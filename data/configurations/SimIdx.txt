@@ -1,0 +1,1 @@
+{"single": {"feed_scatter": 0, "feed_patchy": 0, "feed_grid": 3, "focus": 0, "imitation": 0, "reorientation": 0, "growth": 0, "odor_pref": 12, "chemorbit": 6, "chemotax": 1, "dispersion": 212, "dish": 92}, "batch": {"odor_pref": 6, "chemorbit": 0, "chemotax": 0, "feed_scatter": 0, "feed_grid": 0}}
