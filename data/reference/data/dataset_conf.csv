@@ -1,0 +1,2 @@
+id,fr,filtered_at,collisions_excluded,rescaled_by,centroid,Npoints,Ncontour,bend,front_vector_start,front_vector_stop,rear_vector_start,rear_vector_stop,front_body_ratio,point_idx,use_component_vel,scaled_vel_threshold,arena_xdim,arena_ydim,arena_shape
+no_odor/300l,16,2,True,,True,12,22,from_angles,1,2,8,9,0.5,,False,0.1,0.15,0.15,circular
