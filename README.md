@@ -1,12 +1,12 @@
-==================LARVAWORLD==================
+==================**LARVAWORLD**==================
 
 Drosophila larva behavioral analysis and simulation platform
 
-================================================
+==================================================
 
 Behavioral analysis
 ===================
-Data from any tracker software can be analysed. Compatible file formats are csv and dat. 
+Data from any tracker software can be analysed. Compatible file format is csv.   
 The only required parameters are x,y coordinates of midline points and optionally contourpoints.
 
 Behavioral simulation
@@ -52,17 +52,17 @@ Download or clone the repository to your local drive :
 
     `git clone https://github.com/bagjohn/larvaworld.git`
 
-Make sure python 3.7 is your default python interpreter.
+Make sure python 3.7 is your default python interpreter.  
 Optionally create a python 3.7 virtual environment, for example in folder `larvaworld_venv`, and activate it:
 
     `apt-get install python-virtualenv`
 
     `virtualenv -p /usr/bin/python3 larvaworld_venv`
 
-    `source flyworld_venv/bin/activate`
+    `source larvaworld_venv/bin/activate`
 
 
-Install flyworld dependencies :
+Install larvaworld dependencies :
 
     `cd larvaworld`
 
@@ -71,12 +71,12 @@ Install flyworld dependencies :
 
 **Walkthrough**
 
-Visit the [tutorial notebook](tutorial/walkthrough.ipynb) for a complete walkthrough to Larvaworld.
+Visit the [walkthrough notebook](tutorial/walkthrough.ipynb) for a complete walkthrough and a tutorial to Larvaworld.
 
 **Run Larvaworld**
 
 Larvaworld can be run directly from linux terminal.
-The executable files are in `flyworld/run` directory. Navigate there.
+The executable files are in `larvaworld/run` directory. Navigate there.
 Three modes are available :
 
 1. Analysis 
@@ -84,13 +84,14 @@ Three modes are available :
     Run analysis on the existing sample empirical data (3 dishes of freely exploring larvae).
     This line builds an enriched dataset for every raw dish and analyses it.
     
-        `python analysis.py sample init build enrich anal -all`
+        `python process.py TestGroup init build -each`
+        `python process.py TestGroup enrich anal -nam dish_0 dish_1 dish_2`
         
-    Check the new enriched datasets created in `flyworld/data/sample/groups` and the respective plots for each one.
+    Check the new datasets created in `larvaworld/data/TestGroup/processed` and the respective plots for each one.
 
     Visualize one of the dishes (dish 1) you have created by generating a video.
 
-        `python analysis.py sample vis -vid -idx 1`
+        `python process.py TestGroup vis -vid -nam dish_1
     
 2. Simulation
 
@@ -99,12 +100,12 @@ Three modes are available :
     
         `python exp_run.py dish -N 30 -t 3.0 -vid`
     
-    This line runs a dispersion simulation and compares the results to the existing reference dataset (`flyworld/data/reference`)
+    This line runs a dispersion simulation and compares the results to the existing reference dataset (`larvaworld/data/reference`)
     We choose to only produce a final image of the simulation.
     
         `python exp_run.py dispersion -N 30 -t 3.0 -img -a`
         
-    Check the plots comparing simulated to empirical data in `flyworld/results/runs/dispersion`.
+    Check the plots comparing simulated to empirical data in `larvaworld/SimGroup/single_runs/dispersion`.
     
 3. Batch run
 
@@ -113,4 +114,4 @@ Three modes are available :
     
         `python batch_run.py odor_pref -N 25 -t 3.0 -rng -200.0 200.0 -Ngrd 5`
         
-    Check the heatmap of preference indexes in `flyworld/results/batch_runs`.
+    Check the heatmap of preference indexes in `larvaworld/SimGroup/batch_runs`.

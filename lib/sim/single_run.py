@@ -6,16 +6,11 @@ import time
 
 import numpy as np
 import sys
-
-
-
 sys.path.insert(0, '../..')
 
 from lib.anal.plotting import *
 from lib.conf import exp_types, default_sim
-
 import lib.stor.paths as paths
-
 from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.data_modes as conf
 import lib.aux.naming as nam
