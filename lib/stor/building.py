@@ -40,7 +40,7 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
 
     x_pars = [p for p in save_sequence if p.endswith('x')]
 
-    endpoint_data = pd.DataFrame(columns=['AgentID', 'num_ticks', 'duration_in_sec'])
+    endpoint_data = pd.DataFrame(columns=['AgentID', 'num_ticks', 'cum_dur'])
     appropriate_recordings_counter = 0
     dfs = []
     agent_ids = []
@@ -76,7 +76,7 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
             ddf = df_empty.copy(deep=True)
             endpoint_data = endpoint_data.append({'AgentID': agent_id,
                                                   'num_ticks': len(df),
-                                                  'duration_in_sec': len(df) * d.dt}, ignore_index=True)
+                                                  'cum_dur': len(df) * d.dt}, ignore_index=True)
             ddf.update(df)
             ddf = ddf.assign(AgentID=agent_id).set_index('AgentID', append=True)
             if i == 0:
@@ -87,7 +87,7 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
         for i, (df, agent_id) in enumerate(zip(dfs, agent_ids)):
             endpoint_data = endpoint_data.append({'AgentID': agent_id,
                                                   'num_ticks': len(df),
-                                                  'duration_in_sec': len(df) * d.dt}, ignore_index=True)
+                                                  'cum_dur': len(df) * d.dt}, ignore_index=True)
             df = df.assign(AgentID=agent_id).set_index('AgentID', append=True)
             if i == 0:
                 step_data = df
@@ -186,7 +186,7 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
         step_data = temp
     endpoint_data = temp['head_x'].dropna().groupby('AgentID').count().to_frame()
     endpoint_data.columns = ['num_ticks']
-    endpoint_data['duration_in_sec'] = endpoint_data['num_ticks'] / fr
+    endpoint_data['cum_dur'] = endpoint_data['num_ticks'] / fr
 
     if max_Nagents is not None:
         selected = endpoint_data.nlargest(max_Nagents, columns='num_ticks').index.values
@@ -195,79 +195,7 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
 
     return step_data, endpoint_data
 
-# def build_Jovanic_dataset(dir, source_dir, c, max_Nagents=None, min_Nids=1, complete_ticks=True) :
-#     dataset_type = JovanicGroup
-#     dataset_config = dataset_type['dataset_config']
-#
-#     d = LarvaDataset(dir=dir, **dataset_config)
-#     fr = d.fr
-#     x_pars = [x for x, y in d.points_xy]
-#     y_pars = [y for x, y in d.points_xy]
-#
-#     t_file = os.path.join(source_dir, f'{c}_t.txt')
-#     id_file = os.path.join(source_dir, f'{c}_larvaid.txt')
-#     x_file = os.path.join(source_dir, f'{c}_x_spine.txt')
-#     y_file = os.path.join(source_dir, f'{c}_y_spine.txt')
-#     xs = pd.read_csv(x_file, header=None, sep='\t', names=x_pars)
-#     ys = pd.read_csv(y_file, header=None, sep='\t', names=y_pars)
-#     ts = pd.read_csv(t_file, header=None, sep='\t', names=['Step'])
-#
-#     ids = pd.read_csv(id_file, header=None, sep='\t', names=['AgentID'])
-#     ids['AgentID'] = [f'Larva_{10000 + i[0]}' for i in ids.values]
-#
-#     min_t, max_t = float(ts.min()), float(ts.max())
-#     trange = np.arange(np.ceil(max_t * fr))
-#     temp = pd.concat([ids, ts, xs, ys], axis=1, sort=False)
-#     temp.set_index(keys=['AgentID'], inplace=True, drop=True)
-#     agent_ids = np.sort(temp.index.unique())
-#
-#     durs = []
-#     starts=[]
-#     stops =[]
-#     for id in agent_ids:
-#         data = temp.xs(id)
-#         t = data['Step'].values
-#         start_t = int((t[0] - min_t) * fr)
-#         stop_t = start_t + len(t)
-#         t = np.arange(start_t, stop_t)
-#         temp.loc[id, 'Step'] = t
-#         durs.append(len(t))
-#         starts.append(start_t)
-#         stops.append(stop_t)
-#     temp.reset_index(drop=False, inplace=True)
-#     temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-#
-#     if min_Nids is not None :
-#         temp= match_larva_ids(s=temp, dl=None, pars=['head_x', 'head_y'], e=None, min_Nids=min_Nids)
-#         temp.reset_index(level='Step', drop=False, inplace=True)
-#         old_ids = temp.index.unique().tolist()
-#         new_ids = [f'Larva_{100+i}' for i in range(len(old_ids))]
-#         new_pairs = dict(zip(old_ids, new_ids))
-#         temp.rename(index=new_pairs, inplace=True)
-#         temp.reset_index(drop=False, inplace=True)
-#         temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-#
-#     if complete_ticks :
-#         my_index = pd.MultiIndex.from_product([trange, new_ids], names=['Step', 'AgentID'])
-#         step_data = pd.DataFrame(index=my_index, columns=x_pars + y_pars)
-#         step_data.update(temp)
-#     else :
-#         step_data = temp
-#     endpoint_data = temp['head_x'].dropna().groupby('AgentID').count().to_frame()
-#     endpoint_data.columns=['num_ticks']
-#     endpoint_data['duration_in_sec'] = endpoint_data['num_ticks'] / fr
-#
-#     if max_Nagents is not None:
-#         selected = endpoint_data.nlargest(max_Nagents, columns='num_ticks').index.values
-#         step_data = step_data.loc[(slice(None), selected), :]
-#         endpoint_data = endpoint_data.loc[selected]
-#
-#     step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
-#     endpoint_data.sort_index(inplace=True)
-#     d.set_step_data(step_data)
-#     d.set_endpoint_data(endpoint_data)
-#     d.save()
-#     return d
+
 def read_Schleyer_metadata(dir):
     meta_filename = os.path.join(dir, 'vidAndLogs/metadata.txt')
     dictionary = {}

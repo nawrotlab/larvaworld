@@ -6,11 +6,16 @@ import time
 
 import numpy as np
 import sys
+
+
+
 sys.path.insert(0, '../..')
 
 from lib.anal.plotting import *
 from lib.conf import exp_types, default_sim
+
 import lib.stor.paths as paths
+
 from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.data_modes as conf
 import lib.aux.naming as nam
@@ -78,12 +83,11 @@ def run_sim(sim_id,
     food_endpoint_data = env.food_endpoint_collector.get_agent_vars_dataframe()
     larva_endpoint_data = larva_endpoint_data.droplevel('Step')
     food_endpoint_data = food_endpoint_data.droplevel('Step')
-    if 'duration_in_sec' in sim_params['end_pars']:
-        larva_endpoint_data['duration_in_sec'] = Nsec
+    if 'cum_dur' in sim_params['end_pars']:
+        larva_endpoint_data['cum_dur'] = Nsec
     if 'num_ticks' in sim_params['end_pars']:
         larva_endpoint_data['num_ticks'] = Nsteps
     env.close()
-    # dataset.load()
     end = time.time()
     dur = end - start
     param_dict['duration'] = np.round(dur, 2)
@@ -96,7 +100,7 @@ def run_sim(sim_id,
         d.save()
         dict_to_file(param_dict, d.sim_pars_file_path)
         # Show the odor layer
-        if fly_params['neural_params']['component_params']['olfactor']:
+        if env.Nodors>0:
             env.plot_odorscape(save_to=d.plot_dir)
     print(f'Simulation complete in {dur} seconds!')
     return d
@@ -109,17 +113,12 @@ def data_collection_config(dataset, sim_params):
     step_pars = list(set(fun.flatten_list([effector_collection[e]['step'] for e in effectors])))
     end_pars = list(set(fun.flatten_list([effector_collection[e]['endpoint'] for e in effectors])))
 
-    if sim_params['collect_spinepoints']:
+    if sim_params['collect_midline']:
         step_pars += fun.flatten_list(d.points_xy)
-    if sim_params['collect_contourpoints']:
+    if sim_params['collect_contour']:
         step_pars += fun.flatten_list(d.contour_xy)
-    # if sim_params['collect_pose']:
-    #     step_pars += nam.xy(d.point)
-    #     step_pars += ['bend', 'front_orientation', 'rear_orientation']
-
     collected_pars = {'step': sim_params['step_pars'] + step_pars,
                       'endpoint': sim_params['end_pars'] + end_pars}
-
     return collected_pars
 
 
@@ -216,12 +215,11 @@ def sim_analysis(d, experiment):
         datasets = [d, target_dataset]
         labels = ['simulated', 'empirical']
         comparative_analysis(datasets=datasets, labels=labels, simVSexp=True, save_to=None)
-        plot_marked_strides(dataset=d, agent_ids=d.agent_ids[:2], title=' ')
-        plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:2])
+        plot_marked_strides(dataset=d, agent_ids=d.agent_ids[:3], title=' ', slices=[[10,50], [60,100]])
+        plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:3], min_turn_angle=20)
     elif experiment in ['chemorbit', 'chemotax']:
         plot_distance_to_source(dataset=d, experiment=experiment)
         plot_odor_concentration(dataset=d)
-
         d.visualize(agent_ids=[d.agent_ids[0]], mode='image', image_mode='final',
                     contours=False, centroid=False, spinepoints=False,
                     random_larva_colors=True, trajectories=True, trail_decay_in_sec=None,

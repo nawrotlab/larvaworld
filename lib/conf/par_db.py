@@ -222,8 +222,8 @@ chunk_ar = []
 for (suf, cn) in temp_chunk:
     chunk_ar.append([nam.dst(cn), f'{suf}_d', sub('d', suf), sub(hat('d'), suf), l_dst])
     chunk_ar.append(
-        #     [nam.scal(nam.dst(cn)), f'{suf}_sd', subsup('d', suf, '*'), subsup(hat('d'), suf, '*'), l_sc_dst])
-        # chunk_ar.append(
+            [nam.scal(nam.dst(cn)), f'{suf}_sd', subsup('d', suf, '*'), subsup(hat('d'), suf, '*'), l_sc_dst])
+    chunk_ar.append(
         [nam.straight_dst(cn), f'{suf}_std', subsup('d', suf, 'st'), subsup(hat('d'), suf, 'st'), l_dst])
     chunk_ar.append(
         [nam.scal(nam.straight_dst(cn)), f'{suf}_sstd', subsup('d', suf, 'st*'), subsup(hat('d'), suf, 'st*'),
@@ -269,13 +269,13 @@ for (fn, sn, sym, esym) in temp_dsp:
 dsp_ar = np.array(dsp_ar)
 
 par_ar = np.array([
-    ['duration_in_sec', 'cum_t', sub('t', 'cum'), sub(hat('t'), 'cum'), l_time],
+    ['cum_dur', 'cum_t', sub('t', 'cum'), sub(hat('t'), 'cum'), l_time],
     ['length', 'l_mu', bar('l'), bar(hat('l')), l_body_length],
     ['stride_reoccurence_rate', 'str_rr', sub('str', 'rr'), sub(hat('str'), 'rr'), '-'],
-    ['spinelength', 'l', 'l', hat('l'), l_body_length],
+    ['length', 'l', 'l', hat('l'), l_body_length],
     ['amount_eaten', 'f_am', sub('m', 'feed'), sub(hat('m'), 'feed'), l_mass],
     ['max_feed_amount', 'f_am_max', subsup('m', 'feed', 'm'), subsup(hat('m'), 'feed','m'), l_mass],
-    ['mass_in_mg', 'm', 'm', hat('m'), l_mass],
+    ['mass', 'm', 'm', hat('m'), l_mass],
     ['Nlarvae', 'lar_N', sub('N', 'larvae'), sub(hat('N'), 'larvae'), f'# larvae'],
 ])
 
@@ -303,6 +303,7 @@ sc_random_ar1 = generate_entries(bases=random_ar1.tolist(), types=['scal'])
 
 str_sc_random_ar1 = generate_entries(bases=sc_random_ar1.tolist(), types=['stride'])
 random_ar2 = generate_entries(bases=chunk_ar[:5, :].tolist(), types=['mean', 'std'])
+# sc_random_ar2 = generate_entries(bases=random_ar2[:4, :].tolist(), types=['scal'])
 random_ar3 = generate_entries(bases=ang_ar.tolist(), types=['mean', 'std'])
 random_ar4 = generate_entries(bases=orient_ar.tolist(), types=['mean', 'std'])
 random_ar5 = generate_entries(bases=sc_lin_ar.tolist(), types=['mean', 'std'])
@@ -311,15 +312,18 @@ par_ar = np.vstack([par_ar,
                     ang_ar,
                     lin_ar,
                     sc_lin_ar,
+# sc_random_ar2,
                     chunk_ar,
+random_ar2,
                     dsp_ar,
                     tor_ar,
                     orient_ar,
                     random_ar1,
                     sc_random_ar1,
 sc_chunk_ar,
-                    str_sc_random_ar1,
-                    random_ar2,
+
+
+str_sc_random_ar1,
                     random_ar3,
                     random_ar4,
                     random_ar5])
@@ -404,3 +408,4 @@ collect_db=pd.Series(valid.collect.values,index=valid.par).to_dict()
 par_db = par_db[~par_db.index.duplicated(keep='first')]
 
 # print(par_db.loc['str_sd_mu'])
+# print(random_ar2)

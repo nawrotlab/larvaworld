@@ -5,13 +5,15 @@ import nengo
 import numpy as np
 from copy import deepcopy
 
+from nengo import Simulator
+
 from lib.model.envs._space import agents_spatial_query
-from lib.model.larva._effectors import Crawler, Feeder, Oscillator_coupling, Intermitter, Olfactor, Turner
+from lib.model.larva._effectors import Crawler, Feeder, Oscillator_coupling, Intermitter, Olfactor, Turner, DefaultBrain
 from lib.model.larva._sensorimotor import VelocityAgent
 from lib.model.larva._bodies import LarvaBody
 from lib.aux import functions as fun, naming as nam
 from lib.model.larva.deb import DEB
-from lib.model.larva.nengo_effectors import FlyBrain, NengoManager
+from lib.model.larva.nengo_effectors import NengoBrain, NengoManager, NengoEffector
 
 
 class Larva(mesa.Agent):
@@ -73,9 +75,10 @@ class LarvaReplay(Larva, LarvaBody):
                 self.Nangles = len(self.angle_pars)
                 if self.Nors != 1 or self.Nangles!=1:
                     raise ValueError(f'{self.Nors} orientation and {Nsegs} angle values are present and 1,1 are needed.')
+            else :
+                raise ValueError(f'Defined number of segments {Nsegs} must be either 2 or {self.Npoints-1}')
         else :
             self.Nors, self.Nangles = 0, 0
-
 
         # self.angle_pars=[p for p in d.angles + ['bend'] if p in self.pars]
         # self.Nangles=len(self.angle_pars)
@@ -207,226 +210,32 @@ class LarvaReplay(Larva, LarvaBody):
 class LarvaSim(VelocityAgent, Larva):
     def __init__(self,unique_id, model, fly_params, **kwargs):
         Larva.__init__(self, unique_id=unique_id, model=model)
-        # State variables
-        self.Nlayers = len(self.model.odor_layers)
-        self.odor_concentrations = np.zeros(self.Nlayers)
-        self.olfactory_activation = 0
-        self.real_length = None
-        self.real_mass = None
-        self.__dict__.update(fly_params)
-        self.modules = fly_params['neural_params']['component_params']
 
-        if self.modules['energetics']:
-            if fly_params['energetics_params']['deb'] :
-                self.deb = DEB(species='default', steps_per_day=24 * 60, cv=0, aging=True)
-                self.deb.reach_stage('larva')
-                self.deb.steps_per_day = int(24 * 60 * 60 / self.model.dt)
-                self.real_length = self.deb.get_real_L()
-                self.real_mass = self.deb.get_W()
-
-            else :
-                self.deb = None
-                self.food_to_biomass_ratio = fly_params['energetics_params']['food_to_biomass_ratio']
-
+        self.build_energetics(fly_params['energetics_params'])
         VelocityAgent.__init__(self,**fly_params['sensorimotor_params'], **fly_params['body_params'], **kwargs)
-
-
-
-        # self.__dict__.update(fly_params['neural_params']['component_params'])
-
-
-
-        self.nengo_feeder_reset_to_be_deleted = False
-
-        # Initialize oscillators
-
-
-
-        self.nengo_olfactor, self.nengo_three_oscillators=self.modules['nengo_olfactor'], self.modules['nengo_three_oscillators']
-        if self.nengo_olfactor or self.nengo_three_oscillators:
-            self.nengo_manager = NengoManager(**fly_params['neural_params']['nengo_params'])
-            self.flybrain = FlyBrain()
-            self.flybrain.build(self.nengo_manager, olfactor=self.nengo_olfactor, num_odor_layers=self.Nlayers,
-                                three_oscillators=self.nengo_three_oscillators, **fly_params['neural_params']['nengo_params'], )
-            self.flybrain_sim = nengo.Simulator(self.flybrain, dt=0.01)
-            self.flybrain_iterations_per_step = int(self.model.dt / self.flybrain_sim.dt)
-            # print(self.flybrain_iterations_per_step)
-        else:
-            self.nengo_manager = None
-            self.flybrain = None
-
-        if self.modules['crawler']:
-            self.crawler = Crawler(dt=self.model.dt, **fly_params['neural_params']['crawler_params'])
-            self.crawler.start_effector()
-        else:
-            self.crawler = None
-
-        if self.modules['turner']:
-            self.turner = Turner(dt=self.model.dt, **fly_params['neural_params']['turner_params'])
-            self.turner.start_effector()
-        else:
-            self.turner = None
-
-        if self.modules['feeder']:
-            self.feeder = Feeder(dt=self.model.dt, model=self.model, **fly_params['neural_params']['feeder_params'])
-            self.feeder.stop_effector()
-            self.reset_feeder()
-            self.max_feed_amount = self.compute_max_feed_amount()
-        else:
-            self.feeder = None
-
-        if self.modules['interference']:
-            self.osc_coupling = Oscillator_coupling(**fly_params['neural_params']['interference_params'])
-            # self.crawler_interference_free_window = fly_params['neural_params']['interference_params'][
-            #     'crawler_interference_free_window']
-            # self.crawler_interference_start = fly_params['neural_params']['interference_params'][
-            #     'crawler_interference_start']
-            # self.feeder_interference_free_window = fly_params['neural_params']['interference_params'][
-            #     'feeder_interference_free_window']
-            # self.feeder_interference_start = fly_params['neural_params']['interference_params'][
-            #     'feeder_interference_start']
-            # self.turner_continuous = fly_params['neural_params']['interference_params']['turner_continuous']
-            # self.turner_rebound = fly_params['neural_params']['interference_params']['turner_rebound']
-            # self.interference_ratio = fly_params['neural_params']['interference_params']['interference_ratio']
-
-        else:
-            self.osc_coupling = Oscillator_coupling()
-
-        # Initialize modulators
-        if self.modules['intermitter']:
-            self.intermitter = Intermitter(dt=self.model.dt,
-                                           crawler=self.crawler, turner=self.turner, feeder=self.feeder,
-                                           nengo_manager=self.nengo_manager,
-                                           **fly_params['neural_params']['intermitter_params'])
-            self.intermitter.start_effector()
-        else :
-            self.intermitter=None
-
-        # Initialize sensors
-        if self.modules['olfactor']:
-            self.olfactor = Olfactor(dt=self.model.dt, odor_layers=self.model.odor_layers,
-                                     **fly_params['neural_params']['olfactor_params'])
-        else:
-            self.olfactor = None
-
-        # print(self.real_mass, self.real_length)
-        # raise
-
-
-
-    # def adapt_oscillator_amp_and_threshold(self, length, freq=None, free_window=None, scaled_stride_step=None):
-    #     distance = length * scaled_stride_step
-    #     amp = distance * np.pi * freq / (np.sin(np.pi * free_window))
-    #     thr = np.cos(np.pi * free_window)
-    #     return amp, thr
-
+        self.brain=self.build_brain(fly_params['neural_params'])
+        self.reset_feeder()
     def compute_next_action(self):
-        # print(self.unique_id)
-        # Here starts the nervous system step function
-
-        # Sensation
-        # print(self.real_length * 1000, self.real_mass * 1000)
-
         self.sim_time += self.model.dt
-        if self.Nlayers > 0:
+
+        self.odor_concentrations = self.sense_odors(self.model.Nodors, self.model.odor_layers)
+        lin, ang, self.feeder_motion, self.olfactory_activation = self.brain.run(self.odor_concentrations, self.get_sim_length())
+        self.set_ang_activity(ang)
+        self.set_lin_activity(lin)
+        self.feed_attempt(self.feeder_motion)
+
+        if self.energetics:
+            self.run_energetics(self.feed_success, self.current_amount_eaten)
+    def sense_odors(self, Nodors, odor_layers):
+        if Nodors==0 :
+            return []
+        else :
             pos = self.get_olfactor_position()
-            self.odor_concentrations = self.sense_odors(self.model.odor_layers, pos)
+            values = [odor_layers[id].get_value(pos) for id in odor_layers]
+            if self.brain.olfactor.noise :
+                values = [v + np.random.normal(scale=v * self.brain.olfactor.noise) for v in values]
+            return values
 
-
-        if self.flybrain:
-            man = self.nengo_manager
-            if self.nengo_olfactor:
-                man.set_odor_concentrations(self.odor_concentrations)
-            self.flybrain_sim.run_steps(self.flybrain_iterations_per_step, progress_bar=False)
-            # TODO Right now the nengo turner is not modulated by olfaction
-            # TODO Right now the feeder deoes not work
-            if self.nengo_three_oscillators:
-                lin=self.flybrain.mean_lin_s(self.flybrain_sim.data, self.flybrain_iterations_per_step)* self.get_sim_length()
-                lin_noise = np.random.normal(scale=man.crawler_noise * self.get_sim_length())
-                self.set_lin_activity(lin+lin_noise)
-                ang=self.flybrain.mean_ang_s(self.flybrain_sim.data, self.flybrain_iterations_per_step)
-                ang_noise = np.random.normal(scale=man.turner_noise)
-                self.set_ang_activity(ang+ang_noise)
-                nengo_feeding_event = self.flybrain.feed_event(self.flybrain_sim.data, self.flybrain_iterations_per_step)
-                if nengo_feeding_event & (not self.nengo_feeder_reset_to_be_deleted):
-                    self.feeder_motion = True
-                    self.nengo_feeder_reset_to_be_deleted = True
-                else:
-                    self.feeder_motion = False
-                    self.nengo_feeder_reset_to_be_deleted = False
-
-        # Use a simple gain on the concentration change since last timestep
-        if self.olfactor is not None:
-            self.olfactory_activation = self.olfactor.step(self.odor_concentrations)
-
-        elif self.nengo_olfactor:
-            self.olfactory_activation = 100 * self.flybrain.mean_odor_change(self.flybrain_sim.data, self.flybrain_iterations_per_step)
-        else:
-            pass
-
-        # Intermission
-        if self.intermitter is not None:
-            self.intermitter.step()
-
-        # Step the feeder
-        self.feed_success=False
-        self.current_amount_eaten = 0
-        if self.feeder is not None:
-            self.feeder.step()
-            if self.feeder.complete_iteration:
-                # TODO fix the radius so that it works with any feeder, nengo included
-                success, amount_eaten = self.detect_food(mouth_position=self.get_olfactor_position(),
-                                                                   radius=self.feeder.feed_radius * self.sim_length,
-                                                                   grid=self.model.food_grid,
-                                                                   max_amount_eaten=self.max_feed_amount)
-
-
-
-                if success :
-                    self.feed_success_counter += 1
-                    self.feed_success = True
-                    self.current_amount_eaten = amount_eaten
-                    self.amount_eaten += amount_eaten
-                    # if self.modules['energetics']:
-                    #     # TODO Connect this to metabolism
-                    #     # This adjusts the real_length to mass**(1/3). We need the real_length already, to feed it to the crawler
-                    #
-                    self.intermitter.feeder_reoccurence_rate = self.intermitter.feeder_reoccurence_rate_on_success
-                else:
-                    # TODO Maybe intermit here
-                    self.intermitter.feeder_reoccurence_rate /= (np.exp(self.intermitter.feeder_reoccurence_decay_coef))
-
-        if self.modules['energetics']:
-            if self.deb :
-                self.deb.run(f=int(self.feed_success))
-                self.real_length = self.deb.get_real_L()
-                self.real_mass = self.deb.get_W()
-                # if not self.deb.alive :
-                #     raise ValueError ('Dead')
-            else :
-                self.real_mass += self.current_amount_eaten * self.food_to_biomass_ratio
-                self.adjust_shape_to_mass()
-            self.adjust_body_vertices()
-            self.max_feed_amount = self.compute_max_feed_amount()
-
-        if self.crawler is not None:
-            self.set_lin_activity(self.crawler.step(self.get_sim_length()))
-
-        # ... and finally step the turner...
-        if self.turner is not None:
-            self.osc_coupling.step(crawler=self.crawler, feeder=self.feeder)
-            self.set_head_contacts_ground(value=self.osc_coupling.turner_inhibition)
-            self.set_ang_activity(self.turner.step(inhibited=self.osc_coupling.turner_inhibition,
-                                                   interference_ratio=self.osc_coupling.interference_ratio,
-                                                   A_olf=self.olfactory_activation))
-
-    def sense_odors(self, odor_layers, pos):
-        values = [odor_layers[id].get_value(pos) for id in odor_layers]
-        if self.olfactor.noise:
-            values = [v + np.random.normal(scale=v * self.olfactor.noise) for v in values]
-        return values
-
-        # See computation in MANUAL scientific diary, 20.02.2020
 
     def detect_food(self, mouth_position, radius=None, grid=None, max_amount_eaten=1.0):
         if grid:
@@ -450,18 +259,77 @@ class LarvaSim(VelocityAgent, Larva):
             else:
                 return False, 0
 
+    def feed_attempt(self, motion=False):
+        if motion :
+            r=self.brain.feeder.feed_radius * self.sim_length
+            # TODO fix the radius so that it works with any feeder, nengo included
+            self.feed_success, self.current_amount_eaten = self.detect_food(mouth_position=self.get_olfactor_position(),
+                                                     radius=r,
+                                                     grid=self.model.food_grid,
+                                                     max_amount_eaten=self.max_feed_amount)
+
+            self.feed_success_counter += int(self.feed_success)
+            self.amount_eaten += self.current_amount_eaten
+        else :
+            self.feed_success = False
+            self.current_amount_eaten = 0
+
+
     def reset_feeder(self):
         self.feed_success_counter = 0
         self.amount_eaten = 0
+        self.feeder_motion=False
+        try :
+            self.max_feed_amount = self.compute_max_feed_amount()
+        except :
+            self.max_feed_amount=None
         try:
-            self.feeder.reset()
+            self.brain.feeder.reset()
         except:
             pass
 
     def compute_max_feed_amount(self):
-        return self.feeder.max_feed_amount_ratio * self.real_mass
-        pass
+        return self.brain.feeder.max_feed_amount_ratio * self.real_mass
 
-    def build_modules(self, modules):
 
-        pass
+    def build_energetics(self, energetic_pars):
+        self.real_length = None
+        self.real_mass = None
+        if energetic_pars is not None :
+            self.energetics=True
+            if energetic_pars['deb']:
+                self.deb = DEB(species='default', steps_per_day=24 * 60, cv=0, aging=True)
+                self.deb.reach_stage('larva')
+                self.deb.steps_per_day = int(24 * 60 * 60 / self.model.dt)
+                self.real_length = self.deb.get_real_L()
+                self.real_mass = self.deb.get_W()
+            else:
+                self.deb = None
+                self.food_to_biomass_ratio = energetic_pars['food_to_biomass_ratio']
+        else :
+            self.energetics=False
+
+    def build_brain(self, neural_params):
+        modules=neural_params['modules']
+        if neural_params['nengo'] :
+            brain=NengoBrain()
+            brain.setup(agent=self, modules=modules, conf=neural_params)
+            brain.build(brain.nengo_manager, olfactor=brain.olfactor)
+            brain.sim = Simulator(brain, dt=0.01)
+            brain.Nsteps = int(self.model.dt / brain.sim.dt)
+        else :
+            brain= DefaultBrain(agent=self, modules=modules, conf=neural_params)
+        return brain
+
+    def run_energetics(self, feed_success, amount_eaten):
+        if self.deb:
+            self.deb.run(f=int(feed_success))
+            self.real_length = self.deb.get_real_L()
+            self.real_mass = self.deb.get_W()
+            # if not self.deb.alive :
+            #     raise ValueError ('Dead')
+        else:
+            self.real_mass += amount_eaten * self.food_to_biomass_ratio
+            self.adjust_shape_to_mass()
+        self.adjust_body_vertices()
+        self.max_feed_amount = self.compute_max_feed_amount()

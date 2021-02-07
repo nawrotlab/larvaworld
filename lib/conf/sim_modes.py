@@ -1,4 +1,3 @@
-
 full_traj = {'trajectories': True,
              'trail_decay_in_sec': 0}
 
@@ -33,19 +32,14 @@ default_sim = {
     'dt': 1 / 10,
     # 'dt': 1 / 16,
     # 'dt': 1 / 100,
-               'sim_time_in_min': 3.0,
-               'odor_prep_time_in_min': 0.0,
-               'fly_prep_time_in_min': 0.5,
-               'collect_spinepoints': False,
-               'collect_contourpoints': False,
-               'collect_effectors': [],
-               'step_pars': [''],
-               'end_pars': ['length', 'duration_in_sec', 'num_ticks'],
-               'traj_mode': full_traj,
-               'draw_mode': draw_default,
-               }
-
-
-
-
-
+    'sim_time_in_min': 3.0,
+    'odor_prep_time_in_min': 0.0,
+    'fly_prep_time_in_min': 0.5,
+    'collect_midline': False,
+    'collect_contour': False,
+    'collect_effectors': [],
+    'step_pars': [''],
+    'end_pars': ['length', 'cum_dur', 'num_ticks'],
+    'traj_mode': full_traj,
+    'draw_mode': draw_default,
+}

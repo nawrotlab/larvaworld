@@ -5,7 +5,7 @@ import pandas as pd
 import scipy.stats as stats
 from scipy.stats import truncnorm
 
-from lib.stor.paths import Ref_path
+from lib.stor.paths import Ref_path, Ref_fits
 
 
 class PowerLawDist(st.rv_continuous):
@@ -66,7 +66,7 @@ class GeometricDist(st.rv_continuous):
 
 def sample_agents(filepath=None, pars=None, num_agents=1):
     if filepath is None:
-        filepath=Ref_path
+        filepath = Ref_path
     data = pd.read_csv(filepath, index_col=0)
     if pars is None:
         pars = data.columns
@@ -76,6 +76,46 @@ def sample_agents(filepath=None, pars=None, num_agents=1):
     means = [data[p].mean() for p in pars]
     samples = np.random.multivariate_normal(means, cov, num_agents).T
     return pars, samples
+
+
+def get_ref_bout_distros(mode='stridechain_dist'):
+    f = pd.read_csv(Ref_fits, index_col=0).xs('reference')
+    if mode=='stridechain_dist' :
+        str_i = np.argmin(f[['KS_pow_stride', 'KS_exp_stride', 'KS_log_stride']])
+        if str_i == 0:
+            str_dist = {'range': (f['min_stride'], f['max_stride']),
+                        'name': 'powerlaw',
+                        'alpha': f['alpha_stride']}
+        elif str_i == 1:
+            str_dist = {'range': (f['min_stride'], f['max_stride']),
+                        'name': 'exponential',
+                        'lambda': f['lambda_stride']}
+        elif str_i == 2:
+            str_dist = {'range': (f['min_stride'], f['max_stride']),
+                        'name': 'lognormal',
+                        'mu': f['mu_log_stride'],
+                        'sigma': f['sigma_log_stride']}
+        return str_dist
+
+    elif mode=='pause_dist' :
+        pau_i = np.argmin(f[['KS_pow_pause', 'KS_exp_pause', 'KS_log_pause']])
+        if pau_i == 0:
+            pau_dist = {'range': (f['min_pause'], f['max_pause']),
+                        'name': 'powerlaw',
+                        'alpha': f['alpha_pause']}
+        elif pau_i == 1:
+            pau_dist = {'range': (f['min_pause'], f['max_pause']),
+                        'name': 'exponential',
+                        'lambda': f['lambda_pause']}
+        elif pau_i == 2:
+            pau_dist = {'range': (f['min_pause'], f['max_pause']),
+                        'name': 'lognormal',
+                        'mu': f['mu_log_pause'],
+                        'sigma': f['sigma_log_pause']}
+        return pau_dist
+
+
+get_ref_bout_distros()
 
 
 def truncated_power_law(a, xmin, xmax):
@@ -104,14 +144,13 @@ def sample_lognormal_int(mean, sigma, xmin, xmax):
     return v
 
 
-
 def lognorm_params(mode, stddev):
     """
     Given the mode and std. dev. of the log-normal distribution, this function
     returns the shape and scale parameters for scipy's parameterization of the
     distribution.
     """
-    p = np.poly1d([1, -1, 0, 0, -(stddev/mode)**2])
+    p = np.poly1d([1, -1, 0, 0, -(stddev / mode) ** 2])
     r = p.roots
     sol = r[(r.imag == 0) & (r.real > 0)].real
     shape = np.sqrt(np.log(sol))
@@ -119,9 +158,6 @@ def lognorm_params(mode, stddev):
     return shape, scale
 
 
-
 def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
     return truncnorm(
         (low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
-
-

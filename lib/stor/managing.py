@@ -32,7 +32,7 @@ sys.path.insert(0, '../..')
 from lib.anal.plotting import comparative_analysis, plot_marked_strides, plot_marked_turns
 from lib.stor.building import build_Jovanic, build_Schleyer
 from lib.stor.datagroup import *
-from lib.aux.functions import flatten_list
+import lib.aux.functions as fun
 from lib.stor.larva_dataset import LarvaDataset
 
 
@@ -52,6 +52,7 @@ def build_datasets(datagroup_id, raw_folders=None, names=['raw'], folders=None, 
                       folders=folders, suffixes=suffixes, mode='initialize', ids=ids, arena_pars=arena_pars)
     for d, raw in zip(ds, raw_folders):
         if conf_id == 'JovanicConf':
+            # with fun.suppress_stdout():
             step_data, endpoint_data = build_Jovanic(d, build_conf, source_dir=f'{datagroup.raw_dir}/{raw}', **kwargs)
         elif conf_id == 'SchleyerConf':
             step_data, endpoint_data = build_Schleyer(d, build_conf,
@@ -120,7 +121,10 @@ def enrich_datasets(datagroup_id, names, keep_raw=False, **kwargs):
         for raw, new in zip(raw_ds, ds):
             copy_tree(new.dir, raw.dir)
     enrich_conf = LarvaDataGroup(datagroup_id).get_conf()['enrich']
-    ds = [d.enrich(**enrich_conf) for d in ds]
+
+    with fun.suppress_stdout():
+        ds = [d.compute_orientations(mode='full') for d in ds]
+        # ds = [d.enrich(**enrich_conf) for d in ds]
     return ds
 
 
@@ -138,13 +142,15 @@ def analyse_datasets(datagroup_id, save_to=None, sample_individuals=False, **kwa
     comparative_analysis(datasets=ds, labels=[d.id for d in ds], save_to=save_to)
 
 
-def visualize_datasets(datagroup_id, save_to=None, vis_kwargs={}, **kwargs):
+def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={}, **kwargs):
     warnings.filterwarnings('ignore')
     ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
     if save_to is None and len(ds) > 1:
         save_to = LarvaDataGroup(datagroup_id).vis_dir
-    for d in ds:
-        d.visualize(**vis_kwargs)
+    if save_as is None :
+        save_as=[d.id for d in ds]
+    for d,n in zip(ds, save_as):
+        d.visualize(save_to=save_to, save_as=n, **vis_kwargs)
 
 
 def compute_PIs(datagroup_id, save_to=None, **kwargs):

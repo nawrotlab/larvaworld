@@ -55,18 +55,11 @@ class Oscillator(Effector):
     def oscillate(self):
         super().count_time()
         self.phi += 2 * np.pi / self.timesteps_per_iteration
-        # if int(round(self.t / self.dt)) > self.timesteps_per_iteration:
         if self.phi >= 2 * np.pi:
-            # if self.phi >= 2 * np.pi:
             self.phi %= 2 * np.pi
             self.t = 0
-            # CAUTION This causes problems with timing
-            # self.phi -= 2 * np.pi
             self.complete_iteration = True
             self.iteration_counter += 1
-
-        # else :
-        #     self.complete_iteration = False
 
     def reset(self):
         self.t = 0
@@ -398,7 +391,7 @@ class Feeder(Oscillator):
             # # TODO Here return the amount eaten?
             # if self.complete_iteration:
             #     self.feed_success = self.detect_food(mouth_position, self.feed_radius * length)
-
+        # print(self.complete_iteration)
     # def detect_food(self, mouth_position, radius):
     #     accessible_food = self.model.agents_spatial_query(mouth_position, radius, self.model.get_food())
     #     if accessible_food:
@@ -458,198 +451,20 @@ class Oscillator_coupling():
         if self.crawler_inhibits_bend or self.feeder_inhibits_bend :
             self.turner_inhibition=True
 
-
-
-
-
-class Intermitter_old(Effector):
-    def __init__(self, mode='normal', nengo_manager=None,
-                 crawler=None, intermittent_crawler=False,
-                 crawler_reoccurence_rate=1, crawler_reoccurence_rate_std=0,
-                 feeder=None, intermittent_feeder=False,
-                 feeder_reoccurence_rate_on_success=1, feeder_reoccurence_decay_coef=1,
-                 turner=None, intermittent_turner=False, turner_prepost_lag=[0, 0],
-                 explore2exploit_bias=0.5,
-                 rest_duration_range=(0.1, 11), rest_power_coef=1.5, rest_power_coef_std=0,
-                 **kwargs):
-        super().__init__(**kwargs)
-        self.mode = mode
-        if mode == 'normal':
-            # Define the components affected by the intermitter
-            self.crawler = crawler
-            self.intermittent_crawler = intermittent_crawler
-            self.crawler_reoccurence_rate = float(
-                np.random.normal(loc=crawler_reoccurence_rate, scale=crawler_reoccurence_rate_std, size=1))
-
-            self.feeder = feeder
-            self.intermittent_feeder = intermittent_feeder
-            self.feeder_reoccurence_rate_on_success = feeder_reoccurence_rate_on_success
-            self.feeder_reoccurence_decay_coef = feeder_reoccurence_decay_coef
-            self.feeder_reoccurence_rate = self.feeder_reoccurence_rate_on_success
-
-            self.turner = turner
-            self.intermittent_turner = intermittent_turner
-        elif mode == 'nengo':
-            self.nengo_manager = nengo_manager
-        self.turner_pre_lag_ticks = int(turner_prepost_lag[0] / self.dt)
-        self.turner_post_lag_ticks = int(turner_prepost_lag[1] / self.dt)
-
-        self.explore2exploit_bias = explore2exploit_bias
-        self.reset()
-        # self.activity_counter = 0
-        # self.current_activity_duration = 10
-
-        # Rest-bout duration distribution
-        # Trying to fit curve in fig 3 Ueno(2012)
-        # For a=1.5 as mentioned we don't get visual fit. We try other values
-        # self.rest_duration_range = (1, 10001)  # in sec
-        self.rest_duration_range = rest_duration_range  # in sec
-        self.rest_power_coef = float(np.random.normal(loc=rest_power_coef, scale=rest_power_coef_std, size=1))
-        # self.pause_dist = PowerLawDist(range=self.rest_duration_range, coef=self.rest_power_coef,
-        #                               a=self.rest_duration_range[0], b=self.rest_duration_range[1],
-        #                               name='power_law_dist')
-        xmin, xmax = np.round(np.array(self.rest_duration_range) / self.dt).astype(int)
-        self.rest_dist = truncated_power_law(a=self.rest_power_coef, xmin=xmin, xmax=xmax)
-
-        # Activity-bout duration distribution
-        # Ueno(2012) state as mean activity-bout duration : 10 sec. This means around 10 peristaltic waves (f=1 Hz)
-        # So p must be 0.1 because mean=10
-
-        # self.activity_dist = GeometricDist(rate=self.peristalsis_reoccurence_rate,
-        #                                    a=1, b=np.Inf, name='geometric_dist')
-
-        # noise = np.random.normal(scale=self.amp1/4)
-
-    def reset(self):
-        # Initialize internal variables
-        self.t = 0
-        self.total_t = 0
-        self.current_rest_duration = None
-        self.rest_dur = np.nan
-        self.period_counter = 0
-        self.total_rest_duration = 0
-        self.turner_pre_lag = 0
-        self.turner_post_lag = 0
-        self.rest_start = False
-        self.rest_stop = False
-        self.rest_id = np.nan
-
-    def step(self):
-        self.rest_dur = np.nan
-        self.rest_start = False
-        self.rest_stop = False
-        self.rest_id = np.nan
-        # Check if intermitter is turned on (it could have been turned on last in the previous timestep)
-        self.update_state()
-        self.update_turner()
-        # If the intermitter is on ...
-        if self.effector:
-            self.rest_id = self.period_counter
-            # ...start an inactivity bout if there is none already running ...
-            if self.current_rest_duration is None:
-                self.current_rest_duration = self.rest_dist.rvs(size=1) * self.dt
-                self.rest_start = True
-                #  ... and turn off the underlying components
-                self.inhibit_locomotion()
-            # ... advance the timer of the current inactivity bout ...
-            super().count_time()
-            if self.t > self.current_rest_duration - self.turner_pre_lag_ticks * self.dt:
-                if self.mode == 'normal':
-                    self.turner.start_effector()
-                elif self.mode == 'nengo':
-                    self.nengo_manager.set_turner_freq(self.nengo_manager.active_turner_freq)
-            # ... if end of current inactivity bout is reached turn intermitter off ...
-            if self.t > self.current_rest_duration:
-                self.period_counter += 1
-                self.total_rest_duration += self.t - self.dt
-                self.rest_dur = self.t - self.dt
-                self.current_rest_duration = None
-                self.t = 0
-                self.rest_stop = True
-                self.stop_effector()
-                # ... and turn on locomotion
-                self.disinhibit_locomotion()
-        else:
-            pass
-
-    def disinhibit_locomotion(self):
-        if self.mode == 'normal':
-            if np.random.uniform(0, 1, 1) <= self.explore2exploit_bias:
-                if self.crawler:
-                    if self.intermittent_crawler:
-                        self.crawler.start_effector()
-            else:
-                if self.feeder:
-                    if self.intermittent_feeder:
-                        self.feeder.start_effector()
-            # if self.turner:
-            #     if self.intermittent_turner:
-            #         self.turner.start_effector()
-        elif self.mode == 'nengo':
-            if np.random.uniform(0, 1, 1) <= self.explore2exploit_bias:
-                self.nengo_manager.set_crawler_freq(self.nengo_manager.active_crawler_freq)
-            else:
-                self.nengo_manager.set_feeder_freq(self.nengo_manager.active_feeder_freq)
-
-    def inhibit_locomotion(self):
-        if self.mode == 'normal':
-            if self.crawler:
-                if self.intermittent_crawler:
-                    self.crawler.stop_effector()
-            if self.feeder:
-                if self.intermittent_feeder:
-                    self.feeder.stop_effector()
-            if self.turner:
-                if self.intermittent_turner:
-                    self.turner_post_lag = self.turner_post_lag_ticks
-        elif self.mode == 'nengo':
-            self.nengo_manager.set_crawler_freq(0)
-            self.nengo_manager.set_feeder_freq(0)
-            self.turner_post_lag = self.turner_post_lag_ticks
-
-    def update_turner(self):
-        if self.intermittent_turner:
-            self.turner_post_lag -= 1
-            if self.turner_post_lag <= 0:
-                self.turner_post_lag = 0
-                if self.mode == 'normal':
-                    self.turner.stop_effector()
-                elif self.mode == 'nengo':
-                    self.nengo_manager.set_turner_freq(0)
-
-    def update_state(self):
-        if self.mode == 'normal':
-            # TODO Here the intermitter is turned on because of a stochastic self-limiting peristalsis/feeder oscillation
-            if self.crawler:
-                if self.crawler.complete_iteration:
-                    if np.random.uniform(0, 1, 1) > self.crawler_reoccurence_rate:
-                        self.start_effector()
-            if self.feeder:
-                if self.feeder.complete_iteration:
-                    if np.random.uniform(0, 1, 1) > self.feeder_reoccurence_rate:
-                        self.start_effector()
-                        # self.crawler.stop_effector()
-                        # self.turner.stop_effector()
-        elif self.mode == 'nengo':
-            if not self.effector:
-                if np.random.uniform(0, 1, 1) > 0.97:
-                    self.start_effector()
-
-
 class Intermitter(Effector):
     def __init__(self, nengo_manager=None,
                  crawler=None, intermittent_crawler=False,
                  feeder=None, intermittent_feeder=False,
-                 pause_duration_range=None,
+                 # pause_duration_range=None,
                  pause_dist=None,
-                 pause_mean=None,
-                 pause_std=None,
-                 pause_coef=None,
-                 stridechain_length_range=None,
+                 # pause_mean=None,
+                 # pause_std=None,
+                 # pause_coef=None,
+                 # stridechain_length_range=None,
                  stridechain_dist=None,
-                 stridechain_mean=None,
-                 stridechain_std=None,
-                 stridechain_coef=None,
+                 # stridechain_mean=None,
+                 # stridechain_std=None,
+                 # stridechain_coef=None,
                  feeder_reoccurence_rate_on_success=1, feeder_reoccurence_decay_coef=1,
                  turner=None, intermittent_turner=False, turner_prepost_lag=[0, 0],
                  explore2exploit_bias=0.5,
@@ -661,11 +476,10 @@ class Intermitter(Effector):
         self.intermittent_crawler = intermittent_crawler
         self.intermittent_feeder = intermittent_feeder
         self.intermittent_turner = intermittent_turner
-
+        self.crawler = crawler
+        self.turner = turner
+        self.feeder = feeder
         if self.nengo_manager is None:
-            self.crawler = crawler
-            self.turner = turner
-            self.feeder = feeder
             self.feeder_reoccurence_rate_on_success = feeder_reoccurence_rate_on_success
             self.feeder_reoccurence_decay_coef = feeder_reoccurence_decay_coef
             self.feeder_reoccurence_rate = self.feeder_reoccurence_rate_on_success
@@ -688,27 +502,24 @@ class Intermitter(Effector):
         # self.pause_dist = PowerLawDist(range=self.rest_duration_range, coef=self.rest_power_coef,
         #                               a=self.rest_duration_range[0], b=self.rest_duration_range[1],
         #                               name='power_law_dist')
-        if pause_dist == 'powerlaw':
-            self.pause_min, self.pause_max = np.round(np.array(pause_duration_range) / self.dt).astype(int)
-            # print(pause_coef,self.pause_min, self.pause_max)
-            self.pause_dist = truncated_power_law(a=pause_coef, xmin=self.pause_min, xmax=self.pause_max)
-        elif pause_dist == 'lognormal':
+        if pause_dist['name'] == 'powerlaw':
+            self.pause_min, self.pause_max = np.round(np.array(pause_dist['range']) / self.dt).astype(int)
+            self.pause_dist = truncated_power_law(a=pause_dist['alpha'], xmin=self.pause_min, xmax=self.pause_max)
+        elif pause_dist['name'] == 'lognormal':
             self.pause_dist=None
-            self.pause_min, self.pause_max = pause_duration_range
-            self.pause_mean, self.pause_std = pause_mean, pause_std
+            self.pause_min, self.pause_max = pause_dist['range']
+            self.pause_mean, self.pause_std = pause_dist['mu'], pause_dist['sigma']
             # self.pause_dist = self.lognormal_discrete(mu=int(self.pause_mean / self.dt),
             #                                           sigma=int(self.pause_std / self.dt),
             #                                           min=int(self.pause_min / self.dt),
             #                                           max=int(self.pause_max / self.dt))
 
-        self.stridechain_min, self.stridechain_max = np.array(stridechain_length_range).astype(int)
-        if stridechain_dist == 'powerlaw':
-            self.stridechain_dist = truncated_power_law(a=stridechain_coef, xmin=self.stridechain_min,
+        self.stridechain_min, self.stridechain_max = np.array(stridechain_dist['range']).astype(int)
+        if stridechain_dist['name'] == 'powerlaw':
+            self.stridechain_dist = truncated_power_law(a=stridechain_dist['alpha'], xmin=self.stridechain_min,
                                                         xmax=self.stridechain_max)
-        elif stridechain_dist == 'lognormal':
-            # self.stridechain_dist=None
-            self.stridechain_mean, self.stridechain_std = stridechain_mean, stridechain_std
-            # Dd = lognorm(s=7.54, loc=1.0, scale=4.68)
+        elif stridechain_dist['name'] == 'lognormal':
+            self.stridechain_mean, self.stridechain_std = stridechain_dist['mu'], stridechain_dist['sigma']
             self.stridechain_dist = self.lognormal_discrete(mu=self.stridechain_mean, sigma=self.stridechain_std,
                                                             min=self.stridechain_min, max=self.stridechain_max)
 
@@ -725,8 +536,6 @@ class Intermitter(Effector):
                                         xmin=self.stridechain_min, xmax=self.stridechain_max)
         else:
             v = self.stridechain_dist.rvs(size=1)[0]
-            # if v>self.stridechain_max :
-            #     print(v)
             return v
 
     def generate_pause_duration(self):
@@ -735,7 +544,6 @@ class Intermitter(Effector):
                                    xmin=self.pause_min, xmax=self.pause_max)
         else:
             dur = self.pause_dist.rvs(size=1)[0] * self.dt
-            # print(int(dur*16))
         return dur
 
     def initialize(self):
@@ -779,7 +587,6 @@ class Intermitter(Effector):
             # ...start an inactivity bout if there is none already running ...
             if self.current_pause_duration is None:
                 self.current_pause_duration = self.generate_pause_duration()
-                # print(self.current_pause_duration)
                 self.pause_start = True
                 #  ... and turn off the underlying components
                 self.inhibit_locomotion()
@@ -789,19 +596,14 @@ class Intermitter(Effector):
                 if self.nengo_manager is None:
                     self.turner.start_effector()
                 else:
-                    self.nengo_manager.set_turner_freq(self.nengo_manager.active_turner_freq)
+                    self.turner.set_freq(self.turner.default_freq)
             # ... if end of current inactivity bout is reached turn intermitter off ...
             if self.t > self.current_pause_duration:
-                self.pause_counter += 1
-                self.cum_pause_dur += self.t - self.dt
-                self.pause_dur = self.t - self.dt
-                self.current_pause_duration = None
-                self.t = 0
-                self.pause_stop = True
-                self.stop_effector()
+                self.register_pause()
+                # ... and turn on locomotion
                 self.current_stridechain_length = self.generate_stridechain_length()
                 self.stridechain_start = True
-                # ... and turn on locomotion
+                self.stop_effector()
                 self.disinhibit_locomotion()
         else:
             self.stridechain_id = self.stridechain_counter
@@ -818,9 +620,9 @@ class Intermitter(Effector):
                         self.feeder.start_effector()
         else:
             if np.random.uniform(0, 1, 1) <= self.explore2exploit_bias:
-                self.nengo_manager.set_crawler_freq(self.nengo_manager.active_crawler_freq)
+                self.crawler.set_freq(self.crawler.default_freq)
             else:
-                self.nengo_manager.set_feeder_freq(self.nengo_manager.active_feeder_freq)
+                self.feeder.set_freq(self.feeder.default_freq)
 
     def inhibit_locomotion(self):
         if self.nengo_manager is None:
@@ -834,9 +636,8 @@ class Intermitter(Effector):
                 if self.intermittent_turner:
                     self.turner_post_lag = self.turner_post_lag_ticks
         else:
-            # print('dd')
-            self.nengo_manager.set_crawler_freq(0)
-            self.nengo_manager.set_feeder_freq(0)
+            self.crawler.set_freq(0)
+            self.feeder.set_freq(0)
             self.turner_post_lag = self.turner_post_lag_ticks
 
     def update_turner(self):
@@ -847,24 +648,16 @@ class Intermitter(Effector):
                 if self.nengo_manager is None:
                     self.turner.stop_effector()
                 else:
-                    self.nengo_manager.set_turner_freq(0)
+                    self.turner.set_freq(0)
 
     def update_state(self):
         if self.nengo_manager is None:
             if self.crawler:
                 if self.crawler.complete_iteration:
                     self.current_numstrides += 1
-                    # print(self.current_numstrides, self.current_stridechain_length)
                     if self.current_numstrides >= self.current_stridechain_length:
                         self.start_effector()
-                        self.stridechain_counter += 1
-                        self.stridechain_dur = self.t - self.dt
-                        self.cum_stridechain_dur += self.stridechain_dur
-                        self.stridechain_length = self.current_numstrides
-                        self.t = 0
-                        self.stridechain_stop = True
-                        self.current_numstrides = 0
-                        self.current_stridechain_length = None
+                        self.register_stridechain()
             if self.feeder:
                 if self.feeder.complete_iteration:
                     if np.random.uniform(0, 1, 1) > self.feeder_reoccurence_rate:
@@ -873,6 +666,25 @@ class Intermitter(Effector):
             if not self.effector:
                 if np.random.uniform(0, 1, 1) > 0.97:
                     self.start_effector()
+
+    def register_stridechain(self):
+        self.stridechain_counter += 1
+        self.stridechain_dur = self.t - self.dt
+        self.cum_stridechain_dur += self.stridechain_dur
+        self.stridechain_length = self.current_numstrides
+        self.t = 0
+        self.stridechain_stop = True
+        self.current_numstrides = 0
+        self.current_stridechain_length = None
+
+    def register_pause(self):
+        self.pause_counter += 1
+        self.pause_dur = self.t - self.dt
+        self.cum_pause_dur += self.pause_dur
+        self.current_pause_duration = None
+        self.t = 0
+        self.pause_stop = True
+        pass
 
 
 class BranchIntermitter(Effector):
@@ -1041,3 +853,78 @@ class Olfactor(Effector):
 #     def step(self, olfactory_valence):
 #         self.update_activation(olfactory_valence)
 #         return self.activity
+class Brain() :
+    def __init__(self, agent, modules, conf):
+        self.agent=agent
+        self.modules = modules
+        self.conf=conf
+        # self.crawler, self.turner, self.feeder, self.olfactor, self.intermitter = None, None, None, None, None
+
+
+
+class DefaultBrain(Brain) :
+    def __init__(self, **kwargs):
+        Brain.__init__(self, **kwargs)
+        dt = self.agent.model.dt
+        if self.modules['interference']:
+            self.osc_coupling = Oscillator_coupling(**self.conf['interference_params'])
+        else:
+            self.osc_coupling = Oscillator_coupling()
+        if self.modules['crawler']:
+            self.crawler = Crawler(dt=dt, **self.conf['crawler_params'])
+            self.crawler.start_effector()
+        else :
+            self.crawler=None
+
+        if self.modules['turner']:
+            self.turner = Turner(dt=dt, **self.conf['turner_params'])
+            self.turner.start_effector()
+        else :
+            self.turner=None
+        if self.modules['feeder']:
+            self.feeder = Feeder(dt=dt, model=self.agent.model, **self.conf['feeder_params'])
+            self.feeder.stop_effector()
+        else :
+            self.feeder=None
+        if self.modules['intermitter']:
+            self.intermitter = Intermitter(dt=dt,
+                                           crawler=self.crawler, turner=self.turner, feeder=self.feeder,
+                                           **self.conf['intermitter_params'])
+            self.intermitter.start_effector()
+        else :
+            self.intermitter=None
+        # Initialize sensors
+        if self.modules['olfactor']:
+            self.olfactor = Olfactor(dt=dt, odor_layers=self.agent.model.odor_layers,
+                                     **self.conf['olfactor_params'])
+        else :
+            self.olfactor=None
+
+    def run(self, odor_concentrations, agent_length):
+        if self.intermitter :
+            self.intermitter.step()
+        if self.olfactor:
+            Aolf = self.olfactor.step(odor_concentrations)
+        else :
+            Aolf=0
+        # Step the feeder
+        if self.feeder:
+            self.feeder.step()
+            feed = self.feeder.complete_iteration
+        else :
+            feed=False
+        if self.crawler:
+            lin=self.crawler.step(agent_length)
+        else :
+            lin=0
+
+            # ... and finally step the turner...
+        if self.turner:
+            self.osc_coupling.step(crawler=self.crawler, feeder=self.feeder)
+            # self.set_head_contacts_ground(value=self.osc_coupling.turner_inhibition)
+            ang= self.turner.step(inhibited=self.osc_coupling.turner_inhibition,
+                                                   interference_ratio=self.osc_coupling.interference_ratio,
+                                                   A_olf=Aolf)
+        else :
+            ang=0
+        return lin, ang, feed, Aolf

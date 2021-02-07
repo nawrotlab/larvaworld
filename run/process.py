@@ -42,3 +42,54 @@ if 'anal' in actions :
     analyse_datasets(DataGroup_id, **data_kwargs)
 if 'vis' in actions :
     visualize_datasets(DataGroup_id, **data_kwargs, vis_kwargs = {**vis_kwargs, **replay_kwargs})
+
+'''
+python process.py SampleGroup reg init
+python process.py SampleGroup build -raw each
+python process.py SampleGroup build -raw all
+python process.py SampleGroup enrich -nam dish_0 dish_1 dish_2
+python process.py SampleGroup enrich -nam merged
+
+python process.py SampleGroup anal -nam dish_0 dish_1 dish_2
+python process.py SampleGroup anal -nam merged
+python process.py SampleGroup vis -all -vid -va origin
+python process.py SampleGroup vis -idx 1 -vid -trj 10
+python process.py sample vis -all -vid -ids 0 2 4
+python process.py sample vis -all -vid -tr 500 800
+python process.py sample vis -all -vid -dim 0.1 0.05
+python process.py sample vis -all -vid -dim 0.01 -ids 0 -fix 5
+python process.py sample vis -all -vid -dim 0.01 -ids 0 -fix 5 1
+python process.py sample vis -all -img
+python process.py sample vis -all -img -va origin
+python process.py sample vis -all -img -va origin -vc lin_color
+python process.py sample vis -all -img -vcr
+python process.py sample vis -all -vid -dim 0.01 -ids 0 -fix 5 -vcb -trj
+python process.py sample vis -all -img overlap -dim 0.008 -ids 0 -fix 5 6 -tr 500 1200 -con
+python process.py sample vis -all -vid -trj
+python process.py sample vis -idx 1 -vid -blk -trj
+
+
+python process.py test vis -idx 0 -vid -Nsegs
+python process.py test vis -idx 0 -vid -ids 0 -fix -1 -dim 0.008 -mid
+python process.py test vis -idx 0 -vid -ids 0 -fix -1 -dim 0.008 -con 
+python process.py test vis -idx 0 -vid -ids 0 -fix -1 -dim 0.008 -con -Nsegs
+
+
+Visualize a trajectory sample to detect feeding motions
+python process.py JovanicGroup -sub FoodPatches -raw vis -img -trj -rnd -ids 0
+python process.py JovanicGroup -sub FoodPatches -raw vis -img -trj -rnd -ids 0 -tkr 20000 25000 -aln center -dim 0.015 0.015
+python process.py JovanicGroup -sub FoodPatches -raw vis -img -trj -rnd -ids 1 -tkr 3000 10000 -aln center -dim 0.02 0.02
+
+smaller_dataset(larva_idx=[0], datagroup_id='JovanicGroup', subgroup='FoodPatches', dish_idx=None,dataset_name='dataset', type='raw', tickrange=[20500, 25000])
+smaller_dataset(larva_idx=[1], datagroup_id='JovanicGroup', subgroup='FoodPatches', dish_idx=None,dataset_name='dataset', type='raw', tickrange=[3000, 10000])
+
+python process.py JovanicGroup -sub FoodPatches -dir dataset_[0] enrich anal
+python process.py JovanicGroup -sub FoodPatches -dir dataset_[1] enrich anal
+python process.py JovanicGroup -sub FoodPatches -dir dataset_[0] vis -vid -trj -aln center -dim 0.015 0.015
+python process.py JovanicGroup -sub FoodPatches -dir dataset_[0] vis -vid -trj -aln center -dim 0.015 0.015 -Nsegs 2
+python process.py JovanicGroup -sub FoodPatches -dir dataset_[0] vis -vid -trj -aln center -dim 0.015 0.015 -Nsegs 10 -beh
+python process.py JovanicGroup -sub FoodPatches -dir dataset_[1] vis -vid -trj -aln center -dim 0.02 0.02 -Nsegs 10 -beh
+
+python process.py JovanicGroup -sub FoodPatches -dir dataset_[1] vis -vid -fix 8 -dim 0.01 0.01 -Nsegs 10 -beh
+
+'''

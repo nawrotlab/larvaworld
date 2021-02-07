@@ -60,45 +60,6 @@ def density_extrema(data, kernel_width=0.02, Nbins=1000):
     # minimas.append(minima)
     return minima, maxima
 
-
-# def restored_angle(theta1, d, l):
-#     if d > l / 2:
-#         print(f'Distance traveled higher than half the length, l : {l}, d : {d}')
-#         return 0
-#     a = pi - theta1
-#     det = l ** 2 - (d * sin(a)) ** 2
-#     if det < 0 or isnan(sqrt(det)):
-#         print(f'No solution for y for det :{det}, l : {l}, d : {d}')
-#         return nan
-#     else:
-#         sol1 = d * cos(a) + sqrt(det)
-#         sol2 = d * cos(a) - sqrt(det)
-#         if sol1 < 0 and sol2 < 0:
-#             print('Both solutions for y are negative')
-#             return nan
-#         elif sol1 > 0 and 0 < sol2 != sol1:
-#             print('Solutions for y are positive and different')
-#             return nan
-#         elif sol1 >= 0:
-#             y = sol1
-#         elif sol2 >= 0:
-#             y = sol2
-#         else:
-#             print(f'Unexpected behavior for sol1 {sol1}, sol2 {sol2}')
-#         theta2 = arcsin(y * sin(a) / l)
-#         # From the manual : The inverse sine of each element in x, in radians and in the closed interval[-pi / 2, pi / 2].
-#         # This is a scalar if x is a scalar.
-#         # CAUTION : This is probably ok because body bend anyway is in [-pi / 2, pi / 2]
-#         # theta2 = arcsin(temp)
-#         # print(np.rad2deg(theta1), np.rad2deg(theta2))
-#     # print(theta1, theta2)
-#     # print(theta1-theta2, 'ss')
-#     # check for overshoot
-#     if theta1 * theta2 <= 0:
-#         theta2 = 0
-#     return theta2
-
-
 def _restore_angle(a, d, l, n, num_segments, correction_coef):
     # if a > pi / 2 or a < pi / 2:
     #     s = -1
@@ -646,7 +607,7 @@ def match_larva_ids(s, dl=None, max_t=5*60, max_s=20, pars=None, e=None, min_Nid
             N_t = np.sum([len(next) for next in nexts])
             # if N_s > 0:
             if N_t > 0:
-                print(N_t)
+                # print(N_t)
                 taken = []
                 pairs = dict()
                 for id, next in zip(ids, nexts):
@@ -674,7 +635,7 @@ def match_larva_ids(s, dl=None, max_t=5*60, max_s=20, pars=None, e=None, min_Nid
 
                         ls[id2]=np.nanmean(v)
                         ls.drop([id1], inplace=True)
-                print(pairs)
+                # print(pairs)
                 ids, mins, maxs, first_xy, last_xy = update_extrema(pairs, ids, mins, maxs, first_xy, last_xy)
                 if len(ids)<=min_Nids :
                     break

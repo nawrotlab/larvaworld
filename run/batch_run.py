@@ -58,3 +58,7 @@ batch_run(dir=exp,
           post_kwargs=setup['post_kwargs'],
           run_kwargs=setup['run_kwargs']
           )
+
+'''
+python batch_run.py odor_pref -N 25 -t 3.0 -rng -200.0 200.0 -Ngrd 5
+'''

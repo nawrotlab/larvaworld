@@ -21,22 +21,23 @@ from mesa.time import RandomActivation
 from lib.model.larva._larva import LarvaReplay
 import lib.aux.functions as fun
 from lib.aux.rendering import SimulationClock, SimulationScale, draw_velocity_arrow, draw_trajectories
-from lib.aux.sampling import sample_agents
+from lib.aux.sampling import sample_agents, get_ref_bout_distros
 
+pygame.init()
+max_screen_height = pygame.display.Info().current_h
+sim_screen_dim = int(max_screen_height * 2 / 3)
 
 class LarvaWorld(Model):
     def __init__(self, id, dt,
-                 env_params, Nsteps,
+                 env_params, Nsteps, save_to,
                  background_motion=None, use_background=False, black_background=False,
                  mode='video', image_mode='final', media_name=None,
                  trajectories=True, trail_decay_in_sec=None, trajectory_colors=None,
                  show_state=True, random_larva_colors=False, color_behavior=False,
-                 draw_head=False, draw_contour=True, draw_centroid=False, draw_midline=True,
-                 save_to=None):
-        pygame.init()
-        max_screen_height = pygame.display.Info().current_h
-        sim_screen_dim = int(max_screen_height * 2 / 3)
+                 draw_head=False, draw_contour=True, draw_centroid=False, draw_midline=True):
+
         self.sim_screen_dim = sim_screen_dim
+        # print(self.sim_screen_dim)
         self.Nsteps = Nsteps
         self.dt = dt
         self.id = id
@@ -45,14 +46,12 @@ class LarvaWorld(Model):
         self._screen = None
         self.mode = mode
         self.image_mode = image_mode
-        if mode == 'video':
-            self.video_path = save_to
-            self.image_path = None
-        elif mode == 'image':
-            self.image_path = save_to
-            self.video_path = None
 
-        self.media_name = media_name
+        os.makedirs(save_to, exist_ok=True)
+        if media_name:
+            self.media_name = os.path.join(save_to, media_name)
+        else:
+            self.media_name = os.path.join(save_to, self.id)
 
         self.trajectories = trajectories
         self.trajectory_colors = trajectory_colors
@@ -180,7 +179,6 @@ class LarvaWorld(Model):
         del self.active_larva_schedule
         if self._screen is not None:
             self._screen.close()
-            del self._screen
             self._screen = None
 
     def delete(self, agent):
@@ -224,32 +222,63 @@ class LarvaWorld(Model):
             color = self.default_larva_color
         return color
 
-    def render(self, mode=None, fps=25, velocity_arrows=False,
-               background_motion=[0, 0, 0]):
+    def set_background(self):
+        if self.use_background:
+            ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+            path = os.path.join(ROOT_DIR, 'background.png')
+            print('Loading background image from', path)
+            self.bgimage = pygame.image.load(path)
+            self.bgimagerect = self.bgimage.get_rect()
+            self.tw = self.bgimage.get_width()
+            self.th = self.bgimage.get_height()
+            self.th_max = int(self._screen._window.get_height() / self.th) + 2
+            self.tw_max = int(self._screen._window.get_width() / self.tw) + 2
+        else:
+            self.bgimage = None
+            self.bgimagerect = None
 
-        if mode is None:
-            mode = self.image_mode
+    def draw_background(self, screen, background_motion):
+        if self.bgimage is not None and self.bgimagerect is not None:
+            x, y, a = background_motion
+            try:
+                min_x = int(np.floor(x))
+                min_y = -int(np.floor(y))
+                if a == 0.0:
+                    surface = screen._window
+                    for py in np.arange(min_y - 1, self.th_max + min_y, 1):
+                        for px in np.arange(min_x - 1, self.tw_max + min_x, 1):
+                            p = ((px - x) * (self.tw - 1), (py + y) * (self.th - 1))
+                            surface.blit(self.bgimage, p)
+            except:
+                pass
+
+    def draw_aux(self, screen):
+        self.sim_clock.draw_clock(screen)
+        self.sim_scale.draw_scale(screen)
+        if self.show_state:
+            self.sim_state.draw_state(screen)
+
+    def draw_arena(self, screen):
+        screen.set_bounds(*self.space_edges_for_screen)
+        screen.draw_polygon(self.space_edges, color=self.screen_color)
+        screen.draw_polygon(self.tank_shape, color=self.tank_color)
+
+    def render_aux(self):
+        self.sim_clock.render_clock(self.screen_width, self.screen_height)
+        self.sim_scale.render_scale(self.screen_width, self.screen_height)
+        self.sim_state.render_state(self.screen_width, self.screen_height)
+
+    def render(self, fps=25, velocity_arrows=False,
+               background_motion=[0, 0, 0]):
 
         if self._screen is None:
             caption = self.spec.id if self.spec else ""
-            if self.video_path:
-                os.makedirs(self.video_path, exist_ok=True)
-                if self.media_name:
-                    _video_path = os.path.join(self.video_path, self.media_name + '.mp4')
-                else:
-                    _video_path = os.path.join(self.video_path, self.id + '.mp4')
+            if self.mode == 'video':
+                _video_path=f'{self.media_name}.mp4'
             else:
                 _video_path = None
-            if self.image_path:
-                os.makedirs(self.image_path, exist_ok=True)
-                # Previous setup utilized reset counter for doing multiple experiments with the same parameters
-                # Now we use the id to perform simulations with different parameters
-                # _image_path = os.path.join(self.image_path, str(self.__reset_counter) + '.png')
-                if self.media_name:
-                    _image_path = os.path.join(self.image_path,
-                                               self.media_name + '_' + str(self.snapshot_counter) + '.png')
-                else:
-                    _image_path = os.path.join(self.image_path, self.id + '_' + str(self.snapshot_counter) + '.png')
+            if self.mode == 'image':
+                _image_path = f'{self.media_name}_{self.snapshot_counter}.png'
             else:
                 _image_path = None
 
@@ -257,50 +286,19 @@ class LarvaWorld(Model):
                                                    fps=fps, dt=self.dt, display=True,
                                                    record_video_to=_video_path,
                                                    record_image_to=_image_path)
-            self.sim_clock.render_clock(self.screen_width, self.screen_height)
-            self.sim_scale.render_scale(self.screen_width, self.screen_height)
-            self.sim_state.render_state(self.screen_width, self.screen_height)
-            self._screen.set_bounds(*self.space_edges_for_screen)
-            self._screen.draw_polygon(self.space_edges, color=self.screen_color)
-            self._screen.draw_polygon(self.tank_shape, color=self.tank_color)
-
-            if self.use_background:
-                ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-                path = os.path.join(ROOT_DIR, 'background.png')
-                print('Loading background image from', path)
-                self.bgimage = pygame.image.load(path)
-                self.bgimagerect = self.bgimage.get_rect()
-                self.tw = self.bgimage.get_width()
-                self.th = self.bgimage.get_height()
-                self.th_max = int(self._screen._window.get_height() / self.th) + 2
-                self.tw_max = int(self._screen._window.get_width() / self.tw) + 2
-            else:
-                self.bgimage = None
-                self.bgimagerect = None
+            self.render_aux()
+            self.set_background()
+            self.draw_arena(self._screen)
+            self.draw_background(self._screen, background_motion)
             print('Screen opened')
-
         elif self._screen.close_requested():
             self._screen.close()
             self._screen = None
-            # TODO how to handle this event?
-            print('Screen closed')
 
-        if mode != 'overlap':
-            self._screen.draw_polygon(self.space_edges, color=self.screen_color)
-            self._screen.draw_polygon(self.tank_shape, color=self.tank_color)
-            if self.bgimage is not None and self.bgimagerect is not None:
-                x, y, a = background_motion
-                try:
-                    min_x = int(np.floor(x))
-                    min_y = -int(np.floor(y))
-                    if a == 0.0:
-                        surface = self._screen._window
-                        for py in np.arange(min_y - 1, self.th_max + min_y, 1):
-                            for px in np.arange(min_x - 1, self.tw_max + min_x, 1):
-                                p = ((px - x) * (self.tw - 1), (py + y) * (self.th - 1))
-                                surface.blit(self.bgimage, p)
-                except:
-                    pass
+
+        if self.image_mode != 'overlap':
+            self.draw_arena(self._screen)
+            self.draw_background(self._screen, background_motion)
 
         if self.food_grid:
             self.food_grid.draw(self._screen)
@@ -314,17 +312,16 @@ class LarvaWorld(Model):
             if velocity_arrows:
                 draw_velocity_arrow(self._screen, g)
 
+
+
         if self.trajectories:
             draw_trajectories(space_dims=self.space_dims, agents=self.get_flies(), screen=self._screen,
                               decay_in_ticks=self.trail_decay_in_ticks, trajectory_colors=self.trajectory_colors)
-
-        if mode != 'overlap':
-            # print('ff')
-            self.sim_clock.draw_clock(self._screen)
-            self.sim_scale.draw_scale(self._screen)
-            if self.show_state:
-                self.sim_state.draw_state(self._screen)
+        if self.image_mode != 'overlap':
+            self.draw_aux(self._screen)
             self._screen.render()
+
+
 
     def _place_food(self, num_food, positions, food_params):
         # num_food = self.place_params['initial_num_ood']
@@ -370,7 +367,9 @@ class LarvaWorld(Model):
                 # TODO Figure this out for multiple agents. Now only the first is used
                 background_motion = self.background_motion[:, i]
                 self.render(background_motion=background_motion)
-            # self.close()
+                self.draw_arena(self._screen)
+                self.draw_background(self._screen, background_motion)
+            self._screen.close()
         elif self.mode == 'image':
             if self.image_mode == 'snapshots':
                 for i in range(Nsteps):
@@ -379,14 +378,13 @@ class LarvaWorld(Model):
                         self.snapshot_counter += 1
                         self.render()
                         self._screen.close()
-                        del self._screen
                         self._screen = None
             elif self.image_mode == 'overlap':
                 for i in range(Nsteps):
                     self.step()
                     self.render()
                 self._screen.render()
-                # self.close()
+                self._screen.close()
 
             elif self.image_mode == 'final':
                 if isinstance(self, LarvaWorldSim):
@@ -419,9 +417,12 @@ class LarvaWorldSim(LarvaWorld):
                          **kwargs)
 
         self.fly_params = fly_params
+        for dist in ['pause_dist', 'stridechain_dist'] :
+            if self.fly_params['neural_params']['intermitter_params'][dist]=='fit' :
+                self.fly_params['neural_params']['intermitter_params'][dist] = get_ref_bout_distros(dist)
 
         self.odor_layers = {}
-        self.num_odors = 0
+        self.Nodors=0
 
         self.populate_space(self.env_pars)
 
@@ -492,7 +493,7 @@ class LarvaWorldSim(LarvaWorld):
         if odor_params:
             # landscape = self.odor_params['odor_landscape']
             # odor_ids = self.food_params['odor_id_list']
-            self.num_odors = len(odor_params['odor_id_list'])
+            self.Nodors = len(odor_params['odor_id_list'])
             self.odor_layers = dict.fromkeys(odor_params['odor_id_list'])
             if odor_params['odor_carriers'] == 'food':
                 sources = self.get_food()
@@ -568,9 +569,9 @@ class LarvaWorldSim(LarvaWorld):
         each_fly_params = [self.fly_params for i in range(num_flies)]
 
         flat_fly_params = fun.flatten_dict(self.fly_params)
-        candidate_pars = [p for p in flat_fly_params if flat_fly_params[p] == 'sample']
-        if len(candidate_pars) >= 1:
-            pars, samples = sample_agents(pars=candidate_pars, num_agents=num_flies)
+        sample_pars = [p for p in flat_fly_params if flat_fly_params[p] == 'sample']
+        if len(sample_pars) >= 1:
+            pars, samples = sample_agents(pars=sample_pars, num_agents=num_flies)
             # print(f'Sampling parameters {parameters} from sample file')
 
             for i, config in enumerate(each_fly_params):
@@ -675,7 +676,6 @@ class LarvaWorldSim(LarvaWorld):
 
     def plot_odorscape(self, title=False, save_to=None):
 
-        # rad = np.min([self.world_height / 2, self.world_width / 2])
         radx = self.space_dims[0] / 2
         rady = self.space_dims[1] / 2
         delta = np.min([radx, rady]) / 50
@@ -693,10 +693,6 @@ class LarvaWorldSim(LarvaWorld):
             V = func(X, Y)
             num_sources = layer.get_num_sources()
             name = f'{layer_id} odorscape'
-            # title = f'{layer_id} concentration generated by {num_sources} odor sources '
-            # plot_2D_odorscape(dimensions=[[0, self.space_dims[0]], [0, self.space_dims[1]]],
-            #                   pos=, Cmax=, Cstd=1.0,
-            #                   filepath=os.path.join(save_to, f'{layer_id}.png'))
             plot_surface(x=self.space_to_mm(X), y=self.space_to_mm(Y), z=V, name=name, title=title,
                          save_to=save_to, save_as=f'{layer_id}_odorscape')
         # plt.figure()

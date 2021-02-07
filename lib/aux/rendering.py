@@ -4,6 +4,8 @@ import os
 import numpy as np
 import pygame
 
+from lib.aux import functions as fun
+
 # from pygame import gfxdraw
 # x = 1550
 # y = 400
@@ -113,8 +115,6 @@ class GuppiesViewer(object):
     def draw_text_box(self, text_font, text_position):
         self._window.blit(text_font, text_position)
 
-    # def draw_arrow(self, start, angle_to_x_axis, real_length=1, color=(0, 0, 0), width=.01):
-
     def draw_arrow(self, start, end, color=(0, 0, 0), width=.01):
         size = 4
         start = self._transform(start)
@@ -146,9 +146,7 @@ class GuppiesViewer(object):
         if self._video_writer:
             self._video_writer.append_data(np.flipud(np.rot90(image)))
         if self._image_writer:
-            # print(str(int(pygame.time.get_ticks())))
             self._image_writer.append_data(np.flipud(np.rot90(image)))
-            # self._image_writer.close()
 
     @staticmethod
     def close_requested():
@@ -162,6 +160,8 @@ class GuppiesViewer(object):
             self._video_writer.close()
         if self._image_writer:
             self._image_writer.close()
+        del self
+        print('Screen closed')
 
 class ScreenItem :
     def __init__(self, color=None):
@@ -332,22 +332,16 @@ def draw_velocity_arrow(_screen, agent):
 
 def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, trajectory_colors=None):
     trajs=[fly.trajectory for fly in agents]
-    # print(trajectory_colors)
     if trajectory_colors is not None:
         traj_cols = [trajectory_colors.xs(fly.unique_id, level='AgentID') for fly in agents]
     else:
         traj_cols = [np.array([(0, 0, 0) for t in traj]) for traj, fly in zip(trajs, agents)]
 
-    # print(traj_cols)
+    if decay_in_ticks is not None:
+        trajs = [t[-decay_in_ticks:] for t in trajs]
+        traj_cols = [t[-decay_in_ticks:] for t in traj_cols]
+
     for fly, traj, traj_col in zip(agents, trajs, traj_cols):
-        # traj = fly.trajectory
-        
-
-        if decay_in_ticks is not None:
-            if len(traj) > decay_in_ticks:
-                traj = traj[-decay_in_ticks:]
-                traj_col = traj_col[-decay_in_ticks:]
-
         # This is the case for simulated larvae where no values are np.nan
         if not np.isnan(traj).any():
             parsed_traj = [traj]
@@ -356,19 +350,10 @@ def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, trajector
             continue
         # This is the case for larva trajectories derived from experiments where some values are np.nan
         else:
-            parsed_traj = []
-            parsed_traj_col = []
-            valid_xy = [i for i, xy in enumerate(traj) if not np.isnan(traj[i]).any()]
-            counter = valid_xy[0]
-            for i in range(len(valid_xy)):
-                if i != len(valid_xy) - 1:
-                    if valid_xy[i] != valid_xy[i + 1] - 1:
-                        parsed_traj.append(traj[counter:valid_xy[i] + 1])
-                        parsed_traj_col.append(traj_col[counter:valid_xy[i] + 1])
-                        counter = valid_xy[i + 1]
-                else:
-                    parsed_traj.append(traj[counter:valid_xy[i]])
-                    parsed_traj_col.append(traj_col[counter:valid_xy[i]])
+            traj_x = np.array([x for x, y in traj])
+            ds, de = fun.parse_array_at_nans(traj_x)
+            parsed_traj=[traj[s:e] for s,e in zip(ds,de)]
+            parsed_traj_col=[traj_col[s:e] for s,e in zip(ds,de)]
 
         for t,c in zip(parsed_traj, parsed_traj_col):
             # If trajectory has one point, skip
@@ -381,8 +366,3 @@ def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, trajector
                     c=[tuple(float(x) for x in s.strip('()').split(',')) for s in c]
                     c=[s if not np.isnan(s).any() else (255,0,0) for s in c]
                     screen.draw_polyline(t, color=c, closed=False, width=0.01 * space_dims[0], dynamic_color=True)
-
-                # trajectories = np.asarray(self.trajectories)
-                # for i in range(len(trajectories[0, :, 0])):
-                #     vertices = trajectories[:, i, :]
-                #     _screen.draw_polyline(vertices, color=(0, 0, 0), closed=False, width=.01)

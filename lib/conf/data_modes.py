@@ -40,7 +40,7 @@ JovanicParConf = {'bend': 'from_angles',
                   'rear_vector_stop': 8,
                   'front_body_ratio': 0.5,
                   'point_idx': 8,
-                  'use_component_vel': True,
+                  'use_component_vel': False,
                   'scaled_vel_threshold': 0.2}
 
 SimParConf = {'bend': 'from_angles',

@@ -218,13 +218,13 @@ class VelocityAgent(Agent, abc.ABC):
 
     def update_behavior_dict(self):
         behavior_dict=self.null_behavior_dict.copy()
-        if self.modules['crawler'] and self.crawler.active():
+        if self.brain.modules['crawler'] and self.brain.crawler.active():
             behavior_dict['stride_id'] = True
-            if self.crawler.complete_iteration:
+            if self.brain.crawler.complete_iteration:
                 behavior_dict['stride_stop'] = True
-        if self.modules['intermitter'] and self.intermitter.active():
+        if self.brain.modules['intermitter'] and self.brain.intermitter.active():
             behavior_dict['pause_id'] = True
-        if self.modules['feeder'] and self.feeder.active():
+        if self.brain.modules['feeder'] and self.brain.feeder.active():
             behavior_dict['feed_id'] = True
         orvel=self.get_head().get_angularvelocity()
         if orvel > 0:

@@ -73,9 +73,6 @@ def append_pdf(input, output):
 def combine_pdfs(file_dir='.', save_as="final.pdf") :
     merger = PdfFileMerger()
     files=[]
-    # for filename in filter(lambda x: '.pdf' in x, os.listdir(file_dir)):
-    #     file=os.path.join(file_dir, filename)
-    #     files.append(file)
     for dirpath, dirnames, filenames in os.walk(file_dir):
         for filename in [f for f in filenames if f.endswith(".pdf")]:
             files.append(os.path.join(dirpath, filename))
