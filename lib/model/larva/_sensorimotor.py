@@ -2,10 +2,10 @@ import abc
 import math
 
 import numpy as np
-from scipy.spatial.distance import cdist
 
 from lib.model.larva._bodies import LarvaBody
-from lib.aux.functions import restore_bend, inside_polygon, angle_dif, rotate_around_point, restore_bend_2seg
+from lib.aux.functions import restore_bend, inside_polygon, angle_dif, rotate_around_point, \
+    restore_bend_2seg, rotate_around_center
 
 
 class Agent(LarvaBody, abc.ABC):
@@ -46,6 +46,7 @@ class VelocityAgent(Agent, abc.ABC):
         self.ang_vel = 0
         self.body_bend=0
         self.body_bend_errors=0
+        self.Nangles_b = int(self.Nangles + 1 / 2)
         self.compute_body_bend()
         self.torque = 0
         self.mid_seg_index = int(self.Nsegs / 2)
@@ -80,6 +81,13 @@ class VelocityAgent(Agent, abc.ABC):
         self.lin_force_coef = lin_force_coef
         self.torque_coef = torque_coef
         self.ground_contact=True
+
+        k=0.97
+        self.tank_vertices=self.model.tank_shape * k
+        self.space_edges=self.model.space_edges_for_screen * k
+
+
+
     def step(self):
         self.restore_body_bend()
 
@@ -252,7 +260,7 @@ class VelocityAgent(Agent, abc.ABC):
     '''
 
     # Update 4.1.2020 : Setting b=0 because it is a substitute of the angular damping of the environment
-    def compute_ang_vel(self, torque=0, v=0, z=0, e=1):
+    def compute_ang_vel(self, torque=0, v=0, z=0):
         # if self.ground_contact:
         #     new_ang_velocity=(- self.body_spring_k * self.body_bend + e * torque) * self.dt
         #     if np.abs(new_ang_velocity)<vel_friction :
@@ -278,9 +286,9 @@ class VelocityAgent(Agent, abc.ABC):
         # else :
         #     v=0
         # new_v = v + (e * torque) * self.dt
-        new_v = v + (-z * v - k * b + e * torque) * self.model.dt
+        new_v = v + (-z * v - k * b + torque) * self.model.dt
         # print(v, new_v, v-new_v)
-        if new_v * v<0 and np.abs(e*torque)<Tst * c:
+        if new_v * v<0 and np.abs(torque)<Tst * c:
             return 0.0
         else:
             return new_v
@@ -343,8 +351,7 @@ class VelocityAgent(Agent, abc.ABC):
 
     def update_trajectory(self):
         pos = self.get_position()
-        dx, dy=pos[0]-self.current_pos[0], pos[1]-self.current_pos[1]
-        self.step_dst = np.sqrt(dx ** 2 + dy ** 2)
+        self.step_dst = np.sqrt(np.sum((pos-self.current_pos)**2))
         self.cum_dst += self.step_dst
         self.current_pos=pos
         self.trajectory.append(pos)
@@ -367,15 +374,16 @@ class VelocityAgent(Agent, abc.ABC):
         # Compute orientation
         dt=self.model.dt
         pos_old, or_old = self.get_head().get_pose()
+        head_rear_old = self.get_global_rear_end_of_head()
+
+
         d_or = angular_velocity * dt
         or_new = or_old + d_or
-        # Compute position
-        d = linear_velocity * dt
-        dx, dy = math.cos(or_new) * d, math.sin(or_new) * d
+        k=np.array([math.cos(or_new), math.sin(or_new)])
 
-        head_rear_old = self.get_global_rear_end_of_seg(seg_index=0)
-        pos_temp = rotate_around_point(origin=head_rear_old, point=pos_old, radians=-d_or)
-        pos_new = (pos_temp[0] + dx, pos_temp[1] + dy)
+        d=linear_velocity * dt
+        head_rear_new = head_rear_old + k * d
+        pos_new = head_rear_new + k* self.seg_lengths[0]/2
 
 
         # head_front_local_p = self.get_local_front_end_of_seg(seg_index=0)
@@ -385,30 +393,34 @@ class VelocityAgent(Agent, abc.ABC):
 
         # points=[pos_new]
         # points=[pos_new, front_pos_new]
-        k = 0.97
-        temp_bool = inside_polygon(points=[pos_new], space_edges_for_screen=self.model.space_edges_for_screen*k,
-                                   vertices=self.model.tank_shape*k)
-
-        if temp_bool :
-            self.get_head().set_pose(pos_new, or_new, linear_velocity, angular_velocity)
-            head_rear_new = (head_rear_old[0] + dx, head_rear_old[1] + dy)
-        else:
+        temp_bool = inside_polygon(points=[pos_new], space_edges_for_screen=self.space_edges,vertices=self.tank_vertices)
+        if not temp_bool :
+            linear_velocity=0
+            d=0
+            pos_new = pos_old
+            head_rear_new = head_rear_old
             angular_velocity += np.pi / 2
             d_or = angular_velocity * dt
             or_new = or_old + d_or
-            pos_new=pos_old
-            self.get_head().set_pose(pos_new, or_new, 0, angular_velocity)
-            head_rear_new = head_rear_old
+        self.get_head().set_pose(pos_new, or_new, linear_velocity, angular_velocity)
         self.get_head().update_vertices(pos_new, or_new)
         self.position_rest_of_body(d_or, head_rear_pos=head_rear_new, head_or=or_new)
-        self.model.space.move_agent(self, self.get_global_midspine_of_body())
+
+        self.step_dst = d
+        self.cum_dst += d
+        if self.Nsegs==2:
+            self.current_pos = head_rear_new
+        else :
+            self.current_pos = self.get_global_midspine_of_body()
+        self.model.space.move_agent(self, self.current_pos)
+        self.trajectory.append(self.current_pos)
 
     def position_rest_of_body(self, d_orientation, head_rear_pos, head_or):
         if self.Nsegs == 1:
             pass
         else:
             bend_per_spineangle = d_orientation / (self.Nsegs / 2)
-            for i, seg in enumerate(self.segs[1:]):
+            for i, (seg,l) in enumerate(zip(self.segs[1:], self.seg_lengths[1:])):
                 if i==0 :
                     global_p=head_rear_pos
                     previous_seg_or=head_or
@@ -419,17 +431,11 @@ class VelocityAgent(Agent, abc.ABC):
                     self.spineangles[i] += bend_per_spineangle
                 new_or = previous_seg_or - self.spineangles[i]
                 seg.set_orientation(new_or)
-                new_p = tuple(rotate_around_point(origin=global_p,
-                                                  point=[global_p[0] + self.seg_lengths[i + 1] / 2, global_p[1]],
-                                                  radians=np.pi - new_or))
+                new_p = global_p +np.array([-np.cos(new_or), -np.sin(new_or)])* l / 2
                 seg.set_position(new_p)
                 seg.update_vertices(new_p, new_or)
-                # for i, seg in enumerate(self.segs) :
-                #     print(i, seg.get_orientation())
-
             self.compute_body_bend()
-            # print(self.get_body_bend())
-            # print(self.angles)
+
 
     def compute_spineangles(self):
         seg_ors = [seg.get_orientation() for seg in self.segs]
@@ -437,7 +443,7 @@ class VelocityAgent(Agent, abc.ABC):
 
     def compute_body_bend(self):
         prev = self.body_bend
-        curr= np.sum(self.spineangles[:int(self.Nangles + 1 / 2)])
+        curr= np.sum(self.spineangles[:self.Nangles_b])
         if np.abs(prev)>2 and np.abs(curr)>2 and prev*curr<0 :
             self.body_bend_errors+=1
             # curr=np.sign(curr)*np.pi

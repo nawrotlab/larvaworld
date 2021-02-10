@@ -8,7 +8,6 @@ from scipy.spatial.distance import euclidean
 import lib.aux.functions as fun
 
 # Extension of DataCollector class so that it only collects from a given schedule
-from lib.conf.par_db import par_db
 
 
 class TargetedDataCollector(DataCollector):
@@ -170,11 +169,12 @@ class TargetedDataCollector(DataCollector):
                 "stridechain_length": lambda a: a.brain.intermitter.stridechain_length,
 
                 "deb_f": lambda a: a.deb.get_f(),
-                "reserve": lambda a: a.deb.get_U_E() * 1000,
-                "reserve_density": lambda a: a.deb.get_reserve_density() / 1000,
+                "reserve": lambda a: a.deb.get_reserve(),
+                "reserve_density": lambda a: a.deb.get_reserve_density(),
                 "structural_length": lambda a: a.deb.get_L(),
                 "maturity": lambda a: a.deb.get_U_H()* 1000,
                 "reproduction": lambda a: a.deb.get_U_R()* 1000,
+                "puppation_buffer": lambda a: a.deb.get_puppation_buffer(),
                 "structure": lambda a: a.deb.get_U_V()* 1000,
                 "age_in_days": lambda a: a.deb.age_day,
                 "hunger": lambda a: a.deb.hunger,
@@ -267,6 +267,14 @@ class TargetedDataCollector(DataCollector):
                 "final_amount": lambda a: a.amount,
                 "initial_amount": lambda a: a.initial_amount,
 
+                "birth_time_in_hours": lambda a: a.deb.birth_time_in_hours,
+                "puppation_time_in_hours": lambda a: a.deb.puppation_time_in_hours,
+                "death_time_in_hours": lambda a: a.deb.death_time_in_hours,
+                "deb_Nticks": lambda a: a.deb.tick_counter,
+                "deb_steps_per_day": lambda a: a.deb.steps_per_day,
+                "age": lambda a: a.deb.age_day * 24,
+
+
             }
             return endpoint_parameter_database
 
@@ -311,9 +319,11 @@ effector_collection = {
     'feeder': {'step': ['length', 'mass', 'amount_eaten'],
                'endpoint': ['mass', 'num_feeds', 'feed_success_rate', 'amount_eaten',
                             'feed_dur_ratio']},
-    'deb': {'step': ['deb_f', 'reserve', 'reserve_density',  'structural_length', 'maturity', 'reproduction',
-                     'age_in_days', 'hunger', 'structure'],
-            'endpoint': []},
+    'deb': {'step': ['deb_f', 'reserve', 'reserve_density',
+                     # 'structural_length', 'maturity', 'reproduction','structure','age_in_days',
+                     'hunger',  'puppation_buffer'],
+            'endpoint': ['birth_time_in_hours', 'puppation_time_in_hours',
+                         'death_time_in_hours', 'age']},
     'pose': {'step': ['centroid_x', 'centroid_y', 'bend', 'front_orientation', 'rear_orientation'],
              'endpoint': []},
     'nengo': {'step': ['crawler_activity', 'turner_activity', 'feeder_motion'],

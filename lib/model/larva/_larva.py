@@ -1,19 +1,27 @@
 import random
 
 import mesa
-import nengo
 import numpy as np
 from copy import deepcopy
 
 from nengo import Simulator
 
+# from larvaworld.lib.model import agents_spatial_query
+# from larvaworld.lib.model.larva import DefaultBrain
+# from larvaworld.lib.model.larva import VelocityAgent
+# from larvaworld.lib.model.larva import LarvaBody
+# from larvaworld.lib.aux import naming as nam
+# from larvaworld.lib.aux import functions as fun
+# from larvaworld.lib.model.larva import DEB
+# from larvaworld.lib.model.larva import NengoBrain
 from lib.model.envs._space import agents_spatial_query
-from lib.model.larva._effectors import Crawler, Feeder, Oscillator_coupling, Intermitter, Olfactor, Turner, DefaultBrain
-from lib.model.larva._sensorimotor import VelocityAgent
 from lib.model.larva._bodies import LarvaBody
-from lib.aux import functions as fun, naming as nam
+from lib.model.larva._effectors import DefaultBrain
+from lib.model.larva._sensorimotor import VelocityAgent
+from lib.aux import functions as fun
+from lib.aux import naming as nam
 from lib.model.larva.deb import DEB
-from lib.model.larva.nengo_effectors import NengoBrain, NengoManager, NengoEffector
+from lib.model.larva.nengo_effectors import NengoBrain
 
 
 class Larva(mesa.Agent):
@@ -26,14 +34,14 @@ class Larva(mesa.Agent):
     def update_color(self, default_color, behavior_dict, mode='lin'):
         color = deepcopy(default_color)
         if mode=='lin' :
-            if behavior_dict['stride_stop'] :
-                color=np.array([0, 255, 0])
-            elif behavior_dict['stride_id']:
+            # if behavior_dict['stride_stop'] :
+            #     color=np.array([0, 255, 0])
+            if behavior_dict['stride_id']:
                 color = np.array([0, 150, 0])
             elif behavior_dict['pause_id'] :
                 color=np.array([255, 0, 0])
             elif behavior_dict['feed_id'] :
-                color=np.array([150, 150, 0])
+                color=np.array([0, 0, 255])
         elif mode=='ang' :
             if behavior_dict['Lturn_id'] :
                 color[2]=150
@@ -270,9 +278,15 @@ class LarvaSim(VelocityAgent, Larva):
 
             self.feed_success_counter += int(self.feed_success)
             self.amount_eaten += self.current_amount_eaten
+            if isinstance(self.brain, DefaultBrain) :
+                if self.feed_success :
+                    self.brain.intermitter.feeder_reoccurence_rate=self.brain.intermitter.feeder_reoccurence_rate_on_success
+                else :
+                    self.brain.intermitter.feeder_reoccurence_rate*=self.brain.intermitter.feeder_reoccurence_exp_coef
         else :
             self.feed_success = False
             self.current_amount_eaten = 0
+
 
 
     def reset_feeder(self):
@@ -298,11 +312,14 @@ class LarvaSim(VelocityAgent, Larva):
         if energetic_pars is not None :
             self.energetics=True
             if energetic_pars['deb']:
-                self.deb = DEB(species='default', steps_per_day=24 * 60, cv=0, aging=True)
+                self.deb = DEB(species='default', steps_per_day=24*60, cv=0, aging=True)
                 self.deb.reach_stage('larva')
-                self.deb.steps_per_day = int(24 * 60 * 60 / self.model.dt)
+                self.deb.steps_per_day=int(24 * 60 * 60 / self.model.dt)
                 self.real_length = self.deb.get_real_L()
                 self.real_mass = self.deb.get_W()
+                self.f_decay_coef = energetic_pars['f_decay_coef']
+                self.f_exp_coef = np.exp(self.f_decay_coef*self.model.dt)
+                self.hunger_affects_feeder = energetic_pars['hunger_affects_feeder']
             else:
                 self.deb = None
                 self.food_to_biomass_ratio = energetic_pars['food_to_biomass_ratio']
@@ -322,14 +339,24 @@ class LarvaSim(VelocityAgent, Larva):
         return brain
 
     def run_energetics(self, feed_success, amount_eaten):
+
         if self.deb:
-            self.deb.run(f=int(feed_success))
+            if feed_success:
+                f = 1
+            else:
+                f = self.deb.get_f() * self.f_exp_coef
+            self.deb.run(f=f)
             self.real_length = self.deb.get_real_L()
             self.real_mass = self.deb.get_W()
+            if self.hunger_affects_feeder :
+                self.brain.intermitter.feeder_reoccurence_rate_on_success=self.deb.hunger
             # if not self.deb.alive :
             #     raise ValueError ('Dead')
+            self.adjust_body_vertices()
+            self.max_feed_amount = self.compute_max_feed_amount()
         else:
-            self.real_mass += amount_eaten * self.food_to_biomass_ratio
-            self.adjust_shape_to_mass()
-        self.adjust_body_vertices()
-        self.max_feed_amount = self.compute_max_feed_amount()
+            if feed_success:
+                self.real_mass += amount_eaten * self.food_to_biomass_ratio
+                self.adjust_shape_to_mass()
+                self.adjust_body_vertices()
+                self.max_feed_amount = self.compute_max_feed_amount()

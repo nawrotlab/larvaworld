@@ -1,24 +1,21 @@
 """ Run a simulation and save the parameters and data to files."""
 import datetime
 import json
-import os
 import time
 
-import numpy as np
 import sys
 
 
 
-sys.path.insert(0, '../..')
+# sys.path.insert(0, '../../..')
 
 from lib.anal.plotting import *
 from lib.conf import exp_types, default_sim
-
+from lib.model.larva.deb import deb_dict
 import lib.stor.paths as paths
 
 from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.data_modes as conf
-import lib.aux.naming as nam
 from lib.model.envs._larvaworld import LarvaWorldSim
 import lib.aux.functions as fun
 from lib.aux.functions import dict_to_file, flatten_list
@@ -200,12 +197,16 @@ def sim_analysis(d, experiment):
         plot_endpoint_scatter(datasets=[d], labels=[d.id], par_shorts=['cum_sd', 'f_am'])
 
     elif experiment == 'growth':
-        deb_dict = deb_default()
-        plot_growth(d, deb_dict)
-        try:
-            plot_deb(d)
-        except:
-            pass
+        deb_dicts= [deb_dict(d, id) for id in d.agent_ids]+[deb_default()]
+        plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb.png')
+        plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb_minimal.png', mode='minimal')
+        plot_debs(deb_dicts=deb_dicts[:-1],save_to=d.plot_dir, save_as='deb.png')
+        plot_debs(deb_dicts=deb_dicts[:-1],save_to=d.plot_dir, save_as='deb_minimal.png', mode='minimal')
+        # plot_growth(d, default_deb)
+        # try:
+        #     plot_deb(d)
+        # except:
+        #     pass
     elif experiment == 'focus':
         d.angular_analysis(is_last=False)
         d.detect_turns()

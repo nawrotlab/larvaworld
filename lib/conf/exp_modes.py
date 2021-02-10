@@ -1,6 +1,6 @@
 import sys
 
-sys.path.insert(0, '../..')
+# sys.path.insert(0, '../../..')
 
 from lib.conf.larva_modes import *
 from lib.conf.env_modes import *
@@ -39,6 +39,7 @@ reorientation = {'fly_params': sample_odor_larva,
                  }
 growth = {'fly_params': growing_larva,
           'env_params': growth_exp_np,
+          # 'collect_effectors': ['feeder'],
           'collect_effectors': ['feeder', 'deb'],
           'traj_mode': no_traj,
           'draw_mode': draw_behavior

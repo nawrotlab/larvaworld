@@ -1,25 +1,3 @@
-'''
-This script creates raw datasets from raw larva track files selecting those that have duration longer than the minimum
-Options :
- - dish_idx=None : Scan all tracks in all dishes of experiment for larva tracks satisfying the condition and create a single dataset
- - dish_idx='all' : Scan all dishes in experiment for larva tracks satisfying the condition and create one dataset per dish
- - dish_idx=0 : Scan the 0th dish in experiment for larva tracks satisfying the condition and create a single dataset dataset for this dish
-
-This scripts enriches the dataset computing additional parameters.
-The dataset can be a group dataset (select n) or a single larva dataset (select AgentID).
-Specifically  :
-- the dataset is rescaled
-- collisions are optionally dropped
-- dataset is optionally filtered
-- length and centroid are computed
-- linear and angular parameters are computed
-- epochs of strides, turns and pauses are computed
-- dispersion is computed
-- optionally parameters not having an equivalent in simulations are dropped to make dataset lighter
-'''
-
-import os
-import shutil
 import sys
 import warnings
 from itertools import product
@@ -28,11 +6,9 @@ import pandas as pd
 import numpy as np
 from distutils.dir_util import copy_tree
 
-sys.path.insert(0, '../..')
 from lib.anal.plotting import comparative_analysis, plot_marked_strides, plot_marked_turns
 from lib.stor.building import build_Jovanic, build_Schleyer
 from lib.stor.datagroup import *
-import lib.aux.functions as fun
 from lib.stor.larva_dataset import LarvaDataset
 
 
@@ -122,9 +98,9 @@ def enrich_datasets(datagroup_id, names, keep_raw=False, **kwargs):
             copy_tree(new.dir, raw.dir)
     enrich_conf = LarvaDataGroup(datagroup_id).get_conf()['enrich']
 
-    with fun.suppress_stdout():
-        ds = [d.compute_orientations(mode='full') for d in ds]
-        # ds = [d.enrich(**enrich_conf) for d in ds]
+    # with fun.suppress_stdout():
+
+    ds = [d.enrich(**enrich_conf) for d in ds]
     return ds
 
 

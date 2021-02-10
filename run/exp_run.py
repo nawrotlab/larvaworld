@@ -2,10 +2,12 @@ import sys
 import argparse
 import time
 
+
+
 sys.path.insert(0, '..')
-from lib.sim.single_run import run_sim, generate_config, sim_analysis
 from lib.conf import exp_types
-import lib.aux.argparsers as prs
+from lib.sim.single_run import generate_config, run_sim, sim_analysis
+from lib.aux import argparsers as prs
 
 s=time.time()
 

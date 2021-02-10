@@ -115,12 +115,9 @@ class Crawler(Oscillator):
 
         self.complete_iteration = False
         noise = np.random.normal(scale=self.scaled_noise * length)
-        # noise = 0.0
         if self.effector:
             if self.waveform == 'realistic':
-                scaled_activity = self.realistic_oscillator(phi=self.phi, freq=self.freq, sd=self.step_to_length,
-                                                            max_vel_phase=self.max_vel_phase)
-                activity = scaled_activity * length
+                activity = self.realistic_oscillator(phi=self.phi, freq=self.freq, sd=self.step_to_length)* length
             elif self.waveform == 'square':
                 self.adapt_square_oscillator_amp(length)
                 activity = self.square_oscillator()
@@ -159,10 +156,10 @@ class Crawler(Oscillator):
 
     # Attention. This equation generates the SCALED velocity per stride
     # See vel_curve.ipynb in notebooks/calibration/crawler
-    def realistic_oscillator(self, phi, freq, sd=0.24, max_vel_phase=np.pi, k=+1, r=1, l=0.6):
+    def realistic_oscillator(self, phi, freq, sd=0.24, k=+1, l=0.6):
         # a = (1 * cos(phi - max_vel_phase) ** 1 + k) * sd * freq*r+ sd*freq*(1-r)
         # a = (1 * cos(phi - max_vel_phase) ** 1 - k) * sd * freq
-        a = (cos(phi - max_vel_phase) * l + k) * sd * freq
+        a = (cos(-phi) * l + k) * sd * freq
 
         # b=0.1-a
         # if b>0:
@@ -295,14 +292,8 @@ class Turner(Oscillator, Effector):
 
 
 class NeuralOscillator:
-    def __init__(self, dt, **kwargs):
-        # self.dt = 0.5
+    def __init__(self, dt):
         self.dt = dt
-        # self.noise = noise
-        # Retained all parameters as described in paper. changed only 35 to 3 in tau_h equation to match 0.3 Hz
-        # frequency
-
-        # Stable parameters for neural oscillator
         self.tau = 0.1
         self.w_ee = 3.0
         self.w_ce = 0.1
@@ -312,8 +303,8 @@ class NeuralOscillator:
         self.n = 2.0
 
         # Variable parameters
-        self.g = None
-        self.tau_h = None
+        # self.g = None
+        # self.tau_h = None
         self.activity = 0.0
 
         # Neural populations
@@ -329,45 +320,30 @@ class NeuralOscillator:
         self.C_l = 0
         self.H_C_l = 0  # 10
 
+        self.scaled_tau=self.dt / self.tau
+        # self.scaled_tau_h=None
+
     def step(self, A=0):
-        self.tau_h = 3 / (1 + (0.04 * A) ** 2)
-        self.g = 6 + (0.09 * A) ** 2
+        t=self.scaled_tau
+        tau_h = 3 / (1 + (0.04 * A) ** 2)
+        t_h=self.dt / tau_h
+        g = 6 + (0.09 * A) ** 2
 
-        self.E_l += (self.dt / self.tau) * (-self.E_l + self.compute_R(A + self.w_ee * self.E_l - self.w_ec * self.C_r,
-                                                                       64 + self.g * self.H_E_l))
-        self.E_r += (self.dt / self.tau) * (-self.E_r + self.compute_R(A + self.w_ee * self.E_r - self.w_ec * self.C_l,
-                                                                       64 + self.g * self.H_E_r))
-        self.H_E_l += (self.dt / self.tau_h) * (-self.H_E_l + self.E_l)
-        self.H_E_r += (self.dt / self.tau_h) * (-self.H_E_r + self.E_r)
+        self.E_l += t * (-self.E_l + self.compute_R(A + self.w_ee * self.E_l - self.w_ec * self.C_r,64 + g * self.H_E_l))
+        self.E_r += t * (-self.E_r + self.compute_R(A + self.w_ee * self.E_r - self.w_ec * self.C_l,64 + g * self.H_E_r))
+        self.H_E_l += t_h * (-self.H_E_l + self.E_l)
+        self.H_E_r += t_h * (-self.H_E_r + self.E_r)
 
-        self.C_l += (self.dt / self.tau) * (-self.C_l + self.compute_R(A + self.w_ce * self.E_l - self.w_cc * self.C_r,
-                                                                       64 + self.g * self.H_C_l))
-        self.C_r += (self.dt / self.tau) * (-self.C_r + self.compute_R(A + self.w_ce * self.E_r - self.w_cc * self.C_l,
-                                                                       64 + self.g * self.H_C_r))
-        self.H_C_l += (self.dt / self.tau_h) * (-self.H_C_l + self.E_l)
-        self.H_C_r += (self.dt / self.tau_h) * (-self.H_C_r + self.E_r)
-        # self.E_l += (1 / self.tau) * (-self.E_l + self.compute_R(A + self.w_ee * self.E_l - self.w_ec * self.C_r,
-        #                                                                64 + self.g * self.H_E_l))
-        # self.E_r += (1 / self.tau) * (-self.E_r + self.compute_R(A + self.w_ee * self.E_r - self.w_ec * self.C_l,
-        #                                                                64 + self.g * self.H_E_r))
-        # self.H_E_l += (1 / self.tau_h) * (-self.H_E_l + self.E_l)
-        # self.H_E_r += (1 / self.tau_h) * (-self.H_E_r + self.E_r)
-        #
-        # self.C_l += (1 / self.tau) * (-self.C_l + self.compute_R(A + self.w_ce * self.E_l - self.w_cc * self.C_r,
-        #                                                                64 + self.g * self.H_C_l))
-        # self.C_r += (1 / self.tau) * (-self.C_r + self.compute_R(A + self.w_ce * self.E_r - self.w_cc * self.C_l,
-        #                                                                64 + self.g * self.H_C_r))
-        # self.H_C_l += (1 / self.tau_h) * (-self.H_C_l + self.E_l)
-        # self.H_C_r += (1 / self.tau_h) * (-self.H_C_r + self.E_r)
-        dif = self.E_r - self.E_l
-        self.activity = dif
-        # print('Torque is  :', self.torque)
-        # print('Activation is  :', A)
+        self.C_l += t * (-self.C_l + self.compute_R(A + self.w_ce * self.E_l - self.w_cc * self.C_r,64 + g * self.H_C_l))
+        self.C_r += t * (-self.C_r + self.compute_R(A + self.w_ce * self.E_r - self.w_cc * self.C_l,64 + g * self.H_C_r))
+        self.H_C_l += t_h * (-self.H_C_l + self.E_l)
+        self.H_C_r += t_h * (-self.H_C_r + self.E_r)
+        self.activity = self.E_r - self.E_l
+
 
     def compute_R(self, x, h):
         if x > 0:
             r = self.m * x ** self.n / (x ** self.n + h ** self.n)
-            # print(x,h,r)
             return r
         else:
             return 0.0
@@ -413,16 +389,16 @@ class Oscillator_coupling():
         self.crawler_interference_start = crawler_interference_start
         self.feeder_interference_start = feeder_interference_start
         self.interference_ratio = interference_ratio
-        self.reset()
+        # self.reset()
 
-    def reset(self):
-        self.crawler_inhibits_bend = False
-        self.feeder_inhibits_bend = False
-        self.turner_inhibition=False
+    # def reset(self):
+    #     self.crawler_inhibits_bend = False
+    #     self.feeder_inhibits_bend = False
+    #     self.turner_inhibition=False
 
     def step(self, crawler=None, feeder=None):
-        self.reset()
-        self.resolve_coupling(crawler, feeder)
+        # self.reset()
+        self.turner_inhibition=self.resolve_coupling(crawler, feeder)
 
     def resolve_coupling(self, crawler, feeder):
         if crawler is not None:
@@ -431,14 +407,11 @@ class Oscillator_coupling():
                 r = self.crawler_interference_free_window
                 s = self.crawler_interference_start
                 if crawler.waveform == 'realistic' and not (s <= phi <= (s + r)):
-                    self.crawler_inhibits_bend = True
+                    return True
                 elif crawler.waveform == 'square' and not phi <= 2 * np.pi * crawler.square_signal_duty:
-                    # if self.crawler.effector and not 3 * np.pi / 8 <= self.crawler.phi <= 5 * np.pi / 8:
-                    # self.body_bend_velocity = 0
-                    # self.body_bend-= self.body_bend*0.8*self.dt/self.square_signal_duty
-                    self.crawler_inhibits_bend = True
+                    return True
                 elif crawler.waveform == 'gaussian' and not (s <= phi <= (s + r)):
-                    self.crawler_inhibits_bend = True
+                    return True
 
         if feeder is not None:
             if feeder.effector:
@@ -446,25 +419,17 @@ class Oscillator_coupling():
                 r = self.feeder_interference_free_window
                 s = self.feeder_interference_start
                 if not (s <= phi <= (s + r)):
-                    self.feeder_inhibits_bend = True
-
-        if self.crawler_inhibits_bend or self.feeder_inhibits_bend :
-            self.turner_inhibition=True
+                    return True
+        return False
+        # if self.crawler_inhibits_bend or self.feeder_inhibits_bend :
+        #     self.turner_inhibition=True
 
 class Intermitter(Effector):
     def __init__(self, nengo_manager=None,
                  crawler=None, intermittent_crawler=False,
                  feeder=None, intermittent_feeder=False,
-                 # pause_duration_range=None,
                  pause_dist=None,
-                 # pause_mean=None,
-                 # pause_std=None,
-                 # pause_coef=None,
-                 # stridechain_length_range=None,
                  stridechain_dist=None,
-                 # stridechain_mean=None,
-                 # stridechain_std=None,
-                 # stridechain_coef=None,
                  feeder_reoccurence_rate_on_success=1, feeder_reoccurence_decay_coef=1,
                  turner=None, intermittent_turner=False, turner_prepost_lag=[0, 0],
                  explore2exploit_bias=0.5,
@@ -472,17 +437,27 @@ class Intermitter(Effector):
         super().__init__(**kwargs)
         self.nengo_manager = nengo_manager
 
-        # Define the components affected by the intermitter
-        self.intermittent_crawler = intermittent_crawler
-        self.intermittent_feeder = intermittent_feeder
-        self.intermittent_turner = intermittent_turner
         self.crawler = crawler
         self.turner = turner
         self.feeder = feeder
+        if crawler is None :
+            self.intermittent_crawler=False
+        else :
+            self.intermittent_crawler = intermittent_crawler
+        if turner is None :
+            self.intermittent_turner=False
+        else :
+            self.intermittent_turner = intermittent_turner
+        if feeder is None :
+            self.intermittent_feeder=False
+        else :
+            self.intermittent_feeder = intermittent_feeder
+
         if self.nengo_manager is None:
             self.feeder_reoccurence_rate_on_success = feeder_reoccurence_rate_on_success
             self.feeder_reoccurence_decay_coef = feeder_reoccurence_decay_coef
             self.feeder_reoccurence_rate = self.feeder_reoccurence_rate_on_success
+            self.feeder_reoccurence_exp_coef = np.exp(-self.feeder_reoccurence_decay_coef * self.dt)
 
 
         self.turner_pre_lag_ticks = int(turner_prepost_lag[0] / self.dt)
@@ -535,16 +510,14 @@ class Intermitter(Effector):
             return sample_lognormal_int(mean=self.stridechain_mean, sigma=self.stridechain_std,
                                         xmin=self.stridechain_min, xmax=self.stridechain_max)
         else:
-            v = self.stridechain_dist.rvs(size=1)[0]
-            return v
+            return self.stridechain_dist.rvs(size=1)[0]
 
     def generate_pause_duration(self):
         if self.pause_dist is None:
-            dur = sample_lognormal(mean=self.pause_mean, sigma=self.pause_std,
+            return sample_lognormal(mean=self.pause_mean, sigma=self.pause_std,
                                    xmin=self.pause_min, xmax=self.pause_max)
         else:
-            dur = self.pause_dist.rvs(size=1)[0] * self.dt
-        return dur
+            return self.pause_dist.rvs(size=1)[0] * self.dt
 
     def initialize(self):
         self.pause_dur = np.nan
@@ -611,13 +584,11 @@ class Intermitter(Effector):
     def disinhibit_locomotion(self):
         if self.nengo_manager is None:
             if np.random.uniform(0, 1, 1) <= self.explore2exploit_bias:
-                if self.crawler:
-                    if self.intermittent_crawler:
-                        self.crawler.start_effector()
+                if self.intermittent_crawler:
+                    self.crawler.start_effector()
             else:
-                if self.feeder:
-                    if self.intermittent_feeder:
-                        self.feeder.start_effector()
+                if self.intermittent_feeder:
+                    self.feeder.start_effector()
         else:
             if np.random.uniform(0, 1, 1) <= self.explore2exploit_bias:
                 self.crawler.set_freq(self.crawler.default_freq)
@@ -626,15 +597,12 @@ class Intermitter(Effector):
 
     def inhibit_locomotion(self):
         if self.nengo_manager is None:
-            if self.crawler:
-                if self.intermittent_crawler:
-                    self.crawler.stop_effector()
-            if self.feeder:
-                if self.intermittent_feeder:
-                    self.feeder.stop_effector()
-            if self.turner:
-                if self.intermittent_turner:
-                    self.turner_post_lag = self.turner_post_lag_ticks
+            if self.intermittent_crawler:
+                self.crawler.stop_effector()
+            if self.intermittent_feeder:
+                self.feeder.stop_effector()
+            if self.intermittent_turner:
+                self.turner_post_lag = self.turner_post_lag_ticks
         else:
             self.crawler.set_freq(0)
             self.feeder.set_freq(0)

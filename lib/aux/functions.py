@@ -239,6 +239,19 @@ def rotate_around_point(point, radians, origin=[0, 0]):
 
     return qx, qy
 
+def rotate_around_center(point, radians):
+    x, y = point
+    cos_rad = math.cos(radians)
+    sin_rad = math.sin(radians)
+    qx = cos_rad * x + sin_rad * y
+    qy = -sin_rad * x + cos_rad * y
+    return qx, qy
+
+def rotate_around_center_multi(points, radians):
+    cos_rad = math.cos(radians)
+    sin_rad = math.sin(radians)
+    return [(cos_rad * x + sin_rad * y, -sin_rad * x + cos_rad * y) for x, y in points]
+
 
 def rotate_multiple_points(points, radians, origin=[0, 0]):
     # points have the form :

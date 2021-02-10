@@ -16,6 +16,7 @@ from lib.conf import mesa_space_in_mm
 import lib.conf.env_modes as env
 from lib.stor.datagroup import SimParConf
 from lib.stor.paths import Ref_path, Ref_fits, RefFolder
+from lib.model.envs._larvaworld import LarvaWorldReplay
 
 
 class LarvaDataset:
@@ -701,7 +702,7 @@ class LarvaDataset:
                   save_to=None, save_as=None,
                   **kwargs):
 
-        from lib.model.envs._larvaworld import LarvaWorldReplay
+
 
         angle_pars = ['bend']
         or_pars = ['front_orientation'] + nam.orient(self.segs)

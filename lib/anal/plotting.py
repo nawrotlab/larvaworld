@@ -16,8 +16,7 @@ from sklearn.linear_model import LinearRegression
 import powerlaw
 
 from lib.aux import naming as nam
-from lib.anal.fitting import powerlaw_cdf, powerlaw_pdf, exponential_cdf, exponential_pdf, lognormal_cdf, \
-    lognormal_pdf, compute_density
+from lib.anal.fitting import *
 from lib.aux.functions import weib, flatten_list
 from lib.anal.combining import combine_images, combine_pdfs
 from scipy.stats import ttest_ind
@@ -25,7 +24,6 @@ from matplotlib.patches import Wedge
 
 from lib.stor.paths import DebFolder
 from lib.conf.par_db import par_db
-from lib.model.larva.deb import deb_default
 
 '''
 Generic plot function. Uses the next two functions internally'''
@@ -1205,7 +1203,7 @@ def plot_growth(dataset, deb_dict):
               ['maturity', 'reproduction']]
     ylabels = [['mass $(mg)$', 'length $(mm)$'],
               [l_e, l_e],
-              [r'energy density $(J/mm^{3})$', r'hunger drive $(-)$'],
+              [r'energy density $(-)$', r'hunger drive $(-)$'],
               [l_e, l_e]]
 
     figsize = (15, 20)
@@ -1259,49 +1257,59 @@ def plot_growth(dataset, deb_dict):
         filepath = os.path.join(dataset.plot_dir, filename)
         save_plot(fig, filepath, filename)
 
-def plot_debs(deb_dicts):
+def plot_debs2(deb_dicts, save_to=None, save_as=None):
+    if save_to is None :
+        save_to=DebFolder
+    os.makedirs(save_to, exist_ok=True)
+    if save_as is None :
+        save_as = f'debs.{suf}'
+    filepath = os.path.join(save_to, save_as)
+
+    Ndebs=len(deb_dicts)
+    ids=[d['id'] for d in deb_dicts]
+    cols=Ndataset_colors(Ndebs)
+
+
     l_e = r'energy $(mJ)$'
     labels = [['mass', 'length'],
               ['reserve', 'structure'],
               ['reserve_density', 'hunger'],
               ['maturity', 'reproduction']]
     ylabels = [['mass $(mg)$', 'length $(mm)$'],
-               [l_e, l_e],
-               # [r'energy ratio $(-)$', r'hunger drive $(-)$'],
-               [r'energy density $(J/mm^{3})$', r'hunger drive $(-)$'],
-               [l_e, l_e]]
+               [r'reserve $(mJ)$', r'structure $(mJ)$'],
+               [r'reserve density $(-)$', r'hunger drive $(-)$'],
+               [r'maturity $(mJ)$', r'reproduction $(mJ)$']]
 
-    filename = f'debs.{suf}'
-    filepath = os.path.join(DebFolder, filename)
+
     figsize = (15, 20)
     fig, axs = plt.subplots(len(labels), figsize=figsize, sharex=True)
-    axs = axs.ravel()
-    for deb_dict in deb_dicts :
-        t0, t1, Nticks = deb_dict['birth'], deb_dict['puppation'], deb_dict['Nticks']
+    ax1s = axs.ravel()
+    ax2s=[ax1.twinx() for ax1 in ax1s]
+    for d,id,c in zip(deb_dicts, ids, cols) :
+        t0, t1, Nticks = d['birth'], d['puppation'], d['Nticks']
+        # starvation=d['starvation_days']
+        # print(d)
         t_deb = np.linspace(0, t1, Nticks)
 
         for j, (label, ylabel) in enumerate(zip(labels, ylabels)) :
             l1,l2=label
-            L1,L2=fr'{l1}$_{{deb}}$', fr'{l2}$_{{deb}}$'
             yl1,yl2=ylabel
-            P1 = deb_dict[l1]
-            P2 = deb_dict[l2]
+            P1 = d[l1]
+            P2 = d[l2]
 
-            # ylims1 = [[np.min(p1), np.max(p1)], [np.min(P1), np.max(P1)]]
-            # ylims2 = [[np.min(p2), np.max(p2)], [np.min(P2), np.max(P2)]]
+            ax1=ax1s[j]
+            ax2=ax2s[j]
+            ax1.plot(t_deb, P1, c, label=id)
+            ax2.plot(t_deb, P2, c, linestyle='dashed', label=id)
+            ax1.axvline(t0, color=c, alpha=0.2, linestyle='dashdot', linewidth=3)
+            # b1 = plt.axvline(t0, color=c, alpha=0.2, linestyle='dashdot', linewidth=3)
+            ax1.axvline(t1, color=c, alpha=0.2, linestyle='dashdot', linewidth=3)
 
-            ax1=axs[j]
-            ax2 = ax1.twinx()
-            ax1.plot(t_deb, P1, 'r', linestyle='dashed', label=L1)
-            ax2.plot(t_deb, P2, 'b', linestyle='dashed', label=L2)
-            b1 = plt.axvline(t0, color='g', alpha=1.0, linestyle='dashdot', linewidth=3)
-            b2 = plt.axvline(t1, color='m', alpha=1.0, linestyle='dashdot', linewidth=3)
-            b_leg = plt.legend([b1, b2], ["birth", "puppation"], loc='upper center')
-            plt.gca().add_artist(b_leg)
+            # b2 = plt.axvline(t1, color=c, alpha=0.2, linestyle='dashdot', linewidth=3)
+            # b_leg = plt.legend([b1, b2], ["birth", "puppation"], loc='upper center')
+            # plt.gca().add_artist(b_leg)
             ax1.set_ylabel(yl1)
             ax2.set_ylabel(yl2)
-            # ax1.set_ylim(ylims1[i])
-            # ax2.set_ylim(ylims2[i])
 
             ax1.legend(loc='upper left')
             ax2.legend(loc='upper right')
@@ -1310,11 +1318,111 @@ def plot_debs(deb_dicts):
                 # ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
                 ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
                 # ax.ticklabel_format(useMathText=True, scilimits=(0, 0))
-    # ax1.set_xlim(xlim)
     ax1.set_xlabel(r'time $(hours)$')
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.07, right=0.93, hspace=0.1)
 
-    save_plot(fig, filepath, filename)
+    save_plot(fig, filepath, save_as)
+
+def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full'):
+    if save_to is None :
+        save_to=DebFolder
+    os.makedirs(save_to, exist_ok=True)
+    if save_as is None :
+        save_as = f'debs.{suf}'
+    filepath = os.path.join(save_to, save_as)
+
+
+    Ndebs=len(deb_dicts)
+    ids=[d['id'] for d in deb_dicts]
+    if Ndebs==1 :
+        cols=[(0, 1,  0.1)]
+    else :
+        cols = [(0.9-i, 0.1+i,  0.1) for i in np.linspace(0,0.9,Ndebs)]
+
+    labels = ['mass', 'length','reserve',
+              # 'f',
+              'reserve_density', 'hunger','puppation_buffer']
+    ylabels = ['mass $(mg)$', 'length $(mm)$',r'reserve $(J)$',
+               # r'feeding rate $(-)$',
+               r'reserve density $(-)$', r'hunger drive $(-)$',r'puppation buffer $(-)$']
+    if mode=='minimal' :
+        idx=[0,1,2,5]
+        labels=[l for i,l in enumerate(labels) if i in idx]
+        ylabels=[yl for i,yl in enumerate(ylabels) if i in idx]
+
+
+    figsize = (15, 20)
+    fig, axs = plt.subplots(len(labels), figsize=figsize, sharex=True)
+    axs = axs.ravel()
+    t0s,t1s,t2s, ages=[],[], [], []
+    for d,id,c in zip(deb_dicts, ids, cols) :
+        Nticks=len(d[labels[0]])
+        t0, t1,t2, age = d['birth'], d['puppation'],d['death'], d['age']
+        if d['simulation'] :
+            t_deb = np.linspace(t0, age, Nticks)
+        else :
+            t_deb = np.linspace(0, age, Nticks)
+        starvation = d['starvation']
+        t0s.append(t0)
+        t1s.append(t1)
+        t2s.append(t2)
+        ages.append(age)
+
+        for j, (l, yl) in enumerate(zip(labels, ylabels)) :
+            P = d[l]
+            ax=axs[j]
+            # print(id, l,len(t_deb), len(P))
+            ax.plot(t_deb, P, color=c, label=id, linewidth=2)
+            ax.axvline(t0, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
+            # b1 = plt.axvline(t0, color=c, alpha=0.2, linestyle='dashdot', linewidth=3)
+            ax.axvline(t1, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
+            ax.axvline(t2, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
+            for s0,s1 in starvation :
+                ax.axvspan(s0, s1, color=c, alpha=0.2)
+            # b2 = plt.axvline(t1, color=c, alpha=0.2, linestyle='dashdot', linewidth=3)
+            # b_leg = plt.legend([b1, b2], ["birth", "puppation"], loc='upper center')
+            # plt.gca().add_artist(b_leg)
+            ax.set_ylabel(yl)
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
+                # ax.ticklabel_format(useMathText=True, scilimits=(0, 0))
+            if l=='puppation_buffer' :
+                ax.set_ylim([0,1])
+        if not np.isnan(t0) :
+            ax.annotate('',
+                    xy=(t0, 0), xycoords='data',
+                    xytext=(t0, -0.2), textcoords='data',
+                    arrowprops=dict(color='black', shrink=0.1, alpha=0.6)
+                    )
+        if not np.isnan(t1):
+            ax.annotate('',
+                xy=(t1, 0), xycoords='data',
+                xytext=(t1, -0.2), textcoords='data',
+                arrowprops=dict(color='black', shrink=0.1, alpha=0.6))
+        if not np.isnan(t2):
+            ax.annotate('',
+                xy=(t2, 0), xycoords='data',
+                xytext=(t2, -0.2), textcoords='data',
+                arrowprops=dict(color='black', shrink=0.1, alpha=0.6))
+    ax.set_xlabel(r'time $(hours)$')
+    # ax.set_xlim([0, np.nanmax(ages)+10])
+    T0=np.nanmean(t0s)
+    T1=np.nanmean(t1s)
+    T2=np.nanmean(t2s)
+    ax.annotate('hatch',
+                xy=(T0, 0), xycoords='data', fontsize=20,
+                xytext=(T0, -0.3), textcoords='data',
+                horizontalalignment='center', verticalalignment='top')
+    ax.annotate('puppation',
+                xy=(T1, 0), xycoords='data', fontsize=20,
+                xytext=(T1, -0.3), textcoords='data',
+                horizontalalignment='center', verticalalignment='top')
+    ax.annotate('death',
+                xy=(T2, 0), xycoords='data', fontsize=20,
+                xytext=(T2, -0.3), textcoords='data',
+                horizontalalignment='center', verticalalignment='top')
+    axs[0].legend(handles=[mpatches.Patch(color=c, label=id) for c, id in zip(cols,ids)], labels=ids, fontsize=20, loc='upper center')
+    fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.93, hspace=0.02)
+    save_plot(fig, filepath, save_as)
 
 
 def plot_deb(dataset, mode='minimal'):

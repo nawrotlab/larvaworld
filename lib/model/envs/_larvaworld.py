@@ -1,6 +1,7 @@
-import time
+import warnings
 
 import numpy as np
+import progressbar
 import pygame
 import os
 from Box2D import b2World, b2ChainShape
@@ -34,12 +35,20 @@ class LarvaWorld(Model):
                  mode='video', image_mode='final', media_name=None,
                  trajectories=True, trail_decay_in_sec=None, trajectory_colors=None,
                  show_state=True, random_larva_colors=False, color_behavior=False,
-                 draw_head=False, draw_contour=True, draw_centroid=False, draw_midline=True):
+                 draw_head=False, draw_contour=True, draw_centroid=False, draw_midline=True,
+                 show_display=True, video_fps=None, snapshot_interval_in_sec=20):
 
-        self.sim_screen_dim = sim_screen_dim
-        # print(self.sim_screen_dim)
-        self.Nsteps = Nsteps
         self.dt = dt
+        if video_fps is None :
+            self.video_fps=int(1/dt)
+        else :
+            self.video_fps = int(video_fps/dt)
+
+        self.show_display=show_display
+        self.sim_screen_dim = sim_screen_dim
+        self.Nsteps = Nsteps
+        self.snapshot_interval = int(snapshot_interval_in_sec / self.dt)
+
         self.id = id
         self.spec = EnvSpec(id=f'{id}-v0')
 
@@ -268,8 +277,7 @@ class LarvaWorld(Model):
         self.sim_scale.render_scale(self.screen_width, self.screen_height)
         self.sim_state.render_state(self.screen_width, self.screen_height)
 
-    def render(self, fps=25, velocity_arrows=False,
-               background_motion=[0, 0, 0]):
+    def render(self, velocity_arrows=False, background_motion=[0, 0, 0]):
 
         if self._screen is None:
             caption = self.spec.id if self.spec else ""
@@ -283,7 +291,7 @@ class LarvaWorld(Model):
                 _image_path = None
 
             self._screen = rendering.GuppiesViewer(self.screen_width, self.screen_height, caption=caption,
-                                                   fps=fps, dt=self.dt, display=True,
+                                                   fps=self.video_fps, dt=self.dt, display=self.show_display,
                                                    record_video_to=_video_path,
                                                    record_image_to=_image_path)
             self.render_aux()
@@ -361,55 +369,53 @@ class LarvaWorld(Model):
     def run(self, Nsteps=None):
         if Nsteps is None:
             Nsteps = self.Nsteps
-        if self.mode == 'video':
-            for i in range(Nsteps):
-                self.step()
-                # TODO Figure this out for multiple agents. Now only the first is used
-                background_motion = self.background_motion[:, i]
-                self.render(background_motion=background_motion)
-                self.draw_arena(self._screen)
-                self.draw_background(self._screen, background_motion)
-            self._screen.close()
-        elif self.mode == 'image':
-            if self.image_mode == 'snapshots':
+        warnings.filterwarnings('ignore')
+        with progressbar.ProgressBar(max_value=Nsteps) as bar:
+            if self.mode == 'video':
                 for i in range(Nsteps):
                     self.step()
-                    if (self.active_larva_schedule.time - 1) % int(5 / self.dt) == 0:
-                        self.snapshot_counter += 1
-                        self.render()
-                        self._screen.close()
-                        self._screen = None
-            elif self.image_mode == 'overlap':
-                for i in range(Nsteps):
-                    self.step()
-                    self.render()
-                self._screen.render()
-                self._screen.close()
-
-            elif self.image_mode == 'final':
-                if isinstance(self, LarvaWorldSim):
-                    for t in range(Nsteps):
+                    # TODO Figure this out for multiple agents. Now only the first is used
+                    self.render(background_motion=self.background_motion[:, i])
+                    bar.update(i)
+            elif self.mode == 'image':
+                if self.image_mode == 'snapshots':
+                    for i in range(Nsteps):
                         self.step()
+                        if (self.active_larva_schedule.time - 1) % self.snapshot_interval == 0:
+                            self.snapshot_counter += 1
+                            self.render()
+                            self._screen.close()
+                            self._screen = None
+                        bar.update(i)
+                elif self.image_mode == 'overlap':
+                    for i in range(Nsteps):
+                        self.step()
+                        self.render()
+                        bar.update(i)
+                    self._screen.render()
+                    self._screen.close()
+
+                elif self.image_mode == 'final':
+                    if isinstance(self, LarvaWorldSim):
+                        for i in range(Nsteps):
+                            self.step()
+                            bar.update(i)
+                    elif isinstance(self, LarvaWorldReplay):
+                        self.active_larva_schedule.steps = Nsteps - 1
+                        self.step()
+                    self.render()
+            else:
+                if isinstance(self, LarvaWorldSim):
+                    for i in range(Nsteps):
+                        self.step()
+                        bar.update(i)
                 elif isinstance(self, LarvaWorldReplay):
-                    self.active_larva_schedule.steps = Nsteps - 1
-                    self.step()
-                self.render()
-        else:
-            if isinstance(self, LarvaWorldSim):
-                for t in range(Nsteps):
-                    # s=time.time()
-                    self.step()
-                    # e = time.time()
-                    # if t%100==0 :
-                    #     print(t, e-s)
-            elif isinstance(self, LarvaWorldReplay):
-                raise ValueError('When running a replay, set mode to video or image')
+                    raise ValueError('When running a replay, set mode to video or image')
 
 
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, fly_params,
                  collected_pars={'step': [], 'endpoint': []},
-
                  id='Unnamed_Simulation',
                  **kwargs):
 
@@ -639,8 +645,7 @@ class LarvaWorldSim(LarvaWorld):
         # step space
         if self.physics_engine:
             self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
-
-        self.update_trajectories(self.get_flies())
+            self.update_trajectories(self.get_flies())
         self.larva_step_collector.collect(self)
         # s3 = time.time()
         # if self.sim_clock.second < 0.001:

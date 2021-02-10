@@ -30,6 +30,9 @@ class Body:
         self.Nsegs = Nsegs
         self.seg_vertices = seg_vertices
 
+        self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)
+        self.local_front_end_of_head = (np.max(self.seg_vertices[0][0], axis=0)[0], 0)
+
         # segment_length_x = seg_lengths * np.cos(orientation)
         seg_lengths_x = [np.cos(orientation) * l for l in self.seg_lengths]
         seg_lengths_y = np.sin(orientation) * length / self.Nsegs
@@ -69,6 +72,8 @@ class Body:
         self.Nangles = self.Nsegs - 1
         self.spineangles = np.zeros(self.Nangles)
         self.set_contour()
+
+
 
     def create_joints(self, num_segments, joint_type):
         space=self.model.space
@@ -202,7 +207,7 @@ class Body:
                 seg.draw(viewer)
         if self.model.draw_head:
             viewer.draw_circle(radius=self.seg_lengths[0] / 2,
-                               position=self.get_global_front_end_of_body(),
+                               position=self.get_global_front_end_of_head(),
                                filled=True, color=(255, 0, 0), width=.1)
 
     def plot_vertices(self, axes, **kwargs):
@@ -255,6 +260,12 @@ class Body:
         rear_local_x = np.min(self.seg_vertices[seg_index][0], axis=0)[0]
         return (rear_local_x, 0)
 
+    def get_local_rear_end_of_head(self):
+        return self.local_rear_end_of_head
+
+    def get_local_front_end_of_head(self):
+        return self.local_front_end_of_head
+
     def get_global_front_end_of_seg(self, seg_index):
         local_pos=self.get_local_front_end_of_seg(seg_index)
         global_pos = self.get_segment(seg_index).get_world_point(local_pos)
@@ -265,7 +276,15 @@ class Body:
         global_pos = self.get_segment(seg_index).get_world_point(local_pos)
         return global_pos
 
+    def get_global_rear_end_of_head(self):
+        return self.segs[0].get_world_point(self.local_rear_end_of_head)
+
+    def get_global_front_end_of_head(self):
+        return self.segs[0].get_world_point(self.local_front_end_of_head)
+
     def get_global_midspine_of_body(self):
+        if self.Nsegs==2 :
+            return self.get_global_rear_end_of_head()
         if (self.Nsegs % 2) == 0:
             seg_idx = int(self.Nsegs / 2)
             global_pos = self.get_global_front_end_of_seg(seg_idx)
@@ -274,10 +293,6 @@ class Body:
             global_pos = self.segs[seg_idx].get_world_point((0.0, 0.0))
         return global_pos
 
-    def get_global_front_end_of_body(self):
-        local_pos = self.get_local_front_end_of_seg(0)
-        global_pos = self.get_head().get_world_point(local_pos)
-        return global_pos
 
     def get_global_rear_end_of_body(self):
         local_pos = self.get_local_rear_end_of_seg(-1)
@@ -650,9 +665,7 @@ class PolygonShape:
         # centroid /= area
 
     def update_vertices(self, pos, orient):
-
-        new_vertices = [[list([v[0] + pos[0], v[1] + pos[1]]) for v in self.seg_vertices[0]]]
-        self.vertices = [[rotate_around_point(point=v, radians=-orient, origin=pos) for v in new_vertices[0]]]
+        self.vertices = [pos + np.array(rotate_around_center_multi(self.seg_vertices[0], -orient))]
 
 
     def draw(self, viewer):
@@ -675,11 +688,7 @@ class PolygonShape:
         return np.array(self.pos), self.orientation
 
     def get_world_point(self, local_point):
-        p = self.get_position()
-        o = self.get_orientation()
-        rotated_local_point = rotate_around_point(point=local_point, radians=-o, origin=[0, 0])
-        new_p = [p[0] + rotated_local_point[0], p[1] + rotated_local_point[1]]
-        return new_p
+        return self.get_position()+np.array(rotate_around_center(point=local_point, radians=-self.get_orientation()))
 
     def get_orientation(self):
         return self.orientation
@@ -791,7 +800,8 @@ class LarvaBody(Body):
     def adjust_body_vertices(self):
         self.sim_length = self.real_length * self.model.scaling_factor
         self.seg_lengths = [self.sim_length * r for r in self.seg_ratio]
-        self.seg_vertices = [v * self.sim_length / self.Nsegs for v in self.base_seg_vertices]
+        l=self.sim_length / self.Nsegs
+        self.seg_vertices = [v * l for v in self.base_seg_vertices]
         for i, seg in enumerate(self.segs):
             seg.seg_vertices=self.seg_vertices[i]
 
@@ -827,7 +837,7 @@ class LarvaBody(Body):
         #     new_pos = (self.pos[0] + math.cos(self.orientation) * self.get_sim_length() / 2,
         #                self.pos[1] + math.sin(self.orientation) * self.get_sim_length() / 2)
         #     return new_pos
-        return self.get_global_front_end_of_body()
+        return self.get_global_front_end_of_head()
 
     def generate_segment_shapes(self, num_segments, width_to_length_proportion, density, interval, segment_ratio):
         shape_length = 1

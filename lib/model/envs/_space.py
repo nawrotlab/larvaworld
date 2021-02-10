@@ -40,8 +40,8 @@ class ValueGrid:
         return np.array((0, c, 0))
 
     def get_grid_cell(self, p):
-        p=list(p)
-        c=np.clip(np.array(p/self.xy+self.XY_half).astype(int), a_min=[0,0], a_max=[self.X-1,self.Y-1])
+        # p=list(p)
+        c=np.clip(np.array(p/self.xy + self.XY_half).astype(int), a_min=[0,0], a_max=[self.X-1,self.Y-1])
         return tuple(c)
 
     def get_value(self, cell):
@@ -71,6 +71,8 @@ class ValueGrid:
         viewer.draw_polygon(self.grid_edges, self.get_color(), filled=True)
         not_full=np.array([[k, v/self.initial_value] for k,v in enumerate(self.grid.flatten().tolist()) if v!=self.initial_value])
         if not_full.shape[0]!=0 :
+            # print(not_full)
+            # # raise
             vertices = [self.grid_vertices[int(i)] for i in not_full[:,0]]
             colors = [self.get_color(v) for v in not_full[:,1]]
             for v,c in zip(vertices,colors) :

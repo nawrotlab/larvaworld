@@ -6,6 +6,7 @@ import pygame
 
 from lib.aux import functions as fun
 
+
 # from pygame import gfxdraw
 # x = 1550
 # y = 400
@@ -14,7 +15,7 @@ from lib.aux import functions as fun
 
 
 class GuppiesViewer(object):
-    def __init__(self, width, height, caption="", fps=25, dt=0.1, display=True, record_video_to=None,
+    def __init__(self, width, height, caption="", fps=10, dt=0.1, display=True, record_video_to=None,
                  record_image_to=None):
         x = 1550
         y = 400
@@ -27,15 +28,11 @@ class GuppiesViewer(object):
         self._fps = fps
         self.dt = dt
 
-        self.record_image_to = record_image_to
-
         if display:
             flags = pygame.HWSURFACE | pygame.DOUBLEBUF
             self._window = pygame.display.set_mode((width, height), flags)
             pygame.display.set_caption(caption)
             pygame.event.set_allowed(pygame.QUIT)
-
-            # pygame.mouse.set_visible(False)
         else:
             flags = pygame.HWSURFACE | pygame.DOUBLEBUF
             self._window = pygame.Surface((width, height), flags)
@@ -43,8 +40,7 @@ class GuppiesViewer(object):
 
         if record_video_to:
             import imageio
-            self._video_writer = imageio.get_writer(record_video_to, mode='I', fps=1 / self.dt)
-            # self._video_writer = imageio.get_writer(record_video_to, mode='I', fps=fps)
+            self._video_writer = imageio.get_writer(record_video_to, mode='I', fps=self._fps)
         else:
             self._video_writer = None
 
@@ -79,8 +75,6 @@ class GuppiesViewer(object):
     def draw_polygon(self, vertices, color=(0, 0, 0), filled=True, width=.01):
         vertices = [self._transform(v) for v in vertices]
         width = 0 if filled else int(self._scale[0, 0] * width)
-        # gfxdraw.aapolygon(self._window, vertices, color)
-        # gfxdraw.filled_polygon(self._window, vertices, color)
         pygame.draw.polygon(self._window, color, vertices, 0 if filled else width)
 
     def draw_grid(self, all_vertices, colors, filled=True, width=.01):

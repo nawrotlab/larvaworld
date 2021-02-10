@@ -1,15 +1,13 @@
 import sys
-import argparse
 import numpy as np
 
-sys.path.insert(0, '../..')
+sys.path.insert(0, '../../..')
 import lib.conf.env_modes as env
-from lib.conf.batch_modes import batch_types
-from lib.conf import exp_types
-import lib.aux.functions as fun
 
 
 def add_vis_kwargs(parser):
+    parser.add_argument('-hide', '--show_display', action="store_false", help='Hide display')
+    parser.add_argument('-fps', '--video_fps', type=int, help='The framerate of the saved video')
     parser.add_argument('-vid', '--video', action="store_true", help='Select video or image')
     parser.add_argument('-img', '--image_mode', nargs='?', const='final',
                         choices=['final', 'overlap', 'snapshots'], help='Select image mode')
@@ -47,8 +45,9 @@ def get_vis_kwargs(args):
                   'random_larva_colors': args.random_larva_colors,
                   'color_behavior': args.color_behavior,
                   'black_background': args.black_background,
-
                   'draw_head': args.draw_head,
+                  'show_display' : args.show_display,
+                  'video_fps' : args.video_fps,
                   }
     return vis_kwargs
 

@@ -1,7 +1,7 @@
 import numpy as np
 import sys
 
-sys.path.insert(0, '../..')
+sys.path.insert(0, '../../..')
 import lib.aux.functions as fun
 
 ######## FOOD PARAMETERS ###########
@@ -301,7 +301,7 @@ chemorbit_exp_np = exp_conf(chemorbit_conf(30))
 
 disp_exp_np = exp_conf(disp_conf(30, 0.2))
 
-dish_exp_np = {'arena_params': dish(0.15),
+dish_exp_np = {'arena_params': dish(0.1),
                'space_params': mesa_space,
                'food_params': None,
                'place_params': {**larva_mid(25), **food_place(0)},
@@ -366,9 +366,17 @@ feed_patchy_empirical = {
     'place_params': larva0_food_patchy_8_exp,
     'odor_params': chemorbit_odor_np}
 
-growth_exp_np = {'arena_params': arena(0.05, 0.05),  # dish(0.006),
+
+
+growth_exp_np = {'arena_params': arena(0.01, 0.01),  # dish(0.006),
                  'space_params': mesa_space,
-                 'food_params': food_grid(100),  # food(0.0002),
+                 'food_params': food_grid(50,10**-5),  # food(0.0002),
+                 'place_params': {**larva_mid(1), **food_place(0)},  # larva1_food_uniform,
+                 'odor_params': None}
+
+growth_exp_np_small = {'arena_params': arena(0.01, 0.01),  # dish(0.006),
+                 'space_params': mesa_space,
+                 'food_params': food_grid(20,10**-7),  # food(0.0002),
                  'place_params': {**larva_mid(1), **food_place(0)},  # larva1_food_uniform,
                  'odor_params': None}
 

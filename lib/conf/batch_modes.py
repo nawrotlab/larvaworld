@@ -1,8 +1,9 @@
 import sys
-
-sys.path.insert(0, '../..')
+import numpy as np
 
 from lib.sim.batch_lib import *
+
+# sys.path.insert(0, '../../..')
 
 odor_pref_batch = {
     'pars': ['olfactor_gain_mean'],

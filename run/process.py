@@ -1,11 +1,9 @@
 import sys
 import argparse
-import numpy as np
 
 sys.path.insert(0, '..')
 from lib.stor.datagroup import *
 from lib.stor.managing import *
-import lib.conf.env_modes as env
 import lib.aux.argparsers as prs
 
 parser = argparse.ArgumentParser(description="Initialize processing")

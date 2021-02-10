@@ -29,9 +29,9 @@ draw_on_black = {'color_behavior': False,
                  'random_larva_colors': False}
 
 default_sim = {
+    # 'dt': 1 / 6,
     'dt': 1 / 10,
     # 'dt': 1 / 16,
-    # 'dt': 1 / 100,
     'sim_time_in_min': 3.0,
     'odor_prep_time_in_min': 0.0,
     'fly_prep_time_in_min': 0.5,
