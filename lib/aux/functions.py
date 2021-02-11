@@ -108,7 +108,7 @@ def angle_old(point_3, point_2, point_1, in_deg=True):
     if dif > np.pi:
         dif -= np.pi * 2
     if in_deg:
-        return degrees(dif)
+        return math.degrees(dif)
     else:
         return dif
 
@@ -132,7 +132,7 @@ def angle_to_x_axis(point_1, point_2, in_deg=True):
     rads = math.atan2(dy, dx)
     rads %= 2 * np.pi
     if in_deg:
-        return degrees(rads)
+        return math.degrees(rads)
     else:
         return rads
 
