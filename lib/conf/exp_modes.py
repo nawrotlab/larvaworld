@@ -1,7 +1,5 @@
 import sys
 
-# sys.path.insert(0, '../../..')
-
 from lib.conf.larva_modes import *
 from lib.conf.env_modes import *
 from lib.conf.sim_modes import *
