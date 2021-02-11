@@ -77,6 +77,10 @@ Visit the [tutorial notebook](tutorial/walkthrough.ipynb) for a complete walkthr
 
 Larvaworld can be run directly from linux terminal.
 The executable files are in `larvaworld/run` directory. Navigate there.
+
+    cd run
+
+
 Three modes are available :
 
 1. Analysis 
