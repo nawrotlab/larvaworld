@@ -1,5 +1,4 @@
-from math import cos
-
+import numpy as np
 from scipy import signal
 from scipy.stats import lognorm, rv_discrete
 
@@ -157,15 +156,7 @@ class Crawler(Oscillator):
     # Attention. This equation generates the SCALED velocity per stride
     # See vel_curve.ipynb in notebooks/calibration/crawler
     def realistic_oscillator(self, phi, freq, sd=0.24, k=+1, l=0.6):
-        # a = (1 * cos(phi - max_vel_phase) ** 1 + k) * sd * freq*r+ sd*freq*(1-r)
-        # a = (1 * cos(phi - max_vel_phase) ** 1 - k) * sd * freq
-        a = (cos(-phi) * l + k) * sd * freq
-
-        # b=0.1-a
-        # if b>0:
-        #     add=np.random.uniform(low=0.0, high=b*2)
-        #     a += add
-        # print(add)
+        a = (np.cos(-phi) * l + k) * sd * freq
         return a
 
 
