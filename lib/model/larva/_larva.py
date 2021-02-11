@@ -308,7 +308,7 @@ class LarvaSim(VelocityAgent, Larva):
                 self.real_length = self.deb.get_real_L()
                 self.real_mass = self.deb.get_W()
                 self.f_decay_coef = energetic_pars['f_decay_coef']
-                self.f_exp_coef = np.exp(self.f_decay_coef*self.model.dt)
+                self.f_exp_coef = np.exp(-self.f_decay_coef*self.model.dt)
                 self.hunger_affects_feeder = energetic_pars['hunger_affects_feeder']
             else:
                 self.deb = None

@@ -1341,10 +1341,10 @@ def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full'):
         cols = [(0.9-i, 0.1+i,  0.1) for i in np.linspace(0,0.9,Ndebs)]
 
     labels = ['mass', 'length','reserve',
-              # 'f',
+              'f',
               'reserve_density', 'hunger','puppation_buffer']
     ylabels = ['mass $(mg)$', 'length $(mm)$',r'reserve $(J)$',
-               # r'feeding rate $(-)$',
+               r'feeding rate $(-)$',
                r'reserve density $(-)$', r'hunger drive $(-)$',r'puppation buffer $(-)$']
     if mode=='minimal' :
         idx=[0,1,2,5]
