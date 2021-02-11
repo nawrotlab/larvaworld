@@ -2648,6 +2648,14 @@ class LarvaDataset:
         if is_last:
             self.save()
 
+    def deb_analysis(self, is_last=True) :
+        if self.step_data is None:
+            self.load()
+        s,e=self.step_data, self.endpoint_data
+        e[nam.mean('deb_f')] = s['deb_f'].groupby('AgentID').mean()
+        if is_last:
+            self.save()
+
     def build_dirs(self):
         for i in self.dirs:
             if not os.path.exists(i):

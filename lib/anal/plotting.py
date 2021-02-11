@@ -1344,15 +1344,19 @@ def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full'):
               'f',
               'reserve_density', 'hunger','puppation_buffer']
     ylabels = ['mass $(mg)$', 'length $(mm)$',r'reserve $(J)$',
-               r'feeding rate $(-)$',
+               r'functional response $(-)$',
                r'reserve density $(-)$', r'hunger drive $(-)$',r'puppation buffer $(-)$']
     if mode=='minimal' :
         idx=[0,1,2,6]
         labels=[l for i,l in enumerate(labels) if i in idx]
         ylabels=[yl for i,yl in enumerate(ylabels) if i in idx]
+    elif mode=='f' :
+        idx = [3,5]
+        labels = [l for i, l in enumerate(labels) if i in idx]
+        ylabels = [yl for i, yl in enumerate(ylabels) if i in idx]
 
 
-    figsize = (15, 20)
+    figsize = (15, 4*len(labels))
     fig, axs = plt.subplots(len(labels), figsize=figsize, sharex=True)
     axs = axs.ravel()
     t0s,t1s,t2s, ages=[],[], [], []

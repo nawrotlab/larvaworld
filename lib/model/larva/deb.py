@@ -474,7 +474,7 @@ class DEB:
             return self.U_R/self.U_R__p
 
 
-def deb_default(starvation_days=[]):
+def deb_default(starvation_days=[], f=1, id=None):
     steps_per_day = 24 * 60
     deb = DEB(species='default', steps_per_day=steps_per_day, cv=0, aging=True, print_stage_change=True)
     ww = []
@@ -498,7 +498,7 @@ def deb_default(starvation_days=[]):
         if any([r1 < deb.age_day < r2 for [r1, r2] in starvation_days]):
             f = 0
         else:
-            f = 1
+            f = f
         ww.append(deb.get_W() * 1000)
         h.append(deb.hunger)
         real_L.append(deb.get_real_L() * 1000)
@@ -520,14 +520,15 @@ def deb_default(starvation_days=[]):
     starvation=[[s0 * 24, s1 * 24] for s0, s1 in starvation_days]
     if not np.isnan(t2) :
         starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for s0, s1 in starvation if s0<=t2]
-    if len(starvation)==0 :
-        id = 'ad libitum'
-    elif len(starvation)==1 :
-        range=starvation[0]
-        dur=int(range[1]- range[0])
-        id = f'{dur}h starved'
-    else :
-        id = f'starved {len(starvation)} intervals'
+    if id is None :
+        if len(starvation)==0 :
+            id = 'ad libitum'
+        elif len(starvation)==1 :
+            range=starvation[0]
+            dur=int(range[1]- range[0])
+            id = f'{dur}h starved'
+        else :
+            id = f'starved {len(starvation)} intervals'
     dict = {'birth': deb.birth_time_in_hours,
             'puppation': deb.puppation_time_in_hours,
             'death': t2,
@@ -571,7 +572,6 @@ def deb_dict(dataset, id):
             # 'Nticks': e['deb_Nticks'],
             'simulation': True,
             'f': s['deb_f'].values.tolist(),
-            'id': 'larva',
+            'id': id,
             'starvation': []}
     return dict
-

@@ -331,10 +331,10 @@ class LarvaSim(VelocityAgent, Larva):
     def run_energetics(self, feed_success, amount_eaten):
 
         if self.deb:
+            f = self.deb.get_f()
             if feed_success:
-                f = 1
-            else:
-                f = self.deb.get_f() * self.f_exp_coef
+                f += 1
+            f *= self.f_exp_coef
             self.deb.run(f=f)
             self.real_length = self.deb.get_real_L()
             self.real_mass = self.deb.get_W()

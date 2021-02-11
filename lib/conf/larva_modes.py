@@ -214,7 +214,7 @@ feeder = {'freq_range': [1.0, 5.0],
 
 # ----------------------------------------------ENERGETICS MODES--------------------------------------------------------
 energetics_params = {'food_to_biomass_ratio': 0.1,
-                     'f_decay_coef' : 0.01,
+                     'f_decay_coef' : 0.6,
                      'hunger_affects_feeder' : True,
                      'deb': True}
 

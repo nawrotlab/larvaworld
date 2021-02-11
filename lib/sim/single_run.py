@@ -189,11 +189,15 @@ def sim_analysis(d, experiment):
         plot_endpoint_scatter(datasets=[d], labels=[d.id], par_shorts=['cum_sd', 'f_am'])
 
     elif experiment == 'growth':
+        d.deb_analysis()
+        # print(d.endpoint_data['deb_f_mean'])
         deb_dicts= [deb_dict(d, id) for id in d.agent_ids]+[deb_default()]
-        plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb.png')
-        plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb_minimal.png', mode='minimal')
-        plot_debs(deb_dicts=deb_dicts[:-1],save_to=d.plot_dir, save_as='deb.png')
-        plot_debs(deb_dicts=deb_dicts[:-1],save_to=d.plot_dir, save_as='deb_minimal.png', mode='minimal')
+        plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb.pdf')
+        plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb_minimal.pdf', mode='minimal')
+        plot_debs(deb_dicts=deb_dicts[:-1], save_to=d.plot_dir, save_as='deb_f.pdf', mode='f')
+        plot_debs(deb_dicts=deb_dicts[:-1],save_to=d.plot_dir, save_as='deb.pdf')
+        plot_debs(deb_dicts=deb_dicts[:-1],save_to=d.plot_dir, save_as='deb_minimal.pdf', mode='minimal')
+
         # plot_growth(d, default_deb)
         # try:
         #     plot_deb(d)

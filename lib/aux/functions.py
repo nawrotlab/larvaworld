@@ -98,21 +98,6 @@ def circle_to_polygon(sides, radius, rotation=0, translation=None):
     return np.array(points)
 
 
-def angle_old(point_3, point_2, point_1, in_deg=True):
-    dx1, dy1 = np.array(point_1) - np.array(point_2)
-    rads1 = math.atan2(dy1, dx1)
-    dx2, dy2 = np.array(point_2) - np.array(point_3)
-    rads2 = math.atan2(dy2, dx2)
-    dif = rads1 - rads2
-    dif %= 2 * np.pi
-    if dif > np.pi:
-        dif -= np.pi * 2
-    if in_deg:
-        return math.degrees(dif)
-    else:
-        return dif
-
-
 def angle(a, b, c, in_deg=True):
     if np.isnan(a).any() or np.isnan(b).any() or np.isnan(c).any():
         return np.nan
