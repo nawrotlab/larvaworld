@@ -1,19 +1,9 @@
 import random
-
 import mesa
 import numpy as np
 from copy import deepcopy
 
 from nengo import Simulator
-
-# from larvaworld.lib.model import agents_spatial_query
-# from larvaworld.lib.model.larva import DefaultBrain
-# from larvaworld.lib.model.larva import VelocityAgent
-# from larvaworld.lib.model.larva import LarvaBody
-# from larvaworld.lib.aux import naming as nam
-# from larvaworld.lib.aux import functions as fun
-# from larvaworld.lib.model.larva import DEB
-# from larvaworld.lib.model.larva import NengoBrain
 from lib.model.envs._space import agents_spatial_query
 from lib.model.larva._bodies import LarvaBody
 from lib.model.larva._effectors import DefaultBrain
