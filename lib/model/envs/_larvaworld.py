@@ -4,9 +4,12 @@ import numpy as np
 import progressbar
 import pygame
 import os
+from unflatten import unflatten
 from Box2D import b2World, b2ChainShape
 from mesa.space import ContinuousSpace
-from unflatten import unflatten
+from mesa import Model
+from mesa.time import RandomActivation
+from gym.envs.registration import EnvSpec
 
 from lib.aux.collecting import TargetedDataCollector
 from lib.model.envs._space import GaussianValueLayer, DiffusionValueLayer, ValueGrid
@@ -15,10 +18,6 @@ from lib.model.envs._food import Food
 from lib.anal.plotting import plot_surface
 from lib.aux.rendering import SimulationState
 from lib.aux import rendering
-from gym.envs.registration import EnvSpec
-from mesa import Model
-from mesa.time import RandomActivation
-
 from lib.model.larva._larva import LarvaReplay
 import lib.aux.functions as fun
 from lib.aux.rendering import SimulationClock, SimulationScale, draw_velocity_arrow, draw_trajectories
