@@ -1,7 +1,6 @@
 from nengo import *
 import numpy as np
 from nengo.networks import EnsembleArray
-from numpy import pi
 
 from lib.model.larva._effectors import Brain, Intermitter, Oscillator_coupling
 
@@ -65,14 +64,11 @@ class NengoBrain(Network, Brain):
             y = Ensemble(n_neurons=200, dimensions=3, neuron_type=Direct())
             z = Ensemble(n_neurons=200, dimensions=3, neuron_type=Direct())
             synapse = 1.0
-
             # synapse=0.1
-
-            # e = 10 ** (-6)
 
             def linear_oscillator(x):
                 dr = 1 - x[0] ** 2 - x[1] ** 2
-                s = 2 * pi * x[2] / 2
+                s = 2 * np.pi * x[2] / 2
                 if s > 0.1:
                     v = synapse * -x[1] * s + x[0] * dr + x[0]
                     n = synapse * x[0] * s + x[1] * dr + x[1]
@@ -82,10 +78,8 @@ class NengoBrain(Network, Brain):
 
             def angular_oscillator(x):
                 dr = 1 - x[0] ** 2 - x[1] ** 2
-                s = 2 * pi * x[2]
-                # How to make the oscillator return to baseline state(x[0]=0) when s= 0
+                s = 2 * np.pi * x[2]
                 if s > 0.1:
-                    # return [synapse * -x[1] * s + x[0] * (r - x[0]**2 - x[1]**2) + x[0] - 0.5*x[0],
                     return [synapse * -x[1] * s + x[0] * dr + x[0],
                             synapse * x[0] * s + x[1] * dr + x[1]]
                 else:
@@ -93,17 +87,14 @@ class NengoBrain(Network, Brain):
 
             def feeding_oscillator(x):
                 dr = 1 - x[0] ** 2 - x[1] ** 2
-                s = 2 * pi * x[2]
+                s = 2 * np.pi * x[2]
                 if s > 0.1:
-                    # return [synapse * -x[1] * s + x[0] * (r - x[0]**2 - x[1]**2) + x[0] - 0.5*x[0],
                     return [synapse * -x[1] * s + x[0] * dr + x[0],
                             synapse * x[0] * s + x[1] * dr + x[1]]
                 else:
                     return [0, 1]
 
             def oscillator_interference(x):
-                # To get 0.25 of the whole cycle we need to set the threshold at cos(45)=0.5253
-                # thr = input_manager.get_interference_threshold()
                 coup = input_manager.osc_coupling
                 c0 = coup.crawler_interference_start
                 cr = 1 - coup.feeder_interference_free_window / np.pi
@@ -111,22 +102,12 @@ class NengoBrain(Network, Brain):
                 fr = 1 - coup.feeder_interference_free_window / np.pi
                 r = coup.interference_ratio
                 if x[0] > 0 or x[2] > 0:
-                    # if c0 <= np.pi*(x[0]+1) <= c0 + cr or f0 <= np.pi*(x[2]+1)<=f0 + fr:
                     v = [x[0], 0, x[2]]
-                    # v = [x[0], x[1] * r, x[2]]
                 else:
                     v = x
                 return v
 
             def crawler(x):
-                # print(x)
-                # s=input_manager.get_linear_freq(0)
-                # if s>0.1 :
-                #     # This fits the empirical curve AND correctly computes scaled_stride_step during analysis
-                #     v = (x + 1 + 1.0)/1.6 *input_manager.scaled_stride_step
-                #     return v
-                # else :
-                #     return 0
                 return np.abs(x)*2 * input_manager.scaled_stride_step
 
             def turner(x):
@@ -179,17 +160,10 @@ class NengoBrain(Network, Brain):
             self.p_angular_s = Probe(angular_s)
             self.p_feeding_s = Probe(feeding_s)
 
-            # self.p_lin_f_Node = Probe(linear_freq_node)
-            # print(self.p_linear_s)
 
     def mean_odor_change(self, data, Nticks):
-        # print(self.p_change)
-        # print(len(self.p_change))
         c = data[self.p_change]
-        # mean_c = c[-1]
-
         mean_c = np.mean(c[-Nticks:], axis=0)[0]
-        # print(mean_c)
         return mean_c
 
     def mean_lin_s(self, data, Nticks):
@@ -270,8 +244,6 @@ class NengoEffector:
         self.amp = initial_amp
         self.amp_range = amp_range
         self.noise = noise
-
-
 
     #     Todo get rid of this
         self.complete_iteration=False
