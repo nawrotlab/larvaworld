@@ -26,8 +26,7 @@ def get_vis_kwargs(args):
         mode = 'image'
     else:
         mode = None
-    image_mode = args.image_mode
-    video_speed = args.video_speed
+
     if args.trajectories is None:
         trajectories = False
         trail_decay_in_sec = 0.0
@@ -36,8 +35,8 @@ def get_vis_kwargs(args):
         trail_decay_in_sec = args.trajectories
 
     vis_kwargs = {'mode': mode,
-                  'image_mode': image_mode,
-                  'video_speed': video_speed,
+                  'image_mode': args.image_mode,
+                  'video_speed': args.video_speed,
                   'trajectories': trajectories,
                   'trail_decay_in_sec': trail_decay_in_sec,
                   'random_larva_colors': args.random_larva_colors,

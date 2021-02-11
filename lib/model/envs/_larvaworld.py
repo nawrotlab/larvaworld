@@ -31,7 +31,7 @@ class LarvaWorld(Model):
                  env_params, Nsteps, save_to,
                  background_motion=None, use_background=False, black_background=False,
                  mode='video', image_mode='final', media_name=None,
-                 trajectories=True, trail_decay_in_sec=None, trajectory_colors=None,
+                 trajectories=True, trail_decay_in_sec=0.0, trajectory_colors=None,
                  show_state=True, random_larva_colors=False, color_behavior=False,
                  draw_head=False, draw_contour=True, draw_centroid=False, draw_midline=True,
                  show_display=True, video_speed=1, snapshot_interval_in_sec=60):
@@ -56,11 +56,7 @@ class LarvaWorld(Model):
 
         self.trajectories = trajectories
         self.trajectory_colors = trajectory_colors
-
-        if trail_decay_in_sec is None:
-            self.trail_decay_in_ticks = None
-        else:
-            self.trail_decay_in_ticks = int(trail_decay_in_sec / self.dt)
+        self.trail_decay_in_ticks = int(trail_decay_in_sec / self.dt)
 
         self.show_state = show_state
         self.random_larva_colors = random_larva_colors
