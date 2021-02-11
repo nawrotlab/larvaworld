@@ -3,7 +3,6 @@ xarray~=0.15.0
 colorutils
 nengo~=3.0.0
 mesa~=0.8.6
-gym~=0.16.0
 box2d-py
 imageio
 imageio-ffmpeg

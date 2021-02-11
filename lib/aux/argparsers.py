@@ -7,19 +7,15 @@ import lib.conf.env_modes as env
 
 def add_vis_kwargs(parser):
     parser.add_argument('-hide', '--show_display', action="store_false", help='Hide display')
-    # parser.add_argument('-fps', '--video_speed', type=int, help='The fast-forward speed of the saved video')
-    parser.add_argument('-vid', '--video_speed', type=int, nargs='?', const=1, help='The fast-forward speed of the saved video')
+    parser.add_argument('-vid', '--video_speed', type=float, nargs='?', const=1.0, help='The fast-forward speed of the video')
     parser.add_argument('-img', '--image_mode', nargs='?', const='final',
                         choices=['final', 'overlap', 'snapshots'], help='Select image mode')
     parser.add_argument('-rnd', '--random_larva_colors', action="store_true", help='Color larvae with random colors')
     parser.add_argument('-beh', '--color_behavior', action="store_true", help='Color behavioral epochs')
     parser.add_argument('-trj', '--trajectories', type=float, nargs='?', const=0.0,
                         help='Show trajectories of specific time duration')
-    # parser.add_argument('-trl', '--trail_decay', type=float, help='The duration of the decaying trajectory trail')
     parser.add_argument('-blk', '--black_background', action="store_true", help='Black background')
-
     parser.add_argument('-head', '--draw_head', action="store_true", help='Color the head and tail')
-
     return parser
 
 

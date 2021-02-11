@@ -9,7 +9,6 @@ from Box2D import b2World, b2ChainShape
 from mesa.space import ContinuousSpace
 from mesa import Model
 from mesa.time import RandomActivation
-from gym.envs.registration import EnvSpec
 
 from lib.aux.collecting import TargetedDataCollector
 from lib.model.envs._space import GaussianValueLayer, DiffusionValueLayer, ValueGrid
@@ -35,21 +34,15 @@ class LarvaWorld(Model):
                  trajectories=True, trail_decay_in_sec=None, trajectory_colors=None,
                  show_state=True, random_larva_colors=False, color_behavior=False,
                  draw_head=False, draw_contour=True, draw_centroid=False, draw_midline=True,
-                 show_display=True, video_speed=None, snapshot_interval_in_sec=60):
+                 show_display=True, video_speed=1, snapshot_interval_in_sec=60):
 
         self.dt = dt
-        if video_speed is None :
-            self.video_fps=int(1/dt)
-        else :
-            self.video_fps = int(video_speed / dt)
-
+        self.video_fps = int(video_speed / dt)
         self.show_display=show_display
         self.sim_screen_dim = sim_screen_dim
         self.Nsteps = Nsteps
-        self.snapshot_interval = int(snapshot_interval_in_sec / self.dt)
-
+        self.snapshot_interval = int(snapshot_interval_in_sec / dt)
         self.id = id
-        self.spec = EnvSpec(id=f'{id}-v0')
 
         self._screen = None
         self.mode = mode
@@ -279,7 +272,7 @@ class LarvaWorld(Model):
     def render(self, velocity_arrows=False, background_motion=[0, 0, 0]):
 
         if self._screen is None:
-            caption = self.spec.id if self.spec else ""
+            # caption = self.spec.id if self.spec else ""
             if self.mode == 'video':
                 _video_path=f'{self.media_name}.mp4'
             else:
@@ -289,7 +282,7 @@ class LarvaWorld(Model):
             else:
                 _image_path = None
 
-            self._screen = rendering.GuppiesViewer(self.screen_width, self.screen_height, caption=caption,
+            self._screen = rendering.GuppiesViewer(self.screen_width, self.screen_height, caption=self.id,
                                                    fps=self.video_fps, dt=self.dt, display=self.show_display,
                                                    record_video_to=_video_path,
                                                    record_image_to=_image_path)
