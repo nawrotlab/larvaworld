@@ -476,7 +476,7 @@ class DEB:
 
 def deb_default(starvation_days=[]):
     steps_per_day = 24 * 60
-    deb = DEB(species='default', steps_per_day=steps_per_day, cv=0, aging=True)
+    deb = DEB(species='default', steps_per_day=steps_per_day, cv=0, aging=True, print_stage_change=True)
     ww = []
     E = []
     e = []
@@ -574,5 +574,4 @@ def deb_dict(dataset, id):
             'id': 'larva',
             'starvation': []}
     return dict
-
 

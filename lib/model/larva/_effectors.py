@@ -555,11 +555,12 @@ class Intermitter(Effector):
                 self.inhibit_locomotion()
             # ... advance the timer of the current inactivity bout ...
             super().count_time()
-            if self.t > self.current_pause_duration - self.turner_pre_lag_ticks * self.dt:
-                if self.nengo_manager is None:
-                    self.turner.start_effector()
-                else:
-                    self.turner.set_freq(self.turner.default_freq)
+            if self.intermittent_turner:
+                if self.t > self.current_pause_duration - self.turner_pre_lag_ticks * self.dt:
+                    if self.nengo_manager is None:
+                        self.turner.start_effector()
+                    else:
+                        self.turner.set_freq(self.turner.default_freq)
             # ... if end of current inactivity bout is reached turn intermitter off ...
             if self.t > self.current_pause_duration:
                 self.register_pause()

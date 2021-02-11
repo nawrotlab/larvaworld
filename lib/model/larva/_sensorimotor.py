@@ -82,7 +82,7 @@ class VelocityAgent(Agent, abc.ABC):
         self.torque_coef = torque_coef
         self.ground_contact=True
 
-        k=0.97
+        k=0.95
         self.tank_vertices=self.model.tank_shape * k
         self.space_edges=self.model.space_edges_for_screen * k
 

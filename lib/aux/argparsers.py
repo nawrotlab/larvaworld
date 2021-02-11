@@ -7,8 +7,8 @@ import lib.conf.env_modes as env
 
 def add_vis_kwargs(parser):
     parser.add_argument('-hide', '--show_display', action="store_false", help='Hide display')
-    parser.add_argument('-fps', '--video_fps', type=int, help='The framerate of the saved video')
-    parser.add_argument('-vid', '--video', action="store_true", help='Select video or image')
+    # parser.add_argument('-fps', '--video_speed', type=int, help='The fast-forward speed of the saved video')
+    parser.add_argument('-vid', '--video_speed', type=int, nargs='?', const=1, help='The fast-forward speed of the saved video')
     parser.add_argument('-img', '--image_mode', nargs='?', const='final',
                         choices=['final', 'overlap', 'snapshots'], help='Select image mode')
     parser.add_argument('-rnd', '--random_larva_colors', action="store_true", help='Color larvae with random colors')
@@ -24,13 +24,14 @@ def add_vis_kwargs(parser):
 
 
 def get_vis_kwargs(args):
-    if args.video:
+    if args.video_speed is not None:
         mode = 'video'
     elif args.image_mode is not None:
         mode = 'image'
     else:
         mode = None
     image_mode = args.image_mode
+    video_speed = args.video_speed
     if args.trajectories is None:
         trajectories = False
         trail_decay_in_sec = 0.0
@@ -40,6 +41,7 @@ def get_vis_kwargs(args):
 
     vis_kwargs = {'mode': mode,
                   'image_mode': image_mode,
+                  'video_speed': video_speed,
                   'trajectories': trajectories,
                   'trail_decay_in_sec': trail_decay_in_sec,
                   'random_larva_colors': args.random_larva_colors,
@@ -47,7 +49,6 @@ def get_vis_kwargs(args):
                   'black_background': args.black_background,
                   'draw_head': args.draw_head,
                   'show_display' : args.show_display,
-                  'video_fps' : args.video_fps,
                   }
     return vis_kwargs
 

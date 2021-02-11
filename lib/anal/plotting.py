@@ -1347,7 +1347,7 @@ def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full'):
                r'feeding rate $(-)$',
                r'reserve density $(-)$', r'hunger drive $(-)$',r'puppation buffer $(-)$']
     if mode=='minimal' :
-        idx=[0,1,2,5]
+        idx=[0,1,2,6]
         labels=[l for i,l in enumerate(labels) if i in idx]
         ylabels=[yl for i,yl in enumerate(ylabels) if i in idx]
 

@@ -365,8 +365,6 @@ feed_patchy_empirical = {
     'place_params': larva0_food_patchy_8_exp,
     'odor_params': chemorbit_odor_np}
 
-
-
 growth_exp_np = {'arena_params': arena(0.01, 0.01),  # dish(0.006),
                  'space_params': mesa_space,
                  'food_params': food_grid(50,10**-5),  # food(0.0002),
