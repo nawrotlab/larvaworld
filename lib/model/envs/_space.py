@@ -40,7 +40,6 @@ class ValueGrid:
         return np.array((0, c, 0))
 
     def get_grid_cell(self, p):
-        # p=list(p)
         c=np.clip(np.array(p/self.xy + self.XY_half).astype(int), a_min=[0,0], a_max=[self.X-1,self.Y-1])
         return tuple(c)
 

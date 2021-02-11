@@ -184,10 +184,10 @@ intermitter_2x = {'pause_dist' : 'fit',
                   'intermittent_crawler': True,
                   'intermittent_feeder': True,
                   'feeder_reoccurence_decay_coef': 0.1,
-                  'feeder_reoccurence_rate_on_success': 0.5,
+                  'feeder_reoccurence_rate_on_success': 0.9,
                   'intermittent_turner': False,
                   'turner_prepost_lag': [0.0, 0.0],
-                  'explore2exploit_bias': 0.5}
+                  'explore2exploit_bias': 0.3}
 
 # ----------------------------------------------OLFACTOR MODES----------------------------------------------------------
 
@@ -215,7 +215,7 @@ feeder = {'freq_range': [1.0, 5.0],
 # ----------------------------------------------ENERGETICS MODES--------------------------------------------------------
 energetics_params = {'food_to_biomass_ratio': 0.1,
                      'f_decay_coef' : 0.01,
-                     'hunger_affects_feeder' : True,
+                     'hunger_affects_feeder' : False,
                      'deb': True}
 
 l3_seg11 = {'initial_length': 0.00428,

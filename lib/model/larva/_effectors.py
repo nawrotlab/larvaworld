@@ -111,7 +111,6 @@ class Crawler(Oscillator):
         # print(self.amp, self.timesteps_per_iteration * self.square_signal_duty)
 
     def step(self, length):
-
         self.complete_iteration = False
         noise = np.random.normal(scale=self.scaled_noise * length)
         if self.effector:
@@ -134,7 +133,7 @@ class Crawler(Oscillator):
                 self.step_to_length = self.generate_step_to_length()
             activity += noise
         else:
-            activity = noise
+            activity = 0
         return np.clip(activity, a_min=0, a_max=np.inf)
 
     def gaussian_oscillator(self):
