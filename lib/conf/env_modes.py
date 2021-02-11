@@ -1,7 +1,6 @@
 import numpy as np
 import sys
 
-sys.path.insert(0, '../../..')
 import lib.aux.functions as fun
 
 ######## FOOD PARAMETERS ###########
