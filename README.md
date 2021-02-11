@@ -106,9 +106,9 @@ Three modes are available :
     Optionally run the respetive analysis.
    
     This line runs a dish simulation (30 larvae, 3 minutes) without analysis. 
-    We choose to also see the simulation at a framerate of 6 fps as it unfolds.
+    We choose to also see the simulation at a speed x6 as it unfolds.
     
-        python exp_run.py dish -N 30 -t 3.0 -vid
+        python exp_run.py dish -N 30 -t 3.0 -vid -fps 6
     
     This line runs a dispersion simulation and compares the results to the existing reference dataset (`larvaworld/data/reference`)
     We choose to only produce a final image of the simulation.

@@ -15,7 +15,7 @@ from scipy import stats
 from scipy.interpolate import griddata
 from scipy.stats import ttest_ind
 from sklearn.linear_model import LinearRegression
-import powerlaw
+import powerlaw as pow
 
 
 
@@ -2289,9 +2289,9 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
                 alpha = 1 + len(dur) / np.sum(np.log(dur / durmin))
                 print("powerlaw exponent MLE:", alpha)
                 if discrete:
-                    results = powerlaw.Fit(dur, xmin=durmin, xmax=durmax, discrete=True)
+                    results = pow.Fit(dur, xmin=durmin, xmax=durmax, discrete=True)
                 else:
-                    results = powerlaw.Fit(np.array(dur * fr).astype(int), xmin=int(durmin * fr), xmax=int(durmax * fr),
+                    results = pow.Fit(np.array(dur * fr).astype(int), xmin=int(durmin * fr), xmax=int(durmax * fr),
                                            discrete=True)
                 alpha2 = results.power_law.alpha
                 print("powerlaw exponent powerlaw package:", alpha2)
