@@ -8,20 +8,21 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import cm, pyplot as plt, gridspec, transforms, ticker
+from matplotlib.patches import Wedge
 from mpl_toolkits.mplot3d import Axes3D
 from scipy import signal
 from scipy import stats
 from scipy.interpolate import griddata
+from scipy.stats import ttest_ind
 from sklearn.linear_model import LinearRegression
 import powerlaw
+
+
 
 from lib.aux import naming as nam
 from lib.anal.fitting import *
 from lib.aux.functions import weib, flatten_list
 from lib.anal.combining import combine_images, combine_pdfs
-from scipy.stats import ttest_ind
-from matplotlib.patches import Wedge
-
 from lib.stor.paths import DebFolder
 from lib.conf.par_db import par_db
 
