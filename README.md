@@ -50,7 +50,7 @@ Open linux terminal.
 Navigate to a directory of your choice.
 Download or clone the repository to your local drive :
 
-    git clone https://github.com/nawrotlab/Larvaworld.git
+    git clone https://github.com/nawrotlab/larvaworld.git
 
 Make sure python 3.7 is your default python interpreter.
 Optionally create a python 3.7 virtual environment, for example in folder `larvaworld_venv`, and activate it:
