@@ -3,22 +3,15 @@ import datetime
 import json
 import time
 
-import sys
-
-
-
-# sys.path.insert(0, '../../..')
-
 from lib.anal.plotting import *
 from lib.conf import exp_types, default_sim
-from lib.model.larva.deb import deb_dict
+from lib.model.larva.deb import deb_dict, deb_default
 import lib.stor.paths as paths
 
 from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.data_modes as conf
 from lib.model.envs._larvaworld import LarvaWorldSim
 import lib.aux.functions as fun
-from lib.aux.functions import dict_to_file, flatten_list
 from lib.aux.collecting import effector_collection
 
 
@@ -95,7 +88,7 @@ def run_sim(sim_id,
     # Save simulation data and parameters
     if save_data_flag:
         d.save()
-        dict_to_file(param_dict, d.sim_pars_file_path)
+        fun.dict_to_file(param_dict, d.sim_pars_file_path)
         # Show the odor layer
         if env.Nodors>0:
             env.plot_odorscape(save_to=d.plot_dir)
@@ -230,4 +223,4 @@ def sim_analysis(d, experiment):
         print(ind)
         return ind
     elif experiment == 'imitation':
-        d.save_agent(pars=flatten_list(d.points_xy) + flatten_list(d.contour_xy), header=True)
+        d.save_agent(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
