@@ -1,5 +1,5 @@
-import sys
 import argparse
+import sys
 import time
 
 sys.path.insert(0, '..')

@@ -3,16 +3,15 @@ import datetime
 import json
 import time
 
-from lib.anal.plotting import *
-from lib.conf import exp_types, default_sim
-from lib.model.larva.deb import deb_dict, deb_default
-import lib.stor.paths as paths
-
-from lib.stor.larva_dataset import LarvaDataset
-import lib.conf.data_modes as conf
-from lib.model.envs._larvaworld import LarvaWorldSim
 import lib.aux.functions as fun
+import lib.conf.data_modes as conf
+import lib.stor.paths as paths
+from lib.anal.plotting import *
 from lib.aux.collecting import effector_collection
+from lib.conf import exp_types, default_sim
+from lib.model.envs._larvaworld import LarvaWorldSim
+from lib.model.larva.deb import deb_dict, deb_default
+from lib.stor.larva_dataset import LarvaDataset
 
 
 def run_sim(sim_id,

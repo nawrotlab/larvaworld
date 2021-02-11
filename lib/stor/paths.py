@@ -24,4 +24,3 @@ SimIdx_path = f'{ConfFolder}/SimIdx.txt'
 RefFolder = f'{DataFolder}/reference'
 Ref_path = f'{RefFolder}/data/reference.csv'
 Ref_fits = f'{RefFolder}/data/bout_fits.csv'
-

@@ -47,14 +47,9 @@ class LarvaDataset:
         self.arena_pars = {'arena_xdim': self.arena_xdim,
                            'arena_ydim': self.arena_ydim,
                            'arena_shape': self.arena_shape}
-
         self.dt = 1 / fr
-
-        self.configure_body(Npoints=self.Npoints,
-                            Ncontour=self.Ncontour)
-
+        self.configure_body(Npoints=self.Npoints,Ncontour=self.Ncontour)
         self.define_linear_metrics(self.config)
-
         self.types_dict = self.build_types_dict()
         if load_data:
             try:
@@ -62,8 +57,8 @@ class LarvaDataset:
                 print('Data loaded successfully from stored csv files.')
             except:
                 print('Data not found. Load them manually.')
-        else:
-            print('Data not loaded as requested.')
+        # else:
+        #     print('Data not loaded as requested.')
 
     ########################################
     ############# CALIBRATION ##############
