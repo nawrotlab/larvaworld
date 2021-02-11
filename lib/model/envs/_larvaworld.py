@@ -34,10 +34,14 @@ class LarvaWorld(Model):
                  trajectories=True, trail_decay_in_sec=0.0, trajectory_colors=None,
                  show_state=True, random_larva_colors=False, color_behavior=False,
                  draw_head=False, draw_contour=True, draw_centroid=False, draw_midline=True,
-                 show_display=True, video_speed=1, snapshot_interval_in_sec=60):
+                 show_display=True, video_speed=None, snapshot_interval_in_sec=60*60*10):
 
         self.dt = dt
-        self.video_fps = int(video_speed / dt)
+        if video_speed is None :
+            self.video_fps= int(1 / dt)
+        else :
+            self.video_fps = int(video_speed / dt)
+
         self.show_display=show_display
         self.sim_screen_dim = sim_screen_dim
         self.Nsteps = Nsteps

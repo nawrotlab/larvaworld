@@ -104,7 +104,7 @@ def angle_old(point_3, point_2, point_1, in_deg=True):
     dx2, dy2 = np.array(point_2) - np.array(point_3)
     rads2 = math.atan2(dy2, dx2)
     dif = rads1 - rads2
-    dif %= 2 * pi
+    dif %= 2 * np.pi
     if dif > np.pi:
         dif -= np.pi * 2
     if in_deg:
