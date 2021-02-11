@@ -4,13 +4,11 @@ import random
 import sys
 import time
 from collections import deque
-from math import atan2, pi, degrees
 import pandas as pd
 from contextlib import contextmanager
 import sys, os
 import numpy as np
 from fitter import Fitter
-from numpy import pi
 from pypet import ParameterGroup, Parameter
 from scipy.signal import butter, sosfiltfilt
 import scipy.stats as st
@@ -53,25 +51,15 @@ def density_extrema(data, kernel_width=0.02, Nbins=1000):
         maxima = vals[args_max]
     else:
         maxima = []
-    # try:
-    #     minima = vals[mi][0]
-    # except:
-    #     minima = np.nan
-    # minimas.append(minima)
     return minima, maxima
 
 def _restore_angle(a, d, l, n, num_segments, correction_coef):
-    # if a > pi / 2 or a < pi / 2:
-    #     s = -1
-    # else:
-    #     s = 1
     k0 = (l * n / num_segments) / correction_coef
     k1 = (l * (n + 1) / num_segments) / correction_coef
     if d <= k0:
         return a, 0
     elif k0 < d < k1:
         da = 1.0 * a * d / (l / num_segments)
-        # print(da, a)
         return a - da, da
     elif k1 <= d:
         return 0, a
@@ -96,7 +84,7 @@ def restore_bend_2seg(bend, d, l, correction_coef=1.0):
 
 
 def circle_to_polygon(sides, radius, rotation=0, translation=None):
-    one_segment = math.pi * 2 / sides
+    one_segment = np.pi * 2 / sides
 
     points = [
         (math.sin(one_segment * i + rotation) * radius,
@@ -108,23 +96,6 @@ def circle_to_polygon(sides, radius, rotation=0, translation=None):
                   for point in points]
 
     return np.array(points)
-
-
-# def orientation_change(or_2, or_1):
-#     o = or_2 - or_1
-#     if o > pi:
-#         o -= pi * 2
-#     elif o < -pi:
-#         o += pi * 2
-#     return o
-
-
-# radians of 1 to the axis 32
-# ATTENTION : Center of rotation is point2
-# def angle_old(point_3, point_2, point_1, in_deg=True):
-#     angle_21 = angle_to_x_axis(point_2, point_1, in_deg)
-#     angle_32 = angle_to_x_axis(point_3, point_2, in_deg)
-#     return angle_dif(angle_21, angle_32, in_deg)
 
 
 def angle_old(point_3, point_2, point_1, in_deg=True):
@@ -153,34 +124,13 @@ def angle(a, b, c, in_deg=True):
                 2 * np.pi)
         return ang if ang <= np.pi else ang - 2 * np.pi
 
-
-# def angle_to_x_axis_old(point_1, point_2, in_deg=True):
-#     x1 = point_1[0]
-#     y1 = point_1[1]
-#     x2 = point_2[0]
-#     y2 = point_2[1]
-#     dx = x2 - x1
-#     dy = y2 - y1
-#     rads = atan2(dy, dx)
-#     rads %= 2 * pi
-#     if in_deg:
-#         degs = degrees(rads)
-#         return degs
-#     else:
-#         return rads
-
 def angle_to_x_axis(point_1, point_2, in_deg=True):
     # Point 1 is start, point 2 is end of vector
     if np.isnan(point_1).any() or np.isnan(point_2).any():
         return np.nan
-    # x1 = point_1[0]
-    # y1 = point_1[1]
-    # x2 = point_2[0]
-    # y2 = point_2[1]
-    # dx = x2 - x1
     dx, dy = np.array(point_2) - np.array(point_1)
     rads = atan2(dy, dx)
-    rads %= 2 * pi
+    rads %= 2 * np.pi
     if in_deg:
         return degrees(rads)
     else:
