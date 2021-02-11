@@ -9,7 +9,7 @@ import json
 import os
 import random
 import time
-
+import pandas as pd
 from pypet import Environment, cartesian_product, load_trajectory, pypetconstants
 from pypet.parameter import ObjectTable
 
@@ -17,8 +17,6 @@ from lib.anal.plotting import plot_heatmap, plot_endpoint_scatter
 from lib.conf.larva_modes import *
 from lib.sim.single_run import run_sim, generate_config
 from lib.aux.functions import flatten_dict, reconstruct_dict, flatten_list
-import pandas as pd
-
 from lib.stor.paths import BatchRunFolder
 from lib.stor.larva_dataset import LarvaDataset
 
