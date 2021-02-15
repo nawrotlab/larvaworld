@@ -460,9 +460,9 @@ class LarvaBody:
         if self.real_mass is None:
             self.compute_mass_from_length()
 
-        self.segs=self.generate_segs(pos, orientation, joint_type=joint_type)
+        self.segs = self.generate_segs(pos, orientation, joint_type=joint_type)
 
-        self.contour=self.set_contour()
+        self.contour = self.set_contour()
 
     def get_real_length(self):
         return self.real_length
@@ -519,77 +519,76 @@ class LarvaBody:
         return self.get_global_front_end_of_head()
 
     def generate_seg_shapes(self, num_segments, width_to_length_proportion, density, interval, segment_ratio):
-        N=num_segments
+        N = num_segments
         shape_length = 1
         w = width_to_length_proportion / 2
-        f0 = 0.52
-        front_max = 0.4
-        front_length = f0 - front_max
-        rear_max = -0.4
-        rear_end = f0-shape_length
-        l = rear_max - rear_end
+        x0 = 0.52
+        w_max = 0.4
+        l0 = x0 - w_max
+        # rear_max = -0.4
+        x2 = x0 - shape_length
+        l = -w_max - x2
 
         # generic larva shape with total lenth 1
-        shape = [(f0, +0.0),
-                 (front_max, +w * 2 / 3),
-                 (front_max / 3, +w),
-                 (rear_max, +w * 2 / 3),
-                 (rear_end, 0.0),
-                 (rear_max, -w * 2 / 3),
-                 (front_max / 3, -w),
-                 (front_max, -w * 2 / 3)]
-
+        shape = [(x0, +0.0),
+                 (w_max, +w * 2 / 3),
+                 (w_max / 3, +w),
+                 (-w_max, +w * 2 / 3),
+                 (x2, 0.0),
+                 (-w_max, -w * 2 / 3),
+                 (w_max / 3, -w),
+                 (w_max, -w * 2 / 3)]
         # shape = self.get_larva_shape()
         generic_shape = np.array([shape])
 
         if num_segments == 1:
             return [generic_shape]
         else:
-            s0s = [f0 + r - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
-            s1s = [f0 + r / 2 - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
-            s2s = [f0 - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
-            s0s, s2s = self.add_interval_between_segments(N, density, interval, s0s,s2s)
+            s0s = [x0 + r - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
+            s1s = [x0 + r / 2 - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
+            s2s = [x0 - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
+            s0s, s2s = self.add_interval_between_segments(N, density, interval, s0s, s2s)
             segment_vertices = []
             for i, (s0, s1, s2) in enumerate(zip(s0s, s1s, s2s)):
-                if s0 > front_max and s2 >= front_max:
-                    shape = np.array([[(s0 - s1, +(f0 - s0) / front_length * w),
-                                       (s2 - s1, +(f0 - s2) / front_length * w),
-                                       (s2 - s1, -(f0 - s2) / front_length * w),
-                                       (s0 - s1, -(f0 - s0) / front_length * w)]])
-                elif s0 > front_max > s2 >= rear_max:
-                    shape = np.array([[(s0 - s1, +(f0 - s0) / front_length * w),
-                                       (front_max - s1, +w),
-                                       (s2 - s1, +w),
-                                       (s2 - s1, -w),
-                                       (front_max - s1, -w),
-                                       (s0 - s1, -(f0 - s0) / front_length * w)]])
-                elif rear_max < s0 <= front_max and rear_max <= s2 < front_max:
-                    shape = np.array([[(s0 - s1, +w),
-                                       (s2 - s1, +w),
-                                       (s2 - s1, -w),
-                                       (s0 - s1, -w)]])
-                elif front_max >= s0 > rear_max >= s2:
-                    shape = np.array([[(s0 - s1, +w),
-                                       (rear_max - s1, +w),
-                                       (s2 - s1, +((s2 - rear_end) / l + 1) * w / 2),
-                                       (s2 - s1, -((s2 - rear_end) / l + 1) * w / 2),
-                                       (rear_max - s1, -w),
-                                       (s0 - s1, -w)]])
-                elif rear_max >= s0:
-                    shape = np.array([[(s0 - s1, +((s0 - rear_end) / l + 1) * w / 2),
-                                       (s2 - s1, +((s2 - rear_end) / l + 1) * w / 2),
-                                       (s2 - s1, -((s2 - rear_end) / l + 1) * w / 2),
-                                       (s0 - s1, -((s0 - rear_end) / l + 1) * w / 2)]])
-                segment_vertices.append(shape * N)
+                if s0 > w_max and s2 >= w_max:
+                    shape = [(s0 - s1, +(x0 - s0) / l0 * w),
+                             (s2 - s1, +(x0 - s2) / l0 * w),
+                             (s2 - s1, -(x0 - s2) / l0 * w),
+                             (s0 - s1, -(x0 - s0) / l0 * w)]
+                elif s0 > w_max > s2 >= -w_max:
+                    shape = [(s0 - s1, +(x0 - s0) / l0 * w),
+                             (w_max - s1, +w),
+                             (s2 - s1, +w),
+                             (s2 - s1, -w),
+                             (w_max - s1, -w),
+                             (s0 - s1, -(x0 - s0) / l0 * w)]
+                elif -w_max < s0 <= w_max and -w_max <= s2 < w_max:
+                    shape = [(s0 - s1, +w),
+                             (s2 - s1, +w),
+                             (s2 - s1, -w),
+                             (s0 - s1, -w)]
+                elif w_max >= s0 > -w_max >= s2:
+                    shape = [(s0 - s1, +w),
+                             (-w_max - s1, +w),
+                             (s2 - s1, +((s2 - x2) / l + 1) * w / 2),
+                             (s2 - s1, -((s2 - x2) / l + 1) * w / 2),
+                             (-w_max - s1, -w),
+                             (s0 - s1, -w)]
+                elif -w_max >= s0:
+                    shape = [(s0 - s1, +((s0 - x2) / l + 1) * w / 2),
+                             (s2 - s1, +((s2 - x2) / l + 1) * w / 2),
+                             (s2 - s1, -((s2 - x2) / l + 1) * w / 2),
+                             (s0 - s1, -((s0 - x2) / l + 1) * w / 2)]
+                segment_vertices.append(np.array([shape]) * N)
             return segment_vertices
 
     def get_larva_shape(self, filepath=None):
-        if filepath is None :
-            filepath=LarvaShape_path
+        if filepath is None:
+            filepath = LarvaShape_path
         return np.loadtxt(filepath, dtype=float, delimiter=",")
 
     def generate_segs(self, position, orientation, joint_type=None):
-        N=self.Nsegs
+        N = self.Nsegs
         ls_x = [np.cos(orientation) * l for l in self.seg_lengths]
         ls_y = np.sin(orientation) * self.sim_length / N
         seg_positions = [[position[0] + (-i + (N - 1) / 2) * ls_x[i],
@@ -613,7 +612,7 @@ class LarvaBody:
                 segs.append(seg)
 
             # put all agents into same group (negative so that no collisions are detected)
-            if not self.collisions :
+            if not self.collisions:
                 for fixture in fixtures:
                     fixture.filterData.groupIndex = -1
             # else :
@@ -621,14 +620,14 @@ class LarvaBody:
             #         for fixture in seg._fixtures:
             #             fixture.filterData.groupIndex = -i
 
-
             if joint_type is None:
                 joint_type = {'distance': 2, 'revolute': 1}
             if N > 1:
                 self.create_joints(N, segs, joint_type)
         else:
             for i in range(N):
-                seg = DefaultPolygon(pos=seg_positions[i], orientation=orientation, seg_vertices=self.seg_vertices[i], color=self.seg_colors[i])
+                seg = DefaultPolygon(pos=seg_positions[i], orientation=orientation, seg_vertices=self.seg_vertices[i],
+                                     color=self.seg_colors[i])
                 segs.append(seg)
             self.model.space.place_agent(self, position)
         return segs
