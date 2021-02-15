@@ -7,7 +7,8 @@ import lib.conf.env_modes as env
 
 def add_vis_kwargs(parser):
     parser.add_argument('-hide', '--show_display', action="store_false", help='Hide display')
-    parser.add_argument('-vid', '--video_speed', type=float, nargs='?', const=1.0, help='The fast-forward speed of the video')
+    parser.add_argument('-vid', '--video_speed', type=float, nargs='?', const=1.0,
+                        help='The fast-forward speed of the video')
     parser.add_argument('-img', '--image_mode', nargs='?', const='final',
                         choices=['final', 'overlap', 'snapshots'], help='Select image mode')
     parser.add_argument('-rnd', '--random_larva_colors', action="store_true", help='Color larvae with random colors')
@@ -43,7 +44,7 @@ def get_vis_kwargs(args):
                   'color_behavior': args.color_behavior,
                   'black_background': args.black_background,
                   'draw_head': args.draw_head,
-                  'show_display' : args.show_display,
+                  'show_display': args.show_display,
                   }
     return vis_kwargs
 
@@ -57,7 +58,8 @@ def add_replay_kwargs(parser):
     parser.add_argument('-tkr', '--tick_range', type=int, nargs='+', help='The time range to visualize in ticks')
     parser.add_argument('-fix', '--fix_points', type=int, nargs='+',
                         help='Fixate a midline point to the center of the screen')
-    parser.add_argument('-Nsegs', '--draw_Nsegs', type=int, nargs='?', const=2, help='Simplify larva body to N segments')
+    parser.add_argument('-Nsegs', '--draw_Nsegs', type=int, nargs='?', const=2,
+                        help='Simplify larva body to N segments')
 
     parser.add_argument('-dim', '--arena_dims', type=float, nargs='+', help='The arena dimensions in m')
     parser.add_argument('-con', '--draw_contour', action="store_false", help='Hide the contour')
@@ -75,7 +77,7 @@ def get_replay_kwargs(args):
     if fix is not None:
         use_background = True
         if len(fix) == 2 and np.abs(fix[1]) == 1:
-            fix_point, secondary_fix_point = fix[0], fix[0]+fix[1]
+            fix_point, secondary_fix_point = fix[0], fix[0] + fix[1]
         elif len(fix) == 1:
             fix_point, secondary_fix_point = fix[0], None
         else:
@@ -101,7 +103,6 @@ def get_replay_kwargs(args):
     else:
         arena_pars = None
 
-
     replay_kwargs = {'agent_ids': args.agent_ids,
                      'align_mode': args.align_mode,
                      'fix_point': fix_point,
@@ -120,9 +121,10 @@ def get_replay_kwargs(args):
 
 def add_data_kwargs(parser):
     # parser.add_argument('dataset_type', type=str, help='The dataset type name')
-    parser.add_argument('-fld', '--folders', nargs='+', type=str, help='Folders under the DataGroup parent dir where to search for datasets')
+    parser.add_argument('-fld', '--folders', nargs='+', type=str,
+                        help='Folders under the DataGroup parent dir where to search for datasets')
     parser.add_argument('-suf', '--suffixes', nargs='+', type=str, help='Suffixes of the dataset names')
-    parser.add_argument('-nam', '--names', nargs='+', default=['enriched'],type=str, help='Names of the datasets')
+    parser.add_argument('-nam', '--names', nargs='+', default=['enriched'], type=str, help='Names of the datasets')
     # parser.add_argument('-lst', '--last_common', type=str, default='processed', help='The last common folder of the datasets under the DataGroup parent dir')
     # parser.add_argument('-mode', '--mode', type=str, default='load', choices=['load', 'initialize'],help='Whether to load existing or initialize new datasets')
     parser.add_argument('-load', '--load_data', action="store_false", help='Not load the data from the datasets')
@@ -140,22 +142,26 @@ def get_data_kwargs(args):
     }
     return data_kwargs
 
+
 def add_build_kwargs(parser):
     parser.add_argument('-d_ids', '--dataset_ids', nargs='+', type=str, help='Ids of newly built datasets')
-    parser.add_argument('-raw', '--raw_folders', nargs='+', type=str, help='Folders where to search for raw data when building a dataset')
+    parser.add_argument('-raw', '--raw_folders', nargs='+', type=str,
+                        help='Folders where to search for raw data when building a dataset')
     parser.add_argument('-t', '--min_duration_in_sec', type=float, nargs='?', default=0.0,
                         help='During dataset building, the minimum duration in sec of included larva tracks.')
-    parser.add_argument('-all', '--all_folders', action="store_true", help='Create a single merged dataset from all raw folders')
+    parser.add_argument('-all', '--all_folders', action="store_true",
+                        help='Create a single merged dataset from all raw folders')
     parser.add_argument('-each', '--each_folder', action="store_true", help='Create a dataset from each raw folder')
     return parser
 
+
 def get_build_kwargs(args):
-    if args.all_folders :
-        raw_folders='all'
-    elif args.each_folder :
-        raw_folders='each'
-    else :
-        raw_folders=args.raw_folders
+    if args.all_folders:
+        raw_folders = 'all'
+    elif args.each_folder:
+        raw_folders = 'each'
+    else:
+        raw_folders = args.raw_folders
     build_kwargs = {
         'suffixes': args.suffixes,
         'folders': args.folders,
@@ -166,17 +172,21 @@ def get_build_kwargs(args):
     }
     return build_kwargs
 
+
 def add_sim_kwargs(parser):
     parser.add_argument('-id', '--sim_id', type=str, help='The id of the simulation')
     parser.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae')
     parser.add_argument('-t', '--sim_time', type=float, help='The duration of the simulation in min')
+    parser.add_argument('-Box2D', '--Box2D', action="store_true", help='Use the Box2D physics engine')
     return parser
 
 
 def get_sim_kwargs(args):
-    sim_kwargs = {'sim_id' :args.sim_id,
-        'Nagents': args.Nagents,
-                  'sim_time': args.sim_time}
+    sim_kwargs = {'sim_id': args.sim_id,
+                  'Nagents': args.Nagents,
+                  'sim_time': args.sim_time,
+                  'Box2D': args.Box2D
+                  }
     return sim_kwargs
 
 
@@ -193,7 +203,7 @@ def get_batch_kwargs(args):
     batch_kwargs = {
         'batch_id': args.batch_id,
         'max_Nsims': args.max_Nsims,
-                    'Nbest': args.Nbest}
+        'Nbest': args.Nbest}
     return batch_kwargs
 
 

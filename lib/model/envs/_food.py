@@ -29,6 +29,7 @@ class Food(mesa.Agent):
         # if self.static_food:
         # We bypass the init function of super because it creates a dynamic body. We need a static
         shape = circle_to_polygon(60, self.radius)
+
         if self.model.physics_engine:
             self._body: Box2D.b2Body = self.model.space.CreateStaticBody(position=position)
             # else:
@@ -37,7 +38,7 @@ class Food(mesa.Agent):
             #     # super().__init__(space=self.space, position=self.position, orientation=None, radius=self.shape_radius)
             #     self._body.bullet = True
 
-            self.food_shape = b2ChainShape(vertices=shape)
+            self.food_shape = b2ChainShape(vertices=shape.tolist())
             self._body.CreateFixture(shape=self.food_shape)
             self._body.fixtures[0].filterData.groupIndex = -1
         else:

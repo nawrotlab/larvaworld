@@ -351,7 +351,7 @@ class VelocityAgent(Agent, abc.ABC):
 
     def update_trajectory(self):
         pos = self.get_position()
-        self.step_dst = np.sqrt(np.sum((pos-self.current_pos)**2))
+        self.step_dst = np.sqrt(np.sum(np.array(pos-self.current_pos)**2))
         self.cum_dst += self.step_dst
         self.current_pos=pos
         self.trajectory.append(pos)

@@ -8,7 +8,7 @@ import lib.conf.data_modes as conf
 import lib.stor.paths as paths
 from lib.anal.plotting import *
 from lib.aux.collecting import effector_collection
-from lib.conf import exp_types, default_sim
+from lib.conf import exp_types, default_sim, box2d_space
 from lib.model.envs._larvaworld import LarvaWorldSim
 from lib.model.larva.deb import deb_dict, deb_default
 from lib.stor.larva_dataset import LarvaDataset
@@ -137,7 +137,7 @@ def next_idx(exp, type='single'):
     return idx_dict[type][exp]
 
 
-def generate_config(exp, Nagents=None, sim_time=None, sim_id=None):
+def generate_config(exp, Nagents=None, sim_time=None, sim_id=None, Box2D=False):
     config = exp_types[exp]
     if sim_id is None:
         idx = next_idx(exp)
@@ -170,6 +170,8 @@ def generate_config(exp, Nagents=None, sim_time=None, sim_id=None):
         config['env_params']['place_params']['initial_num_flies'] = Nagents
     if sim_time is not None:
         config['sim_params']['sim_time_in_min'] = sim_time
+    if Box2D :
+        config['env_params']['space_params'] = box2d_space
 
     return config
 
