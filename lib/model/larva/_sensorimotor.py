@@ -139,12 +139,12 @@ class VelocityAgent(Agent, abc.ABC):
             #
             # # From web : Impulse = Force x 1 Sec in Box2D
             # if self.mode == 'impulse':
-            #     imp = lin_vec / target_segment.get_mass()
+            #     imp = lin_vec / target_segment.get_Box2D_mass()
             #     target_segment._body.ApplyLinearImpulse(imp, target_segment._body.worldCenter, wake=True)
             # elif self.mode == 'force':
             #     target_segment._body.ApplyForceToCenter(lin_vec, wake=True)
             # elif self.mode == 'velocity':
-            #     # lin_vec = lin_vec * target_segment.get_mass()
+            #     # lin_vec = lin_vec * target_segment.get_Box2D_mass()
             #     # Use this with gaussian crawler
             #     # target_segment.set_lin_vel(lin_vec * self.lin_coef, local=False)
             #     # Use this with square crawler
@@ -155,7 +155,7 @@ class VelocityAgent(Agent, abc.ABC):
             for seg in self.segs:
                 if self.lin_mode == 'impulse':
                     temp_lin_vec_amp = self.lin_activity * self.lin_vel_coef
-                    impulse = temp_lin_vec_amp * seg.get_world_facing_axis() / seg.get_mass()
+                    impulse = temp_lin_vec_amp * seg.get_world_facing_axis() / seg.get_Box2D_mass()
                     seg._body.ApplyLinearImpulse(impulse, seg._body.worldCenter, wake=True)
                 elif self.lin_mode == 'force':
                     lin_force_amp = self.lin_activity * self.lin_force_coef

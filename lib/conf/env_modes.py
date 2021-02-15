@@ -315,7 +315,7 @@ reorientation_exp_p = {'arena_params': dish(0.2),
                        'place_params': reorientation_place_params,
                        'odor_params': reorientation_odor_p}
 
-reorientation_exp_np = {'arena_params': dish(0.2),
+reorientation_exp_np = {'arena_params': dish(0.1),
                         'space_params': mesa_space,
                         'food_params': food(0.01),
                         'place_params': reorientation_place_params,

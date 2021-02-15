@@ -146,9 +146,9 @@ def generate_config(exp, Nagents=None, sim_time=None, sim_id=None, Box2D=False):
     if 'sim_params' not in config.keys():
         config['sim_params'] = default_sim
 
-    if 'component_params' in config.keys():
-        config['fly_params']['neural_params']['component_params'] = config['component_params']
-        del config['component_params']
+    if 'modules' in config.keys():
+        config['fly_params']['neural_params']['modules'] = config['modules']
+        del config['modules']
     if 'traj_mode' in config.keys():
         config['sim_params']['traj_mode'] = config['traj_mode']
         del config['traj_mode']

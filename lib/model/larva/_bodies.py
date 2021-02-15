@@ -461,7 +461,7 @@ class LarvaBody:
 
         self.segs=self.generate_segs(pos, orientation, joint_type=joint_type)
 
-        self.set_contour()
+        self.contour=self.set_contour()
 
     def get_real_length(self):
         return self.real_length
@@ -629,8 +629,7 @@ class LarvaBody:
                 self.create_joints(N, segs, joint_type)
         else:
             for i in range(N):
-                seg = DefaultPolygon(pos=seg_positions[i], orientation=orientation,
-                                     seg_vertices=self.seg_vertices[i], color=self.seg_colors[i])
+                seg = DefaultPolygon(pos=seg_positions[i], orientation=orientation, seg_vertices=self.seg_vertices[i], color=self.seg_colors[i])
                 segs.append(seg)
             self.model.space.place_agent(self, position)
         return segs
@@ -770,7 +769,6 @@ class LarvaBody:
                                                           np.mean(self.seg_lengths) * x for x in (0.5, 0)))
                     self.joints.append(joint)
 
-    # FIXME Fix the deletion of segments/agents
     def __del__(self):
         try:
             for seg in self.segs:
@@ -783,9 +781,9 @@ class LarvaBody:
 
     def draw(self, viewer):
         if not self.model.draw_contour:
+            self.contour = self.set_contour()
             viewer.draw_polygon(self.contour, filled=True, color=self.get_head()._color)
         else:
-            self.set_contour()
             for seg in self.segs:
                 seg.draw(viewer)
         if self.model.draw_head:
@@ -797,7 +795,7 @@ class LarvaBody:
         for seg in self.segs:
             seg.plot(axes, **kwargs)
 
-    def get_mass(self):
+    def get_Box2D_mass(self):
         mass = 0
         for seg in self.segs:
             mass += seg.get_mass()
@@ -809,9 +807,6 @@ class LarvaBody:
 
     def get_color(self):
         return [seg.get_color() for seg in self.segs]
-
-    # def get_head_orientation(self):
-    #     return self.segs[0].get_orientation()
 
     def get_segment(self, seg_index):
         return self.segs[seg_index]
@@ -882,16 +877,16 @@ class LarvaBody:
     def get_contour(self):
         return self.contour
 
-    def set_contour(self, num_points=22):
+    def set_contour(self, Ncontour=22):
         vertices = [np.array(seg.vertices[0]) for seg in self.segs]
         l_side = flatten_list([v[:int(len(v) / 2)] for v in vertices])
         r_side = flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
         r_side.reverse()
         total_contour = l_side + r_side
-        if len(total_contour) > num_points:
+        if len(total_contour) > Ncontour:
             seed(1)
-            contour = [total_contour[i] for i in sorted(sample(range(len(total_contour)), num_points))]
+            contour = [total_contour[i] for i in sorted(sample(range(len(total_contour)), Ncontour))]
         else:
             contour = total_contour
         # self.contour = contour[ConvexHull(contour).vertices].tolist()
-        self.contour = contour
+        return contour

@@ -22,7 +22,7 @@ feed_grid = {'fly_params': feeding_larva,
 focus = {'fly_params': sample_exploring_larva,
          'env_params': focus_exp_np,
          'collect_effectors': ['turner','pose'],
-         'component_params': sole_turner,
+         'modules': sole_turner,
          }
 imitation = {'fly_params': imitation_larva,
              'env_params': imitation_exp_p,
@@ -32,7 +32,7 @@ imitation = {'fly_params': imitation_larva,
 reorientation = {'fly_params': sample_odor_larva,
                  'env_params': reorientation_exp_np,
                  'collect_effectors': ['turner', 'olfactor','pose'],
-                 'component_params': olfactor_turner,
+                 'modules': olfactor_turner,
                  'traj_mode': no_traj
                  }
 growth = {'fly_params': growing_larva,
