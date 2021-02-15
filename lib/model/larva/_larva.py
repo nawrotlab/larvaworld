@@ -307,9 +307,11 @@ class LarvaSim(VelocityAgent, Larva):
                 self.deb.steps_per_day=int(24 * 60 * 60 / self.model.dt)
                 self.real_length = self.deb.get_real_L()
                 self.real_mass = self.deb.get_W()
+                self.f_increment = energetic_pars['f_increment']
                 self.f_decay_coef = energetic_pars['f_decay_coef']
                 self.f_exp_coef = np.exp(-self.f_decay_coef*self.model.dt)
                 self.hunger_affects_feeder = energetic_pars['hunger_affects_feeder']
+                self.hunger_affects_balance = energetic_pars['hunger_affects_balance']
             else:
                 self.deb = None
                 self.food_to_biomass_ratio = energetic_pars['food_to_biomass_ratio']
@@ -333,13 +335,15 @@ class LarvaSim(VelocityAgent, Larva):
         if self.deb:
             f = self.deb.get_f()
             if feed_success:
-                f += 1
+                f += self.f_increment
             f *= self.f_exp_coef
             self.deb.run(f=f)
             self.real_length = self.deb.get_real_L()
             self.real_mass = self.deb.get_W()
             if self.hunger_affects_feeder :
                 self.brain.intermitter.feeder_reoccurence_rate_on_success=self.deb.hunger
+            if self.hunger_affects_balance :
+                self.brain.intermitter.explore2exploit_bias=1-self.deb.hunger
             # if not self.deb.alive :
             #     raise ValueError ('Dead')
             self.adjust_body_vertices()

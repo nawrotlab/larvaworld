@@ -44,7 +44,10 @@ def larva_mid(N, s=0.1):
 def food_place(N, place='mid', r=0.7):
     if place=='mid' :
         mode='defined'
-        loc=np.array([(0.0, 0.0)]*N)
+        if N>0:
+            loc=np.array([(0.0, 0.0)]*N)
+        else :
+            loc=None
     elif place=='circle' :
         mode = 'defined'
         loc=fun.positions_in_circle(r, N)

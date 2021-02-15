@@ -273,6 +273,9 @@ class TargetedDataCollector(DataCollector):
                 "deb_Nticks": lambda a: a.deb.tick_counter,
                 "deb_steps_per_day": lambda a: a.deb.steps_per_day,
                 "age": lambda a: a.deb.age_day * 24,
+                "reserve_density": lambda a: a.deb.get_reserve_density(),
+                "puppation_buffer": lambda a: a.deb.get_puppation_buffer(),
+                "hunger": lambda a: a.deb.hunger,
 
 
             }
@@ -323,7 +326,10 @@ effector_collection = {
                      # 'structural_length', 'maturity', 'reproduction','structure','age_in_days',
                      'hunger',  'puppation_buffer'],
             'endpoint': ['birth_time_in_hours', 'puppation_time_in_hours',
-                         'death_time_in_hours', 'age']},
+                         'death_time_in_hours', 'age', 'reserve_density', 'puppation_buffer', 'hunger',
+                         'cum_dst', 'cum_scaled_dst','pause_dur_ratio',
+                         'num_strides', 'stride_dur_ratio', 'vel_freq'
+                         ]},
     'pose': {'step': ['centroid_x', 'centroid_y', 'bend', 'front_orientation', 'rear_orientation'],
              'endpoint': []},
     'nengo': {'step': ['crawler_activity', 'turner_activity', 'feeder_motion'],

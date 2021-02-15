@@ -84,11 +84,33 @@ feed_grid_batch = {
 
 }
 
+growth_batch = {
+    'pars': [
+        # 'explore2exploit_bias',
+             'f_decay_coef',
+             # 'f_increment'
+    ],
+    'ranges': np.array([
+        # [0.4, 0.6],
+                        [0.3, 0.5],
+                        # [0.8, 1.2]
+    ]),
+    'process_method': deb_processing,
+    'post_process_method': null_post_processing,
+    'final_process_method': deb_analysis,
+    'space_method': grid_search_dict,
+    'batch_config': None,
+    'post_kwargs': {},
+    'run_kwargs': {'save_data_flag': True}
+
+}
+
 batch_types = {
     'odor_pref': odor_pref_batch,
     'chemorbit': chemorbit_batch,
     'chemotax': chemotax_batch,
     'feed_scatter': feed_scatter_batch,
     'feed_grid': feed_grid_batch,
+    'growth' : growth_batch
 }
 

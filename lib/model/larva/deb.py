@@ -551,9 +551,11 @@ def deb_default(starvation_days=[], f=1, id=None):
             'starvation' : starvation}
     return dict
 
-def deb_dict(dataset, id):
+def deb_dict(dataset, id, new_id=None):
     s=dataset.step_data.xs(id, level='AgentID')
     e=dataset.endpoint_data.loc[id]
+    if new_id is not None :
+        id=new_id
     dict = {'birth': e['birth_time_in_hours'],
             'puppation': e['puppation_time_in_hours'],
             'death': e['death_time_in_hours'],

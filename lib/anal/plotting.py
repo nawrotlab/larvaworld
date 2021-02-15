@@ -1425,7 +1425,8 @@ def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full'):
                 xy=(T2, 0), xycoords='data', fontsize=20,
                 xytext=(T2, -0.3), textcoords='data',
                 horizontalalignment='center', verticalalignment='top')
-    axs[0].legend(handles=[mpatches.Patch(color=c, label=id) for c, id in zip(cols,ids)], labels=ids, fontsize=20, loc='upper center')
+    axs[0].legend(handles=[mpatches.Patch(color=c, label=id) for c, id in zip(cols,ids)],
+                  labels=ids, fontsize=20, loc='upper center', prop={'size': 10})
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.93, hspace=0.02)
     save_plot(fig, filepath, save_as)
 
@@ -1483,27 +1484,86 @@ def plot_deb(dataset, mode='minimal'):
     save_plot(fig, filepath, filename)
 
 
-def plot_surface(x, y, z, name, title=True, save_to=None, save_as=None):
+def plot_surface(x, y, z,  labels, z0=None, title=None, save_to=None, save_as=None, pref=None):
+    # print(z0)
     fig = plt.figure(figsize=(10, 5))
-    if title:
-        fig.suptitle(name, fontsize=20)
+    if title is not None:
+        fig.suptitle(title, fontsize=20)
     # ax = fig.gca(projection='3d')
+    # ax = fig.add_subplot(111, projection='3d')
     ax = Axes3D(fig)
     ax.plot_surface(x, y, z,
                     cmap=cm.coolwarm,
                     linewidth=0,
                     antialiased=True)
-    ax.set_xlabel(r'x $(mm)$', fontsize=10)
-    ax.set_ylabel(r'y $(mm)$', fontsize=10)
-    ax.set_zlabel(r'concentration $(μM)$', fontsize=10)
+    if z0 is not None :
+        ax.plot_surface(x, y, np.ones(x.shape)*z0, alpha=0.5)
+    ax.set_xlabel(labels[0], fontsize=10)
+    ax.set_ylabel(labels[1], fontsize=10)
+    ax.set_zlabel(labels[2], fontsize=10)
+
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
+    ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
+    # plt.show()
 
     if save_to is not None:
         os.makedirs(save_to, exist_ok=True)
         if save_as is None:
-            save_as = f'{name}.{suf}'
+            save_as = f'surface.{suf}'
+            if pref is not None :
+                save_as = f'{pref}_{save_as}'
         filepath = os.path.join(save_to, save_as)
         fig.savefig(filepath, dpi=300)
         print(f'Surface saved as {filepath}')
+    return ax
+
+def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=None) :
+    # fig = plt.figure(figsize=(10, 5))
+    axs=sns.heatmap(z, annot=True, fmt="g", cmap=cm.coolwarm,
+                xticklabels=x.tolist(), yticklabels=y.tolist(),
+                cbar_kws={"orientation": "vertical",
+                          'label': labels[2],
+                          # 'ticks': [1, 0, -1]
+                          })
+    axs.xaxis.set_major_locator(ticker.MaxNLocator(4))
+    axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
+    axs.xaxis.set_ticks_position('top')
+    # ax.yaxis.set_major_locator(ticker.MultipleLocator(5))
+    # ax.yaxis.set_major_formatter(ticker.ScalarFormatter())
+    # ax.set_size_cm(3.5, 3.5)
+    # cax = plt.gcf().axes[-1]
+    # cax.xaxis.set_major_locator(ticker.MaxNLocator(4))
+
+    # ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
+    axs.set_ylabel(labels[1])
+    axs.set_xlabel(labels[0])
+    if title is not None:
+        axs.set_suptitle(title, fontsize=20)
+
+    if save_to is not None:
+        os.makedirs(save_to, exist_ok=True)
+        if save_as is None:
+            save_as = f'heatmap.{suf}'
+            if pref is not None :
+                save_as = f'{pref}_{save_as}'
+        filepath = os.path.join(save_to, save_as)
+        plt.savefig(filepath, dpi=300)
+        print(f'Heatmap saved as {filepath}')
+    return axs
+
+def plot_3pars(df, labels, save_to, z0=None, pref=None) :
+    x, y = np.unique(df[labels[0]].values), np.unique(df[labels[1]].values)
+    X, Y = np.meshgrid(x, y)
+
+    z = df[labels[2]].values.reshape(X.shape).T
+
+    plot_heatmap(x, y, z, labels, save_to=save_to, pref=pref)
+    plot_surface(X, Y, z, labels, save_to=save_to, z0=z0, pref=pref)
+    plt.close('all')
+
+
+
+
 
 
 def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orientation.{suf}'):
@@ -2103,7 +2163,7 @@ def plot_dispersion(datasets, labels, ranges=[[0, 40]], scaled=True, save_to=Non
 
 
 
-def plot_heatmap(csv_filepath, heatmap_filepath):
+def plot_heatmap_PI(csv_filepath, heatmap_filepath):
     print('Creating heatmap')
     new_data = pd.read_csv(csv_filepath, index_col=0)
     gains = new_data.index.values
@@ -2139,6 +2199,8 @@ def plot_heatmap(csv_filepath, heatmap_filepath):
     plt.subplots_adjust(left=0.15, right=0.95)
     plt.savefig(heatmap_filepath, dpi=300)
     print(f'Heatmap saved as {heatmap_filepath}')
+
+
 
 
 def plot_odor_concentration(dataset):
@@ -2715,6 +2777,15 @@ def plot_endpoint_params(datasets, labels, mode='full', save_to=None):
                       'b_mu', 'b_std', 'bv_mu', 'bv_std',
                       ]
 
+    elif mode == 'deb':
+
+        par_shorts = ['cum_d', 'cum_sd', 'str_N', 'fee_N',
+                      'str_tr', 'pau_tr', 'fee_tr', 'f_am',
+                      # 'tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu',
+                      # 'v_mu', 'sv_mu',
+                      # 'hunger', 'reserve_density', 'puppation_buffer'
+                      ]
+
 
     pars, sim_labels, exp_labels, xlabels = [
         par_db[['par', 'symbol', 'exp_symbol', 'unit']].loc[par_shorts].values[:, k].tolist() for k in range(4)]
@@ -2781,7 +2852,7 @@ def plot_endpoint_params(datasets, labels, mode='full', save_to=None):
                 axs[i].text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k', fontsize=15,
                             transform=axs[i].transAxes)
 
-    plt.subplots_adjust(wspace=0.1, hspace=0.3, left=0.06, right=0.96, top=0.9, bottom=0.04)
+    plt.subplots_adjust(wspace=0.1, hspace=0.3, left=0.06, right=0.96, top=0.8, bottom=0.04)
     plt.ylim(ylim)
     leg = axs[0].legend(bbox_to_anchor=(0.5, 1.5), loc='upper left', fontsize=25)
     # for legobj in leg.legendHandles:

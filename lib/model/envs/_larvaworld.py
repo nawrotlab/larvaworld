@@ -690,7 +690,8 @@ class LarvaWorldSim(LarvaWorld):
             V = func(X, Y)
             num_sources = layer.get_num_sources()
             name = f'{layer_id} odorscape'
-            plot_surface(x=self.space_to_mm(X), y=self.space_to_mm(Y), z=V, name=name, title=title,
+            plot_surface(x=self.space_to_mm(X), y=self.space_to_mm(Y), z=V,
+                         labels=[r'x $(mm)$', r'y $(mm)$', r'concentration $(μM)$'], title=title,
                          save_to=save_to, save_as=f'{layer_id}_odorscape')
         # plt.figure()
         # CS = plt.contour(X, Y, V)

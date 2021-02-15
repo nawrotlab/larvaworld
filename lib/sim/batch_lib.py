@@ -12,9 +12,13 @@ import time
 import pandas as pd
 from pypet import Environment, cartesian_product, load_trajectory, pypetconstants
 from pypet.parameter import ObjectTable
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-from lib.anal.plotting import plot_heatmap, plot_endpoint_scatter
+from lib.anal.plotting import plot_heatmap_PI, plot_endpoint_scatter, plot_debs, plot_surface, plot_heatmap, plot_3pars, \
+    plot_endpoint_params
 from lib.conf.larva_modes import *
+from lib.model.larva.deb import deb_dict, deb_default
 from lib.sim.single_run import run_sim, generate_config
 from lib.aux.functions import flatten_dict, reconstruct_dict, flatten_list
 from lib.stor.paths import BatchRunFolder
@@ -146,6 +150,7 @@ def get_results(traj, res_names=None):
     runs_idx = [int(i) for i in traj.f_iter_runs(yields='idx')]
     if res_names is None:
         res_names = np.unique([traj.f_get(r).v_name for r in traj.f_get_results()])
+
     res_values = []
     for res in res_names:
         try:
@@ -201,6 +206,7 @@ def load_default_configuration(traj, sim_params=None, env_params=None, fly_param
     if env_params is not None:
         env_dict = flatten_dict(env_params, parent_key='env_params', sep='.')
         for k, v in env_dict.items():
+            # print(k,v)
             traj.f_apar(k, v)
 
     if fly_params is not None:
@@ -228,9 +234,21 @@ def default_processing(traj, dataset=None):
 def null_processing(traj, dataset=None):
     return dataset, np.nan
 
+def deb_processing(traj, dataset=None):
+    dataset.deb_analysis()
+    deb_f_mean = dataset.endpoint_data['deb_f_mean'].mean()
+    traj.f_add_result('deb_f_mean', deb_f_mean, comment='The average mean deb functional response')
+    hunger = dataset.endpoint_data['hunger'].mean()
+    traj.f_add_result('hunger', hunger, comment='The average final hunger')
+    reserve_density = dataset.endpoint_data['reserve_density'].mean()
+    traj.f_add_result('reserve_density', reserve_density, comment='The average final reserve density')
+
+    return dataset, np.nan
+
 
 def null_post_processing(traj, result_tuple):
     traj.f_load(index=None, load_parameters=2, load_results=2)
+
 
 
 def null_final_processing(traj):
@@ -252,6 +270,47 @@ def end_scatter_generation(traj):
     plot_endpoint_scatter(**kwargs, par_shorts=traj.config.end_parshorts_2)
     plot_endpoint_scatter(**kwargs, par_shorts=traj.config.end_parshorts_3)
     return d
+
+def deb_analysis(traj):
+
+    data_dir = traj.config.dataset_path
+    parent_dir = traj.config.dir_path
+
+
+
+    df = save_results_df(traj)
+    runs_idx, runs, par_names, par_full_names, par_values, res_names, res_values = get_results(traj, res_names=None)
+    if len(par_names) ==2 :
+        # z0s=[1.0,0.5,1.0]
+        for i in range(len(res_names)) :
+            r=res_names[i]
+            labels = par_names + [r]
+            plot_3pars(df, labels, save_to = traj.config.dir_path, pref=r)
+            # plot_3pars(df, labels, z0=z0s[i], save_to = traj.config.dir_path, pref=r)
+
+    dirs = [f'{data_dir}/{dir}' for dir in os.listdir(data_dir)]
+    dirs.sort()
+    ds = [LarvaDataset(dir) for dir in dirs]
+    if len(ds)==1 :
+        new_ids=[None]
+    else :
+        if len(par_names) ==1 :
+            new_ids = [f'{par_names[0]} : {v}' for v in par_values[0]]
+        else :
+            new_ids=[d.id for d in ds]
+        plot_endpoint_params(ds, new_ids, mode='deb', save_to=parent_dir)
+    # print(new_ids,[d.id for d in ds])
+    # raise
+    deb_dicts = flatten_list([[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
+    plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as='deb_f.pdf', mode='f')
+    plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as='deb.pdf')
+    plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as='deb_minimal.pdf', mode='minimal')
+
+
+
+
+
+    return df
 
 
 def post_processing(traj, result_tuple):
@@ -357,72 +416,80 @@ def _batch_run(dir='unnamed',
                run_kwargs={}
                ):
     saved_args = locals()
-    print(locals)
+    # print(locals())
     traj_name = f'{batch_id}_traj'
     parent_dir_path = f'{BatchRunFolder}/{dir}'
     dir_path = os.path.join(parent_dir_path, batch_id)
     plot_path = os.path.join(dir_path, f'{batch_id}.pdf')
     data_path = os.path.join(dir_path, f'{batch_id}.csv')
     filename = f'{dir_path}/{batch_id}.hdf5'
-    try:
-        print('Trying to resume existing trajectory')
-        env = Environment(continuable=True)
-        env.resume(trajectory_name=traj_name, resume_folder=dir_path)
-        print('Resumed existing trajectory')
-    except:
+    build_new = True
+    if os.path.exists(parent_dir_path) and os.path.exists(dir_path) and overwrite==False:
+        build_new = False
         try:
-            print('Trying to load existing trajectory')
-            traj = load_trajectory(filename=filename, name=traj_name, load_all=0)
-            env = Environment(trajectory=traj)
-            traj.f_load(index=None, load_parameters=2, load_results=0)
-            traj.f_expand(space)
-            print('Loaded existing trajectory')
+            print('Trying to resume existing trajectory')
+            env = Environment(continuable=True)
+            env.resume(trajectory_name=traj_name, resume_folder=dir_path)
+            print('Resumed existing trajectory')
+            build_new = False
         except:
-            if multiprocessing:
-                multiproc = True
-                resumable = False
-                wrap_mode = pypetconstants.WRAP_MODE_QUEUE
-            else:
-                multiproc = False
-                resumable = True
-                wrap_mode = pypetconstants.WRAP_MODE_LOCK
             try:
-                print('Trying to create novel environment')
-                env = Environment(trajectory=traj_name, filename=filename,
-                                  file_title=batch_id,
-                                  comment=f'{batch_id} batch run!',
-                                  large_overview_tables=True,
-                                  overwrite_file=True,
-                                  resumable=False,
-                                  resume_folder=dir_path,
-                                  multiproc=multiproc,
-                                  ncores=4,
-                                  use_pool=True,  # Our runs are inexpensive we can get rid of overhead by using a pool
-                                  freeze_input=True,  # We can avoid some overhead by freezing the input to the pool
-                                  wrap_mode=wrap_mode,
-                                  graceful_exit=True)
-                traj = env.traj
-                print('Created novel environment')
-                fly_params, env_params, sim_params = sim_config['fly_params'], sim_config['env_params'], sim_config[
-                    'sim_params']
-                if all(v is not None for v in [sim_params, env_params, fly_params]):
-                    traj = load_default_configuration(traj, sim_params=sim_params, env_params=env_params,
-                                                      fly_params=fly_params)
-                elif params is not None:
-                    for p in params:
-                        traj.f_apar(p, 0.0)
-                if config is not None:
-                    for k, v in config.items():
-                        traj.f_aconf(k, v)
-                traj.f_aconf('parent_dir_path', parent_dir_path, comment='The parent directory')
-                traj.f_aconf('dir_path', dir_path, comment='The directory path for saving data')
-                traj.f_aconf('plot_path', plot_path, comment='The file path for saving plot')
-                traj.f_aconf('data_path', data_path, comment='The file path for saving data')
-                traj.f_aconf('dataset_path', f'{dir_path}/{batch_id}',
-                             comment='The directory path for saving datasets')
-                traj.f_explore(space)
-            except:
-                raise ValueError('Neither of resuming, expanding or exploring new trajectory worked')
+                print('Trying to load existing trajectory')
+                traj = load_trajectory(filename=filename, name=traj_name, load_all=0)
+                env = Environment(trajectory=traj)
+                traj.f_load(index=None, load_parameters=2, load_results=0)
+                traj.f_expand(space)
+                print('Loaded existing trajectory')
+                build_new = False
+            except :
+                print('Neither of resuming or expanding of existing trajectory worked')
+
+    if build_new:
+        if multiprocessing:
+            multiproc = True
+            resumable = False
+            wrap_mode = pypetconstants.WRAP_MODE_QUEUE
+        else:
+            multiproc = False
+            resumable = True
+            wrap_mode = pypetconstants.WRAP_MODE_LOCK
+        # try:
+        print('Trying to create novel environment')
+        env = Environment(trajectory=traj_name, filename=filename,
+                          file_title=batch_id,
+                          comment=f'{batch_id} batch run!',
+                          large_overview_tables=True,
+                          overwrite_file=True,
+                          resumable=False,
+                          resume_folder=dir_path,
+                          multiproc=multiproc,
+                          ncores=4,
+                          use_pool=True,  # Our runs are inexpensive we can get rid of overhead by using a pool
+                          freeze_input=True,  # We can avoid some overhead by freezing the input to the pool
+                          wrap_mode=wrap_mode,
+                          graceful_exit=True)
+        traj = env.traj
+        print('Created novel environment')
+        fly_params, env_params, sim_params = sim_config['fly_params'], sim_config['env_params'], sim_config[
+            'sim_params']
+        if all(v is not None for v in [sim_params, env_params, fly_params]):
+            traj = load_default_configuration(traj, sim_params=sim_params, env_params=env_params,
+                                              fly_params=fly_params)
+        elif params is not None:
+            for p in params:
+                traj.f_apar(p, 0.0)
+        if config is not None:
+            for k, v in config.items():
+                traj.f_aconf(k, v)
+        traj.f_aconf('parent_dir_path', parent_dir_path, comment='The parent directory')
+        traj.f_aconf('dir_path', dir_path, comment='The directory path for saving data')
+        traj.f_aconf('plot_path', plot_path, comment='The file path for saving plot')
+        traj.f_aconf('data_path', data_path, comment='The file path for saving data')
+        traj.f_aconf('dataset_path', f'{dir_path}/{batch_id}',
+                     comment='The directory path for saving datasets')
+        traj.f_explore(space)
+        # except:
+        #     raise ValueError(f'Failed to perform batch run {batch_id}')
 
     if post_process_method is not None:
         env.add_postprocessing(post_process_method, **post_kwargs)
@@ -523,7 +590,7 @@ def heat_map_generation(traj):
     # print(csv_filepath)
     # print(heatmap_filepath)
     df.to_csv(csv_filepath, index=True, header=True)
-    plot_heatmap(csv_filepath, heatmap_filepath)
+    plot_heatmap_PI(csv_filepath, heatmap_filepath)
 
 
 def generate_gain_space(pars, ranges, Ngrid, values=None):
