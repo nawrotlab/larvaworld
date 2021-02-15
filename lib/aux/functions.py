@@ -17,6 +17,8 @@ from shapely.geometry.polygon import Polygon
 import scipy as sp
 import matplotlib.pyplot as plt
 
+from lib.stor.paths import LarvaShape_path
+
 
 def sigmoid(x):
     return 1 / (1 + math.e ** -x)  # mathematically equivalent, but simpler
@@ -52,6 +54,7 @@ def density_extrema(data, kernel_width=0.02, Nbins=1000):
     else:
         maxima = []
     return minima, maxima
+
 
 def _restore_angle(a, d, l, n, num_segments, correction_coef):
     k0 = (l * n / num_segments) / correction_coef
@@ -108,6 +111,7 @@ def angle(a, b, c, in_deg=True):
         ang = (math.degrees(math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(a[1] - b[1], a[0] - b[0])) - np.pi) % (
                 2 * np.pi)
         return ang if ang <= np.pi else ang - 2 * np.pi
+
 
 def angle_to_x_axis(point_1, point_2, in_deg=True):
     # Point 1 is start, point 2 is end of vector
@@ -174,6 +178,7 @@ def rotate_around_point(point, radians, origin=[0, 0]):
 
     return qx, qy
 
+
 def rotate_around_center(point, radians):
     x, y = point
     cos_rad = math.cos(radians)
@@ -181,6 +186,7 @@ def rotate_around_center(point, radians):
     qx = cos_rad * x + sin_rad * y
     qy = -sin_rad * x + cos_rad * y
     return qx, qy
+
 
 def rotate_around_center_multi(points, radians):
     cos_rad = math.cos(radians)
@@ -528,15 +534,16 @@ def compute_velocity_threshold(v, Nbins=500, max_v=None, kernel_width=0.02):
         minimum = np.nan
     return minimum
 
-def match_larva_ids(s, dl=None, max_t=5*60, max_s=20, pars=None, e=None, min_Nids=1, max_Niters=1000):
+
+def match_larva_ids(s, dl=None, max_t=5 * 60, max_s=20, pars=None, e=None, min_Nids=1, max_Niters=1000):
     t_r = np.linspace(0, max_t, max_Niters)
     s_r = np.linspace(0, max_s, max_Niters)
-    if dl is None :
-        ls=None
-    else :
-        ls=e['length']
+    if dl is None:
+        ls = None
+    else:
+        ls = e['length']
     if pars is None:
-        pars=s.columns.values.tolist()
+        pars = s.columns.values.tolist()
     ss = s.dropna().reset_index(level='Step', drop=False)
 
     ids, mins, maxs, first_xy, last_xy = get_extrema(ss, pars)
@@ -560,8 +567,8 @@ def match_larva_ids(s, dl=None, max_t=5*60, max_s=20, pars=None, e=None, min_Nid
                 pairs = dict()
                 for id, next in zip(ids, nexts):
                     next = [idx for idx in next if idx not in taken]
-                    if dl is not None :
-                        next = [idx for idx in next if np.abs(ls[id] - ls[idx])<dl]
+                    if dl is not None:
+                        next = [idx for idx in next if np.abs(ls[id] - ls[idx]) < dl]
                     if len(next) == 0:
                         continue
                     elif len(next) == 1:
@@ -579,13 +586,13 @@ def match_larva_ids(s, dl=None, max_t=5*60, max_s=20, pars=None, e=None, min_Nid
                 ss.rename(index=pairs, inplace=True)
                 if dl is not None:
                     for id1, id2 in pairs.items():
-                        v=ss['spinelength'].loc[id2].values
+                        v = ss['spinelength'].loc[id2].values
 
-                        ls[id2]=np.nanmean(v)
+                        ls[id2] = np.nanmean(v)
                         ls.drop([id1], inplace=True)
                 # print(pairs)
                 ids, mins, maxs, first_xy, last_xy = update_extrema(pairs, ids, mins, maxs, first_xy, last_xy)
-                if len(ids)<=min_Nids :
+                if len(ids) <= min_Nids:
                     break
     # inds, dt, ds = 0, 0, 0
     # while len(ids) > min_Nids and (dt<max_t or ds<max_s) :
@@ -653,26 +660,24 @@ def match_larva_ids(s, dl=None, max_t=5*60, max_s=20, pars=None, e=None, min_Nid
     #                 break
     #             if pairs_found:
     #                 break
-                # else :
-                #     ddst += dst
+    # else :
+    #     ddst += dst
 
+    # break
+    # break
 
-        # break
-                # break
+    # break
+    # break
+    # sss= ss.reset_index(drop=False).set_index(keys=['Step', 'AgentID'], drop=True)
+    # print(any(sss.index.duplicated()))
+    # print(sss[sss.index.duplicated()].index)
+    # print(sss.loc[(1324, 'Larva_10092'), 'head_x'])
+    # print(sss.loc[(1324, 'Larva_10110'), 'head_x'])
 
-
-        # break
-                # break
-        # sss= ss.reset_index(drop=False).set_index(keys=['Step', 'AgentID'], drop=True)
-        # print(any(sss.index.duplicated()))
-        # print(sss[sss.index.duplicated()].index)
-        # print(sss.loc[(1324, 'Larva_10092'), 'head_x'])
-        # print(sss.loc[(1324, 'Larva_10110'), 'head_x'])
-
-        # print(pairs)
-        # print(nexts)
-        # print(best_nexts)
-        # break
+    # print(pairs)
+    # print(nexts)
+    # print(best_nexts)
+    # break
     print('Finalizing dataset')
     ss.reset_index(drop=False, inplace=True)
     ss.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
@@ -680,25 +685,27 @@ def match_larva_ids(s, dl=None, max_t=5*60, max_s=20, pars=None, e=None, min_Nid
     return ss
 
 
-
-
-def get_spatial_nexts0(ids, ddst, first_xy, last_xy) :
+def get_spatial_nexts0(ids, ddst, first_xy, last_xy):
     nexts = [[idx for idx in ids if (idx != id and all(np.abs(last_xy[id] - first_xy[idx]) < ddst))] for id in ids]
     return nexts
 
-def get_spatial_nexts1(ids, nexts, ddst, first_xy, last_xy) :
+
+def get_spatial_nexts1(ids, nexts, ddst, first_xy, last_xy):
     nexts = [[idx for idx in next if (all(np.abs(last_xy[id] - first_xy[idx]) < ddst))] for id, next in zip(ids, nexts)]
     return nexts
 
-def get_temporal_nexts1(ids, nexts, mins, maxs, ddur) :
+
+def get_temporal_nexts1(ids, nexts, mins, maxs, ddur):
     nexts = [[idx for idx in next if 0 < mins[idx] - maxs[id] < ddur] for id, next in zip(ids, nexts)]
     return nexts
 
-def get_temporal_nexts0(ids, mins, maxs, ddur) :
+
+def get_temporal_nexts0(ids, mins, maxs, ddur):
     nexts = [[idx for idx in ids if (idx != id and 0 < mins[idx] - maxs[id] < ddur)] for id in ids]
     return nexts
 
-def get_extrema(ss, pars) :
+
+def get_extrema(ss, pars):
     ids = ss.index.unique().tolist()
     mins = ss['Step'].groupby('AgentID').min()
     maxs = ss['Step'].groupby('AgentID').max()
@@ -708,16 +715,17 @@ def get_extrema(ss, pars) :
         last_xy[id] = ss[pars].xs(id).dropna().values[-1, :]
     return ids, mins, maxs, first_xy, last_xy
 
-def update_extrema(pairs, ids, mins, maxs, first_xy, last_xy) :
+
+def update_extrema(pairs, ids, mins, maxs, first_xy, last_xy):
     for id2 in pairs.values():
-        n_ids=[id for id in pairs.keys() if pairs[id]==id2]+[id2]
-        n_mins=[mins[id] for id in n_ids]
-        min_id=n_ids[np.argmin(n_mins)]
+        n_ids = [id for id in pairs.keys() if pairs[id] == id2] + [id2]
+        n_mins = [mins[id] for id in n_ids]
+        min_id = n_ids[np.argmin(n_mins)]
         n_maxs = [maxs[id] for id in n_ids]
         max_id = n_ids[np.argmax(n_maxs)]
         mins[id2], first_xy[id2] = mins[min_id], first_xy[min_id]
         maxs[id2], last_xy[id2] = maxs[max_id], last_xy[max_id]
-    for id1 in pairs.keys() :
+    for id1 in pairs.keys():
         del mins[id1]
         del maxs[id1]
         del first_xy[id1]
@@ -726,11 +734,12 @@ def update_extrema(pairs, ids, mins, maxs, first_xy, last_xy) :
     return ids, mins, maxs, first_xy, last_xy
 
 
-def positions_in_circle(r, N) :
-    angles=np.linspace(0,np.pi*2,N+1)[:-1]
+def positions_in_circle(r, N):
+    angles = np.linspace(0, np.pi * 2, N + 1)[:-1]
     # print(angles)
-    p=np.array([(np.cos(a)*r, np.sin(a)*r) for a in angles])
+    p = np.array([(np.cos(a) * r, np.sin(a) * r) for a in angles])
     return p
+
 
 def generate_orientations(num_identical, circle_parsing, iterations):
     orientations = sum(([[i] * num_identical for i in np.arange(circle_parsing) * 2 * np.pi / circle_parsing]),
@@ -795,6 +804,31 @@ def random_colors(n):
         b = int(b) % 256
         ret.append(np.array([r, g, b]))
     return ret
+
+
+def generate_larva_shape(width_to_length_proportion=0.2, save_as_default=False):
+    shape_length = 1
+    shape_width = width_to_length_proportion / 2
+    front_end = 0.52
+    front_max = 0.4
+    front_length = front_end - front_max
+    rear_max = -0.4
+    rear_end = -0.48
+    rear_length = rear_max - rear_end
+
+    # generic larva shape with total lenth 1
+    shape = [(front_end, +0.0),
+             (front_max, +shape_width * 2 / 3),
+             (front_max / 3, +shape_width),
+             (rear_max, +shape_width * 2 / 3),
+             (rear_end, 0.0),
+             (rear_max, -shape_width * 2 / 3),
+             (front_max / 3, -shape_width),
+             (front_max, -shape_width * 2 / 3)]
+
+    if save_as_default :
+        np.savetxt(LarvaShape_path, shape, delimiter=",")
+    return shape
 
 
 

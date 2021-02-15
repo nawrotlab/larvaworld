@@ -15,6 +15,7 @@ BatchRunFolder = f'{SimFolder}/batch_runs'
 
 DebFolder = f'{SimFolder}/deb_runs'
 Deb_path = f'{get_parent_dir()}/lib/sim/deb_drosophila.csv'
+LarvaShape_path = f'{get_parent_dir()}/lib/conf/larva_shape.csv'
 
 DataGroups_path = f'{ConfFolder}/DataGroups.txt'
 DataConfs_path = f'{ConfFolder}/DataConfs.txt'

@@ -8,6 +8,7 @@ from Box2D import b2Vec2
 #  ApplyForceToCenter function does not scale
 # _world_scale = np.int(100)
 from lib.aux.functions import *
+from lib.stor.paths import LarvaShape_path
 
 
 class Box2DSegment:
@@ -518,76 +519,74 @@ class LarvaBody:
         return self.get_global_front_end_of_head()
 
     def generate_seg_shapes(self, num_segments, width_to_length_proportion, density, interval, segment_ratio):
+        N=num_segments
         shape_length = 1
-        shape_width = width_to_length_proportion / 2
-        front_end = 0.52
+        w = width_to_length_proportion / 2
+        f0 = 0.52
         front_max = 0.4
-        front_length = front_end - front_max
+        front_length = f0 - front_max
         rear_max = -0.4
-        rear_end = -0.48
-        rear_length = rear_max - rear_end
+        rear_end = f0-shape_length
+        l = rear_max - rear_end
 
         # generic larva shape with total lenth 1
-        generic_shape = np.array([[(front_end, +0.0),
-                                   (front_max, +shape_width * 2 / 3),
-                                   (front_max / 3, +shape_width),
-                                   (rear_max, +shape_width * 2 / 3),
-                                   (rear_end, 0.0),
-                                   (rear_max, -shape_width * 2 / 3),
-                                   (front_max / 3, -shape_width),
-                                   (front_max, -shape_width * 2 / 3)]])
+        shape = [(f0, +0.0),
+                 (front_max, +w * 2 / 3),
+                 (front_max / 3, +w),
+                 (rear_max, +w * 2 / 3),
+                 (rear_end, 0.0),
+                 (rear_max, -w * 2 / 3),
+                 (front_max / 3, -w),
+                 (front_max, -w * 2 / 3)]
 
-        # generic_shape = np.array([[
-        #                            (front_max, +shape_width),
-        #                            (rear_max, +shape_width),
-        #                            (rear_end, +shape_width / 2),
-        #                            (rear_end, -shape_width / 2),
-        #                            (rear_max, -shape_width),
-        #                            (front_max, -shape_width)]])
+        # shape = self.get_larva_shape()
+        generic_shape = np.array([shape])
+
         if num_segments == 1:
             return [generic_shape]
         else:
-            # seg_length = 1 / Nsegs
-
-            seg_starts = [front_end + r - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
-            seg_meds = [front_end + r / 2 - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
-            seg_stops = [front_end - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
-            seg_starts, seg_stops = self.add_interval_between_segments(num_segments, density, interval, seg_starts,
-                                                                       seg_stops)
-            # print(seg_starts, seg_stops)
+            s0s = [f0 + r - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
+            s1s = [f0 + r / 2 - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
+            s2s = [f0 - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
+            s0s, s2s = self.add_interval_between_segments(N, density, interval, s0s,s2s)
             segment_vertices = []
-            for i, (start, med, stop) in enumerate(zip(seg_starts, seg_meds, seg_stops)):
-                if start > front_max and stop >= front_max:
-                    shape = np.array([[(start - med, +(front_end - start) / front_length * shape_width),
-                                       (stop - med, +(front_end - stop) / front_length * shape_width),
-                                       (stop - med, -(front_end - stop) / front_length * shape_width),
-                                       (start - med, -(front_end - start) / front_length * shape_width)]])
-                elif start > front_max > stop >= rear_max:
-                    shape = np.array([[(start - med, +(front_end - start) / front_length * shape_width),
-                                       (front_max - med, +shape_width),
-                                       (stop - med, +shape_width),
-                                       (stop - med, -shape_width),
-                                       (front_max - med, -shape_width),
-                                       (start - med, -(front_end - start) / front_length * shape_width)]])
-                elif rear_max < start <= front_max and rear_max <= stop < front_max:
-                    shape = np.array([[(start - med, +shape_width),
-                                       (stop - med, +shape_width),
-                                       (stop - med, -shape_width),
-                                       (start - med, -shape_width)]])
-                elif front_max >= start > rear_max >= stop:
-                    shape = np.array([[(start - med, +shape_width),
-                                       (rear_max - med, +shape_width),
-                                       (stop - med, +((stop - rear_end) / rear_length + 1) * shape_width / 2),
-                                       (stop - med, -((stop - rear_end) / rear_length + 1) * shape_width / 2),
-                                       (rear_max - med, -shape_width),
-                                       (start - med, -shape_width)]])
-                elif rear_max >= start:
-                    shape = np.array([[(start - med, +((start - rear_end) / rear_length + 1) * shape_width / 2),
-                                       (stop - med, +((stop - rear_end) / rear_length + 1) * shape_width / 2),
-                                       (stop - med, -((stop - rear_end) / rear_length + 1) * shape_width / 2),
-                                       (start - med, -((start - rear_end) / rear_length + 1) * shape_width / 2)]])
-                segment_vertices.append(shape * num_segments)
+            for i, (s0, s1, s2) in enumerate(zip(s0s, s1s, s2s)):
+                if s0 > front_max and s2 >= front_max:
+                    shape = np.array([[(s0 - s1, +(f0 - s0) / front_length * w),
+                                       (s2 - s1, +(f0 - s2) / front_length * w),
+                                       (s2 - s1, -(f0 - s2) / front_length * w),
+                                       (s0 - s1, -(f0 - s0) / front_length * w)]])
+                elif s0 > front_max > s2 >= rear_max:
+                    shape = np.array([[(s0 - s1, +(f0 - s0) / front_length * w),
+                                       (front_max - s1, +w),
+                                       (s2 - s1, +w),
+                                       (s2 - s1, -w),
+                                       (front_max - s1, -w),
+                                       (s0 - s1, -(f0 - s0) / front_length * w)]])
+                elif rear_max < s0 <= front_max and rear_max <= s2 < front_max:
+                    shape = np.array([[(s0 - s1, +w),
+                                       (s2 - s1, +w),
+                                       (s2 - s1, -w),
+                                       (s0 - s1, -w)]])
+                elif front_max >= s0 > rear_max >= s2:
+                    shape = np.array([[(s0 - s1, +w),
+                                       (rear_max - s1, +w),
+                                       (s2 - s1, +((s2 - rear_end) / l + 1) * w / 2),
+                                       (s2 - s1, -((s2 - rear_end) / l + 1) * w / 2),
+                                       (rear_max - s1, -w),
+                                       (s0 - s1, -w)]])
+                elif rear_max >= s0:
+                    shape = np.array([[(s0 - s1, +((s0 - rear_end) / l + 1) * w / 2),
+                                       (s2 - s1, +((s2 - rear_end) / l + 1) * w / 2),
+                                       (s2 - s1, -((s2 - rear_end) / l + 1) * w / 2),
+                                       (s0 - s1, -((s0 - rear_end) / l + 1) * w / 2)]])
+                segment_vertices.append(shape * N)
             return segment_vertices
+
+    def get_larva_shape(self, filepath=None):
+        if filepath is None :
+            filepath=LarvaShape_path
+        return np.loadtxt(filepath, dtype=float, delimiter=",")
 
     def generate_segs(self, position, orientation, joint_type=None):
         N=self.Nsegs
