@@ -7,7 +7,7 @@ import os
 
 from shapely.affinity import affine_transform
 from unflatten import unflatten
-from Box2D import b2World, b2ChainShape
+from Box2D import b2World, b2ChainShape, b2Vec2, b2EdgeShape
 from mesa.space import ContinuousSpace
 from mesa import Model
 from mesa.time import RandomActivation
@@ -270,7 +270,7 @@ class LarvaWorld(Model):
         screen.draw_polygon(self.space_edges, color=self.screen_color)
         screen.draw_polygon(self.tank_shape, color=self.tank_color)
         for b in self.border_xy :
-            screen.draw_polyline(b, color=self.screen_color, width=0.001, closed=False)
+            screen.draw_polyline(b, color=self.screen_color, width=0.001*self.scaling_factor, closed=False)
 
     def render_aux(self):
         self.sim_clock.render_clock(self.screen_width, self.screen_height)
@@ -419,6 +419,12 @@ class LarvaWorld(Model):
         lines=[affine_transform(l,T) for l in lines]
         ps = [p.coords.xy for p in lines]
         borders_xy = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
+
+        if self.physics_engine :
+            for xy in borders_xy :
+                b = self.space.CreateStaticBody(position=(.0, .0))
+                border_shape = b2EdgeShape(vertices=xy.tolist())
+                b.CreateFixture(shape=border_shape)
         return borders_xy, lines
 
 
