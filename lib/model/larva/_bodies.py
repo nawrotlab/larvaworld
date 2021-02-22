@@ -14,15 +14,10 @@ from lib.stor.paths import LarvaShape_path
 class Box2DSegment:
 
     def __init__(self, space: Box2D.b2World, pos, orientation, physics_pars, facing_axis, color, **kwargs):
-        # super().__init__(**kwargs)
         if self.__class__ == Box2DSegment:
             raise NotImplementedError('Abstract class Box2DSegment cannot be instantiated.')
         self.physics_pars = physics_pars
-        # print(color)
         self._color = color
-        # self._highlight_color = np.array((238, 80, 62))
-
-        # self.space = space
         self._body: Box2D.b2Body = space.CreateDynamicBody(
             position=Box2D.b2Vec2(*pos),
             angle=orientation,
@@ -422,7 +417,7 @@ class DefaultPolygon:
 class LarvaBody:
     def __init__(self, model, pos=None, orientation=None,
                  initial_length=None, length_std=0, Nsegs=1, interval=0, joint_type=None,
-                 seg_ratio=None, collisions=False):
+                 seg_ratio=None):
         # FIXME get rid of this
         if not 'density' in locals():
             self.density = 300.0
@@ -433,7 +428,6 @@ class LarvaBody:
         self.seg_ratio = seg_ratio
         self.interval = interval
         self.shape_scale = 1
-        self.collisions = collisions
 
         self.base_seg_vertices = self.generate_seg_shapes(Nsegs, self.width_to_length_ratio,
                                                           density=self.density, interval=self.interval,
@@ -661,13 +655,9 @@ class LarvaBody:
                 segs.append(seg)
 
             # put all agents into same group (negative so that no collisions are detected)
-            if not self.collisions:
+            if self.model.allow_collisions:
                 for fixture in fixtures:
                     fixture.filterData.groupIndex = -1
-            # else :
-            #     for i,seg in enumerate(segs) :
-            #         for fixture in seg._fixtures:
-            #             fixture.filterData.groupIndex = -i
 
             if joint_type is None:
                 joint_type = {'distance': 2, 'revolute': 1}

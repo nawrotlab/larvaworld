@@ -430,13 +430,9 @@ class LarvaWorld(Model):
 
 
 class LarvaWorldSim(LarvaWorld):
-    def __init__(self, fly_params,
-                 collected_pars={'step': [], 'endpoint': []},
-                 id='Unnamed_Simulation', allow_collisions=True,
-                 **kwargs):
-
-        super().__init__(id=id,
-                         **kwargs)
+    def __init__(self, fly_params, collected_pars={'step': [], 'endpoint': []},
+                 id='Unnamed_Simulation', allow_collisions=True, **kwargs):
+        super().__init__(id=id, **kwargs)
 
         self.allow_collisions = allow_collisions
         self.fly_params = fly_params
@@ -444,18 +440,8 @@ class LarvaWorldSim(LarvaWorld):
             if self.fly_params['neural_params']['intermitter_params'][dist]=='fit' :
                 self.fly_params['neural_params']['intermitter_params'][dist] = get_ref_bout_distros(dist)
 
-        self.odor_layers = {}
-        self.Nodors=0
-
         self.populate_space(self.env_pars)
-
-        self.larva_step_collector = TargetedDataCollector(target_schedule='active_larva_schedule', mode='step',
-                                                          pars=collected_pars['step'])
-        self.larva_endpoint_collector = TargetedDataCollector(target_schedule='active_larva_schedule', mode='endpoint',
-                                                              pars=collected_pars['endpoint'])
-
-        self.food_endpoint_collector = TargetedDataCollector(target_schedule='all_food_schedule', mode='endpoint',
-                                                             pars=['initial_amount', 'final_amount'])
+        self.create_data_collectors(collected_pars)
 
     def populate_space(self, environment_params):
         food_params = environment_params['food_params']
@@ -465,9 +451,8 @@ class LarvaWorldSim(LarvaWorld):
                              food_params=food_params)
             self._create_food_grid(space_range=self.space_edges_for_screen,
                                    food_params=food_params)
-        odor_params = environment_params['odor_params']
-        if odor_params:
-            self._create_odor_layers(odor_params=odor_params)
+        # odor_params = environment_params['odor_params']
+        self.Nodors, self.odor_layers = self._create_odor_layers(odor_params=environment_params['odor_params'])
         self._place_flies(environment_params['place_params']['initial_num_flies'],
                           environment_params['place_params']['initial_fly_positions'])
 
@@ -516,8 +501,8 @@ class LarvaWorldSim(LarvaWorld):
         if odor_params:
             # landscape = self.odor_params['odor_landscape']
             # odor_ids = self.food_params['odor_id_list']
-            self.Nodors = len(odor_params['odor_id_list'])
-            self.odor_layers = dict.fromkeys(odor_params['odor_id_list'])
+            Nodors = len(odor_params['odor_id_list'])
+            odor_layers = dict.fromkeys(odor_params['odor_id_list'])
             if odor_params['odor_carriers'] == 'food':
                 sources = self.get_food()
             elif odor_params['odor_carriers'] == 'flies':
@@ -530,7 +515,7 @@ class LarvaWorldSim(LarvaWorld):
                                           odor_params['odor_source_allocation'])
             for i, odor_id in enumerate(odor_params['odor_id_list']):
                 if odor_params['odor_landscape'] == 'Diffusion':
-                    self.odor_layers[odor_id] = DiffusionValueLayer(world=self.space, unique_id=odor_id,
+                    odor_layers[odor_id] = DiffusionValueLayer(world=self.space, unique_id=odor_id,
                                                                     sources=[f for f in sources if
                                                                              f.get_odor_id() == odor_id],
                                                                     world_range=[self.world_x_range,
@@ -540,9 +525,12 @@ class LarvaWorldSim(LarvaWorld):
                                                                     evap_const=odor_params['odor_evaporation_rate'],
                                                                     diff_const=odor_params['odor_diffusion_rate'])
                 elif odor_params['odor_landscape'] == 'Gaussian':
-                    self.odor_layers[odor_id] = GaussianValueLayer(world=self.space, unique_id=odor_id,
+                    odor_layers[odor_id] = GaussianValueLayer(world=self.space, unique_id=odor_id,
                                                                    sources=[f for f in sources if
                                                                             f.get_odor_id() == odor_id])
+            return Nodors, odor_layers
+        else :
+            return 0, {}
 
     def _place_flies(self, num_flies, positions):
         mode = positions['mode']
@@ -728,12 +716,17 @@ class LarvaWorldSim(LarvaWorld):
         # plt.show()
 
     def get_larva_bodies(self):
-        larva_bodies=[]
-        for l in self.get_flies() :
-            for v in l.seg_vertices :
-                p=Polygon(v[0])
-                larva_bodies.append(p)
+        larva_bodies=fun.flatten_list([[Polygon(v[0]) for v in l.seg_vertices] for l in self.get_flies()])
         return larva_bodies
+
+    def create_data_collectors(self, collected_pars):
+        self.larva_step_collector = TargetedDataCollector(target_schedule='active_larva_schedule', mode='step',
+                                                          pars=collected_pars['step'])
+        self.larva_endpoint_collector = TargetedDataCollector(target_schedule='active_larva_schedule', mode='endpoint',
+                                                              pars=collected_pars['endpoint'])
+
+        self.food_endpoint_collector = TargetedDataCollector(target_schedule='all_food_schedule', mode='endpoint',
+                                                             pars=['initial_amount', 'final_amount'])
 
 
 class LarvaWorldReplay(LarvaWorld):

@@ -318,7 +318,7 @@ chemotax_exp_np = exp_conf(chemotax_conf(30))
 
 chemorbit_exp_np = exp_conf(chemorbit_conf(30))
 
-maze_exp_np = exp_conf(maze_conf(1, 10))
+maze_exp_np = exp_conf(maze_conf(1, 15))
 
 disp_exp_np = exp_conf(disp_conf(30, 0.2))
 

@@ -409,6 +409,7 @@ class VelocityAgent(Agent, abc.ABC):
             pos_new = pos_old
             head_rear_new = head_rear_old
             angular_velocity += np.pi / 2
+            # angular_velocity -=np.sign(angular_velocity) * np.pi / 2
             d_or = angular_velocity * dt
             or_new = or_old + d_or
         self.get_head().set_pose(pos_new, or_new, linear_velocity, angular_velocity)
