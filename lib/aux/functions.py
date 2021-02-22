@@ -16,7 +16,8 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 import scipy as sp
 import matplotlib.pyplot as plt
-
+from shapely.geometry import Polygon, LineString
+from shapely.ops import split
 from lib.stor.paths import LarvaShape_path
 
 
@@ -806,30 +807,67 @@ def random_colors(n):
     return ret
 
 
-def generate_larva_shape(width_to_length_proportion=0.2, save_as_default=False):
-    shape_length = 1
-    shape_width = width_to_length_proportion / 2
-    front_end = 0.52
-    front_max = 0.4
-    front_length = front_end - front_max
-    rear_max = -0.4
-    rear_end = -0.48
-    rear_length = rear_max - rear_end
+# Create a bilaterally symmetrical 2D contour with the long axis along x axis
 
-    # generic larva shape with total lenth 1
-    shape = [(front_end, +0.0),
-             (front_max, +shape_width * 2 / 3),
-             (front_max / 3, +shape_width),
-             (rear_max, +shape_width * 2 / 3),
-             (rear_end, 0.0),
-             (rear_max, -shape_width * 2 / 3),
-             (front_max / 3, -shape_width),
-             (front_max, -shape_width * 2 / 3)]
+# Arguments :
+#   points : the points above x axis through which the contour passes
+#   start : the front end of the body
+#   stop : the rear end of the body
+def body(points, start=[1, 0], stop=[0, 0]):
+    xy = np.zeros([len(points) * 2 + 2, 2]) * np.nan
+    xy[0, :] = start
+    xy[len(points) + 1, :] = stop
+    for i in range(len(points)):
+        x, y = points[i]
+        xy[1 + i, :] = x, y
+        xy[-1 - i, :] = x, -y
+    return xy
 
-    if save_as_default :
-        np.savetxt(LarvaShape_path, shape, delimiter=",")
-    return shape
 
+# Segment body in N segments of given ratios via vertical lines
+def segment_body(N, xy0, seg_ratio=None, centered=True):
+    # If segment ratio is not provided, generate equal-length segments
+    if seg_ratio is None:
+        seg_ratio = [1 / N] * N
+
+    # Create a polygon from the given body contour
+    p = Polygon(xy0)
+    # Get maximum x value of contour
+    y0 = np.max(p.exterior.coords.xy[1])
+
+    # Segment body via vertical lines
+    ps = [p]
+    for i, (r, cum_r) in enumerate(zip(seg_ratio, np.cumsum(seg_ratio))):
+        l = LineString([(1 - cum_r, y0), (1 - cum_r, -y0)])
+        new_ps = []
+        for p in ps:
+            new_p = [new_p for new_p in split(p, l)]
+            new_ps += new_p
+        ps = new_ps
+
+    # Sort segments so that front segments come first
+    ps.sort(key=lambda x: x.exterior.xy[0], reverse=True)
+
+    # Transform to 2D array of coords
+    ps = [p.exterior.coords.xy for p in ps]
+    ps = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
+
+    # Center segments around 0,0
+    if centered:
+        for i, (r, cum_r) in enumerate(zip(seg_ratio, np.cumsum(seg_ratio))):
+            ps[i] -= [(1 - cum_r) + r / 2, 0]
+
+    # Put front point at the start of segment vertices. Drop duplicate rows
+    for i in range(len(ps)):
+        if i == 0:
+            ind = np.argmax(ps[i][:, 0])
+            ps[i] = np.flip(np.roll(ps[i], -ind - 1, axis=0), axis=0)
+        else:
+            ps[i] = np.flip(np.roll(ps[i], 1, axis=0), axis=0)
+        _, idx = np.unique(ps[i], axis=0, return_index=True)
+        ps[i] = ps[i][np.sort(idx)]
+    # ps[0]=np.vstack([ps[0], np.array(ps[0][0,:])])
+    return ps
 
 
 @contextmanager

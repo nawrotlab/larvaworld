@@ -222,6 +222,9 @@ class LarvaSim(VelocityAgent, Larva):
         self.set_lin_activity(lin)
         self.feed_attempt(self.feeder_motion)
 
+        # self.real_length+=self.real_length*np.sin(self.brain.crawler.phi)*0.04
+        # self.adjust_body_vertices()
+
         if self.energetics:
             self.run_energetics(self.feed_success, self.current_amount_eaten)
     def sense_odors(self, Nodors, odor_layers):

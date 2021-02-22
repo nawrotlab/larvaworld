@@ -1,13 +1,13 @@
 import abc
 from random import sample, seed
-
+import numpy as np
 import Box2D
 from Box2D import b2Vec2
 
 # TODO Find a way to use this. Now if changed everything is scal except locomotion. It seems that
 #  ApplyForceToCenter function does not scale
 # _world_scale = np.int(100)
-from lib.aux.functions import *
+import lib.aux.functions as fun
 from lib.stor.paths import LarvaShape_path
 
 
@@ -358,7 +358,7 @@ class DefaultPolygon:
         # centroid /= area
 
     def update_vertices(self, pos, orient):
-        self.vertices = [pos + np.array(rotate_around_center_multi(self.seg_vertices[0], -orient))]
+        self.vertices = [pos + np.array(fun.rotate_around_center_multi(self.seg_vertices[0], -orient))]
 
     def draw(self, viewer):
         for vertices in self.vertices:
@@ -380,7 +380,8 @@ class DefaultPolygon:
         return np.array(self.pos), self.orientation
 
     def get_world_point(self, local_point):
-        return self.get_position() + np.array(rotate_around_center(point=local_point, radians=-self.get_orientation()))
+        return self.get_position() + np.array(
+            fun.rotate_around_center(point=local_point, radians=-self.get_orientation()))
 
     def get_orientation(self):
         return self.orientation
@@ -436,7 +437,7 @@ class LarvaBody:
 
         self.base_seg_vertices = self.generate_seg_shapes(Nsegs, self.width_to_length_ratio,
                                                           density=self.density, interval=self.interval,
-                                                          segment_ratio=self.seg_ratio)
+                                                          seg_ratio=self.seg_ratio)
 
         self.Nsegs = Nsegs
         self.Nangles = Nsegs - 1
@@ -450,7 +451,7 @@ class LarvaBody:
 
         self.sim_length = self.real_length * model.scaling_factor
         self.seg_lengths = [self.sim_length * r for r in self.seg_ratio]
-        self.seg_vertices = [v * self.sim_length / Nsegs for v in self.base_seg_vertices]
+        self.seg_vertices = [v * self.sim_length for v in self.base_seg_vertices]
 
         self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)
         self.local_front_end_of_head = (np.max(self.seg_vertices[0][0], axis=0)[0], 0)
@@ -463,6 +464,11 @@ class LarvaBody:
         self.segs = self.generate_segs(pos, orientation, joint_type=joint_type)
 
         self.contour = self.set_contour()
+
+        self.sensors = []
+        self.define_sensor('olfactor', (1, 0))
+        self.add_touch_sensors()
+
 
     def get_real_length(self):
         return self.real_length
@@ -496,6 +502,7 @@ class LarvaBody:
         self.seg_vertices = [v * l for v in self.base_seg_vertices]
         for i, seg in enumerate(self.segs):
             seg.seg_vertices = self.seg_vertices[i]
+        self.update_sensor_position()
 
     '''
     seg_vertices of 2 segments example :
@@ -515,72 +522,114 @@ class LarvaBody:
     Prerequirement : All segments are drawn horizontally with front to the right and midline on x axis.
     '''
 
+    def update_sensor_position(self):
+        for sensor_dict in self.sensors:
+            sensor_dict['local_pos']=sensor_dict['base_local_pos']* self.sim_length
+
     def get_olfactor_position(self):
         return self.get_global_front_end_of_head()
 
-    def generate_seg_shapes(self, num_segments, width_to_length_proportion, density, interval, segment_ratio):
-        N = num_segments
-        shape_length = 1
+    def define_sensor(self, sensor, pos_on_body):
+        x, y = pos_on_body
+        for i, (r, cum_r) in enumerate(zip(self.seg_ratio, np.cumsum(self.seg_ratio))):
+            if x >= 1 - cum_r:
+                seg_idx = i
+                local_pos = np.array([x - 1 + cum_r-r/2, y])
+                break
+        sensor_dict = {'sensor': sensor,
+                       'seg_idx': seg_idx,
+                       'base_local_pos': local_pos,
+                       'local_pos': local_pos * self.sim_length}
+        self.sensors.append(sensor_dict)
+
+    def get_sensor(self, sensor):
+        for sensor_dict in self.sensors :
+            if sensor_dict['sensor']==sensor :
+                return sensor_dict
+
+    def get_sensors(self):
+        return [s['sensor'] for s in self.sensors]
+
+    def get_sensor_position(self, sensor):
+        d=self.get_sensor(sensor)
+        return self.segs[d['seg_idx']].get_world_point(d['local_pos'])
+
+    # def generate_seg_shapes2(self, Nsegs, width_to_length_proportion, density, interval, seg_ratio):
+    #     N = Nsegs
+    #     shape_length = 1
+    #     w = width_to_length_proportion / 2
+    #     x0 = 0.52
+    #     w_max = 0.4
+    #     l0 = x0 - w_max
+    #     # rear_max = -0.4
+    #     x2 = x0 - shape_length
+    #     l = -w_max - x2
+    #
+    #     # generic larva shape with total lenth 1
+    #     shape0 = [(x0, +0.0),
+    #               (w_max, +w * 2 / 3),
+    #               (w_max / 3, +w),
+    #               (-w_max, +w * 2 / 3),
+    #               (x2, 0.0),
+    #               (-w_max, -w * 2 / 3),
+    #               (w_max / 3, -w),
+    #               (w_max, -w * 2 / 3)]
+    #     # shape = self.get_larva_shape()
+    #     generic_shape = np.array([shape0])
+    #
+    #     if N == 1:
+    #         return [generic_shape]
+    #     else:
+    #         s0s = [x0 + r - cum_r for r, cum_r in zip(seg_ratio, np.cumsum(seg_ratio))]
+    #         s1s = [x0 + r / 2 - cum_r for r, cum_r in zip(seg_ratio, np.cumsum(seg_ratio))]
+    #         s2s = [x0 - cum_r for r, cum_r in zip(seg_ratio, np.cumsum(seg_ratio))]
+    #         s0s, s2s = self.add_interval_between_segments(N, density, interval, s0s, s2s)
+    #
+    #         segment_vertices = []
+    #         # for i, (s0, s1, s2) in enumerate(zip(s0s, s1s, s2s)):
+    #         #     shape=[(np.clip(x, a_min=s2, a_max=s0),y) for x,y in shape0]
+    #
+    #         for i, (s0, s1, s2) in enumerate(zip(s0s, s1s, s2s)):
+    #             if s0 > w_max and s2 >= w_max:
+    #                 shape = [(s0 - s1, +(x0 - s0) / l0 * w),
+    #                          (s2 - s1, +(x0 - s2) / l0 * w),
+    #                          (s2 - s1, -(x0 - s2) / l0 * w),
+    #                          (s0 - s1, -(x0 - s0) / l0 * w)]
+    #             elif s0 > w_max > s2 >= -w_max:
+    #                 shape = [(s0 - s1, +(x0 - s0) / l0 * w),
+    #                          (w_max - s1, +w),
+    #                          (s2 - s1, +w),
+    #                          (s2 - s1, -w),
+    #                          (w_max - s1, -w),
+    #                          (s0 - s1, -(x0 - s0) / l0 * w)]
+    #             elif -w_max < s0 <= w_max and -w_max <= s2 < w_max:
+    #                 shape = [(s0 - s1, +w),
+    #                          (s2 - s1, +w),
+    #                          (s2 - s1, -w),
+    #                          (s0 - s1, -w)]
+    #             elif w_max >= s0 > -w_max >= s2:
+    #                 shape = [(s0 - s1, +w),
+    #                          (-w_max - s1, +w),
+    #                          (s2 - s1, +((s2 - x2) / l + 1) * w / 2),
+    #                          (s2 - s1, -((s2 - x2) / l + 1) * w / 2),
+    #                          (-w_max - s1, -w),
+    #                          (s0 - s1, -w)]
+    #             elif -w_max >= s0:
+    #                 shape = [(s0 - s1, +((s0 - x2) / l + 1) * w / 2),
+    #                          (s2 - s1, +((s2 - x2) / l + 1) * w / 2),
+    #                          (s2 - s1, -((s2 - x2) / l + 1) * w / 2),
+    #                          (s0 - s1, -((s0 - x2) / l + 1) * w / 2)]
+    #             segment_vertices.append(np.array([shape]) * N)
+    #         return segment_vertices
+
+    def generate_seg_shapes(self, Nsegs, width_to_length_proportion, density, interval, seg_ratio):
+        self.density = density / (1 - 2 * (Nsegs - 1) * interval)
         w = width_to_length_proportion / 2
-        x0 = 0.52
-        w_max = 0.4
-        l0 = x0 - w_max
-        # rear_max = -0.4
-        x2 = x0 - shape_length
-        l = -w_max - x2
-
-        # generic larva shape with total lenth 1
-        shape = [(x0, +0.0),
-                 (w_max, +w * 2 / 3),
-                 (w_max / 3, +w),
-                 (-w_max, +w * 2 / 3),
-                 (x2, 0.0),
-                 (-w_max, -w * 2 / 3),
-                 (w_max / 3, -w),
-                 (w_max, -w * 2 / 3)]
-        # shape = self.get_larva_shape()
-        generic_shape = np.array([shape])
-
-        if num_segments == 1:
-            return [generic_shape]
-        else:
-            s0s = [x0 + r - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
-            s1s = [x0 + r / 2 - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
-            s2s = [x0 - cum_r for r, cum_r in zip(segment_ratio, np.cumsum(segment_ratio))]
-            s0s, s2s = self.add_interval_between_segments(N, density, interval, s0s, s2s)
-            segment_vertices = []
-            for i, (s0, s1, s2) in enumerate(zip(s0s, s1s, s2s)):
-                if s0 > w_max and s2 >= w_max:
-                    shape = [(s0 - s1, +(x0 - s0) / l0 * w),
-                             (s2 - s1, +(x0 - s2) / l0 * w),
-                             (s2 - s1, -(x0 - s2) / l0 * w),
-                             (s0 - s1, -(x0 - s0) / l0 * w)]
-                elif s0 > w_max > s2 >= -w_max:
-                    shape = [(s0 - s1, +(x0 - s0) / l0 * w),
-                             (w_max - s1, +w),
-                             (s2 - s1, +w),
-                             (s2 - s1, -w),
-                             (w_max - s1, -w),
-                             (s0 - s1, -(x0 - s0) / l0 * w)]
-                elif -w_max < s0 <= w_max and -w_max <= s2 < w_max:
-                    shape = [(s0 - s1, +w),
-                             (s2 - s1, +w),
-                             (s2 - s1, -w),
-                             (s0 - s1, -w)]
-                elif w_max >= s0 > -w_max >= s2:
-                    shape = [(s0 - s1, +w),
-                             (-w_max - s1, +w),
-                             (s2 - s1, +((s2 - x2) / l + 1) * w / 2),
-                             (s2 - s1, -((s2 - x2) / l + 1) * w / 2),
-                             (-w_max - s1, -w),
-                             (s0 - s1, -w)]
-                elif -w_max >= s0:
-                    shape = [(s0 - s1, +((s0 - x2) / l + 1) * w / 2),
-                             (s2 - s1, +((s2 - x2) / l + 1) * w / 2),
-                             (s2 - s1, -((s2 - x2) / l + 1) * w / 2),
-                             (s0 - s1, -((s0 - x2) / l + 1) * w / 2)]
-                segment_vertices.append(np.array([shape]) * N)
-            return segment_vertices
+        points = np.array([[0.9, w], [0.05, w]])
+        xy0 = fun.body(points)
+        ps = fun.segment_body(Nsegs, xy0, seg_ratio=seg_ratio, centered=True)
+        seg_vertices = [np.array([p]) * 1 for p in ps]
+        return seg_vertices
 
     def get_larva_shape(self, filepath=None):
         if filepath is None:
@@ -645,30 +694,27 @@ class LarvaBody:
     # For width_to_length_ratio=w2l, the area of the body without intervals is A=w2l*l*l
     # Subtracting the intervals, this translates to A'= (l-2*(n-1)*int*l) * w2l*l = (1-2*(n-1)*int)*A
     # To get the same mass, we will raise the density=d to d' accordingly : mass=d*A = d'*A' ==> d'=d/(1-2*(n-1)*int)
-    def add_interval_between_segments(self, num_segments, density, interval, seg_starts, seg_stops):
+    def add_interval_between_segments(self, Nsegs, density, interval, seg_starts, seg_stops):
         for i in range(1, len(seg_starts)):
             seg_starts[i] -= interval
         for i in range(len(seg_stops) - 1):
             seg_stops[i] += interval
 
-        self.density = density / (1 - 2 * (num_segments - 1) * interval)
+        self.density = density / (1 - 2 * (Nsegs - 1) * interval)
 
         return seg_starts, seg_stops
 
     def create_joints(self, Nsegs, segs, joint_type):
         space = self.model.space
-
+        l0 = np.mean(self.seg_lengths)
+        self.joints = []
         # TODO Find compatible parameters.
         # Until now for the 12-seg body : density 30000 and maxForce 100000000  and torque_coef 3.5 seem to work for natural bend
         # Trying to implement friction joint
-        # friction_joint = False
         if self.friction_pars is not None:
-            friction_pars = self.friction_pars
-            # print('lala')
-            friction_joint_def = {'maxForce': friction_pars['maxForce'],
+            friction_joint_def = {'maxForce': self.friction_pars['maxForce'],
                                   # Good for one segment maybe : 100000000,
-                                  'maxTorque': friction_pars[
-                                      'maxTorque']}  # Good for one segment maybe : 10,
+                                  'maxTorque': self.friction_pars['maxTorque']}  # Good for one segment maybe : 10,
             for i in range(Nsegs):
                 friction_joint = space.CreateFrictionJoint(**friction_joint_def,
                                                            bodyA=segs[i]._body,
@@ -676,9 +722,8 @@ class LarvaBody:
                                                            localAnchorA=(0, 0),
                                                            localAnchorB=(0, 0))
 
-        self.joints = []
-        # This gets the extreme lateral points:
-        lateral_attachment_dist = self.width_to_length_ratio * Nsegs / 2
+                self.joints.append(friction_joint)
+        w = self.width_to_length_ratio * Nsegs / 2
         # For many segments, the front one(s) will be joint by points outside the body.
         # So we adopt a more conservative solution, bringing the attachment point more medially : No visible difference
         # lateral_attachment_dist = self.width_to_length_ratio * self.Npoints / 4
@@ -687,41 +732,29 @@ class LarvaBody:
             dist_joint_def = {'collideConnected': False,
                               'frequencyHz': 5,
                               'dampingRatio': 1,
-                              'length': np.mean(self.seg_lengths) * 0.01}
+                              'length': l0 * 0.01}
 
             for i in range(Nsegs - 1):
+                A, B = segs[i]._body, segs[i + 1]._body
                 if joint_type['distance'] == 2:
-                    left_joint = space.CreateDistanceJoint(**dist_joint_def,
-                                                           bodyA=segs[i]._body,
-                                                           bodyB=segs[i + 1]._body,
-                                                           localAnchorA=tuple(np.mean(self.seg_lengths) * x for x in
-                                                                              (-0.5, lateral_attachment_dist)),
-                                                           localAnchorB=tuple(
-                                                               np.mean(self.seg_lengths) * x for x in
-                                                               (0.5, lateral_attachment_dist))
-                                                           )
-                    right_joint = space.CreateDistanceJoint(**dist_joint_def,
-                                                            bodyA=segs[i]._body,
-                                                            bodyB=segs[i + 1]._body,
-                                                            localAnchorA=tuple(
-                                                                np.mean(self.seg_lengths) * x for x in
-                                                                (-0.5,
-                                                                 -lateral_attachment_dist)),
-                                                            localAnchorB=tuple(
-                                                                np.mean(self.seg_lengths) * x for x in
-                                                                (0.5, -lateral_attachment_dist))
-                                                            )
-                    self.joints.append([left_joint, right_joint])
+                    j_l = space.CreateDistanceJoint(**dist_joint_def,
+                                                    bodyA=A,
+                                                    bodyB=B,
+                                                    localAnchorA=tuple(l0 * x for x in (-0.5, w)),
+                                                    localAnchorB=tuple(l0 * x for x in (0.5, w)))
+                    j_r = space.CreateDistanceJoint(**dist_joint_def,
+                                                    bodyA=A,
+                                                    bodyB=B,
+                                                    localAnchorA=tuple(l0 * x for x in (-0.5, -w)),
+                                                    localAnchorB=tuple(l0 * x for x in (0.5, -w)))
+                    self.joints.append([j_l, j_r])
                 elif joint_type['distance'] == 1:
-                    joint = space.CreateDistanceJoint(**dist_joint_def,
-                                                      bodyA=segs[i]._body,
-                                                      bodyB=segs[i + 1]._body,
-                                                      localAnchorA=tuple(np.mean(self.seg_lengths) * x for x in
-                                                                         (-0.5, 0)),
-                                                      localAnchorB=tuple(
-                                                          np.mean(self.seg_lengths) * x for x in (0.5, 0))
-                                                      )
-                    self.joints.append(joint)
+                    j = space.CreateDistanceJoint(**dist_joint_def,
+                                                  bodyA=A,
+                                                  bodyB=B,
+                                                  localAnchorA=tuple(l0 * x for x in (-0.5, 0)),
+                                                  localAnchorB=tuple(l0 * x for x in (0.5, 0)))
+                    self.joints.append(j)
 
         if joint_type['revolute']:
 
@@ -735,37 +768,26 @@ class LarvaBody:
                              'motorSpeed': 0}
 
             for i in range(Nsegs - 1):
+                A, B = segs[i]._body, segs[i + 1]._body
                 if joint_type['revolute'] == 2:
-                    left_joint = space.CreateRevoluteJoint(**rev_joint_def,
-                                                           bodyA=segs[i]._body,
-                                                           bodyB=segs[i + 1]._body,
-                                                           localAnchorA=tuple(np.mean(self.seg_lengths) * x for x in
-                                                                              (-0.5, lateral_attachment_dist)),
-                                                           localAnchorB=tuple(
-                                                               np.mean(self.seg_lengths) * x for x in
-                                                               (0.5, lateral_attachment_dist))
-                                                           )
-                    right_joint = space.CreateRevoluteJoint(**rev_joint_def,
-                                                            bodyA=segs[i]._body,
-                                                            bodyB=segs[i + 1]._body,
-                                                            localAnchorA=tuple(
-                                                                np.mean(self.seg_lengths) * x for x in
-                                                                (-0.5,
-                                                                 -lateral_attachment_dist)),
-                                                            localAnchorB=tuple(
-                                                                np.mean(self.seg_lengths) * x for x in
-                                                                (0.5, -lateral_attachment_dist))
-                                                            )
-                    self.joints.append([left_joint, right_joint])
+                    j_l = space.CreateRevoluteJoint(**rev_joint_def,
+                                                    bodyA=A,
+                                                    bodyB=B,
+                                                    localAnchorA=tuple(l0 * x for x in (-0.5, w)),
+                                                    localAnchorB=tuple(l0 * x for x in (0.5, w)))
+                    j_r = space.CreateRevoluteJoint(**rev_joint_def,
+                                                    bodyA=A,
+                                                    bodyB=B,
+                                                    localAnchorA=tuple(l0 * x for x in (-0.5, -w)),
+                                                    localAnchorB=tuple(l0 * x for x in (0.5, -w)))
+                    self.joints.append([j_l, j_r])
                 elif joint_type['revolute'] == 1:
-                    joint = space.CreateRevoluteJoint(**rev_joint_def,
-                                                      bodyA=segs[i]._body,
-                                                      bodyB=segs[i + 1]._body,
-                                                      localAnchorA=tuple(
-                                                          np.mean(self.seg_lengths) * x for x in (-0.5, 0)),
-                                                      localAnchorB=tuple(
-                                                          np.mean(self.seg_lengths) * x for x in (0.5, 0)))
-                    self.joints.append(joint)
+                    j = space.CreateRevoluteJoint(**rev_joint_def,
+                                                  bodyA=A,
+                                                  bodyB=B,
+                                                  localAnchorA=tuple(l0 * x for x in (-0.5, 0)),
+                                                  localAnchorB=tuple(l0 * x for x in (0.5, 0)))
+                    self.joints.append(j)
 
     def __del__(self):
         try:
@@ -776,6 +798,12 @@ class LarvaBody:
                 self.space.remove_agent(self)
             except:
                 pass
+
+    def draw_sensor(self, viewer, sensor):
+        viewer.draw_circle(radius=self.sim_length / 20,
+                           # position=self.get_olfactor_position(),
+                           position=self.get_sensor_position(sensor),
+                           filled=True, color=(255, 0, 0), width=.1)
 
     def draw(self, viewer):
         if not self.model.draw_contour:
@@ -788,6 +816,8 @@ class LarvaBody:
             viewer.draw_circle(radius=self.seg_lengths[0] / 2,
                                position=self.get_global_front_end_of_head(),
                                filled=True, color=(255, 0, 0), width=.1)
+        # for s in self.get_sensors() :
+        #     self.draw_sensor(viewer, s)
 
     def plot_vertices(self, axes, **kwargs):
         for seg in self.segs:
@@ -877,8 +907,8 @@ class LarvaBody:
 
     def set_contour(self, Ncontour=22):
         vertices = [np.array(seg.vertices[0]) for seg in self.segs]
-        l_side = flatten_list([v[:int(len(v) / 2)] for v in vertices])
-        r_side = flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
+        l_side = fun.flatten_list([v[:int(len(v) / 2)] for v in vertices])
+        r_side = fun.flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
         r_side.reverse()
         total_contour = l_side + r_side
         if len(total_contour) > Ncontour:
@@ -888,3 +918,16 @@ class LarvaBody:
             contour = total_contour
         # self.contour = contour[ConvexHull(contour).vertices].tolist()
         return contour
+
+    def add_touch_sensors(self):
+        y=0.1
+        x_f, x_m, x_r=0.75,0.5,0.25
+        self.define_sensor('M_front', (1.0, 0.0))
+        self.define_sensor('L_front', (x_f, y))
+        self.define_sensor('R_front', (x_f, -y))
+        self.define_sensor('L_mid', (x_m, y))
+        self.define_sensor('R_mid', (x_m, -y))
+        self.define_sensor('L_rear', (x_r, y))
+        self.define_sensor('R_rear', (x_r, -y))
+        self.define_sensor('M_rear', (0.0, 0.0))
+

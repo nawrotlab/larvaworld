@@ -22,7 +22,7 @@ feed_grid = {'fly_params': feeding_larva,
 focus = {'fly_params': sample_exploring_larva,
          'env_params': focus_exp_np,
          'collect_effectors': ['turner','pose'],
-         'modules': sole_turner,
+         # 'modules': sole_turner,
          }
 imitation = {'fly_params': imitation_larva,
              'env_params': imitation_exp_p,

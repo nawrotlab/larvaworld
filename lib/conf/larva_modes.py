@@ -18,7 +18,7 @@ vel_torque_transformer = {
     'bend_correction_coef': 1.4,
     'static_torque': 0.0,
     # 'density': 300.0,
-    # 'friction_pars': {'maxForce': 10 ** 0, 'maxTorque': 10 ** -1}
+    'friction_pars': {'maxForce': 10 ** 0, 'maxTorque': 10 ** -1}
 }
 osc_coupling = {
     'crawler_interference_free_window': np.pi * 0.55,  # np.pi * 0.55,  # 0.9, #,
@@ -80,6 +80,13 @@ sample_l3_seg2 = {'initial_length': 'sample',  # From D1 fit
                   'length_std': 0.0,  # From D1 fit
                   'Nsegs': 2,
                   'seg_ratio': [5 / 11, 6 / 11]}
+
+sample_l3_seg11 = {'initial_length': 'sample',  # From D1 fit
+                  'length_std': 0.0,  # From D1 fit
+                  'Nsegs': 11,
+                  # 'seg_ratio': [5 / 11, 6 / 11]
+                   }
+
 brain_locomotion = {'modules': locomotion,
                     'turner_params': lateral_oscillator,
                     'crawler_params': sample_realistic_crawler,
@@ -92,7 +99,9 @@ sample_exploring_larva = {'energetics_params': None,
                           'homeostatic_drive_params': None,
                           'neural_params': brain_locomotion,
                           'sensorimotor_params': vel_torque_transformer,
-                          'body_params': sample_l3_seg2}
+                          # 'body_params': sample_l3_seg11
+                          'body_params': sample_l3_seg2
+                          }
 
 # -------------------------------------------LARVA MODES----------------------------------------------------------
 # ---------------------------------------------------------------------------------------------------------------------
@@ -226,6 +235,8 @@ l3_seg11 = {'initial_length': 0.00428,
             'joint_type': {'distance': 2, 'revolute': 1},
             'interval': 0.0}
 
+
+
 l1_seg2 = {'initial_length': 0.0013,
            'length_std': 0.0001,
            'Nsegs': 2,
@@ -350,3 +361,5 @@ nengo_larva = {'energetics_params': None,
                'neural_params': brain_nengo,
                'sensorimotor_params': vel_torque_transformer,
                'body_params': l3_seg2}
+
+
