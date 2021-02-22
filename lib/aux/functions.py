@@ -378,6 +378,10 @@ def inside_polygon(points, space_edges_for_screen, vertices):
         return all([polygon.contains(Point(x, y)) for x, y in points])
 
 
+def border_collision(line, border_lines):
+    return any([line.crosses(l) for l in border_lines])
+
+
 def timeit(exec_s, globals={}, N=10000):
     t = time.time()
     for i in range(N):

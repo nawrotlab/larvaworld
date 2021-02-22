@@ -4,6 +4,8 @@ import numpy as np
 import progressbar
 import pygame
 import os
+
+from shapely.affinity import affine_transform
 from unflatten import unflatten
 from Box2D import b2World, b2ChainShape
 from mesa.space import ContinuousSpace
@@ -98,6 +100,10 @@ class LarvaWorld(Model):
         self.create_schedules()
         self.create_arena(**self.env_pars['arena_params'])
         self.space = self.create_space(**self.env_pars['space_params'])
+        if 'border_params' in self.env_pars.keys() :
+            self.border_xy, self.border_lines=self.create_borders(**self.env_pars['border_params'])
+        else :
+            self.border_xy, self.border_lines=[], []
         self.sim_clock = SimulationClock(self.dt, color=self.scale_clock_color)
         self.sim_scale = SimulationScale(self.arena_dims[0], self.scaling_factor,
                                          color=self.scale_clock_color)
@@ -263,6 +269,8 @@ class LarvaWorld(Model):
         screen.set_bounds(*self.space_edges_for_screen)
         screen.draw_polygon(self.space_edges, color=self.screen_color)
         screen.draw_polygon(self.tank_shape, color=self.tank_color)
+        for b in self.border_xy :
+            screen.draw_polyline(b, color=self.screen_color, width=0.001, closed=False)
 
     def render_aux(self):
         self.sim_clock.render_clock(self.screen_width, self.screen_height)
@@ -403,6 +411,15 @@ class LarvaWorld(Model):
                         bar.update(i)
                 elif isinstance(self, LarvaWorldReplay):
                     raise ValueError('When running a replay, set mode to video or image')
+
+    def create_borders(self, lines):
+        s=self.scaling_factor
+        X,Y=self.arena_dims
+        T=[s,0,0,s,-s*X/2, -s*Y/2]
+        lines=[affine_transform(l,T) for l in lines]
+        ps = [p.coords.xy for p in lines]
+        borders_xy = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
+        return borders_xy, lines
 
 
 class LarvaWorldSim(LarvaWorld):

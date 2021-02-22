@@ -1,12 +1,15 @@
 import numpy as np
 import sys
 
+from shapely.geometry import Polygon, LineString
+
 import lib.aux.functions as fun
 
 ######## FOOD PARAMETERS ###########
 
 # -------------------------------------------SPACE MODES----------------------------------------------------------
 # ---------------------------------------------------------------------------------------------------------------------
+from lib.model.envs._maze import Maze
 
 mesa_space = {'physics_engine': False,
               'scaling_factor': 1.0}
@@ -41,19 +44,20 @@ def larva_mid(N, s=0.1):
                                       'loc': (0.0, 0.0),
                                       'scale': s}}
 
+
 def food_place(N, place='mid', r=0.7):
-    if place=='mid' :
-        mode='defined'
-        if N>0:
-            loc=np.array([(0.0, 0.0)]*N)
-        else :
-            loc=None
-    elif place=='circle' :
+    if place == 'mid':
         mode = 'defined'
-        loc=fun.positions_in_circle(r, N)
-    elif place=='uniform' :
+        if N > 0:
+            loc = np.array([(0.0, 0.0)] * N)
+        else:
+            loc = None
+    elif place == 'circle':
+        mode = 'defined'
+        loc = fun.positions_in_circle(r, N)
+    elif place == 'uniform':
         mode = 'uniform'
-        loc=None
+        loc = None
     a = {'initial_num_food': N,
          'initial_food_positions': {'mode': mode,
                                     'loc': loc}}
@@ -93,26 +97,12 @@ set_on_xaxis_one_food = {'initial_num_flies': 1 * 8 * 20,
                          'initial_food_positions': {'mode': 'defined',
                                                     'loc': np.array([(0.5, 0.0)])}}
 
-
-
-
-
-
-
 larva1_food0_facing_up = {'initial_num_flies': 1,
                           'initial_fly_positions': {'mode': 'identical',
                                                     'loc': (0.0, 0.0),
                                                     'orientation': np.pi / 2,
                                                     'scale': 0.0},
                           **food_place(0)}
-
-
-
-
-
-
-
-
 
 food_patches = np.array([
     (0.70, 0.07), (0.50, -0.43),
@@ -123,7 +113,7 @@ food_patches = np.array([
 larva0_food_patchy_8_exp = {**larva_mid(0),
                             'initial_num_food': 8,
                             'initial_food_positions': {'mode': 'defined',
-                                                       'loc': food_patches* (1, -1) + (-0.08, 0.08)}}
+                                                       'loc': food_patches * (1, -1) + (-0.08, 0.08)}}
 
 larva0_food_patchy_8_exp_inverted_x = {**larva_mid(0),
                                        'initial_num_food': 8,
@@ -252,6 +242,24 @@ def arena(x, y):
             'arena_shape': 'rectangular'}
 
 
+def maze(nx=15, ny=15, ix=0, iy=0, h=0.1):
+    # Maze dimensions (ncols, nrows)
+    # nx, ny = 15, 15
+    # Maze entry position
+    # ix, iy = 0, 0
+
+    m = Maze(nx, ny, ix, iy, height=h)
+    m.make_maze()
+    lines = m.maze_lines()
+    return lines
+
+
+
+# maze0=[LineString([(0, 0.01), (0.02, 0.01), (0.02, 0.03), (-0.01, 0.03), (-0.01, -0.01)]),
+#        LineString([(0, 0.01), (0.02, 0.01), (0.02, 0.03), (-0.01, 0.03), (-0.01, -0.01)]),
+#        LineString([(0, 0.01), (0.02, 0.01), (0.02, 0.03), (-0.01, 0.03), (-0.01, -0.01)])]
+# maze_polygons=[Polygon([(0, 0), (0, 0.01), (0.02, 0.01), (0.02, 0.03), (-0.01, 0.03), (-0.01, -0.01),])]
+
 ########## FULL EXPERIMENT PARAMETERS #########################
 
 def pref_conf(N, dish_r=0.1):
@@ -278,6 +286,15 @@ def chemorbit_conf(N):
     return conf
 
 
+def maze_conf(N, n):
+    conf = {'arena_params': arena(0.1, 0.1),
+            'border_params': {'lines': maze(nx=n, ny=n, h=0.1)},
+            'food_params': food(0.002),
+            'place_params': {**chemotax_place(N), **food_place(1)},
+            'odor_params': chemorbit_odor_np}
+    return conf
+
+
 def disp_conf(N, dish_r=0.3):
     conf = {'arena_params': dish(dish_r),
             'food_params': None,
@@ -300,6 +317,8 @@ pref_exp_np = exp_conf(pref_conf(25))
 chemotax_exp_np = exp_conf(chemotax_conf(30))
 
 chemorbit_exp_np = exp_conf(chemorbit_conf(30))
+
+maze_exp_np = exp_conf(maze_conf(1, 10))
 
 disp_exp_np = exp_conf(disp_conf(30, 0.2))
 
@@ -357,7 +376,7 @@ feed_scatter_exp_np = {'arena_params': arena(0.05, 0.05),
 feed_patchy_exp_np = {'arena_params': arena(0.2, 0.2),
                       'space_params': mesa_space,
                       'food_params': food(0.0025, amount=0.001),
-                      'place_params': {**larva_mid(20, s=0.1),**food_place(8, 'circle', 0.7)},
+                      'place_params': {**larva_mid(20, s=0.1), **food_place(8, 'circle', 0.7)},
                       'odor_params': chemorbit_odor_np}
 
 feed_patchy_empirical = {
@@ -370,15 +389,15 @@ feed_patchy_empirical = {
 
 growth_exp_np = {'arena_params': arena(0.01, 0.01),  # dish(0.006),
                  'space_params': mesa_space,
-                 'food_params': food_grid(50,10**-3),  # food(0.0002),
+                 'food_params': food_grid(50, 10 ** -3),  # food(0.0002),
                  'place_params': {**larva_mid(1), **food_place(0)},  # larva1_food_uniform,
                  'odor_params': None}
 
 growth_exp_np_small = {'arena_params': arena(0.01, 0.01),  # dish(0.006),
-                 'space_params': mesa_space,
-                 'food_params': food_grid(20,10**-7),  # food(0.0002),
-                 'place_params': {**larva_mid(1), **food_place(0)},  # larva1_food_uniform,
-                 'odor_params': None}
+                       'space_params': mesa_space,
+                       'food_params': food_grid(20, 10 ** -7),  # food(0.0002),
+                       'place_params': {**larva_mid(1), **food_place(0)},  # larva1_food_uniform,
+                       'odor_params': None}
 
 growth_exp_np_old = {'arena_params': dish(0.006),
                      'space_params': mesa_space,

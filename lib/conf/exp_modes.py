@@ -21,7 +21,7 @@ feed_grid = {'fly_params': feeding_larva,
              }
 focus = {'fly_params': sample_exploring_larva,
          'env_params': focus_exp_np,
-         'collect_effectors': ['turner','pose'],
+         'collect_effectors': ['turner', 'pose'],
          # 'modules': sole_turner,
          }
 imitation = {'fly_params': imitation_larva,
@@ -31,7 +31,7 @@ imitation = {'fly_params': imitation_larva,
              }
 reorientation = {'fly_params': sample_odor_larva,
                  'env_params': reorientation_exp_np,
-                 'collect_effectors': ['turner', 'olfactor','pose'],
+                 'collect_effectors': ['turner', 'olfactor', 'pose'],
                  'modules': olfactor_turner,
                  'traj_mode': no_traj
                  }
@@ -50,28 +50,35 @@ odor_pref = {'fly_params': sample_odor_larva_x2,
              }
 chemorbit = {'fly_params': sample_odor_larva,
              'env_params': chemorbit_exp_np,
-             'collect_effectors': ['olfactor','pose'],
+             'collect_effectors': ['olfactor', 'pose'],
              'step_pars': ['dst_to_center', 'scaled_dst_to_center'],
              'end_pars': ['final_dst_to_center', 'final_scaled_dst_to_center',
-                                               'max_dst_to_center', 'max_scaled_dst_to_center'],
+                          'max_dst_to_center', 'max_scaled_dst_to_center'],
              'draw_mode': draw_colors
              }
 chemotax = {'fly_params': sample_odor_larva,
             'env_params': chemotax_exp_np,
-            'collect_effectors': ['olfactor','pose'],
+            'collect_effectors': ['olfactor', 'pose'],
             'step_pars': ['dst_to_chemotax_odor', 'scaled_dst_to_chemotax_odor'],
             'end_pars': ['final_dst_to_chemotax_odor', 'final_scaled_dst_to_chemotax_odor'],
             'draw_mode': draw_colors
             }
 dispersion = {'fly_params': sample_exploring_larva,
               'env_params': disp_exp_np,
-'collect_effectors': ['pose'],
+              'collect_effectors': ['pose'],
               'draw_mode': draw_colors
               }
 dish = {'fly_params': sample_exploring_larva,
         'env_params': dish_exp_np,
-'collect_effectors': ['pose'],
+        'collect_effectors': ['pose'],
         'draw_mode': draw_colors,
+        }
+maze = {'fly_params': sample_odor_larva,
+        'env_params': maze_exp_np,
+        'collect_effectors': ['olfactor', 'pose'],
+        'step_pars': ['dst_to_center', 'scaled_dst_to_center'],
+        'end_pars': ['final_dst_to_center', 'final_scaled_dst_to_center',
+                     'max_dst_to_center', 'max_scaled_dst_to_center'],
         }
 exp_types = {'feed_scatter': feed_scatter,
              'feed_patchy': feed_patchy,
@@ -85,4 +92,5 @@ exp_types = {'feed_scatter': feed_scatter,
              'chemotax': chemotax,
              'dispersion': dispersion,
              'dish': dish,
+             'maze': maze,
              }

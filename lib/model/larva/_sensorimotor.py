@@ -2,10 +2,11 @@ import abc
 import math
 
 import numpy as np
+from shapely.geometry import LineString
 
 from lib.model.larva._bodies import LarvaBody
-from lib.aux.functions import restore_bend, inside_polygon, angle_dif, rotate_around_point, \
-    restore_bend_2seg, rotate_around_center
+
+import lib.aux.functions as fun
 
 
 class Agent(LarvaBody, abc.ABC):
@@ -22,6 +23,9 @@ class Agent(LarvaBody, abc.ABC):
     @abc.abstractmethod
     def step(self, time_step):
         pass
+
+
+
 
 
 class VelocityAgent(Agent, abc.ABC):
@@ -318,9 +322,9 @@ class VelocityAgent(Agent, abc.ABC):
         # a = self.angles[0]
         if not self.model.physics_engine :
             if self.Nsegs ==2 :
-                self.spineangles[0] = restore_bend_2seg(self.spineangles[0], d, l, correction_coef=self.bend_correction_coef)
+                self.spineangles[0] = fun.restore_bend_2seg(self.spineangles[0], d, l, correction_coef=self.bend_correction_coef)
             else :
-                self.spineangles = restore_bend(self.spineangles, d, l, self.Nsegs, correction_coef=self.bend_correction_coef)
+                self.spineangles = fun.restore_bend(self.spineangles, d, l, self.Nsegs, correction_coef=self.bend_correction_coef)
         # print(self.physics_engine)
         # print(np.abs(a)-np.abs(self.angles[0]))
 
@@ -393,8 +397,9 @@ class VelocityAgent(Agent, abc.ABC):
 
         # points=[pos_new]
         # points=[pos_new, front_pos_new]
-        temp_bool = inside_polygon(points=[pos_new], space_edges_for_screen=self.space_edges,vertices=self.tank_vertices)
-        if not temp_bool :
+        in_tank = fun.inside_polygon(points=[pos_new], space_edges_for_screen=self.space_edges,vertices=self.tank_vertices)
+        border_collision = fun.border_collision(line=LineString([pos_old, pos_new]), border_lines= self.model.border_lines)
+        if not in_tank or border_collision :
             linear_velocity=0
             d=0
             pos_new = pos_old
@@ -439,7 +444,7 @@ class VelocityAgent(Agent, abc.ABC):
 
     def compute_spineangles(self):
         seg_ors = [seg.get_orientation() for seg in self.segs]
-        self.spineangles = [angle_dif(seg_ors[i], seg_ors[i + 1], in_deg=False) for i in range(self.Nangles)]
+        self.spineangles = [fun.angle_dif(seg_ors[i], seg_ors[i + 1], in_deg=False) for i in range(self.Nangles)]
 
     def compute_body_bend(self):
         prev = self.body_bend
