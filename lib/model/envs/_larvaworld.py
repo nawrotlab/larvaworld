@@ -29,6 +29,7 @@ pygame.init()
 max_screen_height = pygame.display.Info().current_h
 sim_screen_dim = int(max_screen_height * 2 / 3)
 
+
 class LarvaWorld(Model):
     def __init__(self, id, dt,
                  env_params, Nsteps, save_to,
@@ -37,15 +38,15 @@ class LarvaWorld(Model):
                  trajectories=True, trail_decay_in_sec=0.0, trajectory_colors=None,
                  show_state=True, random_larva_colors=False, color_behavior=False,
                  draw_head=False, draw_contour=True, draw_centroid=False, draw_midline=True,
-                 show_display=True, video_speed=None, snapshot_interval_in_sec=60*60*10):
+                 show_display=True, video_speed=None, snapshot_interval_in_sec=60 * 60 * 10):
 
         self.dt = dt
-        if video_speed is None :
-            self.video_fps= int(1 / dt)
-        else :
+        if video_speed is None:
+            self.video_fps = int(1 / dt)
+        else:
             self.video_fps = int(video_speed / dt)
 
-        self.show_display=show_display
+        self.show_display = show_display
         self.sim_screen_dim = sim_screen_dim
         self.Nsteps = Nsteps
         self.snapshot_interval = int(snapshot_interval_in_sec / dt)
@@ -101,10 +102,10 @@ class LarvaWorld(Model):
         self.create_schedules()
         self.create_arena(**self.env_pars['arena_params'])
         self.space = self.create_space(**self.env_pars['space_params'])
-        if 'border_params' in self.env_pars.keys() :
-            self.border_xy, self.border_lines=self.create_borders(**self.env_pars['border_params'])
-        else :
-            self.border_xy, self.border_lines=[], []
+        if 'border_params' in self.env_pars.keys():
+            self.border_xy, self.border_lines = self.create_borders(**self.env_pars['border_params'])
+        else:
+            self.border_xy, self.border_lines = [], []
         self.sim_clock = SimulationClock(self.dt, color=self.scale_clock_color)
         self.sim_scale = SimulationScale(self.arena_dims[0], self.scaling_factor,
                                          color=self.scale_clock_color)
@@ -270,8 +271,8 @@ class LarvaWorld(Model):
         screen.set_bounds(*self.space_edges_for_screen)
         screen.draw_polygon(self.space_edges, color=self.screen_color)
         screen.draw_polygon(self.tank_shape, color=self.tank_color)
-        for b in self.border_xy :
-            screen.draw_polyline(b, color=self.screen_color, width=0.001*self.scaling_factor, closed=False)
+        for b in self.border_xy:
+            screen.draw_polyline(b, color=self.screen_color, width=0.001 * self.scaling_factor, closed=False)
 
     def render_aux(self):
         self.sim_clock.render_clock(self.screen_width, self.screen_height)
@@ -283,7 +284,7 @@ class LarvaWorld(Model):
         if self._screen is None:
             # caption = self.spec.id if self.spec else ""
             if self.mode == 'video':
-                _video_path=f'{self.media_name}.mp4'
+                _video_path = f'{self.media_name}.mp4'
             else:
                 _video_path = None
             if self.mode == 'image':
@@ -304,7 +305,6 @@ class LarvaWorld(Model):
             self._screen.close()
             self._screen = None
 
-
         if self.image_mode != 'overlap':
             self.draw_arena(self._screen)
             self.draw_background(self._screen, background_motion)
@@ -321,16 +321,12 @@ class LarvaWorld(Model):
             if velocity_arrows:
                 draw_velocity_arrow(self._screen, g)
 
-
-
         if self.trajectories:
             draw_trajectories(space_dims=self.space_dims, agents=self.get_flies(), screen=self._screen,
                               decay_in_ticks=self.trail_decay_in_ticks, trajectory_colors=self.trajectory_colors)
         if self.image_mode != 'overlap':
             self.draw_aux(self._screen)
             self._screen.render()
-
-
 
     def _place_food(self, num_food, positions, food_params):
         # num_food = self.place_params['initial_num_ood']
@@ -414,15 +410,15 @@ class LarvaWorld(Model):
                     raise ValueError('When running a replay, set mode to video or image')
 
     def create_borders(self, lines):
-        s=self.scaling_factor
-        X,Y=self.arena_dims
-        T=[s,0,0,s,-s*X/2, -s*Y/2]
-        lines=[affine_transform(l,T) for l in lines]
+        s = self.scaling_factor
+        X, Y = self.arena_dims
+        T = [s, 0, 0, s, -s * X / 2, -s * Y / 2]
+        lines = [affine_transform(l, T) for l in lines]
         ps = [p.coords.xy for p in lines]
         borders_xy = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
 
-        if self.physics_engine :
-            for xy in borders_xy :
+        if self.physics_engine:
+            for xy in borders_xy:
                 b = self.space.CreateStaticBody(position=(.0, .0))
                 border_shape = b2EdgeShape(vertices=xy.tolist())
                 b.CreateFixture(shape=border_shape)
@@ -431,13 +427,16 @@ class LarvaWorld(Model):
 
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, fly_params, collected_pars={'step': [], 'endpoint': []},
-                 id='Unnamed_Simulation', allow_collisions=True, **kwargs):
+                 id='Unnamed_Simulation', allow_collisions=True,
+                 touch_sensors=False, count_bend_errors=False,**kwargs):
         super().__init__(id=id, **kwargs)
 
+        self.count_bend_errors = count_bend_errors
+        self.touch_sensors = touch_sensors
         self.allow_collisions = allow_collisions
         self.fly_params = fly_params
-        for dist in ['pause_dist', 'stridechain_dist'] :
-            if self.fly_params['neural_params']['intermitter_params'][dist]=='fit' :
+        for dist in ['pause_dist', 'stridechain_dist']:
+            if self.fly_params['neural_params']['intermitter_params'][dist] == 'fit':
                 self.fly_params['neural_params']['intermitter_params'][dist] = get_ref_bout_distros(dist)
 
         self.populate_space(self.env_pars)
@@ -516,20 +515,20 @@ class LarvaWorldSim(LarvaWorld):
             for i, odor_id in enumerate(odor_params['odor_id_list']):
                 if odor_params['odor_landscape'] == 'Diffusion':
                     odor_layers[odor_id] = DiffusionValueLayer(world=self.space, unique_id=odor_id,
-                                                                    sources=[f for f in sources if
-                                                                             f.get_odor_id() == odor_id],
-                                                                    world_range=[self.world_x_range,
-                                                                                 self.world_y_range],
-                                                                    grid_resolution=odor_params[
-                                                                        'odor_layer_grid_resolution'],
-                                                                    evap_const=odor_params['odor_evaporation_rate'],
-                                                                    diff_const=odor_params['odor_diffusion_rate'])
+                                                               sources=[f for f in sources if
+                                                                        f.get_odor_id() == odor_id],
+                                                               world_range=[self.world_x_range,
+                                                                            self.world_y_range],
+                                                               grid_resolution=odor_params[
+                                                                   'odor_layer_grid_resolution'],
+                                                               evap_const=odor_params['odor_evaporation_rate'],
+                                                               diff_const=odor_params['odor_diffusion_rate'])
                 elif odor_params['odor_landscape'] == 'Gaussian':
                     odor_layers[odor_id] = GaussianValueLayer(world=self.space, unique_id=odor_id,
-                                                                   sources=[f for f in sources if
-                                                                            f.get_odor_id() == odor_id])
+                                                              sources=[f for f in sources if
+                                                                       f.get_odor_id() == odor_id])
             return Nodors, odor_layers
-        else :
+        else:
             return 0, {}
 
     def _place_flies(self, num_flies, positions):
@@ -637,16 +636,12 @@ class LarvaWorldSim(LarvaWorld):
             for layer_id in self.odor_layers:
                 self.odor_layers[layer_id].update_values()  # Currently doing something only for the DiffusionValueLayer
 
-        if not self.allow_collisions :
-            self.larva_bodies=self.get_larva_bodies()
-        # s0 = time.time()
-        for fly in self.get_flies():
-            fly.compute_next_action()
+        if not self.allow_collisions:
+            self.larva_bodies = self.get_larva_bodies()
+        for l in self.get_flies():
+            l.compute_next_action()
 
-        # s1 = time.time()
         self.active_larva_schedule.step()
-        # s2 = time.time()
-
         self.active_food_schedule.step()
 
         # step space
@@ -658,8 +653,7 @@ class LarvaWorldSim(LarvaWorld):
         # if self.sim_clock.second < 0.001:
         #     print(self.sim_clock.hour, self.sim_clock.minute)
         #     print(np.round(s3 - s0, 5))
-            # print(np.round(s3 - s0, 5), np.round(s1 - s0, 5), np.round(s2 - s1, 5), np.round(s3 - s2, 5))
-
+        # print(np.round(s3 - s0, 5), np.round(s1 - s0, 5), np.round(s2 - s1, 5), np.round(s3 - s2, 5))
 
     def mock_step(self):
         if self.odor_layers:
@@ -716,7 +710,7 @@ class LarvaWorldSim(LarvaWorld):
         # plt.show()
 
     def get_larva_bodies(self):
-        larva_bodies=fun.flatten_list([[Polygon(v[0]) for v in l.seg_vertices] for l in self.get_flies()])
+        larva_bodies = fun.flatten_list([[Polygon(v[0]) for v in l.seg_vertices] for l in self.get_flies()])
         return larva_bodies
 
     def create_data_collectors(self, collected_pars):

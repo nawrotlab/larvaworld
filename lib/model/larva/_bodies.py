@@ -461,7 +461,8 @@ class LarvaBody:
 
         self.sensors = []
         self.define_sensor('olfactor', (1, 0))
-        self.add_touch_sensors()
+        if self.model.touch_sensors :
+            self.add_touch_sensors()
 
 
     def get_real_length(self):
@@ -492,8 +493,7 @@ class LarvaBody:
     def adjust_body_vertices(self):
         self.sim_length = self.real_length * self.model.scaling_factor
         self.seg_lengths = [self.sim_length * r for r in self.seg_ratio]
-        l = self.sim_length / self.Nsegs
-        self.seg_vertices = [v * l for v in self.base_seg_vertices]
+        self.seg_vertices = [v * self.sim_length for v in self.base_seg_vertices]
         for i, seg in enumerate(self.segs):
             seg.seg_vertices = self.seg_vertices[i]
         self.update_sensor_position()

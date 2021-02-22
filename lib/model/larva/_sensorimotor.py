@@ -2,7 +2,7 @@ import abc
 import math
 
 import numpy as np
-from shapely.geometry import LineString
+from shapely.geometry import LineString, Polygon
 
 from lib.model.larva._bodies import LarvaBody
 
@@ -87,7 +87,7 @@ class VelocityAgent(Agent, abc.ABC):
         self.ground_contact=True
 
         k=0.95
-        self.tank_vertices=self.model.tank_shape * k
+        self.tank_polygon=Polygon(self.model.tank_shape * k)
         self.space_edges=self.model.space_edges_for_screen * k
 
 
@@ -377,7 +377,8 @@ class VelocityAgent(Agent, abc.ABC):
         # TECH : Move the agent
         # Compute orientation
         dt=self.model.dt
-        pos_old, or_old = self.get_head().get_pose()
+        head=self.get_head()
+        pos_old, or_old = head.get_pose()
         head_rear_old = self.get_global_rear_end_of_head()
 
 
@@ -397,8 +398,11 @@ class VelocityAgent(Agent, abc.ABC):
 
         # points=[pos_new]
         # points=[pos_new, front_pos_new]
-        in_tank = fun.inside_polygon(points=[pos_new], space_edges_for_screen=self.space_edges,vertices=self.tank_vertices)
-        border_collision = fun.border_collision(line=LineString([pos_old, pos_new]), border_lines= self.model.border_lines)
+        in_tank = fun.inside_polygon(points=[pos_new], tank_polygon=self.tank_polygon)
+        if len(self.model.border_lines)> 0 :
+            border_collision = fun.border_collision(line=LineString([pos_old, pos_new]), border_lines= self.model.border_lines)
+        else :
+            border_collision = False
         if not self.model.allow_collisions :
             larva_collision = fun.larva_collision(line=LineString([pos_old, pos_new]), larva_bodies= self.model.larva_bodies)
         else :
@@ -412,38 +416,49 @@ class VelocityAgent(Agent, abc.ABC):
             # angular_velocity -=np.sign(angular_velocity) * np.pi / 2
             d_or = angular_velocity * dt
             or_new = or_old + d_or
-        self.get_head().set_pose(pos_new, or_new, linear_velocity, angular_velocity)
-        self.get_head().update_vertices(pos_new, or_new)
+        head.set_pose(pos_new, or_new, linear_velocity, angular_velocity)
+        head.update_vertices(pos_new, or_new)
         self.position_rest_of_body(d_or, head_rear_pos=head_rear_new, head_or=or_new)
 
         self.step_dst = d
         self.cum_dst += d
         if self.Nsegs==2:
-            self.current_pos = head_rear_new
+            pos = head_rear_new
         else :
-            self.current_pos = self.get_global_midspine_of_body()
-        self.model.space.move_agent(self, self.current_pos)
-        self.trajectory.append(self.current_pos)
+            pos = self.get_global_midspine_of_body()
+        self.model.space.move_agent(self, pos)
+        self.trajectory.append(pos)
+        self.current_pos = pos
 
     def position_rest_of_body(self, d_orientation, head_rear_pos, head_or):
-        if self.Nsegs == 1:
+        N=self.Nsegs
+        if N == 1:
             pass
         else:
-            bend_per_spineangle = d_orientation / (self.Nsegs / 2)
-            for i, (seg,l) in enumerate(zip(self.segs[1:], self.seg_lengths[1:])):
-                if i==0 :
-                    global_p=head_rear_pos
-                    previous_seg_or=head_or
-                else :
-                    global_p = self.get_global_rear_end_of_seg(seg_index=i)
-                    previous_seg_or = self.segs[i].get_orientation()
-                if i + 1 <= self.Nsegs / 2:
-                    self.spineangles[i] += bend_per_spineangle
-                new_or = previous_seg_or - self.spineangles[i]
+            if N==2 :
+                seg=self.segs[1]
+                self.spineangles[0] += d_orientation
+                new_or = head_or - self.spineangles[0]
                 seg.set_orientation(new_or)
-                new_p = global_p +np.array([-np.cos(new_or), -np.sin(new_or)])* l / 2
+                new_p = head_rear_pos + np.array([-np.cos(new_or), -np.sin(new_or)]) * self.seg_lengths[1] / 2
                 seg.set_position(new_p)
                 seg.update_vertices(new_p, new_or)
+            else :
+                bend_per_spineangle = d_orientation / (N / 2)
+                for i, (seg,l) in enumerate(zip(self.segs[1:], self.seg_lengths[1:])):
+                    if i==0 :
+                        global_p=head_rear_pos
+                        previous_seg_or=head_or
+                    else :
+                        global_p = self.get_global_rear_end_of_seg(seg_index=i)
+                        previous_seg_or = self.segs[i].get_orientation()
+                    if i + 1 <= N / 2:
+                        self.spineangles[i] += bend_per_spineangle
+                    new_or = previous_seg_or - self.spineangles[i]
+                    seg.set_orientation(new_or)
+                    new_p = global_p +np.array([-np.cos(new_or), -np.sin(new_or)])* l / 2
+                    seg.set_position(new_p)
+                    seg.update_vertices(new_p, new_or)
             self.compute_body_bend()
 
 
@@ -452,10 +467,11 @@ class VelocityAgent(Agent, abc.ABC):
         self.spineangles = [fun.angle_dif(seg_ors[i], seg_ors[i + 1], in_deg=False) for i in range(self.Nangles)]
 
     def compute_body_bend(self):
-        prev = self.body_bend
-        curr= np.sum(self.spineangles[:self.Nangles_b])
-        if np.abs(prev)>2 and np.abs(curr)>2 and prev*curr<0 :
-            self.body_bend_errors+=1
-            # curr=np.sign(curr)*np.pi
-            # print('Illegal bend over rear axis')
+        curr= sum(self.spineangles[:self.Nangles_b])
+        if self.model.count_bend_errors :
+            prev = self.body_bend
+            if np.abs(prev)>2 and np.abs(curr)>2 and prev*curr<0 :
+                self.body_bend_errors+=1
+                # curr=np.sign(curr)*np.pi
+                # print('Illegal bend over rear axis')
         self.body_bend=curr

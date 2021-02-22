@@ -363,19 +363,19 @@ def compute_centroid(points):
     return centroid
 
 
-def inside_polygon(points, space_edges_for_screen, vertices):
-    # // p is your point, p.x is the x coord, p.y is the y coord
-    Xmin, Xmax, Ymin, Ymax = space_edges_for_screen
-    # x, y = point
-
-    if all([(x < Xmin or x > Xmax or y < Ymin or y > Ymax) for x, y in points]):
-        # // Definitely not within the polygon!
-        return False
-    else:
-        polygon = Polygon(vertices)
-        # point = Point(x, y)
-        # print(polygon.contains(point))
-        return all([polygon.contains(Point(x, y)) for x, y in points])
+def inside_polygon(points,tank_polygon):
+    return all([tank_polygon.contains(Point(x, y)) for x, y in points])
+    # # // p is your point, p.x is the x coord, p.y is the y coord
+    # Xmin, Xmax, Ymin, Ymax = space_edges_for_screen
+    # # x, y = point
+    #
+    # if all([(x < Xmin or x > Xmax or y < Ymin or y > Ymax) for x, y in points]):
+    #     # // Definitely not within the polygon!
+    #     return False
+    # else:
+    #     # point = Point(x, y)
+    #     # print(polygon.contains(point))
+    #     return all([Polygon(vertices).contains(Point(x, y)) for x, y in points])
 
 
 def border_collision(line, border_lines):

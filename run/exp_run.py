@@ -27,6 +27,7 @@ sim_config = generate_config(exp, **sim_kwargs)
 exp_config = {
               'common_folder': f'single_runs/{exp}',
               **sim_config}
+
 d=run_sim(**exp_config, **vis_kwargs)
 
 if analysis:

@@ -90,9 +90,7 @@ class Crawler(Oscillator):
             self.step_to_length_mu = step_to_length_mu
             self.step_to_length_std = step_to_length_std
             self.step_to_length=self.generate_step_to_length()
-            # self.step_to_length = float(np.random.normal(loc=step_to_length, scale=step_to_length_std, size=1))
             self.max_vel_phase = max_vel_phase
-            # self.max_vel_phase = max_vel_phase + np.random.uniform(low=-1, high=1, size=1) * self.noise *np.pi*2
 
     # NOTE Computation of linear speed in a squared signal, so that a whole iteration moves the body forward by a
     # proportion of its real_length
@@ -176,6 +174,7 @@ class Turner(Oscillator, Effector):
             if activation_range is None:
                 activation_range = [10, 40]
             self.base_activation = base_activation
+            self.base_noise = np.abs(self.base_activation*self.activation_noise)
             self.range_upwards = self.activation_range[1] - self.base_activation
             self.range_downwards = self.base_activation - self.activation_range[0]
             self.activation = self.base_activation
@@ -261,22 +260,18 @@ class Turner(Oscillator, Effector):
     def update_activation(self, olfactory_valence):
         # Map valence modulation to sigmoid accounting for the non middle location of base_activation
         b = self.base_activation
-        n = self.activation_noise
         rd, ru = self.range_downwards, self.range_upwards
         d, u = self.activation_range
         v = olfactory_valence
-        if v < 0:
-            a = b + rd * v
+        if v==0 :
+            a=0
+        elif v < 0:
+            a = rd * v
         elif v > 0:
-            a = b + ru * v
-        else:
-            a = b
-        noise = np.random.normal(scale=np.abs(b * n)) * (1 - np.abs(
-            v))  # Added the relevance of noise to olfactory valence so that noise is attenuated  when valence is rising
-        self.activation = np.clip(a + noise, a_min=d, a_max=u)
-        # self.activation=a
-        # print(noise)
-        # print(self.activity)
+            a = ru * v
+        # Added the relevance of noise to olfactory valence so that noise is attenuated  when valence is rising
+        noise = np.random.normal(scale=self.base_noise) * (1 - np.abs(v))
+        self.activation = np.clip(b + a + noise, a_min=d, a_max=u)
         # TODO Use sigmoid function as an alternative
         # sig = sigmoid((olfactory_valence + 1) / 2)
 
