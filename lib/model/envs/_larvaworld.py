@@ -6,6 +6,7 @@ import pygame
 import os
 
 from shapely.affinity import affine_transform
+from shapely.geometry import Polygon
 from unflatten import unflatten
 from Box2D import b2World, b2ChainShape, b2Vec2, b2EdgeShape
 from mesa.space import ContinuousSpace
@@ -431,12 +432,13 @@ class LarvaWorld(Model):
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, fly_params,
                  collected_pars={'step': [], 'endpoint': []},
-                 id='Unnamed_Simulation',
+                 id='Unnamed_Simulation', allow_collisions=True,
                  **kwargs):
 
         super().__init__(id=id,
                          **kwargs)
 
+        self.allow_collisions = allow_collisions
         self.fly_params = fly_params
         for dist in ['pause_dist', 'stridechain_dist'] :
             if self.fly_params['neural_params']['intermitter_params'][dist]=='fit' :
@@ -647,6 +649,8 @@ class LarvaWorldSim(LarvaWorld):
             for layer_id in self.odor_layers:
                 self.odor_layers[layer_id].update_values()  # Currently doing something only for the DiffusionValueLayer
 
+        if not self.allow_collisions :
+            self.larva_bodies=self.get_larva_bodies()
         # s0 = time.time()
         for fly in self.get_flies():
             fly.compute_next_action()
@@ -667,6 +671,7 @@ class LarvaWorldSim(LarvaWorld):
         #     print(self.sim_clock.hour, self.sim_clock.minute)
         #     print(np.round(s3 - s0, 5))
             # print(np.round(s3 - s0, 5), np.round(s1 - s0, 5), np.round(s2 - s1, 5), np.round(s3 - s2, 5))
+
 
     def mock_step(self):
         if self.odor_layers:
@@ -721,6 +726,14 @@ class LarvaWorldSim(LarvaWorld):
         # plt.clabel(CS, inline=1, fontsize=10)
         # plt.title(f'Odorant concentration landscape from {num_sources} sources ')
         # plt.show()
+
+    def get_larva_bodies(self):
+        larva_bodies=[]
+        for l in self.get_flies() :
+            for v in l.seg_vertices :
+                p=Polygon(v[0])
+                larva_bodies.append(p)
+        return larva_bodies
 
 
 class LarvaWorldReplay(LarvaWorld):

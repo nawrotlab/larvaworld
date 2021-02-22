@@ -399,7 +399,11 @@ class VelocityAgent(Agent, abc.ABC):
         # points=[pos_new, front_pos_new]
         in_tank = fun.inside_polygon(points=[pos_new], space_edges_for_screen=self.space_edges,vertices=self.tank_vertices)
         border_collision = fun.border_collision(line=LineString([pos_old, pos_new]), border_lines= self.model.border_lines)
-        if not in_tank or border_collision :
+        if not self.model.allow_collisions :
+            larva_collision = fun.larva_collision(line=LineString([pos_old, pos_new]), larva_bodies= self.model.larva_bodies)
+        else :
+            larva_collision=False
+        if not in_tank or border_collision or larva_collision :
             linear_velocity=0
             d=0
             pos_new = pos_old

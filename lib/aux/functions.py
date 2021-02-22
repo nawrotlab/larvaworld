@@ -381,6 +381,9 @@ def inside_polygon(points, space_edges_for_screen, vertices):
 def border_collision(line, border_lines):
     return any([line.crosses(l) for l in border_lines])
 
+def larva_collision(line, larva_bodies):
+    return any([line.intersects(p) for p in larva_bodies])
+
 
 def timeit(exec_s, globals={}, N=10000):
     t = time.time()
