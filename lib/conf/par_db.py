@@ -276,6 +276,10 @@ par_ar = np.array([
     ['amount_eaten', 'f_am', sub('m', 'feed'), sub(hat('m'), 'feed'), l_mass],
     ['max_feed_amount', 'f_am_max', subsup('m', 'feed', 'm'), subsup(hat('m'), 'feed','m'), l_mass],
     ['mass', 'm', 'm', hat('m'), l_mass],
+    ['hunger', 'hunger', 'hunger', hat('hunger'), f'hunger (-)'],
+    ['reserve_density', 'reserve_density', 'reserve_density', hat('reserve_density'), f'reserve density (-)'],
+    ['puppation_buffer', 'puppation_buffer', 'puppation_buffer', hat('puppation_buffer'), f'puppation buffer (-)'],
+    ['deb_f_mean', 'deb_f_mu', sub(bar('f'), 'deb'), sub(hat(bar('f')), 'deb'), f'functional response (-)'],
     ['Nlarvae', 'lar_N', sub('N', 'larvae'), sub(hat('N'), 'larvae'), f'# larvae'],
 ])
 
@@ -407,5 +411,5 @@ collect_db=pd.Series(valid.collect.values,index=valid.par).to_dict()
 
 par_db = par_db[~par_db.index.duplicated(keep='first')]
 
-# print(par_db.loc['fee_tr'])
+# print(par_db.loc['hunger'])
 # print(random_ar2)

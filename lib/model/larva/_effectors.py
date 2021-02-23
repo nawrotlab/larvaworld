@@ -413,10 +413,9 @@ class Intermitter(Effector):
     def __init__(self, nengo_manager=None,
                  crawler=None, intermittent_crawler=False,
                  feeder=None, intermittent_feeder=False,
-                 pause_dist=None,
-                 stridechain_dist=None,
-                 feeder_reoccurence_rate_on_success=1, feeder_reoccurence_decay_coef=1,
                  turner=None, intermittent_turner=False, turner_prepost_lag=[0, 0],
+                 pause_dist=None, stridechain_dist=None,
+                 feeder_reoccurence_decay_coef=1,
                  explore2exploit_bias=0.5,
                  **kwargs):
         super().__init__(**kwargs)
@@ -425,6 +424,7 @@ class Intermitter(Effector):
         self.crawler = crawler
         self.turner = turner
         self.feeder = feeder
+        self.explore2exploit_bias = explore2exploit_bias
         if crawler is None :
             self.intermittent_crawler=False
         else :
@@ -439,16 +439,17 @@ class Intermitter(Effector):
             self.intermittent_feeder = intermittent_feeder
 
         if self.nengo_manager is None:
-            self.feeder_reoccurence_rate_on_success = feeder_reoccurence_rate_on_success
+            # self.feeder_reoccurence_rate_on_success = feeder_reoccurence_rate_on_success
             self.feeder_reoccurence_decay_coef = feeder_reoccurence_decay_coef
-            self.feeder_reoccurence_rate = self.feeder_reoccurence_rate_on_success
+            self.feeder_reoccurence_rate = 1-self.explore2exploit_bias
+            # self.feeder_reoccurence_rate = self.feeder_reoccurence_rate_on_success
             self.feeder_reoccurence_exp_coef = np.exp(-self.feeder_reoccurence_decay_coef * self.dt)
 
 
         self.turner_pre_lag_ticks = int(turner_prepost_lag[0] / self.dt)
         self.turner_post_lag_ticks = int(turner_prepost_lag[1] / self.dt)
 
-        self.explore2exploit_bias = explore2exploit_bias
+
         self.reset()
         # self.activity_counter = 0
         # self.current_activity_duration = 10
@@ -714,7 +715,7 @@ class BranchIntermitter(Effector):
 
 class Olfactor(Effector):
     def __init__(self, odor_layers=None, olfactor_gain_mean=None, olfactor_gain_std=None,
-                 activation_range=None, perception='linear', decay_coef=1, noise=0, **kwargs):
+                 activation_range=[-1.0, 1.0], perception='log', decay_coef=1, noise=0, **kwargs):
         super().__init__(**kwargs)
         if activation_range is None:
             activation_range = [-1, 1]

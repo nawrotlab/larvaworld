@@ -13,8 +13,9 @@ from lib.model.envs._larvaworld import LarvaWorldSim
 from lib.model.larva.deb import deb_dict, deb_default
 from lib.stor.larva_dataset import LarvaDataset
 
+import pickle
 
-def run_sim(sim_id,
+def run_sim_basic(sim_id,
             sim_params,
             env_params,
             fly_params,
@@ -41,8 +42,15 @@ def run_sim(sim_id,
     else:
         parentdir = save_to
     dir_path = os.path.join(parentdir, sim_id)
+
+    # FIXME This only takes the first configuration into account
+    if not type(fly_params)==list :
+        Npoints = fly_params['body_params']['Nsegs'] + 1
+    else :
+        Npoints = fly_params[0]['body_params']['Nsegs'] + 1
+
     d = LarvaDataset(dir=dir_path, id=sim_id, fr=int(1 / dt),
-                     Npoints=fly_params['body_params']['Nsegs'] + 1, Ncontour=0,
+                     Npoints=Npoints, Ncontour=0,
                      arena_pars=env_params['arena_params'],
                      par_conf=par_config, save_data_flag=save_data_flag, load_data=False)
 
@@ -65,6 +73,9 @@ def run_sim(sim_id,
 
     # Read the data collected during the simulation
     larva_step_data = env.larva_step_collector.get_agent_vars_dataframe()
+
+    # table_data=env.table_collector.get_table_dataframe('Torque')
+    # table_data.to_csv(f'{d.data_dir}/table.csv')
     # Collect and read the endpoint data
     env.larva_endpoint_collector.collect(env)
     env.food_endpoint_collector.collect(env)
@@ -94,6 +105,8 @@ def run_sim(sim_id,
     print(f'Simulation complete in {dur} seconds!')
     return d
 
+ser = pickle.dumps(run_sim_basic)
+run_sim = pickle.loads(ser)
 
 def data_collection_config(dataset, sim_params):
     d = dataset
@@ -152,7 +165,6 @@ def generate_config(exp, Nagents=None, sim_time=None, sim_id=None, Box2D=False):
     if 'traj_mode' in config.keys():
         config['sim_params']['traj_mode'] = config['traj_mode']
         del config['traj_mode']
-
     if 'collect_effectors' in config.keys():
         config['sim_params']['collect_effectors'] = config['collect_effectors']
         del config['collect_effectors']
@@ -192,6 +204,7 @@ def sim_analysis(d, experiment):
 
     elif experiment == 'growth':
         d.deb_analysis()
+        plot_endpoint_params(datasets=[d], labels=[d.id], mode='deb')
         # print(d.endpoint_data['deb_f_mean'])
         deb_dicts= [deb_dict(d, id) for id in d.agent_ids]+[deb_default()]
         plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb.pdf')
@@ -199,6 +212,7 @@ def sim_analysis(d, experiment):
         plot_debs(deb_dicts=deb_dicts[:-1], save_to=d.plot_dir, save_as='deb_f.pdf', mode='f')
         plot_debs(deb_dicts=deb_dicts[:-1],save_to=d.plot_dir, save_as='deb.pdf')
         plot_debs(deb_dicts=deb_dicts[:-1],save_to=d.plot_dir, save_as='deb_minimal.pdf', mode='minimal')
+
 
         # plot_growth(d, default_deb)
         # try:

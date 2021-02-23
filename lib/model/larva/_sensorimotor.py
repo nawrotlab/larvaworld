@@ -30,18 +30,17 @@ class Agent(LarvaBody, abc.ABC):
 
 class VelocityAgent(Agent, abc.ABC):
     def __init__(self, pos, orientation,
-                 lin_vel_coef=1.0, ang_vel_coef=None, lin_force_coef=None, torque_coef=1.0, static_torque=0.0,
+                 lin_vel_coef=1.0, ang_vel_coef=None, lin_force_coef=None, torque_coef=1.0,
                  lin_mode='velocity', ang_mode='torque', body_spring_k=1.0, bend_correction_coef=1.0,
                  lin_damping=1.0, ang_damping=1.0, density=300.0,
-                 friction_pars={'maxForce': 10 ** 0, 'maxTorque': 10 ** -1}, **kwargs):
+                  **kwargs):
 
         self.lin_damping = lin_damping
         self.ang_damping = ang_damping
         self.body_spring_k = body_spring_k
         self.bend_correction_coef = bend_correction_coef
-        self.static_torque=static_torque
         self.density = density
-        self.friction_pars = friction_pars
+
 
         self.head_contacts_ground = True
         super().__init__(model=self.model, pos=pos, orientation=orientation, **kwargs)
@@ -84,11 +83,10 @@ class VelocityAgent(Agent, abc.ABC):
         self.ang_vel_coef = ang_vel_coef
         self.lin_force_coef = lin_force_coef
         self.torque_coef = torque_coef
-        self.ground_contact=True
+        # self.ground_contact=True
 
-        k=0.95
+        k=0.9
         self.tank_polygon=Polygon(self.model.tank_shape * k)
-        self.space_edges=self.model.space_edges_for_screen * k
 
 
 
@@ -265,47 +263,14 @@ class VelocityAgent(Agent, abc.ABC):
 
     # Update 4.1.2020 : Setting b=0 because it is a substitute of the angular damping of the environment
     def compute_ang_vel(self, torque=0, v=0, z=0):
-        # if self.ground_contact:
-        #     new_ang_velocity=(- self.body_spring_k * self.body_bend + e * torque) * self.dt
-        #     if np.abs(new_ang_velocity)<vel_friction :
-        #         new_ang_velocity=0
-        #     else :
-        #         self.ground_contact=False
-        # else :
-        #     new_ang_velocity = ang_velocity+ (-b * ang_velocity - self.body_spring_k * self.body_bend + e * torque) * self.dt / a
-        #     if new_ang_velocity*ang_velocity<0 :
-        #         self.ground_contact=True
-        #         new_ang_velocity=0
-        # # print(new_ang_velocity, ang_velocity)
-        # return new_ang_velocity
-        # print(torque)
         k=self.body_spring_k
-        c=self.torque_coef
-        Tst=self.static_torque
         b=self.body_bend
-
-        # dif=(-z * v - k * b)* self.dt
-        # if abs(dif)<abs(v) :
-        #     v += dif
-        # else :
-        #     v=0
-        # new_v = v + (e * torque) * self.dt
         new_v = v + (-z * v - k * b + torque) * self.model.dt
-        # print(v, new_v, v-new_v)
-        if new_v * v<0 and np.abs(torque)<Tst * c:
+        if new_v * v<0:
             return 0.0
         else:
             return new_v
-        # if np.abs(ang_velocity) <= 1.0:
-        #     self.head_contacts_ground = True
-        # if np.abs(e*torque)>=Tst * c :
-        #     self.head_contacts_ground=False
-        # # print(torque, ang_velocity, self.head_contacts_ground)
-        # if not self.head_contacts_ground :
-        #     new_ang_velocity = ang_velocity + (-z * ang_velocity - k * b + e * torque) * self.dt
-        #     return new_ang_velocity
-        # else :
-        #     return 0.0
+
 
     def restore_body_bend(self):
         self.compute_spineangles()
@@ -325,9 +290,6 @@ class VelocityAgent(Agent, abc.ABC):
                 self.spineangles[0] = fun.restore_bend_2seg(self.spineangles[0], d, l, correction_coef=self.bend_correction_coef)
             else :
                 self.spineangles = fun.restore_bend(self.spineangles, d, l, self.Nsegs, correction_coef=self.bend_correction_coef)
-        # print(self.physics_engine)
-        # print(np.abs(a)-np.abs(self.angles[0]))
-
         self.compute_body_bend()
 
     def set_torque(self, value):
@@ -460,7 +422,6 @@ class VelocityAgent(Agent, abc.ABC):
                     seg.set_position(new_p)
                     seg.update_vertices(new_p, new_or)
             self.compute_body_bend()
-
 
     def compute_spineangles(self):
         seg_ors = [seg.get_orientation() for seg in self.segs]

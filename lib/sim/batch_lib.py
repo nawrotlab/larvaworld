@@ -272,12 +272,8 @@ def end_scatter_generation(traj):
     return d
 
 def deb_analysis(traj):
-
     data_dir = traj.config.dataset_path
     parent_dir = traj.config.dir_path
-
-
-
     df = save_results_df(traj)
     runs_idx, runs, par_names, par_full_names, par_values, res_names, res_values = get_results(traj, res_names=None)
     if len(par_names) ==2 :
@@ -406,7 +402,7 @@ def _batch_run(dir='unnamed',
                process_method=null_processing,
                post_process_method=None,
                final_process_method=None,
-               multiprocessing=False,
+               multiprocessing=True,
                resumable=True,
                overwrite=False,
                sim_config=None,

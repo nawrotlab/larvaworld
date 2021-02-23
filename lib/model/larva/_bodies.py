@@ -417,11 +417,11 @@ class DefaultPolygon:
 class LarvaBody:
     def __init__(self, model, pos=None, orientation=None,
                  initial_length=None, length_std=0, Nsegs=1, interval=0, joint_type=None,
-                 seg_ratio=None):
+                 seg_ratio=None, friction_pars={'maxForce': 10 ** 0, 'maxTorque': 10 ** -1}):
         # FIXME get rid of this
         if not 'density' in locals():
             self.density = 300.0
-
+        self.friction_pars = friction_pars
         self.width_to_length_ratio = 0.2
         if seg_ratio is None:
             seg_ratio = [1 / Nsegs] * Nsegs

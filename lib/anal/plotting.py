@@ -2779,11 +2779,14 @@ def plot_endpoint_params(datasets, labels, mode='full', save_to=None):
 
     elif mode == 'deb':
 
-        par_shorts = ['cum_d', 'cum_sd', 'str_N', 'fee_N',
+        par_shorts = [
+            'deb_f_mu', 'hunger', 'reserve_density', 'puppation_buffer',
+            'cum_d', 'cum_sd', 'str_N', 'fee_N',
                       'str_tr', 'pau_tr', 'fee_tr', 'f_am',
+            'l_mu', 'm'
                       # 'tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu',
                       # 'v_mu', 'sv_mu',
-                      # 'hunger', 'reserve_density', 'puppation_buffer'
+
                       ]
 
 

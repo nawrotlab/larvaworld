@@ -6,10 +6,17 @@ from lib.model.larva.deb import DEB
 from lib.stor.paths import Deb_path
 
 '''
-Times of hatch and puppation, lengths of young L1 and late L3 from [1]
-Wet weight of L3 from [2]
+Times of hatch and puppation, lengths of young L1 and late L3 from [1] :
+ - Time at hatch (days) : 0.7
+ - Time from hatch to puppation (days) : 7.8
+ - Length of young L1 (mm) : 0.6
+ - Length of late L3 (mm) : 3.8
+Wet weight of L3 from [2] :
+ - Wet weight of L3 (mg) : 15
 [1] I. Schumann and T. Triphan, “The PEDtracker: An Automatic Staging Approach for Drosophila melanogaster Larvae,” Front. Behav. Neurosci., vol. 14, 2020.
 [2] K. G. Ormerod et al., “Drosophila development, physiology, behavior, and lifespan are influenced by altered dietary composition,” Fly (Austin)., vol. 11, no. 3, pp. 153–170, 2017.
+Reserve density while feeding at libitum (f=1) :
+ - e = 1 (both at hatch and at puppation)
 '''
 
 # inds=[0,1, 2, 6, 11, 14]
@@ -17,11 +24,10 @@ Wet weight of L3 from [2]
 
 
 # inds = [4,6,11,12]
-inds = [0,1,2,3,4,6,7,8,11,14,15]
+inds = [0, 1, 2, 3, 4, 6, 7, 8, 11, 14, 15]
 R = np.array([0.7, 7.8, 0.6, 3.8, 15, 1, 1])
-W=np.array([1,5,1,10,5,5,5])
-W=W/np.sum(W)
-
+W = np.array([2, 5, 5, 10, 2, 5, 5])
+W = W / np.sum(W)
 
 pars0 = ['U_E__0', 'p_m', 'E_G',
          'E_H__b', 'E_R__p', 'E_H__e',
@@ -39,11 +45,11 @@ ranges0 = [[0.000001, 0.001], [1, 100], [1000, 100000],
            [0.9, 0.99], [0.001, 0.003], [0.1, 35],
            [0.003, 0.005], [0.0001, 0.0002], [0.00001, 0.01], [0.1, 2.0]]
 
-try :
+try:
     with open(Deb_path) as tfp:
         species0 = json.load(tfp)
     print('Loaded existing deb')
-except :
+except:
     species0 = dict(zip(pars0, vals0))
 
 pars = [p for i, p in enumerate(pars0) if i in inds]
@@ -59,6 +65,7 @@ def show_results(t0, t1, l0, l1, w1, e0, e1):
     print('Larva final weight : ', np.round(w1, 3), 'mg')
     print('Larva initial reserve density : ', np.round(e0, 3))
     print('Larva final reserve density : ', np.round(e1, 3))
+
 
 def fit_DEB(vals, steps_per_day=24, show=False):
     species = species0.copy()
@@ -76,17 +83,17 @@ def fit_DEB(vals, steps_per_day=24, show=False):
             t0 = deb.age_day
             # w0=deb.get_W()
             l0 = deb.get_real_L() * 1000
-            e0=deb.get_reserve_density()
+            e0 = deb.get_reserve_density()
 
     t1 = deb.age_day - t0
     w1 = deb.get_W() * 1000
     l1 = deb.get_real_L() * 1000
-    e1= deb.get_reserve_density()
+    e1 = deb.get_reserve_density()
     r = np.array([t0, t1, l0, l1, w1, e0, e1])
-    dr = np.abs(r - R) /R
-    error = np.sum(dr*W)
+    dr = np.abs(r - R) / R
+    error = np.sum(dr * W)
     if show:
-        show_results(t0, t1, l0, l1,w1, e0, e1)
+        show_results(t0, t1, l0, l1, w1, e0, e1)
     return error
 
 
