@@ -149,14 +149,14 @@ intermitter_rover = {'pause_dist': 'fit',
                      'intermittent_crawler': True,
                      'intermittent_feeder': True,
                      'feeder_reoccurence_decay_coef': 1,
-                     'explore2exploit_bias': 0.53}
+                     'explore2exploit_bias': 0.73 } #0.52
 
 intermitter_sitter = {'pause_dist': 'fit',
                       'stridechain_dist': 'fit',
                       'intermittent_crawler': True,
                       'intermittent_feeder': True,
                       'feeder_reoccurence_decay_coef': 1,
-                      'explore2exploit_bias': 0.42}
+                      'explore2exploit_bias': 0.46} #0.4
 
 # ----------------------------------------------OLFACTOR MODES----------------------------------------------------------
 
@@ -179,7 +179,7 @@ default_feeder = {'freq_range': [1.0, 5.0],
 
 # ----------------------------------------------ENERGETICS MODES--------------------------------------------------------
 energetics_rover = {'food_to_biomass_ratio': 0.1,
-                    'f_decay_coef': 0.3,
+                    'f_decay_coef': 0.1, #0.3
                     'f_increment': 1.0,
                     'hunger_affects_balance': False,
                     'deb': True}

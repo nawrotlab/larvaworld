@@ -595,13 +595,12 @@ class LarvaWorldSim(LarvaWorld):
             flat_larva_pars = fun.flatten_dict(l)
             sample_pars = [p for p in flat_larva_pars if flat_larva_pars[p] == 'sample']
             if len(sample_pars) >= 1:
-                pars, samples = sample_agents(pars=sample_pars, num_agents=n)
-                for i, config in enumerate(type_larva_pars):
-                    flat_config = fun.flatten_dict(config)
+                pars, samples = sample_agents(pars=sample_pars, N=n)
+                for i, c in enumerate(type_larva_pars):
+                    flat_c = fun.flatten_dict(c)
                     for p, s in zip(pars, samples):
-                        flat_config.update({p: s[i]})
-                    config = unflatten(flat_config)
-                    type_larva_pars[i] = config
+                        flat_c.update({p: s[i]})
+                    type_larva_pars[i] = unflatten(flat_c)
             all_larva_pars.append(type_larva_pars)
         return larva_ids, fun.flatten_list(all_larva_pars)
 

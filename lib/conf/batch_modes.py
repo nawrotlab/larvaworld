@@ -91,8 +91,8 @@ growth_batch = {
         # 'f_increment'
     ],
     'ranges': np.array([
-        [0.3, 0.6],
-        [0.2, 0.5],
+        [0.3, 0.8],
+        [0.1, 0.6],
         # [0.8, 1.2]
     ]),
     'process_method': deb_processing,
@@ -102,8 +102,8 @@ growth_batch = {
     'batch_config': None,
     'post_kwargs': {},
     'run_kwargs': {'save_data_flag': True}
-
 }
+
 
 batch_types = {
     'odor_pref': odor_pref_batch,

@@ -2656,6 +2656,11 @@ class LarvaDataset:
         if is_last:
             self.save()
 
+    def set_id(self, id):
+        self.id=id
+        self.config['id']=id
+        self.save_config()
+
     def build_dirs(self):
         for i in self.dirs:
             if not os.path.exists(i):
@@ -2679,3 +2684,24 @@ class LarvaDataset:
         for pdf, name in zip(pds, filenames):
             path = os.path.join(self.data_dir, name)
             pdf.to_csv(path, index=True, header=True)
+
+    def split_dataset(self, larva_id_prefixes):
+        if self.step_data is None:
+            self.load()
+        # s,e=self.step_data, self.endpoint_data
+        new_ds=[]
+        for f in larva_id_prefixes :
+            new_id=f'{self.id}_{f}'
+            new_dir = f'{self.dir}/../{new_id}'
+            copy_tree(self.dir, new_dir)
+            new_d=LarvaDataset(new_dir)
+            new_d.set_id(new_id)
+
+            invalid_ids=[id for id in self.agent_ids if not str.startswith(id, f)]
+            new_d.drop_agents(invalid_ids)
+            new_ds.append(new_d)
+        print(f'Dataset {self.id} splitted in {[d.id for d in new_ds]}')
+        return new_ds
+
+
+

@@ -262,16 +262,17 @@ effector_collection = {
                              'cum_dst', 'cum_scaled_dst',
                              'num_strides', 'stride_dur_ratio', 'vel_freq']},
     'feeder': {'step': ['length', 'mass', 'amount_eaten'],
-               'endpoint': ['mass', 'num_feeds', 'feed_success_rate', 'amount_eaten',
+               'endpoint': ['length', 'mass', 'num_feeds', 'feed_success_rate', 'amount_eaten',
                             'feed_dur_ratio']},
     'deb': {'step': ['deb_f', 'reserve', 'reserve_density',
                      # 'structural_length', 'maturity', 'reproduction','structure','age_in_days',
                      'hunger', 'puppation_buffer'],
-            'endpoint': ['birth_time_in_hours', 'puppation_time_in_hours',
-                         'death_time_in_hours', 'age', 'reserve_density', 'puppation_buffer', 'hunger',
-                         'cum_dst', 'cum_scaled_dst', 'pause_dur_ratio',
-                         'num_strides', 'stride_dur_ratio', 'vel_freq'
-                         ]},
+            'endpoint': [
+                'cum_dst', 'cum_scaled_dst', 'pause_dur_ratio',
+                'num_strides', 'stride_dur_ratio', 'vel_freq',
+                'reserve_density', 'puppation_buffer', 'hunger',
+                'age','birth_time_in_hours', 'puppation_time_in_hours','death_time_in_hours'
+            ]},
     'pose': {'step': ['centroid_x', 'centroid_y', 'bend', 'front_orientation', 'rear_orientation'],
              'endpoint': []},
     'nengo': {'step': ['crawler_activity', 'turner_activity', 'feeder_motion'],

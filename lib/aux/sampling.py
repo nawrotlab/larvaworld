@@ -64,7 +64,7 @@ class GeometricDist(st.rv_continuous):
         return [int(x) for x in sample]
 
 
-def sample_agents(filepath=None, pars=None, num_agents=1):
+def sample_agents(filepath=None, pars=None, N=1):
     if filepath is None:
         filepath = Ref_path
     data = pd.read_csv(filepath, index_col=0)
@@ -74,7 +74,7 @@ def sample_agents(filepath=None, pars=None, num_agents=1):
         pars = [p for p in data.columns if p in pars]
     cov = np.cov(data[pars].values.T)
     means = [data[p].mean() for p in pars]
-    samples = np.random.multivariate_normal(means, cov, num_agents).T
+    samples = np.random.multivariate_normal(means, cov, N).T
     return pars, samples
 
 

@@ -9,6 +9,7 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import cm, pyplot as plt, gridspec, transforms, ticker
 from matplotlib.patches import Wedge
+from matplotlib.ticker import FormatStrFormatter, ScalarFormatter
 from mpl_toolkits.mplot3d import Axes3D
 from scipy import signal
 from scipy import stats
@@ -1324,7 +1325,7 @@ def plot_debs2(deb_dicts, save_to=None, save_as=None):
 
     save_plot(fig, filepath, save_as)
 
-def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full'):
+def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full', roversVSsitters=False):
     if save_to is None :
         save_to=DebFolder
     os.makedirs(save_to, exist_ok=True)
@@ -1337,8 +1338,29 @@ def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full'):
     ids=[d['id'] for d in deb_dicts]
     if Ndebs==1 :
         cols=[(0, 1,  0.1)]
+        leg_ids=ids
+        leg_cols=cols
+    elif roversVSsitters :
+        cols=[]
+        temp_id=None
+        for id in ids :
+            if str.startswith(id, 'Rover') :
+                cols.append((0,0,1))
+            elif str.startswith(id, 'Sitter') :
+                cols.append((1,0,0))
+            else :
+                cols.append((0, 1, 0.1))
+                temp_id=id
+        if temp_id is not None :
+            leg_cols=[(0, 1, 0.1), (0,0,1), (1,0,0)]
+            leg_ids = [temp_id, 'Rovers', 'Sitters']
+        else :
+            leg_cols = [(0, 0, 1), (1, 0, 0)]
+            leg_ids = ['Rovers', 'Sitters']
     else :
         cols = [(0.9-i, 0.1+i,  0.1) for i in np.linspace(0,0.9,Ndebs)]
+        leg_ids = ids
+        leg_cols = cols
 
     labels = ['mass', 'length','reserve',
               'f',
@@ -1347,11 +1369,15 @@ def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full'):
                r'functional response $(-)$',
                r'reserve density $(-)$', r'hunger drive $(-)$',r'puppation buffer $(-)$']
     if mode=='minimal' :
-        idx=[0,1,2,6]
+        idx=[4,5,6]
         labels=[l for i,l in enumerate(labels) if i in idx]
         ylabels=[yl for i,yl in enumerate(ylabels) if i in idx]
     elif mode=='f' :
-        idx = [3,5]
+        idx = [3,4]
+        labels = [l for i, l in enumerate(labels) if i in idx]
+        ylabels = [yl for i, yl in enumerate(ylabels) if i in idx]
+    elif mode=='full' :
+        idx = [0,1,2,6]
         labels = [l for i, l in enumerate(labels) if i in idx]
         ylabels = [yl for i, yl in enumerate(ylabels) if i in idx]
 
@@ -1389,6 +1415,7 @@ def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full'):
             # plt.gca().add_artist(b_leg)
             ax.set_ylabel(yl)
             ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
+            # ax.xaxis.set_major_locator(ticker.MaxNLocator(4))
                 # ax.ticklabel_format(useMathText=True, scilimits=(0, 0))
             if l=='puppation_buffer' :
                 ax.set_ylim([0,1])
@@ -1425,9 +1452,10 @@ def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full'):
                 xy=(T2, 0), xycoords='data', fontsize=20,
                 xytext=(T2, -0.3), textcoords='data',
                 horizontalalignment='center', verticalalignment='top')
-    axs[0].legend(handles=[mpatches.Patch(color=c, label=id) for c, id in zip(cols,ids)],
-                  labels=ids, fontsize=20, loc='upper center', prop={'size': 10})
+    axs[0].legend(handles=[mpatches.Patch(color=c, label=id) for c, id in zip(leg_cols,leg_ids)],
+                  labels=leg_ids, fontsize=20, loc='upper center', prop={'size': 10})
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.93, hspace=0.02)
+
     save_plot(fig, filepath, save_as)
 
 
@@ -2835,6 +2863,11 @@ def plot_endpoint_params(datasets, labels, mode='full', save_to=None):
         if i % Ncols == 0:
             axs[i].set_ylabel('probability', fontsize=15)
         axs[i].set_title(p, fontsize=15)
+        axs[i].xaxis.set_major_locator(ticker.MaxNLocator(4))
+        axs[i].yaxis.set_major_locator(ticker.MaxNLocator(4))
+        axs[i].xaxis.set_major_formatter(ScalarFormatter(useOffset=True,useMathText=True))
+        # axs[i].ticklabel_format(axis='x', useMathText=True, scilimits=(-3, 3))
+        # axs[i].ticklabel_format(axis='x', useMathText=True, scilimits=(-3, 3), useOffset=True)
 
         if Ndatasets > 1:
             for z, (l1, l2) in enumerate(fit_df[fit_df[p] == True].index.values):
@@ -2857,9 +2890,10 @@ def plot_endpoint_params(datasets, labels, mode='full', save_to=None):
 
     plt.subplots_adjust(wspace=0.1, hspace=0.3, left=0.06, right=0.96, top=0.8, bottom=0.04)
     plt.ylim(ylim)
-    leg = axs[0].legend(bbox_to_anchor=(0.5, 1.5), loc='upper left', fontsize=25)
+    leg = axs[0].legend(bbox_to_anchor=(Ncols/2, 1.8), loc='upper center', prop={'size': 20})
     # for legobj in leg.legendHandles:
     #     legobj.set_linewidth(2.0)
+    # plt.show()
     save_plot(fig, filepath, filename)
     if Ndatasets > 1:
         fit_df.to_csv(fit_filepath, index=True, header=True)

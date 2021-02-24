@@ -23,27 +23,28 @@ Reserve density while feeding at libitum (f=1) :
 # inds = [0, 1, 2, 3, 4, 6, 7, 8, 11, 14, 15]
 
 
-# inds = [4,6,11,12]
+# inds = [0,3,4,11,14,15]
 inds = [0, 1, 2, 3, 4, 6, 7, 8, 11, 14, 15]
 R = np.array([0.7, 7.8, 0.6, 3.8, 15, 1, 1])
-W = np.array([2, 5, 5, 10, 2, 5, 5])
+W = np.array([2, 10, 5, 5, 2, 10, 5])
 W = W / np.sum(W)
 
 pars0 = ['U_E__0', 'p_m', 'E_G',
          'E_H__b', 'E_R__p', 'E_H__e',
          'zoom', 'v_rate_int', 'kap_int',
          'kap_R_int', 'k_J_rate_int', 'shape_factor',
-         'h_a', 'sG', 'L_0', 'd']
+         'h_a', 'sG', 'L_0',
+         'd']
 vals0 = [0.001, 23.57, 4400,
          0.00328786, 0.0166888, 0.05218,
          9.63228, 0.00581869, 0.631228,
          0.95, 0.002, 0.58,
          0.004218, 0.0001, 0.00001, 1]
 ranges0 = [[0.000001, 0.001], [1, 100], [1000, 100000],
-           [0.0001, 0.1], [0.1, 4.0], [0.1, 1.0],
-           [1.0, 100.0], [0.001, 0.06], [0.1, 0.9],
-           [0.9, 0.99], [0.001, 0.003], [0.1, 35],
-           [0.003, 0.005], [0.0001, 0.0002], [0.00001, 0.01], [0.1, 2.0]]
+           [0.001, 0.1], [0.1, 2.0], [0.1, 1.0],
+           [10.0, 100.0], [0.01, 0.1], [0.4, 0.9],
+           [0.9, 0.99], [0.001, 0.003], [1, 20],
+           [0.003, 0.005], [0.0001, 0.0002], [0.00001, 0.01], [0.1, 1.0]]
 
 try:
     with open(Deb_path) as tfp:
@@ -51,7 +52,7 @@ try:
     print('Loaded existing deb')
 except:
     species0 = dict(zip(pars0, vals0))
-
+# species0 = dict(zip(pars0, vals0))
 pars = [p for i, p in enumerate(pars0) if i in inds]
 Npars = len(pars)
 ranges = np.array([r for i, r in enumerate(ranges0) if i in inds])
@@ -97,12 +98,12 @@ def fit_DEB(vals, steps_per_day=24, show=False):
     return error
 
 
-alg_pars = {'max_num_iteration': 30,
-            'population_size': 20,
+alg_pars = {'max_num_iteration': 40,
+            'population_size': 30,
             'mutation_probability': 0.1,
-            'elit_ratio': 0.1,
+            'elit_ratio': 0.2,
             'crossover_probability': 0.1,
-            'parents_portion': 0.2,
+            'parents_portion': 0.3,
             'crossover_type': 'uniform',
             'max_iteration_without_improv': None}
 

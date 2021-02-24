@@ -202,18 +202,24 @@ def sim_analysis(d, experiment):
         plot_endpoint_scatter(datasets=[d], labels=[d.id], par_shorts=['cum_sd', 'f_am', 'str_tr', 'fee_tr'])
         plot_endpoint_scatter(datasets=[d], labels=[d.id], par_shorts=['cum_sd', 'f_am'])
 
-    elif experiment == 'growth':
+    elif experiment in ['growth', 'growth_2x']:
         d.deb_analysis()
-        plot_endpoint_params(datasets=[d], labels=[d.id], mode='deb')
+        if experiment=='growth_2x' :
+            roversVSsitters=True
+            datasets=d.split_dataset(larva_id_prefixes=['Sitter', 'Rover'])
+            labels=['Sitters', 'Rovers']
+        else :
+            roversVSsitters=False
+            datasets = [d]
+            labels = [d.id]
+        plot_endpoint_params(datasets=datasets, labels=labels, mode='deb', save_to=d.plot_dir)
         # print(d.endpoint_data['deb_f_mean'])
         deb_dicts= [deb_dict(d, id) for id in d.agent_ids]+[deb_default()]
-        plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb.pdf')
-        plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb_minimal.pdf', mode='minimal')
-        plot_debs(deb_dicts=deb_dicts[:-1], save_to=d.plot_dir, save_as='deb_f.pdf', mode='f')
-        plot_debs(deb_dicts=deb_dicts[:-1],save_to=d.plot_dir, save_as='deb.pdf')
-        plot_debs(deb_dicts=deb_dicts[:-1],save_to=d.plot_dir, save_as='deb_minimal.pdf', mode='minimal')
-
-
+        plot_debs(deb_dicts=deb_dicts[:-1], save_to=d.plot_dir, save_as='deb.pdf', roversVSsitters=roversVSsitters)
+        plot_debs(deb_dicts=deb_dicts[:-1], save_to=d.plot_dir, save_as='deb_f.pdf', mode='f', roversVSsitters=roversVSsitters)
+        plot_debs(deb_dicts=deb_dicts[:-1], save_to=d.plot_dir, save_as='deb_minimal.pdf', mode='minimal', roversVSsitters=roversVSsitters)
+        plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb.pdf', roversVSsitters=roversVSsitters)
+        plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb_minimal.pdf', mode='minimal', roversVSsitters=roversVSsitters)
         # plot_growth(d, default_deb)
         # try:
         #     plot_deb(d)
