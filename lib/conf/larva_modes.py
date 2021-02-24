@@ -149,14 +149,14 @@ intermitter_rover = {'pause_dist': 'fit',
                      'intermittent_crawler': True,
                      'intermittent_feeder': True,
                      'feeder_reoccurence_decay_coef': 1,
-                     'explore2exploit_bias': 0.73 } #0.52
+                     'explore2exploit_bias': 0.74}  # 0.52
 
 intermitter_sitter = {'pause_dist': 'fit',
                       'stridechain_dist': 'fit',
                       'intermittent_crawler': True,
                       'intermittent_feeder': True,
                       'feeder_reoccurence_decay_coef': 1,
-                      'explore2exploit_bias': 0.46} #0.4
+                      'explore2exploit_bias': 0.44}  # 0.4
 
 # ----------------------------------------------OLFACTOR MODES----------------------------------------------------------
 
@@ -179,15 +179,15 @@ default_feeder = {'freq_range': [1.0, 5.0],
 
 # ----------------------------------------------ENERGETICS MODES--------------------------------------------------------
 energetics_rover = {'food_to_biomass_ratio': 0.1,
-                    'f_decay_coef': 0.1, #0.3
+                    'f_decay_coef': 0.1,  # 0.3
                     'f_increment': 1.0,
-                    'hunger_affects_balance': False,
+                    'hunger_affects_balance': True,
                     'deb': True}
 
 energetics_sitter = {'food_to_biomass_ratio': 0.1,
                      'f_decay_coef': 0.5,
                      'f_increment': 1.0,
-                     'hunger_affects_balance': False,
+                     'hunger_affects_balance': True,
                      'deb': True}
 
 l3_seg11 = {'initial_length': 0.00428,
@@ -287,13 +287,13 @@ growing_rover = {'energetics_params': energetics_rover,
                  'neural_params': brain_rover,
                  'sensorimotor_params': default_physics,
                  'body_params': l1_seg2,
-                  'id_prefix' : 'Rover'}
+                 'id_prefix': 'Rover'}
 
 growing_sitter = {'energetics_params': energetics_sitter,
                   'neural_params': brain_sitter,
                   'sensorimotor_params': default_physics,
                   'body_params': l1_seg2,
-                  'id_prefix' : 'Sitter'}
+                  'id_prefix': 'Sitter'}
 
 # A larva model for imitating experimental datasets (eg contours)
 

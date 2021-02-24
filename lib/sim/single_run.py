@@ -15,17 +15,20 @@ from lib.stor.larva_dataset import LarvaDataset
 
 import pickle
 
+
 def run_sim_basic(sim_id,
-            sim_params,
-            env_params,
-            fly_params,
-            save_to=None,
-            common_folder=None,
-            media_name=None,
-            save_data_flag=True,
-            par_config=conf.SimParConf,
-            **kwargs):
+                  sim_params,
+                  env_params,
+                  fly_params,
+                  save_to=None,
+                  common_folder=None,
+                  media_name=None,
+                  save_data_flag=True,
+                  par_config=conf.SimParConf,
+                  starvation_hours=[],
+                  **kwargs):
     print(f'Initializing simulation {sim_id}!')
+    # print(starvation_hours)
     if save_to is None:
         save_to = paths.SimFolder
     # current_date = date.today()
@@ -44,15 +47,16 @@ def run_sim_basic(sim_id,
     dir_path = os.path.join(parentdir, sim_id)
 
     # FIXME This only takes the first configuration into account
-    if not type(fly_params)==list :
+    if not type(fly_params) == list:
         Npoints = fly_params['body_params']['Nsegs'] + 1
-    else :
+    else:
         Npoints = fly_params[0]['body_params']['Nsegs'] + 1
 
     d = LarvaDataset(dir=dir_path, id=sim_id, fr=int(1 / dt),
                      Npoints=Npoints, Ncontour=0,
                      arena_pars=env_params['arena_params'],
-                     par_conf=par_config, save_data_flag=save_data_flag, load_data=False)
+                     par_conf=par_config, save_data_flag=save_data_flag, load_data=False,
+                     starvation_hours=starvation_hours)
 
     collected_pars = data_collection_config(dataset=d, sim_params=sim_params)
 
@@ -61,6 +65,7 @@ def run_sim_basic(sim_id,
                         collected_pars=collected_pars,
                         media_name=media_name,
                         save_to=d.vis_dir,
+                        starvation_hours=starvation_hours,
                         **kwargs)
 
     # Prepare the odor layer for a number of timesteps
@@ -100,13 +105,15 @@ def run_sim_basic(sim_id,
         d.save()
         fun.dict_to_file(param_dict, d.sim_pars_file_path)
         # Show the odor layer
-        if env.Nodors>0:
+        if env.Nodors > 0:
             env.plot_odorscape(save_to=d.plot_dir)
     print(f'Simulation complete in {dur} seconds!')
     return d
 
+
 ser = pickle.dumps(run_sim_basic)
 run_sim = pickle.loads(ser)
+
 
 def data_collection_config(dataset, sim_params):
     d = dataset
@@ -140,8 +147,8 @@ def next_idx(exp, type='single'):
         batch_names = batch_types.keys()
         exp_idx_dict = dict(zip(exp_names, [0] * len(exp_names)))
         batch_idx_dict = dict(zip(batch_names, [0] * len(batch_names)))
-        idx_dict = {'single' : exp_idx_dict,
-                    'batch' : batch_idx_dict}
+        idx_dict = {'single': exp_idx_dict,
+                    'batch': batch_idx_dict}
     if not exp in idx_dict[type].keys():
         idx_dict[type][exp] = 0
     idx_dict[type][exp] += 1
@@ -182,7 +189,7 @@ def generate_config(exp, Nagents=None, sim_time=None, sim_id=None, Box2D=False):
         config['env_params']['place_params']['initial_num_flies'] = Nagents
     if sim_time is not None:
         config['sim_params']['sim_time_in_min'] = sim_time
-    if Box2D :
+    if Box2D:
         config['env_params']['space_params'] = box2d_space
 
     return config
@@ -203,23 +210,28 @@ def sim_analysis(d, experiment):
         plot_endpoint_scatter(datasets=[d], labels=[d.id], par_shorts=['cum_sd', 'f_am'])
 
     elif experiment in ['growth', 'growth_2x']:
+        starvation_hours = d.config['starvation_hours']
         d.deb_analysis()
-        if experiment=='growth_2x' :
-            roversVSsitters=True
-            datasets=d.split_dataset(larva_id_prefixes=['Sitter', 'Rover'])
-            labels=['Sitters', 'Rovers']
-        else :
-            roversVSsitters=False
+        if experiment == 'growth_2x':
+            roversVSsitters = True
+            datasets = d.split_dataset(larva_id_prefixes=['Sitter', 'Rover'])
+            labels = ['Sitters', 'Rovers']
+        else:
+            roversVSsitters = False
             datasets = [d]
             labels = [d.id]
         plot_endpoint_params(datasets=datasets, labels=labels, mode='deb', save_to=d.plot_dir)
-        # print(d.endpoint_data['deb_f_mean'])
-        deb_dicts= [deb_dict(d, id) for id in d.agent_ids]+[deb_default()]
-        plot_debs(deb_dicts=deb_dicts[:-1], save_to=d.plot_dir, save_as='deb.pdf', roversVSsitters=roversVSsitters)
-        plot_debs(deb_dicts=deb_dicts[:-1], save_to=d.plot_dir, save_as='deb_f.pdf', mode='f', roversVSsitters=roversVSsitters)
-        plot_debs(deb_dicts=deb_dicts[:-1], save_to=d.plot_dir, save_as='deb_minimal.pdf', mode='minimal', roversVSsitters=roversVSsitters)
-        plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb.pdf', roversVSsitters=roversVSsitters)
-        plot_debs(deb_dicts=deb_dicts,save_to=d.plot_dir, save_as='comparative_deb_minimal.pdf', mode='minimal', roversVSsitters=roversVSsitters)
+        deb_dicts = [deb_dict(d, id, starvation_hours=starvation_hours) for id in d.agent_ids] + [
+            deb_default(starvation_hours=starvation_hours)]
+        c = {'save_to': d.plot_dir,
+             'roversVSsitters': roversVSsitters}
+        plot_debs(deb_dicts=deb_dicts, save_as='comparative_deb_minimal.pdf', mode='minimal', **c)
+        plot_debs(deb_dicts=deb_dicts, save_as='comparative_deb.pdf', **c)
+
+        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb.pdf', **c)
+        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_f.pdf', mode='f', **c)
+        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_minimal.pdf', mode='minimal', **c)
+
         # plot_growth(d, default_deb)
         # try:
         #     plot_deb(d)
@@ -234,7 +246,7 @@ def sim_analysis(d, experiment):
         datasets = [d, target_dataset]
         labels = ['simulated', 'empirical']
         comparative_analysis(datasets=datasets, labels=labels, simVSexp=True, save_to=None)
-        plot_marked_strides(dataset=d, agent_ids=d.agent_ids[:3], title=' ', slices=[[10,50], [60,100]])
+        plot_marked_strides(dataset=d, agent_ids=d.agent_ids[:3], title=' ', slices=[[10, 50], [60, 100]])
         plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:3], min_turn_angle=20)
     elif experiment in ['chemorbit', 'chemotax']:
         plot_distance_to_source(dataset=d, experiment=experiment)

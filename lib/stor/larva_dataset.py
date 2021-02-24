@@ -1,3 +1,4 @@
+import json
 import shutil
 from ast import literal_eval
 from distutils.dir_util import copy_tree
@@ -24,15 +25,18 @@ class LarvaDataset:
                  fr=16, Npoints=3, Ncontour=0,
                  par_conf=SimParConf, arena_pars=env.dish(0.1),
                  filtered_at=np.nan, rescaled_by=np.nan,
-                 save_data_flag=True, load_data=True):
+                 save_data_flag=True, load_data=True,
+                 starvation_hours=[]):
         self.par_config = par_conf
         self.save_data_flag = save_data_flag
         self.define_paths(dir)
         if os.path.exists(self.config_file_path):
-            temp = pd.read_csv(self.config_file_path)
-            self.config = {col: temp[col].values[0] for col in temp.columns.values}
+            # temp = pd.read_csv(self.config_file_path)
+            # self.config = {col: temp[col].values[0] for col in temp.columns.values}
+            with open(self.config_file_path) as tfp:
+                self.config = json.load(tfp)
             self.build_dirs()
-            print(f'Loaded dataset {self.config["id"]} with existing configuration')
+            print(f'Resumed dataset {self.config["id"]} with existing configuration')
         else:
             self.config = {'id': id,
                            'fr': fr,
@@ -40,10 +44,12 @@ class LarvaDataset:
                            'rescaled_by': rescaled_by,
                            'Npoints': Npoints,
                            'Ncontour': Ncontour,
+                           'starvation_hours' : starvation_hours
                            }
             self.config = {**self.config, **par_conf, **arena_pars}
             print(f'Initialized dataset {id} with new configuration')
         self.__dict__.update(self.config)
+        # print(self.config['starvation_hours'])
         self.arena_pars = {'arena_xdim': self.arena_xdim,
                            'arena_ydim': self.arena_ydim,
                            'arena_shape': self.arena_shape}
@@ -532,9 +538,11 @@ class LarvaDataset:
             self.config['Nagents'] = self.Nagents
         except:
             pass
-        dict = {k: [v] for k, v in self.config.items()}
-        temp = pd.DataFrame.from_dict(dict)
-        temp.to_csv(self.config_file_path, index=False, header=True)
+        with open(self.config_file_path, "w") as fp:
+            json.dump(self.config, fp)
+        # dict = {k: [v] for k, v in self.config.items()}
+        # temp = pd.DataFrame.from_dict(dict)
+        # temp.to_csv(self.config_file_path, index=False, header=True)
 
     def save_agent(self, pars=None, header=True):
         if self.step_data is None:

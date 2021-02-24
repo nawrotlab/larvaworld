@@ -1369,7 +1369,7 @@ def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full', roversVSsitter
                r'functional response $(-)$',
                r'reserve density $(-)$', r'hunger drive $(-)$',r'puppation buffer $(-)$']
     if mode=='minimal' :
-        idx=[4,5,6]
+        idx=[2,4,5,6]
         labels=[l for i,l in enumerate(labels) if i in idx]
         ylabels=[yl for i,yl in enumerate(ylabels) if i in idx]
     elif mode=='f' :
@@ -1455,7 +1455,7 @@ def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full', roversVSsitter
     axs[0].legend(handles=[mpatches.Patch(color=c, label=id) for c, id in zip(leg_cols,leg_ids)],
                   labels=leg_ids, fontsize=20, loc='upper center', prop={'size': 10})
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.93, hspace=0.02)
-
+    # plt.show()
     save_plot(fig, filepath, save_as)
 
 

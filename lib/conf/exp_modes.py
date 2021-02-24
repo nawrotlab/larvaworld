@@ -47,6 +47,7 @@ growth_2x = {'fly_params': [growing_rover, growing_sitter],
              'env_params': growth_exp_np,
              'collect_effectors': ['feeder', 'deb'],
              'traj_mode': no_traj,
+             'starvation_hours': [[4, 7]]
              }
 odor_pref = {'fly_params': odor_larva_x2,
              'env_params': pref_exp_np,

@@ -171,13 +171,18 @@ class SimulationClock(ScreenItem):
         super().__init__(color=color)
         # Time Info
         self.sim_step_in_dms = int(sim_step_in_sec * 100)
-        self.time = 0
+        self.time_in_min = 0
         self.dmsecond = 0
         self.second = 0
         self.minute = 0
         self.hour = 0
         self.counter = 0
 
+        self.timer_on=False
+        self.next_on=None
+        self.next_off=None
+        self.timer_opened = False
+        self.timer_closed = False
 
     def tick_clock(self):
         self.dmsecond += self.sim_step_in_dms
@@ -190,6 +195,7 @@ class SimulationClock(ScreenItem):
         if self.minute >= 60:
             self.hour += 1
             self.minute -= 60
+        self.check_timer()
 
     def render_clock(self, width, height):
         # Scale to screen
@@ -235,6 +241,38 @@ class SimulationClock(ScreenItem):
         viewer.draw_text_box(self.minute_font, self.minute_font_r)
         viewer.draw_text_box(self.second_font, self.second_font_r)
         viewer.draw_text_box(self.dmsecond_font, self.msecond_font_r)
+
+    def set_timer(self, on_times_in_min, off_times_in_min):
+        self.Ndurs=len(on_times_in_min)
+        self.timer_on_times, self.timer_off_times= on_times_in_min, off_times_in_min
+        self.current_dur = 0
+        self.next_on, self.next_off=self.timer_on_times[self.current_dur], self.timer_off_times[self.current_dur]
+        self.timer_on=False
+
+    def check_timer(self):
+        self.timer_opened = False
+        self.timer_closed = False
+        if not self.timer_on and self.next_on is not None :
+            t=self.hour*60+self.minute
+            if t>=self.next_on :
+                self.timer_on=True
+                self.timer_opened=True
+                self.current_dur +=1
+                if self.current_dur<self.Ndurs :
+                    self.next_on=self.timer_on_times[self.current_dur]
+                else :
+                    self.next_on =None
+        elif self.timer_on and self.next_off is not None :
+            t = self.hour * 60 + self.minute
+            if t>=self.next_off :
+                self.timer_on=False
+                self.timer_closed = True
+                if self.current_dur<self.Ndurs :
+                    self.next_off=self.timer_off_times[self.current_dur]
+                else :
+                    self.next_on =None
+
+
 
 
 class SimulationScale(ScreenItem):

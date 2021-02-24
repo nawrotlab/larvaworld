@@ -10,7 +10,9 @@ from lib.stor.paths import get_parent_dir, Deb_path
 
 
 class DEB:
-    def __init__(self, species='aedes', steps_per_day=1, cv=0, aging=False, print_stage_change=False, starvation_strategy=True):
+    def __init__(self, species='default', steps_per_day=1, cv=0,
+                 aging=False, print_stage_change=False, starvation_strategy=True, base_hunger=0.5):
+        self.base_hunger=base_hunger
         self.print_stage_change = print_stage_change
         self.starvation_strategy = starvation_strategy
         # My flags
@@ -142,7 +144,7 @@ class DEB:
 
     def compute_hunger(self):
         try :
-            h = np.clip(1 - 0.5 * self.get_reserve_density(), a_min=0, a_max=1)
+            h = np.clip(self.base_hunger + 1 - self.get_reserve_density(), a_min=0, a_max=1)
             return h
         except :
             return np.nan
@@ -474,7 +476,8 @@ class DEB:
             return self.U_R/self.U_R__p
 
 
-def deb_default(starvation_days=[], f=1, id=None):
+def deb_default(starvation_hours=[], f=1, id=None):
+    base_f=f
     steps_per_day = 24 * 60
     deb = DEB(species='default', steps_per_day=steps_per_day, cv=0, aging=True, print_stage_change=True)
     ww = []
@@ -488,17 +491,19 @@ def deb_default(starvation_days=[], f=1, id=None):
     # U_V = []
     fs = []
     puppation_buffer=[]
-
     c0 = False
     while not deb.puppa:
         if not deb.alive:
             print(f'The organism died at {deb.death_time_in_hours} hours.')
             t1=np.nan
             break
-        if any([r1 < deb.age_day < r2 for [r1, r2] in starvation_days]):
-            f = 0
-        else:
-            f = f
+        if deb.larva :
+            if any([r1 <= (deb.age_day-t0)*24 < r2 for [r1, r2] in starvation_hours]):
+                f = 0
+            else:
+                f = base_f
+        else :
+            f=base_f
         ww.append(deb.get_W() * 1000)
         h.append(deb.hunger)
         real_L.append(deb.get_real_L() * 1000)
@@ -517,7 +522,7 @@ def deb_default(starvation_days=[], f=1, id=None):
         t1 = deb.age_day
 
     t2=deb.death_time_in_hours
-    starvation=[[s0 * 24, s1 * 24] for s0, s1 in starvation_days]
+    starvation=[[s0 +t0*24, s1 +t0* 24] for s0, s1 in starvation_hours]
     if not np.isnan(t2) :
         starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for s0, s1 in starvation if s0<=t2]
     if id is None :
@@ -551,14 +556,19 @@ def deb_default(starvation_days=[], f=1, id=None):
             'starvation' : starvation}
     return dict
 
-def deb_dict(dataset, id, new_id=None):
+def deb_dict(dataset, id, new_id=None, starvation_hours=[]):
     s=dataset.step_data.xs(id, level='AgentID')
     e=dataset.endpoint_data.loc[id]
     if new_id is not None :
         id=new_id
-    dict = {'birth': e['birth_time_in_hours'],
+    t0=e['birth_time_in_hours']
+    t2=e['death_time_in_hours']
+    starvation=[[s0 +t0, s1 +t0] for s0, s1 in starvation_hours]
+    if not np.isnan(t2) :
+        starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for s0, s1 in starvation if s0<=t2]
+    dict = {'birth': t0,
             'puppation': e['puppation_time_in_hours'],
-            'death': e['death_time_in_hours'],
+            'death': t2,
             'age' : e['age'],
             'mass': s['mass'].values.tolist(),
             'length': s['length'].values.tolist(),
@@ -575,5 +585,5 @@ def deb_dict(dataset, id, new_id=None):
             'simulation': True,
             'f': s['deb_f'].values.tolist(),
             'id': id,
-            'starvation': []}
+            'starvation': starvation}
     return dict

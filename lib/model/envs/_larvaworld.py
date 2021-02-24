@@ -426,8 +426,15 @@ class LarvaWorld(Model):
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, fly_params, collected_pars={'step': [], 'endpoint': []},
                  id='Unnamed_Simulation', allow_collisions=True,
-                 touch_sensors=False, count_bend_errors=False, **kwargs):
+                 touch_sensors=False, count_bend_errors=False,
+                 starvation_hours=[], **kwargs):
         super().__init__(id=id, **kwargs)
+        self.starvation_hours = starvation_hours
+        if len(self.starvation_hours)>0 :
+            on_times_in_min=[s0*60 for [s0,s1] in self.starvation_hours]
+            off_times_in_min=[s1*60 for [s0,s1] in self.starvation_hours]
+            self.sim_clock.set_timer(on_times_in_min, off_times_in_min)
+        self.starvation=self.sim_clock.timer_on
         self.count_bend_errors = count_bend_errors
         self.touch_sensors = touch_sensors
         self.allow_collisions = allow_collisions
@@ -641,6 +648,15 @@ class LarvaWorldSim(LarvaWorld):
     def step(self):
         # Tick sim_clock
         self.sim_clock.tick_clock()
+        if len(self.starvation_hours) > 0:
+            self.starvation=self.sim_clock.timer_on
+            if self.sim_clock.timer_opened :
+                if self.food_grid is not None :
+                    self.food_grid.empty_grid()
+            if self.sim_clock.timer_closed :
+                if self.food_grid is not None :
+                    self.food_grid.reset()
+
         # print(self.sim_clock.dmsecond)
         # Update value_layers
 

@@ -477,9 +477,11 @@ class LarvaSim(VelocityAgent, Larva):
     def __init__(self, unique_id, model, fly_params, **kwargs):
         Larva.__init__(self, unique_id=unique_id, model=model)
 
+        self.brain = self.build_brain(fly_params['neural_params'])
         self.build_energetics(fly_params['energetics_params'])
         VelocityAgent.__init__(self, **fly_params['sensorimotor_params'], **fly_params['body_params'], **kwargs)
-        self.brain = self.build_brain(fly_params['neural_params'])
+
+
         self.reset_feeder()
 
     def compute_next_action(self):
@@ -573,16 +575,22 @@ class LarvaSim(VelocityAgent, Larva):
         if energetic_pars is not None:
             self.energetics = True
             if energetic_pars['deb']:
-                self.deb = DEB(species='default', steps_per_day=24 * 60, cv=0, aging=True)
-                self.deb.reach_stage('larva')
-                self.deb.steps_per_day = int(24 * 60 * 60 / self.model.dt)
-                self.real_length = self.deb.get_real_L()
-                self.real_mass = self.deb.get_W()
+                self.hunger_affects_balance = energetic_pars['hunger_affects_balance']
                 self.f_increment = energetic_pars['f_increment']
                 self.f_decay_coef = energetic_pars['f_decay_coef']
                 self.f_exp_coef = np.exp(-self.f_decay_coef * self.model.dt)
                 # self.hunger_affects_feeder = energetic_pars['hunger_affects_feeder']
-                self.hunger_affects_balance = energetic_pars['hunger_affects_balance']
+                if self.hunger_affects_balance :
+                    base_hunger=1-self.brain.intermitter.explore2exploit_bias
+                    self.deb = DEB(species='default', steps_per_day=24 * 60, cv=0, aging=True, base_hunger=base_hunger)
+                else :
+                    self.deb = DEB(species='default', steps_per_day=24 * 60, cv=0, aging=True)
+                self.deb.reach_stage('larva')
+                self.deb.steps_per_day = int(24 * 60 * 60 / self.model.dt)
+                self.real_length = self.deb.get_real_L()
+                self.real_mass = self.deb.get_W()
+
+
             else:
                 self.deb = None
                 self.food_to_biomass_ratio = energetic_pars['food_to_biomass_ratio']

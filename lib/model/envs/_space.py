@@ -86,6 +86,13 @@ class ValueGrid:
              [x * int(i - X), y * int(j + 1 - Y)]]
         return v
 
+    def reset(self):
+        self.grid = np.ones([self.X, self.Y]) * self.initial_value
+
+    def empty_grid(self):
+        self.grid = np.zeros([self.X, self.Y])
+
+
 
 class ValueLayer:
     def __init__(self, world, unique_id, sources, **kwargs):
