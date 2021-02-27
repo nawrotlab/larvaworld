@@ -368,7 +368,8 @@ def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag
                 fly_params=fly_params,
                 sim_params=sim_params,
                 mode=None,
-                save_data_flag=save_data_flag, **kwargs)
+                save_data_flag=save_data_flag,
+                **kwargs)
 
     if process_method is None:
         results = np.nan

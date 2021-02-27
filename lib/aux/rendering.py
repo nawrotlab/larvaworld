@@ -245,8 +245,8 @@ class SimulationClock(ScreenItem):
     def set_timer(self, on_times_in_min, off_times_in_min):
         self.Ndurs=len(on_times_in_min)
         self.timer_on_times, self.timer_off_times= on_times_in_min, off_times_in_min
-        self.current_dur = 0
-        self.next_on, self.next_off=self.timer_on_times[self.current_dur], self.timer_off_times[self.current_dur]
+        self.dur_idx = 0
+        self.next_on, self.next_off= self.timer_on_times[self.dur_idx], self.timer_off_times[self.dur_idx]
         self.timer_on=False
 
     def check_timer(self):
@@ -257,9 +257,9 @@ class SimulationClock(ScreenItem):
             if t>=self.next_on :
                 self.timer_on=True
                 self.timer_opened=True
-                self.current_dur +=1
-                if self.current_dur<self.Ndurs :
-                    self.next_on=self.timer_on_times[self.current_dur]
+                self.dur_idx +=1
+                if self.dur_idx<self.Ndurs :
+                    self.next_on=self.timer_on_times[self.dur_idx]
                 else :
                     self.next_on =None
         elif self.timer_on and self.next_off is not None :
@@ -267,8 +267,8 @@ class SimulationClock(ScreenItem):
             if t>=self.next_off :
                 self.timer_on=False
                 self.timer_closed = True
-                if self.current_dur<self.Ndurs :
-                    self.next_off=self.timer_off_times[self.current_dur]
+                if self.dur_idx<self.Ndurs :
+                    self.next_off=self.timer_off_times[self.dur_idx]
                 else :
                     self.next_on =None
 

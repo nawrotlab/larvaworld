@@ -16,6 +16,7 @@ from lib.sim.batch_lib import batch_run
 parser = argparse.ArgumentParser(description="Run given batch-run")
 parser.add_argument('experiment', choices=list(batch_types.keys()), help='The experiment type')
 parser = prs.add_sim_kwargs(parser)
+parser = prs.add_exp_kwargs(parser)
 parser = prs.add_batch_kwargs(parser)
 parser = prs.add_space_kwargs(parser)
 
@@ -23,7 +24,8 @@ args = parser.parse_args()
 # print(args)
 exp = args.experiment
 sim_kwargs = prs.get_sim_kwargs(args)
-sim_config = generate_config(exp, **sim_kwargs)
+exp_kwargs = prs.get_exp_kwargs(args)
+sim_config = generate_config(exp, **sim_kwargs, exp_kwargs=exp_kwargs)
 
 setup = batch_types[exp]
 space_method = setup['space_method']

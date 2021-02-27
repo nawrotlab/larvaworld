@@ -40,14 +40,18 @@ growth = {'fly_params': growing_rover,
           'env_params': growth_exp_np,
           # 'collect_effectors': ['feeder'],
           'collect_effectors': ['feeder', 'deb'],
+          # 'step_pars': ['cum_dst'],
           'traj_mode': no_traj,
-          'draw_mode': draw_behavior
+          'draw_mode': draw_behavior,
+          # 'starvation_hours': [[0.2, 0.4]]
           }
 growth_2x = {'fly_params': [growing_rover, growing_sitter],
              'env_params': growth_exp_np,
              'collect_effectors': ['feeder', 'deb'],
              'traj_mode': no_traj,
-             'starvation_hours': [[4, 7]]
+             # 'step_pars': ['cum_dst'],
+             # 'age_in_hours' : 0
+             # 'starvation_hours': [[24, 48]]
              }
 odor_pref = {'fly_params': odor_larva_x2,
              'env_params': pref_exp_np,

@@ -26,7 +26,7 @@ class LarvaDataset:
                  par_conf=SimParConf, arena_pars=env.dish(0.1),
                  filtered_at=np.nan, rescaled_by=np.nan,
                  save_data_flag=True, load_data=True,
-                 starvation_hours=[]):
+                 starvation_hours=[], deb_base_f=1):
         self.par_config = par_conf
         self.save_data_flag = save_data_flag
         self.define_paths(dir)
@@ -44,7 +44,8 @@ class LarvaDataset:
                            'rescaled_by': rescaled_by,
                            'Npoints': Npoints,
                            'Ncontour': Ncontour,
-                           'starvation_hours' : starvation_hours
+                           'starvation_hours' : starvation_hours,
+                           'deb_base_f' : deb_base_f
                            }
             self.config = {**self.config, **par_conf, **arena_pars}
             print(f'Initialized dataset {id} with new configuration')
@@ -2504,7 +2505,8 @@ class LarvaDataset:
     def enrich(self, rescale_by=None, drop_collisions=False, interpolate_nans=False, filter_f=None,
                length_and_centroid=True, drop_contour=False, drop_unused_pars=False,
                drop_immobile=False, mode='minimal', dispersion_starts=[0],
-               ang_analysis=True, lin_analysis=True, bout_annotation=['turn', 'stride', 'pause']):
+               ang_analysis=True, lin_analysis=True, bout_annotation=['turn', 'stride', 'pause'],
+               is_last=True):
         # print(self.config)
         # raise
         if rescale_by is not None:
@@ -2535,7 +2537,8 @@ class LarvaDataset:
             self.drop_immobile_larvae(is_last=False)
         if drop_unused_pars:
             self.drop_unused_pars(is_last=False)
-        self.save()
+        if is_last:
+            self.save()
 
     def create_reference_dataset(self):
         if self.endpoint_data is None:

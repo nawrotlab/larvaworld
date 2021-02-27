@@ -1,3 +1,4 @@
+import copy
 import warnings
 
 import numpy as np
@@ -190,6 +191,7 @@ class LarvaWorld(Model):
         if self._screen is not None:
             self._screen.close()
             self._screen = None
+        # del self
 
     def delete(self, agent):
         if type(agent) is LarvaSim:
@@ -427,9 +429,11 @@ class LarvaWorldSim(LarvaWorld):
     def __init__(self, fly_params, collected_pars={'step': [], 'endpoint': []},
                  id='Unnamed_Simulation', allow_collisions=True,
                  touch_sensors=False, count_bend_errors=False,
-                 starvation_hours=[], **kwargs):
+                 starvation_hours=[], hours_as_larva=0, deb_base_f =1, **kwargs):
         super().__init__(id=id, **kwargs)
         self.starvation_hours = starvation_hours
+        self.hours_as_larva = hours_as_larva
+        self.deb_base_f = deb_base_f
         if len(self.starvation_hours)>0 :
             on_times_in_min=[s0*60 for [s0,s1] in self.starvation_hours]
             off_times_in_min=[s1*60 for [s0,s1] in self.starvation_hours]
@@ -583,14 +587,18 @@ class LarvaWorldSim(LarvaWorld):
             larva_confs=[larva_pars]
         else :
             larva_confs = larva_pars
-        Ns=[int(N/len(larva_confs)) for i in range(len(larva_confs)-1)]
+        ls=larva_confs[:]
+        Ns=[int(N/len(ls)) for i in range(len(ls)-1)]
         Ns.append(N-sum(Ns))
         all_larva_pars=[]
         larva_ids = []
-        for l,n in zip(larva_confs, Ns) :
+        for l,n in zip(ls, Ns) :
             if 'id_prefix' in l :
                 id_prefix = l['id_prefix']
-                del l['id_prefix']
+                # FIXME This should be deleted but then the input larva_pars is changed which causes problem in sequential simulations.
+                #  Even shallow copying the list as ls does not save it!!!
+                #  I had to add **kwargs to the LarvaBody class in order to just ignore this argument
+                # del l['id_prefix']
             else :
                 id_prefix = 'Larva'
             for i in range(n) :
@@ -648,12 +656,15 @@ class LarvaWorldSim(LarvaWorld):
     def step(self):
         # Tick sim_clock
         self.sim_clock.tick_clock()
+
         if len(self.starvation_hours) > 0:
             self.starvation=self.sim_clock.timer_on
             if self.sim_clock.timer_opened :
+                # print(self.sim_clock.hour, self.sim_clock.minute)
                 if self.food_grid is not None :
                     self.food_grid.empty_grid()
             if self.sim_clock.timer_closed :
+                # print(self.sim_clock.hour, self.sim_clock.minute)
                 if self.food_grid is not None :
                     self.food_grid.reset()
 

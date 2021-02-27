@@ -26,7 +26,7 @@ box2d_space = {'physics_engine': True,
 
 def food_grid(dim, amount=0.00001):
     return {'grid_resolution': [dim, dim],
-            'initial_value': amount}
+            'initial_amount': amount}
 
 
 def food(r, amount=0.000001):

@@ -185,10 +185,23 @@ def get_sim_kwargs(args):
     sim_kwargs = {'sim_id': args.sim_id,
                   'Nagents': args.Nagents,
                   'sim_time': args.sim_time,
-                  'Box2D': args.Box2D
+                  'Box2D': args.Box2D,
                   }
     return sim_kwargs
 
+def add_exp_kwargs(parser):
+    parser.add_argument('-age', '--hours_as_larva', type=float, nargs='?', default=0.0,
+                        help='The initial larva age since hatch in hours')
+    parser.add_argument('-deb_f', '--deb_base_f', type=float, nargs='?', default=1.0,
+                        help='The base deb functional response where 0 denotes no food and 1 at libitum feeding')
+    return parser
+
+def get_exp_kwargs(args):
+    exp_kwargs = {
+                  'hours_as_larva': args.hours_as_larva,
+                  'deb_base_f': args.deb_base_f
+                  }
+    return exp_kwargs
 
 def add_batch_kwargs(parser):
     parser.add_argument('-id_b', '--batch_id', type=str, help='The id of the batch run')

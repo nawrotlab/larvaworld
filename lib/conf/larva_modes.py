@@ -149,14 +149,16 @@ intermitter_rover = {'pause_dist': 'fit',
                      'intermittent_crawler': True,
                      'intermittent_feeder': True,
                      'feeder_reoccurence_decay_coef': 1,
-                     'explore2exploit_bias': 0.74}  # 0.52
+                     'explore2exploit_bias': 0.6  # 0.74 # 0.52
+                     }
 
 intermitter_sitter = {'pause_dist': 'fit',
                       'stridechain_dist': 'fit',
                       'intermittent_crawler': True,
                       'intermittent_feeder': True,
                       'feeder_reoccurence_decay_coef': 1,
-                      'explore2exploit_bias': 0.44}  # 0.4
+                      'explore2exploit_bias': 0.36  # 0.44 # 0.4
+                      }
 
 # ----------------------------------------------OLFACTOR MODES----------------------------------------------------------
 
@@ -178,17 +180,35 @@ default_feeder = {'freq_range': [1.0, 5.0],
 # ----------------------------------------------SENSORIMOTOR MODES--------------------------------------------------------
 
 # ----------------------------------------------ENERGETICS MODES--------------------------------------------------------
+# energetics_rover_old = {'food_to_biomass_ratio': 0.1,
+#                         'f_decay_coef': 0.5,  # 0.1,  # 0.3
+#                         'f_increment': 1.0,
+#                         'hunger_affects_balance': True,
+#                         'deb': True}
+#
+# energetics_sitter_old = {'food_to_biomass_ratio': 0.1,
+#                          'f_decay_coef': 0.7,  # 0.5,
+#                          'f_increment': 1.0,
+#                          'hunger_affects_balance': True,
+#                          'deb': True,
+#                          }
+
+# C-Glucose absorption from [1]:
+# Rovers :0.5
+# Sitters : 0.15
+# [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
 energetics_rover = {'food_to_biomass_ratio': 0.1,
-                    'f_decay_coef': 0.1,  # 0.3
-                    'f_increment': 1.0,
+                    'f_decay_coef': 0.1,  # 0.1,  # 0.3
+                    'f_increment': 0.5,
                     'hunger_affects_balance': True,
                     'deb': True}
 
 energetics_sitter = {'food_to_biomass_ratio': 0.1,
-                     'f_decay_coef': 0.5,
-                     'f_increment': 1.0,
+                     'f_decay_coef': 0.1,  # 0.5,
+                     'f_increment': 0.15,
                      'hunger_affects_balance': True,
-                     'deb': True}
+                     'deb': True,
+                     }
 
 l3_seg11 = {'initial_length': 0.00428,
             'length_std': 0.00053,

@@ -303,6 +303,18 @@ class Larva(mesa.Agent):
     def birth_time_in_hours(self):
         return self.deb.birth_time_in_hours
 
+    @property
+    def hours_as_larva(self):
+        return self.deb.hours_as_larva
+
+    @property
+    def feeder_reoccurence_rate(self):
+        return self.brain.intermitter.feeder_reoccurence_rate
+
+    @property
+    def explore2exploit_bias(self):
+        return self.brain.intermitter.explore2exploit_bias
+
 
 class LarvaReplay(Larva, LarvaBody):
     def __init__(self, unique_id, model, schedule, length=5, data=None):
@@ -481,7 +493,6 @@ class LarvaSim(VelocityAgent, Larva):
         self.build_energetics(fly_params['energetics_params'])
         VelocityAgent.__init__(self, **fly_params['sensorimotor_params'], **fly_params['body_params'], **kwargs)
 
-
         self.reset_feeder()
 
     def compute_next_action(self):
@@ -543,12 +554,8 @@ class LarvaSim(VelocityAgent, Larva):
 
             self.feed_success_counter += int(self.feed_success)
             self.amount_eaten += self.current_amount_eaten
-            if isinstance(self.brain, DefaultBrain):
-                if self.feed_success:
-                    self.brain.intermitter.feeder_reoccurence_rate = 1 - self.brain.intermitter.explore2exploit_bias
-                    # self.brain.intermitter.feeder_reoccurence_rate=self.brain.intermitter.feeder_reoccurence_rate_on_success
-                else:
-                    self.brain.intermitter.feeder_reoccurence_rate *= self.brain.intermitter.feeder_reoccurence_exp_coef
+            self.update_balance(self.feed_success)
+
         else:
             self.feed_success = False
             self.current_amount_eaten = 0
@@ -580,12 +587,15 @@ class LarvaSim(VelocityAgent, Larva):
                 self.f_decay_coef = energetic_pars['f_decay_coef']
                 self.f_exp_coef = np.exp(-self.f_decay_coef * self.model.dt)
                 # self.hunger_affects_feeder = energetic_pars['hunger_affects_feeder']
-                if self.hunger_affects_balance :
-                    base_hunger=1-self.brain.intermitter.explore2exploit_bias
-                    self.deb = DEB(species='default', steps_per_day=24 * 60, cv=0, aging=True, base_hunger=base_hunger)
-                else :
-                    self.deb = DEB(species='default', steps_per_day=24 * 60, cv=0, aging=True)
+                steps_per_day=24*60
+                if self.hunger_affects_balance:
+                    base_hunger = self.brain.intermitter.feeder_reoccurence_rate
+                    # base_hunger = 1 - self.brain.intermitter.explore2exploit_bias
+                    self.deb = DEB(steps_per_day=steps_per_day, base_hunger=base_hunger)
+                else:
+                    self.deb = DEB(steps_per_day=steps_per_day)
                 self.deb.reach_stage('larva')
+                self.deb.reach_larva_age(hours_as_larva=self.model.hours_as_larva, f=self.model.deb_base_f)
                 self.deb.steps_per_day = int(24 * 60 * 60 / self.model.dt)
                 self.real_length = self.deb.get_real_L()
                 self.real_mass = self.deb.get_W()
@@ -622,7 +632,8 @@ class LarvaSim(VelocityAgent, Larva):
             # if self.hunger_affects_feeder :
             #     self.brain.intermitter.feeder_reoccurence_rate_on_success=self.deb.hunger
             if self.hunger_affects_balance:
-                self.brain.intermitter.explore2exploit_bias = 1 - self.deb.hunger
+                self.brain.intermitter.feeder_reoccurence_rate = self.deb.hunger
+                # self.brain.intermitter.explore2exploit_bias = 1 - self.deb.hunger
             # if not self.deb.alive :
             #     raise ValueError ('Dead')
             self.adjust_body_vertices()
@@ -634,4 +645,13 @@ class LarvaSim(VelocityAgent, Larva):
                 self.adjust_body_vertices()
                 self.max_feed_amount = self.compute_max_feed_amount()
 
-
+    def update_balance(self, fed):
+        if isinstance(self.brain, DefaultBrain):
+            if fed:
+                self.brain.intermitter.explore2exploit_bias = self.brain.intermitter.base_explore2exploit_bias
+                # self.brain.intermitter.feeder_reoccurence_rate = 1 - self.brain.intermitter.explore2exploit_bias
+                # self.brain.intermitter.feeder_reoccurence_rate=self.brain.intermitter.feeder_reoccurence_rate_on_success
+            else:
+                self.brain.intermitter.explore2exploit_bias = 1 - (
+                        1 - self.brain.intermitter.explore2exploit_bias) * self.brain.intermitter.feeder_reoccurence_exp_coef
+                # self.brain.intermitter.feeder_reoccurence_rate *= self.brain.intermitter.feeder_reoccurence_exp_coef

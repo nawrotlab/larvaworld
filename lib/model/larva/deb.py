@@ -11,7 +11,7 @@ from lib.stor.paths import get_parent_dir, Deb_path
 
 class DEB:
     def __init__(self, species='default', steps_per_day=1, cv=0,
-                 aging=False, print_stage_change=False, starvation_strategy=True, base_hunger=0.5):
+                 aging=True, print_stage_change=False, starvation_strategy=False, base_hunger=0.5):
         self.base_hunger=base_hunger
         self.print_stage_change = print_stage_change
         self.starvation_strategy = starvation_strategy
@@ -26,6 +26,7 @@ class DEB:
         self.birth_time_in_hours = np.nan
         self.puppation_time_in_hours = np.nan
         self.death_time_in_hours = np.nan
+        self.hours_as_larva = 0
 
         # Input params
         self.steps_per_day = steps_per_day
@@ -150,6 +151,7 @@ class DEB:
             return np.nan
 
     def run(self, f=None):
+        self.age_day += 1 / self.steps_per_day
         self.tick_counter += 1
         if f is None:
             f = 1
@@ -183,7 +185,7 @@ class DEB:
 
         #     do-plots                          ; then the plots are updated
         #   if count turtles = 0 [stop]
-        self.age_day += 1 / self.steps_per_day
+
 
     # change in reserves: determined by the difference between assimilation (S_A) and mobilization (S_C) fluxes
     # ; when food-dynamics are constant f = the value of f_scaled set in the user interface
@@ -466,6 +468,12 @@ class DEB:
                 f = 1
                 self.run(f)
 
+    def reach_larva_age(self, hours_as_larva, f=1):
+        self.hours_as_larva=hours_as_larva
+        N=int(self.steps_per_day/24*hours_as_larva)
+        for i in range(N) :
+            self.run(f)
+
     def compute_structure(self):
         return self.L ** 3 * self.E_G
 
@@ -476,8 +484,9 @@ class DEB:
             return self.U_R/self.U_R__p
 
 
-def deb_default(starvation_hours=[], f=1, id=None):
-    base_f=f
+def deb_default(starvation_hours=[], base_f=1, id=None):
+    # print(base_f)
+    base_f=base_f
     steps_per_day = 24 * 60
     deb = DEB(species='default', steps_per_day=steps_per_day, cv=0, aging=True, print_stage_change=True)
     ww = []
@@ -498,7 +507,7 @@ def deb_default(starvation_hours=[], f=1, id=None):
             t1=np.nan
             break
         if deb.larva :
-            if any([r1 <= (deb.age_day-t0)*24 < r2 for [r1, r2] in starvation_hours]):
+            if any([r1 <= (deb.age_day*24-t0) < r2 for [r1, r2] in starvation_hours]):
                 f = 0
             else:
                 f = base_f
@@ -518,13 +527,14 @@ def deb_default(starvation_hours=[], f=1, id=None):
         deb.run(f)
         if deb.larva and not c0:
             c0 = True
-            t0 = deb.age_day
-        t1 = deb.age_day
-
+            t0 = deb.birth_time_in_hours
+    t1 = deb.puppation_time_in_hours
     t2=deb.death_time_in_hours
-    starvation=[[s0 +t0*24, s1 +t0* 24] for s0, s1 in starvation_hours]
+    t3=deb.hours_as_larva
+    starvation=[[s0 +t0, s1 +t0] for [s0, s1] in starvation_hours]
+    # print(t0,t1,starvation, deb.age_day*24)
     if not np.isnan(t2) :
-        starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for s0, s1 in starvation if s0<=t2]
+        starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for [s0, s1] in starvation if s0<=t2]
     if id is None :
         if len(starvation)==0 :
             id = 'ad libitum'
@@ -534,10 +544,11 @@ def deb_default(starvation_hours=[], f=1, id=None):
             id = f'{dur}h starved'
         else :
             id = f'starved {len(starvation)} intervals'
-    dict = {'birth': deb.birth_time_in_hours,
-            'puppation': deb.puppation_time_in_hours,
+    dict = {'birth': t0,
+            'puppation': t1,
             'death': t2,
-            'age' : deb.age_day*24,
+            'age' : deb.age_day*24+1,
+            'sim_start' : t3,
             'mass': ww,
             'length': real_L,
             'reserve': E,
@@ -554,6 +565,7 @@ def deb_default(starvation_hours=[], f=1, id=None):
             'f': fs,
             'id' : id,
             'starvation' : starvation}
+    # raise
     return dict
 
 def deb_dict(dataset, id, new_id=None, starvation_hours=[]):
@@ -563,18 +575,23 @@ def deb_dict(dataset, id, new_id=None, starvation_hours=[]):
         id=new_id
     t0=e['birth_time_in_hours']
     t2=e['death_time_in_hours']
-    starvation=[[s0 +t0, s1 +t0] for s0, s1 in starvation_hours]
+    t3=e['hours_as_larva']
+    starvation=[[s0 +t0, s1 +t0] for [s0, s1] in starvation_hours]
+    # print(t0, starvation)
     if not np.isnan(t2) :
-        starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for s0, s1 in starvation if s0<=t2]
+        starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for [s0, s1] in starvation if s0<=t2]
     dict = {'birth': t0,
             'puppation': e['puppation_time_in_hours'],
             'death': t2,
             'age' : e['age'],
+            'sim_start' : t3,
             'mass': s['mass'].values.tolist(),
             'length': s['length'].values.tolist(),
             'reserve': s['reserve'].values.tolist(),
             'reserve_density': s['reserve_density'].values.tolist(),
             'hunger': s['hunger'].values.tolist(),
+            'feeder_reoccurence_rate': s['feeder_reoccurence_rate'].values.tolist(),
+            'explore2exploit_bias': s['explore2exploit_bias'].values.tolist(),
             # 'structural_length': s['structural_length'].values.tolist(),
             # 'maturity': s['maturity'].values.tolist(),
             # 'reproduction': s['reproduction'].values.tolist(),

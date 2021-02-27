@@ -425,6 +425,7 @@ class Intermitter(Effector):
         self.turner = turner
         self.feeder = feeder
         self.explore2exploit_bias = explore2exploit_bias
+        self.base_explore2exploit_bias = explore2exploit_bias
         if crawler is None :
             self.intermittent_crawler=False
         else :

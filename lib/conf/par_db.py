@@ -411,5 +411,5 @@ collect_db=pd.Series(valid.collect.values,index=valid.par).to_dict()
 
 par_db = par_db[~par_db.index.duplicated(keep='first')]
 
-# print(par_db.loc['hunger'])
+# print(par_db.loc['f_am'])
 # print(random_ar2)

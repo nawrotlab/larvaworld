@@ -14,6 +14,7 @@ parser.add_argument('experiment', choices=list(exp_types.keys()), help='The expe
 parser.add_argument('-a', '--analysis', action="store_true", help='Whether to run analysis')
 
 parser = prs.add_sim_kwargs(parser)
+parser = prs.add_exp_kwargs(parser)
 parser = prs.add_vis_kwargs(parser)
 
 args = parser.parse_args()
@@ -21,14 +22,15 @@ args = parser.parse_args()
 exp = args.experiment
 analysis = args.analysis
 sim_kwargs = prs.get_sim_kwargs(args)
+exp_kwargs = prs.get_exp_kwargs(args)
 vis_kwargs = prs.get_vis_kwargs(args)
 
-sim_config = generate_config(exp, **sim_kwargs)
+sim_config = generate_config(exp, **sim_kwargs, exp_kwargs=exp_kwargs)
 exp_config = {
               'common_folder': f'single_runs/{exp}',
               **sim_config}
 
-d=run_sim(**exp_config, **vis_kwargs)
+d=run_sim(**exp_config, **vis_kwargs, enrich=True)
 
 if analysis:
     sim_analysis(d, exp)

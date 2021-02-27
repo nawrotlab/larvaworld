@@ -417,12 +417,13 @@ class DefaultPolygon:
 class LarvaBody:
     def __init__(self, model, pos=None, orientation=None,
                  initial_length=None, length_std=0, Nsegs=1, interval=0, joint_type=None,
-                 seg_ratio=None, friction_pars={'maxForce': 10 ** 0, 'maxTorque': 10 ** -1}):
+                 seg_ratio=None, friction_pars={'maxForce': 10 ** 0, 'maxTorque': 10 ** -1}, **kwargs):
         # FIXME get rid of this
         if not 'density' in locals():
             self.density = 300.0
         self.friction_pars = friction_pars
-        self.width_to_length_ratio = 0.2
+        self.width_to_length_ratio = 0.18 # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
+        # self.width_to_length_ratio = 0.2
         if seg_ratio is None:
             seg_ratio = [1 / Nsegs] * Nsegs
         self.seg_ratio = seg_ratio

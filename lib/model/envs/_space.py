@@ -9,8 +9,12 @@ from scipy.stats import multivariate_normal
 
 
 class ValueGrid:
-    def __init__(self, space_range, grid_resolution=[100, 100], distribution='uniform', initial_value=1):
-        self.initial_value = initial_value
+    def __init__(self, space_range, grid_resolution=[100, 100], distribution='uniform', initial_amount=1):
+        self.initial_amount = initial_amount
+        if initial_amount>0 :
+            self.initial_value=1
+        else :
+            self.initial_value=0
         # print(grid_resolution)
         # print(grid_resolution[0])
         # print(type(grid_resolution[0]))
@@ -27,7 +31,7 @@ class ValueGrid:
         self.XY_half=np.array([self.X/2, self.Y/2])
 
         if distribution == 'uniform':
-            self.grid = np.ones([self.X, self.Y]) * initial_value
+            self.grid = np.ones([self.X, self.Y]) * self.initial_amount
 
         self.grid_vertices = self.generate_grid_vertices()
         self.grid_edges = [[-xr / 2, -yr / 2],
@@ -36,8 +40,8 @@ class ValueGrid:
                            [-xr / 2, yr / 2]]
 
     def get_color(self, v=1):
-        c = int(v * 255)
-        return np.array((0, c, 0))
+        c = int((1-v) * 255)
+        return np.array((c, 255, c))
 
     def get_grid_cell(self, p):
         c=np.clip(np.array(p/self.xy + self.XY_half).astype(int), a_min=[0,0], a_max=[self.X-1,self.Y-1])
@@ -67,8 +71,8 @@ class ValueGrid:
         return vertices
 
     def draw(self, viewer):
-        viewer.draw_polygon(self.grid_edges, self.get_color(), filled=True)
-        not_full=np.array([[k, v/self.initial_value] for k,v in enumerate(self.grid.flatten().tolist()) if v!=self.initial_value])
+        viewer.draw_polygon(self.grid_edges, self.get_color(v=self.initial_value), filled=True)
+        not_full=np.array([[k, v/self.initial_amount] for k,v in enumerate(self.grid.flatten().tolist()) if v!=self.initial_amount])
         if not_full.shape[0]!=0 :
             # print(not_full)
             # # raise
