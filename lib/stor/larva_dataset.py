@@ -51,8 +51,6 @@ class LarvaDataset:
             self.config = {**self.config, **par_conf, **arena_pars}
             print(f'Initialized dataset {id} with new configuration')
         self.__dict__.update(self.config)
-        # self.save_config()
-        # print(self.config['starvation_hours'])
         self.arena_pars = {'arena_xdim': self.arena_xdim,
                            'arena_ydim': self.arena_ydim,
                            'arena_shape': self.arena_shape}
