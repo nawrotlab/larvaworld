@@ -27,6 +27,7 @@ def sim_enrichment(d, experiment):
         d.enrich(length_and_centroid=False, is_last=False)
     return d
 
+
 def sim_analysis(d, experiment):
     s, e = d.step_data, d.endpoint_data
     if experiment in ['feed_patchy', 'feed_scatter', 'feed_grid']:
@@ -43,7 +44,8 @@ def sim_analysis(d, experiment):
 
     elif experiment in ['growth', 'growth_2x']:
         starvation_hours = d.config['starvation_hours']
-        deb_base_f = d.config['deb_base_f']
+        f = d.config['deb_base_f']
+        deb_model=deb_default(starvation_hours=starvation_hours, base_f=f)
         if experiment == 'growth_2x':
             roversVSsitters = True
             datasets = d.split_dataset(larva_id_prefixes=['Sitter', 'Rover'])
@@ -53,38 +55,32 @@ def sim_analysis(d, experiment):
             datasets = [d]
             labels = [d.id]
 
-        try :
-            barplot(datasets=datasets, labels=labels, par_shorts=['f_am'], save_to=d.plot_dir)
-        except :
-            pass
-        plot_pathlength(datasets=datasets, labels=labels, scaled=False, save_to=d.plot_dir)
-        plot_endpoint_params(datasets=datasets, labels=labels, mode='deb', save_to=d.plot_dir)
 
-        deb_dicts = [deb_dict(d, id, starvation_hours=starvation_hours) for id in d.agent_ids] + [
-            deb_default(starvation_hours=starvation_hours, base_f=deb_base_f)]
+
+        deb_dicts = [deb_dict(d, id, starvation_hours=starvation_hours) for id in d.agent_ids] + [deb_model]
         c = {'save_to': d.plot_dir,
              'roversVSsitters': roversVSsitters}
-        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_f_only.pdf', mode='f_only', sim_only=True, **c)
         plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_f.pdf', mode='f', sim_only=True,
                   include_feeder_reoccurence=True, **c)
+        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_f_only.pdf', mode='f_only', sim_only=True, **c)
+
         plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb.pdf', sim_only=True, **c)
         plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_minimal.pdf', mode='minimal', sim_only=True, **c)
         plot_debs(deb_dicts=[deb_dicts[-1]], save_as='default_deb.pdf', **c)
         plot_debs(deb_dicts=deb_dicts, save_as='comparative_deb.pdf', **c)
         plot_debs(deb_dicts=deb_dicts, save_as='comparative_deb_minimal.pdf', mode='minimal', **c)
+        cc = {'datasets': datasets,
+              'labels': labels,
+              'save_to': d.plot_dir}
+        try:
+            barplot(par_shorts=['f_am'], **cc)
+        except:
+            pass
+        plot_food_amount(**cc)
+        plot_pathlength(scaled=False, **cc)
+        plot_endpoint_params(mode='deb', **cc)
 
-
-
-        # plot_growth(d, default_deb)
-        # try:
-        #     plot_deb(d)
-        # except:
-        #     pass
-    # elif experiment == 'focus':
-    #     d.angular_analysis(is_last=False)
-    #     d.detect_turns()
     elif experiment == 'dispersion':
-        # d.enrich(length_and_centroid=False)
         target_dataset = load_reference_dataset()
         datasets = [d, target_dataset]
         labels = ['simulated', 'empirical']
@@ -195,8 +191,8 @@ def run_sim_basic(sim_id,
 
     # Save simulation data and parameters
     if save_data_flag:
-        if enrich and experiment is not None :
-            d=sim_enrichment(d, experiment)
+        if enrich and experiment is not None:
+            d = sim_enrichment(d, experiment)
         d.save()
         fun.dict_to_file(param_dict, d.sim_pars_file_path)
         # Show the odor layer
@@ -252,10 +248,9 @@ def next_idx(exp, type='single'):
     return idx_dict[type][exp]
 
 
-
 def generate_config(exp, Nagents=None, sim_time=None, sim_id=None, Box2D=False, exp_kwargs={}):
     config = exp_types[exp]
-    config['experiment']=exp
+    config['experiment'] = exp
     config.update(**exp_kwargs)
 
     if sim_id is None:
@@ -292,6 +287,3 @@ def generate_config(exp, Nagents=None, sim_time=None, sim_id=None, Box2D=False, 
         config['env_params']['space_params'] = box2d_space
 
     return config
-
-
-

@@ -253,7 +253,7 @@ class SimulationClock(ScreenItem):
         self.timer_opened = False
         self.timer_closed = False
         if not self.timer_on and self.next_on is not None :
-            t=self.hour*60+self.minute
+            t=self.hour*60+self.minute+self.second/60
             if t>=self.next_on :
                 self.timer_on=True
                 self.timer_opened=True
@@ -263,7 +263,7 @@ class SimulationClock(ScreenItem):
                 else :
                     self.next_on =None
         elif self.timer_on and self.next_off is not None :
-            t = self.hour * 60 + self.minute
+            t = self.hour * 60 + self.minute+self.second/60
             if t>=self.next_off :
                 self.timer_on=False
                 self.timer_closed = True

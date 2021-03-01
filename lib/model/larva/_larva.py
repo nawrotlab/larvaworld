@@ -595,7 +595,8 @@ class LarvaSim(VelocityAgent, Larva):
                 else:
                     self.deb = DEB(steps_per_day=steps_per_day)
                 self.deb.reach_stage('larva')
-                self.deb.reach_larva_age(hours_as_larva=self.model.hours_as_larva, f=self.model.deb_base_f)
+                self.deb.advance_larva_age(hours_as_larva=self.model.hours_as_larva, f=self.model.deb_base_f,
+                                           starvation_hours=self.model.deb_starvation_hours)
                 self.deb.steps_per_day = int(24 * 60 * 60 / self.model.dt)
                 self.real_length = self.deb.get_real_L()
                 self.real_mass = self.deb.get_W()

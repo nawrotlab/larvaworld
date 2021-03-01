@@ -1406,6 +1406,8 @@ def plot_debs(deb_dicts, save_to=None, save_as=None, mode='full', roversVSsitter
         t1s.append(t1)
         t2s.append(t2)
         ages.append(age)
+        # print(starvation)
+        # print(t0, t3, t0+t3)
 
         for j, (l, yl) in enumerate(zip(labels, ylabels)):
             P = d[l]
@@ -2218,6 +2220,37 @@ def plot_pathlength(datasets, labels, scaled=True, save_to=None, save_as=None):
     fig, axs = plt.subplots(1, 1, figsize=(10, 5))
     for d, lab, c in zip(datasets, labels, colors):
         dst_df = d.step_data['cum_dst']
+        dst_m = dst_df.groupby(level='Step').quantile(q=0.5)
+        dst_u = dst_df.groupby(level='Step').quantile(q=0.75)
+        dst_b = dst_df.groupby(level='Step').quantile(q=0.25)
+        plot_mean_and_range(x=trange, mean=dst_m, lb=dst_b, ub=dst_u, axis=axs, color_mean=c,
+                            color_shading=c, label=lab)
+    axs.set_ylabel(ylab)
+    axs.set_xlabel('time, $min$')
+    axs.set_xlim([trange[0], trange[-1]])
+    axs.xaxis.set_major_locator(ticker.MaxNLocator(5))
+    axs.legend(loc='upper left', fontsize=9)
+    fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.95, hspace=.005, wspace=0.05)
+    # plt.show()
+    save_plot(fig, filepath, filename)
+    # raise
+
+def plot_food_amount(datasets, labels, save_to=None, save_as=None):
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to)
+    Nticks = len(datasets[0].step_data.index.unique('Step'))
+    t0, t1 = 0, int(Nticks / datasets[0].fr / 60)
+
+    filename = f'food_intake.{suf}'
+    ylab = r'Food intake $(mg)$'
+
+    if save_as is not None:
+        filename = save_as
+    filepath = os.path.join(save_to, filename)
+
+    trange = np.linspace(t0, t1, Nticks)
+    fig, axs = plt.subplots(1, 1, figsize=(10, 5))
+    for d, lab, c in zip(datasets, labels, colors):
+        dst_df = d.step_data['amount_eaten']
         dst_m = dst_df.groupby(level='Step').quantile(q=0.5)
         dst_u = dst_df.groupby(level='Step').quantile(q=0.75)
         dst_b = dst_df.groupby(level='Step').quantile(q=0.25)

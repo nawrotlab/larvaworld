@@ -31,6 +31,8 @@ exp_config = {
               'common_folder': f'single_runs/{exp}',
               **sim_config}
 
+# print(exp_kwargs)
+# raise
 d=run_sim(**exp_config, **vis_kwargs, enrich=True)
 
 if analysis:

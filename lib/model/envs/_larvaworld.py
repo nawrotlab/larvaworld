@@ -429,21 +429,24 @@ class LarvaWorldSim(LarvaWorld):
     def __init__(self, fly_params, collected_pars={'step': [], 'endpoint': []},
                  id='Unnamed_Simulation', allow_collisions=True,
                  touch_sensors=False, count_bend_errors=False,
-                 starvation_hours=[], hours_as_larva=0, deb_base_f =1, **kwargs):
+                 starvation_hours=[], hours_as_larva=0, deb_base_f=1, **kwargs):
         super().__init__(id=id, **kwargs)
         self.starvation_hours = starvation_hours
         self.hours_as_larva = hours_as_larva
         self.deb_base_f = deb_base_f
-        if len(self.starvation_hours)>0 :
-            on_times_in_min=[s0*60 for [s0,s1] in self.starvation_hours]
-            off_times_in_min=[s1*60 for [s0,s1] in self.starvation_hours]
+        self.deb_starvation_hours = [[s0, np.clip(s1, a_min=s0, a_max=hours_as_larva)] for [s0, s1] in
+                                     self.starvation_hours if s0 < hours_as_larva]
+        self.sim_starvation_hours = [[np.clip(s0 - hours_as_larva, a_min=0, a_max=+np.inf), s1 - hours_as_larva] for
+                                     [s0, s1] in self.starvation_hours if s1 > hours_as_larva]
+        if len(self.sim_starvation_hours) > 0:
+            on_times_in_min = [s0 * 60 for [s0, s1] in self.sim_starvation_hours]
+            off_times_in_min = [s1 * 60 for [s0, s1] in self.sim_starvation_hours]
             self.sim_clock.set_timer(on_times_in_min, off_times_in_min)
-        self.starvation=self.sim_clock.timer_on
+        self.starvation = self.sim_clock.timer_on
         self.count_bend_errors = count_bend_errors
         self.touch_sensors = touch_sensors
         self.allow_collisions = allow_collisions
         self.larva_pars = fly_params
-
 
         self.populate_space(env_pars=self.env_pars, larva_pars=self.larva_pars)
         self.create_data_collectors(collected_pars)
@@ -583,30 +586,30 @@ class LarvaWorldSim(LarvaWorld):
         return larva_positions, larva_orientations
 
     def _generate_larva_pars(self, N, larva_pars):
-        if not isinstance(larva_pars, list) :
-            larva_confs=[larva_pars]
-        else :
+        if not isinstance(larva_pars, list):
+            larva_confs = [larva_pars]
+        else:
             larva_confs = larva_pars
-        ls=larva_confs[:]
-        Ns=[int(N/len(ls)) for i in range(len(ls)-1)]
-        Ns.append(N-sum(Ns))
-        all_larva_pars=[]
+        ls = larva_confs[:]
+        Ns = [int(N / len(ls)) for i in range(len(ls) - 1)]
+        Ns.append(N - sum(Ns))
+        all_larva_pars = []
         larva_ids = []
-        for l,n in zip(ls, Ns) :
-            if 'id_prefix' in l :
+        for l, n in zip(ls, Ns):
+            if 'id_prefix' in l:
                 id_prefix = l['id_prefix']
                 # FIXME This should be deleted but then the input larva_pars is changed which causes problem in sequential simulations.
                 #  Even shallow copying the list as ls does not save it!!!
                 #  I had to add **kwargs to the LarvaBody class in order to just ignore this argument
                 # del l['id_prefix']
-            else :
+            else:
                 id_prefix = 'Larva'
-            for i in range(n) :
+            for i in range(n):
                 larva_ids.append(f'{id_prefix}_{i}')
             for dist in ['pause_dist', 'stridechain_dist']:
                 if l['neural_params']['intermitter_params'][dist] == 'fit':
                     l['neural_params']['intermitter_params'][dist] = get_ref_bout_distros(dist)
-            type_larva_pars = [l]*n
+            type_larva_pars = [l] * n
             flat_larva_pars = fun.flatten_dict(l)
             sample_pars = [p for p in flat_larva_pars if flat_larva_pars[p] == 'sample']
             if len(sample_pars) >= 1:
@@ -657,15 +660,20 @@ class LarvaWorldSim(LarvaWorld):
         # Tick sim_clock
         self.sim_clock.tick_clock()
 
-        if len(self.starvation_hours) > 0:
-            self.starvation=self.sim_clock.timer_on
-            if self.sim_clock.timer_opened :
+        if len(self.sim_starvation_hours) > 0:
+            self.starvation = self.sim_clock.timer_on
+            if self.sim_clock.timer_opened:
                 # print(self.sim_clock.hour, self.sim_clock.minute)
-                if self.food_grid is not None :
+                if self.food_grid is not None:
                     self.food_grid.empty_grid()
-            if self.sim_clock.timer_closed :
+            if self.sim_clock.timer_closed:
                 # print(self.sim_clock.hour, self.sim_clock.minute)
-                if self.food_grid is not None :
+                try:
+                    for l in self.get_flies():
+                        l.brain.intermitter.explore2exploit_bias = l.brain.intermitter.base_explore2exploit_bias
+                except:
+                    pass
+                if self.food_grid is not None:
                     self.food_grid.reset()
 
         # print(self.sim_clock.dmsecond)

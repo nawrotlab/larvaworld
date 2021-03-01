@@ -12,7 +12,7 @@ from lib.stor.paths import get_parent_dir, Deb_path
 class DEB:
     def __init__(self, species='default', steps_per_day=1, cv=0,
                  aging=True, print_stage_change=False, starvation_strategy=False, base_hunger=0.5):
-        self.base_hunger=base_hunger
+        self.base_hunger = base_hunger
         self.print_stage_change = print_stage_change
         self.starvation_strategy = starvation_strategy
         # My flags
@@ -144,10 +144,10 @@ class DEB:
         self.W = self.compute_wet_weight()
 
     def compute_hunger(self):
-        try :
-            h = np.clip(self.base_hunger + 1 - self.get_reserve_density(), a_min=0, a_max=1)
+        try:
+            h = np.clip(self.base_hunger + 10*(1 - self.get_reserve_density()), a_min=0, a_max=1)
             return h
-        except :
+        except:
             return np.nan
 
     def run(self, f=None):
@@ -186,7 +186,6 @@ class DEB:
         #     do-plots                          ; then the plots are updated
         #   if count turtles = 0 [stop]
 
-
     # change in reserves: determined by the difference between assimilation (S_A) and mobilization (S_C) fluxes
     # ; when food-dynamics are constant f = the value of f_scaled set in the user interface
     # ; if food is set to  "logistic" f depends on prey density and the half-saturation coefficient (K)
@@ -218,7 +217,7 @@ class DEB:
         self.S_C = L ** 2 * (g * e / (g + e)) * (1 + (L / (g * (v / (g * k_M)))))
         self.S_A = self.f * L ** 2
         self.dU_E = self.S_A - self.S_C
-        self.e_scaled=e
+        self.e_scaled = e
 
         # change in maturity is calculated (for immature individuals only)
 
@@ -235,7 +234,7 @@ class DEB:
             if self.embryo and not self.larva:
                 self.embryo = False
                 self.larva = True
-                self.birth_time_in_hours=self.age_day*24
+                self.birth_time_in_hours = self.age_day * 24
                 if self.print_stage_change:
                     print(f'Larval stage reached after {self.age_day} days')
             if self.puppa:
@@ -255,7 +254,7 @@ class DEB:
     def calc_dU_R(self):
         k = self.kap
         k_J = self.k_J_rate
-        U_R__p=self.U_R__p
+        U_R__p = self.U_R__p
         S_C = self.S_C
         U_R = self.U_R
         if self.larva and U_R < U_R__p:
@@ -275,22 +274,22 @@ class DEB:
     # the following procedure calculates change in structural length, if growth in negative the individual does not have enough energy to pay somatic maintenance and the starvation submodel is run
     # where growth is set to 0 and individuals divirt enough energy from development (for juveniles) or reprodution (for adults) to pay maintenance costs
     def calc_dL(self):
-        g=self.g
-        L=self.L
-        k_M=self.k_M_rate
-        k_J=self.k_J_rate
-        v=self.v_rate
-        S_C=self.S_C
-        S_A=self.S_A
-        e=self.e_scaled
-        k=self.kap
-        U_H__p=self.U_H__p
-        self.dL = (((v / (g * L ** 2)) * S_C) - k_M * L)/3
+        g = self.g
+        L = self.L
+        k_M = self.k_M_rate
+        k_J = self.k_J_rate
+        v = self.v_rate
+        S_C = self.S_C
+        S_A = self.S_A
+        e = self.e_scaled
+        k = self.kap
+        U_H__p = self.U_H__p
+        self.dL = (((v / (g * L ** 2)) * S_C) - k_M * L) / 3
         # if growth is negative use starvation strategy 3 from the DEB book
-        if self.dL<0 :
+        if self.dL < 0:
             if e < L / (v / (g * k_M)) and self.starvation_strategy:
                 self.dL = 0
-                d=(1 - k) * e * L ** 2 - k_J * U_H__p - k * L ** 2 * (L / (v / (g * k_M)) - e)
+                d = (1 - k) * e * L ** 2 - k_J * U_H__p - k * L ** 2 * (L / (v / (g * k_M)) - e)
                 if self.U_H < self.U_H__p:
                     self.dU_H = d
                 else:
@@ -301,10 +300,9 @@ class DEB:
                         self.die()
                     if self.U_R < 0:
                         self.die()
-            else :
+            else:
                 print('dd')
                 self.die()
-
 
     # the following procedure calculates the change in damage enducing compounds of an individual
     def calc_dq_acceleration(self):
@@ -314,9 +312,9 @@ class DEB:
         k_M = self.k_M_rate
         v = self.v_rate
         e = self.e_scaled
-        q=self.q_acceleration
+        q = self.q_acceleration
         self.dq_acceleration = (q * (L ** 3 / (v / (g * k_M)) ** 3) * self.sG + self.h_a) * e * (
-                                       (v / L) - ((3 / L) * dL)) - ((3 / L) * dL) * q
+                (v / L) - ((3 / L) * dL)) - ((3 / L) * dL) * q
 
     # the following procedure calculates the change in damage in the individual
     def calc_dh_rate(self):
@@ -392,8 +390,8 @@ class DEB:
     #  ]
     #   if food-dynamics = "logistic"[ ask patches [ set X X + d_X / timestep]]
     def update(self):
-        s=self.steps_per_day
-        t=self.tick_counter
+        s = self.steps_per_day
+        t = self.tick_counter
         self.U_E += self.dU_E / s
         self.U_H += self.dU_H / s
         self.U_R += self.dU_R / s
@@ -454,12 +452,12 @@ class DEB:
         return self.U_V
 
     def get_reserve(self):
-        return self.U_E*self.p_am
+        return self.U_E * self.p_am
 
     def get_reserve_density(self):
-        if self.embryo and not self.larva :
+        if self.embryo and not self.larva:
             return np.nan
-        else :
+        else:
             return self.e_scaled
 
     def reach_stage(self, stage='larva'):
@@ -468,25 +466,39 @@ class DEB:
                 f = 1
                 self.run(f)
 
-    def reach_larva_age(self, hours_as_larva, f=1):
-        self.hours_as_larva=hours_as_larva
-        N=int(self.steps_per_day/24*hours_as_larva)
-        for i in range(N) :
-            self.run(f)
+    def advance_larva_age(self, hours_as_larva, f=1, starvation_hours=[]):
+        self.hours_as_larva = hours_as_larva
+        if len(starvation_hours) == 0:
+            N = int(self.steps_per_day / 24 * hours_as_larva)
+            for i in range(N):
+                self.run(f)
+        else:
+            t = 0
+            for s0, s1 in starvation_hours:
+                N0 = int(self.steps_per_day / 24 * (s0 - t))
+                for i in range(N0):
+                    self.run(f)
+                N1 = int(self.steps_per_day / 24 * (s1 - s0))
+                for i in range(N1):
+                    self.run(0)
+                t += s1
+            N2 = int(self.steps_per_day / 24 * (hours_as_larva - t))
+            for i in range(N2):
+                self.run(f)
 
     def compute_structure(self):
         return self.L ** 3 * self.E_G
 
     def get_puppation_buffer(self):
-        if self.embryo and not self.larva :
+        if self.embryo and not self.larva:
             return np.nan
-        else :
-            return self.U_R/self.U_R__p
+        else:
+            return self.U_R / self.U_R__p
 
 
 def deb_default(starvation_hours=[], base_f=1, id=None):
     # print(base_f)
-    base_f=base_f
+    base_f = base_f
     steps_per_day = 24 * 60
     deb = DEB(species='default', steps_per_day=steps_per_day, cv=0, aging=True, print_stage_change=True)
     ww = []
@@ -499,20 +511,20 @@ def deb_default(starvation_hours=[], base_f=1, id=None):
     # U_R = []
     # U_V = []
     fs = []
-    puppation_buffer=[]
+    puppation_buffer = []
     c0 = False
     while not deb.puppa:
         if not deb.alive:
             print(f'The organism died at {deb.death_time_in_hours} hours.')
-            t1=np.nan
+            t1 = np.nan
             break
-        if deb.larva :
-            if any([r1 <= (deb.age_day*24-t0) < r2 for [r1, r2] in starvation_hours]):
+        if deb.larva:
+            if any([r1 <= (deb.age_day * 24 - t0) < r2 for [r1, r2] in starvation_hours]):
                 f = 0
             else:
                 f = base_f
-        else :
-            f=base_f
+        else:
+            f = base_f
         ww.append(deb.get_W() * 1000)
         h.append(deb.hunger)
         real_L.append(deb.get_real_L() * 1000)
@@ -529,26 +541,26 @@ def deb_default(starvation_hours=[], base_f=1, id=None):
             c0 = True
             t0 = deb.birth_time_in_hours
     t1 = deb.puppation_time_in_hours
-    t2=deb.death_time_in_hours
-    t3=deb.hours_as_larva
-    starvation=[[s0 +t0, s1 +t0] for [s0, s1] in starvation_hours]
+    t2 = deb.death_time_in_hours
+    t3 = deb.hours_as_larva
+    starvation = [[s0 + t0, s1 + t0] for [s0, s1] in starvation_hours]
     # print(t0,t1,starvation, deb.age_day*24)
-    if not np.isnan(t2) :
-        starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for [s0, s1] in starvation if s0<=t2]
-    if id is None :
-        if len(starvation)==0 :
+    if not np.isnan(t2):
+        starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for [s0, s1] in starvation if s0 <= t2]
+    if id is None:
+        if len(starvation) == 0:
             id = 'ad libitum'
-        elif len(starvation)==1 :
-            range=starvation[0]
-            dur=int(range[1]- range[0])
+        elif len(starvation) == 1:
+            range = starvation[0]
+            dur = int(range[1] - range[0])
             id = f'{dur}h starved'
-        else :
+        else:
             id = f'starved {len(starvation)} intervals'
     dict = {'birth': t0,
             'puppation': t1,
             'death': t2,
-            'age' : deb.age_day*24+1,
-            'sim_start' : t3,
+            'age': deb.age_day * 24 + 1,
+            'sim_start': t3,
             'mass': ww,
             'length': real_L,
             'reserve': E,
@@ -561,30 +573,31 @@ def deb_default(starvation_hours=[], base_f=1, id=None):
             'puppation_buffer': puppation_buffer,
             # 'steps_per_day': deb.steps_per_day,
             # 'Nticks': deb.tick_counter,
-            'simulation' : False,
+            'simulation': False,
             'f': fs,
-            'id' : id,
-            'starvation' : starvation}
+            'id': id,
+            'starvation': starvation}
     # raise
     return dict
 
+
 def deb_dict(dataset, id, new_id=None, starvation_hours=[]):
-    s=dataset.step_data.xs(id, level='AgentID')
-    e=dataset.endpoint_data.loc[id]
-    if new_id is not None :
-        id=new_id
-    t0=e['birth_time_in_hours']
-    t2=e['death_time_in_hours']
-    t3=e['hours_as_larva']
-    starvation=[[s0 +t0, s1 +t0] for [s0, s1] in starvation_hours]
+    s = dataset.step_data.xs(id, level='AgentID')
+    e = dataset.endpoint_data.loc[id]
+    if new_id is not None:
+        id = new_id
+    t0 = e['birth_time_in_hours']
+    t2 = e['death_time_in_hours']
+    t3 = e['hours_as_larva']
+    starvation = [[s0 + t0, s1 + t0] for [s0, s1] in starvation_hours]
     # print(t0, starvation)
-    if not np.isnan(t2) :
-        starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for [s0, s1] in starvation if s0<=t2]
+    if not np.isnan(t2):
+        starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for [s0, s1] in starvation if s0 <= t2]
     dict = {'birth': t0,
             'puppation': e['puppation_time_in_hours'],
             'death': t2,
-            'age' : e['age'],
-            'sim_start' : t3,
+            'age': e['age'],
+            'sim_start': t3,
             'mass': s['mass'].values.tolist(),
             'length': s['length'].values.tolist(),
             'reserve': s['reserve'].values.tolist(),

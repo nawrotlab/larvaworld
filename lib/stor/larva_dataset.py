@@ -731,10 +731,10 @@ class LarvaDataset:
         s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range_in_ticks=time_range_in_ticks,
                                         dynamic_color=dynamic_color)
 
-        if ids is None:
-            n0 = 'all'
-        elif len(ids) == 1:
+        if len(ids) == 1:
             n0 = ids[0]
+        elif len(ids)==len(self.agent_ids):
+            n0 = 'all'
         else:
             n0 = f'{len(ids)}l'
 
@@ -779,7 +779,6 @@ class LarvaDataset:
                                       **kwargs)
 
         replay_env.run()
-
         print('Visualization complete')
 
     #####################################

@@ -3,6 +3,7 @@ import numpy as np
 
 sys.path.insert(0, '../../..')
 import lib.conf.env_modes as env
+import lib.aux.functions as fun
 
 
 def add_vis_kwargs(parser):
@@ -194,12 +195,28 @@ def add_exp_kwargs(parser):
                         help='The initial larva age since hatch in hours')
     parser.add_argument('-deb_f', '--deb_base_f', type=float, nargs='?', default=1.0,
                         help='The base deb functional response where 0 denotes no food and 1 at libitum feeding')
+    parser.add_argument('-starv_h', '--starvation_hours', type=float, nargs='+',
+                        help='The starvation time intervals in hours')
     return parser
 
 def get_exp_kwargs(args):
+
+    if args.starvation_hours is None :
+        starvation_hours=[]
+    else :
+        if len(args.starvation_hours)%2!=0 :
+            raise ValueError ('Starvation intervals must be provided in pairs of start-stop time')
+        else :
+            starvation_hours = fun.group_list_by_n(args.starvation_hours, 2)
+
+    # if args.hours_as_larva is None :
+    #     hours_as_larva=[0.0]
+    # if args.deb_base_f is None :
+    #     deb_base_f=[1.0]
     exp_kwargs = {
                   'hours_as_larva': args.hours_as_larva,
-                  'deb_base_f': args.deb_base_f
+                  'deb_base_f': args.deb_base_f,
+        'starvation_hours' : starvation_hours
                   }
     return exp_kwargs
 
