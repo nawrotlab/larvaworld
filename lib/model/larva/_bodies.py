@@ -353,7 +353,7 @@ class DefaultPolygon:
         # centroid /= area
 
     def update_vertices(self, pos, orient):
-        self.vertices = [pos + np.array(fun.rotate_around_center_multi(self.seg_vertices[0], -orient))]
+        self.vertices = [pos + fun.rotate_around_center_multi(self.seg_vertices[0], -orient)]
 
     def draw(self, viewer):
         for vertices in self.vertices:
@@ -375,8 +375,7 @@ class DefaultPolygon:
         return np.array(self.pos), self.orientation
 
     def get_world_point(self, local_point):
-        return self.get_position() + np.array(
-            fun.rotate_around_center(point=local_point, radians=-self.get_orientation()))
+        return self.get_position() + fun.rotate_around_center(point=local_point, radians=-self.get_orientation())
 
     def get_orientation(self):
         return self.orientation
@@ -422,7 +421,7 @@ class LarvaBody:
         if not 'density' in locals():
             self.density = 300.0
         self.friction_pars = friction_pars
-        self.width_to_length_ratio = 0.18 # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
+        self.width_to_length_ratio = 0.2 # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
         # self.width_to_length_ratio = 0.2
         if seg_ratio is None:
             seg_ratio = [1 / Nsegs] * Nsegs
@@ -448,8 +447,8 @@ class LarvaBody:
         self.seg_lengths = [self.sim_length * r for r in self.seg_ratio]
         self.seg_vertices = [v * self.sim_length for v in self.base_seg_vertices]
 
-        self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)
-        self.local_front_end_of_head = (np.max(self.seg_vertices[0][0], axis=0)[0], 0)
+        self.set_head_edges()
+
 
         if not hasattr(self, 'real_mass'):
             self.real_mass = None
@@ -495,8 +494,9 @@ class LarvaBody:
         self.sim_length = self.real_length * self.model.scaling_factor
         self.seg_lengths = [self.sim_length * r for r in self.seg_ratio]
         self.seg_vertices = [v * self.sim_length for v in self.base_seg_vertices]
-        for i, seg in enumerate(self.segs):
-            seg.seg_vertices = self.seg_vertices[i]
+        for vec, seg in zip(self.seg_vertices, self.segs):
+            seg.seg_vertices = vec
+        self.set_head_edges()
         self.update_sensor_position()
 
     '''
@@ -626,10 +626,10 @@ class LarvaBody:
         seg_vertices = [np.array([p]) * 1 for p in ps]
         return seg_vertices
 
-    def get_larva_shape(self, filepath=None):
-        if filepath is None:
-            filepath = LarvaShape_path
-        return np.loadtxt(filepath, dtype=float, delimiter=",")
+    # def get_larva_shape(self, filepath=None):
+    #     if filepath is None:
+    #         filepath = LarvaShape_path
+    #     return np.loadtxt(filepath, dtype=float, delimiter=",")
 
     def generate_segs(self, position, orientation, joint_type=None):
         N = self.Nsegs
@@ -921,4 +921,8 @@ class LarvaBody:
         self.define_sensor('L_rear', (x_r, y))
         self.define_sensor('R_rear', (x_r, -y))
         self.define_sensor('M_rear', (0.0, 0.0))
+
+    def set_head_edges(self):
+        self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)
+        self.local_front_end_of_head = (np.max(self.seg_vertices[0][0], axis=0)[0], 0)
 

@@ -189,7 +189,7 @@ class VelocityAgent(Agent, abc.ABC):
                 ang_vel = self.compute_ang_vel(v=ang_vel, z=self.ang_damping)
 
 
-            self.step_no_physics(linear_velocity=lin_vel_amp, angular_velocity=ang_vel)
+            self.step_no_physics(lin_vel=lin_vel_amp, ang_vel=ang_vel)
 
 
         # Paint the body to visualize effector state
@@ -325,7 +325,7 @@ class VelocityAgent(Agent, abc.ABC):
     def set_head_contacts_ground(self, value):
         self.head_contacts_ground = value
 
-    def step_no_physics(self, linear_velocity, angular_velocity):
+    def step_no_physics(self, lin_vel, ang_vel):
         # self.body_bend += self.dt * ang_velocity
         # self.body_bend = np.clip(self.body_bend, a_min=-np.pi, a_max=np.pi)
 
@@ -344,11 +344,11 @@ class VelocityAgent(Agent, abc.ABC):
         head_rear_old = self.get_global_rear_end_of_head()
 
 
-        d_or = angular_velocity * dt
+        d_or = ang_vel * dt
         or_new = or_old + d_or
         k=np.array([math.cos(or_new), math.sin(or_new)])
 
-        d=linear_velocity * dt
+        d=lin_vel * dt
         head_rear_new = head_rear_old + k * d
         pos_new = head_rear_new + k* self.seg_lengths[0]/2
 
@@ -370,15 +370,15 @@ class VelocityAgent(Agent, abc.ABC):
         else :
             larva_collision=False
         if not in_tank or border_collision or larva_collision :
-            linear_velocity=0
+            lin_vel=0
             d=0
             pos_new = pos_old
             head_rear_new = head_rear_old
-            angular_velocity += np.pi / 2
+            ang_vel += np.pi / 2
             # angular_velocity -=np.sign(angular_velocity) * np.pi / 2
-            d_or = angular_velocity * dt
+            d_or = ang_vel * dt
             or_new = or_old + d_or
-        head.set_pose(pos_new, or_new, linear_velocity, angular_velocity)
+        head.set_pose(pos_new, or_new, lin_vel, ang_vel)
         head.update_vertices(pos_new, or_new)
         self.position_rest_of_body(d_or, head_rear_pos=head_rear_new, head_or=or_new)
 

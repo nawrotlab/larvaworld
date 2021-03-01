@@ -47,7 +47,8 @@ intermittent_crawler = {'pause_dist': 'fit',
                         'explore2exploit_bias': 1}
 sample_l3_seg2 = {'initial_length': 'sample',
                   'Nsegs': 2,
-                  'seg_ratio': [5 / 11, 6 / 11]}
+                  'seg_ratio': [0.5,0.5]#[5 / 11, 6 / 11]
+                  }
 
 sample_l3_seg11 = {'initial_length': 'sample',  # From D1 fit
                    'length_std': 0.0,  # From D1 fit
@@ -219,12 +220,14 @@ l3_seg11 = {'initial_length': 0.00428,
 l1_seg2 = {'initial_length': 0.0013,
            'length_std': 0.0001,
            'Nsegs': 2,
-           'seg_ratio': [5 / 11, 6 / 11]}
+           'seg_ratio': [0.5,0.5]#[5 / 11, 6 / 11]
+           }
 
 l3_seg2 = {'initial_length': 0.003,
            'length_std': 0.0,
            'Nsegs': 2,
-           'seg_ratio': [5 / 11, 6 / 11]}
+           'seg_ratio': [0.5,0.5]#[5 / 11, 6 / 11]
+           }
 # -------------------------------------------WHOLE NEURAL MODES---------------------------------------------------------
 
 brain_olfactor = {'modules': olfactor_locomotion,

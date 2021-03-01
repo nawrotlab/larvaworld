@@ -72,7 +72,7 @@ def fit_DEB(vals, steps_per_day=24, show=False):
     species = species0.copy()
     for p, v in zip(pars, vals):
         species[p] = v
-    deb = DEB(species=species, steps_per_day=steps_per_day, cv=0, aging=True, print_stage_change=show)
+    deb = DEB(species=species, steps_per_day=steps_per_day, print_stage_change=show)
     c0 = False
     while not deb.puppa:
         if not deb.alive:

@@ -11,7 +11,7 @@ from lib.stor.paths import get_parent_dir, Deb_path
 
 class DEB:
     def __init__(self, species='default', steps_per_day=1, cv=0,
-                 aging=True, print_stage_change=False, starvation_strategy=False, base_hunger=0.5):
+                 aging=False, print_stage_change=False, starvation_strategy=False, base_hunger=0.5):
         self.base_hunger = base_hunger
         self.print_stage_change = print_stage_change
         self.starvation_strategy = starvation_strategy
@@ -45,6 +45,8 @@ class DEB:
 
         # Individual parameters
         self.L = None
+        self.LL = None
+        self.V = None
         self.dL = None
         self.U_H = None
         self.dU_H = None
@@ -129,7 +131,7 @@ class DEB:
             self.__dict__.update(species)
         else:
             self.__dict__.update(self.species)
-
+        self.shape_factor_V=self.shape_factor ** 3
         self.convert_parameters()
         self.f = 0
         self.lay_egg = False
@@ -150,14 +152,11 @@ class DEB:
         except:
             return np.nan
 
-    def run(self, f=None):
+    def run(self, f=1):
         self.age_day += 1 / self.steps_per_day
         self.tick_counter += 1
-        if f is None:
-            f = 1
-        self.f = f
         # first all individuals calculate the change in their state variables based on the current conditions
-        self.calc_dU_E(f=self.f)
+        self.calc_dU_E(f=f)
         self.calc_dU_H()
         self.calc_dU_R()
         self.calc_dL()
@@ -213,9 +212,9 @@ class DEB:
             self.f = f
         else:
             self.f = 0
-        e = v * (self.U_E / L ** 3)
+        e = v * (self.U_E / self.V)
         self.S_C = L ** 2 * (g * e / (g + e)) * (1 + (L / (g * (v / (g * k_M)))))
-        self.S_A = self.f * L ** 2
+        self.S_A = self.f * self.LL
         self.dU_E = self.S_A - self.S_C
         self.e_scaled = e
 
@@ -276,6 +275,7 @@ class DEB:
     def calc_dL(self):
         g = self.g
         L = self.L
+        LL = self.LL
         k_M = self.k_M_rate
         k_J = self.k_J_rate
         v = self.v_rate
@@ -284,24 +284,23 @@ class DEB:
         e = self.e_scaled
         k = self.kap
         U_H__p = self.U_H__p
-        self.dL = (((v / (g * L ** 2)) * S_C) - k_M * L) / 3
+        self.dL = (((v / (g * LL)) * S_C) - k_M * L) / 3
         # if growth is negative use starvation strategy 3 from the DEB book
         if self.dL < 0:
             if e < L / (v / (g * k_M)) and self.starvation_strategy:
                 self.dL = 0
-                d = (1 - k) * e * L ** 2 - k_J * U_H__p - k * L ** 2 * (L / (v / (g * k_M)) - e)
+                d = (1 - k) * e * LL - k_J * U_H__p - k * LL * (L / (v / (g * k_M)) - e)
                 if self.U_H < self.U_H__p:
                     self.dU_H = d
                 else:
                     self.dU_R = d
-                self.dU_E = S_A - e * L ** 2
+                self.dU_E = S_A - e * LL
                 if self.U_H < U_H__p:
                     if self.dU_H < 0:
                         self.die()
                     if self.U_R < 0:
                         self.die()
             else:
-                print('dd')
                 self.die()
 
     # the following procedure calculates the change in damage enducing compounds of an individual
@@ -313,7 +312,7 @@ class DEB:
         v = self.v_rate
         e = self.e_scaled
         q = self.q_acceleration
-        self.dq_acceleration = (q * (L ** 3 / (v / (g * k_M)) ** 3) * self.sG + self.h_a) * e * (
+        self.dq_acceleration = (q * (self.V / (v / (g * k_M)) ** 3) * self.sG + self.h_a) * e * (
                 (v / L) - ((3 / L) * dL)) - ((3 / L) * dL) * q
 
     # the following procedure calculates the change in damage in the individual
@@ -349,6 +348,8 @@ class DEB:
     def calc_embryo_reserve_investment(self):
 
         self.L = self.L_0
+        self.LL=self.L**2
+        self.V=self.L**3
         self.U_E = self.U_E__0
         self.U_H = 0
         self.U_R = 0
@@ -396,29 +397,34 @@ class DEB:
         self.U_H += self.dU_H / s
         self.U_R += self.dU_R / s
         self.L += self.dL / s
+        self.LL = self.L**2
+        self.V = self.L*self.LL
         self.U_V = self.compute_structure()
         self.hunger = self.compute_hunger()
         self.W = self.compute_wet_weight()
-        if self.U_H >= self.U_H__b:
-            self.q_acceleration += self.dq_acceleration / s
-            self.h_rate += self.dh_rate / s
+
         # ageing related mortality
         if self.aging:
+            if self.U_H >= self.U_H__b:
+                self.q_acceleration += self.dq_acceleration / s
+                self.h_rate += self.dh_rate / s
             if t % s == 0:
                 if np.random.uniform(0, 1) < self.h_rate:
                     self.die()
         # background mortality
         else:
-            if t % s == 0:
-                if np.random.uniform(0, 1) < self.background_mortality:
-                    self.die()
+            # TODO define background mortality
+            pass
+            # if t % s == 0:
+            #     if np.random.uniform(0, 1) < self.background_mortality:
+            #         self.die()
         #   if food-dynamics = "logistic"[ ask patches [ set X X + d_X / timestep]]
 
     def get_f(self):
         return self.f
 
     def compute_wet_weight(self):
-        physical_V = (self.L * self.shape_factor) ** 3  # in cm**3
+        physical_V = self.V * self.shape_factor_V  # in cm**3
         w = physical_V * self.d  # in g
         return w
 
@@ -487,7 +493,7 @@ class DEB:
                 self.run(f)
 
     def compute_structure(self):
-        return self.L ** 3 * self.E_G
+        return self.V * self.E_G
 
     def get_puppation_buffer(self):
         if self.embryo and not self.larva:
@@ -500,7 +506,7 @@ def deb_default(starvation_hours=[], base_f=1, id=None):
     # print(base_f)
     base_f = base_f
     steps_per_day = 24 * 60
-    deb = DEB(species='default', steps_per_day=steps_per_day, cv=0, aging=True, print_stage_change=True)
+    deb = DEB(species='default', steps_per_day=steps_per_day, print_stage_change=True)
     ww = []
     E = []
     e = []
