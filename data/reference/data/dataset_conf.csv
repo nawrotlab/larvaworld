@@ -1,2 +1,1 @@
-id,fr,filtered_at,collisions_excluded,rescaled_by,centroid,Npoints,Ncontour,bend,front_vector_start,front_vector_stop,rear_vector_start,rear_vector_stop,front_body_ratio,point_idx,use_component_vel,scaled_vel_threshold,arena_xdim,arena_ydim,arena_shape
-no_odor/300l,16,2,True,,True,12,22,from_angles,1,2,8,9,0.5,,False,0.1,0.15,0.15,circular
+{"id": "reference", "fr": 16, "filtered_at": 2, "rescaled_by": NaN, "Npoints": 12, "Ncontour": 22, "starvation_hours": [], "deb_base_f": 1, "bend": "from_angles", "front_vector_start": 1, "front_vector_stop": 2, "rear_vector_start": 8, "rear_vector_stop": 9, "point_idx": NaN, "use_component_vel": false, "scaled_vel_threshold": 0.2, "arena_xdim": 0.15, "arena_ydim": 0.15, "arena_shape": "circular"}

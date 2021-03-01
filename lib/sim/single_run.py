@@ -53,7 +53,10 @@ def sim_analysis(d, experiment):
             datasets = [d]
             labels = [d.id]
 
-        barplot(datasets=datasets, labels=labels, par_shorts=['f_am'], save_to=d.plot_dir)
+        try :
+            barplot(datasets=datasets, labels=labels, par_shorts=['f_am'], save_to=d.plot_dir)
+        except :
+            pass
         plot_pathlength(datasets=datasets, labels=labels, scaled=False, save_to=d.plot_dir)
         plot_endpoint_params(datasets=datasets, labels=labels, mode='deb', save_to=d.plot_dir)
 
@@ -61,6 +64,7 @@ def sim_analysis(d, experiment):
             deb_default(starvation_hours=starvation_hours, base_f=deb_base_f)]
         c = {'save_to': d.plot_dir,
              'roversVSsitters': roversVSsitters}
+        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_f_only.pdf', mode='f_only', sim_only=True, **c)
         plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_f.pdf', mode='f', sim_only=True,
                   include_feeder_reoccurence=True, **c)
         plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb.pdf', sim_only=True, **c)

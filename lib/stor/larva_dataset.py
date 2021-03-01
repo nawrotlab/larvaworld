@@ -33,6 +33,7 @@ class LarvaDataset:
         if os.path.exists(self.config_file_path):
             # temp = pd.read_csv(self.config_file_path)
             # self.config = {col: temp[col].values[0] for col in temp.columns.values}
+            # self.save_config()
             with open(self.config_file_path) as tfp:
                 self.config = json.load(tfp)
             self.build_dirs()
@@ -50,6 +51,7 @@ class LarvaDataset:
             self.config = {**self.config, **par_conf, **arena_pars}
             print(f'Initialized dataset {id} with new configuration')
         self.__dict__.update(self.config)
+        # self.save_config()
         # print(self.config['starvation_hours'])
         self.arena_pars = {'arena_xdim': self.arena_xdim,
                            'arena_ydim': self.arena_ydim,

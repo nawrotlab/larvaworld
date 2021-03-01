@@ -25,6 +25,7 @@ sim_kwargs = prs.get_sim_kwargs(args)
 exp_kwargs = prs.get_exp_kwargs(args)
 vis_kwargs = prs.get_vis_kwargs(args)
 
+
 sim_config = generate_config(exp, **sim_kwargs, exp_kwargs=exp_kwargs)
 exp_config = {
               'common_folder': f'single_runs/{exp}',
