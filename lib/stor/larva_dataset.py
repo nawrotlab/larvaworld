@@ -454,6 +454,16 @@ class LarvaDataset:
         ids = s.index.unique(level='AgentID').values
         if len(ids) != 1:
             raise ValueError('Fixation only implemented for a single agent.')
+
+        if type(point) == int:
+            if point == -1:
+                point = 'centroid'
+            else:
+                point = self.points[point]
+        if secondary_point is not None:
+            if type(secondary_point) == int:
+                secondary_point = self.points[secondary_point]
+
         pars = [p for p in self.xy_pars if p in s.columns.values]
         if set(nam.xy(point)).issubset(s.columns):
             print(f'Fixing {point} to arena center')
@@ -654,16 +664,21 @@ class LarvaDataset:
 
         fit_bout_params(d=self, fit_filepath=self.fit_file_path, save_to=None, save_as='bout_pars.pdf')
 
-    def get_par_list(self, track_point=None, spinepoints=True, centroid=True, contours=True,
-                     spineangle_params=['bend'], orientation_params=['front_orientation'],
-                     chunk_params=['stride_stop', 'stride_id', 'pause_id', 'feed_id', 'Lturn_id', 'Rturn_id']):
+    def get_par_list(self, track_point=None, points=True, centroid=True, contours=True,
+                     angle_pars=None, orientation_pars=None, chunk_pars=None):
+        if angle_pars is None :
+            angle_pars = ['bend']
+        if orientation_pars is None :
+            orientation_pars = ['front_orientation'] + nam.orient(self.segs)
+        if chunk_pars is None :
+            chunk_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id']
         if track_point is None:
             track_point = self.point
         if set(nam.xy(track_point)).issubset(self.step_data.columns):
             pos_xy_pars = nam.xy(track_point)
         else:
             pos_xy_pars = []
-        if spinepoints == True and len(self.points_xy) >= 1:
+        if points == True and len(self.points_xy) >= 1:
             point_xy_pars = nam.xy(self.points, flat=True)
         else:
             point_xy_pars = []
@@ -675,24 +690,29 @@ class LarvaDataset:
             contour_xy_pars = nam.xy(self.contour, flat=True)
         else:
             contour_xy_pars = []
-        pars = cent_xy_pars + point_xy_pars + pos_xy_pars + contour_xy_pars + spineangle_params + orientation_params + chunk_params
+        pars = cent_xy_pars + point_xy_pars + pos_xy_pars + contour_xy_pars + angle_pars + orientation_pars + chunk_pars
         pars = np.unique(pars).tolist()
         return pars, pos_xy_pars
 
-    def get_smaller_dataset(self, agent_ids=None, pars=None, time_range_in_ticks=None):
+    def get_smaller_dataset(self, ids=None, pars=None, time_range_in_ticks=None, dynamic_color=None):
         if self.step_data is None:
             self.load()
-        if agent_ids is None:
-            agent_ids = self.agent_ids
+        if ids is None:
+            ids = self.agent_ids
+        if type(ids) == list and all([type(i) == int for i in ids]):
+            ids = [self.agent_ids[i] for i in ids]
         if pars is None:
             pars = self.step_data.columns.values.tolist()
+        if dynamic_color is not None:
+            pars.append(dynamic_color)
+        pars = [p for p in pars if p in self.step_data.columns]
         if time_range_in_ticks is None:
-            s = self.step_data.loc[(slice(None), agent_ids), pars].copy(deep=True)
+            s = self.step_data.loc[(slice(None), ids), pars].copy(deep=True)
         else:
             a, b = time_range_in_ticks
-            s = self.step_data.loc[(slice(a, b), agent_ids), pars].copy(deep=True)
-        e = self.endpoint_data.loc[agent_ids]
-        return s, e
+            s = self.step_data.loc[(slice(a, b), ids), pars].copy(deep=True)
+        e = self.endpoint_data.loc[ids]
+        return s, e, ids
 
     def visualize(self,
                   arena_pars=None,
@@ -706,29 +726,17 @@ class LarvaDataset:
                   save_to=None, save_as=None,
                   **kwargs):
 
+        pars, pos_xy_pars = self.get_par_list(track_point=track_point, points=spinepoints, centroid=centroid,
+                                              contours=contours)
+        s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range_in_ticks=time_range_in_ticks,
+                                        dynamic_color=dynamic_color)
 
-
-        angle_pars = ['bend']
-        or_pars = ['front_orientation'] + nam.orient(self.segs)
-        chunk_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id']
-        pars, pos_xy_pars = self.get_par_list(track_point=track_point, spinepoints=spinepoints, centroid=centroid,
-                                              contours=contours,
-                                              spineangle_params=angle_pars,
-                                              orientation_params=or_pars,
-                                              chunk_params=chunk_pars)
-
-        if type(agent_ids) == list and all([type(i) == int for i in agent_ids]):
-            agent_ids = [self.agent_ids[i] for i in agent_ids]
-        if agent_ids is None:
+        if ids is None:
             n0 = 'all'
-        elif len(agent_ids) == 1:
-            n0 = agent_ids[0]
+        elif len(ids) == 1:
+            n0 = ids[0]
         else:
-            n0 = f'{len(agent_ids)}l'
-        if dynamic_color is not None:
-            pars.append(dynamic_color)
-        pars = [p for p in pars if p in self.step_data.columns]
-        s, e = self.get_smaller_dataset(agent_ids=agent_ids, pars=pars, time_range_in_ticks=time_range_in_ticks)
+            n0 = f'{len(ids)}l'
 
         if dynamic_color is not None:
             trajectory_colors = s[dynamic_color]
@@ -747,16 +755,7 @@ class LarvaDataset:
             bg = None
             n1 = 'aligned'
         elif fix_point is not None:
-            if type(fix_point) == int:
-                if fix_point == -1:
-                    fix_point = 'centroid'
-                else:
-                    fix_point = self.points[fix_point]
-            if secondary_fix_point is not None:
-                if type(secondary_fix_point) == int:
-                    secondary_fix_point = self.points[secondary_fix_point]
-            s, bg = self.fix_point(point=fix_point, secondary_point=secondary_fix_point, s=s,
-                                   arena_dims=arena_dims)
+            s, bg = self.fix_point(point=fix_point, secondary_point=secondary_fix_point, s=s, arena_dims=arena_dims)
             n1 = 'fixed'
         else:
             bg = None
