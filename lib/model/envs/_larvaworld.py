@@ -439,9 +439,9 @@ class LarvaWorldSim(LarvaWorld):
         self.sim_starvation_hours = [[np.clip(s0 - hours_as_larva, a_min=0, a_max=+np.inf), s1 - hours_as_larva] for
                                      [s0, s1] in self.starvation_hours if s1 > hours_as_larva]
         if len(self.sim_starvation_hours) > 0:
-            on_times_in_min = [s0 * 60 for [s0, s1] in self.sim_starvation_hours]
-            off_times_in_min = [s1 * 60 for [s0, s1] in self.sim_starvation_hours]
-            self.sim_clock.set_timer(on_times_in_min, off_times_in_min)
+            on_ticks = [int(s0 * 60*60/self.dt) for [s0, s1] in self.sim_starvation_hours]
+            off_ticks = [int(s1 * 60*60/self.dt) for [s0, s1] in self.sim_starvation_hours]
+            self.sim_clock.set_timer(on_ticks, off_ticks)
         self.starvation = self.sim_clock.timer_on
         self.count_bend_errors = count_bend_errors
         self.touch_sensors = touch_sensors

@@ -185,6 +185,7 @@ class SimulationClock(ScreenItem):
         self.timer_closed = False
 
     def tick_clock(self):
+        self.counter+=1
         self.dmsecond += self.sim_step_in_dms
         if self.dmsecond >= 100:
             self.second += 1
@@ -242,33 +243,31 @@ class SimulationClock(ScreenItem):
         viewer.draw_text_box(self.second_font, self.second_font_r)
         viewer.draw_text_box(self.dmsecond_font, self.msecond_font_r)
 
-    def set_timer(self, on_times_in_min, off_times_in_min):
-        self.Ndurs=len(on_times_in_min)
-        self.timer_on_times, self.timer_off_times= on_times_in_min, off_times_in_min
+    def set_timer(self, on_ticks, off_ticks):
+        self.Ndurs=len(on_ticks)
+        self.timer_on_ticks, self.timer_off_ticks= on_ticks, off_ticks
         self.dur_idx = 0
-        self.next_on, self.next_off= self.timer_on_times[self.dur_idx], self.timer_off_times[self.dur_idx]
+        self.next_on, self.next_off= self.timer_on_ticks[self.dur_idx], self.timer_off_ticks[self.dur_idx]
         self.timer_on=False
 
     def check_timer(self):
         self.timer_opened = False
         self.timer_closed = False
         if not self.timer_on and self.next_on is not None :
-            t=self.hour*60+self.minute+self.second/60
-            if t>=self.next_on :
+            if self.counter>=self.next_on :
                 self.timer_on=True
                 self.timer_opened=True
                 self.dur_idx +=1
                 if self.dur_idx<self.Ndurs :
-                    self.next_on=self.timer_on_times[self.dur_idx]
+                    self.next_on=self.timer_on_ticks[self.dur_idx]
                 else :
                     self.next_on =None
         elif self.timer_on and self.next_off is not None :
-            t = self.hour * 60 + self.minute+self.second/60
-            if t>=self.next_off :
+            if self.counter>=self.next_off :
                 self.timer_on=False
                 self.timer_closed = True
                 if self.dur_idx<self.Ndurs :
-                    self.next_off=self.timer_off_times[self.dur_idx]
+                    self.next_off=self.timer_off_ticks[self.dur_idx]
                 else :
                     self.next_on =None
 
