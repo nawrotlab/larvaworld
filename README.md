@@ -68,6 +68,10 @@ Install package dependencies :
 
     pip install -r requirements.txt
     
+Add the virtual environment to jupyter so that you can run the notebooks
+
+    python -m ipykernel install --user --name=larvaworld_venv
+    
 
 **Walkthrough**
 
