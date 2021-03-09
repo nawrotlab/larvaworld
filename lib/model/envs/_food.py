@@ -113,6 +113,12 @@ class Food(mesa.Agent):
     def set_odor_id(self, odor_id):
         self.odor_id = odor_id
 
+    def set_odor(self, id, intensity=2, spread=0.0002):
+        self.set_odor_id(id)
+        self.set_scaled_odor_intensity(intensity)
+        self.set_scaled_odor_spread(spread)
+        self.set_odor_dist()
+
     def set_color(self, color):
         self._color = color
 

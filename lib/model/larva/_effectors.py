@@ -45,6 +45,7 @@ class Oscillator(Effector):
         else:
             self.initial_phi = 0
         self.timesteps_per_iteration = int(round((1 / self.freq) / self.dt))
+        self.d_phi = 2 * np.pi / self.timesteps_per_iteration
         self.phi = self.initial_phi
 
     def set_frequency(self, freq):
@@ -53,7 +54,7 @@ class Oscillator(Effector):
 
     def oscillate(self):
         super().count_time()
-        self.phi += 2 * np.pi / self.timesteps_per_iteration
+        self.phi += self.d_phi
         if self.phi >= 2 * np.pi:
             self.phi %= 2 * np.pi
             self.t = 0
@@ -69,8 +70,9 @@ class Oscillator(Effector):
 
 
 class Crawler(Oscillator):
-    def __init__(self, waveform, initial_amp=None, square_signal_duty=None, step_to_length_mu=None, step_to_length_std=0,
-                 gaussian_window_std=None, max_vel_phase=0, noise=0, **kwargs):
+    def __init__(self, waveform, initial_amp=None, square_signal_duty=None, step_to_length_mu=None,
+                 step_to_length_std=0,
+                 gaussian_window_std=None, max_vel_phase=np.pi, noise=0, **kwargs):
         super().__init__(**kwargs)
         self.waveform = waveform
         self.activity = 0
@@ -89,7 +91,7 @@ class Crawler(Oscillator):
         elif self.waveform == 'realistic':
             self.step_to_length_mu = step_to_length_mu
             self.step_to_length_std = step_to_length_std
-            self.step_to_length=self.generate_step_to_length()
+            self.step_to_length = self.generate_step_to_length()
             self.max_vel_phase = max_vel_phase
 
     # NOTE Computation of linear speed in a squared signal, so that a whole iteration moves the body forward by a
@@ -97,7 +99,7 @@ class Crawler(Oscillator):
     # TODO This is not working as expected probably because of the body drifting even
     #  during the silent half of the circle. For 100 sec with 1 Hz, with sim_length 0.1 and step_to_length we should
     #  get distance traveled=4 but we get 5.45
-    def generate_step_to_length(self) :
+    def generate_step_to_length(self):
         return float(np.random.normal(loc=self.step_to_length_mu, scale=self.step_to_length_std, size=1))
 
     def adapt_square_oscillator_amp(self, length):
@@ -113,7 +115,8 @@ class Crawler(Oscillator):
         noise = np.random.normal(scale=self.scaled_noise * length)
         if self.effector:
             if self.waveform == 'realistic':
-                activity = self.realistic_oscillator(phi=self.phi, freq=self.freq, sd=self.step_to_length)* length
+                activity = self.realistic_oscillator(phi=self.phi, freq=self.freq,
+                                                     sd=self.step_to_length, max_vel_phase=self.max_vel_phase) * length
             elif self.waveform == 'square':
                 self.adapt_square_oscillator_amp(length)
                 activity = self.square_oscillator()
@@ -127,7 +130,7 @@ class Crawler(Oscillator):
             # if self.noise:
             #     activity += np.random.normal(scale=np.abs(activity * self.noise))
             super().oscillate()
-            if self.complete_iteration :
+            if self.complete_iteration:
                 self.step_to_length = self.generate_step_to_length()
             activity += noise
         else:
@@ -152,14 +155,15 @@ class Crawler(Oscillator):
 
     # Attention. This equation generates the SCALED velocity per stride
     # See vel_curve.ipynb in notebooks/calibration/crawler
-    def realistic_oscillator(self, phi, freq, sd=0.24, k=+1, l=0.6):
-        a = (np.cos(-phi) * l + k) * sd * freq
+    def realistic_oscillator(self, phi, freq, sd=0.24, k=+1, l=0.6, max_vel_phase=np.pi):
+        a = freq * sd * (k + l * np.cos(phi - max_vel_phase))
+        # a = (np.cos(-phi) * l + k) * sd * freq
         return a
 
 
 class Turner(Oscillator, Effector):
     def __init__(self, amp_range=None, initial_amp=None, neural=False, base_activation=20, activation_range=None,
-                 activation_noise=0.0, noise=0.0, continuous = True, rebound= False, **kwargs):
+                 activation_noise=0.0, noise=0.0, continuous=True, rebound=False, **kwargs):
         self.noise = noise
 
         self.activation_noise = activation_noise
@@ -167,14 +171,14 @@ class Turner(Oscillator, Effector):
         self.neural = neural
         self.continuous = continuous
         self.rebound = rebound
-        self.buildup =0
+        self.buildup = 0
 
         if self.neural:
             Effector.__init__(self, **kwargs)
             if activation_range is None:
                 activation_range = [10, 40]
             self.base_activation = base_activation
-            self.base_noise = np.abs(self.base_activation*self.activation_noise)
+            self.base_noise = np.abs(self.base_activation * self.activation_noise)
             self.range_upwards = self.activation_range[1] - self.base_activation
             self.range_downwards = self.base_activation - self.activation_range[0]
             self.activation = self.base_activation
@@ -182,7 +186,8 @@ class Turner(Oscillator, Effector):
             # Multiplicative noise
             # activity += np.random.normal(scale=np.abs(activity * self.noise))
             # Additive noise based on mean activity=14.245
-            self.scaled_noise = np.abs(14.245 * self.noise)  # 14.245 is the mean output of the oscillator at baseline activation=20
+            self.scaled_noise = np.abs(
+                14.245 * self.noise)  # 14.245 is the mean output of the oscillator at baseline activation=20
             # self.prepare_turner(Nsec=10)
         else:
             # FIXME Will be obsolete when we fix oscillator interference
@@ -212,17 +217,17 @@ class Turner(Oscillator, Effector):
 
     def step(self, inhibited=False, interference_ratio=1.0, A_olf=0.0):
         if not inhibited:
-            a=self.compute_angular_activity(A_olf)
-            A= a + self.buildup
+            a = self.compute_angular_activity(A_olf)
+            A = a + self.buildup
             self.buildup = 0
         else:
             if self.continuous:
                 a = self.compute_angular_activity(A_olf)
-                A = a* interference_ratio + self.buildup
+                A = a * interference_ratio + self.buildup
                 if self.rebound:
                     self.buildup += a
             else:
-                A=0.0
+                A = 0.0
         A += np.random.normal(scale=self.scaled_noise)
         return A
 
@@ -261,17 +266,18 @@ class Turner(Oscillator, Effector):
         # Map valence modulation to sigmoid accounting for the non middle location of base_activation
         b = self.base_activation
         rd, ru = self.range_downwards, self.range_upwards
-        d, u = self.activation_range
+        # d, u = self.activation_range
         v = olfactory_valence
-        if v==0 :
-            a=0
+        if v == 0:
+            a = 0
         elif v < 0:
             a = rd * v
         elif v > 0:
             a = ru * v
         # Added the relevance of noise to olfactory valence so that noise is attenuated  when valence is rising
         noise = np.random.normal(scale=self.base_noise) * (1 - np.abs(v))
-        self.activation = np.clip(b + a + noise, a_min=d, a_max=u)
+        self.activation = b + a + noise
+        # self.activation = np.clip(b + a + noise, a_min=d, a_max=u)
         # TODO Use sigmoid function as an alternative
         # sig = sigmoid((olfactory_valence + 1) / 2)
 
@@ -305,26 +311,29 @@ class NeuralOscillator:
         self.C_l = 0
         self.H_C_l = 0  # 10
 
-        self.scaled_tau=self.dt / self.tau
+        self.scaled_tau = self.dt / self.tau
         # self.scaled_tau_h=None
 
     def step(self, A=0):
-        t=self.scaled_tau
+        t = self.scaled_tau
         tau_h = 3 / (1 + (0.04 * A) ** 2)
-        t_h=self.dt / tau_h
+        t_h = self.dt / tau_h
         g = 6 + (0.09 * A) ** 2
 
-        self.E_l += t * (-self.E_l + self.compute_R(A + self.w_ee * self.E_l - self.w_ec * self.C_r,64 + g * self.H_E_l))
-        self.E_r += t * (-self.E_r + self.compute_R(A + self.w_ee * self.E_r - self.w_ec * self.C_l,64 + g * self.H_E_r))
+        self.E_l += t * (
+                    -self.E_l + self.compute_R(A + self.w_ee * self.E_l - self.w_ec * self.C_r, 64 + g * self.H_E_l))
+        self.E_r += t * (
+                    -self.E_r + self.compute_R(A + self.w_ee * self.E_r - self.w_ec * self.C_l, 64 + g * self.H_E_r))
         self.H_E_l += t_h * (-self.H_E_l + self.E_l)
         self.H_E_r += t_h * (-self.H_E_r + self.E_r)
 
-        self.C_l += t * (-self.C_l + self.compute_R(A + self.w_ce * self.E_l - self.w_cc * self.C_r,64 + g * self.H_C_l))
-        self.C_r += t * (-self.C_r + self.compute_R(A + self.w_ce * self.E_r - self.w_cc * self.C_l,64 + g * self.H_C_r))
+        self.C_l += t * (
+                    -self.C_l + self.compute_R(A + self.w_ce * self.E_l - self.w_cc * self.C_r, 64 + g * self.H_C_l))
+        self.C_r += t * (
+                    -self.C_r + self.compute_R(A + self.w_ce * self.E_r - self.w_cc * self.C_l, 64 + g * self.H_C_r))
         self.H_C_l += t_h * (-self.H_C_l + self.E_l)
         self.H_C_r += t_h * (-self.H_C_r + self.E_r)
         self.activity = self.E_r - self.E_l
-
 
     def compute_R(self, x, h):
         if x > 0:
@@ -376,14 +385,9 @@ class Oscillator_coupling():
         self.interference_ratio = interference_ratio
         # self.reset()
 
-    # def reset(self):
-    #     self.crawler_inhibits_bend = False
-    #     self.feeder_inhibits_bend = False
-    #     self.turner_inhibition=False
-
     def step(self, crawler=None, feeder=None):
         # self.reset()
-        self.turner_inhibition=self.resolve_coupling(crawler, feeder)
+        self.turner_inhibition = self.resolve_coupling(crawler, feeder)
 
     def resolve_coupling(self, crawler, feeder):
         if crawler is not None:
@@ -409,6 +413,7 @@ class Oscillator_coupling():
         # if self.crawler_inhibits_bend or self.feeder_inhibits_bend :
         #     self.turner_inhibition=True
 
+
 class Intermitter(Effector):
     def __init__(self, nengo_manager=None,
                  crawler=None, intermittent_crawler=False,
@@ -426,30 +431,28 @@ class Intermitter(Effector):
         self.feeder = feeder
         self.explore2exploit_bias = explore2exploit_bias
         self.base_explore2exploit_bias = explore2exploit_bias
-        if crawler is None :
-            self.intermittent_crawler=False
-        else :
+        if crawler is None:
+            self.intermittent_crawler = False
+        else:
             self.intermittent_crawler = intermittent_crawler
-        if turner is None :
-            self.intermittent_turner=False
-        else :
+        if turner is None:
+            self.intermittent_turner = False
+        else:
             self.intermittent_turner = intermittent_turner
-        if feeder is None :
-            self.intermittent_feeder=False
-        else :
+        if feeder is None:
+            self.intermittent_feeder = False
+        else:
             self.intermittent_feeder = intermittent_feeder
 
         if self.nengo_manager is None:
             # self.feeder_reoccurence_rate_on_success = feeder_reoccurence_rate_on_success
             self.feeder_reoccurence_decay_coef = feeder_reoccurence_decay_coef
-            self.feeder_reoccurence_rate = 1-self.explore2exploit_bias
+            self.feeder_reoccurence_rate = 1 - self.explore2exploit_bias
             # self.feeder_reoccurence_rate = self.feeder_reoccurence_rate_on_success
             self.feeder_reoccurence_exp_coef = np.exp(-self.feeder_reoccurence_decay_coef * self.dt)
 
-
         self.turner_pre_lag_ticks = int(turner_prepost_lag[0] / self.dt)
         self.turner_post_lag_ticks = int(turner_prepost_lag[1] / self.dt)
-
 
         self.reset()
         # self.activity_counter = 0
@@ -468,7 +471,7 @@ class Intermitter(Effector):
             self.pause_min, self.pause_max = np.round(np.array(pause_dist['range']) / self.dt).astype(int)
             self.pause_dist = truncated_power_law(a=pause_dist['alpha'], xmin=self.pause_min, xmax=self.pause_max)
         elif pause_dist['name'] == 'lognormal':
-            self.pause_dist=None
+            self.pause_dist = None
             self.pause_min, self.pause_max = pause_dist['range']
             self.pause_mean, self.pause_std = pause_dist['mu'], pause_dist['sigma']
             # self.pause_dist = self.lognormal_discrete(mu=int(self.pause_mean / self.dt),
@@ -502,7 +505,7 @@ class Intermitter(Effector):
     def generate_pause_duration(self):
         if self.pause_dist is None:
             return sample_lognormal(mean=self.pause_mean, sigma=self.pause_std,
-                                   xmin=self.pause_min, xmax=self.pause_max)
+                                    xmin=self.pause_min, xmax=self.pause_max)
         else:
             return self.pause_dist.rvs(size=1)[0] * self.dt
 
@@ -727,8 +730,8 @@ class Olfactor(Effector):
         self.noise = noise
         self.reset()
 
-        ms, ss= olfactor_gain_mean, olfactor_gain_std
-        Nms, Nss=len(ms), len(ss)
+        ms, ss = olfactor_gain_mean, olfactor_gain_std
+        Nms, Nss = len(ms), len(ss)
 
         if Nms != self.num_layers or Nss != self.num_layers:
             raise Exception(
@@ -740,6 +743,12 @@ class Olfactor(Effector):
         self.activation = 0
         self.previous_odor_concentrations = np.zeros(self.num_layers)
         self.current_odor_concentrations = np.zeros(self.num_layers)
+
+    def set_gain(self, value, odor_idx=0):
+        self.gain[odor_idx]=value
+
+    def get_gain(self, odor_idx=0):
+        return self.gain[odor_idx]
 
     def step(self, concentrations):
         if self.odor_layers:
@@ -759,7 +768,6 @@ class Olfactor(Effector):
                 dif = cur - prev
                 mean = (cur + prev) / 2
                 if self.perception == 'linear':
-
                     self.activation += self.dt * self.gain[i] * dif
 
                 elif self.perception == 'log':
@@ -786,6 +794,7 @@ class Olfactor(Effector):
             self.activation = 0
         return self.activation
 
+
 # class TurnerModulator:
 #     def __init__(self, base_activation, activation_range, **kwargs):
 #         self.base_activation = base_activation
@@ -809,16 +818,15 @@ class Olfactor(Effector):
 #     def step(self, olfactory_valence):
 #         self.update_activation(olfactory_valence)
 #         return self.activity
-class Brain() :
+class Brain():
     def __init__(self, agent, modules, conf):
-        self.agent=agent
+        self.agent = agent
         self.modules = modules
-        self.conf=conf
+        self.conf = conf
         # self.crawler, self.turner, self.feeder, self.olfactor, self.intermitter = None, None, None, None, None
 
 
-
-class DefaultBrain(Brain) :
+class DefaultBrain(Brain):
     def __init__(self, **kwargs):
         Brain.__init__(self, **kwargs)
         dt = self.agent.model.dt
@@ -829,58 +837,71 @@ class DefaultBrain(Brain) :
         if self.modules['crawler']:
             self.crawler = Crawler(dt=dt, **self.conf['crawler_params'])
             self.crawler.start_effector()
-        else :
-            self.crawler=None
+        else:
+            self.crawler = None
 
         if self.modules['turner']:
             self.turner = Turner(dt=dt, **self.conf['turner_params'])
             self.turner.start_effector()
-        else :
-            self.turner=None
+        else:
+            self.turner = None
         if self.modules['feeder']:
             self.feeder = Feeder(dt=dt, model=self.agent.model, **self.conf['feeder_params'])
             self.feeder.stop_effector()
-        else :
-            self.feeder=None
+        else:
+            self.feeder = None
         if self.modules['intermitter']:
             self.intermitter = Intermitter(dt=dt,
                                            crawler=self.crawler, turner=self.turner, feeder=self.feeder,
                                            **self.conf['intermitter_params'])
             self.intermitter.start_effector()
-        else :
-            self.intermitter=None
+        else:
+            self.intermitter = None
         # Initialize sensors
         if self.modules['olfactor']:
             self.olfactor = Olfactor(dt=dt, odor_layers=self.agent.model.odor_layers,
                                      **self.conf['olfactor_params'])
-        else :
-            self.olfactor=None
+        else:
+            self.olfactor = None
 
-    def run(self, odor_concentrations, agent_length):
-        if self.intermitter :
-            self.intermitter.step()
-        if self.olfactor:
-            Aolf = self.olfactor.step(odor_concentrations)
+        if self.modules['MB'] :
+            self.MB = None
         else :
-            Aolf=0
+            self.MB = None
+
+    def run(self, odor_concentrations, agent_length, food_detected):
+        if self.intermitter:
+            self.intermitter.step()
+
         # Step the feeder
         if self.feeder:
             self.feeder.step()
-            feed = self.feeder.complete_iteration
-        else :
-            feed=False
-        if self.crawler:
-            lin=self.crawler.step(agent_length)
-        else :
-            lin=0
+            feed_motion = self.feeder.complete_iteration
+        else:
+            feed_motion = False
 
+        feed_success=feed_motion and food_detected
+
+        if self.MB :
+            # self.MB.step(odor_concentrations, feed_success)
+            pass
+
+        if self.crawler:
+            lin = self.crawler.step(agent_length)
+        else:
+            lin = 0
+
+        if self.olfactor:
+            Aolf = self.olfactor.step(odor_concentrations)
+        else:
+            Aolf = 0
             # ... and finally step the turner...
         if self.turner:
             self.osc_coupling.step(crawler=self.crawler, feeder=self.feeder)
             # self.set_head_contacts_ground(value=self.osc_coupling.turner_inhibition)
-            ang= self.turner.step(inhibited=self.osc_coupling.turner_inhibition,
-                                                   interference_ratio=self.osc_coupling.interference_ratio,
-                                                   A_olf=Aolf)
-        else :
-            ang=0
-        return lin, ang, feed, Aolf
+            ang = self.turner.step(inhibited=self.osc_coupling.turner_inhibition,
+                                   interference_ratio=self.osc_coupling.interference_ratio,
+                                   A_olf=Aolf)
+        else:
+            ang = 0
+        return lin, ang, feed_motion, feed_success, Aolf

@@ -1,4 +1,5 @@
 import copy
+import time
 import warnings
 
 import numpy as np
@@ -40,14 +41,16 @@ class LarvaWorld(Model):
                  trajectories=True, trail_decay_in_sec=0.0, trajectory_colors=None,
                  show_state=True, random_larva_colors=False, color_behavior=False,
                  draw_head=False, draw_contour=True, draw_centroid=False, draw_midline=True,
-                 show_display=True, video_speed=None, snapshot_interval_in_sec=60 * 60 * 10):
+                 show_display=True, video_speed=None, snapshot_interval_in_sec=60 * 60 * 10,
+                 touch_sensors=False, allow_clicks=True):
         # super.__init__(**kwargs)
         self.dt = dt
         if video_speed is None:
             self.video_fps = int(1 / dt)
         else:
             self.video_fps = int(video_speed / dt)
-
+        self.allow_clicks = allow_clicks
+        self.touch_sensors = touch_sensors
         self.show_display = show_display
         self.sim_screen_dim = sim_screen_dim
         self.Nsteps = Nsteps
@@ -331,9 +334,22 @@ class LarvaWorld(Model):
             self.draw_aux(self._screen)
             self._screen.render()
 
+        if self.allow_clicks :
+            self.evaluate_clicks()
+
+    def screen2space_pos(self, pos):
+        p = (2 * pos[0] / self.screen_width - 1), -(2 * pos[1] / self.screen_height - 1)
+        pp = p[0] * self.space_dims[0] / 2, p[1] * self.space_dims[1] / 2
+        return pp
+
     def _place_food(self, N, positions, food_pars):
         if N == 0:
             return
+        food_positions=self._generate_food_positions(N, positions)
+        for i, p in enumerate(food_positions):
+            self.add_food(position=p, food_pars=food_pars)
+
+    def _generate_food_positions(self, N, positions):
         raw_food_positions = []
         if positions['mode'] == 'defined':
             raw_food_positions = positions['loc']
@@ -346,22 +362,27 @@ class LarvaWorld(Model):
                 pos = (float(x), float(y))
                 raw_food_positions.append(pos)
         elif positions['mode'] == 'normal':
-            # base_pos = tuple([self.tank_radius * x for x in initial_food_positions[1]])
-            # food_positions = np.random.normal(loc=base_pos, scale=initial_food_positions[2] * self.tank_radius,
-            #                                   size=(initial_num_food, 2))
             raw_food_positions = np.random.normal(loc=positions[1],
                                                   scale=positions[2],
                                                   size=(N, 2))
         # Scale positions to the tank dimensions
         food_positions = [(x * self.space_dims[0] / 2, y * self.space_dims[1] / 2) for (x, y) in
                           raw_food_positions]
-        food_ids = [f'Food_{i}' for i in range(N)]
-        for i, p in enumerate(food_positions):
-            f = Food(unique_id=food_ids[i], model=self, position=p,
-                     amount=food_pars['amount'],
-                     shape_radius=food_pars['shape_radius'])
-            self.active_food_schedule.add(f)
-            self.all_food_schedule.add(f)
+        return food_positions
+
+    def add_food(self, position, food_pars=None):
+        if food_pars is None :
+            food_pars=self.env_pars['food_params']
+        id = self.next_id(type='Food')
+        f = Food(unique_id=id, position=position, model=self, **food_pars)
+        self.active_food_schedule.add(f)
+        self.all_food_schedule.add(f)
+        return f
+
+    def next_id(self, type='Food'):
+        if type == 'Food':
+            N = self.all_food_schedule.get_agent_count()
+            return f'Food_{N}'
 
     def run(self, Nsteps=None):
         if Nsteps is None:
@@ -424,11 +445,26 @@ class LarvaWorld(Model):
                 b.CreateFixture(shape=border_shape)
         return borders_xy, lines
 
+    def evaluate_clicks(self):
+        ev = pygame.event.get()
+        for event in ev:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                self.mousebuttondown_time = time.time()
+            elif event.type == pygame.MOUSEBUTTONUP:
+                dur = np.round(time.time() - self.mousebuttondown_time,2)
+                self.mousebuttondown_time = None
+                pos = pygame.mouse.get_pos()
+                p = self.screen2space_pos(pos)
+                f = self.add_food(p)
+                odor_id = list(self.odor_layers.keys())[0]
+                self.odor_layers[odor_id].sources.append(f)
+                f.set_odor(id=odor_id, intensity=dur)
+
 
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, fly_params, collected_pars={'step': [], 'endpoint': []},
                  id='Unnamed_Simulation', allow_collisions=True,
-                 touch_sensors=False, count_bend_errors=False,
+                 count_bend_errors=False,
                  starvation_hours=[], hours_as_larva=0, deb_base_f=1, **kwargs):
         super().__init__(id=id, **kwargs)
         self.starvation_hours = starvation_hours
@@ -439,12 +475,12 @@ class LarvaWorldSim(LarvaWorld):
         self.sim_starvation_hours = [[np.clip(s0 - hours_as_larva, a_min=0, a_max=+np.inf), s1 - hours_as_larva] for
                                      [s0, s1] in self.starvation_hours if s1 > hours_as_larva]
         if len(self.sim_starvation_hours) > 0:
-            on_ticks = [int(s0 * 60*60/self.dt) for [s0, s1] in self.sim_starvation_hours]
-            off_ticks = [int(s1 * 60*60/self.dt) for [s0, s1] in self.sim_starvation_hours]
+            on_ticks = [int(s0 * 60 * 60 / self.dt) for [s0, s1] in self.sim_starvation_hours]
+            off_ticks = [int(s1 * 60 * 60 / self.dt) for [s0, s1] in self.sim_starvation_hours]
             self.sim_clock.set_timer(on_ticks, off_ticks)
         self.starvation = self.sim_clock.timer_on
         self.count_bend_errors = count_bend_errors
-        self.touch_sensors = touch_sensors
+
         self.allow_collisions = allow_collisions
         self.larva_pars = fly_params
 
@@ -513,16 +549,18 @@ class LarvaWorldSim(LarvaWorld):
             # odor_ids = self.food_params['odor_id_list']
             Nodors = len(odor_pars['odor_id_list'])
             layers = dict.fromkeys(odor_pars['odor_id_list'])
+
             if odor_pars['odor_carriers'] == 'food':
                 sources = self.get_food()
             elif odor_pars['odor_carriers'] == 'flies':
                 sources = self.get_flies()
             else:
                 raise ('Currently only food or larvae can be odor carriers')
-            self.allocate_odor_parameters(sources, odor_pars['odor_id_list'],
-                                          odor_pars['odor_intensity_list'],
-                                          odor_pars['odor_spread_list'],
-                                          odor_pars['odor_source_allocation'])
+            self.allocate_odors(sources,
+                                odor_pars['odor_id_list'],
+                                odor_pars['odor_intensity_list'],
+                                odor_pars['odor_spread_list'],
+                                odor_pars['odor_source_allocation'])
             for i, odor_id in enumerate(odor_pars['odor_id_list']):
                 if odor_pars['odor_landscape'] == 'Diffusion':
                     layers[odor_id] = DiffusionValueLayer(world=self.space, unique_id=odor_id,
@@ -633,17 +671,14 @@ class LarvaWorldSim(LarvaWorld):
         ids, all_pars = self._generate_larva_pars(N, larva_pars)
         self._place_larvae(positions, orientations, ids, all_pars)
 
-    def allocate_odor_parameters(self, agents, odor_id_list, odor_intensity_list, odor_spread_list,
-                                 allocation_mode='iterative'):
+    def allocate_odors(self, agents, odor_id_list, odor_intensity_list, odor_spread_list,
+                       allocation_mode='iterative'):
         ids, intensities, spreads = self.compute_odor_parameters(len(agents), odor_id_list,
                                                                  odor_intensity_list,
                                                                  odor_spread_list,
                                                                  allocation_mode)
         for a, id, intensity, spread in zip(agents, ids, intensities, spreads):
-            a.set_odor_id(id)
-            a.set_scaled_odor_intensity(intensity)
-            a.set_scaled_odor_spread(spread)
-            a.set_odor_dist()
+            a.set_odor(id, intensity, spread)
 
     def compute_odor_parameters(self, N, odor_id_list, odor_intensity_list, odor_spread_list,
                                 allocation_mode='iterative'):

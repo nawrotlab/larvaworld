@@ -502,10 +502,9 @@ class DEB:
             return self.U_R / self.U_R__p
 
 
-def deb_default(starvation_hours=[], base_f=1, id=None):
+def deb_default(starvation_hours=[], base_f=1, id=None, steps_per_day=24*60):
     # print(base_f)
     base_f = base_f
-    steps_per_day = 24 * 60
     deb = DEB(species='default', steps_per_day=steps_per_day, print_stage_change=True)
     ww = []
     E = []
@@ -553,19 +552,21 @@ def deb_default(starvation_hours=[], base_f=1, id=None):
     # print(t0,t1,starvation, deb.age_day*24)
     if not np.isnan(t2):
         starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for [s0, s1] in starvation if s0 <= t2]
-    if id is None:
-        if len(starvation) == 0:
-            id = 'ad libitum'
-        elif len(starvation) == 1:
-            range = starvation[0]
-            dur = int(range[1] - range[0])
-            id = f'{dur}h starved'
-        else:
-            id = f'starved {len(starvation)} intervals'
+    # if id is None:
+    #     if len(starvation) == 0:
+    #         id = 'ad libitum'
+    #     elif len(starvation) == 1:
+    #         range = starvation[0]
+    #         dur = int(range[1] - range[0])
+    #         id = f'{dur}h starved'
+    #     else:
+    #         id = f'starved {len(starvation)} intervals'
+    if id is None :
+        id = 'DEB model'
     dict = {'birth': t0,
             'puppation': t1,
             'death': t2,
-            'age': deb.age_day * 24 + 1,
+            'age': deb.age_day * 24,
             'sim_start': t3,
             'mass': ww,
             'length': real_L,
@@ -583,7 +584,6 @@ def deb_default(starvation_hours=[], base_f=1, id=None):
             'f': fs,
             'id': id,
             'starvation': starvation}
-    # raise
     return dict
 
 

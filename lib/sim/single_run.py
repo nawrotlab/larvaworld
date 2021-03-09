@@ -55,30 +55,45 @@ def sim_analysis(d, experiment):
             datasets = [d]
             labels = [d.id]
 
+        cc = {'datasets': datasets,
+              'labels': labels,
+              'save_to': d.plot_dir}
+
+        plot_food_amount(**cc)
+        plot_food_amount(d_amount=True, **cc)
+        # raise
+        plot_pathlength(scaled=False, **cc)
+        plot_endpoint_params(mode='deb', **cc)
+        try:
+            barplot(par_shorts=['f_am'], **cc)
+        except:
+            pass
 
 
         deb_dicts = [deb_dict(d, id, starvation_hours=starvation_hours) for id in d.agent_ids] + [deb_model]
         c = {'save_to': d.plot_dir,
              'roversVSsitters': roversVSsitters}
-        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_f.pdf', mode='f', sim_only=True,
-                  include_feeder_reoccurence=True, **c)
-        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_f_only.pdf', mode='f_only', sim_only=True, **c)
 
+        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_hunger.pdf', mode='hunger', sim_only=True,
+                  include_feeder_reoccurence=False, **c)
+        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_hunger_sim_start.pdf', mode='hunger', sim_only=True,
+                  include_feeder_reoccurence=False, start_at_sim_start=True,**c)
+        # raise
         plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb.pdf', sim_only=True, **c)
         plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_minimal.pdf', mode='minimal', sim_only=True, **c)
+        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_complete.pdf', mode='complete', sim_only=True, **c)
         plot_debs(deb_dicts=[deb_dicts[-1]], save_as='default_deb.pdf', **c)
+
+        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_f_sec.pdf', mode='f', sim_only=True,
+                  time_unit='seconds', start_at_sim_start=True, **c)
+        plot_debs(deb_dicts=deb_dicts[:-1], save_as='deb_f.pdf', mode='f', sim_only=True, **c)
+
+        plot_debs(deb_dicts=deb_dicts, save_as='comparative_deb_complete.pdf', mode='complete', **c)
         plot_debs(deb_dicts=deb_dicts, save_as='comparative_deb.pdf', **c)
         plot_debs(deb_dicts=deb_dicts, save_as='comparative_deb_minimal.pdf', mode='minimal', **c)
-        cc = {'datasets': datasets,
-              'labels': labels,
-              'save_to': d.plot_dir}
-        try:
-            barplot(par_shorts=['f_am'], **cc)
-        except:
-            pass
-        plot_food_amount(**cc)
-        plot_pathlength(scaled=False, **cc)
-        plot_endpoint_params(mode='deb', **cc)
+
+
+
 
     elif experiment == 'dispersion':
         target_dataset = load_reference_dataset()
@@ -87,12 +102,14 @@ def sim_analysis(d, experiment):
         comparative_analysis(datasets=datasets, labels=labels, simVSexp=True, save_to=None)
         plot_marked_strides(dataset=d, agent_ids=d.agent_ids[:3], title=' ', slices=[[10, 50], [60, 100]])
         plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:3], min_turn_angle=20)
+
+
     elif experiment in ['chemorbit', 'chemotax']:
         plot_distance_to_source(dataset=d, experiment=experiment)
         plot_odor_concentration(dataset=d)
         d.visualize(agent_ids=[d.agent_ids[0]], mode='image', image_mode='final',
                     contours=False, centroid=False, spinepoints=False,
-                    random_larva_colors=True, trajectories=True, trail_decay_in_sec=None,
+                    random_larva_colors=True, trajectories=True, trail_decay_in_sec=0,
                     save_as='single_trajectory')
     elif experiment == 'odor_pref':
         ind = d.compute_preference_index(arena_diameter_in_mm=100)

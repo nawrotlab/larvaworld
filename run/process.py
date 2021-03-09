@@ -2,9 +2,9 @@ import sys
 import argparse
 
 sys.path.insert(0, '..')
-from lib.stor.datagroup import *
 from lib.stor.managing import *
 import lib.aux.argparsers as prs
+from lib.stor.datagroup import *
 
 parser = argparse.ArgumentParser(description="Initialize processing")
 parser = prs.add_data_kwargs(parser)

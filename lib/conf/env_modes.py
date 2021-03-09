@@ -228,6 +228,12 @@ reorientation_odor_np = {'odor_landscape': 'Gaussian',
                          'odor_source_allocation': 'iterative'}
 
 
+def odor(id, intensity=2, spread=0.0002):
+    return {'id': id,
+            'intensity': intensity,
+            'spread': spread}
+
+
 ########### ARENA PARAMETERS ################
 
 def dish(r):
@@ -252,7 +258,6 @@ def maze(nx=15, ny=15, ix=0, iy=0, h=0.1):
     m.make_maze()
     lines = m.maze_lines()
     return lines
-
 
 
 # maze0=[LineString([(0, 0.01), (0.02, 0.01), (0.02, 0.03), (-0.01, 0.03), (-0.01, -0.01)]),
@@ -322,7 +327,7 @@ maze_exp_np = exp_conf(maze_conf(1, 15))
 
 disp_exp_np = exp_conf(disp_conf(30, 0.2))
 
-dish_exp_np = {'arena_params': dish(0.1),
+dish_exp_np = {'arena_params': dish(0.15),
                'space_params': mesa_space,
                'food_params': None,
                'place_params': {**larva_mid(25), **food_place(0)},
@@ -390,7 +395,7 @@ feed_patchy_empirical = {
 growth_exp_np = {'arena_params': arena(0.015, 0.015),  # dish(0.006),
                  'space_params': mesa_space,
                  'food_params': food_grid(50, 10 ** -3),  # food(0.0002),
-                 'place_params': {**larva_mid(1), **food_place(0)},  # larva1_food_uniform,
+                 'place_params': {**larva_mid(1, 0.3), **food_place(0)},  # larva1_food_uniform,
                  'odor_params': None}
 
 growth_exp_np_small = {'arena_params': arena(0.01, 0.01),  # dish(0.006),

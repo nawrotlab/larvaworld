@@ -1381,6 +1381,7 @@ class LarvaDataset:
             self.load()
         order = int(interval_in_sec / self.dt)
 
+
         s, e = self.step_data, self.endpoint_data
         ids = self.agent_ids
         Nids = len(ids)
@@ -1408,6 +1409,12 @@ class LarvaDataset:
                 df = d.xs(id, level='AgentID', drop_level=True)
                 i_min = argrelextrema(df.values, np.less_equal, order=order)[0]
                 i_max = argrelextrema(df.values, np.greater_equal, order=order)[0]
+
+                i_min_dif=np.diff(i_min, append=order)
+                i_max_dif=np.diff(i_max, append=order)
+                i_min=i_min[i_min_dif>=order]
+                i_max=i_max[i_max_dif>=order]
+
                 i_min = i_min[df.loc[i_min + t0] < thr_min]
                 i_max = i_max[df.loc[i_max + t0] > thr_max]
 
@@ -2695,21 +2702,22 @@ class LarvaDataset:
             pdf.to_csv(path, index=True, header=True)
 
     def split_dataset(self, larva_id_prefixes):
-        if self.step_data is None:
-            self.load()
-        # s,e=self.step_data, self.endpoint_data
-        new_ds=[]
-        for f in larva_id_prefixes :
-            new_id=f'{self.id}_{f}'
-            new_dir = f'{self.dir}/../{new_id}'
-            copy_tree(self.dir, new_dir)
-            new_d=LarvaDataset(new_dir)
-            new_d.set_id(new_id)
-
-            invalid_ids=[id for id in self.agent_ids if not str.startswith(id, f)]
-            new_d.drop_agents(invalid_ids)
-            new_ds.append(new_d)
-        print(f'Dataset {self.id} splitted in {[d.id for d in new_ds]}')
+        new_ids = [f'{self.id}_{f}' for f in larva_id_prefixes]
+        new_dirs = [f'{self.dir}/../{new_id}' for new_id in new_ids]
+        if all([os.path.exists(new_dir) for new_dir in new_dirs]) :
+            new_ds=[LarvaDataset(new_dir) for new_dir in new_dirs]
+        else :
+            if self.step_data is None:
+                self.load()
+            new_ds=[]
+            for f, new_id, new_dir in zip(larva_id_prefixes, new_ids, new_dirs) :
+                copy_tree(self.dir, new_dir)
+                new_d=LarvaDataset(new_dir)
+                new_d.set_id(new_id)
+                invalid_ids=[id for id in self.agent_ids if not str.startswith(id, f)]
+                new_d.drop_agents(invalid_ids)
+                new_ds.append(new_d)
+            print(f'Dataset {self.id} splitted in {[d.id for d in new_ds]}')
         return new_ds
 
 

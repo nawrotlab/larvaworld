@@ -499,11 +499,18 @@ class LarvaSim(VelocityAgent, Larva):
         self.sim_time += self.model.dt
 
         self.odor_concentrations = self.sense_odors(self.model.Nodors, self.model.odor_layers)
-        lin, ang, self.feeder_motion, self.olfactory_activation = self.brain.run(self.odor_concentrations,
-                                                                                 self.get_sim_length())
+        self.food_detected, self.food_source = self.detect_food(pos=self.get_olfactor_position(),
+                                                                grid=self.model.food_grid)
+
+        lin, ang, self.feeder_motion, self.feed_success, self.olfactory_activation = self.brain.run(
+            self.odor_concentrations,
+            self.get_sim_length(),
+            self.food_detected)
         self.set_ang_activity(ang)
         self.set_lin_activity(lin)
-        self.feed_attempt(self.feeder_motion)
+        self.current_amount_eaten = self.feed(success=self.feed_success, source=self.food_source,
+                                              max_amount_eaten=self.max_feed_amount)
+        self.update_balance(self.feed_success)
         if self.energetics:
             self.run_energetics(self.feed_success, self.current_amount_eaten)
 
@@ -517,44 +524,44 @@ class LarvaSim(VelocityAgent, Larva):
                 values = [v + np.random.normal(scale=v * self.brain.olfactor.noise) for v in values]
             return values
 
-    def detect_food(self, mouth_position, radius=None, grid=None, max_amount_eaten=1.0):
-        if grid:
-            cell = grid.get_grid_cell(mouth_position)
-            if grid.get_value(cell) > 0:
-                subtracted_value = grid.subtract_value(cell, max_amount_eaten)
-                return True, subtracted_value
+    def detect_food(self, pos, grid=None):
+        if self.brain.feeder is not None :
+            radius=self.brain.feeder.feed_radius * self.sim_length,
+            if grid:
+                cell = grid.get_grid_cell(pos)
+                if grid.get_value(cell) > 0:
+                    return True, cell
+                else:
+                    return False, None
             else:
-                return False, 0
-        else:
-            # s = time.time()
-            accessible_food = agents_spatial_query(pos=mouth_position, radius=radius,
-                                                   agent_list=self.model.get_food())
-            # e = time.time()
-            # print(e-s)
-            # print(len(accessible_food))
-            if accessible_food:
-                food = random.choice(accessible_food)
-                amount_eaten = food.subtract_amount(amount=max_amount_eaten)
-                return True, amount_eaten
+                accessible_food = agents_spatial_query(pos=pos, radius=radius,
+                                                       agent_list=self.model.get_food())
+                if accessible_food:
+                    food = random.choice(accessible_food)
+                    return True, food
+                else:
+                    return False, None
+        else :
+            return False, None
+
+    def feed(self, success, source, max_amount_eaten):
+        if success:
+            if self.model.food_grid:
+                amount = self.model.food_grid.subtract_value(source, max_amount_eaten)
             else:
-                return False, 0
+                amount = source.subtract_amount(max_amount_eaten)
+            # # TODO fix the radius so that it works with any feeder, nengo included
+            # success, amount = self.detect_food(mouth_position=self.get_olfactor_position(),
+            #                                    radius=self.brain.feeder.feed_radius * self.sim_length,
+            #                                    grid=self.model.food_grid,
+            #                                    max_amount_eaten=self.max_feed_amount)
 
-    def feed_attempt(self, motion=False):
-        if motion:
-            r = self.brain.feeder.feed_radius * self.sim_length
-            # TODO fix the radius so that it works with any feeder, nengo included
-            self.feed_success, self.current_amount_eaten = self.detect_food(mouth_position=self.get_olfactor_position(),
-                                                                            radius=r,
-                                                                            grid=self.model.food_grid,
-                                                                            max_amount_eaten=self.max_feed_amount)
-
-            self.feed_success_counter += int(self.feed_success)
-            self.amount_eaten += self.current_amount_eaten
-            self.update_balance(self.feed_success)
+            self.feed_success_counter += int(success)
+            self.amount_eaten += amount
 
         else:
-            self.feed_success = False
-            self.current_amount_eaten = 0
+            amount = 0
+        return amount
 
     def reset_feeder(self):
         self.feed_success_counter = 0
@@ -583,7 +590,7 @@ class LarvaSim(VelocityAgent, Larva):
                 self.f_decay_coef = energetic_pars['f_decay_coef']
                 self.f_exp_coef = np.exp(-self.f_decay_coef * self.model.dt)
                 # self.hunger_affects_feeder = energetic_pars['hunger_affects_feeder']
-                steps_per_day=24*60
+                steps_per_day = 24 * 60
                 if self.hunger_affects_balance:
                     base_hunger = self.brain.intermitter.feeder_reoccurence_rate
                     # base_hunger = 1 - self.brain.intermitter.explore2exploit_bias

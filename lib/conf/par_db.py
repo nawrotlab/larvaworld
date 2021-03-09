@@ -73,16 +73,6 @@ def ddot_hat_th(p):
 def lin(p):
     return fr'${{{p.replace("$", "")}}}_{{l}}$'
 
-
-# def scaled_entry(base) :
-#     fn,sn,sym,esym,u=base
-#     return np.array([nam.scal(fn), f's{sn}', ast(sym), ast(esym), u])
-
-
-# k3,k4=base_nam(asterisk, ['bff', 'dff'])
-# k5,k6=base_nam(asterisk, [k1,k2])
-# print(base_nam(hat, ['b', 'd']))
-
 b, fo, ro = 'bend', 'front_orientation', 'rear_orientation'
 bv, fov, rov = nam.vel([b, fo, ro])
 ba, foa, roa = nam.acc([b, fo, ro])
@@ -121,9 +111,9 @@ l_dst = 'distance $(mm)$'
 l_body_length = 'body length $(mm)$'
 l_vel = 'velocity $(mm/sec)$'
 l_acc = 'acceleration $(mm/sec^2)$'
-l_sc_dst = 'scal distance $(-)$'
-l_sc_vel = 'scal velocity $(sec^{-1})$'
-l_sc_acc = 'scal acceleration $(sec^{-2})$'
+l_sc_dst = 'scaled distance $(-)$'
+l_sc_vel = 'scaled velocity $(sec^{-1})$'
+l_sc_acc = 'scaled acceleration $(sec^{-2})$'
 l_num = 'counts $(#)$'
 l_mass = 'mass $(mg)$'
 
@@ -410,6 +400,35 @@ collect_db=pd.Series(valid.collect.values,index=valid.par).to_dict()
 # print(par_db.loc['cum_sd'])
 
 par_db = par_db[~par_db.index.duplicated(keep='first')]
+par_db['unit'].loc['str_tr']='% time crawling'
+par_db['unit'].loc['non_str_tr']='% time not crawling'
+par_db['unit'].loc['pau_tr']='% time pausing'
+par_db['unit'].loc['fee_tr']='% time feeding'
+par_db['unit'].loc['tur_tr']='% time turning'
+par_db['unit'].loc['Ltur_tr']='% time turning left'
+par_db['unit'].loc['Rtur_tr']='% time turning right'
 
-# print(par_db.loc['f_am'])
+
+par_db['unit'].loc['cum_sd']='scaled pathlength'
+par_db['unit'].loc['cum_d']='pathlength $(mm)$'
+
+
+par_db['unit'].loc['b']='bend angle $(deg)$'
+par_db['unit'].loc['bv']='bending velocity $(deg/sec)$'
+par_db['unit'].loc['ba']='bending acceleration $(deg^2/sec)$'
+par_db['unit'].loc['fov']='orientation velocity $(deg/sec)$'
+par_db['unit'].loc['foa']='orientation acceleration $(deg^2/sec)$'
+par_db['unit'].loc['rov']='rear orientation velocity $(deg/sec)$'
+par_db['unit'].loc['roa']='rear orientation acceleration $(deg^2/sec)$'
+
+
+par_db['unit'].loc['str_fo']=r'$\Delta\theta_{or}$ over strides $(deg)$'
+par_db['unit'].loc['str_ro']=r'$\Delta\theta_{or_{r}}$ over strides $(deg)$'
+par_db['unit'].loc['tur_fo']=r'$\Delta\theta_{or}$ over turns $(deg)$'
+par_db['unit'].loc['tur_ro']=r'$\Delta\theta_{or_{r}}$ over turns $(deg)$'
+
+
+
+# print(par_db.loc['str_fo'])
+
 # print(random_ar2)

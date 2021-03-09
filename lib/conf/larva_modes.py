@@ -16,7 +16,7 @@ default_coupling = {
     'feeder_interference_free_window': 0.0,
     'crawler_interference_start': np.pi * 0.45,  # np.pi * 0.3, #np.pi * 4 / 8,
     'feeder_interference_start': 0.0,
-    'interference_ratio': 0.0
+    'interference_ratio': 0.1
 }
 default_turner = {'neural': True,
                   'base_activation': 20.0,
@@ -39,7 +39,8 @@ locomotion = {'turner': True,
               'interference': True,
               'intermitter': True,
               'olfactor': False,
-              'feeder': False}
+              'feeder': False,
+              'MB': False}
 
 intermittent_crawler = {'pause_dist': 'fit',
                         'stridechain_dist': 'fit',
@@ -47,7 +48,7 @@ intermittent_crawler = {'pause_dist': 'fit',
                         'explore2exploit_bias': 1}
 sample_l3_seg2 = {'initial_length': 'sample',
                   'Nsegs': 2,
-                  'seg_ratio': [0.5,0.5]#[5 / 11, 6 / 11]
+                  'seg_ratio': [0.5, 0.5]  # [5 / 11, 6 / 11]
                   }
 
 sample_l3_seg11 = {'initial_length': 'sample',  # From D1 fit
@@ -79,70 +80,80 @@ sole_turner = {'turner': True,
                'interference': False,
                'intermitter': False,
                'olfactor': False,
-               'feeder': False}
+               'feeder': False,
+              'MB': False}
 
 sole_crawler = {'turner': False,
                 'crawler': True,
                 'interference': False,
                 'intermitter': False,
                 'olfactor': False,
-                'feeder': False}
+                'feeder': False,
+              'MB': False}
 
 locomotion_no_interference = {'turner': True,
                               'crawler': True,
                               'interference': False,
                               'intermitter': True,
                               'olfactor': False,
-                              'feeder': False}
+                              'feeder': False,
+              'MB': False}
 
 two_osc_interference = {'turner': True,
                         'crawler': True,
                         'interference': True,
                         'intermitter': False,
                         'olfactor': False,
-                        'feeder': False}
+                        'feeder': False,
+              'MB': False}
 
 two_osc = {'turner': True,
            'crawler': True,
            'interference': False,
            'intermitter': False,
            'olfactor': False,
-           'feeder': False}
+           'feeder': False,
+              'MB': False}
 
 olfactor_turner = {'turner': True,
                    'crawler': False,
                    'interference': False,
                    'intermitter': False,
                    'olfactor': True,
-                   'feeder': False}
+                   'feeder': False,
+              'MB': False}
 
 olfactor_locomotion = {'turner': True,
                        'crawler': True,
                        'interference': True,
                        'intermitter': True,
                        'olfactor': True,
-                       'feeder': False}
+                       'feeder': False,
+              'MB': False}
 
 feed_locomotion = {'turner': True,
                    'crawler': True,
                    'interference': True,
                    'intermitter': True,
                    'olfactor': False,
-                   'feeder': True}
+                   'feeder': True,
+              'MB': False}
 
 full_brain = {'turner': True,
               'crawler': True,
               'interference': True,
               'intermitter': True,
               'olfactor': True,
-              'feeder': True}
+              'feeder': True,
+              'MB': False}
 
 growth_locomotion = {'turner': True,
                      'crawler': True,
                      'interference': True,
                      'intermitter': True,
                      'olfactor': False,
-                     'feeder': True}
+                     'feeder': True,
+              'MB': False}
 
 # --------------------------------------------TURNER MODES--------------------------------------------------------------
 intermitter_rover = {'pause_dist': 'fit',
@@ -220,13 +231,13 @@ l3_seg11 = {'initial_length': 0.00428,
 l1_seg2 = {'initial_length': 0.0013,
            'length_std': 0.0001,
            'Nsegs': 2,
-           'seg_ratio': [0.5,0.5]#[5 / 11, 6 / 11]
+           'seg_ratio': [0.5, 0.5]  # [5 / 11, 6 / 11]
            }
 
 l3_seg2 = {'initial_length': 0.003,
            'length_std': 0.0,
            'Nsegs': 2,
-           'seg_ratio': [0.5,0.5]#[5 / 11, 6 / 11]
+           'seg_ratio': [0.5, 0.5]  # [5 / 11, 6 / 11]
            }
 # -------------------------------------------WHOLE NEURAL MODES---------------------------------------------------------
 

@@ -104,7 +104,6 @@ class ValueLayer:
         self.id = unique_id
 
         self.sources = sources
-        self.num_sources = len(self.sources)
 
     def get_value(self, pos):
         pass
@@ -119,7 +118,7 @@ class ValueLayer:
         pass
 
     def get_num_sources(self):
-        return self.num_sources
+        return len(self.sources)
 
 
 class GaussianValueLayer(ValueLayer):
