@@ -47,7 +47,7 @@ on_image_disabled = b'iVBORw0KGgoAAAANSUhEUgAAAFoAAAAnCAYAAACPFF8dAAAAAXNSR0IArs
 food_pars = {
     'unique_id': str,
     'pos': tuple,
-    'shape_radius': float,
+    'radius': float,
     'amount': float,
     'odor_id': str,
     'odor_intensity': float,
@@ -150,6 +150,15 @@ def set_kwargs(kwargs, title='Arguments'):
 
     return kwargs
 
+def get_agent_list(agents, pars) :
+    data = []
+    for f in agents:
+        dic = {}
+        for p in pars:
+            dic[p] = getattr(f, p)
+        data.append(dic)
+    return data
+
 
 def get_graph_kwargs(func):
     signature = inspect.getfullargspec(func)
@@ -219,19 +228,34 @@ def update_environment(env_params, window, collapsibles, sectiondicts, food_list
     for k, v in arena_params.items():
         window.Element(k).Update(value=v)
 
-    place_params = env_params['place_params']
-    update_placement(place_params, window, collapsibles, sectiondicts)
-
     food_list = env_params['food_params']['food_list']
+    place_params = env_params['place_params']
+    update_placement(place_params, window, collapsibles, sectiondicts, food_list)
+    return food_list
 
 
-def update_placement(place_params, window, collapsibles, sectiondicts):
+
+
+def update_placement(place_params, window, collapsibles, sectiondicts, food_list):
     window.Element('Nagents').Update(value=place_params['initial_num_flies'])
     window.Element('larva_place_mode').Update(value=place_params['initial_fly_positions']['mode'])
     window.Element('larva_positions').Update(value=place_params['initial_fly_positions']['loc'])
-    window.Element('Nfood').Update(value=place_params['initial_num_food'])
-    window.Element('food_place_mode').Update(value=place_params['initial_food_positions']['mode'])
-    window.Element('food_positions').Update(value=place_params['initial_food_positions']['loc'])
+    update_food_placement(window, food_list, place_params=place_params)
+
+def update_food_placement(window, food_list, place_params=None) :
+    if len(food_list) > 0 :
+        Nfood=len(food_list)
+        food_place_mode=None
+        food_positions=None
+    else :
+        if place_params is None :
+            return
+        Nfood = place_params['initial_num_food']
+        food_place_mode = place_params['initial_food_positions']['mode']
+        food_positions = place_params['initial_food_positions']['loc']
+    window.Element('Nfood').Update(value=Nfood)
+    window.Element('food_place_mode').Update(value=food_place_mode)
+    window.Element('food_positions').Update(value=food_positions)
 
 
 def init_model(larva_model, collapsibles={}, sectiondicts={}):
@@ -325,7 +349,7 @@ def update_sim(window, values, collapsibles, sectiondicts, output_keys, food_lis
         exp_conf = copy.deepcopy(exp_types[exp])
         update_model(exp_conf['fly_params'], window, collapsibles, sectiondicts)
 
-        update_environment(exp_conf['env_params'], window, collapsibles, sectiondicts, food_list)
+        food_list=update_environment(exp_conf['env_params'], window, collapsibles, sectiondicts, food_list)
 
         if 'sim_params' not in exp_conf.keys():
             exp_conf['sim_params'] = default_sim.copy()
@@ -346,6 +370,7 @@ def update_sim(window, values, collapsibles, sectiondicts, output_keys, food_lis
         window.Element('sim_id').Update(value=sim_id)
         common_folder = f'single_runs/{exp}'
         window.Element('common_folder').Update(value=common_folder)
+        return food_list
 
 
 def collapse(layout, key, visible=True):
@@ -496,35 +521,8 @@ class SectionDict:
                 new_dict[k] = window[f'TOGGLE_{k}'].metadata.state
             else:
                 vv = values[k]
-                if type(v) == type(vv) or vv in ['sample', 'fit']:
-                    new_dict[k] = vv
-                elif vv in [None, 'None']:
-                    new_dict[k] = None
-                elif type(v) == list:
-                    if type(vv) == tuple:
-                        new_dict[k] = list(vv)
-                    else:
-                        try:
-                            new_dict[k] = [float(x) for x in vv.split()]
-                        except:
-                            new_dict[k] = ast.literal_eval(vv)
-                elif type(v) == tuple:
-                    if type(vv) == list:
-                        new_dict[k] = tuple(vv)
-                    else:
-                        new_dict[k] = ast.literal_eval(vv)
-                elif type(v) == np.ndarray:
-                    continue
-                # elif type(v) == dict:
-                #     new_dict[k] = self.get_dict(values, window, v)
-                else:
-                    if v is None:
-
-                        vv = vv
-                    else:
-
-                        vv = type(v)(vv)
-                    new_dict[k] = vv
+                vv=retrieve_value(vv, type(v))
+                new_dict[k] = vv
         return new_dict
 
     # def update_section(self, window, dict):
@@ -787,16 +785,18 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
             window[f'SEC {sec_name}'].update(visible=collapsibles[sec_name].state)
     # elif event == 'EXP':
     elif event == 'Load':
-        update_sim(window, values, collapsibles, sectiondicts, output_keys, food_list)
+        food_list=update_sim(window, values, collapsibles, sectiondicts, output_keys, food_list)
     elif 'TOGGLE' in event:
         if window[event].metadata.state is not None:
             window[event].metadata.state = not window[event].metadata.state
             window[event].update(image_data=on_image if window[event].metadata.state else off_image)
     elif event == 'Food list':
         food_list = gui_table(food_list, food_pars)
+        update_food_placement(window, food_list, place_params=None)
+
     elif event == 'Configure':
         if values['EXP'] != '':
-            sim_config = get_sim_config(window, values, module_keys, sectiondicts, collapsibles, output_keys)
+            sim_config = get_sim_config(window, values, module_keys, sectiondicts, collapsibles, output_keys, food_list)
             env = init_sim(
                 fly_params=sim_config['fly_params'],
                 env_params=sim_config['env_params'])
@@ -813,6 +813,9 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
                         sel = set_agent_kwargs(sel, larva_pars)
                     sel.selected = False
                     env.selected_agents.remove(sel)
+            food_list = get_agent_list(env.get_food(), food_pars)
+            update_food_placement(window, food_list, place_params=None)
+
 
             # place_params = setup_sim(
             #     fly_params=sim_config['fly_params'],
@@ -928,7 +931,7 @@ def run_gui():
 
             food_list = eval_simulation(event, values, window, sim_datasets, collapsibles, module_keys, sectiondicts, output_keys,
                             food_list)
-
+    window.close()
 
 if __name__ == "__main__":
     run_gui()

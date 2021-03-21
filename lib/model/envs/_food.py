@@ -14,14 +14,14 @@ class Food(LarvaworldAgent):
     # _angular_damping = 60.  # * _world_scale
 
     def __init__(self, unique_id, model, position,
-                 shape_radius, amount=1.0, quality=1,
-                 odor_id=None, odor_intensity=None, odor_spread=None):
+                 radius=0.002, amount=1.0, quality=1.0,
+                 odor_id=None, odor_intensity=0.0, odor_spread=0.0):
 
         super().__init__(unique_id=unique_id, model=model)
         # CAUTION : Applying the same scaling factor to the odor distributions
         # The rest will be set externally from the _create_odor_layers method
         self.default_color = np.array((100, 200, 120))
-        self.radius = shape_radius * self.model.scaling_factor
+        self.radius = radius * self.model.scaling_factor
         self.initial_amount = amount
         self.quality = quality
         self.amount = self.initial_amount

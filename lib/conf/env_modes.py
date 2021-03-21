@@ -48,7 +48,7 @@ def food_grid(dim, amount=0.00001):
 
 
 def food(r, amount=0.000001, odor_id=None, odor_intensity=0.0, odor_spread=0.0):
-    return {'shape_radius': r,
+    return {'radius': r,
             'amount': amount,
             'odor_id': odor_id,
             'odor_intensity': odor_intensity,
@@ -90,8 +90,8 @@ def food_place(N, place='mid', r=0.7):
 def pref_place(N):
     return {**larva_mid(N),
             'initial_num_food': 2,
-            'initial_food_positions': {'mode': 'defined',
-                                       'loc': np.array([(-0.8, 0), (0.8, 0)])}}
+            'initial_food_positions': {'mode': None,
+                                       'loc': None}}
 
 
 def chemotax_place(N):
@@ -305,7 +305,7 @@ def pref_conf(N, dish_r=0.1):
                 'unique_id': 'CS+ source',
                 'pos': (-0.04, 0.0),
                 'amount': 0,
-                    'shape_radius' : 0.005,
+                    'radius' : 0.005,
                     'odor_id': 'CS+',
                     'odor_intensity': 2,
                     'odor_spread': 0.001},
@@ -313,7 +313,7 @@ def pref_conf(N, dish_r=0.1):
                 'unique_id': 'CS- source',
                 'pos': (0.04, 0.0),
                 'amount': 0,
-                    'shape_radius': 0.005,
+                    'radius': 0.005,
                     'odor_id': 'CS-',
                     'odor_intensity': 2,
                     'odor_spread': 0.001}]},
@@ -329,7 +329,7 @@ def chemotax_conf(N):
                 'unique_id': 'Odor source',
                 'pos': (0.8, 0.0),
                 'amount': 0,
-                    'shape_radius' : 0.002,
+                    'radius' : 0.002,
                     'odor_id': 'Odor',
                     'odor_intensity': 8,
                     'odor_spread': 0.0004}]},
@@ -345,7 +345,7 @@ def chemorbit_conf(N):
                 'unique_id': 'Odor source',
                 'pos': (0.0, 0.0),
                 'amount': 0,
-                    'shape_radius' : 0.002,
+                    'radius' : 0.002,
                     'odor_id': 'Odor',
                     'odor_intensity': 2,
                     'odor_spread': 0.0002}]},

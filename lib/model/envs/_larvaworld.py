@@ -376,7 +376,6 @@ class LarvaWorld:
     def _place_food(self, N=0, positions=None, food_pars={}):
         pars=copy.deepcopy(food_pars)
         if len(pars['food_list'])==0 :
-            pars.pop('food_list')
             if N == 0:
                 return
             food_positions = self._generate_food_positions(N, positions)
@@ -413,7 +412,9 @@ class LarvaWorld:
 
     def add_food(self, position, id=None, food_pars=None):
         if food_pars is None:
-            food_pars = self.env_pars['food_params']
+            food_pars = copy.deepcopy(self.env_pars['food_params'])
+        if 'food_list' in list(food_pars.keys()):
+            food_pars.pop('food_list')
         if id is None:
             id = self.next_id(type='Food')
         f = Food(unique_id=id, position=position, model=self, **food_pars)
@@ -508,8 +509,10 @@ class LarvaWorld:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         p = self.screen2space_pos(pygame.mouse.get_pos())
-                        self.eval_selection(p)
+                        res=self.eval_selection(p)
                         # self.mousebuttondown_time = time.time()
+                        if not res :
+                            f = self.add_food(p)
                     # elif event.button == 3:
                     #     self.input_box.visible = True
 
@@ -569,8 +572,10 @@ class LarvaWorld:
             a.id_box.visible = self.ids_visible
 
     def eval_selection(self, p):
+        res=False
         for f in self.get_food() + self.get_flies():
             if f.contained(p):
+                res=True
                 if not f.selected:
                     f.selected = True
                     self.selected_agents.append(f)
@@ -578,6 +583,7 @@ class LarvaWorld:
                 if f.selected:
                     f.selected = False
                     self.selected_agents.remove(f)
+        return res
 
 
 class LarvaWorldSim(LarvaWorld):
