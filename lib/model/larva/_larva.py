@@ -50,6 +50,7 @@ class LarvaworldAgent:
         return Circle(self.get_position(), radius=self.radius).contains_point(point)
 
 
+
 class Larva(LarvaworldAgent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id=unique_id, model=model)

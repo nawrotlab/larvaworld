@@ -7,6 +7,8 @@ import progressbar
 import os
 from typing import List, Any, Optional
 
+import lib.conf.sim_modes
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
@@ -30,6 +32,8 @@ from lib.model.larva._larva import LarvaReplay
 import lib.aux.functions as fun
 from lib.aux.rendering import SimulationClock, SimulationScale, draw_velocity_arrow, draw_trajectories
 from lib.aux.sampling import sample_agents, get_ref_bout_distros
+import lib.sim.gui_lib as gui
+from lib.conf.sim_modes import agent_pars
 
 
 
@@ -501,7 +505,6 @@ class LarvaWorld:
         for event in ev:
             if event.type == pygame.QUIT:
                 self._screen.close_requested()
-                # self.close()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_TAB:
                     self.toggle_ids()
@@ -513,6 +516,10 @@ class LarvaWorld:
                         # self.mousebuttondown_time = time.time()
                         if not res :
                             f = self.add_food(p)
+                    elif event.button == 3 :
+                        if len(self.selected_agents) > 0:
+                            sel = self.selected_agents[0]
+                            sel = gui.set_agent_kwargs(sel)
                     # elif event.button == 3:
                     #     self.input_box.visible = True
 
@@ -581,10 +588,24 @@ class LarvaWorld:
                     self.selected_agents.append(f)
             else:
                 if f.selected:
+                    res = True
                     f.selected = False
                     self.selected_agents.remove(f)
         return res
 
+    def get_agent_list(self, class_name):
+        if class_name == 'Food' :
+            agents=self.get_food()
+        elif class_name in ['LarvaSim', 'LarvaReplay'] :
+            agents = self.get_flies()
+        pars= agent_pars[class_name]
+        data = []
+        for f in agents:
+            dic = {}
+            for p in pars:
+                dic[p] = getattr(f, p)
+            data.append(dic)
+        return data
 
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, fly_params, collected_pars={'step': [], 'endpoint': []},
@@ -675,6 +696,7 @@ class LarvaWorldSim(LarvaWorld):
             # odor_ids = self.food_params['odor_id_list']
             Nodors = len(odor_pars['odor_id_list'])
             layers = dict.fromkeys(odor_pars['odor_id_list'])
+            odor_colors =fun.random_colors(Nodors)
 
             if odor_pars['odor_carriers'] == 'food':
                 sources = self.get_food()
@@ -688,7 +710,7 @@ class LarvaWorldSim(LarvaWorld):
                                 # odor_pars['odor_spread_list'],
                                 odor_pars['odor_source_allocation']
                                 )
-            for i, odor_id in enumerate(odor_pars['odor_id_list']):
+            for i, (odor_id, odor_color) in enumerate(zip(odor_pars['odor_id_list'], odor_colors)):
                 if odor_pars['odor_landscape'] == 'Diffusion':
                     layers[odor_id] = DiffusionValueLayer(world=self.space, unique_id=odor_id,
                                                           sources=[f for f in sources if
@@ -698,11 +720,13 @@ class LarvaWorldSim(LarvaWorld):
                                                           grid_resolution=odor_pars[
                                                               'odor_layer_grid_resolution'],
                                                           evap_const=odor_pars['odor_evaporation_rate'],
-                                                          diff_const=odor_pars['odor_diffusion_rate'])
+                                                          diff_const=odor_pars['odor_diffusion_rate'], color=odor_color)
                 elif odor_pars['odor_landscape'] == 'Gaussian':
                     layers[odor_id] = GaussianValueLayer(world=self.space, unique_id=odor_id,
                                                          sources=[f for f in sources if
-                                                                  f.get_odor_id() == odor_id])
+                                                                  f.get_odor_id() == odor_id], color=odor_color)
+                for f in layers[odor_id].sources :
+                    f.set_default_color(layers[odor_id].color)
             return Nodors, layers
         else:
             return 0, {}

@@ -41,6 +41,25 @@ default_sim = {
     'collect_effectors': [],
     'step_pars': [''],
     'end_pars': ['length', 'cum_dur', 'num_ticks'],
-    'traj_mode': full_traj,
-    'draw_mode': draw_default,
+    # 'traj_mode': full_traj,
+    # 'draw_mode': draw_default,
 }
+
+
+food_pars = {
+    'unique_id': str,
+    'pos': tuple,
+    'radius': float,
+    'amount': float,
+    'odor_id': str,
+    'odor_intensity': float,
+    'odor_spread': float
+}
+larva_pars = {
+    'unique_id': str,
+}
+
+agent_pars = {'Food' : food_pars,
+              'LarvaSim' : larva_pars,
+              'LarvaReplay' : larva_pars
+              }

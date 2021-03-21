@@ -100,10 +100,10 @@ class ValueGrid:
 
 
 class ValueLayer:
-    def __init__(self, world, unique_id, sources, **kwargs):
+    def __init__(self, world, unique_id, sources, color, **kwargs):
         self.world = world
         self.id = unique_id
-
+        self.color = color
         self.sources = sources
 
     def get_value(self, pos):

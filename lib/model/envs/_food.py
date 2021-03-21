@@ -15,12 +15,11 @@ class Food(LarvaworldAgent):
 
     def __init__(self, unique_id, model, position,
                  radius=0.002, amount=1.0, quality=1.0,
-                 odor_id=None, odor_intensity=0.0, odor_spread=0.0):
-
+                 odor_id=None, odor_intensity=0.0, odor_spread=0.1, color=np.array((100, 200, 120))):
         super().__init__(unique_id=unique_id, model=model)
         # CAUTION : Applying the same scaling factor to the odor distributions
         # The rest will be set externally from the _create_odor_layers method
-        self.default_color = np.array((100, 200, 120))
+        self.default_color = color
         self.radius = radius * self.model.scaling_factor
         self.initial_amount = amount
         self.quality = quality
@@ -28,8 +27,7 @@ class Food(LarvaworldAgent):
         self.odor_id = odor_id
         self.odor_intensity = odor_intensity
         self.odor_spread = odor_spread
-        if self.odor_intensity>0 :
-            self.set_odor_dist()
+        self.set_odor_dist()
         # print(self.odor_spread, odor_intensity)
 
         # self.__dict__.update(_food_params)
@@ -132,6 +130,11 @@ class Food(LarvaworldAgent):
     def set_color(self, color):
         self._color = color
 
+    def set_default_color(self,color):
+        self.default_color = color
+        self._color = self.default_color
+        self.id_box.color=self.default_color
+
     # @abc.abstractmethod
     def step(self):
         # print('ff')
@@ -143,9 +146,14 @@ class Food(LarvaworldAgent):
             filled=True
         else :
             filled=False
-        viewer.draw_circle(position=self.get_position(), radius=self.radius, color=self._color, filled=filled, width=self.radius/5)
+        w=self.radius/5
+        viewer.draw_circle(position=self.get_position(), radius=self.radius, color=self._color, filled=filled, width=w)
+        if self.odor_intensity > 0 :
+            viewer.draw_circle(position=self.get_position(), radius=self.radius*1.5, color=self._color, filled=False, width=w/2)
+            viewer.draw_circle(position=self.get_position(), radius=self.radius*2.0, color=self._color, filled=False, width=w/3)
+            viewer.draw_circle(position=self.get_position(), radius=self.radius*3.0, color=self._color, filled=False, width=w/4)
         if self.selected :
-            viewer.draw_circle(position=self.get_position(), radius=self.radius+self.radius / 5, color=self.model.selection_color, filled=False,
-                               width=self.radius / 5)
+            viewer.draw_circle(position=self.get_position(), radius=self.radius+w, color=self.model.selection_color, filled=False,
+                               width=w)
 
 

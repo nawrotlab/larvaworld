@@ -6,14 +6,17 @@ import time
 
 import lib.aux.functions as fun
 import lib.conf.data_modes as conf
+import lib.conf.sim_modes
 import lib.stor.paths as paths
 from lib.anal.plotting import *
 from lib.aux.collecting import effector_collection
 from lib.conf import exp_types, default_sim, box2d_space
+from lib.model.envs._food import Food
 from lib.model.envs._larvaworld import LarvaWorldSim
+from lib.model.larva._larva import Larva
 from lib.model.larva.deb import deb_dict, deb_default
 from lib.stor.larva_dataset import LarvaDataset
-
+import lib.sim.gui_lib as gui
 import pickle
 
 
@@ -126,17 +129,20 @@ def sim_analysis(d, experiment):
     elif experiment == 'imitation':
         d.save_agent(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
 
-# def setup_sim(env_params,fly_params) :
-#     env = LarvaWorldSim(fly_params=fly_params, env_params=env_params, mode='video')
-#     setup = env.setup()
-#     return setup
-
 def init_sim(env_params,fly_params) :
     env = LarvaWorldSim(fly_params=fly_params, env_params=env_params, mode='video')
     env.allow_clicks = True
     env.show_clock = False
     env.is_running = True
     return env
+
+def configure_sim(env_params,fly_params):
+    env = init_sim(env_params,fly_params)
+    while env.is_running:
+        env.step()
+        env.render()
+    food_list = env.get_agent_list(class_name='Food')
+    return food_list
 
 
 

@@ -72,6 +72,7 @@ def food_place(N, place='mid', r=0.7):
     if place == 'mid':
         mode = 'defined'
         if N > 0:
+            # loc = (0.0, 0.0)
             loc = np.array([(0.0, 0.0)] * N)
         else:
             loc = None
@@ -83,7 +84,8 @@ def food_place(N, place='mid', r=0.7):
         loc = None
     a = {'initial_num_food': N,
          'initial_food_positions': {'mode': mode,
-                                    'loc': loc}}
+                                    'loc': loc,
+                                    'scale' : 0.1}}
     return a
 
 
@@ -91,7 +93,9 @@ def pref_place(N):
     return {**larva_mid(N),
             'initial_num_food': 2,
             'initial_food_positions': {'mode': None,
-                                       'loc': None}}
+                                       'loc': None,
+                                       'scale': None
+                                       }}
 
 
 def chemotax_place(N):
@@ -101,7 +105,8 @@ def chemotax_place(N):
                                       'scale': 0.05},
             'initial_num_food': 1,
             'initial_food_positions': {'mode': 'defined',
-                                       'loc': np.array([(0.8, 0.0)])}}
+                                       'loc': np.array([(0.8, 0.0)]),
+                                       'scale' : None}}
 
 
 spiral_around_food = {'initial_num_flies': 32,
@@ -305,7 +310,7 @@ def pref_conf(N, dish_r=0.1):
                 'unique_id': 'CS+ source',
                 'pos': (-0.04, 0.0),
                 'amount': 0,
-                    'radius' : 0.005,
+                    'radius' : 0.003,
                     'odor_id': 'CS+',
                     'odor_intensity': 2,
                     'odor_spread': 0.001},
@@ -313,7 +318,7 @@ def pref_conf(N, dish_r=0.1):
                 'unique_id': 'CS- source',
                 'pos': (0.04, 0.0),
                 'amount': 0,
-                    'radius': 0.005,
+                    'radius': 0.003,
                     'odor_id': 'CS-',
                     'odor_intensity': 2,
                     'odor_spread': 0.001}]},
