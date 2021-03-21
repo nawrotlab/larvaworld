@@ -86,7 +86,7 @@ feed_grid_batch = {
 
 growth_batch = {
     'pars': [
-        'explore2exploit_bias',
+        'EEB',
         'f_decay_coef',
         # 'f_increment'
     ],
@@ -104,6 +104,32 @@ growth_batch = {
     'run_kwargs': {'save_data_flag': True}
 }
 
+growth_2x_batch = {
+    'pars': [
+        'EEB',
+        'hunger_sensitivity',
+        # 'f_increment'
+    ],
+    'ranges': np.array([
+        [0.2, 0.99],
+        [0.0, 0.0],
+        # [0.8, 1.2]
+    ]),
+    'process_method': deb_processing,
+    'post_process_method': post_processing,
+    'final_process_method': null_final_processing,
+    'space_method': grid_search_dict,
+    'batch_config': {'fit_par': 'deb_f_mean_deviation',
+                     'minimize': True,
+                     'threshold': 0.00001},
+    'post_kwargs': {},
+    'run_kwargs': {'save_data_flag': True}
+}
+
+# Just change the 'fly_params' to growing_sitter, in growth_2x in exp_modes
+# python batch_run.py growth_2x -N 6 -t 5 -id_b test333 -Ngrd 8 1 -Nmax 20 -Nbst 4
+
+
 
 batch_types = {
     'odor_pref': odor_pref_batch,
@@ -111,5 +137,6 @@ batch_types = {
     'chemotax': chemotax_batch,
     'feed_scatter': feed_scatter_batch,
     'feed_grid': feed_grid_batch,
-    'growth': growth_batch
+    'growth': growth_batch,
+    'growth_2x': growth_2x_batch,
 }

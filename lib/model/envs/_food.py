@@ -1,28 +1,35 @@
-import mesa
 import numpy as np
 from Box2D import Box2D, b2ChainShape
 from scipy.stats import multivariate_normal
+from matplotlib.patches import Circle
 
 from lib.aux.functions import circle_to_polygon
+from lib.aux.rendering import InputBox
+from lib.model.larva._larva import LarvaworldAgent
 
 
-class Food(mesa.Agent):
+class Food(LarvaworldAgent):
     # _friction = 1.0
     # _linear_damping = 15.  # * _world_scale
     # _angular_damping = 60.  # * _world_scale
 
     def __init__(self, unique_id, model, position,
-                 shape_radius, amount=1.0,
+                 shape_radius, amount=1.0, quality=1,
                  odor_id=None, odor_intensity=None, odor_spread=None):
+
         super().__init__(unique_id=unique_id, model=model)
         # CAUTION : Applying the same scaling factor to the odor distributions
         # The rest will be set externally from the _create_odor_layers method
+        self.default_color = np.array((100, 200, 120))
         self.radius = shape_radius * self.model.scaling_factor
         self.initial_amount = amount
+        self.quality = quality
         self.amount = self.initial_amount
         self.odor_id = odor_id
         self.odor_intensity = odor_intensity
         self.odor_spread = odor_spread
+        if self.odor_intensity>0 :
+            self.set_odor_dist()
         # print(self.odor_spread, odor_intensity)
 
         # self.__dict__.update(_food_params)
@@ -34,8 +41,8 @@ class Food(mesa.Agent):
             self._body: Box2D.b2Body = self.model.space.CreateStaticBody(position=position)
             # else:
             #     # all parameters in real space units
-            #     self._body: Box2D.b2Body = self.space.CreateDynamicBody(position=self.position, orientation=None)
-            #     # super().__init__(space=self.space, position=self.position, orientation=None, radius=self.shape_radius)
+            #     self._body: Box2D.b2Body = self.space.CreateDynamicBody(pos=self.pos, orientation=None)
+            #     # super().__init__(space=self.space, pos=self.pos, orientation=None, radius=self.shape_radius)
             #     self._body.bullet = True
 
             self.food_shape = b2ChainShape(vertices=shape.tolist())
@@ -44,20 +51,23 @@ class Food(mesa.Agent):
         else:
             self.model.space.place_agent(self, position)
 
-        self.initial_color = np.array((100, 200, 120))
-        self._color = self.initial_color
+
+        self._color = self.default_color
 
         # will be set by the environment
         self._id = None
-
+        self.circle = Circle(self.get_position(), radius=self.radius)
         # # put all agents into same group (negative so that no collisions are detected)
         # self._fixtures[0].filterData.groupIndex = -1
 
         # self._body_color = (100, 100, 100)
         # self._highlight_color = (100, 100, 100)
+        self.id_box = InputBox(visible=False, text=self.unique_id,
+                               color_inactive=self.default_color, color_active=self.default_color,
+                               screen_pos=self.model.space2screen_pos(self.get_position()),
+                               linewidth=1)
 
-    def set_id(self, id):
-        self._id = id
+
 
     @property
     def id(self):
@@ -90,8 +100,8 @@ class Food(mesa.Agent):
             self.model.delete(self)
         else :
             r=(self.initial_amount - self.amount)/self.initial_amount
-            self._color=r*np.array((255,255,255)) + (1-r)*self.initial_color
-            # self._color=self.initial_color + (self.initial_amount - self.amount)*(np.array((255,255,255))-self.initial_color)
+            self._color=r*np.array((255,255,255)) + (1-r)*self.default_color
+            # self._color=self.default_color + (self.initial_amount - self.amount)*(np.array((255,255,255))-self.default_color)
         return np.min([amount, prev_amount])
 
     def get_odor_intensity(self):
@@ -128,4 +138,14 @@ class Food(mesa.Agent):
         pass
 
     def draw(self, viewer):
-        viewer.draw_circle(position=self.get_position(), radius=self.radius, color=self._color)
+        self.id_box.set_shape(self.model.space2screen_pos(self.get_position()))
+        if self.amount>0:
+            filled=True
+        else :
+            filled=False
+        viewer.draw_circle(position=self.get_position(), radius=self.radius, color=self._color, filled=filled, width=self.radius/5)
+        if self.selected :
+            viewer.draw_circle(position=self.get_position(), radius=self.radius+self.radius / 5, color=self.model.selection_color, filled=False,
+                               width=self.radius / 5)
+
+

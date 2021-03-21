@@ -71,7 +71,10 @@ effector_pars = {
 
     "feeder_motion": 'feeder_motion',
     "amount_eaten": 'amount_eaten',
+    "scaled_amount_eaten": 'scaled_amount_eaten',
+    "amount_absorbed": 'amount_absorbed',
     "feed_success_rate": 'feed_success_rate',
+    "filled_gut_ratio": 'filled_gut_ratio',
 
     "vel_freq": 'crawler_freq',
     "stride_dst_mean": 'stride_dst_mean_in_mm',
@@ -101,8 +104,7 @@ intermitter_pars = {
 
     "num_feeds": 'num_feeds',
     "feed_dur_ratio": 'feed_dur_ratio',
-    "feeder_reoccurence_rate": 'feeder_reoccurence_rate',
-    "explore2exploit_bias": 'explore2exploit_bias',
+    "explore2exploit_balance": 'explore2exploit_balance',
 
     "num_strides": 'num_strides',
     "stride_dur_ratio": 'stride_dur_ratio',
@@ -264,9 +266,11 @@ effector_collection = {
                 'endpoint': ['stride_scaled_dst_mean', 'stride_dst_mean',
                              'cum_dst', 'cum_scaled_dst',
                              'num_strides', 'stride_dur_ratio', 'vel_freq']},
-    'feeder': {'step': ['length', 'mass', 'amount_eaten', 'feeder_reoccurence_rate', 'explore2exploit_bias'],
-               'endpoint': ['length', 'mass', 'num_feeds', 'feed_success_rate', 'amount_eaten',
-                            'feed_dur_ratio']},
+    'feeder': {
+        'step': ['length', 'mass', 'amount_eaten', 'scaled_amount_eaten',
+                 'explore2exploit_balance', 'filled_gut_ratio', 'amount_absorbed'],
+        'endpoint': ['length', 'mass', 'num_feeds', 'feed_success_rate', 'amount_eaten', 'scaled_amount_eaten',
+                     'feed_dur_ratio', 'amount_absorbed']},
     'deb': {'step': ['deb_f', 'reserve', 'reserve_density',
                      # 'structural_length', 'maturity', 'reproduction','structure','age_in_days',
                      'hunger', 'puppation_buffer', 'cum_dst'],
@@ -274,7 +278,7 @@ effector_collection = {
                 'cum_dst', 'cum_scaled_dst', 'pause_dur_ratio',
                 'num_strides', 'stride_dur_ratio', 'vel_freq',
                 'reserve_density', 'puppation_buffer', 'hunger',
-                'age','birth_time_in_hours', 'puppation_time_in_hours','death_time_in_hours','hours_as_larva'
+                'age', 'birth_time_in_hours', 'puppation_time_in_hours', 'death_time_in_hours', 'hours_as_larva'
             ]},
     'pose': {'step': ['centroid_x', 'centroid_y', 'bend', 'front_orientation', 'rear_orientation'],
              'endpoint': []},

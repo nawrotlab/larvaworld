@@ -9,8 +9,9 @@ from scipy.stats import multivariate_normal
 
 
 class ValueGrid:
-    def __init__(self, space_range, grid_resolution=[100, 100], distribution='uniform', initial_amount=1):
+    def __init__(self, space_range, grid_resolution=[100, 100], distribution='uniform', initial_amount=1, quality=1):
         self.initial_amount = initial_amount
+        self.quality = quality
         if initial_amount>0 :
             self.initial_value=1
         else :
@@ -144,8 +145,8 @@ class GaussianValueLayer(ValueLayer):
         # print(value)
         return value
 
-    # def model(position, width, height):
-    #     return  (height / scipy.stats.norm.pdf(position,position,width)) * scipy.stats.norm.pdf(x, position, width)
+    # def model(pos, width, height):
+    #     return  (height / scipy.stats.norm.pdf(pos,pos,width)) * scipy.stats.norm.pdf(x, pos, width)
 
 
 class DiffusionValueLayer(ValueLayer):

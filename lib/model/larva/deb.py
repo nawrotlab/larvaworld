@@ -11,7 +11,11 @@ from lib.stor.paths import get_parent_dir, Deb_path
 
 class DEB:
     def __init__(self, species='default', steps_per_day=1, cv=0,
-                 aging=False, print_stage_change=False, starvation_strategy=False, base_hunger=0.5):
+                 aging=False, print_stage_change=False, starvation_strategy=False,
+                 base_hunger=0.5, hunger_sensitivity = 10):
+        # self.k_x = k_x
+        # self.base_k_x = 0.3
+        self.hunger_sensitivity = hunger_sensitivity
         self.base_hunger = base_hunger
         self.print_stage_change = print_stage_change
         self.starvation_strategy = starvation_strategy
@@ -116,14 +120,7 @@ class DEB:
         self.dh_rate = 0
         self.age_day = 0
 
-        # I added these because they are required for conversion
-        # self.p_m = None
-        # self.zoom = None
-        # self.kap_int = None
-        # self.E_H__b = None
-        # self.E_H__p = None
-        # self.E_G = None
-        # self.v_rate_int = None
+
 
         if self.species == 'default':
             with open(Deb_path) as tfp:
@@ -147,7 +144,7 @@ class DEB:
 
     def compute_hunger(self):
         try:
-            h = np.clip(self.base_hunger + 10*(1 - self.get_reserve_density()), a_min=0, a_max=1)
+            h = np.clip(self.base_hunger + self.hunger_sensitivity*(1 - self.get_reserve_density()), a_min=0, a_max=1)
             return h
         except:
             return np.nan
@@ -213,8 +210,9 @@ class DEB:
         else:
             self.f = 0
         e = v * (self.U_E / self.V)
-        self.S_C = L ** 2 * (g * e / (g + e)) * (1 + (L / (g * (v / (g * k_M)))))
-        self.S_A = self.f * self.LL
+        self.S_C = L ** 2 * (g * e / (g + e)) * (1 + L*k_M/v)
+        self.S_A = self.f * self.LL #* self.k_x/self.base_k_x
+        # self.S_A = self.f * self.LL
         self.dU_E = self.S_A - self.S_C
         self.e_scaled = e
 
@@ -321,6 +319,8 @@ class DEB:
 
     def convert_parameters(self):
         self.p_am = self.p_m * self.zoom / self.kap_int
+        # print(self.p_am)
+        # self.p_am = self.k_x * self.p_xm
         self.U_H__b_int = self.E_H__b / self.p_am
         self.U_H__e_int = self.E_H__e / self.p_am
         self.U_R__p_int = self.E_R__p / self.p_am
@@ -456,6 +456,9 @@ class DEB:
 
     def get_U_V(self):
         return self.U_V
+
+    def get_V(self):
+        return self.V
 
     def get_reserve(self):
         return self.U_E * self.p_am
@@ -609,8 +612,7 @@ def deb_dict(dataset, id, new_id=None, starvation_hours=[]):
             'reserve': s['reserve'].values.tolist(),
             'reserve_density': s['reserve_density'].values.tolist(),
             'hunger': s['hunger'].values.tolist(),
-            'feeder_reoccurence_rate': s['feeder_reoccurence_rate'].values.tolist(),
-            'explore2exploit_bias': s['explore2exploit_bias'].values.tolist(),
+            'explore2exploit_balance': s['explore2exploit_balance'].values.tolist(),
             # 'structural_length': s['structural_length'].values.tolist(),
             # 'maturity': s['maturity'].values.tolist(),
             # 'reproduction': s['reproduction'].values.tolist(),

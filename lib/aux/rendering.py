@@ -13,7 +13,6 @@ from lib.aux import functions as fun
 # os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x, y)
 
 
-
 class GuppiesViewer(object):
     def __init__(self, width, height, caption="", fps=10, dt=0.1, display=True, record_video_to=None,
                  record_image_to=None):
@@ -36,7 +35,7 @@ class GuppiesViewer(object):
         else:
             flags = pygame.HWSURFACE | pygame.DOUBLEBUF
             self._window = pygame.Surface((width, height), flags)
-
+        # raise
 
         if record_video_to:
             import imageio
@@ -69,6 +68,7 @@ class GuppiesViewer(object):
     def draw_circle(self, position=(0, 0), radius=.1, color=(0, 0, 0), filled=True, width=.01):
         position = self._transform(position)
         radius = int(self._scale[0, 0] * radius)
+        # width = 0 if filled else int(np.ceil(radius * width))
         width = 0 if filled else int(self._scale[0, 0] * width)
         pygame.draw.circle(self._window, color, position, radius, width)
 
@@ -80,18 +80,17 @@ class GuppiesViewer(object):
     def draw_grid(self, all_vertices, colors, filled=True, width=.01):
         all_vertices = [[self._transform(v) for v in vertices] for vertices in all_vertices]
         width = 0 if filled else int(self._scale[0, 0] * width)
-        for vertices, color in zip(all_vertices, colors) :
+        for vertices, color in zip(all_vertices, colors):
             pygame.draw.polygon(self._window, color, vertices, 0 if filled else width)
-
 
     def draw_polyline(self, vertices, color=(0, 0, 0), closed=False, width=.01, dynamic_color=False):
         vertices = [self._transform(v) for v in vertices]
         width = int(self._scale[0, 0] * width)
-        if not dynamic_color :
+        if not dynamic_color:
             pygame.draw.lines(self._window, color, closed, vertices, width)
-        else :
-            for v1,v2,c in zip(vertices[:-1],vertices[1:],color) :
-                pygame.draw.lines(self._window, c, closed, [v1,v2], width)
+        else:
+            for v1, v2, c in zip(vertices[:-1], vertices[1:], color):
+                pygame.draw.lines(self._window, c, closed, [v1, v2], width)
 
     def draw_line(self, start, end, color=(0, 0, 0), width=.01):
         start = self._transform(start)
@@ -132,6 +131,12 @@ class GuppiesViewer(object):
 
     def render(self):
         if self._display:
+            # for event in pygame.event.get():
+            #     if event.type == pygame.QUIT:
+            #         print('DD')
+            #     elif event.type == pygame.VIDEORESIZE:
+            #         print('FF')
+
             pygame.display.flip()
             image = pygame.surfarray.pixels3d(self._window)
             self._t.tick(self._fps)
@@ -141,6 +146,7 @@ class GuppiesViewer(object):
             self._video_writer.append_data(np.flipud(np.rot90(image)))
         if self._image_writer:
             self._image_writer.append_data(np.flipud(np.rot90(image)))
+        # return image
 
     @staticmethod
     def close_requested():
@@ -150,6 +156,7 @@ class GuppiesViewer(object):
 
     def close(self):
         pygame.display.quit()
+        # pygame.quit()
         if self._video_writer:
             self._video_writer.close()
         if self._image_writer:
@@ -157,12 +164,79 @@ class GuppiesViewer(object):
         del self
         print('Screen closed')
 
-class ScreenItem :
+
+class ScreenItem:
     def __init__(self, color=None):
-        if color is None :
-            self.color=(0, 0, 0)
-        else :
+        if color is None:
+            self.color = (0, 0, 0)
+        else:
             self.color = color
+
+
+class InputBox:
+    def __init__(self, visible=False, text='', color_inactive=None, color_active=None,
+                 screen_pos=None, linewidth=0.01, show_frame=False):
+        self.screen_pos = screen_pos
+        self.linewidth = linewidth
+        self.show_frame = show_frame
+        self.set_shape(self.screen_pos)
+        if color_active is None:
+            color_active = pygame.Color('dodgerblue2')
+        self.color_active = color_active
+        if color_inactive is None:
+            color_inactive = pygame.Color('lightskyblue3')
+        self.color_inactive = color_inactive
+        self.color = self.color_inactive
+        self.visible = visible
+        self.active = False
+        self.font = pygame.font.Font(None, 32)
+        self.text = text
+
+    def draw(self, viewer):
+        if self.visible and self.shape is not None:
+            # Render the current text.
+            txt_surface = self.font.render(self.text, True, self.color)
+            # Blit the text.
+            viewer.draw_text_box(txt_surface, (self.shape.x + 5, self.shape.y + 5))
+            # viewer._window.blit(txt_surface, (self.shape.x + 5, self.shape.y + 5))
+            if self.show_frame :
+                # Blit the input_box rect.
+                viewer.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
+                # pygame.draw.rect(viewer._window, self.color, self.shape, self.linewidth)
+
+    def switch(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            # self.set_shape(event.pos)
+            # If the user clicked on the input_box rect.
+            if self.shape.collidepoint(event.pos):
+                # Toggle the active variable.
+                self.active = not self.active
+            else:
+                self.active = False
+                # Change the current color of the input box.
+            self.color = self.color_active if self.active else self.color_inactive
+
+    def get_input(self, event):
+        if self.visible:
+            self.switch(event)
+            if event.type == pygame.KEYDOWN:
+                if self.active:
+                    if event.key == pygame.K_RETURN:
+                        self.submit()
+                    elif event.key == pygame.K_BACKSPACE:
+                        self.text = self.text[:-1]
+                    else:
+                        self.text += event.unicode
+
+    def submit(self):
+        print(self.text)
+        self.visible = False
+
+    def set_shape(self, pos):
+        if pos is None or any(np.isnan(pos)) :
+            self.shape=None
+        else :
+            self.shape = pygame.Rect(pos[0], pos[1], 140, 32)
 
 
 class SimulationClock(ScreenItem):
@@ -178,14 +252,14 @@ class SimulationClock(ScreenItem):
         self.hour = 0
         self.counter = 0
 
-        self.timer_on=False
-        self.next_on=None
-        self.next_off=None
+        self.timer_on = False
+        self.next_on = None
+        self.next_off = None
         self.timer_opened = False
         self.timer_closed = False
 
     def tick_clock(self):
-        self.counter+=1
+        self.counter += 1
         self.dmsecond += self.sim_step_in_dms
         if self.dmsecond >= 100:
             self.second += 1
@@ -244,42 +318,38 @@ class SimulationClock(ScreenItem):
         viewer.draw_text_box(self.dmsecond_font, self.msecond_font_r)
 
     def set_timer(self, on_ticks, off_ticks):
-        self.Ndurs=len(on_ticks)
-        self.timer_on_ticks, self.timer_off_ticks= on_ticks, off_ticks
+        self.Ndurs = len(on_ticks)
+        self.timer_on_ticks, self.timer_off_ticks = on_ticks, off_ticks
         self.dur_idx = 0
-        self.next_on, self.next_off= self.timer_on_ticks[self.dur_idx], self.timer_off_ticks[self.dur_idx]
-        self.timer_on=False
+        self.next_on, self.next_off = self.timer_on_ticks[self.dur_idx], self.timer_off_ticks[self.dur_idx]
+        self.timer_on = False
 
     def check_timer(self):
         self.timer_opened = False
         self.timer_closed = False
-        if not self.timer_on and self.next_on is not None :
-            if self.counter>=self.next_on :
-                self.timer_on=True
-                self.timer_opened=True
-                self.dur_idx +=1
-                if self.dur_idx<self.Ndurs :
-                    self.next_on=self.timer_on_ticks[self.dur_idx]
-                else :
-                    self.next_on =None
-        elif self.timer_on and self.next_off is not None :
-            if self.counter>=self.next_off :
-                self.timer_on=False
+        if not self.timer_on and self.next_on is not None:
+            if self.counter >= self.next_on:
+                self.timer_on = True
+                self.timer_opened = True
+                self.dur_idx += 1
+                if self.dur_idx < self.Ndurs:
+                    self.next_on = self.timer_on_ticks[self.dur_idx]
+                else:
+                    self.next_on = None
+        elif self.timer_on and self.next_off is not None:
+            if self.counter >= self.next_off:
+                self.timer_on = False
                 self.timer_closed = True
-                if self.dur_idx<self.Ndurs :
-                    self.next_off=self.timer_off_ticks[self.dur_idx]
-                else :
-                    self.next_on =None
-
-
+                if self.dur_idx < self.Ndurs:
+                    self.next_off = self.timer_off_ticks[self.dur_idx]
+                else:
+                    self.next_on = None
 
 
 class SimulationScale(ScreenItem):
 
     def __init__(self, real_width, scaling_factor, color=None):
-
         super().__init__(color=color)
-
 
         # Get 1/10 of max real dimension, transform it to mm and find the closest reasonable scale
         real_width_in_mm = real_width * 1000
@@ -320,21 +390,19 @@ class SimulationScale(ScreenItem):
             pygame.draw.line(viewer._window, self.color, line[0], line[1], 1)
         viewer.draw_text_box(self.scale_font, self.scale_font_r)
 
+
 class SimulationState(ScreenItem):
 
     def __init__(self, model, color=None):
-
         super().__init__(color=color)
-        self.model=model
-        self.Nagents=0
+        self.model = model
+        self.Nagents = 0
 
     def update_state(self):
-        c=np.isnan(self.model.get_fly_positions())
-        self.Nagents=len(c[c[:,0]==False])
-
+        c = np.isnan(self.model.get_fly_positions())
+        self.Nagents = len(c[c[:, 0] == False])
 
     def render_state(self, width, height):
-
         x_pos = int(width * 0.9)
         y_pos = int(height * 0.94)
         font_size = int(1 / 40 * width)
@@ -362,7 +430,7 @@ def draw_velocity_arrow(_screen, agent):
 
 
 def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, trajectory_colors=None):
-    trajs=[fly.trajectory for fly in agents]
+    trajs = [fly.trajectory for fly in agents]
     if trajectory_colors is not None:
         traj_cols = [trajectory_colors.xs(fly.unique_id, level='AgentID') for fly in agents]
     else:
@@ -383,17 +451,17 @@ def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, trajector
         else:
             traj_x = np.array([x for x, y in traj])
             ds, de = fun.parse_array_at_nans(traj_x)
-            parsed_traj=[traj[s:e] for s,e in zip(ds,de)]
-            parsed_traj_col=[traj_col[s:e] for s,e in zip(ds,de)]
+            parsed_traj = [traj[s:e] for s, e in zip(ds, de)]
+            parsed_traj_col = [traj_col[s:e] for s, e in zip(ds, de)]
 
-        for t,c in zip(parsed_traj, parsed_traj_col):
+        for t, c in zip(parsed_traj, parsed_traj_col):
             # If trajectory has one point, skip
             if len(t) < 2:
                 pass
             else:
-                if trajectory_colors is None :
+                if trajectory_colors is None:
                     screen.draw_polyline(t, color=fly.default_color, closed=False, width=0.003 * space_dims[0])
-                else :
-                    c=[tuple(float(x) for x in s.strip('()').split(',')) for s in c]
-                    c=[s if not np.isnan(s).any() else (255,0,0) for s in c]
+                else:
+                    c = [tuple(float(x) for x in s.strip('()').split(',')) for s in c]
+                    c = [s if not np.isnan(s).any() else (255, 0, 0) for s in c]
                     screen.draw_polyline(t, color=c, closed=False, width=0.01 * space_dims[0], dynamic_color=True)

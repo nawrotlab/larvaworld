@@ -7,7 +7,11 @@ from Box2D import b2Vec2
 # TODO Find a way to use this. Now if changed everything is scal except locomotion. It seems that
 #  ApplyForceToCenter function does not scale
 # _world_scale = np.int(100)
+from matplotlib.patches import Circle
+from shapely.geometry import Polygon, Point
+
 import lib.aux.functions as fun
+from lib.aux.rendering import InputBox
 from lib.stor.paths import LarvaShape_path
 
 
@@ -31,7 +35,7 @@ class Box2DSegment:
         self.facing_axis = facing_axis
 
         # CAUTION
-        # This sets the body's origin (where position, orientation is derived from)
+        # This sets the body's origin (where pos, orientation is derived from)
         # self._body.localCenter = b2Vec2(0.0, 0.0)
         # this sets the body' center of mass (where velocity is set etc)
         # self._body.massData.center= self._body.localCenter
@@ -50,7 +54,7 @@ class Box2DSegment:
     def get_position(self):
         # CAUTION CAUTION This took me a whole day.
         # worldCenter gets the point where the torque is applied
-        # position gets a point (tried to identify whether it is center of mass or origin, no luck) unknown how
+        # pos gets a point (tried to identify whether it is center of mass or origin, no luck) unknown how
         pos = self._body.worldCenter
         # print(pos)
         return np.asarray(pos)
@@ -115,7 +119,7 @@ class Box2DSegment:
 
     def get_state(self):
         return self.get_pose()
-        # return tuple((*self._body.position, self._body.angle_to_x_axis))
+        # return tuple((*self._body.pos, self._body.angle_to_x_axis))
 
     def get_local_point(self, point):
         return np.asarray(self._body.GetLocalPoint(np.asarray(point)))
@@ -180,82 +184,6 @@ class Box2DSegment:
     def plot(self, axes, **kwargs):
         raise NotImplementedError('The plot method needs to be implemented by the subclass of Box2DSegment.')
 
-
-# class Quad(Box2DSegment):
-#     def __init__(self, width, height, **kwargs):
-#         super().__init__(**kwargs)
-#
-#         self._width = width
-#         self._height = height
-#
-#         self._fixture = self._body.CreatePolygonFixture(
-#             box=Box2D.b2Vec2(self._width / 2, self._height / 2),
-#             density=self.physics_pars['density'],
-#             friction=self.physics_pars['friction'],
-#             restitution=self.physics_pars['restitution'],
-#             # radius=.000001
-#         )
-#
-#     @property
-#     def width(self):
-#         return self._width
-#
-#     @property
-#     def height(self):
-#         return self._height
-#
-#     @property
-#     def vertices(self):
-#         return np.asarray([[self._body.GetWorldPoint(v) for v in self._fixture.shape.vertices]])
-#
-#     def draw(self, viewer):
-#         viewer.draw_polygon(self.vertices[0], filled=True, color=self._color)
-#
-#     def plot(self, axes, **kwargs):
-#         from simulation.tools.plotting import plot_rect
-#         return plot_rect(axes, self, **kwargs)
-#
-#     def get_width(self):
-#         return self._width
-#
-#     def get_height(self):
-#         return self._height
-
-
-# class Circle(Box2DSegment):
-#     def __init__(self, radius, **kwargs):
-#         super().__init__(**kwargs)
-#
-#         self._radius = radius
-#
-#         self._fixture = self._body.CreateCircleFixture(
-#             radius=self._radius,
-#             density=self.physics_pars['density'],
-#             friction=self.physics_pars['friction'],
-#             restitution=self.physics_pars['restitution']
-#         )
-#
-#     @property
-#     def width(self):
-#         return 2 * self._radius
-#
-#     @property
-#     def height(self):
-#         return 2 * self._radius
-#
-#     def draw(self, viewer):
-#         viewer.draw_aacircle(position=self.get_position(), radius=self._radius, color=self._color)
-#
-#     @property
-#     def vertices(self):
-#         return np.array([[self.get_position()]])
-#
-#     def get_radius(self):
-#         return self._radius
-#
-#     def plot(self, axes, **kwargs):
-#         from simulation.tools.plotting import plot_circle
-#         return plot_circle(axes, self, **kwargs)
 
 
 class Box2DPolygon(Box2DSegment):
@@ -322,6 +250,8 @@ class Box2DPolygon(Box2DSegment):
     def draw(self, viewer):
         for i, vertices in enumerate(self.vertices):
             viewer.draw_polygon(vertices, filled=True, color=self._color)
+
+
 
     # def plot(self, axes, **kwargs):
     #     from simulation.tools.plotting import plot_polygon
@@ -415,8 +345,9 @@ class DefaultPolygon:
 
 class LarvaBody:
     def __init__(self, model, pos=None, orientation=None,
-                 initial_length=None, length_std=0, Nsegs=1, interval=0, joint_type=None,
+                 initial_length=None, length_std=0, Nsegs=1, interval=0, joint_type={'distance': 2, 'revolute': 1},
                  seg_ratio=None, friction_pars={'maxForce': 10 ** 0, 'maxTorque': 10 ** -1}, **kwargs):
+
         # FIXME get rid of this
         if not 'density' in locals():
             self.density = 300.0
@@ -455,6 +386,11 @@ class LarvaBody:
         if self.real_mass is None:
             self.compute_mass_from_length()
 
+        if not hasattr(self, 'V'):
+            self.V = None
+        if self.V is None:
+            self.V = self.get_real_length()**3
+
         self.segs = self.generate_segs(pos, orientation, joint_type=joint_type)
 
         self.contour = self.set_contour()
@@ -492,6 +428,7 @@ class LarvaBody:
 
     def adjust_body_vertices(self):
         self.sim_length = self.real_length * self.model.scaling_factor
+        self.radius=self.sim_length/2
         self.seg_lengths = [self.sim_length * r for r in self.seg_ratio]
         self.seg_vertices = [v * self.sim_length for v in self.base_seg_vertices]
         for vec, seg in zip(self.seg_vertices, self.segs):
@@ -792,7 +729,7 @@ class LarvaBody:
 
     def draw_sensor(self, viewer, sensor):
         viewer.draw_circle(radius=self.sim_length / 20,
-                           # position=self.get_olfactor_position(),
+                           # pos=self.get_olfactor_position(),
                            position=self.get_sensor_position(sensor),
                            filled=True, color=(255, 0, 0), width=.1)
 
@@ -807,6 +744,12 @@ class LarvaBody:
             viewer.draw_circle(radius=self.seg_lengths[0] / 2,
                                position=self.get_global_front_end_of_head(),
                                filled=True, color=(255, 0, 0), width=.1)
+        if self.selected:
+            r=self.seg_lengths[0] / 2
+            viewer.draw_circle(radius=r,
+                               position=self.get_global_midspine_of_body(),
+                               filled=False, color=self.model.selection_color, width=r/5)
+
         # for s in self.get_sensors() :
         #     self.draw_sensor(viewer, s)
 
@@ -925,4 +868,7 @@ class LarvaBody:
     def set_head_edges(self):
         self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)
         self.local_front_end_of_head = (np.max(self.seg_vertices[0][0], axis=0)[0], 0)
+
+
+
 

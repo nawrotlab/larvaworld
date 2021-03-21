@@ -72,12 +72,12 @@ class Oscillator(Effector):
 class Crawler(Oscillator):
     def __init__(self, waveform, initial_amp=None, square_signal_duty=None, step_to_length_mu=None,
                  step_to_length_std=0,
-                 gaussian_window_std=None, max_vel_phase=np.pi, noise=0, **kwargs):
+                 gaussian_window_std=None, max_vel_phase=np.pi, crawler_noise=0, **kwargs):
         super().__init__(**kwargs)
         self.waveform = waveform
         self.activity = 0
         self.amp = initial_amp
-        self.scaled_noise = noise
+        self.scaled_noise = crawler_noise
         # self.noise = self.scaled_noise * self.
         if self.waveform == 'square':
             # the percentage of the crawler iteration for which linear force/velocity is applied to the body.
@@ -145,7 +145,7 @@ class Crawler(Oscillator):
         value = window[current_t]
         # print(self.t/self.dt, self.timesteps_per_iteration, current_t)
         return value
-        # FIXME This is just the x position on the window. But right now only phi iterates around so I use phi.
+        # FIXME This is just the x pos on the window. But right now only phi iterates around so I use phi.
         # return window[round(self.phi*self.timesteps_per_iteration/(2*np.pi))]
 
     def square_oscillator(self):
@@ -156,7 +156,7 @@ class Crawler(Oscillator):
     # Attention. This equation generates the SCALED velocity per stride
     # See vel_curve.ipynb in notebooks/calibration/crawler
     def realistic_oscillator(self, phi, freq, sd=0.24, k=+1, l=0.6, max_vel_phase=np.pi):
-        a = freq * sd * (k + l * np.cos(phi - max_vel_phase))
+        a = freq * sd * (k + l * np.cos(phi - max_vel_phase*np.pi))
         # a = (np.cos(-phi) * l + k) * sd * freq
         return a
 
@@ -197,9 +197,9 @@ class Turner(Oscillator, Effector):
             self.amp_range = amp_range
             self.scaled_noise = np.abs(self.initial_amp * self.noise)
 
-    def compute_angular_activity(self, olfactory_valence=0):
+    def compute_angular_activity(self, olfactory_activation=0):
         if self.neural:
-            self.update_activation(olfactory_valence)
+            self.update_activation(olfactory_activation)
             if self.effector:
                 activity = self.compute_activity(activation=self.activation)
 
@@ -262,12 +262,12 @@ class Turner(Oscillator, Effector):
     # The olfactory input will lie in the range (-1,1) in the sense of positive (going up the gradient)  will cause
     # less turns and negative (going down the gradient) will cause more turns. If this works in chemotaxis,
     # this range (-1,1) could be regarded as the cumulative valence of olfactory input.
-    def update_activation(self, olfactory_valence):
+    def update_activation(self, olfactory_activation):
         # Map valence modulation to sigmoid accounting for the non middle location of base_activation
         b = self.base_activation
         rd, ru = self.range_downwards, self.range_upwards
         # d, u = self.activation_range
-        v = olfactory_valence
+        v = olfactory_activation
         if v == 0:
             a = 0
         elif v < 0:
@@ -279,7 +279,7 @@ class Turner(Oscillator, Effector):
         self.activation = b + a + noise
         # self.activation = np.clip(b + a + noise, a_min=d, a_max=u)
         # TODO Use sigmoid function as an alternative
-        # sig = sigmoid((olfactory_valence + 1) / 2)
+        # sig = sigmoid((olfactory_activation + 1) / 2)
 
 
 class NeuralOscillator:
@@ -344,8 +344,9 @@ class NeuralOscillator:
 
 
 class Feeder(Oscillator):
-    def __init__(self, model, feed_radius, max_feed_amount_ratio, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, model, feed_radius, max_feed_amount_ratio,
+                 feeder_initial_freq=2, feeder_freq_range=[1,3], **kwargs):
+        super().__init__(initial_freq = feeder_initial_freq, freq_range = feeder_freq_range, **kwargs)
         self.model = model
         self.feed_radius = feed_radius
         self.max_feed_amount_ratio = max_feed_amount_ratio
@@ -392,19 +393,19 @@ class Oscillator_coupling():
     def resolve_coupling(self, crawler, feeder):
         if crawler is not None:
             if crawler.effector:
-                phi = crawler.phi
+                phi = crawler.phi/np.pi
                 r = self.crawler_interference_free_window
                 s = self.crawler_interference_start
                 if crawler.waveform == 'realistic' and not (s <= phi <= (s + r)):
                     return True
-                elif crawler.waveform == 'square' and not phi <= 2 * np.pi * crawler.square_signal_duty:
+                elif crawler.waveform == 'square' and not phi <= 2 * crawler.square_signal_duty:
                     return True
                 elif crawler.waveform == 'gaussian' and not (s <= phi <= (s + r)):
                     return True
 
         if feeder is not None:
             if feeder.effector:
-                phi = feeder.phi
+                phi = feeder.phi/np.pi
                 r = self.feeder_interference_free_window
                 s = self.feeder_interference_start
                 if not (s <= phi <= (s + r)):
@@ -420,8 +421,8 @@ class Intermitter(Effector):
                  feeder=None, intermittent_feeder=False,
                  turner=None, intermittent_turner=False, turner_prepost_lag=[0, 0],
                  pause_dist=None, stridechain_dist=None,
-                 feeder_reoccurence_decay_coef=1,
-                 explore2exploit_bias=0.5,
+                 EEB_decay_coef=1,
+                 EEB=0.5,
                  **kwargs):
         super().__init__(**kwargs)
         self.nengo_manager = nengo_manager
@@ -429,8 +430,8 @@ class Intermitter(Effector):
         self.crawler = crawler
         self.turner = turner
         self.feeder = feeder
-        self.explore2exploit_bias = explore2exploit_bias
-        self.base_explore2exploit_bias = explore2exploit_bias
+        self.EEB = EEB
+        self.base_EEB = EEB
         if crawler is None:
             self.intermittent_crawler = False
         else:
@@ -446,18 +447,15 @@ class Intermitter(Effector):
 
         if self.nengo_manager is None:
             # self.feeder_reoccurence_rate_on_success = feeder_reoccurence_rate_on_success
-            self.feeder_reoccurence_decay_coef = feeder_reoccurence_decay_coef
-            self.feeder_reoccurence_rate = 1 - self.explore2exploit_bias
+            self.EEB_decay_coef = EEB_decay_coef
+            # self.feeder_reoccurence_rate = 1 - self.EEB
             # self.feeder_reoccurence_rate = self.feeder_reoccurence_rate_on_success
-            self.feeder_reoccurence_exp_coef = np.exp(-self.feeder_reoccurence_decay_coef * self.dt)
+            self.EEB_exp_coef = np.exp(-self.EEB_decay_coef * self.dt)
 
         self.turner_pre_lag_ticks = int(turner_prepost_lag[0] / self.dt)
         self.turner_post_lag_ticks = int(turner_prepost_lag[1] / self.dt)
 
         self.reset()
-        # self.activity_counter = 0
-        # self.current_activity_duration = 10
-
         # Rest-bout duration distribution
         # Trying to fit curve in fig 3 Ueno(2012)
         # For a=1.5 as mentioned we don't get visual fit. We try other values
@@ -521,6 +519,8 @@ class Intermitter(Effector):
         self.stridechain_id = np.nan
         self.stridechain_length = np.nan
 
+        # self.feed_bout_dur = np.nan
+
     def reset(self):
         # Initialize internal variables
         self.initialize()
@@ -574,14 +574,14 @@ class Intermitter(Effector):
 
     def disinhibit_locomotion(self):
         if self.nengo_manager is None:
-            if np.random.uniform(0, 1, 1) <= self.explore2exploit_bias:
+            if np.random.uniform(0, 1, 1) >= self.EEB:
                 if self.intermittent_crawler:
                     self.crawler.start_effector()
             else:
                 if self.intermittent_feeder:
                     self.feeder.start_effector()
         else:
-            if np.random.uniform(0, 1, 1) <= self.explore2exploit_bias:
+            if np.random.uniform(0, 1, 1) >= self.EEB:
                 self.crawler.set_freq(self.crawler.default_freq)
             else:
                 self.feeder.set_freq(self.feeder.default_freq)
@@ -619,7 +619,7 @@ class Intermitter(Effector):
                         self.register_stridechain()
             if self.feeder:
                 if self.feeder.complete_iteration:
-                    if np.random.uniform(0, 1, 1) > self.feeder_reoccurence_rate:
+                    if np.random.uniform(0, 1, 1) >= self.EEB:
                         self.start_effector()
         else:
             if not self.effector:
@@ -719,7 +719,7 @@ class BranchIntermitter(Effector):
 
 class Olfactor(Effector):
     def __init__(self, odor_layers=None, olfactor_gain_mean=None, olfactor_gain_std=None,
-                 activation_range=[-1.0, 1.0], perception='log', decay_coef=1, noise=0, **kwargs):
+                 activation_range=[-1.0, 1.0], perception='log', decay_coef=1, olfactor_noise=0, **kwargs):
         super().__init__(**kwargs)
         if activation_range is None:
             activation_range = [-1, 1]
@@ -727,9 +727,8 @@ class Olfactor(Effector):
         self.decay_coef = decay_coef
         self.odor_layers = odor_layers
         self.num_layers = len(odor_layers)
-        self.noise = noise
+        self.noise = olfactor_noise
         self.reset()
-
         ms, ss = olfactor_gain_mean, olfactor_gain_std
         Nms, Nss = len(ms), len(ss)
 
@@ -806,17 +805,17 @@ class Olfactor(Effector):
 #     # The olfactory input will lie in the range (-1,1) in the sense of positive (going up the gradient)  will cause
 #     # less turns and negative (going down the gradient) will cause more turns. If this works in chemotaxis,
 #     # this range (-1,1) could be regarded as the cumulative valence of olfactory input.
-#     def update_activation(self, olfactory_valence):
+#     def update_activation(self, olfactory_activation):
 #         # Map valence modulation to sigmoid accounting for the non middle location of base_activation
-#         if olfactory_valence < 0:
-#             self.activity = self.base_activation + self.range_downwards * olfactory_valence
-#         elif olfactory_valence > 0:
-#             self.activity = self.base_activation + self.range_upwards * olfactory_valence
+#         if olfactory_activation < 0:
+#             self.activity = self.base_activation + self.range_downwards * olfactory_activation
+#         elif olfactory_activation > 0:
+#             self.activity = self.base_activation + self.range_upwards * olfactory_activation
 #         else:
 #             self.activity = self.base_activation
 #
-#     def step(self, olfactory_valence):
-#         self.update_activation(olfactory_valence)
+#     def step(self, olfactory_activation):
+#         self.update_activation(olfactory_activation)
 #         return self.activity
 class Brain():
     def __init__(self, agent, modules, conf):
@@ -864,10 +863,10 @@ class DefaultBrain(Brain):
         else:
             self.olfactor = None
 
-        if self.modules['MB'] :
-            self.MB = None
+        if self.modules['memory'] :
+            self.memory = None
         else :
-            self.MB = None
+            self.memory = None
 
     def run(self, odor_concentrations, agent_length, food_detected):
         if self.intermitter:
@@ -882,8 +881,8 @@ class DefaultBrain(Brain):
 
         feed_success=feed_motion and food_detected
 
-        if self.MB :
-            # self.MB.step(odor_concentrations, feed_success)
+        if self.memory :
+            # self.memory.step(odor_concentrations, feed_success)
             pass
 
         if self.crawler:

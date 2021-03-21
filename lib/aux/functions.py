@@ -813,6 +813,8 @@ def random_colors(n):
         ret.append(np.array([r, g, b]))
     return ret
 
+def round2significant(a, significant_digits) :
+    return round(a, significant_digits - int(math.floor(math.log10(abs(a)))) - 1)
 
 # Create a bilaterally symmetrical 2D contour with the long axis along x axis
 

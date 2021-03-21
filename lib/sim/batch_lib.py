@@ -19,7 +19,7 @@ from lib.anal.plotting import plot_heatmap_PI, plot_endpoint_scatter, plot_debs,
     plot_endpoint_params
 from lib.conf.larva_modes import *
 from lib.model.larva.deb import deb_dict, deb_default
-from lib.sim.single_run import run_sim, generate_config
+from lib.sim.single_run import run_sim
 from lib.aux.functions import flatten_dict, reconstruct_dict, flatten_list
 from lib.stor.paths import BatchRunFolder
 from lib.stor.larva_dataset import LarvaDataset
@@ -49,33 +49,33 @@ Examples of this default batch run are given in  :
 '''
 
 
-def batch_default(experiment, batch_config, Nagents, sim_time, params, values=None, par_space_steps=3):
-    batch_id = f'{experiment}_batchrun'
-    batch_idx = 0
-
-    sim_config = generate_config(experiment=experiment, Nagents=Nagents, sim_time=sim_time, config=None)
-
-    # Collect only the endpoint parameter required for fitting
-    sim_config['sim_params']['collect_effectors'] = ['']
-    sim_config['sim_params']['collected_step_parameters'] = ['']
-    sim_config['sim_params']['collected_endpoint_parameters'] = [batch_config['fit_par']]
-
-    if values is None:
-        space = grid_search_dict(params, batch_config['ranges'], Ngrid=par_space_steps)
-    else:
-        values_dict = dict(zip(params, values))
-        space = cartesian_product(values_dict)
-
-    batch_run(batch_id=batch_id,
-              batch_idx=batch_idx,
-              space=space,
-              save_data_in_hdf5=False,
-              process_method=default_processing,
-              post_process_method=post_processing,
-              final_process_method=null_final_processing,
-              sim_config=sim_config,
-              config=batch_config
-              )
+# def batch_default(experiment, batch_config, Nagents, sim_time, params, values=None, par_space_steps=3):
+#     batch_id = f'{experiment}_batchrun'
+#     batch_idx = 0
+#
+#     sim_config = generate_config(experiment=experiment, Nagents=Nagents, sim_time=sim_time, config=None)
+#
+#     # Collect only the endpoint parameter required for fitting
+#     sim_config['sim_params']['collect_effectors'] = ['']
+#     sim_config['sim_params']['collected_step_parameters'] = ['']
+#     sim_config['sim_params']['collected_endpoint_parameters'] = [batch_config['fit_par']]
+#
+#     if values is None:
+#         space = grid_search_dict(params, batch_config['ranges'], Ngrid=par_space_steps)
+#     else:
+#         values_dict = dict(zip(params, values))
+#         space = cartesian_product(values_dict)
+#
+#     batch_run(batch_id=batch_id,
+#               batch_idx=batch_idx,
+#               space=space,
+#               save_data_in_hdf5=False,
+#               process_method=default_processing,
+#               post_process_method=post_processing,
+#               final_process_method=null_final_processing,
+#               sim_config=sim_config,
+#               config=batch_config
+#               )
 
 
 def get_best_individuals(traj, ranges=np.nan, fit_par='global_fit', num_individuals=20, minimize=True,
@@ -238,6 +238,8 @@ def deb_processing(traj, dataset=None):
     dataset.deb_analysis()
     deb_f_mean = dataset.endpoint_data['deb_f_mean'].mean()
     traj.f_add_result('deb_f_mean', deb_f_mean, comment='The average mean deb functional response')
+    deb_f_mean_deviation = np.abs(dataset.endpoint_data['deb_f_mean'].mean()-1)
+    traj.f_add_result('deb_f_mean_deviation', deb_f_mean_deviation, comment='The deviation of average mean deb functional response from 1')
     hunger = dataset.endpoint_data['hunger'].mean()
     traj.f_add_result('hunger', hunger, comment='The average final hunger')
     reserve_density = dataset.endpoint_data['reserve_density'].mean()

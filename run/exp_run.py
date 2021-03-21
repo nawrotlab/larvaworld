@@ -25,18 +25,14 @@ sim_kwargs = prs.get_sim_kwargs(args)
 exp_kwargs = prs.get_exp_kwargs(args)
 vis_kwargs = prs.get_vis_kwargs(args)
 
-
 sim_config = generate_config(exp, **sim_kwargs, exp_kwargs=exp_kwargs)
-exp_config = {
-              'common_folder': f'single_runs/{exp}',
-              **sim_config}
+sim_config['common_folder'] = f'single_runs/{exp}'
 
-# print(exp_kwargs)
-# raise
-d=run_sim(**exp_config, **vis_kwargs, enrich=True)
+d=run_sim(**sim_config, **vis_kwargs, enrich=True)
 
 if analysis:
     sim_analysis(d, exp)
 
 e=time.time()
-print(f'Simulation completed in {e-s}')
+if d is not None :
+    print(f'Simulation completed in {e-s}')

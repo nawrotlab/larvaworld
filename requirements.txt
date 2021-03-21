@@ -31,3 +31,4 @@ corner~=2.1.0
 tqdm~=4.42.1
 progressbar2~=3.53.1
 ipykernel
+PySimpleGUI~=4.34.0

@@ -45,14 +45,16 @@ growth = {'fly_params': growing_rover,
           'draw_mode': draw_behavior,
           # 'starvation_hours': [[0.2, 0.4]]
           }
-growth_2x = {'fly_params': [growing_rover, growing_sitter],
-             'env_params': growth_exp_np,
-             'collect_effectors': ['feeder', 'deb'],
-             'traj_mode': no_traj,
-             # 'step_pars': ['cum_dst'],
-             # 'age_in_hours' : 0
-             # 'starvation_hours': [[24, 48]]
-             }
+growth_2x = {
+    # 'fly_params': growing_sitter,
+    'fly_params': [growing_rover, growing_sitter],
+    'env_params': growth_exp_np,
+    'collect_effectors': ['feeder', 'deb'],
+    'traj_mode': no_traj,
+    # 'step_pars': ['cum_dst'],
+    # 'age_in_hours' : 0
+    # 'starvation_hours': [[24, 48]]
+}
 odor_pref = {'fly_params': odor_larva_x2,
              'env_params': pref_exp_np,
              'collect_effectors': ['olfactor'],
@@ -91,18 +93,19 @@ maze = {'fly_params': odor_larva,
         'end_pars': ['final_dst_to_center', 'final_scaled_dst_to_center',
                      'max_dst_to_center', 'max_scaled_dst_to_center'],
         }
-exp_types = {'feed_scatter': feed_scatter,
-             'feed_patchy': feed_patchy,
-             'feed_grid': feed_grid,
-             'focus': focus,
-             'imitation': imitation,
-             'reorientation': reorientation,
-             'growth': growth,
-             'growth_2x': growth_2x,
-             'odor_pref': odor_pref,
-             'chemorbit': chemorbit,
-             'chemotax': chemotax,
-             'dispersion': dispersion,
-             'dish': dish,
-             'maze': maze,
-             }
+exp_types = {
+    'focus': focus,
+    'dish': dish,
+    'dispersion': dispersion,
+    'chemorbit': chemorbit,
+    'chemotax': chemotax,
+    'odor_pref': odor_pref,
+    'feed_grid': feed_grid,
+    'feed_patchy': feed_patchy,
+    'feed_scatter': feed_scatter,
+    'growth': growth,
+    'growth_2x': growth_2x,
+    'maze': maze,
+    'imitation': imitation,
+    'reorientation': reorientation
+}

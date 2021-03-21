@@ -8,25 +8,25 @@ from lib.model.larva._bodies import LarvaBody
 
 import lib.aux.functions as fun
 
+#
+# class Agent(LarvaBody, abc.ABC):
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+#         # self._id = None
+#
+#     # def set_id(self, id):
+#     #     self._id = id
+#
+#     # @property
+#     # def id(self):
+#     #     return self._id
+#
+#     @abc.abstractmethod
+#     def step(self, time_step):
+#         pass
 
-class Agent(LarvaBody, abc.ABC):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # self._id = None
 
-    # def set_id(self, id):
-    #     self._id = id
-
-    # @property
-    # def id(self):
-    #     return self._id
-
-    @abc.abstractmethod
-    def step(self, time_step):
-        pass
-
-
-class VelocityAgent(Agent, abc.ABC):
+class VelocityAgent(LarvaBody):
     def __init__(self, pos, orientation,
                  lin_vel_coef=1.0, ang_vel_coef=None, lin_force_coef=None, torque_coef=1.0,
                  lin_mode='velocity', ang_mode='torque', body_spring_k=1.0, bend_correction_coef=1.0,
@@ -302,12 +302,7 @@ class VelocityAgent(Agent, abc.ABC):
     def set_body_bend(self, value):
         self.body_bend = value
 
-    def get_position(self):
-        if self.model.physics_engine:
-            return self.get_global_midspine_of_body()
-        else:
-            return self.pos
-            # return self.get_global_midspine_of_body()
+
 
     def update_trajectory(self):
         pos = self.get_position()

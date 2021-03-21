@@ -1,11 +1,14 @@
 import copy
+import random
 import time
 import warnings
-
 import numpy as np
 import progressbar
-import pygame
 import os
+from typing import List, Any, Optional
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+import pygame
 
 from mesa.datacollection import DataCollector
 from shapely.affinity import affine_transform
@@ -13,37 +16,47 @@ from shapely.geometry import Polygon
 from unflatten import unflatten
 from Box2D import b2World, b2ChainShape, b2Vec2, b2EdgeShape
 from mesa.space import ContinuousSpace
-from mesa import Model
+from mesa import Model, Agent
 from mesa.time import RandomActivation
 
 from lib.aux.collecting import TargetedDataCollector
 from lib.model.envs._space import GaussianValueLayer, DiffusionValueLayer, ValueGrid
-from lib.model.larva._larva import LarvaSim
+from lib.model.larva._larva import LarvaSim, Larva
 from lib.model.envs._food import Food
 from lib.anal.plotting import plot_surface
-from lib.aux.rendering import SimulationState
+from lib.aux.rendering import SimulationState, InputBox
 from lib.aux import rendering
 from lib.model.larva._larva import LarvaReplay
 import lib.aux.functions as fun
 from lib.aux.rendering import SimulationClock, SimulationScale, draw_velocity_arrow, draw_trajectories
 from lib.aux.sampling import sample_agents, get_ref_bout_distros
 
-pygame.init()
-max_screen_height = pygame.display.Info().current_h
-sim_screen_dim = int(max_screen_height * 2 / 3)
 
 
-class LarvaWorld(Model):
-    def __init__(self, id, dt,
-                 env_params, Nsteps, save_to,
-                 background_motion=None, use_background=False, black_background=False,
-                 mode='video', image_mode='final', media_name=None,
-                 trajectories=True, trail_decay_in_sec=0.0, trajectory_colors=None,
-                 show_state=True, random_larva_colors=False, color_behavior=False,
-                 draw_head=False, draw_contour=True, draw_centroid=False, draw_midline=True,
-                 show_display=True, video_speed=None, snapshot_interval_in_sec=60 * 60 * 10,
-                 touch_sensors=False, allow_clicks=True):
-        # super.__init__(**kwargs)
+
+class LarvaWorld:
+    def __new__(cls, *args: Any, **kwargs: Any) -> Any:
+
+        pygame.init()
+        max_screen_height = pygame.display.Info().current_h
+        cls.sim_screen_dim = int(max_screen_height * 2 / 3)
+        """Create a new model object and instantiate its RNG automatically."""
+        cls._seed = kwargs.get("seed", None)
+        cls.random = random.Random(cls._seed)
+        return object.__new__(cls)
+
+    def __init__(self, env_params, id='unnamed', dt=0.1, Nsteps=None, save_to='.', background_motion=None,
+                 use_background=False, black_background=False, mode='video', image_mode='final', media_name=None,
+                 trajectories=True, trail_decay_in_sec=0.0, trajectory_colors=None, show_state=True,
+                 random_larva_colors=False, color_behavior=False, draw_head=False, draw_contour=True,
+                 draw_centroid=False, draw_midline=True, show_display=True, video_speed=None,
+                 snapshot_interval_in_sec=60 * 60 * 10, touch_sensors=False, allow_clicks=True, show_clock=True,
+                 *args: [], **kwargs: {'seed': 1}):
+        # super().__init__(*args, **kwargs)
+        self.ids_visible = False
+        self.input_box = InputBox()
+        self.selected_agents = []
+        self.is_running = False
         self.dt = dt
         if video_speed is None:
             self.video_fps = int(1 / dt)
@@ -52,7 +65,8 @@ class LarvaWorld(Model):
         self.allow_clicks = allow_clicks
         self.touch_sensors = touch_sensors
         self.show_display = show_display
-        self.sim_screen_dim = sim_screen_dim
+        self.show_clock = show_clock
+
         self.Nsteps = Nsteps
         self.snapshot_interval = int(snapshot_interval_in_sec / dt)
         self.id = id
@@ -80,10 +94,11 @@ class LarvaWorld(Model):
         self.draw_centroid = draw_centroid
         self.draw_midline = draw_midline
 
-        if background_motion is None:
-            self.background_motion = np.zeros((3, self.Nsteps))
-        else:
-            self.background_motion = background_motion
+        # if background_motion is None:
+        #     self.background_motion = np.zeros((3, self.Nsteps))
+        # else:
+        #     self.background_motion = background_motion
+        self.background_motion = background_motion
         self.use_background = use_background
         self.black_background = black_background
         if self.black_background:
@@ -96,7 +111,7 @@ class LarvaWorld(Model):
             self.screen_color = (200, 200, 200)
             self.scale_clock_color = (0, 0, 0)
             self.default_larva_color = np.array([0, 0, 0])
-
+        self.selection_color = np.array([255, 0, 0])
         self.env_pars = env_params
 
         self.snapshot_counter = 0
@@ -189,12 +204,13 @@ class LarvaWorld(Model):
         self.all_food_schedule = RandomActivation(self)
 
     def destroy(self):
+        self.is_running = False
         del self.active_food_schedule
         del self.active_larva_schedule
         if self._screen is not None:
             self._screen.close()
             self._screen = None
-        # del self
+        pygame.quit()
 
     def delete(self, agent):
         if type(agent) is LarvaSim:
@@ -205,10 +221,10 @@ class LarvaWorld(Model):
     def close(self):
         self.destroy()
 
-    def get_flies(self):
+    def get_flies(self) -> List[Agent]:
         return self.active_larva_schedule.agents
 
-    def get_food(self):
+    def get_food(self) -> List[Agent]:
         # print(self.active_food_schedule.agents)
         return self.active_food_schedule.agents
 
@@ -268,10 +284,12 @@ class LarvaWorld(Model):
                 pass
 
     def draw_aux(self, screen):
-        self.sim_clock.draw_clock(screen)
+        if self.show_clock:
+            self.sim_clock.draw_clock(screen)
         self.sim_scale.draw_scale(screen)
         if self.show_state:
             self.sim_state.draw_state(screen)
+        self.input_box.draw(screen)
 
     def draw_arena(self, screen):
         screen.set_bounds(*self.space_edges_for_screen)
@@ -281,27 +299,31 @@ class LarvaWorld(Model):
             screen.draw_polyline(b, color=self.screen_color, width=0.001 * self.scaling_factor, closed=False)
 
     def render_aux(self):
-        self.sim_clock.render_clock(self.screen_width, self.screen_height)
+        if self.show_clock:
+            self.sim_clock.render_clock(self.screen_width, self.screen_height)
         self.sim_scale.render_scale(self.screen_width, self.screen_height)
         self.sim_state.render_state(self.screen_width, self.screen_height)
 
-    def render(self, velocity_arrows=False, background_motion=[0, 0, 0]):
-
+    def render(self, velocity_arrows=False, tick=None):
+        if self.background_motion is None or tick is None:
+            background_motion = [0, 0, 0]
+        else:
+            background_motion = self.background_motion[:, tick]
         if self._screen is None:
             # caption = self.spec.id if self.spec else ""
             if self.mode == 'video':
-                _video_path = f'{self.media_name}.mp4'
+                self._video_path = f'{self.media_name}.mp4'
             else:
-                _video_path = None
+                self._video_path = None
             if self.mode == 'image':
-                _image_path = f'{self.media_name}_{self.snapshot_counter}.png'
+                self._image_path = f'{self.media_name}_{self.snapshot_counter}.png'
             else:
-                _image_path = None
+                self._image_path = None
 
             self._screen = rendering.GuppiesViewer(self.screen_width, self.screen_height, caption=self.id,
                                                    fps=self.video_fps, dt=self.dt, display=self.show_display,
-                                                   record_video_to=_video_path,
-                                                   record_image_to=_image_path)
+                                                   record_video_to=self._video_path,
+                                                   record_image_to=self._image_path)
             self.render_aux()
             self.set_background()
             self.draw_arena(self._screen)
@@ -310,6 +332,8 @@ class LarvaWorld(Model):
         elif self._screen.close_requested():
             self._screen.close()
             self._screen = None
+            self.is_running = False
+            return None
 
         if self.image_mode != 'overlap':
             self.draw_arena(self._screen)
@@ -320,9 +344,11 @@ class LarvaWorld(Model):
         # render food
         for o in self.get_food():
             o.draw(self._screen)
+            o.id_box.draw(self._screen)
 
         for g in self.get_flies():
             g.draw(self._screen)
+            g.id_box.draw(self._screen)
             # render velocity arrows
             if velocity_arrows:
                 draw_velocity_arrow(self._screen, g)
@@ -330,24 +356,39 @@ class LarvaWorld(Model):
         if self.trajectories:
             draw_trajectories(space_dims=self.space_dims, agents=self.get_flies(), screen=self._screen,
                               decay_in_ticks=self.trail_decay_in_ticks, trajectory_colors=self.trajectory_colors)
+
+        self.evaluate_clicks()
         if self.image_mode != 'overlap':
             self.draw_aux(self._screen)
             self._screen.render()
-
-        if self.allow_clicks :
-            self.evaluate_clicks()
+            # return image
 
     def screen2space_pos(self, pos):
         p = (2 * pos[0] / self.screen_width - 1), -(2 * pos[1] / self.screen_height - 1)
         pp = p[0] * self.space_dims[0] / 2, p[1] * self.space_dims[1] / 2
         return pp
 
-    def _place_food(self, N, positions, food_pars):
-        if N == 0:
-            return
-        food_positions=self._generate_food_positions(N, positions)
-        for i, p in enumerate(food_positions):
-            self.add_food(position=p, food_pars=food_pars)
+    def space2screen_pos(self, pos):
+        p = pos[0] * 2 / self.space_dims[0], pos[1] * 2 / self.space_dims[1]
+        pp = ((p[0] + 1) * self.screen_width / 2, (-p[1] + 1) * self.screen_height / 2)
+        return pp
+
+    def _place_food(self, N=0, positions=None, food_pars={}):
+        pars=copy.deepcopy(food_pars)
+        if len(pars['food_list'])==0 :
+            pars.pop('food_list')
+            if N == 0:
+                return
+            food_positions = self._generate_food_positions(N, positions)
+            for i, p in enumerate(food_positions):
+                self.add_food(position=p, food_pars=pars)
+        else :
+            for f in pars['food_list'] :
+                id=f['unique_id']
+                position = f['pos']
+                f.pop('unique_id')
+                f.pop('pos')
+                self.add_food(id=id,position=position, food_pars=f)
 
     def _generate_food_positions(self, N, positions):
         raw_food_positions = []
@@ -370,10 +411,11 @@ class LarvaWorld(Model):
                           raw_food_positions]
         return food_positions
 
-    def add_food(self, position, food_pars=None):
-        if food_pars is None :
-            food_pars=self.env_pars['food_params']
-        id = self.next_id(type='Food')
+    def add_food(self, position, id=None, food_pars=None):
+        if food_pars is None:
+            food_pars = self.env_pars['food_params']
+        if id is None:
+            id = self.next_id(type='Food')
         f = Food(unique_id=id, position=position, model=self, **food_pars)
         self.active_food_schedule.add(f)
         self.all_food_schedule.add(f)
@@ -385,16 +427,23 @@ class LarvaWorld(Model):
             return f'Food_{N}'
 
     def run(self, Nsteps=None):
+        # pygame.init()
+        self.is_running = True
         if Nsteps is None:
             Nsteps = self.Nsteps
         warnings.filterwarnings('ignore')
         with progressbar.ProgressBar(max_value=Nsteps) as bar:
             if self.mode == 'video':
                 for i in range(Nsteps):
+                    if not self.is_running:
+                        self.close()
+                        return False
                     self.step()
                     # TODO Figure this out for multiple agents. Now only the first is used
-                    self.render(background_motion=self.background_motion[:, i])
+                    self.render(tick=i)
                     bar.update(i)
+                    # print(self.is_running)
+
             elif self.mode == 'image':
                 if self.image_mode == 'snapshots':
                     for i in range(Nsteps):
@@ -429,6 +478,7 @@ class LarvaWorld(Model):
                         bar.update(i)
                 elif isinstance(self, LarvaWorldReplay):
                     raise ValueError('When running a replay, set mode to video or image')
+        return True
 
     def create_borders(self, lines):
         s = self.scaling_factor
@@ -448,17 +498,86 @@ class LarvaWorld(Model):
     def evaluate_clicks(self):
         ev = pygame.event.get()
         for event in ev:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                self.mousebuttondown_time = time.time()
-            elif event.type == pygame.MOUSEBUTTONUP:
-                dur = np.round(time.time() - self.mousebuttondown_time,2)
-                self.mousebuttondown_time = None
-                pos = pygame.mouse.get_pos()
-                p = self.screen2space_pos(pos)
-                f = self.add_food(p)
-                odor_id = list(self.odor_layers.keys())[0]
-                self.odor_layers[odor_id].sources.append(f)
-                f.set_odor(id=odor_id, intensity=dur)
+            if event.type == pygame.QUIT:
+                self._screen.close_requested()
+                # self.close()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_TAB:
+                    self.toggle_ids()
+            if self.allow_clicks:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        p = self.screen2space_pos(pygame.mouse.get_pos())
+                        self.eval_selection(p)
+                        # self.mousebuttondown_time = time.time()
+                    # elif event.button == 3:
+                    #     self.input_box.visible = True
+
+                # elif event.type == pygame.MOUSEBUTTONUP:
+                #     dur = np.round(time.time() - self.mousebuttondown_time, 2)
+                #     self.mousebuttondown_time = None
+                #     p = self.screen2space_pos(pygame.mouse.get_pos())
+                #     f = self.add_food(p)
+                #     odor_id = list(self.odor_layers.keys())[0]
+                #     self.odor_layers[odor_id].sources.append(f)
+                #     f.set_odor(id=odor_id, intensity=dur)
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_DELETE:
+                        for f in self.selected_agents:
+                            self.selected_agents.remove(f)
+                            self.delete(f)
+                self.input_box.get_input(event)
+
+    # def customize(self):
+    #     while self.is_running:
+    #         self.render()
+    #         return self.selected_agents
+
+    def get_place_params(self):
+        return {**self.get_food_placement(), **self.get_larva_placement()}
+
+    def get_image_path(self):
+        return f'{self.media_name}_{self.snapshot_counter}.png'
+        # return None
+
+    def get_food_placement(self):
+        Nfood = len(self.get_food())
+        if Nfood > 0:
+            food_loc = np.array([f.pos for f in self.get_food()]) * 2 / self.arena_dims
+            food_pos = {'mode': 'defined', 'loc': food_loc}
+        else:
+            food_pos = None
+        food_placement = {'initial_num_food': Nfood,
+                          'initial_food_positions': food_pos}
+        return food_placement
+
+    def get_larva_placement(self):
+        Nlarvae = len(self.get_flies())
+        if Nlarvae > 0:
+            larva_loc = np.array([f.current_pos for f in self.get_flies()]) * 2 / self.arena_dims
+            larva_or = np.array([f.front_orientation_in_deg for f in self.get_flies()])
+            larva_pos = {'mode': 'defined', 'loc': larva_loc, 'orientation': larva_or}
+        else:
+            larva_pos = None
+        larva_placement = {'initial_num_flies': Nlarvae,
+                           'initial_fly_positions': larva_pos}
+        return larva_placement
+
+    def toggle_ids(self):
+        self.ids_visible = not self.ids_visible
+        for a in self.get_flies() + self.get_food():
+            a.id_box.visible = self.ids_visible
+
+    def eval_selection(self, p):
+        for f in self.get_food() + self.get_flies():
+            if f.contained(p):
+                if not f.selected:
+                    f.selected = True
+                    self.selected_agents.append(f)
+            else:
+                if f.selected:
+                    f.selected = False
+                    self.selected_agents.remove(f)
 
 
 class LarvaWorldSim(LarvaWorld):
@@ -490,11 +609,12 @@ class LarvaWorldSim(LarvaWorld):
     def populate_space(self, env_pars, larva_pars):
         food_pars = env_pars['food_params']
         if food_pars:
-            self._place_food(env_pars['place_params']['initial_num_food'],
-                             env_pars['place_params']['initial_food_positions'],
+            self._place_food(self.env_pars['place_params']['initial_num_food'],
+                             self.env_pars['place_params']['initial_food_positions'],
                              food_pars=food_pars)
-            self._create_food_grid(space_range=self.space_edges_for_screen,
-                                   food_pars=food_pars)
+            if 'grid_pars' in list(food_pars.keys()) :
+                self._create_food_grid(space_range=self.space_edges_for_screen,
+                                   food_pars=food_pars['grid_pars'])
         # odor_params = environment_params['odor_params']
         self.Nodors, self.odor_layers = self._create_odor_layers(odor_pars=env_pars['odor_params'])
 
@@ -558,9 +678,10 @@ class LarvaWorldSim(LarvaWorld):
                 raise ('Currently only food or larvae can be odor carriers')
             self.allocate_odors(sources,
                                 odor_pars['odor_id_list'],
-                                odor_pars['odor_intensity_list'],
-                                odor_pars['odor_spread_list'],
-                                odor_pars['odor_source_allocation'])
+                                # odor_pars['odor_intensity_list'],
+                                # odor_pars['odor_spread_list'],
+                                odor_pars['odor_source_allocation']
+                                )
             for i, odor_id in enumerate(odor_pars['odor_id_list']):
                 if odor_pars['odor_landscape'] == 'Diffusion':
                     layers[odor_id] = DiffusionValueLayer(world=self.space, unique_id=odor_id,
@@ -671,25 +792,25 @@ class LarvaWorldSim(LarvaWorld):
         ids, all_pars = self._generate_larva_pars(N, larva_pars)
         self._place_larvae(positions, orientations, ids, all_pars)
 
-    def allocate_odors(self, agents, odor_id_list, odor_intensity_list, odor_spread_list,
+    def allocate_odors(self, agents, odor_id_list,
                        allocation_mode='iterative'):
-        ids, intensities, spreads = self.compute_odor_parameters(len(agents), odor_id_list,
-                                                                 odor_intensity_list,
-                                                                 odor_spread_list,
-                                                                 allocation_mode)
-        for a, id, intensity, spread in zip(agents, ids, intensities, spreads):
-            a.set_odor(id, intensity, spread)
+        ids = self.compute_odor_parameters(len(agents), odor_id_list,
+                                           # odor_intensity_list,
+                                           # odor_spread_list,
+                                           allocation_mode)
+        for a, id in zip(agents, ids):
+            a.set_odor_id(id)
 
-    def compute_odor_parameters(self, N, odor_id_list, odor_intensity_list, odor_spread_list,
+    def compute_odor_parameters(self, N, odor_id_list,
                                 allocation_mode='iterative'):
         N_o = len(odor_id_list)
-        N_i = len(odor_intensity_list)
-        N_s = len(odor_spread_list)
+        # N_i = len(odor_intensity_list)
+        # N_s = len(odor_spread_list)
         if allocation_mode == 'iterative':
             ids = [odor_id_list[i % N_o] for i in range(N)]
-            intensities = [odor_intensity_list[i % N_i] for i in range(N)]
-            spreads = [odor_spread_list[i % N_s] for i in range(N)]
-        return ids, intensities, spreads
+            # intensities = [odor_intensity_list[i % N_i] for i in range(N)]
+            # spreads = [odor_spread_list[i % N_s] for i in range(N)]
+        return ids
 
     def step(self):
         # Tick sim_clock
@@ -703,11 +824,11 @@ class LarvaWorldSim(LarvaWorld):
                     self.food_grid.empty_grid()
             if self.sim_clock.timer_closed:
                 # print(self.sim_clock.hour, self.sim_clock.minute)
-                try:
-                    for l in self.get_flies():
-                        l.brain.intermitter.explore2exploit_bias = l.brain.intermitter.base_explore2exploit_bias
-                except:
-                    pass
+                # try:
+                #     for l in self.get_flies():
+                #         l.brain.intermitter.explore2exploit_bias = l.brain.intermitter.base_explore2exploit_bias
+                # except:
+                #     pass
                 if self.food_grid is not None:
                     self.food_grid.reset()
 
@@ -748,9 +869,6 @@ class LarvaWorldSim(LarvaWorld):
                     g.turner.step()
                 except:
                     pass
-            # g.step()
-            # if self.physics_engine:
-            #     self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
 
     # update trajectories
     def update_trajectories(self, flies):

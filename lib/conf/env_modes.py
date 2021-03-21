@@ -20,6 +20,24 @@ mesa_space_in_mm = {'physics_engine': False,
 box2d_space = {'physics_engine': True,
                'scaling_factor': 100.0}
 
+arena_shapes = ['circular', 'rectangular']
+
+larva_place_modes = [
+    'normal',
+    'defined',
+    'identical',
+    'uniform',
+    'uniform_circ',
+    'spiral',
+    'facing_right'
+]
+
+food_place_modes = [
+    'normal',
+    'defined',
+    'uniform'
+]
+
 
 # --------------------------------------------FOOD PARAMETERS----------------------------------------------------------
 # ---------------------------------------------------------------------------------------------------------------------
@@ -29,9 +47,14 @@ def food_grid(dim, amount=0.00001):
             'initial_amount': amount}
 
 
-def food(r, amount=0.000001):
+def food(r, amount=0.000001, odor_id=None, odor_intensity=0.0, odor_spread=0.0):
     return {'shape_radius': r,
-            'amount': amount}
+            'amount': amount,
+            'odor_id': odor_id,
+            'odor_intensity': odor_intensity,
+            'odor_spread': odor_spread,
+            'food_list' : []
+            }
 
 
 ########## PLACEMENT PARAMETERS #############
@@ -138,8 +161,17 @@ larva20_food_patchy_9 = {**larva_mid(20),
                                                                      (-0.7, 0.0), (0.0, 0.0), (0.7, 0.0)])}}
 
 reorientation_place_params = {'initial_num_flies': 200,
-                              'initial_fly_positions': {'mode': 'uniform_circ'},
+                              'initial_fly_positions': {'mode': 'uniform_circ',
+                                                        'loc': (0.0, 0.0)},
                               **food_place(1)}
+
+# def odor(id, intensity=2, spread=0.0002):
+#     return {
+#         'odor_id': id,
+#         'odor_intensity': intensity,
+#         'odor_spread': spread,
+#     }
+
 
 ####### ODORSCAPE PARAMETERS #################
 # ---------------------------------------ODOR LANDSCAPE MODES------------------------------------------------------
@@ -172,66 +204,66 @@ one_diffusion_odor = {'odor_landscape': 'Diffusion',
 no_odor = {'odor_id_list': None}
 
 chemotax_odor_p = {'odor_landscape': 'Gaussian',
-                   'odor_id_list': ['Random_odor_ID'],
+                   'odor_id_list': ['Odor'],
                    'odor_carriers': 'food',
-                   'odor_intensity_list': [3],
-                   'odor_spread_list': [0.04],
+                   # 'odor_intensity_list': [3],
+                   # 'odor_spread_list': [0.04],
                    'odor_source_allocation': 'iterative'}
 
 chemotax_odor_np = {'odor_landscape': 'Gaussian',
-                    'odor_id_list': ['Random_odor_ID'],
+                    'odor_id_list': ['Odor'],
                     'odor_carriers': 'food',
-                    'odor_intensity_list': [8],
-                    'odor_spread_list': [0.0004],
+                    # 'odor_intensity_list': [8],
+                    # 'odor_spread_list': [0.0004],
                     'odor_source_allocation': 'iterative'}
 
 chemorbit_odor_p = {'odor_landscape': 'Gaussian',
-                    'odor_id_list': ['Random_odor_ID'],
+                    'odor_id_list': ['Odor'],
                     'odor_carriers': 'food',
-                    'odor_intensity_list': [3 / 16],
-                    'odor_spread_list': [0.04 / 4],
+                    # 'odor_intensity_list': [3 / 16],
+                    # 'odor_spread_list': [0.04 / 4],
                     'odor_source_allocation': 'iterative'}
 
 chemorbit_odor_np = {'odor_landscape': 'Gaussian',
-                     'odor_id_list': ['Random_odor_ID'],
+                     'odor_id_list': ['Odor'],
                      'odor_carriers': 'food',
-                     'odor_intensity_list': [2],
-                     'odor_spread_list': [0.0002],
+                     # 'odor_intensity_list': [2],
+                     # 'odor_spread_list': [0.0002],
                      'odor_source_allocation': 'iterative'}
 
 patchy_odor_np = {'odor_landscape': 'Gaussian',
-                  'odor_id_list': ['Random_odor_ID'],
+                  'odor_id_list': ['Odor'],
                   'odor_carriers': 'food',
-                  'odor_intensity_list': [0.5],
-                  'odor_spread_list': [0.00005],
+                  # 'odor_intensity_list': [0.5],
+                  # 'odor_spread_list': [0.00005],
                   'odor_source_allocation': 'iterative'}
 
 pref_odors = {'odor_landscape': 'Gaussian',
               'odor_id_list': ['CS+', 'CS-'],
               'odor_carriers': 'food',
-              'odor_intensity_list': [2, 2],
-              'odor_spread_list': [0.001, 0.001],
+              # 'odor_intensity_list': [2, 2],
+              # 'odor_spread_list': [0.001, 0.001],
               'odor_source_allocation': 'iterative'}
 
 reorientation_odor_p = {'odor_landscape': 'Gaussian',
                         'odor_id_list': ['Odor'],
                         'odor_carriers': 'food',
-                        'odor_intensity_list': [3 / 16],
-                        'odor_spread_list': [0.04 / 4],
+                        # 'odor_intensity_list': [3 / 16],
+                        # 'odor_spread_list': [0.04 / 4],
                         'odor_source_allocation': 'iterative'}
 
 reorientation_odor_np = {'odor_landscape': 'Gaussian',
                          'odor_id_list': ['Odor'],
                          'odor_carriers': 'food',
-                         'odor_intensity_list': [0.03 / 16],
-                         'odor_spread_list': [0.0004 / 4],
+                         # 'odor_intensity_list': [0.03 / 16],
+                         # 'odor_spread_list': [0.0004 / 4],
                          'odor_source_allocation': 'iterative'}
 
 
-def odor(id, intensity=2, spread=0.0002):
-    return {'id': id,
-            'intensity': intensity,
-            'spread': spread}
+# def odor(id, intensity=2, spread=0.0002):
+#     return {'id': id,
+#             'intensity': intensity,
+#             'spread': spread}
 
 
 ########### ARENA PARAMETERS ################
@@ -251,7 +283,7 @@ def arena(x, y):
 def maze(nx=15, ny=15, ix=0, iy=0, h=0.1):
     # Maze dimensions (ncols, nrows)
     # nx, ny = 15, 15
-    # Maze entry position
+    # Maze entry pos
     # ix, iy = 0, 0
 
     m = Maze(nx, ny, ix, iy, height=h)
@@ -269,7 +301,23 @@ def maze(nx=15, ny=15, ix=0, iy=0, h=0.1):
 
 def pref_conf(N, dish_r=0.1):
     conf = {'arena_params': dish(dish_r),
-            'food_params': food(0.005),
+            'food_params': {'food_list': [{
+                'unique_id': 'CS+ source',
+                'pos': (-0.04, 0.0),
+                'amount': 0,
+                    'shape_radius' : 0.005,
+                    'odor_id': 'CS+',
+                    'odor_intensity': 2,
+                    'odor_spread': 0.001},
+            {
+                'unique_id': 'CS- source',
+                'pos': (0.04, 0.0),
+                'amount': 0,
+                    'shape_radius': 0.005,
+                    'odor_id': 'CS-',
+                    'odor_intensity': 2,
+                    'odor_spread': 0.001}]},
+            # 'food_params': food(0.005, amount=0, odor_intensity=2, odor_spread=0.001),
             'place_params': pref_place(N),
             'odor_params': pref_odors}
     return conf
@@ -277,7 +325,15 @@ def pref_conf(N, dish_r=0.1):
 
 def chemotax_conf(N):
     conf = {'arena_params': arena(0.1, 0.06),
-            'food_params': food(0.002),
+            'food_params': {'food_list': [{
+                'unique_id': 'Odor source',
+                'pos': (0.8, 0.0),
+                'amount': 0,
+                    'shape_radius' : 0.002,
+                    'odor_id': 'Odor',
+                    'odor_intensity': 8,
+                    'odor_spread': 0.0004}]},
+            'food_params': food(0.002, amount=0, odor_intensity=8, odor_spread=0.0004),
             'place_params': chemotax_place(N),
             'odor_params': chemotax_odor_np}
     return conf
@@ -285,7 +341,15 @@ def chemotax_conf(N):
 
 def chemorbit_conf(N):
     conf = {'arena_params': arena(0.1, 0.06),
-            'food_params': food(0.002),
+            'food_params': {'food_list': [{
+                'unique_id': 'Odor source',
+                'pos': (0.0, 0.0),
+                'amount': 0,
+                    'shape_radius' : 0.002,
+                    'odor_id': 'Odor',
+                    'odor_intensity': 2,
+                    'odor_spread': 0.0002}]},
+            # 'food_params': food(0.002, amount=0, odor_intensity=2, odor_spread=0.0002),
             'place_params': {**larva_mid(N, s=0), **food_place(1)},
             'odor_params': chemorbit_odor_np}
     return conf
@@ -335,13 +399,13 @@ dish_exp_np = {'arena_params': dish(0.15),
 
 reorientation_exp_p = {'arena_params': dish(0.2),
                        'space_params': box2d_space,
-                       'food_params': food(0.01),
+                       'food_params': food(0.01, amount=0, odor_intensity=8, odor_spread=0.0004),
                        'place_params': reorientation_place_params,
                        'odor_params': reorientation_odor_p}
 
 reorientation_exp_np = {'arena_params': dish(0.1),
                         'space_params': mesa_space,
-                        'food_params': food(0.01),
+                        'food_params': food(0.01, amount=0, odor_intensity=8, odor_spread=0.0004),
                         'place_params': reorientation_place_params,
                         'odor_params': reorientation_odor_np}
 
@@ -364,7 +428,9 @@ focus_exp_p = {'arena_params': dish(0.02),
                'odor_params': None}
 
 feed_grid_exp = {'arena_params': arena(0.05, 0.05),
-                 'food_params': food_grid(50),
+                 'food_params': {
+                     'food_list' : [],
+                     'grid_pars' : food_grid(50)},
                  'place_params': {**larva_mid(1), **food_place(0)},
                  'odor_params': None}
 
@@ -380,7 +446,7 @@ feed_scatter_exp_np = {'arena_params': arena(0.05, 0.05),
 
 feed_patchy_exp_np = {'arena_params': arena(0.2, 0.2),
                       'space_params': mesa_space,
-                      'food_params': food(0.0025, amount=0.001),
+                      'food_params': food(0.0025, amount=0.001, odor_intensity=8, odor_spread=0.0004),
                       'place_params': {**larva_mid(20, s=0.1), **food_place(8, 'circle', 0.7)},
                       'odor_params': chemorbit_odor_np}
 
@@ -388,7 +454,7 @@ feed_patchy_empirical = {
     # 'arena_params': arena(0.2, 0.2),
     'arena_params': arena(0.192512, 0.192512),
     'space_params': mesa_space_in_mm,
-    'food_params': food(0.0025),
+    'food_params': food(0.0025, amount=0.001, odor_intensity=8, odor_spread=0.0004),
     'place_params': larva0_food_patchy_8_exp,
     'odor_params': chemorbit_odor_np}
 

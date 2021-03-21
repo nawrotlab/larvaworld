@@ -427,8 +427,13 @@ par_db['unit'].loc['str_ro']=r'$\Delta\theta_{or_{r}}$ over strides $(deg)$'
 par_db['unit'].loc['tur_fo']=r'$\Delta\theta_{or}$ over turns $(deg)$'
 par_db['unit'].loc['tur_ro']=r'$\Delta\theta_{or_{r}}$ over turns $(deg)$'
 
+par_db['unit'].loc['fee_N']='# feeding events'
 
+par_db.loc['sf_am']={'par' : 'scaled_amount_eaten',
+                     'symbol' : '${m^{*}}_{feed}$',
+                     'exp_symbol' : '${\hat{m^{*}}}_{feed}$',
+                     'unit' : 'food intake as % larval mass',
+                     'collect' : None}
 
-# print(par_db.loc['str_fo'])
-
+# print(par_db.loc['sf_am'])
 # print(random_ar2)

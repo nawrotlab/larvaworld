@@ -178,6 +178,7 @@ def add_sim_kwargs(parser):
     parser.add_argument('-id', '--sim_id', type=str, help='The id of the simulation')
     parser.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae')
     parser.add_argument('-t', '--sim_time', type=float, help='The duration of the simulation in min')
+    parser.add_argument('-dt', '--dt', type=float, help='The timestep of the simulation in sec')
     parser.add_argument('-Box2D', '--Box2D', action="store_true", help='Use the Box2D physics engine')
     return parser
 
@@ -186,9 +187,11 @@ def get_sim_kwargs(args):
     sim_kwargs = {'sim_id': args.sim_id,
                   'Nagents': args.Nagents,
                   'sim_time': args.sim_time,
+                  'dt': args.dt,
                   'Box2D': args.Box2D,
                   }
     return sim_kwargs
+
 
 def add_exp_kwargs(parser):
     parser.add_argument('-age', '--hours_as_larva', type=float, nargs='?', default=0.0,
@@ -199,14 +202,14 @@ def add_exp_kwargs(parser):
                         help='The starvation time intervals in hours')
     return parser
 
-def get_exp_kwargs(args):
 
-    if args.starvation_hours is None :
-        starvation_hours=[]
-    else :
-        if len(args.starvation_hours)%2!=0 :
-            raise ValueError ('Starvation intervals must be provided in pairs of start-stop time')
-        else :
+def get_exp_kwargs(args):
+    if args.starvation_hours is None:
+        starvation_hours = []
+    else:
+        if len(args.starvation_hours) % 2 != 0:
+            raise ValueError('Starvation intervals must be provided in pairs of start-stop time')
+        else:
             starvation_hours = fun.group_list_by_n(args.starvation_hours, 2)
 
     # if args.hours_as_larva is None :
@@ -214,11 +217,12 @@ def get_exp_kwargs(args):
     # if args.deb_base_f is None :
     #     deb_base_f=[1.0]
     exp_kwargs = {
-                  'hours_as_larva': args.hours_as_larva,
-                  'deb_base_f': args.deb_base_f,
-        'starvation_hours' : starvation_hours
-                  }
+        'hours_as_larva': args.hours_as_larva,
+        'deb_base_f': args.deb_base_f,
+        'starvation_hours': starvation_hours
+    }
     return exp_kwargs
+
 
 def add_batch_kwargs(parser):
     parser.add_argument('-id_b', '--batch_id', type=str, help='The id of the batch run')

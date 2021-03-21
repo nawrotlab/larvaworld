@@ -4,6 +4,7 @@ import numpy as np
 from geneticalgorithm import geneticalgorithm as ga
 from lib.model.larva.deb import DEB
 from lib.stor.paths import Deb_path
+import lib.aux.functions as fun
 
 '''
 Times of hatch and puppation, lengths of young L1 and late L3 from [1] :
@@ -23,10 +24,12 @@ Reserve density while feeding at libitum (f=1) :
 # inds = [0, 1, 2, 3, 4, 6, 7, 8, 11, 14, 15]
 
 
-# inds = [0,3,4,11,14,15]
-inds = [0, 1, 2, 3, 4, 6, 7, 8, 11, 14, 15]
-R = np.array([0.7, 7.8, 0.6, 3.8, 15, 1, 1])
-W = np.array([2, 10, 5, 5, 2, 10, 5])
+# inds = [11]
+# inds = [0,3,11,14,15]
+# inds = [0, 1, 2, 3, 4, 6, 7, 8, 11, 14, 15]
+inds = [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 14, 15]
+R = np.array([0.7, 5.8, 0.6, 5.8, 15, 1, 1])
+W = np.array([2, 5, 2, 10, 2, 1000, 1000])
 W = W / np.sum(W)
 
 pars0 = ['U_E__0', 'p_m', 'E_G',
@@ -34,17 +37,19 @@ pars0 = ['U_E__0', 'p_m', 'E_G',
          'zoom', 'v_rate_int', 'kap_int',
          'kap_R_int', 'k_J_rate_int', 'shape_factor',
          'h_a', 'sG', 'L_0',
-         'd']
+         'd', 'p_xm']
 vals0 = [0.001, 23.57, 4400,
-         0.00328786, 0.0166888, 0.05218,
-         9.63228, 0.00581869, 0.631228,
-         0.95, 0.002, 0.58,
-         0.004218, 0.0001, 0.00001, 1]
-ranges0 = [[0.000001, 0.001], [1, 100], [1000, 100000],
-           [0.001, 0.1], [0.1, 2.0], [0.1, 1.0],
-           [10.0, 100.0], [0.01, 0.1], [0.4, 0.9],
-           [0.9, 0.99], [0.001, 0.003], [1, 20],
-           [0.003, 0.005], [0.0001, 0.0002], [0.00001, 0.01], [0.1, 1.0]]
+         0.0033, 0.017, 0.52,
+         9.6, 0.006, 0.6,
+         0.95, 0.002, 0.6,
+         0.004, 0.0001, 0.00001,
+         0.9, 4.0]
+ranges0 = [[0.000001, 0.01], [0.1, 100], [1000, 1000000],
+           [0.001, 0.2], [0.001, 2.0], [0.4, 1.0],
+           [0.01, 100.0], [0.0001, 0.1], [0.2, 0.98],
+           [0.9, 0.99], [0.001, 0.003], [0.1, 20],
+           [0.003, 0.005], [0.00005, 0.0002], [0.000001, 0.01],
+           [0.01, 1.0], [0.01, 10000.0]]
 
 try:
     with open(Deb_path) as tfp:
@@ -52,6 +57,8 @@ try:
     print('Loaded existing deb')
 except:
     species0 = dict(zip(pars0, vals0))
+    print('Started new deb')
+
 # species0 = dict(zip(pars0, vals0))
 pars = [p for i, p in enumerate(pars0) if i in inds]
 Npars = len(pars)
@@ -68,10 +75,13 @@ def show_results(t0, t1, l0, l1, w1, e0, e1):
     print('Larva final reserve density : ', np.round(e1, 3))
 
 
-def fit_DEB(vals, steps_per_day=24, show=False):
-    species = species0.copy()
-    for p, v in zip(pars, vals):
-        species[p] = v
+def fit_DEB(vals, steps_per_day=24*2, show=False, def_species=None):
+    if def_species is None :
+        species = species0.copy()
+        for p, v in zip(pars, vals):
+            species[p] = v
+    else :
+        species=def_species
     deb = DEB(species=species, steps_per_day=steps_per_day, print_stage_change=show)
     c0 = False
     while not deb.puppa:
@@ -91,21 +101,24 @@ def fit_DEB(vals, steps_per_day=24, show=False):
     l1 = deb.get_real_L() * 1000
     e1 = deb.get_reserve_density()
     r = np.array([t0, t1, l0, l1, w1, e0, e1])
-    dr = np.abs(r - R) / R
+    dr = np.abs(r - R)/R
     error = np.sum(dr * W)
     if show:
         show_results(t0, t1, l0, l1, w1, e0, e1)
     return error
 
+# e = fit_DEB(None, steps_per_day=24 * 60, show=True, def_species=species0)
+# print(e)
+
 
 alg_pars = {'max_num_iteration': 40,
-            'population_size': 30,
-            'mutation_probability': 0.1,
-            'elit_ratio': 0.2,
-            'crossover_probability': 0.1,
-            'parents_portion': 0.3,
+            'population_size': 200,
+            'mutation_probability': 0.5,
+            'elit_ratio': 0.0,
+            'crossover_probability': 0.01,
+            'parents_portion': 0.1,
             'crossover_type': 'uniform',
-            'max_iteration_without_improv': None}
+            'max_iteration_without_improv': 3}
 
 model = ga(function=fit_DEB, dimension=Npars, variable_type='real', variable_boundaries=ranges,
            algorithm_parameters=alg_pars)
@@ -116,12 +129,16 @@ best = species0.copy()
 for p, v in zip(pars, model.best_variable):
     best[p] = v
 
+for k, v in best.items():
+    best[k]=fun.round2significant(v,4)
+
 with open(Deb_path, "w") as fp:
     json.dump(best, fp)
 
 for k, v in best.items():
     print(f'{k} : {v}')
 
-e = fit_DEB(model.best_variable, steps_per_day=24 * 60, show=True)
+# e = fit_DEB(model.best_variable, steps_per_day=24 * 60, show=True)
+e = fit_DEB(None, steps_per_day=24 * 60, show=True, def_species=best)
 
 print(e)

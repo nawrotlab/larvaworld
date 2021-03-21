@@ -504,7 +504,7 @@ class LarvaDataset:
     #####################################
 
     def load(self, step_data=True, endpoint_data=True, food_endpoint_data=False):
-        print(f'Loading data from {self.step_file_path}')
+        # print(f'Loading data from {self.step_file_path}')
         # TODO Use this dict idea for annotation of parameters and for metric units
         # col_names = pd.read_csv(self.step_file_path, nrows=0).columns
         # types_dict = {'AgentID': str}
@@ -515,10 +515,10 @@ class LarvaDataset:
         if step_data:
             try:
                 self.step_data = pd.read_csv(self.step_file_path, index_col=['Step', 'AgentID'], dtype=self.types_dict)
-                print('Step data loaded according to types dictionary')
+                # print('Step data loaded according to types dictionary')
             except:
                 self.step_data = pd.read_csv(self.step_file_path, index_col=['Step', 'AgentID'])
-                print('Step data loaded independent of types dictionary')
+                # print('Step data loaded independent of types dictionary')
             self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
             self.agent_ids = self.step_data.index.unique('AgentID').values
             self.num_ticks = self.step_data.index.unique('Step').size
@@ -1520,7 +1520,7 @@ class LarvaDataset:
             p_data = s[p].dropna().reset_index(level=0, drop=True)
             p_data.sort_index(inplace=True)
             p_data.to_csv(f'{self.par_distro_dir}/{filename}', index=True, header=True)
-            print(f'Dataset saved as {filename}')
+            # print(f'Dataset saved as {filename}')
 
     def create_chunk_dataset(self, chunk, pars, Npoints=32):
         if self.step_data is None:
@@ -1556,7 +1556,7 @@ class LarvaDataset:
             chunk_df = pd.DataFrame(np.array(chunks), index=chunk_ids, columns=np.arange(Npoints).tolist())
             chunk_df.to_csv(f'{self.par_during_stride_dir}/{filename}', index=True, header=True)
             chunk_dfs.append(chunk_df)
-            print(f'Dataset saved as {filename}')
+            # print(f'Dataset saved as {filename}')
         return chunk_dfs
 
     def create_dispersion_dataset(self, par='dispersion', scaled=True):
@@ -1581,7 +1581,7 @@ class LarvaDataset:
         dsp_ar[:, 2] = dsp_b
         dsp_df = pd.DataFrame(dsp_ar, index=steps, columns=['median', 'upper', 'lower'])
         dsp_df.to_csv(filepath, index=True, header=True)
-        print(f'Dataset saved as {filepath}')
+        # print(f'Dataset saved as {filepath}')
 
     def compute_chunk_metrics(self, chunk_name, is_last=True):
         if self.step_data is None:
