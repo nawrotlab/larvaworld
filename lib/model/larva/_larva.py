@@ -159,7 +159,7 @@ class Larva(LarvaworldAgent):
     @property
     def dst_to_chemotax_odor_in_mm(self):
         return euclidean(tuple(self.current_pos),
-                         (0.8, 0.0)) * 1000 / self.model.scaling_factor,
+                         (0.8, 0.0)) * 1000 / self.model.scaling_factor
 
     @property
     def scaled_dst_to_chemotax_odor(self):

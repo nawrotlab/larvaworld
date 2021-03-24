@@ -116,8 +116,8 @@ def sim_analysis(d, experiment):
 
 
     elif experiment in ['chemorbit', 'chemotax']:
-        plot_distance_to_source(dataset=d, experiment=experiment)
         plot_odor_concentration(datasets=[d])
+        plot_distance_to_source(dataset=d, experiment=experiment)
         d.visualize(agent_ids=[d.agent_ids[0]], mode='image', image_mode='final',
                     contours=False, centroid=False, spinepoints=False,
                     random_larva_colors=True, trajectories=True, trail_decay_in_sec=0,

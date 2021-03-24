@@ -6,19 +6,16 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import PySimpleGUI as sg
 import matplotlib
 import inspect
-
 from tkinter import *
 
+sys.path.insert(0, '..')
 from lib.aux.collecting import effector_collection
 from lib.conf import exp_types, default_sim, mock_larva, box2d_space, larva_place_modes, \
     food_place_modes, pref_exp_np, agent_pars
-
 from lib.sim.gui_lib import gui_table, SectionDict, bool_button, Collapsible, \
     set_kwargs, on_image, off_image, SYMBOL_UP, SYMBOL_DOWN, button_kwargs, header_kwargs, \
     text_kwargs, on_image_disabled, retrieve_value
 from lib.sim.single_run import run_sim, next_idx, configure_sim
-
-sys.path.insert(0, '..')
 from lib.anal.plotting import *
 from lib.stor.larva_dataset import LarvaDataset
 from lib.stor.paths import SingleRunFolder, RefFolder, get_parent_dir

@@ -7,7 +7,7 @@ import matplotlib.patches as mpatches
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib import cm, pyplot as plt, gridspec, transforms, ticker
+from matplotlib import cm, pyplot as plt, gridspec, transforms, ticker, patches
 from matplotlib.patches import Wedge
 from matplotlib.ticker import FormatStrFormatter, ScalarFormatter
 from mpl_toolkits.mplot3d import Axes3D
@@ -37,13 +37,13 @@ plt_conf = {'axes.labelsize': 20,
             'figure.titlesize': 30,
             'xtick.labelsize': 20,
             'ytick.labelsize': 20,
-            'legend.fontsize': 20,
-            'legend.title_fontsize': 20}
+            'legend.fontsize': 15,
+            'legend.title_fontsize': 15}
 plt.rcParams.update(plt_conf)
-# suf = 'pdf'
+suf = 'pdf'
 
 
-suf = 'png'
+# suf = 'png'
 
 
 def mean_confidence_interval(data, confidence=0.95):
@@ -1369,8 +1369,6 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     axs[0].legend(handles=[mpatches.Patch(color=c, label=id) for c, id in zip(leg_cols, leg_ids)],
                   labels=leg_ids, fontsize=20, loc='upper left', prop={'size': 15})
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.93, hspace=0.02)
-    # plt.show()
-    # raise
     return process_plot(fig, save_to, save_as, return_fig)
 
 
@@ -1472,7 +1470,7 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
     k = range(N)
     s = s.loc[s[avels].dropna().index.values].copy()
     target = s[hov].dropna()
-    num_best = 10
+    num_best = 5
     combos = []
     corrs = []
     ps = []
@@ -1489,6 +1487,12 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
     best_combos = [combos[i] for i in max_corrs_idx]
     best_combos_ind = [np.sort([avels.index(x) + 1 for x in set(avels).intersection(c)]) for c in best_combos]
     best_combo = combos[heapq.nlargest(1, range(len(corrs)), key=corrs.__getitem__)[0]]
+
+    # best_combos_ind[0]=[1,2,3,4,5]
+    # best_combos_ind[1]=[1,2,3,4]
+    # best_combos_ind[2]=[1,2,3,4,7]
+    # best_combos_ind[3]=[1,3]
+    # best_combos_ind[4]=[1,2,3]
     for i, (cor, combo) in enumerate(zip(max_corrs, best_combos_ind)):
         print(f'Combo number {i} has correlation {cor}')
         print(f'Includes {combo}')
@@ -1498,15 +1502,16 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
     X0 = s[avels].dropna().values
     y = target.values
 
-    figsize = (12, 8)
-    fontsize = 15
+    figsize = (15, 7)
 
     # Plot figure with subplots of different sizes
     fig = plt.figure(figsize=figsize)
+    fig, axs = plt.subplots(1, 2, figsize=figsize)
+    axs = axs.ravel()
     # set up subplot grid
-    gridspec.GridSpec(2, 2)
+    # gridspec.GridSpec(2, 2)
 
-    plt.subplot2grid((2, 2), (0, 0), colspan=1, rowspan=1)
+    # plt.subplot2grid((2, 2), (0, 0), colspan=1, rowspan=1)
 
     scores1 = []
     coefs1 = []
@@ -1515,14 +1520,14 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
         reg = LinearRegression().fit(X, y)
         scores1.append(reg.score(X, y))
         coefs1.append(reg.coef_)
-        # print(i, reg.coef_, 'intercept :', reg.intercept_)
     # fig.suptitle('Reorientation prediction by cum angles')
-    plt.scatter(np.arange(1, N + 1), scores1)
-    plt.xticks(np.arange(1, N + 1))
-    plt.xlabel('spineangle', fontsize=fontsize)
-    plt.ylabel('regression score', fontsize=fontsize)
+    axs[0].scatter(np.arange(1, N + 1), scores1, c='blue', alpha=1.0, marker=",", label='single', s=200)
+    axs[0].plot(np.arange(1, N + 1), scores1, c='blue')
+    axs[0].set_xticks(ticks=np.arange(1, N + 1))
+    axs[0].set_xlabel(r'angular velocity, $\dot{\theta}_{i}$')
+    axs[0].set_ylabel('regression score')
 
-    plt.subplot2grid((2, 2), (0, 1), colspan=1, rowspan=1)
+    # plt.subplot2grid((2, 2), (0, 1), colspan=1, rowspan=1)
 
     scores2 = []
     coefs2 = []
@@ -1531,24 +1536,30 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
         reg = LinearRegression().fit(X, y)
         scores2.append(reg.score(X, y))
         coefs2.append(reg.coef_)
-        # print(i, reg.coef_, 'intercept :', reg.intercept_)
     # fig.suptitle('Reorientation prediction by each spineangle')
-    plt.scatter(np.arange(1, N + 1), scores2)
-    r = np.arange(1, N + 1)
-    plt.xticks(ticks=r, labels=['1'] + [f'1-{i}' for i in r[1:]])
-    # plt.xticklabels(['1']+[f'1-{i}' for i in r[1:]])
-    plt.xlabel('angles', fontsize=fontsize)
-    plt.ylabel('regression score', fontsize=fontsize)
+    axs[0].scatter(np.arange(1, N + 1), scores2, c='green', alpha=1.0, marker="o", label='cumulative', s=200)
+    axs[0].plot(np.arange(1, N + 1), scores2, c='green')
+    shape1 = patches.Circle((0, 0), 1, facecolor='blue')
+    shape2 = patches.Rectangle((0, 0), 1, 1, facecolor='green')
+    axs[0].legend(loc='lower left')
+    # axs[0].legend((shape1, shape2), ('single', 'cumulative'), loc='lower left')
+    axs[0].yaxis.set_major_locator(ticker.MaxNLocator(4))
+    # r = np.arange(1, N + 1)
+    # plt.xticks(ticks=r, labels=['1'] + [f'1-{i}' for i in r[1:]])
+    # plt.xlabel(r'cumulative angular velocity, $\dot{\theta}_{1-i}$')
+    # plt.ylabel('regression score')
 
-    plt.subplot2grid((2, 2), (1, 0), colspan=2, rowspan=1)
+    # plt.subplot2grid((2, 2), (1, 0), colspan=2, rowspan=1)
 
-    ylim = [0.9, 1]
-    plt.bar([','.join(map(str, c)) for c in best_combos_ind], max_corrs)
+    ylim = [0.6, 1]
+    axs[1].bar(x=[','.join(map(str, c)) for c in best_combos_ind], height=max_corrs, width=0.8, color='black')
     # ax.set_xticks(best_combos_ind)
-    plt.xlabel('angles', fontsize=fontsize)
-    plt.ylabel('Pearson correlation', fontsize=fontsize)
-    plt.ylim(ylim)
-    plt.tight_layout()
+    axs[1].set_xlabel('combined angular velocities')
+    axs[1].set_ylabel('Pearson correlation')
+    axs[1].tick_params(axis='x', which='major', labelsize=15)
+    axs[1].set_ylim(ylim)
+    axs[1].yaxis.set_major_locator(ticker.MaxNLocator(4))
+    plt.subplots_adjust(wspace=0.3, left=0.1, right=0.95, bottom=0.15, top=0.95)
     fig.savefig(filepath, dpi=300)
     print(f'Image saved as {filepath}')
     return best_combo
@@ -1639,30 +1650,28 @@ def plot_spatiotemporal_variation(dataset, spatial_cvs, temporal_cvs, sizes=None
     if not os.path.exists(save_to):
         os.makedirs(save_to)
     filepath = os.path.join(save_to, save_as)
-    fig = plt.figure(figsize=([9, 7.5]))
-    ax = fig.add_subplot(111)
+    fig, ax = plt.subplots(1,1, figsize=(15, 15))
     # r'$\Theta_{bend}$'
     c = 'c'
     svel_num_strings = ['{' + str(i + 1) + '}' for i in range(N_svels)]
     lvel_num_strings = ['{' + str(i + 2) + '}' for i in range(N_lvels)]
-    labels = [r'$v_{centroid}$'] + [rf'$v_{i}$' for i in svel_num_strings] + \
-             [rf'$v^{c}_{i}$' for i in lvel_num_strings]
-    markers = ['s'] + ['v' for i in range(N_svels)] + ['o' for i in range(N_lvels)]
+    labels = [r'$v_{cen}$'] + \
+             [rf'$v^{c}_{i}$' for i in lvel_num_strings] + [rf'$v_{i}$' for i in svel_num_strings]
+    markers = ['s'] + ['o' for i in range(N_lvels)] + ['v' for i in range(N_svels)]
     cnum = 1 + N_svels
     cmap = plt.get_cmap('hsv')
     cmap = [cmap(1. * i / cnum) for i in range(cnum)]
-    cmap = [cmap[0]] + cmap[1:] + cmap[2:]
-    # print(cmap)
+    cmap = [cmap[0]] + cmap[2:] + cmap[1:]
     if sizes is None:
-        for v, m, s, t, c in zip(labels, markers, spatial_cvs, temporal_cvs, cmap):
-            ax.scatter(s, t, marker=m, c=c, label=v)
+        for v, m, scv, tcv, c in zip(labels, markers, spatial_cvs, temporal_cvs, cmap):
+            plt.scatter(scv, tcv, marker=m, c=c, label=v)
     else:
-        for v, m, s, t, c, size in zip(labels, markers, spatial_cvs, temporal_cvs, cmap, sizes):
-            ax.scatter(s, t, marker=m, c=c, label=v, s=size)
-    ax.legend(loc='upper left', fontsize=11, bbox_to_anchor=(1.03, 1))
-    # plt.plot(mean_spatial_stds, mean_temporal_stds)
-    plt.ylabel(r'$\overline{cv}_{temporal}$', fontsize=15)
-    plt.xlabel(r'$\overline{cv}_{spatial}$', fontsize=15)
+        for v, m, scv, tcv, c, s in zip(labels, markers, spatial_cvs, temporal_cvs, cmap, sizes):
+            plt.scatter(scv, tcv, marker=m, c=c, label=v, s=s)
+    plt.legend(loc='upper left', ncol=2, handleheight=2.4, labelspacing=0.05)
+    # ax.legend(loc='upper left', fontsize=15, bbox_to_anchor=(1.03, 1))
+    plt.ylabel(r'$\overline{cv}_{temporal}$')
+    plt.xlabel(r'$\overline{cv}_{spatial}$')
     plt.tight_layout()
     fig.savefig(filepath, dpi=300)
     print(f'Image saved as {filepath}')
@@ -1695,13 +1704,13 @@ def plot_distance_to_source(dataset, experiment):
 
     elif experiment == 'chemotax':
         y = 450
-        d.plot_step_data(parameters=['dst_to_[0.4,0.0]'], title=' ', mode='time',
+        d.plot_step_data(parameters=['dst_to_chemotax_odor'], title=' ', mode='time',
                          figsize=figsize, plot_quantiles=Nquantiles,
                          xlim=[0, 180], ylim=[0, y], xlabel=l_time, ylabel=l_dst,
                          save_to=save_to, save_as=f'dst_to_source_timeplot.{suf}')
 
         y = 120
-        d.plot_step_data(parameters=['scaled_dst_to_[0.4,0.0]'], title=' ', mode='time',
+        d.plot_step_data(parameters=['scaled_dst_to_chemotax_odor'], title=' ', mode='time',
                          figsize=figsize, plot_quantiles=Nquantiles,
                          xlim=[0, 180], ylim=[0, y], xlabel=l_time, ylabel=l_sc_dst,
                          save_to=save_to, save_as=f'scaled_dst_to_source_timeplot.{suf}')
@@ -2014,7 +2023,7 @@ def plot_interference(datasets, labels, mode='orientation', agent_idx=None,
     return process_plot(fig, save_to, save_as, return_fig)
 
 
-def plot_dispersion(datasets, labels, ranges=[[0, 40]], scaled=True, save_to=None, fig_cols=2, return_fig=False):
+def plot_dispersion(datasets, labels, ranges=[[0, 40]], scaled=False, save_to=None, fig_cols=1, return_fig=False):
     Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='dispersion')
     for r in ranges:
         r0, r1, dur = r[0], r[1], r[1] - r[0]
@@ -2048,8 +2057,8 @@ def plot_dispersion(datasets, labels, ranges=[[0, 40]], scaled=True, save_to=Non
         axs.set_xlim([trange[0], trange[-1]])
         axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
         axs.xaxis.set_major_locator(ticker.MaxNLocator(4))
-        axs.legend(loc='upper left', fontsize=9)
-        fig.subplots_adjust(top=0.95, bottom=0.15, left=0.15 / fig_cols, right=0.95, hspace=.005, wspace=0.05)
+        axs.legend(loc='upper left')
+        fig.subplots_adjust(top=0.95, bottom=0.15, left=0.2 / fig_cols, right=0.95, hspace=.005, wspace=0.05)
         return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -2117,8 +2126,6 @@ def plot_gut(datasets, labels, save_to=None, save_as=None, return_fig=False):
     axs.yaxis.set_major_locator(ticker.MaxNLocator(5))
     axs.legend(loc='upper left', fontsize=9)
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.95, hspace=.005, wspace=0.05)
-    # plt.show()
-    # raise
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -2238,18 +2245,19 @@ def plot_odor_concentration(datasets, labels=None, save_to=None, return_fig=Fals
         save_to = d.plot_dir
     filename = f'odor_concentration.{suf}'
 
-    fig, axs = plt.subplots(1, 1, figsize=(10, 5))
-    plot_mean_and_range(x=trange, mean=dc_m, lb=dc_u, ub=dc_b, axis=axs, color_mean='grey',
-                        color_shading='grey')
+    fig, axs = plt.subplots(1, 1, figsize=(7.5, 5))
+    plot_mean_and_range(x=trange, mean=dc_m, lb=dc_u, ub=dc_b, axis=axs, color_mean='grey',color_shading='grey')
     axs.plot(trange, dc0, 'r')
 
     axs.set_ylabel('Concentration C(t), $\mu$M')
     axs.set_xlabel('time, $sec$')
     axs.set_xlim([trange[0], trange[-1]])
-    axs.legend(loc='upper right', fontsize=9)
+    # axs.legend(loc='upper right')
+    axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
     # axs[1].set_xticks([0.5, 1, 10])
     # axs[1].set_xticklabels(['0.5', '1', '10'])
-    # plt.MaxNLocator(4)
+    plt.subplots_adjust(bottom=0.15, left=0.15, right=0.95, top=0.95)
+    plt.show()
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -2752,7 +2760,7 @@ def plot_crawl_pars(datasets, labels, simVSexp=False, save_to=None, legend=False
         if legend:
             axs[i].legend(loc='upper right')
     axs[0].set_ylabel('probability')
-    plt.subplots_adjust(bottom=0.15, top=0.95, left=0.2 / len(pars), right=0.99, wspace=0.01)
+    plt.subplots_adjust(bottom=0.15, top=0.95, left=0.25 / len(pars), right=0.99, wspace=0.01)
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -2981,6 +2989,9 @@ def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
     config = {'datasets': datasets,
               'labels': labels,
               'save_to': save_to}
+    for scaled in [True, False]:
+        plot_dispersion(**config, scaled=scaled, fig_cols=2)
+        plot_dispersion(**config, scaled=scaled, fig_cols=1)
     plot_stride_Dbend(**config, show_text=False)
     plot_stride_Dorient(**config, simVSexp=simVSexp, absolute=True)
     plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=3)
@@ -3005,9 +3016,7 @@ def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
 
     plot_turns(**config)
     plot_turn_duration(**config)
-    for scaled in [True, False]:
-        plot_dispersion(**config, scaled=scaled, fig_cols=2)
-        plot_dispersion(**config, scaled=scaled, fig_cols=1)
+
     for mode in ['minimal', 'limited', 'full']:
         plot_endpoint_params(**config, mode=mode)
     combine_pdfs(file_dir=save_to)
@@ -3273,10 +3282,6 @@ def calibration_plot(save_to=None, files=None):
         ax.tick_params(**tick_params)
         ax.axis('off')
         ax.imshow(im, cmap=None, aspect=None)
-
-    # plt.show()
     filepath = os.path.join(save_to, filename)
     save_plot(fig, filepath, filename)
-    # return None
 
-# calibration_plot(save_to=f'{SingleRunFolder}/dispersion/dispersion200l_0/plots/comparative')

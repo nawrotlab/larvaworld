@@ -78,8 +78,8 @@ class LarvaDataset:
             self.load()
         ids = self.agent_ids
         # Define all candidate velocities, their respective points and their short labels
-        points = ['centroid'] + self.points + self.points[1:]
-        vels = [self.cent_vel] + self.points_vel + nam.lin(self.points_vel[1:])
+        points = ['centroid'] +  self.points[1:] + self.points
+        vels = [self.cent_vel]  + nam.lin(self.points_vel[1:])+ self.points_vel
         svels = nam.scal(vels)
 
         vels_minima = nam.min(vels)
@@ -131,7 +131,7 @@ class LarvaDataset:
                                           save_to=save_to,
                                           save_as=f'stride_variability_svel_max_{svel_max_thr}_interval_{int}_sized.pdf')
             plot_spatiotemporal_variation(dataset=self, spatial_cvs=m_s_cvs, temporal_cvs=m_t_cvs,
-                                          sizes=[110 for c in mean_crawl_ratios],
+                                          sizes=[300 for c in mean_crawl_ratios],
                                           save_to=save_to,
                                           save_as=f'stride_variability_svel_max_{svel_max_thr}_interval_{int}.pdf')
 
@@ -894,7 +894,7 @@ class LarvaDataset:
             self.save()
         print('All angles computed')
 
-    def compute_bend(self, is_last=True):
+    def compute_bend(self, mode='minimal', is_last=True):
         if self.step_data is None:
             self.load()
         s=self.step_data
@@ -906,7 +906,7 @@ class LarvaDataset:
             print(f'Computing bending angle as the difference between front and rear orientations')
             s['bend'] = s.apply(lambda r: fun.angle_dif(r['front_orientation'], r['rear_orientation']), axis=1)
         elif b_conf == 'from_angles':
-            self.compute_spineangles(mode='minimal', is_last=False)
+            self.compute_spineangles(mode=mode, is_last=False)
             print(f'Computing bending angle as the sum of the first {len(self.bend_angles)} front angles')
             s['bend'] = s[self.bend_angles].sum(axis=1, min_count=1)
 
@@ -1045,7 +1045,7 @@ class LarvaDataset:
             print('Orientation and bend are already computed. If you want to recompute them, set recompute to True')
         else:
             self.compute_orientations(mode=mode, is_last=False)
-            self.compute_bend(is_last=False)
+            self.compute_bend(mode=mode, is_last=False)
         self.compute_angular_metrics(mode=mode, is_last=False)
         self.compute_LR_bias(is_last=False)
         if self.save_data_flag:

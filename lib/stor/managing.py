@@ -88,7 +88,7 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
     return ds
 
 
-def enrich_datasets(datagroup_id, names, keep_raw=False, **kwargs):
+def enrich_datasets(datagroup_id, names, keep_raw=False, enrich_conf=None, **kwargs):
     warnings.filterwarnings('ignore')
     ds = get_datasets(datagroup_id, last_common='processed', names=names, mode='load', **kwargs)
     if keep_raw:
@@ -96,7 +96,8 @@ def enrich_datasets(datagroup_id, names, keep_raw=False, **kwargs):
         raw_ds = get_datasets(datagroup_id, last_common='processed', names=raw_names, mode='initialize', **kwargs)
         for raw, new in zip(raw_ds, ds):
             copy_tree(new.dir, raw.dir)
-    enrich_conf = LarvaDataGroup(datagroup_id).get_conf()['enrich']
+    if enrich_conf is None :
+        enrich_conf = LarvaDataGroup(datagroup_id).get_conf()['enrich']
 
     # with fun.suppress_stdout():
 
