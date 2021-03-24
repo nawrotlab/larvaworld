@@ -116,7 +116,10 @@ def sim_analysis(d, experiment):
 
 
     elif experiment in ['chemorbit', 'chemotax']:
-        plot_odor_concentration(datasets=[d])
+        plot_timeplot('c_odor1',datasets=[d])
+        plot_timeplot('A_olf',datasets=[d])
+        plot_timeplot('A_tur',datasets=[d])
+        plot_timeplot('Act_tur',datasets=[d])
         plot_distance_to_source(dataset=d, experiment=experiment)
         d.visualize(agent_ids=[d.agent_ids[0]], mode='image', image_mode='final',
                     contours=False, centroid=False, spinepoints=False,

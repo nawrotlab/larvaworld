@@ -91,9 +91,10 @@ def draw_figure(window, func, func_kwargs, data, figure_agg):
             fig, save_to, save_as = func(datasets=list(data.values()), labels=list(data.keys()),
                                          return_fig=True, **func_kwargs)  # call function to get the figure
             figure_agg = draw_canvas(window['GRAPH_CANVAS'].TKCanvas, fig)  # draw the figure
+            return figure_agg, fig, save_to, save_as
         except:
             print('Plot not available for these datasets')
-    return figure_agg, fig, save_to, save_as
+            return None, None, None, None
 
 
 def update_func(window, values, func, func_kwargs, graph_dict):

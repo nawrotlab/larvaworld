@@ -2228,10 +2228,20 @@ def plot_heatmap_PI(csv_filepath='PIs.csv', heatmap_filepath='PI_heatmap.pdf', r
 
 
 def plot_odor_concentration(datasets, labels=None, save_to=None, return_fig=False):
+    return plot_timeplot('c_odor1', datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
+
+def plot_timeplot(par_short, datasets, labels=None, save_to=None, return_fig=False) :
+    if par_short not in par_db.index.to_list() :
+        raise ValueError (f'Parameter shortcut {par_short} does not exist in parameter database')
+    par_dict=par_db.loc[par_short]
+    par=par_dict['par']
+    sim_label=par_dict['symbol']
+    xlabel=par_dict['unit']
+
     d = datasets[0]
     s = d.step_data
 
-    dc = s['first_odor_concentration']
+    dc = s[par]
     dc0 = dc.xs(d.agent_ids[0], level='AgentID')
 
     dc_m = dc.groupby(level='Step').quantile(q=0.5)
@@ -2243,13 +2253,13 @@ def plot_odor_concentration(datasets, labels=None, save_to=None, return_fig=Fals
     trange = np.linspace(0, dur, Nticks)
     if save_to is None:
         save_to = d.plot_dir
-    filename = f'odor_concentration.{suf}'
+    filename = f'{par}.{suf}'
 
     fig, axs = plt.subplots(1, 1, figsize=(7.5, 5))
-    plot_mean_and_range(x=trange, mean=dc_m, lb=dc_u, ub=dc_b, axis=axs, color_mean='grey',color_shading='grey')
+    plot_mean_and_range(x=trange, mean=dc_m, lb=dc_u, ub=dc_b, axis=axs, color_mean='grey', color_shading='grey')
     axs.plot(trange, dc0, 'r')
 
-    axs.set_ylabel('Concentration C(t), $\mu$M')
+    axs.set_ylabel(xlabel)
     axs.set_xlabel('time, $sec$')
     axs.set_xlim([trange[0], trange[-1]])
     # axs.legend(loc='upper right')
@@ -2257,7 +2267,6 @@ def plot_odor_concentration(datasets, labels=None, save_to=None, return_fig=Fals
     # axs[1].set_xticks([0.5, 1, 10])
     # axs[1].set_xticklabels(['0.5', '1', '10'])
     plt.subplots_adjust(bottom=0.15, left=0.15, right=0.95, top=0.95)
-    plt.show()
     return process_plot(fig, save_to, filename, return_fig)
 
 

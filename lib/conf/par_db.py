@@ -435,5 +435,30 @@ par_db.loc['sf_am']={'par' : 'scaled_amount_eaten',
                      'unit' : 'food intake as % larval mass',
                      'collect' : None}
 
-# print(par_db.loc['sf_am'])
+par_db.loc['c_odor1']={'par' : 'first_odor_concentration',
+                     'symbol' : '${C}_{odor_{1}}$',
+                     'exp_symbol' : '${\hat{C}_{odor_{1}}$',
+                     'unit' : 'Concentration C(t), $\mu$M',
+                     'collect' : 'first_odor_concentration'}
+
+par_db.loc['A_olf']={'par' : 'olfactory_activation',
+                     'symbol' : '$A_{olf}$',
+                     'exp_symbol' : '$\hat{A}_{olf}$',
+                     'unit' : 'Olfactory activation',
+                     'collect' : 'olfactory_activation'}
+
+par_db.loc['A_tur']={'par' : 'turner_activation',
+                     'symbol' : '$A_{tur}$',
+                     'exp_symbol' : '$\hat{A}_{tur}$',
+                     'unit' : 'Turner activation',
+                     'collect' : 'turner_activation'}
+
+par_db.loc['Act_tur']={'par' : 'turner_activity',
+                     'symbol' : '$Act_{tur}$',
+                     'exp_symbol' : '$\hat{Act}_{tur}$',
+                     'unit' : 'Turner activity',
+                     'collect' : 'ang_activity'}
+
+# print(par_db.loc['c_odor1']['par'])
 # print(random_ar2)
+# print('c_odor1' in par_db.index.to_list())
