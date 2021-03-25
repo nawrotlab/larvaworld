@@ -9,7 +9,7 @@ from typing import List, Any, Optional
 
 import lib.conf.sim_modes
 from lib.model.envs._maze import Border
-
+from lib.aux import naming as nam
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
@@ -676,11 +676,12 @@ class LarvaWorld:
 
 
 class LarvaWorldSim(LarvaWorld):
-    def __init__(self, collected_pars={'step': [], 'endpoint': []},
-                 id='Unnamed_Simulation', allow_collisions=True,
-                 count_bend_errors=False,
+    def __init__(self, collected_pars=None,
+                 id='Unnamed_Simulation', allow_collisions=True, count_bend_errors=False,
                  starvation_hours=[], hours_as_larva=0, deb_base_f=1, **kwargs):
         super().__init__(id=id, **kwargs)
+        if collected_pars is None:
+            collected_pars = {'step': [], 'endpoint': []}
         self.starvation_hours = starvation_hours
         self.hours_as_larva = hours_as_larva
         self.deb_base_f = deb_base_f
@@ -887,8 +888,7 @@ class LarvaWorldSim(LarvaWorld):
         ids, all_pars = self._generate_larva_pars(N, larva_pars)
         self._place_larvae(positions, orientations, ids, all_pars)
 
-    def allocate_odors(self, agents, odor_id_list,
-                       allocation_mode='iterative'):
+    def allocate_odors(self, agents, odor_id_list,allocation_mode='iterative'):
         ids = self.compute_odor_parameters(len(agents), odor_id_list,
                                            # odor_intensity_list,
                                            # odor_spread_list,
@@ -896,8 +896,7 @@ class LarvaWorldSim(LarvaWorld):
         for a, id in zip(agents, ids):
             a.set_odor_id(id)
 
-    def compute_odor_parameters(self, N, odor_id_list,
-                                allocation_mode='iterative'):
+    def compute_odor_parameters(self, N, odor_id_list,allocation_mode='iterative'):
         N_o = len(odor_id_list)
         # N_i = len(odor_intensity_list)
         # N_s = len(odor_spread_list)
@@ -1025,7 +1024,7 @@ class LarvaWorldReplay(LarvaWorld):
         super().__init__(id=id, **kwargs)
 
         self.dataset = dataset
-        self.pos_xy_pars = pos_xy_pars
+        self.pos_pars = pos_xy_pars
         self.draw_Nsegs = draw_Nsegs
 
         self.step_data = step_data
@@ -1033,11 +1032,41 @@ class LarvaWorldReplay(LarvaWorld):
         self.agent_ids = self.step_data.index.unique('AgentID').values
         self.num_agents = len(self.agent_ids)
 
-        self.starting_tick = self.step_data.index.unique('Step')[0]
+        # self.starting_tick = self.step_data.index.unique('Step')[0]
         try:
             self.lengths = self.endpoint_data['length'].values
         except:
             self.lengths = np.ones(self.num_agents) * 5
+
+        self.pars = self.step_data.columns.values
+        self.mid_pars = [p for p in fun.flatten_list(dataset.points_xy) if p in self.pars]
+        self.Npoints = int(len(self.mid_pars) / 2)
+
+        self.con_pars = [p for p in fun.flatten_list(dataset.contour_xy) if p in self.pars]
+        self.Ncontour = int(len(self.con_pars) / 2)
+
+        self.cen_pars = [p for p in dataset.cent_xy if p in self.pars]
+        Nsegs = self.draw_Nsegs
+        if Nsegs is not None:
+            if Nsegs == self.Npoints - 1:
+                self.or_pars = [p for p in nam.orient(dataset.segs) if p in self.pars]
+                self.Nors = len(self.or_pars)
+                self.angle_pars = []
+                self.Nangles = 0
+                if self.Nors != Nsegs:
+                    raise ValueError(f'Orientation values are not present for all body segments : {self.Nors} of {Nsegs}')
+            elif Nsegs == 2:
+                self.or_pars = [p for p in ['front_orientation'] if p in self.pars]
+                self.Nors = len(self.or_pars)
+                self.angle_pars = [p for p in ['bend'] if p in self.pars]
+                self.Nangles = len(self.angle_pars)
+                if self.Nors != 1 or self.Nangles != 1:
+                    raise ValueError(f'{self.Nors} orientation and {Nsegs} angle values are present and 1,1 are needed.')
+            else:
+                raise ValueError(f'Defined number of segments {Nsegs} must be either 2 or {self.Npoints - 1}')
+        else:
+            self.Nors, self.Nangles = 0, 0
+            self.angle_pars, self.or_pars = [], []
 
         self.create_flies()
 
@@ -1049,9 +1078,7 @@ class LarvaWorldReplay(LarvaWorld):
     def create_flies(self):
         for i, id in enumerate(self.agent_ids):
             data = self.step_data.xs(id, level='AgentID', drop_level=True)
-            f = LarvaReplay(model=self, unique_id=id, schedule=self.active_larva_schedule,
-                            length=self.lengths[i],
-                            data=data)
+            f = LarvaReplay(model=self, unique_id=id,length=self.lengths[i],data=data)
             self.active_larva_schedule.add(f)
             self.space.place_agent(f, (0, 0))
 

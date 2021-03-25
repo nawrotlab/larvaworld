@@ -10,136 +10,89 @@ from lib.model.agents._body import LarvaBody
 from lib.model.agents._effector import DefaultBrain
 from lib.model.agents._sensorimotor import BodyController
 from lib.aux import functions as fun
-from lib.aux import naming as nam
 from lib.model.agents.deb import DEB
 from lib.model.agents.nengo_effectors import NengoBrain
 
 
 class LarvaReplay(Larva, LarvaBody):
-    def __init__(self, unique_id, model, schedule, length=5, data=None):
-        Larva.__init__(self, unique_id=unique_id, model=model, radius=length/2)
-
-        self.schedule = schedule
-        self.data = data
-        self.pars = self.data.columns.values
-        self.Nticks = len(self.data.index.unique().values)
-        self.t0 = self.data.index.unique().values[0]
-
-        d = self.model.dataset
-        self.spinepoint_xy_pars = [p for p in fun.flatten_list(d.points_xy) if p in self.pars]
-        self.Npoints = int(len(self.spinepoint_xy_pars) / 2)
-
-        self.contour_xy_pars = [p for p in fun.flatten_list(d.contour_xy) if p in self.pars]
-        self.Ncontour = int(len(self.contour_xy_pars) / 2)
-
-        self.centroid_xy_pars = [p for p in d.cent_xy if p in self.pars]
-
-        Nsegs = self.model.draw_Nsegs
-        if Nsegs is not None:
-            if Nsegs == self.Npoints - 1:
-                self.orientation_pars = [p for p in nam.orient(d.segs) if p in self.pars]
-                self.Nors = len(self.orientation_pars)
-                self.Nangles = 0
-                if self.Nors != Nsegs:
-                    raise ValueError(
-                        f'Orientation values are not present for all body segments : {self.Nors} of {Nsegs}')
-            elif Nsegs == 2:
-                self.orientation_pars = [p for p in ['front_orientation'] if p in self.pars]
-                self.Nors = len(self.orientation_pars)
-                self.angle_pars = [p for p in ['bend'] if p in self.pars]
-                self.Nangles = len(self.angle_pars)
-                if self.Nors != 1 or self.Nangles != 1:
-                    raise ValueError(
-                        f'{self.Nors} orientation and {Nsegs} angle values are present and 1,1 are needed.')
-            else:
-                raise ValueError(f'Defined number of segments {Nsegs} must be either 2 or {self.Npoints - 1}')
-        else:
-            self.Nors, self.Nangles = 0, 0
+    def __init__(self, unique_id, model, length=5, data=None):
+        Larva.__init__(self, unique_id=unique_id, model=model, radius=length / 2)
 
         self.chunk_ids = None
         self.trajectory = []
         self.color = deepcopy(self.default_color)
         self.sim_length = length
 
+        self.Nticks = len(data.index.unique().values)
+        N=self.Nticks
+        Nmid=self.model.Npoints
+        Ncon=self.model.Ncontour
+        Nangles=self.model.Nangles
+        Nors=self.model.Nors
+        Nsegs=self.model.draw_Nsegs
+        mid_pars=self.model.mid_pars
+        con_pars=self.model.con_pars
+        cen_pars=self.model.cen_pars
+        pos_pars=self.model.pos_pars
+        ang_pars=self.model.angle_pars
+        or_pars=self.model.or_pars
+        mid_dim=[N, Nmid, 2]
+        con_dim=[N, Ncon, 2]
 
-        if self.Npoints > 0:
-            self.spinepoint_positions_ar = self.data[self.spinepoint_xy_pars].values
-            self.spinepoint_positions_ar = self.spinepoint_positions_ar.reshape([self.Nticks, self.Npoints, 2])
-        else:
-            self.spinepoint_positions_ar = np.ones([self.Nticks, self.Npoints, 2]) * np.nan
+        self.mid_ar = data[mid_pars].values.reshape(mid_dim) if Nmid > 0 else np.ones(mid_dim) * np.nan
+        self.con_ar = data[con_pars].values.reshape(con_dim) if Ncon > 0 else np.ones(con_dim) * np.nan
+        self.cen_ar = data[cen_pars].values if len(cen_pars) == 2 else np.ones([N, 2]) * np.nan
+        self.pos_ar = data[pos_pars].values if len(pos_pars) == 2 else np.ones([N, 2]) * np.nan
+        self.ang_ar = data[ang_pars].values if Nangles > 0 else np.ones([N, Nangles]) * np.nan
+        self.or_ar = data[or_pars].values if Nors > 0 else np.ones([N, Nors]) * np.nan
 
-        if self.Ncontour > 0:
-            self.contourpoint_positions_ar = self.data[self.contour_xy_pars].values
-            self.contourpoint_positions_ar = self.contourpoint_positions_ar.reshape([self.Nticks, self.Ncontour, 2])
-        else:
-            self.contourpoint_positions_ar = np.ones([self.Nticks, self.Ncontour, 2]) * np.nan
-
-        if len(self.centroid_xy_pars) == 2:
-            self.centroid_position_ar = self.data[self.centroid_xy_pars].values
-        else:
-            self.centroid_position_ar = np.ones([self.Nticks, 2]) * np.nan
-
-        if len(self.model.pos_xy_pars) == 2:
-            self.position_ar = self.data[self.model.pos_xy_pars].values
-        else:
-            self.position_ar = np.ones([self.Nticks, 2]) * np.nan
-
-        if self.Nangles > 0:
-            self.spineangles_ar = self.data[self.angle_pars].values
-        else:
-            self.spineangles_ar = np.ones([self.Nticks, self.Nangles]) * np.nan
-
-        if self.Nors > 0:
-            self.orientations_ar = self.data[self.orientation_pars].values
-        else:
-            self.orientations_ar = np.ones([self.Nticks, self.Nors]) * np.nan
-
-        vp_behavior = [p for p in self.behavior_pars if p in self.pars]
-        self.behavior_ar = np.zeros([self.Nticks, len(self.behavior_pars)], dtype=bool)
+        vp_behavior = [p for p in self.behavior_pars if p in self.model.pars]
+        self.beh_ar = np.zeros([N, len(self.behavior_pars)], dtype=bool)
         for i, p in enumerate(self.behavior_pars):
             if p in vp_behavior:
-                self.behavior_ar[:, i] = np.array([not v for v in np.isnan(self.data[p].values).tolist()])
+                self.beh_ar[:, i] = np.array([not v for v in np.isnan(data[p].values).tolist()])
 
-        if self.model.draw_Nsegs is not None:
-            LarvaBody.__init__(self, model, pos=self.position_ar[0], orientation=self.orientations_ar[0][0],
-                               initial_length=self.sim_length / 1000, length_std=0, Nsegs=self.model.draw_Nsegs,
+        self.pos = self.pos_ar[0]
+        if Nsegs is not None:
+            LarvaBody.__init__(self, model, pos=self.pos, orientation=self.or_ar[0][0],
+                               initial_length=self.sim_length / 1000, length_std=0, Nsegs=Nsegs,
                                interval=0)
 
-        self.pos = self.position_ar[0]
 
+
+    def read_step(self, i):
+        self.midline = self.mid_ar[i].tolist()
+        self.vertices = self.con_ar[i]
+        self.cen_pos = self.cen_ar[i]
+        self.pos = self.pos_ar[i]
+        self.trajectory = self.pos_ar[:i, :].tolist()
+        self.angles = self.ang_ar[i]
+        self.orients = self.or_ar[i]
+        self.beh_dict = dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist()))
 
     def step(self):
-        step = self.schedule.steps
-        self.spinepoint_positions = self.spinepoint_positions_ar[step].tolist()
-        self.vertices = self.contourpoint_positions_ar[step]
-        self.centroid_position = self.centroid_position_ar[step]
-        self.pos = self.position_ar[step]
+        step = self.model.active_larva_schedule.steps
+        self.read_step(step)
         if not np.isnan(self.pos).any():
             self.model.space.move_agent(self, self.pos)
-        self.trajectory = self.position_ar[:step, :].tolist()
-        self.spineangles = self.spineangles_ar[step]
-        self.orientations = self.orientations_ar[step]
         if self.model.color_behavior:
-            behavior_dict = dict(zip(self.behavior_pars, self.behavior_ar[step, :].tolist()))
-            self.color = self.update_color(self.default_color, behavior_dict)
+            self.color = self.update_color(self.default_color, self.beh_dict)
         else:
             self.color = self.default_color
         if self.model.draw_Nsegs is not None:
             segs = self.segs
-
-            if len(self.spinepoint_positions) == len(segs) + 1:
+            if len(self.midline) == len(segs) + 1:
                 for i, seg in enumerate(segs):
-                    pos = [np.nanmean([self.spinepoint_positions[i][j], self.spinepoint_positions[i + 1][j]]) for j in
-                           [0, 1]]
-                    o = np.deg2rad(self.orientations[i])
+                    pos = [np.nanmean([self.midline[i][j], self.midline[i + 1][j]]) for j in [0, 1]]
+                    o = np.deg2rad(self.orients[i])
                     seg.set_position(pos)
                     seg.set_orientation(o)
                     seg.update_vertices(pos, o)
-            elif len(segs) == 2 and self.Nors == 1 and self.Nangles == 1:
+            elif len(segs) == 2 and len(self.orients) == 1 and len(self.angles) == 1:
                 l1, l2 = [self.sim_length * r for r in self.seg_ratio]
                 x, y = self.pos
-                h_or = np.deg2rad(self.orientations[0])
-                b_or = np.deg2rad(self.orientations[0] - self.spineangles[0])
+                h_or = np.deg2rad(self.orients[0])
+                b_or = np.deg2rad(self.orients[0] - self.angles[0])
                 p_head = np.array(fun.rotate_around_point(origin=[x, y], point=[l1 + x, y], radians=-h_or))
                 p_tail = np.array(fun.rotate_around_point(origin=[x, y], point=[l2 + x, y], radians=np.pi - b_or))
                 pos1 = [np.nanmean([p_head[j], [x, y][j]]) for j in [0, 1]]
@@ -150,7 +103,7 @@ class LarvaReplay(Larva, LarvaBody):
                 segs[1].set_position(pos2)
                 segs[1].set_orientation(b_or)
                 segs[1].update_vertices(pos2, b_or)
-                self.spinepoint_positions = np.array([p_head, self.pos, p_tail])
+                self.midline = np.array([p_head, self.pos, p_tail])
 
     def draw(self, viewer):
         if self.model.draw_contour:
@@ -161,26 +114,24 @@ class LarvaReplay(Larva, LarvaBody):
             elif len(self.vertices) > 0:
                 viewer.draw_polygon(self.vertices, filled=True, color=self.color)
         if self.model.draw_centroid:
-            if not np.isnan(self.centroid_position).any():
-                pos = self.centroid_position
+            if not np.isnan(self.cen_pos).any():
+                pos = self.cen_pos
             elif not np.isnan(self.pos).any():
                 pos = self.pos
             else:
                 pos = None
             if pos is not None:
                 viewer.draw_circle(radius=.1, position=pos, filled=True, color=self.color, width=1)
-        if self.model.draw_midline and self.Npoints > 1:
-            if not np.isnan(self.spinepoint_positions[0]).any():
-                viewer.draw_polyline(self.spinepoint_positions, color=(0, 0, 255), closed=False, width=.07)
-                for i, seg_pos in enumerate(self.spinepoint_positions):
-                    c = 255 * i / (len(self.spinepoint_positions) - 1)
+        if self.model.draw_midline and self.model.Npoints > 1:
+            if not np.isnan(self.midline[0]).any():
+                viewer.draw_polyline(self.midline, color=(0, 0, 255), closed=False, width=.07)
+                for i, seg_pos in enumerate(self.midline):
+                    c = 255 * i / (len(self.midline) - 1)
                     color = (c, 255 - c, 0)
                     viewer.draw_circle(radius=.07, position=seg_pos, filled=True, color=color, width=.01)
         if self.selected:
-            r = self.sim_length / 2
-            viewer.draw_circle(radius=r,
-                               position=self.get_position(),
-                               filled=False, color=self.model.selection_color, width=r / 5)
+            viewer.draw_circle(radius=self.radius,position=self.pos,
+                               filled=False, color=self.model.selection_color, width=self.radius / 5)
 
 
 class LarvaSim(BodyController, Larva):
@@ -189,14 +140,15 @@ class LarvaSim(BodyController, Larva):
 
         self.brain = self.build_brain(fly_params['neural_params'])
         self.build_energetics(fly_params['energetics_params'])
-        BodyController.__init__(self, model=model, orientation=orientation, **fly_params['sensorimotor_params'], **fly_params['body_params'], **kwargs)
+        BodyController.__init__(self, model=model, orientation=orientation, **fly_params['sensorimotor_params'],
+                                **fly_params['body_params'], **kwargs)
         self.build_gut(self.V)
 
         self.reset_feeder()
         self.radius = self.sim_length / 2
 
         self.food_detected, self.food_source, self.feeder_motion, self.current_amount_eaten, self.feed_success = False, None, False, 0, False
-        self.odor_concentrations = [0]*self.model.Nodors
+        self.odor_concentrations = [0] * self.model.Nodors
         self.olfactory_activation = 0
 
     def compute_next_action(self):

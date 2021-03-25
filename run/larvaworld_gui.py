@@ -218,7 +218,7 @@ def init_environment(env_params, collapsibles={}, sectiondicts={}):
          sg.Combo(larva_place_modes, key='larva_place_mode', enable_events=True, readonly=True, font=('size', 10),
                   size=(15, 1))],
         [sg.Text('positions:', size=(12, 1)), sg.In(None, key='larva_positions', **text_kwargs)],
-        # [sg.Text('orientations:', size=(12, 1)), sg.In(None, key='larva_orientations', **text_kwargs)],
+        # [sg.Text('orients:', size=(12, 1)), sg.In(None, key='larva_orientations', **text_kwargs)],
     ]
 
     # food_list_conf = []

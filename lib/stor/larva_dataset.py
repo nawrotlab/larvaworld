@@ -903,7 +903,7 @@ class LarvaDataset:
             print('Bending angle not defined. Can not compute angles')
             return
         elif b_conf == 'from_vectors':
-            print(f'Computing bending angle as the difference between front and rear orientations')
+            print(f'Computing bending angle as the difference between front and rear orients')
             s['bend'] = s.apply(lambda r: fun.angle_dif(r['front_orientation'], r['rear_orientation']), axis=1)
         elif b_conf == 'from_angles':
             self.compute_spineangles(mode=mode, is_last=False)
@@ -935,7 +935,7 @@ class LarvaDataset:
 
         for key in ['front_vector_start', 'front_vector_stop', 'rear_vector_start', 'rear_vector_stop']:
             if self.config[key] is None:
-                print('Front and rear vectors are not defined. Can not compute orientations')
+                print('Front and rear vectors are not defined. Can not compute orients')
                 return
         else:
             f1, f2 = self.config['front_vector_start'], self.config['front_vector_stop']
@@ -947,7 +947,7 @@ class LarvaDataset:
         xy = [nam.xy(self.points[i]) for i in range(len(self.points))]
         s = self.step_data
         # s = self.step_data.copy(deep=False)
-        print(f'Computing front and rear orientations')
+        print(f'Computing front and rear orients')
         xy_pars = fun.flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1]])
         xy_ar = s[xy_pars].values
         Npoints = int(xy_ar.shape[1] / 2)
@@ -961,7 +961,7 @@ class LarvaDataset:
             s[a] = c[z].T
         if mode == 'full':
             N = len(self.segs)
-            print(f'Computing additional orientations for {N} spinesegments')
+            print(f'Computing additional orients for {N} spinesegments')
             ors = nam.orient(self.segs)
             xy_pars = fun.flatten_list([xy[i] for i in range(N + 1)])
             xy_ar = s[xy_pars].values
@@ -975,7 +975,7 @@ class LarvaDataset:
                 s[a] = c[z].T
         if is_last:
             self.save()
-        print('All orientations computed')
+        print('All orients computed')
 
     def unwrap_orientations(self, is_last=True):
         if self.step_data is None:
@@ -990,7 +990,7 @@ class LarvaDataset:
                 s.loc[(slice(None), id), nam.unwrap(p)] = fun.unwrap_deg(ts)
         if is_last:
             self.save()
-        print('All orientations unwrapped')
+        print('All orients unwrapped')
 
     def compute_angular_metrics(self, mode='minimal', is_last=True):
         if self.step_data is None:
@@ -1164,7 +1164,7 @@ class LarvaDataset:
                 orientations = ['rear_orientation']
 
         if not set(orientations).issubset(s.columns):
-            print('Required orientations not found. Component linear metrics not computed.')
+            print('Required orients not found. Component linear metrics not computed.')
             return
 
         xy_params = self.raw_or_filtered_xy(points)

@@ -370,7 +370,7 @@ class LarvaBody:
 
         self.Nsegs = Nsegs
         self.Nangles = Nsegs - 1
-        self.spineangles = np.zeros(self.Nangles)
+        self.angles = np.zeros(self.Nangles)
         self.seg_colors = generate_seg_colors(Nsegs, self.default_color)
 
         if not hasattr(self, 'real_length'):
