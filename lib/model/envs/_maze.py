@@ -5,7 +5,8 @@ import random
 # Create a maze using the depth-first algorithm described at
 # https://scipython.com/blog/making-a-maze/
 # Christian Hill, April 2017.
-from shapely.geometry import LineString
+from matplotlib.patches import Circle
+from shapely.geometry import LineString, Point
 
 
 class Cell:
@@ -185,3 +186,44 @@ class Maze:
                     lines.append(LineString([(x1, y1), (x2, y2)]))
         return lines
 
+class Border:
+    def __init__(self, model, points=None, lines= None, unique_id=None, width=0.001, color=None,
+                 from_maze=False, from_screen=True):
+
+        self.model=model
+        if color is None :
+            color=self.model.screen_color
+        self.default_color=color
+        if unique_id is None :
+            unique_id= f'Border_{len(self.model.border_xy)}'
+        self.unique_id = unique_id
+        self.width=width * self.model.scaling_factor
+        self.points=points
+        if lines is None :
+            lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in zip(points[:-1], points[1:])]
+        self.border_xy, self.border_lines = self.model.create_borders(lines, from_screen=from_screen)
+        self.border_bodies = self.model.create_border_bodies(self.border_xy)
+        self.selected=False
+
+    def delete(self):
+        for xy in self.border_xy :
+            self.model.border_xy.remove(xy)
+        for l in self.border_lines:
+            self.model.border_lines.remove(l)
+        if len(self.border_bodies)>0 :
+            for b in self.border_bodies :
+                self.model.border_bodies.remove(b)
+                self.model.space.delete(b)
+        del self
+
+    def draw(self, screen):
+        for b in self.border_xy :
+            screen.draw_polyline(b, color=self.default_color, width=self.width, closed=False)
+            if self.selected :
+                screen.draw_polyline(b, color=self.model.selection_color, width=self.width*0.5, closed=False)
+
+    def contained(self,p):
+        return any([l.distance(Point(p))<self.width for l in self.border_lines])
+
+    def set_id(self,id):
+        self.unique_id=id

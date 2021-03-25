@@ -121,7 +121,7 @@ def update_model(larva_model, window, collapsibles, sectiondicts):
     collapsibles['BRAIN'].update(window, module_dict_upper)
 
 
-def update_environment(env_params, window, collapsibles, sectiondicts, food_list):
+def update_environment(env_params, window, collapsibles, sectiondicts, food_list, border_list):
     arena_params = env_params['arena_params']
     for k, v in arena_params.items():
         window.Element(k).Update(value=v)
@@ -132,7 +132,11 @@ def update_environment(env_params, window, collapsibles, sectiondicts, food_list
         food_list = env_params['food_params']['food_list']
     place_params = env_params['place_params']
     update_placement(place_params, window, collapsibles, sectiondicts, food_list)
-    return food_list
+    if 'border_list' in env_params.keys():
+        border_list=env_params['border_list']
+    else :
+        border_list = []
+    return food_list, border_list
 
 
 def update_placement(place_params, window, collapsibles, sectiondicts, food_list):
@@ -261,13 +265,13 @@ def init_environment(env_params, collapsibles={}, sectiondicts={}):
     return [collapsibles['ENVIRONMENT'].get_section()]
 
 
-def update_sim(window, values, collapsibles, sectiondicts, output_keys, food_list):
+def update_sim(window, values, collapsibles, sectiondicts, output_keys, food_list, border_list):
     if values['EXP'] != '':
         exp = values['EXP']
         exp_conf = copy.deepcopy(exp_types[exp])
         update_model(exp_conf['fly_params'], window, collapsibles, sectiondicts)
 
-        food_list = update_environment(exp_conf['env_params'], window, collapsibles, sectiondicts, food_list)
+        food_list, border_list = update_environment(exp_conf['env_params'], window, collapsibles, sectiondicts, food_list, border_list)
 
         if 'sim_params' not in exp_conf.keys():
             exp_conf['sim_params'] = default_sim.copy()
@@ -288,7 +292,7 @@ def update_sim(window, values, collapsibles, sectiondicts, output_keys, food_lis
         window.Element('sim_id').Update(value=sim_id)
         common_folder = f'single_runs/{exp}'
         window.Element('common_folder').Update(value=common_folder)
-        return food_list
+        return food_list,border_list
 
 
 def build_analysis_tab():
@@ -350,6 +354,7 @@ def build_simulation_tab():
     larva_model = copy.deepcopy(mock_larva)
     env_params = pref_exp_np
     food_list = env_params['food_params']['food_list']
+    border_list = []
 
     module_dict = larva_model['neural_params']['modules']
     module_keys = list(module_dict.keys())
@@ -395,7 +400,7 @@ def build_simulation_tab():
         [sg.Col(model_layout)],
         [sg.Col(env_layout)]
     ]
-    return simulation_layout, sim_datasets, collapsibles, module_keys, sectiondicts, output_keys, food_list
+    return simulation_layout, sim_datasets, collapsibles, module_keys, sectiondicts, output_keys, food_list, border_list
 
 
 def build_model_tab():
@@ -457,7 +462,7 @@ def get_model(window, values, module_keys, sectiondicts, collapsibles, base_mode
     return base_model
 
 
-def get_environment(window, values, module_keys, sectiondicts, collapsibles, base_environment, food_list):
+def get_environment(window, values, module_keys, sectiondicts, collapsibles, base_environment, food_list, border_list):
     base_environment['place_params']['initial_num_flies'] = retrieve_value(values['Nagents'], int)
     base_environment['place_params']['initial_fly_positions']['mode'] = retrieve_value(values['larva_place_mode'], str)
     # larva_loc=values['larva_positions']
@@ -472,13 +477,15 @@ def get_environment(window, values, module_keys, sectiondicts, collapsibles, bas
     if base_environment['food_params'] is not None :
         base_environment['food_params']['food_list'] = food_list
 
+    base_environment['border_list']= border_list
+
     if window['TOGGLE_Box2D'].metadata.state:
         base_environment['space_params'] = box2d_space
     base_environment['arena_params'] = sectiondicts['ARENA'].get_dict(values, window)
     return base_environment
 
 
-def get_sim_config(window, values, module_keys, sectiondicts, collapsibles, output_keys, food_list):
+def get_sim_config(window, values, module_keys, sectiondicts, collapsibles, output_keys, food_list, border_list):
     exp = values['EXP']
     exp_conf = copy.deepcopy(exp_types[exp])
 
@@ -490,8 +497,7 @@ def get_sim_config(window, values, module_keys, sectiondicts, collapsibles, outp
     # sim_params['collect_effectors'] = dict(zip(output_keys, [window[f'TOGGLE_{f"collect_{k}"}'].metadata.state for k in output_keys]))
 
     env_params = get_environment(window, values, module_keys, sectiondicts, collapsibles, exp_conf['env_params'],
-                                 food_list)
-    # print(env_params['place_params'])
+                                 food_list, border_list)
 
     fly_params = get_model(window, values, module_keys, sectiondicts, collapsibles, exp_conf['fly_params'])
 
@@ -507,16 +513,15 @@ def get_sim_config(window, values, module_keys, sectiondicts, collapsibles, outp
 
 
 def eval_simulation(event, values, window, sim_datasets, collapsibles, module_keys, sectiondicts, output_keys,
-                    food_list):
+                    food_list, border_list):
     if event.startswith('OPEN SEC'):
         sec_name = event.split()[-1]
         if collapsibles[sec_name].state is not None:
             collapsibles[sec_name].state = not collapsibles[sec_name].state
             window[event].update(SYMBOL_DOWN if collapsibles[sec_name].state else SYMBOL_UP)
             window[f'SEC {sec_name}'].update(visible=collapsibles[sec_name].state)
-    # elif event == 'EXP':
     elif event == 'Load':
-        food_list = update_sim(window, values, collapsibles, sectiondicts, output_keys, food_list)
+        food_list, border_list = update_sim(window, values, collapsibles, sectiondicts, output_keys, food_list, border_list)
     elif 'TOGGLE' in event:
         if window[event].metadata.state is not None:
             window[event].metadata.state = not window[event].metadata.state
@@ -527,20 +532,20 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
 
     elif event == 'Configure':
         if values['EXP'] != '':
-            sim_config = get_sim_config(window, values, module_keys, sectiondicts, collapsibles, output_keys, food_list)
-            food_list = configure_sim(
+            sim_config = get_sim_config(window, values, module_keys, sectiondicts, collapsibles, output_keys, food_list, border_list)
+            food_list, border_list = configure_sim(
                 fly_params=sim_config['fly_params'],
                 env_params=sim_config['env_params'])
             update_food_placement(window, food_list, collapsibles, place_params=None)
 
     elif event == 'Run':
         if values['EXP'] != '':
-            sim_config = get_sim_config(window, values, module_keys, sectiondicts, collapsibles, output_keys, food_list)
+            sim_config = get_sim_config(window, values, module_keys, sectiondicts, collapsibles, output_keys, food_list, border_list)
             vis_kwargs = {'mode': 'video'}
             d = run_sim(**sim_config, **vis_kwargs)
             if d is not None:
                 sim_datasets.append(d)
-    return food_list
+    return food_list, border_list
 
 
 # -------------------------------- GUI Starts Here -------------------------------#
@@ -644,8 +649,7 @@ def run_gui():
     #     [sg.Col(data_list)],
     #     [sg.Col(graph_list), graph_instructions]
     # ]
-
-    simulation_layout, sim_datasets, collapsibles, module_keys, sectiondicts, output_keys, food_list = build_simulation_tab()
+    simulation_layout, sim_datasets, collapsibles, module_keys, sectiondicts, output_keys, food_list, border_list = build_simulation_tab()
     model_layout = build_model_tab()
 
     layout = [
@@ -665,17 +669,14 @@ def run_gui():
         tab = values['ACTIVE_TAB']
         if tab == 'ANALYSIS_TAB':
             window, func, func_kwargs, data, figure_agg, fig, save_to, save_as = eval_analysis(event, values, window,
-                                                                                               func,
-                                                                                               func_kwargs, data,
+                                                                                               func, func_kwargs, data,
                                                                                                figure_agg, fig, save_to,
                                                                                                save_as, graph_dict)
         elif tab == 'MODEL_TAB':
             window = eval_model(event, values, window)
         elif tab == 'SIMULATION_TAB':
-
-            food_list = eval_simulation(event, values, window, sim_datasets, collapsibles, module_keys, sectiondicts,
-                                        output_keys,
-                                        food_list)
+            food_list, border_list = eval_simulation(event, values, window, sim_datasets, collapsibles, module_keys, sectiondicts,
+                                        output_keys, food_list, border_list)
     window.close()
 
 

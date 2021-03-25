@@ -135,7 +135,7 @@ def sim_analysis(d, experiment):
 def init_sim(env_params,fly_params) :
     env = LarvaWorldSim(fly_params=fly_params, env_params=env_params, mode='video')
     env.allow_clicks = True
-    env.show_clock = False
+    env.visible_clock = False
     env.is_running = True
     return env
 
@@ -145,7 +145,8 @@ def configure_sim(env_params,fly_params):
         env.step()
         env.render()
     food_list = env.get_agent_list(class_name='Food')
-    return food_list
+    border_list = env.get_agent_list(class_name='Border')
+    return food_list, border_list
 
 
 
@@ -202,7 +203,7 @@ def run_sim_basic(sim_id,
                      starvation_hours=starvation_hours, deb_base_f=deb_base_f)
 
     collected_pars = data_collection_config(dataset=d, sim_params=sim_params)
-    env = LarvaWorldSim(fly_params, id=sim_id, env_params=env_params, dt=dt, Nsteps=Nsteps,
+    env = LarvaWorldSim(fly_params=fly_params, id=sim_id, env_params=env_params, dt=dt, Nsteps=Nsteps,
                         collected_pars=collected_pars,
                         media_name=media_name,
                         save_to=d.vis_dir,

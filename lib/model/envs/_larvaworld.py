@@ -8,13 +8,14 @@ import os
 from typing import List, Any, Optional
 
 import lib.conf.sim_modes
+from lib.model.envs._maze import Border
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
 from mesa.datacollection import DataCollector
 from shapely.affinity import affine_transform
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, LineString
 from unflatten import unflatten
 from Box2D import b2World, b2ChainShape, b2Vec2, b2EdgeShape
 from mesa.space import ContinuousSpace
@@ -36,8 +37,6 @@ import lib.sim.gui_lib as gui
 from lib.conf.sim_modes import agent_pars
 
 
-
-
 class LarvaWorld:
     def __new__(cls, *args: Any, **kwargs: Any) -> Any:
 
@@ -49,15 +48,27 @@ class LarvaWorld:
         cls.random = random.Random(cls._seed)
         return object.__new__(cls)
 
-    def __init__(self, env_params, id='unnamed', dt=0.1, Nsteps=None, save_to='.', background_motion=None,
+    def __init__(self, env_params, fly_params=None, id='unnamed', dt=0.1, Nsteps=None, save_to='.',
+                 background_motion=None,
                  use_background=False, black_background=False, mode='video', image_mode='final', media_name=None,
-                 trajectories=True, trail_decay_in_sec=0.0, trajectory_colors=None, show_state=True,
+                 trajectories=True, trail_decay_in_sec=0.0, trajectory_colors=None, visible_state=True,
                  random_larva_colors=False, color_behavior=False, draw_head=False, draw_contour=True,
                  draw_centroid=False, draw_midline=True, show_display=True, video_speed=None,
-                 snapshot_interval_in_sec=60 * 60 * 10, touch_sensors=False, allow_clicks=True, show_clock=True,
+                 snapshot_interval_in_sec=60 * 60 * 10, touch_sensors=False, allow_clicks=True, visible_clock=True,
                  *args: [], **kwargs: {'seed': 1}):
         # super().__init__(*args, **kwargs)
-        self.ids_visible = False
+        self.visible_ids = False
+        self.visible_state = visible_state
+        self.visible_clock = visible_clock
+        self.selected_type = 'Food'
+
+        self.borders, self.border_xy, self.border_lines, self.border_bodies = [], [], [], []
+
+        self.mousebuttondown_time = None
+        self.mousebuttonup_time = None
+        self.mousebuttondown_pos = None
+        self.mousebuttonup_pos = None
+
         self.input_box = InputBox()
         self.selected_agents = []
         self.is_running = False
@@ -69,7 +80,6 @@ class LarvaWorld:
         self.allow_clicks = allow_clicks
         self.touch_sensors = touch_sensors
         self.show_display = show_display
-        self.show_clock = show_clock
 
         self.Nsteps = Nsteps
         self.snapshot_interval = int(snapshot_interval_in_sec / dt)
@@ -89,7 +99,6 @@ class LarvaWorld:
         self.trajectory_colors = trajectory_colors
         self.trail_decay_in_ticks = int(trail_decay_in_sec / self.dt)
 
-        self.show_state = show_state
         self.random_larva_colors = random_larva_colors
         self.color_behavior = color_behavior
 
@@ -117,6 +126,7 @@ class LarvaWorld:
             self.default_larva_color = np.array([0, 0, 0])
         self.selection_color = np.array([255, 0, 0])
         self.env_pars = env_params
+        self.larva_pars = fly_params
 
         self.snapshot_counter = 0
         self.food_grid = None
@@ -126,10 +136,11 @@ class LarvaWorld:
         self.create_schedules()
         self.create_arena(**self.env_pars['arena_params'])
         self.space = self.create_space(**self.env_pars['space_params'])
-        if 'border_params' in self.env_pars.keys():
-            self.border_xy, self.border_lines = self.create_borders(**self.env_pars['border_params'])
-        else:
-            self.border_xy, self.border_lines = [], []
+        if 'border_list' in self.env_pars.keys():
+            for border_pars in self.env_pars['border_list'] :
+                b = Border(model=self, **border_pars)
+                self.add_border(b)
+
         self.sim_clock = SimulationClock(self.dt, color=self.scale_clock_color)
         self.sim_scale = SimulationScale(self.arena_dims[0], self.scaling_factor,
                                          color=self.scale_clock_color)
@@ -221,6 +232,9 @@ class LarvaWorld:
             self.active_larva_schedule.remove(agent)
         elif type(agent) is Food:
             self.active_food_schedule.remove(agent)
+        elif type(agent) is Border:
+            self.borders.remove(agent)
+            agent.delete()
 
     def close(self):
         self.destroy()
@@ -288,10 +302,10 @@ class LarvaWorld:
                 pass
 
     def draw_aux(self, screen):
-        if self.show_clock:
+        if self.visible_clock:
             self.sim_clock.draw_clock(screen)
         self.sim_scale.draw_scale(screen)
-        if self.show_state:
+        if self.visible_state:
             self.sim_state.draw_state(screen)
         self.input_box.draw(screen)
 
@@ -299,16 +313,19 @@ class LarvaWorld:
         screen.set_bounds(*self.space_edges_for_screen)
         screen.draw_polygon(self.space_edges, color=self.screen_color)
         screen.draw_polygon(self.tank_shape, color=self.tank_color)
-        for b in self.border_xy:
-            screen.draw_polyline(b, color=self.screen_color, width=0.001 * self.scaling_factor, closed=False)
+        for i, b in enumerate(self.borders):
+            b.draw(screen)
+        # for i,b in enumerate(self.border_xy):
 
     def render_aux(self):
-        if self.show_clock:
+        if self.visible_clock:
             self.sim_clock.render_clock(self.screen_width, self.screen_height)
-        self.sim_scale.render_scale(self.screen_width, self.screen_height)
+        if self.visible_state:
+            self.sim_scale.render_scale(self.screen_width, self.screen_height)
         self.sim_state.render_state(self.screen_width, self.screen_height)
 
     def render(self, velocity_arrows=False, tick=None):
+
         if self.background_motion is None or tick is None:
             background_motion = [0, 0, 0]
         else:
@@ -325,7 +342,7 @@ class LarvaWorld:
                 self._image_path = None
 
             self._screen = rendering.GuppiesViewer(self.screen_width, self.screen_height, caption=self.id,
-                                                   fps=self.video_fps, dt=self.dt, display=self.show_display,
+                                                   fps=self.video_fps, dt=self.dt, show_display=self.show_display,
                                                    record_video_to=self._video_path,
                                                    record_image_to=self._image_path)
             self.render_aux()
@@ -345,7 +362,6 @@ class LarvaWorld:
 
         if self.food_grid:
             self.food_grid.draw(self._screen)
-        # render food
         for o in self.get_food():
             o.draw(self._screen)
             o.id_box.draw(self._screen)
@@ -361,7 +377,7 @@ class LarvaWorld:
             draw_trajectories(space_dims=self.space_dims, agents=self.get_flies(), screen=self._screen,
                               decay_in_ticks=self.trail_decay_in_ticks, trajectory_colors=self.trajectory_colors)
 
-        self.evaluate_clicks()
+        self.evaluate_input()
         if self.image_mode != 'overlap':
             self.draw_aux(self._screen)
             self._screen.render()
@@ -378,20 +394,20 @@ class LarvaWorld:
         return pp
 
     def _place_food(self, N=0, positions=None, food_pars={}):
-        pars=copy.deepcopy(food_pars)
-        if len(pars['food_list'])==0 :
+        pars = copy.deepcopy(food_pars)
+        if len(pars['food_list']) == 0:
             if N == 0:
                 return
             food_positions = self._generate_food_positions(N, positions)
             for i, p in enumerate(food_positions):
                 self.add_food(position=p, food_pars=pars)
-        else :
-            for f in pars['food_list'] :
-                id=f['unique_id']
+        else:
+            for f in pars['food_list']:
+                id = f['unique_id']
                 position = f['pos']
                 f.pop('unique_id')
                 f.pop('pos')
-                self.add_food(id=id,position=position, food_pars=f)
+                self.add_food(id=id, position=position, food_pars=f)
 
     def _generate_food_positions(self, N, positions):
         raw_food_positions = []
@@ -426,10 +442,26 @@ class LarvaWorld:
         self.all_food_schedule.add(f)
         return f
 
+    def add_larva(self, position, orientation=None, id=None, pars=None):
+        if pars is None:
+            ids, all_pars = self._generate_larva_pars(1, copy.deepcopy(self.larva_pars))
+            pars = all_pars[0]
+        if id is None:
+            id = self.next_id(type='Larva')
+        if orientation is None:
+            orientation = np.random.uniform(0, 2 * np.pi, 1)[0]
+        l = LarvaSim(model=self, pos=position, orientation=orientation, unique_id=id, fly_params=pars)
+        self.active_larva_schedule.add(l)
+        self.all_larva_schedule.add(l)
+        return l
+
     def next_id(self, type='Food'):
         if type == 'Food':
             N = self.all_food_schedule.get_agent_count()
             return f'Food_{N}'
+        elif type == 'Larva':
+            N = self.all_larva_schedule.get_agent_count()
+            return f'Larva_{N}'
 
     def run(self, Nsteps=None):
         # pygame.init()
@@ -485,22 +517,32 @@ class LarvaWorld:
                     raise ValueError('When running a replay, set mode to video or image')
         return True
 
-    def create_borders(self, lines):
+    def create_borders(self, lines, from_screen=False):
         s = self.scaling_factor
         X, Y = self.arena_dims
-        T = [s, 0, 0, s, -s * X / 2, -s * Y / 2]
+        if not from_screen:
+            T = [s, 0, 0, s, -s * X / 2, -s * Y / 2]
+        else:
+            T = [s, 0, 0, s, 0, 0]
         lines = [affine_transform(l, T) for l in lines]
         ps = [p.coords.xy for p in lines]
-        borders_xy = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
+        border_xy = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
+        return border_xy, lines
 
+    def create_border_bodies(self, border_xy):
         if self.physics_engine:
-            for xy in borders_xy:
+            border_bodies = []
+            for xy in border_xy:
                 b = self.space.CreateStaticBody(position=(.0, .0))
                 border_shape = b2EdgeShape(vertices=xy.tolist())
                 b.CreateFixture(shape=border_shape)
-        return borders_xy, lines
+                border_bodies.append(b)
+            return border_bodies
+        else:
+            return []
 
-    def evaluate_clicks(self):
+    def evaluate_input(self):
+        d_zoom=0.05
         ev = pygame.event.get()
         for event in ev:
             if event.type == pygame.QUIT:
@@ -508,40 +550,47 @@ class LarvaWorld:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_TAB:
                     self.toggle_ids()
-            if self.allow_clicks:
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        p = self.screen2space_pos(pygame.mouse.get_pos())
-                        res=self.eval_selection(p)
-                        # self.mousebuttondown_time = time.time()
-                        if not res :
-                            f = self.add_food(p)
-                    elif event.button == 3 :
-                        if len(self.selected_agents) > 0:
-                            sel = self.selected_agents[0]
-                            sel = gui.set_agent_kwargs(sel)
-                    # elif event.button == 3:
-                    #     self.input_box.visible = True
-
-                # elif event.type == pygame.MOUSEBUTTONUP:
-                #     dur = np.round(time.time() - self.mousebuttondown_time, 2)
-                #     self.mousebuttondown_time = None
-                #     p = self.screen2space_pos(pygame.mouse.get_pos())
-                #     f = self.add_food(p)
-                #     odor_id = list(self.odor_layers.keys())[0]
-                #     self.odor_layers[odor_id].sources.append(f)
-                #     f.set_odor(id=odor_id, intensity=dur)
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_DELETE:
+                elif event.key == pygame.K_c:
+                    self.toggle_clock()
+                elif event.key == pygame.K_s:
+                    self.toggle_state()
+                elif event.key == pygame.K_DELETE:
+                    if gui.delete_objects_window(self.selected_agents):
                         for f in self.selected_agents:
                             self.selected_agents.remove(f)
                             self.delete(f)
+            if self.allow_clicks:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self.mousebuttondown_pos = self._screen.get_mouse_position()
+                    # self.mousebuttondown_time = time.time()
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    # self.mousebuttonup_time = time.time()
+                    # dt = self.mousebuttonup_time - self.mousebuttondown_time
+                    p = self._screen.get_mouse_position()
+                    if event.button == 1:
+                        res = self.eval_selection(p)
+                        # self.mousebuttondown_time = time.time()
+                        if not res:
+                            if self.selected_type == 'Food':
+                                f = self.add_food(p)
+                            elif self.selected_type == 'Larva':
+                                f = self.add_larva(p)
+                            elif self.selected_type == 'Border':
+                                b = Border(model=self, points=[tuple(self.mousebuttondown_pos), tuple(p)], from_screen=True)
+                                self.add_border(b)
+                    elif event.button == 3:
+                        if len(self.selected_agents) > 0:
+                            sel = self.selected_agents[0]
+                            sel = gui.set_agent_kwargs(sel)
+                        else:
+                            self.selected_type = gui.object_menu(self.selected_type)
+                    elif event.button == 4:
+                        self._screen.zoom_screen(d_zoom=-d_zoom)
+                    elif event.button == 5:
+                        self._screen.zoom_screen(d_zoom=+d_zoom)
+
                 self.input_box.get_input(event)
 
-    # def customize(self):
-    #     while self.is_running:
-    #         self.render()
-    #         return self.selected_agents
 
     def get_place_params(self):
         return {**self.get_food_placement(), **self.get_larva_placement()}
@@ -574,15 +623,21 @@ class LarvaWorld:
         return larva_placement
 
     def toggle_ids(self):
-        self.ids_visible = not self.ids_visible
+        self.visible_ids = not self.visible_ids
         for a in self.get_flies() + self.get_food():
-            a.id_box.visible = self.ids_visible
+            a.id_box.visible = self.visible_ids
+
+    def toggle_clock(self):
+        self.visible_clock = not self.visible_clock
+
+    def toggle_state(self):
+        self.visible_state = not self.visible_state
 
     def eval_selection(self, p):
-        res=False
-        for f in self.get_food() + self.get_flies():
+        res = False
+        for f in self.get_food() + self.get_flies() + self.borders:
             if f.contained(p):
-                res=True
+                res = True
                 if not f.selected:
                     f.selected = True
                     self.selected_agents.append(f)
@@ -594,11 +649,13 @@ class LarvaWorld:
         return res
 
     def get_agent_list(self, class_name):
-        if class_name == 'Food' :
-            agents=self.get_food()
-        elif class_name in ['LarvaSim', 'LarvaReplay'] :
+        if class_name == 'Food':
+            agents = self.get_food()
+        elif class_name in ['LarvaSim', 'LarvaReplay']:
             agents = self.get_flies()
-        pars= agent_pars[class_name]
+        elif class_name == 'Border':
+            agents = self.borders
+        pars = agent_pars[class_name]
         data = []
         for f in agents:
             dic = {}
@@ -607,8 +664,15 @@ class LarvaWorld:
             data.append(dic)
         return data
 
+    def add_border(self, b):
+        self.borders.append(b)
+        self.border_xy += b.border_xy
+        self.border_lines += b.border_lines
+        self.border_bodies += b.border_bodies
+
+
 class LarvaWorldSim(LarvaWorld):
-    def __init__(self, fly_params, collected_pars={'step': [], 'endpoint': []},
+    def __init__(self, collected_pars={'step': [], 'endpoint': []},
                  id='Unnamed_Simulation', allow_collisions=True,
                  count_bend_errors=False,
                  starvation_hours=[], hours_as_larva=0, deb_base_f=1, **kwargs):
@@ -628,7 +692,6 @@ class LarvaWorldSim(LarvaWorld):
         self.count_bend_errors = count_bend_errors
 
         self.allow_collisions = allow_collisions
-        self.larva_pars = fly_params
 
         self.populate_space(env_pars=self.env_pars, larva_pars=self.larva_pars)
         self.create_data_collectors(collected_pars)
@@ -639,9 +702,9 @@ class LarvaWorldSim(LarvaWorld):
             self._place_food(self.env_pars['place_params']['initial_num_food'],
                              self.env_pars['place_params']['initial_food_positions'],
                              food_pars=food_pars)
-            if 'grid_pars' in list(food_pars.keys()) :
+            if 'grid_pars' in list(food_pars.keys()):
                 self._create_food_grid(space_range=self.space_edges_for_screen,
-                                   food_pars=food_pars['grid_pars'])
+                                       food_pars=food_pars['grid_pars'])
         # odor_params = environment_params['odor_params']
         self.Nodors, self.odor_layers = self._create_odor_layers(odor_pars=env_pars['odor_params'])
 
@@ -696,7 +759,7 @@ class LarvaWorldSim(LarvaWorld):
             # odor_ids = self.food_params['odor_id_list']
             Nodors = len(odor_pars['odor_id_list'])
             layers = dict.fromkeys(odor_pars['odor_id_list'])
-            odor_colors =fun.random_colors(Nodors)
+            odor_colors = fun.random_colors(Nodors)
 
             if odor_pars['odor_carriers'] == 'food':
                 sources = self.get_food()
@@ -725,7 +788,7 @@ class LarvaWorldSim(LarvaWorld):
                     layers[odor_id] = GaussianValueLayer(world=self.space, unique_id=odor_id,
                                                          sources=[f for f in sources if
                                                                   f.get_odor_id() == odor_id], color=odor_color)
-                for f in layers[odor_id].sources :
+                for f in layers[odor_id].sources:
                     f.set_default_color(layers[odor_id].color)
             return Nodors, layers
         else:
@@ -813,9 +876,7 @@ class LarvaWorldSim(LarvaWorld):
 
     def _place_larvae(self, positions, orientations, ids, all_pars):
         for i, (p, o, id, pars) in enumerate(zip(positions, orientations, ids, all_pars)):
-            f = LarvaSim(model=self, pos=p, orientation=o, unique_id=id, fly_params=pars)
-            self.active_larva_schedule.add(f)
-            self.all_larva_schedule.add(f)
+            self.add_larva(position=p, orientation=o, id=id, pars=pars)
 
     def create_larvae(self, N, pos_conf, larva_pars):
         positions, orientations = self._generate_larva_poses(N, pos_conf)

@@ -14,28 +14,23 @@ from lib.aux import functions as fun
 
 
 class GuppiesViewer(object):
-    def __init__(self, width, height, caption="", fps=10, dt=0.1, display=True, record_video_to=None,
-                 record_image_to=None):
+    def __init__(self, width, height, caption="", fps=10, dt=0.1, show_display=True, record_video_to=None,
+                 record_image_to=None, zoom=1):
         x = 1550
         y = 400
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x, y)
 
-        self._width = width
-        self._height = height
-        self._display = display
+        self.zoom = zoom
+        self.caption = caption
+        self.window_size = width, height
+        self.show_display = show_display
         self._t = pygame.time.Clock()
         self._fps = fps
         self.dt = dt
+        self.center = np.array([0.0, 0.0])
 
-        if display:
-            flags = pygame.HWSURFACE | pygame.DOUBLEBUF
-            self._window = pygame.display.set_mode((width, height), flags)
-            pygame.display.set_caption(caption)
-            pygame.event.set_allowed(pygame.QUIT)
-        else:
-            flags = pygame.HWSURFACE | pygame.DOUBLEBUF
-            self._window = pygame.Surface((width, height), flags)
-        # raise
+        self.display_size = self.scale_dims()
+        self._window = self.init_screen()
 
         if record_video_to:
             import imageio
@@ -52,15 +47,40 @@ class GuppiesViewer(object):
         self._scale = np.array([[1., .0], [.0, -1.]])
         self._translation = np.zeros(2)
 
+    def init_screen(self):
+        if self.show_display:
+            flags = pygame.HWSURFACE | pygame.DOUBLEBUF
+            window = pygame.display.set_mode(self.window_size, flags)
+            pygame.display.set_caption(self.caption)
+            pygame.event.set_allowed(pygame.QUIT)
+        else:
+            flags = pygame.HWSURFACE | pygame.DOUBLEBUF
+            window = pygame.Surface(self.display_size, flags)
+        return window
+
+    def scale_dims(self):
+        _width = int(self.window_size[0] / self.zoom)
+        _height = int(self.window_size[1] / self.zoom)
+        return _width, _height
+
+    def zoom_screen(self, d_zoom):
+        if 0.01 <= self.zoom + d_zoom <= 1:
+            self.zoom += d_zoom
+            self.display_size = self.scale_dims()
+            self.center -= self.get_mouse_position() * d_zoom
+        if self.zoom == 1:
+            self.center = np.array([0.0, 0.0])
+
     def __del__(self):
         self.close()
 
     def set_bounds(self, left, right, bottom, top):
         assert right > left and top > bottom
-        scale_x = self._width / (right - left)
-        scale_y = self._height / (top - bottom)
+        scale_x = self.display_size[0] / (right - left)
+        scale_y = self.display_size[1] / (top - bottom)
         self._scale = np.array([[scale_x, .0], [.0, -scale_y]])
-        self._translation = np.array([-left * scale_x, -bottom * scale_y])
+        self._translation = np.array([(-left * self.zoom) * scale_x, (-bottom * self.zoom) * scale_y])
+        self._translation += self.center * [-scale_x, scale_y]
 
     def _transform(self, position):
         return np.round(self._scale.dot(position) + self._translation).astype(int)
@@ -130,13 +150,7 @@ class GuppiesViewer(object):
         return np.linalg.inv(self._scale).dot(mouse_pos)
 
     def render(self):
-        if self._display:
-            # for event in pygame.event.get():
-            #     if event.type == pygame.QUIT:
-            #         print('DD')
-            #     elif event.type == pygame.VIDEORESIZE:
-            #         print('FF')
-
+        if self.show_display:
             pygame.display.flip()
             image = pygame.surfarray.pixels3d(self._window)
             self._t.tick(self._fps)
@@ -146,7 +160,7 @@ class GuppiesViewer(object):
             self._video_writer.append_data(np.flipud(np.rot90(image)))
         if self._image_writer:
             self._image_writer.append_data(np.flipud(np.rot90(image)))
-        # return image
+        return image
 
     @staticmethod
     def close_requested():
@@ -199,7 +213,7 @@ class InputBox:
             # Blit the text.
             viewer.draw_text_box(txt_surface, (self.shape.x + 5, self.shape.y + 5))
             # viewer._window.blit(txt_surface, (self.shape.x + 5, self.shape.y + 5))
-            if self.show_frame :
+            if self.show_frame:
                 # Blit the input_box rect.
                 viewer.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
                 # pygame.draw.rect(viewer._window, self.color, self.shape, self.linewidth)
@@ -233,9 +247,9 @@ class InputBox:
         self.visible = False
 
     def set_shape(self, pos):
-        if pos is None or any(np.isnan(pos)) :
-            self.shape=None
-        else :
+        if pos is None or any(np.isnan(pos)):
+            self.shape = None
+        else:
             self.shape = pygame.Rect(pos[0], pos[1], 140, 32)
 
 

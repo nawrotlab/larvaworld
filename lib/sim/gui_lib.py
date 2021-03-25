@@ -1,5 +1,7 @@
 import copy
 from ast import literal_eval
+from typing import List, Tuple
+
 import numpy as np
 import PySimpleGUI as sg
 import operator
@@ -24,6 +26,10 @@ def retrieve_value(v, type) :
             vv = False
         elif v in ['True', True]:
             vv = True
+    elif type==List[Tuple[float, float]] :
+        v=v.replace('{', ' ')
+        v=v.replace('}', ' ')
+        vv = [tuple([float(x) for x in t.split()]) for t in v.split('   ')]
     elif type == tuple or type == list:
         try:
             vv = literal_eval(v)
@@ -297,9 +303,6 @@ def collapse(layout, key, visible=True):
     return sg.pin(sg.Column(layout, key=key, visible=visible))
 
 
-
-
-
 def set_kwargs(kwargs, title='Arguments'):
     if kwargs != {}:
         layout = []
@@ -348,12 +351,49 @@ def set_agent_kwargs(agent):
     if event == 'Ok':
         for i, (p, t) in enumerate(pars.items()):
             v = values[f'kw_{p}']
-            # print(v, type(v))
             if p == 'unique_id':
                 agent.set_id(str(v))
             else:
                 setattr(agent, p, retrieve_value(v, t))
     return agent
+
+
+def object_menu(selected):
+    object_list=['Larva', 'Food', 'Border']
+    title='Select object type'
+    layout = [
+        [sg.Text(title, **header_kwargs)],
+        [sg.Listbox(default_values=[selected], values=object_list, change_submits=False, size=(20, len(object_list)), key='SELECTED_OBJECT',
+                    enable_events=True)],
+    [sg.Ok()]]
+    window=sg.Window(title, layout)
+    while True:
+        event, values = window.read()
+        sel = values['SELECTED_OBJECT'][0]
+        if event == 'Ok':
+            break
+    window.close()
+    return sel
+
+def delete_objects_window(selected):
+    ids=[sel.unique_id for sel in selected]
+    title='Delete objects?'
+    layout = [
+        [sg.Text(title, **header_kwargs)],
+        [sg.Listbox(default_values=ids, values=ids, change_submits=False, size=(20, len(ids)), key='DELETE_OBJECTS',
+                    enable_events=True)],
+    [sg.Ok(), sg.Cancel()]]
+    window=sg.Window(title, layout)
+    while True:
+        event, values = window.read()
+        if event == 'Ok':
+            res=True
+            break
+        elif event == 'Cancel' :
+            res = False
+            break
+    window.close()
+    return res
 
 
 class BtnInfo:

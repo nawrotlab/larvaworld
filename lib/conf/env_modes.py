@@ -47,13 +47,13 @@ def food_grid(dim, amount=0.00001):
             'initial_amount': amount}
 
 
-def food(r, amount=0.000001, odor_id=None, odor_intensity=0.0, odor_spread=0.0):
+def food(r, amount=0.000001, odor_id=None, odor_intensity=0.0, odor_spread=0.1):
     return {'radius': r,
             'amount': amount,
             'odor_id': odor_id,
             'odor_intensity': odor_intensity,
             'odor_spread': odor_spread,
-            'food_list' : []
+            'food_list': []
             }
 
 
@@ -85,7 +85,7 @@ def food_place(N, place='mid', r=0.7):
     a = {'initial_num_food': N,
          'initial_food_positions': {'mode': mode,
                                     'loc': loc,
-                                    'scale' : 0.1}}
+                                    'scale': 0.1}}
     return a
 
 
@@ -106,7 +106,7 @@ def chemotax_place(N):
             'initial_num_food': 1,
             'initial_food_positions': {'mode': 'defined',
                                        'loc': np.array([(0.8, 0.0)]),
-                                       'scale' : None}}
+                                       'scale': None}}
 
 
 spiral_around_food = {'initial_num_flies': 32,
@@ -310,14 +310,14 @@ def pref_conf(N, dish_r=0.1):
                 'unique_id': 'CS+ source',
                 'pos': (-0.04, 0.0),
                 'amount': 0,
-                    'radius' : 0.003,
-                    'odor_id': 'CS+',
-                    'odor_intensity': 2,
-                    'odor_spread': 0.001},
-            {
-                'unique_id': 'CS- source',
-                'pos': (0.04, 0.0),
-                'amount': 0,
+                'radius': 0.003,
+                'odor_id': 'CS+',
+                'odor_intensity': 2,
+                'odor_spread': 0.001},
+                {
+                    'unique_id': 'CS- source',
+                    'pos': (0.04, 0.0),
+                    'amount': 0,
                     'radius': 0.003,
                     'odor_id': 'CS-',
                     'odor_intensity': 2,
@@ -334,10 +334,10 @@ def chemotax_conf(N):
                 'unique_id': 'Odor source',
                 'pos': (0.8, 0.0),
                 'amount': 0,
-                    'radius' : 0.002,
-                    'odor_id': 'Odor',
-                    'odor_intensity': 8,
-                    'odor_spread': 0.0004}]},
+                'radius': 0.002,
+                'odor_id': 'Odor',
+                'odor_intensity': 8,
+                'odor_spread': 0.0004}]},
             'food_params': food(0.002, amount=0, odor_intensity=8, odor_spread=0.0004),
             'place_params': chemotax_place(N),
             'odor_params': chemotax_odor_np}
@@ -350,10 +350,10 @@ def chemorbit_conf(N):
                 'unique_id': 'Odor source',
                 'pos': (0.0, 0.0),
                 'amount': 0,
-                    'radius' : 0.002,
-                    'odor_id': 'Odor',
-                    'odor_intensity': 2,
-                    'odor_spread': 0.0002}]},
+                'radius': 0.002,
+                'odor_id': 'Odor',
+                'odor_intensity': 2,
+                'odor_spread': 0.0002}]},
             # 'food_params': food(0.002, amount=0, odor_intensity=2, odor_spread=0.0002),
             'place_params': {**larva_mid(N, s=0), **food_place(1)},
             'odor_params': chemorbit_odor_np}
@@ -362,7 +362,12 @@ def chemorbit_conf(N):
 
 def maze_conf(N, n):
     conf = {'arena_params': arena(0.1, 0.1),
-            'border_params': {'lines': maze(nx=n, ny=n, h=0.1)},
+            'border_list': [
+                {
+                'unique_id': 'Maze',
+                'lines': maze(nx=n, ny=n, h=0.1),
+                'from_screen': False}
+            ],
             'food_params': food(0.002),
             'place_params': {**chemotax_place(N), **food_place(1)},
             'odor_params': chemorbit_odor_np}
@@ -434,8 +439,8 @@ focus_exp_p = {'arena_params': dish(0.02),
 
 feed_grid_exp = {'arena_params': arena(0.05, 0.05),
                  'food_params': {
-                     'food_list' : [],
-                     'grid_pars' : food_grid(50)},
+                     'food_list': [],
+                     'grid_pars': food_grid(50)},
                  'place_params': {**larva_mid(1), **food_place(0)},
                  'odor_params': None}
 

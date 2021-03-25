@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 full_traj = {'trajectories': True,
              'trail_decay_in_sec': 0}
 
@@ -51,6 +53,7 @@ food_pars = {
     'pos': tuple,
     'radius': float,
     'amount': float,
+    'quality': float,
     'odor_id': str,
     'odor_intensity': float,
     'odor_spread': float
@@ -58,8 +61,14 @@ food_pars = {
 larva_pars = {
     'unique_id': str,
 }
+border_pars = {
+    'unique_id': str,
+    'width': float,
+    'points': List[Tuple[float, float]]
+}
 
 agent_pars = {'Food' : food_pars,
               'LarvaSim' : larva_pars,
-              'LarvaReplay' : larva_pars
+              'LarvaReplay' : larva_pars,
+              'Border' : border_pars,
               }
