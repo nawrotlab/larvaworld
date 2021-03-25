@@ -22,16 +22,15 @@ class BodyController(LarvaBody):
         self.density = density
 
         self.head_contacts_ground = True
-        # self.initial_pos = pos
-        # self.pos = self.initial_pos
         self.trajectory = [self.pos]
-        super().__init__(model=self.model, pos=self.pos, orientation=orientation, **kwargs)
+        super().__init__(model=model, pos=self.pos, orientation=orientation, **kwargs)
         self.lin_activity = 0
         self.ang_activity = 0
         self.ang_vel = 0
         self.body_bend = 0
         self.body_bend_errors = 0
         self.Nangles_b = int(self.Nangles + 1 / 2)
+        self.spineangles = [0.0]*self.Nangles
         self.compute_body_bend()
         self.torque = 0
         self.mid_seg_index = int(self.Nsegs / 2)

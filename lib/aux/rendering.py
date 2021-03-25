@@ -28,6 +28,7 @@ class GuppiesViewer(object):
         self._fps = fps
         self.dt = dt
         self.center = np.array([0.0, 0.0])
+        self.center_lim = np.array([0.0, 0.0])
 
         self.display_size = self.scale_dims()
         self._window = self.init_screen()
@@ -67,7 +68,7 @@ class GuppiesViewer(object):
         if 0.01 <= self.zoom + d_zoom <= 1:
             self.zoom += d_zoom
             self.display_size = self.scale_dims()
-            self.center -= self.get_mouse_position() * d_zoom
+            self.center = np.clip(self.center- self.get_mouse_position() * d_zoom, self.center_lim, -self.center_lim)
         if self.zoom == 1:
             self.center = np.array([0.0, 0.0])
 
@@ -81,6 +82,8 @@ class GuppiesViewer(object):
         self._scale = np.array([[scale_x, .0], [.0, -scale_y]])
         self._translation = np.array([(-left * self.zoom) * scale_x, (-bottom * self.zoom) * scale_y])
         self._translation += self.center * [-scale_x, scale_y]
+        self.center_lim=(1-self.zoom)*np.array([left, bottom])
+
 
     def _transform(self, position):
         return np.round(self._scale.dot(position) + self._translation).astype(int)
@@ -177,6 +180,10 @@ class GuppiesViewer(object):
             self._image_writer.close()
         del self
         print('Screen closed')
+
+    def move_center(self, dx=0, dy=0):
+        self.center=np.clip(self.center-self.center_lim* [dx, dy], self.center_lim, -self.center_lim)
+
 
 
 class ScreenItem:

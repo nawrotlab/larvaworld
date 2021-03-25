@@ -23,8 +23,7 @@ class LarvaReplay(Larva, LarvaBody):
         self.color = deepcopy(self.default_color)
         self.sim_length = length
 
-        self.Nticks = len(data.index.unique().values)
-        N=self.Nticks
+        N = len(data.index.unique().values)
         Nmid=self.model.Npoints
         Ncon=self.model.Ncontour
         Nangles=self.model.Nangles
@@ -46,19 +45,15 @@ class LarvaReplay(Larva, LarvaBody):
         self.ang_ar = data[ang_pars].values if Nangles > 0 else np.ones([N, Nangles]) * np.nan
         self.or_ar = data[or_pars].values if Nors > 0 else np.ones([N, Nors]) * np.nan
 
-        vp_behavior = [p for p in self.behavior_pars if p in self.model.pars]
+        vp_beh = [p for p in self.behavior_pars if p in self.model.pars]
         self.beh_ar = np.zeros([N, len(self.behavior_pars)], dtype=bool)
         for i, p in enumerate(self.behavior_pars):
-            if p in vp_behavior:
+            if p in vp_beh:
                 self.beh_ar[:, i] = np.array([not v for v in np.isnan(data[p].values).tolist()])
-
         self.pos = self.pos_ar[0]
         if Nsegs is not None:
             LarvaBody.__init__(self, model, pos=self.pos, orientation=self.or_ar[0][0],
-                               initial_length=self.sim_length / 1000, length_std=0, Nsegs=Nsegs,
-                               interval=0)
-
-
+                               initial_length=self.sim_length / 1000, length_std=0, Nsegs=Nsegs,interval=0)
 
     def read_step(self, i):
         self.midline = self.mid_ar[i].tolist()
@@ -121,7 +116,7 @@ class LarvaReplay(Larva, LarvaBody):
             else:
                 pos = None
             if pos is not None:
-                viewer.draw_circle(radius=.1, position=pos, filled=True, color=self.color, width=1)
+                viewer.draw_circle(radius=self.radius/2, position=pos, filled=True, color=self.color, width=self.radius / 3)
         if self.model.draw_midline and self.model.Npoints > 1:
             if not np.isnan(self.midline[0]).any():
                 viewer.draw_polyline(self.midline, color=(0, 0, 255), closed=False, width=.07)
@@ -130,8 +125,11 @@ class LarvaReplay(Larva, LarvaBody):
                     color = (c, 255 - c, 0)
                     viewer.draw_circle(radius=.07, position=seg_pos, filled=True, color=color, width=.01)
         if self.selected:
-            viewer.draw_circle(radius=self.radius,position=self.pos,
-                               filled=False, color=self.model.selection_color, width=self.radius / 5)
+            if len(self.vertices) > 0 and not np.isnan(self.vertices).any():
+                viewer.draw_polygon(self.vertices, filled=False, color=self.model.selection_color, width=self.radius / 5)
+            elif not np.isnan(self.pos).any():
+                viewer.draw_circle(radius=self.radius,position=self.pos,
+                               filled=False, color=self.model.selection_color, width=self.radius / 3)
 
 
 class LarvaSim(BodyController, Larva):
@@ -175,6 +173,8 @@ class LarvaSim(BodyController, Larva):
         # Paint the body to visualize effector state
         if self.model.color_behavior:
             self.update_behavior_dict()
+        else :
+            self.set_color([self.default_color for seg in self.segs])
         # if self.model.draw_contour:
         #     self.set_contour()
 

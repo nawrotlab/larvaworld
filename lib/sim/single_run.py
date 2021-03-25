@@ -165,7 +165,6 @@ def run_sim_basic(sim_id,
                   preview=False,
                   **kwargs):
 
-    # print(starvation_hours)
     if save_to is None:
         save_to = paths.SimFolder
     # current_date = date.today()
@@ -176,9 +175,6 @@ def run_sim_basic(sim_id,
     dt = sim_params['dt']
     Nsec = sim_params['sim_time_in_min'] * 60
     Nsteps = int(Nsec / dt)
-
-    print(sim_params['sim_time_in_min'])
-
     if common_folder:
         parentdir = os.path.join(save_to, common_folder)
     else:
@@ -220,9 +216,7 @@ def run_sim_basic(sim_id,
         im = env.get_image_path()
         env.close()
         return im
-    # except :
-    #     print (f'Failed to initialize simulation {sim_id}.')
-    #     return None
+
 
 
 

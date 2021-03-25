@@ -554,10 +554,37 @@ class LarvaWorld:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_TAB:
                     self.toggle_ids()
-                elif event.key == pygame.K_c:
+                elif event.key == pygame.K_t:
                     self.toggle_clock()
                 elif event.key == pygame.K_s:
                     self.toggle_state()
+                elif event.key == pygame.K_b:
+                    self.toggle_behavior()
+                elif event.key == pygame.K_m:
+                    self.toggle_midline()
+                elif event.key == pygame.K_c:
+                    self.toggle_contour()
+                elif event.key == pygame.K_h:
+                    self.toggle_head()
+                elif event.key == pygame.K_e:
+                    self.toggle_centroid()
+                # elif event.key == pygame.K_MINUS:
+                #     print(self._screen._fps)
+                #     self._screen._fps-=10
+                #     print(self._screen._fps)
+                # elif event.key == pygame.K_PLUS:
+                #     print(self._screen._fps)
+                #     self._screen._fps+=10
+                #     print(self._screen._fps)
+                elif event.key == pygame.K_LEFT:
+                    self._screen.move_center(-0.05,0)
+                elif event.key == pygame.K_RIGHT:
+                    self._screen.move_center(+0.05,0)
+                elif event.key == pygame.K_UP:
+                    self._screen.move_center(0,+0.05)
+                elif event.key == pygame.K_DOWN:
+                    self._screen.move_center(0,-0.05)
+
                 elif event.key == pygame.K_DELETE:
                     if gui.delete_objects_window(self.selected_agents):
                         for f in self.selected_agents:
@@ -637,6 +664,21 @@ class LarvaWorld:
     def toggle_state(self):
         self.visible_state = not self.visible_state
 
+    def toggle_behavior(self):
+        self.color_behavior = not self.color_behavior
+
+    def toggle_midline(self):
+        self.draw_midline = not self.draw_midline
+
+    def toggle_contour(self):
+        self.draw_contour = not self.draw_contour
+
+    def toggle_head(self):
+        self.draw_head = not self.draw_head
+
+    def toggle_centroid(self):
+        self.draw_centroid = not self.draw_centroid
+
     def eval_selection(self, p):
         res = False
         for f in self.get_food() + self.get_flies() + self.borders:
@@ -678,7 +720,7 @@ class LarvaWorld:
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, collected_pars=None,
                  id='Unnamed_Simulation', allow_collisions=True, count_bend_errors=False,
-                 starvation_hours=[], hours_as_larva=0, deb_base_f=1, **kwargs):
+                 starvation_hours=[], hours_as_larva=0, deb_base_f=1, parameter_dict={},**kwargs):
         super().__init__(id=id, **kwargs)
         if collected_pars is None:
             collected_pars = {'step': [], 'endpoint': []}
@@ -698,10 +740,10 @@ class LarvaWorldSim(LarvaWorld):
 
         self.allow_collisions = allow_collisions
 
-        self.populate_space(env_pars=self.env_pars, larva_pars=self.larva_pars)
+        self.populate_space(env_pars=self.env_pars, larva_pars=self.larva_pars, parameter_dict=parameter_dict)
         self.create_data_collectors(collected_pars)
 
-    def populate_space(self, env_pars, larva_pars):
+    def populate_space(self, env_pars, larva_pars, parameter_dict={}):
         food_pars = env_pars['food_params']
         if food_pars:
             self._place_food(self.env_pars['place_params']['initial_num_food'],
@@ -715,7 +757,7 @@ class LarvaWorldSim(LarvaWorld):
 
         self.create_larvae(N=env_pars['place_params']['initial_num_flies'],
                            pos_conf=env_pars['place_params']['initial_fly_positions'],
-                           larva_pars=larva_pars)
+                           larva_pars=larva_pars, parameter_dict=parameter_dict)
 
     def prepare_flies(self, timesteps):
         for t in range(timesteps):
@@ -842,7 +884,7 @@ class LarvaWorldSim(LarvaWorld):
             pass
         return larva_positions, larva_orientations
 
-    def _generate_larva_pars(self, N, larva_pars):
+    def _generate_larva_pars(self, N, larva_pars,  parameter_dict={}):
         if not isinstance(larva_pars, list):
             larva_confs = [larva_pars]
         else:
@@ -877,15 +919,28 @@ class LarvaWorldSim(LarvaWorld):
                         flat_c.update({p: s[i]})
                     type_larva_pars[i] = unflatten(flat_c)
             all_larva_pars.append(type_larva_pars)
-        return larva_ids, fun.flatten_list(all_larva_pars)
+        all_larva_pars=fun.flatten_list(all_larva_pars)
+        for k,vs in parameter_dict.items() :
+            # if len(all_larva_pars)!=len(vs) :
+            #     raise ValueError (f'Parameter {k} has {len(vs)} values but number of larvae is {len(all_larva_pars)}')
+            for larva_pars,v in zip(all_larva_pars, vs) :
+                # print(v)
+                # print(v)
+                larva_pars[k].update(v)
+                # larva_pars['neural_params'][k]=v
+                # print(list(larva_pars.keys()))
+                # print(list(larva_pars['neural_params'].keys()))
+                # print(list(larva_pars['neural_params']['olfactor_params'].keys()))
+                # print(larva_pars['neural_params']['olfactor_params']['olfactor_gain_mean'])
+        return larva_ids, all_larva_pars
 
     def _place_larvae(self, positions, orientations, ids, all_pars):
         for i, (p, o, id, pars) in enumerate(zip(positions, orientations, ids, all_pars)):
             self.add_larva(position=p, orientation=o, id=id, pars=pars)
 
-    def create_larvae(self, N, pos_conf, larva_pars):
+    def create_larvae(self, N, pos_conf, larva_pars, parameter_dict={}):
         positions, orientations = self._generate_larva_poses(N, pos_conf)
-        ids, all_pars = self._generate_larva_pars(N, larva_pars)
+        ids, all_pars = self._generate_larva_pars(N, larva_pars, parameter_dict=parameter_dict)
         self._place_larvae(positions, orientations, ids, all_pars)
 
     def allocate_odors(self, agents, odor_id_list,allocation_mode='iterative'):

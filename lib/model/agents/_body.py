@@ -737,13 +737,29 @@ class LarvaBody:
             for seg in self.segs:
                 seg.draw(viewer)
         if self.model.draw_head:
-            viewer.draw_circle(radius=self.seg_lengths[0] / 2,
+            viewer.draw_circle(radius=self.radius/2,
                                position=self.get_global_front_end_of_head(),
-                               filled=True, color=(255, 0, 0), width=.1)
+                               filled=True, color=(255, 0, 0), width=self.radius / 3)
+
+        if self.model.draw_midline :
+            points=[self.get_global_front_end_of_seg(i) for i in range(self.Nsegs)] + [self.get_global_rear_end_of_body()]
+            viewer.draw_polyline(points, color=(0, 0, 255), closed=False, width=self.radius / 10)
+            for i, p in enumerate(points):
+                c = 255 * i / (len(points) - 1)
+                color = (c, 255 - c, 0)
+                viewer.draw_circle(radius=self.radius / 10, position=p, filled=True, color=color, width=self.radius / 20)
+
+        if self.model.draw_centroid:
+            viewer.draw_circle(radius=self.radius/2, position=self.get_position(), filled=True, color=self.default_color, width=self.radius / 3)
+
         if self.selected:
             r = self.seg_lengths[0] / 2
-            viewer.draw_circle(radius=r,
-                               position=self.get_position(),
+            try:
+                for seg in self.segs:
+                    for i, vertices in enumerate(seg.vertices):
+                        viewer.draw_polygon(vertices, filled=False, color=self.model.selection_color, width=r / 5)
+            except :
+                viewer.draw_circle(radius=r,position=self.get_position(),
                                filled=False, color=self.model.selection_color, width=r / 5)
 
         # for s in self.get_sensors() :
