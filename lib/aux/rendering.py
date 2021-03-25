@@ -189,11 +189,11 @@ class ScreenItem:
 
 class InputBox:
     def __init__(self, visible=False, text='', color_inactive=None, color_active=None,
-                 screen_pos=None, linewidth=0.01, show_frame=False):
+                 screen_pos=None, linewidth=0.01, show_frame=False, agent=None):
         self.screen_pos = screen_pos
         self.linewidth = linewidth
         self.show_frame = show_frame
-        self.set_shape(self.screen_pos)
+        # self.set_shape(self.screen_pos)
         if color_active is None:
             color_active = pygame.Color('dodgerblue2')
         self.color_active = color_active
@@ -205,18 +205,22 @@ class InputBox:
         self.active = False
         self.font = pygame.font.Font(None, 32)
         self.text = text
+        self.agent = agent
 
     def draw(self, viewer):
-        if self.visible and self.shape is not None:
-            # Render the current text.
-            txt_surface = self.font.render(self.text, True, self.color)
-            # Blit the text.
-            viewer.draw_text_box(txt_surface, (self.shape.x + 5, self.shape.y + 5))
-            # viewer._window.blit(txt_surface, (self.shape.x + 5, self.shape.y + 5))
-            if self.show_frame:
-                # Blit the input_box rect.
-                viewer.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
-                # pygame.draw.rect(viewer._window, self.color, self.shape, self.linewidth)
+        if self.visible :
+            if self.agent is not None :
+                self.set_shape(self.agent.model.space2screen_pos(self.agent.get_position()))
+            if self.shape is not None:
+                # Render the current text.
+                txt_surface = self.font.render(self.text, True, self.color)
+                # Blit the text.
+                viewer.draw_text_box(txt_surface, (self.shape.x + 5, self.shape.y + 5))
+                # viewer._window.blit(txt_surface, (self.shape.x + 5, self.shape.y + 5))
+                if self.show_frame:
+                    # Blit the input_box rect.
+                    viewer.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
+                    # pygame.draw.rect(viewer._window, self.color, self.shape, self.linewidth)
 
     def switch(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -247,10 +251,10 @@ class InputBox:
         self.visible = False
 
     def set_shape(self, pos):
-        if pos is None or any(np.isnan(pos)):
-            self.shape = None
-        else:
+        if pos is not None and not any(np.isnan(pos)):
             self.shape = pygame.Rect(pos[0], pos[1], 140, 32)
+        else :
+            self.shape =None
 
 
 class SimulationClock(ScreenItem):

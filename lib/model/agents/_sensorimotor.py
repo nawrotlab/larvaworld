@@ -1,38 +1,20 @@
 import abc
 import math
-
 import numpy as np
 from shapely.geometry import LineString, Polygon
 
-from lib.model.larva._bodies import LarvaBody
-
+from lib.model.agents._body import LarvaBody
 import lib.aux.functions as fun
 
-#
-# class Agent(LarvaBody, abc.ABC):
-#     def __init__(self, **kwargs):
-#         super().__init__(**kwargs)
-#         # self._id = None
-#
-#     # def set_id(self, id):
-#     #     self._id = id
-#
-#     # @property
-#     # def id(self):
-#     #     return self._id
-#
-#     @abc.abstractmethod
-#     def step(self, time_step):
-#         pass
 
-
-class VelocityAgent(LarvaBody):
-    def __init__(self, pos, orientation,
+class BodyController(LarvaBody):
+    def __init__(self, model, orientation,
                  lin_vel_coef=1.0, ang_vel_coef=None, lin_force_coef=None, torque_coef=1.0,
                  lin_mode='velocity', ang_mode='torque', body_spring_k=1.0, bend_correction_coef=1.0,
                  lin_damping=1.0, ang_damping=1.0, density=300.0,
                  **kwargs):
 
+        self.model = model
         self.lin_damping = lin_damping
         self.ang_damping = ang_damping
         self.body_spring_k = body_spring_k
@@ -40,7 +22,10 @@ class VelocityAgent(LarvaBody):
         self.density = density
 
         self.head_contacts_ground = True
-        super().__init__(model=self.model, pos=pos, orientation=orientation, **kwargs)
+        # self.initial_pos = pos
+        # self.pos = self.initial_pos
+        self.trajectory = [self.pos]
+        super().__init__(model=self.model, pos=self.pos, orientation=orientation, **kwargs)
         self.lin_activity = 0
         self.ang_activity = 0
         self.ang_vel = 0
@@ -55,9 +40,6 @@ class VelocityAgent(LarvaBody):
 
         self.cum_dst = 0.0
         self.step_dst = 0.0
-        self.initial_pos = self.get_position()
-        self.current_pos = self.initial_pos
-        self.trajectory = [self.current_pos]
 
         self.lin_mode = lin_mode
         self.ang_mode = ang_mode
@@ -80,7 +62,6 @@ class VelocityAgent(LarvaBody):
         self.ang_vel_coef = ang_vel_coef
         self.lin_force_coef = lin_force_coef
         self.torque_coef = torque_coef
-        # self.ground_contact=True
 
         k = 0.9
         self.tank_polygon = Polygon(self.model.tank_shape * k)
@@ -185,12 +166,6 @@ class VelocityAgent(LarvaBody):
 
             self.step_no_physics(lin_vel=lin_vel_amp, ang_vel=ang_vel)
 
-        # Paint the body to visualize effector state
-        if self.model.color_behavior:
-            self.update_behavior_dict()
-        # if self.model.draw_contour:
-        #     self.set_contour()
-
     def compute_new_lin_vel_vector(self, target_segment):
         # Option 1 : Create the linear velocity from orientation.
         # This was the default. But it seems because of numerical issues it doesn't generate the expected vector,
@@ -219,24 +194,6 @@ class VelocityAgent(LarvaBody):
 
         return lin_vec
 
-    def update_behavior_dict(self):
-        behavior_dict = self.null_behavior_dict.copy()
-        if self.brain.modules['crawler'] and self.brain.crawler.active():
-            behavior_dict['stride_id'] = True
-            if self.brain.crawler.complete_iteration:
-                behavior_dict['stride_stop'] = True
-        if self.brain.modules['intermitter'] and self.brain.intermitter.active():
-            behavior_dict['pause_id'] = True
-        if self.brain.modules['feeder'] and self.brain.feeder.active():
-            behavior_dict['feed_id'] = True
-        orvel = self.get_head().get_angularvelocity()
-        if orvel > 0:
-            behavior_dict['Lturn_id'] = True
-        elif orvel < 0:
-            behavior_dict['Rturn_id'] = True
-        color = self.update_color(self.default_color, behavior_dict)
-        self.set_color([color for seg in self.segs])
-
     # Using the forward Euler method to compute the next theta and theta'
 
     '''Here we implement the lateral oscillator as described in Wystrach(2016) :
@@ -254,7 +211,7 @@ class VelocityAgent(LarvaBody):
     '''
 
     # Update 4.1.2020 : Setting b=0 because it is a substitute of the angular damping of the environment
-    def compute_ang_vel(self, torque=0, v=0, z=0):
+    def compute_ang_vel(self, torque=0.0, v=0.0, z=0.0):
         k = self.body_spring_k
         b = self.body_bend
         new_v = v + (-z * v - k * b + torque) * self.model.dt
@@ -302,14 +259,13 @@ class VelocityAgent(LarvaBody):
     def set_body_bend(self, value):
         self.body_bend = value
 
-
-
     def update_trajectory(self):
-        pos = self.get_position()
-        self.step_dst = np.sqrt(np.sum(np.array(pos - self.current_pos) ** 2))
+        last_pos = self.trajectory[-1]
+        if self.model.physics_engine:
+            self.pos = self.get_global_midspine_of_body()
+        self.step_dst = np.sqrt(np.sum(np.array(self.pos - last_pos) ** 2))
         self.cum_dst += self.step_dst
-        self.current_pos = pos
-        self.trajectory.append(pos)
+        self.trajectory.append(self.pos)
 
     def set_head_contacts_ground(self, value):
         self.head_contacts_ground = value
@@ -364,7 +320,6 @@ class VelocityAgent(LarvaBody):
             pos_new = pos_old
             head_rear_new = head_rear_old
             ang_vel += np.pi / 2
-            # angular_velocity -=np.sign(angular_velocity) * np.pi / 2
             d_or = ang_vel * dt
             or_new = or_old + d_or
         head.set_pose(pos_new, or_new, lin_vel, ang_vel)
@@ -379,7 +334,7 @@ class VelocityAgent(LarvaBody):
             pos = self.get_global_midspine_of_body()
         self.model.space.move_agent(self, pos)
         self.trajectory.append(pos)
-        self.current_pos = pos
+        self.pos = pos
 
     def position_rest_of_body(self, d_orientation, head_rear_pos, head_or):
         N = self.Nsegs

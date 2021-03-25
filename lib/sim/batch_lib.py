@@ -18,7 +18,7 @@ import seaborn as sns
 from lib.anal.plotting import plot_heatmap_PI, plot_endpoint_scatter, plot_debs, plot_surface, plot_heatmap, plot_3pars, \
     plot_endpoint_params
 from lib.conf.larva_modes import *
-from lib.model.larva.deb import deb_dict, deb_default
+from lib.model.agents.deb import deb_dict, deb_default
 from lib.sim.single_run import run_sim
 from lib.aux.functions import flatten_dict, reconstruct_dict, flatten_list
 from lib.stor.paths import BatchRunFolder

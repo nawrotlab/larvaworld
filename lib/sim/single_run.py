@@ -11,10 +11,9 @@ import lib.stor.paths as paths
 from lib.anal.plotting import *
 from lib.aux.collecting import effector_collection
 from lib.conf import exp_types, default_sim, box2d_space
-from lib.model.envs._food import Food
 from lib.model.envs._larvaworld import LarvaWorldSim
-from lib.model.larva._larva import Larva
-from lib.model.larva.deb import deb_dict, deb_default
+from lib.model.agents._agent import Larva, Food
+from lib.model.agents.deb import deb_dict, deb_default
 from lib.stor.larva_dataset import LarvaDataset
 import lib.sim.gui_lib as gui
 import pickle

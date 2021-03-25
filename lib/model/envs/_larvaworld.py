@@ -24,12 +24,11 @@ from mesa.time import RandomActivation
 
 from lib.aux.collecting import TargetedDataCollector
 from lib.model.envs._space import GaussianValueLayer, DiffusionValueLayer, ValueGrid
-from lib.model.larva._larva import LarvaSim, Larva
-from lib.model.envs._food import Food
+from lib.model.agents._larva import LarvaSim, LarvaReplay
+from lib.model.agents._agent import Food
 from lib.anal.plotting import plot_surface
 from lib.aux.rendering import SimulationState, InputBox
 from lib.aux import rendering
-from lib.model.larva._larva import LarvaReplay
 import lib.aux.functions as fun
 from lib.aux.rendering import SimulationClock, SimulationScale, draw_velocity_arrow, draw_trajectories
 from lib.aux.sampling import sample_agents, get_ref_bout_distros
@@ -389,9 +388,14 @@ class LarvaWorld:
         return pp
 
     def space2screen_pos(self, pos):
-        p = pos[0] * 2 / self.space_dims[0], pos[1] * 2 / self.space_dims[1]
-        pp = ((p[0] + 1) * self.screen_width / 2, (-p[1] + 1) * self.screen_height / 2)
-        return pp
+        if pos is None or any(np.isnan(pos)):
+            return None
+        try :
+            return self._screen._transform(pos)
+        except :
+            p = pos[0] * 2 / self.space_dims[0], pos[1] * 2 / self.space_dims[1]
+            pp = ((p[0] + 1) * self.screen_width / 2, (-p[1] + 1) * self.screen_height / 2)
+            return pp
 
     def _place_food(self, N=0, positions=None, food_pars={}):
         pars = copy.deepcopy(food_pars)

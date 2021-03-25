@@ -1,10 +1,4 @@
-# df_maze.py
 import random
-
-
-# Create a maze using the depth-first algorithm described at
-# https://scipython.com/blog/making-a-maze/
-# Christian Hill, April 2017.
 from matplotlib.patches import Circle
 from shapely.geometry import LineString, Point
 

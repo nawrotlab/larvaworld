@@ -185,7 +185,6 @@ class Box2DSegment:
         raise NotImplementedError('The plot method needs to be implemented by the subclass of Box2DSegment.')
 
 
-
 class Box2DPolygon(Box2DSegment):
     def __init__(self, seg_vertices=None, **kwargs):
         super().__init__(**kwargs)
@@ -250,8 +249,6 @@ class Box2DPolygon(Box2DSegment):
     def draw(self, viewer):
         for i, vertices in enumerate(self.vertices):
             viewer.draw_polygon(vertices, filled=True, color=self._color)
-
-
 
     # def plot(self, axes, **kwargs):
     #     from simulation.tools.plotting import plot_polygon
@@ -343,17 +340,24 @@ class DefaultPolygon:
         return self._color
 
 
+def generate_seg_colors(N, color):
+    if N > 5:
+        return [np.array((0, 255, 0))] + [np.copy(color) for i in range(N - 2)] + [np.array((255, 0, 0))]
+    else:
+        return [np.copy(color) for i in range(N)]
+
+
 class LarvaBody:
     def __init__(self, model, pos=None, orientation=None,
                  initial_length=None, length_std=0, Nsegs=1, interval=0, joint_type={'distance': 2, 'revolute': 1},
                  seg_ratio=None, friction_pars={'maxForce': 10 ** 0, 'maxTorque': 10 ** -1}, **kwargs):
 
+        self.model=model
         # FIXME get rid of this
-        if not 'density' in locals():
+        if 'density' not in locals():
             self.density = 300.0
         self.friction_pars = friction_pars
-        self.width_to_length_ratio = 0.2 # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
-        # self.width_to_length_ratio = 0.2
+        self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
         if seg_ratio is None:
             seg_ratio = [1 / Nsegs] * Nsegs
         self.seg_ratio = seg_ratio
@@ -367,7 +371,7 @@ class LarvaBody:
         self.Nsegs = Nsegs
         self.Nangles = Nsegs - 1
         self.spineangles = np.zeros(self.Nangles)
-        self.seg_colors = self.generate_seg_colors(Nsegs, self.default_color)
+        self.seg_colors = generate_seg_colors(Nsegs, self.default_color)
 
         if not hasattr(self, 'real_length'):
             self.real_length = None
@@ -380,7 +384,6 @@ class LarvaBody:
 
         self.set_head_edges()
 
-
         if not hasattr(self, 'real_mass'):
             self.real_mass = None
         if self.real_mass is None:
@@ -389,7 +392,7 @@ class LarvaBody:
         if not hasattr(self, 'V'):
             self.V = None
         if self.V is None:
-            self.V = self.get_real_length()**3
+            self.V = self.get_real_length() ** 3
 
         self.segs = self.generate_segs(pos, orientation, joint_type=joint_type)
 
@@ -397,9 +400,8 @@ class LarvaBody:
 
         self.sensors = []
         self.define_sensor('olfactor', (1, 0))
-        if self.model.touch_sensors :
+        if self.model.touch_sensors:
             self.add_touch_sensors()
-
 
     def get_real_length(self):
         return self.real_length
@@ -428,7 +430,7 @@ class LarvaBody:
 
     def adjust_body_vertices(self):
         self.sim_length = self.real_length * self.model.scaling_factor
-        self.radius=self.sim_length/2
+        self.radius = self.sim_length / 2
         self.seg_lengths = [self.sim_length * r for r in self.seg_ratio]
         self.seg_vertices = [v * self.sim_length for v in self.base_seg_vertices]
         for vec, seg in zip(self.seg_vertices, self.segs):
@@ -456,7 +458,7 @@ class LarvaBody:
 
     def update_sensor_position(self):
         for sensor_dict in self.sensors:
-            sensor_dict['local_pos']=sensor_dict['base_local_pos']* self.sim_length
+            sensor_dict['local_pos'] = sensor_dict['base_local_pos'] * self.sim_length
 
     def get_olfactor_position(self):
         return self.get_global_front_end_of_head()
@@ -466,7 +468,7 @@ class LarvaBody:
         for i, (r, cum_r) in enumerate(zip(self.seg_ratio, np.cumsum(self.seg_ratio))):
             if x >= 1 - cum_r:
                 seg_idx = i
-                local_pos = np.array([x - 1 + cum_r-r/2, y])
+                local_pos = np.array([x - 1 + cum_r - r / 2, y])
                 break
         sensor_dict = {'sensor': sensor,
                        'seg_idx': seg_idx,
@@ -475,15 +477,15 @@ class LarvaBody:
         self.sensors.append(sensor_dict)
 
     def get_sensor(self, sensor):
-        for sensor_dict in self.sensors :
-            if sensor_dict['sensor']==sensor :
+        for sensor_dict in self.sensors:
+            if sensor_dict['sensor'] == sensor:
                 return sensor_dict
 
     def get_sensors(self):
         return [s['sensor'] for s in self.sensors]
 
     def get_sensor_position(self, sensor):
-        d=self.get_sensor(sensor)
+        d = self.get_sensor(sensor)
         return self.segs[d['seg_idx']].get_world_point(d['local_pos'])
 
     # def generate_seg_shapes2(self, Nsegs, width_to_length_proportion, density, interval, seg_ratio):
@@ -608,12 +610,6 @@ class LarvaBody:
                 segs.append(seg)
             self.model.space.place_agent(self, position)
         return segs
-
-    def generate_seg_colors(self, N, color):
-        if N > 5:
-            return [np.array((0, 255, 0))] + [np.copy(color) for i in range(N - 2)] + [np.array((255, 0, 0))]
-        else:
-            return [np.copy(color) for i in range(N)]
 
     # To make peristalsis visible we try to leave some space between the segments.
     # We define an interval proportional to the length : int*l.
@@ -745,10 +741,10 @@ class LarvaBody:
                                position=self.get_global_front_end_of_head(),
                                filled=True, color=(255, 0, 0), width=.1)
         if self.selected:
-            r=self.seg_lengths[0] / 2
+            r = self.seg_lengths[0] / 2
             viewer.draw_circle(radius=r,
-                               position=self.get_global_midspine_of_body(),
-                               filled=False, color=self.model.selection_color, width=r/5)
+                               position=self.get_position(),
+                               filled=False, color=self.model.selection_color, width=r / 5)
 
         # for s in self.get_sensors() :
         #     self.draw_sensor(viewer, s)
@@ -854,8 +850,8 @@ class LarvaBody:
         return contour
 
     def add_touch_sensors(self):
-        y=0.1
-        x_f, x_m, x_r=0.75,0.5,0.25
+        y = 0.1
+        x_f, x_m, x_r = 0.75, 0.5, 0.25
         self.define_sensor('M_front', (1.0, 0.0))
         self.define_sensor('L_front', (x_f, y))
         self.define_sensor('R_front', (x_f, -y))
@@ -868,7 +864,3 @@ class LarvaBody:
     def set_head_edges(self):
         self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)
         self.local_front_end_of_head = (np.max(self.seg_vertices[0][0], axis=0)[0], 0)
-
-
-
-

@@ -25,7 +25,7 @@ from lib.aux import naming as nam
 from lib.anal.fitting import *
 from lib.aux.functions import weib, flatten_list
 from lib.anal.combining import combine_images, combine_pdfs
-from lib.model.larva.deb import deb_dict, deb_default
+from lib.model.agents.deb import deb_dict, deb_default
 from lib.stor.paths import DebFolder, SingleRunFolder
 from lib.conf.par_db import par_db
 
