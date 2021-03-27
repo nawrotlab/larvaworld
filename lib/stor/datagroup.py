@@ -266,6 +266,14 @@ def loadParConf(id):
         raise ValueError(f'Parameter configuration {id} does not exist')
 
 
+def loadSimConf(id):
+    try:
+        conf_dict = loadSimConfDict()
+        conf = conf_dict[id]
+        return conf
+    except:
+        raise ValueError(f'Simulation configuration {id} does not exist')
+
 def loadConfDict():
     with open(paths.DataConfs_path) as tfp:
         Conf_dict = json.load(tfp)
@@ -276,6 +284,13 @@ def loadParConfDict():
         Conf_dict = json.load(tfp)
     return Conf_dict
 
+def loadSimConfDict():
+    try :
+        with open(paths.SimConfs_path) as tfp:
+            Conf_dict = json.load(tfp)
+        return Conf_dict
+    except :
+        return {}
 
 def loadDataGroupDict():
     with open(paths.DataGroups_path) as tfp:
@@ -295,6 +310,9 @@ def saveParConfDict(ConfDict):
     with open(paths.ParConfs_path, "w") as fp:
         json.dump(ConfDict, fp)
 
+def saveSimConfDict(ConfDict):
+    with open(paths.SimConfs_path, "w") as fp:
+        json.dump(ConfDict, fp)
 
 def saveDataGroupDict(DataGroupDict):
     with open(paths.DataGroups_path, "w") as fp:
@@ -319,6 +337,15 @@ def saveParConf(conf, id):
     conf_dict[id] = conf
     saveParConfDict(conf_dict)
     print(f'Parameter configuration saved under the id : {id}')
+
+def saveSimConf(conf, id):
+    try:
+        conf_dict = loadSimConfDict()
+    except:
+        conf_dict = {}
+    conf_dict[id] = conf
+    saveSimConfDict(conf_dict)
+    print(f'Simulation configuration saved under the id : {id}')
 
 def saveDataGroup(DataGroup):
     try:
@@ -356,6 +383,14 @@ def deleteConf(id):
     except:
         pass
 
+def deleteSimConf(id):
+    conf_dict = loadSimConfDict()
+    try:
+        conf_dict.pop(id, None)
+        saveSimConfDict(conf_dict)
+        print(f'Deleted simulation configuration under the id : {id}')
+    except:
+        pass
 
 def initializeDataGroup(id):
     DataGroup = loadDataGroup(id)

@@ -647,12 +647,13 @@ class LarvaWorld:
                         res = self.eval_selection(p)
                         # self.mousebuttondown_time = time.time()
                         if not res and isinstance(self, LarvaWorldSim):
+                            p=tuple(p)
                             if self.selected_type == 'Food':
                                 f = self.add_food(p)
                             elif self.selected_type == 'Larva':
                                 f = self.add_larva(p)
                             elif self.selected_type == 'Border':
-                                b = Border(model=self, points=[tuple(self.mousebuttondown_pos), tuple(p)],
+                                b = Border(model=self, points=[tuple(self.mousebuttondown_pos), p],
                                            from_screen=True)
                                 self.add_border(b)
                     elif event.button == 3:

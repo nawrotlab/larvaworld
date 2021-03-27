@@ -21,6 +21,7 @@ DataGroups_path = f'{ConfFolder}/DataGroups.txt'
 DataConfs_path = f'{ConfFolder}/DataConfs.txt'
 ParConfs_path = f'{ConfFolder}/ParConfs.txt'
 SimIdx_path = f'{ConfFolder}/SimIdx.txt'
+SimConfs_path = f'{ConfFolder}/SimConfs.txt'
 
 RefFolder = f'{DataFolder}/reference'
 Ref_path = f'{RefFolder}/data/reference.csv'

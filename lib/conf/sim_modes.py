@@ -50,7 +50,7 @@ default_sim = {
 
 food_pars = {
     'unique_id': str,
-    'pos': tuple,
+    'pos': Tuple[float, float],
     'radius': float,
     'amount': float,
     'quality': float,

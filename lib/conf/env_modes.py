@@ -73,7 +73,8 @@ def food_place(N, place='mid', r=0.7):
         mode = 'defined'
         if N > 0:
             # loc = (0.0, 0.0)
-            loc = np.array([(0.0, 0.0)] * N)
+            loc = [(0.0, 0.0)] * N
+            # loc = np.array([(0.0, 0.0)] * N)
         else:
             loc = None
     elif place == 'circle':
@@ -105,7 +106,8 @@ def chemotax_place(N):
                                       'scale': 0.05},
             'initial_num_food': 1,
             'initial_food_positions': {'mode': 'defined',
-                                       'loc': np.array([(0.8, 0.0)]),
+                                       'loc': [(0.8, 0.0)],
+                                       # 'loc': np.array([(0.8, 0.0)]),
                                        'scale': None}}
 
 
@@ -309,7 +311,8 @@ def pref_conf(N, dish_r=0.1):
             'food_params': {'food_list': [{
                 'unique_id': 'CS+ source',
                 'pos': (-0.04, 0.0),
-                'amount': 0,
+                'amount': 0.0,
+                'quality': 1.0,
                 'radius': 0.003,
                 'odor_id': 'CS+',
                 'odor_intensity': 2,
@@ -317,7 +320,8 @@ def pref_conf(N, dish_r=0.1):
                 {
                     'unique_id': 'CS- source',
                     'pos': (0.04, 0.0),
-                    'amount': 0,
+                    'amount': 0.0,
+                'quality': 1.0,
                     'radius': 0.003,
                     'odor_id': 'CS-',
                     'odor_intensity': 2,
@@ -333,7 +337,8 @@ def chemotax_conf(N):
             'food_params': {'food_list': [{
                 'unique_id': 'Odor source',
                 'pos': (0.8, 0.0),
-                'amount': 0,
+                'amount': 0.0,
+                'quality': 1.0,
                 'radius': 0.002,
                 'odor_id': 'Odor',
                 'odor_intensity': 8,
@@ -349,7 +354,8 @@ def chemorbit_conf(N):
             'food_params': {'food_list': [{
                 'unique_id': 'Odor source',
                 'pos': (0.0, 0.0),
-                'amount': 0,
+                'amount': 0.0,
+                'quality': 1.0,
                 'radius': 0.002,
                 'odor_id': 'Odor',
                 'odor_intensity': 2,

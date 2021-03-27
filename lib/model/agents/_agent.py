@@ -19,6 +19,7 @@ class LarvaworldAgent:
 
 
         # Will be set by the respective subclasses
+
         self.initial_pos = pos
         self.pos = self.initial_pos
         self.default_color = default_color
@@ -27,7 +28,8 @@ class LarvaworldAgent:
         self.id_box = self.init_id_box()
 
     def get_position(self):
-        return np.array(self.pos)
+        return tuple(self.pos)
+        # return np.array(self.pos)
 
     def init_id_box(self):
         id_box = InputBox(visible=False, text=self.unique_id,
