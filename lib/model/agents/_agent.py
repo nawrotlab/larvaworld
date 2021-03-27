@@ -46,6 +46,14 @@ class LarvaworldAgent:
     def step(self):
         pass
 
+    # @abc.abstractmethod
+    def set_color(self, color):
+        pass
+
+    def set_default_color(self, color):
+        self.default_color=color
+        self.set_color(color)
+
 
 class Larva(LarvaworldAgent):
     def __init__(self, unique_id, model, pos=None, radius=None):
@@ -84,13 +92,7 @@ class Larva(LarvaworldAgent):
     def second_odor_concentration(self):
         return self.odor_concentrations[1]
 
-    @property
-    def body_bend_in_deg(self):
-        return np.rad2deg(self.body_bend)
 
-    @property
-    def ang_vel_in_deg(self):
-        return np.rad2deg(self.get_head().get_angularvelocity())
 
     @property
     def length_in_mm(self):
@@ -104,13 +106,7 @@ class Larva(LarvaworldAgent):
     def scaled_amount_eaten(self):
         return self.amount_eaten / self.get_real_mass()
 
-    @property
-    def front_orientation_in_deg(self):
-        return np.rad2deg(self.get_head().get_normalized_orientation())
 
-    @property
-    def rear_orientation_in_deg(self):
-        return np.rad2deg(self.get_tail().get_normalized_orientation())
 
     @property
     def orientation_to_center_in_deg(self):

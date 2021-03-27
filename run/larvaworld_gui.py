@@ -2,7 +2,6 @@
 # !/usr/bin/env python
 import copy
 
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import PySimpleGUI as sg
 import matplotlib
 import inspect
@@ -14,7 +13,7 @@ from lib.conf import exp_types, default_sim, mock_larva, box2d_space, larva_plac
     food_place_modes, pref_exp_np, agent_pars
 from lib.sim.gui_lib import gui_table, SectionDict, bool_button, Collapsible, \
     set_kwargs, on_image, off_image, SYMBOL_UP, SYMBOL_DOWN, button_kwargs, header_kwargs, \
-    text_kwargs, on_image_disabled, retrieve_value
+    text_kwargs, on_image_disabled, retrieve_value, draw_canvas, delete_figure_agg
 from lib.sim.single_run import run_sim, next_idx, configure_sim
 from lib.anal.plotting import *
 from lib.stor.larva_dataset import LarvaDataset
@@ -24,18 +23,6 @@ matplotlib.use('TkAgg')
 
 
 # Class holding the button graphic info. At this time only the state is kept
-
-
-def draw_canvas(canvas, figure):
-    figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
-    figure_canvas_agg.draw()
-    figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
-    return figure_canvas_agg
-
-
-def delete_figure_agg(figure_agg):
-    figure_agg.get_tk_widget().forget()
-    plt.close('all')
 
 
 def save_plot(fig, save_to, save_as):

@@ -10,6 +10,7 @@ from typing import List, Any, Optional
 import lib.conf.sim_modes
 from lib.model.envs._maze import Border
 from lib.aux import naming as nam
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
@@ -22,10 +23,10 @@ from mesa.space import ContinuousSpace
 from mesa import Model, Agent
 from mesa.time import RandomActivation
 
-from lib.aux.collecting import TargetedDataCollector
+from lib.aux.collecting import TargetedDataCollector, step_database
 from lib.model.envs._space import GaussianValueLayer, DiffusionValueLayer, ValueGrid
 from lib.model.agents._larva import LarvaSim, LarvaReplay
-from lib.model.agents._agent import Food
+from lib.model.agents._agent import Food, Larva
 from lib.anal.plotting import plot_surface
 from lib.aux.rendering import SimulationState, InputBox
 from lib.aux import rendering
@@ -50,16 +51,19 @@ class LarvaWorld:
     def __init__(self, env_params, fly_params=None, id='unnamed', dt=0.1, Nsteps=None, save_to='.',
                  background_motion=None,
                  use_background=False, black_background=False, mode='video', image_mode='final', media_name=None,
-                 trajectories=True, trail_decay_in_sec=0.0, trajectory_colors=None, visible_state=True,
-                 random_larva_colors=False, color_behavior=False, draw_head=False, draw_contour=True,
-                 draw_centroid=False, draw_midline=True, show_display=True, video_speed=None,
+                 trajectories=True, trajectory_dt=0.0, trajectory_colors=None, visible_state=True,
+                 random_colors=False, color_behavior=False, draw_head=False, draw_contour=True,
+                 draw_centroid=False, draw_midline=True,show_display=True, video_speed=None,
                  snapshot_interval_in_sec=60 * 60 * 10, touch_sensors=False, allow_clicks=True, visible_clock=True,
-                 *args: [], **kwargs: {'seed': 1}):
-        # super().__init__(*args, **kwargs)
+                 # *args: [], **kwargs: {'seed': 1}
+                 ):
+
+        self.dynamic_graphs=[]
         self.visible_ids = False
+        self.focus_mode = False
         self.visible_state = visible_state
         self.visible_clock = visible_clock
-        self.selected_type = 'Food'
+        self.selected_type = 'Larva'
 
         self.borders, self.border_xy, self.border_lines, self.border_bodies = [], [], [], []
 
@@ -79,7 +83,7 @@ class LarvaWorld:
         self.allow_clicks = allow_clicks
         self.touch_sensors = touch_sensors
         self.show_display = show_display
-
+        self.Nticks=0
         self.Nsteps = Nsteps
         self.snapshot_interval = int(snapshot_interval_in_sec / dt)
         self.id = id
@@ -96,9 +100,9 @@ class LarvaWorld:
 
         self.trajectories = trajectories
         self.trajectory_colors = trajectory_colors
-        self.trail_decay_in_ticks = int(trail_decay_in_sec / self.dt)
+        self.trajectory_dt = trajectory_dt
 
-        self.random_larva_colors = random_larva_colors
+        self.random_colors = random_colors
         self.color_behavior = color_behavior
 
         self.draw_head = draw_head
@@ -113,16 +117,9 @@ class LarvaWorld:
         self.background_motion = background_motion
         self.use_background = use_background
         self.black_background = black_background
-        if self.black_background:
-            self.tank_color = (0, 0, 0)
-            self.screen_color = (50, 50, 50)
-            self.scale_clock_color = (255, 255, 255)
-            self.default_larva_color = np.array([255, 255, 255])
-        else:
-            self.tank_color = (255, 255, 255)
-            self.screen_color = (200, 200, 200)
-            self.scale_clock_color = (0, 0, 0)
-            self.default_larva_color = np.array([0, 0, 0])
+        self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
+            self.black_background)
+
         self.selection_color = np.array([255, 0, 0])
         self.env_pars = env_params
         self.larva_pars = fly_params
@@ -136,7 +133,7 @@ class LarvaWorld:
         self.create_arena(**self.env_pars['arena_params'])
         self.space = self.create_space(**self.env_pars['space_params'])
         if 'border_list' in self.env_pars.keys():
-            for border_pars in self.env_pars['border_list'] :
+            for border_pars in self.env_pars['border_list']:
                 b = Border(model=self, **border_pars)
                 self.add_border(b)
 
@@ -144,6 +141,21 @@ class LarvaWorld:
         self.sim_scale = SimulationScale(self.arena_dims[0], self.scaling_factor,
                                          color=self.scale_clock_color)
         self.sim_state = SimulationState(model=self, color=self.scale_clock_color)
+
+        self.screen_texts = self.create_screen_texts(color=self.scale_clock_color)
+
+    def set_default_colors(self, black_background):
+        if black_background:
+            tank_color = (0, 0, 0)
+            screen_color = (50, 50, 50)
+            scale_clock_color = (255, 255, 255)
+            default_larva_color = np.array([255, 255, 255])
+        else:
+            tank_color = (255, 255, 255)
+            screen_color = (200, 200, 200)
+            scale_clock_color = (0, 0, 0)
+            default_larva_color = np.array([0, 0, 0])
+        return tank_color, screen_color, scale_clock_color, default_larva_color
 
     def create_arena(self, arena_xdim, arena_ydim, arena_shape):
         X, Y = arena_xdim, arena_ydim
@@ -264,13 +276,13 @@ class LarvaWorld:
         return np.array([g.get_position() for g in self.get_flies()])
 
     def generate_larva_color(self):
-        if self.random_larva_colors:
+        if self.random_colors:
             color = fun.random_colors(1)[0]
         else:
             color = self.default_larva_color
         return color
 
-    def set_background(self):
+    def set_background(self, width, height):
         if self.use_background:
             ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
             path = os.path.join(ROOT_DIR, 'background.png')
@@ -279,8 +291,8 @@ class LarvaWorld:
             self.bgimagerect = self.bgimage.get_rect()
             self.tw = self.bgimage.get_width()
             self.th = self.bgimage.get_height()
-            self.th_max = int(self._screen._window.get_height() / self.th) + 2
-            self.tw_max = int(self._screen._window.get_width() / self.tw) + 2
+            self.th_max = int(height / self.th) + 2
+            self.tw_max = int(width / self.tw) + 2
         else:
             self.bgimage = None
             self.bgimagerect = None
@@ -307,6 +319,7 @@ class LarvaWorld:
         if self.visible_state:
             self.sim_state.draw_state(screen)
         self.input_box.draw(screen)
+        self.draw_screen_texts(screen)
 
     def draw_arena(self, screen):
         screen.set_bounds(*self.space_edges_for_screen)
@@ -316,12 +329,14 @@ class LarvaWorld:
             b.draw(screen)
         # for i,b in enumerate(self.border_xy):
 
-    def render_aux(self):
+    def render_aux(self, width, height):
         if self.visible_clock:
-            self.sim_clock.render_clock(self.screen_width, self.screen_height)
+            self.sim_clock.render_clock(width, height)
         if self.visible_state:
-            self.sim_scale.render_scale(self.screen_width, self.screen_height)
-        self.sim_state.render_state(self.screen_width, self.screen_height)
+            self.sim_scale.render_scale(width, height)
+        self.sim_state.render_state(width, height)
+        for name, text in self.screen_texts.items():
+            text.render(width, height)
 
     def render(self, velocity_arrows=False, tick=None):
 
@@ -344,8 +359,8 @@ class LarvaWorld:
                                                    fps=self.video_fps, dt=self.dt, show_display=self.show_display,
                                                    record_video_to=self._video_path,
                                                    record_image_to=self._image_path)
-            self.render_aux()
-            self.set_background()
+            self.render_aux(self.screen_width, self.screen_height)
+            self.set_background(self._screen._window.get_width(), self._screen._window.get_height())
             self.draw_arena(self._screen)
             self.draw_background(self._screen, background_motion)
             print('Screen opened')
@@ -374,9 +389,11 @@ class LarvaWorld:
 
         if self.trajectories:
             draw_trajectories(space_dims=self.space_dims, agents=self.get_flies(), screen=self._screen,
-                              decay_in_ticks=self.trail_decay_in_ticks, trajectory_colors=self.trajectory_colors)
+                              decay_in_ticks=int(self.trajectory_dt / self.dt),
+                              trajectory_colors=self.trajectory_colors)
 
         self.evaluate_input()
+        self.evaluate_graphs()
         if self.image_mode != 'overlap':
             self.draw_aux(self._screen)
             self._screen.render()
@@ -390,9 +407,9 @@ class LarvaWorld:
     def space2screen_pos(self, pos):
         if pos is None or any(np.isnan(pos)):
             return None
-        try :
+        try:
             return self._screen._transform(pos)
-        except :
+        except:
             p = pos[0] * 2 / self.space_dims[0], pos[1] * 2 / self.space_dims[1]
             pp = ((p[0] + 1) * self.screen_width / 2, (-p[1] + 1) * self.screen_height / 2)
             return pp
@@ -546,28 +563,45 @@ class LarvaWorld:
             return []
 
     def evaluate_input(self):
-        d_zoom=0.05
+        d_zoom = 0.01
         ev = pygame.event.get()
         for event in ev:
             if event.type == pygame.QUIT:
                 self._screen.close_requested()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_TAB:
-                    self.toggle_ids()
+                    self.toggle('visible_ids')
                 elif event.key == pygame.K_t:
-                    self.toggle_clock()
+                    self.toggle('visible_clock')
                 elif event.key == pygame.K_s:
-                    self.toggle_state()
+                    self.toggle('visible_state')
                 elif event.key == pygame.K_b:
-                    self.toggle_behavior()
+                    self.toggle('color_behavior')
                 elif event.key == pygame.K_m:
-                    self.toggle_midline()
+                    self.toggle('draw_midline')
                 elif event.key == pygame.K_c:
-                    self.toggle_contour()
+                    self.toggle('draw_contour')
                 elif event.key == pygame.K_h:
-                    self.toggle_head()
+                    self.toggle('draw_head')
                 elif event.key == pygame.K_e:
-                    self.toggle_centroid()
+                    self.toggle('draw_centroid')
+                elif event.key == pygame.K_f:
+                    self.toggle('focus_mode')
+                elif event.key == pygame.K_p:
+                    self.toggle('trajectories')
+                elif event.key == pygame.K_r:
+                    self.toggle('random_colors')
+                    for f in self.get_flies() :
+                        f.set_default_color(self.generate_larva_color())
+                elif event.key == pygame.K_g :
+                    self.toggle('black_background')
+                    self.update_default_colors()
+                elif event.key == pygame.K_MINUS:
+                    self.trajectory_dt = np.clip(self.trajectory_dt - 5, a_min=0, a_max=np.inf)
+                    self.toggle('trajectory_dt', self.trajectory_dt)
+                elif event.key == pygame.K_PLUS:
+                    self.trajectory_dt = np.clip(self.trajectory_dt + 5, a_min=0, a_max=np.inf)
+                    self.toggle('trajectory_dt', self.trajectory_dt)
                 # elif event.key == pygame.K_MINUS:
                 #     print(self._screen._fps)
                 #     self._screen._fps-=10
@@ -577,19 +611,30 @@ class LarvaWorld:
                 #     self._screen._fps+=10
                 #     print(self._screen._fps)
                 elif event.key == pygame.K_LEFT:
-                    self._screen.move_center(-0.05,0)
+                    self._screen.move_center(-0.05, 0)
                 elif event.key == pygame.K_RIGHT:
-                    self._screen.move_center(+0.05,0)
+                    self._screen.move_center(+0.05, 0)
                 elif event.key == pygame.K_UP:
-                    self._screen.move_center(0,+0.05)
+                    self._screen.move_center(0, +0.05)
                 elif event.key == pygame.K_DOWN:
-                    self._screen.move_center(0,-0.05)
+                    self._screen.move_center(0, -0.05)
+                elif event.key == pygame.K_i:
+                    import imageio
+                    record_image_to=f'{self.media_name}_{self.snapshot_counter}.png'
+                    self._screen._image_writer = imageio.get_writer(record_image_to, mode='i')
+                    self.toggle('snapshot #', self.snapshot_counter)
+                    self.snapshot_counter += 1
 
                 elif event.key == pygame.K_DELETE:
                     if gui.delete_objects_window(self.selected_agents):
                         for f in self.selected_agents:
                             self.selected_agents.remove(f)
                             self.delete(f)
+                elif event.key == pygame.K_q:
+                    if len(self.selected_agents) > 0:
+                        sel = self.selected_agents[0]
+                        if isinstance(sel, Larva) :
+                            self.dynamic_graphs.append(gui.DynamicGraph(agent=sel, available_pars=self.available_pars))
             if self.allow_clicks:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     self.mousebuttondown_pos = self._screen.get_mouse_position()
@@ -601,13 +646,14 @@ class LarvaWorld:
                     if event.button == 1:
                         res = self.eval_selection(p)
                         # self.mousebuttondown_time = time.time()
-                        if not res:
+                        if not res and isinstance(self, LarvaWorldSim):
                             if self.selected_type == 'Food':
                                 f = self.add_food(p)
                             elif self.selected_type == 'Larva':
                                 f = self.add_larva(p)
                             elif self.selected_type == 'Border':
-                                b = Border(model=self, points=[tuple(self.mousebuttondown_pos), tuple(p)], from_screen=True)
+                                b = Border(model=self, points=[tuple(self.mousebuttondown_pos), tuple(p)],
+                                           from_screen=True)
                                 self.add_border(b)
                     elif event.button == 3:
                         if len(self.selected_agents) > 0:
@@ -617,11 +663,24 @@ class LarvaWorld:
                             self.selected_type = gui.object_menu(self.selected_type)
                     elif event.button == 4:
                         self._screen.zoom_screen(d_zoom=-d_zoom)
+                        self.toggle(name='zoom', value=self._screen.zoom)
                     elif event.button == 5:
                         self._screen.zoom_screen(d_zoom=+d_zoom)
-
+                        self.toggle(name='zoom', value=self._screen.zoom)
                 self.input_box.get_input(event)
+        if self.focus_mode and len(self.selected_agents) > 0:
+            try:
+                sel = self.selected_agents[0]
+                self._screen.move_center(pos=sel.get_position())
+            except:
+                pass
 
+    def evaluate_graphs(self):
+        for g in self.dynamic_graphs :
+            running=g.evaluate()
+            if not running :
+                self.dynamic_graphs.remove(g)
+                del g
 
     def get_place_params(self):
         return {**self.get_food_placement(), **self.get_larva_placement()}
@@ -653,31 +712,16 @@ class LarvaWorld:
                            'initial_fly_positions': larva_pos}
         return larva_placement
 
-    def toggle_ids(self):
-        self.visible_ids = not self.visible_ids
-        for a in self.get_flies() + self.get_food():
-            a.id_box.visible = self.visible_ids
+    def toggle(self, name, value=None):
+        if value is None:
+            setattr(self, name, not getattr(self, name))
+            value = 'ON' if getattr(self, name) else 'OFF'
+        self.screen_texts[name].text = f'{name} {value}'
+        self.screen_texts[name].end_time = pygame.time.get_ticks() + 3000
 
-    def toggle_clock(self):
-        self.visible_clock = not self.visible_clock
-
-    def toggle_state(self):
-        self.visible_state = not self.visible_state
-
-    def toggle_behavior(self):
-        self.color_behavior = not self.color_behavior
-
-    def toggle_midline(self):
-        self.draw_midline = not self.draw_midline
-
-    def toggle_contour(self):
-        self.draw_contour = not self.draw_contour
-
-    def toggle_head(self):
-        self.draw_head = not self.draw_head
-
-    def toggle_centroid(self):
-        self.draw_centroid = not self.draw_centroid
+        if name == 'visible_ids':
+            for a in self.get_flies() + self.get_food():
+                a.id_box.visible = self.visible_ids
 
     def eval_selection(self, p):
         res = False
@@ -716,14 +760,57 @@ class LarvaWorld:
         self.border_lines += b.border_lines
         self.border_bodies += b.border_bodies
 
+    def draw_screen_texts(self, screen):
+        for name, text in self.screen_texts.items():
+            if text and pygame.time.get_ticks() < text.end_time:
+                text.visible = True
+                text.draw(screen)
+            else:
+                text.visible = False
+
+    def create_screen_texts(self, color):
+        texts = {}
+        names = [
+            'trajectory_dt',
+            'trajectories',
+            'focus_mode',
+            'draw_centroid',
+            'draw_head',
+            'draw_midline',
+            'draw_contour',
+            'visible_clock',
+            'visible_ids',
+            'visible_state',
+            'color_behavior',
+            'random_colors',
+            'black_background',
+            'zoom',
+            'snapshot #'
+        ]
+        for name in names:
+            text = InputBox(visible=False, text=name,
+                            color_active=color, color_inactive=color,
+                            screen_pos=None, linewidth=0.01, show_frame=False)
+            texts[name] = text
+        return texts
+
+    def update_default_colors(self):
+        self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
+            self.black_background)
+        for f in self.get_flies():
+            f.set_default_color(self.generate_larva_color())
+        for i in [self.sim_clock, self.sim_scale, self.sim_state] + list(self.screen_texts.values()):
+            i.set_color(self.scale_clock_color)
+
 
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, collected_pars=None,
                  id='Unnamed_Simulation', allow_collisions=True, count_bend_errors=False,
-                 starvation_hours=[], hours_as_larva=0, deb_base_f=1, parameter_dict={},**kwargs):
+                 starvation_hours=[], hours_as_larva=0, deb_base_f=1, parameter_dict={}, **kwargs):
         super().__init__(id=id, **kwargs)
         if collected_pars is None:
             collected_pars = {'step': [], 'endpoint': []}
+        self.available_pars = fun.unique_list(list(step_database.keys()))
         self.starvation_hours = starvation_hours
         self.hours_as_larva = hours_as_larva
         self.deb_base_f = deb_base_f
@@ -884,7 +971,7 @@ class LarvaWorldSim(LarvaWorld):
             pass
         return larva_positions, larva_orientations
 
-    def _generate_larva_pars(self, N, larva_pars,  parameter_dict={}):
+    def _generate_larva_pars(self, N, larva_pars, parameter_dict={}):
         if not isinstance(larva_pars, list):
             larva_confs = [larva_pars]
         else:
@@ -919,11 +1006,11 @@ class LarvaWorldSim(LarvaWorld):
                         flat_c.update({p: s[i]})
                     type_larva_pars[i] = unflatten(flat_c)
             all_larva_pars.append(type_larva_pars)
-        all_larva_pars=fun.flatten_list(all_larva_pars)
-        for k,vs in parameter_dict.items() :
+        all_larva_pars = fun.flatten_list(all_larva_pars)
+        for k, vs in parameter_dict.items():
             # if len(all_larva_pars)!=len(vs) :
             #     raise ValueError (f'Parameter {k} has {len(vs)} values but number of larvae is {len(all_larva_pars)}')
-            for larva_pars,v in zip(all_larva_pars, vs) :
+            for larva_pars, v in zip(all_larva_pars, vs):
                 # print(v)
                 # print(v)
                 larva_pars[k].update(v)
@@ -943,7 +1030,7 @@ class LarvaWorldSim(LarvaWorld):
         ids, all_pars = self._generate_larva_pars(N, larva_pars, parameter_dict=parameter_dict)
         self._place_larvae(positions, orientations, ids, all_pars)
 
-    def allocate_odors(self, agents, odor_id_list,allocation_mode='iterative'):
+    def allocate_odors(self, agents, odor_id_list, allocation_mode='iterative'):
         ids = self.compute_odor_parameters(len(agents), odor_id_list,
                                            # odor_intensity_list,
                                            # odor_spread_list,
@@ -951,7 +1038,7 @@ class LarvaWorldSim(LarvaWorld):
         for a, id in zip(agents, ids):
             a.set_odor_id(id)
 
-    def compute_odor_parameters(self, N, odor_id_list,allocation_mode='iterative'):
+    def compute_odor_parameters(self, N, odor_id_list, allocation_mode='iterative'):
         N_o = len(odor_id_list)
         # N_i = len(odor_intensity_list)
         # N_s = len(odor_spread_list)
@@ -964,6 +1051,7 @@ class LarvaWorldSim(LarvaWorld):
     def step(self):
         # Tick sim_clock
         self.sim_clock.tick_clock()
+        self.Nticks+=1
 
         if len(self.sim_starvation_hours) > 0:
             self.starvation = self.sim_clock.timer_on
@@ -1087,6 +1175,13 @@ class LarvaWorldReplay(LarvaWorld):
         self.agent_ids = self.step_data.index.unique('AgentID').values
         self.num_agents = len(self.agent_ids)
 
+        self.available_pars=[p for p in self.step_data.columns.values if
+                              p not in fun.flatten_list(self.dataset.contour_xy) + fun.flatten_list(
+                                  self.dataset.points_xy)]
+
+
+
+
         # self.starting_tick = self.step_data.index.unique('Step')[0]
         try:
             self.lengths = self.endpoint_data['length'].values
@@ -1101,6 +1196,8 @@ class LarvaWorldReplay(LarvaWorld):
         self.Ncontour = int(len(self.con_pars) / 2)
 
         self.cen_pars = [p for p in dataset.cent_xy if p in self.pars]
+
+
         Nsegs = self.draw_Nsegs
         if Nsegs is not None:
             if Nsegs == self.Npoints - 1:
@@ -1109,14 +1206,16 @@ class LarvaWorldReplay(LarvaWorld):
                 self.angle_pars = []
                 self.Nangles = 0
                 if self.Nors != Nsegs:
-                    raise ValueError(f'Orientation values are not present for all body segments : {self.Nors} of {Nsegs}')
+                    raise ValueError(
+                        f'Orientation values are not present for all body segments : {self.Nors} of {Nsegs}')
             elif Nsegs == 2:
                 self.or_pars = [p for p in ['front_orientation'] if p in self.pars]
                 self.Nors = len(self.or_pars)
                 self.angle_pars = [p for p in ['bend'] if p in self.pars]
                 self.Nangles = len(self.angle_pars)
                 if self.Nors != 1 or self.Nangles != 1:
-                    raise ValueError(f'{self.Nors} orientation and {Nsegs} angle values are present and 1,1 are needed.')
+                    raise ValueError(
+                        f'{self.Nors} orientation and {Nsegs} angle values are present and 1,1 are needed.')
             else:
                 raise ValueError(f'Defined number of segments {Nsegs} must be either 2 or {self.Npoints - 1}')
         else:
@@ -1133,11 +1232,12 @@ class LarvaWorldReplay(LarvaWorld):
     def create_flies(self):
         for i, id in enumerate(self.agent_ids):
             data = self.step_data.xs(id, level='AgentID', drop_level=True)
-            f = LarvaReplay(model=self, unique_id=id,length=self.lengths[i],data=data)
+            f = LarvaReplay(model=self, unique_id=id, length=self.lengths[i], data=data)
             self.active_larva_schedule.add(f)
             self.space.place_agent(f, (0, 0))
 
     def step(self):
+        self.Nticks += 1
         # Tick sim_clock
         self.sim_clock.tick_clock()
         self.active_larva_schedule.step()

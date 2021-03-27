@@ -2,6 +2,8 @@ import lib.aux.naming as nam
 import numpy as np
 import pandas as pd
 
+from lib.aux.collecting import step_database
+
 
 def base(method, input, **kwargs):
     if type(input) == str:
@@ -269,6 +271,7 @@ par_ar = np.array([
     ['hunger', 'hunger', 'hunger', hat('hunger'), f'hunger (-)'],
     ['reserve_density', 'reserve_density', 'reserve_density', hat('reserve_density'), f'reserve density (-)'],
     ['puppation_buffer', 'puppation_buffer', 'puppation_buffer', hat('puppation_buffer'), f'puppation buffer (-)'],
+    ['deb_f', 'deb_f', sub('f', 'deb'), sub(hat('f'), 'deb'), f'functional response (-)'],
     ['deb_f_mean', 'deb_f_mu', sub(bar('f'), 'deb'), sub(hat(bar('f')), 'deb'), f'functional response (-)'],
     ['Nlarvae', 'lar_N', sub('N', 'larvae'), sub(hat('N'), 'larvae'), f'# larvae'],
 ])
@@ -331,73 +334,73 @@ par_db.index.name = cols[ind_col]
 def get_lambda(attr) :
     return lambda a: getattr(a, attr)
 
-par_db['collect']=None
-# par_db['collect'].loc['f_am']=lambda a: a.amount_eaten
-par_db['collect'].loc['f_am']=get_lambda('amount_eaten')
 
-valid=par_db[['par','collect']].dropna()
-collect_db=pd.Series(valid.collect.values,index=valid.par).to_dict()
-# collect_db
-# print(par_db.columns.values)
-# print(collect_db)
-# par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
-#               'cum_t', 'str_tr', 'pau_tr', 'tor',
-#               'tor5_mu', 'tor20_mu', 'sdisp40_max', 'sdisp40_fin',
-#               'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr']
 
-# par_shorts = ['l_mu', 'str_N', 'str_rr', 'fsv',
-#               'cum_d', 'cum_sd', 'v_mu', 'sv_mu',
-#               'str_d_mu', 'str_d_std', 'str_sd_mu', 'str_sd_std',
-#               'str_std_mu', 'str_std_std', 'str_sstd_mu', 'str_sstd_std',
-#               'str_fo_mu', 'str_fo_std', 'str_ro_mu', 'str_ro_std',
-#               'str_b_mu', 'str_b_std', 'str_t_mu', 'str_t_std',
-#               'cum_t', 'str_tr', 'pau_tr', 'non_str_tr',
-#               'pau_N', 'pau_t_mu', 'pau_t_std', 'tor',
-#               'tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu',
-#               'tor2_std', 'tor5_std', 'tor10_std', 'tor20_std',
-#               'disp_mu', 'disp_fin', 'disp40_fin', 'disp40_max',
-#               'sdisp_mu', 'sdisp_fin', 'sdisp40_fin', 'sdisp40_max',
-#               'Ltur_t_mu', 'Ltur_t_std', 'cum_Ltur_t', 'Ltur_tr',
-#               'Rtur_t_mu', 'Rtur_t_std', 'cum_Rtur_t', 'Rtur_tr',
-#               'Ltur_fo_mu', 'Ltur_fo_std', 'Rtur_fo_mu', 'Rtur_fo_std',
-#               'b_mu', 'b_std', 'bv_mu', 'bv_std',
-#               ]
-
-# print([p for p in par_shorts if p not in par_db.index.values])
-# syms = par_db['exp_symbol'].loc[par_shorts].values.tolist()
-# print(syms)
-# print([p for p in par_shorts if p not in par_db.index.values])
-# print(par_db.loc[par_shorts])
-# print(par_db.loc['tur_tmu'])
-# ttt = ['b', 'bv', 'ba']
-# k1, k2 = [par_db[['unit', 'symbol']].loc[ttt].values[:, i].tolist() for i in [0, 1]]
-# print(k1)
-# raise
-# k='dispersion'
+# par_db['collect'].loc['f_am']=get_lambda('amount_eaten')
 #
-# hk=f'$\hat{{{k}}}$'
-# sk=f'{hk}$^{{*}}$'
-# k=f'${{{hk}}}^{*} in 40sec$'
-# import matplotlib.pyplot as plt
-
+# valid=par_db[['par','collect']].dropna()
+# collect_db=pd.Series(valid.collect.values,index=valid.par).to_dict()
+# # collect_db
+# # print(par_db.columns.values)
+# # print(collect_db)
+# # par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
+# #               'cum_t', 'str_tr', 'pau_tr', 'tor',
+# #               'tor5_mu', 'tor20_mu', 'sdisp40_max', 'sdisp40_fin',
+# #               'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr']
 #
-# random_ar = generate_entries(bases=lin_ar.tolist(), types=['mean','std'])
-# print(kk)
-# # # kk=hat_ast_lin('fff')
-# fig, axs = plt.subplots(1, 1, figsize=(10,10))
-# for i in range(17):
-#     for j in range(4) :
-#         axs.text(0.0 + 0.25*j, 0.065 * i, syms[4*i+j], fontsize=20)
-#         # axs.text(0.2, 0.1 * i, syms[4*i+1], fontsize=20)
-#         # axs.text(0.4 * 3, 0.1 * i, syms[4*i+2], fontsize=20)
-#         # axs.text(0.6 * 4, 0.1 * i, syms[4*i+3], fontsize=20)
-# # for i in range(len(syms)):
-# #     axs.text(0.1 * i, 0.1 * i, syms[i], fontsize=20)
-# # axs.set_ylabel(kk[0, 3], fontsize=15)
-# # axs.set_xlabel(kk[1, 3], fontsize=15)
-# plt.show()
-# print(par_db.loc['f_am'])
-# print(par_db.loc['cum_sd'])
+# # par_shorts = ['l_mu', 'str_N', 'str_rr', 'fsv',
+# #               'cum_d', 'cum_sd', 'v_mu', 'sv_mu',
+# #               'str_d_mu', 'str_d_std', 'str_sd_mu', 'str_sd_std',
+# #               'str_std_mu', 'str_std_std', 'str_sstd_mu', 'str_sstd_std',
+# #               'str_fo_mu', 'str_fo_std', 'str_ro_mu', 'str_ro_std',
+# #               'str_b_mu', 'str_b_std', 'str_t_mu', 'str_t_std',
+# #               'cum_t', 'str_tr', 'pau_tr', 'non_str_tr',
+# #               'pau_N', 'pau_t_mu', 'pau_t_std', 'tor',
+# #               'tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu',
+# #               'tor2_std', 'tor5_std', 'tor10_std', 'tor20_std',
+# #               'disp_mu', 'disp_fin', 'disp40_fin', 'disp40_max',
+# #               'sdisp_mu', 'sdisp_fin', 'sdisp40_fin', 'sdisp40_max',
+# #               'Ltur_t_mu', 'Ltur_t_std', 'cum_Ltur_t', 'Ltur_tr',
+# #               'Rtur_t_mu', 'Rtur_t_std', 'cum_Rtur_t', 'Rtur_tr',
+# #               'Ltur_fo_mu', 'Ltur_fo_std', 'Rtur_fo_mu', 'Rtur_fo_std',
+# #               'b_mu', 'b_std', 'bv_mu', 'bv_std',
+# #               ]
+#
+# # print([p for p in par_shorts if p not in par_db.index.values])
+# # syms = par_db['exp_symbol'].loc[par_shorts].values.tolist()
+# # print(syms)
+# # print([p for p in par_shorts if p not in par_db.index.values])
+# # print(par_db.loc[par_shorts])
+# # print(par_db.loc['tur_tmu'])
+# # ttt = ['b', 'bv', 'ba']
+# # k1, k2 = [par_db[['unit', 'symbol']].loc[ttt].values[:, i].tolist() for i in [0, 1]]
+# # print(k1)
+# # raise
+# # k='dispersion'
+# #
+# # hk=f'$\hat{{{k}}}$'
+# # sk=f'{hk}$^{{*}}$'
+# # k=f'${{{hk}}}^{*} in 40sec$'
+# # import matplotlib.pyplot as plt
+#
+# #
+# # random_ar = generate_entries(bases=lin_ar.tolist(), types=['mean','std'])
+# # print(kk)
+# # # # kk=hat_ast_lin('fff')
+# # fig, axs = plt.subplots(1, 1, figsize=(10,10))
+# # for i in range(17):
+# #     for j in range(4) :
+# #         axs.text(0.0 + 0.25*j, 0.065 * i, syms[4*i+j], fontsize=20)
+# #         # axs.text(0.2, 0.1 * i, syms[4*i+1], fontsize=20)
+# #         # axs.text(0.4 * 3, 0.1 * i, syms[4*i+2], fontsize=20)
+# #         # axs.text(0.6 * 4, 0.1 * i, syms[4*i+3], fontsize=20)
+# # # for i in range(len(syms)):
+# # #     axs.text(0.1 * i, 0.1 * i, syms[i], fontsize=20)
+# # # axs.set_ylabel(kk[0, 3], fontsize=15)
+# # # axs.set_xlabel(kk[1, 3], fontsize=15)
+# # plt.show()
+# # print(par_db.loc['f_am'])
+# # print(par_db.loc['cum_sd'])
 
 par_db = par_db[~par_db.index.duplicated(keep='first')]
 par_db['unit'].loc['str_tr']='% time crawling'
@@ -416,6 +419,8 @@ par_db['unit'].loc['cum_d']='pathlength $(mm)$'
 par_db['unit'].loc['b']='bend angle $(deg)$'
 par_db['unit'].loc['bv']='bending velocity $(deg/sec)$'
 par_db['unit'].loc['ba']='bending acceleration $(deg^2/sec)$'
+par_db['unit'].loc['fo']='orientation angle $(deg)$'
+par_db['unit'].loc['ro']='rear orientation angle $(deg)$'
 par_db['unit'].loc['fov']='orientation velocity $(deg/sec)$'
 par_db['unit'].loc['foa']='orientation acceleration $(deg^2/sec)$'
 par_db['unit'].loc['rov']='rear orientation velocity $(deg/sec)$'
@@ -433,32 +438,56 @@ par_db.loc['sf_am']={'par' : 'scaled_amount_eaten',
                      'symbol' : '${m^{*}}_{feed}$',
                      'exp_symbol' : '${\hat{m^{*}}}_{feed}$',
                      'unit' : 'food intake as % larval mass',
-                     'collect' : None}
+                     # 'collect' : None
+                     }
 
 par_db.loc['c_odor1']={'par' : 'first_odor_concentration',
                      'symbol' : '${C}_{odor_{1}}$',
                      'exp_symbol' : '${\hat{C}_{odor_{1}}$',
                      'unit' : 'Concentration C(t), $\mu$M',
-                     'collect' : 'first_odor_concentration'}
+                     # 'collect' : 'first_odor_concentration'
+                       }
 
 par_db.loc['A_olf']={'par' : 'olfactory_activation',
                      'symbol' : '$A_{olf}$',
                      'exp_symbol' : '$\hat{A}_{olf}$',
                      'unit' : 'Olfactory activation',
-                     'collect' : 'olfactory_activation'}
+                     # 'collect' : 'olfactory_activation'
+                     }
 
 par_db.loc['A_tur']={'par' : 'turner_activation',
                      'symbol' : '$A_{tur}$',
                      'exp_symbol' : '$\hat{A}_{tur}$',
                      'unit' : 'Turner activation',
-                     'collect' : 'turner_activation'}
+                     # 'collect' : 'turner_activation'
+                     }
 
 par_db.loc['Act_tur']={'par' : 'turner_activity',
                      'symbol' : '$Act_{tur}$',
                      'exp_symbol' : '$\hat{Act}_{tur}$',
                      'unit' : 'Turner activity',
-                     'collect' : 'ang_activity'}
+                     # 'collect' : 'ang_activity'
+                       }
 
-# print(par_db.loc['c_odor1']['par'])
+par_db['lim']=None
+par_db['lim'].loc['b']=[-180,180]
+par_db['lim'].loc['fo']=[0,360]
+par_db['lim'].loc['ro']=[0,360]
+par_db['lim'].loc['fov']=[-300,300]
+par_db['lim'].loc['rov']=[-300,300]
+
+par_db['lim'].loc['f_am']=[0.0,10**-5]
+par_db['lim'].loc['hunger']=[0.0,1.0]
+par_db['lim'].loc['puppation_buffer']=[0.0,1.0]
+par_db['lim'].loc['reserve_density']=[0.0,2.0]
+par_db['lim'].loc['deb_f']=[0.0,2.0]
+
+par_db['collect']=None
+for k,v in step_database.items() :
+    par_db['collect'].loc[par_db['par']==k]=v
+# print(par_db.loc['f_am'])
 # print(random_ar2)
 # print('c_odor1' in par_db.index.to_list())
+# print(par_db[par_db['par'].isin(['stride_start', 'stride_stop', 'stride_dur', 'stride_id'])])
+# print(par_db['par'].loc[par_db['collect'].isin([None])])
+# print(par_db['par'].loc[par_db['collect'].isin([None])].index.tolist())

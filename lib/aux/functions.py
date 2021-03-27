@@ -888,3 +888,8 @@ def suppress_stdout():
             yield
         finally:
             sys.stdout = old_stdout
+
+def unique_list(l):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in l if not (x in seen or seen_add(x))]

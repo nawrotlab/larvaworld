@@ -164,7 +164,7 @@ def run_sim_basic(sim_id,
                   deb_base_f=1,
                   preview=False,
                   **kwargs):
-
+    np.random.seed(1)
     if save_to is None:
         save_to = paths.SimFolder
     # current_date = date.today()
@@ -209,13 +209,13 @@ def run_sim_basic(sim_id,
     # Prepare the flies for a number of timesteps
     env.prepare_flies(int(sim_params['fly_prep_time_in_min'] * 60 / env.dt))
     print(f'Initialized simulation {sim_id}!')
-    if preview :
-        env.step()
-        env.render()
-
-        im = env.get_image_path()
-        env.close()
-        return im
+    # if preview :
+    #     env.step()
+    #     env.render()
+    #
+    #     im = env.get_image_path()
+    #     env.close()
+    #     return im
 
 
 
@@ -224,6 +224,7 @@ def run_sim_basic(sim_id,
     completed = env.run()
 
     if not completed:
+        d.delete()
         print(f'Simulation not completed!')
         return None
     else:

@@ -148,12 +148,6 @@ class Box2DSegment:
             if contact_edge.other == other and contact_edge.contact.touching:
                 return True
 
-    # def set_color(self, color):
-    #     self._color = color
-    #
-    # def set_highlight_color(self, color):
-    #     self._highlight_color = color
-
     # @property
     def get_color(self):
         return self._color

@@ -64,12 +64,14 @@ class GuppiesViewer(object):
         _height = int(self.window_size[1] / self.zoom)
         return _width, _height
 
-    def zoom_screen(self, d_zoom):
-        if 0.01 <= self.zoom + d_zoom <= 1:
-            self.zoom += d_zoom
+    def zoom_screen(self, d_zoom, pos=None):
+        if pos is None:
+            pos = self.get_mouse_position()
+        if 0.001 <= self.zoom + d_zoom <= 1:
+            self.zoom = np.round(self.zoom + d_zoom, 2)
             self.display_size = self.scale_dims()
-            self.center = np.clip(self.center- self.get_mouse_position() * d_zoom, self.center_lim, -self.center_lim)
-        if self.zoom == 1:
+            self.center = np.clip(self.center - pos * d_zoom, self.center_lim, -self.center_lim)
+        if self.zoom == 1.0:
             self.center = np.array([0.0, 0.0])
 
     def __del__(self):
@@ -82,8 +84,7 @@ class GuppiesViewer(object):
         self._scale = np.array([[scale_x, .0], [.0, -scale_y]])
         self._translation = np.array([(-left * self.zoom) * scale_x, (-bottom * self.zoom) * scale_y])
         self._translation += self.center * [-scale_x, scale_y]
-        self.center_lim=(1-self.zoom)*np.array([left, bottom])
-
+        self.center_lim = (1 - self.zoom) * np.array([left, bottom])
 
     def _transform(self, position):
         return np.round(self._scale.dot(position) + self._translation).astype(int)
@@ -163,6 +164,7 @@ class GuppiesViewer(object):
             self._video_writer.append_data(np.flipud(np.rot90(image)))
         if self._image_writer:
             self._image_writer.append_data(np.flipud(np.rot90(image)))
+            self._image_writer = None
         return image
 
     @staticmethod
@@ -181,9 +183,10 @@ class GuppiesViewer(object):
         del self
         print('Screen closed')
 
-    def move_center(self, dx=0, dy=0):
-        self.center=np.clip(self.center-self.center_lim* [dx, dy], self.center_lim, -self.center_lim)
-
+    def move_center(self, dx=0, dy=0, pos=None):
+        if pos is None:
+            pos = self.center - self.center_lim * [dx, dy]
+        self.center = np.clip(pos, self.center_lim, -self.center_lim)
 
 
 class ScreenItem:
@@ -193,10 +196,14 @@ class ScreenItem:
         else:
             self.color = color
 
+    def set_color(self, color):
+        self.color = color
 
-class InputBox:
+
+class InputBox(ScreenItem):
     def __init__(self, visible=False, text='', color_inactive=None, color_active=None,
-                 screen_pos=None, linewidth=0.01, show_frame=False, agent=None):
+                 screen_pos=None, linewidth=0.01, show_frame=False, agent=None, end_time=0):
+        super().__init__(color=color_active)
         self.screen_pos = screen_pos
         self.linewidth = linewidth
         self.show_frame = show_frame
@@ -207,17 +214,20 @@ class InputBox:
         if color_inactive is None:
             color_inactive = pygame.Color('lightskyblue3')
         self.color_inactive = color_inactive
-        self.color = self.color_inactive
         self.visible = visible
         self.active = False
         self.font = pygame.font.Font(None, 32)
         self.text = text
+        self.text_font = None
         self.agent = agent
+        self.end_time = end_time
+        self.shape = None
 
     def draw(self, viewer):
-        if self.visible :
-            if self.agent is not None :
+        if self.visible:
+            if self.agent is not None:
                 self.set_shape(self.agent.model.space2screen_pos(self.agent.get_position()))
+                self.color = self.agent.default_color
             if self.shape is not None:
                 # Render the current text.
                 txt_surface = self.font.render(self.text, True, self.color)
@@ -228,6 +238,9 @@ class InputBox:
                     # Blit the input_box rect.
                     viewer.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
                     # pygame.draw.rect(viewer._window, self.color, self.shape, self.linewidth)
+            elif self.text_font is not None:
+                self.text_font = self.font_large.render(self.text, 1, self.color)
+                viewer.draw_text_box(self.text_font, self.text_font_r)
 
     def switch(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -260,8 +273,22 @@ class InputBox:
     def set_shape(self, pos):
         if pos is not None and not any(np.isnan(pos)):
             self.shape = pygame.Rect(pos[0], pos[1], 140, 32)
-        else :
-            self.shape =None
+        else:
+            self.shape = None
+
+    def render(self, width, height):
+        # Scale to screen
+        x_pos = int(width * 0.85)
+        y_pos = int(height * 0.1)
+        large_font_size = int(1 / 20 * width)
+
+        # Fonts
+        self.font_large = pygame.font.SysFont("SansitaOne.tff", large_font_size)
+
+        # Hour
+        self.text_font = self.font_large.render(self.text, 1, self.color)  # zero-pad hours to 2 digits
+        self.text_font_r = self.text_font.get_rect()
+        self.text_font_r.center = (x_pos * 0.91, y_pos)
 
 
 class SimulationClock(ScreenItem):
@@ -413,6 +440,7 @@ class SimulationScale(ScreenItem):
     def draw_scale(self, viewer):
         for line in self.lines:
             pygame.draw.line(viewer._window, self.color, line[0], line[1], 1)
+        self.scale_font = self.font.render(f'{self.scale_in_mm} mm', 1, self.color)
         viewer.draw_text_box(self.scale_font, self.scale_font_r)
 
 

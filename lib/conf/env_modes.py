@@ -470,7 +470,9 @@ feed_patchy_empirical = {
 
 growth_exp_np = {'arena_params': arena(0.015, 0.015),  # dish(0.006),
                  'space_params': mesa_space,
-                 'food_params': food_grid(50, 10 ** -3),  # food(0.0002),
+                 'food_params': {
+                     'food_list': [],
+                     'grid_pars': food_grid(50, 10**-3)},
                  'place_params': {**larva_mid(1, 0.3), **food_place(0)},  # larva1_food_uniform,
                  'odor_params': None}
 

@@ -269,7 +269,6 @@ def parsed_time_plot(fig, axs, data, agent_ids, parameters, dt=None, Nsubplots=1
         ax.set_xticks(ticks=ticks)
         ax.set_xticklabels(labels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
         ax.set_xlim([0, Npoints - 1])
-    # plt.MaxNLocator(10)
 
     # plt.legend(loc='upper right')
     filename = f'{parameters}_parsed.jpg'

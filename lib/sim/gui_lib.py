@@ -4,9 +4,16 @@ from typing import List, Tuple
 
 import numpy as np
 import PySimpleGUI as sg
+from random import randint
 import operator
 
+from matplotlib import ticker, pyplot
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
+
 from lib.conf import agent_pars
+from lib.conf.par_db import par_db
 
 on_image = b'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'
 
@@ -16,29 +23,29 @@ off_image_disabled = b'iVBORw0KGgoAAAANSUhEUgAAAFoAAAAnCAYAAACPFF8dAAAAAXNSR0IAr
 on_image_disabled = b'iVBORw0KGgoAAAANSUhEUgAAAFoAAAAnCAYAAACPFF8dAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsIAAA7CARUoSoAAAAVLSURBVGhD7Zu7TytHFMbHyxvsJeb9kjCiCihRpJAobaqblFGUJmXqKMofkyZpaKhS5HaJIgUpRZQmoqAhSgEUSBZgsAE/uJhX5ht80LmH8e56fdde7PuTPu0yj/XMt7Nnd2aXxPr6uuKMjIx84LruR47jJGtJbeeVplQqOaOjo+8MDAwk7u7uyrWsWIF2FYvFf3Rbt/HnQ+oDj0Ynk8kPl5eXf9Amf6L7pW5vb9X9/b3Jaye5XE719fWpubk51dPTY/bjijba+KbN3t7d3f324uLir1rWg9HpdPrFysrKy0KhMJTNZtX19XUtu/0sLi6qyclJlUqlcLWpRCJRy4knNzc3ShusKpXKq52dnS/z+fyvSE9sbGxMrq2t/Xd8fJw+PDw0hf1oRWdxNY2Pj6tMJqMmJiZUf3//Y3ocrjQJPOG+nJ2dYWSXt7a23tMRYt+Zn5//rlqteppMB5EHi5rZ2VmEtEeTAUzGJRo3yZOv7ydo94j293v8ndjW6JDxvh7RpoBEGtsKo9FofdNTq6urampqSvX29tZynhcIIUdHR//qUb3iDA4OZnDzs0Gm0khulQCMBs/VZIC2Dw8Pv6v71OvoO7lri3nUYb5tlToRp7Z9Deos37ZanYbVaA7vON/qCU1k6kQC94oMhxFk+FuCU9doPnptkPFRqBN5YjTvKO1LE3iZtwSjMwNiDGnYaD6aEa/1czieFdXQ0JB1wQfPw5C8Cii9Wwg9omHw2NiYmSLDaCz4YNoJ8ScHpGNBCGU4SIe6hVBGY+0BBmOiUy6XzQIKpptY9cOohrESjHg+y+u2ON+w0TAXpgGYfHl5aZYGq9WqMRsLLDDbNnXGyelWQsVoisUwl4OTQGvZPF5TOsxHyOlGQsdogNEroTQZGkqlktkiLnfq7M+LpnpsM4zS5EIVXvFUKhVzAmC2zH+OoA/1JGnYaByEwoN8PONhBXFbgngOw1GvnaNamhJWjdBwb2EmDAP0/EwvTV3XNQbiRNDJ4KBxuIGGQXayGXlhKx9WnFDDCjdBGEZhIJ1Om+dnmI2RXCwWayWfgrpXV1e1v4IhG10P2dEwCoKtnpQkVOgAGNX5fN7c5LCP+IvHOzxT85sk0uUoxt+oh7ygyI7Y5IetTlSSNBUoYSheg8E4mCYf9wDy5asyqlfvFZrE1pFGhd+0pYdRPbzKPTGaF6B9WVEeJGro95uRH7Y6jcqLuiOaKvIDyP2oFBRb3bDywlbeT5LAocPvQFEif5sUBFu9RuVHkDq+RvOK/ECIeW8y7nHZsJULIj9sdRpVEKxGU2W+lftRywtb+bDywlY+qCTGaLkuAagw39pGcBSjWoJJkFe+hJdtRn7Y6kBAznwdZPCVNg5V4gegfS4KI29KgB4VMWVHo7nZtjpcvG1hZTuulK0eID/RdpQDjn7+PcfMrh5UGciDRiVA69w03UfjMdVHw9EB5EUp/IaXbHXQdrwUQTsB2q5nwZc6/T6xubn5WyaT+Wxvb08VCgVTwAtbmIkCNHpmZkYtLCyY76P5iwQ6GXGE/MHMFzPlg4ODP/f39z91Tk9Pfzw/P1dLS0tqenra10h0shUC+JQYbTs5OXltfQRtjKvQdhhMyuVyP5k244t/PXJ+0aPmCywM4dLEohAuD1S0QUa0ApiMD9LxMTrCB1SvXe0GnuHegi1M1m3/I5vNvtBZd8Zo3fCkNvvnZDL5OV41Ic7EqTM48RjReOdo+3QhLmAAwmis4ejQ8bu+Ir/SaWYpk/9XViKVSn3tuu43ujMf67t8975JDYk29UrfAP/WA2NdawNJDzlK/Q9RjPZ1HEiBtwAAAABJRU5ErkJggg=='
 
 
-def retrieve_value(v, type) :
+def retrieve_value(v, type):
     if v in ['', 'None', None]:
         vv = None
     elif v in ['sample', 'fit']:
         vv = v
-    elif type=='bool' :
+    elif type == 'bool':
         if v in ['False', False]:
             vv = False
         elif v in ['True', True]:
             vv = True
-    elif type==List[Tuple[float, float]] :
-        v=v.replace('{', ' ')
-        v=v.replace('}', ' ')
+    elif type == List[Tuple[float, float]]:
+        v = v.replace('{', ' ')
+        v = v.replace('}', ' ')
         vv = [tuple([float(x) for x in t.split()]) for t in v.split('   ')]
     elif type == tuple or type == list:
         try:
             vv = literal_eval(v)
         except:
-            vv= [float(x) for x in v.split()]
-            if type == tuple :
-                vv=tuple(vv)
+            vv = [float(x) for x in v.split()]
+            if type == tuple:
+                vv = tuple(vv)
     elif type(v) == type:
-        vv=v
+        vv = v
     else:
         vv = type(v)
     return vv
@@ -55,7 +62,7 @@ def get_table_data(values, pars_dict, Nagents):
     return data
 
 
-def build_table_window(data, pars_dict, title) :
+def build_table_window(data, pars_dict, title):
     text_args = {'font': 'Courier 10',
                  'size': (15, 1),
                  'justification': 'center'}
@@ -78,7 +85,8 @@ def build_table_window(data, pars_dict, title) :
     table_window.close_destroys_window = True
     return Nagents, Npars, pars, table_window
 
-def gui_table(data, pars_dict, title='Agent list') :
+
+def gui_table(data, pars_dict, title='Agent list'):
     """
         Another simple table created from Input Text Elements.  This demo adds the ability to "navigate" around the drawing using
         the arrow keys. The tab key works automatically, but the arrow keys are done in the code below.
@@ -86,7 +94,8 @@ def gui_table(data, pars_dict, title='Agent list') :
 
     sg.change_look_and_feel('Dark Brown 2')  # No excuse for gray windows
     # Show a "splash" type message so the user doesn't give up waiting
-    sg.popup_quick_message('Hang on for a moment, this will take a bit to create....', auto_close=True, non_blocking=True)
+    sg.popup_quick_message('Hang on for a moment, this will take a bit to create....', auto_close=True,
+                           non_blocking=True)
 
     Nagents, Npars, pars, table_window = build_table_window(data, pars_dict, title)
 
@@ -97,7 +106,7 @@ def gui_table(data, pars_dict, title='Agent list') :
             table_window.close()
             return data
             # break
-        if event == 'Ok' :
+        if event == 'Ok':
             data = get_table_data(values, pars_dict, Nagents)
             table_window.close()
             return data
@@ -113,7 +122,7 @@ def gui_table(data, pars_dict, title='Agent list') :
             c = c + 1 * (c < Npars - 1)
         elif event.startswith('Up'):
             r = r - 1 * (r > 0)
-        elif event in pars:         # Perform a sort if a column heading was clicked
+        elif event in pars:  # Perform a sort if a column heading was clicked
             col_clicked = pars.index(event)
             try:
                 table = [[int(values[(row, col)]) for col in range(Npars)] for row in range(Nagents)]
@@ -124,13 +133,14 @@ def gui_table(data, pars_dict, title='Agent list') :
                 for i in range(Nagents):
                     for j in range(Npars):
                         table_window[(i, j)].update(new_table[i][j])
-                [table_window[c].update(font='Any 14') for c in pars]     # make all column headings be normal fonts
-                table_window[event].update(font='Any 14 bold')                    # bold the font that was clicked
+                [table_window[c].update(font='Any 14') for c in pars]  # make all column headings be normal fonts
+                table_window[event].update(font='Any 14 bold')  # bold the font that was clicked
         # if the current cell changed, set focus on new cell
         if current_cell != (r, c):
             current_cell = r, c
-            table_window[current_cell].set_focus()          # set the focus on the element moved to
-            table_window[current_cell].update(select=True)  # when setting focus, also highlight the data in the element so typing overwrites
+            table_window[current_cell].set_focus()  # set the focus on the element moved to
+            table_window[current_cell].update(
+                select=True)  # when setting focus, also highlight the data in the element so typing overwrites
         if event == 'Add':
             data = get_table_data(values, pars_dict, Nagents)
             data.append(data[r])
@@ -138,17 +148,16 @@ def gui_table(data, pars_dict, title='Agent list') :
             Nagents, Npars, pars, table_window = build_table_window(data, pars_dict, title)
         elif event == 'Remove':
             data = get_table_data(values, pars_dict, Nagents)
-            data=[d for i,d in enumerate(data) if i!=r]
+            data = [d for i, d in enumerate(data) if i != r]
             table_window.close()
             Nagents, Npars, pars, table_window = build_table_window(data, pars_dict, title)
             # table_window.close()
             # gui_table(data, pars_dict, title='Agent list')
 
-
     # if clicked button to dump the table's values
-        # if event.startswith('Show Table'):
-        #     table = [[values[(row, col)] for col in range(Npars)] for row in range(Nagents)]
-        #     sg.popup_scrolled('your_table = [ ', ',\n'.join([str(table[i]) for i in range(Nagents)]) + '  ]', title='Copy your data from here')
+    # if event.startswith('Show Table'):
+    #     table = [[values[(row, col)] for col in range(Npars)] for row in range(Nagents)]
+    #     sg.popup_scrolled('your_table = [ ', ',\n'.join([str(table[i]) for i in range(Nagents)]) + '  ]', title='Copy your data from here')
 
 
 def update_window_from_dict(window, dict):
@@ -189,7 +198,7 @@ class SectionDict:
                 new_dict[k] = window[f'TOGGLE_{k}'].metadata.state
             else:
                 vv = values[k]
-                vv=retrieve_value(vv, type(v))
+                vv = retrieve_value(vv, type(v))
                 new_dict[k] = vv
         return new_dict
 
@@ -340,9 +349,9 @@ def set_kwargs(kwargs, title='Arguments'):
 
 
 def set_agent_kwargs(agent):
-    class_name=type(agent).__name__
-    pars=agent_pars[class_name]
-    title=f'{class_name} args'
+    class_name = type(agent).__name__
+    pars = agent_pars[class_name]
+    title = f'{class_name} args'
     layout = []
     for i, (p, t) in enumerate(pars.items()):
         layout.append([sg.Text(p, size=(20, 1)), sg.Input(default_text=getattr(agent, p), key=f'kw_{p}', size=(20, 1))])
@@ -359,14 +368,15 @@ def set_agent_kwargs(agent):
 
 
 def object_menu(selected):
-    object_list=['Larva', 'Food', 'Border']
-    title='Select object type'
+    object_list = ['Larva', 'Food', 'Border']
+    title = 'Select object type'
     layout = [
         [sg.Text(title, **header_kwargs)],
-        [sg.Listbox(default_values=[selected], values=object_list, change_submits=False, size=(20, len(object_list)), key='SELECTED_OBJECT',
+        [sg.Listbox(default_values=[selected], values=object_list, change_submits=False, size=(20, len(object_list)),
+                    key='SELECTED_OBJECT',
                     enable_events=True)],
-    [sg.Ok()]]
-    window=sg.Window(title, layout)
+        [sg.Ok()]]
+    window = sg.Window(title, layout)
     while True:
         event, values = window.read()
         sel = values['SELECTED_OBJECT'][0]
@@ -375,21 +385,22 @@ def object_menu(selected):
     window.close()
     return sel
 
+
 def delete_objects_window(selected):
-    ids=[sel.unique_id for sel in selected]
-    title='Delete objects?'
+    ids = [sel.unique_id for sel in selected]
+    title = 'Delete objects?'
     layout = [
         [sg.Text(title, **header_kwargs)],
         [sg.Listbox(default_values=ids, values=ids, change_submits=False, size=(20, len(ids)), key='DELETE_OBJECTS',
                     enable_events=True)],
-    [sg.Ok(), sg.Cancel()]]
-    window=sg.Window(title, layout)
+        [sg.Ok(), sg.Cancel()]]
+    window = sg.Window(title, layout)
     while True:
         event, values = window.read()
         if event == 'Ok':
-            res=True
+            res = True
             break
-        elif event == 'Cancel' :
+        elif event == 'Cancel':
             res = False
             break
     window.close()
@@ -410,3 +421,141 @@ header_kwargs = {'font': ('size', 10),
                  'size': (15, 1)}
 text_kwargs = {'font': ('size', 10),
                'size': (15, 1)}
+
+
+def draw_canvas(canvas, figure):
+    figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
+    figure_canvas_agg.draw()
+    figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
+    return figure_canvas_agg
+
+def delete_figure_agg(figure_agg):
+    figure_agg.get_tk_widget().forget()
+    plt.close('all')
+
+
+class DynamicGraph:
+    def __init__(self, agent, par_shorts=[], available_pars=[]):
+
+        self.agent = agent
+        self.available_pars = available_pars
+        self.par_shorts = par_shorts
+        self.dt = self.agent.model.dt
+        self.init_dur = 20
+        self.window_size=(1550, 1200)
+        self.canvas_size=(self.window_size[0]-50, self.window_size[1]-50)
+        self.my_dpi=96
+        self.figsize=(int(self.canvas_size[0]/self.my_dpi), int(self.canvas_size[1]/self.my_dpi))
+
+        Ncols=4
+        par_lists=[list(a) for a in np.array_split(self.available_pars, Ncols)]
+        par_layout = [[sg.Text('Choose parameters')],
+                      [sg.Col([*[[sg.CB(p, key=f'k_{p}')] for p in par_lists[i]]]) for i in range(Ncols)],
+                      [sg.Button('Ok', **button_kwargs), sg.Button('Cancel', **button_kwargs)]
+                      ]
+
+        graph_layout = [
+            # [sg.Text(f'{self.agent.unique_id} : {self.par}', size=(40, 1), justification='center', font='Helvetica 20')],
+            [sg.Canvas(size=(1280, 1200), key='-CANVAS-')],
+            [sg.Text('Time in seconds to display on screen')],
+            [sg.Slider(range=(0.1, 60), default_value=self.init_dur, size=(40, 10), orientation='h',
+                       key='-SLIDER-TIME-')],
+            [sg.Button('Choose', **button_kwargs)]
+        ]
+        layout=[[sg.Column(par_layout, key='-COL1-'), sg.Column(graph_layout, visible=False, key='-COL2-')]]
+        self.window = sg.Window(f'{self.agent.unique_id} Dynamic Graph', layout, finalize=True, location=(0, 0), size=self.window_size)
+        self.canvas_elem = self.window.FindElement('-CANVAS-')
+        self.canvas = self.canvas_elem.TKCanvas
+        self.fig_agg = None
+
+        self.update_pars()
+        self.layout=1
+    def evaluate(self):
+        event, values = self.window.read(timeout=0)
+        if event is None:
+            self.window.close()
+            return False
+        elif event=='Choose' :
+            self.window[f'-COL2-'].update(visible=False)
+            self.window[f'-COL1-'].update(visible=True)
+            self.layout = 1
+        elif event=='Ok' :
+            self.window[f'-COL1-'].update(visible=False)
+            self.window[f'-COL2-'].update(visible=True)
+            pars=[p for p in self.available_pars if values[f'k_{p}']]
+            self.par_shorts=par_db.loc[par_db['par'].isin(pars)].index.tolist()
+            self.update_pars()
+            self.layout = 2
+
+
+
+        elif event=='Cancel' :
+            self.window[f'-COL1-'].update(visible=False)
+            self.window[f'-COL2-'].update(visible=True)
+            self.layout = 2
+
+        if self.layout==2 and self.Npars>0:
+            secs = values['-SLIDER-TIME-']
+            Nticks = int(secs / self.dt)  # draw this many data points (on next line)
+            t = self.agent.model.Nticks * self.dt
+            trange = np.linspace(t - secs, t, Nticks)
+            ys = self.update(Nticks)
+            for ax, y in zip(self.axs, ys):
+                ax.lines.pop(0)
+                ax.plot(trange, y, color='black')
+            self.axs[-1].set_xlim(np.min(trange), np.max(trange))
+            self.fig_agg.draw()
+        return True
+
+    def update(self, Nticks):
+        y_nan = np.ones(Nticks) * np.nan
+        ys = []
+        for p, v in self.yranges.items():
+            self.yranges[p] = np.append(v, getattr(self.agent, p))
+            dif = self.yranges[p].shape[0] - Nticks
+            if dif >= 0:
+                y = self.yranges[p][-Nticks:]
+            else:
+                y = y_nan
+                y[-dif:] = self.yranges[p]
+                # y = np.pad(self.yranges[p], (-dif, 0), constant_values=np.nan)
+            ys.append(y)
+        return ys
+
+    def update_pars(self):
+        self.pars, self.sim_symbols, self.exp_symbols, self.units, self.ylims, self.par_collects = [
+            par_db[['par', 'symbol', 'exp_symbol', 'unit', 'lim', 'collect']].loc[self.par_shorts].values[:, k].tolist() for k in
+            range(6)]
+
+        self.Npars = len(self.pars)
+        self.yranges = {}
+
+        self.fig, axs = plt.subplots(self.Npars, 1, figsize=self.figsize, dpi=self.my_dpi, sharex=True)
+        if self.Npars > 1:
+            self.axs = axs.ravel()
+        else:
+            self.axs = [axs]
+        Nticks = int(self.init_dur / self.dt)
+        for i, (ax, p, l, u, lim, p_col) in enumerate(zip(self.axs, self.pars, self.sim_symbols, self.units, self.ylims, self.par_collects)):
+            if hasattr(self.agent, p_col) :
+                p0=p_col
+            else :
+                p0=p
+            self.yranges[p0] = np.ones(Nticks) * np.nan
+            ax.grid()
+            ax.plot(range(Nticks), self.yranges[p0], color='black', label=l)
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
+            ax.legend(loc='upper right')
+            ax.set_ylabel(u, fontsize=10)
+            if lim is not None :
+                ax.set_ylim(lim)
+            ax.tick_params(axis='y', which='major', labelsize=10)
+            if i == self.Npars - 1:
+                ax.set_xlabel('time, $sec$')
+                ax.xaxis.set_major_locator(ticker.MaxNLocator(10))
+        self.fig.subplots_adjust(bottom=0.15, top=0.95, left=0.1, right=0.99, wspace=0.01, hspace=0.05)
+        if self.fig_agg:
+            delete_figure_agg(self.fig_agg)
+        self.fig_agg = draw_canvas(self.canvas, self.fig)
+
+

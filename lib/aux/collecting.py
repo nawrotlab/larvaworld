@@ -20,8 +20,8 @@ pos_xy = {
 }
 
 orientation_pars = {
-    "front_orientation": 'front_orientation_in_deg',
-    "rear_orientation": 'rear_orientation_in_deg',
+    "front_orientation": 'front_orientation',
+    "rear_orientation": 'rear_orientation',
     "orientation_to_center": 'orientation_to_center_in_deg',
     "final_orientation_to_center": 'orientation_to_center_in_deg',
 }
@@ -52,8 +52,8 @@ lin_pars = {
 }
 
 ang_pars = {
-    "angular_vel": 'ang_vel_in_deg',
-    "bend": 'body_bend_in_deg',
+    "front_orientation_vel": 'front_orientation_vel',
+    "bend": 'bend',
     # "torque": lambda a : a.torque,
     "torque": 'torque',
     "body_bend_errors": 'body_bend_errors',
@@ -135,6 +135,27 @@ food_pars = {
     "initial_amount": 'initial_amount',
 }
 
+step_database = {
+                             **pos_xy,
+                             **orientation_pars,
+                             **lin_pars,
+                             **ang_pars,
+                             **effector_pars,
+                             **intermitter_pars,
+                             **body_pars,
+                             **deb_pars}
+
+endpoint_database = {
+                "sim_duration": 'sim_time',
+                **pos_xy,
+                **orientation_pars,
+                **lin_pars,
+                **ang_pars,
+                **effector_pars,
+                **intermitter_pars,
+                **body_pars,
+                **deb_pars,
+                **food_pars}
 
 # Extension of DataCollector class so that it only collects from a given schedule
 class TargetedDataCollector(DataCollector):
@@ -178,30 +199,12 @@ class TargetedDataCollector(DataCollector):
         if mode == 'step':
             midline_xy = self.midline_xy_pars()
             contour_xy = self.contour_xy_pars()
-            step_database = {**midline_xy,
+            full_step_database = {**midline_xy,
                              **contour_xy,
-                             **pos_xy,
-                             **orientation_pars,
-                             **lin_pars,
-                             **ang_pars,
-                             **effector_pars,
-                             **intermitter_pars,
-                             **body_pars,
-                             **deb_pars}
-            return step_database
+                             **step_database}
+            return full_step_database
 
         elif mode == 'endpoint':
-            endpoint_database = {
-                "sim_duration": 'sim_time',
-                **pos_xy,
-                **orientation_pars,
-                **lin_pars,
-                **ang_pars,
-                **effector_pars,
-                **intermitter_pars,
-                **body_pars,
-                **deb_pars,
-                **food_pars}
             return endpoint_database
 
     def midline_xy_pars(self, N=12):

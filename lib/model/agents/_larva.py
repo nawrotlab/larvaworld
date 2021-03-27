@@ -44,6 +44,8 @@ class LarvaReplay(Larva, LarvaBody):
         self.pos_ar = data[pos_pars].values if len(pos_pars) == 2 else np.ones([N, 2]) * np.nan
         self.ang_ar = data[ang_pars].values if Nangles > 0 else np.ones([N, Nangles]) * np.nan
         self.or_ar = data[or_pars].values if Nors > 0 else np.ones([N, Nors]) * np.nan
+        self.bend_ar = data['bend'].values if 'bend' in data.columns else np.ones(N) * np.nan
+        self.front_or_ar = data['front_orientation'].values if 'front_orientation' in data.columns else np.ones(N) * np.nan
 
         vp_beh = [p for p in self.behavior_pars if p in self.model.pars]
         self.beh_ar = np.zeros([N, len(self.behavior_pars)], dtype=bool)
@@ -54,7 +56,7 @@ class LarvaReplay(Larva, LarvaBody):
         if Nsegs is not None:
             LarvaBody.__init__(self, model, pos=self.pos, orientation=self.or_ar[0][0],
                                initial_length=self.sim_length / 1000, length_std=0, Nsegs=Nsegs,interval=0)
-
+        self.data=data
     def read_step(self, i):
         self.midline = self.mid_ar[i].tolist()
         self.vertices = self.con_ar[i]
@@ -64,6 +66,13 @@ class LarvaReplay(Larva, LarvaBody):
         self.angles = self.ang_ar[i]
         self.orients = self.or_ar[i]
         self.beh_dict = dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist()))
+
+        self.front_orientation = self.front_or_ar[i]
+        self.bend = self.bend_ar[i]
+
+        for p in ['front_orientation_vel'] :
+            setattr(self, p, self.data[p].values[i] if p in self.data.columns else np.nan)
+        # self.front_orientation_vel = self.front_or_vel_ar[i]
 
     def step(self):
         step = self.model.active_larva_schedule.steps
@@ -83,11 +92,12 @@ class LarvaReplay(Larva, LarvaBody):
                     seg.set_position(pos)
                     seg.set_orientation(o)
                     seg.update_vertices(pos, o)
-            elif len(segs) == 2 and len(self.orients) == 1 and len(self.angles) == 1:
+            # elif len(segs) == 2 and len(self.orients) == 1 and len(self.angles) == 1:
+            elif len(segs) == 2:
                 l1, l2 = [self.sim_length * r for r in self.seg_ratio]
                 x, y = self.pos
-                h_or = np.deg2rad(self.orients[0])
-                b_or = np.deg2rad(self.orients[0] - self.angles[0])
+                h_or = np.deg2rad(self.front_orientation)
+                b_or = np.deg2rad(self.front_orientation - self.bend)
                 p_head = np.array(fun.rotate_around_point(origin=[x, y], point=[l1 + x, y], radians=-h_or))
                 p_tail = np.array(fun.rotate_around_point(origin=[x, y], point=[l2 + x, y], radians=np.pi - b_or))
                 pos1 = [np.nanmean([p_head[j], [x, y][j]]) for j in [0, 1]]
@@ -130,6 +140,10 @@ class LarvaReplay(Larva, LarvaBody):
             elif not np.isnan(self.pos).any():
                 viewer.draw_circle(radius=self.radius,position=self.pos,
                                filled=False, color=self.model.selection_color, width=self.radius / 3)
+
+    def set_color(self,color) :
+        self.color=color
+
 
 
 class LarvaSim(BodyController, Larva):
@@ -404,3 +418,19 @@ class LarvaSim(BodyController, Larva):
             behavior_dict['Rturn_id'] = True
         color = self.update_color(self.default_color, behavior_dict)
         self.set_color([color for seg in self.segs])
+
+    @property
+    def front_orientation(self):
+        return np.rad2deg(self.get_head().get_normalized_orientation())
+
+    @property
+    def rear_orientation(self):
+        return np.rad2deg(self.get_tail().get_normalized_orientation())
+
+    @property
+    def bend(self):
+        return np.rad2deg(self.body_bend)
+
+    @property
+    def front_orientation_vel(self):
+        return np.rad2deg(self.get_head().get_angularvelocity())

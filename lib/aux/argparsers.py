@@ -12,7 +12,7 @@ def add_vis_kwargs(parser):
                         help='The fast-forward speed of the video')
     parser.add_argument('-img', '--image_mode', nargs='?', const='final',
                         choices=['final', 'overlap', 'snapshots'], help='Select image mode')
-    parser.add_argument('-rnd', '--random_larva_colors', action="store_true", help='Color larvae with random colors')
+    parser.add_argument('-rnd', '--random_colors', action="store_true", help='Color larvae with random colors')
     parser.add_argument('-beh', '--color_behavior', action="store_true", help='Color behavioral epochs')
     parser.add_argument('-trj', '--trajectories', type=float, nargs='?', const=0.0,
                         help='Show trajectories of specific time duration')
@@ -31,17 +31,17 @@ def get_vis_kwargs(args):
 
     if args.trajectories is None:
         trajectories = False
-        trail_decay_in_sec = 0.0
+        trajectory_dt = 0.0
     else:
         trajectories = True
-        trail_decay_in_sec = args.trajectories
+        trajectory_dt = args.trajectories
 
     vis_kwargs = {'mode': mode,
                   'image_mode': args.image_mode,
                   'video_speed': args.video_speed,
                   'trajectories': trajectories,
-                  'trail_decay_in_sec': trail_decay_in_sec,
-                  'random_larva_colors': args.random_larva_colors,
+                  'trajectory_dt': trajectory_dt,
+                  'random_colors': args.random_colors,
                   'color_behavior': args.color_behavior,
                   'black_background': args.black_background,
                   'draw_head': args.draw_head,

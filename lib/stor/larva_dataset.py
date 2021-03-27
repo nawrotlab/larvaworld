@@ -728,7 +728,7 @@ class LarvaDataset:
 
         pars, pos_xy_pars = self.get_par_list(track_point=track_point, points=spinepoints, centroid=centroid,
                                               contours=contours)
-        s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range_in_ticks=time_range_in_ticks,
+        s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=None, time_range_in_ticks=time_range_in_ticks,
                                         dynamic_color=dynamic_color)
 
         if len(ids) == 1:
