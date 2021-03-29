@@ -475,9 +475,9 @@ class DEB:
                 f = 1
                 self.run(f)
 
-    def advance_larva_age(self, hours_as_larva, f=1, starvation_hours=[]):
+    def advance_larva_age(self, hours_as_larva, f=1, starvation_hours=None):
         self.hours_as_larva = hours_as_larva
-        if len(starvation_hours) == 0:
+        if starvation_hours is None :
             N = int(self.steps_per_day / 24 * hours_as_larva)
             for i in range(N):
                 self.run(f)
@@ -505,7 +505,9 @@ class DEB:
             return self.U_R / self.U_R__p
 
 
-def deb_default(starvation_hours=[], base_f=1, id=None, steps_per_day=24*60):
+def deb_default(starvation_hours=None, base_f=1, id=None, steps_per_day=24*60):
+    if starvation_hours is None :
+        starvation_hours=[]
     # print(base_f)
     base_f = base_f
     deb = DEB(species='default', steps_per_day=steps_per_day, print_stage_change=True)
@@ -590,7 +592,9 @@ def deb_default(starvation_hours=[], base_f=1, id=None, steps_per_day=24*60):
     return dict
 
 
-def deb_dict(dataset, id, new_id=None, starvation_hours=[]):
+def deb_dict(dataset, id, new_id=None, starvation_hours=None):
+    if starvation_hours is None :
+        starvation_hours=[]
     s = dataset.step_data.xs(id, level='AgentID')
     e = dataset.endpoint_data.loc[id]
     if new_id is not None:

@@ -9,18 +9,19 @@ from scipy.stats import multivariate_normal
 
 
 class ValueGrid:
-    def __init__(self, space_range, grid_resolution=[100, 100], distribution='uniform', initial_amount=1, quality=1):
-        self.initial_amount = initial_amount
+    def __init__(self, space_range, food_grid_dims=[100, 100], distribution='uniform',
+                 food_grid_amount=1, quality=1):
+        self.initial_amount = food_grid_amount
         self.quality = quality
-        if initial_amount>0 :
+        if food_grid_amount>0 :
             self.initial_value=1
         else :
             self.initial_value=0
-        # print(grid_resolution)
-        # print(grid_resolution[0])
-        # print(type(grid_resolution[0]))
+        # print(food_grid_dims)
+        # print(food_grid_dims[0])
+        # print(type(food_grid_dims[0]))
         # raise
-        self.X, self.Y = grid_resolution
+        self.X, self.Y = food_grid_dims
         x_range = tuple(space_range[0:2])
         y_range = tuple(space_range[2:])
         x0, x1 = x_range[0], x_range[1]

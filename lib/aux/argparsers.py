@@ -126,8 +126,6 @@ def add_data_kwargs(parser):
                         help='Folders under the DataGroup parent dir where to search for datasets')
     parser.add_argument('-suf', '--suffixes', nargs='+', type=str, help='Suffixes of the dataset names')
     parser.add_argument('-nam', '--names', nargs='+', default=['enriched'], type=str, help='Names of the datasets')
-    # parser.add_argument('-lst', '--last_common', type=str, default='processed', help='The last common folder of the datasets under the DataGroup parent dir')
-    # parser.add_argument('-mode', '--mode', type=str, default='load', choices=['load', 'initialize'],help='Whether to load existing or initialize new datasets')
     parser.add_argument('-load', '--load_data', action="store_false", help='Not load the data from the datasets')
     return parser
 
@@ -176,24 +174,24 @@ def get_build_kwargs(args):
 
 def add_sim_kwargs(parser):
     parser.add_argument('-id', '--sim_id', type=str, help='The id of the simulation')
-    parser.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae')
-    parser.add_argument('-t', '--sim_time', type=float, help='The duration of the simulation in min')
-    parser.add_argument('-dt', '--dt', type=float, help='The timestep of the simulation in sec')
+    parser.add_argument('-path', '--path', type=str, help='The path to save the simulation dataset')
+    parser.add_argument('-t', '--sim_dur', type=float, nargs='?', default=3.0,  help='The duration of the simulation in min')
+    parser.add_argument('-dt', '--dt', type=float, nargs='?', default=0.1,  help='The timestep of the simulation in sec')
     parser.add_argument('-Box2D', '--Box2D', action="store_true", help='Use the Box2D physics engine')
     return parser
 
 
 def get_sim_kwargs(args):
     sim_kwargs = {'sim_id': args.sim_id,
-                  'Nagents': args.Nagents,
-                  'sim_time': args.sim_time,
+                  'sim_dur': args.sim_dur,
+                  'path': args.path,
                   'dt': args.dt,
                   'Box2D': args.Box2D,
                   }
     return sim_kwargs
 
 
-def add_exp_kwargs(parser):
+def add_life_kwargs(parser):
     parser.add_argument('-age', '--hours_as_larva', type=float, nargs='?', default=0.0,
                         help='The initial larva age since hatch in hours')
     parser.add_argument('-deb_f', '--deb_base_f', type=float, nargs='?', default=1.0,
@@ -203,9 +201,9 @@ def add_exp_kwargs(parser):
     return parser
 
 
-def get_exp_kwargs(args):
+def get_life_kwargs(args):
     if args.starvation_hours is None:
-        starvation_hours = []
+        starvation_hours = args.starvation_hours
     else:
         if len(args.starvation_hours) % 2 != 0:
             raise ValueError('Starvation intervals must be provided in pairs of start-stop time')
@@ -216,12 +214,12 @@ def get_exp_kwargs(args):
     #     hours_as_larva=[0.0]
     # if args.deb_base_f is None :
     #     deb_base_f=[1.0]
-    exp_kwargs = {
+    life_kwargs = {
         'hours_as_larva': args.hours_as_larva,
         'deb_base_f': args.deb_base_f,
         'starvation_hours': starvation_hours
     }
-    return exp_kwargs
+    return life_kwargs
 
 
 def add_batch_kwargs(parser):
@@ -256,3 +254,13 @@ def get_space_kwargs(args):
                     'ranges': args.ranges,
                     'Ngrid': Ngrid}
     return space_kwargs
+
+def add_place_kwargs(parser):
+    parser.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae')
+    return parser
+
+def get_place_kwargs(args):
+    place_kwargs = {
+                  'Nagents': args.Nagents,
+                  }
+    return place_kwargs

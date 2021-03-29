@@ -26,7 +26,9 @@ class LarvaDataset:
                  par_conf=SimParConf, arena_pars=env.dish(0.1),
                  filtered_at=np.nan, rescaled_by=np.nan,
                  save_data_flag=True, load_data=True,
-                 starvation_hours=[], deb_base_f=1):
+                 life_params={}
+                 # starvation_hours=[], deb_base_f=1
+                 ):
         self.par_config = par_conf
         self.save_data_flag = save_data_flag
         self.define_paths(dir)
@@ -45,10 +47,10 @@ class LarvaDataset:
                            'rescaled_by': rescaled_by,
                            'Npoints': Npoints,
                            'Ncontour': Ncontour,
-                           'starvation_hours' : starvation_hours,
-                           'deb_base_f' : deb_base_f
+                           # 'starvation_hours' : starvation_hours,
+                           # 'deb_base_f' : deb_base_f
                            }
-            self.config = {**self.config, **par_conf, **arena_pars}
+            self.config = {**self.config, **par_conf, **arena_pars, **life_params}
             print(f'Initialized dataset {id} with new configuration')
         self.__dict__.update(self.config)
         self.arena_pars = {'arena_xdim': self.arena_xdim,
@@ -742,13 +744,15 @@ class LarvaDataset:
             trajectory_colors = s[dynamic_color]
         else:
             trajectory_colors = None
+        # FIXME xy are saved in mm and that messes things up. right now i scale the arena up, but this makes the scale wrong
         if env_params is None:
             if arena_pars is None:
                 arena_pars = self.arena_pars
-            env_params = {'arena_params': arena_pars,
-                          'space_params': mesa_space_in_mm}
+            env_params = {'arena_params': arena_pars}
         arena_dims_in_m = env_params['arena_params']['arena_xdim'], env_params['arena_params']['arena_ydim']
         arena_dims = [i * 1000 for i in arena_dims_in_m]
+        env_params['arena_params']['arena_xdim'] = arena_dims[0]
+        env_params['arena_params']['arena_ydim'] = arena_dims[1]
 
         if align_mode is not None:
             s = self.align_trajectories(s=s, mode=align_mode, arena_dims=arena_dims, track_point=track_point)

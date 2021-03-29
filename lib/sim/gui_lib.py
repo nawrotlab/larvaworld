@@ -12,7 +12,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
-from lib.conf import agent_pars
+from lib.conf.sim_modes import agent_pars
 from lib.conf.par_db import par_db
 
 on_image = b'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'
@@ -49,7 +49,10 @@ def retrieve_value(v, type):
         v = v.replace('}', '')
         v = v.replace('[', '')
         v = v.replace(']', '')
+        v = v.replace('(', '')
+        v = v.replace(')', '')
         v = v.replace("'", '')
+        v = v.replace(",", ' ')
         vv = tuple([float(x) for x in v.split()])
     elif type == tuple or type == list:
         try:
@@ -174,34 +177,48 @@ def gui_table(data, pars_dict, title='Agent list'):
     #     sg.popup_scrolled('your_table = [ ', ',\n'.join([str(table[i]) for i in range(Nagents)]) + '  ]', title='Copy your data from here')
 
 
-def update_window_from_dict(window, dict):
-    if dict is not None:
-        for k, v in dict.items():
-            if type(v) != bool:
-                window.Element(k).Update(value=v)
-            else:
+def update_window_from_dict(window, dic, prefix=None):
+    if dic is not None:
+        for k, v in dic.items():
+            if prefix is not None :
+                k= f'{prefix}_{k}'
+            if type(v) == bool:
                 window[f'TOGGLE_{k}'].metadata.state = v
                 window[f'TOGGLE_{k}'].update(image_data=on_image if v else off_image)
+            elif type(v) == dict :
+                if prefix is not None :
+                    new_prefix = k
+                else :
+                    new_prefix=None
+                update_window_from_dict(window, v, prefix=new_prefix)
+            else:
+                window.Element(k).Update(value=v)
 
 
 class SectionDict:
     def __init__(self, name, dict, type_dict=None):
         self.init_dict = dict
+        # self.named_init_dict=self.named_dict(dict)
         self.type_dict = type_dict
         self.name = name
+        self.subdicts={}
 
-    def init_section(self, dict=None):
-        if dict is None:
-            if self.init_dict is not None:
-                dict = self.init_dict
-            else:
-                return []
+    def init_section(self):
+        if self.init_dict is not None:
+            dic = self.init_dict
+        else:
+            return []
         l = []
-        for k, v in dict.items():
-            if type(v) != bool:
-                l.append([sg.Text(f'{k}:', **text_kwargs), sg.In(v, key=k, **text_kwargs)])
+        for k, v in dic.items():
+            k0=f'{self.name}_{k}'
+            if type(v) == bool:
+                l.append(bool_button(k, v, k0))
+            elif type(v) == dict:
+                self.subdicts[k0]=CollapsibleDict(k0, True, dict=v, toggle=True)
+                ll=self.subdicts[k0].get_section()
+                l.append(ll)
             else:
-                l.append(bool_button(k, v))
+                l.append([sg.Text(f'{k}:', **text_kwargs), sg.In(v, key=k0, **text_kwargs)])
         return l
 
     def get_dict(self, values, window):
@@ -209,24 +226,39 @@ class SectionDict:
         if new_dict is None:
             return new_dict
         if self.type_dict is None :
-
             for i, (k, v) in enumerate(new_dict.items()):
+                k0 = f'{self.name}_{k}'
                 if type(v) == bool:
-                    new_dict[k] = window[f'TOGGLE_{k}'].metadata.state
+                    new_dict[k] = window[f'TOGGLE_{k0}'].metadata.state
+                elif type(v) == dict:
+                    new_dict[k] = self.subdicts[k0].get_dict(values, window)
                 else:
-                    vv = values[k]
+                    vv = values[k0]
                     vv = retrieve_value(vv, type(v))
                     new_dict[k] = vv
 
         else :
             for i, (k, t) in enumerate(self.type_dict.items()):
+                k0 = f'{self.name}_{k}'
                 if t == bool:
-                    new_dict[k] = window[f'TOGGLE_{k}'].metadata.state
+                    new_dict[k] = window[f'TOGGLE_{k0}'].metadata.state
+                elif t == dict:
+                    new_dict[k] = self.subdicts[k0].get_dict(values, window)
                 else:
-                    new_dict[k] = retrieve_value(values[k], t)
+                    new_dict[k] = retrieve_value(values[k0], t)
         return new_dict
 
+    def get_subdicts(self):
+        subdicts={}
+        for s in list(self.subdicts.values()) :
+            subdicts.update(s.get_subdicts())
+        return subdicts
 
+    # def named_dict(self, dic):
+    #     new_dict=copy.deepcopy(dic)
+    #     for k in list(dic.keys()) :
+    #         new_dict[f'{self.name}_{k}'] = new_dict.pop(k)
+    #     return new_dict
 
 
 
@@ -252,7 +284,10 @@ class SectionDict:
     #             window.Element(k).Update(value=v)
 
 
-def bool_button(name, state):
+def bool_button(name, state, toggle_name=None):
+    if toggle_name is None :
+        toggle_name=name
+    # print(toggle_name)
     if state:
         image = on_image
     elif not state:
@@ -260,7 +295,7 @@ def bool_button(name, state):
     elif state is None:
         image = off_image_disabled
     l = [sg.Text(f'{name} :', **text_kwargs),
-         sg.Button(image_data=image, k=f'TOGGLE_{name}', border_width=0,
+         sg.Button(image_data=image, k=f'TOGGLE_{toggle_name}', border_width=0,
                    button_color=(
                        sg.theme_background_color(), sg.theme_background_color()),
                    disabled_button_color=(
@@ -273,7 +308,6 @@ class Collapsible:
     def __init__(self, name, state, content, toggle=None, disabled=False):
         self.name = name
         self.state = state
-        self.content = content
         self.toggle = toggle
         if state:
             self.symbol = SYMBOL_DOWN
@@ -294,6 +328,7 @@ class Collapsible:
                     image = on_image
                 elif not toggle:
                     image = off_image
+            print(name)
             header.append(sg.Button(image_data=image, k=f'TOGGLE_{name}', border_width=0,
                                     button_color=(
                                         sg.theme_background_color(), sg.theme_background_color()),
@@ -312,7 +347,7 @@ class Collapsible:
     def set_section(self, section):
         self.section = section
 
-    def update(self, window, dict):
+    def update(self, window, dict, use_prefix=True):
         if dict is None:
             if self.toggle is not None:
                 window[f'TOGGLE_{self.name}'].metadata.state = None
@@ -325,8 +360,33 @@ class Collapsible:
                 window[f'TOGGLE_{self.name}'].update(image_data=on_image_disabled)
             if self.state is None:
                 self.state = False
-            update_window_from_dict(window, dict)
+            if use_prefix :
+                prefix=self.name
+            else :
+                prefix=None
+            update_window_from_dict(window, dict, prefix=prefix)
         return window
+
+class CollapsibleDict(Collapsible) :
+    def __init__(self, name, state, dict, dict_name=None, type_dict=None, toggle=None, disabled=False):
+        if dict_name is None :
+            dict_name = name
+        self.sectiondict=SectionDict(name=dict_name, dict=dict, type_dict=type_dict)
+        content=self.sectiondict.init_section()
+        super().__init__(name, state, content, toggle, disabled)
+
+    def get_dict(self, values, window):
+        if self.state is None :
+            return None
+        else :
+            return self.sectiondict.get_dict(values, window)
+
+    def get_subdicts(self):
+        subdicts={}
+        subdicts[self.name]=self
+        all_subdicts={**subdicts, **self.sectiondict.get_subdicts()}
+        return all_subdicts
+
 
 
 def collapse(layout, key, visible=True):

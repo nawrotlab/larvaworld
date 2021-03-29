@@ -2,7 +2,7 @@ import numpy as np
 from scipy import signal
 from scipy.stats import lognorm, rv_discrete
 
-from lib.aux.sampling import *
+import lib.aux.sampling as sampling
 
 
 class Effector:
@@ -467,7 +467,7 @@ class Intermitter(Effector):
         #                               name='power_law_dist')
         if pause_dist['name'] == 'powerlaw':
             self.pause_min, self.pause_max = np.round(np.array(pause_dist['range']) / self.dt).astype(int)
-            self.pause_dist = truncated_power_law(a=pause_dist['alpha'], xmin=self.pause_min, xmax=self.pause_max)
+            self.pause_dist = sampling.truncated_power_law(a=pause_dist['alpha'], xmin=self.pause_min, xmax=self.pause_max)
         elif pause_dist['name'] == 'lognormal':
             self.pause_dist = None
             self.pause_min, self.pause_max = pause_dist['range']
@@ -479,7 +479,7 @@ class Intermitter(Effector):
 
         self.stridechain_min, self.stridechain_max = np.array(stridechain_dist['range']).astype(int)
         if stridechain_dist['name'] == 'powerlaw':
-            self.stridechain_dist = truncated_power_law(a=stridechain_dist['alpha'], xmin=self.stridechain_min,
+            self.stridechain_dist = sampling.truncated_power_law(a=stridechain_dist['alpha'], xmin=self.stridechain_min,
                                                         xmax=self.stridechain_max)
         elif stridechain_dist['name'] == 'lognormal':
             self.stridechain_mean, self.stridechain_std = stridechain_dist['mu'], stridechain_dist['sigma']
@@ -495,14 +495,14 @@ class Intermitter(Effector):
 
     def generate_stridechain_length(self):
         if self.stridechain_dist is None:
-            return sample_lognormal_int(mean=self.stridechain_mean, sigma=self.stridechain_std,
+            return sampling.sample_lognormal_int(mean=self.stridechain_mean, sigma=self.stridechain_std,
                                         xmin=self.stridechain_min, xmax=self.stridechain_max)
         else:
             return self.stridechain_dist.rvs(size=1)[0]
 
     def generate_pause_duration(self):
         if self.pause_dist is None:
-            return sample_lognormal(mean=self.pause_mean, sigma=self.pause_std,
+            return sampling.sample_lognormal(mean=self.pause_mean, sigma=self.pause_std,
                                     xmin=self.pause_min, xmax=self.pause_max)
         else:
             return self.pause_dist.rvs(size=1)[0] * self.dt

@@ -7,12 +7,12 @@ from Box2D import b2Vec2
 # TODO Find a way to use this. Now if changed everything is scal except locomotion. It seems that
 #  ApplyForceToCenter function does not scale
 # _world_scale = np.int(100)
-from matplotlib.patches import Circle
-from shapely.geometry import Polygon, Point
+# from matplotlib.patches import Circle
+# from shapely.geometry import Polygon, Point
 
 import lib.aux.functions as fun
-from lib.aux.rendering import InputBox
-from lib.stor.paths import LarvaShape_path
+# from lib.aux.rendering import InputBox
+# from lib.stor.paths import LarvaShape_path
 
 
 class Box2DSegment:
@@ -213,8 +213,9 @@ class Box2DPolygon(Box2DSegment):
             )
 
         self._fixtures = self._body.fixtures
-        # print(self._body.inertia)
-        self._body.inertia = self.physics_pars['inertia']
+
+        # FIXME for some reason this produces error
+        # self._body.inertia = self.physics_pars['inertia']
 
     # @property
     # def width(self):
@@ -342,14 +343,12 @@ def generate_seg_colors(N, color):
 
 
 class LarvaBody:
-    def __init__(self, model, pos=None, orientation=None,
+    def __init__(self, model, pos=None, orientation=None, density=300.0,
                  initial_length=None, length_std=0, Nsegs=1, interval=0, joint_type={'distance': 2, 'revolute': 1},
                  seg_ratio=None, friction_pars={'maxForce': 10 ** 0, 'maxTorque': 10 ** -1}, **kwargs):
 
         self.model=model
-        # FIXME get rid of this
-        if 'density' not in locals():
-            self.density = 300.0
+        self.density = density
         self.friction_pars = friction_pars
         self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
         if seg_ratio is None:

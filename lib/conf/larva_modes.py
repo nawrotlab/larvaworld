@@ -337,7 +337,7 @@ mock_brain = {'modules': full_brain,
               'nengo': False}
 
 mock_body = {'initial_length': 4.5,
-             'length_std': 0.0,
+             'length_std': np.nan,
              'Nsegs': 2,
              'seg_ratio': [0.5, 0.5]  # [5 / 11, 6 / 11]
              }

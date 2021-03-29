@@ -6,15 +6,8 @@ import numpy as np
 import progressbar
 import os
 from typing import List, Any, Optional
-
-import lib.conf.sim_modes
-from lib.model.envs._maze import Border
-from lib.aux import naming as nam
-
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
-
-from mesa.datacollection import DataCollector
 from shapely.affinity import affine_transform
 from shapely.geometry import Polygon, LineString
 from unflatten import unflatten
@@ -24,17 +17,17 @@ from mesa import Model, Agent
 from mesa.time import RandomActivation
 
 from lib.aux.collecting import TargetedDataCollector, step_database
-from lib.model.envs._space import GaussianValueLayer, DiffusionValueLayer, ValueGrid
-from lib.model.agents._larva import LarvaSim, LarvaReplay
-from lib.model.agents._agent import Food, Larva
-from lib.anal.plotting import plot_surface
-from lib.aux.rendering import SimulationState, InputBox
-from lib.aux import rendering
-import lib.aux.functions as fun
-from lib.aux.rendering import SimulationClock, SimulationScale, draw_velocity_arrow, draw_trajectories
+
+import lib.aux.rendering as ren
 from lib.aux.sampling import sample_agents, get_ref_bout_distros
+import lib.aux.functions as fun
+from lib.aux import naming as nam
+
 import lib.sim.gui_lib as gui
 from lib.conf.sim_modes import agent_pars
+from lib.model import *
+
+
 
 
 class LarvaWorld:
@@ -49,7 +42,7 @@ class LarvaWorld:
         return object.__new__(cls)
 
     def __init__(self, env_params, fly_params=None, id='unnamed', dt=0.1, Nsteps=None, save_to='.',
-                 background_motion=None,
+                 background_motion=None,Box2D=False,
                  use_background=False, black_background=False, mode='video', image_mode='final', media_name=None,
                  trajectories=True, trajectory_dt=0.0, trajectory_colors=None, visible_state=True,
                  random_colors=False, color_behavior=False, draw_head=False, draw_contour=True,
@@ -72,7 +65,7 @@ class LarvaWorld:
         self.mousebuttondown_pos = None
         self.mousebuttonup_pos = None
 
-        self.input_box = InputBox()
+        self.input_box = ren.InputBox()
         self.selected_agents = []
         self.is_running = False
         self.dt = dt
@@ -131,16 +124,16 @@ class LarvaWorld:
 
         self.create_schedules()
         self.create_arena(**self.env_pars['arena_params'])
-        self.space = self.create_space(**self.env_pars['space_params'])
+        self.space = self.create_space(Box2D)
         if 'border_list' in self.env_pars.keys():
             for border_pars in self.env_pars['border_list']:
                 b = Border(model=self, **border_pars)
                 self.add_border(b)
 
-        self.sim_clock = SimulationClock(self.dt, color=self.scale_clock_color)
-        self.sim_scale = SimulationScale(self.arena_dims[0], self.scaling_factor,
+        self.sim_clock = ren.SimulationClock(self.dt, color=self.scale_clock_color)
+        self.sim_scale = ren.SimulationScale(self.arena_dims[0], self.scaling_factor,
                                          color=self.scale_clock_color)
-        self.sim_state = SimulationState(model=self, color=self.scale_clock_color)
+        self.sim_state = ren.SimulationState(model=self, color=self.scale_clock_color)
 
         self.screen_texts = self.create_screen_texts(color=self.scale_clock_color)
 
@@ -182,22 +175,24 @@ class LarvaWorld:
             # This is a rectangular shape
             self.unscaled_tank_shape = self.unscaled_space_edges
 
-    def create_space(self, physics_engine, scaling_factor):
-        self.physics_engine = physics_engine
-
-        if scaling_factor is None:
-            scaling_factor = 1.0
-        self.scaling_factor = scaling_factor
-        self.space_dims = self.arena_dims * self.scaling_factor
-        self.space_edges = [(x * scaling_factor, y * scaling_factor) for (x, y) in self.unscaled_space_edges]
-        self.space_edges_for_screen = self.unscaled_space_edges_for_screen * scaling_factor
-        self.tank_shape = self.unscaled_tank_shape * scaling_factor
+    def create_space(self, Box2D):
+        if Box2D :
+            self.physics_engine = True
+            self.scaling_factor = 1000.0
+        else :
+            self.physics_engine = False
+            self.scaling_factor = 1.0
+        s=self.scaling_factor
+        self.space_dims = self.arena_dims * s
+        self.space_edges = [(x * s, y * s) for (x, y) in self.unscaled_space_edges]
+        self.space_edges_for_screen = self.unscaled_space_edges_for_screen * s
+        self.tank_shape = self.unscaled_tank_shape * s
 
         # print(self.space_edges)
         # print(type(self.space_edges))
         # print(len(self.space_edges))
 
-        if physics_engine:
+        if self.physics_engine:
             self._sim_velocity_iterations = 6
             self._sim_position_iterations = 2
 
@@ -355,7 +350,7 @@ class LarvaWorld:
             else:
                 self._image_path = None
 
-            self._screen = rendering.GuppiesViewer(self.screen_width, self.screen_height, caption=self.id,
+            self._screen = ren.GuppiesViewer(self.screen_width, self.screen_height, caption=self.id,
                                                    fps=self.video_fps, dt=self.dt, show_display=self.show_display,
                                                    record_video_to=self._video_path,
                                                    record_image_to=self._image_path)
@@ -385,10 +380,10 @@ class LarvaWorld:
             g.id_box.draw(self._screen)
             # render velocity arrows
             if velocity_arrows:
-                draw_velocity_arrow(self._screen, g)
+                ren.draw_velocity_arrow(self._screen, g)
 
         if self.trajectories:
-            draw_trajectories(space_dims=self.space_dims, agents=self.get_flies(), screen=self._screen,
+            ren.draw_trajectories(space_dims=self.space_dims, agents=self.get_flies(), screen=self._screen,
                               decay_in_ticks=int(self.trajectory_dt / self.dt),
                               trajectory_colors=self.trajectory_colors)
 
@@ -414,27 +409,33 @@ class LarvaWorld:
             pp = ((p[0] + 1) * self.screen_width / 2, (-p[1] + 1) * self.screen_height / 2)
             return pp
 
-    def _place_food(self, N=0, positions=None, food_pars={}):
-        pars = copy.deepcopy(food_pars)
-        if len(pars['food_list']) == 0:
-            if N == 0:
-                return
-            food_positions = self._generate_food_positions(N, positions)
+    def relative2space_pos(self, pos):
+        x,y=pos
+        return x * self.space_dims[0] / 2, y * self.space_dims[1] / 2
+
+    def _place_food(self, food_pars):
+        # pars = copy.deepcopy(food_pars)
+        if food_pars['food_grid'] is not None:
+            self._create_food_grid(space_range=self.space_edges_for_screen,
+                                   food_pars=food_pars['food_grid'])
+        if food_pars['food_distro'] is not None:
+            N, mode, loc, scale, pars=[food_pars['food_distro'][p] for p in ['N', 'mode', 'loc', 'scale', 'pars']]
+            food_positions = self._generate_food_positions(N, mode, loc, scale)
             for i, p in enumerate(food_positions):
                 self.add_food(position=p, food_pars=pars)
-        else:
-            for f in pars['food_list']:
-                id = f['unique_id']
-                position = f['pos']
-                f.pop('unique_id')
-                f.pop('pos')
-                self.add_food(id=id, position=position, food_pars=f)
+        for id, f_pars in food_pars['food_list'].items():
+            # id = f['unique_id']
+            position = f_pars['pos']
+            # position = self.relative2space_pos(position)
+            # f.pop('unique_id')
+            f_pars.pop('pos')
+            self.add_food(id=id, position=position, food_pars=f_pars)
 
-    def _generate_food_positions(self, N, positions):
+    def _generate_food_positions(self, N, mode, loc, scale):
         raw_food_positions = []
-        if positions['mode'] == 'defined':
-            raw_food_positions = positions['loc']
-        elif positions['mode'] == 'uniform':
+        # if positions['mode'] == 'defined':
+        #     raw_food_positions = positions['loc']
+        if mode == 'uniform':
             for i in range(N):
                 th = np.random.uniform(0, 2 * np.pi, 1)
                 r = float(np.sqrt(np.random.uniform(0, 1, 1)))
@@ -442,20 +443,21 @@ class LarvaWorld:
                 y = r * np.sin(th)
                 pos = (float(x), float(y))
                 raw_food_positions.append(pos)
-        elif positions['mode'] == 'normal':
-            raw_food_positions = np.random.normal(loc=positions[1],
-                                                  scale=positions[2],
+        elif mode == 'normal':
+            raw_food_positions = np.random.normal(loc=loc,
+                                                  scale=scale,
                                                   size=(N, 2))
+        elif mode == 'circle' :
+            raw_food_positions = fun.positions_in_circle(scale, N)
         # Scale positions to the tank dimensions
-        food_positions = [(x * self.space_dims[0] / 2, y * self.space_dims[1] / 2) for (x, y) in
-                          raw_food_positions]
+        food_positions = [self.relative2space_pos(p) for p in raw_food_positions]
         return food_positions
 
     def add_food(self, position, id=None, food_pars=None):
-        if food_pars is None:
-            food_pars = copy.deepcopy(self.env_pars['food_params'])
-        if 'food_list' in list(food_pars.keys()):
-            food_pars.pop('food_list')
+        # if food_pars is None:
+        #     food_pars = copy.deepcopy(self.env_pars['food_params'])
+        # if 'food_list' in list(food_pars.keys()):
+        #     food_pars.pop('food_list')
         if id is None:
             id = self.next_id(type='Food')
         f = Food(unique_id=id, position=position, model=self, **food_pars)
@@ -747,12 +749,15 @@ class LarvaWorld:
         elif class_name == 'Border':
             agents = self.borders
         pars = agent_pars[class_name]
-        data = []
+        data = {}
         for f in agents:
             dic = {}
             for p in pars:
-                dic[p] = getattr(f, p)
-            data.append(dic)
+                if p=='unique_id' :
+                    id=f.unique_id
+                else :
+                    dic[p] = getattr(f, p)
+            data[id] =dic
         return data
 
     def add_border(self, b):
@@ -789,7 +794,7 @@ class LarvaWorld:
             'snapshot #'
         ]
         for name in names:
-            text = InputBox(visible=False, text=name,
+            text = ren.InputBox(visible=False, text=name,
                             color_active=color, color_inactive=color,
                             screen_pos=None, linewidth=0.01, show_frame=False)
             texts[name] = text
@@ -807,18 +812,26 @@ class LarvaWorld:
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, collected_pars=None,
                  id='Unnamed_Simulation', allow_collisions=True, count_bend_errors=False,
-                 starvation_hours=[], hours_as_larva=0, deb_base_f=1, parameter_dict={}, **kwargs):
+                 life_params={},
+                 parameter_dict={}, **kwargs):
         super().__init__(id=id, **kwargs)
+        if life_params=={}:
+            life_params = {'starvation_hours': None,
+                           'hours_as_larva': 0.0,
+                           'deb_base_f': 1.0}
         if collected_pars is None:
             collected_pars = {'step': [], 'endpoint': []}
         self.available_pars = fun.unique_list(list(step_database.keys()))
-        self.starvation_hours = starvation_hours
-        self.hours_as_larva = hours_as_larva
-        self.deb_base_f = deb_base_f
-        self.deb_starvation_hours = [[s0, np.clip(s1, a_min=s0, a_max=hours_as_larva)] for [s0, s1] in
-                                     self.starvation_hours if s0 < hours_as_larva]
-        self.sim_starvation_hours = [[np.clip(s0 - hours_as_larva, a_min=0, a_max=+np.inf), s1 - hours_as_larva] for
-                                     [s0, s1] in self.starvation_hours if s1 > hours_as_larva]
+        self.starvation_hours = life_params['starvation_hours']
+        if self.starvation_hours is None :
+            self.starvation_hours = []
+        self.hours_as_larva = life_params['hours_as_larva']
+        self.deb_base_f = life_params['deb_base_f']
+
+        self.deb_starvation_hours = [[s0, np.clip(s1, a_min=s0, a_max=self.hours_as_larva)] for [s0, s1] in
+                                     self.starvation_hours if s0 < self.hours_as_larva]
+        self.sim_starvation_hours = [[np.clip(s0 - self.hours_as_larva, a_min=0, a_max=+np.inf), s1 - self.hours_as_larva] for
+                                     [s0, s1] in self.starvation_hours if s1 > self.hours_as_larva]
         if len(self.sim_starvation_hours) > 0:
             on_ticks = [int(s0 * 60 * 60 / self.dt) for [s0, s1] in self.sim_starvation_hours]
             off_ticks = [int(s1 * 60 * 60 / self.dt) for [s0, s1] in self.sim_starvation_hours]
@@ -832,19 +845,12 @@ class LarvaWorldSim(LarvaWorld):
         self.create_data_collectors(collected_pars)
 
     def populate_space(self, env_pars, larva_pars, parameter_dict={}):
-        food_pars = env_pars['food_params']
-        if food_pars:
-            self._place_food(self.env_pars['place_params']['initial_num_food'],
-                             self.env_pars['place_params']['initial_food_positions'],
-                             food_pars=food_pars)
-            if 'grid_pars' in list(food_pars.keys()):
-                self._create_food_grid(space_range=self.space_edges_for_screen,
-                                       food_pars=food_pars['grid_pars'])
+        self._place_food(env_pars['food_params'])
+
         # odor_params = environment_params['odor_params']
         self.Nodors, self.odor_layers = self._create_odor_layers(odor_pars=env_pars['odor_params'])
 
-        self.create_larvae(N=env_pars['place_params']['initial_num_flies'],
-                           pos_conf=env_pars['place_params']['initial_fly_positions'],
+        self.create_larvae(place_pars=env_pars['place_params'],
                            larva_pars=larva_pars, parameter_dict=parameter_dict)
 
     def prepare_flies(self, timesteps):
@@ -884,14 +890,12 @@ class LarvaWorldSim(LarvaWorld):
                 self.odor_layers.update_values()  # Currently doing something only for the DiffusionValueLayer
 
     def _create_food_grid(self, space_range, food_pars):
-        if food_pars and 'grid_resolution' in food_pars:
+        if food_pars and 'food_grid_dims' in food_pars:
             self.food_grid = ValueGrid(**food_pars, space_range=space_range,
                                        distribution='uniform')
 
     def _create_odor_layers(self, odor_pars):
         if odor_pars:
-            # landscape = self.odor_params['odor_landscape']
-            # odor_ids = self.food_params['odor_id_list']
             Nodors = len(odor_pars['odor_id_list'])
             layers = dict.fromkeys(odor_pars['odor_id_list'])
             odor_colors = fun.random_colors(Nodors)
@@ -929,17 +933,16 @@ class LarvaWorldSim(LarvaWorld):
         else:
             return 0, {}
 
-    def _generate_larva_poses(self, N, positions):
-        mode = positions['mode']
+    def _generate_larva_poses(self, N, mode, loc, scale, orientation):
         raw_larva_positions = None
         if mode == 'identical':
-            raw_larva_positions = np.zeros((N, 2)) + positions['loc']
-            larva_orientations = np.zeros(N) + positions['orientation']
+            raw_larva_positions = np.zeros((N, 2)) + loc
+            larva_orientations = np.zeros(N) + orientation
         elif mode == 'normal':
-            raw_larva_positions = np.random.normal(loc=positions['loc'], scale=positions['scale'], size=(N, 2))
+            raw_larva_positions = np.random.normal(loc=loc, scale=scale, size=(N, 2))
             larva_orientations = np.random.rand(N) * 2 * np.pi - np.pi
         elif mode == 'facing_right':
-            raw_larva_positions = np.random.normal(loc=positions['loc'], scale=positions['scale'], size=(N, 2))
+            raw_larva_positions = np.random.normal(loc=loc, scale=scale, size=(N, 2))
             larva_orientations = np.random.rand(N) * 2 * np.pi / 6 - np.pi / 6
         elif mode == 'spiral':
             raw_larva_positions = [(0.0, 0.8)] * 8 + [(0.6, 0)] * 8 + [(0.0, -0.4)] * 8 + [(-0.2, 0.0)] * 8
@@ -958,11 +961,11 @@ class LarvaWorldSim(LarvaWorld):
                 raw_larva_positions.append(pos)
                 larva_orientations = np.random.rand(N) * 2 * np.pi - np.pi
         elif mode == 'defined':
-            raw_larva_positions = positions['loc']
-            larva_orientations = positions['orientation']
+            raw_larva_positions = loc
+            larva_orientations = orientation
         elif mode == 'scal':
-            larva_positions = positions['loc']
-            larva_orientations = positions['orientation']
+            larva_positions = loc
+            larva_orientations = orientation
 
         # Scale positions to the tank dimensions
         if raw_larva_positions is not None:
@@ -1026,8 +1029,9 @@ class LarvaWorldSim(LarvaWorld):
         for i, (p, o, id, pars) in enumerate(zip(positions, orientations, ids, all_pars)):
             self.add_larva(position=p, orientation=o, id=id, pars=pars)
 
-    def create_larvae(self, N, pos_conf, larva_pars, parameter_dict={}):
-        positions, orientations = self._generate_larva_poses(N, pos_conf)
+    def create_larvae(self, place_pars, larva_pars, parameter_dict={}):
+        N, mode, loc, scale,orientation = [place_pars[p] for p in ['N', 'mode','loc', 'scale', 'orientation']]
+        positions, orientations = self._generate_larva_poses(N, mode, loc, scale, orientation)
         ids, all_pars = self._generate_larva_pars(N, larva_pars, parameter_dict=parameter_dict)
         self._place_larvae(positions, orientations, ids, all_pars)
 
@@ -1117,7 +1121,7 @@ class LarvaWorldSim(LarvaWorld):
         return array * 1000 / self.scaling_factor
 
     def plot_odorscape(self, title=False, save_to=None):
-
+        from lib.anal.plotting import plot_surface
         radx = self.space_dims[0] / 2
         rady = self.space_dims[1] / 2
         delta = np.min([radx, rady]) / 50

@@ -1,20 +1,13 @@
 import random
 import numpy as np
 from copy import deepcopy
-
 from nengo import Simulator
 
-from lib.model.envs._space import agents_spatial_query
-from lib.model.agents._agent import Larva
-from lib.model.agents._body import LarvaBody
-from lib.model.agents._effector import DefaultBrain
-from lib.model.agents._sensorimotor import BodyController
 from lib.aux import functions as fun
-from lib.model.agents.deb import DEB
-from lib.model.agents.nengo_effectors import NengoBrain
+from lib.model import *
 
 
-class LarvaReplay(Larva, LarvaBody):
+class LarvaReplay(Larva, BodyReplay):
     def __init__(self, unique_id, model, length=5, data=None):
         Larva.__init__(self, unique_id=unique_id, model=model, radius=length / 2)
 
@@ -24,19 +17,19 @@ class LarvaReplay(Larva, LarvaBody):
         self.sim_length = length
 
         N = len(data.index.unique().values)
-        Nmid=self.model.Npoints
-        Ncon=self.model.Ncontour
-        Nangles=self.model.Nangles
-        Nors=self.model.Nors
-        Nsegs=self.model.draw_Nsegs
-        mid_pars=self.model.mid_pars
-        con_pars=self.model.con_pars
-        cen_pars=self.model.cen_pars
-        pos_pars=self.model.pos_pars
-        ang_pars=self.model.angle_pars
-        or_pars=self.model.or_pars
-        mid_dim=[N, Nmid, 2]
-        con_dim=[N, Ncon, 2]
+        Nmid = self.model.Npoints
+        Ncon = self.model.Ncontour
+        Nangles = self.model.Nangles
+        Nors = self.model.Nors
+        Nsegs = self.model.draw_Nsegs
+        mid_pars = self.model.mid_pars
+        con_pars = self.model.con_pars
+        cen_pars = self.model.cen_pars
+        pos_pars = self.model.pos_pars
+        ang_pars = self.model.angle_pars
+        or_pars = self.model.or_pars
+        mid_dim = [N, Nmid, 2]
+        con_dim = [N, Ncon, 2]
 
         self.mid_ar = data[mid_pars].values.reshape(mid_dim) if Nmid > 0 else np.ones(mid_dim) * np.nan
         self.con_ar = data[con_pars].values.reshape(con_dim) if Ncon > 0 else np.ones(con_dim) * np.nan
@@ -45,7 +38,8 @@ class LarvaReplay(Larva, LarvaBody):
         self.ang_ar = data[ang_pars].values if Nangles > 0 else np.ones([N, Nangles]) * np.nan
         self.or_ar = data[or_pars].values if Nors > 0 else np.ones([N, Nors]) * np.nan
         self.bend_ar = data['bend'].values if 'bend' in data.columns else np.ones(N) * np.nan
-        self.front_or_ar = data['front_orientation'].values if 'front_orientation' in data.columns else np.ones(N) * np.nan
+        self.front_or_ar = data['front_orientation'].values if 'front_orientation' in data.columns else np.ones(
+            N) * np.nan
 
         vp_beh = [p for p in self.behavior_pars if p in self.model.pars]
         self.beh_ar = np.zeros([N, len(self.behavior_pars)], dtype=bool)
@@ -54,9 +48,9 @@ class LarvaReplay(Larva, LarvaBody):
                 self.beh_ar[:, i] = np.array([not v for v in np.isnan(data[p].values).tolist()])
         self.pos = self.pos_ar[0]
         if Nsegs is not None:
-            LarvaBody.__init__(self, model, pos=self.pos, orientation=self.or_ar[0][0],
-                               initial_length=self.sim_length / 1000, length_std=0, Nsegs=Nsegs,interval=0)
-        self.data=data
+            BodyReplay.__init__(self, model, pos=self.pos, orientation=self.or_ar[0][0],
+                                initial_length=self.sim_length / 1000, length_std=0, Nsegs=Nsegs, interval=0)
+        self.data = data
     def read_step(self, i):
         self.midline = self.mid_ar[i].tolist()
         self.vertices = self.con_ar[i]
@@ -70,7 +64,7 @@ class LarvaReplay(Larva, LarvaBody):
         self.front_orientation = self.front_or_ar[i]
         self.bend = self.bend_ar[i]
 
-        for p in ['front_orientation_vel'] :
+        for p in ['front_orientation_vel']:
             setattr(self, p, self.data[p].values[i] if p in self.data.columns else np.nan)
         # self.front_orientation_vel = self.front_or_vel_ar[i]
 
@@ -126,7 +120,8 @@ class LarvaReplay(Larva, LarvaBody):
             else:
                 pos = None
             if pos is not None:
-                viewer.draw_circle(radius=self.radius/2, position=pos, filled=True, color=self.color, width=self.radius / 3)
+                viewer.draw_circle(radius=self.radius / 2, position=pos, filled=True, color=self.color,
+                                   width=self.radius / 3)
         if self.model.draw_midline and self.model.Npoints > 1:
             if not np.isnan(self.midline[0]).any():
                 viewer.draw_polyline(self.midline, color=(0, 0, 255), closed=False, width=.07)
@@ -136,24 +131,24 @@ class LarvaReplay(Larva, LarvaBody):
                     viewer.draw_circle(radius=.07, position=seg_pos, filled=True, color=color, width=.01)
         if self.selected:
             if len(self.vertices) > 0 and not np.isnan(self.vertices).any():
-                viewer.draw_polygon(self.vertices, filled=False, color=self.model.selection_color, width=self.radius / 5)
+                viewer.draw_polygon(self.vertices, filled=False, color=self.model.selection_color,
+                                    width=self.radius / 5)
             elif not np.isnan(self.pos).any():
-                viewer.draw_circle(radius=self.radius,position=self.pos,
-                               filled=False, color=self.model.selection_color, width=self.radius / 3)
+                viewer.draw_circle(radius=self.radius, position=self.pos,
+                                   filled=False, color=self.model.selection_color, width=self.radius / 3)
 
-    def set_color(self,color) :
-        self.color=color
+    def set_color(self, color):
+        self.color = color
 
 
-
-class LarvaSim(BodyController, Larva):
+class LarvaSim(BodySim, Larva):
     def __init__(self, unique_id, model, pos, orientation, fly_params, **kwargs):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos)
 
         self.brain = self.build_brain(fly_params['neural_params'])
         self.build_energetics(fly_params['energetics_params'])
-        BodyController.__init__(self, model=model, orientation=orientation, **fly_params['sensorimotor_params'],
-                                **fly_params['body_params'], **kwargs)
+        BodySim.__init__(self, model=model, orientation=orientation, **fly_params['sensorimotor_params'],
+                         **fly_params['body_params'], **kwargs)
         self.build_gut(self.V)
 
         self.reset_feeder()
@@ -165,7 +160,7 @@ class LarvaSim(BodyController, Larva):
 
     def compute_next_action(self):
 
-        self.sim_time += self.model.dt
+        self.cum_dur += self.model.dt
 
         self.odor_concentrations = self.sense_odors(self.model.Nodors, self.model.odor_layers)
         self.food_detected, self.food_source, food_quality = self.detect_food(pos=self.get_olfactor_position(),
@@ -187,7 +182,7 @@ class LarvaSim(BodyController, Larva):
         # Paint the body to visualize effector state
         if self.model.color_behavior:
             self.update_behavior_dict()
-        else :
+        else:
             self.set_color([self.default_color for seg in self.segs])
         # if self.model.draw_contour:
         #     self.set_contour()

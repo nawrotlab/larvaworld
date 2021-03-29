@@ -7,17 +7,17 @@ import PySimpleGUI as sg
 import matplotlib
 import inspect
 from tkinter import *
-
+from typing import List, Tuple
 from lib.stor import paths
 from lib.stor.datagroup import saveSimConf, loadSimConfDict, loadSimConf, deleteSimConf
 
 sys.path.insert(0, '..')
 from lib.aux.collecting import effector_collection
 from lib.conf import exp_types, default_sim, mock_larva, box2d_space, larva_place_modes, \
-    food_place_modes, pref_exp_np, agent_pars
+    food_place_modes, pref_exp_np, agent_pars, mock_env, mesa_space
 from lib.sim.gui_lib import gui_table, SectionDict, bool_button, Collapsible, \
     set_kwargs, on_image, off_image, SYMBOL_UP, SYMBOL_DOWN, button_kwargs, header_kwargs, \
-    text_kwargs, on_image_disabled, retrieve_value, draw_canvas, delete_figure_agg
+    text_kwargs, on_image_disabled, retrieve_value, draw_canvas, delete_figure_agg, CollapsibleDict
 from lib.sim.single_run import run_sim, next_idx, configure_sim
 from lib.anal.plotting import *
 from lib.stor.larva_dataset import LarvaDataset
@@ -78,20 +78,6 @@ def change_dataset_id(window, values, data):
     return data
 
 
-# def set_configuration() :
-#     l = [[sg.Text('Store new configuration', size=(20, 1)), sg.In(k='NEW_ID', size=(10, 1))],
-#          [sg.Button('Store'), sg.Ok(), sg.Cancel()]]
-#     e, v = sg.Window('Sim configuration', l).read(close=True)
-#     if e == 'Ok':
-#         data[v['NEW_ID']] = data.pop(old_id)
-#         update_data_list(window, data)
-#     elif e == 'Store':
-#         d = data[old_id]
-#         d.set_id(v['NEW_ID'])
-#         data[v['NEW_ID']] = data.pop(old_id)
-#         update_data_list(window, data)
-
-
 def draw_figure(window, func, func_kwargs, data, figure_agg):
     if func is not None and len(list(data.keys())) > 0:
         if figure_agg:
@@ -128,132 +114,88 @@ def update_model(larva_model, window, collapsibles, sectiondicts):
     module_dict_upper = copy.deepcopy(module_dict)
     for k in list(module_dict_upper.keys()):
         module_dict_upper[k.upper()] = module_dict_upper.pop(k)
-    collapsibles['BRAIN'].update(window, module_dict_upper)
+    collapsibles['BRAIN'].update(window, module_dict_upper, use_prefix=False)
 
 
 def update_environment(env_params, window, collapsibles, sectiondicts, food_list, border_list):
-    arena_params = env_params['arena_params']
-    for k, v in arena_params.items():
-        window.Element(k).Update(value=v)
+    # arena_params = env_params['arena_params']
+    # for k, v in arena_params.items():
+    #     window.Element(k).Update(value=v)
 
-    if env_params['food_params'] is None:
-        food_list = []
-    else:
-        food_list = env_params['food_params']['food_list']
-    place_params = env_params['place_params']
-    update_placement(place_params, window, collapsibles, sectiondicts, food_list)
+    food_params = env_params['food_params']
+    food_list = food_params['food_list']
+    collapsibles['FOOD_DISTRIBUTION'].update(window, food_params['food_distro'])
+    collapsibles['FOOD_GRID'].update(window, food_params['food_grid'])
+
+    collapsibles['ARENA'].update(window, env_params['arena_params'])
+
+    collapsibles['LARVA_DISTRIBUTION'].update(window, env_params['place_params'])
     if 'border_list' in env_params.keys():
         border_list = env_params['border_list']
     else:
         border_list = []
     return food_list, border_list
 
-
-def update_placement(place_params, window, collapsibles, sectiondicts, food_list):
-    window.Element('Nagents').Update(value=place_params['initial_num_flies'])
-    window.Element('larva_place_mode').Update(value=place_params['initial_fly_positions']['mode'])
-    window.Element('larva_positions').Update(value=place_params['initial_fly_positions']['loc'])
-    update_food_placement(window, food_list, collapsibles, place_params=place_params)
-
-
-def update_food_placement(window, food_list, collapsibles, place_params=None):
-    if len(food_list) > 0:
-        Nfood = len(food_list)
-        food_place_mode = None
-        food_loc = None
-        food_scale = None
-        collapsibles['FOOD_DISTRIBUTION'].update(window, dict=None)
-    else:
-        if place_params is None:
-            return
-        Nfood = place_params['initial_num_food']
-        if Nfood > 0:
-            food_place_mode = place_params['initial_food_positions']['mode']
-            food_loc = place_params['initial_food_positions']['loc']
-            food_scale = place_params['initial_food_positions']['scale']
-            window[f'TOGGLE_FOOD_DISTRIBUTION'].update(image_data=on_image_disabled)
-            if collapsibles['FOOD_DISTRIBUTION'].state is None:
-                collapsibles['FOOD_DISTRIBUTION'].state = False
-        else:
-            food_place_mode = None
-            food_loc = None
-            food_scale = None
-            window[f'TOGGLE_FOOD_DISTRIBUTION'].update(image_data=off_image)
-    window.Element('Nfood').Update(value=Nfood)
-    window.Element('food_place_mode').Update(value=food_place_mode)
-    window.Element('food_loc').Update(value=food_loc)
-    window.Element('food_scale').Update(value=food_scale)
-
-
 def init_model(larva_model, collapsibles={}, sectiondicts={}):
     # update_window_from_dict(model['sensorimotor_params'], window)
     # window = collapsibles['ENERGETICS'].update(model['energetics_params'], window)
     # window = collapsibles['BODY'].update(model['body_params'], window)
 
-    for name, dict, kwargs in zip(['PHYSICS', 'ENERGETICS', 'BODY'],
-                                  [larva_model['sensorimotor_params'], larva_model['energetics_params'],
+    for name, dict, kwargs in zip(['PHYSICS', 'ENERGETICS', 'BODY'],[larva_model['sensorimotor_params'], larva_model['energetics_params'],
                                    larva_model['body_params']],
                                   [{}, {'toggle': True, 'disabled': True}, {}]):
-        sectiondicts[name] = SectionDict(name, dict)
-        collapsibles[name] = Collapsible(name, True, sectiondicts[name].init_section(), **kwargs)
+        collapsibles[name] = CollapsibleDict(name, True, dict=dict, type_dict=None, **kwargs)
 
     module_conf = []
     for k, v in larva_model['neural_params']['modules'].items():
-        d = SectionDict(k, larva_model['neural_params'][f'{k}_params'])
-        s = Collapsible(k.upper(), False, d.init_section(), toggle=v)
+        s = CollapsibleDict(k.upper(), False, dict=larva_model['neural_params'][f'{k}_params'],
+                            dict_name=k.upper(), toggle=v)
+        # s = CollapsibleDict(k.upper(), False, dict=larva_model['neural_params'][f'{k}_params'],
+        #                     dict_name=k, toggle=v)
         collapsibles[s.name] = s
-        sectiondicts[d.name] = d
+        # print('k')
+        # sectiondicts[d.name] = d
         module_conf.append(s.get_section())
     collapsibles['BRAIN'] = Collapsible('BRAIN', True, module_conf)
-
     brain_layout = sg.Col([collapsibles['BRAIN'].get_section()])
     non_brain_layout = sg.Col([collapsibles['PHYSICS'].get_section(),
                                collapsibles['BODY'].get_section(),
                                collapsibles['ENERGETICS'].get_section()])
 
-    model_layout = [[brain_layout
-        , non_brain_layout]
-
-                    ]
+    model_layout = [[brain_layout, non_brain_layout]]
 
     collapsibles['MODEL'] = Collapsible('MODEL', True, model_layout)
-
     return [collapsibles['MODEL'].get_section()]
 
 
 def init_environment(env_params, collapsibles={}, sectiondicts={}):
-    sectiondicts['ARENA'] = SectionDict('ARENA', env_params['arena_params'])
-    collapsibles['ARENA'] = Collapsible('ARENA', True, sectiondicts['ARENA'].init_section())
+    collapsibles['ARENA'] = CollapsibleDict('ARENA', True, dict=env_params['arena_params'])
 
-    larva_place_conf = [
-        [sg.Text('# larvae:', **text_kwargs), sg.In(1, key='Nagents', **text_kwargs)],
-        [sg.Text('placement:', **text_kwargs),
-         sg.Combo(larva_place_modes, key='larva_place_mode', enable_events=True, readonly=True, **text_kwargs)],
-        [sg.Text('positions:', **text_kwargs), sg.In(None, key='larva_positions', **text_kwargs)],
-        # [sg.Text('orients:', size=(12, 1)), sg.In(None, key='larva_orientations', **text_kwargs)],
-    ]
+    # larva_place_conf = [
+    #     [sg.Text('# larvae:', **text_kwargs), sg.In(1, key='Nagents', **text_kwargs)],
+    #     [sg.Text('distribution:', **text_kwargs),
+    #      sg.Combo(larva_place_modes, key='larva_place_mode', enable_events=True, readonly=True, **text_kwargs)],
+    #     [sg.Text('loc:', **text_kwargs), sg.In(None, key='larva_loc', **text_kwargs)],
+    #     [sg.Text('scale:', **text_kwargs), sg.In(None, key='larva_scale', **text_kwargs)],
+    #     # [sg.Text('orients:', size=(12, 1)), sg.In(None, key='larva_orientations', **text_kwargs)],
+    # ]
+    temp = CollapsibleDict('LARVA_DISTRIBUTION', True, dict=env_params['place_params'], toggle=True,
+                                                    disabled=False)
+    collapsibles.update(temp.get_subdicts())
 
-    # food_list_conf = []
-    # for f in env_params['food_params']['food_list']:
-    #     d = SectionDict(k, larva_model['neural_params'][f'{k}_params'])
-    #     s = Collapsible(k.upper(), False, d.init_section(), toggle=v)
-    #     collapsibles[s.name] = s
-    #     sectiondicts[d.name] = d
-    #     food_list_conf.append(s.get_section())
-    # collapsibles['FOOD_LIST'] = Collapsible('FOOD_LIST', False, food_list_conf)
+    food_pars=env_params['food_params']
 
-    food_place_distro = [
-        [sg.Text('distribution:', **text_kwargs),
-         sg.Combo(food_place_modes, key='food_place_mode', enable_events=True, readonly=True, **text_kwargs)],
-        [sg.Text('loc:', **text_kwargs), sg.In(None, key='food_loc', **text_kwargs)],
-        [sg.Text('scale:', **text_kwargs), sg.In(None, key='food_scale', **text_kwargs)],
-    ]
-    collapsibles['FOOD_DISTRIBUTION'] = Collapsible('FOOD_DISTRIBUTION', True, food_place_distro, toggle=True,
+    temp = CollapsibleDict('FOOD_DISTRIBUTION', True, dict=food_pars['food_distro'], toggle=True,
+                                                    disabled=False)
+    collapsibles.update(temp.get_subdicts())
+
+
+    collapsibles['FOOD_GRID'] = CollapsibleDict('FOOD_GRID', True, dict=food_pars['food_grid'], toggle=True,
                                                     disabled=False)
 
-    food_place_conf = [
-        [sg.Text('# food:', **text_kwargs), sg.In(1, key='Nfood', **text_kwargs)],
+    food_conf = [
         collapsibles['FOOD_DISTRIBUTION'].get_section(),
+        collapsibles['FOOD_GRID'].get_section(),
         [sg.Button('Food list', **button_kwargs)]
     ]
 
@@ -261,14 +203,13 @@ def init_environment(env_params, collapsibles={}, sectiondicts={}):
 
     ]
 
-    collapsibles['LARVA_PLACEMENT'] = Collapsible('LARVA_PLACEMENT', True, larva_place_conf)
-    collapsibles['FOOD_PLACEMENT'] = Collapsible('FOOD_PLACEMENT', True, food_place_conf)
+    collapsibles['FOOD'] = Collapsible('FOOD', True, food_conf)
     collapsibles['ODORS'] = Collapsible('ODORS', True, odor_conf)
 
     env_layout = [
         collapsibles['ARENA'].get_section(),
-        collapsibles['LARVA_PLACEMENT'].get_section(),
-        collapsibles['FOOD_PLACEMENT'].get_section(),
+        collapsibles['LARVA_DISTRIBUTION'].get_section(),
+        collapsibles['FOOD'].get_section(),
         collapsibles['ODORS'].get_section()
     ]
 
@@ -286,25 +227,17 @@ def update_sim(window, values, collapsibles, sectiondicts, output_keys, food_lis
         food_list, border_list = update_environment(exp_conf['env_params'], window, collapsibles, sectiondicts,
                                                     food_list, border_list)
 
-        if 'sim_params' not in exp_conf.keys():
-            exp_conf['sim_params'] = default_sim.copy()
-        sim_params = exp_conf['sim_params']
-        window.Element('sim_time_in_min').Update(value=sim_params['sim_time_in_min'])
+
         output_dict = {}
         for k in output_keys:
-            # if k in sim_params['collect_effectors'] :
-            #     output_dict[f'collect_{k}']=True
-            # else :
-            #     output_dict[f'collect_{k}'] = False
-            if k in exp_conf['collect_effectors']:
+
+            if k in exp_conf['collections']:
                 output_dict[k] = True
             else:
                 output_dict[k] = False
         collapsibles['OUTPUT'].update(window, output_dict)
-        sim_id = f'{exp}_{next_idx(exp)}'
-        window.Element('sim_id').Update(value=sim_id)
-        common_folder = f'single_runs/{exp}'
-        window.Element('common_folder').Update(value=common_folder)
+        window.Element('sim_id').Update(value=f'{exp}_{next_idx(exp)}')
+        window.Element('path').Update(value=f'single_runs/{exp}')
         return food_list, border_list
 
 
@@ -365,7 +298,7 @@ def build_simulation_tab():
     sim_datasets = []
 
     larva_model = copy.deepcopy(mock_larva)
-    env_params = pref_exp_np
+    env_params = copy.deepcopy(mock_env)
     food_list = env_params['food_params']['food_list']
     border_list = []
 
@@ -391,12 +324,12 @@ def build_simulation_tab():
     output_keys = list(effector_collection.keys())
     output_dict = dict(zip(output_keys, [False] * len(output_keys)))
     # output_dict=dict(zip([f'collect_{k}' for k in output_keys], [False]*len(output_keys)))
-    sectiondicts['OUTPUT'] = SectionDict('OUTPUT', output_dict)
-    collapsibles['OUTPUT'] = Collapsible('OUTPUT', True, sectiondicts['OUTPUT'].init_section())
+    # sectiondicts['OUTPUT'] = SectionDict('OUTPUT', output_dict)
+    collapsibles['OUTPUT'] = CollapsibleDict('OUTPUT', True, dict=output_dict)
 
     sim_conf = [[sg.Text('Sim id:', **text_kwargs), sg.In('unnamed_sim', key='sim_id', **text_kwargs)],
-                [sg.Text('Path:', **text_kwargs), sg.In('single_runs', key='common_folder', **text_kwargs)],
-                [sg.Text('Duration (min):', **text_kwargs), sg.In(3, key='sim_time_in_min', **text_kwargs)],
+                [sg.Text('Path:', **text_kwargs), sg.In('single_runs', key='path', **text_kwargs)],
+                [sg.Text('Duration (min):', **text_kwargs), sg.In(3, key='sim_dur', **text_kwargs)],
                 [sg.Text('Timestep (sec):', **text_kwargs), sg.In(0.1, key='dt', **text_kwargs)],
                 bool_button('Box2D', False),
                 collapsibles['OUTPUT'].get_section()
@@ -475,36 +408,24 @@ def get_model(window, values, module_keys, sectiondicts, collapsibles, base_mode
         if collapsibles[name].state is None:
             base_model[pars] = None
         else:
-            base_model[pars] = sectiondicts[name].get_dict(values, window)
+            base_model[pars] = collapsibles[name].get_dict(values, window)
         # collapsibles[name].update(window,dict)
 
     # module_conf = []
     for k, v in module_dict.items():
-        base_model['neural_params'][f'{k}_params'] = sectiondicts[k].get_dict(values, window)
+        base_model['neural_params'][f'{k}_params'] = collapsibles[k.upper()].get_dict(values, window)
         # collapsibles[k.upper()].update(window,larva_model['neural_params'][f'{k}_params'])
     return base_model
 
 
 def get_environment(window, values, module_keys, sectiondicts, collapsibles, base_environment, food_list, border_list):
-    base_environment['place_params']['initial_num_flies'] = retrieve_value(values['Nagents'], int)
-    base_environment['place_params']['initial_fly_positions']['mode'] = retrieve_value(values['larva_place_mode'], str)
-    # larva_loc=values['larva_positions']
-    #
-    # base_environment['place_params']['initial_fly_positions']['loc'] = np.array(literal_eval(larva_loc))
-
-    base_environment['place_params']['initial_num_food'] = retrieve_value(values['Nfood'], int)
-    base_environment['place_params']['initial_food_positions']['mode'] = retrieve_value(values['food_place_mode'], str)
-    # base_environment['place_params']['initial_food_positions']['loc'] = retrieve_value(values['food_loc'], tuple)
-    # base_environment['place_params']['initial_food_positions']['scale'] = retrieve_value(values['food_scale'], float)
-
-    if base_environment['food_params'] is not None:
-        base_environment['food_params']['food_list'] = food_list
-
+    base_environment['place_params']=collapsibles['LARVA_DISTRIBUTION'].get_dict(values, window)
+    base_environment['food_params']['food_distro']=collapsibles['FOOD_DISTRIBUTION'].get_dict(values, window)
+    base_environment['food_params']['food_grid']=collapsibles['FOOD_GRID'].get_dict(values, window)
+    base_environment['food_params']['food_list'] = food_list
+    print(base_environment['food_params']['food_grid'])
     base_environment['border_list'] = border_list
-
-    if window['TOGGLE_Box2D'].metadata.state:
-        base_environment['space_params'] = box2d_space
-    base_environment['arena_params'] = sectiondicts['ARENA'].get_dict(values, window)
+    base_environment['arena_params'] = collapsibles['ARENA'].get_dict(values, window)
     return base_environment
 
 
@@ -512,20 +433,22 @@ def get_sim_config(window, values, module_keys, sectiondicts, collapsibles, outp
     exp = values['EXP']
     exp_conf = copy.deepcopy(exp_types[exp])
 
-    sim_params = copy.deepcopy(default_sim)
-    sim_params['sim_time_in_min'] = float(values['sim_time_in_min'])
+    sim_params ={}
+    sim_params['sim_id'] = str(values['sim_id'])
+    sim_params['sim_dur'] = float(values['sim_dur'])
     sim_params['dt'] = float(values['dt'])
+    sim_params['path'] = str(values['path'])
+    sim_params['Box2D'] = window['TOGGLE_Box2D'].metadata.state
 
-    sim_params['collect_effectors'] = [k for k in output_keys if window[f'TOGGLE_{k}'].metadata.state == True]
-    # sim_params['collect_effectors'] = dict(zip(output_keys, [window[f'TOGGLE_{f"collect_{k}"}'].metadata.state for k in output_keys]))
+    temp=collapsibles['OUTPUT'].get_dict(values,window)
+    exp_conf['collections'] = [k for k in output_keys if temp[k]]
 
     env_params = get_environment(window, values, module_keys, sectiondicts, collapsibles, exp_conf['env_params'],
                                  food_list, border_list)
 
     fly_params = get_model(window, values, module_keys, sectiondicts, collapsibles, exp_conf['fly_params'])
 
-    sim_config = {'sim_id': str(values['sim_id']),
-                  'common_folder': str(values['common_folder']),
+    sim_config = {
                   'enrich': True,
                   'experiment': exp,
                   'sim_params': sim_params,
@@ -537,6 +460,7 @@ def get_sim_config(window, values, module_keys, sectiondicts, collapsibles, outp
 
 def eval_simulation(event, values, window, sim_datasets, collapsibles, module_keys, sectiondicts, output_keys,
                     food_list, border_list):
+    # print(list(collapsibles.keys()))
     if event.startswith('OPEN SEC'):
         sec_name = event.split()[-1]
         if collapsibles[sec_name].state is not None:
@@ -556,18 +480,17 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
             conf = loadSimConf(values['SAVED_CONF'])
             food_list = conf['food_list']
             border_list = conf['border_list']
-            update_food_placement(window, food_list, collapsibles, place_params=None)
-            # vis_kwargs = {'mode': 'video'}
-            # d = run_sim(**sim_config, **vis_kwargs)
-            # if d is not None:
-            #     sim_datasets.append(d)
+            collapsibles['ARENA'].update(window, conf['arena_params'])
+            window['TOGGLE_Box2D'].metadata.state = conf['Box2D']
+            window['TOGGLE_Box2D'].update(image_data=on_image if window['TOGGLE_Box2D'].metadata.state else off_image)
     elif 'TOGGLE' in event:
+        # print(event)
         if window[event].metadata.state is not None:
             window[event].metadata.state = not window[event].metadata.state
             window[event].update(image_data=on_image if window[event].metadata.state else off_image)
     elif event == 'Food list':
         food_list = gui_table(food_list, agent_pars['Food'])
-        update_food_placement(window, food_list, collapsibles, place_params=None)
+        # update_food_placement(window, food_list, collapsibles, place_params=None)
 
     elif event == 'Configure':
         if values['EXP'] != '':
@@ -582,16 +505,16 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
             if e == 'Ok':
                 food_list = new_food_list
                 border_list = new_border_list
-                update_food_placement(window, food_list, collapsibles, place_params=None)
+                # update_food_placement(window, food_list, collapsibles, place_params=None)
             elif e == 'Store' and v['CONF_ID'] != '':
                 food_list = new_food_list
                 border_list = new_border_list
-                update_food_placement(window, food_list, collapsibles, place_params=None)
-                # sim_config = get_sim_config(window, values, module_keys, sectiondicts, collapsibles, output_keys,
-                #                             food_list, border_list)
+                # update_food_placement(window, food_list, collapsibles, place_params=None)
                 conf = {
                     'food_list': food_list,
                     'border_list': border_list,
+                    'arena_params': sectiondicts['ARENA'].get_dict(values, window),
+                    'Box2D': window['TOGGLE_Box2D'].metadata.state,
                 }
                 conf_id = v['CONF_ID']
                 saveSimConf(conf, conf_id)
@@ -606,6 +529,7 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
             d = run_sim(**sim_config, **vis_kwargs)
             if d is not None:
                 sim_datasets.append(d)
+    print(values)
     return food_list, border_list
 
 

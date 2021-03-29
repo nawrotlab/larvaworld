@@ -36,15 +36,7 @@ default_sim = {
     # 'dt': 1 / 16,
     # 'dt': 1 / 200,
     'sim_time_in_min': 3.0,
-    'odor_prep_time_in_min': 0.0,
-    'fly_prep_time_in_min': 0.5,
-    'collect_midline': False,
-    'collect_contour': False,
-    'collect_effectors': [],
-    'step_pars': [''],
-    'end_pars': ['length', 'cum_dur', 'num_ticks'],
-    # 'traj_mode': full_traj,
-    # 'draw_mode': draw_default,
+    'Box2D' : False,
 }
 
 

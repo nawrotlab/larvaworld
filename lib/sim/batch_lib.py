@@ -197,7 +197,7 @@ def save_results_dict(traj, save_to=None, save_as='results_dict.csv'):
         json.dump(all, fp)
 
 
-def load_default_configuration(traj, sim_params=None, env_params=None, fly_params=None):
+def load_default_configuration(traj, sim_params=None, env_params=None, fly_params=None, life_params=None):
     if sim_params is not None:
         env_dict = flatten_dict(sim_params, parent_key='sim_params', sep='.')
         for k, v in env_dict.items():
@@ -212,6 +212,11 @@ def load_default_configuration(traj, sim_params=None, env_params=None, fly_param
     if fly_params is not None:
         fly_dict = flatten_dict(fly_params, parent_key='fly_params', sep='.')
         for k, v in fly_dict.items():
+            traj.f_apar(k, v)
+
+    if life_params is not None:
+        life_dict = flatten_dict(life_params, parent_key='life_params', sep='.')
+        for k, v in life_dict.items():
             traj.f_apar(k, v)
     return traj
 
@@ -364,11 +369,14 @@ def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag
     env_params = reconstruct_dict(traj.f_get('env_params'))
     fly_params = reconstruct_dict(traj.f_get('fly_params'))
     sim_params = reconstruct_dict(traj.f_get('sim_params'))
+    life_params = reconstruct_dict(traj.f_get('life_params'))
+    sim_params['sim_id'] = f'run_{traj.v_idx}'
 
-    d = run_sim(sim_id=f'run_{traj.v_idx}',
+    d = run_sim(
                 env_params=env_params,
                 fly_params=fly_params,
                 sim_params=sim_params,
+                life_params=life_params,
                 mode=None,
                 save_data_flag=save_data_flag,
                 **kwargs)
@@ -389,7 +397,7 @@ def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag
         traj.f_add_result('endpoint_data', endpoint_data=e, comment='The simulation endpoint data')
         traj.f_add_result('step_data', step_data=s, comment='The simulation step-by-step data')
     end = time.time()
-    print(f'Single run complete in {end - start} seconds')
+    print(f'Single run {traj.v_idx} complete in {end - start} seconds')
     return d, results
 
 
@@ -414,6 +422,7 @@ def _batch_run(dir='unnamed',
                post_kwargs={},
                run_kwargs={}
                ):
+    # run_kwargs['sim_params']['path']=batch_id
     saved_args = locals()
     # print(locals())
     traj_name = f'{batch_id}_traj'
@@ -469,11 +478,12 @@ def _batch_run(dir='unnamed',
                           graceful_exit=True)
         traj = env.traj
         print('Created novel environment')
-        fly_params, env_params, sim_params = sim_config['fly_params'], sim_config['env_params'], sim_config[
-            'sim_params']
-        if all(v is not None for v in [sim_params, env_params, fly_params]):
+        # print(list(sim_config.keys()))
+        fly_params, env_params, sim_params, life_params = sim_config['fly_params'], sim_config['env_params'], sim_config[
+            'sim_params'], sim_config['life_params']
+        if all(v is not None for v in [sim_params, env_params, fly_params, life_params]):
             traj = load_default_configuration(traj, sim_params=sim_params, env_params=env_params,
-                                              fly_params=fly_params)
+                                              fly_params=fly_params, life_params=life_params)
         elif params is not None:
             for p in params:
                 traj.f_apar(p, 0.0)
@@ -492,8 +502,9 @@ def _batch_run(dir='unnamed',
 
     if post_process_method is not None:
         env.add_postprocessing(post_process_method, **post_kwargs)
+    # print(run_kwargs)
     env.run(single_method, process_method, save_data_in_hdf5=save_data_in_hdf5, save_to=dir_path,
-            common_folder=batch_id, **run_kwargs)
+            **run_kwargs)
     env.disable_logging()
     print('Batch run complete')
     if final_process_method is not None:

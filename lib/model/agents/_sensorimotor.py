@@ -3,27 +3,33 @@ import math
 import numpy as np
 from shapely.geometry import LineString, Polygon
 
-from lib.model.agents._body import LarvaBody
+from lib.model import LarvaBody
 import lib.aux.functions as fun
 
 
-class BodyController(LarvaBody):
-    def __init__(self, model, orientation,
+class BodyManager(LarvaBody):
+    def __init__(self, model, pos, orientation, **kwargs) :
+        super().__init__(model=model, pos=pos, orientation=orientation, **kwargs)
+
+class BodyReplay(BodyManager):
+    def __init__(self, model, pos, orientation, **kwargs) :
+        super().__init__(model=model, pos=pos, orientation=orientation, **kwargs)
+
+class BodySim(BodyManager):
+    def __init__(self, model, orientation,density=300.0,
                  lin_vel_coef=1.0, ang_vel_coef=None, lin_force_coef=None, torque_coef=1.0,
                  lin_mode='velocity', ang_mode='torque', body_spring_k=1.0, bend_correction_coef=1.0,
-                 lin_damping=1.0, ang_damping=1.0, density=300.0,
-                 **kwargs):
-
-        self.model = model
+                 lin_damping=1.0, ang_damping=1.0, **kwargs):
         self.lin_damping = lin_damping
         self.ang_damping = ang_damping
+        super().__init__(model=model, pos=self.pos, orientation=orientation, density=density, **kwargs)
+
         self.body_spring_k = body_spring_k
         self.bend_correction_coef = bend_correction_coef
-        self.density = density
+        # self.density = density
 
         self.head_contacts_ground = True
         self.trajectory = [self.pos]
-        super().__init__(model=model, pos=self.pos, orientation=orientation, **kwargs)
         self.lin_activity = 0
         self.ang_activity = 0
         self.ang_vel = 0
@@ -35,7 +41,7 @@ class BodyController(LarvaBody):
         self.torque = 0
         self.mid_seg_index = int(self.Nsegs / 2)
 
-        self.sim_time = 0
+        self.cum_dur = 0
 
         self.cum_dst = 0.0
         self.step_dst = 0.0

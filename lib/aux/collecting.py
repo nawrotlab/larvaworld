@@ -136,26 +136,28 @@ food_pars = {
 }
 
 step_database = {
-                             **pos_xy,
-                             **orientation_pars,
-                             **lin_pars,
-                             **ang_pars,
-                             **effector_pars,
-                             **intermitter_pars,
-                             **body_pars,
-                             **deb_pars}
+    **pos_xy,
+    **orientation_pars,
+    **lin_pars,
+    **ang_pars,
+    **effector_pars,
+    **intermitter_pars,
+    **body_pars,
+    **deb_pars}
 
 endpoint_database = {
-                "sim_duration": 'sim_time',
-                **pos_xy,
-                **orientation_pars,
-                **lin_pars,
-                **ang_pars,
-                **effector_pars,
-                **intermitter_pars,
-                **body_pars,
-                **deb_pars,
-                **food_pars}
+    "sim_dur": 'sim_dur',
+    "cum_dur": 'cum_dur',
+    **pos_xy,
+    **orientation_pars,
+    **lin_pars,
+    **ang_pars,
+    **effector_pars,
+    **intermitter_pars,
+    **body_pars,
+    **deb_pars,
+    **food_pars}
+
 
 # Extension of DataCollector class so that it only collects from a given schedule
 class TargetedDataCollector(DataCollector):
@@ -200,8 +202,8 @@ class TargetedDataCollector(DataCollector):
             midline_xy = self.midline_xy_pars()
             contour_xy = self.contour_xy_pars()
             full_step_database = {**midline_xy,
-                             **contour_xy,
-                             **step_database}
+                                  **contour_xy,
+                                  **step_database}
             return full_step_database
 
         elif mode == 'endpoint':
@@ -230,28 +232,28 @@ class TargetedDataCollector(DataCollector):
         return contour_xy
 
 
-step_db = {
-    'f_am': lambda a: a.amount_eaten,
-    'fee_N': lambda a: a.brain.feeder.iteration_counter,
-    'pau_N': lambda a: a.brain.intermitter.pause_counter,
-    'str_N': lambda a: a.brain.crawler.iteration_counter,
-    'fee_tr': lambda a: a.brain.feeder.total_t / a.sim_time,
-    'pau_tr': lambda a: a.brain.intermitter.cum_pause_dur / a.sim_time,
-    'str_tr': lambda a: a.brain.crawler.total_t / a.sim_time,
-    'chn0': lambda a: a.brain.intermitter.stridechain_start,
-    'chn1': lambda a: a.brain.intermitter.stridechain_stop,
-    'pau0': lambda a: a.brain.intermitter.pause_start,
-    'pau1': lambda a: a.brain.intermitter.pause_stop,
-    # 'fee_t': lambda a: a.feeder.total_t / a.sim_time,
-    'pau_t': lambda a: a.brain.intermitter.pause_dur,
-    'pau_id': lambda a: a.brain.intermitter.pause_id,
-    # 'str_t': lambda a: a.crawler.total_t / a.sim_time,
-    'chn_t': lambda a: a.brain.intermitter.stridechain_dur,
-    'chn_id': lambda a: a.brain.intermitter.stridechain_id,
-    'chn_l': lambda a: a.brain.intermitter.stridechain_length,
-    # 'str0': lambda a: a.crawler.total_t / a.sim_time,
-    # 'str1': lambda a: a.crawler.total_t / a.sim_time,
-}
+# step_db = {
+#     'f_am': lambda a: a.amount_eaten,
+#     'fee_N': lambda a: a.brain.feeder.iteration_counter,
+#     'pau_N': lambda a: a.brain.intermitter.pause_counter,
+#     'str_N': lambda a: a.brain.crawler.iteration_counter,
+#     'fee_tr': lambda a: a.brain.feeder.total_t / a.sim_time,
+#     'pau_tr': lambda a: a.brain.intermitter.cum_pause_dur / a.sim_time,
+#     'str_tr': lambda a: a.brain.crawler.total_t / a.sim_time,
+#     'chn0': lambda a: a.brain.intermitter.stridechain_start,
+#     'chn1': lambda a: a.brain.intermitter.stridechain_stop,
+#     'pau0': lambda a: a.brain.intermitter.pause_start,
+#     'pau1': lambda a: a.brain.intermitter.pause_stop,
+#     # 'fee_t': lambda a: a.feeder.total_t / a.sim_time,
+#     'pau_t': lambda a: a.brain.intermitter.pause_dur,
+#     'pau_id': lambda a: a.brain.intermitter.pause_id,
+#     # 'str_t': lambda a: a.crawler.total_t / a.sim_time,
+#     'chn_t': lambda a: a.brain.intermitter.stridechain_dur,
+#     'chn_id': lambda a: a.brain.intermitter.stridechain_id,
+#     'chn_l': lambda a: a.brain.intermitter.stridechain_length,
+#     # 'str0': lambda a: a.crawler.total_t / a.sim_time,
+#     # 'str1': lambda a: a.crawler.total_t / a.sim_time,
+# }
 
 effector_collection = {
     'intermitter': {
@@ -262,7 +264,7 @@ effector_collection = {
     'olfactor': {'step': ['first_odor_concentration', 'olfactory_activation',
                           'turner_activation', 'turner_activity', 'torque', 'orientation_to_center'],
                  'endpoint': ['final_dispersion', 'final_scaled_dispersion',
-                              'final_orientation_to_center']},
+                              'final_orientation_to_center', 'final_x']},
     'turner': {'step': ['turner_activation', 'turner_activity', 'torque'],
                'endpoint': []},
     'crawler': {'step': ['crawler_activity'],
@@ -284,8 +286,15 @@ effector_collection = {
                 'age', 'birth_time_in_hours', 'puppation_time_in_hours', 'death_time_in_hours', 'hours_as_larva'
             ]},
     'pose': {'step': ['centroid_x', 'centroid_y', 'bend', 'front_orientation', 'rear_orientation'],
-             'endpoint': []},
+             'endpoint': ['length', 'cum_dur', 'final_x']},
     'nengo': {'step': ['crawler_activity', 'turner_activity', 'feeder_motion'],
-              'endpoint': []}
+              'endpoint': []},
+    'dst2center': {'step': ['dst_to_center', 'scaled_dst_to_center'],
+                   'endpoint': ['final_dst_to_center', 'final_scaled_dst_to_center',
+                                'max_dst_to_center', 'max_scaled_dst_to_center']},
+    'chemotax_dst': {'step': ['dst_to_chemotax_odor', 'scaled_dst_to_chemotax_odor'],
+                     'endpoint': ['final_dst_to_chemotax_odor', 'final_scaled_dst_to_chemotax_odor']},
+    'midline': None,
+    'contour': None
 
 }

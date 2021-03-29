@@ -1,18 +1,18 @@
 from copy import deepcopy
-
 import numpy as np
 from Box2D import Box2D, b2ChainShape
 from matplotlib.patches import Circle
 from scipy.spatial.distance import euclidean
 from scipy.stats import multivariate_normal
 
-from lib.aux import functions as fun
-from lib.aux.functions import circle_to_polygon
-from lib.aux.rendering import InputBox
+import lib.aux.functions as fun
+import lib.aux.rendering as ren
 
 
 class LarvaworldAgent:
-    def __init__(self, unique_id, model, pos=None, default_color=None, radius=None):
+    def __init__(self,
+                 unique_id : str,
+                 model, pos=None, default_color=None, radius=None):
         self.selected = False
         self.unique_id = unique_id
         self.model = model
@@ -32,7 +32,7 @@ class LarvaworldAgent:
         # return np.array(self.pos)
 
     def init_id_box(self):
-        id_box = InputBox(visible=False, text=self.unique_id,
+        id_box = ren.InputBox(visible=False, text=self.unique_id,
                           color_inactive=self.default_color, color_active=self.default_color,
                           screen_pos=None, agent=self)
         return id_box
@@ -363,7 +363,7 @@ class Food(LarvaworldAgent):
         self.odor_spread = odor_spread
         self.set_odor_dist()
 
-        shape = circle_to_polygon(60, self.radius)
+        shape = fun.circle_to_polygon(60, self.radius)
 
         if self.model.physics_engine:
             self._body: Box2D.b2Body = self.model.space.CreateStaticBody(position=self.pos)

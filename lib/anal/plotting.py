@@ -25,7 +25,7 @@ from lib.aux import naming as nam
 from lib.anal.fitting import *
 from lib.aux.functions import weib, flatten_list
 from lib.anal.combining import combine_images, combine_pdfs
-from lib.model.agents.deb import deb_dict, deb_default
+
 from lib.stor.paths import DebFolder, SingleRunFolder
 from lib.conf.par_db import par_db
 
@@ -1191,6 +1191,7 @@ def plot_pauses(dataset, Npauses=10, save_to=None, plot_simulated=False, return_
 def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSsitters=False, sim_only=False,
               start_at_sim_start=False, time_unit='hours', return_fig=False,
               datasets=None, labels=None, include_default_deb=False):
+    from lib.model.agents.deb import deb_dict, deb_default
     warnings.filterwarnings('ignore')
     if save_to is None:
         save_to = DebFolder

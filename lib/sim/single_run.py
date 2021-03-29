@@ -12,7 +12,6 @@ from lib.anal.plotting import *
 from lib.aux.collecting import effector_collection
 from lib.conf import exp_types, default_sim, box2d_space
 from lib.model.envs._larvaworld import LarvaWorldSim
-from lib.model.agents._agent import Larva, Food
 from lib.model.agents.deb import deb_dict, deb_default
 from lib.stor.larva_dataset import LarvaDataset
 import lib.sim.gui_lib as gui
@@ -115,14 +114,14 @@ def sim_analysis(d, experiment):
 
 
     elif experiment in ['chemorbit', 'chemotax']:
-        plot_timeplot('c_odor1',datasets=[d])
-        plot_timeplot('A_olf',datasets=[d])
-        plot_timeplot('A_tur',datasets=[d])
-        plot_timeplot('Act_tur',datasets=[d])
+        plot_timeplot('c_odor1', datasets=[d])
+        plot_timeplot('A_olf', datasets=[d])
+        plot_timeplot('A_tur', datasets=[d])
+        plot_timeplot('Act_tur', datasets=[d])
         plot_distance_to_source(dataset=d, experiment=experiment)
         d.visualize(agent_ids=[d.agent_ids[0]], mode='image', image_mode='final',
                     contours=False, centroid=False, spinepoints=False,
-                    random_larva_colors=True, trajectories=True, trail_decay_in_sec=0,
+                    random_colors=True, trajectories=True, trajectory_dt=0,
                     save_as='single_trajectory')
     elif experiment == 'odor_pref':
         ind = d.compute_preference_index(arena_diameter_in_mm=100)
@@ -131,15 +130,17 @@ def sim_analysis(d, experiment):
     elif experiment == 'imitation':
         d.save_agent(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
 
-def init_sim(env_params,fly_params) :
+
+def init_sim(env_params, fly_params):
     env = LarvaWorldSim(fly_params=fly_params, env_params=env_params, mode='video')
     env.allow_clicks = True
     env.visible_clock = False
     env.is_running = True
     return env
 
-def configure_sim(env_params,fly_params):
-    env = init_sim(env_params,fly_params)
+
+def configure_sim(env_params, fly_params):
+    env = init_sim(env_params, fly_params)
     while env.is_running:
         env.step()
         env.render()
@@ -148,67 +149,77 @@ def configure_sim(env_params,fly_params):
     return food_list, border_list
 
 
-
-def run_sim_basic(sim_id,
-                  sim_params,
-                  env_params,
-                  fly_params,
-                  save_to=None,
-                  common_folder=None,
-                  media_name=None,
-                  save_data_flag=True,
-                  enrich=False,
-                  experiment=None,
-                  par_config=conf.SimParConf,
-                  starvation_hours=[],
-                  deb_base_f=1,
-                  preview=False,
-                  **kwargs):
+def run_sim_basic(
+        sim_params,
+        env_params,
+        fly_params,
+        life_params={},
+        collections=None,
+        save_to=None,
+        # common_folder=None,
+        media_name=None,
+        save_data_flag=True,
+        enrich=False,
+        experiment=None,
+        par_config=conf.SimParConf,
+        # starvation_hours=[],
+        # deb_base_f=1,
+        preview=False,
+        **kwargs):
+    if collections is None:
+        collections = ['pose']
     np.random.seed(1)
+    id = sim_params['sim_id']
+    dt = sim_params['dt']
+    Nsec = sim_params['sim_dur'] * 60
+    path = sim_params['path']
+    Box2D = sim_params['Box2D']
+
     if save_to is None:
         save_to = paths.SimFolder
+    if path is not None:
+        save_to = os.path.join(save_to, path)
+    dir_path = os.path.join(save_to, id)
+
+
     # current_date = date.today()
     # Store the parameters so that we can save them in the results folder
     sim_date = datetime.datetime.now()
     param_dict = locals()
     start = time.time()
-    dt = sim_params['dt']
-    Nsec = sim_params['sim_time_in_min'] * 60
-    Nsteps = int(Nsec / dt)
-    if common_folder:
-        parentdir = os.path.join(save_to, common_folder)
-    else:
-        parentdir = save_to
-    dir_path = os.path.join(parentdir, sim_id)
 
+    Nsteps = int(Nsec / dt)
     # FIXME This only takes the first configuration into account
     if not type(fly_params) == list:
         Npoints = fly_params['body_params']['Nsegs'] + 1
     else:
         Npoints = fly_params[0]['body_params']['Nsegs'] + 1
 
-
-
     # Build the environment
     # try :
-    d = LarvaDataset(dir=dir_path, id=sim_id, fr=int(1 / dt),
+    d = LarvaDataset(dir=dir_path, id=id, fr=int(1 / dt),
                      Npoints=Npoints, Ncontour=0,
                      arena_pars=env_params['arena_params'],
                      par_conf=par_config, save_data_flag=save_data_flag, load_data=False,
-                     starvation_hours=starvation_hours, deb_base_f=deb_base_f)
+                     life_params=life_params
+                     # starvation_hours=starvation_hours, deb_base_f=deb_base_f
+                     )
 
-    collected_pars = data_collection_config(dataset=d, sim_params=sim_params)
-    env = LarvaWorldSim(fly_params=fly_params, id=sim_id, env_params=env_params, dt=dt, Nsteps=Nsteps,
-                        collected_pars=collected_pars,
+    collected_pars = data_collection_config(dataset=d, collections=collections)
+    env = LarvaWorldSim(fly_params=fly_params, id=id, env_params=env_params, dt=dt, Nsteps=Nsteps,
+                        collected_pars=collected_pars, Box2D=Box2D,
                         media_name=media_name,
                         save_to=d.vis_dir,
-                        starvation_hours=starvation_hours, deb_base_f=deb_base_f,
-                        **kwargs)
+                        life_params=life_params,
+                                    # starvation_hours=starvation_hours, deb_base_f=deb_base_f,
+                                    ** kwargs)
     # Prepare the odor layer for a number of timesteps
-    env.prepare_odor_layer(int(sim_params['odor_prep_time_in_min'] * 60 / env.dt))
+    odor_prep_time = 0.0
+    larva_prep_time = 0.5
+    env.prepare_odor_layer(int(odor_prep_time * 60 / env.dt))
     # Prepare the flies for a number of timesteps
-    env.prepare_flies(int(sim_params['fly_prep_time_in_min'] * 60 / env.dt))
-    print(f'Initialized simulation {sim_id}!')
+    env.prepare_flies(int(larva_prep_time * 60 / env.dt))
+    print(f'Initialized simulation {id}!')
     # if preview :
     #     env.step()
     #     env.render()
@@ -216,9 +227,6 @@ def run_sim_basic(sim_id,
     #     im = env.get_image_path()
     #     env.close()
     #     return im
-
-
-
 
     # Run the simulation
     completed = env.run()
@@ -239,10 +247,11 @@ def run_sim_basic(sim_id,
 
         larva_endpoint_data = larva_endpoint_data.droplevel('Step')
         food_endpoint_data = food_endpoint_data.droplevel('Step')
-        if 'cum_dur' in sim_params['end_pars']:
-            larva_endpoint_data['cum_dur'] = larva_step_data.index.unique('Step').size*d.dt
-        if 'num_ticks' in sim_params['end_pars']:
-            larva_endpoint_data['num_ticks'] = larva_step_data.index.unique('Step').size
+        # if 'cum_dur' in sim_params['end_pars']:
+        #     larva_endpoint_data['cum_dur'] = larva_step_data.index.unique('Step').size*d.dt
+        # if 'num_ticks' in sim_params['end_pars']:
+        #     larva_endpoint_data['num_ticks'] = larva_step_data.index.unique('Step').size
+
         d.set_step_data(larva_step_data)
         d.set_endpoint_data(larva_endpoint_data)
         d.set_food_endpoint_data(food_endpoint_data)
@@ -250,7 +259,6 @@ def run_sim_basic(sim_id,
         end = time.time()
         dur = end - start
         param_dict['duration'] = np.round(dur, 2)
-
 
         # Save simulation data and parameters
         if save_data_flag:
@@ -269,19 +277,21 @@ ser = pickle.dumps(run_sim_basic)
 run_sim = pickle.loads(ser)
 
 
-def data_collection_config(dataset, sim_params):
+def data_collection_config(dataset, collections):
     d = dataset
-    effectors = [e for e in sim_params['collect_effectors']]
-    # effectors = [e for e in sim_params['collect_effectors'] if component_params[e]]
-    step_pars = list(set(fun.flatten_list([effector_collection[e]['step'] for e in effectors])))
-    end_pars = list(set(fun.flatten_list([effector_collection[e]['endpoint'] for e in effectors])))
+    step_pars = []
+    end_pars = []
+    for c in collections:
+        if c == 'midline':
+            step_pars += fun.flatten_list(d.points_xy)
+        elif c == 'contour':
+            step_pars += fun.flatten_list(d.contour_xy)
+        else:
+            step_pars += effector_collection[c]['step']
+            end_pars += effector_collection[c]['endpoint']
 
-    if sim_params['collect_midline']:
-        step_pars += fun.flatten_list(d.points_xy)
-    if sim_params['collect_contour']:
-        step_pars += fun.flatten_list(d.contour_xy)
-    collected_pars = {'step': sim_params['step_pars'] + step_pars,
-                      'endpoint': sim_params['end_pars'] + end_pars}
+    collected_pars = {'step': fun.unique_list(step_pars),
+                      'endpoint': fun.unique_list(end_pars)}
     return collected_pars
 
 
@@ -311,43 +321,21 @@ def next_idx(exp, type='single'):
     return idx_dict[type][exp]
 
 
-def generate_config(exp, Nagents=None, sim_time=None, dt=None, sim_id=None, Box2D=False, exp_kwargs={}):
+def generate_config(exp, sim_params, Nagents=None, life_params={}):
     config = copy.deepcopy(exp_types[exp])
     config['experiment'] = exp
-    config.update(**exp_kwargs)
+    # config.update(**exp_kwargs)
 
-
-    if sim_id is None:
-        idx = next_idx(exp)
-        sim_id = f'{exp}_{idx}'
-    config['sim_id'] = sim_id
-    if 'sim_params' not in config.keys():
-        config['sim_params'] = copy.deepcopy(default_sim)
-    if 'modules' in config.keys():
-        config['fly_params']['neural_params']['modules'] = config['modules']
-        del config['modules']
-    if 'traj_mode' in config.keys():
-        config['sim_params']['traj_mode'] = config['traj_mode']
-        del config['traj_mode']
-    if 'collect_effectors' in config.keys():
-        config['sim_params']['collect_effectors'] = config['collect_effectors']
-        del config['collect_effectors']
-    if 'end_pars' in config.keys():
-        config['sim_params']['end_pars'] += config['end_pars']
-        del config['end_pars']
-    if 'step_pars' in config.keys():
-        config['sim_params']['step_pars'] += config['step_pars']
-        del config['step_pars']
-    if 'draw_mode' in config.keys():
-        config['sim_params']['draw_mode'] = config['draw_mode']
-        del config['draw_mode']
-
+    # if 'sim_params' not in config.keys():
+    #     config['sim_params'] = copy.deepcopy(default_sim)
+    config['sim_params'] = sim_params
+    config['life_params'] = life_params
     if Nagents is not None:
         config['env_params']['place_params']['initial_num_flies'] = Nagents
-    if sim_time is not None:
-        config['sim_params']['sim_time_in_min'] = sim_time
-    if dt is not None:
-        config['sim_params']['dt'] = dt
-    if Box2D:
-        config['env_params']['space_params'] = box2d_space
-    return config.copy()
+    # if sim_time is not None:
+    #     config['sim_params']['sim_time_in_min'] = sim_time
+    # if dt is not None:
+    #     config['sim_params']['dt'] = dt
+    # if Box2D:
+    #     config['env_params']['space_params'] = box2d_space
+    return config
