@@ -68,7 +68,7 @@ class BodySim(BodyManager):
         self.lin_force_coef = lin_force_coef
         self.torque_coef = torque_coef
 
-        k = 0.9
+        k = 0.95
         self.tank_polygon = Polygon(self.model.tank_shape * k)
 
     def step(self):

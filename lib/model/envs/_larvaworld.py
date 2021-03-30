@@ -125,9 +125,10 @@ class LarvaWorld:
         self.create_schedules()
         self.create_arena(**self.env_pars['arena_params'])
         self.space = self.create_space(Box2D)
-        if 'border_list' in self.env_pars.keys():
-            for border_pars in self.env_pars['border_list']:
-                b = Border(model=self, **border_pars)
+        print(self.env_pars)
+        if 'border_list' in list(self.env_pars.keys()):
+            for id, pars in self.env_pars['border_list'].items():
+                b = Border(model=self, unique_id = id, **pars)
                 self.add_border(b)
 
         self.sim_clock = ren.SimulationClock(self.dt, color=self.scale_clock_color)
@@ -453,9 +454,10 @@ class LarvaWorld:
         food_positions = [self.relative2space_pos(p) for p in raw_food_positions]
         return food_positions
 
-    def add_food(self, position, id=None, food_pars=None):
+    def add_food(self, position, id=None, food_pars={}):
         # if food_pars is None:
-        #     food_pars = copy.deepcopy(self.env_pars['food_params'])
+        #     food_pars = food()
+            # food_pars = copy.deepcopy(self.env_pars['food_params'])
         # if 'food_list' in list(food_pars.keys()):
         #     food_pars.pop('food_list')
         if id is None:

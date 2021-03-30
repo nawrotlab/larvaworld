@@ -1,11 +1,7 @@
 import math
-import time
 
-import numpy
 import numpy as np
-import scipy
 from mesa.space import ContinuousSpace
-from scipy.stats import multivariate_normal
 
 
 class ValueGrid:
@@ -340,16 +336,3 @@ class LimitedSpace(ContinuousSpace):
         super().__init__(**kwargs)
 
 
-def agents_spatial_query(pos, radius, agent_list):
-    if len(agent_list) == 0:
-        return []
-    # s = time.time()
-    agent_positions = np.array([agent.get_position() for agent in agent_list])
-    agent_radii = np.array([agent.get_radius() for agent in agent_list])
-    dsts = np.linalg.norm(agent_positions - pos, axis=1) - agent_radii
-    inds = np.where(dsts <= radius)[0]
-    # e = time.time()
-    # print(e - s)
-    # print(len(inds)>0)
-    # print(len(inds))
-    return [agent_list[i] for i in inds]

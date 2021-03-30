@@ -133,7 +133,7 @@ def update_environment(env_params, window, collapsibles, sectiondicts, food_list
     if 'border_list' in env_params.keys():
         border_list = env_params['border_list']
     else:
-        border_list = []
+        border_list = {}
     return food_list, border_list
 
 def init_model(larva_model, collapsibles={}, sectiondicts={}):

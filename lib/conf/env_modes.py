@@ -47,9 +47,10 @@ def food_grid(dim, amount=0.00001):
             'food_grid_amount': amount}
 
 
-def food(r=0.1, amount=0.000001, odor_id=None, odor_intensity=0.0, odor_spread=0.1):
+def food(r=0.1, amount=0.000001, quality=1.0, odor_id=None, odor_intensity=0.0, odor_spread=0.1):
     return {'radius': r,
             'amount': amount,
+            'quality': quality,
             'odor_id': odor_id,
             'odor_intensity': odor_intensity,
             'odor_spread': odor_spread,
@@ -385,12 +386,12 @@ def chemorbit_conf(N):
 
 def maze_conf(N, n):
     conf = {'arena_params': arena(0.1, 0.1),
-            'border_list': [
-                {
-                    'unique_id': 'Maze',
+            'border_list': {
+                'Maze' : {
+                    # 'unique_id': 'Maze',
                     'lines': maze(nx=n, ny=n, h=0.1),
                     'from_screen': False}
-            ],
+            },
             'food_params': {
                 'food_list': {},
                 'food_grid': None,

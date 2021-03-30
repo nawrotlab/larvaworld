@@ -207,7 +207,7 @@ class LarvaSim(BodySim, Larva):
                 else:
                     return False, None, None
             else:
-                accessible_food = agents_spatial_query(pos=pos, radius=radius,
+                accessible_food = fun.agents_spatial_query(pos=pos, radius=radius,
                                                        agent_list=self.model.get_food())
                 if accessible_food:
                     food = random.choice(accessible_food)

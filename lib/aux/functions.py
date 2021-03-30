@@ -893,3 +893,13 @@ def unique_list(l):
     seen = set()
     seen_add = seen.add
     return [x for x in l if not (x in seen or seen_add(x))]
+
+
+def agents_spatial_query(pos, radius, agent_list):
+    if len(agent_list) == 0:
+        return []
+    agent_positions = np.array([agent.get_position() for agent in agent_list])
+    agent_radii = np.array([agent.get_radius() for agent in agent_list])
+    dsts = np.linalg.norm(agent_positions - pos, axis=1) - agent_radii
+    inds = np.where(dsts <= radius)[0]
+    return [agent_list[i] for i in inds]
