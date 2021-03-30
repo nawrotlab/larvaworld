@@ -30,21 +30,21 @@ header_kwargs = {'font': ('size', 7),
 text_kwargs = {'font': ('size', 7),
                'size': (12, 1)}
 
-def retrieve_value(v, type):
+def retrieve_value(v, t):
     if v in ['', 'None', None]:
         vv = None
     elif v in ['sample', 'fit']:
         vv = v
-    elif type == 'bool':
+    elif t == 'bool':
         if v in ['False', False]:
             vv = False
         elif v in ['True', True]:
             vv = True
-    elif type == List[Tuple[float, float]]:
+    elif t == List[Tuple[float, float]]:
         v = v.replace('{', ' ')
         v = v.replace('}', ' ')
         vv = [tuple([float(x) for x in t.split()]) for t in v.split('   ')]
-    elif type == Tuple[float, float]:
+    elif t == Tuple[float, float]:
         v = v.replace('{', '')
         v = v.replace('}', '')
         v = v.replace('[', '')
@@ -54,17 +54,20 @@ def retrieve_value(v, type):
         v = v.replace("'", '')
         v = v.replace(",", ' ')
         vv = tuple([float(x) for x in v.split()])
-    elif type == tuple or type == list:
+    elif t == tuple or t == list:
         try:
             vv = literal_eval(v)
         except:
             vv = [float(x) for x in v.split()]
-            if type == tuple:
+            if t == tuple:
                 vv = tuple(vv)
-    elif type(v) == type:
+    elif type(v) == t:
         vv = v
+    # elif type(t) == dict:
+    #     vv = v
     else:
-        vv = type(v)
+        # print(v, t)
+        vv = t(v)
     return vv
 
 

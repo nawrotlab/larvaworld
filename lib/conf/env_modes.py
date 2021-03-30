@@ -496,7 +496,7 @@ growth_exp_np = {'arena_params': arena(0.015, 0.015),  # dish(0.006),
 
 mock_env = {'arena_params': dish(0.1),
             'food_params': {
-                'food_distro': food_distro(10, 'normal', pars=food()),
+                'food_distro': food_distro(10, 'normal', pars=food(odor_id='CS')),
                 'food_grid': food_grid(50),
                 'food_list': {'CS_source': {
                     'pos': (-0.04, 0.0),

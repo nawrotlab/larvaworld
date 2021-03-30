@@ -39,16 +39,19 @@ default_sim = {
     'Box2D' : False,
 }
 
-
-food_pars = {
-    'unique_id': str,
-    'pos': Tuple[float, float],
+base_food_pars={
     'radius': float,
     'amount': float,
     'quality': float,
     'odor_id': str,
     'odor_intensity': float,
     'odor_spread': float
+}
+
+food_pars = {
+    'unique_id': str,
+    'pos': Tuple[float, float],
+    **base_food_pars
 }
 larva_pars = {
     'unique_id': str,
@@ -64,3 +67,12 @@ agent_pars = {'Food' : food_pars,
               'LarvaReplay' : larva_pars,
               'Border' : border_pars,
               }
+
+food_distro_pars={
+    'N': int,
+    'mode': str,
+    'loc': Tuple[float, float],
+    'scale': float,
+    'pars': base_food_pars,
+    # 'orientation': float,
+}

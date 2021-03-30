@@ -14,7 +14,7 @@ from lib.stor.datagroup import saveSimConf, loadSimConfDict, loadSimConf, delete
 sys.path.insert(0, '..')
 from lib.aux.collecting import effector_collection
 from lib.conf import exp_types, default_sim, mock_larva, box2d_space, larva_place_modes, \
-    food_place_modes, pref_exp_np, agent_pars, mock_env, mesa_space
+    food_place_modes, pref_exp_np, agent_pars, mock_env, mesa_space, base_food_pars, food_distro_pars
 from lib.sim.gui_lib import gui_table, SectionDict, bool_button, Collapsible, \
     set_kwargs, on_image, off_image, SYMBOL_UP, SYMBOL_DOWN, button_kwargs, header_kwargs, \
     text_kwargs, on_image_disabled, retrieve_value, draw_canvas, delete_figure_agg, CollapsibleDict
@@ -186,7 +186,8 @@ def init_environment(env_params, collapsibles={}, sectiondicts={}):
     food_pars=env_params['food_params']
 
     temp = CollapsibleDict('FOOD_DISTRIBUTION', True, dict=food_pars['food_distro'], toggle=True,
-                                                    disabled=False)
+                                                    # type_dict=food_distro_pars,
+                           disabled=False)
     collapsibles.update(temp.get_subdicts())
 
 
