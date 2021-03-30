@@ -395,7 +395,7 @@ def maze_conf(N, n):
             'food_params': {
                 'food_list': {},
                 'food_grid': None,
-                'food_distro': food_distro(1, mode='normal', loc=(0.0, 0.0), scale=0.1, pars=food(0.002))},
+                'food_distro': food_distro(1, mode='normal', loc=(0.0, 0.0), scale=0.0, pars=food(0.001,amount=0.0, odor_id='Odor',odor_intensity=0.02))},
             'place_params': chemotax_place(N),
             'odor_params': chemorbit_odor_np}
     return conf

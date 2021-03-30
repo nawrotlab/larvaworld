@@ -121,11 +121,9 @@ class LarvaWorld:
         self.food_grid = None
 
         # Add mesa schecule to use datacollector class
-
         self.create_schedules()
         self.create_arena(**self.env_pars['arena_params'])
         self.space = self.create_space(Box2D)
-        print(self.env_pars)
         if 'border_list' in list(self.env_pars.keys()):
             for id, pars in self.env_pars['border_list'].items():
                 b = Border(model=self, unique_id = id, **pars)
@@ -188,10 +186,6 @@ class LarvaWorld:
         self.space_edges = [(x * s, y * s) for (x, y) in self.unscaled_space_edges]
         self.space_edges_for_screen = self.unscaled_space_edges_for_screen * s
         self.tank_shape = self.unscaled_tank_shape * s
-
-        # print(self.space_edges)
-        # print(type(self.space_edges))
-        # print(len(self.space_edges))
 
         if self.physics_engine:
             self._sim_velocity_iterations = 6
@@ -606,14 +600,6 @@ class LarvaWorld:
                 elif event.key == pygame.K_PLUS:
                     self.trajectory_dt = np.clip(self.trajectory_dt + 5, a_min=0, a_max=np.inf)
                     self.toggle('trajectory_dt', self.trajectory_dt)
-                # elif event.key == pygame.K_MINUS:
-                #     print(self._screen._fps)
-                #     self._screen._fps-=10
-                #     print(self._screen._fps)
-                # elif event.key == pygame.K_PLUS:
-                #     print(self._screen._fps)
-                #     self._screen._fps+=10
-                #     print(self._screen._fps)
                 elif event.key == pygame.K_LEFT:
                     self._screen.move_center(-0.05, 0)
                 elif event.key == pygame.K_RIGHT:
@@ -1014,17 +1000,8 @@ class LarvaWorldSim(LarvaWorld):
             all_larva_pars.append(type_larva_pars)
         all_larva_pars = fun.flatten_list(all_larva_pars)
         for k, vs in parameter_dict.items():
-            # if len(all_larva_pars)!=len(vs) :
-            #     raise ValueError (f'Parameter {k} has {len(vs)} values but number of larvae is {len(all_larva_pars)}')
             for larva_pars, v in zip(all_larva_pars, vs):
-                # print(v)
-                # print(v)
                 larva_pars[k].update(v)
-                # larva_pars['neural_params'][k]=v
-                # print(list(larva_pars.keys()))
-                # print(list(larva_pars['neural_params'].keys()))
-                # print(list(larva_pars['neural_params']['olfactor_params'].keys()))
-                # print(larva_pars['neural_params']['olfactor_params']['olfactor_gain_mean'])
         return larva_ids, all_larva_pars
 
     def _place_larvae(self, positions, orientations, ids, all_pars):
@@ -1063,22 +1040,13 @@ class LarvaWorldSim(LarvaWorld):
         if len(self.sim_starvation_hours) > 0:
             self.starvation = self.sim_clock.timer_on
             if self.sim_clock.timer_opened:
-                # print(self.sim_clock.hour, self.sim_clock.minute)
                 if self.food_grid is not None:
                     self.food_grid.empty_grid()
             if self.sim_clock.timer_closed:
-                # print(self.sim_clock.hour, self.sim_clock.minute)
-                # try:
-                #     for l in self.get_flies():
-                #         l.brain.intermitter.explore2exploit_bias = l.brain.intermitter.base_explore2exploit_bias
-                # except:
-                #     pass
                 if self.food_grid is not None:
                     self.food_grid.reset()
 
-        # print(self.sim_clock.dmsecond)
         # Update value_layers
-
         if self.odor_layers:
             for layer_id in self.odor_layers:
                 self.odor_layers[layer_id].update_values()  # Currently doing something only for the DiffusionValueLayer
