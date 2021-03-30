@@ -30,6 +30,7 @@ header_kwargs = {'font': ('size', 7),
 text_kwargs = {'font': ('size', 7),
                'size': (12, 1)}
 
+
 def retrieve_value(v, t):
     if v in ['', 'None', None]:
         vv = None
@@ -183,16 +184,16 @@ def gui_table(data, pars_dict, title='Agent list'):
 def update_window_from_dict(window, dic, prefix=None):
     if dic is not None:
         for k, v in dic.items():
-            if prefix is not None :
-                k= f'{prefix}_{k}'
+            if prefix is not None:
+                k = f'{prefix}_{k}'
             if type(v) == bool:
                 window[f'TOGGLE_{k}'].metadata.state = v
                 window[f'TOGGLE_{k}'].update(image_data=on_image if v else off_image)
-            elif type(v) == dict :
-                if prefix is not None :
+            elif type(v) == dict:
+                if prefix is not None:
                     new_prefix = k
-                else :
-                    new_prefix=None
+                else:
+                    new_prefix = None
                 update_window_from_dict(window, v, prefix=new_prefix)
             else:
                 window.Element(k).Update(value=v)
@@ -204,7 +205,7 @@ class SectionDict:
         # self.named_init_dict=self.named_dict(dict)
         self.type_dict = type_dict
         self.name = name
-        self.subdicts={}
+        self.subdicts = {}
 
     def init_section(self):
         if self.init_dict is not None:
@@ -213,12 +214,12 @@ class SectionDict:
             return []
         l = []
         for k, v in dic.items():
-            k0=f'{self.name}_{k}'
+            k0 = f'{self.name}_{k}'
             if type(v) == bool:
-                l.append(bool_button(k, v, k0))
+                l.append(named_bool_button(k, v, k0))
             elif type(v) == dict:
-                self.subdicts[k0]=CollapsibleDict(k0, True, dict=v, toggle=True)
-                ll=self.subdicts[k0].get_section()
+                self.subdicts[k0] = CollapsibleDict(k0, True, disp_name=k, dict=v, toggle=True)
+                ll = self.subdicts[k0].get_section()
                 l.append(ll)
             else:
                 l.append([sg.Text(f'{k}:', **text_kwargs), sg.In(v, key=k0, **text_kwargs)])
@@ -228,7 +229,7 @@ class SectionDict:
         new_dict = copy.deepcopy(self.init_dict)
         if new_dict is None:
             return new_dict
-        if self.type_dict is None :
+        if self.type_dict is None:
             for i, (k, v) in enumerate(new_dict.items()):
                 k0 = f'{self.name}_{k}'
                 if type(v) == bool:
@@ -240,7 +241,7 @@ class SectionDict:
                     vv = retrieve_value(vv, type(v))
                     new_dict[k] = vv
 
-        else :
+        else:
             for i, (k, t) in enumerate(self.type_dict.items()):
                 k0 = f'{self.name}_{k}'
                 if t == bool:
@@ -252,93 +253,57 @@ class SectionDict:
         return new_dict
 
     def get_subdicts(self):
-        subdicts={}
-        for s in list(self.subdicts.values()) :
+        subdicts = {}
+        for s in list(self.subdicts.values()):
             subdicts.update(s.get_subdicts())
         return subdicts
 
-    # def named_dict(self, dic):
-    #     new_dict=copy.deepcopy(dic)
-    #     for k in list(dic.keys()) :
-    #         new_dict[f'{self.name}_{k}'] = new_dict.pop(k)
-    #     return new_dict
 
-
-
-    # def update_section(self, window, dict):
-    #     # if dict is None:
-    #     #     if self.init_dict is not None:
-    #     #         dict = self.init_dict
-    #     #     else:
-    #     #         return
-    #     for k, v in dict.items():
-    #         v0=self.init_dict[k]
-    #         if type(v0)==bool :
-    #             event=f'TOGGLE_{k}'
-    #             if type(v)==bool :
-    #                 window[event].metadata.state = v
-    #                 window[event].update(image_data=on_image if v else off_image)
-    #             else :
-    #                 raise ValueError (f'Parameter {k} initial boolean value {v0} but new non boolean {v} was passed')
-    #         elif type(v0)==dict :
-    #             # self.update_section(window, )
-    #             raise ValueError(f'Parameter {k} initial dict value {v0}')
-    #         else :
-    #             window.Element(k).Update(value=v)
-
-
-def bool_button(name, state, toggle_name=None):
-    if toggle_name is None :
-        toggle_name=name
-    # print(toggle_name)
-    if state:
-        image = on_image
-    elif not state:
-        image = off_image
-    elif state is None:
-        image = off_image_disabled
-    l = [sg.Text(f'{name} :', **text_kwargs),
-         sg.Button(image_data=image, k=f'TOGGLE_{toggle_name}', border_width=0,
-                   button_color=(
-                       sg.theme_background_color(), sg.theme_background_color()),
-                   disabled_button_color=(
-                       sg.theme_background_color(), sg.theme_background_color()),
-                   metadata=BtnInfo(state=state))]
+def named_bool_button(name, state, toggle_name=None):
+    if toggle_name is None:
+        toggle_name = name
+    l = [sg.Text(f'{name} :', **text_kwargs),bool_button(toggle_name, state)]
     return l
 
 
+def bool_button(name, state, disabled=False):
+    if state:
+        if disabled :
+            image = on_image_disabled
+        else :
+            image = on_image
+    elif state==False:
+        if disabled:
+            image = off_image_disabled
+        else:
+            image = off_image
+    elif state is None :
+        image = off_image_disabled
+    b = sg.Button(image_data=image, k=f'TOGGLE_{name}', border_width=0,
+                  button_color=(sg.theme_background_color(), sg.theme_background_color()),
+                  disabled_button_color=(sg.theme_background_color(), sg.theme_background_color()),
+                  metadata=BtnInfo(state=state))
+    return b
+
+
+def named_list_layout(text, key, choices) :
+    l =[sg.Text(text, **header_kwargs),
+     sg.Combo(choices, key=key, enable_events=True, readonly=True, **text_kwargs)]
+    return l
+
 class Collapsible:
-    def __init__(self, name, state, content, toggle=None, disabled=False):
+    def __init__(self, name, state, content, disp_name=None, toggle=None, disabled=False):
         self.name = name
+        if disp_name is None:
+            disp_name = name
+        self.disp_name = disp_name
         self.state = state
         self.toggle = toggle
-        if state:
-            self.symbol = SYMBOL_DOWN
-        else:
-            self.symbol = SYMBOL_UP
+        self.symbol = SYMBOL_DOWN if state else SYMBOL_UP
         header = [sg.T(self.symbol, enable_events=True, k=f'OPEN SEC {name}', text_color='black'),
-                  sg.T(name, enable_events=True, text_color='black', k=f'SEC {name} TEXT', **header_kwargs)]
+                  sg.T(disp_name, enable_events=True, text_color='black', k=f'SEC {name} TEXT', **header_kwargs)]
         if toggle is not None:
-            if disabled:
-                toggle_state = None
-                if toggle:
-                    image = on_image_disabled
-                elif not toggle:
-                    image = off_image_disabled
-            else:
-                toggle_state = toggle
-                if toggle:
-                    image = on_image
-                elif not toggle:
-                    image = off_image
-            print(name)
-            header.append(sg.Button(image_data=image, k=f'TOGGLE_{name}', border_width=0,
-                                    button_color=(
-                                        sg.theme_background_color(), sg.theme_background_color()),
-                                    disabled_button_color=(
-                                        sg.theme_background_color(), sg.theme_background_color()),
-                                    metadata=BtnInfo(state=toggle_state)))
-
+            header.append(bool_button(name, toggle, disabled))
         self.section = [header, [collapse(content, f'SEC {name}', visible=state)]]
 
     def get_section(self, as_col=True):
@@ -363,33 +328,34 @@ class Collapsible:
                 window[f'TOGGLE_{self.name}'].update(image_data=on_image_disabled)
             if self.state is None:
                 self.state = False
-            if use_prefix :
-                prefix=self.name
-            else :
-                prefix=None
+            if use_prefix:
+                prefix = self.name
+            else:
+                prefix = None
             update_window_from_dict(window, dict, prefix=prefix)
         return window
 
-class CollapsibleDict(Collapsible) :
-    def __init__(self, name, state, dict, dict_name=None, type_dict=None, toggle=None, disabled=False):
-        if dict_name is None :
+
+class CollapsibleDict(Collapsible):
+    def __init__(self, name, state, dict, dict_name=None, type_dict=None, **kwargs):
+        if dict_name is None:
             dict_name = name
-        self.sectiondict=SectionDict(name=dict_name, dict=dict, type_dict=type_dict)
-        content=self.sectiondict.init_section()
-        super().__init__(name, state, content, toggle, disabled)
+        self.dict_name = dict_name
+        self.sectiondict = SectionDict(name=dict_name, dict=dict, type_dict=type_dict)
+        content = self.sectiondict.init_section()
+        super().__init__(name, state, content, **kwargs)
 
     def get_dict(self, values, window):
-        if self.state is None :
+        if self.state is None:
             return None
-        else :
+        else:
             return self.sectiondict.get_dict(values, window)
 
     def get_subdicts(self):
-        subdicts={}
-        subdicts[self.name]=self
-        all_subdicts={**subdicts, **self.sectiondict.get_subdicts()}
+        subdicts = {}
+        subdicts[self.name] = self
+        all_subdicts = {**subdicts, **self.sectiondict.get_subdicts()}
         return all_subdicts
-
 
 
 def collapse(layout, key, visible=True):
@@ -404,17 +370,17 @@ def collapse(layout, key, visible=True):
 
 
 def set_kwargs(kwargs, title='Arguments', type_dict=None):
-    sec_dict=SectionDict(name=title, dict=kwargs, type_dict=type_dict)
-    layout=sec_dict.init_section()
+    sec_dict = SectionDict(name=title, dict=kwargs, type_dict=type_dict)
+    layout = sec_dict.init_section()
     layout.append([sg.Ok(), sg.Cancel()])
-    window=sg.Window(title, layout)
-    while True :
+    window = sg.Window(title, layout)
+    while True:
         event, values = window.read()
-        if event=='Ok' :
-            new_kwargs=sec_dict.get_dict(values, window)
+        if event == 'Ok':
+            new_kwargs = sec_dict.get_dict(values, window)
             break
-        elif event=='Cancel' :
-            new_kwargs=kwargs
+        elif event == 'Cancel':
+            new_kwargs = kwargs
             break
         elif 'TOGGLE' in event:
             if window[event].metadata.state is not None:
@@ -463,11 +429,11 @@ def set_agent_kwargs(agent):
     class_name = type(agent).__name__
     pars = agent_pars[class_name]
     title = f'{class_name} args'
-    kwargs={}
-    for p in list(pars.keys()) :
-        kwargs[p] = getattr(agent,p)
-    new_kwargs=set_kwargs(kwargs, title, type_dict=pars)
-    for p,v in new_kwargs.items() :
+    kwargs = {}
+    for p in list(pars.keys()):
+        kwargs[p] = getattr(agent, p)
+    new_kwargs = set_kwargs(kwargs, title, type_dict=pars)
+    for p, v in new_kwargs.items():
         if p == 'unique_id':
             agent.set_id(v)
         else:
@@ -520,14 +486,12 @@ class BtnInfo:
         self.state = state  # Can have 3 states - True, False, None (toggle)
 
 
-
-
-
 def draw_canvas(canvas, figure):
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
     figure_canvas_agg.draw()
     figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
     return figure_canvas_agg
+
 
 def delete_figure_agg(figure_agg):
     figure_agg.get_tk_widget().forget()
@@ -542,13 +506,13 @@ class DynamicGraph:
         self.par_shorts = par_shorts
         self.dt = self.agent.model.dt
         self.init_dur = 20
-        self.window_size=(1550, 1200)
-        self.canvas_size=(self.window_size[0]-50, self.window_size[1]-50)
-        self.my_dpi=96
-        self.figsize=(int(self.canvas_size[0]/self.my_dpi), int(self.canvas_size[1]/self.my_dpi))
+        self.window_size = (1550, 1200)
+        self.canvas_size = (self.window_size[0] - 50, self.window_size[1] - 50)
+        self.my_dpi = 96
+        self.figsize = (int(self.canvas_size[0] / self.my_dpi), int(self.canvas_size[1] / self.my_dpi))
 
-        Ncols=4
-        par_lists=[list(a) for a in np.array_split(self.available_pars, Ncols)]
+        Ncols = 4
+        par_lists = [list(a) for a in np.array_split(self.available_pars, Ncols)]
         par_layout = [[sg.Text('Choose parameters')],
                       [sg.Col([*[[sg.CB(p, key=f'k_{p}')] for p in par_lists[i]]]) for i in range(Ncols)],
                       [sg.Button('Ok', **button_kwargs), sg.Button('Cancel', **button_kwargs)]
@@ -562,39 +526,41 @@ class DynamicGraph:
                        key='-SLIDER-TIME-')],
             [sg.Button('Choose', **button_kwargs)]
         ]
-        layout=[[sg.Column(par_layout, key='-COL1-'), sg.Column(graph_layout, visible=False, key='-COL2-')]]
-        self.window = sg.Window(f'{self.agent.unique_id} Dynamic Graph', layout, finalize=True, location=(0, 0), size=self.window_size)
+        layout = [[sg.Column(par_layout, key='-COL1-'), sg.Column(graph_layout, visible=False, key='-COL2-')]]
+        self.window = sg.Window(f'{self.agent.unique_id} Dynamic Graph', layout, finalize=True, location=(0, 0),
+                                size=self.window_size)
         self.canvas_elem = self.window.FindElement('-CANVAS-')
         self.canvas = self.canvas_elem.TKCanvas
         self.fig_agg = None
 
         self.update_pars()
-        self.layout=1
+        self.layout = 1
+
     def evaluate(self):
         event, values = self.window.read(timeout=0)
         if event is None:
             self.window.close()
             return False
-        elif event=='Choose' :
+        elif event == 'Choose':
             self.window[f'-COL2-'].update(visible=False)
             self.window[f'-COL1-'].update(visible=True)
             self.layout = 1
-        elif event=='Ok' :
+        elif event == 'Ok':
             self.window[f'-COL1-'].update(visible=False)
             self.window[f'-COL2-'].update(visible=True)
-            pars=[p for p in self.available_pars if values[f'k_{p}']]
-            self.par_shorts=par_db.loc[par_db['par'].isin(pars)].index.tolist()
+            pars = [p for p in self.available_pars if values[f'k_{p}']]
+            self.par_shorts = par_db.loc[par_db['par'].isin(pars)].index.tolist()
             self.update_pars()
             self.layout = 2
 
 
 
-        elif event=='Cancel' :
+        elif event == 'Cancel':
             self.window[f'-COL1-'].update(visible=False)
             self.window[f'-COL2-'].update(visible=True)
             self.layout = 2
 
-        if self.layout==2 and self.Npars>0:
+        if self.layout == 2 and self.Npars > 0:
             secs = values['-SLIDER-TIME-']
             Nticks = int(secs / self.dt)  # draw this many data points (on next line)
             t = self.agent.model.Nticks * self.dt
@@ -624,7 +590,8 @@ class DynamicGraph:
 
     def update_pars(self):
         self.pars, self.sim_symbols, self.exp_symbols, self.units, self.ylims, self.par_collects = [
-            par_db[['par', 'symbol', 'exp_symbol', 'unit', 'lim', 'collect']].loc[self.par_shorts].values[:, k].tolist() for k in
+            par_db[['par', 'symbol', 'exp_symbol', 'unit', 'lim', 'collect']].loc[self.par_shorts].values[:, k].tolist()
+            for k in
             range(6)]
 
         self.Npars = len(self.pars)
@@ -636,18 +603,19 @@ class DynamicGraph:
         else:
             self.axs = [axs]
         Nticks = int(self.init_dur / self.dt)
-        for i, (ax, p, l, u, lim, p_col) in enumerate(zip(self.axs, self.pars, self.sim_symbols, self.units, self.ylims, self.par_collects)):
-            if hasattr(self.agent, p_col) :
-                p0=p_col
-            else :
-                p0=p
+        for i, (ax, p, l, u, lim, p_col) in enumerate(
+                zip(self.axs, self.pars, self.sim_symbols, self.units, self.ylims, self.par_collects)):
+            if hasattr(self.agent, p_col):
+                p0 = p_col
+            else:
+                p0 = p
             self.yranges[p0] = np.ones(Nticks) * np.nan
             ax.grid()
             ax.plot(range(Nticks), self.yranges[p0], color='black', label=l)
             ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
             ax.legend(loc='upper right')
             ax.set_ylabel(u, fontsize=10)
-            if lim is not None :
+            if lim is not None:
                 ax.set_ylim(lim)
             ax.tick_params(axis='y', which='major', labelsize=10)
             if i == self.Npars - 1:
@@ -657,5 +625,3 @@ class DynamicGraph:
         if self.fig_agg:
             delete_figure_agg(self.fig_agg)
         self.fig_agg = draw_canvas(self.canvas, self.fig)
-
-

@@ -8,16 +8,18 @@ import matplotlib
 import inspect
 from tkinter import *
 from typing import List, Tuple
-from lib.stor import paths
-from lib.stor.datagroup import saveSimConf, loadSimConfDict, loadSimConf, deleteSimConf
 
 sys.path.insert(0, '..')
+from lib.stor import paths
+from lib.stor.datagroup import saveSimConf, loadSimConfDict, loadSimConf, deleteSimConf
+from lib.aux import functions as fun
+
 from lib.aux.collecting import effector_collection
 from lib.conf import exp_types, default_sim, mock_larva, box2d_space, larva_place_modes, \
     food_place_modes, pref_exp_np, agent_pars, mock_env, mesa_space, base_food_pars, food_distro_pars
-from lib.sim.gui_lib import gui_table, SectionDict, bool_button, Collapsible, \
+from lib.sim.gui_lib import gui_table, SectionDict, named_bool_button, Collapsible, \
     set_kwargs, on_image, off_image, SYMBOL_UP, SYMBOL_DOWN, button_kwargs, header_kwargs, \
-    text_kwargs, on_image_disabled, retrieve_value, draw_canvas, delete_figure_agg, CollapsibleDict
+    text_kwargs, on_image_disabled, retrieve_value, draw_canvas, delete_figure_agg, CollapsibleDict, named_list_layout
 from lib.sim.single_run import run_sim, next_idx, configure_sim
 from lib.anal.plotting import *
 from lib.stor.larva_dataset import LarvaDataset
@@ -103,7 +105,7 @@ def update_func(window, values, func, func_kwargs, graph_dict):
     return func, func_kwargs
 
 
-def update_model(larva_model, window, collapsibles, sectiondicts):
+def update_model(larva_model, window, collapsibles):
     for name, dict in zip(['PHYSICS', 'ENERGETICS', 'BODY'],
                           [larva_model['sensorimotor_params'], larva_model['energetics_params'],
                            larva_model['body_params']]):
@@ -117,7 +119,7 @@ def update_model(larva_model, window, collapsibles, sectiondicts):
     collapsibles['BRAIN'].update(window, module_dict_upper, use_prefix=False)
 
 
-def update_environment(env_params, window, collapsibles, sectiondicts, food_list, border_list):
+def update_environment(env_params, window, collapsibles, food_list, border_list):
     # arena_params = env_params['arena_params']
     # for k, v in arena_params.items():
     #     window.Element(k).Update(value=v)
@@ -136,7 +138,7 @@ def update_environment(env_params, window, collapsibles, sectiondicts, food_list
         border_list = {}
     return food_list, border_list
 
-def init_model(larva_model, collapsibles={}, sectiondicts={}):
+def init_model(larva_model, collapsibles={}):
     # update_window_from_dict(model['sensorimotor_params'], window)
     # window = collapsibles['ENERGETICS'].update(model['energetics_params'], window)
     # window = collapsibles['BODY'].update(model['body_params'], window)
@@ -150,11 +152,7 @@ def init_model(larva_model, collapsibles={}, sectiondicts={}):
     for k, v in larva_model['neural_params']['modules'].items():
         s = CollapsibleDict(k.upper(), False, dict=larva_model['neural_params'][f'{k}_params'],
                             dict_name=k.upper(), toggle=v)
-        # s = CollapsibleDict(k.upper(), False, dict=larva_model['neural_params'][f'{k}_params'],
-        #                     dict_name=k, toggle=v)
         collapsibles[s.name] = s
-        # print('k')
-        # sectiondicts[d.name] = d
         module_conf.append(s.get_section())
     collapsibles['BRAIN'] = Collapsible('BRAIN', True, module_conf)
     brain_layout = sg.Col([collapsibles['BRAIN'].get_section()])
@@ -168,7 +166,7 @@ def init_model(larva_model, collapsibles={}, sectiondicts={}):
     return [collapsibles['MODEL'].get_section()]
 
 
-def init_environment(env_params, collapsibles={}, sectiondicts={}):
+def init_environment(env_params, collapsibles={}):
     collapsibles['ARENA'] = CollapsibleDict('ARENA', True, dict=env_params['arena_params'])
 
     # larva_place_conf = [
@@ -185,19 +183,18 @@ def init_environment(env_params, collapsibles={}, sectiondicts={}):
 
     food_pars=env_params['food_params']
 
-    temp = CollapsibleDict('FOOD_DISTRIBUTION', True, dict=food_pars['food_distro'], toggle=True,
-                                                    # type_dict=food_distro_pars,
-                           disabled=False)
+    temp = CollapsibleDict('FOOD_DISTRIBUTION', True, dict=food_pars['food_distro'],
+                           disp_name='distribution', toggle=True,disabled=False)
     collapsibles.update(temp.get_subdicts())
 
 
-    collapsibles['FOOD_GRID'] = CollapsibleDict('FOOD_GRID', True, dict=food_pars['food_grid'], toggle=True,
-                                                    disabled=False)
+    collapsibles['FOOD_GRID'] = CollapsibleDict('FOOD_GRID', True, dict=food_pars['food_grid'],
+                                                disp_name='grid', toggle=True,disabled=False)
 
     food_conf = [
         collapsibles['FOOD_DISTRIBUTION'].get_section(),
         collapsibles['FOOD_GRID'].get_section(),
-        [sg.Button('Food list', **button_kwargs)]
+        [sg.Text('list:', **text_kwargs),sg.Button('Food list', **button_kwargs)]
     ]
 
     odor_conf = [
@@ -219,19 +216,17 @@ def init_environment(env_params, collapsibles={}, sectiondicts={}):
     return collapsibles['ENVIRONMENT'].get_section()
 
 
-def update_sim(window, values, collapsibles, sectiondicts, output_keys, food_list, border_list):
+def update_sim(window, values, collapsibles,output_keys, food_list, border_list):
     if values['EXP'] != '':
         exp = values['EXP']
         exp_conf = copy.deepcopy(exp_types[exp])
-        update_model(exp_conf['fly_params'], window, collapsibles, sectiondicts)
-
-        food_list, border_list = update_environment(exp_conf['env_params'], window, collapsibles, sectiondicts,
+        update_model(exp_conf['fly_params'], window, collapsibles,)
+        food_list, border_list = update_environment(exp_conf['env_params'], window, collapsibles,
                                                     food_list, border_list)
 
 
         output_dict = {}
         for k in output_keys:
-
             if k in exp_conf['collections']:
                 output_dict[k] = True
             else:
@@ -301,63 +296,48 @@ def build_simulation_tab():
     larva_model = copy.deepcopy(mock_larva)
     env_params = copy.deepcopy(mock_env)
     food_list = env_params['food_params']['food_list']
-    border_list = []
+    border_list = {}
 
     module_dict = larva_model['neural_params']['modules']
     module_keys = list(module_dict.keys())
 
     collapsibles = {}
-    sectiondicts = {}
 
-    exp_layout = [sg.Col([
-        [sg.Text('Experiment:', **header_kwargs),
-         sg.Combo(list(exp_types.keys()), key='EXP', enable_events=True, readonly=True, **text_kwargs)],
+    l_exp = [sg.Col([
+        named_list_layout(text='Experiment:', key='EXP', choices=list(exp_types.keys())),
         [sg.Button('Load', **button_kwargs), sg.Button('Configure', **button_kwargs),
          sg.Button('Run', **button_kwargs)]
     ])]
-
-    saved_conf_layout = [sg.Col([
-        [sg.Text('Environment:', **header_kwargs),
-         sg.Combo(list(loadSimConfDict().keys()), key='SAVED_CONF', enable_events=True, readonly=True,**text_kwargs)],
-        [sg.Button('Use', **button_kwargs), sg.Button('Delete', **button_kwargs)]
-    ])]
-
     output_keys = list(effector_collection.keys())
     output_dict = dict(zip(output_keys, [False] * len(output_keys)))
-    # output_dict=dict(zip([f'collect_{k}' for k in output_keys], [False]*len(output_keys)))
-    # sectiondicts['OUTPUT'] = SectionDict('OUTPUT', output_dict)
     collapsibles['OUTPUT'] = CollapsibleDict('OUTPUT', True, dict=output_dict)
 
     sim_conf = [[sg.Text('Sim id:', **text_kwargs), sg.In('unnamed_sim', key='sim_id', **text_kwargs)],
                 [sg.Text('Path:', **text_kwargs), sg.In('single_runs', key='path', **text_kwargs)],
                 [sg.Text('Duration (min):', **text_kwargs), sg.In(3, key='sim_dur', **text_kwargs)],
                 [sg.Text('Timestep (sec):', **text_kwargs), sg.In(0.1, key='dt', **text_kwargs)],
-                bool_button('Box2D', False),
+                named_bool_button('Box2D', False),
                 collapsibles['OUTPUT'].get_section()
                 ]
 
     collapsibles['CONFIGURATION'] = Collapsible('CONFIGURATION', True, sim_conf)
 
-    global_conf_layout = collapsibles['CONFIGURATION'].get_section()
+    l_conf1 = collapsibles['CONFIGURATION'].get_section()
 
-    conf_layout = [[sg.Col([exp_layout, global_conf_layout])]]
-    # conf_layout = [[sg.Col([exp_layout, saved_conf_layout, global_conf_layout])]]
+    l_conf = [[sg.Col([l_exp, l_conf1])]]
 
-    model_layout = init_model(larva_model, collapsibles, sectiondicts)
+    l_mod = init_model(larva_model, collapsibles)
 
-    env_layout = init_environment(env_params, collapsibles, sectiondicts)
-    env_layout = [[sg.Col([saved_conf_layout, env_layout])]]
-    # env_layout = init_environment(env_params, collapsibles, sectiondicts)
+    l_env0 = [sg.Col([
+        [sg.Text('Environment:', **header_kwargs),
+         sg.Combo(list(loadSimConfDict().keys()), key='SAVED_CONF', enable_events=True, readonly=True,**text_kwargs)],
+        [sg.Button('Use', **button_kwargs), sg.Button('Delete', **button_kwargs)]
+    ])]
+    l_env1 = init_environment(env_params, collapsibles)
+    l_env = [[sg.Col([l_env0, l_env1])]]
 
-    simulation_layout = [
-        [
-            sg.Col(conf_layout),
-            sg.Col(env_layout),
-            sg.Col(model_layout)
-
-        ]
-    ]
-    return simulation_layout, sim_datasets, collapsibles, module_keys, sectiondicts, output_keys, food_list, border_list
+    l_sim = [[sg.Col(l_conf),sg.Col(l_env),sg.Col(l_mod)]]
+    return l_sim, sim_datasets, collapsibles, module_keys, output_keys, food_list, border_list
 
 
 def build_model_tab():
@@ -400,7 +380,7 @@ def eval_model(event, values, window):
     return window
 
 
-def get_model(window, values, module_keys, sectiondicts, collapsibles, base_model):
+def get_model(window, values, module_keys, collapsibles, base_model):
     module_dict = dict(zip(module_keys, [window[f'TOGGLE_{k.upper()}'].metadata.state for k in module_keys]))
     base_model['neural_params']['modules'] = module_dict
 
@@ -419,7 +399,7 @@ def get_model(window, values, module_keys, sectiondicts, collapsibles, base_mode
     return base_model
 
 
-def get_environment(window, values, module_keys, sectiondicts, collapsibles, base_environment, food_list, border_list):
+def get_environment(window, values, module_keys, collapsibles, base_environment, food_list, border_list):
     base_environment['place_params']=collapsibles['LARVA_DISTRIBUTION'].get_dict(values, window)
     base_environment['food_params']['food_distro']=collapsibles['FOOD_DISTRIBUTION'].get_dict(values, window)
     base_environment['food_params']['food_grid']=collapsibles['FOOD_GRID'].get_dict(values, window)
@@ -430,7 +410,7 @@ def get_environment(window, values, module_keys, sectiondicts, collapsibles, bas
     return base_environment
 
 
-def get_sim_config(window, values, module_keys, sectiondicts, collapsibles, output_keys, food_list, border_list):
+def get_sim_config(window, values, module_keys, collapsibles, output_keys, food_list, border_list):
     exp = values['EXP']
     exp_conf = copy.deepcopy(exp_types[exp])
 
@@ -444,11 +424,10 @@ def get_sim_config(window, values, module_keys, sectiondicts, collapsibles, outp
     temp=collapsibles['OUTPUT'].get_dict(values,window)
     exp_conf['collections'] = [k for k in output_keys if temp[k]]
 
-    env_params = get_environment(window, values, module_keys, sectiondicts, collapsibles, exp_conf['env_params'],
+    env_params = get_environment(window, values, module_keys, collapsibles, exp_conf['env_params'],
                                  food_list, border_list)
 
-    fly_params = get_model(window, values, module_keys, sectiondicts, collapsibles, exp_conf['fly_params'])
-
+    fly_params = get_model(window, values, module_keys, collapsibles, exp_conf['fly_params'])
     sim_config = {
                   'enrich': True,
                   'experiment': exp,
@@ -459,9 +438,8 @@ def get_sim_config(window, values, module_keys, sectiondicts, collapsibles, outp
     return sim_config
 
 
-def eval_simulation(event, values, window, sim_datasets, collapsibles, module_keys, sectiondicts, output_keys,
+def eval_simulation(event, values, window, sim_datasets, collapsibles, module_keys, output_keys,
                     food_list, border_list):
-    # print(list(collapsibles.keys()))
     if event.startswith('OPEN SEC'):
         sec_name = event.split()[-1]
         if collapsibles[sec_name].state is not None:
@@ -469,7 +447,7 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
             window[event].update(SYMBOL_DOWN if collapsibles[sec_name].state else SYMBOL_UP)
             window[f'SEC {sec_name}'].update(visible=collapsibles[sec_name].state)
     elif event == 'Load':
-        food_list, border_list = update_sim(window, values, collapsibles, sectiondicts, output_keys, food_list,
+        food_list, border_list = update_sim(window, values, collapsibles, output_keys, food_list,
                                             border_list)
     elif event == 'Delete':
         if values['SAVED_CONF'] != '':
@@ -485,18 +463,17 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
             window['TOGGLE_Box2D'].metadata.state = conf['Box2D']
             window['TOGGLE_Box2D'].update(image_data=on_image if window['TOGGLE_Box2D'].metadata.state else off_image)
     elif 'TOGGLE' in event:
-        # print(event)
         if window[event].metadata.state is not None:
             window[event].metadata.state = not window[event].metadata.state
             window[event].update(image_data=on_image if window[event].metadata.state else off_image)
     elif event == 'Food list':
-        food_list = gui_table(food_list, agent_pars['Food'])
-        # update_food_placement(window, food_list, collapsibles, place_params=None)
+        t0=fun.agent_dict2list(food_list)
+        t1 = gui_table(t0, agent_pars['Food'])
+        food_list=fun.agent_list2dict(t1)
 
     elif event == 'Configure':
         if values['EXP'] != '':
-            sim_config = get_sim_config(window, values, module_keys, sectiondicts, collapsibles, output_keys, food_list,
-                                        border_list)
+            sim_config = get_sim_config(window, values, module_keys, collapsibles, output_keys, food_list,border_list)
             new_food_list, new_border_list = configure_sim(
                 fly_params=sim_config['fly_params'],
                 env_params=sim_config['env_params'])
@@ -506,165 +483,62 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
             if e == 'Ok':
                 food_list = new_food_list
                 border_list = new_border_list
-                # update_food_placement(window, food_list, collapsibles, place_params=None)
             elif e == 'Store' and v['CONF_ID'] != '':
                 food_list = new_food_list
                 border_list = new_border_list
-                # update_food_placement(window, food_list, collapsibles, place_params=None)
                 conf = {
                     'food_list': food_list,
                     'border_list': border_list,
-                    'arena_params': sectiondicts['ARENA'].get_dict(values, window),
+                    'arena_params': collapsibles['ARENA'].get_dict(values, window),
                     'Box2D': window['TOGGLE_Box2D'].metadata.state,
                 }
                 conf_id = v['CONF_ID']
                 saveSimConf(conf, conf_id)
                 window['SAVED_CONF'].update(values=list(loadSimConfDict().keys()))
 
-
     elif event == 'Run':
         if values['EXP'] != '':
-            sim_config = get_sim_config(window, values, module_keys, sectiondicts, collapsibles, output_keys, food_list,
-                                        border_list)
+            sim_config = get_sim_config(window, values, module_keys, collapsibles, output_keys, food_list,border_list)
             vis_kwargs = {'mode': 'video'}
             d = run_sim(**sim_config, **vis_kwargs)
             if d is not None:
                 sim_datasets.append(d)
-    print(values)
     return food_list, border_list
 
-
-# -------------------------------- GUI Starts Here -------------------------------#
-# fig = your figure you want to display.  Assumption is that 'fig' holds the      #
-#       information to display.                                                   #
-# --------------------------------------------------------------------------------#
 sg.theme('LightGreen')
 
 
 def run_gui():
-    analysis_layout, graph_dict, data, func, func_kwargs, fig, save_to, save_as, figure_agg = build_analysis_tab()
-    # fig, save_to, save_as, figure_agg = None, '', '', None
-    # func, func_kwargs = None, {}
-    # data = {}
-    # data_list = [
-    #     [sg.Text('DATASETS', **header_kwargs)],
-    #     [sg.Listbox(values=[], change_submits=True, size=(20, len(data.keys())), key='DATASET_IDS')],
-    #     [sg.FolderBrowse(button_text='Add', initial_folder=SingleRunFolder, key='DATASET_DIR', change_submits=True,
-    #                      **button_kwargs)],
-    #     [sg.Button('Remove', **button_kwargs), sg.Button('Add ref', **button_kwargs),
-    #      sg.Button('Change ID', **button_kwargs)],
-    #     # [sg.Text(' ' * 12)]
-    # ]
-    #
-    # dim = 1000
-    # figure_w, figure_h = dim, dim
-    # graph_dict = {
-    #     'crawl_pars': plot_crawl_pars,
-    #     'angular_pars': plot_ang_pars,
-    #     'endpoint_params': plot_endpoint_params,
-    #     'stride_Dbend': plot_stride_Dbend,
-    #     'stride_Dorient': plot_stride_Dorient,
-    #     'interference': plot_interference,
-    #     'dispersion': plot_dispersion,
-    #     'stridesNpauses': plot_stridesNpauses,
-    #     'turn_duration': plot_turn_duration,
-    #     'turns': plot_turns,
-    #     'pathlength': plot_pathlength,
-    #     'food_amount': plot_food_amount,
-    #     'gut': plot_gut,
-    #     'barplot': barplot,
-    #     'deb': plot_debs,
-    # }
-    # graph_list = [
-    #     [sg.Text('GRAPHS', **header_kwargs)],
-    #     [sg.Listbox(values=list(graph_dict), change_submits=True, size=(20, len(list(graph_dict))), key='GRAPH_LIST')],
-    #     [sg.Button('Set args', **button_kwargs), sg.Button('Draw', **button_kwargs), sg.Button('Save', **button_kwargs)]]
-    #
-    # graph_code = sg.Col([[sg.MLine(size=(70, 30), key='GRAPH_CODE')]])
-    # graph_canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key='GRAPH_CANVAS')]])
-    # graph_instructions = sg.Col([[sg.Pane([graph_canvas, graph_code], size=(figure_w, figure_h))],
-    #                              [sg.Text('Grab square above and slide upwards to view source code for graph')]])
-    #
-    # analysis_layout = [
-    #     [sg.Col(data_list)],
-    #     [sg.Col(graph_list), graph_instructions]
-    # ]
-    # fig, save_to, save_as, figure_agg = None, '', '', None
-    # func, func_kwargs = None, {}
-    # data = {}
-    # data_list = [
-    #     [sg.Text('DATASETS', **header_kwargs)],
-    #     [sg.Listbox(values=[], change_submits=True, size=(20, len(data.keys())), key='DATASET_IDS')],
-    #     [sg.FolderBrowse(button_text='Add', initial_folder=SingleRunFolder, key='DATASET_DIR', change_submits=True,
-    #                      **button_kwargs)],
-    #     [sg.Button('Remove', **button_kwargs), sg.Button('Add ref', **button_kwargs),
-    #      sg.Button('Change ID', **button_kwargs)],
-    #     # [sg.Text(' ' * 12)]
-    # ]
-    #
-    # dim = 1000
-    # figure_w, figure_h = dim, dim
-    # graph_dict = {
-    #     'crawl_pars': plot_crawl_pars,
-    #     'angular_pars': plot_ang_pars,
-    #     'endpoint_params': plot_endpoint_params,
-    #     'stride_Dbend': plot_stride_Dbend,
-    #     'stride_Dorient': plot_stride_Dorient,
-    #     'interference': plot_interference,
-    #     'dispersion': plot_dispersion,
-    #     'stridesNpauses': plot_stridesNpauses,
-    #     'turn_duration': plot_turn_duration,
-    #     'turns': plot_turns,
-    #     'pathlength': plot_pathlength,
-    #     'food_amount': plot_food_amount,
-    #     'gut': plot_gut,
-    #     'barplot': barplot,
-    #     'deb': plot_debs,
-    # }
-    # graph_list = [
-    #     [sg.Text('GRAPHS', **header_kwargs)],
-    #     [sg.Listbox(values=list(graph_dict), change_submits=True, size=(20, len(list(graph_dict))), key='GRAPH_LIST')],
-    #     [sg.Button('Set args', **button_kwargs), sg.Button('Draw', **button_kwargs), sg.Button('Save', **button_kwargs)]]
-    #
-    # graph_code = sg.Col([[sg.MLine(size=(70, 30), key='GRAPH_CODE')]])
-    # graph_canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key='GRAPH_CANVAS')]])
-    # graph_instructions = sg.Col([[sg.Pane([graph_canvas, graph_code], size=(figure_w, figure_h))],
-    #                              [sg.Text('Grab square above and slide upwards to view source code for graph')]])
-    #
-    # analysis_layout = [
-    #     [sg.Col(data_list)],
-    #     [sg.Col(graph_list), graph_instructions]
-    # ]
-    simulation_layout, sim_datasets, collapsibles, module_keys, sectiondicts, output_keys, food_list, border_list = build_simulation_tab()
-    model_layout = build_model_tab()
+    l_anal, graph_dict, data, func, func_kwargs, fig, save_to, save_as, figure_agg = build_analysis_tab()
+    l_sim, sim_datasets, collapsibles, module_keys, output_keys, food_list, border_list = build_simulation_tab()
+    l_mod = build_model_tab()
 
-    layout = [
+    l_gui = [
         [sg.TabGroup([[
-            sg.Tab('Model', model_layout, background_color='darkseagreen', key='MODEL_TAB'),
-            sg.Tab('Simulation', simulation_layout, background_color='darkseagreen', key='SIMULATION_TAB'),
-            sg.Tab('Analysis', analysis_layout, background_color='darkseagreen', key='ANALYSIS_TAB')]],
+            sg.Tab('Model', l_mod, background_color='darkseagreen', key='MODEL_TAB'),
+            sg.Tab('Simulation', l_sim, background_color='darkseagreen', key='SIMULATION_TAB'),
+            sg.Tab('Analysis', l_anal, background_color='darkseagreen', key='ANALYSIS_TAB')]],
             key='ACTIVE_TAB', tab_location='top', selected_title_color='purple')]
     ]
 
-    window = sg.Window('Larvaworld gui', layout, resizable=True, finalize=True, size=(2000, 1200))
+    w = sg.Window('Larvaworld gui', l_gui, resizable=True, finalize=True, size=(2000, 1200))
 
     while True:
-        event, values = window.read()
-        if event in (None, 'Exit'):
+        e, v = w.read()
+        if e in (None, 'Exit'):
             break
-        tab = values['ACTIVE_TAB']
+        tab = v['ACTIVE_TAB']
         if tab == 'ANALYSIS_TAB':
-            window, func, func_kwargs, data, figure_agg, fig, save_to, save_as = eval_analysis(event, values, window,
+            w, func, func_kwargs, data, figure_agg, fig, save_to, save_as = eval_analysis(e, v, w,
                                                                                                func, func_kwargs, data,
                                                                                                figure_agg, fig, save_to,
                                                                                                save_as, graph_dict)
         elif tab == 'MODEL_TAB':
-            window = eval_model(event, values, window)
+            w = eval_model(e, v, w)
         elif tab == 'SIMULATION_TAB':
-            food_list, border_list = eval_simulation(event, values, window, sim_datasets, collapsibles, module_keys,
-                                                     sectiondicts,
+            food_list, border_list = eval_simulation(e, v, w, sim_datasets, collapsibles, module_keys,
                                                      output_keys, food_list, border_list)
-    window.close()
+    w.close()
 
 
 if __name__ == "__main__":
