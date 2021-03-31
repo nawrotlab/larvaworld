@@ -25,7 +25,7 @@ import lib.aux.functions as fun
 from lib.aux import naming as nam
 
 import lib.sim.gui_lib as gui
-from lib.conf.sim_modes import agent_pars
+from lib.conf.sim_modes import agent_pars, odor_gain_pars
 from lib.model import *
 
 
@@ -85,6 +85,7 @@ class LarvaWorld:
         self._screen = None
         self.mode = mode
         self.image_mode = image_mode
+        self.save_to = save_to
 
         os.makedirs(save_to, exist_ok=True)
         if media_name:
@@ -119,6 +120,7 @@ class LarvaWorld:
         self.larva_pars = fly_params
 
         self.snapshot_counter = 0
+        self.odorscape_counter = 0
         self.food_grid = None
 
         # Add mesa schecule to use datacollector class
@@ -429,7 +431,7 @@ class LarvaWorld:
             for i, p in enumerate(food_positions):
                 self.add_food(position=p, food_pars=pars)
         for id, f_pars in food_pars['food_list'].items():
-            # id = f['unique_id']
+            print(id, f_pars)
             position = f_pars['pos']
             # position = self.relative2space_pos(position)
             # f.pop('unique_id')
@@ -698,7 +700,12 @@ class LarvaWorld:
                     self._screen._image_writer = imageio.get_writer(record_image_to, mode='i')
                     self.toggle('snapshot #', self.snapshot_counter)
                     self.snapshot_counter += 1
-
+                elif event.key == pygame.K_o:
+                    # import imageio
+                    # record_image_to = f'{self.media_name}_{self.snapshot_counter}.png'
+                    self.plot_odorscape(save_to=self.save_to)
+                    self.toggle('odorscape #', self.odorscape_counter)
+                    self.odorscape_counter += 1
                 elif event.key == pygame.K_DELETE:
                     if gui.delete_objects_window(self.selected_agents):
                         for f in self.selected_agents:
@@ -709,6 +716,15 @@ class LarvaWorld:
                         sel = self.selected_agents[0]
                         if isinstance(sel, Larva):
                             self.dynamic_graphs.append(gui.DynamicGraph(agent=sel, available_pars=self.available_pars))
+                elif event.key == pygame.K_w:
+                    if len(self.selected_agents) > 0:
+                        sel = self.selected_agents[0]
+                        if isinstance(sel, LarvaSim):
+                            if sel.brain.olfactor is not None :
+                                odor_gains = sel.brain.olfactor.gain
+                                odor_gains = gui.set_kwargs(odor_gains, title='Odor gains')
+                                sel.brain.olfactor.gain=odor_gains
+
             if self.allow_clicks:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     self.mousebuttondown_pos = self._screen.get_mouse_position()
@@ -864,7 +880,8 @@ class LarvaWorld:
             'black_background',
             'larva_collisions',
             'zoom',
-            'snapshot #'
+            'snapshot #',
+            'odorscape #'
         ]
         for name in names:
             text = ren.InputBox(visible=False, text=name,
@@ -926,20 +943,7 @@ class LarvaWorldSim(LarvaWorld):
         self._place_food(env_pars['food_params'])
         self.create_larvae(place_pars=env_pars['place_params'],
                            larva_pars=larva_pars, parameter_dict=parameter_dict)
-        # odor_params = environment_params['odor_params']
         self.Nodors, self.odor_layers = self._create_odor_layers()
-        # self.Nodors, self.odor_layers = self._create_odor_layers(odor_pars=env_pars['odor_params'])
-
-
-
-        # agents=self.get_flies()+self.get_food()
-        # for odor_id, odor_layer in self.odor_layers.items() :
-        #     odor_layer.sources=[f for f in agents if f.get_odor_id() == odor_id]
-        #     for f in odor_layer.sources:
-        #         f.set_default_color(odor_layer.color)
-
-
-
 
 
     def prepare_flies(self, timesteps):
@@ -974,9 +978,9 @@ class LarvaWorldSim(LarvaWorld):
         # raise ValueError
 
     def prepare_odor_layer(self, timesteps):
-        if self.odor_layers:
-            for i in range(timesteps):
-                self.odor_layers.update_values()  # Currently doing something only for the DiffusionValueLayer
+        for i in range(timesteps):
+            for id, layer in self.odor_layers.items() :
+                layer.update_values()  # Currently doing something only for the DiffusionValueLayer
 
     def _create_food_grid(self, space_range, food_pars):
         if food_pars and 'food_grid_dims' in food_pars:
@@ -1183,9 +1187,8 @@ class LarvaWorldSim(LarvaWorld):
                     self.food_grid.reset()
 
         # Update value_layers
-        if self.odor_layers:
-            for layer_id in self.odor_layers:
-                self.odor_layers[layer_id].update_values()  # Currently doing something only for the DiffusionValueLayer
+        for id, layer in self.odor_layers.items():
+            layer.update_values()  # Currently doing something only for the DiffusionValueLayer
 
         if not self.larva_collisions:
             self.larva_bodies = self.get_larva_bodies()
@@ -1205,9 +1208,8 @@ class LarvaWorldSim(LarvaWorld):
         # self.table_collector.add_table_row(table_name='Torque', )
 
     def mock_step(self):
-        if self.odor_layers:
-            for layer_id in self.odor_layers:
-                self.odor_layers[layer_id].update_values()  # Currently doing something only for the DiffusionValueLayer
+        for id, layer in self.odor_layers.items():
+            layer.update_values()  # Currently doing something only for the DiffusionValueLayer
         for i, g in enumerate(self.get_flies()):
             if np.random.choice([0, 1]) == 0:
                 # p,o=g.get_midpoint_position()
@@ -1227,28 +1229,30 @@ class LarvaWorldSim(LarvaWorld):
     def space_to_mm(self, array):
         return array * 1000 / self.scaling_factor
 
-    def plot_odorscape(self, title=False, save_to=None):
+    def plot_odorscape(self, save_to=None):
         from lib.anal.plotting import plot_surface
         radx = self.space_dims[0] / 2
         rady = self.space_dims[1] / 2
         delta = np.min([radx, rady]) / 50
-        x = np.arange(-radx, radx, delta)
-        y = np.arange(-rady, rady, delta)
-        X, Y = np.meshgrid(x, y)
+        x0 = np.arange(-radx, radx, delta)
+        y0 = np.arange(-rady, rady, delta)
+        X, Y = np.meshgrid(x0, y0)
+        x = self.space_to_mm(X)
+        y = self.space_to_mm(Y)
 
         @np.vectorize
         def func(a, b):
             v = layer.get_value((a, b))
             return v
 
-        for layer_id in self.odor_layers:
-            layer = self.odor_layers[layer_id]
+        for id, layer in self.odor_layers.items():
+            title=f'{id} odorscape'
             V = func(X, Y)
-            num_sources = layer.get_num_sources()
-            name = f'{layer_id} odorscape'
-            plot_surface(x=self.space_to_mm(X), y=self.space_to_mm(Y), z=V,
+            # num_sources = layer.get_num_sources()
+            # name = f'{id} odorscape'
+            plot_surface(x=x, y=y, z=V,
                          labels=[r'x $(mm)$', r'y $(mm)$', r'concentration $(μM)$'], title=title,
-                         save_to=save_to, save_as=f'{layer_id}_odorscape')
+                         save_to=save_to, save_as=f'{id}_odorscape_{self.odorscape_counter}')
         # plt.figure()
         # CS = plt.contour(X, Y, V)
         # plt.clabel(CS, inline=1, fontsize=10)

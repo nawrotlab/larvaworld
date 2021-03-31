@@ -213,14 +213,14 @@ def brain_olfactor_conf(ids, means, stds=None, noise=0.0):
 
 
 def odor_larva_conf(ids, means, stds=None, noise=0.0,
-                    odor_id=None, odor_intensity=0.0
+                    odor_id=None, odor_intensity=0.0, odor_spread=0.0001
                     ):
     return {'energetics_params': None,
             'neural_params': brain_olfactor_conf(ids, means, stds, noise),
             'sensorimotor_params': default_physics,
             'body_params': sample_l3_seg2,
             # 'odor_params': None,
-            'odor_params': odor(odor_id, odor_intensity)
+            'odor_params': odor(odor_id, odor_intensity, odor_spread)
             }
 
 
@@ -441,12 +441,12 @@ flag_larva_L = {**odor_larva_conf(ids=odors3, means=[100, 0, 0]),
 flag_larva_R = {**odor_larva_conf(ids=odors3, means=[100, 0, 0]),
                 'id_prefix': 'Right'}
 
-king_larva_L = {**odor_larva_conf(ids=odors5, means=[100, 0, -50, 0, 0],
-                                  odor_id='Left group odor', odor_intensity=2.0
+king_larva_L = {**odor_larva_conf(ids=odors5, means=[100, 0, 0, 0, 0],
+                                  odor_id='Left group odor', odor_intensity=2.0, odor_spread=0.00005
                                   ),
                 'id_prefix': 'Left'}
 
-king_larva_R = {**odor_larva_conf(ids=odors5, means=[100, -50, 0, 0, 0],
-                                  odor_id='Right group odor', odor_intensity=2.0
+king_larva_R = {**odor_larva_conf(ids=odors5, means=[100, 0, 0, 0, 0],
+                                  odor_id='Right group odor', odor_intensity=2.0, odor_spread=0.00005
                                   ),
                 'id_prefix': 'Right'}

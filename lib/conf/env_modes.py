@@ -143,7 +143,7 @@ def game_conf(dim=0.1, N=10, x=0.8, y=0.0, scale=0.03):
     x0, y0 = x * dim / 2, y * dim / 2
     return {'arena_params': arena(dim, dim),
             'food_params': food_param_conf(list={
-                **odor_source('Flag', can_be_carried=True),
+                **odor_source('Flag', odor_intensity=8, odor_spread=0.0004, can_be_carried=True),
                 **odor_source('Left base', (-x0, y0)),
                 **odor_source('Right base', (+x0, y0))}),
             'place_params': {
@@ -154,7 +154,7 @@ def game_conf(dim=0.1, N=10, x=0.8, y=0.0, scale=0.03):
             }
 
 
-game_exp = game_conf()
+game_env = game_conf()
 
 
 def maze_conf(N, n):
@@ -170,69 +170,69 @@ def maze_conf(N, n):
     return conf
 
 
-pref_exp_np = {'arena_params': dish(0.1),
+pref_env = {'arena_params': dish(0.1),
                'food_params': food_param_conf(list=CS_UCS_odors),
                'place_params': larva_distro(25),
                'odor_params': gaussian_odor()}
 
-chemotax_exp_np = {'arena_params': arena(0.1, 0.06),
+chemotax_env = {'arena_params': arena(0.1, 0.06),
                    'food_params': food_param_conf(list={**odor_source(id='Odor source', pos=(0.04, 0.0),
                                                                       odor_id='Odor', odor_intensity=8,
                                                                       odor_spread=0.0004)}),
                    'place_params': larva_distro(30, mode='facing_right', loc=(-0.8, 0.0), scale=0.05),
                    'odor_params': gaussian_odor()}
 
-chemorbit_exp_np = {'arena_params': arena(0.1, 0.06),
+chemorbit_env = {'arena_params': arena(0.1, 0.06),
                     'food_params': food_param_conf(list={**odor_source(id='Odor source', odor_id='Odor')}),
                     'place_params': larva_distro(30, scale=0.0),
                     'odor_params': gaussian_odor()
-                    }
+                 }
 
-maze_exp_np = maze_conf(1, 15)
+maze_env = maze_conf(1, 15)
 
-disp_exp_np = {'arena_params': dish(0.2),
+dispersion_env = {'arena_params': dish(0.2),
                'food_params': food_param_conf(),
                'place_params': larva_distro(30, scale=0.0),
                'odor_params': None}
 
-dish_exp_np = {'arena_params': dish(0.15),
+dish_env = {'arena_params': dish(0.15),
                'food_params': food_param_conf(),
                'place_params': larva_distro(25),
                'odor_params': None}
 
-reorientation_exp_np = {'arena_params': dish(0.1),
+reorientation_env = {'arena_params': dish(0.1),
                         'food_params': food_param_conf(list={**odor_source(id='Odor source', odor_id='Odor')}),
                         'place_params': larva_distro(200, 'uniform_circ', scale=None),
                         'odor_params': gaussian_odor()}
 
-imitation_exp_p = {'arena_params': dish(0.15),
+imitation_env_p = {'arena_params': dish(0.15),
                    'food_params': food_param_conf(),
                    'place_params': larva_distro(25),
                    'odor_params': None}
 
-focus_exp_np = {'arena_params': dish(0.02),
+focus_env = {'arena_params': dish(0.02),
                 'food_params': food_param_conf(),
                 'place_params': larva_distro(1, 'normal', scale=0.3, orientation=np.pi / 2),
                 'odor_params': None}
 
-feed_grid_exp_np = {'arena_params': arena(0.05, 0.05),
-                    'food_params': food_param_conf(grid=food_grid(50)),
-                    'place_params': larva_distro(1),
-                    'odor_params': None}
+# feed_grid_env = {'arena_params': arena(0.05, 0.05),
+#                     'food_params': food_param_conf(grid=food_grid(50)),
+#                     'place_params': larva_distro(1),
+#                     'odor_params': None}
 
-feed_scatter_exp_np = {'arena_params': arena(0.05, 0.05),
+uniform_food_env = {'arena_params': arena(0.05, 0.05),
                        'food_params': food_param_conf(distro=food_distro(10000, 'uniform', None, None, food(0.0003,**odor()))),
                        'place_params': larva_distro(20, scale=0.3),
                        'odor_params': None}
 
-feed_patchy_exp_np = {'arena_params': arena(0.2, 0.2),
+patchy_food_env = {'arena_params': arena(0.2, 0.2),
                       'food_params': food_param_conf(distro=food_distro(8, 'circle', None, 0.7,
                                                      food(0.0025, amount=0.001, odor_id='Odor', odor_intensity=8,
                                                           odor_spread=0.0004))),
                       'place_params': larva_distro(20),
                       'odor_params': gaussian_odor()}
 
-growth_exp_np = {'arena_params': arena(0.015, 0.015),  # dish(0.006),
+food_grid_env = {'arena_params': arena(0.03, 0.03),  # dish(0.006),
                  'food_params': food_param_conf(grid=food_grid(50, 10 ** -3)),
                  'place_params': larva_distro(1),
                  'odor_params': None}

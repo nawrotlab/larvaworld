@@ -1368,10 +1368,9 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
 
 
 def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=None, pref=None):
-    # print(z0)
-    fig = plt.figure(figsize=(10, 5))
+    fig = plt.figure(figsize=(20, 10))
     if title is not None:
-        fig.suptitle(title, fontsize=20)
+        fig.suptitle(title)
     # ax = fig.gca(projection='3d')
     # ax = fig.add_subplot(111, projection='3d')
     ax = Axes3D(fig)
@@ -1381,12 +1380,13 @@ def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=Non
                     antialiased=True)
     if z0 is not None:
         ax.plot_surface(x, y, np.ones(x.shape) * z0, alpha=0.5)
-    ax.set_xlabel(labels[0], fontsize=10)
-    ax.set_ylabel(labels[1], fontsize=10)
-    ax.set_zlabel(labels[2], fontsize=10)
+    ax.set_xlabel(labels[0])
+    ax.set_ylabel(labels[1])
+    ax.set_zlabel(labels[2])
 
     ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
     ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
+    ax.zaxis.set_major_locator(ticker.MaxNLocator(5))
 
     if save_to is not None:
         os.makedirs(save_to, exist_ok=True)
@@ -1396,7 +1396,7 @@ def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=Non
                 save_as = f'{pref}_{save_as}'
         filepath = os.path.join(save_to, save_as)
         fig.savefig(filepath, dpi=300)
-        print(f'Surface saved as {filepath}')
+        print(f'Surface saved as {save_as}')
     return ax
 
 

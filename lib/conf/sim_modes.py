@@ -36,14 +36,14 @@ default_sim = {
     # 'dt': 1 / 16,
     # 'dt': 1 / 200,
     'sim_time_in_min': 3.0,
-    'Box2D' : False,
+    'Box2D': False,
 }
 
-odor_pars={'odor_id': str,
-    'odor_intensity': float,
-    'odor_spread': float}
+odor_pars = {'odor_id': str,
+             'odor_intensity': float,
+             'odor_spread': float}
 
-base_food_pars={
+base_food_pars = {
     'radius': float,
     'amount': float,
     'quality': float,
@@ -59,8 +59,10 @@ food_pars = {
 odor_gain_pars = {
     'unique_id': str,
     'mean': float,
-    'std' : float
+    'std': float
 }
+
+
 
 larva_pars = {
     'unique_id': str,
@@ -72,13 +74,13 @@ border_pars = {
     'points': List[Tuple[float, float]]
 }
 
-agent_pars = {'Food' : food_pars,
-              'LarvaSim' : larva_pars,
-              'LarvaReplay' : larva_pars,
-              'Border' : border_pars,
+agent_pars = {'Food': food_pars,
+              'LarvaSim': larva_pars,
+              'LarvaReplay': larva_pars,
+              'Border': border_pars,
               }
 
-food_distro_pars={
+food_distro_pars = {
     'N': int,
     'mode': str,
     'loc': Tuple[float, float],
