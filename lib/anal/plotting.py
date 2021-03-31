@@ -1,32 +1,27 @@
 import heapq
 import itertools
-import os
-import warnings
 
 import matplotlib.patches as mpatches
-import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib import cm, pyplot as plt, gridspec, transforms, ticker, patches
+from matplotlib import cm, transforms, ticker, patches
 from matplotlib.patches import Wedge
-from matplotlib.ticker import FormatStrFormatter, ScalarFormatter
+from matplotlib.ticker import ScalarFormatter
 from mpl_toolkits.mplot3d import Axes3D
 from scipy import signal
 from scipy import stats
 from scipy.interpolate import griddata
 from scipy.signal import butter, sosfiltfilt
-from scipy.stats import ttest_ind
 from sklearn.linear_model import LinearRegression
 import powerlaw as pow
 
 from PIL import Image
 
-from lib.aux import naming as nam
 from lib.anal.fitting import *
-from lib.aux.functions import weib, flatten_list
+from lib.aux.functions import weib, flatten_list, N_colors
 from lib.anal.combining import combine_images, combine_pdfs
 
-from lib.stor.paths import DebFolder, SingleRunFolder
+from lib.stor.paths import DebFolder
 from lib.conf.par_db import par_db
 
 '''
@@ -1964,7 +1959,7 @@ def plot_interference(datasets, labels, mode='orientation', agent_idx=None,
         else:
             save_as = f'interference_{mode}_agent_idx_{agent_idx}.{suf}'
 
-    # if agent_id is not None and Ndatasets != 1:
+    # if agent_id is not None and N != 1:
     #     raise ValueError('Individual larva data can be plotted only when a single dataset is provided.')
 
     par_shorts = ['sv']
@@ -2975,21 +2970,6 @@ def plot_turns(datasets, labels, save_to=None, return_fig=False):
     return process_plot(fig, save_to, filename, return_fig)
 
 
-def Ndataset_colors(Ndatasets):
-    if Ndatasets == 1:
-        colors = ['blue']
-    elif Ndatasets == 2:
-        colors = ['red', 'blue']
-    elif Ndatasets == 3:
-        colors = ['green', 'blue', 'red']
-    elif Ndatasets == 4:
-        colors = ['red', 'blue', 'darkred', 'darkblue']
-    else:
-        colormap = cm.get_cmap('brg')
-        colors = [colormap(i) for i in np.linspace(0, 1, Ndatasets)]
-    return colors
-
-
 def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
     warnings.filterwarnings('ignore')
     Ndatasets = len(datasets)
@@ -3059,7 +3039,7 @@ def plot_config(datasets, labels, save_to, subfolder=None):
     Ndatasets = len(datasets)
     if Ndatasets != len(labels):
         raise ValueError('Number of labels does not much number of datasets')
-    colors = Ndataset_colors(Ndatasets)
+    colors = N_colors(Ndatasets)
     if save_to is None:
         save_to = datasets[0].comp_plot_dir
     if subfolder is not None:
@@ -3178,7 +3158,7 @@ def barplot(datasets, labels, par_shorts=['f_am'], coupled_labels=None, xlabel=N
     if coupled_labels is not None:
         Npairs = len(coupled_labels)
         N = int(Ndatasets / Npairs)
-        leg_cols = Ndataset_colors(N)
+        leg_cols = N_colors(N)
         colors = leg_cols * Npairs
         leg_ids = labels[:N]
         ind = np.hstack([np.linspace(0 + i / N, w + i / N, N) for i in range(Npairs)])

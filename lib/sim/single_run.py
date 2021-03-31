@@ -10,7 +10,7 @@ import lib.conf.sim_modes
 import lib.stor.paths as paths
 from lib.anal.plotting import *
 from lib.aux.collecting import effector_collection
-from lib.conf import exp_types, default_sim, box2d_space
+from lib.conf import exp_types
 from lib.model.envs._larvaworld import LarvaWorldSim
 from lib.model.agents.deb import deb_dict, deb_default
 from lib.stor.larva_dataset import LarvaDataset
@@ -211,6 +211,7 @@ def run_sim_basic(
                         media_name=media_name,
                         save_to=d.vis_dir,
                         life_params=life_params,
+                        experiment=experiment,
                                     # starvation_hours=starvation_hours, deb_base_f=deb_base_f,
                                     ** kwargs)
     # Prepare the odor layer for a number of timesteps
@@ -331,7 +332,7 @@ def generate_config(exp, sim_params, Nagents=None, life_params={}):
     config['sim_params'] = sim_params
     config['life_params'] = life_params
     if Nagents is not None:
-        config['env_params']['place_params']['initial_num_flies'] = Nagents
+        config['env_params']['place_params']['']['N'] = Nagents
     # if sim_time is not None:
     #     config['sim_params']['sim_time_in_min'] = sim_time
     # if dt is not None:

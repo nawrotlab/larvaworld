@@ -4,11 +4,14 @@ import random
 import sys
 import time
 from collections import deque
+
+import numpy
 import pandas as pd
 from contextlib import contextmanager
 import sys, os
 import numpy as np
 from fitter import Fitter
+from matplotlib import cm, colors
 from pypet import ParameterGroup, Parameter
 from scipy.signal import butter, sosfiltfilt
 import scipy.stats as st
@@ -918,3 +921,37 @@ def agent_list2dict(l) :
         a.pop('unique_id')
         d[id]=a
     return d
+
+def compute_dst(point1, point2) :
+    x1, y1 = point1
+    x2, y2 = point2
+    return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+
+def N_colors(N, as_rgb=False):
+    if N == 1:
+        cs = ['blue']
+    elif N == 2:
+        cs = ['red', 'blue']
+    elif N == 3:
+        cs = ['green', 'blue', 'red']
+    elif N == 4:
+        cs = ['red', 'blue', 'darkred', 'darkblue']
+    elif N == 5:
+        cs = ['green', 'red', 'blue', 'darkred', 'darkblue']
+    else:
+        colormap = cm.get_cmap('brg')
+        cs = [colormap(i) for i in np.linspace(0, 1, N)]
+    if as_rgb :
+        cs=[colors.to_rgb(c) for c in cs]
+        cs=[tuple([i*255 for i in c]) for c in cs]
+    return cs
+
+def LvsRtoggle(side) :
+    if side=='Left' :
+        return 'Right'
+    elif side=='Right':
+        return 'Left'
+    else :
+        raise ValueError(f'Argument {side} is neither Left nor Right')
+

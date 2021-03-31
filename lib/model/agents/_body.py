@@ -3,7 +3,9 @@ from random import sample, seed
 import numpy as np
 import Box2D
 from Box2D import b2Vec2
-
+from shapely import affinity
+from shapely.geometry import Polygon, LineString, MultiPolygon
+from shapely.ops import cascaded_union
 # TODO Find a way to use this. Now if changed everything is scal except locomotion. It seems that
 #  ApplyForceToCenter function does not scale
 # _world_scale = np.int(100)
@@ -250,7 +252,7 @@ class Box2DPolygon(Box2DSegment):
     #     return plot_polygon(axes, self, **kwargs)
 
 
-class DefaultPolygon:
+class DefaultSegment:
     def __init__(self, pos, orientation, seg_vertices, color):
         self.pos = pos
         self.orientation = orientation
@@ -333,6 +335,11 @@ class DefaultPolygon:
 
     def get_color(self):
         return self._color
+
+    def get_polygon(self, scale=1):
+        p0=Polygon(self.vertices[0])
+        p=affinity.scale(p0, xfact=scale, yfact=scale)
+        return p
 
 
 def generate_seg_colors(N, color):
@@ -588,7 +595,7 @@ class LarvaBody:
                 segs.append(seg)
 
             # put all agents into same group (negative so that no collisions are detected)
-            if self.model.allow_collisions:
+            if self.model.larva_collisions:
                 for fixture in fixtures:
                     fixture.filterData.groupIndex = -1
 
@@ -598,7 +605,7 @@ class LarvaBody:
                 self.create_joints(N, segs, joint_type)
         else:
             for i in range(N):
-                seg = DefaultPolygon(pos=seg_positions[i], orientation=orientation, seg_vertices=self.seg_vertices[i],
+                seg = DefaultSegment(pos=seg_positions[i], orientation=orientation, seg_vertices=self.seg_vertices[i],
                                      color=self.seg_colors[i])
                 segs.append(seg)
             self.model.space.place_agent(self, position)
@@ -735,6 +742,7 @@ class LarvaBody:
                                filled=True, color=(255, 0, 0), width=self.radius / 3)
 
         if self.model.draw_midline :
+            # points=[self.segs[i].get_position() for i in range(self.Nsegs)]
             points=[self.get_global_front_end_of_seg(i) for i in range(self.Nsegs)] + [self.get_global_rear_end_of_body()]
             viewer.draw_polyline(points, color=(0, 0, 255), closed=False, width=self.radius / 10)
             for i, p in enumerate(points):
@@ -743,6 +751,7 @@ class LarvaBody:
                 viewer.draw_circle(radius=self.radius / 10, position=p, filled=True, color=color, width=self.radius / 20)
 
         if self.model.draw_centroid:
+            print('sss')
             viewer.draw_circle(radius=self.radius/2, position=self.get_position(), filled=True, color=self.default_color, width=self.radius / 3)
 
         if self.selected:
@@ -873,3 +882,24 @@ class LarvaBody:
     def set_head_edges(self):
         self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)
         self.local_front_end_of_head = (np.max(self.seg_vertices[0][0], axis=0)[0], 0)
+
+    def get_polygon(self, scale=1):
+        # p=self.segs[0].get_polygon()
+        # for i in range(self.Nsegs) :
+        #     if i!=0 :
+        #         p=p.union(self.segs[i].get_polygon())
+        # return p
+        # mp=MultiPolygon([seg.get_polygon() for seg in self.segs])
+        # p=Polygon(mp.bounds)
+        p=cascaded_union([seg.get_polygon(scale=scale) for seg in self.segs])
+        return p
+
+    def move_body(self, dx, dy):
+        for i, seg in enumerate(self.segs) :
+            p, o = seg.get_pose()
+            new_p = p + np.array([dx,dy])
+            seg.set_position(tuple(new_p))
+            seg.update_vertices(new_p, o)
+        self.pos=self.get_global_midspine_of_body()
+
+

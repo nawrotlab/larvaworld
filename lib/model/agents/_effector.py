@@ -718,39 +718,47 @@ class BranchIntermitter(Effector):
 
 
 class Olfactor(Effector):
-    def __init__(self, odor_layers=None, olfactor_gain_mean=None, olfactor_gain_std=None,
-                 activation_range=[-1.0, 1.0], perception='log', decay_coef=1, olfactor_noise=0, **kwargs):
+    def __init__(self,
+                 odor_layers=None, olfactor_gain_mean=None, olfactor_gain_std=None,
+                 odor_dict={},perception='log', decay_coef=1, olfactor_noise=0, **kwargs):
         super().__init__(**kwargs)
-        if activation_range is None:
-            activation_range = [-1, 1]
         self.perception = perception
         self.decay_coef = decay_coef
-        self.odor_layers = odor_layers
-        self.num_layers = len(odor_layers)
         self.noise = olfactor_noise
+        self.activation_range = [-1.0, 1.0]
+        # self.odor_layers = odor_layers
+        # self.num_layers = len(odor_layers)
+        self.init_gain(odor_dict)
         self.reset()
-        ms, ss = olfactor_gain_mean, olfactor_gain_std
-        Nms, Nss = len(ms), len(ss)
+        # ms, ss = olfactor_gain_mean, olfactor_gain_std
+        # Nms, Nss = len(ms), len(ss)
 
-        if Nms != self.num_layers or Nss != self.num_layers:
-            raise Exception(
-                f"Dimensionality of olfactor_gain ({Nms}) does not match number of odor layers ({self.num_layers})")
-        self.gain = [float(np.random.normal(m, s, 1)) for m, s in zip(ms, ss)]
-        self.activation_range = activation_range
+        # if Nms != self.num_layers or Nss != self.num_layers:
+        #     raise Exception(
+        #         f"Dimensionality of olfactor_gain ({Nms}) does not match number of odor layers ({self.num_layers})")
+        # self.base_gain = {}
+        # for odor_id, m, s in zip(odor_layers, ms, ss) :
+        #     self.base_gain[odor_id]= float(np.random.normal(m, s, 1))
+        # self.gain = self.base_gain
+        # self.gain = [float(np.random.normal(m, s, 1)) for m, s in zip(ms, ss)]
+
 
     def reset(self):
         self.activation = 0
-        self.previous_odor_concentrations = np.zeros(self.num_layers)
-        self.current_odor_concentrations = np.zeros(self.num_layers)
+        self.previous_odor_concentrations = np.zeros(self.Nodors)
+        self.current_odor_concentrations = np.zeros(self.Nodors)
 
-    def set_gain(self, value, odor_idx=0):
-        self.gain[odor_idx]=value
+    def set_gain(self, value, odor_id):
+        self.gain[odor_id]=value
 
-    def get_gain(self, odor_idx=0):
-        return self.gain[odor_idx]
+    def reset_gain(self, odor_id):
+        self.gain[odor_id]=self.base_gain[odor_id]
+
+    def get_gain(self, odor_id):
+        return self.gain[odor_id]
 
     def step(self, concentrations):
-        if self.odor_layers:
+        if self.Nodors>0:
             # print(concentrations)
             # print(self.previous_odor_concentrations)
             # print(self.current_odor_concentrations)
@@ -761,19 +769,19 @@ class Olfactor(Effector):
             # UPDATE : Equation has been split between olfactor and turner
             self.activation -= self.activation * self.dt * self.decay_coef
             # self.activation = 0
-            for i in range(self.num_layers):
+            for i, (id, gain) in enumerate(self.gain.items()):
                 prev = self.previous_odor_concentrations[i]
                 cur = self.current_odor_concentrations[i]
                 dif = cur - prev
                 mean = (cur + prev) / 2
                 if self.perception == 'linear':
-                    self.activation += self.dt * self.gain[i] * dif
+                    self.activation += self.dt * gain * dif
 
                 elif self.perception == 'log':
                     # self.activation += self.gain[i] * dif / prev
                     if prev != 0:
                         # self.activation += self.gain[i] * dif / prev
-                        self.activation += self.dt * self.gain[i] * dif / prev
+                        self.activation += self.dt * gain * dif / prev
                     # print(prev)
                     # self.activation += self.dt*self.gain[i] * dif / mean
                     # self.activation += self.dt*self.gain[i] * np.log(dif)
@@ -792,6 +800,19 @@ class Olfactor(Effector):
         else:
             self.activation = 0
         return self.activation
+
+    def init_gain(self, odor_dict):
+        self.Nodors=len(odor_dict)
+        self.base_gain={}
+        for id, p in odor_dict.items():
+            if type(p)==dict :
+                m,s=p['mean'], p['std']
+                self.base_gain[id] = float(np.random.normal(m, s, 1))
+            else :
+                self.base_gain[id]=p
+        self.gain=self.base_gain
+
+
 
 
 # class TurnerModulator:
@@ -858,8 +879,7 @@ class DefaultBrain(Brain):
             self.intermitter = None
         # Initialize sensors
         if self.modules['olfactor']:
-            self.olfactor = Olfactor(dt=dt, odor_layers=self.agent.model.odor_layers,
-                                     **self.conf['olfactor_params'])
+            self.olfactor = Olfactor(dt=dt,**self.conf['olfactor_params'])
         else:
             self.olfactor = None
 

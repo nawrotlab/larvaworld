@@ -449,26 +449,34 @@ class SimulationState(ScreenItem):
     def __init__(self, model, color=None):
         super().__init__(color=color)
         self.model = model
-        self.Nagents = 0
+        # self.Nagents = 0
+        self.text = ''
+        # self.text = f'# larvae : {self.Nagents}'
 
-    def update_state(self):
-        c = np.isnan(self.model.get_fly_positions())
-        self.Nagents = len(c[c[:, 0] == False])
+    # def update_state(self):
+    #     c = np.isnan(self.model.get_fly_positions())
+    #     self.Nagents = len(c[c[:, 0] == False])
+    #     self.text = f'# larvae : {self.Nagents}'
 
     def render_state(self, width, height):
-        x_pos = int(width * 0.9)
+        x_pos = int(width * 0.85)
         y_pos = int(height * 0.94)
         font_size = int(1 / 40 * width)
 
         self.font = pygame.font.SysFont("Trebuchet MS", font_size)
-        self.state_font = self.font.render(f'# larvae : {self.Nagents}', 1, self.color)
+        self.state_font = self.font.render(self.text, 1, self.color)
         self.state_font_r = self.state_font.get_rect()
         self.state_font_r.center = (x_pos, y_pos)
 
     def draw_state(self, viewer):
-        self.update_state()
-        self.state_font = self.font.render(f'# larvae : {self.Nagents}', 1, self.color)
+        # self.update_state()
+        self.state_font = self.font.render(self.text, 1, self.color)
         viewer.draw_text_box(self.state_font, self.state_font_r)
+
+    def set_text(self,text):
+        self.text=text
+
+
 
 
 def draw_velocity_arrow(_screen, agent):

@@ -6,7 +6,6 @@ dish = {'fly_params': exploring_larva,
         'collections': ['pose'],
         }
 
-
 feed_scatter = {'fly_params': feeding_larva,
                 'env_params': feed_scatter_exp_np,
                 'collections': ['crawler', 'feeder', 'intermitter'],
@@ -66,6 +65,14 @@ maze = {'fly_params': odor_larva,
         'env_params': maze_exp_np,
         'collections': ['olfactor', 'pose', 'dst2center'],
         }
+flag = {'fly_params': [flag_larva_L, flag_larva_R],
+        'env_params': game_exp,
+        'collections': ['olfactor', 'pose', 'dst2center'],
+        }
+king = {'fly_params': [king_larva_L, king_larva_R],
+        'env_params': game_exp,
+        'collections': ['olfactor', 'pose', 'dst2center'],
+        }
 exp_types = {
     'focus': focus,
     'dish': dish,
@@ -80,5 +87,7 @@ exp_types = {
     'growth_2x': growth_2x,
     'maze': maze,
     'imitation': imitation,
-    'reorientation': reorientation
+    'reorientation': reorientation,
+    'flag': flag,
+    'king': king,
 }

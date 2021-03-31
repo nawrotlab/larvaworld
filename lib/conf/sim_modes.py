@@ -39,13 +39,15 @@ default_sim = {
     'Box2D' : False,
 }
 
+odor_pars={'odor_id': str,
+    'odor_intensity': float,
+    'odor_spread': float}
+
 base_food_pars={
     'radius': float,
     'amount': float,
     'quality': float,
-    'odor_id': str,
-    'odor_intensity': float,
-    'odor_spread': float
+    **odor_pars
 }
 
 food_pars = {
@@ -53,8 +55,16 @@ food_pars = {
     'pos': Tuple[float, float],
     **base_food_pars
 }
+
+odor_gain_pars = {
+    'unique_id': str,
+    'mean': float,
+    'std' : float
+}
+
 larva_pars = {
     'unique_id': str,
+    **odor_pars
 }
 border_pars = {
     'unique_id': str,

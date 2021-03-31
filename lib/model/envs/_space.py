@@ -97,7 +97,7 @@ class ValueGrid:
 
 
 class ValueLayer:
-    def __init__(self, world, unique_id, sources, color, **kwargs):
+    def __init__(self, world, unique_id,  color,sources=[], **kwargs):
         self.world = world
         self.id = unique_id
         self.color = color
@@ -123,27 +123,16 @@ class GaussianValueLayer(ValueLayer):
     def __init__(self, world, **kwargs):
         super().__init__(world, **kwargs)
 
-        # self.dist = multivariate_normal([0, 0], [[0.2, 0], [0, 0.2]])
-
     def update_values(self):
         pass
 
     def get_value(self, pos):
         value = 0
         for s in self.sources:
-            source_pos = s.get_position()
-            # print(source_pos)
-            # spread = s.get_odor_spread()
-            # intensity = s.get_odor_intensity()
-            rel_pos = [pos[0] - source_pos[0], pos[1] - source_pos[1]]
-            # dist = multivariate_normal([0, 0], [[spread, 0], [0, spread]])
-            # v = dist.pdf(rel_pos) * intensity / dist.pdf([0, 0])
+            p = s.get_position()
+            rel_pos = [pos[0] - p[0], pos[1] - p[1]]
             value += s.get_gaussian_odor_value(rel_pos)
-        # print(value)
         return value
-
-    # def model(pos, width, height):
-    #     return  (height / scipy.stats.norm.pdf(pos,pos,width)) * scipy.stats.norm.pdf(x, pos, width)
 
 
 class DiffusionValueLayer(ValueLayer):

@@ -13,7 +13,6 @@ from lib.aux import functions as fun
 from lib.anal.fitting import *
 from lib.aux.parsing import parse_dataset, multiparse_dataset_by_sliding_window
 from lib.anal.plotting import *
-from lib.conf import mesa_space_in_mm
 import lib.conf.env_modes as env
 from lib.stor.datagroup import SimParConf
 from lib.stor.paths import Ref_path, Ref_fits, RefFolder

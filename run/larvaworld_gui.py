@@ -7,19 +7,16 @@ import PySimpleGUI as sg
 import matplotlib
 import inspect
 from tkinter import *
-from typing import List, Tuple
 
 sys.path.insert(0, '..')
-from lib.stor import paths
 from lib.stor.datagroup import saveSimConf, loadSimConfDict, loadSimConf, deleteSimConf
 from lib.aux import functions as fun
 
 from lib.aux.collecting import effector_collection
-from lib.conf import exp_types, default_sim, mock_larva, box2d_space, larva_place_modes, \
-    food_place_modes, pref_exp_np, agent_pars, mock_env, mesa_space, base_food_pars, food_distro_pars
-from lib.sim.gui_lib import gui_table, SectionDict, named_bool_button, Collapsible, \
+from lib.conf import exp_types, mock_larva, agent_pars, mock_env, odor_gain_pars
+from lib.sim.gui_lib import gui_table, named_bool_button, Collapsible, \
     set_kwargs, on_image, off_image, SYMBOL_UP, SYMBOL_DOWN, button_kwargs, header_kwargs, \
-    text_kwargs, on_image_disabled, retrieve_value, draw_canvas, delete_figure_agg, CollapsibleDict, named_list_layout
+    text_kwargs, draw_canvas, delete_figure_agg, CollapsibleDict, named_list_layout
 from lib.sim.single_run import run_sim, next_idx, configure_sim
 from lib.anal.plotting import *
 from lib.stor.larva_dataset import LarvaDataset
@@ -105,18 +102,26 @@ def update_func(window, values, func, func_kwargs, graph_dict):
     return func, func_kwargs
 
 
-def update_model(larva_model, window, collapsibles):
-    for name, dict in zip(['PHYSICS', 'ENERGETICS', 'BODY'],
+def update_model(larva_model, window, collapsibles, odor_gains):
+    for name, dict in zip(['PHYSICS', 'ENERGETICS', 'BODY', 'ODOR'],
                           [larva_model['sensorimotor_params'], larva_model['energetics_params'],
-                           larva_model['body_params']]):
+                           larva_model['body_params'], larva_model['odor_params']]):
         collapsibles[name].update(window, dict)
     module_dict = larva_model['neural_params']['modules']
     for k, v in module_dict.items():
-        collapsibles[k.upper()].update(window, larva_model['neural_params'][f'{k}_params'])
+        dic=larva_model['neural_params'][f'{k}_params']
+        if k=='olfactor' :
+            if dic is not None :
+                odor_gains=dic['odor_dict']
+                dic.pop('odor_dict')
+            else :
+                odor_gains={}
+        collapsibles[k.upper()].update(window, dic)
     module_dict_upper = copy.deepcopy(module_dict)
     for k in list(module_dict_upper.keys()):
         module_dict_upper[k.upper()] = module_dict_upper.pop(k)
     collapsibles['BRAIN'].update(window, module_dict_upper, use_prefix=False)
+    return odor_gains
 
 
 def update_environment(env_params, window, collapsibles, food_list, border_list):
@@ -143,22 +148,30 @@ def init_model(larva_model, collapsibles={}):
     # window = collapsibles['ENERGETICS'].update(model['energetics_params'], window)
     # window = collapsibles['BODY'].update(model['body_params'], window)
 
-    for name, dict, kwargs in zip(['PHYSICS', 'ENERGETICS', 'BODY'],[larva_model['sensorimotor_params'], larva_model['energetics_params'],
-                                   larva_model['body_params']],
-                                  [{}, {'toggle': True, 'disabled': True}, {}]):
+    for name, dict, kwargs in zip(['PHYSICS', 'ENERGETICS', 'BODY', 'ODOR'],
+                                  [larva_model['sensorimotor_params'], larva_model['energetics_params'],
+                                   larva_model['body_params'], larva_model['odor_params']],
+                                  [{}, {'toggle': True, 'disabled': True}, {}, {}]):
         collapsibles[name] = CollapsibleDict(name, True, dict=dict, type_dict=None, **kwargs)
 
     module_conf = []
     for k, v in larva_model['neural_params']['modules'].items():
-        s = CollapsibleDict(k.upper(), False, dict=larva_model['neural_params'][f'{k}_params'],
-                            dict_name=k.upper(), toggle=v)
-        collapsibles[s.name] = s
+        dic=larva_model['neural_params'][f'{k}_params']
+        if k=='olfactor' :
+            # odor_gains=dic['odor_dict']
+            dic.pop('odor_dict')
+        s = CollapsibleDict(k.upper(), False, dict=dic,dict_name=k.upper(), toggle=v)
+        collapsibles.update(s.get_subdicts())
         module_conf.append(s.get_section())
+    odor_gain_conf = [sg.Text('odor gains:', **text_kwargs), sg.Button('Odor gains', **button_kwargs)]
+    module_conf.append(odor_gain_conf)
     collapsibles['BRAIN'] = Collapsible('BRAIN', True, module_conf)
     brain_layout = sg.Col([collapsibles['BRAIN'].get_section()])
     non_brain_layout = sg.Col([collapsibles['PHYSICS'].get_section(),
                                collapsibles['BODY'].get_section(),
-                               collapsibles['ENERGETICS'].get_section()])
+                               collapsibles['ENERGETICS'].get_section(),
+                               collapsibles['ODOR'].get_section()
+                               ])
 
     model_layout = [[brain_layout, non_brain_layout]]
 
@@ -216,11 +229,11 @@ def init_environment(env_params, collapsibles={}):
     return collapsibles['ENVIRONMENT'].get_section()
 
 
-def update_sim(window, values, collapsibles,output_keys, food_list, border_list):
+def update_sim(window, values, collapsibles,output_keys, food_list, border_list, odor_gains):
     if values['EXP'] != '':
         exp = values['EXP']
         exp_conf = copy.deepcopy(exp_types[exp])
-        update_model(exp_conf['fly_params'], window, collapsibles,)
+        odor_gains = update_model(exp_conf['fly_params'], window, collapsibles, odor_gains)
         food_list, border_list = update_environment(exp_conf['env_params'], window, collapsibles,
                                                     food_list, border_list)
 
@@ -234,7 +247,7 @@ def update_sim(window, values, collapsibles,output_keys, food_list, border_list)
         collapsibles['OUTPUT'].update(window, output_dict)
         window.Element('sim_id').Update(value=f'{exp}_{next_idx(exp)}')
         window.Element('path').Update(value=f'single_runs/{exp}')
-        return food_list, border_list
+        return food_list, border_list, odor_gains
 
 
 def build_analysis_tab():
@@ -296,6 +309,7 @@ def build_simulation_tab():
     larva_model = copy.deepcopy(mock_larva)
     env_params = copy.deepcopy(mock_env)
     food_list = env_params['food_params']['food_list']
+    odor_gains = larva_model['neural_params']['olfactor_params']['odor_dict']
     border_list = {}
 
     module_dict = larva_model['neural_params']['modules']
@@ -337,7 +351,7 @@ def build_simulation_tab():
     l_env = [[sg.Col([l_env0, l_env1])]]
 
     l_sim = [[sg.Col(l_conf),sg.Col(l_env),sg.Col(l_mod)]]
-    return l_sim, sim_datasets, collapsibles, module_keys, output_keys, food_list, border_list
+    return l_sim, sim_datasets, collapsibles, module_keys, output_keys, food_list, border_list, odor_gains
 
 
 def build_model_tab():
@@ -380,7 +394,7 @@ def eval_model(event, values, window):
     return window
 
 
-def get_model(window, values, module_keys, collapsibles, base_model):
+def get_model(window, values, module_keys, collapsibles, odor_gains, base_model):
     module_dict = dict(zip(module_keys, [window[f'TOGGLE_{k.upper()}'].metadata.state for k in module_keys]))
     base_model['neural_params']['modules'] = module_dict
 
@@ -396,6 +410,8 @@ def get_model(window, values, module_keys, collapsibles, base_model):
     for k, v in module_dict.items():
         base_model['neural_params'][f'{k}_params'] = collapsibles[k.upper()].get_dict(values, window)
         # collapsibles[k.upper()].update(window,larva_model['neural_params'][f'{k}_params'])
+    if base_model['neural_params']['olfactor_params'] is not None :
+        base_model['neural_params']['olfactor_params']['odor_dict'] = odor_gains
     return base_model
 
 
@@ -410,7 +426,7 @@ def get_environment(window, values, module_keys, collapsibles, base_environment,
     return base_environment
 
 
-def get_sim_config(window, values, module_keys, collapsibles, output_keys, food_list, border_list):
+def get_sim_config(window, values, module_keys, collapsibles, output_keys, food_list, border_list, odor_gains):
     exp = values['EXP']
     exp_conf = copy.deepcopy(exp_types[exp])
 
@@ -427,7 +443,7 @@ def get_sim_config(window, values, module_keys, collapsibles, output_keys, food_
     env_params = get_environment(window, values, module_keys, collapsibles, exp_conf['env_params'],
                                  food_list, border_list)
 
-    fly_params = get_model(window, values, module_keys, collapsibles, exp_conf['fly_params'])
+    fly_params = get_model(window, values, module_keys, collapsibles,odor_gains, exp_conf['fly_params'])
     sim_config = {
                   'enrich': True,
                   'experiment': exp,
@@ -439,7 +455,7 @@ def get_sim_config(window, values, module_keys, collapsibles, output_keys, food_
 
 
 def eval_simulation(event, values, window, sim_datasets, collapsibles, module_keys, output_keys,
-                    food_list, border_list):
+                    food_list, border_list, odor_gains):
     if event.startswith('OPEN SEC'):
         sec_name = event.split()[-1]
         if collapsibles[sec_name].state is not None:
@@ -447,8 +463,8 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
             window[event].update(SYMBOL_DOWN if collapsibles[sec_name].state else SYMBOL_UP)
             window[f'SEC {sec_name}'].update(visible=collapsibles[sec_name].state)
     elif event == 'Load':
-        food_list, border_list = update_sim(window, values, collapsibles, output_keys, food_list,
-                                            border_list)
+        food_list, border_list, odor_gains = update_sim(window, values, collapsibles, output_keys, food_list,
+                                            border_list, odor_gains)
     elif event == 'Delete':
         if values['SAVED_CONF'] != '':
             deleteSimConf(values['SAVED_CONF'])
@@ -470,10 +486,14 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
         t0=fun.agent_dict2list(food_list)
         t1 = gui_table(t0, agent_pars['Food'])
         food_list=fun.agent_list2dict(t1)
+    elif event == 'Odor gains':
+        t0=fun.agent_dict2list(odor_gains)
+        t1 = gui_table(t0, odor_gain_pars)
+        odor_gains=fun.agent_list2dict(t1)
 
     elif event == 'Configure':
         if values['EXP'] != '':
-            sim_config = get_sim_config(window, values, module_keys, collapsibles, output_keys, food_list,border_list)
+            sim_config = get_sim_config(window, values, module_keys, collapsibles, output_keys, food_list,border_list, odor_gains)
             new_food_list, new_border_list = configure_sim(
                 fly_params=sim_config['fly_params'],
                 env_params=sim_config['env_params'])
@@ -498,19 +518,19 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
 
     elif event == 'Run':
         if values['EXP'] != '':
-            sim_config = get_sim_config(window, values, module_keys, collapsibles, output_keys, food_list,border_list)
+            sim_config = get_sim_config(window, values, module_keys, collapsibles, output_keys, food_list,border_list, odor_gains)
             vis_kwargs = {'mode': 'video'}
             d = run_sim(**sim_config, **vis_kwargs)
             if d is not None:
                 sim_datasets.append(d)
-    return food_list, border_list
+    return food_list, border_list,odor_gains
 
 sg.theme('LightGreen')
 
 
 def run_gui():
     l_anal, graph_dict, data, func, func_kwargs, fig, save_to, save_as, figure_agg = build_analysis_tab()
-    l_sim, sim_datasets, collapsibles, module_keys, output_keys, food_list, border_list = build_simulation_tab()
+    l_sim, sim_datasets, collapsibles, module_keys, output_keys, food_list, border_list, odor_gains = build_simulation_tab()
     l_mod = build_model_tab()
 
     l_gui = [
@@ -536,9 +556,10 @@ def run_gui():
         elif tab == 'MODEL_TAB':
             w = eval_model(e, v, w)
         elif tab == 'SIMULATION_TAB':
-            food_list, border_list = eval_simulation(e, v, w, sim_datasets, collapsibles, module_keys,
-                                                     output_keys, food_list, border_list)
+            food_list, border_list, odor_gains = eval_simulation(e, v, w, sim_datasets, collapsibles, module_keys,
+                                                     output_keys, food_list, border_list, odor_gains)
     w.close()
+    return
 
 
 if __name__ == "__main__":

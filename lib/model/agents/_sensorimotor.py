@@ -68,7 +68,7 @@ class BodySim(BodyManager):
         self.lin_force_coef = lin_force_coef
         self.torque_coef = torque_coef
 
-        k = 0.95
+        k = 0.9
         self.tank_polygon = Polygon(self.model.tank_shape * k)
 
     def step(self):
@@ -171,6 +171,9 @@ class BodySim(BodyManager):
 
             self.step_no_physics(lin_vel=lin_vel_amp, ang_vel=ang_vel)
 
+        for o in self.carried_objects:
+            o.pos = self.pos
+
     def compute_new_lin_vel_vector(self, target_segment):
         # Option 1 : Create the linear velocity from orientation.
         # This was the default. But it seems because of numerical issues it doesn't generate the expected vector,
@@ -272,6 +275,7 @@ class BodySim(BodyManager):
         self.cum_dst += self.step_dst
         self.trajectory.append(self.pos)
 
+
     def set_head_contacts_ground(self, value):
         self.head_contacts_ground = value
 
@@ -314,19 +318,20 @@ class BodySim(BodyManager):
                                                     border_lines=self.model.border_lines)
         else:
             border_collision = False
-        if not self.model.allow_collisions:
-            larva_collision = fun.larva_collision(line=LineString([pos_old, pos_new]),
-                                                  larva_bodies=self.model.larva_bodies)
+        if not self.model.larva_collisions:
+            ids=self.model.detect_collisions(self.unique_id)
+            larva_collision=False if len(ids)==0 else True
         else:
             larva_collision = False
         if not in_tank or border_collision or larva_collision:
             lin_vel = 0
             d = 0
-            pos_new = pos_old
             head_rear_new = head_rear_old
-            ang_vel += np.pi / 2
+            ang_vel += np.pi / 20
             d_or = ang_vel * dt
             or_new = or_old + d_or
+            k = np.array([math.cos(or_new), math.sin(or_new)])
+            pos_new = head_rear_new + k * self.seg_lengths[0] / 2
         head.set_pose(pos_new, or_new, lin_vel, ang_vel)
         head.update_vertices(pos_new, or_new)
         self.position_rest_of_body(d_or, head_rear_pos=head_rear_new, head_or=or_new)
@@ -340,6 +345,13 @@ class BodySim(BodyManager):
         self.model.space.move_agent(self, pos)
         self.trajectory.append(pos)
         self.pos = pos
+        # print(self.pos)
+        # print(self.pos)
+        # print(head.get_position())
+        # print(head.get_position())
+        # print(self.get_tail().get_position())
+        # print(self.get_tail().get_position())
+        # print()
 
     def position_rest_of_body(self, d_orientation, head_rear_pos, head_or):
         N = self.Nsegs

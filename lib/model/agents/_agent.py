@@ -12,10 +12,14 @@ import lib.aux.rendering as ren
 class LarvaworldAgent:
     def __init__(self,
                  unique_id : str,
-                 model, pos=None, default_color=None, radius=None):
+                 model, pos=None, default_color=None, radius=None,
+                 odor_id=None,odor_intensity=0.0, odor_spread=0.1, group='', can_be_carried=False):
         self.selected = False
         self.unique_id = unique_id
         self.model = model
+        self.group = group
+        self.base_odor_id = f'{group} base odor'
+        self.gain_for_base_odor = 100
 
 
         # Will be set by the respective subclasses
@@ -26,6 +30,15 @@ class LarvaworldAgent:
         self.radius = radius
 
         self.id_box = self.init_id_box()
+
+        self.odor_id = odor_id
+        self.odor_intensity = odor_intensity
+        self.odor_spread = odor_spread
+        self.set_odor_dist()
+
+        self.carried_objects=[]
+        self.can_be_carried=can_be_carried
+        self.is_carried_by=None
 
     def get_position(self):
         return tuple(self.pos)
@@ -56,11 +69,30 @@ class LarvaworldAgent:
         self.default_color=color
         self.set_color(color)
 
+    def set_odor_dist(self):
+        self.odor_dist = multivariate_normal([0, 0], [[self.odor_spread, 0], [0, self.odor_spread]])
+        self.odor_peak_value = self.odor_intensity / self.odor_dist.pdf([0, 0])
+
+    def set_odor_id(self, odor_id):
+        self.odor_id = odor_id
+
+    def get_odor_id(self):
+        return self.odor_id
+
+    def set_odor(self, odor_id, intensity=2, spread=0.0002):
+        self.set_odor_id(odor_id)
+        self.set_scaled_odor_intensity(intensity)
+        self.set_scaled_odor_spread(spread)
+        self.set_odor_dist()
+
+    def get_gaussian_odor_value(self, pos):
+        return self.odor_dist.pdf(pos) * self.odor_peak_value
+
 
 class Larva(LarvaworldAgent):
-    def __init__(self, unique_id, model, pos=None, radius=None):
+    def __init__(self, unique_id, model, pos=None, radius=None, **kwargs):
         default_color = model.generate_larva_color()
-        super().__init__(unique_id=unique_id, model=model, default_color=default_color, pos=pos, radius=radius)
+        super().__init__(unique_id=unique_id, model=model, default_color=default_color, pos=pos, radius=radius, **kwargs)
         self.behavior_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id', 'Lturn_id', 'Rturn_id']
         self.null_behavior_dict = dict(zip(self.behavior_pars, [False] * len(self.behavior_pars)))
 
@@ -352,16 +384,14 @@ class Larva(LarvaworldAgent):
 class Food(LarvaworldAgent):
     def __init__(self, unique_id, model, position,
                  radius=0.002, amount=1.0, quality=1.0,
-                 odor_id=None, odor_intensity=0.0, odor_spread=0.1, color=np.array((100, 200, 120))):
+                   color=np.array((100, 200, 120)), **kwargs):
         super().__init__(unique_id=unique_id, model=model, pos=position, default_color=color,
-                         radius=radius*model.scaling_factor)
+                         radius=radius*model.scaling_factor, **kwargs)
         self.initial_amount = amount
         self.quality = quality
         self.amount = self.initial_amount
-        self.odor_id = odor_id
-        self.odor_intensity = odor_intensity
-        self.odor_spread = odor_spread
-        self.set_odor_dist()
+
+
 
         shape = fun.circle_to_polygon(60, self.radius)
 
@@ -385,11 +415,9 @@ class Food(LarvaworldAgent):
         # self._fixtures[0].filterData.groupIndex = -1
 
 
-    def get_odor_id(self):
-        return self.odor_id
 
-    def get_gaussian_odor_value(self, pos):
-        return self.odor_dist.pdf(pos) * self.odor_peak_value
+
+
 
     def get_radius(self):
         return self.radius
@@ -421,18 +449,7 @@ class Food(LarvaworldAgent):
     def set_scaled_odor_spread(self, spread):
         self.odor_spread = spread * self.model.scaling_factor
 
-    def set_odor_dist(self):
-        self.odor_dist = multivariate_normal([0, 0], [[self.odor_spread, 0], [0, self.odor_spread]])
-        self.odor_peak_value = self.odor_intensity / self.odor_dist.pdf([0, 0])
 
-    def set_odor_id(self, odor_id):
-        self.odor_id = odor_id
-
-    def set_odor(self, odor_id, intensity=2, spread=0.0002):
-        self.set_odor_id(odor_id)
-        self.set_scaled_odor_intensity(intensity)
-        self.set_scaled_odor_spread(spread)
-        self.set_odor_dist()
 
     def set_color(self, color):
         self._color = color

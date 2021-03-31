@@ -8,8 +8,8 @@ from lib.model import *
 
 
 class LarvaReplay(Larva, BodyReplay):
-    def __init__(self, unique_id, model, length=5, data=None):
-        Larva.__init__(self, unique_id=unique_id, model=model, radius=length / 2)
+    def __init__(self, unique_id, model, length=5, data=None, **kwargs):
+        Larva.__init__(self, unique_id=unique_id, model=model, radius=length / 2, **kwargs)
 
         self.chunk_ids = None
         self.trajectory = []
@@ -142,8 +142,9 @@ class LarvaReplay(Larva, BodyReplay):
 
 
 class LarvaSim(BodySim, Larva):
-    def __init__(self, unique_id, model, pos, orientation, fly_params, **kwargs):
-        Larva.__init__(self, unique_id=unique_id, model=model, pos=pos)
+    def __init__(self, unique_id, model, pos, orientation, fly_params,group='',**kwargs):
+        Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
+                       **fly_params['odor_params'], group=group)
 
         self.brain = self.build_brain(fly_params['neural_params'])
         self.build_energetics(fly_params['energetics_params'])
@@ -155,7 +156,10 @@ class LarvaSim(BodySim, Larva):
         self.radius = self.sim_length / 2
 
         self.food_detected, self.food_source, self.feeder_motion, self.current_amount_eaten, self.feed_success = False, None, False, 0, False
-        self.odor_concentrations = [0] * self.model.Nodors
+        try:
+            self.odor_concentrations = [0] * self.brain.olfactor.Nodors
+        except :
+            self.odor_concentrations=[]
         self.olfactory_activation = 0
 
     def compute_next_action(self):
@@ -199,6 +203,7 @@ class LarvaSim(BodySim, Larva):
 
     def detect_food(self, pos, grid=None):
         if self.brain.feeder is not None:
+
             radius = self.brain.feeder.feed_radius * self.sim_length,
             if grid:
                 cell = grid.get_grid_cell(pos)
@@ -211,6 +216,7 @@ class LarvaSim(BodySim, Larva):
                                                        agent_list=self.model.get_food())
                 if accessible_food:
                     food = random.choice(accessible_food)
+                    self.resolve_carrying(food)
                     return True, food, food.quality
                 else:
                     return False, None, None
@@ -429,3 +435,28 @@ class LarvaSim(BodySim, Larva):
     @property
     def front_orientation_vel(self):
         return np.rad2deg(self.get_head().get_angularvelocity())
+
+    def resolve_carrying(self, food):
+        if food.can_be_carried:
+            if food.is_carried_by is not None:
+                prev_carrier = food.is_carried_by
+                prev_carrier.carried_objects.remove(food)
+                if self.model.experiment=='flag' :
+                    prev_carrier.brain.olfactor.set_gain(0.0, prev_carrier.base_odor_id)
+            food.is_carried_by = self
+            self.carried_objects.append(food)
+            if self.model.experiment == 'flag':
+                self.brain.olfactor.set_gain(self.gain_for_base_odor, self.base_odor_id)
+            elif self.model.experiment == 'king':
+                carrier_group=self.group
+                carrier_group_odor_id=self.get_odor_id()
+                opponent_group=fun.LvsRtoggle(carrier_group)
+                opponent_odor_id=f'{opponent_group} group odor'
+                for f in self.model.get_flies():
+                    if f.group==carrier_group :
+                        f.brain.olfactor.set_gain(f.gain_for_base_odor, opponent_odor_id)
+                        f.brain.olfactor.set_gain(0.0, 'Flag odor')
+                    else :
+                        f.brain.olfactor.set_gain(0.0, carrier_group_odor_id)
+                        f.brain.olfactor.reset_gain('Flag odor')
+                self.brain.olfactor.set_gain(-self.gain_for_base_odor, opponent_odor_id)
