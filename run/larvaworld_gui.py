@@ -343,7 +343,9 @@ def build_simulation_tab():
     l_mod0 = [sg.Col([
         [sg.Text('Larva model:', **header_kwargs),
          sg.Combo(list(loadConfDict('Model').keys()), key='MODEL_CONF', enable_events=True, readonly=True, **text_kwargs)],
-        [sg.Button('Load', key='LOAD_MODEL', **button_kwargs), sg.Button('Delete',key='DELETE_MODEL', **button_kwargs)]
+        [sg.Button('Load', key='LOAD_MODEL', **button_kwargs),
+         sg.Button('Save',key='SAVE_MODEL', **button_kwargs),
+         sg.Button('Delete',key='DELETE_MODEL', **button_kwargs)]
     ])]
 
     l_mod1 = init_model(larva_model, collapsibles)
@@ -353,7 +355,9 @@ def build_simulation_tab():
     l_env0 = [sg.Col([
         [sg.Text('Environment:', **header_kwargs),
          sg.Combo(list(loadConfDict('Env').keys()), key='ENV_CONF', enable_events=True, readonly=True, **text_kwargs)],
-        [sg.Button('Load',key='LOAD_ENV', **button_kwargs), sg.Button('Delete',key='DELETE_ENV', **button_kwargs)]
+        [sg.Button('Load',key='LOAD_ENV', **button_kwargs),
+         sg.Button('Save',key='SAVE_ENV', **button_kwargs),
+         sg.Button('Delete',key='DELETE_ENV', **button_kwargs)]
     ])]
     l_env1 = init_environment(env_params, collapsibles)
     l_env = [[sg.Col([l_env0, l_env1])]]
@@ -488,6 +492,16 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
             conf = loadConf(values['MODEL_CONF'],'Model')
             odor_gains = update_model(conf, window, collapsibles, odor_gains)
 
+    elif event == 'SAVE_MODEL':
+        l = [[sg.Text('Store new model', size=(20, 1)), sg.In(k='MODEL_ID', size=(10, 1))],
+             [sg.Ok(), sg.Cancel()]]
+        e, v = sg.Window('Model configuration', l).read(close=True)
+        if e == 'Ok':
+            model = get_model(window, values, module_keys,collapsibles, odor_gains)
+            model_id = v['MODEL_ID']
+            saveConf(model, 'Model', model_id)
+            window['MODEL_CONF'].update(values=list(loadConfDict('Model').keys()))
+
     elif event == 'DELETE_ENV':
         if values['ENV_CONF'] != '':
             deleteConf(values['ENV_CONF'], 'Env')
@@ -497,6 +511,7 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
         if values['MODEL_CONF'] != '':
             deleteConf(values['MODEL_CONF'], 'Model')
             window['MODEL_CONF'].update(values=list(loadConfDict('Model').keys()))
+            window['MODEL_CONF'].update(value='')
 
     elif 'TOGGLE' in event:
         if window[event].metadata.state is not None:
@@ -522,12 +537,6 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, module_ke
             elif e == 'Store' and v['ENV_ID'] != '':
                 food_list = new_food_list
                 border_list = new_border_list
-                # conf = {
-                #     'food_list': food_list,
-                #     'border_list': border_list,
-                #     'arena_params': collapsibles['ARENA'].get_dict(values, window),
-                #     'Box2D': window['TOGGLE_Box2D'].metadata.state,
-                # }
                 env=get_environment(window, values, collapsibles, food_list, border_list)
                 env_id = v['ENV_ID']
                 saveConf(env, 'Env',env_id)

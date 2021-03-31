@@ -291,7 +291,7 @@ def deleteConf(id, conf_type):
     conf_dict = loadConfDict(conf_type)
     try:
         conf_dict.pop(id, None)
-        saveConfDict(conf_dict)
+        saveConfDict(conf_dict, conf_type)
         print(f'Deleted {conf_type} configuration under the id : {id}')
     except:
         pass
