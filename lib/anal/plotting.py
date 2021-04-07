@@ -1387,7 +1387,7 @@ def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=Non
     ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
     ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
     ax.zaxis.set_major_locator(ticker.MaxNLocator(5))
-
+    plt.show()
     if save_to is not None:
         os.makedirs(save_to, exist_ok=True)
         if save_as is None:

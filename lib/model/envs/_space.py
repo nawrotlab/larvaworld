@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 from mesa.space import ContinuousSpace
-
+from scipy.ndimage.filters import gaussian_filter
 
 class ValueGrid:
     def __init__(self, space_range, grid_dims=[50, 50], distribution='uniform',
@@ -124,12 +124,13 @@ class FoodGrid(ValueGrid):
 
 
 class ValueLayer:
-    def __init__(self, world, unique_id,  color,space_range,space2grid, sources=[], visible=False, **kwargs):
-        self.world = world
+    def __init__(self, space, unique_id, color, space_range, space2grid, sources=[],
+                 visible=False, grid_dims=[50, 50],**kwargs):
+        self.space = space
         self.id = unique_id
         self.color = color
         self.sources = sources
-        self.value_grid=ValueGrid(space_range=space_range, default_color=color)
+        self.value_grid=ValueGrid(space_range=space_range, default_color=color, grid_dims=grid_dims)
         self.space2grid=space2grid
         self.visible=visible
 
@@ -165,8 +166,8 @@ class ValueLayer:
 
 
 class GaussianValueLayer(ValueLayer):
-    def __init__(self, world, **kwargs):
-        super().__init__(world, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def update_values(self):
         pass
@@ -181,49 +182,18 @@ class GaussianValueLayer(ValueLayer):
 
 
 class DiffusionValueLayer(ValueLayer):
-    def __init__(self, world, world_range, grid_resolution, evap_const, diff_const, **kwargs):
-        super().__init__(world, **kwargs)
-
-        # The grid parameters measured in number of grid cells. This will be mapped on the space dimensions
-        self.grid_res = grid_resolution
-        self.grid_width_in_cells = self.grid_res[0]
-        self.grid_heigth_in_cells = self.grid_res[1]
-        self.world_range = world_range
-        self.grid_step_x = (world_range[0][1] - world_range[0][0]) / self.grid_width_in_cells
-        self.grid_step_y = (world_range[1][1] - world_range[1][0]) / self.grid_heigth_in_cells
-
-        self.values = np.zeros(shape=(self.grid_width_in_cells, self.grid_heigth_in_cells)) + self.default_val()
-
-        self.x_ticks = np.arange(0, self.grid_width_in_cells, 1)
-        self.y_ticks = np.arange(0, self.grid_heigth_in_cells, 1)
-        self.X, self.Y = np.meshgrid(self.x_ticks, self.y_ticks)
-        # temp = np.array(self.X.flatten(), self.Y.flatten())
-        # self.grid_points = np.array([self.X.flatten(), self.Y.flatten()]).T
-
-        # self.grid_kdtree = spatial.KDTree(self.grid_points)
+    def __init__(self, evap_const, diff_const, **kwargs):
+        super().__init__(**kwargs)
 
         self.evap_const = evap_const
         self.diff_const = diff_const
 
         # self.diffuse_layer = np.vectorize(self.aux_diffuse)
 
-    # TODO This is the simplest approach rounding to the cell without taking into account where exactly in the cell.
-    #  We will want to do this more elegantly
-    def world_pos_to_grid_cell(self, world_pos):
-        grid_x = (world_pos[0] - self.world_range[0][0]) / self.grid_step_x
-        grid_y = (world_pos[1] - self.world_range[1][0]) / self.grid_step_y
-        cell = (int(math.floor(grid_x)), int(math.floor(grid_y)))
-        return cell
-
-    @staticmethod
-    def default_val():
-        """ Default value for new cell elements. """
-        return 0
 
     def out_of_bounds(self, grid_pos):
         x, y = grid_pos
-        return x < 0 or x >= self.grid_width_in_cells or y < 0 or y >= self.grid_heigth_in_cells
-        # return x < -self.grid_range or x > self.grid_range or y < -self.grid_range or y > self.grid_range
+        return x < 0 or x >= self.value_grid.X or y < 0 or y >= self.value_grid.Y
 
     def iter_neighborhood(self, cell, moore, include_center=False, radius=1):
         """ Return an iterator over cell coordinates that are in the
@@ -255,13 +225,6 @@ class DiffusionValueLayer(ValueLayer):
                 # Skip diagonals in Moore neighborhood when distance > radius
                 if moore and 1 < radius < (dy ** 2 + dx ** 2) ** .5:
                     continue
-                # Skip if not a torus and new coords out of bounds.
-                # if not self.torus and (not (0 <= dx + x < self.width) or
-                #                        not (0 <= dy + y < self.height)):
-                #     continue
-
-                # px = self.torus_adj(x + dx, self.width)
-                # py = self.torus_adj(y + dy, self.height)
                 px = x + dx
                 py = y + dy
 
@@ -278,67 +241,25 @@ class DiffusionValueLayer(ValueLayer):
         sum_values = 0
         neighbors = list(self.iter_neighborhood(cell, moore=True, include_center=True, radius=5))
         for cell in neighbors:
-            sum_values += self.values[cell]
+            sum_values += self.value_grid.get_value(cell)
         return sum_values / len(neighbors)
 
-    def add_value(self, pos, value):
-        cell = self.world_pos_to_grid_cell(pos)
-        self.values[cell] += value
+    def add_value(self, p, value):
+        cell = self.value_grid.get_grid_cell(p)
+        v0 = self.value_grid.get_value(cell)
+        self.value_grid.set_value(cell, v0+value)
 
-    def get_value(self, pos):
-        cell = self.world_pos_to_grid_cell(pos)
-        return self.values[cell]
-        # x, y = pos
-        # x_index = np.array(np.where(self.x_ticks == x))
-        # y_index = np.array(np.where(self.y_ticks == y))
-        # # print(pos)
-        # # print(x_index.size, len(y_index))
-        #
-        # if x_index.size == 0 or y_index.size == 0:
-        #     # FIXME This produces lots of Nan values
-        #     z = griddata(self.grid_points, self.Z.flatten(), pos)
-        #     if math.isnan(z):
-        #         # print('Nan value using griddata')
-        #         x, y = self._get_nearest_grid_point(pos)
-        #         x_index = np.where(self.x_ticks == x)
-        #         y_index = np.where(self.y_ticks == y)
-        #         z = self.Z[x_index, y_index]
-        # elif x_index.size == 1 and y_index.size == 1:
-        #     z = self.Z[x_index, y_index]
-        #     # print('normal', z)
-        # else:
-        #     raise NotImplementedError('More indexes than expected')
-        # return z
+    def get_value(self, p):
+        cell = self.value_grid.get_grid_cell(p)
+        return self.value_grid.get_value(cell)
 
-    def set_value(self, pos, value):
-        cell = self.world_pos_to_grid_cell(pos)
-        self.values[cell] = value
-        # x, y = pos
-        # x_index = np.array(np.where(self.x_ticks == x))
-        # y_index = np.array(np.where(self.y_ticks == y))
-        # if x_index.size == 0 or y_index.size == 0:
-        #     x, y = self._get_nearest_grid_point(pos)
-        #     x_index = np.where(self.x_ticks == x)
-        #     y_index = np.where(self.y_ticks == y)
-        # self.Z[x_index, y_index] = value
-
-    # def _get_nearest_grid_point(self, pos):
-    #     """ Get the cell coordinates that a given x,y point falls in. """
-    #     if self.out_of_bounds(pos):
-    #         raise Exception("Point out of bounds.")
-    #
-    #     x, y = pos
-    #     index = self.grid_kdtree.query([x, y], k=1)[1]
-    #     # print([x, y])
-    #     # print(index)
-    #     nearest_point = self.grid_points[index]
-    #     # print(nearest_point)
-    #     return nearest_point
+    def set_value(self, p, value):
+        cell = self.value_grid.get_grid_cell(p)
+        self.value_grid.set_value(cell,value)
 
     def diffuse_cell(self, cell):
-        # pos = [x, y]
-        current_value = self.values[cell]
-        r = self.evap_const * (current_value + self.diff_const * (self.neighbor_avg(cell) - current_value))
+        v = self.value_grid.get_value(cell)
+        r = self.evap_const * (v + self.diff_const * (self.neighbor_avg(cell) - v))
         return r
 
     # @np.vectorize
@@ -351,22 +272,18 @@ class DiffusionValueLayer(ValueLayer):
             source_pos = s.get_position()
             intensity = s.get_odor_intensity()
             self.add_value(source_pos, intensity)
-        new_values = np.zeros(shape=(self.grid_width_in_cells, self.grid_heigth_in_cells))
+        self.value_grid.grid = gaussian_filter(self.value_grid.grid, sigma=7)*self.evap_const
 
-        # Iteration approach
-        for x in range(self.grid_width_in_cells):
-            for y in range(self.grid_heigth_in_cells):
-                r = self.diffuse_cell((x, y))
-                new_values[x, y] = r
-
-        # Vectorization approach
-        # new_values = self.diffuse_layer(self.X,self.Y)
-
-        self.values = new_values
+        # new_values = np.zeros(shape=(self.value_grid.X, self.value_grid.Y))
+        #
+        # # Iteration approach
+        # for x in range(self.value_grid.X):
+        #     for y in range(self.value_grid.Y):
+        #         r = self.diffuse_cell((x, y))
+        #         new_values[x, y] = r
+        # self.value_grid.grid = new_values
 
 
-class LimitedSpace(ContinuousSpace):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+
 
 

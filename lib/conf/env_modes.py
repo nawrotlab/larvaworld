@@ -136,8 +136,16 @@ CS_UCS_odors = {**odor_source(id='CS_source', pos=(-0.04, 0.0), odor_id='CS'),
 
 
 def gaussian_odor():
-    return {'odor_landscape': 'Gaussian',
+    return {'odorscape': 'Gaussian',
             # 'odor_id_list': odor_id_list,
+            }
+
+
+def diffusion_odor():
+    return {'odorscape': 'Diffusion',
+            'grid_dims': [200, 200],
+            'evap_const': 0.9,
+            'diff_const': 0.8
             }
 
 
@@ -197,8 +205,15 @@ chemorbit_env = {'arena_params': arena(0.1, 0.06),
                  'odor_params': gaussian_odor()
                  }
 
+chemorbit_diffusion_env = {'arena_params': arena(0.3, 0.3),
+                 'food_params': food_param_conf(list={**odor_source(id='Odor source', odor_id='Odor', odor_intensity=350.0)}),
+                 'larva_params': larva_distro(30, scale=0.0, model='navigator'),
+                 'odor_params': diffusion_odor()
+                 }
+
 RL_chemorbit_env = {'arena_params': arena(0.1, 0.1),
-                    'food_params': food_param_conf(list={**foodNodor_source(id='Odor source', pos=(-0.04, -0.025), odor_id='Odor')}),
+                    'food_params': food_param_conf(
+                        list={**foodNodor_source(id='Odor source', pos=(-0.04, -0.025), odor_id='Odor')}),
                     'larva_params': larva_distro(30, scale=0.0, model='RL_learner'),
                     'odor_params': gaussian_odor()
                     }

@@ -387,6 +387,7 @@ if __name__ == '__main__':
     saveConf(env.dispersion_env, 'Env', 'dispersion')
     saveConf(env.chemotax_env, 'Env', 'chemotaxis approach')
     saveConf(env.chemorbit_env, 'Env', 'chemotaxis local')
+    saveConf(env.chemorbit_diffusion_env, 'Env', 'chemotaxis local diffusion')
     saveConf(env.pref_env, 'Env', 'odor preference')
     saveConf(env.patchy_food_env, 'Env', 'patchy food')
     saveConf(env.uniform_food_env, 'Env', 'uniform food')
