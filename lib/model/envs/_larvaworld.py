@@ -7,6 +7,7 @@ import os
 from typing import List, Any
 
 
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from shapely.affinity import affine_transform
@@ -17,7 +18,7 @@ from mesa import Agent
 from mesa.time import RandomActivation
 
 from lib.aux.collecting import TargetedDataCollector, step_database
-
+from lib.model.envs._space import FoodGrid
 import lib.aux.rendering as ren
 from lib.aux.sampling import sample_agents, get_ref_bout_distros
 import lib.aux.functions as fun
@@ -151,6 +152,7 @@ class LarvaWorld:
 
         self.snapshot_counter = 0
         self.odorscape_counter = 0
+        self.Nodors, self.odor_layers=0,{}
         self.food_grid = None
 
         # Add mesa schecule to use datacollector class
@@ -389,6 +391,9 @@ class LarvaWorld:
 
         if self.food_grid:
             self.food_grid.draw(self._screen)
+        for id, layer in self.odor_layers.items():
+            if layer.visible :
+                layer.draw_value_grid(self._screen)
         for o in self.get_food():
             o.draw(self._screen)
             o.id_box.draw(self._screen)
@@ -738,6 +743,15 @@ class LarvaWorld:
                                 odor_gains = sel.brain.olfactor.gain
                                 odor_gains = gui.set_kwargs(odor_gains, title='Odor gains')
                                 sel.brain.olfactor.gain = odor_gains
+                else :
+                    for i in range(self.Nodors) :
+                        if event.key == getattr(pygame, f'K_{i}'):
+                            layer_id=list(self.odor_layers.keys())[i]
+                            layer=self.odor_layers[layer_id]
+                            layer.visible=not layer.visible
+                            self.toggle(layer_id, 'ON' if layer.visible else 'OFF')
+
+
 
             if self.allow_clicks:
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -872,12 +886,21 @@ class LarvaWorld:
             'snapshot #',
             'odorscape #'
         ]
+
         for name in names:
             text = ren.InputBox(visible=False, text=name,
                                 color_active=color, color_inactive=color,
                                 screen_pos=None, linewidth=0.01, show_frame=False)
             texts[name] = text
         return texts
+
+    def add_screen_texts(self, names, color):
+        for name in names:
+            text = ren.InputBox(visible=False, text=name,
+                                color_active=color, color_inactive=color,
+                                screen_pos=None, linewidth=0.01, show_frame=False)
+            self.screen_texts[name]=text
+
 
     def update_default_colors(self):
         self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
@@ -924,6 +947,7 @@ class LarvaWorldSim(LarvaWorld):
         self._place_food(self.env_pars['food_params'])
         self.create_larvae(larva_pars=self.env_pars['larva_params'], parameter_dict=parameter_dict)
         self.Nodors, self.odor_layers = self._create_odor_layers()
+        self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
         self.create_data_collectors(collected_pars)
 
@@ -932,10 +956,6 @@ class LarvaWorldSim(LarvaWorld):
 
         self.set_end_condition()
 
-    # def populate_space(self, env_pars, larva_pars, parameter_dict={}):
-    #     self._place_food(env_pars['food_params'])
-    #     self.create_larvae(larva_pars=larva_pars, parameter_dict=parameter_dict)
-    #     self.Nodors, self.odor_layers = self._create_odor_layers()
 
     def prepare_flies(self, timesteps):
         for t in range(timesteps):
@@ -975,8 +995,7 @@ class LarvaWorldSim(LarvaWorld):
 
     def _create_food_grid(self, space_range, food_pars):
         if food_pars and 'food_grid_dims' in food_pars:
-            self.food_grid = ValueGrid(**food_pars, space_range=space_range,
-                                       distribution='uniform')
+            self.food_grid = FoodGrid(**food_pars, space_range=space_range,distribution='uniform')
 
     def _create_odor_layers(self, landscape='Gaussian'):
         sources = self.get_food() + self.get_flies()
@@ -1033,12 +1052,16 @@ class LarvaWorldSim(LarvaWorld):
                                                           'odor_layer_grid_resolution'],
                                                       evap_const=diffusion_pars['odor_evaporation_rate'],
                                                       diff_const=diffusion_pars['odor_diffusion_rate'],
-                                                      color=odor_color)
+                                                      color=odor_color,
+                                                      space_range=self.space_edges_for_screen,
+                                                     space2grid=self.space2grid(50))
             elif landscape == 'Gaussian':
                 layers[odor_id] = GaussianValueLayer(world=self.space, unique_id=odor_id,
                                                      sources=[f for f in sources if
                                                               f.get_odor_id() == odor_id],
-                                                     color=odor_color)
+                                                     color=odor_color,
+                                                     space_range=self.space_edges_for_screen,
+                                                     space2grid=self.space2grid(50))
             # for f in layers[odor_id].sources:
             #     f.set_default_color(layers[odor_id].color)
         return Nodors, layers
@@ -1183,35 +1206,29 @@ class LarvaWorldSim(LarvaWorld):
     def space_to_mm(self, array):
         return array * 1000 / self.scaling_factor
 
-    def plot_odorscape(self, save_to=None):
-        from lib.anal.plotting import plot_surface
+    def space2grid(self, N=100):
+        n=int(N/2)
         radx = self.space_dims[0] / 2
         rady = self.space_dims[1] / 2
-        delta = np.min([radx, rady]) / 50
+        delta = np.min([radx, rady]) / n
         x0 = np.arange(-radx, radx, delta)
         y0 = np.arange(-rady, rady, delta)
         X, Y = np.meshgrid(x0, y0)
+        return X,Y
+
+    def plot_odorscape(self, save_to=None):
+        from lib.anal.plotting import plot_surface
+        X, Y = self.space2grid(100)
         x = self.space_to_mm(X)
         y = self.space_to_mm(Y)
 
-        @np.vectorize
-        def func(a, b):
-            v = layer.get_value((a, b))
-            return v
-
         for id, layer in self.odor_layers.items():
             title = f'{id} odorscape'
-            V = func(X, Y)
-            # num_sources = layer.get_num_sources()
-            # name = f'{id} odorscape'
+            V=layer.get_value_grid(X,Y)
             plot_surface(x=x, y=y, z=V,
                          labels=[r'x $(mm)$', r'y $(mm)$', r'concentration $(μM)$'], title=title,
                          save_to=save_to, save_as=f'{id}_odorscape_{self.odorscape_counter}')
-        # plt.figure()
-        # CS = plt.contour(X, Y, V)
-        # plt.clabel(CS, inline=1, fontsize=10)
-        # plt.title(f'Odorant concentration landscape from {num_sources} sources ')
-        # plt.show()
+
 
     def get_larva_bodies(self, scale=1.0):
         larva_bodies = {}

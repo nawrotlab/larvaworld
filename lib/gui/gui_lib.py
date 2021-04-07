@@ -28,14 +28,13 @@ button_kwargs = {'font': ('size', 6),
                  }
 
 buttonM_kwargs = {'font': ('size', 8),
-                 'size': (12, 1)
-                 }
+                  'size': (12, 1)
+                  }
 
 header_kwargs = {'font': ('size', 8),
                  'size': (14, 1)}
 text_kwargs = {'font': ('size', 8),
                'size': (14, 1)}
-
 
 
 def retrieve_value(v, t):
@@ -340,6 +339,7 @@ def bool_button(name, state, disabled=False):
                   disabled_button_color=(sg.theme_background_color(), sg.theme_background_color()),
                   metadata=BtnInfo(state=state))
     return b
+
 
 
 def named_list_layout(text, key, choices):
@@ -710,7 +710,7 @@ class DynamicGraph:
         self.pars, self.sim_symbols, self.exp_symbols, self.units, self.ylims, self.par_collects = [
             par_db[['par', 'symbol', 'exp_symbol', 'unit', 'lim', 'collect']].loc[self.par_shorts].values[:, k].tolist()
             for k in range(6)]
-        self.ylims=[retrieve_value(lim, Tuple[float, float])for lim in self.ylims]
+        self.ylims = [retrieve_value(lim, Tuple[float, float]) for lim in self.ylims]
         self.Npars = len(self.pars)
         self.yranges = {}
 

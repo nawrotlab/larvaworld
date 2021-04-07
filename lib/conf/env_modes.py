@@ -198,7 +198,7 @@ chemorbit_env = {'arena_params': arena(0.1, 0.06),
                  }
 
 RL_chemorbit_env = {'arena_params': arena(0.1, 0.1),
-                    'food_params': food_param_conf(list={**foodNodor_source(id='Odor source', odor_id='Odor')}),
+                    'food_params': food_param_conf(list={**foodNodor_source(id='Odor source', pos=(-0.04, -0.025), odor_id='Odor')}),
                     'larva_params': larva_distro(30, scale=0.0, model='RL_learner'),
                     'odor_params': gaussian_odor()
                     }
@@ -247,7 +247,7 @@ patchy_food_env = {'arena_params': arena(0.2, 0.2),
                    'odor_params': gaussian_odor()}
 
 food_grid_env = {'arena_params': arena(0.03, 0.03),  # dish(0.006),
-                 'food_params': food_param_conf(grid=food_grid(50, 10 ** -3)),
+                 'food_params': food_param_conf(grid=food_grid(50, 10 ** -9)),
                  'larva_params': larva_distro(25, model='feeder'),
                  'odor_params': None}
 

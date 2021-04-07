@@ -240,3 +240,5 @@ def get_sim(window, values, collapsibles, output_keys, source_units, border_list
         'collections': collections,
     }
     return sim_config
+
+

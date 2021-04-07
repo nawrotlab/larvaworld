@@ -5,19 +5,16 @@ from mesa.space import ContinuousSpace
 
 
 class ValueGrid:
-    def __init__(self, space_range, food_grid_dims=[100, 100], distribution='uniform',
-                 food_grid_amount=1, quality=1):
-        self.initial_amount = food_grid_amount
-        self.quality = quality
-        if food_grid_amount>0 :
-            self.initial_value=1
-        else :
-            self.initial_value=0
+    def __init__(self, space_range, grid_dims=[50, 50], distribution='uniform',
+                 initial_value=0, default_color=(255,255,255)):
+        self.initial_value=initial_value
+        self.default_color=default_color
+
         # print(food_grid_dims)
         # print(food_grid_dims[0])
         # print(type(food_grid_dims[0]))
         # raise
-        self.X, self.Y = food_grid_dims
+        self.X, self.Y = grid_dims
         x_range = tuple(space_range[0:2])
         y_range = tuple(space_range[2:])
         x0, x1 = x_range[0], x_range[1]
@@ -29,17 +26,13 @@ class ValueGrid:
         self.XY_half=np.array([self.X/2, self.Y/2])
 
         if distribution == 'uniform':
-            self.grid = np.ones([self.X, self.Y]) * self.initial_amount
+            self.grid = np.ones([self.X, self.Y]) * self.initial_value
 
         self.grid_vertices = self.generate_grid_vertices()
         self.grid_edges = [[-xr / 2, -yr / 2],
                            [xr / 2, -yr / 2],
                            [xr / 2, yr / 2],
                            [-xr / 2, yr / 2]]
-
-    def get_color(self, v=1):
-        c = int((1-v) * 255)
-        return np.array((c, 255, c))
 
     def get_grid_cell(self, p):
         c=np.clip(np.array(p/self.xy + self.XY_half).astype(int), a_min=[0,0], a_max=[self.X-1,self.Y-1])
@@ -68,17 +61,6 @@ class ValueGrid:
                 vertices.append(self.cell_vertices(i, j))
         return vertices
 
-    def draw(self, viewer):
-        viewer.draw_polygon(self.grid_edges, self.get_color(v=self.initial_value), filled=True)
-        not_full=np.array([[k, v/self.initial_amount] for k,v in enumerate(self.grid.flatten().tolist()) if v!=self.initial_amount])
-        if not_full.shape[0]!=0 :
-            # print(not_full)
-            # # raise
-            vertices = [self.grid_vertices[int(i)] for i in not_full[:,0]]
-            colors = [self.get_color(v) for v in not_full[:,1]]
-            for v,c in zip(vertices,colors) :
-                viewer.draw_polygon(v, c, filled=True)
-
     def cell_vertices(self, i, j):
         x, y = self.x, self.y
         X, Y = self.X / 2, self.Y / 2
@@ -94,14 +76,62 @@ class ValueGrid:
     def empty_grid(self):
         self.grid = np.zeros([self.X, self.Y])
 
+    def draw(self, viewer):
+        color_grid=self.get_color_grid()
+        for vertices, col in zip(self.grid_vertices, color_grid) :
+            viewer.draw_polygon(vertices, col, filled=True)
+
+    def get_color(self, v):
+        v0=self.initial_value
+        c = int((v0-v) * 255)
+        col=np.clip(np.array(self.default_color)+c, a_min=0, a_max=255)
+        return col
+
+    def get_color_grid(self):
+        v0 = self.initial_value
+        cs = np.array((v0-self.grid.flatten()) * 255).astype(int)
+        cs = np.array([cs,cs,cs]).T
+        color_grid = np.clip(np.array(self.default_color) + cs, a_min=0, a_max=255)
+        return color_grid
+
+
+
+class FoodGrid(ValueGrid):
+    def __init__(self, space_range, food_grid_dims=[100, 100], distribution='uniform',
+                 default_color=(0,255,0), food_grid_amount=1, quality=1):
+        if food_grid_amount>0 :
+            initial_value=1
+        else :
+            initial_value=0
+        super().__init__(space_range=space_range, distribution=distribution,
+                         grid_dims=food_grid_dims, initial_value=initial_value, default_color=default_color)
+        self.initial_amount = food_grid_amount
+        self.quality = quality
+
+        if distribution == 'uniform':
+            self.grid = np.ones([self.X, self.Y]) * self.initial_amount
+
+
+
+    def draw(self, viewer):
+        viewer.draw_polygon(self.grid_edges, self.get_color(v=self.initial_value), filled=True)
+        not_full=np.array([[k, v/self.initial_amount] for k,v in enumerate(self.grid.flatten().tolist()) if v!=self.initial_amount])
+        if not_full.shape[0]!=0 :
+            vertices = [self.grid_vertices[int(i)] for i in not_full[:,0]]
+            colors = [self.get_color(v) for v in not_full[:,1]]
+            for v,c in zip(vertices,colors) :
+                viewer.draw_polygon(v, c, filled=True)
 
 
 class ValueLayer:
-    def __init__(self, world, unique_id,  color,sources=[], **kwargs):
+    def __init__(self, world, unique_id,  color,space_range,space2grid, sources=[], visible=False, **kwargs):
         self.world = world
         self.id = unique_id
         self.color = color
         self.sources = sources
+        self.value_grid=ValueGrid(space_range=space_range, default_color=color)
+        self.space2grid=space2grid
+        self.visible=visible
 
     def get_value(self, pos):
         pass
@@ -117,6 +147,21 @@ class ValueLayer:
 
     def get_num_sources(self):
         return len(self.sources)
+
+    def get_value_grid(self, X,Y):
+        @np.vectorize
+        def func(a, b):
+            v = self.get_value((a, b))
+            return v
+
+        V = func(X, Y)
+        return V
+
+    def draw_value_grid(self, viewer):
+        X,Y=self.space2grid
+        V=self.get_value_grid(X,Y).T
+        self.value_grid.grid=V/np.max(V)
+        self.value_grid.draw(viewer)
 
 
 class GaussianValueLayer(ValueLayer):
