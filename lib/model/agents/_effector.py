@@ -754,6 +754,9 @@ class Olfactor(Effector):
     def reset_gain(self, odor_id):
         self.gain[odor_id]=self.base_gain[odor_id]
 
+    def reset_all_gains(self):
+        self.gain=self.base_gain
+
     def get_gain(self, odor_id):
         return self.gain[odor_id]
 

@@ -199,8 +199,8 @@ class TargetedDataCollector(DataCollector):
 
     def generate_database(self, mode):
         if mode == 'step':
-            midline_xy = self.midline_xy_pars()
-            contour_xy = self.contour_xy_pars()
+            midline_xy = midline_xy_pars()
+            contour_xy = contour_xy_pars()
             full_step_database = {**midline_xy,
                                   **contour_xy,
                                   **step_database}
@@ -209,27 +209,30 @@ class TargetedDataCollector(DataCollector):
         elif mode == 'endpoint':
             return endpoint_database
 
-    def midline_xy_pars(self, N=12):
-        midline_xy = {}
-        points = ['head'] + [f'spinepoint_{i}' for i in np.arange(2, N, 1)] + ['tail']
-        for i, p in enumerate(points):
-            midline_xy.update(
-                {f'{p}_x': lambda a, i_bound=i: a.get_segment(i_bound).get_position()[
-                                                    0] * 1000 / a.model.scaling_factor,
-                 f'{p}_y': lambda a, i_bound=i: a.get_segment(i_bound).get_position()[
-                                                    1] * 1000 / a.model.scaling_factor,
-                 })
-        return midline_xy
 
-    def contour_xy_pars(self, N=22):
-        contour_xy = {}
-        contour = [f'contourpoint_{j}' for j in range(N)]
-        for j, c_point in enumerate(contour):
-            contour_xy.update(
-                {f'{c_point}_x': lambda a, j_bound=j: a.get_contour()[j_bound][0] * 1000 / a.model.scaling_factor,
-                 f'{c_point}_y': lambda a, j_bound=j: a.get_contour()[j_bound][1] * 1000 / a.model.scaling_factor,
-                 })
-        return contour_xy
+def midline_xy_pars(N=11):
+    midline_xy = {}
+    points = ['head'] + [f'seg{i}' for i in np.arange(2, N, 1)] + ['tail']
+    # points = ['head'] + [f'spinepoint_{i}' for i in np.arange(2, N, 1)] + ['tail']
+    for i, p in enumerate(points):
+        midline_xy.update(
+            {f'{p}_x': lambda a, i_bound=i: a.get_segment(i_bound).get_position()[
+                                                0] * 1000 / a.model.scaling_factor,
+             f'{p}_y': lambda a, i_bound=i: a.get_segment(i_bound).get_position()[
+                                                1] * 1000 / a.model.scaling_factor,
+             })
+    return midline_xy
+
+
+def contour_xy_pars(N=22):
+    contour_xy = {}
+    contour = [f'contourpoint_{j}' for j in range(N)]
+    for j, c_point in enumerate(contour):
+        contour_xy.update(
+            {f'{c_point}_x': lambda a, j_bound=j: a.get_contour()[j_bound][0] * 1000 / a.model.scaling_factor,
+             f'{c_point}_y': lambda a, j_bound=j: a.get_contour()[j_bound][1] * 1000 / a.model.scaling_factor,
+             })
+    return contour_xy
 
 
 # step_db = {

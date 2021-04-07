@@ -39,7 +39,7 @@ def build_datasets(datagroup_id, raw_folders=None, names=['raw'], folders=None, 
         step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
         endpoint_data.sort_index(inplace=True)
         d.set_step_data(step_data)
-        d.set_endpoint_data(endpoint_data)
+        d.set_end_data(endpoint_data)
         d.save(food_endpoint_data=False)
         d.agent_ids = d.step_data.index.unique('AgentID').values
         d.num_ticks = d.step_data.index.unique('Step').size

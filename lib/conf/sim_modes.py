@@ -1,44 +1,5 @@
 from typing import List, Tuple
 
-full_traj = {'trajectories': True,
-             'trail_decay_in_sec': 0}
-
-trail_traj = {'trajectories': True,
-              'trail_decay_in_sec': 10}
-
-no_traj = {'trajectories': False,
-           'trail_decay_in_sec': None}
-
-draw_default = {'color_behavior': False,
-                'draw_head': False,
-                'draw_contour': False,
-                'random_larva_colors': False}
-
-draw_behavior = {'color_behavior': True,
-                 'draw_head': False,
-                 'draw_contour': False,
-                 'random_larva_colors': False}
-
-draw_colors = {'color_behavior': False,
-               'draw_head': False,
-               'draw_contour': False,
-               'random_larva_colors': True}
-
-draw_on_black = {'color_behavior': False,
-                 'draw_head': False,
-                 'draw_contour': False,
-                 'black_background': True,
-                 'random_larva_colors': False}
-
-default_sim = {
-    # 'dt': 1 / 6,
-    'dt': 1 / 10,
-    # 'dt': 1 / 16,
-    # 'dt': 1 / 200,
-    'sim_time_in_min': 3.0,
-    'Box2D': False,
-}
-
 odor_pars = {'odor_id': str,
              'odor_intensity': float,
              'odor_spread': float}
@@ -62,10 +23,9 @@ odor_gain_pars = {
     'std': float
 }
 
-
-
 larva_pars = {
     'unique_id': str,
+    'group': str,
     **odor_pars
 }
 border_pars = {
@@ -80,11 +40,86 @@ agent_pars = {'Food': food_pars,
               'Border': border_pars,
               }
 
-food_distro_pars = {
-    'N': int,
-    'mode': str,
-    'loc': Tuple[float, float],
-    'scale': float,
-    'pars': base_food_pars,
-    # 'orientation': float,
-}
+arena_pars_dict = {'arena_xdim': float,
+                   'arena_ydim': float,
+                   'arena_shape': ['circular', 'rectangular']}
+
+
+def distro_pars(class_name):
+    larva_distros = [
+        'normal',
+        'defined',
+        'identical',
+        'uniform',
+        'uniform_circ',
+        'spiral',
+        'facing_right'
+    ]
+
+    food_distros = [
+        'normal',
+        # 'defined',
+        'uniform'
+    ]
+
+    agent_distros = {
+        'Larva': larva_distros,
+        'Food': food_distros,
+    }
+
+    common_distro_pars = {
+        'group': str,
+        'default_color': str,
+        'mode': agent_distros[class_name],
+        'N': int,
+        'loc': Tuple[float, float],
+        'scale': float,
+    }
+    if class_name == 'Food':
+        return {
+            **common_distro_pars,
+            **base_food_pars,
+            # 'pars': base_food_pars,
+        }
+    elif class_name == 'Larva':
+        from lib.stor.datagroup import loadConfDict
+        return {
+            'model': list(loadConfDict('Model').keys()),
+            **common_distro_pars,
+            'orientation': float
+
+        }
+
+#
+#
+# names = [
+#             'trajectory_dt',
+#             'trajectories',
+#             'focus_mode',
+#             'draw_centroid',
+#             'draw_head',
+#             'draw_midline',
+#             'draw_contour',
+#             'visible_clock',
+#             'visible_ids',
+#             'visible_state',
+#             'color_behavior',
+#             'random_colors',
+#             'black_background',
+#             'larva_collisions',
+#             'zoom',
+#             'snapshot #',
+#             'odorscape #'
+#         ]
+#
+#
+# input_default={}
+# for name in names :
+#     input_default[name] = True
+#
+# print(input_default)
+#
+# keyboard_shortcut = {}
+# for name in names :
+#     keyboard_shortcut[name] = 'e'
+# print(keyboard_shortcut)

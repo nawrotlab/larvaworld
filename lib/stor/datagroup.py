@@ -2,21 +2,16 @@ import json
 import sys
 import shutil
 import os
-from lib.conf.data_modes import *
+import numpy as np
+
+import lib.stor.paths as paths
+sys.path.insert(0, paths.get_parent_dir())
 import lib.conf.env_modes as env
 import lib.conf.larva_modes as mod
-import lib.stor.paths as paths
 
-sys.path.insert(0, paths.get_parent_dir())
+import lib.conf.data_modes as dat
 
-conf_paths = {
-    'Data': paths.DataConfs_path,
-    'Group': paths.DataGroups_path,
-    'Env': paths.EnvConfs_path,
-    'Par': paths.ParConfs_path,
-    'Exp': paths.ExpConfs_path,
-    'Model': paths.ModelConfs_path,
-}
+
 
 
 def get_input(message, itype, default='', accepted=None, range=None):
@@ -170,11 +165,11 @@ def setConf(id):
 
     print(f' - Step 2 : Raw data configuration')
     Ncols = get_input("Enter sequence of columns in raw data", itype=int, range=[0, +np.inf],
-                      default=len(Schleyer_raw_cols))
+                      default=len(dat.Schleyer_raw_cols))
     read_sequence = []
     for i in range(Ncols):
         read_sequence.append(
-            get_input(f"Enter raw column name {i} of {Ncols}", itype=str, default=Schleyer_raw_cols[i]))
+            get_input(f"Enter raw column name {i} of {Ncols}", itype=str, default=dat.Schleyer_raw_cols[i]))
     read_metadata = get_input("Read dataset metadata?", itype=bool, default=True)
 
     print(f' - Step 3 : Enrichment configuration')
@@ -258,7 +253,7 @@ def loadConf(id, conf_type):
 
 
 def loadConfDict(conf_type):
-    with open(conf_paths[conf_type]) as tfp:
+    with open(paths.conf_paths[conf_type]) as tfp:
         Conf_dict = json.load(tfp)
     return Conf_dict
 
@@ -276,7 +271,7 @@ def saveConf(conf, conf_type, id=None):
 
 
 def saveConfDict(ConfDict, conf_type):
-    with open(conf_paths[conf_type], "w") as fp:
+    with open(paths.conf_paths[conf_type], "w") as fp:
         json.dump(ConfDict, fp)
 
 
@@ -305,7 +300,7 @@ def initializeDataGroup(id):
     plot_path = f'{path}/plots'
     visuals_path = f'{path}/visuals'
     subgroups = DataGroup['subgroups']
-    dirs = [f'{DataFolder}/{i}' for i in [path, raw_path, processed_path, plot_path, visuals_path]]
+    dirs = [f'{paths.DataFolder}/{i}' for i in [path, raw_path, processed_path, plot_path, visuals_path]]
     for i in dirs:
         if not os.path.exists(i):
             os.makedirs(i)
@@ -368,40 +363,56 @@ class LarvaDataGroup:
         return loadConf(loadConf(self.conf, 'Data')['par'], 'Par')
 
     def get_path(self):
-        return f'{DataFolder}/{self.path}'
+        return f'{paths.DataFolder}/{self.path}'
 
 
 if __name__ == '__main__':
-    saveConf(SchleyerConf, 'Data')
-    saveConf(JovanicConf, 'Data')
-    saveConf(SimConf, 'Data')
-    saveConf(SchleyerParConf, 'Par', 'SchleyerParConf')
-    saveConf(JovanicParConf, 'Par', 'JovanicParConf')
-    saveConf(PaisiosParConf, 'Par', 'PaisiosParConf')
-    saveConf(SinglepointParConf, 'Par', 'SinglepointParConf')
-    saveConf(SimParConf, 'Par', 'SimParConf')
-    saveConf(SchleyerGroup, 'Group')
-    saveConf(JovanicGroup, 'Group')
-    saveConf(TestGroup, 'Group')
-    saveConf(SimGroup, 'Group')
+    saveConf(dat.SchleyerConf, 'Data')
+    saveConf(dat.JovanicConf, 'Data')
+    saveConf(dat.SimConf, 'Data')
 
+    saveConf(dat.SchleyerParConf, 'Par', 'SchleyerParConf')
+    saveConf(dat.JovanicParConf, 'Par', 'JovanicParConf')
+    saveConf(dat.PaisiosParConf, 'Par', 'PaisiosParConf')
+    saveConf(dat.SinglepointParConf, 'Par', 'SinglepointParConf')
+    saveConf(dat.SimParConf, 'Par', 'SimParConf')
+
+    saveConf(dat.SchleyerGroup, 'Group')
+    saveConf(dat.JovanicGroup, 'Group')
+    saveConf(dat.TestGroup, 'Group')
+    saveConf(dat.SimGroup, 'Group')
+
+    saveConf(env.focus_env, 'Env', 'focused view')
     saveConf(env.dish_env, 'Env', 'dish')
     saveConf(env.dispersion_env, 'Env', 'dispersion')
-    saveConf(env.chemotax_env, 'Env', 'chemotaxis')
+    saveConf(env.chemotax_env, 'Env', 'chemotaxis approach')
+    saveConf(env.chemorbit_env, 'Env', 'chemotaxis local')
     saveConf(env.pref_env, 'Env', 'odor preference')
-    saveConf(env.food_grid_env, 'Env', 'food grid')
     saveConf(env.patchy_food_env, 'Env', 'patchy food')
     saveConf(env.uniform_food_env, 'Env', 'uniform food')
-    # saveConf(env.maze_env, 'Env','maze')
-    saveConf(env.game_env, 'Env', 'game')
+    saveConf(env.food_grid_env, 'Env', 'food grid')
+    saveConf(env.growth_env, 'Env', 'growth')
+    saveConf(env.growth_2x_env, 'Env', 'rovers-sitters')
+    saveConf(env.reorientation_env, 'Env', 'reorientation')
+    saveConf(env.imitation_env_p, 'Env', 'realistic imitation')
+    saveConf(env.maze_env, 'Env','maze')
+    saveConf(env.king_env, 'Env', 'keep the flag')
+    saveConf(env.flag_env, 'Env', 'flag to base')
 
 
     saveConf(mod.exploring_larva, 'Model', 'explorer')
     saveConf(mod.odor_larva, 'Model', 'navigator')
+    saveConf(mod.odor_larva_x2, 'Model', 'navigator_x2')
     saveConf(mod.feeding_larva, 'Model', 'feeder')
     saveConf(mod.feeding_odor_larva, 'Model', 'feeder-navigator')
     saveConf(mod.growing_rover, 'Model', 'rover')
     saveConf(mod.growing_sitter, 'Model', 'sitter')
+    saveConf(mod.imitation_larva, 'Model', 'imitation')
+    saveConf(mod.flag_larva, 'Model', 'gamer')
+    saveConf(mod.king_larva_L, 'Model', 'gamer_L')
+    saveConf(mod.king_larva_R, 'Model', 'gamer_R')
+
+
 
 # a=loadDataGroupDict()
 # print(list(a.keys()))

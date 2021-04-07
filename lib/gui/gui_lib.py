@@ -23,13 +23,19 @@ on_image_disabled = b'iVBORw0KGgoAAAANSUhEUgAAAFoAAAAnCAYAAACPFF8dAAAAAXNSR0IArs
 
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'
-button_kwargs = {'font': ('size', 5),
-                 'size': (7, 1)
+button_kwargs = {'font': ('size', 6),
+                 'size': (10, 1)
                  }
-header_kwargs = {'font': ('size', 7),
-                 'size': (15, 1)}
-text_kwargs = {'font': ('size', 7),
-               'size': (12, 1)}
+
+buttonM_kwargs = {'font': ('size', 8),
+                 'size': (12, 1)
+                 }
+
+header_kwargs = {'font': ('size', 8),
+                 'size': (14, 1)}
+text_kwargs = {'font': ('size', 8),
+               'size': (14, 1)}
+
 
 
 def retrieve_value(v, t):
@@ -56,6 +62,7 @@ def retrieve_value(v, t):
         v = v.replace("'", '')
         v = v.replace(",", ' ')
         vv = tuple([float(x) for x in v.split()])
+
     elif t == tuple or t == list:
         try:
             vv = literal_eval(v)
@@ -67,6 +74,10 @@ def retrieve_value(v, t):
         vv = v
     # elif type(t) == dict:
     #     vv = v
+    elif type(t) == list:
+        vv = retrieve_value(v, type(t[0]))
+        if vv not in t:
+            raise ValueError(f'Retrieved value {vv} not in list {t}')
     else:
         # print(v, t)
         vv = t(v)
@@ -83,17 +94,25 @@ def get_table_data(values, pars_dict, Nagents):
         data.append(dic)
     return data
 
-def set_agent_dict(dic, type_dic) :
-    t0 = fun.agent_dict2list(dic)
-    t1 = gui_table(t0, type_dic)
-    dic = fun.agent_list2dict(t1)
+
+def set_agent_dict(dic, type_dic, header='unique_id', title='Agent list'):
+    t0 = fun.agent_dict2list(dic, header=header)
+    t1 = gui_table(t0, type_dic, title=title)
+    dic = fun.agent_list2dict(t1, header=header)
     return dic
 
 
-def build_table_window(data, pars_dict, title):
-    text_args = {'font': 'Courier 10',
-                 'size': (15, 1),
-                 'justification': 'center'}
+def build_table_window(data, pars_dict, title, return_layout=False):
+    # if return_layout:
+    #     kwargs = text_kwargs
+    #     # kwargs2= {'size': (1, 1)}
+    # else:
+    kwargs = text_kwargs
+    kwargs2 = {'size': (2, 1)}
+    text_kwargs2 = {**kwargs,
+                    'justification': 'center'}
+    # header_kwargs2 = {**header_kwargs,
+    #                   'justification': 'center'}
     pars = list(pars_dict.keys())
     par_types = list(pars_dict.values())
     Nagents, Npars = len(data), len(pars)
@@ -101,14 +120,20 @@ def build_table_window(data, pars_dict, title):
     # Normally a layout is specified 1 ROW at a time. Here multiple rows are being contatenated together to produce the layout
     # Note the " + \ " at the ends of the lines rather than the usual " , "
     # This is done because each line is a list of lists
-    layout = [[sg.Text(title, font='Default 12')]] + \
-             [[sg.Text(' ', size=(2, 1))] + [sg.Text(p, key=p, enable_events=True, **text_args) for p in pars]] + \
-             [[sg.T(i + 1, size=(2, 1))] + [sg.Input(data[i][p], key=(i, p), **text_args) for p in pars] for i in
-              range(Nagents)] + \
-             [[sg.Button('Add'), sg.Button('Remove'), sg.Button('Ok'), sg.Button('Cancel')]]
+    layout = [[sg.Text(' ', **kwargs2)] + [sg.Text(p, key=p, enable_events=True, **text_kwargs2) for p in pars]] + \
+             [
+                 [sg.T(i + 1, **kwargs2)] +
+                 [sg.Input(data[i][p], key=(i, p), **text_kwargs2) if type(pars_dict[p]) != list else sg.Combo(
+                     pars_dict[p], default_value=data[i][p], key=(i, p), enable_events=True, readonly=True,
+                     **kwargs) for p in pars] for i in range(Nagents)] + \
+             [[sg.Button('Add', **button_kwargs), sg.Button('Remove', **button_kwargs),
+               sg.Button('Ok', **button_kwargs), sg.Button('Cancel', **button_kwargs)]]
+
+    if return_layout:
+        return layout
 
     # Create the window
-    table_window = sg.Window('A Table Simulation', layout, default_element_size=(20, 1), element_padding=(1, 1),
+    table_window = sg.Window(title, layout, default_element_size=(20, 1), element_padding=(1, 1),
                              return_keyboard_events=True, finalize=True)
     table_window.close_destroys_window = True
     return Nagents, Npars, pars, table_window
@@ -188,6 +213,23 @@ def gui_table(data, pars_dict, title='Agent list'):
     #     sg.popup_scrolled('your_table = [ ', ',\n'.join([str(table[i]) for i in range(Nagents)]) + '  ]', title='Copy your data from here')
 
 
+# def gui_read_only_table(data, pars_dict, title='Agent list') :
+#     text_kwargs2 = {**text_kwargs,
+#                     'justification': 'center'}
+#     pars = list(pars_dict.keys())
+#     par_types = list(pars_dict.values())
+#     Nagents, Npars = len(data), len(pars)
+#     layout = [[sg.Text(' ', size=(2, 1))] + [sg.Text(p, key=p, enable_events=True, **text_kwargs2) for p in pars]] + \
+#              [
+#                  [sg.T(i + 1, size=(2, 1))] +
+#                  [sg.Input(data[i][p], key=(i, p), **text_kwargs2) if type(pars_dict[p]) != list else sg.Combo(
+#                      pars_dict[p], default_value=data[i][p], key=(i, p), enable_events=True, readonly=True,
+#                      **text_kwargs) for p in pars] for i in
+#                  range(Nagents)] + \
+#              [[sg.Button('Add'), sg.Button('Remove'), sg.Button('Ok'), sg.Button('Cancel')]]
+#     return layout
+
+
 def update_window_from_dict(window, dic, prefix=None):
     if dic is not None:
         for k, v in dic.items():
@@ -231,7 +273,12 @@ class SectionDict:
                 ll = self.subdicts[k0].get_section()
                 l.append(ll)
             else:
-                l.append([sg.Text(f'{k}:', **text_kwargs), sg.In(v, key=k0, **text_kwargs)])
+                temp = sg.In(v, key=k0, **text_kwargs)
+                if self.type_dict is not None:
+                    if type(self.type_dict[k]) == list:
+                        temp = sg.Combo(self.type_dict[k], default_value=v, key=k0, enable_events=True, readonly=True,
+                                        **text_kwargs)
+                l.append([sg.Text(f'{k}:', **text_kwargs), temp])
         return l
 
     def get_dict(self, values, window):
@@ -271,22 +318,22 @@ class SectionDict:
 def named_bool_button(name, state, toggle_name=None):
     if toggle_name is None:
         toggle_name = name
-    l = [sg.Text(f'{name} :', **text_kwargs),bool_button(toggle_name, state)]
+    l = [sg.Text(f'{name} :', **text_kwargs), bool_button(toggle_name, state)]
     return l
 
 
 def bool_button(name, state, disabled=False):
     if state:
-        if disabled :
+        if disabled:
             image = on_image_disabled
-        else :
+        else:
             image = on_image
-    elif state==False:
+    elif state == False:
         if disabled:
             image = off_image_disabled
         else:
             image = off_image
-    elif state is None :
+    elif state is None:
         image = off_image_disabled
     b = sg.Button(image_data=image, k=f'TOGGLE_{name}', border_width=0,
                   button_color=(sg.theme_background_color(), sg.theme_background_color()),
@@ -295,10 +342,11 @@ def bool_button(name, state, disabled=False):
     return b
 
 
-def named_list_layout(text, key, choices) :
-    l =[sg.Text(text, **header_kwargs),
-     sg.Combo(choices, key=key, enable_events=True, readonly=True, **text_kwargs)]
+def named_list_layout(text, key, choices):
+    l = [sg.Text(text, **header_kwargs),
+         sg.Combo(choices, key=key, enable_events=True, readonly=True, **text_kwargs)]
     return l
+
 
 class Collapsible:
     def __init__(self, name, state, content, disp_name=None, toggle=None, disabled=False):
@@ -467,6 +515,67 @@ def object_menu(selected):
             break
     window.close()
     return sel
+
+
+# def right_click_menu() :
+#     commands = ['Delete', 'Favourite', 'Reply', 'Copy', 'Edit']
+#     # layout = [
+#     #     [sg.Listbox(size=(35, 22), key='chat', values=messages,
+#     #                 right_click_menu=['&Right', commands])]
+#     # ]
+#     window = sg.Window("Windows-like program",
+#                        layout=[],
+#                        default_element_size=(12, 1),
+#                        grab_anywhere=True,
+#                        right_click_menu=['&Right', commands],
+#                        default_button_element_size=(12, 1))
+#
+#     while True:
+#
+#         event, values = window.read()
+#         if event == sg.WIN_CLOSED:
+#             break
+#         print(event, values)
+#
+#     window.close()
+
+# def add_agent_distro(agent_class):
+#     if agent_class == 'Food':
+#         title = 'Food distribution'
+#     elif agent_class == 'Larva':
+#         title = 'Larva distribution'
+#     l = [sg.Col([
+#         [sg.Text('Group:', **header_kwargs), sg.In(agent_class, key='group', **text_kwargs)],
+#         [sg.Text('Distribution:', **header_kwargs),
+#          sg.Combo(agent_distros[agent_class], key='mode', enable_events=True, readonly=True, **text_kwargs)],
+#         [sg.Text(f'# {agent_class}:', **header_kwargs), sg.In((0.0, 0.0), key='N', **text_kwargs)],
+#         [sg.Text('Loc', **header_kwargs), sg.In((0.0, 0.0), key='loc', **text_kwargs)],
+#         [sg.Text('Scale:', **header_kwargs), sg.In(0.0, key='scale', **text_kwargs)],
+#         [sg.Text('Orientation:', **header_kwargs), sg.In('', key='orientation', **text_kwargs)],
+#         [sg.Text('Larva model:', **header_kwargs),
+#          sg.Combo(list(loadConfDict('Model').keys()), key='model', enable_events=True, readonly=True, **text_kwargs)],
+#         [sg.Button('Ok', **button_kwargs), sg.Button('Cancel', **button_kwargs)]])]
+#
+#     w = sg.Window(title, l)
+#     while True:
+#         e, v = w.read()
+#         if e == 'Ok':
+#             loc = retrieve_value(v['loc'], Tuple[float, float])
+#             scale = retrieve_value(v['scale'], float)
+#             orientation = retrieve_value(v['orientation'], float)
+#             distro = {str(v['group']): {
+#                 'N': int(v['N']),
+#                 'mode': str(v['mode']),
+#                 'loc': loc,
+#                 'scale': scale,
+#                 'orientation': orientation,
+#                 'model': str(v['model'])}
+#             }
+#             break
+#         elif e == 'Cancel':
+#             distro = {}
+#     w.close()
+#     return distro
 
 
 def delete_objects_window(selected):

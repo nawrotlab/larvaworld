@@ -6,12 +6,16 @@ from lib.sim.batch_lib import *
 # sys.path.insert(0, '../../..')
 
 odor_pref_batch = {
-    'pars': ['olfactor_gain_mean'],
-    'ranges': np.array([[-500.0, 500.0]]),
+    'pars': ['CS.mean', 'UCS.mean'],
+    'ranges': np.array([
+        [-100.0, 100.0],
+        [-100.0, 100.0]
+    ]),
     'process_method': PI_computation,
     'post_process_method': null_post_processing,
     'final_process_method': heat_map_generation,
-    'space_method': generate_gain_space,
+    'space_method': grid_search_dict,
+    # 'space_method': generate_gain_space,
     'batch_config': None,
     'post_kwargs': {},
     'run_kwargs': {}
@@ -126,7 +130,7 @@ growth_2x_batch = {
     'run_kwargs': {'save_data_flag': True}
 }
 
-# Just change the 'fly_params' to growing_sitter, in growth_2x in exp_modes
+# Just change the 'larva_pars' to growing_sitter, in growth_2x in exp_modes
 # python batch_run.py growth_2x -N 6 -t 5 -id_b test333 -Ngrd 8 1 -Nmax 20 -Nbst 4
 
 

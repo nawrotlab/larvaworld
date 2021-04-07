@@ -197,7 +197,7 @@ def save_results_dict(traj, save_to=None, save_as='results_dict.csv'):
         json.dump(all, fp)
 
 
-def load_default_configuration(traj, sim_params=None, env_params=None, fly_params=None, life_params=None):
+def load_default_configuration(traj, sim_params=None, env_params=None, larva_pars=None, life_params=None):
     if sim_params is not None:
         env_dict = flatten_dict(sim_params, parent_key='sim_params', sep='.')
         for k, v in env_dict.items():
@@ -209,8 +209,8 @@ def load_default_configuration(traj, sim_params=None, env_params=None, fly_param
             # print(k,v)
             traj.f_apar(k, v)
 
-    if fly_params is not None:
-        fly_dict = flatten_dict(fly_params, parent_key='fly_params', sep='.')
+    if larva_pars is not None:
+        fly_dict = flatten_dict(larva_pars, parent_key='larva_pars', sep='.')
         for k, v in fly_dict.items():
             traj.f_apar(k, v)
 
@@ -367,14 +367,14 @@ def post_processing(traj, result_tuple):
 def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag=False, **kwargs):
     start = time.time()
     env_params = reconstruct_dict(traj.f_get('env_params'))
-    fly_params = reconstruct_dict(traj.f_get('fly_params'))
+    # larva_pars = reconstruct_dict(traj.f_get('larva_pars'))
     sim_params = reconstruct_dict(traj.f_get('sim_params'))
     life_params = reconstruct_dict(traj.f_get('life_params'))
     sim_params['sim_id'] = f'run_{traj.v_idx}'
 
     d = run_sim(
                 env_params=env_params,
-                fly_params=fly_params,
+                # larva_pars=larva_pars,
                 sim_params=sim_params,
                 life_params=life_params,
                 mode=None,
@@ -478,12 +478,10 @@ def _batch_run(dir='unnamed',
                           graceful_exit=True)
         traj = env.traj
         print('Created novel environment')
-        # print(list(sim_config.keys()))
-        fly_params, env_params, sim_params, life_params = sim_config['fly_params'], sim_config['env_params'], sim_config[
+        env_params, sim_params, life_params = sim_config['env_params'], sim_config[
             'sim_params'], sim_config['life_params']
-        if all(v is not None for v in [sim_params, env_params, fly_params, life_params]):
-            traj = load_default_configuration(traj, sim_params=sim_params, env_params=env_params,
-                                              fly_params=fly_params, life_params=life_params)
+        if all(v is not None for v in [sim_params, env_params, life_params]):
+            traj = load_default_configuration(traj, sim_params=sim_params, env_params=env_params,life_params=life_params)
         elif params is not None:
             for p in params:
                 traj.f_apar(p, 0.0)
@@ -572,8 +570,8 @@ if __name__ == '__main__':
     # Necessary for multiprocessing under Windows.
     batch_id = 'template'
     batch_idx = 0
-    space = cartesian_product({'fly_params.sensorimotor_params.torque_coef': [0.08, 0.09],
-                               'fly_params.sensorimotor_params.ang_damping': [0.6, 0.3]})
+    space = cartesian_product({'larva_pars.sensorimotor_params.torque_coef': [0.08, 0.09],
+                               'larva_pars.sensorimotor_params.ang_damping': [0.6, 0.3]})
     batch_run(batch_id=batch_id, batch_idx=batch_idx, space=space)
 
 
@@ -587,20 +585,17 @@ def PI_computation(traj, dataset):
 def heat_map_generation(traj):
     path=traj.config.dir_path
     csv_filepath = f'{path}/PIs.csv'
-    heatmap_filepath = f'{path}/PI_heatmap.pdf'
     runs_idx, runs, par_names, par_full_names, par_values, res_names, res_values = get_results(traj, res_names=['PI'])
     inds = res_values[0]
-    combos = par_values[0]
-    gains = np.unique([c[0] for c in combos]).astype(int)
-    left_gain = pd.Series(gains, name="left_gain")
-    right_gain = pd.Series(gains, name="right_gain")
+    Lgains =np.array(par_values[0]).astype(int)
+    Rgains =np.array(par_values[1]).astype(int)
+    left_gain = pd.Series(np.unique(Lgains), name="left_gain")
+    right_gain = pd.Series(np.unique(Rgains), name="right_gain")
     df = pd.DataFrame(index=left_gain, columns=right_gain, dtype=float)
-    for combo, ind in zip(combos, inds):
-        df[combo[1]].loc[combo[0]] = ind
-    # print(csv_filepath)
-    # print(heatmap_filepath)
+    for Lgain, Rgain, ind in zip(Lgains, Rgains, inds):
+        df[Rgain].loc[Lgain] = ind
     df.to_csv(csv_filepath, index=True, header=True)
-    plot_heatmap_PI(csv_filepath, heatmap_filepath)
+    plot_heatmap_PI(save_to=traj.config.dir_path, csv_filepath=csv_filepath)
 
 
 def generate_gain_space(pars, ranges, Ngrid, values=None):

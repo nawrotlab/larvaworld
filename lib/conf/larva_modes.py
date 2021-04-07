@@ -369,14 +369,16 @@ growing_rover = {'energetics_params': energetics_rover,
                  'sensorimotor_params': default_physics,
                  'body_params': l1_seg2,
                  'odor_params': odor(),
-                 'id_prefix': 'Rover'}
+                 # 'id_prefix': 'Rover'
+                 }
 
 growing_sitter = {'energetics_params': energetics_sitter,
                   'neural_params': brain_sitter,
                   'sensorimotor_params': default_physics,
                   'body_params': l1_seg2,
                   'odor_params': odor(),
-                  'id_prefix': 'Sitter'}
+                  # 'id_prefix': 'Sitter'
+                  }
 
 mock_brain = {'modules': full_brain,
               'turner_params': default_turner,
@@ -394,7 +396,7 @@ mock_body = {'initial_length': 4.5,
              'seg_ratio': [0.5, 0.5]  # [5 / 11, 6 / 11]
              }
 
-mock_larva = {'energetics_params': energetics_rover,
+test_larva = {'energetics_params': energetics_rover,
               'neural_params': mock_brain,
               'sensorimotor_params': default_physics,
               'body_params': mock_body,
@@ -435,18 +437,16 @@ nengo_larva = {'energetics_params': None,
 odors3 = [f'{source} odor' for source in ['Flag', 'Left base', 'Right base']]
 odors5 = [f'{source} odor' for source in ['Flag', 'Left base', 'Right base', 'Left group', 'Right group']]
 
-flag_larva_L = {**odor_larva_conf(ids=odors3, means=[100, 0, 0]),
-                'id_prefix': 'Left'}
-
-flag_larva_R = {**odor_larva_conf(ids=odors3, means=[100, 0, 0]),
-                'id_prefix': 'Right'}
+flag_larva = {**odor_larva_conf(ids=odors3, means=[100, 0, 0]),
+                }
 
 king_larva_L = {**odor_larva_conf(ids=odors5, means=[100, 0, 0, 0, 0],
                                   odor_id='Left group odor', odor_intensity=2.0, odor_spread=0.00005
                                   ),
-                'id_prefix': 'Left'}
+                # 'id_prefix': 'Left'
+                }
 
 king_larva_R = {**odor_larva_conf(ids=odors5, means=[100, 0, 0, 0, 0],
                                   odor_id='Right group odor', odor_intensity=2.0, odor_spread=0.00005
                                   ),
-                'id_prefix': 'Right'}
+                }

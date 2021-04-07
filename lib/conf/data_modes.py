@@ -1,7 +1,6 @@
 import numpy as np
 from lib.aux import naming as nam
 import lib.conf.env_modes as env
-from lib.stor.paths import DataFolder
 
 PaisiosParConf = {'bend': 'from_vectors',
                   'front_vector_start': 2,

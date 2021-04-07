@@ -73,7 +73,6 @@ class BodySim(BodyManager):
 
     def step(self):
         self.restore_body_bend()
-
         # Trying restoration for any number of segments
         # if self.Nsegs == 1:
         # if self.Nsegs > 0:
@@ -86,7 +85,6 @@ class BodySim(BodyManager):
         #     # Default mode : apply torque
         #     # self.get_head()._body.ApplyTorque(self.torque, wake=True)
         #     pass
-
         if self.model.physics_engine:
             if self.ang_mode == 'velocity':
                 ang_vel = self.ang_activity * self.ang_vel_coef
@@ -314,8 +312,9 @@ class BodySim(BodyManager):
         # points=[pos_new, front_pos_new]
         in_tank = fun.inside_polygon(points=[pos_new], tank_polygon=self.tank_polygon)
         if len(self.model.border_lines) > 0:
-            border_collision = fun.border_collision(line=LineString([pos_old, pos_new]),
+            border_collision = fun.border_collision(line=LineString([head_rear_old, head_rear_new]),
                                                     border_lines=self.model.border_lines)
+
         else:
             border_collision = False
         if not self.model.larva_collisions:

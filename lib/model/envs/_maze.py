@@ -2,6 +2,7 @@ import random
 from matplotlib.patches import Circle
 from shapely.geometry import LineString, Point
 
+import lib.aux.functions as fun
 
 class Cell:
     """A cell in the maze.
@@ -194,7 +195,8 @@ class Border:
         self.width=width * self.model.scaling_factor
         self.points=points
         if lines is None :
-            lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in zip(points[:-1], points[1:])]
+            lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in fun.group_list_by_n(points,2)]
+            # lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in zip(points[:-1], points[1:])]
         self.border_xy, self.border_lines = self.model.create_borders(lines, from_screen=from_screen)
         self.border_bodies = self.model.create_border_bodies(self.border_xy)
         self.selected=False

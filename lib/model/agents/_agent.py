@@ -26,6 +26,8 @@ class LarvaworldAgent:
 
         self.initial_pos = pos
         self.pos = self.initial_pos
+        if type(default_color)==str :
+            default_color=fun.colorname2tuple(default_color)
         self.default_color = default_color
         self.radius = radius
 
@@ -90,8 +92,9 @@ class LarvaworldAgent:
 
 
 class Larva(LarvaworldAgent):
-    def __init__(self, unique_id, model, pos=None, radius=None, **kwargs):
-        default_color = model.generate_larva_color()
+    def __init__(self, unique_id, model, pos=None, radius=None, default_color = None, **kwargs):
+        if default_color is None :
+            default_color = model.generate_larva_color()
         super().__init__(unique_id=unique_id, model=model, default_color=default_color, pos=pos, radius=radius, **kwargs)
         self.behavior_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id', 'Lturn_id', 'Rturn_id']
         self.null_behavior_dict = dict(zip(self.behavior_pars, [False] * len(self.behavior_pars)))
@@ -384,8 +387,10 @@ class Larva(LarvaworldAgent):
 class Food(LarvaworldAgent):
     def __init__(self, unique_id, model, position,
                  radius=0.002, amount=1.0, quality=1.0,
-                   color=np.array((100, 200, 120)), **kwargs):
-        super().__init__(unique_id=unique_id, model=model, pos=position, default_color=color,
+                   default_color=None, **kwargs):
+        if default_color is None :
+            default_color=np.array((100, 200, 120))
+        super().__init__(unique_id=unique_id, model=model, pos=position, default_color=default_color,
                          radius=radius*model.scaling_factor, **kwargs)
         self.initial_amount = amount
         self.quality = quality
@@ -430,7 +435,7 @@ class Food(LarvaworldAgent):
         self.amount -= amount
         if self.amount <= 0.0:
             self.amount = 0.0
-            self.model.delete(self)
+            self.model.delete_agent(self)
         else:
             r = (self.initial_amount - self.amount) / self.initial_amount
             self._color = r * np.array((255, 255, 255)) + (1 - r) * self.default_color

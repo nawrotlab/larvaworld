@@ -14,7 +14,7 @@ from scipy.interpolate import griddata
 from scipy.signal import butter, sosfiltfilt
 from sklearn.linear_model import LinearRegression
 import powerlaw as pow
-
+import warnings
 from PIL import Image
 
 from lib.anal.fitting import *
@@ -2183,18 +2183,22 @@ def plot_food_amount(datasets, labels, save_to=None, save_as=None, filt_amount=F
     return process_plot(fig, save_to, filename, return_fig)
 
 
-def plot_heatmap_PI(csv_filepath='PIs.csv', heatmap_filepath='PI_heatmap.pdf', return_fig=False):
+def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False):
+    filename='PI_heatmap.pdf'
     print('Creating heatmap')
     new_data = pd.read_csv(csv_filepath, index_col=0)
-    gains = new_data.index.values
-    Ngains = len(gains)
-    # print(new_data.index.values)
-    # del new_data.index.name
+    new_data.sort_index(ascending=True, inplace=True)
+    new_data = new_data.reindex(sorted(new_data.columns, reverse=True), axis=1)
+    Lgains = new_data.index.values.astype(int)
+    Rgains = new_data.columns.values.astype(int)
+    Ngains = len(Lgains)
+
+
     grid_kws = {"height_ratios": (.9, .05), "hspace": 0.4}
-    fig, ax = plt.subplots(figsize=(6, 5))
+    fig, ax = plt.subplots(figsize=(12, 10))
     sns.heatmap(new_data, annot=False, fmt="g", cmap='RdYlGn', vmin=-1, vmax=1, ax=ax,
                 cbar_kws={"orientation": "vertical",
-                          'label': 'Preference Index for left odor',
+                          'label': 'Preference for left odor',
                           'ticks': [1, 0, -1]})
     # ax.set_size_cm(3.5, 3.5)
     cax = plt.gcf().axes[-1]
@@ -2211,15 +2215,19 @@ def plot_heatmap_PI(csv_filepath='PIs.csv', heatmap_filepath='PI_heatmap.pdf', r
     # ax.set_xlabel(r'$V_{right}$')
     # ax.set_xlabel(r'Valence$_{right}$')
     # ax.set_xlabel('Right odor valence')
-    ax.xaxis.set_ticks_position('top')
+    # ax.xaxis.set_ticks_position('top')
     r = np.linspace(0.5, Ngains - 0.5, 5)
     ax.set_xticks(r)
     ax.set_yticks(r)
-    ax.set_xticklabels(gains[r.astype(int)])
-    ax.set_yticklabels(gains[r.astype(int)])
-    plt.subplots_adjust(left=0.15, right=0.95, bottom=0.15)
-    plt.savefig(heatmap_filepath, dpi=300)
-    print(f'Heatmap saved as {heatmap_filepath}')
+    # print(Rgains)
+    # print(Lgains)
+
+    # print(Lgains[r.astype(int)])
+    # print(Rgains[r.astype(int)])
+    ax.set_xticklabels(Lgains[r.astype(int)])
+    ax.set_yticklabels(Rgains[r.astype(int)])
+    plt.subplots_adjust(left=0.15, right=0.95, bottom=0.15, top=0.95)
+    return process_plot(fig, save_to, filename, return_fig)
 
 
 def plot_odor_concentration(datasets, labels=None, save_to=None, return_fig=False):

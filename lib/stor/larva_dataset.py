@@ -14,7 +14,8 @@ from lib.anal.fitting import *
 from lib.aux.parsing import parse_dataset, multiparse_dataset_by_sliding_window
 from lib.anal.plotting import *
 import lib.conf.env_modes as env
-from lib.stor.datagroup import SimParConf
+from lib.conf.data_modes import SimParConf
+
 from lib.stor.paths import Ref_path, Ref_fits, RefFolder
 from lib.model.envs._larvaworld import LarvaWorldReplay
 
@@ -301,10 +302,10 @@ class LarvaDataset:
         self.starting_tick = self.step_data.index.unique('Step')[0]
         # self.save()
 
-    def set_endpoint_data(self, endpoint_data):
+    def set_end_data(self, endpoint_data):
         self.endpoint_data = endpoint_data
 
-    def set_food_endpoint_data(self, food_endpoint_data):
+    def set_food_end_data(self, food_endpoint_data):
         self.food_endpoint_data = food_endpoint_data
 
     def set_types_dict(self, types_dict):

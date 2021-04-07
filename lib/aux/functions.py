@@ -382,7 +382,11 @@ def inside_polygon(points,tank_polygon):
 
 
 def border_collision(line, border_lines):
-    return any([line.crosses(l) for l in border_lines])
+    # for l in border_lines :
+    #     print(l)
+    #     print(line)
+    #     print()
+    return any([line.intersection(l) for l in border_lines])
 
 def larva_collision(line, larva_bodies):
     return any([line.intersects(p) for p in larva_bodies])
@@ -907,18 +911,19 @@ def agents_spatial_query(pos, radius, agent_list):
     inds = np.where(dsts <= radius)[0]
     return [agent_list[i] for i in inds]
 
-def agent_dict2list(dic) :
+def agent_dict2list(dic, header='unique_id') :
+    # print(dic)
     l=[]
     for id, pars in dic.items() :
-        pars['unique_id']=id
+        pars[header]=id
         l.append(pars)
     return l
 
-def agent_list2dict(l) :
+def agent_list2dict(l, header='unique_id') :
     d={}
     for a in l :
-        id=a['unique_id']
-        a.pop('unique_id')
+        id=a[header]
+        a.pop(header)
         d[id]=a
     return d
 
@@ -943,9 +948,13 @@ def N_colors(N, as_rgb=False):
         colormap = cm.get_cmap('brg')
         cs = [colormap(i) for i in np.linspace(0, 1, N)]
     if as_rgb :
-        cs=[colors.to_rgb(c) for c in cs]
-        cs=[tuple([i*255 for i in c]) for c in cs]
+        cs=[colorname2tuple(c) for c in cs]
     return cs
+
+def colorname2tuple(name) :
+    c0=colors.to_rgb(name)
+    c1=tuple([i * 255 for i in c0])
+    return c1
 
 def LvsRtoggle(side) :
     if side=='Left' :

@@ -1,76 +1,90 @@
 from lib.conf.larva_modes import *
 from lib.conf.env_modes import *
 
-dish = {'fly_params': exploring_larva,
-        'env_params': dish_env,
+dish = {
+        'env_params': 'dish',
+        # 'env_params': dish_env,
         'collections': ['pose'],
         }
 
-feed_scatter = {'fly_params': feeding_larva,
-                'env_params': uniform_food_env,
+feed_scatter = {
+                'env_params': 'uniform food',
+                # 'env_params': uniform_food_env,
                 'collections': ['crawler', 'feeder', 'intermitter'],
                 }
-feed_patchy = {'fly_params': feeding_odor_larva,
-               'env_params': patchy_food_env,
+feed_patchy = {
+               'env_params': 'patchy food',
+               # 'env_params': patchy_food_env,
                'collections': ['crawler', 'feeder', 'intermitter'],
                }
-feed_grid = {'fly_params': feeding_larva,
-             'env_params': food_grid_env,
+feed_grid = {
+             'env_params': 'food grid',
+             # 'env_params': food_grid_env,
              'collections': ['crawler', 'feeder', 'intermitter'],
              }
-focus = {'fly_params': exploring_larva,
-         'env_params': focus_env,
+focus = {
+         'env_params': 'focused view',
+         # 'env_params': focus_env,
          'collections': ['turner', 'pose'],
          }
-imitation = {'fly_params': imitation_larva,
-             'env_params': imitation_env_p,
+imitation = {
+             'env_params': 'realistic imitation',
+             # 'env_params': imitation_env_p,
              'collections': ['midline', 'contour', 'pose'],
              }
-reorientation = {'fly_params': odor_larva,
-                 'env_params': reorientation_env,
+reorientation = {
+                 'env_params': 'reorientation',
+                 # 'env_params': reorientation_env,
                  'collections': ['turner', 'olfactor', 'pose'],
                  }
-growth = {'fly_params': growing_rover,
-          'env_params': food_grid_env,
+growth = {
+          'env_params': 'growth',
+          # 'env_params': growth_env,
           # 'collect_effectors': ['feeder'],
           'collections': ['feeder', 'deb'],
-          # 'starvation_hours': [[0.2, 0.4]]
           }
 growth_2x = {
-    # 'fly_params': growing_sitter,
-    'fly_params': [growing_rover, growing_sitter],
-    'env_params': food_grid_env,
+
+    'env_params': 'rovers-sitters',
+    # 'env_params': growth_2x_env,
     'collections': ['feeder', 'deb'],
     # 'age_in_hours' : 0
     # 'starvation_hours': [[24, 48]]
 }
-odor_pref = {'fly_params': odor_larva_x2,
-             'env_params': pref_env,
+odor_pref = {
+             'env_params': 'odor preference',
+             # 'env_params': pref_env,
              'collections': ['olfactor'],
              }
-chemorbit = {'fly_params': odor_larva,
-             'env_params': chemorbit_env,
+chemorbit = {
+             'env_params': 'chemotaxis local',
+             # 'env_params': chemorbit_env,
              'collections': ['olfactor', 'pose', 'dst2center'],
              }
-chemotax = {'fly_params': odor_larva,
-            'env_params': chemotax_env,
+chemotax = {
+            'env_params': 'chemotaxis approach',
+            # 'env_params': chemotax_env,
             'collections': ['olfactor', 'pose', 'chemotax_dst'],
             }
-dispersion = {'fly_params': exploring_larva,
-              'env_params': dispersion_env,
+dispersion = {
+              'env_params': 'dispersion',
+              # 'env_params': dispersion_env,
               'collections': ['pose'],
               }
 
-maze = {'fly_params': odor_larva,
-        'env_params': maze_env,
+maze = {
+        'env_params': 'maze',
+        # 'env_params': maze_env,
         'collections': ['olfactor', 'pose', 'dst2center'],
         }
-flag = {'fly_params': [flag_larva_L, flag_larva_R],
-        'env_params': game_env,
+flag = {
+        'env_params': 'flag to base',
+        # 'env_params': flag_env,
         'collections': ['olfactor', 'pose', 'dst2center'],
         }
-king = {'fly_params': [king_larva_L, king_larva_R],
-        'env_params': game_env,
+king = {
+        'env_params': 'keep the flag',
+        # 'env_params': king_env,
         'collections': ['olfactor', 'pose', 'dst2center'],
         }
 exp_types = {

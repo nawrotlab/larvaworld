@@ -785,6 +785,7 @@ class LarvaBody:
         return [seg.get_color() for seg in self.segs]
 
     def get_segment(self, seg_index):
+        # print(seg_index)
         return self.segs[seg_index]
 
     def get_head(self):

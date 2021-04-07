@@ -142,14 +142,14 @@ class LarvaReplay(Larva, BodyReplay):
 
 
 class LarvaSim(BodySim, Larva):
-    def __init__(self, unique_id, model, pos, orientation, fly_params,group='',**kwargs):
+    def __init__(self, unique_id, model, pos, orientation, larva_pars, group='', default_color=None, **kwargs):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
-                       **fly_params['odor_params'], group=group)
+                       **larva_pars['odor_params'], group=group, default_color=default_color)
 
-        self.brain = self.build_brain(fly_params['neural_params'])
-        self.build_energetics(fly_params['energetics_params'])
-        BodySim.__init__(self, model=model, orientation=orientation, **fly_params['sensorimotor_params'],
-                         **fly_params['body_params'], **kwargs)
+        self.brain = self.build_brain(larva_pars['neural_params'])
+        self.build_energetics(larva_pars['energetics_params'])
+        BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['sensorimotor_params'],
+                         **larva_pars['body_params'], **kwargs)
         self.build_gut(self.V)
 
         self.reset_feeder()
@@ -440,23 +440,28 @@ class LarvaSim(BodySim, Larva):
         if food.can_be_carried:
             if food.is_carried_by is not None:
                 prev_carrier = food.is_carried_by
+                if prev_carrier==self :
+                    return
                 prev_carrier.carried_objects.remove(food)
-                if self.model.experiment=='flag' :
-                    prev_carrier.brain.olfactor.set_gain(0.0, prev_carrier.base_odor_id)
+                prev_carrier.brain.olfactor.reset_all_gains()
+                # if self.model.experiment=='flag' :
+                #     prev_carrier.brain.olfactor.reset_gain(prev_carrier.base_odor_id)
             food.is_carried_by = self
             self.carried_objects.append(food)
+
+
             if self.model.experiment == 'flag':
                 self.brain.olfactor.set_gain(self.gain_for_base_odor, self.base_odor_id)
             elif self.model.experiment == 'king':
                 carrier_group=self.group
                 carrier_group_odor_id=self.get_odor_id()
                 opponent_group=fun.LvsRtoggle(carrier_group)
-                opponent_odor_id=f'{opponent_group} group odor'
+                opponent_group_odor_id=f'{opponent_group} group odor'
                 for f in self.model.get_flies():
                     if f.group==carrier_group :
-                        f.brain.olfactor.set_gain(f.gain_for_base_odor, opponent_odor_id)
-                        f.brain.olfactor.set_gain(0.0, 'Flag odor')
+                        f.brain.olfactor.set_gain(f.gain_for_base_odor, opponent_group_odor_id)
+                        # f.brain.olfactor.set_gain(0.0, 'Flag odor')
                     else :
                         f.brain.olfactor.set_gain(0.0, carrier_group_odor_id)
-                        f.brain.olfactor.reset_gain('Flag odor')
-                self.brain.olfactor.set_gain(-self.gain_for_base_odor, opponent_odor_id)
+                        # f.brain.olfactor.reset_gain('Flag odor')
+                self.brain.olfactor.set_gain(-self.gain_for_base_odor, opponent_group_odor_id)
