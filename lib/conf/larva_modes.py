@@ -291,7 +291,7 @@ brain_RLolfactor = {'modules': RL_olfactor,
                     'crawler_params': default_crawler,
                     'interference_params': default_coupling,
                     'intermitter_params': intermittent_crawler,
-                    'olfactor_params': olfactor_conf(),
+                    'olfactor_params': olfactor_conf(means=[5.0]),
                     'feeder_params': default_feeder,
                     'memory_params': {'k': 33},
                     'nengo': False}
