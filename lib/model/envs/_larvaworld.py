@@ -1117,6 +1117,8 @@ class LarvaWorldSim(LarvaWorld):
                                                              ['N', 'mode', 'loc', 'scale', 'orientation', 'model', 'default_color']]
             # if type(larva_model) == str:
             #     larva_model = loadConf(larva_model, 'Model')
+            # print(larva_model['neural_params']['memory_params'])
+            # raise
             positions, orientations = self._generate_larva_poses(N, mode, loc, scale, orientation)
             all_pars = self._generate_larva_pars(N, larva_model, parameter_dict=parameter_dict)
             ids = [f'{group_id}_{i}' for i in range(N)]

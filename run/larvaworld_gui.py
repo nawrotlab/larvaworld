@@ -8,7 +8,7 @@ from tkinter import *
 from lib.gui.analysis_tab import build_analysis_tab, eval_analysis
 from lib.gui.gui_lib import SYMBOL_DOWN, SYMBOL_UP, on_image, off_image
 from lib.gui.model_tab import build_model_tab, eval_model
-from lib.gui.simulation_tab import build_simulation_tab, eval_simulation
+from lib.gui.simulation_tab import build_sim_tab, eval_sim
 
 sys.path.insert(0, '..')
 
@@ -24,7 +24,7 @@ sg.theme('LightGreen')
 def run_gui():
     collapsibles={}
     l_anal, graph_dict, data, func, func_kwargs, fig, save_to, save_as, figure_agg = build_analysis_tab()
-    l_sim, sim_datasets, collapsibles, output_keys, source_units, border_list, larva_groups, source_groups = build_simulation_tab(collapsibles)
+    l_sim, sim_datasets, collapsibles, output_keys, source_units, border_list, larva_groups, source_groups = build_sim_tab(collapsibles)
     l_mod, collapsibles, module_keys, odor_gains = build_model_tab(collapsibles)
 
     l_gui = [
@@ -61,7 +61,7 @@ def run_gui():
         elif tab == 'MODEL_TAB':
             odor_gains = eval_model(e, v, w, collapsibles, module_keys,odor_gains)
         elif tab == 'SIMULATION_TAB':
-            source_units, border_list, larva_groups, source_groups = eval_simulation(e, v, w, sim_datasets, collapsibles, output_keys, source_units, border_list, larva_groups, source_groups)
+            source_units, border_list, larva_groups, source_groups = eval_sim(e, v, w, sim_datasets, collapsibles, output_keys, source_units, border_list, larva_groups, source_groups)
     w.close()
     return
 

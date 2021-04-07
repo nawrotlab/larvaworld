@@ -145,7 +145,7 @@ class LarvaSim(BodySim, Larva):
     def __init__(self, unique_id, model, pos, orientation, larva_pars, group='', default_color=None, **kwargs):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
                        **larva_pars['odor_params'], group=group, default_color=default_color)
-
+        # print(list(larva_pars['neural_params'].keys()))
         self.brain = self.build_brain(larva_pars['neural_params'])
         self.build_energetics(larva_pars['energetics_params'])
         BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['sensorimotor_params'],
@@ -157,9 +157,9 @@ class LarvaSim(BodySim, Larva):
 
         self.food_detected, self.food_source, self.feeder_motion, self.current_amount_eaten, self.feed_success = False, None, False, 0, False
         try:
-            self.odor_concentrations = [0] * self.brain.olfactor.Nodors
+            self.odor_concentrations = self.brain.olfactor.cur_con
         except :
-            self.odor_concentrations=[]
+            self.odor_concentrations= {}
         self.olfactory_activation = 0
 
     def compute_next_action(self):
@@ -193,17 +193,19 @@ class LarvaSim(BodySim, Larva):
 
     def sense_odors(self, Nodors, odor_layers):
         if Nodors == 0:
-            return []
+            return {}
         else:
             pos = self.get_olfactor_position()
-            values = [odor_layers[odor_id].get_value(pos) for odor_id in odor_layers]
-            if self.brain.olfactor.noise:
-                values = [v + np.random.normal(scale=v * self.brain.olfactor.noise) for v in values]
-            return values
+            cons={}
+            for id, layer in odor_layers.items() :
+                v=layer.get_value(pos)
+                cons[id] = v + np.random.normal(scale=v * self.brain.olfactor.noise)
+            # if self.brain.olfactor.noise:
+            #     values = [v + np.random.normal(scale=v * self.brain.olfactor.noise) for v in values]
+            return cons
 
     def detect_food(self, pos, grid=None):
         if self.brain.feeder is not None:
-
             radius = self.brain.feeder.feed_radius * self.sim_length,
             if grid:
                 cell = grid.get_grid_cell(pos)

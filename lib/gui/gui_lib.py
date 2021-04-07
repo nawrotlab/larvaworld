@@ -24,7 +24,7 @@ on_image_disabled = b'iVBORw0KGgoAAAANSUhEUgAAAFoAAAAnCAYAAACPFF8dAAAAAXNSR0IArs
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'
 button_kwargs = {'font': ('size', 6),
-                 'size': (10, 1)
+                 'size': (8, 1)
                  }
 
 buttonM_kwargs = {'font': ('size', 8),
@@ -709,9 +709,8 @@ class DynamicGraph:
     def update_pars(self):
         self.pars, self.sim_symbols, self.exp_symbols, self.units, self.ylims, self.par_collects = [
             par_db[['par', 'symbol', 'exp_symbol', 'unit', 'lim', 'collect']].loc[self.par_shorts].values[:, k].tolist()
-            for k in
-            range(6)]
-
+            for k in range(6)]
+        self.ylims=[retrieve_value(lim, Tuple[float, float])for lim in self.ylims]
         self.Npars = len(self.pars)
         self.yranges = {}
 

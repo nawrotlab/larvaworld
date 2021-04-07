@@ -66,6 +66,13 @@ chemotax = {
             # 'env_params': chemotax_env,
             'collections': ['olfactor', 'pose', 'chemotax_dst'],
             }
+
+RL_chemorbit = {
+             'env_params': 'RL chemotaxis local',
+             # 'env_params': chemorbit_env,
+             'collections': ['olfactor', 'pose', 'dst2center'],
+             }
+
 dispersion = {
               'env_params': 'dispersion',
               # 'env_params': dispersion_env,
@@ -93,6 +100,7 @@ exp_types = {
     'dispersion': dispersion,
     'chemorbit': chemorbit,
     'chemotax': chemotax,
+    'RL_chemorbit': RL_chemorbit,
     'odor_pref': odor_pref,
     'feed_grid': feed_grid,
     'feed_patchy': feed_patchy,

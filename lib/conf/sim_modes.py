@@ -13,6 +13,7 @@ base_food_pars = {
 
 food_pars = {
     'unique_id': str,
+    # 'default_color': str,
     'pos': Tuple[float, float],
     **base_food_pars
 }

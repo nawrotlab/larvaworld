@@ -275,7 +275,8 @@ cum_sd_std,cum_scaled_dst_std,$\~{{d}_{cum}^{*}}$,$\~{{\hat{d}}_{cum}^{*}}$,scal
 fsv_mu,scaled_vel_freq_mean,$\bar{{f}_{v}^{*}}$,$\bar{{\hat{f}}_{v}^{*}}$,frequency $(Hz)$,,
 fsv_std,scaled_vel_freq_std,$\~{{f}_{v}^{*}}$,$\~{{\hat{f}}_{v}^{*}}$,frequency $(Hz)$,,
 sf_am,scaled_amount_eaten,${m^{*}}_{feed}$,${\hat{m^{*}}}_{feed}$,food intake as % larval mass,,scaled_amount_eaten
-c_odor1,first_odor_concentration,${C}_{odor_{1}}$,${\hat{C}_{odor_{1}}$,"Concentration C(t), $\mu$M",,first_odor_concentration
-A_olf,olfactory_activation,$A_{olf}$,$\hat{A}_{olf}$,Olfactory activation,,olfactory_activation
-A_tur,turner_activation,$A_{tur}$,$\hat{A}_{tur}$,Turner activation,,turner_activation
-Act_tur,turner_activity,$Act_{tur}$,$\hat{Act}_{tur}$,Turner activity,,ang_activity
+c_odor1,first_odor_concentration,${C}_{odor_{1}}$,${\hat{C}_{odor_{1}}$,"Concentration C(t), $\mu$M","[0.0, 2.0]",first_odor_concentration
+dc_odor1,first_odor_concentration_change,$\delta{C}_{odor_{1}}$,$\delta{\hat{C}_{odor_{1}}$,"Concentration change dC(t), $-$","[-0.03, 0.03]",first_odor_concentration_change
+A_olf,olfactory_activation,$A_{olf}$,$\hat{A}_{olf}$,Olfactory activation,"[-1.0, 1.0]",olfactory_activation
+A_tur,turner_activation,$A_{tur}$,$\hat{A}_{tur}$,Turner activation,"[10.0, 40.0]",turner_activation
+Act_tur,turner_activity,$Act_{tur}$,$\hat{Act}_{tur}$,Turner activity,"[-20.0, 20.0]",ang_activity

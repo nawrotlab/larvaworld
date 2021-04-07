@@ -307,4 +307,6 @@ def generate_config(exp, sim_params, Nagents=None, life_params={}):
     for k,v in config['env_params']['larva_params'].items():
         if type(v['model'])==str :
             v['model']=loadConf(v['model'], 'Model')
+    # print(config['env_params']['larva_params']['Larva']['model'])
+    # raise
     return config

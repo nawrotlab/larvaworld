@@ -123,13 +123,15 @@ class Larva(LarvaworldAgent):
 
     @property
     def first_odor_concentration(self):
-        return self.odor_concentrations[0]
+        return list(self.odor_concentrations.values())[0]
 
     @property
     def second_odor_concentration(self):
-        return self.odor_concentrations[1]
+        return list(self.odor_concentrations.values())[1]
 
-
+    @property
+    def first_odor_concentration_change(self):
+        return list(self.brain.olfactor.dCon.values())[0]
 
     @property
     def length_in_mm(self):

@@ -398,6 +398,7 @@ if __name__ == '__main__':
     saveConf(env.maze_env, 'Env','maze')
     saveConf(env.king_env, 'Env', 'keep the flag')
     saveConf(env.flag_env, 'Env', 'flag to base')
+    saveConf(env.RL_chemorbit_env, 'Env', 'RL chemotaxis local')
 
 
     saveConf(mod.exploring_larva, 'Model', 'explorer')
@@ -411,6 +412,7 @@ if __name__ == '__main__':
     saveConf(mod.flag_larva, 'Model', 'gamer')
     saveConf(mod.king_larva_L, 'Model', 'gamer_L')
     saveConf(mod.king_larva_R, 'Model', 'gamer_R')
+    saveConf(mod.RL_odor_larva, 'Model', 'RL_learner')
 
 
 

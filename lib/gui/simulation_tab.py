@@ -21,19 +21,14 @@ def save_env(window, env):
         window['ENV_CONF'].update(value=env_id)
 
 
-def init_environment(env_params, collapsibles={}):
+def init_env(env_params, collapsibles={}):
     collapsibles['ARENA'] = CollapsibleDict('ARENA', True, dict=env_params['arena_params'], type_dict=arena_pars_dict)
-
-    food_pars = env_params['food_params']
-
-    collapsibles['FOOD_GRID'] = CollapsibleDict('FOOD_GRID', True, dict=food_pars['food_grid'],
+    collapsibles['FOOD_GRID'] = CollapsibleDict('FOOD_GRID', True, dict=env_params['food_params']['food_grid'],
                                                 disp_name='FOOD GRID', toggle=True, disabled=False)
 
     food_conf = [
         [sg.Button('SOURCE GROUPS', **buttonM_kwargs)],
-        # [sg.Text('SOURCE GROUPS:', **header_kwargs), sg.Button('source_groups', **buttonM_kwargs)],
         [sg.Button('SOURCE UNITS', **buttonM_kwargs)],
-        # [sg.Text('SOURCE UNITS:', **header_kwargs), sg.Button('source_units', **buttonM_kwargs)],
         collapsibles['FOOD_GRID'].get_section()
     ]
 
@@ -46,10 +41,9 @@ def init_environment(env_params, collapsibles={}):
 
     env_layout = [
         collapsibles['ARENA'].get_section(),
-        # collapsibles['LARVA_DISTRIBUTION'].get_section(),
-        [sg.Button('LARVA GROUPS', **buttonM_kwargs)],
-        # [sg.Text('LARVA GROUPS:', **header_kwargs), sg.Button('larva_groups', **buttonM_kwargs)],
+        [sg.Button('BORDERS', **buttonM_kwargs)],
         collapsibles['SOURCES'].get_section(),
+        [sg.Button('LARVA GROUPS', **buttonM_kwargs)],
         collapsibles['ODORSCAPE'].get_section()
     ]
 
@@ -58,11 +52,11 @@ def init_environment(env_params, collapsibles={}):
     return collapsibles['ENVIRONMENT'].get_section()
 
 
-def update_environment(env_params, window, collapsibles):
+def update_env(env_params, window, collapsibles):
     # arena_params = env_params['arena_params']
     # for k, v in arena_params.items():
     #     window.Element(k).Update(value=v)
-
+    print(env_params)
     food_params = env_params['food_params']
     source_units = food_params['source_units']
     source_groups = food_params['source_groups']
@@ -80,7 +74,7 @@ def update_environment(env_params, window, collapsibles):
     return source_units, border_list, larva_groups, source_groups
 
 
-def get_environment(window, values, collapsibles, source_units, border_list, larva_groups, source_groups):
+def get_env(window, values, collapsibles, source_units, border_list, larva_groups, source_groups):
     env = {}
     env['larva_params'] = larva_groups
     env['food_params'] = {}
@@ -96,7 +90,7 @@ def get_environment(window, values, collapsibles, source_units, border_list, lar
     return copy.deepcopy(env)
 
 
-def build_simulation_tab(collapsibles):
+def build_sim_tab(collapsibles):
     sim_datasets = []
 
     env_params = copy.deepcopy(test_env)
@@ -135,7 +129,7 @@ def build_simulation_tab(collapsibles):
          sg.Button('Save', key='SAVE_ENV', **button_kwargs),
          sg.Button('Delete', key='DELETE_ENV', **button_kwargs)]
     ])]
-    l_env1 = init_environment(env_params, collapsibles)
+    l_env1 = init_env(env_params, collapsibles)
 
 
 
@@ -146,18 +140,18 @@ def build_simulation_tab(collapsibles):
     return l_sim, sim_datasets, collapsibles, output_keys, source_units, border_list, larva_groups, source_groups
 
 
-def eval_simulation(event, values, window, sim_datasets, collapsibles, output_keys,
-                    source_units, border_list, larva_groups, source_groups):
+def eval_sim(event, values, window, sim_datasets, collapsibles, output_keys,
+             source_units, border_list, larva_groups, source_groups):
     if event == 'LOAD_EXP' and values['EXP'] != '':
         source_units, border_list, larva_groups, source_groups = update_sim(window, values, collapsibles, output_keys)
 
 
     elif event == 'LOAD_ENV' and values['ENV_CONF'] != '':
         conf = loadConf(values['ENV_CONF'], 'Env')
-        source_units, border_list, larva_groups, source_groups = update_environment(conf, window, collapsibles)
+        source_units, border_list, larva_groups, source_groups = update_env(conf, window, collapsibles)
 
     elif event == 'SAVE_ENV':
-        env = get_environment(window, values, collapsibles, source_units, border_list, larva_groups, source_groups)
+        env = get_env(window, values, collapsibles, source_units, border_list, larva_groups, source_groups)
         save_env(window, env)
 
 
@@ -177,9 +171,12 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, output_ke
     elif event == 'SOURCE GROUPS':
         source_groups = set_agent_dict(source_groups, distro_pars('Food'), header='group', title='Food distribution')
 
+    elif event == 'BORDERS':
+        border_list = set_agent_dict(border_list, agent_pars['Border'], title='Impassable borders')
+
 
     elif event == 'CONF_ENV':
-        env = get_environment(window, values, collapsibles, source_units, border_list, larva_groups, source_groups)
+        env = get_env(window, values, collapsibles, source_units, border_list, larva_groups, source_groups)
         new_source_units, new_border_list = configure_sim(env_params=env)
         l = [
             [sg.Text('Food agents and borders have been individually stored.', size=(70, 1))],
@@ -194,8 +191,8 @@ def eval_simulation(event, values, window, sim_datasets, collapsibles, output_ke
 
 
     elif event == 'Run' and values['EXP'] != '':
-        sim_config = get_sim_config(window, values, collapsibles, output_keys, source_units, border_list, larva_groups,
-                                    source_groups)
+        sim_config = get_sim(window, values, collapsibles, output_keys, source_units, border_list, larva_groups,
+                             source_groups)
         vis_kwargs = {'mode': 'video'}
         d = run_sim(**sim_config, **vis_kwargs)
         if d is not None:
@@ -210,7 +207,7 @@ def update_sim(window, values, collapsibles, output_keys):
     if type(env) == str:
         window.Element('ENV_CONF').Update(value=env)
         env = loadConf(env, 'Env')
-    source_units, border_list, larva_groups, source_groups = update_environment(env, window, collapsibles)
+    source_units, border_list, larva_groups, source_groups = update_env(env, window, collapsibles)
 
     output_dict = dict(zip(output_keys, [True if k in exp_conf['collections'] else False for k in output_keys]))
     collapsibles['OUTPUT'].update(window, output_dict)
@@ -220,7 +217,7 @@ def update_sim(window, values, collapsibles, output_keys):
     return source_units, border_list, larva_groups, source_groups
 
 
-def get_sim_config(window, values, collapsibles, output_keys, source_units, border_list, larva_groups, source_groups):
+def get_sim(window, values, collapsibles, output_keys, source_units, border_list, larva_groups, source_groups):
     exp = values['EXP']
     sim = {}
     sim['sim_id'] = str(values['sim_id'])
@@ -232,7 +229,7 @@ def get_sim_config(window, values, collapsibles, output_keys, source_units, bord
     temp = collapsibles['OUTPUT'].get_dict(values, window)
     collections = [k for k in output_keys if temp[k]]
 
-    env = get_environment(window, values, collapsibles, source_units, border_list, larva_groups, source_groups)
+    env = get_env(window, values, collapsibles, source_units, border_list, larva_groups, source_groups)
 
 
     sim_config = {

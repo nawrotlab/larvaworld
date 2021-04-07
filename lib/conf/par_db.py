@@ -378,6 +378,13 @@ def set_ParDb():
                              # 'collect' : 'first_odor_concentration'
                              }
 
+    par_db.loc['dc_odor1'] = {'par': 'first_odor_concentration_change',
+                              'symbol': '$\delta{C}_{odor_{1}}$',
+                              'exp_symbol': '$\delta{\hat{C}_{odor_{1}}$',
+                              'unit': 'Concentration change dC(t), $-$',
+                              # 'collect' : 'first_odor_concentration'
+                              }
+
     par_db.loc['A_olf'] = {'par': 'olfactory_activation',
                            'symbol': '$A_{olf}$',
                            'exp_symbol': '$\hat{A}_{olf}$',
@@ -412,6 +419,12 @@ def set_ParDb():
     par_db['lim'].loc['reserve_density'] = [0.0, 2.0]
     par_db['lim'].loc['deb_f'] = [0.0, 2.0]
 
+    par_db['lim'].loc['c_odor1'] = [0.0, 2.0]
+    par_db['lim'].loc['dc_odor1'] = [-0.03, 0.03]
+    par_db['lim'].loc['A_olf'] = [-1.0, 1.0]
+    par_db['lim'].loc['A_tur'] = [10.0, 40.0]
+    par_db['lim'].loc['Act_tur'] = [-20.0, 20.0]
+
     par_db['collect'] = None
     for k, v in step_database.items():
         par_db['collect'].loc[par_db['par'] == k] = v
@@ -423,6 +436,10 @@ def set_ParDb():
     par_db.to_csv(ParDb_path, index=True, header=True)
 
 
+# Use this to update the database
+set_ParDb()
+
+
 def load_ParDb():
     df = pd.read_csv(ParDb_path, index_col=0)
     return df
@@ -430,11 +447,9 @@ def load_ParDb():
 
 par_db = load_ParDb()
 
-
-# print(par_db.loc['f_am'])
+# print(par_db.loc['c_odor1'])
+# print(par_db.loc['dc_odor1'])
 # print(random_ar2)
 # print('c_odor1' in par_db.index.to_list())
 # print(par_db['par'].loc[par_db['collect'].isin([None])])
 # print(par_db['par'].loc[par_db['collect'].isin([None])].index.tolist())
-
-

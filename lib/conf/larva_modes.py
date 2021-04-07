@@ -143,6 +143,14 @@ olfactor_locomotion = {'turner': True,
                        'feeder': False,
                        'memory': False}
 
+RL_olfactor = {'turner': True,
+               'crawler': True,
+               'interference': True,
+               'intermitter': True,
+               'olfactor': True,
+               'feeder': True,
+               'memory': True}
+
 feed_locomotion = {'turner': True,
                    'crawler': True,
                    'interference': True,
@@ -277,6 +285,16 @@ l3_seg2 = {'initial_length': 0.003,
            'seg_ratio': [0.5, 0.5]  # [5 / 11, 6 / 11]
            }
 # -------------------------------------------WHOLE NEURAL MODES---------------------------------------------------------
+
+brain_RLolfactor = {'modules': RL_olfactor,
+                    'turner_params': default_turner,
+                    'crawler_params': default_crawler,
+                    'interference_params': default_coupling,
+                    'intermitter_params': intermittent_crawler,
+                    'olfactor_params': olfactor_conf(),
+                    'feeder_params': default_feeder,
+                    'memory_params': {'k': 33},
+                    'nengo': False}
 
 brain_olfactor = {'modules': olfactor_locomotion,
                   'turner_params': default_turner,
@@ -438,7 +456,7 @@ odors3 = [f'{source} odor' for source in ['Flag', 'Left base', 'Right base']]
 odors5 = [f'{source} odor' for source in ['Flag', 'Left base', 'Right base', 'Left group', 'Right group']]
 
 flag_larva = {**odor_larva_conf(ids=odors3, means=[100, 0, 0]),
-                }
+              }
 
 king_larva_L = {**odor_larva_conf(ids=odors5, means=[100, 0, 0, 0, 0],
                                   odor_id='Left group odor', odor_intensity=2.0, odor_spread=0.00005
@@ -450,3 +468,9 @@ king_larva_R = {**odor_larva_conf(ids=odors5, means=[100, 0, 0, 0, 0],
                                   odor_id='Right group odor', odor_intensity=2.0, odor_spread=0.00005
                                   ),
                 }
+
+RL_odor_larva = {'energetics_params': None,
+                 'neural_params': brain_RLolfactor,
+                 'sensorimotor_params': default_physics,
+                 'body_params': sample_l3_seg2,
+                 'odor_params': odor()}
