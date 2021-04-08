@@ -143,7 +143,7 @@ def gaussian_odor():
 
 def diffusion_odor():
     return {'odorscape': 'Diffusion',
-            'grid_dims': [200, 200],
+            'grid_dims': [50, 50],
             'evap_const': 0.9,
             'diff_const': 0.8
             }
@@ -158,11 +158,11 @@ def game_env_conf(dim=0.1, N=10, x=0.8, y=0.0, scale=0.03, mode='king'):
     env = {'arena_params': arena(dim, dim),
            'food_params': food_param_conf(list={
                **odor_source('Flag', odor_intensity=8, odor_spread=0.0004, default_color='green', can_be_carried=True),
-               **odor_source('Left base', (-x0, y0), default_color='blue'),
-               **odor_source('Right base', (+x0, y0), default_color='red')}),
+               **odor_source('Left base', (-x0, y0), default_color='red'),
+               **odor_source('Right base', (+x0, y0), default_color='blue')}),
            'larva_params': {
-               **larva_distro(N, loc=(-x, y), scale=scale, group_id='Left', model=modL, default_color='darkblue'),
-               **larva_distro(N, loc=(+x, y), scale=scale, group_id='Right', model=modR, default_color='darkred')
+               **larva_distro(N, loc=(-x, y), scale=scale, group_id='Left', model=modL, default_color='darkred'),
+               **larva_distro(N, loc=(+x, y), scale=scale, group_id='Right', model=modR, default_color='darkblue')
            },
            'odor_params': gaussian_odor()
            }
@@ -213,9 +213,10 @@ chemorbit_diffusion_env = {'arena_params': arena(0.3, 0.3),
 
 RL_chemorbit_env = {'arena_params': arena(0.1, 0.1),
                     'food_params': food_param_conf(
-                        list={**foodNodor_source(id='Odor source', pos=(-0.04, -0.025), odor_id='Odor')}),
+                        list={**foodNodor_source(id='Odor source', pos=(0.0, 0.0), odor_id='Odor',
+                                                 odor_intensity=350.0, default_color='blue')}),
                     'larva_params': larva_distro(30, scale=0.0, model='RL_learner'),
-                    'odor_params': gaussian_odor()
+                    'odor_params': diffusion_odor()
                     }
 
 maze_env = maze_conf(15)
