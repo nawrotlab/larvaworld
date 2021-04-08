@@ -48,6 +48,21 @@ class GuppiesViewer(object):
         self._scale = np.array([[1., .0], [.0, -1.]])
         self._translation = np.zeros(2)
 
+    def draw_arena(self, tank_shape, tank_color, screen_color):
+        surf1 = pygame.Surface(self.display_size, pygame.SRCALPHA)
+        surf2 = pygame.Surface(self.display_size, pygame.SRCALPHA)
+
+        tank_shape = [self._transform(v) for v in tank_shape]
+        pygame.draw.polygon(surf1, tank_color, tank_shape, 0)
+
+        # screen_shape = [self._transform(v) for v in screen_shape]
+        # pygame.draw.polygon(surf2, screen_color, screen_shape, 0)
+        pygame.draw.rect(surf2, screen_color, surf2.get_rect())
+        # surf1.blit(surf2, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+        surf2.blit(surf1, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+        self._window.blit(surf2, (0, 0))
+
+
     def init_screen(self):
         if self.show_display:
             flags = pygame.HWSURFACE | pygame.DOUBLEBUF

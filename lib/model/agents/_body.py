@@ -488,74 +488,6 @@ class LarvaBody:
         d = self.get_sensor(sensor)
         return self.segs[d['seg_idx']].get_world_point(d['local_pos'])
 
-    # def generate_seg_shapes2(self, Nsegs, width_to_length_proportion, density, interval, seg_ratio):
-    #     N = Nsegs
-    #     shape_length = 1
-    #     w = width_to_length_proportion / 2
-    #     x0 = 0.52
-    #     w_max = 0.4
-    #     l0 = x0 - w_max
-    #     # rear_max = -0.4
-    #     x2 = x0 - shape_length
-    #     l = -w_max - x2
-    #
-    #     # generic larva shape with total lenth 1
-    #     shape0 = [(x0, +0.0),
-    #               (w_max, +w * 2 / 3),
-    #               (w_max / 3, +w),
-    #               (-w_max, +w * 2 / 3),
-    #               (x2, 0.0),
-    #               (-w_max, -w * 2 / 3),
-    #               (w_max / 3, -w),
-    #               (w_max, -w * 2 / 3)]
-    #     # shape = self.get_larva_shape()
-    #     generic_shape = np.array([shape0])
-    #
-    #     if N == 1:
-    #         return [generic_shape]
-    #     else:
-    #         s0s = [x0 + r - cum_r for r, cum_r in zip(seg_ratio, np.cumsum(seg_ratio))]
-    #         s1s = [x0 + r / 2 - cum_r for r, cum_r in zip(seg_ratio, np.cumsum(seg_ratio))]
-    #         s2s = [x0 - cum_r for r, cum_r in zip(seg_ratio, np.cumsum(seg_ratio))]
-    #         s0s, s2s = self.add_interval_between_segments(N, density, interval, s0s, s2s)
-    #
-    #         segment_vertices = []
-    #         # for i, (s0, s1, s2) in enumerate(zip(s0s, s1s, s2s)):
-    #         #     shape=[(np.clip(x, a_min=s2, a_max=s0),y) for x,y in shape0]
-    #
-    #         for i, (s0, s1, s2) in enumerate(zip(s0s, s1s, s2s)):
-    #             if s0 > w_max and s2 >= w_max:
-    #                 shape = [(s0 - s1, +(x0 - s0) / l0 * w),
-    #                          (s2 - s1, +(x0 - s2) / l0 * w),
-    #                          (s2 - s1, -(x0 - s2) / l0 * w),
-    #                          (s0 - s1, -(x0 - s0) / l0 * w)]
-    #             elif s0 > w_max > s2 >= -w_max:
-    #                 shape = [(s0 - s1, +(x0 - s0) / l0 * w),
-    #                          (w_max - s1, +w),
-    #                          (s2 - s1, +w),
-    #                          (s2 - s1, -w),
-    #                          (w_max - s1, -w),
-    #                          (s0 - s1, -(x0 - s0) / l0 * w)]
-    #             elif -w_max < s0 <= w_max and -w_max <= s2 < w_max:
-    #                 shape = [(s0 - s1, +w),
-    #                          (s2 - s1, +w),
-    #                          (s2 - s1, -w),
-    #                          (s0 - s1, -w)]
-    #             elif w_max >= s0 > -w_max >= s2:
-    #                 shape = [(s0 - s1, +w),
-    #                          (-w_max - s1, +w),
-    #                          (s2 - s1, +((s2 - x2) / l + 1) * w / 2),
-    #                          (s2 - s1, -((s2 - x2) / l + 1) * w / 2),
-    #                          (-w_max - s1, -w),
-    #                          (s0 - s1, -w)]
-    #             elif -w_max >= s0:
-    #                 shape = [(s0 - s1, +((s0 - x2) / l + 1) * w / 2),
-    #                          (s2 - s1, +((s2 - x2) / l + 1) * w / 2),
-    #                          (s2 - s1, -((s2 - x2) / l + 1) * w / 2),
-    #                          (s0 - s1, -((s0 - x2) / l + 1) * w / 2)]
-    #             segment_vertices.append(np.array([shape]) * N)
-    #         return segment_vertices
-
     def generate_seg_shapes(self, Nsegs, width_to_length_proportion, density, interval, seg_ratio):
         self.density = density / (1 - 2 * (Nsegs - 1) * interval)
         w = width_to_length_proportion / 2
@@ -742,7 +674,6 @@ class LarvaBody:
                                filled=True, color=(255, 0, 0), width=self.radius / 3)
 
         if self.model.draw_midline :
-            # points=[self.segs[i].get_position() for i in range(self.Nsegs)]
             points=[self.get_global_front_end_of_seg(i) for i in range(self.Nsegs)] + [self.get_global_rear_end_of_body()]
             viewer.draw_polyline(points, color=(0, 0, 255), closed=False, width=self.radius / 10)
             for i, p in enumerate(points):
@@ -751,7 +682,6 @@ class LarvaBody:
                 viewer.draw_circle(radius=self.radius / 10, position=p, filled=True, color=color, width=self.radius / 20)
 
         if self.model.draw_centroid:
-            print('sss')
             viewer.draw_circle(radius=self.radius/2, position=self.get_position(), filled=True, color=self.default_color, width=self.radius / 3)
 
         if self.selected:

@@ -209,7 +209,7 @@ class LarvaSim(BodySim, Larva):
             radius = self.brain.feeder.feed_radius * self.sim_length,
             if grid:
                 cell = grid.get_grid_cell(pos)
-                if grid.get_value(cell) > 0:
+                if grid.get_cell_value(cell) > 0:
                     return True, cell, grid.quality
                 else:
                     return False, None, None
@@ -231,7 +231,7 @@ class LarvaSim(BodySim, Larva):
             if empty_gut_M < max_amount_eaten:
                 return 0, False
             if self.model.food_grid:
-                amount = self.model.food_grid.subtract_value(source, max_amount_eaten)
+                amount = -self.model.food_grid.add_cell_value(source, -max_amount_eaten)
             else:
                 amount = source.subtract_amount(max_amount_eaten)
             # # TODO fix the radius so that it works with any feeder, nengo included

@@ -6,6 +6,9 @@ import progressbar
 import os
 from typing import List, Any
 
+
+
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from shapely.affinity import affine_transform
@@ -25,6 +28,8 @@ from lib.aux import naming as nam
 import lib.gui.gui_lib as gui
 from lib.conf.sim_modes import agent_pars
 from lib.model import *
+from lib.model.agents._agent import LarvaworldAgent
+from lib.sim.input_lib import evaluate_input, evaluate_graphs
 
 
 class LarvaWorld:
@@ -246,6 +251,10 @@ class LarvaWorld:
                                     torus=False)
         return space
 
+    def _create_food_grid(self, space_range, grid_pars):
+        if grid_pars:
+            self.food_grid = FoodGrid(**grid_pars, space_range=space_range)
+
     def create_schedules(self):
         self.active_larva_schedule = RandomActivation(self)
         self.all_larva_schedule = RandomActivation(self)
@@ -274,13 +283,13 @@ class LarvaWorld:
         pygame.quit()
         del self
 
-    def get_flies(self) -> List[Agent]:
+    def get_flies(self) -> List[Larva]:
         return self.active_larva_schedule.agents
 
-    def get_food(self) -> List[Agent]:
+    def get_food(self) -> List[Food]:
         return self.active_food_schedule.agents
 
-    def get_agents(self, agent_class) -> List[Agent]:
+    def get_agents(self, agent_class) -> List[LarvaworldAgent]:
         if agent_class == 'Food':
             return self.get_food()
         elif agent_class == 'Larva':
@@ -332,13 +341,24 @@ class LarvaWorld:
         self.input_box.draw(screen)
         self.draw_screen_texts(screen)
 
-    def draw_arena(self, screen):
+    def draw_arena(self, screen, background_motion):
         screen.set_bounds(*self.space_edges_for_screen)
-        screen.draw_polygon(self.space_edges, color=self.screen_color)
-        screen.draw_polygon(self.tank_shape, color=self.tank_color)
+        arena_drawn = False
+        for id, layer in self.odor_layers.items():
+            if layer.visible:
+                layer.draw(screen)
+                arena_drawn = True
+                break
+        if not arena_drawn and self.food_grid:
+            self.food_grid.draw(screen)
+            arena_drawn = True
+        if not arena_drawn:
+            screen.draw_polygon(self.tank_shape, color=self.tank_color)
+            self.draw_background(screen, background_motion)
+        screen.draw_arena(self.tank_shape, self.tank_color, self.screen_color)
+
         for i, b in enumerate(self.borders):
             b.draw(screen)
-        # for i,b in enumerate(self.border_xy):
 
     def render_aux(self, width, height):
         if self.visible_clock:
@@ -350,13 +370,11 @@ class LarvaWorld:
             text.render(width, height)
 
     def render(self, velocity_arrows=False, tick=None):
-
         if self.background_motion is None or tick is None:
             background_motion = [0, 0, 0]
         else:
             background_motion = self.background_motion[:, tick]
         if self._screen is None:
-            # caption = self.spec.id if self.spec else ""
             if self.mode == 'video':
                 self._video_path = f'{self.media_name}.mp4'
             else:
@@ -372,8 +390,7 @@ class LarvaWorld:
                                              record_image_to=self._image_path)
             self.render_aux(self.screen_width, self.screen_height)
             self.set_background(self._screen._window.get_width(), self._screen._window.get_height())
-            self.draw_arena(self._screen)
-            self.draw_background(self._screen, background_motion)
+            self.draw_arena(self._screen, background_motion)
             print('Screen opened')
         elif self._screen.close_requested():
             self._screen.close()
@@ -382,14 +399,8 @@ class LarvaWorld:
             return None
 
         if self.image_mode != 'overlap':
-            self.draw_arena(self._screen)
-            self.draw_background(self._screen, background_motion)
+            self.draw_arena(self._screen, background_motion)
 
-        if self.food_grid:
-            self.food_grid.draw(self._screen)
-        for id, layer in self.odor_layers.items():
-            if layer.visible:
-                layer.draw_value_grid(self._screen)
         for o in self.get_food():
             o.draw(self._screen)
             o.id_box.draw(self._screen)
@@ -406,8 +417,9 @@ class LarvaWorld:
                                   decay_in_ticks=int(self.trajectory_dt / self.dt),
                                   trajectory_colors=self.trajectory_colors)
 
-        self.evaluate_input()
-        self.evaluate_graphs()
+        evaluate_input(self, self._screen)
+        evaluate_graphs(self)
+
         if self.image_mode != 'overlap':
             self.draw_aux(self._screen)
             self._screen.render()
@@ -436,7 +448,7 @@ class LarvaWorld:
         pars0 = copy.deepcopy(food_pars)
         if pars0['food_grid'] is not None:
             self._create_food_grid(space_range=self.space_edges_for_screen,
-                                   food_pars=pars0['food_grid'])
+                                   grid_pars=pars0['food_grid'])
         if pars0['source_groups'] is not None:
             distro_pars = ['N', 'mode', 'loc', 'scale']
             for group_id, group_pars in pars0['source_groups'].items():
@@ -658,176 +670,11 @@ class LarvaWorld:
         else:
             return []
 
-    def evaluate_input(self):
-        d_zoom = 0.01
-        ev = pygame.event.get()
-        for event in ev:
-            if event.type == pygame.QUIT:
-                self._screen.close_requested()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_TAB:
-                    self.toggle('visible_ids')
-                elif event.key == pygame.K_t:
-                    self.toggle('visible_clock')
-                elif event.key == pygame.K_s:
-                    self.toggle('visible_state')
-                elif event.key == pygame.K_b:
-                    self.toggle('color_behavior')
-                elif event.key == pygame.K_m:
-                    self.toggle('draw_midline')
-                elif event.key == pygame.K_c:
-                    self.toggle('draw_contour')
-                elif event.key == pygame.K_h:
-                    self.toggle('draw_head')
-                elif event.key == pygame.K_e:
-                    self.toggle('draw_centroid')
-                elif event.key == pygame.K_f:
-                    self.toggle('focus_mode')
-                elif event.key == pygame.K_p:
-                    self.toggle('trajectories')
-                elif event.key == pygame.K_r:
-                    self.toggle('random_colors')
-                    for f in self.get_flies():
-                        f.set_default_color(self.generate_larva_color())
-                elif event.key == pygame.K_g:
-                    self.toggle('black_background')
-                    self.update_default_colors()
-                elif event.key == pygame.K_y:
-                    self.toggle('larva_collisions')
-                    self.eliminate_overlap()
-                elif event.key == pygame.K_MINUS:
-                    self.trajectory_dt = np.clip(self.trajectory_dt - 5, a_min=0, a_max=np.inf)
-                    self.toggle('trajectory_dt', self.trajectory_dt)
-                elif event.key == pygame.K_PLUS:
-                    self.trajectory_dt = np.clip(self.trajectory_dt + 5, a_min=0, a_max=np.inf)
-                    self.toggle('trajectory_dt', self.trajectory_dt)
-                elif event.key == pygame.K_LEFT:
-                    self._screen.move_center(-0.05, 0)
-                elif event.key == pygame.K_RIGHT:
-                    self._screen.move_center(+0.05, 0)
-                elif event.key == pygame.K_UP:
-                    self._screen.move_center(0, +0.05)
-                elif event.key == pygame.K_DOWN:
-                    self._screen.move_center(0, -0.05)
-                elif event.key == pygame.K_i:
-                    import imageio
-                    record_image_to = f'{self.media_name}_{self.snapshot_counter}.png'
-                    self._screen._image_writer = imageio.get_writer(record_image_to, mode='i')
-                    self.toggle('snapshot #', self.snapshot_counter)
-                    self.snapshot_counter += 1
-                elif event.key == pygame.K_o:
-                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        show=True
-                    else :
-                        show=False
-                    # import imageio
-                    # record_image_to = f'{self.media_name}_{self.snapshot_counter}.png'
-                    self.plot_odorscape(save_to=self.save_to, show=show)
-                    self.toggle('odorscape #', self.odorscape_counter)
-                    self.odorscape_counter += 1
-                elif event.key == pygame.K_DELETE:
-                    if gui.delete_objects_window(self.selected_agents):
-                        for f in self.selected_agents:
-                            self.selected_agents.remove(f)
-                            self.delete_agent(f)
-                elif event.key == pygame.K_q:
-                    if len(self.selected_agents) > 0:
-                        sel = self.selected_agents[0]
-                        if isinstance(sel, Larva):
-                            self.dynamic_graphs.append(gui.DynamicGraph(agent=sel, available_pars=self.available_pars))
-                elif event.key == pygame.K_w:
-                    if len(self.selected_agents) > 0:
-                        sel = self.selected_agents[0]
-                        if isinstance(sel, LarvaSim):
-                            if sel.brain.olfactor is not None:
-                                odor_gains = sel.brain.olfactor.gain
-                                odor_gains = gui.set_kwargs(odor_gains, title='Odor gains')
-                                sel.brain.olfactor.gain = odor_gains
-                else:
-                    for i in range(self.Nodors):
-                        if event.key == getattr(pygame, f'K_{i}'):
-                            layer_id = list(self.odor_layers.keys())[i]
-                            layer = self.odor_layers[layer_id]
-                            layer.visible = not layer.visible
-                            self.toggle(layer_id, 'ON' if layer.visible else 'OFF')
-
-            if self.allow_clicks:
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    self.mousebuttondown_pos = self._screen.get_mouse_position()
-                    # self.mousebuttondown_time = time.time()
-                elif event.type == pygame.MOUSEBUTTONUP:
-                    # self.mousebuttonup_time = time.time()
-                    # dt = self.mousebuttonup_time - self.mousebuttondown_time
-                    p = self._screen.get_mouse_position()
-                    if event.button == 1:
-                        res = self.eval_selection(p)
-                        # self.mousebuttondown_time = time.time()
-                        if not res and isinstance(self, LarvaWorldSim):
-                            p = tuple(p)
-                            if self.selected_type == 'Food':
-                                f = self.add_food(p)
-                            elif self.selected_type == 'Larva':
-                                f = self.add_larva(p)
-                            elif self.selected_type == 'Border':
-                                b = Border(model=self, points=[tuple(self.mousebuttondown_pos), p],
-                                           from_screen=True)
-                                self.add_border(b)
-                    elif event.button == 3:
-                        if len(self.selected_agents) > 0:
-                            sel = self.selected_agents[0]
-                            sel = gui.set_agent_kwargs(sel)
-                        else:
-                            self.selected_type = gui.object_menu(self.selected_type)
-                    elif event.button == 4:
-                        self._screen.zoom_screen(d_zoom=-d_zoom)
-                        self.toggle(name='zoom', value=self._screen.zoom)
-                    elif event.button == 5:
-                        self._screen.zoom_screen(d_zoom=+d_zoom)
-                        self.toggle(name='zoom', value=self._screen.zoom)
-                self.input_box.get_input(event)
-        if self.focus_mode and len(self.selected_agents) > 0:
-            try:
-                sel = self.selected_agents[0]
-                self._screen.move_center(pos=sel.get_position())
-            except:
-                pass
-
-    def evaluate_graphs(self):
-        for g in self.dynamic_graphs:
-            running = g.evaluate()
-            if not running:
-                self.dynamic_graphs.remove(g)
-                del g
-
     def get_image_path(self):
         return f'{self.media_name}_{self.snapshot_counter}.png'
         # return None
 
-    def toggle(self, name, value=None):
-        if value is None:
-            setattr(self, name, not getattr(self, name))
-            value = 'ON' if getattr(self, name) else 'OFF'
-        self.screen_texts[name].text = f'{name} {value}'
-        self.screen_texts[name].end_time = pygame.time.get_ticks() + 3000
 
-        if name == 'visible_ids':
-            for a in self.get_flies() + self.get_food():
-                a.id_box.visible = self.visible_ids
-
-    def eval_selection(self, p):
-        res = False
-        for f in self.get_food() + self.get_flies() + self.borders:
-            if f.contained(p):
-                res = True
-                if not f.selected:
-                    f.selected = True
-                    self.selected_agents.append(f)
-            else:
-                if f.selected:
-                    res = True
-                    f.selected = False
-                    self.selected_agents.remove(f)
-        return res
 
     def get_agent_list(self, class_name):
         if class_name == 'Food':
@@ -942,7 +789,8 @@ class LarvaWorldSim(LarvaWorld):
 
         self._place_food(self.env_pars['food_params'])
         self.create_larvae(larva_pars=self.env_pars['larva_params'], parameter_dict=parameter_dict)
-        self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars['odor_params'])
+        if self.env_pars['odorscape'] is not None:
+            self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars['odorscape'])
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
         self.create_data_collectors(collected_pars)
@@ -988,10 +836,6 @@ class LarvaWorldSim(LarvaWorld):
             for id, layer in self.odor_layers.items():
                 layer.update_values()  # Currently doing something only for the DiffusionValueLayer
 
-    def _create_food_grid(self, space_range, food_pars):
-        if food_pars and 'food_grid_dims' in food_pars:
-            self.food_grid = FoodGrid(**food_pars, space_range=space_range, distribution='uniform')
-
     def _create_odor_layers(self, pars):
         sources = self.get_food() + self.get_flies()
         odor_ids = []
@@ -1008,12 +852,11 @@ class LarvaWorldSim(LarvaWorld):
         odorscape = pars['odorscape']
         for i, (id, color) in enumerate(zip(odor_ids, odor_colors)):
             kwargs = {
-                'space': self.space,
+                # 'space': self.space,
                 'unique_id': id,
                 'sources': [f for f in sources if f.get_odor_id() == id],
-                'color': color,
+                'default_color': color,
                 'space_range': self.space_edges_for_screen,
-                # 'space2grid': self.space2grid(100)
             }
             if odorscape == 'Diffusion':
                 layers[id] = DiffusionValueLayer(dt=self.dt, scaling_factor=self.scaling_factor,
@@ -1169,8 +1012,8 @@ class LarvaWorldSim(LarvaWorld):
         from lib.anal.plotting import plot_surface
         for id, layer in self.odor_layers.items():
             title = f'{id} odorscape'
-            X,Y=layer.value_grid.meshgrid
-            V = layer.get_value_grid(X, Y)
+            X, Y = layer.meshgrid
+            V = layer.get_grid()
             x = self.space_to_mm(X)
             y = self.space_to_mm(Y)
             plot_surface(x=x, y=y, z=V,
