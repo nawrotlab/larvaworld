@@ -716,9 +716,13 @@ class LarvaWorld:
                     self.toggle('snapshot #', self.snapshot_counter)
                     self.snapshot_counter += 1
                 elif event.key == pygame.K_o:
+                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        show=True
+                    else :
+                        show=False
                     # import imageio
                     # record_image_to = f'{self.media_name}_{self.snapshot_counter}.png'
-                    self.plot_odorscape(save_to=self.save_to)
+                    self.plot_odorscape(save_to=self.save_to, show=show)
                     self.toggle('odorscape #', self.odorscape_counter)
                     self.odorscape_counter += 1
                 elif event.key == pygame.K_DELETE:
@@ -1009,12 +1013,13 @@ class LarvaWorldSim(LarvaWorld):
                 'sources': [f for f in sources if f.get_odor_id() == id],
                 'color': color,
                 'space_range': self.space_edges_for_screen,
-                'space2grid': self.space2grid(50)}
+                # 'space2grid': self.space2grid(100)
+            }
             if odorscape == 'Diffusion':
-                layers[id] = DiffusionValueLayer(
+                layers[id] = DiffusionValueLayer(dt=self.dt, scaling_factor=self.scaling_factor,
                                                  grid_dims=pars['grid_dims'],
                                                  evap_const=pars['evap_const'],
-                                                 diff_const=pars['diff_const'],
+                                                 gaussian_sigma=pars['gaussian_sigma'],
                                                  **kwargs)
             elif odorscape == 'Gaussian':
                 layers[id] = GaussianValueLayer(**kwargs)
@@ -1160,28 +1165,17 @@ class LarvaWorldSim(LarvaWorld):
     def space_to_mm(self, array):
         return array * 1000 / self.scaling_factor
 
-    def space2grid(self, N=100):
-        n = int(N / 2)
-        radx = self.space_dims[0] / 2
-        rady = self.space_dims[1] / 2
-        delta = np.min([radx, rady]) / n
-        x0 = np.arange(-radx, radx, delta)
-        y0 = np.arange(-rady, rady, delta)
-        X, Y = np.meshgrid(x0, y0)
-        return X, Y
-
-    def plot_odorscape(self, save_to=None):
+    def plot_odorscape(self, save_to=None, show=False):
         from lib.anal.plotting import plot_surface
-        X, Y = self.space2grid(100)
-        x = self.space_to_mm(X)
-        y = self.space_to_mm(Y)
-
         for id, layer in self.odor_layers.items():
             title = f'{id} odorscape'
+            X,Y=layer.value_grid.meshgrid
             V = layer.get_value_grid(X, Y)
+            x = self.space_to_mm(X)
+            y = self.space_to_mm(Y)
             plot_surface(x=x, y=y, z=V,
                          labels=[r'x $(mm)$', r'y $(mm)$', r'concentration $(μM)$'], title=title,
-                         save_to=save_to, save_as=f'{id}_odorscape_{self.odorscape_counter}')
+                         save_to=save_to, save_as=f'{id}_odorscape_{self.odorscape_counter}', show=show)
 
     def get_larva_bodies(self, scale=1.0):
         larva_bodies = {}

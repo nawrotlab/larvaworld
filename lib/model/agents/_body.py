@@ -833,7 +833,7 @@ class LarvaBody:
         return self.segs[0].get_world_point(self.local_rear_end_of_head)
 
     def get_global_front_end_of_head(self):
-        return self.segs[0].get_world_point(self.local_front_end_of_head)
+        return np.array(self.segs[0].get_world_point(self.local_front_end_of_head))
 
     def get_global_midspine_of_body(self):
         if self.Nsegs == 2:

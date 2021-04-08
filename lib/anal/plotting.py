@@ -1367,7 +1367,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     return process_plot(fig, save_to, save_as, return_fig)
 
 
-def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=None, pref=None):
+def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=None, pref=None, show=False):
     fig = plt.figure(figsize=(20, 10))
     if title is not None:
         fig.suptitle(title)
@@ -1387,7 +1387,8 @@ def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=Non
     ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
     ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
     ax.zaxis.set_major_locator(ticker.MaxNLocator(5))
-    plt.show()
+    if show :
+        plt.show()
     if save_to is not None:
         os.makedirs(save_to, exist_ok=True)
         if save_as is None:

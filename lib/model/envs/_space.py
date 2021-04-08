@@ -25,6 +25,11 @@ class ValueGrid:
         self.xy=np.array([self.x, self.y])
         self.XY_half=np.array([self.X/2, self.Y/2])
 
+        x_linspace = np.linspace(x0, x1, self.X)
+        y_linspace = np.linspace(y0, y1, self.Y)
+        self.meshgrid = np.meshgrid(x_linspace, y_linspace)
+
+
         if distribution == 'uniform':
             self.grid = np.ones([self.X, self.Y]) * self.initial_value
 
@@ -124,14 +129,14 @@ class FoodGrid(ValueGrid):
 
 
 class ValueLayer:
-    def __init__(self, space, unique_id, color, space_range, space2grid, sources=[],
+    def __init__(self, space, unique_id, color, space_range, sources=[],
                  visible=False, grid_dims=[50, 50],**kwargs):
         self.space = space
         self.id = unique_id
         self.color = color
         self.sources = sources
         self.value_grid=ValueGrid(space_range=space_range, default_color=color, grid_dims=grid_dims)
-        self.space2grid=space2grid
+        # self.space2grid=space2grid
         self.visible=visible
 
     def get_value(self, pos):
@@ -159,7 +164,7 @@ class ValueLayer:
         return V
 
     def draw_value_grid(self, viewer):
-        X,Y=self.space2grid
+        X,Y=self.value_grid.meshgrid
         V=self.get_value_grid(X,Y).T
         self.value_grid.grid=V/np.max(V)
         self.value_grid.draw(viewer)
@@ -182,67 +187,31 @@ class GaussianValueLayer(ValueLayer):
 
 
 class DiffusionValueLayer(ValueLayer):
-    def __init__(self, evap_const, diff_const, **kwargs):
+
+
+    def __init__(self, dt, scaling_factor, evap_const,gaussian_sigma, **kwargs):
         super().__init__(**kwargs)
+        '''
+            A typical diffusion coefficient for a molecule in the gas phase is in the range of 10-6 to 10-5 m2/s
+            
+            
 
+Yes, it does that automatically based on the sigma and truncate parameters.
+Indeed, the function gaussian_filter is implemented by applying multiples 1D gaussian filters (you can see that here). 
+This function uses gaussian_filter1d which generate itself the kernel using _gaussian_kernel1d with a radius of 
+int(truncate * sigma + 0.5).
+
+
+            Doing the math, sigma ends up reeeeally small
+        '''
+        D = 10**-6
+        cell_width, cell_height = self.value_grid.x/scaling_factor, self.value_grid.y/scaling_factor
+        rad_x, rad_y = D*dt/cell_width, D*dt/cell_height
+        temp=10**5
+        sigma=int(rad_x*temp), int(rad_y*temp)
         self.evap_const = evap_const
-        self.diff_const = diff_const
+        self.sigma = gaussian_sigma
 
-        # self.diffuse_layer = np.vectorize(self.aux_diffuse)
-
-
-    def out_of_bounds(self, grid_pos):
-        x, y = grid_pos
-        return x < 0 or x >= self.value_grid.X or y < 0 or y >= self.value_grid.Y
-
-    def iter_neighborhood(self, cell, moore, include_center=False, radius=1):
-        """ Return an iterator over cell coordinates that are in the
-        neighborhood of a certain point.
-        Args:
-            pos: Coordinate tuple for the neighborhood to get.
-            moore: If True, return Moore neighborhood
-                        (including diagonals)
-                   If False, return Von Neumann neighborhood
-                        (exclude diagonals)
-            include_center: If True, return the (x, y) cell as well.
-                            Otherwise, return surrounding cells only.
-            radius: radius, in cells, of neighborhood to get.
-        Returns:
-            A list of coordinate tuples representing the neighborhood. For
-            example with radius 1, it will return list with number of elements
-            equals at most 9 (8) if Moore, 5 (4) if Von Neumann (if not
-            including the center).
-        """
-        x, y = cell
-        coordinates = set()
-        for dy in range(-radius, radius + 1):
-            for dx in range(-radius, radius + 1):
-                if dx == 0 and dy == 0 and not include_center:
-                    continue
-                # Skip diagonals in Von Neumann neighborhood.
-                if not moore and dy != 0 and dx != 0:
-                    continue
-                # Skip diagonals in Moore neighborhood when distance > radius
-                if moore and 1 < radius < (dy ** 2 + dx ** 2) ** .5:
-                    continue
-                px = x + dx
-                py = y + dy
-
-                # Skip if new coords out of bounds.
-                if self.out_of_bounds((px, py)):
-                    continue
-
-                coords = (px, py)
-                if coords not in coordinates:
-                    coordinates.add(coords)
-                    yield coords
-
-    def neighbor_avg(self, cell):
-        sum_values = 0
-        neighbors = list(self.iter_neighborhood(cell, moore=True, include_center=True, radius=5))
-        for cell in neighbors:
-            sum_values += self.value_grid.get_value(cell)
-        return sum_values / len(neighbors)
 
     def add_value(self, p, value):
         cell = self.value_grid.get_grid_cell(p)
@@ -257,31 +226,13 @@ class DiffusionValueLayer(ValueLayer):
         cell = self.value_grid.get_grid_cell(p)
         self.value_grid.set_value(cell,value)
 
-    def diffuse_cell(self, cell):
-        v = self.value_grid.get_value(cell)
-        r = self.evap_const * (v + self.diff_const * (self.neighbor_avg(cell) - v))
-        return r
-
-    # @np.vectorize
-    def aux_diffuse(self, x, y):
-        v = self.diffuse_cell((x, y))
-        return v
 
     def update_values(self):
         for s in self.sources:
             source_pos = s.get_position()
             intensity = s.get_odor_intensity()
             self.add_value(source_pos, intensity)
-        self.value_grid.grid = gaussian_filter(self.value_grid.grid, sigma=7)*self.evap_const
-
-        # new_values = np.zeros(shape=(self.value_grid.X, self.value_grid.Y))
-        #
-        # # Iteration approach
-        # for x in range(self.value_grid.X):
-        #     for y in range(self.value_grid.Y):
-        #         r = self.diffuse_cell((x, y))
-        #         new_values[x, y] = r
-        # self.value_grid.grid = new_values
+        self.value_grid.grid = gaussian_filter(self.value_grid.grid, sigma=self.sigma)*self.evap_const
 
 
 

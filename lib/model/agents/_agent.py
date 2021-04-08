@@ -81,6 +81,12 @@ class LarvaworldAgent:
     def get_odor_id(self):
         return self.odor_id
 
+    def get_odor_intensity(self):
+        return self.odor_intensity
+
+    def get_odor_spread(self):
+        return self.odor_spread
+
     def set_odor(self, odor_id, intensity=2, spread=0.0002):
         self.set_odor_id(odor_id)
         self.set_scaled_odor_intensity(intensity)
@@ -444,11 +450,7 @@ class Food(LarvaworldAgent):
             # self._color=self.default_color + (self.initial_amount - self.amount)*(np.array((255,255,255))-self.default_color)
         return np.min([amount, prev_amount])
 
-    def get_odor_intensity(self):
-        return self.odor_intensity
 
-    def get_odor_spread(self):
-        return self.odor_spread
 
     def set_scaled_odor_intensity(self, intensity):
         self.odor_intensity = intensity * self.model.scaling_factor

@@ -143,9 +143,9 @@ def gaussian_odor():
 
 def diffusion_odor():
     return {'odorscape': 'Diffusion',
-            'grid_dims': [50, 50],
+            'grid_dims': [100, 100],
             'evap_const': 0.9,
-            'diff_const': 0.8
+            'gaussian_sigma': (7,7)
             }
 
 
@@ -214,14 +214,13 @@ chemorbit_diffusion_env = {'arena_params': arena(0.3, 0.3),
 RL_chemorbit_env = {'arena_params': arena(0.1, 0.1),
                     'food_params': food_param_conf(
                         list={**foodNodor_source(id='Odor source', pos=(0.0, 0.0), odor_id='Odor',
-                                                 odor_intensity=350.0, default_color='blue')}),
+                                                 odor_intensity=300.0, default_color='blue')}),
                     'larva_params': larva_distro(30, scale=0.0, model='RL_learner'),
                     'odor_params': diffusion_odor()
                     }
 
 maze_env = maze_conf(15)
 
-# maze_mod = larva_distro(1, mode='facing_right', loc=(-0.8, 0.0), scale=0.3, model=odor_larva)
 
 dispersion_env = {'arena_params': dish(0.2),
                   'food_params': food_param_conf(),
