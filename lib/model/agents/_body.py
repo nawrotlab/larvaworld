@@ -4,7 +4,7 @@ import numpy as np
 import Box2D
 from Box2D import b2Vec2
 from shapely import affinity
-from shapely.geometry import Polygon, LineString, MultiPolygon
+from shapely.geometry import Polygon
 from shapely.ops import cascaded_union
 # TODO Find a way to use this. Now if changed everything is scal except locomotion. It seems that
 #  ApplyForceToCenter function does not scale
@@ -13,8 +13,7 @@ from shapely.ops import cascaded_union
 # from shapely.geometry import Polygon, Point
 
 import lib.aux.functions as fun
-# from lib.aux.rendering import InputBox
-# from lib.stor.paths import LarvaShape_path
+
 
 
 class Box2DSegment:
@@ -43,14 +42,6 @@ class Box2DSegment:
         # self._body.massData.center= self._body.localCenter
         # self._body.massData.center= b2Vec2(0.0, 0.0)
         # self._body.localCenter = self._body.massData.center
-
-    # @property
-    # def width(self):
-    #     raise NotImplementedError
-
-    # @property
-    # def height(self):
-    #     raise NotImplementedError
 
     # @property
     def get_position(self):
@@ -104,8 +95,6 @@ class Box2DSegment:
 
     def set_ang_vel(self, ang_vel):
         self._body.angularVelocity = ang_vel
-
-    # Panos
 
     def set_mass(self, mass):
         self._body.mass = mass
@@ -219,13 +208,6 @@ class Box2DPolygon(Box2DSegment):
         # FIXME for some reason this produces error
         # self._body.inertia = self.physics_pars['inertia']
 
-    # @property
-    # def width(self):
-    #     return self._width
-    #
-    # @property
-    # def height(self):
-    #     return self._height
 
     @property
     def vertices(self):
@@ -239,17 +221,9 @@ class Box2DPolygon(Box2DSegment):
     def plot_vertices(self):
         raise NotImplementedError
 
-    # @staticmethod
-    # def _shape_vertices() -> np.ndarray:
-    #     raise NotImplementedError
-
     def draw(self, viewer):
         for i, vertices in enumerate(self.vertices):
             viewer.draw_polygon(vertices, filled=True, color=self._color)
-
-    # def plot(self, axes, **kwargs):
-    #     from simulation.tools.plotting import plot_polygon
-    #     return plot_polygon(axes, self, **kwargs)
 
 
 class DefaultSegment:
@@ -815,13 +789,6 @@ class LarvaBody:
         self.local_front_end_of_head = (np.max(self.seg_vertices[0][0], axis=0)[0], 0)
 
     def get_polygon(self, scale=1):
-        # p=self.segs[0].get_polygon()
-        # for i in range(self.Nsegs) :
-        #     if i!=0 :
-        #         p=p.union(self.segs[i].get_polygon())
-        # return p
-        # mp=MultiPolygon([seg.get_polygon() for seg in self.segs])
-        # p=Polygon(mp.bounds)
         p=cascaded_union([seg.get_polygon(scale=scale) for seg in self.segs])
         return p
 
