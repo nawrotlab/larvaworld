@@ -194,7 +194,7 @@ intermitter_sitter = {'pause_dist': 'fit',
 
 
 # ----------------------------------------------OLFACTOR MODES----------------------------------------------------------
-def olfactor_conf(ids=['Odor'], means=[100.0], stds=None, noise=0.0):
+def olfactor_conf(ids=['Odor'], means=[150.0], stds=None, noise=0.0):
     if stds is None:
         stds = np.array([0.0] * len(means))
     odor_dict = {}
@@ -205,7 +205,7 @@ def olfactor_conf(ids=['Odor'], means=[100.0], stds=None, noise=0.0):
         'odor_dict': odor_dict,
         'perception': 'log',
         'olfactor_noise': noise,
-        'decay_coef': 1.0}
+        'decay_coef': 0.5}
 
 
 def brain_olfactor_conf(ids, means, stds=None, noise=0.0):
@@ -232,15 +232,6 @@ def odor_larva_conf(ids, means, stds=None, noise=0.0,
             }
 
 
-# default_olfactor = {'olfactor_gain_mean': np.array([200.0]),
-#                     'olfactor_gain_std': np.array([0.0]),
-#                     'olfactor_noise': 0.0,
-#                     'decay_coef': 1.0}
-
-# default_olfactor_x2 = {'olfactor_gain_mean': [-100.0, 0.0],
-#                        'olfactor_gain_std': [0.0, 0.0],
-#                        'olfactor_noise': 0.0,
-#                        'decay_coef': 1.0}
 # -----------------------------------------------FEEDER MODES-----------------------------------------------------------
 default_feeder = {'feeder_freq_range': [1.0, 3.0],
                   'feeder_initial_freq': 2.0,
@@ -311,7 +302,7 @@ brain_olfactor_x2 = {'modules': olfactor_locomotion,
                      'crawler_params': default_crawler,
                      'interference_params': default_coupling,
                      'intermitter_params': intermittent_crawler,
-                     'olfactor_params': olfactor_conf(ids=['CS', 'UCS'], means=[100.0, 0.0]),
+                     'olfactor_params': olfactor_conf(ids=['CS', 'UCS'], means=[150.0, 0.0]),
                      'feeder_params': None,
                      'memory_params': None,
                      'nengo': False}
@@ -403,7 +394,7 @@ mock_brain = {'modules': full_brain,
               'crawler_params': default_crawler,
               'interference_params': default_coupling,
               'intermitter_params': intermitter_rover,
-              'olfactor_params': olfactor_conf(ids=['CS', 'UCS'], means=[100.0, 0.0]),
+              'olfactor_params': olfactor_conf(ids=['CS', 'UCS'], means=[150.0, 0.0]),
               'feeder_params': default_feeder,
               'memory_params': None,
               'nengo': False}
@@ -455,16 +446,16 @@ nengo_larva = {'energetics_params': None,
 odors3 = [f'{source} odor' for source in ['Flag', 'Left base', 'Right base']]
 odors5 = [f'{source} odor' for source in ['Flag', 'Left base', 'Right base', 'Left group', 'Right group']]
 
-flag_larva = {**odor_larva_conf(ids=odors3, means=[100, 0, 0]),
+flag_larva = {**odor_larva_conf(ids=odors3, means=[150, 0, 0]),
               }
 
-king_larva_L = {**odor_larva_conf(ids=odors5, means=[100, 0, 0, 0, 0],
+king_larva_L = {**odor_larva_conf(ids=odors5, means=[150, 0, 0, 0, 0],
                                   odor_id='Left group odor', odor_intensity=2.0, odor_spread=0.00005
                                   ),
                 # 'id_prefix': 'Left'
                 }
 
-king_larva_R = {**odor_larva_conf(ids=odors5, means=[100, 0, 0, 0, 0],
+king_larva_R = {**odor_larva_conf(ids=odors5, means=[150, 0, 0, 0, 0],
                                   odor_id='Right group odor', odor_intensity=2.0, odor_spread=0.00005
                                   ),
                 }

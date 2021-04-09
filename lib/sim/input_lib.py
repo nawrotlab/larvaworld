@@ -31,8 +31,8 @@ def evaluate_input(model, screen):
         if event.type == pygame.QUIT:
             screen.close_requested()
         if event.type == pygame.KEYDOWN:
-            for k,v in shortcuts.items() :
-                if event.key==getattr(pygame, f'K_{v}'):
+            for k, v in shortcuts.items():
+                if event.key == getattr(pygame, f'K_{v}'):
                     toggle(model, k)
 
             if event.key == pygame.K_MINUS:
@@ -85,30 +85,15 @@ def evaluate_input(model, screen):
                 # dt = model.mousebuttonup_time - model.mousebuttondown_time
                 p = screen.get_mouse_position()
                 if event.button == 1:
-                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        ctrl = True
-                    else:
-                        ctrl = False
-                    eval_selection(model, p, ctrl)
-                    # model.mousebuttondown_time = time.time()
-                    if len(model.selected_agents) == 0:
-                        # if len(model.selected_agents) == 0 and isinstance(model, LarvaWorldSim):
-                        try:
-                            p = tuple(p)
-                            if model.selected_type == 'Food':
-                                f = model.add_food(p)
-                            elif model.selected_type == 'Larva':
-                                f = model.add_larva(p)
-                            elif model.selected_type == 'Border':
-                                b = Border(model=model, points=[tuple(model.mousebuttondown_pos), p],
-                                           from_screen=True)
-                                model.add_border(b)
-                        except:
-                            pass
+                    if not eval_selection(model, p, ctrl=pygame.key.get_mods() & pygame.KMOD_CTRL):
+                        model.add_agent(agent_class=model.selected_type, p0=tuple(p),
+                                        p1=tuple(model.mousebuttondown_pos))
+
                 elif event.button == 3:
                     if len(model.selected_agents) > 0:
-                        sel = model.selected_agents[0]
-                        sel = gui.set_agent_kwargs(sel)
+                        for sel in model.selected_agents :
+                            # sel = model.selected_agents[0]
+                            sel = gui.set_agent_kwargs(sel)
                     else:
                         model.selected_type = gui.object_menu(model.selected_type)
                 elif event.button == 4:
@@ -135,15 +120,22 @@ def evaluate_graphs(model):
 
 
 def eval_selection(model, p, ctrl):
+    res=False if len(model.selected_agents)==0 else True
     for f in model.get_food() + model.get_flies() + model.borders:
         if f.contained(p):
             if not f.selected:
                 f.selected = True
                 model.selected_agents.append(f)
+            else:
+                if ctrl:
+                    f.selected = False
+                    model.selected_agents.remove(f)
+            res=True
         else:
             if f.selected and not ctrl:
                 f.selected = False
                 model.selected_agents.remove(f)
+    return res
 
 
 def toggle(model, name, value=None, show=False, minus=False, plus=False):

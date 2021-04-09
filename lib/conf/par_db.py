@@ -419,8 +419,8 @@ def set_ParDb():
     par_db['lim'].loc['reserve_density'] = [0.0, 2.0]
     par_db['lim'].loc['deb_f'] = [0.0, 2.0]
 
-    par_db['lim'].loc['c_odor1'] = [0.0, 2.0]
-    par_db['lim'].loc['dc_odor1'] = [-0.03, 0.03]
+    par_db['lim'].loc['c_odor1'] = [0.0, 8.0]
+    par_db['lim'].loc['dc_odor1'] = [-0.05, 0.05]
     par_db['lim'].loc['A_olf'] = [-1.0, 1.0]
     par_db['lim'].loc['A_tur'] = [10.0, 40.0]
     par_db['lim'].loc['Act_tur'] = [-20.0, 20.0]

@@ -32,3 +32,6 @@ tqdm~=4.42.1
 progressbar2~=3.53.1
 ipykernel
 PySimpleGUI~=4.34.0
+future~=0.18.2
+siunits~=0.0.5
+statsmodels~=0.12.2

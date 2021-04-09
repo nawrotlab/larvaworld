@@ -805,7 +805,6 @@ class RLmemory :
     def step(self, gain, dCon, reward):
         for id in self.odor_ids :
             if reward :
-                print('xx')
                 gain[id]*=1.1
             else :
                 gain[id]*=0.99

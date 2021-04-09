@@ -1,17 +1,13 @@
 import heapq
 import itertools
+from typing import Tuple
 
-import matplotlib.patches as mpatches
 import pandas as pd
 import seaborn as sns
 from matplotlib import cm, transforms, ticker, patches
-from matplotlib.patches import Wedge
-from matplotlib.ticker import ScalarFormatter
 from mpl_toolkits.mplot3d import Axes3D
-from scipy import signal
-from scipy import stats
-from scipy.interpolate import griddata
-from scipy.signal import butter, sosfiltfilt
+import statsmodels.api as sm
+from scipy import signal,stats, interpolate, signal
 from sklearn.linear_model import LinearRegression
 import powerlaw as pow
 import warnings
@@ -23,6 +19,7 @@ from lib.anal.combining import combine_images, combine_pdfs
 
 from lib.stor.paths import DebFolder
 from lib.conf.par_db import par_db
+import lib.gui.gui_lib as gui
 
 '''
 Generic plot function. Uses the next two functions internally'''
@@ -59,11 +56,6 @@ def plot_mean_and_range(x, mean, lb, ub, axis, color_mean=None, color_shading=No
         axis.plot(x, mean, color_mean)
 
     # pass
-
-
-# def plot_dataset_for_each(agent_ids, **kwargs):
-#     for agent_id in agent_ids:
-#         plot_dataset(agent_ids=[agent_id], **kwargs)
 
 
 def plot_dataset(save_to, save_as=None, mode='time', subplot_structure=[1, 1],
@@ -413,12 +405,12 @@ def time_plot(fig, axs, data, agent_ids, parameters, dt=None, Nsubplots=1,
             colors = ['white', 'grey']
             if show_legend:
                 if legend_labels is None:
-                    patches = [mpatches.Patch(color=color, label=name) for name, color in
+                    patch = [patches.Patch(color=color, label=name) for name, color in
                                zip(background_for_chunks, colors)]
                 else:
-                    patches = [mpatches.Patch(color=color, label=name) for name, color in
+                    patch = [patches.Patch(color=color, label=name) for name, color in
                                zip(legend_labels, colors)]
-                plt.legend(handles=patches, loc='upper right', prop={'size': 15})
+                plt.legend(handles=patch, loc='upper right', prop={'size': 15})
             for i, (chunk, color) in enumerate(zip(background_for_chunks, colors)):
                 start_flag = f'{chunk}_start'
                 stop_flag = f'{chunk}_stop'
@@ -1302,8 +1294,8 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         for j, (l, yl) in enumerate(zip(labels, ylabels)):
             if l == 'f_filt':
                 P = d['f']
-                sos = butter(N=1, Wn=4, btype='lowpass', analog=False, fs=Nticks / (s1 - s0), output='sos')
-                P = sosfiltfilt(sos, P)
+                sos = signal.butter(N=1, Wn=4, btype='lowpass', analog=False, fs=Nticks / (s1 - s0), output='sos')
+                P = signal.sosfiltfilt(sos, P)
             else:
                 P = d[l]
             ax = axs[j]
@@ -1361,7 +1353,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         except:
             pass
 
-    axs[0].legend(handles=[mpatches.Patch(color=c, label=id) for c, id in zip(leg_cols, leg_ids)],
+    axs[0].legend(handles=[patches.Patch(color=c, label=id) for c, id in zip(leg_cols, leg_ids)],
                   labels=leg_ids, fontsize=20, loc='upper left', prop={'size': 15})
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.93, hspace=0.02)
     return process_plot(fig, save_to, save_as, return_fig)
@@ -1398,10 +1390,11 @@ def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=Non
         filepath = os.path.join(save_to, save_as)
         fig.savefig(filepath, dpi=300)
         print(f'Surface saved as {save_as}')
+    plt.close('all')
     return ax
 
 
-def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=None):
+def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=None, show=False):
     # fig = plt.figure(figsize=(10, 5))
     axs = sns.heatmap(z, annot=True, fmt="g", cmap=cm.coolwarm,
                       xticklabels=x.tolist(), yticklabels=y.tolist(),
@@ -1423,7 +1416,8 @@ def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=N
     axs.set_xlabel(labels[0])
     if title is not None:
         axs.set_suptitle(title, fontsize=20)
-
+    if show :
+        plt.show()
     if save_to is not None:
         os.makedirs(save_to, exist_ok=True)
         if save_as is None:
@@ -1433,18 +1427,92 @@ def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=N
         filepath = os.path.join(save_to, save_as)
         plt.savefig(filepath, dpi=300)
         print(f'Heatmap saved as {filepath}')
+    plt.close('all')
     return axs
 
 
-def plot_3pars(df, labels, save_to, z0=None, pref=None):
-    x, y = np.unique(df[labels[0]].values), np.unique(df[labels[1]].values)
-    X, Y = np.meshgrid(x, y)
+def plot_3pars(df, labels, save_to, z0=None, pref=None, show=False):
+    plot_3d(df, labels, save_to, pref=pref, save_as=None, show=show)
+    try:
+        x, y = np.unique(df[labels[0]].values), np.unique(df[labels[1]].values)
+        X, Y = np.meshgrid(x, y)
 
-    z = df[labels[2]].values.reshape(X.shape).T
+        z = df[labels[2]].values.reshape(X.shape).T
 
-    plot_heatmap(x, y, z, labels, save_to=save_to, pref=pref)
-    plot_surface(X, Y, z, labels, save_to=save_to, z0=z0, pref=pref)
+        plot_heatmap(x, y, z, labels, save_to=save_to, pref=pref, show=show)
+        plot_surface(X, Y, z, labels, save_to=save_to, z0=z0, pref=pref, show=show)
+    except :
+        pass
+
+def plot_3d(df, labels, save_to, pref=None, save_as=None, show=False) :
+    l0,l1,l2=labels
+    X = df[[l0, l1]]
+    y = df[l2]
+
+    X = sm.add_constant(X)
+    est = sm.OLS(y, X).fit()
+
+    xx1, xx2 = np.meshgrid(np.linspace(X[l0].min(), X[l0].max(), 100),
+                           np.linspace(X[l1].min(), X[l1].max(), 100))
+
+    # plot the hyperplane by evaluating the parameters on the grid
+    Z = est.params[0] + est.params[1] * xx1 + est.params[2] * xx2
+
+    # create matplotlib 3d axes
+    fig = plt.figure(figsize=(12, 8))
+    ax = Axes3D(fig, azim=-115, elev=15)
+
+    # plot hyperplane
+    surf = ax.plot_surface(xx1, xx2, Z, cmap=plt.cm.RdBu_r, alpha=0.6, linewidth=0)
+
+    # plot data points - points over the HP are white, points below are black
+    resid = y - est.predict(X)
+    ax.scatter(X[resid >= 0][l0], X[resid >= 0][l1], y[resid >= 0], color='black', alpha=0.4, facecolor='white')
+    ax.scatter(X[resid < 0][l0], X[resid < 0][l1], y[resid < 0], color='black', alpha=0.4)
+
+    # set axis labels
+    ax.set_xlabel(l0)
+    ax.set_ylabel(l1)
+    ax.set_zlabel(l2)
+    if show:
+        plt.show()
+    if save_to is not None:
+        os.makedirs(save_to, exist_ok=True)
+        if save_as is None:
+            save_as = f'3d_plot.{suf}'
+            if pref is not None:
+                save_as = f'{pref}_{save_as}'
+        filepath = os.path.join(save_to, save_as)
+        plt.savefig(filepath, dpi=300)
+        print(f'3D plot saved as {filepath}')
     plt.close('all')
+    return fig
+
+def plot_2d(df, labels, save_to, pref=None, save_as=None, show=False) :
+    par = labels[0]
+    res = labels[0]
+    p = df[par].values
+    r = df[res].values
+    fig, axs = plt.subplots(1, 1, figsize=(10, 10))
+    axs.scatter(p, r)
+    axs.set_xlabel(par)
+    axs.set_ylabel(res)
+    if show:
+        plt.show()
+    if save_to is not None:
+        os.makedirs(save_to, exist_ok=True)
+        if save_as is None:
+            save_as = f'2d_plot.{suf}'
+            if pref is not None:
+                save_as = f'{pref}_{save_as}'
+        filepath = os.path.join(save_to, save_as)
+        plt.savefig(filepath, dpi=300)
+        print(f'3D plot saved as {filepath}')
+    plt.close('all')
+    return fig
+
+
+
 
 
 def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orientation.{suf}'):
@@ -1778,7 +1846,7 @@ def plot_2D_countour(x, y, z, dimensions, Cmax, filepath):
     xi = np.linspace(xmin, xmax, 1000)
     yi = np.linspace(ymin, ymax, 1000)
     ## grid the data.
-    zi = griddata((x, y), z, (xi[None, :], yi[:, None]), method='cubic')
+    zi = interpolate.griddata((x, y), z, (xi[None, :], yi[:, None]), method='cubic')
     levels = np.linspace(0.0, Cmax, 10000)
     fig = plt.figure(figsize=(xmax - xmin, ymax - ymin))
     # ax = plt.gca()
@@ -2157,22 +2225,16 @@ def plot_food_amount(datasets, labels, save_to=None, save_as=None, filt_amount=F
         # print(dst_m)
         # print(type(dst_m))
         if filt_amount:
-            sos = butter(N=1, Wn=0.1, btype='lowpass', analog=False, fs=Nticks / (t1 - t0), output='sos')
+            sos = signal.butter(N=1, Wn=0.1, btype='lowpass', analog=False, fs=Nticks / (t1 - t0), output='sos')
             dst_m = dst_m.diff()
             dst_m.iloc[0] = 0
-            dst_m = sosfiltfilt(sos, dst_m)
+            dst_m = signal.sosfiltfilt(sos, dst_m)
             dst_u = dst_u.diff()
             dst_u.iloc[0] = 0
-            dst_u = sosfiltfilt(sos, dst_u)
+            dst_u = signal.sosfiltfilt(sos, dst_u)
             dst_b = dst_b.diff()
             dst_b.iloc[0] = 0
-            dst_b = sosfiltfilt(sos, dst_b)
-            # print(dst_m)
-            # print(type(dst_m))
-            # for df in [dst_m, dst_u, dst_b] :
-            #     df=df.diff()
-            #     df.iloc[0]=0
-            #     df = sosfiltfilt(sos, df)
+            dst_b = signal.sosfiltfilt(sos, dst_b)
         plot_mean_and_range(x=trange, mean=dst_m, lb=dst_b, ub=dst_u, axis=axs, color_mean=c,
                             color_shading=c, label=lab)
     axs.set_ylabel(ylab)
@@ -2234,6 +2296,9 @@ def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False):
 def plot_odor_concentration(datasets, labels=None, save_to=None, return_fig=False):
     return plot_timeplot('c_odor1', datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
 
+def plot_sensed_odor_concentration(datasets, labels=None, save_to=None, return_fig=False):
+    return plot_timeplot('dc_odor1', datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
+
 def plot_timeplot(par_short, datasets, labels=None, save_to=None, return_fig=False) :
     if par_short not in par_db.index.to_list() :
         raise ValueError (f'Parameter shortcut {par_short} does not exist in parameter database')
@@ -2241,6 +2306,7 @@ def plot_timeplot(par_short, datasets, labels=None, save_to=None, return_fig=Fal
     par=par_dict['par']
     sim_label=par_dict['symbol']
     xlabel=par_dict['unit']
+    ylim=gui.retrieve_value(par_dict['lim'], Tuple[float,float])
 
     d = datasets[0]
     s = d.step_data
@@ -2266,11 +2332,10 @@ def plot_timeplot(par_short, datasets, labels=None, save_to=None, return_fig=Fal
     axs.set_ylabel(xlabel)
     axs.set_xlabel('time, $sec$')
     axs.set_xlim([trange[0], trange[-1]])
+    axs.set_ylim(ylim)
     # axs.legend(loc='upper right')
     axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
-    # axs[1].set_xticks([0.5, 1, 10])
-    # axs[1].set_xticklabels(['0.5', '1', '10'])
-    plt.subplots_adjust(bottom=0.15, left=0.15, right=0.95, top=0.95)
+    plt.subplots_adjust(bottom=0.15, left=0.2, right=0.95, top=0.95)
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -2620,7 +2685,7 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
     # two-dimensionl dataset.
     ell_radius_x = np.sqrt(1 + pearson)
     ell_radius_y = np.sqrt(1 - pearson)
-    ellipse = mpatches.Ellipse((0, 0), width=ell_radius_x * 2, height=ell_radius_y * 2,
+    ellipse = patches.Ellipse((0, 0), width=ell_radius_x * 2, height=ell_radius_y * 2,
                                facecolor=facecolor, **kwargs)
 
     # Calculating the stdandard deviation of x from
@@ -2886,7 +2951,7 @@ def plot_endpoint_params(datasets, labels, mode='full', save_to=None, save_as=No
         axs[i].set_title(p, fontsize=15)
         axs[i].xaxis.set_major_locator(ticker.MaxNLocator(4))
         axs[i].yaxis.set_major_locator(ticker.MaxNLocator(4))
-        axs[i].xaxis.set_major_formatter(ScalarFormatter(useOffset=True, useMathText=True))
+        axs[i].xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=True, useMathText=True))
         # axs[i].ticklabel_format(axis='x', useMathText=True, scilimits=(-3, 3))
         # axs[i].ticklabel_format(axis='x', useMathText=True, scilimits=(-3, 3), useOffset=True)
 
@@ -3028,8 +3093,8 @@ def dual_half_circle(center, radius, angle=0, ax=None, colors=('w', 'k'), **kwar
     if ax is None:
         ax = plt.gca()
     theta1, theta2 = angle, angle + 180
-    w1 = Wedge(center, radius, theta1, theta2, fc=colors[0], **kwargs)
-    w2 = Wedge(center, radius, theta2, theta1, fc=colors[1], **kwargs)
+    w1 = patches.Wedge(center, radius, theta1, theta2, fc=colors[0], **kwargs)
+    w2 = patches.Wedge(center, radius, theta2, theta1, fc=colors[1], **kwargs)
     for wedge in [w1, w2]:
         ax.add_artist(wedge)
     return [w1, w2]
@@ -3159,8 +3224,7 @@ def process_plot(fig, save_to, filename, return_fig):
 
 
 def barplot(datasets, labels, par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None, save_to=None,
-            save_as=None,
-            return_fig=False):
+            save_as=None, return_fig=False):
     Ndatasets, colors, save_to = plot_config(datasets, labels, save_to)
     w = 0.1
 
@@ -3217,7 +3281,7 @@ def barplot(datasets, labels, par_shorts=['f_am'], coupled_labels=None, xlabel=N
             plt.xticks(ind, labels, color='k')
         else:
             plt.xticks(new_ind, coupled_labels, color='k')
-            plt.legend(handles=[mpatches.Patch(color=c, label=id) for c, id in zip(leg_cols, leg_ids)],
+            plt.legend(handles=[patches.Patch(color=c, label=id) for c, id in zip(leg_cols, leg_ids)],
                        labels=leg_ids, fontsize=20, loc='upper right', prop={'size': 10})
         if ylabel is None:
             plt.ylabel(u)

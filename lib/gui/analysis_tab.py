@@ -109,6 +109,7 @@ def build_analysis_tab():
         'turn_duration': plot_turn_duration,
         'turns': plot_turns,
         'odor_concentration': plot_odor_concentration,
+        'sensed_odor_concentration': plot_sensed_odor_concentration,
         'pathlength': plot_pathlength,
         'food_amount': plot_food_amount,
         'gut': plot_gut,

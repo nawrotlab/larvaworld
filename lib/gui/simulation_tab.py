@@ -3,12 +3,13 @@ import copy
 import PySimpleGUI as sg
 
 from lib.aux.collecting import effector_collection
-from lib.conf import exp_types, test_env, agent_pars, distro_pars, arena_pars_dict
+from lib.conf import exp_types, test_env, agent_pars, distro_pars, arena_pars_dict, life_pars_dict
 from lib.gui.gui_lib import CollapsibleDict, named_list_layout, button_kwargs, Collapsible, text_kwargs, \
     named_bool_button, header_kwargs, set_agent_dict, build_table_window, buttonM_kwargs
 from lib.sim.single_run import next_idx, run_sim, configure_sim
 from lib.stor.datagroup import loadConfDict, loadConf, saveConf, deleteConf
 import lib.aux.functions as fun
+
 
 def save_env(window, env):
     l = [[sg.Text('Store new environment', size=(20, 1)), sg.In(k='ENV_ID', size=(10, 1))],
@@ -119,7 +120,13 @@ def build_sim_tab(collapsibles):
 
     l_conf1 = collapsibles['CONFIGURATION'].get_section()
 
-    l_conf = [[sg.Col([l_exp, l_conf1])]]
+    life_dict = {'starvation_hours': None,
+                 'hours_as_larva': 0.0,
+                 'deb_base_f': 1.0}
+    collapsibles['LIFE'] = CollapsibleDict('LIFE', False, dict=life_dict, type_dict=life_pars_dict)
+    l_life = collapsibles['LIFE'].get_section()
+
+    l_conf = [[sg.Col([l_exp, l_conf1, l_life])]]
 
     l_env0 = [sg.Col([
         [sg.Text('Environment:', **header_kwargs),
@@ -130,8 +137,6 @@ def build_sim_tab(collapsibles):
          sg.Button('Delete', key='DELETE_ENV', **button_kwargs)]
     ])]
     l_env1 = init_env(env_params, collapsibles)
-
-
 
     l_env = [[sg.Col([l_env0, l_env1])]]
 
@@ -203,7 +208,7 @@ def eval_sim(event, values, window, sim_datasets, collapsibles, output_keys,
 def update_sim(window, values, collapsibles, output_keys):
     exp = values['EXP']
     exp_conf = copy.deepcopy(exp_types[exp])
-    env=exp_conf['env_params']
+    env = exp_conf['env_params']
     if type(env) == str:
         window.Element('ENV_CONF').Update(value=env)
         env = loadConf(env, 'Env')
@@ -217,28 +222,34 @@ def update_sim(window, values, collapsibles, output_keys):
     return source_units, border_list, larva_groups, source_groups
 
 
-def get_sim(window, values, collapsibles, output_keys, source_units, border_list, larva_groups, source_groups):
-    exp = values['EXP']
+def get_sim_conf(window, values):
     sim = {}
     sim['sim_id'] = str(values['sim_id'])
     sim['sim_dur'] = float(values['sim_dur'])
     sim['dt'] = float(values['dt'])
     sim['path'] = str(values['path'])
     sim['Box2D'] = window['TOGGLE_Box2D'].metadata.state
+    return sim
+
+
+def get_sim(window, values, collapsibles, output_keys, source_units, border_list, larva_groups, source_groups):
+    exp = values['EXP']
+
+    sim = get_sim_conf(window, values)
 
     temp = collapsibles['OUTPUT'].get_dict(values, window)
     collections = [k for k in output_keys if temp[k]]
 
     env = get_env(window, values, collapsibles, source_units, border_list, larva_groups, source_groups)
 
+    life = collapsibles['LIFE'].get_dict(values, window)
 
     sim_config = {
         'enrich': True,
         'experiment': exp,
         'sim_params': sim,
         'env_params': env,
+        'life_params': life,
         'collections': collections,
     }
     return sim_config
-
-

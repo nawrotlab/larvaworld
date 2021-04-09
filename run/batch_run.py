@@ -41,13 +41,14 @@ else:
     space_kwargs['ranges'] = np.array(fun.group_list_by_n(space_kwargs['ranges'], 2))
 space = space_method(**space_kwargs)
 
-batch_config = setup['batch_config']
+optimization = setup['optimization']
 batch_kwargs = prs.get_batch_kwargs(args)
 
-if batch_config is not None:
-    batch_config['max_Nsims'] = batch_kwargs['max_Nsims']
-    batch_config['Nbest'] = batch_kwargs['Nbest']
-    batch_config['ranges'] = space_kwargs['ranges']
+
+if optimization is not None:
+    optimization['max_Nsims'] = batch_kwargs['max_Nsims']
+    optimization['Nbest'] = batch_kwargs['Nbest']
+    optimization['ranges'] = space_kwargs['ranges']
 
 if batch_kwargs['batch_id'] is None :
     idx = next_idx(exp, type='batch')
@@ -63,11 +64,11 @@ batch_run(dir=exp,
           post_process_method=setup['post_process_method'],
           final_process_method=setup['final_process_method'],
           sim_config=sim_config,
-          config=batch_config,
+          optimization=optimization,
           post_kwargs=setup['post_kwargs'],
           run_kwargs=setup['run_kwargs']
           )
 
 '''
-python batch_run.py odor_pref -N 25 -t 3.0 -rng -200.0 200.0 -Ngrd 5
+python batch_run.py odor_pref -N 5 -t 1.0 -id_b test
 '''

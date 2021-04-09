@@ -59,13 +59,14 @@ odor_pref = {
 chemorbit = {
              'env_params': 'chemotaxis local',
              # 'env_params': chemorbit_env,
-             'collections': ['olfactor', 'pose', 'dst2center'],
+             'collections': ['dst2center'],
+             # 'collections': ['olfactor', 'pose', 'dst2center'],
              }
 
 chemorbit_diffusion = {
              'env_params': 'chemotaxis local diffusion',
              # 'env_params': chemorbit_env,
-             'collections': ['olfactor', 'pose', 'dst2center'],
+             'collections': ['dst2center'],
              }
 
 chemotax = {
@@ -77,7 +78,7 @@ chemotax = {
 RL_chemorbit = {
              'env_params': 'RL chemotaxis local',
              # 'env_params': chemorbit_env,
-             'collections': ['olfactor', 'pose', 'dst2center'],
+             'collections': ['dst2center'],
              }
 
 dispersion = {

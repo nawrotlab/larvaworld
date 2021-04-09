@@ -15,7 +15,6 @@ from shapely.affinity import affine_transform
 from unflatten import unflatten
 from Box2D import b2World, b2ChainShape, b2EdgeShape
 from mesa.space import ContinuousSpace
-from mesa import Agent
 from mesa.time import RandomActivation
 
 from lib.aux.collecting import TargetedDataCollector, step_database
@@ -513,6 +512,18 @@ class LarvaWorld:
         self.active_larva_schedule.add(l)
         self.all_larva_schedule.add(l)
         return l
+
+    def add_agent(self, agent_class, p0, p1=None):
+        try:
+            if agent_class == 'Food':
+                f = self.add_food(p0)
+            elif agent_class == 'Larva':
+                f = self.add_larva(p0)
+            elif agent_class == 'Border':
+                b = Border(model=self, points=[p1, p0],from_screen=True)
+                self.add_border(b)
+        except:
+            pass
 
     def next_id(self, type='Food'):
         if type == 'Food':

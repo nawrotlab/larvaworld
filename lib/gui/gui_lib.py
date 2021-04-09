@@ -150,7 +150,7 @@ def gui_table(data, pars_dict, title='Agent list'):
                            non_blocking=True)
 
     Nagents, Npars, pars, table_window = build_table_window(data, pars_dict, title)
-
+    print(Nagents, Npars, pars)
     current_cell = (0, 0)
     while True:  # Event Loop
         event, values = table_window.read()

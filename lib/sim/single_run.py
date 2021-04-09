@@ -3,18 +3,19 @@ import copy
 import datetime
 import json
 import time
+import pickle
 
 import lib.aux.functions as fun
-import lib.conf.data_modes as conf
+import lib.conf.data_modes as dat
 import lib.stor.paths as paths
 from lib.anal.plotting import *
 from lib.aux.collecting import effector_collection, midline_xy_pars
 from lib.conf import exp_types
 from lib.model.envs._larvaworld import LarvaWorldSim
 from lib.model.agents.deb import deb_dict, deb_default
-from lib.stor.datagroup import loadConf
+from lib.stor.datagroup import loadConf, loadConfDict
 from lib.stor.larva_dataset import LarvaDataset
-import pickle
+
 
 
 def sim_enrichment(d, experiment):
@@ -114,6 +115,7 @@ def sim_analysis(d, experiment):
 
     elif experiment in ['chemorbit', 'chemotax']:
         plot_timeplot('c_odor1', datasets=[d])
+        plot_timeplot('dc_odor1', datasets=[d])
         plot_timeplot('A_olf', datasets=[d])
         plot_timeplot('A_tur', datasets=[d])
         plot_timeplot('Act_tur', datasets=[d])
@@ -151,7 +153,6 @@ def configure_sim(env_params):
 def run_sim_basic(
         sim_params,
         env_params,
-        # larva_pars,
         life_params={},
         collections=None,
         save_to=None,
@@ -159,7 +160,7 @@ def run_sim_basic(
         save_data_flag=True,
         enrich=False,
         experiment=None,
-        par_config=conf.SimParConf,
+        par_config=dat.SimParConf,
         seed=1,
         **kwargs):
     if collections is None:
@@ -283,6 +284,7 @@ def next_idx(exp, type='single'):
         batch_names = batch_types.keys()
         exp_idx_dict = dict(zip(exp_names, [0] * len(exp_names)))
         batch_idx_dict = dict(zip(batch_names, [0] * len(batch_names)))
+        # batch_idx_dict.update(loadConfDict('Batch'))
         idx_dict = {'single': exp_idx_dict,
                     'batch': batch_idx_dict}
     if not exp in idx_dict[type].keys():

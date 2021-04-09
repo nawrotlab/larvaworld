@@ -5,14 +5,14 @@ import os
 import numpy as np
 
 import lib.stor.paths as paths
+
 sys.path.insert(0, paths.get_parent_dir())
 import lib.conf.env_modes as env
 import lib.conf.larva_modes as mod
 
+
 import lib.conf.data_modes as dat
-
-
-
+# import lib.conf.batch_modes as bat
 
 def get_input(message, itype, default='', accepted=None, range=None):
     while True:
@@ -366,56 +366,129 @@ class LarvaDataGroup:
         return f'{paths.DataFolder}/{self.path}'
 
 
+chemorbit_batch = {
+    'exp' : 'chemorbit',
+    'space_search': {
+        'pars': ['Odor.mean', 'decay_coef'],
+        'ranges': [(300.0, 1300.0), (0.1, 0.5)],
+        'Ngrid': [3, 3]
+    },
+    'optimization': {
+        'fit_par': 'scaled_dst_to_center',
+        'minimize': True,
+        'threshold': 0.1,
+        'max_Nsims': 16,
+        'Nbest': 4
+    },
+}
+
+feed_grid_batch = {
+    'exp' : 'feed_grid',
+    'space_search': {
+        'pars': ['EEB', 'EEB_decay_coef'],
+        'ranges': [(0.0, 1.0), (0.1, 2.0)],
+        'Ngrid': [6, 6]
+    },
+    'optimization': {
+        'fit_par': 'amount_eaten',
+        'minimize': False,
+        'threshold': 2.0,
+        'max_Nsims': 60,
+        'Nbest': 6
+    },
+}
+
+
+
 if __name__ == '__main__':
-    saveConf(dat.SchleyerConf, 'Data')
-    saveConf(dat.JovanicConf, 'Data')
-    saveConf(dat.SimConf, 'Data')
 
-    saveConf(dat.SchleyerParConf, 'Par', 'SchleyerParConf')
-    saveConf(dat.JovanicParConf, 'Par', 'JovanicParConf')
-    saveConf(dat.PaisiosParConf, 'Par', 'PaisiosParConf')
-    saveConf(dat.SinglepointParConf, 'Par', 'SinglepointParConf')
-    saveConf(dat.SimParConf, 'Par', 'SimParConf')
+    dat_list = [
+        dat.SchleyerConf,
+        dat.JovanicConf,
+        dat.SimConf,
+    ]
+    for d in dat_list:
+        saveConf(d, 'Data')
 
-    saveConf(dat.SchleyerGroup, 'Group')
-    saveConf(dat.JovanicGroup, 'Group')
-    saveConf(dat.TestGroup, 'Group')
-    saveConf(dat.SimGroup, 'Group')
+    par_conf_dict = {
+        'SchleyerParConf': dat.SchleyerParConf,
+        'JovanicParConf': dat.JovanicParConf,
+        'PaisiosParConf': dat.PaisiosParConf,
+        'SinglepointParConf': dat.SinglepointParConf,
+        'SimParConf': dat.SimParConf,
+    }
+    for k, v in par_conf_dict.items():
+        saveConf(v, 'Par', k)
 
-    saveConf(env.focus_env, 'Env', 'focused view')
-    saveConf(env.dish_env, 'Env', 'dish')
-    saveConf(env.dispersion_env, 'Env', 'dispersion')
-    saveConf(env.chemotax_env, 'Env', 'chemotaxis approach')
-    saveConf(env.chemorbit_env, 'Env', 'chemotaxis local')
-    saveConf(env.chemorbit_diffusion_env, 'Env', 'chemotaxis local diffusion')
-    saveConf(env.pref_env, 'Env', 'odor preference')
-    saveConf(env.patchy_food_env, 'Env', 'patchy food')
-    saveConf(env.uniform_food_env, 'Env', 'uniform food')
-    saveConf(env.food_grid_env, 'Env', 'food grid')
-    saveConf(env.growth_env, 'Env', 'growth')
-    saveConf(env.growth_2x_env, 'Env', 'rovers-sitters')
-    saveConf(env.reorientation_env, 'Env', 'reorientation')
-    saveConf(env.imitation_env_p, 'Env', 'realistic imitation')
-    saveConf(env.maze_env, 'Env','maze')
-    saveConf(env.king_env, 'Env', 'keep the flag')
-    saveConf(env.flag_env, 'Env', 'flag to base')
-    saveConf(env.RL_chemorbit_env, 'Env', 'RL chemotaxis local')
+    group_list = [
+        dat.SchleyerGroup,
+        dat.JovanicGroup,
+        dat.TestGroup,
+        dat.SimGroup,
+    ]
+    for g in group_list:
+        saveConf(g, 'Group')
 
+    env_dict = {
+        'focused view': env.focus_env,
+        'dish': env.dish_env,
+        'dispersion': env.dispersion_env,
+        'chemotaxis approach': env.chemotax_env,
+        'chemotaxis local': env.chemorbit_env,
+        'chemotaxis local diffusion': env.chemorbit_diffusion_env,
+        'odor preference': env.pref_env,
+        'patchy food': env.patchy_food_env,
+        'uniform food': env.uniform_food_env,
+        'food grid': env.food_grid_env,
+        'growth': env.growth_env,
+        'rovers-sitters': env.growth_2x_env,
+        'reorientation': env.reorientation_env,
+        'realistic imitation': env.imitation_env_p,
+        'maze': env.maze_env,
+        'keep the flag': env.king_env,
+        'flag to base': env.flag_env,
+        'RL chemotaxis local': env.RL_chemorbit_env,
+    }
+    for k, v in env_dict.items():
+        saveConf(v, 'Env', k)
 
-    saveConf(mod.exploring_larva, 'Model', 'explorer')
-    saveConf(mod.odor_larva, 'Model', 'navigator')
-    saveConf(mod.odor_larva_x2, 'Model', 'navigator_x2')
-    saveConf(mod.feeding_larva, 'Model', 'feeder')
-    saveConf(mod.feeding_odor_larva, 'Model', 'feeder-navigator')
-    saveConf(mod.growing_rover, 'Model', 'rover')
-    saveConf(mod.growing_sitter, 'Model', 'sitter')
-    saveConf(mod.imitation_larva, 'Model', 'imitation')
-    saveConf(mod.flag_larva, 'Model', 'gamer')
-    saveConf(mod.king_larva_L, 'Model', 'gamer_L')
-    saveConf(mod.king_larva_R, 'Model', 'gamer_R')
-    saveConf(mod.RL_odor_larva, 'Model', 'RL_learner')
+    mod_dict = {
+        'explorer': mod.exploring_larva,
+        'navigator': mod.odor_larva,
+        'navigator_x2': mod.odor_larva_x2,
+        'feeder': mod.feeding_larva,
+        'feeder-navigator': mod.feeding_odor_larva,
+        'rover': mod.growing_rover,
+        'sitter': mod.growing_sitter,
+        'imitation': mod.imitation_larva,
+        'gamer': mod.flag_larva,
+        'gamer_L': mod.king_larva_L,
+        'gamer_R': mod.king_larva_R,
+        'RL_learner': mod.RL_odor_larva,
 
+    }
+    for k, v in mod_dict.items():
+        saveConf(v, 'Model', k)
 
-
-# a=loadDataGroupDict()
-# print(list(a.keys()))
+    batch_dict = {
+        # 'focused view': env.focus_env,
+        # 'dish': env.dish_env,
+        # 'dispersion': env.dispersion_env,
+        # 'chemotaxis approach': env.chemotax_env,
+        'chemotaxis_local': chemorbit_batch,
+        # 'chemotaxis local diffusion': env.chemorbit_diffusion_env,
+        # 'odor preference': env.pref_env,
+        # 'patchy food': env.patchy_food_env,
+        # 'uniform food': env.uniform_food_env,
+        'food_grid': feed_grid_batch,
+        # 'growth': env.growth_env,
+        # 'rovers-sitters': env.growth_2x_env,
+        # 'reorientation': env.reorientation_env,
+        # 'realistic imitation': env.imitation_env_p,
+        # 'maze': env.maze_env,
+        # 'keep the flag': env.king_env,
+        # 'flag to base': env.flag_env,
+        # 'RL chemotaxis local': env.RL_chemorbit_env,
+    }
+    for k, v in batch_dict.items():
+        saveConf(v, 'Batch', k)

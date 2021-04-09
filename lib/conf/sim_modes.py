@@ -45,6 +45,32 @@ arena_pars_dict = {'arena_xdim': float,
                    'arena_ydim': float,
                    'arena_shape': ['circular', 'rectangular']}
 
+opt_pars_dict = {
+    'fit_par': str,
+    'minimize': bool,
+    'threshold': float,
+    'max_Nsims': int,
+    'Nbest': int
+}
+
+# space_pars_dict = {'pars': List[str],
+#                    'ranges': List[Tuple[float, float]],
+#                    'Ngrid': List[int]}
+
+space_pars_dict = {'pars': str,
+                   'ranges': Tuple[float, float],
+                   'Ngrid': int}
+
+# method_pars_dict = {
+#
+# }
+life_pars_dict = {
+    'starvation_hours': List[Tuple[float, float]],
+    'hours_as_larva': float,
+    'deb_base_f': float
+
+}
+
 
 def distro_pars(class_name):
     larva_distros = [

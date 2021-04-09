@@ -221,7 +221,10 @@ def flatten_dict(d, parent_key='', sep='.'):
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
         if isinstance(v, collections.MutableMapping):
-            items.extend(flatten_dict(v, new_key, sep=sep).items())
+            if len(v)>0 :
+                items.extend(flatten_dict(v, new_key, sep=sep).items())
+            else :
+                items.append((new_key, 'empty_dict'))
         else:
             items.append((new_key, v))
     return dict(items)
@@ -237,7 +240,10 @@ def reconstruct_dict(param_group):
             if p.f_is_empty():
                 dict.update({p.v_name: None})
             else:
-                dict.update({p.v_name: p.f_get()})
+                v=p.f_get()
+                if v=='empty_dict' :
+                    v={}
+                dict.update({p.v_name: v})
 
     return dict
 

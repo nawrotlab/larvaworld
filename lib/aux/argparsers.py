@@ -224,9 +224,9 @@ def get_life_kwargs(args):
 
 def add_batch_kwargs(parser):
     parser.add_argument('-id_b', '--batch_id', type=str, help='The id of the batch run')
-    parser.add_argument('-Nmax', '--max_Nsims', type=int, nargs='?', const=50,
+    parser.add_argument('-Nmax', '--max_Nsims', type=int, nargs='?', default=40,
                         help='The maximum number of simulations to run')
-    parser.add_argument('-Nbst', '--Nbest', type=int, nargs='?', const=5,
+    parser.add_argument('-Nbst', '--Nbest', type=int, nargs='?', default=4,
                         help='The number of best configurations to expand')
     return parser
 
@@ -249,7 +249,7 @@ def add_space_kwargs(parser):
 def get_space_kwargs(args):
     Ngrid = args.Ngrid
     if Ngrid is None:
-        Ngrid = [5]
+        Ngrid = [8]
     space_kwargs = {'pars': args.pars,
                     'ranges': args.ranges,
                     'Ngrid': Ngrid}
