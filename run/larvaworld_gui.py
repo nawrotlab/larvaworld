@@ -23,7 +23,7 @@ def run_gui():
     l_anal, graph_dict, data, func, func_kwargs, fig, save_to, save_as, figure_agg = build_analysis_tab()
     l_mod, collapsibles, odor_gains = build_model_tab(collapsibles)
     l_sim, sim_datasets, collapsibles, source_units, border_list, larva_groups, source_groups = build_sim_tab(collapsibles)
-    l_batch, collapsibles, space_search, batch_results = build_batch_tab(collapsibles)
+    l_batch, collapsibles, space_search, batch_results, batch_fig_agg = build_batch_tab(collapsibles)
 
     dicts = {
         'odor_gains' : odor_gains,
@@ -71,7 +71,7 @@ def run_gui():
         elif tab == 'MODEL_TAB':
             dicts['odor_gains'] = eval_model(e, v, w, collapsibles, dicts['odor_gains'])
         elif tab == 'BATCH_TAB':
-            dicts = eval_batch(e, v, w, collapsibles, dicts)
+            dicts, batch_fig_agg = eval_batch(e, v, w, collapsibles, dicts, batch_fig_agg)
         elif tab == 'SIMULATION_TAB':
             dicts = eval_sim(e, v, w, collapsibles, dicts)
     w.close()

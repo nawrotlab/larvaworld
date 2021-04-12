@@ -1462,7 +1462,7 @@ def plot_3d(df, labels, save_to, pref=None, save_as=None, show=False) :
 
     # create matplotlib 3d axes
     fig = plt.figure(figsize=(12, 8))
-    ax = Axes3D(fig, azim=-115, elev=15)
+    ax = Axes3D(fig, azim=115, elev=15)
 
     # plot hyperplane
     surf = ax.plot_surface(xx1, xx2, Z, cmap=plt.cm.RdBu_r, alpha=0.6, linewidth=0)
@@ -1472,10 +1472,21 @@ def plot_3d(df, labels, save_to, pref=None, save_as=None, show=False) :
     ax.scatter(X[resid >= 0][l0], X[resid >= 0][l1], y[resid >= 0], color='black', alpha=0.4, facecolor='white')
     ax.scatter(X[resid < 0][l0], X[resid < 0][l1], y[resid < 0], color='black', alpha=0.4)
 
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(4))
+    ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
+    ax.zaxis.set_major_locator(ticker.MaxNLocator(4))
+
     # set axis labels
-    ax.set_xlabel(l0)
-    ax.set_ylabel(l1)
-    ax.set_zlabel(l2)
+    ax.set_xlabel(l0, labelpad=20)
+    ax.set_ylabel(l1, labelpad=20)
+    ax.set_zlabel(l2, labelpad=20)
+    # ax.xaxis.set_label_position('top')
+    # ax.yaxis.set_label_position('top')
+    # ax.zaxis.set_ticks_position('bottom')
+    # ax.xaxis._axinfo['label']['space_factor'] = -6.8
+    # ax.yaxis._axinfo['label']['space_factor'] = -6.8
+    # ax.zaxis._axinfo['label']['space_factor'] = -6.8
+
     if show:
         plt.show()
     if save_to is not None:
@@ -1489,6 +1500,13 @@ def plot_3d(df, labels, save_to, pref=None, save_as=None, show=False) :
         print(f'3D plot saved as {filepath}')
     plt.close('all')
     return fig
+
+# f='../../data/SimGroup/batch_runs/chemorbit/chemotaxis_local_23'
+# ff=f'{f}/results.csv'
+# df=pd.read_csv(ff, index_col=0)
+# labels=['mean', 'decay_coef', 'scaled_dispersion']
+# plot_3d(df, labels, f, show=True)
+
 
 def plot_2d(df, labels, save_to, pref=None, save_as=None, show=False) :
     par = labels[0]
@@ -3146,7 +3164,7 @@ def plot_endpoint_scatter(datasets, labels, save_to=None, par_shorts=None, retur
     filepath = os.path.join(save_to, filename)
     for i, (p0, p1) in enumerate(pairs):
         ax = axs[i]
-        pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=[p0, p1],
+        pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=[p0, p1],
                                                                         to_return=['par', 'symbol', 'exp_symbol','unit'])
 
 

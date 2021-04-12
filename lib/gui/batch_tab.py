@@ -6,7 +6,7 @@ from lib.aux.dtype_dicts import opt_pars_dict, space_pars_dict
 from lib.conf import exp_types
 from lib.conf.batch_conf import test_batch
 from lib.gui.gui_lib import CollapsibleDict, button_kwargs, Collapsible, text_kwargs, buttonM_kwargs, named_list_layout, \
-    gui_table, save_gui_conf, delete_gui_conf
+    gui_table, save_gui_conf, delete_gui_conf, draw_canvas, delete_figure_agg
 from lib.gui.simulation_tab import get_sim_conf, update_sim
 from lib.sim.single_run import generate_config, next_idx
 from lib.conf.conf import loadConfDict, loadConf
@@ -65,8 +65,17 @@ def build_batch_tab(collapsibles):
     collapsibles['BATCH_CONFIGURATION'] = Collapsible('BATCH_CONFIGURATION', True, batch_conf)
     l_conf = collapsibles['BATCH_CONFIGURATION'].get_section()
     l_opt = init_batch(batch, collapsibles)
-    l_batch = [[sg.Col([l_exp,l_conf,[sg.Button('SPACE_SEARCH', **buttonM_kwargs)], l_opt])]]
-    return l_batch, collapsibles, space_search, batch_results
+    l_batch0 = sg.Col([l_exp,l_conf,[sg.Button('SPACE_SEARCH', **buttonM_kwargs)], l_opt])
+    # l_batch0 = [[sg.Col([l_exp,l_conf,[sg.Button('SPACE_SEARCH', **buttonM_kwargs)], l_opt])]]
+
+    dim = 2000
+    figure_w, figure_h = dim, dim
+
+    batch_canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key='BATCH_CANVAS')]])
+
+    l_batch = [[l_batch0, batch_canvas]]
+    batch_fig_agg=None
+    return l_batch, collapsibles, space_search, batch_results, batch_fig_agg
 
 
 def set_space_table(space_search):
@@ -87,7 +96,7 @@ def set_space_table(space_search):
     return dic
 
 
-def eval_batch(event, values, window, collapsibles, dicts):
+def eval_batch(event, values, window, collapsibles, dicts, batch_fig_agg):
     space_search = dicts['space_search']
     if event == 'LOAD_BATCH':
         if values['BATCH_CONF'] != '':
@@ -126,13 +135,19 @@ def eval_batch(event, values, window, collapsibles, dicts):
             life_params = collapsibles['LIFE'].get_dict(values, window)
             sim_config = generate_config(exp=batch["exp"], sim_params=sim_params, life_params=life_params)
             batch_kwargs = prepare_batch(batch, batch_id, sim_config)
-            df, plots=batch_run(**batch_kwargs)
+            df, figs=batch_run(**batch_kwargs)
             dicts['batch_results']['df'] = df
-            dicts['batch_results']['plots'] = plots
+            dicts['batch_results']['figs'] = figs
+            if batch_fig_agg:
+                # ** IMPORTANT ** Clean up previous drawing before drawing again
+                delete_figure_agg(batch_fig_agg)
+            for fig in figs :
+                batch_fig_agg = draw_canvas(window['BATCH_CANVAS'].TKCanvas, fig)  # draw the figure
+                # return figure_agg
 
     elif event == 'SPACE_SEARCH':
         space_search = set_space_table(space_search)
 
     dicts['space_search'] = space_search
 
-    return dicts
+    return dicts, batch_fig_agg
