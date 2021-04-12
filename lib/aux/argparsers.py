@@ -2,7 +2,7 @@ import sys
 import numpy as np
 
 sys.path.insert(0, '../../..')
-import lib.conf.env_modes as env
+import lib.conf.env_conf as env
 import lib.aux.functions as fun
 
 

@@ -6,8 +6,7 @@ import progressbar
 import os
 from typing import List, Any
 
-
-
+from lib.envs._maze import Border
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -17,15 +16,14 @@ from Box2D import b2World, b2ChainShape, b2EdgeShape
 from mesa.space import ContinuousSpace
 from mesa.time import RandomActivation
 
-from lib.aux.collecting import TargetedDataCollector, step_database
-from lib.model.envs._space import FoodGrid
+from lib.aux.collecting import TargetedDataCollector
+from lib.envs._space import FoodGrid, DiffusionValueLayer, GaussianValueLayer
 import lib.aux.rendering as ren
 from lib.aux.sampling import sample_agents, get_ref_bout_distros
 import lib.aux.functions as fun
 from lib.aux import naming as nam
 
-import lib.gui.gui_lib as gui
-from lib.conf.sim_modes import agent_pars
+from lib.aux.dtype_dicts import agent_pars
 from lib.model import *
 from lib.model.agents._agent import LarvaworldAgent
 from lib.sim.input_lib import evaluate_input, evaluate_graphs
@@ -90,7 +88,7 @@ class LarvaWorld:
         self.focus_mode = False
         self.visible_state = visible_state
         self.visible_clock = visible_clock
-        self.selected_type = 'Food'
+        self.selected_type = ''
 
         self.borders, self.border_xy, self.border_lines, self.border_bodies = [], [], [], []
 
@@ -777,7 +775,7 @@ class LarvaWorldSim(LarvaWorld):
                            'deb_base_f': 1.0}
         if collected_pars is None:
             collected_pars = {'step': [], 'endpoint': []}
-        self.available_pars = fun.unique_list(list(step_database.keys()))
+        # self.available_pars = fun.unique_list([p for p in list(step_database.keys()) if par_conf.par_in_db(par=p)])
         self.starvation_hours = life_params['starvation_hours']
         if self.starvation_hours is None:
             self.starvation_hours = []

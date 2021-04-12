@@ -1,25 +1,22 @@
 import heapq
 import itertools
-from typing import Tuple
 
 import pandas as pd
 import seaborn as sns
 from matplotlib import cm, transforms, ticker, patches
 from mpl_toolkits.mplot3d import Axes3D
 import statsmodels.api as sm
-from scipy import signal,stats, interpolate, signal
+from scipy import stats, signal
 from sklearn.linear_model import LinearRegression
 import powerlaw as pow
-import warnings
 from PIL import Image
 
 from lib.anal.fitting import *
 from lib.aux.functions import weib, flatten_list, N_colors
 from lib.anal.combining import combine_images, combine_pdfs
+from lib.aux import par_conf
 
 from lib.stor.paths import DebFolder
-from lib.conf.par_db import par_db
-import lib.gui.gui_lib as gui
 
 '''
 Generic plot function. Uses the next two functions internally'''
@@ -1982,8 +1979,8 @@ def plot_stride_Dorient(datasets, labels, simVSexp=False, absolute=True, save_to
     filename = f'stride_orient_change.{suf}'
 
     par_shorts = ['str_fo', 'str_ro']
-    pars, sim_labels, exp_labels, xlabels = [
-        par_db[['par', 'symbol', 'exp_symbol', 'unit']].loc[par_shorts].values[:, k].tolist() for k in range(4)]
+    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+
     ranges = [80, 80]
 
     if simVSexp:
@@ -2042,9 +2039,7 @@ def plot_interference(datasets, labels, mode='orientation', agent_idx=None,
     elif mode == 'spinelength':
         par_shorts.append('l')
 
-    pars, sim_labels, exp_labels, units = [
-        par_db[['par', 'symbol', 'exp_symbol', 'unit']].loc[par_shorts].values[:, k].tolist() for k in range(4)]
-    # print(pars, sim_labels, exp_labels, units)
+    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
     fig, axs = plt.subplots(len(pars), 1, figsize=(10, len(pars) * 5), sharex=True)
     axs = axs.ravel()
 
@@ -2300,13 +2295,13 @@ def plot_sensed_odor_concentration(datasets, labels=None, save_to=None, return_f
     return plot_timeplot('dc_odor1', datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
 
 def plot_timeplot(par_short, datasets, labels=None, save_to=None, return_fig=False) :
-    if par_short not in par_db.index.to_list() :
-        raise ValueError (f'Parameter shortcut {par_short} does not exist in parameter database')
-    par_dict=par_db.loc[par_short]
+
+    par_dict= par_conf.get_par_dict(short=par_short)
     par=par_dict['par']
     sim_label=par_dict['symbol']
     xlabel=par_dict['unit']
-    ylim=gui.retrieve_value(par_dict['lim'], Tuple[float,float])
+    ylim=par_dict['lim']
+    # ylim=gui.retrieve_value(par_dict['lim'], Tuple[float,float])
 
     d = datasets[0]
     s = d.step_data
@@ -2332,10 +2327,12 @@ def plot_timeplot(par_short, datasets, labels=None, save_to=None, return_fig=Fal
     axs.set_ylabel(xlabel)
     axs.set_xlabel('time, $sec$')
     axs.set_xlim([trange[0], trange[-1]])
-    axs.set_ylim(ylim)
+    if ylim is not None :
+        axs.set_ylim(ylim)
     # axs.legend(loc='upper right')
     axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
     plt.subplots_adjust(bottom=0.15, left=0.2, right=0.95, top=0.95)
+    # plt.show()
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -2749,8 +2746,8 @@ def plot_ang_pars(datasets, labels, simVSexp=False, absolute=True, include_turns
     if include_turns:
         par_shorts += ['tur_fo']
         ranges += [100]
-    pars, sim_labels, exp_labels, xlabels = [
-        par_db[['par', 'symbol', 'exp_symbol', 'unit']].loc[par_shorts].values[:, k].tolist() for k in range(4)]
+
+    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
 
     filename = f'angular_pars_{len(pars)}.{suf}'
 
@@ -2795,8 +2792,7 @@ def plot_crawl_pars(datasets, labels, simVSexp=False, save_to=None, legend=False
     filename = f'crawl_pars.{suf}'
 
     par_shorts = ['str_N', 'str_tr', 'cum_d']
-    pars, sim_labels, exp_labels, xlabels = [
-        par_db[['par', 'symbol', 'exp_symbol', 'unit']].loc[par_shorts].values[:, k].tolist() for k in range(4)]
+    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
     ranges = [(100, 300), (0.5, 1.0), (80, 320)]
 
     if simVSexp:
@@ -2904,8 +2900,7 @@ def plot_endpoint_params(datasets, labels, mode='full', save_to=None, save_as=No
 
         ]
 
-    pars, sim_labels, exp_labels, xlabels = [
-        par_db[['par', 'symbol', 'exp_symbol', 'unit']].loc[par_shorts].values[:, k].tolist() for k in range(4)]
+    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
     pars = [p for p in pars if all([p in d.endpoint_data.columns for d in datasets])]
 
     if Ndatasets > 1:
@@ -2988,8 +2983,7 @@ def plot_turn_duration(datasets, labels, save_to=None, legend=False, absolute=Tr
     filename = f'turn_duration.{suf}'
 
     par_shorts = ['tur_fo', 'tur_t']
-    pars, sim_labels, exp_labels, units = [
-        par_db[['par', 'symbol', 'exp_symbol', 'unit']].loc[par_shorts].values[:, k].tolist() for k in range(4)]
+    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
 
     fig, axs = plt.subplots(1, 1, figsize=(5, 5))
 
@@ -3021,8 +3015,9 @@ def plot_turns(datasets, labels, save_to=None, return_fig=False):
     fig, axs = plt.subplots(1, 1, figsize=(5, 5))
 
     par_short = 'tur_fo'
-    par, sim_label, exp_label, xlabel = [par_db[['par', 'symbol', 'exp_symbol', 'unit']].loc[par_short].values[k] for k
-                                         in range(4)]
+    par_dict= par_conf.get_par_dict(short=par_short)
+    par=par_dict['par']
+    xlabel=par_dict['unit']
 
     ts = []
     for d in datasets:
@@ -3146,8 +3141,9 @@ def plot_endpoint_scatter(datasets, labels, save_to=None, par_shorts=None, retur
     filepath = os.path.join(save_to, filename)
     for i, (p0, p1) in enumerate(pairs):
         ax = axs[i]
-        pars, sim_labels, exp_labels, units = [
-            par_db[['par', 'symbol', 'exp_symbol', 'unit']].loc[[p0, p1]].values[:, k].tolist() for k in range(4)]
+        pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=[p0, p1],
+                                                                        to_return=['par', 'symbol', 'exp_symbol','unit'])
+
 
         v0_all = [d.endpoint_data[pars[0]].values for d in datasets]
         v1_all = [d.endpoint_data[pars[1]].values for d in datasets]
@@ -3244,8 +3240,8 @@ def barplot(datasets, labels, par_shorts=['f_am'], coupled_labels=None, xlabel=N
     else:
         filename = save_as
 
-    pars, sim_labels, exp_labels, units = [
-        par_db[['par', 'symbol', 'exp_symbol', 'unit']].loc[par_shorts].values[:, k].tolist() for k in range(4)]
+    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+
 
     # Pull the formatting out here
     bar_kwargs = {'width': w, 'color': colors, 'linewidth': 4, 'zorder': 5, 'align': 'center'}
@@ -3347,3 +3343,22 @@ def calibration_plot(save_to=None, files=None):
     filepath = os.path.join(save_to, filename)
     save_plot(fig, filepath, filename)
 
+graph_dict = {
+    'crawl_pars': plot_crawl_pars,
+    'angular_pars': plot_ang_pars,
+    'endpoint_params': plot_endpoint_params,
+    'stride_Dbend': plot_stride_Dbend,
+    'stride_Dorient': plot_stride_Dorient,
+    'interference': plot_interference,
+    'dispersion': plot_dispersion,
+    'stridesNpauses': plot_stridesNpauses,
+    'turn_duration': plot_turn_duration,
+    'turns': plot_turns,
+    'odor_concentration': plot_odor_concentration,
+    'sensed_odor_concentration': plot_sensed_odor_concentration,
+    'pathlength': plot_pathlength,
+    'food_amount': plot_food_amount,
+    'gut': plot_gut,
+    'barplot': barplot,
+    'deb': plot_debs,
+}

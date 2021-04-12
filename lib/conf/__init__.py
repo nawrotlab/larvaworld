@@ -1,5 +1,4 @@
-from .larva_modes import *
-from .env_modes import *
-from .sim_modes import *
-from .exp_modes import *
+from .larva_conf import *
+from .env_conf import *
+from .exp_conf import *
 # from .batch_modes import *

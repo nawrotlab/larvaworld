@@ -6,14 +6,14 @@ import time
 import pickle
 
 import lib.aux.functions as fun
-import lib.conf.data_modes as dat
+import lib.conf.data_conf as dat
 import lib.stor.paths as paths
 from lib.anal.plotting import *
 from lib.aux.collecting import output, midline_xy_pars
 from lib.conf import exp_types
-from lib.model.envs._larvaworld import LarvaWorldSim
+from lib.envs._larvaworld import LarvaWorldSim
 from lib.model.agents.deb import deb_dict, deb_default
-from lib.stor.datagroup import loadConf, loadConfDict
+from lib.conf.conf import loadConf
 from lib.stor.larva_dataset import LarvaDataset
 
 
@@ -275,7 +275,7 @@ def load_reference_dataset():
 
 
 def next_idx(exp, type='single'):
-    from lib.conf.batch_modes import batch_types
+    from lib.conf.batch_conf import batch_types
     try:
         with open(paths.SimIdx_path) as tfp:
             idx_dict = json.load(tfp)

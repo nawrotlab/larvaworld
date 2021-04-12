@@ -13,11 +13,11 @@ from lib.aux import functions as fun
 from lib.anal.fitting import *
 from lib.aux.parsing import parse_dataset, multiparse_dataset_by_sliding_window
 from lib.anal.plotting import *
-import lib.conf.env_modes as env
-from lib.conf.data_modes import SimParConf
+import lib.conf.env_conf as env
+from lib.conf.data_conf import SimParConf
 
 from lib.stor.paths import Ref_path, Ref_fits, RefFolder
-from lib.model.envs._larvaworld import LarvaWorldReplay
+from lib.envs._larvaworld import LarvaWorldReplay
 
 
 class LarvaDataset:

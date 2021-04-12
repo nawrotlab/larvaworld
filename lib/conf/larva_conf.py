@@ -4,12 +4,7 @@ The larva model parameters
 
 import numpy as np
 
-
-def odor(id=None, intensity=0.0, spread=0.0002):
-    return {'odor_id': id,
-            'odor_intensity': intensity,
-            'odor_spread': spread}
-
+from lib.aux.functions import odor
 
 ''' Default exploration model'''
 default_physics = {

@@ -1,25 +1,26 @@
 import copy
 
 import PySimpleGUI as sg
-
+from lib.aux.dtype_dicts import agent_pars, distro_pars, arena_pars_dict, life_pars_dict
 from lib.aux.collecting import output_keys
-from lib.conf import exp_types, test_env, agent_pars, distro_pars, arena_pars_dict, life_pars_dict
+from lib.conf import exp_types, test_env
 from lib.gui.gui_lib import CollapsibleDict, named_list_layout, button_kwargs, Collapsible, text_kwargs, \
-    named_bool_button, header_kwargs, set_agent_dict, build_table_window, buttonM_kwargs
+    named_bool_button, header_kwargs, set_agent_dict, buttonM_kwargs, save_gui_conf, delete_gui_conf
 from lib.sim.single_run import next_idx, run_sim, configure_sim
-from lib.stor.datagroup import loadConfDict, loadConf, saveConf, deleteConf
-import lib.aux.functions as fun
+from lib.conf.conf import loadConfDict, loadConf, saveConf, deleteConf
 
 
-def save_env(window, env):
-    l = [[sg.Text('Store new environment', size=(20, 1)), sg.In(k='ENV_ID', size=(10, 1))],
-         [sg.Ok(), sg.Cancel()]]
-    e, v = sg.Window('Environment configuration', l).read(close=True)
-    if e == 'Ok':
-        env_id = v['ENV_ID']
-        saveConf(env, 'Env', env_id)
-        window['ENV_CONF'].update(values=list(loadConfDict('Env').keys()))
-        window['ENV_CONF'].update(value=env_id)
+# def save_env(window, env):
+#     l = [
+#         named_list_layout('Store new environment', 'ENV_ID', list(loadConfDict('Env').keys()),
+#                           readonly=False, enable_events=False),
+#          [sg.Ok(), sg.Cancel()]]
+#     e, v = sg.Window('Environment configuration', l).read(close=True)
+#     if e == 'Ok':
+#         env_id = v['ENV_ID']
+#         saveConf(env, 'Env', env_id)
+#         window['ENV_CONF'].update(values=list(loadConfDict('Env').keys()))
+#         window['ENV_CONF'].update(value=env_id)
 
 
 def init_env(env_params, collapsibles={}):
@@ -157,15 +158,12 @@ def eval_sim(event, values, window, sim_datasets, collapsibles,
 
     elif event == 'SAVE_ENV':
         env = get_env(window, values, collapsibles, source_units, border_list, larva_groups, source_groups)
-        save_env(window, env)
+        save_gui_conf(window, env, 'Env')
 
 
 
-    elif event == 'DELETE_ENV' and values['ENV_CONF'] != '':
-        deleteConf(values['ENV_CONF'], 'Env')
-        window['ENV_CONF'].update(values=list(loadConfDict('Env').keys()))
-        window['ENV_CONF'].update(value='')
-
+    elif event == 'DELETE_ENV':
+        delete_gui_conf(window, values, 'Env')
 
     elif event == 'LARVA GROUPS':
         larva_groups = set_agent_dict(larva_groups, distro_pars('Larva'), header='group', title='Larva distribution')

@@ -2,14 +2,13 @@ import copy
 
 import PySimpleGUI as sg
 
-from lib.conf import test_larva, odor_gain_pars, opt_pars_dict, space_pars_dict
-from lib.conf.batch_modes import test_batch, batch_types
-from lib.gui.gui_lib import CollapsibleDict, button_kwargs, Collapsible, text_kwargs, header_kwargs, set_agent_dict, \
-    buttonM_kwargs, named_list_layout, gui_table
+from lib.aux.dtype_dicts import opt_pars_dict, space_pars_dict
+from lib.conf.batch_conf import test_batch
+from lib.gui.gui_lib import CollapsibleDict, button_kwargs, Collapsible, text_kwargs, buttonM_kwargs, named_list_layout, \
+    gui_table, save_gui_conf, delete_gui_conf
 from lib.gui.simulation_tab import get_sim_conf
 from lib.sim.single_run import generate_config, next_idx
-from lib.stor.datagroup import loadConfDict, loadConf, deleteConf, saveConf
-import numpy as np
+from lib.conf.conf import loadConfDict, loadConf
 
 
 def init_batch(batch, collapsibles={}):
@@ -95,7 +94,6 @@ def set_space_table(space_search):
 def eval_batch(event, values, window, collapsibles, space_search):
     if event == 'LOAD_BATCH':
         if values['BATCH_CONF'] != '':
-            # batch = copy.deepcopy(batch_types[values['BATCH_CONF']])
             batch=values['BATCH_CONF']
             window.Element('batch_id').Update(value=f'{batch}_{next_idx(batch, type="batch")}')
             window.Element('batch_path').Update(value=batch)
@@ -103,20 +101,13 @@ def eval_batch(event, values, window, collapsibles, space_search):
             space_search = update_batch(conf, window, collapsibles, space_search)
 
     elif event == 'SAVE_BATCH':
-        l = [[sg.Text('Store new batch', size=(20, 1)), sg.In(k='BATCH_ID', size=(10, 1))],
-             [sg.Ok(), sg.Cancel()]]
-        e, v = sg.Window('Batch configuration', l).read(close=True)
-        if e == 'Ok':
-            batch = get_batch(window, values, collapsibles)
-            batch_id = v['BATCH_ID']
-            saveConf(batch, 'Batch', batch_id)
-            window['BATCH_CONF'].update(values=list(loadConfDict('Batch').keys()))
+        batch = get_batch(window, values, collapsibles, space_search)
+        save_gui_conf(window, batch, 'Batch')
+
 
     elif event == 'DELETE_BATCH':
-        if values['BATCH_CONF'] != '':
-            deleteConf(values['BATCH_CONF'], 'Batch')
-            window['BATCH_CONF'].update(values=list(loadConfDict('Batch').keys()))
-            window['BATCH_CONF'].update(value='')
+        delete_gui_conf(window, values, 'Batch')
+
 
     elif event == 'RUN_BATCH':
         if values['BATCH_CONF'] != '' and values['EXP'] != '':

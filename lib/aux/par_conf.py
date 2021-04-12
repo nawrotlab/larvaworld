@@ -1,9 +1,14 @@
+import copy
+from typing import Tuple, Type
+
 import lib.aux.naming as nam
 import numpy as np
 import pandas as pd
+import shelve
 
+import lib.aux.functions as fun
 from lib.aux.collecting import step_database
-from lib.stor.paths import ParDb_path
+import lib.stor.paths as paths
 
 
 def base(method, input, **kwargs):
@@ -425,6 +430,11 @@ def set_ParDb():
     par_db['lim'].loc['A_tur'] = [10.0, 40.0]
     par_db['lim'].loc['Act_tur'] = [-20.0, 20.0]
 
+    to_drop1 = [f'{c}_l' for c in ['non_str', 'pau', 'str', 'tur', 'Ltur', 'Rtur', 'fee']]
+    to_drop2 = fun.flatten_list([[f'{c}_{d}' for d in ['sstd', 'std', 'sd', 'd']] for c in ['non_str', 'fee']])
+    to_drop = to_drop1 + to_drop2
+    par_db.drop(labels=to_drop, inplace=True)
+
     par_db['collect'] = None
     for k, v in step_database.items():
         par_db['collect'].loc[par_db['par'] == k] = v
@@ -433,23 +443,144 @@ def set_ParDb():
     # par_db['type'].loc['str0'] = bool
     # par_db['type'].loc['str1'] = bool
 
-    par_db.to_csv(ParDb_path, index=True, header=True)
+    par_db = set_dtype(par_db)
+    par_db = set_collect_from(par_db)
+
+    par_db.to_csv(paths.ParDb_path, index=True, header=True)
+
+    return par_db
 
 
-# Use this to update the database
-set_ParDb()
+def set_dtype(par_db):
+    db = par_db.to_dict('index')
+    for k in db.keys():
+        if k in [
+            'non_str0', 'non_str1',
+            'str0', 'str1',
+            'pau0', 'pau1',
+            'tur0', 'tur1',
+            'Ltur0', 'Ltur1',
+            'Rtur0', 'Rtur1',
+            'fee0', 'fee1',
+            'chn0', 'chn1',
+        ]:
+            db[k]['dtype'] = bool
+        elif str(k).endswith('id'):
+            db[k]['dtype'] = str
+        elif str(k).endswith('N'):
+            db[k]['dtype'] = int
+        elif 'counts' in db[k]['unit']:
+            db[k]['dtype'] = int
+        elif str(k).endswith('mu') or str(k).endswith('std'):
+            db[k]['dtype'] = float
+        elif 'fo' in k or 'ro' in k or 'disp' in k:
+            db[k]['dtype'] = float
+        else:
+            db[k]['dtype'] = float
+        # elif 'disp' in k or 'ro' in k :
+        # elif 'disp' in k or 'ro' in k :
+        #     print(k)
+    par_db = pd.DataFrame.from_dict(db, orient='index')
+    return par_db
+
+
+def set_collect_from(par_db):
+    from lib.model.agents._agent import LarvaworldAgent
+    db = par_db.to_dict('index')
+    for k in db.keys():
+        if db[k]['par'] in step_database:
+            db[k]['collect_from'] = LarvaworldAgent
+        else:
+            db[k]['collect_from'] = None
+            # db[k]['collect_from'] = 'Unknown'
+            # print(k)
+    par_db = pd.DataFrame.from_dict(db, orient='index')
+    return par_db
 
 
 def load_ParDb():
-    df = pd.read_csv(ParDb_path, index_col=0)
+    import lib.gui.gui_lib as gui
+    df = pd.read_csv(paths.ParDb_path, index_col=0)
+    df['lim'] = [gui.retrieve_value(v, Tuple[float, float]) for v in df['lim'].values]
+    df['dtype'] = [gui.retrieve_value(v, Type) for v in df['dtype'].values]
     return df
 
 
-par_db = load_ParDb()
+def set_ParShelve(par_db):
+    # ATTENTION : This must NOT be the laded par_db but the one just created. Othrwise everything is float!
+    temp = copy.deepcopy(par_db)
+    with shelve.open(paths.ParShelve_path) as db0:
+        for k, v in temp.to_dict('index').items():
+            #     if 'LarvaworldAgent' in v['collect_from'] :
+            #         v['collect_from']=LarvaworldAgent
+            #     elif 'Larvaworld' in v['collect_from'] :
+            #         v['collect_from']=LarvaWorld
+            db0[k] = v
+    db0.close()
 
-# print(par_db.loc['c_odor1'])
+
+def get_par_dict(short=None, par=None, retrieve_from='shelve'):
+    if retrieve_from == 'shelve':
+        db = shelve.open(paths.ParShelve_path)
+    elif retrieve_from == 'par_db':
+        db = load_ParDb().to_dict('index')
+    if short is not None:
+        if short not in list(db.keys()):
+            raise ValueError(f'Parameter shortcut {short} does not exist in parameter database')
+        dic = db[short]
+    elif par is not None:
+        for k in db.keys():
+            if db[k]['par'] == par:
+                dic = db[k]
+    else:
+        raise ValueError('Either the shortcut or the parameter name must be provided.')
+    if retrieve_from == 'shelve':
+        db.close()
+    return dic
+
+
+def par_dict_lists(shorts=None, pars=None, retrieve_from='shelve',
+                   to_return=['par', 'symbol', 'unit', 'lim']):
+    if shorts is not None:
+        par_dicts = [get_par_dict(short=short, retrieve_from=retrieve_from) for short in shorts]
+    elif pars is not None:
+        par_dicts = [get_par_dict(par=par, retrieve_from=retrieve_from) for par in pars]
+    else:
+        raise ValueError('Either the shortcuts or the parameter names must be provided.')
+    r = []
+    for p in to_return:
+        r.append([d[p] for d in par_dicts])
+    return r
+
+
+def par_in_db(short=None, par=None):
+    res = False
+    db = shelve.open(paths.ParShelve_path)
+    if short is not None:
+        if short in list(db.keys()):
+            res = True
+    elif par is not None:
+        for k in db.keys():
+            if db[k]['par'] == par:
+                res = True
+    db.close()
+    return res
+
+
+def get_runtime_pars():
+    return fun.unique_list([p for p in list(step_database.keys()) if par_in_db(par=p)])
+
+
 # print(par_db.loc['dc_odor1'])
 # print(random_ar2)
 # print('c_odor1' in par_db.index.to_list())
 # print(par_db['par'].loc[par_db['collect'].isin([None])])
 # print(par_db['par'].loc[par_db['collect'].isin([None])].index.tolist())
+
+
+if __name__ == '__main__':
+    # Use this to update the database
+    par_db = set_ParDb()
+    set_ParShelve(par_db)
+    # print(type(get_par('c_odor1')['dtype']))
+    # print(type(par_db['dtype'].loc['c_odor1']))

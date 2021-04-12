@@ -1,5 +1,7 @@
 from typing import List, Tuple
 
+from lib.aux import par_conf
+
 odor_pars = {'odor_id': str,
              'odor_intensity': float,
              'odor_spread': float}
@@ -46,7 +48,8 @@ arena_pars_dict = {'arena_xdim': float,
                    'arena_shape': ['circular', 'rectangular']}
 
 opt_pars_dict = {
-    'fit_par': str,
+    'fit_par': par_conf.get_runtime_pars(),
+    # 'fit_par': str,
     'minimize': bool,
     'threshold': float,
     'max_Nsims': int,
@@ -109,7 +112,7 @@ def distro_pars(class_name):
             # 'pars': base_food_pars,
         }
     elif class_name == 'Larva':
-        from lib.stor.datagroup import loadConfDict
+        from lib.conf.conf import loadConfDict
         return {
             'model': list(loadConfDict('Model').keys()),
             **common_distro_pars,

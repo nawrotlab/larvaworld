@@ -974,3 +974,8 @@ def mutate_value(v, range, scale=0.1) :
     r0,r1=range
     return float(np.round(np.clip(np.random.normal(loc=v, scale=scale * np.abs(r1 - r0)), a_min=r0, a_max=r1), 2))
 
+
+def odor(id=None, intensity=0.0, spread=0.0002):
+    return {'odor_id': id,
+            'odor_intensity': intensity,
+            'odor_spread': spread}

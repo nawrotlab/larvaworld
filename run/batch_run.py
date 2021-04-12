@@ -5,7 +5,7 @@ import numpy as np
 
 
 sys.path.insert(0, '..')
-from lib.conf.batch_modes import batch_types
+from lib.conf.batch_conf import batch_types
 from lib.sim.single_run import generate_config, next_idx
 import lib.aux.functions as fun
 import lib.aux.argparsers as prs

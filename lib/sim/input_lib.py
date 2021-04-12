@@ -1,7 +1,7 @@
 import pygame
 import numpy as np
 import lib.gui.gui_lib as gui
-from lib.model import Larva, LarvaSim, Border
+from lib.model import Larva, LarvaSim
 
 shortcuts = {
     # 'trajectory_dt' : ['MINUS', 'PLUS'],
@@ -59,7 +59,7 @@ def evaluate_input(model, screen):
                 if len(model.selected_agents) > 0:
                     sel = model.selected_agents[0]
                     if isinstance(sel, Larva):
-                        model.dynamic_graphs.append(gui.DynamicGraph(agent=sel, available_pars=model.available_pars))
+                        model.dynamic_graphs.append(gui.DynamicGraph(agent=sel))
             elif event.key == pygame.K_w:
                 if len(model.selected_agents) > 0:
                     sel = model.selected_agents[0]

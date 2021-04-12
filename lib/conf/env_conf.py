@@ -5,7 +5,7 @@ import numpy as np
 # -------------------------------------------SPACE MODES----------------------------------------------------------
 # ---------------------------------------------------------------------------------------------------------------------
 import lib.aux.functions as fun
-from lib.conf import odor
+from lib.aux.functions import odor
 
 
 def food_grid(dim, amount=0.00001):
@@ -101,7 +101,7 @@ def arena(x, y):
 
 
 def maze(nx=15, ny=15, ix=0, iy=0, h=0.1, return_points=False):
-    from lib.model.envs._maze import Maze
+    from lib.envs._maze import Maze
     m = Maze(nx, ny, ix, iy, height=h)
     m.make_maze()
     lines = m.maze_lines()
@@ -250,6 +250,10 @@ focus_env = {'arena_params': dish(0.02),
              'food_params': food_param_conf(),
              'larva_params': larva_distro(1, 'normal', scale=0.3, orientation=np.pi / 2, model='explorer'),
              'odorscape': None}
+
+
+
+
 
 uniform_food_env = {'arena_params': arena(0.05, 0.05),
                     'food_params': food_param_conf(

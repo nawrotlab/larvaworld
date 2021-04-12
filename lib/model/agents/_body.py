@@ -236,6 +236,7 @@ class DefaultSegment:
 
         self.lin_vel = 0.0
         self.ang_vel = 0.0
+        self.ang_acc = 0.0
         self._color = color
         # print(self._color)
         # centroid = np.zeros(2)

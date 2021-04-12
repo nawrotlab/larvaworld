@@ -1,5 +1,5 @@
-from lib.conf.larva_modes import *
-from lib.conf.env_modes import *
+from lib.conf.larva_conf import *
+from lib.conf.env_conf import *
 
 dish = {
         'env_params': 'dish',
@@ -59,8 +59,8 @@ odor_pref = {
 chemorbit = {
              'env_params': 'chemotaxis local',
              # 'env_params': chemorbit_env,
-             'collections': ['dst2center'],
-             # 'collections': ['olfactor', 'pose', 'dst2center'],
+             # 'collections': ['dst2center'],
+             'collections': ['olfactor', 'pose', 'dst2center'],
              }
 
 chemorbit_diffusion = {

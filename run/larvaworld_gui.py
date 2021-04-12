@@ -8,12 +8,12 @@ from tkinter import *
 
 
 sys.path.insert(0, '..')
-from lib.gui.analysis_tab import build_analysis_tab, eval_analysis
+
 from lib.gui.batch_tab import build_batch_tab, eval_batch
 from lib.gui.gui_lib import SYMBOL_DOWN, SYMBOL_UP, on_image, off_image
 from lib.gui.model_tab import build_model_tab, eval_model
 from lib.gui.simulation_tab import build_sim_tab, eval_sim
-
+from lib.gui.analysis_tab import build_analysis_tab, eval_analysis
 matplotlib.use('TkAgg')
 sg.theme('LightGreen')
 

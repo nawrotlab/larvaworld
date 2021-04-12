@@ -2,10 +2,11 @@ import copy
 
 import PySimpleGUI as sg
 
-from lib.conf import test_larva, odor_gain_pars, module_keys
+from lib.aux.dtype_dicts import odor_gain_pars
+from lib.conf import test_larva,  module_keys
 from lib.gui.gui_lib import CollapsibleDict, button_kwargs, Collapsible, text_kwargs, header_kwargs, set_agent_dict, \
-    buttonM_kwargs
-from lib.stor.datagroup import loadConfDict, loadConf, deleteConf, saveConf
+    buttonM_kwargs, save_gui_conf, delete_gui_conf
+from lib.conf.conf import loadConfDict, loadConf, deleteConf, saveConf
 
 
 def init_model(larva_model, collapsibles={}):
@@ -112,20 +113,11 @@ def eval_model(event, values, window, collapsibles, odor_gains):
             odor_gains = update_model(conf, window, collapsibles, odor_gains)
 
     elif event == 'SAVE_MODEL':
-        l = [[sg.Text('Store new model', size=(20, 1)), sg.In(k='MODEL_ID', size=(10, 1))],
-             [sg.Ok(), sg.Cancel()]]
-        e, v = sg.Window('Model configuration', l).read(close=True)
-        if e == 'Ok':
-            model = get_model(window, values, module_keys, collapsibles, odor_gains)
-            model_id = v['MODEL_ID']
-            saveConf(model, 'Model', model_id)
-            window['MODEL_CONF'].update(values=list(loadConfDict('Model').keys()))
+        model = get_model(window, values, module_keys, collapsibles, odor_gains)
+        save_gui_conf(window, model, 'Model')
 
     elif event == 'DELETE_MODEL':
-        if values['MODEL_CONF'] != '':
-            deleteConf(values['MODEL_CONF'], 'Model')
-            window['MODEL_CONF'].update(values=list(loadConfDict('Model').keys()))
-            window['MODEL_CONF'].update(value='')
+        delete_gui_conf(window, values, 'Model')
 
     elif event == 'ODOR GAINS':
         odor_gains = set_agent_dict(odor_gains, odor_gain_pars, title='Odor gains')

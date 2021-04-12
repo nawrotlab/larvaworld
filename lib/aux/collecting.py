@@ -3,7 +3,7 @@ import numpy as np
 from operator import attrgetter
 
 from mesa.datacollection import DataCollector
-from scipy.spatial.distance import euclidean
+# from scipy.spatial.distance import euclidean
 
 import lib.aux.functions as fun
 
@@ -54,6 +54,8 @@ lin_pars = {
 ang_pars = {
     "front_orientation_vel": 'front_orientation_vel',
     "bend": 'bend',
+    "body_bend_vel": 'body_bend_vel',
+    "body_bend_acc": 'body_bend_acc',
     # "torque": lambda a : a.torque,
     "torque": 'torque',
     "body_bend_errors": 'body_bend_errors',
@@ -293,7 +295,10 @@ output = {
              'endpoint': ['length', 'cum_dur', 'final_x']},
     'nengo': {'step': ['crawler_activity', 'turner_activity', 'feeder_motion'],
               'endpoint': []},
-    'dst2center': {'step': ['dst_to_center', 'scaled_dst_to_center'],
+    'dst2center': {'step': [
+        'dispersion', 'scaled_dispersion',
+        'dst_to_center', 'scaled_dst_to_center',
+                            ],
                    'endpoint': ['final_dst_to_center', 'final_scaled_dst_to_center',
                                 'max_dst_to_center', 'max_scaled_dst_to_center']},
     'chemotax_dst': {'step': ['dst_to_chemotax_odor', 'scaled_dst_to_chemotax_odor'],
@@ -302,4 +307,26 @@ output = {
     'contour': None
 }
 
+
+
+
+
+
 output_keys = list(output.keys())
+#
+# print(len(list(step_database.keys())))
+# print(len(list(endpoint_database.keys())))
+# print([a for a in list(endpoint_database.keys()) if a not in list(step_database.keys())])
+#
+# s=[]
+# e=[]
+# for k, v in output.items() :
+#     if v is not None :
+#         s+=v['step']
+#         e+=v['endpoint']
+
+# s=fun.unique_list(s)
+# e=fun.unique_list(e)
+#
+# print(len(s))
+# print(len(e))

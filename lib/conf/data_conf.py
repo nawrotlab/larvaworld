@@ -1,6 +1,6 @@
 import numpy as np
 from lib.aux import naming as nam
-import lib.conf.env_modes as env
+import lib.conf.env_conf as env
 
 PaisiosParConf = {'bend': 'from_vectors',
                   'front_vector_start': 2,

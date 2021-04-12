@@ -1,7 +1,6 @@
-import numpy as np
 import pandas as pd
 
-from lib.stor.datagroup import *
+from lib.conf.conf import *
 from lib.aux.functions import match_larva_ids
 from lib.aux import functions as fun
 from lib.aux import naming as nam

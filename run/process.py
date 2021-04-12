@@ -4,7 +4,7 @@ import argparse
 sys.path.insert(0, '..')
 from lib.stor.managing import build_datasets, analyse_datasets, visualize_datasets, enrich_datasets
 import lib.aux.argparsers as prs
-from lib.stor.datagroup import *
+from lib.conf.conf import *
 
 parser = argparse.ArgumentParser(description="Initialize processing")
 parser = prs.add_data_kwargs(parser)

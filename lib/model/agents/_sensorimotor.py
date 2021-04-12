@@ -33,7 +33,13 @@ class BodySim(BodyManager):
         self.lin_activity = 0
         self.ang_activity = 0
         self.ang_vel = 0
+        # self.ang_vel_0 = 0
         self.body_bend = 0
+        self.body_bend_0 = 0
+        self.body_bend_vel = 0
+        self.body_bend_vel_0 = 0
+        self.body_bend_acc = 0
+        self.body_bend_acc_0 = 0
         self.body_bend_errors = 0
         self.Nangles_b = int(self.Nangles + 1 / 2)
         self.spineangles = [0.0]*self.Nangles
@@ -390,9 +396,13 @@ class BodySim(BodyManager):
     def compute_body_bend(self):
         curr = sum(self.spineangles[:self.Nangles_b])
         if self.model.count_bend_errors:
-            prev = self.body_bend
-            if np.abs(prev) > 2 and np.abs(curr) > 2 and prev * curr < 0:
+            self.body_bend_0 = self.body_bend
+            if np.abs(self.body_bend_0) > 2 and np.abs(curr) > 2 and self.body_bend_0 * curr < 0:
                 self.body_bend_errors += 1
                 # curr=np.sign(curr)*np.pi
                 # print('Illegal bend over rear axis')
         self.body_bend = curr
+        self.body_bend_vel_0=self.body_bend_vel
+        self.body_bend_acc_0=self.body_bend_acc
+        self.body_bend_vel= (self.body_bend - self.body_bend_0) / self.model.dt
+        self.body_bend_acc= (self.body_bend_vel - self.body_bend_vel_0) / self.model.dt

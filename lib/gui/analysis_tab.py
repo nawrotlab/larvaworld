@@ -1,12 +1,16 @@
+import os
+
 import PySimpleGUI as sg
 import matplotlib
 import inspect
 from tkinter import *
 
-from lib.anal.plotting import *
+
 from lib.gui.gui_lib import header_kwargs, button_kwargs, delete_figure_agg, draw_canvas, set_kwargs
-from lib.stor.larva_dataset import LarvaDataset
 from lib.stor.paths import SingleRunFolder, get_parent_dir, RefFolder
+from lib.anal.plotting import graph_dict
+from lib.stor.larva_dataset import LarvaDataset
+
 
 
 def save_plot(fig, save_to, save_as):
@@ -97,25 +101,7 @@ def build_analysis_tab():
 
     dim = 2000
     figure_w, figure_h = dim, dim
-    graph_dict = {
-        'crawl_pars': plot_crawl_pars,
-        'angular_pars': plot_ang_pars,
-        'endpoint_params': plot_endpoint_params,
-        'stride_Dbend': plot_stride_Dbend,
-        'stride_Dorient': plot_stride_Dorient,
-        'interference': plot_interference,
-        'dispersion': plot_dispersion,
-        'stridesNpauses': plot_stridesNpauses,
-        'turn_duration': plot_turn_duration,
-        'turns': plot_turns,
-        'odor_concentration': plot_odor_concentration,
-        'sensed_odor_concentration': plot_sensed_odor_concentration,
-        'pathlength': plot_pathlength,
-        'food_amount': plot_food_amount,
-        'gut': plot_gut,
-        'barplot': barplot,
-        'deb': plot_debs,
-    }
+
     graph_list = [
         [sg.Text('GRAPHS', **header_kwargs)],
         [sg.Listbox(values=list(graph_dict), change_submits=True, size=(20, len(list(graph_dict))), key='GRAPH_LIST')],

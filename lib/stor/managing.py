@@ -1,14 +1,13 @@
-import sys
 import warnings
 from itertools import product
 import pandas as pd
 
-import numpy as np
 from distutils.dir_util import copy_tree
 
 from lib.anal.plotting import comparative_analysis, plot_marked_strides, plot_marked_turns
 from lib.stor.building import build_Jovanic, build_Schleyer
-from lib.stor.datagroup import *
+from lib.conf.conf import *
+from lib.stor.datagroup import LarvaDataGroup
 from lib.stor.larva_dataset import LarvaDataset
 
 

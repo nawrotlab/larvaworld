@@ -1,19 +1,18 @@
 import copy
 from ast import literal_eval
-from typing import List, Tuple
+from typing import List, Tuple, Type
 
 import numpy as np
 import PySimpleGUI as sg
-from random import randint
 import operator
 
-from matplotlib import ticker, pyplot
-from matplotlib.figure import Figure
+from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
-from lib.conf.sim_modes import agent_pars
-from lib.conf.par_db import par_db
+from lib.aux import par_conf
+from lib.conf.conf import loadConfDict, saveConf, deleteConf
+from lib.aux.dtype_dicts import agent_pars
 import lib.aux.functions as fun
 
 on_image = b'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'
@@ -35,7 +34,11 @@ header_kwargs = {'font': ('size', 8),
                  'size': (14, 1)}
 text_kwargs = {'font': ('size', 8),
                'size': (14, 1)}
+text0_kwargs = {'font': ('size', 8),
+                'size': (24, 1)}
 
+
+# sg.theme('LightGreen')
 
 def retrieve_value(v, t):
     if v in ['', 'None', None]:
@@ -61,6 +64,15 @@ def retrieve_value(v, t):
         v = v.replace("'", '')
         v = v.replace(",", ' ')
         vv = tuple([float(x) for x in v.split()])
+    elif t == Type and type(v) == str:
+        if 'str' in v:
+            vv = str
+        elif 'float' in v:
+            vv = float
+        elif 'bool' in v:
+            vv = bool
+        elif 'int' in v:
+            vv = int
 
     elif t == tuple or t == list:
         try:
@@ -341,10 +353,9 @@ def bool_button(name, state, disabled=False):
     return b
 
 
-
-def named_list_layout(text, key, choices):
+def named_list_layout(text, key, choices, readonly=True, enable_events=True):
     l = [sg.Text(text, **header_kwargs),
-         sg.Combo(choices, key=key, enable_events=True, readonly=True, **text_kwargs)]
+         sg.Combo(choices, key=key, enable_events=enable_events, readonly=readonly, **text_kwargs)]
     return l
 
 
@@ -391,8 +402,6 @@ class Collapsible:
                 prefix = None
             update_window_from_dict(window, dict, prefix=prefix)
         return window
-
-
 
 
 class CollapsibleDict(Collapsible):
@@ -501,19 +510,22 @@ def set_agent_kwargs(agent):
 
 
 def object_menu(selected):
-    object_list = ['Larva', 'Food', 'Border']
+    object_list = ['', 'Larva', 'Food', 'Border']
     title = 'Select object type'
     layout = [
         [sg.Text(title, **header_kwargs)],
         [sg.Listbox(default_values=[selected], values=object_list, change_submits=False, size=(20, len(object_list)),
                     key='SELECTED_OBJECT',
                     enable_events=True)],
-        [sg.Ok()]]
+        [sg.Ok(), sg.Cancel()]]
     window = sg.Window(title, layout)
     while True:
         event, values = window.read()
-        sel = values['SELECTED_OBJECT'][0]
         if event == 'Ok':
+            sel = values['SELECTED_OBJECT'][0]
+            break
+        elif event in (None, 'Cancel'):
+            sel = selected
             break
     window.close()
     return sel
@@ -619,22 +631,26 @@ def delete_figure_agg(figure_agg):
 
 
 class DynamicGraph:
-    def __init__(self, agent, par_shorts=[], available_pars=[]):
-
+    def __init__(self, agent, pars=[], available_pars=None):
+        # sg.change_look_and_feel('DarkBlue15')
+        sg.theme('DarkBlue15')
         self.agent = agent
+        if available_pars is None:
+            available_pars = par_conf.get_runtime_pars()
         self.available_pars = available_pars
-        self.par_shorts = par_shorts
+        self.pars = pars
         self.dt = self.agent.model.dt
         self.init_dur = 20
-        self.window_size = (1550, 1200)
-        self.canvas_size = (self.window_size[0] - 50, self.window_size[1] - 50)
+        self.window_size = (1550, 1000)
+        self.canvas_size = (self.window_size[0] - 50, self.window_size[1] - 200)
         self.my_dpi = 96
         self.figsize = (int(self.canvas_size[0] / self.my_dpi), int(self.canvas_size[1] / self.my_dpi))
 
         Ncols = 4
         par_lists = [list(a) for a in np.array_split(self.available_pars, Ncols)]
         par_layout = [[sg.Text('Choose parameters')],
-                      [sg.Col([*[[sg.CB(p, key=f'k_{p}')] for p in par_lists[i]]]) for i in range(Ncols)],
+                      [sg.Col([*[[sg.CB(p, key=f'k_{p}', **text0_kwargs)] for p in par_lists[i]]]) for i in
+                       range(Ncols)],
                       [sg.Button('Ok', **button_kwargs), sg.Button('Cancel', **button_kwargs)]
                       ]
 
@@ -668,13 +684,9 @@ class DynamicGraph:
         elif event == 'Ok':
             self.window[f'-COL1-'].update(visible=False)
             self.window[f'-COL2-'].update(visible=True)
-            pars = [p for p in self.available_pars if values[f'k_{p}']]
-            self.par_shorts = par_db.loc[par_db['par'].isin(pars)].index.tolist()
+            self.pars = [p for p in self.available_pars if values[f'k_{p}']]
             self.update_pars()
             self.layout = 2
-
-
-
         elif event == 'Cancel':
             self.window[f'-COL1-'].update(visible=False)
             self.window[f'-COL2-'].update(visible=True)
@@ -709,10 +721,9 @@ class DynamicGraph:
         return ys
 
     def update_pars(self):
-        self.pars, self.sim_symbols, self.exp_symbols, self.units, self.ylims, self.par_collects = [
-            par_db[['par', 'symbol', 'exp_symbol', 'unit', 'lim', 'collect']].loc[self.par_shorts].values[:, k].tolist()
-            for k in range(6)]
-        self.ylims = [retrieve_value(lim, Tuple[float, float]) for lim in self.ylims]
+        to_return = ['par', 'symbol', 'exp_symbol', 'unit', 'lim', 'collect']
+        self.pars, self.sim_symbols, self.exp_symbols, self.units, self.ylims, self.par_collects = par_conf.par_dict_lists(
+            pars=self.pars, to_return=to_return)
         self.Npars = len(self.pars)
         self.yranges = {}
 
@@ -744,3 +755,41 @@ class DynamicGraph:
         if self.fig_agg:
             delete_figure_agg(self.fig_agg)
         self.fig_agg = draw_canvas(self.canvas, self.fig)
+
+
+def fullNcap(conf_type):
+    if conf_type == 'Env':
+        full = 'environment'
+        cap = 'ENV'
+    elif conf_type == 'Batch':
+        full = 'batch'
+        cap = 'BATCH'
+    elif conf_type == 'Model':
+        full = 'model'
+        cap = 'MODEL'
+    elif conf_type == 'Exp':
+        full = 'experiment'
+        cap = 'EXP'
+    return full, cap
+
+
+def save_gui_conf(window, conf, conf_type):
+    full, cap = fullNcap(conf_type)
+    l = [
+        named_list_layout(f'Store new {full}', f'{cap}_ID', list(loadConfDict(conf_type).keys()),
+                          readonly=False, enable_events=False),
+        [sg.Ok(), sg.Cancel()]]
+    e, v = sg.Window(f'{full} configuration', l).read(close=True)
+    if e == 'Ok':
+        conf_id = v[f'{cap}_ID']
+        saveConf(conf, conf_type, conf_id)
+        window[f'{cap}_CONF'].update(values=list(loadConfDict(conf_type).keys()))
+        window[f'{cap}_CONF'].update(value=conf_id)
+
+
+def delete_gui_conf(window, values, conf_type):
+    full, cap = fullNcap(conf_type)
+    if values[f'{cap}_CONF'] != '':
+        deleteConf(values[f'{cap}_CONF'], conf_type)
+        window[f'{cap}_CONF'].update(values=list(loadConfDict(conf_type).keys()))
+        window[f'{cap}_CONF'].update(value='')

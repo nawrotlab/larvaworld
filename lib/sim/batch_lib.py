@@ -49,33 +49,6 @@ Examples of this default batch run are given in  :
 '''
 
 
-# def batch_default(experiment, batch_config, Nagents, sim_time, params, values=None, par_space_steps=3):
-#     batch_id = f'{experiment}_batchrun'
-#     batch_idx = 0
-#
-#     sim_config = generate_config(experiment=experiment, Nagents=Nagents, sim_time=sim_time, config=None)
-#
-#     # Collect only the endpoint parameter required for fitting
-#     sim_config['sim_params']['collect_effectors'] = ['']
-#     sim_config['sim_params']['collected_step_parameters'] = ['']
-#     sim_config['sim_params']['collected_endpoint_parameters'] = [batch_config['fit_par']]
-#
-#     if values is None:
-#         space = grid_search_dict(params, batch_config['ranges'], Ngrid=par_space_steps)
-#     else:
-#         values_dict = dict(zip(params, values))
-#         space = cartesian_product(values_dict)
-#
-#     batch_run(batch_id=batch_id,
-#               batch_idx=batch_idx,
-#               space=space,
-#               save_data_in_hdf5=False,
-#               process_method=default_processing,
-#               post_process_method=post_processing,
-#               final_process_method=null_final_processing,
-#               sim_config=sim_config,
-#               config=batch_config
-#               )
 def prepare_batch(batch, batch_id, sim_config):
     space = grid_search_dict(**batch['space_search'])
     batch['optimization']['ranges'] = np.array(batch['space_search']['ranges'])
