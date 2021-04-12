@@ -2,7 +2,7 @@ import copy
 
 import PySimpleGUI as sg
 
-from lib.aux.collecting import effector_collection
+from lib.aux.collecting import output_keys
 from lib.conf import exp_types, test_env, agent_pars, distro_pars, arena_pars_dict, life_pars_dict
 from lib.gui.gui_lib import CollapsibleDict, named_list_layout, button_kwargs, Collapsible, text_kwargs, \
     named_bool_button, header_kwargs, set_agent_dict, build_table_window, buttonM_kwargs
@@ -104,7 +104,7 @@ def build_sim_tab(collapsibles):
         named_list_layout(text='Experiment:', key='EXP', choices=list(exp_types.keys())),
         [sg.Button('Load', key='LOAD_EXP', **button_kwargs), sg.Button('Run', **button_kwargs)]
     ])]
-    output_keys = list(effector_collection.keys())
+
     output_dict = dict(zip(output_keys, [False] * len(output_keys)))
     collapsibles['OUTPUT'] = CollapsibleDict('OUTPUT', False, dict=output_dict)
 
@@ -142,13 +142,13 @@ def build_sim_tab(collapsibles):
 
     l_sim = [[sg.Col(l_conf), sg.Col(l_env)]]
 
-    return l_sim, sim_datasets, collapsibles, output_keys, source_units, border_list, larva_groups, source_groups
+    return l_sim, sim_datasets, collapsibles, source_units, border_list, larva_groups, source_groups
 
 
-def eval_sim(event, values, window, sim_datasets, collapsibles, output_keys,
+def eval_sim(event, values, window, sim_datasets, collapsibles,
              source_units, border_list, larva_groups, source_groups):
     if event == 'LOAD_EXP' and values['EXP'] != '':
-        source_units, border_list, larva_groups, source_groups = update_sim(window, values, collapsibles, output_keys)
+        source_units, border_list, larva_groups, source_groups = update_sim(window, values, collapsibles)
 
 
     elif event == 'LOAD_ENV' and values['ENV_CONF'] != '':
@@ -196,7 +196,7 @@ def eval_sim(event, values, window, sim_datasets, collapsibles, output_keys,
 
 
     elif event == 'Run' and values['EXP'] != '':
-        sim_config = get_sim(window, values, collapsibles, output_keys, source_units, border_list, larva_groups,
+        sim_config = get_sim(window, values, collapsibles, source_units, border_list, larva_groups,
                              source_groups)
         vis_kwargs = {'mode': 'video'}
         d = run_sim(**sim_config, **vis_kwargs)
@@ -205,7 +205,7 @@ def eval_sim(event, values, window, sim_datasets, collapsibles, output_keys,
     return source_units, border_list, larva_groups, source_groups
 
 
-def update_sim(window, values, collapsibles, output_keys):
+def update_sim(window, values, collapsibles):
     exp = values['EXP']
     exp_conf = copy.deepcopy(exp_types[exp])
     env = exp_conf['env_params']
@@ -232,7 +232,7 @@ def get_sim_conf(window, values):
     return sim
 
 
-def get_sim(window, values, collapsibles, output_keys, source_units, border_list, larva_groups, source_groups):
+def get_sim(window, values, collapsibles, source_units, border_list, larva_groups, source_groups):
     exp = values['EXP']
 
     sim = get_sim_conf(window, values)

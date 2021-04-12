@@ -175,6 +175,8 @@ growth_locomotion = {'turner': True,
                      'feeder': True,
                      'memory': False}
 
+module_keys = list(full_brain.keys())
+
 # --------------------------------------------TURNER MODES--------------------------------------------------------------
 intermitter_rover = {'pause_dist': 'fit',
                      'stridechain_dist': 'fit',

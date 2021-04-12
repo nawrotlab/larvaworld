@@ -393,6 +393,8 @@ class Collapsible:
         return window
 
 
+
+
 class CollapsibleDict(Collapsible):
     def __init__(self, name, state, dict, dict_name=None, type_dict=None, **kwargs):
         if dict_name is None:

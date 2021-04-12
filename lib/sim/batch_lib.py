@@ -78,161 +78,90 @@ Examples of this default batch run are given in  :
 #               )
 def prepare_batch(batch, batch_id, sim_config):
     space = grid_search_dict(**batch['space_search'])
-    batch['optimization']['ranges']=np.array(batch['space_search']['ranges'])
+    batch['optimization']['ranges'] = np.array(batch['space_search']['ranges'])
     prepared_batch = {
         'space': space,
         'dir': batch['exp'],
         'batch_id': batch_id,
         'sim_config': sim_config,
-        # 'pars': batch['space_search']['pars'],
-        # 'ranges': np.array(batch['space_search']['ranges']),
         'process_method': default_processing,
         'post_process_method': post_processing,
         'final_process_method': null_final_processing,
-        # 'space_method': grid_search_dict,
         'optimization': batch['optimization'],
         'post_kwargs': {},
         'run_kwargs': {}
     }
     return prepared_batch
 
-def get_best_individuals(traj, ranges=np.nan, fit_par='global_fit', num_individuals=20, minimize=True,
-                         mutate=True, recombine=True):
-    traj.f_load(index=None, load_parameters=2, load_results=2)
-    runs_idx, runs, par_names, par_full_names, par_values, res_names, global_fits = get_results(traj,
-                                                                                                res_names=[fit_par])
-    global_fits = np.array(global_fits)
-    idx = np.argpartition(global_fits, num_individuals)[0]
-    inds = []
-    if minimize:
-        selected_idx = idx[:num_individuals]
-    else:
-        selected_idx = idx[-num_individuals:]
-    # print(par_values)
-    for i in selected_idx:
-        ps = []
-        for a in par_values:
-            p0 = np.array(a)[i]
-            p = np.round(p0, 2)
-            ps.append(p)
-        inds.append(ps)
-    # print(selected_idx)
-    # print(inds)
-    pars = np.array(inds).T
-    # print(pars)
-    if mutate:
-        mutation_ratio = 0.1
-        exp_space = []
-        if np.isnan(ranges).any():
-            ranges = np.array([[np.min(p), np.max(p)] for p in pars])
-        spaces = [np.abs(r[1] - r[0]) for r in ranges]
-        # print(ranges)
 
-        # print(pars)
-        # print(spaces)
-        # print(ranges)
-        # print([len(pp) for pp in [pars, spaces, ranges]])
-        for p, s, r in zip(pars, spaces, ranges):
-            noisy_p = []
-            for i in p:
-                # if type(i) is np.ndarray :
-                #     t = np.random.normal(loc=i[0], scale=mutation_ratio * s)
-                #     t = np.array(float(np.round(np.clip(t, a_min=r[0], a_max=r[1]), 2)))
-                # else :
-                t = np.random.normal(loc=i, scale=mutation_ratio * s)
-                t = float(np.round(np.clip(t, a_min=r[0], a_max=r[1]), 2))
-                # print(i,t)
-                noisy_p.append(t)
-            # noisy_p = [float(np.round(np.clip(np.random.normal(loc=i, scale=mutation_ratio * s), a_min=r[0], a_max=r[1]),2)) for i in p]
-            # print(noisy_p)
+def get_Nbest(traj, fit_par, ranges, Nbest=20, minimize=True, mutate=True, recombine=True):
+    traj.f_load(index=None, load_parameters=2, load_results=2)
+    p_n0s = [traj.f_get(p).v_full_name for p in traj.f_get_explored_parameters()]
+    p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
+    fits = np.array([traj.f_get(run).f_get(fit_par).f_get() for run in traj.f_get_run_names(sort=True)])
+    idx0 = np.argpartition(fits, Nbest)
+    idx = idx0[:Nbest] if minimize else idx0[-Nbest:]
+    V0s = np.array([[np.round(np.array(v)[i], 2) for v in p_vs] for i in idx]).T
+    if mutate:
+        space = []
+        for v0s, r in zip(V0s, ranges):
+            vs = [fun.mutate_value(v0, r, scale=0.1) for v0 in v0s]
             if recombine:
-                random.shuffle(noisy_p)
-            # print(noisy_p)
-            exp_space.append(noisy_p)
+                random.shuffle(vs)
+            space.append(vs)
     else:
-        exp_space = list(pars)
-    best_pop = dict(zip(par_full_names, exp_space))
-    # print(best_pop)
+        space = list(V0s)
+    best_pop = dict(zip(p_n0s, space))
     return best_pop
 
 
 def get_results(traj, res_names=None):
-    par_values = []
-    par_names = []
-    par_full_names = []
-    for i, p in enumerate(traj.f_get_explored_parameters()):
-        par_values.append(traj.f_get(p).f_get_range())
-        par_names.append(traj.f_get(p).v_name)
-        par_full_names.append(traj.f_get(p).v_full_name)
+    p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
+    p_ns = [traj.f_get(p).v_name for p in traj.f_get_explored_parameters()]
+    p_n0s = [traj.f_get(p).v_full_name for p in traj.f_get_explored_parameters()]
     runs = traj.f_get_run_names(sort=True)
     runs_idx = [int(i) for i in traj.f_iter_runs(yields='idx')]
     if res_names is None:
         res_names = np.unique([traj.f_get(r).v_name for r in traj.f_get_results()])
 
-    res_values = []
-    for res in res_names:
-        try:
-            res_values.append([traj.f_get(run).f_get(res).f_get() for run in runs])
-        except:
-            res_names = [r for r in res_names if r != res]
-    par_names = [str(p) for p in par_names]
-    res_names = [str(p) for p in res_names]
-    return runs_idx, runs, par_names, par_full_names, par_values, res_names, res_values
+    r_vs = [[traj.f_get(run).f_get(r_n).f_get() for run in runs] for r_n in res_names]
+    # r_vs = []
+    # for res in res_names:
+    #     try:
+    #         r_vs.append([traj.f_get(run).f_get(res).f_get() for run in runs])
+    #     except:
+    #         res_names = [r for r in res_names if r != res]
+    return runs_idx, p_ns, p_n0s, p_vs, res_names, r_vs
 
 
-def save_results_df(traj, save_to=None, save_as='results.csv'):
-    if save_to is None:
-        save_to = traj.config.dir_path
-    runs_idx, runs, par_names, par_full_names, par_values, res_names, res_values = get_results(traj, res_names=None)
-    # print(runs_idx, runs, par_names, par_full_names, par_values, res_names, res_values)
-    data = np.array(par_values + res_values).T
-    cols = par_names + res_names
-    df = pd.DataFrame(data, index=runs_idx, columns=cols)
+def save_results_df(traj):
+    runs_idx, p_ns, p_n0s, p_vs, r_ns, r_vs = get_results(traj, res_names=None)
+    df = pd.DataFrame(np.array(p_vs + r_vs).T, index=runs_idx, columns=p_ns + r_ns)
     df.index.name = 'run_idx'
-    file_path = os.path.join(save_to, save_as)
     try:
         fit_par, minimize = traj.config.fit_par, traj.config.minimize
         df.sort_values(by=fit_par, ascending=minimize, inplace=True)
     except:
         pass
-    df.to_csv(file_path, index=True, header=True)
+    df.to_csv(os.path.join(traj.config.dir_path, 'results.csv'), index=True, header=True)
     return df
 
 
-def save_results_dict(traj, save_to=None, save_as='results_dict.csv'):
-    if save_to is None:
-        save_to = traj.config.dir_path
-    file_path = os.path.join(save_to, save_as)
-    runs_idx, runs, par_names, par_full_names, par_values, res_names, res_values = get_results(traj, res_names=None)
-    all = {}
-    for idx, pvs, rvs in zip(runs_idx, par_values, res_values):
-        all[idx] = {}
-        for p, pv in zip(par_names, pvs):
-            all[idx][p] = pv
-        for r, rv in zip(res_names, rvs):
-            all[idx][r] = list(rv)
-    with open(file_path, "w") as fp:
-        json.dump(all, fp)
-
-
-def load_default_configuration(traj, sim_params=None, env_params=None, life_params=None, collections=[]):
-    if sim_params is not None:
-        env_dict = fun.flatten_dict(sim_params, parent_key='sim_params', sep='.')
-        for k, v in env_dict.items():
+def load_default_configuration(traj, sim_config):
+    env, sim, life, collections = sim_config['env_params'], sim_config[
+        'sim_params'], sim_config['life_params'], sim_config['collections']
+    if sim is not None:
+        sim_dict = fun.flatten_dict(sim, parent_key='sim_params', sep='.')
+        for k, v in sim_dict.items():
             traj.f_aconf(k, v)
 
-    if env_params is not None:
-        env_dict = fun.flatten_dict(env_params, parent_key='env_params', sep='.')
+    if env is not None:
+        env_dict = fun.flatten_dict(env, parent_key='env_params', sep='.')
         for k, v in env_dict.items():
-            # print(k,v)
             traj.f_apar(k, v)
-    # if larva_pars is not None:
-    #     fly_dict = fun.flatten_dict(larva_pars, parent_key='larva_pars', sep='.')
-    #     for k, v in fly_dict.items():
-    #         traj.f_apar(k, v)
 
-    if life_params is not None:
-        life_dict = fun.flatten_dict(life_params, parent_key='life_params', sep='.')
+    if life is not None:
+        life_dict = fun.flatten_dict(life, parent_key='life_params', sep='.')
         for k, v in life_dict.items():
             traj.f_apar(k, v)
 
@@ -241,23 +170,13 @@ def load_default_configuration(traj, sim_params=None, env_params=None, life_para
 
 
 def default_processing(traj, dataset=None):
-    # print(dataset.endpoint_data)
-    # raise
-    fit_par = traj.config.fit_par
+    p = traj.config.fit_par
     try:
-        fit = dataset.endpoint_data[fit_par].mean()
+        fit = dataset.endpoint_data[p].mean()
     except:
-        fit = np.mean(dataset.step_data[fit_par].groupby('AgentID').mean())
-    traj.f_add_result(fit_par, fit, comment='The fit')
+        fit = np.mean(dataset.step_data[p].groupby('AgentID').mean())
+    traj.f_add_result(p, fit, comment='The fit')
     return dataset, fit
-
-
-# def end_collection_processing(traj, dataset=None):
-#     end_pars = traj.config.end_pars
-#     for p in end_pars:
-#         vs = dataset.endpoint_data[p].values
-#         traj.f_add_result(p, vs, comment=f'Endpoint par {p}')
-#     return dataset, None
 
 
 def null_processing(traj, dataset=None):
@@ -285,29 +204,24 @@ def null_post_processing(traj, result_tuple):
 
 def plot_results(traj, df):
     filepath = traj.config.dir_path
-    runs_idx, runs, par_names, par_full_names, par_values, res_names, res_values = get_results(traj, res_names=None)
+    p_ns = [traj.f_get(p).v_name for p in traj.f_get_explored_parameters()]
+    r_ns = np.unique([traj.f_get(r).v_name for r in traj.f_get_results()])
     kwargs = {'df': df,
-              # 'labels': par_names + res_names,
               'save_to': filepath,
-              # 'pref': None,
               'show': False}
-    if len(res_names) == 1:
-        if len(par_names) == 1:
-            plot_2d(labels= par_names + res_names, pref=None, **kwargs)
-        elif len(par_names) == 2:
-            plot_3pars(labels= par_names + res_names,pref=None,**kwargs)
-        elif len(par_names) >2 :
-            for i,pair in enumerate(itertools.combinations(par_names, 2)) :
-                plot_3pars(labels=list(pair) + res_names,pref=i, **kwargs)
-
-
+    for r_n in r_ns:
+        if len(p_ns) == 1:
+            plot_2d(labels=p_ns + [r_n], pref=r_n, **kwargs)
+        elif len(p_ns) == 2:
+            plot_3pars(labels=p_ns + [r_n], pref=r_n, **kwargs)
+        elif len(p_ns) > 2:
+            for i, pair in enumerate(itertools.combinations(p_ns, 2)):
+                plot_3pars(labels=list(pair) + [r_n], pref=f'{i}_{r_n}', **kwargs)
 
 
 def null_final_processing(traj):
     df = save_results_df(traj)
     plot_results(traj, df)
-    # d = save_results_dict(traj)
-    # print(df)
     return df
 
 
@@ -329,29 +243,25 @@ def end_scatter_generation(traj):
 def deb_analysis(traj):
     data_dir = traj.config.dataset_path
     parent_dir = traj.config.dir_path
-    df = save_results_df(traj)
-    runs_idx, runs, par_names, par_full_names, par_values, res_names, res_values = get_results(traj, res_names=None)
-    if len(par_names) == 2:
-        # z0s=[1.0,0.5,1.0]
-        for i in range(len(res_names)):
-            r = res_names[i]
-            labels = par_names + [r]
-            plot_3pars(df, labels, save_to=traj.config.dir_path, pref=r)
-            # plot_3pars(df, labels, z0=z0s[i], save_to = traj.config.dir_path, pref=r)
+    df = null_final_processing(traj)
 
+    p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
+    p_ns = [traj.f_get(p).v_name for p in traj.f_get_explored_parameters()]
+    # r_ns = np.unique([traj.f_get(r).v_name for r in traj.f_get_results()])
+
+    # if len(p_ns) == 2:
+    #     for i in range(len(r_ns)):
+    #         r = r_ns[i]
+    #         labels = p_ns + [r]
+    #         plot_3pars(df, labels, save_to=traj.config.dir_path, pref=r)
     dirs = [f'{data_dir}/{dir}' for dir in os.listdir(data_dir)]
     dirs.sort()
     ds = [LarvaDataset(dir) for dir in dirs]
     if len(ds) == 1:
         new_ids = [None]
     else:
-        if len(par_names) == 1:
-            new_ids = [f'{par_names[0]} : {v}' for v in par_values[0]]
-        else:
-            new_ids = [d.id for d in ds]
+        new_ids = [f'{p_ns[0]} : {v}' for v in p_vs[0]] if len(p_ns) == 1 else [d.id for d in ds]
         plot_endpoint_params(ds, new_ids, mode='deb', save_to=parent_dir)
-    # print(new_ids,[d.id for d in ds])
-    # raise
     deb_dicts = fun.flatten_list(
         [[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
     plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as='deb_f.pdf', mode='f')
@@ -362,39 +272,31 @@ def deb_analysis(traj):
 
 
 def post_processing(traj, result_tuple):
-    fit_par, minimize, threshold, max_Nsims, Nbest, ranges = traj.config.fit_par, traj.config.minimize, traj.config.threshold, traj.config.max_Nsims, traj.config.Nbest, traj.config.ranges
+    fit_par, minimize, thr, max_Nsims, Nbest, ranges = traj.config.fit_par, traj.config.minimize, traj.config.threshold, traj.config.max_Nsims, traj.config.Nbest, traj.config.ranges
     traj.f_load(index=None, load_parameters=2, load_results=2)
-    run_names = traj.f_get_run_names()
-    Nruns = len(run_names)
-    fits = []
-    for run_name in run_names:
-        fit = traj.res.runs.f_get(run_name).f_get(fit_par).f_get()
-        fits.append(fit)
+    runs = traj.f_get_run_names()
+    Nruns = len(runs)
+    fits = [traj.res.runs.f_get(run).f_get(fit_par).f_get() for run in runs]
     if minimize:
         best = min(fits)
         best_idx = np.argmin(fits)
-        thr_reached = best <= threshold
+        thr_reached = best <= thr
     else:
         best = max(fits)
         best_idx = np.argmax(fits)
-        thr_reached = best >= threshold
-    best_run_name = run_names[best_idx]
-    print(f'Best result out of {Nruns} runs : {best} in run {best_run_name}')
+        thr_reached = best >= thr
+    best_run = runs[best_idx]
+    print(f'Best result out of {Nruns} runs : {best} in run {best_run}')
     maxNreached = Nruns >= max_Nsims
     if not thr_reached and not maxNreached:
-        space = get_best_individuals(traj, ranges=ranges, fit_par=fit_par,
-                                     num_individuals=Nbest,
-                                     minimize=minimize, mutate=True)
+        space = get_Nbest(traj, ranges=ranges, fit_par=fit_par, Nbest=Nbest, minimize=minimize, mutate=True)
         traj.f_expand(space)
         print(f'Continuing expansion with another {Nbest} configurations')
     else:
-        par_values = []
-        par_names = []
-        for i, p in enumerate(traj.f_get_explored_parameters()):
-            par_values.append(traj.f_get(p).f_get_range())
-            par_names.append(traj.f_get(p).v_name)
+        p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
+        p_ns = [traj.f_get(p).v_name for p in traj.f_get_explored_parameters()]
         best_config = {}
-        for l, p in zip(par_values, par_names):
+        for l, p in zip(p_vs, p_ns):
             best_config.update({p: l[best_idx]})
         if maxNreached:
             print(f'Maximum number of simulations reached. Halting search')
@@ -405,7 +307,7 @@ def post_processing(traj, result_tuple):
         traj.f_remove_items(['best_run_name'])
     except:
         pass
-    traj.f_add_result('best_run_name', best_run_name, comment=f'The run with the best result')
+    traj.f_add_result('best_run_name', best_run, comment=f'The run with the best result')
     traj.f_store()
 
 
@@ -471,25 +373,20 @@ def _batch_run(dir='unnamed',
     traj_name = f'{batch_id}_traj'
     parent_dir_path = f'{paths.BatchRunFolder}/{dir}'
     dir_path = os.path.join(parent_dir_path, batch_id)
-
     filename = f'{dir_path}/{batch_id}.hdf5'
     build_new = True
     if os.path.exists(parent_dir_path) and os.path.exists(dir_path) and overwrite == False:
         build_new = False
         try:
-            # print('Trying to resume existing trajectory')
             env = Environment(continuable=True)
             env.resume(trajectory_name=traj_name, resume_folder=dir_path)
             print('Resumed existing trajectory')
             build_new = False
         except:
             try:
-                # print('Trying to load existing trajectory')
                 traj = load_trajectory(filename=filename, name=traj_name, load_all=0)
                 env = Environment(trajectory=traj, multiproc=True, ncores=4)
-
                 traj = config_traj(traj, optimization)
-
                 traj.f_load(index=None, load_parameters=2, load_results=0)
                 traj.f_expand(space)
                 print('Loaded existing trajectory')
@@ -506,7 +403,6 @@ def _batch_run(dir='unnamed',
             multiproc = False
             resumable = True
             wrap_mode = pypetconstants.WRAP_MODE_LOCK
-        # print('Trying to create novel environment')
         env = Environment(trajectory=traj_name,
                           filename=filename,
                           file_title=batch_id,
@@ -533,8 +429,7 @@ def _batch_run(dir='unnamed',
     env.disable_logging()
     print('Batch run complete')
     if final_process_method is not None:
-        results= final_process_method(env.traj)
-        # print(results)
+        results = final_process_method(env.traj)
         return results
 
 
@@ -548,11 +443,7 @@ def config_traj(traj, optimization):
 
 
 def prepare_traj(traj, sim_config, params, batch_id, parent_dir_path, dir_path):
-    env_params, sim_params, life_params, collections = sim_config['env_params'], sim_config[
-        'sim_params'], sim_config['life_params'], sim_config['collections']
-
-    traj = load_default_configuration(traj, sim_params=sim_params, env_params=env_params,
-                                      life_params=life_params, collections=collections)
+    traj = load_default_configuration(traj, sim_config)
     if params is not None:
         for p in params:
             traj.f_apar(p, 0.0)
@@ -623,47 +514,22 @@ def get_space_from_file(space_filepath=None, params=None, space_pd=None, returne
     return space
 
 
-if __name__ == '__main__':
-    # This will execute the main function in case the script is called from the one true
-    # main process and not from a child processes spawned by your environment.
-    # Necessary for multiprocessing under Windows.
-    batch_id = 'template'
-    batch_idx = 0
-    space = cartesian_product({'larva_pars.sensorimotor_params.torque_coef': [0.08, 0.09],
-                               'larva_pars.sensorimotor_params.ang_damping': [0.6, 0.3]})
-    batch_run(batch_id=batch_id, batch_idx=batch_idx, space=space)
-
-
 def PI_computation(traj, dataset):
-    arena_xdim_in_mm = traj.parameters.env_params.arena_params.arena_xdim * 1000
-    ind = dataset.compute_preference_index(arena_diameter_in_mm=arena_xdim_in_mm)
+    ind = dataset.compute_preference_index()
     traj.f_add_result('PI', ind, comment=f'The preference index')
     return dataset, ind
 
 
 def heat_map_generation(traj):
-    path = traj.config.dir_path
-    csv_filepath = f'{path}/PIs.csv'
-    runs_idx, runs, par_names, par_full_names, par_values, res_names, res_values = get_results(traj, res_names=['PI'])
-    inds = res_values[0]
-    Lgains = np.array(par_values[0]).astype(int)
-    Rgains = np.array(par_values[1]).astype(int)
-    left_gain = pd.Series(np.unique(Lgains), name="left_gain")
-    right_gain = pd.Series(np.unique(Rgains), name="right_gain")
-    df = pd.DataFrame(index=left_gain, columns=right_gain, dtype=float)
-    for Lgain, Rgain, ind in zip(Lgains, Rgains, inds):
-        df[Rgain].loc[Lgain] = ind
+    csv_filepath = f'{traj.config.dir_path}/PIs.csv'
+    p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
+    PIs = [traj.f_get(run).f_get('PI').f_get() for run in traj.f_get_run_names(sort=True)]
+    Lgains = np.array(p_vs[0]).astype(int)
+    Rgains = np.array(p_vs[1]).astype(int)
+    Lgain_range = pd.Series(np.unique(Lgains), name="left_gain")
+    Rgain_range = pd.Series(np.unique(Rgains), name="right_gain")
+    df = pd.DataFrame(index=Lgain_range, columns=Rgain_range, dtype=float)
+    for Lgain, Rgain, PI in zip(Lgains, Rgains, PIs):
+        df[Rgain].loc[Lgain] = PI
     df.to_csv(csv_filepath, index=True, header=True)
     plot_heatmap_PI(save_to=traj.config.dir_path, csv_filepath=csv_filepath)
-
-#
-# def generate_gain_space(pars, ranges, Ngrid, values=None):
-#     if len(pars) != 1 or len(Ngrid) != 1 or len(ranges) != 1:
-#         raise ValueError('There must be a single parameter, range and space step')
-#     r, s = ranges[0], Ngrid[0]
-#     if values is None:
-#         values = np.linspace(r[0], r[1], s)
-#     values = [fun.flatten_list([[[a, b] for a in values] for b in values])]
-#     values_dict = dict(zip(pars, values))
-#     space = cartesian_product(values_dict)
-#     return space

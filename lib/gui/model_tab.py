@@ -2,7 +2,7 @@ import copy
 
 import PySimpleGUI as sg
 
-from lib.conf import test_larva, odor_gain_pars
+from lib.conf import test_larva, odor_gain_pars, module_keys
 from lib.gui.gui_lib import CollapsibleDict, button_kwargs, Collapsible, text_kwargs, header_kwargs, set_agent_dict, \
     buttonM_kwargs
 from lib.stor.datagroup import loadConfDict, loadConf, deleteConf, saveConf
@@ -62,7 +62,7 @@ def update_model(larva_model, window, collapsibles, odor_gains):
     return odor_gains
 
 
-def get_model(window, values, module_keys, collapsibles, odor_gains):
+def get_model(window, values, collapsibles, odor_gains):
     module_dict = dict(zip(module_keys, [window[f'TOGGLE_{k.upper()}'].metadata.state for k in module_keys]))
     model = {}
     model['neural_params'] = {}
@@ -89,7 +89,6 @@ def build_model_tab(collapsibles):
     larva_model = copy.deepcopy(test_larva)
     odor_gains = larva_model['neural_params']['olfactor_params']['odor_dict']
     module_dict = larva_model['neural_params']['modules']
-    module_keys = list(module_dict.keys())
 
     l_mod0 = [sg.Col([
         [sg.Text('Larva model:', **header_kwargs),
@@ -103,10 +102,10 @@ def build_model_tab(collapsibles):
     l_mod1 = init_model(larva_model, collapsibles)
 
     l_mod = [[sg.Col([l_mod0, l_mod1])]]
-    return l_mod, collapsibles, module_keys, odor_gains
+    return l_mod, collapsibles,odor_gains
 
 
-def eval_model(event, values, window, collapsibles, module_keys, odor_gains):
+def eval_model(event, values, window, collapsibles, odor_gains):
     if event == 'LOAD_MODEL':
         if values['MODEL_CONF'] != '':
             conf = loadConf(values['MODEL_CONF'], 'Model')

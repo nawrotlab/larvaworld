@@ -9,7 +9,7 @@ import lib.aux.functions as fun
 import lib.conf.data_modes as dat
 import lib.stor.paths as paths
 from lib.anal.plotting import *
-from lib.aux.collecting import effector_collection, midline_xy_pars
+from lib.aux.collecting import output, midline_xy_pars
 from lib.conf import exp_types
 from lib.model.envs._larvaworld import LarvaWorldSim
 from lib.model.agents.deb import deb_dict, deb_default
@@ -260,8 +260,8 @@ def collection_conf(dataset, collections):
         elif c == 'contour':
             step_pars += fun.flatten_list(d.contour_xy)
         else:
-            step_pars += effector_collection[c]['step']
-            end_pars += effector_collection[c]['endpoint']
+            step_pars += output[c]['step']
+            end_pars += output[c]['endpoint']
 
     collected_pars = {'step': fun.unique_list(step_pars),
                       'endpoint': fun.unique_list(end_pars)}

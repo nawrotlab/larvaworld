@@ -970,3 +970,7 @@ def LvsRtoggle(side) :
     else :
         raise ValueError(f'Argument {side} is neither Left nor Right')
 
+def mutate_value(v, range, scale=0.1) :
+    r0,r1=range
+    return float(np.round(np.clip(np.random.normal(loc=v, scale=scale * np.abs(r1 - r0)), a_min=r0, a_max=r1), 2))
+

@@ -958,8 +958,12 @@ class LarvaWorldSim(LarvaWorld):
             positions, orientations = self._generate_larva_poses(N, mode, loc, scale, orientation)
             all_pars = self._generate_larva_pars(N, larva_model, parameter_dict=parameter_dict)
             ids = [f'{group_id}_{i}' for i in range(N)]
+
             for i, (p, o, id, pars) in enumerate(zip(positions, orientations, ids, all_pars)):
                 self.add_larva(position=p, orientation=o, id=id, pars=pars, group=group_id, default_color=col)
+                # print(pars['neural_params']['olfactor_params'])
+                # print(i, pars['neural_params']['olfactor_params']['odor_dict']['CS']['mean'])
+            # raise
             # self._place_larvae(positions, orientations, ids, all_pars, group=group_id)
 
     def step(self):

@@ -259,7 +259,7 @@ def contour_xy_pars(N=22):
 #     # 'str1': lambda a: a.crawler.total_t / a.sim_time,
 # }
 
-effector_collection = {
+output = {
     'intermitter': {
         'step': ['pause_id', 'pause_start', 'pause_stop', 'pause_dur'] + ['stridechain_id', 'stridechain_start',
                                                                           'stridechain_stop', 'stridechain_dur'],
@@ -300,5 +300,6 @@ effector_collection = {
                      'endpoint': ['final_dst_to_chemotax_odor', 'final_scaled_dst_to_chemotax_odor']},
     'midline': None,
     'contour': None
-
 }
+
+output_keys = list(output.keys())
