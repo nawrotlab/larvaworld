@@ -21,9 +21,20 @@ sg.theme('LightGreen')
 def run_gui():
     collapsibles={}
     l_anal, graph_dict, data, func, func_kwargs, fig, save_to, save_as, figure_agg = build_analysis_tab()
-    l_sim, sim_datasets, collapsibles, source_units, border_list, larva_groups, source_groups = build_sim_tab(collapsibles)
     l_mod, collapsibles, odor_gains = build_model_tab(collapsibles)
-    l_batch, collapsibles, space_search = build_batch_tab(collapsibles)
+    l_sim, sim_datasets, collapsibles, source_units, border_list, larva_groups, source_groups = build_sim_tab(collapsibles)
+    l_batch, collapsibles, space_search, batch_results = build_batch_tab(collapsibles)
+
+    dicts = {
+        'odor_gains' : odor_gains,
+        'source_units' : source_units,
+        'source_groups' : source_groups,
+        'larva_groups' : larva_groups,
+        'border_list' : border_list,
+        'sim_datasets' : sim_datasets,
+        'space_search' : space_search,
+        'batch_results' : batch_results,
+             }
 
     l_gui = [
         [sg.TabGroup([[
@@ -42,16 +53,14 @@ def run_gui():
             break
         if e.startswith('OPEN SEC'):
             sec = e.split()[-1]
-            s=collapsibles[sec].state
-            if s is not None:
-                s = not s
-                w[e].update(SYMBOL_DOWN if s else SYMBOL_UP)
-                w[f'SEC {sec}'].update(visible=s)
+            if collapsibles[sec].state is not None:
+                collapsibles[sec].state = not collapsibles[sec].state
+                w[e].update(SYMBOL_DOWN if collapsibles[sec].state else SYMBOL_UP)
+                w[f'SEC {sec}'].update(visible=collapsibles[sec].state)
         elif 'TOGGLE' in e:
-            s=w[e].metadata.state
-            if s is not None:
-                s = not s
-                w[e].update(image_data=on_image if s else off_image)
+            if w[e].metadata.state is not None:
+                w[e].metadata.state = not w[e].metadata.state
+                w[e].update(image_data=on_image if w[e].metadata.state else off_image)
 
         tab = v['ACTIVE_TAB']
         if tab == 'ANALYSIS_TAB':
@@ -60,13 +69,11 @@ def run_gui():
                                                                                           figure_agg, fig, save_to,
                                                                                           save_as, graph_dict)
         elif tab == 'MODEL_TAB':
-            odor_gains = eval_model(e, v, w, collapsibles, odor_gains)
+            dicts['odor_gains'] = eval_model(e, v, w, collapsibles, dicts['odor_gains'])
         elif tab == 'BATCH_TAB':
-            space_search = eval_batch(e, v, w, collapsibles, space_search)
+            dicts = eval_batch(e, v, w, collapsibles, dicts)
         elif tab == 'SIMULATION_TAB':
-            source_units, border_list, larva_groups, source_groups = eval_sim(e, v, w, sim_datasets, collapsibles,
-                                                                              source_units, border_list, larva_groups,
-                                                                              source_groups)
+            dicts = eval_sim(e, v, w, collapsibles, dicts)
     w.close()
     return
 

@@ -146,10 +146,16 @@ def build_sim_tab(collapsibles):
     return l_sim, sim_datasets, collapsibles, source_units, border_list, larva_groups, source_groups
 
 
-def eval_sim(event, values, window, sim_datasets, collapsibles,
-             source_units, border_list, larva_groups, source_groups):
+def eval_sim(event, values, window, collapsibles, dicts):
+    source_units = dicts['source_units']
+    border_list = dicts['border_list']
+    larva_groups = dicts['larva_groups']
+    source_groups = dicts['source_groups']
+
+
     if event == 'LOAD_EXP' and values['EXP'] != '':
-        source_units, border_list, larva_groups, source_groups = update_sim(window, values, collapsibles)
+        exp_id = values['EXP']
+        source_units, border_list, larva_groups, source_groups = update_sim(window, exp_id, collapsibles)
 
 
     elif event == 'LOAD_ENV' and values['ENV_CONF'] != '':
@@ -199,13 +205,19 @@ def eval_sim(event, values, window, sim_datasets, collapsibles,
         vis_kwargs = {'mode': 'video'}
         d = run_sim(**sim_config, **vis_kwargs)
         if d is not None:
-            sim_datasets.append(d)
-    return source_units, border_list, larva_groups, source_groups
+            dicts['sim_datasets'].append(d)
+
+    dicts['source_units'] = source_units
+    dicts['border_list'] = border_list
+    dicts['larva_groups'] = larva_groups
+    dicts['source_groups'] = source_groups
+
+    return dicts
 
 
-def update_sim(window, values, collapsibles):
-    exp = values['EXP']
-    exp_conf = copy.deepcopy(exp_types[exp])
+def update_sim(window, exp_id, collapsibles):
+    # exp = values['EXP']
+    exp_conf = copy.deepcopy(exp_types[exp_id])
     env = exp_conf['env_params']
     if type(env) == str:
         window.Element('ENV_CONF').Update(value=env)
@@ -215,8 +227,8 @@ def update_sim(window, values, collapsibles):
     output_dict = dict(zip(output_keys, [True if k in exp_conf['collections'] else False for k in output_keys]))
     collapsibles['OUTPUT'].update(window, output_dict)
 
-    window.Element('sim_id').Update(value=f'{exp}_{next_idx(exp)}')
-    window.Element('path').Update(value=f'single_runs/{exp}')
+    window.Element('sim_id').Update(value=f'{exp_id}_{next_idx(exp_id)}')
+    window.Element('path').Update(value=f'single_runs/{exp_id}')
     return source_units, border_list, larva_groups, source_groups
 
 

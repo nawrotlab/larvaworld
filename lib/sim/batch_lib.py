@@ -109,7 +109,8 @@ def get_results(traj, res_names=None):
 
 def save_results_df(traj):
     runs_idx, p_ns, p_n0s, p_vs, r_ns, r_vs = get_results(traj, res_names=None)
-    df = pd.DataFrame(np.array(p_vs + r_vs).T, index=runs_idx, columns=p_ns + r_ns)
+    cols=list(p_ns)+list(r_ns)
+    df = pd.DataFrame(np.array(p_vs + r_vs).T, index=runs_idx, columns=cols)
     df.index.name = 'run_idx'
     try:
         fit_par, minimize = traj.config.fit_par, traj.config.minimize
@@ -176,6 +177,7 @@ def null_post_processing(traj, result_tuple):
 
 
 def plot_results(traj, df):
+    plots=[]
     filepath = traj.config.dir_path
     p_ns = [traj.f_get(p).v_name for p in traj.f_get_explored_parameters()]
     r_ns = np.unique([traj.f_get(r).v_name for r in traj.f_get_results()])
@@ -184,18 +186,22 @@ def plot_results(traj, df):
               'show': False}
     for r_n in r_ns:
         if len(p_ns) == 1:
-            plot_2d(labels=p_ns + [r_n], pref=r_n, **kwargs)
+            fig=plot_2d(labels=p_ns + [r_n], pref=r_n, **kwargs)
+            plots.append(fig)
         elif len(p_ns) == 2:
-            plot_3pars(labels=p_ns + [r_n], pref=r_n, **kwargs)
+            figs=plot_3pars(labels=p_ns + [r_n], pref=r_n, **kwargs)
+            plots+=figs
         elif len(p_ns) > 2:
             for i, pair in enumerate(itertools.combinations(p_ns, 2)):
-                plot_3pars(labels=list(pair) + [r_n], pref=f'{i}_{r_n}', **kwargs)
+                figs=plot_3pars(labels=list(pair) + [r_n], pref=f'{i}_{r_n}', **kwargs)
+                plots += figs
+    return plots
 
 
 def null_final_processing(traj):
     df = save_results_df(traj)
-    plot_results(traj, df)
-    return df
+    plots = plot_results(traj, df)
+    return df, plots
 
 
 def end_scatter_generation(traj):
@@ -216,7 +222,7 @@ def end_scatter_generation(traj):
 def deb_analysis(traj):
     data_dir = traj.config.dataset_path
     parent_dir = traj.config.dir_path
-    df = null_final_processing(traj)
+    df, plots = null_final_processing(traj)
 
     p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
     p_ns = [traj.f_get(p).v_name for p in traj.f_get_explored_parameters()]
@@ -276,11 +282,11 @@ def post_processing(traj, result_tuple):
         else:
             print(f'Best result reached threshold. Halting search')
         print(f'Best configuration is {best_config} with result {best}')
-    try:
-        traj.f_remove_items(['best_run_name'])
-    except:
-        pass
-    traj.f_add_result('best_run_name', best_run, comment=f'The run with the best result')
+    # try:
+    #     traj.f_remove_items(['best_run_name'])
+    # except:
+    #     pass
+    # traj.f_add_result('best_run_name', best_run, comment=f'The run with the best result')
     traj.f_store()
 
 

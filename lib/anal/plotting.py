@@ -1388,7 +1388,7 @@ def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=Non
         fig.savefig(filepath, dpi=300)
         print(f'Surface saved as {save_as}')
     plt.close('all')
-    return ax
+    return fig
 
 
 def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=None, show=False):
@@ -1429,17 +1429,22 @@ def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=N
 
 
 def plot_3pars(df, labels, save_to, z0=None, pref=None, show=False):
-    plot_3d(df, labels, save_to, pref=pref, save_as=None, show=show)
+    figs=[]
+    fig1=plot_3d(df, labels, save_to, pref=pref, save_as=None, show=show)
+    figs.append(fig1)
     try:
         x, y = np.unique(df[labels[0]].values), np.unique(df[labels[1]].values)
         X, Y = np.meshgrid(x, y)
 
         z = df[labels[2]].values.reshape(X.shape).T
 
-        plot_heatmap(x, y, z, labels, save_to=save_to, pref=pref, show=show)
-        plot_surface(X, Y, z, labels, save_to=save_to, z0=z0, pref=pref, show=show)
+        fig2=plot_heatmap(x, y, z, labels, save_to=save_to, pref=pref, show=show)
+        fig3=plot_surface(X, Y, z, labels, save_to=save_to, z0=z0, pref=pref, show=show)
+        figs.append(fig2)
+        figs.append(fig3)
     except :
         pass
+    return figs
 
 def plot_3d(df, labels, save_to, pref=None, save_as=None, show=False) :
     l0,l1,l2=labels
