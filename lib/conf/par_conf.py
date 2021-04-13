@@ -282,6 +282,7 @@ def set_ParDb():
         ['reserve_density', 'reserve_density', 'reserve_density', hat('reserve_density'), f'reserve density (-)'],
         ['puppation_buffer', 'puppation_buffer', 'puppation_buffer', hat('puppation_buffer'), f'puppation buffer (-)'],
         ['deb_f', 'deb_f', sub('f', 'deb'), sub(hat('f'), 'deb'), f'functional response (-)'],
+        ['deb_f_deviation', 'deb_f_dev', sub('f', 'deb'), sub(hat('f'), 'deb'), f'functional response deviation (-)'],
         ['deb_f_mean', 'deb_f_mu', sub(bar('f'), 'deb'), sub(hat(bar('f')), 'deb'), f'functional response (-)'],
         ['Nlarvae', 'lar_N', sub('N', 'larvae'), sub(hat('N'), 'larvae'), f'# larvae'],
     ])
@@ -404,6 +405,13 @@ def set_ParDb():
                            # 'collect' : 'turner_activation'
                            }
 
+    # par_db.loc['deb_f_deviation'] = {'par': 'turner_activation',
+    #                        'symbol': '$A_{tur}$',
+    #                        'exp_symbol': '$\hat{A}_{tur}$',
+    #                        'unit': 'Turner activation',
+    #                        # 'collect' : 'turner_activation'
+    #                        }
+
     par_db.loc['Act_tur'] = {'par': 'turner_activity',
                              'symbol': '$Act_{tur}$',
                              'exp_symbol': '$\hat{Act}_{tur}$',
@@ -485,7 +493,7 @@ def set_dtype(par_db):
 
 
 def set_collect_from(par_db):
-    from lib.model.agents._agent import LarvaworldAgent
+    from lib.model._agent import LarvaworldAgent
     db = par_db.to_dict('index')
     for k in db.keys():
         if db[k]['par'] in step_database:
@@ -546,7 +554,7 @@ def par_dict_lists(shorts=None, pars=None, retrieve_from='shelve',
     elif pars is not None:
         par_dicts = [get_par_dict(par=par, retrieve_from=retrieve_from) for par in pars]
     else:
-        raise ValueError('Either the shortcuts or the parameter names must be provided.')
+        raise ValueError('Either the shortcut_defaults or the parameter names must be provided.')
     r = []
     for p in to_return:
         r.append([d[p] for d in par_dicts])

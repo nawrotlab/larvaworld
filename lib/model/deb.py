@@ -6,7 +6,7 @@ Changes from code from netlogo :
 '''
 import json
 import numpy as np
-from lib.stor.paths import get_parent_dir, Deb_path
+from lib.stor.paths import Deb_path
 
 
 class DEB:

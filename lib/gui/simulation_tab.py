@@ -1,13 +1,13 @@
 import copy
 
 import PySimpleGUI as sg
-from lib.aux.dtype_dicts import agent_pars, distro_pars, arena_pars_dict, life_pars_dict
+from lib.conf.dtype_dicts import agent_pars, distro_pars, arena_pars_dict, life_pars_dict, odorscape_pars_dict
 from lib.aux.collecting import output_keys
-from lib.conf import exp_types, test_env
+from lib.conf import test_env
 from lib.gui.gui_lib import CollapsibleDict, named_list_layout, button_kwargs, Collapsible, text_kwargs, \
     named_bool_button, header_kwargs, set_agent_dict, buttonM_kwargs, save_gui_conf, delete_gui_conf
-from lib.sim.single_run import next_idx, run_sim, configure_sim
-from lib.conf.conf import loadConfDict, loadConf, saveConf, deleteConf
+from lib.sim.single_run import run_sim, configure_sim
+from lib.conf.conf import loadConfDict, loadConf, next_idx
 
 
 # def save_env(window, env):
@@ -34,12 +34,9 @@ def init_env(env_params, collapsibles={}):
         collapsibles['FOOD_GRID'].get_section()
     ]
 
-    odor_conf = [
-
-    ]
 
     collapsibles['SOURCES'] = Collapsible('SOURCES', True, food_conf)
-    collapsibles['ODORSCAPE'] = Collapsible('ODORSCAPE', True, odor_conf)
+    collapsibles['ODORSCAPE'] = CollapsibleDict('ODORSCAPE', True, dict=env_params['odorscape'], type_dict=odorscape_pars_dict)
 
     env_layout = [
         collapsibles['ARENA'].get_section(),
@@ -65,6 +62,7 @@ def update_env(env_params, window, collapsibles):
     collapsibles['FOOD_GRID'].update(window, food_params['food_grid'])
 
     collapsibles['ARENA'].update(window, env_params['arena_params'])
+    collapsibles['ODORSCAPE'].update(window, env_params['odorscape'])
 
     # collapsibles['LARVA_DISTRIBUTION'].update(window, env_params['larva_params'])
 
@@ -76,7 +74,12 @@ def update_env(env_params, window, collapsibles):
     return source_units, border_list, larva_groups, source_groups
 
 
-def get_env(window, values, collapsibles, source_units, border_list, larva_groups, source_groups):
+def get_env(window, values, collapsibles, dicts):
+    source_units = dicts['source_units']
+    border_list = dicts['border_list']
+    larva_groups = dicts['larva_groups']
+    source_groups = dicts['source_groups']
+
     env = {}
     env['larva_params'] = larva_groups
     env['food_params'] = {}
@@ -85,6 +88,7 @@ def get_env(window, values, collapsibles, source_units, border_list, larva_group
     env['food_params']['source_units'] = source_units
     env['border_list'] = border_list
     env['arena_params'] = collapsibles['ARENA'].get_dict(values, window)
+    env['odorscape'] = collapsibles['ODORSCAPE'].get_dict(values, window)
 
     for k, v in env['larva_params'].items():
         if type(v['model']) == str:
@@ -102,7 +106,7 @@ def build_sim_tab(collapsibles):
     border_list = {}
 
     l_exp = [sg.Col([
-        named_list_layout(text='Experiment:', key='EXP', choices=list(exp_types.keys())),
+        named_list_layout(text='Experiment:', key='EXP', choices=list(loadConfDict('Exp').keys())),
         [sg.Button('Load', key='LOAD_EXP', **button_kwargs), sg.Button('Run', **button_kwargs)]
     ])]
 
@@ -163,7 +167,7 @@ def eval_sim(event, values, window, collapsibles, dicts):
         source_units, border_list, larva_groups, source_groups = update_env(conf, window, collapsibles)
 
     elif event == 'SAVE_ENV':
-        env = get_env(window, values, collapsibles, source_units, border_list, larva_groups, source_groups)
+        env = get_env(window, values, collapsibles, dicts)
         save_gui_conf(window, env, 'Env')
 
 
@@ -185,7 +189,7 @@ def eval_sim(event, values, window, collapsibles, dicts):
 
 
     elif event == 'CONF_ENV':
-        env = get_env(window, values, collapsibles, source_units, border_list, larva_groups, source_groups)
+        env = get_env(window, values, collapsibles, dicts)
         new_source_units, new_border_list = configure_sim(env_params=env)
         l = [
             [sg.Text('Food agents and borders have been individually stored.', size=(70, 1))],
@@ -200,10 +204,10 @@ def eval_sim(event, values, window, collapsibles, dicts):
 
 
     elif event == 'Run' and values['EXP'] != '':
-        sim_config = get_sim(window, values, collapsibles, source_units, border_list, larva_groups,
-                             source_groups)
+        exp_conf = get_exp(window, values, collapsibles, dicts)
+        exp_conf['enrich']=True
         vis_kwargs = {'mode': 'video'}
-        d = run_sim(**sim_config, **vis_kwargs)
+        d = run_sim(**exp_conf, **vis_kwargs)
         if d is not None:
             dicts['sim_datasets'].append(d)
 
@@ -217,7 +221,8 @@ def eval_sim(event, values, window, collapsibles, dicts):
 
 def update_sim(window, exp_id, collapsibles):
     # exp = values['EXP']
-    exp_conf = copy.deepcopy(exp_types[exp_id])
+    # exp_conf = copy.deepcopy(exp_types[exp_id])
+    exp_conf = loadConf(exp_id, 'Exp')
     env = exp_conf['env_params']
     if type(env) == str:
         window.Element('ENV_CONF').Update(value=env)
@@ -242,24 +247,24 @@ def get_sim_conf(window, values):
     return sim
 
 
-def get_sim(window, values, collapsibles, source_units, border_list, larva_groups, source_groups):
-    exp = values['EXP']
+def get_exp(window, values, collapsibles, dicts):
+    exp_id = values['EXP']
 
     sim = get_sim_conf(window, values)
 
     temp = collapsibles['OUTPUT'].get_dict(values, window)
     collections = [k for k in output_keys if temp[k]]
 
-    env = get_env(window, values, collapsibles, source_units, border_list, larva_groups, source_groups)
+    env = get_env(window, values, collapsibles, dicts)
 
     life = collapsibles['LIFE'].get_dict(values, window)
 
-    sim_config = {
-        'enrich': True,
-        'experiment': exp,
+    exp_conf = {
+        # 'enrich': True,
+        'experiment': exp_id,
         'sim_params': sim,
         'env_params': env,
         'life_params': life,
         'collections': collections,
     }
-    return sim_config
+    return exp_conf

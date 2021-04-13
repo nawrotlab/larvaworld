@@ -23,9 +23,9 @@ from lib.aux.sampling import sample_agents, get_ref_bout_distros
 import lib.aux.functions as fun
 from lib.aux import naming as nam
 
-from lib.aux.dtype_dicts import agent_pars
+from lib.conf.dtype_dicts import agent_pars
 from lib.model import *
-from lib.model.agents._agent import LarvaworldAgent
+from lib.model._agent import LarvaworldAgent
 from lib.sim.input_lib import evaluate_input, evaluate_graphs
 
 

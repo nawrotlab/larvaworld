@@ -2,7 +2,7 @@ import json
 
 import numpy as np
 from geneticalgorithm import geneticalgorithm as ga
-from lib.model.agents.deb import DEB
+from lib.model.deb import DEB
 from lib.stor.paths import Deb_path
 import lib.aux.functions as fun
 

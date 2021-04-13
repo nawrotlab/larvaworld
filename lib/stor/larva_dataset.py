@@ -2673,6 +2673,7 @@ class LarvaDataset:
             self.load()
         s,e=self.step_data, self.endpoint_data
         e[nam.mean('deb_f')] = s['deb_f'].groupby('AgentID').mean()
+        e[nam.mean('deb_f_deviation')] = s['deb_f_deviation'].groupby('AgentID').mean()
         if is_last:
             self.save()
 

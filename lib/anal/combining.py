@@ -92,6 +92,8 @@ def render_mpl_table(data, col_width=3.0, row_height=0.625, font_size=14,
         size = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
         fig, ax = plt.subplots(figsize=size)
         ax.axis('off')
+    else :
+        fig  = None
 
     mpl_table = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns, **kwargs)
 
@@ -105,4 +107,4 @@ def render_mpl_table(data, col_width=3.0, row_height=0.625, font_size=14,
             cell.set_facecolor(header_color)
         else:
             cell.set_facecolor(row_colors[k[0] % len(row_colors)])
-    return ax
+    return ax, fig

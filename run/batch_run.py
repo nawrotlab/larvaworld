@@ -5,8 +5,9 @@ import numpy as np
 
 
 sys.path.insert(0, '..')
-from lib.conf.batch_conf import batch_types
-from lib.sim.single_run import generate_config, next_idx
+from lib.conf.batch_conf_0 import batch_types
+from lib.sim.single_run import generate_config
+from lib.conf.conf import next_idx
 import lib.aux.functions as fun
 import lib.aux.argparsers as prs
 from lib.sim.batch_lib import batch_run

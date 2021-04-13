@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from lib.aux import par_conf
+from lib.conf import par_conf
 
 odor_pars = {'odor_id': str,
              'odor_intensity': float,
@@ -47,6 +47,12 @@ arena_pars_dict = {'arena_xdim': float,
                    'arena_ydim': float,
                    'arena_shape': ['circular', 'rectangular']}
 
+odorscape_pars_dict = {'odorscape': ['Gaussian', 'Diffusion'],
+            'grid_dims': Tuple[float, float],
+            'evap_const': float,
+            'gaussian_sigma': Tuple[float, float],
+            }
+
 opt_pars_dict = {
     'fit_par': par_conf.get_runtime_pars(),
     # 'fit_par': str,
@@ -54,6 +60,12 @@ opt_pars_dict = {
     'threshold': float,
     'max_Nsims': int,
     'Nbest': int
+}
+
+batch_methods_dict = {
+    'run' : ['null', 'default', 'deb', 'odor_preference'],
+    'post' : ['null', 'default'],
+    'final' : ['null', 'scatterplots', 'deb', 'odor_preference'],
 }
 
 # space_pars_dict = {'pars': List[str],

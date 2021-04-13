@@ -7,28 +7,28 @@ dish = {
         'collections': ['pose'],
         }
 
-feed_scatter = {
-                'env_params': 'uniform food',
+uniform_food = {
+                'env_params': 'uniform_food',
                 # 'env_params': uniform_food_env,
                 'collections': ['crawler', 'feeder', 'intermitter'],
                 }
-feed_patchy = {
-               'env_params': 'patchy food',
+patchy_food = {
+               'env_params': 'patchy_food',
                # 'env_params': patchy_food_env,
                'collections': ['crawler', 'feeder', 'intermitter'],
                }
-feed_grid = {
-             'env_params': 'food grid',
+food_grid = {
+             'env_params': 'food_grid',
              # 'env_params': food_grid_env,
              'collections': ['crawler', 'feeder', 'intermitter'],
              }
 focus = {
-         'env_params': 'focused view',
+         'env_params': 'focus',
          # 'env_params': focus_env,
          'collections': ['turner', 'pose'],
          }
 imitation = {
-             'env_params': 'realistic imitation',
+             'env_params': 'realistic_imitation',
              # 'env_params': imitation_env_p,
              'collections': ['midline', 'contour', 'pose'],
              }
@@ -43,40 +43,40 @@ growth = {
           # 'collect_effectors': ['feeder'],
           'collections': ['feeder', 'deb'],
           }
-growth_2x = {
+rovers_sitters = {
 
-    'env_params': 'rovers-sitters',
+    'env_params': 'rovers_sitters',
     # 'env_params': growth_2x_env,
     'collections': ['feeder', 'deb'],
     # 'age_in_hours' : 0
     # 'starvation_hours': [[24, 48]]
 }
 odor_pref = {
-             'env_params': 'odor preference',
+             'env_params': 'odor_preference',
              # 'env_params': pref_env,
              'collections': ['olfactor'],
              }
 chemorbit = {
-             'env_params': 'chemotaxis local',
+             'env_params': 'chemotaxis_local',
              # 'env_params': chemorbit_env,
              # 'collections': ['dst2center'],
              'collections': ['olfactor', 'pose', 'dst2center'],
              }
 
 chemorbit_diffusion = {
-             'env_params': 'chemotaxis local diffusion',
+             'env_params': 'chemotaxis_diffusion',
              # 'env_params': chemorbit_env,
              'collections': ['dst2center'],
              }
 
 chemotax = {
-            'env_params': 'chemotaxis approach',
+            'env_params': 'chemotaxis_approach',
             # 'env_params': chemotax_env,
             'collections': ['olfactor', 'pose', 'chemotax_dst'],
             }
 
-RL_chemorbit = {
-             'env_params': 'RL chemotaxis local',
+chemotaxis_RL = {
+             'env_params': 'chemotaxis_RL',
              # 'env_params': chemorbit_env,
              'collections': ['dst2center'],
              }
@@ -92,13 +92,13 @@ maze = {
         # 'env_params': maze_env,
         'collections': ['olfactor', 'pose', 'dst2center'],
         }
-flag = {
-        'env_params': 'flag to base',
+capture_the_flag = {
+        'env_params': 'capture_the_flag',
         # 'env_params': flag_env,
         'collections': ['olfactor', 'pose', 'dst2center'],
         }
-king = {
-        'env_params': 'keep the flag',
+keep_the_flag = {
+        'env_params': 'keep_the_flag',
         # 'env_params': king_env,
         'collections': ['olfactor', 'pose', 'dst2center'],
         }
@@ -109,16 +109,16 @@ exp_types = {
     'chemorbit': chemorbit,
     'chemorbit_diffusion': chemorbit_diffusion,
     'chemotax': chemotax,
-    'RL_chemorbit': RL_chemorbit,
+    'chemotaxis_RL': chemotaxis_RL,
     'odor_pref': odor_pref,
-    'feed_grid': feed_grid,
-    'feed_patchy': feed_patchy,
-    'feed_scatter': feed_scatter,
+    'food_grid': food_grid,
+    'patchy_food': patchy_food,
+    'uniform_food': uniform_food,
     'growth': growth,
-    'growth_2x': growth_2x,
+    'rovers_sitters': rovers_sitters,
     'maze': maze,
     'imitation': imitation,
     'reorientation': reorientation,
-    'flag': flag,
-    'king': king,
+    'flag': capture_the_flag,
+    'king': keep_the_flag,
 }

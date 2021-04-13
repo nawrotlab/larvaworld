@@ -105,8 +105,8 @@ def build_analysis_tab():
     graph_list = [
         [sg.Text('GRAPHS', **header_kwargs)],
         [sg.Listbox(values=list(graph_dict), change_submits=True, size=(20, len(list(graph_dict))), key='GRAPH_LIST')],
-        [sg.Button('Graph args', **button_kwargs), sg.Button('Draw', **button_kwargs),
-         sg.Button('Save', **button_kwargs)]]
+        [sg.Button('Graph args', **button_kwargs, k = 'ANALYSIS_FIG_ARGS'), sg.Button('Draw', **button_kwargs, k='DRAW_ANALYSIS_FIG'),
+         sg.Button('Save', **button_kwargs, k='SAVE_ANALYSIS_FIG')]]
 
     graph_code = sg.Col([[sg.MLine(size=(70, 30), key='GRAPH_CODE')]])
     graph_canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key='GRAPH_CANVAS')]])
@@ -139,11 +139,11 @@ def eval_analysis(event, values, window, func, func_kwargs, data, figure_agg, fi
             update_data_list(window, data)
     elif event == 'Change ID':
         data = change_dataset_id(window, values, data)
-    elif event == 'Save':
+    elif event == 'SAVE_ANALYSIS_FIG':
         save_plot(fig, save_to, save_as)
-    elif event == 'Graph args':
+    elif event == 'ANALYSIS_FIG_ARGS':
         func_kwargs = set_kwargs(func_kwargs, title='Graph arguments')
-    elif event == 'Draw':
+    elif event == 'DRAW_ANALYSIS_FIG':
         figure_agg, fig, save_to, save_as = draw_figure(window, func, func_kwargs, data, figure_agg)
     func, func_kwargs = update_func(window, values, func, func_kwargs, graph_dict)
     # print(values['DATASET_DIR'], type(values['DATASET_DIR']))

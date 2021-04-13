@@ -5,7 +5,8 @@ import time
 sys.path.insert(0, '..')
 
 from lib.conf import exp_types
-from lib.sim.single_run import generate_config, run_sim, sim_analysis, next_idx
+from lib.sim.single_run import generate_config, run_sim, sim_analysis
+from lib.conf.conf import next_idx
 from lib.aux import argparsers as prs
 
 s = time.time()

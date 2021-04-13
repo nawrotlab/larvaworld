@@ -4,12 +4,15 @@ import shutil
 import os
 import numpy as np
 
-import lib.stor.paths as paths
+from lib.stor import paths as paths
 
 sys.path.insert(0, paths.get_parent_dir())
 
 import lib.conf.larva_conf as mod
 import lib.conf.data_conf as dat
+import lib.conf.batch_conf as bat
+import lib.conf.exp_conf as exp
+
 
 def get_input(message, itype, default='', accepted=None, range=None):
     while True:
@@ -303,42 +306,9 @@ def initializeDataGroup(id):
             os.makedirs(i)
 
 
-chemorbit_batch = {
-    'exp' : 'chemorbit',
-    'space_search': {
-        'pars': ['Odor.mean', 'decay_coef'],
-        'ranges': [(300.0, 1300.0), (0.1, 0.5)],
-        'Ngrid': [3, 3]
-    },
-    'optimization': {
-        'fit_par': 'scaled_dispersion',
-        'minimize': True,
-        'threshold': 0.1,
-        'max_Nsims': 16,
-        'Nbest': 4
-    },
-}
-
-feed_grid_batch = {
-    'exp' : 'feed_grid',
-    'space_search': {
-        'pars': ['EEB', 'EEB_decay_coef'],
-        'ranges': [(0.0, 1.0), (0.1, 2.0)],
-        'Ngrid': [6, 6]
-    },
-    'optimization': {
-        'fit_par': 'amount_eaten',
-        'minimize': False,
-        'threshold': 2.0,
-        'max_Nsims': 60,
-        'Nbest': 6
-    },
-}
-
-
-
 if __name__ == '__main__':
     import lib.conf.env_conf as env
+
     dat_list = [
         dat.SchleyerConf,
         dat.JovanicConf,
@@ -367,24 +337,24 @@ if __name__ == '__main__':
         saveConf(g, 'Group')
 
     env_dict = {
-        'focused view': env.focus_env,
+        'focus': env.focus_env,
         'dish': env.dish_env,
         'dispersion': env.dispersion_env,
-        'chemotaxis approach': env.chemotax_env,
-        'chemotaxis local': env.chemorbit_env,
-        'chemotaxis local diffusion': env.chemorbit_diffusion_env,
-        'odor preference': env.pref_env,
-        'patchy food': env.patchy_food_env,
-        'uniform food': env.uniform_food_env,
-        'food grid': env.food_grid_env,
+        'chemotaxis_approach': env.chemotax_env,
+        'chemotaxis_local': env.chemorbit_env,
+        'chemotaxis_diffusion': env.chemorbit_diffusion_env,
+        'odor_preference': env.pref_env,
+        'patchy_food': env.patchy_food_env,
+        'uniform_food': env.uniform_food_env,
+        'food_grid': env.food_grid_env,
         'growth': env.growth_env,
-        'rovers-sitters': env.growth_2x_env,
+        'rovers_sitters': env.growth_2x_env,
         'reorientation': env.reorientation_env,
-        'realistic imitation': env.imitation_env_p,
+        'realistic_imitation': env.imitation_env_p,
         'maze': env.maze_env,
-        'keep the flag': env.king_env,
-        'flag to base': env.flag_env,
-        'RL chemotaxis local': env.RL_chemorbit_env,
+        'keep_the_flag': env.king_env,
+        'capture_the_flag': env.flag_env,
+        'chemotaxis_RL': env.RL_chemorbit_env,
     }
     for k, v in env_dict.items():
         saveConf(v, 'Env', k)
@@ -411,15 +381,15 @@ if __name__ == '__main__':
         # 'focused view': env.focus_env,
         # 'dish': env.dish_env,
         # 'dispersion': env.dispersion_env,
-        # 'chemotaxis approach': env.chemotax_env,
-        'chemotaxis_local': chemorbit_batch,
+        'chemotaxis_approach': bat.chemotax_batch,
+        'chemotaxis_local': bat.chemorbit_batch,
         # 'chemotaxis local diffusion': env.chemorbit_diffusion_env,
-        # 'odor preference': env.pref_env,
-        # 'patchy food': env.patchy_food_env,
+        'odor_preference': bat.odor_pref_batch,
+        'patchy_food': bat.uniform_food_batch,
         # 'uniform food': env.uniform_food_env,
-        'food_grid': feed_grid_batch,
-        # 'growth': env.growth_env,
-        # 'rovers-sitters': env.growth_2x_env,
+        'food_grid': bat.food_grid_batch,
+        'growth': bat.growth_batch,
+        'rovers_sitters': bat.rovers_sitters_batch,
         # 'reorientation': env.reorientation_env,
         # 'realistic imitation': env.imitation_env_p,
         # 'maze': env.maze_env,
@@ -429,3 +399,46 @@ if __name__ == '__main__':
     }
     for k, v in batch_dict.items():
         saveConf(v, 'Batch', k)
+
+    exp_dict = {
+        'focus': exp.focus,
+        'dish': exp.dish,
+        'dispersion': exp.dispersion,
+        'chemotaxis_approach': exp.chemotax,
+        'chemotaxis_local': exp.chemorbit,
+        'chemotaxis_diffusion': exp.chemorbit_diffusion,
+        'odor_preference': exp.odor_pref,
+        'patchy_food': exp.patchy_food,
+        'uniform_food': exp.uniform_food,
+        'food_grid': exp.food_grid,
+        'growth': exp.growth,
+        'rovers_sitters': exp.rovers_sitters,
+        'reorientation': exp.reorientation,
+        'realistic_imitation': exp.imitation,
+        'maze': exp.maze,
+        'keep_the_flag': exp.keep_the_flag,
+        'capture_the_flag': exp.capture_the_flag,
+        'chemotaxis_RL': exp.chemotaxis_RL,
+    }
+    for k, v in exp_dict.items():
+        saveConf(v, 'Exp', k)
+
+
+def next_idx(exp, type='single'):
+    try:
+        with open(paths.SimIdx_path) as tfp:
+            idx_dict = json.load(tfp)
+    except:
+        exp_names = list(loadConfDict('Exp').keys())
+        batch_names = list(loadConfDict('Batch').keys())
+        exp_idx_dict = dict(zip(exp_names, [0] * len(exp_names)))
+        batch_idx_dict = dict(zip(batch_names, [0] * len(batch_names)))
+        # batch_idx_dict.update(loadConfDict('Batch'))
+        idx_dict = {'single': exp_idx_dict,
+                    'batch': batch_idx_dict}
+    if not exp in idx_dict[type].keys():
+        idx_dict[type][exp] = 0
+    idx_dict[type][exp] += 1
+    with open(paths.SimIdx_path, "w") as fp:
+        json.dump(idx_dict, fp)
+    return idx_dict[type][exp]

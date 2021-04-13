@@ -2,11 +2,11 @@ import copy
 
 import PySimpleGUI as sg
 
-from lib.aux.dtype_dicts import odor_gain_pars
+from lib.conf.dtype_dicts import odor_gain_pars
 from lib.conf import test_larva,  module_keys
 from lib.gui.gui_lib import CollapsibleDict, button_kwargs, Collapsible, text_kwargs, header_kwargs, set_agent_dict, \
     buttonM_kwargs, save_gui_conf, delete_gui_conf
-from lib.conf.conf import loadConfDict, loadConf, deleteConf, saveConf
+from lib.conf.conf import loadConfDict, loadConf
 
 
 def init_model(larva_model, collapsibles={}):

@@ -245,15 +245,15 @@ class Larva(LarvaworldAgent):
 
     @property
     def stride_dur_ratio(self):
-        return self.brain.crawler.total_t / self.sim_time
+        return self.brain.crawler.total_t / self.cum_dur
 
     @property
     def pause_dur_ratio(self):
-        return self.brain.intermitter.cum_pause_dur / self.sim_time
+        return self.brain.intermitter.cum_pause_dur / self.cum_dur
 
     @property
     def stridechain_dur_ratio(self):
-        return self.brain.intermitter.cum_stridechain_dur / self.sim_time
+        return self.brain.intermitter.cum_stridechain_dur / self.cum_dur
 
     @property
     def pause_start(self):
@@ -313,7 +313,7 @@ class Larva(LarvaworldAgent):
 
     @property
     def feed_dur_ratio(self):
-        return self.brain.feeder.total_t / self.sim_time
+        return self.brain.feeder.total_t / self.cum_dur
 
     @property
     def feed_success_rate(self):
@@ -322,6 +322,10 @@ class Larva(LarvaworldAgent):
     @property
     def deb_f(self):
         return self.deb.get_f()
+
+    @property
+    def deb_f_deviation(self):
+        return np.abs(self.deb.get_f() - 1)
 
     @property
     def reserve(self):

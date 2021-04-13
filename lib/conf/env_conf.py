@@ -139,7 +139,9 @@ CS_UCS_odors = {**odor_source(id='CS_source', pos=(-0.04, 0.0), odor_id='CS', de
 
 def gaussian_odor():
     return {'odorscape': 'Gaussian',
-            # 'odor_id_list': odor_id_list,
+            'grid_dims': None,
+            'evap_const': None,
+            'gaussian_sigma': None
             }
 
 

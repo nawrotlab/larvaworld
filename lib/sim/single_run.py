@@ -1,7 +1,6 @@
 """ Run a simulation and save the parameters and data to files."""
 import copy
 import datetime
-import json
 import time
 import pickle
 
@@ -12,7 +11,7 @@ from lib.anal.plotting import *
 from lib.aux.collecting import output, midline_xy_pars
 from lib.conf import exp_types
 from lib.envs._larvaworld import LarvaWorldSim
-from lib.model.agents.deb import deb_dict, deb_default
+from lib.model.deb import deb_dict, deb_default
 from lib.conf.conf import loadConf
 from lib.stor.larva_dataset import LarvaDataset
 
@@ -272,27 +271,6 @@ def load_reference_dataset():
     reference_dataset = LarvaDataset(dir=paths.RefFolder, load_data=False)
     reference_dataset.load(step_data=False)
     return reference_dataset
-
-
-def next_idx(exp, type='single'):
-    from lib.conf.batch_conf import batch_types
-    try:
-        with open(paths.SimIdx_path) as tfp:
-            idx_dict = json.load(tfp)
-    except:
-        exp_names = exp_types.keys()
-        batch_names = batch_types.keys()
-        exp_idx_dict = dict(zip(exp_names, [0] * len(exp_names)))
-        batch_idx_dict = dict(zip(batch_names, [0] * len(batch_names)))
-        # batch_idx_dict.update(loadConfDict('Batch'))
-        idx_dict = {'single': exp_idx_dict,
-                    'batch': batch_idx_dict}
-    if not exp in idx_dict[type].keys():
-        idx_dict[type][exp] = 0
-    idx_dict[type][exp] += 1
-    with open(paths.SimIdx_path, "w") as fp:
-        json.dump(idx_dict, fp)
-    return idx_dict[type][exp]
 
 
 def generate_config(exp, sim_params, Nagents=None, life_params={}):

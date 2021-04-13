@@ -1,6 +1,7 @@
+import copy
 import heapq
 import itertools
-
+import warnings
 import pandas as pd
 import seaborn as sns
 from matplotlib import cm, transforms, ticker, patches
@@ -14,7 +15,7 @@ from PIL import Image
 from lib.anal.fitting import *
 from lib.aux.functions import weib, flatten_list, N_colors
 from lib.anal.combining import combine_images, combine_pdfs
-from lib.aux import par_conf
+from lib.conf import par_conf
 
 from lib.stor.paths import DebFolder
 
@@ -1175,7 +1176,7 @@ def plot_pauses(dataset, Npauses=10, save_to=None, plot_simulated=False, return_
 def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSsitters=False, sim_only=False,
               start_at_sim_start=False, time_unit='hours', return_fig=False,
               datasets=None, labels=None, include_default_deb=False):
-    from lib.model.agents.deb import deb_dict, deb_default
+    from lib.model.deb import deb_dict, deb_default
     warnings.filterwarnings('ignore')
     if save_to is None:
         save_to = DebFolder
@@ -1393,15 +1394,16 @@ def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=Non
 
 def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=None, show=False):
     # fig = plt.figure(figsize=(10, 5))
-    axs = sns.heatmap(z, annot=True, fmt="g", cmap=cm.coolwarm,
-                      xticklabels=x.tolist(), yticklabels=y.tolist(),
+    fig, ax = plt.subplots(figsize=(12, 10))
+    sns.heatmap(z, annot=True, fmt="g", cmap=cm.coolwarm,
+                      xticklabels=x.tolist(), yticklabels=y.tolist(), ax=ax,
                       cbar_kws={"orientation": "vertical",
                                 'label': labels[2],
                                 # 'ticks': [1, 0, -1]
                                 })
-    axs.xaxis.set_major_locator(ticker.MaxNLocator(4))
-    axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
-    axs.xaxis.set_ticks_position('top')
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(4))
+    ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
+    ax.xaxis.set_ticks_position('top')
     # ax.yaxis.set_major_locator(ticker.MultipleLocator(5))
     # ax.yaxis.set_major_formatter(ticker.ScalarFormatter())
     # ax.set_size_cm(3.5, 3.5)
@@ -1409,10 +1411,10 @@ def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=N
     # cax.xaxis.set_major_locator(ticker.MaxNLocator(4))
 
     # ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
-    axs.set_ylabel(labels[1])
-    axs.set_xlabel(labels[0])
+    ax.set_ylabel(labels[1])
+    ax.set_xlabel(labels[0])
     if title is not None:
-        axs.set_suptitle(title, fontsize=20)
+        ax.set_suptitle(title, fontsize=20)
     if show :
         plt.show()
     if save_to is not None:
@@ -1425,13 +1427,14 @@ def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=N
         plt.savefig(filepath, dpi=300)
         print(f'Heatmap saved as {filepath}')
     plt.close('all')
-    return axs
+    return fig
 
 
 def plot_3pars(df, labels, save_to, z0=None, pref=None, show=False):
-    figs=[]
+    fig_dict={}
+    pr=f'{labels[0]}VS{labels[1]}'
     fig1=plot_3d(df, labels, save_to, pref=pref, save_as=None, show=show)
-    figs.append(fig1)
+    fig_dict[f'{pr}_3d']=fig1
     try:
         x, y = np.unique(df[labels[0]].values), np.unique(df[labels[1]].values)
         X, Y = np.meshgrid(x, y)
@@ -1440,11 +1443,11 @@ def plot_3pars(df, labels, save_to, z0=None, pref=None, show=False):
 
         fig2=plot_heatmap(x, y, z, labels, save_to=save_to, pref=pref, show=show)
         fig3=plot_surface(X, Y, z, labels, save_to=save_to, z0=z0, pref=pref, show=show)
-        figs.append(fig2)
-        figs.append(fig3)
+        fig_dict[f'{pr}_heatmap']=fig2
+        fig_dict[f'{pr}_surface']=fig3
     except :
         pass
-    return figs
+    return fig_dict
 
 def plot_3d(df, labels, save_to, pref=None, save_as=None, show=False) :
     l0,l1,l2=labels
@@ -3121,7 +3124,7 @@ def dual_half_circle(center, radius, angle=0, ax=None, colors=('w', 'k'), **kwar
 def save_plot(fig, filepath, filename=None):
     fig.savefig(filepath, dpi=300, facecolor=None)
     # print(fig.get_size_inches(), filename)
-    fig.clear()
+    # fig.clear()
     plt.close(fig)
     if filename is not None:
         print(f'Plot saved as {filename}')
@@ -3165,7 +3168,7 @@ def plot_endpoint_scatter(datasets, labels, save_to=None, par_shorts=None, retur
     for i, (p0, p1) in enumerate(pairs):
         ax = axs[i]
         pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=[p0, p1],
-                                                                        to_return=['par', 'symbol', 'exp_symbol','unit'])
+                                                                      to_return=['par', 'symbol', 'exp_symbol','unit'])
 
 
         v0_all = [d.endpoint_data[pars[0]].values for d in datasets]
@@ -3184,6 +3187,7 @@ def plot_endpoint_scatter(datasets, labels, save_to=None, par_shorts=None, retur
         ax.set_ylim(v1_r)
         ax.ticklabel_format(useMathText=True, scilimits=(0, 0))
     save_plot(fig, filepath, filename)
+    return fig
 
 
 def plot_nengo(d, save_to=None):
@@ -3239,7 +3243,7 @@ def process_plot(fig, save_to, filename, return_fig):
     else:
         filepath = os.path.join(save_to, filename)
         save_plot(fig, filepath, filename)
-        return None
+        return fig
 
 
 def barplot(datasets, labels, par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None, save_to=None,
@@ -3365,6 +3369,8 @@ def calibration_plot(save_to=None, files=None):
         ax.imshow(im, cmap=None, aspect=None)
     filepath = os.path.join(save_to, filename)
     save_plot(fig, filepath, filename)
+
+
 
 graph_dict = {
     'crawl_pars': plot_crawl_pars,

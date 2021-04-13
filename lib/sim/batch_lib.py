@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 from lib.anal.plotting import plot_heatmap_PI, plot_endpoint_scatter, plot_debs, plot_3pars, \
     plot_endpoint_params, plot_3d, plot_2d
-from lib.model.agents.deb import deb_dict
+from lib.model.deb import deb_dict
 from lib.sim.single_run import run_sim
 import lib.aux.functions as fun
 import lib.stor.paths as paths
@@ -48,22 +48,46 @@ Examples of this default batch run are given in  :
 - feed_scatter_batchrun.py for feed_scatter_experiment
 '''
 
+def batch_methods(run='default', post='default', final='null'):
+    process_method_dict = {
+        'null': null_processing,
+        'default': default_processing,
+        'deb': deb_processing,
+        'odor_preference': PI_computation,
+    }
 
-def prepare_batch(batch, batch_id, sim_config):
+    post_process_method_dict = {
+        'null': null_post_processing,
+        'default': post_processing,
+    }
+
+    final_process_method_dict = {
+        'null': null_final_processing,
+        'deb': deb_analysis,
+        'scatterplots': end_scatter_generation,
+        'odor_preference': heat_map_generation,
+    }
+
+    return {'process_method': process_method_dict[run],
+            'post_process_method': post_process_method_dict[post],
+            'final_process_method': final_process_method_dict[final], }
+
+def prepare_batch(batch, batch_id, exp_conf):
     space = grid_search_dict(**batch['space_search'])
-    batch['optimization']['ranges'] = np.array(batch['space_search']['ranges'])
+    if batch['optimization'] is not None :
+        batch['optimization']['ranges'] = np.array(batch['space_search']['ranges'])
+    exp_conf['sim_params']['path']=batch_id
     prepared_batch = {
         'space': space,
         'dir': batch['exp'],
         'batch_id': batch_id,
-        'sim_config': sim_config,
-        'process_method': default_processing,
-        'post_process_method': post_processing,
-        'final_process_method': null_final_processing,
+        'sim_config': exp_conf,
+        **batch_methods(**batch['methods']),
         'optimization': batch['optimization'],
+        'run_kwargs': batch['run_kwargs'],
         'post_kwargs': {},
-        'run_kwargs': {}
     }
+
     return prepared_batch
 
 
@@ -159,14 +183,15 @@ def null_processing(traj, dataset=None):
 
 def deb_processing(traj, dataset=None):
     dataset.deb_analysis()
-    deb_f_mean = dataset.endpoint_data['deb_f_mean'].mean()
+    e=dataset.endpoint_data
+    deb_f_mean = e['deb_f_mean'].mean()
     traj.f_add_result('deb_f_mean', deb_f_mean, comment='The average mean deb functional response')
-    deb_f_mean_deviation = np.abs(dataset.endpoint_data['deb_f_mean'].mean() - 1)
-    traj.f_add_result('deb_f_mean_deviation', deb_f_mean_deviation,
+    deb_f_deviation_mean = e['deb_f_deviation_mean'].mean()
+    traj.f_add_result('deb_f_deviation_mean', deb_f_deviation_mean,
                       comment='The deviation of average mean deb functional response from 1')
-    hunger = dataset.endpoint_data['hunger'].mean()
+    hunger = e['hunger'].mean()
     traj.f_add_result('hunger', hunger, comment='The average final hunger')
-    reserve_density = dataset.endpoint_data['reserve_density'].mean()
+    reserve_density = e['reserve_density'].mean()
     traj.f_add_result('reserve_density', reserve_density, comment='The average final reserve density')
 
     return dataset, np.nan
@@ -177,7 +202,7 @@ def null_post_processing(traj, result_tuple):
 
 
 def plot_results(traj, df):
-    plots=[]
+    fig_dict={}
     filepath = traj.config.dir_path
     p_ns = [traj.f_get(p).v_name for p in traj.f_get_explored_parameters()]
     r_ns = np.unique([traj.f_get(r).v_name for r in traj.f_get_results()])
@@ -187,15 +212,15 @@ def plot_results(traj, df):
     for r_n in r_ns:
         if len(p_ns) == 1:
             fig=plot_2d(labels=p_ns + [r_n], pref=r_n, **kwargs)
-            plots.append(fig)
+            fig_dict[f'{p_ns[0]}VS{r_n}']=fig
         elif len(p_ns) == 2:
-            figs=plot_3pars(labels=p_ns + [r_n], pref=r_n, **kwargs)
-            plots+=figs
+            dic=plot_3pars(labels=p_ns + [r_n], pref=r_n, **kwargs)
+            fig_dict.update(dic)
         elif len(p_ns) > 2:
             for i, pair in enumerate(itertools.combinations(p_ns, 2)):
-                figs=plot_3pars(labels=list(pair) + [r_n], pref=f'{i}_{r_n}', **kwargs)
-                plots += figs
-    return plots
+                dic=plot_3pars(labels=list(pair) + [r_n], pref=f'{i}_{r_n}', **kwargs)
+                fig_dict.update(dic)
+    return fig_dict
 
 
 def null_final_processing(traj):
@@ -205,24 +230,28 @@ def null_final_processing(traj):
 
 
 def end_scatter_generation(traj):
-    d = save_results_df(traj)
+    df = save_results_df(traj)
     parent_dir = traj.config.dataset_path
     dirs = [f'{parent_dir}/{d}' for d in os.listdir(parent_dir)]
     dirs.sort()
     ds = [LarvaDataset(dir) for dir in dirs]
+    fig_dict= {}
     kwargs = {'datasets': ds,
               'labels': [d.id for d in ds],
               'save_to': traj.config.dir_path}
-    plot_endpoint_scatter(**kwargs, par_shorts=traj.config.end_parshorts_1)
-    plot_endpoint_scatter(**kwargs, par_shorts=traj.config.end_parshorts_2)
-    plot_endpoint_scatter(**kwargs, par_shorts=traj.config.end_parshorts_3)
-    return d
+    for i in [1,2,3] :
+        l=f'end_parshorts_{i}'
+        par_shorts=getattr(traj.config, l)
+        f=plot_endpoint_scatter(**kwargs, par_shorts=par_shorts)
+        p1, p2 = par_shorts
+        fig_dict[f'{p1}VS{p2}'] = f
+    return df, fig_dict
 
 
 def deb_analysis(traj):
     data_dir = traj.config.dataset_path
     parent_dir = traj.config.dir_path
-    df, plots = null_final_processing(traj)
+    df = save_results_df(traj)
 
     p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
     p_ns = [traj.f_get(p).v_name for p in traj.f_get_explored_parameters()]
@@ -243,11 +272,11 @@ def deb_analysis(traj):
         plot_endpoint_params(ds, new_ids, mode='deb', save_to=parent_dir)
     deb_dicts = fun.flatten_list(
         [[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
-    plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as='deb_f.pdf', mode='f')
-    plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as='deb.pdf')
-    plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as='deb_minimal.pdf', mode='minimal')
-
-    return df
+    fig_dict = {}
+    for m in ['f', 'minimal', 'full'] :
+        f=plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as=f'deb_{m}.pdf', mode=m)
+        fig_dict[f'deb_{m}'] = f
+    return df, fig_dict
 
 
 def post_processing(traj, result_tuple):
@@ -297,7 +326,6 @@ def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag
     life_params = fun.reconstruct_dict(traj.f_get('life_params'))
 
     sim_params['sim_id'] = f'run_{traj.v_idx}'
-
     d = run_sim(
         env_params=env_params,
         sim_params=sim_params,
@@ -511,4 +539,6 @@ def heat_map_generation(traj):
     for Lgain, Rgain, PI in zip(Lgains, Rgains, PIs):
         df[Rgain].loc[Lgain] = PI
     df.to_csv(csv_filepath, index=True, header=True)
-    plot_heatmap_PI(save_to=traj.config.dir_path, csv_filepath=csv_filepath)
+    fig=plot_heatmap_PI(save_to=traj.config.dir_path, csv_filepath=csv_filepath)
+    fig_dict={'PI_heatmap' : fig}
+    return df, fig_dict

@@ -2,7 +2,7 @@ from nengo import *
 import numpy as np
 from nengo.networks import EnsembleArray
 
-from lib.model import Brain, Intermitter, Oscillator_coupling
+from lib.model._effector import Brain, Intermitter, Oscillator_coupling
 
 
 class NengoBrain(Network, Brain):

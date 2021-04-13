@@ -115,6 +115,7 @@ intermitter_pars = {
 
 deb_pars = {
     "deb_f": 'deb_f',
+    "deb_f_deviation": 'deb_f_deviation',
     "reserve": 'reserve',
     "reserve_density": 'reserve_density',
     "structural_length": 'structural_length',
@@ -238,29 +239,6 @@ def contour_xy_pars(N=22):
     return contour_xy
 
 
-# step_db = {
-#     'f_am': lambda a: a.amount_eaten,
-#     'fee_N': lambda a: a.brain.feeder.iteration_counter,
-#     'pau_N': lambda a: a.brain.intermitter.pause_counter,
-#     'str_N': lambda a: a.brain.crawler.iteration_counter,
-#     'fee_tr': lambda a: a.brain.feeder.total_t / a.sim_time,
-#     'pau_tr': lambda a: a.brain.intermitter.cum_pause_dur / a.sim_time,
-#     'str_tr': lambda a: a.brain.crawler.total_t / a.sim_time,
-#     'chn0': lambda a: a.brain.intermitter.stridechain_start,
-#     'chn1': lambda a: a.brain.intermitter.stridechain_stop,
-#     'pau0': lambda a: a.brain.intermitter.pause_start,
-#     'pau1': lambda a: a.brain.intermitter.pause_stop,
-#     # 'fee_t': lambda a: a.feeder.total_t / a.sim_time,
-#     'pau_t': lambda a: a.brain.intermitter.pause_dur,
-#     'pau_id': lambda a: a.brain.intermitter.pause_id,
-#     # 'str_t': lambda a: a.crawler.total_t / a.sim_time,
-#     'chn_t': lambda a: a.brain.intermitter.stridechain_dur,
-#     'chn_id': lambda a: a.brain.intermitter.stridechain_id,
-#     'chn_l': lambda a: a.brain.intermitter.stridechain_length,
-#     # 'str0': lambda a: a.crawler.total_t / a.sim_time,
-#     # 'str1': lambda a: a.crawler.total_t / a.sim_time,
-# }
-
 output = {
     'intermitter': {
         'step': ['pause_id', 'pause_start', 'pause_stop', 'pause_dur'] + ['stridechain_id', 'stridechain_start',
@@ -282,7 +260,7 @@ output = {
                  'explore2exploit_balance', 'filled_gut_ratio', 'amount_absorbed'],
         'endpoint': ['length', 'mass', 'num_feeds', 'feed_success_rate', 'amount_eaten', 'scaled_amount_eaten',
                      'feed_dur_ratio', 'amount_absorbed']},
-    'deb': {'step': ['deb_f', 'reserve', 'reserve_density',
+    'deb': {'step': ['deb_f', 'deb_f_deviation',  'reserve', 'reserve_density',
                      # 'structural_length', 'maturity', 'reproduction','structure','age_in_days',
                      'hunger', 'puppation_buffer', 'cum_dst'],
             'endpoint': [
