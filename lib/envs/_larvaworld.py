@@ -769,10 +769,6 @@ class LarvaWorldSim(LarvaWorld):
                  life_params={},
                  parameter_dict={}, **kwargs):
         super().__init__(id=id, **kwargs)
-        if life_params == {}:
-            life_params = {'starvation_hours': None,
-                           'hours_as_larva': 0.0,
-                           'deb_base_f': 1.0}
         if collected_pars is None:
             collected_pars = {'step': [], 'endpoint': []}
         # self.available_pars = fun.unique_list([p for p in list(step_database.keys()) if par_conf.par_in_db(par=p)])

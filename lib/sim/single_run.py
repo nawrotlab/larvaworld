@@ -9,12 +9,10 @@ import lib.conf.data_conf as dat
 import lib.stor.paths as paths
 from lib.anal.plotting import *
 from lib.aux.collecting import output, midline_xy_pars
-from lib.conf import exp_types
 from lib.envs._larvaworld import LarvaWorldSim
 from lib.model.deb import deb_dict, deb_default
 from lib.conf.conf import loadConf
 from lib.stor.larva_dataset import LarvaDataset
-
 
 
 def sim_enrichment(d, experiment):
@@ -186,7 +184,6 @@ def run_sim_basic(
     # print(env_params['larva_params'].values())
     Npoints = list(env_params['larva_params'].values())[0]['model']['body_params']['Nsegs'] + 1
 
-
     d = LarvaDataset(dir=dir_path, id=id, fr=int(1 / dt),
                      Npoints=Npoints, Ncontour=0,
                      arena_pars=env_params['arena_params'],
@@ -197,10 +194,10 @@ def run_sim_basic(
     collected_pars = collection_conf(dataset=d, collections=collections)
     env = LarvaWorldSim(id=id, dt=dt, Box2D=Box2D,
                         # larva_pars=larva_pars,
-                        env_params=env_params,  collected_pars=collected_pars,
+                        env_params=env_params, collected_pars=collected_pars,
                         life_params=life_params, Nsteps=Nsteps,
-                        media_name=media_name, save_to=d.vis_dir,experiment=experiment,
-                        ** kwargs)
+                        media_name=media_name, save_to=d.vis_dir, experiment=experiment,
+                        **kwargs)
     # Prepare the odor layer for a number of timesteps
     odor_prep_time = 0.0
     larva_prep_time = 0.5
@@ -239,7 +236,7 @@ def run_sim_basic(
             if env.Nodors > 0:
                 env.plot_odorscape(save_to=d.plot_dir)
         print(f'Simulation completed in {dur} seconds!')
-        res= d
+        res = d
     env.close()
     return res
 
@@ -273,20 +270,40 @@ def load_reference_dataset():
     return reference_dataset
 
 
-def generate_config(exp, sim_params, Nagents=None, life_params={}):
-    config = copy.deepcopy(exp_types[exp])
-    config['experiment'] = exp
-    config['sim_params'] = sim_params
-    config['life_params'] = life_params
+# def generate_config(exp, sim_params, Nagents=None, life_params={}):
+#     config = copy.deepcopy(exp_types[exp])
+#     config['experiment'] = exp
+#     config['sim_params'] = sim_params
+#     config['life_params'] = life_params
+#
+#     if type(config['env_params']) == str:
+#         config['env_params'] = loadConf(config['env_params'], 'Env')
+#
+#     if Nagents is not None:
+#         config['env_params']['larva_params']['Larva']['N'] = Nagents
+#     for k, v in config['env_params']['larva_params'].items():
+#         if type(v['model']) == str:
+#             v['model'] = loadConf(v['model'], 'Model')
+#     # print(config['env_params']['larva_params']['Larva']['model'])
+#     # raise
+#     return config
 
-    if type(config['env_params'])==str :
-        config['env_params']=loadConf(config['env_params'], 'Env')
 
-    if Nagents is not None:
-        config['env_params']['larva_params']['Larva']['N'] = Nagents
-    for k,v in config['env_params']['larva_params'].items():
-        if type(v['model'])==str :
-            v['model']=loadConf(v['model'], 'Model')
-    # print(config['env_params']['larva_params']['Larva']['model'])
-    # raise
-    return config
+def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True):
+    if life_params is None:
+        life_params = {'starvation_hours': None,
+                       'hours_as_larva': 0.0,
+                       'deb_base_f': 1.0}
+    exp_conf = loadConf(exp_type, 'Exp')
+    env = exp_conf['env_params']
+    if type(env) == str:
+        env = loadConf(env, 'Env')
+    for k, v in env['larva_params'].items():
+        if type(v['model']) == str:
+            v['model'] = loadConf(v['model'], 'Model')
+    exp_conf['env_params'] = env
+    exp_conf['life_params'] = life_params
+    exp_conf['sim_params'] = sim_params
+    exp_conf['experiment'] = exp_type
+    exp_conf['enrich'] = enrich
+    return exp_conf

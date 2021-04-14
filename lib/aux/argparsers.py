@@ -224,19 +224,33 @@ def get_life_kwargs(args):
 
 def add_batch_kwargs(parser):
     parser.add_argument('-id_b', '--batch_id', type=str, help='The id of the batch run')
-    parser.add_argument('-Nmax', '--max_Nsims', type=int, nargs='?', default=40,
+    return parser
+
+
+def get_batch_kwargs(args):
+    kwargs = {
+        'batch_id': args.batch_id
+    }
+    return kwargs
+
+def add_optimization_kwargs(parser):
+    parser.add_argument('-fit_par', '--fit_par', type=str, help='The fit parameter of the batch run')
+    parser.add_argument('-minimize', '--minimize', type=bool, help='Whether to try to minimize the fit parameter')
+    parser.add_argument('-threshold', '--threshold', type=float, help='The fit parameter threshold for terminating the batch-run')
+    parser.add_argument('-maxN', '--max_Nsims', type=int, nargs='?', default=12,
                         help='The maximum number of simulations to run')
     parser.add_argument('-Nbst', '--Nbest', type=int, nargs='?', default=4,
                         help='The number of best configurations to expand')
     return parser
 
-
-def get_batch_kwargs(args):
-    batch_kwargs = {
-        'batch_id': args.batch_id,
+def get_optimization_kwargs(args):
+    kwargs = {
+        'fit_par': args.fit_par,
+        'minimize': args.minimize,
+        'threshold': args.threshold,
         'max_Nsims': args.max_Nsims,
         'Nbest': args.Nbest}
-    return batch_kwargs
+    return kwargs
 
 
 def add_space_kwargs(parser):
@@ -248,8 +262,8 @@ def add_space_kwargs(parser):
 
 def get_space_kwargs(args):
     Ngrid = args.Ngrid
-    if Ngrid is None:
-        Ngrid = [8]
+    if type(Ngrid)==int :
+        Ngrid = [Ngrid]* len(args.pars)
     space_kwargs = {'pars': args.pars,
                     'ranges': args.ranges,
                     'Ngrid': Ngrid}
