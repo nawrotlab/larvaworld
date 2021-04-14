@@ -532,9 +532,11 @@ def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, trajector
 
         for t, c in zip(parsed_traj, parsed_traj_col):
             # If trajectory has one point, skip
+
             if len(t) < 2:
                 pass
             else:
+                # print(c)
                 if trajectory_colors is None:
                     screen.draw_polyline(t, color=fly.default_color, closed=False, width=0.003 * space_dims[0])
                 else:

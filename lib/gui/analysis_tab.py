@@ -5,8 +5,8 @@ import matplotlib
 import inspect
 from tkinter import *
 
-
-from lib.gui.gui_lib import header_kwargs, button_kwargs, ButtonGraphList
+from lib.conf.dtype_dicts import get_replay_kwargs_dict, replay_pars_dict
+from lib.gui.gui_lib import header_kwargs, button_kwargs, ButtonGraphList, CollapsibleDict
 from lib.stor.paths import SingleRunFolder, RefFolder
 from lib.anal.plotting import graph_dict
 from lib.stor.larva_dataset import LarvaDataset
@@ -32,7 +32,7 @@ def change_dataset_id(window, values, data):
             update_data_list(window, data)
     return data
 
-def build_analysis_tab(graph_lists, dicts):
+def build_analysis_tab(collapsibles, graph_lists, dicts):
     dicts['analysis_data'] = {}
     data_list = [
         [sg.Text('DATASETS', **header_kwargs)],
@@ -41,21 +41,24 @@ def build_analysis_tab(graph_lists, dicts):
         [sg.FolderBrowse(button_text='Add', initial_folder=SingleRunFolder, key='DATASET_DIR', change_submits=True,
                          enable_events=True, **button_kwargs)],
         [sg.Button('Remove', **button_kwargs), sg.Button('Add ref', **button_kwargs),
-         sg.Button('Change ID', **button_kwargs)],
+         sg.Button('Change ID', **button_kwargs), sg.Button('Replay', **button_kwargs)],
         # [sg.Text(' ' * 12)]
     ]
 
     graph_lists['ANALYSIS'] = ButtonGraphList(name='ANALYSIS', fig_dict=graph_dict)
 
 
+
     analysis_layout = [
         [sg.Col(data_list)],
-        [graph_lists['ANALYSIS'].get_layout(), graph_lists['ANALYSIS'].canvas]
+        [graph_lists['ANALYSIS'].get_layout(), graph_lists['ANALYSIS'].canvas],
+
+
     ]
-    return analysis_layout, graph_lists, dicts
+    return analysis_layout, collapsibles, graph_lists, dicts
 
 
-def eval_analysis(event, values, window, graph_lists, dicts):
+def eval_analysis(event, values, window, collapsibles, graph_lists, dicts):
     if event == 'DATASET_DIR':
         if values['DATASET_DIR'] != '':
             d = LarvaDataset(dir=values['DATASET_DIR'])
@@ -73,6 +76,14 @@ def eval_analysis(event, values, window, graph_lists, dicts):
             update_data_list(window, dicts['analysis_data'])
     elif event == 'Change ID':
         dicts['analysis_data'] = change_dataset_id(window, values, dicts['analysis_data'])
+    elif event == 'Replay':
+        if len(values['DATASET_IDS']) > 0:
+            id = values['DATASET_IDS'][0]
+            d=dicts['analysis_data'][id]
+            vis_kwargs=collapsibles['VISUALIZATION'].get_dict(values, window)
+            replay_kwargs = collapsibles['REPLAY'].get_dict(values, window)
+            d.visualize(vis_kwargs=vis_kwargs, **replay_kwargs)
+
     elif event == 'ANALYSIS_SAVE_FIG':
         graph_lists['ANALYSIS'].save_fig()
     elif event == 'ANALYSIS_FIG_ARGS':

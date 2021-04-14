@@ -1,6 +1,7 @@
 from typing import List, Tuple
 
 from lib.conf import par_conf
+from lib.conf.conf import loadConfDict
 
 odor_pars = {'odor_id': str,
              'odor_intensity': float,
@@ -131,13 +132,12 @@ vis_pars_dict = {
 }
 
 
-def get_vis_kwargs_dict(mode='video', image_mode='final', video_speed=1, show_display=True,media_name=None,
+def get_vis_kwargs_dict(mode='video', image_mode='final', video_speed=1, show_display=True, media_name=None,
                         draw_head=False, draw_centroid=False, draw_midline=True, draw_contour=True,
                         trajectories=False, trajectory_dt=0.0,
                         black_background=False, random_colors=False, color_behavior=False,
                         visible_clock=True, visible_state=True, visible_scale=True, visible_ids=False,
                         ):
-
     dic = {
         'render': {'mode': mode,
                    'image_mode': image_mode,
@@ -159,6 +159,54 @@ def get_vis_kwargs_dict(mode='video', image_mode='final', video_speed=1, show_di
                 'visible_ids': visible_ids}
     }
 
+    return dic
+
+
+replay_pars_dict = {
+    'arena_pars': arena_pars_dict,
+    'env_params': ['']+list(loadConfDict('Env').keys()),
+    'track_point': int,
+    # 'spinepoints': bool,
+    # 'centroid': bool,
+    # 'contours': bool,
+    'dynamic_color': ['', 'lin_color', 'ang_color'],
+    'agent_ids': list,
+    'time_range': Tuple[float, float],
+    'transposition': ['', 'origin', 'arena', 'center'],
+    'fix_point': int,
+    'secondary_fix_point': ['', 1, -1],
+    'use_background': bool,
+    'draw_Nsegs': int,
+}
+
+
+def get_replay_kwargs_dict(arena_pars=None,
+                           env_params=None,
+                           track_point=None,
+                           # spinepoints=True, centroid=True, contours=True,
+                           dynamic_color=None,
+                           agent_ids=None,
+                           time_range=None,
+                           transposition=None, fix_point=None, secondary_fix_point=None,use_background=False,
+                           draw_Nsegs=None):
+    dic = {
+        'arena_pars': arena_pars,
+        'env_params': env_params,
+        'track_point': track_point,
+        # 'spinepoints': spinepoints,
+        # 'centroid': centroid,
+        # 'contours': contours,
+        'dynamic_color': dynamic_color,
+        'agent_ids': agent_ids,
+        'time_range': time_range,
+        'transposition': transposition,
+        'fix_point': fix_point,
+        'secondary_fix_point': secondary_fix_point,
+        'use_background': use_background,
+        'draw_Nsegs': draw_Nsegs,
+        # 'centroid': centroid,
+
+    }
     return dic
 
 

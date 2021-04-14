@@ -2,9 +2,11 @@ import copy
 
 import PySimpleGUI as sg
 from lib.conf.dtype_dicts import agent_pars, distro_pars, arena_pars_dict, life_pars_dict, odorscape_pars_dict, \
-    get_vis_kwargs_dict, vis_pars_dict
+    get_vis_kwargs_dict, vis_pars_dict, get_replay_kwargs_dict, replay_pars_dict
 from lib.aux.collecting import output_keys
 from lib.conf import test_env
+from lib.conf import env_conf
+
 from lib.gui.gui_lib import CollapsibleDict, named_list_layout, button_kwargs, Collapsible, text_kwargs, \
     named_bool_button, header_kwargs, set_agent_dict, buttonM_kwargs, save_gui_conf, delete_gui_conf, GraphList
 from lib.sim.single_run import run_sim, configure_sim, sim_analysis
@@ -111,6 +113,8 @@ def build_sim_tab(collapsibles, graph_lists, dicts):
                  'deb_base_f': 1.0}
     collapsibles['LIFE'] = CollapsibleDict('LIFE', False, dict=life_dict, type_dict=life_pars_dict)
     # l_life = collapsibles['LIFE'].get_section()
+    s = CollapsibleDict('REPLAY', False, dict=get_replay_kwargs_dict(arena_pars=env_conf.dish(0.15)), type_dict=replay_pars_dict)
+    collapsibles.update(s.get_subdicts())
 
     graph_lists['EXP'] = GraphList('EXP')
 
@@ -119,6 +123,7 @@ def build_sim_tab(collapsibles, graph_lists, dicts):
         collapsibles['CONFIGURATION'].get_section(),
         collapsibles['OUTPUT'].get_section(),
         collapsibles['VISUALIZATION'].get_section(),
+        collapsibles['REPLAY'].get_section(),
         collapsibles['LIFE'].get_section(),
         [graph_lists['EXP'].get_layout()]
     ])]]
@@ -198,6 +203,9 @@ def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
         vis_kwargs = collapsibles['VISUALIZATION'].get_dict(values, window)
         d = run_sim(**exp_conf, vis_kwargs=vis_kwargs)
         if d is not None:
+            from lib.gui.analysis_tab import update_data_list
+            dicts['analysis_data'][d.id] = d
+            update_data_list(window, dicts['analysis_data'])
             dicts['sim_results']['datasets'].append(d)
             fig_dict, results = sim_analysis(d, exp_conf['experiment'])
             # fig_keys = list(fig_dict.keys())

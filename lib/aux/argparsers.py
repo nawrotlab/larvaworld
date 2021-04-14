@@ -63,8 +63,8 @@ def get_vis_kwargs(args):
 
 
 def add_replay_kwargs(parser):
-    parser.add_argument('-aln', '--align_mode', choices=['origin', 'arena', 'center'],
-                        help='The alignment mode for visualization')
+    parser.add_argument('-trans', '--transposition', choices=['origin', 'arena', 'center'],
+                        help='The transposition mode for visualization')
     parser.add_argument('-dyn', '--dynamic_color', choices=['lin', 'ang'],
                         help='Color the trajectories based on velocity')
     parser.add_argument('-ids', '--agent_ids', type=int, nargs='+', help='The indexes of larvae to visualize')
@@ -88,7 +88,7 @@ def get_replay_kwargs(args):
     if fix is not None:
         use_background = True
         if len(fix) == 2 and np.abs(fix[1]) == 1:
-            fix_point, secondary_fix_point = fix[0], fix[0] + fix[1]
+            fix_point, secondary_fix_point = fix[0], fix[1]
         elif len(fix) == 1:
             fix_point, secondary_fix_point = fix[0], None
         else:
@@ -115,12 +115,12 @@ def get_replay_kwargs(args):
         arena_pars = None
 
     replay_kwargs = {'agent_ids': args.agent_ids,
-                     'align_mode': args.align_mode,
+                     'transposition': args.transposition,
                      'fix_point': fix_point,
                      'secondary_fix_point': secondary_fix_point,
                      'draw_Nsegs': args.draw_Nsegs,
                      'use_background': use_background,
-                     'time_range_in_ticks': args.tick_range,
+                     'time_range': args.tick_range,
                      'dynamic_color': dynamic_color,
                      'arena_pars': arena_pars,
 

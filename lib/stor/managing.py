@@ -127,7 +127,8 @@ def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={},r
     if save_as is None :
         save_as=[d.id for d in ds]
     for d,n in zip(ds, save_as):
-        d.visualize(save_to=save_to, save_as=n, vis_kwargs=vis_kwargs, **replay_kwargs)
+        vis_kwargs['media_name'] = n
+        d.visualize(save_to=save_to, vis_kwargs=vis_kwargs, **replay_kwargs)
 
 
 def compute_PIs(datagroup_id, save_to=None, **kwargs):

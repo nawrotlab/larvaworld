@@ -461,10 +461,10 @@ class LarvaDataset:
             if point == -1:
                 point = 'centroid'
             else:
+                if secondary_point is not None:
+                    if type(secondary_point) == int and np.abs(secondary_point) == 1:
+                        secondary_point = self.points[point+secondary_point]
                 point = self.points[point]
-        if secondary_point is not None:
-            if type(secondary_point) == int:
-                secondary_point = self.points[secondary_point]
 
         pars = [p for p in self.xy_pars if p in s.columns.values]
         if set(nam.xy(point)).issubset(s.columns):
@@ -677,6 +677,11 @@ class LarvaDataset:
             chunk_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id']
         if track_point is None:
             track_point = self.point
+        elif type(track_point) == int:
+            if track_point == -1:
+                track_point = 'centroid'
+            else:
+                track_point = self.points[track_point]
         if set(nam.xy(track_point)).issubset(self.step_data.columns):
             pos_xy_pars = nam.xy(track_point)
         else:
@@ -695,9 +700,9 @@ class LarvaDataset:
             contour_xy_pars = []
         pars = cent_xy_pars + point_xy_pars + pos_xy_pars + contour_xy_pars + angle_pars + orientation_pars + chunk_pars
         pars = np.unique(pars).tolist()
-        return pars, pos_xy_pars
+        return pars, pos_xy_pars, track_point
 
-    def get_smaller_dataset(self, ids=None, pars=None, time_range_in_ticks=None, dynamic_color=None):
+    def get_smaller_dataset(self, ids=None, pars=None, time_range=None, dynamic_color=None):
         if self.step_data is None:
             self.load()
         if ids is None:
@@ -706,32 +711,36 @@ class LarvaDataset:
             ids = [self.agent_ids[i] for i in ids]
         if pars is None:
             pars = self.step_data.columns.values.tolist()
-        if dynamic_color is not None:
+        elif dynamic_color is not None:
             pars.append(dynamic_color)
         pars = [p for p in pars if p in self.step_data.columns]
-        if time_range_in_ticks is None:
-            s = self.step_data.loc[(slice(None), ids), pars].copy(deep=True)
+        if time_range is None:
+            s = copy.deepcopy(self.step_data.loc[(slice(None), ids), pars])
         else:
-            a, b = time_range_in_ticks
-            s = self.step_data.loc[(slice(a, b), ids), pars].copy(deep=True)
-        e = self.endpoint_data.loc[ids]
+            a, b = time_range
+            a=int(a/self.dt)
+            b=int(b/self.dt)
+            s = copy.deepcopy(self.step_data.loc[(slice(a, b), ids), pars])
+        e = copy.deepcopy(self.endpoint_data.loc[ids])
         return s, e, ids
 
     def visualize(self,
+                  vis_kwargs,
                   arena_pars=None,
                   env_params=None,
                   track_point=None,
-                  spinepoints=True, centroid=True, contours=True,
+                  # spinepoints=True, centroid=True, contours=True,
                   dynamic_color=None,
                   agent_ids=None,
-                  time_range_in_ticks=None,
-                  align_mode=None, fix_point=None, secondary_fix_point=None,
-                  save_to=None, save_as=None,
+                  time_range=None,
+                  transposition=None, fix_point=None, secondary_fix_point=None,
+                  save_to=None,
                   **kwargs):
-
-        pars, pos_xy_pars = self.get_par_list(track_point=track_point, points=spinepoints, centroid=centroid,
-                                              contours=contours)
-        s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=None, time_range_in_ticks=time_range_in_ticks,
+        # print(**kwargs)
+        # raise
+        pars, pos_xy_pars, track_point = self.get_par_list(track_point=track_point, points=True, centroid=True,
+                                              contours=True)
+        s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range=time_range,
                                         dynamic_color=dynamic_color)
 
         if len(ids) == 1:
@@ -740,7 +749,7 @@ class LarvaDataset:
             n0 = 'all'
         else:
             n0 = f'{len(ids)}l'
-
+        # print(dynamic_color, type(dynamic_color))
         if dynamic_color is not None:
             trajectory_colors = s[dynamic_color]
         else:
@@ -755,8 +764,8 @@ class LarvaDataset:
         env_params['arena_params']['arena_xdim'] = arena_dims[0]
         env_params['arena_params']['arena_ydim'] = arena_dims[1]
 
-        if align_mode is not None:
-            s = self.align_trajectories(s=s, mode=align_mode, arena_dims=arena_dims, track_point=track_point)
+        if transposition is not None:
+            s = self.align_trajectories(s=s, mode=transposition, arena_dims=arena_dims, track_point=track_point)
             bg = None
             n1 = 'aligned'
         elif fix_point is not None:
@@ -766,13 +775,14 @@ class LarvaDataset:
             bg = None
             n1 = 'normal'
         replay_id = f'{n0}_{n1}'
-        if save_as is None:
-            save_as = replay_id
+        if vis_kwargs['render']['media_name'] is None:
+            vis_kwargs['render']['media_name'] = replay_id
         if save_to is None:
             save_to = self.vis_dir
-
+        # print(trajectory_colors)
         Nsteps = len(s.index.unique('Step').values)
         replay_env = LarvaWorldReplay(id=replay_id, env_params=env_params,
+                                      vis_kwargs=vis_kwargs,
                                       step_data=s, endpoint_data=e,
                                       Nsteps=Nsteps,
                                       dataset=self,
@@ -780,7 +790,7 @@ class LarvaDataset:
                                       background_motion=bg,
                                       dt=self.dt,
                                       trajectory_colors=trajectory_colors,
-                                      save_to=save_to, media_name=save_as,
+                                      save_to=save_to,
                                       **kwargs)
 
         replay_env.run()

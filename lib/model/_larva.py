@@ -48,8 +48,9 @@ class LarvaReplay(Larva, BodyReplay):
                 self.beh_ar[:, i] = np.array([not v for v in np.isnan(data[p].values).tolist()])
         self.pos = self.pos_ar[0]
         if Nsegs is not None:
+            # FIXME Here the sim_length is not divided by 1000 because all xy coords are in mm
             BodyReplay.__init__(self, model, pos=self.pos, orientation=self.or_ar[0][0],
-                                initial_length=self.sim_length / 1000, length_std=0, Nsegs=Nsegs, interval=0)
+                                initial_length=self.sim_length, length_std=0, Nsegs=Nsegs, interval=0)
         self.data = data
     def read_step(self, i):
         self.midline = self.mid_ar[i].tolist()

@@ -116,9 +116,8 @@ def sim_analysis(d, exp_type):
         fig_dict.update(dic)
         vis_kwargs=get_vis_kwargs_dict(mode='image',image_mode='final',show_display=False,
                                        random_colors=True, trajectories=True, trajectory_dt=0,
-                                       visible_clock=False, visible_scale=False)
-        d.visualize(agent_ids=[d.agent_ids[0]], vis_kwargs = vis_kwargs,
-                    save_as='single_trajectory')
+                                       visible_clock=False, visible_scale=False, media_name='single_trajectory')
+        d.visualize(agent_ids=[d.agent_ids[0]], vis_kwargs = vis_kwargs)
     elif exp_type == 'odor_preference':
         ind = d.compute_preference_index(arena_diameter_in_mm=100)
         print(ind)

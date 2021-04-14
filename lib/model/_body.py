@@ -255,7 +255,6 @@ class DefaultSegment:
         self.vertices = [pos + fun.rotate_around_center_multi(self.seg_vertices[0], -orient)]
 
     def draw(self, viewer):
-        # print(self._color)
         for vertices in self.vertices:
             viewer.draw_polygon(vertices, filled=True, color=self._color)
 

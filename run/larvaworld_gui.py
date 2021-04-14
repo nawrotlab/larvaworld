@@ -22,7 +22,7 @@ def run_gui():
     collapsibles={}
     graph_lists={}
     dicts = {}
-    l_anal, graph_lists, dicts = build_analysis_tab(graph_lists, dicts)
+    l_anal, collapsibles, graph_lists, dicts = build_analysis_tab(collapsibles,graph_lists, dicts)
     l_mod, collapsibles, dicts = build_model_tab(collapsibles, dicts)
     l_sim, collapsibles, graph_lists, dicts = build_sim_tab(collapsibles, graph_lists, dicts)
     l_batch, collapsibles, graph_lists, dicts = build_batch_tab(collapsibles, graph_lists, dicts)
@@ -61,7 +61,7 @@ def run_gui():
 
         tab = v['ACTIVE_TAB']
         if tab == 'ANALYSIS_TAB':
-            graph_lists, dicts = eval_analysis(e, v, w,graph_lists, dicts)
+            graph_lists, dicts = eval_analysis(e, v, w,collapsibles,graph_lists, dicts)
                                                                                           # func, func_kwargs,
                                                                                           # figure_agg, fig, save_to,
                                                                                           # save_as,

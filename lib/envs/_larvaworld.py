@@ -1121,6 +1121,7 @@ class LarvaWorldReplay(LarvaWorld):
                     raise ValueError(
                         f'Orientation values are not present for all body segments : {self.Nors} of {Nsegs}')
             elif Nsegs == 2:
+
                 self.or_pars = [p for p in ['front_orientation'] if p in self.pars]
                 self.Nors = len(self.or_pars)
                 self.angle_pars = [p for p in ['bend'] if p in self.pars]
