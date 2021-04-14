@@ -37,9 +37,9 @@ if 'build' in actions :
 if 'enrich' in actions :
     enrich_datasets(DataGroup_id, **data_kwargs)
 if 'anal' in actions :
-    analyse_datasets(DataGroup_id, **data_kwargs)
+    fig_dict =analyse_datasets(DataGroup_id, **data_kwargs)
 if 'vis' in actions :
-    visualize_datasets(DataGroup_id, **data_kwargs, vis_kwargs = {**vis_kwargs, **replay_kwargs})
+    visualize_datasets(DataGroup_id, **data_kwargs, vis_kwargs = vis_kwargs, replay_kwargs=replay_kwargs)
 
 '''
 python process.py SampleGroup reg init

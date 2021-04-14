@@ -1,4 +1,6 @@
 import copy
+import inspect
+import os
 from ast import literal_eval
 from typing import List, Tuple, Type
 
@@ -14,6 +16,7 @@ from lib.conf import par_conf
 from lib.conf.conf import loadConfDict, saveConf, deleteConf
 from lib.conf.dtype_dicts import agent_pars
 import lib.aux.functions as fun
+from lib.stor.paths import get_parent_dir
 
 on_image = b'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'
 off_image = b'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'
@@ -531,65 +534,116 @@ def object_menu(selected):
     return sel
 
 
-# def right_click_menu() :
-#     commands = ['Delete', 'Favourite', 'Reply', 'Copy', 'Edit']
-#     # layout = [
-#     #     [sg.Listbox(size=(35, 22), key='chat', values=messages,
-#     #                 right_click_menu=['&Right', commands])]
-#     # ]
-#     window = sg.Window("Windows-like program",
-#                        layout=[],
-#                        default_element_size=(12, 1),
-#                        grab_anywhere=True,
-#                        right_click_menu=['&Right', commands],
-#                        default_button_element_size=(12, 1))
-#
-#     while True:
-#
-#         event, values = window.read()
-#         if event == sg.WIN_CLOSED:
-#             break
-#         print(event, values)
-#
-#     window.close()
+class GraphList:
+    def __init__(self, name, fig_dict={}):
+        self.name = name
+        self.fig_dict = fig_dict
+        self.layout, self.list_key = self.init_layout(name, fig_dict)
+        self.canvas, self.canvas_key = self.init_canvas(name)
+        self.fig_agg = None
+        self.draw_key='unreachable'
 
-# def add_agent_distro(agent_class):
-#     if agent_class == 'Food':
-#         title = 'Food distribution'
-#     elif agent_class == 'Larva':
-#         title = 'Larva distribution'
-#     l = [sg.Col([
-#         [sg.Text('Group:', **header_kwargs), sg.In(agent_class, key='group', **text_kwargs)],
-#         [sg.Text('Distribution:', **header_kwargs),
-#          sg.Combo(agent_distros[agent_class], key='mode', enable_events=True, readonly=True, **text_kwargs)],
-#         [sg.Text(f'# {agent_class}:', **header_kwargs), sg.In((0.0, 0.0), key='N', **text_kwargs)],
-#         [sg.Text('Loc', **header_kwargs), sg.In((0.0, 0.0), key='loc', **text_kwargs)],
-#         [sg.Text('Scale:', **header_kwargs), sg.In(0.0, key='scale', **text_kwargs)],
-#         [sg.Text('Orientation:', **header_kwargs), sg.In('', key='orientation', **text_kwargs)],
-#         [sg.Text('Larva model:', **header_kwargs),
-#          sg.Combo(list(loadConfDict('Model').keys()), key='model', enable_events=True, readonly=True, **text_kwargs)],
-#         [sg.Button('Ok', **button_kwargs), sg.Button('Cancel', **button_kwargs)]])]
-#
-#     w = sg.Window(title, l)
-#     while True:
-#         e, v = w.read()
-#         if e == 'Ok':
-#             loc = retrieve_value(v['loc'], Tuple[float, float])
-#             scale = retrieve_value(v['scale'], float)
-#             orientation = retrieve_value(v['orientation'], float)
-#             distro = {str(v['group']): {
-#                 'N': int(v['N']),
-#                 'mode': str(v['mode']),
-#                 'loc': loc,
-#                 'scale': scale,
-#                 'orientation': orientation,
-#                 'model': str(v['model'])}
-#             }
-#             break
-#         elif e == 'Cancel':
-#             distro = {}
-#     w.close()
-#     return distro
+    def init_layout(self, name, fig_dict):
+        list_key = f'{name}_GRAPH_LIST'
+        values = list(fig_dict.keys())
+        h=int(np.max([len(values), 5]))
+        l = [
+            [sg.Text('GRAPHS', **header_kwargs)],
+            [sg.Listbox(values=values, change_submits=True, size=(20, h), key=list_key,auto_size_text=True)],
+        ]
+
+
+        return l, list_key
+
+    def init_canvas(self, name):
+        canvas_key = f'{name}_CANVAS'
+        figure_w, figure_h = 800, 800
+        canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key=canvas_key)]])
+        # canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key=canvas_key)]])
+        return canvas, canvas_key
+
+    def draw_fig(self, window, fig):
+        if self.fig_agg:
+            delete_figure_agg(self.fig_agg)
+        self.fig_agg = draw_canvas(window[self.canvas_key].TKCanvas, fig)
+
+    def update(self, window, fig_dict):
+        self.fig_dict = fig_dict
+        window.Element(self.list_key).Update(values=list(fig_dict.keys()))
+
+    def evaluate(self, window, list_values):
+        if len(list_values) > 0:
+            choice = list_values[0]
+            fig = self.fig_dict[choice]
+            self.draw_fig(window, fig)
+
+    def get_layout(self, as_col=True):
+        if as_col:
+            return sg.Col(self.layout)
+        else:
+            return self.layout
+
+
+class ButtonGraphList(GraphList):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.draw_key = f'{self.name}_DRAW_FIG'
+        l = [sg.Button('Graph args', **button_kwargs, k=f'{self.name}_FIG_ARGS'),
+             sg.Button('Draw', **button_kwargs, k=self.draw_key),
+             sg.Button('Save', **button_kwargs, k=f'{self.name}_SAVE_FIG')]
+        self.layout.append(l)
+        self.fig, self.save_to, self.save_as = None, '', ''
+        self.func, self.func_kwargs = None, {}
+
+    def evaluate(self, window, list_values):
+        if len(list_values) > 0:
+            choice = list_values[0]
+            if self.fig_dict[choice] != self.func:
+                self.func = self.fig_dict[choice]
+                self.func_kwargs = self.get_graph_kwargs(self.func)
+
+    def get_graph_kwargs(self, func):
+        signature = inspect.getfullargspec(func)
+        kwargs = dict(zip(signature.args[-len(signature.defaults):], signature.defaults))
+        for k in ['datasets', 'labels', 'save_to', 'save_as', 'return_fig', 'deb_dicts']:
+            if k in kwargs.keys():
+                del kwargs[k]
+        return kwargs
+
+    def generate(self, window, data):
+        if self.func is not None and len(list(data.keys())) > 0:
+            try:
+                self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()), return_fig=True, **self.func_kwargs)
+                self.draw_fig(window, self.fig)
+            except:
+                print('Plot not available for these datasets')
+                self.fig, self.save_to, self.save_as = None, '', ''
+
+    def save_fig(self):
+        if self.fig is not None:
+            layout = [
+                [sg.Text('Filename', size=(10, 1)), sg.In(default_text=self.save_as, k='SAVE_AS', size=(80, 1))],
+                [sg.Text('Directory', size=(10, 1)), sg.In(self.save_to, k='SAVE_TO', size=(80, 1)),
+                 sg.FolderBrowse(initial_folder=get_parent_dir(), key='SAVE_TO', change_submits=True)],
+                [sg.Ok(), sg.Cancel()]]
+
+            event, values = sg.Window('Save figure', layout).read(close=True)
+            if event == 'Ok':
+                save_as = values['SAVE_AS']
+                save_to = values['SAVE_TO']
+                filepath = os.path.join(save_to, save_as)
+                self.fig.savefig(filepath, dpi=300)
+                # save_canvas(window['GRAPH_CANVAS'].TKCanvas, filepath)
+                # figure_agg.print_figure(filepath)
+                print(f'Plot saved as {save_as}')
+
+    def set_fig_args(self):
+        self.func_kwargs = set_kwargs(self.func_kwargs, title='Graph arguments')
+
+
+
+
+
 
 
 def delete_objects_window(selected):

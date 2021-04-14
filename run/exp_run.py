@@ -35,12 +35,12 @@ if sim_kwargs['path'] is None:
     sim_kwargs['path'] = f'single_runs/{exp_type}'
 
 
-exp_conf = get_exp_conf(exp_type,  sim_kwargs, life_kwargs, enrich=True)
+exp_conf = get_exp_conf(exp_type,  sim_kwargs, life_kwargs, enrich=True, N = place_kwargs['N'])
 
-d = run_sim(**exp_conf, **vis_kwargs)
+d = run_sim(**exp_conf, vis_kwargs=vis_kwargs)
 
 if analysis:
-    sim_analysis(d, exp_id)
+    fig_dict, results=sim_analysis(d, exp_type)
 
 e = time.time()
 if d is not None:

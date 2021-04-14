@@ -1,26 +1,14 @@
 import copy
 
 import PySimpleGUI as sg
-from lib.conf.dtype_dicts import agent_pars, distro_pars, arena_pars_dict, life_pars_dict, odorscape_pars_dict
+from lib.conf.dtype_dicts import agent_pars, distro_pars, arena_pars_dict, life_pars_dict, odorscape_pars_dict, \
+    get_vis_kwargs_dict, vis_pars_dict
 from lib.aux.collecting import output_keys
 from lib.conf import test_env
 from lib.gui.gui_lib import CollapsibleDict, named_list_layout, button_kwargs, Collapsible, text_kwargs, \
-    named_bool_button, header_kwargs, set_agent_dict, buttonM_kwargs, save_gui_conf, delete_gui_conf
-from lib.sim.single_run import run_sim, configure_sim
+    named_bool_button, header_kwargs, set_agent_dict, buttonM_kwargs, save_gui_conf, delete_gui_conf, GraphList
+from lib.sim.single_run import run_sim, configure_sim, sim_analysis
 from lib.conf.conf import loadConfDict, loadConf, next_idx
-
-
-# def save_env(window, env):
-#     l = [
-#         named_list_layout('Store new environment', 'ENV_ID', list(loadConfDict('Env').keys()),
-#                           readonly=False, enable_events=False),
-#          [sg.Ok(), sg.Cancel()]]
-#     e, v = sg.Window('Environment configuration', l).read(close=True)
-#     if e == 'Ok':
-#         env_id = v['ENV_ID']
-#         saveConf(env, 'Env', env_id)
-#         window['ENV_CONF'].update(values=list(loadConfDict('Env').keys()))
-#         window['ENV_CONF'].update(value=env_id)
 
 
 def init_env(env_params, collapsibles={}):
@@ -34,9 +22,9 @@ def init_env(env_params, collapsibles={}):
         collapsibles['FOOD_GRID'].get_section()
     ]
 
-
     collapsibles['SOURCES'] = Collapsible('SOURCES', True, food_conf)
-    collapsibles['ODORSCAPE'] = CollapsibleDict('ODORSCAPE', True, dict=env_params['odorscape'], type_dict=odorscape_pars_dict)
+    collapsibles['ODORSCAPE'] = CollapsibleDict('ODORSCAPE', True, dict=env_params['odorscape'],
+                                                type_dict=odorscape_pars_dict)
 
     env_layout = [
         collapsibles['ARENA'].get_section(),
@@ -52,10 +40,6 @@ def init_env(env_params, collapsibles={}):
 
 
 def update_env(env_params, window, collapsibles):
-    # arena_params = env_params['arena_params']
-    # for k, v in arena_params.items():
-    #     window.Element(k).Update(value=v)
-    print(env_params)
     food_params = env_params['food_params']
     source_units = food_params['source_units']
     source_groups = food_params['source_groups']
@@ -63,8 +47,6 @@ def update_env(env_params, window, collapsibles):
 
     collapsibles['ARENA'].update(window, env_params['arena_params'])
     collapsibles['ODORSCAPE'].update(window, env_params['odorscape'])
-
-    # collapsibles['LARVA_DISTRIBUTION'].update(window, env_params['larva_params'])
 
     larva_groups = env_params['larva_params']
     if 'border_list' in env_params.keys():
@@ -75,18 +57,13 @@ def update_env(env_params, window, collapsibles):
 
 
 def get_env(window, values, collapsibles, dicts):
-    source_units = dicts['source_units']
-    border_list = dicts['border_list']
-    larva_groups = dicts['larva_groups']
-    source_groups = dicts['source_groups']
-
     env = {}
-    env['larva_params'] = larva_groups
+    env['larva_params'] = dicts['larva_groups']
     env['food_params'] = {}
-    env['food_params']['source_groups'] = source_groups
+    env['food_params']['source_groups'] = dicts['source_groups']
     env['food_params']['food_grid'] = collapsibles['FOOD_GRID'].get_dict(values, window)
-    env['food_params']['source_units'] = source_units
-    env['border_list'] = border_list
+    env['food_params']['source_units'] = dicts['source_units']
+    env['border_list'] = dicts['border_list']
     env['arena_params'] = collapsibles['ARENA'].get_dict(values, window)
     env['odorscape'] = collapsibles['ODORSCAPE'].get_dict(values, window)
 
@@ -96,14 +73,15 @@ def get_env(window, values, collapsibles, dicts):
     return copy.deepcopy(env)
 
 
-def build_sim_tab(collapsibles):
-    sim_datasets = []
+def build_sim_tab(collapsibles, graph_lists, dicts):
+    dicts['sim_results'] = {}
+    dicts['sim_results']['datasets'] = []
 
     env_params = copy.deepcopy(test_env)
-    larva_groups = env_params['larva_params']
-    source_units = env_params['food_params']['source_units']
-    source_groups = env_params['food_params']['source_groups']
-    border_list = {}
+    dicts['larva_groups'] = env_params['larva_params']
+    dicts['source_units'] = env_params['food_params']['source_units']
+    dicts['source_groups'] = env_params['food_params']['source_groups']
+    dicts['border_list'] = {}
 
     l_exp = [sg.Col([
         named_list_layout(text='Experiment:', key='EXP', choices=list(loadConfDict('Exp').keys())),
@@ -113,25 +91,37 @@ def build_sim_tab(collapsibles):
     output_dict = dict(zip(output_keys, [False] * len(output_keys)))
     collapsibles['OUTPUT'] = CollapsibleDict('OUTPUT', False, dict=output_dict)
 
+    collapsibles['VISUALIZATION'] = CollapsibleDict('VISUALIZATION', False,
+                                                    dict=get_vis_kwargs_dict(video_speed=60), type_dict=vis_pars_dict)
+
     sim_conf = [[sg.Text('Sim id:', **text_kwargs), sg.In('unnamed_sim', key='sim_id', **text_kwargs)],
                 [sg.Text('Path:', **text_kwargs), sg.In('single_runs', key='path', **text_kwargs)],
                 [sg.Text('Duration (min):', **text_kwargs), sg.In(3, key='sim_dur', **text_kwargs)],
                 [sg.Text('Timestep (sec):', **text_kwargs), sg.In(0.1, key='dt', **text_kwargs)],
                 named_bool_button('Box2D', False),
-                collapsibles['OUTPUT'].get_section()
+
                 ]
 
     collapsibles['CONFIGURATION'] = Collapsible('CONFIGURATION', True, sim_conf)
 
-    l_conf1 = collapsibles['CONFIGURATION'].get_section()
+    # l_conf1 = collapsibles['CONFIGURATION'].get_section()
 
     life_dict = {'starvation_hours': None,
                  'hours_as_larva': 0.0,
                  'deb_base_f': 1.0}
     collapsibles['LIFE'] = CollapsibleDict('LIFE', False, dict=life_dict, type_dict=life_pars_dict)
-    l_life = collapsibles['LIFE'].get_section()
+    # l_life = collapsibles['LIFE'].get_section()
 
-    l_conf = [[sg.Col([l_exp, l_conf1, l_life])]]
+    graph_lists['EXP'] = GraphList('EXP')
+
+    l_conf = [[sg.Col([
+        l_exp,
+        collapsibles['CONFIGURATION'].get_section(),
+        collapsibles['OUTPUT'].get_section(),
+        collapsibles['VISUALIZATION'].get_section(),
+        collapsibles['LIFE'].get_section(),
+        [graph_lists['EXP'].get_layout()]
+    ])]]
 
     l_env0 = [sg.Col([
         [sg.Text('Environment:', **header_kwargs),
@@ -145,17 +135,16 @@ def build_sim_tab(collapsibles):
 
     l_env = [[sg.Col([l_env0, l_env1])]]
 
-    l_sim = [[sg.Col(l_conf), sg.Col(l_env)]]
+    l_sim = [[sg.Col(l_conf), sg.Col(l_env), graph_lists['EXP'].canvas]]
 
-    return l_sim, sim_datasets, collapsibles, source_units, border_list, larva_groups, source_groups
+    return l_sim, collapsibles, graph_lists, dicts
 
 
-def eval_sim(event, values, window, collapsibles, dicts):
+def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
     source_units = dicts['source_units']
     border_list = dicts['border_list']
     larva_groups = dicts['larva_groups']
     source_groups = dicts['source_groups']
-
 
     if event == 'LOAD_EXP' and values['EXP'] != '':
         exp_id = values['EXP']
@@ -205,18 +194,30 @@ def eval_sim(event, values, window, collapsibles, dicts):
 
     elif event == 'Run' and values['EXP'] != '':
         exp_conf = get_exp(window, values, collapsibles, dicts)
-        exp_conf['enrich']=True
-        vis_kwargs = {'mode': 'video'}
-        d = run_sim(**exp_conf, **vis_kwargs)
+        exp_conf['enrich'] = True
+        vis_kwargs = collapsibles['VISUALIZATION'].get_dict(values, window)
+        d = run_sim(**exp_conf, vis_kwargs=vis_kwargs)
         if d is not None:
-            dicts['sim_datasets'].append(d)
+            dicts['sim_results']['datasets'].append(d)
+            fig_dict, results = sim_analysis(d, exp_conf['experiment'])
+            # fig_keys = list(fig_dict.keys())
+            dicts['sim_results']['fig_dict'] = fig_dict
+            graph_lists['EXP'].update(window, fig_dict)
+            # window.Element('EXP_GRAPH_LIST').Update(values=fig_keys)
+
+    # elif event == 'EXP_GRAPH_LIST':
+    # # elif event == 'DRAW_EXP_FIG':
+    #     if len(values['EXP_GRAPH_LIST']) > 0:
+    #         choice = values['EXP_GRAPH_LIST'][0]
+    #         fig=dicts['sim_results']['fig_dict'][choice]
+    #         exp_fig_agg = draw_exp_canvas(window, fig, exp_fig_agg)
 
     dicts['source_units'] = source_units
     dicts['border_list'] = border_list
     dicts['larva_groups'] = larva_groups
     dicts['source_groups'] = source_groups
 
-    return dicts
+    return dicts, graph_lists
 
 
 def update_sim(window, exp_id, collapsibles):

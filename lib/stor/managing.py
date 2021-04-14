@@ -115,10 +115,11 @@ def analyse_datasets(datagroup_id, save_to=None, sample_individuals=False, **kwa
                 plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:1])
             except:
                 pass
-    comparative_analysis(datasets=ds, labels=[d.id for d in ds], save_to=save_to)
+    fig_dict = comparative_analysis(datasets=ds, labels=[d.id for d in ds], save_to=save_to)
+    return fig_dict
 
 
-def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={}, **kwargs):
+def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={},replay_kwargs={}, **kwargs):
     warnings.filterwarnings('ignore')
     ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
     if save_to is None and len(ds) > 1:
@@ -126,7 +127,7 @@ def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={}, 
     if save_as is None :
         save_as=[d.id for d in ds]
     for d,n in zip(ds, save_as):
-        d.visualize(save_to=save_to, save_as=n, **vis_kwargs)
+        d.visualize(save_to=save_to, save_as=n, vis_kwargs=vis_kwargs, **replay_kwargs)
 
 
 def compute_PIs(datagroup_id, save_to=None, **kwargs):

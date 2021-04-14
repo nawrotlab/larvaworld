@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 
 from lib.anal.plotting import plot_heatmap_PI, plot_endpoint_scatter, plot_debs, plot_3pars, \
     plot_endpoint_params, plot_3d, plot_2d
+from lib.conf.dtype_dicts import get_vis_kwargs_dict
 from lib.model.deb import deb_dict
 from lib.sim.single_run import run_sim
 import lib.aux.functions as fun
@@ -331,7 +332,7 @@ def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag
         sim_params=sim_params,
         life_params=life_params,
         collections=traj.collections,
-        mode=None,
+        vis_kwargs=get_vis_kwargs_dict(mode=None),
         save_data_flag=save_data_flag,
         **kwargs)
 

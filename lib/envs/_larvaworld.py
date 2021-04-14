@@ -40,21 +40,25 @@ class LarvaWorld:
         cls.random = random.Random(cls._seed)
         return object.__new__(cls)
 
-    def __init__(self, env_params,
+    def __init__(self, vis_kwargs, env_params,
                  # larva_pars=None,
                  id='unnamed', dt=0.1, Nsteps=None, save_to='.',
                  background_motion=None, Box2D=False,
-                 use_background=False, mode='video', image_mode='final', media_name=None,
+                 use_background=False,
+                 # mode='video',
+                 # image_mode='final',
+                 media_name=None,
 
                  # vis_kwargs=
-                 trajectories=True, trajectory_dt=0.0, trajectory_colors=None,
-                 visible_clock=True, visible_state=True,
-                 random_colors=False, color_behavior=False, draw_head=False,
-                 draw_centroid=False, draw_contour=True,
-                 draw_midline=True,
-                 black_background=False,
+                 # trajectories=True, trajectory_dt=0.0,
+                 trajectory_colors=None,
+                 # visible_clock=True, visible_state=True,
+                 # random_colors=False, color_behavior=False, draw_head=False,
+                 # draw_centroid=False, draw_contour=True,
+                 # draw_midline=True,
+                 # black_background=False,
 
-                 show_display=True, video_speed=None,
+                 # show_display=True, video_speed=None,
                  snapshot_interval_in_sec=60 * 60 * 10, touch_sensors=False, allow_clicks=True,
                  experiment=None
                  # *args: [], **kwargs: {'seed': 1}
@@ -81,13 +85,17 @@ class LarvaWorld:
         #     'focus_mode': False,
         #     'larva_collisions': True,
         # }
+        self.vis_kwargs = vis_kwargs
+        self.__dict__.update(self.vis_kwargs)
+
+
 
         self.experiment = experiment
         self.dynamic_graphs = []
-        self.visible_ids = False
+        # self.visible_ids = False
         self.focus_mode = False
-        self.visible_state = visible_state
-        self.visible_clock = visible_clock
+        # self.visible_state = visible_state
+        # self.visible_clock = visible_clock
         self.selected_type = ''
 
         self.borders, self.border_xy, self.border_lines, self.border_bodies = [], [], [], []
@@ -101,21 +109,21 @@ class LarvaWorld:
         self.selected_agents = []
         self.is_running = False
         self.dt = dt
-        if video_speed is None:
+        if self.video_speed is None:
             self.video_fps = int(1 / dt)
         else:
-            self.video_fps = int(video_speed / dt)
+            self.video_fps = int(self.video_speed / dt)
         self.allow_clicks = allow_clicks
         self.touch_sensors = touch_sensors
-        self.show_display = show_display
+        # self.show_display = show_display
         self.Nticks = 0
         self.Nsteps = Nsteps
         self.snapshot_interval = int(snapshot_interval_in_sec / dt)
         self.id = id
 
         self._screen = None
-        self.mode = mode
-        self.image_mode = image_mode
+        # self.mode = mode
+        # self.image_mode = image_mode
         self.save_to = save_to
 
         os.makedirs(save_to, exist_ok=True)
@@ -124,17 +132,17 @@ class LarvaWorld:
         else:
             self.media_name = os.path.join(save_to, self.id)
 
-        self.trajectories = trajectories
+        # self.trajectories = trajectories
         self.trajectory_colors = trajectory_colors
-        self.trajectory_dt = trajectory_dt
+        # self.trajectory_dt = trajectory_dt
 
-        self.random_colors = random_colors
-        self.color_behavior = color_behavior
-
-        self.draw_head = draw_head
-        self.draw_contour = draw_contour
-        self.draw_centroid = draw_centroid
-        self.draw_midline = draw_midline
+        # self.random_colors = random_colors
+        # self.color_behavior = color_behavior
+        #
+        # self.draw_head = draw_head
+        # self.draw_contour = draw_contour
+        # self.draw_centroid = draw_centroid
+        # self.draw_midline = draw_midline
 
         # if background_motion is None:
         #     self.background_motion = np.zeros((3, self.Nsteps))
@@ -142,7 +150,7 @@ class LarvaWorld:
         #     self.background_motion = background_motion
         self.background_motion = background_motion
         self.use_background = use_background
-        self.black_background = black_background
+        # self.black_background = black_background
         self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
             self.black_background)
 
@@ -360,9 +368,9 @@ class LarvaWorld:
     def render_aux(self, width, height):
         if self.visible_clock:
             self.sim_clock.render_clock(width, height)
+        self.sim_scale.render_scale(width, height)
         if self.visible_state:
-            self.sim_scale.render_scale(width, height)
-        self.sim_state.render_state(width, height)
+            self.sim_state.render_state(width, height)
         for name, text in self.screen_texts.items():
             text.render(width, height)
 

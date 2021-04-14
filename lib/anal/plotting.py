@@ -131,6 +131,7 @@ def plot_dataset(save_to, save_as=None, mode='time', subplot_structure=[1, 1],
         filename = save_as
     filepath = os.path.join(save_to, filename)
     save_plot(fig, filepath, filename)
+    return fig
 
 
 def parsed_time_plot(fig, axs, data, agent_ids, parameters, dt=None, Nsubplots=1,
@@ -747,11 +748,12 @@ def plot_marked_strides(dataset, agent_ids=None, title=' ', show_legend=True, sh
     dst = nam.scal('dst')
     v = nam.scal('vel')
 
+    fig_dict={}
     for agent_id in agent_ids:
         filepaths = [f'{agent_id}_{f}' for f in generic_filepaths]
-        for figsize, filepath, xlim in zip(figsizes, filepaths, xlims):
+        for i,(figsize, filepath, xlim) in enumerate(zip(figsizes, filepaths, xlims)):
             try:
-                d.plot_step_data(parameters=[v], mode='time', figsize=figsize, agent_ids=[agent_id],
+                fig=d.plot_step_data(parameters=[v], mode='time', figsize=figsize, agent_ids=[agent_id],
                                  ylabel=r'scal velocity, $v (sec^{-1})$', xlabel=r'time, $(sec)$', title=title,
                                  show_legend=show_legend,
                                  xlim=xlim,
@@ -760,9 +762,10 @@ def plot_marked_strides(dataset, agent_ids=None, title=' ', show_legend=True, sh
                                  legend_labels=['stride', 'pause'],
                                  marker_params=[nam.max(v), nam.min(v)],
                                  save_to=save_to, save_as=filepath)
+                fig_dict[f'strides_{agent_id}_{i}'] = fig
             except:
                 pass
-
+    return fig_dict
 
 def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
                       vertical_boundaries=False, min_turn_angle=0, slices=[], return_fig=False):
@@ -808,7 +811,7 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
     bv = nam.vel(b)
     ho = 'front_orientation'
     hov = nam.vel(ho)
-
+    fig_dict = {}
     for agent_id in agent_ids:
         filepaths = [f'{agent_id}_{f}' for f in generic_filepaths]
 
@@ -822,7 +825,7 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
         ho0 = s[ho]
         hov0 = s[hov]
 
-        for filepath, figsize, xlim in zip(filepaths, figsizes, xlims):
+        for idx, (filepath, figsize, xlim) in enumerate(zip(filepaths, figsizes, xlims)):
             fig, axs = plt.subplots(1, 1, figsize=figsize)
 
             if turn_epochs is not None:
@@ -875,7 +878,8 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
             plt.subplots_adjust(hspace=0.05, top=0.96, bottom=0.15, left=0.06, right=0.95)
             fig.savefig(f'{save_to}/{filepath}', dpi=300)
             print(f'Image saved as {filepath}')
-
+            fig_dict[f'turns_{agent_id}_{i}']=fig
+    return fig_dict
 
 def plot_velocity_spect_hist(dataset, agent_id=None,
                              titles=['scal velocity spectogram', 'scal velocity histogram'], return_fig=False):
@@ -1764,7 +1768,7 @@ def plot_spatiotemporal_variation(dataset, spatial_cvs, temporal_cvs, sizes=None
     print(f'Image saved as {filepath}')
 
 
-def plot_distance_to_source(dataset, experiment):
+def plot_distance_to_source(dataset, exp_type):
     d = dataset
     s = d.step_data
     save_to = os.path.join(d.plot_dir, 'distance2source_timeplots')
@@ -1775,33 +1779,33 @@ def plot_distance_to_source(dataset, experiment):
     l_time = 'time $(sec)$'
 
     Nquantiles = 3
-
-    if experiment == 'chemorbit':
+    fig_dict={}
+    if exp_type == 'chemorbit':
         y = 20
-        d.plot_step_data(parameters=['dst_to_center'], title=' ', mode='time',
+        fig_dict['dst_to_source'] = d.plot_step_data(parameters=['dst_to_center'], title=' ', mode='time',
                          figsize=figsize, plot_quantiles=Nquantiles,
                          xlim=[0, 600], ylim=[0, y], xlabel=l_time, ylabel=l_dst,
                          save_to=save_to, save_as=f'dst_to_source_timeplot.{suf}')
 
         y = 5
-        d.plot_step_data(parameters=['scaled_dst_to_center'], title=' ', mode='time',
+        fig_dict['scaled_dst_to_source'] =d.plot_step_data(parameters=['scaled_dst_to_center'], title=' ', mode='time',
                          figsize=figsize, plot_quantiles=Nquantiles,
                          xlim=[0, 600], ylim=[0, y], xlabel=l_time, ylabel=l_sc_dst,
                          save_to=save_to, save_as=f'scaled_dst_to_source_timeplot.{suf}')
 
-    elif experiment == 'chemotax':
+    elif exp_type == 'chemotax':
         y = 450
-        d.plot_step_data(parameters=['dst_to_chemotax_odor'], title=' ', mode='time',
+        fig_dict['dst_to_source'] =d.plot_step_data(parameters=['dst_to_chemotax_odor'], title=' ', mode='time',
                          figsize=figsize, plot_quantiles=Nquantiles,
                          xlim=[0, 180], ylim=[0, y], xlabel=l_time, ylabel=l_dst,
                          save_to=save_to, save_as=f'dst_to_source_timeplot.{suf}')
 
         y = 120
-        d.plot_step_data(parameters=['scaled_dst_to_chemotax_odor'], title=' ', mode='time',
+        fig_dict['scaled_dst_to_source'] =d.plot_step_data(parameters=['scaled_dst_to_chemotax_odor'], title=' ', mode='time',
                          figsize=figsize, plot_quantiles=Nquantiles,
                          xlim=[0, 180], ylim=[0, y], xlabel=l_time, ylabel=l_sc_dst,
                          save_to=save_to, save_as=f'scaled_dst_to_source_timeplot.{suf}')
-
+    return  fig_dict
 
 def plot_olfaction(dataset):
     d = dataset
@@ -3066,6 +3070,7 @@ def plot_turns(datasets, labels, save_to=None, return_fig=False):
 
 
 def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
+    fig_dict={}
     warnings.filterwarnings('ignore')
     Ndatasets = len(datasets)
     if save_to is None:
@@ -3074,36 +3079,42 @@ def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
               'labels': labels,
               'save_to': save_to}
     for scaled in [True, False]:
-        plot_dispersion(**config, scaled=scaled, fig_cols=2)
-        plot_dispersion(**config, scaled=scaled, fig_cols=1)
-    plot_stride_Dbend(**config, show_text=False)
-    plot_stride_Dorient(**config, simVSexp=simVSexp, absolute=True)
-    plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=3)
+        for fig_cols in [1,2] :
+            s='scaled_' if scaled else ''
+            l=f'{s}dispersion_{fig_cols}'
+            fig_dict[l]=plot_dispersion(**config, scaled=scaled, fig_cols=fig_cols)
+
+    fig_dict['stride_Dbend']=plot_stride_Dbend(**config, show_text=False)
+    fig_dict['stride_Dorient']=plot_stride_Dorient(**config, simVSexp=simVSexp, absolute=True)
+    fig_dict['ang_pars']=plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=3)
     # plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=5, include_rear=True)
     # plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=5)
 
     for r in ['broad']:
         # for r in ['default', 'restricted', 'broad']:
-        plot_stridesNpauses(**config, plot_fits='all', time_unit='sec', range=r, only_fit_one=True)
-        plot_stridesNpauses(**config, plot_fits='best', time_unit='sec', range=r)
+        fig_dict[f'bout_fit_all_{r}']=plot_stridesNpauses(**config, plot_fits='all', time_unit='sec', range=r, only_fit_one=True)
+        fig_dict[f'bout_fit_best_{r}']=plot_stridesNpauses(**config, plot_fits='best', time_unit='sec', range=r)
     for mode in ['orientation', 'orientation_x2', 'bend', 'spinelength']:
         for agent_idx in [None, 0, 1]:
+            i='' if agent_idx is None else f'_{agent_idx}'
             try:
-                plot_interference(**config, mode=mode, agent_idx=agent_idx)
+                fig_dict[f'interference_{mode}{i}']=plot_interference(**config, mode=mode, agent_idx=agent_idx)
             except:
                 pass
     try:
-        calibration_plot(save_to=save_to)
+        fig_dict['calibration']=calibration_plot(save_to=save_to)
     except:
         pass
-    plot_crawl_pars(**config, simVSexp=simVSexp)
+    fig_dict['crawl_pars']=plot_crawl_pars(**config, simVSexp=simVSexp)
 
-    plot_turns(**config)
-    plot_turn_duration(**config)
+    fig_dict['turns']=plot_turns(**config)
+    fig_dict['turn_duration']=plot_turn_duration(**config)
 
+    # for mode in ['minimal']:
     for mode in ['minimal', 'limited', 'full']:
-        plot_endpoint_params(**config, mode=mode)
+        fig_dict[f'endpoint_{mode}']=plot_endpoint_params(**config, mode=mode)
     combine_pdfs(file_dir=save_to)
+    return fig_dict
 
 
 def dual_half_circle(center, radius, angle=0, ax=None, colors=('w', 'k'), **kwargs):
@@ -3369,6 +3380,7 @@ def calibration_plot(save_to=None, files=None):
         ax.imshow(im, cmap=None, aspect=None)
     filepath = os.path.join(save_to, filename)
     save_plot(fig, filepath, filename)
+    return fig
 
 
 

@@ -133,8 +133,8 @@ def foodNodor_source(id, pos=(0.0, 0.0), r=0.003, odor_id=None, odor_intensity=2
                         default_color=default_color, can_be_carried=can_be_carried)}}
 
 
-CS_UCS_odors = {**odor_source(id='CS_source', pos=(-0.04, 0.0), odor_id='CS', default_color='red'),
-                **odor_source(id='UCS_source', pos=(0.04, 0.0), odor_id='UCS', default_color='blue')}
+CS_UCS_odors = {**odor_source(id='CS_source', pos=(-0.04, 0.0), odor_id='CS', default_color='blue'),
+                **odor_source(id='UCS_source', pos=(0.04, 0.0), odor_id='UCS', default_color='red')}
 
 
 def gaussian_odor():
@@ -162,11 +162,11 @@ def game_env_conf(dim=0.1, N=10, x=0.8, y=0.0, scale=0.03, mode='king'):
     env = {'arena_params': arena(dim, dim),
            'food_params': food_param_conf(list={
                **odor_source('Flag', odor_intensity=8, odor_spread=0.0004, default_color='green', can_be_carried=True),
-               **odor_source('Left base', (-x0, y0), default_color='red'),
-               **odor_source('Right base', (+x0, y0), default_color='blue')}),
+               **odor_source('Left base', (-x0, y0), default_color='blue'),
+               **odor_source('Right base', (+x0, y0), default_color='red')}),
            'larva_params': {
-               **larva_distro(N, loc=(-x, y), scale=scale, group_id='Left', model=modL, default_color='darkred'),
-               **larva_distro(N, loc=(+x, y), scale=scale, group_id='Right', model=modR, default_color='darkblue')
+               **larva_distro(N, loc=(-x, y), scale=scale, group_id='Left', model=modL, default_color='darkblue'),
+               **larva_distro(N, loc=(+x, y), scale=scale, group_id='Right', model=modR, default_color='darkred')
            },
            'odorscape': gaussian_odor()
            }

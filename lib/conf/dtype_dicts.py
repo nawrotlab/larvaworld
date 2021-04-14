@@ -48,10 +48,10 @@ arena_pars_dict = {'arena_xdim': float,
                    'arena_shape': ['circular', 'rectangular']}
 
 odorscape_pars_dict = {'odorscape': ['Gaussian', 'Diffusion'],
-            'grid_dims': Tuple[float, float],
-            'evap_const': float,
-            'gaussian_sigma': Tuple[float, float],
-            }
+                       'grid_dims': Tuple[float, float],
+                       'evap_const': float,
+                       'gaussian_sigma': Tuple[float, float],
+                       }
 
 opt_pars_dict = {
     'fit_par': par_conf.get_runtime_pars(),
@@ -63,9 +63,9 @@ opt_pars_dict = {
 }
 
 batch_methods_dict = {
-    'run' : ['null', 'default', 'deb', 'odor_preference'],
-    'post' : ['null', 'default'],
-    'final' : ['null', 'scatterplots', 'deb', 'odor_preference'],
+    'run': ['null', 'default', 'deb', 'odor_preference'],
+    'post': ['null', 'default'],
+    'final': ['null', 'scatterplots', 'deb', 'odor_preference'],
 }
 
 # space_pars_dict = {'pars': List[str],
@@ -85,6 +85,67 @@ life_pars_dict = {
     'deb_base_f': float
 
 }
+
+vis_disp_dict = {
+    'mode': ['', 'video', 'image'],
+    'image_mode': ['final', 'snapshots', 'overlap'],
+    'video_speed': int,
+    'show_display': bool,
+}
+
+vis_draw_dict = {
+    'draw_head': bool,
+    'draw_centroid': bool,
+    'draw_midline': bool,
+    'draw_contour': bool,
+    'trajectories': bool,
+    'trajectory_dt': float,
+}
+
+vis_color_dict = {
+    'black_background': bool,
+    'random_colors': bool,
+    'color_behavior': bool,
+}
+
+vis_aux_dict = {
+    'visible_clock': bool,
+    'visible_state': bool,
+    'visible_ids': bool,
+}
+
+vis_pars_dict = {
+    **vis_disp_dict,
+    **vis_draw_dict,
+    **vis_color_dict,
+    **vis_aux_dict,
+}
+
+
+def get_vis_kwargs_dict(mode='video', image_mode='final', video_speed=1, show_display=True,
+                        draw_head=False, draw_centroid=False, draw_midline=True, draw_contour=True,
+                        trajectories=False, trajectory_dt=0.0,
+                        black_background=False, random_colors=False, color_behavior=False,
+                        visible_clock=True, visible_state=True, visible_ids=False,
+                        ):
+    return {
+        'mode': mode,
+        'image_mode': image_mode,
+        'video_speed': video_speed,
+        'show_display': show_display,
+        'draw_head': draw_head,
+        'draw_centroid': draw_centroid,
+        'draw_midline': draw_midline,
+        'draw_contour': draw_contour,
+        'trajectories': trajectories,
+        'trajectory_dt': trajectory_dt,
+        'black_background': black_background,
+        'random_colors': random_colors,
+        'color_behavior': color_behavior,
+        'visible_clock': visible_clock,
+        'visible_state': visible_state,
+        'visible_ids': visible_ids,
+    }
 
 
 def distro_pars(class_name):

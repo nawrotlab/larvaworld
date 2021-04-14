@@ -18,6 +18,12 @@ def add_vis_kwargs(parser):
                         help='Show trajectories of specific time duration')
     parser.add_argument('-blk', '--black_background', action="store_true", help='Black background')
     parser.add_argument('-head', '--draw_head', action="store_true", help='Color the head and tail')
+    parser.add_argument('-con', '--draw_contour', action="store_false", help='Hide the contour')
+    parser.add_argument('-mid', '--draw_midline', action="store_false", help='Hide the midline')
+    parser.add_argument('-cen', '--draw_centroid', action="store_true", help='Show the centroid')
+    parser.add_argument('-vis_clock', '--visible_clock', action="store_false", help='Visible clock')
+    parser.add_argument('-vis_state', '--visible_state', action="store_false", help='Visible state')
+    parser.add_argument('-vis_ids', '--visible_ids', action="store_true", help='Visible ids')
     return parser
 
 
@@ -39,13 +45,21 @@ def get_vis_kwargs(args):
     vis_kwargs = {'mode': mode,
                   'image_mode': args.image_mode,
                   'video_speed': args.video_speed,
+                  'show_display': args.show_display,
+                  'draw_head': args.draw_head,
+                  'draw_contour': args.draw_contour,
+                  'draw_midline': args.draw_midline,
+                  'draw_centroid': args.draw_centroid,
                   'trajectories': trajectories,
                   'trajectory_dt': trajectory_dt,
                   'random_colors': args.random_colors,
                   'color_behavior': args.color_behavior,
                   'black_background': args.black_background,
-                  'draw_head': args.draw_head,
-                  'show_display': args.show_display,
+                  'visible_clock': args.visible_clock,
+                  'visible_state': args.visible_state,
+                  'visible_ids': args.visible_ids,
+
+
                   }
     return vis_kwargs
 
@@ -63,9 +77,7 @@ def add_replay_kwargs(parser):
                         help='Simplify larva body to N segments')
 
     parser.add_argument('-dim', '--arena_dims', type=float, nargs='+', help='The arena dimensions in m')
-    parser.add_argument('-con', '--draw_contour', action="store_false", help='Hide the contour')
-    parser.add_argument('-mid', '--draw_midline', action="store_false", help='Hide the midline')
-    parser.add_argument('-cen', '--draw_centroid', action="store_true", help='Show the centroid')
+
     return parser
 
 
@@ -113,9 +125,7 @@ def get_replay_kwargs(args):
                      'time_range_in_ticks': args.tick_range,
                      'dynamic_color': dynamic_color,
                      'arena_pars': arena_pars,
-                     'draw_contour': args.draw_contour,
-                     'draw_midline': args.draw_midline,
-                     'draw_centroid': args.draw_centroid,
+
                      }
     return replay_kwargs
 
@@ -275,6 +285,6 @@ def add_place_kwargs(parser):
 
 def get_place_kwargs(args):
     place_kwargs = {
-                  'Nagents': args.Nagents,
+                  'N': args.Nagents,
                   }
     return place_kwargs

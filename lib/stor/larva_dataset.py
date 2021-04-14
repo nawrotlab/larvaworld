@@ -619,8 +619,9 @@ class LarvaDataset:
             os.makedirs(save_to)
         if agent_ids is None:
             agent_ids = self.agent_ids
-        plot_dataset(data=self.step_data, parameters=parameters, agent_ids=agent_ids, dt=self.dt, save_to=save_to,
+        fig=plot_dataset(data=self.step_data, parameters=parameters, agent_ids=agent_ids, dt=self.dt, save_to=save_to,
                      **kwargs)
+        return fig
 
     def plot_angular_pars(self, bend_param=None, orientation_param=None, candidate_distributions=['t'],
                           chunk_only=None, num_sample=None, absolute=False):
@@ -2688,7 +2689,7 @@ class LarvaDataset:
                 os.makedirs(i)
 
     def analysis(self):
-        comparative_analysis(datasets=[self], labels=[self.id])
+        fig_dict=comparative_analysis(datasets=[self], labels=[self.id])
 
     def store_pause_datasets(self, filepath):
         d = pd.read_csv(filepath, index_col=['AgentID', 'Chunk'])

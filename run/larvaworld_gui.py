@@ -20,21 +20,12 @@ sg.theme('LightGreen')
 
 def run_gui():
     collapsibles={}
-    l_anal, graph_dict, data, func, func_kwargs, fig, save_to, save_as, figure_agg = build_analysis_tab()
-    l_mod, collapsibles, odor_gains = build_model_tab(collapsibles)
-    l_sim, sim_datasets, collapsibles, source_units, border_list, larva_groups, source_groups = build_sim_tab(collapsibles)
-    l_batch, collapsibles, space_search, batch_results, batch_fig_agg = build_batch_tab(collapsibles)
-
-    dicts = {
-        'odor_gains' : odor_gains,
-        'source_units' : source_units,
-        'source_groups' : source_groups,
-        'larva_groups' : larva_groups,
-        'border_list' : border_list,
-        'sim_datasets' : sim_datasets,
-        'space_search' : space_search,
-        'batch_results' : batch_results,
-             }
+    graph_lists={}
+    dicts = {}
+    l_anal, graph_lists, dicts = build_analysis_tab(graph_lists, dicts)
+    l_mod, collapsibles, dicts = build_model_tab(collapsibles, dicts)
+    l_sim, collapsibles, graph_lists, dicts = build_sim_tab(collapsibles, graph_lists, dicts)
+    l_batch, collapsibles, graph_lists, dicts = build_batch_tab(collapsibles, graph_lists, dicts)
 
     l_gui = [
         [sg.TabGroup([[
@@ -62,18 +53,25 @@ def run_gui():
                 w[e].metadata.state = not w[e].metadata.state
                 w[e].update(image_data=on_image if w[e].metadata.state else off_image)
 
+        else :
+            for name,graph_list in graph_lists.items() :
+                if e==graph_list.list_key :
+                    graph_list.evaluate(w, v[graph_list.list_key])
+
+
         tab = v['ACTIVE_TAB']
         if tab == 'ANALYSIS_TAB':
-            w, func, func_kwargs, data, figure_agg, fig, save_to, save_as = eval_analysis(e, v, w,
-                                                                                          func, func_kwargs, data,
-                                                                                          figure_agg, fig, save_to,
-                                                                                          save_as, graph_dict)
+            graph_lists, dicts = eval_analysis(e, v, w,graph_lists, dicts)
+                                                                                          # func, func_kwargs,
+                                                                                          # figure_agg, fig, save_to,
+                                                                                          # save_as,
+
         elif tab == 'MODEL_TAB':
-            dicts['odor_gains'] = eval_model(e, v, w, collapsibles, dicts['odor_gains'])
+            dicts = eval_model(e, v, w, collapsibles, dicts)
         elif tab == 'BATCH_TAB':
-            dicts, batch_fig_agg = eval_batch(e, v, w, collapsibles, dicts, batch_fig_agg)
+            dicts, graph_lists = eval_batch(e, v, w, collapsibles, dicts, graph_lists)
         elif tab == 'SIMULATION_TAB':
-            dicts = eval_sim(e, v, w, collapsibles, dicts)
+            dicts, graph_lists = eval_sim(e, v, w, collapsibles, dicts, graph_lists)
     w.close()
     return
 

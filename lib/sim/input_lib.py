@@ -139,17 +139,8 @@ def eval_selection(model, p, ctrl):
 
 
 def toggle(model, name, value=None, show=False, minus=False, plus=False):
-    if name == 'visible_ids':
-        for a in model.get_flies() + model.get_food():
-            a.id_box.visible = not a.id_box.visible
-    elif name == 'random_colors':
-        for f in model.get_flies():
-            f.set_default_color(model.generate_larva_color())
-    elif name == 'black_background':
-        model.update_default_colors()
-    elif name == 'larva_collisions':
-        model.eliminate_overlap()
-    elif name == 'snapshot #':
+
+    if name == 'snapshot #':
         import imageio
         record_image_to = f'{model.media_name}_{model.snapshot_counter}.png'
         model._screen._image_writer = imageio.get_writer(record_image_to, mode='i')
@@ -174,3 +165,14 @@ def toggle(model, name, value=None, show=False, minus=False, plus=False):
         value = 'ON' if getattr(model, name) else 'OFF'
     model.screen_texts[name].text = f'{name} {value}'
     model.screen_texts[name].end_time = pygame.time.get_ticks() + 3000
+
+    if name == 'visible_ids':
+        for a in model.get_flies() + model.get_food():
+            a.id_box.visible = not a.id_box.visible
+    elif name == 'random_colors':
+        for f in model.get_flies():
+            f.set_default_color(model.generate_larva_color())
+    elif name == 'black_background':
+        model.update_default_colors()
+    elif name == 'larva_collisions':
+        model.eliminate_overlap()
