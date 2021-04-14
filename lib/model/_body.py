@@ -255,6 +255,7 @@ class DefaultSegment:
         self.vertices = [pos + fun.rotate_around_center_multi(self.seg_vertices[0], -orient)]
 
     def draw(self, viewer):
+        # print(self._color)
         for vertices in self.vertices:
             viewer.draw_polygon(vertices, filled=True, color=self._color)
 
@@ -637,6 +638,7 @@ class LarvaBody:
                            filled=True, color=(255, 0, 0), width=.1)
 
     def draw(self, viewer):
+
         if not self.model.draw_contour:
             self.contour = self.set_contour()
             viewer.draw_polygon(self.contour, filled=True, color=self.get_head()._color)
@@ -682,8 +684,10 @@ class LarvaBody:
             mass += seg.get_mass()
         return mass
 
-    def set_color(self, color):
-        for seg, col in zip(self.segs, color):
+    def set_color(self, colors):
+        if len(colors)!=self.Nsegs :
+            colors=[tuple(colors) for i in range(self.Nsegs)]
+        for seg, col in zip(self.segs, colors):
             seg.set_color(col)
 
     def get_color(self):

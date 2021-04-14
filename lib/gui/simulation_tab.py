@@ -91,8 +91,8 @@ def build_sim_tab(collapsibles, graph_lists, dicts):
     output_dict = dict(zip(output_keys, [False] * len(output_keys)))
     collapsibles['OUTPUT'] = CollapsibleDict('OUTPUT', False, dict=output_dict)
 
-    collapsibles['VISUALIZATION'] = CollapsibleDict('VISUALIZATION', False,
-                                                    dict=get_vis_kwargs_dict(video_speed=60), type_dict=vis_pars_dict)
+    s = CollapsibleDict('VISUALIZATION', False, dict=get_vis_kwargs_dict(video_speed=60), type_dict=vis_pars_dict, toggled_subsections=None)
+    collapsibles.update(s.get_subdicts())
 
     sim_conf = [[sg.Text('Sim id:', **text_kwargs), sg.In('unnamed_sim', key='sim_id', **text_kwargs)],
                 [sg.Text('Path:', **text_kwargs), sg.In('single_runs', key='path', **text_kwargs)],

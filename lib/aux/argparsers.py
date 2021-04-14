@@ -1,6 +1,8 @@
 import sys
 import numpy as np
 
+from lib.conf.dtype_dicts import get_vis_kwargs_dict
+
 sys.path.insert(0, '../../..')
 import lib.conf.env_conf as env
 import lib.aux.functions as fun
@@ -12,6 +14,7 @@ def add_vis_kwargs(parser):
                         help='The fast-forward speed of the video')
     parser.add_argument('-img', '--image_mode', nargs='?', const='final',
                         choices=['final', 'overlap', 'snapshots'], help='Select image mode')
+    parser.add_argument('-media', '--media_name', type=str, help='Filename for the saved video/image')
     parser.add_argument('-rnd', '--random_colors', action="store_true", help='Color larvae with random colors')
     parser.add_argument('-beh', '--color_behavior', action="store_true", help='Color behavioral epochs')
     parser.add_argument('-trj', '--trajectories', type=float, nargs='?', const=0.0,
@@ -23,6 +26,7 @@ def add_vis_kwargs(parser):
     parser.add_argument('-cen', '--draw_centroid', action="store_true", help='Show the centroid')
     parser.add_argument('-vis_clock', '--visible_clock', action="store_false", help='Visible clock')
     parser.add_argument('-vis_state', '--visible_state', action="store_false", help='Visible state')
+    parser.add_argument('-vis_scale', '--visible_scale', action="store_false", help='Visible spatial scale')
     parser.add_argument('-vis_ids', '--visible_ids', action="store_true", help='Visible ids')
     return parser
 
@@ -30,10 +34,13 @@ def add_vis_kwargs(parser):
 def get_vis_kwargs(args):
     if args.video_speed is not None:
         mode = 'video'
+        video_speed = args.video_speed
     elif args.image_mode is not None:
         mode = 'image'
+        video_speed = 1
     else:
         mode = None
+        video_speed = 1
 
     if args.trajectories is None:
         trajectories = False
@@ -42,25 +49,16 @@ def get_vis_kwargs(args):
         trajectories = True
         trajectory_dt = args.trajectories
 
-    vis_kwargs = {'mode': mode,
-                  'image_mode': args.image_mode,
-                  'video_speed': args.video_speed,
-                  'show_display': args.show_display,
-                  'draw_head': args.draw_head,
-                  'draw_contour': args.draw_contour,
-                  'draw_midline': args.draw_midline,
-                  'draw_centroid': args.draw_centroid,
-                  'trajectories': trajectories,
-                  'trajectory_dt': trajectory_dt,
-                  'random_colors': args.random_colors,
-                  'color_behavior': args.color_behavior,
-                  'black_background': args.black_background,
-                  'visible_clock': args.visible_clock,
-                  'visible_state': args.visible_state,
-                  'visible_ids': args.visible_ids,
-
-
-                  }
+    vis_kwargs = get_vis_kwargs_dict(mode=mode, image_mode=args.image_mode, video_speed=video_speed,
+                                     show_display=args.show_display, media_name=args.media_name,
+                                     draw_head=args.draw_head, draw_centroid=args.draw_centroid,
+                                     draw_midline=args.draw_midline, draw_contour=args.draw_contour,
+                                     trajectories=trajectories, trajectory_dt=trajectory_dt,
+                                     black_background=args.black_background, random_colors=args.random_colors,
+                                     color_behavior=args.color_behavior,
+                                     visible_clock=args.visible_clock, visible_state=args.visible_state,
+                                     visible_scale=args.visible_scale, visible_ids=args.visible_ids,
+                                     )
     return vis_kwargs
 
 
@@ -185,8 +183,9 @@ def get_build_kwargs(args):
 def add_sim_kwargs(parser):
     parser.add_argument('-id', '--sim_id', type=str, help='The id of the simulation')
     parser.add_argument('-path', '--path', type=str, help='The path to save the simulation dataset')
-    parser.add_argument('-t', '--sim_dur', type=float, nargs='?', default=1.0,  help='The duration of the simulation in min')
-    parser.add_argument('-dt', '--dt', type=float, nargs='?', default=0.1,  help='The timestep of the simulation in sec')
+    parser.add_argument('-t', '--sim_dur', type=float, nargs='?', default=1.0,
+                        help='The duration of the simulation in min')
+    parser.add_argument('-dt', '--dt', type=float, nargs='?', default=0.1, help='The timestep of the simulation in sec')
     parser.add_argument('-Box2D', '--Box2D', action="store_true", help='Use the Box2D physics engine')
     return parser
 
@@ -243,15 +242,18 @@ def get_batch_kwargs(args):
     }
     return kwargs
 
+
 def add_optimization_kwargs(parser):
     parser.add_argument('-fit_par', '--fit_par', type=str, help='The fit parameter of the batch run')
     parser.add_argument('-minimize', '--minimize', type=bool, help='Whether to try to minimize the fit parameter')
-    parser.add_argument('-threshold', '--threshold', type=float, help='The fit parameter threshold for terminating the batch-run')
+    parser.add_argument('-threshold', '--threshold', type=float,
+                        help='The fit parameter threshold for terminating the batch-run')
     parser.add_argument('-maxN', '--max_Nsims', type=int, nargs='?', default=12,
                         help='The maximum number of simulations to run')
     parser.add_argument('-Nbst', '--Nbest', type=int, nargs='?', default=4,
                         help='The number of best configurations to expand')
     return parser
+
 
 def get_optimization_kwargs(args):
     kwargs = {
@@ -272,19 +274,21 @@ def add_space_kwargs(parser):
 
 def get_space_kwargs(args):
     Ngrid = args.Ngrid
-    if type(Ngrid)==int :
-        Ngrid = [Ngrid]* len(args.pars)
+    if type(Ngrid) == int:
+        Ngrid = [Ngrid] * len(args.pars)
     space_kwargs = {'pars': args.pars,
                     'ranges': args.ranges,
                     'Ngrid': Ngrid}
     return space_kwargs
 
+
 def add_place_kwargs(parser):
     parser.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae')
     return parser
 
+
 def get_place_kwargs(args):
     place_kwargs = {
-                  'N': args.Nagents,
-                  }
+        'N': args.Nagents,
+    }
     return place_kwargs

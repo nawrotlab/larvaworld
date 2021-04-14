@@ -86,10 +86,11 @@ life_pars_dict = {
 
 }
 
-vis_disp_dict = {
+vis_render_dict = {
     'mode': ['', 'video', 'image'],
     'image_mode': ['final', 'snapshots', 'overlap'],
     'video_speed': int,
+    'media_name': str,
     'show_display': bool,
 }
 
@@ -110,42 +111,55 @@ vis_color_dict = {
 
 vis_aux_dict = {
     'visible_clock': bool,
+    'visible_scale': bool,
     'visible_state': bool,
     'visible_ids': bool,
 }
 
-vis_pars_dict = {
-    **vis_disp_dict,
+vis_pars_dict0 = {
+    **vis_render_dict,
     **vis_draw_dict,
     **vis_color_dict,
     **vis_aux_dict,
 }
 
+vis_pars_dict = {
+    'render': vis_render_dict,
+    'draw': vis_draw_dict,
+    'color': vis_color_dict,
+    'aux': vis_aux_dict,
+}
 
-def get_vis_kwargs_dict(mode='video', image_mode='final', video_speed=1, show_display=True,
+
+def get_vis_kwargs_dict(mode='video', image_mode='final', video_speed=1, show_display=True,media_name=None,
                         draw_head=False, draw_centroid=False, draw_midline=True, draw_contour=True,
                         trajectories=False, trajectory_dt=0.0,
                         black_background=False, random_colors=False, color_behavior=False,
-                        visible_clock=True, visible_state=True, visible_ids=False,
+                        visible_clock=True, visible_state=True, visible_scale=True, visible_ids=False,
                         ):
-    return {
-        'mode': mode,
-        'image_mode': image_mode,
-        'video_speed': video_speed,
-        'show_display': show_display,
-        'draw_head': draw_head,
-        'draw_centroid': draw_centroid,
-        'draw_midline': draw_midline,
-        'draw_contour': draw_contour,
-        'trajectories': trajectories,
-        'trajectory_dt': trajectory_dt,
-        'black_background': black_background,
-        'random_colors': random_colors,
-        'color_behavior': color_behavior,
-        'visible_clock': visible_clock,
-        'visible_state': visible_state,
-        'visible_ids': visible_ids,
+
+    dic = {
+        'render': {'mode': mode,
+                   'image_mode': image_mode,
+                   'video_speed': video_speed,
+                   'media_name': media_name,
+                   'show_display': show_display},
+        'draw': {'draw_head': draw_head,
+                 'draw_centroid': draw_centroid,
+                 'draw_midline': draw_midline,
+                 'draw_contour': draw_contour,
+                 'trajectories': trajectories,
+                 'trajectory_dt': trajectory_dt},
+        'color': {'black_background': black_background,
+                  'random_colors': random_colors,
+                  'color_behavior': color_behavior},
+        'aux': {'visible_clock': visible_clock,
+                'visible_scale': visible_scale,
+                'visible_state': visible_state,
+                'visible_ids': visible_ids}
     }
+
+    return dic
 
 
 def distro_pars(class_name):

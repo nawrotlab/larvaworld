@@ -265,10 +265,11 @@ def update_window_from_dict(window, dic, prefix=None):
 
 
 class SectionDict:
-    def __init__(self, name, dict, type_dict=None):
+    def __init__(self, name, dict, type_dict=None, toggled_subsections=True):
         self.init_dict = dict
         # self.named_init_dict=self.named_dict(dict)
         self.type_dict = type_dict
+        self.toggled_subsections = toggled_subsections
         self.name = name
         self.subdicts = {}
 
@@ -283,7 +284,11 @@ class SectionDict:
             if type(v) == bool:
                 l.append(named_bool_button(k, v, k0))
             elif type(v) == dict:
-                self.subdicts[k0] = CollapsibleDict(k0, True, disp_name=k, dict=v, toggle=True)
+                if self.type_dict is not None :
+                    type_dict=self.type_dict[k]
+                else :
+                    type_dict=None
+                self.subdicts[k0] = CollapsibleDict(k0, True, disp_name=k, dict=v, type_dict=type_dict, toggle=self.toggled_subsections)
                 ll = self.subdicts[k0].get_section()
                 l.append(ll)
             else:
@@ -316,7 +321,7 @@ class SectionDict:
                 k0 = f'{self.name}_{k}'
                 if t == bool:
                     new_dict[k] = window[f'TOGGLE_{k0}'].metadata.state
-                elif t == dict:
+                elif t == dict or type(t) == dict:
                     new_dict[k] = self.subdicts[k0].get_dict(values, window)
                 else:
                     new_dict[k] = retrieve_value(values[k0], t)
@@ -408,11 +413,11 @@ class Collapsible:
 
 
 class CollapsibleDict(Collapsible):
-    def __init__(self, name, state, dict, dict_name=None, type_dict=None, **kwargs):
+    def __init__(self, name, state, dict, dict_name=None, type_dict=None, toggled_subsections = True, **kwargs):
         if dict_name is None:
             dict_name = name
         self.dict_name = dict_name
-        self.sectiondict = SectionDict(name=dict_name, dict=dict, type_dict=type_dict)
+        self.sectiondict = SectionDict(name=dict_name, dict=dict, type_dict=type_dict, toggled_subsections=toggled_subsections)
         content = self.sectiondict.init_section()
         super().__init__(name, state, content, **kwargs)
 

@@ -114,10 +114,11 @@ def sim_analysis(d, exp_type):
             fig_dict[p] =plot_timeplot(p, datasets=[d])
         dic = plot_distance_to_source(dataset=d, exp_type=exp_type)
         fig_dict.update(dic)
-        d.visualize(agent_ids=[d.agent_ids[0]], mode='image', image_mode='final',
-                    contours=False, centroid=False, spinepoints=False,
-                    random_colors=True, trajectories=True, trajectory_dt=0,
-                    save_as='single_trajectory', show_display=False)
+        vis_kwargs=get_vis_kwargs_dict(mode='image',image_mode='final',show_display=False,
+                                       random_colors=True, trajectories=True, trajectory_dt=0,
+                                       visible_clock=False, visible_scale=False)
+        d.visualize(agent_ids=[d.agent_ids[0]], vis_kwargs = vis_kwargs,
+                    save_as='single_trajectory')
     elif exp_type == 'odor_preference':
         ind = d.compute_preference_index(arena_diameter_in_mm=100)
         print(ind)
@@ -128,8 +129,7 @@ def sim_analysis(d, exp_type):
     return fig_dict, results
 
 def init_sim(env_params):
-    env = LarvaWorldSim(env_params=env_params, vis_kwargs=get_vis_kwargs_dict(visible_clock=False))
-    env.allow_clicks = True
+    env = LarvaWorldSim(env_params=env_params, vis_kwargs=get_vis_kwargs_dict(visible_clock=False, visible_state=False))
     env.is_running = True
     return env
 
@@ -151,7 +151,6 @@ def run_sim_basic(
         life_params={},
         collections=None,
         save_to=None,
-        media_name=None,
         save_data_flag=True,
         enrich=False,
         experiment=None,
@@ -194,7 +193,7 @@ def run_sim_basic(
                         # larva_pars=larva_pars,
                         env_params=env_params, collected_pars=collected_pars,
                         life_params=life_params, Nsteps=Nsteps,
-                        media_name=media_name, save_to=d.vis_dir, experiment=experiment,
+                        save_to=d.vis_dir, experiment=experiment,
                         **kwargs, vis_kwargs=vis_kwargs)
     # Prepare the odor layer for a number of timesteps
     odor_prep_time = 0.0

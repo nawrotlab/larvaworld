@@ -41,61 +41,22 @@ class LarvaWorld:
         return object.__new__(cls)
 
     def __init__(self, vis_kwargs, env_params,
-                 # larva_pars=None,
                  id='unnamed', dt=0.1, Nsteps=None, save_to='.',
                  background_motion=None, Box2D=False,
                  use_background=False,
-                 # mode='video',
-                 # image_mode='final',
-                 media_name=None,
-
-                 # vis_kwargs=
-                 # trajectories=True, trajectory_dt=0.0,
                  trajectory_colors=None,
-                 # visible_clock=True, visible_state=True,
-                 # random_colors=False, color_behavior=False, draw_head=False,
-                 # draw_centroid=False, draw_contour=True,
-                 # draw_midline=True,
-                 # black_background=False,
-
-                 # show_display=True, video_speed=None,
-                 snapshot_interval_in_sec=60 * 60 * 10, touch_sensors=False, allow_clicks=True,
+                 touch_sensors=False, allow_clicks=True,
                  experiment=None
-                 # *args: [], **kwargs: {'seed': 1}
                  ):
 
-        # vis_kwargs = {
-        #     'trajectory_dt': 0.0,
-        #     'trajectories': False,
-        #
-        #     'draw_midline': True,
-        #     'draw_contour': True,
-        #
-        #     'draw_centroid': False,
-        #     'draw_head': False,
-        #
-        #     'visible_clock': True,
-        #     'visible_ids': False,
-        #     'visible_state': True,
-        #
-        #     'color_behavior': False,
-        #     'random_colors': False,
-        #     'black_background': False,
-        #
-        #     'focus_mode': False,
-        #     'larva_collisions': True,
-        # }
         self.vis_kwargs = vis_kwargs
-        self.__dict__.update(self.vis_kwargs)
-
-
+        self.__dict__.update(self.vis_kwargs['draw'])
+        self.__dict__.update(self.vis_kwargs['color'])
+        self.__dict__.update(self.vis_kwargs['aux'])
 
         self.experiment = experiment
         self.dynamic_graphs = []
-        # self.visible_ids = False
         self.focus_mode = False
-        # self.visible_state = visible_state
-        # self.visible_clock = visible_clock
         self.selected_type = ''
 
         self.borders, self.border_xy, self.border_lines, self.border_bodies = [], [], [], []
@@ -109,48 +70,28 @@ class LarvaWorld:
         self.selected_agents = []
         self.is_running = False
         self.dt = dt
-        if self.video_speed is None:
-            self.video_fps = int(1 / dt)
-        else:
-            self.video_fps = int(self.video_speed / dt)
+        self.video_fps = int(self.vis_kwargs['render']['video_speed'] / dt)
+        # self.video_fps = int(self.video_speed / dt)
         self.allow_clicks = allow_clicks
         self.touch_sensors = touch_sensors
-        # self.show_display = show_display
         self.Nticks = 0
         self.Nsteps = Nsteps
+        snapshot_interval_in_sec = 10
         self.snapshot_interval = int(snapshot_interval_in_sec / dt)
         self.id = id
 
         self._screen = None
-        # self.mode = mode
-        # self.image_mode = image_mode
         self.save_to = save_to
 
         os.makedirs(save_to, exist_ok=True)
-        if media_name:
-            self.media_name = os.path.join(save_to, media_name)
+        if self.vis_kwargs['render']['media_name']:
+            self.media_name = os.path.join(save_to, self.vis_kwargs['render']['media_name'])
         else:
             self.media_name = os.path.join(save_to, self.id)
 
-        # self.trajectories = trajectories
         self.trajectory_colors = trajectory_colors
-        # self.trajectory_dt = trajectory_dt
-
-        # self.random_colors = random_colors
-        # self.color_behavior = color_behavior
-        #
-        # self.draw_head = draw_head
-        # self.draw_contour = draw_contour
-        # self.draw_centroid = draw_centroid
-        # self.draw_midline = draw_midline
-
-        # if background_motion is None:
-        #     self.background_motion = np.zeros((3, self.Nsteps))
-        # else:
-        #     self.background_motion = background_motion
         self.background_motion = background_motion
         self.use_background = use_background
-        # self.black_background = black_background
         self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
             self.black_background)
 
@@ -180,6 +121,45 @@ class LarvaWorld:
         self.screen_texts = self.create_screen_texts(color=self.scale_clock_color)
 
         self.end_condition_met = False
+
+    def toggle(self, name, value=None, show=False, minus=False, plus=False):
+
+        if name == 'snapshot #':
+            import imageio
+            record_image_to = f'{self.media_name}_{self.snapshot_counter}.png'
+            self._screen._image_writer = imageio.get_writer(record_image_to, mode='i')
+            value = self.snapshot_counter
+            self.snapshot_counter += 1
+        elif name == 'odorscape #':
+            self.plot_odorscape(save_to=self.save_to, show=show)
+            value = self.odorscape_counter
+            self.odorscape_counter += 1
+        elif name == 'trajectory_dt':
+            if minus:
+                dt = -1
+            elif plus:
+                dt = +1
+            self.trajectory_dt = np.clip(self.trajectory_dt + 5 * dt, a_min=0, a_max=np.inf)
+            value = self.trajectory_dt
+        # elif name=='black_background' :
+        # elif name=='black_background' :
+
+        if value is None:
+            setattr(self, name, not getattr(self, name))
+            value = 'ON' if getattr(self, name) else 'OFF'
+        self.screen_texts[name].text = f'{name} {value}'
+        self.screen_texts[name].end_time = pygame.time.get_ticks() + 3000
+
+        if name == 'visible_ids':
+            for a in self.get_flies() + self.get_food():
+                a.id_box.visible = not a.id_box.visible
+        elif name == 'random_colors':
+            for f in self.get_flies():
+                f.set_default_color(self.generate_larva_color())
+        elif name == 'black_background':
+            self.update_default_colors()
+        elif name == 'larva_collisions':
+            self.eliminate_overlap()
 
     def set_default_colors(self, black_background):
         if black_background:
@@ -280,13 +260,12 @@ class LarvaWorld:
         # del self.active_food_schedule
         # del self.active_larva_schedule
         if self._screen is not None:
-            self._screen.close()
-            self._screen = None
+            self._screen.close_requested()
 
-    def delete(self):
-        self.close()
-        pygame.quit()
-        del self
+    # def delete(self):
+    #     self.close()
+    #     pygame.quit()
+    #     del self
 
     def get_flies(self) -> List[Larva]:
         return self.active_larva_schedule.agents
@@ -340,7 +319,8 @@ class LarvaWorld:
     def draw_aux(self, screen):
         if self.visible_clock:
             self.sim_clock.draw_clock(screen)
-        self.sim_scale.draw_scale(screen)
+        if self.visible_scale:
+            self.sim_scale.draw_scale(screen)
         if self.visible_state:
             self.sim_state.draw_state(screen)
         self.input_box.draw(screen)
@@ -366,11 +346,9 @@ class LarvaWorld:
             b.draw(screen)
 
     def render_aux(self, width, height):
-        if self.visible_clock:
-            self.sim_clock.render_clock(width, height)
+        self.sim_clock.render_clock(width, height)
         self.sim_scale.render_scale(width, height)
-        if self.visible_state:
-            self.sim_state.render_state(width, height)
+        self.sim_state.render_state(width, height)
         for name, text in self.screen_texts.items():
             text.render(width, height)
 
@@ -380,17 +358,19 @@ class LarvaWorld:
         else:
             background_motion = self.background_motion[:, tick]
         if self._screen is None:
-            if self.mode == 'video':
+            if self.vis_kwargs['render']['mode'] == 'video':
                 self._video_path = f'{self.media_name}.mp4'
             else:
                 self._video_path = None
-            if self.mode == 'image':
+            if self.vis_kwargs['render']['mode'] == 'image':
                 self._image_path = f'{self.media_name}_{self.snapshot_counter}.png'
             else:
                 self._image_path = None
 
             self._screen = ren.GuppiesViewer(self.screen_width, self.screen_height, caption=self.id,
-                                             fps=self.video_fps, dt=self.dt, show_display=self.show_display,
+                                             fps=self.video_fps, dt=self.dt,
+                                             show_display=self.vis_kwargs['render']['show_display'],
+                                             # show_display=self.show_display,
                                              record_video_to=self._video_path,
                                              record_image_to=self._image_path)
             self.render_aux(self.screen_width, self.screen_height)
@@ -400,10 +380,10 @@ class LarvaWorld:
         elif self._screen.close_requested():
             self._screen.close()
             self._screen = None
-            self.is_running = False
-            return None
+            self.close()
+            return
 
-        if self.image_mode != 'overlap':
+        if self.vis_kwargs['render']['image_mode'] != 'overlap':
             self.draw_arena(self._screen, background_motion)
 
         for o in self.get_food():
@@ -425,7 +405,7 @@ class LarvaWorld:
         evaluate_input(self, self._screen)
         evaluate_graphs(self)
 
-        if self.image_mode != 'overlap':
+        if self.vis_kwargs['render']['image_mode'] != 'overlap':
             self.draw_aux(self._screen)
             self._screen.render()
             # return image
@@ -526,7 +506,7 @@ class LarvaWorld:
             elif agent_class == 'Larva':
                 f = self.add_larva(p0)
             elif agent_class == 'Border':
-                b = Border(model=self, points=[p1, p0],from_screen=True)
+                b = Border(model=self, points=[p1, p0], from_screen=True)
                 self.add_border(b)
         except:
             pass
@@ -542,67 +522,73 @@ class LarvaWorld:
     def run(self, Nsteps=None):
         # pygame.init()
         self.is_running = True
+        self.sim_paused = False
         if Nsteps is None:
             Nsteps = self.Nsteps
         warnings.filterwarnings('ignore')
         with progressbar.ProgressBar(max_value=Nsteps) as bar:
-            if self.mode == 'video':
-                for i in range(Nsteps):
-                    if not self.is_running:
-                        self.close()
-                        return False
+            while self.is_running and self.Nticks < Nsteps and not self.end_condition_met:
+                if not self.sim_paused :
                     self.step()
-                    # TODO Figure this out for multiple agents. Now only the first is used
-                    self.render(tick=i)
-                    bar.update(i)
-                    # print(self.is_running)
-                    if self.end_condition_met:
-                        return True
+                    bar.update(self.Nticks)
+                if self.vis_kwargs['render']['mode'] == 'video' or self.vis_kwargs['render']['image_mode'] == 'overlap':
+                    self.render(tick=self.Nticks)
+                if self.vis_kwargs['render']['image_mode'] == 'snapshots':
+                    if (self.Nticks - 1) % self.snapshot_interval == 0:
+                        self.render(tick=self.Nticks)
+                        self.toggle(name='snapshot #')
+                        self._screen.render()
 
-            elif self.mode == 'image':
-                if self.image_mode == 'snapshots':
-                    for i in range(Nsteps):
-                        self.step()
-                        if (self.active_larva_schedule.time - 1) % self.snapshot_interval == 0:
-                            self.snapshot_counter += 1
-                            self.render()
-                            self._screen.close()
-                            self._screen = None
-                        bar.update(i)
-                        if self.end_condition_met:
-                            return True
-                elif self.image_mode == 'overlap':
-                    for i in range(Nsteps):
-                        self.step()
-                        self.render()
-                        bar.update(i)
-                        if self.end_condition_met:
-                            return True
-                    self._screen.render()
-                    self._screen.close()
+                        # self._screen.close()
 
-                elif self.image_mode == 'final':
-                    if isinstance(self, LarvaWorldSim):
-                        for i in range(Nsteps):
-                            self.step()
-                            bar.update(i)
-                            if self.end_condition_met:
-                                return True
-                    elif isinstance(self, LarvaWorldReplay):
-                        self.active_larva_schedule.steps = Nsteps - 1
-                        self.step()
-                    self.render()
-            else:
-                if isinstance(self, LarvaWorldSim):
-                    for i in range(Nsteps):
-                        self.step()
-                        bar.update(i)
-                        if self.end_condition_met:
-                            return True
-                elif isinstance(self, LarvaWorldReplay):
-                    raise ValueError('When running a replay, set mode to video or image')
+            if self.vis_kwargs['render']['image_mode'] == 'overlap':
+                self._screen.render()
+                self._screen.close()
+            elif self.vis_kwargs['render']['image_mode'] == 'final':
+                self.render(tick=self.Nticks)
+                self.toggle(name='snapshot #')
+                self._screen.render()
+                self._screen.close()
 
-        return True
+            #     elif self.vis_kwargs['render']['mode'] == 'image':
+            #
+            #             bar.update(i)
+            #             if self.end_condition_met:
+            #                 return True
+            #     elif self.vis_kwargs['render']['image_mode'] == 'overlap':
+            #     # elif self.image_mode == 'overlap':
+            #     #     for i in range(Nsteps):
+            #         self.step()
+            #         self.render()
+            #         bar.update(i)
+            #         if self.end_condition_met:
+            #             return True
+            #         self._screen.render()
+            #         self._screen.close()
+            #
+            #     elif self.vis_kwargs['render']['image_mode'] == 'final':
+            #     # elif self.image_mode == 'final':
+            #         if isinstance(self, LarvaWorldSim):
+            #             for i in range(Nsteps):
+            #                 self.step()
+            #                 bar.update(i)
+            #                 if self.end_condition_met:
+            #                     return True
+            #         elif isinstance(self, LarvaWorldReplay):
+            #             self.active_larva_schedule.steps = Nsteps - 1
+            #             self.step()
+            #         self.render()
+            # else:
+            #     if isinstance(self, LarvaWorldSim):
+            #         for i in range(Nsteps):
+            #             self.step()
+            #             bar.update(i)
+            #             if self.end_condition_met:
+            #                 return True
+            #     elif isinstance(self, LarvaWorldReplay):
+            #         raise ValueError('When running a replay, set mode to video or image')
+
+        return self.is_running
 
     def set_end_condition(self):
         if self.experiment == 'flag':
@@ -691,8 +677,6 @@ class LarvaWorld:
         return f'{self.media_name}_{self.snapshot_counter}.png'
         # return None
 
-
-
     def get_agent_list(self, class_name):
         if class_name == 'Food':
             agents = self.get_food()
@@ -745,7 +729,8 @@ class LarvaWorld:
             'larva_collisions',
             'zoom',
             'snapshot #',
-            'odorscape #'
+            'odorscape #',
+            'sim_paused',
         ]
 
         for name in names:
