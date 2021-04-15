@@ -7,8 +7,7 @@ import PySimpleGUI as sg
 import matplotlib
 from tkinter import *
 
-from lib.anal.combining import render_mpl_table
-from lib.sim.batch_lib import batch_run
+
 
 sys.path.insert(0, '..')
 
