@@ -1,5 +1,5 @@
 import copy
-
+import threading
 import PySimpleGUI as sg
 from lib.conf.dtype_dicts import agent_pars, distro_pars, arena_pars_dict, life_pars_dict, odorscape_pars_dict, \
     get_vis_kwargs_dict, vis_pars_dict, get_replay_kwargs_dict, replay_pars_dict

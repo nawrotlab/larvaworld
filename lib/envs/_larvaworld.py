@@ -44,7 +44,7 @@ class LarvaWorld:
                  id='unnamed', dt=0.1, Nsteps=None, save_to='.',
                  background_motion=None, Box2D=False,
                  use_background=False,
-                 trajectory_colors=None,
+                 traj_color=None,
                  touch_sensors=False, allow_clicks=True,
                  experiment=None
                  ):
@@ -89,7 +89,7 @@ class LarvaWorld:
         else:
             self.media_name = os.path.join(save_to, self.id)
 
-        self.trajectory_colors = trajectory_colors
+        self.traj_color = traj_color
         self.background_motion = background_motion
         self.use_background = use_background
         self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
@@ -400,7 +400,7 @@ class LarvaWorld:
         if self.trajectories:
             ren.draw_trajectories(space_dims=self.space_dims, agents=self.get_flies(), screen=self._screen,
                                   decay_in_ticks=int(self.trajectory_dt / self.dt),
-                                  trajectory_colors=self.trajectory_colors)
+                                  traj_color=self.traj_color)
 
         evaluate_input(self, self._screen)
         evaluate_graphs(self)

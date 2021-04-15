@@ -1,6 +1,7 @@
-def optimization(fit_par, minimize=True, threshold=0.0001, max_Nsims=10, Nbest=4):
+def optimization(fit_par, minimize=True, threshold=0.0001, max_Nsims=10, Nbest=4, operations={'mean' : True, 'std': False, 'abs' : False}):
     return {
         'fit_par': fit_par,
+        'operations' : operations,
         'minimize': minimize,
         'threshold': threshold,
         'max_Nsims': max_Nsims,
@@ -86,16 +87,17 @@ rovers_sitters_batch = {
     'run_kwargs' : {'save_data_flag': True}
 }
 
+
 growth_batch = {
     'exp': 'growth',
     'space_search': {
         'pars': ['EEB', 'hunger_sensitivity'],
-        'ranges': [(0.3, 1.0), (0.1, 0.6)],
-        'Ngrid': [3, 3]
+        'ranges': [(0.5, 0.8), (0.0, 0.0)],
+        'Ngrid': [8, 1]
     },
     'methods': batch_methods(),
-    'optimization': optimization('deb_f_deviation'),
-    'run_kwargs' : {'save_data_flag': True}
+    'optimization': optimization('deb_f_deviation', max_Nsims=20, operations={'mean':True, 'abs':True}),
+    'run_kwargs' : {'save_data_flag': False}
 }
 
 test_batch = {

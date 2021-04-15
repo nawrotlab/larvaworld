@@ -119,7 +119,7 @@ class FoodGrid(ValueGrid):
 
     def get_color(self, v):
         v0 = self.initial_value
-        c = int((v0 - v) / v0 * 255)
+        c = int((v0 - v) / v0 * 255) if v0!=0 else 255
         col = np.clip(np.array(self.default_color) + c, a_min=0, a_max=255)
         return col
 

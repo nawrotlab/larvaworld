@@ -1,7 +1,7 @@
 from typing import List, Tuple
 
 from lib.conf import par_conf
-from lib.conf.conf import loadConfDict
+from lib.conf.conf import loadConfDict, next_idx
 
 odor_pars = {'odor_id': str,
              'odor_intensity': float,
@@ -54,9 +54,14 @@ odorscape_pars_dict = {'odorscape': ['Gaussian', 'Diffusion'],
                        'gaussian_sigma': Tuple[float, float],
                        }
 
+operation_dict = {
+    'mean' : bool,
+    'std' : bool,
+    'abs' : bool,
+                  }
 opt_pars_dict = {
     'fit_par': par_conf.get_runtime_pars(),
-    # 'fit_par': str,
+    'operations': operation_dict,
     'minimize': bool,
     'threshold': float,
     'max_Nsims': int,
@@ -164,7 +169,7 @@ def get_vis_kwargs_dict(mode='video', image_mode='final', video_speed=1, show_di
 
 replay_pars_dict = {
     'arena_pars': arena_pars_dict,
-    'env_params': ['']+list(loadConfDict('Env').keys()),
+    'env_params': [''] + list(loadConfDict('Env').keys()),
     'track_point': int,
     # 'spinepoints': bool,
     # 'centroid': bool,
@@ -187,7 +192,7 @@ def get_replay_kwargs_dict(arena_pars=None,
                            dynamic_color=None,
                            agent_ids=None,
                            time_range=None,
-                           transposition=None, fix_point=None, secondary_fix_point=None,use_background=False,
+                           transposition=None, fix_point=None, secondary_fix_point=None, use_background=False,
                            draw_Nsegs=None):
     dic = {
         'arena_pars': arena_pars,
@@ -255,6 +260,7 @@ def distro_pars(class_name):
 
         }
 
+
 #
 #
 # names = [
@@ -288,3 +294,24 @@ def distro_pars(class_name):
 # for name in names :
 #     keyboard_shortcut[name] = 'e'
 # print(keyboard_shortcut)
+
+def life_dict(f=1, age=0, starvation=None):
+    return {'deb_base_f': f,
+            'hours_as_larva': age,
+            'starvation_hours': starvation
+            }
+
+
+def sim_dict(sim_id=None, sim_dur=3, dt=0.1, path=None, Box2D=False, exp_type=None):
+    if exp_type is not None:
+        if sim_id is None:
+            sim_id = f'{exp_type}_{next_idx(exp_type)}'
+        if path is None:
+            path = f'single_runs/{exp_type}'
+    return {
+        'sim_id': sim_id,
+        'sim_dur': sim_dur,
+        'dt': dt,
+        'path': path,
+        'Box2D': Box2D
+    }

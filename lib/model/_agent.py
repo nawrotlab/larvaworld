@@ -325,7 +325,7 @@ class Larva(LarvaworldAgent):
 
     @property
     def deb_f_deviation(self):
-        return np.abs(self.deb.get_f() - 1)
+        return self.deb.get_f() - 1
 
     @property
     def reserve(self):

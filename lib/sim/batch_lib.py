@@ -170,10 +170,19 @@ def load_default_configuration(traj, sim_config):
 
 def default_processing(traj, dataset=None):
     p = traj.config.fit_par
+    ops_mean=traj.config.operations.mean
+    ops_std=traj.config.operations.std
+    ops_abs=traj.config.operations.abs
     try:
-        fit = dataset.endpoint_data[p].mean()
+        vals=dataset.endpoint_data[p].values
     except:
-        fit = np.mean(dataset.step_data[p].groupby('AgentID').mean())
+        vals=dataset.step_data[p].groupby('AgentID').mean()
+    if ops_abs:
+        vals = np.abs(vals)
+    if ops_mean:
+        fit = np.mean(vals)
+    elif ops_std:
+        fit = np.std(vals)
     traj.f_add_result(p, fit, comment='The fit')
     return dataset, fit
 
@@ -332,7 +341,7 @@ def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag
         sim_params=sim_params,
         life_params=life_params,
         collections=traj.collections,
-        vis_kwargs=get_vis_kwargs_dict(mode=None),
+        vis_kwargs=get_vis_kwargs_dict(mode=None, image_mode=None),
         save_data_flag=save_data_flag,
         **kwargs)
 
@@ -443,10 +452,9 @@ def _batch_run(dir='unnamed',
 
 def config_traj(traj, optimization):
     if optimization is not None:
-        for k, v in optimization.items():
-            # print(k,v)
+        opt_dict = fun.flatten_dict(optimization, parent_key='optimization', sep='.')
+        for k, v in opt_dict.items():
             traj.f_aconf(k, v)
-        # raise
     return traj
 
 

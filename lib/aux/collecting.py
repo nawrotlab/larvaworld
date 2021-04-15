@@ -258,7 +258,9 @@ output = {
     'feeder': {
         'step': ['length', 'mass', 'amount_eaten', 'scaled_amount_eaten',
                  'explore2exploit_balance', 'filled_gut_ratio', 'amount_absorbed'],
-        'endpoint': ['length', 'mass', 'num_feeds', 'feed_success_rate', 'amount_eaten', 'scaled_amount_eaten',
+        'endpoint': ['length', 'mass', 'num_feeds',
+                     # 'feed_success_rate',
+                     'amount_eaten', 'scaled_amount_eaten',
                      'feed_dur_ratio', 'amount_absorbed']},
     'deb': {'step': ['deb_f', 'deb_f_deviation',  'reserve', 'reserve_density',
                      # 'structural_length', 'maturity', 'reproduction','structure','age_in_days',

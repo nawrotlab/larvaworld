@@ -33,9 +33,6 @@ class LarvaDataset:
         self.save_data_flag = save_data_flag
         self.define_paths(dir)
         if os.path.exists(self.config_file_path):
-            # temp = pd.read_csv(self.config_file_path)
-            # self.config = {col: temp[col].values[0] for col in temp.columns.values}
-            # self.save_config()
             with open(self.config_file_path) as tfp:
                 self.config = json.load(tfp)
             self.build_dirs()
@@ -57,7 +54,7 @@ class LarvaDataset:
                            'arena_ydim': self.arena_ydim,
                            'arena_shape': self.arena_shape}
         self.dt = 1 / fr
-        self.configure_body(Npoints=self.Npoints,Ncontour=self.Ncontour)
+        self.configure_body(Npoints=self.Npoints, Ncontour=self.Ncontour)
         self.define_linear_metrics(self.config)
         self.types_dict = self.build_types_dict()
         if load_data:
@@ -66,8 +63,6 @@ class LarvaDataset:
                 print('Data loaded successfully from stored csv files.')
             except:
                 print('Data not found. Load them manually.')
-        # else:
-        #     print('Data not loaded as requested.')
 
     ########################################
     ############# CALIBRATION ##############
@@ -80,8 +75,8 @@ class LarvaDataset:
             self.load()
         ids = self.agent_ids
         # Define all candidate velocities, their respective points and their short labels
-        points = ['centroid'] +  self.points[1:] + self.points
-        vels = [self.cent_vel]  + nam.lin(self.points_vel[1:])+ self.points_vel
+        points = ['centroid'] + self.points[1:] + self.points
+        vels = [self.cent_vel] + nam.lin(self.points_vel[1:]) + self.points_vel
         svels = nam.scal(vels)
 
         vels_minima = nam.min(vels)
@@ -220,12 +215,10 @@ class LarvaDataset:
         front_body_ratio = len(best_combo) / self.Nangles
         self.two_segment_model(front_body_ratio=front_body_ratio)
 
-
-
     def apply_filter(self, pars, freq, N=1, inplace=False, refilter=False, is_last=True):
         if self.step_data is None:
             self.load()
-        s=self.step_data
+        s = self.step_data
         if not refilter:
             if self.config['filtered_at'] is not None and not np.isnan(self.config['filtered_at']):
                 prev_filter = self.config['filtered_at']
@@ -268,11 +261,12 @@ class LarvaDataset:
     def rescale(self, rescale_again=False, scale=1, is_last=True):
         if self.step_data is None:
             self.load()
-        s,e =self.step_data, self.endpoint_data
+        s, e = self.step_data, self.endpoint_data
         if not rescale_again:
             if self.config['rescaled_by'] is not None and not np.isnan(self.config['rescaled_by']):
                 prev_scale = self.config['rescaled_by']
-                print(f'Dataset already rescaled by {prev_scale}. If you want to rescale again set rescale_again to True')
+                print(
+                    f'Dataset already rescaled by {prev_scale}. If you want to rescale again set rescale_again to True')
                 return
         print(f'Rescaling dataset by {scale}')
         dst_params = self.points_dst + [self.cent_dst] + self.segs
@@ -314,7 +308,7 @@ class LarvaDataset:
     def replace_outliers_with_nan(self, pars, stds=None, thresholds=None, additional_pars=None):
         if self.step_data is None:
             self.load()
-        s=self.step_data
+        s = self.step_data
         for i, p in enumerate(pars):
             for id in self.agent_ids:
                 k = s.loc[(slice(None), id), p]
@@ -463,7 +457,7 @@ class LarvaDataset:
             else:
                 if secondary_point is not None:
                     if type(secondary_point) == int and np.abs(secondary_point) == 1:
-                        secondary_point = self.points[point+secondary_point]
+                        secondary_point = self.points[point + secondary_point]
                 point = self.points[point]
 
         pars = [p for p in self.xy_pars if p in s.columns.values]
@@ -619,8 +613,8 @@ class LarvaDataset:
             os.makedirs(save_to)
         if agent_ids is None:
             agent_ids = self.agent_ids
-        fig=plot_dataset(data=self.step_data, parameters=parameters, agent_ids=agent_ids, dt=self.dt, save_to=save_to,
-                     **kwargs)
+        fig = plot_dataset(data=self.step_data, parameters=parameters, agent_ids=agent_ids, dt=self.dt, save_to=save_to,
+                           **kwargs)
         return fig
 
     def plot_angular_pars(self, bend_param=None, orientation_param=None, candidate_distributions=['t'],
@@ -667,14 +661,10 @@ class LarvaDataset:
 
         fit_bout_params(d=self, fit_filepath=self.fit_file_path, save_to=None, save_as='bout_pars.pdf')
 
-    def get_par_list(self, track_point=None, points=True, centroid=True, contours=True,
-                     angle_pars=None, orientation_pars=None, chunk_pars=None):
-        if angle_pars is None :
-            angle_pars = ['bend']
-        if orientation_pars is None :
-            orientation_pars = ['front_orientation'] + nam.orient(self.segs)
-        if chunk_pars is None :
-            chunk_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id']
+    def get_par_list(self, track_point=None):
+        angle_pars = ['bend']
+        orientation_pars = ['front_orientation'] + nam.orient(self.segs)
+        chunk_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id']
         if track_point is None:
             track_point = self.point
         elif type(track_point) == int:
@@ -682,22 +672,11 @@ class LarvaDataset:
                 track_point = 'centroid'
             else:
                 track_point = self.points[track_point]
-        if set(nam.xy(track_point)).issubset(self.step_data.columns):
-            pos_xy_pars = nam.xy(track_point)
-        else:
-            pos_xy_pars = []
-        if points == True and len(self.points_xy) >= 1:
-            point_xy_pars = nam.xy(self.points, flat=True)
-        else:
-            point_xy_pars = []
-        if centroid == True and len(self.cent_xy) >= 1:
-            cent_xy_pars = self.cent_xy
-        else:
-            cent_xy_pars = []
-        if contours == True and len(self.contour_xy) >= 1:
-            contour_xy_pars = nam.xy(self.contour, flat=True)
-        else:
-            contour_xy_pars = []
+        pos_xy_pars = nam.xy(track_point) if set(nam.xy(track_point)).issubset(self.step_data.columns) else []
+        point_xy_pars = nam.xy(self.points, flat=True) if len(self.points_xy) >= 1 else []
+        cent_xy_pars = self.cent_xy if len(self.cent_xy) >= 1 else []
+        contour_xy_pars = nam.xy(self.contour, flat=True) if len(self.contour_xy) >= 1 else []
+
         pars = cent_xy_pars + point_xy_pars + pos_xy_pars + contour_xy_pars + angle_pars + orientation_pars + chunk_pars
         pars = np.unique(pars).tolist()
         return pars, pos_xy_pars, track_point
@@ -718,8 +697,8 @@ class LarvaDataset:
             s = copy.deepcopy(self.step_data.loc[(slice(None), ids), pars])
         else:
             a, b = time_range
-            a=int(a/self.dt)
-            b=int(b/self.dt)
+            a = int(a / self.dt)
+            b = int(b / self.dt)
             s = copy.deepcopy(self.step_data.loc[(slice(a, b), ids), pars])
         e = copy.deepcopy(self.endpoint_data.loc[ids])
         return s, e, ids
@@ -729,31 +708,24 @@ class LarvaDataset:
                   arena_pars=None,
                   env_params=None,
                   track_point=None,
-                  # spinepoints=True, centroid=True, contours=True,
                   dynamic_color=None,
                   agent_ids=None,
                   time_range=None,
                   transposition=None, fix_point=None, secondary_fix_point=None,
                   save_to=None,
                   **kwargs):
-        # print(**kwargs)
-        # raise
-        pars, pos_xy_pars, track_point = self.get_par_list(track_point=track_point, points=True, centroid=True,
-                                              contours=True)
-        s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range=time_range,
-                                        dynamic_color=dynamic_color)
+
+        pars, pos_xy_pars, track_point = self.get_par_list(track_point)
+        s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range=time_range, dynamic_color=dynamic_color)
 
         if len(ids) == 1:
             n0 = ids[0]
-        elif len(ids)==len(self.agent_ids):
+        elif len(ids) == len(self.agent_ids):
             n0 = 'all'
         else:
             n0 = f'{len(ids)}l'
-        # print(dynamic_color, type(dynamic_color))
-        if dynamic_color is not None:
-            trajectory_colors = s[dynamic_color]
-        else:
-            trajectory_colors = None
+        traj_color = s[dynamic_color] if dynamic_color is not None else None
+
         # FIXME xy are saved in mm and that messes things up. right now i scale the arena up, but this makes the scale wrong
         if env_params is None:
             if arena_pars is None:
@@ -767,7 +739,7 @@ class LarvaDataset:
         if transposition is not None:
             s = self.align_trajectories(s=s, mode=transposition, arena_dims=arena_dims, track_point=track_point)
             bg = None
-            n1 = 'aligned'
+            n1 = 'transposed'
         elif fix_point is not None:
             s, bg = self.fix_point(point=fix_point, secondary_point=secondary_fix_point, s=s, arena_dims=arena_dims)
             n1 = 'fixed'
@@ -779,7 +751,6 @@ class LarvaDataset:
             vis_kwargs['render']['media_name'] = replay_id
         if save_to is None:
             save_to = self.vis_dir
-        # print(trajectory_colors)
         Nsteps = len(s.index.unique('Step').values)
         replay_env = LarvaWorldReplay(id=replay_id, env_params=env_params,
                                       vis_kwargs=vis_kwargs,
@@ -789,7 +760,7 @@ class LarvaDataset:
                                       pos_xy_pars=pos_xy_pars,
                                       background_motion=bg,
                                       dt=self.dt,
-                                      trajectory_colors=trajectory_colors,
+                                      traj_color=traj_color,
                                       save_to=save_to,
                                       **kwargs)
 
@@ -804,10 +775,10 @@ class LarvaDataset:
         if self.step_data is None:
             self.load()
 
-        s,e = self.step_data, self.endpoint_data
-        t=len(s)
-        segs=self.segs
-        Nsegs=len(segs)
+        s, e = self.step_data, self.endpoint_data
+        t = len(s)
+        segs = self.segs
+        Nsegs = len(segs)
         xy = s[nam.xy(self.points, flat=True)].values
         L = np.zeros([1, t]) * np.nan
         S = np.zeros([Nsegs, t]) * np.nan
@@ -839,7 +810,7 @@ class LarvaDataset:
     def compute_centroid_from_contour(self, is_last=True):
         if self.step_data is None:
             self.load()
-        s=self.step_data
+        s = self.step_data
         con_pars = nam.xy(self.contour, flat=True)
         if not set(con_pars).issubset(s.columns) or len(con_pars) == 0:
             print(f'No contour found. Not computing centroid')
@@ -862,7 +833,7 @@ class LarvaDataset:
                                     drop_contour=True, is_last=True):
         if self.step_data is None:
             self.load()
-        s,e=self.step_data, self.endpoint_data
+        s, e = self.step_data, self.endpoint_data
         if 'length' in e.columns.values and not recompute_length:
             print('Length is already computed. If you want to recompute it, set recompute_length to True')
         else:
@@ -912,8 +883,8 @@ class LarvaDataset:
     def compute_bend(self, mode='minimal', is_last=True):
         if self.step_data is None:
             self.load()
-        s=self.step_data
-        b_conf=self.config['bend']
+        s = self.step_data
+        b_conf = self.config['bend']
         if b_conf is None:
             print('Bending angle not defined. Can not compute angles')
             return
@@ -936,7 +907,7 @@ class LarvaDataset:
         ids = self.agent_ids
         for id in ids:
             b = s['bend'].xs(id, level='AgentID', drop_level=True).dropna()
-            bv = s[nam.vel('bend')].xs(id, level='AgentID',drop_level=True).dropna()
+            bv = s[nam.vel('bend')].xs(id, level='AgentID', drop_level=True).dropna()
             e.loc[id, 'bend_mean'] = b.mean()
             e.loc[id, 'bend_vel_mean'] = bv.mean()
             e.loc[id, 'bend_std'] = b.std()
@@ -1155,7 +1126,7 @@ class LarvaDataset:
             self.load()
         s, e = self.step_data, self.endpoint_data
         ids = self.agent_ids
-        Nids=len(ids)
+        Nids = len(ids)
         Nticks = len(s.index.unique('Step'))
         t0 = self.starting_tick
         dt = self.dt
@@ -1202,7 +1173,8 @@ class LarvaDataset:
             sA = np.zeros([Nticks, Nids]) * np.nan
 
             for i, data in enumerate(all_d):
-                v, d = fun.compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=dt,return_dst=True)
+                v, d = fun.compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=dt,
+                                                      return_dst=True)
                 a = np.diff(v) / dt
                 cum_d = np.nancumsum(d)
                 D[1:, i] = d
@@ -1298,7 +1270,8 @@ class LarvaDataset:
             mup = nam.mean(p)
 
             if set([mp, mp40]).issubset(e.columns.values) and not recompute:
-                print(f'Dispersion starting at {s0} is already detected. If you want to recompute it, set recompute_dispersion to True')
+                print(
+                    f'Dispersion starting at {s0} is already detected. If you want to recompute it, set recompute_dispersion to True')
                 continue
             print(f'Computing dispersion starting at {s0} based on {point}')
             for id in ids:
@@ -1341,13 +1314,13 @@ class LarvaDataset:
         ids = self.agent_ids
         p = self.point
         o = 'orientation_to_origin'
-        fo='front_orientation'
+        fo = 'front_orientation'
         abs_o = nam.abs(o)
         final_o = nam.final(o)
         mean_abs_o = nam.mean(abs_o)
 
         print(f'Computing orientation to origin based on {p}')
-        s[o] = s.apply(lambda r: fun.angle_sum(fun.angle_to_x_axis(r[nam.xy(p)].values,origin), r[fo]), axis=1)
+        s[o] = s.apply(lambda r: fun.angle_sum(fun.angle_to_x_axis(r[nam.xy(p)].values, origin), r[fo]), axis=1)
         s[abs_o] = np.abs(s[o].values)
         for id in ids:
             e.loc[id, final_o] = s[o].xs(id, level='AgentID').dropna().values[-1]
@@ -1362,7 +1335,7 @@ class LarvaDataset:
         s, e = self.step_data, self.endpoint_data
         ids = self.agent_ids
         Nids = len(ids)
-        p=self.point
+        p = self.point
         print(f'Computing distance to origin based on {p}')
         d = 'dst_to_origin'
         p_fin = nam.final(d)
@@ -1396,7 +1369,6 @@ class LarvaDataset:
             self.load()
         order = int(interval_in_sec / self.dt)
 
-
         s, e = self.step_data, self.endpoint_data
         ids = self.agent_ids
         Nids = len(ids)
@@ -1425,10 +1397,10 @@ class LarvaDataset:
                 i_min = argrelextrema(df.values, np.less_equal, order=order)[0]
                 i_max = argrelextrema(df.values, np.greater_equal, order=order)[0]
 
-                i_min_dif=np.diff(i_min, append=order)
-                i_max_dif=np.diff(i_max, append=order)
-                i_min=i_min[i_min_dif>=order]
-                i_max=i_max[i_max_dif>=order]
+                i_min_dif = np.diff(i_min, append=order)
+                i_max_dif = np.diff(i_max, append=order)
+                i_min = i_min[i_min_dif >= order]
+                i_max = i_max[i_max_dif >= order]
 
                 i_min = i_min[df.loc[i_min + t0] < thr_min]
                 i_max = i_max[df.loc[i_max + t0] > thr_max]
@@ -2171,8 +2143,10 @@ class LarvaDataset:
                          [nam.unwrap('front_orientation'), nam.unwrap('rear_orientation'), 'bend'] if
                          p in self.step_data.columns]
 
-        self.add_min_max_flags(parameters=[flag], interval_in_sec=0.3, absolute_threshold=[np.inf, sv_thr],is_last=False)
-        self.compute_dominant_frequencies(parameters=[flag], freq_range=[0.7, 2.5], accepted_range=[0.7, 2.5],is_last=False)
+        self.add_min_max_flags(parameters=[flag], interval_in_sec=0.3, absolute_threshold=[np.inf, sv_thr],
+                               is_last=False)
+        self.compute_dominant_frequencies(parameters=[flag], freq_range=[0.7, 2.5], accepted_range=[0.7, 2.5],
+                                          is_last=False)
         self.detect_contacting_chunks(chunk=c, mid_flag=mid_flag, edge_flag=edge_flag,
                                       vel_par=flag, control_pars=pars_to_track,
                                       track_point=track_point, is_last=False)
@@ -2182,8 +2156,8 @@ class LarvaDataset:
 
         if self.save_data_flag:
             self.create_chunk_dataset(c, pars=[flag, 'spinelength', nam.vel('front_orientation'),
-                                                        nam.vel('rear_orientation'),
-                                                        nam.vel('bend')])
+                                               nam.vel('rear_orientation'),
+                                               nam.vel('bend')])
 
         if is_last:
             self.save()
@@ -2228,9 +2202,9 @@ class LarvaDataset:
 
         if self.step_data is None:
             self.load()
-        s,e=self.step_data,self.endpoint_data
-        c=condition_param
-        p_Rt, p_Lt, p_t=nam.chunk_track('Rturn', c), nam.chunk_track('Lturn', c), nam.chunk_track('turn', c)
+        s, e = self.step_data, self.endpoint_data
+        c = condition_param
+        p_Rt, p_Lt, p_t = nam.chunk_track('Rturn', c), nam.chunk_track('Lturn', c), nam.chunk_track('turn', c)
         if set(nam.num(['Lturn', 'Rturn'])).issubset(e.columns.values) and not recompute_turns:
             print('Turns are already detected. If you want to recompute it, set recompute_turns to True')
             return
@@ -2250,9 +2224,11 @@ class LarvaDataset:
             track_params = [nam.unwrap(ho)]
             # track_params = [b, unwrap(ho)]
 
-        self.detect_chunks_on_condition(chunk_name='Lturn', chunk_only=chunk_only, condition_param=c,min_value=min_ang_vel,
+        self.detect_chunks_on_condition(chunk_name='Lturn', chunk_only=chunk_only, condition_param=c,
+                                        min_value=min_ang_vel,
                                         store_max=True, min_duration=min_duration, is_last=False)
-        self.detect_chunks_on_condition(chunk_name='Rturn', chunk_only=chunk_only, condition_param=c,max_value=-min_ang_vel,
+        self.detect_chunks_on_condition(chunk_name='Rturn', chunk_only=chunk_only, condition_param=c,
+                                        max_value=-min_ang_vel,
                                         store_min=True, min_duration=min_duration, is_last=False)
         self.track_parameters_during_chunk(chunk='Lturn', pars=track_params, is_last=False)
         self.track_parameters_during_chunk(chunk='Rturn', pars=track_params, is_last=False)
@@ -2267,9 +2243,8 @@ class LarvaDataset:
         self.create_par_distro_dataset([nam.dur('turn')])
         for p in track_params:
             s[f'turn_{p}'] = ss[[nam.chunk_track(chunk_name='Rturn', params=p),
-                                             nam.chunk_track(chunk_name='Lturn', params=p)]].sum(axis=1, min_count=1)
+                                 nam.chunk_track(chunk_name='Lturn', params=p)]].sum(axis=1, min_count=1)
             self.create_par_distro_dataset([f'turn_{p}'])
-
 
         if is_last:
             self.save()
@@ -2589,7 +2564,7 @@ class LarvaDataset:
     def raw_or_filtered_xy(self, points):
         r = nam.xy(points, flat=True)
         f = nam.filt(r)
-        if all(i in self.step_data.columns for i in f) :
+        if all(i in self.step_data.columns for i in f):
             print('Using filtered xy coordinates')
             return f
         elif all(i in self.step_data.columns for i in r):
@@ -2635,7 +2610,7 @@ class LarvaDataset:
     def compute_tortuosity(self, durs_in_sec=[2, 5, 10, 20], is_last=True):
         if self.endpoint_data is None:
             self.load(step_data=False)
-        e=self.endpoint_data
+        e = self.endpoint_data
         e['tortuosity'] = 1 - e['final_dispersion'] / e['cum_dst']
         durs = [int(self.fr * d) for d in durs_in_sec]
         Ndurs = len(durs)
@@ -2679,18 +2654,18 @@ class LarvaDataset:
         if is_last:
             self.save()
 
-    def deb_analysis(self, is_last=True) :
+    def deb_analysis(self, is_last=True):
         if self.step_data is None:
             self.load()
-        s,e=self.step_data, self.endpoint_data
+        s, e = self.step_data, self.endpoint_data
         e[nam.mean('deb_f')] = s['deb_f'].groupby('AgentID').mean()
         e[nam.mean('deb_f_deviation')] = s['deb_f_deviation'].groupby('AgentID').mean()
         if is_last:
             self.save()
 
     def set_id(self, id):
-        self.id=id
-        self.config['id']=id
+        self.id = id
+        self.config['id'] = id
         self.save_config()
 
     def build_dirs(self):
@@ -2699,7 +2674,7 @@ class LarvaDataset:
                 os.makedirs(i)
 
     def analysis(self):
-        fig_dict=comparative_analysis(datasets=[self], labels=[self.id])
+        fig_dict = comparative_analysis(datasets=[self], labels=[self.id])
 
     def store_pause_datasets(self, filepath):
         d = pd.read_csv(filepath, index_col=['AgentID', 'Chunk'])
@@ -2720,21 +2695,18 @@ class LarvaDataset:
     def split_dataset(self, larva_id_prefixes):
         new_ids = [f'{self.id}_{f}' for f in larva_id_prefixes]
         new_dirs = [f'{self.dir}/../{new_id}' for new_id in new_ids]
-        if all([os.path.exists(new_dir) for new_dir in new_dirs]) :
-            new_ds=[LarvaDataset(new_dir) for new_dir in new_dirs]
-        else :
+        if all([os.path.exists(new_dir) for new_dir in new_dirs]):
+            new_ds = [LarvaDataset(new_dir) for new_dir in new_dirs]
+        else:
             if self.step_data is None:
                 self.load()
-            new_ds=[]
-            for f, new_id, new_dir in zip(larva_id_prefixes, new_ids, new_dirs) :
+            new_ds = []
+            for f, new_id, new_dir in zip(larva_id_prefixes, new_ids, new_dirs):
                 copy_tree(self.dir, new_dir)
-                new_d=LarvaDataset(new_dir)
+                new_d = LarvaDataset(new_dir)
                 new_d.set_id(new_id)
-                invalid_ids=[id for id in self.agent_ids if not str.startswith(id, f)]
+                invalid_ids = [id for id in self.agent_ids if not str.startswith(id, f)]
                 new_d.drop_agents(invalid_ids)
                 new_ds.append(new_d)
             print(f'Dataset {self.id} splitted in {[d.id for d in new_ds]}')
         return new_ds
-
-
-

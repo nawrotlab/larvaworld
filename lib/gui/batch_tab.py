@@ -1,4 +1,5 @@
 import copy
+import threading
 
 import PySimpleGUI as sg
 
@@ -6,7 +7,7 @@ from lib.anal.combining import render_mpl_table
 from lib.conf.dtype_dicts import opt_pars_dict, space_pars_dict, batch_methods_dict
 from lib.conf.batch_conf import test_batch
 from lib.gui.gui_lib import CollapsibleDict, button_kwargs, Collapsible, text_kwargs, buttonM_kwargs, named_list_layout, \
-    gui_table, save_gui_conf, delete_gui_conf,  named_bool_button, on_image, off_image, GraphList
+    gui_table, save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList
 from lib.gui.simulation_tab import update_sim, get_exp
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 
@@ -15,7 +16,8 @@ def update_batch(batch, window, collapsibles):
     collapsibles['METHODS'].update(window, batch['methods'])
     collapsibles['OPTIMIZATION'].update(window, batch['optimization'])
     window['TOGGLE_save_data_flag'].metadata.state = batch['run_kwargs']['save_data_flag']
-    window['TOGGLE_save_data_flag'].update(image_data=on_image if window['TOGGLE_save_data_flag'].metadata.state else off_image)
+    window['TOGGLE_save_data_flag'].update(
+        image_data=on_image if window['TOGGLE_save_data_flag'].metadata.state else off_image)
     return batch['space_search']
 
 
@@ -25,14 +27,14 @@ def get_batch(window, values, collapsibles, space_search):
     batch['optimization'] = collapsibles['OPTIMIZATION'].get_dict(values, window)
     batch['space_search'] = space_search
     batch['exp'] = values['EXP']
-    batch['run_kwargs']={}
+    batch['run_kwargs'] = {}
     batch['run_kwargs']['save_data_flag'] = window['TOGGLE_save_data_flag'].metadata.state
     return copy.deepcopy(batch)
 
 
 def build_batch_tab(collapsibles, graph_lists, dicts):
     batch = copy.deepcopy(test_batch)
-    dicts['batch_results']={}
+    dicts['batch_results'] = {}
     dicts['space_search'] = batch['space_search']
     l_exp = [sg.Col([
         named_list_layout(text='Batch:', key='BATCH_CONF', choices=list(loadConfDict('Batch').keys())),
@@ -46,10 +48,12 @@ def build_batch_tab(collapsibles, graph_lists, dicts):
                   named_bool_button('Save data', False, toggle_name='save_data_flag'),
                   ]
 
-    collapsibles['BATCH_CONFIGURATION'] = Collapsible('BATCH_CONFIGURATION', True, batch_conf, disp_name='CONFIGURATION')
+    collapsibles['BATCH_CONFIGURATION'] = Collapsible('BATCH_CONFIGURATION', True, batch_conf,
+                                                      disp_name='CONFIGURATION')
     collapsibles['METHODS'] = CollapsibleDict('METHODS', True, dict=batch['methods'], type_dict=batch_methods_dict)
-    collapsibles['OPTIMIZATION'] = CollapsibleDict('OPTIMIZATION', True, dict=batch['optimization'], type_dict=opt_pars_dict,
-                                                   toggle=True, disabled=True)
+    s = CollapsibleDict('OPTIMIZATION', True, dict=batch['optimization'], type_dict=opt_pars_dict,
+                        toggle=True, disabled=True, toggled_subsections=None)
+    collapsibles.update(s.get_subdicts())
 
     graph_lists['BATCH'] = GraphList('BATCH')
 
@@ -86,7 +90,7 @@ def set_space_table(space_search):
 def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
     if event == 'LOAD_BATCH':
         if values['BATCH_CONF'] != '':
-            batch_type=values['BATCH_CONF']
+            batch_type = values['BATCH_CONF']
             window.Element('batch_id').Update(value=f'{batch_type}_{next_idx(batch_type, type="batch")}')
             window.Element('batch_path').Update(value=batch_type)
             conf = loadConf(batch_type, 'Batch')
@@ -118,12 +122,17 @@ def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
             batch_path = str(values['batch_path'])
             exp_conf = get_exp(window, values, collapsibles, dicts)
             batch_kwargs = prepare_batch(batch, batch_id, exp_conf)
-            df, fig_dict=batch_run(**batch_kwargs)
+            # dicts['batch_kwargs']=batch_kwargs
+    #
+            # thread = threading.Thread(target=batch_run, kwargs=batch_kwargs, daemon=True)
+            # thread.start()
+
+            df, fig_dict = batch_run(**batch_kwargs)
             df_ax, df_fig = render_mpl_table(df)
             fig_dict['dataframe'] = df_fig
             dicts['batch_results']['df'] = df
             dicts['batch_results']['fig_dict'] = fig_dict
-            graph_lists['BATCH'].update(window, fig_dict)
+            graph_lists['BATCH'].update(window, dicts['batch_results']['fig_dict'])
 
     elif event == 'SPACE_SEARCH':
         dicts['space_search'] = set_space_table(dicts['space_search'])

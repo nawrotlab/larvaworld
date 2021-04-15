@@ -3258,7 +3258,7 @@ def process_plot(fig, save_to, filename, return_fig):
 
 
 def barplot(datasets, labels, par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None, save_to=None,
-            save_as=None, return_fig=False):
+            save_as=None, return_fig=False, show=False):
     Ndatasets, colors, save_to = plot_config(datasets, labels, save_to)
     w = 0.1
 
@@ -3324,6 +3324,8 @@ def barplot(datasets, labels, par_shorts=['f_am'], coupled_labels=None, xlabel=N
         plt.ylim(0, h)
         if xlabel is not None:
             plt.xlabel(xlabel)
+        if show :
+            plt.show()
         return process_plot(fig, save_to, filename, return_fig)
 
 

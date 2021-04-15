@@ -7,12 +7,6 @@ import pygame
 from lib.aux import functions as fun
 
 
-# from pygame import gfxdraw
-# x = 1550
-# y = 400
-# os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x, y)
-
-
 class GuppiesViewer(object):
     def __init__(self, width, height, caption="", fps=10, dt=0.1, show_display=True, record_video_to=None,
                  record_image_to=None, zoom=1):
@@ -61,7 +55,6 @@ class GuppiesViewer(object):
         # surf1.blit(surf2, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
         surf2.blit(surf1, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
         self._window.blit(surf2, (0, 0))
-
 
     def init_screen(self):
         if self.show_display:
@@ -425,11 +418,6 @@ class SimulationScale(ScreenItem):
         # I don't exactly understand why this works...
         self.scale_to_draw = self.scale_in_mm / real_width_in_mm
         self.lines = None
-        # self.x = 120
-        # self.y = 40
-        # self.lines = [[(self.x - self.scale_to_draw / 2, self.y), (self.x + self.scale_to_draw / 2, self.y)],
-        #               [(self.x + self.scale_to_draw / 2, self.y - 10), (self.x + self.scale_to_draw / 2, self.y + 10)],
-        #               [(self.x - self.scale_to_draw / 2, self.y - 10), (self.x - self.scale_to_draw / 2, self.y + 10)]]
 
     def compute_lines(self, x, y, scale):
         return [[(x - scale / 2, y), (x + scale / 2, y)],
@@ -468,11 +456,6 @@ class SimulationState(ScreenItem):
         self.text = ''
         # self.text = f'# larvae : {self.Nagents}'
 
-    # def update_state(self):
-    #     c = np.isnan(self.model.get_fly_positions())
-    #     self.Nagents = len(c[c[:, 0] == False])
-    #     self.text = f'# larvae : {self.Nagents}'
-
     def render_state(self, width, height):
         x_pos = int(width * 0.85)
         y_pos = int(height * 0.94)
@@ -488,10 +471,8 @@ class SimulationState(ScreenItem):
         self.state_font = self.font.render(self.text, 1, self.color)
         viewer.draw_text_box(self.state_font, self.state_font_r)
 
-    def set_text(self,text):
-        self.text=text
-
-
+    def set_text(self, text):
+        self.text = text
 
 
 def draw_velocity_arrow(_screen, agent):
@@ -505,10 +486,10 @@ def draw_velocity_arrow(_screen, agent):
         _screen.draw_arrow(start, start + lin_vel / 100, color=(0, 0, 255), width=.01)
 
 
-def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, trajectory_colors=None):
+def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, traj_color=None):
     trajs = [fly.trajectory for fly in agents]
-    if trajectory_colors is not None:
-        traj_cols = [trajectory_colors.xs(fly.unique_id, level='AgentID') for fly in agents]
+    if traj_color is not None:
+        traj_cols = [traj_color.xs(fly.unique_id, level='AgentID') for fly in agents]
     else:
         traj_cols = [np.array([(0, 0, 0) for t in traj]) for traj, fly in zip(trajs, agents)]
 
@@ -536,8 +517,7 @@ def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, trajector
             if len(t) < 2:
                 pass
             else:
-                # print(c)
-                if trajectory_colors is None:
+                if traj_color is None:
                     screen.draw_polyline(t, color=fly.default_color, closed=False, width=0.003 * space_dims[0])
                 else:
                     c = [tuple(float(x) for x in s.strip('()').split(',')) for s in c]

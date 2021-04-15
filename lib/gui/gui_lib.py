@@ -12,6 +12,7 @@ from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
+from lib.anal.combining import render_mpl_table
 from lib.conf import par_conf
 from lib.conf.conf import loadConfDict, saveConf, deleteConf
 from lib.conf.dtype_dicts import agent_pars
@@ -852,3 +853,5 @@ def delete_gui_conf(window, values, conf_type):
         deleteConf(values[f'{cap}_CONF'], conf_type)
         window[f'{cap}_CONF'].update(values=list(loadConfDict(conf_type).keys()))
         window[f'{cap}_CONF'].update(value='')
+
+

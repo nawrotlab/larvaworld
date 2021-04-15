@@ -278,7 +278,7 @@ food_grid_env = {'arena_params': arena(0.03, 0.03),  # dish(0.006),
 
 growth_env = {'arena_params': arena(0.03, 0.03),  # dish(0.006),
               'food_params': food_param_conf(grid=food_grid(50, 10 ** -3)),
-              'larva_params': larva_distro(5, model='rover'),
+              'larva_params': larva_distro(5, model='sitter'),
               'odorscape': None}
 
 growth_2x_env = {'arena_params': arena(0.02, 0.02),  # dish(0.006),

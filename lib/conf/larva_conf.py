@@ -178,7 +178,7 @@ intermitter_rover = {'pause_dist': 'fit',
                      'intermittent_crawler': True,
                      'intermittent_feeder': True,
                      'EEB_decay_coef': 1,
-                     'EEB': 0.4  # 0.57
+                     'EEB': 0.5  # 0.57
                      }
 
 intermitter_sitter = {'pause_dist': 'fit',
