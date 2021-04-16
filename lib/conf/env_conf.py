@@ -166,7 +166,7 @@ def game_env_conf(dim=0.1, N=10, x=0.8, y=0.0, scale=0.03, mode='king'):
         modL, modR = 'gamer', 'gamer'
     env = {'arena_params': arena(dim, dim),
            'food_params': food_param_conf(list={
-               **odor_source('Flag', odor_intensity=8, odor_spread=0.0004, default_color='green', can_be_carried=True),
+               **foodNodor_source('Flag', odor_intensity=8, odor_spread=0.0004, default_color='green', can_be_carried=True),
                **odor_source('Left base', (-x0, y0), default_color='blue'),
                **odor_source('Right base', (+x0, y0), default_color='red')}),
            'larva_params': {

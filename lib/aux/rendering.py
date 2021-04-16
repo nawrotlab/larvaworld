@@ -467,7 +467,6 @@ class SimulationState(ScreenItem):
         self.state_font_r.center = (x_pos, y_pos)
 
     def draw_state(self, viewer):
-        # self.update_state()
         self.state_font = self.font.render(self.text, 1, self.color)
         viewer.draw_text_box(self.state_font, self.state_font_r)
 

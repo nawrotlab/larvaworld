@@ -317,6 +317,7 @@ class LarvaWorld:
                 pass
 
     def draw_aux(self, screen):
+        screen.draw_arena(self.tank_shape, self.tank_color, self.screen_color)
         if self.visible_clock:
             self.sim_clock.draw_clock(screen)
         if self.visible_scale:
@@ -324,7 +325,9 @@ class LarvaWorld:
         if self.visible_state:
             self.sim_state.draw_state(screen)
         self.input_box.draw(screen)
+
         self.draw_screen_texts(screen)
+
 
     def draw_arena(self, screen, background_motion):
         screen.set_bounds(*self.space_edges_for_screen)
@@ -340,7 +343,7 @@ class LarvaWorld:
         if not arena_drawn:
             screen.draw_polygon(self.tank_shape, color=self.tank_color)
             self.draw_background(screen, background_motion)
-        screen.draw_arena(self.tank_shape, self.tank_color, self.screen_color)
+
 
         for i, b in enumerate(self.borders):
             b.draw(screen)
@@ -408,7 +411,6 @@ class LarvaWorld:
         if self.vis_kwargs['render']['image_mode'] != 'overlap':
             self.draw_aux(self._screen)
             self._screen.render()
-            # return image
 
     def screen2space_pos(self, pos):
         p = (2 * pos[0] / self.screen_width - 1), -(2 * pos[1] / self.screen_height - 1)
@@ -591,7 +593,7 @@ class LarvaWorld:
         return self.is_running
 
     def set_end_condition(self):
-        if self.experiment == 'flag':
+        if self.experiment == 'capture_the_flag':
             for f in self.get_food():
                 if f.unique_id == 'Flag':
                     # print('ss')
@@ -607,7 +609,7 @@ class LarvaWorld:
             self.l_dst0 = self.flag.radius * 2 + self.l_base.radius * 2
             self.r_dst0 = self.flag.radius * 2 + self.r_base.radius * 2
 
-        elif self.experiment == 'king':
+        elif self.experiment == 'keep_the_flag':
             for f in self.get_food():
                 if f.unique_id == 'Flag':
                     self.flag = f
@@ -615,7 +617,7 @@ class LarvaWorld:
             self.r_t = 0
 
     def check_end_condition(self):
-        if self.experiment == 'flag':
+        if self.experiment == 'capture_the_flag':
             flag_p = self.flag.get_position()
             l_dst = -self.l_dst0 + fun.compute_dst(flag_p, self.l_base_p)
             r_dst = -self.r_dst0 + fun.compute_dst(flag_p, self.r_base_p)
@@ -629,7 +631,7 @@ class LarvaWorld:
                 self.end_condition_met = True
             self.sim_state.set_text(f'L:{l_dst} vs R:{r_dst}')
 
-        elif self.experiment == 'king':
+        elif self.experiment == 'keep_the_flag':
             dur = 180
             carrier = self.flag.is_carried_by
             if carrier is None:
