@@ -245,8 +245,7 @@ output = {
                                                                           'stridechain_stop', 'stridechain_dur'],
         'endpoint': ['num_pauses', 'cum_pause_dur', 'pause_dur_ratio',
                      'num_stridechains', 'cum_stridechain_dur', 'stridechain_dur_ratio']},
-    'olfactor': {'step': ['first_odor_concentration', 'olfactory_activation', 'first_odor_concentration_change',
-                          'turner_activation', 'turner_activity', 'torque', 'orientation_to_center'],
+    'olfactor': {'step': ['first_odor_concentration', 'olfactory_activation', 'first_odor_concentration_change'],
                  'endpoint': ['final_dispersion', 'final_scaled_dispersion',
                               'final_orientation_to_center', 'final_x']},
     'turner': {'step': ['turner_activation', 'turner_activity', 'torque'],
@@ -277,7 +276,7 @@ output = {
               'endpoint': []},
     'dst2center': {'step': [
         'dispersion', 'scaled_dispersion',
-        'dst_to_center', 'scaled_dst_to_center',
+        'dst_to_center', 'scaled_dst_to_center', 'orientation_to_center'
                             ],
                    'endpoint': ['final_dst_to_center', 'final_scaled_dst_to_center',
                                 'max_dst_to_center', 'max_scaled_dst_to_center']},

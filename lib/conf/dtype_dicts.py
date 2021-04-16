@@ -49,7 +49,7 @@ arena_pars_dict = {'arena_xdim': float,
                    'arena_shape': ['circular', 'rectangular']}
 
 odorscape_pars_dict = {'odorscape': ['Gaussian', 'Diffusion'],
-                       'grid_dims': Tuple[float, float],
+                       'grid_dims': tuple,
                        'evap_const': float,
                        'gaussian_sigma': Tuple[float, float],
                        }

@@ -147,6 +147,11 @@ class LarvaSim(BodySim, Larva):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
                        **larva_pars['odor_params'], group=group, default_color=default_color)
         # print(list(larva_pars['neural_params'].keys()))
+        # FIXME : Get rid of this
+        try :
+            larva_pars['neural_params']['olfactor_params']['odor_dict'] = self.update_odor_dicts(larva_pars['neural_params']['olfactor_params']['odor_dict'])
+        except :
+            pass
         self.brain = self.build_brain(larva_pars['neural_params'])
         self.build_energetics(larva_pars['energetics_params'])
         BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['sensorimotor_params'],
@@ -162,6 +167,18 @@ class LarvaSim(BodySim, Larva):
         except :
             self.odor_concentrations= {}
         self.olfactory_activation = 0
+
+    def update_odor_dicts(self, odor_dict):  #
+
+        temp={'mean': 0.0, 'std': 0.0}
+        food_odor_ids = fun.unique_list([s.get_odor_id() for s in self.model.get_food() + [self] if s.get_odor_id() is not None])
+        if odor_dict is None:
+            odor_dict = {}
+            # odor_dict = {odor_id: temp for odor_id in food_odor_ids}
+        for odor_id in food_odor_ids:
+            if odor_id not in list(odor_dict.keys()):
+                odor_dict[odor_id]=temp
+        return odor_dict
 
     def compute_next_action(self):
 

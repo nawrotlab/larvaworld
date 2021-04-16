@@ -23,7 +23,7 @@ from lib.aux.sampling import sample_agents, get_ref_bout_distros
 import lib.aux.functions as fun
 from lib.aux import naming as nam
 
-from lib.conf.dtype_dicts import agent_pars
+from lib.conf.dtype_dicts import agent_pars, life_dict
 from lib.model import *
 from lib.model._agent import LarvaworldAgent
 from lib.sim.input_lib import evaluate_input, evaluate_graphs
@@ -759,12 +759,14 @@ class LarvaWorld:
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, collected_pars=None,
                  id='Unnamed_Simulation', larva_collisions=True, count_bend_errors=False,
-                 life_params={},
+                 life_params=None,
                  parameter_dict={}, **kwargs):
         super().__init__(id=id, **kwargs)
         if collected_pars is None:
             collected_pars = {'step': [], 'endpoint': []}
         # self.available_pars = fun.unique_list([p for p in list(step_database.keys()) if par_conf.par_in_db(par=p)])
+        if life_params is None :
+            life_params=life_dict()
         self.starvation_hours = life_params['starvation_hours']
         if self.starvation_hours is None:
             self.starvation_hours = []
@@ -836,14 +838,7 @@ class LarvaWorldSim(LarvaWorld):
 
     def _create_odor_layers(self, pars):
         sources = self.get_food() + self.get_flies()
-        odor_ids = []
-        for f in self.get_flies():
-            try:
-                ids = list(f.brain.olfactor.gain.keys())
-                odor_ids += ids
-            except:
-                pass
-        odor_ids = fun.unique_list(odor_ids)
+        odor_ids = fun.unique_list([s.get_odor_id() for s in sources if s.get_odor_id() is not None])
         Nodors = len(odor_ids)
         odor_colors = fun.N_colors(Nodors, as_rgb=True)
         layers = {}
@@ -934,6 +929,7 @@ class LarvaWorldSim(LarvaWorld):
         return all_larva_pars
 
     def create_larvae(self, larva_pars, parameter_dict={}):
+
         for group_id, group_pars in larva_pars.items():
             N, mode, loc, scale, orientation, larva_model, col = [group_pars[p] for p in
                                                                   ['N', 'mode', 'loc', 'scale', 'orientation', 'model',

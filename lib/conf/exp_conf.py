@@ -56,23 +56,36 @@ odor_pref = {
              # 'env_params': pref_env,
              'collections': ['olfactor'],
              }
+
+odor_pref = {
+             'env_params': 'odor_preference',
+             # 'env_params': pref_env,
+             'collections': ['olfactor'],
+             }
+
+odor_pref_RL = {
+             'env_params': 'odor_preference_RL',
+             # 'env_params': pref_env,
+             'collections': ['olfactor'],
+             }
+
 chemorbit = {
              'env_params': 'chemotaxis_local',
              # 'env_params': chemorbit_env,
              # 'collections': ['dst2center'],
-             'collections': ['olfactor', 'pose', 'dst2center'],
+             'collections': ['turner', 'olfactor', 'pose', 'dst2center'],
              }
 
 chemorbit_diffusion = {
              'env_params': 'chemotaxis_diffusion',
              # 'env_params': chemorbit_env,
-             'collections': ['dst2center'],
+             'collections': ['turner', 'dst2center', 'pose', 'dst2center'],
              }
 
 chemotax = {
             'env_params': 'chemotaxis_approach',
             # 'env_params': chemotax_env,
-            'collections': ['olfactor', 'pose', 'chemotax_dst'],
+            'collections': ['turner', 'olfactor', 'pose', 'chemotax_dst'],
             }
 
 chemotaxis_RL = {
@@ -95,12 +108,12 @@ maze = {
 capture_the_flag = {
         'env_params': 'capture_the_flag',
         # 'env_params': flag_env,
-        'collections': ['olfactor', 'pose', 'dst2center'],
+        'collections': ['pose'],
         }
 keep_the_flag = {
         'env_params': 'keep_the_flag',
         # 'env_params': king_env,
-        'collections': ['olfactor', 'pose', 'dst2center'],
+        'collections': ['pose'],
         }
 # exp_types = {
 #     'focus': focus,

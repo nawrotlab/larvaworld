@@ -13,6 +13,7 @@ s = time.time()
 parser = argparse.ArgumentParser(description="Run given experiments")
 parser.add_argument('experiment', choices=list(loadConfDict('Exp').keys()), help='The experiment type')
 parser.add_argument('-a', '--analysis', action="store_true", help='Whether to run analysis')
+parser.add_argument('-no_save', '--no_save', action="store_true", help='Whether to run analysis')
 
 parser = prs.add_sim_kwargs(parser)
 parser = prs.add_life_kwargs(parser)
@@ -37,7 +38,7 @@ if sim_kwargs['path'] is None:
 
 exp_conf = get_exp_conf(exp_type,  sim_kwargs, life_kwargs, enrich=True, N = place_kwargs['N'])
 
-d = run_sim(**exp_conf, vis_kwargs=vis_kwargs)
+d = run_sim(**exp_conf, vis_kwargs=vis_kwargs, save_data_flag=not args.no_save)
 
 if analysis:
     fig_dict, results=sim_analysis(d, exp_type)

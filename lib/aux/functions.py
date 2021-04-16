@@ -915,7 +915,7 @@ def agents_spatial_query(pos, radius, agent_list):
     agent_radii = np.array([agent.get_radius() for agent in agent_list])
     dsts = np.linalg.norm(agent_positions - pos, axis=1) - agent_radii
     inds = np.where(dsts <= radius)[0]
-    return [agent_list[i] for i in inds]
+    return [agent_list[i] for i in inds if agent_list[i].amount>0]
 
 def agent_dict2list(dic, header='unique_id') :
     # print(dic)

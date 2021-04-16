@@ -1,3 +1,6 @@
+import itertools
+import random
+
 import numpy as np
 from scipy import signal
 from scipy.stats import lognorm, rv_discrete
@@ -723,6 +726,8 @@ class Olfactor(Effector):
                  odor_layers=None, olfactor_gain_mean=None, olfactor_gain_std=None,
                  odor_dict={}, perception='log', decay_coef=1, olfactor_noise=0, **kwargs):
         super().__init__(**kwargs)
+
+
         self.perception = perception
         self.decay_coef = decay_coef
         self.noise = olfactor_noise
@@ -731,6 +736,7 @@ class Olfactor(Effector):
         # self.odor_layers = odor_layers
         # self.num_layers = len(odor_layers)
         self.init_gain(odor_dict)
+
 
 
     def set_gain(self, value, odor_id):
@@ -768,6 +774,10 @@ class Olfactor(Effector):
         return self.gain
 
     def step(self, concentrations):
+        for id,c in concentrations.items() :
+            if id not in self.odor_ids :
+                self.add_novel_odor(id, con=c, gain=0.0)
+
         self.dCon=self.compute_dCon(concentrations)
         # Implementation of the equation at p.20 of the paper
         # UPDATE : Equation has been split between olfactor and turner
@@ -778,12 +788,15 @@ class Olfactor(Effector):
         return self.activation
 
     def init_gain(self, odor_dict):
-        self.Nodors = len(odor_dict)
-        self.odor_ids = list(odor_dict.keys())
+        if odor_dict is None :
+            odor_dict ={}
+
         self.base_gain = {}
         # self.prev_con = {}
         self.Con = {}
         self.dCon = {}
+        self.Nodors = len(odor_dict)
+        self.odor_ids = list(odor_dict.keys())
         for id, p in odor_dict.items():
             if type(p) == dict:
                 m, s = p['mean'], p['std']
@@ -795,23 +808,106 @@ class Olfactor(Effector):
             self.dCon[id] = 0.0
         self.gain = self.base_gain
 
+    def add_novel_odor(self, id, con=0.0, gain=0.0):
+        self.Nodors +=1
+        self.odor_ids.append(id)
+        self.base_gain[id]=gain
+        self.gain[id]=gain
+        self.dCon[id]=0.0
+        self.Con[id]=con
 
-class RLmemory :
-    def __init__(self,dt, odor_ids,k):
-        self.dt=dt
-        self.odor_ids=odor_ids
-        self.k=k
+
+
+class RLmemory(Effector):
+    def __init__(self, gain, DeltadCon=0.02, state_spacePerOdorSide=3, gain_space=[-500, -50, 50, 500],
+                 update_dt=2, train_dur=30, alpha=0.05, gamma=0.6, epsilon=0.15, **kwargs):
+        super().__init__(**kwargs)
+        self.effector=True
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.DeltadCon = DeltadCon
+        self.gain_space = gain_space
+        # self.gain = gain
+        self.odor_ids = list(gain.keys())
+        self.Nodors = len(self.odor_ids)
+        self.actions = [ii for ii in itertools.product(gain_space, repeat=self.Nodors)]
+        self.state_spacePerOdorSide = state_spacePerOdorSide
+        self.state_space = np.array([ii for ii in itertools.product(range(2 * self.state_spacePerOdorSide + 1), repeat=self.Nodors)])
+        # self.q_table = [np.zeros(len(self.state_space), len(self.actions)) for ii in odor_ids]
+        self.q_table = np.zeros((self.state_space.shape[0], len(self.actions)))
+        self.lastAction = 0
+        self.lastState = 0
+        self.Niters = int(update_dt*60/self.dt)
+        self.iterator = self.Niters
+        self.train_dur = train_dur
+        self.rewardSum = 0
+        self.best_gain = gain
+
+    def state_collapse(self, dCon):
+
+        if len(dCon) > 0 :
+        # if len(dCon) == 1:
+            dCon = [dCon]
+        stateV = []
+        for index in range(len(dCon)):
+            # print(dCon, dCon[index], index, type(dCon))
+            # raise
+            for i in dCon[index]:
+                dConI = dCon[index][i]
+                stateIntermitt = np.zeros(self.state_spacePerOdorSide)
+                for ii in range(self.state_spacePerOdorSide):
+                    stateIntermitt[ii] = np.abs(dConI) > (ii + 1) * self.DeltadCon
+
+            stateV.append(int(np.sign(dConI) * (np.sum(stateIntermitt)) + self.state_spacePerOdorSide))
+        state = np.where((self.state_space == stateV).all(axis=1))[0][0]
+        return state
 
     def step(self, gain, dCon, reward):
-        for id in self.odor_ids :
-            if reward :
-                gain[id]*=1.1
-            else :
-                gain[id]*=0.99
-            # d=dCon[id]
-        return gain
+        self.count_time()
+        if self.effector and self.total_t>self.train_dur*60 :
+            self.effector=False
+            print(f'Training stopped after {self.train_dur} minutes')
+            print(f'Best gain : {self.best_gain}')
+        if self.effector :
+            self.rewardSum += int(reward) - 0.01
+            if self.iterator >= self.Niters:
+                self.iterator = 0
+                state = self.state_collapse(dCon)
 
+                if random.uniform(0, 1) < self.epsilon:
+                    actionID = random.randrange(len(self.actions))
+                else:
+                    actionID = np.argmax(self.q_table[state])  # Exploit learned values
 
+                old_value = self.q_table[self.lastState, self.lastAction]
+                next_max = np.max(self.q_table[state])
+
+                new_value = (1 - self.alpha) * old_value + self.alpha * (self.rewardSum + self.gamma * next_max)
+                # print('------------------------------')
+                # print('gain : ', gain)
+                # print('reward : ', self.rewardSum)
+                self.rewardSum = 0
+                self.q_table[state, self.lastAction] = new_value
+                self.lastAction = actionID
+                self.lastState = state
+
+                action = self.actions[actionID]
+                for ii, id in enumerate(self.odor_ids):
+                    gain[id] = action[ii]
+                # print('dCon : ', dCon)
+                # print('new gain : ', gain)
+                # print(self.q_table.astype(int))
+                # print(np.mean(self.q_table, axis=0))
+                self.best_gain=self.get_best_gain()
+                # print(self.best_gain)
+            self.iterator += 1
+            return gain
+        else :
+            return self.best_gain
+
+    def get_best_gain(self):
+        return dict(zip(self.odor_ids, self.actions[np.argmax(np.mean(self.q_table, axis=0))]))
 
 # class TurnerModulator:
 #     def __init__(self, base_activation, activation_range, **kwargs):
@@ -882,7 +978,7 @@ class DefaultBrain(Brain):
             self.olfactor = None
 
         if self.modules['memory']:
-            self.memory = RLmemory(dt=dt, odor_ids=self.olfactor.odor_ids, **self.conf['memory_params'])
+            self.memory = RLmemory(dt=dt, gain=self.olfactor.gain, **self.conf['memory_params'])
         else:
             self.memory = None
 

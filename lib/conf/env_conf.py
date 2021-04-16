@@ -133,8 +133,13 @@ def foodNodor_source(id, pos=(0.0, 0.0), r=0.003, odor_id=None, odor_intensity=2
                         default_color=default_color, can_be_carried=can_be_carried)}}
 
 
-CS_UCS_odors = {**odor_source(id='CS_source', pos=(-0.04, 0.0), odor_id='CS', default_color='blue'),
-                **odor_source(id='UCS_source', pos=(0.04, 0.0), odor_id='UCS', default_color='red')}
+CS_UCS_odors = {**odor_source(id='CS_source', pos=(-0.04, 0.0), odor_id='CS', default_color='red'),
+                **odor_source(id='UCS_source', pos=(0.04, 0.0), odor_id='UCS', default_color='blue')}
+
+CS_UCS_odors_RL = {
+    **foodNodor_source(id='CS_source', pos=(-0.03, 0.0), odor_id='CS', default_color='red',odor_intensity=300.0, r=0.015),
+    **odor_source(id='UCS_source', pos=(0.03, 0.0), odor_id='UCS', default_color='blue',odor_intensity=300.0, r=0.015),
+                   }
 
 
 def gaussian_odor():
@@ -196,6 +201,11 @@ pref_env = {'arena_params': dish(0.1),
             'larva_params': larva_distro(25, model='navigator_x2'),
             'odorscape': gaussian_odor()}
 
+pref_env_RL = {'arena_params': dish(0.1),
+            'food_params': food_param_conf(list=CS_UCS_odors_RL),
+            'larva_params': larva_distro(25, model='RL_learner'),
+            'odorscape': diffusion_odor()}
+
 chemotax_env = {'arena_params': arena(0.1, 0.06),
                 'food_params': food_param_conf(list={**odor_source(id='Odor_source', pos=(0.04, 0.0),
                                                                    odor_id='Odor', odor_intensity=8,
@@ -213,16 +223,16 @@ chemorbit_env = {'arena_params': arena(0.1, 0.06),
 chemorbit_diffusion_env = {'arena_params': arena(0.3, 0.3),
                            'food_params': food_param_conf(
                                list={**odor_source(id='Odor_source', odor_id='Odor',
-                                                   odor_intensity=350.0, default_color='blue')}),
+                                                   odor_intensity=300.0, default_color='blue',r=0.03)}),
                            'larva_params': larva_distro(30, scale=0.0, model='navigator'),
                            'odorscape': diffusion_odor()
                            }
 
-RL_chemorbit_env = {'arena_params': arena(0.1, 0.1),
+RL_chemorbit_env = {'arena_params': dish(0.2),
                     'food_params': food_param_conf(
                         list={**foodNodor_source(id='Odor_source', pos=(0.0, 0.0), odor_id='Odor',
-                                                 odor_intensity=300.0, default_color='blue')}),
-                    'larva_params': larva_distro(30, scale=0.0, model='RL_learner'),
+                                                 odor_intensity=300.0, default_color='blue', r=0.03)}),
+                    'larva_params': larva_distro(1, loc=(0.5, 0.5), scale=0.0, model='RL_learner'),
                     'odorscape': diffusion_odor()
                     }
 
@@ -296,4 +306,4 @@ test_env = {'arena_params': dish(0.1),
                 'source_units': CS_UCS_odors
             },
             'larva_params': larva_distro(25, model='feeder'),
-            'odorscape': gaussian_odor()}
+            'odorscape': diffusion_odor()}

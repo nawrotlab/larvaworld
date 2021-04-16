@@ -191,13 +191,19 @@ intermitter_sitter = {'pause_dist': 'fit',
 
 
 # ----------------------------------------------OLFACTOR MODES----------------------------------------------------------
+
+
 def olfactor_conf(ids=['Odor'], means=[150.0], stds=None, noise=0.0):
-    if stds is None:
-        stds = np.array([0.0] * len(means))
-    odor_dict = {}
-    for id, m, s in zip(ids, means, stds):
-        odor_dict[id] = {'mean': m,
-                         'std': s}
+    def new_odor_dict(ids: list, means: list, stds=None) -> dict:
+        if stds is None:
+            stds = np.array([0.0] * len(means))
+        odor_dict = {}
+        for id, m, s in zip(ids, means, stds):
+            odor_dict[id] = {'mean': m,
+                             'std': s}
+        return odor_dict
+
+    odor_dict = None if ids is None else new_odor_dict(ids, means, stds)
     return {
         'odor_dict': odor_dict,
         'perception': 'log',
@@ -274,14 +280,24 @@ l3_seg2 = {'initial_length': 0.003,
            }
 # -------------------------------------------WHOLE NEURAL MODES---------------------------------------------------------
 
+RL_memory = {'DeltadCon': 0.1,
+             'state_spacePerOdorSide': 0,
+             'gain_space': [-300.0, -50.0, 50.0, 300.0],
+             'update_dt': 1,
+             'alpha': 0.05,
+             'gamma': 0.6,
+             'epsilon': 0.3,
+             'train_dur': 20,
+             }
+
 brain_RLolfactor = {'modules': RL_olfactor,
                     'turner_params': default_turner,
                     'crawler_params': default_crawler,
                     'interference_params': default_coupling,
                     'intermitter_params': intermittent_crawler,
-                    'olfactor_params': olfactor_conf(means=[5.0]),
+                    'olfactor_params': olfactor_conf(ids=None),
                     'feeder_params': default_feeder,
-                    'memory_params': {'k': 33},
+                    'memory_params': RL_memory,
                     'nengo': False}
 
 brain_olfactor = {'modules': olfactor_locomotion,
@@ -386,14 +402,14 @@ growing_sitter = {'energetics_params': energetics_sitter,
                   # 'id_prefix': 'Sitter'
                   }
 
-mock_brain = {'modules': full_brain,
+mock_brain = {'modules': {key: True for key in module_keys},
               'turner_params': default_turner,
               'crawler_params': default_crawler,
               'interference_params': default_coupling,
               'intermitter_params': intermitter_rover,
               'olfactor_params': olfactor_conf(ids=['CS', 'UCS'], means=[150.0, 0.0]),
               'feeder_params': default_feeder,
-              'memory_params': None,
+              'memory_params': RL_memory,
               'nengo': False}
 
 mock_body = {'initial_length': 4.5,
