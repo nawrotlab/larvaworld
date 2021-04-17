@@ -250,13 +250,8 @@ def reconstruct_dict(param_group):
 
 def group_list_by_n(l, n):
     if not len(l) % n == 0.0:
-        print('List length must be multiple of n')
-    else:
-        k = int(len(l) / n)
-        nl = []
-    for i in range(k):
-        nl.append(l[i * n:(i + 1) * n])
-    return nl
+        raise ValueError('List length must be multiple of n')
+    return [l[i * n:(i + 1) * n] for i in range(int(len(l) / n))]
 
 
 def weib(x, n, a):
@@ -961,6 +956,7 @@ def colorname2tuple(name) :
     c0=colors.to_rgb(name)
     c1=tuple([i * 255 for i in c0])
     return c1
+
 
 def LvsRtoggle(side) :
     if side=='Left' :

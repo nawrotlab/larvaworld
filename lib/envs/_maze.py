@@ -182,22 +182,22 @@ class Maze:
         return lines
 
 class Border:
-    def __init__(self, model, points=None, lines= None, unique_id=None, width=0.001, color=None,
-                 from_maze=False, from_screen=True):
+    def __init__(self, model, points=None, unique_id=None, width=0.001, default_color='black'):
 
         self.model=model
-        if color is None :
-            color=self.model.screen_color
-        self.default_color=color
+        if type(default_color)==str :
+            default_color=fun.colorname2tuple(default_color)
+        elif default_color is None :
+            default_color=self.model.screen_color
+        self.default_color=default_color
         if unique_id is None :
             unique_id= f'Border_{len(self.model.border_xy)}'
         self.unique_id = unique_id
         self.width=width * self.model.scaling_factor
         self.points=points
-        if lines is None :
-            lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in fun.group_list_by_n(points,2)]
+        lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in fun.group_list_by_n(points,2)]
             # lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in zip(points[:-1], points[1:])]
-        self.border_xy, self.border_lines = self.model.create_borders(lines, from_screen=from_screen)
+        self.border_xy, self.border_lines = self.model.create_borders(lines)
         self.border_bodies = self.model.create_border_bodies(self.border_xy)
         self.selected=False
 

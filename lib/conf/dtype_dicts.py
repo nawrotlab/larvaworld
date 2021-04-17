@@ -3,22 +3,28 @@ from typing import List, Tuple
 from lib.conf import par_conf
 from lib.conf.conf import loadConfDict, next_idx
 
-odor_pars = {'odor_id': str,
-             'odor_intensity': float,
-             'odor_spread': float}
+odor_dtypes = {'odor_id': str,
+               'odor_intensity': float,
+               'odor_spread': float}
 
-base_food_pars = {
+food_dtypes = {
     'radius': float,
     'amount': float,
     'quality': float,
-    **odor_pars
+    # **odor_dtypes
 }
 
-food_pars = {
+basic_dtypes={
     'unique_id': str,
-    # 'default_color': str,
-    'pos': Tuple[float, float],
-    **base_food_pars
+    'default_color': str,
+    'group': str,
+    'pos': Tuple[float, float]
+}
+
+source_dtypes = {
+    **basic_dtypes,
+    **food_dtypes,
+      ** odor_dtypes
 }
 
 odor_gain_pars = {
@@ -27,72 +33,68 @@ odor_gain_pars = {
     'std': float
 }
 
-larva_pars = {
-    'unique_id': str,
-    'group': str,
-    **odor_pars
+larva_dtypes = {
+    **basic_dtypes,
+    **odor_dtypes
 }
-border_pars = {
+border_dtypes = {
     'unique_id': str,
+    'default_color': str,
     'width': float,
     'points': List[Tuple[float, float]]
 }
 
-agent_pars = {'Food': food_pars,
-              'LarvaSim': larva_pars,
-              'LarvaReplay': larva_pars,
-              'Border': border_pars,
-              }
+agent_dtypes = {'Food': source_dtypes,
+              'LarvaSim': larva_dtypes,
+              'LarvaReplay': larva_dtypes,
+              'Border': border_dtypes,
+                }
 
-arena_pars_dict = {'arena_xdim': float,
+arena_dtypes = {'arena_xdim': float,
                    'arena_ydim': float,
                    'arena_shape': ['circular', 'rectangular']}
 
-odorscape_pars_dict = {'odorscape': ['Gaussian', 'Diffusion'],
+odorscape_dtypes = {'odorscape': ['Gaussian', 'Diffusion'],
                        'grid_dims': tuple,
                        'evap_const': float,
                        'gaussian_sigma': Tuple[float, float],
-                       }
+                    }
 
-operation_dict = {
-    'mean' : bool,
-    'std' : bool,
-    'abs' : bool,
-                  }
-opt_pars_dict = {
+operation_dtypes = {
+    'mean': bool,
+    'std': bool,
+    'abs': bool,
+}
+optimization_dtypes = {
     'fit_par': par_conf.get_runtime_pars(),
-    'operations': operation_dict,
+    'operations': operation_dtypes,
     'minimize': bool,
     'threshold': float,
     'max_Nsims': int,
     'Nbest': int
 }
 
-batch_methods_dict = {
+batch_method_dtypes = {
     'run': ['null', 'default', 'deb', 'odor_preference'],
     'post': ['null', 'default'],
     'final': ['null', 'scatterplots', 'deb', 'odor_preference'],
 }
 
-# space_pars_dict = {'pars': List[str],
-#                    'ranges': List[Tuple[float, float]],
-#                    'Ngrid': List[int]}
-
-space_pars_dict = {'pars': str,
+space_search_dtypes = {'pars': str,
                    'ranges': Tuple[float, float],
                    'Ngrid': int}
 
 # method_pars_dict = {
 #
 # }
-life_pars_dict = {
+life_dtypes = {
     'starvation_hours': List[Tuple[float, float]],
     'hours_as_larva': float,
     'deb_base_f': float
 
 }
 
-vis_render_dict = {
+vis_render_dtypes = {
     'mode': ['', 'video', 'image'],
     'image_mode': ['final', 'snapshots', 'overlap'],
     'video_speed': int,
@@ -100,7 +102,7 @@ vis_render_dict = {
     'show_display': bool,
 }
 
-vis_draw_dict = {
+vis_draw_dtypes = {
     'draw_head': bool,
     'draw_centroid': bool,
     'draw_midline': bool,
@@ -109,31 +111,31 @@ vis_draw_dict = {
     'trajectory_dt': float,
 }
 
-vis_color_dict = {
+vis_color_dtypes = {
     'black_background': bool,
     'random_colors': bool,
     'color_behavior': bool,
 }
 
-vis_aux_dict = {
+vis_aux_dtypes = {
     'visible_clock': bool,
     'visible_scale': bool,
     'visible_state': bool,
     'visible_ids': bool,
 }
 
-vis_pars_dict0 = {
-    **vis_render_dict,
-    **vis_draw_dict,
-    **vis_color_dict,
-    **vis_aux_dict,
-}
+# vis_dtypes = {
+#     **vis_render_dtypes,
+#     **vis_draw_dtypes,
+#     **vis_color_dtypes,
+#     **vis_aux_dtypes,
+# }
 
-vis_pars_dict = {
-    'render': vis_render_dict,
-    'draw': vis_draw_dict,
-    'color': vis_color_dict,
-    'aux': vis_aux_dict,
+vis_dtypes = {
+    'render': vis_render_dtypes,
+    'draw': vis_draw_dtypes,
+    'color': vis_color_dtypes,
+    'aux': vis_aux_dtypes,
 }
 
 
@@ -167,8 +169,8 @@ def get_vis_kwargs_dict(mode='video', image_mode='final', video_speed=1, show_di
     return dic
 
 
-replay_pars_dict = {
-    'arena_pars': arena_pars_dict,
+replay_dtypes = {
+    'arena_pars': arena_dtypes,
     'env_params': [''] + list(loadConfDict('Env').keys()),
     'track_point': int,
     # 'spinepoints': bool,
@@ -228,7 +230,7 @@ def distro_pars(class_name):
 
     food_distros = [
         'normal',
-        # 'defined',
+        'circle',
         'uniform'
     ]
 
@@ -237,7 +239,7 @@ def distro_pars(class_name):
         'Food': food_distros,
     }
 
-    common_distro_pars = {
+    common_distro_dtypes = {
         'group': str,
         'default_color': str,
         'mode': agent_distros[class_name],
@@ -247,15 +249,15 @@ def distro_pars(class_name):
     }
     if class_name == 'Food':
         return {
-            **common_distro_pars,
-            **base_food_pars,
-            # 'pars': base_food_pars,
+            **common_distro_dtypes,
+            **food_dtypes,
+            **odor_dtypes
         }
     elif class_name == 'Larva':
         from lib.conf.conf import loadConfDict
         return {
             'model': list(loadConfDict('Model').keys()),
-            **common_distro_pars,
+            **common_distro_dtypes,
             'orientation': float
 
         }

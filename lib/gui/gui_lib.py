@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from lib.anal.combining import render_mpl_table
 from lib.conf import par_conf
 from lib.conf.conf import loadConfDict, saveConf, deleteConf
-from lib.conf.dtype_dicts import agent_pars
+from lib.conf.dtype_dicts import agent_dtypes
 import lib.aux.functions as fun
 from lib.stor.paths import get_parent_dir
 
@@ -49,16 +49,27 @@ def retrieve_value(v, t):
         vv = None
     elif v in ['sample', 'fit']:
         vv = v
+
     elif t == 'bool':
         if v in ['False', False]:
             vv = False
         elif v in ['True', True]:
             vv = True
-    elif t == List[Tuple[float, float]]:
-        v = v.replace('{', ' ')
-        v = v.replace('}', ' ')
-        vv = [tuple([float(x) for x in t.split()]) for t in v.split('   ')]
-    elif t == Tuple[float, float]:
+    elif type(v) == t:
+        vv = v
+    elif t == List[Tuple[float, float]] :
+        if type(v) == str:
+            v = v.replace('{', ' ')
+            v = v.replace('}', ' ')
+            v = v.replace('[', ' ')
+            v = v.replace(']', ' ')
+            v = v.replace('(', ' ')
+            v = v.replace(')', ' ')
+            v = v.replace(',', ' ')
+            vv = [tuple([float(x) for x in t.split()]) for t in v.split('   ')]
+        elif type(v)==list :
+            vv=v
+    elif t == Tuple[float, float] and type(v) == str:
         v = v.replace('{', '')
         v = v.replace('}', '')
         v = v.replace('[', '')
@@ -85,8 +96,7 @@ def retrieve_value(v, t):
             vv = [float(x) for x in v.split()]
             if t == tuple:
                 vv = tuple(vv)
-    elif type(v) == t:
-        vv = v
+
     # elif type(t) == dict:
     #     vv = v
     elif type(t) == list:
@@ -97,6 +107,9 @@ def retrieve_value(v, t):
         # print(v, t)
         vv = t(v)
     return vv
+
+def retrieve_dict(dic, type_dic) :
+    return {k:retrieve_value(v,type_dic[k]) for k,v in dic.items()}
 
 
 def get_table_data(values, pars_dict, Nagents):
@@ -211,7 +224,11 @@ def gui_table(data, pars_dict, title='Agent list'):
                 select=True)  # when setting focus, also highlight the data in the element so typing overwrites
         if event == 'Add':
             data = get_table_data(values, pars_dict, Nagents)
-            data.append(data[r])
+            try:
+                new_row=data[r]
+            except :
+                new_row= {k : None for k in pars_dict.keys()}
+            data.append(new_row)
             table_window.close()
             Nagents, Npars, pars, table_window = build_table_window(data, pars_dict, title)
         elif event == 'Remove':
@@ -504,12 +521,12 @@ def set_kwargs(kwargs, title='Arguments', type_dict=None):
 
 def set_agent_kwargs(agent):
     class_name = type(agent).__name__
-    pars = agent_pars[class_name]
+    dtypes = agent_dtypes[class_name]
     title = f'{class_name} args'
     kwargs = {}
-    for p in list(pars.keys()):
+    for p in list(dtypes.keys()):
         kwargs[p] = getattr(agent, p)
-    new_kwargs = set_kwargs(kwargs, title, type_dict=pars)
+    new_kwargs = set_kwargs(kwargs, title, type_dict=dtypes)
     for p, v in new_kwargs.items():
         if p == 'unique_id':
             agent.set_id(v)
@@ -854,4 +871,17 @@ def delete_gui_conf(window, values, conf_type):
         window[f'{cap}_CONF'].update(values=list(loadConfDict(conf_type).keys()))
         window[f'{cap}_CONF'].update(value='')
 
+def check_collapsibles(window,event, collapsibles) :
+    if event.startswith('OPEN SEC'):
+        sec = event.split()[-1]
+        if collapsibles[sec].state is not None:
+            collapsibles[sec].state = not collapsibles[sec].state
+            window[event].update(SYMBOL_DOWN if collapsibles[sec].state else SYMBOL_UP)
+            window[f'SEC {sec}'].update(visible=collapsibles[sec].state)
+    # return collapsibles
 
+def check_toggles(window,event) :
+    if 'TOGGLE' in event:
+        if window[event].metadata.state is not None:
+            window[event].metadata.state = not window[event].metadata.state
+            window[event].update(image_data=on_image if window[event].metadata.state else off_image)

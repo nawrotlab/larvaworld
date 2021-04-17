@@ -35,6 +35,8 @@ class LarvaworldAgent:
 
         self.odor_id = odor_id
         self.odor_intensity = odor_intensity
+        if odor_spread is None :
+            odor_spread = 0.1
         self.odor_spread = odor_spread
         self.set_odor_dist()
 

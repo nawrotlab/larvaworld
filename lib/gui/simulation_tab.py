@@ -1,20 +1,21 @@
 import copy
 import threading
 import PySimpleGUI as sg
-from lib.conf.dtype_dicts import agent_pars, distro_pars, arena_pars_dict, life_pars_dict, odorscape_pars_dict, \
-    get_vis_kwargs_dict, vis_pars_dict, get_replay_kwargs_dict, replay_pars_dict
+from lib.conf.dtype_dicts import agent_dtypes, distro_pars, arena_dtypes, life_dtypes, odorscape_dtypes, \
+    get_vis_kwargs_dict, vis_dtypes, get_replay_kwargs_dict, replay_dtypes
 from lib.aux.collecting import output_keys
 from lib.conf import test_env
 from lib.conf import env_conf
 
 from lib.gui.gui_lib import CollapsibleDict, named_list_layout, button_kwargs, Collapsible, text_kwargs, \
     named_bool_button, header_kwargs, set_agent_dict, buttonM_kwargs, save_gui_conf, delete_gui_conf, GraphList
+from lib.gui.draw_env import draw_env
 from lib.sim.single_run import run_sim, configure_sim, sim_analysis
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 
 
 def init_env(env_params, collapsibles={}):
-    collapsibles['ARENA'] = CollapsibleDict('ARENA', True, dict=env_params['arena_params'], type_dict=arena_pars_dict)
+    collapsibles['ARENA'] = CollapsibleDict('ARENA', True, dict=env_params['arena_params'], type_dict=arena_dtypes)
     collapsibles['FOOD_GRID'] = CollapsibleDict('FOOD_GRID', True, dict=env_params['food_params']['food_grid'],
                                                 disp_name='FOOD GRID', toggle=True, disabled=False)
 
@@ -26,7 +27,7 @@ def init_env(env_params, collapsibles={}):
 
     collapsibles['SOURCES'] = Collapsible('SOURCES', True, food_conf)
     collapsibles['ODORSCAPE'] = CollapsibleDict('ODORSCAPE', True, dict=env_params['odorscape'],
-                                                type_dict=odorscape_pars_dict)
+                                                type_dict=odorscape_dtypes)
 
     env_layout = [
         collapsibles['ARENA'].get_section(),
@@ -93,7 +94,7 @@ def build_sim_tab(collapsibles, graph_lists, dicts):
     output_dict = dict(zip(output_keys, [False] * len(output_keys)))
     collapsibles['OUTPUT'] = CollapsibleDict('OUTPUT', False, dict=output_dict)
 
-    s = CollapsibleDict('VISUALIZATION', False, dict=get_vis_kwargs_dict(video_speed=60), type_dict=vis_pars_dict, toggled_subsections=None)
+    s = CollapsibleDict('VISUALIZATION', False, dict=get_vis_kwargs_dict(video_speed=60), type_dict=vis_dtypes, toggled_subsections=None)
     collapsibles.update(s.get_subdicts())
 
     sim_conf = [[sg.Text('Sim id:', **text_kwargs), sg.In('unnamed_sim', key='sim_id', **text_kwargs)],
@@ -111,9 +112,9 @@ def build_sim_tab(collapsibles, graph_lists, dicts):
     life_dict = {'starvation_hours': None,
                  'hours_as_larva': 0.0,
                  'deb_base_f': 1.0}
-    collapsibles['LIFE'] = CollapsibleDict('LIFE', False, dict=life_dict, type_dict=life_pars_dict)
+    collapsibles['LIFE'] = CollapsibleDict('LIFE', False, dict=life_dict, type_dict=life_dtypes)
     # l_life = collapsibles['LIFE'].get_section()
-    s = CollapsibleDict('REPLAY', False, dict=get_replay_kwargs_dict(arena_pars=env_conf.dish(0.15)), type_dict=replay_pars_dict)
+    s = CollapsibleDict('REPLAY', False, dict=get_replay_kwargs_dict(arena_pars=env_conf.dish(0.15)), type_dict=replay_dtypes)
     collapsibles.update(s.get_subdicts())
 
     graph_lists['EXP'] = GraphList('EXP')
@@ -133,6 +134,7 @@ def build_sim_tab(collapsibles, graph_lists, dicts):
          sg.Combo(list(loadConfDict('Env').keys()), key='ENV_CONF', enable_events=True, readonly=True, **text_kwargs)],
         [sg.Button('Load', key='LOAD_ENV', **button_kwargs),
          sg.Button('Configure', key='CONF_ENV', **button_kwargs),
+         sg.Button('Draw', key='DRAW_ENV', **button_kwargs),
          sg.Button('Save', key='SAVE_ENV', **button_kwargs),
          sg.Button('Delete', key='DELETE_ENV', **button_kwargs)]
     ])]
@@ -143,6 +145,9 @@ def build_sim_tab(collapsibles, graph_lists, dicts):
     l_sim = [[sg.Col(l_conf), sg.Col(l_env), graph_lists['EXP'].canvas]]
 
     return l_sim, collapsibles, graph_lists, dicts
+
+
+
 
 
 def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
@@ -173,14 +178,19 @@ def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
         larva_groups = set_agent_dict(larva_groups, distro_pars('Larva'), header='group', title='Larva distribution')
 
     elif event == 'SOURCE UNITS':
-        source_units = set_agent_dict(source_units, agent_pars['Food'], title='Food distribution')
+        source_units = set_agent_dict(source_units, agent_dtypes['Food'], title='Food distribution')
 
     elif event == 'SOURCE GROUPS':
         source_groups = set_agent_dict(source_groups, distro_pars('Food'), header='group', title='Food distribution')
 
     elif event == 'BORDERS':
-        border_list = set_agent_dict(border_list, agent_pars['Border'], title='Impassable borders')
+        border_list = set_agent_dict(border_list, agent_dtypes['Border'], title='Impassable borders')
 
+    elif event == 'DRAW_ENV':
+        env = get_env(window, values, collapsibles, dicts)
+        new_env = draw_env(env)
+        source_units = new_env['food_params']['source_units']
+        border_list = new_env['border_list']
 
     elif event == 'CONF_ENV':
         env = get_env(window, values, collapsibles, dicts)

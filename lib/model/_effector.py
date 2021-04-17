@@ -739,6 +739,7 @@ class Olfactor(Effector):
 
 
 
+
     def set_gain(self, value, odor_id):
         self.gain[odor_id] = value
 
@@ -888,7 +889,7 @@ class RLmemory(Effector):
                 # print('gain : ', gain)
                 # print('reward : ', self.rewardSum)
                 self.rewardSum = 0
-                self.q_table[state, self.lastAction] = new_value
+                self.q_table[self.lastState, self.lastAction] = new_value
                 self.lastAction = actionID
                 self.lastState = state
 

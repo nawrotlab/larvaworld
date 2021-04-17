@@ -6,6 +6,8 @@ import progressbar
 import os
 from typing import List, Any
 
+import webcolors
+
 from lib.envs._maze import Border
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -23,7 +25,7 @@ from lib.aux.sampling import sample_agents, get_ref_bout_distros
 import lib.aux.functions as fun
 from lib.aux import naming as nam
 
-from lib.conf.dtype_dicts import agent_pars, life_dict
+from lib.conf.dtype_dicts import agent_dtypes, life_dict
 from lib.model import *
 from lib.model._agent import LarvaworldAgent
 from lib.sim.input_lib import evaluate_input, evaluate_graphs
@@ -328,7 +330,6 @@ class LarvaWorld:
 
         self.draw_screen_texts(screen)
 
-
     def draw_arena(self, screen, background_motion):
         screen.set_bounds(*self.space_edges_for_screen)
         arena_drawn = False
@@ -343,7 +344,6 @@ class LarvaWorld:
         if not arena_drawn:
             screen.draw_polygon(self.tank_shape, color=self.tank_color)
             self.draw_background(screen, background_motion)
-
 
         for i, b in enumerate(self.borders):
             b.draw(screen)
@@ -508,7 +508,7 @@ class LarvaWorld:
             elif agent_class == 'Larva':
                 f = self.add_larva(p0)
             elif agent_class == 'Border':
-                b = Border(model=self, points=[p1, p0], from_screen=True)
+                b = Border(model=self, points=[p1, p0])
                 self.add_border(b)
         except:
             pass
@@ -530,7 +530,7 @@ class LarvaWorld:
         warnings.filterwarnings('ignore')
         with progressbar.ProgressBar(max_value=Nsteps) as bar:
             while self.is_running and self.Nticks < Nsteps and not self.end_condition_met:
-                if not self.sim_paused :
+                if not self.sim_paused:
                     self.step()
                     bar.update(self.Nticks)
                 if self.vis_kwargs['render']['mode'] == 'video' or self.vis_kwargs['render']['image_mode'] == 'overlap':
@@ -651,13 +651,14 @@ class LarvaWorld:
                     self.end_condition_met = True
             self.sim_state.set_text(f'L:{np.round(dur - self.l_t, 2)} vs R:{np.round(dur - self.r_t, 2)}')
 
-    def create_borders(self, lines, from_screen=False):
+    def create_borders(self, lines):
         s = self.scaling_factor
         X, Y = self.arena_dims
-        if not from_screen:
-            T = [s, 0, 0, s, -s * X / 2, -s * Y / 2]
-        else:
-            T = [s, 0, 0, s, 0, 0]
+        # if not from_screen:
+        #     T = [s, 0, 0, s, -s * X / 2, -s * Y / 2]
+        # else:
+        #     T = [s, 0, 0, s, 0, 0]
+        T = [s, 0, 0, s, 0, 0]
         lines = [affine_transform(l, T) for l in lines]
         ps = [p.coords.xy for p in lines]
         border_xy = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
@@ -680,19 +681,25 @@ class LarvaWorld:
         # return None
 
     def get_agent_list(self, class_name):
+        global id
         if class_name == 'Food':
             agents = self.get_food()
         elif class_name in ['LarvaSim', 'LarvaReplay']:
             agents = self.get_flies()
         elif class_name == 'Border':
             agents = self.borders
-        pars = agent_pars[class_name]
+        pars = list(agent_dtypes[class_name].keys())
         data = {}
         for f in agents:
             dic = {}
             for p in pars:
                 if p == 'unique_id':
                     id = f.unique_id
+                elif p == 'default_color':
+                    try:
+                        dic[p] = webcolors.rgb_to_name(tuple([int(x) for x in getattr(f, p)]))
+                    except:
+                        dic[p] = getattr(f, p)
                 else:
                     dic[p] = getattr(f, p)
             data[id] = dic
@@ -767,8 +774,8 @@ class LarvaWorldSim(LarvaWorld):
         if collected_pars is None:
             collected_pars = {'step': [], 'endpoint': []}
         # self.available_pars = fun.unique_list([p for p in list(step_database.keys()) if par_conf.par_in_db(par=p)])
-        if life_params is None :
-            life_params=life_dict()
+        if life_params is None:
+            life_params = life_dict()
         self.starvation_hours = life_params['starvation_hours']
         if self.starvation_hours is None:
             self.starvation_hours = []

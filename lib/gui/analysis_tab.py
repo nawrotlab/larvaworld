@@ -5,7 +5,7 @@ import matplotlib
 import inspect
 from tkinter import *
 
-from lib.conf.dtype_dicts import get_replay_kwargs_dict, replay_pars_dict
+from lib.conf.dtype_dicts import get_replay_kwargs_dict, replay_dtypes
 from lib.gui.gui_lib import header_kwargs, button_kwargs, ButtonGraphList, CollapsibleDict
 from lib.stor.paths import SingleRunFolder, RefFolder
 from lib.anal.plotting import graph_dict

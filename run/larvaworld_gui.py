@@ -12,7 +12,7 @@ from tkinter import *
 sys.path.insert(0, '..')
 
 from lib.gui.batch_tab import build_batch_tab, eval_batch, get_batch
-from lib.gui.gui_lib import SYMBOL_DOWN, SYMBOL_UP, on_image, off_image
+from lib.gui.gui_lib import SYMBOL_DOWN, SYMBOL_UP, on_image, off_image, check_collapsibles, check_toggles
 from lib.gui.model_tab import build_model_tab, eval_model
 from lib.gui.simulation_tab import build_sim_tab, eval_sim, get_exp
 from lib.gui.analysis_tab import build_analysis_tab, eval_analysis
@@ -68,21 +68,23 @@ def run_gui():
         e, v = w.read()
         if e in (None, 'Exit'):
             break
-        if e.startswith('OPEN SEC'):
-            sec = e.split()[-1]
-            if collapsibles[sec].state is not None:
-                collapsibles[sec].state = not collapsibles[sec].state
-                w[e].update(SYMBOL_DOWN if collapsibles[sec].state else SYMBOL_UP)
-                w[f'SEC {sec}'].update(visible=collapsibles[sec].state)
-        elif 'TOGGLE' in e:
-            if w[e].metadata.state is not None:
-                w[e].metadata.state = not w[e].metadata.state
-                w[e].update(image_data=on_image if w[e].metadata.state else off_image)
+        check_collapsibles(w,e, collapsibles)
+        check_toggles(w,e)
+        # if e.startswith('OPEN SEC'):
+        #     sec = e.split()[-1]
+        #     if collapsibles[sec].state is not None:
+        #         collapsibles[sec].state = not collapsibles[sec].state
+        #         w[e].update(SYMBOL_DOWN if collapsibles[sec].state else SYMBOL_UP)
+        #         w[f'SEC {sec}'].update(visible=collapsibles[sec].state)
+        # elif 'TOGGLE' in e:
+        #     if w[e].metadata.state is not None:
+        #         w[e].metadata.state = not w[e].metadata.state
+        #         w[e].update(image_data=on_image if w[e].metadata.state else off_image)
 
-        else :
-            for name,graph_list in graph_lists.items() :
-                if e==graph_list.list_key :
-                    graph_list.evaluate(w, v[graph_list.list_key])
+        # else :
+        for name,graph_list in graph_lists.items() :
+            if e==graph_list.list_key :
+                graph_list.evaluate(w, v[graph_list.list_key])
 
 
         tab = v['ACTIVE_TAB']

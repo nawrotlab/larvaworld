@@ -110,25 +110,30 @@ def maze(nx=15, ny=15, ix=0, iy=0, h=0.1, return_points=False):
         for l in lines:
             ps.append(l.coords[0])
             ps.append(l.coords[1])
+        ps=[(np.round(x-h/2,3), np.round(y-h/2,3)) for x,y in ps]
         return ps
     else:
         return lines
 
 
+
+
 def odor_source(id, pos=(0.0, 0.0), r=0.003, odor_id=None, odor_intensity=2, odor_spread=0.0002, can_be_carried=False,
-                default_color=None):
+                default_color=None, group=''):
     if odor_id is None:
         odor_id = f'{id} odor'
     return {id: {'pos': pos,
+                 'group': group,
                  **food(r=r, amount=0.0, **odor(odor_id, odor_intensity, odor_spread),
                         default_color=default_color, can_be_carried=can_be_carried)}}
 
 
 def foodNodor_source(id, pos=(0.0, 0.0), r=0.003, odor_id=None, odor_intensity=2, odor_spread=0.0002,
-                     can_be_carried=False, default_color=None):
+                     can_be_carried=False, default_color=None, group=''):
     if odor_id is None:
         odor_id = f'{id} odor'
     return {id: {'pos': pos,
+                 'group': group,
                  **food(r=r, amount=0.01, **odor(odor_id, odor_intensity, odor_spread),
                         default_color=default_color, can_be_carried=can_be_carried)}}
 
@@ -182,15 +187,15 @@ king_env = game_env_conf(mode='king')
 flag_env = game_env_conf(mode='flag')
 
 
-def maze_conf(n):
-    conf = {'arena_params': arena(0.1, 0.1),
+def maze_conf(n, h):
+    conf = {'arena_params': arena(h, h),
             'border_list': {
                 'Maze': {
-                    'points': maze(nx=n, ny=n, h=0.1, return_points=True),
-                    # 'lines': maze(nx=n, ny=n, h=0.1),
-                    'from_screen': False}
+                    'points': maze(nx=n, ny=n, h=h, return_points=True),
+                    'default_color' : 'black',
+                    'width': 0.001}
             },
-            'food_params': food_param_conf(list={**odor_source('Target')}),
+            'food_params': food_param_conf(list={**odor_source('Target', odor_id='Odor')}),
             'larva_params': larva_distro(5, mode='facing_right', loc=(-0.8, 0.0), scale=0.03, model='navigator'),
             'odorscape': gaussian_odor()}
     return conf
@@ -236,7 +241,7 @@ RL_chemorbit_env = {'arena_params': dish(0.2),
                     'odorscape': diffusion_odor()
                     }
 
-maze_env = maze_conf(15)
+maze_env = maze_conf(15, 0.1)
 
 dispersion_env = {'arena_params': dish(0.2),
                   'food_params': food_param_conf(),

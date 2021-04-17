@@ -4,7 +4,7 @@ import threading
 import PySimpleGUI as sg
 
 from lib.anal.combining import render_mpl_table
-from lib.conf.dtype_dicts import opt_pars_dict, space_pars_dict, batch_methods_dict
+from lib.conf.dtype_dicts import optimization_dtypes, space_search_dtypes, batch_method_dtypes
 from lib.conf.batch_conf import test_batch
 from lib.gui.gui_lib import CollapsibleDict, button_kwargs, Collapsible, text_kwargs, buttonM_kwargs, named_list_layout, \
     gui_table, save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList
@@ -50,8 +50,8 @@ def build_batch_tab(collapsibles, graph_lists, dicts):
 
     collapsibles['BATCH_CONFIGURATION'] = Collapsible('BATCH_CONFIGURATION', True, batch_conf,
                                                       disp_name='CONFIGURATION')
-    collapsibles['METHODS'] = CollapsibleDict('METHODS', True, dict=batch['methods'], type_dict=batch_methods_dict)
-    s = CollapsibleDict('OPTIMIZATION', True, dict=batch['optimization'], type_dict=opt_pars_dict,
+    collapsibles['METHODS'] = CollapsibleDict('METHODS', True, dict=batch['methods'], type_dict=batch_method_dtypes)
+    s = CollapsibleDict('OPTIMIZATION', True, dict=batch['optimization'], type_dict=optimization_dtypes,
                         toggle=True, disabled=True, toggled_subsections=None)
     collapsibles.update(s.get_subdicts())
 
@@ -78,9 +78,9 @@ def set_space_table(space_search):
             d[k] = v[i]
         t0.append(d)
 
-    t1 = gui_table(t0, space_pars_dict, title='space search')
+    t1 = gui_table(t0, space_search_dtypes, title='space search')
     dic = {}
-    for k in list(space_pars_dict.keys()):
+    for k in list(space_search_dtypes.keys()):
         dic[k] = [l[k] for l in t1]
         # if k == 'ranges':
         #     dic[k] = np.array(dic[k])
