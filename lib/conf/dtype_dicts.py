@@ -216,9 +216,7 @@ def get_replay_kwargs_dict(arena_pars=None,
     }
     return dic
 
-
-def distro_pars(class_name):
-    larva_distros = [
+larva_distros = [
         'normal',
         'defined',
         'identical',
@@ -228,27 +226,33 @@ def distro_pars(class_name):
         'facing_right'
     ]
 
-    food_distros = [
-        'normal',
-        'circle',
-        'uniform'
-    ]
+food_distros = [
+    'normal',
+    'circle',
+    'uniform'
+]
 
-    agent_distros = {
-        'Larva': larva_distros,
-        'Food': food_distros,
-    }
+agent_distros = {
+    'Larva': larva_distros,
+    'Food': food_distros,
+}
+
+def distro_dtypes(class_name, basic=False):
+
 
     common_distro_dtypes = {
-        'group': str,
-        'default_color': str,
         'mode': agent_distros[class_name],
         'N': int,
         'loc': Tuple[float, float],
         'scale': float,
     }
+    if basic :
+        return common_distro_dtypes
+
     if class_name == 'Food':
         return {
+            'group': str,
+            'default_color': str,
             **common_distro_dtypes,
             **food_dtypes,
             **odor_dtypes
@@ -256,6 +260,8 @@ def distro_pars(class_name):
     elif class_name == 'Larva':
         from lib.conf.conf import loadConfDict
         return {
+            'group': str,
+            'default_color': str,
             'model': list(loadConfDict('Model').keys()),
             **common_distro_dtypes,
             'orientation': float

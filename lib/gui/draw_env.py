@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 import numpy as np
 
 from lib.aux.functions import agent_list2dict
-from lib.conf.dtype_dicts import border_dtypes, food_dtypes, odor_dtypes, arena_dtypes
+from lib.conf.dtype_dicts import border_dtypes, food_dtypes, odor_dtypes, arena_dtypes, distro_dtypes
 from lib.gui.gui_lib import CollapsibleDict, button_kwargs, text_kwargs, check_collapsibles, check_toggles, \
     retrieve_dict
 
@@ -776,25 +776,31 @@ def draw_env(env=None):
     source_units = env['food_params']['source_units']
     source_groups = env['food_params']['source_groups']
     larva_groups = env['larva_params']
-
-    current = {}
-
-
+    borders_f, source_units_f, source_groups_f, larva_groups_f = {}, {}, {}, {}
 
     collapsibles['ARENA'] = CollapsibleDict('ARENA', True, dict=arena_pars, type_dict=arena_dtypes)
+
+    null_distro = {
+        'mode': None,
+        'N': 0,
+        'loc': None,
+        'scale': None,
+    }
+
+    collapsibles['SOURCE_DISTRO'] = CollapsibleDict('SOURCE_DISTRO', False, dict=null_distro,
+                                                    type_dict=distro_dtypes('Food', basic=True),
+                                                    toggle=False, disabled=True)
 
     null_odor = {'odor_id': None,
                  'odor_intensity': 0.0,
                  'odor_spread': None}
 
-
     collapsibles['SOURCE_ODOR'] = CollapsibleDict('SOURCE_ODOR', False, dict=null_odor, type_dict=odor_dtypes,
                                                   toggle=False)
 
-    null_food = {'radius': 0.03,
+    null_food = {'radius': None,
                  'amount': 0.0,
                  'quality': 1.0}
-
 
     collapsibles['SOURCE_FOOD'] = CollapsibleDict('SOURCE_FOOD', False, dict=null_food, type_dict=food_dtypes,
                                                   toggle=False)
@@ -814,10 +820,12 @@ def draw_env(env=None):
          sg.B('Pick', k='PICK BORDER_color', **button_kwargs)],
 
         [sg.R('Add Source', 1, key='SOURCE', enable_events=True)],
-        [sg.T('', size=(5, 1)), sg.T('id', size=(5, 1)),
+        [sg.T('', size=(2, 1)),
+         sg.R('single id', 2, disabled=True, key='SOURCE_single', enable_events=True, size=(5, 1)),
          sg.In(f'SOURCE_{len(source_units.keys())}', key='SOURCE_id', **text_kwargs)],
-        [sg.T('', size=(5, 1)), sg.T('group', size=(5, 1)),
-         sg.In(key='SOURCE_group', **text_kwargs)],
+        [sg.T('', size=(2, 1)), sg.R('group id', 2, disabled=True, key='SOURCE_group', enable_events=True, size=(5, 1)),
+         sg.In(key='SOURCE_group_id', **text_kwargs)],
+        [sg.T('', size=(5, 1)), *collapsibles['SOURCE_DISTRO'].get_section()],
         [sg.T('', size=(5, 1)), *collapsibles['SOURCE_ODOR'].get_section()],
         [sg.T('', size=(5, 1)), *collapsibles['SOURCE_FOOD'].get_section()],
         [sg.T('', size=(5, 1)), sg.T('shape', size=(5, 1)),
@@ -849,8 +857,9 @@ def draw_env(env=None):
 
     graph = window["-GRAPH-"]  # type: sg.Graph
 
-    dragging = False
+    dragging, current = False, {}
     start_point = end_point = prior_rect = None
+
     graph.bind('<Button-3>', '+RIGHT+')
     while True:
         event, values = window.read()
@@ -866,8 +875,11 @@ def draw_env(env=None):
         check_collapsibles(window, event, collapsibles)
         check_toggles(window, event)
         if event == 'RESET_ARENA':
+            window["info"].update(value='Arena has been reset. All items erased.')
             s, arena = draw_arena(graph, collapsibles['ARENA'].get_dict(values, window))
             borders, source_units, source_groups, larva_groups = {}, {}, {}, {}
+            borders_f, source_units_f, source_groups_f, larva_groups_f = {}, {}, {}, {}
+
             for ii in ['BORDER', 'SOURCE']:
                 window[f'{ii}_id'].update(value=f'{ii}_0')
 
@@ -905,10 +917,9 @@ def draw_env(env=None):
                             graph.move_figure(fig, delta_x, delta_y)
                             graph.update()
                 elif values['SOURCE']:
-                    odor_on = window['TOGGLE_SOURCE_ODOR'].metadata.state
-                    id=values['SOURCE_id']
-                    if odor_on and values['SOURCE_ODOR_odor_id'] == '':
-                        window['SOURCE_ODOR_odor_id'].update(value=f'{id}_odor')
+
+                    # window['SOURCE_single'].update(disabled=False)
+                    # window['SOURCE_group'].update(disabled=False)
                     c = {'fill_color': values['SOURCE_color'] if window['TOGGLE_SOURCE_FOOD'].metadata.state else None,
                          'line_color': values['SOURCE_color'],
                          'line_width': 5,
@@ -923,20 +934,34 @@ def draw_env(env=None):
                 elif values['-ERASE-']:
                     for figure in drag_figures:
                         if figure != arena:
+                            for dic, f_dic in zip([borders, source_units, source_groups, larva_groups],
+                                                  [borders_f, source_units_f, source_groups_f, larva_groups_f]):
+                                if figure in list(f_dic.keys()):
+                                    window["info"].update(value=f"Item {f_dic[figure]} erased")
+                                    dic.pop(f_dic[figure])
+                                    f_dic.pop(figure)
                             graph.delete_figure(figure)
+
         elif event.endswith('+UP'):  # The drawing has ended because mouse up
             info = window["info"]
             P1, P2 = scale(start_point, s), scale(end_point, s)
             if not any([out_of_bounds(P, collapsibles['ARENA'].get_dict(values, window)) for P in [P1, P2]]):
                 if values['BORDER']:
-                    info.update(value=f"border from {P1} to {P2}")
-                    dic = {'unique_id': values['BORDER_id'],
+
+                    id = values['BORDER_id']
+                    if id in list(borders.keys()) or id == '':
+                        info.update(value=f"Border id {id} already exists or is empty")
+                        graph.delete_figure(prior_rect)
+                        dragging, current = False, {}
+                        start_point = end_point = prior_rect = None
+                        continue
+                    dic = {'unique_id': id,
                            'default_color': values['BORDER_color'],
                            'width': values['BORDER_width'],
                            'points': [P1, P2]}
-
+                    info.update(value=f"Border {id} placed from {P1} to {P2}")
                     current = agent_list2dict([retrieve_dict(dic, border_dtypes)])
-                    print(current[values['BORDER_id']]['points'])
+                    borders_f[prior_rect] = id
                     borders.update(current)
                     window['BORDER_id'].update(value=f'BORDER_{len(borders.keys())}')
                 elif values['SOURCE']:
@@ -944,28 +969,62 @@ def draw_env(env=None):
                     shape, color, id = values['SOURCE_SHAPE'], values['SOURCE_color'], values['SOURCE_id']
                     food_on = window['TOGGLE_SOURCE_FOOD'].metadata.state
                     odor_on = window['TOGGLE_SOURCE_ODOR'].metadata.state
+                    if id in list(source_units.keys()) or id == '':
+                        info.update(value=f"Source id {id} already exists  or is empty")
+                        graph.delete_figure(prior_rect)
+                        dragging, current = False, {}
+                        start_point = end_point = prior_rect = None
+                        continue
+                    if not odor_on and not food_on:
+                        info.update(value=f"Assign food and/or odor to the drawn source")
+                        graph.delete_figure(prior_rect)
+                        dragging, current = False, {}
+                        start_point = end_point = prior_rect = None
+                        continue
+                    elif odor_on:
+                        if values['SOURCE_ODOR_odor_id'] == '':
+                            info.update(value=f"Default odor id automatically assigned to the drawn odor source")
+                            window['SOURCE_ODOR_odor_id'].update(value=f'{id}_odor')
+                            graph.delete_figure(prior_rect)
+                            dragging, current = False, {}
+                            start_point = end_point = prior_rect = None
+                            continue
+                        if not float(values['SOURCE_ODOR_odor_intensity']) > 0 or values[
+                            'SOURCE_ODOR_odor_spread'] is None or not float(values['SOURCE_ODOR_odor_spread']) > 0:
+                            info.update(value=f"Assign positive odor intensity and spread to the drawn odor source")
+                            graph.delete_figure(prior_rect)
+                            dragging, current = False, {}
+                            start_point = end_point = prior_rect = None
+                            continue
                     food_pars = collapsibles['SOURCE_FOOD'].get_dict(values, window) if food_on else null_food
                     # if odor_on and values['SOURCE_ODOR_odor_id'] == '':
                     #     window['SOURCE_ODOR_odor_id'].update(value=f'{id}_odor')
                     odor_pars = collapsibles['SOURCE_ODOR'].get_dict(values, window) if odor_on else null_odor
 
                     current = {id: {'default_color': color,
-                                    'group': values['SOURCE_group'],
+                                    'group': values['SOURCE_group_id'],
                                     'pos': P1,
                                     **food_pars,
                                     **odor_pars,
                                     }}
-                    info.update(value=f"source at {P1}")
+                    info.update(value=f"Source {id} placed at {P1}")
+                    source_units_f[prior_rect] = id
                     source_units.update(current)
                     window['SOURCE_id'].update(value=f'SOURCE_{len(source_units.keys())}')
                     window['SOURCE_ODOR_odor_id'].update(value='')
             else:
                 graph.delete_figure(prior_rect)
-            current = {}
-            start_point, end_point = None, None  # enable grabbing a new rect
-            dragging = False
-            prior_rect = None
-        # print(values)
+            dragging, current = False, {}
+            start_point = end_point = prior_rect = None
+
+        window['SOURCE_single'].update(disabled=not values['SOURCE'])
+        window['SOURCE_group'].update(disabled=not values['SOURCE'])
+        collapsibles['SOURCE_DISTRO'].disable(window) if not values['SOURCE_group'] else collapsibles['SOURCE_DISTRO'].enable(window)
+        if values['SOURCE_group'] :
+            window['SOURCE_id'].update(value='')
+        elif values['SOURCE_id']=='' :
+            window['SOURCE_id'].update(value=f'SOURCE_{len(source_units.keys())}')
+        print(values)
 
     window.close()
     return env

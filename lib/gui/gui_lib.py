@@ -411,23 +411,31 @@ class Collapsible:
 
     def update(self, window, dict, use_prefix=True):
         if dict is None:
-            if self.toggle is not None:
-                window[f'TOGGLE_{self.name}'].metadata.state = None
-                window[f'TOGGLE_{self.name}'].update(image_data=off_image_disabled)
-            self.state = None
-            window[f'OPEN SEC {self.name}'].update(SYMBOL_UP)
-            window[f'SEC {self.name}'].update(visible=False)
+            self.disable(window)
         else:
-            if self.toggle is not None:
-                window[f'TOGGLE_{self.name}'].update(image_data=on_image_disabled)
-            if self.state is None:
-                self.state = False
+            self.enable(window)
             if use_prefix:
                 prefix = self.name
             else:
                 prefix = None
             update_window_from_dict(window, dict, prefix=prefix)
         return window
+
+    def disable(self, window):
+        if self.toggle is not None:
+            window[f'TOGGLE_{self.name}'].metadata.state = None
+            window[f'TOGGLE_{self.name}'].update(image_data=off_image_disabled)
+        self.state = None
+        window[f'OPEN SEC {self.name}'].update(SYMBOL_UP)
+        window[f'SEC {self.name}'].update(visible=False)
+
+    def enable(self, window):
+        if self.toggle is not None:
+            window[f'TOGGLE_{self.name}'].update(image_data=on_image_disabled)
+        if self.state is None:
+            self.state = True
+        window[f'OPEN SEC {self.name}'].update(SYMBOL_DOWN)
+        window[f'SEC {self.name}'].update(visible=True)
 
 
 class CollapsibleDict(Collapsible):

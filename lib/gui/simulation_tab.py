@@ -1,7 +1,7 @@
 import copy
 import threading
 import PySimpleGUI as sg
-from lib.conf.dtype_dicts import agent_dtypes, distro_pars, arena_dtypes, life_dtypes, odorscape_dtypes, \
+from lib.conf.dtype_dicts import agent_dtypes, distro_dtypes, arena_dtypes, life_dtypes, odorscape_dtypes, \
     get_vis_kwargs_dict, vis_dtypes, get_replay_kwargs_dict, replay_dtypes
 from lib.aux.collecting import output_keys
 from lib.conf import test_env
@@ -175,13 +175,13 @@ def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
         delete_gui_conf(window, values, 'Env')
 
     elif event == 'LARVA GROUPS':
-        larva_groups = set_agent_dict(larva_groups, distro_pars('Larva'), header='group', title='Larva distribution')
+        larva_groups = set_agent_dict(larva_groups, distro_dtypes('Larva'), header='group', title='Larva distribution')
 
     elif event == 'SOURCE UNITS':
         source_units = set_agent_dict(source_units, agent_dtypes['Food'], title='Food distribution')
 
     elif event == 'SOURCE GROUPS':
-        source_groups = set_agent_dict(source_groups, distro_pars('Food'), header='group', title='Food distribution')
+        source_groups = set_agent_dict(source_groups, distro_dtypes('Food'), header='group', title='Food distribution')
 
     elif event == 'BORDERS':
         border_list = set_agent_dict(border_list, agent_dtypes['Border'], title='Impassable borders')
