@@ -7,7 +7,7 @@ from lib.aux.collecting import output_keys
 from lib.conf import test_env
 from lib.conf import env_conf
 
-from lib.gui.gui_lib import CollapsibleDict, named_list_layout, button_kwargs, Collapsible, text_kwargs, \
+from lib.gui.gui_lib import CollapsibleDict, named_list_layout, b_kws, Collapsible, t_kws, \
     named_bool_button, header_kwargs, set_agent_dict, buttonM_kwargs, save_gui_conf, delete_gui_conf, GraphList
 from lib.gui.draw_env import draw_env
 from lib.sim.single_run import run_sim, configure_sim, sim_analysis
@@ -88,7 +88,7 @@ def build_sim_tab(collapsibles, graph_lists, dicts):
 
     l_exp = [sg.Col([
         named_list_layout(text='Experiment:', key='EXP', choices=list(loadConfDict('Exp').keys())),
-        [sg.Button('Load', key='LOAD_EXP', **button_kwargs), sg.Button('Run', **button_kwargs)]
+        [sg.Button('Load', key='LOAD_EXP', **b_kws), sg.Button('Run', **b_kws)]
     ])]
 
     output_dict = dict(zip(output_keys, [False] * len(output_keys)))
@@ -97,10 +97,10 @@ def build_sim_tab(collapsibles, graph_lists, dicts):
     s = CollapsibleDict('VISUALIZATION', False, dict=get_vis_kwargs_dict(video_speed=60), type_dict=vis_dtypes, toggled_subsections=None)
     collapsibles.update(s.get_subdicts())
 
-    sim_conf = [[sg.Text('Sim id:', **text_kwargs), sg.In('unnamed_sim', key='sim_id', **text_kwargs)],
-                [sg.Text('Path:', **text_kwargs), sg.In('single_runs', key='path', **text_kwargs)],
-                [sg.Text('Duration (min):', **text_kwargs), sg.In(3, key='sim_dur', **text_kwargs)],
-                [sg.Text('Timestep (sec):', **text_kwargs), sg.In(0.1, key='dt', **text_kwargs)],
+    sim_conf = [[sg.Text('Sim id:', **t_kws), sg.In('unnamed_sim', key='sim_id', **t_kws)],
+                [sg.Text('Path:', **t_kws), sg.In('single_runs', key='path', **t_kws)],
+                [sg.Text('Duration (min):', **t_kws), sg.In(3, key='sim_dur', **t_kws)],
+                [sg.Text('Timestep (sec):', **t_kws), sg.In(0.1, key='dt', **t_kws)],
                 named_bool_button('Box2D', False),
 
                 ]
@@ -131,12 +131,12 @@ def build_sim_tab(collapsibles, graph_lists, dicts):
 
     l_env0 = [sg.Col([
         [sg.Text('Environment:', **header_kwargs),
-         sg.Combo(list(loadConfDict('Env').keys()), key='ENV_CONF', enable_events=True, readonly=True, **text_kwargs)],
-        [sg.Button('Load', key='LOAD_ENV', **button_kwargs),
-         sg.Button('Configure', key='CONF_ENV', **button_kwargs),
-         sg.Button('Draw', key='DRAW_ENV', **button_kwargs),
-         sg.Button('Save', key='SAVE_ENV', **button_kwargs),
-         sg.Button('Delete', key='DELETE_ENV', **button_kwargs)]
+         sg.Combo(list(loadConfDict('Env').keys()), key='ENV_CONF', enable_events=True, readonly=True, **t_kws)],
+        [sg.Button('Load', key='LOAD_ENV', **b_kws),
+         sg.Button('Configure', key='CONF_ENV', **b_kws),
+         sg.Button('Draw', key='DRAW_ENV', **b_kws),
+         sg.Button('Save', key='SAVE_ENV', **b_kws),
+         sg.Button('Delete', key='DELETE_ENV', **b_kws)]
     ])]
     l_env1 = init_env(env_params, collapsibles)
 

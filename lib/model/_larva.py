@@ -113,6 +113,9 @@ class LarvaReplay(Larva, BodyReplay):
                     seg.draw(viewer)
             elif len(self.vertices) > 0:
                 viewer.draw_polygon(self.vertices, filled=True, color=self.color)
+        # return
+        # viewer.draw_polygon(self.get_shape().boundary.coords, self.color, filled=True, width=self.radius / 10)
+        # return
         if self.model.draw_centroid:
             if not np.isnan(self.cen_pos).any():
                 pos = self.cen_pos
@@ -137,6 +140,8 @@ class LarvaReplay(Larva, BodyReplay):
             elif not np.isnan(self.pos).any():
                 viewer.draw_circle(radius=self.radius, position=self.pos,
                                    filled=False, color=self.model.selection_color, width=self.radius / 3)
+
+
 
     def set_color(self, color):
         self.color = color
@@ -232,8 +237,8 @@ class LarvaSim(BodySim, Larva):
                 else:
                     return False, None, None
             else:
-                accessible_food = fun.agents_spatial_query(pos=pos, radius=radius,
-                                                       agent_list=self.model.get_food())
+                accessible_food = [a for a in self.model.get_food() if (a.contained(pos) and a.amount>0)]
+                # accessible_food = fun.agents_spatial_query(pos=pos, radius=radius,agent_list=self.model.get_food())
                 if accessible_food:
                     food = random.choice(accessible_food)
                     self.resolve_carrying(food)

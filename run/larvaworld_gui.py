@@ -74,12 +74,12 @@ def run_gui():
         #     sec = e.split()[-1]
         #     if collapsibles[sec].state is not None:
         #         collapsibles[sec].state = not collapsibles[sec].state
-        #         w[e].update(SYMBOL_DOWN if collapsibles[sec].state else SYMBOL_UP)
-        #         w[f'SEC {sec}'].update(visible=collapsibles[sec].state)
+        #         W[e].update(SYMBOL_DOWN if collapsibles[sec].state else SYMBOL_UP)
+        #         W[f'SEC {sec}'].update(visible=collapsibles[sec].state)
         # elif 'TOGGLE' in e:
-        #     if w[e].metadata.state is not None:
-        #         w[e].metadata.state = not w[e].metadata.state
-        #         w[e].update(image_data=on_image if w[e].metadata.state else off_image)
+        #     if W[e].metadata.state is not None:
+        #         W[e].metadata.state = not W[e].metadata.state
+        #         W[e].update(image_data=on_image if W[e].metadata.state else off_image)
 
         # else :
         for name,graph_list in graph_lists.items() :
@@ -103,7 +103,7 @@ def run_gui():
 
 
         # if dicts['batch_kwargs'] :
-        #     thread = threading.Thread(target=batch_thread, args=(dicts['batch_kwargs'], w, dicts),daemon=True)
+        #     thread = threading.Thread(target=batch_thread, args=(dicts['batch_kwargs'], W, dicts),daemon=True)
         #     thread.start()
         #     dicts['batch_kwargs'] = None
         #
@@ -114,7 +114,7 @@ def run_gui():
         #     # sg.popup_animated(None)  # stop animination in case one is running
         #     thread = None  # reset variables for next run
         #     # thread, message, progress, timeout = None, '', 0, None  # reset variables for next run
-        #     graph_lists['BATCH'].update(w, dicts['batch_results']['fig_dict'])
+        #     graph_lists['BATCH'].update(W, dicts['batch_results']['fig_dict'])
     w.close()
     return
 

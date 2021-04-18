@@ -3117,7 +3117,7 @@ def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
     return fig_dict
 
 
-def dual_half_circle(center, radius, angle=0, ax=None, colors=('w', 'k'), **kwargs):
+def dual_half_circle(center, radius, angle=0, ax=None, colors=('W', 'k'), **kwargs):
     """
     Add two half circles to the axes *ax* (or the current axes) with the
     specified facecolors *colors* rotated at *angle* (in degrees).

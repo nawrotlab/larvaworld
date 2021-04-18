@@ -92,7 +92,7 @@ class Maze:
                   .format(ww_x1, ww_y1, ww_x2, ww_y2), file=ww_f)
 
         # Write the SVG image file for maze
-        with open(filename, 'w') as f:
+        with open(filename, 'W') as f:
             # SVG preamble and styles.
             print('<?xml version="1.0" encoding="utf-8"?>', file=f)
             print('<svg xmlns="http://www.w3.org/2000/svg"', file=f)

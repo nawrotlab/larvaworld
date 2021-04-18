@@ -390,7 +390,7 @@ class LarvaWorld:
             self.draw_arena(self._screen, background_motion)
 
         for o in self.get_food():
-            o.draw(self._screen)
+            o.draw(self._screen, filled = True if o.amount > 0 else False)
             o.id_box.draw(self._screen)
 
         for g in self.get_flies():
@@ -451,25 +451,12 @@ class LarvaWorld:
             self.add_food(id=id, position=position, food_pars=f_pars)
 
     def _generate_food_positions(self, N, mode, loc, scale):
-        raw_food_positions = []
-        # if positions['mode'] == 'defined':
-        #     raw_food_positions = positions['loc']
-        if mode == 'uniform':
-            for i in range(N):
-                th = np.random.uniform(0, 2 * np.pi, 1)
-                r = float(np.sqrt(np.random.uniform(0, 1, 1)))
-                x = r * np.cos(th)
-                y = r * np.sin(th)
-                pos = (float(x), float(y))
-                raw_food_positions.append(pos)
-        elif mode == 'normal':
-            raw_food_positions = np.random.normal(loc=loc,
-                                                  scale=scale,
-                                                  size=(N, 2))
-        elif mode == 'circle':
-            raw_food_positions = fun.positions_in_circle(scale, N)
+        food_positions = fun.generate_xy_distro(mode, N, loc, scale)
+        # raw_food_positions = fun.generate_xy_distro(mode, N, loc, scale)
+        # raw_food_positions = []
+
         # Scale positions to the tank dimensions
-        food_positions = [self.relative2space_pos(p) for p in raw_food_positions]
+        # food_positions = [self.relative2space_pos(p) for p in raw_food_positions]
         return food_positions
 
     def add_food(self, position, id=None, food_pars={}):
@@ -480,7 +467,7 @@ class LarvaWorld:
         #     food_pars.pop('source_units')
         if id is None:
             id = self.next_id(type='Food')
-        f = Food(unique_id=id, position=position, model=self, **food_pars)
+        f = Food(unique_id=id, pos=position, model=self, **food_pars)
         self.active_food_schedule.add(f)
         self.all_food_schedule.add(f)
         return f

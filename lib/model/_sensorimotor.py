@@ -103,7 +103,7 @@ class BodySim(BodyManager):
                 # unused_ang_vel = self.compute_ang_vel(ang_velocity=self.get_head().get_angularvelocity(),
                 #                                                ang_damping=False)
                 # TODO THis needs to be calibrated according to the real larva
-                self.torque = self.ang_activity * self.torque_coef
+                self.torque = self.ang_activity * self.torque_coef*10000
                 self.segs[0]._body.ApplyTorque(self.torque, wake=True)
                 if self.Nsegs > 1:
                     for i in np.arange(1, self.mid_seg_index, 1):
@@ -337,7 +337,9 @@ class BodySim(BodyManager):
             or_new = or_old + d_or
             k = np.array([math.cos(or_new), math.sin(or_new)])
             pos_new = head_rear_new + k * self.seg_lengths[0] / 2
-        head.set_pose(pos_new, or_new, lin_vel, ang_vel)
+        head.set_pose(pos_new, or_new)
+        head.set_lin_vel(lin_vel)
+        head.set_ang_vel(ang_vel)
         head.update_vertices(pos_new, or_new)
         self.position_rest_of_body(d_or, head_rear_pos=head_rear_new, head_or=or_new)
 

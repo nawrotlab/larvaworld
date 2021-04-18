@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 
 from lib.conf.dtype_dicts import odor_gain_pars
 from lib.conf import test_larva, module_keys
-from lib.gui.gui_lib import CollapsibleDict, button_kwargs, Collapsible, text_kwargs, header_kwargs, set_agent_dict, \
+from lib.gui.gui_lib import CollapsibleDict, b_kws, Collapsible, t_kws, header_kwargs, set_agent_dict, \
     buttonM_kwargs, save_gui_conf, delete_gui_conf
 from lib.conf.conf import loadConfDict, loadConf
 
@@ -26,7 +26,7 @@ def init_model(larva_model, collapsibles={}):
         collapsibles.update(s.get_subdicts())
         module_conf.append(s.get_section())
     odor_gain_conf = [sg.Button('ODOR GAINS', **buttonM_kwargs)]
-    # odor_gain_conf = [sg.Text('odor gains:', **text_kwargs), sg.Button('Odor gains', **button_kwargs)]
+    # odor_gain_conf = [sg.Text('odor gains:', **t_kws), sg.Button('Odor gains', **b_kws)]
     module_conf.append(odor_gain_conf)
     collapsibles['BRAIN'] = Collapsible('BRAIN', True, module_conf)
     brain_layout = sg.Col([collapsibles['BRAIN'].get_section()])
@@ -94,10 +94,10 @@ def build_model_tab(collapsibles, dicts):
     l_mod0 = [sg.Col([
         [sg.Text('Larva model:', **header_kwargs),
          sg.Combo(list(loadConfDict('Model').keys()), key='MODEL_CONF', enable_events=True, readonly=True,
-                  **text_kwargs)],
-        [sg.Button('Load', key='LOAD_MODEL', **button_kwargs),
-         sg.Button('Save', key='SAVE_MODEL', **button_kwargs),
-         sg.Button('Delete', key='DELETE_MODEL', **button_kwargs)]
+                  **t_kws)],
+        [sg.Button('Load', key='LOAD_MODEL', **b_kws),
+         sg.Button('Save', key='SAVE_MODEL', **b_kws),
+         sg.Button('Delete', key='DELETE_MODEL', **b_kws)]
     ])]
 
     l_mod1 = init_model(larva_model, collapsibles)

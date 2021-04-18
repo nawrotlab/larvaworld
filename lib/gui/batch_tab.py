@@ -6,7 +6,7 @@ import PySimpleGUI as sg
 from lib.anal.combining import render_mpl_table
 from lib.conf.dtype_dicts import optimization_dtypes, space_search_dtypes, batch_method_dtypes
 from lib.conf.batch_conf import test_batch
-from lib.gui.gui_lib import CollapsibleDict, button_kwargs, Collapsible, text_kwargs, buttonM_kwargs, named_list_layout, \
+from lib.gui.gui_lib import CollapsibleDict, b_kws, Collapsible, t_kws, buttonM_kwargs, named_list_layout, \
     gui_table, save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList
 from lib.gui.simulation_tab import update_sim, get_exp
 from lib.conf.conf import loadConfDict, loadConf, next_idx
@@ -38,13 +38,13 @@ def build_batch_tab(collapsibles, graph_lists, dicts):
     dicts['space_search'] = batch['space_search']
     l_exp = [sg.Col([
         named_list_layout(text='Batch:', key='BATCH_CONF', choices=list(loadConfDict('Batch').keys())),
-        [sg.Button('Load', key='LOAD_BATCH', **button_kwargs),
-         sg.Button('Save', key='SAVE_BATCH', **button_kwargs),
-         sg.Button('Delete', key='DELETE_BATCH', **button_kwargs),
-         sg.Button('Run', key='RUN_BATCH', **button_kwargs)]
+        [sg.Button('Load', key='LOAD_BATCH', **b_kws),
+         sg.Button('Save', key='SAVE_BATCH', **b_kws),
+         sg.Button('Delete', key='DELETE_BATCH', **b_kws),
+         sg.Button('Run', key='RUN_BATCH', **b_kws)]
     ])]
-    batch_conf = [[sg.Text('Batch id:', **text_kwargs), sg.In('unnamed_batch_0', key='batch_id', **text_kwargs)],
-                  [sg.Text('Path:', **text_kwargs), sg.In('unnamed_batch', key='batch_path', **text_kwargs)],
+    batch_conf = [[sg.Text('Batch id:', **t_kws), sg.In('unnamed_batch_0', key='batch_id', **t_kws)],
+                  [sg.Text('Path:', **t_kws), sg.In('unnamed_batch', key='batch_path', **t_kws)],
                   named_bool_button('Save data', False, toggle_name='save_data_flag'),
                   ]
 

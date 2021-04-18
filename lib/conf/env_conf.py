@@ -272,14 +272,14 @@ focus_env = {'arena_params': dish(0.02),
 
 
 
-uniform_food_env = {'arena_params': arena(0.05, 0.05),
+uniform_food_env = {'arena_params': dish(0.05),
                     'food_params': food_param_conf(
-                        distro=food_distro(10000, 'uniform', None, None, food(0.0003, **odor()))),
+                        distro=food_distro(2000, 'uniform', (0,0), 0.025, food(0.0003, **odor()))),
                     'larva_params': larva_distro(20, scale=0.3, model='feeder'),
                     'odorscape': None}
 
 patchy_food_env = {'arena_params': arena(0.2, 0.2),
-                   'food_params': food_param_conf(distro=food_distro(8, 'circle', None, 0.7,
+                   'food_params': food_param_conf(distro=food_distro(8, 'circle', (0,0), 0.07,
                                                                      pars=food(0.0025, amount=0.001, odor_id='Odor',
                                                                                odor_intensity=8,
                                                                                odor_spread=0.0004), group_id='Food')),

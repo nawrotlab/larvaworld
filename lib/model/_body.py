@@ -4,7 +4,7 @@ import numpy as np
 import Box2D
 from Box2D import b2Vec2
 from shapely import affinity
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, Point
 from shapely.ops import cascaded_union
 # TODO Find a way to use this. Now if changed everything is scal except locomotion. It seems that
 #  ApplyForceToCenter function does not scale
@@ -12,20 +12,67 @@ from shapely.ops import cascaded_union
 # from matplotlib.patches import Circle
 # from shapely.geometry import Polygon, Point
 
+
 import lib.aux.functions as fun
 
 
+class BodySegment:
+    def __init__(self, space, pos, orientation, seg_vertices, color):
+        self.space = space
+        self.color = color
+        self.pos = pos
+        self.orientation = orientation
+        self.seg_vertices = seg_vertices
+        # self.vertices = None
 
-class Box2DSegment:
+    def draw(self, viewer, filled=True):
+        for vertices in self.vertices:
+            viewer.draw_polygon(vertices, filled=filled, color=self.color)
 
-    def __init__(self, space: Box2D.b2World, pos, orientation, physics_pars, facing_axis, color, **kwargs):
+    # @property
+    def get_color(self):
+        return self.color
+
+    def get_position(self):
+        return np.array(self.pos)
+
+    def set_position(self, pos):
+        self.pos = pos
+
+    def set_orientation(self, orientation):
+        self.orientation = orientation
+
+    def set_pose(self, pos, orientation):
+        self.set_position(pos)
+        self.set_orientation(orientation)
+
+    def get_orientation(self):
+        return self.orientation
+
+    def get_normalized_orientation(self):
+        angle = self.get_orientation()
+        # I normalize the angle_to_x_axis in [-pi,pi]
+        angle %= 2 * np.pi
+        # if angle > np.pi:
+        #     angle -= 2 * np.pi
+        return angle
+
+    def get_shape(self, scale=1):
+        p0 = Polygon(self.vertices[0])
+        p = affinity.scale(p0, xfact=scale, yfact=scale)
+        return p
+
+
+class Box2DSegment(BodySegment):
+
+    def __init__(self, space: Box2D.b2World, physics_pars, facing_axis, **kwargs):
+        super().__init__(space=space, **kwargs)
         if self.__class__ == Box2DSegment:
             raise NotImplementedError('Abstract class Box2DSegment cannot be instantiated.')
         self.physics_pars = physics_pars
-        self._color = color
-        self._body: Box2D.b2Body = space.CreateDynamicBody(
-            position=Box2D.b2Vec2(*pos),
-            angle=orientation,
+        self._body: Box2D.b2Body = self.space.CreateDynamicBody(
+            position=Box2D.b2Vec2(*self.pos),
+            angle=self.orientation,
             linearDamping=physics_pars['lin_damping'],
             angularDamping=physics_pars['ang_damping'])
         self._body.linearVelocity = Box2D.b2Vec2(*[.0, .0])
@@ -49,23 +96,13 @@ class Box2DSegment:
         # worldCenter gets the point where the torque is applied
         # pos gets a point (tried to identify whether it is center of mass or origin, no luck) unknown how
         pos = self._body.worldCenter
-        # print(pos)
         return np.asarray(pos)
 
     def set_position(self, position):
         self._body.position = position
 
     def get_orientation(self):
-        angle = self._body.angle
-        return angle
-
-    def get_normalized_orientation(self):
-        angle = self.get_orientation()
-        # I normalize the angle_to_x_axis in [-pi,pi]
-        angle %= 2 * np.pi
-        # if angle > np.pi:
-        #     angle -= 2 * np.pi
-        return angle
+        return self._body.angle
 
     def get_linearvelocity_vec(self):
         return self._body.linearVelocity
@@ -83,10 +120,6 @@ class Box2DSegment:
     def get_pose(self):
         pos = np.asarray(self._body.position)
         return tuple((*pos, self._body.angle))
-
-    def set_pose(self, pose):
-        self.set_position(pose[:2])
-        self.set_orientation(pose[2])
 
     def set_lin_vel(self, lin_vel, local=False):
         if local:
@@ -107,10 +140,6 @@ class Box2DSegment:
 
     def set_massdata(self, massdata):
         self._body.massData = massdata
-
-    def get_state(self):
-        return self.get_pose()
-        # return tuple((*self._body.pos, self._body.angle_to_x_axis))
 
     def get_local_point(self, point):
         return np.asarray(self._body.GetLocalPoint(np.asarray(point)))
@@ -139,44 +168,21 @@ class Box2DSegment:
             if contact_edge.other == other and contact_edge.contact.touching:
                 return True
 
-    # @property
-    def get_color(self):
-        return self._color
-
     # @color.setter
     def set_color(self, color):
         color = np.asarray(color, dtype=np.int32)
         color = np.maximum(color, np.zeros_like(color, dtype=np.int32))
         color = np.minimum(color, np.full_like(color, 255, dtype=np.int32))
-        self._color = color
-
-    @property
-    def highlight_color(self):
-        return self._highlight_color
-
-    @highlight_color.setter
-    def highlight_color(self, color):
-        color = np.asarray(color, dtype=np.int32)
-        color = np.maximum(color, np.zeros_like(color, dtype=np.int32))
-        color = np.minimum(color, np.full_like(color, 255, dtype=np.int32))
-        self._highlight_color = color
-
-    @abc.abstractmethod
-    def draw(self, viewer):
-        raise NotImplementedError('The draw method needs to be implemented by the subclass of Box2DSegment.')
-
-    @abc.abstractmethod
-    def plot(self, axes, **kwargs):
-        raise NotImplementedError('The plot method needs to be implemented by the subclass of Box2DSegment.')
+        self.color = color
 
 
 class Box2DPolygon(Box2DSegment):
-    def __init__(self, seg_vertices=None, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         # TODO: right now this assumes that all subpolygons have the same number of edges
         # TODO: rewrite such that arbitrary subpolygons can be used here
-        vertices = seg_vertices
+        vertices = self.seg_vertices
 
         centroid = np.zeros(2)
         area = .0
@@ -208,67 +214,22 @@ class Box2DPolygon(Box2DSegment):
         # FIXME for some reason this produces error
         # self._body.inertia = self.physics_pars['inertia']
 
-
     @property
     def vertices(self):
         return np.array([[self.get_world_point(v) for v in vertices] for vertices in self.__local_vertices])
 
-    @property
-    def local_vertices(self):
-        return self.__local_vertices
 
-    @property
-    def plot_vertices(self):
-        raise NotImplementedError
-
-    def draw(self, viewer):
-        for i, vertices in enumerate(self.vertices):
-            viewer.draw_polygon(vertices, filled=True, color=self._color)
-
-
-class DefaultSegment:
-    def __init__(self, pos, orientation, seg_vertices, color):
-        self.pos = pos
-        self.orientation = orientation
-        self.seg_vertices = seg_vertices
-        self.vertices = None
+class DefaultSegment(BodySegment):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.update_vertices(self.pos, self.orientation)
 
         self.lin_vel = 0.0
         self.ang_vel = 0.0
         self.ang_acc = 0.0
-        self._color = color
-        # print(self._color)
-        # centroid = np.zeros(2)
-        # area = .0
-        # for vs in self.vertices:
-        #     print(vs)
-        #     # compute centroid of circle_to_polygon
-        #     r0 = np.roll(vs[:, 0], 1)
-        #     r1 = np.roll(vs[:, 1], 1)
-        #     a = 0.5 * np.abs(np.dot(vs[:, 0], r1) - np.dot(vs[:, 1], r0))
-        #     area += a
-        #     centroid += vs.mean(axis=0) * a
-        # centroid /= area
 
     def update_vertices(self, pos, orient):
         self.vertices = [pos + fun.rotate_around_center_multi(self.seg_vertices[0], -orient)]
-
-    def draw(self, viewer):
-        for vertices in self.vertices:
-            viewer.draw_polygon(vertices, filled=True, color=self._color)
-
-    def get_position(self):
-        return np.array(self.pos)
-
-    def set_position(self, pos):
-        self.pos = pos
-
-    def set_pose(self, pos, orientation, lin_vel, ang_vel):
-        self.pos = pos
-        self.orientation = orientation
-        self.lin_vel = lin_vel
-        self.ang_vel = ang_vel
 
     def get_pose(self):
         return np.array(self.pos), self.orientation
@@ -276,27 +237,13 @@ class DefaultSegment:
     def get_world_point(self, local_point):
         return self.get_position() + fun.rotate_around_center(point=local_point, radians=-self.get_orientation())
 
-    def get_orientation(self):
-        return self.orientation
-
-    def get_normalized_orientation(self):
-        angle = self.get_orientation()
-        # I normalize the angle_to_x_axis in [-pi,pi]
-        angle %= 2 * np.pi
-        # if angle > np.pi:
-        #     angle -= 2 * np.pi
-        return angle
-
-    def set_orientation(self, orientation):
-        self.orientation = orientation
-
     def get_linearvelocity_amp(self):
         return self.lin_vel
 
     def get_angularvelocity(self):
         return self.ang_vel
 
-    def set_linear_velocity(self, lin_vel):
+    def set_lin_vel(self, lin_vel):
         self.lin_vel = lin_vel
 
     def set_ang_vel(self, ang_vel):
@@ -306,15 +253,7 @@ class DefaultSegment:
         color = np.asarray(color, dtype=np.int32)
         color = np.maximum(color, np.zeros_like(color, dtype=np.int32))
         color = np.minimum(color, np.full_like(color, 255, dtype=np.int32))
-        self._color = color
-
-    def get_color(self):
-        return self._color
-
-    def get_polygon(self, scale=1):
-        p0=Polygon(self.vertices[0])
-        p=affinity.scale(p0, xfact=scale, yfact=scale)
-        return p
+        self.color = color
 
 
 def generate_seg_colors(N, color):
@@ -329,7 +268,7 @@ class LarvaBody:
                  initial_length=None, length_std=0, Nsegs=1, interval=0, joint_type={'distance': 2, 'revolute': 1},
                  seg_ratio=None, friction_pars={'maxForce': 10 ** 0, 'maxTorque': 10 ** -1}, **kwargs):
 
-        self.model=model
+        self.model = model
         self.density = density
         self.friction_pars = friction_pars
         self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
@@ -512,7 +451,8 @@ class LarvaBody:
                 self.create_joints(N, segs, joint_type)
         else:
             for i in range(N):
-                seg = DefaultSegment(pos=seg_positions[i], orientation=orientation, seg_vertices=self.seg_vertices[i],
+                seg = DefaultSegment(space=self.model.space, pos=seg_positions[i], orientation=orientation,
+                                     seg_vertices=self.seg_vertices[i],
                                      color=self.seg_colors[i])
                 segs.append(seg)
             self.model.space.place_agent(self, position)
@@ -637,38 +577,38 @@ class LarvaBody:
                            filled=True, color=(255, 0, 0), width=.1)
 
     def draw(self, viewer):
+        c, r = self.get_head().color, self.radius
 
         if not self.model.draw_contour:
             self.contour = self.set_contour()
-            viewer.draw_polygon(self.contour, filled=True, color=self.get_head()._color)
+            viewer.draw_polygon(self.contour, c, True, r / 5)
         else:
-            for seg in self.segs:
-                seg.draw(viewer)
+            viewer.draw_polygon(self.get_shape().boundary.coords, c, True, r / 5)
+            # for seg in self.segs:
+            #     seg.draw(viewer)
         if self.model.draw_head:
-            viewer.draw_circle(radius=self.radius/2,
-                               position=self.get_global_front_end_of_head(),
-                               filled=True, color=(255, 0, 0), width=self.radius / 3)
+            viewer.draw_circle(self.get_global_front_end_of_head(), r / 2, (255, 0, 0), True, r / 6)
 
-        if self.model.draw_midline :
-            points=[self.get_global_front_end_of_seg(i) for i in range(self.Nsegs)] + [self.get_global_rear_end_of_body()]
-            viewer.draw_polyline(points, color=(0, 0, 255), closed=False, width=self.radius / 10)
+        if self.model.draw_midline:
+            points = [self.get_global_front_end_of_seg(i) for i in range(self.Nsegs)] + [self.get_global_rear_end_of_body()]
+            viewer.draw_polyline(points, color=(0, 0, 255), closed=False, width=r / 10)
             for i, p in enumerate(points):
                 c = 255 * i / (len(points) - 1)
                 color = (c, 255 - c, 0)
-                viewer.draw_circle(radius=self.radius / 10, position=p, filled=True, color=color, width=self.radius / 20)
+                viewer.draw_circle(p, r / 10, color, True, r / 20)
 
         if self.model.draw_centroid:
-            viewer.draw_circle(radius=self.radius/2, position=self.get_position(), filled=True, color=self.default_color, width=self.radius / 3)
+            viewer.draw_circle(self.get_position(), r / 2, self.default_color, True, r / 3)
 
         if self.selected:
-            r = self.seg_lengths[0] / 2
+            cc = self.model.selection_color
             try:
-                for seg in self.segs:
-                    for i, vertices in enumerate(seg.vertices):
-                        viewer.draw_polygon(vertices, filled=False, color=self.model.selection_color, width=r / 5)
-            except :
-                viewer.draw_circle(radius=r,position=self.get_position(),
-                               filled=False, color=self.model.selection_color, width=r / 5)
+                viewer.draw_polygon(self.get_shape().boundary.coords, cc, False, r / 10)
+                # for seg in self.segs:
+                #     for i, vertices in enumerate(seg.vertices):
+                #         viewer.draw_polygon(vertices, c, False, r)
+            except:
+                viewer.draw_circle(self.get_position(), r, cc, False, r/5)
 
         # for s in self.get_sensors() :
         #     self.draw_sensor(viewer, s)
@@ -684,8 +624,8 @@ class LarvaBody:
         return mass
 
     def set_color(self, colors):
-        if len(colors)!=self.Nsegs :
-            colors=[tuple(colors) for i in range(self.Nsegs)]
+        if len(colors) != self.Nsegs:
+            colors = [tuple(colors) for i in range(self.Nsegs)]
         for seg, col in zip(self.segs, colors):
             seg.set_color(col)
 
@@ -792,16 +732,15 @@ class LarvaBody:
         self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)
         self.local_front_end_of_head = (np.max(self.seg_vertices[0][0], axis=0)[0], 0)
 
-    def get_polygon(self, scale=1):
-        p=cascaded_union([seg.get_polygon(scale=scale) for seg in self.segs])
+    def get_shape(self, scale=1):
+        p = cascaded_union([seg.get_shape(scale=scale) for seg in self.segs])
+
         return p
 
     def move_body(self, dx, dy):
-        for i, seg in enumerate(self.segs) :
+        for i, seg in enumerate(self.segs):
             p, o = seg.get_pose()
-            new_p = p + np.array([dx,dy])
+            new_p = p + np.array([dx, dy])
             seg.set_position(tuple(new_p))
             seg.update_vertices(new_p, o)
-        self.pos=self.get_global_midspine_of_body()
-
-
+        self.pos = self.get_global_midspine_of_body()

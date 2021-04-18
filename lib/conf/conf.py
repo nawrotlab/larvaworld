@@ -441,6 +441,6 @@ def next_idx(exp, type='single'):
     if not exp in idx_dict[type].keys():
         idx_dict[type][exp] = 0
     idx_dict[type][exp] += 1
-    with open(paths.SimIdx_path, "w") as fp:
+    with open(paths.SimIdx_path, "W") as fp:
         json.dump(idx_dict, fp)
     return idx_dict[type][exp]

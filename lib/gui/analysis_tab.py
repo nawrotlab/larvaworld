@@ -6,7 +6,7 @@ import inspect
 from tkinter import *
 
 from lib.conf.dtype_dicts import get_replay_kwargs_dict, replay_dtypes
-from lib.gui.gui_lib import header_kwargs, button_kwargs, ButtonGraphList, CollapsibleDict
+from lib.gui.gui_lib import header_kwargs, b_kws, ButtonGraphList, CollapsibleDict
 from lib.stor.paths import SingleRunFolder, RefFolder
 from lib.anal.plotting import graph_dict
 from lib.stor.larva_dataset import LarvaDataset
@@ -38,10 +38,10 @@ def build_analysis_tab(collapsibles, graph_lists, dicts):
         [sg.Text('DATASETS', **header_kwargs)],
         [sg.Col([[sg.Listbox(values=[], change_submits=False, size=(22, len(dicts['analysis_data'].keys())), key='DATASET_IDS',
                     enable_events=True),
-        sg.FolderBrowse(button_text='Add', initial_folder=SingleRunFolder, key='DATASET_DIR', change_submits=True,
-                         enable_events=True, **button_kwargs, target=(0, -1))]])],
-        [sg.Button('Remove', **button_kwargs), sg.Button('Add ref', **button_kwargs),
-         sg.Button('Change ID', **button_kwargs), sg.Button('Replay', **button_kwargs)],
+                  sg.FolderBrowse(button_text='Add', initial_folder=SingleRunFolder, key='DATASET_DIR', change_submits=True,
+                                  enable_events=True, **b_kws, target=(0, -1))]])],
+        [sg.Button('Remove', **b_kws), sg.Button('Add ref', **b_kws),
+         sg.Button('Change ID', **b_kws), sg.Button('Replay', **b_kws)],
         # [sg.Text(' ' * 12)]
     ]
 

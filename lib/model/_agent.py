@@ -4,6 +4,8 @@ from Box2D import Box2D, b2ChainShape
 from matplotlib.patches import Circle
 from scipy.spatial.distance import euclidean
 from scipy.stats import multivariate_normal
+from shapely import affinity
+from shapely.geometry import Point, Polygon
 
 import lib.aux.functions as fun
 import lib.aux.rendering as ren
@@ -11,9 +13,9 @@ import lib.aux.rendering as ren
 
 class LarvaworldAgent:
     def __init__(self,
-                 unique_id : str,
+                 unique_id: str,
                  model, pos=None, default_color=None, radius=None,
-                 odor_id=None,odor_intensity=0.0, odor_spread=0.1, group='', can_be_carried=False):
+                 odor_id=None, odor_intensity=0.0, odor_spread=0.1, group='', can_be_carried=False):
         self.selected = False
         self.unique_id = unique_id
         self.model = model
@@ -21,56 +23,63 @@ class LarvaworldAgent:
         self.base_odor_id = f'{group} base odor'
         self.gain_for_base_odor = 100
 
-
-        # Will be set by the respective subclasses
-
         self.initial_pos = pos
         self.pos = self.initial_pos
-        if type(default_color)==str :
-            default_color=fun.colorname2tuple(default_color)
+        if type(default_color) == str:
+            default_color = fun.colorname2tuple(default_color)
         self.default_color = default_color
+        self.color = self.default_color
         self.radius = radius
 
         self.id_box = self.init_id_box()
 
         self.odor_id = odor_id
         self.odor_intensity = odor_intensity
-        if odor_spread is None :
+        if odor_spread is None:
             odor_spread = 0.1
         self.odor_spread = odor_spread
         self.set_odor_dist()
 
-        self.carried_objects=[]
-        self.can_be_carried=can_be_carried
-        self.is_carried_by=None
+        self.carried_objects = []
+        self.can_be_carried = can_be_carried
+        self.is_carried_by = None
 
     def get_position(self):
         return tuple(self.pos)
-        # return np.array(self.pos)
+
+    def get_radius(self):
+        return self.radius
 
     def init_id_box(self):
         id_box = ren.InputBox(visible=False, text=self.unique_id,
-                          color_inactive=self.default_color, color_active=self.default_color,
-                          screen_pos=None, agent=self)
+                              color_inactive=self.default_color, color_active=self.default_color,
+                              screen_pos=None, agent=self)
         return id_box
 
     def set_id(self, id):
         self.unique_id = id
         self.id_box.text = self.unique_id
 
+    def get_shape(self, scale=1):
+        p = self.get_position()
+        return Point(p).buffer(self.radius*scale) if not np.isnan(p).all() else None
+
+    def set_color(self, color):
+        self.color = color
+
     def contained(self, point):
-        return Circle(tuple(self.get_position()), radius=self.radius).contains_point(point)
+        # return Point(self.get_position()).distance(Point(point))<=self.radius
+        # return Circle(self.get_position(), radius=self.radius).contains_point(point)
+        shape = self.get_shape()
+        return shape.covers(Point(point)) if shape else False
 
     # @abc.abstractmethod
     def step(self):
         pass
 
-    # @abc.abstractmethod
-    def set_color(self, color):
-        pass
-
     def set_default_color(self, color):
-        self.default_color=color
+        self.default_color = color
+        self.id_box.color = self.default_color
         self.set_color(color)
 
     def set_odor_dist(self):
@@ -98,12 +107,31 @@ class LarvaworldAgent:
     def get_gaussian_odor_value(self, pos):
         return self.odor_dist.pdf(pos) * self.odor_peak_value
 
+    def draw(self, viewer, filled=True):
+        if self.get_shape() is None :
+            return
+        p, c, r = self.get_position(), self.color, self.radius
+        viewer.draw_polygon(self.get_shape().boundary.coords, c, filled, r/5)
+        # viewer.draw_circle(p, r, c, filled, r / 5)
+
+        if self.odor_intensity > 0:
+            viewer.draw_polygon(self.get_shape(1.5).boundary.coords, c, False, r / 10)
+            viewer.draw_polygon(self.get_shape(2.0).boundary.coords, c, False, r / 15)
+            viewer.draw_polygon(self.get_shape(3.0).boundary.coords, c, False, r / 20)
+            # viewer.draw_circle(p, r * 1.5, c, False, r / 10)
+            # viewer.draw_circle(p, r * 2.0, c, False, r / 15)
+            # viewer.draw_circle(p, r * 3.0, c, False, r / 20)
+        if self.selected:
+            viewer.draw_polygon(self.get_shape(1.1).boundary.coords, self.model.selection_color, False, r / 5)
+            # viewer.draw_circle(p, r * 1.2, self.model.selection_color, False, r / 5)
+
 
 class Larva(LarvaworldAgent):
-    def __init__(self, unique_id, model, pos=None, radius=None, default_color = None, **kwargs):
-        if default_color is None :
+    def __init__(self, unique_id, model, pos=None, radius=None, default_color=None, **kwargs):
+        if default_color is None:
             default_color = model.generate_larva_color()
-        super().__init__(unique_id=unique_id, model=model, default_color=default_color, pos=pos, radius=radius, **kwargs)
+        super().__init__(unique_id=unique_id, model=model, default_color=default_color, pos=pos, radius=radius,
+                         **kwargs)
         self.behavior_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id', 'Lturn_id', 'Rturn_id']
         self.null_behavior_dict = dict(zip(self.behavior_pars, [False] * len(self.behavior_pars)))
 
@@ -152,8 +180,6 @@ class Larva(LarvaworldAgent):
     @property
     def scaled_amount_eaten(self):
         return self.amount_eaten / self.get_real_mass()
-
-
 
     @property
     def orientation_to_center_in_deg(self):
@@ -399,18 +425,14 @@ class Larva(LarvaworldAgent):
 
 
 class Food(LarvaworldAgent):
-    def __init__(self, unique_id, model, position,
-                 radius=0.002, amount=1.0, quality=1.0,
-                   default_color=None, **kwargs):
+    def __init__(self, amount=1.0, quality=1.0,default_color=None, shape_vertices=None, **kwargs):
         if default_color is None :
-            default_color=np.array((100, 200, 120))
-        super().__init__(unique_id=unique_id, model=model, pos=position, default_color=default_color,
-                         radius=radius*model.scaling_factor, **kwargs)
+            default_color = 'green'
+        super().__init__(default_color=default_color,**kwargs)
+        self.shape_vertices = shape_vertices
         self.initial_amount = amount
         self.quality = quality
         self.amount = self.initial_amount
-
-
 
         shape = fun.circle_to_polygon(60, self.radius)
 
@@ -426,20 +448,8 @@ class Food(LarvaworldAgent):
             self._body.fixtures[0].filterData.groupIndex = -1
         else:
             self.model.space.place_agent(self, self.pos)
-        self._color = self.default_color
-
-
-        self.circle = Circle(tuple(self.get_position()), radius=self.radius)
         # # put all agents into same group (negative so that no collisions are detected)
         # self._fixtures[0].filterData.groupIndex = -1
-
-
-
-
-
-
-    def get_radius(self):
-        return self.radius
 
     def get_amount(self):
         return self.amount
@@ -452,45 +462,24 @@ class Food(LarvaworldAgent):
             self.model.delete_agent(self)
         else:
             r = (self.initial_amount - self.amount) / self.initial_amount
-            self._color = r * np.array((255, 255, 255)) + (1 - r) * self.default_color
-            # self._color=self.default_color + (self.initial_amount - self.amount)*(np.array((255,255,255))-self.default_color)
+            self.color = r * np.array((255, 255, 255)) + (1 - r) * self.default_color
         return np.min([amount, prev_amount])
 
+    def get_vertices(self):
+        v0=self.shape_vertices
+        x0, y0 = self.get_position()
+        if v0 is not None and not np.isnan((x0,y0)).all():
+            return [(x+x0,y+y0) for x,y in v0]
+        else :
+            return None
 
-
-    def set_scaled_odor_intensity(self, intensity):
-        self.odor_intensity = intensity * self.model.scaling_factor
-
-    def set_scaled_odor_spread(self, spread):
-        self.odor_spread = spread * self.model.scaling_factor
-
-
-
-    def set_color(self, color):
-        self._color = color
-
-    def set_default_color(self, color):
-        self.default_color = color
-        self._color = self.default_color
-        self.id_box.color = self.default_color
-
-
-
-    def draw(self, viewer):
-        if self.amount > 0:
-            filled = True
-        else:
-            filled = False
-        w = self.radius / 5
-        viewer.draw_circle(position=self.get_position(), radius=self.radius, color=self._color, filled=filled, width=w)
-        if self.odor_intensity > 0:
-            viewer.draw_circle(position=self.get_position(), radius=self.radius * 1.5, color=self._color, filled=False,
-                               width=w / 2)
-            viewer.draw_circle(position=self.get_position(), radius=self.radius * 2.0, color=self._color, filled=False,
-                               width=w / 3)
-            viewer.draw_circle(position=self.get_position(), radius=self.radius * 3.0, color=self._color, filled=False,
-                               width=w / 4)
-        if self.selected:
-            viewer.draw_circle(position=self.get_position(), radius=self.radius + w, color=self.model.selection_color,
-                               filled=False,
-                               width=w)
+    def get_shape(self, scale=1):
+        p = self.get_position()
+        if np.isnan(p).all() :
+            return None
+        elif self.get_vertices() is None :
+            return Point(p).buffer(self.radius*scale)
+        else :
+            p0 = Polygon(self.get_vertices())
+            p = affinity.scale(p0, xfact=scale, yfact=scale)
+            return p

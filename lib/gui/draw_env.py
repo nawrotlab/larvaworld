@@ -1,9 +1,9 @@
 import PySimpleGUI as sg
 import numpy as np
 
-from lib.aux.functions import agent_list2dict
+import lib.aux.functions as fun
 from lib.conf.dtype_dicts import border_dtypes, food_dtypes, odor_dtypes, arena_dtypes, distro_dtypes
-from lib.gui.gui_lib import CollapsibleDict, button_kwargs, text_kwargs, check_collapsibles, check_toggles, \
+from lib.gui.gui_lib import CollapsibleDict, b_kws, t_kws, check_collapsibles, check_toggles, \
     retrieve_dict
 
 """
@@ -13,7 +13,7 @@ from lib.gui.gui_lib import CollapsibleDict, button_kwargs, text_kwargs, check_c
     mouse to "drag" and draw rectangles and circles.
 """
 
-w, h = 800, 800
+W, H = 800, 800
 
 
 def popup_color_chooser(look_and_feel=None):
@@ -681,8 +681,6 @@ def popup_color_chooser(look_and_feel=None):
 
     button_size = (1, 1)
 
-    # button_size = (None,None)         # for very compact buttons
-
     def ColorButton(color):
         """
         A User Defined Element - returns a Button that configured in a certain way.
@@ -692,13 +690,12 @@ def popup_color_chooser(look_and_feel=None):
         return sg.B(button_color=('white', color[1]), pad=(0, 0), size=button_size, key=color,
                     tooltip=f'{color[0]}:{color[1]}', border_width=0)
 
-    num_colors = len(list(color_map.keys()))
+    N = len(list(color_map.keys()))
     row_len = 40
 
     grid = [[ColorButton(list(color_map.items())[c + j * row_len]) for c in range(0, row_len)] for j in
-            range(0, num_colors // row_len)]
-    grid += [[ColorButton(list(color_map.items())[c + num_colors - num_colors % row_len]) for c in
-              range(0, num_colors % row_len)]]
+            range(0, N // row_len)]
+    grid += [[ColorButton(list(color_map.items())[c + N - N % row_len]) for c in range(0, N % row_len)]]
 
     layout = [[sg.Text('Pick a color', font='Def 18')]] + grid + \
              [[sg.Button('OK'), sg.T(size=(30, 1), key='-OUT-'), sg.Button('Cancel'), sg.T(size=(30, 1))]]
@@ -726,26 +723,30 @@ def draw_arena(graph, arena_pars):
     shape = arena_pars['arena_shape']
     X, Y = arena_pars['arena_xdim'], arena_pars['arena_ydim']
     if shape == 'circular' and X is not None:
-        arena = graph.draw_circle((int(w / 2), int(h / 2)), int(w / 2), fill_color='white', line_color='black',
+        arena = graph.draw_circle((int(W / 2), int(H / 2)), int(W / 2), fill_color='white', line_color='black',
                                   line_width=5)
-        s = w / X
-    elif shape == 'rectangular' and X is not None and Y is not None:
+        s = W / X
+    elif shape == 'rectangular' and not None in (X, Y):
         if X >= Y:
             dif = (X - Y) / X
-            arena = graph.draw_rectangle((0, int(h * dif / 2)), (w, h - int(h * dif / 2)), fill_color='white',
+            arena = graph.draw_rectangle((0, int(H * dif / 2)), (W, H - int(H * dif / 2)), fill_color='white',
                                          line_color='black', line_width=5)
-            s = w / X
+            s = W / X
         else:
             dif = (Y - X) / Y
-            arena = graph.draw_rectangle((int(w * dif / 2), 0), (w - int(w * dif / 2), h), fill_color='white',
+            arena = graph.draw_rectangle((int(W * dif / 2), 0), (W - int(W * dif / 2), H), fill_color='white',
                                          line_color='black')
-            s = h / Y
+            s = H / Y
     return s, arena
     # pass
 
 
-def scale(xy, s):
-    return (xy[0] - w / 2) / s, (xy[1] - h / 2) / s
+def scale_xy(xy, s):
+    return (xy[0] - W / 2) / s, (xy[1] - H / 2) / s
+
+
+def unscale_xy(xy, s):
+    return xy[0] * s + W / 2, xy[1] * s + H / 2
 
 
 def out_of_bounds(xy, arena_pars):
@@ -756,6 +757,35 @@ def out_of_bounds(xy, arena_pars):
         return np.sqrt(x ** 2 + y ** 2) > X / 2
     elif shape == 'rectangular':
         return not (-X / 2 < x < X / 2 and -Y / 2 < y < Y / 2)
+
+
+def delete_prior(prior_rect, graph):
+    # print('xx')
+    if type(prior_rect) == list:
+        for pr in prior_rect:
+            graph.delete_figure(pr)
+    else:
+        graph.delete_figure(prior_rect)
+
+
+def inspect_distro(default_color, mode, N, loc, scale, graph, s, id=None, **kwargs):
+    Ps = fun.generate_xy_distro(mode, N, loc=unscale_xy(loc, s), scale=scale * s)
+    group_figs = []
+    # dx = scale*s
+    # dy = scale*s
+    for i, P0 in enumerate(Ps):
+        # P1 = (P0[0] + dx, P0[1] + dy)
+        temp = draw_source(P0, default_color, graph, s, **kwargs)
+        # temp = graph.draw_circle(P0, dx, line_width=3, line_color=default_color)
+        print(i, temp, P0)
+        group_figs.append(temp)
+    return group_figs
+
+
+def draw_source(P0, color, graph, s, amount, radius, **kwargs):
+    fill_color = color if amount > 0 else None
+    temp = graph.draw_circle(P0, radius * s, line_width=3, line_color=color, fill_color=fill_color)
+    return temp
 
 
 def draw_env(env=None):
@@ -777,6 +807,8 @@ def draw_env(env=None):
     source_groups = env['food_params']['source_groups']
     larva_groups = env['larva_params']
     borders_f, source_units_f, source_groups_f, larva_groups_f = {}, {}, {}, {}
+    inspect_figs = {}
+    sample_fig, sample_pars = None, {}
 
     collapsibles['ARENA'] = CollapsibleDict('ARENA', True, dict=arena_pars, type_dict=arena_dtypes)
 
@@ -809,96 +841,96 @@ def draw_env(env=None):
     arena = None
 
     col = [
-        collapsibles['ARENA'].get_section(), [sg.Button('Reset arena', key='RESET_ARENA', **button_kwargs)],
+        collapsibles['ARENA'].get_section(), [sg.B('Reset arena', k='RESET_ARENA', **b_kws)],
 
-        [sg.R('Add Border', 1, key='BORDER', enable_events=True)],
+        [sg.R('Add Border', 1, k='BORDER', enable_events=True)],
         [sg.T('', size=(5, 1)), sg.T('id', size=(5, 1)),
-         sg.In(f'BORDER_{len(borders.keys())}', key='BORDER_id', **text_kwargs)],
-        [sg.T('', size=(5, 1)), sg.T('width', size=(5, 1)), sg.In(0.001, key='BORDER_width', **text_kwargs)],
+         sg.In(f'BORDER_{len(borders.keys())}', k='BORDER_id', **t_kws)],
+        [sg.T('', size=(5, 1)), sg.T('width', size=(5, 1)), sg.In(0.001, k='BORDER_width', **t_kws)],
         [sg.T('', size=(5, 1)), sg.T('color', size=(5, 1)),
-         sg.In(default_text='black', key='BORDER_color', **text_kwargs),
-         sg.B('Pick', k='PICK BORDER_color', **button_kwargs)],
+         sg.In(default_text='black', k='BORDER_color', **t_kws),
+         sg.B('Pick', k='PICK BORDER_color', **b_kws)],
 
-        [sg.R('Add Source', 1, key='SOURCE', enable_events=True)],
+        [sg.R('Add Source', 1, k='SOURCE', enable_events=True)],
         [sg.T('', size=(2, 1)),
-         sg.R('single id', 2, disabled=True, key='SOURCE_single', enable_events=True, size=(5, 1)),
-         sg.In(f'SOURCE_{len(source_units.keys())}', key='SOURCE_id', **text_kwargs)],
-        [sg.T('', size=(2, 1)), sg.R('group id', 2, disabled=True, key='SOURCE_group', enable_events=True, size=(5, 1)),
-         sg.In(key='SOURCE_group_id', **text_kwargs)],
+         sg.R('single id', 2, disabled=True, k='SOURCE_single', enable_events=True, size=(5, 1)),
+         sg.In(f'SOURCE_{len(source_units.keys())}', k='SOURCE_id', **t_kws)],
+        [sg.T('', size=(2, 1)), sg.R('group id', 2, disabled=True, k='SOURCE_group', enable_events=True, size=(5, 1)),
+         sg.In(k='SOURCE_group_id', **t_kws)],
         [sg.T('', size=(5, 1)), *collapsibles['SOURCE_DISTRO'].get_section()],
         [sg.T('', size=(5, 1)), *collapsibles['SOURCE_ODOR'].get_section()],
         [sg.T('', size=(5, 1)), *collapsibles['SOURCE_FOOD'].get_section()],
         [sg.T('', size=(5, 1)), sg.T('shape', size=(5, 1)),
          sg.Combo(['RECT', 'CIRCLE'], default_value='CIRCLE', k='SOURCE_SHAPE', enable_events=True, readonly=True,
-                  **text_kwargs)],
+                  **t_kws)],
         [sg.T('', size=(5, 1)), sg.T('color', size=(5, 1)),
-         sg.In(default_text='green', key='SOURCE_color', **text_kwargs),
-         sg.B('Pick', k='PICK SOURCE_color', **button_kwargs)],
+         sg.In(default_text='green', k='SOURCE_color', **t_kws),
+         sg.B('Pick', k='PICK SOURCE_color', **b_kws)],
 
-        [sg.R('Erase item', 1, key='-ERASE-', enable_events=True)],
-        [sg.R('Move item', 1, True, key='-MOVE-', enable_events=True)],
+        [sg.R('Erase item', 1, k='-ERASE-', enable_events=True)],
+        [sg.R('Move item', 1, True, k='-MOVE-', enable_events=True)],
+        [sg.R('Inspect item', 1, True, k='-INSPECT-', enable_events=True)],
     ]
 
     layout = [
 
         [sg.Graph(
-            canvas_size=(w, h),
+            canvas_size=(W, H),
             graph_bottom_left=(0, 0),
-            graph_top_right=(w, h),
+            graph_top_right=(W, H),
             key="-GRAPH-",
             change_submits=True,  # mouse click events
             background_color='black',
             drag_submits=True), sg.Col(col)],
-        [sg.Text(key='info', size=(60, 1))],
-        [sg.B('Ok', **button_kwargs), sg.B('Cancel', **button_kwargs)]
+        [sg.T(k='info', size=(60, 1))],
+        [sg.B('Ok', **b_kws), sg.B('Cancel', **b_kws)]
     ]
 
-    window = sg.Window("Drawing and Moving Stuff Around", layout, finalize=True)
+    w = sg.Window("Drawing and Moving Stuff Around", layout, finalize=True)
 
-    graph = window["-GRAPH-"]  # type: sg.Graph
+    graph = w["-GRAPH-"]  # type: sg.Graph
 
     dragging, current = False, {}
     start_point = end_point = prior_rect = None
 
     graph.bind('<Button-3>', '+RIGHT+')
     while True:
-        event, values = window.read()
-        if event in [None, 'Cancel']:
-            break  # exit
-        elif event == 'Ok':
-            env['arena_params'] = collapsibles['ARENA'].get_dict(values, window)
+        e, v = w.read()
+        info = w["info"]
+        if e in [None, 'Cancel']:
+            break
+        elif e == 'Ok':
+            env['arena_params'] = collapsibles['ARENA'].get_dict(v, w)
             env['border_list'] = borders
             env['food_params']['source_units'] = source_units
             env['food_params']['source_groups'] = source_groups
             env['larva_params'] = larva_groups
             break  # exit
-        check_collapsibles(window, event, collapsibles)
-        check_toggles(window, event)
-        if event == 'RESET_ARENA':
-            window["info"].update(value='Arena has been reset. All items erased.')
-            s, arena = draw_arena(graph, collapsibles['ARENA'].get_dict(values, window))
+        check_collapsibles(w, e, collapsibles)
+        check_toggles(w, e)
+        if e == 'RESET_ARENA':
+            info.update(value='Arena has been reset. All items erased.')
+            s, arena = draw_arena(graph, collapsibles['ARENA'].get_dict(v, w))
             borders, source_units, source_groups, larva_groups = {}, {}, {}, {}
             borders_f, source_units_f, source_groups_f, larva_groups_f = {}, {}, {}, {}
 
             for ii in ['BORDER', 'SOURCE']:
-                window[f'{ii}_id'].update(value=f'{ii}_0')
+                w[f'{ii}_id'].update(value=f'{ii}_0')
 
         if arena is None:
             continue
-        if event == '-MOVE-':
+        if e == '-MOVE-':
             graph.Widget.config(cursor='fleur')
             # graph.set_cursor(cursor='fleur')          # not yet released method... coming soon!
-        elif not event.startswith('-GRAPH-'):
+        elif not e.startswith('-GRAPH-'):
             # graph.set_cursor(cursor='left_ptr')       # not yet released method... coming soon!
             graph.Widget.config(cursor='left_ptr')
-        # if event == 'Pick' :
-        if event.startswith('PICK'):
-            target = event.split()[-1]
-            # if event == 'PICK_SOURCE_COLOR' :
-            color_chosen = popup_color_chooser('Dark Blue 3')
-            window[target].update(color_chosen)
-        if event == "-GRAPH-":  # if there's a "Graph" event, then it's a mouse
-            x, y = values["-GRAPH-"]
+        if e.startswith('PICK'):
+            target = e.split()[-1]
+            choice = popup_color_chooser('Dark Blue 3')
+            w[target].update(choice)
+        if e == "-GRAPH-":  # if there's a "Graph" event, then it's a mouse
+            x, y = v["-GRAPH-"]
             if not dragging:
                 start_point = (x, y)
                 dragging = True
@@ -907,126 +939,205 @@ def draw_env(env=None):
             else:
                 end_point = (x, y)
             if prior_rect:
-                graph.delete_figure(prior_rect)
+                delete_prior(prior_rect, graph)
             delta_x, delta_y = x - lastxy[0], y - lastxy[1]
             lastxy = x, y
             if None not in (start_point, end_point):
-                if values['-MOVE-']:
+                if v['-MOVE-']:
+                    delta_X, delta_Y = delta_x / s, delta_y / s
                     for fig in drag_figures:
                         if fig != arena:
+                            for dic, f_dic in zip([borders, source_units, source_groups, larva_groups],
+                                                  [borders_f, source_units_f, source_groups_f, larva_groups_f]):
+                                if fig in list(f_dic.keys()):
+                                    w["info"].update(value=f"Item {f_dic[fig]} moved by ({delta_X}, {delta_Y})")
+                                    if dic == source_units:
+                                        X0, Y0 = dic[f_dic[fig]]['pos']
+                                        dic[f_dic[fig]]['pos'] = (X0 + delta_X, Y0 + delta_Y)
+                                        print(dic[f_dic[fig]]['pos'])
+                                    elif dic in [source_groups, larva_groups]:
+                                        X0, Y0 = dic[f_dic[fig]]['loc']
+                                        dic[f_dic[fig]]['loc'] = (X0 + delta_X, Y0 + delta_Y)
+                                    elif dic == borders:
+                                        dic[f_dic[fig]]['points'] = [(X0 + delta_X, Y0 + delta_Y) for X0, Y0 in
+                                                                     dic[f_dic[fig]]['points']]
                             graph.move_figure(fig, delta_x, delta_y)
                             graph.update()
-                elif values['SOURCE']:
-
-                    # window['SOURCE_single'].update(disabled=False)
-                    # window['SOURCE_group'].update(disabled=False)
-                    c = {'fill_color': values['SOURCE_color'] if window['TOGGLE_SOURCE_FOOD'].metadata.state else None,
-                         'line_color': values['SOURCE_color'],
-                         'line_width': 5,
-                         }
-                    if values['SOURCE_SHAPE'] == 'RECT':
-                        prior_rect = graph.draw_rectangle(start_point, end_point, **c)
-                    elif values['SOURCE_SHAPE'] == 'CIRCLE':
-                        prior_rect = graph.draw_circle(start_point, end_point[0] - start_point[0], **c)
-                elif values['BORDER']:
-                    prior_rect = graph.draw_line(start_point, end_point, color=values['BORDER_color'],
-                                                 width=int(float(values['BORDER_width']) * s))
-                elif values['-ERASE-']:
+                elif v['-ERASE-']:
+                    for figure in drag_figures:
+                        if figure != arena:
+                            # print(figure)
+                            for dic, f_dic in zip([borders, source_units, source_groups, larva_groups],
+                                                  [borders_f, source_units_f, source_groups_f, larva_groups_f]):
+                                if figure in list(f_dic.keys()):
+                                    w["info"].update(value=f"Item {f_dic[figure]} erased")
+                                    dic.pop(f_dic[figure])
+                                    f_dic.pop(figure)
+                            graph.delete_figure(figure)
+                elif v['-INSPECT-']:
                     for figure in drag_figures:
                         if figure != arena:
                             for dic, f_dic in zip([borders, source_units, source_groups, larva_groups],
                                                   [borders_f, source_units_f, source_groups_f, larva_groups_f]):
+
                                 if figure in list(f_dic.keys()):
-                                    window["info"].update(value=f"Item {f_dic[figure]} erased")
-                                    dic.pop(f_dic[figure])
-                                    f_dic.pop(figure)
-                            graph.delete_figure(figure)
+                                    if f_dic[figure] in list(inspect_figs.keys()):
+                                        for f in inspect_figs[f_dic[figure]]:
+                                            graph.delete_figure(f)
+                                        inspect_figs.pop(f_dic[figure])
+                                    else:
+                                        w["info"].update(value=f"Inspecting item {f_dic[figure]} ")
+                                        if dic in [source_groups, larva_groups]:
+                                            inspect_figs[f_dic[figure]] = inspect_distro(id=f_dic[figure], s=s,
+                                                                                         graph=graph,
+                                                                                         **dic[f_dic[figure]])
 
-        elif event.endswith('+UP'):  # The drawing has ended because mouse up
-            info = window["info"]
-            P1, P2 = scale(start_point, s), scale(end_point, s)
-            if not any([out_of_bounds(P, collapsibles['ARENA'].get_dict(values, window)) for P in [P1, P2]]):
-                if values['BORDER']:
+                elif v['SOURCE'] or v['BORDER']:
+                    P1, P2 = scale_xy(start_point, s), scale_xy(end_point, s)
+                    if not any([out_of_bounds(P, collapsibles['ARENA'].get_dict(v, w)) for P in [P1, P2]]):
+                        if v['SOURCE']:
+                            shape, color = v['SOURCE_SHAPE'], v['SOURCE_color']
+                            food_on = w['TOGGLE_SOURCE_FOOD'].metadata.state
+                            odor_on = w['TOGGLE_SOURCE_ODOR'].metadata.state
+                            if v['SOURCE_group_id'] == '' and v['SOURCE_id'] == '':
+                                info.update(value=f"Both source single id and group id are empty")
+                            elif not v['SOURCE_group'] and not v['SOURCE_single']:
+                                info.update(value=f"Select to add a single or a group of sources")
+                            elif v['SOURCE_single'] and (
+                                    v['SOURCE_id'] in list(source_units.keys()) or v['SOURCE_id'] == ''):
+                                info.update(value=f"Source id {v['SOURCE_id']} already exists or is empty")
+                            elif not odor_on and not food_on:
+                                info.update(value=f"Assign food and/or odor to the drawn source")
+                            elif odor_on and v['SOURCE_ODOR_odor_id'] == '':
+                                info.update(value=f"Default odor id automatically assigned to the drawn odor source")
+                                id = v['SOURCE_group_id'] if v['SOURCE_group_id'] != '' else v['SOURCE_id']
+                                w['SOURCE_ODOR_odor_id'].update(value=f'{id}_odor')
+                            elif odor_on and not float(v['SOURCE_ODOR_odor_intensity']) > 0:
+                                info.update(value=f"Assign positive odor intensity to the drawn odor source")
+                            elif odor_on and (
+                                    v['SOURCE_ODOR_odor_spread'] == '' or not float(v['SOURCE_ODOR_odor_spread']) > 0):
+                                info.update(value=f"Assign positive odor spread to the drawn odor source")
+                            elif v['SOURCE_group'] and (
+                                    v['SOURCE_group_id'] in list(source_groups.keys()) or v['SOURCE_group_id'] == ''):
+                                print()
+                                info.update(value=f"Source group id {v['SOURCE_group_id']} already exists or is empty")
+                            elif v['SOURCE_group'] and v['SOURCE_DISTRO_mode'] in ['', None]:
+                                info.update(value=f"Define a distribution mode")
+                            elif v['SOURCE_group'] and not int(v['SOURCE_DISTRO_N']) > 0:
+                                info.update(value=f"Assign a positive integer number of sources for the distribution")
+                            # elif scale in ['', None] or not scale > 0:
+                            #     info.update(value=f"Define a positive scale/radius for the distribution")
+                            elif v['SOURCE_single'] or (v['SOURCE_group'] and sample_fig is None):
+                                c = {'fill_color': v['SOURCE_color'] if w[
+                                    'TOGGLE_SOURCE_FOOD'].metadata.state else None,
+                                     'line_color': v['SOURCE_color'],
+                                     'line_width': 5,
+                                     }
+                                if v['SOURCE_SHAPE'] == 'RECT':
+                                    prior_rect = graph.draw_rectangle(start_point, end_point, **c)
+                                elif v['SOURCE_SHAPE'] == 'CIRCLE':
+                                    prior_rect = graph.draw_circle(start_point, end_point[0] - start_point[0], **c)
 
-                    id = values['BORDER_id']
-                    if id in list(borders.keys()) or id == '':
-                        info.update(value=f"Border id {id} already exists or is empty")
-                        graph.delete_figure(prior_rect)
-                        dragging, current = False, {}
-                        start_point = end_point = prior_rect = None
-                        continue
-                    dic = {'unique_id': id,
-                           'default_color': values['BORDER_color'],
-                           'width': values['BORDER_width'],
-                           'points': [P1, P2]}
-                    info.update(value=f"Border {id} placed from {P1} to {P2}")
-                    current = agent_list2dict([retrieve_dict(dic, border_dtypes)])
-                    borders_f[prior_rect] = id
-                    borders.update(current)
-                    window['BORDER_id'].update(value=f'BORDER_{len(borders.keys())}')
-                elif values['SOURCE']:
-                    window['SOURCE_FOOD_radius'].update(value=np.abs(end_point[0] - start_point[0]) / s)
-                    shape, color, id = values['SOURCE_SHAPE'], values['SOURCE_color'], values['SOURCE_id']
-                    food_on = window['TOGGLE_SOURCE_FOOD'].metadata.state
-                    odor_on = window['TOGGLE_SOURCE_ODOR'].metadata.state
-                    if id in list(source_units.keys()) or id == '':
-                        info.update(value=f"Source id {id} already exists  or is empty")
-                        graph.delete_figure(prior_rect)
-                        dragging, current = False, {}
-                        start_point = end_point = prior_rect = None
-                        continue
-                    if not odor_on and not food_on:
-                        info.update(value=f"Assign food and/or odor to the drawn source")
-                        graph.delete_figure(prior_rect)
-                        dragging, current = False, {}
-                        start_point = end_point = prior_rect = None
-                        continue
-                    elif odor_on:
-                        if values['SOURCE_ODOR_odor_id'] == '':
-                            info.update(value=f"Default odor id automatically assigned to the drawn odor source")
-                            window['SOURCE_ODOR_odor_id'].update(value=f'{id}_odor')
-                            graph.delete_figure(prior_rect)
-                            dragging, current = False, {}
-                            start_point = end_point = prior_rect = None
-                            continue
-                        if not float(values['SOURCE_ODOR_odor_intensity']) > 0 or values[
-                            'SOURCE_ODOR_odor_spread'] is None or not float(values['SOURCE_ODOR_odor_spread']) > 0:
-                            info.update(value=f"Assign positive odor intensity and spread to the drawn odor source")
-                            graph.delete_figure(prior_rect)
-                            dragging, current = False, {}
-                            start_point = end_point = prior_rect = None
-                            continue
-                    food_pars = collapsibles['SOURCE_FOOD'].get_dict(values, window) if food_on else null_food
-                    # if odor_on and values['SOURCE_ODOR_odor_id'] == '':
-                    #     window['SOURCE_ODOR_odor_id'].update(value=f'{id}_odor')
-                    odor_pars = collapsibles['SOURCE_ODOR'].get_dict(values, window) if odor_on else null_odor
+                                w['SOURCE_FOOD_radius'].update(value=np.abs(end_point[0] - start_point[0]) / s)
+                                food_pars = collapsibles['SOURCE_FOOD'].get_dict(v, w)
+                                if not food_on :
+                                    food_pars['amount']=0.0
+                                odor_pars = collapsibles['SOURCE_ODOR'].get_dict(v, w)
+                                if not odor_on :
+                                    food_pars['odor_id'] = None
+                                    food_pars['odor_intensity'] = 0.0
+                                sample_pars = {'default_color': color,
+                                               **food_pars,
+                                               **odor_pars,
+                                               }
 
-                    current = {id: {'default_color': color,
-                                    'group': values['SOURCE_group_id'],
-                                    'pos': P1,
-                                    **food_pars,
-                                    **odor_pars,
+                                if v['SOURCE_single']:
+
+                                    current = {v['SOURCE_id']: {
+                                        'group': v['SOURCE_group_id'],
+                                        'pos': P1,
+                                        **sample_pars
                                     }}
-                    info.update(value=f"Source {id} placed at {P1}")
-                    source_units_f[prior_rect] = id
+                                    sample_fig, sample_pars = None, {}
+                                else:
+                                    info.update(value=f"Draw a sample item for the distribution")
+                            elif v['SOURCE_group']:
+                                w['SOURCE_DISTRO_scale'].update(value=np.abs(end_point[0] - start_point[0]) / s)
+                                w['SOURCE_DISTRO_loc'].update(value=P1)
+                                distro_pars = collapsibles['SOURCE_DISTRO'].get_dict(v, w)
+                                current = {v['SOURCE_group_id']: {
+                                    **distro_pars,
+                                    **sample_pars
+                                }}
+
+                                prior_rect = graph.draw_circle(start_point, end_point[0] - start_point[0],
+                                                               line_color=sample_pars['default_color'], line_width=5)
+
+
+                        elif v['BORDER']:
+                            id = v['BORDER_id']
+                            if id in list(borders.keys()) or id == '':
+                                info.update(value=f"Border id {id} already exists or is empty")
+                            else:
+                                dic = {'unique_id': id,
+                                       'default_color': v['BORDER_color'],
+                                       'width': v['BORDER_width'],
+                                       'points': [P1, P2]}
+                                current = fun.agent_list2dict([retrieve_dict(dic, border_dtypes)])
+
+                                prior_rect = graph.draw_line(start_point, end_point, color=v['BORDER_color'],
+                                                             width=int(float(v['BORDER_width']) * s))
+
+                    else:
+                        # delete_prior(prior_rect, graph)
+                        current = {}
+
+
+        elif e.endswith('+UP'):  # The drawing has ended because mouse up
+            if v['BORDER'] and current != {}:
+                info.update(value=f"Border {v['BORDER_id']} placed from {P1} to {P2}")
+                borders_f[prior_rect] = id
+                borders.update(current)
+                w['BORDER_id'].update(value=f'BORDER_{len(borders.keys())}')
+            elif v['SOURCE']:
+                if v['SOURCE_single'] and current != {}:
+                    info.update(value=f"Source {v['SOURCE_id']} placed at {P1}")
+                    source_units_f[prior_rect] = v['SOURCE_id']
                     source_units.update(current)
-                    window['SOURCE_id'].update(value=f'SOURCE_{len(source_units.keys())}')
-                    window['SOURCE_ODOR_odor_id'].update(value='')
+                    w['SOURCE_id'].update(value=f'SOURCE_{len(source_units.keys())}')
+                    w['SOURCE_ODOR_odor_id'].update(value='')
+                elif v['SOURCE_group'] and sample_pars != {}:
+                    if current == {}:
+                        info.update(value=f"Sample item for source group {v['SOURCE_group_id']} detected." \
+                                          "Now draw the distribution's space")
+
+                        sample_fig = prior_rect
+                    else:
+                        id = v['SOURCE_group_id']
+                        info.update(value=f"Source group {id} placed at {P1}")
+                        source_groups_f[prior_rect] = id
+                        source_groups.update(current)
+                        w['SOURCE_group_id'].update(value=f'SOURCE_GROUP_{len(source_groups.keys())}')
+                        w['SOURCE_ODOR_odor_id'].update(value='')
+                        inspect_distro(id=id, **source_groups[id], graph=graph, s=s)
+                        delete_prior(sample_fig, graph)
+                        sample_fig, sample_pars = None, {}
             else:
-                graph.delete_figure(prior_rect)
+                delete_prior(prior_rect, graph)
+
             dragging, current = False, {}
             start_point = end_point = prior_rect = None
 
-        window['SOURCE_single'].update(disabled=not values['SOURCE'])
-        window['SOURCE_group'].update(disabled=not values['SOURCE'])
-        collapsibles['SOURCE_DISTRO'].disable(window) if not values['SOURCE_group'] else collapsibles['SOURCE_DISTRO'].enable(window)
-        if values['SOURCE_group'] :
-            window['SOURCE_id'].update(value='')
-        elif values['SOURCE_id']=='' :
-            window['SOURCE_id'].update(value=f'SOURCE_{len(source_units.keys())}')
-        print(values)
-
-    window.close()
+        w['SOURCE_single'].update(disabled=not v['SOURCE'])
+        w['SOURCE_group'].update(disabled=not v['SOURCE'])
+        collapsibles['SOURCE_DISTRO'].disable(w) if not v['SOURCE_group'] else collapsibles['SOURCE_DISTRO'].enable(w)
+        if v['SOURCE_group']:
+            w['SOURCE_id'].update(value='')
+        elif v['SOURCE_id'] == '':
+            w['SOURCE_id'].update(value=f'SOURCE_{len(source_units.keys())}')
+        # print(list(borders.keys()))
+    #
+    w.close()
     return env
 
 

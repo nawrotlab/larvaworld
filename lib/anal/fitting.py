@@ -114,7 +114,7 @@ def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
         # axs[j].plot(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, c='k', linewidth=2, alpha=0.6,
         #             label=f'{dist_name} fit')
 
-        # axs[i].hist(y, color='k',weights=weights,bins=x, label=f'{list(w.keys())[0]} dist')
+        # axs[i].hist(y, color='k',weights=weights,bins=x, label=f'{list(W.keys())[0]} dist')
         axs[j].legend(loc='upper right', fontsize=15)
         axs[j].set_xlabel(xl, fontsize=15)
 
@@ -235,8 +235,8 @@ def fit_endpoint_params(d, fit_filepath=None, save_to=None, save_as='endpoint_fi
         # f.distributions = ['norm']
         # f.timeout = 200
         # f.fit()
-        # w = f.get_best()
-        # print(w)
+        # W = f.get_best()
+        # print(W)
         loc, scale = list(w.values())[0]
         stat, pvalue = stats.kstest(data, list(w.keys())[0], args=list(w.values())[0])
         fits.append([par, stat, pvalue])
@@ -323,8 +323,8 @@ def fit_bout_params(d, fit_filepath=None, save_to=None, save_as='bout_fit.pdf'):
         # f.distributions = ['norm']
         # f.timeout = 200
         # f.fit()
-        # w = f.get_best()
-        # print(w)
+        # W = f.get_best()
+        # print(W)
         args = list(w.values())[0]
         name = list(w.keys())[0]
         stat, pvalue = stats.kstest(data, name, args=args)
@@ -399,8 +399,8 @@ def fit_crawl_params(d, target_point=None,fit_filepath=None, save_to=None, save_
         # f.distributions = ['norm']
         # f.timeout = 200
         # f.fit()
-        # w = f.get_best()
-        # print(w)
+        # W = f.get_best()
+        # print(W)
         loc, scale = list(w.values())[0]
         stat, pvalue = stats.kstest(data, list(w.keys())[0], args=list(w.values())[0])
         fits.append([par, stat, pvalue])
