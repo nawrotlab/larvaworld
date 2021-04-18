@@ -42,14 +42,14 @@ def food_param_conf(distro={}, list={}, grid=None):
             'source_units': list}
 
 
-def larva_distro(N=1, mode='normal', loc=(0.0, 0.0), scale=0.1, orientation=None, group_id='Larva', model={},
-                 default_color=None):
+def larva_distro(N=1, mode='normal', loc=(0.0, 0.0), scale=0.001, orientation_range=(0.0,360.0), group_id='Larva', model={},
+                 default_color='black'):
     if N > 0:
         return {group_id: {'N': N,
                            'mode': mode,
                            'loc': loc,
                            'scale': scale,
-                           'orientation': orientation,
+                           'orientation_range': orientation_range,
                            'model': model,
                            'default_color': default_color,
                            }}
@@ -57,17 +57,17 @@ def larva_distro(N=1, mode='normal', loc=(0.0, 0.0), scale=0.1, orientation=None
         return None
 
 
-set_on_xaxis_one_food = {'initial_num_flies': 1 * 8 * 20,
-                         'initial_fly_positions': {'mode': 'defined',
-                                                   'loc': fun.generate_positions_on_xaxis(num_identical=1 * 8,
-                                                                                          num_starting_points=20,
-                                                                                          step=0.05, starting_x=-0.5),
-                                                   'orientation': fun.generate_orientations(num_identical=1,
-                                                                                            circle_parsing=8,
-                                                                                            iterations=20)},
-                         'initial_num_food': 1,
-                         'initial_food_positions': {'mode': 'defined',
-                                                    'loc': np.array([(0.5, 0.0)])}}
+# set_on_xaxis_one_food = {'initial_num_flies': 1 * 8 * 20,
+#                          'initial_fly_positions': {'mode': 'defined',
+#                                                    'loc': fun.generate_positions_on_xaxis(num_identical=1 * 8,
+#                                                                                           num_starting_points=20,
+#                                                                                           step=0.05, starting_x=-0.5),
+#                                                    'orientation_range': fun.generate_orientations(num_identical=1,
+#                                                                                             circle_parsing=8,
+#                                                                                             iterations=20)},
+#                          'initial_num_food': 1,
+#                          'initial_food_positions': {'mode': 'defined',
+#                                                     'loc': np.array([(0.5, 0.0)])}}
 
 food_patches = np.array([
     (0.70, 0.07), (0.50, -0.43),
@@ -196,7 +196,7 @@ def maze_conf(n, h):
                     'width': 0.001}
             },
             'food_params': food_param_conf(list={**odor_source('Target', odor_id='Odor')}),
-            'larva_params': larva_distro(5, mode='facing_right', loc=(-0.8, 0.0), scale=0.03, model='navigator'),
+            'larva_params': larva_distro(5, mode='normal', loc=(-0.8, 0.0), scale=0.03, orientation_range=(-60.0,60.0), model='navigator'),
             'odorscape': gaussian_odor()}
     return conf
 
@@ -215,7 +215,7 @@ chemotax_env = {'arena_params': arena(0.1, 0.06),
                 'food_params': food_param_conf(list={**odor_source(id='Odor_source', pos=(0.04, 0.0),
                                                                    odor_id='Odor', odor_intensity=8,
                                                                    odor_spread=0.0004, default_color='blue')}),
-                'larva_params': larva_distro(30, mode='facing_right', loc=(-0.8, 0.0), scale=0.05, model='navigator'),
+                'larva_params': larva_distro(30, mode='normal', loc=(-0.04, 0.0), scale=0.001, orientation_range=(-60.0,60.0), model='navigator'),
                 'odorscape': gaussian_odor()}
 
 chemorbit_env = {'arena_params': arena(0.1, 0.06),
@@ -250,12 +250,12 @@ dispersion_env = {'arena_params': dish(0.2),
 
 dish_env = {'arena_params': dish(0.1),
             'food_params': food_param_conf(),
-            'larva_params': larva_distro(25, scale=0.05, model='explorer'),
+            'larva_params': larva_distro(25, scale=0.005, model='explorer'),
             'odorscape': None}
 
 reorientation_env = {'arena_params': dish(0.1),
                      'food_params': food_param_conf(list={**odor_source(id='Odor_source', odor_id='Odor')}),
-                     'larva_params': larva_distro(200, 'uniform_circ', scale=None, model='navigator'),
+                     'larva_params': larva_distro(200, 'uniform_circ', scale=0.0, model='navigator'),
                      'odorscape': gaussian_odor()}
 
 imitation_env_p = {'arena_params': dish(0.15),
@@ -265,7 +265,7 @@ imitation_env_p = {'arena_params': dish(0.15),
 
 focus_env = {'arena_params': dish(0.02),
              'food_params': food_param_conf(),
-             'larva_params': larva_distro(1, 'normal', scale=0.3, orientation=np.pi / 2, model='explorer'),
+             'larva_params': larva_distro(1, 'normal', scale=0.0, orientation_range=[90.0,90.0], model='explorer'),
              'odorscape': None}
 
 
@@ -275,7 +275,7 @@ focus_env = {'arena_params': dish(0.02),
 uniform_food_env = {'arena_params': dish(0.05),
                     'food_params': food_param_conf(
                         distro=food_distro(2000, 'uniform', (0,0), 0.025, food(0.0003, **odor()))),
-                    'larva_params': larva_distro(20, scale=0.3, model='feeder'),
+                    'larva_params': larva_distro(20, scale=0.005, model='feeder'),
                     'odorscape': None}
 
 patchy_food_env = {'arena_params': arena(0.2, 0.2),

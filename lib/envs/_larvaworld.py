@@ -427,9 +427,9 @@ class LarvaWorld:
             pp = ((p[0] + 1) * self.screen_width / 2, (-p[1] + 1) * self.screen_height / 2)
             return pp
 
-    def relative2space_pos(self, pos):
-        x, y = pos
-        return x * self.space_dims[0] / 2, y * self.space_dims[1] / 2
+    # def relative2space_pos(self, pos):
+    #     x, y = pos
+    #     return x * self.space_dims[0] / 2, y * self.space_dims[1] / 2
 
     def _place_food(self, food_pars):
         pars0 = copy.deepcopy(food_pars)
@@ -441,7 +441,7 @@ class LarvaWorld:
             for group_id, group_pars in pars0['source_groups'].items():
                 N, mode, loc, scale = [group_pars[p] for p in distro_pars]
                 pars = {p: group_pars[p] for p in group_pars if p not in distro_pars}
-                food_positions = self._generate_food_positions(N, mode, loc, scale)
+                food_positions = fun.generate_xy_distro(mode, N, loc, scale)
                 ids = [f'{group_id}_{i}' for i in range(N)]
                 for id, p in zip(ids, food_positions):
                     self.add_food(id=id, position=p, food_pars=pars)
@@ -450,14 +450,6 @@ class LarvaWorld:
             f_pars.pop('pos')
             self.add_food(id=id, position=position, food_pars=f_pars)
 
-    def _generate_food_positions(self, N, mode, loc, scale):
-        food_positions = fun.generate_xy_distro(mode, N, loc, scale)
-        # raw_food_positions = fun.generate_xy_distro(mode, N, loc, scale)
-        # raw_food_positions = []
-
-        # Scale positions to the tank dimensions
-        # food_positions = [self.relative2space_pos(p) for p in raw_food_positions]
-        return food_positions
 
     def add_food(self, position, id=None, food_pars={}):
         # if food_pars is None:
@@ -859,48 +851,6 @@ class LarvaWorldSim(LarvaWorld):
             #     f.set_default_color(layers[odor_id].color)
         return Nodors, layers
 
-    def _generate_larva_poses(self, N, mode, loc, scale, orientation):
-        raw_larva_positions = None
-        if mode == 'identical':
-            raw_larva_positions = np.zeros((N, 2)) + loc
-            larva_orientations = np.zeros(N) + orientation
-        elif mode == 'normal':
-            raw_larva_positions = np.random.normal(loc=loc, scale=scale, size=(N, 2))
-            larva_orientations = np.random.rand(N) * 2 * np.pi - np.pi
-        elif mode == 'facing_right':
-            raw_larva_positions = np.random.normal(loc=loc, scale=scale, size=(N, 2))
-            larva_orientations = np.random.rand(N) * 2 * np.pi / 6 - np.pi / 6
-        elif mode == 'spiral':
-            raw_larva_positions = [(0.0, 0.8)] * 8 + [(0.6, 0)] * 8 + [(0.0, -0.4)] * 8 + [(-0.2, 0.0)] * 8
-            larva_orientations = [i * np.pi / 4 for i in range(8)] * 4
-        elif mode == 'uniform':
-            raw_larva_positions = np.random.uniform(low=-1, high=1, size=(N, 2))
-            larva_orientations = np.random.rand(N) * 2 * np.pi - np.pi
-        elif mode == 'uniform_circ':
-            raw_larva_positions = []
-            for i in range(N):
-                theta = np.random.uniform(0, 2 * np.pi, 1)
-                r = float(np.sqrt(np.random.uniform(0, 1, 1)))
-                x = r * np.cos(theta)
-                y = r * np.sin(theta)
-                pos = (float(x), float(y))
-                raw_larva_positions.append(pos)
-                larva_orientations = np.random.rand(N) * 2 * np.pi - np.pi
-        elif mode == 'defined':
-            raw_larva_positions = loc
-            larva_orientations = orientation
-        elif mode == 'scal':
-            larva_positions = loc
-            larva_orientations = orientation
-
-        # Scale positions to the tank dimensions
-        if raw_larva_positions is not None:
-            larva_positions = [(x * self.space_dims[0] / 2, y * self.space_dims[1] / 2) for (x, y) in
-                               raw_larva_positions]
-        else:
-            pass
-        return larva_positions, larva_orientations
-
     def _generate_larva_pars(self, N, larva_pars, parameter_dict={}):
         for dist in ['pause_dist', 'stridechain_dist']:
             if larva_pars['neural_params']['intermitter_params'][dist] == 'fit':
@@ -927,14 +877,16 @@ class LarvaWorldSim(LarvaWorld):
     def create_larvae(self, larva_pars, parameter_dict={}):
 
         for group_id, group_pars in larva_pars.items():
-            N, mode, loc, scale, orientation, larva_model, col = [group_pars[p] for p in
-                                                                  ['N', 'mode', 'loc', 'scale', 'orientation', 'model',
+            N, mode, loc, scale, orientation_range, larva_model, col = [group_pars[p] for p in
+                                                                  ['N', 'mode', 'loc', 'scale', 'orientation_range', 'model',
                                                                    'default_color']]
             # if type(larva_model) == str:
             #     larva_model = loadConf(larva_model, 'Model')
             # print(larva_model['neural_params']['memory_params'])
             # raise
-            positions, orientations = self._generate_larva_poses(N, mode, loc, scale, orientation)
+            a1, a2 = np.deg2rad(orientation_range)
+            orientations = np.random.uniform(low=a1, high=a2, size=N).tolist()
+            positions = fun.generate_xy_distro(mode, N, loc, scale)
             all_pars = self._generate_larva_pars(N, larva_model, parameter_dict=parameter_dict)
             ids = [f'{group_id}_{i}' for i in range(N)]
 

@@ -765,9 +765,13 @@ def xy_uniform_circle(radius, N, loc=(0.0, 0.0)):
     p = [(loc[0] + r * np.cos(a), loc[1] + r * np.sin(a)) for a, r in zip(angles, rs)]
     return p
 
+
+
 def generate_xy_distro(mode, N, loc=(0.0, 0.0), scale=0.0) :
-    if mode == 'uniform':
+    if mode == 'uniform_circ':
         return xy_uniform_circle(scale, N, loc=loc)
+    elif mode == 'uniform':
+        return list(map(tuple,np.random.uniform(low=-scale/2, high=scale/2, size=(N, 2))+np.array(loc)))
     elif mode == 'normal':
         return np.random.normal(loc=loc, scale=scale, size=(N, 2)).tolist()
     elif mode == 'circle':

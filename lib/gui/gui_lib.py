@@ -41,6 +41,10 @@ header_kwargs = {'font': ('size', 8),
                  'size': (14, 1)}
 t_kws = {'font': ('size', 8),
                'size': (14, 1)}
+t5_kws = {'font': ('size', 8),
+               'size': (5, 1)}
+t2_kws = {'font': ('size', 8),
+               'size': (2, 1)}
 text0_kwargs = {'font': ('size', 8),
                 'size': (24, 1)}
 

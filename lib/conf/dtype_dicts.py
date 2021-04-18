@@ -1,4 +1,5 @@
 from typing import List, Tuple
+import numpy as np
 
 from lib.conf import par_conf
 from lib.conf.conf import loadConfDict, next_idx
@@ -7,14 +8,24 @@ odor_dtypes = {'odor_id': str,
                'odor_intensity': float,
                'odor_spread': float}
 
+odor_null_distro = {'odor_id': None,
+                    'odor_intensity': 0.0,
+                    'odor_spread': None}
+
 food_dtypes = {
     'radius': float,
     'amount': float,
     'quality': float,
     # **odor_dtypes
 }
+food_null_distro = {
+    'radius': 0.001,
+    'amount': 0.0,
+    'quality': 1.0,
+    # **odor_dtypes
+}
 
-basic_dtypes={
+basic_dtypes = {
     'unique_id': str,
     'default_color': str,
     'group': str,
@@ -24,7 +35,7 @@ basic_dtypes={
 source_dtypes = {
     **basic_dtypes,
     **food_dtypes,
-      ** odor_dtypes
+    **odor_dtypes
 }
 
 odor_gain_pars = {
@@ -45,19 +56,19 @@ border_dtypes = {
 }
 
 agent_dtypes = {'Food': source_dtypes,
-              'LarvaSim': larva_dtypes,
-              'LarvaReplay': larva_dtypes,
-              'Border': border_dtypes,
+                'LarvaSim': larva_dtypes,
+                'LarvaReplay': larva_dtypes,
+                'Border': border_dtypes,
                 }
 
 arena_dtypes = {'arena_xdim': float,
-                   'arena_ydim': float,
-                   'arena_shape': ['circular', 'rectangular']}
+                'arena_ydim': float,
+                'arena_shape': ['circular', 'rectangular']}
 
 odorscape_dtypes = {'odorscape': ['Gaussian', 'Diffusion'],
-                       'grid_dims': tuple,
-                       'evap_const': float,
-                       'gaussian_sigma': Tuple[float, float],
+                    'grid_dims': tuple,
+                    'evap_const': float,
+                    'gaussian_sigma': Tuple[float, float],
                     }
 
 operation_dtypes = {
@@ -81,8 +92,8 @@ batch_method_dtypes = {
 }
 
 space_search_dtypes = {'pars': str,
-                   'ranges': Tuple[float, float],
-                   'Ngrid': int}
+                       'ranges': Tuple[float, float],
+                       'Ngrid': int}
 
 # method_pars_dict = {
 #
@@ -216,44 +227,48 @@ def get_replay_kwargs_dict(arena_pars=None,
     }
     return dic
 
-larva_distros = [
-        'normal',
-        'defined',
-        'identical',
-        'uniform',
-        'uniform_circ',
-        'spiral',
-        'facing_right'
-    ]
-
-food_distros = [
-    'normal',
-    'circle',
-    'uniform'
-]
-
-agent_distros = {
-    'Larva': larva_distros,
-    'Food': food_distros,
-}
-
-def distro_dtypes(class_name, basic=False):
 
 
-    common_distro_dtypes = {
-        'mode': agent_distros[class_name],
+def basic_null_distro(class_name):
+    distro = {
+        'mode': None,
+        'N': 0,
+        'loc': (0.0, 0.0),
+        'scale': 0.0,
+    }
+    if class_name == 'Larva':
+        distro = {**distro, 'orientation_range': (0.0, 360.0)}
+    return distro
+
+
+def basic_distro_types(class_name):
+    dtypes = {
+        'mode': [
+            'normal',
+            'circle',
+            'uniform',
+            'uniform_circ',
+
+        ],
         'N': int,
         'loc': Tuple[float, float],
         'scale': float,
     }
-    if basic :
-        return common_distro_dtypes
+    if class_name == 'Larva':
+        dtypes = {**dtypes, 'orientation_range': Tuple[float, float]}
+    return dtypes
+
+
+def distro_dtypes(class_name, basic=False):
+    basic_dtypes = basic_distro_types(class_name)
+    if basic:
+        return basic_dtypes
 
     if class_name == 'Food':
         return {
             'group': str,
             'default_color': str,
-            **common_distro_dtypes,
+            **basic_dtypes,
             **food_dtypes,
             **odor_dtypes
         }
@@ -263,9 +278,32 @@ def distro_dtypes(class_name, basic=False):
             'group': str,
             'default_color': str,
             'model': list(loadConfDict('Model').keys()),
-            **common_distro_dtypes,
-            'orientation': float
+            **basic_dtypes,
+            **odor_dtypes
+        }
 
+
+def null_distro(class_name, basic=False):
+    basic_distro = basic_null_distro(class_name)
+    if basic:
+        return basic_distro
+
+    if class_name == 'Food':
+        return {
+            'group': '',
+            'default_color': 'green',
+            **basic_distro,
+            **food_null_distro,
+            **odor_null_distro
+        }
+    elif class_name == 'Larva':
+        from lib.conf.conf import loadConfDict
+        return {
+            'group': '',
+            'default_color': 'black',
+            'model': None,
+            **basic_distro,
+            **odor_null_distro
         }
 
 
