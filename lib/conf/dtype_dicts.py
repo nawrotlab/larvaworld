@@ -232,6 +232,7 @@ def get_replay_kwargs_dict(arena_pars=None,
 def basic_null_distro(class_name):
     distro = {
         'mode': None,
+        'shape': None,
         'N': 0,
         'loc': (0.0, 0.0),
         'scale': 0.0,
@@ -245,14 +246,15 @@ def basic_distro_types(class_name):
     dtypes = {
         'mode': [
             'normal',
-            'circle',
+            'periphery',
             'uniform',
-            'uniform_circ',
+            # 'uniform_circ',
 
         ],
+        'shape' : ['circle', 'rect'],
         'N': int,
         'loc': Tuple[float, float],
-        'scale': float,
+        'scale': Tuple[float, float],
     }
     if class_name == 'Larva':
         dtypes = {**dtypes, 'orientation_range': Tuple[float, float]}

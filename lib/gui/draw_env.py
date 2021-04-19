@@ -19,6 +19,28 @@ from lib.gui.gui_lib import CollapsibleDict, b_kws, t_kws, check_collapsibles, c
 W, H = 800, 800
 
 
+def update_window_distro(window, name, p1, p2):
+    scale = tuple(np.abs(np.array(p2) - np.array(p1)))
+    window[f'{name}_DISTRO_scale'].update(value=scale)
+    window[f'{name}_DISTRO_loc'].update(value=p1)
+
+
+def draw_shape(graph, p1, p2, shape, **kwargs):
+    if p2 == p1:
+        return None
+    pp1, pp2 = np.array(p1), np.array(p2)
+    dpp = np.abs(pp2 - pp1)
+    if shape == 'rect':
+        p1 = tuple(pp1 - dpp / 2)
+        p2 = tuple(pp1 + dpp / 2)
+        fig = graph.draw_rectangle(p1, p2, **kwargs)
+    elif shape == 'circle':
+        fig = graph.draw_circle(p1, dpp[0], **kwargs)
+    else:
+        fig = None
+    return fig
+
+
 def popup_color_chooser(look_and_feel=None):
     """
 
@@ -727,16 +749,14 @@ def color_pick_layout(name, color):
             sg.B('Pick', k=f'PICK {name}_color', **b_kws)]
 
 
-def add_agent_layout(name0, color, collapsibles, dtype_name=None,basic=True):
+def add_agent_layout(name0, color, collapsibles, dtype_name=None, basic=True):
     if dtype_name is None:
         dtype_name = name0
     name = name0.upper()
 
-
     collapsibles[f'{name}_DISTRO'] = CollapsibleDict(f'{name}_DISTRO', False, dict=null_distro(dtype_name, basic=basic),
                                                      type_dict=distro_dtypes(dtype_name, basic=basic),
                                                      toggle=False, disabled=True)
-
 
     collapsibles[f'{name}_ODOR'] = CollapsibleDict(f'{name}_ODOR', False, dict=odor_null_distro, type_dict=odor_dtypes,
                                                    toggle=False)
@@ -802,19 +822,14 @@ def delete_prior(prior_rect, graph):
         graph.delete_figure(prior_rect)
 
 
-def inspect_distro(default_color, mode, N, loc, scale, graph, s, id=None, item='LARVA', **kwargs):
-    Ps = fun.generate_xy_distro(mode, N, loc=unscale_xy(loc, s), scale=scale * s)
+def inspect_distro(default_color, mode, shape, N, loc, scale, graph, s, id=None, item='LARVA', **kwargs):
+    Ps = fun.generate_xy_distro(mode, shape, N, loc=unscale_xy(loc, s), scale=np.array(scale) * s)
     group_figs = []
-    # dx = scale*s
-    # dy = scale*s
     for i, P0 in enumerate(Ps):
-        # P1 = (P0[0] + dx, P0[1] + dy)
-        if item=='SOURCE' :
+        if item == 'SOURCE':
             temp = draw_source(P0, default_color, graph, s, **kwargs)
-        elif item=='LARVA' :
+        elif item == 'LARVA':
             temp = draw_larva(P0, default_color, graph, s, **kwargs)
-        # temp = graph.draw_circle(P0, dx, line_width=3, line_color=default_color)
-        print(i, temp, P0)
         group_figs.append(temp)
     return group_figs
 
@@ -824,18 +839,19 @@ def draw_source(P0, color, graph, s, amount, radius, **kwargs):
     temp = graph.draw_circle(P0, radius * s, line_width=3, line_color=color, fill_color=fill_color)
     return temp
 
+
 def draw_larva(P0, color, graph, s, orientation_range, **kwargs):
     points = np.array([[0.9, 0.1], [0.05, 0.1]])
     xy0 = fun.body(points)
-    a1, a2=orientation_range
-    a1, a2=np.deg2rad(a1),np.deg2rad(a2)
+    a1, a2 = orientation_range
+    a1, a2 = np.deg2rad(a1), np.deg2rad(a2)
     xy0 = fun.rotate_multiple_points(xy0, random.uniform(a1, a2), origin=[0, 0])
     # print(xy0)
-    xy0/=250
+    xy0 /= 250
     # print(xy0)
-    xy0*=s
+    xy0 *= s
     # print(xy0)
-    xy0+=np.array(P0)
+    xy0 += np.array(P0)
     # print(xy0)
     temp = graph.draw_polygon(xy0, line_width=3, line_color=color, fill_color=color)
     return temp
@@ -846,6 +862,23 @@ def check_abort(name, w, v, units, groups):
     info = w['info']
     abort = True
     odor_on = w[f'TOGGLE_{o}_ODOR'].metadata.state
+
+    if not odor_on:
+        w[f'{o}_ODOR_odor_id'].update(value=None)
+        w[f'{o}_ODOR_odor_intensity'].update(value=0.0)
+
+    if o == 'SOURCE':
+        food_on = w[f'TOGGLE_{o}_FOOD'].metadata.state
+        if not odor_on and not food_on:
+            info.update(value=f"Assign food and/or odor to the drawn source")
+            return True
+        else:
+            if not food_on and v[f'{o}_FOOD_amount'] != 0.0:
+                w[f'{o}_FOOD_amount'].update(value=0.0)
+                info.update(value=f"Source food amount set to 0")
+            elif v[f'{o}_FOOD_amount'] == 0.0:
+                w[f'{o}_FOOD_amount'].update(value=10 ** -3)
+                info.update(value=f"Source food amount set to default")
     if v[f'{o}_group_id'] == '' and v[f'{o}_id'] == '':
         info.update(value=f"Both {o.lower()} single id and group id are empty")
     elif not v[f'{o}_group'] and not v[f'{o}_single']:
@@ -867,6 +900,8 @@ def check_abort(name, w, v, units, groups):
         info.update(value=f"{o.lower()} group id {v[f'{o}_group_id']} already exists or is empty")
     elif v[f'{o}_group'] and v[f'{o}_DISTRO_mode'] in ['', None]:
         info.update(value=f"Define a distribution mode")
+    elif v[f'{o}_group'] and v[f'{o}_DISTRO_shape'] in ['', None]:
+        info.update(value=f"Define a distribution shape")
     elif v[f'{o}_group'] and not int(v[f'{o}_DISTRO_N']) > 0:
         info.update(value=f"Assign a positive integer number of items for the distribution")
     else:
@@ -903,7 +938,6 @@ def draw_env(env=None):
     source_l, collapsibles = add_agent_layout('Source', 'green', collapsibles, dtype_name='Food')
     larva_l, collapsibles = add_agent_layout('Larva', 'black', collapsibles)
 
-
     collapsibles['SOURCE_FOOD'] = CollapsibleDict('SOURCE_FOOD', False, dict=food_null_distro, type_dict=food_dtypes,
                                                   toggle=False)
 
@@ -912,7 +946,6 @@ def draw_env(env=None):
 
     col2 = [
 
-
         *larva_l,
 
         *source_l,
@@ -920,7 +953,7 @@ def draw_env(env=None):
         [sg.T('', **t5_kws), *collapsibles['SOURCE_FOOD'].get_section()],
 
         [sg.T('', **t5_kws), sg.T('shape', **t5_kws),
-         sg.Combo(['RECT', 'CIRCLE'], default_value='CIRCLE', k='SOURCE_SHAPE', enable_events=True, readonly=True,
+         sg.Combo(['rect', 'circle'], default_value='circle', k='SOURCE_shape', enable_events=True, readonly=True,
                   **t_kws)],
 
         [sg.R('Add Border', 1, k='BORDER', enable_events=True)],
@@ -944,10 +977,10 @@ def draw_env(env=None):
             change_submits=True,  # mouse click events
             background_color='black',
             drag_submits=True)],
-        [sg.T('Instructions : ',k='info', size=(60, 3))],
+        [sg.T('Instructions : ', k='info', size=(60, 3))],
         [sg.B('Ok', **b_kws), sg.B('Cancel', **b_kws)]
     ]
-    layout=[[sg.Col(col1), sg.Col(col2)]]
+    layout = [[sg.Col(col1), sg.Col(col2)]]
 
     w = sg.Window("Drawing and Moving Stuff Around", layout, finalize=True)
 
@@ -1058,33 +1091,24 @@ def draw_env(env=None):
 
                 elif v['SOURCE'] or v['BORDER'] or v['LARVA']:
                     P1, P2 = scale_xy(start_point, s), scale_xy(end_point, s)
-                    if not any([out_of_bounds(P, collapsibles['ARENA'].get_dict(v, w)) for P in [P1, P2]]):
+                    if any([out_of_bounds(P, collapsibles['ARENA'].get_dict(v, w)) for P in [P1, P2]]):
+                        current = {}
+                    else:
                         if v['SOURCE'] and not check_abort('SOURCE', w, v, source_units, source_groups):
                             o = 'SOURCE'
                             color = v[f'{o}_color']
-                            odor_on = w[f'TOGGLE_{o}_ODOR'].metadata.state
+                            if v['SOURCE_single'] or (v['SOURCE_group'] and sample_fig is None):
 
-                            if not odor_on and not w['TOGGLE_SOURCE_FOOD'].metadata.state:
-                                info.update(value=f"Assign food and/or odor to the drawn source")
-                            elif v['SOURCE_single'] or (v['SOURCE_group'] and sample_fig is None):
-                                c = {'fill_color': v['SOURCE_color'] if w[
-                                    'TOGGLE_SOURCE_FOOD'].metadata.state else None,
-                                     'line_color': v['SOURCE_color'],
+                                c = {'fill_color': color if w['TOGGLE_SOURCE_FOOD'].metadata.state else None,
+                                     'line_color': color,
                                      'line_width': 5,
                                      }
-                                if v['SOURCE_SHAPE'] == 'RECT':
-                                    prior_rect = graph.draw_rectangle(start_point, end_point, **c)
-                                elif v['SOURCE_SHAPE'] == 'CIRCLE':
-                                    prior_rect = graph.draw_circle(start_point, end_point[0] - start_point[0], **c)
+                                prior_rect = draw_shape(graph, shape=v[f'{o}_shape'], p1=start_point,
+                                                        p2=end_point, **c)
 
                                 w['SOURCE_FOOD_radius'].update(value=np.abs(end_point[0] - start_point[0]) / s)
                                 food_pars = collapsibles['SOURCE_FOOD'].get_dict(v, w)
-                                if not w['TOGGLE_SOURCE_FOOD'].metadata.state:
-                                    food_pars['amount'] = 0.0
                                 odor_pars = collapsibles['SOURCE_ODOR'].get_dict(v, w)
-                                if not odor_on:
-                                    odor_pars['odor_id'] = None
-                                    odor_pars['odor_intensity'] = 0.0
                                 sample_pars = {'default_color': color,
                                                **food_pars,
                                                **odor_pars,
@@ -1100,38 +1124,39 @@ def draw_env(env=None):
                                     sample_fig, sample_pars = None, {}
                                 else:
                                     info.update(value=f"Draw a sample item for the distribution")
-                            elif v['SOURCE_group']:
-                                w['SOURCE_DISTRO_scale'].update(value=np.abs(end_point[0] - start_point[0]) / s)
-                                w['SOURCE_DISTRO_loc'].update(value=P1)
+                            elif v[f'{o}_group']:
+                                update_window_distro(w, o, P1, P2)
                                 distro_pars = collapsibles['SOURCE_DISTRO'].get_dict(v, w)
                                 current = {v['SOURCE_group_id']: {
                                     **distro_pars,
                                     **sample_pars
                                 }}
-
-                                prior_rect = graph.draw_circle(start_point, end_point[0] - start_point[0],
-                                                               line_color=sample_pars['default_color'], line_width=5)
+                                c = {'fill_color': None,
+                                     'line_color': color,
+                                     'line_width': 5,
+                                     }
+                                prior_rect = draw_shape(graph, shape=v[f'{o}_DISTRO_shape'], p1=start_point,
+                                                        p2=end_point, **c)
                         elif v['LARVA'] and not check_abort('LARVA', w, v, larva_units, larva_groups):
                             o = 'LARVA'
                             color = v[f'{o}_color']
-                            odor_on = w[f'TOGGLE_{o}_ODOR'].metadata.state
                             odor_pars = collapsibles[f'{o}_ODOR'].get_dict(v, w)
-                            if not odor_on:
-                                odor_pars['odor_id'] = None
-                                odor_pars['odor_intensity'] = 0.0
                             sample_larva_pars = {'default_color': color,
-                                                  **odor_pars,
-                                                  }
+                                                 **odor_pars,
+                                                 }
                             if v[f'{o}_group']:
-                                w[f'{o}_DISTRO_scale'].update(value=np.abs(end_point[0] - start_point[0]) / s)
-                                w[f'{o}_DISTRO_loc'].update(value=P1)
+                                update_window_distro(w, o, P1, P2)
                                 distro_pars = collapsibles[f'{o}_DISTRO'].get_dict(v, w)
                                 current = {v[f'{o}_group_id']: {
                                     **distro_pars,
                                     **sample_larva_pars
                                 }}
-                                prior_rect = graph.draw_circle(start_point, end_point[0] - start_point[0],
-                                                               line_color=sample_larva_pars['default_color'], line_width=5)
+                                c = {'fill_color': None,
+                                     'line_color': color,
+                                     'line_width': 5,
+                                     }
+                                prior_rect = draw_shape(graph, shape=v[f'{o}_DISTRO_shape'], p1=start_point,
+                                                        p2=end_point, **c)
 
                         elif v['BORDER']:
                             id = v['BORDER_id']
@@ -1147,9 +1172,6 @@ def draw_env(env=None):
                                 prior_rect = graph.draw_line(start_point, end_point, color=v['BORDER_color'],
                                                              width=int(float(v['BORDER_width']) * s))
 
-                    else:
-                        # delete_prior(prior_rect, graph)
-                        current = {}
 
 
         elif e.endswith('+UP'):  # The drawing has ended because mouse up
@@ -1182,10 +1204,10 @@ def draw_env(env=None):
                         delete_prior(sample_fig, graph)
                         sample_fig, sample_pars = None, {}
             elif v['LARVA'] and current != {}:
-                o='LARVA'
-                units,groups=larva_units, larva_groups
-                units_f,groups_f=larva_units_f, larva_groups_f
-                if v[f'{o}_single'] :
+                o = 'LARVA'
+                units, groups = larva_units, larva_groups
+                units_f, groups_f = larva_units_f, larva_groups_f
+                if v[f'{o}_single']:
                     pass
                 elif v[f'{o}_group']:
                     id = v[f'{o}_group_id']

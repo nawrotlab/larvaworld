@@ -751,10 +751,10 @@ def update_extrema(pairs, ids, mins, maxs, first_xy, last_xy):
     return ids, mins, maxs, first_xy, last_xy
 
 
-def xy_along_circle(r, N, loc=(0.0, 0.0)):
-    print(r, N, loc)
+def xy_along_circle(N, loc=(0.0, 0.0), radius=1.0):
+    # print(r, N, loc)
     angles = np.linspace(0, np.pi * 2, N + 1)[:-1]
-    p = [(loc[0] + np.cos(a) * r, loc[1] + np.sin(a) * r) for a in angles]
+    p = [(loc[0] + np.cos(a) * radius, loc[1] + np.sin(a) * radius) for a in angles]
     return p
 
 
@@ -767,15 +767,21 @@ def xy_uniform_circle(radius, N, loc=(0.0, 0.0)):
 
 
 
-def generate_xy_distro(mode, N, loc=(0.0, 0.0), scale=0.0) :
-    if mode == 'uniform_circ':
-        return xy_uniform_circle(scale, N, loc=loc)
-    elif mode == 'uniform':
-        return list(map(tuple,np.random.uniform(low=-scale/2, high=scale/2, size=(N, 2))+np.array(loc)))
+def generate_xy_distro(mode, shape, N, loc=(0.0, 0.0), scale=0.0) :
+    loc, scale=np.array(loc), np.array(scale)
+    if mode == 'uniform':
+        if shape=='circle' :
+            return xy_uniform_circle(radius=np.mean(scale), N=N, loc=loc)
+        elif shape == 'rect':
+            # print(-scale/2)
+            return list(map(tuple,np.random.uniform(low=-scale/2, high=scale/2, size=(N, 2))+loc))
     elif mode == 'normal':
         return np.random.normal(loc=loc, scale=scale, size=(N, 2)).tolist()
-    elif mode == 'circle':
-        return xy_along_circle(scale, N, loc=loc)
+    elif mode == 'periphery':
+        if shape == 'circle':
+            return xy_along_circle(N, loc=loc, radius=np.max(scale))
+        elif shape == 'rect':
+            return xy_along_circle(N, loc=loc, radius=np.mean(scale))
     else :
         raise ValueError (f'XY distribution {mode} not implemented.')
 
