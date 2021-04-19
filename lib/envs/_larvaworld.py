@@ -25,7 +25,8 @@ from lib.aux.sampling import sample_agents, get_ref_bout_distros
 import lib.aux.functions as fun
 from lib.aux import naming as nam
 
-from lib.conf.dtype_dicts import agent_dtypes, life_dict
+
+import lib.conf.dtype_dicts as dtypes
 from lib.model import *
 from lib.model._agent import LarvaworldAgent
 from lib.sim.input_lib import evaluate_input, evaluate_graphs
@@ -661,13 +662,14 @@ class LarvaWorld:
 
     def get_agent_list(self, class_name):
         global id
-        if class_name == 'Food':
+        if class_name == 'Source':
             agents = self.get_food()
         elif class_name in ['LarvaSim', 'LarvaReplay']:
             agents = self.get_flies()
         elif class_name == 'Border':
             agents = self.borders
-        pars = list(agent_dtypes[class_name].keys())
+        pars = list(dtypes.get_dict_dtypes('agent', class_name=class_name).keys())
+        # pars = list(agent_dtypes[class_name].keys())
         data = {}
         for f in agents:
             dic = {}
@@ -754,7 +756,7 @@ class LarvaWorldSim(LarvaWorld):
             collected_pars = {'step': [], 'endpoint': []}
         # self.available_pars = fun.unique_list([p for p in list(step_database.keys()) if par_conf.par_in_db(par=p)])
         if life_params is None:
-            life_params = life_dict()
+            life_params = dtypes.get_dict('life')
         self.starvation_hours = life_params['starvation_hours']
         if self.starvation_hours is None:
             self.starvation_hours = []

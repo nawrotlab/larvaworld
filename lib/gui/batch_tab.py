@@ -4,12 +4,12 @@ import threading
 import PySimpleGUI as sg
 
 from lib.anal.combining import render_mpl_table
-from lib.conf.dtype_dicts import optimization_dtypes, space_search_dtypes, batch_method_dtypes
 from lib.conf.batch_conf import test_batch
-from lib.gui.gui_lib import CollapsibleDict, b_kws, Collapsible, t_kws, buttonM_kwargs, named_list_layout, \
-    gui_table, save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList
+from lib.gui.gui_lib import CollapsibleDict, t8_kws, Collapsible, t14_kws, t14_kws, named_list_layout, \
+    gui_table, save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList, b6_kws
 from lib.gui.simulation_tab import update_sim, get_exp
 from lib.conf.conf import loadConfDict, loadConf, next_idx
+import lib.conf.dtype_dicts as dtypes
 
 
 def update_batch(batch, window, collapsibles):
@@ -38,20 +38,22 @@ def build_batch_tab(collapsibles, graph_lists, dicts):
     dicts['space_search'] = batch['space_search']
     l_exp = [sg.Col([
         named_list_layout(text='Batch:', key='BATCH_CONF', choices=list(loadConfDict('Batch').keys())),
-        [sg.Button('Load', key='LOAD_BATCH', **b_kws),
-         sg.Button('Save', key='SAVE_BATCH', **b_kws),
-         sg.Button('Delete', key='DELETE_BATCH', **b_kws),
-         sg.Button('Run', key='RUN_BATCH', **b_kws)]
+        [sg.B('Load', key='LOAD_BATCH', **b6_kws),
+         sg.B('Save', key='SAVE_BATCH', **b6_kws),
+         sg.B('Delete', key='DELETE_BATCH', **b6_kws),
+         sg.B('Run', key='RUN_BATCH', **b6_kws)]
     ])]
-    batch_conf = [[sg.Text('Batch id:', **t_kws), sg.In('unnamed_batch_0', key='batch_id', **t_kws)],
-                  [sg.Text('Path:', **t_kws), sg.In('unnamed_batch', key='batch_path', **t_kws)],
+    batch_conf = [[sg.Text('Batch id:', **t14_kws), sg.In('unnamed_batch_0', key='batch_id', **t14_kws)],
+                  [sg.Text('Path:', **t14_kws), sg.In('unnamed_batch', key='batch_path', **t14_kws)],
                   named_bool_button('Save data', False, toggle_name='save_data_flag'),
                   ]
 
     collapsibles['BATCH_CONFIGURATION'] = Collapsible('BATCH_CONFIGURATION', True, batch_conf,
                                                       disp_name='CONFIGURATION')
-    collapsibles['METHODS'] = CollapsibleDict('METHODS', True, dict=batch['methods'], type_dict=batch_method_dtypes)
-    s = CollapsibleDict('OPTIMIZATION', True, dict=batch['optimization'], type_dict=optimization_dtypes,
+    collapsibles['METHODS'] = CollapsibleDict('METHODS', True, dict=batch['methods'],
+                                              type_dict=dtypes.get_dict_dtypes('batch_methods'))
+    s = CollapsibleDict('OPTIMIZATION', True, dict=batch['optimization'],
+                        type_dict=dtypes.get_dict_dtypes('optimization'),
                         toggle=True, disabled=True, toggled_subsections=None)
     collapsibles.update(s.get_subdicts())
 
@@ -60,7 +62,7 @@ def build_batch_tab(collapsibles, graph_lists, dicts):
     l_batch0 = sg.Col([l_exp,
                        collapsibles['BATCH_CONFIGURATION'].get_section(),
                        collapsibles['METHODS'].get_section(),
-                       [sg.Button('SPACE_SEARCH', **buttonM_kwargs)],
+                       [sg.Button('SPACE_SEARCH', **t14_kws)],
                        collapsibles['OPTIMIZATION'].get_section(),
                        [graph_lists['BATCH'].get_layout()]
                        ])
@@ -78,9 +80,9 @@ def set_space_table(space_search):
             d[k] = v[i]
         t0.append(d)
 
-    t1 = gui_table(t0, space_search_dtypes, title='space search')
+    t1 = gui_table(t0, dtypes.get_dict_dtypes('space_search'), title='space search')
     dic = {}
-    for k in list(space_search_dtypes.keys()):
+    for k in list(dtypes.get_dict_dtypes('space_search').keys()):
         dic[k] = [l[k] for l in t1]
         # if k == 'ranges':
         #     dic[k] = np.array(dic[k])

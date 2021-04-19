@@ -138,9 +138,9 @@ def configure_sim(env_params):
     while env.is_running:
         env.step()
         env.render()
-    food_list = env.get_agent_list(class_name='Food')
+    source_list = env.get_agent_list(class_name='Source')
     border_list = env.get_agent_list(class_name='Border')
-    return food_list, border_list
+    return source_list, border_list
 
 
 def run_sim_basic(

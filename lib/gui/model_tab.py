@@ -2,11 +2,11 @@ import copy
 
 import PySimpleGUI as sg
 
-from lib.conf.dtype_dicts import odor_gain_pars
 from lib.conf import test_larva, module_keys
-from lib.gui.gui_lib import CollapsibleDict, b_kws, Collapsible, t_kws, header_kwargs, set_agent_dict, \
-    buttonM_kwargs, save_gui_conf, delete_gui_conf
+from lib.gui.gui_lib import CollapsibleDict, t8_kws, Collapsible, set_agent_dict, \
+    t14_kws, save_gui_conf, delete_gui_conf, b12_kws
 from lib.conf.conf import loadConfDict, loadConf
+import lib.conf.dtype_dicts as dtypes
 
 
 def init_model(larva_model, collapsibles={}):
@@ -25,8 +25,8 @@ def init_model(larva_model, collapsibles={}):
         s = CollapsibleDict(k.upper(), False, dict=dic, dict_name=k.upper(), toggle=v)
         collapsibles.update(s.get_subdicts())
         module_conf.append(s.get_section())
-    odor_gain_conf = [sg.Button('ODOR GAINS', **buttonM_kwargs)]
-    # odor_gain_conf = [sg.Text('odor gains:', **t_kws), sg.Button('Odor gains', **b_kws)]
+    odor_gain_conf = [sg.B('ODOR GAINS', **b12_kws)]
+    # odor_gain_conf = [sg.Text('odor gains:', **t14_kws), sg.Button('Odor gains', **t8_kws)]
     module_conf.append(odor_gain_conf)
     collapsibles['BRAIN'] = Collapsible('BRAIN', True, module_conf)
     brain_layout = sg.Col([collapsibles['BRAIN'].get_section()])
@@ -92,12 +92,12 @@ def build_model_tab(collapsibles, dicts):
     # module_dict = larva_model['neural_params']['modules']
 
     l_mod0 = [sg.Col([
-        [sg.Text('Larva model:', **header_kwargs),
+        [sg.Text('Larva model:', **t14_kws),
          sg.Combo(list(loadConfDict('Model').keys()), key='MODEL_CONF', enable_events=True, readonly=True,
-                  **t_kws)],
-        [sg.Button('Load', key='LOAD_MODEL', **b_kws),
-         sg.Button('Save', key='SAVE_MODEL', **b_kws),
-         sg.Button('Delete', key='DELETE_MODEL', **b_kws)]
+                  **t14_kws)],
+        [sg.Button('Load', key='LOAD_MODEL', **t8_kws),
+         sg.Button('Save', key='SAVE_MODEL', **t8_kws),
+         sg.Button('Delete', key='DELETE_MODEL', **t8_kws)]
     ])]
 
     l_mod1 = init_model(larva_model, collapsibles)
@@ -120,6 +120,6 @@ def eval_model(event, values, window, collapsibles, dicts):
         delete_gui_conf(window, values, 'Model')
 
     elif event == 'ODOR GAINS':
-        dicts['odor_gains'] = set_agent_dict(dicts['odor_gains'], odor_gain_pars, title='Odor gains')
+        dicts['odor_gains'] = set_agent_dict(dicts['odor_gains'], dtypes.get_dict_dtypes('odor_gain'), title='Odor gains')
 
     return dicts

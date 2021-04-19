@@ -424,16 +424,10 @@ class Larva(LarvaworldAgent):
         return self.brain.intermitter.EEB
 
 
-class Food(LarvaworldAgent):
-    def __init__(self, amount=1.0, quality=1.0,default_color=None, shape_vertices=None, **kwargs):
-        if default_color is None :
-            default_color = 'green'
-        super().__init__(default_color=default_color,**kwargs)
+class Source(LarvaworldAgent):
+    def __init__(self, shape_vertices=None, **kwargs):
+        super().__init__(**kwargs)
         self.shape_vertices = shape_vertices
-        self.initial_amount = amount
-        self.quality = quality
-        self.amount = self.initial_amount
-
         shape = fun.circle_to_polygon(60, self.radius)
 
         if self.model.physics_engine:
@@ -443,27 +437,13 @@ class Food(LarvaworldAgent):
             #     self._body: Box2D.b2Body = self.space.CreateDynamicBody(pos=self.pos, orientation=None)
             #     # super().__init__(space=self.space, pos=self.pos, orientation=None, radius=self.shape_radius)
             #     self._body.bullet = True
-            self.food_shape = b2ChainShape(vertices=shape.tolist())
-            self._body.CreateFixture(shape=self.food_shape)
+            self.Box2D_shape = b2ChainShape(vertices=shape.tolist())
+            self._body.CreateFixture(shape=self.Box2D_shape)
             self._body.fixtures[0].filterData.groupIndex = -1
         else:
             self.model.space.place_agent(self, self.pos)
         # # put all agents into same group (negative so that no collisions are detected)
         # self._fixtures[0].filterData.groupIndex = -1
-
-    def get_amount(self):
-        return self.amount
-
-    def subtract_amount(self, amount):
-        prev_amount = self.amount
-        self.amount -= amount
-        if self.amount <= 0.0:
-            self.amount = 0.0
-            self.model.delete_agent(self)
-        else:
-            r = (self.initial_amount - self.amount) / self.initial_amount
-            self.color = r * np.array((255, 255, 255)) + (1 - r) * self.default_color
-        return np.min([amount, prev_amount])
 
     def get_vertices(self):
         v0=self.shape_vertices
@@ -483,3 +463,28 @@ class Food(LarvaworldAgent):
             p0 = Polygon(self.get_vertices())
             p = affinity.scale(p0, xfact=scale, yfact=scale)
             return p
+
+class Food(Source):
+    def __init__(self, amount=1.0, quality=1.0,default_color=None, **kwargs):
+        if default_color is None :
+            default_color = 'green'
+        super().__init__(default_color=default_color,**kwargs)
+        self.initial_amount = amount
+        self.quality = quality
+        self.amount = self.initial_amount
+
+    def get_amount(self):
+        return self.amount
+
+    def subtract_amount(self, amount):
+        prev_amount = self.amount
+        self.amount -= amount
+        if self.amount <= 0.0:
+            self.amount = 0.0
+            self.model.delete_agent(self)
+        else:
+            r = (self.initial_amount - self.amount) / self.initial_amount
+            self.color = r * np.array((255, 255, 255)) + (1 - r) * self.default_color
+        return np.min([amount, prev_amount])
+
+
