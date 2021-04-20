@@ -42,8 +42,8 @@ vis_dtypes = {
 }
 
 null_vis_render = {
-    'mode': 'video',
-    'image_mode': 'final',
+    'mode': None,
+    'image_mode': None,
     'video_speed': 1,
     'media_name': None,
     'show_display': True,
@@ -77,65 +77,6 @@ null_vis = {
     'color': null_vis_color,
     'aux': null_vis_aux,
 }
-
-
-def get_vis_kwargs_dict(mode='video', image_mode='final', video_speed=1, show_display=True, media_name=None,
-                        draw_head=False, draw_centroid=False, draw_midline=True, draw_contour=True,
-                        trajectories=False, trajectory_dt=0.0,
-                        black_background=False, random_colors=False, color_behavior=False,
-                        visible_clock=True, visible_state=True, visible_scale=True, visible_ids=False,
-                        ):
-    dic = {
-        'render': {'mode': mode,
-                   'image_mode': image_mode,
-                   'video_speed': video_speed,
-                   'media_name': media_name,
-                   'show_display': show_display},
-        'draw': {'draw_head': draw_head,
-                 'draw_centroid': draw_centroid,
-                 'draw_midline': draw_midline,
-                 'draw_contour': draw_contour,
-                 'trajectories': trajectories,
-                 'trajectory_dt': trajectory_dt},
-        'color': {'black_background': black_background,
-                  'random_colors': random_colors,
-                  'color_behavior': color_behavior},
-        'aux': {'visible_clock': visible_clock,
-                'visible_scale': visible_scale,
-                'visible_state': visible_state,
-                'visible_ids': visible_ids}
-    }
-
-    return dic
-
-
-# def get_replay_kwargs_dict(arena_pars=None,
-#                            env_params=None,
-#                            track_point=None,
-#                            dynamic_color=None,
-#                            agent_ids=None,
-#                            time_range=None,
-#                            transposition=None, fix_point=None, secondary_fix_point=None, use_background=False,
-#                            draw_Nsegs=None):
-#     dic = {
-#         'arena_pars': arena_pars,
-#         'env_params': env_params,
-#         'track_point': track_point,
-#         # 'spinepoints': spinepoints,
-#         # 'centroid': centroid,
-#         # 'contours': contours,
-#         'dynamic_color': dynamic_color,
-#         'agent_ids': agent_ids,
-#         'time_range': time_range,
-#         'transposition': transposition,
-#         'fix_point': fix_point,
-#         'secondary_fix_point': secondary_fix_point,
-#         'use_background': use_background,
-#         'draw_Nsegs': draw_Nsegs,
-#         # 'centroid': centroid,
-#
-#     }
-#     return dic
 
 
 def get_dict(name, class_name=None, **kwargs):
@@ -374,14 +315,6 @@ def get_distro_dtypes(class_name, basic=True):
     if not basic:
         dtypes = {**dtypes, **get_dict_dtypes('agent', class_name=class_name)}
     return dtypes
-
-
-def life_dict(f=1, age=0, starvation=None):
-    return {'deb_base_f': f,
-            'hours_as_larva': age,
-            'starvation_hours': starvation
-            }
-
 
 def sim_dict(sim_id=None, sim_dur=3, dt=0.1, path=None, Box2D=False, exp_type=None):
     if exp_type is not None:

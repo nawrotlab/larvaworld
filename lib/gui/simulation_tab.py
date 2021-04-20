@@ -96,7 +96,7 @@ def build_sim_tab(collapsibles, graph_lists, dicts):
     collapsibles['OUTPUT'] = CollapsibleDict('OUTPUT', False, dict=output_dict)
 
     s = CollapsibleDict('VISUALIZATION', False,
-                        dict=dtypes.get_dict_dtypes('visualization', video_speed=60),
+                        dict=dtypes.get_dict_dtypes('visualization', mode='video',video_speed=60),
                         # dict=get_vis_kwargs_dict(video_speed=60),
                         type_dict=dtypes.get_dict_dtypes('visualization'),
                         toggled_subsections=None)

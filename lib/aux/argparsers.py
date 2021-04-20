@@ -1,11 +1,12 @@
 import sys
 import numpy as np
 
-from lib.conf.dtype_dicts import get_vis_kwargs_dict
 
 sys.path.insert(0, '../../..')
 import lib.conf.env_conf as env
 import lib.aux.functions as fun
+import lib.conf.dtype_dicts as dtypes
+
 
 
 def add_vis_kwargs(parser):
@@ -49,7 +50,8 @@ def get_vis_kwargs(args):
         trajectories = True
         trajectory_dt = args.trajectories
 
-    vis_kwargs = get_vis_kwargs_dict(mode=mode, image_mode=args.image_mode, video_speed=video_speed,
+
+    vis_kwargs = dtypes.get_dict_dtypes('visualization', mode=mode, image_mode=args.image_mode, video_speed=video_speed,
                                      show_display=args.show_display, media_name=args.media_name,
                                      draw_head=args.draw_head, draw_centroid=args.draw_centroid,
                                      draw_midline=args.draw_midline, draw_contour=args.draw_contour,

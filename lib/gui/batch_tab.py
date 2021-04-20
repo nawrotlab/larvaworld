@@ -6,7 +6,7 @@ import PySimpleGUI as sg
 from lib.anal.combining import render_mpl_table
 from lib.conf.batch_conf import test_batch
 from lib.gui.gui_lib import CollapsibleDict, t8_kws, Collapsible, t14_kws, t14_kws, named_list_layout, \
-    gui_table, save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList, b6_kws
+    gui_table, save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList, b6_kws, b12_kws
 from lib.gui.simulation_tab import update_sim, get_exp
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 import lib.conf.dtype_dicts as dtypes
@@ -62,7 +62,7 @@ def build_batch_tab(collapsibles, graph_lists, dicts):
     l_batch0 = sg.Col([l_exp,
                        collapsibles['BATCH_CONFIGURATION'].get_section(),
                        collapsibles['METHODS'].get_section(),
-                       [sg.Button('SPACE_SEARCH', **t14_kws)],
+                       [sg.B('SPACE_SEARCH', **b12_kws)],
                        collapsibles['OPTIMIZATION'].get_section(),
                        [graph_lists['BATCH'].get_layout()]
                        ])
