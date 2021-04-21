@@ -327,7 +327,6 @@ def draw_env(env=None):
         check_toggles(w, e)
         if e == 'RESET_ARENA':
             s, arena, db = reset_arena(window=w, graph=graph, arena_pars=arena_pars, env_db=env_db)
-
         elif e == 'NEW_ARENA':
             w['out'].update(value='New arena initialized. All items erased.')
             s, arena = draw_arena(graph, collapsibles['Arena'].get_dict(v, w))
@@ -363,9 +362,6 @@ def draw_env(env=None):
                     delta_X, delta_Y = delta_x / s, delta_y / s
                     for fig in drag_figures:
                         for k in list(db.keys()):
-                            # for dic, f_dic in zip([borders, source_units, source_groups, larva_units, larva_groups],
-                            #                       [borders_f, source_units_f, source_groups_f, larva_units_f,
-                            #                        larva_groups_f]):
                             if fig in list(db[k]['figs'].keys()):
                                 id = db[k]['figs'][fig]
                                 w['out'].update(value=f"Item {id} moved by ({delta_X}, {delta_Y})")
@@ -385,8 +381,6 @@ def draw_env(env=None):
                 elif v['-ERASE-']:
                     for fig in drag_figures:
                         for k in list(db.keys()):
-                            # for dic, f_dic in zip([borders, source_units, source_groups, larva_groups],
-                            #                       [borders_f, source_units_f, source_groups_f, larva_groups_f]):
                             if fig in list(db[k]['figs'].keys()):
                                 id = db[k]['figs'][fig]
                                 w['out'].update(value=f"Item {id} erased")
@@ -398,7 +392,6 @@ def draw_env(env=None):
                 elif v['-INSPECT-']:
                     for fig in drag_figures:
                         for k in list(db.keys()):
-
                             if fig in list(db[k]['figs'].keys()):
                                 id = db[k]['figs'][fig]
                                 w['out'].update(value=f"Inspecting item {id} ")

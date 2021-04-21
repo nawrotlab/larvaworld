@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 
 from lib.conf.larva_conf import test_larva, module_keys
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, set_agent_dict, save_gui_conf, delete_gui_conf, b12_kws, \
-    b6_kws, CollapsibleTable
+    b6_kws, CollapsibleTable, graphic_button, t10_kws, t12_kws, t18_kws
 from lib.conf.conf import loadConfDict, loadConf
 import lib.conf.dtype_dicts as dtypes
 
@@ -92,11 +92,11 @@ def build_model_tab(collapsibles):
     collapsibles.update(**s1.get_subdicts())
 
     l_mod0 = [sg.Col([
-        [sg.Text('Larva model:'),
-         sg.Combo(list(loadConfDict('Model').keys()), key='MODEL_CONF', enable_events=True, readonly=True)],
-        [sg.B('Load', key='LOAD_MODEL', **b6_kws),
-         sg.B('Save', key='SAVE_MODEL', **b6_kws),
-         sg.B('Delete', key='DELETE_MODEL', **b6_kws)]
+        [sg.Text('Larva model',**t10_kws),
+         graphic_button('load', 'LOAD_MODEL'),
+         graphic_button('data_add', 'SAVE_MODEL'),
+         graphic_button('data_remove', 'DELETE_MODEL')],
+         [sg.Combo(list(loadConfDict('Model').keys()), key='MODEL_CONF', enable_events=True, readonly=True, **t18_kws)],
     ])]
 
     l_mod1 = init_model(larva_model, collapsibles)

@@ -8,6 +8,7 @@ import numpy as np
 import PySimpleGUI as sg
 import operator
 
+from PySimpleGUI import ColorChooserButton
 from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
@@ -17,6 +18,8 @@ from lib.conf.conf import loadConfDict, saveConf, deleteConf
 import lib.aux.functions as fun
 from lib.stor.paths import get_parent_dir
 import lib.conf.dtype_dicts as dtypes
+import lib.gui.icons.icons as icons
+import lib.gui.graphics as graphics
 
 on_image = b'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'
 
@@ -687,9 +690,9 @@ w_kws = {
     'default_button_element_size': (6, 1),
     'default_element_size': (14, 1),
     'font': ('size', 8),
-    'auto_size_text' : False,
-    'auto_size_buttons' : False,
-    'text_justification' : 'left',
+    'auto_size_text': False,
+    'auto_size_buttons': False,
+    'text_justification': 'left',
 }
 
 b_kws = {'font': ('size', 6)}
@@ -705,12 +708,16 @@ b12_kws = {'font': ('size', 6),
 
 t8_kws = {'size': (8, 1)
           }
-
+t6_kws= {'size': (6, 1)
+          }
 t10_kws = {'size': (10, 1)
            }
 t12_kws = {'size': (12, 1)
            }
-
+t16_kws= {'size': (16, 1)
+           }
+t18_kws= {'size': (18, 1)
+           }
 t14_kws = {'size': (14, 1)}
 
 t40_kws = {'size': (40, 1)}
@@ -718,6 +725,31 @@ t40_kws = {'size': (40, 1)}
 t5_kws = {'size': (5, 1)}
 t2_kws = {'size': (2, 1)}
 t24_kws = {'size': (24, 1)}
+
+
+def graphic_button(name, key,**kwargs):
+    dic={
+        'load' : graphics.Button_Load,
+        'play' : graphics.Button_Play,
+        'pick_color' : graphics.Button_Color_Circle,
+        'edit' : graphics.Document_2_Edit,
+        'data_add' : graphics.Database_Add,
+        'data_remove' : graphics.Database_Remove,
+        'add' : graphics.Button_Add,
+        'remove' : graphics.Button_Remove,
+        'search_add' : graphics.Search_Add,
+        'box_add' : graphics.Box_Add,
+        'file_add' : graphics.File_Add,
+        'equalizer' : graphics.System_Equalizer,
+        'preferences' : graphics.System_Preferences,
+        'pictures' : graphics.Pictures,
+         }
+    c = {'button_color': (sg.theme_background_color(), sg.theme_background_color()),
+         'border_width': 0,
+         # **b_kws
+         }
+
+    return sg.B(image_data=dic[name], k=key, **c, **kwargs)
 
 
 # sg.theme('LightGreen')
@@ -771,11 +803,14 @@ def popup_color_chooser(look_and_feel=None):
     return color_chosen
 
 
+# pick_color_icon = './icons/pick_color.png'
 def color_pick_layout(name, color=None):
     return [sg.T('', **t5_kws), sg.T('color', **t5_kws),
             sg.Combo(list(color_map.keys()), default_value=color, k=f'{name}_color', enable_events=True, readonly=True,
                      **t8_kws),
-            sg.B('Pick', k=f'PICK {name}_color', **b3_kws)]
+            graphic_button('pick_color', f'PICK {name}_color'),
+            ColorChooserButton('pick', k=f'PICK2 {name}_color'),
+            ]
 
 
 def retrieve_value(v, t):
@@ -817,9 +852,9 @@ def retrieve_value(v, t):
         v = v.replace(')', '')
         v = v.replace("'", '')
         v = v.replace(",", ' ')
-        if t ==Tuple[float, float] :
+        if t == Tuple[float, float]:
             vv = tuple([float(x) for x in v.split()])
-        elif t ==Tuple[int, int] :
+        elif t == Tuple[int, int]:
             vv = tuple([int(x) for x in v.split()])
     elif t == Type and type(v) == str:
         if 'str' in v:
@@ -900,9 +935,6 @@ def build_table_window(data, pars_dict, title, return_layout=False):
                              return_keyboard_events=True, finalize=True)
     table_window.close_destroys_window = True
     return Nagents, Npars, pars, table_window
-
-
-
 
 
 def gui_table(data, pars_dict, title='Agent list'):
@@ -1116,7 +1148,7 @@ class Collapsible:
         self.toggle = toggle
         self.auto_open = auto_open
         self.symbol = SYMBOL_DOWN if state else SYMBOL_UP
-        header = [sg.T(self.symbol, enable_events=True, k=f'OPEN SEC {name}', text_color='black',**t2_kws),
+        header = [sg.T(self.symbol, enable_events=True, k=f'OPEN SEC {name}', text_color='black', **t2_kws),
                   sg.T(disp_name, enable_events=True, text_color='black', k=f'SEC {name} TEXT', **t12_kws)]
         if toggle is not None:
             header.append(bool_button(name, toggle, disabled))
@@ -1157,10 +1189,10 @@ class Collapsible:
         if self.toggle is not None:
             window[f'TOGGLE_{self.name}'].update(image_data=on_image_disabled)
         if self.state is None:
-            if self.auto_open :
+            if self.auto_open:
                 self.state = True
                 self.symbol = SYMBOL_DOWN
-            else :
+            else:
                 self.state = False
                 self.symbol = SYMBOL_UP
         window[f'OPEN SEC {self.name}'].update(self.symbol)
@@ -1171,74 +1203,74 @@ class Collapsible:
         subdicts[self.name] = self
         return subdicts
 
+
 class CollapsibleTable(Collapsible):
     def __init__(self, name, state, dict, type_dict, headings, **kwargs):
         self.dict = dict
         self.type_dict = type_dict
-        if 'unique_id' in list(type_dict.keys()) :
-            self.header='unique_id'
+        if 'unique_id' in list(type_dict.keys()):
+            self.header = 'unique_id'
         elif 'group' in list(type_dict.keys()):
             self.header = 'group'
         self.headings = headings
-        self.col_widths =[]
-        for i,p in enumerate(self.headings) :
-            if p in ['id', 'group'] :
+        self.col_widths = []
+        for i, p in enumerate(self.headings):
+            if p in ['id', 'group']:
                 self.col_widths.append(10)
-            elif p in ['color'] :
+            elif p in ['color']:
                 self.col_widths.append(8)
             elif type_dict[p] in [int, float]:
-                self.col_widths.append(np.max([len(p),4]))
-            else :
+                self.col_widths.append(np.max([len(p), 4]))
+            else:
                 self.col_widths.append(12)
         self.Ncols = len(headings)
         self.data = self.set_data(dict)
         self.key = f'TABLE {name}'
         self.layout = self.get_layout()
-        self.edit_key=f'EDIT_TABLE {name}'
-        b=[sg.B('Edit',k=self.edit_key, **b_kws)]
+        self.edit_key = f'EDIT_TABLE {name}'
+        b = [graphic_button('edit', self.edit_key)]
         super().__init__(name, state, content=self.layout, next_to_header=b, **kwargs)
 
     def set_data(self, dic):
-        if len(dic)!=0 :
-            data=[]
+        if len(dic) != 0:
+            data = []
             for id, pars in dic.items():
-                row=[id]
-                for j, p in enumerate(self.headings[1:]) :
-                    for k,v in pars.items() :
-                        if k=='default_color' and p=='color' :
+                row = [id]
+                for j, p in enumerate(self.headings[1:]):
+                    for k, v in pars.items():
+                        if k == 'default_color' and p == 'color':
                             row.append(v)
-                        elif k==p :
+                        elif k == p:
                             row.append(v)
                 data.append(row)
-        else :
-            data=[['']*self.Ncols]
+        else:
+            data = [[''] * self.Ncols]
         return data
 
     def get_layout(self):
         layout = [[sg.Table(values=self.data[:][:], headings=self.headings, col_widths=self.col_widths,
                             max_col_width=30, background_color='lightblue',
-                        auto_size_columns=False,
-                        # display_row_numbers=True,
-                        justification='center',
-                        font=w_kws['font'],
-                        num_rows=len(self.data),
-                        alternating_row_color='lightyellow',
-                        key=self.key
-               )]]
+                            auto_size_columns=False,
+                            # display_row_numbers=True,
+                            justification='center',
+                            font=w_kws['font'],
+                            num_rows=len(self.data),
+                            alternating_row_color='lightyellow',
+                            key=self.key
+                            )]]
         return layout
 
-    def update_table(self, window,dic):
+    def update_table(self, window, dic):
         self.dict = dic
         self.data = self.set_data(dic)
         window[self.key].update(values=self.data, num_rows=len(self.data))
 
-    def edit_table(self, window,dic=None):
-        if dic is None :
-            dic=self.dict
-        dic= set_agent_dict(dic, self.type_dict, header=self.header, title=self.disp_name)
-        self.update_table(window,dic)
+    def edit_table(self, window, dic=None):
+        if dic is None:
+            dic = self.dict
+        dic = set_agent_dict(dic, self.type_dict, header=self.header, title=self.disp_name)
+        self.update_table(window, dic)
         # return self.dict
-
 
 
 # class ImmutableTable:
@@ -1413,8 +1445,9 @@ def object_menu(selected):
 
 
 class GraphList:
-    def __init__(self, name, fig_dict={}):
+    def __init__(self, name, fig_dict={}, next_to_header=None):
         self.name = name
+        self.next_to_header = next_to_header
         self.fig_dict = fig_dict
         self.layout, self.list_key = self.init_layout(name, fig_dict)
         self.canvas, self.canvas_key = self.init_canvas(name)
@@ -1425,8 +1458,11 @@ class GraphList:
         list_key = f'{name}_GRAPH_LIST'
         values = list(fig_dict.keys())
         h = int(np.max([len(values), 5]))
+        header=[sg.Text('Graphs', **t10_kws)]
+        if self.next_to_header is not None :
+            header+=self.next_to_header
         l = [
-            [sg.Text('GRAPHS')],
+            header,
             [sg.Listbox(values=values, change_submits=True, size=(20, h), key=list_key, auto_size_text=True)],
         ]
 
@@ -1462,13 +1498,20 @@ class GraphList:
 
 
 class ButtonGraphList(GraphList):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.draw_key = f'{self.name}_DRAW_FIG'
-        l = [sg.B('Graph args', **b6_kws, k=f'{self.name}_FIG_ARGS'),
-             sg.B('Draw', **b6_kws, k=self.draw_key),
-             sg.B('Save', **b6_kws, k=f'{self.name}_SAVE_FIG')]
-        self.layout.append(l)
+    def __init__(self, name,**kwargs):
+        self.draw_key = f'{name}_DRAW_FIG'
+        l = [
+            graphic_button('equalizer', f'{name}_FIG_ARGS'),
+            # graphic_button('preferences', f'{self.name}_SAVEd_FIG'),
+            # sg.B('Graph args', **b6_kws, k=f'{self.name}_FIG_ARGS'),
+            graphic_button('pictures', self.draw_key),
+            # sg.B('Draw', **b6_kws, k=self.draw_key),
+            graphic_button('file_add', f'{name}_SAVE_FIG')
+            # sg.B('Save', **b6_kws, k=f'{self.name}_SAVE_FIG')
+        ]
+        super().__init__(name=name, next_to_header=l, **kwargs)
+
+        # self.layout.append(l)
         self.fig, self.save_to, self.save_as = None, '', ''
         self.func, self.func_kwargs = None, {}
 

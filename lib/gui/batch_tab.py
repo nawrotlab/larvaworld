@@ -4,8 +4,9 @@ import threading
 import PySimpleGUI as sg
 
 from lib.anal.combining import render_mpl_table
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, named_list_layout, \
-    gui_table, save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList, b12_kws, b_kws
+from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
+    gui_table, save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList, b12_kws, b_kws, \
+    graphic_button, t10_kws, t12_kws, t18_kws, t8_kws, t6_kws
 from lib.gui.simulation_tab import update_sim, get_exp
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 import lib.conf.dtype_dicts as dtypes
@@ -15,8 +16,7 @@ def update_batch(batch, window, collapsibles):
     collapsibles['Methods'].update(window, batch['methods'])
     collapsibles['Optimization'].update(window, batch['optimization'])
     window['TOGGLE_save_data_flag'].metadata.state = batch['run_kwargs']['save_data_flag']
-    window['TOGGLE_save_data_flag'].update(
-        image_data=on_image if window['TOGGLE_save_data_flag'].metadata.state else off_image)
+    window['TOGGLE_save_data_flag'].update(image_data=on_image if window['TOGGLE_save_data_flag'].metadata.state else off_image)
     return batch['space_search']
 
 
@@ -32,14 +32,16 @@ def get_batch(window, values, collapsibles, space_search):
 
 
 def build_batch_tab(collapsibles, graph_lists, dicts):
-
     dicts['space_search'] = dtypes.get_dict('space_search')
     l_exp = [sg.Col([
-        named_list_layout(text='Batch:', key='BATCH_CONF', choices=list(loadConfDict('Batch').keys())),
-        [sg.B('Load', key='LOAD_BATCH', **b_kws),
-         sg.B('Save', key='SAVE_BATCH', **b_kws),
-         sg.B('Delete', key='DELETE_BATCH', **b_kws),
-         sg.B('Run', key='RUN_BATCH', **b_kws)]
+        [sg.Text('Batch', **t6_kws),
+         graphic_button('load', 'LOAD_BATCH'),
+         graphic_button('data_add', 'SAVE_BATCH'),
+         graphic_button('data_remove', 'DELETE_BATCH'),
+         graphic_button('play', 'RUN_BATCH')],
+        [sg.Combo(list(loadConfDict('Batch').keys()), key='BATCH_CONF',
+                                               enable_events=True, readonly=True, **t18_kws)],
+
     ])]
     batch_conf = [[sg.Text('Batch id:'), sg.In('unnamed_batch_0', key='batch_id')],
                   [sg.Text('Path:'), sg.In('unnamed_batch', key='batch_path')],
@@ -56,7 +58,6 @@ def build_batch_tab(collapsibles, graph_lists, dicts):
     for s in [s1, s2]:
         collapsibles.update(s.get_subdicts())
     collapsibles.update(s.get_subdicts())
-
     graph_lists['BATCH'] = GraphList('BATCH')
 
     l_batch0 = sg.Col([l_exp,
@@ -101,21 +102,13 @@ def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
             window.Element('EXP').Update(value=conf['exp'])
             update_sim(window, conf['exp'], collapsibles)
             # source_units, border_list, larva_groups, source_groups = update_sim(window, conf['exp'], collapsibles)
-            # dicts['source_units'] = source_units
-            # dicts['border_list'] = border_list
-            # dicts['larva_groups'] = larva_groups
-            # dicts['source_groups'] = source_groups
-
-
 
     elif event == 'SAVE_BATCH':
         batch = get_batch(window, values, collapsibles, dicts['space_search'])
         save_gui_conf(window, batch, 'Batch')
 
-
     elif event == 'DELETE_BATCH':
         delete_gui_conf(window, values, 'Batch')
-
 
     elif event == 'RUN_BATCH':
         if values['BATCH_CONF'] != '' and values['EXP'] != '':

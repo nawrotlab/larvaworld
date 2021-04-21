@@ -5,7 +5,10 @@ import matplotlib
 import inspect
 from tkinter import *
 
-from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws
+from PySimpleGUI import BUTTON_TYPE_BROWSE_FOLDER
+
+from lib.gui import graphics
+from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, t10_kws, t16_kws
 from lib.stor.paths import SingleRunFolder, RefFolder
 from lib.anal.plotting import graph_dict
 from lib.stor.larva_dataset import LarvaDataset
@@ -34,24 +37,22 @@ def change_dataset_id(window, values, data):
 def build_analysis_tab(collapsibles, graph_lists):
 
     data_list = [
-        [sg.Text('Datasets')],
-        [sg.Col([[sg.Listbox(values=[], change_submits=False, size=(22, 0), key='DATASET_IDS',
-                    enable_events=True),
-                  sg.FolderBrowse(button_text='Add', initial_folder=SingleRunFolder, key='DATASET_DIR', change_submits=True,
-                                  enable_events=True, **t8_kws, target=(0, -1))]])],
-        [sg.B('Remove', **b6_kws), sg.B('Add ref', **b6_kws),
-         sg.B('Change ID', **b6_kws), sg.B('Replay', **b6_kws)],
-        # [sg.Text(' ' * 12)]
-    ]
+        [sg.Text('Datasets', **t8_kws),
+            graphic_button('remove', 'Remove'),
+            graphic_button('play', 'Replay'),
+            graphic_button('box_add', 'Add ref'),
+            graphic_button('edit', 'Change ID'),
+            # sg.B('Remove', **b6_kws),
+            # sg.B('Add ref', **b6_kws),
+         # sg.B('Change ID', **b6_kws),
+            # sg.B('Replay', **b6_kws)
+        ],
+        [sg.Col([[sg.Listbox(values=[], **t16_kws, change_submits=False, key='DATASET_IDS',enable_events=True),
+                  graphic_button('search_add', 'DATASET_DIR',initial_folder=SingleRunFolder, change_submits=True,
+                                  enable_events=True,target=(0, -1), button_type=BUTTON_TYPE_BROWSE_FOLDER)]])]]
 
     graph_lists['ANALYSIS'] = ButtonGraphList(name='ANALYSIS', fig_dict=graph_dict)
-
-
-
-    analysis_layout = [
-        [sg.Col(data_list)],
-        [graph_lists['ANALYSIS'].get_layout(), graph_lists['ANALYSIS'].canvas],
-    ]
+    analysis_layout = [[sg.Col(data_list)], [graph_lists['ANALYSIS'].get_layout(), graph_lists['ANALYSIS'].canvas]]
     return analysis_layout, collapsibles, graph_lists
 
 
