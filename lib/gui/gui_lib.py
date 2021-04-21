@@ -683,12 +683,13 @@ color_map = {
 
 w_kws = {
     'finalize': True,
-    'resizable': True,
+    # 'resizable': True,
     'default_button_element_size': (6, 1),
     'default_element_size': (14, 1),
     'font': ('size', 8),
-    # 'auto_size_text' : True,
-    # 'auto_size_buttons' : True,
+    'auto_size_text' : False,
+    # 'auto_size_buttons' : False,
+    'text_justification' : 'left',
 }
 
 b_kws = {'font': ('size', 6)}
@@ -807,7 +808,7 @@ def retrieve_value(v, t):
             vv = [tuple([float(x) for x in t.split()]) for t in v.split('   ')]
         elif type(v) == list:
             vv = v
-    elif t == Tuple[float, float] and type(v) == str:
+    elif t in [Tuple[float, float], Tuple[int, int]] and type(v) == str:
         v = v.replace('{', '')
         v = v.replace('}', '')
         v = v.replace('[', '')
@@ -816,7 +817,10 @@ def retrieve_value(v, t):
         v = v.replace(')', '')
         v = v.replace("'", '')
         v = v.replace(",", ' ')
-        vv = tuple([float(x) for x in v.split()])
+        if t ==Tuple[float, float] :
+            vv = tuple([float(x) for x in v.split()])
+        elif t ==Tuple[int, int] :
+            vv = tuple([int(x) for x in v.split()])
     elif t == Type and type(v) == str:
         if 'str' in v:
             vv = str
@@ -898,33 +902,7 @@ def build_table_window(data, pars_dict, title, return_layout=False):
     return Nagents, Npars, pars, table_window
 
 
-# def immutable_table(name, dic):
-#     if name == 'Source groups':
-#         print(dic)
-#         headings = ['group', 'N', 'default_color']
-#         data=np.ones([len(dic), len(headings)])*np.nan
-#         for i, id, pars in enumerate(dic.items()):
-#             data[i][0] = id
-#             for j, p in enumerate(headings[1:]) :
-#                 for k,v in pars.items() :
-#                     if k==p :
-#                         data[i][j]=v
-#     layout = [[sg.Table(values=data, headings=headings, max_col_width=25, background_color='lightblue',
-#                         auto_size_columns=True,
-#                         display_row_numbers=True,
-#                         justification='right',
-#                         font=w_kws['font'],
-#                         # num_rows=20,
-#                         alternating_row_color='lightyellow',
-#                         key=f'TABLE_{name}'
-#                         # tooltip='This is a table'
-#                )],
-#               # [sg.Button('Read'), sg.Button('Double'), sg.Button('Change Colors')],
-#               # [sg.Text('Read = read which rows are selected')],
-#               # [sg.Text('Double = double the amount of data in the table')],
-#               # [sg.Text('Change Colors = Changes the colors of rows 8 and 9')]
-#               ]
-#     return layout
+
 
 
 def gui_table(data, pars_dict, title='Agent list'):
@@ -1128,15 +1106,17 @@ def named_list_layout(text, key, choices, readonly=True, enable_events=True):
 
 
 class Collapsible:
-    def __init__(self, name, state, content, disp_name=None, toggle=None, disabled=False, next_to_header=None):
+    def __init__(self, name, state, content, disp_name=None, toggle=None, disabled=False, next_to_header=None,
+                 auto_open=True):
         self.name = name
         if disp_name is None:
             disp_name = name
         self.disp_name = disp_name
         self.state = state
         self.toggle = toggle
+        self.auto_open = auto_open
         self.symbol = SYMBOL_DOWN if state else SYMBOL_UP
-        header = [sg.T(self.symbol, enable_events=True, k=f'OPEN SEC {name}', text_color='black'),
+        header = [sg.T(self.symbol, enable_events=True, k=f'OPEN SEC {name}', text_color='black',**t2_kws),
                   sg.T(disp_name, enable_events=True, text_color='black', k=f'SEC {name} TEXT', **t12_kws)]
         if toggle is not None:
             header.append(bool_button(name, toggle, disabled))
@@ -1177,10 +1157,132 @@ class Collapsible:
         if self.toggle is not None:
             window[f'TOGGLE_{self.name}'].update(image_data=on_image_disabled)
         if self.state is None:
-            self.state = True
-        window[f'OPEN SEC {self.name}'].update(SYMBOL_DOWN)
-        window[f'SEC {self.name}'].update(visible=True)
+            if self.auto_open :
+                self.state = True
+                self.symbol = SYMBOL_DOWN
+            else :
+                self.state = False
+                self.symbol = SYMBOL_UP
+        window[f'OPEN SEC {self.name}'].update(self.symbol)
+        window[f'SEC {self.name}'].update(visible=self.state)
 
+    def get_subdicts(self):
+        subdicts = {}
+        subdicts[self.name] = self
+        return subdicts
+
+class CollapsibleTable(Collapsible):
+    def __init__(self, name, state, dict, type_dict, headings, **kwargs):
+        self.dict = dict
+        self.type_dict = type_dict
+        if 'unique_id' in list(type_dict.keys()) :
+            self.header='unique_id'
+        elif 'group' in list(type_dict.keys()):
+            self.header = 'group'
+        self.headings = headings
+        self.col_widths =[]
+        for i,p in enumerate(self.headings) :
+            if p in ['id', 'group'] :
+                self.col_widths.append(10)
+            elif p in ['color'] :
+                self.col_widths.append(8)
+            elif type_dict[p] in [int, float]:
+                self.col_widths.append(np.max([len(p),4]))
+            else :
+                self.col_widths.append(12)
+        self.Ncols = len(headings)
+        self.data = self.set_data(dict)
+        self.key = f'TABLE {name}'
+        self.layout = self.get_layout()
+        self.edit_key=f'EDIT_TABLE {name}'
+        b=[sg.B('Edit',k=self.edit_key, **b_kws)]
+        super().__init__(name, state, content=self.layout, next_to_header=b, **kwargs)
+
+    def set_data(self, dic):
+        if len(dic)!=0 :
+            data=[]
+            for id, pars in dic.items():
+                row=[id]
+                for j, p in enumerate(self.headings[1:]) :
+                    for k,v in pars.items() :
+                        if k=='default_color' and p=='color' :
+                            row.append(v)
+                        elif k==p :
+                            row.append(v)
+                data.append(row)
+        else :
+            data=[['']*self.Ncols]
+        return data
+
+    def get_layout(self):
+        layout = [[sg.Table(values=self.data[:][:], headings=self.headings, col_widths=self.col_widths,
+                            max_col_width=30, background_color='lightblue',
+                        auto_size_columns=False,
+                        # display_row_numbers=True,
+                        justification='center',
+                        font=w_kws['font'],
+                        num_rows=len(self.data),
+                        alternating_row_color='lightyellow',
+                        key=self.key
+               )]]
+        return layout
+
+    def update_table(self, window,dic):
+        self.dict = dic
+        self.data = self.set_data(dic)
+        window[self.key].update(values=self.data, num_rows=len(self.data))
+
+    def edit_table(self, window,dic=None):
+        if dic is None :
+            dic=self.dict
+        dic= set_agent_dict(dic, self.type_dict, header=self.header, title=self.disp_name)
+        self.update_table(window,dic)
+        # return self.dict
+
+
+
+# class ImmutableTable:
+#     def __init__(self, name, dic, headings):
+#         # self.dict = dict
+#         self.headings = headings
+#         self.Ncols=len(headings)
+#         self.name = name
+#         self.key = f'TABLE_{self.name}'
+#         self.data=self.set_data(dic)
+#         self.layout=self.get_layout()
+#
+#
+#     def set_data(self, dic):
+#         if len(dic)!=0 :
+#             data=[]
+#             for i, id, pars in enumerate(dic.items()):
+#                 row=[]
+#                 row.append(id)
+#                 row.append(pars['default_color'])
+#                 for j, p in enumerate(self.headings[2:]) :
+#                     for k,v in pars.items() :
+#                         if k==p :
+#                             row.append(v)
+#                 data.append(row)
+#         else :
+#             data=[['']*self.Ncols]
+#         return data
+#
+#     def get_layout(self):
+#         layout = [[sg.Table(values=self.data[:][:], headings=self.headings, max_col_width=30, background_color='lightblue',
+#                         auto_size_columns=False,
+#                         # display_row_numbers=True,
+#                         justification='center',
+#                         font=w_kws['font'],
+#                         num_rows=len(self.data),
+#                         alternating_row_color='lightyellow',
+#                         key=self.key
+#                )]]
+#         return layout
+#
+#     def update(self, dic, window):
+#         self.data = self.set_data(dic)
+#         window[self.key].update(values=self.data)
 
 class CollapsibleDict(Collapsible):
     def __init__(self, name, state, dict, dict_name=None, type_dict=None, toggled_subsections=True, **kwargs):

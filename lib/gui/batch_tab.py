@@ -4,7 +4,6 @@ import threading
 import PySimpleGUI as sg
 
 from lib.anal.combining import render_mpl_table
-from lib.conf.batch_conf import test_batch
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, named_list_layout, \
     gui_table, save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList, b12_kws, b_kws
 from lib.gui.simulation_tab import update_sim, get_exp
@@ -33,9 +32,8 @@ def get_batch(window, values, collapsibles, space_search):
 
 
 def build_batch_tab(collapsibles, graph_lists, dicts):
-    batch = copy.deepcopy(test_batch)
-    dicts['batch_results'] = {}
-    dicts['space_search'] = batch['space_search']
+
+    dicts['space_search'] = dtypes.get_dict('space_search')
     l_exp = [sg.Col([
         named_list_layout(text='Batch:', key='BATCH_CONF', choices=list(loadConfDict('Batch').keys())),
         [sg.B('Load', key='LOAD_BATCH', **b_kws),
@@ -52,7 +50,7 @@ def build_batch_tab(collapsibles, graph_lists, dicts):
                                                       disp_name='Configuration')
     s1 = CollapsibleDict('Methods', True, dict=dtypes.get_dict('batch_methods'),
                          type_dict=dtypes.get_dict_dtypes('batch_methods'))
-    s2 = CollapsibleDict('Optimization', True, dict=batch['optimization'],
+    s2 = CollapsibleDict('Optimization', True, dict=dtypes.get_dict('optimization'),
                          type_dict=dtypes.get_dict_dtypes('optimization'),
                          toggle=True, disabled=True, toggled_subsections=None)
     for s in [s1, s2]:
@@ -101,11 +99,12 @@ def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
             dicts['space_search'] = update_batch(conf, window, collapsibles)
 
             window.Element('EXP').Update(value=conf['exp'])
-            source_units, border_list, larva_groups, source_groups = update_sim(window, conf['exp'], collapsibles)
-            dicts['source_units'] = source_units
-            dicts['border_list'] = border_list
-            dicts['larva_groups'] = larva_groups
-            dicts['source_groups'] = source_groups
+            update_sim(window, conf['exp'], collapsibles)
+            # source_units, border_list, larva_groups, source_groups = update_sim(window, conf['exp'], collapsibles)
+            # dicts['source_units'] = source_units
+            # dicts['border_list'] = border_list
+            # dicts['larva_groups'] = larva_groups
+            # dicts['source_groups'] = source_groups
 
 
 
@@ -124,7 +123,7 @@ def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
             batch = get_batch(window, values, collapsibles, dicts['space_search'])
             batch_id = str(values['batch_id'])
             batch_path = str(values['batch_path'])
-            exp_conf = get_exp(window, values, collapsibles, dicts)
+            exp_conf = get_exp(window, values, collapsibles)
             batch_kwargs = prepare_batch(batch, batch_id, exp_conf)
             # dicts['batch_kwargs']=batch_kwargs
             #

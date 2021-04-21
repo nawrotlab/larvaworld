@@ -126,8 +126,8 @@ def diffusion_odor():
 
 
 def game_env_conf(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
-    x*=dim
-    y*=dim
+    x=np.round(x*dim,3)
+    y=np.round(y*dim,3)
     if mode == 'king':
         modL, modR = 'gamer_L', 'gamer_R'
     elif mode == 'flag':

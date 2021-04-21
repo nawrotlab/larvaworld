@@ -215,7 +215,7 @@ class LarvaSim(BodySim, Larva):
         #     self.set_contour()
 
     def sense_odors(self, Nodors, odor_layers):
-        if Nodors == 0:
+        if Nodors == 0 or self.brain.olfactor is None:
             return {}
         else:
             pos = self.get_olfactor_position()

@@ -31,11 +31,11 @@ def change_dataset_id(window, values, data):
             update_data_list(window, data)
     return data
 
-def build_analysis_tab(collapsibles, graph_lists, dicts):
-    dicts['analysis_data'] = {}
+def build_analysis_tab(collapsibles, graph_lists):
+
     data_list = [
         [sg.Text('Datasets')],
-        [sg.Col([[sg.Listbox(values=[], change_submits=False, size=(22, len(dicts['analysis_data'].keys())), key='DATASET_IDS',
+        [sg.Col([[sg.Listbox(values=[], change_submits=False, size=(22, 0), key='DATASET_IDS',
                     enable_events=True),
                   sg.FolderBrowse(button_text='Add', initial_folder=SingleRunFolder, key='DATASET_DIR', change_submits=True,
                                   enable_events=True, **t8_kws, target=(0, -1))]])],
@@ -51,10 +51,8 @@ def build_analysis_tab(collapsibles, graph_lists, dicts):
     analysis_layout = [
         [sg.Col(data_list)],
         [graph_lists['ANALYSIS'].get_layout(), graph_lists['ANALYSIS'].canvas],
-
-
     ]
-    return analysis_layout, collapsibles, graph_lists, dicts
+    return analysis_layout, collapsibles, graph_lists
 
 
 def eval_analysis(event, values, window, collapsibles, graph_lists, dicts):

@@ -99,15 +99,3 @@ growth_batch = {
     'optimization': optimization('deb_f_deviation', max_Nsims=20, operations={'mean':True, 'abs':True}),
     'run_kwargs' : {'save_data_flag': False}
 }
-
-test_batch = {
-    'exp': 'chemotaxis_local',
-    'space_search': {
-        'pars': ['Odor.mean', 'decay_coef'],
-        'ranges': [(300.0, 1300.0), (0.1, 0.5)],
-        'Ngrid': [3, 3]
-    },
-    'methods': batch_methods(),
-    'optimization': optimization('scaled_dispersion'),
-    'run_kwargs' : {'save_data_flag': False}
-}

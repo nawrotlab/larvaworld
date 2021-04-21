@@ -9,6 +9,7 @@ class ValueGrid:
     def __init__(self, unique_id, space_range, grid_dims=[50, 50], distribution='uniform',visible=False,
                  initial_value=0, default_color=(255, 255, 255), max_value=np.inf, min_value=-np.inf):
         # print(unique_id, default_color)
+        # print(grid_dims, type(grid_dims))
         self.visible = visible
         self.unique_id = unique_id
         self.initial_value = initial_value
