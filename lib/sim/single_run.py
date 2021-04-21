@@ -167,7 +167,6 @@ def run_sim_basic(
     Nsec = sim_params['sim_dur'] * 60
     path = sim_params['path']
     Box2D = sim_params['Box2D']
-
     if save_to is None:
         save_to = paths.SimFolder
     if path is not None:

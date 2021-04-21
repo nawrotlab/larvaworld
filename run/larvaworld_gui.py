@@ -53,7 +53,7 @@ def run_gui():
     dicts['batch_results'] = {}
     dicts['analysis_data'] = {}
     l_anal, collapsibles, graph_lists = build_analysis_tab(collapsibles,graph_lists)
-    l_mod, collapsibles, dicts = build_model_tab(collapsibles, dicts)
+    l_mod, collapsibles = build_model_tab(collapsibles)
     l_sim, collapsibles, graph_lists = build_sim_tab(collapsibles, graph_lists)
     l_batch, collapsibles, graph_lists, dicts = build_batch_tab(collapsibles, graph_lists, dicts)
 
@@ -78,11 +78,14 @@ def run_gui():
             if e==graph_list.list_key :
                 graph_list.evaluate(w, v[graph_list.list_key])
 
+        if e.startswith('EDIT_TABLE'):
+            collapsibles[e.split()[-1]].edit_table(w)
+
         tab = v['ACTIVE_TAB']
         if tab == 'ANALYSIS_TAB':
             graph_lists, dicts = eval_analysis(e, v, w,collapsibles,graph_lists, dicts)
         elif tab == 'MODEL_TAB':
-            dicts = eval_model(e, v, w, collapsibles, dicts)
+            eval_model(e, v, w, collapsibles)
         elif tab == 'BATCH_TAB':
             dicts, graph_lists = eval_batch(e, v, w, collapsibles, dicts, graph_lists)
         elif tab == 'SIMULATION_TAB':

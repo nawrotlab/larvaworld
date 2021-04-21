@@ -150,7 +150,6 @@ def game_env_conf(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
 king_env = game_env_conf(mode='king')
 flag_env = game_env_conf(mode='flag')
 
-
 def maze_conf(n, h):
     conf = {'arena_params': arena(h, h),
             'border_list': {

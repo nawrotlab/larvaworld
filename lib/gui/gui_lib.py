@@ -688,7 +688,7 @@ w_kws = {
     'default_element_size': (14, 1),
     'font': ('size', 8),
     'auto_size_text' : False,
-    # 'auto_size_buttons' : False,
+    'auto_size_buttons' : False,
     'text_justification' : 'left',
 }
 

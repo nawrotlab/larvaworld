@@ -1,10 +1,10 @@
 '''
 The larva model parameters
 '''
+import copy
 
 import numpy as np
-
-from lib.aux.functions import odor
+import lib.conf.dtype_dicts as dtypes
 
 ''' Default exploration model'''
 default_physics = {
@@ -74,9 +74,8 @@ brain_locomotion = {'modules': locomotion,
 exploring_larva = {'energetics_params': None,
                    'neural_params': brain_locomotion,
                    'sensorimotor_params': default_physics,
-                   # 'body_params': sample_l3_seg11
                    'body_params': sample_l3_seg2,
-                   'odor_params': odor(),
+                   'odor_params': dtypes.get_dict('odor'),
                    }
 
 # -------------------------------------------LARVA MODES----------------------------------------------------------
@@ -226,13 +225,13 @@ def brain_olfactor_conf(ids, means, stds=None, noise=0.0):
 def odor_larva_conf(ids, means, stds=None, noise=0.0,
                     odor_id=None, odor_intensity=0.0, odor_spread=0.0001
                     ):
-    return {'energetics_params': None,
-            'neural_params': brain_olfactor_conf(ids, means, stds, noise),
-            'sensorimotor_params': default_physics,
-            'body_params': sample_l3_seg2,
-            # 'odor_params': None,
-            'odor_params': odor(odor_id, odor_intensity, odor_spread)
-            }
+    return copy.deepcopy({'energetics_params': None,
+             'neural_params': brain_olfactor_conf(ids, means, stds, noise),
+             'sensorimotor_params': default_physics,
+             'body_params': sample_l3_seg2,
+             'odor_params': dtypes.get_dict('odor', odor_id=odor_id,
+                                            odor_intensity=odor_intensity, odor_spread=odor_spread)
+             })
 
 
 # -----------------------------------------------FEEDER MODES-----------------------------------------------------------
@@ -375,47 +374,45 @@ immobile_odor_larva = {'energetics_params': None,
                        'neural_params': brain_immobile_olfactor,
                        'sensorimotor_params': default_physics,
                        'body_params': sample_l3_seg2,
-                       'odor_params': odor()}
+                       'odor_params': dtypes.get_dict('odor')}
 
 odor_larva = {'energetics_params': None,
               'neural_params': brain_olfactor,
               'sensorimotor_params': default_physics,
               'body_params': sample_l3_seg2,
-              'odor_params': odor()}
+              'odor_params': dtypes.get_dict('odor')}
+
+
 
 odor_larva_x2 = {'energetics_params': None,
                  'neural_params': brain_olfactor_x2,
                  'sensorimotor_params': default_physics,
                  'body_params': sample_l3_seg2,
-                 'odor_params': odor(), }
+                 'odor_params': dtypes.get_dict('odor') }
 
 feeding_larva = {'energetics_params': None,
                  'neural_params': brain_feeder,
                  'sensorimotor_params': default_physics,
                  'body_params': sample_l3_seg2,
-                 'odor_params': odor(), }
+                 'odor_params': dtypes.get_dict('odor')}
 
 feeding_odor_larva = {'energetics_params': None,
                       'neural_params': brain_feeder_olfactor,
                       'sensorimotor_params': default_physics,
                       'body_params': sample_l3_seg2,
-                      'odor_params': odor(), }
+                      'odor_params': dtypes.get_dict('odor')}
 
 growing_rover = {'energetics_params': energetics_rover,
                  'neural_params': brain_rover,
                  'sensorimotor_params': default_physics,
                  'body_params': l1_seg2,
-                 'odor_params': odor(),
-                 # 'id_prefix': 'Rover'
-                 }
+                 'odor_params': dtypes.get_dict('odor')}
 
 growing_sitter = {'energetics_params': energetics_sitter,
                   'neural_params': brain_sitter,
                   'sensorimotor_params': default_physics,
                   'body_params': l1_seg2,
-                  'odor_params': odor(),
-                  # 'id_prefix': 'Sitter'
-                  }
+                  'odor_params': dtypes.get_dict('odor')}
 
 mock_brain = {'modules': {key: True for key in module_keys},
               'turner_params': default_turner,
@@ -437,7 +434,7 @@ test_larva = {'energetics_params': energetics_rover,
               'neural_params': mock_brain,
               'sensorimotor_params': default_physics,
               'body_params': mock_body,
-              'odor_params': odor()}
+              'odor_params': dtypes.get_dict('odor')}
 
 # A larva model for imitating experimental datasets (eg contours)
 
@@ -451,7 +448,7 @@ imitation_larva = {'energetics_params': None,
                    'neural_params': brain_locomotion,
                    'sensorimotor_params': imitation_physics,
                    'body_params': l3_seg11,
-                   'odor_params': odor(), }
+                   'odor_params': dtypes.get_dict('odor')}
 
 brain_nengo = {'modules': full_brain,
                'turner_params': {'initial_freq': 0.3,
@@ -469,27 +466,27 @@ nengo_larva = {'energetics_params': None,
                'neural_params': brain_nengo,
                'sensorimotor_params': default_physics,
                'body_params': l3_seg2,
-               'odor_params': odor(), }
+               'odor_params': dtypes.get_dict('odor')}
 
 odors3 = [f'{source}_odor' for source in ['Flag', 'Left_base', 'Right_base']]
 odors5 = [f'{source}_odor' for source in ['Flag', 'Left_base', 'Right_base', 'Left', 'Right']]
 
-flag_larva = {**odor_larva_conf(ids=odors3, means=[150, 0, 0]),
+
+
+
+
+king_larva_R = {**odor_larva_conf(ids=odors5, means=[150.0, 0.0, 0.0, 0.0, 0.0],
+                                  odor_id='Right_odor', odor_intensity=2.0, odor_spread=0.00005)}
+
+king_larva_L = {**odor_larva_conf(ids=odors5, means=[150.0, 0.0, 0.0, 0.0, 0.0],
+                                  odor_id='Left_odor', odor_intensity=2.0, odor_spread=0.00005)}
+
+flag_larva = {**odor_larva_conf(ids=odors3, means=[150.0, 0.0, 0.0]),
               }
-
-king_larva_L = {**odor_larva_conf(ids=odors5, means=[150, 0, 0, 0, 0],
-                                  odor_id='Left_odor', odor_intensity=2.0, odor_spread=0.00005
-                                  ),
-                # 'id_prefix': 'Left'
-                }
-
-king_larva_R = {**odor_larva_conf(ids=odors5, means=[150, 0, 0, 0, 0],
-                                  odor_id='Right_odor', odor_intensity=2.0, odor_spread=0.00005
-                                  ),
-                }
 
 RL_odor_larva = {'energetics_params': None,
                  'neural_params': brain_RLolfactor,
                  'sensorimotor_params': default_physics,
                  'body_params': sample_l3_seg2,
-                 'odor_params': odor()}
+                 'odor_params': dtypes.get_dict('odor')}
+

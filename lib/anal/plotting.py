@@ -1239,16 +1239,16 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                 r'reserve density $(-)$', r'hunger drive $(-)$',
                 r'pupation buffer $(-)$', r'explore2exploit_balance $(-)$',
                 r'functional response $(-)$', ]
+    print(mode)
     if mode == 'minimal':
         idx = [2, 4, 5, 6]
-    elif mode == 'hunger':
-        idx = [2, 4, 5, 7, 8]
-    elif mode == 'f':
-        idx = [3]
     elif mode == 'full':
         idx = [0, 1, 2, 6]
     elif mode == 'complete':
         idx = [0, 1, 2, 4, 5, 6]
+    elif mode in labels0 :
+        idx =[labels0.index(mode)]
+
     labels = [labels0[i] for i in idx]
     ylabels = [ylabels0[i] for i in idx]
 
@@ -1357,7 +1357,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
 
     axs[0].legend(handles=[patches.Patch(color=c, label=id) for c, id in zip(leg_cols, leg_ids)],
                   labels=leg_ids, fontsize=20, loc='upper left', prop={'size': 15})
-    fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.93, hspace=0.02)
+    fig.subplots_adjust(top=0.95, bottom=0.2, left=0.1, right=0.93, hspace=0.02)
     return process_plot(fig, save_to, save_as, return_fig)
 
 

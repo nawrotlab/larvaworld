@@ -7,8 +7,10 @@ import lib.aux.functions as fun
 
 from lib.aux.collecting import output_keys
 from lib.gui.gui_lib import CollapsibleDict, named_list_layout, Collapsible, \
-    named_bool_button, set_agent_dict, save_gui_conf, delete_gui_conf, GraphList, b12_kws, b6_kws, CollapsibleTable
+    named_bool_button, set_agent_dict, save_gui_conf, delete_gui_conf, GraphList, b12_kws, b6_kws, CollapsibleTable, \
+    b_kws
 from lib.gui.draw_env import draw_env
+from lib.gui.life_conf import life_conf
 from lib.sim.single_run import run_sim, sim_analysis
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 
@@ -48,8 +50,6 @@ def init_env(collapsibles):
 
 def update_env(env_params, window, collapsibles):
     food_params = env_params['food_params']
-    # source_units = food_params['source_units']
-    # source_groups = food_params['source_groups']
     collapsibles['Food grid'].update(window, food_params['food_grid'])
     collapsibles['Arena'].update(window, env_params['arena_params'])
     collapsibles['Odorscape'].update(window, env_params['odorscape'])
@@ -115,7 +115,8 @@ def build_sim_tab(collapsibles, graph_lists):
     s1 = CollapsibleDict('Output', False, dict=output_dict, auto_open=False)
     s2 = CollapsibleDict('Visualization', False, dict=dtypes.get_dict('visualization', mode='video', video_speed=60),
                          type_dict=dtypes.get_dict_dtypes('visualization'), toggled_subsections=None)
-    s3 = CollapsibleDict('Life', False, dict=dtypes.get_dict('life'), type_dict=dtypes.get_dict_dtypes('life'))
+    s3 = CollapsibleDict('Life', False, dict=dtypes.get_dict('life'), type_dict=dtypes.get_dict_dtypes('life'),
+                         next_to_header=[sg.B('Edit', k='CONF_LIFE', **b_kws)])
     s4 = CollapsibleDict('Replay', False, dict=dtypes.get_dict('replay'), type_dict=dtypes.get_dict_dtypes('replay'))
     for s in [s1, s2, s3, s4]:
         collapsibles.update(s.get_subdicts())
@@ -159,10 +160,9 @@ def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
         save_gui_conf(window, env, 'Env')
     elif event == 'DELETE_ENV':
         delete_gui_conf(window, values, 'Env')
+    elif event == 'CONF_LIFE' :
+        collapsibles['Life'].update(window, life_conf())
 
-    elif event.startswith('EDIT_TABLE'):
-        tab = event.split()[-1]
-        collapsibles[tab].edit_table(window)
 
     elif event == 'CONF_ENV':
         env = get_env(window, values, collapsibles, extend=False)

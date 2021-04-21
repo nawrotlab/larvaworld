@@ -14,7 +14,7 @@ import lib.aux.rendering as ren
 class LarvaworldAgent:
     def __init__(self,
                  unique_id: str,
-                 model, pos=None, default_color=None, radius=None, immutable=False,
+                 model, pos=None, default_color=None, radius=None,
                  odor_id=None, odor_intensity=0.0, odor_spread=0.1, group='', can_be_carried=False):
         self.selected = False
         self.unique_id = unique_id
@@ -41,6 +41,7 @@ class LarvaworldAgent:
         self.carried_objects = []
         self.can_be_carried = can_be_carried
         self.is_carried_by = None
+        # print(self.get_odor_id(), self.group)
 
     def get_position(self):
         return tuple(self.pos)

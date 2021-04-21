@@ -3,7 +3,8 @@ import copy
 import PySimpleGUI as sg
 
 from lib.conf.larva_conf import test_larva, module_keys
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, set_agent_dict,save_gui_conf, delete_gui_conf, b12_kws, b6_kws
+from lib.gui.gui_lib import CollapsibleDict, Collapsible, set_agent_dict, save_gui_conf, delete_gui_conf, b12_kws, \
+    b6_kws, CollapsibleTable
 from lib.conf.conf import loadConfDict, loadConf
 import lib.conf.dtype_dicts as dtypes
 
@@ -19,15 +20,13 @@ def init_model(larva_model, collapsibles={}):
     for k, v in larva_model['neural_params']['modules'].items():
         dic = larva_model['neural_params'][f'{k}_params']
         if k == 'olfactor':
-            # odor_gains=dic['odor_dict']
             dic.pop('odor_dict')
         s = CollapsibleDict(k.upper(), False, dict=dic, dict_name=k.upper(), toggle=v)
         collapsibles.update(s.get_subdicts())
         module_conf.append(s.get_section())
-    odor_gain_conf = [sg.B('Odor gains', **b12_kws)]
-    module_conf.append(odor_gain_conf)
     collapsibles['Brain'] = Collapsible('Brain', True, module_conf)
-    brain_layout = sg.Col([collapsibles['Brain'].get_section()])
+    brain_layout = sg.Col([collapsibles['Brain'].get_section(),
+                           collapsibles['odor_gains'].get_section()])
     non_brain_layout = sg.Col([collapsibles['Physics'].get_section(),
                                collapsibles['Body'].get_section(),
                                collapsibles['Energetics'].get_section(),
@@ -46,22 +45,23 @@ def update_model(larva_model, window, collapsibles):
                            larva_model['body_params'], larva_model['odor_params']]):
         collapsibles[name].update(window, dict)
     module_dict = larva_model['neural_params']['modules']
-    odor_gains = {}
     for k, v in module_dict.items():
         dic = larva_model['neural_params'][f'{k}_params']
         if k == 'olfactor':
             if dic is not None:
                 odor_gains = dic['odor_dict']
                 dic.pop('odor_dict')
+            else :
+                odor_gains = {}
+            collapsibles['odor_gains'].update_table(window, odor_gains)
         collapsibles[k.upper()].update(window, dic)
     module_dict_upper = copy.deepcopy(module_dict)
     for k in list(module_dict_upper.keys()):
         module_dict_upper[k.upper()] = module_dict_upper.pop(k)
     collapsibles['Brain'].update(window, module_dict_upper, use_prefix=False)
-    return odor_gains
 
 
-def get_model(window, values, collapsibles, odor_gains):
+def get_model(window, values, collapsibles):
     module_dict = dict(zip(module_keys, [window[f'TOGGLE_{k.upper()}'].metadata.state for k in module_keys]))
     model = {}
     model['neural_params'] = {}
@@ -77,17 +77,19 @@ def get_model(window, values, collapsibles, odor_gains):
 
     for k, v in module_dict.items():
         model['neural_params'][f'{k}_params'] = collapsibles[k.upper()].get_dict(values, window)
-        # collapsibles[k.upper()].update(window,larva_model['neural_params'][f'{k}_params'])
     if model['neural_params']['olfactor_params'] is not None:
-        model['neural_params']['olfactor_params']['odor_dict'] = odor_gains
+        model['neural_params']['olfactor_params']['odor_dict'] = collapsibles['odor_gains'].dict
     model['neural_params']['nengo'] = False
     return copy.deepcopy(model)
 
 
-def build_model_tab(collapsibles, dicts):
+def build_model_tab(collapsibles):
     larva_model = copy.deepcopy(test_larva)
-    dicts['odor_gains'] = larva_model['neural_params']['olfactor_params']['odor_dict']
-    # module_dict = larva_model['neural_params']['modules']
+
+    s1 = CollapsibleTable('odor_gains', True, headings=['id', 'mean', 'std'], dict={},
+                          disp_name='Odor gains',type_dict=dtypes.get_dict_dtypes('odor_gain'))
+
+    collapsibles.update(**s1.get_subdicts())
 
     l_mod0 = [sg.Col([
         [sg.Text('Larva model:'),
@@ -100,23 +102,20 @@ def build_model_tab(collapsibles, dicts):
     l_mod1 = init_model(larva_model, collapsibles)
 
     l_mod = [[sg.Col([l_mod0, l_mod1])]]
-    return l_mod, collapsibles, dicts
+    return l_mod, collapsibles
 
 
-def eval_model(event, values, window, collapsibles, dicts):
+def eval_model(event, values, window, collapsibles):
     if event == 'LOAD_MODEL':
         if values['MODEL_CONF'] != '':
             conf = loadConf(values['MODEL_CONF'], 'Model')
-            dicts['odor_gains'] = update_model(conf, window, collapsibles)
+            update_model(conf, window, collapsibles)
 
     elif event == 'SAVE_MODEL':
-        model = get_model(window, values, collapsibles, dicts['odor_gains'])
+        model = get_model(window, values, collapsibles)
         save_gui_conf(window, model, 'Model')
 
     elif event == 'DELETE_MODEL':
         delete_gui_conf(window, values, 'Model')
 
-    elif event == 'Odor gains':
-        dicts['odor_gains'] = set_agent_dict(dicts['odor_gains'], dtypes.get_dict_dtypes('odor_gain'), title='Odor gains')
 
-    return dicts
