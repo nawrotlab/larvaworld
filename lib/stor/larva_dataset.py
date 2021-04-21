@@ -545,7 +545,7 @@ class LarvaDataset:
             self.config['Nagents'] = self.Nagents
         except:
             pass
-        with open(self.config_file_path, "W") as fp:
+        with open(self.config_file_path, "w") as fp:
             json.dump(self.config, fp)
         # dict = {k: [v] for k, v in self.config.items()}
         # temp = pd.DataFrame.from_dict(dict)

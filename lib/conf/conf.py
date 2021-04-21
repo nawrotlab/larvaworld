@@ -364,6 +364,7 @@ if __name__ == '__main__':
         'explorer': mod.exploring_larva,
         'navigator': mod.odor_larva,
         'navigator_x2': mod.odor_larva_x2,
+        'immobile': mod.immobile_odor_larva,
         'feeder': mod.feeding_larva,
         'feeder-navigator': mod.feeding_odor_larva,
         'rover': mod.growing_rover,
@@ -441,6 +442,6 @@ def next_idx(exp, type='single'):
     if not exp in idx_dict[type].keys():
         idx_dict[type][exp] = 0
     idx_dict[type][exp] += 1
-    with open(paths.SimIdx_path, "W") as fp:
+    with open(paths.SimIdx_path, "w") as fp:
         json.dump(idx_dict, fp)
     return idx_dict[type][exp]

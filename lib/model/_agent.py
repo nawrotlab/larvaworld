@@ -14,7 +14,7 @@ import lib.aux.rendering as ren
 class LarvaworldAgent:
     def __init__(self,
                  unique_id: str,
-                 model, pos=None, default_color=None, radius=None,
+                 model, pos=None, default_color=None, radius=None, immutable=False,
                  odor_id=None, odor_intensity=0.0, odor_spread=0.1, group='', can_be_carried=False):
         self.selected = False
         self.unique_id = unique_id
@@ -30,9 +30,7 @@ class LarvaworldAgent:
         self.default_color = default_color
         self.color = self.default_color
         self.radius = radius
-
         self.id_box = self.init_id_box()
-
         self.odor_id = odor_id
         self.odor_intensity = odor_intensity
         if odor_spread is None:
@@ -425,7 +423,7 @@ class Larva(LarvaworldAgent):
 
 
 class Source(LarvaworldAgent):
-    def __init__(self, shape_vertices=None, **kwargs):
+    def __init__(self, shape_vertices=None, shape='circle', **kwargs):
         super().__init__(**kwargs)
         self.shape_vertices = shape_vertices
         shape = fun.circle_to_polygon(60, self.radius)
@@ -486,5 +484,23 @@ class Food(Source):
             r = (self.initial_amount - self.amount) / self.initial_amount
             self.color = r * np.array((255, 255, 255)) + (1 - r) * self.default_color
         return np.min([amount, prev_amount])
+
+    def draw(self, viewer, filled=True):
+        # if self.get_shape() is None :
+        #     return
+        p, c, r = self.get_position(), self.color, self.radius
+        # viewer.draw_polygon(self.get_shape().boundary.coords, c, filled, r/5)
+        viewer.draw_circle(p, r, c, filled, r / 5)
+
+        if self.odor_intensity > 0:
+            # viewer.draw_polygon(self.get_shape(1.5).boundary.coords, c, False, r / 10)
+            # viewer.draw_polygon(self.get_shape(2.0).boundary.coords, c, False, r / 15)
+            # viewer.draw_polygon(self.get_shape(3.0).boundary.coords, c, False, r / 20)
+            viewer.draw_circle(p, r * 1.5, c, False, r / 10)
+            viewer.draw_circle(p, r * 2.0, c, False, r / 15)
+            viewer.draw_circle(p, r * 3.0, c, False, r / 20)
+        if self.selected:
+            # viewer.draw_polygon(self.get_shape(1.1).boundary.coords, self.model.selection_color, False, r / 5)
+            viewer.draw_circle(p, r * 1.1, self.model.selection_color, False, r / 5)
 
 

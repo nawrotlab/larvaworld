@@ -72,9 +72,13 @@ def sample_agents(filepath=None, pars=None, N=1):
         pars = data.columns
     else:
         pars = [p for p in data.columns if p in pars]
-    cov = np.cov(data[pars].values.T)
     means = [data[p].mean() for p in pars]
-    samples = np.random.multivariate_normal(means, cov, N).T
+    if len(pars)>=2:
+        cov = np.cov(data[pars].values.T)
+        samples = np.random.multivariate_normal(means, cov, N).T
+    elif len(pars)==1:
+        std=np.std(data[pars].values)
+        samples = np.atleast_2d(np.random.normal(means[0], std, N))
     return pars, samples
 
 

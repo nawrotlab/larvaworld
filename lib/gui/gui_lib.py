@@ -25,7 +25,6 @@ off_image = b'iVBORw0KGgoAAAANSUhEUgAAAFoAAAAnCAYAAACPFF8dAAAACXBIWXMAAA7DAAAOww
 off_image_disabled = b'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'
 on_image_disabled = b'iVBORw0KGgoAAAANSUhEUgAAAFoAAAAnCAYAAACPFF8dAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsIAAA7CARUoSoAAAAVLSURBVGhD7Zu7TytHFMbHyxvsJeb9kjCiCihRpJAobaqblFGUJmXqKMofkyZpaKhS5HaJIgUpRZQmoqAhSgEUSBZgsAE/uJhX5ht80LmH8e56fdde7PuTPu0yj/XMt7Nnd2aXxPr6uuKMjIx84LruR47jJGtJbeeVplQqOaOjo+8MDAwk7u7uyrWsWIF2FYvFf3Rbt/HnQ+oDj0Ynk8kPl5eXf9Amf6L7pW5vb9X9/b3Jaye5XE719fWpubk51dPTY/bjijba+KbN3t7d3f324uLir1rWg9HpdPrFysrKy0KhMJTNZtX19XUtu/0sLi6qyclJlUqlcLWpRCJRy4knNzc3ShusKpXKq52dnS/z+fyvSE9sbGxMrq2t/Xd8fJw+PDw0hf1oRWdxNY2Pj6tMJqMmJiZUf3//Y3ocrjQJPOG+nJ2dYWSXt7a23tMRYt+Zn5//rlqteppMB5EHi5rZ2VmEtEeTAUzGJRo3yZOv7ydo94j293v8ndjW6JDxvh7RpoBEGtsKo9FofdNTq6urampqSvX29tZynhcIIUdHR//qUb3iDA4OZnDzs0Gm0khulQCMBs/VZIC2Dw8Pv6v71OvoO7lri3nUYb5tlToRp7Z9Deos37ZanYbVaA7vON/qCU1k6kQC94oMhxFk+FuCU9doPnptkPFRqBN5YjTvKO1LE3iZtwSjMwNiDGnYaD6aEa/1czieFdXQ0JB1wQfPw5C8Cii9Wwg9omHw2NiYmSLDaCz4YNoJ8ScHpGNBCGU4SIe6hVBGY+0BBmOiUy6XzQIKpptY9cOohrESjHg+y+u2ON+w0TAXpgGYfHl5aZYGq9WqMRsLLDDbNnXGyelWQsVoisUwl4OTQGvZPF5TOsxHyOlGQsdogNEroTQZGkqlktkiLnfq7M+LpnpsM4zS5EIVXvFUKhVzAmC2zH+OoA/1JGnYaByEwoN8PONhBXFbgngOw1GvnaNamhJWjdBwb2EmDAP0/EwvTV3XNQbiRNDJ4KBxuIGGQXayGXlhKx9WnFDDCjdBGEZhIJ1Om+dnmI2RXCwWayWfgrpXV1e1v4IhG10P2dEwCoKtnpQkVOgAGNX5fN7c5LCP+IvHOzxT85sk0uUoxt+oh7ygyI7Y5IetTlSSNBUoYSheg8E4mCYf9wDy5asyqlfvFZrE1pFGhd+0pYdRPbzKPTGaF6B9WVEeJGro95uRH7Y6jcqLuiOaKvIDyP2oFBRb3bDywlbeT5LAocPvQFEif5sUBFu9RuVHkDq+RvOK/ECIeW8y7nHZsJULIj9sdRpVEKxGU2W+lftRywtb+bDywlY+qCTGaLkuAagw39pGcBSjWoJJkFe+hJdtRn7Y6kBAznwdZPCVNg5V4gegfS4KI29KgB4VMWVHo7nZtjpcvG1hZTuulK0eID/RdpQDjn7+PcfMrh5UGciDRiVA69w03UfjMdVHw9EB5EUp/IaXbHXQdrwUQTsB2q5nwZc6/T6xubn5WyaT+Wxvb08VCgVTwAtbmIkCNHpmZkYtLCyY76P5iwQ6GXGE/MHMFzPlg4ODP/f39z91Tk9Pfzw/P1dLS0tqenra10h0shUC+JQYbTs5OXltfQRtjKvQdhhMyuVyP5k244t/PXJ+0aPmCywM4dLEohAuD1S0QUa0ApiMD9LxMTrCB1SvXe0GnuHegi1M1m3/I5vNvtBZd8Zo3fCkNvvnZDL5OV41Ic7EqTM48RjReOdo+3QhLmAAwmis4ejQ8bu+Ir/SaWYpk/9XViKVSn3tuu43ujMf67t8975JDYk29UrfAP/WA2NdawNJDzlK/Q9RjPZ1HEiBtwAAAABJRU5ErkJggg=='
 
-
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'
 
@@ -682,34 +681,42 @@ color_map = {
     'YellowGreen': '#9ACD32',
 }
 
+w_kws = {
+    'finalize': True,
+    'resizable': True,
+    'default_button_element_size': (6, 1),
+    'default_element_size': (14, 1),
+    'font': ('size', 8),
+    # 'auto_size_text' : True,
+    # 'auto_size_buttons' : True,
+}
+
+b_kws = {'font': ('size', 6)}
+
 b3_kws = {'font': ('size', 6),
-               'size': (3, 1)}
+          'size': (3, 1)}
 
 b6_kws = {'font': ('size', 6),
-               'size': (6, 1)}
+          'size': (6, 1)}
 
 b12_kws = {'font': ('size', 6),
-               'size': (12, 1)}
+           'size': (12, 1)}
 
-t8_kws = {'font': ('size', 8),
-                 'size': (8, 1)
+t8_kws = {'size': (8, 1)
           }
 
-t10_kws = {'font': ('size', 8),
-                 'size': (10, 1)
-          }
-t12_kws = {'font': ('size', 8),
-                 'size': (12, 1)
-          }
+t10_kws = {'size': (10, 1)
+           }
+t12_kws = {'size': (12, 1)
+           }
 
-t14_kws = {'font': ('size', 8),
-               'size': (14, 1)}
-t5_kws = {'font': ('size', 8),
-               'size': (5, 1)}
-t2_kws = {'font': ('size', 8),
-               'size': (2, 1)}
-t24_kws = {'font': ('size', 8),
-                'size': (24, 1)}
+t14_kws = {'size': (14, 1)}
+
+t40_kws = {'size': (40, 1)}
+
+t5_kws = {'size': (5, 1)}
+t2_kws = {'size': (2, 1)}
+t24_kws = {'size': (24, 1)}
 
 
 # sg.theme('LightGreen')
@@ -762,26 +769,33 @@ def popup_color_chooser(look_and_feel=None):
         sg.change_look_and_feel(old_look_and_feel)
     return color_chosen
 
+
 def color_pick_layout(name, color=None):
     return [sg.T('', **t5_kws), sg.T('color', **t5_kws),
-            # sg.In(default_text=f'{color}', k=f'{name}_color', **t14_kws),
-            sg.Combo(list(color_map.keys()), default_value=color, k=f'{name}_color', enable_events=True, readonly=True, **t8_kws),
+            sg.Combo(list(color_map.keys()), default_value=color, k=f'{name}_color', enable_events=True, readonly=True,
+                     **t8_kws),
             sg.B('Pick', k=f'PICK {name}_color', **b3_kws)]
+
 
 def retrieve_value(v, t):
     if v in ['', 'None', None]:
         vv = None
     elif v in ['sample', 'fit']:
         vv = v
-
-    elif t == 'bool':
-        if v in ['False', False]:
+    elif t in ['bool', bool]:
+        if v in ['False', False, 0, '0']:
             vv = False
-        elif v in ['True', True]:
+        elif v in ['True', True, 1, '1']:
             vv = True
+    elif t in ['float', float]:
+        vv = float(v)
+    elif t in ['str', str]:
+        vv = str(v)
+    elif t in ['int', int]:
+        vv = int(v)
     elif type(v) == t:
         vv = v
-    elif t == List[Tuple[float, float]] :
+    elif t == List[Tuple[float, float]]:
         if type(v) == str:
             v = v.replace('{', ' ')
             v = v.replace('}', ' ')
@@ -791,8 +805,8 @@ def retrieve_value(v, t):
             v = v.replace(')', ' ')
             v = v.replace(',', ' ')
             vv = [tuple([float(x) for x in t.split()]) for t in v.split('   ')]
-        elif type(v)==list :
-            vv=v
+        elif type(v) == list:
+            vv = v
     elif t == Tuple[float, float] and type(v) == str:
         v = v.replace('{', '')
         v = v.replace('}', '')
@@ -828,12 +842,12 @@ def retrieve_value(v, t):
         if vv not in t:
             raise ValueError(f'Retrieved value {vv} not in list {t}')
     else:
-        # print(v, t)
-        vv = t(v)
+        vv = v
     return vv
 
-def retrieve_dict(dic, type_dic) :
-    return {k:retrieve_value(v,type_dic[k]) for k,v in dic.items()}
+
+def retrieve_dict(dic, type_dic):
+    return {k: retrieve_value(v, type_dic[k]) for k, v in dic.items()}
 
 
 def get_table_data(values, pars_dict, Nagents):
@@ -855,16 +869,9 @@ def set_agent_dict(dic, type_dic, header='unique_id', title='Agent list'):
 
 
 def build_table_window(data, pars_dict, title, return_layout=False):
-    # if return_layout:
-    #     kwargs = t14_kws
-    #     # kwargs2= {'size': (1, 1)}
-    # else:
-    kwargs = t14_kws
-    kwargs2 = {'size': (2, 1)}
-    text_kwargs2 = {**kwargs,
-                    'justification': 'center'}
-    # header_kwargs2 = {**t14_kws,
-    #                   'justification': 'center'}
+    t12_kws_c = {**t12_kws,
+                 'justification': 'center'}
+
     pars = list(pars_dict.keys())
     par_types = list(pars_dict.values())
     Nagents, Npars = len(data), len(pars)
@@ -872,14 +879,14 @@ def build_table_window(data, pars_dict, title, return_layout=False):
     # Normally a layout is specified 1 ROW at a time. Here multiple rows are being contatenated together to produce the layout
     # Note the " + \ " at the ends of the lines rather than the usual " , "
     # This is done because each line is a list of lists
-    layout = [[sg.Text(' ', **kwargs2)] + [sg.Text(p, key=p, enable_events=True, **text_kwargs2) for p in pars]] + \
+    layout = [[sg.Text(' ', **t2_kws)] + [sg.Text(p, key=p, enable_events=True, **t12_kws_c) for p in pars]] + \
              [
-                 [sg.T(i + 1, **kwargs2)] +
-                 [sg.Input(data[i][p], key=(i, p), **text_kwargs2) if type(pars_dict[p]) != list else sg.Combo(
+                 [sg.T(i + 1, **t2_kws)] +
+                 [sg.Input(data[i][p], key=(i, p), **t12_kws_c) if type(pars_dict[p]) != list else sg.Combo(
                      pars_dict[p], default_value=data[i][p], key=(i, p), enable_events=True, readonly=True,
-                     **kwargs) for p in pars] for i in range(Nagents)] + \
-             [[sg.Button('Add', **t8_kws), sg.Button('Remove', **t8_kws),
-               sg.Button('Ok', **t8_kws), sg.Button('Cancel', **t8_kws)]]
+                     **t12_kws) for p in pars] for i in range(Nagents)] + \
+             [[sg.Button('Add', **b6_kws), sg.Button('Remove', **b6_kws),
+               sg.Button('Ok', **b6_kws), sg.Button('Cancel', **b6_kws)]]
 
     if return_layout:
         return layout
@@ -889,6 +896,35 @@ def build_table_window(data, pars_dict, title, return_layout=False):
                              return_keyboard_events=True, finalize=True)
     table_window.close_destroys_window = True
     return Nagents, Npars, pars, table_window
+
+
+# def immutable_table(name, dic):
+#     if name == 'Source groups':
+#         print(dic)
+#         headings = ['group', 'N', 'default_color']
+#         data=np.ones([len(dic), len(headings)])*np.nan
+#         for i, id, pars in enumerate(dic.items()):
+#             data[i][0] = id
+#             for j, p in enumerate(headings[1:]) :
+#                 for k,v in pars.items() :
+#                     if k==p :
+#                         data[i][j]=v
+#     layout = [[sg.Table(values=data, headings=headings, max_col_width=25, background_color='lightblue',
+#                         auto_size_columns=True,
+#                         display_row_numbers=True,
+#                         justification='right',
+#                         font=w_kws['font'],
+#                         # num_rows=20,
+#                         alternating_row_color='lightyellow',
+#                         key=f'TABLE_{name}'
+#                         # tooltip='This is a table'
+#                )],
+#               # [sg.Button('Read'), sg.Button('Double'), sg.Button('Change Colors')],
+#               # [sg.Text('Read = read which rows are selected')],
+#               # [sg.Text('Double = double the amount of data in the table')],
+#               # [sg.Text('Change Colors = Changes the colors of rows 8 and 9')]
+#               ]
+#     return layout
 
 
 def gui_table(data, pars_dict, title='Agent list'):
@@ -949,9 +985,9 @@ def gui_table(data, pars_dict, title='Agent list'):
         if event == 'Add':
             data = get_table_data(values, pars_dict, Nagents)
             try:
-                new_row=data[r]
-            except :
-                new_row= {k : None for k in pars_dict.keys()}
+                new_row = data[r]
+            except:
+                new_row = {k: None for k in pars_dict.keys()}
             data.append(new_row)
             table_window.close()
             Nagents, Npars, pars, table_window = build_table_window(data, pars_dict, title)
@@ -967,23 +1003,6 @@ def gui_table(data, pars_dict, title='Agent list'):
     # if event.startswith('Show Table'):
     #     table = [[values[(row, col)] for col in range(Npars)] for row in range(Nagents)]
     #     sg.popup_scrolled('your_table = [ ', ',\n'.join([str(table[i]) for i in range(Nagents)]) + '  ]', title='Copy your data from here')
-
-
-# def gui_read_only_table(data, pars_dict, title='Agent list') :
-#     text_kwargs2 = {**t14_kws,
-#                     'justification': 'center'}
-#     pars = list(pars_dict.keys())
-#     par_types = list(pars_dict.values())
-#     Nagents, Npars = len(data), len(pars)
-#     layout = [[sg.Text(' ', size=(2, 1))] + [sg.Text(p, key=p, enable_events=True, **text_kwargs2) for p in pars]] + \
-#              [
-#                  [sg.T(i + 1, size=(2, 1))] +
-#                  [sg.Input(data[i][p], key=(i, p), **text_kwargs2) if type(pars_dict[p]) != list else sg.Combo(
-#                      pars_dict[p], default_value=data[i][p], key=(i, p), enable_events=True, readonly=True,
-#                      **t14_kws) for p in pars] for i in
-#                  range(Nagents)] + \
-#              [[sg.Button('Add'), sg.Button('Remove'), sg.Button('Ok'), sg.Button('Cancel')]]
-#     return layout
 
 
 def update_window_from_dict(window, dic, prefix=None):
@@ -1026,20 +1045,20 @@ class SectionDict:
             if type(v) == bool:
                 l.append(named_bool_button(k, v, k0))
             elif type(v) == dict:
-                if self.type_dict is not None :
-                    type_dict=self.type_dict[k]
-                else :
-                    type_dict=None
-                self.subdicts[k0] = CollapsibleDict(k0, True, disp_name=k, dict=v, type_dict=type_dict, toggle=self.toggled_subsections)
+                if self.type_dict is not None:
+                    type_dict = self.type_dict[k]
+                else:
+                    type_dict = None
+                self.subdicts[k0] = CollapsibleDict(k0, True, disp_name=k, dict=v, type_dict=type_dict,
+                                                    toggle=self.toggled_subsections)
                 ll = self.subdicts[k0].get_section()
                 l.append(ll)
             else:
-                temp = sg.In(v, key=k0, **t14_kws)
+                temp = sg.In(v, key=k0)
                 if self.type_dict is not None:
                     if type(self.type_dict[k]) == list:
-                        temp = sg.Combo(self.type_dict[k], default_value=v, key=k0, enable_events=True, readonly=True,
-                                        **t14_kws)
-                l.append([sg.Text(f'{k}:', **t14_kws), temp])
+                        temp = sg.Combo(self.type_dict[k], default_value=v, key=k0, enable_events=True, readonly=True)
+                l.append([sg.Text(f'{k}:'), temp])
         return l
 
     def get_dict(self, values, window):
@@ -1079,7 +1098,7 @@ class SectionDict:
 def named_bool_button(name, state, toggle_name=None):
     if toggle_name is None:
         toggle_name = name
-    l = [sg.Text(f'{name} :', **t14_kws), bool_button(toggle_name, state)]
+    l = [sg.Text(f'{name} :'), bool_button(toggle_name, state)]
     return l
 
 
@@ -1104,8 +1123,7 @@ def bool_button(name, state, disabled=False):
 
 
 def named_list_layout(text, key, choices, readonly=True, enable_events=True):
-    l = [sg.Text(text, **t14_kws),
-         sg.Combo(choices, key=key, enable_events=enable_events, readonly=readonly, **t14_kws)]
+    l = [sg.Text(text), sg.Combo(choices, key=key, enable_events=enable_events, readonly=readonly)]
     return l
 
 
@@ -1122,8 +1140,8 @@ class Collapsible:
                   sg.T(disp_name, enable_events=True, text_color='black', k=f'SEC {name} TEXT', **t12_kws)]
         if toggle is not None:
             header.append(bool_button(name, toggle, disabled))
-        if next_to_header is not None :
-            header.append(next_to_header)
+        if next_to_header is not None:
+            header += next_to_header
         self.section = [header, [collapse(content, f'SEC {name}', visible=state)]]
 
     def get_section(self, as_col=True):
@@ -1165,11 +1183,12 @@ class Collapsible:
 
 
 class CollapsibleDict(Collapsible):
-    def __init__(self, name, state, dict, dict_name=None, type_dict=None, toggled_subsections = True, **kwargs):
+    def __init__(self, name, state, dict, dict_name=None, type_dict=None, toggled_subsections=True, **kwargs):
         if dict_name is None:
             dict_name = name
         self.dict_name = dict_name
-        self.sectiondict = SectionDict(name=dict_name, dict=dict, type_dict=type_dict, toggled_subsections=toggled_subsections)
+        self.sectiondict = SectionDict(name=dict_name, dict=dict, type_dict=type_dict,
+                                       toggled_subsections=toggled_subsections)
         content = self.sectiondict.init_section()
         super().__init__(name, state, content, **kwargs)
 
@@ -1255,12 +1274,12 @@ def set_kwargs(kwargs, title='Arguments', type_dict=None):
 
 def set_agent_kwargs(agent):
     class_name = type(agent).__name__
-    # dtypes = agent_dtypes[class_name]
+    type_dict = dtypes.get_dict_dtypes('agent', class_name=class_name)
     title = f'{class_name} args'
     kwargs = {}
-    for p in list(dtypes.keys()):
+    for p in list(type_dict.keys()):
         kwargs[p] = getattr(agent, p)
-    new_kwargs = set_kwargs(kwargs, title, type_dict=dtypes.get_dict_dtypes('agent', class_name=class_name))
+    new_kwargs = set_kwargs(kwargs, title, type_dict=type_dict)
     for p, v in new_kwargs.items():
         if p == 'unique_id':
             agent.set_id(v)
@@ -1273,7 +1292,7 @@ def object_menu(selected):
     object_list = ['', 'Larva', 'Food', 'Border']
     title = 'Select object type'
     layout = [
-        [sg.Text(title, **t14_kws)],
+        [sg.Text(title)],
         [sg.Listbox(default_values=[selected], values=object_list, change_submits=False, size=(20, len(object_list)),
                     key='SELECTED_OBJECT',
                     enable_events=True)],
@@ -1298,17 +1317,16 @@ class GraphList:
         self.layout, self.list_key = self.init_layout(name, fig_dict)
         self.canvas, self.canvas_key = self.init_canvas(name)
         self.fig_agg = None
-        self.draw_key='unreachable'
+        self.draw_key = 'unreachable'
 
     def init_layout(self, name, fig_dict):
         list_key = f'{name}_GRAPH_LIST'
         values = list(fig_dict.keys())
-        h=int(np.max([len(values), 5]))
+        h = int(np.max([len(values), 5]))
         l = [
-            [sg.Text('GRAPHS', **t14_kws)],
-            [sg.Listbox(values=values, change_submits=True, size=(20, h), key=list_key,auto_size_text=True)],
+            [sg.Text('GRAPHS')],
+            [sg.Listbox(values=values, change_submits=True, size=(20, h), key=list_key, auto_size_text=True)],
         ]
-
 
         return l, list_key
 
@@ -1370,7 +1388,8 @@ class ButtonGraphList(GraphList):
     def generate(self, window, data):
         if self.func is not None and len(list(data.keys())) > 0:
             try:
-                self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()), return_fig=True, **self.func_kwargs)
+                self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()),
+                                                                 return_fig=True, **self.func_kwargs)
                 self.draw_fig(window, self.fig)
             except:
                 print('Plot not available for these datasets')
@@ -1398,16 +1417,11 @@ class ButtonGraphList(GraphList):
         self.func_kwargs = set_kwargs(self.func_kwargs, title='Graph arguments')
 
 
-
-
-
-
-
 def delete_objects_window(selected):
     ids = [sel.unique_id for sel in selected]
     title = 'Delete objects?'
     layout = [
-        [sg.Text(title, **t14_kws)],
+        [sg.Text(title)],
         [sg.Listbox(default_values=ids, values=ids, change_submits=False, size=(20, len(ids)), key='DELETE_OBJECTS',
                     enable_events=True)],
         [sg.Ok(), sg.Cancel()]]
@@ -1605,7 +1619,8 @@ def delete_gui_conf(window, values, conf_type):
         window[f'{cap}_CONF'].update(values=list(loadConfDict(conf_type).keys()))
         window[f'{cap}_CONF'].update(value='')
 
-def check_collapsibles(window,event, collapsibles) :
+
+def check_collapsibles(window, event, collapsibles):
     if event.startswith('OPEN SEC'):
         sec = event.split()[-1]
         if collapsibles[sec].state is not None:
@@ -1614,7 +1629,8 @@ def check_collapsibles(window,event, collapsibles) :
             window[f'SEC {sec}'].update(visible=collapsibles[sec].state)
     # return collapsibles
 
-def check_toggles(window,event) :
+
+def check_toggles(window, event):
     if 'TOGGLE' in event:
         if window[event].metadata.state is not None:
             window[event].metadata.state = not window[event].metadata.state

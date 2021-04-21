@@ -5,7 +5,7 @@ import matplotlib
 import inspect
 from tkinter import *
 
-from lib.gui.gui_lib import t14_kws, t8_kws, ButtonGraphList, b6_kws
+from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws
 from lib.stor.paths import SingleRunFolder, RefFolder
 from lib.anal.plotting import graph_dict
 from lib.stor.larva_dataset import LarvaDataset
@@ -34,7 +34,7 @@ def change_dataset_id(window, values, data):
 def build_analysis_tab(collapsibles, graph_lists, dicts):
     dicts['analysis_data'] = {}
     data_list = [
-        [sg.Text('DATASETS', **t14_kws)],
+        [sg.Text('Datasets')],
         [sg.Col([[sg.Listbox(values=[], change_submits=False, size=(22, len(dicts['analysis_data'].keys())), key='DATASET_IDS',
                     enable_events=True),
                   sg.FolderBrowse(button_text='Add', initial_folder=SingleRunFolder, key='DATASET_DIR', change_submits=True,

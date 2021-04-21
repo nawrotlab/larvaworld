@@ -300,6 +300,16 @@ brain_RLolfactor = {'modules': RL_olfactor,
                     'memory_params': RL_memory,
                     'nengo': False}
 
+brain_immobile_olfactor = {'modules': olfactor_turner,
+                           'turner_params': default_turner,
+                           'crawler_params': None,
+                           'interference_params': None,
+                           'intermitter_params': None,
+                           'olfactor_params': olfactor_conf(),
+                           'feeder_params': None,
+                           'memory_params': None,
+                           'nengo': False}
+
 brain_olfactor = {'modules': olfactor_locomotion,
                   'turner_params': default_turner,
                   'crawler_params': default_crawler,
@@ -361,12 +371,17 @@ brain_sitter = {'modules': growth_locomotion,
                 'nengo': False}
 
 # -------------------------------------------WHOLE LARVA MODES---------------------------------------------------------
+immobile_odor_larva = {'energetics_params': None,
+                       'neural_params': brain_immobile_olfactor,
+                       'sensorimotor_params': default_physics,
+                       'body_params': sample_l3_seg2,
+                       'odor_params': odor()}
 
 odor_larva = {'energetics_params': None,
               'neural_params': brain_olfactor,
               'sensorimotor_params': default_physics,
               'body_params': sample_l3_seg2,
-              'odor_params': odor(), }
+              'odor_params': odor()}
 
 odor_larva_x2 = {'energetics_params': None,
                  'neural_params': brain_olfactor_x2,
@@ -456,20 +471,20 @@ nengo_larva = {'energetics_params': None,
                'body_params': l3_seg2,
                'odor_params': odor(), }
 
-odors3 = [f'{source} odor' for source in ['Flag', 'Left base', 'Right base']]
-odors5 = [f'{source} odor' for source in ['Flag', 'Left base', 'Right base', 'Left group', 'Right group']]
+odors3 = [f'{source}_odor' for source in ['Flag', 'Left_base', 'Right_base']]
+odors5 = [f'{source}_odor' for source in ['Flag', 'Left_base', 'Right_base', 'Left', 'Right']]
 
 flag_larva = {**odor_larva_conf(ids=odors3, means=[150, 0, 0]),
               }
 
 king_larva_L = {**odor_larva_conf(ids=odors5, means=[150, 0, 0, 0, 0],
-                                  odor_id='Left group odor', odor_intensity=2.0, odor_spread=0.00005
+                                  odor_id='Left_odor', odor_intensity=2.0, odor_spread=0.00005
                                   ),
                 # 'id_prefix': 'Left'
                 }
 
 king_larva_R = {**odor_larva_conf(ids=odors5, means=[150, 0, 0, 0, 0],
-                                  odor_id='Right group odor', odor_intensity=2.0, odor_spread=0.00005
+                                  odor_id='Right_odor', odor_intensity=2.0, odor_spread=0.00005
                                   ),
                 }
 

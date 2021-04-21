@@ -848,7 +848,7 @@ def print_dict(d):
 
 def dict_to_file(dictionary, filename):
     orig_stdout = sys.stdout
-    f = open(filename, 'W')
+    f = open(filename, 'w')
     sys.stdout = f
     print_dict(dictionary)
     sys.stdout = orig_stdout

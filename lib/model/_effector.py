@@ -186,6 +186,8 @@ class Turner(Oscillator, Effector):
             self.range_downwards = self.base_activation - self.activation_range[0]
             self.activation = self.base_activation
             self.neural_oscillator = NeuralOscillator(dt=self.dt)
+            for i in range(1000) :
+                self.neural_oscillator.step(base_activation)
             # Multiplicative noise
             # activity += np.random.normal(scale=np.abs(activity * self.noise))
             # Additive noise based on mean activity=14.245

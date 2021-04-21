@@ -128,22 +128,22 @@ def sim_analysis(d, exp_type):
     return fig_dict, results
 
 
-def init_sim(env_params):
-    env = LarvaWorldSim(env_params=env_params,
-                        vis_kwargs=dtypes.get_dict_dtypes('visualization', mode='video',
-                                                          visible_clock=False, visible_state=False))
-    env.is_running = True
-    return env
+# def init_sim(env_params):
+#     env = LarvaWorldSim(env_params=env_params,
+#                         vis_kwargs=dtypes.get_dict('visualization', mode='video',
+#                                                           visible_clock=False, visible_state=False))
+#     env.is_running = True
+#     return env
 
 
-def configure_sim(env_params):
-    env = init_sim(env_params)
-    while env.is_running:
-        env.step()
-        env.render()
-    source_list = env.get_agent_list(class_name='Source')
-    border_list = env.get_agent_list(class_name='Border')
-    return source_list, border_list
+# def configure_sim(env_params):
+#     env = init_sim(env_params)
+#     while env.is_running:
+#         env.step()
+#         env.render()
+#     source_list = env.get_agent_list(class_name='Source')
+#     border_list = env.get_agent_list(class_name='Border')
+#     return source_list, border_list
 
 
 def run_sim_basic(
@@ -199,10 +199,10 @@ def run_sim_basic(
                         **kwargs, vis_kwargs=vis_kwargs)
     # Prepare the odor layer for a number of timesteps
     odor_prep_time = 0.0
-    larva_prep_time = 0.5
+    # larva_prep_time = 0.5
     env.prepare_odor_layer(int(odor_prep_time * 60 / env.dt))
     # Prepare the flies for a number of timesteps
-    env.prepare_flies(int(larva_prep_time * 60 / env.dt))
+    # env.prepare_flies(int(larva_prep_time * 60 / env.dt))
     print(f'Initialized simulation {id}!')
 
     # Run the simulation
