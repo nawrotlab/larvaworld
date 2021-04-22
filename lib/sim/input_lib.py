@@ -127,13 +127,11 @@ def eval_selection(model, p, ctrl):
             if not f.selected:
                 f.selected = True
                 model.selected_agents.append(f)
-            else:
-                if ctrl:
+            elif ctrl:
                     f.selected = False
                     model.selected_agents.remove(f)
             res=True
-        else:
-            if f.selected and not ctrl:
+        elif f.selected and not ctrl:
                 f.selected = False
                 model.selected_agents.remove(f)
     return res

@@ -121,10 +121,10 @@ def null_distro(class_name, basic=True):
         distro = {**distro, 'orientation_range': (0.0, 360.0), 'model': None}
     if not basic:
         distro = {**distro, **get_dict('agent', class_name=class_name)}
-        for p in ['unique_id', 'pos'] :
-            try :
+        for p in ['unique_id', 'pos']:
+            try:
                 distro.pop(p)
-            except :
+            except:
                 pass
     return distro
 
@@ -211,7 +211,68 @@ all_null_dicts = {
     'space_search': {'pars': None,
                      'ranges': None,
                      'Ngrid': None},
-    'visualization': null_vis
+    'visualization': null_vis,
+    'body': {'initial_length': 4.5,
+             'length_std': 0.0,
+             'Nsegs': 2,
+             'seg_ratio': [0.5, 0.5]
+             },
+    'physics': {
+        'torque_coef': 0.41,
+        'ang_damping': 2.5,
+        'body_spring_k': 0.02,
+        'bend_correction_coef': 1.4,
+    },
+    'energetics': {'f_decay_coef': 0.1,  # 0.1,  # 0.3
+                   'absorption_c': 0.5,
+                   'hunger_affects_balance': True,
+                   'hunger_sensitivity': 10.0,
+                   'deb_on': True},
+    'crawler': {'waveform': 'realistic',
+                'freq_range': [0.5, 2.5],
+                'initial_freq': 'sample',  # From D1 fit
+                'step_to_length_mu': 'sample',  # From D1 fit
+                'step_to_length_std': 'sample',  # From D1 fit
+                'initial_amp': None,
+                'crawler_noise': 0.0,
+                'max_vel_phase': 1
+                },
+    'turner': {'neural': True,
+               'base_activation': 20.0,
+               'activation_range': [10.0, 40.0],
+               'noise': 0.15,
+               'activation_noise': 0.5
+               },
+    'interference': {
+        'crawler_interference_free_window': 0.5,  # np.pi * 0.55,  # 0.9, #,
+        'feeder_interference_free_window': 0.0,
+        'crawler_interference_start': 0.5,  # np.pi * 0.3, #np.pi * 4 / 8,
+        'feeder_interference_start': 0.0,
+        'interference_ratio': 0.1
+    },
+    'intermitter': {'pause_dist': 'fit',
+                    'stridechain_dist': 'fit',
+                    'intermittent_crawler': True,
+                    'intermittent_feeder': False,
+                    'EEB_decay_coef': 1.0,
+                    'EEB': 0.0},
+    'olfactor': {
+        'perception': 'log',
+        'olfactor_noise': 0.0,
+        'decay_coef': 0.5},
+    'feeder': {'feeder_freq_range': [1.0, 3.0],
+               'feeder_initial_freq': 2.0,
+               'feed_radius': 0.1,
+               'max_feed_amount_ratio': 0.00001},
+    'memory': {'DeltadCon': 0.1,
+               'state_spacePerOdorSide': 0,
+               'gain_space': [-300.0, -50.0, 50.0, 300.0],
+               'update_dt': 1,
+               'alpha': 0.05,
+               'gamma': 0.6,
+               'epsilon': 0.3,
+               'train_dur': 20,
+               }
 
 }
 
@@ -301,7 +362,68 @@ def get_dict_dtypes(name, **kwargs):
                          'ranges': Tuple[float, float],
                          'Ngrid': int},
 
-        'visualization': vis_dtypes
+        'visualization': vis_dtypes,
+        'body': {'initial_length': float,
+                 'length_std': float,
+                 'Nsegs': int,
+                 'seg_ratio': List[float]  # [5 / 11, 6 / 11]
+                 },
+        'physics': {
+            'torque_coef': float,
+            'ang_damping': float,
+            'body_spring_k': float,
+            'bend_correction_coef': float,
+        },
+        'energetics': {'f_decay_coef': float,
+                       'absorption_c': float,
+                       'hunger_affects_balance': bool,
+                       'hunger_sensitivity': float,
+                       'deb_on': bool},
+        'crawler': {'waveform': ['realistic', 'square', 'gaussian'],
+                    'freq_range': Tuple[float, float],
+                    'initial_freq': float,  # From D1 fit
+                    'step_to_length_mu': float,  # From D1 fit
+                    'step_to_length_std': float,  # From D1 fit
+                    'initial_amp': float,
+                    'crawler_noise': float,
+                    'max_vel_phase': float
+                    },
+        'turner': {'neural': bool,
+                   'base_activation': float,
+                   'activation_range': Tuple[float, float],
+                   'noise': float,
+                   'activation_noise': float
+                   },
+        'interference': {
+            'crawler_interference_free_window': float,  # np.pi * 0.55,  # 0.9, #,
+            'feeder_interference_free_window': float,
+            'crawler_interference_start': float,  # np.pi * 0.3, #np.pi * 4 / 8,
+            'feeder_interference_start': float,
+            'interference_ratio': float
+        },
+        'intermitter': {'pause_dist': dict,
+                        'stridechain_dist': dict,
+                        'intermittent_crawler': bool,
+                        'intermittent_feeder': bool,
+                        'EEB_decay_coef': float,
+                        'EEB': float},
+        'olfactor': {
+            'perception': ['log', 'linear'],
+            'olfactor_noise': float,
+            'decay_coef': float},
+        'feeder': {'feeder_freq_range': Tuple[float, float],
+                   'feeder_initial_freq': float,
+                   'feed_radius': float,
+                   'max_feed_amount_ratio': float},
+        'memory': {'DeltadCon': float,
+                   'state_spacePerOdorSide': 0,
+                   'gain_space': List[float],
+                   'update_dt': float,
+                   'alpha': float,
+                   'gamma': float,
+                   'epsilon': float,
+                   'train_dur': float,
+                   }
 
     }
     if name in list(all_dtypes.keys()):
@@ -321,7 +443,8 @@ def get_agent_dtypes(class_name):
     if class_name in ['Larva', 'LarvaSim', 'LarvaReplay']:
         dtypes = {**dtypes, **get_dict_dtypes('odor')}
     elif class_name in ['Source', 'Food']:
-        dtypes = {**dtypes, **get_dict_dtypes('odor'), **get_dict_dtypes('food'), 'can_be_carried': bool, 'pos' : Tuple[float, float]}
+        dtypes = {**dtypes, **get_dict_dtypes('odor'), **get_dict_dtypes('food'), 'can_be_carried': bool,
+                  'pos': Tuple[float, float]}
     elif class_name in ['Border']:
         dtypes = {**dtypes, 'width': float, 'points': List[Tuple[float, float]]}
     return dtypes
@@ -336,7 +459,7 @@ def null_agent(class_name):
     if class_name in ['Larva', 'LarvaSim', 'LarvaReplay']:
         dic = {**dic, **get_dict('odor'), 'default_color': 'black'}
     elif class_name in ['Source', 'Food']:
-        dic = {**dic, **get_dict('odor'), **get_dict('food'), 'default_color': 'green', 'pos' : (0.0,0.0)}
+        dic = {**dic, **get_dict('odor'), **get_dict('food'), 'default_color': 'green', 'pos': (0.0, 0.0)}
     elif class_name in ['Border']:
         dic = {**dic, 'width': 0.001, 'points': None, 'default_color': 'grey'}
     return dic
@@ -355,10 +478,10 @@ def get_distro_dtypes(class_name, basic=True):
         dtypes = {**dtypes, 'orientation_range': Tuple[float, float], 'model': list(loadConfDict('Model').keys())}
     if not basic:
         dtypes = {**dtypes, **get_dict_dtypes('agent', class_name=class_name)}
-        for p in ['unique_id', 'pos'] :
-            try :
+        for p in ['unique_id', 'pos']:
+            try:
                 dtypes.pop(p)
-            except :
+            except:
                 pass
     return dtypes
 
@@ -377,5 +500,3 @@ def sim_dict(sim_id=None, sim_dur=3, dt=0.1, path=None, Box2D=False, exp_type=No
         'path': path,
         'Box2D': Box2D
     }
-
-

@@ -170,18 +170,12 @@ def draw_source(P0, default_color, graph, s, amount, radius, **kwargs):
 
 
 def draw_larva(P0, color, graph, s, orientation_range, **kwargs):
-    # P0=scale_xy(pos,s)
     points = np.array([[0.9, 0.1], [0.05, 0.1]])
     xy0 = fun.body(points) - np.array([0.5, 0.0])
-    a1, a2 = orientation_range
-    a1, a2 = np.deg2rad(a1), np.deg2rad(a2)
-    xy0 = fun.rotate_multiple_points(xy0, random.uniform(a1, a2), origin=[0, 0])
-    xy0 /= 250
-    xy0 *= s
-    xy0 += np.array(P0)
+    xy0 = fun.rotate_multiple_points(xy0, random.uniform(*np.deg2rad(orientation_range)), origin=[0, 0])
+    xy0 =xy0*s/ 250+np.array(P0)
     temp = graph.draw_polygon(xy0, line_width=3, line_color=color, fill_color=color)
     return temp
-
 
 def check_abort(name, w, v, units, groups):
     o = name
@@ -303,7 +297,7 @@ def draw_env(env=None):
     ]
     layout = [[sg.Col(col1), sg.Col(col2)]]
 
-    w = sg.Window("Environment configuration", layout, **w_kws)
+    w = sg.Window("Environment configuration", layout, **w_kws,location=(600, 200))
     graph = w["-GRAPH-"]  # type: sg.Graph
     graph.bind('<Button-3>', '+RIGHT+')
 

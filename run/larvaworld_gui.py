@@ -46,16 +46,18 @@ def run_gui():
     thread=None
     collapsibles={}
     graph_lists={}
-    dicts = {}
-    dicts['sim_results'] = {}
-    dicts['sim_results']['datasets'] = []
-    dicts['batch_kwargs']=None
-    dicts['batch_results'] = {}
-    dicts['analysis_data'] = {}
-    l_anal, collapsibles, graph_lists = build_analysis_tab(collapsibles,graph_lists)
+    dicts = {
+        'sim_results' : {'datasets' : []},
+        'batch_kwargs' : None,
+        'batch_results' : {},
+        'analysis_data' : {},
+    }
+
+
     l_mod, collapsibles = build_model_tab(collapsibles)
     l_sim, collapsibles, graph_lists = build_sim_tab(collapsibles, graph_lists)
-    l_batch, collapsibles, graph_lists, dicts = build_batch_tab(collapsibles, graph_lists, dicts)
+    l_batch, collapsibles, graph_lists = build_batch_tab(collapsibles, graph_lists)
+    l_anal, collapsibles, graph_lists = build_analysis_tab(collapsibles, graph_lists)
 
     l_gui = [
         [sg.TabGroup([[
@@ -66,7 +68,7 @@ def run_gui():
             key='ACTIVE_TAB', tab_location='top', selected_title_color='purple')]
     ]
 
-    w = sg.Window('Larvaworld gui', l_gui, size=(2000, 1200), **w_kws)
+    w = sg.Window('Larvaworld gui', l_gui, size=(1800, 1200), **w_kws,location=(300, 100))
 
     while True:
         e, v = w.read()

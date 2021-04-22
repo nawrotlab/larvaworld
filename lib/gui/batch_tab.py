@@ -5,8 +5,8 @@ import PySimpleGUI as sg
 
 from lib.anal.combining import render_mpl_table
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
-    gui_table, save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList, b12_kws, b_kws, \
-    graphic_button, t10_kws, t12_kws, t18_kws, t8_kws, t6_kws
+    save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList, b12_kws, b_kws, \
+    graphic_button, t10_kws, t12_kws, t18_kws, t8_kws, t6_kws, CollapsibleTable
 from lib.gui.simulation_tab import update_sim, get_exp
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 import lib.conf.dtype_dicts as dtypes
@@ -17,22 +17,23 @@ def update_batch(batch, window, collapsibles):
     collapsibles['Optimization'].update(window, batch['optimization'])
     window['TOGGLE_save_data_flag'].metadata.state = batch['run_kwargs']['save_data_flag']
     window['TOGGLE_save_data_flag'].update(image_data=on_image if window['TOGGLE_save_data_flag'].metadata.state else off_image)
-    return batch['space_search']
+    collapsibles['space_search'].update_table(window, batch['space_search'])
+
+    # return batch['space_search']
 
 
-def get_batch(window, values, collapsibles, space_search):
+def get_batch(window, values, collapsibles):
     batch = {
         'methods': collapsibles['Methods'].get_dict(values, window),
         'optimization': collapsibles['Optimization'].get_dict(values, window),
-        'space_search': space_search,
+        'space_search': collapsibles['space_search'].dict,
         'exp': values['EXP'],
         'run_kwargs': {'save_data_flag': window['TOGGLE_save_data_flag'].metadata.state},
     }
     return copy.deepcopy(batch)
 
 
-def build_batch_tab(collapsibles, graph_lists, dicts):
-    dicts['space_search'] = dtypes.get_dict('space_search')
+def build_batch_tab(collapsibles, graph_lists):
     l_exp = [sg.Col([
         [sg.Text('Batch', **t6_kws),
          graphic_button('load', 'LOAD_BATCH'),
@@ -52,42 +53,47 @@ def build_batch_tab(collapsibles, graph_lists, dicts):
                                                       disp_name='Configuration')
     s1 = CollapsibleDict('Methods', True, dict=dtypes.get_dict('batch_methods'),
                          type_dict=dtypes.get_dict_dtypes('batch_methods'))
-    s2 = CollapsibleDict('Optimization', True, dict=dtypes.get_dict('optimization'),
+    s2 = CollapsibleTable('space_search', True, headings=['pars', 'ranges', 'Ngrid'], dict={},
+                         disp_name='Space search',
+                         type_dict=dtypes.get_dict_dtypes('space_search'))
+    s3 = CollapsibleDict('Optimization', True, dict=dtypes.get_dict('optimization'),
                          type_dict=dtypes.get_dict_dtypes('optimization'),
                          toggle=True, disabled=True, toggled_subsections=None)
-    for s in [s1, s2]:
+    for s in [s1, s2,s3]:
         collapsibles.update(s.get_subdicts())
-    collapsibles.update(s.get_subdicts())
     graph_lists['BATCH'] = GraphList('BATCH')
 
     l_batch0 = sg.Col([l_exp,
                        collapsibles['BATCH_CONFIGURATION'].get_section(),
                        collapsibles['Methods'].get_section(),
-                       [sg.B('Space search', **b12_kws)],
+                       collapsibles['space_search'].get_section(),
                        collapsibles['Optimization'].get_section(),
                        [graph_lists['BATCH'].get_layout()]
                        ])
 
     l_batch = [[l_batch0, graph_lists['BATCH'].canvas]]
-    return l_batch, collapsibles, graph_lists, dicts
+    return l_batch, collapsibles, graph_lists
 
 
-def set_space_table(space_search):
-    N = len(space_search['pars'])
-    t0 = []
-    for i in range(N):
-        d = {}
-        for k, v in space_search.items():
-            d[k] = v[i]
-        t0.append(d)
-
-    t1 = gui_table(t0, dtypes.get_dict_dtypes('space_search'), title='space search')
-    dic = {}
-    for k in list(dtypes.get_dict_dtypes('space_search').keys()):
-        dic[k] = [l[k] for l in t1]
-        # if k == 'ranges':
-        #     dic[k] = np.array(dic[k])
-    return dic
+# def set_space_table(space_search):
+#     if space_search['pars'] is None :
+#         t0=[]
+#     else :
+#         N = len(space_search['pars'])
+#         t0 = []
+#         for i in range(N):
+#             d = {}
+#             for k, v in space_search.items():
+#                 d[k] = v[i]
+#             t0.append(d)
+#
+#     t1 = gui_table(t0, dtypes.get_dict_dtypes('space_search'), title='space search')
+#     dic = {}
+#     for k in list(dtypes.get_dict_dtypes('space_search').keys()):
+#         dic[k] = [l[k] for l in t1]
+#         # if k == 'ranges':
+#         #     dic[k] = np.array(dic[k])
+#     return dic
 
 
 def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
@@ -97,7 +103,8 @@ def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
             window.Element('batch_id').Update(value=f'{batch_type}_{next_idx(batch_type, type="batch")}')
             window.Element('batch_path').Update(value=batch_type)
             conf = loadConf(batch_type, 'Batch')
-            dicts['space_search'] = update_batch(conf, window, collapsibles)
+            update_batch(conf, window, collapsibles)
+            # dicts['space_search'] = update_batch(conf, window, collapsibles)
 
             window.Element('EXP').Update(value=conf['exp'])
             update_sim(window, conf['exp'], collapsibles)
@@ -129,8 +136,5 @@ def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
             dicts['batch_results']['df'] = df
             dicts['batch_results']['fig_dict'] = fig_dict
             graph_lists['BATCH'].update(window, dicts['batch_results']['fig_dict'])
-
-    elif event == 'Space search':
-        dicts['space_search'] = set_space_table(dicts['space_search'])
 
     return dicts, graph_lists

@@ -2,26 +2,38 @@ import copy
 
 import PySimpleGUI as sg
 
-from lib.conf.larva_conf import test_larva, module_keys
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, set_agent_dict, save_gui_conf, delete_gui_conf, b12_kws, \
+from lib.conf.larva_conf import module_keys
+from lib.gui.gui_lib import CollapsibleDict, Collapsible, save_gui_conf, delete_gui_conf, b12_kws, \
     b6_kws, CollapsibleTable, graphic_button, t10_kws, t12_kws, t18_kws
 from lib.conf.conf import loadConfDict, loadConf
 import lib.conf.dtype_dicts as dtypes
 
 
-def init_model(larva_model, collapsibles={}):
-    for name, dict, kwargs in zip(['Physics', 'Energetics', 'Body', 'Odor'],
-                                  [larva_model['sensorimotor_params'], larva_model['energetics_params'],
-                                   larva_model['body_params'], larva_model['odor_params']],
+def init_model(collapsibles={}):
+    for name, d, t_d, kwargs in zip(['Physics', 'Energetics', 'Body', 'Odor'],
+                                  [dtypes.get_dict('physics'),
+                                   dtypes.get_dict('energetics'),
+                                   dtypes.get_dict('body'),
+                                   dtypes.get_dict('odor')],
+        [dtypes.get_dict_dtypes('physics'),
+         dtypes.get_dict_dtypes('energetics'),
+         dtypes.get_dict_dtypes('body'),
+         dtypes.get_dict_dtypes('odor')],
                                   [{}, {'toggle': True, 'disabled': True}, {}, {}]):
-        collapsibles[name] = CollapsibleDict(name, True, dict=dict, type_dict=None, **kwargs)
+        collapsibles[name] = CollapsibleDict(name, True, dict=d, type_dict=t_d, **kwargs)
 
     module_conf = []
-    for k, v in larva_model['neural_params']['modules'].items():
-        dic = larva_model['neural_params'][f'{k}_params']
-        if k == 'olfactor':
-            dic.pop('odor_dict')
-        s = CollapsibleDict(k.upper(), False, dict=dic, dict_name=k.upper(), toggle=v)
+    # for k, v in larva_model['neural_params']['modules'].items():
+    #     dic = larva_model['neural_params'][f'{k}_params']
+    #     if k == 'olfactor':
+    #         dic.pop('odor_dict')
+    #     s = CollapsibleDict(k.upper(), False, dict=dic, dict_name=k.upper(), toggle=v)
+    #     collapsibles.update(s.get_subdicts())
+    #     module_conf.append(s.get_section())
+    for k in module_keys:
+        d = dtypes.get_dict(k)
+        t_d = dtypes.get_dict_dtypes(k)
+        s = CollapsibleDict(k.upper(), False, dict=d, type_dict=t_d, dict_name=k.upper(), toggle=True)
         collapsibles.update(s.get_subdicts())
         module_conf.append(s.get_section())
     collapsibles['Brain'] = Collapsible('Brain', True, module_conf)
@@ -84,7 +96,6 @@ def get_model(window, values, collapsibles):
 
 
 def build_model_tab(collapsibles):
-    larva_model = copy.deepcopy(test_larva)
 
     s1 = CollapsibleTable('odor_gains', True, headings=['id', 'mean', 'std'], dict={},
                           disp_name='Odor gains',type_dict=dtypes.get_dict_dtypes('odor_gain'))
@@ -93,13 +104,14 @@ def build_model_tab(collapsibles):
 
     l_mod0 = [sg.Col([
         [sg.Text('Larva model',**t10_kws),
-         graphic_button('load', 'LOAD_MODEL'),
-         graphic_button('data_add', 'SAVE_MODEL'),
-         graphic_button('data_remove', 'DELETE_MODEL')],
-         [sg.Combo(list(loadConfDict('Model').keys()), key='MODEL_CONF', enable_events=True, readonly=True, **t18_kws)],
+         graphic_button('load', 'LOAD_MODEL', tooltip='Load a larva model to inspect its parameters.'),
+         graphic_button('data_add', 'SAVE_MODEL', tooltip='Save a new larva model to use in simulations.'),
+         graphic_button('data_remove', 'DELETE_MODEL', tooltip='Delete an existing larva model.')],
+         [sg.Combo(list(loadConfDict('Model').keys()), key='MODEL_CONF', enable_events=True, readonly=True,
+                   **t18_kws, tooltip='The currently loaded larva model.')],
     ])]
 
-    l_mod1 = init_model(larva_model, collapsibles)
+    l_mod1 = init_model(collapsibles)
 
     l_mod = [[sg.Col([l_mod0, l_mod1])]]
     return l_mod, collapsibles
@@ -117,5 +129,4 @@ def eval_model(event, values, window, collapsibles):
 
     elif event == 'DELETE_MODEL':
         delete_gui_conf(window, values, 'Model')
-
 

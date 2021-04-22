@@ -484,9 +484,9 @@ class LarvaSim(BodySim, Larva):
             self.carried_objects.append(food)
 
 
-            if self.model.experiment == 'flag':
+            if self.model.experiment == 'capture_the_flag':
                 self.brain.olfactor.set_gain(self.gain_for_base_odor, self.base_odor_id)
-            elif self.model.experiment == 'king':
+            elif self.model.experiment == 'keep_the_flag':
                 carrier_group=self.group
                 carrier_group_odor_id=self.get_odor_id()
                 opponent_group=fun.LvsRtoggle(carrier_group)

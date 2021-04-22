@@ -32,7 +32,6 @@ default_crawler = {'waveform': 'realistic',
                    'step_to_length_mu': 'sample',  # From D1 fit
                    'step_to_length_std': 'sample',  # From D1 fit
                    'initial_amp': None,
-                   'random_phi': True,
                    'crawler_noise': 0.1,
                    'max_vel_phase': 1
                    }
@@ -413,28 +412,6 @@ growing_sitter = {'energetics_params': energetics_sitter,
                   'sensorimotor_params': default_physics,
                   'body_params': l1_seg2,
                   'odor_params': dtypes.get_dict('odor')}
-
-mock_brain = {'modules': {key: True for key in module_keys},
-              'turner_params': default_turner,
-              'crawler_params': default_crawler,
-              'interference_params': default_coupling,
-              'intermitter_params': intermitter_rover,
-              'olfactor_params': olfactor_conf(ids=['CS', 'UCS'], means=[150.0, 0.0]),
-              'feeder_params': default_feeder,
-              'memory_params': RL_memory,
-              'nengo': False}
-
-mock_body = {'initial_length': 4.5,
-             'length_std': np.nan,
-             'Nsegs': 2,
-             'seg_ratio': [0.5, 0.5]  # [5 / 11, 6 / 11]
-             }
-
-test_larva = {'energetics_params': energetics_rover,
-              'neural_params': mock_brain,
-              'sensorimotor_params': default_physics,
-              'body_params': mock_body,
-              'odor_params': dtypes.get_dict('odor')}
 
 # A larva model for imitating experimental datasets (eg contours)
 

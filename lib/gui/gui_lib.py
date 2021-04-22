@@ -18,7 +18,6 @@ from lib.conf.conf import loadConfDict, saveConf, deleteConf
 import lib.aux.functions as fun
 from lib.stor.paths import get_parent_dir
 import lib.conf.dtype_dicts as dtypes
-import lib.gui.icons.icons as icons
 import lib.gui.graphics as graphics
 
 on_image = b'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'
@@ -686,7 +685,7 @@ color_map = {
 
 w_kws = {
     'finalize': True,
-    # 'resizable': True,
+    'resizable': True,
     'default_button_element_size': (6, 1),
     'default_element_size': (14, 1),
     'font': ('size', 8),
@@ -914,14 +913,9 @@ def build_table_window(data, pars_dict, title, return_layout=False):
     pars = list(pars_dict.keys())
     par_types = list(pars_dict.values())
     Nagents, Npars = len(data), len(pars)
-    # A HIGHLY unusual layout definition
-    # Normally a layout is specified 1 ROW at a time. Here multiple rows are being contatenated together to produce the layout
-    # Note the " + \ " at the ends of the lines rather than the usual " , "
-    # This is done because each line is a list of lists
     layout = [[sg.Text(' ', **t2_kws)] + [sg.Text(p, key=p, enable_events=True, **t12_kws_c) for p in pars]] + \
-             [
-                 [sg.T(i + 1, **t2_kws)] +
-                 [sg.Input(data[i][p], key=(i, p), **t12_kws_c) if type(pars_dict[p]) != list else sg.Combo(
+             [[sg.T(i + 1, **t2_kws)] +
+                 [sg.In(data[i][p], key=(i, p), **t12_kws_c) if type(pars_dict[p]) != list else sg.Combo(
                      pars_dict[p], default_value=data[i][p], key=(i, p), enable_events=True, readonly=True,
                      **t12_kws) for p in pars] for i in range(Nagents)] + \
              [[sg.Button('Add', **b6_kws), sg.Button('Remove', **b6_kws),
@@ -938,6 +932,7 @@ def build_table_window(data, pars_dict, title, return_layout=False):
 
 
 def gui_table(data, pars_dict, title='Agent list'):
+    data0=copy.deepcopy(data)
     """
         Another simple table created from Input Text Elements.  This demo adds the ability to "navigate" around the drawing using
         the arrow keys. The tab key works automatically, but the arrow keys are done in the code below.
@@ -949,13 +944,12 @@ def gui_table(data, pars_dict, title='Agent list'):
                            non_blocking=True)
 
     Nagents, Npars, pars, table_window = build_table_window(data, pars_dict, title)
-    print(Nagents, Npars, pars)
     current_cell = (0, 0)
     while True:  # Event Loop
         event, values = table_window.read()
         if event in (None, 'Cancel'):
             table_window.close()
-            return data
+            return data0
             # break
         if event == 'Ok':
             data = get_table_data(values, pars_dict, Nagents)
@@ -1212,6 +1206,8 @@ class CollapsibleTable(Collapsible):
             self.header = 'unique_id'
         elif 'group' in list(type_dict.keys()):
             self.header = 'group'
+        else :
+            self.header=None
         self.headings = headings
         self.col_widths = []
         for i, p in enumerate(self.headings):
@@ -1220,9 +1216,9 @@ class CollapsibleTable(Collapsible):
             elif p in ['color']:
                 self.col_widths.append(8)
             elif type_dict[p] in [int, float]:
-                self.col_widths.append(np.max([len(p), 4]))
+                self.col_widths.append(np.max([len(p), 5]))
             else:
-                self.col_widths.append(12)
+                self.col_widths.append(10)
         self.Ncols = len(headings)
         self.data = self.set_data(dict)
         self.key = f'TABLE {name}'
@@ -1233,16 +1229,22 @@ class CollapsibleTable(Collapsible):
 
     def set_data(self, dic):
         if len(dic) != 0:
-            data = []
-            for id, pars in dic.items():
-                row = [id]
-                for j, p in enumerate(self.headings[1:]):
-                    for k, v in pars.items():
-                        if k == 'default_color' and p == 'color':
-                            row.append(v)
-                        elif k == p:
-                            row.append(v)
-                data.append(row)
+            if self.header is not None :
+                data = []
+                for id, pars in dic.items():
+                    row = [id]
+                    for j, p in enumerate(self.headings[1:]):
+                        for k, v in pars.items():
+                            if k == 'default_color' and p == 'color':
+                                row.append(v)
+                            elif k == p:
+                                row.append(v)
+                    data.append(row)
+            else :
+                dic2={k:dic[k] for k in self.headings}
+                l=list(dic2.values())
+                N=len(l[0])
+                data=[[j[i] for j in l]for i in range(N)]
         else:
             data = [[''] * self.Ncols]
         return data
@@ -1265,56 +1267,17 @@ class CollapsibleTable(Collapsible):
         self.data = self.set_data(dic)
         window[self.key].update(values=self.data, num_rows=len(self.data))
 
-    def edit_table(self, window, dic=None):
-        if dic is None:
-            dic = self.dict
-        dic = set_agent_dict(dic, self.type_dict, header=self.header, title=self.disp_name)
-        self.update_table(window, dic)
-        # return self.dict
+    def edit_table(self, window):
+        if self.header is not None:
+            dic = set_agent_dict(self.dict, self.type_dict, header=self.header, title=self.disp_name)
+            self.update_table(window, dic)
+        else :
+            t0=[dict(zip(self.headings, l)) for l in self.data] if self.data!=[[''] * self.Ncols] else []
+            t1 = gui_table(t0, self.type_dict, title='Parameter space')
+            if t1!=t0:
+                dic={k : [l[k] for l in t1] for k in self.headings}
+                self.update_table(window, dic)
 
-
-# class ImmutableTable:
-#     def __init__(self, name, dic, headings):
-#         # self.dict = dict
-#         self.headings = headings
-#         self.Ncols=len(headings)
-#         self.name = name
-#         self.key = f'TABLE_{self.name}'
-#         self.data=self.set_data(dic)
-#         self.layout=self.get_layout()
-#
-#
-#     def set_data(self, dic):
-#         if len(dic)!=0 :
-#             data=[]
-#             for i, id, pars in enumerate(dic.items()):
-#                 row=[]
-#                 row.append(id)
-#                 row.append(pars['default_color'])
-#                 for j, p in enumerate(self.headings[2:]) :
-#                     for k,v in pars.items() :
-#                         if k==p :
-#                             row.append(v)
-#                 data.append(row)
-#         else :
-#             data=[['']*self.Ncols]
-#         return data
-#
-#     def get_layout(self):
-#         layout = [[sg.Table(values=self.data[:][:], headings=self.headings, max_col_width=30, background_color='lightblue',
-#                         auto_size_columns=False,
-#                         # display_row_numbers=True,
-#                         justification='center',
-#                         font=w_kws['font'],
-#                         num_rows=len(self.data),
-#                         alternating_row_color='lightyellow',
-#                         key=self.key
-#                )]]
-#         return layout
-#
-#     def update(self, dic, window):
-#         self.data = self.set_data(dic)
-#         window[self.key].update(values=self.data)
 
 class CollapsibleDict(Collapsible):
     def __init__(self, name, state, dict, dict_name=None, type_dict=None, toggled_subsections=True, **kwargs):
@@ -1354,19 +1317,16 @@ def set_kwargs(kwargs, title='Arguments', type_dict=None):
     sec_dict = SectionDict(name=title, dict=kwargs, type_dict=type_dict)
     layout = sec_dict.init_section()
     layout.append([sg.Ok(), sg.Cancel()])
-    window = sg.Window(title, layout)
+    window = sg.Window(title, layout, **w_kws)
     while True:
         event, values = window.read()
         if event == 'Ok':
             new_kwargs = sec_dict.get_dict(values, window)
             break
-        elif event == 'Cancel':
+        elif event in ['Cancel', None]:
             new_kwargs = kwargs
             break
-        elif 'TOGGLE' in event:
-            if window[event].metadata.state is not None:
-                window[event].metadata.state = not window[event].metadata.state
-                window[event].update(image_data=on_image if window[event].metadata.state else off_image)
+        check_toggles(window, event)
     window.close()
     del sec_dict
     return new_kwargs
@@ -1461,18 +1421,13 @@ class GraphList:
         header=[sg.Text('Graphs', **t10_kws)]
         if self.next_to_header is not None :
             header+=self.next_to_header
-        l = [
-            header,
-            [sg.Listbox(values=values, change_submits=True, size=(20, h), key=list_key, auto_size_text=True)],
-        ]
-
+        l = [header,[sg.Listbox(values=values, change_submits=True, size=(20, h), key=list_key, auto_size_text=True)]]
         return l, list_key
 
     def init_canvas(self, name):
         canvas_key = f'{name}_CANVAS'
         figure_w, figure_h = 800, 800
         canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key=canvas_key)]])
-        # canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key=canvas_key)]])
         return canvas, canvas_key
 
     def draw_fig(self, window, fig):
@@ -1491,27 +1446,24 @@ class GraphList:
             self.draw_fig(window, fig)
 
     def get_layout(self, as_col=True):
-        if as_col:
-            return sg.Col(self.layout)
-        else:
-            return self.layout
+        return sg.Col(self.layout) if as_col else self.layout
+        # if as_col:
+        #     return sg.Col(self.layout)
+        # else:
+        #     return self.layout
 
 
 class ButtonGraphList(GraphList):
     def __init__(self, name,**kwargs):
         self.draw_key = f'{name}_DRAW_FIG'
         l = [
-            graphic_button('equalizer', f'{name}_FIG_ARGS'),
+            graphic_button('equalizer', f'{name}_FIG_ARGS', tooltip='Configure the graph arguments.'),
             # graphic_button('preferences', f'{self.name}_SAVEd_FIG'),
-            # sg.B('Graph args', **b6_kws, k=f'{self.name}_FIG_ARGS'),
-            graphic_button('pictures', self.draw_key),
-            # sg.B('Draw', **b6_kws, k=self.draw_key),
-            graphic_button('file_add', f'{name}_SAVE_FIG')
-            # sg.B('Save', **b6_kws, k=f'{self.name}_SAVE_FIG')
+            graphic_button('pictures', self.draw_key, tooltip='Draw the graph.'),
+            graphic_button('file_add', f'{name}_SAVE_FIG', tooltip='Save the graph to a file.')
         ]
         super().__init__(name=name, next_to_header=l, **kwargs)
 
-        # self.layout.append(l)
         self.fig, self.save_to, self.save_as = None, '', ''
         self.func, self.func_kwargs = None, {}
 
@@ -1554,8 +1506,6 @@ class ButtonGraphList(GraphList):
                 save_to = values['SAVE_TO']
                 filepath = os.path.join(save_to, save_as)
                 self.fig.savefig(filepath, dpi=300)
-                # save_canvas(window['GRAPH_CANVAS'].TKCanvas, filepath)
-                # figure_agg.print_figure(filepath)
                 print(f'Plot saved as {save_as}')
 
     def set_fig_args(self):
@@ -1772,7 +1722,6 @@ def check_collapsibles(window, event, collapsibles):
             collapsibles[sec].state = not collapsibles[sec].state
             window[event].update(SYMBOL_DOWN if collapsibles[sec].state else SYMBOL_UP)
             window[f'SEC {sec}'].update(visible=collapsibles[sec].state)
-    # return collapsibles
 
 
 def check_toggles(window, event):

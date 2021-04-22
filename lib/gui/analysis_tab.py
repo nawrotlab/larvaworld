@@ -38,18 +38,14 @@ def build_analysis_tab(collapsibles, graph_lists):
 
     data_list = [
         [sg.Text('Datasets', **t8_kws),
-            graphic_button('remove', 'Remove'),
-            graphic_button('play', 'Replay'),
-            graphic_button('box_add', 'Add ref'),
-            graphic_button('edit', 'Change ID'),
-            # sg.B('Remove', **b6_kws),
-            # sg.B('Add ref', **b6_kws),
-         # sg.B('Change ID', **b6_kws),
-            # sg.B('Replay', **b6_kws)
-        ],
+            graphic_button('remove', 'Remove', tooltip='Remove a dataset from the analysis list.'),
+            graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
+            graphic_button('box_add', 'Add ref', tooltip='Add the reference experimental dataset to the analysis list.'),
+            graphic_button('edit', 'Change ID', tooltip='Change the dataset ID transiently or permanently.')],
         [sg.Col([[sg.Listbox(values=[], **t16_kws, change_submits=False, key='DATASET_IDS',enable_events=True),
                   graphic_button('search_add', 'DATASET_DIR',initial_folder=SingleRunFolder, change_submits=True,
-                                  enable_events=True,target=(0, -1), button_type=BUTTON_TYPE_BROWSE_FOLDER)]])]]
+                                  enable_events=True,target=(0, -1), button_type=BUTTON_TYPE_BROWSE_FOLDER,
+                                 tooltip='Browse to add a dataset to the analysis list.')]])]]
 
     graph_lists['ANALYSIS'] = ButtonGraphList(name='ANALYSIS', fig_dict=graph_dict)
     analysis_layout = [[sg.Col(data_list)], [graph_lists['ANALYSIS'].get_layout(), graph_lists['ANALYSIS'].canvas]]
