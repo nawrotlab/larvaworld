@@ -3065,7 +3065,7 @@ def plot_turns(datasets, labels, save_to=None, return_fig=False):
     fig.subplots_adjust(top=0.92, bottom=0.15, left=0.2, right=0.95, hspace=.005, wspace=0.05)
     return process_plot(fig, save_to, filename, return_fig)
 
-def plot_turn_Dorient2center(datasets, labels, save_to=None, return_fig=False):
+def plot_turn_Dorient2center(datasets, labels, min_angle=30.0, save_to=None, return_fig=False):
     Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='turn')
     filename = f'turn_Dorient2center.{suf}'
     figsize = (10, 5)
@@ -3077,27 +3077,31 @@ def plot_turn_Dorient2center(datasets, labels, save_to=None, return_fig=False):
         b0_par = f'{p}_at_{S}turn_start'
         b1_par = f'{p}_at_{S}turn_stop'
         bd_par = f'{S}turn_{p}'
-        b0s = []
-        b1s = []
-        dbs = []
-        for d in datasets:
-            b0 = d.get_par(b0_par).dropna().values.flatten()
-            b1 = d.get_par(b1_par).dropna().values.flatten()
-            bd = d.get_par(bd_par).dropna().values.flatten()
-            b0s.append(b0)
-            b1s.append(b1)
-            dbs.append(bd)
+        b0s = [d.get_par(b0_par).dropna().values.flatten() for d in datasets]
+        b1s = [d.get_par(b1_par).dropna().values.flatten() for d in datasets]
+        dbs = [d.get_par(bd_par).dropna().values.flatten() for d in datasets]
 
         for i, (b0, b1, db, label, c) in enumerate(zip(b0s, b1s, dbs, labels, colors)):
+            b0=b0[np.abs(db)>min_angle]
+            b1=b1[np.abs(db)>min_angle]
+
             circular_hist(axs[2*i+k], np.deg2rad(b0), bins=16,alpha=0.3, label='start', color=c, offset=np.pi/2)
             circular_hist(axs[2*i+k], np.deg2rad(b1), bins=16,alpha=0.6, label='stop', color=c, offset=np.pi/2)
+            m0=np.deg2rad(np.mean(b0))
+            m1=np.deg2rad(np.mean(b1))
+            arrow0 = patches.FancyArrowPatch((0, 0), (m0,0.3),zorder=2, mutation_scale=30, alpha=0.3, color=c,
+                                             edgecolor='black', fill=True, linewidth=0.5)
+            axs[2*i+k].add_patch(arrow0)
+            arrow1 = patches.FancyArrowPatch((0, 0), (m1,0.3), zorder=2, mutation_scale=30, alpha=0.6, color=c,
+                                             edgecolor='black', fill=True, linewidth=0.5)
+            axs[2 * i + k].add_patch(arrow1)
             axs[2*i+k].set_xticklabels([0, '', +90, '',180, '', -90, ''])
             # Visualise by radius of bins
             # circular_hist(ax[1], angles1, offset=np.pi / 2, density=False)
             axs[2*i+k].legend(loc=[0.9, 0.9])
-
+            axs[2*i+k].set_title(f'Bearing before and after a {side} turn.', fontsize=15, y=-0.2)
     plt.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.9, wspace=0.4)
-    # plt.show()
+    plt.show()
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -3165,7 +3169,7 @@ def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
 
     # Plot data on ax
     patches = ax.bar(bins[:-1], radius, zorder=1, align='edge', width=widths,
-                     edgecolor='C0', fill=True, linewidth=1, **kwargs)
+                     edgecolor='black', fill=True, linewidth=2, **kwargs)
 
     # Set the direction of the zero angle
     ax.set_theta_offset(offset)
@@ -3515,6 +3519,7 @@ graph_dict = {
     'stridesNpauses': plot_stridesNpauses,
     'turn_duration': plot_turn_duration,
     'turns': plot_turns,
+    'turn_Dorient2center': plot_turn_Dorient2center,
     'odor_concentration': plot_odor_concentration,
     'sensed_odor_concentration': plot_sensed_odor_concentration,
     'pathlength': plot_pathlength,
