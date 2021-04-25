@@ -504,6 +504,12 @@ class LarvaWorld:
 
     def run(self, Nsteps=None):
         # pygame.init()
+        # import pygame_gui
+        # manager = pygame_gui.UIManager((800, 600))
+        # hello_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((350, 275), (100, 50)),
+        #                                             text='Say Hello',
+        #                                             manager=manager)
+        # clock = pygame.time.Clock()
         self.is_running = True
         self.sim_paused = False
         if Nsteps is None:
@@ -511,6 +517,7 @@ class LarvaWorld:
         warnings.filterwarnings('ignore')
         with progressbar.ProgressBar(max_value=Nsteps) as bar:
             while self.is_running and self.Nticks < Nsteps and not self.end_condition_met:
+                # time_delta = clock.tick(60) / 1000.0
                 if not self.sim_paused:
                     self.step()
                     bar.update(self.Nticks)
@@ -521,7 +528,15 @@ class LarvaWorld:
                         self.render(tick=self.Nticks)
                         self.toggle(name='snapshot #')
                         self._screen.render()
-
+                # for event in pygame.event.get():
+                #     if event.type == pygame.USEREVENT:
+                #         if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                #             if event.ui_element == hello_button:
+                #                 print('Hello World!')
+                #     manager.process_events(event)
+                # manager.update(time_delta)
+                # manager.draw_ui(self._screen)
+                # pygame.display.update()
                         # self._screen.close()
 
             if self.vis_kwargs['render']['image_mode'] == 'overlap':
@@ -861,13 +876,15 @@ class LarvaWorldSim(LarvaWorld):
         if len(sample_pars) >= 1:
             pars, samples = sample_agents(pars=sample_pars, N=N)
 
-        all_larva_pars = []
-        for i in range(N):
-            l = copy.deepcopy(larva_pars)
-            flat_l = fun.flatten_dict(l)
-            for p, s in zip(pars, samples):
-                flat_l.update({p: s[i]})
-            all_larva_pars.append(unflatten(flat_l))
+            all_larva_pars = []
+            for i in range(N):
+                l = copy.deepcopy(larva_pars)
+                flat_l = fun.flatten_dict(l)
+                for p, s in zip(pars, samples):
+                    flat_l.update({p: s[i]})
+                all_larva_pars.append(unflatten(flat_l))
+        else :
+            all_larva_pars=[larva_pars]*N
 
         for k, vs in parameter_dict.items():
             for l, v in zip(all_larva_pars, vs):

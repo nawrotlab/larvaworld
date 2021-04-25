@@ -266,3 +266,4 @@ dc_odor1,first_odor_concentration_change,$\delta{C}_{odor_{1}}$,$\delta{\hat{C}_
 A_olf,olfactory_activation,$A_{olf}$,$\hat{A}_{olf}$,Olfactory activation,"[-1.0, 1.0]",olfactory_activation,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 A_tur,turner_activation,$A_{tur}$,$\hat{A}_{tur}$,Turner activation,"[10.0, 40.0]",turner_activation,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 Act_tur,turner_activity,$Act_{tur}$,$\hat{Act}_{tur}$,Turner activity,"[-20.0, 20.0]",ang_activity,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+fo2cen,orientation_to_center,$\theta_{or_{cen}}$,$\hat{theta}_{or_{cen}}$,orientation angle $(deg)$,"[-180, 180]",orientation_to_center_in_deg,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>

@@ -1,3 +1,4 @@
+import copy
 from typing import List, Tuple
 import numpy as np
 
@@ -78,11 +79,12 @@ null_vis = {
 
 def get_dict(name, class_name=None, basic=True, as_entry=False, **kwargs):
     if name in list(all_null_dicts.keys()):
-        dic = all_null_dicts[name]
+        d = all_null_dicts[name]
     elif name == 'distro':
-        dic = null_distro(class_name=class_name, basic=basic)
+        d = null_distro(class_name=class_name, basic=basic)
     elif name == 'agent':
-        dic = null_agent(class_name=class_name)
+        d = null_agent(class_name=class_name)
+    dic = copy.deepcopy(d)
     if name == 'visualization':
         for k, v in dic.items():
             if k in list(kwargs.keys()):
@@ -212,10 +214,10 @@ all_null_dicts = {
                      'ranges': None,
                      'Ngrid': None},
     'visualization': null_vis,
-    'body': {'initial_length': 4.5,
+    'body': {'initial_length': 0.0045,
              'length_std': 0.0,
              'Nsegs': 2,
-             'seg_ratio': [0.5, 0.5]
+             'seg_ratio': None
              },
     'physics': {
         'torque_coef': 0.41,
@@ -237,25 +239,27 @@ all_null_dicts = {
                 'crawler_noise': 0.0,
                 'max_vel_phase': 1
                 },
-    'turner': {'neural': True,
-               'base_activation': 20.0,
-               'activation_range': [10.0, 40.0],
-               'noise': 0.15,
-               'activation_noise': 0.5
+    'turner': {'mode': None,
+               'base_activation': None,
+               'activation_range': None,
+               'noise': 0.0,
+               'activation_noise': 0.0,
+               'initial_amp': None,
+               'amp_range': None,
+               'initial_freq': None,
+               'freq_range': None,
                },
     'interference': {
-        'crawler_interference_free_window': 0.5,  # np.pi * 0.55,  # 0.9, #,
-        'feeder_interference_free_window': 0.0,
-        'crawler_interference_start': 0.5,  # np.pi * 0.3, #np.pi * 4 / 8,
-        'feeder_interference_start': 0.0,
-        'interference_ratio': 0.1
+        'crawler_phi_range': [0.0, 0.0],  # np.pi * 0.55,  # 0.9, #,
+        'feeder_phi_range': [0.0, 0.0],
+        'attenuation_ratio': 1.0
     },
     'intermitter': {'pause_dist': 'fit',
                     'stridechain_dist': 'fit',
-                    'intermittent_crawler': True,
+                    'intermittent_crawler': False,
                     'intermittent_feeder': False,
                     'EEB_decay_coef': 1.0,
-                    'EEB': 0.0},
+                    'EEB': 1.0},
     'olfactor': {
         'perception': 'log',
         'olfactor_noise': 0.0,
@@ -272,8 +276,14 @@ all_null_dicts = {
                'gamma': 0.6,
                'epsilon': 0.3,
                'train_dur': 20,
-               }
-
+               },
+    'modules': {'turner': False,
+                'crawler': False,
+                'interference': False,
+                'intermitter': False,
+                'olfactor': False,
+                'feeder': False,
+                'memory': False}
 }
 
 
@@ -379,7 +389,7 @@ def get_dict_dtypes(name, **kwargs):
                        'hunger_affects_balance': bool,
                        'hunger_sensitivity': float,
                        'deb_on': bool},
-        'crawler': {'waveform': ['realistic', 'square', 'gaussian'],
+        'crawler': {'waveform': ['realistic', 'square', 'gaussian', 'constant'],
                     'freq_range': Tuple[float, float],
                     'initial_freq': float,  # From D1 fit
                     'step_to_length_mu': float,  # From D1 fit
@@ -388,18 +398,20 @@ def get_dict_dtypes(name, **kwargs):
                     'crawler_noise': float,
                     'max_vel_phase': float
                     },
-        'turner': {'neural': bool,
+        'turner': {'mode': ['', 'neural', 'sinusoidal'],
                    'base_activation': float,
                    'activation_range': Tuple[float, float],
                    'noise': float,
-                   'activation_noise': float
+                   'activation_noise': float,
+                   'initial_amp': float,
+                   'amp_range': Tuple[float, float],
+                   'initial_freq': float,
+                   'freq_range': Tuple[float, float],
                    },
         'interference': {
-            'crawler_interference_free_window': float,  # np.pi * 0.55,  # 0.9, #,
-            'feeder_interference_free_window': float,
-            'crawler_interference_start': float,  # np.pi * 0.3, #np.pi * 4 / 8,
-            'feeder_interference_start': float,
-            'interference_ratio': float
+            'crawler_phi_range': Tuple[float, float],  # np.pi * 0.55,  # 0.9, #,
+            'feeder_phi_range': Tuple[float, float],
+            'attenuation_ratio': float
         },
         'intermitter': {'pause_dist': dict,
                         'stridechain_dist': dict,
@@ -423,7 +435,14 @@ def get_dict_dtypes(name, **kwargs):
                    'gamma': float,
                    'epsilon': float,
                    'train_dur': float,
-                   }
+                   },
+        'modules': {'turner': bool,
+                    'crawler': bool,
+                    'interference': bool,
+                    'intermitter': bool,
+                    'olfactor': bool,
+                    'feeder': bool,
+                    'memory': bool}
 
     }
     if name in list(all_dtypes.keys()):
@@ -432,6 +451,9 @@ def get_dict_dtypes(name, **kwargs):
         return get_distro_dtypes(**kwargs)
     elif name == 'agent':
         return get_agent_dtypes(**kwargs)
+
+
+module_keys = list(get_dict('modules').keys())
 
 
 def get_agent_dtypes(class_name):

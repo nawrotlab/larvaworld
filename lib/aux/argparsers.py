@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 
+from lib.conf.conf import loadConfDict
 
 sys.path.insert(0, '../../..')
 import lib.conf.env_conf as env
@@ -285,11 +286,13 @@ def get_space_kwargs(args):
 
 def add_place_kwargs(parser):
     parser.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae')
+    parser.add_argument('-M', '--larva_model', choices=list(loadConfDict('Model').keys()), help='The larva model to use')
     return parser
 
 
 def get_place_kwargs(args):
     place_kwargs = {
         'N': args.Nagents,
+        'larva_model': args.larva_model,
     }
     return place_kwargs

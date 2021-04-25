@@ -14,18 +14,30 @@ default_physics = {
     'bend_correction_coef': 1.4,
 }
 default_coupling = {
-    'crawler_interference_free_window': 0.55,  # np.pi * 0.55,  # 0.9, #,
-    'feeder_interference_free_window': 0.0,
-    'crawler_interference_start': 0.45,  # np.pi * 0.3, #np.pi * 4 / 8,
-    'feeder_interference_start': 0.0,
-    'interference_ratio': 0.1
+    'crawler_phi_range': (0.45, 1.0),  # np.pi * 0.55,  # 0.9, #,
+    'feeder_phi_range': (0.0, 0.0),  # np.pi * 0.3, #np.pi * 4 / 8,
+    'attenuation_ratio': 0.1
 }
-default_turner = {'neural': True,
-                  'base_activation': 20.0,
-                  'activation_range': [10.0, 40.0],
-                  'noise': 0.15,
-                  'activation_noise': 0.5
-                  }
+
+
+neural_turner = dtypes.get_dict('turner',
+                                mode='neural',
+                                base_activation=20.0,
+                                activation_range=[10.0, 40.0],
+                                noise=0.15,
+                                activation_noise=0.5,
+                                )
+
+sinusoidal_turner = dtypes.get_dict('turner',
+                                    mode='sinusoidal',
+                                    initial_amp=15.0,
+                                    amp_range=[0.0, 50.0],
+                                    initial_freq=0.3,
+                                    freq_range=[0.1, 1.0],
+                                    noise=0.15,
+                                    activation_noise=0.5,
+                                    )
+
 default_crawler = {'waveform': 'realistic',
                    'freq_range': [0.5, 2.5],
                    'initial_freq': 'sample',  # From D1 fit
@@ -35,13 +47,16 @@ default_crawler = {'waveform': 'realistic',
                    'crawler_noise': 0.1,
                    'max_vel_phase': 1
                    }
-locomotion = {'turner': True,
-              'crawler': True,
-              'interference': True,
-              'intermitter': True,
-              'olfactor': False,
-              'feeder': False,
-              'memory': False}
+
+constant_crawler = {'waveform': 'constant',
+                    'freq_range': [0.5, 2.5],
+                    'initial_freq': 'sample',  # From D1 fit
+                    'step_to_length_mu': 'sample',  # From D1 fit
+                    'step_to_length_std': 'sample',  # From D1 fit
+                    'initial_amp': 0.0012,
+                    'crawler_noise': 0.1,
+                    'max_vel_phase': 1
+                    }
 
 intermittent_crawler = {'pause_dist': 'fit',
                         'stridechain_dist': 'fit',
@@ -49,6 +64,7 @@ intermittent_crawler = {'pause_dist': 'fit',
                         'intermittent_feeder': False,
                         'EEB_decay_coef': 1,
                         'EEB': 0}
+
 sample_l3_seg2 = {'initial_length': 'sample',
                   'length_std': 0.0,
                   'Nsegs': 2,
@@ -61,8 +77,12 @@ sample_l3_seg11 = {'initial_length': 'sample',  # From D1 fit
                    # 'seg_ratio': [5 / 11, 6 / 11]
                    }
 
-brain_locomotion = {'modules': locomotion,
-                    'turner_params': default_turner,
+brain_locomotion = {'modules': dtypes.get_dict('modules',
+                                               crawler=True,
+                                               turner=True,
+                                               interference=True,
+                                               intermitter=True),
+                    'turner_params': neural_turner,
                     'crawler_params': default_crawler,
                     'interference_params': default_coupling,
                     'intermitter_params': intermittent_crawler,
@@ -70,105 +90,13 @@ brain_locomotion = {'modules': locomotion,
                     'feeder_params': None,
                     'memory_params': None,
                     'nengo': False}
+
 exploring_larva = {'energetics_params': None,
                    'neural_params': brain_locomotion,
                    'sensorimotor_params': default_physics,
                    'body_params': sample_l3_seg2,
                    'odor_params': dtypes.get_dict('odor'),
                    }
-
-# -------------------------------------------LARVA MODES----------------------------------------------------------
-# ---------------------------------------------------------------------------------------------------------------------
-
-sole_turner = {'turner': True,
-               'crawler': False,
-               'interference': False,
-               'intermitter': False,
-               'olfactor': False,
-               'feeder': False,
-               'memory': False}
-
-sole_crawler = {'turner': False,
-                'crawler': True,
-                'interference': False,
-                'intermitter': False,
-                'olfactor': False,
-                'feeder': False,
-                'memory': False}
-
-locomotion_no_interference = {'turner': True,
-                              'crawler': True,
-                              'interference': False,
-                              'intermitter': True,
-                              'olfactor': False,
-                              'feeder': False,
-                              'memory': False}
-
-two_osc_interference = {'turner': True,
-                        'crawler': True,
-                        'interference': True,
-                        'intermitter': False,
-                        'olfactor': False,
-                        'feeder': False,
-                        'memory': False}
-
-two_osc = {'turner': True,
-           'crawler': True,
-           'interference': False,
-           'intermitter': False,
-           'olfactor': False,
-           'feeder': False,
-           'memory': False}
-
-olfactor_turner = {'turner': True,
-                   'crawler': False,
-                   'interference': False,
-                   'intermitter': False,
-                   'olfactor': True,
-                   'feeder': False,
-                   'memory': False}
-
-olfactor_locomotion = {'turner': True,
-                       'crawler': True,
-                       'interference': True,
-                       'intermitter': True,
-                       'olfactor': True,
-                       'feeder': False,
-                       'memory': False}
-
-RL_olfactor = {'turner': True,
-               'crawler': True,
-               'interference': True,
-               'intermitter': True,
-               'olfactor': True,
-               'feeder': True,
-               'memory': True}
-
-feed_locomotion = {'turner': True,
-                   'crawler': True,
-                   'interference': True,
-                   'intermitter': True,
-                   'olfactor': False,
-                   'feeder': True,
-                   'memory': False}
-
-full_brain = {'turner': True,
-              'crawler': True,
-              'interference': True,
-              'intermitter': True,
-              'olfactor': True,
-              'feeder': True,
-              'memory': False}
-
-growth_locomotion = {'turner': True,
-                     'crawler': True,
-                     'interference': True,
-                     'intermitter': True,
-                     'olfactor': False,
-                     'feeder': True,
-                     'memory': False}
-
-module_keys = list(full_brain.keys())
 
 # --------------------------------------------TURNER MODES--------------------------------------------------------------
 intermitter_rover = {'pause_dist': 'fit',
@@ -209,9 +137,16 @@ def olfactor_conf(ids=['Odor'], means=[150.0], stds=None, noise=0.0):
         'decay_coef': 0.5}
 
 
+
 def brain_olfactor_conf(ids, means, stds=None, noise=0.0):
-    return {'modules': full_brain,
-            'turner_params': default_turner,
+    return {'modules': dtypes.get_dict('modules',
+                                       crawler=True,
+                                       turner=True,
+                                       interference=True,
+                                       intermitter=True,
+                                       olfactor=True,
+                                       feeder=True),
+            'turner_params': neural_turner,
             'crawler_params': default_crawler,
             'interference_params': default_coupling,
             'intermitter_params': intermittent_crawler,
@@ -225,12 +160,12 @@ def odor_larva_conf(ids, means, stds=None, noise=0.0,
                     odor_id=None, odor_intensity=0.0, odor_spread=0.0001
                     ):
     return copy.deepcopy({'energetics_params': None,
-             'neural_params': brain_olfactor_conf(ids, means, stds, noise),
-             'sensorimotor_params': default_physics,
-             'body_params': sample_l3_seg2,
-             'odor_params': dtypes.get_dict('odor', odor_id=odor_id,
-                                            odor_intensity=odor_intensity, odor_spread=odor_spread)
-             })
+                          'neural_params': brain_olfactor_conf(ids, means, stds, noise),
+                          'sensorimotor_params': default_physics,
+                          'body_params': sample_l3_seg2,
+                          'odor_params': dtypes.get_dict('odor', odor_id=odor_id,
+                                                         odor_intensity=odor_intensity, odor_spread=odor_spread)
+                          })
 
 
 # -----------------------------------------------FEEDER MODES-----------------------------------------------------------
@@ -288,28 +223,42 @@ RL_memory = {'DeltadCon': 0.1,
              'train_dur': 20,
              }
 
-brain_RLolfactor = {'modules': RL_olfactor,
-                    'turner_params': default_turner,
-                    'crawler_params': default_crawler,
-                    'interference_params': default_coupling,
-                    'intermitter_params': intermittent_crawler,
-                    'olfactor_params': olfactor_conf(ids=None),
-                    'feeder_params': default_feeder,
-                    'memory_params': RL_memory,
-                    'nengo': False}
+brain_RLolfactor = {
+    'modules': dtypes.get_dict('modules',
+                               crawler=True,
+                               turner=True,
+                               interference=True,
+                               intermitter=True,
+                               olfactor=True,
+                               feeder=True,
+                               memory=True),
+    'turner_params': neural_turner,
+    'crawler_params': default_crawler,
+    'interference_params': default_coupling,
+    'intermitter_params': intermittent_crawler,
+    'olfactor_params': olfactor_conf(ids=None),
+    'feeder_params': default_feeder,
+    'memory_params': RL_memory,
+    'nengo': False}
 
-brain_immobile_olfactor = {'modules': olfactor_turner,
-                           'turner_params': default_turner,
-                           'crawler_params': None,
-                           'interference_params': None,
-                           'intermitter_params': None,
-                           'olfactor_params': olfactor_conf(),
-                           'feeder_params': None,
-                           'memory_params': None,
-                           'nengo': False}
+brain_immobile_olfactor = {
+    'modules': dtypes.get_dict('modules', turner=True, olfactor=True),
+    'turner_params': neural_turner,
+    'crawler_params': None,
+    'interference_params': None,
+    'intermitter_params': None,
+    'olfactor_params': olfactor_conf(),
+    'feeder_params': None,
+    'memory_params': None,
+    'nengo': False}
 
-brain_olfactor = {'modules': olfactor_locomotion,
-                  'turner_params': default_turner,
+brain_olfactor = {'modules': dtypes.get_dict('modules',
+                                             turner=True,
+                                             crawler=True,
+                                             interference=True,
+                                             intermitter=True,
+                                             olfactor=True),
+                  'turner_params': neural_turner,
                   'crawler_params': default_crawler,
                   'interference_params': default_coupling,
                   'intermitter_params': intermittent_crawler,
@@ -318,8 +267,13 @@ brain_olfactor = {'modules': olfactor_locomotion,
                   'memory_params': None,
                   'nengo': False}
 
-brain_olfactor_x2 = {'modules': olfactor_locomotion,
-                     'turner_params': default_turner,
+brain_olfactor_x2 = {'modules': dtypes.get_dict('modules',
+                                                turner=True,
+                                                crawler=True,
+                                                interference=True,
+                                                intermitter=True,
+                                                olfactor=True),
+                     'turner_params': neural_turner,
                      'crawler_params': default_crawler,
                      'interference_params': default_coupling,
                      'intermitter_params': intermittent_crawler,
@@ -328,8 +282,13 @@ brain_olfactor_x2 = {'modules': olfactor_locomotion,
                      'memory_params': None,
                      'nengo': False}
 
-brain_feeder = {'modules': feed_locomotion,
-                'turner_params': default_turner,
+brain_feeder = {'modules': dtypes.get_dict('modules',
+                                           turner=True,
+                                           crawler=True,
+                                           interference=True,
+                                           intermitter=True,
+                                           feeder=True),
+                'turner_params': neural_turner,
                 'crawler_params': default_crawler,
                 'interference_params': default_coupling,
                 'intermitter_params': intermitter_rover,
@@ -338,8 +297,14 @@ brain_feeder = {'modules': feed_locomotion,
                 'memory_params': None,
                 'nengo': False}
 
-brain_feeder_olfactor = {'modules': full_brain,
-                         'turner_params': default_turner,
+brain_feeder_olfactor = {'modules': dtypes.get_dict('modules',
+                                                    crawler=True,
+                                                    turner=True,
+                                                    interference=True,
+                                                    intermitter=True,
+                                                    olfactor=True,
+                                                    feeder=True),
+                         'turner_params': neural_turner,
                          'crawler_params': default_crawler,
                          'interference_params': default_coupling,
                          'intermitter_params': intermitter_rover,
@@ -348,8 +313,14 @@ brain_feeder_olfactor = {'modules': full_brain,
                          'memory_params': None,
                          'nengo': False}
 
-brain_rover = {'modules': growth_locomotion,
-               'turner_params': default_turner,
+brain_rover = {'modules': dtypes.get_dict('modules',
+                                          crawler=True,
+                                          turner=True,
+                                          interference=True,
+                                          intermitter=True,
+                                          olfactor=False,
+                                          feeder=True),
+               'turner_params': neural_turner,
                'crawler_params': default_crawler,
                'interference_params': default_coupling,
                'intermitter_params': intermitter_rover,
@@ -358,8 +329,14 @@ brain_rover = {'modules': growth_locomotion,
                'memory_params': None,
                'nengo': False}
 
-brain_sitter = {'modules': growth_locomotion,
-                'turner_params': default_turner,
+brain_sitter = {'modules': dtypes.get_dict('modules',
+                                           crawler=True,
+                                           turner=True,
+                                           interference=True,
+                                           intermitter=True,
+                                           olfactor=False,
+                                           feeder=True),
+                'turner_params': neural_turner,
                 'crawler_params': default_crawler,
                 'interference_params': default_coupling,
                 'intermitter_params': intermitter_sitter,
@@ -381,13 +358,11 @@ odor_larva = {'energetics_params': None,
               'body_params': sample_l3_seg2,
               'odor_params': dtypes.get_dict('odor')}
 
-
-
 odor_larva_x2 = {'energetics_params': None,
                  'neural_params': brain_olfactor_x2,
                  'sensorimotor_params': default_physics,
                  'body_params': sample_l3_seg2,
-                 'odor_params': dtypes.get_dict('odor') }
+                 'odor_params': dtypes.get_dict('odor')}
 
 feeding_larva = {'energetics_params': None,
                  'neural_params': brain_feeder,
@@ -427,7 +402,13 @@ imitation_larva = {'energetics_params': None,
                    'body_params': l3_seg11,
                    'odor_params': dtypes.get_dict('odor')}
 
-brain_nengo = {'modules': full_brain,
+brain_nengo = {'modules': dtypes.get_dict('modules',
+                                          crawler=True,
+                                          turner=True,
+                                          interference=True,
+                                          intermitter=True,
+                                          olfactor=True,
+                                          feeder=True),
                'turner_params': {'initial_freq': 0.3,
                                  'initial_amp': 10.0,
                                  'noise': 0.0},
@@ -448,10 +429,6 @@ nengo_larva = {'energetics_params': None,
 odors3 = [f'{source}_odor' for source in ['Flag', 'Left_base', 'Right_base']]
 odors5 = [f'{source}_odor' for source in ['Flag', 'Left_base', 'Right_base', 'Left', 'Right']]
 
-
-
-
-
 king_larva_R = {**odor_larva_conf(ids=odors5, means=[150.0, 0.0, 0.0, 0.0, 0.0],
                                   odor_id='Right_odor', odor_intensity=2.0, odor_spread=0.00005)}
 
@@ -467,3 +444,30 @@ RL_odor_larva = {'energetics_params': None,
                  'body_params': sample_l3_seg2,
                  'odor_params': dtypes.get_dict('odor')}
 
+basic_brain = {'modules': dtypes.get_dict('modules',
+                                          turner=True,
+                                          crawler=True,
+                                          interference=False,
+                                          intermitter=False,
+                                          olfactor=True),
+               'turner_params': sinusoidal_turner,
+               # 'turner_params': neural_turner,
+               # 'crawler_params': default_crawler,
+               'crawler_params': constant_crawler,
+               'interference_params': default_coupling,
+               'intermitter_params': intermittent_crawler,
+               'olfactor_params': olfactor_conf(),
+               'feeder_params': None,
+               'memory_params': None,
+               'nengo': False}
+
+basic_larva = {'energetics_params': None,
+               'neural_params': basic_brain,
+               'sensorimotor_params': default_physics,
+               'body_params': {'initial_length': 'sample',
+                               'length_std': 0.0,
+                               'Nsegs': 1,
+                               'seg_ratio': None  # [5 / 11, 6 / 11]
+                               },
+               'odor_params': dtypes.get_dict('odor'),
+               }

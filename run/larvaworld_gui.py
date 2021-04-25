@@ -57,7 +57,7 @@ def run_gui():
     l_mod, collapsibles = build_model_tab(collapsibles)
     l_sim, collapsibles, graph_lists = build_sim_tab(collapsibles, graph_lists)
     l_batch, collapsibles, graph_lists = build_batch_tab(collapsibles, graph_lists)
-    l_anal, collapsibles, graph_lists = build_analysis_tab(collapsibles, graph_lists)
+    l_anal, collapsibles, graph_lists, dicts = build_analysis_tab(collapsibles, graph_lists, dicts)
 
     l_gui = [
         [sg.TabGroup([[

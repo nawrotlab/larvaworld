@@ -374,6 +374,7 @@ if __name__ == '__main__':
         'gamer_L': mod.king_larva_L,
         'gamer_R': mod.king_larva_R,
         'RL_learner': mod.RL_odor_larva,
+        'basic_navigator': mod.basic_larva,
 
     }
     for k, v in mod_dict.items():

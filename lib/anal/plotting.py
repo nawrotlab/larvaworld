@@ -2,6 +2,9 @@ import copy
 import heapq
 import itertools
 import warnings
+
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import cm, transforms, ticker, patches
@@ -405,10 +408,10 @@ def time_plot(fig, axs, data, agent_ids, parameters, dt=None, Nsubplots=1,
             if show_legend:
                 if legend_labels is None:
                     patch = [patches.Patch(color=color, label=name) for name, color in
-                               zip(background_for_chunks, colors)]
+                             zip(background_for_chunks, colors)]
                 else:
                     patch = [patches.Patch(color=color, label=name) for name, color in
-                               zip(legend_labels, colors)]
+                             zip(legend_labels, colors)]
                 plt.legend(handles=patch, loc='upper right', prop={'size': 15})
             for i, (chunk, color) in enumerate(zip(background_for_chunks, colors)):
                 start_flag = f'{chunk}_start'
@@ -748,24 +751,26 @@ def plot_marked_strides(dataset, agent_ids=None, title=' ', show_legend=True, sh
     dst = nam.scal('dst')
     v = nam.scal('vel')
 
-    fig_dict={}
+    fig_dict = {}
     for agent_id in agent_ids:
         filepaths = [f'{agent_id}_{f}' for f in generic_filepaths]
-        for i,(figsize, filepath, xlim) in enumerate(zip(figsizes, filepaths, xlims)):
+        for i, (figsize, filepath, xlim) in enumerate(zip(figsizes, filepaths, xlims)):
             try:
-                fig=d.plot_step_data(parameters=[v], mode='time', figsize=figsize, agent_ids=[agent_id],
-                                 ylabel=r'scal velocity, $v (sec^{-1})$', xlabel=r'time, $(sec)$', title=title,
-                                 show_legend=show_legend,
-                                 xlim=xlim,
-                                 # ylim=[0.0, ymax],
-                                 background_flags=[nam.id('stride')], background_for_chunks=['stride', 'non_stride'],
-                                 legend_labels=['stride', 'pause'],
-                                 marker_params=[nam.max(v), nam.min(v)],
-                                 save_to=save_to, save_as=filepath)
+                fig = d.plot_step_data(parameters=[v], mode='time', figsize=figsize, agent_ids=[agent_id],
+                                       ylabel=r'scal velocity, $v (sec^{-1})$', xlabel=r'time, $(sec)$', title=title,
+                                       show_legend=show_legend,
+                                       xlim=xlim,
+                                       # ylim=[0.0, ymax],
+                                       background_flags=[nam.id('stride')],
+                                       background_for_chunks=['stride', 'non_stride'],
+                                       legend_labels=['stride', 'pause'],
+                                       marker_params=[nam.max(v), nam.min(v)],
+                                       save_to=save_to, save_as=filepath)
                 fig_dict[f'strides_{agent_id}_{i}'] = fig
             except:
                 pass
     return fig_dict
+
 
 def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
                       vertical_boundaries=False, min_turn_angle=0, slices=[], return_fig=False):
@@ -878,8 +883,9 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
             plt.subplots_adjust(hspace=0.05, top=0.96, bottom=0.15, left=0.06, right=0.95)
             fig.savefig(f'{save_to}/{filepath}', dpi=300)
             print(f'Image saved as {filepath}')
-            fig_dict[f'turns_{agent_id}_{i}']=fig
+            fig_dict[f'turns_{agent_id}_{i}'] = fig
     return fig_dict
+
 
 def plot_velocity_spect_hist(dataset, agent_id=None,
                              titles=['scal velocity spectogram', 'scal velocity histogram'], return_fig=False):
@@ -1246,8 +1252,8 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         idx = [0, 1, 2, 6]
     elif mode == 'complete':
         idx = [0, 1, 2, 4, 5, 6]
-    elif mode in labels0 :
-        idx =[labels0.index(mode)]
+    elif mode in labels0:
+        idx = [labels0.index(mode)]
 
     labels = [labels0[i] for i in idx]
     ylabels = [ylabels0[i] for i in idx]
@@ -1381,7 +1387,7 @@ def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=Non
     ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
     ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
     ax.zaxis.set_major_locator(ticker.MaxNLocator(5))
-    if show :
+    if show:
         plt.show()
     if save_to is not None:
         os.makedirs(save_to, exist_ok=True)
@@ -1400,11 +1406,11 @@ def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=N
     # fig = plt.figure(figsize=(10, 5))
     fig, ax = plt.subplots(figsize=(12, 10))
     sns.heatmap(z, annot=True, fmt="g", cmap=cm.coolwarm,
-                      xticklabels=x.tolist(), yticklabels=y.tolist(), ax=ax,
-                      cbar_kws={"orientation": "vertical",
-                                'label': labels[2],
-                                # 'ticks': [1, 0, -1]
-                                })
+                xticklabels=x.tolist(), yticklabels=y.tolist(), ax=ax,
+                cbar_kws={"orientation": "vertical",
+                          'label': labels[2],
+                          # 'ticks': [1, 0, -1]
+                          })
     ax.xaxis.set_major_locator(ticker.MaxNLocator(4))
     ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
     ax.xaxis.set_ticks_position('top')
@@ -1419,7 +1425,7 @@ def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=N
     ax.set_xlabel(labels[0])
     if title is not None:
         ax.set_suptitle(title, fontsize=20)
-    if show :
+    if show:
         plt.show()
     if save_to is not None:
         os.makedirs(save_to, exist_ok=True)
@@ -1435,26 +1441,27 @@ def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=N
 
 
 def plot_3pars(df, labels, save_to, z0=None, pref=None, show=False):
-    fig_dict={}
-    pr=f'{labels[0]}VS{labels[1]}'
-    fig1=plot_3d(df, labels, save_to, pref=pref, save_as=None, show=show)
-    fig_dict[f'{pr}_3d']=fig1
+    fig_dict = {}
+    pr = f'{labels[0]}VS{labels[1]}'
+    fig1 = plot_3d(df, labels, save_to, pref=pref, save_as=None, show=show)
+    fig_dict[f'{pr}_3d'] = fig1
     try:
         x, y = np.unique(df[labels[0]].values), np.unique(df[labels[1]].values)
         X, Y = np.meshgrid(x, y)
 
         z = df[labels[2]].values.reshape(X.shape).T
 
-        fig2=plot_heatmap(x, y, z, labels, save_to=save_to, pref=pref, show=show)
-        fig3=plot_surface(X, Y, z, labels, save_to=save_to, z0=z0, pref=pref, show=show)
-        fig_dict[f'{pr}_heatmap']=fig2
-        fig_dict[f'{pr}_surface']=fig3
-    except :
+        fig2 = plot_heatmap(x, y, z, labels, save_to=save_to, pref=pref, show=show)
+        fig3 = plot_surface(X, Y, z, labels, save_to=save_to, z0=z0, pref=pref, show=show)
+        fig_dict[f'{pr}_heatmap'] = fig2
+        fig_dict[f'{pr}_surface'] = fig3
+    except:
         pass
     return fig_dict
 
-def plot_3d(df, labels, save_to, pref=None, save_as=None, show=False) :
-    l0,l1,l2=labels
+
+def plot_3d(df, labels, save_to, pref=None, save_as=None, show=False):
+    l0, l1, l2 = labels
     X = df[[l0, l1]]
     y = df[l2]
 
@@ -1508,6 +1515,7 @@ def plot_3d(df, labels, save_to, pref=None, save_as=None, show=False) :
     plt.close('all')
     return fig
 
+
 # f='../../data/SimGroup/batch_runs/chemorbit/chemotaxis_local_23'
 # ff=f'{f}/results.csv'
 # df=pd.read_csv(ff, index_col=0)
@@ -1515,7 +1523,7 @@ def plot_3d(df, labels, save_to, pref=None, save_as=None, show=False) :
 # plot_3d(df, labels, f, show=True)
 
 
-def plot_2d(df, labels, save_to, pref=None, save_as=None, show=False) :
+def plot_2d(df, labels, save_to, pref=None, save_as=None, show=False):
     par = labels[0]
     res = labels[0]
     p = df[par].values
@@ -1537,9 +1545,6 @@ def plot_2d(df, labels, save_to, pref=None, save_as=None, show=False) :
         print(f'3D plot saved as {filepath}')
     plt.close('all')
     return fig
-
-
-
 
 
 def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orientation.{suf}'):
@@ -1741,7 +1746,7 @@ def plot_spatiotemporal_variation(dataset, spatial_cvs, temporal_cvs, sizes=None
     if not os.path.exists(save_to):
         os.makedirs(save_to)
     filepath = os.path.join(save_to, save_as)
-    fig, ax = plt.subplots(1,1, figsize=(15, 15))
+    fig, ax = plt.subplots(1, 1, figsize=(15, 15))
     # r'$\Theta_{bend}$'
     c = 'c'
     svel_num_strings = ['{' + str(i + 1) + '}' for i in range(N_svels)]
@@ -1779,33 +1784,37 @@ def plot_distance_to_source(dataset, exp_type):
     l_time = 'time $(sec)$'
 
     Nquantiles = 3
-    fig_dict={}
+    fig_dict = {}
     if exp_type == 'chemorbit':
         y = 20
         fig_dict['dst_to_source'] = d.plot_step_data(parameters=['dst_to_center'], title=' ', mode='time',
-                         figsize=figsize, plot_quantiles=Nquantiles,
-                         xlim=[0, 600], ylim=[0, y], xlabel=l_time, ylabel=l_dst,
-                         save_to=save_to, save_as=f'dst_to_source_timeplot.{suf}')
+                                                     figsize=figsize, plot_quantiles=Nquantiles,
+                                                     xlim=[0, 600], ylim=[0, y], xlabel=l_time, ylabel=l_dst,
+                                                     save_to=save_to, save_as=f'dst_to_source_timeplot.{suf}')
 
         y = 5
-        fig_dict['scaled_dst_to_source'] =d.plot_step_data(parameters=['scaled_dst_to_center'], title=' ', mode='time',
-                         figsize=figsize, plot_quantiles=Nquantiles,
-                         xlim=[0, 600], ylim=[0, y], xlabel=l_time, ylabel=l_sc_dst,
-                         save_to=save_to, save_as=f'scaled_dst_to_source_timeplot.{suf}')
+        fig_dict['scaled_dst_to_source'] = d.plot_step_data(parameters=['scaled_dst_to_center'], title=' ', mode='time',
+                                                            figsize=figsize, plot_quantiles=Nquantiles,
+                                                            xlim=[0, 600], ylim=[0, y], xlabel=l_time, ylabel=l_sc_dst,
+                                                            save_to=save_to,
+                                                            save_as=f'scaled_dst_to_source_timeplot.{suf}')
 
     elif exp_type == 'chemotax':
         y = 450
-        fig_dict['dst_to_source'] =d.plot_step_data(parameters=['dst_to_chemotax_odor'], title=' ', mode='time',
-                         figsize=figsize, plot_quantiles=Nquantiles,
-                         xlim=[0, 180], ylim=[0, y], xlabel=l_time, ylabel=l_dst,
-                         save_to=save_to, save_as=f'dst_to_source_timeplot.{suf}')
+        fig_dict['dst_to_source'] = d.plot_step_data(parameters=['dst_to_chemotax_odor'], title=' ', mode='time',
+                                                     figsize=figsize, plot_quantiles=Nquantiles,
+                                                     xlim=[0, 180], ylim=[0, y], xlabel=l_time, ylabel=l_dst,
+                                                     save_to=save_to, save_as=f'dst_to_source_timeplot.{suf}')
 
         y = 120
-        fig_dict['scaled_dst_to_source'] =d.plot_step_data(parameters=['scaled_dst_to_chemotax_odor'], title=' ', mode='time',
-                         figsize=figsize, plot_quantiles=Nquantiles,
-                         xlim=[0, 180], ylim=[0, y], xlabel=l_time, ylabel=l_sc_dst,
-                         save_to=save_to, save_as=f'scaled_dst_to_source_timeplot.{suf}')
-    return  fig_dict
+        fig_dict['scaled_dst_to_source'] = d.plot_step_data(parameters=['scaled_dst_to_chemotax_odor'], title=' ',
+                                                            mode='time',
+                                                            figsize=figsize, plot_quantiles=Nquantiles,
+                                                            xlim=[0, 180], ylim=[0, y], xlabel=l_time, ylabel=l_sc_dst,
+                                                            save_to=save_to,
+                                                            save_as=f'scaled_dst_to_source_timeplot.{suf}')
+    return fig_dict
+
 
 def plot_olfaction(dataset):
     d = dataset
@@ -1939,13 +1948,8 @@ def plot_bend_change_over_displacement(dataset, return_fig=False):
     sd_data = s.loc[ind, sd].values
 
     bv_correction = bv_data / dataset.fr * np.sign(b_data)
-
-    # xlim=ylim=[-180,180]
-
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     ax.scatter(x=sd_data, y=bv_correction, marker='.')
-    # ax.set_xlim(xlim)
-    # ax.set_ylim(ylim)
     filename = f'bend_change_over_displacement.{suf}'
     return process_plot(fig, save_to, filename, return_fig)
 
@@ -1973,7 +1977,6 @@ def plot_stride_Dbend(datasets, labels, show_text=False, save_to=None, return_fi
         dbs.append(db)
 
     figsize = (5, 5)
-
     ylim = [-60, 60]
     xlim = [0, 85]
 
@@ -1986,9 +1989,7 @@ def plot_stride_Dbend(datasets, labels, show_text=False, save_to=None, return_fi
         ax.scatter(x=b0, y=db, marker='o', s=2.0, alpha=0.6, color=c, label=label)
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
-        # ax.set_xlabel('bend at stride start, deg')
         ax.set_xlabel(r'$\theta_{bend}$ at stride start $(deg)$')
-        # ax.set_ylabel('bend change over stride, deg')
         ax.set_ylabel(r'$\Delta\theta_{bend}$ over stride $(deg)$')
 
         m, k = np.polyfit(b0, db, 1)
@@ -1998,7 +1999,6 @@ def plot_stride_Dbend(datasets, labels, show_text=False, save_to=None, return_fi
         ax.plot(b0, m * b0 + k, linewidth=4, color=c)
         if show_text and i == 0:
             ax.text(80, 50, rf'$\Delta\theta_{{b}}={m} \theta_{{b}}$', fontsize=15)
-            # ax.text(80, 50, rf'$\Delta\theta_{{b}}={m}*\theta_{{b}} + {k}$', fontsize=15)
         print(f'Bend correction during strides for {label} fitted as : db={m}*b + {k}')
     plt.subplots_adjust(bottom=0.15, top=0.95, left=0.2, right=0.99, wspace=0.01)
     return process_plot(fig, save_to, filename, return_fig)
@@ -2009,7 +2009,8 @@ def plot_stride_Dorient(datasets, labels, simVSexp=False, absolute=True, save_to
     filename = f'stride_orient_change.{suf}'
 
     par_shorts = ['str_fo', 'str_ro']
-    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts,
+                                                                    to_return=['par', 'symbol', 'exp_symbol', 'unit'])
 
     ranges = [80, 80]
 
@@ -2046,17 +2047,10 @@ def plot_stride_Dorient(datasets, labels, simVSexp=False, absolute=True, save_to
     return process_plot(fig, save_to, filename, return_fig)
 
 
-def plot_interference(datasets, labels, mode='orientation', agent_idx=None,
-                      include_rear=True, save_to=None, save_as=None, return_fig=False):
+def plot_interference(datasets, labels, mode='orientation', agent_idx=None, save_to=None, save_as=None, return_fig=False):
     Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='interference')
     if save_as is None:
-        if agent_idx is None:
-            save_as = f'interference_{mode}.{suf}'
-        else:
-            save_as = f'interference_{mode}_agent_idx_{agent_idx}.{suf}'
-
-    # if agent_id is not None and N != 1:
-    #     raise ValueError('Individual larva data can be plotted only when a single dataset is provided.')
+        save_as = f'interference_{mode}.{suf}' if agent_idx is None else f'interference_{mode}_agent_idx_{agent_idx}.{suf}'
 
     par_shorts = ['sv']
     if mode == 'orientation':
@@ -2069,14 +2063,12 @@ def plot_interference(datasets, labels, mode='orientation', agent_idx=None,
     elif mode == 'spinelength':
         par_shorts.append('l')
 
-    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts,
+                                                                  to_return=['par', 'symbol', 'exp_symbol', 'unit'])
     fig, axs = plt.subplots(len(pars), 1, figsize=(10, len(pars) * 5), sharex=True)
     axs = axs.ravel()
 
-    if mode in ['bend', 'orientation']:
-        ang_ylim = [0, 60]
-    elif mode in ['spinelength']:
-        ang_ylim = None
+    ang_ylim = [0, 60] if mode in ['bend', 'orientation'] else None
 
     if agent_idx is not None:
         data = [[d.load_chunk_dataset(chunk='stride', parameter=p).loc[d.agent_ids[agent_idx]].values for p in pars] for
@@ -2087,27 +2079,24 @@ def plot_interference(datasets, labels, mode='orientation', agent_idx=None,
     for d0, c, color, label in zip(data, colors, colors, labels):
         if mode in ['bend', 'orientation']:
             d0 = [np.abs(d) for d in d0]
-        for i, (p, pd) in enumerate(zip(pars, d0)):
-            ts_m, ts_l, ts_h = np.nanquantile(pd, q=0.5, axis=0), \
-                               np.nanquantile(pd, q=0.25, axis=0), \
-                               np.nanquantile(pd, q=0.75, axis=0)
+        for i, (p,u, pd) in enumerate(zip(pars, units, d0)):
+            ts_m, ts_l, ts_h = [np.nanquantile(pd, q=q, axis=0) for q in [0.5,0.25,0.75]]
             plot_mean_and_range(x=np.arange(len(ts_m)), mean=ts_m, lb=ts_l, ub=ts_h, axis=axs[i],
                                 color_mean=c, color_shading=color, label=label)
             axs[i].yaxis.set_major_locator(ticker.MaxNLocator(4))
-            axs[i].set_ylim(ymin=0)
+            axs[i].legend(loc='upper right')
+            axs[i].set_ylabel(u)
+            ylim = ang_ylim if i != 0 else [0.0, 0.6]
+            axs[i].set_ylim(ymin=0.0)
+            axs[i].set_ylim(ylim)
+
     Nticks = 5
     ticks = np.linspace(0, Npoints - 1, Nticks)
     axs[-1].set_xticks(ticks=ticks)
     axs[-1].set_xticklabels(labels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
     axs[-1].set_xlim([0, Npoints - 1])
-    axs[-1].set_ylim(ymin=0)
     axs[-1].set_xlabel('$\phi_{stride}$')
 
-    for j in range(len(pars)):
-        axs[j].legend(loc='upper right')
-        axs[j].set_ylabel(units[j])
-        if j != 0:
-            axs[j].set_ylim(ang_ylim)
     fig.subplots_adjust(top=0.97, bottom=0.2 / len(pars), left=0.12, right=0.95, hspace=.1, wspace=0.05)
     return process_plot(fig, save_to, save_as, return_fig)
 
@@ -2272,7 +2261,7 @@ def plot_food_amount(datasets, labels, save_to=None, save_as=None, filt_amount=F
 
 
 def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False):
-    filename='PI_heatmap.pdf'
+    filename = 'PI_heatmap.pdf'
     print('Creating heatmap')
     new_data = pd.read_csv(csv_filepath, index_col=0)
     new_data.sort_index(ascending=True, inplace=True)
@@ -2280,7 +2269,6 @@ def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False):
     Lgains = new_data.index.values.astype(int)
     Rgains = new_data.columns.values.astype(int)
     Ngains = len(Lgains)
-
 
     grid_kws = {"height_ratios": (.9, .05), "hspace": 0.4}
     fig, ax = plt.subplots(figsize=(12, 10))
@@ -2321,16 +2309,17 @@ def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False):
 def plot_odor_concentration(datasets, labels=None, save_to=None, return_fig=False):
     return plot_timeplot('c_odor1', datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
 
+
 def plot_sensed_odor_concentration(datasets, labels=None, save_to=None, return_fig=False):
     return plot_timeplot('dc_odor1', datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
 
-def plot_timeplot(par_short, datasets, labels=None, save_to=None, return_fig=False) :
 
-    par_dict= par_conf.get_par_dict(short=par_short)
-    par=par_dict['par']
-    sim_label=par_dict['symbol']
-    xlabel=par_dict['unit']
-    ylim=par_dict['lim']
+def plot_timeplot(par_short, datasets, labels=None, save_to=None, return_fig=False):
+    par_dict = par_conf.get_par_dict(short=par_short)
+    par = par_dict['par']
+    sim_label = par_dict['symbol']
+    xlabel = par_dict['unit']
+    ylim = par_dict['lim']
     # ylim=gui.retrieve_value(par_dict['lim'], Tuple[float,float])
 
     d = datasets[0]
@@ -2357,7 +2346,7 @@ def plot_timeplot(par_short, datasets, labels=None, save_to=None, return_fig=Fal
     axs.set_ylabel(xlabel)
     axs.set_xlabel('time, $sec$')
     axs.set_xlim([trange[0], trange[-1]])
-    if ylim is not None :
+    if ylim is not None:
         axs.set_ylim(ylim)
     # axs.legend(loc='upper right')
     axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
@@ -2713,7 +2702,7 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
     ell_radius_x = np.sqrt(1 + pearson)
     ell_radius_y = np.sqrt(1 - pearson)
     ellipse = patches.Ellipse((0, 0), width=ell_radius_x * 2, height=ell_radius_y * 2,
-                               facecolor=facecolor, **kwargs)
+                              facecolor=facecolor, **kwargs)
 
     # Calculating the stdandard deviation of x from
     # the squareroot of the variance and multiplying
@@ -2777,19 +2766,18 @@ def plot_ang_pars(datasets, labels, simVSexp=False, absolute=True, include_turns
         par_shorts += ['tur_fo']
         ranges += [100]
 
-    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts,
+                                                                    to_return=['par', 'symbol', 'exp_symbol', 'unit'])
 
     filename = f'angular_pars_{len(pars)}.{suf}'
 
-    if simVSexp:
-        p_labels = [[sl, el] for sl, el in zip(sim_labels, exp_labels)]
-    else:
-        p_labels = [[sl] * Ndatasets for sl in sim_labels]
+    p_labels = [[sl, el] for sl, el in zip(sim_labels, exp_labels)]  if simVSexp else [[sl] * Ndatasets for sl in sim_labels]
 
     fig, axs = plt.subplots(1, len(pars), figsize=(len(pars) * 5, 5), sharey=True)
     axs = axs.ravel()
     nbins = 200
 
+    # vs=[]
     for i, (p, r, p_lab, xlab) in enumerate(zip(pars, ranges, p_labels, xlabels)):
         for j, d in enumerate(datasets):
             v = d.get_par(p).dropna().values
@@ -2798,6 +2786,12 @@ def plot_ang_pars(datasets, labels, simVSexp=False, absolute=True, include_turns
                 r1, r2 = 0, r
             else:
                 r1, r2 = -r, r
+            # if p=='bend_vel' :
+            #     vs.append(v)
+            # if len(vs)==2:
+            #     st, pv = ks_2samp(vs[0].T[0], vs[1].T[0])
+            #     print(st,pv)
+            #     raise
             x = np.linspace(r1, r2, nbins)
             weights = np.ones_like(v) / float(len(v))
             # exp_weights = np.ones_like(exp) / float(len(exp))
@@ -2822,7 +2816,8 @@ def plot_crawl_pars(datasets, labels, simVSexp=False, save_to=None, legend=False
     filename = f'crawl_pars.{suf}'
 
     par_shorts = ['str_N', 'str_tr', 'cum_d']
-    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts,
+                                                                    to_return=['par', 'symbol', 'exp_symbol', 'unit'])
     ranges = [(100, 300), (0.5, 1.0), (80, 320)]
 
     if simVSexp:
@@ -2930,7 +2925,8 @@ def plot_endpoint_params(datasets, labels, mode='full', save_to=None, save_as=No
 
         ]
 
-    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts,
+                                                                    to_return=['par', 'symbol', 'exp_symbol', 'unit'])
     pars = [p for p in pars if all([p in d.endpoint_data.columns for d in datasets])]
 
     if Ndatasets > 1:
@@ -3013,7 +3009,8 @@ def plot_turn_duration(datasets, labels, save_to=None, legend=False, absolute=Tr
     filename = f'turn_duration.{suf}'
 
     par_shorts = ['tur_fo', 'tur_t']
-    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts,
+                                                                  to_return=['par', 'symbol', 'exp_symbol', 'unit'])
 
     fig, axs = plt.subplots(1, 1, figsize=(5, 5))
 
@@ -3045,9 +3042,9 @@ def plot_turns(datasets, labels, save_to=None, return_fig=False):
     fig, axs = plt.subplots(1, 1, figsize=(5, 5))
 
     par_short = 'tur_fo'
-    par_dict= par_conf.get_par_dict(short=par_short)
-    par=par_dict['par']
-    xlabel=par_dict['unit']
+    par_dict = par_conf.get_par_dict(short=par_short)
+    par = par_dict['par']
+    xlabel = par_dict['unit']
 
     ts = []
     for d in datasets:
@@ -3068,9 +3065,119 @@ def plot_turns(datasets, labels, save_to=None, return_fig=False):
     fig.subplots_adjust(top=0.92, bottom=0.15, left=0.2, right=0.95, hspace=.005, wspace=0.05)
     return process_plot(fig, save_to, filename, return_fig)
 
+def plot_turn_Dorient2center(datasets, labels, save_to=None, return_fig=False):
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='turn')
+    filename = f'turn_Dorient2center.{suf}'
+    figsize = (10, 5)
+    fig, axs = plt.subplots(Ndatasets, 2, figsize=figsize,subplot_kw=dict(projection='polar'),sharex=True, sharey=True)
+    if Ndatasets>1 :
+        axs=axs.ravel()
+    p = 'orientation_to_center'
+    for k, (S, side) in enumerate(zip(['L', 'R'], ['left', 'right'])) :
+        b0_par = f'{p}_at_{S}turn_start'
+        b1_par = f'{p}_at_{S}turn_stop'
+        bd_par = f'{S}turn_{p}'
+        b0s = []
+        b1s = []
+        dbs = []
+        for d in datasets:
+            b0 = d.get_par(b0_par).dropna().values.flatten()
+            b1 = d.get_par(b1_par).dropna().values.flatten()
+            bd = d.get_par(bd_par).dropna().values.flatten()
+            b0s.append(b0)
+            b1s.append(b1)
+            dbs.append(bd)
+
+        for i, (b0, b1, db, label, c) in enumerate(zip(b0s, b1s, dbs, labels, colors)):
+            circular_hist(axs[2*i+k], np.deg2rad(b0), bins=16,alpha=0.3, label='start', color=c, offset=np.pi/2)
+            circular_hist(axs[2*i+k], np.deg2rad(b1), bins=16,alpha=0.6, label='stop', color=c, offset=np.pi/2)
+            axs[2*i+k].set_xticklabels([0, '', +90, '',180, '', -90, ''])
+            # Visualise by radius of bins
+            # circular_hist(ax[1], angles1, offset=np.pi / 2, density=False)
+            axs[2*i+k].legend(loc=[0.9, 0.9])
+
+    plt.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.9, wspace=0.4)
+    # plt.show()
+    return process_plot(fig, save_to, filename, return_fig)
+
+
+def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
+    """
+    Produce a circular histogram of angles on ax.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes._subplots.PolarAxesSubplot
+        axis instance created with subplot_kw=dict(projection='polar').
+
+    x : array
+        Angles to plot, expected in units of radians.
+
+    bins : int, optional
+        Defines the number of equal-width bins in the range. The default is 16.
+
+    density : bool, optional
+        If True plot frequency proportional to area. If False plot frequency
+        proportional to radius. The default is True.
+
+    offset : float, optional
+        Sets the offset for the location of the 0 direction in units of
+        radians. The default is 0.
+
+    gaps : bool, optional
+        Whether to allow gaps between bins. When gaps = False the bins are
+        forced to partition the entire [-pi, pi] range. The default is True.
+
+    Returns
+    -------
+    n : array or list of arrays
+        The number of values in each bin.
+
+    bins : array
+        The edges of the bins.
+
+    patches : `.BarContainer` or list of a single `.Polygon`
+        Container of individual artists used to create the histogram
+        or list of such containers if there are multiple input datasets.
+    """
+    # Wrap angles to [-pi, pi)
+    x = (x+np.pi) % (2*np.pi) - np.pi
+
+    # Force bins to partition entire circle
+    if not gaps:
+        bins = np.linspace(-np.pi, np.pi, num=bins+1)
+
+    # Bin data and record counts
+    n, bins = np.histogram(x, bins=bins)
+
+    # Compute width of each bin
+    widths = np.diff(bins)
+
+    # By default plot frequency proportional to area
+    if density:
+        # Area to assign each bin
+        area = n / x.size
+        # Calculate corresponding bin radius
+        radius = (area/np.pi) ** .5
+    # Otherwise plot frequency proportional to radius
+    else:
+        radius = n
+
+    # Plot data on ax
+    patches = ax.bar(bins[:-1], radius, zorder=1, align='edge', width=widths,
+                     edgecolor='C0', fill=True, linewidth=1, **kwargs)
+
+    # Set the direction of the zero angle
+    ax.set_theta_offset(offset)
+
+    # Remove ylabels for area plots (they are mostly obstructive)
+    if density:
+        ax.set_yticks([])
+
+    return n, bins, patches
 
 def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
-    fig_dict={}
+    fig_dict = {}
     warnings.filterwarnings('ignore')
     Ndatasets = len(datasets)
     if save_to is None:
@@ -3079,40 +3186,53 @@ def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
               'labels': labels,
               'save_to': save_to}
     for scaled in [True, False]:
-        for fig_cols in [1,2] :
-            s='scaled_' if scaled else ''
-            l=f'{s}dispersion_{fig_cols}'
-            fig_dict[l]=plot_dispersion(**config, scaled=scaled, fig_cols=fig_cols)
+        for fig_cols in [1, 2]:
+            s = 'scaled_' if scaled else ''
+            l = f'{s}dispersion_{fig_cols}'
+            fig_dict[l] = plot_dispersion(**config, scaled=scaled, fig_cols=fig_cols)
 
-    fig_dict['stride_Dbend']=plot_stride_Dbend(**config, show_text=False)
-    fig_dict['stride_Dorient']=plot_stride_Dorient(**config, simVSexp=simVSexp, absolute=True)
-    fig_dict['ang_pars']=plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=3)
+    try:
+        fig_dict['stride_Dbend'] = plot_stride_Dbend(**config, show_text=False)
+    except:
+        pass
+    try:
+        fig_dict['stride_Dorient'] = plot_stride_Dorient(**config, simVSexp=simVSexp, absolute=True)
+    except :
+        pass
+    try :
+        fig_dict['ang_pars'] = plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=3)
+    except :
+        pass
     # plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=5, include_rear=True)
     # plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=5)
 
     for r in ['broad']:
         # for r in ['default', 'restricted', 'broad']:
-        fig_dict[f'bout_fit_all_{r}']=plot_stridesNpauses(**config, plot_fits='all', time_unit='sec', range=r, only_fit_one=True)
-        fig_dict[f'bout_fit_best_{r}']=plot_stridesNpauses(**config, plot_fits='best', time_unit='sec', range=r)
+        try :
+            fig_dict[f'bout_fit_all_{r}'] = plot_stridesNpauses(**config, plot_fits='all', time_unit='sec', range=r,
+                                                                only_fit_one=True)
+            fig_dict[f'bout_fit_best_{r}'] = plot_stridesNpauses(**config, plot_fits='best', time_unit='sec', range=r)
+        except :
+            pass
     for mode in ['orientation', 'orientation_x2', 'bend', 'spinelength']:
         for agent_idx in [None, 0, 1]:
-            i='' if agent_idx is None else f'_{agent_idx}'
+            i = '' if agent_idx is None else f'_{agent_idx}'
             try:
-                fig_dict[f'interference_{mode}{i}']=plot_interference(**config, mode=mode, agent_idx=agent_idx)
+                fig_dict[f'interference_{mode}{i}'] = plot_interference(**config, mode=mode, agent_idx=agent_idx)
             except:
                 pass
     try:
-        fig_dict['calibration']=calibration_plot(save_to=save_to)
+        fig_dict['calibration'] = calibration_plot(save_to=save_to)
     except:
         pass
-    fig_dict['crawl_pars']=plot_crawl_pars(**config, simVSexp=simVSexp)
+    fig_dict['crawl_pars'] = plot_crawl_pars(**config, simVSexp=simVSexp)
 
-    fig_dict['turns']=plot_turns(**config)
-    fig_dict['turn_duration']=plot_turn_duration(**config)
+    fig_dict['turns'] = plot_turns(**config)
+    fig_dict['turn_duration'] = plot_turn_duration(**config)
 
     # for mode in ['minimal']:
     for mode in ['minimal', 'limited', 'full']:
-        fig_dict[f'endpoint_{mode}']=plot_endpoint_params(**config, mode=mode)
+        fig_dict[f'endpoint_{mode}'] = plot_endpoint_params(**config, mode=mode)
     combine_pdfs(file_dir=save_to)
     return fig_dict
 
@@ -3179,8 +3299,7 @@ def plot_endpoint_scatter(datasets, labels, save_to=None, par_shorts=None, retur
     for i, (p0, p1) in enumerate(pairs):
         ax = axs[i]
         pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=[p0, p1],
-                                                                      to_return=['par', 'symbol', 'exp_symbol','unit'])
-
+                                                                      to_return=['par', 'symbol', 'exp_symbol', 'unit'])
 
         v0_all = [d.endpoint_data[pars[0]].values for d in datasets]
         v1_all = [d.endpoint_data[pars[1]].values for d in datasets]
@@ -3278,8 +3397,8 @@ def barplot(datasets, labels, par_shorts=['f_am'], coupled_labels=None, xlabel=N
     else:
         filename = save_as
 
-    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par', 'symbol', 'exp_symbol', 'unit'])
-
+    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts,
+                                                                  to_return=['par', 'symbol', 'exp_symbol', 'unit'])
 
     # Pull the formatting out here
     bar_kwargs = {'width': w, 'color': colors, 'linewidth': 4, 'zorder': 5, 'align': 'center'}
@@ -3324,7 +3443,7 @@ def barplot(datasets, labels, par_shorts=['f_am'], coupled_labels=None, xlabel=N
         plt.ylim(0, h)
         if xlabel is not None:
             plt.xlabel(xlabel)
-        if show :
+        if show:
             plt.show()
         return process_plot(fig, save_to, filename, return_fig)
 
@@ -3383,7 +3502,6 @@ def calibration_plot(save_to=None, files=None):
     filepath = os.path.join(save_to, filename)
     save_plot(fig, filepath, filename)
     return fig
-
 
 
 graph_dict = {

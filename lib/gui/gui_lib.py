@@ -830,7 +830,7 @@ def retrieve_value(v, t):
         vv = int(v)
     elif type(v) == t:
         vv = v
-    elif t == List[Tuple[float, float]]:
+    elif t in [List[Tuple[float, float]], List[float], List[int]]:
         if type(v) == str:
             v = v.replace('{', ' ')
             v = v.replace('}', ' ')
@@ -838,11 +838,17 @@ def retrieve_value(v, t):
             v = v.replace(']', ' ')
             v = v.replace('(', ' ')
             v = v.replace(')', ' ')
-            v = v.replace(',', ' ')
-            vv = [tuple([float(x) for x in t.split()]) for t in v.split('   ')]
+
+            if t==List[Tuple[float, float]] :
+                v = v.replace(',', ' ')
+                vv = [tuple([float(x) for x in t.split()]) for t in v.split('   ')]
+            elif t==List[float] :
+                vv = [float(x) for x in v.split(',')]
+            elif t==List[int] :
+                vv = [int(x) for x in v.split(',')]
         elif type(v) == list:
             vv = v
-    elif t in [Tuple[float, float], Tuple[int, int]] and type(v) == str:
+    elif t in [Tuple[float, float], Tuple[int, int], ] and type(v) == str:
         v = v.replace('{', '')
         v = v.replace('}', '')
         v = v.replace('[', '')
@@ -958,16 +964,18 @@ def gui_table(data, pars_dict, title='Agent list'):
         elem = table_window.find_element_with_focus()
         current_cell = elem.Key if elem and type(elem.Key) is tuple else (0, 0)
         r, c = current_cell
-
-        if event.startswith('Down'):
-            r = r + 1 * (r < Nagents - 1)
-        elif event.startswith('Left'):
-            c = c - 1 * (c > 0)
-        elif event.startswith('Right'):
-            c = c + 1 * (c < Npars - 1)
-        elif event.startswith('Up'):
-            r = r - 1 * (r > 0)
-        elif event in pars:  # Perform a sort if a column heading was clicked
+        try :
+            if event.startswith('Down'):
+                r = r + 1 * (r < Nagents - 1)
+            elif event.startswith('Left'):
+                c = c - 1 * (c > 0)
+            elif event.startswith('Right'):
+                c = c + 1 * (c < Npars - 1)
+            elif event.startswith('Up'):
+                r = r - 1 * (r > 0)
+        except :
+            pass
+        if event in pars:  # Perform a sort if a column heading was clicked
             col_clicked = pars.index(event)
             try:
                 table = [[int(values[(row, col)]) for col in range(Npars)] for row in range(Nagents)]
@@ -1086,8 +1094,9 @@ class SectionDict:
                 k0 = f'{self.name}_{k}'
                 if t == bool:
                     new_dict[k] = window[f'TOGGLE_{k0}'].metadata.state
-                elif t == dict or type(t) == dict:
-                    new_dict[k] = self.subdicts[k0].get_dict(values, window)
+                elif t == dict or type(t) == dict :
+                    if k0 in list(values.keys()) and values[k0] not in ['fit', 'sample']:
+                        new_dict[k] = self.subdicts[k0].get_dict(values, window)
                 else:
                     new_dict[k] = retrieve_value(values[k0], t)
         return new_dict

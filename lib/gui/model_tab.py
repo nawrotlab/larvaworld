@@ -2,7 +2,6 @@ import copy
 
 import PySimpleGUI as sg
 
-from lib.conf.larva_conf import module_keys
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, save_gui_conf, delete_gui_conf, b12_kws, \
     b6_kws, CollapsibleTable, graphic_button, t10_kws, t12_kws, t18_kws
 from lib.conf.conf import loadConfDict, loadConf
@@ -23,14 +22,7 @@ def init_model(collapsibles={}):
         collapsibles[name] = CollapsibleDict(name, True, dict=d, type_dict=t_d, **kwargs)
 
     module_conf = []
-    # for k, v in larva_model['neural_params']['modules'].items():
-    #     dic = larva_model['neural_params'][f'{k}_params']
-    #     if k == 'olfactor':
-    #         dic.pop('odor_dict')
-    #     s = CollapsibleDict(k.upper(), False, dict=dic, dict_name=k.upper(), toggle=v)
-    #     collapsibles.update(s.get_subdicts())
-    #     module_conf.append(s.get_section())
-    for k in module_keys:
+    for k in dtypes.module_keys:
         d = dtypes.get_dict(k)
         t_d = dtypes.get_dict_dtypes(k)
         s = CollapsibleDict(k.upper(), False, dict=d, type_dict=t_d, dict_name=k.upper(), toggle=True)
@@ -74,7 +66,7 @@ def update_model(larva_model, window, collapsibles):
 
 
 def get_model(window, values, collapsibles):
-    module_dict = dict(zip(module_keys, [window[f'TOGGLE_{k.upper()}'].metadata.state for k in module_keys]))
+    module_dict = dict(zip(dtypes.module_keys, [window[f'TOGGLE_{k.upper()}'].metadata.state for k in dtypes.module_keys]))
     model = {}
     model['neural_params'] = {}
     model['neural_params']['modules'] = module_dict

@@ -25,6 +25,9 @@ def sim_enrichment(d, experiment):
         d.detect_turns(is_last=False)
     elif experiment == 'dispersion':
         d.enrich(length_and_centroid=False, is_last=False)
+    elif experiment in ['chemotaxis_local', 'chemotaxis_diffusion']:
+        d.angular_analysis(is_last=False)
+        d.detect_turns(track_params = ['orientation_to_center'],is_last=False)
     return d
 
 
@@ -63,11 +66,9 @@ def sim_analysis(d, exp_type):
         cc = {'datasets': datasets,
               'labels': labels,
               'save_to': d.plot_dir}
-
         fig_dict['gut'] = plot_gut(**cc)
         fig_dict['food_amount'] = plot_food_amount(**cc)
         fig_dict['food_amount_filt'] = plot_food_amount(filt_amount=True, **cc)
-        # raise
         fig_dict['pathlength'] = plot_pathlength(scaled=False, **cc)
         fig_dict['endpoint'] = plot_endpoint_params(mode='deb', **cc)
         try:
@@ -93,10 +94,6 @@ def sim_analysis(d, exp_type):
             save_as = f'{l}.pdf'
             fig_dict[l] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c)
 
-
-
-
-
     elif exp_type == 'dispersion':
         target_dataset = load_reference_dataset()
         datasets = [d, target_dataset]
@@ -110,6 +107,8 @@ def sim_analysis(d, exp_type):
 
 
     elif exp_type in ['chemotaxis_approach', 'chemotaxis_local', 'chemotaxis_diffusion']:
+        if exp_type in ['chemotaxis_local', 'chemotaxis_diffusion']:
+            fig_dict['turn_Dorient2center'] = plot_turn_Dorient2center(datasets=[d], labels=[d.id])
         for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
             fig_dict[p] = plot_timeplot(p, datasets=[d])
         dic = plot_distance_to_source(dataset=d, exp_type=exp_type)
@@ -126,25 +125,6 @@ def sim_analysis(d, exp_type):
     elif exp_type == 'realistic_imitation':
         d.save_agent(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
     return fig_dict, results
-
-
-# def init_sim(env_params):
-#     env = LarvaWorldSim(env_params=env_params,
-#                         vis_kwargs=dtypes.get_dict('visualization', mode='video',
-#                                                           visible_clock=False, visible_state=False))
-#     env.is_running = True
-#     return env
-
-
-# def configure_sim(env_params):
-#     env = init_sim(env_params)
-#     while env.is_running:
-#         env.step()
-#         env.render()
-#     source_list = env.get_agent_list(class_name='Source')
-#     border_list = env.get_agent_list(class_name='Border')
-#     return source_list, border_list
-
 
 def run_sim_basic(
         sim_params,
@@ -167,6 +147,7 @@ def run_sim_basic(
     Nsec = sim_params['sim_dur'] * 60
     path = sim_params['path']
     Box2D = sim_params['Box2D']
+
     if save_to is None:
         save_to = paths.SimFolder
     if path is not None:
@@ -191,15 +172,14 @@ def run_sim_basic(
 
     collected_pars = collection_conf(dataset=d, collections=collections)
     env = LarvaWorldSim(id=id, dt=dt, Box2D=Box2D,
-                        # larva_pars=larva_pars,
                         env_params=env_params, collected_pars=collected_pars,
                         life_params=life_params, Nsteps=Nsteps,
                         save_to=d.vis_dir, experiment=experiment,
                         **kwargs, vis_kwargs=vis_kwargs)
     # Prepare the odor layer for a number of timesteps
-    odor_prep_time = 0.0
+    # odor_prep_time = 0.0
     # larva_prep_time = 0.5
-    env.prepare_odor_layer(int(odor_prep_time * 60 / env.dt))
+    # env.prepare_odor_layer(int(odor_prep_time * 60 / env.dt))
     # Prepare the flies for a number of timesteps
     # env.prepare_flies(int(larva_prep_time * 60 / env.dt))
     print(f'Initialized simulation {id}!')
@@ -231,8 +211,8 @@ def run_sim_basic(
             d.save()
             fun.dict_to_file(param_dict, d.sim_pars_file_path)
             # Save the odor layer
-            if env.Nodors > 0:
-                env.plot_odorscape(save_to=d.plot_dir)
+            # if env.Nodors > 0:
+            #     env.plot_odorscape(save_to=d.plot_dir)
         print(f'Simulation completed in {dur} seconds!')
         res = d
     env.close()
@@ -287,7 +267,7 @@ def load_reference_dataset():
 #     return config
 
 
-def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None):
+def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, larva_model=None):
     if life_params is None:
         life_params = {'starvation_hours': None,
                        'hours_as_larva': 0.0,
@@ -296,12 +276,18 @@ def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None):
     env = exp_conf['env_params']
     if type(env) == str:
         env = loadConf(env, 'Env')
-    for k, v in env['larva_params'].items():
-        if type(v['model']) == str:
-            v['model'] = loadConf(v['model'], 'Model')
+
     if N is not None:
         for k in list(env['larva_params'].keys()):
             env['larva_params'][k]['N'] = N
+    if larva_model is not None:
+        for k in list(env['larva_params'].keys()):
+            env['larva_params'][k]['model'] = larva_model
+
+    for k, v in env['larva_params'].items():
+        if type(v['model']) == str:
+            v['model'] = loadConf(v['model'], 'Model')
+
     exp_conf['env_params'] = env
     exp_conf['life_params'] = life_params
     exp_conf['sim_params'] = sim_params

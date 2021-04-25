@@ -46,6 +46,8 @@ lin_pars = {
 
     "max_dst_to_center": 'max_dst_to_center_in_mm',
     "max_scaled_dst_to_center": 'max_scaled_dst_to_center',
+    "mean_scaled_dst_to_center": 'mean_scaled_dst_to_center',
+    "mean_dst_to_center": 'mean_dst_to_center_in_mm',
 
     "final_dst_to_chemotax_odor": 'dst_to_chemotax_odor_in_mm',
     "final_scaled_dst_to_chemotax_odor": 'scaled_dst_to_chemotax_odor',
@@ -279,7 +281,9 @@ output = {
         'dst_to_center', 'scaled_dst_to_center', 'orientation_to_center'
                             ],
                    'endpoint': ['final_dst_to_center', 'final_scaled_dst_to_center',
-                                'max_dst_to_center', 'max_scaled_dst_to_center']},
+                                'max_dst_to_center', 'max_scaled_dst_to_center',
+                                'mean_dst_to_center', 'mean_scaled_dst_to_center',
+                                ]},
     'chemotax_dst': {'step': ['dst_to_chemotax_odor', 'scaled_dst_to_chemotax_odor'],
                      'endpoint': ['final_dst_to_chemotax_odor', 'final_scaled_dst_to_chemotax_odor']},
     'midline': None,

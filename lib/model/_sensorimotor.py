@@ -297,17 +297,21 @@ class BodySim(BodyManager):
         # TECH : Move the agent
         # Compute orientation
         dt = self.model.dt
-        head = self.get_head()
-        pos_old, or_old = head.get_pose()
-        head_rear_old = self.get_global_rear_end_of_head()
-
-        d_or = ang_vel * dt
-        or_new = or_old + d_or
-        k = np.array([math.cos(or_new), math.sin(or_new)])
-
+        do = ang_vel * dt
         d = lin_vel * dt
-        head_rear_new = head_rear_old + k * d
-        pos_new = head_rear_new + k * self.seg_lengths[0] / 2
+
+        head = self.get_head()
+        hp0, o0 = head.get_pose()
+
+
+        o1 = o0 + do
+        k = np.array([math.cos(o1), math.sin(o1)])
+
+        if self.Nsegs>1 :
+            p1_torque = self.get_global_rear_end_of_head() + k * d
+            hp1 = p1_torque + k * self.seg_lengths[0] / 2
+        else :
+            hp1 = hp0 + k * d
 
         # head_front_local_p = self.get_local_front_end_of_seg(seg_index=0)
         # head_front_global_p = self.get_head().get_world_point(head_front_local_p)
@@ -316,9 +320,11 @@ class BodySim(BodyManager):
 
         # points=[pos_new]
         # points=[pos_new, front_pos_new]
-        in_tank = fun.inside_polygon(points=[pos_new], tank_polygon=self.tank_polygon)
+        in_tank = fun.inside_polygon(points=[hp1], tank_polygon=self.tank_polygon)
         if len(self.model.border_lines) > 0:
-            border_collision = fun.border_collision(line=LineString([head_rear_old, head_rear_new]),
+            # temp1=self.get_global_front_end_of_head()
+            temp2=self.get_global_rear_end_of_body()
+            border_collision = fun.border_collision(line=LineString([hp1, temp2]),
                                                     border_lines=self.model.border_lines)
 
         else:
@@ -331,27 +337,29 @@ class BodySim(BodyManager):
         if not in_tank or border_collision or larva_collision:
             lin_vel = 0
             d = 0
-            head_rear_new = head_rear_old
             ang_vel += np.pi / 20
-            d_or = ang_vel * dt
-            or_new = or_old + d_or
-            k = np.array([math.cos(or_new), math.sin(or_new)])
-            pos_new = head_rear_new + k * self.seg_lengths[0] / 2
-        head.set_pose(pos_new, or_new)
+            do = ang_vel * dt
+            o1 = o0 + do
+            k = np.array([math.cos(o1), math.sin(o1)])
+            if self.Nsegs > 1:
+                p1_torque = self.get_global_rear_end_of_head()
+                hp1 = p1_torque + k * self.seg_lengths[0] / 2
+            else :
+                hp1 = hp0
+
+        head.set_pose(hp1, o1)
         head.set_lin_vel(lin_vel)
         head.set_ang_vel(ang_vel)
-        head.update_vertices(pos_new, or_new)
-        self.position_rest_of_body(d_or, head_rear_pos=head_rear_new, head_or=or_new)
+        head.update_vertices(hp1, o1)
+        if self.Nsegs > 1:
+            self.position_rest_of_body(do, head_rear_pos=p1_torque, head_or=o1)
 
         self.step_dst = d
         self.cum_dst += d
-        if self.Nsegs == 2:
-            pos = head_rear_new
-        else:
-            pos = self.get_global_midspine_of_body()
-        self.model.space.move_agent(self, pos)
-        self.trajectory.append(pos)
-        self.pos = pos
+        p1 = self.get_global_midspine_of_body()
+        self.model.space.move_agent(self, p1)
+        self.trajectory.append(p1)
+        self.pos = p1
         # print(self.pos)
         # print(self.pos)
         # print(head.get_position())

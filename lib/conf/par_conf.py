@@ -419,7 +419,16 @@ def set_ParDb():
                              # 'collect' : 'ang_activity'
                              }
 
+    par_db.loc['fo2cen'] = {'par': 'orientation_to_center',
+                             'symbol': r'$\theta_{or_{cen}}$',
+                             'exp_symbol': '$\hat{theta}_{or_{cen}}$',
+                             'unit': 'orientation angle $(deg)$',
+                             # 'lim': [-180, 180],
+                             # 'collect' : 'ang_activity'
+                             }
+
     par_db['lim'] = None
+    par_db['lim'].loc['fo2cen'] = [-180, 180]
     par_db['lim'].loc['b'] = [-180, 180]
     par_db['lim'].loc['fo'] = [0, 360]
     par_db['lim'].loc['ro'] = [0, 360]
@@ -528,6 +537,7 @@ def set_ParShelve(par_db):
 
 
 def get_par_dict(short=None, par=None, retrieve_from='shelve'):
+    dic=None
     if retrieve_from == 'shelve':
         db = shelve.open(paths.ParShelve_path)
     elif retrieve_from == 'par_db':
@@ -579,7 +589,7 @@ def get_runtime_pars():
     return fun.unique_list([p for p in list(step_database.keys()) if par_in_db(par=p)])
 
 
-# print(par_db.loc['dc_odor1'])
+# print(get_par_dict(par='orientation_to_center'))
 # print(random_ar2)
 # print('c_odor1' in par_db.index.to_list())
 # print(par_db['par'].loc[par_db['collect'].isin([None])])

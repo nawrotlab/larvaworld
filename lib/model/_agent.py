@@ -1,3 +1,4 @@
+import time
 from copy import deepcopy
 import numpy as np
 from Box2D import Box2D, b2ChainShape
@@ -214,11 +215,11 @@ class Larva(LarvaworldAgent):
 
     @property
     def dst_to_center_in_mm(self):
-        return euclidean(tuple(self.pos), (0, 0)) * 1000 / self.model.scaling_factor
+        return np.sqrt(np.sum(np.array(self.pos)**2)) * 1000 / self.model.scaling_factor
 
     @property
     def scaled_dst_to_center(self):
-        return euclidean(tuple(self.pos), (0, 0)) / self.get_sim_length()
+        return np.sqrt(np.sum(np.array(self.pos)**2)) / self.get_sim_length()
 
     @property
     def dst_to_chemotax_odor_in_mm(self):
@@ -232,15 +233,21 @@ class Larva(LarvaworldAgent):
 
     @property
     def max_dst_to_center_in_mm(self):
-        return np.nanmax([euclidean(tuple(self.trajectory[i]),
-                                    (0.0, 0.0)) for i in
-                          range(len(self.trajectory))]) * 1000 / self.model.scaling_factor
+        return np.nanmax(np.sqrt(np.sum(np.array(self.trajectory)**2, axis=1))) * 1000/ self.model.scaling_factor
 
     @property
     def max_scaled_dst_to_center(self):
-        return np.nanmax([euclidean(tuple(self.trajectory[i]),
-                                    (0.0, 0.0)) for i in
-                          range(len(self.trajectory))]) / self.get_sim_length()
+        d = np.nanmax(np.sqrt(np.sum(np.array(self.trajectory)**2, axis=1)))/ self.get_sim_length()
+        return d
+
+    @property
+    def mean_dst_to_center_in_mm(self):
+        return np.nanmean(np.sqrt(np.sum(np.array(self.trajectory)**2, axis=1)))* 1000 / self.model.scaling_factor
+
+    @property
+    def mean_scaled_dst_to_center(self):
+        d = np.nanmean(np.sqrt(np.sum(np.array(self.trajectory)**2, axis=1)))/ self.get_sim_length()
+        return d
 
     @property
     def dispersion_max_in_mm(self):

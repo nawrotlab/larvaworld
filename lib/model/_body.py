@@ -274,6 +274,10 @@ class LarvaBody:
         self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
         if seg_ratio is None:
             seg_ratio = [1 / Nsegs] * Nsegs
+        elif type(seg_ratio)==str :
+            seg_ratio= seg_ratio.replace('(', '')
+            seg_ratio= seg_ratio.replace(')', '')
+            seg_ratio = [float(x) for x in seg_ratio.split(',')]
         self.seg_ratio = seg_ratio
         self.interval = interval
         self.shape_scale = 1
@@ -684,7 +688,9 @@ class LarvaBody:
         return np.array(self.segs[0].get_world_point(self.local_front_end_of_head))
 
     def get_global_midspine_of_body(self):
-        if self.Nsegs == 2:
+        if self.Nsegs == 1:
+            return self.segs[0].get_position()
+        elif self.Nsegs == 2:
             return self.get_global_rear_end_of_head()
         if (self.Nsegs % 2) == 0:
             seg_idx = int(self.Nsegs / 2)

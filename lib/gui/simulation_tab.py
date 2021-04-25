@@ -89,7 +89,9 @@ def build_sim_tab(collapsibles, graph_lists):
     for s in [s1, s2, s3, s4]:
         collapsibles.update(**s.get_subdicts())
     l_exp = [sg.Col([
-        [sg.Text('Experiment', **t10_kws), graphic_button('load', 'LOAD_EXP'), graphic_button('play', 'RUN_EXP')],
+        [sg.Text('Experiment', **t10_kws, tooltip='The currently selected simulation experiment.'),
+         graphic_button('load', 'LOAD_EXP', tooltip='Load the configuration for a simulation experiment.'),
+         graphic_button('play', 'RUN_EXP', tooltip='Run the selected simulation experiment.')],
         [sg.Combo(list(loadConfDict('Exp').keys()), key='EXP', enable_events=True, readonly=True, **t18_kws)]
     ])]
     sim_conf = [[sg.Text('Sim id:'), sg.In('unnamed_sim', key='sim_id')],
@@ -103,7 +105,8 @@ def build_sim_tab(collapsibles, graph_lists):
     s2 = CollapsibleDict('Visualization', False, dict=dtypes.get_dict('visualization', mode='video', video_speed=60),
                          type_dict=dtypes.get_dict_dtypes('visualization'), toggled_subsections=None)
     s3 = CollapsibleDict('Life', False, dict=dtypes.get_dict('life'), type_dict=dtypes.get_dict_dtypes('life'),
-                         next_to_header=[graphic_button('edit', 'CONF_LIFE')])
+                         next_to_header=[graphic_button('edit', 'CONF_LIFE',
+                                                        tooltip='Configure the life history of the simulated larvae.')])
     s4 = CollapsibleDict('Replay', False, dict=dtypes.get_dict('replay'), type_dict=dtypes.get_dict_dtypes('replay'))
     for s in [s1, s2, s3, s4]:
         collapsibles.update(s.get_subdicts())
@@ -118,11 +121,11 @@ def build_sim_tab(collapsibles, graph_lists):
         [graph_lists['EXP'].get_layout()]
     ])]]
     l_env0 = [sg.Col([
-        [sg.Text('Environment', **t10_kws),
-         graphic_button('load', 'LOAD_ENV'),
-         graphic_button('edit', 'CONF_ENV'),
-         graphic_button('data_add', 'SAVE_ENV'),
-         graphic_button('data_remove', 'DELETE_ENV'),
+        [sg.Text('Environment', **t10_kws, tooltip='The currently selected environment configuration'),
+         graphic_button('load', 'LOAD_ENV', tooltip='Load a stored environment configuration.'),
+         graphic_button('edit', 'CONF_ENV', tooltip='Configure an existing or draw an entirely new environment.'),
+         graphic_button('data_add', 'SAVE_ENV', tooltip='Save a new environment configuration.'),
+         graphic_button('data_remove', 'DELETE_ENV', tooltip='Delete an existing environment configuration.'),
          ],
         [sg.Combo(list(loadConfDict('Env').keys()), key='ENV_CONF', enable_events=True, readonly=True, **t18_kws)],
     ])]
