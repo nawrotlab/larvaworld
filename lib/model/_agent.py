@@ -11,17 +11,14 @@ from shapely.geometry import Point, Polygon
 import lib.aux.functions as fun
 import lib.aux.rendering as ren
 
-
 class LarvaworldAgent:
-    def __init__(self,
-                 unique_id: str,
-                 model, pos=None, default_color=None, radius=None,
+    def __init__(self,unique_id: str,model, pos=None, default_color=None, radius=None,
                  odor_id=None, odor_intensity=0.0, odor_spread=0.1, group='', can_be_carried=False):
         self.selected = False
         self.unique_id = unique_id
         self.model = model
         self.group = group
-        self.base_odor_id = f'{group} base odor'
+        self.base_odor_id = f'{group}_base_odor'
         self.gain_for_base_odor = 100
 
         self.initial_pos = pos
@@ -42,7 +39,6 @@ class LarvaworldAgent:
         self.carried_objects = []
         self.can_be_carried = can_be_carried
         self.is_carried_by = None
-        # print(self.get_odor_id(), self.group)
 
     def get_position(self):
         return tuple(self.pos)

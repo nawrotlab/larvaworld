@@ -1,9 +1,7 @@
 """Here we state all possible collected parameters for the simulations"""
 import numpy as np
 from operator import attrgetter
-
 from mesa.datacollection import DataCollector
-# from scipy.spatial.distance import euclidean
 
 import lib.aux.functions as fun
 

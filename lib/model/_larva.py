@@ -4,7 +4,7 @@ from copy import deepcopy
 from nengo import Simulator
 
 from lib.aux import functions as fun
-from lib.model import *
+from lib.model import Larva, BodyReplay, BodySim, DEB, DefaultBrain, NengoBrain
 
 
 class LarvaReplay(Larva, BodyReplay):
@@ -52,6 +52,7 @@ class LarvaReplay(Larva, BodyReplay):
             BodyReplay.__init__(self, model, pos=self.pos, orientation=self.or_ar[0][0],
                                 initial_length=self.sim_length, length_std=0, Nsegs=Nsegs, interval=0)
         self.data = data
+
     def read_step(self, i):
         self.midline = self.mid_ar[i].tolist()
         self.vertices = self.con_ar[i]
@@ -141,8 +142,6 @@ class LarvaReplay(Larva, BodyReplay):
                 viewer.draw_circle(radius=self.radius, position=self.pos,
                                    filled=False, color=self.model.selection_color, width=self.radius / 3)
 
-
-
     def set_color(self, color):
         self.color = color
 
@@ -153,9 +152,10 @@ class LarvaSim(BodySim, Larva):
                        **larva_pars['odor_params'], group=group, default_color=default_color)
         # print(list(larva_pars['neural_params'].keys()))
         # FIXME : Get rid of this
-        try :
-            larva_pars['neural_params']['olfactor_params']['odor_dict'] = self.update_odor_dicts(larva_pars['neural_params']['olfactor_params']['odor_dict'])
-        except :
+        try:
+            larva_pars['neural_params']['olfactor_params']['odor_dict'] = self.update_odor_dicts(
+                larva_pars['neural_params']['olfactor_params']['odor_dict'])
+        except:
             pass
         self.brain = self.build_brain(larva_pars['neural_params'])
         self.build_energetics(larva_pars['energetics_params'])
@@ -169,20 +169,21 @@ class LarvaSim(BodySim, Larva):
         self.food_detected, self.food_source, self.feeder_motion, self.current_amount_eaten, self.feed_success = False, None, False, 0, False
         try:
             self.odor_concentrations = self.brain.olfactor.cur_con
-        except :
-            self.odor_concentrations= {}
+        except:
+            self.odor_concentrations = {}
         self.olfactory_activation = 0
 
     def update_odor_dicts(self, odor_dict):  #
 
-        temp={'mean': 0.0, 'std': 0.0}
-        food_odor_ids = fun.unique_list([s.get_odor_id() for s in self.model.get_food() + [self] if s.get_odor_id() is not None])
+        temp = {'mean': 0.0, 'std': 0.0}
+        food_odor_ids = fun.unique_list(
+            [s.get_odor_id() for s in self.model.get_food() + [self] if s.get_odor_id() is not None])
         if odor_dict is None:
             odor_dict = {}
             # odor_dict = {odor_id: temp for odor_id in food_odor_ids}
         for odor_id in food_odor_ids:
             if odor_id not in list(odor_dict.keys()):
-                odor_dict[odor_id]=temp
+                odor_dict[odor_id] = temp
         return odor_dict
 
     def compute_next_action(self):
@@ -219,9 +220,9 @@ class LarvaSim(BodySim, Larva):
             return {}
         else:
             pos = self.get_olfactor_position()
-            cons={}
-            for id, layer in odor_layers.items() :
-                v=layer.get_value(pos)
+            cons = {}
+            for id, layer in odor_layers.items():
+                v = layer.get_value(pos)
                 cons[id] = v + np.random.normal(scale=v * self.brain.olfactor.noise)
             # if self.brain.olfactor.noise:
             #     values = [v + np.random.normal(scale=v * self.brain.olfactor.noise) for v in values]
@@ -237,7 +238,7 @@ class LarvaSim(BodySim, Larva):
                 else:
                     return False, None, None
             else:
-                accessible_food = [a for a in self.model.get_food() if (a.contained(pos) and a.amount>0)]
+                accessible_food = [a for a in self.model.get_food() if (a.contained(pos) and a.amount > 0)]
                 # accessible_food = fun.agents_spatial_query(pos=pos, radius=radius,agent_list=self.model.get_food())
                 if accessible_food:
                     food = random.choice(accessible_food)
@@ -465,16 +466,15 @@ class LarvaSim(BodySim, Larva):
     def bend_acc(self):
         return np.rad2deg(self.body_bend_acc)
 
-
     @property
     def front_orientation_vel(self):
         return np.rad2deg(self.get_head().get_angularvelocity())
 
     def resolve_carrying(self, food):
-        if food.can_be_carried:
+        if food.can_be_carried and food not in self.carried_objects:
             if food.is_carried_by is not None:
                 prev_carrier = food.is_carried_by
-                if prev_carrier==self :
+                if prev_carrier == self:
                     return
                 prev_carrier.carried_objects.remove(food)
                 prev_carrier.brain.olfactor.reset_all_gains()
@@ -482,20 +482,18 @@ class LarvaSim(BodySim, Larva):
                 #     prev_carrier.brain.olfactor.reset_gain(prev_carrier.base_odor_id)
             food.is_carried_by = self
             self.carried_objects.append(food)
-
-
             if self.model.experiment == 'capture_the_flag':
                 self.brain.olfactor.set_gain(self.gain_for_base_odor, self.base_odor_id)
             elif self.model.experiment == 'keep_the_flag':
-                carrier_group=self.group
-                carrier_group_odor_id=self.get_odor_id()
-                opponent_group=fun.LvsRtoggle(carrier_group)
-                opponent_group_odor_id=f'{opponent_group} group odor'
+                carrier_group = self.group
+                carrier_group_odor_id = self.get_odor_id()
+                opponent_group = fun.LvsRtoggle(carrier_group)
+                opponent_group_odor_id = f'{opponent_group}_odor'
                 for f in self.model.get_flies():
-                    if f.group==carrier_group :
+                    if f.group == carrier_group:
                         f.brain.olfactor.set_gain(f.gain_for_base_odor, opponent_group_odor_id)
                         # f.brain.olfactor.set_gain(0.0, 'Flag odor')
-                    else :
+                    else:
                         f.brain.olfactor.set_gain(0.0, carrier_group_odor_id)
                         # f.brain.olfactor.reset_gain('Flag odor')
                 self.brain.olfactor.set_gain(-self.gain_for_base_odor, opponent_group_odor_id)

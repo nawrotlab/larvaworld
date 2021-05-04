@@ -17,7 +17,7 @@ from lib.conf.conf import loadConfDict, loadConf, next_idx
 
 def init_env(collapsibles):
     s1 = CollapsibleDict('Arena', True, dict=dtypes.get_dict('arena'), type_dict=dtypes.get_dict_dtypes('arena'))
-    s2 = CollapsibleDict('Food grid', True, dict=dtypes.get_dict('food_grid'),
+    s2 = CollapsibleDict('Food_grid', True, dict=dtypes.get_dict('food_grid'),disp_name='Food grid',
                          type_dict=dtypes.get_dict_dtypes('food_grid'), toggle=True, disabled=False)
     s3 = CollapsibleDict('Odorscape', True, dict=dtypes.get_dict('odorscape'),
                          type_dict=dtypes.get_dict_dtypes('odorscape'))
@@ -26,7 +26,7 @@ def init_env(collapsibles):
     food_conf = [
         collapsibles['source_groups'].get_section(),
         collapsibles['source_units'].get_section(),
-        collapsibles['Food grid'].get_section()
+        collapsibles['Food_grid'].get_section()
     ]
     collapsibles['Sources'] = Collapsible('Sources', True, food_conf)
 
@@ -43,7 +43,7 @@ def init_env(collapsibles):
 
 def update_env(env_params, window, collapsibles):
     food_params = env_params['food_params']
-    collapsibles['Food grid'].update(window, food_params['food_grid'])
+    collapsibles['Food_grid'].update(window, food_params['food_grid'])
     collapsibles['Arena'].update(window, env_params['arena_params'])
     collapsibles['Odorscape'].update(window, env_params['odorscape'])
     border_list = env_params['border_list'] if 'border_list' in env_params.keys() else {}
@@ -59,7 +59,7 @@ def get_env(window, values, collapsibles, extend=True):
         'larva_params': d['larva_groups'].dict,
         'food_params': {
             'source_groups': d['source_groups'].dict,
-            'food_grid': d['Food grid'].get_dict(values, window),
+            'food_grid': d['Food_grid'].get_dict(values, window),
             'source_units': d['source_units'].dict,
         },
         'border_list': d['border_list'].dict,
@@ -74,7 +74,11 @@ def get_env(window, values, collapsibles, extend=True):
     return env0
 
 
-def build_sim_tab(collapsibles, graph_lists):
+def build_sim_tab():
+    collapsibles={}
+    graph_lists={}
+
+
     s1 = CollapsibleTable('larva_groups', True, headings=['group', 'color', 'N', 'model'], dict={},
                           disp_name='Larva groups',
                           type_dict=dtypes.get_dict_dtypes('distro', class_name='Larva', basic=False))

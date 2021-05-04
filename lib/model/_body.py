@@ -9,9 +9,6 @@ from shapely.ops import cascaded_union
 # TODO Find a way to use this. Now if changed everything is scal except locomotion. It seems that
 #  ApplyForceToCenter function does not scale
 # _world_scale = np.int(100)
-# from matplotlib.patches import Circle
-# from shapely.geometry import Polygon, Point
-
 
 import lib.aux.functions as fun
 

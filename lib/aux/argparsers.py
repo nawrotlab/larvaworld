@@ -1,13 +1,13 @@
 import sys
 import numpy as np
 
-from lib.conf.conf import loadConfDict
+
 
 sys.path.insert(0, '../../..')
 import lib.conf.env_conf as env
 import lib.aux.functions as fun
 import lib.conf.dtype_dicts as dtypes
-
+from lib.conf.conf import loadConfDict
 
 
 def add_vis_kwargs(parser):

@@ -1,10 +1,6 @@
 import os
-from os import listdir
-from os.path import isfile, join
-
 import six
 from PyPDF2 import PdfFileMerger, PdfFileReader
-import os
 import numpy as np
 from PIL import Image
 from matplotlib import pyplot as plt
@@ -13,11 +9,9 @@ from matplotlib import pyplot as plt
 def combine_images(filenames=None, file_dir='.', save_as='combined_image.pdf', save_to='.', size=(1000, 1000),
                    figsize=None):
     if filenames is None:
-        filenames = [f for f in listdir(f'{file_dir}/') if isfile(join(f'{file_dir}/', f))]
+        filenames = [f for f in os.listdir(f'{file_dir}/') if os.path.isfile(os.path.join(f'{file_dir}/', f))]
     filenames = np.sort(filenames)
     files = [os.path.join(file_dir, name) for name in filenames]
-    # print(files)
-
     x, y = size
     if figsize is None:
         if len(files) <= 4:
@@ -53,7 +47,7 @@ def combine_images(filenames=None, file_dir='.', save_as='combined_image.pdf', s
 
 def combine_videos_4to1(filenames=None, file_dir='.', save_as='combined_videos.mp4', save_to='.'):
     if filenames is None:
-        filenames = [f for f in listdir(f'{file_dir}/') if isfile(join(f'{file_dir}/', f))]
+        filenames = [f for f in os.listdir(f'{file_dir}/') if os.path.isfile(os.path.join(f'{file_dir}/', f))]
     filenames = np.sort(filenames)
     files = [os.path.join(file_dir, name) for name in filenames]
     temp_files = [os.path.join(file_dir, name) for name in ['output1.mp4', 'output2.mp4']]

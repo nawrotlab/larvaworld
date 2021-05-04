@@ -1,6 +1,5 @@
 import itertools
 import random
-
 import numpy as np
 from scipy import signal
 from scipy.stats import lognorm, rv_discrete

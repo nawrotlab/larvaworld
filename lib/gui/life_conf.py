@@ -1,16 +1,10 @@
-import copy
-import random
-from typing import Tuple
-
 import PySimpleGUI as sg
 import numpy as np
 
 import lib.aux.functions as fun
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.plotting import plot_debs
-from lib.gui.gui_lib import CollapsibleDict, check_collapsibles, check_toggles, \
-    retrieve_dict, t5_kws, t2_kws, color_pick_layout, popup_color_chooser, b_kws, t40_kws, b_kws, w_kws, t8_kws, \
-    delete_figure_agg, draw_canvas, retrieve_value, t24_kws, t10_kws
+from lib.gui.gui_lib import check_toggles, b_kws, w_kws, delete_figure_agg, draw_canvas, t24_kws, t10_kws
 from lib.model.deb import deb_dict, deb_default
 
 W, H = 1400, 700
@@ -93,7 +87,6 @@ def life_conf():
     while True:
         e, v = w.read()
         check_toggles(w, e)
-        # info = w["info"]
         if e in [None, 'Cancel']:
             break
         elif e == 'Ok':
@@ -126,11 +119,20 @@ def life_conf():
                 delete_figure_agg(fig_agg)
             fig_agg = draw_canvas(canvas, fig)
         if e == 'SLIDER_starvation_start' and v['SLIDER_starvation_start'] > v['SLIDER_starvation_stop']:
-            w.Element('SLIDER_starvation_start').Update(value=v['SLIDER_starvation_stop'])
-        if e == 'SLIDER_starvation_stop' and v['SLIDER_starvation_stop'] < v['SLIDER_starvation_start']:
             w.Element('SLIDER_starvation_stop').Update(value=v['SLIDER_starvation_start'])
+        if e == 'SLIDER_starvation_stop' and v['SLIDER_starvation_stop'] < v['SLIDER_starvation_start']:
+            w.Element('SLIDER_starvation_start').Update(value=v['SLIDER_starvation_stop'])
         for ii in ['starvation_start', 'starvation_stop', 'age']:
             w.Element(f'SLIDER_{ii}').Update(range=(0.0, deb_model['puppation'] - deb_model['birth']))
+        for t1,t2 in starvation_hours :
+            if t1<v['SLIDER_starvation_start']<t2 :
+                w.Element('SLIDER_starvation_start').Update(value=t2)
+            elif v['SLIDER_starvation_start']<t1 and v['SLIDER_starvation_stop']>t1:
+                w.Element('SLIDER_starvation_stop').Update(value=t1)
+            if t1<v['SLIDER_starvation_stop']<t2 :
+                w.Element('SLIDER_starvation_stop').Update(value=t1)
+            elif v['SLIDER_starvation_stop']>t2 and v['SLIDER_starvation_start']<t2:
+                w.Element('SLIDER_starvation_start').Update(value=t2)
     w.close()
     return life
 

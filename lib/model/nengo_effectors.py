@@ -31,10 +31,6 @@ class NengoBrain(Network, Brain):
         else :
             self.intermitter=None
 
-
-
-
-
     def build(self, input_manager, olfactor=False):
 
         with self:
@@ -160,7 +156,6 @@ class NengoBrain(Network, Brain):
             self.p_angular_s = Probe(angular_s)
             self.p_feeding_s = Probe(feeding_s)
 
-
     def mean_odor_change(self, data, Nticks):
         c = data[self.p_change]
         mean_c = np.mean(c[-Nticks:], axis=0)[0]
@@ -214,7 +209,6 @@ class NengoManager:
         self.odor_concentrations = np.zeros(Nodors)
 
         self.scaled_stride_step = self.crawler.step_to_length_mu
-
 
     def add_value(self, value):
         self.activation += value

@@ -13,7 +13,7 @@ class GuppiesViewer(object):
         x = 1550
         y = 400
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x, y)
-
+        self.w_loc = [int(x) for x in os.environ['SDL_VIDEO_WINDOW_POS'].split(',')]
         self.zoom = zoom
         self.caption = caption
         self.window_size = width, height
@@ -26,6 +26,8 @@ class GuppiesViewer(object):
 
         self.display_size = self.scale_dims()
         self._window = self.init_screen()
+
+        # winInfo = pygame.PygameWindowInfo()
 
         if record_video_to:
             import imageio

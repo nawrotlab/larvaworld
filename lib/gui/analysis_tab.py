@@ -1,14 +1,9 @@
 import os
-
 import PySimpleGUI as sg
-import matplotlib
-import inspect
-from tkinter import *
-
-from PySimpleGUI import BUTTON_TYPE_BROWSE_FOLDER
+# from tkinter import *
 
 from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, t10_kws, t16_kws
-from lib.stor.paths import SingleRunFolder, RefFolder
+from lib.stor import paths
 from lib.anal.plotting import graph_dict
 from lib.stor.larva_dataset import LarvaDataset
 
@@ -34,7 +29,10 @@ def change_dataset_id(window, values, data):
     return data
 
 
-def build_analysis_tab(collapsibles, graph_lists, dicts):
+def build_analysis_tab():
+    collapsibles = {}
+    graph_lists = {}
+    dicts={'analysis_data' : {}}
     data = dicts['analysis_data']
     data_list = [
         [sg.Text('Datasets', **t8_kws),
@@ -44,8 +42,8 @@ def build_analysis_tab(collapsibles, graph_lists, dicts):
          graphic_button('edit', 'Change ID', tooltip='Change the dataset ID transiently or permanently.')],
         [sg.Col([[sg.Listbox(values=list(data.keys()), size=(16, len(data)), change_submits=False, key='DATASET_IDS',
                              enable_events=True),
-                  graphic_button('search_add', 'DATASET_DIR', initial_folder=SingleRunFolder, change_submits=True,
-                                 enable_events=True, target=(0, -1), button_type=BUTTON_TYPE_BROWSE_FOLDER,
+                  graphic_button('search_add', 'DATASET_DIR', initial_folder=paths.SingleRunFolder, change_submits=True,
+                                 enable_events=True, target=(0, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
                                  tooltip='Browse to add datasets to the analysis list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')]])]]
 
     graph_lists['ANALYSIS'] = ButtonGraphList(name='ANALYSIS', fig_dict=graph_dict)
@@ -68,7 +66,7 @@ def eval_analysis(event, values, window, collapsibles, graph_lists, dicts):
             update_data_list(window, dicts['analysis_data'])
 
     elif event == 'Add ref':
-        d = LarvaDataset(dir=RefFolder)
+        d = LarvaDataset(dir=paths.RefFolder)
         dicts['analysis_data'][d.id] = d
         window.Element('DATASET_IDS').Update(values=list(dicts['analysis_data'].keys()))
     elif event == 'Remove':

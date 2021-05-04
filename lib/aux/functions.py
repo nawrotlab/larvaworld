@@ -88,6 +88,8 @@ def restore_bend_2seg(bend, d, l, correction_coef=1.0):
         return bend * (1 - d / k0)
     elif k0 <= d:
         return 0
+    elif d<0 :
+        return bend
 
 
 def circle_to_polygon(sides, radius, rotation=0, translation=None):
@@ -499,6 +501,7 @@ def downsample_2d_array(a, step):
 def compute_velocity(xy, dt, return_dst=False):
     x = xy[:, 0]
     y = xy[:, 1]
+
     dx = np.diff(x)
     dy = np.diff(y)
     d = np.sqrt(dx ** 2 + dy ** 2)

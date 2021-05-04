@@ -5,10 +5,9 @@ import numpy as np
 import progressbar
 import os
 from typing import List, Any
-
 import webcolors
 
-from lib.envs._maze import Border
+
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -24,7 +23,7 @@ import lib.aux.rendering as ren
 from lib.aux.sampling import sample_agents, get_ref_bout_distros
 import lib.aux.functions as fun
 from lib.aux import naming as nam
-
+from lib.envs._maze import Border
 import lib.conf.dtype_dicts as dtypes
 from lib.model import *
 from lib.model._agent import LarvaworldAgent
@@ -612,6 +611,15 @@ class LarvaWorld:
             self.l_t = 0
             self.r_t = 0
 
+        elif self.experiment == 'catch_me' :
+            self.target_group='Left' if random.uniform(0,1)>0.5 else 'Right'
+            self.follower_group = 'Right' if self.target_group=='Left' else 'Left'
+            for f in self.get_flies() :
+                if f.group==self.target_group :
+                    f.brain.olfactor.gain = {id : -v for id,v in f.brain.olfactor.gain.items()}
+            self.score = {self.target_group : 0.0,
+                          self.follower_group : 0.0}
+
     def check_end_condition(self):
         if self.experiment == 'capture_the_flag':
             flag_p = self.flag.get_position()
@@ -646,6 +654,25 @@ class LarvaWorld:
                     print('Right group wins')
                     self.end_condition_met = True
             self.sim_state.set_text(f'L:{np.round(dur - self.l_t, 2)} vs R:{np.round(dur - self.r_t, 2)}')
+
+        elif self.experiment == 'catch_me':
+            def set_target_group(group) :
+                self.target_group = group
+                self.follower_group = 'Right' if self.target_group == 'Left' else 'Left'
+                for f in self.get_flies():
+                    f.brain.olfactor.gain = {id: -v for id, v in f.brain.olfactor.gain.items()}
+            targets={f:f.get_position() for f in self.get_flies() if f.group==self.target_group}
+            followers=[f for f in self.get_flies() if f.group==self.follower_group]
+            for f in followers :
+                if any([f.contained(p) for p in list(targets.values())]):
+                    set_target_group(f.group)
+                    break
+            self.score[self.target_group]+=self.dt
+            for group,score in self.score.items() :
+                if score>=1200.0 :
+                    print(f'{group} group wins')
+                    self.end_condition_met = True
+            self.sim_state.set_text(f'L:{np.round(self.score["Left"],1)} vs R:{np.round(self.score["Right"],1)}')
 
     def create_borders(self, lines):
         s = self.scaling_factor

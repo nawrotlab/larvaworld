@@ -355,6 +355,7 @@ if __name__ == '__main__':
         'maze': env.maze_env,
         'keep_the_flag': env.king_env,
         'capture_the_flag': env.flag_env,
+        'catch_me': env.catch_me_env,
         'chemotaxis_RL': env.RL_chemorbit_env,
     }
     for k, v in env_dict.items():
@@ -373,6 +374,8 @@ if __name__ == '__main__':
         'gamer': mod.flag_larva,
         'gamer_L': mod.king_larva_L,
         'gamer_R': mod.king_larva_R,
+        'follower_R': mod.follower_R,
+        'follower_L': mod.follower_L,
         'RL_learner': mod.RL_odor_larva,
         'basic_navigator': mod.basic_larva,
 
@@ -422,6 +425,7 @@ if __name__ == '__main__':
         'maze': exp.maze,
         'keep_the_flag': exp.keep_the_flag,
         'capture_the_flag': exp.capture_the_flag,
+        'catch_me': exp.catch_me,
         'chemotaxis_RL': exp.chemotaxis_RL,
     }
     for k, v in exp_dict.items():

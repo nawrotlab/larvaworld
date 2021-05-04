@@ -1,5 +1,4 @@
 import copy
-
 import PySimpleGUI as sg
 
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, save_gui_conf, delete_gui_conf, b12_kws, \
@@ -87,8 +86,8 @@ def get_model(window, values, collapsibles):
     return copy.deepcopy(model)
 
 
-def build_model_tab(collapsibles):
-
+def build_model_tab():
+    collapsibles={}
     s1 = CollapsibleTable('odor_gains', True, headings=['id', 'mean', 'std'], dict={},
                           disp_name='Odor gains',type_dict=dtypes.get_dict_dtypes('odor_gain'))
 

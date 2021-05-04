@@ -5,8 +5,9 @@ import PySimpleGUI as sg
 
 from lib.anal.combining import render_mpl_table
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
-    save_gui_conf, delete_gui_conf, named_bool_button, on_image, off_image, GraphList, b12_kws, b_kws, \
+    save_gui_conf, delete_gui_conf, named_bool_button, GraphList, b12_kws, b_kws, \
     graphic_button, t10_kws, t12_kws, t18_kws, t8_kws, t6_kws, CollapsibleTable
+from lib.gui import graphics
 from lib.gui.simulation_tab import update_sim, get_exp
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 import lib.conf.dtype_dicts as dtypes
@@ -16,7 +17,7 @@ def update_batch(batch, window, collapsibles):
     collapsibles['Methods'].update(window, batch['methods'])
     collapsibles['Optimization'].update(window, batch['optimization'])
     window['TOGGLE_save_data_flag'].metadata.state = batch['run_kwargs']['save_data_flag']
-    window['TOGGLE_save_data_flag'].update(image_data=on_image if window['TOGGLE_save_data_flag'].metadata.state else off_image)
+    window['TOGGLE_save_data_flag'].update(image_data=graphics.on_image if window['TOGGLE_save_data_flag'].metadata.state else graphics.off_image)
     collapsibles['space_search'].update_table(window, batch['space_search'])
 
     # return batch['space_search']
@@ -33,7 +34,10 @@ def get_batch(window, values, collapsibles):
     return copy.deepcopy(batch)
 
 
-def build_batch_tab(collapsibles, graph_lists):
+def build_batch_tab():
+    collapsibles = {}
+    graph_lists = {}
+
     l_exp = [sg.Col([
         [sg.Text('Batch', **t6_kws),
          graphic_button('load', 'LOAD_BATCH'),

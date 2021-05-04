@@ -1,7 +1,7 @@
 import abc
 import math
 import numpy as np
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import LineString, Polygon, Point
 
 from lib.model import LarvaBody
 import lib.aux.functions as fun
@@ -73,8 +73,9 @@ class BodySim(BodyManager):
         self.ang_vel_coef = ang_vel_coef
         self.lin_force_coef = lin_force_coef
         self.torque_coef = torque_coef
+        self.backward_motion = True
 
-        k = 0.9
+        k = 0.95
         self.tank_polygon = Polygon(self.model.tank_shape * k)
 
     def step(self):
@@ -296,57 +297,40 @@ class BodySim(BodyManager):
 
         # TECH : Move the agent
         # Compute orientation
-        dt = self.model.dt
-        do = ang_vel * dt
-        d = lin_vel * dt
-
-        head = self.get_head()
-        hp0, o0 = head.get_pose()
-
-
-        o1 = o0 + do
-        k = np.array([math.cos(o1), math.sin(o1)])
-
-        if self.Nsegs>1 :
-            p1_torque = self.get_global_rear_end_of_head() + k * d
-            hp1 = p1_torque + k * self.seg_lengths[0] / 2
-        else :
-            hp1 = hp0 + k * d
-
-        # head_front_local_p = self.get_local_front_end_of_seg(seg_index=0)
-        # head_front_global_p = self.get_head().get_world_point(head_front_local_p)
-        # front_pos_temp = rotate_around_point(origin=head_rear_global_p, point=head_front_global_p, radians=-d_or)
-        # front_pos_new = (front_pos_temp[0] + dx, front_pos_temp[1] + dy)
-
-        # points=[pos_new]
-        # points=[pos_new, front_pos_new]
-        in_tank = fun.inside_polygon(points=[hp1], tank_polygon=self.tank_polygon)
-        if len(self.model.border_lines) > 0:
-            # temp1=self.get_global_front_end_of_head()
-            temp2=self.get_global_rear_end_of_body()
-            border_collision = fun.border_collision(line=LineString([hp1, temp2]),
-                                                    border_lines=self.model.border_lines)
-
-        else:
-            border_collision = False
+        shape = self.segs[0].get_shape()
+        border_collision = any([l.intersects(shape) for l in self.model.border_lines]) if len(self.model.border_lines) > 0 else False
         if not self.model.larva_collisions:
             ids=self.model.detect_collisions(self.unique_id)
             larva_collision=False if len(ids)==0 else True
         else:
             larva_collision = False
-        if not in_tank or border_collision or larva_collision:
+        if border_collision or larva_collision:
             lin_vel = 0
-            d = 0
-            ang_vel += np.pi / 20
-            do = ang_vel * dt
-            o1 = o0 + do
-            k = np.array([math.cos(o1), math.sin(o1)])
-            if self.Nsegs > 1:
-                p1_torque = self.get_global_rear_end_of_head()
-                hp1 = p1_torque + k * self.seg_lengths[0] / 2
-            else :
-                hp1 = hp0
+            ang_vel += np.sign(ang_vel)*np.pi/10
+        dt = self.model.dt
+        a0 = self.spineangles[0]
+        ang_vel=np.clip(ang_vel, a_min=-(np.pi-a0)/dt, a_max=(np.pi-a0)/dt)
+        do = ang_vel * dt
+        d = lin_vel * dt
+        head = self.get_head()
+        hp0, o0 = head.get_pose()
+        o1 = o0 + do
+        k = np.array([math.cos(o1), math.sin(o1)])
+        if self.Nsegs>1 :
+            p1_torque = self.get_global_rear_end_of_head() + k * d
+            hp1 = p1_torque + k * self.seg_lengths[0] / 2
+            hf1 = p1_torque + k * self.seg_lengths[0]
+        else :
+            hp1 = hp0 + k * d
+            hf1 = hp0 + k * (d+self.get_sim_length()/2)
 
+        in_tank = fun.inside_polygon(points=[hf1, hp1],tank_polygon=self.tank_polygon)
+        if not in_tank :
+            hp1=hp0
+            lin_vel =0
+            d=0
+            p1_torque = self.get_global_rear_end_of_head()
+            # ang_vel*=1.1
         head.set_pose(hp1, o1)
         head.set_lin_vel(lin_vel)
         head.set_ang_vel(ang_vel)
@@ -405,12 +389,19 @@ class BodySim(BodyManager):
 
     def compute_body_bend(self):
         curr = sum(self.spineangles[:self.Nangles_b])
-        if self.model.count_bend_errors:
-            self.body_bend_0 = self.body_bend
-            if np.abs(self.body_bend_0) > 2 and np.abs(curr) > 2 and self.body_bend_0 * curr < 0:
-                self.body_bend_errors += 1
+        # if self.model.count_bend_errors:
+        #     self.body_bend_0 = self.body_bend
+        #     if np.abs(self.body_bend_0) > 2 and np.abs(curr) > 2 and self.body_bend_0 * curr < 0:
+        #         self.body_bend_errors += 1
                 # curr=np.sign(curr)*np.pi
                 # print('Illegal bend over rear axis')
+        self.body_bend_0 = self.body_bend
+        # if np.abs(self.body_bend_0) > 2 and np.abs(curr) > 2 and self.body_bend_0 * curr < 0:
+        #     self.body_bend_errors += 1
+        #     self.segs[0].set_ang_vel(0)
+        #     print('ss')
+        # else :
+        #     self.body_bend = curr
         self.body_bend = curr
         self.body_bend_vel_0=self.body_bend_vel
         self.body_bend_acc_0=self.body_bend_acc

@@ -6,7 +6,7 @@ Changes from code from netlogo :
 '''
 import json
 import numpy as np
-from lib.stor.paths import Deb_path
+from lib.stor import paths
 
 
 class DEB:
@@ -123,7 +123,7 @@ class DEB:
 
 
         if self.species == 'default':
-            with open(Deb_path) as tfp:
+            with open(paths.Deb_path) as tfp:
                 species = json.load(tfp)
             self.__dict__.update(species)
         else:

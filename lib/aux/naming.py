@@ -1,23 +1,17 @@
 import numpy as np
-from lib.aux import functions as fun
-
 
 def xy(points, flat=False):
     if type(points) == str:
         return [f'{points}_x', f'{points}_y']
     elif type(points) == list:
         t=[[f'{p}_x', f'{p}_y'] for p in points]
-        if flat :
-            return fun.flatten_list(t)
-        else :
-            return t
+        return [item for sublist in t for item in sublist] if flat else t
 
 def dst(points):
     if type(points) == str:
         return f'{points}_dst'
     elif type(points) == list:
         return [f'{point}_dst' for point in points]
-
 
 def straight_dst(points):
     if type(points) == str:

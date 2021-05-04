@@ -1,3 +1,5 @@
+import os
+
 import pygame
 import numpy as np
 import lib.gui.gui_lib as gui
@@ -91,12 +93,14 @@ def evaluate_input(model, screen):
                                         p1=tuple(model.mousebuttondown_pos))
 
                 elif event.button == 3:
+                    loc = tuple(np.array(screen.w_loc) + np.array(pygame.mouse.get_pos()))
                     if len(model.selected_agents) > 0:
                         for sel in model.selected_agents :
+
                             # sel = model.selected_agents[0]
-                            sel = gui.set_agent_kwargs(sel)
+                            sel = gui.set_agent_kwargs(sel, location=loc)
                     else:
-                        model.selected_type = gui.object_menu(model.selected_type)
+                        model.selected_type = gui.object_menu(model.selected_type, location=loc)
                 elif event.button == 4:
                     screen.zoom_screen(d_zoom=-d_zoom)
                     model.toggle(name='zoom', value=screen.zoom)

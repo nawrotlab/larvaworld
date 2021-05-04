@@ -16,8 +16,7 @@ from pypet import Environment, cartesian_product, load_trajectory, pypetconstant
 from pypet.parameter import ObjectTable
 import matplotlib.pyplot as plt
 
-from lib.anal.plotting import plot_heatmap_PI, plot_endpoint_scatter, plot_debs, plot_3pars, \
-    plot_endpoint_params, plot_3d, plot_2d
+from lib.anal.plotting import plot_heatmap_PI, plot_endpoint_scatter, plot_debs, plot_3pars, plot_endpoint_params, plot_2d
 from lib.model.deb import deb_dict
 from lib.sim.single_run import run_sim
 import lib.aux.functions as fun

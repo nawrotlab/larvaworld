@@ -115,6 +115,12 @@ keep_the_flag = {
         # 'env_params': king_env,
         'collections': ['pose'],
         }
+
+catch_me = {
+        'env_params': 'catch_me',
+        # 'env_params': king_env,
+        'collections': ['pose'],
+        }
 # exp_types = {
 #     'focus': focus,
 #     'dish': dish,

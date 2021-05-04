@@ -1,9 +1,7 @@
 import os
-
 import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
-from scipy.stats import *
 import scipy.stats as st
 
 from lib.aux import naming as nam
@@ -53,11 +51,9 @@ def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
     hca = f'turn_{nam.unwrap(ho)}'
     pars = [b, bv, ba, hov, hoa, hca]
     ranges = [150, 400, 5000, 400, 5000, 100]
-    # print(pars)
 
     if fit_filepath is None:
         # These are the fits of a 100 larvae dataset
-
         fitted_distros = [{'t': (2.36, 0, 13)},
                           {'t': (1.71, 0, 32.1)},
                           {'t': (1.94, 0, 331)},
@@ -67,12 +63,9 @@ def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
         target_stats = [0.006, 0.01, 0.01, 0.005, 0.005, 0.026]
     else:
         pars, fitted_distros, target_stats = d.load_fits(filepath=fit_filepath, selected_pars=pars)
-        # print(pars)
     nbins = 500
-    # ranges=[80,300,3200,300,3200]
     height = 0.05
     colors = ['g', 'r', 'b', 'r', 'b', 'g']
-    # labels=['bend', 'bend velocity', 'bend acceleration', 'orientation velocity', 'orientation acceleration']
     labels = [r'$\theta_{b}$', r'$\dot{\theta}_{b}$', r'$\ddot{\theta}_{b}$', r'$\dot{\theta}_{or}$',
               r'$\ddot{\theta}_{or}$', r'$\theta_{turn}$']
     xlabels = ['angle $(deg)$', 'angular velocity $(deg/sec)$', 'angular acceleration, $(deg^2/sec)$',
@@ -83,7 +76,6 @@ def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
     axs = axs.ravel()
     for i, (par, w, r, l, xl, j, col, target) in enumerate(
             zip(pars, fitted_distros, ranges, labels, xlabels, order, colors, target_stats)):
-        # print(i,par)
         x = np.linspace(-r, r, nbins)
         data = s[par].dropna().values
         if absolute :
@@ -97,13 +89,8 @@ def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
         if dist.shapes is None :
             dist_args_dict = dict(zip(['loc', 'scale'], dist_args))
         else :
-        # elif len(dist.shapes)==1 :
             dist_args_dict = dict(zip([dist.shapes]+['loc', 'scale'], dist_args))
-        # print(dist_name)
-        # print(dist_args)
-        # print(dist_args_dict)
-        stat, pvalue = stats.kstest(data, dist_name, args=dist_args)
-        # print(stat, pvalue)
+        stat, pvalue = sp.stats.kstest(data, dist_name, args=dist_args)
         fits.append([par, stat, pvalue])
         print(f'Parameter {par} was fitted with stat : {stat} vs target stat : {target}')
         y = dist.rvs(size=100000, **dist_args_dict)
@@ -111,10 +98,6 @@ def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
         my_n, my_bins, my_patches = axs[j].hist(y, bins=x, weights=n_weights, alpha=0)
         axs[j].scatter(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, marker='.', c='k', s=40, alpha=0.6)
         axs[j].plot(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, c='k', linewidth=2, alpha=0.6)
-        # axs[j].plot(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, c='k', linewidth=2, alpha=0.6,
-        #             label=f'{dist_name} fit')
-
-        # axs[i].hist(y, color='k',weights=weights,bins=x, label=f'{list(W.keys())[0]} dist')
         axs[j].legend(loc='upper right', fontsize=15)
         axs[j].set_xlabel(xl, fontsize=15)
 
@@ -123,8 +106,6 @@ def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
             axs[j].set_xlim([0, r])
         else :
             axs[j].set_xlim([-r, r])
-        # plt.xlim([-r,r])
-        # break
     axs[0].set_ylabel('probability, $P$', fontsize=15)
     axs[3].set_ylabel('probability, $P$', fontsize=15)
     plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.1, hspace=0.3)
@@ -138,25 +119,10 @@ def fit_endpoint_params(d, fit_filepath=None, save_to=None, save_as='endpoint_fi
         save_to = d.plot_dir
     filepath = os.path.join(save_to, save_as)
     e = d.endpoint_data
-    # TURNER PARAMETERS
-    # -----------------------
-
-    # The bend of the front-body (sum of half the angles) is the target for the turner calibration
-    # The head reorientation velocity is the result of the turner calibration
-    # if mode == 'experiment':
-    # point = d.critical_spinepoint
-
-    # act_r = 'non_rest_dur_fraction'
-    #
-    # elif mode == 'simulation':
-    # point = 'centroid'
     point = d.point
     dst = 'distance'
-    # dst = d.dst_param(point)
     v = 'velocity'
-    # v = d.vel_param(point)
     a = 'acceleration'
-    # a = d.acc_param(point)
     sv = nam.scal(v)
     sa = nam.scal(a)
     cum_dst = nam.cum(dst)
@@ -170,7 +136,6 @@ def fit_endpoint_params(d, fit_filepath=None, save_to=None, save_as='endpoint_fi
     Nstrides = nam.num('stride')
     stride_ratio = nam.dur_ratio('stride')
     l = 'length'
-
     pars = [l, f_crawler,
             nam.mean(stride_d), nam.mean(stride_sd),
             Nstrides, stride_ratio,
@@ -187,7 +152,6 @@ def fit_endpoint_params(d, fit_filepath=None, save_to=None, save_as='endpoint_fi
               (0, 70), (0, 20),
               (0.5, 1.0),(0.5, 1.0),
               (-20.0, 20.0), (-8.0, 8.0)]
-    # print(pars)
 
     if fit_filepath is None:
         # These are the fits of a 100 larvae dataset
@@ -202,7 +166,6 @@ def fit_endpoint_params(d, fit_filepath=None, save_to=None, save_as='endpoint_fi
         target_stats = [0.074, 0.087, 0.086, 0.084, 0.057, 0.048, 0.068, 0.094]
     else:
         pars, fitted_distros, target_stats = d.load_fits(filepath=fit_filepath, selected_pars=pars)
-        # print(pars)
     fits = []
 
     labels = ['body length', 'stride frequency',
@@ -227,21 +190,13 @@ def fit_endpoint_params(d, fit_filepath=None, save_to=None, save_as='endpoint_fi
     axs = axs.ravel()
     for i, (par, lab, xl, (rmin, rmax), w, target) in enumerate(
             zip(pars, labels, xlabels, ranges, fitted_distros, target_stats)):
-        # print(par)
         data = e[par].dropna().values
-        # rmin, rmax=np.min(data), np.max(data)
         x = np.linspace(rmin, rmax, nbins)
-        # f = Fitter(data)
-        # f.distributions = ['norm']
-        # f.timeout = 200
-        # f.fit()
-        # W = f.get_best()
-        # print(W)
         loc, scale = list(w.values())[0]
-        stat, pvalue = stats.kstest(data, list(w.keys())[0], args=list(w.values())[0])
+        stat, pvalue = sp.stats.kstest(data, list(w.keys())[0], args=list(w.values())[0])
         fits.append([par, stat, pvalue])
         print(f'Parameter {par} was fitted with stat : {stat} vs target stat : {target}')
-        y = norm.rvs(size=10000, loc=loc, scale=scale)
+        y = sp.norm.rvs(size=10000, loc=loc, scale=scale)
         n_weights = np.ones_like(y) / float(len(y))
         my_n, my_bins, my_patches = axs[i].hist(y, bins=x, weights=n_weights, alpha=0)
         axs[i].scatter(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, marker='o', c='k', s=40, alpha=0.6)
@@ -271,7 +226,6 @@ def fit_bout_params(d, fit_filepath=None, save_to=None, save_as='bout_fit.pdf'):
     filepath = os.path.join(save_to, save_as)
     e = d.endpoint_data
     s = d.step_data
-
     pars = [nam.chain_counts_par('stride'), nam.dur(nam.non('stride')),
             nam.dur_ratio('stride'), nam.dur_ratio('non_stride'),
             nam.num('stride'), nam.num('non_stride'),
@@ -284,14 +238,12 @@ def fit_bout_params(d, fit_filepath=None, save_to=None, save_as='bout_fit.pdf'):
               (0, 3), (0, 60),
               (0.0, 1.0), (0.0, 1.0),
               (0, 100), (0, 100)]
-    # print(pars)
 
     if fit_filepath is None:
         # These are the fits of a 100 larvae dataset
         raise ValueError('Not implemented. Please provide fit file')
     else:
         pars, fitted_distros, target_stats = d.load_fits(filepath=fit_filepath, selected_pars=pars)
-        # print(pars)
     fits = []
 
     labels = ['stride chains', 'stride-free bouts',
@@ -317,27 +269,19 @@ def fit_bout_params(d, fit_filepath=None, save_to=None, save_as='bout_fit.pdf'):
             data = e[par].dropna().values
         except:
             data = s[par].dropna().values
-        # rmin, rmax=np.min(data), np.max(data)
         x = np.linspace(rmin, rmax, nbins)
-        # f = Fitter(data)
-        # f.distributions = ['norm']
-        # f.timeout = 200
-        # f.fit()
-        # W = f.get_best()
-        # print(W)
         args = list(w.values())[0]
         name = list(w.keys())[0]
-        stat, pvalue = stats.kstest(data, name, args=args)
+        stat, pvalue = sp.stats.kstest(data, name, args=args)
         fits.append([par, stat, pvalue])
         print(f'Parameter {par} was fitted with stat : {stat} vs target stat : {target}')
-        distr = getattr(stats.distributions, name)
+        distr = getattr(sp.stats.distributions, name)
         y = distr.rvs(*args, size=10000)
         n_weights = np.ones_like(y) / float(len(y))
         my_n, my_bins, my_patches = axs[i].hist(y, bins=x, weights=n_weights, alpha=0)
         axs[i].scatter(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, marker='o', c='k', s=40, alpha=0.6)
         axs[i].plot(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, alpha=0.6, c='k', linewidth=2,
                     label=f'{name} fit')
-
         weights = np.ones_like(data) / float(len(data))
         axs[i].hist(data, bins=x, weights=weights, label=lab, color='b', alpha=0.6)
         axs[i].legend(loc='upper right', fontsize=12)
@@ -361,9 +305,7 @@ def fit_crawl_params(d, target_point=None,fit_filepath=None, save_to=None, save_
     if target_point is None :
         target_point=d.point
     point=d.point
-    # exp_dst = nam.dst(d.point)
     exp_dst = 'distance'
-    # dst = nam.dst(d.point)
     dst = 'distance'
     exp_cum_sdst = nam.cum(nam.scal(exp_dst))
     cum_sdst = nam.cum(nam.scal(dst))
@@ -374,12 +316,8 @@ def fit_crawl_params(d, target_point=None,fit_filepath=None, save_to=None, save_
     exp_pars = [Nstrides, stride_ratio, exp_cum_sdst]
     pars = [Nstrides, stride_ratio, cum_sdst]
     ranges = [(100, 300), (0.5, 1.0),(20, 80)]
-    # print(pars)
-    # print(exp_cum_sdst, cum_sdst)
     exp_pars, fitted_distros, target_stats = d.load_fits(filepath=fit_filepath, selected_pars=exp_pars)
-    # print(exp_pars)
     fits = []
-
     labels = ['$N_{strides}$', 'crawling ratio',
               '$distance_{scal}$']
     xlabels = ['counts $(-)$', 'time ratio $(-)$',
@@ -391,33 +329,23 @@ def fit_crawl_params(d, target_point=None,fit_filepath=None, save_to=None, save_
     axs = axs.ravel()
     for i, (par, lab, xl, (rmin, rmax), w, target, c) in enumerate(
             zip(pars, labels, xlabels, ranges, fitted_distros, target_stats, colors)):
-        # print(par)
         data = e[par].dropna().values
-        # rmin, rmax=np.min(data), np.max(data)
         x = np.linspace(rmin, rmax, nbins)
-        # f = Fitter(data)
-        # f.distributions = ['norm']
-        # f.timeout = 200
-        # f.fit()
-        # W = f.get_best()
-        # print(W)
         loc, scale = list(w.values())[0]
-        stat, pvalue = stats.kstest(data, list(w.keys())[0], args=list(w.values())[0])
+        stat, pvalue = sp.stats.kstest(data, list(w.keys())[0], args=list(w.values())[0])
         fits.append([par, stat, pvalue])
         print(f'Parameter {par} was fitted with stat : {stat} vs target stat : {target}')
-        y = norm.rvs(size=10000, loc=loc, scale=scale)
+        y = sp.norm.rvs(size=10000, loc=loc, scale=scale)
         n_weights = np.ones_like(y) / float(len(y))
         my_n, my_bins, my_patches = axs[i].hist(y, bins=x, weights=n_weights, alpha=0)
         axs[i].scatter(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, marker='o', c='k', s=40, alpha=0.6)
         axs[i].plot(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, alpha=0.6, c='k', linewidth=2)
-
         weights = np.ones_like(data) / float(len(data))
         axs[i].hist(data, bins=x, weights=weights, label=lab, color=c, alpha=0.6)
         axs[i].legend(loc='upper right', fontsize=12)
         axs[i].set_xlabel(xl, fontsize=12)
         axs[i].set_ylim([0, height])
     axs[0].set_ylabel('probability, $P$', fontsize=15)
-
     plt.subplots_adjust(left=0.05, bottom=0.1, right=0.99, top=0.95, wspace=0.01, hspace=0.3)
     plt.savefig(filepath, dpi=300)
     print(f'Image saved as {filepath} !')

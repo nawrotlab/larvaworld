@@ -3068,8 +3068,7 @@ def plot_turns(datasets, labels, save_to=None, return_fig=False):
 def plot_turn_Dorient2center(datasets, labels, min_angle=30.0, save_to=None, return_fig=False):
     Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='turn')
     filename = f'turn_Dorient2center.{suf}'
-    figsize = (10, 5)
-    fig, axs = plt.subplots(Ndatasets, 2, figsize=figsize,subplot_kw=dict(projection='polar'),sharex=True, sharey=True)
+    fig, axs = plt.subplots(Ndatasets, 2, figsize=(10, 5*Ndatasets),subplot_kw=dict(projection='polar'),sharex=True, sharey=True)
     if Ndatasets>1 :
         axs=axs.ravel()
     p = 'orientation_to_center'
@@ -3082,26 +3081,26 @@ def plot_turn_Dorient2center(datasets, labels, min_angle=30.0, save_to=None, ret
         dbs = [d.get_par(bd_par).dropna().values.flatten() for d in datasets]
 
         for i, (b0, b1, db, label, c) in enumerate(zip(b0s, b1s, dbs, labels, colors)):
-            b0=b0[np.abs(db)>min_angle]
-            b1=b1[np.abs(db)>min_angle]
+            B0=np.deg2rad(b0[np.abs(db)>min_angle])
+            B1=np.deg2rad(b1[np.abs(db)>min_angle])
+            circular_hist(axs[2*i+k], B0, bins=16,alpha=0.3, label='start', color=c, offset=np.pi/2)
+            circular_hist(axs[2*i+k], B1, bins=16,alpha=0.6, label='stop', color=c, offset=np.pi/2)
 
-            circular_hist(axs[2*i+k], np.deg2rad(b0), bins=16,alpha=0.3, label='start', color=c, offset=np.pi/2)
-            circular_hist(axs[2*i+k], np.deg2rad(b1), bins=16,alpha=0.6, label='stop', color=c, offset=np.pi/2)
-            m0=np.deg2rad(np.mean(b0))
-            m1=np.deg2rad(np.mean(b1))
-            arrow0 = patches.FancyArrowPatch((0, 0), (m0,0.3),zorder=2, mutation_scale=30, alpha=0.3, color=c,
+            arrow0 = patches.FancyArrowPatch((0, 0), (np.mean(B0),0.3),zorder=2, mutation_scale=30, alpha=0.3, facecolor=c,
                                              edgecolor='black', fill=True, linewidth=0.5)
             axs[2*i+k].add_patch(arrow0)
-            arrow1 = patches.FancyArrowPatch((0, 0), (m1,0.3), zorder=2, mutation_scale=30, alpha=0.6, color=c,
+            arrow1 = patches.FancyArrowPatch((0, 0), (np.mean(B1),0.3), zorder=2, mutation_scale=30, alpha=0.6, facecolor=c,
                                              edgecolor='black', fill=True, linewidth=0.5)
             axs[2 * i + k].add_patch(arrow1)
-            axs[2*i+k].set_xticklabels([0, '', +90, '',180, '', -90, ''])
+
             # Visualise by radius of bins
             # circular_hist(ax[1], angles1, offset=np.pi / 2, density=False)
             axs[2*i+k].legend(loc=[0.9, 0.9])
-            axs[2*i+k].set_title(f'Bearing before and after a {side} turn.', fontsize=15, y=-0.2)
-    plt.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.9, wspace=0.4)
-    plt.show()
+        axs[2*i+k].set_title(f'Bearing before and after a {side} turn.', fontsize=15, y=-0.2)
+    for ax in axs :
+        ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''])
+    plt.subplots_adjust(bottom=0.1, top=0.9, left=0.05, right=0.9, wspace=0.4, hspace=0.1)
+    # plt.show()
     return process_plot(fig, save_to, filename, return_fig)
 
 
