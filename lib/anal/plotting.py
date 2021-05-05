@@ -10,7 +10,8 @@ import seaborn as sns
 from matplotlib import cm, transforms, ticker, patches
 from mpl_toolkits.mplot3d import Axes3D
 import statsmodels.api as sm
-from scipy import stats, signal
+from scipy import stats, signal, interpolate
+from scipy.stats import ttest_ind
 from sklearn.linear_model import LinearRegression
 import powerlaw as pow
 from PIL import Image
@@ -25,13 +26,13 @@ from lib.stor.paths import DebFolder
 '''
 Generic plot function. Uses the next two functions internally'''
 
-plt_conf = {'axes.labelsize': 20,
+plt_conf = {'axes.labelsize': 22,
             'axes.titlesize': 25,
             'figure.titlesize': 30,
             'xtick.labelsize': 20,
             'ytick.labelsize': 20,
-            'legend.fontsize': 15,
-            'legend.title_fontsize': 15}
+            'legend.fontsize': 20,
+            'legend.title_fontsize': 20}
 plt.rcParams.update(plt_conf)
 suf = 'pdf'
 
@@ -64,14 +65,14 @@ def plot_dataset(save_to, save_as=None, mode='time', subplot_structure=[1, 1],
                  legendtitlesize=20, draw_y0=False, log=False,
                  title=None, log_yscale=False, xlim=None, ylim=None, xlabel=None, ylabel=None,
                  sharex=False, sharey=False, **kwargs):
-    plot_config = {'axes.labelsize': labelsize,
-                   'axes.titlesize': titlesize,
-                   'figure.titlesize': figtitlesize,
-                   'xtick.labelsize': ticksize,
-                   'ytick.labelsize': ticksize,
-                   'legend.fontsize': legendsize,
-                   'legend.title_fontsize': legendtitlesize}
-    plt.rcParams.update(plot_config)
+    # plot_config = {'axes.labelsize': labelsize,
+    #                'axes.titlesize': titlesize,
+    #                'figure.titlesize': figtitlesize,
+    #                'xtick.labelsize': ticksize,
+    #                'ytick.labelsize': ticksize,
+    #                'legend.fontsize': legendsize,
+    #                'legend.title_fontsize': legendtitlesize}
+    # plt.rcParams.update(plot_config)
     fig, axs = plt.subplots(subplot_structure[0], subplot_structure[1], sharex=sharex, sharey=sharey, figsize=figsize)
 
     N = subplot_structure[0] * subplot_structure[1]
@@ -412,7 +413,7 @@ def time_plot(fig, axs, data, agent_ids, parameters, dt=None, Nsubplots=1,
                 else:
                     patch = [patches.Patch(color=color, label=name) for name, color in
                              zip(legend_labels, colors)]
-                plt.legend(handles=patch, loc='upper right', prop={'size': 15})
+                plt.legend(handles=patch, loc='upper right')
             for i, (chunk, color) in enumerate(zip(background_for_chunks, colors)):
                 start_flag = f'{chunk}_start'
                 stop_flag = f'{chunk}_stop'
@@ -748,8 +749,8 @@ def plot_marked_strides(dataset, agent_ids=None, title=' ', show_legend=True, sh
 
     ymax = 1.0
 
-    dst = nam.scal('dst')
-    v = nam.scal('vel')
+    # dst = nam.scal('dst')
+    v = nam.scal('velocity')
 
     fig_dict = {}
     for agent_id in agent_ids:
@@ -757,10 +758,10 @@ def plot_marked_strides(dataset, agent_ids=None, title=' ', show_legend=True, sh
         for i, (figsize, filepath, xlim) in enumerate(zip(figsizes, filepaths, xlims)):
             try:
                 fig = d.plot_step_data(parameters=[v], mode='time', figsize=figsize, agent_ids=[agent_id],
-                                       ylabel=r'scal velocity, $v (sec^{-1})$', xlabel=r'time, $(sec)$', title=title,
+                                       ylabel=r'scaled velocity $(sec^{-1})$', xlabel=r'time $(sec)$', title=title,
                                        show_legend=show_legend,
                                        xlim=xlim,
-                                       # ylim=[0.0, ymax],
+                                       ylim=[0.0, ymax],
                                        background_flags=[nam.id('stride')],
                                        background_for_chunks=['stride', 'non_stride'],
                                        legend_labels=['stride', 'pause'],
@@ -880,7 +881,7 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
             par_legend = plt.legend(handles, labels, loc=2)
             plt.legend(epoch_handles, turn_epochs, loc=1)
             plt.gca().add_artist(par_legend)
-            plt.subplots_adjust(hspace=0.05, top=0.96, bottom=0.15, left=0.06, right=0.95)
+            plt.subplots_adjust(hspace=0.05, top=0.95, bottom=0.2, left=0.08, right=0.92)
             fig.savefig(f'{save_to}/{filepath}', dpi=300)
             print(f'Image saved as {filepath}')
             fig_dict[f'turns_{agent_id}_{i}'] = fig
@@ -2631,10 +2632,10 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
     # lin_cs = ['darkred', 'red', 'lightsalmon']
     ang_cs = ['black']
     cs = [lin_cs, ang_cs]
-    lin_labels = [r'$\bf{head}$', r'$\bf{midpoint}$', r'$\bf{tail}$']
+    lin_labels = [r'$\bf{head}$', r'$\bf{mid}$', r'$\bf{tail}$']
     ang_labels = [r'$\dot{\theta}_{or}$']
     labels = [lin_labels, ang_labels]
-    ylabels = ['scal linear velocity', 'angular velocity $(deg/sec)$']
+    ylabels = [r'scaled velocity $(sec^{-1})$', 'angular velocity $(deg/sec)$']
 
     for i in [0, 1]:
         fig, ax = plt.subplots(1, 1, figsize=(10, 5))
@@ -2658,14 +2659,14 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
         ax.set_xticklabels(labels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
         ax.set_xlim([0, Npoints - 1])
 
-        ax.set_ylabel(ylabels[i], fontsize=15)
-        ax.set_xlabel('$\phi_{stride}$', fontsize=15)
+        ax.set_ylabel(ylabels[i])
+        ax.set_xlabel('$\phi_{stride}$')
         # axs.set_xlim([trange[0], trange[-1]])
-        l = ax.legend(loc='upper right', fontsize=12)
+        l = ax.legend(loc='upper right')
         # plt.MaxNLocator(4)
         for j, text in enumerate(l.get_texts()):
             text.set_color(cs[i][j])
-        plt.subplots_adjust(bottom=0.15, top=0.96, left=0.08, right=0.97, wspace=0.01)
+        plt.subplots_adjust(bottom=0.2, top=0.95, left=0.1, right=0.95, wspace=0.01)
         fig.savefig(filepaths[i], dpi=300)
         print(f'Plot saved as {filepaths[i]}')
 

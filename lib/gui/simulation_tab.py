@@ -8,7 +8,7 @@ import lib.aux.functions as fun
 from lib.aux.collecting import output_keys
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     named_bool_button, save_gui_conf, delete_gui_conf, GraphList, b12_kws, b6_kws, CollapsibleTable, \
-    b_kws, graphic_button, t10_kws, t12_kws, t18_kws, t8_kws
+    b_kws, graphic_button, t10_kws, t12_kws, t18_kws, t8_kws, w_kws, default_run_window
 from lib.gui.draw_env import draw_env
 from lib.gui.life_conf import life_conf
 from lib.sim.single_run import run_sim, sim_analysis
@@ -75,6 +75,7 @@ def get_env(window, values, collapsibles, extend=True):
 
 
 def build_sim_tab():
+    dicts={}
     collapsibles={}
     graph_lists={}
 
@@ -135,8 +136,8 @@ def build_sim_tab():
     ])]
     l_env1 = init_env(collapsibles)
     l_env = [[sg.Col([l_env0, l_env1])]]
-    l_sim = [[sg.Col(l_conf), sg.Col(l_env), graph_lists['EXP'].canvas]]
-    return l_sim, collapsibles, graph_lists
+    l_sim = [[sg.Col(l_conf,vertical_alignment='t'), sg.Col(l_env,vertical_alignment='t'), graph_lists['EXP'].canvas]]
+    return l_sim, collapsibles, graph_lists, dicts
 
 
 def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
@@ -178,9 +179,9 @@ def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
         exp_conf['enrich'] = True
         d = run_sim(**exp_conf, vis_kwargs=collapsibles['Visualization'].get_dict(values, window))
         if d is not None:
-            from lib.gui.analysis_tab import update_data_list
             dicts['analysis_data'][d.id] = d
-            update_data_list(window, dicts['analysis_data'])
+            if 'DATASET_IDS' in window.element_list() :
+                window.Element('DATASET_IDS').Update(values=list(dicts['analysis_data'].keys()))
             dicts['sim_results']['datasets'].append(d)
             fig_dict, results = sim_analysis(d, exp_conf['experiment'])
             dicts['sim_results']['fig_dict'] = fig_dict
@@ -221,3 +222,22 @@ def get_exp(window, values, collapsibles):
         'collections': [k for k in output_keys if collapsibles['Output'].get_dict(values, window)[k]],
     }
     return exp_conf
+
+if __name__ == "__main__":
+    sg.theme('LightGreen')
+    dicts = {
+        'sim_results': {'datasets': []},
+        'batch_kwargs': None,
+        'batch_results': {},
+        'analysis_data': {},
+    }
+    l, col, graphs = build_sim_tab()
+    w = sg.Window('Simulation gui', l, size=(1800, 1200), **w_kws, location=(300, 100))
+    # print(graphs)
+    while True:
+        e, v = w.read()
+        if e in (None, 'Exit'):
+            break
+        default_run_window(w, e, v, col, graphs)
+        dicts, graphs = eval_sim(e, v, w, col, dicts, graphs)
+    w.close()

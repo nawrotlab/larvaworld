@@ -2,14 +2,15 @@ import os
 import PySimpleGUI as sg
 # from tkinter import *
 
-from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, t10_kws, t16_kws
+from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, t10_kws, t16_kws, default_run_window, w_kws
 from lib.stor import paths
 from lib.anal.plotting import graph_dict
 from lib.stor.larva_dataset import LarvaDataset
 
 
-def update_data_list(window, data):
-    window.Element('DATASET_IDS').Update(values=list(data.keys()))
+# def update_data_list(window, data):
+#     window.Element('DATASET_IDS').Update(values=list(data.keys()))
+
 
 
 def change_dataset_id(window, values, data):
@@ -20,12 +21,12 @@ def change_dataset_id(window, values, data):
         e, v = sg.Window('Change dataset ID', l).read(close=True)
         if e == 'Ok':
             data[v['NEW_ID']] = data.pop(old_id)
-            update_data_list(window, data)
+            window.Element('DATASET_IDS').Update(values=list(data.keys()))
         elif e == 'Store':
             d = data[old_id]
             d.set_id(v['NEW_ID'])
             data[v['NEW_ID']] = data.pop(old_id)
-            update_data_list(window, data)
+            window.Element('DATASET_IDS').Update(values=list(data.keys()))
     return data
 
 
@@ -47,11 +48,11 @@ def build_analysis_tab():
                                  tooltip='Browse to add datasets to the analysis list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')]])]]
 
     graph_lists['ANALYSIS'] = ButtonGraphList(name='ANALYSIS', fig_dict=graph_dict)
-    analysis_layout = [[sg.Col(data_list + graph_lists['ANALYSIS'].get_layout(as_col=False)),graph_lists['ANALYSIS'].canvas]]
+    analysis_layout = [[sg.Col(data_list + graph_lists['ANALYSIS'].get_layout(as_col=False),vertical_alignment='t'),graph_lists['ANALYSIS'].canvas]]
     return analysis_layout, collapsibles, graph_lists, dicts
 
 
-def eval_analysis(event, values, window, collapsibles, graph_lists, dicts):
+def eval_analysis(event, values, window, collapsibles, dicts, graph_lists):
     if event == 'DATASET_DIR':
         dr=values['DATASET_DIR']
         if dr != '':
@@ -63,7 +64,7 @@ def eval_analysis(event, values, window, collapsibles, graph_lists, dicts):
                     if os.path.exists(f'{ddr}/data'):
                         d = LarvaDataset(dir=ddr)
                         dicts['analysis_data'][d.id] = d
-            update_data_list(window, dicts['analysis_data'])
+            window.Element('DATASET_IDS').Update(values=list(dicts['analysis_data'].keys()))
 
     elif event == 'Add ref':
         d = LarvaDataset(dir=paths.RefFolder)
@@ -73,7 +74,7 @@ def eval_analysis(event, values, window, collapsibles, graph_lists, dicts):
         if len(values['DATASET_IDS']) > 0:
             id = values['DATASET_IDS'][0]
             dicts['analysis_data'].pop(id, None)
-            update_data_list(window, dicts['analysis_data'])
+            window.Element('DATASET_IDS').Update(values=list(dicts['analysis_data'].keys()))
     elif event == 'Change ID':
         dicts['analysis_data'] = change_dataset_id(window, values, dicts['analysis_data'])
     elif event == 'Replay':
@@ -90,4 +91,16 @@ def eval_analysis(event, values, window, collapsibles, graph_lists, dicts):
         graph_lists['ANALYSIS'].set_fig_args()
     elif event == 'ANALYSIS_DRAW_FIG':
         graph_lists['ANALYSIS'].generate(window, dicts['analysis_data'])
-    return graph_lists, dicts
+    return dicts, graph_lists
+
+if __name__ == "__main__":
+    sg.theme('LightGreen')
+    l, col, graphs, dicts = build_analysis_tab()
+    w = sg.Window('Analysis gui', l, size=(1800, 1200), **w_kws, location=(300, 100))
+    while True:
+        e, v = w.read()
+        if e in (None, 'Exit'):
+            break
+        default_run_window(w, e, v, col, graphs)
+        dicts, graphs = eval_analysis(e, v, w, col, dicts, graphs)
+    w.close()

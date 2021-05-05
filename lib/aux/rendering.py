@@ -212,7 +212,7 @@ class ScreenItem:
 
 class InputBox(ScreenItem):
     def __init__(self, visible=False, text='', color_inactive=None, color_active=None,
-                 screen_pos=None, linewidth=0.01, show_frame=False, agent=None, end_time=0):
+                 screen_pos=None, linewidth=0.01, show_frame=False, agent=None, end_time=0, start_time=0):
         super().__init__(color=color_active)
         self.screen_pos = screen_pos
         self.linewidth = linewidth
@@ -231,6 +231,7 @@ class InputBox(ScreenItem):
         self.text_font = None
         self.agent = agent
         self.end_time = end_time
+        self.start_time = start_time
         self.shape = None
 
     def draw(self, viewer):

@@ -2,7 +2,7 @@ import copy
 import PySimpleGUI as sg
 
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, save_gui_conf, delete_gui_conf, b12_kws, \
-    b6_kws, CollapsibleTable, graphic_button, t10_kws, t12_kws, t18_kws
+    b6_kws, CollapsibleTable, graphic_button, t10_kws, t12_kws, t18_kws, w_kws, default_run_window
 from lib.conf.conf import loadConfDict, loadConf
 import lib.conf.dtype_dicts as dtypes
 
@@ -87,6 +87,8 @@ def get_model(window, values, collapsibles):
 
 
 def build_model_tab():
+    dicts={}
+    graph_lists={}
     collapsibles={}
     s1 = CollapsibleTable('odor_gains', True, headings=['id', 'mean', 'std'], dict={},
                           disp_name='Odor gains',type_dict=dtypes.get_dict_dtypes('odor_gain'))
@@ -104,11 +106,11 @@ def build_model_tab():
 
     l_mod1 = init_model(collapsibles)
 
-    l_mod = [[sg.Col([l_mod0, l_mod1])]]
-    return l_mod, collapsibles
+    l_mod = [[sg.Col([l_mod0, l_mod1],vertical_alignment='t')]]
+    return l_mod, collapsibles, graph_lists, dicts
 
 
-def eval_model(event, values, window, collapsibles):
+def eval_model(event, values, window, collapsibles, dicts, graph_lists):
     if event == 'LOAD_MODEL':
         if values['MODEL_CONF'] != '':
             conf = loadConf(values['MODEL_CONF'], 'Model')
@@ -120,4 +122,22 @@ def eval_model(event, values, window, collapsibles):
 
     elif event == 'DELETE_MODEL':
         delete_gui_conf(window, values, 'Model')
+
+    return dicts, graph_lists
+
+if __name__ == "__main__":
+    sg.theme('LightGreen')
+    n='model'
+    # l, c, g, d = build_tab(n)
+    l, c, g, d = build_model_tab()
+    w = sg.Window(f'{n} gui', l, size=(1800, 1200), **w_kws, location=(300, 100))
+
+    while True:
+        e, v = w.read()
+        if e in (None, 'Exit'):
+            break
+        default_run_window(w, e, v, c, g)
+        d, g = eval_model(e,v,w, collapsibles=c, dicts=d, graph_lists=g)
+        # d, g = eval_tab(n, collapsibles=c, dicts=d, graph_lists=g)
+    w.close()
 

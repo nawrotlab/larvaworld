@@ -308,7 +308,7 @@ class BodySim(BodyManager):
             lin_vel = 0
             ang_vel += np.sign(ang_vel)*np.pi/10
         dt = self.model.dt
-        a0 = self.spineangles[0]
+        a0 = self.spineangles[0] if len(self.spineangles)>0 else 0.0
         ang_vel=np.clip(ang_vel, a_min=-(np.pi-a0)/dt, a_max=(np.pi-a0)/dt)
         do = ang_vel * dt
         d = lin_vel * dt

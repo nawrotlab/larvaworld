@@ -1435,7 +1435,7 @@ class GraphList:
     def init_canvas(self, name):
         canvas_key = f'{name}_CANVAS'
         figure_w, figure_h = 800, 800
-        canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key=canvas_key)]])
+        canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key=canvas_key)]], vertical_alignment='t')
         return canvas, canvas_key
 
     def draw_fig(self, window, fig):
@@ -1737,3 +1737,15 @@ def check_toggles(window, event):
         if window[event].metadata.state is not None:
             window[event].metadata.state = not window[event].metadata.state
             window[event].update(image_data=graphics.on_image if window[event].metadata.state else graphics.off_image)
+
+def default_run_window(window, event, values, collapsibles={}, graph_lists={}) :
+    # if event in (None, 'Exit'):
+    #     break
+    check_collapsibles(window, event, collapsibles)
+    check_toggles(window, event)
+    for name, graph_list in graph_lists.items():
+        if event == graph_list.list_key:
+            graph_list.evaluate(window, values[graph_list.list_key])
+
+    if event.startswith('EDIT_TABLE'):
+        collapsibles[event.split()[-1]].edit_table(window)

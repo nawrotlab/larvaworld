@@ -592,7 +592,7 @@ def get_runtime_pars():
 # print(get_par_dict(par='orientation_to_center'))
 # print(random_ar2)
 # print('c_odor1' in par_db.index.to_list())
-# print(par_db['par'].loc[par_db['collect'].isin([None])])
+
 # print(par_db['par'].loc[par_db['collect'].isin([None])].index.tolist())
 
 
@@ -601,4 +601,5 @@ if __name__ == '__main__':
     par_db = set_ParDb()
     set_ParShelve(par_db)
     # print(type(get_par('c_odor1')['dtype']))
-    # print(type(par_db['dtype'].loc['c_odor1']))
+    # print(get_par_dict(short='v'))
+    print(par_db.loc['c_odor1'])

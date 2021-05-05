@@ -7,85 +7,57 @@ import PySimpleGUI as sg
 import matplotlib
 from tkinter import *
 
-
-
 sys.path.insert(0, '..')
 
 from lib.gui.batch_tab import build_batch_tab, eval_batch, get_batch
-from lib.gui.gui_lib import check_collapsibles, check_toggles, w_kws
+from lib.gui.gui_lib import check_collapsibles, check_toggles, w_kws, default_run_window
 from lib.gui.model_tab import build_model_tab, eval_model
 from lib.gui.simulation_tab import build_sim_tab, eval_sim, get_exp
 from lib.gui.analysis_tab import build_analysis_tab, eval_analysis
+
 matplotlib.use('TkAgg')
 
 
 
 
 
-class LarvaworldGui :
-    def __init__(self):
+class LarvaworldGui:
+    def __init__(self, tabs=['model', 'exp', 'batch', 'anal']):
         # sg.change_look_and_feel('Dark Blue 3')
         sg.theme('LightGreen')
         self.background_color = 'darkblue'
-        collapsibles = {}
-        graph_lists = {}
-        dicts = {
+        self.collapsibles = {}
+        self.graph_lists = {}
+        self.dicts = {
             'sim_results': {'datasets': []},
             'batch_kwargs': None,
             'batch_results': {},
             'analysis_data': {},
         }
 
-        l_mod, col_mod = build_model_tab()
-        l_sim, col_sim, graph_lists_sim = build_sim_tab()
-        l_batch, col_batch, graph_lists_batch = build_batch_tab()
-        l_anal, col_anal, graph_lists_anal, dicts_anal = build_analysis_tab()
-        for dic in [col_mod, col_sim, col_batch, col_anal]:
-            collapsibles.update(dic)
-        for dic in [graph_lists_sim, graph_lists_batch, graph_lists_anal]:
-            graph_lists.update(dic)
-        for dic in [dicts_anal]:
-            dicts.update(dic)
+        ts = []
 
-        l_gui = [
-            [sg.TabGroup([[
-                sg.Tab('Model', l_mod, background_color=self.background_color,key='MODEL_TAB'),
-                sg.Tab('Simulation', l_sim, background_color=self.background_color,key='SIMULATION_TAB'),
-                sg.Tab('Batch run', l_batch, background_color=self.background_color,key='BATCH_TAB'),
-                sg.Tab('Analysis', l_anal, background_color=self.background_color, key='ANALYSIS_TAB')]],
-                key='ACTIVE_TAB', tab_location='top', selected_title_color='purple')]
-        ]
-        # self.layout=l_gui
-        self.collapsibles=collapsibles
-        self.graph_lists=graph_lists
-        self.dicts=dicts
+        for n in tabs:
+            l, c, g, d = self.build_tab(n)
+            self.collapsibles.update(c)
+            self.graph_lists.update(g)
+            self.dicts.update(d)
+            ts.append(sg.Tab(n, l, background_color=self.background_color, key=f'{n} TAB'))
 
+        l_gui = [[sg.TabGroup([ts], key='ACTIVE_TAB', tab_location='top', selected_title_color='purple')]]
         self.window = sg.Window('Larvaworld gui', l_gui, size=(1800, 1200), **w_kws, location=(300, 100))
 
     def run(self):
         while True:
-
             e, v = self.window.read()
             if e in (None, 'Exit'):
                 break
-            check_collapsibles(self.window, e, self.collapsibles)
-            check_toggles(self.window, e)
-            for name, graph_list in self.graph_lists.items():
-                if e == graph_list.list_key:
-                    graph_list.evaluate(self.window, v[graph_list.list_key])
+            default_run_window(self.window, e, v, self.collapsibles, self.graph_lists)
 
-            if e.startswith('EDIT_TABLE'):
-                self.collapsibles[e.split()[-1]].edit_table(self.window)
-
-            tab = v['ACTIVE_TAB']
-            if tab == 'ANALYSIS_TAB':
-                self.graph_lists, self.dicts = eval_analysis(e, v, self.window, self.collapsibles, self.graph_lists, self.dicts)
-            elif tab == 'MODEL_TAB':
-                eval_model(e, v, self.window, self.collapsibles)
-            elif tab == 'BATCH_TAB':
-                self.dicts, self.graph_lists = eval_batch(e, v, self.window, self.collapsibles, self.dicts, self.graph_lists)
-            elif tab == 'SIMULATION_TAB':
-                self.dicts, self.graph_lists = eval_sim(e, v, self.window, self.collapsibles, self.dicts, self.graph_lists)
+            tab = v['ACTIVE_TAB'].split()[0]
+            k, kk = self.eval_tab(tab, event=e, values=v, window=self.window,
+                                                    collapsibles=self.collapsibles, dicts=self.dicts,
+                                                    graph_lists=self.graph_lists)
 
             # if dicts['batch_kwargs'] :
             #     thread = threading.Thread(target=batch_thread, args=(dicts['batch_kwargs'], W, dicts),daemon=True)
@@ -102,6 +74,26 @@ class LarvaworldGui :
             #     graph_lists['BATCH'].update(W, dicts['batch_results']['fig_dict'])
             # print(v)
         self.window.close()
+
+    def build_tab(self, name):
+        if name == 'model':
+            return build_model_tab()
+        elif name == 'exp':
+            return build_sim_tab()
+        elif name == 'batch':
+            return build_batch_tab()
+        elif name == 'anal':
+            return build_analysis_tab()
+
+    def eval_tab(self, name, **kwargs):
+        if name == 'model':
+            return eval_model(**kwargs)
+        elif name == 'exp':
+            return eval_sim(**kwargs)
+        elif name == 'batch':
+            return eval_batch(**kwargs)
+        elif name == 'anal':
+            return eval_analysis(**kwargs)
 
     # def batch_thread(kwargs, window, dicts):
     #     """
@@ -125,7 +117,7 @@ class LarvaworldGui :
     #     window.write_event_value('-THREAD-', '*** The thread says.... "I am finished" ***')
 
 
-
 if __name__ == "__main__":
-    gui=LarvaworldGui()
+    # gui = LarvaworldGui(tabs=['batch'])
+    gui = LarvaworldGui(tabs=['model', 'exp', 'batch', 'anal'])
     gui.run()

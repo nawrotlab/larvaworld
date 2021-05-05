@@ -150,6 +150,7 @@ class LarvaWorld:
             value = 'ON' if getattr(self, name) else 'OFF'
         self.screen_texts[name].text = f'{name} {value}'
         self.screen_texts[name].end_time = pygame.time.get_ticks() + 3000
+        self.screen_texts[name].start_time = pygame.time.get_ticks()+int(self.dt*1000)
 
         if name == 'visible_ids':
             for a in self.get_flies() + self.get_food():
@@ -737,7 +738,7 @@ class LarvaWorld:
 
     def draw_screen_texts(self, screen):
         for name, text in self.screen_texts.items():
-            if text and pygame.time.get_ticks() < text.end_time:
+            if text and text.start_time<pygame.time.get_ticks() < text.end_time:
                 text.visible = True
                 text.draw(screen)
             else:
