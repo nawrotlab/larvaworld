@@ -84,7 +84,7 @@ def eval_analysis(event, values, window, collapsibles, dicts, graph_lists):
             if 'Visualization' in list(collapsibles.keys()) :
                 vis_kwargs = collapsibles['Visualization'].get_dict(values, window)
             else :
-                vis_kwargs = dtypes.get_dict('visualization', mode='video', video_speed=60)
+                vis_kwargs = dtypes.get_dict('visualization', mode='video', video_speed=60, visible_scale=False)
 
             if 'Replay' in list(collapsibles.keys()) :
                 replay_kwargs = collapsibles['Replay'].get_dict(values, window)

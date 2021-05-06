@@ -7,6 +7,7 @@ import PySimpleGUI as sg
 import matplotlib
 from tkinter import *
 
+from lib.gui.intro_tab import build_intro_tab, eval_intro_tab
 from lib.gui.video_tab import build_video_tab, eval_video_tab
 
 sys.path.insert(0, '..')
@@ -27,7 +28,7 @@ class LarvaworldGui:
     def __init__(self, tabs=['model', 'exp', 'batch', 'anal']):
         # sg.change_look_and_feel('Dark Blue 3')
         sg.theme('LightGreen')
-        self.background_color = 'darkblue'
+        self.background_color = None
         self.collapsibles = {}
         self.graph_lists = {}
         self.dicts = {
@@ -88,6 +89,8 @@ class LarvaworldGui:
             return build_analysis_tab()
         elif name == 'video':
             return build_video_tab()
+        elif name == 'intro':
+            return build_intro_tab()
 
     def eval_tab(self, name, **kwargs):
         if name == 'model':
@@ -100,6 +103,8 @@ class LarvaworldGui:
             return eval_analysis(**kwargs)
         elif name == 'video':
             return eval_video_tab(**kwargs)
+        elif name == 'intro':
+            return eval_intro_tab(**kwargs)
 
     # def batch_thread(kwargs, window, dicts):
     #     """
@@ -125,5 +130,5 @@ class LarvaworldGui:
 
 if __name__ == "__main__":
     # gui = LarvaworldGui(tabs=['anal'])
-    gui = LarvaworldGui(tabs=['model', 'exp', 'batch', 'anal', 'video'])
+    gui = LarvaworldGui(tabs=['intro','model', 'exp', 'batch', 'anal', 'video'])
     gui.run()

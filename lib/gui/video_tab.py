@@ -5,14 +5,8 @@ import PySimpleGUI as sg
 import webbrowser
 
 
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, save_gui_conf, delete_gui_conf, b12_kws, \
-    b6_kws, CollapsibleTable, graphic_button, t10_kws, t12_kws, t18_kws, w_kws, default_run_window, BtnLink
-from lib.conf.conf import loadConfDict, loadConf
-import lib.conf.dtype_dicts as dtypes
-
+from lib.gui.gui_lib import w_kws, default_run_window, BtnLink
 import lib.stor.paths as paths
-
-
 
 
 def build_video_tab():
