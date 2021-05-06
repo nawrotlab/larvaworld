@@ -11,7 +11,7 @@ from lib.stor.datagroup import LarvaDataGroup
 from lib.stor.larva_dataset import LarvaDataset
 
 
-def build_datasets(datagroup_id, raw_folders=None, names=['raw'], folders=None, suffixes=None,
+def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None,
                    ids=None, arena_pars=None, **kwargs):
     warnings.filterwarnings('ignore')
     datagroup = LarvaDataGroup(datagroup_id)
@@ -23,6 +23,8 @@ def build_datasets(datagroup_id, raw_folders=None, names=['raw'], folders=None, 
     elif raw_folders == 'each':
         raw_folders = [[f] for f in np.sort(os.listdir(datagroup.raw_dir))]
         names = [f'{f[0]}' for f in raw_folders]
+    else :
+        raise ValueError('Raw folders must be set to all or each')
     ds = get_datasets(datagroup_id=datagroup_id, last_common='processed', names=names,
                       folders=folders, suffixes=suffixes, mode='initialize', ids=ids, arena_pars=arena_pars)
     for d, raw in zip(ds, raw_folders):
@@ -68,6 +70,7 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
     dirs = [f'{f}/{n}' for (f, n) in list(product(folders, names))]
     ds = []
     for dir, id in zip(dirs, ids):
+        # print(dir)
         if mode == 'load':
             if not os.path.exists(dir):
                 print(f'No dataset found at {dir}')

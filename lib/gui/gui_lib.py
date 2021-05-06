@@ -1545,6 +1545,10 @@ class BtnInfo:
     def __init__(self, state=True):
         self.state = state  # Can have 3 states - True, False, None (toggle)
 
+class BtnLink :
+    def __init__(self, link):
+        self.link = link
+
 
 def draw_canvas(canvas, figure, side='top', fill='both', expand=1):
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)

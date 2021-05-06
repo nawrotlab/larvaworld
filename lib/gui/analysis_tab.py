@@ -6,7 +6,7 @@ from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, t10
 from lib.stor import paths
 from lib.anal.plotting import graph_dict
 from lib.stor.larva_dataset import LarvaDataset
-
+import lib.conf.dtype_dicts as dtypes
 
 # def update_data_list(window, data):
 #     window.Element('DATASET_IDS').Update(values=list(data.keys()))
@@ -81,8 +81,15 @@ def eval_analysis(event, values, window, collapsibles, dicts, graph_lists):
         if len(values['DATASET_IDS']) > 0:
             id = values['DATASET_IDS'][0]
             d = dicts['analysis_data'][id]
-            vis_kwargs = collapsibles['Visualization'].get_dict(values, window)
-            replay_kwargs = collapsibles['Replay'].get_dict(values, window)
+            if 'Visualization' in list(collapsibles.keys()) :
+                vis_kwargs = collapsibles['Visualization'].get_dict(values, window)
+            else :
+                vis_kwargs = dtypes.get_dict('visualization', mode='video', video_speed=60)
+
+            if 'Replay' in list(collapsibles.keys()) :
+                replay_kwargs = collapsibles['Replay'].get_dict(values, window)
+            else :
+                replay_kwargs = dtypes.get_dict('replay', arena_pars=None)
             d.visualize(vis_kwargs=vis_kwargs, **replay_kwargs)
 
     elif event == 'ANALYSIS_SAVE_FIG':

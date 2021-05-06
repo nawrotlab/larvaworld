@@ -1091,8 +1091,14 @@ class LarvaDataset:
 
             for i, data in enumerate(all_d):
                 v, d = fun.compute_velocity(xy=data[xy].values, dt=dt, return_dst=True)
+                # temp=Nticks - data[xy].values.shape[0]
+                # if temp>0:
+                #     k=np.zeros(temp)
+                #     v=np.concatenate([k,v])
+                #     d=np.concatenate([k,d])
                 a = np.diff(v) / dt
                 cum_d = np.nancumsum(d)
+
                 D[1:, i] = d
                 Dcum[1:, i] = cum_d
                 V[1:, i] = v
