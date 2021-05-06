@@ -5,7 +5,7 @@ import PySimpleGUI as sg
 import webbrowser
 
 
-from lib.gui.gui_lib import w_kws, default_run_window, BtnLink
+from lib.gui.gui_lib import w_kws, default_run_window, BtnLink, window_size
 import lib.stor.paths as paths
 
 
@@ -19,7 +19,7 @@ def build_video_tab():
                    metadata=BtnLink(link=f'{link_pref}{f.split(".")[0]}.mp4')) for f in files]
     n = 3
     b_list = [b_list[i * n:(i + 1) * n] for i in range((len(b_list) + n - 1) // n)]
-    l_vid = [[sg.Col(b_list, vertical_scroll_only=True,scrollable=True, size=(1800, 1200))]]
+    l_vid = [[sg.Col(b_list, vertical_scroll_only=True,scrollable=True, size=window_size)]]
 
     return l_vid, collapsibles, graph_lists, dicts
 
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     sg.theme('LightGreen')
     n = 'video'
     l, c, g, d = build_video_tab()
-    w = sg.Window(f'{n} gui', l, size=(1800, 1200), **w_kws, location=(300, 100))
+    w = sg.Window(f'{n} gui', l, size=window_size, **w_kws, location=(300, 100))
 
     while True:
         e, v = w.read()

@@ -8,7 +8,7 @@ import lib.aux.functions as fun
 from lib.aux.collecting import output_keys
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     named_bool_button, save_gui_conf, delete_gui_conf, GraphList, b12_kws, b6_kws, CollapsibleTable, \
-    b_kws, graphic_button, t10_kws, t12_kws, t18_kws, t8_kws, w_kws, default_run_window
+    b_kws, graphic_button, t10_kws, t12_kws, t18_kws, t8_kws, w_kws, default_run_window, col_kws, window_size, col_size
 from lib.gui.draw_env import draw_env
 from lib.gui.life_conf import life_conf
 from lib.sim.single_run import run_sim, sim_analysis
@@ -16,10 +16,10 @@ from lib.conf.conf import loadConfDict, loadConf, next_idx
 
 
 def init_env(collapsibles):
-    s1 = CollapsibleDict('Arena', True, dict=dtypes.get_dict('arena'), type_dict=dtypes.get_dict_dtypes('arena'))
-    s2 = CollapsibleDict('Food_grid', True, dict=dtypes.get_dict('food_grid'),disp_name='Food grid',
+    s1 = CollapsibleDict('Arena', False, dict=dtypes.get_dict('arena'), type_dict=dtypes.get_dict_dtypes('arena'))
+    s2 = CollapsibleDict('Food_grid', False, dict=dtypes.get_dict('food_grid'),disp_name='Food grid',
                          type_dict=dtypes.get_dict_dtypes('food_grid'), toggle=True, disabled=False)
-    s3 = CollapsibleDict('Odorscape', True, dict=dtypes.get_dict('odorscape'),
+    s3 = CollapsibleDict('Odorscape', False, dict=dtypes.get_dict('odorscape'),
                          type_dict=dtypes.get_dict_dtypes('odorscape'))
     for s in [s1, s2, s3]:
         collapsibles.update(s.get_subdicts())
@@ -98,7 +98,7 @@ def build_sim_tab():
          graphic_button('load', 'LOAD_EXP', tooltip='Load the configuration for a simulation experiment.'),
          graphic_button('play', 'RUN_EXP', tooltip='Run the selected simulation experiment.')],
         [sg.Combo(list(loadConfDict('Exp').keys()), key='EXP', enable_events=True, readonly=True, **t18_kws)]
-    ])]
+    ],**col_kws)]
     sim_conf = [[sg.Text('Sim id:'), sg.In('unnamed_sim', key='sim_id')],
                 [sg.Text('Path:'), sg.In('single_runs', key='path')],
                 [sg.Text('Duration (min):'), sg.In(3, key='sim_dur')],
@@ -135,8 +135,8 @@ def build_sim_tab():
         [sg.Combo(list(loadConfDict('Env').keys()), key='ENV_CONF', enable_events=True, readonly=True, **t18_kws)],
     ])]
     l_env1 = init_env(collapsibles)
-    l_env = [[sg.Col([l_env0, l_env1])]]
-    l_sim = [[sg.Col(l_conf,vertical_alignment='t'), sg.Col(l_env,vertical_alignment='t'), graph_lists['EXP'].canvas]]
+    # l_env = [[sg.Col([l_env0, l_env1], **col_kws)]]
+    l_sim = [[sg.Col(l_conf,**col_kws, size=col_size(0.25)), sg.Col([l_env0, l_env1],**col_kws, size=col_size(0.25)), graph_lists['EXP'].canvas]]
     return l_sim, collapsibles, graph_lists, dicts
 
 

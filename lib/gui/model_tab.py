@@ -1,8 +1,9 @@
 import copy
 import PySimpleGUI as sg
 
+
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, save_gui_conf, delete_gui_conf, b12_kws, \
-    b6_kws, CollapsibleTable, graphic_button, t10_kws, t12_kws, t18_kws, w_kws, default_run_window
+    b6_kws, CollapsibleTable, graphic_button, t10_kws, t12_kws, t18_kws, w_kws, default_run_window, col_kws, col_size
 from lib.conf.conf import loadConfDict, loadConf
 import lib.conf.dtype_dicts as dtypes
 
@@ -29,16 +30,16 @@ def init_model(collapsibles={}):
         module_conf.append(s.get_section())
     collapsibles['Brain'] = Collapsible('Brain', True, module_conf)
     brain_layout = sg.Col([collapsibles['Brain'].get_section(),
-                           collapsibles['odor_gains'].get_section()])
+                           collapsibles['odor_gains'].get_section()],**col_kws, size=col_size(0.25))
     non_brain_layout = sg.Col([collapsibles['Physics'].get_section(),
                                collapsibles['Body'].get_section(),
                                collapsibles['Energetics'].get_section(),
                                collapsibles['Odor'].get_section()
-                               ])
+                               ],**col_kws, size=col_size(0.25))
 
     model_layout = [[brain_layout, non_brain_layout]]
 
-    collapsibles['Model'] = Collapsible('Model', False, model_layout)
+    collapsibles['Model'] = Collapsible('Model', True, model_layout)
     return collapsibles['Model'].get_section()
 
 

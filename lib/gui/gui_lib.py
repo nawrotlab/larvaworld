@@ -676,16 +676,23 @@ color_map = {
     'YellowGreen': '#9ACD32',
 }
 
+window_size=(1800, 1200)
+
+def col_size(window_x_fraction) :
+    return int(window_size[0]*window_x_fraction),window_size[1]
+
 w_kws = {
     'finalize': True,
     'resizable': True,
     'default_button_element_size': (6, 1),
     'default_element_size': (14, 1),
-    'font': ('size', 8),
+    'font': ('Helvetica', 8, 'normal'),
     'auto_size_text': False,
     'auto_size_buttons': False,
     'text_justification': 'left',
 }
+
+col_kws = {'vertical_alignment':'t', 'expand_x':False, 'expand_y':False}
 
 b_kws = {'font': ('size', 6)}
 
@@ -1435,7 +1442,7 @@ class GraphList:
     def init_canvas(self, name):
         canvas_key = f'{name}_CANVAS'
         figure_w, figure_h = 800, 800
-        canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key=canvas_key)]], vertical_alignment='t')
+        canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key=canvas_key, background_color='Lightblue')]], **col_kws)
         return canvas, canvas_key
 
     def draw_fig(self, window, fig):
