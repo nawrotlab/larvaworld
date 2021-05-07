@@ -129,7 +129,7 @@ def olfactor_conf(ids=['Odor'], means=[150.0], stds=None, noise=0.0):
                              'std': s}
         return odor_dict
 
-    odor_dict = None if ids is None else new_odor_dict(ids, means, stds)
+    odor_dict = {} if ids is None else new_odor_dict(ids, means, stds)
     return {
         'odor_dict': odor_dict,
         'perception': 'log',

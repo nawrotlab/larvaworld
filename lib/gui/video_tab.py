@@ -5,7 +5,7 @@ import PySimpleGUI as sg
 import webbrowser
 
 
-from lib.gui.gui_lib import w_kws, default_run_window, BtnLink, window_size
+from lib.gui.gui_lib import w_kws, default_run_window, BtnLink, window_size, ClickableImage
 import lib.stor.paths as paths
 
 
@@ -15,8 +15,10 @@ def build_video_tab():
     collapsibles = {}
     link_pref = "http://computational-systems-neuroscience.de/wp-content/uploads/2021/04/"
     files = [f for f in os.listdir(paths.VideoSlideFolder) if f.endswith('png')]
-    b_list = [sg.B(image_filename=os.path.join(paths.VideoSlideFolder, f), image_subsample=5, key=f'IMAGE {f.split(".")[0]}', enable_events=True, pad=(25,40),
-                   metadata=BtnLink(link=f'{link_pref}{f.split(".")[0]}.mp4')) for f in files]
+    b_list = [ClickableImage(name=f.split(".")[0], link=f'{link_pref}{f.split(".")[0]}.mp4',
+                             image_filename=os.path.join(paths.VideoSlideFolder, f),
+                             image_subsample=5,pad=(25, 40)) for f in files]
+
     n = 3
     b_list = [b_list[i * n:(i + 1) * n] for i in range((len(b_list) + n - 1) // n)]
     l_vid = [[sg.Col(b_list, vertical_scroll_only=True,scrollable=True, size=window_size)]]
@@ -25,9 +27,9 @@ def build_video_tab():
 
 
 def eval_video_tab(event, values, window, collapsibles, dicts, graph_lists):
-    if 'IMAGE' in event:
-        link = window[event].metadata.link
-        webbrowser.open(link)
+    if 'ClickableImage' in event:
+        window[event].eval()
+
     return dicts, graph_lists
 
 

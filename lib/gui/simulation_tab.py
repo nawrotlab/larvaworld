@@ -208,7 +208,7 @@ def get_sim_conf(window, values):
         'sim_dur': float(values['sim_dur']),
         'dt': float(values['dt']),
         'path': str(values['path']),
-        'Box2D': window['TOGGLE_Box2D'].metadata.state,
+        'Box2D': window['TOGGLE_Box2D'].get_state(),
     }
     return sim
 

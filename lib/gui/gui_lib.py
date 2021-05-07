@@ -1,6 +1,7 @@
 import copy
 import inspect
 import os
+import webbrowser
 from ast import literal_eval
 from typing import List, Tuple, Type
 
@@ -8,7 +9,7 @@ import numpy as np
 import PySimpleGUI as sg
 import operator
 
-from PySimpleGUI import BUTTON_TYPE_COLOR_CHOOSER
+from PySimpleGUI import BUTTON_TYPE_COLOR_CHOOSER, Button
 from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
@@ -1024,8 +1025,7 @@ def update_window_from_dict(window, dic, prefix=None):
             if prefix is not None:
                 k = f'{prefix}_{k}'
             if type(v) == bool:
-                window[f'TOGGLE_{k}'].metadata.state = v
-                window[f'TOGGLE_{k}'].update(image_data=graphics.on_image if v else graphics.off_image)
+                window[f'TOGGLE_{k}'].set_state(v)
             elif type(v) == dict:
                 if prefix is not None:
                     new_prefix = k
@@ -1082,7 +1082,7 @@ class SectionDict:
             for i, (k, v) in enumerate(new_dict.items()):
                 k0 = f'{self.name}_{k}'
                 if type(v) == bool:
-                    new_dict[k] = window[f'TOGGLE_{k0}'].metadata.state
+                    new_dict[k] = window[f'TOGGLE_{k0}'].get_state()
                 elif type(v) == dict:
                     new_dict[k] = self.subdicts[k0].get_dict(values, window)
                 else:
@@ -1094,7 +1094,7 @@ class SectionDict:
             for i, (k, t) in enumerate(self.type_dict.items()):
                 k0 = f'{self.name}_{k}'
                 if t == bool:
-                    new_dict[k] = window[f'TOGGLE_{k0}'].metadata.state
+                    new_dict[k] = window[f'TOGGLE_{k0}'].get_state()
                 elif t == dict or type(t) == dict :
                     try:
                     # if k0 in list(values.keys()) and values[k0] not in ['fit', 'sample']:
@@ -1115,28 +1115,42 @@ class SectionDict:
 def named_bool_button(name, state, toggle_name=None):
     if toggle_name is None:
         toggle_name = name
-    l = [sg.Text(f'{name} :'), bool_button(toggle_name, state)]
-    return l
+    return [sg.Text(f'{name} :'), BoolButton(toggle_name, state)]
+
+class BoolButton(Button) :
+    def __init__(self, name, state, disabled=False, **kwargs) :
+        self.name = name
+        self.state = state
+        self.disabled = disabled
+        c = sg.theme_background_color()
+        super().__init__(image_data=self.get_image(self.state, self.disabled), k=f'TOGGLE_{self.name}', border_width=0,
+                      button_color=(c, c),disabled_button_color=(c, c),
+                      metadata=BtnInfo(state=self.state), **b6_kws, **kwargs)
+
+    def toggle(self):
+        if not self.disabled :
+            self.set_state(state=not self.state)
 
 
-def bool_button(name, state, disabled=False):
-    if state:
-        if disabled:
-            image = graphics.on_image_disabled
-        else:
-            image = graphics.on_image
-    elif state == False:
-        if disabled:
-            image = graphics.off_image_disabled
-        else:
-            image = graphics.off_image
-    elif state is None:
-        image = graphics.off_image_disabled
-    b = sg.Button(image_data=image, k=f'TOGGLE_{name}', border_width=0,
-                  button_color=(sg.theme_background_color(), sg.theme_background_color()),
-                  disabled_button_color=(sg.theme_background_color(), sg.theme_background_color()),
-                  metadata=BtnInfo(state=state), **b6_kws)
-    return b
+    def get_state(self):
+        return self.state
+
+    def set_state(self, state=None, disabled=None):
+        if state is not None :
+            self.state = state
+        if disabled is not None :
+            self.disabled = disabled
+        self.update(image_data=self.get_image(self.state, self.disabled))
+
+    def get_image(self, state, disabled):
+        if not disabled :
+            image=graphics.on_image if state else graphics.off_image
+        else :
+            image=graphics.on_image_disabled if state else graphics.off_image_disabled
+        return image
+
+
+
 
 
 def named_list_layout(text, key, choices, readonly=True, enable_events=True):
@@ -1154,20 +1168,19 @@ class Collapsible:
         self.state = state
         self.toggle = toggle
         self.auto_open = auto_open
-        self.symbol = SYMBOL_DOWN if state else SYMBOL_UP
-        header = [sg.T(self.symbol, enable_events=True, k=f'OPEN SEC {name}', text_color='black', **t2_kws),
-                  sg.T(disp_name, enable_events=True, text_color='black', k=f'SEC {name} TEXT', **t12_kws)]
+        cc={'enable_events' : True, 'text_color' :'black'}
+        self.sec_symbol=sg.T(SYMBOL_DOWN if state else SYMBOL_UP, k=f'OPEN SEC {name}', **cc,**t2_kws )
+        header = [self.sec_symbol,sg.T(disp_name, **cc,**t12_kws )]
         if toggle is not None:
-            header.append(bool_button(name, toggle, disabled))
+            header.append(BoolButton(name, toggle, disabled))
         if next_to_header is not None:
             header += next_to_header
-        self.section = [header, [collapse(content, f'SEC {name}', visible=state)]]
+        self.content=collapse(content, f'SEC {name}', visible=state)
+        self.section = [header, [self.content]]
 
     def get_section(self, as_col=True):
-        if as_col:
-            return [sg.Col(self.section)]
-        else:
-            return self.section
+        return [sg.Col(self.section)] if as_col else self.section
+
 
     def set_section(self, section):
         self.section = section
@@ -1179,33 +1192,33 @@ class Collapsible:
             self.disable(window)
         else:
             self.enable(window)
-            if use_prefix:
-                prefix = self.name
-            else:
-                prefix = None
+            prefix = self.name if use_prefix else None
             update_window_from_dict(window, dict, prefix=prefix)
         return window
 
+    def click(self, window):
+        if self.state is not None:
+            self.state = not self.state
+            self.sec_symbol.update(SYMBOL_DOWN if self.state else SYMBOL_UP)
+            # self.content.update(visible=self.state)
+            window[f'SEC {self.name}'].update(visible=self.state)
+
     def disable(self, window):
         if self.toggle is not None:
-            window[f'TOGGLE_{self.name}'].metadata.state = None
-            window[f'TOGGLE_{self.name}'].update(image_data=graphics.off_image_disabled)
+            window[f'TOGGLE_{self.name}'].set_state(state=False, disabled=True)
         self.state = None
-        window[f'OPEN SEC {self.name}'].update(SYMBOL_UP)
+        self.sec_symbol.update(SYMBOL_UP)
         window[f'SEC {self.name}'].update(visible=False)
 
     def enable(self, window):
         if self.toggle is not None:
-            window[f'TOGGLE_{self.name}'].update(image_data=graphics.on_image_disabled)
-        if self.state is None:
-            if self.auto_open:
-                self.state = True
-                self.symbol = SYMBOL_DOWN
-            else:
-                self.state = False
-                self.symbol = SYMBOL_UP
-        window[f'OPEN SEC {self.name}'].update(self.symbol)
-        window[f'SEC {self.name}'].update(visible=self.state)
+            window[f'TOGGLE_{self.name}'].set_state(state=True, disabled=False)
+        if self.auto_open:
+            self.state = True
+            self.sec_symbol.update(SYMBOL_DOWN)
+            window[f'SEC {self.name}'].update(visible=self.state)
+        elif self.state is None:
+            self.state = False
 
     def get_subdicts(self):
         subdicts = {}
@@ -1556,6 +1569,15 @@ class BtnLink :
     def __init__(self, link):
         self.link = link
 
+class ClickableImage(Button) :
+    def __init__(self, name, link, **kwargs) :
+        self.name = name
+        self.link = link
+        super().__init__(key=f'ClickableImage {self.name}', enable_events=True, metadata=BtnLink(link=self.link), **kwargs)
+
+    def eval(self):
+        webbrowser.open(self.link)
+
 
 def draw_canvas(canvas, figure, side='top', fill='both', expand=1):
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
@@ -1737,17 +1759,12 @@ def delete_gui_conf(window, values, conf_type):
 def check_collapsibles(window, event, collapsibles):
     if event.startswith('OPEN SEC'):
         sec = event.split()[-1]
-        if collapsibles[sec].state is not None:
-            collapsibles[sec].state = not collapsibles[sec].state
-            window[event].update(SYMBOL_DOWN if collapsibles[sec].state else SYMBOL_UP)
-            window[f'SEC {sec}'].update(visible=collapsibles[sec].state)
+        collapsibles[sec].click(window)
 
 
 def check_toggles(window, event):
     if 'TOGGLE' in event:
-        if window[event].metadata.state is not None:
-            window[event].metadata.state = not window[event].metadata.state
-            window[event].update(image_data=graphics.on_image if window[event].metadata.state else graphics.off_image)
+        window[event].toggle()
 
 def default_run_window(window, event, values, collapsibles={}, graph_lists={}) :
     # if event in (None, 'Exit'):

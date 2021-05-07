@@ -25,7 +25,7 @@ def init_model(collapsibles={}):
     for k in dtypes.module_keys:
         d = dtypes.get_dict(k)
         t_d = dtypes.get_dict_dtypes(k)
-        s = CollapsibleDict(k.upper(), False, dict=d, type_dict=t_d, dict_name=k.upper(), toggle=True)
+        s = CollapsibleDict(k.upper(), False, dict=d, type_dict=t_d, dict_name=k.upper(), toggle=True, auto_open=False)
         collapsibles.update(s.get_subdicts())
         module_conf.append(s.get_section())
     collapsibles['Brain'] = Collapsible('Brain', True, module_conf)
@@ -66,7 +66,7 @@ def update_model(larva_model, window, collapsibles):
 
 
 def get_model(window, values, collapsibles):
-    module_dict = dict(zip(dtypes.module_keys, [window[f'TOGGLE_{k.upper()}'].metadata.state for k in dtypes.module_keys]))
+    module_dict = dict(zip(dtypes.module_keys, [window[f'TOGGLE_{k.upper()}'].get_state() for k in dtypes.module_keys]))
     model = {}
     model['neural_params'] = {}
     model['neural_params']['modules'] = module_dict

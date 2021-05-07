@@ -182,14 +182,14 @@ def check_abort(name, w, v, units, groups):
     o = name
     info = w['info']
     abort = True
-    odor_on = w[f'TOGGLE_{o}_ODOR'].metadata.state
+    odor_on = w[f'TOGGLE_{o}_ODOR'].get_state()
 
     if not odor_on:
         w[f'{o}_ODOR_odor_id'].update(value=None)
         w[f'{o}_ODOR_odor_intensity'].update(value=0.0)
 
     if o == 'SOURCE':
-        food_on = w[f'TOGGLE_{o}_FOOD'].metadata.state
+        food_on = w[f'TOGGLE_{o}_FOOD'].get_state()
         if not odor_on and not food_on:
             info.update(value=f"Assign food and/or odor to the drawn source")
             return True
@@ -406,7 +406,7 @@ def draw_env(env=None):
                             o = 'SOURCE'
                             color = v[f'{o}_color']
                             if v['SOURCE_single'] or (v['SOURCE_group'] and sample_fig is None):
-                                fill_color = color if w['TOGGLE_SOURCE_FOOD'].metadata.state else None
+                                fill_color = color if w['TOGGLE_SOURCE_FOOD'].get_state() else None
                                 prior_rect = draw_shape(graph, shape=v[f'{o}_shape'], p1=start_point, p2=end_point,
                                                         line_color=color, fill_color=fill_color)
                                 temp = np.max(np.abs(np.array(end_point) - np.array(start_point)))

@@ -428,7 +428,7 @@ def get_dict_dtypes(name, **kwargs):
                    'feed_radius': float,
                    'max_feed_amount_ratio': float},
         'memory': {'DeltadCon': float,
-                   'state_spacePerOdorSide': 0,
+                   'state_spacePerOdorSide': int,
                    'gain_space': List[float],
                    'update_dt': float,
                    'alpha': float,
