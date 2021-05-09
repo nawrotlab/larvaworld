@@ -426,11 +426,11 @@ class Oscillator_coupling():
             if crawler.effector:
                 phi = crawler.phi / np.pi
                 p0, p1 = self.crawler_phi_range
-                if crawler.waveform == 'realistic' and (p0 < phi < p1):
+                if crawler.waveform == 'realistic' and (phi < p0 or phi>p1):
                     return True
                 elif crawler.waveform == 'square' and not phi <= 2 * crawler.square_signal_duty:
                     return True
-                elif crawler.waveform == 'gaussian' and (p0 < phi < p1):
+                elif crawler.waveform == 'gaussian' and (phi < p0 or phi>p1):
                     return True
 
         if feeder is not None:

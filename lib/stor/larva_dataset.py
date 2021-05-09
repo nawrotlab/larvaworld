@@ -2238,6 +2238,12 @@ class LarvaDataset:
                                         store_min=True, min_duration=min_duration, is_last=False)
         self.track_parameters_during_chunk(chunk='Lturn', pars=track_params, is_last=False)
         self.track_parameters_during_chunk(chunk='Rturn', pars=track_params, is_last=False)
+        for track_par in track_params :
+            p_track_tur = nam.chunk_track('turn', track_par)
+            p_track_Ltur = nam.chunk_track('Lturn', track_par)
+            p_track_Rtur = nam.chunk_track('Rturn', track_par)
+            e[nam.mean(p_track_tur)] = s[[p_track_Ltur, p_track_Rtur]].abs().groupby('AgentID').mean().mean(axis=1)
+            e[nam.std(p_track_tur)] = s[[p_track_Ltur, p_track_Rtur]].abs().groupby('AgentID').std().mean(axis=1)
 
         if constant_bend_chunks:
             print('Additionally detecting constant bend chunks.')
@@ -2246,6 +2252,8 @@ class LarvaDataset:
                                             min_duration=min_duration, is_last=False)
 
         s[nam.dur('turn')] = s[[nam.dur('Rturn'), nam.dur('Lturn')]].sum(axis=1, min_count=1)
+        s[nam.stop('turn')] = s[[nam.stop('Rturn'), nam.stop('Lturn')]].sum(axis=1, min_count=1)
+        self.compute_chunk_metrics('turn', is_last=False)
         self.create_par_distro_dataset([nam.dur('turn')])
         for p in track_params:
             s[f'turn_{p}'] = ss[[nam.chunk_track(chunk_name='Rturn', params=p),

@@ -76,6 +76,7 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
                 print(f'No dataset found at {dir}')
                 continue
             d = LarvaDataset(dir=dir, load_data=load_data)
+            # d = LarvaDataset(dir=dir, load_data=load_data, id=id)
         elif mode == 'initialize':
             try:
                 shutil.rmtree(dir)

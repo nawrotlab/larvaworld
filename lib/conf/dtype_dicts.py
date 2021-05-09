@@ -148,7 +148,7 @@ all_null_dicts = {
     'food_grid':
         {
             'unique_id': 'Food_grid',
-            'grid_dims': (50, 50),
+            'grid_dims': (20, 20),
             'initial_value': 10 ** -3,
             'distribution': 'uniform',
         },

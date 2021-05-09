@@ -1,5 +1,6 @@
 import copy
 import random
+import time
 import warnings
 import numpy as np
 import progressbar
@@ -77,7 +78,7 @@ class LarvaWorld:
         self.touch_sensors = touch_sensors
         self.Nticks = 0
         self.Nsteps = Nsteps
-        snapshot_interval_in_sec = 10
+        snapshot_interval_in_sec = 60
         self.snapshot_interval = int(snapshot_interval_in_sec / dt)
         self.id = id
 
@@ -319,16 +320,22 @@ class LarvaWorld:
                 pass
 
     def draw_aux(self, screen):
+        # t1 = time.time()
         screen.draw_arena(self.tank_shape, self.tank_color, self.screen_color)
+        # t2 = time.time()
         if self.visible_clock:
             self.sim_clock.draw_clock(screen)
         if self.visible_scale:
             self.sim_scale.draw_scale(screen)
         if self.visible_state:
             self.sim_state.draw_state(screen)
+        t3 = time.time()
         self.input_box.draw(screen)
 
         self.draw_screen_texts(screen)
+        t4 = time.time()
+        # print()
+        # print(np.round([1000*(t4-t3)]))
 
     def draw_arena(self, screen, background_motion):
         screen.set_bounds(*self.space_edges_for_screen)
@@ -355,10 +362,12 @@ class LarvaWorld:
         for name, text in self.screen_texts.items():
             text.render(width, height)
 
-    def render(self, velocity_arrows=False, tick=None):
-        if self.background_motion is None or tick is None:
-            background_motion = [0, 0, 0]
-        else:
+    def render(self, velocity_arrows=False, tick=None, background_motion = [0, 0, 0]):
+        # if self.background_motion is None or tick is None:
+        #     background_motion = [0, 0, 0]
+        # else:
+        #     background_motion = self.background_motion[:, tick]
+        if self.background_motion and tick :
             background_motion = self.background_motion[:, tick]
         if self._screen is None:
             if self.vis_kwargs['render']['mode'] == 'video':
@@ -385,7 +394,7 @@ class LarvaWorld:
             self._screen = None
             self.close()
             return
-
+        # t0=time.time()
         if self.vis_kwargs['render']['image_mode'] != 'overlap':
             self.draw_arena(self._screen, background_motion)
 
@@ -407,11 +416,16 @@ class LarvaWorld:
 
         evaluate_input(self, self._screen)
         evaluate_graphs(self)
-
+        # t1 = time.time()
         if self.vis_kwargs['render']['image_mode'] != 'overlap':
+            # t2 = time.time()
             self.draw_aux(self._screen)
+            # t3 = time.time()
             self._screen.render()
 
+        # t4 = time.time()
+        # print()
+        # print(np.round([1000*(t4-t1),1000*(t2-t1), 1000*(t3-t2), 1000*(t4-t3)]))
     def screen2space_pos(self, pos):
         p = (2 * pos[0] / self.screen_width - 1), -(2 * pos[1] / self.screen_height - 1)
         pp = p[0] * self.space_dims[0] / 2, p[1] * self.space_dims[1] / 2
@@ -503,6 +517,8 @@ class LarvaWorld:
             return f'Larva_{N}'
 
     def run(self, Nsteps=None):
+        mode= self.vis_kwargs['render']['mode']
+        img_mode= self.vis_kwargs['render']['image_mode']
         # pygame.init()
         # import pygame_gui
         # manager = pygame_gui.UIManager((800, 600))
@@ -515,77 +531,41 @@ class LarvaWorld:
         if Nsteps is None:
             Nsteps = self.Nsteps
         warnings.filterwarnings('ignore')
+        # import time
         with progressbar.ProgressBar(max_value=Nsteps) as bar:
             while self.is_running and self.Nticks < Nsteps and not self.end_condition_met:
-                # time_delta = clock.tick(60) / 1000.0
                 if not self.sim_paused:
+                    # t0=time.time()
                     self.step()
                     bar.update(self.Nticks)
-                if self.vis_kwargs['render']['mode'] == 'video' or self.vis_kwargs['render']['image_mode'] == 'overlap':
-                    self.render(tick=self.Nticks)
-                if self.vis_kwargs['render']['image_mode'] == 'snapshots':
-                    if (self.Nticks - 1) % self.snapshot_interval == 0:
+                if mode=='video' :
+                    if img_mode != 'snapshots':
+                        # t1 = time.time()
                         self.render(tick=self.Nticks)
-                        self.toggle(name='snapshot #')
-                        self._screen.render()
-                # for event in pygame.event.get():
-                #     if event.type == pygame.USEREVENT:
-                #         if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                #             if event.ui_element == hello_button:
-                #                 print('Hello World!')
-                #     manager.process_events(event)
-                # manager.update(time_delta)
-                # manager.draw_ui(self._screen)
-                # pygame.display.update()
-                        # self._screen.close()
+                        # t2 = time.time()
+                    elif (self.Nticks - 1) % self.snapshot_interval == 0:
+                        # print('ss')
+                        self.render(tick=self.Nticks)
+                elif mode== 'image':
+                    if img_mode == 'overlap':
+                        self.render(tick=self.Nticks)
+                    elif img_mode == 'snapshots':
+                        if (self.Nticks - 1) % self.snapshot_interval == 0:
+                            self.render(tick=self.Nticks)
+                            self.toggle(name='snapshot #')
+                            self._screen.render()
 
-            if self.vis_kwargs['render']['image_mode'] == 'overlap':
+                # print()
+                # print((t1-t0)*1000, (t2-t1)*1000)
+
+            if img_mode == 'overlap':
                 self._screen.render()
                 self._screen.close()
-            elif self.vis_kwargs['render']['image_mode'] == 'final':
+            elif img_mode == 'final':
                 self.render(tick=self.Nticks)
                 self.toggle(name='snapshot #')
                 self._screen.render()
                 self._screen.close()
-
-            #     elif self.vis_kwargs['render']['mode'] == 'image':
-            #
-            #             bar.update(i)
-            #             if self.end_condition_met:
-            #                 return True
-            #     elif self.vis_kwargs['render']['image_mode'] == 'overlap':
-            #     # elif self.image_mode == 'overlap':
-            #     #     for i in range(Nsteps):
-            #         self.step()
-            #         self.render()
-            #         bar.update(i)
-            #         if self.end_condition_met:
-            #             return True
-            #         self._screen.render()
-            #         self._screen.close()
-            #
-            #     elif self.vis_kwargs['render']['image_mode'] == 'final':
-            #     # elif self.image_mode == 'final':
-            #         if isinstance(self, LarvaWorldSim):
-            #             for i in range(Nsteps):
-            #                 self.step()
-            #                 bar.update(i)
-            #                 if self.end_condition_met:
-            #                     return True
-            #         elif isinstance(self, LarvaWorldReplay):
-            #             self.active_larva_schedule.steps = Nsteps - 1
-            #             self.step()
-            #         self.render()
-            # else:
-            #     if isinstance(self, LarvaWorldSim):
-            #         for i in range(Nsteps):
-            #             self.step()
-            #             bar.update(i)
-            #             if self.end_condition_met:
-            #                 return True
-            #     elif isinstance(self, LarvaWorldReplay):
-            #         raise ValueError('When running a replay, set mode to video or image')
-
         return self.is_running
 
     def set_end_condition(self):

@@ -485,8 +485,8 @@ class Food(Source):
             self.amount = 0.0
             self.model.delete_agent(self)
         else:
-            r = (self.initial_amount - self.amount) / self.initial_amount
-            self.color = r * np.array((255, 255, 255)) + (1 - r) * self.default_color
+            r = self.amount / self.initial_amount
+            self.color = (1 - r) * np.array((255, 255, 255)) + r * np.array(self.default_color)
         return np.min([amount, prev_amount])
 
     def draw(self, viewer, filled=True):

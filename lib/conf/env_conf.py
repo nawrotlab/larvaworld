@@ -234,7 +234,7 @@ imitation_env_p = {'arena_params': dish(0.15),
 
 focus_env = {'arena_params': dish(0.01),
              'food_params': food_param_conf(),
-             'larva_params': larva_distro(N=1, orientation_range=[90.0, 90.0], model='explorer'),
+             'larva_params': larva_distro(N=1, orientation_range=[90.0, 90.0], model='immobile'),
              'odorscape': None}
 
 uniform_food_env = {'arena_params': dish(0.05),
@@ -255,10 +255,16 @@ food_grid_env = {'arena_params': arena(0.03, 0.03),  # dish(0.006),
                  'larva_params': larva_distro(N=25, model='feeder'),
                  'odorscape': None}
 
-growth_env = {'arena_params': arena(0.03, 0.03),  # dish(0.006),
+growth_env = {'arena_params': arena(0.02, 0.02),  # dish(0.006),
               'food_params': food_param_conf(grid=dtypes.get_dict('food_grid')),
               'larva_params': larva_distro(N=5, model='sitter'),
               'odorscape': None}
+
+# growth_env = {'arena_params': dish(0.01),  # dish(0.006),
+#               'food_params': food_param_conf(list={**dtypes.get_dict('agent', class_name='Source', unique_id='Food',
+#                                                                    as_entry=True, amount=1.0, radius=0.01)}),
+#               'larva_params': larva_distro(N=5, model='sitter'),
+#               'odorscape': None}
 
 growth_2x_env = {'arena_params': arena(0.02, 0.02),  # dish(0.006),
                  'food_params': food_param_conf(grid=dtypes.get_dict('food_grid')),

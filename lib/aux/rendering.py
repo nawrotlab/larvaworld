@@ -1,5 +1,6 @@
 import math
 import os
+import time
 
 import numpy as np
 import pygame
@@ -45,9 +46,9 @@ class GuppiesViewer(object):
         self._translation = np.zeros(2)
 
     def draw_arena(self, tank_shape, tank_color, screen_color):
+        # t0=time.time()
         surf1 = pygame.Surface(self.display_size, pygame.SRCALPHA)
         surf2 = pygame.Surface(self.display_size, pygame.SRCALPHA)
-
         tank_shape = [self._transform(v) for v in tank_shape]
         pygame.draw.polygon(surf1, tank_color, tank_shape, 0)
 
@@ -57,6 +58,9 @@ class GuppiesViewer(object):
         # surf1.blit(surf2, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
         surf2.blit(surf1, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
         self._window.blit(surf2, (0, 0))
+        # t1 = time.time()
+        # print()
+        # print(np.round((t1-t0)*1000))
 
     def init_screen(self):
         if self.show_display:

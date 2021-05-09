@@ -41,6 +41,7 @@ growth = {
           'env_params': 'growth',
           # 'env_params': growth_env,
           # 'collect_effectors': ['feeder'],
+          # 'collections': ['pose'],
           'collections': ['feeder', 'deb'],
           }
 rovers_sitters = {

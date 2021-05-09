@@ -63,6 +63,24 @@ def sim_analysis(d, exp_type):
             datasets = [d]
             labels = [d.id]
 
+
+
+        deb_dicts = [deb_dict(d, id, starvation_hours=starvation_hours) for id in d.agent_ids] + [deb_model]
+        c = {'save_to': d.plot_dir,
+             'roversVSsitters': roversVSsitters}
+        c1 = {'deb_dicts': deb_dicts[:-1],
+              'sim_only': True}
+        for m in ['full', 'complete','minimal']:
+            l = f'{m}_comp'
+            save_as = f'{l}.pdf'
+            fig_dict[l] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c)
+        for m in ['full', 'complete']:
+        # for m in ['f', 'hunger', 'minimal', 'full', 'complete']:
+            for t in ['hours', 'seconds']:
+                for i, s in enumerate([True, False]):
+                    l = f'{m}_{t}_{i}'
+                    save_as = f'{l}.pdf'
+                    fig_dict[l] = plot_debs(save_as=save_as, mode=m, time_unit=t, start_at_sim_start=s, **c, **c1)
         cc = {'datasets': datasets,
               'labels': labels,
               'save_to': d.plot_dir}
@@ -76,23 +94,6 @@ def sim_analysis(d, exp_type):
         except:
             pass
 
-        deb_dicts = [deb_dict(d, id, starvation_hours=starvation_hours) for id in d.agent_ids] + [deb_model]
-        c = {'save_to': d.plot_dir,
-             'roversVSsitters': roversVSsitters}
-        c1 = {'deb_dicts': deb_dicts[:-1],
-              'sim_only': True}
-
-        for m in ['f', 'hunger', 'minimal', 'full', 'complete']:
-            for t in ['hours', 'seconds']:
-                for i, s in enumerate([True, False]):
-                    l = f'{m}_{t}_{i}'
-                    save_as = f'{l}.pdf'
-                    fig_dict[l] = plot_debs(save_as=save_as, mode=m, time_unit=t, start_at_sim_start=s, **c, **c1)
-
-        for m in ['minimal', 'full', 'complete']:
-            l = f'{m}_comp'
-            save_as = f'{l}.pdf'
-            fig_dict[l] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c)
 
     elif exp_type == 'dispersion':
         target_dataset = load_reference_dataset()
@@ -104,6 +105,8 @@ def sim_analysis(d, exp_type):
         fig_dict.update(dic1)
         dic2 = plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:3], min_turn_angle=20)
         fig_dict.update(dic2)
+
+
 
 
     elif exp_type in ['chemotaxis_approach', 'chemotaxis_local', 'chemotaxis_diffusion']:

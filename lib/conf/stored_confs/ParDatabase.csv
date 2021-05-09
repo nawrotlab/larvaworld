@@ -146,11 +146,11 @@ chn_N,num_stridechains,${N}_{stridechains}$,${\hat{N}}_{stridechains}$,# stridec
 str_d_mu,stride_dst_mean,$\bar{{d}_{str}}$,$\bar{{\hat{d}}_{str}}$,distance $(mm)$,,stride_dst_mean_in_mm,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 str_d_std,stride_dst_std,$\~{{d}_{str}}$,$\~{{\hat{d}}_{str}}$,distance $(mm)$,,,<class 'float'>,
 str_sd_mu,scaled_stride_dst_mean,$\bar{{d}_{str}^{*}}$,$\bar{{\hat{d}}_{str}^{*}}$,scaled distance $(-)$,,,<class 'float'>,
-str_sd_std,scaled_stride_dst_std,$\~{{d}_{str}^{*}}$,$\~{{\hat{d}}_{str}^{*}}$,scaled distance $(-)$,,,<class 'float'>,
+str_sd_std,scaled_stride_dst_std,$\~{{d}_{str}^{*}}$,$\~{{\hat{d}}_{str}^{*}}$,scaled distance $(-)$,"[0.0, 0.15]",,<class 'float'>,
 str_std_mu,stride_straight_dst_mean,$\bar{{d}_{str}^{st}}$,$\bar{{\hat{d}}_{str}^{st}}$,distance $(mm)$,,,<class 'float'>,
 str_std_std,stride_straight_dst_std,$\~{{d}_{str}^{st}}$,$\~{{\hat{d}}_{str}^{st}}$,distance $(mm)$,,,<class 'float'>,
 str_sstd_mu,scaled_stride_straight_dst_mean,$\bar{{d}_{str}^{st*}}$,$\bar{{\hat{d}}_{str}^{st*}}$,scaled distance $(-)$,,,<class 'float'>,
-str_sstd_std,scaled_stride_straight_dst_std,$\~{{d}_{str}^{st*}}$,$\~{{\hat{d}}_{str}^{st*}}$,scaled distance $(-)$,,,<class 'float'>,
+str_sstd_std,scaled_stride_straight_dst_std,$\~{{d}_{str}^{st*}}$,$\~{{\hat{d}}_{str}^{st*}}$,scaled distance $(-)$,"[0.0, 0.2]",,<class 'float'>,
 disp,dispersion,disp,$\hat{disp}$,distance $(mm)$,,dispersion_in_mm,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 sdisp,scaled_dispersion,${disp}^{*}$,${\hat{disp}}^{*}$,scaled distance $(-)$,,scaled_dispersion,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 disp_mu,dispersion_mean,$\bar{disp}$,$\bar{\hat{disp}}$,distance $(mm)$,,,<class 'float'>,
