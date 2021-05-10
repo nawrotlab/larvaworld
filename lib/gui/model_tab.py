@@ -33,12 +33,11 @@ def init_model(collapsibles={}):
 
 
 def update_model(larva_model, window, collapsibles):
-    for name, dict in zip(['Physics', 'Energetics', 'Body', 'Odor'],[larva_model['sensorimotor_params'], larva_model['energetics_params'],
-                           larva_model['body_params'], larva_model['odor_params']]):
-        collapsibles[name].update(window, dict)
-    module_dict = larva_model['neural_params']['modules']
+    for name in ['Physics', 'Energetics', 'Body', 'Odor']:
+        collapsibles[name].update(window, larva_model[name.lower()])
+    module_dict = larva_model['brain']['modules']
     for k, v in module_dict.items():
-        dic = larva_model['neural_params'][f'{k}_params']
+        dic = larva_model['brain'][f'{k}_params']
         if k == 'olfactor':
             if dic is not None:
                 odor_gains = dic['odor_dict']
@@ -56,22 +55,17 @@ def update_model(larva_model, window, collapsibles):
 def get_model(window, values, collapsibles):
     module_dict = dict(zip(dtypes.module_keys, [window[f'TOGGLE_{k.upper()}'].get_state() for k in dtypes.module_keys]))
     model = {}
-    model['neural_params'] = {}
-    model['neural_params']['modules'] = module_dict
+    model['brain'] = {}
+    model['brain']['modules'] = module_dict
 
-    for name, pars in zip(['Physics', 'Energetics', 'Body', 'Odor'],
-                          ['sensorimotor_params', 'energetics_params', 'body_params', 'odor_params']):
-        if collapsibles[name].state is None:
-            model[pars] = None
-        else:
-            model[pars] = collapsibles[name].get_dict(values, window)
-        # collapsibles[name].update(window,dict)
+    for name in ['Physics', 'Energetics', 'Body', 'Odor']:
+        model[name.lower()] = None  if collapsibles[name].state is None else collapsibles[name].get_dict(values, window)
 
     for k, v in module_dict.items():
-        model['neural_params'][f'{k}_params'] = collapsibles[k.upper()].get_dict(values, window)
-    if model['neural_params']['olfactor_params'] is not None:
-        model['neural_params']['olfactor_params']['odor_dict'] = collapsibles['odor_gains'].dict
-    model['neural_params']['nengo'] = False
+        model['brain'][f'{k}_params'] = collapsibles[k.upper()].get_dict(values, window)
+    if model['brain']['olfactor_params'] is not None:
+        model['brain']['olfactor_params']['odor_dict'] = collapsibles['odor_gains'].dict
+    model['brain']['nengo'] = False
     return copy.deepcopy(model)
 
 

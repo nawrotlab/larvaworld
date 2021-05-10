@@ -875,10 +875,10 @@ class LarvaWorldSim(LarvaWorld):
         return Nodors, layers
 
     def _generate_larva_pars(self, N, larva_pars, parameter_dict={}):
-        if larva_pars['neural_params']['intermitter_params']:
+        if larva_pars['brain']['intermitter_params']:
             for dist in ['pause_dist', 'stridechain_dist']:
-                if larva_pars['neural_params']['intermitter_params'][dist] == 'fit':
-                    larva_pars['neural_params']['intermitter_params'][dist] = get_ref_bout_distros(dist)
+                if larva_pars['brain']['intermitter_params'][dist] == 'fit':
+                    larva_pars['brain']['intermitter_params'][dist] = get_ref_bout_distros(dist)
         flat_larva_pars = fun.flatten_dict(larva_pars)
         sample_pars = [p for p in flat_larva_pars if flat_larva_pars[p] == 'sample']
         if len(sample_pars) >= 1:
@@ -910,8 +910,8 @@ class LarvaWorldSim(LarvaWorld):
             for i, (p, o, pars) in enumerate(zip(positions, orientations, all_pars)):
                 self.add_larva(position=p, orientation=o, id=f'{group_id}_{i}', pars=pars, group=group_id,
                                default_color=group_pars['default_color'])
-                # print(pars['neural_params']['olfactor_params'])
-                # print(i, pars['neural_params']['olfactor_params']['odor_dict']['CS']['mean'])
+                # print(pars['brain']['olfactor_params'])
+                # print(i, pars['brain']['olfactor_params']['odor_dict']['CS']['mean'])
             # raise
             # self._place_larvae(positions, orientations, ids, all_pars, group=group_id)
 

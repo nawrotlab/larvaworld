@@ -1,4 +1,4 @@
-,body_params.initial_length,neural_params.crawler_params.initial_freq,neural_params.intermitter_params.crawler_reoccurence_rate,neural_params.crawler_params.step_to_length_mu,neural_params.crawler_params.step_to_length_std
+,body.initial_length,brain.crawler_params.initial_freq,brain.intermitter_params.crawler_reoccurence_rate,brain.crawler_params.step_to_length_mu,brain.crawler_params.step_to_length_std
 0,0.004011208168473573,1.75,0.9527559055118108,0.20175885447868325,0.05973577009149447
 1,0.004359851567373676,1.6875,0.9276595744680852,0.2184782447941485,0.04863420374030882
 2,0.004487438014982579,1.4375,0.9326923076923076,0.22213577512926905,0.03860634178719522

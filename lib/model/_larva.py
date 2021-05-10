@@ -149,18 +149,18 @@ class LarvaReplay(Larva, BodyReplay):
 class LarvaSim(BodySim, Larva):
     def __init__(self, unique_id, model, pos, orientation, larva_pars, group='', default_color=None, **kwargs):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
-                       **larva_pars['odor_params'], group=group, default_color=default_color)
-        # print(list(larva_pars['neural_params'].keys()))
+                       **larva_pars['odor'], group=group, default_color=default_color)
+        # print(list(larva_pars['brain'].keys()))
         # FIXME : Get rid of this
         try:
-            larva_pars['neural_params']['olfactor_params']['odor_dict'] = self.update_odor_dicts(
-                larva_pars['neural_params']['olfactor_params']['odor_dict'])
+            larva_pars['brain']['olfactor_params']['odor_dict'] = self.update_odor_dicts(
+                larva_pars['brain']['olfactor_params']['odor_dict'])
         except:
             pass
-        self.brain = self.build_brain(larva_pars['neural_params'])
-        self.build_energetics(larva_pars['energetics_params'])
-        BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['sensorimotor_params'],
-                         **larva_pars['body_params'], **kwargs)
+        self.brain = self.build_brain(larva_pars['brain'])
+        self.build_energetics(larva_pars['energetics'])
+        BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['physics'],
+                         **larva_pars['body'], **kwargs)
         self.build_gut(self.V)
 
         self.reset_feeder()
@@ -360,16 +360,16 @@ class LarvaSim(BodySim, Larva):
         self.amount_absorbed += absorbed_M
         self.filled_gut_ratio = 1 - self.empty_gut_M / self.gut_M
 
-    def build_brain(self, neural_params):
-        modules = neural_params['modules']
-        if neural_params['nengo']:
+    def build_brain(self, brain):
+        modules = brain['modules']
+        if brain['nengo']:
             brain = NengoBrain()
-            brain.setup(agent=self, modules=modules, conf=neural_params)
+            brain.setup(agent=self, modules=modules, conf=brain)
             brain.build(brain.nengo_manager, olfactor=brain.olfactor)
             brain.sim = Simulator(brain, dt=0.01)
             brain.Nsteps = int(self.model.dt / brain.sim.dt)
         else:
-            brain = DefaultBrain(agent=self, modules=modules, conf=neural_params)
+            brain = DefaultBrain(agent=self, modules=modules, conf=brain)
         return brain
 
     def run_energetics(self, food_detected, feed_success, amount_eaten, food_quality):

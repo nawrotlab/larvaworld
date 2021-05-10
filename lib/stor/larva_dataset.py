@@ -2556,10 +2556,10 @@ class LarvaDataset:
         e = self.endpoint_data
         pars = ['length', 'scaled_vel_freq',
                 'stride_reoccurence_rate', 'scaled_stride_dst_mean', 'scaled_stride_dst_std']
-        sample_pars = ['body_params.initial_length', 'neural_params.crawler_params.initial_freq',
-                       'neural_params.intermitter_params.crawler_reoccurence_rate',
-                       'neural_params.crawler_params.step_to_length_mu',
-                       'neural_params.crawler_params.step_to_length_std'
+        sample_pars = ['body.initial_length', 'brain.crawler_params.initial_freq',
+                       'brain.intermitter_params.crawler_reoccurence_rate',
+                       'brain.crawler_params.step_to_length_mu',
+                       'brain.crawler_params.step_to_length_std'
                        ]
         v = e[pars].values
         v[:, 0] /= 1000

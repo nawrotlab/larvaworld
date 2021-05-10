@@ -164,7 +164,7 @@ def run_sim_basic(
     Nsteps = int(Nsec / dt)
     # # FIXME This only takes the first configuration into account
     # print(env_params['larva_params'].values())
-    Npoints = list(env_params['larva_params'].values())[0]['model']['body_params']['Nsegs'] + 1
+    Npoints = list(env_params['larva_params'].values())[0]['model']['body']['Nsegs'] + 1
 
     d = LarvaDataset(dir=dir_path, id=id, fr=int(1 / dt),
                      Npoints=Npoints, Ncontour=0,
