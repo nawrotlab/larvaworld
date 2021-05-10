@@ -3,8 +3,8 @@ cum_t,cum_dur,${t}_{cum}$,${\hat{t}}_{cum}$,time $(sec)$,,,<class 'float'>,
 l_mu,length,$\bar{l}$,$\bar{\hat{l}}$,body length $(mm)$,,length_in_mm,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 str_rr,stride_reoccurence_rate,${str}_{rr}$,${\hat{str}}_{rr}$,-,,,<class 'float'>,
 l,length,l,$\hat{l}$,body length $(mm)$,,length_in_mm,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-f_am,amount_eaten,${m}_{feed}$,${\hat{m}}_{feed}$,mass $(mg)$,"[0.0, 1e-05]",amount_eaten,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-f_am_max,max_feed_amount,${m}_{feed}^{m}$,${\hat{m}}_{feed}^{m}$,mass $(mg)$,,,<class 'float'>,
+f_am,amount_eaten,${m}_{feed}$,${\hat{m}}_{feed}$,food intake (mg),"[0.0, 1e-05]",amount_eaten,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+f_am_max,max_feed_amount,${m}_{feed}^{m}$,${\hat{m}}_{feed}^{m}$,max food intake (mg),,,<class 'float'>,
 m,mass,m,$\hat{m}$,mass $(mg)$,,mass_in_mg,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 hunger,hunger,hunger,$\hat{hunger}$,hunger (-),"[0.0, 1.0]",hunger,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 reserve_density,reserve_density,reserve_density,$\hat{reserve_density}$,reserve density (-),"[0.0, 2.0]",reserve_density,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>

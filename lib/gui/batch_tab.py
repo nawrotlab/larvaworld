@@ -18,11 +18,7 @@ def update_batch(batch, window, collapsibles):
     collapsibles['Methods'].update(window, batch['methods'])
     collapsibles['Optimization'].update(window, batch['optimization'])
     window['TOGGLE_save_data_flag'].set_state(state=batch['run_kwargs']['save_data_flag'])
-    # window['TOGGLE_save_data_flag'].update(
-    #     image_data=graphics.on_image if window['TOGGLE_save_data_flag'].metadata.state else graphics.off_image)
     collapsibles['space_search'].update_table(window, batch['space_search'])
-
-    # return batch['space_search']
 
 
 def get_batch(window, values, collapsibles, exp=None):

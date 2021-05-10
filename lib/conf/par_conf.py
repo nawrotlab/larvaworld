@@ -275,8 +275,8 @@ def set_ParDb():
         ['length', 'l_mu', bar('l'), bar(hat('l')), l_body_length],
         ['stride_reoccurence_rate', 'str_rr', sub('str', 'rr'), sub(hat('str'), 'rr'), '-'],
         ['length', 'l', 'l', hat('l'), l_body_length],
-        ['amount_eaten', 'f_am', sub('m', 'feed'), sub(hat('m'), 'feed'), l_mass],
-        ['max_feed_amount', 'f_am_max', subsup('m', 'feed', 'm'), subsup(hat('m'), 'feed', 'm'), l_mass],
+        ['amount_eaten', 'f_am', sub('m', 'feed'), sub(hat('m'), 'feed'), 'food intake (mg)'],
+        ['max_feed_amount', 'f_am_max', subsup('m', 'feed', 'm'), subsup(hat('m'), 'feed', 'm'), 'max food intake (mg)'],
         ['mass', 'm', 'm', hat('m'), l_mass],
         ['hunger', 'hunger', 'hunger', hat('hunger'), f'hunger (-)'],
         ['reserve_density', 'reserve_density', 'reserve_density', hat('reserve_density'), f'reserve density (-)'],
@@ -604,4 +604,4 @@ if __name__ == '__main__':
     set_ParShelve(par_db)
     # print(type(get_par('c_odor1')['dtype']))
     # print(get_par_dict(short='fov'))
-    # print(par_db.loc['tur_fo_mu'])
+    # print(par_db.loc['f_am'])
