@@ -1,7 +1,6 @@
 import copy
 import PySimpleGUI as sg
 
-
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, save_gui_conf, delete_gui_conf, b12_kws, \
     b6_kws, CollapsibleTable, graphic_button, t10_kws, t12_kws, t18_kws, w_kws, default_run_window, col_kws, col_size
 from lib.conf.conf import loadConfDict, loadConf

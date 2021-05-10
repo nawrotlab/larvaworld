@@ -1,7 +1,5 @@
 import PySimpleGUI as sg
-import numpy as np
 
-import lib.aux.functions as fun
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.plotting import plot_debs
 from lib.gui.gui_lib import check_toggles, b_kws, w_kws, delete_figure_agg, draw_canvas, t24_kws, t10_kws
@@ -35,7 +33,6 @@ deb_modes=['mass', 'length',
 
 def life_conf():
     sg.theme('LightGreen')
-    # sg.theme('Dark Blue 3')
     life = dtypes.get_dict('life')
     starvation_hours = []
 

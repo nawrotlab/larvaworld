@@ -1,25 +1,17 @@
-import copy
 import os
-
 import PySimpleGUI as sg
-import webbrowser
 
-from lib.gui.gui_lib import w_kws, default_run_window, BtnLink
+from lib.gui.gui_lib import w_kws, default_run_window
 import lib.stor.paths as paths
 
 
 def build_intro_tab():
-    dicts = {}
-    graph_lists = {}
-    collapsibles = {}
-
     c = {'size': (80, 1),
          'pad': (20, 5),
          'justification': 'center'
          }
 
     filenames=os.listdir(paths.IntroSlideFolder)
-
     filenames.sort()
 
     b_list = [
@@ -31,15 +23,11 @@ def build_intro_tab():
                       [sg.T('Behavioral analysis and simulation platform', font=("Lobster", 15, "bold"), **c)],
                       [sg.T('for Drosophila larva', font=("Lobster", 15, "bold"), **c)]],
                      element_justification='center',
-                     # justification='center',
-                     # vertical_alignment='center'
                      )
-    # files = [f for f in os.listdir(paths.IntroSlideFolder) if f.endswith('png')]
-
 
     l_intro = [[l_title]]
 
-    return l_intro, collapsibles, graph_lists, dicts
+    return l_intro, {}, {}, {}
 
 
 def eval_intro_tab(event, values, window, collapsibles, dicts, graph_lists):

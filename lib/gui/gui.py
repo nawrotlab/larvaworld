@@ -1,9 +1,6 @@
-import copy
 import threading
-
 import PySimpleGUI as sg
 import matplotlib
-from tkinter import *
 
 from lib.gui.intro_tab import build_intro_tab, eval_intro_tab
 from lib.gui.video_tab import build_video_tab, eval_video_tab
@@ -133,4 +130,3 @@ class LarvaworldGui:
     #     window.write_event_value('-THREAD-', '*** The thread says.... "I am finished" ***')
 
 
-# larvaworld_gui = LarvaworldGui()

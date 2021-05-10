@@ -1,18 +1,11 @@
-import copy
 import os
-
 import PySimpleGUI as sg
-import webbrowser
 
-
-from lib.gui.gui_lib import w_kws, default_run_window, BtnLink, window_size, ClickableImage
+from lib.gui.gui_lib import w_kws, default_run_window, window_size, ClickableImage
 import lib.stor.paths as paths
 
 
 def build_video_tab():
-    dicts = {}
-    graph_lists = {}
-    collapsibles = {}
     link_pref = "http://computational-systems-neuroscience.de/wp-content/uploads/2021/04/"
     files = [f for f in os.listdir(paths.VideoSlideFolder) if f.endswith('png')]
     b_list = [ClickableImage(name=f.split(".")[0], link=f'{link_pref}{f.split(".")[0]}.mp4',
@@ -23,7 +16,7 @@ def build_video_tab():
     b_list = [b_list[i * n:(i + 1) * n] for i in range((len(b_list) + n - 1) // n)]
     l_vid = [[sg.Col(b_list, vertical_scroll_only=True,scrollable=True, size=window_size)]]
 
-    return l_vid, collapsibles, graph_lists, dicts
+    return l_vid, {}, {}, {}
 
 
 def eval_video_tab(event, values, window, collapsibles, dicts, graph_lists):

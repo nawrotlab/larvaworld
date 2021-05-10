@@ -1,6 +1,5 @@
 import copy
 import random
-
 import PySimpleGUI as sg
 import numpy as np
 

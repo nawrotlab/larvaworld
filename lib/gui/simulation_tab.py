@@ -1,14 +1,12 @@
 import copy
 import threading
 import PySimpleGUI as sg
-import numpy as np
 import lib.conf.dtype_dicts as dtypes
-import lib.aux.functions as fun
 
 from lib.aux.collecting import output_keys
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
-    named_bool_button, save_gui_conf, delete_gui_conf, GraphList, b12_kws, b6_kws, CollapsibleTable, \
-    b_kws, graphic_button, t10_kws, t12_kws, t18_kws, t8_kws, w_kws, default_run_window, col_kws, window_size, col_size
+    named_bool_button, save_gui_conf, delete_gui_conf, GraphList, CollapsibleTable, \
+    graphic_button, t10_kws, t18_kws, w_kws, default_run_window, col_kws, col_size
 from lib.gui.draw_env import draw_env
 from lib.gui.life_conf import life_conf
 from lib.sim.single_run import run_sim, sim_analysis
