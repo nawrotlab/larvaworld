@@ -154,12 +154,16 @@ class Larva(LarvaworldAgent):
         return self.brain.turner.activation
 
     @property
+    def olfactory_activation(self):
+        return self.brain.olfactory_activation
+
+    @property
     def first_odor_concentration(self):
-        return list(self.odor_concentrations.values())[0]
+        return list(self.brain.olfactor.Con.values())[0]
 
     @property
     def second_odor_concentration(self):
-        return list(self.odor_concentrations.values())[1]
+        return list(self.brain.olfactor.Con.values())[1]
 
     @property
     def first_odor_concentration_change(self):

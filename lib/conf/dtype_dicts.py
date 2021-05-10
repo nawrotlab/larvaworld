@@ -225,8 +225,8 @@ all_null_dicts = {
         'body_spring_k': 0.02,
         'bend_correction_coef': 1.4,
     },
-    'energetics': {'f_decay_coef': 0.1,  # 0.1,  # 0.3
-                   'absorption_c': 0.5,
+    'energetics': {'f_decay': 0.1,  # 0.1,  # 0.3
+                   'absorption': 0.5,
                    'hunger_affects_balance': True,
                    'hunger_sensitivity': 10.0,
                    'deb_on': True},
@@ -384,8 +384,8 @@ def get_dict_dtypes(name, **kwargs):
             'body_spring_k': float,
             'bend_correction_coef': float,
         },
-        'energetics': {'f_decay_coef': float,
-                       'absorption_c': float,
+        'energetics': {'f_decay': float,
+                       'absorption': float,
                        'hunger_affects_balance': bool,
                        'hunger_sensitivity': float,
                        'deb_on': bool},

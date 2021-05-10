@@ -166,12 +166,8 @@ class LarvaSim(BodySim, Larva):
         self.reset_feeder()
         self.radius = self.sim_length / 2
 
-        self.food_detected, self.food_source, self.feeder_motion, self.current_amount_eaten, self.feed_success = False, None, False, 0, False
-        try:
-            self.odor_concentrations = self.brain.olfactor.cur_con
-        except:
-            self.odor_concentrations = {}
-        self.olfactory_activation = 0
+        self.food_detected, self.feeder_motion, self.current_amount_eaten, self.feed_success = None, False, 0, False
+
 
     def update_odor_dicts(self, odor_dict):  #
 
@@ -190,20 +186,13 @@ class LarvaSim(BodySim, Larva):
 
         self.cum_dur += self.model.dt
 
-        self.odor_concentrations = self.sense_odors(self.model.Nodors, self.model.odor_layers)
-        self.food_detected, self.food_source, food_quality = self.detect_food(pos=self.get_olfactor_position(),
-                                                                              grid=self.model.food_grid)
+        self.food_detected, food_quality = self.detect_food()
 
-        lin, ang, self.feeder_motion, feed_success, self.olfactory_activation = self.brain.run(
-            self.odor_concentrations,
-            self.get_sim_length(),
-            self.food_detected)
+        lin, ang, self.feeder_motion = self.brain.run()
         self.set_ang_activity(ang)
         self.set_lin_activity(lin)
-        self.current_amount_eaten, self.feed_success = self.feed(success=feed_success, source=self.food_source,
-                                                                 max_amount_eaten=self.max_feed_amount,
-                                                                 empty_gut_M=self.empty_gut_M)
-        self.update_gut(self.current_amount_eaten)
+        self.current_amount_eaten, self.feed_success = self.feed()
+
         if self.energetics:
             self.run_energetics(self.food_detected, self.feed_success, self.current_amount_eaten, food_quality)
 
@@ -211,65 +200,44 @@ class LarvaSim(BodySim, Larva):
         if self.model.color_behavior:
             self.update_behavior_dict()
         else:
-            self.set_color([self.default_color for seg in self.segs])
-        # if self.model.draw_contour:
-        #     self.set_contour()
+            self.set_color([self.default_color]*self.Nsegs)
 
-    def sense_odors(self, Nodors, odor_layers):
-        if Nodors == 0 or self.brain.olfactor is None:
-            return {}
-        else:
-            pos = self.get_olfactor_position()
-            cons = {}
-            for id, layer in odor_layers.items():
-                v = layer.get_value(pos)
-                cons[id] = v + np.random.normal(scale=v * self.brain.olfactor.noise)
-            # if self.brain.olfactor.noise:
-            #     values = [v + np.random.normal(scale=v * self.brain.olfactor.noise) for v in values]
-            return cons
 
-    def detect_food(self, pos, grid=None):
+    def detect_food(self):
         if self.brain.feeder is not None:
-            radius = self.brain.feeder.feed_radius * self.sim_length,
+            # radius = self.brain.feeder.feed_radius * self.sim_length
+            pos = self.get_olfactor_position()
+            grid = self.model.food_grid
             if grid:
                 cell = grid.get_grid_cell(pos)
                 if grid.get_cell_value(cell) > 0:
-                    return True, cell, grid.quality
-                else:
-                    return False, None, None
+                    return cell, grid.quality
+                # else:
+                #     return False, None, None
             else:
                 accessible_food = [a for a in self.model.get_food() if (a.contained(pos) and a.amount > 0)]
                 # accessible_food = fun.agents_spatial_query(pos=pos, radius=radius,agent_list=self.model.get_food())
                 if accessible_food:
                     food = random.choice(accessible_food)
                     self.resolve_carrying(food)
-                    return True, food, food.quality
-                else:
-                    return False, None, None
-        else:
-            return False, None, None
+                    return food, food.quality
+                # else:
+                #     return False, None, None
+        # else:
+        return None, None
 
-    def feed(self, success, source, max_amount_eaten, empty_gut_M):
-
-        if success:
-            if empty_gut_M < max_amount_eaten:
-                return 0, False
-            if self.model.food_grid:
-                amount = -self.model.food_grid.add_cell_value(source, -max_amount_eaten)
-            else:
-                amount = source.subtract_amount(max_amount_eaten)
-            # # TODO fix the radius so that it works with any feeder, nengo included
-            # success, amount = self.detect_food(mouth_position=self.get_olfactor_position(),
-            #                                    radius=self.brain.feeder.feed_radius * self.sim_length,
-            #                                    grid=self.model.food_grid,
-            #                                    max_amount_eaten=self.max_feed_amount)
-
-            self.feed_success_counter += int(success)
+    def feed(self):
+        a_max = self.max_feed_amount
+        source=self.food_detected
+        if self.feeder_motion and source is not None and self.empty_gut_M >= a_max:
+            grid = self.model.food_grid
+            amount = -grid.add_cell_value(source, -a_max) if grid else source.subtract_amount(a_max)
+            self.feed_success_counter += 1
             self.amount_eaten += amount
-
+            self.update_gut(amount)
+            return amount, True
         else:
-            amount = 0
-        return amount, success
+            return 0, True
 
     def reset_feeder(self):
         self.feed_success_counter = 0
@@ -297,9 +265,9 @@ class LarvaSim(BodySim, Larva):
             self.energetics = True
             if energetic_pars['deb_on']:
                 self.hunger_affects_balance = energetic_pars['hunger_affects_balance']
-                self.absorption_c = energetic_pars['absorption_c']  # /60
-                self.f_decay_coef = energetic_pars['f_decay_coef']
-                self.f_exp_coef = np.exp(-self.f_decay_coef * self.model.dt)
+                self.absorption = energetic_pars['absorption']  # /60
+                self.f_decay = energetic_pars['f_decay']
+                self.f_exp_coef = np.exp(-self.f_decay * self.model.dt)
                 steps_per_day = 24 * 60
                 if self.hunger_affects_balance:
                     self.deb = DEB(steps_per_day=steps_per_day, base_hunger=self.brain.intermitter.base_EEB,
@@ -307,7 +275,6 @@ class LarvaSim(BodySim, Larva):
                 else:
                     self.deb = DEB(steps_per_day=steps_per_day,
                                    hunger_sensitivity=energetic_pars['hunger_sensitivity'])
-                # self.deb = DEB(steps_per_day=steps_per_day, hunger_sensitivity = energetic_pars['hunger_sensitivity'])
                 self.deb.reach_stage('larva')
                 self.deb.advance_larva_age(hours_as_larva=self.model.hours_as_larva, f=self.model.deb_base_f,
                                            starvation_hours=self.model.deb_starvation_hours)
@@ -331,7 +298,7 @@ class LarvaSim(BodySim, Larva):
         self.amount_absorbed = 0
         self.filled_gut_ratio = 0
         # self.digestion_c = 80
-        self.absorption_c = 0.3
+        self.absorption = 0.3
 
         self.gut_M = self.gut_M_ratio * V
 
@@ -352,7 +319,7 @@ class LarvaSim(BodySim, Larva):
         self.gut_food_M -= gut_food_dM
         # print(gut_food_dM, self.gut_food_M)
         # self.gut_product_M += gut_food_dM
-        absorbed_M = self.gut_product_M * self.absorption_c * self.model.dt
+        absorbed_M = self.gut_product_M * self.absorption * self.model.dt
         # absorbed_M = 0
         self.gut_product_M += (gut_food_dM - absorbed_M)
         # self.empty_gut_M = self.gut_M - self.gut_food_M
@@ -373,51 +340,29 @@ class LarvaSim(BodySim, Larva):
         return brain
 
     def run_energetics(self, food_detected, feed_success, amount_eaten, food_quality):
-        # if isinstance(self.brain, DefaultBrain):
-        #     if not food_detected:
-        #         # print('DD')
-        #         self.brain.intermitter.EEB *= self.brain.intermitter.EEB_exp_coef
-        #     else :
-        #         self.brain.intermitter.EEB = self.brain.intermitter.base_EEB
-
         if self.deb:
             f = self.deb.get_f()
-
             if feed_success:
-                # f += self.f_increment
-                f += food_quality * self.absorption_c * amount_eaten / self.max_feed_amount
-                # f += self.f_increment/np.clip(f-1, 1, +np.inf)
-            # else :
-            #     f *= self.f_exp_coef
+                f += food_quality * self.absorption * amount_eaten / self.max_feed_amount
             f *= self.f_exp_coef
-            # f=np.clip(f,0,2)
             self.deb.run(f=f)
             self.real_length = self.deb.get_real_L()
             self.real_mass = self.deb.get_W()
             self.V = self.deb.get_V()
 
-            # if self.hunger_affects_feeder :
-            #     self.brain.intermitter.feeder_reoccurence_rate_on_success=self.deb.hunger
-            if not food_detected:
-                # print('DD')
+            if food_detected is None:
                 self.brain.intermitter.EEB *= self.brain.intermitter.EEB_exp_coef
             else:
+                # h0=self.deb.base_hunger
                 if self.hunger_affects_balance:
-                    dh = self.deb.hunger - self.deb.base_hunger
-                    # print(dh)
-                    if dh == 0:
-                        pass
-                    elif dh > 0:
-                        self.brain.intermitter.EEB = dh / (1 - self.deb.base_hunger) * (
-                                1 - self.brain.intermitter.base_EEB) + self.brain.intermitter.base_EEB
-                    else:
-                        self.brain.intermitter.EEB = dh / self.deb.base_hunger * self.brain.intermitter.base_EEB + self.brain.intermitter.base_EEB
+                    self.brain.intermitter.EEB=self.deb.base_hunger
+                    # dh = self.deb.hunger - h0
+                    # if dh > 0:
+                    #     self.brain.intermitter.EEB = dh / (1 - h0) * (1 - h0) + h0
+                    # else:
+                    #     self.brain.intermitter.EEB = dh / h0 * h0 + h0
                 else:
                     self.brain.intermitter.EEB = self.brain.intermitter.base_EEB
-            # if self.hunger_affects_balance and food_detected:
-            #     self.brain.intermitter.EEB = self.deb.hunger
-            # if not self.deb.alive :
-            #     raise ValueError ('Dead')
             self.adjust_body_vertices()
             self.max_feed_amount = self.compute_max_feed_amount()
         else:

@@ -176,23 +176,22 @@ class NengoBrain(Network, Brain):
         event = np.any(s[-Nticks:] == 1)
         return event
 
-    def run(self, odor_concentrations, agent_length):
+    def run(self):
+        l=self.agent.get_sim_length()
         N = self.Nsteps
         man = self.nengo_manager
-        man.set_odor_concentrations(odor_concentrations)
+        man.set_odor_concentrations(self.sense_odors() if self.olfactor else {})
         self.intermitter.step()
         self.sim.run_steps(N, progress_bar=False)
         d = self.sim.data
         # TODO Right now the nengo turner is not modulated by olfaction
         # TODO Right now the feeder deoes not work
-        lin = self.mean_lin_s(d, N) * agent_length + np.random.normal(scale=self.crawler.noise * agent_length)
+        lin = self.mean_lin_s(d, N) * l + np.random.normal(scale=self.crawler.noise * l)
         ang = self.mean_ang_s(d, N) + np.random.normal(scale=self.turner.noise)
         feed = self.feed_event(d, N)
-        if self.olfactor:
-            Aolf = 100 * self.mean_odor_change(d, N)
-        else :
-            Aolf=0
-        return lin, ang, feed, Aolf
+        # feed_success = feed and food_detected
+        self.olfactory_activation = 100 * self.mean_odor_change(d, N) if self.olfactor else 0
+        return lin, ang, feed
 
 
 class NengoManager:

@@ -626,7 +626,7 @@ class LarvaBody:
 
     def set_color(self, colors):
         if len(colors) != self.Nsegs:
-            colors = [tuple(colors) for i in range(self.Nsegs)]
+            colors = [tuple(colors)] * self.Nsegs
         for seg, col in zip(self.segs, colors):
             seg.set_color(col)
 

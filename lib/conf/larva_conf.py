@@ -183,14 +183,14 @@ default_feeder = {'feeder_freq_range': [1.0, 3.0],
 # Rovers :0.5
 # Sitters : 0.15
 # [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
-energetics_rover = {'f_decay_coef': 0.1,  # 0.1,  # 0.3
-                    'absorption_c': 0.5,
+energetics_rover = {'f_decay': 0.1,  # 0.1,  # 0.3
+                    'absorption': 0.5,
                     'hunger_affects_balance': True,
                     'hunger_sensitivity': 12.0,
                     'deb_on': True}
 
-energetics_sitter = {'f_decay_coef': 0.1,  # 0.5,
-                     'absorption_c': 0.15,
+energetics_sitter = {'f_decay': 0.1,  # 0.5,
+                     'absorption': 0.15,
                      'hunger_affects_balance': True,
                      'hunger_sensitivity': 12.0,
                      'deb_on': True,
@@ -430,20 +430,19 @@ odors3 = [f'{source}_odor' for source in ['Flag', 'Left_base', 'Right_base']]
 odors5 = [f'{source}_odor' for source in ['Flag', 'Left_base', 'Right_base', 'Left', 'Right']]
 odors2 = [f'{source}_odor' for source in ['Left', 'Right']]
 
-follower_R = {**odor_larva_conf(ids=odors2, means=[150.0, 0.0],
-                                  odor_id='Right_odor', odor_intensity=300.0, odor_spread=0.02)}
+follower_R = odor_larva_conf(ids=odors2, means=[150.0, 0.0],
+                                  odor_id='Right_odor', odor_intensity=300.0, odor_spread=0.02)
 
-follower_L = {**odor_larva_conf(ids=odors2, means=[0.0, 150.0],
-                                  odor_id='Left_odor', odor_intensity=300.0, odor_spread=0.02)}
+follower_L = odor_larva_conf(ids=odors2, means=[0.0, 150.0],
+                                  odor_id='Left_odor', odor_intensity=300.0, odor_spread=0.02)
 
-king_larva_R = {**odor_larva_conf(ids=odors5, means=[150.0, 0.0, 0.0, 0.0, 0.0],
-                                  odor_id='Right_odor', odor_intensity=2.0, odor_spread=0.00005)}
+king_larva_R = odor_larva_conf(ids=odors5, means=[150.0, 0.0, 0.0, 0.0, 0.0],
+                                  odor_id='Right_odor', odor_intensity=2.0, odor_spread=0.00005)
 
-king_larva_L = {**odor_larva_conf(ids=odors5, means=[150.0, 0.0, 0.0, 0.0, 0.0],
-                                  odor_id='Left_odor', odor_intensity=2.0, odor_spread=0.00005)}
+king_larva_L = odor_larva_conf(ids=odors5, means=[150.0, 0.0, 0.0, 0.0, 0.0],
+                                  odor_id='Left_odor', odor_intensity=2.0, odor_spread=0.00005)
 
-flag_larva = {**odor_larva_conf(ids=odors3, means=[150.0, 0.0, 0.0]),
-              }
+flag_larva = odor_larva_conf(ids=odors3, means=[150.0, 0.0, 0.0])
 
 RL_odor_larva = {'energetics': None,
                  'brain': brain_RLolfactor,
@@ -458,8 +457,6 @@ basic_brain = {'modules': dtypes.get_dict('modules',
                                           intermitter=False,
                                           olfactor=True),
                'turner_params': sinusoidal_turner,
-               # 'turner_params': neural_turner,
-               # 'crawler_params': default_crawler,
                'crawler_params': constant_crawler,
                'interference_params': default_coupling,
                'intermitter_params': intermittent_crawler,
