@@ -2336,13 +2336,16 @@ def plot_sensed_odor_concentration(datasets, labels=None, save_to=None, return_f
     return plot_timeplot(['dc_odor1'], datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
 
 
-def plot_timeplot(par_shorts, datasets, labels=None,same_plot=True, show_first=True, save_to=None, return_fig=False):
+def plot_timeplot(par_shorts, datasets, labels=None,same_plot=True, table=None, show_first=True, save_to=None, return_fig=False):
     N=len(par_shorts)
     cols=['grey'] if N==1 else N_colors(N)
     if not same_plot :
         raise NotImplementedError
     d = datasets[0]
-    s = d.step_data
+    if table is not None :
+        s=d.load_table(table)
+    else :
+        s = d.step_data
     if save_to is None:
         save_to = d.plot_dir
 
@@ -2352,22 +2355,31 @@ def plot_timeplot(par_shorts, datasets, labels=None,same_plot=True, show_first=T
     # ylim=gui.retrieve_value(par_dict['lim'], Tuple[float,float])
 
     for short, c in zip(par_shorts, cols) :
-
         par_dict = par_conf.get_par_dict(short=short)
         par = par_dict['par']
         symbol = par_dict['symbol']
         xlabel = par_dict['unit']
         ylim = par_dict['lim']
+        if par not in list(s.keys()) :
+            # raise ValueError (f'Parameter {par} does not exist in dataset')
+            print (f'Parameter {par} does not exist in dataset')
+            continue
         dc = s[par]
-        dc0 = dc.xs(d.agent_ids[0], level='AgentID')
+        dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
 
         dc_m = dc.groupby(level='Step').quantile(q=0.5)
         dc_u = dc.groupby(level='Step').quantile(q=0.75)
         dc_b = dc.groupby(level='Step').quantile(q=0.25)
 
+
         Nticks = len(dc_m)
-        dur = int(Nticks / d.fr)
-        trange = np.linspace(0, dur, Nticks)
+        if table is None :
+            dur = int(Nticks / d.fr)
+            trange = np.linspace(0, dur, Nticks)
+            time_label = 'time, $sec$'
+        else :
+            trange = np.arange(Nticks)
+            time_label = 'timesteps'
 
 
 
@@ -2376,7 +2388,7 @@ def plot_timeplot(par_shorts, datasets, labels=None,same_plot=True, show_first=T
             axs.plot(trange, dc0, 'r')
 
     axs.set_ylabel(xlabel)
-    axs.set_xlabel('time, $sec$')
+    axs.set_xlabel(time_label)
     axs.set_xlim([trange[0], trange[-1]])
     if ylim is not None:
         axs.set_ylim(ylim)

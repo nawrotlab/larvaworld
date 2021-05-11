@@ -197,32 +197,30 @@ class Turner(Oscillator, Effector):
     def update_activation(self, A_olf):
         if self.mode == 'neural':
             # Map valence modulation to sigmoid accounting for the non middle location of base_activation
-            b = self.base_activation
-            rd, ru = self.range_downwards, self.range_upwards
+            # b = self.base_activation
+            # rd, ru = self.A0, self.A1
             # d, u = self.activation_range
-            v = A_olf
-            if v == 0:
+            if A_olf == 0:
                 a = 0
-            elif v < 0:
-                a = rd * v
-            elif v > 0:
-                a = ru * v
+            elif A_olf < 0:
+                a = self.r0 * A_olf
+            elif A_olf > 0:
+                a = self.r1 * A_olf
             # Added the relevance of noise to olfactory valence so that noise is attenuated  when valence is rising
-            noise = np.random.normal(scale=self.base_noise) * (1 - np.abs(v))
-            return b + a + noise
+            # noise = np.random.normal(scale=self.base_noise) * (1 - np.abs(v))
+            return self.base_activation + a + np.random.normal(scale=self.base_noise) * (1 - np.abs(A_olf))
         else:
             return A_olf + np.random.normal(scale=self.activation_noise)
 
-    def step(self, inhibited=False, interference_ratio=1.0, A_olf=0.0):
+    def step(self, inhibited=False, attenuation=1.0, A_olf=0.0):
         self.activation = self.update_activation(A_olf)
         if not inhibited:
-            a = self.compute_angular_activity()
-            A = a + self.buildup
+            A = self.compute_angular_activity() + self.buildup
             self.buildup = 0
         else:
             if self.continuous:
                 a = self.compute_angular_activity()
-                A = a * interference_ratio + self.buildup
+                A = a * attenuation + self.buildup
                 if self.rebound:
                     self.buildup += a
             else:
@@ -234,11 +232,10 @@ class Turner(Oscillator, Effector):
         Effector.__init__(self, dt=dt)
         if activation_range is None:
             activation_range = [10, 40]
-        self.activation_range = activation_range
         self.base_activation = base_activation
         self.base_noise = np.abs(self.base_activation * self.activation_noise)
-        self.range_upwards = self.activation_range[1] - self.base_activation
-        self.range_downwards = self.base_activation - self.activation_range[0]
+        self.r1 = activation_range[1] - self.base_activation
+        self.r0 = self.base_activation - activation_range[0]
         self.activation = self.base_activation
         self.neural_oscillator = NeuralOscillator(dt=self.dt)
         for i in range(1000):
@@ -387,24 +384,10 @@ class Feeder(Oscillator):
         # self.feed_success = None
 
     def step(self):
-        # def step(self, mouth_position, length):
         self.complete_iteration = False
-        # self.feed_success = None
         if self.effector:
-            # print('ff')
             super().oscillate()
-            # # TODO Here return the amount eaten?
-            # if self.complete_iteration:
-            #     self.feed_success = self.detect_food(mouth_position, self.feed_radius * length)
-        # print(self.complete_iteration)
-    # def detect_food(self, mouth_position, radius):
-    #     accessible_food = self.model.agents_spatial_query(mouth_position, radius, self.model.get_food())
-    #     if accessible_food:
-    #         food = random.choice(accessible_food)
-    #         self.model.delete(food)
-    #         return True
-    #     else:
-    #         return False
+        return self.complete_iteration
 
 
 class Oscillator_coupling():
@@ -414,12 +397,9 @@ class Oscillator_coupling():
         self.crawler_phi_range = crawler_phi_range
         self.feeder_phi_range = feeder_phi_range
         self.attenuation = attenuation
-        self.turner_inhibition = False
-        # self.reset()
 
     def step(self, crawler=None, feeder=None):
-        # self.reset()
-        self.turner_inhibition = self.resolve_coupling(crawler, feeder)
+        return self.resolve_coupling(crawler, feeder)
 
     def resolve_coupling(self, crawler, feeder):
         if crawler is not None:
@@ -774,17 +754,16 @@ class Olfactor(Effector):
     #     return self.gain[odor_id]
 
     def compute_dCon(self, concentrations):
-        for id, cur in concentrations.items() :
+        for id, cur in concentrations.items():
             if id not in self.odor_ids:
                 self.add_novel_odor(id, con=cur, gain=0.0)
-            else :
+            else:
                 prev = self.Con[id]
                 if self.perception == 'log':
                     self.dCon[id] = cur / prev - 1 if prev != 0 else 0
                 elif self.perception == 'linear':
                     self.dCon[id] = cur - prev
         self.Con = concentrations
-
 
     def get_dCon(self):
         return self.dCon
@@ -799,6 +778,12 @@ class Olfactor(Effector):
             self.compute_dCon(cons)
             self.activation *= 1 - self.dt * self.decay_coef
             self.activation += self.dt * np.sum([self.gain[id] * self.dCon[id] for id in self.odor_ids])
+
+            if self.activation > self.A1:
+                self.activation = self.A1
+            elif self.activation < self.A0:
+                self.activation = self.A0
+
         return self.activation
 
     def init_gain(self, odor_dict):
@@ -829,9 +814,10 @@ class Olfactor(Effector):
 
 
 class RLmemory(Effector):
-    def __init__(self, gain, DeltadCon=0.02, state_spacePerOdorSide=3, gain_space=[-500, -50, 50, 500],
+    def __init__(self,brain, gain, DeltadCon=0.02, state_spacePerOdorSide=3, gain_space=[-500, -50, 50, 500],
                  update_dt=2, train_dur=30, alpha=0.05, gamma=0.6, epsilon=0.15, **kwargs):
         super().__init__(**kwargs)
+        self.brain = brain
         self.effector = True
         self.alpha = alpha
         self.gamma = gamma
@@ -855,6 +841,14 @@ class RLmemory(Effector):
         self.rewardSum = 0
         self.best_gain = gain
 
+        self.table=False
+
+        # if self.brain.agent.model.table_collector is not None and self.Nticks%(int(3*60/self.dt))==0 :
+        #     for name, table in self.table_collector.tables.items() :
+        #         cols=list(table.keys())
+        #         for l in self.get_flies() :
+        #             self.table_collector.add_table_row(table_name=name, row={col : getattr(l, col) for col in cols})
+
     def state_collapse(self, dCon):
 
         if len(dCon) > 0:
@@ -875,16 +869,17 @@ class RLmemory(Effector):
         return state
 
     def step(self, gain, dCon, reward):
-        # v=list(self.get_best_gain().values())
-        # if v[0]!=v[1] :
-        #     print(self.get_best_gain())
+        if self.table==False :
+            temp = self.brain.agent.model.table_collector
+            self.table = temp.tables['best_gains'] if 'best_gains' in list(temp.tables.keys()) else None
+
         self.count_time()
         if self.effector and self.total_t > self.train_dur * 60:
             self.effector = False
             print(f'Training stopped after {self.train_dur} minutes')
             print(f'Best gain : {self.best_gain}')
         if self.effector:
-            self.rewardSum += int(reward) - 0.01
+            self.rewardSum += int(reward) - 0.001
             if self.iterator >= self.Niters:
                 self.iterator = 0
                 state = self.state_collapse(dCon)
@@ -898,10 +893,7 @@ class RLmemory(Effector):
                 next_max = np.max(self.q_table[state])
 
                 new_value = (1 - self.alpha) * old_value + self.alpha * (self.rewardSum + self.gamma * next_max)
-                # print('------------------------------')
-                # print('gain : ', gain)
-                # print('reward : ', self.rewardSum)
-                self.rewardSum = 0
+
                 self.q_table[self.lastState, self.lastAction] = new_value
                 self.lastAction = actionID
                 self.lastState = state
@@ -909,12 +901,14 @@ class RLmemory(Effector):
                 action = self.actions[actionID]
                 for ii, id in enumerate(self.odor_ids):
                     gain[id] = action[ii]
-                # print('dCon : ', dCon)
-                # print('new gain : ', gain)
-                # print(self.q_table.astype(int))
-                # print(np.mean(self.q_table, axis=0))
                 self.best_gain = self.get_best_gain()
-                # print(self.best_gain)
+                if self.table is not None :
+                    for col in list(self.table.keys()) :
+                        try :
+                            self.table[col].append(getattr(self.brain.agent, col))
+                        except :
+                            self.table[col].append(np.nan)
+                self.rewardSum = 0
             self.iterator += 1
             return gain
         else:
@@ -956,19 +950,11 @@ class Brain():
         # self.crawler, self.turner, self.feeder, self.olfactor, self.intermitter = None, None, None, None, None
 
     def sense_odors(self, pos):
-
-        # pos = self.agent.get_olfactor_position()
         cons = {}
-
         for id, layer in self.agent.model.odor_layers.items():
-            # t0 = time.time()
             v = layer.get_value(pos)
-            # t1 = time.time()
             cons[id] = v + np.random.normal(scale=v * self.olfactor.noise)
-            # t4 = time.time()
-        # print(np.round([t4 - t0, t1 - t0], 5) * 100000)
         return cons
-
 
 
 class DefaultBrain(Brain):
@@ -1009,44 +995,25 @@ class DefaultBrain(Brain):
             self.olfactor = None
 
         if self.modules['memory']:
-            self.memory = RLmemory(dt=dt, gain=self.olfactor.gain, **self.conf['memory_params'])
+            self.memory = RLmemory(brain=self, dt=dt, gain=self.olfactor.gain, **self.conf['memory_params'])
         else:
             self.memory = None
 
     def run(self, pos):
-
         if self.intermitter:
             self.intermitter.step()
 
         # Step the feeder
-        if self.feeder:
-            self.feeder.step()
-            feed_motion = self.feeder.complete_iteration
-        else:
-            feed_motion = False
+        feed_motion = self.feeder.step() if self.feeder else False
 
-        # t0 = time.time()
         if self.memory:
-            self.olfactor.gain = self.memory.step(self.olfactor.get_gain(), self.olfactor.get_dCon(), self.agent.food_detected is not None)
-        # t1 = time.time()
+            self.olfactor.gain = self.memory.step(self.olfactor.get_gain(), self.olfactor.get_dCon(),
+                                                  self.agent.food_detected is not None)
         lin = self.crawler.step(self.agent.get_sim_length()) if self.crawler else 0
-        # t2 = time.time()
-        if self.olfactor :
-            cons=self.sense_odors(pos)
+        self.olfactory_activation = self.olfactor.step(self.sense_odors(pos)) if self.olfactor else 0
+        # ... and finally step the turner...
+        ang = self.turner.step(inhibited=self.osc_coupling.step(crawler=self.crawler, feeder=self.feeder),
+                               attenuation=self.osc_coupling.attenuation,
+                               A_olf=self.olfactory_activation) if self.turner else 0
 
-            self.olfactory_activation = self.olfactor.step(cons)
-        else :
-            self.olfactory_activation =0
-        # t3 = time.time()
-            # ... and finally step the turner...
-        if self.turner:
-            self.osc_coupling.step(crawler=self.crawler, feeder=self.feeder)
-            # self.set_head_contacts_ground(value=self.osc_coupling.turner_inhibition)
-            ang = self.turner.step(inhibited=self.osc_coupling.turner_inhibition,
-                                   interference_ratio=self.osc_coupling.attenuation,
-                                   A_olf=self.olfactory_activation)
-        else:
-            ang = 0
-        # t4 = time.time()
-        # print(np.round([t4 - t0, t1 - t0, t2 - t1, t3 - t2, t4 - t3], 6) * 1000000)
         return lin, ang, feed_motion

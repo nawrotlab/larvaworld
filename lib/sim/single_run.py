@@ -127,8 +127,13 @@ def sim_analysis(d, exp_type):
 
         # return ind
     elif exp_type == 'odor_preference_RL':
-        fig_dict['best_gains'] = plot_timeplot(['g_odor1', 'g_odor2'], datasets=[d], show_first=False)
-        # fig_dict['best_gains_2'] = plot_timeplot('g_odor2', datasets=[d])
+        fig_dict['best_gains_table'] = plot_timeplot(['g_odor1', 'g_odor2'], datasets=[d], show_first=False, table='best_gains')
+        fig_dict['reward_table'] = plot_timeplot(['cum_reward'], datasets=[d], show_first=False, table='best_gains')
+        # fig_dict['best_gains'] = plot_timeplot(['g_odor1', 'g_odor2'], datasets=[d], show_first=False)
+    elif exp_type == 'chemotaxis_RL':
+        fig_dict['best_gains_table'] = plot_timeplot(['g_odor1'], datasets=[d], show_first=False, table='best_gains')
+        fig_dict['reward_table'] = plot_timeplot(['cum_reward'], datasets=[d], show_first=False, table='best_gains')
+        # fig_dict['best_gains'] = plot_timeplot(['g_odor1', 'g_odor2'], datasets=[d], show_first=False)
     elif exp_type == 'realistic_imitation':
         d.save_agent(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
     return fig_dict, results
@@ -207,6 +212,7 @@ def run_sim_basic(
         d.set_end_data(env.larva_end_col.get_agent_vars_dataframe().droplevel('Step'))
         d.set_food_end_data(env.food_end_col.get_agent_vars_dataframe().droplevel('Step'))
 
+
         end = time.time()
         dur = end - start
         param_dict['duration'] = np.round(dur, 2)
@@ -216,6 +222,7 @@ def run_sim_basic(
             if enrich and experiment is not None:
                 d = sim_enrichment(d, experiment)
             d.save()
+            d.save_tables(env.table_collector.tables)
             fun.dict_to_file(param_dict, d.sim_pars_file_path)
             # Save the odor layer
             # if env.Nodors > 0:
@@ -234,6 +241,7 @@ def collection_conf(dataset, collections):
     d = dataset
     step_pars = []
     end_pars = []
+    tables = {}
     for c in collections:
         if c == 'midline':
             step_pars += list(midline_xy_pars(N=d.Nsegs).keys())
@@ -243,9 +251,12 @@ def collection_conf(dataset, collections):
         else:
             step_pars += output[c]['step']
             end_pars += output[c]['endpoint']
+        if 'tables' in list(output[c].keys()) :
+            tables.update(output[c]['tables'])
 
     collected_pars = {'step': fun.unique_list(step_pars),
-                      'endpoint': fun.unique_list(end_pars)}
+                      'endpoint': fun.unique_list(end_pars),
+                      'tables' : tables}
     return collected_pars
 
 

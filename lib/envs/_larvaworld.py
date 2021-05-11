@@ -7,8 +7,7 @@ import progressbar
 import os
 from typing import List, Any
 import webcolors
-
-
+from mesa.datacollection import DataCollector
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -777,7 +776,8 @@ class LarvaWorldSim(LarvaWorld):
                  parameter_dict={}, **kwargs):
         super().__init__(id=id, **kwargs)
         if collected_pars is None:
-            collected_pars = {'step': [], 'endpoint': []}
+            collected_pars = {'step': [], 'endpoint': [], 'tables' : {} }
+
         self.starvation_hours = life_params['starvation_hours']
         if self.starvation_hours is None:
             self.starvation_hours = []
@@ -932,46 +932,26 @@ class LarvaWorldSim(LarvaWorld):
 
         if not self.larva_collisions:
             self.larva_bodies = self.get_larva_bodies()
-        # t0 = time.time()
         # Update value_layers
         for id, layer in self.odor_layers.items():
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
-        # t1 = time.time()
 
         for l in self.get_flies():
             l.compute_next_action()
-        # t2 = time.time()
         self.active_larva_schedule.step()
-        # t3 = time.time()
         self.active_food_schedule.step()
-        # t4 = time.time()
-        # step space
         if self.physics_engine:
             self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
             self.update_trajectories(self.get_flies())
         self.larva_step_col.collect(self)
+        # if self.table_collector is not None and self.Nticks%(int(3*60/self.dt))==0 :
+        #     for name, table in self.table_collector.tables.items() :
+        #         cols=list(table.keys())
+        #         for l in self.get_flies() :
+        #             self.table_collector.add_table_row(table_name=name, row={col : getattr(l, col) for col in cols})
 
         self.check_end_condition()
-        # self.table_collector.add_table_row(table_name='Torque', )
 
-
-        # if self.Nticks%600 in [598,599,0,1,2] :
-        # print(np.round([t4-t0, t1-t0, t2-t1, t3-t2, t4-t3],4)*10000)
-    # def mock_step(self):
-    #     for id, layer in self.odor_layers.items():
-    #         layer.update_values()  # Currently doing something only for the DiffusionValueLayer
-    #     for i, g in enumerate(self.get_flies()):
-    #         if np.random.choice([0, 1]) == 0:
-    #             # p,o=g.get_midpoint_position()
-    #             # FIXME now preparing only turner
-    #             # g.compute_next_action()
-    #             # g.step()
-    #             try:
-    #                 g.turner.step()
-    #             except:
-    #                 pass
-
-    # update trajectories
     def update_trajectories(self, flies):
         for fly in flies:
             fly.update_trajectory()
@@ -1026,7 +1006,7 @@ class LarvaWorldSim(LarvaWorld):
         self.food_end_col = TargetedDataCollector(schedule_id='all_food_schedule', mode='endpoint',
                                                   pars=['initial_amount', 'final_amount'])
 
-        # self.table_collector = DataCollector(tables={"Torque": ["unique_id", "torque"]})
+        self.table_collector = DataCollector(tables=collected_pars['tables']) if len(collected_pars['tables'])>0 else None
 
     def eliminate_overlap(self):
         scale = 3.0

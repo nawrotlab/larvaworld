@@ -69,6 +69,7 @@ effector_pars = {
 
     "first_odor_best_gain": 'first_odor_best_gain',
     "second_odor_best_gain": 'second_odor_best_gain',
+    "cum_reward": 'cum_reward',
 
     "turner_activation": 'turner_activation',
     "turner_activity": 'ang_activity',
@@ -264,7 +265,7 @@ output = {
                      # 'feed_success_rate',
                      'amount_eaten', 'scaled_amount_eaten',
                      'feed_dur_ratio', 'amount_absorbed']},
-    'deb': {'step': ['deb_f', 'deb_f_deviation',  'reserve', 'reserve_density',
+    'deb': {'step': ['deb_f', 'deb_f_deviation', 'reserve', 'reserve_density',
                      # 'structural_length', 'maturity', 'reproduction','structure','age_in_days',
                      'hunger', 'puppation_buffer', 'cum_dst'],
             'endpoint': [
@@ -280,23 +281,19 @@ output = {
     'dst2center': {'step': [
         'dispersion', 'scaled_dispersion',
         'dst_to_center', 'scaled_dst_to_center', 'orientation_to_center'
-                            ],
-                   'endpoint': ['final_dst_to_center', 'final_scaled_dst_to_center',
-                                'max_dst_to_center', 'max_scaled_dst_to_center',
-                                'mean_dst_to_center', 'mean_scaled_dst_to_center',
-                                ]},
+    ],
+        'endpoint': ['final_dst_to_center', 'final_scaled_dst_to_center',
+                     'max_dst_to_center', 'max_scaled_dst_to_center',
+                     'mean_dst_to_center', 'mean_scaled_dst_to_center',
+                     ]},
     'chemotax_dst': {'step': ['dst_to_chemotax_odor', 'scaled_dst_to_chemotax_odor'],
                      'endpoint': ['final_dst_to_chemotax_odor', 'final_scaled_dst_to_chemotax_odor']},
-    'memory' : {'step': ['first_odor_best_gain', 'second_odor_best_gain'],
-                     'endpoint': ['first_odor_best_gain', 'second_odor_best_gain']},
+    'memory': {'step': [],
+               'endpoint': [],
+               'tables': {'best_gains': ['unique_id', 'first_odor_best_gain', 'second_odor_best_gain', 'cum_reward']}},
     'midline': None,
     'contour': None
 }
-
-
-
-
-
 
 output_keys = list(output.keys())
 #

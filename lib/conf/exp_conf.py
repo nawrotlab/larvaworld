@@ -92,7 +92,7 @@ chemotax = {
 chemotaxis_RL = {
              'env_params': 'chemotaxis_RL',
              # 'env_params': chemorbit_env,
-             'collections': ['dst2center'],
+             'collections': ['dst2center', 'memory'],
              }
 
 dispersion = {

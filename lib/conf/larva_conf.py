@@ -34,12 +34,12 @@ sinusoidal_turner = dtypes.get_dict('turner',
 
 RL_memory = {'DeltadCon': 0.1,
              'state_spacePerOdorSide': 0,
-             'gain_space': np.arange(-300.0, 300.0, 50.0).tolist(),
-             'update_dt': 1,
+             'gain_space': np.arange(-300.0, 300.0, 100.0).tolist(),
+             'update_dt': 3,
              'alpha': 0.05,
              'gamma': 0.6,
-             'epsilon': 0.3,
-             'train_dur': 120,
+             'epsilon': 0.5,
+             'train_dur': 240,
              }
 
 

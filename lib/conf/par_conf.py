@@ -391,6 +391,13 @@ def set_ParDb():
                              # 'collect' : 'first_odor_concentration'
                              }
 
+    par_db.loc['cum_reward'] = {'par': 'cum_reward',
+                             'symbol': '${R}_{cum}$',
+                             'exp_symbol': '${\hat{R}_{cum}$',
+                             'unit': 'Reward R(t)',
+                             # 'collect' : 'first_odor_concentration'
+                             }
+
     par_db.loc['c_odor1'] = {'par': 'first_odor_concentration',
                              'symbol': '${C}_{odor_{1}}$',
                              'exp_symbol': '${\hat{C}_{odor_{1}}$',

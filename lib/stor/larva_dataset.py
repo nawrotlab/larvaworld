@@ -290,11 +290,14 @@ class LarvaDataset:
         print(f'Dataset rescaled by {scale}.')
 
     def set_step_data(self, step_data):
-        self.step_data = step_data
-        self.agent_ids = self.step_data.index.unique('AgentID').values
-        self.num_ticks = self.step_data.index.unique('Step').size
-        self.starting_tick = self.step_data.index.unique('Step')[0]
-        # self.save()
+        try :
+            self.step_data = step_data
+            self.agent_ids = self.step_data.index.unique('AgentID').values
+            self.num_ticks = self.step_data.index.unique('Step').size
+            self.starting_tick = self.step_data.index.unique('Step')[0]
+            # self.save()
+        except :
+            pass
 
     def set_end_data(self, endpoint_data):
         self.endpoint_data = endpoint_data
@@ -540,6 +543,19 @@ class LarvaDataset:
                 self.food_endpoint_data.to_csv(self.food_endpoint_file_path, index=True, header=True)
             self.save_config()
 
+    def save_tables(self, tables):
+        for name, table in tables.items():
+            path=os.path.join(self.data_dir, f'{name}.csv')
+            df=pd.DataFrame(table)
+            if 'unique_id' in df.columns :
+                df.rename(columns={'unique_id' : 'AgentID'}, inplace=True)
+                Nagents=len(df['AgentID'].unique().tolist())
+                Nrows=int(len(df.index)/Nagents)
+                df['Step']=np.array([[i]*Nagents for i in range(Nrows)]).flatten()
+                df.set_index(['Step', 'AgentID'], inplace=True)
+                df.sort_index(level=['Step', 'AgentID'], inplace=True)
+            df.to_csv(path, index=True, header=True)
+
     def save_config(self):
         try:
             self.config['Nagents'] = self.Nagents
@@ -598,6 +614,14 @@ class LarvaDataset:
         file_path = f'{self.par_distro_dir}/{par}.csv'
         try:
             data = pd.read_csv(file_path, index_col=0)
+            return data
+        except:
+            raise ValueError(f'No dataset at {file_path}')
+
+    def load_table(self, name):
+        file_path = f'{self.data_dir}/{name}.csv'
+        try:
+            data = pd.read_csv(file_path, index_col=['Step', 'AgentID'])
             return data
         except:
             raise ValueError(f'No dataset at {file_path}')

@@ -1630,7 +1630,7 @@ class DynamicGraph:
         self.canvas = self.canvas_elem.TKCanvas
         self.fig_agg = None
 
-        self.update_pars()
+        # self.update_pars()
         self.layout = 1
 
     def evaluate(self):

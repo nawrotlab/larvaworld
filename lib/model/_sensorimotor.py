@@ -225,6 +225,7 @@ class BodySim(BodyManager):
 
     # Update 4.1.2020 : Setting b=0 because it is a substitute of the angular damping of the environment
     def compute_ang_vel(self, torque=0.0, v=0.0, z=0.0):
+
         k = self.body_spring_k
         b = self.body_bend
         new_v = v + (-z * v - k * b + torque) * self.model.dt
@@ -232,6 +233,7 @@ class BodySim(BodyManager):
         #     return 0.0
         # else:
         #     return new_v
+
         return new_v
 
     def restore_body_bend(self):
@@ -286,6 +288,7 @@ class BodySim(BodyManager):
         self.head_contacts_ground = value
 
     def step_no_physics(self, lin_vel, ang_vel):
+
         # self.body_bend += self.dt * ang_velocity
         # self.body_bend = np.clip(self.body_bend, a_min=-np.pi, a_max=np.pi)
 
@@ -298,6 +301,13 @@ class BodySim(BodyManager):
 
         # TECH : Move the agent
         # Compute orientation
+        dt = self.model.dt
+        a0 = self.spineangles[0] if len(self.spineangles) > 0 else 0.0
+        head = self.get_head()
+        hp0, o0 = head.get_pose()
+        hr0 = self.get_global_rear_end_of_head()
+
+
         border_collision = any([l.intersects(self.segs[0].get_shape()) for l in self.model.border_lines]) if len(self.model.border_lines) > 0 else False
         if not self.model.larva_collisions:
             ids=self.model.detect_collisions(self.unique_id)
@@ -307,44 +317,53 @@ class BodySim(BodyManager):
         if border_collision or larva_collision:
             lin_vel = 0
             ang_vel += np.sign(ang_vel)*np.pi/10
-        dt = self.model.dt
-        a0 = self.spineangles[0] if len(self.spineangles)>0 else 0.0
-        ang_vel=np.clip(ang_vel, a_min=-np.pi-a0/dt, a_max=(np.pi-a0)/dt)
-        do = ang_vel * dt
-        d = lin_vel * dt
-        head = self.get_head()
-        hp0, o0 = head.get_pose()
-        o1 = o0 + do
-        k = np.array([math.cos(o1), math.sin(o1)])
-        if self.Nsegs>1 :
-            p1_torque = self.get_global_rear_end_of_head() + k * d
-            hp1 = p1_torque + k * self.seg_lengths[0] / 2
-            hf1 = p1_torque + k * self.seg_lengths[0]
-        else :
-            hp1 = hp0 + k * d
-            hf1 = hp0 + k * (d+self.get_sim_length()/2)
 
-        in_tank = fun.inside_polygon(points=[hf1, hp1],tank_polygon=self.tank_polygon)
+
+        d = lin_vel * dt
+        ang_vel0=np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
+
+        in_tank=False
+        dd=0.01
+        counter = -1
         while not in_tank :
-            lin_vel = 0
-            d = 0
-            ang_vel+=np.random.uniform(-1,1)*np.pi
-            do = ang_vel * dt
-            o1 = o0 + do
+            # if np.isnan(ang_vel) :
+            #
+            #     print()
+            #     print(d, lin_vel)
+            #     d = 0
+            #     lin_vel = 0
+            #     print(self.unique_id, counter)
+            #     print(o0, hp0)
+            #     print(ang_vel)
+            #     print(ang_vel0)
+            #     print(np.abs(ang_vel)*np.sign(ang_vel0))
+            #     raise
+
+            counter+=1
+            ang_vel*=-(1+dd*counter)
+            o1 = o0 + ang_vel * dt
             k = np.array([math.cos(o1), math.sin(o1)])
-            if self.Nsegs > 1:
-                p1_torque = self.get_global_rear_end_of_head()
-                hp1 = p1_torque + k * self.seg_lengths[0] / 2
-                hf1 = p1_torque + k * self.seg_lengths[0]
-            else:
-                hp1 = hp0
-                hf1 = hp0 + k * (self.get_sim_length() / 2)
+            dxy = k * d
+            if self.Nsegs>1 :
+                hr1=hr0+dxy
+                hp1 = hr1 + k * self.seg_lengths[0] / 2
+                hf1 = hr1 + k * self.seg_lengths[0]
+            else :
+                hp1 = hp0 + dxy
+                hf1 = hp1 + k * (self.get_sim_length()/2)
+
             in_tank = fun.inside_polygon(points=[hf1, hp1], tank_polygon=self.tank_polygon)
+
+        # if np.isnan(ang_vel):
+        #     print('xxxx', np.sign(ang_vel0))
+        ang_vel = np.abs(ang_vel)*np.sign(ang_vel0)
+        # if np.isnan(ang_vel):
+        #     print('xxxex', np.sign(ang_vel0))
         head.set_pose(hp1, o1)
         head.update_vertices(hp1, o1)
         if self.Nsegs > 1:
-            self.position_rest_of_body(o1-o0, head_rear_pos=p1_torque, head_or=o1)
-        self.pos = self.get_global_midspine_of_body() if self.Nsegs != 2 else p1_torque
+            self.position_rest_of_body(o1-o0, head_rear_pos=hr1, head_or=o1)
+        self.pos = self.get_global_midspine_of_body() if self.Nsegs != 2 else hr1
         self.model.space.move_agent(self, self.pos)
         head.set_lin_vel(lin_vel)
         head.set_ang_vel(ang_vel)
