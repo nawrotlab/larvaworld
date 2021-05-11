@@ -127,7 +127,7 @@ fee0,feed_start,${t}_{feed}^{0}$,${\hat{t}}_{feed}^{0}$,time $(sec)$,,,<class 'b
 fee1,feed_stop,${t}_{feed}^{1}$,${\hat{t}}_{feed}^{1}$,time $(sec)$,,,<class 'bool'>,
 fee_id,feed_id,${feed}_{id}$,${\hat{feed}}_{id}$,counts $(#)$,,,<class 'str'>,
 fee_tr,feed_dur_ratio,${r}_{feed}$,${\hat{r}}_{feed}$,% time feeding,,feed_dur_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-fee_N,num_feeds,${N}_{feeds}$,${\hat{N}}_{feeds}$,# feeds,,num_feeds,<class 'int'>,<class 'lib.model._agent.LarvaworldAgent'>
+fee_N,num_feeds,${N}_{feeds}$,${\hat{N}}_{feeds}$,# feeding events,,num_feeds,<class 'int'>,<class 'lib.model._agent.LarvaworldAgent'>
 chn_d,stridechain_dst,${d}_{chn}$,${\hat{d}}_{chn}$,distance $(mm)$,,,<class 'float'>,
 chn_sd,scaled_stridechain_dst,${d}_{chn}^{*}$,${\hat{d}}_{chn}^{*}$,scaled distance $(-)$,,,<class 'float'>,
 chn_std,stridechain_straight_dst,${d}_{chn}^{st}$,${\hat{d}}_{chn}^{st}$,distance $(mm)$,,,<class 'float'>,
@@ -261,6 +261,8 @@ cum_sd_std,cum_scaled_dst_std,$\~{{d}_{cum}^{*}}$,$\~{{\hat{d}}_{cum}^{*}}$,scal
 fsv_mu,scaled_vel_freq_mean,$\bar{{f}_{v}^{*}}$,$\bar{{\hat{f}}_{v}^{*}}$,frequency $(Hz)$,,,<class 'float'>,
 fsv_std,scaled_vel_freq_std,$\~{{f}_{v}^{*}}$,$\~{{\hat{f}}_{v}^{*}}$,frequency $(Hz)$,,,<class 'float'>,
 sf_am,scaled_amount_eaten,${m^{*}}_{feed}$,${\hat{m^{*}}}_{feed}$,food intake as % larval mass,,scaled_amount_eaten,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+g_odor1,first_odor_best_gain,${G}_{odor_{1}}$,${\hat{G}_{odor_{1}}$,Gain G(t),"[-500.0, 500.0]",first_odor_best_gain,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+g_odor2,second_odor_best_gain,${G}_{odor_{2}}$,${\hat{G}_{odor_{2}}$,Gain G(t),"[-500.0, 500.0]",second_odor_best_gain,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 c_odor1,first_odor_concentration,${C}_{odor_{1}}$,${\hat{C}_{odor_{1}}$,"Concentration C(t), $\mu$M","[0.0, 8.0]",first_odor_concentration,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 dc_odor1,first_odor_concentration_change,$\delta{C}_{odor_{1}}$,$\delta{\hat{C}_{odor_{1}}$,"Concentration change dC(t), $-$","[-0.05, 0.05]",first_odor_concentration_change,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 A_olf,olfactory_activation,$A_{olf}$,$\hat{A}_{olf}$,Olfactory activation,"[-1.0, 1.0]",olfactory_activation,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>

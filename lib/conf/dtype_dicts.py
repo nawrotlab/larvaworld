@@ -522,3 +522,39 @@ def sim_dict(sim_id=None, sim_dur=3, dt=0.1, path=None, Box2D=False, exp_type=No
         'path': path,
         'Box2D': Box2D
     }
+
+def brain_dict(modules, nengo=False, odor_dict=None, **kwargs):
+    modules = get_dict('modules', **{m: True for m in modules})
+    d = {'modules': modules}
+    for k, v in modules.items():
+        p = f'{k}_params'
+        if not v:
+            d[p] = None
+        elif k in list(kwargs.keys()):
+            d[p] = kwargs[k]
+        else:
+            d[p] = get_dict(k)
+        if k == 'olfactor' and d[p] is not None:
+            d[p]['odor_dict'] = odor_dict
+    d['nengo'] = nengo
+    return d
+
+def larva_dict(brain,**kwargs) :
+    d= {'brain':brain}
+    for k in ['energetics', 'physics', 'body', 'odor'] :
+        if k in list(kwargs.keys()) :
+            d[k]=kwargs[k]
+        elif k=='energetics' :
+            d[k]=None
+        else :
+            d[k]=get_dict(k)
+    return d
+
+def new_odor_dict(ids: list, means: list, stds=None) -> dict:
+    if stds is None:
+        stds = np.array([0.0] * len(means))
+    odor_dict = {}
+    for id, m, s in zip(ids, means, stds):
+        odor_dict[id] = {'mean': m,
+                         'std': s}
+    return odor_dict

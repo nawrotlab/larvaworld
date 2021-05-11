@@ -67,7 +67,7 @@ odor_pref = {
 odor_pref_RL = {
              'env_params': 'odor_preference_RL',
              # 'env_params': pref_env,
-             'collections': ['olfactor'],
+             'collections': ['memory'],
              }
 
 chemorbit = {

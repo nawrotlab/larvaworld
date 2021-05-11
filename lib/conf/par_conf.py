@@ -377,6 +377,20 @@ def set_ParDb():
                            # 'collect' : None
                            }
 
+    par_db.loc['g_odor1'] = {'par': 'first_odor_best_gain',
+                             'symbol': '${G}_{odor_{1}}$',
+                             'exp_symbol': '${\hat{G}_{odor_{1}}$',
+                             'unit': 'Gain G(t)',
+                             # 'collect' : 'first_odor_concentration'
+                             }
+
+    par_db.loc['g_odor2'] = {'par': 'second_odor_best_gain',
+                             'symbol': '${G}_{odor_{2}}$',
+                             'exp_symbol': '${\hat{G}_{odor_{2}}$',
+                             'unit': 'Gain G(t)',
+                             # 'collect' : 'first_odor_concentration'
+                             }
+
     par_db.loc['c_odor1'] = {'par': 'first_odor_concentration',
                              'symbol': '${C}_{odor_{1}}$',
                              'exp_symbol': '${\hat{C}_{odor_{1}}$',
@@ -441,6 +455,8 @@ def set_ParDb():
     par_db['lim'].loc['reserve_density'] = [0.0, 2.0]
     par_db['lim'].loc['deb_f'] = [0.0, 2.0]
 
+    par_db['lim'].loc['g_odor1'] = [-500.0, 500.0]
+    par_db['lim'].loc['g_odor2'] = [-500.0, 500.0]
     par_db['lim'].loc['c_odor1'] = [0.0, 8.0]
     par_db['lim'].loc['dc_odor1'] = [-0.05, 0.05]
     par_db['lim'].loc['A_olf'] = [-1.0, 1.0]
@@ -604,4 +620,5 @@ if __name__ == '__main__':
     set_ParShelve(par_db)
     # print(type(get_par('c_odor1')['dtype']))
     # print(get_par_dict(short='fov'))
-    # print(par_db.loc['f_am'])
+    # print(par_db.loc['g_odor1'])
+    # print(par_db.loc['g_odor2'])

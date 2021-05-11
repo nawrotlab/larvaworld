@@ -2329,51 +2329,64 @@ def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False):
 
 
 def plot_odor_concentration(datasets, labels=None, save_to=None, return_fig=False):
-    return plot_timeplot('c_odor1', datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
+    return plot_timeplot(['c_odor1'], datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
 
 
 def plot_sensed_odor_concentration(datasets, labels=None, save_to=None, return_fig=False):
-    return plot_timeplot('dc_odor1', datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
+    return plot_timeplot(['dc_odor1'], datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
 
 
-def plot_timeplot(par_short, datasets, labels=None, save_to=None, return_fig=False):
-    par_dict = par_conf.get_par_dict(short=par_short)
-    par = par_dict['par']
-    sim_label = par_dict['symbol']
-    xlabel = par_dict['unit']
-    ylim = par_dict['lim']
-    # ylim=gui.retrieve_value(par_dict['lim'], Tuple[float,float])
-
+def plot_timeplot(par_shorts, datasets, labels=None,same_plot=True, show_first=True, save_to=None, return_fig=False):
+    N=len(par_shorts)
+    cols=['grey'] if N==1 else N_colors(N)
+    if not same_plot :
+        raise NotImplementedError
     d = datasets[0]
     s = d.step_data
-
-    dc = s[par]
-    dc0 = dc.xs(d.agent_ids[0], level='AgentID')
-
-    dc_m = dc.groupby(level='Step').quantile(q=0.5)
-    dc_u = dc.groupby(level='Step').quantile(q=0.75)
-    dc_b = dc.groupby(level='Step').quantile(q=0.25)
-
-    Nticks = len(dc_m)
-    dur = int(Nticks / d.fr)
-    trange = np.linspace(0, dur, Nticks)
     if save_to is None:
         save_to = d.plot_dir
-    filename = f'{par}.{suf}'
+
+
 
     fig, axs = plt.subplots(1, 1, figsize=(7.5, 5))
-    plot_mean_and_range(x=trange, mean=dc_m, lb=dc_u, ub=dc_b, axis=axs, color_mean='grey', color_shading='grey')
-    axs.plot(trange, dc0, 'r')
+    # ylim=gui.retrieve_value(par_dict['lim'], Tuple[float,float])
+
+    for short, c in zip(par_shorts, cols) :
+
+        par_dict = par_conf.get_par_dict(short=short)
+        par = par_dict['par']
+        symbol = par_dict['symbol']
+        xlabel = par_dict['unit']
+        ylim = par_dict['lim']
+        dc = s[par]
+        dc0 = dc.xs(d.agent_ids[0], level='AgentID')
+
+        dc_m = dc.groupby(level='Step').quantile(q=0.5)
+        dc_u = dc.groupby(level='Step').quantile(q=0.75)
+        dc_b = dc.groupby(level='Step').quantile(q=0.25)
+
+        Nticks = len(dc_m)
+        dur = int(Nticks / d.fr)
+        trange = np.linspace(0, dur, Nticks)
+
+
+
+        plot_mean_and_range(x=trange, mean=dc_m, lb=dc_u, ub=dc_b, axis=axs, color_mean=c, color_shading=c, label=symbol)
+        if show_first :
+            axs.plot(trange, dc0, 'r')
 
     axs.set_ylabel(xlabel)
     axs.set_xlabel('time, $sec$')
     axs.set_xlim([trange[0], trange[-1]])
     if ylim is not None:
         axs.set_ylim(ylim)
+    if N>1 :
+        plt.legend()
     # axs.legend(loc='upper right')
     axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
     plt.subplots_adjust(bottom=0.15, left=0.2, right=0.95, top=0.95)
-    # plt.show()
+    plt.show()
+    filename = f'{par}.{suf}'
     return process_plot(fig, save_to, filename, return_fig)
 
 

@@ -67,6 +67,9 @@ effector_pars = {
     "olfactory_activation": 'olfactory_activation',
     "first_odor_concentration_change": 'first_odor_concentration_change',
 
+    "first_odor_best_gain": 'first_odor_best_gain',
+    "second_odor_best_gain": 'second_odor_best_gain',
+
     "turner_activation": 'turner_activation',
     "turner_activity": 'ang_activity',
 
@@ -284,6 +287,8 @@ output = {
                                 ]},
     'chemotax_dst': {'step': ['dst_to_chemotax_odor', 'scaled_dst_to_chemotax_odor'],
                      'endpoint': ['final_dst_to_chemotax_odor', 'final_scaled_dst_to_chemotax_odor']},
+    'memory' : {'step': ['first_odor_best_gain', 'second_odor_best_gain'],
+                     'endpoint': ['first_odor_best_gain', 'second_odor_best_gain']},
     'midline': None,
     'contour': None
 }

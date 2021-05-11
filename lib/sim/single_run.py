@@ -113,18 +113,22 @@ def sim_analysis(d, exp_type):
         if exp_type in ['chemotaxis_local', 'chemotaxis_diffusion']:
             fig_dict['turn_Dorient2center'] = plot_turn_Dorient2center(datasets=[d], labels=[d.id])
         for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
-            fig_dict[p] = plot_timeplot(p, datasets=[d])
+            fig_dict[p] = plot_timeplot([p], datasets=[d])
         dic = plot_distance_to_source(dataset=d, exp_type=exp_type)
         fig_dict.update(dic)
         vis_kwargs = dtypes.get_dict('visualization', mode='image', image_mode='final', show_display=False,
                                          random_colors=True, trajectories=True, trajectory_dt=0,
                                          visible_clock=False, visible_scale=False, media_name='single_trajectory')
         d.visualize(agent_ids=[d.agent_ids[0]], vis_kwargs=vis_kwargs)
-    elif exp_type in ['odor_preference', 'odor_preference_RL']:
+    elif exp_type in ['odor_preference']:
         ind = d.compute_preference_index()
         print(ind)
         results['PI'] = ind
+
         # return ind
+    elif exp_type == 'odor_preference_RL':
+        fig_dict['best_gains'] = plot_timeplot(['g_odor1', 'g_odor2'], datasets=[d], show_first=False)
+        # fig_dict['best_gains_2'] = plot_timeplot('g_odor2', datasets=[d])
     elif exp_type == 'realistic_imitation':
         d.save_agent(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
     return fig_dict, results

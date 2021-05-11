@@ -916,6 +916,7 @@ class LarvaWorldSim(LarvaWorld):
             # self._place_larvae(positions, orientations, ids, all_pars, group=group_id)
 
     def step(self):
+
         # Tick sim_clock
         self.sim_clock.tick_clock()
         self.Nticks += 1
@@ -929,18 +930,21 @@ class LarvaWorldSim(LarvaWorld):
                 if self.food_grid is not None:
                     self.food_grid.reset()
 
+        if not self.larva_collisions:
+            self.larva_bodies = self.get_larva_bodies()
+        # t0 = time.time()
         # Update value_layers
         for id, layer in self.odor_layers.items():
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
+        # t1 = time.time()
 
-        if not self.larva_collisions:
-            self.larva_bodies = self.get_larva_bodies()
         for l in self.get_flies():
             l.compute_next_action()
-
+        # t2 = time.time()
         self.active_larva_schedule.step()
+        # t3 = time.time()
         self.active_food_schedule.step()
-
+        # t4 = time.time()
         # step space
         if self.physics_engine:
             self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
@@ -950,6 +954,9 @@ class LarvaWorldSim(LarvaWorld):
         self.check_end_condition()
         # self.table_collector.add_table_row(table_name='Torque', )
 
+
+        # if self.Nticks%600 in [598,599,0,1,2] :
+        # print(np.round([t4-t0, t1-t0, t2-t1, t3-t2, t4-t3],4)*10000)
     # def mock_step(self):
     #     for id, layer in self.odor_layers.items():
     #         layer.update_values()  # Currently doing something only for the DiffusionValueLayer

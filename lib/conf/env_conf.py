@@ -104,8 +104,8 @@ CS_UCS_odors = {**odor_source(id='CS_source', pos=(-0.04, 0.0), odor_id='CS', de
 
 CS_UCS_odors_RL = {
     **foodNodor_source(id='CS_source', pos=(-0.03, 0.0), odor_id='CS', default_color='red', odor_intensity=300.0,
-                       r=0.015),
-    **odor_source(id='UCS_source', pos=(0.03, 0.0), odor_id='UCS', default_color='blue', odor_intensity=300.0, r=0.015),
+                       radius=0.015),
+    **odor_source(id='UCS_source', pos=(0.03, 0.0), odor_id='UCS', default_color='blue', odor_intensity=300.0, radius=0.015),
 }
 
 
@@ -170,7 +170,7 @@ pref_env = {'arena_params': dish(0.1),
             'larva_params': larva_distro(N=25, scale=(0.005, 0.02), model='navigator_x2'),
             'odorscape': gaussian_odor()}
 
-pref_env_RL = {'arena_params': dish(0.1),
+pref_env_RL = {'arena_params': dish(0.15),
                'food_params': food_param_conf(list=CS_UCS_odors_RL),
                'larva_params': larva_distro(N=25, scale=(0.005, 0.02), model='RL_learner'),
                'odorscape': diffusion_odor()}

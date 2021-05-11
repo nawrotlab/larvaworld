@@ -166,6 +166,14 @@ class Larva(LarvaworldAgent):
         return list(self.brain.olfactor.Con.values())[1]
 
     @property
+    def first_odor_best_gain(self):
+        return list(self.brain.memory.get_best_gain().values())[0]
+
+    @property
+    def second_odor_best_gain(self):
+        return list(self.brain.memory.get_best_gain().values())[1]
+
+    @property
     def first_odor_concentration_change(self):
         return list(self.brain.olfactor.dCon.values())[0]
 
@@ -472,6 +480,7 @@ class Source(LarvaworldAgent):
 
 class Food(Source):
     def __init__(self, amount=1.0, quality=1.0,default_color=None, **kwargs):
+        # print(kwargs)
         if default_color is None :
             default_color = 'green'
         super().__init__(default_color=default_color,**kwargs)
@@ -511,4 +520,8 @@ class Food(Source):
             # viewer.draw_polygon(self.get_shape(1.1).boundary.coords, self.model.selection_color, False, r / 5)
             viewer.draw_circle(p, r * 1.1, self.model.selection_color, False, r / 5)
 
+    def contained(self, point):
+        return euclidean(self.get_position(), point)<=self.radius
+        # return Point(self.get_position()).distance(Point(point))<=self.radius
+        # return Circle(self.get_position(), radius=self.radius).contains_point(point)
 

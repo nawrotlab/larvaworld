@@ -176,11 +176,11 @@ class NengoBrain(Network, Brain):
         event = np.any(s[-Nticks:] == 1)
         return event
 
-    def run(self):
+    def run(self,pos):
         l=self.agent.get_sim_length()
         N = self.Nsteps
         man = self.nengo_manager
-        man.set_odor_concentrations(self.sense_odors() if self.olfactor else {})
+        man.set_odor_concentrations(self.sense_odors(pos) if self.olfactor else {})
         self.intermitter.step()
         self.sim.run_steps(N, progress_bar=False)
         d = self.sim.data

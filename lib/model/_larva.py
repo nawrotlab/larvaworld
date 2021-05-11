@@ -1,4 +1,6 @@
 import random
+import time
+
 import numpy as np
 from copy import deepcopy
 from nengo import Simulator
@@ -168,7 +170,6 @@ class LarvaSim(BodySim, Larva):
 
         self.food_detected, self.feeder_motion, self.current_amount_eaten, self.feed_success = None, False, 0, False
 
-
     def update_odor_dicts(self, odor_dict):  #
 
         temp = {'mean': 0.0, 'std': 0.0}
@@ -183,30 +184,33 @@ class LarvaSim(BodySim, Larva):
         return odor_dict
 
     def compute_next_action(self):
-
+        # t0 = time.time()
         self.cum_dur += self.model.dt
-
-        self.food_detected, food_quality = self.detect_food()
-
-        lin, ang, self.feeder_motion = self.brain.run()
+        pos=self.get_olfactor_position()
+        self.food_detected, food_quality = self.detect_food(pos)
+        # t1 = time.time()
+        lin, ang, self.feeder_motion = self.brain.run(pos)
         self.set_ang_activity(ang)
         self.set_lin_activity(lin)
         self.current_amount_eaten, self.feed_success = self.feed()
-
+        # t2 = time.time()
         if self.energetics:
             self.run_energetics(self.food_detected, self.feed_success, self.current_amount_eaten, food_quality)
-
+        # t3 = time.time()
         # Paint the body to visualize effector state
         if self.model.color_behavior:
             self.update_behavior_dict()
         else:
-            self.set_color([self.default_color]*self.Nsegs)
+            self.set_color([self.default_color] * self.Nsegs)
+        # t4 = time.time()
+        # print(np.round([t4 - t0, t1 - t0, t2 - t1, t3 - t2, t4 - t3], 5) * 100000)
 
+    def detect_food(self,pos):
 
-    def detect_food(self):
         if self.brain.feeder is not None:
             # radius = self.brain.feeder.feed_radius * self.sim_length
-            pos = self.get_olfactor_position()
+            # t0 = time.time()
+            # pos = self.get_olfactor_position()
             grid = self.model.food_grid
             if grid:
                 cell = grid.get_grid_cell(pos)
@@ -215,20 +219,26 @@ class LarvaSim(BodySim, Larva):
                 # else:
                 #     return False, None, None
             else:
-                accessible_food = [a for a in self.model.get_food() if (a.contained(pos) and a.amount > 0)]
+                # t1 = time.time()
+                valid = [a for a in self.model.get_food() if a.amount > 0]
+                accessible_food = [a for a in valid if a.contained(pos)]
                 # accessible_food = fun.agents_spatial_query(pos=pos, radius=radius,agent_list=self.model.get_food())
+                # t2 = time.time()
                 if accessible_food:
                     food = random.choice(accessible_food)
                     self.resolve_carrying(food)
                     return food, food.quality
                 # else:
                 #     return False, None, None
+                # t3 = time.time()
+                # t4 = time.time()
         # else:
+        # print(np.round([t4 - t0, t1 - t0, t2 - t1, t3 - t2, t4 - t3], 5) * 100000)
         return None, None
 
     def feed(self):
         a_max = self.max_feed_amount
-        source=self.food_detected
+        source = self.food_detected
         if self.feeder_motion and source is not None and self.empty_gut_M >= a_max:
             grid = self.model.food_grid
             amount = -grid.add_cell_value(source, -a_max) if grid else source.subtract_amount(a_max)
@@ -355,7 +365,7 @@ class LarvaSim(BodySim, Larva):
             else:
                 # h0=self.deb.base_hunger
                 if self.hunger_as_EEB:
-                    self.brain.intermitter.EEB=self.deb.base_hunger
+                    self.brain.intermitter.EEB = self.deb.base_hunger
                     # dh = self.deb.hunger - h0
                     # if dh > 0:
                     #     self.brain.intermitter.EEB = dh / (1 - h0) * (1 - h0) + h0
