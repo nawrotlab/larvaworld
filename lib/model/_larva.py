@@ -253,7 +253,7 @@ class LarvaSim(BodySim, Larva):
             pass
 
     def compute_max_feed_amount(self):
-        return self.brain.feeder.max_feed_amount_ratio * self.V ** (2 / 3)
+        return self.brain.feeder.feed_capacity * self.V ** (2 / 3)
 
     def build_energetics(self, energetic_pars):
         self.real_length = None
@@ -264,17 +264,17 @@ class LarvaSim(BodySim, Larva):
         if energetic_pars is not None:
             self.energetics = True
             if energetic_pars['deb_on']:
-                self.hunger_affects_balance = energetic_pars['hunger_affects_balance']
+                self.hunger_as_EEB = energetic_pars['hunger_as_EEB']
                 self.absorption = energetic_pars['absorption']  # /60
                 self.f_decay = energetic_pars['f_decay']
                 self.f_exp_coef = np.exp(-self.f_decay * self.model.dt)
                 steps_per_day = 24 * 60
-                if self.hunger_affects_balance:
+                if self.hunger_as_EEB:
                     self.deb = DEB(steps_per_day=steps_per_day, base_hunger=self.brain.intermitter.base_EEB,
-                                   hunger_sensitivity=energetic_pars['hunger_sensitivity'])
+                                   hunger_gain=energetic_pars['hunger_gain'])
                 else:
                     self.deb = DEB(steps_per_day=steps_per_day,
-                                   hunger_sensitivity=energetic_pars['hunger_sensitivity'])
+                                   hunger_gain=energetic_pars['hunger_gain'])
                 self.deb.reach_stage('larva')
                 self.deb.advance_larva_age(hours_as_larva=self.model.hours_as_larva, f=self.model.deb_base_f,
                                            starvation_hours=self.model.deb_starvation_hours)
@@ -354,7 +354,7 @@ class LarvaSim(BodySim, Larva):
                 self.brain.intermitter.EEB *= self.brain.intermitter.EEB_exp_coef
             else:
                 # h0=self.deb.base_hunger
-                if self.hunger_affects_balance:
+                if self.hunger_as_EEB:
                     self.brain.intermitter.EEB=self.deb.base_hunger
                     # dh = self.deb.hunger - h0
                     # if dh > 0:
@@ -364,14 +364,14 @@ class LarvaSim(BodySim, Larva):
                 else:
                     self.brain.intermitter.EEB = self.brain.intermitter.base_EEB
             self.adjust_body_vertices()
-            self.max_feed_amount = self.compute_max_feed_amount()
+
         else:
             if feed_success:
                 self.real_mass += amount_eaten * food_quality * self.food_to_biomass_ratio
                 self.adjust_shape_to_mass()
                 self.adjust_body_vertices()
-                self.max_feed_amount = self.compute_max_feed_amount()
                 self.V = self.get_real_length() ** 3
+        self.max_feed_amount = self.compute_max_feed_amount()
 
     def update_behavior_dict(self):
         behavior_dict = self.null_behavior_dict.copy()

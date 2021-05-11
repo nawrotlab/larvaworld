@@ -12,10 +12,10 @@ from lib.stor import paths
 class DEB:
     def __init__(self, species='default', steps_per_day=1, cv=0,
                  aging=False, print_stage_change=False, starvation_strategy=False,
-                 base_hunger=0.5, hunger_sensitivity = 10):
+                 base_hunger=0.5, hunger_gain = 10):
         # self.k_x = k_x
         # self.base_k_x = 0.3
-        self.hunger_sensitivity = hunger_sensitivity
+        self.hunger_gain = hunger_gain
         self.base_hunger = base_hunger
         self.print_stage_change = print_stage_change
         self.starvation_strategy = starvation_strategy
@@ -144,7 +144,7 @@ class DEB:
 
     def compute_hunger(self):
         try:
-            h = np.clip(self.base_hunger + self.hunger_sensitivity*(1 - self.get_reserve_density()), a_min=0, a_max=1)
+            h = np.clip(self.base_hunger + self.hunger_gain*(1 - self.get_reserve_density()), a_min=0, a_max=1)
             return h
         except:
             return np.nan

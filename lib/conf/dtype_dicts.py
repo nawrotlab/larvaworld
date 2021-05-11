@@ -215,7 +215,7 @@ all_null_dicts = {
                      'Ngrid': None},
     'visualization': null_vis,
     'body': {'initial_length': 0.0045,
-             'length_std': 0.0,
+             'length_std': 0.0001,
              'Nsegs': 2,
              'seg_ratio': None
              },
@@ -227,8 +227,8 @@ all_null_dicts = {
     },
     'energetics': {'f_decay': 0.1,  # 0.1,  # 0.3
                    'absorption': 0.5,
-                   'hunger_affects_balance': True,
-                   'hunger_sensitivity': 10.0,
+                   'hunger_as_EEB': True,
+                   'hunger_gain': 12.0,
                    'deb_on': True},
     'crawler': {'waveform': 'realistic',
                 'freq_range': [0.5, 2.5],
@@ -237,7 +237,7 @@ all_null_dicts = {
                 'step_to_length_std': 'sample',  # From D1 fit
                 'initial_amp': None,
                 'crawler_noise': 0.0,
-                'max_vel_phase': 1
+                'max_vel_phase': 1.0
                 },
     'turner': {'mode': None,
                'base_activation': None,
@@ -252,14 +252,14 @@ all_null_dicts = {
     'interference': {
         'crawler_phi_range': [0.0, 0.0],  # np.pi * 0.55,  # 0.9, #,
         'feeder_phi_range': [0.0, 0.0],
-        'attenuation_ratio': 1.0
+        'attenuation': 1.0
     },
     'intermitter': {'pause_dist': 'fit',
                     'stridechain_dist': 'fit',
-                    'intermittent_crawler': False,
-                    'intermittent_feeder': False,
-                    'EEB_decay_coef': 1.0,
-                    'EEB': 1.0},
+                    'crawl_bouts': True,
+                    'feed_bouts': False,
+                    'EEB_decay': 1.0,
+                    'EEB': 0.0},
     'olfactor': {
         'perception': 'log',
         'olfactor_noise': 0.0,
@@ -267,7 +267,7 @@ all_null_dicts = {
     'feeder': {'feeder_freq_range': [1.0, 3.0],
                'feeder_initial_freq': 2.0,
                'feed_radius': 0.1,
-               'max_feed_amount_ratio': 0.00001},
+               'feed_capacity': 0.00001},
     'memory': {'DeltadCon': 0.1,
                'state_spacePerOdorSide': 0,
                'gain_space': [-300.0, -50.0, 50.0, 300.0],
@@ -386,8 +386,8 @@ def get_dict_dtypes(name, **kwargs):
         },
         'energetics': {'f_decay': float,
                        'absorption': float,
-                       'hunger_affects_balance': bool,
-                       'hunger_sensitivity': float,
+                       'hunger_as_EEB': bool,
+                       'hunger_gain': float,
                        'deb_on': bool},
         'crawler': {'waveform': ['realistic', 'square', 'gaussian', 'constant'],
                     'freq_range': Tuple[float, float],
@@ -411,13 +411,13 @@ def get_dict_dtypes(name, **kwargs):
         'interference': {
             'crawler_phi_range': Tuple[float, float],  # np.pi * 0.55,  # 0.9, #,
             'feeder_phi_range': Tuple[float, float],
-            'attenuation_ratio': float
+            'attenuation': float
         },
         'intermitter': {'pause_dist': dict,
                         'stridechain_dist': dict,
-                        'intermittent_crawler': bool,
-                        'intermittent_feeder': bool,
-                        'EEB_decay_coef': float,
+                        'crawl_bouts': bool,
+                        'feed_bouts': bool,
+                        'EEB_decay': float,
                         'EEB': float},
         'olfactor': {
             'perception': ['log', 'linear'],
@@ -426,7 +426,7 @@ def get_dict_dtypes(name, **kwargs):
         'feeder': {'feeder_freq_range': Tuple[float, float],
                    'feeder_initial_freq': float,
                    'feed_radius': float,
-                   'max_feed_amount_ratio': float},
+                   'feed_capacity': float},
         'memory': {'DeltadCon': float,
                    'state_spacePerOdorSide': int,
                    'gain_space': List[float],

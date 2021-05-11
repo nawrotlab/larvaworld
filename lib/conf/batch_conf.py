@@ -42,7 +42,7 @@ chemorbit_batch = {
 food_grid_batch = {
     'exp': 'food_grid',
     'space_search': {
-        'pars': ['EEB', 'EEB_decay_coef'],
+        'pars': ['EEB', 'EEB_decay'],
         'ranges': [(0.0, 1.0), (0.1, 2.0)],
         'Ngrid': [6, 6]
     },
@@ -91,7 +91,7 @@ rovers_sitters_batch = {
 growth_batch = {
     'exp': 'growth',
     'space_search': {
-        'pars': ['EEB', 'hunger_sensitivity'],
+        'pars': ['EEB', 'hunger_gain'],
         'ranges': [(0.5, 0.8), (0.0, 0.0)],
         'Ngrid': [8, 1]
     },

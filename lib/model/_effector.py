@@ -376,12 +376,12 @@ class NeuralOscillator:
 
 
 class Feeder(Oscillator):
-    def __init__(self, model, feed_radius, max_feed_amount_ratio,
+    def __init__(self, model, feed_radius, feed_capacity,
                  feeder_initial_freq=2, feeder_freq_range=[1, 3], **kwargs):
         super().__init__(initial_freq=feeder_initial_freq, freq_range=feeder_freq_range, **kwargs)
         self.model = model
         self.feed_radius = feed_radius
-        self.max_feed_amount_ratio = max_feed_amount_ratio
+        self.feed_capacity = feed_capacity
         # self.feed_success = None
 
     def step(self):
@@ -408,10 +408,10 @@ class Feeder(Oscillator):
 class Oscillator_coupling():
     def __init__(self, crawler_phi_range=[0.0, 0.0],
                  feeder_phi_range=[0.0, 0.0],
-                 attenuation_ratio=0.0):
+                 attenuation=0.0):
         self.crawler_phi_range = crawler_phi_range
         self.feeder_phi_range = feeder_phi_range
-        self.attenuation_ratio = attenuation_ratio
+        self.attenuation = attenuation
         self.turner_inhibition = False
         # self.reset()
 
@@ -444,11 +444,11 @@ class Oscillator_coupling():
 
 class Intermitter(Effector):
     def __init__(self, nengo_manager=None,
-                 crawler=None, intermittent_crawler=False,
-                 feeder=None, intermittent_feeder=False,
+                 crawler=None, crawl_bouts=False,
+                 feeder=None, feed_bouts=False,
                  turner=None, intermittent_turner=False, turner_prepost_lag=[0, 0],
                  pause_dist=None, stridechain_dist=None,
-                 EEB_decay_coef=1,
+                 EEB_decay=1,
                  EEB=0.5,
                  **kwargs):
         super().__init__(**kwargs)
@@ -460,24 +460,24 @@ class Intermitter(Effector):
         self.EEB = EEB
         self.base_EEB = EEB
         if crawler is None:
-            self.intermittent_crawler = False
+            self.crawl_bouts = False
         else:
-            self.intermittent_crawler = intermittent_crawler
+            self.crawl_bouts = crawl_bouts
         if turner is None:
             self.intermittent_turner = False
         else:
             self.intermittent_turner = intermittent_turner
         if feeder is None:
-            self.intermittent_feeder = False
+            self.feed_bouts = False
         else:
-            self.intermittent_feeder = intermittent_feeder
+            self.feed_bouts = feed_bouts
 
         if self.nengo_manager is None:
             # self.feeder_reoccurence_rate_on_success = feeder_reoccurence_rate_on_success
-            self.EEB_decay_coef = EEB_decay_coef
+            self.EEB_decay = EEB_decay
             # self.feeder_reoccurence_rate = 1 - self.EEB
             # self.feeder_reoccurence_rate = self.feeder_reoccurence_rate_on_success
-            self.EEB_exp_coef = np.exp(-self.EEB_decay_coef * self.dt)
+            self.EEB_exp_coef = np.exp(-self.EEB_decay * self.dt)
 
         self.turner_pre_lag_ticks = int(turner_prepost_lag[0] / self.dt)
         self.turner_post_lag_ticks = int(turner_prepost_lag[1] / self.dt)
@@ -603,10 +603,10 @@ class Intermitter(Effector):
     def disinhibit_locomotion(self):
         if self.nengo_manager is None:
             if np.random.uniform(0, 1, 1) >= self.EEB:
-                if self.intermittent_crawler:
+                if self.crawl_bouts:
                     self.crawler.start_effector()
             else:
-                if self.intermittent_feeder:
+                if self.feed_bouts:
                     self.feeder.start_effector()
         else:
             if np.random.uniform(0, 1, 1) >= self.EEB:
@@ -616,9 +616,9 @@ class Intermitter(Effector):
 
     def inhibit_locomotion(self):
         if self.nengo_manager is None:
-            if self.intermittent_crawler:
+            if self.crawl_bouts:
                 self.crawler.stop_effector()
-            if self.intermittent_feeder:
+            if self.feed_bouts:
                 self.feeder.stop_effector()
             if self.intermittent_turner:
                 self.turner_post_lag = self.turner_post_lag_ticks
@@ -1042,7 +1042,7 @@ class DefaultBrain(Brain):
             self.osc_coupling.step(crawler=self.crawler, feeder=self.feeder)
             # self.set_head_contacts_ground(value=self.osc_coupling.turner_inhibition)
             ang = self.turner.step(inhibited=self.osc_coupling.turner_inhibition,
-                                   interference_ratio=self.osc_coupling.attenuation_ratio,
+                                   interference_ratio=self.osc_coupling.attenuation,
                                    A_olf=self.olfactory_activation)
         else:
             ang = 0
