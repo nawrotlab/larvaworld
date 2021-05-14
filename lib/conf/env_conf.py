@@ -169,9 +169,14 @@ def maze_conf(n, h):
     return conf
 
 
-pref_env = {'arena_params': dish(0.1),
+pref_test_env = {'arena_params': dish(0.1),
             'food_params': food_param_conf(list=CS_UCS_odors),
             'larva_params': larva_distro(N=25, scale=(0.005, 0.02), model='navigator_x2'),
+            'odorscape': gaussian_odor()}
+
+pref_train_env = {'arena_params': dish(0.1),
+            'food_params': food_param_conf(list=CS_UCS_odors, grid=dtypes.get_dict('food_grid')),
+            'larva_params': larva_distro(N=25, scale=(0.005, 0.02), model='RL_feeder'),
             'odorscape': gaussian_odor()}
 
 pref_env_RL = {'arena_params': arena(0.2, 0.1),

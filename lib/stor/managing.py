@@ -1,3 +1,4 @@
+import copy
 import warnings
 from itertools import product
 import pandas as pd
@@ -155,6 +156,22 @@ def compute_PIs(datagroup_id, save_to=None, **kwargs):
     df = pd.DataFrame({'PI': PIs, 'N': Ns}, index=ids)
     df.to_csv(f'{save_to}/{filename}', header=True, index=True)
     print(f'PIs saved as {filename}')
+
+# def merge_datasets(datasets, id, dir) :
+#     d0=LarvaDataset(dir, id=id)
+#     N=sum([d.Nagents for d in datasets])
+#     s0,e0=[], []
+#     for i, d in enumerate(datasets) :
+#         s = copy.deepcopy(d.step_data)
+#         e = copy.deepcopy(d.endpoint_data)
+#         s.index['AgentID']= f'D{i}_' + s.index['AgentID'].astype('str')
+#         e.index['AgentID']= f'D{i}_' + e.index['AgentID'].astype('str')
+#         # e = copy.deepcopy(d.endpoint_data)
+#         s0.append(s)
+#         e0.append(e)
+#     s0=
+#
+#     dd.config=datasets[0].config
 # k=get_datasets(datagroup_id='JovanicGroup', last_common='processed/AttP2@UAS_TNT', names = ['enriched_dataset'],
 #                 folders=['Fed', 'ProteinDeprived', 'Starved'], suffixes=None, load_data=True)
 

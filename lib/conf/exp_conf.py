@@ -58,10 +58,17 @@ odor_pref = {
              'collections': ['olfactor'],
              }
 
-odor_pref = {
-             'env_params': 'odor_preference',
+odor_pref_test = {
+             'env_params': 'odor_pref_test',
              # 'env_params': pref_env,
              'collections': ['olfactor'],
+             }
+
+odor_pref_train = {
+             'env_params': 'odor_pref_train',
+             # 'env_params': pref_env,
+             'collections': ['olfactor', 'memory'],
+            'life_params' : dtypes.get_dict('life', starvation_hours=[(1/12, 2/12), (3/12, 4/12), (5/12, 6/12)])
              }
 
 odor_pref_RL = {

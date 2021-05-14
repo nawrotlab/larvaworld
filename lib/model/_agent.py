@@ -167,12 +167,17 @@ class Larva(LarvaworldAgent):
 
     @property
     def first_odor_best_gain(self):
-        return list(self.brain.memory.get_best_gain().values())[0]
+        return list(self.brain.memory.best_gain.values())[0]
 
     @property
     def second_odor_best_gain(self):
-        return list(self.brain.memory.get_best_gain().values())[1]
+        return list(self.brain.memory.best_gain.values())[1]
 
+    @property
+    def best_olfactor_decay(self):
+        return self.brain.memory.best_decay_coef
+
+    best_olfactor_decay
 
     @property
     def cum_reward(self):

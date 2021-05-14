@@ -26,7 +26,10 @@ def sim_enrichment(d, experiment):
     elif experiment == 'dispersion':
         d.enrich(length_and_centroid=False, is_last=False)
     elif experiment in ['chemotaxis_local', 'chemotaxis_diffusion']:
+        d.linear_analysis(is_last=False)
         d.angular_analysis(is_last=False)
+        d.detect_strides(is_last=False)
+        d.detect_pauses(is_last=False)
         d.detect_turns(track_params = ['orientation_to_center'],is_last=False)
     return d
 
@@ -120,19 +123,23 @@ def sim_analysis(d, exp_type):
                                          random_colors=True, trajectories=True, trajectory_dt=0,
                                          visible_clock=False, visible_scale=False, media_name='single_trajectory')
         d.visualize(agent_ids=[d.agent_ids[0]], vis_kwargs=vis_kwargs)
-    elif exp_type in ['odor_preference']:
+    elif exp_type in ['odor_pref_test', 'odor_pref_train']:
         ind = d.compute_preference_index()
-        print(ind)
+        print(f'Preference for left odor : {np.round(ind,3)}')
         results['PI'] = ind
 
         # return ind
-    elif exp_type == 'odor_preference_RL':
+    if exp_type in ['odor_preference_RL', 'odor_pref_train']:
         fig_dict['best_gains_table'] = plot_timeplot(['g_odor1', 'g_odor2'], datasets=[d], show_first=False, table='best_gains')
         fig_dict['reward_table'] = plot_timeplot(['cum_reward'], datasets=[d], show_first=False, table='best_gains')
+        fig_dict['olfactor_decay_table'] = plot_timeplot(['D_olf'], datasets=[d], show_first=False, table='best_gains')
         # fig_dict['best_gains'] = plot_timeplot(['g_odor1', 'g_odor2'], datasets=[d], show_first=False)
+        # fig_dict['best_gains_inds'] = plot_timeplot(['g_odor1', 'g_odor2'], datasets=[d], show_first=False, individuals=True)
     elif exp_type == 'chemotaxis_RL':
         fig_dict['best_gains_table'] = plot_timeplot(['g_odor1'], datasets=[d], show_first=False, table='best_gains')
         fig_dict['reward_table'] = plot_timeplot(['cum_reward'], datasets=[d], show_first=False, table='best_gains')
+        fig_dict['olfactor_decay_table'] = plot_timeplot(['D_olf'], datasets=[d], show_first=False, table='best_gains')
+        fig_dict['olfactor_decay_table_inds'] = plot_timeplot(['D_olf'], datasets=[d], show_first=False, table='best_gains', individuals=True)
         # fig_dict['best_gains'] = plot_timeplot(['g_odor1', 'g_odor2'], datasets=[d], show_first=False)
     elif exp_type == 'realistic_imitation':
         d.save_agent(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
@@ -159,7 +166,6 @@ def run_sim_basic(
     Nsec = sim_params['sim_dur'] * 60
     path = sim_params['path']
     Box2D = sim_params['Box2D']
-
     if save_to is None:
         save_to = paths.SimFolder
     if path is not None:
@@ -222,7 +228,8 @@ def run_sim_basic(
             if enrich and experiment is not None:
                 d = sim_enrichment(d, experiment)
             d.save()
-            d.save_tables(env.table_collector.tables)
+            if env.table_collector is not None :
+                d.save_tables(env.table_collector.tables)
             fun.dict_to_file(param_dict, d.sim_pars_file_path)
             # Save the odor layer
             # if env.Nodors > 0:
@@ -286,11 +293,9 @@ def load_reference_dataset():
 
 
 def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, larva_model=None):
-    if life_params is None:
-        life_params = {'starvation_hours': None,
-                       'hours_as_larva': 0.0,
-                       'deb_base_f': 1.0}
+
     exp_conf = loadConf(exp_type, 'Exp')
+
     env = exp_conf['env_params']
     if type(env) == str:
         env = loadConf(env, 'Env')
@@ -307,7 +312,11 @@ def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, la
             v['model'] = loadConf(v['model'], 'Model')
 
     exp_conf['env_params'] = env
-    exp_conf['life_params'] = life_params
+    if 'life_params' not in list(exp_conf.keys()):
+        if life_params is None :
+            life_params = dtypes.get_dict('life')
+
+        exp_conf['life_params'] = life_params
     exp_conf['sim_params'] = sim_params
     exp_conf['experiment'] = exp_type
     exp_conf['enrich'] = enrich

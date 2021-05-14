@@ -34,12 +34,15 @@ sinusoidal_turner = dtypes.get_dict('turner',
 
 RL_memory = {'DeltadCon': 0.1,
              'state_spacePerOdorSide': 0,
+             # 'gain_space': [150.0],
              'gain_space': np.arange(-300.0, 300.0, 100.0).tolist(),
-             'update_dt': 3,
+             'decay_coef_space': None,
+             # 'decay_coef_space': np.round(np.arange(0.01, 1.5, 0.2),1).tolist(),
+             'update_dt': 1,
              'alpha': 0.05,
              'gamma': 0.6,
-             'epsilon': 0.5,
-             'train_dur': 240,
+             'epsilon': 0.7,
+             'train_dur': 30,
              }
 
 
@@ -57,6 +60,12 @@ brain_RLolfactor = dtypes.brain_dict(['turner', 'crawler', 'interference', 'inte
                                    turner=neural_turner,
                                    interference=default_coupling,
                                    memory=RL_memory)
+
+brain_RLolfactor_feeder = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'olfactor', 'feeder', 'memory'],
+                                   turner=neural_turner,
+                                   interference=default_coupling,
+                                   memory=RL_memory,
+                                            intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.5))
 
 
 
@@ -117,6 +126,7 @@ growing_sitter = dtypes.larva_dict(brain_sitter, body=dtypes.get_dict('body', in
 
 nengo_larva = dtypes.larva_dict(brain_nengo)
 RL_odor_larva = dtypes.larva_dict(brain_RLolfactor, body=dtypes.get_dict('body', initial_length='sample'))
+RL_feed_odor_larva = dtypes.larva_dict(brain_RLolfactor_feeder, body=dtypes.get_dict('body', initial_length='sample'))
 imitation_larva = dtypes.larva_dict(brain_locomotion, body=dtypes.get_dict('body', Nsegs=11),
                                     physics=dtypes.get_dict('physics', ang_damping=1.0, body_spring_k=1.0))
 

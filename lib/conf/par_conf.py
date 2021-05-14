@@ -398,6 +398,13 @@ def set_ParDb():
                              # 'collect' : 'first_odor_concentration'
                              }
 
+    par_db.loc['D_olf'] = {'par': 'best_olfactor_decay',
+                             'symbol': '${D}_{olf}$',
+                             'exp_symbol': '${\hat{D}_{olf}$',
+                             'unit': 'Olfactor decay coeeficient',
+                             # 'collect' : 'first_odor_concentration'
+                             }
+
     par_db.loc['c_odor1'] = {'par': 'first_odor_concentration',
                              'symbol': '${C}_{odor_{1}}$',
                              'exp_symbol': '${\hat{C}_{odor_{1}}$',
@@ -628,4 +635,4 @@ if __name__ == '__main__':
     # print(type(get_par('c_odor1')['dtype']))
     # print(get_par_dict(short='fov'))
     # print(par_db.loc['g_odor1'])
-    # print(par_db.loc['g_odor2'])
+    print(par_db.loc['pau_fo'])

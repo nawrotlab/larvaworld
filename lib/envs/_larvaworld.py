@@ -600,6 +600,19 @@ class LarvaWorld:
             self.score = {self.target_group : 0.0,
                           self.follower_group : 0.0}
 
+        elif self.experiment == 'odor_pref_train' :
+            self.CS_trial_counter=1
+            self.UCS_trial_counter=0
+            print()
+            print(f'Training trial {self.CS_trial_counter} with CS started at {self.sim_clock.minute} : {self.sim_clock.second}')
+            for f in self.get_food():
+                if f.unique_id == 'CS_source':
+                    self.CS_source = f
+                elif f.unique_id == 'UCS_source':
+                    self.UCS_source = f
+            self.CS_source.odor_intensity = 2.0
+            self.UCS_source.odor_intensity = 0.0
+
     def check_end_condition(self):
         if self.experiment == 'capture_the_flag':
             flag_p = self.flag.get_position()
@@ -653,6 +666,52 @@ class LarvaWorld:
                     print(f'{group} group wins')
                     self.end_condition_met = True
             self.sim_state.set_text(f'L:{np.round(self.score["Left"],1)} vs R:{np.round(self.score["Right"],1)}')
+
+        elif self.experiment == 'odor_pref_train':
+            if self.sim_clock.timer_opened :
+                self.UCS_trial_counter+=1
+                print()
+                print(f'Starvation trial {self.UCS_trial_counter} with UCS started at {self.sim_clock.minute}:{self.sim_clock.second}')
+                self.CS_source.odor_intensity=0.0
+                self.UCS_source.odor_intensity=2.0
+                self.move_larvae_to_center()
+            if self.sim_clock.timer_closed :
+                self.CS_trial_counter += 1
+                print()
+                print(f'Training trial {self.CS_trial_counter} with CS started at {self.sim_clock.minute}:{self.sim_clock.second}')
+                self.CS_source.odor_intensity = 2.0
+                self.UCS_source.odor_intensity = 0.0
+                self.move_larvae_to_center()
+            if self.sim_clock.next_on is None and self.sim_clock.next_off is None :
+                print()
+                print(f'Test trial started at {self.sim_clock.minute}:{self.sim_clock.second}')
+                self.CS_source.odor_intensity = 2.0
+                self.UCS_source.odor_intensity = 2.0
+                self.move_larvae_to_center()
+            if self.sim_clock.minute>=35 :
+                print(f'Test trial ended at {self.sim_clock.minute}:{self.sim_clock.second}')
+
+    def move_larvae_to_center(self) :
+        N=len(self.get_flies())
+        orientations = np.random.uniform(low=0.0, high=np.pi*2, size=N).tolist()
+        positions = fun.generate_xy_distro(N=N, mode='uniform', scale=(0.005,0.015), loc=(0.0,0.0), shape='oval')
+
+        for l, p, o in zip(self.get_flies(), positions, orientations) :
+            temp=np.array([-np.cos(o), -np.sin(o)])
+            head = l.get_head()
+            head.set_pose(p,o)
+            head.update_vertices(p,o)
+            for i, seg in enumerate(l.segs[1:]) :
+                seg.set_orientation(o)
+                prev_p = l.get_global_rear_end_of_seg(seg_index=i)
+                new_p = prev_p + temp * l.seg_lengths[i+1] / 2
+                seg.set_position(new_p)
+                seg.set_lin_vel(0.0)
+                seg.set_ang_vel(0.0)
+            l.pos = l.get_global_midspine_of_body()
+            self.space.move_agent(l, l.pos)
+
+
 
     def create_borders(self, lines):
         s = self.scaling_factor
@@ -924,9 +983,11 @@ class LarvaWorldSim(LarvaWorld):
         if len(self.sim_starvation_hours) > 0:
             self.starvation = self.sim_clock.timer_on
             if self.sim_clock.timer_opened:
+                # print('Starvation period starts!')
                 if self.food_grid is not None:
                     self.food_grid.empty_grid()
             if self.sim_clock.timer_closed:
+                # print('Starvation period ended!')
                 if self.food_grid is not None:
                     self.food_grid.reset()
 

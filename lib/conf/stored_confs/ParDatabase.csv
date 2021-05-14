@@ -264,6 +264,7 @@ sf_am,scaled_amount_eaten,${m^{*}}_{feed}$,${\hat{m^{*}}}_{feed}$,food intake as
 g_odor1,first_odor_best_gain,${G}_{odor_{1}}$,${\hat{G}_{odor_{1}}$,Gain G(t),"[-500.0, 500.0]",first_odor_best_gain,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 g_odor2,second_odor_best_gain,${G}_{odor_{2}}$,${\hat{G}_{odor_{2}}$,Gain G(t),"[-500.0, 500.0]",second_odor_best_gain,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 cum_reward,cum_reward,${R}_{cum}$,${\hat{R}_{cum}$,Reward R(t),,cum_reward,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+D_olf,best_olfactor_decay,${D}_{olf}$,${\hat{D}_{olf}$,Olfactor decay coeeficient,,best_olfactor_decay,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 c_odor1,first_odor_concentration,${C}_{odor_{1}}$,${\hat{C}_{odor_{1}}$,"Concentration C(t), $\mu$M","[0.0, 8.0]",first_odor_concentration,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 dc_odor1,first_odor_concentration_change,$\delta{C}_{odor_{1}}$,$\delta{\hat{C}_{odor_{1}}$,"Concentration change dC(t), $-$","[-0.05, 0.05]",first_odor_concentration_change,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 A_olf,olfactory_activation,$A_{olf}$,$\hat{A}_{olf}$,Olfactory activation,"[-1.0, 1.0]",olfactory_activation,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>

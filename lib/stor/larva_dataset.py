@@ -90,9 +90,9 @@ class LarvaDataset:
         # self.compute_linear_metrics(mode='full', is_last=True)
         int = 0.3
         svel_max_thr = 0.1
-        # self.add_min_max_flags(parameters=svels, interval_in_sec=int, is_last=False)
-        self.add_min_max_flags(parameters=svels, interval_in_sec=int, threshold_in_std=None,
-                               absolute_threshold=[np.inf, svel_max_thr], is_last=False)
+        # self.compute_extrema(parameters=svels, interval_in_sec=int, is_last=False)
+        self.compute_extrema(parameters=svels, interval_in_sec=int, threshold_in_std=None,
+                             abs_threshold=[np.inf, svel_max_thr], is_last=False)
         self.compute_dominant_frequencies(parameters=svels, freq_range=[0.7, 2.6], accepted_range=[0.7, 2.6])
         # raise
         if not from_file:
@@ -215,14 +215,15 @@ class LarvaDataset:
         front_body_ratio = len(best_combo) / self.Nangles
         self.two_segment_model(front_body_ratio=front_body_ratio)
 
-    def apply_filter(self, pars, freq, N=1, inplace=False, refilter=False, is_last=True):
+    def apply_filter(self, pars, freq, N=1, inplace=False, refilter=False, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         s = self.step_data
         if not refilter:
             if self.config['filtered_at'] is not None and not np.isnan(self.config['filtered_at']):
                 prev_filter = self.config['filtered_at']
-                print(
+                if show_output:
+                    print(
                     f'Dataset has already been filtered at {prev_filter} Hz. If you want to apply additional filter set refilter to True')
                 return
         pars = [p for p in pars if p in s.columns]
@@ -230,7 +231,8 @@ class LarvaDataset:
         self.config['filtered_at'] = freq
         self.save_config()
         self.types_dict.update({col: float for col in nam.filt(pars)})
-        print(f'Applying filter to all spatial parameters')
+        if show_output:
+            print(f'Applying filter to all spatial parameters')
         fpars = nam.filt(pars)
         data = np.dstack(list(self.step_data[pars].groupby('AgentID').apply(pd.DataFrame.to_numpy)))
         f_array = fun.apply_filter_to_array_with_nans_multidim(data, freq=freq, fr=self.fr, N=N)
@@ -242,9 +244,10 @@ class LarvaDataset:
                 s[p] = f_array[:, j, :].flatten()
         if is_last:
             self.save()
-        print('All parameters filtered')
+        if show_output:
+            print('All parameters filtered')
 
-    def interpolate_nans(self, pars, is_last=True):
+    def interpolate_nans(self, pars, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         for p in pars:
@@ -256,19 +259,22 @@ class LarvaDataset:
                 pass
         if is_last:
             self.save()
-        print('All parameters interpolated')
+        if show_output:
+            print('All parameters interpolated')
 
-    def rescale(self, rescale_again=False, scale=1, is_last=True):
+    def rescale(self, rescale_again=False, scale=1, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
         if not rescale_again:
             if self.config['rescaled_by'] is not None and not np.isnan(self.config['rescaled_by']):
                 prev_scale = self.config['rescaled_by']
-                print(
-                    f'Dataset already rescaled by {prev_scale}. If you want to rescale again set rescale_again to True')
+                if show_output :
+                    print(
+                        f'Dataset already rescaled by {prev_scale}. If you want to rescale again set rescale_again to True')
                 return
-        print(f'Rescaling dataset by {scale}')
+        if show_output:
+            print(f'Rescaling dataset by {scale}')
         dst_params = self.points_dst + [self.cent_dst] + self.segs
         vel_params = self.points_vel + [self.cent_vel]
         acc_params = self.points_acc + [self.cent_acc]
@@ -287,16 +293,17 @@ class LarvaDataset:
         self.config['rescaled_by'] = scale
         if is_last:
             self.save()
-        print(f'Dataset rescaled by {scale}.')
+        if show_output:
+            print(f'Dataset rescaled by {scale}.')
 
     def set_step_data(self, step_data):
-        try :
+        try:
             self.step_data = step_data
             self.agent_ids = self.step_data.index.unique('AgentID').values
             self.num_ticks = self.step_data.index.unique('Step').size
             self.starting_tick = self.step_data.index.unique('Step')[0]
             # self.save()
-        except :
+        except:
             pass
 
     def set_end_data(self, endpoint_data):
@@ -338,7 +345,7 @@ class LarvaDataset:
         self.save()
         print('All outliers replaced')
 
-    def exclude_rows(self, flag_column, accepted_values=None, rejected_values=None, is_last=True):
+    def exclude_rows(self, flag_column, accepted_values=None, rejected_values=None, is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
@@ -353,41 +360,46 @@ class LarvaDataset:
 
         if is_last:
             self.save()
-        print(f'Rows excluded according to {flag_column}.')
+        if show_output:
+            print(f'Rows excluded according to {flag_column}.')
 
-    def drop_agents(self, agents, is_last=True):
+    def drop_agents(self, agents, is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         self.step_data.drop(agents, level='AgentID', inplace=True)
         self.endpoint_data.drop(agents, inplace=True)
         if is_last:
             self.save()
-        print(f'{len(agents)} agents dropped.')
+        if show_output:
+            print(f'{len(agents)} agents dropped.')
 
-    def drop_contour(self, is_last=True):
+    def drop_contour(self, is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         self.set_step_data(self.step_data.drop(columns=fun.flatten_list(self.contour_xy)))
         if is_last:
             self.save()
-        print('Contour dropped.')
+        if show_output:
+            print('Contour dropped.')
 
-    def drop_step_pars(self, pars, is_last=True):
+    def drop_step_pars(self, pars, is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
-        for p in pars:
-            try:
-                self.step_data.drop(columns=[p], inplace=True)
-            except:
-                pass
+        self.step_data.drop(columns=[p for p in pars if p in self.step_data.columns], inplace=True)
+        # for p in pars:
+        #     try:
+        #         self.step_data.drop(columns=[p], inplace=True)
+        #     except:
+        #         pass
         self.set_step_data(self.step_data)
         if is_last:
             self.save()
             self.load()
-        print(f'{len(pars)} parameters dropped. {len(self.step_data.columns)} remain.')
+        if show_output:
+            print(f'{len(pars)} parameters dropped. {len(self.step_data.columns)} remain.')
         # print(self.step_data.columns)
 
-    def drop_unused_pars(self, is_last=True):
+    def drop_unused_pars(self, is_last=True,show_output = True):
         vels = ['vel', nam.scal('vel')]
         lin = ['dst', 'vel', 'acc']
         lins = lin + nam.scal(lin) + nam.cum(['dst', nam.scal('dst')]) + nam.max(vels) + nam.min(vels)
@@ -399,10 +411,26 @@ class LarvaDataset:
         vpars = lins + self.ang_pars + self.xy_pars + behs + strs + var
 
         self.drop_step_pars(pars=[p for p in self.step_data.columns.values if p not in vpars],
-                            is_last=False)
+                            is_last=False, show_output=show_output)
         if is_last:
             self.save()
-        print('Non simulated parameters dropped.')
+        if show_output:
+            print('Non simulated parameters dropped.')
+
+    def drop_midline(self, is_last=True,show_output = True):
+        self.drop_step_pars(pars=fun.flatten_list(self.points_xy),is_last=False, show_output=show_output)
+        if is_last:
+            self.save()
+        if show_output:
+            print('Midline xy coords dropped.')
+
+    def drop_chunks(self, chunks=['stride', 'pause', 'Lturn', 'Rturn', 'turn'], is_last=True,show_output = True):
+        pars=flatten_list([[f'{c}_start', f'{c}_stop', f'{c}_id', f'{c}_dur'] for c in chunks])
+        self.drop_step_pars(pars=pars,is_last=False, show_output=show_output)
+        if is_last:
+            self.save()
+        if show_output:
+            print('Chunk metrics dropped.')
 
     #####################################
     ####### ALIGNMENT/FIXATION ##########
@@ -521,7 +549,7 @@ class LarvaDataset:
             self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
             self.agent_ids = self.step_data.index.unique('AgentID').values
             self.num_ticks = self.step_data.index.unique('Step').size
-            self.starting_tick = self.step_data.index.unique('Step')[0]
+            self.starting_tick = int(self.step_data.index.unique('Step')[0])
             self.Nagents = len(self.agent_ids)
         if endpoint_data:
             self.endpoint_data = pd.read_csv(self.endpoint_file_path, index_col=0)
@@ -545,13 +573,13 @@ class LarvaDataset:
 
     def save_tables(self, tables):
         for name, table in tables.items():
-            path=os.path.join(self.data_dir, f'{name}.csv')
-            df=pd.DataFrame(table)
-            if 'unique_id' in df.columns :
-                df.rename(columns={'unique_id' : 'AgentID'}, inplace=True)
-                Nagents=len(df['AgentID'].unique().tolist())
-                Nrows=int(len(df.index)/Nagents)
-                df['Step']=np.array([[i]*Nagents for i in range(Nrows)]).flatten()
+            path = os.path.join(self.data_dir, f'{name}.csv')
+            df = pd.DataFrame(table)
+            if 'unique_id' in df.columns:
+                df.rename(columns={'unique_id': 'AgentID'}, inplace=True)
+                Nagents = len(df['AgentID'].unique().tolist())
+                Nrows = int(len(df.index) / Nagents)
+                df['Step'] = np.array([[i] * Nagents for i in range(Nrows)]).flatten()
                 df.set_index(['Step', 'AgentID'], inplace=True)
                 df.sort_index(level=['Step', 'AgentID'], inplace=True)
             df.to_csv(path, index=True, header=True)
@@ -740,7 +768,8 @@ class LarvaDataset:
                   **kwargs):
 
         pars, pos_xy_pars, track_point = self.get_par_list(track_point)
-        s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range=time_range, dynamic_color=dynamic_color)
+        s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range=time_range,
+                                             dynamic_color=dynamic_color)
 
         if len(ids) == 1:
             n0 = ids[0]
@@ -795,7 +824,7 @@ class LarvaDataset:
     ############# ENRICHMENT ############
     #####################################
 
-    def compute_length(self, mode='full', is_last=True):
+    def compute_length(self, mode='minimal', is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
 
@@ -808,7 +837,8 @@ class LarvaDataset:
         S = np.zeros([Nsegs, t]) * np.nan
 
         if mode == 'full':
-            print(f'Computing lengths for {Nsegs} segments and total body length')
+            if show_output:
+                print(f'Computing lengths for {Nsegs} segments and total body length')
             for j in range(xy.shape[0]):
                 for i, seg in enumerate(segs):
                     S[i, j] = np.sqrt(np.nansum((xy[j, 2 * i:2 * i + 2] - xy[j, 2 * i + 2:2 * i + 4]) ** 2))
@@ -816,7 +846,8 @@ class LarvaDataset:
             for i, seg in enumerate(segs):
                 s[seg] = S[i, :].flatten()
         elif mode == 'minimal':
-            print(f'Computing body length')
+            if show_output:
+                print(f'Computing body length')
             for j in range(xy.shape[0]):
                 k = np.sum(np.diff(np.array(fun.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
                 if not np.isnan(np.sum(k)):
@@ -829,17 +860,20 @@ class LarvaDataset:
         e['length'] = s['length'].groupby('AgentID').quantile(q=0.5)
         if is_last:
             self.save()
-        print('All lengths computed.')
+        if show_output:
+            print('All lengths computed.')
 
-    def compute_centroid_from_contour(self, is_last=True):
+    def compute_centroid_from_contour(self, is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         s = self.step_data
         con_pars = nam.xy(self.contour, flat=True)
         if not set(con_pars).issubset(s.columns) or len(con_pars) == 0:
-            print(f'No contour found. Not computing centroid')
+            if show_output:
+                print(f'No contour found. Not computing centroid')
         else:
-            print(f'Computing centroid from {len(self.contour)} contourpoints')
+            if show_output:
+                print(f'Computing centroid from {len(self.contour)} contourpoints')
             contour = s[con_pars].values
             Nconpoints = int(contour.shape[1] / 2)
             Nticks = contour.shape[0]
@@ -851,37 +885,41 @@ class LarvaDataset:
             s[self.cent_xy[1]] = c[:, 1]
         if is_last:
             self.save()
-        print('Centroid coordinates computed.')
+        if show_output:
+            print('Centroid coordinates computed.')
 
     def compute_length_and_centroid(self, recompute_length=False, recompute_centroid=False,
-                                    drop_contour=True, is_last=True):
+                                    drop_contour=True, is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
         if 'length' in e.columns.values and not recompute_length:
-            print('Length is already computed. If you want to recompute it, set recompute_length to True')
+            if show_output:
+                print('Length is already computed. If you want to recompute it, set recompute_length to True')
         else:
-            self.compute_length(mode='minimal', is_last=False)
+            self.compute_length(mode='minimal', is_last=False,show_output = show_output)
         if set(nam.xy('centroid')).issubset(s.columns.values) and not recompute_centroid:
-            print('Centroid is already computed. If you want to recompute it, set recompute_centroid to True')
+            if show_output:
+                print('Centroid is already computed. If you want to recompute it, set recompute_centroid to True')
         else:
-            self.compute_centroid_from_contour(is_last=False)
+            self.compute_centroid_from_contour(is_last=False,show_output = show_output)
         if drop_contour:
             try:
-                self.drop_contour(is_last=False)
+                self.drop_contour(is_last=False,show_output = show_output)
             except:
                 pass
         if is_last:
             self.save()
 
-    def compute_spineangles(self, chunk_only=None, mode='full', is_last=True):
+    def compute_spineangles(self, chunk_only=None, mode='full', is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         self.bend_angles = self.angles[:int(np.round(self.config['front_body_ratio'] * self.Nangles))]
         if chunk_only is None:
             s = self.step_data.copy(deep=False)
         else:
-            print(f'Computation restricted to {chunk_only} chunks')
+            if show_output :
+                print(f'Computation restricted to {chunk_only} chunks')
             s = self.step_data.loc[self.step_data[nam.id(chunk_only)].dropna().index.values].copy(deep=False)
         xy = [nam.xy(self.points[i]) for i in range(len(self.points))]
         if mode == 'full':
@@ -889,7 +927,8 @@ class LarvaDataset:
         elif mode == 'minimal':
             angles = self.bend_angles
         N = len(angles)
-        print(f'Computing {N} angles')
+        if show_output:
+            print(f'Computing {N} angles')
         xy_pars = fun.flatten_list([xy[i] for i in range(N + 2)])
         xy_ar = s[xy_pars].values
         Npoints = int(xy_ar.shape[1] / 2)
@@ -902,29 +941,34 @@ class LarvaDataset:
             self.step_data[a] = c[z].T
         if is_last:
             self.save()
-        print('All angles computed')
+        if show_output:
+            print('All angles computed')
 
-    def compute_bend(self, mode='minimal', is_last=True):
+    def compute_bend(self, mode='minimal', is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         s = self.step_data
         b_conf = self.config['bend']
         if b_conf is None:
-            print('Bending angle not defined. Can not compute angles')
+            if show_output :
+                print('Bending angle not defined. Can not compute angles')
             return
         elif b_conf == 'from_vectors':
-            print(f'Computing bending angle as the difference between front and rear orients')
+            if show_output:
+                print(f'Computing bending angle as the difference between front and rear orients')
             s['bend'] = s.apply(lambda r: fun.angle_dif(r['front_orientation'], r['rear_orientation']), axis=1)
         elif b_conf == 'from_angles':
-            self.compute_spineangles(mode=mode, is_last=False)
-            print(f'Computing bending angle as the sum of the first {len(self.bend_angles)} front angles')
+            self.compute_spineangles(mode=mode, is_last=False,show_output = show_output)
+            if show_output:
+                print(f'Computing bending angle as the sum of the first {len(self.bend_angles)} front angles')
             s['bend'] = s[self.bend_angles].sum(axis=1, min_count=1)
 
         if is_last:
             self.save()
-        print('All bends computed')
+        if show_output:
+            print('All bends computed')
 
-    def compute_LR_bias(self, is_last=True):
+    def compute_LR_bias(self, is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
@@ -939,13 +983,15 @@ class LarvaDataset:
 
         if is_last:
             self.save()
-        print('LR biases computed')
+        if show_output:
+            print('LR biases computed')
 
-    def compute_orientations(self, mode='full', is_last=True):
+    def compute_orientations(self, mode='full', is_last=True,show_output = True):
 
         for key in ['front_vector_start', 'front_vector_stop', 'rear_vector_start', 'rear_vector_stop']:
             if self.config[key] is None:
-                print('Front and rear vectors are not defined. Can not compute orients')
+                if show_output:
+                    print('Front and rear vectors are not defined. Can not compute orients')
                 return
         else:
             f1, f2 = self.config['front_vector_start'], self.config['front_vector_stop']
@@ -957,7 +1003,8 @@ class LarvaDataset:
         xy = [nam.xy(self.points[i]) for i in range(len(self.points))]
         s = self.step_data
         # s = self.step_data.copy(deep=False)
-        print(f'Computing front and rear orients')
+        if show_output:
+            print(f'Computing front and rear orients')
         xy_pars = fun.flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1]])
         xy_ar = s[xy_pars].values
         Npoints = int(xy_ar.shape[1] / 2)
@@ -971,7 +1018,8 @@ class LarvaDataset:
             s[a] = c[z].T
         if mode == 'full':
             N = len(self.segs)
-            print(f'Computing additional orients for {N} spinesegments')
+            if show_output:
+                print(f'Computing additional orients for {N} spinesegments')
             ors = nam.orient(self.segs)
             xy_pars = fun.flatten_list([xy[i] for i in range(N + 1)])
             xy_ar = s[xy_pars].values
@@ -985,9 +1033,10 @@ class LarvaDataset:
                 s[a] = c[z].T
         if is_last:
             self.save()
-        print('All orients computed')
+        if show_output:
+            print('All orientations computed')
 
-    def unwrap_orientations(self, is_last=True):
+    def unwrap_orientations(self, is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
@@ -1000,9 +1049,10 @@ class LarvaDataset:
                 s.loc[(slice(None), id), nam.unwrap(p)] = fun.unwrap_deg(ts)
         if is_last:
             self.save()
-        print('All orients unwrapped')
+        if show_output:
+            print('All orients unwrapped')
 
-    def compute_angular_metrics(self, mode='minimal', is_last=True):
+    def compute_angular_metrics(self, mode='minimal', is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
@@ -1010,7 +1060,7 @@ class LarvaDataset:
         Nids = len(ids)
         Nticks = len(s.index.unique('Step'))
         t0 = self.starting_tick
-        self.unwrap_orientations(is_last=False)
+        self.unwrap_orientations(is_last=False,show_output = show_output)
 
         if mode == 'full':
             pars = self.angles + nam.orient(self.segs) + ['front_orientation',
@@ -1020,8 +1070,8 @@ class LarvaDataset:
 
         pars = [a for a in pars if a in s.columns]
         Npars = len(pars)
-
-        print(f'Computing angular velocities and accelerations for {Npars} angular parameters')
+        if show_output:
+            print(f'Computing angular velocities and accelerations for {Npars} angular parameters')
 
         V = np.zeros([Nticks, Npars, Nids]) * np.nan
         A = np.zeros([Nticks, Npars, Nids]) * np.nan
@@ -1045,19 +1095,23 @@ class LarvaDataset:
             s[a] = A[:, k, :].flatten()
         if is_last:
             self.save()
-        print('All angular parameters computed')
+        if show_output:
+            print('All angular parameters computed')
 
-    def angular_analysis(self, recompute=False, mode='minimal', is_last=True):
+    def angular_analysis(self, recompute=False, mode='minimal', is_last=True,show_output = True):
+        c = {'show_output': show_output,
+             'is_last': False}
         if self.step_data is None:
             self.load()
         if set(['front_orientation', 'rear_orientation', 'bend']).issubset(
                 self.step_data.columns.values) and not recompute:
-            print('Orientation and bend are already computed. If you want to recompute them, set recompute to True')
+            if show_output:
+                print('Orientation and bend are already computed. If you want to recompute them, set recompute to True')
         else:
-            self.compute_orientations(mode=mode, is_last=False)
-            self.compute_bend(mode=mode, is_last=False)
-        self.compute_angular_metrics(mode=mode, is_last=False)
-        self.compute_LR_bias(is_last=False)
+            self.compute_orientations(mode=mode, **c)
+            self.compute_bend(mode=mode, **c)
+        self.compute_angular_metrics(mode=mode, **c)
+        self.compute_LR_bias(**c)
         if self.save_data_flag:
             b = 'bend'
             fo = 'front_orientation'
@@ -1067,9 +1121,10 @@ class LarvaDataset:
             self.create_par_distro_dataset([b, bv, ba, fov, foa, rov, roa])
         if is_last:
             self.save()
-        print(f'Completed {mode} angular analysis.')
+        if show_output:
+            print(f'Completed {mode} angular analysis.')
 
-    def compute_spatial_metrics(self, mode='full', is_last=True):
+    def compute_spatial_metrics(self, mode='full', is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
@@ -1084,17 +1139,19 @@ class LarvaDataset:
             lengths = None
 
         if mode == 'full':
-            print(f'Computing distances, velocities and accelerations for {self.Npoints} points')
+            if show_output:
+                print(f'Computing distances, velocities and accelerations for {self.Npoints} points')
             points = self.points.copy()
             points += ['centroid']
         elif mode == 'minimal':
-            print(f'Computing distances, velocities and accelerations for a single spinepoint')
+            if show_output:
+                print(f'Computing distances, velocities and accelerations for a single spinepoint')
             points = [self.point]
 
         points = np.unique(points).tolist()
         points = [p for p in points if set(nam.xy(p)).issubset(s.columns.values)]
 
-        xy_params = self.raw_or_filtered_xy(points)
+        xy_params = self.raw_or_filtered_xy(points, show_output=show_output)
         xy_params = fun.group_list_by_n(xy_params, 2)
 
         all_d = [s.xs(id, level='AgentID', drop_level=True) for id in ids]
@@ -1149,9 +1206,10 @@ class LarvaDataset:
 
         if is_last:
             self.save()
-        print('All spatial parameters computed')
+        if show_output:
+            print('All spatial parameters computed')
 
-    def compute_linear_metrics(self, mode='full', is_last=True):
+    def compute_linear_metrics(self, mode='full', is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
@@ -1166,24 +1224,28 @@ class LarvaDataset:
             lengths = None
 
         if mode == 'full':
-            print(
+            if show_output:
+                print(
                 f'Computing linear distances, velocities and accelerations for {self.Npoints - 1} points')
             points = self.points[1:]
             orientations = nam.orient(self.segs)
         elif mode == 'minimal':
             if self.point == 'centroid' or self.point == self.points[0]:
-                print('Defined point is either centroid or head. Orientation of front segment not defined.')
+                if show_output:
+                    print('Defined point is either centroid or head. Orientation of front segment not defined.')
                 return
             else:
-                print(f'Computing linear distances, velocities and accelerations for a single spinepoint')
+                if show_output:
+                    print(f'Computing linear distances, velocities and accelerations for a single spinepoint')
                 points = [self.point]
                 orientations = ['rear_orientation']
 
         if not set(orientations).issubset(s.columns):
-            print('Required orients not found. Component linear metrics not computed.')
+            if show_output:
+                print('Required orients not found. Component linear metrics not computed.')
             return
 
-        xy_params = self.raw_or_filtered_xy(points)
+        xy_params = self.raw_or_filtered_xy(points, show_output=show_output)
         xy_params = fun.group_list_by_n(xy_params, 2)
 
         all_d = [s.xs(id, level='AgentID', drop_level=True) for id in ids]
@@ -1233,9 +1295,10 @@ class LarvaDataset:
 
         if is_last:
             self.save()
-        print('All linear parameters computed')
+        if show_output:
+            print('All linear parameters computed')
 
-    def store_global_linear_metrics(self, is_last=True):
+    def store_global_linear_metrics(self, is_last=True,show_output = True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
@@ -1271,18 +1334,20 @@ class LarvaDataset:
         if is_last:
             self.save()
 
-    def linear_analysis(self, mode='minimal', is_last=True):
+    def linear_analysis(self, mode='minimal', is_last=True, show_output=True):
+        c = {'show_output': show_output,
+             'is_last': False}
         if self.step_data is None:
             self.load()
 
         # self.distance = nam.dst(self.point)
-        self.compute_spatial_metrics(mode=mode, is_last=False)
-        self.compute_linear_metrics(mode=mode, is_last=False)
-        self.store_global_linear_metrics(is_last=False)
+        self.compute_spatial_metrics(mode=mode, **c)
+        self.compute_linear_metrics(mode=mode, **c)
+        self.store_global_linear_metrics(**c)
         if is_last:
             self.save()
 
-    def compute_dispersion(self, recompute=False, starts=[0], is_last=True):
+    def compute_dispersion(self, recompute=False, starts=[0], is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
@@ -1300,16 +1365,19 @@ class LarvaDataset:
             mup = nam.mean(p)
 
             if set([mp, mp40]).issubset(e.columns.values) and not recompute:
-                print(
+                if show_output:
+                    print(
                     f'Dispersion starting at {s0} is already detected. If you want to recompute it, set recompute_dispersion to True')
                 continue
-            print(f'Computing dispersion starting at {s0} based on {point}')
+            if show_output:
+                print(f'Computing dispersion starting at {s0} based on {point}')
             for id in ids:
                 xy = s[nam.xy(point)].xs(id, level='AgentID', drop_level=True)
                 try:
                     origin_xy = list(xy.dropna().values[t0])
                 except:
-                    print(f'No values to set origin point for {id}')
+                    if show_output:
+                        print(f'No values to set origin point for {id}')
                     s.loc[(slice(None), id), p] = np.empty(len(xy)) * np.nan
                     continue
                 d = dst(list(xy.values), [origin_xy])[:, 0]
@@ -1335,9 +1403,10 @@ class LarvaDataset:
             self.create_dispersion_dataset(par=p, scaled=False)
         if is_last:
             self.save()
-        print('Dispersions computed')
+        if show_output:
+            print('Dispersions computed')
 
-    def compute_orientation_to_origin(self, origin=np.array([0, 0]), is_last=True):
+    def compute_orientation_to_origin(self, origin=np.array([0, 0]), is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
@@ -1348,8 +1417,8 @@ class LarvaDataset:
         abs_o = nam.abs(o)
         final_o = nam.final(o)
         mean_abs_o = nam.mean(abs_o)
-
-        print(f'Computing orientation to origin based on {p}')
+        if show_output:
+            print(f'Computing orientation to origin based on {p}')
         s[o] = s.apply(lambda r: fun.angle_sum(fun.angle_to_x_axis(r[nam.xy(p)].values, origin), r[fo]), axis=1)
         s[abs_o] = np.abs(s[o].values)
         for id in ids:
@@ -1357,16 +1426,18 @@ class LarvaDataset:
             e.loc[id, mean_abs_o] = s[abs_o].xs(id, level='AgentID').dropna().mean()
         if is_last:
             self.save()
-        print('Orientation to origin computed')
+        if show_output:
+            print('Orientation to origin computed')
 
-    def compute_dst_to_origin(self, origin=np.array([0, 0]), start_time_in_sec=0.0, is_last=True):
+    def compute_dst_to_origin(self, origin=np.array([0, 0]), start_time_in_sec=0.0, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
         ids = self.agent_ids
         Nids = len(ids)
         p = self.point
-        print(f'Computing distance to origin based on {p}')
+        if show_output:
+            print(f'Computing distance to origin based on {p}')
         d = 'dst_to_origin'
         p_fin = nam.final(d)
         p_max = nam.max(d)
@@ -1389,12 +1460,13 @@ class LarvaDataset:
                 pass
         if is_last:
             self.save()
-        print('Distance to origin computed')
+        if show_output:
+            print('Distance to origin computed')
 
-    def add_min_max_flags(self, parameters, interval_in_sec, threshold_in_std=None, absolute_threshold=None,
-                          is_last=True):
-        if absolute_threshold is None:
-            absolute_threshold = [+np.inf, -np.inf]
+    def compute_extrema(self, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None,
+                        is_last=True, show_output=True):
+        if abs_threshold is None:
+            abs_threshold = [+np.inf, -np.inf]
         if self.step_data is None:
             self.load()
         order = int(interval_in_sec / self.dt)
@@ -1410,7 +1482,8 @@ class LarvaDataset:
         max_array = np.ones([Nticks, Npars, Nids]) * np.nan
 
         for i, p in enumerate(parameters):
-            print(f'Calculating local extrema for {p}')
+            if show_output:
+                print(f'Calculating local extrema for {p}')
             p_min, p_max = nam.min(p), nam.max(p)
             s[p_min] = np.nan
             s[p_max] = np.nan
@@ -1421,7 +1494,7 @@ class LarvaDataset:
                 thr_min = mu - threshold_in_std * std
                 thr_max = mu + threshold_in_std * std
             else:
-                thr_min, thr_max = absolute_threshold
+                thr_min, thr_max = abs_threshold
             for j, id in enumerate(ids):
                 df = d.xs(id, level='AgentID', drop_level=True)
                 i_min = argrelextrema(df.values, np.less_equal, order=order)[0]
@@ -1442,10 +1515,11 @@ class LarvaDataset:
             s[p_max] = max_array[:, i, :].flatten()
         if is_last:
             self.save()
-        print('All local extrema flagged')
+        if show_output:
+            print('All local extrema flagged')
 
     def compute_dominant_frequencies(self, parameters, freq_range=None, accepted_range=None,
-                                     compare_params=False, is_last=True):
+                                     compare_params=False, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
@@ -1472,18 +1546,21 @@ class LarvaDataset:
                     max_freq = max_freqs[int(len(max_freqs) / 2)]
                     if accepted_range:
                         if not accepted_range[0] < max_freq < accepted_range[1]:
-                            print(f'Dominant frequency of {p} for {id} : {max_freq} outside the accepted_range')
+                            if show_output:
+                                print(f'Dominant frequency of {p} for {id} : {max_freq} outside the accepted_range')
                             max_freq = np.nan
                 except:
                     max_freq = np.nan
-                    print(f'Dominant frequency of {p} for {id} not found')
+                    if show_output:
+                        print(f'Dominant frequency of {p} for {id} not found')
                 F[i, j] = max_freq
         if compare_params:
             for i, p in enumerate(parameters):
                 print(p, V[i])
             ind = np.argmax(V)
             best_p = parameters[ind]
-            print(f'Best parameter : {best_p}')
+            if show_output:
+                print(f'Best parameter : {best_p}')
             existing = fun.common_member(nam.freq(parameters), self.endpoint_data.columns.values)
             e.drop(columns=existing, inplace=True)
             e[nam.freq(best_p)] = F[ind]
@@ -1492,9 +1569,10 @@ class LarvaDataset:
                 e[nam.freq(p)] = F[i]
         if is_last:
             self.save()
-        print('All dominant frequencies computed')
+        if show_output:
+            print('All dominant frequencies computed')
 
-    def compute_preference_index(self, arena_diameter_in_mm=None, return_num=False):
+    def compute_preference_index(self, arena_diameter_in_mm=None, return_num=False, show_output=True):
         if not hasattr(self, 'endpoint_data'):
             self.load(step_data=False)
         if arena_diameter_in_mm is None:
@@ -1600,12 +1678,13 @@ class LarvaDataset:
         dsp_df.to_csv(filepath, index=True, header=True)
         # print(f'Dataset saved as {filepath}')
 
-    def compute_chunk_metrics(self, chunk_name, is_last=True):
+    def compute_chunk_metrics(self, chunk_name, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
         Nids = len(self.agent_ids)
-        print(f'Computing chunk metrics for {Nids} agents')
+        if show_output:
+            print(f'Computing chunk metrics for {Nids} agents')
         chunk_dur = nam.dur(chunk_name)
         e[nam.num(chunk_name)] = s[nam.stop(chunk_name)].groupby('AgentID').sum()
         e[nam.cum(chunk_dur)] = s[chunk_dur].groupby('AgentID').sum()
@@ -1615,18 +1694,19 @@ class LarvaDataset:
 
         if is_last:
             self.save()
-        print('Chunk metrics computed')
+        if show_output:
+            print('Chunk metrics computed')
 
     def detect_contacting_chunks(self, chunk, track_point, mid_flag=None, edge_flag=None,
                                  control_pars=[], vel_par=None,
-                                 chunk_dur_in_sec=None, is_last=True):
+                                 chunk_dur_in_sec=None, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
         Nticks = len(s.index.unique('Step'))
         ids = self.agent_ids
         Nids = len(ids)
-        t0 = self.starting_tick
+        t0 = int(self.starting_tick)
 
         chunk_start = nam.start(chunk)
         chunk_stop = nam.stop(chunk)
@@ -1656,7 +1736,8 @@ class LarvaDataset:
         if vel_par:
             freqs = e[nam.freq(vel_par)]
             mean_freq = freqs.mean()
-            print(f'Replacing {freqs.isna().sum()} nan values with population mean frequency : {mean_freq}')
+            if show_output:
+                print(f'Replacing {freqs.isna().sum()} nan values with population mean frequency : {mean_freq}')
             freqs.fillna(value=mean_freq, inplace=True)
             chunk_dur_in_ticks = 1 / (freqs.values * self.dt)
             control_pars.append(vel_par)
@@ -1675,7 +1756,7 @@ class LarvaDataset:
                                and (b - a <= 1.6 * t)
                                and set(np.arange(a, b + 1)) <= set(valid)
                                and (any((m > a) and (m < b) for m in mids))
-                               ])
+                               ]).astype(int)
             all_chunks.append(chunks)
         all_durs = []
         all_contacts = []
@@ -1714,6 +1795,7 @@ class LarvaDataset:
             Nchunks = len(chunks)
             if Nchunks == 0:
                 continue
+
             starts = chunks[:, 0]
             stops = chunks[:, 1]
             start_array[starts - t0, i] = True
@@ -1763,7 +1845,7 @@ class LarvaDataset:
             e[nam.cum(scaled_chunk_strdst)] = e[nam.cum(chunk_strdst)] / e['length']
             e[nam.mean(scaled_chunk_strdst)] = e[nam.mean(chunk_strdst)] / e['length']
             e[nam.std(scaled_chunk_strdst)] = e[nam.std(chunk_strdst)] / e['length']
-        self.compute_chunk_metrics(chunk, is_last=False)
+        self.compute_chunk_metrics(chunk, is_last=False, show_output=show_output)
         if self.save_data_flag:
             self.create_par_distro_dataset([chunk_chain_dur, chunk_chain_length])
 
@@ -1773,9 +1855,10 @@ class LarvaDataset:
 
         if is_last:
             self.save()
-        print('All chunks-around-flag detected')
+        if show_output:
+            print('All chunks-around-flag detected')
 
-    def compute_chunk_overlap(self, base_chunk, overlapping_chunk, is_last=True):
+    def compute_chunk_overlap(self, base_chunk, overlapping_chunk, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         s = self.step_data
@@ -1797,17 +1880,18 @@ class LarvaDataset:
         self.types_dict.update({p: float})
         if is_last:
             self.save()
-        print('All chunk overlaps computed')
+        if show_output:
+            print('All chunk overlaps computed')
         return s[p].dropna().sum()
 
-    def track_parameters_during_chunk(self, chunk, pars, mode='dif', is_last=True):
+    def track_pars_in_chunk(self, chunk, pars, mode='dif', is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         ids = self.agent_ids
         Nids = len(ids)
         s, e = self.step_data, self.endpoint_data
         Nticks = len(s.index.unique('Step'))
-        t0 = self.starting_tick
+        t0 = int(self.starting_tick)
 
         c0 = nam.start(chunk)
         c1 = nam.stop(chunk)
@@ -1850,65 +1934,105 @@ class LarvaDataset:
             self.create_par_distro_dataset(p_tracks + p0s + p1s)
         if is_last:
             self.save()
-        print('All parameters tracked')
+        if show_output:
+            print('All parameters tracked')
 
-    def detect_chunks_on_condition(self, chunk_name, condition_param, chunk_only=None, max_value=np.inf,
-                                   min_value=-np.inf, non_overlap_chunk=None,
-                                   store_min=False, store_max=False,
-                                   min_duration=0, is_last=True):
+    def compute_chunk_bearing2source(self, chunk, source=(-50.0, 0.0), is_last=True, show_output=True):
+        if self.step_data is None:
+            self.load()
+        s=self.step_data
+        ho = nam.unwrap('front_orientation')
+        ho0_par = f'{ho}_at_{chunk}_start'
+        ho1_par = f'{ho}_at_{chunk}_stop'
+
+        x0_par = f'x_at_{chunk}_start'
+        x1_par = f'x_at_{chunk}_stop'
+
+        y0_par = f'y_at_{chunk}_start'
+        y1_par = f'y_at_{chunk}_stop'
+
+        b0_par = f'bearing_to_{source}_at_{chunk}_start'
+        b1_par = f'bearing_to_{source}_at_{chunk}_stop'
+        db_par = f'{chunk}_bearing_to_{source}_correction'
+
+        b0=compute_bearing2source(self.get_par(x0_par).dropna().values, self.get_par(y0_par).dropna().values, self.get_par(ho0_par).dropna().values, loc=source, in_deg=True)
+        b1=compute_bearing2source(self.get_par(x1_par).dropna().values, self.get_par(y1_par).dropna().values, self.get_par(ho1_par).dropna().values, loc=source, in_deg=True)
+        s[b0_par] = np.nan
+        s.loc[s[f'{chunk}_start']==True, b0_par]=b0
+        s[b1_par] = np.nan
+        s.loc[s[f'{chunk}_stop']==True, b1_par] = b1
+        s[db_par] = np.nan
+        s.loc[s[f'{chunk}_stop']==True, db_par] = np.abs(b1)-np.abs(b0)
+
+        self.create_par_distro_dataset([b0_par, b1_par, db_par])
+        if is_last:
+            self.save()
+        if show_output :
+            print(f'Bearing to source {source} during {chunk} computed')
+
+
+    def detect_chunks(self, chunk_name, par, chunk_only=None, par_range=[-np.inf, np.inf],
+                      non_overlap_chunk=None,
+                      store_min=False, store_max=False,
+                      min_dur=0.0, is_last=True,show_output=True):
         if self.step_data is None:
             self.load()
         ids = self.agent_ids
         Nids = len(ids)
         s, e = self.step_data, self.endpoint_data
-        Nticks = len(s.index.unique('Step'))
-        t0 = self.starting_tick
+        N = len(s.index.unique('Step'))
+        t0 = int(self.starting_tick)
+        if min_dur == 0.0:
+            min_dur = self.dt
         if chunk_only is not None:
             ss = s.loc[s[nam.id(chunk_only)].dropna().index]
         else:
             ss = s
-        print(f'Detecting chunks-on-condition for {Nids} agents')
+        if show_output:
+            print(f'Detecting chunks-on-condition for {Nids} agents')
         c = chunk_name
         p_s0 = nam.start(c)
         p_s1 = nam.stop(c)
         p_id = nam.id(c)
         p_dur = nam.dur(c)
-        p_max = nam.max(nam.chunk_track(c, condition_param))
-        p_min = nam.min(nam.chunk_track(c, condition_param))
+        p_max = nam.max(nam.chunk_track(c, par))
+        p_min = nam.min(nam.chunk_track(c, par))
 
         if non_overlap_chunk is not None:
             non_ov_id = nam.id(non_overlap_chunk)
             data = [ss.xs(id, level='AgentID', drop_level=True) for id in ids]
             data = [d[d[non_ov_id].isna()] for d in data]
-            data = [d[condition_param] for d in data]
+            data = [d[par] for d in data]
         else:
-            data = [ss[condition_param].xs(id, level='AgentID', drop_level=True) for id in ids]
-        a_inds = [d[(d < max_value) & (d > min_value)].index for d in data]
+            data = [ss[par].xs(id, level='AgentID', drop_level=True) for id in ids]
+        Vmin, Vmax = par_range
+        a_inds = [d[(d < Vmax) & (d > Vmin)].index for d in data]
         a_s0s = [t_inds[np.where(np.diff(t_inds, prepend=[-1]) != 1)[0]] for t_inds in a_inds]
         a_s1s = [t_inds[np.where(np.diff(t_inds, append=[np.inf]) != 1)[0]] for t_inds in a_inds]
         a_durs = [np.array([(s1 - s0) * self.dt for s0, s1 in zip(t_s0s, t_s1s)]) for t_s0s, t_s1s in zip(a_s0s, a_s1s)]
-        inds = [np.where(t_durs >= min_duration) for t_durs in a_durs]
+        inds = [np.where(t_durs >= min_dur) for t_durs in a_durs]
         durs = [t_durs[t_inds] for t_durs, t_inds in zip(a_durs, inds)]
-        starts = [t_starts[t_inds] for t_starts, t_inds in zip(a_s0s, inds)]
-        stops = [t_stops[t_inds] for t_stops, t_inds in zip(a_s1s, inds)]
+        starts = [t_starts[t_inds].values.astype(int) for t_starts, t_inds in zip(a_s0s, inds)]
+        stops = [t_stops[t_inds].values.astype(int) for t_stops, t_inds in zip(a_s1s, inds)]
 
-        S0 = np.zeros([Nticks, Nids]) * np.nan
-        S1 = np.zeros([Nticks, Nids]) * np.nan
-        Dur = np.zeros([Nticks, Nids]) * np.nan
-        Id = np.zeros([Nticks, Nids]) * np.nan
-        Max = np.zeros([Nticks, Nids]) * np.nan
-        Min = np.zeros([Nticks, Nids]) * np.nan
+        S0 = np.zeros([N, Nids]) * np.nan
+        S1 = np.zeros([N, Nids]) * np.nan
+        Dur = np.zeros([N, Nids]) * np.nan
+        Id = np.zeros([N, Nids]) * np.nan
+        Max = np.zeros([N, Nids]) * np.nan
+        Min = np.zeros([N, Nids]) * np.nan
 
         for i, (id, ds, s0s, s1s) in enumerate(zip(ids, durs, starts, stops)):
+            # print(s0s,s1s,t0)
             S0[s0s - t0, i] = True
             S1[s1s - t0, i] = True
             Dur[s1s - t0, i] = ds
             for j, (s0, s1) in enumerate(zip(s0s, s1s)):
                 Id[s0 - t0:s1 - t0, i] = j
                 if store_max:
-                    Max[s1 - t0, i] = s.loc[(slice(s0, s1), id), condition_param].max()
+                    Max[s1 - t0, i] = s.loc[(slice(s0, s1), id), par].max()
                 if store_min:
-                    Min[s1 - t0, i] = s.loc[(slice(s0, s1), id), condition_param].min()
+                    Min[s1 - t0, i] = s.loc[(slice(s0, s1), id), par].min()
 
         arrays = [S0, S1, Dur, Id, Max, Min]
         pars = [p_s0, p_s1, p_dur, p_id, p_max, p_min]
@@ -1916,22 +2040,23 @@ class LarvaDataset:
             a = a.flatten()
             s[p] = a
 
-        self.compute_chunk_metrics(c, is_last=False)
+        self.compute_chunk_metrics(c, is_last=False, show_output=show_output)
         self.types_dict.update({col: bool for col in [p_s0, p_s1]})
         self.types_dict.update({col: float for col in [p_dur, p_id]})
 
         if is_last:
             self.save()
-        print('All chunks-on-condition detected')
+        if show_output:
+            print('All chunks-on-condition detected')
 
     def detect_non_chunks(self, chunk_name, non_chunk_name=None, guide_parameter=None,
-                          min_duration=0, is_last=True):
+                          min_dur=0.0, is_last=True,show_output=True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
-        min_dur = int(min_duration / self.dt)
+        min_dur = int(min_dur / self.dt)
         Nticks = len(s.index.unique('Step'))
-        t0 = self.starting_tick
+        t0 = int(self.starting_tick)
         ids = self.agent_ids
         Nids = len(ids)
         if guide_parameter is None:
@@ -1951,21 +2076,23 @@ class LarvaDataset:
         p_s1 = nam.stop(c)
         p_id = nam.id(c)
         p_dur = nam.dur(c)
-
-        print(f'Detecting non-chunks for {Nids} agents')
+        if show_output:
+            print(f'Detecting non-chunks for {Nids} agents')
         for j, id in enumerate(ids):
             d = s.xs(id, level='AgentID', drop_level=True)
             nonna = d[guide_parameter].dropna().index.values
             inval = d[chunk_id].dropna().index.values
             val = np.setdiff1d(nonna, inval, assume_unique=True)
             if len(val) == 0:
-                print(f'No valid steps for {id}')
+                if show_output:
+                    print(f'No valid steps for {id}')
                 continue
             s0s = np.sort([val[0]] + val[np.where(np.diff(val) > 1)[0] + 1].tolist())
             s1s = np.sort(val[np.where(np.diff(val) > 1)[0]].tolist() + [val[-1]])
 
             if len(s0s) != len(s1s):
-                print('Number of start and stop indexes does not match')
+                if show_output:
+                    print('Number of start and stop indexes does not match')
                 min = np.min([len(s0s), len(s1s)])
                 s0s = s0s[:min]
                 s1s = s1s[:min]
@@ -1973,8 +2100,9 @@ class LarvaDataset:
             v_s1s = []
             for i, (s0, s1) in enumerate(zip(s0s, s1s)):
                 if s0 > s1:
-                    print(i, s0, s1)
-                    print('Start index bigger than stop index.')
+                    # print(i, s0, s1)
+                    if show_output:
+                        print('Start index bigger than stop index.')
                     continue
                 elif s1 - s0 <= min_dur:
                     continue
@@ -1983,8 +2111,8 @@ class LarvaDataset:
                 else:
                     v_s0s.append(s0)
                     v_s1s.append(s1)
-            v_s0s = np.array(v_s0s)
-            v_s1s = np.array(v_s1s)
+            v_s0s = np.array(v_s0s).astype(int)
+            v_s1s = np.array(v_s1s).astype(int)
             S0[v_s0s - t0, j] = True
             S1[v_s1s - t0, j] = True
             Dur[v_s1s - t0, j] = (v_s1s - v_s0s) * self.dt
@@ -1996,13 +2124,14 @@ class LarvaDataset:
         for p, a in zip(pars, arrays):
             s[p] = a.flatten()
 
-        self.compute_chunk_metrics(c, is_last=False)
+        self.compute_chunk_metrics(c, is_last=False, show_output=show_output)
         self.types_dict.update({col: bool for col in [p_s0, p_s1]})
         self.types_dict.update({col: float for col in [p_dur, p_id]})
 
         if is_last:
             self.save()
-        print('All non-chunks detected')
+        if show_output:
+            print('All non-chunks detected')
 
     def analyse_bouts(self, mode='stride', dur_max_in_std=None, dur_range=None):
         if mode == 'stride':
@@ -2063,135 +2192,145 @@ class LarvaDataset:
         else:
             return exp_bends, exp_bendvels
 
-    def pause_analysis(self, condition_param=None, max_value=0.1, min_value=-np.inf, min_duration=1, is_last=True):
+    # def pause_analysis(self, vel_par=None, max_value=0.1, min_value=-np.inf, min_duration=1, is_last=True):
+    #     if self.step_data is None:
+    #         self.load()
+    #     if vel_par == None:
+    #         vel_par = nam.scal(self.velocity)
+    #     self.compute_orientations(is_last=False)
+    #     self.compute_angular_metrics(is_last=False)
+    #     self.compute_linear_metrics(mode='minimal', is_last=False)
+    #     self.detect_chunks(chunk_name='pause', par=vel_par,
+    #                        max_value=max_value, min_value=min_value,
+    #                        min_duration=min_duration, is_last=False)
+    #     self.compute_spineangles(chunk_only='pause', mode='full', is_last=False)
+    #     self.compute_angular_metrics(is_last=True)
+    #     #
+    #     # best_combo = self.plot_bend2orientation_analysis(data=None)
+    #     best_combo = plot_bend2orientation_analysis(dataset=self)
+    #     front_body_ratio = len(best_combo) / self.Nangles
+    #     self.two_segment_model(front_body_ratio=front_body_ratio)
+    #     self.compute_bend(is_last=False)
+    #     self.compute_angular_metrics()
+    #     pauses, pause_file_path = self.create_chunk_dataset('pause', pars=['bend', nam.vel('bend')])
+    #     self.store_pause_datasets(filepath=pause_file_path)
+    #     plot_pauses(dataset=self, Npauses=10)
+    #     if is_last:
+    #         self.save()
+    #     print('All pauses detected')
+
+    # def detect_bend_pauses(self, ang_vel=None, max_value=30, min_value=-30, min_duration=0.5, is_last=True):
+    #     if self.step_data is None:
+    #         self.load()
+    #     if ang_vel is None:
+    #         ang_vel = nam.vel('front_orientation')
+    #     # if max_value is None :
+    #     #     data=self.step_data[condition_param].dropna().values
+    #     #     data=data[data>=0.0]
+    #     #     data=data[data<=0.5]
+    #     #     plt.hist(data, bins=100)
+    #     #     plt.show()
+    #     #     minima, maxima=density_extrema(data, kernel_width=0.02, Nbins=100)
+    #     #     max_value=minima[0]
+    #     #     print(minima)
+    #     #     print(f'Velocity threshold set at {max_value}')
+    #     # raise
+    #     self.compute_orientations(mode='minimal', is_last=False)
+    #     self.compute_angular_metrics(mode='minimal', is_last=False)
+    #     self.detect_chunks(chunk_name='bend_pause', par=ang_vel,
+    #                        max_value=max_value, min_value=min_value,
+    #                        min_duration=min_duration, is_last=False)
+    #
+    #     if is_last:
+    #         self.save()
+    #     print('All bend-pauses detected')
+
+    def detect_pauses(self, recompute=False, stride_non_overlap=True,vel_par=None, min_dur=0.1,
+                      is_last=True,show_output=True):
+        cc = {'show_output': show_output,
+              'is_last': False}
         if self.step_data is None:
             self.load()
-        if condition_param == None:
-            condition_param = nam.scal(self.velocity)
-        self.compute_orientations(is_last=False)
-        self.compute_angular_metrics(is_last=False)
-        self.compute_linear_metrics(mode='minimal', is_last=False)
-        self.detect_chunks_on_condition(chunk_name='pause', condition_param=condition_param,
-                                        max_value=max_value, min_value=min_value,
-                                        min_duration=min_duration, is_last=False)
-        self.compute_spineangles(chunk_only='pause', mode='full', is_last=False)
-        self.compute_angular_metrics(is_last=True)
-        #
-        # best_combo = self.plot_bend2orientation_analysis(data=None)
-        best_combo = plot_bend2orientation_analysis(dataset=self)
-        front_body_ratio = len(best_combo) / self.Nangles
-        self.two_segment_model(front_body_ratio=front_body_ratio)
-        self.compute_bend(is_last=False)
-        self.compute_angular_metrics()
-        pauses, pause_file_path = self.create_chunk_dataset('pause', pars=['bend', nam.vel('bend')])
-        self.store_pause_datasets(filepath=pause_file_path)
-        plot_pauses(dataset=self, Npauses=10)
-        if is_last:
-            self.save()
-        print('All pauses detected')
-
-    def detect_bend_pauses(self, condition_param=None, max_value=30, min_value=-30, min_duration=0.5, is_last=True):
-        if self.step_data is None:
-            self.load()
-        if condition_param == None:
-            condition_param = nam.vel('front_orientation')
-        # if max_value is None :
-        #     data=self.step_data[condition_param].dropna().values
-        #     data=data[data>=0.0]
-        #     data=data[data<=0.5]
-        #     plt.hist(data, bins=100)
-        #     plt.show()
-        #     minima, maxima=density_extrema(data, kernel_width=0.02, Nbins=100)
-        #     max_value=minima[0]
-        #     print(minima)
-        #     print(f'Velocity threshold set at {max_value}')
-        # raise
-        self.compute_orientations(mode='minimal', is_last=False)
-        self.compute_angular_metrics(mode='minimal', is_last=False)
-        self.detect_chunks_on_condition(chunk_name='bend_pause', condition_param=condition_param,
-                                        max_value=max_value, min_value=min_value,
-                                        min_duration=min_duration, is_last=False)
-
-        if is_last:
-            self.save()
-        print('All bend-pauses detected')
-
-    def detect_pauses(self, recompute_pauses=False, stride_non_overlap=True,
-                      condition_param=None, max_value=None, min_value=-np.inf, min_duration=0.1,
-                      is_last=True):
-        if self.step_data is None:
-            self.load()
-        chunk = 'pause'
-        if nam.num(chunk) in self.endpoint_data.columns.values and not recompute_pauses:
-            print('Pauses are already detected. If you want to recompute it, set recompute_pauses to True')
+        c = 'pause'
+        if nam.num(c) in self.endpoint_data.columns.values and not recompute:
+            if show_output:
+                print('Pauses are already detected. If you want to recompute it, set recompute to True')
             return
-        if max_value is None:
-            max_value = self.config['scaled_vel_threshold']
 
-        if condition_param == None:
-            condition_param = nam.scal(self.velocity)
+        par_range = [-np.inf, self.config['scaled_vel_threshold']]
 
-        if stride_non_overlap:
-            non_overlap_chunk = 'stride'
-        else:
-            non_overlap_chunk = None
-        self.detect_chunks_on_condition(chunk_name=chunk, condition_param=condition_param,
-                                        max_value=max_value, min_value=min_value,
-                                        non_overlap_chunk=non_overlap_chunk,
-                                        min_duration=min_duration, is_last=False)
+        if vel_par is None:
+            vel_par = nam.scal('vel')
+
+        non_overlap_chunk = 'stride' if stride_non_overlap else None
+
+        pars_to_track = [p for p in
+                         [nam.unwrap('front_orientation'), nam.unwrap('rear_orientation'), 'bend', 'x', 'y'] if
+                         p in self.step_data.columns]
+
+        self.detect_chunks(chunk_name=c, par=vel_par, par_range=par_range,
+                           non_overlap_chunk=non_overlap_chunk,
+                           min_dur=min_dur, **cc)
+
+        self.track_pars_in_chunk(chunk=c, pars=pars_to_track, **cc)
+
         if self.save_data_flag:
-            self.create_par_distro_dataset([nam.dur(chunk)])
+            self.create_par_distro_dataset([nam.dur(c)])
         if is_last:
             self.save()
-        print('All crawl-pauses detected')
+        if show_output:
+            print('All crawl-pauses detected')
 
     #######################################
     ########## PARSING : STRIDES ##########
     #######################################
 
-    def detect_strides(self, recompute=False, flag=None, track_point=None, mid_flag=None, use_edge_flag=True,
-                       non_chunks=True, is_last=True):
+    def detect_strides(self, recompute=False, vel_par=None, track_point=None, mid_flag=None, use_edge_flag=True,
+                       non_chunks=True, is_last=True,show_output=True):
+        cc = {'show_output': show_output,
+             'is_last': False}
         if self.step_data is None:
             self.load()
         c = 'stride'
         if nam.num(c) in self.endpoint_data.columns.values and not recompute:
-            print('Strides are already detected. If you want to recompute it, set recompute to True')
+            if show_output:
+                print('Strides are already detected. If you want to recompute it, set recompute to True')
             return
         sv_thr = self.config['scaled_vel_threshold']
         if track_point is None:
             track_point = self.point
-        if flag is None:
-            flag = nam.scal('vel')
+        if vel_par is None:
+            vel_par = nam.scal('vel')
         if mid_flag is None:
-            mid_flag = nam.max(flag)
+            mid_flag = nam.max(vel_par)
         if use_edge_flag is True:
-            edge_flag = nam.min(flag)
+            edge_flag = nam.min(vel_par)
         else:
             edge_flag = None
 
         pars_to_track = [p for p in
-                         [nam.unwrap('front_orientation'), nam.unwrap('rear_orientation'), 'bend'] if
+                         [nam.unwrap('front_orientation'), nam.unwrap('rear_orientation'), 'bend', 'x', 'y'] if
                          p in self.step_data.columns]
 
-        self.add_min_max_flags(parameters=[flag], interval_in_sec=0.3, absolute_threshold=[np.inf, sv_thr],
-                               is_last=False)
-        self.compute_dominant_frequencies(parameters=[flag], freq_range=[0.7, 2.5], accepted_range=[0.7, 2.5],
-                                          is_last=False)
+        self.compute_extrema(parameters=[vel_par], interval_in_sec=0.3, abs_threshold=[np.inf, sv_thr], **cc)
+        self.compute_dominant_frequencies(parameters=[vel_par], freq_range=[0.7, 2.5], accepted_range=[0.7, 2.5],**cc)
         self.detect_contacting_chunks(chunk=c, mid_flag=mid_flag, edge_flag=edge_flag,
-                                      vel_par=flag, control_pars=pars_to_track,
-                                      track_point=track_point, is_last=False)
+                                      vel_par=vel_par, control_pars=pars_to_track,
+                                      track_point=track_point, **cc)
         if non_chunks:
-            self.detect_non_chunks(chunk_name=c, guide_parameter=flag, min_duration=0.0, is_last=False)
-        self.track_parameters_during_chunk(chunk=c, pars=pars_to_track, is_last=False)
+            self.detect_non_chunks(chunk_name=c, guide_parameter=vel_par, **cc)
+        self.track_pars_in_chunk(chunk=c, pars=pars_to_track, **cc)
 
         if self.save_data_flag:
-            self.create_chunk_dataset(c, pars=[flag, 'spinelength', nam.vel('front_orientation'),
+            self.create_chunk_dataset(c, pars=[vel_par, 'spinelength', nam.vel('front_orientation'),
                                                nam.vel('rear_orientation'),
                                                nam.vel('bend')])
+            self.create_par_distro_dataset([nam.dur(c)])
 
         if is_last:
             self.save()
-        print('All strides detected')
+        if show_output:
+            print('All strides detected')
 
     def stride_max_flag_phase_analysis(self, agent_id=None, flag=None, par_to_track=None):
         if self.step_data is None:
@@ -2226,43 +2365,36 @@ class LarvaDataset:
     ########## PARSING : TURNS ##########
     #######################################
 
-    def detect_turns(self, recompute_turns=False, min_ang_vel=0,
-                     condition_param=None, chunk_only=None, track_params=None, min_duration=None,
-                     constant_bend_chunks=False, is_last=True):
-
+    def detect_turns(self, recompute=False, min_ang_vel=0.0, chunk_only=None, track_params=None,
+                     constant_bend_chunks=False, is_last=True,show_output=True,  **kwargs):
+        cc = {'show_output': show_output,
+              'is_last': False}
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
-        c = condition_param
-        p_Rt, p_Lt, p_t = nam.chunk_track('Rturn', c), nam.chunk_track('Lturn', c), nam.chunk_track('turn', c)
-        if set(nam.num(['Lturn', 'Rturn'])).issubset(e.columns.values) and not recompute_turns:
-            print('Turns are already detected. If you want to recompute it, set recompute_turns to True')
+        if set(nam.num(['Lturn', 'Rturn'])).issubset(e.columns.values) and not recompute:
+            if show_output:
+                print('Turns are already detected. If you want to recompute it, set recompute_turns to True')
             return
-        if chunk_only is not None:
-            ss = s.loc[s[nam.id(chunk_only)].dropna().index]
-        else:
-            ss = s
-        if min_duration is None:
-            min_duration = self.dt
-        if c is None:
-            b = 'bend'
-            bv = nam.vel(b)
-            ho = 'front_orientation'
-            hov = nam.vel(ho)
-            c = hov
+        ss = s.loc[s[nam.id(chunk_only)].dropna().index] if chunk_only is not None else s
+
+        fo = 'front_orientation'
+        fov = nam.vel(fo)
         if track_params is None:
-            track_params = [nam.unwrap(ho)]
+            track_params = [nam.unwrap(fo), 'x', 'y']
             # track_params = [b, unwrap(ho)]
 
-        self.detect_chunks_on_condition(chunk_name='Lturn', chunk_only=chunk_only, condition_param=c,
-                                        min_value=min_ang_vel,
-                                        store_max=True, min_duration=min_duration, is_last=False)
-        self.detect_chunks_on_condition(chunk_name='Rturn', chunk_only=chunk_only, condition_param=c,
-                                        max_value=-min_ang_vel,
-                                        store_min=True, min_duration=min_duration, is_last=False)
-        self.track_parameters_during_chunk(chunk='Lturn', pars=track_params, is_last=False)
-        self.track_parameters_during_chunk(chunk='Rturn', pars=track_params, is_last=False)
-        for track_par in track_params :
+        self.detect_chunks(chunk_name='Lturn', chunk_only=chunk_only, par=fov,par_range=[min_ang_vel, np.inf],
+                           store_max=True, **cc, **kwargs)
+        self.detect_chunks(chunk_name='Rturn', chunk_only=chunk_only, par=fov,par_range=[-np.inf, -min_ang_vel],
+                           store_min=True, **cc, **kwargs)
+        self.track_pars_in_chunk(chunk='Lturn', pars=track_params, **cc)
+        self.track_pars_in_chunk(chunk='Rturn', pars=track_params, **cc)
+        for track_par in track_params:
+            for st in ['start', 'stop'] :
+                s[f'{track_par}_at_turn_{st}']=s[[f'{track_par}_at_Lturn_{st}', f'{track_par}_at_Rturn_{st}']].sum(axis=1, min_count=1)
+                if self.save_data_flag:
+                    self.create_par_distro_dataset([f'{track_par}_at_turn_{st}'])
             p_track_tur = nam.chunk_track('turn', track_par)
             p_track_Ltur = nam.chunk_track('Lturn', track_par)
             p_track_Rtur = nam.chunk_track('Rturn', track_par)
@@ -2270,14 +2402,17 @@ class LarvaDataset:
             e[nam.std(p_track_tur)] = s[[p_track_Ltur, p_track_Rtur]].abs().groupby('AgentID').std().mean(axis=1)
 
         if constant_bend_chunks:
-            print('Additionally detecting constant bend chunks.')
-            self.detect_chunks_on_condition(chunk_name='constant_bend', chunk_only=chunk_only, condition_param=bv,
-                                            min_value=-min_ang_vel, max_value=min_ang_vel,
-                                            min_duration=min_duration, is_last=False)
+            if show_output:
+                print('Additionally detecting constant bend chunks.')
+            self.detect_chunks(chunk_name='constant_bend', chunk_only=chunk_only, par=nam.vel('bend'),
+                               par_range=[-min_ang_vel, min_ang_vel], **cc, **kwargs)
 
         s[nam.dur('turn')] = s[[nam.dur('Rturn'), nam.dur('Lturn')]].sum(axis=1, min_count=1)
+        s[nam.start('turn')] = s[[nam.start('Rturn'), nam.start('Lturn')]].sum(axis=1, min_count=1)
         s[nam.stop('turn')] = s[[nam.stop('Rturn'), nam.stop('Lturn')]].sum(axis=1, min_count=1)
-        self.compute_chunk_metrics('turn', is_last=False)
+        # s[nam.stop('turn')] = s[[nam.stop('Rturn'), nam.stop('Lturn')]].sum(axis=1, min_count=1)
+        # s[nam.stop('turn')] = s[[nam.stop('Rturn'), nam.stop('Lturn')]].sum(axis=1, min_count=1)
+        self.compute_chunk_metrics('turn', **cc)
         self.create_par_distro_dataset([nam.dur('turn')])
         for p in track_params:
             s[f'turn_{p}'] = ss[[nam.chunk_track(chunk_name='Rturn', params=p),
@@ -2286,7 +2421,8 @@ class LarvaDataset:
 
         if is_last:
             self.save()
-        print('All turns detected')
+        if show_output:
+            print('All turns detected')
 
     #######################################
     ########## FIT DISTRIBUTIONS ##########
@@ -2435,7 +2571,7 @@ class LarvaDataset:
             self.save()
         print('Geometric distribution fitted to stridechains')
 
-    def generate_traj_colors(self, is_last=True):
+    def generate_traj_colors(self, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         pars = [nam.scal(self.velocity), nam.vel('front_orientation')]
@@ -2535,39 +2671,52 @@ class LarvaDataset:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
-    def enrich(self, rescale_by=None, drop_collisions=False, interpolate_nans=False, filter_f=None,
-               length_and_centroid=True, drop_contour=False, drop_unused_pars=False,
+    def enrich(self, rescale_by=None, drop_collisions=False, interpolate_nans=False,
+               filter_f=None,length_and_centroid=True,
+                drop_contour=False, drop_unused_pars=False, drop_midline=False, drop_chunks = False,
                drop_immobile=False, mode='minimal', dispersion_starts=[0],
                ang_analysis=True, lin_analysis=True, bout_annotation=['turn', 'stride', 'pause'],
+               bearing_to_source=False, show_output=True,
                is_last=True):
+        warnings.filterwarnings('ignore')
+        c={'show_output' : show_output,
+           'is_last' : False}
         if rescale_by is not None:
-            self.rescale(scale=rescale_by, is_last=False)
+            self.rescale(scale=rescale_by, **c)
         if drop_collisions:
-            self.exclude_rows(flag_column='collision_flag', accepted_values=[0], is_last=False)
+            self.exclude_rows(flag_column='collision_flag', accepted_values=[0], **c)
         if interpolate_nans:
-            self.interpolate_nans(pars=self.xy_pars, is_last=False)
+            self.interpolate_nans(pars=self.xy_pars, **c)
         if filter_f is not None:
-            self.apply_filter(pars=self.xy_pars, freq=filter_f, inplace=True, is_last=False)
+            self.apply_filter(pars=self.xy_pars, freq=filter_f, inplace=True, **c)
         if length_and_centroid:
-            self.compute_length_and_centroid(drop_contour=drop_contour, is_last=False)
+            self.compute_length_and_centroid(drop_contour=drop_contour, **c)
         if ang_analysis:
-            self.angular_analysis(recompute=False, mode=mode, is_last=False)
-            if 'turn' in bout_annotation:
-                self.detect_turns(recompute_turns=False, is_last=False)
+            self.angular_analysis(recompute=False, mode=mode, **c)
+
         if lin_analysis:
-            self.linear_analysis(mode=mode, is_last=False)
-            self.compute_dispersion(recompute=False, starts=dispersion_starts, is_last=False)
-            self.compute_tortuosity(is_last=False)
+            self.linear_analysis(mode=mode, **c)
+            self.compute_dispersion(recompute=False, starts=dispersion_starts, **c)
+            self.compute_tortuosity(**c)
             if 'stride' in bout_annotation:
-                self.detect_strides(recompute=False, is_last=False)
+                self.detect_strides(recompute=False, **c)
             if 'pause' in bout_annotation:
-                self.detect_pauses(recompute_pauses=False, is_last=False)
-        self.generate_traj_colors(is_last=False)
+                self.detect_pauses(recompute=False, **c)
+            if 'turn' in bout_annotation:
+                self.detect_turns(recompute=False, **c)
+        if bearing_to_source :
+            for chunk in ['turn', 'stride', 'pause'] :
+                self.compute_chunk_bearing2source(chunk=chunk, **c)
+        self.generate_traj_colors(**c)
 
         if drop_immobile:
-            self.drop_immobile_larvae(is_last=False)
+            self.drop_immobile_larvae(**c)
+        if drop_midline:
+            self.drop_midline(**c)
+        if drop_chunks:
+            self.drop_chunks(**c)
         if drop_unused_pars:
-            self.drop_unused_pars(is_last=False)
+            self.drop_unused_pars(**c)
         if is_last:
             self.save()
 
@@ -2597,17 +2746,20 @@ class LarvaDataset:
                             save_fits_to=None, save_fits_as=Ref_fits)
         print(f'Reference dataset saved.')
 
-    def raw_or_filtered_xy(self, points):
+    def raw_or_filtered_xy(self, points, show_output=True):
         r = nam.xy(points, flat=True)
         f = nam.filt(r)
         if all(i in self.step_data.columns for i in f):
-            print('Using filtered xy coordinates')
+            if show_output :
+                print('Using filtered xy coordinates')
             return f
         elif all(i in self.step_data.columns for i in r):
-            print('Using raw xy coordinates')
+            if show_output:
+                print('Using raw xy coordinates')
             return r
         else:
-            print('No xy coordinates exist. Not computing spatial metrics')
+            if show_output:
+                print('No xy coordinates exist. Not computing spatial metrics')
             return
 
     def drop_immobile_larvae(self, vel_threshold=0.1, is_last=True):
@@ -2639,11 +2791,16 @@ class LarvaDataset:
                 p_df = self.step_data[par]
         return p_df
 
+    def get_xy(self):
+        if self.step_data is None:
+            self.load()
+        return self.step_data[['x', 'y']]
+
     def delete(self):
         shutil.rmtree(self.dir)
         print('Dataset deleted')
 
-    def compute_tortuosity(self, durs_in_sec=[2, 5, 10, 20], is_last=True):
+    def compute_tortuosity(self, durs_in_sec=[2, 5, 10, 20], is_last=True, show_output=True):
         if self.endpoint_data is None:
             self.load(step_data=False)
         e = self.endpoint_data
@@ -2686,11 +2843,13 @@ class LarvaDataset:
                 e[par_m] = T_m
                 e[par_s] = T_s
 
-        print('Tortuosities computed')
+
         if is_last:
             self.save()
+        if show_output :
+            print('Tortuosities computed')
 
-    def deb_analysis(self, is_last=True):
+    def deb_analysis(self, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data

@@ -214,6 +214,22 @@ def unwrap_deg(ts):
     return b
 
 
+def flatten_tuple(test_tuple):
+    res=[]
+    if isinstance(test_tuple, tuple) :
+        for i in test_tuple :
+            if isinstance(i, tuple) :
+                for j in i :
+                    res.append(j)
+            else :
+                res.append(i)
+        return tuple(res)
+
+    # res = []
+    # for sub in test_tuple:
+    #     res += flatten_tuple(sub)
+    # return tuple(res)
+
 def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
@@ -529,6 +545,19 @@ def compute_component_velocity(xy, angles, dt, return_dst=False):
         return v, d
     else:
         return v
+
+def compute_bearing2source(xs, ys,  ors, loc=(0.0,0.0), in_deg=True) :
+    # Compute the orientation relative to a source located at loc
+    # args :
+    #       xys : 2D array of the xy position.
+    #       ors : 1D array of the absolute orientation (already in deg).
+    x0,y0=loc
+    dxs = np.array(xs) - x0
+    dys = np.array(ys) - y0
+    rads = np.arctan2(dys, dxs)% (2 * np.pi)
+    drads=(ors-np.rad2deg(rads))%360
+    drads[drads>180]-=360
+    return drads if in_deg else np.deg2rad(rads)
 
 
 def compute_velocity_threshold(v, Nbins=500, max_v=None, kernel_width=0.02):
@@ -1001,6 +1030,7 @@ def compute_dst(point1, point2):
 
 
 def N_colors(N, as_rgb=False):
+
     if N == 1:
         cs = ['blue']
     elif N == 2:

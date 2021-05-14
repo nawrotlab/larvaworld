@@ -343,7 +343,8 @@ if __name__ == '__main__':
         'chemotaxis_approach': env.chemotax_env,
         'chemotaxis_local': env.chemorbit_env,
         'chemotaxis_diffusion': env.chemorbit_diffusion_env,
-        'odor_preference': env.pref_env,
+        'odor_pref_test': env.pref_test_env,
+        'odor_pref_train': env.pref_train_env,
         'odor_preference_RL': env.pref_env_RL,
         'patchy_food': env.patchy_food_env,
         'uniform_food': env.uniform_food_env,
@@ -377,6 +378,7 @@ if __name__ == '__main__':
         'follower_R': mod.follower_R,
         'follower_L': mod.follower_L,
         'RL_learner': mod.RL_odor_larva,
+        'RL_feeder': mod.RL_feed_odor_larva,
         'basic_navigator': mod.basic_larva,
 
     }
@@ -413,7 +415,8 @@ if __name__ == '__main__':
         'chemotaxis_approach': exp.chemotax,
         'chemotaxis_local': exp.chemorbit,
         'chemotaxis_diffusion': exp.chemorbit_diffusion,
-        'odor_preference': exp.odor_pref,
+        'odor_pref_test': exp.odor_pref_test,
+        'odor_pref_train': exp.odor_pref_train,
         'odor_preference_RL': exp.odor_pref_RL,
         'patchy_food': exp.patchy_food,
         'uniform_food': exp.uniform_food,

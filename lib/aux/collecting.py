@@ -70,6 +70,7 @@ effector_pars = {
     "first_odor_best_gain": 'first_odor_best_gain',
     "second_odor_best_gain": 'second_odor_best_gain',
     "cum_reward": 'cum_reward',
+    "best_olfactor_decay": 'best_olfactor_decay',
 
     "turner_activation": 'turner_activation',
     "turner_activity": 'ang_activity',
@@ -290,7 +291,7 @@ output = {
                      'endpoint': ['final_dst_to_chemotax_odor', 'final_scaled_dst_to_chemotax_odor']},
     'memory': {'step': [],
                'endpoint': [],
-               'tables': {'best_gains': ['unique_id', 'first_odor_best_gain', 'second_odor_best_gain', 'cum_reward']}},
+               'tables': {'best_gains': ['unique_id', 'first_odor_best_gain', 'second_odor_best_gain', 'cum_reward', 'best_olfactor_decay']}},
     'midline': None,
     'contour': None
 }

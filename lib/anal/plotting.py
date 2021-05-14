@@ -9,6 +9,7 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import cm, transforms, ticker, patches
 from matplotlib.patches import Patch
+from matplotlib.ticker import MaxNLocator, FixedLocator
 from mpl_toolkits.mplot3d import Axes3D
 import statsmodels.api as sm
 from scipy import stats, signal, interpolate
@@ -18,7 +19,7 @@ import powerlaw as pow
 from PIL import Image
 
 from lib.anal.fitting import *
-from lib.aux.functions import weib, flatten_list, N_colors
+from lib.aux.functions import weib, flatten_list, N_colors, compute_bearing2source
 from lib.anal.combining import combine_images, combine_pdfs
 from lib.conf import par_conf
 
@@ -2031,16 +2032,11 @@ def plot_stride_Dorient(datasets, labels, simVSexp=False, absolute=True, save_to
 
     ranges = [80, 80]
 
-    if simVSexp:
-        p_labels = [[sl, el] for sl, el in zip(sim_labels, exp_labels)]
-    else:
-        p_labels = [[sl] * Ndatasets for sl in sim_labels]
+    p_labels = [[sl, el] for sl, el in zip(sim_labels, exp_labels)] if simVSexp else [[sl] * Ndatasets for sl in sim_labels]
 
     fig, axs = plt.subplots(1, len(pars), figsize=(10, 5), sharey=True)
-    if len(pars) > 1:
-        axs = axs.ravel()
-    else:
-        axs = [axs]
+    axs = axs.ravel() if len(pars) > 1 else [axs]
+
     nbins = 200
 
     for i, (p, r, p_lab, xlab) in enumerate(zip(pars, ranges, p_labels, xlabels)):
@@ -2052,9 +2048,8 @@ def plot_stride_Dorient(datasets, labels, simVSexp=False, absolute=True, save_to
             else:
                 r1, r2 = -r, r
             x = np.linspace(r1, r2, nbins)
-            weights = np.ones_like(v) / float(len(v))
-            axs[i].hist(v, color=colors[j], bins=x, label=p_lab[j],
-                        weights=weights, alpha=0.5)
+            weights = np.ones_like(v) / len(v)
+            axs[i].hist(v, color=colors[j], bins=x, label=p_lab[j], weights=weights, alpha=0.5)
         axs[i].set_xlabel(xlab)
         axs[i].yaxis.set_major_locator(ticker.MaxNLocator(4))
         if legend:
@@ -2336,7 +2331,7 @@ def plot_sensed_odor_concentration(datasets, labels=None, save_to=None, return_f
     return plot_timeplot(['dc_odor1'], datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
 
 
-def plot_timeplot(par_shorts, datasets, labels=None,same_plot=True, table=None, show_first=True, save_to=None, return_fig=False):
+def plot_timeplot(par_shorts, datasets, labels=None,same_plot=True, individuals=False,  table=None, show_first=True, save_to=None, return_fig=False):
     N=len(par_shorts)
     cols=['grey'] if N==1 else N_colors(N)
     if not same_plot :
@@ -2365,12 +2360,8 @@ def plot_timeplot(par_shorts, datasets, labels=None,same_plot=True, table=None, 
             print (f'Parameter {par} does not exist in dataset')
             continue
         dc = s[par]
-        dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
 
         dc_m = dc.groupby(level='Step').quantile(q=0.5)
-        dc_u = dc.groupby(level='Step').quantile(q=0.75)
-        dc_b = dc.groupby(level='Step').quantile(q=0.25)
-
 
         Nticks = len(dc_m)
         if table is None :
@@ -2381,11 +2372,20 @@ def plot_timeplot(par_shorts, datasets, labels=None,same_plot=True, table=None, 
             trange = np.arange(Nticks)
             time_label = 'timesteps'
 
+        if individuals :
+            for agent_id in dc.index.get_level_values('AgentID') :
+                dc_single = dc.xs(agent_id, level='AgentID')
+                axs.plot(trange, dc_single, color=c, linewidth=1)
+            axs.plot(trange, dc_m, 'r', linewidth=2)
+        else :
 
+            dc_u = dc.groupby(level='Step').quantile(q=0.75)
+            dc_b = dc.groupby(level='Step').quantile(q=0.25)
 
-        plot_mean_and_range(x=trange, mean=dc_m, lb=dc_u, ub=dc_b, axis=axs, color_mean=c, color_shading=c, label=symbol)
-        if show_first :
-            axs.plot(trange, dc0, 'r')
+            plot_mean_and_range(x=trange, mean=dc_m, lb=dc_u, ub=dc_b, axis=axs, color_mean=c, color_shading=c, label=symbol)
+            if show_first :
+                dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
+                axs.plot(trange, dc0, 'r')
 
     axs.set_ylabel(xlabel)
     axs.set_xlabel(time_label)
@@ -2397,7 +2397,7 @@ def plot_timeplot(par_shorts, datasets, labels=None,same_plot=True, table=None, 
     # axs.legend(loc='upper right')
     axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
     plt.subplots_adjust(bottom=0.15, left=0.2, right=0.95, top=0.95)
-    plt.show()
+    # plt.show()
     filename = f'{par}.{suf}'
     return process_plot(fig, save_to, filename, return_fig)
 
@@ -3179,6 +3179,93 @@ def plot_turn_Dorient2center(datasets, labels, min_angle=30.0, save_to=None, ret
     return process_plot(fig, save_to, filename, return_fig)
 
 
+def plot_chunk_Dorient2source(datasets, labels, chunk='stride', source=(0.0,0.0),Nbins=16, min_dur=0.0,
+                              plot_merged=False, save_to=None, return_fig=False):
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder=chunk)
+    filename = f'{chunk}_Dorient2souce.{suf}'
+    if plot_merged :
+        Ndatasets+=1
+        colors.insert(0, 'black')
+        labels.insert(0, 'merged')
+    Ncols=int(np.ceil(np.sqrt(Ndatasets)))
+    Nrows=Ncols-1 if Ndatasets<Ncols**2-Ncols else Ncols
+    fig, axs = plt.subplots(Nrows, Ncols, figsize=(6*Ncols, 8*Nrows),
+                            subplot_kw=dict(projection='polar'),
+                            # sharex=True,
+                            sharey=True
+                            )
+
+    axs=axs.ravel() if Ndatasets>1 else [axs]
+
+    chunk_dur=nam.dur(chunk)
+    durs = [d.get_par(chunk_dur) for d in datasets]
+
+    b0_par = f'bearing_to_{source}_at_{chunk}_start'
+    b1_par = f'bearing_to_{source}_at_{chunk}_stop'
+    db_par = f'{chunk}_bearing_to_{source}_correction'
+    try :
+        b0s = [d.get_par(b0_par).dropna().values for d in datasets]
+        b1s = [d.get_par(b1_par).dropna().values for d in datasets]
+        dbs = [d.get_par(db_par).dropna().values for d in datasets]
+    except :
+        ho = nam.unwrap('front_orientation')
+        ho0_par = f'{ho}_at_{chunk}_start'
+        ho1_par = f'{ho}_at_{chunk}_stop'
+
+        x0_par = f'x_at_{chunk}_start'
+        x1_par = f'x_at_{chunk}_stop'
+
+        y0_par = f'y_at_{chunk}_start'
+        y1_par = f'y_at_{chunk}_stop'
+
+
+        b0s = [compute_bearing2source(d.get_par(x0_par).dropna().values, d.get_par(y0_par).dropna().values, d.get_par(ho0_par).dropna().values, loc=source, in_deg=True) for d in datasets]
+        b1s = [compute_bearing2source(d.get_par(x1_par).dropna().values, d.get_par(y1_par).dropna().values, d.get_par(ho1_par).dropna().values, loc=source, in_deg=True) for d in datasets]
+        dbs =[np.abs(b1)-np.abs(b0) for b0,b1 in  zip(b0s,b1s)]
+
+    if plot_merged:
+        b0s.insert(0, np.vstack(b0s))
+        b1s.insert(0, np.vstack(b1s))
+        dbs.insert(0, np.vstack(dbs))
+        durs.insert(0, np.vstack(durs))
+    for i, (b0, b1,db, dur, label, c) in enumerate(zip(b0s, b1s,dbs, durs, labels, colors)):
+        b0=b0[dur>min_dur]
+        b1=b1[dur>min_dur]
+        db = db [dur>min_dur]
+        b0m,b1m=np.mean(b0),np.mean(b1)
+        dbm=np.round(np.mean(db),2)
+        if np.isnan([dbm, b0m, b1m]).any() :
+            continue
+        circular_hist(axs[i], b0, bins=Nbins,alpha=0.3, label='start', color=c, offset=np.pi/2)
+        circular_hist(axs[i], b1, bins=Nbins,alpha=0.6, label='stop', color=c, offset=np.pi/2)
+        arrow0 = patches.FancyArrowPatch((0, 0), (b0m,0.3),zorder=2, mutation_scale=30, alpha=0.3, facecolor=c,
+                                         edgecolor='black', fill=True, linewidth=0.5)
+
+        axs[i].add_patch(arrow0)
+        arrow1 = patches.FancyArrowPatch((0, 0), (b1m,0.3), zorder=2, mutation_scale=30, alpha=0.6, facecolor=c,
+                                         edgecolor='black', fill=True, linewidth=0.5)
+        axs[i].add_patch(arrow1)
+
+        text_x=-0.3
+        text_y=1.2
+        axs[i].text(text_x,text_y,f'Dataset : {label}',transform = axs[i].transAxes)
+        axs[i].text(text_x,text_y-0.1,f'Chunk (#) : {chunk} ({len(b0)})',transform = axs[i].transAxes)
+        axs[i].text(text_x,text_y-0.2,fr'Correction $\Delta\theta_{{{"or"}}} : {dbm}^{{{"o"}}}$',transform = axs[i].transAxes)
+        # Visualise by radius of bins
+        # circular_hist(ax[1], angles1, offset=np.pi / 2, density=False)
+        axs[i].legend(loc=[0.9, 0.9])
+        axs[i].set_title(f'Bearing before and after a {chunk}.', fontsize=15, y=-0.2)
+    for ax in axs :
+        ax.xaxis.set_major_locator(MaxNLocator(8))
+        ticks_loc = ax.get_xticks().tolist()[:-1]
+        # print(ticks_loc)
+        ax.xaxis.set_major_locator(FixedLocator(ticks_loc))
+        ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''])
+    plt.subplots_adjust(bottom=0.2, top=0.8, left=0.05*Ncols/2, right=0.9, wspace=0.8, hspace=0.3)
+    plt.show()
+    return process_plot(fig, save_to, filename, return_fig)
+
+
 def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
     """
     Produce a circular histogram of angles on ax.
@@ -3682,6 +3769,7 @@ graph_dict = {
     'turn_duration': plot_turn_duration,
     'turns': plot_turns,
     'turn_Dorient2center': plot_turn_Dorient2center,
+    'chunk_Dorient2source': plot_chunk_Dorient2source,
     'odor_concentration': plot_odor_concentration,
     'sensed_odor_concentration': plot_sensed_odor_concentration,
     'pathlength': plot_pathlength,

@@ -7,6 +7,7 @@ from scipy import signal
 from scipy.stats import lognorm, rv_discrete
 
 import lib.aux.sampling as sampling
+from lib.aux.functions import flatten_tuple
 
 
 class Effector:
@@ -814,8 +815,8 @@ class Olfactor(Effector):
 
 
 class RLmemory(Effector):
-    def __init__(self,brain, gain, DeltadCon=0.02, state_spacePerOdorSide=3, gain_space=[-500, -50, 50, 500],
-                 update_dt=2, train_dur=30, alpha=0.05, gamma=0.6, epsilon=0.15, **kwargs):
+    def __init__(self,brain, gain, decay_coef, DeltadCon=0.02, state_spacePerOdorSide=3, gain_space=[-500, -50, 50, 500],
+                 decay_coef_space = None, update_dt=2, train_dur=30, alpha=0.05, gamma=0.6, epsilon=0.15, **kwargs):
         super().__init__(**kwargs)
         self.brain = brain
         self.effector = True
@@ -824,10 +825,16 @@ class RLmemory(Effector):
         self.epsilon = epsilon
         self.DeltadCon = DeltadCon
         self.gain_space = gain_space
+        if decay_coef_space is None :
+            decay_coef_space = [decay_coef]
+        self.decay_coef_space = decay_coef_space
         # self.gain = gain
         self.odor_ids = list(gain.keys())
         self.Nodors = len(self.odor_ids)
+        self.fit_pars = self.odor_ids + ['decay_coef']
+        # self.Nfit_pars =self.Nodors + 1
         self.actions = [ii for ii in itertools.product(gain_space, repeat=self.Nodors)]
+        self.actions = [flatten_tuple(ii) for ii in itertools.product(self.actions, list(self.decay_coef_space))]
         self.state_spacePerOdorSide = state_spacePerOdorSide
         self.state_space = np.array(
             [ii for ii in itertools.product(range(2 * self.state_spacePerOdorSide + 1), repeat=self.Nodors)])
@@ -840,14 +847,10 @@ class RLmemory(Effector):
         self.train_dur = train_dur
         self.rewardSum = 0
         self.best_gain = gain
+        # self.decay_coef = decay_coef
+        self.best_decay_coef = decay_coef
 
         self.table=False
-
-        # if self.brain.agent.model.table_collector is not None and self.Nticks%(int(3*60/self.dt))==0 :
-        #     for name, table in self.table_collector.tables.items() :
-        #         cols=list(table.keys())
-        #         for l in self.get_flies() :
-        #             self.table_collector.add_table_row(table_name=name, row={col : getattr(l, col) for col in cols})
 
     def state_collapse(self, dCon):
 
@@ -868,10 +871,11 @@ class RLmemory(Effector):
         state = np.where((self.state_space == stateV).all(axis=1))[0][0]
         return state
 
-    def step(self, gain, dCon, reward):
+    def step(self, gain, dCon, reward, decay_coef):
         if self.table==False :
             temp = self.brain.agent.model.table_collector
-            self.table = temp.tables['best_gains'] if 'best_gains' in list(temp.tables.keys()) else None
+            if temp is not  None :
+                self.table = temp.tables['best_gains'] if 'best_gains' in list(temp.tables.keys()) else None
 
         self.count_time()
         if self.effector and self.total_t > self.train_dur * 60:
@@ -901,8 +905,11 @@ class RLmemory(Effector):
                 action = self.actions[actionID]
                 for ii, id in enumerate(self.odor_ids):
                     gain[id] = action[ii]
-                self.best_gain = self.get_best_gain()
-                if self.table is not None :
+                decay_coef = action[-1]
+                best_combo=self.get_best_combo()
+                self.best_gain = {id : best_combo[id] for id in self.odor_ids}
+                self.best_decay_coef = best_combo['decay_coef']
+                if self.table :
                     for col in list(self.table.keys()) :
                         try :
                             self.table[col].append(getattr(self.brain.agent, col))
@@ -910,12 +917,16 @@ class RLmemory(Effector):
                             self.table[col].append(np.nan)
                 self.rewardSum = 0
             self.iterator += 1
-            return gain
-        else:
-            return self.best_gain
 
-    def get_best_gain(self):
-        return dict(zip(self.odor_ids, self.actions[np.argmax(np.mean(self.q_table, axis=0))]))
+            return gain, decay_coef
+        else:
+            return self.best_gain, self.best_decay_coef
+
+    # def get_best_gain(self):
+    #     return dict(zip(self.odor_ids, self.actions[np.argmax(np.mean(self.q_table, axis=0))]))
+
+    def get_best_combo(self):
+        return dict(zip(self.fit_pars, self.actions[np.argmax(np.mean(self.q_table, axis=0))]))
 
 
 # class TurnerModulator:
@@ -995,7 +1006,8 @@ class DefaultBrain(Brain):
             self.olfactor = None
 
         if self.modules['memory']:
-            self.memory = RLmemory(brain=self, dt=dt, gain=self.olfactor.gain, **self.conf['memory_params'])
+            self.memory = RLmemory(brain=self, dt=dt, decay_coef=self.olfactor.decay_coef,
+                                   gain=self.olfactor.gain, **self.conf['memory_params'])
         else:
             self.memory = None
 
@@ -1007,8 +1019,8 @@ class DefaultBrain(Brain):
         feed_motion = self.feeder.step() if self.feeder else False
 
         if self.memory:
-            self.olfactor.gain = self.memory.step(self.olfactor.get_gain(), self.olfactor.get_dCon(),
-                                                  self.agent.food_detected is not None)
+            self.olfactor.gain, self.olfactor.decay_coef = self.memory.step(self.olfactor.get_gain(), self.olfactor.get_dCon(),
+                                                  self.agent.food_detected is not None, self.olfactor.decay_coef)
         lin = self.crawler.step(self.agent.get_sim_length()) if self.crawler else 0
         self.olfactory_activation = self.olfactor.step(self.sense_odors(pos)) if self.olfactor else 0
         # ... and finally step the turner...
