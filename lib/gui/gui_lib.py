@@ -1069,10 +1069,7 @@ class SectionDict:
             if type(v) == bool:
                 l.append(named_bool_button(k, v, k0))
             elif type(v) == dict:
-                if self.type_dict is not None:
-                    type_dict = self.type_dict[k]
-                else:
-                    type_dict = None
+                type_dict = self.type_dict[k] if self.type_dict is not None else None
                 self.subdicts[k0] = CollapsibleDict(k0, False, disp_name=k, dict=v, type_dict=type_dict,
                                                     toggle=self.toggled_subsections)
                 ll = self.subdicts[k0].get_section()
@@ -1343,7 +1340,8 @@ class CollapsibleDict(Collapsible):
         super().__init__(name, state, content, **kwargs)
 
     def get_dict(self, values, window):
-        if self.state is None:
+        # print(self.name, self.state, self.toggle)
+        if self.state is None or self.toggle==False:
             return None
         else:
             return self.sectiondict.get_dict(values, window)
@@ -1791,11 +1789,20 @@ def check_toggles(window, event):
     if 'TOGGLE' in event:
         window[event].toggle()
 
+def check_togglesNcollapsibles(window, event, collapsibles) :
+    check_collapsibles(window, event, collapsibles)
+    if 'TOGGLE' in event:
+        window[event].toggle()
+        name=event[7:]
+        if name in list(collapsibles.keys()) :
+            collapsibles[name].toggle=not collapsibles[name].toggle
+
 def default_run_window(window, event, values, collapsibles={}, graph_lists={}) :
     # if event in (None, 'Exit'):
     #     break
-    check_collapsibles(window, event, collapsibles)
-    check_toggles(window, event)
+    # check_toggles(window, event)
+    # check_collapsibles(window, event, collapsibles)
+    check_togglesNcollapsibles(window, event, collapsibles)
     for name, graph_list in graph_lists.items():
         if event == graph_list.list_key:
             graph_list.evaluate(window, values[graph_list.list_key])

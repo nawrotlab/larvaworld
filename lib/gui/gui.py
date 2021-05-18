@@ -56,6 +56,8 @@ class LarvaworldGui:
             k, kk = self.eval_tab(tab, event=e, values=v, window=self.window,
                                   collapsibles=self.collapsibles, dicts=self.dicts,
                                   graph_lists=self.graph_lists)
+            # print(self.collapsibles['Replay'].get_dict(v, self.window))
+            # print(v)
 
             # if dicts['batch_kwargs'] :
             #     thread = threading.Thread(target=batch_thread, args=(dicts['batch_kwargs'], W, dicts),daemon=True)

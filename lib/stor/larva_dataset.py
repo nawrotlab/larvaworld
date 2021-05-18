@@ -767,12 +767,13 @@ class LarvaDataset:
         else:
             n0 = f'{len(ids)}l'
         traj_color = s[dynamic_color] if dynamic_color is not None else None
-
+        # print(arena_pars)
         # FIXME xy are saved in mm and that messes things up. right now i scale the arena up, but this makes the scale wrong
         if env_params is None:
             if arena_pars is None:
                 arena_pars = self.arena_pars
             env_params = {'arena_params': arena_pars}
+        # print(arena_pars)
         arena_dims_in_m = env_params['arena_params']['arena_xdim'], env_params['arena_params']['arena_ydim']
         arena_dims = [i * 1000 for i in arena_dims_in_m]
         env_params['arena_params']['arena_xdim'] = arena_dims[0]
