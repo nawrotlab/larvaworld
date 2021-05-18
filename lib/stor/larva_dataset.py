@@ -1922,11 +1922,11 @@ class LarvaDataset:
                 p_mc0,p_mc1, p_mc =f'{p}_at_{mc0}', f'{p}_at_{mc1}', nam.chunk_track(merged_chunk, p)
                 s[p_mc0] = s[[f'{p}_at_{nam.start(c)}' for c in chunks]].sum(axis=1, min_count=1)
                 s[p_mc1] = s[[f'{p}_at_{nam.stop(c)}' for c in chunks]].sum(axis=1, min_count=1)
+                s[p_mc] = s[[nam.chunk_track(c, p) for c in chunks]].sum(axis=1, min_count=1)
 
                 if self.save_data_flag:
                     self.create_par_distro_dataset([p_mc0, p_mc1, mcdur, p_mc])
 
-                s[p_mc] = s[[nam.chunk_track(c, p) for c in chunks]].sum(axis=1, min_count=1)
                 e[nam.mean(p_mc)] = s[[nam.chunk_track(c, p) for c in chunks]].abs().groupby('AgentID').mean().mean(axis=1)
                 e[nam.std(p_mc)] = s[[nam.chunk_track(c, p) for c in chunks]].abs().groupby('AgentID').std().mean(axis=1)
         if is_last:

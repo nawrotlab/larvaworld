@@ -1380,8 +1380,6 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     axs[0].legend(handles=[patches.Patch(color=c, label=id) for c, id in zip(leg_cols, leg_ids)],
                   labels=leg_ids, fontsize=20, loc='upper left', prop={'size': 15})
     fig.subplots_adjust(top=0.95, bottom=0.2, left=0.1, right=0.93, hspace=0.02)
-    # plt.show()
-    # raise
     return process_plot(fig, save_to, save_as, return_fig)
 
 
@@ -2149,7 +2147,6 @@ def plot_dispersion(datasets, labels, ranges=[[0, 40]], scaled=False, save_to=No
         axs.xaxis.set_major_locator(ticker.MaxNLocator(4))
         axs.legend(loc='upper left')
         fig.subplots_adjust(top=0.95, bottom=0.15, left=0.2 / fig_cols, right=0.95, hspace=.005, wspace=0.05)
-        plt.show()
         return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -2395,10 +2392,8 @@ def plot_timeplot(par_shorts, datasets, labels=None,same_plot=True, individuals=
         axs.set_ylim(ylim)
     if N>1 :
         plt.legend()
-    # axs.legend(loc='upper right')
     axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
     plt.subplots_adjust(bottom=0.15, left=0.2, right=0.95, top=0.95)
-    # plt.show()
     filename = f'{par}.{suf}'
     return process_plot(fig, save_to, filename, return_fig)
 
@@ -3076,7 +3071,6 @@ def plot_endpoint_params(datasets, labels, mode='full', par_shorts=None, save_to
     if Ndatasets > 1:
         fit_df.to_csv(fit_filepath, index=True, header=True)
         print(f'Tests saved as {fit_filename}.')
-    # plt.show()
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -3176,7 +3170,6 @@ def plot_turn_Dorient2center(datasets, labels, min_angle=30.0, save_to=None, ret
     for ax in axs :
         ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''])
     plt.subplots_adjust(bottom=0.1, top=0.9, left=0.05, right=0.9, wspace=0.4, hspace=0.1)
-    # plt.show()
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -3234,11 +3227,6 @@ def plot_chunk_Dorient2source(datasets, labels, chunk='stride', source=(0.0,0.0)
         b1=b1[dur>min_dur]
         db = db [dur>min_dur]
         b0m,b1m=np.mean(b0),np.mean(b1)
-        # ff,aa=plt.subplots(1,2)
-        # aa[0].hist(b0, bins=36)
-        # aa[1].hist(b1, bins=36)
-        # plt.show()
-        print(b0m,b1m)
         dbm=np.round(np.mean(db),2)
         if np.isnan([dbm, b0m, b1m]).any() :
             continue
@@ -3265,7 +3253,6 @@ def plot_chunk_Dorient2source(datasets, labels, chunk='stride', source=(0.0,0.0)
         ax.xaxis.set_major_locator(FixedLocator(ticks_loc))
         ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''])
     plt.subplots_adjust(bottom=0.2, top=0.8, left=0.05*Ncols/2, right=0.9, wspace=0.8, hspace=0.3)
-    plt.show()
     return process_plot(fig, save_to, filename, return_fig)
 
 

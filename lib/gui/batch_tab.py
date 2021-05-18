@@ -7,7 +7,7 @@ from lib.anal.combining import render_mpl_table
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     save_gui_conf, delete_gui_conf, named_bool_button, GraphList, b12_kws, b_kws, \
     graphic_button, t10_kws, t12_kws, t18_kws, t8_kws, t6_kws, CollapsibleTable, w_kws, default_run_window, col_kws, \
-    col_size
+    col_size, t24_kws
 from lib.gui.exp_tab import update_sim, get_exp
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 import lib.conf.dtype_dicts as dtypes
@@ -46,7 +46,7 @@ def build_batch_tab():
          graphic_button('data_remove', 'DELETE_BATCH'),
          graphic_button('play', 'RUN_BATCH')],
         [sg.Combo(list(loadConfDict('Batch').keys()), key='BATCH_CONF',
-                  enable_events=True, readonly=True, **t18_kws)],
+                  enable_events=True, readonly=True, **t24_kws)],
 
     ])]
     batch_conf = [[sg.Text('Batch id:', **t10_kws), sg.In('unnamed_batch_0', key='batch_id', **t18_kws)],

@@ -1,13 +1,16 @@
 import copy
 import threading
 import PySimpleGUI as sg
+import numpy as np
+
 import lib.conf.dtype_dicts as dtypes
 
 from lib.aux.collecting import output_keys
 from lib.gui.env_tab import update_env, get_env
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     named_bool_button, save_gui_conf, delete_gui_conf, GraphList, CollapsibleTable, \
-    graphic_button, t10_kws, t18_kws, w_kws, default_run_window, col_kws, col_size, window_size, t24_kws, t8_kws
+    graphic_button, t10_kws, t18_kws, w_kws, default_run_window, col_kws, col_size, window_size, t24_kws, t8_kws, \
+    t16_kws, t2_kws, t14_kws, t5_kws, t11_kws, t1_kws, t15_kws, t6_kws
 from lib.gui.draw_env import draw_env
 from lib.gui.life_conf import life_conf
 from lib.sim.single_run import run_sim, sim_analysis
@@ -27,10 +30,10 @@ def build_sim_tab():
         [sg.Text('Progress :', **t8_kws), sg.ProgressBar(100, orientation='h', size=(8.8, 20), key='EXP_PROGRESSBAR',
                                                          bar_color=('green', 'lightgrey'), border_width=3)]
     ],**col_kws)]
-    sim_conf = [[sg.Text('Sim id:'), sg.In('unnamed_sim', key='sim_id')],
-                [sg.Text('Path:'), sg.In('single_runs', key='path')],
-                [sg.Text('Duration (min):'), sg.In(3, key='sim_dur')],
-                [sg.Text('Timestep (sec):'), sg.In(0.1, key='dt')],
+    sim_conf = [[sg.Text('Sim id :', **t8_kws), sg.In('unnamed_sim', key='sim_id', **t16_kws)],
+                [sg.Text('Path :', **t8_kws), sg.In('single_runs', key='path', **t16_kws)],
+                [sg.Text('Duration :', **t8_kws), sg.Spin(values=np.round(np.arange(0.0,100.1, 0.1),1).tolist(),initial_value=3.0, key='sim_dur', **t6_kws), sg.Text('minutes', **t8_kws, justification='center')],
+                [sg.Text('Timestep :', **t8_kws), sg.Spin(values=np.round(np.arange(0.01,1.01, 0.01),2).tolist(),initial_value=0.1, key='dt', **t6_kws), sg.Text('seconds', **t8_kws, justification='center')],
                 named_bool_button('Box2D', False)]
     collapsibles['Configuration'] = Collapsible('Configuration', True, sim_conf)
     output_dict = dict(zip(output_keys, [False] * len(output_keys)))

@@ -269,7 +269,6 @@ class LarvaWorld:
         # del self.active_larva_schedule
         if self._screen is not None:
             self._screen.close_requested()
-
     # def delete(self):
     #     self.close()
     #     pygame.quit()
@@ -567,12 +566,11 @@ class LarvaWorld:
 
         if img_mode == 'overlap':
             self._screen.render()
-            self._screen.close()
         elif img_mode == 'final':
             self.render(tick=self.Nticks)
             self.toggle(name='snapshot #')
             self._screen.render()
-            self._screen.close()
+        self._screen.close()
         return self.is_running
 
     def set_end_condition(self):

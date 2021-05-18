@@ -719,11 +719,14 @@ t16_kws= {'size': (16, 1)
 t18_kws= {'size': (18, 1)
            }
 t14_kws = {'size': (14, 1)}
+t15_kws = {'size': (15, 1)}
+t11_kws = {'size': (11, 1)}
 
 t40_kws = {'size': (40, 1)}
 
 t5_kws = {'size': (5, 1)}
 t2_kws = {'size': (2, 1)}
+t1_kws = {'size': (1, 1)}
 t24_kws = {'size': (24, 1)}
 
 # class GuiProgressBar(sg.ProgressBar) :
