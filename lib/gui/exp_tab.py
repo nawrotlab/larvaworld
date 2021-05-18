@@ -25,10 +25,13 @@ def build_sim_tab():
     l_exp = [sg.Col([
         [sg.Text('Experiment', **t10_kws, tooltip='The currently selected simulation experiment.'),
          graphic_button('load', 'LOAD_EXP', tooltip='Load the configuration for a simulation experiment.'),
+         graphic_button('data_add', 'SAVE_EXP', tooltip='Save a new experiment configuration.'),
+         graphic_button('data_remove', 'DELETE_EXP', tooltip='Delete an existing experiment configuration.'),
          graphic_button('play', 'RUN_EXP', tooltip='Run the selected simulation experiment.')],
-        [sg.Combo(list(loadConfDict('Exp').keys()), key='EXP', enable_events=True, readonly=True, **t24_kws)],
+        [sg.Combo(list(loadConfDict('Exp').keys()), key='EXP_CONF', enable_events=True, readonly=True, **t24_kws)],
         [sg.Text('Progress :', **t8_kws), sg.ProgressBar(100, orientation='h', size=(8.8, 20), key='EXP_PROGRESSBAR',
-                                                         bar_color=('green', 'lightgrey'), border_width=3)]
+                                                         bar_color=('green', 'lightgrey'), border_width=3),
+         graphic_button('check', 'EXP_COMPLETE',visible=False,  tooltip='Whether the current experiment was completed.')]
     ],**col_kws)]
     sim_conf = [[sg.Text('Sim id :', **t8_kws), sg.In('unnamed_sim', key='sim_id', **t16_kws)],
                 [sg.Text('Path :', **t8_kws), sg.In('single_runs', key='path', **t16_kws)],
@@ -51,29 +54,33 @@ def build_sim_tab():
         collapsibles['Life'].get_section(),
         [graph_lists['EXP'].get_layout()]
     ])]]
-    # col1=sg.Col(l_conf,**col_kws, size=col_size(0.25,0.9))
-    # col2 = sg.Col([[sg.Output(key='EXP_OUTPUT', size=col_size(0.25, 0.1))]])
-    # l_sim0 = sg.Col([[col1, graph_lists['EXP'].canvas]])
-
-    # l_sim= [[sg.Col([[sg.Pane([col1, col2])],[sg.Text('Grab square above and slide upwards to view console output')]],
-    #                size=col_size(0.25)), graph_lists['EXP'].canvas]]
     l_sim=[[sg.Col(l_conf,**col_kws, size=col_size(0.25)), graph_lists['EXP'].canvas]]
     return l_sim, collapsibles, graph_lists, dicts
 
 
+
+
+
 def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
-    if event == 'LOAD_EXP' and values['EXP'] != '':
-        exp_id = values['EXP']
+    if event == 'LOAD_EXP' and values['EXP_CONF'] != '':
+        exp_id = values['EXP_CONF']
         update_sim(window, exp_id, collapsibles)
+    elif event == 'SAVE_EXP':
+
+        exp = get_exp(window, values, collapsibles)
+        save_gui_conf(window, exp, 'Exp')
+    elif event == 'DELETE_EXP':
+        delete_gui_conf(window, values, 'Exp')
     elif event == 'CONF_LIFE':
         collapsibles['Life'].update(window, life_conf())
-    elif event == 'RUN_EXP' and values['EXP'] != '':
-        exp_conf = get_exp(window, values, collapsibles)
+    elif event == 'RUN_EXP' and values['EXP_CONF'] != '':
+        exp_conf = get_exp_conf(window, values, collapsibles)
         window['EXP_PROGRESSBAR'].update(0,max=exp_conf['sim_params']['sim_dur']*60/exp_conf['sim_params']['dt'])
         exp_conf['enrich'] = True
         vis_kwargs = collapsibles['Visualization'].get_dict(values, window) if 'Visualization' in list(collapsibles.keys()) else dtypes.get_dict('visualization', mode='video', video_speed=60)
         d = run_sim(**exp_conf, vis_kwargs=vis_kwargs, progress_bar=window['EXP_PROGRESSBAR'])
         if d is not None:
+            window['EXP_COMPLETE'].update(visible=True)
             dicts['analysis_data'][d.id] = d
             if 'DATASET_IDS' in window.element_list() :
                 window.Element('DATASET_IDS').Update(values=list(dicts['analysis_data'].keys()))
@@ -83,6 +90,7 @@ def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
             graph_lists['EXP'].update(window, fig_dict)
         else :
             window['EXP_PROGRESSBAR'].update(0)
+            window['EXP_COMPLETE'].update(visible=False)
     return dicts, graph_lists
 
 
@@ -96,9 +104,12 @@ def update_sim(window, exp_id, collapsibles):
         update_env(env, window, collapsibles)
     output_dict = dict(zip(output_keys, [True if k in exp_conf['collections'] else False for k in output_keys]))
     collapsibles['Output'].update(window, output_dict)
+    life = exp_conf['life_params'] if 'life_params' in list(exp_conf.keys()) else dtypes.get_dict('life')
+    collapsibles['Life'].update(window, life)
     window.Element('sim_id').Update(value=f'{exp_id}_{next_idx(exp_id)}')
     window.Element('path').Update(value=f'single_runs/{exp_id}')
     window['EXP_PROGRESSBAR'].update(0)
+    window['EXP_COMPLETE'].update(visible=False)
 
 def get_sim_conf(window, values):
     sim = {
@@ -111,8 +122,8 @@ def get_sim_conf(window, values):
     return sim
 
 
-def get_exp(window, values, collapsibles):
-    exp=values['EXP']
+def get_exp_conf(window, values, collapsibles):
+    exp=values['EXP_CONF']
     if 'ENV_CONF' in window.element_list() :
         env = get_env(window, values, collapsibles)
     else :
@@ -130,6 +141,18 @@ def get_exp(window, values, collapsibles):
         'collections': [k for k in output_keys if collapsibles['Output'].get_dict(values, window)[k]],
     }
     return exp_conf
+
+def get_exp(window, values, collapsibles):
+    print(collapsibles['Life'].get_dict(values, window))
+    if 'ENV_CONF' in window.element_list() and values['ENV_CONF'] != '':
+        env = values['ENV_CONF']
+    else :
+        env = loadConf(values['EXP_CONF'], 'Exp')['env_params']
+    exp={'env_params': env,
+         'collections': [k for k in output_keys if collapsibles['Output'].get_dict(values, window)[k]],
+         'life_params': collapsibles['Life'].get_dict(values, window),
+         }
+    return exp
 
 if __name__ == "__main__":
     sg.theme('LightGreen')

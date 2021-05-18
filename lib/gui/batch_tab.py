@@ -8,7 +8,7 @@ from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     save_gui_conf, delete_gui_conf, named_bool_button, GraphList, b12_kws, b_kws, \
     graphic_button, t10_kws, t12_kws, t18_kws, t8_kws, t6_kws, CollapsibleTable, w_kws, default_run_window, col_kws, \
     col_size, t24_kws
-from lib.gui.exp_tab import update_sim, get_exp
+from lib.gui.exp_tab import update_sim, get_exp_conf
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 import lib.conf.dtype_dicts as dtypes
 from lib.sim.single_run import get_exp_conf
@@ -23,7 +23,7 @@ def update_batch(batch, window, collapsibles):
 
 def get_batch(window, values, collapsibles, exp=None):
     if exp is None:
-        exp = values['EXP']
+        exp = values['EXP_CONF']
     batch = {
         'methods': collapsibles['Methods'].get_dict(values, window),
         'optimization': collapsibles['Optimization'].get_dict(values, window),
@@ -109,8 +109,8 @@ def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
             window.Element('batch_path').Update(value=batch_type)
             conf = loadConf(batch_type, 'Batch')
             update_batch(conf, window, collapsibles)
-            if 'EXP' in window.element_list():
-                window.Element('EXP').Update(value=conf['exp'])
+            if 'EXP_CONF' in window.element_list():
+                window.Element('EXP_CONF').Update(value=conf['exp'])
                 update_sim(window, conf['exp'], collapsibles)
             else:
                 dicts['batch_exp'] = conf['exp']
@@ -127,7 +127,7 @@ def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
             from lib.sim.batch_lib import prepare_batch, batch_run
             batch_id = str(values['batch_id'])
             batch_path = str(values['batch_path'])
-            if 'EXP' not in window.element_list() or values['EXP'] == '':
+            if 'EXP_CONF' not in window.element_list() or values['EXP_CONF'] == '':
                 exp = dicts['batch_exp']
                 batch = get_batch(window, values, collapsibles, exp=exp)
                 sim_params = {
@@ -140,7 +140,7 @@ def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
                 exp_conf = get_exp_conf(exp, sim_params)
             else:
                 batch = get_batch(window, values, collapsibles)
-                exp_conf = get_exp(window, values, collapsibles)
+                exp_conf = get_exp_conf(window, values, collapsibles)
             batch_kwargs = prepare_batch(batch, batch_id, exp_conf)
             # dicts['batch_kwargs']=batch_kwargs
             #

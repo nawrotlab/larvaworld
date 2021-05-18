@@ -741,6 +741,7 @@ def graphic_button(name, key,**kwargs):
     dic={
         'load' : graphics.Button_Load,
         'play' : graphics.Button_Play,
+        'check' : graphics.Button_Check,
         'pick_color' : graphics.Button_Color_Circle,
         'edit' : graphics.Document_2_Edit,
         'data_add' : graphics.Database_Add,
