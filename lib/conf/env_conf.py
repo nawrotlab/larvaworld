@@ -207,7 +207,7 @@ chemorbit_env = {'arena_params': arena(0.1, 0.06),
 chemorbit_diffusion_env = {'arena_params': arena(0.3, 0.3),
                            'food_params': food_param_conf(
                                list={**odor_source(id='Odor_source', odor_id='Odor',
-                                                   odor_intensity=300.0, default_color='blue', r=0.03)}),
+                                                   odor_intensity=300.0, default_color='blue', radius=0.03)}),
                            'larva_params': larva_distro(N=30, model='navigator'),
                            'odorscape': diffusion_odor()
                            }

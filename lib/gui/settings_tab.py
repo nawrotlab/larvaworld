@@ -43,7 +43,8 @@ def build_settings_tab():
 
     s1 = CollapsibleDict('Visualization', True, dict=dtypes.get_dict('visualization', mode='video', video_speed=60),
                          type_dict=dtypes.get_dict_dtypes('visualization'), toggled_subsections=None)
-    s2 = CollapsibleDict('Replay', False, dict=dtypes.get_dict('replay'), type_dict=dtypes.get_dict_dtypes('replay'), toggled_subsections=False)
+    s2 = CollapsibleDict('Replay', False, dict=dtypes.get_dict('replay'), type_dict=dtypes.get_dict_dtypes('replay'),
+                         toggled_subsections=False)
     s3 = Collapsible('Keyboard', True, content=l_short, next_to_header=[
                                                 graphic_button('burn', 'RESET_SHORTCUTS', tooltip='Reset all shortcuts to the defaults.')])
     s4 = Collapsible('Mouse', False, content=l_mouse)
