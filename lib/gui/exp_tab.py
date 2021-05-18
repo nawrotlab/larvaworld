@@ -7,7 +7,7 @@ from lib.aux.collecting import output_keys
 from lib.gui.env_tab import update_env, get_env
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     named_bool_button, save_gui_conf, delete_gui_conf, GraphList, CollapsibleTable, \
-    graphic_button, t10_kws, t18_kws, w_kws, default_run_window, col_kws, col_size
+    graphic_button, t10_kws, t18_kws, w_kws, default_run_window, col_kws, col_size, window_size, t24_kws, t8_kws
 from lib.gui.draw_env import draw_env
 from lib.gui.life_conf import life_conf
 from lib.sim.single_run import run_sim, sim_analysis
@@ -23,7 +23,9 @@ def build_sim_tab():
         [sg.Text('Experiment', **t10_kws, tooltip='The currently selected simulation experiment.'),
          graphic_button('load', 'LOAD_EXP', tooltip='Load the configuration for a simulation experiment.'),
          graphic_button('play', 'RUN_EXP', tooltip='Run the selected simulation experiment.')],
-        [sg.Combo(list(loadConfDict('Exp').keys()), key='EXP', enable_events=True, readonly=True, **t18_kws)]
+        [sg.Combo(list(loadConfDict('Exp').keys()), key='EXP', enable_events=True, readonly=True, **t24_kws)],
+        [sg.Text('Progress :', **t8_kws), sg.ProgressBar(100, orientation='h', size=(8.8, 20), key='EXP_PROGRESSBAR',
+                                                         bar_color=('green', 'lightgrey'), border_width=3)]
     ],**col_kws)]
     sim_conf = [[sg.Text('Sim id:'), sg.In('unnamed_sim', key='sim_id')],
                 [sg.Text('Path:'), sg.In('single_runs', key='path')],
@@ -46,7 +48,13 @@ def build_sim_tab():
         collapsibles['Life'].get_section(),
         [graph_lists['EXP'].get_layout()]
     ])]]
-    l_sim = [[sg.Col(l_conf,**col_kws, size=col_size(0.25)), graph_lists['EXP'].canvas]]
+    # col1=sg.Col(l_conf,**col_kws, size=col_size(0.25,0.9))
+    # col2 = sg.Col([[sg.Output(key='EXP_OUTPUT', size=col_size(0.25, 0.1))]])
+    # l_sim0 = sg.Col([[col1, graph_lists['EXP'].canvas]])
+
+    # l_sim= [[sg.Col([[sg.Pane([col1, col2])],[sg.Text('Grab square above and slide upwards to view console output')]],
+    #                size=col_size(0.25)), graph_lists['EXP'].canvas]]
+    l_sim=[[sg.Col(l_conf,**col_kws, size=col_size(0.25)), graph_lists['EXP'].canvas]]
     return l_sim, collapsibles, graph_lists, dicts
 
 
@@ -58,8 +66,10 @@ def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
         collapsibles['Life'].update(window, life_conf())
     elif event == 'RUN_EXP' and values['EXP'] != '':
         exp_conf = get_exp(window, values, collapsibles)
+        window['EXP_PROGRESSBAR'].update(0,max=exp_conf['sim_params']['sim_dur']*60/exp_conf['sim_params']['dt'])
         exp_conf['enrich'] = True
-        d = run_sim(**exp_conf, vis_kwargs=collapsibles['Visualization'].get_dict(values, window))
+        vis_kwargs = collapsibles['Visualization'].get_dict(values, window) if 'Visualization' in list(collapsibles.keys()) else dtypes.get_dict('visualization', mode='video', video_speed=60)
+        d = run_sim(**exp_conf, vis_kwargs=vis_kwargs, progress_bar=window['EXP_PROGRESSBAR'])
         if d is not None:
             dicts['analysis_data'][d.id] = d
             if 'DATASET_IDS' in window.element_list() :
@@ -68,21 +78,24 @@ def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
             fig_dict, results = sim_analysis(d, exp_conf['experiment'])
             dicts['sim_results']['fig_dict'] = fig_dict
             graph_lists['EXP'].update(window, fig_dict)
+        else :
+            window['EXP_PROGRESSBAR'].update(0)
     return dicts, graph_lists
 
 
 def update_sim(window, exp_id, collapsibles):
     exp_conf = loadConf(exp_id, 'Exp')
     env = exp_conf['env_params']
-    if type(env) == str:
-        window.Element('ENV_CONF').Update(value=env)
-        env = loadConf(env, 'Env')
-    update_env(env, window, collapsibles)
+    if 'ENV_CONF' in window.element_list():
+        if type(env) == str:
+            window.Element('ENV_CONF').Update(value=env)
+            env = loadConf(env, 'Env')
+        update_env(env, window, collapsibles)
     output_dict = dict(zip(output_keys, [True if k in exp_conf['collections'] else False for k in output_keys]))
     collapsibles['Output'].update(window, output_dict)
     window.Element('sim_id').Update(value=f'{exp_id}_{next_idx(exp_id)}')
     window.Element('path').Update(value=f'single_runs/{exp_id}')
-
+    window['EXP_PROGRESSBAR'].update(0)
 
 def get_sim_conf(window, values):
     sim = {
@@ -96,10 +109,20 @@ def get_sim_conf(window, values):
 
 
 def get_exp(window, values, collapsibles):
+    exp=values['EXP']
+    if 'ENV_CONF' in window.element_list() :
+        env = get_env(window, values, collapsibles)
+    else :
+        env = loadConf(exp, 'Exp')['env_params']
+        if type(env) == str:
+            env = loadConf(env, 'Env')
+            for k, v in env['larva_params'].items():
+                if type(v['model']) == str:
+                    v['model'] = loadConf(v['model'], 'Model')
     exp_conf = {
-        'experiment': values['EXP'],
+        'experiment': exp,
         'sim_params': get_sim_conf(window, values),
-        'env_params': get_env(window, values, collapsibles),
+        'env_params': env,
         'life_params': collapsibles['Life'].get_dict(values, window),
         'collections': [k for k in output_keys if collapsibles['Output'].get_dict(values, window)[k]],
     }

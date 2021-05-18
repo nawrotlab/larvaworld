@@ -67,7 +67,6 @@ def eval_settings(event, values, window, collapsibles, dicts, graph_lists):
     cur = dicts['shortcuts']['cur']
     if event == 'RESET_SHORTCUTS':
         dicts['shortcuts']['cur'] = None
-        # window.ReturnKeyboardEvents = False
         for title, dic in dtypes.default_shortcuts.items():
             for k, v in dic.items():
                 window[f'SHORT {k}'].update(disabled=True, value=v)

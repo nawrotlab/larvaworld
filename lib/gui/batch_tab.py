@@ -8,7 +8,7 @@ from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     save_gui_conf, delete_gui_conf, named_bool_button, GraphList, b12_kws, b_kws, \
     graphic_button, t10_kws, t12_kws, t18_kws, t8_kws, t6_kws, CollapsibleTable, w_kws, default_run_window, col_kws, \
     col_size
-from lib.gui.simulation_tab import update_sim, get_exp
+from lib.gui.exp_tab import update_sim, get_exp
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 import lib.conf.dtype_dicts as dtypes
 from lib.sim.single_run import get_exp_conf

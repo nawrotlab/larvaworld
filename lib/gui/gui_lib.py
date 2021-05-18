@@ -679,8 +679,8 @@ color_map = {
 
 window_size=(1800, 1200)
 
-def col_size(window_x_fraction) :
-    return int(window_size[0]*window_x_fraction),window_size[1]
+def col_size(x_frac, y_frac=1.0) :
+    return int(window_size[0]*x_frac),int(window_size[1]*y_frac)
 
 w_kws = {
     'finalize': True,
@@ -725,6 +725,13 @@ t40_kws = {'size': (40, 1)}
 t5_kws = {'size': (5, 1)}
 t2_kws = {'size': (2, 1)}
 t24_kws = {'size': (24, 1)}
+
+# class GuiProgressBar(sg.ProgressBar) :
+#     def __init__(self, max_value):
+#         super().__init__(max_value)
+#
+#     def update(self, t):
+#         self.UpdateBar(t)
 
 
 def graphic_button(name, key,**kwargs):

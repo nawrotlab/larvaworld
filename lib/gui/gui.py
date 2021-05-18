@@ -9,7 +9,7 @@ from lib.gui.video_tab import build_video_tab, eval_video_tab
 from lib.gui.batch_tab import build_batch_tab, eval_batch, get_batch
 import lib.gui.gui_lib as gui
 from lib.gui.model_tab import build_model_tab, eval_model
-from lib.gui.simulation_tab import build_sim_tab, eval_sim
+from lib.gui.exp_tab import build_sim_tab, eval_sim
 from lib.gui.analysis_tab import build_analysis_tab, eval_analysis
 
 matplotlib.use('TkAgg')

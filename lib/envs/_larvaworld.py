@@ -49,9 +49,11 @@ class LarvaWorld:
                  use_background=False,
                  traj_color=None,
                  touch_sensors=False, allow_clicks=True,
-                 experiment=None
+                 experiment=None,
+                 progress_bar=None,
                  ):
 
+        self.progress_bar = progress_bar
         self.vis_kwargs = vis_kwargs
         self.__dict__.update(self.vis_kwargs['draw'])
         self.__dict__.update(self.vis_kwargs['color'])
@@ -535,40 +537,42 @@ class LarvaWorld:
             Nsteps = self.Nsteps
         warnings.filterwarnings('ignore')
         # import time
-        with progressbar.ProgressBar(max_value=Nsteps) as bar:
-            while self.is_running and self.Nticks < Nsteps and not self.end_condition_met:
-                if not self.sim_paused:
-                    # t0=time.time()
-                    self.step()
-                    bar.update(self.Nticks)
-                if mode=='video' :
-                    if img_mode != 'snapshots':
-                        # t1 = time.time()
+        if self.progress_bar is None :
+            self.progress_bar = progressbar.ProgressBar(max_value=Nsteps)
+        bar=self.progress_bar
+        while self.is_running and self.Nticks < Nsteps and not self.end_condition_met:
+            if not self.sim_paused:
+                # t0=time.time()
+                self.step()
+                bar.update(self.Nticks)
+            if mode=='video' :
+                if img_mode != 'snapshots':
+                    # t1 = time.time()
+                    self.render(tick=self.Nticks)
+                    # t2 = time.time()
+                elif (self.Nticks - 1) % self.snapshot_interval == 0:
+                    # print('ss')
+                    self.render(tick=self.Nticks)
+            elif mode== 'image':
+                if img_mode == 'overlap':
+                    self.render(tick=self.Nticks)
+                elif img_mode == 'snapshots':
+                    if (self.Nticks - 1) % self.snapshot_interval == 0:
                         self.render(tick=self.Nticks)
-                        # t2 = time.time()
-                    elif (self.Nticks - 1) % self.snapshot_interval == 0:
-                        # print('ss')
-                        self.render(tick=self.Nticks)
-                elif mode== 'image':
-                    if img_mode == 'overlap':
-                        self.render(tick=self.Nticks)
-                    elif img_mode == 'snapshots':
-                        if (self.Nticks - 1) % self.snapshot_interval == 0:
-                            self.render(tick=self.Nticks)
-                            self.toggle(name='snapshot #')
-                            self._screen.render()
+                        self.toggle(name='snapshot #')
+                        self._screen.render()
 
-                # print()
-                # print((t1-t0)*1000, (t2-t1)*1000)
+            # print()
+            # print((t1-t0)*1000, (t2-t1)*1000)
 
-            if img_mode == 'overlap':
-                self._screen.render()
-                self._screen.close()
-            elif img_mode == 'final':
-                self.render(tick=self.Nticks)
-                self.toggle(name='snapshot #')
-                self._screen.render()
-                self._screen.close()
+        if img_mode == 'overlap':
+            self._screen.render()
+            self._screen.close()
+        elif img_mode == 'final':
+            self.render(tick=self.Nticks)
+            self.toggle(name='snapshot #')
+            self._screen.render()
+            self._screen.close()
         return self.is_running
 
     def set_end_condition(self):
