@@ -552,9 +552,9 @@ def compute_bearing2source(xs, ys,  ors, loc=(0.0,0.0), in_deg=True) :
     #       xys : 2D array of the xy position.
     #       ors : 1D array of the absolute orientation (already in deg).
     x0,y0=loc
-    dxs = np.array(xs) - x0
-    dys = np.array(ys) - y0
-    rads = np.arctan2(dys, dxs)% (2 * np.pi)
+    dxs = x0- np.array(xs)
+    dys = y0 - np.array(ys)
+    rads = np.arctan2(dys, dxs)
     drads=(ors-np.rad2deg(rads))%360
     drads[drads>180]-=360
     return drads if in_deg else np.deg2rad(rads)

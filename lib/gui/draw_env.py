@@ -109,7 +109,6 @@ def reset_arena(window, graph, arena_pars, env_db):
         for f in figs:
             db['s_g']['figs'][f] = id
     for id, pars in db['l_g']['items'].items():
-        print(id, pars)
         figs = inspect_distro(**c, id=id, item='LARVA', **pars)
         for f in figs:
             db['l_g']['figs'][f] = id
@@ -141,7 +140,6 @@ def out_of_bounds(xy, arena_pars):
 
 
 def delete_prior(prior_rect, graph):
-    # print('xx')
     if type(prior_rect) == list:
         for pr in prior_rect:
             graph.delete_figure(pr)
@@ -227,13 +225,11 @@ def check_abort(name, w, v, units, groups):
         info.update(value=f"Assign a positive integer number of items for the distribution")
     else:
         abort = False
-    # print(abort, o)
     return abort
 
 
 def draw_env(env=None):
     sg.theme('LightGreen')
-    # sg.theme('Dark Blue 3')
     collapsibles = {}
     if env is None:
         env = {'border_list': {},
@@ -493,7 +489,6 @@ def draw_env(env=None):
                     else:
                         w['out'].update(value=f"Source group {id} placed at {P1}")
                         groups['items'].update(current)
-                        print(current)
                         w[f'{o}_group_id'].update(value=f"SOURCE_GROUP_{len(groups['items'].keys())}")
                         w[f'{o}_ODOR_odor_id'].update(value='')
                         figs = inspect_distro(id=id, **groups['items'][id], graph=graph, s=s, item=o)
@@ -529,10 +524,6 @@ def draw_env(env=None):
             collapsibles[f'{o}_DISTRO'].disable(w) if not v[f'{o}_group'] else collapsibles[f'{o}_DISTRO'].enable(w)
             if v[f'{o}_group']:
                 w[f'{o}_id'].update(value='')
-        for k,v in db['l_g']['items'].items():
-            # print(k)
-            # print(v)
-            print(v['loc'])
     w.close()
     return env
 

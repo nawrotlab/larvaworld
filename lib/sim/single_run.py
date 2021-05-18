@@ -30,7 +30,9 @@ def sim_enrichment(d, experiment):
         d.angular_analysis(is_last=False)
         d.detect_strides(is_last=False)
         d.detect_pauses(is_last=False)
-        d.detect_turns(track_params = ['orientation_to_center'],is_last=False)
+        d.detect_turns(is_last=False)
+        for chunk in ['turn', 'stride', 'pause']:
+            d.compute_chunk_bearing2source(chunk=chunk, source=(0.0,0.0),is_last=False)
     return d
 
 
@@ -114,7 +116,11 @@ def sim_analysis(d, exp_type):
 
     elif exp_type in ['chemotaxis_approach', 'chemotaxis_local', 'chemotaxis_diffusion']:
         if exp_type in ['chemotaxis_local', 'chemotaxis_diffusion']:
-            fig_dict['turn_Dorient2center'] = plot_turn_Dorient2center(datasets=[d], labels=[d.id])
+            for chunk in ['turn', 'stride', 'pause']:
+                for dur in [0.0,0.5,1.0] :
+                    fig_dict[f'{chunk}_Dorient2source_min_{dur}_sec'] = plot_chunk_Dorient2source(datasets=[d], labels=[d.id],
+                                                                                 chunk=chunk, source=(0.0, 0.0), min_dur=dur)
+            # fig_dict['turn_Dorient2center'] = plot_turn_Dorient2center(datasets=[d], labels=[d.id])
         for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
             fig_dict[p] = plot_timeplot([p], datasets=[d])
         dic = plot_distance_to_source(dataset=d, exp_type=exp_type)

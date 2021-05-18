@@ -288,7 +288,8 @@ class BodySim(BodyManager):
         self.head_contacts_ground = value
 
     def step_no_physics(self, lin_vel, ang_vel):
-
+        # print()
+        # print(np.round(fun.compute_bearing2source([self.pos[0]], [self.pos[1]],  np.rad2deg(self.get_head().get_orientation()), loc=(0.2,0.2), in_deg=True))[0])
         # self.body_bend += self.dt * ang_velocity
         # self.body_bend = np.clip(self.body_bend, a_min=-np.pi, a_max=np.pi)
 

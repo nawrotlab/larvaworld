@@ -1062,7 +1062,7 @@ class SectionDict:
                     type_dict = self.type_dict[k]
                 else:
                     type_dict = None
-                self.subdicts[k0] = CollapsibleDict(k0, True, disp_name=k, dict=v, type_dict=type_dict,
+                self.subdicts[k0] = CollapsibleDict(k0, False, disp_name=k, dict=v, type_dict=type_dict,
                                                     toggle=self.toggled_subsections)
                 ll = self.subdicts[k0].get_section()
                 l.append(ll)
@@ -1446,10 +1446,10 @@ class GraphList:
         list_key = f'{name}_GRAPH_LIST'
         values = list(fig_dict.keys())
         h = int(np.max([len(values), 5]))
-        header=[sg.Text('Graphs', **t10_kws)]
+        header=[sg.Text('Graphs', **t14_kws)]
         if self.next_to_header is not None :
             header+=self.next_to_header
-        l = [header,[sg.Listbox(values=values, change_submits=True, size=(20, h), key=list_key, auto_size_text=True)]]
+        l = [header,[sg.Listbox(values=values, change_submits=True, size=(25, h), key=list_key, auto_size_text=True)]]
         return l, list_key
 
     def init_canvas(self, name):
@@ -1777,3 +1777,13 @@ def default_run_window(window, event, values, collapsibles={}, graph_lists={}) :
 
     if event.startswith('EDIT_TABLE'):
         collapsibles[event.split()[-1]].edit_table(window)
+
+def load_shortcuts():
+    try:
+        conf = loadConfDict('Settings')
+    except:
+        conf = {'keys': {}, 'pygame_keys': {}}
+        for title, dic in dtypes.default_shortcuts.items():
+            conf['keys'].update(dic)
+        conf['pygame_keys'] = {k: dtypes.get_pygame_key(v) for k, v in conf['keys'].items()}
+    return conf

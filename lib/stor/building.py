@@ -62,6 +62,8 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
             agent_ids.append(agent_id)
             if appropriate_recordings_counter >= max_Nagents:
                 break
+    if len(dfs)==0 :
+        return None, None
     if complete_ticks:
         min_tick, max_tick = np.min([df.index.min() for df in dfs]), np.max([df.index.max() for df in dfs])
         trange = np.arange(min_tick, max_tick + 1).tolist()

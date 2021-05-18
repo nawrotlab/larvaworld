@@ -2149,6 +2149,7 @@ def plot_dispersion(datasets, labels, ranges=[[0, 40]], scaled=False, save_to=No
         axs.xaxis.set_major_locator(ticker.MaxNLocator(4))
         axs.legend(loc='upper left')
         fig.subplots_adjust(top=0.95, bottom=0.15, left=0.2 / fig_cols, right=0.95, hspace=.005, wspace=0.05)
+        plt.show()
         return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -3189,7 +3190,7 @@ def plot_chunk_Dorient2source(datasets, labels, chunk='stride', source=(0.0,0.0)
         labels.insert(0, 'merged')
     Ncols=int(np.ceil(np.sqrt(Ndatasets)))
     Nrows=Ncols-1 if Ndatasets<Ncols**2-Ncols else Ncols
-    fig, axs = plt.subplots(Nrows, Ncols, figsize=(6*Ncols, 8*Nrows),
+    fig, axs = plt.subplots(Nrows, Ncols, figsize=(8*Ncols, 8*Nrows),
                             subplot_kw=dict(projection='polar'),
                             # sharex=True,
                             sharey=True
@@ -3221,7 +3222,7 @@ def plot_chunk_Dorient2source(datasets, labels, chunk='stride', source=(0.0,0.0)
 
         b0s = [compute_bearing2source(d.get_par(x0_par).dropna().values, d.get_par(y0_par).dropna().values, d.get_par(ho0_par).dropna().values, loc=source, in_deg=True) for d in datasets]
         b1s = [compute_bearing2source(d.get_par(x1_par).dropna().values, d.get_par(y1_par).dropna().values, d.get_par(ho1_par).dropna().values, loc=source, in_deg=True) for d in datasets]
-        dbs =[np.abs(b1)-np.abs(b0) for b0,b1 in  zip(b0s,b1s)]
+        dbs =[np.abs(b0)-np.abs(b1) for b0,b1 in  zip(b0s,b1s)]
 
     if plot_merged:
         b0s.insert(0, np.vstack(b0s))
@@ -3233,16 +3234,21 @@ def plot_chunk_Dorient2source(datasets, labels, chunk='stride', source=(0.0,0.0)
         b1=b1[dur>min_dur]
         db = db [dur>min_dur]
         b0m,b1m=np.mean(b0),np.mean(b1)
+        # ff,aa=plt.subplots(1,2)
+        # aa[0].hist(b0, bins=36)
+        # aa[1].hist(b1, bins=36)
+        # plt.show()
+        print(b0m,b1m)
         dbm=np.round(np.mean(db),2)
         if np.isnan([dbm, b0m, b1m]).any() :
             continue
         circular_hist(axs[i], b0, bins=Nbins,alpha=0.3, label='start', color=c, offset=np.pi/2)
         circular_hist(axs[i], b1, bins=Nbins,alpha=0.6, label='stop', color=c, offset=np.pi/2)
-        arrow0 = patches.FancyArrowPatch((0, 0), (b0m,0.3),zorder=2, mutation_scale=30, alpha=0.3, facecolor=c,
+        arrow0 = patches.FancyArrowPatch((0, 0), (np.deg2rad(b0m),0.3),zorder=2, mutation_scale=30, alpha=0.3, facecolor=c,
                                          edgecolor='black', fill=True, linewidth=0.5)
 
         axs[i].add_patch(arrow0)
-        arrow1 = patches.FancyArrowPatch((0, 0), (b1m,0.3), zorder=2, mutation_scale=30, alpha=0.6, facecolor=c,
+        arrow1 = patches.FancyArrowPatch((0, 0), (np.deg2rad(b1m),0.3), zorder=2, mutation_scale=30, alpha=0.6, facecolor=c,
                                          edgecolor='black', fill=True, linewidth=0.5)
         axs[i].add_patch(arrow1)
 
@@ -3250,15 +3256,12 @@ def plot_chunk_Dorient2source(datasets, labels, chunk='stride', source=(0.0,0.0)
         text_y=1.2
         axs[i].text(text_x,text_y,f'Dataset : {label}',transform = axs[i].transAxes)
         axs[i].text(text_x,text_y-0.1,f'Chunk (#) : {chunk} ({len(b0)})',transform = axs[i].transAxes)
-        axs[i].text(text_x,text_y-0.2,fr'Correction $\Delta\theta_{{{"or"}}} : {dbm}^{{{"o"}}}$',transform = axs[i].transAxes)
-        # Visualise by radius of bins
-        # circular_hist(ax[1], angles1, offset=np.pi / 2, density=False)
+        axs[i].text(text_x,text_y-0.2,f'Min duration : {min_dur} sec',transform = axs[i].transAxes)
+        axs[i].text(text_x,text_y-0.3,fr'Correction $\Delta\theta_{{{"or"}}} : {dbm}^{{{"o"}}}$',transform = axs[i].transAxes)
         axs[i].legend(loc=[0.9, 0.9])
         axs[i].set_title(f'Bearing before and after a {chunk}.', fontsize=15, y=-0.2)
     for ax in axs :
-        ax.xaxis.set_major_locator(MaxNLocator(8))
-        ticks_loc = ax.get_xticks().tolist()[:-1]
-        # print(ticks_loc)
+        ticks_loc = ax.get_xticks().tolist()
         ax.xaxis.set_major_locator(FixedLocator(ticks_loc))
         ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''])
     plt.subplots_adjust(bottom=0.2, top=0.8, left=0.05*Ncols/2, right=0.9, wspace=0.8, hspace=0.3)

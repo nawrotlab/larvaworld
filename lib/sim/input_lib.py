@@ -5,26 +5,28 @@ import numpy as np
 import lib.gui.gui_lib as gui
 from lib.model import Larva, LarvaSim
 
-shortcuts = {
-    # 'trajectory_dt' : ['MINUS', 'PLUS'],
-    'trajectories': 'p',
-    'focus_mode': 'f',
-    'draw_centroid': 'e',
-    'draw_head': 'h',
-    'draw_midline': 'm',
-    'draw_contour': 'c',
-    'visible_clock': 't',
-    'visible_ids': 'TAB',
-    'visible_state': 's',
-    'color_behavior': 'b',
-    'random_colors': 'r',
-    'black_background': 'g',
-    'larva_collisions': 'y',
-    # 'zoom' : ,
-    'snapshot #': 'i',
-    'sim_paused': 'SPACE',
-    # 'odorscape #' : 'o'
-}
+# shortcuts = {
+#     # 'trajectory_dt' : ['MINUS', 'PLUS'],
+#     'trajectories': 'p',
+#     'focus_mode': 'f',
+#     'draw_centroid': 'e',
+#     'draw_head': 'h',
+#     'draw_midline': 'm',
+#     'draw_contour': 'c',
+#     'visible_clock': 't',
+#     'visible_ids': 'TAB',
+#     'visible_state': 's',
+#     'color_behavior': 'b',
+#     'random_colors': 'r',
+#     'black_background': 'g',
+#     'larva_collisions': 'y',
+#     # 'zoom' : ,
+#     'snapshot #': 'i',
+#     'sim_paused': 'SPACE',
+#     # 'odorscape #' : 'o'
+# }
+
+shortcuts = gui.load_shortcuts()
 
 
 def evaluate_input(model, screen):
@@ -34,50 +36,9 @@ def evaluate_input(model, screen):
         if event.type == pygame.QUIT:
             screen.close_requested()
         if event.type == pygame.KEYDOWN:
-            for k, v in shortcuts.items():
-                if event.key == getattr(pygame, f'K_{v}'):
-                    model.toggle(k)
-
-            if event.key == pygame.K_MINUS:
-                model.toggle('trajectory_dt', minus=True)
-            elif event.key == pygame.K_PLUS:
-                model.toggle('trajectory_dt', plus=True)
-            elif event.key == pygame.K_o:
-                model.toggle('odorscape #', show=pygame.key.get_mods() & pygame.KMOD_CTRL)
-
-            elif event.key == pygame.K_LEFT:
-                screen.move_center(-0.05, 0)
-            elif event.key == pygame.K_RIGHT:
-                screen.move_center(+0.05, 0)
-            elif event.key == pygame.K_UP:
-                screen.move_center(0, +0.05)
-            elif event.key == pygame.K_DOWN:
-                screen.move_center(0, -0.05)
-            elif event.key == pygame.K_DELETE:
-                if gui.delete_objects_window(model.selected_agents):
-                    for f in model.selected_agents:
-                        model.selected_agents.remove(f)
-                        model.delete_agent(f)
-            elif event.key == pygame.K_q:
-                if len(model.selected_agents) > 0:
-                    sel = model.selected_agents[0]
-                    if isinstance(sel, Larva):
-                        model.dynamic_graphs.append(gui.DynamicGraph(agent=sel))
-            elif event.key == pygame.K_w:
-                if len(model.selected_agents) > 0:
-                    sel = model.selected_agents[0]
-                    if isinstance(sel, LarvaSim):
-                        if sel.brain.olfactor is not None:
-                            odor_gains = sel.brain.olfactor.gain
-                            odor_gains = gui.set_kwargs(odor_gains, title='Odor gains')
-                            sel.brain.olfactor.gain = odor_gains
-            else:
-                for i in range(model.Nodors):
-                    if event.key == getattr(pygame, f'K_{i}'):
-                        layer_id = list(model.odor_layers.keys())[i]
-                        layer = model.odor_layers[layer_id]
-                        layer.visible = not layer.visible
-                        model.toggle(layer_id, 'ON' if layer.visible else 'OFF')
+            for k, v in shortcuts['pygame_keys'].items():
+                if event.key == getattr(pygame, v):
+                    eval_keypress(k, screen, model)
 
         if model.allow_clicks:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -95,17 +56,13 @@ def evaluate_input(model, screen):
                 elif event.button == 3:
                     loc = tuple(np.array(screen.w_loc) + np.array(pygame.mouse.get_pos()))
                     if len(model.selected_agents) > 0:
-                        for sel in model.selected_agents :
-
+                        for sel in model.selected_agents:
                             # sel = model.selected_agents[0]
                             sel = gui.set_agent_kwargs(sel, location=loc)
                     else:
                         model.selected_type = gui.object_menu(model.selected_type, location=loc)
-                elif event.button == 4:
-                    screen.zoom_screen(d_zoom=-d_zoom)
-                    model.toggle(name='zoom', value=screen.zoom)
-                elif event.button == 5:
-                    screen.zoom_screen(d_zoom=+d_zoom)
+                elif event.button in [4, 5]:
+                    screen.zoom_screen(d_zoom=-d_zoom if event.button == 4 else d_zoom)
                     model.toggle(name='zoom', value=screen.zoom)
             model.input_box.get_input(event)
     if model.focus_mode and len(model.selected_agents) > 0:
@@ -114,6 +71,55 @@ def evaluate_input(model, screen):
             screen.move_center(pos=sel.get_position())
         except:
             pass
+
+
+def eval_keypress(k, screen, model):
+    if k == '▲ trail duration':
+        model.toggle('trajectory_dt', plus=True)
+    elif k == '▼ trail duration':
+        model.toggle('trajectory_dt', minus=True)
+    elif k == 'visible trail':
+        model.toggle('trajectories')
+    elif k == 'pause':
+        model.toggle('sim_paused')
+    elif k == 'move left':
+        screen.move_center(-0.05, 0)
+    elif k == 'move right':
+        screen.move_center(+0.05, 0)
+    elif k == 'move up':
+        screen.move_center(0, +0.05)
+    elif k == 'move down':
+        screen.move_center(0, -0.05)
+    elif k == 'plot odorscapes':
+        model.toggle('odorscape #', show=pygame.key.get_mods() & pygame.KMOD_CTRL)
+    elif 'odorscape' in k:
+        idx = k.split(' ')[-1]
+        layer_id = list(model.odor_layers.keys())[idx]
+        layer = model.odor_layers[layer_id]
+        layer.visible = not layer.visible
+        model.toggle(layer_id, 'ON' if layer.visible else 'OFF')
+    elif k == 'snapshot':
+        model.toggle('snapshot #')
+    elif k == 'delete item':
+        if gui.delete_objects_window(model.selected_agents):
+            for f in model.selected_agents:
+                model.selected_agents.remove(f)
+                model.delete_agent(f)
+    elif k == 'dynamic graph':
+        if len(model.selected_agents) > 0:
+            sel = model.selected_agents[0]
+            if isinstance(sel, Larva):
+                model.dynamic_graphs.append(gui.DynamicGraph(agent=sel))
+    elif k == 'odor gains':
+        if len(model.selected_agents) > 0:
+            sel = model.selected_agents[0]
+            if isinstance(sel, LarvaSim):
+                if sel.brain.olfactor is not None:
+                    odor_gains = sel.brain.olfactor.gain
+                    odor_gains = gui.set_kwargs(odor_gains, title='Odor gains')
+                    sel.brain.olfactor.gain = odor_gains
+    else:
+        model.toggle(k)
 
 
 def evaluate_graphs(model):
@@ -125,57 +131,17 @@ def evaluate_graphs(model):
 
 
 def eval_selection(model, p, ctrl):
-    res=False if len(model.selected_agents)==0 else True
+    res = False if len(model.selected_agents) == 0 else True
     for f in model.get_food() + model.get_flies() + model.borders:
         if f.contained(p):
             if not f.selected:
                 f.selected = True
                 model.selected_agents.append(f)
             elif ctrl:
-                    f.selected = False
-                    model.selected_agents.remove(f)
-            res=True
-        elif f.selected and not ctrl:
                 f.selected = False
                 model.selected_agents.remove(f)
+            res = True
+        elif f.selected and not ctrl:
+            f.selected = False
+            model.selected_agents.remove(f)
     return res
-
-
-# def toggle(model, name, value=None, show=False, minus=False, plus=False):
-#
-#     if name == 'snapshot #':
-#         import imageio
-#         record_image_to = f'{model.media_name}_{model.snapshot_counter}.png'
-#         model._screen._image_writer = imageio.get_writer(record_image_to, mode='i')
-#         value = model.snapshot_counter
-#         model.snapshot_counter += 1
-#     elif name == 'odorscape #':
-#         model.plot_odorscape(save_to=model.save_to, show=show)
-#         value = model.odorscape_counter
-#         model.odorscape_counter += 1
-#     elif name == 'trajectory_dt':
-#         if minus:
-#             dt = -1
-#         elif plus:
-#             dt = +1
-#         model.trajectory_dt = np.clip(model.trajectory_dt + 5 * dt, a_min=0, a_max=np.inf)
-#         value = model.trajectory_dt
-#     # elif name=='black_background' :
-#     # elif name=='black_background' :
-#
-#     if value is None:
-#         setattr(model, name, not getattr(model, name))
-#         value = 'ON' if getattr(model, name) else 'OFF'
-#     model.screen_texts[name].text = f'{name} {value}'
-#     model.screen_texts[name].end_time = pygame.time.get_ticks() + 3000
-#
-#     if name == 'visible_ids':
-#         for a in model.get_flies() + model.get_food():
-#             a.id_box.visible = not a.id_box.visible
-#     elif name == 'random_colors':
-#         for f in model.get_flies():
-#             f.set_default_color(model.generate_larva_color())
-#     elif name == 'black_background':
-#         model.update_default_colors()
-#     elif name == 'larva_collisions':
-#         model.eliminate_overlap()

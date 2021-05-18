@@ -9,6 +9,8 @@ from typing import List, Any
 import webcolors
 from mesa.datacollection import DataCollector
 
+from lib.conf.conf import loadConfDict
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from shapely.affinity import affine_transform
@@ -123,6 +125,8 @@ class LarvaWorld:
 
         self.end_condition_met = False
 
+
+
     def toggle(self, name, value=None, show=False, minus=False, plus=False):
 
         if name == 'snapshot #':
@@ -149,7 +153,7 @@ class LarvaWorld:
             setattr(self, name, not getattr(self, name))
             value = 'ON' if getattr(self, name) else 'OFF'
         self.screen_texts[name].text = f'{name} {value}'
-        self.screen_texts[name].end_time = pygame.time.get_ticks() + 3000
+        self.screen_texts[name].end_time = pygame.time.get_ticks() + 2000
         self.screen_texts[name].start_time = pygame.time.get_ticks()+int(self.dt*1000)
 
         if name == 'visible_ids':

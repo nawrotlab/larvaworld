@@ -1,5 +1,6 @@
 import os
 import PySimpleGUI as sg
+import numpy as np
 # from tkinter import *
 
 from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, t10_kws, t16_kws, default_run_window, w_kws
@@ -36,11 +37,14 @@ def build_analysis_tab():
          graphic_button('remove', 'Remove', tooltip='Remove a dataset from the analysis list.'),
          graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
          graphic_button('box_add', 'Add ref', tooltip='Add the reference experimental dataset to the analysis list.'),
-         graphic_button('edit', 'Change ID', tooltip='Change the dataset ID transiently or permanently.')],
-        [sg.Col([[sg.Listbox(values=list(data.keys()), size=(16, len(data)), key='DATASET_IDS', enable_events=True),
-                  graphic_button('search_add', 'DATASET_DIR', initial_folder=paths.SingleRunFolder, change_submits=True,
-                                 enable_events=True, target=(0, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
-                                 tooltip='Browse to add datasets to the analysis list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')]])]]
+         graphic_button('edit', 'Change ID', tooltip='Change the dataset ID transiently or permanently.'),
+         graphic_button('search_add', 'DATASET_DIR', initial_folder=paths.SingleRunFolder, change_submits=True,
+                        enable_events=True, target=(0, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
+                        tooltip='Browse to add datasets to the analysis list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
+         ],
+
+        [sg.Col([[sg.Listbox(values=list(data.keys()), size=(25, 5), key='DATASET_IDS', enable_events=True),
+                  ]])]]
 
     graph_lists['ANALYSIS'] = g = ButtonGraphList(name='ANALYSIS', fig_dict=graph_dict)
     analysis_layout = [[sg.Col(data_list + g.get_layout(as_col=False), vertical_alignment='t'), g.canvas]]

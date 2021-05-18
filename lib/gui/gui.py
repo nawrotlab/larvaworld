@@ -2,7 +2,9 @@ import threading
 import PySimpleGUI as sg
 import matplotlib
 
+from lib.gui.env_tab import build_env_tab, eval_env
 from lib.gui.intro_tab import build_intro_tab, eval_intro_tab
+from lib.gui.settings_tab import build_settings_tab, eval_settings
 from lib.gui.video_tab import build_video_tab, eval_video_tab
 from lib.gui.batch_tab import build_batch_tab, eval_batch, get_batch
 import lib.gui.gui_lib as gui
@@ -17,11 +19,14 @@ class LarvaworldGui:
 
     def __init__(self, tabs=None):
         self.tab_dict = {'intro': 'introduction',
-                         'model': 'larva models',
-                         'exp': 'simulations',
-                         'batch': 'batch runs',
+                         'model': 'larva model',
+                         'env': 'environment',
+                         'exp': 'simulation',
+                         'batch': 'batch run',
                          'anal': 'analysis',
-                         'video': 'videos'}
+                         'video': 'videos',
+                         'settings': 'settings',
+                         }
 
         if tabs is None:
             tabs = list(self.tab_dict.keys())
@@ -73,6 +78,8 @@ class LarvaworldGui:
             return build_model_tab()
         elif name == 'exp':
             return build_sim_tab()
+        elif name == 'env':
+            return build_env_tab()
         elif name == 'batch':
             return build_batch_tab()
         elif name == 'anal':
@@ -81,12 +88,16 @@ class LarvaworldGui:
             return build_video_tab()
         elif name == 'intro':
             return build_intro_tab()
+        elif name == 'settings':
+            return build_settings_tab()
 
     def eval_tab(self, name, **kwargs):
         if name == 'model':
             return eval_model(**kwargs)
         elif name == 'exp':
             return eval_sim(**kwargs)
+        elif name == 'env':
+            return eval_env(**kwargs)
         elif name == 'batch':
             return eval_batch(**kwargs)
         elif name == 'anal':
@@ -95,6 +106,8 @@ class LarvaworldGui:
             return eval_video_tab(**kwargs)
         elif name == 'intro':
             return eval_intro_tab(**kwargs)
+        elif name == 'settings':
+            return eval_settings(**kwargs)
 
     def get_layout(self):
         ts = []

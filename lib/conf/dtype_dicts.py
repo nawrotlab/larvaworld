@@ -76,6 +76,129 @@ null_vis = {
     'aux': null_vis_aux,
 }
 
+shortcut_vis_draw = {
+    # 'trajectory_dt' : ['MINUS', 'PLUS'],
+    'visible trail': 'p',
+    '▲ trail duration': '+',
+    '▼ trail duration': '-',
+
+    'draw_head': 'h',
+    'draw_centroid': 'e',
+    'draw_midline': 'm',
+    'draw_contour': 'c'
+}
+
+shortcut_inspect = {
+    'focus_mode': 'f',
+    'odor gains': 'w',
+    'dynamic graph': 'q',
+}
+
+shortcut_vis_color = {
+    'black_background': 'g',
+    'random_colors': 'r',
+    'color_behavior': 'b',
+}
+
+shortcut_vis_aux = {
+    'visible_clock': 't',
+    'visible_scale': 'n',
+    'visible_state': 's',
+    'visible_ids': 'tab',
+}
+
+shortcut_moving = {
+    'move up': 'UP',
+    'move down': 'DOWN',
+    'move left': 'LEFT',
+    'move right': 'RIGHT',
+}
+
+shortcut_sim = {
+    'larva_collisions': 'y',
+    'pause': 'space',
+    'snapshot': 'i',
+    'delete item': 'del',
+
+}
+
+shortcut_odorscape = {
+
+    'plot odorscapes': 'o',
+    **{f'odorscape {i}': i for i in range(10)},
+    # 'move_right': 'RIGHT',
+}
+
+# null_shortcut = {
+#    # 'shortcut_vis_render': shortcut_vis_render,
+#     'shortcut_vis_draw': shortcut_vis_draw,
+#     'shortcut_vis_color': shortcut_vis_color,
+#     'shortcut_vis_aux': shortcut_vis_aux,
+#     'shortcut_moving': shortcut_moving,
+# }
+
+default_shortcuts = {
+    **shortcut_vis_draw,
+    **shortcut_vis_color,
+    **shortcut_vis_aux,
+    **shortcut_moving,
+    **shortcut_sim,
+    **shortcut_inspect,
+    **shortcut_odorscape,
+}
+
+default_shortcuts = {
+    'draw': shortcut_vis_draw,
+    'color': shortcut_vis_color,
+    'aux': shortcut_vis_aux,
+    'screen': shortcut_moving,
+    'simulation': shortcut_sim,
+    'inspect': shortcut_inspect,
+    'odorscape': shortcut_odorscape,
+}
+
+mouse_controls = {
+    'select item' : 'left click',
+    'add item' : 'left click',
+    'select item type' : 'right click',
+    'inspect item' : 'right click',
+    'screen zoom in' : 'scroll up',
+    'screen zoom out' : 'scroll down',
+}
+
+
+def get_pygame_key(key):
+    pygame_keys = {
+        'BackSpace': 'BACKSPACE',
+        'tab': 'TAB',
+        'del': 'DELETE',
+        'clear': 'CLEAR',
+        'Return': 'RETURN',
+        'Escape': 'ESCAPE',
+        'space': 'SPACE',
+        'exclam': 'EXCLAIM',
+        'quotedbl': 'QUOTEDBL',
+        '+': 'PLUS',
+        'comma': 'COMMA',
+        '-': 'MINUS',
+        'period': 'PERIOD',
+        'slash': 'SLASH',
+        'numbersign': 'HASH',
+        'Down:': 'DOWN',
+        'Up:': 'UP',
+        'Right:': 'RIGHT',
+        'Left:': 'LEFT',
+        'dollar': 'DOLLAR',
+        'ampersand': 'AMPERSAND',
+        'parenleft': 'LEFTPAREN',
+        'parenright': 'RIGHTPAREN',
+        'asterisk': 'ASTERISK',
+    }
+    return f'K_{pygame_keys[key]}' if key in list(pygame_keys.keys()) else f'K_{key}'
+
+
+# default_shortcuts_pygame = {k: get_pygame_key(v) for k, v in default_shortcuts.items()}
+
 
 def get_dict(name, class_name=None, basic=True, as_entry=False, **kwargs):
     if name in list(all_null_dicts.keys()):
@@ -523,6 +646,7 @@ def sim_dict(sim_id=None, sim_dur=3, dt=0.1, path=None, Box2D=False, exp_type=No
         'Box2D': Box2D
     }
 
+
 def brain_dict(modules, nengo=False, odor_dict=None, **kwargs):
     modules = get_dict('modules', **{m: True for m in modules})
     d = {'modules': modules}
@@ -539,16 +663,18 @@ def brain_dict(modules, nengo=False, odor_dict=None, **kwargs):
     d['nengo'] = nengo
     return d
 
-def larva_dict(brain,**kwargs) :
-    d= {'brain':brain}
-    for k in ['energetics', 'physics', 'body', 'odor'] :
-        if k in list(kwargs.keys()) :
-            d[k]=kwargs[k]
-        elif k=='energetics' :
-            d[k]=None
-        else :
-            d[k]=get_dict(k)
+
+def larva_dict(brain, **kwargs):
+    d = {'brain': brain}
+    for k in ['energetics', 'physics', 'body', 'odor']:
+        if k in list(kwargs.keys()):
+            d[k] = kwargs[k]
+        elif k == 'energetics':
+            d[k] = None
+        else:
+            d[k] = get_dict(k)
     return d
+
 
 def new_odor_dict(ids: list, means: list, stds=None) -> dict:
     if stds is None:

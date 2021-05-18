@@ -12,8 +12,9 @@ def init_model(collapsibles={}):
     for name, kwargs in zip(['Physics', 'Energetics', 'Body', 'Odor'],
                                     [{}, {'toggle': True, 'disabled': True}, {}, {}]):
         n=name.lower()
-        collapsibles[name] = CollapsibleDict(name, True, dict=dtypes.get_dict(n),type_dict=dtypes.get_dict_dtypes(n), **kwargs)
+        collapsibles[name] = CollapsibleDict(name, False, dict=dtypes.get_dict(n),type_dict=dtypes.get_dict_dtypes(n), **kwargs)
         l1.append(collapsibles[name].get_section())
+    l1.append(collapsibles['odor_gains'].get_section())
     non_brain_layout = sg.Col(l1, **col_kws, size=col_size(0.25))
 
     l2 = []
@@ -23,8 +24,7 @@ def init_model(collapsibles={}):
         collapsibles.update(s.get_subdicts())
         l2.append(s.get_section())
     collapsibles['Brain'] = Collapsible('Brain', True, l2)
-    brain_layout = sg.Col([collapsibles['Brain'].get_section(),
-                           collapsibles['odor_gains'].get_section()],**col_kws, size=col_size(0.25))
+    brain_layout = sg.Col([collapsibles['Brain'].get_section()],**col_kws, size=col_size(0.25))
 
     model_layout = [[brain_layout, non_brain_layout]]
 
