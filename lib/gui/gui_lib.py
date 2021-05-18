@@ -1216,19 +1216,27 @@ class Collapsible:
     def disable(self, window):
         if self.toggle is not None:
             window[f'TOGGLE_{self.name}'].set_state(state=False, disabled=True)
+        self.close(window)
         self.state = None
-        self.sec_symbol.update(SYMBOL_UP)
-        window[f'SEC {self.name}'].update(visible=False)
+
 
     def enable(self, window):
         if self.toggle is not None:
             window[f'TOGGLE_{self.name}'].set_state(state=True, disabled=False)
         if self.auto_open:
-            self.state = True
-            self.sec_symbol.update(SYMBOL_DOWN)
-            window[f'SEC {self.name}'].update(visible=self.state)
+            self.open(window)
         elif self.state is None:
             self.state = False
+
+    def open(self, window):
+        self.state = True
+        self.sec_symbol.update(SYMBOL_DOWN)
+        window[f'SEC {self.name}'].update(visible=self.state)
+
+    def close(self, window):
+        self.state = False
+        self.sec_symbol.update(SYMBOL_UP)
+        window[f'SEC {self.name}'].update(visible=False)
 
     def get_subdicts(self):
         subdicts = {}
@@ -1253,6 +1261,8 @@ class CollapsibleTable(Collapsible):
                 self.col_widths.append(10)
             elif p in ['color']:
                 self.col_widths.append(8)
+            elif p in ['model']:
+                self.col_widths.append(14)
             elif type_dict[p] in [int, float]:
                 self.col_widths.append(np.max([len(p), 5]))
             else:
@@ -1304,6 +1314,10 @@ class CollapsibleTable(Collapsible):
         self.dict = dic
         self.data = self.set_data(dic)
         window[self.key].update(values=self.data, num_rows=len(self.data))
+        if self.data[0][0] != '' :
+            self.open(window)
+        else :
+            self.close(window)
 
     def edit_table(self, window):
         if self.header is not None:
