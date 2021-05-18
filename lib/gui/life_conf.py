@@ -2,7 +2,8 @@ import PySimpleGUI as sg
 
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.plotting import plot_debs
-from lib.gui.gui_lib import check_toggles, b_kws, w_kws, delete_figure_agg, draw_canvas, t24_kws, t10_kws
+from lib.gui.gui_lib import check_toggles, b_kws, w_kws, delete_figure_agg, draw_canvas, t24_kws, t10_kws, col_kws, \
+    t12_kws, t18_kws
 from lib.model.deb import deb_dict, deb_default
 
 W, H = 1400, 700
@@ -17,7 +18,7 @@ sl2_kws = {
     'size': (30, 10),
     'enable_events': True,
     'orientation': 'h',
-    'pad': ((k, k), (3 * k, 3 * k)),
+    'pad': ((k, k), (k, k)),
 # 'background_color' : 'lightblue'
 }
 
@@ -40,17 +41,18 @@ def life_conf():
         [sg.Listbox(deb_modes, size=(14, len(deb_modes)),default_values=['reserve'], k='deb_mode', enable_events=True)]
     ]
 
-    l1 = [[sg.Text('Food quality : ', **t24_kws)],
+    l2 = [[sg.Text('Food quality : ', **t24_kws)],
           [sg.Slider(range=(0.0, 1.0), default_value=1.0, key='SLIDER_quality',
                      tick_interval=0.25, resolution=0.01, **sl1_kws)],
           [sg.Text('', **t24_kws)],
-          [sg.Text('Starting age (hours post-hatch): ', **t24_kws)],
-          [sg.Slider(range=(0, 250), default_value=0, key=f'SLIDER_age',
-                     tick_interval=25, resolution=0.1, **sl1_kws)]]
+          [sg.Text('', size=(10, 1)), sg.Ok(**b_kws), sg.Cancel(**b_kws)],
+          # [sg.Text('Starting age (hours post-hatch): ', **t24_kws)],
+          # [sg.Slider(range=(0, 250), default_value=0, key=f'SLIDER_age',
+          #            tick_interval=25, resolution=0.1, **sl1_kws)]
+          ]
 
-    l2 = [
-        [sg.Col([[sg.Text('Starvation periods (h)')],
-                 [sg.Table(values=starvation_hours[:][:], headings=['start', 'stop'], def_col_width=6,
+    starvation_table=sg.Col([[sg.Text('Starvation epochs (h)', **t18_kws)],
+                 [sg.Table(values=starvation_hours[:][:], headings=['start', 'stop'], def_col_width=7,
                            max_col_width=20, background_color='lightblue', header_background_color='lightorange',
                            auto_size_columns=False,
                            # display_row_numbers=True,
@@ -60,13 +62,15 @@ def life_conf():
                            alternating_row_color='lightyellow',
                            key='STARVATION'
                            )],
-                 # [sg.Listbox(values=[], change_submits=False, size=(22, 0), key='STARVATION',enable_events=True)],
-                 [sg.B('Remove', **b_kws), sg.B('Add', **b_kws)]]),
-         sg.Col([*[[sg.Text(f'{i} : ', size=(5, 1)),
-                  sg.Slider(range=(0, 250), default_value=0, key=f'SLIDER_starvation_{i}',
-                            tick_interval=25, resolution=0.1, **sl2_kws)] for i in ['start', 'stop']],
+                 [sg.B('Remove', **b_kws), sg.B('Add', **b_kws)]],**col_kws)
+
+    l1 = [
+        [starvation_table,
+         sg.Col([*[[sg.Text(f'{i} : ', **t12_kws),
+                  sg.Slider(range=(0, 250), default_value=0, key=f'SLIDER_{j}',
+                            tick_interval=25, resolution=0.1, **sl2_kws)] for i,j in zip(['start', 'stop', 'Starting age'], ['starvation_start', 'starvation_stop', 'age'])],
                  [sg.Text('')],
-                 [sg.Text('', size=(25, 1)), sg.Ok(**b_kws), sg.Cancel(**b_kws)]])]
+                 ])]
         # [sg.Text(' ' * 12)]
     ]
 
@@ -105,12 +109,12 @@ def life_conf():
                 starvation_hours.remove(starvation_hours[v['STARVATION'][0]])
                 w.Element('STARVATION').Update(values=starvation_hours, num_rows=len(starvation_hours))
                 w.write_event_value('Draw', 'Draw the initial plot')
-        elif e == 'SLIDER_quality':
+        elif e in ['SLIDER_quality', 'SLIDER_age']:
             w.write_event_value('Draw', 'Draw the initial plot')
         elif e == 'deb_mode':
             w.write_event_value('Draw', 'Draw the initial plot')
         elif e == 'Draw':
-            deb_model = deb_default(starvation_hours=starvation_hours, base_f=v['SLIDER_quality'])
+            deb_model = deb_default(starvation_hours=starvation_hours, base_f=v['SLIDER_quality'], hours_as_larva=v['SLIDER_age'])
             fig, save_to, filename = plot_debs(deb_dicts=[deb_model], mode=v['deb_mode'][0], return_fig=True)
             if fig_agg:
                 delete_figure_agg(fig_agg)

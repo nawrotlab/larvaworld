@@ -158,12 +158,12 @@ default_shortcuts = {
 }
 
 mouse_controls = {
-    'select item' : 'left click',
-    'add item' : 'left click',
-    'select item type' : 'right click',
-    'inspect item' : 'right click',
-    'screen zoom in' : 'scroll up',
-    'screen zoom out' : 'scroll down',
+    'select item': 'left click',
+    'add item': 'left click',
+    'select item type': 'right click',
+    'inspect item': 'right click',
+    'screen zoom in': 'scroll up',
+    'screen zoom out': 'scroll down',
 }
 
 
@@ -406,7 +406,14 @@ all_null_dicts = {
                 'intermitter': False,
                 'olfactor': False,
                 'feeder': False,
-                'memory': False}
+                'memory': False},
+    'sim_params': {
+        'sim_id': None,
+        'path': None,
+        'sim_dur': 3.0,
+        'dt': 0.1,
+        'Box2D': False,
+    }
 }
 
 
@@ -565,7 +572,15 @@ def get_dict_dtypes(name, **kwargs):
                     'intermitter': bool,
                     'olfactor': bool,
                     'feeder': bool,
-                    'memory': bool}
+                    'memory': bool},
+
+        'sim_params': {
+            'sim_id': str,
+            'path': str,
+            'sim_dur': float,
+            'dt': float,
+            'Box2D': bool,
+        }
 
     }
     if name in list(all_dtypes.keys()):

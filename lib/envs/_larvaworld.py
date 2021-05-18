@@ -570,7 +570,8 @@ class LarvaWorld:
             self.render(tick=self.Nticks)
             self.toggle(name='snapshot #')
             self._screen.render()
-        self._screen.close()
+        if self._screen :
+            self._screen.close()
         return self.is_running
 
     def set_end_condition(self):

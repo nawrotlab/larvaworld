@@ -1328,6 +1328,9 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             # b1 = plt.axvline(t0, color=c, alpha=0.2, linestyle='dashdot', linewidth=3)
             ax.axvline(t1, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
             ax.axvline(t2, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
+
+            ax.axvline(t3+t0, color='grey', alpha=0.6, linestyle='dashed', linewidth=3)
+            ax.axvspan(0, t3+t0, color='grey', alpha=0.1)
             if sim_only:
                 ax.set_xlim(s0, s1)
             # else :

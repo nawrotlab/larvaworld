@@ -12,7 +12,7 @@ from lib.stor import paths
 class DEB:
     def __init__(self, species='default', steps_per_day=1, cv=0,
                  aging=False, print_stage_change=False, starvation_strategy=False,
-                 base_hunger=0.5, hunger_gain = 10):
+                 base_hunger=0.5, hunger_gain = 10, hours_as_larva=0):
         # self.k_x = k_x
         # self.base_k_x = 0.3
         self.hunger_gain = hunger_gain
@@ -30,7 +30,7 @@ class DEB:
         self.birth_time_in_hours = np.nan
         self.puppation_time_in_hours = np.nan
         self.death_time_in_hours = np.nan
-        self.hours_as_larva = 0
+        self.hours_as_larva = hours_as_larva
 
         # Input params
         self.steps_per_day = steps_per_day
@@ -505,12 +505,12 @@ class DEB:
             return self.U_R / self.U_R__p
 
 
-def deb_default(starvation_hours=None, base_f=1, id=None, steps_per_day=24*60):
+def deb_default(starvation_hours=None, base_f=1, id=None, steps_per_day=24*60, **kwargs):
     if starvation_hours is None :
         starvation_hours=[]
     # print(base_f)
     base_f = base_f
-    deb = DEB(species='default', steps_per_day=steps_per_day, print_stage_change=True)
+    deb = DEB(species='default', steps_per_day=steps_per_day, print_stage_change=True, **kwargs)
     ww = []
     E = []
     e = []
