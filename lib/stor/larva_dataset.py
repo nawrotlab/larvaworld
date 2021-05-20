@@ -24,14 +24,8 @@ from lib.envs._larvaworld import LarvaWorldReplay
 
 
 class LarvaDataset:
-    def __init__(self, dir, id='unnamed',
-                 fr=16, Npoints=3, Ncontour=0,
-                 par_conf=SimParConf, arena_pars=env.dish(0.1),
-                 filtered_at=np.nan, rescaled_by=np.nan,
-                 save_data_flag=True, load_data=True,
-                 life_params={}
-                 # starvation_hours=[], deb_base_f=1
-                 ):
+    def __init__(self, dir, id='unnamed',fr=16, Npoints=3, Ncontour=0,life_params={},arena_pars=env.dish(0.1),
+                 par_conf=SimParConf, filtered_at=np.nan, rescaled_by=np.nan,save_data_flag=True, load_data=True):
         self.par_config = par_conf
         self.save_data_flag = save_data_flag
         self.define_paths(dir)
@@ -39,7 +33,6 @@ class LarvaDataset:
             with open(self.config_file_path) as tfp:
                 self.config = json.load(tfp)
             self.build_dirs()
-            # print(f'Resumed dataset {self.config["id"]} with existing configuration')
         else:
             self.config = {'id': id,
                            'fr': fr,
@@ -47,10 +40,10 @@ class LarvaDataset:
                            'rescaled_by': rescaled_by,
                            'Npoints': Npoints,
                            'Ncontour': Ncontour,
-                           # 'starvation_hours' : starvation_hours,
-                           # 'deb_base_f' : deb_base_f
+                           **par_conf,
+                           **arena_pars,
+                           **life_params
                            }
-            self.config = {**self.config, **par_conf, **arena_pars, **life_params}
             print(f'Initialized dataset {id} with new configuration')
         self.__dict__.update(self.config)
         self.arena_pars = {'arena_xdim': self.arena_xdim,
@@ -230,12 +223,12 @@ class LarvaDataset:
     #         print('All parameters filtered')
 
     def apply_filter(self, pars, freq, N=1, inplace=False, recompute=False, is_last=True, show_output=True):
-        if self.step_data is None:
-            self.load()
-        s = self.step_data
         if self.config['filtered_at'] is not None and not np.isnan(self.config['filtered_at']) and not recompute:
             output = f'Dataset has already been filtered at {self.config["filtered_at"]} Hz. If you want to apply additional filter set refilter to True'
         else:
+            if self.step_data is None:
+                self.load()
+            s = self.step_data
             pars = [p for p in pars if p in s.columns]
             self.filtered_at = freq
             self.config['filtered_at'] = freq
@@ -254,51 +247,41 @@ class LarvaDataset:
     def interpolate_nans(self, pars, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
+        s=self.step_data
+        pars=[p for p in pars if p in s.columns]
         for p in pars:
-            try:
-                for id in self.agent_ids:
-                    d = fun.interpolate_nans(self.step_data[p].xs(id, level='AgentID', drop_level=True).values)
-                    self.step_data.loc[(slice(None), id), p] = d
-            except:
-                pass
+            for id in self.agent_ids:
+                s.loc[(slice(None), id), p] = fun.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
         if is_last:
             self.save()
         if show_output:
             print('All parameters interpolated')
 
-    def rescale(self, rescale_again=False, scale=1, is_last=True, show_output=True):
-        if self.step_data is None:
-            self.load()
-        s, e = self.step_data, self.endpoint_data
-        if not rescale_again:
-            if self.config['rescaled_by'] is not None and not np.isnan(self.config['rescaled_by']):
-                prev_scale = self.config['rescaled_by']
-                if show_output:
-                    print(
-                        f'Dataset already rescaled by {prev_scale}. If you want to rescale again set rescale_again to True')
-                return
-        if show_output:
-            print(f'Rescaling dataset by {scale}')
-        dst_params = self.points_dst + [self.cent_dst] + self.segs
-        vel_params = self.points_vel + [self.cent_vel]
-        acc_params = self.points_acc + [self.cent_acc]
-        other_params = ['spinelength']
-        lin_pars = self.xy_pars + dst_params + vel_params + acc_params + other_params
-        for p in lin_pars:
-            try:
+    def rescale(self, rescale_again=False, scale=1.0, is_last=True, show_output=True):
+        if not rescale_again and self.config['rescaled_by'] is not None and not np.isnan(self.config['rescaled_by']):
+            prev_scale = self.config['rescaled_by']
+            output= f'Dataset already rescaled by {prev_scale}. If you want to rescale again set rescale_again to True'
+        else :
+            if self.step_data is None:
+                self.load()
+            s, e = self.step_data, self.endpoint_data
+            dst_params = self.points_dst + [self.cent_dst] + self.segs
+            vel_params = self.points_vel + [self.cent_vel]
+            acc_params = self.points_acc + [self.cent_acc]
+            other_params = ['spinelength']
+            lin_pars = self.xy_pars + dst_params + vel_params + acc_params + other_params
+            lin_pars = [p for p in lin_pars if p in self.step_data.columns]
+            for p in lin_pars:
                 s[p] = s[p].apply(lambda x: x * scale)
-            except:
-                pass
-        try:
-            e['length'] = e['length'].apply(lambda x: x * scale)
-        except:
-            pass
-        self.rescaled_by = scale
-        self.config['rescaled_by'] = scale
-        if is_last:
-            self.save()
+            if 'length' in e.columns :
+                e['length'] = e['length'].apply(lambda x: x * scale)
+            self.rescaled_by = scale
+            self.config['rescaled_by'] = scale
+            output=f'Dataset rescaled by {scale}.'
+            if is_last:
+                self.save()
         if show_output:
-            print(f'Dataset rescaled by {scale}.')
+            print(output)
 
     def set_step_data(self, step_data):
         try:
@@ -387,18 +370,12 @@ class LarvaDataset:
         if self.step_data is None:
             self.load()
         self.step_data.drop(columns=[p for p in pars if p in self.step_data.columns], inplace=True)
-        # for p in pars:
-        #     try:
-        #         self.step_data.drop(columns=[p], inplace=True)
-        #     except:
-        #         pass
         self.set_step_data(self.step_data)
         if is_last:
             self.save()
             self.load()
         if show_output:
             print(f'{len(pars)} parameters dropped. {len(self.step_data.columns)} remain.')
-        # print(self.step_data.columns)
 
     def drop_unused_pars(self, is_last=True, show_output=True):
         vels = ['vel', nam.scal('vel')]
@@ -654,9 +631,9 @@ class LarvaDataset:
             os.makedirs(save_to)
         if agent_ids is None:
             agent_ids = self.agent_ids
-        fig = plot_dataset(data=self.step_data, parameters=parameters, agent_ids=agent_ids, dt=self.dt, save_to=save_to,
+        fig0 = plot_dataset(data=self.step_data, parameters=parameters, agent_ids=agent_ids, dt=self.dt, save_to=save_to,
                            **kwargs)
-        return fig
+        return fig0
 
     def plot_angular_pars(self, bend_param=None, orientation_param=None, candidate_distributions=['t'],
                           chunk_only=None, num_sample=None, absolute=False):
@@ -703,24 +680,21 @@ class LarvaDataset:
         fit_bout_params(d=self, fit_filepath=self.fit_file_path, save_to=None, save_as='bout_pars.pdf')
 
     def get_par_list(self, track_point=None):
-        angle_pars = ['bend']
-        orientation_pars = ['front_orientation'] + nam.orient(self.segs)
-        chunk_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id']
+        angle_p = ['bend']
+        or_p = ['front_orientation'] + nam.orient(self.segs)
+        chunk_p = ['stride_stop', 'stride_id', 'pause_id', 'feed_id']
         if track_point is None:
             track_point = self.point
         elif type(track_point) == int:
-            if track_point == -1:
-                track_point = 'centroid'
-            else:
-                track_point = self.points[track_point]
-        pos_xy_pars = nam.xy(track_point) if set(nam.xy(track_point)).issubset(self.step_data.columns) else []
-        point_xy_pars = nam.xy(self.points, flat=True) if len(self.points_xy) >= 1 else []
-        cent_xy_pars = self.cent_xy if len(self.cent_xy) >= 1 else []
-        contour_xy_pars = nam.xy(self.contour, flat=True) if len(self.contour_xy) >= 1 else []
+            track_point = 'centroid' if track_point == -1 else self.points[track_point]
 
-        pars = cent_xy_pars + point_xy_pars + pos_xy_pars + contour_xy_pars + angle_pars + orientation_pars + chunk_pars
-        pars = np.unique(pars).tolist()
-        return pars, pos_xy_pars, track_point
+        pos_p = nam.xy(track_point) if set(nam.xy(track_point)).issubset(self.step_data.columns) else []
+        point_p = nam.xy(self.points, flat=True) if len(self.points_xy) >= 1 else []
+        cent_p = self.cent_xy if len(self.cent_xy) >= 1 else []
+        contour_p = nam.xy(self.contour, flat=True) if len(self.contour_xy) >= 1 else []
+
+        pars = np.unique(cent_p + point_p + pos_p + contour_p + angle_p + or_p + chunk_p).tolist()
+        return pars, pos_p, track_point
 
     def get_smaller_dataset(self, ids=None, pars=None, time_range=None, dynamic_color=None):
         if self.step_data is None:
@@ -740,26 +714,20 @@ class LarvaDataset:
             a, b = time_range
             a = int(a / self.dt)
             b = int(b / self.dt)
+            # tick_range=(np.array(time_range)/self.dt).astype(int)
             s = copy.deepcopy(self.step_data.loc[(slice(a, b), ids), pars])
         e = copy.deepcopy(self.endpoint_data.loc[ids])
         return s, e, ids
 
-    def visualize(self,
-                  vis_kwargs,
-                  arena_pars=None,
-                  env_params=None,
-                  track_point=None,
-                  dynamic_color=None,
-                  agent_ids=None,
-                  time_range=None,
-                  transposition=None, fix_point=None, secondary_fix_point=None,
-                  save_to=None,
-                  **kwargs):
+    def visualize(self, vis_kwargs,agent_ids=None,save_to=None,time_range=None,draw_Nsegs=None,
+                  arena_pars=None,env_params=None,space_in_mm=True,track_point=None, dynamic_color=None,
+                  transposition=None, fix_point=None, secondary_fix_point=None, **kwargs):
 
         pars, pos_xy_pars, track_point = self.get_par_list(track_point)
-        s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range=time_range,
-                                             dynamic_color=dynamic_color)
-
+        s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range=time_range, dynamic_color=dynamic_color)
+        contour_xy = nam.xy(self.contour, flat=True)
+        if (len(contour_xy) == 0 or not set(contour_xy).issubset(s.columns)) and draw_Nsegs is None:
+            draw_Nsegs = self.Nsegs
         if len(ids) == 1:
             n0 = ids[0]
         elif len(ids) == len(self.agent_ids):
@@ -767,15 +735,12 @@ class LarvaDataset:
         else:
             n0 = f'{len(ids)}l'
         traj_color = s[dynamic_color] if dynamic_color is not None else None
-        # print(arena_pars)
-        # FIXME xy are saved in mm and that messes things up. right now i scale the arena up, but this makes the scale wrong
+
         if env_params is None:
             if arena_pars is None:
                 arena_pars = self.arena_pars
             env_params = {'arena_params': arena_pars}
-        # print(arena_pars)
-        arena_dims_in_m = env_params['arena_params']['arena_xdim'], env_params['arena_params']['arena_ydim']
-        arena_dims = [i * 1000 for i in arena_dims_in_m]
+        arena_dims = [env_params['arena_params'][k] * 1000 for k in ['arena_xdim', 'arena_ydim']]
         env_params['arena_params']['arena_xdim'] = arena_dims[0]
         env_params['arena_params']['arena_ydim'] = arena_dims[1]
 
@@ -795,17 +760,10 @@ class LarvaDataset:
         if save_to is None:
             save_to = self.vis_dir
         Nsteps = len(s.index.unique('Step').values)
-        replay_env = LarvaWorldReplay(id=replay_id, env_params=env_params,
-                                      vis_kwargs=vis_kwargs,
-                                      step_data=s, endpoint_data=e,
-                                      Nsteps=Nsteps,
-                                      dataset=self,
-                                      pos_xy_pars=pos_xy_pars,
-                                      background_motion=bg,
-                                      dt=self.dt,
-                                      traj_color=traj_color,
-                                      save_to=save_to,
-                                      **kwargs)
+        replay_env = LarvaWorldReplay(id=replay_id, env_params=env_params,space_in_mm=space_in_mm,dt=self.dt,
+                                      vis_kwargs=vis_kwargs,save_to=save_to,background_motion=bg,
+                                      dataset=self, step_data=s, endpoint_data=e,Nsteps=Nsteps,draw_Nsegs=draw_Nsegs,
+                                      pos_xy_pars=pos_xy_pars,traj_color=traj_color,**kwargs)
 
         replay_env.run()
         print('Visualization complete')
@@ -1562,7 +1520,7 @@ class LarvaDataset:
         if show_output:
             print('All dominant frequencies computed')
 
-    def compute_preference_index(self, arena_diameter_in_mm=None, return_num=False, show_output=True):
+    def compute_preference_index(self, arena_diameter_in_mm=None, return_num=False, return_all=False, show_output=True):
         if not hasattr(self, 'endpoint_data'):
             self.load(step_data=False)
         if arena_diameter_in_mm is None:
@@ -1575,7 +1533,10 @@ class LarvaDataset:
         N_m = d[(d <= +r / 2) & (d >= -r / 2)].count()
         pI = np.round((N_l - N_r) / N, 3)
         if return_num:
-            return pI, N
+            if return_all :
+                return pI, N, N_l, N_r
+            else :
+                return pI, N
         else:
             return pI
 
@@ -1673,7 +1634,7 @@ class LarvaDataset:
             self.load()
         s, e = self.step_data, self.endpoint_data
 
-        for c in chunks :
+        for c in chunks:
             dur = nam.dur(c)
             e[nam.num(c)] = s[nam.stop(c)].groupby('AgentID').sum()
             e[nam.cum(dur)] = s[dur].groupby('AgentID').sum()
@@ -1684,9 +1645,7 @@ class LarvaDataset:
         if is_last:
             self.save()
 
-
-    def detect_contacting_chunks(self, chunk, track_point, mid_flag=None, edge_flag=None,
-                                 control_pars=[], vel_par=None,
+    def detect_contacting_chunks(self, chunk, track_point, mid_flag=None, edge_flag=None,control_pars=[], vel_par=None,
                                  chunk_dur_in_sec=None, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
@@ -1867,7 +1826,7 @@ class LarvaDataset:
             print('All chunk overlaps computed')
         return s[p].dropna().sum()
 
-    def track_pars_in_chunks(self, chunks, pars, mode='dif',merged_chunk=None, is_last=True, show_output=True):
+    def track_pars_in_chunks(self, chunks, pars, mode='dif', merged_chunk=None, is_last=True, show_output=True):
         if self.step_data is None:
             self.load()
         ids = self.agent_ids
@@ -1877,10 +1836,9 @@ class LarvaDataset:
         t0 = int(self.starting_tick)
         all_d = [s.xs(id, level='AgentID', drop_level=True) for id in ids]
 
-        for c in chunks :
+        for c in chunks:
             c0 = nam.start(c)
             c1 = nam.stop(c)
-
 
             all_0s = [d[d[c0] == True].index.values.astype(int) for d in all_d]
             all_1s = [d[d[c1] == True].index.values.astype(int) for d in all_d]
@@ -1917,10 +1875,10 @@ class LarvaDataset:
 
             if self.save_data_flag:
                 self.create_par_distro_dataset(p_tracks + p0s + p1s)
-        if merged_chunk is not None :
+        if merged_chunk is not None:
             mc0, mc1, mcdur = nam.start(merged_chunk), nam.stop(merged_chunk), nam.dur(merged_chunk)
             for p in pars:
-                p_mc0,p_mc1, p_mc =f'{p}_at_{mc0}', f'{p}_at_{mc1}', nam.chunk_track(merged_chunk, p)
+                p_mc0, p_mc1, p_mc = f'{p}_at_{mc0}', f'{p}_at_{mc1}', nam.chunk_track(merged_chunk, p)
                 s[p_mc0] = s[[f'{p}_at_{nam.start(c)}' for c in chunks]].sum(axis=1, min_count=1)
                 s[p_mc1] = s[[f'{p}_at_{nam.stop(c)}' for c in chunks]].sum(axis=1, min_count=1)
                 s[p_mc] = s[[nam.chunk_track(c, p) for c in chunks]].sum(axis=1, min_count=1)
@@ -1928,8 +1886,10 @@ class LarvaDataset:
                 if self.save_data_flag:
                     self.create_par_distro_dataset([p_mc0, p_mc1, mcdur, p_mc])
 
-                e[nam.mean(p_mc)] = s[[nam.chunk_track(c, p) for c in chunks]].abs().groupby('AgentID').mean().mean(axis=1)
-                e[nam.std(p_mc)] = s[[nam.chunk_track(c, p) for c in chunks]].abs().groupby('AgentID').std().mean(axis=1)
+                e[nam.mean(p_mc)] = s[[nam.chunk_track(c, p) for c in chunks]].abs().groupby('AgentID').mean().mean(
+                    axis=1)
+                e[nam.std(p_mc)] = s[[nam.chunk_track(c, p) for c in chunks]].abs().groupby('AgentID').std().mean(
+                    axis=1)
         if is_last:
             self.save()
         if show_output:
@@ -1986,8 +1946,7 @@ class LarvaDataset:
             print(f'Bearing to source {source} during {chunk} computed')
 
     def detect_chunks(self, chunk_names, par, chunk_only=None, par_ranges=[[-np.inf, np.inf]],
-                      non_overlap_chunk=None,merged_chunk=None,
-                      store_min=[False], store_max=[False],
+                      non_overlap_chunk=None, merged_chunk=None,store_min=[False], store_max=[False],
                       min_dur=0.0, is_last=True, show_output=True):
 
         if self.step_data is None:
@@ -2009,7 +1968,7 @@ class LarvaDataset:
         else:
             data = [ss[par].xs(id, level='AgentID', drop_level=True) for id in ids]
 
-        for c, (Vmin, Vmax), storMin, storMax in zip(chunk_names, par_ranges, store_min, store_max) :
+        for c, (Vmin, Vmax), storMin, storMax in zip(chunk_names, par_ranges, store_min, store_max):
             S0 = np.zeros([N, Nids]) * np.nan
             S1 = np.zeros([N, Nids]) * np.nan
             Dur = np.zeros([N, Nids]) * np.nan
@@ -2024,11 +1983,11 @@ class LarvaDataset:
             p_max = nam.max(nam.chunk_track(c, par))
             p_min = nam.min(nam.chunk_track(c, par))
 
-
             a_inds = [d[(d < Vmax) & (d > Vmin)].index for d in data]
             a_s0s = [t_inds[np.where(np.diff(t_inds, prepend=[-1]) != 1)[0]] for t_inds in a_inds]
             a_s1s = [t_inds[np.where(np.diff(t_inds, append=[np.inf]) != 1)[0]] for t_inds in a_inds]
-            a_durs = [np.array([(s1 - s0) * self.dt for s0, s1 in zip(t_s0s, t_s1s)]) for t_s0s, t_s1s in zip(a_s0s, a_s1s)]
+            a_durs = [np.array([(s1 - s0) * self.dt for s0, s1 in zip(t_s0s, t_s1s)]) for t_s0s, t_s1s in
+                      zip(a_s0s, a_s1s)]
             inds = [np.where(t_durs >= min_dur) for t_durs in a_durs]
 
             chunks = [(durs[i], s0s[i].values.astype(int), s1s[i].values.astype(int)) for durs, s0s, s1s, i in
@@ -2049,8 +2008,8 @@ class LarvaDataset:
                 a = a.flatten()
                 s[p] = a
         self.compute_chunk_metrics(chunk_names, is_last=False, show_output=show_output)
-        if merged_chunk is not None :
-            mc0,mc1,mcdur=nam.start(merged_chunk), nam.stop(merged_chunk), nam.dur(merged_chunk)
+        if merged_chunk is not None:
+            mc0, mc1, mcdur = nam.start(merged_chunk), nam.stop(merged_chunk), nam.dur(merged_chunk)
             s[mcdur] = s[[nam.dur(c) for c in chunk_names]].sum(axis=1, min_count=1)
             s[mc0] = s[[nam.start(c) for c in chunk_names]].sum(axis=1, min_count=1)
             s[mc1] = s[[nam.stop(c) for c in chunk_names]].sum(axis=1, min_count=1)
@@ -2396,10 +2355,10 @@ class LarvaDataset:
             # track_params = [b, unwrap(ho)]
 
         self.detect_chunks(chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=fov,
-                           par_ranges=[[min_ang_vel, np.inf], [-np.inf, -min_ang_vel]],merged_chunk='turn',
-                           store_max=[True, False],store_min=[False, True], **cc, **kwargs)
+                           par_ranges=[[min_ang_vel, np.inf], [-np.inf, -min_ang_vel]], merged_chunk='turn',
+                           store_max=[True, False], store_min=[False, True], **cc, **kwargs)
 
-        self.track_pars_in_chunks(chunks=['Lturn', 'Rturn'], pars=track_params,merged_chunk='turn', **cc)
+        self.track_pars_in_chunks(chunks=['Lturn', 'Rturn'], pars=track_params, merged_chunk='turn', **cc)
 
         # for track_par in track_params:
         #     for st in ['start', 'stop']:
@@ -2596,14 +2555,14 @@ class LarvaDataset:
             if p in s.columns:
                 (r1, b1, g1), (r2, b2, g2) = c
                 r, b, g = r2 - r1, b2 - b1, g2 - g1
-                temp = np.clip(s[p].abs().values/lim, a_min=0, a_max=1)
-                s[l] = [(r1 + r *t, b1 + b *t, g1 + g *t) for t in temp]
-            else :
+                temp = np.clip(s[p].abs().values / lim, a_min=0, a_max=1)
+                s[l] = [(r1 + r * t, b1 + b * t, g1 + g * t) for t in temp]
+            else:
                 s[l] = [(np.nan, np.nan, np.nan)] * N
 
                 # lambda x: (np.round(r1 + r * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3),
-                    #            np.round(b1 + b * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3),
-                    #            np.round(g1 + g * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3)))
+                #            np.round(b1 + b * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3),
+                #            np.round(g1 + g * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3)))
                 # s[l] = s[p].apply(
                 #     lambda x: (np.round(r1 + r * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3),
                 #                np.round(b1 + b * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3),
@@ -2685,7 +2644,6 @@ class LarvaDataset:
         warnings.filterwarnings('ignore')
         c = {'show_output': show_output,
              'is_last': False}
-        # tt = []
         if rescale_by is not None:
             self.rescale(scale=rescale_by, **c)
         if drop_collisions:
@@ -2694,31 +2652,23 @@ class LarvaDataset:
             self.interpolate_nans(pars=self.xy_pars, **c)
         if filter_f is not None:
             self.apply_filter(pars=self.xy_pars, freq=filter_f, inplace=True, **c)
-        # tt.append(time.time())
         if length_and_centroid:
             self.compute_length_and_centroid(drop_contour=drop_contour, **c)
-        # tt.append(time.time())
         if ang_analysis:
             self.angular_analysis(recompute=False, mode=mode, **c)
-        # tt.append(time.time())
         if lin_analysis:
             self.linear_analysis(mode=mode, **c)
             self.compute_dispersion(recompute=False, starts=dispersion_starts, **c)
             self.compute_tortuosity(**c)
-            # tt.append(time.time())
             if 'stride' in bout_annotation:
                 self.detect_strides(recompute=False, **c)
-                # tt.append(time.time())
             if 'pause' in bout_annotation:
                 self.detect_pauses(recompute=False, **c)
-                # tt.append(time.time())
             if 'turn' in bout_annotation:
                 self.detect_turns(recompute=False, **c)
-                # tt.append(time.time())
         if source_location is not None:
-            for chunk in ['turn', 'stride', 'pause']:
-                self.compute_chunk_bearing2source(chunk=chunk,source=source_location,  **c)
-        # tt.append(time.time())
+            for chunk in bout_annotation:
+                self.compute_chunk_bearing2source(chunk=chunk, source=source_location, **c)
         self.generate_traj_colors(**c)
         if drop_immobile:
             self.drop_immobile_larvae(**c)
@@ -2730,7 +2680,6 @@ class LarvaDataset:
             self.drop_unused_pars(**c)
         if is_last:
             self.save()
-        # print(np.round(np.diff(tt) * 1000))
 
     def create_reference_dataset(self):
         if self.endpoint_data is None:

@@ -21,7 +21,7 @@ def build_shortcut_layout(collapsibles):
                sg.In(default_text=conf['keys'][k], key=f'SHORT {k}', disabled=True,
                      disabled_readonly_background_color='black', enable_events=True,
                      text_color='white', **t10_kws, justification='center'),
-               graphic_button('edit', f'EDIT_SHORTCUT  {k}')] for k in list(dic.keys())],
+               graphic_button('edit', f'EDIT_SHORTCUT  {k}', tooltip=f'Edit shortcut for {k}')] for k in list(dic.keys())],
             # [sg.T("", **t8_kws)]
         ]
         collapsibles[col_title]=Collapsible(col_title, state=False, disp_name=title, content=ll)
@@ -46,10 +46,12 @@ def build_settings_tab():
     s2 = CollapsibleDict('Replay', False, dict=dtypes.get_dict('replay'), type_dict=dtypes.get_dict_dtypes('replay'),
                          toggled_subsections=False)
     s3 = Collapsible('Keyboard', True, content=l_short, next_to_header=[
-                                                graphic_button('burn', 'RESET_SHORTCUTS', tooltip='Reset all shortcuts to the defaults.')])
+                                                graphic_button('burn', 'RESET_SHORTCUTS',
+                                                               tooltip='Reset all shortcuts to the defaults. '
+                                                                       'Restart Larvaworld after changing shortcuts.')])
     s4 = Collapsible('Mouse', False, content=l_mouse)
 
-    l_controls=[[sg.Col([s3.get_section(),s4.get_section()])]]
+    l_controls = [[sg.Col([s3.get_section(),s4.get_section()])]]
 
     s5 = Collapsible('Controls', True, content=l_controls)
     for s in [s1, s2, s3, s4, s5]:
@@ -68,6 +70,7 @@ def eval_settings(event, values, window, collapsibles, dicts, graph_lists):
     cur = dicts['shortcuts']['cur']
     if event == 'RESET_SHORTCUTS':
         dicts['shortcuts']['cur'] = None
+        # window.ReturnKeyboardEvents = False
         for title, dic in dtypes.default_shortcuts.items():
             for k, v in dic.items():
                 window[f'SHORT {k}'].update(disabled=True, value=v)

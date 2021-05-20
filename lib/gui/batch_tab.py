@@ -41,12 +41,12 @@ def build_batch_tab():
 
     l_exp = [sg.Col([
         [sg.Text('Batch', **t6_kws),
-         graphic_button('load', 'LOAD_BATCH'),
-         graphic_button('data_add', 'SAVE_BATCH'),
-         graphic_button('data_remove', 'DELETE_BATCH'),
-         graphic_button('play', 'RUN_BATCH')],
-        [sg.Combo(list(loadConfDict('Batch').keys()), key='BATCH_CONF',
-                  enable_events=True, readonly=True, **t24_kws)],
+         graphic_button('load', 'LOAD_BATCH', tooltip='Load the configuration for a simulation experiment.'),
+         graphic_button('data_add', 'SAVE_BATCH', tooltip='Save a new batch run configuration.'),
+         graphic_button('data_remove', 'DELETE_BATCH', tooltip='Delete an existing batch run configuration.'),
+         graphic_button('play', 'RUN_BATCH', tooltip='Run the selected batch run experiment.')],
+        [sg.Combo(list(loadConfDict('Batch').keys()), key='BATCH_CONF', enable_events=True,
+                  tooltip='The currently loaded batch run.', readonly=True, **t24_kws)],
 
     ])]
     batch_conf = [[sg.Text('Batch id:', **t10_kws), sg.In('unnamed_batch_0', key='batch_id', **t18_kws)],

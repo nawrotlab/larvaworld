@@ -1189,7 +1189,6 @@ class Collapsible:
     def get_section(self, as_col=True):
         return [sg.Col(self.section)] if as_col else self.section
 
-
     def set_section(self, section):
         self.section = section
 
@@ -1270,7 +1269,7 @@ class CollapsibleTable(Collapsible):
         self.key = f'TABLE {name}'
         self.layout = self.get_layout()
         self.edit_key = f'EDIT_TABLE {name}'
-        b = [graphic_button('edit', self.edit_key)]
+        b = [graphic_button('edit', self.edit_key, tooltip= f'Create new {name}')]
         super().__init__(name, state, content=self.layout, next_to_header=b, **kwargs)
 
     def set_data(self, dic):
@@ -1797,7 +1796,8 @@ def check_togglesNcollapsibles(window, event, collapsibles) :
         if name in list(collapsibles.keys()) :
             collapsibles[name].toggle=not collapsibles[name].toggle
 
-def default_run_window(window, event, values, collapsibles={}, graph_lists={}) :
+
+def default_run_window(window, event, values, collapsibles={}, graph_lists={}):
     # if event in (None, 'Exit'):
     #     break
     # check_toggles(window, event)

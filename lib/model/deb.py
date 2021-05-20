@@ -39,9 +39,10 @@ class DEB:
         self.species = species
 
         # Global parameters
-        self.U_E__0 = None
+        self.U_E__0 = 0.001
+        self.E_R__p = 0.7016
+        self.L_0 = 0.001
         self.f = None
-        self.L_0 = None
 
         # parameters for the environment: here only prey density
         self.X = None
@@ -85,11 +86,8 @@ class DEB:
 
         # STANDARD DEB PARAMETERS
         self.g = None
-        self.v_rate = None
-        self.kap = None
-        self.kap_R = None
-        self.k_M_rate = None
-        self.k_J_rate = None
+        # self.v_rate = None
+        # self.k_M_rate = None
         self.U_H__b = None
         self.U_H__p = 0.00001
         self.U_H__e = None
@@ -98,7 +96,7 @@ class DEB:
 
         # PREY DYNAMICS given from netlogo interface
         self.J_XAm_rate_int = 1
-        self.F_m = 1
+        # self.F_m = 1 # This is included in the deb fit
         self.r_X = 1
         self.K_X = 1
         self.volume = 1
@@ -110,7 +108,7 @@ class DEB:
 
         # AGING given from netlogo interface.
         self.h_a = 4.105E-4
-        self.sG = -0.5
+        self.s_G = -0.5
         self.background_mortality = 0.0
 
         # not given from netlogo interface
@@ -128,7 +126,6 @@ class DEB:
             self.__dict__.update(species)
         else:
             self.__dict__.update(self.species)
-        self.shape_factor_V=self.shape_factor ** 3
         self.convert_parameters()
         self.f = 0
         self.lay_egg = False
@@ -203,8 +200,8 @@ class DEB:
     def calc_dU_E(self, f):
         g = self.g
         L = self.L
-        k_M = self.k_M_rate
-        v = self.v_rate
+        k_M = self.k_M
+        v = self.v
         if not self.U_H <= self.U_H__b:
             self.f = f
         else:
@@ -220,7 +217,7 @@ class DEB:
 
     def calc_dU_H(self):
         k = self.kap
-        k_J = self.k_J_rate
+        k_J = self.k_J
         U_H__b = self.U_H__b
         S_C = self.S_C
         U_H = self.U_H
@@ -250,7 +247,7 @@ class DEB:
     # the following procedure calculates change in reprobuffer if mature
     def calc_dU_R(self):
         k = self.kap
-        k_J = self.k_J_rate
+        k_J = self.k_J
         U_R__p = self.U_R__p
         S_C = self.S_C
         U_R = self.U_R
@@ -274,9 +271,9 @@ class DEB:
         g = self.g
         L = self.L
         LL = self.LL
-        k_M = self.k_M_rate
-        k_J = self.k_J_rate
-        v = self.v_rate
+        k_M = self.k_M
+        k_J = self.k_J
+        v = self.v
         S_C = self.S_C
         S_A = self.S_A
         e = self.e_scaled
@@ -306,11 +303,11 @@ class DEB:
         g = self.g
         L = self.L
         dL = self.dL
-        k_M = self.k_M_rate
-        v = self.v_rate
+        k_M = self.k_M
+        v = self.v
         e = self.e_scaled
         q = self.q_acceleration
-        self.dq_acceleration = (q * (self.V / (v / (g * k_M)) ** 3) * self.sG + self.h_a) * e * (
+        self.dq_acceleration = (q * (self.V / (v / (g * k_M)) ** 3) * self.s_G + self.h_a) * e * (
                 (v / L) - ((3 / L) * dL)) - ((3 / L) * dL) * q
 
     # the following procedure calculates the change in damage in the individual
@@ -318,14 +315,12 @@ class DEB:
         self.dh_rate = self.q_acceleration - ((3 / self.L) * self.dL) * self.h_rate
 
     def convert_parameters(self):
-        self.p_am = self.p_m * self.zoom / self.kap_int
-        # print(self.p_am)
-        # self.p_am = self.k_x * self.p_xm
-        self.U_H__b_int = self.E_H__b / self.p_am
-        self.U_H__e_int = self.E_H__e / self.p_am
+        self.p_am = self.p_M * self.z / self.kap
+        self.U_H__b_int = self.E_Hb / self.p_am
+        self.U_H__e_int = self.E_He / self.p_am
         self.U_R__p_int = self.E_R__p / self.p_am
-        self.k_M_rate_int = self.p_m / self.E_G
-        self.g_int = (self.E_G * self.v_rate_int / self.p_am) / self.kap_int
+        self.k_M = self.p_M / self.E_G
+        self.g_int = (self.E_G * self.v / self.p_am) / self.kap
 
     def individual_variability(self):
         # ; individuals vary in their DEB paramters on a normal distribution with a mean on the input paramater and a coefficent of variation equal to the cv
@@ -338,11 +333,6 @@ class DEB:
         self.U_R__p = self.U_R__p_int / scatter_multiplier
         self.U_H__e = self.U_H__e_int / scatter_multiplier
 
-        self.v_rate = self.v_rate_int
-        self.kap = self.kap_int
-        self.kap_R = self.kap_R_int
-        self.k_M_rate = self.k_M_rate_int
-        self.k_J_rate = self.k_J_rate_int
         self.K = self.J_XAm_rate / self.F_m
 
     def calc_embryo_reserve_investment(self):
@@ -424,8 +414,8 @@ class DEB:
         return self.f
 
     def compute_wet_weight(self):
-        physical_V = self.V * self.shape_factor_V  # in cm**3
-        w = physical_V * self.d  # in g
+        physical_V = self.V * self.del_M **3  # in cm**3
+        w = physical_V * self.d_V  # in g
         return w
 
     def get_h_rate(self):
@@ -436,7 +426,7 @@ class DEB:
 
     def get_real_L(self):
         # Structural L is in cm. We turn it to m
-        l = self.L * self.shape_factor * 10 / 1000
+        l = self.L * self.del_M * 10 / 1000
         return l
 
     def get_L(self):
@@ -554,18 +544,8 @@ def deb_default(starvation_hours=None, base_f=1, id=None, steps_per_day=24*60, *
     t2 = deb.death_time_in_hours
     t3 = deb.hours_as_larva
     starvation = [[s0 + t0, s1 + t0] for [s0, s1] in starvation_hours]
-    # print(t0,t1,starvation, deb.age_day*24)
     if not np.isnan(t2):
         starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for [s0, s1] in starvation if s0 <= t2]
-    # if id is None:
-    #     if len(starvation) == 0:
-    #         id = 'ad libitum'
-    #     elif len(starvation) == 1:
-    #         range = starvation[0]
-    #         dur = int(range[1] - range[0])
-    #         id = f'{dur}h starved'
-    #     else:
-    #         id = f'starved {len(starvation)} intervals'
     if id is None :
         id = 'DEB model'
     dict = {'birth': t0,

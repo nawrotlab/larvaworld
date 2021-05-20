@@ -66,7 +66,7 @@ def plot_dataset(save_to, save_as=None, mode='time', subplot_structure=[1, 1],
                  figsize=(15, 10), ticksize=15, labelsize=15, titlesize=25, figtitlesize=30, legendsize=15,
                  legendtitlesize=20, draw_y0=False, log=False,
                  title=None, log_yscale=False, xlim=None, ylim=None, xlabel=None, ylabel=None,
-                 sharex=False, sharey=False, **kwargs):
+                 sharex=False, sharey=False, fig=None, axs=None, **kwargs):
     # plot_config = {'axes.labelsize': labelsize,
     #                'axes.titlesize': titlesize,
     #                'figure.titlesize': figtitlesize,
@@ -75,16 +75,15 @@ def plot_dataset(save_to, save_as=None, mode='time', subplot_structure=[1, 1],
     #                'legend.fontsize': legendsize,
     #                'legend.title_fontsize': legendtitlesize}
     # plt.rcParams.update(plot_config)
-    fig, axs = plt.subplots(subplot_structure[0], subplot_structure[1], sharex=sharex, sharey=sharey, figsize=figsize)
-
-    N = subplot_structure[0] * subplot_structure[1]
-    if N > 1:
-        axs = axs.ravel()
-    else:
-        axs = [axs]
+    if fig is None and axs is None :
+        fig, axs = plt.subplots(subplot_structure[0], subplot_structure[1], sharex=sharex, sharey=sharey, figsize=figsize)
+        N = subplot_structure[0] * subplot_structure[1]
+        axs = axs.ravel() if N > 1 else [axs]
+    else :
+        N=1
 
     if mode == 'time':
-        fig, filename = time_plot(fig, axs, Nsubplots=N, **kwargs)
+        fig, filename = time_plot(fig, ax=axs[0], Nsubplots=N, **kwargs)
     elif mode == 'parsed_time':
         fig, filename = parsed_time_plot(fig, axs, Nsubplots=N, **kwargs)
     elif mode == 'hist':
@@ -135,8 +134,8 @@ def plot_dataset(save_to, save_as=None, mode='time', subplot_structure=[1, 1],
 
     if save_as:
         filename = save_as
-    filepath = os.path.join(save_to, filename)
-    save_plot(fig, filepath, filename)
+        filepath = os.path.join(save_to, filename)
+        save_plot(fig, filepath, filename)
     return fig
 
 
@@ -267,7 +266,7 @@ def parsed_time_plot(fig, axs, data, agent_ids, parameters, dt=None, Nsubplots=1
     return fig, filename
 
 
-def time_plot(fig, axs, data, agent_ids, parameters, dt=None, Nsubplots=1,
+def time_plot(fig, ax, data, agent_ids, parameters, dt=None, Nsubplots=1,
               plot_mean=False, plot_quantiles=None, plot_CI=False, secondary_ylabel=None,
               marker_params=None, background_flags=None, background_for_chunks=None, legend_labels=None,
               background_vertical_boundaries=True, show_legend=True, show_par_legend=True,
@@ -286,32 +285,76 @@ def time_plot(fig, axs, data, agent_ids, parameters, dt=None, Nsubplots=1,
             my_data.index.set_levels(my_data.index.levels[0] * dt / 3600, level=0, inplace=True)
     else:
         l = 'time $(ticks)$'
-    # axs.set_xlabel(l)
-    # print(my_data.index.values)
-    # print(my_data.index.levels[0].min())
     trange = my_data.index.unique(level='Step')
-    plt.xlim([np.min(my_data.index.levels[0].values), np.max(my_data.index.levels[0].values)])
-    plt.xlabel(l)
+    ax.set_xlim([np.min(my_data.index.levels[0].values), np.max(my_data.index.levels[0].values)])
+    ax.set_xlabel(l)
+    if len(agent_ids) == 1:
+        filename = f'parameters_of_{agent_ids[0]}.jpg'
+        agent_data = my_data.xs(agent_ids[0], level='AgentID', drop_level=True)
+        if background_flags:
+            for i, flag in enumerate(background_flags):
+                # print(flag,i)
+                flag_data = agent_data[flag].dropna()
+                flag_indexes = flag_data.index.values
+                flag_starts = [i for i in flag_indexes if i - dt not in flag_indexes]
+                flag_stops = [i for i in flag_indexes if i + dt not in flag_indexes]
+                for start, end in zip(flag_starts, flag_stops):
+                    ax.axvspan(start, end, facecolor=f'{0.2 * (i + 1)}', alpha=0.5)
+        if background_for_chunks is not None:
+            cmap = cm.get_cmap('Pastel2')
+            num_chunks = len(background_for_chunks)
+            colors = [cmap(i) for i in np.arange(num_chunks)]
+            colors = ['white', 'grey']
+            if show_legend:
+                if legend_labels is None:
+                    patch = [patches.Patch(color=color, label=name) for name, color in
+                             zip(background_for_chunks, colors)]
+                else:
+                    patch = [patches.Patch(color=color, label=name) for name, color in
+                             zip(legend_labels, colors)]
+                ax.legend(handles=patch, loc='upper right')
+            for i, (chunk, color) in enumerate(zip(background_for_chunks, colors)):
+                start_flag = f'{chunk}_start'
+                stop_flag = f'{chunk}_stop'
+                start_indexes = agent_data.index[agent_data[start_flag] == True]
+                stop_indexes = agent_data.index[agent_data[stop_flag] == True]
+                for start, stop in zip(start_indexes, stop_indexes):
+                    # print(start, stop, stop-start)
+                    ax.axvspan(start, stop, color=color, alpha=1.0)
+                    if background_vertical_boundaries:
+                        ax.axvline(start, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
+                        ax.axvline(stop, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
+        if marker_params:
+            for i, par in enumerate(marker_params):
+                dd = agent_data[par].values
+                # print(dd==True)
+                flagged_d = agent_data[parameters[0]].loc[dd == True]
+                # print(flagged_d)
+                if i == 0:
+                    ax.plot(flagged_d, linestyle='None', lw=10, color='green', marker='v')
+                elif i == 1:
+                    ax.plot(flagged_d, linestyle='None', lw=10, color='red', marker='^')
+                else:
+                    print('Currently only two marker parameters are supported')
+                    pass
     if len(parameters) == 1:
         param = parameters[0]
         if plot_CI:
             ts_m, ts_l, ts_h = mean_confidence_interval(my_data[param].values, confidence=0.95)
-            plot_mean_and_range(x=trange, mean=ts_m, lb=ts_l, ub=ts_h, axis=axs[0], color_mean='b',
+            plot_mean_and_range(x=trange, mean=ts_m, lb=ts_l, ub=ts_h, axis=ax, color_mean='b',
                                 color_shading='grey')
         elif plot_mean == True:
             mean_series = my_data[param].groupby(level='Step').mean()
-            plt.plot(mean_series, 'r', linewidth=3, linestyle="--")
+            ax.plot(mean_series, 'r', linewidth=3, linestyle="--")
         elif plot_quantiles is not None:
             ts_m = my_data[param].groupby(level='Step').median()
             if plot_quantiles == 3:
                 ts_l = my_data[param].groupby(level='Step').quantile(0.25)
                 ts_h = my_data[param].groupby(level='Step').quantile(0.75)
-                plot_mean_and_range(x=trange, mean=ts_m, lb=ts_l, ub=ts_h, axis=axs[0], color_mean='b',
+                plot_mean_and_range(x=trange, mean=ts_m, lb=ts_l, ub=ts_h, axis=ax, color_mean='b',
                                     color_shading='grey')
-                # plt.plot(aa, 'b', linewidth=2, linestyle="--")
-                # plt.plot(bb, 'b', linewidth=2, linestyle="--")
             elif plot_quantiles == 7:
-                plt.plot(ts_m, 'r', linewidth=3, linestyle="-")
+                ax.plot(ts_m, 'r', linewidth=3, linestyle="-")
                 aa = my_data[param].groupby(level='Step').quantile(0.35)
                 bb = my_data[param].groupby(level='Step').quantile(0.65)
                 cc = my_data[param].groupby(level='Step').quantile(0.2)
@@ -319,29 +362,27 @@ def time_plot(fig, axs, data, agent_ids, parameters, dt=None, Nsubplots=1,
                 ee = my_data[param].groupby(level='Step').quantile(0.05)
                 ff = my_data[param].groupby(level='Step').quantile(0.95)
 
-                plt.plot(aa, 'b', linewidth=2, linestyle="--")
-                plt.plot(bb, 'b', linewidth=2, linestyle="--")
-                plt.plot(cc, 'g', linewidth=2, linestyle="--")
-                plt.plot(ddd, 'g', linewidth=2, linestyle="--")
-                plt.plot(ee, 'c', linewidth=2, linestyle="--")
-                plt.plot(ff, 'c', linewidth=2, linestyle="--")
+                ax.plot(aa, 'b', linewidth=2, linestyle="--")
+                ax.plot(bb, 'b', linewidth=2, linestyle="--")
+                ax.plot(cc, 'g', linewidth=2, linestyle="--")
+                ax.plot(ddd, 'g', linewidth=2, linestyle="--")
+                ax.plot(ee, 'c', linewidth=2, linestyle="--")
+                ax.plot(ff, 'c', linewidth=2, linestyle="--")
         else:
             for i, agent_id in enumerate(agent_ids):
                 agent_data = my_data.xs(agent_id, level='AgentID', drop_level=True)
                 if len(agent_ids) > 5:
-                    plt.plot(agent_data[param], color='grey', alpha=0.5)
+                    ax.plot(agent_data[param], color='grey', alpha=0.5)
                 else:
-                    plt.plot(agent_data[param], color='blue')
-        plt.title(f'{param} of multiple larvae')
-        plt.ylabel(param)
+                    ax.plot(agent_data[param], color='blue')
+        ax.set_title(f'{param} of multiple larvae')
+        ax.set_ylabel(param)
         filename = f'{param}_of_multiple_larvae.jpg'
     elif len(parameters) == 2 and len(agent_ids) == 1:
         agent_id = agent_ids[0]
         param1, param2 = parameters
         d1 = my_data[param1].xs(agent_id, level='AgentID', drop_level=True)
         d2 = my_data[param2].xs(agent_id, level='AgentID', drop_level=True)
-
-        # plt.legend(loc= 'upper left')
         if secondary_ylabel is None:
             secondary_y_label = param2
 
@@ -356,17 +397,14 @@ def time_plot(fig, axs, data, agent_ids, parameters, dt=None, Nsubplots=1,
                     handles.append(h)
                     labels.append(l)
 
-            plt.legend(handles, labels, loc='upper right')
+            ax.legend(handles, labels, loc='upper right')
         else:
             ax1 = d1.plot()
             ax1.set_ylabel(param1)
             ax2 = d2.plot(secondary_y=True)
             ax2.set_ylabel(secondary_ylabel)
-        # plt.legend((a, b),
-        #            (param1, param2), loc='upper right')
-        # plt.title(f'{param1} vs {param2} for {agent_id} ')
         try:
-            axs.set_xlabel(l)
+            ax.set_xlabel(l)
         except:
             pass
         # TODO This causes problems with more than one param. or maybe not
@@ -381,66 +419,15 @@ def time_plot(fig, axs, data, agent_ids, parameters, dt=None, Nsubplots=1,
         for parameter, c in zip(parameters, colors):
             # print(parameter)
             d = my_data[parameter].xs(agent_id, level='AgentID', drop_level=True)
-            plt.plot(d, label=parameter, color=c)
-        plt.title(f'{parameters} of {agent_id} ')
-        plt.ylabel(parameters)
+            ax.plot(d, label=parameter, color=c)
+        ax.set_title(f'{parameters} of {agent_id} ')
+        ax.set_ylabel(parameters)
         if show_legend:
-            plt.legend()
+            ax.legend()
         # TODO This causes problems with more than one param. or maybe not
         filename = f'parameters_of_{agent_id}.jpg'
-        # filename = f'{parameters}_of_{agent_id}.jpg'
-        # print(filename)
     else:
         raise ('Can not plot more than 1 parametres for multiple agents')
-    if len(agent_ids) == 1:
-        agent_data = my_data.xs(agent_ids[0], level='AgentID', drop_level=True)
-        if background_flags:
-            for i, flag in enumerate(background_flags):
-                # print(flag,i)
-                flag_data = agent_data[flag].dropna()
-                flag_indexes = flag_data.index.values
-                flag_starts = [i for i in flag_indexes if i - dt not in flag_indexes]
-                flag_stops = [i for i in flag_indexes if i + dt not in flag_indexes]
-                for start, end in zip(flag_starts, flag_stops):
-                    plt.axvspan(start, end, facecolor=f'{0.2 * (i + 1)}', alpha=0.5)
-        if background_for_chunks is not None:
-            cmap = cm.get_cmap('Pastel2')
-            num_chunks = len(background_for_chunks)
-            colors = [cmap(i) for i in np.arange(num_chunks)]
-            colors = ['white', 'grey']
-            if show_legend:
-                if legend_labels is None:
-                    patch = [patches.Patch(color=color, label=name) for name, color in
-                             zip(background_for_chunks, colors)]
-                else:
-                    patch = [patches.Patch(color=color, label=name) for name, color in
-                             zip(legend_labels, colors)]
-                plt.legend(handles=patch, loc='upper right')
-            for i, (chunk, color) in enumerate(zip(background_for_chunks, colors)):
-                start_flag = f'{chunk}_start'
-                stop_flag = f'{chunk}_stop'
-                start_indexes = agent_data.index[agent_data[start_flag] == True]
-                stop_indexes = agent_data.index[agent_data[stop_flag] == True]
-                for start, stop in zip(start_indexes, stop_indexes):
-                    # print(start, stop, stop-start)
-                    plt.axvspan(start, stop, color=color, alpha=1.0)
-                    if background_vertical_boundaries:
-                        plt.axvline(start, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
-                        plt.axvline(stop, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
-        if marker_params:
-            for i, par in enumerate(marker_params):
-                dd = agent_data[par].values
-                # print(dd==True)
-                flagged_d = agent_data[parameters[0]].loc[dd == True]
-                # print(flagged_d)
-                if i == 0:
-                    plt.plot(flagged_d, linestyle='None', lw=10, color='green', marker='v')
-                elif i == 1:
-                    plt.plot(flagged_d, linestyle='None', lw=10, color='red', marker='^')
-                else:
-                    print('Currently only two marker parameters are supported')
-                    pass
-
     return fig, filename
 
 
@@ -722,6 +709,51 @@ def plot_bend_pauses(dataset, save_to=None):
     fig.savefig(filepath, dpi=300)
     print(f'Image saved as {filepath}')
 
+def plot_sample_marked_strides(datasets, labels, agent_idx=0, slice=[20,40], save_to=None, return_fig=False) :
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='stride')
+    filename = 'sample_marked_strides.pdf'
+
+    chunks=['stride', 'pause']
+    chunk_cols=['lightblue', 'grey']
+    pars, ylabels, ylims = par_conf.par_dict_lists(shorts=['sv'],to_return=['par', 'unit', 'lim'])
+    p=pars[0]
+    ylab='scaled speed'
+    # ylab=ylabels[0]
+    ylim=1.0
+    # ylim=ylims[0]
+
+    figx=15 * 6 * 3 if slice is None else 20
+    figy=5
+
+    fig, axs =plt.subplots(Ndatasets,1, figsize=(figx, figy*Ndatasets), sharey=True, sharex=True)
+    axs = axs.ravel() if Ndatasets > 1 else [axs]
+    handles = [patches.Patch(color=col, label=n) for n, col in zip(['stride', 'pause'], chunk_cols)]
+
+
+    for ii, (d, l) in enumerate(zip(datasets, labels)) :
+        ax=axs[ii]
+        if ii == Ndatasets - 1 :
+            ax.set_xlabel(r'time $(sec)$')
+        ax.set_ylabel(ylab)
+        ax.set_ylim(ylim)
+        ax.set_xlim(slice)
+        ax.legend(handles=handles, loc='upper right')
+        s=copy.deepcopy(d.step_data.xs(d.agent_ids[agent_idx], level='AgentID', drop_level=True))
+        s.set_index(s.index*d.dt, inplace=True)
+        ax.plot(s[p], color='blue')
+        for i, (c, col) in enumerate(zip(chunks, chunk_cols)):
+            s0s = s.index[s[nam.start(c)] == True]
+            s1s = s.index[s[nam.stop(c)] == True]
+            for s0, s1 in zip(s0s, s1s):
+                ax.axvspan(s0, s1, color=col, alpha=1.0)
+                ax.axvline(s0, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
+                ax.axvline(s1, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
+
+        ax.plot(s[p].loc[s[nam.max(p)] == True], linestyle='None', lw=10, color='green', marker='v')
+        ax.plot(s[p].loc[s[nam.min(p)] == True], linestyle='None', lw=10, color='red', marker='^')
+
+    plt.subplots_adjust(bottom=0.2, top=0.95, left=0.1, right=0.95, hspace=0.2)
+    return process_plot(fig, save_to, filename, return_fig)
 
 def plot_marked_strides(dataset, agent_ids=None, title=' ', show_legend=True, show_par_legend=False, slices=[],
                         return_fig=False):
@@ -1995,7 +2027,7 @@ def plot_stride_Dbend(datasets, labels, show_text=False, save_to=None, return_fi
         b1s.append(b1)
         dbs.append(db)
 
-    figsize = (5, 5)
+    figsize = (6, 5)
     ylim = [-60, 60]
     xlim = [0, 85]
 
@@ -2016,10 +2048,10 @@ def plot_stride_Dbend(datasets, labels, show_text=False, save_to=None, return_fi
         k = np.round(k, 2)
         fits[label] = [m, k]
         ax.plot(b0, m * b0 + k, linewidth=4, color=c)
-        if show_text and i == 0:
-            ax.text(80, 50, rf'$\Delta\theta_{{b}}={m} \theta_{{b}}$', fontsize=15)
+        if show_text:
+            ax.text(0.3, 0.9-i*0.1, rf'${label} : \Delta\theta_{{b}}={m} \cdot \theta_{{b}}$', fontsize=12, transform=ax.transAxes)
         print(f'Bend correction during strides for {label} fitted as : db={m}*b + {k}')
-    plt.subplots_adjust(bottom=0.15, top=0.95, left=0.2, right=0.99, wspace=0.01)
+    plt.subplots_adjust(bottom=0.2, top=0.95, left=0.25, right=0.95, wspace=0.01)
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -2056,7 +2088,7 @@ def plot_stride_Dorient(datasets, labels, simVSexp=False, absolute=True, save_to
         if legend:
             axs[i].legend()
     axs[0].set_ylabel('probability')
-    plt.subplots_adjust(bottom=0.15, top=0.95, left=0.1, right=0.99, wspace=0.01)
+    plt.subplots_adjust(bottom=0.2, top=0.95, left=0.12, right=0.99, wspace=0.01)
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -2909,9 +2941,11 @@ def plot_crawl_pars(datasets, labels, simVSexp=False, save_to=None, legend=False
     return process_plot(fig, save_to, filename, return_fig)
 
 
-def plot_endpoint_params(datasets, labels, mode='full', par_shorts=None, save_to=None, save_as=None, return_fig=False):
+def plot_endpoint_params(datasets, labels, mode='basic', par_shorts=None, save_to=None, save_as=None, return_fig=False):
     warnings.filterwarnings('ignore')
     Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='endpoint')
+    for d in datasets :
+        d.load(step_data=False)
     if save_as is None:
         filename = f'endpoint_params_{mode}.{suf}'
     else:
@@ -2923,8 +2957,11 @@ def plot_endpoint_params(datasets, labels, mode='full', par_shorts=None, save_to
     nbins = 20
 
     if par_shorts is None :
-
-        if mode == 'minimal':
+        if mode == 'basic':
+            par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
+                          'str_tr', 'pau_tr', 'Ltur_tr', 'Rtur_tr',
+                          'tor20_mu', 'sdisp40_fin', 'b_mu', 'bv_mu']
+        elif mode == 'minimal':
             par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
                           'cum_t', 'str_tr', 'pau_tr', 'tor',
                           'tor5_mu', 'tor20_mu', 'sdisp40_max', 'sdisp40_fin',
@@ -3080,49 +3117,38 @@ def plot_endpoint_params(datasets, labels, mode='full', par_shorts=None, save_to
 def plot_turn_duration(datasets, labels, save_to=None, legend=False, absolute=True, return_fig=False):
     Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='turn')
     filename = f'turn_duration.{suf}'
-
     par_shorts = ['tur_fo', 'tur_t']
-    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts,
-                                                                  to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+    pars, units = par_conf.par_dict_lists(shorts=par_shorts,to_return=['par', 'unit'])
 
-    fig, axs = plt.subplots(1, 1, figsize=(5, 5))
-
+    fig, axs = plt.subplots(1, 1, figsize=(6, 5))
     for d, l, c in zip(datasets, labels, colors):
         t = d.get_par(pars[0]).dropna().values.flatten()
         if absolute:
             t = np.abs(t)
         dur = d.get_par(pars[1]).dropna().values.flatten()
-        plt.scatter(x=dur, y=t, marker='.', s=0.5, c=c, alpha=0.5, label=l)
-
+        plt.scatter(x=dur, y=t, marker='.', s=0.5, c=c, alpha=0.5)
         m, k = np.polyfit(dur, t, 1)
-        # m = np.round(m, 3)
-        # k = np.round(k, 3)
-        # fits[label] = [m, k]
-        axs.plot(dur, m * dur + k, linewidth=4, color=c)
+        axs.plot(dur, m * dur + k, linewidth=4, color=c, label=l)
 
     plt.xlabel(units[1])
     plt.ylabel(units[0])
     axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
     if legend:
         plt.legend(loc='upper right')
-    plt.subplots_adjust(bottom=0.15, top=0.95, left=0.2, right=0.95, wspace=0.01)
+    plt.subplots_adjust(bottom=0.15, top=0.95, left=0.22, right=0.95, wspace=0.01)
     return process_plot(fig, save_to, filename, return_fig)
 
 
 def plot_turns(datasets, labels, save_to=None, return_fig=False):
     Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='turn')
     filename = f'turns.{suf}'
-    fig, axs = plt.subplots(1, 1, figsize=(5, 5))
+    fig, axs = plt.subplots(1, 1, figsize=(6, 5))
 
-    par_short = 'tur_fo'
-    par_dict = par_conf.get_par_dict(short=par_short)
-    par = par_dict['par']
-    xlabel = par_dict['unit']
+    pars, units = par_conf.par_dict_lists(shorts=['tur_fo'], to_return=['par', 'unit'])
+    par = pars[0]
+    xlabel = units[0]
 
-    ts = []
-    for d in datasets:
-        t = d.get_par(par).dropna().values
-        ts.append(t)
+    ts = [d.get_par(par).dropna().values for d in datasets]
 
     r = 150
     Nbins = 150
@@ -3135,7 +3161,7 @@ def plot_turns(datasets, labels, save_to=None, return_fig=False):
     axs.set_xlabel(xlabel)
     axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
     axs.legend(loc='upper right', fontsize=10)
-    fig.subplots_adjust(top=0.92, bottom=0.15, left=0.2, right=0.95, hspace=.005, wspace=0.05)
+    fig.subplots_adjust(top=0.92, bottom=0.15, left=0.25, right=0.95, hspace=.005, wspace=0.05)
     return process_plot(fig, save_to, filename, return_fig)
 
 def plot_turn_Dorient2center(datasets, labels, min_angle=30.0, save_to=None, return_fig=False):
@@ -3390,7 +3416,7 @@ def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
     fig_dict['turn_duration'] = plot_turn_duration(**config)
 
     # for mode in ['minimal']:
-    for mode in ['minimal', 'limited', 'full']:
+    for mode in ['minimal', 'limited']:
         fig_dict[f'endpoint_{mode}'] = plot_endpoint_params(**config, mode=mode)
     combine_pdfs(file_dir=save_to)
     return fig_dict
@@ -3761,6 +3787,7 @@ graph_dict = {
     'stridesNpauses': plot_stridesNpauses,
     'turn_duration': plot_turn_duration,
     'turns': plot_turns,
+    'marked_strides': plot_sample_marked_strides,
     'turn_Dorient2center': plot_turn_Dorient2center,
     'chunk_Dorient2source': plot_chunk_Dorient2source,
     'odor_concentration': plot_odor_concentration,

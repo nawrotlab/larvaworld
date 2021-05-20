@@ -51,8 +51,9 @@ class LarvaWorld:
                  touch_sensors=False, allow_clicks=True,
                  experiment=None,
                  progress_bar=None,
+                 space_in_mm = False
                  ):
-
+        self.space_in_mm = space_in_mm
         self.progress_bar = progress_bar
         self.vis_kwargs = vis_kwargs
         self.__dict__.update(self.vis_kwargs['draw'])
@@ -120,7 +121,7 @@ class LarvaWorld:
 
         self.sim_clock = ren.SimulationClock(self.dt, color=self.scale_clock_color)
         self.sim_scale = ren.SimulationScale(self.arena_dims[0], self.scaling_factor,
-                                             color=self.scale_clock_color)
+                                             color=self.scale_clock_color, space_in_mm=self.space_in_mm)
         self.sim_state = ren.SimulationState(model=self, color=self.scale_clock_color)
 
         self.screen_texts = self.create_screen_texts(color=self.scale_clock_color)

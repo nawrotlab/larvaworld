@@ -99,7 +99,8 @@ def build_env_tab():
          graphic_button('data_add', 'SAVE_ENV', tooltip='Save a new environment configuration.'),
          graphic_button('data_remove', 'DELETE_ENV', tooltip='Delete an existing environment configuration.'),
          ],
-        [sg.Combo(list(loadConfDict('Env').keys()), key='ENV_CONF', enable_events=True, readonly=True, **t24_kws)],
+        [sg.Combo(list(loadConfDict('Env').keys()), key='ENV_CONF', enable_events=True, readonly=True,
+                  tooltip='The currently loaded environment.', **t24_kws)],
     ])]
     l_env1 = init_env(collapsibles)
     # l_env = [[sg.Col([l_env0, l_env1], **col_kws)]]

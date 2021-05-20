@@ -64,6 +64,12 @@ odor_pref_test = {
              'collections': ['olfactor'],
              }
 
+odor_pref_test_on_food = {
+             'env_params': 'odor_pref_test_on_food',
+             'sim_params': dtypes.get_dict('sim_params'),
+             'collections': ['olfactor', 'feeder'],
+             }
+
 odor_pref_train = {
              'env_params': 'odor_pref_train',
              'sim_params': dtypes.get_dict('sim_params', sim_dur=35.0),

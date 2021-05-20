@@ -98,6 +98,14 @@ brain_feeder_olfactor = dtypes.brain_dict(['turner', 'crawler', 'interference', 
                                           intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.5),
                                           )
 
+brain_feeder_olfactor_x2 = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'olfactor', 'feeder'],
+                                             odor_dict={'CS': {'mean': 150.0, 'std': 0.0},
+                                                        'UCS': {'mean': 0.0, 'std': 0.0}},
+                                          turner=neural_turner,
+                                          interference=default_coupling,
+                                          intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.5),
+                                          )
+
 brain_rover = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'feeder'],
                                 turner=neural_turner,
                                 interference=default_coupling,
@@ -132,6 +140,7 @@ imitation_larva = dtypes.larva_dict(brain_locomotion, body=dtypes.get_dict('body
 
 basic_larva = dtypes.larva_dict(basic_brain, body=dtypes.get_dict('body', initial_length='sample', Nsegs=1))
 feeding_odor_larva = dtypes.larva_dict(brain_feeder_olfactor, body=dtypes.get_dict('body', initial_length='sample'))
+feeding_odor_larva_x2 = dtypes.larva_dict(brain_feeder_olfactor_x2, body=dtypes.get_dict('body', initial_length='sample'))
 feeding_larva = dtypes.larva_dict(brain_rover, body=dtypes.get_dict('body', initial_length='sample'))
 immobile_odor_larva = dtypes.larva_dict(brain_immobile_olfactor, body=dtypes.get_dict('body', initial_length='sample'))
 odor_larva = dtypes.larva_dict(brain_olfactor, body=dtypes.get_dict('body', initial_length='sample'))

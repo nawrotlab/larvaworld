@@ -129,12 +129,11 @@ def sim_analysis(d, exp_type):
                                          random_colors=True, trajectories=True, trajectory_dt=0,
                                          visible_clock=False, visible_scale=False, media_name='single_trajectory')
         d.visualize(agent_ids=[d.agent_ids[0]], vis_kwargs=vis_kwargs)
-    elif exp_type in ['odor_pref_test', 'odor_pref_train']:
+    elif exp_type in ['odor_pref_test', 'odor_pref_train', 'odor_pref_test_on_food']:
         ind = d.compute_preference_index()
         print(f'Preference for left odor : {np.round(ind,3)}')
         results['PI'] = ind
 
-        # return ind
     if exp_type in ['odor_preference_RL', 'odor_pref_train']:
         fig_dict['best_gains_table'] = plot_timeplot(['g_odor1', 'g_odor2'], datasets=[d], show_first=False, table='best_gains')
         fig_dict['reward_table'] = plot_timeplot(['cum_reward'], datasets=[d], show_first=False, table='best_gains')

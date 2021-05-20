@@ -415,11 +415,11 @@ class SimulationClock(ScreenItem):
 
 class SimulationScale(ScreenItem):
 
-    def __init__(self, real_width, scaling_factor, color=None):
+    def __init__(self, real_width, scaling_factor, color=None, space_in_mm = False):
         super().__init__(color=color)
 
         # Get 1/10 of max real dimension, transform it to mm and find the closest reasonable scale
-        real_width_in_mm = real_width * 1000
+        real_width_in_mm = real_width if space_in_mm else real_width*1000
         self.scale_in_mm = self.closest(lst=[1, 2.5, 5, 7.5, 10, 25, 50, 75, 100, 250, 500, 750, 1000],
                                         k=real_width_in_mm / 10)
         # I don't exactly understand why this works...

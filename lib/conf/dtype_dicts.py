@@ -416,6 +416,7 @@ all_null_dicts = {
     }
 }
 
+# print(all_null_dicts['arena']['arena_xdim','arena_ydim'])
 
 def get_dict_dtypes(name, **kwargs):
     from lib.conf import par_conf
