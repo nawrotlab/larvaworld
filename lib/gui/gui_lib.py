@@ -1338,9 +1338,11 @@ class CollapsibleDict(Collapsible):
         content = self.sectiondict.init_section()
         super().__init__(name, state, content, **kwargs)
 
-    def get_dict(self, values, window):
+    def get_dict(self, values, window, check_toggle=True):
         # print(self.name, self.state, self.toggle)
-        if self.state is None or self.toggle==False:
+        if self.state is None:
+            return None
+        elif check_toggle and self.toggle==False :
             return None
         else:
             return self.sectiondict.get_dict(values, window)

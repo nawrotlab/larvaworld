@@ -6,8 +6,8 @@ import numpy as np
 import lib.aux.functions as fun
 import lib.conf.dtype_dicts as dtypes
 from lib.gui.gui_lib import CollapsibleDict, check_collapsibles, check_toggles, \
-    retrieve_dict, t5_kws, t2_kws, color_pick_layout, b_kws, t40_kws, b_kws, w_kws, graphic_button
-
+    retrieve_dict, t5_kws, t2_kws, color_pick_layout, b_kws, t40_kws, b_kws, w_kws, graphic_button, \
+    check_togglesNcollapsibles
 
 """
     Demo - Drawing and moving demo
@@ -61,6 +61,8 @@ def add_agent_layout(name0, color, collapsibles):
     collapsibles[f'{name}_ODOR'] = CollapsibleDict(f'{name}_ODOR', False, dict=dtypes.get_dict('odor'),
                                                    type_dict=dtypes.get_dict_dtypes('odor'),
                                                    toggle=False, disp_name='odor')
+
+
     l = [[sg.R(f'Add {name0}', 1, k=name, enable_events=True)],
          [sg.T('', **t2_kws),
           sg.R('single id', 2, disabled=True, k=f'{name}_single', enable_events=True, **t5_kws),
@@ -315,8 +317,9 @@ def draw_env(env=None):
             env['food_params']['source_groups'] = db['s_g']['items']
             env['larva_params'] = db['l_g']['items']
             break  # exit
-        check_collapsibles(w, e, collapsibles)
-        check_toggles(w, e)
+        # check_collapsibles(w, e, collapsibles)
+        # check_toggles(w, e)
+        check_togglesNcollapsibles(w, e, collapsibles)
         if e == 'RESET_ARENA':
             s, arena, db = reset_arena(window=w, graph=graph, arena_pars=arena_pars, env_db=env_db)
         elif e == 'NEW_ARENA':
@@ -406,9 +409,11 @@ def draw_env(env=None):
                                                         line_color=color, fill_color=fill_color)
                                 temp = np.max(np.abs(np.array(end_point) - np.array(start_point)))
                                 w['SOURCE_FOOD_radius'].update(value=temp / s)
+
+
                                 sample_pars = {'default_color': color,
-                                               **collapsibles['SOURCE_FOOD'].get_dict(v, w),
-                                               **collapsibles['SOURCE_ODOR'].get_dict(v, w),
+                                               **collapsibles['SOURCE_FOOD'].get_dict(v, w, check_toggle=False),
+                                               **collapsibles['SOURCE_ODOR'].get_dict(v, w, check_toggle=False),
                                                }
 
                                 if v['SOURCE_single']:
@@ -432,7 +437,7 @@ def draw_env(env=None):
                             o = 'LARVA'
                             color = v[f'{o}_color']
                             sample_larva_pars = {'default_color': color,
-                                                 **collapsibles[f'{o}_ODOR'].get_dict(v, w),
+                                                 **collapsibles[f'{o}_ODOR'].get_dict(v, w, check_toggle=False),
                                                  }
                             if v[f'{o}_group']:
                                 update_window_distro(v, w, o, start_point, end_point, s)
