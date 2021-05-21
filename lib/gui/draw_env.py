@@ -428,7 +428,7 @@ def draw_env(env=None):
                             elif v[f'{o}_group']:
                                 update_window_distro(v, w, o, start_point, end_point, s)
                                 current = {v['SOURCE_group_id']: {
-                                    **collapsibles['SOURCE_DISTRO'].get_dict(v, w),
+                                    **collapsibles['SOURCE_DISTRO'].get_dict(v, w, check_toggle=False),
                                     **sample_pars
                                 }}
                                 prior_rect = draw_shape(graph, shape=v[f'{o}_DISTRO_shape'], p1=start_point,
@@ -442,7 +442,7 @@ def draw_env(env=None):
                             if v[f'{o}_group']:
                                 update_window_distro(v, w, o, start_point, end_point, s)
                                 current = {v[f'{o}_group_id']: {
-                                    **collapsibles[f'{o}_DISTRO'].get_dict(v, w),
+                                    **collapsibles[f'{o}_DISTRO'].get_dict(v, w, check_toggle=False),
                                     **sample_larva_pars
                                 }}
                                 prior_rect = draw_shape(graph, shape=v[f'{o}_DISTRO_shape'], p1=start_point,

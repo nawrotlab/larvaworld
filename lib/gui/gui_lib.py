@@ -1339,7 +1339,6 @@ class CollapsibleDict(Collapsible):
         super().__init__(name, state, content, **kwargs)
 
     def get_dict(self, values, window, check_toggle=True):
-        # print(self.name, self.state, self.toggle)
         if self.state is None:
             return None
         elif check_toggle and self.toggle==False :
