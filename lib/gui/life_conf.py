@@ -114,7 +114,7 @@ def life_conf():
         elif e == 'deb_mode':
             w.write_event_value('Draw', 'Draw the initial plot')
         elif e == 'Draw':
-            deb_model = deb_default(starvation_hours=starvation_hours, base_f=v['SLIDER_quality'], hours_as_larva=v['SLIDER_age'])
+            deb_model = deb_default(epochs=starvation_hours, base_f=v['SLIDER_quality'], hours_as_larva=v['SLIDER_age'])
             fig, save_to, filename = plot_debs(deb_dicts=[deb_model], mode=v['deb_mode'][0], return_fig=True)
             if fig_agg:
                 delete_figure_agg(fig_agg)

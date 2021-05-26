@@ -1,580 +1,576 @@
 '''
-DEB pipeline as in DEB-IBM (see code from Netlogo below)
-
-Changes from code from netlogo :
- - __ instead of ^ in variable names
+DEB pipeline from literature
 '''
 import json
 import numpy as np
+import pandas as pd
+from numpy import real
+from scipy.integrate import quad, solve_ivp
+
 from lib.stor import paths
+from lib.aux import functions as fun
 
 
 class DEB:
-    def __init__(self, species='default', steps_per_day=1, cv=0,
-                 aging=False, print_stage_change=False, starvation_strategy=False,
-                 base_hunger=0.5, hunger_gain = 10, hours_as_larva=0):
-        # self.k_x = k_x
-        # self.base_k_x = 0.3
+    def __init__(self, id='DEB model',species='default', steps_per_day=1, cv=0, T=298.15, eb=1.0,base_f = 1.0,
+                 aging=False, print_output=False, starvation_strategy=False, save_dict=True,
+                 base_hunger=0.5, hunger_gain=10, hours_as_larva=0, simulation=True):
+
+        # Drosophila model by default
+        if species == 'default':
+            with open(paths.Deb_path) as tfp:
+                self.species = json.load(tfp)
+        else:
+            self.species = species
+        self.__dict__.update(self.species)
+
+        # DEB methods enabled
+        self.starvation_strategy = starvation_strategy
+        self.aging = aging
+
+        # Hunger drive parameters
         self.hunger_gain = hunger_gain
         self.base_hunger = base_hunger
-        self.print_stage_change = print_stage_change
-        self.starvation_strategy = starvation_strategy
-        # My flags
-        self.embryo = True
-        self.larva = False
-        self.puppa = False
-        self.imago = False
+
+        # Aux input parameters
+        self.w_X = self.w_E = self.w_V = self.w_P = 23.9  # g/mol molecular weight for water-free food, reserve, structure, product(faeces)
+        self.T = T
+        self.L0 = 10 ** -10
+        self.hours_as_larva = hours_as_larva
+        self.id = id
+        self.cv = cv
+        self.eb = eb
+        self.base_f = base_f
+        self.f=base_f
+        self.print_output = print_output
+        self.simulation = simulation
+        self.epochs=[]
+        self.dict_file = None
+
+        # Larva stage flags
+        self.stage = 'embryo'
         self.alive = True
 
-        self.tick_counter = 0
+        # Stage duration parameters
+        self.age = 0
         self.birth_time_in_hours = np.nan
-        self.puppation_time_in_hours = np.nan
+        self.pupation_time_in_hours = np.nan
+        self.emergence_time_in_hours = np.nan
         self.death_time_in_hours = np.nan
-        self.hours_as_larva = hours_as_larva
 
-        # Input params
-        self.steps_per_day = steps_per_day
-        self.cv = cv
-        self.aging = aging
-        self.species = species
+        self.derived_pars()
+        self.set_steps_per_day(steps_per_day)
 
-        # Global parameters
-        self.U_E__0 = 0.001
-        self.E_R__p = 0.7016
-        self.L_0 = 0.001
-        self.f = None
-
-        # parameters for the environment: here only prey density
-        self.X = None
-        self.d_X = None
-
-        # Individual parameters
-        self.L = None
-        self.LL = None
-        self.V = None
-        self.dL = None
-        self.U_H = None
-        self.dU_H = None
-        self.U_E = None
-        self.dU_E = None
-        self.e_scaled = None
-        self.U_R = None
-        self.dU_R = None
-        self.U_V = None
-
-        # Fluxes
-        self.S_A = None
-        self.S_C = None
-
-        # EMBRYO
-        self.e_ref = None
-        self.U_E_embryo = None
-        self.S_C_embryo = None
-        self.U_H_embryo = None
-        self.L_embryo = None
-        self.dU_E_embryo = None
-        self.dU_H_embryo = None
-        self.dL_embryo = None
-
-        #   parameters used to calculate the costs for an egg / initial reserves
-        self.lower_bound = None
-        self.upper_bound = None
-        self.estimation = None
-        self.lay_egg = None
-        self.offspring_count = None
-        self.sim = None
-
-        # STANDARD DEB PARAMETERS
-        self.g = None
-        # self.v_rate = None
-        # self.k_M_rate = None
-        self.U_H__b = None
-        self.U_H__p = 0.00001
-        self.U_H__e = None
-        #  parameter that is used to randomize the input parameters
-        self.scatter_multiplier = None
-
-        # PREY DYNAMICS given from netlogo interface
-        self.J_XAm_rate_int = 1
-        # self.F_m = 1 # This is included in the deb fit
-        self.r_X = 1
-        self.K_X = 1
-        self.volume = 1
-        self.f_scaled = 1
-
-        # not given from netlogo interface
-        self.J_XAm_rate = None
-        self.K = None
-
-        # AGING given from netlogo interface.
-        self.h_a = 4.105E-4
-        self.s_G = -0.5
-        self.background_mortality = 0.0
-
-        # not given from netlogo interface
-        self.q_acceleration = 0
-        self.dq_acceleration = 0
-        self.h_rate = 0
-        self.dh_rate = 0
-        self.age_day = 0
-
-
-
-        if self.species == 'default':
-            with open(paths.Deb_path) as tfp:
-                species = json.load(tfp)
-            self.__dict__.update(species)
-        else:
-            self.__dict__.update(self.species)
-        self.convert_parameters()
-        self.f = 0
-        self.lay_egg = False
-
-        self.X = self.J_XAm_rate_int / self.F_m  # set initial value of prey to their carrying capacity
-
-        # individual-variability  ; first their individual variability in the parameter is set
-        self.individual_variability()
-        #   calc-embryo-reserve-investment     ; then the initial energy is calculated for each
-        self.calc_embryo_reserve_investment()
-        self.hunger = self.compute_hunger()
-        self.W = self.compute_wet_weight()
-
-    def compute_hunger(self):
-        try:
-            h = np.clip(self.base_hunger + self.hunger_gain*(1 - self.get_reserve_density()), a_min=0, a_max=1)
-            return h
-        except:
-            return np.nan
-
-    def run(self, f=1):
-        self.age_day += 1 / self.steps_per_day
-        self.tick_counter += 1
-        # first all individuals calculate the change in their state variables based on the current conditions
-        self.calc_dU_E(f=f)
-        self.calc_dU_H()
-        self.calc_dU_R()
-        self.calc_dL()
-
-        # if the ageing submodel is turned on, the change in damage inducing compound and damage are calculated
-        if self.aging:
-            self.calc_dq_acceleration()
-            self.calc_dh_rate()
-
-        # if food-dynamics = "logistic"     ; if prey dynamics are set to "logistic" the change in prey density is calculated
-        #   [ask patches [calc-d_X]]
-        #
-        # the the state variables of the individuals and prey are updated based on the delta value
+        self.E = self.E0
+        self.E_H = 0
+        self.E_R = 0
+        self.V = self.L0 ** 3
         self.update()
 
-        # ask turtles with [U_H >= U_H^p] ;
-        # mature individual check if they have enough energy in their reproduction buffer to repdroduce
-        if self.U_H >= self.U_H__e:
-            self.calc_lay_eggs()
-            if self.lay_egg:
-                # if so, they calculate how much energy to invest in an embryo
-                self.calc_embryo_reserve_investment()
-                # and they produce one offspring
-                self.lay_eggs()
+        self.run_embryo_stage()
+        self.predict_larva_stage(f=self.base_f)
 
-        #     do-plots                          ; then the plots are updated
-        #   if count turtles = 0 [stop]
+        if save_dict :
+            self.dict = self.init_dict()
+        else :
+            self.dict=None
 
-    # change in reserves: determined by the difference between assimilation (S_A) and mobilization (S_C) fluxes
-    # ; when food-dynamics are constant f = the value of f_scaled set in the user interface
-    # ; if food is set to  "logistic" f depends on prey density and the half-saturation coefficient (K)
-    # ; for embryos f = 0 because they do not feed exogenously
-    #
-    # to calc-dU_E
-    #
-    #   if food-dynamics = "constant"
-    #   [ ifelse U_H <= U_H^b
-    #     [set f 0]
-    #     [set f f_scaled]
-    #   ]
-    #   if food-dynamics = "logistic"
-    #   [ ifelse U_H <= U_H^b
-    #     [set f 0]
-    #     [set f X / (K + X)]
-    #   ]
+    def update(self):
+        self.L = self.V ** (1 / 3)
+        self.Lw = self.L / self.del_M
+        self.Ww = self.compute_Ww()
+        self.e = self.compute_e()
+        self.hunger = self.compute_hunger()
 
-    def calc_dU_E(self, f):
-        g = self.g
-        L = self.L
-        k_M = self.k_M
+    def scale_time(self):
+        dt = self.dt*self.T_factor
+        # print(dt)
+        self.F_m_dt = self.F_m * dt
+        self.v_dt = self.v * dt
+        self.p_M_dt = self.p_M * dt
+        self.p_T_dt = self.p_T * dt if self.p_T != 0.0 else 0.0
+        self.k_J_dt = self.k_J * dt
+        self.h_a_dt = self.h_a * dt ** 2
+
+        self.p_Am_dt = self.p_Am * dt
+        self.p_Amm_dt = self.p_Amm * dt
+        self.k_E_dt = self.k_E * dt
+
+    def set_steps_per_day(self, steps_per_day):
+        self.steps_per_day = steps_per_day
+        self.dt=1/steps_per_day
+        self.scale_time()
+
+    def derived_pars(self):
+        kap = self.kap
         v = self.v
-        if not self.U_H <= self.U_H__b:
-            self.f = f
-        else:
-            self.f = 0
-        e = v * (self.U_E / self.V)
-        self.S_C = L ** 2 * (g * e / (g + e)) * (1 + L*k_M/v)
-        self.S_A = self.f * self.LL #* self.k_x/self.base_k_x
-        # self.S_A = self.f * self.LL
-        self.dU_E = self.S_A - self.S_C
-        self.e_scaled = e
+        p_Am = self.p_Am = self.z * self.p_M / kap
+        self.E_M = p_Am / v
+        self.E_V = self.mu_V * self.d_V / self.w_V
+        k_M = self.k_M = self.p_M / self.E_G
+        g = self.g = self.E_G / (kap * self.E_M)
+        ii = g ** 2 * k_M ** 3 / ((1 - kap) * v ** 2)
+        self.k = self.k_J / k_M
+        self.U_Hb = self.E_Hb / p_Am
+        self.vHb = self.U_Hb * ii
+        self.U_He = self.E_He / p_Am
+        self.vHe = self.U_He * ii
+        self.Lm = v / (g * k_M)
+        self.T_factor = np.exp(self.T_A / self.T_ref - self.T_A / self.T);  # Arrhenius factor
 
-        # change in maturity is calculated (for immature individuals only)
+        lb = self.lb = self.get_length_at_birth(eb=self.eb)
+        Lb = self.Lb = lb * self.Lm
+        self.Lwb = Lb / self.del_M
+        self.tau_b = self.get_tau_b(eb=self.eb)
+        self.t_b = self.tau_b / k_M / self.T_factor
 
-    def calc_dU_H(self):
-        k = self.kap
-        k_J = self.k_J
-        U_H__b = self.U_H__b
-        S_C = self.S_C
-        U_H = self.U_H
-        U_H__e = self.U_H__e
-        if U_H < U_H__b:  # they only invest into maturity until they reach puberty
-            self.dU_H = (1 - k) * S_C - k_J * U_H
-        elif U_H__b <= U_H < U_H__e:
-            if self.embryo and not self.larva:
-                self.embryo = False
-                self.larva = True
-                self.birth_time_in_hours = self.age_day * 24
-                if self.print_stage_change:
-                    print(f'Larval stage reached after {self.age_day} days')
-            if self.puppa:
-                self.dU_H = (1 - k) * S_C - k_J * U_H
-            else:
-                self.dU_H = 0
+        self.k_E = v / Lb
 
-        elif U_H__e <= U_H:
-            if self.puppa and not self.imago:
-                self.puppa = False
-                self.imago = True
-                if self.print_stage_change:
-                    print(f'Imago stage reached after {self.age_day} days')
-            self.dU_H = 0
+        # For the larva the volume specific max assimilation rate p_Amm is used instead of the surface-specific p_Am
+        self.p_Amm = p_Am / Lb
 
-    # the following procedure calculates change in reprobuffer if mature
-    def calc_dU_R(self):
-        k = self.kap
-        k_J = self.k_J
-        U_R__p = self.U_R__p
-        S_C = self.S_C
-        U_R = self.U_R
-        if self.larva and U_R < U_R__p:
-            self.dU_R = (1 - k) * S_C - k_J * U_R__p
-        elif U_R >= U_R__p:
-            if self.larva and not self.puppa:
-                self.larva = False
-                self.puppa = True
-                self.puppation_time_in_hours = self.age_day * 24
-                if self.print_stage_change:
-                    print(f'Puppal stage reached after {self.age_day} days')
-            if self.imago:
-                self.dU_R = (1 - k) * S_C - k_J * U_R__p
-            else:
-                self.dU_R = 0
+        self.uE0 = self.get_initial_reserve(eb=self.eb)
+        self.U0 = self.uE0 * v ** 2 / g ** 2 / k_M ** 3
+        self.E0 = self.U0 * p_Am
+        self.Ww0 = self.E0 * self.w_E / self.mu_E  # g, initial wet weight
 
-    # the following procedure calculates change in structural length, if growth in negative the individual does not have enough energy to pay somatic maintenance and the starvation submodel is run
-    # where growth is set to 0 and individuals divirt enough energy from development (for juveniles) or reprodution (for adults) to pay maintenance costs
-    def calc_dL(self):
+        self.v_Rm = (1 + lb / g) / (1 - lb)  # scaled max reprod buffer density
+        self.v_Rj = self.s_j * self.v_Rm  # scaled reprod buffer density at pupation
+        if self.print_output:
+            print('------------------Egg------------------')
+            print(f'Reserve energy  (mJ) :       {int(1000 * self.E0)}')
+            print(f'Wet weight      (mg) :       {np.round(1000 * self.Ww0, 5)}')
+
+    def get_tau_b(self, eb=1.0):
+        def get_tb(x, ab, xb):
+            return x ** (-2 / 3) / (1 - x) / (ab - fun.beta0(x, xb))
+
         g = self.g
-        L = self.L
-        LL = self.LL
-        k_M = self.k_M
-        k_J = self.k_J
-        v = self.v
-        S_C = self.S_C
-        S_A = self.S_A
-        e = self.e_scaled
-        k = self.kap
-        U_H__p = self.U_H__p
-        self.dL = (((v / (g * LL)) * S_C) - k_M * L) / 3
-        # if growth is negative use starvation strategy 3 from the DEB book
-        if self.dL < 0:
-            if e < L / (v / (g * k_M)) and self.starvation_strategy:
-                self.dL = 0
-                d = (1 - k) * e * LL - k_J * U_H__p - k * LL * (L / (v / (g * k_M)) - e)
-                if self.U_H < self.U_H__p:
-                    self.dU_H = d
-                else:
-                    self.dU_R = d
-                self.dU_E = S_A - e * LL
-                if self.U_H < U_H__p:
-                    if self.dU_H < 0:
-                        self.die()
-                    if self.U_R < 0:
-                        self.die()
-            else:
-                self.die()
+        xb = g / (eb + g)
+        ab = 3 * g * xb ** (1 / 3) / self.lb
+        return 3 * quad(func=get_tb, a=1e-15, b=xb, args=(ab, xb))[0]
 
-    # the following procedure calculates the change in damage enducing compounds of an individual
-    def calc_dq_acceleration(self):
+    def get_length_at_birth(self, eb=1.0):
         g = self.g
-        L = self.L
-        dL = self.dL
+        k = self.k
+        vHb = self.vHb
+
+        n = 1000 + round(1000 * max(0, k - 1))
+        xb = g / (g + eb)
+        xb3 = xb ** (1 / 3)
+        x = np.linspace(10 ** -5, xb, n)
+        dx = xb / n
+        x3 = x ** (1 / 3)
+
+        b = fun.beta0(x, xb) / (3 * g)
+
+        t0 = xb * g * vHb
+        i = 0
+        norm = 1
+        ni = 100
+
+        lb = vHb ** (1 / 3)
+
+        while i < ni and norm > 1e-18:
+            l = x3 / (xb3 / lb - b)
+            s = (k - x) / (1 - x) * l / g / x
+            vv = np.exp(- dx * np.cumsum(s))
+            vb = vv[- 1]
+            r = (g + l)
+            rv = r / vv
+            t = t0 / lb ** 3 / vb - dx * np.sum(rv)
+            dl = xb3 / lb ** 2 * l ** 2. / x3
+            dlnv = np.exp(- dx * np.cumsum(s * dl / l))
+            dlnvb = dlnv[- 1]
+            dt = - t0 / lb ** 3 / vb * (3 / lb + dlnvb) - dx * np.sum((dl / r - dlnv) * rv)
+            lb -= t / dt  # Newton Raphson step
+            norm = t ** 2
+            i += 1
+        return lb
+
+    def get_initial_reserve(self, eb=1.0):
+        g = self.g
+        xb = g / (g + eb)
+        return np.real((3 * g / (3 * g * xb ** (1 / 3) / self.lb - fun.beta0(0, xb))) ** 3)
+
+    def predict_larva_stage(self, f=1.0):
+        g = self.g
+        lb = self.lb
+        c1 = f / g * (g + lb) / (f - lb)
+        c2 = self.k * self.vHb / lb ** 3
+        rho_j = (f / lb - 1) / (f / g + 1)  # scaled specific growth rate of larva
+
+        def get_tj(tau_j):
+            ert = np.exp(- tau_j * rho_j)
+            return np.abs(self.v_Rj - c1 * (1 - ert) + c2 * tau_j * ert)
+
+        tau_j = self.tau_j = fun.simplex(get_tj, 1)
+        self.lj = lb * np.exp(tau_j * rho_j / 3)
+        self.t_j = tau_j / self.k_M / self.T_factor
+        Lj = self.Lj = self.lj * self.Lm
+        self.Lwj = Lj / self.del_M
+        E_Rm = self.E_Rm = self.v_Rm * (1 - self.kap) * g * self.E_M * Lj ** 3
+        self.E_Rj = E_Rm * self.s_j
+        self.E_eggs = E_Rm * self.kap_R
+
+    def predict_pupa_stage(self):
+        g = self.g
         k_M = self.k_M
-        v = self.v
-        e = self.e_scaled
-        q = self.q_acceleration
-        self.dq_acceleration = (q * (self.V / (v / (g * k_M)) ** 3) * self.s_G + self.h_a) * e * (
-                (v / L) - ((3 / L) * dL)) - ((3 / L) * dL) * q
 
-    # the following procedure calculates the change in damage in the individual
-    def calc_dh_rate(self):
-        self.dh_rate = self.q_acceleration - ((3 / self.L) * self.dL) * self.h_rate
+        def emergence(t, luEvH, terminal=True, direction=0):
+            return self.vHe - luEvH[2]
 
-    def convert_parameters(self):
-        self.p_am = self.p_M * self.z / self.kap
-        self.U_H__b_int = self.E_Hb / self.p_am
-        self.U_H__e_int = self.E_He / self.p_am
-        self.U_R__p_int = self.E_R__p / self.p_am
-        self.k_M = self.p_M / self.E_G
-        self.g_int = (self.E_G * self.v / self.p_am) / self.kap
+        def get_te(t, luEvH):
+            l = luEvH[0]
+            u_E = max(1e-6, luEvH[1])
+            ii = u_E + l ** 3
+            dl = (g * u_E - l ** 4) / ii / 3
+            du_E = - u_E * l ** 2 * (g + l) / ii
+            dv_H = - du_E - self.k * luEvH[2]
+            return [dl, du_E, dv_H]  # pack output
 
-    def individual_variability(self):
-        # ; individuals vary in their DEB paramters on a normal distribution with a mean on the input paramater and a coefficent of variation equal to the cv
-        #   ; set cv to 0 for no variation
-        #   set scatter-multiplier e ^ (random-normal 0 cv)
-        scatter_multiplier = np.exp(np.random.normal(0, self.cv))
-        self.J_XAm_rate = self.J_XAm_rate_int * scatter_multiplier
-        self.g = self.g_int / scatter_multiplier
-        self.U_H__b = self.U_H__b_int / scatter_multiplier
-        self.U_R__p = self.U_R__p_int / scatter_multiplier
-        self.U_H__e = self.U_H__e_int / scatter_multiplier
+        sol = solve_ivp(fun=get_te, t_span=(0, 1000), y0=[0, self.uEj, 0], events=emergence)
+        self.tau_e = sol.t_events[0][0]
+        self.le, self.uEe = sol.y_events[0][0][:2]
+        self.t_e = self.tau_e / k_M / self.T_factor
+        self.Le = self.le * self.Lm
+        self.Lwe = self.Le / self.del_M
+        self.Ue = self.uEe * self.v ** 2 / g ** 2 / k_M ** 3
+        self.Ee = self.Ue * self.p_Am
+        self.Wwe = self.compute_Ww(V=self.Le ** 3, E=self.Ee + self.E_Rj)  # g, wet weight at emergence
 
-        self.K = self.J_XAm_rate / self.F_m
+        self.V=self.Le**3
+        self.E=self.Ee
+        self.E_H=self.E_He
+        self.update()
 
-    def calc_embryo_reserve_investment(self):
+        self.emergence_time_in_hours = self.pupation_time_in_hours + np.round(self.t_e * 24, 1)
+        self.stage = 'imago'
+        self.age = self.t_e
+        if self.print_output:
+            print('-------------Pupa stage-------------')
+            print(f'Duration         (d) :      {np.round(self.t_e, 3)}')
+            print('-------------Emergence--------------')
+            print(f'Wet weight      (mg) :      {np.round(self.Wwe * 1000, 5)}')
+            print(f'Physical length (mm) :      {np.round(self.Lwe * 10, 3)}')
 
-        self.L = self.L_0
-        self.LL=self.L**2
-        self.V=self.L**3
-        self.U_E = self.U_E__0
-        self.U_H = 0
-        self.U_R = 0
-        self.dU_R = 0
-        self.U_V = self.compute_structure()
+    def predict_imago_stage(self, f=1.0):
+        # if np.abs(self.sG) < 1e-10:
+        #     self.sG = 1e-10
+        # self.uh_a =self.h_a/ self.k_M ** 2 # scaled Weibull aging coefficient
+        # self.lT = self.p_T/(self.p_M*self.Lm)# scaled heating length {p_T}/[p_M]Lm
+        # self.li = f - self.lT;
+        # self.hW3 = self.ha * f * self.g/ 6/ self.li
+        # self.hW = self.hW3**(1/3) # scaled Weibull aging rate
+        # self.hG = self.sG * f * self.g * self.li**2
+        # self.hG3 = self.hG**3;     # scaled Gompertz aging rate
+        # self.tG = self.hG/ self.hW
+        # self.tG3 = self.hG3/ self.hW3 # scaled Gompertz aging rate
+        # # self.tau_m = sol.t_events[0][0]
+        # # self.lm, self.uEm=sol.y_events[0][0][:2]
+        self.t_m = self.tau_m / self.k_M / self.T_factor
+        self.Li = self.li * self.Lm
+        self.Lwi = self.Li / self.del_M
+        self.Ui = self.uEi * self.v ** 2 / self.g ** 2 / self.k_M ** 3
+        self.Ei = self.Ui * self.p_Am
+        self.Wwi = self.compute_Ww(V=self.Li ** 3, E=self.Ei + self.E_Rj)  # g, imago wet weight
+        self.age = self.t_m
 
-    def calc_lay_eggs(self):
-        pass
+        self.V = self.Li ** 3
+        self.E = self.Ei
+        self.update()
 
-    def lay_eggs(self):
-        pass
+        if self.print_output:
+            print('-------------Imago stage-------------')
+            print(f'Duration         (d) :      {np.round(self.t_i_cor, 3)}')
+            print('---------------Emergence---------------')
+            print(f'Wet weight      (mg) :      {np.round(self.Wwi * 1000, 5)}')
+            print(f'Physical length (mm) :      {np.round(self.Lwi * 10, 3)}')
+
+    def run_embryo_stage(self, dt=None):
+        if dt is None:
+            dt = self.dt
+
+        kap = self.kap
+        E_G = self.E_G
+
+        t = 0
+
+        while self.E_H < self.E_Hb:
+            p_S = self.p_M_dt * self.V + self.p_T_dt * self.V ** (2 / 3)  # This is in e/t and below needs to be volume-specific
+            p_C = self.E * (E_G * self.v_dt / self.V ** (1 / 3) + p_S / self.V) / (kap * self.E / self.V + E_G)
+            p_G = kap * p_C - p_S
+            p_J = self.k_J_dt * self.E_H
+            p_R = (1 - kap) * p_C - p_J
+
+            self.E -= p_C
+            self.V += p_G / E_G
+            self.E_H += p_R
+            self.update()
+
+            t += dt
+        self.Eb = self.E
+        L_b = self.V ** (1 / 3)
+        Lw_b = L_b / self.del_M
+
+        self.Wwb = self.compute_Ww(V=self.Lb ** 3, E=self.Eb)  # g, wet weight at birth
+        self.birth_time_in_hours = np.round(self.t_b * 24, 2)
+        self.stage = 'larva'
+        self.age=self.t_b
+        if self.print_output:
+            print('-------------Embryo stage-------------')
+            print(f'Duration         (d) :      predicted {np.round(self.t_b, 3)} VS computed {np.round(t, 3)}')
+            print('----------------Birth----------------')
+            print(f'Wet weight      (mg) :      {np.round(self.Wwb * 1000, 5)}')
+            print(f'Physical length (mm) :      predicted {np.round(self.Lwb * 10, 3)} VS computed {np.round(Lw_b * 10, 3)}')
+
+    def run_larva_stage(self, f=1.0, dt=None):
+        if dt is None:
+            dt = self.dt
+        kap = self.kap
+        E_G = self.E_G
+        g = self.g
+        del_M = self.del_M
+
+
+
+        t = 0
+
+        while self.E_R < self.E_Rj:
+            p_A = self.p_Amm_dt * f * self.V
+            p_S = self.p_M_dt * self.V
+            p_C = self.E * (E_G * self.k_E_dt + p_S / self.V) / (kap * self.E / self.V + E_G)
+            p_G = kap * p_C - p_S
+            p_J = self.k_J_dt * self.E_Hb
+            p_R = (1 - kap) * p_C - p_J
+
+            self.E += (p_A - p_C)
+            self.V += p_G / E_G
+            self.E_R += p_R
+            self.update()
+
+            t += dt
+        Lw_j = self.V ** (1 / 3) / del_M
+        Ej = self.Ej = self.E
+        self.Uj = Ej / self.p_Am
+        self.uEj = self.lj ** 3 * (self.kap * self.kap_V + f / g)
+        # self.uEj = self.Uj / self.v ** 2 * self.g ** 2 * self.k_M ** 3
+        self.Wwj=self.compute_Ww(V=self.Lj ** 3, E=Ej + self.E_Rj)  # g, wet weight at pupation, including reprod buffer
+        # self.Wwj = self.Lj**3 * (1 + f * self.w_V) # g, wet weight at pupation, excluding reprod buffer at pupation
+        # self.Wwj += self.E_Rj * self.w_E/ self.mu_E/ self.d_E # g, wet weight including reprod buffer
+        self.pupation_time_in_hours = self.birth_time_in_hours + np.round(t * 24, 1)
+        self.stage = 'pupa'
+        if self.print_output:
+            print('-------------Larva stage-------------')
+            print(f'Duration         (d) :      predicted {np.round(self.t_j, 3)} VS computed {np.round(t, 3)}')
+            print('---------------Pupation---------------')
+            print(f'Wet weight      (mg) :      {np.round(self.Wwj * 1000, 5)}')
+            print(f'Physical length (mm) :      predicted {np.round(self.Lwj * 10, 3)} VS computed {np.round(Lw_j * 10, 3)}')
+
+    def compute_hunger(self):
+        return np.clip(self.base_hunger + self.hunger_gain * (1 - self.get_e()), a_min=0, a_max=1)
+
+    def run(self, f=None):
+        if f is None :
+            f=self.base_f
+        self.f=f
+        self.age += self.dt
+
+        kap = self.kap
+        E_G = self.E_G
+
+        if self.E_R < self.E_Rj:
+            p_A = self.p_Amm_dt * f * self.V
+            p_S = self.p_M_dt * self.V
+            p_C = self.E * (E_G * self.k_E_dt + p_S / self.V) / (kap * self.E / self.V + E_G)
+            p_G = kap * p_C - p_S
+            p_J = self.k_J_dt * self.E_Hb
+            p_R = (1 - kap) * p_C - p_J
+            self.E += (p_A - p_C)
+            self.V += p_G / E_G
+            self.E_R += p_R
+            self.update()
+
+        elif self.stage=='larva' :
+            self.pupation_time_in_hours = np.round(self.age * 24, 1)
+            self.stage = 'pupa'
+            # self.hours_as_larva = self.pupation_time_in_hours - self.birth_time_in_hours
+        if self.dict is not None :
+            self.update_dict()
+
 
     def die(self):
         self.alive = False
-        self.death_time_in_hours = self.age_day * 24
-        if self.print_stage_change:
-            print(f'Dead after {self.age_day} days')
-
-    # the following procedure calculates change in prey density this procedure is only run when prey dynamics are set to "logistic" in the user interface
-    #    set d_X (r_X) * X * (1 - (X / K_X))   - sum [ S_A * J_XAm_rate   ] of turtles-here / volume
-    def calc_d_X(self):
-        pass
-
-    # to update
-    # ; individuals update their state variables based on the calc_state variable proccesses
-    #   ask turtles
-    #   [
-    #     set U_E U_E + dU_E / timestep
-    #     set U_H U_H + dU_H / timestep
-    #     set U_R U_R + dU_R    / timestep
-    #     set L L + dL    / timestep
-    #     if U_H > U_H^b
-    #     [ set q_acceleration q_acceleration + dq_acceleration  / timestep
-    #       set h_rate h_rate + dh_rate  / timestep
-    #     ]
-    #
-    #    if aging = "on" [if ticks mod timestep = age-day [if random-float 1 < h_rate [die]] ] ;ageing related mortality
-    #    if aging = "off" [if ticks mod timestep = age-day [if random-float 1 < background-mortality [die]] ]
-    #  ]
-    #   if food-dynamics = "logistic"[ ask patches [ set X X + d_X / timestep]]
-    def update(self):
-        s = self.steps_per_day
-        t = self.tick_counter
-        self.U_E += self.dU_E / s
-        self.U_H += self.dU_H / s
-        self.U_R += self.dU_R / s
-        self.L += self.dL / s
-        self.LL = self.L**2
-        self.V = self.L*self.LL
-        self.U_V = self.compute_structure()
-        self.hunger = self.compute_hunger()
-        self.W = self.compute_wet_weight()
-
-        # ageing related mortality
-        if self.aging:
-            if self.U_H >= self.U_H__b:
-                self.q_acceleration += self.dq_acceleration / s
-                self.h_rate += self.dh_rate / s
-            if t % s == 0:
-                if np.random.uniform(0, 1) < self.h_rate:
-                    self.die()
-        # background mortality
-        else:
-            # TODO define background mortality
-            pass
-            # if t % s == 0:
-            #     if np.random.uniform(0, 1) < self.background_mortality:
-            #         self.die()
-        #   if food-dynamics = "logistic"[ ask patches [ set X X + d_X / timestep]]
+        self.death_time_in_hours = self.age * 24
+        if self.print_output:
+            print(f'Dead after {self.age} days')
 
     def get_f(self):
         return self.f
 
-    def compute_wet_weight(self):
-        physical_V = self.V * self.del_M **3  # in cm**3
-        w = physical_V * self.d_V  # in g
-        return w
+    def compute_Ww(self, V=None, E=None):
+        if V is None :
+            V=self.V
+        if E is None :
+            E=self.E+self.E_R
+        return V * self.d_V + E * self.w_E / self.mu_E
 
-    def get_h_rate(self):
-        return self.h_rate
+    def compute_e(self, V=None, E=None, E_M=None):
+        if V is None:
+            V = self.V
+        if E is None:
+            E = self.E
+        if E_M is None:
+            E_M = self.E_M
+        return E/V/E_M
 
-    def get_q_acceleration(self):
-        return self.q_acceleration
-
-    def get_real_L(self):
+    def get_Lw(self):
         # Structural L is in cm. We turn it to m
-        l = self.L * self.del_M * 10 / 1000
-        return l
+        return self.Lw * 10 / 1000
 
     def get_L(self):
         return self.L
 
-    def get_W(self):
-        return self.W
+    def get_Ww(self):
+        return self.Ww
 
-    def get_U_E(self):
-        return self.U_E
+    def get_E_R(self):
+        return self.E_R
 
-    def get_U_R(self):
-        return self.U_R
-
-    def get_U_H(self):
-        return self.U_H
-
-    def get_U_V(self):
-        return self.U_V
+    def get_E_H(self):
+        return self.E_H
 
     def get_V(self):
         return self.V
 
-    def get_reserve(self):
-        return self.U_E * self.p_am
+    def get_E(self):
+        return self.E
 
-    def get_reserve_density(self):
-        if self.embryo and not self.larva:
-            return np.nan
-        else:
-            return self.e_scaled
+    def get_e(self):
+        return self.e
 
-    def reach_stage(self, stage='larva'):
-        if stage == 'larva':
-            while self.alive and not self.larva:
-                f = 1
-                self.run(f)
-
-    def advance_larva_age(self, hours_as_larva, f=1, starvation_hours=None):
-        self.hours_as_larva = hours_as_larva
-        if starvation_hours is None :
-            N = int(self.steps_per_day / 24 * hours_as_larva)
-            for i in range(N):
-                self.run(f)
+    def grow_larva(self, hours_as_larva=None, epochs=None, fs=None):
+        if epochs is None:
+            if hours_as_larva is not None :
+                self.hours_as_larva = hours_as_larva
+                N = int(self.steps_per_day / 24 * hours_as_larva)
+                for i in range(N):
+                    if self.stage=='larva' :
+                        self.run()
+            else :
+                while self.stage == 'larva':
+                    self.run()
+                self.hours_as_larva = self.pupation_time_in_hours-self.birth_time_in_hours
         else:
             t = 0
-            for s0, s1 in starvation_hours:
+            Nepochs=len(epochs)
+            if fs is None :
+                fs=[0]*Nepochs
+            elif type(fs)==float :
+                fs=[fs]*Nepochs
+            elif len(fs)!=Nepochs :
+                raise ValueError (f'Number of functional response values : {len(fs)} does not much number of epochs : {Nepochs}')
+            max_age=(self.birth_time_in_hours+hours_as_larva)/24 if hours_as_larva is not None else np.inf
+            for (s0, s1), f in zip(epochs, fs):
                 N0 = int(self.steps_per_day / 24 * (s0 - t))
                 for i in range(N0):
-                    self.run(f)
+                    if self.stage == 'larva' and self.age<=max_age:
+                        self.run()
                 N1 = int(self.steps_per_day / 24 * (s1 - s0))
                 for i in range(N1):
-                    self.run(0)
+                    if self.stage == 'larva' and self.age<=max_age:
+                        self.run(f=f)
                 t += s1
-            N2 = int(self.steps_per_day / 24 * (hours_as_larva - t))
-            for i in range(N2):
-                self.run(f)
+            if hours_as_larva is not None :
+                self.hours_as_larva = hours_as_larva
+                N2 = int(self.steps_per_day / 24 * (hours_as_larva - t))
+                for i in range(N2):
+                    if self.stage == 'larva':
+                        self.run()
+            else :
+                while self.stage == 'larva':
+                    self.run()
+                self.hours_as_larva = self.pupation_time_in_hours-self.birth_time_in_hours
+            self.epochs = self.store_epochs(epochs)
 
-    def compute_structure(self):
-        return self.V * self.E_G
+    def get_pupation_buffer(self):
+        return self.E_R / self.E_Rj
 
-    def get_puppation_buffer(self):
-        if self.embryo and not self.larva:
-            return np.nan
-        else:
-            return self.U_R / self.U_R__p
+    def get_hunger(self):
+        return self.hunger
 
+    def init_dict(self):
+        dict = {
+                'age': [],
+                'mass': [],
+                'length': [],
+                'reserve': [],
+                'reserve_density': [],
+                'hunger': [],
+                'pupation_buffer': [],
+                'f': []
+                }
+        return dict
 
-def deb_default(starvation_hours=None, base_f=1, id=None, steps_per_day=24*60, **kwargs):
-    if starvation_hours is None :
-        starvation_hours=[]
-    # print(base_f)
-    base_f = base_f
-    deb = DEB(species='default', steps_per_day=steps_per_day, print_stage_change=True, **kwargs)
-    ww = []
-    E = []
-    e = []
-    h = []
-    # L = []
-    real_L = []
-    # U_H = []
-    # U_R = []
-    # U_V = []
-    fs = []
-    puppation_buffer = []
-    c0 = False
-    while not deb.puppa:
-        if not deb.alive:
-            print(f'The organism died at {deb.death_time_in_hours} hours.')
-            t1 = np.nan
-            break
-        if deb.larva:
-            if any([r1 <= (deb.age_day * 24 - t0) < r2 for [r1, r2] in starvation_hours]):
-                f = 0
-            else:
-                f = base_f
-        else:
-            f = base_f
-        ww.append(deb.get_W() * 1000)
-        h.append(deb.hunger)
-        real_L.append(deb.get_real_L() * 1000)
-        # L.append(deb.get_L())
-        E.append(deb.get_reserve())
-        e.append(deb.get_reserve_density())
-        # U_H.append(deb.get_U_H() * 1000)
-        # U_R.append(deb.get_U_R() * 1000)
-        # U_V.append(deb.get_U_V() * 1000)
-        fs.append(deb.get_f())
-        puppation_buffer.append(deb.get_puppation_buffer())
-        deb.run(f)
-        if deb.larva and not c0:
-            c0 = True
-            t0 = deb.birth_time_in_hours
-    t1 = deb.puppation_time_in_hours
-    t2 = deb.death_time_in_hours
-    t3 = deb.hours_as_larva
-    starvation = [[s0 + t0, s1 + t0] for [s0, s1] in starvation_hours]
-    if not np.isnan(t2):
-        starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for [s0, s1] in starvation if s0 <= t2]
-    if id is None :
-        id = 'DEB model'
-    dict = {'birth': t0,
-            'puppation': t1,
-            'death': t2,
-            'age': deb.age_day * 24,
-            'sim_start': t3,
-            'mass': ww,
-            'length': real_L,
-            'reserve': E,
-            'reserve_density': e,
-            'hunger': h,
-            # 'structural_length': L,
-            # 'maturity': U_H,
-            # 'reproduction': U_R,
-            # 'structure': U_V,
-            'puppation_buffer': puppation_buffer,
-            # 'steps_per_day': deb.steps_per_day,
-            # 'Nticks': deb.tick_counter,
-            'simulation': False,
-            'f': fs,
-            'id': id,
-            'starvation': starvation}
-    return dict
+    def update_dict(self):
+        d=self.dict
+        d['age'].append(self.age*24)
+        d['mass'].append(self.get_Ww()*1000)
+        d['length'].append(self.get_Lw()*1000)
+        d['reserve'].append(self.get_E())
+        d['reserve_density'].append(self.get_e())
+        d['hunger'].append(self.get_hunger())
+        d['pupation_buffer'].append(self.get_pupation_buffer())
+        d['f'].append(self.get_f())
+
+    def finalize_dict(self):
+        d = self.dict
+        d['birth'] = self.birth_time_in_hours
+        d['pupation'] = self.pupation_time_in_hours
+        d['emergence'] = self.emergence_time_in_hours
+        d['death'] = self.death_time_in_hours
+        d['id'] = self.id
+        d['simulation'] = self.simulation
+        d['sim_start'] = self.hours_as_larva
+        d['epochs'] = self.epochs
+
+    def return_dict(self) :
+        return self.dict
+
+    def store_epochs(self, epochs):
+        t0= self.birth_time_in_hours
+        t1= self.pupation_time_in_hours
+        t2= self.death_time_in_hours
+        epochs = [[s0 + t0, s1 + t0] for [s0, s1] in epochs]
+        for t in [t1,t2] :
+            if not np.isnan(t):
+             epochs = [[s0, np.clip(s1, a_min=s0, a_max=t)] for [s0, s1] in epochs if s0 <= t]
+        return epochs
+
+    def save_dict(self, path):
+        if self.dict is not None :
+            self.finalize_dict()
+            self.dict_file=f'{path}/{self.id}.txt'
+            with open(self.dict_file, "w") as fp:
+                json.dump(self.dict, fp)
+
+    def load_dict(self):
+        if self.dict_file is not None :
+            with open(self.dict_file) as tfp:
+                d = json.load(tfp)
+            return d
+
+def deb_default(epochs=None, fs=None, base_f=1.0, steps_per_day=24 * 60, **kwargs):
+    deb = DEB(steps_per_day=steps_per_day, base_f=base_f,simulation=False, **kwargs)
+    deb.grow_larva(epochs=epochs, fs=fs, hours_as_larva=None)
+    deb.finalize_dict()
+    d=deb.return_dict()
+    return d
 
 
 def deb_dict(dataset, id, new_id=None, starvation_hours=None):
-    if starvation_hours is None :
-        starvation_hours=[]
+    if starvation_hours is None:
+        starvation_hours = []
     s = dataset.step_data.xs(id, level='AgentID')
     e = dataset.endpoint_data.loc[id]
     if new_id is not None:
@@ -583,11 +579,10 @@ def deb_dict(dataset, id, new_id=None, starvation_hours=None):
     t2 = e['death_time_in_hours']
     t3 = e['hours_as_larva']
     starvation = [[s0 + t0, s1 + t0] for [s0, s1] in starvation_hours]
-    # print(t0, starvation)
     if not np.isnan(t2):
         starvation = [[s0, np.clip(s1, a_min=s0, a_max=t2)] for [s0, s1] in starvation if s0 <= t2]
     dict = {'birth': t0,
-            'puppation': e['puppation_time_in_hours'],
+            'puppation': e['pupation_time_in_hours'],
             'death': t2,
             'age': e['age'],
             'sim_start': t3,
@@ -609,3 +604,12 @@ def deb_dict(dataset, id, new_id=None, starvation_hours=None):
             'id': id,
             'starvation': starvation}
     return dict
+
+
+if __name__ == '__main__':
+    eb = 1.0
+    f = 1.0
+    steps_per_day = 10 ** 3
+    deb = DEB(eb=eb, steps_per_day=steps_per_day, print_output=True)
+    deb.run_larva_stage(f=f)
+    deb.predict_pupa_stage()

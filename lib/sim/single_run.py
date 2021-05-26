@@ -58,7 +58,7 @@ def sim_analysis(d, exp_type):
     elif exp_type in ['growth', 'rovers_sitters']:
         starvation_hours = d.config['starvation_hours']
         f = d.config['deb_base_f']
-        deb_model = deb_default(starvation_hours=starvation_hours, base_f=f)
+        deb_model = deb_default(epochs=starvation_hours, base_f=f)
         if exp_type == 'rovers_sitters':
             roversVSsitters = True
             datasets = d.split_dataset(larva_id_prefixes=['Sitter', 'Rover'])
@@ -70,7 +70,8 @@ def sim_analysis(d, exp_type):
 
 
 
-        deb_dicts = [deb_dict(d, id, starvation_hours=starvation_hours) for id in d.agent_ids] + [deb_model]
+        deb_dicts = list(d.load_deb_dicts().values()) + [deb_model]
+        # deb_dicts = [deb_dict(d, id, starvation_hours=starvation_hours) for id in d.agent_ids] + [deb_model]
         c = {'save_to': d.plot_dir,
              'roversVSsitters': roversVSsitters}
         c1 = {'deb_dicts': deb_dicts[:-1],
@@ -85,7 +86,7 @@ def sim_analysis(d, exp_type):
                 for i, s in enumerate([True, False]):
                     l = f'{m}_{t}_{i}'
                     save_as = f'{l}.pdf'
-                    fig_dict[l] = plot_debs(save_as=save_as, mode=m, time_unit=t, start_at_sim_start=s, **c, **c1)
+                    fig_dict[l] = plot_debs(save_as=save_as, mode=m, time_unit=t, **c, **c1)
         cc = {'datasets': datasets,
               'labels': labels,
               'save_to': d.plot_dir}
@@ -236,6 +237,11 @@ def run_sim_basic(
             if env.table_collector is not None :
                 d.save_tables(env.table_collector.tables)
             fun.dict_to_file(param_dict, d.sim_pars_file_path)
+            for l in env.get_flies() :
+                try :
+                    l.deb.save_dict(d.deb_dir)
+                except :
+                    pass
             # Save the odor layer
             # if env.Nodors > 0:
             #     env.plot_odorscape(save_to=d.plot_dir)

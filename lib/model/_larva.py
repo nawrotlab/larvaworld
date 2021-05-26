@@ -280,19 +280,15 @@ class LarvaSim(BodySim, Larva):
                 self.f_exp_coef = np.exp(-self.f_decay * self.model.dt)
                 steps_per_day = 24 * 60
                 if self.hunger_as_EEB:
-                    self.deb = DEB(steps_per_day=steps_per_day, base_hunger=self.brain.intermitter.base_EEB,
+                    self.deb = DEB(id=self.unique_id, steps_per_day=steps_per_day, base_hunger=self.brain.intermitter.base_EEB,
                                    hunger_gain=energetic_pars['hunger_gain'])
                 else:
-                    self.deb = DEB(steps_per_day=steps_per_day,
-                                   hunger_gain=energetic_pars['hunger_gain'])
-                self.deb.reach_stage('larva')
-                self.deb.advance_larva_age(hours_as_larva=self.model.hours_as_larva, f=self.model.deb_base_f,
-                                           starvation_hours=self.model.deb_starvation_hours)
-                self.deb.steps_per_day = int(24 * 60 * 60 / self.model.dt)
-                self.real_length = self.deb.get_real_L()
-                self.real_mass = self.deb.get_W()
+                    self.deb = DEB(id=self.unique_id, steps_per_day=steps_per_day, hunger_gain=energetic_pars['hunger_gain'], base_f=self.model.deb_base_f)
+                self.deb.grow_larva(hours_as_larva=self.model.hours_as_larva, epochs=self.model.deb_starvation_hours)
+                self.deb.set_steps_per_day(int(24 * 60 * 60 / self.model.dt))
+                self.real_length = self.deb.get_Lw()
+                self.real_mass = self.deb.get_Ww()
                 self.V = self.deb.get_V()
-                # p_am=self.deb.p_am
 
             else:
                 self.deb = None
@@ -356,8 +352,8 @@ class LarvaSim(BodySim, Larva):
                 f += food_quality * self.absorption * amount_eaten / self.max_feed_amount
             f *= self.f_exp_coef
             self.deb.run(f=f)
-            self.real_length = self.deb.get_real_L()
-            self.real_mass = self.deb.get_W()
+            self.real_length = self.deb.get_Lw()
+            self.real_mass = self.deb.get_Ww()
             self.V = self.deb.get_V()
 
             if food_detected is None:

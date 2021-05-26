@@ -327,19 +327,6 @@ class BodySim(BodyManager):
         dd=0.01
         counter = -1
         while not in_tank :
-            # if np.isnan(ang_vel) :
-            #
-            #     print()
-            #     print(d, lin_vel)
-            #     d = 0
-            #     lin_vel = 0
-            #     print(self.unique_id, counter)
-            #     print(o0, hp0)
-            #     print(ang_vel)
-            #     print(ang_vel0)
-            #     print(np.abs(ang_vel)*np.sign(ang_vel0))
-            #     raise
-
             counter+=1
             ang_vel*=-(1+dd*counter)
             o1 = o0 + ang_vel * dt
@@ -354,12 +341,7 @@ class BodySim(BodyManager):
                 hf1 = hp1 + k * (self.get_sim_length()/2)
 
             in_tank = fun.inside_polygon(points=[hf1, hp1], tank_polygon=self.tank_polygon)
-
-        # if np.isnan(ang_vel):
-        #     print('xxxx', np.sign(ang_vel0))
         ang_vel = np.abs(ang_vel)*np.sign(ang_vel0)
-        # if np.isnan(ang_vel):
-        #     print('xxxex', np.sign(ang_vel0))
         head.set_pose(hp1, o1)
         head.update_vertices(hp1, o1)
         if self.Nsegs > 1:
@@ -409,19 +391,7 @@ class BodySim(BodyManager):
 
     def compute_body_bend(self):
         curr = sum(self.spineangles[:self.Nangles_b])
-        # if self.model.count_bend_errors:
-        #     self.body_bend_0 = self.body_bend
-        #     if np.abs(self.body_bend_0) > 2 and np.abs(curr) > 2 and self.body_bend_0 * curr < 0:
-        #         self.body_bend_errors += 1
-                # curr=np.sign(curr)*np.pi
-                # print('Illegal bend over rear axis')
         self.body_bend_0 = self.body_bend
-        # if np.abs(self.body_bend_0) > 2 and np.abs(curr) > 2 and self.body_bend_0 * curr < 0:
-        #     self.body_bend_errors += 1
-        #     self.segs[0].set_ang_vel(0)
-        #     print('ss')
-        # else :
-        #     self.body_bend = curr
         self.body_bend = curr
         self.body_bend_vel_0=self.body_bend_vel
         self.body_bend_acc_0=self.body_bend_acc

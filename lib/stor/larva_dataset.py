@@ -620,6 +620,17 @@ class LarvaDataset:
         except:
             raise ValueError(f'No dataset at {file_path}')
 
+    def load_deb_dicts(self, agent_ids=None):
+        if agent_ids is None :
+            agent_ids=self.agent_ids
+        d={}
+        for id in agent_ids :
+            f=f'{self.deb_dir}/{id}.txt'
+            with open(f) as tfp:
+                dic = json.load(tfp)
+            d[id]=dic
+        return d
+
     #####################################
     ############# PLOTS #################
     #####################################
@@ -2607,11 +2618,12 @@ class LarvaDataset:
         self.plot_dir = os.path.join(dir, 'plots')
         self.vis_dir = os.path.join(dir, 'visuals')
         self.aux_dir = os.path.join(dir, 'aux')
+        self.deb_dir = os.path.join(self.data_dir, 'deb_dicts')
         self.par_distro_dir = os.path.join(self.aux_dir, 'par_distros')
         self.par_during_stride_dir = os.path.join(self.aux_dir, 'par_during_stride')
         self.dispersion_dir = os.path.join(self.aux_dir, 'dispersion')
         self.comp_plot_dir = os.path.join(self.plot_dir, 'comparative')
-        self.dirs = [self.dir, self.data_dir, self.plot_dir, self.vis_dir, self.comp_plot_dir,
+        self.dirs = [self.dir, self.data_dir, self.plot_dir, self.vis_dir, self.comp_plot_dir,self.deb_dir,
                      self.aux_dir, self.par_distro_dir, self.par_during_stride_dir, self.dispersion_dir]
 
         self.step_file_path = os.path.join(self.data_dir, 'step_data.csv')

@@ -325,22 +325,17 @@ class LarvaWorld:
                 pass
 
     def draw_aux(self, screen):
-        # t1 = time.time()
         screen.draw_arena(self.tank_shape, self.tank_color, self.screen_color)
-        # t2 = time.time()
         if self.visible_clock:
             self.sim_clock.draw_clock(screen)
         if self.visible_scale:
             self.sim_scale.draw_scale(screen)
         if self.visible_state:
             self.sim_state.draw_state(screen)
-        t3 = time.time()
         self.input_box.draw(screen)
 
         self.draw_screen_texts(screen)
-        t4 = time.time()
-        # print()
-        # print(np.round([1000*(t4-t3)]))
+
 
     def draw_arena(self, screen, background_motion):
         screen.set_bounds(*self.space_edges_for_screen)
@@ -428,9 +423,6 @@ class LarvaWorld:
             # t3 = time.time()
             self._screen.render()
 
-        # t4 = time.time()
-        # print()
-        # print(np.round([1000*(t4-t1),1000*(t2-t1), 1000*(t3-t2), 1000*(t4-t3)]))
     def screen2space_pos(self, pos):
         p = (2 * pos[0] / self.screen_width - 1), -(2 * pos[1] / self.screen_height - 1)
         pp = p[0] * self.space_dims[0] / 2, p[1] * self.space_dims[1] / 2
@@ -464,10 +456,8 @@ class LarvaWorld:
                 ids = [f'{group_id}_{i}' for i in range(N)]
                 for id, p in zip(ids, food_positions):
                     self.add_food(id=id, position=p, food_pars=pars)
-        # print(pars0['source_units'])
-        # raise
+
         for id, f_pars in pars0['source_units'].items():
-            # print(f_pars)
             position = f_pars['pos']
             f_pars.pop('pos')
             self.add_food(id=id, position=position, food_pars=f_pars)
@@ -499,6 +489,7 @@ class LarvaWorld:
                      larva_pars=pars, group=group, default_color=default_color)
         self.active_larva_schedule.add(l)
         self.all_larva_schedule.add(l)
+
         return l
 
     def add_agent(self, agent_class, p0, p1=None):
@@ -542,16 +533,12 @@ class LarvaWorld:
         bar=self.progress_bar
         while self.is_running and self.Nticks < Nsteps and not self.end_condition_met:
             if not self.sim_paused:
-                # t0=time.time()
                 self.step()
                 bar.update(self.Nticks)
             if mode=='video' :
                 if img_mode != 'snapshots':
-                    # t1 = time.time()
                     self.render(tick=self.Nticks)
-                    # t2 = time.time()
                 elif (self.Nticks - 1) % self.snapshot_interval == 0:
-                    # print('ss')
                     self.render(tick=self.Nticks)
             elif mode== 'image':
                 if img_mode == 'overlap':
@@ -561,9 +548,6 @@ class LarvaWorld:
                         self.render(tick=self.Nticks)
                         self.toggle(name='snapshot #')
                         self._screen.render()
-
-            # print()
-            # print((t1-t0)*1000, (t2-t1)*1000)
 
         if img_mode == 'overlap':
             self._screen.render()
@@ -579,13 +563,10 @@ class LarvaWorld:
         if self.experiment == 'capture_the_flag':
             for f in self.get_food():
                 if f.unique_id == 'Flag':
-                    # print('ss')
                     self.flag = f
                 elif f.unique_id == 'Left_base':
-                    # print('ssdd')
                     self.l_base = f
                 elif f.unique_id == 'Right_base':
-                    # print('sssssa')
                     self.r_base = f
             self.l_base_p = self.l_base.get_position()
             self.r_base_p = self.r_base.get_position()
@@ -977,10 +958,6 @@ class LarvaWorldSim(LarvaWorld):
             for i, (p, o, pars) in enumerate(zip(positions, orientations, all_pars)):
                 self.add_larva(position=p, orientation=o, id=f'{group_id}_{i}', pars=pars, group=group_id,
                                default_color=group_pars['default_color'])
-                # print(pars['brain']['olfactor_params'])
-                # print(i, pars['brain']['olfactor_params']['odor_dict']['CS']['mean'])
-            # raise
-            # self._place_larvae(positions, orientations, ids, all_pars, group=group_id)
 
     def step(self):
 
@@ -991,11 +968,9 @@ class LarvaWorldSim(LarvaWorld):
         if len(self.sim_starvation_hours) > 0:
             self.starvation = self.sim_clock.timer_on
             if self.sim_clock.timer_opened:
-                # print('Starvation period starts!')
                 if self.food_grid is not None:
                     self.food_grid.empty_grid()
             if self.sim_clock.timer_closed:
-                # print('Starvation period ended!')
                 if self.food_grid is not None:
                     self.food_grid.reset()
 

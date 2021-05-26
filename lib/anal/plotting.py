@@ -1231,8 +1231,8 @@ def plot_pauses(dataset, Npauses=10, save_to=None, plot_simulated=False, return_
     save_plot(fig, filepath2, filename2)
 
 
-def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSsitters=False, sim_only=False,
-              start_at_sim_start=False, time_unit='hours', return_fig=False,
+def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSsitters=False,
+              time_unit='hours', return_fig=False,sim_only=False,
               datasets=None, labels=None, include_default_deb=False):
     from lib.model.deb import deb_dict, deb_default
     warnings.filterwarnings('ignore')
@@ -1241,7 +1241,6 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     os.makedirs(save_to, exist_ok=True)
     if save_as is None:
         save_as = f'debs.{suf}'
-    # filepath = os.path.join(save_to, save_as)
     if deb_dicts is None:
         default_deb_added = False
         deb_dicts = []
@@ -1249,9 +1248,10 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             starvation_hours = d.config['starvation_hours']
             if include_default_deb and not default_deb_added:
                 f = d.config['deb_base_f']
-                deb_model = deb_default(starvation_hours=starvation_hours, base_f=f)
+                deb_model = deb_default(epochs=starvation_hours, base_f=f)
                 deb_dicts.append(deb_model)
-            dataset_deb_dicts = [deb_dict(d, id, starvation_hours=starvation_hours) for id in d.agent_ids]
+            dataset_deb_dicts = list(d.load_deb_dicts().values())
+            # dataset_deb_dicts = [deb_dict(d, id, starvation_hours=starvation_hours) for id in d.agent_ids]
             deb_dicts.append(dataset_deb_dicts)
         deb_dicts = flatten_list(deb_dicts)
 
@@ -1286,14 +1286,13 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     labels0 = ['mass', 'length',
                'reserve', 'f',
                'reserve_density', 'hunger',
-               'puppation_buffer', 'explore2exploit_balance',
+               'pupation_buffer', 'explore2exploit_balance',
                'f_filt']
     ylabels0 = ['wet mass $(mg)$', 'body length $(mm)$',
                 r'reserve $(J)$', r'functional response $(-)$',
                 r'reserve density $(-)$', r'hunger drive $(-)$',
                 r'pupation buffer $(-)$', r'explore2exploit_balance $(-)$',
                 r'functional response $(-)$', ]
-    # print(mode)
     if mode == 'minimal':
         idx = [2, 4, 5, 6]
     elif mode == 'full':
@@ -1308,14 +1307,11 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
 
     figsize = (15, 4 * len(labels))
     fig, axs = plt.subplots(len(labels), figsize=figsize, sharex=True)
-    if len(labels) > 1:
-        axs = axs.ravel()
-    else:
-        axs = [axs]
-    t0s, t1s, t2s, ages = [], [], [], []
+    axs = axs.ravel() if len(labels) > 1 else [axs]
+
+    t0s, t1s, t2s,t3s, max_ages = [], [], [], [], []
     for d, id, c in zip(deb_dicts, ids, cols):
-        Nticks = len(d[labels[0]])
-        t0, t1, t2, t3, age = d['birth'], d['puppation'], d['death'], d['sim_start'], d['age']
+        t0, t1, t2, t3, age = d['birth'], d['pupation'], d['death'], d['sim_start']+d['birth'], np.array(d['age'])
         if time_unit == 'hours':
             pass
         elif time_unit == 'minutes':
@@ -1330,67 +1326,47 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             t2 *= 3600
             t3 *= 3600
             age *= 3600
-        if d['simulation']:
-            if not start_at_sim_start:
-                s0, s1 = t0 + t3, age
-            else:
-                s0, s1 = 0, age - t0 - t3
-        else:
-            s0, s1 = 0, age
 
-        t_deb = np.linspace(s0, s1, Nticks)
-        starvation = d['starvation']
+
         t0s.append(t0)
         t1s.append(t1)
         t2s.append(t2)
-        ages.append(age)
-        # print(starvation)
-        # print(t0, t3, t0+t3)
+        t3s.append(t3)
+        max_ages.append(age[-1])
 
         for j, (l, yl) in enumerate(zip(labels, ylabels)):
             if l == 'f_filt':
                 P = d['f']
-                sos = signal.butter(N=1, Wn=4, btype='lowpass', analog=False, fs=Nticks / (s1 - s0), output='sos')
+                sos = signal.butter(N=1, Wn=4, btype='lowpass', analog=False, fs=len(P) / (age[-1] - t0), output='sos')
                 P = signal.sosfiltfilt(sos, P)
             else:
                 P = d[l]
             ax = axs[j]
-            ax.plot(t_deb, P, color=c, label=id, linewidth=2, alpha=1.0)
+            ax.plot(age, P, color=c, label=id, linewidth=2, alpha=1.0)
             ax.axvline(t0, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
-            # b1 = plt.axvline(t0, color=c, alpha=0.2, linestyle='dashdot', linewidth=3)
             ax.axvline(t1, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
             ax.axvline(t2, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
+            if d['simulation'] :
+                # ax.axvline(t3, color='grey', alpha=0.3, linestyle='dashed', linewidth=3)
+                ax.axvspan(0, t3, color='grey', alpha=0.05)
+            for st0, st1 in d['epochs']:
 
-            ax.axvline(t3+t0, color='grey', alpha=0.6, linestyle='dashed', linewidth=3)
-            ax.axvspan(0, t3+t0, color='grey', alpha=0.1)
-            if sim_only:
-                ax.set_xlim(s0, s1)
-            # else :
-            #     ax.set_xlim(xmin=s0)
-            for st0, st1 in starvation:
-                if start_at_sim_start and d['simulation']:
-                    st0 -= (t0 + t3)
-                    st1 -= (t0 + t3)
                 ax.axvspan(st0, st1, color=c, alpha=0.2)
-            # b2 = plt.axvline(t1, color=c, alpha=0.2, linestyle='dashdot', linewidth=3)
-            # b_leg = plt.legend([b1, b2], ["birth", "puppation"], loc='upper center')
-            # plt.gca().add_artist(b_leg)
             ax.set_ylabel(yl)
             ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
             ax.xaxis.set_major_locator(ticker.MaxNLocator(10))
-            # ax.ticklabel_format(useMathText=True, scilimits=(0, 0))
-            if l in ['puppation_buffer', 'explore2exploit_balance']:
+            if l in ['pupation_buffer', 'explore2exploit_balance']:
                 ax.set_ylim([0, 1])
             if l == 'f':
                 ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
                 ax.set_ylim(ymin=0)
 
-        for t in [t0, t1, t2]:
+        for t in [0, t0, t1, t2]:
             if not np.isnan(t):
                 try:
                     ax.annotate('', xy=(t, 0), xycoords='data',
                                 xytext=(t, -0.2), textcoords='data',
-                                arrowprops=dict(color='black', shrink=0.1, alpha=0.6)
+                                arrowprops=dict(color='black', shrink=0.08, alpha=0.6)
                                 )
                 except:
                     pass
@@ -1398,12 +1374,13 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     T0 = np.nanmean(t0s)
     T1 = np.nanmean(t1s)
     T2 = np.nanmean(t2s)
-    fontsize = 15
+
+    fontsize = 20
     y = -0.2
-    texts = ['hatch', 'pupation', 'death']
-    # texts=['egg', 'hatch', 'pupation', 'death']
-    text_xs = [T0, T1, T2]
-    # text_xs=[0, T0, T1, T2]
+    # texts = ['hatch', 'pupation', 'death']
+    texts=['egg', 'hatch', 'pupation', 'death']
+    # text_xs = [T0, T1, T2]
+    text_xs=[0, T0, T1, T2]
     for text, x in zip(texts, text_xs):
         try:
             ax.annotate(text, xy=(x, 0), xycoords='data', fontsize=fontsize,
@@ -1411,6 +1388,8 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                         horizontalalignment='center', verticalalignment='top')
         except:
             pass
+    if sim_only :
+        axs[0].set_xlim([np.min(t3s), np.max(max_ages)])
 
     axs[0].legend(handles=[patches.Patch(color=c, label=id) for c, id in zip(leg_cols, leg_ids)],
                   labels=leg_ids, fontsize=20, loc='upper left', prop={'size': 15})

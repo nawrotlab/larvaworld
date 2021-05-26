@@ -3,8 +3,9 @@ import math
 import random
 import sys
 import time
+from scipy.optimize import minimize
 from collections import deque
-
+from numpy.lib import scimath
 import numpy
 import pandas as pd
 from contextlib import contextmanager
@@ -22,6 +23,21 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Polygon, LineString
 from shapely.ops import split
 from lib.stor.paths import LarvaShape_path
+
+def simplex(func, x0, args=()):
+    res = minimize(func, x0, args=args, method='nelder-mead', options={'xatol': 1e-8, 'disp': False}).x[0]
+    return res
+
+def beta0(x0, x1):
+    x03 = x0 ** (1 / 3)
+    x13 = x1 ** (1 / 3)
+    a3 = math.sqrt(3)
+
+    f1 = - 3 * x13 + a3 * np.arctan((1 + 2 * x13) / a3) - scimath.log(x13 - 1) + scimath.log(1 + x13 + x13 ** 2) / 2
+    f0 = - 3 * x03 + a3 * np.arctan((1 + 2 * x03) / a3) - scimath.log(x03 - 1) + scimath.log(1 + x03 + x03 ** 2) / 2
+    f = f1 - f0
+    return np.real(f)
+    # return f
 
 
 def sigmoid(x):
@@ -88,7 +104,7 @@ def restore_bend_2seg(bend, d, l, correction_coef=1.0):
         return bend * (1 - d / k0)
     elif k0 <= d:
         return 0
-    elif d<0 :
+    elif d < 0:
         return bend
 
 
@@ -215,13 +231,13 @@ def unwrap_deg(ts):
 
 
 def flatten_tuple(test_tuple):
-    res=[]
-    if isinstance(test_tuple, tuple) :
-        for i in test_tuple :
-            if isinstance(i, tuple) :
-                for j in i :
+    res = []
+    if isinstance(test_tuple, tuple):
+        for i in test_tuple:
+            if isinstance(i, tuple):
+                for j in i:
                     res.append(j)
-            else :
+            else:
                 res.append(i)
         return tuple(res)
 
@@ -229,6 +245,7 @@ def flatten_tuple(test_tuple):
     # for sub in test_tuple:
     #     res += flatten_tuple(sub)
     # return tuple(res)
+
 
 def flatten_list(l):
     return [item for sublist in l for item in sublist]
@@ -546,17 +563,18 @@ def compute_component_velocity(xy, angles, dt, return_dst=False):
     else:
         return v
 
-def compute_bearing2source(xs, ys,  ors, loc=(0.0,0.0), in_deg=True) :
+
+def compute_bearing2source(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
     # Compute the orientation relative to a source located at loc
     # args :
     #       xys : 2D array of the xy position.
     #       ors : 1D array of the absolute orientation (already in deg).
-    x0,y0=loc
-    dxs = x0- np.array(xs)
+    x0, y0 = loc
+    dxs = x0 - np.array(xs)
     dys = y0 - np.array(ys)
     rads = np.arctan2(dys, dxs)
-    drads=(ors-np.rad2deg(rads))%360
-    drads[drads>180]-=360
+    drads = (ors - np.rad2deg(rads)) % 360
+    drads[drads > 180] -= 360
     return drads if in_deg else np.deg2rad(rads)
 
 
@@ -783,21 +801,24 @@ def update_extrema(pairs, ids, mins, maxs, first_xy, last_xy):
     return ids, mins, maxs, first_xy, last_xy
 
 
-def single_parametric_interpolate(obj_x_loc,obj_y_loc,numPts=50):
+def single_parametric_interpolate(obj_x_loc, obj_y_loc, numPts=50):
     n = len(obj_x_loc)
-    vi = [[obj_x_loc[(i+1)%n] - obj_x_loc[i],
-         obj_y_loc[(i+1)%n] - obj_y_loc[i]] for i in range(n)]
+    vi = [[obj_x_loc[(i + 1) % n] - obj_x_loc[i],
+           obj_y_loc[(i + 1) % n] - obj_y_loc[i]] for i in range(n)]
     si = [np.linalg.norm(v) for v in vi]
     di = np.linspace(0, sum(si), numPts, endpoint=False)
     new_points = []
     for d in di:
-        for i,s in enumerate(si):
-            if d>s: d -= s
-            else: break
-        l = d/s
-        new_points.append((obj_x_loc[i] + l*vi[i][0],
-                           obj_y_loc[i] + l*vi[i][1]))
+        for i, s in enumerate(si):
+            if d > s:
+                d -= s
+            else:
+                break
+        l = d / s
+        new_points.append((obj_x_loc[i] + l * vi[i][0],
+                           obj_y_loc[i] + l * vi[i][1]))
     return new_points
+
 
 def xy_along_circle(N, loc, radius):
     # print(r, N, loc)
@@ -805,41 +826,40 @@ def xy_along_circle(N, loc, radius):
     p = [(loc[0] + np.cos(a) * radius[0], loc[1] + np.sin(a) * radius[1]) for a in angles]
     return p
 
-def xy_along_rect(N, loc, scale):
-    x0,y0=-scale
-    x1,y1=scale
-    rext_x=[loc[0]+x for x in[x0,x1,x1,x0]]
-    rext_y=[loc[1]+y for y in[y0,y0,y1,y1]]
-    p=single_parametric_interpolate(rext_x,rext_y,numPts=N)
-    return p
 
+def xy_along_rect(N, loc, scale):
+    x0, y0 = -scale
+    x1, y1 = scale
+    rext_x = [loc[0] + x for x in [x0, x1, x1, x0]]
+    rext_y = [loc[1] + y for y in [y0, y0, y1, y1]]
+    p = single_parametric_interpolate(rext_x, rext_y, numPts=N)
+    return p
 
 
 def xy_uniform_circle(N, loc, radius):
     angles = np.random.uniform(0, 2 * np.pi, N).tolist()
-    xs = np.random.uniform(0, radius[0]**2, N) ** 0.5 * np.cos(angles)
-    ys = np.random.uniform(0, radius[1]**2, N) ** 0.5 * np.sin(angles)
-    p = [(loc[0] + x, loc[1] + y) for a,x,y in zip(angles,xs,ys)]
+    xs = np.random.uniform(0, radius[0] ** 2, N) ** 0.5 * np.cos(angles)
+    ys = np.random.uniform(0, radius[1] ** 2, N) ** 0.5 * np.sin(angles)
+    p = [(loc[0] + x, loc[1] + y) for a, x, y in zip(angles, xs, ys)]
     return p
 
 
-
-def generate_xy_distro(mode, shape, N, loc=(0.0, 0.0), scale=(0.0, 0.0)) :
-    loc, scale=np.array(loc), np.array(scale)
+def generate_xy_distro(mode, shape, N, loc=(0.0, 0.0), scale=(0.0, 0.0)):
+    loc, scale = np.array(loc), np.array(scale)
     if mode == 'uniform':
-        if shape in ['circle', 'oval'] :
+        if shape in ['circle', 'oval']:
             return xy_uniform_circle(N=N, loc=loc, radius=scale)
         elif shape == 'rect':
-            return list(map(tuple,np.random.uniform(low=-scale, high=scale, size=(N, 2))+loc))
+            return list(map(tuple, np.random.uniform(low=-scale, high=scale, size=(N, 2)) + loc))
     elif mode == 'normal':
-        return np.random.normal(loc=loc, scale=scale/2, size=(N, 2)).tolist()
+        return np.random.normal(loc=loc, scale=scale / 2, size=(N, 2)).tolist()
     elif mode == 'periphery':
-        if shape in ['circle', 'oval'] :
+        if shape in ['circle', 'oval']:
             return xy_along_circle(N, loc=loc, radius=scale)
         elif shape == 'rect':
             return xy_along_rect(N, loc, scale)
-    else :
-        raise ValueError (f'XY distribution {mode} not implemented.')
+    else:
+        raise ValueError(f'XY distribution {mode} not implemented.')
 
 
 def generate_orientations(num_identical, circle_parsing, iterations):
@@ -1030,7 +1050,6 @@ def compute_dst(point1, point2):
 
 
 def N_colors(N, as_rgb=False):
-
     if N == 1:
         cs = ['blue']
     elif N == 2:
@@ -1067,4 +1086,3 @@ def LvsRtoggle(side):
 def mutate_value(v, range, scale=0.1):
     r0, r1 = range
     return float(np.round(np.clip(np.random.normal(loc=v, scale=scale * np.abs(r1 - r0)), a_min=r0, a_max=r1), 2))
-

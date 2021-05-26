@@ -157,7 +157,6 @@ class Box2DSegment(BodySegment):
         return np.asarray(self._body.GetWorldVector(vector))
 
     def get_world_facing_axis(self):
-        # print(self._body.GetWorldVector(self.facing_axis))
         return np.asarray(self._body.GetWorldVector(self.facing_axis))
 
     def collides_with(self, other):
@@ -634,7 +633,6 @@ class LarvaBody:
         return [seg.get_color() for seg in self.segs]
 
     def get_segment(self, seg_index):
-        # print(seg_index)
         return self.segs[seg_index]
 
     def get_head(self):

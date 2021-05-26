@@ -130,11 +130,9 @@ deb_pars = {
     "structure": 'structure',
     "hunger": 'hunger',
     "birth_time_in_hours": 'birth_time_in_hours',
-    "puppation_time_in_hours": 'puppation_time_in_hours',
+    "pupation_time_in_hours": 'pupation_time_in_hours',
     "death_time_in_hours": 'death_time_in_hours',
     "hours_as_larva": 'hours_as_larva',
-    "deb_Nticks": 'deb_Nticks',
-    "deb_steps_per_day": 'deb_steps_per_day',
     "age": 'age_in_hours',
 }
 
@@ -273,7 +271,7 @@ output = {
                 'cum_dst', 'cum_scaled_dst', 'pause_dur_ratio',
                 'num_strides', 'stride_dur_ratio', 'vel_freq',
                 'reserve_density', 'puppation_buffer', 'hunger',
-                'age', 'birth_time_in_hours', 'puppation_time_in_hours', 'death_time_in_hours', 'hours_as_larva'
+                'age', 'birth_time_in_hours', 'pupation_time_in_hours', 'death_time_in_hours', 'hours_as_larva'
             ]},
     'pose': {'step': ['centroid_x', 'centroid_y', 'bend', 'front_orientation', 'rear_orientation'],
              'endpoint': ['length', 'cum_dur', 'final_x']},

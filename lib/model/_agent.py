@@ -381,11 +381,11 @@ class Larva(LarvaworldAgent):
 
     @property
     def reserve(self):
-        return self.deb.get_reserve()
+        return self.deb.get_E()
 
     @property
     def reserve_density(self):
-        return self.deb.get_reserve_density()
+        return self.deb.get_e()
 
     @property
     def structural_length(self):
@@ -393,43 +393,35 @@ class Larva(LarvaworldAgent):
 
     @property
     def maturity(self):
-        return self.deb.get_U_H() * 1000
+        return self.deb.get_E_H() * 1000 #in mJ
 
     @property
     def reproduction(self):
-        return self.deb.get_U_R() * 1000
+        return self.deb.get_E_R() * 1000 #in mJ
 
     @property
     def puppation_buffer(self):
-        return self.deb.get_puppation_buffer()
+        return self.deb.get_pupation_buffer()
 
     @property
     def structure(self):
-        return self.deb.get_U_V() * 1000
+        return self.deb.get_V() * self.deb.E_V * 1000 #in mJ
 
     @property
     def age_in_hours(self):
-        return self.deb.age_day * 24
+        return self.deb.age * 24
 
     @property
     def hunger(self):
         return self.deb.hunger
 
     @property
-    def deb_steps_per_day(self):
-        return self.deb.steps_per_day
-
-    @property
-    def deb_Nticks(self):
-        return self.deb.tick_counter
-
-    @property
     def death_time_in_hours(self):
         return self.deb.death_time_in_hours
 
     @property
-    def puppation_time_in_hours(self):
-        return self.deb.puppation_time_in_hours
+    def pupation_time_in_hours(self):
+        return self.deb.pupation_time_in_hours
 
     @property
     def birth_time_in_hours(self):
