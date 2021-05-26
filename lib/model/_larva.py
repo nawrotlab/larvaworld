@@ -163,7 +163,7 @@ class LarvaSim(BodySim, Larva):
         self.build_energetics(larva_pars['energetics'])
         BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['physics'],
                          **larva_pars['body'], **kwargs)
-        self.build_gut(self.V)
+        self.build_gut(self.real_mass)
 
         self.reset_feeder()
         self.radius = self.sim_length / 2
@@ -184,26 +184,20 @@ class LarvaSim(BodySim, Larva):
         return odor_dict
 
     def compute_next_action(self):
-        # t0 = time.time()
         self.cum_dur += self.model.dt
         pos=self.get_olfactor_position()
         self.food_detected, food_quality = self.detect_food(pos)
-        # t1 = time.time()
         lin, ang, self.feeder_motion = self.brain.run(pos)
         self.set_ang_activity(ang)
         self.set_lin_activity(lin)
         self.current_amount_eaten, self.feed_success = self.feed()
-        # t2 = time.time()
         if self.energetics:
             self.run_energetics(self.food_detected, self.feed_success, self.current_amount_eaten, food_quality)
-        # t3 = time.time()
         # Paint the body to visualize effector state
         if self.model.color_behavior:
             self.update_behavior_dict()
         else:
             self.set_color([self.default_color] * self.Nsegs)
-        # t4 = time.time()
-        # print(np.round([t4 - t0, t1 - t0, t2 - t1, t3 - t2, t4 - t3], 5) * 100000)
 
     def detect_food(self,pos):
 
@@ -239,12 +233,15 @@ class LarvaSim(BodySim, Larva):
     def feed(self):
         a_max = self.max_feed_amount
         source = self.food_detected
+        # if self.feeder_motion :
+        #     print(self.empty_gut_M)
         if self.feeder_motion and source is not None and self.empty_gut_M >= a_max:
             grid = self.model.food_grid
             amount = -grid.add_cell_value(source, -a_max) if grid else source.subtract_amount(a_max)
             self.feed_success_counter += 1
             self.amount_eaten += amount
             self.update_gut(amount)
+
             return amount, True
         else:
             return 0, True
@@ -296,21 +293,24 @@ class LarvaSim(BodySim, Larva):
         else:
             self.energetics = False
 
-    def build_gut(self, V):
+    def build_gut(self, mass):
         self.gut_M_ratio = 0.11
         self.gut_food_M = 0
-        self.empty_gut_M = 0
+
         self.gut_product_M = 0
         self.amount_absorbed = 0
         self.filled_gut_ratio = 0
         # self.digestion_c = 80
         self.absorption = 0.3
 
-        self.gut_M = self.gut_M_ratio * V
+        self.gut_M = self.gut_M_ratio * mass*1000 # in mg
+        self.empty_gut_M = self.gut_M
+
 
     def update_gut(self, amount_eaten):
-        self.gut_M = self.gut_M_ratio * self.V
-        self.empty_gut_M = self.gut_M - self.gut_food_M - self.gut_product_M
+        self.gut_M = self.gut_M_ratio * self.real_mass*1000 # in mg
+
+
         # FIXME here I need to add the k_x but I don't know it
         # For V1-morphs ingestion rate is proportional to L**3 . Kooijman p.269. Didn't use it.
         # self.digestion_tau_unscaled = 24 * 60 * 60 / self.model.dt * self.gut_M_ratio * 550 / p_am
@@ -320,19 +320,12 @@ class LarvaSim(BodySim, Larva):
 
         self.gut_food_M += amount_eaten
         gut_food_dM = 0.001 * self.gut_food_M * self.model.dt
-        # gut_food_dM = np.clip(self.gut_M/self.digestion_tau, 0, self.gut_food_M)
-        # gut_food_dM = self.gut_food_M/self.digestion_tau
         self.gut_food_M -= gut_food_dM
-        # print(gut_food_dM, self.gut_food_M)
-        # self.gut_product_M += gut_food_dM
         absorbed_M = self.gut_product_M * self.absorption * self.model.dt
-        # absorbed_M = 0
         self.gut_product_M += (gut_food_dM - absorbed_M)
-        # self.empty_gut_M = self.gut_M - self.gut_food_M
         self.empty_gut_M = self.gut_M - self.gut_food_M - self.gut_product_M
         self.amount_absorbed += absorbed_M
         self.filled_gut_ratio = 1 - self.empty_gut_M / self.gut_M
-
     def build_brain(self, brain):
         modules = brain['modules']
         if brain['nengo']:
