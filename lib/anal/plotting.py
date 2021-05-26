@@ -1288,10 +1288,10 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                'reserve_density', 'hunger',
                'pupation_buffer', 'explore2exploit_balance',
                'f_filt']
-    ylabels0 = ['wet mass $(mg)$', 'body length $(mm)$',
+    ylabels0 = ['wet weight $(mg)$', 'body length $(mm)$',
                 r'reserve $(J)$', r'functional response $(-)$',
                 r'reserve density $(-)$', r'hunger drive $(-)$',
-                r'pupation buffer $(-)$', r'explore2exploit_balance $(-)$',
+                r'pupation buffer $(-)$', r'exploit VS explore $(-)$',
                 r'functional response $(-)$', ]
     if mode == 'minimal':
         idx = [2, 4, 5, 6]
@@ -1314,18 +1314,21 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         t0, t1, t2, t3, age = d['birth'], d['pupation'], d['death'], d['sim_start']+d['birth'], np.array(d['age'])
         if time_unit == 'hours':
             pass
+            tickstep=24
         elif time_unit == 'minutes':
             t0 *= 60
             t1 *= 60
             t2 *= 60
             t3 *= 60
             age *= 60
+            tickstep = 24*60
         elif time_unit == 'seconds':
             t0 *= 3600
             t1 *= 3600
             t2 *= 3600
             t3 *= 3600
             age *= 3600
+            tickstep = 24 * 3600
 
 
         t0s.append(t0)
@@ -1354,7 +1357,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                 ax.axvspan(st0, st1, color=c, alpha=0.2)
             ax.set_ylabel(yl)
             ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(10))
+
             if l in ['pupation_buffer', 'explore2exploit_balance']:
                 ax.set_ylim([0, 1])
             if l == 'f':
@@ -1389,7 +1392,10 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         except:
             pass
     if sim_only :
-        axs[0].set_xlim([np.min(t3s), np.max(max_ages)])
+        axs[-1].set_xlim([np.min(t3s), np.max(max_ages)])
+        axs[-1].xaxis.set_major_locator(ticker.MaxNLocator(5))
+    else :
+        axs[-1].set_xticks(ticks=np.arange(0, np.max(max_ages), tickstep))
 
     axs[0].legend(handles=[patches.Patch(color=c, label=id) for c, id in zip(leg_cols, leg_ids)],
                   labels=leg_ids, fontsize=20, loc='upper left', prop={'size': 15})
