@@ -182,6 +182,8 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
                 e=None
         temp_save(temp,e)
         # return None, None
+
+
     temp = match_larva_ids(s=temp, pars=['head_x', 'head_y'], e=e,
                            min_Nids=min_Nids, dl=dl, **kwargs)
     temp.reset_index(level='Step', drop=False, inplace=True)
@@ -192,9 +194,11 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
     temp.reset_index(drop=False, inplace=True)
     max_step =int(temp['Step'].max())
     temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-
+    temp.sort_index(level=['Step', 'AgentID'], inplace=True)
+    print(temp[temp.index.duplicated()])
+    temp.drop_duplicates(inplace=True)
     if complete_ticks:
-        trange = np.arange(max_step)
+        trange = np.arange(max_step).astype(int)
         my_index = pd.MultiIndex.from_product([trange, new_ids], names=['Step', 'AgentID'])
         step_data = pd.DataFrame(index=my_index, columns=x_pars + y_pars)
         step_data.update(temp)

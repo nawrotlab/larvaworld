@@ -24,9 +24,11 @@ from shapely.geometry import Polygon, LineString
 from shapely.ops import split
 from lib.stor.paths import LarvaShape_path
 
+
 def simplex(func, x0, args=()):
     res = minimize(func, x0, args=args, method='nelder-mead', options={'xatol': 1e-8, 'disp': False}).x[0]
     return res
+
 
 def beta0(x0, x1):
     x03 = x0 ** (1 / 3)
@@ -752,63 +754,75 @@ def match_larva_ids2(s, dl=None, max_t=5 * 60, max_s=20, pars=None, e=None, min_
     return ss
 
 
-def match_larva_ids(s,e, dl, max_t=5 * 60, max_s=20, pars=None,  min_Nids=1, max_Niters=1000):
-    t_r = np.linspace(0, max_t, max_Niters)
-    s_r = np.linspace(0, max_s, max_Niters)
+def match_larva_ids(s, e, dl, max_t=5 * 60, max_s=20, pars=None, min_Nids=1, max_Niters=1000):
+    wl, wt, ws = 100, 1, 0.5
+    max_error = 200
+    max_counter = 100
+    Nidx=5+++0
+
+    def prior(maxs, last_xy, ls, idx):
+        pp = maxs.nsmallest(idx).iloc[[-1]]
+
+        id0, t0 = pp.index[0], pp.values[0]
+        xy0, l0 = last_xy[id0], ls[id0]
+        return [id0, t0, xy0, l0]
+
+    def next(id1, mins, first_xy, ls):
+        t1, xy1, l1 = mins[id1], first_xy[id1], ls[id1]
+        return [id1, t1, xy1, l1]
+
+    def eval_c(c0, c1):
+        tt = c1[1] - c0[1]
+        ll = np.abs(c1[3] - c0[3])
+        if tt <= 0:
+            return max_error*2
+        dd = np.sqrt(np.sum((c1[2] - c0[2]) ** 2))
+        return wt * tt + wl * ll + ws * dd
+
+    def eval(c0, id1, mins, first_xy, ls):
+        c1 = next(id1, mins, first_xy, ls)
+        return eval_c(c0, c1)
+
+    def match_c(c0, ids, mins, first_xy, ls):
+        ee = [eval(c0, id1, mins, first_xy, ls) for id1 in ids]
+        return ids[np.argmin(ee)], np.min(ee)
+
+    def match(ids, mins, maxs, first_xy, last_xy, ls, idx):
+        c0 = prior(maxs, last_xy, ls, idx)
+        id1, error = match_c(c0, ids, mins, first_xy, ls)
+        return np.array([(c0[0], id1), error])
+
+    def step(ls, ss, ids, mins, maxs, first_xy, last_xy, idx):
+        res = np.array([match(ids, mins, maxs, first_xy, last_xy, ls, idx+i) for i in range(Nidx)])
+        error=res[:,1].min()
+        id0,id1=res[np.argmin(res[:,1]),0]
+
+        if error<max_error :
+            ss.rename(index={id0: id1}, inplace=True)
+            ls[id1] = ss['spinelength'].loc[id1].dropna().mean()
+            ls.drop([id0], inplace=True)
+            ids, mins, maxs, first_xy, last_xy = update_extrema({id0: id1}, ids, mins, maxs, first_xy, last_xy)
+        return ls, ss, ids, mins, maxs, first_xy, last_xy, error
+
     ls = e['length']
     if pars is None:
         pars = s.columns.values.tolist()
     ss = s.dropna().reset_index(level='Step', drop=False)
-
+    ss['Step'] = ss['Step'].values.astype(int)
     ids, mins, maxs, first_xy, last_xy = get_extrema(ss, pars)
+    counter = 0
+    error = 0
+    idx = 1
+    while counter < max_counter:
+        ls, ss, ids, mins, maxs, first_xy, last_xy, error = step(ls, ss, ids, mins, maxs, first_xy, last_xy, idx)
 
-    for i in range(max_Niters):
-        ds, dt = s_r[i], t_r[i]
-        print(i, len(ids), ds, dt)
-        # nexts_t = get_temporal_nexts0(ids, mins, maxs, dt)
-        nexts_sp = get_spatial_nexts0(ids, ds, first_xy, last_xy)
-        # N_t = np.sum([len(next) for next in nexts_t])
-        N_s = np.sum([len(next) for next in nexts_sp])
-        # if N_t > 0:
-        if N_s > 0:
-            # nexts = get_spatial_nexts1(ids, nexts_t, ds, first_xy, last_xy, dl, ls)
-            nexts = get_temporal_nexts1(ids, nexts_sp, mins, maxs, dt)
-            # N_s = np.sum([len(next) for next in nexts])
-            N_t = np.sum([len(next) for next in nexts])
-            # if N_s > 0:
-            if N_t > 0:
-                # print(N_t)
-                taken = []
-                pairs = dict()
-                for id, next in zip(ids, nexts):
-                    next = [idx for idx in next if idx not in taken]
-                    if dl is not None:
-                        next = [idx for idx in next if np.abs(ls[id] - ls[idx]) < dl]
-                    if len(next) == 0:
-                        continue
-                    elif len(next) == 1:
-                        best_next = next[0]
-                        taken.append(best_next)
-                    elif len(next) > 1:
-                        errors = [np.sum(np.abs(last_xy[id] - first_xy[idx])) for idx in next]
-                        indmin = np.argmin(errors)
-                        best_next = next[indmin]
-                    pairs[best_next] = id
-                while len(common_member(list(pairs.keys()), list(pairs.values()))) > 0:
-                    for id1, id2 in pairs.items():
-                        if id2 in list(pairs.keys()):
-                            pairs.update({id1: pairs[id2]})
-                ss.rename(index=pairs, inplace=True)
-                if dl is not None:
-                    for id1, id2 in pairs.items():
-                        v = ss['spinelength'].loc[id2].values
+        print(counter, idx, len(ids), int(error))
+        if error >= max_error:
+            idx += 1+Nidx
+            if idx >= len(ids)-Nidx:
+                counter += 1
+                idx = 1
 
-                        ls[id2] = np.nanmean(v)
-                        ls.drop([id1], inplace=True)
-                # print(pairs)
-                ids, mins, maxs, first_xy, last_xy = update_extrema(pairs, ids, mins, maxs, first_xy, last_xy)
-                if len(ids) <= min_Nids:
-                    break
     # inds, dt, ds = 0, 0, 0
     # while len(ids) > min_Nids and (dt<max_t or ds<max_s) :
     #     inds+=1
@@ -896,8 +910,8 @@ def match_larva_ids(s,e, dl, max_t=5 * 60, max_s=20, pars=None,  min_Nids=1, max
     print('Finalizing dataset')
     ss.reset_index(drop=False, inplace=True)
     ss.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-    # ss.sort_index(level=['Step', 'AgentID'], inplace=True)
     return ss
+
 
 def get_spatial_nexts0(ids, ddst, first_xy, last_xy):
     nexts = [[idx for idx in ids if (idx != id and all(np.abs(last_xy[id] - first_xy[idx]) < ddst))] for id in ids]
