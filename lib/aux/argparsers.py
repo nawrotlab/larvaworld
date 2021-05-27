@@ -189,6 +189,8 @@ def add_sim_kwargs(parser):
                         help='The duration of the simulation in min')
     parser.add_argument('-dt', '--dt', type=float, nargs='?', default=0.1, help='The timestep of the simulation in sec')
     parser.add_argument('-Box2D', '--Box2D', action="store_true", help='Use the Box2D physics engine')
+    parser.add_argument('-sample', '--sample_dataset', type=str, nargs='?', default='reference',choices=list(loadConfDict('Ref').keys()),
+                        help='The dataset to sample the parameters from')
     return parser
 
 
@@ -198,6 +200,7 @@ def get_sim_kwargs(args):
                   'path': args.path,
                   'dt': args.dt,
                   'Box2D': args.Box2D,
+                  'sample_dataset': args.sample_dataset,
                   }
     return sim_kwargs
 

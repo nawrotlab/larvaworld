@@ -66,7 +66,8 @@ def eval_analysis(event, values, window, collapsibles, dicts, graph_lists):
             window.Element('DATASET_IDS').Update(values=list(dicts['analysis_data'].keys()))
 
     elif event == 'Add ref':
-        d = LarvaDataset(dir=paths.RefFolder)
+        sample_dataset='reference'
+        d = LarvaDataset(dir=f'{paths.RefFolder}/{sample_dataset}')
         dicts['analysis_data'][d.id] = d
         window.Element('DATASET_IDS').Update(values=list(dicts['analysis_data'].keys()))
     elif event == 'Remove':

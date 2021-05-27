@@ -233,7 +233,8 @@ class BodySim(BodyManager):
         #     return 0.0
         # else:
         #     return new_v
-
+        # if new_v>0 :
+        #     print('dd')
         return new_v
 
     def restore_body_bend(self):
@@ -251,9 +252,10 @@ class BodySim(BodyManager):
         # a = self.angles[0]
         if not self.model.physics_engine:
             if self.Nsegs == 2:
+                # kkk=self.spineangles[0]
                 self.spineangles[0] = fun.restore_bend_2seg(self.spineangles[0], d, l,
                                                             correction_coef=self.bend_correction_coef)
-
+                # print((np.rad2deg([kkk,self.spineangles[0]-kkk])*1).astype(int))
             else:
                 self.spineangles = fun.restore_bend(self.spineangles, d, l, self.Nsegs,
                                                     correction_coef=self.bend_correction_coef)
@@ -323,25 +325,35 @@ class BodySim(BodyManager):
         d = lin_vel * dt
         ang_vel0=np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
 
-        in_tank=False
-        dd=0.01
-        counter = -1
-        while not in_tank :
-            counter+=1
-            ang_vel*=-(1+dd*counter)
+        def check_in_tank(ang_vel, o0, d, hr0) :
             o1 = o0 + ang_vel * dt
+            # print(o1,o0,ang_vel,dt)
             k = np.array([math.cos(o1), math.sin(o1)])
             dxy = k * d
-            if self.Nsegs>1 :
-                hr1=hr0+dxy
+            if self.Nsegs > 1:
+                hr1 = hr0 + dxy
                 hp1 = hr1 + k * self.seg_lengths[0] / 2
                 hf1 = hr1 + k * self.seg_lengths[0]
-            else :
+            else:
                 hp1 = hp0 + dxy
-                hf1 = hp1 + k * (self.get_sim_length()/2)
+                hf1 = hp1 + k * (self.get_sim_length() / 2)
 
             in_tank = fun.inside_polygon(points=[hf1, hp1], tank_polygon=self.tank_polygon)
-        ang_vel = np.abs(ang_vel)*np.sign(ang_vel0)
+            return in_tank, o1, hr1, hp1
+
+        in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
+        # in_tank=False
+        dd=0.01
+        counter = -1
+        # ang_vel*=-1
+        while not in_tank :
+            # print(counter, ang_vel)
+            # print('xx')
+            counter+=1
+            ang_vel*=-(1+dd*counter)
+            in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
+        if counter>=0:
+            ang_vel = np.abs(ang_vel)*np.sign(ang_vel0)
         head.set_pose(hp1, o1)
         head.update_vertices(hp1, o1)
         if self.Nsegs > 1:

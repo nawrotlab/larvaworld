@@ -437,6 +437,16 @@ if __name__ == '__main__':
     for k, v in exp_dict.items():
         saveConf(v, 'Exp', k)
 
+    reference_datasets ={
+        '' : '',
+        'reference' : 'reference',
+        'Fed' : 'Fed',
+        'Starved' : 'Starved',
+        'Deprived' : 'Deprived',
+    }
+
+    for k, v in reference_datasets.items():
+        saveConf(v, 'Ref', k)
 
 def next_idx(exp, type='single'):
     try:

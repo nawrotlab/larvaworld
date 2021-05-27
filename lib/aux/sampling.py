@@ -5,7 +5,7 @@ import pandas as pd
 import scipy.stats as stats
 from scipy.stats import truncnorm
 
-from lib.stor.paths import Ref_path, Ref_fits
+from lib.stor.paths import RefFolder
 
 
 class PowerLawDist(st.rv_continuous):
@@ -64,9 +64,12 @@ class GeometricDist(st.rv_continuous):
         return [int(x) for x in sample]
 
 
-def sample_agents(filepath=None, pars=None, N=1):
+def sample_agents(filepath=None, pars=None, N=1, sample_dataset='reference'):
+    path_dir = f'{RefFolder}/{sample_dataset}'
+    path_data = f'{path_dir}/data/reference.csv'
+    # path_fits = f'{path_dir}/data/bout_fits.csv'
     if filepath is None:
-        filepath = Ref_path
+        filepath = path_data
     data = pd.read_csv(filepath, index_col=0)
     if pars is None:
         pars = data.columns
@@ -74,16 +77,29 @@ def sample_agents(filepath=None, pars=None, N=1):
         pars = [p for p in data.columns if p in pars]
     means = [data[p].mean() for p in pars]
     if len(pars)>=2:
-        cov = np.cov(data[pars].values.T)
+        base=data[pars].values.T
+        cov = np.cov(base)
         samples = np.random.multivariate_normal(means, cov, N).T
+
+        # print(data[pars].values.T.shape)
+        # print(pars)
+        # import matplotlib.pyplot  as plt
+        # plt.scatter(x=base[2,:], y=base[3,:], color='b')
+        # plt.scatter(x=samples[2,:], y=samples[3,:], color='r')
+        # plt.show()
+        # raise
     elif len(pars)==1:
         std=np.std(data[pars].values)
         samples = np.atleast_2d(np.random.normal(means[0], std, N))
     return pars, samples
 
 
-def get_ref_bout_distros(mode='stridechain_dist'):
-    f = pd.read_csv(Ref_fits, index_col=0).xs('reference')
+def get_ref_bout_distros(mode='stridechain_dist', sample_dataset='reference'):
+    path_dir = f'{RefFolder}/{sample_dataset}'
+    # path_data = f'{path_dir}/data/reference.csv'
+    path_fits = f'{path_dir}/data/bout_fits.csv'
+
+    f = pd.read_csv(path_fits, index_col=0).xs(sample_dataset)
     if mode=='stridechain_dist' :
         str_i = np.argmin(f[['KS_pow_stride', 'KS_exp_stride', 'KS_log_stride']])
         if str_i == 0:
@@ -119,7 +135,6 @@ def get_ref_bout_distros(mode='stridechain_dist'):
         return pau_dist
 
 
-get_ref_bout_distros()
 
 
 def truncated_power_law(a, xmin, xmax):

@@ -711,7 +711,7 @@ def plot_bend_pauses(dataset, save_to=None):
 
 def plot_sample_marked_strides(datasets, labels, agent_idx=0, slice=[20,40], save_to=None, return_fig=False) :
     Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='stride')
-    filename = 'sample_marked_strides.pdf'
+    filename = f'sample_marked_strides_{agent_idx}.pdf'
 
     chunks=['stride', 'pause']
     chunk_cols=['lightblue', 'grey']
@@ -735,12 +735,13 @@ def plot_sample_marked_strides(datasets, labels, agent_idx=0, slice=[20,40], sav
         if ii == Ndatasets - 1 :
             ax.set_xlabel(r'time $(sec)$')
         ax.set_ylabel(ylab)
-        ax.set_ylim(ylim)
+        ax.set_ylim([0, ylim])
         ax.set_xlim(slice)
         ax.legend(handles=handles, loc='upper right')
         s=copy.deepcopy(d.step_data.xs(d.agent_ids[agent_idx], level='AgentID', drop_level=True))
         s.set_index(s.index*d.dt, inplace=True)
         ax.plot(s[p], color='blue')
+        # print(np.min(s.index.values), np.max(s.index.values), len(s.index.values), d.dt)
         for i, (c, col) in enumerate(zip(chunks, chunk_cols)):
             s0s = s.index[s[nam.start(c)] == True]
             s1s = s.index[s[nam.stop(c)] == True]
@@ -2131,29 +2132,35 @@ def plot_interference(datasets, labels, mode='orientation', agent_idx=None, save
     return process_plot(fig, save_to, save_as, return_fig)
 
 
-def plot_dispersion(datasets, labels, ranges=[[0, 40]], scaled=False, save_to=None, fig_cols=1, return_fig=False):
+def plot_dispersion(datasets, labels, ranges=None, scaled=False, save_to=None, fig_cols=1, return_fig=False):
     Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='dispersion')
-    for r in ranges:
-        r0, r1, dur = r[0], r[1], r[1] - r[0]
-        t0, t1 = int(r0 * datasets[0].fr), int(r1 * datasets[0].fr)
-        if r0 == 0:
+    if ranges is None :
+        ranges = [(0,40)]
+        # ranges = itertools.product([0,20], [40, 80, 120, 160, 200])
+    for r0,r1 in ranges:
+        # print(r0,r1)
+        if r0==0 and r1==40 :
             par = f'dispersion'
-        else:
-            par = f'dispersion_{r0}'
+        else :
+            par = f'dispersion_{r0}_{r1}'
+        dsp_dfs = [d.load_dispersion_dataset(par=par, scaled=scaled) for d in datasets]
+        # except :
+        #     continue
         if scaled:
             filename = f'scaled_dispersion_{r0}-{r1}_{fig_cols}.{suf}'
             ylab = 'scaled dispersion'
         else:
             filename = f'dispersion_{r0}-{r1}_{fig_cols}.{suf}'
             ylab = r'dispersion $(mm)$'
+        t0, t1 = int(r0 * datasets[0].fr), int(r1 * datasets[0].fr)
         Nticks = t1 - t0
         trange = np.linspace(r0, r1, Nticks)
         fig, axs = plt.subplots(1, 1, figsize=(5 * fig_cols, 5))
-        for d, lab, c in zip(datasets, labels, colors):
-            dsp_df = d.load_dispersion_dataset(par=par, scaled=scaled)
-            dsp_m = dsp_df['median']
-            dsp_u = dsp_df['upper']
-            dsp_b = dsp_df['lower']
+
+        for dsp_df, lab, c in zip(dsp_dfs, labels, colors):
+            dsp_m = dsp_df['median'].values
+            dsp_u = dsp_df['upper'].values
+            dsp_b = dsp_df['lower'].values
 
             dsp_m = dsp_m[t0:t1]
             dsp_u = dsp_u[t0:t1]
@@ -2504,12 +2511,13 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
     for mode in ['pdf', 'cdf']:
         if type != mode:
             continue
+        base_file=f'{save_as}_{mode}_{range}_{plot_fits}'
         if not only_fit_one:
             j0 = 0
-            filename = f'{save_as}_{mode}_{range}.{suf}'
+            filename = f'{base_file}.{suf}'
         else:
             j0 = 1
-            filename = f'{save_as}_{mode}_{range}_0.{suf}'
+            filename = f'{base_file}_0.{suf}'
         fit_filename = f'bout_fits_{range}.csv'
         if save_fits_as is None:
             fit_filepath = os.path.join(save_fits_to, fit_filename)
@@ -2881,7 +2889,7 @@ def plot_crawl_pars(datasets, labels, simVSexp=False, save_to=None, legend=False
     par_shorts = ['str_N', 'str_tr', 'cum_d']
     pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts,
                                                                     to_return=['par', 'symbol', 'exp_symbol', 'unit'])
-    ranges = [(100, 300), (0.5, 1.0), (80, 320)]
+    # ranges = [(100, 300), (0.5, 1.0), (80, 320)]
 
     if simVSexp:
         p_labels = [[sl, el] for sl, el in zip(sim_labels, exp_labels)]
@@ -2891,11 +2899,13 @@ def plot_crawl_pars(datasets, labels, simVSexp=False, save_to=None, legend=False
     fig, axs = plt.subplots(1, len(pars), figsize=(len(pars) * 5, 5), sharey=True)
     axs = axs.ravel()
     nbins = 40
-    for i, (p, r, p_lab, xlab) in enumerate(zip(pars, ranges, p_labels, xlabels)):
-        r1, r2 = r[0], r[1]
+    for i, (p, p_lab, xlab) in enumerate(zip(pars, p_labels, xlabels)):
+        vs=[d.get_par(p).dropna().values for d in datasets]
+        r1, r2 = np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs])
+        # r1, r2 = r[0], r[1]
         x = np.linspace(r1, r2, nbins)
         for j, d in enumerate(datasets):
-            v = d.get_par(p).dropna().values
+            # v = d.get_par(p).dropna().values
             # axs[i].set_xlim([-ranges[i], ranges[i]])
             # statistic, pvalue = ks_2samp(exp, exp)
 
@@ -2910,7 +2920,7 @@ def plot_crawl_pars(datasets, labels, simVSexp=False, save_to=None, legend=False
             #             weights=sim_weights, alpha=0.5, histtype='stepfilled')
             # axs[i].hist(exp, color="blue", bins=x, label=exp_labels[i],
             #             weights=exp_weights, alpha=0.5, histtype='stepfilled')
-            sns.histplot(v, color=colors[j], bins=x, kde=True, ax=axs[i], label=p_lab[j],
+            sns.histplot(vs[j], color=colors[j], bins=x, kde=True, ax=axs[i], label=p_lab[j],
                          stat="probability", element="step")
         # sns.distplot(exp, color="red", bins=x, hist=False, ax=axs[i], label=sim_labels[i],
         #              norm_hist=True)
@@ -2923,6 +2933,8 @@ def plot_crawl_pars(datasets, labels, simVSexp=False, save_to=None, legend=False
             axs[i].legend(loc='upper right')
     axs[0].set_ylabel('probability')
     plt.subplots_adjust(bottom=0.15, top=0.95, left=0.25 / len(pars), right=0.99, wspace=0.01)
+    # plt.show()
+    # raise
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -3354,6 +3366,19 @@ def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
     config = {'datasets': datasets,
               'labels': labels,
               'save_to': save_to}
+    # for mode in ['minimal']:
+    # for idx in [0,1,2,3,4,5] :
+    #     fig_dict[f'sample_marked_strides_{idx}']= plot_sample_marked_strides(**config, agent_idx=idx)
+    for r in ['default','broad']:
+        # for r in ['default', 'restricted', 'broad']:
+        try :
+            fig_dict[f'bout_fit_all_{r}'] = plot_stridesNpauses(**config, plot_fits='all', time_unit='sec', range=r,
+                                                                only_fit_one=True)
+            fig_dict[f'bout_fit_best_{r}'] = plot_stridesNpauses(**config, plot_fits='best', time_unit='sec', range=r)
+        except :
+            pass
+    for mode in ['minimal', 'limited']:
+        fig_dict[f'endpoint_{mode}'] = plot_endpoint_params(**config, mode=mode)
     for mode in ['orientation', 'orientation_x2', 'bend', 'spinelength']:
         for agent_idx in [None, 0, 1]:
             i = '' if agent_idx is None else f'_{agent_idx}'
@@ -3363,9 +3388,13 @@ def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
                 pass
     for scaled in [True, False]:
         for fig_cols in [1, 2]:
-            s = 'scaled_' if scaled else ''
-            l = f'{s}dispersion_{fig_cols}'
-            fig_dict[l] = plot_dispersion(**config, scaled=scaled, fig_cols=fig_cols)
+            for r0, r1 in itertools.product([0, 20], [40, 80, 120, 160, 200]):
+                s = 'scaled_' if scaled else ''
+                l = f'{s}dispersion_{r0}->{r1}_{fig_cols}'
+                try :
+                    fig_dict[l] = plot_dispersion(**config, scaled=scaled, fig_cols=fig_cols, ranges=[(r0, r1)])
+                except :
+                    pass
 
     try:
         fig_dict['stride_Dbend'] = plot_stride_Dbend(**config, show_text=False)
@@ -3382,14 +3411,7 @@ def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
     # plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=5, include_rear=True)
     # plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=5)
 
-    for r in ['broad']:
-        # for r in ['default', 'restricted', 'broad']:
-        try :
-            fig_dict[f'bout_fit_all_{r}'] = plot_stridesNpauses(**config, plot_fits='all', time_unit='sec', range=r,
-                                                                only_fit_one=True)
-            fig_dict[f'bout_fit_best_{r}'] = plot_stridesNpauses(**config, plot_fits='best', time_unit='sec', range=r)
-        except :
-            pass
+
 
     try:
         fig_dict['calibration'] = calibration_plot(save_to=save_to)
@@ -3400,9 +3422,8 @@ def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
     fig_dict['turns'] = plot_turns(**config)
     fig_dict['turn_duration'] = plot_turn_duration(**config)
 
-    # for mode in ['minimal']:
-    for mode in ['minimal', 'limited']:
-        fig_dict[f'endpoint_{mode}'] = plot_endpoint_params(**config, mode=mode)
+
+
     combine_pdfs(file_dir=save_to)
     return fig_dict
 

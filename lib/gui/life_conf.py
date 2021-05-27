@@ -27,7 +27,7 @@ deb_modes=['mass', 'length',
            # 'f',
                'reserve_density',
            'hunger',
-               'puppation_buffer',
+               'pupation_buffer',
            # 'explore2exploit_balance',
            #     'f_filt'
            ]
@@ -124,7 +124,7 @@ def life_conf():
         if e == 'SLIDER_starvation_stop' and v['SLIDER_starvation_stop'] < v['SLIDER_starvation_start']:
             w.Element('SLIDER_starvation_start').Update(value=v['SLIDER_starvation_stop'])
         for ii in ['starvation_start', 'starvation_stop', 'age']:
-            w.Element(f'SLIDER_{ii}').Update(range=(0.0, deb_model['puppation'] - deb_model['birth']))
+            w.Element(f'SLIDER_{ii}').Update(range=(0.0, deb_model['pupation'] - deb_model['birth']))
         for t1,t2 in starvation_hours :
             if t1<v['SLIDER_starvation_start']<t2 :
                 w.Element('SLIDER_starvation_start').Update(value=t2)

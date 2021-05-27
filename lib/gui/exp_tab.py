@@ -43,6 +43,10 @@ def build_sim_tab():
                 [sg.Text('Timestep :', **t8_kws),
                  sg.Spin(values=np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(), initial_value=0.1, key='dt',
                          **t6_kws), sg.Text('seconds', **t8_kws, justification='center')],
+                [sg.Text('Sample dataset :', **t8_kws),
+                 [sg.Combo(list(loadConfDict('Ref').keys()), key='sample_dataset', enable_events=True, readonly=True,
+                           tooltip='The reference dataset to sample parameters from.', **t16_kws)]
+                 ],
                 named_bool_button('Box2D', False)]
     collapsibles['Configuration'] = Collapsible('Configuration', True, sim_conf)
     output_dict = dict(zip(output_keys, [False] * len(output_keys)))
@@ -126,6 +130,7 @@ def get_sim_conf(window, values):
         'sim_dur': float(values['sim_dur']),
         'dt': float(values['dt']),
         'path': str(values['path']),
+        'sample_dataset': str(values['sample_dataset']),
         'Box2D': window['TOGGLE_Box2D'].get_state(),
     }
     return sim

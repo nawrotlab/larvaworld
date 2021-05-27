@@ -18,9 +18,8 @@ DebFolder = f'{SimFolder}/deb_runs'
 Deb_path = f'{get_parent_dir()}/lib/sim/deb_drosophila.csv'
 
 
-RefFolder = f'{DataFolder}/reference'
-Ref_path = f'{RefFolder}/data/reference.csv'
-Ref_fits = f'{RefFolder}/data/bout_fits.csv'
+RefFolder = f'{DataFolder}/SampleGroup'
+# RefFolder = f'{DataFolder}/reference'
 
 
 ConfFolder = f'{get_parent_dir()}/lib/conf/stored_confs'
@@ -37,6 +36,7 @@ conf_paths = {
     'Model': f'{ConfFolder}/ModelConfs.txt',
     'Batch': f'{ConfFolder}/BatchConfs.txt',
     'Settings': f'{ConfFolder}/SetConfs.txt',
+    'Ref': f'{ConfFolder}/ReferenceDatasets.txt',
 }
 
 VideoSlideFolder = f'{get_parent_dir()}/lib/gui/video_slides'

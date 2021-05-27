@@ -13,7 +13,7 @@ from lib.stor.larva_dataset import LarvaDataset
 
 
 def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None,
-                   ids=None, arena_pars=None, **kwargs):
+                   ids=None, arena_pars=None,names=['raw'], **kwargs):
     warnings.filterwarnings('ignore')
     datagroup = LarvaDataGroup(datagroup_id)
     build_conf = datagroup.get_conf()['build']
@@ -24,14 +24,19 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
     elif raw_folders == 'each':
         raw_folders = [[f] for f in np.sort(os.listdir(datagroup.raw_dir))]
         names = [f'{f[0]}' for f in raw_folders]
-    else :
-        raise ValueError('Raw folders must be set to all or each')
+    # elif len(raw_folders)>0 and len(names)==1 :
+    #     names=names*len(raw_folders)
+    # else :
+    #     raise ValueError('Raw folders must be set to all or each')
     ds = get_datasets(datagroup_id=datagroup_id, last_common='processed', names=names,
                       folders=folders, suffixes=suffixes, mode='initialize', ids=ids, arena_pars=arena_pars)
     for d, raw in zip(ds, raw_folders):
         if conf_id == 'JovanicConf':
             # with fun.suppress_stdout():
             step_data, endpoint_data = build_Jovanic(d, build_conf, source_dir=f'{datagroup.raw_dir}/{raw}', **kwargs)
+            # if step_data is None and endpoint_data is None :
+            #     print(f'Temporarily saved {d.id} dataset')
+            #     continue
         elif conf_id == 'SchleyerConf':
             step_data, endpoint_data = build_Schleyer(d, build_conf,
                                                       raw_folders=[f'{datagroup.raw_dir}/{r}' for r in raw], **kwargs)
@@ -51,7 +56,7 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
 
 
 def get_datasets(datagroup_id, names, last_common='processed', folders=None, suffixes=None,
-                 mode='load', load_data=True, ids=None, arena_pars=None):
+                 mode='load', load_data=True, ids=None, arena_pars=None, **kwargs):
     datagroup = LarvaDataGroup(datagroup_id)
     data_conf = datagroup.get_conf()['data']
     par_conf = datagroup.get_par_conf()
@@ -105,7 +110,7 @@ def enrich_datasets(datagroup_id, names, keep_raw=False, enrich_conf=None, **kwa
 
     # with fun.suppress_stdout():
 
-    ds = [d.enrich(**enrich_conf) for d in ds]
+    ds = [d.enrich(**enrich_conf, **kwargs) for d in ds]
     return ds
 
 

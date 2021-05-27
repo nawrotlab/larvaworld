@@ -820,9 +820,10 @@ class LarvaWorld:
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, collected_pars=None,
                  id='Unnamed_Simulation', larva_collisions=True, count_bend_errors=False,
-                 life_params=None,
+                 life_params=None,sample_dataset='reference',
                  parameter_dict={}, **kwargs):
         super().__init__(id=id, **kwargs)
+        self.sample_dataset=sample_dataset
         if collected_pars is None:
             collected_pars = {'step': [], 'endpoint': [], 'tables' : {} }
 
@@ -922,15 +923,15 @@ class LarvaWorldSim(LarvaWorld):
                 layers[id] = GaussianValueLayer(**kwargs)
         return Nodors, layers
 
-    def _generate_larva_pars(self, N, larva_pars, parameter_dict={}):
+    def _generate_larva_pars(self, N, larva_pars, parameter_dict={}, sample_dataset='reference'):
         if larva_pars['brain']['intermitter_params']:
             for dist in ['pause_dist', 'stridechain_dist']:
                 if larva_pars['brain']['intermitter_params'][dist] == 'fit':
-                    larva_pars['brain']['intermitter_params'][dist] = get_ref_bout_distros(dist)
+                    larva_pars['brain']['intermitter_params'][dist] = get_ref_bout_distros(dist, sample_dataset=sample_dataset)
         flat_larva_pars = fun.flatten_dict(larva_pars)
         sample_pars = [p for p in flat_larva_pars if flat_larva_pars[p] == 'sample']
         if len(sample_pars) >= 1:
-            pars, samples = sample_agents(pars=sample_pars, N=N)
+            pars, samples = sample_agents(pars=sample_pars, N=N, sample_dataset=sample_dataset)
 
             all_larva_pars = []
             for i in range(N):
@@ -953,7 +954,8 @@ class LarvaWorldSim(LarvaWorld):
             a1, a2 = np.deg2rad(group_pars['orientation_range'])
             orientations = np.random.uniform(low=a1, high=a2, size=N).tolist()
             positions = fun.generate_xy_distro(N=N, **{k:group_pars[k] for k in ['mode', 'shape', 'loc', 'scale']})
-            all_pars = self._generate_larva_pars(N, group_pars['model'], parameter_dict=parameter_dict)
+            all_pars = self._generate_larva_pars(N, group_pars['model'], parameter_dict=parameter_dict,
+                                                 sample_dataset=self.sample_dataset)
 
             for i, (p, o, pars) in enumerate(zip(positions, orientations, all_pars)):
                 self.add_larva(position=p, orientation=o, id=f'{group_id}_{i}', pars=pars, group=group_id,

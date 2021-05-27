@@ -73,7 +73,7 @@ class Oscillator(Effector):
 
 class Crawler(Oscillator):
     def __init__(self, waveform, initial_amp=None, square_signal_duty=None, step_to_length_mu=None,
-                 step_to_length_std=0,
+                 step_to_length_std=0.0,
                  gaussian_window_std=None, max_vel_phase=1.0, crawler_noise=0, **kwargs):
         super().__init__(**kwargs)
         self.waveform = waveform
@@ -81,18 +81,19 @@ class Crawler(Oscillator):
         self.amp = initial_amp
         self.scaled_noise = crawler_noise
         # self.noise = self.scaled_noise * self.
+        step_mu, step_std=[np.max([0.0, ii]) for ii in [step_to_length_mu, step_to_length_std]]
         if self.waveform == 'square':
             # the percentage of the crawler iteration for which linear force/velocity is applied to the body.
             # It is passed to the duty arg of the square signal of the oscillator
             self.square_signal_duty = square_signal_duty
-            self.step_to_length_mu = step_to_length_mu
-            self.step_to_length_std = step_to_length_std
+            self.step_to_length_mu = step_mu
+            self.step_to_length_std = step_std
             self.step_to_length = self.generate_step_to_length()
         elif self.waveform == 'gaussian':
             self.gaussian_window_std = gaussian_window_std
         elif self.waveform == 'realistic':
-            self.step_to_length_mu = step_to_length_mu
-            self.step_to_length_std = step_to_length_std
+            self.step_to_length_mu = step_mu
+            self.step_to_length_std = step_std
             self.step_to_length = self.generate_step_to_length()
             self.max_vel_phase = max_vel_phase * np.pi
 
@@ -215,6 +216,8 @@ class Turner(Oscillator, Effector):
 
     def step(self, inhibited=False, attenuation=1.0, A_olf=0.0):
         self.activation = self.update_activation(A_olf)
+        # self.activation = 20
+        # inhibited=False
         if not inhibited:
             A = self.compute_angular_activity() + self.buildup
             self.buildup = 0
@@ -226,7 +229,11 @@ class Turner(Oscillator, Effector):
                     self.buildup += a
             else:
                 A = 0.0
-        A += np.random.normal(scale=self.noise)
+        n=np.random.normal(scale=self.noise)
+        A += n
+        # print(int(self.activation))
+        # if A>=20 :
+        #     print('xx')
         return A
 
     def init_neural(self, dt, base_activation=20, activation_range=None, **kwargs):
@@ -475,6 +482,8 @@ class Intermitter(Effector):
         # self.pause_dist = PowerLawDist(range=self.rest_duration_range, coef=self.rest_power_coef,
         #                               a=self.rest_duration_range[0], b=self.rest_duration_range[1],
         #                               name='power_law_dist')
+        # print(pause_dist)
+        # print(stridechain_dist)
         if pause_dist['name'] == 'powerlaw':
             self.pause_min, self.pause_max = np.round(np.array(pause_dist['range']) / self.dt).astype(int)
             self.pause_dist = sampling.truncated_power_law(a=pause_dist['alpha'], xmin=self.pause_min,

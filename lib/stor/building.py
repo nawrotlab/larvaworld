@@ -1,3 +1,5 @@
+import os.path
+
 import pandas as pd
 
 from lib.conf.conf import *
@@ -99,85 +101,100 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
     return step_data, endpoint_data
 
 def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ticks=True,
-                  min_Nids=None, dl=None,**kwargs):
+                  min_Nids=None, dl=None,min_duration_in_sec=0,**kwargs):
+    temp_step_path=os.path.join(source_dir, 'step.csv')
+    temp_length_path=os.path.join(source_dir, 'length.csv')
+    def temp_save(step,length) :
+        step.to_csv(temp_step_path, index=True, header=True)
+        length.to_csv(temp_length_path, index=True, header=True)
+        print(f'Saved temporary dataset {dataset.id} successfully!')
+    def temp_load() :
+        step = pd.read_csv(temp_step_path, index_col=['Step', 'AgentID'])
+        e = pd.read_csv(temp_length_path, index_col=0)
+        return step, e
+
     d=dataset
     fr = d.fr
     x_pars = [x for x, y in d.points_xy]
     y_pars = [y for x, y in d.points_xy]
 
-    t_file = os.path.join(source_dir, 't.txt')
-    id_file = os.path.join(source_dir, 'larvaid.txt')
-    x_file = os.path.join(source_dir, 'x_spine.txt')
-    y_file = os.path.join(source_dir, 'y_spine.txt')
-    xs = pd.read_csv(x_file, header=None, sep='\t', names=x_pars)
-    ys = pd.read_csv(y_file, header=None, sep='\t', names=y_pars)
-    ts = pd.read_csv(t_file, header=None, sep='\t', names=['Step'])
+    try :
+        temp, e=temp_load()
+        print('Loaded temporary data successfully!')
+    except :
 
-    ids = pd.read_csv(id_file, header=None, sep='\t', names=['AgentID'])
-    ids['AgentID'] = [f'Larva_{10000 + i[0]}' for i in ids.values]
+        t_file = os.path.join(source_dir, 't.txt')
+        id_file = os.path.join(source_dir, 'larvaid.txt')
+        x_file = os.path.join(source_dir, 'x_spine.txt')
+        y_file = os.path.join(source_dir, 'y_spine.txt')
+        xs = pd.read_csv(x_file, header=None, sep='\t', names=x_pars)
+        ys = pd.read_csv(y_file, header=None, sep='\t', names=y_pars)
+        ts = pd.read_csv(t_file, header=None, sep='\t', names=['Step'])
 
-    min_t, max_t = float(ts.min()), float(ts.max())
-    trange = np.arange(np.ceil(max_t * fr))
-    temp = pd.concat([ids, ts, xs, ys], axis=1, sort=False)
-    temp.set_index(keys=['AgentID'], inplace=True, drop=True)
-    agent_ids = np.sort(temp.index.unique())
+        ids = pd.read_csv(id_file, header=None, sep='\t', names=['AgentID'])
+        ids['AgentID'] = [f'Larva_{10000 + i[0]}' for i in ids.values]
 
-    durs = []
-    starts = []
-    stops = []
-    for id in agent_ids:
-        data = temp.xs(id)
-        t = data['Step'].values
-        start_t = int((t[0] - min_t) * fr)
-        stop_t = start_t + len(t)
-        t = np.arange(start_t, stop_t)
-        temp.loc[id, 'Step'] = t
-        durs.append(len(t))
-        starts.append(start_t)
-        stops.append(stop_t)
-    temp.reset_index(drop=False, inplace=True)
-    temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
+        min_t, max_t = float(ts.min()), float(ts.max())
 
-    if min_Nids is not None:
-        if dl is not None :
-            temp['spinelength']=np.nan
-            temp.reset_index(level='Step', drop=False, inplace=True)
-            temp_ids = temp.index.unique().tolist()
-            ls=[]
-            for id in temp_ids :
-                ag_temp=temp.loc[id]
-                xy = ag_temp[nam.xy(d.points, flat=True)].values
-                spinelength = np.zeros(len(ag_temp)) * np.nan
-                for j in range(xy.shape[0]):
-                    k = np.sum(np.diff(np.array(fun.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
-                    if not np.isnan(np.sum(k)):
-                        sp_l = np.sum([np.sqrt(kk) for kk in k])
-                    else:
-                        sp_l = np.nan
-                    spinelength[j] = sp_l
-                temp['spinelength'].loc[id]=spinelength
-                ls.append(np.nanmean(spinelength))
-            e = pd.DataFrame({'length' : ls}, index=temp_ids)
-            # import matplotlib.pyplot as plt
-            # e.hist()
-            # plt.show()
-            # raise
-            temp.reset_index(drop=False, inplace=True)
-            temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-        else :
-            e=None
+        temp = pd.concat([ids, ts, xs, ys], axis=1, sort=False)
+        temp.set_index(keys=['AgentID'], inplace=True, drop=True)
+        agent_ids = np.sort(temp.index.unique())
 
-        temp = match_larva_ids(s=temp, pars=['head_x', 'head_y'], e=e,
-                               min_Nids=min_Nids, dl=dl, **kwargs)
-        temp.reset_index(level='Step', drop=False, inplace=True)
-        old_ids = temp.index.unique().tolist()
-        new_ids = [f'Larva_{100 + i}' for i in range(len(old_ids))]
-        new_pairs = dict(zip(old_ids, new_ids))
-        temp.rename(index=new_pairs, inplace=True)
+        durs = []
+        starts = []
+        stops = []
+        for id in agent_ids:
+            data = temp.xs(id)
+            t = data['Step'].values
+            start_t = int((t[0] - min_t) * fr)
+            stop_t = start_t + len(t)
+            t = np.arange(start_t, stop_t)
+            temp.loc[id, 'Step'] = t
+            durs.append(len(t))
+            starts.append(start_t)
+            stops.append(stop_t)
         temp.reset_index(drop=False, inplace=True)
         temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
 
+        if min_Nids is not None:
+            if dl is not None :
+                temp['spinelength']=np.nan
+                temp.reset_index(level='Step', drop=False, inplace=True)
+                temp_ids = temp.index.unique().tolist()
+                ls=[]
+                for id in temp_ids :
+                    ag_temp=temp.loc[id]
+                    xy = ag_temp[nam.xy(d.points, flat=True)].values
+                    spinelength = np.zeros(len(ag_temp)) * np.nan
+                    for j in range(xy.shape[0]):
+                        k = np.sum(np.diff(np.array(fun.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
+                        if not np.isnan(np.sum(k)):
+                            sp_l = np.sum([np.sqrt(kk) for kk in k])
+                        else:
+                            sp_l = np.nan
+                        spinelength[j] = sp_l
+                    temp['spinelength'].loc[id]=spinelength
+                    ls.append(np.nanmean(spinelength))
+                e = pd.DataFrame({'length' : ls}, index=temp_ids)
+                temp.reset_index(drop=False, inplace=True)
+                temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
+            else :
+                e=None
+        temp_save(temp,e)
+        # return None, None
+    temp = match_larva_ids(s=temp, pars=['head_x', 'head_y'], e=e,
+                           min_Nids=min_Nids, dl=dl, **kwargs)
+    temp.reset_index(level='Step', drop=False, inplace=True)
+    old_ids = temp.index.unique().tolist()
+    new_ids = [f'Larva_{100 + i}' for i in range(len(old_ids))]
+    new_pairs = dict(zip(old_ids, new_ids))
+    temp.rename(index=new_pairs, inplace=True)
+    temp.reset_index(drop=False, inplace=True)
+    max_step =int(temp['Step'].max())
+    temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
+
     if complete_ticks:
+        trange = np.arange(max_step)
         my_index = pd.MultiIndex.from_product([trange, new_ids], names=['Step', 'AgentID'])
         step_data = pd.DataFrame(index=my_index, columns=x_pars + y_pars)
         step_data.update(temp)
@@ -192,7 +209,13 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
         step_data = step_data.loc[(slice(None), selected), :]
         endpoint_data = endpoint_data.loc[selected]
 
+    if min_duration_in_sec>0 :
+        selected = endpoint_data[endpoint_data['cum_dur']>=min_duration_in_sec].index.values
+        step_data = step_data.loc[(slice(None), selected), :]
+        endpoint_data = endpoint_data.loc[selected]
+
     return step_data, endpoint_data
+
 
 
 def read_Schleyer_metadata(dir):

@@ -359,7 +359,7 @@ all_null_dicts = {
                 'step_to_length_mu': 'sample',  # From D1 fit
                 'step_to_length_std': 'sample',  # From D1 fit
                 'initial_amp': None,
-                'crawler_noise': 0.0,
+                'crawler_noise': 0.1,
                 'max_vel_phase': 1.0
                 },
     'turner': {'mode': None,
@@ -413,6 +413,7 @@ all_null_dicts = {
         'sim_dur': 3.0,
         'dt': 0.1,
         'Box2D': False,
+        'sample_dataset' : 'reference'
     }
 }
 
@@ -581,6 +582,7 @@ def get_dict_dtypes(name, **kwargs):
             'sim_dur': float,
             'dt': float,
             'Box2D': bool,
+            'sample_dataset': list(loadConfDict('Ref').keys())
         }
 
     }
