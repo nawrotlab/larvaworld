@@ -478,6 +478,23 @@ def set_ParDb():
     par_db['lim'].loc['Act_tur'] = [-20.0, 20.0]
     par_db['lim'].loc['str_sd_std'] = [0.0, 0.15]
     par_db['lim'].loc['str_sstd_std'] = [0.0, 0.2]
+    # par_db['lim'].loc['l_mu'] = [2.5, 4.5]
+    par_db['lim'].loc['fsv'] = [1.0, 2.5]
+    par_db['lim'].loc['str_sd_mu'] = [0.1, 0.3]
+    par_db['lim'].loc['str_sd_std'] = [0.0, 0.1]
+    par_db['lim'].loc['str_tr'] = [0.3, 1.0]
+    par_db['lim'].loc['pau_tr'] = [0.0, 0.5]
+    par_db['lim'].loc['sv_mu'] = [0.05, 0.35]
+    par_db['lim'].loc['tor2_mu'] = [0.0, 0.5]
+    par_db['lim'].loc['tor5_mu'] = [0.0, 0.5]
+    par_db['lim'].loc['tor10_mu'] = [0.0, 0.5]
+    par_db['lim'].loc['tor20_mu'] = [0.0, 0.5]
+    par_db['lim'].loc['str_fo_mu'] = [-5.0, 5.0]
+    par_db['lim'].loc['str_fo_std'] = [10.0, 40.0]
+    par_db['lim'].loc['tur_fo_mu'] = [5.0, 25.0]
+    par_db['lim'].loc['tur_fo_std'] = [10.0, 40.0]
+    par_db['lim'].loc['b_mu'] = [-5.0, 5.0]
+    par_db['lim'].loc['b_std'] = [10.0, 30.0]
 
     to_drop1 = [f'{c}_l' for c in ['non_str', 'pau', 'str', 'tur', 'Ltur', 'Rtur', 'fee']]
     to_drop2 = fun.flatten_list([[f'{c}_{d}' for d in ['sstd', 'std', 'sd', 'd']] for c in ['non_str', 'fee']])
@@ -488,9 +505,38 @@ def set_ParDb():
     for k, v in step_database.items():
         par_db['collect'].loc[par_db['par'] == k] = v
 
-    # par_db['type'] = None
-    # par_db['type'].loc['str0'] = bool
-    # par_db['type'].loc['str1'] = bool
+    par_db['disp_name']=par_db['par']
+    disp_dict={
+        'sv' : r'velocity$_{scaled}$',
+        'sv_mu' : r'mean velocity$_{scaled}$',
+        'v' : 'velocity',
+        'l_mu' : 'body length',
+        'fsv' : 'crawl frequency',
+        'str_sd_mu' : r'stridestep$_{scaled}$ mean',
+        'str_sd_std' : r'stridestep$_{scaled}$ std',
+        'b' : 'body bend',
+        'b_mu' : 'body bend mean',
+        'b_std' : 'body bend std',
+        'bv': 'bend velocity',
+        'bv_mu': 'bend velocity mean',
+        'bv_std': 'bend velocity std',
+        'fov': 'turn velocity',
+        'fov_mu': 'turn velocity mean',
+        'fov_std': 'turn velocity std',
+        'str_fo_mu': r'stride $\Delta_{or}$ mean',
+        'str_fo_std': r'stride $\Delta_{or}$ std',
+        'tur_fo_mu': 'turn angle mean',
+        'tur_fo_std': 'turn angle std',
+        'pau_t_mu': 'pause duration mean',
+        'pau_t_std': 'pause duration std',
+        'str_tr': 'crawl time ratio',
+        'pau_tr': 'pause time ratio',
+        **{f'tor{ii}' : rf'tortuosity$_{{{ii} sec}}$' for ii in [2,5,10,20]},
+        **{f'tor{ii}_mu' : rf'tortuosity$_{{{ii} sec}}$ mean' for ii in [2,5,10,20]},
+        **{f'tor{ii}_std' : rf'tortuosity$_{{{ii} sec}}$ std' for ii in [2,5,10,20]},
+    }
+    for kk,vv in disp_dict.items() :
+        par_db['disp_name'].loc[kk] = vv
 
     par_db = set_dtype(par_db)
     par_db = set_collect_from(par_db)
@@ -589,8 +635,7 @@ def get_par_dict(short=None, par=None, retrieve_from='shelve'):
     return dic
 
 
-def par_dict_lists(shorts=None, pars=None, retrieve_from='shelve',
-                   to_return=['par', 'symbol', 'unit', 'lim']):
+def par_dict_lists(shorts=None, pars=None, retrieve_from='shelve',to_return=['par', 'symbol', 'unit', 'lim']):
     if shorts is not None:
         par_dicts = [get_par_dict(short=short, retrieve_from=retrieve_from) for short in shorts]
     elif pars is not None:
@@ -635,4 +680,4 @@ if __name__ == '__main__':
     # print(type(get_par('c_odor1')['dtype']))
     # print(get_par_dict(short='fov'))
     # print(par_db.loc['g_odor1'])
-    print(par_db.loc['pau_fo'])
+    print(par_db.loc['l_mu'])

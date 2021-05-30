@@ -16,6 +16,7 @@ from matplotlib import cm, colors
 from pypet import ParameterGroup, Parameter
 from scipy.signal import butter, sosfiltfilt
 import scipy.stats as st
+from scipy.stats import lognorm, rv_discrete
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 import scipy as sp
@@ -754,11 +755,11 @@ def match_larva_ids2(s, dl=None, max_t=5 * 60, max_s=20, pars=None, e=None, min_
     return ss
 
 
-def match_larva_ids(s, e, dl, max_t=5 * 60, max_s=20, pars=None, min_Nids=1, max_Niters=1000):
-    wl, wt, ws = 100, 1, 0.5
-    max_error = 200
-    max_counter = 100
-    Nidx=5+++0
+def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, max_counter=10, Nidx=100, **kwargs):
+    # wl, wt, ws = 100, 1, 0.5
+    # max_error = 600
+    # max_counter = 10
+    # Nidx=100
 
     def prior(maxs, last_xy, ls, idx):
         pp = maxs.nsmallest(idx).iloc[[-1]]
@@ -818,8 +819,8 @@ def match_larva_ids(s, e, dl, max_t=5 * 60, max_s=20, pars=None, min_Nids=1, max
 
         print(counter, idx, len(ids), int(error))
         if error >= max_error:
-            idx += 1+Nidx
-            if idx >= len(ids)-Nidx:
+            idx += Nidx
+            if idx >= len(ids):
                 counter += 1
                 idx = 1
 
@@ -1247,3 +1248,23 @@ def LvsRtoggle(side):
 def mutate_value(v, range, scale=0.1):
     r0, r1 = range
     return float(np.round(np.clip(np.random.normal(loc=v, scale=scale * np.abs(r1 - r0)), a_min=r0, a_max=r1), 2))
+
+def weighted_mean(array, Nmax) :
+    y = np.bincount(array)
+    i = np.nonzero(y)[0]
+    ws=np.vstack((i, y[i])).T
+    ws0 = ws[np.argsort(ws[:,1])[-Nmax:]]
+    s=np.sum(ws0[:,1])
+    # print(s)
+    m=np.sum(ws0[:,0]*ws0[:,1])/s
+    # print(m)
+    return m
+
+
+def lognormal_discrete(mu, sigma, min, max):
+    Dd = lognorm(s=sigma, loc=0.0, scale=np.exp(mu))
+    pk2 = Dd.cdf(np.arange(min + 1, max + 2)) - Dd.cdf(np.arange(min, max + 1))
+    pk2 = pk2 / np.sum(pk2)
+    xrng = np.arange(min, max + 1, 1)
+    return rv_discrete(a=min, b=max, values=(xrng, pk2))
+

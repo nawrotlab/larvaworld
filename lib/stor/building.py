@@ -100,8 +100,7 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
     step_data = step_data.mask(step_data == 'na', np.nan)
     return step_data, endpoint_data
 
-def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ticks=True,
-                  min_Nids=None, dl=None,min_duration_in_sec=0,**kwargs):
+def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ticks=True,min_duration_in_sec=0,**kwargs):
     temp_step_path=os.path.join(source_dir, 'step.csv')
     temp_length_path=os.path.join(source_dir, 'length.csv')
     def temp_save(step,length) :
@@ -156,36 +155,32 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
         temp.reset_index(drop=False, inplace=True)
         temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
 
-        if min_Nids is not None:
-            if dl is not None :
-                temp['spinelength']=np.nan
-                temp.reset_index(level='Step', drop=False, inplace=True)
-                temp_ids = temp.index.unique().tolist()
-                ls=[]
-                for id in temp_ids :
-                    ag_temp=temp.loc[id]
-                    xy = ag_temp[nam.xy(d.points, flat=True)].values
-                    spinelength = np.zeros(len(ag_temp)) * np.nan
-                    for j in range(xy.shape[0]):
-                        k = np.sum(np.diff(np.array(fun.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
-                        if not np.isnan(np.sum(k)):
-                            sp_l = np.sum([np.sqrt(kk) for kk in k])
-                        else:
-                            sp_l = np.nan
-                        spinelength[j] = sp_l
-                    temp['spinelength'].loc[id]=spinelength
-                    ls.append(np.nanmean(spinelength))
-                e = pd.DataFrame({'length' : ls}, index=temp_ids)
-                temp.reset_index(drop=False, inplace=True)
-                temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-            else :
-                e=None
+        temp['spinelength']=np.nan
+        temp.reset_index(level='Step', drop=False, inplace=True)
+        temp_ids = temp.index.unique().tolist()
+        ls=[]
+        for id in temp_ids :
+            ag_temp=temp.loc[id]
+            xy = ag_temp[nam.xy(d.points, flat=True)].values
+            spinelength = np.zeros(len(ag_temp)) * np.nan
+            for j in range(xy.shape[0]):
+                k = np.sum(np.diff(np.array(fun.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
+                if not np.isnan(np.sum(k)):
+                    sp_l = np.sum([np.sqrt(kk) for kk in k])
+                else:
+                    sp_l = np.nan
+                spinelength[j] = sp_l
+            temp['spinelength'].loc[id]=spinelength
+            ls.append(np.nanmean(spinelength))
+        e = pd.DataFrame({'length' : ls}, index=temp_ids)
+        temp.reset_index(drop=False, inplace=True)
+        temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
         temp_save(temp,e)
         # return None, None
 
 
-    temp = match_larva_ids(s=temp, pars=['head_x', 'head_y'], e=e,
-                           min_Nids=min_Nids, dl=dl, **kwargs)
+    temp = match_larva_ids(s=temp, e=e, pars=['head_x', 'head_y'], **kwargs)
+    # temp = match_larva_ids(s=temp, pars=['head_x', 'head_y'], e=e,min_Nids=min_Nids, dl=dl, **kwargs)
     temp.reset_index(level='Step', drop=False, inplace=True)
     old_ids = temp.index.unique().tolist()
     new_ids = [f'Larva_{100 + i}' for i in range(len(old_ids))]
@@ -195,7 +190,7 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
     max_step =int(temp['Step'].max())
     temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
     temp.sort_index(level=['Step', 'AgentID'], inplace=True)
-    print(temp[temp.index.duplicated()])
+    # print(temp[temp.index.duplicated()])
     temp.drop_duplicates(inplace=True)
     if complete_ticks:
         trange = np.arange(max_step).astype(int)

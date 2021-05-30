@@ -91,7 +91,7 @@ class LarvaDataset:
         # self.compute_extrema(parameters=svels, interval_in_sec=int, is_last=False)
         self.compute_extrema(parameters=svels, interval_in_sec=int, threshold_in_std=None,
                              abs_threshold=[np.inf, svel_max_thr], is_last=False)
-        self.compute_dominant_frequencies(parameters=svels, freq_range=[0.7, 2.6], accepted_range=[0.7, 2.6])
+        # self.compute_dominant_frequencies(parameters=svels, freq_range=[0.7, 2.6], accepted_range=[0.7, 2.6])
         # raise
         if not from_file:
             m_t_cvs = []
@@ -1428,7 +1428,7 @@ class LarvaDataset:
         if show_output:
             print('Distance to origin computed')
 
-    def compute_extrema(self, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None,
+    def compute_extrema(self, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None,compute_frequency=True,
                         is_last=True, show_output=True):
         if abs_threshold is None:
             abs_threshold = [+np.inf, -np.inf]
@@ -1445,11 +1445,13 @@ class LarvaDataset:
 
         min_array = np.ones([Nticks, Npars, Nids]) * np.nan
         max_array = np.ones([Nticks, Npars, Nids]) * np.nan
+        freq_array=np.ones([Npars, Nids]) * np.nan
 
         for i, p in enumerate(parameters):
             if show_output:
                 print(f'Calculating local extrema for {p}')
             p_min, p_max = nam.min(p), nam.max(p)
+            p_freq = nam.freq(p)
             s[p_min] = np.nan
             s[p_max] = np.nan
             d = s[p]
@@ -1473,15 +1475,19 @@ class LarvaDataset:
                 i_min = i_min[df.loc[i_min + t0] < thr_min]
                 i_max = i_max[df.loc[i_max + t0] > thr_max]
 
+                freq_array[i,j]=1 / fun.weighted_mean(np.diff(i_min).astype(int), 3)/self.dt
+
                 min_array[i_min, i, j] = True
                 max_array[i_max, i, j] = True
 
             s[p_min] = min_array[:, i, :].flatten()
             s[p_max] = max_array[:, i, :].flatten()
+
+            if compute_frequency :
+                e[p_freq]=freq_array[i,:]
+
         if is_last:
             self.save()
-        if show_output:
-            print('All local extrema flagged')
 
     def compute_dominant_frequencies(self, parameters, freq_range=None, accepted_range=None,
                                      compare_params=False, is_last=True, show_output=True):
@@ -1494,34 +1500,25 @@ class LarvaDataset:
         V = np.zeros(Npars)
         F = np.ones((Npars, Nids)) * np.nan
         for i, p in enumerate(parameters):
+            if show_output:
+                print(f'Calculating dominant frequency for paramater {p}')
             for j, id in enumerate(ids):
                 d = s[p].xs(id, level='AgentID', drop_level=True)
                 try:
                     f, t, Sxx = spectrogram(d, fs=1 / self.dt)
+                    # keep only frequencies of interest
                     if freq_range:
                         f0, f1 = freq_range
-                        rng = np.where((f >= f0) & (f <= f1))
-
-                        # keep only frequencies of interest
-                        f = f[rng]
-                        Sxx = Sxx[rng, :][0]
-                        max_Sxx = np.nanmax(Sxx)
-                        V[i] += max_Sxx / np.nansum(Sxx)
-                    max_freqs = f[np.where(Sxx == max_Sxx)[0]]
-                    max_freq = max_freqs[int(len(max_freqs) / 2)]
-                    if accepted_range:
-                        if not accepted_range[0] < max_freq < accepted_range[1]:
-                            if show_output:
-                                print(f'Dominant frequency of {p} for {id} : {max_freq} outside the accepted_range')
-                            max_freq = np.nan
+                        valid = np.where((f >= f0) & (f <= f1))
+                        f = f[valid]
+                        Sxx = Sxx[valid, :][0]
+                    max_freq = f[np.argmax(np.nanmedian(Sxx, axis=1))]
                 except:
                     max_freq = np.nan
                     if show_output:
                         print(f'Dominant frequency of {p} for {id} not found')
                 F[i, j] = max_freq
         if compare_params:
-            for i, p in enumerate(parameters):
-                print(p, V[i])
             ind = np.argmax(V)
             best_p = parameters[ind]
             if show_output:
@@ -1534,8 +1531,7 @@ class LarvaDataset:
                 e[nam.freq(p)] = F[i]
         if is_last:
             self.save()
-        if show_output:
-            print('All dominant frequencies computed')
+
 
     def compute_preference_index(self, arena_diameter_in_mm=None, return_num=False, return_all=False, show_output=True):
         if not hasattr(self, 'endpoint_data'):
@@ -1797,7 +1793,7 @@ class LarvaDataset:
                         chunk_chain_dur_array[stop - t0, i] = chain_dur_counter
                         chain_counter = 0
                         chain_dur_counter = 0
-                    dst = d.loc[slice(start, stop), track_dst].sum()
+                    dst = d.loc[slice(start+1, stop), track_dst].sum()
                     xy = d.loc[slice(start, stop), track_xy].dropna().values
                     straight_dst = euclidean(tuple(xy[-1]), tuple(xy[0]))
                     orient = fun.angle_to_x_axis(xy[0], xy[-1])
@@ -2290,7 +2286,7 @@ class LarvaDataset:
     ########## PARSING : STRIDES ##########
     #######################################
 
-    def detect_strides(self, recompute=False, vel_par=None, track_point=None, mid_flag=None, use_edge_flag=True,
+    def detect_strides(self, recompute=False, vel_par=None, track_point=None,
                        non_chunks=True, is_last=True, show_output=True):
         cc = {'show_output': show_output,
               'is_last': False}
@@ -2306,19 +2302,15 @@ class LarvaDataset:
         #     track_point = self.point
         if vel_par is None:
             vel_par = nam.scal('vel')
-        if mid_flag is None:
-            mid_flag = nam.max(vel_par)
-        if use_edge_flag is True:
-            edge_flag = nam.min(vel_par)
-        else:
-            edge_flag = None
+        mid_flag = nam.max(vel_par)
+        edge_flag = nam.min(vel_par)
 
         pars_to_track = [p for p in
                          [nam.unwrap('front_orientation'), nam.unwrap('rear_orientation'), 'bend', 'x', 'y'] if
                          p in self.step_data.columns]
 
         self.compute_extrema(parameters=[vel_par], interval_in_sec=0.3, abs_threshold=[np.inf, sv_thr], **cc)
-        self.compute_dominant_frequencies(parameters=[vel_par], freq_range=[0.7, 2.5], accepted_range=[0.7, 2.5], **cc)
+        # self.compute_dominant_frequencies(parameters=[vel_par], freq_range=[0.7, 2.5], accepted_range=[0.7, 2.5], **cc)
         self.detect_contacting_chunks(chunk=c, mid_flag=mid_flag, edge_flag=edge_flag,
                                       vel_par=vel_par, control_pars=pars_to_track,
                                       track_point=track_point, **cc)
@@ -2673,10 +2665,12 @@ class LarvaDataset:
     def enrich(self, rescale_by=None, drop_collisions=False, interpolate_nans=False,
                filter_f=None, length_and_centroid=True,
                drop_contour=False, drop_unused_pars=False, drop_midline=False, drop_chunks=False,
-               drop_immobile=False, mode='minimal', dispersion_starts=[0,20],dispersion_stops=[40,80,120,160,200],
+               drop_immobile=False, mode='minimal', dispersion_starts=[0,20],dispersion_stops=[40,80],
                ang_analysis=True, lin_analysis=True, bout_annotation=['turn', 'stride', 'pause'],
                source_location=None, show_output=True,recompute_all=False,
                is_last=True, **kwargs):
+        print()
+        print(f'--- Enriching dataset {self.id} with derived parameters ---')
         self.config['front_body_ratio']=0.5
         self.save_config()
         warnings.filterwarnings('ignore')
@@ -2718,8 +2712,10 @@ class LarvaDataset:
             self.drop_unused_pars(**c)
         if is_last:
             self.save()
+        # print(f'--- Enrichment of dataset {self.id} complete ---')
+        # print()
 
-    def create_reference_dataset(self, dataset_id='reference'):
+    def create_reference_dataset(self, dataset_id='reference', Nstd=3):
         if self.endpoint_data is None:
             self.load()
         # if not os.path.exists(RefFolder):
@@ -2728,7 +2724,9 @@ class LarvaDataset:
         path_data = f'{path_dir}/data/reference.csv'
         path_fits = f'{path_dir}/data/bout_fits.csv'
         copy_tree(self.dir, path_dir)
-        e = self.endpoint_data
+        new_d = LarvaDataset(path_dir)
+        new_d.set_id(dataset_id)
+        e = new_d.endpoint_data
         pars = ['length', 'scaled_vel_freq',
                 'stride_reoccurence_rate', 'scaled_stride_dst_mean', 'scaled_stride_dst_std']
         sample_pars = ['body.initial_length', 'brain.crawler_params.initial_freq',
@@ -2736,17 +2734,19 @@ class LarvaDataset:
                        'brain.crawler_params.step_to_length_mu',
                        'brain.crawler_params.step_to_length_std'
                        ]
-        v = e[pars].values
-        v[:, 0] /= 1000
-        df = pd.DataFrame(v, columns=sample_pars)
+        for p in pars :
+            mu,std=e[p].mean(), e[p].std()
+            e=e[e[p]<mu+Nstd*std]
+            e=e[e[p]>mu-Nstd*std]
+        new_d.set_end_data(e)
+        new_d.save(step_data=False)
+        v = new_d.endpoint_data[pars]
+        v['length'] = v['length']/1000
+        df = pd.DataFrame(v.values, columns=sample_pars)
         df.to_csv(path_data)
 
-        plot_stridesNpauses(datasets=[self], labels=[dataset_id],
-                            stridechain_duration=False, pause_chunk='pause', time_unit='sec',
-                            plot_fits='all', range='broad',
-                            save_to=None, save_as='stridesNpauses',
-                            save_fits_to=None, save_fits_as=path_fits)
-        print(f'Reference dataset saved.')
+        plot_stridesNpauses(datasets=[self], labels=[dataset_id], save_as='reference_bouts.pdf', save_fits_as=path_fits)
+        print(f'Reference dataset {dataset_id} saved.')
 
     def raw_or_filtered_xy(self, points, show_output=True):
         r = nam.xy(points, flat=True)

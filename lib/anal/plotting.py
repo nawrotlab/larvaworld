@@ -29,7 +29,7 @@ from lib.stor.paths import DebFolder
 Generic plot function. Uses the next two functions internally'''
 
 plt_conf = {'axes.labelsize': 22,
-            'axes.titlesize': 25,
+            'axes.titlesize': 30,
             'figure.titlesize': 30,
             'xtick.labelsize': 20,
             'ytick.labelsize': 20,
@@ -709,9 +709,10 @@ def plot_bend_pauses(dataset, save_to=None):
     fig.savefig(filepath, dpi=300)
     print(f'Image saved as {filepath}')
 
-def plot_sample_marked_strides(datasets, labels, agent_idx=0, slice=[20,40], save_to=None, return_fig=False) :
-    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='stride')
-    filename = f'sample_marked_strides_{agent_idx}.pdf'
+def plot_sample_marked_strides(datasets, labels, agent_idx=0, agent_id=None, slice=[20,40], subfolder='individuals', save_to=None, return_fig=False) :
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder)
+    temp=f'sample_marked_strides_{slice[0]}-{slice[1]}'
+    filename = f'{temp}_{agent_id}.pdf' if agent_id is not None else f'{temp}_{agent_idx}.pdf'
 
     chunks=['stride', 'pause']
     chunk_cols=['lightblue', 'grey']
@@ -722,7 +723,7 @@ def plot_sample_marked_strides(datasets, labels, agent_idx=0, slice=[20,40], sav
     ylim=1.0
     # ylim=ylims[0]
 
-    figx=15 * 6 * 3 if slice is None else 20
+    figx=15 * 6 * 3 if slice is None else int((slice[1]-slice[0])/3)
     figy=5
 
     fig, axs =plt.subplots(Ndatasets,1, figsize=(figx, figy*Ndatasets), sharey=True, sharex=True)
@@ -738,7 +739,11 @@ def plot_sample_marked_strides(datasets, labels, agent_idx=0, slice=[20,40], sav
         ax.set_ylim([0, ylim])
         ax.set_xlim(slice)
         ax.legend(handles=handles, loc='upper right')
-        s=copy.deepcopy(d.step_data.xs(d.agent_ids[agent_idx], level='AgentID', drop_level=True))
+
+        if agent_id is None :
+            agent_id = d.agent_ids[agent_idx]
+
+        s=copy.deepcopy(d.step_data.xs(agent_id, level='AgentID', drop_level=True))
         s.set_index(s.index*d.dt, inplace=True)
         ax.plot(s[p], color='blue')
         # print(np.min(s.index.values), np.max(s.index.values), len(s.index.values), d.dt)
@@ -757,15 +762,14 @@ def plot_sample_marked_strides(datasets, labels, agent_idx=0, slice=[20,40], sav
     return process_plot(fig, save_to, filename, return_fig)
 
 def plot_marked_strides(dataset, agent_ids=None, title=' ', show_legend=True, show_par_legend=False, slices=[],
-                        return_fig=False):
+                        subfolder='individuals',return_fig=False):
     # We plot the complete or a slice of the timeseries of scal centroid velocity. The grey areas are stridechains
     d = dataset
 
     if agent_ids is None:
         agent_ids = d.agent_ids
 
-    dir = 'epochs'
-    save_to = os.path.join(d.plot_dir, dir)
+    save_to = os.path.join(d.plot_dir, subfolder)
     xxx = 'marked_strides'
     this_suf = 'pdf'
 
@@ -822,15 +826,14 @@ def plot_marked_strides(dataset, agent_ids=None, title=' ', show_legend=True, sh
 
 
 def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
-                      vertical_boundaries=False, min_turn_angle=0, slices=[], return_fig=False):
+                      vertical_boundaries=False, min_turn_angle=0, slices=[],subfolder='individuals', return_fig=False):
     # We plot the complete or a slice of the timeseries of scal centroid velocity. The grey areas are stridechains
     d = dataset
 
     if agent_ids is None:
         agent_ids = d.agent_ids
 
-    dir = 'epochs'
-    save_to = os.path.join(d.plot_dir, dir)
+    save_to = os.path.join(d.plot_dir, subfolder)
 
     # if save_to is None:
     #     save_to = os.path.join(d.plot_dir, 'plot_strides')
@@ -1991,8 +1994,8 @@ def plot_bend_change_over_displacement(dataset, return_fig=False):
     return process_plot(fig, save_to, filename, return_fig)
 
 
-def plot_stride_Dbend(datasets, labels, show_text=False, save_to=None, return_fig=False):
-    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='stride')
+def plot_stride_Dbend(datasets, labels, show_text=False,subfolder='stride', save_to=None, return_fig=False):
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder)
     filename = f'stride_bend_change.{suf}'
 
     p = 'bend'
@@ -2041,8 +2044,9 @@ def plot_stride_Dbend(datasets, labels, show_text=False, save_to=None, return_fi
     return process_plot(fig, save_to, filename, return_fig)
 
 
-def plot_stride_Dorient(datasets, labels, simVSexp=False, absolute=True, save_to=None, legend=False, return_fig=False):
-    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='stride')
+def plot_stride_Dorient(datasets, labels, simVSexp=False, absolute=True, subfolder='stride',
+                        save_to=None, legend=False, return_fig=False):
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder)
     filename = f'stride_orient_change.{suf}'
 
     par_shorts = ['str_fo', 'str_ro']
@@ -2078,8 +2082,9 @@ def plot_stride_Dorient(datasets, labels, simVSexp=False, absolute=True, save_to
     return process_plot(fig, save_to, filename, return_fig)
 
 
-def plot_interference(datasets, labels, mode='orientation', agent_idx=None, save_to=None, save_as=None, return_fig=False):
-    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='interference')
+def plot_interference(datasets, labels, mode='orientation', agent_idx=None, subfolder='interference',
+                      save_to=None, save_as=None, return_fig=False):
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder)
     if save_as is None:
         save_as = f'interference_{mode}.{suf}' if agent_idx is None else f'interference_{mode}_agent_idx_{agent_idx}.{suf}'
 
@@ -2132,8 +2137,9 @@ def plot_interference(datasets, labels, mode='orientation', agent_idx=None, save
     return process_plot(fig, save_to, save_as, return_fig)
 
 
-def plot_dispersion(datasets, labels, ranges=None, scaled=False, save_to=None, fig_cols=1, return_fig=False):
-    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='dispersion')
+def plot_dispersion(datasets, labels, ranges=None, scaled=False, subfolder='dispersion',fig_cols=1,
+                    save_as=None, save_to=None,  return_fig=False):
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder)
     if ranges is None :
         ranges = [(0,40)]
         # ranges = itertools.product([0,20], [40, 80, 120, 160, 200])
@@ -2152,6 +2158,8 @@ def plot_dispersion(datasets, labels, ranges=None, scaled=False, save_to=None, f
         else:
             filename = f'dispersion_{r0}-{r1}_{fig_cols}.{suf}'
             ylab = r'dispersion $(mm)$'
+        if save_as is not None :
+            filename = save_as
         t0, t1 = int(r0 * datasets[0].fr), int(r1 * datasets[0].fr)
         Nticks = t1 - t0
         trange = np.linspace(r0, r1, Nticks)
@@ -2426,72 +2434,74 @@ def plot_timeplot(par_shorts, datasets, labels=None,same_plot=True, individuals=
 
 
 def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chunk='pause', time_unit='sec',
-                        plot_fits='all', range='broad', print_fits=False, only_fit_one=True, type='cdf',
-                        save_to=None, save_as='stridesNpauses', save_fits_to=None, save_fits_as=None, return_fig=False):
-    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='bouts')
+                        plot_fits='all', range='broad', print_fits=False, only_fit_one=True, mode='cdf', subfolder='bouts',
+                        save_to=None, save_as=None, save_fits_to=None, save_fits_as=None, return_fig=False):
+    warnings.filterwarnings('ignore')
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder=subfolder)
+
     if save_fits_to is None:
-        save_fits_to = f'{save_to}/bout_fits'
+        save_fits_to = save_to
     if not os.path.exists(save_fits_to):
         os.makedirs(save_fits_to)
 
-    pause_discrete = False
+    pau_discr = False
 
     pause_lab = r'$\bf{pauses}$'
     chain_lab = r'$\bf{stridechains}$'
 
-    pause_durs = []
-    chain_durs = []
+    pau_durs = []
+    chn_durs = []
 
     frs = []
     for label, dataset in zip(labels, datasets):
         frs.append(dataset.fr)
         pause_par = nam.dur(pause_chunk)
-        pause_dur = dataset.get_par(pause_par).dropna().values
-        pause_min = 0.3
-        pause_max = 12
+        pau_dur = dataset.get_par(pause_par).dropna().values
+        pau0 = 0.3
+        pau1 = 12
         if time_unit == 'ms':
             pause_xlabel = 'time $(msec)$'
-            pause_dur *= 1000
-            pause_min *= 1000
-            pause_max *= 1000
+            pau_dur *= 1000
+            pau0 *= 1000
+            pau1 *= 1000
         elif time_unit == 'sec':
             pause_xlabel = 'time $(sec)$'
             pass
 
         if stridechain_duration:
             chain_par = nam.dur(nam.chain('stride'))
-            chain_dur = dataset.get_par(chain_par).dropna().values
-            chain_discrete = False
-            chain_min = 0.5
-            chain_max = 50
+            chn_dur = dataset.get_par(chain_par).dropna().values
+            chn_discr = False
+            chn0 = 0.5
+            chn1 = 50
             if time_unit == 'ms':
                 chain_xlabel = 'time $(msec)$'
-                chain_dur *= 1000
-                chain_min *= 1000
-                chain_max *= 1000
+                chn_dur *= 1000
+                chn0 *= 1000
+                chn1 *= 1000
             elif time_unit == 'sec':
                 chain_xlabel = 'time $(sec)$'
                 pass
 
         else:
             chain_par = nam.length(nam.chain('stride'))
-            chain_dur = dataset.get_par(chain_par).dropna().values
+            chn_dur = dataset.get_par(chain_par).dropna().values
             chain_xlabel = '# strides'
-            chain_discrete = True
-            chain_min = 1
-            chain_max = 100
-        pause_durs.append(pause_dur)
-        chain_durs.append(chain_dur)
+            chn_discr = True
+            chn0 = 1
+            chn1 = 100
+        pau_durs.append(pau_dur)
+        chn_durs.append(chn_dur)
 
-    min_pauses, max_pauses = [np.min(dur) for dur in pause_durs], [np.max(dur) for dur in pause_durs]
-    min_chains, max_chains = [np.min(dur) for dur in chain_durs], [np.max(dur) for dur in chain_durs]
+    min_pauses, max_pauses = [np.min(dur) for dur in pau_durs], [np.max(dur) for dur in pau_durs]
+    min_chains, max_chains = [np.min(dur) for dur in chn_durs], [np.max(dur) for dur in chn_durs]
 
     if range == 'broad':
-        pause_min, pause_max = np.min(min_pauses), np.max(max_pauses)
-        chain_min, chain_max = np.min(min_chains), np.max(max_chains)
+        pau0, pau1 = np.min(min_pauses), np.max(max_pauses)
+        chn0, chn1 = np.min(min_chains), np.max(max_chains)
     elif range == 'restricted':
-        pause_min, pause_max = np.max(min_pauses), np.min(max_pauses)
-        chain_min, chain_max = np.max(min_chains), np.min(max_chains)
+        pau0, pau1 = np.max(min_pauses), np.min(max_pauses)
+        chn0, chn1 = np.max(min_chains), np.min(max_chains)
     elif range == 'default':
         pass
 
@@ -2500,153 +2510,135 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
         [f'alpha_{p}', f'KS_pow_{p}', f'lambda_{p}', f'KS_exp_{p}', f'mu_log_{p}', f'sigma_log_{p}', f'KS_log_{p}'] for
         p in ps]
     fit_df = pd.DataFrame(index=labels, columns=flatten_list(stored_pars))
-    fit_df['min_pause'] = np.clip(min_pauses, a_min=pause_min, a_max=+np.inf)
-    fit_df['max_pause'] = np.clip(max_pauses, a_min=0, a_max=pause_max)
-    fit_df['min_stride'] = np.clip(min_chains, a_min=chain_min, a_max=+np.inf)
-    fit_df['max_stride'] = np.clip(max_chains, a_min=0, a_max=chain_max)
+    fit_df['min_pause'] = np.clip(min_pauses, a_min=pau0, a_max=+np.inf)
+    fit_df['max_pause'] = np.clip(max_pauses, a_min=0, a_max=pau1)
+    fit_df['min_stride'] = np.clip(min_chains, a_min=chn0, a_max=+np.inf)
+    fit_df['max_stride'] = np.clip(max_chains, a_min=0, a_max=chn1)
+    j0 = 0 if not only_fit_one else 1
+    if save_as is None :
+        base_file=f'stridesNpauses_{mode}_{range}_{plot_fits}'
+        filename = f'{base_file}.{suf}' if not only_fit_one else f'{base_file}_0.{suf}'
+    else :
+        filename = save_as
+    if save_fits_as is None :
+        save_fits_as =f'bout_fits_{range}.csv'
+    fit_filepath = os.path.join(save_fits_to, save_fits_as)
 
-    # pause_min, pause_max = np.min(pause_dur), np.max(pause_dur)
-    # chain_min, chain_max = np.min(chain_dur), np.max(chain_dur)
 
-    for mode in ['pdf', 'cdf']:
-        if type != mode:
-            continue
-        base_file=f'{save_as}_{mode}_{range}_{plot_fits}'
-        if not only_fit_one:
-            j0 = 0
-            filename = f'{base_file}.{suf}'
-        else:
-            j0 = 1
-            filename = f'{base_file}_0.{suf}'
-        fit_filename = f'bout_fits_{range}.csv'
-        if save_fits_as is None:
-            fit_filepath = os.path.join(save_fits_to, fit_filename)
-        else:
-            fit_filepath = save_fits_as
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=False, sharey=True)
+    axs = axs.ravel()
+    # print(chn0, chn1)
+    for j, (pau_dur, chn_dur, c, label, fr) in enumerate(zip(pau_durs, chn_durs, colors, labels, frs)):
+        for i, (dur, discr, dur0, dur1) in enumerate(zip([chn_dur, pau_dur], [chn_discr, pau_discr], [chn0, pau0], [chn1, pau1])):
+            dur = dur[dur >= dur0]
+            dur = dur[dur <= dur1]
 
-        fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=False, sharey=True)
-        axs = axs.ravel()
+            u2, c2, c2cum = compute_density(dur, dur0, dur1, Nbins=64)
+            du2 = 0.5 * (u2[:-1] + u2[1:])
+            alpha = 1 + len(dur) / np.sum(np.log(dur / dur0))
 
-        for j, (pause_dur, chain_dur, c, label, fr) in enumerate(
-                zip(pause_durs, chain_durs, colors, labels, frs)):
+            if discr:
+                results = pow.Fit(dur, xmin=dur0, xmax=dur1, discrete=True)
+            else:
+                results = pow.Fit(np.array(dur * fr).astype(int), xmin=int(dur0 * fr), xmax=int(dur1 * fr),
+                                  discrete=True)
+            alpha2 = results.power_law.alpha
+            beta = len(dur) / np.sum(dur - dur0)
+            mean_lognormal = np.mean(np.log(dur))
+            std_lognormal = np.std(np.log(dur))
 
-            for i, (dur, discrete, durmin, durmax) in enumerate(
-                    zip([chain_dur, pause_dur],
-                        [chain_discrete, pause_discrete], [chain_min, pause_min], [chain_max, pause_max])):
-                # label = f'{label_prefix} {label_suffix}'
-                # if use_min_values :
-                #     durmax = np.max(dur)
-                # else :
-                #     durmin, durmax = np.min(dur), np.max(dur)
-                dur = dur[dur >= durmin]
-                dur = dur[dur <= durmax]
+            KS_plaw = np.max(np.abs(c2cum - 1 + powerlaw_cdf(u2, dur0, alpha)))
+            KS_exp = np.max(np.abs(c2cum - 1 + exponential_cdf(u2, dur0, beta)))
+            KS_logn = np.max(np.abs(c2cum - 1 + lognormal_cdf(u2, mean_lognormal, std_lognormal)))
 
-                u2, c2, c2cum = compute_density(dur, durmin, durmax, Nbins=64)
-                du2 = 0.5 * (u2[:-1] + u2[1:])
-                alpha = 1 + len(dur) / np.sum(np.log(dur / durmin))
-
-                if discrete:
-                    results = pow.Fit(dur, xmin=durmin, xmax=durmax, discrete=True)
+            if print_fits:
+                print()
+                if i == 0:
+                    print(f'-----{label}-stridechains----------')
                 else:
-                    results = pow.Fit(np.array(dur * fr).astype(int), xmin=int(durmin * fr), xmax=int(durmax * fr),
-                                      discrete=True)
-                alpha2 = results.power_law.alpha
-                beta = len(dur) / np.sum(dur - durmin)
-                mean_lognormal = np.mean(np.log(dur))
-                std_lognormal = np.std(np.log(dur))
+                    print(f'-----{label}-pauses----------')
+                print(f'range : {np.min(dur)} - {np.max(dur)}, Nbouts : {len(dur)}')
+                print("powerlaw exponent MLE:", alpha)
+                print("powerlaw exponent powerlaw package:", alpha2)
+                print("exponential exponent MLE:", beta)
+                print("lognormal mean,std:", mean_lognormal, std_lognormal)
+                print('KS plaw', KS_plaw)
+                print('KS exp', KS_exp)
+                print('KS logn', KS_logn)
+                print()
 
-                KS_plaw = np.max(np.abs(c2cum - 1 + powerlaw_cdf(u2, durmin, alpha)))
-                KS_exp = np.max(np.abs(c2cum - 1 + exponential_cdf(u2, durmin, beta)))
-                KS_logn = np.max(np.abs(c2cum - 1 + lognormal_cdf(u2, mean_lognormal, std_lognormal)))
+            to_store = np.round([alpha, KS_plaw, beta, KS_exp, mean_lognormal, std_lognormal, KS_logn], 3)
+            fit_df.loc[label, stored_pars[i]] = to_store
 
-                if print_fits:
-                    print()
-                    if i == 0:
-                        print(f'-----{label}-stridechains----------')
+            idx_max = np.argmin([KS_plaw, KS_exp, KS_logn])
+            lws = [2, 2, 2]
+            lws[idx_max] = 4
+
+            if mode == 'cdf':
+                ylabel = 'cumulative probability'
+                if Ndatasets > 1:
+                    axs[i].loglog(u2, c2cum, '.', color=c, alpha=0.7)
+                    # axs[i].loglog(u2, c2cum, '.', color=c, label=label, alpha=0.7)
+                else:
+                    axs[i].loglog(u2, c2cum, '.', color=c, alpha=0.7)
+                if plot_fits == 'all':
+                    if j == j0:
+                        axs[i].loglog(u2, 1 - powerlaw_cdf(u2, dur0, alpha), 'c', lw=lws[0], label='powerlaw')
+                        axs[i].loglog(u2, 1 - exponential_cdf(u2, dur0, beta), 'g', lw=lws[1],
+                                      label='exponential')
+                        axs[i].loglog(u2, 1 - lognormal_cdf(u2, mean_lognormal, std_lognormal), 'm', lw=lws[2],
+                                      label='lognormal')
                     else:
-                        print(f'-----{label}-pauses----------')
-                    print(f'range : {np.min(dur)} - {np.max(dur)}, Nbouts : {len(dur)}')
-                    print("powerlaw exponent MLE:", alpha)
-                    print("powerlaw exponent powerlaw package:", alpha2)
-                    print("exponential exponent MLE:", beta)
-                    print("lognormal mean,std:", mean_lognormal, std_lognormal)
-                    print('KS plaw', KS_plaw)
-                    print('KS exp', KS_exp)
-                    print('KS logn', KS_logn)
-                    print()
-
-                to_store = np.round([alpha, KS_plaw, beta, KS_exp, mean_lognormal, std_lognormal, KS_logn], 3)
-                fit_df.loc[label, stored_pars[i]] = to_store
-
-                idx_max = np.argmin([KS_plaw, KS_exp, KS_logn])
-                lws = [2, 2, 2]
-                lws[idx_max] = 4
-
-                if mode == 'cdf':
-                    ylabel = 'cumulative probability'
-                    if Ndatasets > 1:
-                        axs[i].loglog(u2, c2cum, '.', color=c, alpha=0.7)
-                        # axs[i].loglog(u2, c2cum, '.', color=c, label=label, alpha=0.7)
+                        if not only_fit_one:
+                            axs[i].loglog(u2, 1 - powerlaw_cdf(u2, dur0, alpha), 'c', lw=lws[0])
+                            axs[i].loglog(u2, 1 - exponential_cdf(u2, dur0, beta), 'g', lw=lws[1])
+                            axs[i].loglog(u2, 1 - lognormal_cdf(u2, mean_lognormal, std_lognormal), 'm', lw=lws[2])
+                elif plot_fits == 'best':
+                    if idx_max == 0:
+                        axs[i].loglog(u2, 1 - powerlaw_cdf(u2, dur0, alpha), color=c, lw=lws[0])
+                    elif idx_max == 1:
+                        axs[i].loglog(u2, 1 - exponential_cdf(u2, dur0, beta), color=c, lw=lws[1])
+                    elif idx_max == 2:
+                        axs[i].loglog(u2, 1 - lognormal_cdf(u2, mean_lognormal, std_lognormal), color=c, lw=lws[2])
+                axs[i].axis([dur0, 1.1 * dur1, 1E-4, 1.1 * 1E-0])
+            elif mode == 'pdf':
+                ylabel = 'probability'
+                if Ndatasets > 1:
+                    axs[i].loglog(du2, c2, '.', color=c, alpha=0.7)
+                    # axs[i].loglog(du2, c2, '.', color=c, label=label, alpha=0.7)
+                else:
+                    axs[i].loglog(du2, c2, '.', color=c, alpha=0.7)
+                if plot_fits == 'all':
+                    if j == j0:
+                        axs[i].loglog(du2, powerlaw_pdf(du2, dur0, alpha), 'c', lw=lws[0], label='powerlaw')
+                        axs[i].loglog(du2, exponential_pdf(du2, dur0, beta), 'g', lw=lws[1],
+                                      label='exponential')
+                        axs[i].loglog(du2, lognormal_pdf(du2, mean_lognormal, std_lognormal), 'm', lw=lws[2],
+                                      label='lognormal')
                     else:
-                        axs[i].loglog(u2, c2cum, '.', color=c, alpha=0.7)
-                    if plot_fits == 'all':
-                        if j == j0:
-                            axs[i].loglog(u2, 1 - powerlaw_cdf(u2, durmin, alpha), 'c', lw=lws[0], label='powerlaw')
-                            axs[i].loglog(u2, 1 - exponential_cdf(u2, durmin, beta), 'g', lw=lws[1],
-                                          label='exponential')
-                            axs[i].loglog(u2, 1 - lognormal_cdf(u2, mean_lognormal, std_lognormal), 'm', lw=lws[2],
-                                          label='lognormal')
-                        else:
-                            if not only_fit_one:
-                                axs[i].loglog(u2, 1 - powerlaw_cdf(u2, durmin, alpha), 'c', lw=lws[0])
-                                axs[i].loglog(u2, 1 - exponential_cdf(u2, durmin, beta), 'g', lw=lws[1])
-                                axs[i].loglog(u2, 1 - lognormal_cdf(u2, mean_lognormal, std_lognormal), 'm', lw=lws[2])
-                    elif plot_fits == 'best':
-                        if idx_max == 0:
-                            axs[i].loglog(u2, 1 - powerlaw_cdf(u2, durmin, alpha), color=c, lw=lws[0])
-                        elif idx_max == 1:
-                            axs[i].loglog(u2, 1 - exponential_cdf(u2, durmin, beta), color=c, lw=lws[1])
-                        elif idx_max == 2:
-                            axs[i].loglog(u2, 1 - lognormal_cdf(u2, mean_lognormal, std_lognormal), color=c, lw=lws[2])
-                    axs[i].axis([durmin, 1.1 * durmax, 1E-4, 1.1 * 1E-0])
-                elif mode == 'pdf':
-                    ylabel = 'probability'
-                    if Ndatasets > 1:
-                        axs[i].loglog(du2, c2, '.', color=c, alpha=0.7)
-                        # axs[i].loglog(du2, c2, '.', color=c, label=label, alpha=0.7)
-                    else:
-                        axs[i].loglog(du2, c2, '.', color=c, alpha=0.7)
-                    if plot_fits == 'all':
-                        if j == j0:
-                            axs[i].loglog(du2, powerlaw_pdf(du2, durmin, alpha), 'c', lw=lws[0], label='powerlaw')
-                            axs[i].loglog(du2, exponential_pdf(du2, durmin, beta), 'g', lw=lws[1],
-                                          label='exponential')
-                            axs[i].loglog(du2, lognormal_pdf(du2, mean_lognormal, std_lognormal), 'm', lw=lws[2],
-                                          label='lognormal')
-                        else:
-                            if not only_fit_one:
-                                axs[i].loglog(du2, powerlaw_pdf(du2, durmin, alpha), 'c', lw=lws[0])
-                                axs[i].loglog(du2, exponential_pdf(du2, durmin, beta), 'g', lw=lws[1])
-                                axs[i].loglog(du2, lognormal_pdf(du2, mean_lognormal, std_lognormal), 'm', lw=lws[2])
-                    elif plot_fits == 'best':
-                        if idx_max == 0:
-                            axs[i].loglog(du2, powerlaw_pdf(du2, durmin, alpha), color=c, lw=lws[0])
-                        elif idx_max == 1:
-                            axs[i].loglog(du2, exponential_pdf(du2, durmin, beta), color=c, lw=lws[1])
-                        elif idx_max == 2:
-                            axs[i].loglog(du2, lognormal_pdf(du2, mean_lognormal, std_lognormal), color=c, lw=lws[2])
-                    axs[i].axis([durmin, 1.1 * durmax, 1E-6, 1.1 * 1E-0])
-                axs[i].legend(loc='lower left', fontsize=15)
-        # axs[0].yaxis.set_major_locator(ticker.MaxNLocator(4))
-        axs[0].set_ylabel(ylabel)
-        axs[0].set_xlabel(chain_xlabel)
-        axs[1].set_xlabel(pause_xlabel)
-        axs[0].set_title(chain_lab)
-        axs[1].set_title(pause_lab)
-        fig.subplots_adjust(top=0.92, bottom=0.15, left=0.15, right=0.95, hspace=.005, wspace=0.05)
-        fit_df.to_csv(fit_filepath, index=True, header=True)
-        print(f'Fits saved as {fit_filename}.')
-        return process_plot(fig, save_to, filename, return_fig)
+                        if not only_fit_one:
+                            axs[i].loglog(du2, powerlaw_pdf(du2, dur0, alpha), 'c', lw=lws[0])
+                            axs[i].loglog(du2, exponential_pdf(du2, dur0, beta), 'g', lw=lws[1])
+                            axs[i].loglog(du2, lognormal_pdf(du2, mean_lognormal, std_lognormal), 'm', lw=lws[2])
+                elif plot_fits == 'best':
+                    if idx_max == 0:
+                        axs[i].loglog(du2, powerlaw_pdf(du2, dur0, alpha), color=c, lw=lws[0])
+                    elif idx_max == 1:
+                        axs[i].loglog(du2, exponential_pdf(du2, dur0, beta), color=c, lw=lws[1])
+                    elif idx_max == 2:
+                        axs[i].loglog(du2, lognormal_pdf(du2, mean_lognormal, std_lognormal), color=c, lw=lws[2])
+                axs[i].axis([dur0, 1.1 * dur1, 1E-6, 1.1 * 1E-0])
+            axs[i].legend(loc='lower left', fontsize=15)
+    # axs[0].yaxis.set_major_locator(ticker.MaxNLocator(4))
+    axs[0].set_ylabel(ylabel)
+    axs[0].set_xlabel(chain_xlabel)
+    axs[1].set_xlabel(pause_xlabel)
+    axs[0].set_title(chain_lab)
+    axs[1].set_title(pause_lab)
+
+    fig.subplots_adjust(top=0.92, bottom=0.15, left=0.15, right=0.95, hspace=.005, wspace=0.05)
+    fit_df.to_csv(fit_filepath, index=True, header=True)
+    return process_plot(fig, save_to, filename, return_fig)
 
 
 def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_fig=False):
@@ -2818,13 +2810,13 @@ def plot_correlated_pars(dataset, pars, labels, save_to=None, save_as=f'correlat
     return process_plot(g, save_to, save_as, return_fig)
 
 
-def plot_ang_pars(datasets, labels, simVSexp=False, absolute=True, include_turns=False, include_rear=False,
-                  save_to=None, Npars=3, legend=False, return_fig=False):
-    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='turn')
+def plot_ang_pars(datasets, labels, simVSexp=False, absolute=True, include_turns=False, include_rear=False, subfolder='turn',
+                  save_fits_as=None, save_as=None, save_to=None, Npars=3, par_legend=False, return_fig=False):
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder=subfolder)
     if Npars == 5:
         par_shorts = ['b', 'bv', 'ba', 'fov', 'foa']
         ranges = [100, 200, 2000, 200, 2000]
-        ylim = 0.1
+        ylim = 0.05
     elif Npars == 3:
         par_shorts = ['b', 'bv', 'fov']
         ranges = [100, 200, 200]
@@ -2840,16 +2832,24 @@ def plot_ang_pars(datasets, labels, simVSexp=False, absolute=True, include_turns
     pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts,
                                                                     to_return=['par', 'symbol', 'exp_symbol', 'unit'])
 
-    filename = f'angular_pars_{len(pars)}.{suf}'
+    filename = f'angular_pars_{len(pars)}.{suf}' if save_as is None else save_as
+    fit_filename = 'ang_pars_ttest.csv' if save_fits_as is None else save_fits_as
+    fit_filepath = os.path.join(save_to, fit_filename)
 
     p_labels = [[sl, el] for sl, el in zip(sim_labels, exp_labels)]  if simVSexp else [[sl] * Ndatasets for sl in sim_labels]
 
-    fig, axs = plt.subplots(1, len(pars), figsize=(len(pars) * 5, 5), sharey=True)
+    if Ndatasets > 1:
+        fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(labels, 2)])
+        fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=('dataset1', 'dataset2'))
+        fit_df = pd.DataFrame(index=fit_ind, columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
+
+    fig, axs = plt.subplots(1, len(pars), figsize=(len(pars) * 8, 8), sharey=True)
     axs = axs.ravel()
     nbins = 200
 
     # vs=[]
     for i, (p, r, p_lab, xlab) in enumerate(zip(pars, ranges, p_labels, xlabels)):
+        vs=[]
         for j, d in enumerate(datasets):
             v = d.get_par(p).dropna().values
             if absolute:
@@ -2857,6 +2857,7 @@ def plot_ang_pars(datasets, labels, simVSexp=False, absolute=True, include_turns
                 r1, r2 = 0, r
             else:
                 r1, r2 = -r, r
+            vs.append(v)
             # if p=='bend_vel' :
             #     vs.append(v)
             # if len(vs)==2:
@@ -2871,20 +2872,63 @@ def plot_ang_pars(datasets, labels, simVSexp=False, absolute=True, include_turns
             #              hist_kws={'weights': sim_weights})
             # sns.distplot(exp, color="blue", ax=axs[i], bins=x, hist=False, label=exp_labels[i],
             #              hist_kws={'weights': exp_weights})
-            axs[i].hist(v, color=colors[j], bins=x, label=p_lab[j], weights=weights, alpha=0.5)
+            axs[i].hist(v, color=colors[j], bins=x, label=p_lab[j], weights=weights, alpha=0.8, histtype='step', linewidth=2)
+            axs[i].set_xlim(xmin=0)
+
+        if Ndatasets > 1:
+            for ind, (v1, v2) in zip(fit_ind, itertools.combinations(vs, 2)):
+                st, pv = ttest_ind(v1, v2, equal_var=False)
+                signif = pv <= 0.01
+                temp = np.nanmean(v1) < np.nanmean(v2)
+                if not signif:
+                    fit_df[p].loc[ind] = 0
+                else:
+                    fit_df[p].loc[ind] = 1 if temp else -1
+                fit_df[f'S_{p}'].loc[ind] = st
+                fit_df[f'P_{p}'].loc[ind] = np.round(pv, 11)
+            ii = 0
+            for z, (l1, l2) in enumerate(fit_df.index.values):
+                if fit_df[p].iloc[z] == 1:
+                    c1, c2 = colors[labels.index(l1)], colors[labels.index(l2)]
+                elif fit_df[p].iloc[z] == -1:
+                    c1, c2 = colors[labels.index(l2)], colors[labels.index(l1)]
+                else:
+                    ii += 1
+                    continue
+                rad = 0.04
+                yy = 0.95 - (z - ii) * 0.08
+                xx = 0.75
+                dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=axs[i], colors=(c1, c2),
+                                 transform=axs[i].transAxes)
+                pv = fit_df[f'P_{p}'].loc[(l1, l2)]
+                if pv == 0:
+                    pvi = -9
+                else:
+                    for pvi in np.arange(-1, -10, -1):
+                        if np.log10(pv) > pvi:
+                            pvi += 1
+                            break
+                axs[i].text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k', fontsize=15,
+                            transform=axs[i].transAxes)
+
         axs[i].set_xlabel(xlab)
         axs[i].yaxis.set_major_locator(ticker.MaxNLocator(3))
-        if legend:
-            axs[i].legend()
+        # if par_legend:
+        #     axs[i].legend(loc='upper center')
+    axs[0].legend(handles=[patches.Patch(facecolor=c, label=id, edgecolor='black') for c, id in zip(colors, labels)],
+               labels=labels, loc='upper left', handlelength=0.5, handleheight=0.5)
     axs[0].set_ylabel('probability')
     axs[0].set_ylim([0, ylim])
     plt.subplots_adjust(bottom=0.15, top=0.95, left=0.3 / len(pars), right=0.99, wspace=0.01)
+    if Ndatasets > 1:
+        fit_df.to_csv(fit_filepath, index=True, header=True)
     return process_plot(fig, save_to, filename, return_fig)
 
 
-def plot_crawl_pars(datasets, labels, simVSexp=False, save_to=None, legend=False, return_fig=False):
-    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='endpoint')
-    filename = f'crawl_pars.{suf}'
+def plot_crawl_pars(datasets, labels, simVSexp=False,subfolder='endpoint',
+                    save_as=None, save_to=None, legend=False, return_fig=False):
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder=subfolder)
+    filename = f'crawl_pars.{suf}' if save_as is None else save_as
 
     par_shorts = ['str_N', 'str_tr', 'cum_d']
     pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts,
@@ -2938,16 +2982,14 @@ def plot_crawl_pars(datasets, labels, simVSexp=False, save_to=None, legend=False
     return process_plot(fig, save_to, filename, return_fig)
 
 
-def plot_endpoint_params(datasets, labels, mode='basic', par_shorts=None, save_to=None, save_as=None, return_fig=False):
+def plot_endpoint_params(datasets, labels, mode='basic', par_shorts=None,subfolder='endpoint',
+                         save_to=None, save_as=None, save_fits_as = None, return_fig=False):
     warnings.filterwarnings('ignore')
-    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder='endpoint')
+    Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder=subfolder)
     for d in datasets :
         d.load(step_data=False)
-    if save_as is None:
-        filename = f'endpoint_params_{mode}.{suf}'
-    else:
-        filename = save_as
-    fit_filename = 'endpoint_ttest.csv'
+    filename = f'endpoint_params_{mode}.{suf}' if save_as is None else save_as
+    fit_filename = 'endpoint_ttest.csv' if save_fits_as is None else save_fits_as
     fit_filepath = os.path.join(save_to, fit_filename)
 
     ylim = [0.0, 0.25]
@@ -2963,17 +3005,20 @@ def plot_endpoint_params(datasets, labels, mode='basic', par_shorts=None, save_t
                           'cum_t', 'str_tr', 'pau_tr', 'tor',
                           'tor5_mu', 'tor20_mu', 'sdisp40_max', 'sdisp40_fin',
                           'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr']
-
+        elif mode == 'stride_def':
+            par_shorts = ['l_mu', 'fsv', 'str_sd_mu', 'str_sd_std']
+        elif mode == 'result':
+            par_shorts = ['sv_mu', 'str_tr', 'pau_tr',
+                          'str_fo_mu', 'str_fo_std', 'tor5_mu', 'tor20_mu',
+                          'tur_fo_mu', 'tur_fo_std']
 
         elif mode == 'limited':
-
             par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
                           'cum_t', 'str_tr', 'pau_tr', 'pau_t_mu',
                           'tor5_mu', 'tor5_std', 'tor20_mu', 'tor20_std',
                           'tor', 'sdisp_mu', 'sdisp40_max', 'sdisp40_fin',
                           'b_mu', 'b_std', 'bv_mu', 'bv_std',
                           'Ltur_tr', 'Rtur_tr', 'Ltur_fo_mu', 'Rtur_fo_mu']
-
 
         elif mode == 'full':
 
@@ -3010,10 +3055,13 @@ def plot_endpoint_params(datasets, labels, mode='basic', par_shorts=None, save_t
         else :
             raise ValueError ('Provide parameter shortcuts or define a mode')
 
-    pars, symbols, exp_symbols, xlabels, xlims = par_conf.par_dict_lists(shorts=par_shorts,
-                                                                    to_return=['par', 'symbol', 'exp_symbol', 'unit', 'lim'])
+    pars, = par_conf.par_dict_lists(shorts=par_shorts,to_return=['par'])
     pars = [p for p in pars if all([p in d.endpoint_data.columns for d in datasets])]
+    symbols, exp_symbols, xlabels, xlims, disps = par_conf.par_dict_lists(pars=pars,to_return=['symbol', 'exp_symbol', 'unit', 'lim', 'disp_name'])
 
+    if mode == 'stride_def':
+        xlims = [[2.5,4.8], [0.8, 2.0], [0.1, 0.25], [0.02, 0.09]]
+    # raise
     if Ndatasets > 1:
         fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(labels, 2)])
         fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=('dataset1', 'dataset2'))
@@ -3021,11 +3069,13 @@ def plot_endpoint_params(datasets, labels, mode='basic', par_shorts=None, save_t
 
     lw = 3
     Npars = len(pars)
-    Ncols = 4
+
+    Ncols = int(np.min([Npars, 4]))
     Nrows = int(np.ceil(Npars / Ncols))
-    fig, axs = plt.subplots(Nrows, Ncols, figsize=(8 * Ncols, 8 * Nrows), sharey=True)
+
+    fig, axs = plt.subplots(Nrows, Ncols, figsize=(7 * Ncols, 7 * Nrows), sharey=True)
     axs = axs.ravel()
-    for i, (p, symbol, xlabel, xlim) in enumerate(zip(pars, symbols, xlabels, xlims)):
+    for i, (p, symbol, xlabel, xlim, disp) in enumerate(zip(pars, symbols, xlabels, xlims, disps)):
         # if xlim is not None :
         #     print(p, xlabel,xlim, type(xlim), xlim[0])
         values = [d.endpoint_data[p].values for d in datasets]
@@ -3055,7 +3105,8 @@ def plot_endpoint_params(datasets, labels, mode='basic', par_shorts=None, save_t
             try:
                 v = df[[col]].dropna().values
                 weights = np.ones_like(v) / float(len(v))
-                y, x, patches = axs[i].hist(v, bins=nbins, weights=weights, color=colors[j], alpha=0.5)
+                bins=nbins if xlim is None else np.linspace(xlim[0], xlim[1], nbins)
+                y, x, patches = axs[i].hist(v, bins=bins, weights=weights, color=colors[j], alpha=0.5)
                 x = x[:-1] + (x[1] - x[0]) / 2
                 y_smooth = np.polyfit(x, y, 5)
                 poly_y = np.poly1d(y_smooth)(x)
@@ -3065,7 +3116,7 @@ def plot_endpoint_params(datasets, labels, mode='basic', par_shorts=None, save_t
         if i % Ncols == 0:
             axs[i].set_ylabel('probability')
         # axs[i].set_title(symbol)
-        axs[i].set_title(p)
+        axs[i].set_title(disp)
         # axs[i].legend([Patch(color='none')], [symbol], loc='upper left')
         axs[i].set_xlabel(xlabel)
         # print(p, xlim)
@@ -3079,16 +3130,18 @@ def plot_endpoint_params(datasets, labels, mode='basic', par_shorts=None, save_t
         # axs[i].ticklabel_format(axis='x', useMathText=True, scilimits=(-3, 3), useOffset=True)
 
         if Ndatasets > 1:
+            ii = 0
             for z, (l1, l2) in enumerate(fit_df.index.values):
                 if fit_df[p].iloc[z] == 1 :
                     c1, c2 = colors[labels.index(l1)], colors[labels.index(l2)]
                 elif fit_df[p].iloc[z] == -1 :
                     c1, c2 = colors[labels.index(l2)], colors[labels.index(l1)]
                 else :
+                    ii+=1
                     continue
                 rad = 0.04
-                yy = 0.95 - z * 0.08
-                xx = 0.7
+                yy = 0.95 - (z-ii) * 0.08
+                xx = 0.8
                 dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=axs[i], colors=(c1, c2),
                                  transform=axs[i].transAxes)
                 pv = fit_df[f'P_{p}'].loc[(l1, l2)]
@@ -3102,9 +3155,10 @@ def plot_endpoint_params(datasets, labels, mode='basic', par_shorts=None, save_t
                 axs[i].text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k', fontsize=15,
                             transform=axs[i].transAxes)
 
-    plt.subplots_adjust(wspace=0.2, hspace=0.5, left=0.1, right=0.95, top=0.8, bottom=0.05)
+    plt.subplots_adjust(wspace=0.02, hspace=0.3, left=0.07, right=0.97, top=1-(0.1/Nrows), bottom=0.12/Nrows)
     plt.ylim(ylim)
-    leg = axs[0].legend(bbox_to_anchor=(Ncols / 2, 1.8), loc='upper center', prop={'size': 20})
+    axs[0].legend(loc='upper left', prop={'size': 20})
+    # leg = axs[0].legend(bbox_to_anchor=(Ncols / 2, 1.8), loc='upper center', prop={'size': 20})
     if Ndatasets > 1:
         fit_df.to_csv(fit_filepath, index=True, header=True)
         print(f'Tests saved as {fit_filename}.')
@@ -3281,7 +3335,6 @@ def plot_chunk_Dorient2source(datasets, labels, chunk='stride', source=(0.0,0.0)
     plt.subplots_adjust(bottom=0.2, top=0.8, left=0.05*Ncols/2, right=0.9, wspace=0.8, hspace=0.3)
     return process_plot(fig, save_to, filename, return_fig)
 
-
 def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
     """
     Produce a circular histogram of angles on ax.
@@ -3357,27 +3410,26 @@ def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
 
     return n, bins, patches
 
-def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
+def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None):
     fig_dict = {}
     warnings.filterwarnings('ignore')
-    Ndatasets = len(datasets)
     if save_to is None:
         save_to = datasets[0].comp_plot_dir
+    if labels is None :
+        labels=[d.id for d in datasets]
     config = {'datasets': datasets,
               'labels': labels,
               'save_to': save_to}
-    # for mode in ['minimal']:
-    # for idx in [0,1,2,3,4,5] :
-    #     fig_dict[f'sample_marked_strides_{idx}']= plot_sample_marked_strides(**config, agent_idx=idx)
-    for r in ['default','broad']:
-        # for r in ['default', 'restricted', 'broad']:
-        try :
-            fig_dict[f'bout_fit_all_{r}'] = plot_stridesNpauses(**config, plot_fits='all', time_unit='sec', range=r,
-                                                                only_fit_one=True)
-            fig_dict[f'bout_fit_best_{r}'] = plot_stridesNpauses(**config, plot_fits='best', time_unit='sec', range=r)
-        except :
-            pass
-    for mode in ['minimal', 'limited']:
+    for r in ['default', 'restricted', 'broad']:
+        for mode in ['pdf', 'cdf'] :
+            try :
+                fig_dict[f'bout_{mode}_fit_all_{r}'] = plot_stridesNpauses(**config, plot_fits='all', time_unit='sec', range=r,
+                                                                    only_fit_one=True, mode=mode)
+                fig_dict[f'bout_{mode}_fit_best_{r}'] = plot_stridesNpauses(**config, plot_fits='best', time_unit='sec', range=r,
+                                                                            mode=mode)
+            except :
+                pass
+    for mode in ['minimal', 'limited', 'full']:
         fig_dict[f'endpoint_{mode}'] = plot_endpoint_params(**config, mode=mode)
     for mode in ['orientation', 'orientation_x2', 'bend', 'spinelength']:
         for agent_idx in [None, 0, 1]:
@@ -3408,24 +3460,36 @@ def comparative_analysis(datasets, labels, simVSexp=False, save_to=None):
         fig_dict['ang_pars'] = plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=3)
     except :
         pass
-    # plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=5, include_rear=True)
-    # plot_ang_pars(**config, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=5)
-
-
-
     try:
         fig_dict['calibration'] = calibration_plot(save_to=save_to)
     except:
         pass
     fig_dict['crawl_pars'] = plot_crawl_pars(**config, simVSexp=simVSexp)
-
     fig_dict['turns'] = plot_turns(**config)
     fig_dict['turn_duration'] = plot_turn_duration(**config)
-
-
-
     combine_pdfs(file_dir=save_to)
     return fig_dict
+
+def targeted_analysis(datasets, labels=None, simVSexp=False, save_to=None, pref='') :
+    if save_to is None:
+        save_to = datasets[0].comp_plot_dir
+    if labels is None :
+        labels=[d.id for d in datasets]
+    anal_kws = {'datasets': datasets,
+                'labels': labels,
+                'save_to': save_to,
+                'subfolder' : None}
+    init_dir, res_dir='init','result'
+    plot_stridesNpauses(**anal_kws, plot_fits='best', time_unit='sec', range='broad',
+                        save_as=f'bouts{pref}.pdf',save_fits_as=f'bout_fits{pref}.csv')
+    plot_endpoint_params(**anal_kws, mode='stride_def', save_as=f'stride_pars{pref}.pdf',
+                         save_fits_as=f'stride_pars_ttest{pref}.csv')
+
+    plot_interference(**anal_kws, mode='orientation', save_as=f'interference{pref}.pdf')
+    plot_crawl_pars(**anal_kws, save_as=f'crawl_pars{pref}.pdf')
+    plot_ang_pars(**anal_kws, Npars=3, save_as=f'ang_pars{pref}.pdf',save_fits_as=f'ang_pars_ttest{pref}.csv')
+    plot_endpoint_params(**anal_kws, mode='result',save_as=f'results{pref}.pdf')
+    plot_dispersion(**anal_kws, scaled=True, fig_cols=2, ranges=[(0, 80)], save_as=f'dispersion{pref}.pdf')
 
 
 def dual_half_circle(center, radius, angle=0, ax=None, colors=('W', 'k'), **kwargs):

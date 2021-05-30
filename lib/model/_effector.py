@@ -1,13 +1,11 @@
 import itertools
 import random
-import time
 
 import numpy as np
 from scipy import signal
-from scipy.stats import lognorm, rv_discrete
 
 import lib.aux.sampling as sampling
-from lib.aux.functions import flatten_tuple
+from lib.aux.functions import flatten_tuple, lognormal_discrete
 
 
 class Effector:
@@ -503,22 +501,17 @@ class Intermitter(Effector):
                                                                  xmax=self.stridechain_max)
         elif stridechain_dist['name'] == 'lognormal':
             self.stridechain_mean, self.stridechain_std = stridechain_dist['mu'], stridechain_dist['sigma']
-            self.stridechain_dist = self.lognormal_discrete(mu=self.stridechain_mean, sigma=self.stridechain_std,
-                                                            min=self.stridechain_min, max=self.stridechain_max)
-
-    def lognormal_discrete(self, mu, sigma, min, max):
-        Dd = lognorm(s=sigma, loc=0.0, scale=np.exp(mu))
-        pk2 = Dd.cdf(np.arange(min + 1, max + 2)) - Dd.cdf(np.arange(min, max + 1))
-        pk2 = pk2 / np.sum(pk2)
-        xrng = np.arange(min, max + 1, 1)
-        return rv_discrete(a=min, b=max, values=(xrng, pk2))
+            self.stridechain_dist = lognormal_discrete(mu=self.stridechain_mean, sigma=self.stridechain_std,
+                                                       min=self.stridechain_min, max=self.stridechain_max)
+            # print(self.stridechain_mean, self.stridechain_std, self.stridechain_min, self.stridechain_max)
 
     def generate_stridechain_length(self):
         if self.stridechain_dist is None:
-            return sampling.sample_lognormal_int(mean=self.stridechain_mean, sigma=self.stridechain_std,
+            l= sampling.sample_lognormal_int(mean=self.stridechain_mean, sigma=self.stridechain_std,
                                                  xmin=self.stridechain_min, xmax=self.stridechain_max)
         else:
-            return self.stridechain_dist.rvs(size=1)[0]
+            l=self.stridechain_dist.rvs(size=1)[0]
+        return l
 
     def generate_pause_duration(self):
         if self.pause_dist is None:
@@ -586,6 +579,7 @@ class Intermitter(Effector):
                 self.register_pause()
                 # ... and turn on locomotion
                 self.current_stridechain_length = self.generate_stridechain_length()
+
                 self.stridechain_start = True
                 self.stop_effector()
                 self.disinhibit_locomotion()

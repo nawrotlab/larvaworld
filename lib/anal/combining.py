@@ -64,11 +64,11 @@ def combine_videos_4to1(filenames=None, file_dir='.', save_as='combined_videos.m
 def append_pdf(input, output):
     [output.addPage(input.getPage(page_num)) for page_num in range(input.numPages)]
 
-def combine_pdfs(file_dir='.', save_as="final.pdf") :
+def combine_pdfs(file_dir='.', save_as="final.pdf", pref='') :
     merger = PdfFileMerger()
     files=[]
     for dirpath, dirnames, filenames in os.walk(file_dir):
-        for filename in [f for f in filenames if f.endswith(".pdf")]:
+        for filename in [f for f in filenames if (f.endswith(".pdf") and f.startswith(pref))]:
             files.append(os.path.join(dirpath, filename))
     # print(files)
     files.sort()

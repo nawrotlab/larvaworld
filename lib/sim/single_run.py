@@ -24,7 +24,7 @@ def sim_enrichment(d, experiment):
         d.angular_analysis(is_last=False)
         d.detect_turns(is_last=False)
     elif experiment == 'dispersion':
-        d.enrich(length_and_centroid=False, is_last=False)
+        d.enrich(length_and_centroid=False,show_output=False, is_last=False)
     elif experiment in ['chemotaxis_local', 'chemotaxis_diffusion']:
         d.linear_analysis(is_last=False)
         d.angular_analysis(is_last=False)

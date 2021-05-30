@@ -67,31 +67,22 @@ class GeometricDist(st.rv_continuous):
 def sample_agents(filepath=None, pars=None, N=1, sample_dataset='reference'):
     path_dir = f'{RefFolder}/{sample_dataset}'
     path_data = f'{path_dir}/data/reference.csv'
-    # path_fits = f'{path_dir}/data/bout_fits.csv'
     if filepath is None:
         filepath = path_data
     data = pd.read_csv(filepath, index_col=0)
-    if pars is None:
-        pars = data.columns
-    else:
-        pars = [p for p in data.columns if p in pars]
+    pars = data.columns if pars is None else [p for p in data.columns if p in pars]
     means = [data[p].mean() for p in pars]
+
     if len(pars)>=2:
         base=data[pars].values.T
         cov = np.cov(base)
         samples = np.random.multivariate_normal(means, cov, N).T
-
-        # print(data[pars].values.T.shape)
-        # print(pars)
-        # import matplotlib.pyplot  as plt
-        # plt.scatter(x=base[2,:], y=base[3,:], color='b')
-        # plt.scatter(x=samples[2,:], y=samples[3,:], color='r')
-        # plt.show()
-        # raise
     elif len(pars)==1:
         std=np.std(data[pars].values)
         samples = np.atleast_2d(np.random.normal(means[0], std, N))
     return pars, samples
+
+
 
 
 def get_ref_bout_distros(mode='stridechain_dist', sample_dataset='reference'):
@@ -180,3 +171,48 @@ def lognorm_params(mode, stddev):
 def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
     return truncnorm(
         (low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
+
+if __name__ == '__main__':
+    # pp=['brain.crawler_params.step_to_length_std']
+    pp=['brain.crawler_params.step_to_length_mu', 'brain.crawler_params.step_to_length_std']
+    cs=['Fed', 'Deprived', 'Starved']
+    # # import pandas as pd
+    # es=[pd.read_csv(f'{RefFolder}/{c}/data/reference.csv') for c in cs]
+    import matplotlib.pyplot as plt
+    # for c,e in zip(cs,es):
+    #     plt.hist(e[pp[3]], bins=20, label=c, histtype='step')
+    # #     # print(len(k[j][k[j] < 0]))
+    # # # plt.suptitle(p)
+    # plt.legend()
+    # plt.show()
+    # raise
+    # kk = [sample_agents(pars=pp, N=2000, sample_dataset=c)[1] for c in cs]
+    for c in cs :
+        samples=sample_agents(pars=pp, N=2000, sample_dataset=c)[1]
+        ms0, ss0 = samples[0], samples[1]
+        ms1,ss1=[],[]
+        for i in range(2000) :
+            m,s=ms0[i],ss0[i]
+            z=np.random.normal(loc=m, scale=s, size=2000)
+            mm,ss=np.mean(z), np.std(z)
+            ms1.append(mm)
+            ss1.append(ss)
+        plt.hist(ms0, bins=20, label=f'{c}_exp', histtype='step')
+        plt.hist(ms1, bins=20, label=f'{c}_sim', histtype='step')
+        plt.suptitle(f'{c}_mean')
+        plt.legend()
+        plt.show()
+        plt.hist(ss0, bins=20, label=f'{c}_exp', histtype='step')
+        plt.hist(ss1, bins=20, label=f'{c}_sim', histtype='step')
+        plt.suptitle(f'{c}_std')
+        plt.legend()
+        plt.show()
+        # break
+    # for j,p in enumerate(pp) :
+    #     print(p)
+    #     for i,(k,c) in enumerate(zip(kk,cs)) :
+    #         plt.hist(k[j], bins=20, label=c, histtype='step')
+    #         print(len(k[j][k[j]<0]))
+    #     plt.suptitle(p)
+    #     plt.legend()
+    #     plt.show()

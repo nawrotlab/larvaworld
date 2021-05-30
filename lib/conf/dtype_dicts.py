@@ -359,7 +359,7 @@ all_null_dicts = {
                 'step_to_length_mu': 'sample',  # From D1 fit
                 'step_to_length_std': 'sample',  # From D1 fit
                 'initial_amp': None,
-                'crawler_noise': 0.1,
+                'crawler_noise': 0.05,
                 'max_vel_phase': 1.0
                 },
     'turner': {'mode': None,
