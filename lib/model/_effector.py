@@ -135,9 +135,10 @@ class Crawler(Oscillator):
             super().oscillate()
             if self.complete_iteration and self.waveform == 'realistic':
                 self.step_to_length = self.generate_step_to_length()
-            activity += np.random.normal(scale=self.scaled_noise * length)
+            # activity += np.random.normal(scale=self.scaled_noise * length)
         else:
             activity = 0
+        activity += np.random.normal(scale=self.scaled_noise * length)
         return activity
         # return np.clip(activity, a_min=0, a_max=np.inf)
 

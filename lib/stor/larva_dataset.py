@@ -2734,12 +2734,16 @@ class LarvaDataset:
                        'brain.crawler_params.step_to_length_mu',
                        'brain.crawler_params.step_to_length_std'
                        ]
+        # print(len(new_d.agent_ids))
+        invalid_ids=[]
         for p in pars :
             mu,std=e[p].mean(), e[p].std()
-            e=e[e[p]<mu+Nstd*std]
-            e=e[e[p]>mu-Nstd*std]
-        new_d.set_end_data(e)
-        new_d.save(step_data=False)
+            invalid_ids.append(e[e[p]>mu+Nstd*std].index.values.tolist())
+            invalid_ids.append(e[e[p]<mu-Nstd*std].index.values.tolist())
+        invalid_ids=fun.unique_list(fun.flatten_list(invalid_ids))
+        new_d.drop_agents(agents=invalid_ids)
+        new_d.load()
+        # print(len(new_d.agent_ids))
         v = new_d.endpoint_data[pars]
         v['length'] = v['length']/1000
         df = pd.DataFrame(v.values, columns=sample_pars)
