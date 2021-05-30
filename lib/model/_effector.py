@@ -71,9 +71,10 @@ class Oscillator(Effector):
 
 class Crawler(Oscillator):
     def __init__(self, waveform, initial_amp=None, square_signal_duty=None, step_to_length_mu=None,
-                 step_to_length_std=0.0,
+                 step_to_length_std=0.0,initial_freq=1.3, freq_std=0.0,
                  gaussian_window_std=None, max_vel_phase=1.0, crawler_noise=0, **kwargs):
-        super().__init__(**kwargs)
+        initial_freq=np.random.normal(initial_freq, freq_std)
+        super().__init__(initial_freq = initial_freq, **kwargs)
         self.waveform = waveform
         self.activity = 0
         self.amp = initial_amp

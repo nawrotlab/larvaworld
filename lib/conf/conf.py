@@ -382,7 +382,7 @@ if __name__ == '__main__':
         'RL_learner': mod.RL_odor_larva,
         'RL_feeder': mod.RL_feed_odor_larva,
         'basic_navigator': mod.basic_larva,
-
+        'explorer_3con': mod.exploring_3c_larva,
     }
     for k, v in mod_dict.items():
         saveConf(v, 'Model', k)

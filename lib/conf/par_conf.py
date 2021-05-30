@@ -495,6 +495,7 @@ def set_ParDb():
     par_db['lim'].loc['tur_fo_std'] = [10.0, 40.0]
     par_db['lim'].loc['b_mu'] = [-5.0, 5.0]
     par_db['lim'].loc['b_std'] = [10.0, 30.0]
+    par_db['lim'].loc['pau_t_mu'] = [0.0, 2.0]
 
     to_drop1 = [f'{c}_l' for c in ['non_str', 'pau', 'str', 'tur', 'Ltur', 'Rtur', 'fee']]
     to_drop2 = fun.flatten_list([[f'{c}_{d}' for d in ['sstd', 'std', 'sd', 'd']] for c in ['non_str', 'fee']])

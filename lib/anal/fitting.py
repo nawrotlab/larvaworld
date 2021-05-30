@@ -352,7 +352,7 @@ def fit_crawl_params(d, target_point=None,fit_filepath=None, save_to=None, save_
     return fits
 
 
-def powerlaw_cdf(x, durmin, alpha):
+def power_cdf(x, durmin, alpha):
     return 1 - (x / durmin) ** (1 - alpha)
 
 
@@ -360,7 +360,7 @@ def powerlaw_pdf(x, durmin, alpha):
     return (alpha - 1) / durmin * (x / durmin) ** (-alpha)
 
 
-def exponential_cdf(x, durmin, beta):
+def exp_cdf(x, durmin, beta):
     return 1 - np.exp(-beta * (x - durmin))
 
 
@@ -368,7 +368,7 @@ def exponential_pdf(x, durmin, beta):
     return beta * np.exp(-beta * (x - durmin))
 
 
-def lognormal_cdf(x, mu, sigma):
+def lognorm_cdf(x, mu, sigma):
     return 0.5 + 0.5 * sp.special.erf((np.log(x) - mu) / np.sqrt(2) / sigma)
 
 
@@ -434,9 +434,9 @@ def analyse_bouts(dataset, parameter, scale_coef=1, label=None, xlabel=r'time$(s
     std_lognormal = np.std(np.log(dur))
     print("lognormal mean,std:", mean_lognormal, std_lognormal)
 
-    KS_plaw = np.max(np.abs(c2cum - 1 + powerlaw_cdf(u2, durmin, alpha)))
-    KS_exp = np.max(np.abs(c2cum - 1 + exponential_cdf(u2, durmin, beta)))
-    KS_logn = np.max(np.abs(c2cum - 1 + lognormal_cdf(u2, mean_lognormal, std_lognormal)))
+    KS_plaw = np.max(np.abs(c2cum - 1 + power_cdf(u2, durmin, alpha)))
+    KS_exp = np.max(np.abs(c2cum - 1 + exp_cdf(u2, durmin, beta)))
+    KS_logn = np.max(np.abs(c2cum - 1 + lognorm_cdf(u2, mean_lognormal, std_lognormal)))
     print()
     print('KS plaw', KS_plaw)
     print('KS exp', KS_exp)
@@ -456,9 +456,9 @@ def analyse_bouts(dataset, parameter, scale_coef=1, label=None, xlabel=r'time$(s
     axs[0].axis([durmin, durmax, 1E-5, 1E-0])
 
     axs[1].loglog(u2, c2cum, 'or', label=label)
-    axs[1].loglog(u2, 1 - powerlaw_cdf(u2, durmin, alpha), 'r', lw=lws[0], label='powerlaw MLE')
-    axs[1].loglog(u2, 1 - exponential_cdf(u2, durmin, beta), 'g', lw=lws[1], label='exponential MLE')
-    axs[1].loglog(u2, 1 - lognormal_cdf(u2, mean_lognormal, std_lognormal), 'b', lw=lws[2], label='lognormal MLE')
+    axs[1].loglog(u2, 1 - power_cdf(u2, durmin, alpha), 'r', lw=lws[0], label='powerlaw MLE')
+    axs[1].loglog(u2, 1 - exp_cdf(u2, durmin, beta), 'g', lw=lws[1], label='exponential MLE')
+    axs[1].loglog(u2, 1 - lognorm_cdf(u2, mean_lognormal, std_lognormal), 'b', lw=lws[2], label='lognormal MLE')
 
     axs[1].legend(loc='lower left', fontsize=15)
     # axs[1].axis([1.1*durmin, 1.1*durmax,1E-2,1.1*1E-0])

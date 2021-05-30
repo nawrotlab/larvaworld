@@ -65,6 +65,7 @@ class GeometricDist(st.rv_continuous):
 
 
 def sample_agents(filepath=None, pars=None, N=1, sample_dataset='reference'):
+    print('xx')
     path_dir = f'{RefFolder}/{sample_dataset}'
     path_data = f'{path_dir}/data/reference.csv'
     if filepath is None:
@@ -86,6 +87,7 @@ def sample_agents(filepath=None, pars=None, N=1, sample_dataset='reference'):
 
 
 def get_ref_bout_distros(mode='stridechain_dist', sample_dataset='reference'):
+    print('fff')
     path_dir = f'{RefFolder}/{sample_dataset}'
     # path_data = f'{path_dir}/data/reference.csv'
     path_fits = f'{path_dir}/data/bout_fits.csv'

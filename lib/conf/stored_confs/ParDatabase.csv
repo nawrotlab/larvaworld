@@ -67,7 +67,7 @@ pau_sd,scaled_pause_dst,${d}_{pau}^{*}$,${\hat{d}}_{pau}^{*}$,scaled distance $(
 pau_std,pause_straight_dst,${d}_{pau}^{st}$,${\hat{d}}_{pau}^{st}$,distance $(mm)$,,,pause_straight_dst,<class 'float'>,
 pau_sstd,scaled_pause_straight_dst,${d}_{pau}^{st*}$,${\hat{d}}_{pau}^{st*}$,scaled distance $(-)$,,,scaled_pause_straight_dst,<class 'float'>,
 pau_t,pause_dur,${t}_{pause}$,${\hat{t}}_{pause}$,time $(sec)$,,pause_dur,pause_dur,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-pau_t_mu,pause_dur_mean,${\bar{t}}_{pause}$,${\bar{\hat{t}}}_{pause}$,time $(sec)$,,,pause duration mean,<class 'float'>,
+pau_t_mu,pause_dur_mean,${\bar{t}}_{pause}$,${\bar{\hat{t}}}_{pause}$,time $(sec)$,"[0.0, 2.0]",,pause duration mean,<class 'float'>,
 pau_t_std,pause_dur_std,${\~{t}}_{pause}$,${\~{\hat{t}}}_{pause}$,time $(sec)$,,,pause duration std,<class 'float'>,
 cum_pau_t,cum_pause_dur,${t}_{pause}^{cum}$,${\hat{t}}_{pause}^{cum}$,time $(sec)$,,cum_pause_dur,cum_pause_dur,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 pau_t_max,pause_dur_max,${t}_{pause}^{m}$,${\hat{t}}_{pause}^{m}$,time $(sec)$,,,pause_dur_max,<class 'float'>,

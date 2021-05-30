@@ -356,6 +356,7 @@ all_null_dicts = {
     'crawler': {'waveform': 'realistic',
                 'freq_range': [0.5, 2.5],
                 'initial_freq': 'sample',  # From D1 fit
+                'freq_std': 0.0,
                 'step_to_length_mu': 'sample',  # From D1 fit
                 'step_to_length_std': 'sample',  # From D1 fit
                 'initial_amp': None,
@@ -413,9 +414,16 @@ all_null_dicts = {
         'sim_dur': 3.0,
         'dt': 0.1,
         'Box2D': False,
-        'sample_dataset' : 'reference'
+        'sample_dataset': 'reference'
+    },
+    'logn_dist': {
+        'range': (0.0, 2.0),
+        'name': 'lognormal',
+        'mu': 1.0,
+        'sigma': 0.0
     }
 }
+
 
 # print(all_null_dicts['arena']['arena_xdim','arena_ydim'])
 
@@ -524,6 +532,7 @@ def get_dict_dtypes(name, **kwargs):
         'crawler': {'waveform': ['realistic', 'square', 'gaussian', 'constant'],
                     'freq_range': Tuple[float, float],
                     'initial_freq': float,  # From D1 fit
+                    'freq_std': float,  # From D1 fit
                     'step_to_length_mu': float,  # From D1 fit
                     'step_to_length_std': float,  # From D1 fit
                     'initial_amp': float,
@@ -583,6 +592,12 @@ def get_dict_dtypes(name, **kwargs):
             'dt': float,
             'Box2D': bool,
             'sample_dataset': list(loadConfDict('Ref').keys())
+        },
+        'logn_dist': {
+            'range': Tuple[float, float],
+            'name': 'lognormal',
+            'mu': float,
+            'sigma': float
         }
 
     }

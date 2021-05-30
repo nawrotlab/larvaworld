@@ -1158,7 +1158,7 @@ def segment_body(N, xy0, seg_ratio=None, centered=True):
 
 @contextmanager
 def suppress_stdout():
-    with open(os.devnull, "W") as devnull:
+    with open(os.devnull, "w") as devnull:
         old_stdout = sys.stdout
         sys.stdout = devnull
         try:
