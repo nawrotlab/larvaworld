@@ -3,6 +3,7 @@ import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
 import scipy.stats as st
+from scipy.stats import ks_2samp
 
 from lib.aux import naming as nam
 
@@ -355,9 +356,19 @@ def fit_crawl_params(d, target_point=None,fit_filepath=None, save_to=None, save_
 def power_cdf(x, durmin, alpha):
     return 1 - (x / durmin) ** (1 - alpha)
 
-
 def powerlaw_pdf(x, durmin, alpha):
-    return (alpha - 1) / durmin * (x / durmin) ** (-alpha)
+    res= (alpha - 1) / durmin * (x / durmin) ** (-alpha)
+    return res
+
+
+def powerlaw_pdf2(x, durmin, alpha, normalized=True):
+
+    res= (alpha - 1) / durmin * (x / durmin) ** (-alpha)
+    if normalized :
+        cdf0=1-power_cdf(np.max(x), durmin, alpha)
+        res=res/cdf0
+        res=res/np.sum(res)
+    return res
 
 
 def exp_cdf(x, durmin, beta):
@@ -375,19 +386,181 @@ def lognorm_cdf(x, mu, sigma):
 def lognormal_pdf(x, mu, sigma):
     return 1 / (x * sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((np.log(x) - mu) / sigma) ** 2)
 
+def logNpow_pdf(x,mu,sigma, alpha,dur0, durmid, ratio) :
+    x0 = x[x < durmid]
+    x1 = x[x >= durmid]
+    log_pdf = lognormal_pdf(x0, mu, sigma) * ratio
+    pow_pdf = powerlaw_pdf(x1, durmid, alpha) * (1 - ratio)
+    pdf = np.hstack([log_pdf, pow_pdf])
+    return pdf
+
+
+def logNpow_cdf(x,mu,sigma, alpha,dur0, durmid, ratio) :
+    x0=x[x<durmid]
+    x1=x[x>=durmid]
+    N0=x0.shape[0]
+    log_cdf=1-lognorm_cdf(x0, mu, sigma)
+    pow_cdf=1-power_cdf(x1, durmid, alpha)
+    # log_cdf *= ratio
+    pow_cdf *= (1-ratio)
+    pow0=pow_cdf[0]
+    # for i in range(len(log_cdf)):
+    #     log_cdf[-i-1]=pow0
+    # log1=log_cdf[-1]
+    # log_dif=-np.diff(log_cdf)
+    # log_dif=log_cdf[:-1]/log_cdf[1:]
+    # d0=1/log_cdf[-1]
+    # d1=1/pow0
+    # print(log_dif)
+    # print(pow0/log1)
+    # log_cdf[1:] = pow0*log_dif
+    # log_cdf[1:] = pow0*log_dif
+    # print('ddddddddddddddddd')
+    # print(log_cdf)
+    # log_cdf[1:] *= log_dif/d0*d1
+    # print(log_cdf)
+    cdf0=np.hstack([log_cdf, pow_cdf])
+    # print(cdf0[:N0+1], N0, cdf0[N0])
+    # for i in np.arange(N0-1,1,-1) :
+    #     cdf0[i]=cdf0[i+1]*cdf0[i-1]/cdf0[i]*(1-cdf0[i])
+    # print(cdf0[:N0+1])
+    cdf = 1-cdf0
+    # print(1-cdf[N0-2:N0+2], N0)
+    # print(cdf[N0-2:N0+2])
+
+
+    return cdf
+
+def get_logNpow(dur,dur0,dur1,durmid, fr, discrete=False) :
+    d0=dur[dur < durmid]
+    d1=dur[dur  >= durmid]
+    r=len(d0)/len(dur)
+    m, s = get_lognormal(d0)
+    a = get_powerlaw_alpha(d1, durmid, dur1, fr, discrete=discrete)
+    return m,s, a, r
+
+def get_powerlaw_alpha(dur, dur0, dur1, fr, discrete=False) :
+    from powerlaw import Fit
+    if discrete:
+        results = Fit(dur, xmin=dur0, xmax=dur1, discrete=True)
+    else:
+        results = Fit(np.array(dur * fr).astype(int), xmin=int(dur0 * fr), xmax=int(dur1 * fr),discrete=True)
+    alpha = results.power_law.alpha
+    return alpha
+
+def get_lognormal(dur) :
+    m = np.mean(np.log(dur))
+    s = np.std(np.log(dur))
+    return m,s
 
 def compute_density(x, xmin, xmax, Nbins=64):
     log_range = np.linspace(np.log2(xmin), np.log2(xmax), Nbins)
     bins = np.unique((2 * 2 ** (log_range)) / 2)
+    # bin_dif=-np.diff(bins)
     x_filt = x[x >= xmin]
     x_filt = x_filt[x_filt <= xmax]
+    N=len(x_filt)
+    # pdf = np.array([len([x for x in x_filt if bins[i]<=x<bins[i+1]]) for i in range(Nbins)])/N
+    # pdf = np.array([len(x_filt[(x_filt<bins[i+1] and x_filt>=bins[i])]) for i in range(Nbins)])/N
     cdf = np.ones(len(bins))
     pdf = np.zeros(len(bins) -1)
     for i in range(len(bins)):
         cdf[i] = 1 - np.mean(x_filt < bins[i])
         if i >= 1:
             pdf[i - 1] = -(cdf[i] - cdf[i - 1]) / (bins[i] - bins[i - 1])
-    return bins, pdf, cdf
+    # print(np.sum(pdf))
+    bins1=0.5 * (bins[:-1] + bins[1:])
+    return bins,bins1, pdf, cdf
+
+def KS(a1,a2) :
+    return np.max(np.abs(a1 - a2))
+
+def MSE(a1, a2) :
+    return np.sum((a1 - a2)**2)/a1.shape[0]
+
+def logNpow_switch(x, xmin, xmax,u2, c2cum, fr,discrete=False) :
+    xmids = u2[1:-1]
+    temp = np.ones(len(xmids))
+    for j, xx in enumerate(xmids):
+        mm, ss, aa, r = get_logNpow(x, xmin, xmax, xx, fr, discrete=discrete)
+        lp_cdf = 1 - logNpow_cdf(u2, mm, ss, aa, xmin, xx, r)
+        KS_lognNpow = MSE(c2cum, lp_cdf)
+        # lp_st, lp_pv = ks_2samp(c2cum, lp_cdf)
+        temp[j] = KS_lognNpow
+    xmid = xmids[np.nanargmin(temp)] if not all(np.isnan(temp)) else np.nan
+    return xmid
+
+def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, Nbins=64, print_fits=True, label='dataset', bouts='pauses', combine=True) :
+    x = x0[x0 >= xmin]
+    x = x[x <= xmax]
+
+    u2, du2, c2, c2cum = compute_density(x, xmin, xmax, Nbins=Nbins)
+
+    values=[u2,du2,c2,c2cum]
+
+
+    a2 = 1 + len(x) / np.sum(np.log(x / xmin))
+    a = get_powerlaw_alpha(x, xmin, xmax, fr, discrete=discrete)
+    p_cdf = 1-power_cdf(u2, xmin, a)
+    p_pdf = powerlaw_pdf(du2, xmin, a)
+
+    b = len(x) / np.sum(x - xmin)
+    e_cdf=1-exp_cdf(u2, xmin, b)
+    e_pdf=exponential_pdf(du2, xmin, b)
+
+    m, s = get_lognormal(x)
+    l_cdf = 1-lognorm_cdf(u2, m, s)
+    l_pdf = lognormal_pdf(du2, m, s)
+
+    KS_pow = MSE(c2cum, p_cdf)
+    p_st, p_pv = ks_2samp(c2cum , p_cdf)
+    KS_exp = MSE(c2cum, e_cdf)
+    e_st, e_pv = ks_2samp(c2cum, e_cdf)
+    KS_logn = MSE(c2cum, l_cdf)
+    l_st, l_pv = ks_2samp(c2cum, l_cdf)
+
+    if np.isnan(xmid) and combine :
+        xmid=logNpow_switch(x, xmin, xmax,u2, c2cum, fr,discrete)
+    if not np.isnan(xmid) :
+        mm, ss, aa, r = get_logNpow(x, xmin, xmax, xmid, fr, discrete=discrete)
+        lp_cdf =1- logNpow_cdf(u2, mm, ss, aa, xmin, xmid, r)
+        lp_pdf =logNpow_pdf(du2, mm, ss, aa, xmin, xmid, r)
+        KS_lognNpow = MSE(c2cum, lp_cdf)
+        lp_st, lp_pv = ks_2samp(c2cum, lp_cdf)
+    else :
+        mm, ss, aa, r =np.nan, np.nan,np.nan,np.nan
+        lp_cdf, lp_pdf = None, None
+        KS_lognNpow = np.nan
+        lp_st, lp_pv = np.nan, np.nan
+
+    Ks = np.array([KS_pow, KS_exp, KS_logn, KS_lognNpow])
+    idx_Kmax = np.nanargmin(Ks)
+
+    res = np.round([a, KS_pow, b, KS_exp, m, s, KS_logn, mm, ss, aa, xmid,r, KS_lognNpow], 3)
+    pdfs=[p_pdf, e_pdf, l_pdf, lp_pdf]
+    cdfs=[p_cdf, e_cdf, l_cdf, lp_cdf]
+
+    if print_fits:
+        print()
+        print(f'-----{label}-{bouts}----------')
+        print(f'initial range : {np.min(x0)} - {np.max(x0)}, Nbouts : {len(x0)}')
+        print(f'accepted range : {xmin} - {xmax}, Nbouts : {len(x)}')
+        print("powerlaw exponent MLE:", a2)
+        print("powerlaw exponent powerlaw package:", a)
+        print("exponential exponent MLE:", b)
+        print("lognormal mean,std:", m, s)
+        print("lognormal-powerlaw mean,std, alpha, durmid:", mm, ss, aa, xmid)
+        print('MSE pow', KS_pow)
+        print('MSE exp', KS_exp)
+        print('MSE logn', KS_logn)
+        print('MSE lognNpow', KS_lognNpow)
+        print('KS2 pow', p_st, p_pv)
+        print('KS2 exp', e_st, e_pv)
+        print('KS2 logn', l_st, l_pv)
+        print('KS2 lognNpow', lp_st, lp_pv)
+        print()
+
+    return values, pdfs,cdfs, Ks, idx_Kmax,res
 
 
 def analyse_bouts(dataset, parameter, scale_coef=1, label=None, xlabel=r'time$(sec)$',
@@ -420,10 +593,7 @@ def analyse_bouts(dataset, parameter, scale_coef=1, label=None, xlabel=r'time$(s
 
     dur = dur[dur >= durmin]
     dur = dur[dur <= durmax]
-    u2, c2, c2cum = compute_density(dur, durmin, durmax)
-    du2 = 0.5 * (u2[:-1] + u2[1:])
-    print(len(u2), len(du2), len(u2))
-    print(durmin, durmax)
+    u2,du2, c2, c2cum = compute_density(dur, durmin, durmax)
     alpha = 1 + len(dur) / np.sum(np.log(dur / durmin))
     print("powerlaw exponent MLE:", alpha)
 
@@ -438,9 +608,9 @@ def analyse_bouts(dataset, parameter, scale_coef=1, label=None, xlabel=r'time$(s
     KS_exp = np.max(np.abs(c2cum - 1 + exp_cdf(u2, durmin, beta)))
     KS_logn = np.max(np.abs(c2cum - 1 + lognorm_cdf(u2, mean_lognormal, std_lognormal)))
     print()
-    print('KS plaw', KS_plaw)
-    print('KS exp', KS_exp)
-    print('KS logn', KS_logn)
+    print('MSE plaw', KS_plaw)
+    print('MSE exp', KS_exp)
+    print('MSE logn', KS_logn)
 
     idx_max=np.argmin([KS_plaw,KS_exp,KS_logn])
     lws=[2,2,2]

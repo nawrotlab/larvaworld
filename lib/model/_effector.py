@@ -492,6 +492,14 @@ class Intermitter(Effector):
             self.pause_dist = None
             self.pause_min, self.pause_max = pause_dist['range']
             self.pause_mean, self.pause_std = pause_dist['mu'], pause_dist['sigma']
+        elif pause_dist['name'] == 'logNpow':
+
+            self.pause_min, self.pause_max = pause_dist['range']
+            # self.pause_mean, self.pause_std = pause_dist['mu'], pause_dist['sigma']
+            # self.pause_alpha, self.pause_switch = pause_dist['alpha'], pause_dist['switch']
+            self.pause_dist = sampling.logNpow_distro(a=pause_dist['alpha'], xmin=self.pause_min,xmid=pause_dist['switch'],
+                                                           xmax=self.pause_max, m=pause_dist['mu'], s=pause_dist['sigma'],
+                                                      r=pause_dist['ratio'], dt=self.dt)
             # self.pause_dist = self.lognormal_discrete(mu=int(self.pause_mean / self.dt),
             #                                           sigma=int(self.pause_std / self.dt),
             #                                           min=int(self.pause_min / self.dt),

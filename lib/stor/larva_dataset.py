@@ -406,7 +406,7 @@ class LarvaDataset:
 
     def drop_chunks(self, chunks=['stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn'],
                     is_last=True, show_output=True):
-        pars = flatten_list([[f'{c}_start', f'{c}_stop', f'{c}_id', f'{c}_dur', f'{c}_length'] for c in chunks])
+        pars = fun.flatten_list([[f'{c}_start', f'{c}_stop', f'{c}_id', f'{c}_dur', f'{c}_length'] for c in chunks])
         self.drop_step_pars(pars=pars, is_last=False, show_output=show_output)
         if is_last:
             self.save()
@@ -428,7 +428,7 @@ class LarvaDataset:
             raise ValueError('Defined point xy coordinates do not exist. Can not align trajectories! ')
         all_xy_pars = self.points_xy + self.contour_xy + [self.cent_xy] + xy_pars
         all_xy_pars = [xy_pair for xy_pair in all_xy_pars if set(xy_pair).issubset(s.columns)]
-        all_xy_pars = fun.group_list_by_n(np.unique(flatten_list(all_xy_pars)), 2)
+        all_xy_pars = fun.group_list_by_n(np.unique(fun.flatten_list(all_xy_pars)), 2)
         if mode == 'origin':
             print('Aligning trajectories to common origin')
             xy = [s[xy_pars].xs(id, level='AgentID').dropna().values[0] for id in ids]
@@ -1785,14 +1785,19 @@ class LarvaDataset:
                 chain_dur_counter = 0
                 dists = np.zeros((Nchunks, 3)) * np.nan
                 for j, (start, stop, dur, contact) in enumerate(zip(starts, stops, durs, contacts)):
-                    id_array[start - t0:stop - t0, i] = j
+
                     chain_counter += 1
                     chain_dur_counter += dur
                     if contact == 0:
+                        if chain_counter>0 :
+                            id_array[start+ 1 - t0:stop+ 1 - t0, i] = j
+                        else :
+                            id_array[start - t0:stop + 1 - t0, i] = j
                         chunk_chain_length_array[stop - t0, i] = chain_counter
                         chunk_chain_dur_array[stop - t0, i] = chain_dur_counter
                         chain_counter = 0
                         chain_dur_counter = 0
+
                     dst = d.loc[slice(start+1, stop), track_dst].sum()
                     xy = d.loc[slice(start, stop), track_xy].dropna().values
                     straight_dst = euclidean(tuple(xy[-1]), tuple(xy[0]))
@@ -1946,9 +1951,9 @@ class LarvaDataset:
         b1_par = f'bearing_to_{source}_at_{c1}'
         db_par = f'{chunk}_bearing_to_{source}_correction'
 
-        b0 = compute_bearing2source(self.get_par(x0_par).dropna().values, self.get_par(y0_par).dropna().values,
+        b0 = fun.compute_bearing2source(self.get_par(x0_par).dropna().values, self.get_par(y0_par).dropna().values,
                                     self.get_par(ho0_par).dropna().values, loc=source, in_deg=True)
-        b1 = compute_bearing2source(self.get_par(x1_par).dropna().values, self.get_par(y1_par).dropna().values,
+        b1 = fun.compute_bearing2source(self.get_par(x1_par).dropna().values, self.get_par(y1_par).dropna().values,
                                     self.get_par(ho1_par).dropna().values, loc=source, in_deg=True)
         s[b0_par] = np.nan
         s.loc[s[c0] == True, b0_par] = b0
@@ -2021,7 +2026,8 @@ class LarvaDataset:
                 s1s = ii0[np.where(np.diff(ii0, append=[np.inf]) != 1)[0]]
                 ds=(s1s-s0s)*self.dt
                 ii1 = np.where(ds >= min_dur)
-                ds = ds[ii1]+self.dt/2
+                ds = ds[ii1]
+                # ds = ds[ii1]+self.dt/2
                 s0s = s0s[ii1].values.astype(int)
                 s1s = s1s[ii1].values.astype(int)
 
@@ -2029,7 +2035,7 @@ class LarvaDataset:
                 S1[s1s - t0, i] = True
                 Dur[s1s - t0, i] = ds
                 for j, (s0, s1) in enumerate(zip(s0s, s1s)):
-                    Id[s0 - t0:s1 - t0, i] = j
+                    Id[s0 - t0:s1+1 - t0, i] = j
                     if storMax:
                         Max[s1 - t0, i] = s.loc[(slice(s0, s1), id), par].max()
                     if storMin:
@@ -2246,7 +2252,7 @@ class LarvaDataset:
     #         self.save()
     #     print('All bend-pauses detected')
 
-    def detect_pauses(self, recompute=False, stride_non_overlap=True, vel_par=None, min_dur=0.1,
+    def detect_pauses(self, recompute=False, stride_non_overlap=True, vel_par=None, min_dur=0.0,
                       is_last=True, show_output=True):
         cc = {'show_output': show_output,
               'is_last': False}
@@ -2715,7 +2721,7 @@ class LarvaDataset:
         # print(f'--- Enrichment of dataset {self.id} complete ---')
         # print()
 
-    def create_reference_dataset(self, dataset_id='reference', Nstd=3):
+    def create_reference_dataset(self, dataset_id='reference', Nstd=3, overwrite=False):
         if self.endpoint_data is None:
             self.load()
         # if not os.path.exists(RefFolder):
@@ -2723,7 +2729,8 @@ class LarvaDataset:
         path_dir=f'{RefFolder}/{dataset_id}'
         path_data = f'{path_dir}/data/reference.csv'
         path_fits = f'{path_dir}/data/bout_fits.csv'
-        copy_tree(self.dir, path_dir)
+        if not os.path.exists(path_dir) or overwrite :
+            copy_tree(self.dir, path_dir)
         new_d = LarvaDataset(path_dir)
         new_d.set_id(dataset_id)
         e = new_d.endpoint_data
@@ -2734,22 +2741,23 @@ class LarvaDataset:
                        'brain.crawler_params.step_to_length_mu',
                        'brain.crawler_params.step_to_length_std'
                        ]
-        # print(len(new_d.agent_ids))
-        invalid_ids=[]
-        for p in pars :
-            mu,std=e[p].mean(), e[p].std()
-            invalid_ids.append(e[e[p]>mu+Nstd*std].index.values.tolist())
-            invalid_ids.append(e[e[p]<mu-Nstd*std].index.values.tolist())
-        invalid_ids=fun.unique_list(fun.flatten_list(invalid_ids))
-        new_d.drop_agents(agents=invalid_ids)
-        new_d.load()
-        # print(len(new_d.agent_ids))
+
+        # invalid_ids=[]
+        # for p in pars :
+        #     mu,std=e[p].mean(), e[p].std()
+        #     invalid_ids.append(e[e[p]>mu+Nstd*std].index.values.tolist())
+        #     invalid_ids.append(e[e[p]<mu-Nstd*std].index.values.tolist())
+        # invalid_ids=fun.unique_list(fun.flatten_list(invalid_ids))
+        # if len(invalid_ids) > 0 :
+        #     new_d.drop_agents(agents=invalid_ids)
+        #     new_d.load()
+
         v = new_d.endpoint_data[pars]
         v['length'] = v['length']/1000
         df = pd.DataFrame(v.values, columns=sample_pars)
         df.to_csv(path_data)
 
-        plot_stridesNpauses(datasets=[self], labels=[dataset_id], save_as='reference_bouts.pdf', save_fits_as=path_fits)
+        plot_stridesNpauses(datasets=[new_d], labels=[dataset_id], save_as='reference_bouts.pdf', save_fits_as=path_fits)
         print(f'Reference dataset {dataset_id} saved.')
 
     def raw_or_filtered_xy(self, points, show_output=True):
@@ -2910,3 +2918,48 @@ class LarvaDataset:
                 new_ds.append(new_d)
             print(f'Dataset {self.id} splitted in {[d.id for d in new_ds]}')
         return new_ds
+
+    def get_chunks(self, chunk, min_dur=0.0, max_dur=np.inf):
+        # t=nam.dur(chunk)
+        t, id=nam.dur(chunk), nam.id(chunk)
+        s0,s1=nam.start(chunk), nam.stop(chunk)
+        if self.step_data is None:
+            self.load()
+        s=copy.deepcopy(self.step_data)
+        e=self.endpoint_data
+        counts=s[t].dropna().groupby('AgentID').count()
+        # s = s.dropna(subset=[id])
+        ser1=s[id].loc[s[t] >=min_dur]
+        # ser2=s[id].loc[s[t] <min_dur]
+        ser1.reset_index(level='Step', drop=True, inplace=True)
+        # ser2.reset_index(level='Step', drop=True, inplace=True)
+        ser1=ser1.reset_index(drop=False).values.tolist()
+        # ser2=ser2.reset_index(drop=False).values.tolist()
+        s = s.loc[s[id]]
+        # union of the series
+        # union = pd.Series(np.union1d(ser1, ser2))
+
+        # intersection of the series
+        # intersect = pd.Series(np.intersect1d(ser1, ser2))
+
+        # uncommon elements in both the series
+        # notcommonseries = union[~union.isin(intersect)]
+        # print([kk for kk in ser1 if kk in ser2])
+        # aa=s[[id, t,s0,s1]].loc[s[id]==1.0]
+        # print(intersect)
+        # print(ser2['Larva_222', :])
+        # print(ser1['Larva_222', :])
+        # displaying the result
+        # print(len(notcommonseries), len(intersect), len(union), len(s[t].dropna().values.tolist()))
+        # print(e['num_strides'].sum(), len(ser1), len(ser2))
+        # valid.reset_index(level='Step', drop=True, inplace=True)
+        # invalid.reset_index(level='Step', drop=True, inplace=True)
+        # b=pd.merge(valid, invalid, how='outer')
+        # print(b.loc[b.duplicated().index])
+        # merged = valid.merge(invalid, indicator=True, how='outer')
+        # merged[merged['_merge'] == 'right_only']
+        # print(pd.Series(np.intersect1d(valid, invalid)))
+        # print(s[[id,t,s0,s1]].loc[s[id]==370.0])
+        # print(s[[id,t,s0,s1]].loc[s[id]==374.0])
+        # print(pd.concat([valid,invalid]).drop_duplicates(keep=False))
+        # print(len(valid.values)+len(invalid.values)-sum(counts.values))
