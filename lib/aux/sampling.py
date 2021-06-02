@@ -94,6 +94,7 @@ def get_ref_bout_distros(mode='stridechain_dist', sample_dataset='reference'):
 
     f = pd.read_csv(path_fits, index_col=0).xs(sample_dataset)
     if mode=='stridechain_dist' :
+        k = 'stride'
         str_i = np.argmin(f[['KS_pow_stride', 'KS_exp_stride', 'KS_log_stride', 'KS_logNpow_stride']])
         if str_i == 0:
             str_dist = {'range': (f['min_stride'], f['max_stride']),
@@ -115,6 +116,8 @@ def get_ref_bout_distros(mode='stridechain_dist', sample_dataset='reference'):
                         'sigma': f['sigma_logNpow_stride'],
                         'alpha': f['alpha_logNpow_stride'],
                         'switch': f['switch_logNpow_stride'],
+                        'ratio': f[f'ratio_logNpow_{k}'],
+                        'overlap': f[f'overlap_logNpow_{k}'],
                         }
         return str_dist
 
@@ -142,19 +145,20 @@ def get_ref_bout_distros(mode='stridechain_dist', sample_dataset='reference'):
                         'alpha': f[f'alpha_logNpow_{k}'],
                         'switch': f[f'switch_logNpow_{k}'],
                         'ratio': f[f'ratio_logNpow_{k}'],
+                        'overlap': f[f'overlap_logNpow_{k}'],
                         }
         # print(pau_dist, sample_dataset)
         # raise
         return pau_dist
 
 
-def logNpow_distro(a, xmin, xmax, m,s,xmid,r, dt) :
+def logNpow_distro(a, xmin, xmax, m,s,xmid,r, dt, overlap=0) :
     x0, x1 = int(xmin/ dt), int(xmax/ dt)
     xx = np.arange(x0,x1)
     # xx = (x / dt).astype(int)
     x=xx*dt
     # x=np.arange(xmin,xmax,dt)
-    pmf=logNpow_pdf(x,m,s, a,xmin, xmid, r)
+    pmf=logNpow_pdf(x,m,s, a,xmin, xmid, r, overlap)
     pmf /= pmf.sum()
 
     # x0,x1=xx[0],xx[-1]

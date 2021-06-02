@@ -2648,7 +2648,7 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
 
     ps = ['stride', 'pause']
     stored_pars = [
-        [f'alpha_{p}', f'KS_pow_{p}', f'lambda_{p}', f'KS_exp_{p}', f'mu_log_{p}', f'sigma_log_{p}', f'KS_log_{p}', f'mu_logNpow_{p}', f'sigma_logNpow_{p}',f'alpha_logNpow_{p}', f'switch_logNpow_{p}',f'ratio_logNpow_{p}', f'KS_logNpow_{p}'] for
+        [f'alpha_{p}', f'KS_pow_{p}', f'lambda_{p}', f'KS_exp_{p}', f'mu_log_{p}', f'sigma_log_{p}', f'KS_log_{p}', f'mu_logNpow_{p}', f'sigma_logNpow_{p}',f'alpha_logNpow_{p}', f'switch_logNpow_{p}',f'ratio_logNpow_{p}',f'overlap_logNpow_{p}', f'KS_logNpow_{p}'] for
         p in ps]
     fit_df = pd.DataFrame(index=labels, columns=fun.flatten_list(stored_pars))
     fit_df['min_pause'] = np.clip(min_pauses, a_min=pau0, a_max=+np.inf)
@@ -2732,11 +2732,11 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
 
     fig.subplots_adjust(top=0.92, bottom=0.15, left=0.15, right=0.95, hspace=.005, wspace=0.05)
     # print(fit_df)
-    # print(fit_df['min_pause'])
+    # print(fit_df['KS_logNpow_pause'])
     # print(fit_df['mu_log_pause'])
     # print(fit_df['sigma_log_pause'])
-    plt.show()
-    raise
+    # plt.show()
+    # raise
     fit_df.to_csv(fit_filepath, index=True, header=True)
     return process_plot(fig, save_to, filename, return_fig)
 

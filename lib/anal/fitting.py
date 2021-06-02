@@ -1,4 +1,6 @@
 import os
+import warnings
+
 import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
@@ -6,6 +8,7 @@ import scipy.stats as st
 from scipy.stats import ks_2samp
 
 from lib.aux import naming as nam
+from lib.aux import functions as fun
 
 
 def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
@@ -386,7 +389,7 @@ def lognorm_cdf(x, mu, sigma):
 def lognormal_pdf(x, mu, sigma):
     return 1 / (x * sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((np.log(x) - mu) / sigma) ** 2)
 
-def logNpow_pdf(x,mu,sigma, alpha,dur0, durmid, ratio) :
+def logNpow_pdf(x,mu,sigma, alpha,dur0, durmid, ratio, overlap=0) :
     x0 = x[x < durmid]
     x1 = x[x >= durmid]
     log_pdf = lognormal_pdf(x0, mu, sigma) * ratio
@@ -431,11 +434,12 @@ def logNpow_cdf(x,mu,sigma, alpha,dur0, durmid, ratio) :
 
     return cdf
 
-def get_logNpow(dur,dur0,dur1,durmid, fr, discrete=False) :
+def get_logNpow(dur,dur0,dur1,durmid, fr,overlap=0, discrete=False) :
     d0=dur[dur < durmid]
     d1=dur[dur  >= durmid]
     r=len(d0)/len(dur)
-    m, s = get_lognormal(d0)
+    d00=dur[dur < durmid+overlap*(dur1-durmid)]
+    m, s = get_lognormal(d00)
     a = get_powerlaw_alpha(d1, durmid, dur1, fr, discrete=discrete)
     return m,s, a, r
 
@@ -456,19 +460,14 @@ def get_lognormal(dur) :
 def compute_density(x, xmin, xmax, Nbins=64):
     log_range = np.linspace(np.log2(xmin), np.log2(xmax), Nbins)
     bins = np.unique((2 * 2 ** (log_range)) / 2)
-    # bin_dif=-np.diff(bins)
     x_filt = x[x >= xmin]
     x_filt = x_filt[x_filt <= xmax]
-    N=len(x_filt)
-    # pdf = np.array([len([x for x in x_filt if bins[i]<=x<bins[i+1]]) for i in range(Nbins)])/N
-    # pdf = np.array([len(x_filt[(x_filt<bins[i+1] and x_filt>=bins[i])]) for i in range(Nbins)])/N
     cdf = np.ones(len(bins))
     pdf = np.zeros(len(bins) -1)
     for i in range(len(bins)):
         cdf[i] = 1 - np.mean(x_filt < bins[i])
         if i >= 1:
             pdf[i - 1] = -(cdf[i] - cdf[i - 1]) / (bins[i] - bins[i - 1])
-    # print(np.sum(pdf))
     bins1=0.5 * (bins[:-1] + bins[1:])
     return bins,bins1, pdf, cdf
 
@@ -479,66 +478,72 @@ def MSE(a1, a2) :
     return np.sum((a1 - a2)**2)/a1.shape[0]
 
 def logNpow_switch(x, xmin, xmax,u2, c2cum, fr,discrete=False) :
-    xmids = u2[1:-1]
-    temp = np.ones(len(xmids))
-    for j, xx in enumerate(xmids):
-        mm, ss, aa, r = get_logNpow(x, xmin, xmax, xx, fr, discrete=discrete)
-        lp_cdf = 1 - logNpow_cdf(u2, mm, ss, aa, xmin, xx, r)
-        KS_lognNpow = MSE(c2cum, lp_cdf)
-        # lp_st, lp_pv = ks_2samp(c2cum, lp_cdf)
-        temp[j] = KS_lognNpow
-    xmid = xmids[np.nanargmin(temp)] if not all(np.isnan(temp)) else np.nan
-    return xmid
-
-def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, Nbins=64, print_fits=True, label='dataset', bouts='pauses', combine=True) :
-    x = x0[x0 >= xmin]
-    x = x[x <= xmax]
-
-    u2, du2, c2, c2cum = compute_density(x, xmin, xmax, Nbins=Nbins)
-
-    values=[u2,du2,c2,c2cum]
-
-
-    a2 = 1 + len(x) / np.sum(np.log(x / xmin))
-    a = get_powerlaw_alpha(x, xmin, xmax, fr, discrete=discrete)
-    p_cdf = 1-power_cdf(u2, xmin, a)
-    p_pdf = powerlaw_pdf(du2, xmin, a)
-
-    b = len(x) / np.sum(x - xmin)
-    e_cdf=1-exp_cdf(u2, xmin, b)
-    e_pdf=exponential_pdf(du2, xmin, b)
-
-    m, s = get_lognormal(x)
-    l_cdf = 1-lognorm_cdf(u2, m, s)
-    l_pdf = lognormal_pdf(du2, m, s)
-
-    KS_pow = MSE(c2cum, p_cdf)
-    p_st, p_pv = ks_2samp(c2cum , p_cdf)
-    KS_exp = MSE(c2cum, e_cdf)
-    e_st, e_pv = ks_2samp(c2cum, e_cdf)
-    KS_logn = MSE(c2cum, l_cdf)
-    l_st, l_pv = ks_2samp(c2cum, l_cdf)
-
-    if np.isnan(xmid) and combine :
-        xmid=logNpow_switch(x, xmin, xmax,u2, c2cum, fr,discrete)
-    if not np.isnan(xmid) :
-        mm, ss, aa, r = get_logNpow(x, xmin, xmax, xmid, fr, discrete=discrete)
-        lp_cdf =1- logNpow_cdf(u2, mm, ss, aa, xmin, xmid, r)
-        lp_pdf =logNpow_pdf(du2, mm, ss, aa, xmin, xmid, r)
-        KS_lognNpow = MSE(c2cum, lp_cdf)
-        lp_st, lp_pv = ks_2samp(c2cum, lp_cdf)
+    xmids = u2[1:-int(len(u2)/2)]
+    overlaps=np.linspace(0,1,11)
+    temp = np.ones([len(xmids),len(overlaps)])
+    for i, xmid in enumerate(xmids):
+        for j, ov in enumerate(overlaps) :
+            mm, ss, aa, r = get_logNpow(x, xmin, xmax, xmid, fr, discrete=discrete, overlap=ov)
+            lp_cdf = 1 - logNpow_cdf(u2, mm, ss, aa, xmin, xmid, r)
+            temp[i,j] = MSE(c2cum, lp_cdf)
+    if all(np.isnan(temp.flatten())) :
+        return np.nan
     else :
-        mm, ss, aa, r =np.nan, np.nan,np.nan,np.nan
-        lp_cdf, lp_pdf = None, None
-        KS_lognNpow = np.nan
-        lp_st, lp_pv = np.nan, np.nan
+        ii,jj=np.unravel_index(np.nanargmin(temp), temp.shape)
+        xmid = xmids[ii]
+        ov = overlaps[jj]
+        return xmid, ov
 
-    Ks = np.array([KS_pow, KS_exp, KS_logn, KS_lognNpow])
-    idx_Kmax = np.nanargmin(Ks)
+def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan,overlap=0.0, Nbins=64, print_fits=True, label='dataset', bouts='pauses', combine=True) :
+    with fun.suppress_stdout() :
+        warnings.filterwarnings('ignore')
+        x = x0[x0 >= xmin]
+        x = x[x <= xmax]
 
-    res = np.round([a, KS_pow, b, KS_exp, m, s, KS_logn, mm, ss, aa, xmid,r, KS_lognNpow], 3)
-    pdfs=[p_pdf, e_pdf, l_pdf, lp_pdf]
-    cdfs=[p_cdf, e_cdf, l_cdf, lp_cdf]
+        u2, du2, c2, c2cum = compute_density(x, xmin, xmax, Nbins=Nbins)
+        values=[u2,du2,c2,c2cum]
+
+        a2 = 1 + len(x) / np.sum(np.log(x / xmin))
+        a = get_powerlaw_alpha(x, xmin, xmax, fr, discrete=discrete)
+        p_cdf = 1-power_cdf(u2, xmin, a)
+        p_pdf = powerlaw_pdf(du2, xmin, a)
+
+        b = len(x) / np.sum(x - xmin)
+        e_cdf=1-exp_cdf(u2, xmin, b)
+        e_pdf=exponential_pdf(du2, xmin, b)
+
+        m, s = get_lognormal(x)
+        l_cdf = 1-lognorm_cdf(u2, m, s)
+        l_pdf = lognormal_pdf(du2, m, s)
+
+        KS_pow = MSE(c2cum, p_cdf)
+        # p_st, p_pv = ks_2samp(c2cum , p_cdf)
+        KS_exp = MSE(c2cum, e_cdf)
+        # e_st, e_pv = ks_2samp(c2cum, e_cdf)
+        KS_logn = MSE(c2cum, l_cdf)
+        # l_st, l_pv = ks_2samp(c2cum, l_cdf)
+
+        if np.isnan(xmid) and combine :
+            xmid, overlap=logNpow_switch(x, xmin, xmax,u2, c2cum, fr,discrete)
+        if not np.isnan(xmid) :
+            # print(overlap)
+            mm, ss, aa, r = get_logNpow(x, xmin, xmax, xmid, fr, discrete=discrete, overlap=overlap)
+            lp_cdf =1- logNpow_cdf(u2, mm, ss, aa, xmin, xmid, r)
+            lp_pdf =logNpow_pdf(du2, mm, ss, aa, xmin, xmid, r)
+            KS_lognNpow = MSE(c2cum, lp_cdf)
+            # lp_st, lp_pv = ks_2samp(c2cum, lp_cdf)
+        else :
+            mm, ss, aa, r =np.nan, np.nan,np.nan,np.nan
+            lp_cdf, lp_pdf = None, None
+            KS_lognNpow = np.nan
+            # lp_st, lp_pv = np.nan, np.nan
+
+        Ks = np.array([KS_pow, KS_exp, KS_logn, KS_lognNpow])
+        idx_Kmax = np.nanargmin(Ks)
+
+        res = np.round([a, KS_pow, b, KS_exp, m, s, KS_logn, mm, ss, aa, xmid,r,overlap, KS_lognNpow], 5)
+        pdfs=[p_pdf, e_pdf, l_pdf, lp_pdf]
+        cdfs=[p_cdf, e_cdf, l_cdf, lp_cdf]
 
     if print_fits:
         print()
@@ -549,15 +554,15 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, Nbins=64, 
         print("powerlaw exponent powerlaw package:", a)
         print("exponential exponent MLE:", b)
         print("lognormal mean,std:", m, s)
-        print("lognormal-powerlaw mean,std, alpha, durmid:", mm, ss, aa, xmid)
+        print("lognormal-powerlaw mean,std, alpha, durmid, overlap:", mm, ss, aa, xmid, overlap)
         print('MSE pow', KS_pow)
         print('MSE exp', KS_exp)
         print('MSE logn', KS_logn)
         print('MSE lognNpow', KS_lognNpow)
-        print('KS2 pow', p_st, p_pv)
-        print('KS2 exp', e_st, e_pv)
-        print('KS2 logn', l_st, l_pv)
-        print('KS2 lognNpow', lp_st, lp_pv)
+        # print('KS2 pow', p_st, p_pv)
+        # print('KS2 exp', e_st, e_pv)
+        # print('KS2 logn', l_st, l_pv)
+        # print('KS2 lognNpow', lp_st, lp_pv)
         print()
 
     return values, pdfs,cdfs, Ks, idx_Kmax,res
