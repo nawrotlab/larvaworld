@@ -15,7 +15,7 @@ from lib.model import Larva, LarvaSim
 #     'draw_contour': 'c',
 #     'visible_clock': 't',
 #     'visible_ids': 'TAB',
-#     'visible_state': 's',
+#     'visible_state': 'sigma',
 #     'color_behavior': 'b',
 #     'random_colors': 'r',
 #     'black_background': 'g',

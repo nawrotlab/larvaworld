@@ -5,7 +5,8 @@ import numpy as np
 from scipy import signal
 
 import lib.aux.sampling as sampling
-from lib.aux.functions import flatten_tuple, lognormal_discrete
+from lib.aux.functions import flatten_tuple
+from lib.aux.sampling import lognormal_discrete
 
 
 class Effector:
@@ -449,24 +450,14 @@ class Intermitter(Effector):
         self.feeder = feeder
         self.EEB = EEB
         self.base_EEB = EEB
-        if crawler is None:
-            self.crawl_bouts = False
-        else:
-            self.crawl_bouts = crawl_bouts
-        if turner is None:
-            self.intermittent_turner = False
-        else:
-            self.intermittent_turner = intermittent_turner
-        if feeder is None:
-            self.feed_bouts = False
-        else:
-            self.feed_bouts = feed_bouts
+
+        self.crawl_bouts = False if crawler is None else crawl_bouts
+        self.intermittent_turner = False if turner is None else intermittent_turner
+        self.feed_bouts = False if feeder is None else feed_bouts
+
 
         if self.nengo_manager is None:
-            # self.feeder_reoccurence_rate_on_success = feeder_reoccurence_rate_on_success
             self.EEB_decay = EEB_decay
-            # self.feeder_reoccurence_rate = 1 - self.EEB
-            # self.feeder_reoccurence_rate = self.feeder_reoccurence_rate_on_success
             self.EEB_exp_coef = np.exp(-self.EEB_decay * self.dt)
 
         self.turner_pre_lag_ticks = int(turner_prepost_lag[0] / self.dt)
@@ -484,51 +475,33 @@ class Intermitter(Effector):
         #                               name='power_law_dist')
         # print(pause_dist)
         # print(stridechain_dist)
-        if pause_dist['name'] == 'powerlaw':
-            self.pause_min, self.pause_max = np.round(np.array(pause_dist['range']) / self.dt).astype(int)
-            self.pause_dist = sampling.truncated_power_law(a=pause_dist['alpha'], xmin=self.pause_min,
-                                                           xmax=self.pause_max)
-        elif pause_dist['name'] == 'lognormal':
-            self.pause_dist = None
-            self.pause_min, self.pause_max = pause_dist['range']
-            self.pause_mean, self.pause_std = pause_dist['mu'], pause_dist['sigma']
-        elif pause_dist['name'] == 'logNpow':
+        # if pause_dist['name'] == 'powerlaw':
+        #     self.pause_dist = sampling.trunc_powerlaw(**pause_dist, dt=self.dt)
+        # elif pause_dist['name'] == 'lognormal':
+        #     self.pause_dist = None
+        #     self.pause_min, self.pause_max = pause_dist['range']
+        #     self.pause_mean, self.pause_std = pause_dist['mu'], pause_dist['sigma']
+        # elif pause_dist['name'] == 'logNpow':
+        #     self.pause_dist = sampling.logNpow_distro(**pause_dist, dt=self.dt)
+        #
+        # if stridechain_dist['name'] == 'powerlaw':
+        #     self.stridechain_dist = sampling.trunc_powerlaw(**stridechain_dist)
+        # elif stridechain_dist['name'] == 'lognormal':
+        #     self.stridechain_dist = lognormal_discrete(**stridechain_dist)
+        self.stridechain_dist = sampling.BoutGenerator(**stridechain_dist, dt=1)
+        self.pause_dist = sampling.BoutGenerator(**pause_dist, dt=self.dt)
 
-            self.pause_min, self.pause_max = pause_dist['range']
-            # self.pause_mean, self.pause_std = pause_dist['mu'], pause_dist['sigma']
-            # self.pause_alpha, self.pause_switch = pause_dist['alpha'], pause_dist['switch']
-            self.pause_dist = sampling.logNpow_distro(a=pause_dist['alpha'], xmin=self.pause_min,xmid=pause_dist['switch'],
-                                                           xmax=self.pause_max, m=pause_dist['mu'], s=pause_dist['sigma'],
-                                                      r=pause_dist['ratio'], dt=self.dt, overlap=pause_dist['overlap'])
-            # self.pause_dist = self.lognormal_discrete(mu=int(self.pause_mean / self.dt),
-            #                                           sigma=int(self.pause_std / self.dt),
-            #                                           min=int(self.pause_min / self.dt),
-            #                                           max=int(self.pause_max / self.dt))
-
-        self.stridechain_min, self.stridechain_max = np.array(stridechain_dist['range']).astype(int)
-        if stridechain_dist['name'] == 'powerlaw':
-            self.stridechain_dist = sampling.truncated_power_law(a=stridechain_dist['alpha'], xmin=self.stridechain_min,
-                                                                 xmax=self.stridechain_max)
-        elif stridechain_dist['name'] == 'lognormal':
-            self.stridechain_mean, self.stridechain_std = stridechain_dist['mu'], stridechain_dist['sigma']
-            self.stridechain_dist = lognormal_discrete(mu=self.stridechain_mean, sigma=self.stridechain_std,
-                                                       min=self.stridechain_min, max=self.stridechain_max)
-            # print(self.stridechain_mean, self.stridechain_std, self.stridechain_min, self.stridechain_max)
-
-    def generate_stridechain_length(self):
-        if self.stridechain_dist is None:
-            l= sampling.sample_lognormal_int(mean=self.stridechain_mean, sigma=self.stridechain_std,
-                                                 xmin=self.stridechain_min, xmax=self.stridechain_max)
-        else:
-            l=self.stridechain_dist.rvs(size=1)[0]
-        return l
-
-    def generate_pause_duration(self):
-        if self.pause_dist is None:
-            return sampling.sample_lognormal(mean=self.pause_mean, sigma=self.pause_std,
-                                             xmin=self.pause_min, xmax=self.pause_max)
-        else:
-            return self.pause_dist.rvs(size=1)[0] * self.dt
+    # def generate_stridechain(self):
+    #     return self.stridechain_dist.sample()
+    #     # return self.stridechain_dist.rvs(size=1)[0]
+    #
+    # def generate_pause(self):
+    #     return self.pause_dist.sample()
+    #     # if self.pause_dist is None:
+    #     #     return sampling.sample_lognormal(mu=self.pause_mean, sigma=self.pause_std,
+    #     #                                      range=(self.pause_min, self.pause_max))
+    #     # else:
+    #     #     return self.pause_dist.rvs(size=1)[0] * self.dt
 
     def initialize(self):
         self.pause_dur = np.nan
@@ -572,7 +545,7 @@ class Intermitter(Effector):
             self.pause_id = self.pause_counter
             # ...start an inactivity bout if there is none already running ...
             if self.current_pause_duration is None:
-                self.current_pause_duration = self.generate_pause_duration()
+                self.current_pause_duration = self.pause_dist.sample()
                 self.pause_start = True
                 #  ... and turn off the underlying components
                 self.inhibit_locomotion()
@@ -588,7 +561,7 @@ class Intermitter(Effector):
             if self.t > self.current_pause_duration:
                 self.register_pause()
                 # ... and turn on locomotion
-                self.current_stridechain_length = self.generate_stridechain_length()
+                self.current_stridechain_length = self.stridechain_dist.sample()
 
                 self.stridechain_start = True
                 self.stop_effector()
@@ -872,7 +845,7 @@ class RLmemory(Effector):
             dCon = [dCon]
         stateV = []
         for index in range(len(dCon)):
-            # print(dCon, dCon[index], index, type(dCon))
+            # print(dCon, dCon[index], index, mode(dCon))
             # raise
             for i in dCon[index]:
                 dConI = dCon[index][i]

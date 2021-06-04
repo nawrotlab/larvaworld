@@ -106,6 +106,7 @@ def sim_analysis(d, exp_type):
         target_dataset = load_reference_dataset(dataset_id=d.config['sample_dataset'])
         datasets = [d, target_dataset]
         labels = ['simulated', 'empirical']
+        targeted_analysis(datasets)
         dic0 = comparative_analysis(datasets=datasets, labels=labels, simVSexp=True, save_to=None)
         fig_dict.update(dic0)
         dic1 = plot_marked_strides(dataset=d, agent_ids=d.agent_ids[:3], title=' ', slices=[[10, 50], [60, 100]])
@@ -295,13 +296,13 @@ def load_reference_dataset(dataset_id='reference'):
 #     config['sim_params'] = sim_params
 #     config['life_params'] = life_params
 #
-#     if type(config['env_params']) == str:
+#     if mode(config['env_params']) == str:
 #         config['env_params'] = loadConf(config['env_params'], 'Env')
 #
 #     if Nagents is not None:
 #         config['env_params']['larva_params']['Larva']['N'] = Nagents
 #     for k, v in config['env_params']['larva_params'].items():
-#         if type(v['model']) == str:
+#         if mode(v['model']) == str:
 #             v['model'] = loadConf(v['model'], 'Model')
 #     # print(config['env_params']['larva_params']['Larva']['model'])
 #     # raise

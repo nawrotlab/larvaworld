@@ -1,12 +1,10 @@
 import collections
 import math
 import random
-import sys
 import time
 from scipy.optimize import minimize
 from collections import deque
 from numpy.lib import scimath
-import numpy
 import pandas as pd
 from contextlib import contextmanager
 import sys, os
@@ -16,14 +14,11 @@ from matplotlib import cm, colors
 from pypet import ParameterGroup, Parameter
 from scipy.signal import butter, sosfiltfilt
 import scipy.stats as st
-from scipy.stats import lognorm, rv_discrete
 from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
 import scipy as sp
 import matplotlib.pyplot as plt
 from shapely.geometry import Polygon, LineString
 from shapely.ops import split
-from lib.stor.paths import LarvaShape_path
 
 
 def simplex(func, x0, args=()):
@@ -189,8 +184,8 @@ def rotate_around_point(point, radians, origin=[0, 0]):
     """Rotate a point around a given point.
 
     I call this the "high performance" version since we're caching some
-    values that are needed >1 time. It's less readable than the previous
-    function but it's faster.
+    values that are needed >1 time. It'sigma less readable than the previous
+    function but it'sigma faster.
     """
     x, y = point
     offset_x, offset_y = origin
@@ -316,7 +311,7 @@ def parse_array_at_nans(array):
 
 # def apply_filter_to_array_with_nans(array, critical_freq, fr, N=1):
 #     sos = butter(N=N, Wn=critical_freq, btype='lowpass', analog=False, fs=fr, output='sos')
-#     # print(type(array))
+#     # print(mode(array))
 #     # The array chunks must be longer than padlen=6
 #     padlen = 6
 #     return apply_sos_filter_to_array_with_nans(array=array, sos=sos, padlen=padlen)
@@ -1256,16 +1251,9 @@ def weighted_mean(array, Nmax) :
     ws=np.vstack((i, y[i])).T
     ws0 = ws[np.argsort(ws[:,1])[-Nmax:]]
     s=np.sum(ws0[:,1])
-    # print(s)
+    # print(sigma)
     m=np.sum(ws0[:,0]*ws0[:,1])/s
     # print(m)
     return m
 
-
-def lognormal_discrete(mu, sigma, min, max):
-    Dd = lognorm(s=sigma, loc=0.0, scale=np.exp(mu))
-    pk2 = Dd.cdf(np.arange(min + 1, max + 2)) - Dd.cdf(np.arange(min, max + 1))
-    pk2 = pk2 / np.sum(pk2)
-    xrng = np.arange(min, max + 1, 1)
-    return rv_discrete(a=min, b=max, values=(xrng, pk2))
 

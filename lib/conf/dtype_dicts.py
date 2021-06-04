@@ -103,7 +103,7 @@ shortcut_vis_color = {
 shortcut_vis_aux = {
     'visible_clock': 't',
     'visible_scale': 'n',
-    'visible_state': 's',
+    'visible_state': 'sigma',
     'visible_ids': 'tab',
 }
 
@@ -160,7 +160,7 @@ default_shortcuts = {
 mouse_controls = {
     'select item': 'left click',
     'add item': 'left click',
-    'select item type': 'right click',
+    'select item mode': 'right click',
     'inspect item': 'right click',
     'screen zoom in': 'scroll up',
     'screen zoom out': 'scroll down',

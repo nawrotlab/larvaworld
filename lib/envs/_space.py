@@ -179,7 +179,7 @@ class DiffusionValueLayer(ValueLayer):
     def __init__(self, dt, scaling_factor, evap_const, gaussian_sigma, **kwargs):
         super().__init__(**kwargs)
         '''
-            A typical diffusion coefficient for a molecule in the gas phase is in the range of 10-6 to 10-5 m2/s           
+            A typical diffusion coefficient for a molecule in the gas phase is in the range of 10-6 to 10-5 m2/sigma           
 
             Yes, it does that automatically based on the sigma and truncate parameters.
             Indeed, the function gaussian_filter is implemented by applying multiples 1D gaussian filters (you can see that here). 

@@ -11,7 +11,7 @@ from lib.aux import argparsers as prs
 s = time.time()
 
 parser = argparse.ArgumentParser(description="Run given experiments")
-parser.add_argument('experiment', choices=list(loadConfDict('Exp').keys()), help='The experiment type')
+parser.add_argument('experiment', choices=list(loadConfDict('Exp').keys()), help='The experiment mode')
 parser.add_argument('-a', '--analysis', action="store_true", help='Whether to run analysis')
 parser.add_argument('-no_save', '--no_save', action="store_true", help='Whether to run analysis')
 

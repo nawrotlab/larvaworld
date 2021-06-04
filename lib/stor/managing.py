@@ -167,12 +167,12 @@ def compute_PIs(datagroup_id, save_to=None, **kwargs):
 #     N=sum([d.Nagents for d in datasets])
 #     s0,e0=[], []
 #     for i, d in enumerate(datasets) :
-#         s = copy.deepcopy(d.step_data)
+#         sigma = copy.deepcopy(d.step_data)
 #         e = copy.deepcopy(d.endpoint_data)
-#         s.index['AgentID']= f'D{i}_' + s.index['AgentID'].astype('str')
+#         sigma.index['AgentID']= f'D{i}_' + sigma.index['AgentID'].astype('str')
 #         e.index['AgentID']= f'D{i}_' + e.index['AgentID'].astype('str')
 #         # e = copy.deepcopy(d.endpoint_data)
-#         s0.append(s)
+#         s0.append(sigma)
 #         e0.append(e)
 #     s0=
 #

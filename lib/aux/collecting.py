@@ -300,15 +300,15 @@ output_keys = list(output.keys())
 # print(len(list(endpoint_database.keys())))
 # print([a for a in list(endpoint_database.keys()) if a not in list(step_database.keys())])
 #
-# s=[]
+# sigma=[]
 # e=[]
 # for k, v in output.items() :
 #     if v is not None :
-#         s+=v['step']
+#         sigma+=v['step']
 #         e+=v['endpoint']
 
-# s=fun.unique_list(s)
+# sigma=fun.unique_list(sigma)
 # e=fun.unique_list(e)
 #
-# print(len(s))
+# print(len(sigma))
 # print(len(e))

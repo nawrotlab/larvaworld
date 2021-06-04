@@ -892,7 +892,7 @@ def retrieve_value(v, t):
             if t == tuple:
                 vv = tuple(vv)
 
-    # elif type(t) == dict:
+    # elif mode(t) == dict:
     #     vv = v
     elif type(t) == list:
         vv = retrieve_value(v, type(t[0]))
@@ -958,7 +958,7 @@ def gui_table(data, pars_dict, title='Agent list'):
     """
 
     sg.change_look_and_feel('Dark Brown 2')  # No excuse for gray windows
-    # Show a "splash" type message so the user doesn't give up waiting
+    # Show a "splash" mode message so the user doesn't give up waiting
     sg.popup_quick_message('Hang on for a moment, this will take a bit to create....', auto_close=True,
                            non_blocking=True)
 
@@ -1024,7 +1024,7 @@ def gui_table(data, pars_dict, title='Agent list'):
             # table_window.close()
             # gui_table(data, pars_dict, title='Agent list')
 
-    # if clicked button to dump the table's values
+    # if clicked button to dump the table'sigma values
     # if event.startswith('Show Table'):
     #     table = [[values[(row, col)] for col in range(Npars)] for row in range(Nagents)]
     #     sg.popup_scrolled('your_table = [ ', ',\n'.join([str(table[i]) for i in range(Nagents)]) + '  ]', title='Copy your data from here')
@@ -1385,22 +1385,22 @@ def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
     # if kwargs != {}:
     #     layout = []
     #     for i, (k, v) in enumerate(kwargs.items()):
-    #         if not type(v) == dict and not type(v) == np.ndarray:
+    #         if not mode(v) == dict and not mode(v) == np.ndarray:
     #             layout.append([sg.Text(k, size=(20, 1)), sg.Input(default_text=str(v), k=f'KW_{i}', size=(20, 1))])
     #     layout.append([sg.Ok(), sg.Cancel()])
     #     event, values = sg.Window(title, layout).read(close=True)
     #     if event == 'Ok':
     #         for i, (k, v) in enumerate(kwargs.items()):
-    #             if type(v) == np.ndarray:
+    #             if mode(v) == np.ndarray:
     #                 continue
-    #             if not type(v) == dict:
+    #             if not mode(v) == dict:
     #                 vv = values[f'KW_{i}']
-    #                 if type(v) == bool:
+    #                 if mode(v) == bool:
     #                     if vv == 'False':
     #                         vv = False
     #                     elif vv == 'True':
     #                         vv = True
-    #                 elif type(v) == list or type(v) == tuple:
+    #                 elif mode(v) == list or mode(v) == tuple:
     #                     vv = literal_eval(vv)
     #
     #                 elif v is None:
@@ -1409,7 +1409,7 @@ def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
     #                     else:
     #                         vv = vv
     #                 else:
-    #                     vv = type(v)(vv)
+    #                     vv = mode(v)(vv)
     #                 kwargs[k] = vv
     #             else:
     #                 kwargs[k] = set_kwargs(v, title=k)
@@ -1435,7 +1435,7 @@ def set_agent_kwargs(agent, **kwargs):
 
 def object_menu(selected, **kwargs):
     object_list = ['', 'Larva', 'Food', 'Border']
-    title = 'Select object type'
+    title = 'Select object mode'
     layout = [
         [sg.Text(title)],
         [sg.Listbox(default_values=[selected], values=object_list, change_submits=False, size=(20, len(object_list)),

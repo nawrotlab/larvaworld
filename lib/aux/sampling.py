@@ -3,10 +3,11 @@ import scipy.stats as st
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
-from scipy.stats import truncnorm
+from scipy.stats import truncnorm, lognorm, rv_discrete
 
-from lib.anal.fitting import compute_density, power_cdf, exp_cdf, lognorm_cdf, powerlaw_pdf, logNpow_pdf, \
-    fit_bout_distros, logNpow_cdf
+from lib.anal.fitting import compute_density, powerlaw_cdf, exponential_cdf, lognorm_cdf, powerlaw_pdf, logNpow_pdf, \
+    fit_bout_distros, logNpow_cdf, get_best_distro, get_distro, lognormal_pdf, exponential_pdf
+from lib.conf.conf import loadConf
 from lib.stor.paths import RefFolder
 
 
@@ -84,111 +85,103 @@ def sample_agents(filepath=None, pars=None, N=1, sample_dataset='reference'):
         samples = np.atleast_2d(np.random.normal(means[0], std, N))
     return pars, samples
 
+class BoutGenerator :
+    def __init__(self, name, range,dt,  mode='rvs', **kwargs):
+        self.name=name
+        self.dt=dt
+        ddfs = {
+            'powerlaw': {'cdf': powerlaw_cdf, 'pdf': powerlaw_pdf, 'args': ['alpha'], 'rvs': trunc_powerlaw},
+            'exponential': {'cdf': exponential_cdf, 'pdf': exponential_pdf, 'args': ['beta'], 'rvs': lognormal_discrete},
+            'lognormal': {'cdf': lognorm_cdf, 'pdf': lognormal_pdf, 'args': ['mu', 'sigma'], 'rvs': lognormal_discrete},
+            'logNpow': {'cdf': logNpow_cdf, 'pdf': logNpow_pdf,
+                        'args': ['alpha', 'mu', 'sigma', 'switch', 'ratio', 'overlap'], 'rvs': logNpow_distro}
+        }
+        self.xmin, self.xmax = range
+        self.funct = ddfs[name][mode]
+        self.args= {'xmin' : self.xmin,'xmax' : self.xmax,'range' : range,'dt' :self.dt,'name':self.name,  **kwargs}
+        # self.args  = {'xmin' : self.xmin, **{a: kwargs[a] for a in ddfs[name]['args']}}
+
+        self.dist = self.funct(**self.args)
+    def sample(self, size=1):
+        vs = self.dist.rvs(size=size) * self.dt
+        return vs[0] if size == 1 else vs
+        # if self.name in ['logNpow', 'powerlaw'] :
+        #     self.dist = self.funct(**self.args)
+        #     vs = self.dist.rvs(size=size) * self.dt
+        # else :
+        #     vs=np.ones(size)*np.nan
+        #     for i in range(size) :
+        #         vs[i] = self.funct(**self.args, size=1)
+        # return vs[0] if size==1 else vs
 
 
-
-def get_ref_bout_distros(mode='stridechain_dist', sample_dataset='reference'):
-    path_dir = f'{RefFolder}/{sample_dataset}'
-    # path_data = f'{path_dir}/data/reference.csv'
-    path_fits = f'{path_dir}/data/bout_fits.csv'
-
-    f = pd.read_csv(path_fits, index_col=0).xs(sample_dataset)
-    if mode=='stridechain_dist' :
-        k = 'stride'
-        str_i = np.argmin(f[['KS_pow_stride', 'KS_exp_stride', 'KS_log_stride', 'KS_logNpow_stride']])
-        if str_i == 0:
-            str_dist = {'range': (f['min_stride'], f['max_stride']),
-                        'name': 'powerlaw',
-                        'alpha': f['alpha_stride']}
-        elif str_i == 1:
-            str_dist = {'range': (f['min_stride'], f['max_stride']),
-                        'name': 'exponential',
-                        'lambda': f['lambda_stride']}
-        elif str_i == 2:
-            str_dist = {'range': (f['min_stride'], f['max_stride']),
-                        'name': 'lognormal',
-                        'mu': f['mu_log_stride'],
-                        'sigma': f['sigma_log_stride']}
-        elif str_i == 3:
-            str_dist = {'range': (f['min_stride'], f['max_stride']),
-                        'name': 'logNpow',
-                        'mu': f['mu_logNpow_stride'],
-                        'sigma': f['sigma_logNpow_stride'],
-                        'alpha': f['alpha_logNpow_stride'],
-                        'switch': f['switch_logNpow_stride'],
-                        'ratio': f[f'ratio_logNpow_{k}'],
-                        'overlap': f[f'overlap_logNpow_{k}'],
-                        }
-        return str_dist
-
-    elif mode=='pause_dist' :
-        k='pause'
-        pau_i = np.argmin(f[['KS_pow_pause', 'KS_exp_pause', 'KS_log_pause', 'KS_logNpow_pause']])
-        if pau_i == 0:
-            pau_dist = {'range': (f['min_pause'], f['max_pause']),
-                        'name': 'powerlaw',
-                        'alpha': f['alpha_pause']}
-        elif pau_i == 1:
-            pau_dist = {'range': (f['min_pause'], f['max_pause']),
-                        'name': 'exponential',
-                        'lambda': f['lambda_pause']}
-        elif pau_i == 2:
-            pau_dist = {'range': (f['min_pause'], f['max_pause']),
-                        'name': 'lognormal',
-                        'mu': f['mu_log_pause'],
-                        'sigma': f['sigma_log_pause']}
-        elif pau_i == 3:
-            pau_dist = {'range': (f[f'min_{k}'], f[f'max_{k}']),
-                        'name': 'logNpow',
-                        'mu': f[f'mu_logNpow_{k}'],
-                        'sigma': f[f'sigma_logNpow_{k}'],
-                        'alpha': f[f'alpha_logNpow_{k}'],
-                        'switch': f[f'switch_logNpow_{k}'],
-                        'ratio': f[f'ratio_logNpow_{k}'],
-                        'overlap': f[f'overlap_logNpow_{k}'],
-                        }
-        # print(pau_dist, sample_dataset)
-        # raise
-        return pau_dist
+def get_sample_bout_distro(bout='stride', sample_dataset='reference'):
+    # path_dir = f'{RefFolder}/{sample_dataset}'
+    # path_fits = f'{path_dir}/data/bout_fits.csv'
+    # f = pd.read_csv(path_fits, index_col=0).xs(sample_dataset)
+    # return get_best_distro(bout, f)
+    distro=loadConf(sample_dataset, 'Ref')[bout]['best']
+    return distro
 
 
-def logNpow_distro(a, xmin, xmax, m,s,xmid,r, dt, overlap=0) :
+def logNpow_distro(alpha, range, mu, sigma, switch, ratio, dt, overlap=0, **kwargs) :
+    xmin, xmax=range
     x0, x1 = int(xmin/ dt), int(xmax/ dt)
     xx = np.arange(x0,x1)
-    # xx = (x / dt).astype(int)
     x=xx*dt
-    # x=np.arange(xmin,xmax,dt)
-    pmf=logNpow_pdf(x,m,s, a,xmin, xmid, r, overlap)
+    pmf=logNpow_pdf(x, mu, sigma, alpha, xmin, switch, ratio, overlap)
     pmf /= pmf.sum()
-
-    # x0,x1=xx[0],xx[-1]
-    # print(len(xx), len(np.unique(xx)))
-    # print(len(pmf), len(np.unique(pmf)))
-    # raise
-    return stats.rv_discrete(values=(range(x0, x1), pmf))
+    return stats.rv_discrete(values=(xx, pmf))
 
 
-def truncated_power_law(a, xmin, xmax):
-    x = np.arange(xmin, xmax + 1, dtype='float')
-    pmf = 1 / x ** a
-    # pmf =(a - 1) / xmin * (x / xmin) ** (-a)
+def trunc_powerlaw(alpha, range, dt=1, **kwargs):
+    xmin, xmax = range
+    x0, x1 = int(xmin / dt), int(xmax / dt)
+    xx = np.arange(x0, x1)
+    x = xx * dt
+    # xk = np.arange(xmin, xmax,dt).astype(int)
+    # pk = 1 / xk ** alpha
+    # print('ddd')
+    pk = (alpha - 1) / x[0] * (x / x[0]) ** (-alpha)
+    pk /= pk.sum()
+
+    return stats.rv_discrete(values=(xx, pk))
+
+def lognormal_discrete2(mu, sigma, range, dt=1, **kwargs):
+    xmin,xmax=range
+    x0, x1 = np.round(xmin / dt).astype(int), np.ceil(xmax / dt).astype(int)
+    N=x1-x0
+    Dd = lognorm(s=sigma, loc=0.0, scale=np.exp(mu))
+    pk2 = Dd.cdf(np.linspace(xmin + 1*dt, xmax + 2*dt, N+1)) - Dd.cdf(np.linspace(xmin, xmax + 1*dt, N+1))
+    pk2 = pk2 / np.sum(pk2)
+    xrng = np.arange(x0, x1 + 1, 1)
+    # print(dt)
+    return stats.rv_discrete(values=(xrng, pk2))
+
+def lognormal_discrete(mu, sigma, range, dt=1, **kwargs):
+    # print(mu,sigma,range)
+    xmin, xmax = range
+    x0, x1 = int(xmin / dt), int(xmax / dt)
+    xx = np.arange(x0, x1+1)
+    x = xx * dt
+    pmf = lognormal_pdf(x, mu, sigma)
     pmf /= pmf.sum()
-    # return stats.rv_continuous(values=(range(xmin, xmax+1), pmf))
-    return stats.rv_discrete(values=(range(xmin, xmax + 1), pmf))
+    return stats.rv_discrete(values=(xx, pmf))
 
 
-def sample_lognormal(mean, sigma, xmin, xmax):
-    # print(mean, sigma)
+def sample_lognormal(mu, sigma,range, size=1, **kwargs):
+    xmin, xmax = range
     while True:
-        v = np.random.lognormal(mean=mean, sigma=sigma, size=None)
+        v = np.random.lognormal(mean=mu, sigma=sigma, size=size)
         if v >= xmin and v <= xmax:
             break
     return v
 
 
-def sample_lognormal_int(mean, sigma, xmin, xmax):
+def sample_lognormal_int(mu, sigma, range, size=1, **kwargs):
+    xmin, xmax = range
     while True:
-        v = np.floor(np.random.lognormal(mean=mean, sigma=sigma, size=None))
+        v = np.floor(np.random.lognormal(mean=mu, sigma=sigma, size=size))
         if v >= xmin and v <= xmax:
             break
     # print(np.round(v))
@@ -198,7 +191,7 @@ def sample_lognormal_int(mean, sigma, xmin, xmax):
 def lognorm_params(mode, stddev):
     """
     Given the mode and std. dev. of the log-normal distribution, this function
-    returns the shape and scale parameters for scipy's parameterization of the
+    returns the shape and scale parameters for scipy'sigma parameterization of the
     distribution.
     """
     p = np.poly1d([1, -1, 0, 0, -(stddev / mode) ** 2])
@@ -214,80 +207,85 @@ def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
         (low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 
 if __name__ == '__main__':
-    import numpy
-    from matplotlib import pyplot as plt
-
-    import powerlaw as pow
     import matplotlib.pyplot as plt
+    d_id='Fed'
+    bouts=['stride', 'pause']
+    # bout='pause'
+    # e=pd.read_csv(f'{RefFolder}/Starved/data/endpoint_data.csv', index_col=0)
 
-    # Nbins = 256
     fr=11.27
     dt=1/fr
-    a, dur0, dur1=3.194, 0.1,19.43
-    m, s, xmid, r = -1.131,0.521, 1.898, 0.985
-    # a, dur0, dur1=3.2, 1.5,90.0
-    # dur0_t, dur1_t = int(dur0/dt),int(dur1/dt)
-    # pau_dist=truncated_power_law(a,dur0_t, dur1_t)
-    pau_dist=logNpow_distro(a, dur0, dur1, m,s,xmid,r, dt)
-    dur_t=pau_dist.rvs(size=10000)
-    dur=dur_t * dt
-    values, pdfs,cdfs, Ks, idx_Kmax,res = fit_bout_distros(dur, xmin=0.1, xmax=20, fr=fr)
-    u2, du2, c2, c2cum = values
-    p_cdf, e_cdf, l_cdf, lp_cdf= cdfs
-    # raise
-    # aa = 1 + len(dur) / np.sum(np.log(dur / dur0))
-    # aa_t = 1 + len(dur_t) / np.sum(np.log(dur_t / dur0_t))
-    # adur0,adur1=np.min(dur), np.max(dur)
-    # adur0_t,adur1_t=np.min(dur_t), np.max(dur_t)
-    # aa2_t = pow.Fit(dur_t, xmin=dur0_t, xmax=dur1_t, discrete=True).power_law.alpha
-    # aa2 = pow.Fit(np.array(dur * fr).astype(int), xmin=int(dur0 * fr), xmax=int(dur1 * fr), discrete=True).power_law.alpha
-    #
-    # u2,du2, c2, c2cum = compute_density(dur, dur0, dur1, Nbins=Nbins)
-    # u2_t,du2_t, c2_t, c2cum_t = compute_density(dur_t, dur0_t, dur1_t, Nbins=Nbins)
-    # td=load_reference_dataset('Starved')
-    # vs=td.get_par('pause_dur')
-    lp_cdf0=1-logNpow_cdf(u2,m, s,a, dur0, xmid, r)
 
+    # pau_dist1=logNpow_distro(**pause_dist, dt=dt)
+    # pp1=pau_dist1.rvs(size=10000)* dt
 
-    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+    # pau_dist2=logNpow_distro(alpha=2.3436,mu=-1.0676, sigma=0.52, switch=0.454, dt=dt)
+
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5),sharex=False, sharey=True)
     axs=axs.ravel()
-    axs[0].loglog(u2, c2cum, '.', color='red', alpha=0.7)
-    axs[0].loglog(u2, lp_cdf, 'c', lw=2, label='powerlaw')
-    axs[0].loglog(u2, lp_cdf0, 'r', lw=2, label='powerlaw')
+    for j, (bout, comb,discr, (xmin,xmax), par, dt_bout) in enumerate(zip(bouts, [False, True],[True, False], [(1,100), (0.1,20.0)], ['stridechain_length', 'pause_dur'], [1, dt])) :
+        # if j==1 :
+        #     continue
+        print(f'------{bout}--------')
+        pp = pd.read_csv(f'{RefFolder}/{d_id}/aux/par_distros/{par}.csv', index_col=0).values.flatten()
+        # dist0 = get_sample_bout_distro(bout=bout, sample_dataset='Starved')
+        # a, m, s, xmid, r = [dist0[k] for k in ['alpha', 'mu', 'sigma', 'switch', 'ratio']]
+        dist0 =loadConf(d_id,'Ref')[bout]['best']
+        print(-1, dist0)
+
+        ls=['exp','sim', 'sim2', 'sim3', 'sim4', 'sim5', 'sim6']
+        cols=['b', 'r','c', 'm', 'orange', 'grey', 'lightgreen']
+        for i in range(1) :
+        # for i, dur in enumerate([pp0, pp1]) :
+            values, pdfs, cdfs, Ks, idx_Kmax, res, res_dict, best = fit_bout_distros(pp, xmin=xmin, xmax=xmax, fr=fr, xmid=np.nan, bout=bout, fit_by='cdf',
+                                                                                     print_fits=False, combine=comb, discrete=discr, overlap=0.2)
+            u2, du2, c2, c2cum = values
+            p_cdf, e_cdf, l_cdf, lp_cdf = cdfs
+
+            cdf0 = 1 - get_distro(x=u2, mode='cdf', **dist0)
+            # cdf0/=cdf0[0]
+            pdf0 = 1 - get_distro(x=du2, mode='pdf', **dist0)
+            # print(sum(pdf0))
+            # print(cdf0[0],len(cdf0))
+            l=ls[i]
+            # axs[j].loglog(du2, c2, '.', color=cols[i], alpha=0.7)
+            axs[j].loglog(u2, c2cum, '.', color=cols[i], alpha=0.7)
+            axs[j].loglog(u2, cdfs[idx_Kmax], color=cols[i], lw=2, label=f'{l}_{i}')
+            axs[j].loglog(u2, cdf0, 'g', lw=2)
+            print(i,c2cum[0], u2[0], len(u2), best[bout]['best'])
+            pau_dist = BoutGenerator(**best[bout]['best'], dt=dt_bout)
+            # pau_dist = logNpow_distro(**best[bout], dt=dt)
+            pp = pau_dist.sample(size=10000)
+        axs[j].legend()
+        axs[j].set_ylim([10**-3.5, 10**0])
     # axs[1].loglog(du2, c2, '.', color='red', alpha=0.7)
-    # axs[1].loglog(du2, powerlaw_pdf(du2, dur0, aa2), 'c', lw=2, label='powerlaw')
+    # axs[1].loglog(du2, powerlaw_pdf(du2, xmin, aa2), 'c', lw=2, label='powerlaw')
 
     # axs[2].loglog(u2_t, c2cum_t, '.', color='red', alpha=0.7)
-    # axs[2].loglog(u2_t, 1 - power_cdf(u2_t, dur0_t, aa2_t), 'c', lw=2, label='powerlaw')
+    # axs[2].loglog(u2_t, 1 - powerlaw_cdf(u2_t, dur0_t, aa2_t), 'c', lw=2, label='powerlaw')
     # axs[3].loglog(du2_t, c2_t, '.', color='red', alpha=0.7)
     # axs[3].loglog(du2_t, powerlaw_pdf(du2_t, dur0_t, aa2_t), 'c', lw=2, label='powerlaw')
 
-    # axs[4].set_xticks(bins, ["2^%s" % i for i in bins])
-    # ys,xs,pol=axs[5].hist(numpy.log10(dur), log=True, bins=np.linspace(np.log10(dur0), np.log10(dur1), Nbins), histtype='step',alpha=0)
-    # ys,xs,pol=axs[5].hist(numpy.log10(dur), log=True, bins=np.linspace(np.log10(dur0), np.log10(dur1), Nbins), histtype='step',alpha=0)
+    # axs[4].set_xticks(bins, ["2^%sigma" % i for i in bins])
+    # ys,xs,pol=axs[5].hist(numpy.log10(dur), log=True, bins=np.linspace(np.log10(xmin), np.log10(dur1), Nbins), histtype='step',alpha=0)
+    # ys,xs,pol=axs[5].hist(numpy.log10(dur), log=True, bins=np.linspace(np.log10(xmin), np.log10(dur1), Nbins), histtype='step',alpha=0)
     # xs=0.5 * (xs[:-1] + xs[1:])
     # axs[5].plot(xs,ys)
     # cum_ys = 1-np.cumsum(ys)/np.sum(ys)
     # cum_ys = np.array([np.cumsum(ys[:i+1]) for i,(x,y) in enumerate(zip(xs,ys))])
     # print(xs, du2)
     # axs[4].loglog(du2, cum_ys, '.', color='red', alpha=0.7)
-    # axs[4].loglog(u2, 1 - power_cdf(u2, dur0, aa2), 'c', lw=2, label='powerlaw')
+    # axs[4].loglog(u2, 1 - powerlaw_cdf(u2, xmin, aa2), 'c', lw=2, label='powerlaw')
     # axs[4].scatter(xs, np.log10(cum_ys))
     # axs[4].set_yticks([])
-    # axs[5].hist(numpy.log10(dur), log=True, bins=np.linspace(np.log10(dur0), np.log10(dur1), Nbins), histtype='step')
+    # axs[5].hist(numpy.log10(dur), log=True, bins=np.linspace(np.log10(xmin), np.log10(dur1), Nbins), histtype='step')
     # ys,xs,pol = axs[7].hist(numpy.log10(dur_t), log=True, bins=np.linspace(np.log10(dur0_t), np.log10(dur1_t), Nbins), histtype='step',alpha=0)
     # xs = 0.5 * (xs[:-1] + xs[1:])
     # axs[7].plot(xs, ys)
     # cum_ys = 1 - np.cumsum(ys) / np.sum(ys)
     # axs[6].loglog(du2_t, cum_ys, '.', color='red', alpha=0.7)
-    # axs[6].loglog(u2_t, 1 - power_cdf(u2_t, dur0_t, aa2_t), 'c', lw=2, label='powerlaw')
-
+    # axs[6].loglog(u2_t, 1 - powerlaw_cdf(u2_t, dur0_t, aa2_t), 'c', lw=2, label='powerlaw')
     plt.show()
-    # raise
-
-    # print(a,dur0,dur1)
-    # print(aa,aa2, adur0,adur1)
-
 
     raise
     # pp=['brain.crawler_params.step_to_length_std']
@@ -333,3 +331,5 @@ if __name__ == '__main__':
     #     plt.suptitle(p)
     #     plt.legend()
     #     plt.show()
+
+

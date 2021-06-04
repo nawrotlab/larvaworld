@@ -20,7 +20,7 @@ from PIL import Image
 
 from lib.anal.fitting import *
 from lib.anal.combining import combine_images, combine_pdfs
-from lib.conf import par_conf
+from lib.conf import par_conf, conf
 from lib.aux import functions as fun
 from lib.stor import paths
 
@@ -572,7 +572,7 @@ def plot_stride_distribution(dataset, agent_id=None, save_to=None):
 
     s = agent_data['scaled_stride_dst'].dropna()
     t = agent_data['stride_dur'].dropna()
-    # print(s)
+    # print(sigma)
     # print(t)
     fig, axs = plt.subplots(1, 1, figsize=([5, 5]))
     axs.plot(s, t, '.')
@@ -635,8 +635,8 @@ def plot_stridechains(dataset, save_to=None):
 
     axs.loglog(u, c, 'or', label='stridechains')
     # axs.loglog(u, 1 - powerlaw_cdf_2(u, P[0], P[1]), 'k', lw=2, label='powerlaw linear')
-    axs.loglog(u, 1 - power_cdf(u, 1, alpha), 'r', lw=2, label='powerlaw MLE')
-    axs.loglog(u, 1 - exp_cdf(u, 1, beta), 'g', lw=2, label='exponential MLE')
+    axs.loglog(u, 1 - powerlaw_cdf(u, 1, alpha), 'r', lw=2, label='powerlaw MLE')
+    axs.loglog(u, 1 - exponential_cdf(u, 1, beta), 'g', lw=2, label='exponential MLE')
     axs.loglog(u, 1 - lognorm_cdf(u, mu, sigma), 'b', lw=2, label='lognormal MLE')
 
     axs.legend(loc='lower left', fontsize=15)
@@ -696,8 +696,8 @@ def plot_bend_pauses(dataset, save_to=None):
     fig.suptitle('Bend-pause distribution', fontsize=25)
 
     axs.loglog(u, ccum, 'or', label='bend_pauses')
-    axs.loglog(u, 1 - power_cdf(u, durmin, alpha), 'r', lw=2, label='powerlaw MLE')
-    axs.loglog(u, 1 - exp_cdf(u, durmin, beta), 'g', lw=2, label='exponential MLE')
+    axs.loglog(u, 1 - powerlaw_cdf(u, durmin, alpha), 'r', lw=2, label='powerlaw MLE')
+    axs.loglog(u, 1 - exponential_cdf(u, durmin, beta), 'g', lw=2, label='exponential MLE')
     axs.loglog(u, 1 - lognorm_cdf(u, mu, sigma), 'b', lw=2, label='lognormal MLE')
 
     axs.legend(loc='lower left', fontsize=15)
@@ -942,7 +942,7 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
         filepaths = [f'{agent_id}_{f}' for f in generic_filepaths]
 
         s = d.step_data.xs(agent_id, level='AgentID', drop_level=True)
-        # Nticks=len(s.index)
+        # Nticks=len(sigma.index)
         # dur=Nticks/d.fr
         s.set_index(s.index.values / d.fr, inplace=True)
 
@@ -1298,7 +1298,7 @@ def plot_pauses(dataset, Npauses=10, save_to=None, plot_simulated=False, return_
     axs[0].set_xlabel('angle (deg)')
     axs[0].set_ylabel('counts')
     axs[1].hist(max_bendvels, color='r', bins=Nbins, label='maximum bending velocity')
-    axs[1].set_xlabel('angular velocity (deg/s)')
+    axs[1].set_xlabel('angular velocity (deg/sigma)')
     axs[1].set_ylabel('counts')
     fig.suptitle('Maximum values during pauses', fontsize=20)
     save_plot(fig, filepath2, filename2)
@@ -1664,7 +1664,7 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
     #     os.makedirs(save_to)
     filepath = os.path.join(save_to, save_as)
 
-    # s = self.step_data
+    # sigma = self.step_data
     avels = nam.vel(d.angles)
     if not set(avels).issubset(s.columns.values):
         raise ValueError('Spineangle angular velocities do not exist in step_data')
@@ -1860,7 +1860,7 @@ def plot_spatiotemporal_variation(dataset, spatial_cvs, temporal_cvs, sizes=None
     lvel_num_strings = ['{' + str(i + 2) + '}' for i in range(N_lvels)]
     labels = [r'$v_{cen}$'] + \
              [rf'$v^{c}_{i}$' for i in lvel_num_strings] + [rf'$v_{i}$' for i in svel_num_strings]
-    markers = ['s'] + ['o' for i in range(N_lvels)] + ['v' for i in range(N_svels)]
+    markers = ['sigma'] + ['o' for i in range(N_lvels)] + ['v' for i in range(N_svels)]
     cnum = 1 + N_svels
     cmap = plt.get_cmap('hsv')
     cmap = [cmap(1. * i / cnum) for i in range(cnum)]
@@ -2358,7 +2358,7 @@ def plot_food_amount(datasets, labels, save_to=None, save_as=None, filt_amount=F
         dst_u = dst_df.groupby(level='Step').quantile(q=0.75)
         dst_b = dst_df.groupby(level='Step').quantile(q=0.25)
         # print(dst_m)
-        # print(type(dst_m))
+        # print(mode(dst_m))
         if filt_amount:
             sos = signal.butter(N=1, Wn=0.1, btype='lowpass', analog=False, fs=Nticks / (t1 - t0), output='sos')
             dst_m = dst_m.diff()
@@ -2564,7 +2564,7 @@ def plot_navigational_index(datasets, labels=None, subfolder='source', save_as=N
 
 def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chunk='pause', time_unit='sec',
                         plot_fits='all', range='default', print_fits=False, only_fit_one=True, mode='cdf',
-                        subfolder='bouts',
+                        subfolder='bouts', refit_distros=False,
                         save_to=None, save_as=None, save_fits_to=None, save_fits_as=None, return_fig=False):
     warnings.filterwarnings('ignore')
     Ndatasets, colors, save_to = plot_config(datasets, labels, save_to, subfolder=subfolder)
@@ -2646,15 +2646,14 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
     # pau0=1.5
     # print('ssss')
 
-    ps = ['stride', 'pause']
-    stored_pars = [
-        [f'alpha_{p}', f'KS_pow_{p}', f'lambda_{p}', f'KS_exp_{p}', f'mu_log_{p}', f'sigma_log_{p}', f'KS_log_{p}', f'mu_logNpow_{p}', f'sigma_logNpow_{p}',f'alpha_logNpow_{p}', f'switch_logNpow_{p}',f'ratio_logNpow_{p}',f'overlap_logNpow_{p}', f'KS_logNpow_{p}'] for
-        p in ps]
-    fit_df = pd.DataFrame(index=labels, columns=fun.flatten_list(stored_pars))
-    fit_df['min_pause'] = np.clip(min_pauses, a_min=pau0, a_max=+np.inf)
-    fit_df['max_pause'] = np.clip(max_pauses, a_min=0, a_max=pau1)
-    fit_df['min_stride'] = np.clip(min_chains, a_min=chn0, a_max=+np.inf)
-    fit_df['max_stride'] = np.clip(max_chains, a_min=0, a_max=chn1)
+    # stored_pars = [
+    #     [f'alpha_{p}', f'KS_pow_{p}', f'lambda_{p}', f'KS_exp_{p}', f'mu_log_{p}', f'sigma_log_{p}', f'KS_log_{p}', f'mu_logNpow_{p}', f'sigma_logNpow_{p}',f'alpha_logNpow_{p}', f'switch_logNpow_{p}',f'ratio_logNpow_{p}',f'overlap_logNpow_{p}', f'KS_logNpow_{p}'] for
+    #     p in ps]
+    # fit_df = pd.DataFrame(index=labels)
+    # fit_df['min_pause'] = np.clip(min_pauses, a_min=pau0, a_max=+np.inf)
+    # fit_df['max_pause'] = np.clip(max_pauses, a_min=0, a_max=pau1)
+    # fit_df['min_stride'] = np.clip(min_chains, a_min=chn0, a_max=+np.inf)
+    # fit_df['max_stride'] = np.clip(max_chains, a_min=0, a_max=chn1)
     if save_as is None:
         base_file = f'stridesNpauses_{mode}_{range}_{plot_fits}'
         filename = f'{base_file}.{suf}' if not only_fit_one else f'{base_file}_0.{suf}'
@@ -2663,6 +2662,7 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
     if save_fits_as is None:
         save_fits_as = f'bout_fits_{range}.csv'
     fit_filepath = os.path.join(save_fits_to, save_fits_as)
+    fits={l : {} for l in labels}
 
     fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=False, sharey=True)
     axs = axs.ravel()
@@ -2672,32 +2672,56 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
 
 
     for j, (pau_dur, chn_dur, c, label, fr) in enumerate(zip(pau_durs, chn_durs, colors, labels, frs)):
+        try :
+            ref=conf.loadConf(label, 'Ref')
+        except :
+            ref = None
         for i, (x0, discr, xmin, xmax) in enumerate(
                 zip([chn_dur, pau_dur], [chn_discr, pau_discr], [chn0, pau0], [chn1, pau1])):
-            bouts='stridechains' if i == 0 else 'pauses'
+            bout='stride' if i == 0 else 'pause'
             combine=False if i == 0 else True
-            values, pdfs, cdfs, Ks, idx_Kmax, res = fit_bout_distros(x0, xmin, xmax, fr, discr,
-                                                                     label=label, bouts=bouts, print_fits=print_fits, combine=combine)
-
-            u2, du2, c2, c2cum = values
-            p_pdf, e_pdf, l_pdf, lp_pdf = pdfs
-            p_cdf, e_cdf, l_cdf, lp_cdf = cdfs
-
-            fit_df.loc[label, stored_pars[i]] = res
             lws = [2, 2, 2, 2]
-            lws[idx_Kmax] = 4
 
+            if not refit_distros and ref is not None:
+                x = x0[x0 >= xmin]
+                x = x[x <= xmax]
+                u2, du2, c2, c2cum = compute_density(x, xmin, xmax)
+                fitted=ref[bout]['best']
+                pdfs=[get_distro(x=du2, **fitted, mode='pdf')]*4
+                cdfs=[1-get_distro(x=u2, **fitted, mode='cdf')]*4
+                idx_Kmax=0
+                # print(label, bout)
+
+            else :
+                values, pdfs, cdfs, Ks, idx_Kmax, res, res_dict, best = fit_bout_distros(x0, xmin, xmax, fr, discr,
+                                                                                   dataset_id=label, bout=bout, print_fits=print_fits, combine=combine)
+
+                u2, du2, c2, c2cum = values
+                lws[idx_Kmax] = 4
+                fits[label].update(res_dict)
+                # print(best)
+
+
+            # print(combine)
+            # print(cdfs)
 
             if mode == 'cdf':
                 ylabel = 'cumulative probability'
                 xrange=u2
                 y=c2cum
                 ddfs=cdfs
+                for ii in ddfs :
+                    if ii is not None :
+                        ii/=ii[0]
+
             elif mode == 'pdf' :
                 ylabel = 'probability'
                 xrange = du2
                 y = c2
                 ddfs = pdfs
+                for ii in ddfs:
+                    if ii is not None:
+                        ii /= sum(ii)
 
             axs[i].loglog(xrange, y, '.', color=c, alpha=0.7)
             for z,(l,col,lw,ddf) in enumerate(zip(distro_ls, distro_cs,lws, ddfs)):
@@ -2709,13 +2733,12 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
                     cc=col
                 else :
                     continue
-                # lab = l
-                # lab = ll if j == j0 else None
                 axs[i].loglog(xrange, ddf, color=cc, lw=lw, label=l)
+                # print(label, bout, len(ddf), xrange[0], ddf[0])
             # axs[i].legend(loc='lower left', fontsize=15)
 
-    # axs[0].yaxis.set_major_locator(ticker.MaxNLocator(4))
     for ii in [0,1] :
+
         if plot_fits == 'all':
             axs[ii].legend(handles=[patches.Patch(facecolor=col, label=l, edgecolor='black') for col, l in zip(distro_cs, distro_ls)],
                   labels=distro_ls, loc='lower left', handlelength=0.5, handleheight=0.5, fontsize=15)
@@ -2727,6 +2750,7 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
     axs[1].set_xlabel(pause_xlabel)
     axs[0].set_xlim([chn_t0, chn_t1])
     axs[1].set_xlim([pau_t0, pau_t1])
+    axs[1].set_ylim([10**-3.5, 10**0])
     axs[0].set_title(chain_lab)
     axs[1].set_title(pause_lab)
 
@@ -2735,8 +2759,9 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
     # print(fit_df['KS_logNpow_pause'])
     # print(fit_df['mu_log_pause'])
     # print(fit_df['sigma_log_pause'])
-    # plt.show()
-    # raise
+    plt.show()
+    raise
+    fit_df=pd.DataFrame.from_dict(fits,orient="index")
     fit_df.to_csv(fit_filepath, index=True, header=True)
     return process_plot(fig, save_to, filename, return_fig)
 
@@ -2846,7 +2871,7 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
         The axes object to draw the ellipse into.
 
     n_std : float
-        The number of standard deviations to determine the ellipse's radiuses.
+        The number of standard deviations to determine the ellipse'sigma radiuses.
 
     **kwargs
         Forwarded to `~matplotlib.patches.Ellipse`
@@ -3357,7 +3382,7 @@ def plot_endpoint_params(datasets, labels, mode='basic', par_shorts=None, subfol
     axs = axs.ravel() if Nrows * Ncols > 1 else [axs]
     for i, (p, symbol, xlabel, xlim, disp) in enumerate(zip(pars, symbols, xlabels, xlims, disps)):
         # if xlim is not None :
-        #     print(p, xlabel,xlim, type(xlim), xlim[0])
+        #     print(p, xlabel,xlim, mode(xlim), xlim[0])
         values = [d.endpoint_data[p].values for d in datasets]
         # print(p)
         if Ndatasets > 1:

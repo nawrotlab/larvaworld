@@ -80,7 +80,7 @@ class Box2DSegment(BodySegment):
         self.facing_axis = facing_axis
 
         # CAUTION
-        # This sets the body's origin (where pos, orientation is derived from)
+        # This sets the body'sigma origin (where pos, orientation is derived from)
         # self._body.localCenter = b2Vec2(0.0, 0.0)
         # this sets the body' center of mass (where velocity is set etc)
         # self._body.massData.center= self._body.localCenter
@@ -495,7 +495,7 @@ class LarvaBody:
 
                 self.joints.append(friction_joint)
         w = self.width_to_length_ratio * Nsegs / 2
-        # For many segments, the front one(s) will be joint by points outside the body.
+        # For many segments, the front one(sigma) will be joint by points outside the body.
         # So we adopt a more conservative solution, bringing the attachment point more medially : No visible difference
         # lateral_attachment_dist = self.width_to_length_ratio * self.Npoints / 4
 
@@ -610,8 +610,8 @@ class LarvaBody:
             except:
                 viewer.draw_circle(self.get_position(), r, cc, False, r/5)
 
-        # for s in self.get_sensors() :
-        #     self.draw_sensor(viewer, s)
+        # for sigma in self.get_sensors() :
+        #     self.draw_sensor(viewer, sigma)
 
     def plot_vertices(self, axes, **kwargs):
         for seg in self.segs:

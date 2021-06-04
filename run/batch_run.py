@@ -11,7 +11,7 @@ import lib.aux.argparsers as prs
 from lib.sim.batch_lib import batch_run, prepare_batch
 
 parser = argparse.ArgumentParser(description="Run given batch-run")
-parser.add_argument('batch', choices=list(loadConfDict('Batch').keys()), help='The batch-run type')
+parser.add_argument('batch', choices=list(loadConfDict('Batch').keys()), help='The batch-run mode')
 parser = prs.add_sim_kwargs(parser)
 parser = prs.add_life_kwargs(parser)
 parser = prs.add_batch_kwargs(parser)

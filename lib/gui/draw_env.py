@@ -102,7 +102,7 @@ def reset_arena(window, graph, arena_pars, env_db):
     db = copy.deepcopy(env_db)
 
     s, arena = draw_arena(graph, arena_pars)
-    c = {'graph': graph, 's': s}
+    c = {'graph': graph, 'sigma': s}
     for id, pars in db['s_u']['items'].items():
         temp = draw_source(P0=unscale_xy(pars['pos'], s), **c, **pars)
         db['s_u']['figs'][temp] = id
@@ -163,7 +163,7 @@ def inspect_distro(default_color, mode, shape, N, loc, scale, graph, s, id=None,
 
 
 def draw_source(P0, default_color, graph, s, amount, radius, **kwargs):
-    # P0=scale_xy(pos,s)
+    # P0=scale_xy(pos,sigma)
     fill_color = default_color if amount > 0 else None
     temp = graph.draw_circle(P0, radius * s, line_width=3, line_color=default_color, fill_color=fill_color)
     return temp
@@ -203,7 +203,7 @@ def check_abort(name, w, v, units, groups):
     if v[f'{o}_group_id'] == '' and v[f'{o}_id'] == '':
         info.update(value=f"Both {o.lower()} single id and group id are empty")
     elif not v[f'{o}_group'] and not v[f'{o}_single']:
-        info.update(value=f"Select to add a single or a group of {o.lower()}s")
+        info.update(value=f"Select to add a single or a group of {o.lower()}sigma")
     elif v[f'{o}_single'] and (
             v[f'{o}_id'] in list(units.keys()) or v[f'{o}_id'] == ''):
         info.update(value=f"{o.lower()} id {v[f'{o}_id']} already exists or is empty")
@@ -298,7 +298,7 @@ def draw_env(env=None):
     layout = [[sg.Col(col1), sg.Col(col2)]]
 
     w = sg.Window("Environment configuration", layout, **w_kws,location=(600, 200))
-    graph = w["-GRAPH-"]  # type: sg.Graph
+    graph = w["-GRAPH-"]  # mode: sg.Graph
     graph.bind('<Button-3>', '+RIGHT+')
 
     dragging, current = False, {}
@@ -339,7 +339,7 @@ def draw_env(env=None):
         #     target = e.split()[-1]
         #     choice = popup_color_chooser('Dark Blue 3')
         #     w[target].update(choice)
-        if e == "-GRAPH-":  # if there's a "Graph" event, then it's a mouse
+        if e == "-GRAPH-":  # if there'sigma a "Graph" event, then it'sigma a mouse
             x, y = v["-GRAPH-"]
             if not dragging:
                 start_point = (x, y)
@@ -354,7 +354,7 @@ def draw_env(env=None):
             lastxy = x, y
             if None not in (start_point, end_point):
                 if v['-MOVE-']:
-                    # delta_X, delta_Y = scale_xy((delta_x, delta_y),s)
+                    # delta_X, delta_Y = scale_xy((delta_x, delta_y),sigma)
                     delta_X, delta_Y = delta_x / s, delta_y / s
                     for fig in drag_figures:
                         for k in list(db.keys()):
@@ -488,7 +488,7 @@ def draw_env(env=None):
                     id = v[f'{o}_group_id']
                     if current == {}:
                         info.update(value=f"Sample item for source group {id} detected." \
-                                          "Now draw the distribution's space")
+                                          "Now draw the distribution'sigma space")
 
                         sample_fig = prior_rect
                     else:

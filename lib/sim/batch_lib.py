@@ -26,7 +26,7 @@ import lib.conf.dtype_dicts as dtypes
 
 ''' Default batch run.
 Arguments :
-- Experiment type eg 'chemorbit'
+- Experiment mode eg 'chemorbit'
 - Batchrun configuration as a dict eg :
                 {'fit_par': 'final_scaled_dst_to_center',
                 'minimize': True,

@@ -38,7 +38,7 @@ def get_input(message, itype, default='', accepted=None, range=None):
                 v = bool
                 break
             else:
-                print("Data type must be one of ['str','int','float','bool']")
+                print("Data mode must be one of ['str','int','float','bool']")
         if itype == bool:
             if t in ['n', 'N', 'False', False]:
                 v = False
@@ -52,7 +52,7 @@ def get_input(message, itype, default='', accepted=None, range=None):
         try:
             t = itype(t)
         except:
-            print(f"Input must be of type {itype}! Try again.")
+            print(f"Input must be of mode {itype}! Try again.")
             continue
         if accepted is None and range is None:
             v = t
@@ -236,7 +236,7 @@ def setDataGroup(id=None):
     print(f' -- Step 5 : DataGroup additional parameters')
     while get_input("Add additional parameter?", itype=bool, default=False):
         key = get_input("Enter additional parameter name", itype=str)
-        itype = get_input(f"Enter data type for {key}", itype=type)
+        itype = get_input(f"Enter data mode for {key}", itype=type)
         value = get_input(f"Enter value for {key}", itype=itype)
         DataGroup[key] = value
     saveConf(DataGroup, 'Group')
@@ -258,14 +258,18 @@ def loadConfDict(conf_type):
     return Conf_dict
 
 
-def saveConf(conf, conf_type, id=None):
+def saveConf(conf, conf_type, id=None, mode='overwrite'):
     try:
         conf_dict = loadConfDict(conf_type)
     except:
         conf_dict = {}
     if id is None:
         id = conf['id']
-    conf_dict[id] = conf
+
+    if mode=='update' and id in list(conf_dict.keys()):
+        conf_dict[id].update(conf)
+    else :
+        conf_dict[id] = conf
     saveConfDict(conf_dict, conf_type)
     print(f'{conf_type} Configuration saved under the id : {id}')
 

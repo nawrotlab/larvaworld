@@ -131,7 +131,7 @@ def get_replay_kwargs(args):
 
 
 def add_data_kwargs(parser):
-    # parser.add_argument('dataset_type', type=str, help='The dataset type name')
+    # parser.add_argument('dataset_type', mode=str, help='The dataset mode name')
     parser.add_argument('-fld', '--folders', nargs='+', type=str,
                         help='Folders under the DataGroup parent dir where to search for datasets')
     parser.add_argument('-suf', '--suffixes', nargs='+', type=str, help='Suffixes of the dataset names')

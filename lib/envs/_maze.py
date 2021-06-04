@@ -101,7 +101,7 @@ class Maze:
                   .format(width + 2 * padding, height + 2 * padding,
                           -padding, -padding, width + 2 * padding, height + 2 * padding),
                   file=f)
-            print('<defs>\n<style type="text/css"><![CDATA[', file=f)
+            print('<defs>\n<style mode="text/css"><![CDATA[', file=f)
             print('line {', file=f)
             print('    stroke: #000000;\n    stroke-linecap: square;', file=f)
             print('    stroke-width: 5;\n}', file=f)

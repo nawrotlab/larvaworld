@@ -13,7 +13,6 @@ from sklearn.metrics.pairwise import nan_euclidean_distances as dst
 
 from lib.aux import functions as fun
 
-from lib.anal.fitting import *
 from lib.aux.parsing import parse_dataset, multiparse_dataset_by_sliding_window
 from lib.anal.plotting import *
 import lib.conf.env_conf as env
@@ -165,7 +164,7 @@ class LarvaDataset:
             r2, p2 = stats.pearsonr(s_stride_or, s_ors_stop[:, i])
             rNps[i, 2] = r2
             rNps[i, 3] = p2
-        #     errors[i]=np.sum(np.abs(np.diff(s[[o,stride_or]].dropna().values)))
+        #     errors[i]=np.sum(np.abs(np.diff(sigma[[o,stride_or]].dropna().values)))
         df = pd.DataFrame(np.round(rNps, 4), index=ors)
         df.columns = ['Pearson r (start)', 'p-value (start)', 'Pearson r (stop)', 'p-value (stop)']
         filename = f'{save_to}/choose_orientation.csv'
@@ -216,8 +215,8 @@ class LarvaDataset:
     # def step_process(self, name, is_last=True, show_output=True, **kwargs):
     #     if self.step_data is None:
     #         self.load()
-    #     s = self.step_data
-    #     self.process_methods[name](s,**kwargs)
+    #     sigma = self.step_data
+    #     self.process_methods[name](sigma,**kwargs)
     #
     #     if is_last:
     #         self.save()
@@ -963,7 +962,7 @@ class LarvaDataset:
 
         xy = [nam.xy(self.points[i]) for i in range(len(self.points))]
         s = self.step_data
-        # s = self.step_data.copy(deep=False)
+        # sigma = self.step_data.copy(deep=False)
         if show_output:
             print(f'Computing front and rear orients')
         xy_pars = fun.flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1]])
@@ -1733,7 +1732,7 @@ class LarvaDataset:
         elif chunk_dur_in_sec:
             chunk_dur_in_ticks = {id : chunk_dur_in_sec / self.dt for id in ids}
             # chunk_dur_in_ticks = np.ones(Nids) * chunk_dur_in_sec / self.dt
-        # all_d = [s.xs(id, level='AgentID', drop_level=True) for id in ids]
+        # all_d = [sigma.xs(id, level='AgentID', drop_level=True) for id in ids]
         # all_mid_flag_ticks = [d[d[mid_flag] == True].index.values for d in all_d]
         # all_edge_flag_ticks = [d[d[edge_flag] == True].index.values for d in all_d]
         # all_valid_ticks = [d[control_pars].dropna().index.values for d in all_d]
@@ -2395,15 +2394,15 @@ class LarvaDataset:
 
         # for track_par in track_params:
         #     for st in ['start', 'stop']:
-        #         s[f'{track_par}_at_turn_{st}'] = s[[f'{track_par}_at_Lturn_{st}', f'{track_par}_at_Rturn_{st}']].sum(
+        #         sigma[f'{track_par}_at_turn_{st}'] = sigma[[f'{track_par}_at_Lturn_{st}', f'{track_par}_at_Rturn_{st}']].sum(
         #             axis=1, min_count=1)
         #         if self.save_data_flag:
         #             self.create_par_distro_dataset([f'{track_par}_at_turn_{st}'])
         #     p_track_tur = nam.chunk_track('turn', track_par)
         #     p_track_Ltur = nam.chunk_track('Lturn', track_par)
         #     p_track_Rtur = nam.chunk_track('Rturn', track_par)
-        #     e[nam.mean(p_track_tur)] = s[[p_track_Ltur, p_track_Rtur]].abs().groupby('AgentID').mean().mean(axis=1)
-        #     e[nam.std(p_track_tur)] = s[[p_track_Ltur, p_track_Rtur]].abs().groupby('AgentID').std().mean(axis=1)
+        #     e[nam.mean(p_track_tur)] = sigma[[p_track_Ltur, p_track_Rtur]].abs().groupby('AgentID').mean().mean(axis=1)
+        #     e[nam.std(p_track_tur)] = sigma[[p_track_Ltur, p_track_Rtur]].abs().groupby('AgentID').std().mean(axis=1)
 
         if constant_bend_chunks:
             if show_output:
@@ -2411,15 +2410,15 @@ class LarvaDataset:
             self.detect_chunks(chunk_names=['constant_bend'], chunk_only=chunk_only, par=nam.vel('bend'),
                                par_ranges=[[-min_ang_vel, min_ang_vel]], **cc, **kwargs)
 
-        # s[nam.dur('turn')] = s[[nam.dur('Rturn'), nam.dur('Lturn')]].sum(axis=1, min_count=1)
-        # s[nam.start('turn')] = s[[nam.start('Rturn'), nam.start('Lturn')]].sum(axis=1, min_count=1)
-        # s[nam.stop('turn')] = s[[nam.stop('Rturn'), nam.stop('Lturn')]].sum(axis=1, min_count=1)
-        # s[nam.stop('turn')] = s[[nam.stop('Rturn'), nam.stop('Lturn')]].sum(axis=1, min_count=1)
-        # s[nam.stop('turn')] = s[[nam.stop('Rturn'), nam.stop('Lturn')]].sum(axis=1, min_count=1)
+        # sigma[nam.dur('turn')] = sigma[[nam.dur('Rturn'), nam.dur('Lturn')]].sum(axis=1, min_count=1)
+        # sigma[nam.start('turn')] = sigma[[nam.start('Rturn'), nam.start('Lturn')]].sum(axis=1, min_count=1)
+        # sigma[nam.stop('turn')] = sigma[[nam.stop('Rturn'), nam.stop('Lturn')]].sum(axis=1, min_count=1)
+        # sigma[nam.stop('turn')] = sigma[[nam.stop('Rturn'), nam.stop('Lturn')]].sum(axis=1, min_count=1)
+        # sigma[nam.stop('turn')] = sigma[[nam.stop('Rturn'), nam.stop('Lturn')]].sum(axis=1, min_count=1)
         # self.compute_chunk_metrics(['turn'], **cc)
         # self.create_par_distro_dataset([nam.dur('turn')])
         # for p in track_params:
-        #     s[f'turn_{p}'] = ss[[nam.chunk_track(chunk_name='Rturn', params=p),
+        #     sigma[f'turn_{p}'] = ss[[nam.chunk_track(chunk_name='Rturn', params=p),
         #                          nam.chunk_track(chunk_name='Lturn', params=p)]].sum(axis=1, min_count=1)
         #     self.create_par_distro_dataset([f'turn_{p}'])
 
@@ -2596,7 +2595,7 @@ class LarvaDataset:
                 # lambda x: (np.round(r1 + r * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3),
                 #            np.round(b1 + b * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3),
                 #            np.round(g1 + g * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3)))
-                # s[l] = s[p].apply(
+                # sigma[l] = sigma[p].apply(
                 #     lambda x: (np.round(r1 + r * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3),
                 #                np.round(b1 + b * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3),
                 #                np.round(g1 + g * np.clip(np.abs(x) / lim, a_min=0, a_max=1), 3)))
@@ -2757,7 +2756,9 @@ class LarvaDataset:
         df = pd.DataFrame(v.values, columns=sample_pars)
         df.to_csv(path_data)
 
-        plot_stridesNpauses(datasets=[new_d], labels=[dataset_id], save_as='reference_bouts.pdf', save_fits_as=path_fits)
+        fit_bouts(new_d, store=True, bouts=['stride', 'pause'])
+
+        # plot_stridesNpauses(datasets=[new_d], labels=[dataset_id], save_as='reference_bouts.pdf', save_fits_as=path_fits)
         print(f'Reference dataset {dataset_id} saved.')
 
     def raw_or_filtered_xy(self, points, show_output=True):
@@ -2928,9 +2929,9 @@ class LarvaDataset:
         s=copy.deepcopy(self.step_data)
         e=self.endpoint_data
         counts=s[t].dropna().groupby('AgentID').count()
-        # s = s.dropna(subset=[id])
+        # sigma = sigma.dropna(subset=[id])
         ser1=s[id].loc[s[t] >=min_dur]
-        # ser2=s[id].loc[s[t] <min_dur]
+        # ser2=sigma[id].loc[sigma[t] <min_dur]
         ser1.reset_index(level='Step', drop=True, inplace=True)
         # ser2.reset_index(level='Step', drop=True, inplace=True)
         ser1=ser1.reset_index(drop=False).values.tolist()
@@ -2945,12 +2946,12 @@ class LarvaDataset:
         # uncommon elements in both the series
         # notcommonseries = union[~union.isin(intersect)]
         # print([kk for kk in ser1 if kk in ser2])
-        # aa=s[[id, t,s0,s1]].loc[s[id]==1.0]
+        # aa=sigma[[id, t,s0,s1]].loc[sigma[id]==1.0]
         # print(intersect)
         # print(ser2['Larva_222', :])
         # print(ser1['Larva_222', :])
         # displaying the result
-        # print(len(notcommonseries), len(intersect), len(union), len(s[t].dropna().values.tolist()))
+        # print(len(notcommonseries), len(intersect), len(union), len(sigma[t].dropna().values.tolist()))
         # print(e['num_strides'].sum(), len(ser1), len(ser2))
         # valid.reset_index(level='Step', drop=True, inplace=True)
         # invalid.reset_index(level='Step', drop=True, inplace=True)
@@ -2959,7 +2960,7 @@ class LarvaDataset:
         # merged = valid.merge(invalid, indicator=True, how='outer')
         # merged[merged['_merge'] == 'right_only']
         # print(pd.Series(np.intersect1d(valid, invalid)))
-        # print(s[[id,t,s0,s1]].loc[s[id]==370.0])
-        # print(s[[id,t,s0,s1]].loc[s[id]==374.0])
+        # print(sigma[[id,t,s0,s1]].loc[sigma[id]==370.0])
+        # print(sigma[[id,t,s0,s1]].loc[sigma[id]==374.0])
         # print(pd.concat([valid,invalid]).drop_duplicates(keep=False))
         # print(len(valid.values)+len(invalid.values)-sum(counts.values))
