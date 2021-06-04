@@ -2587,7 +2587,7 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
         frs.append(dataset.fr)
         pause_par = nam.dur(pause_chunk)
         pau_dur = dataset.get_par(pause_par).dropna().values
-        pau0 = 0.1
+        pau0 = 0.4
         # pau0 = 0.3
         pau1 = 20.0
         pau_t0, pau_t1 = 0, 10**1.4
@@ -2679,13 +2679,13 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
         for i, (x0, discr, xmin, xmax) in enumerate(
                 zip([chn_dur, pau_dur], [chn_discr, pau_discr], [chn0, pau0], [chn1, pau1])):
             bout='stride' if i == 0 else 'pause'
-            combine=False if i == 0 else True
+            combine=False
+            # combine=False if i == 0 else True
             lws = [2, 2, 2, 2]
 
             if not refit_distros and ref is not None:
-                x = x0[x0 >= xmin]
-                x = x[x <= xmax]
-                u2, du2, c2, c2cum = compute_density(x, xmin, xmax)
+
+                u2, du2, c2, c2cum = compute_density(x0, xmin, xmax)
                 fitted=ref[bout]['best']
                 pdfs=[get_distro(x=du2, **fitted, mode='pdf')]*4
                 cdfs=[1-get_distro(x=u2, **fitted, mode='cdf')]*4
@@ -2759,8 +2759,8 @@ def plot_stridesNpauses(datasets, labels, stridechain_duration=False, pause_chun
     # print(fit_df['KS_logNpow_pause'])
     # print(fit_df['mu_log_pause'])
     # print(fit_df['sigma_log_pause'])
-    plt.show()
-    raise
+    # plt.show()
+    # raise
     fit_df=pd.DataFrame.from_dict(fits,orient="index")
     fit_df.to_csv(fit_filepath, index=True, header=True)
     return process_plot(fig, save_to, filename, return_fig)

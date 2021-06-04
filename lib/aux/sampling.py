@@ -223,7 +223,7 @@ if __name__ == '__main__':
 
     fig, axs = plt.subplots(1, 2, figsize=(10, 5),sharex=False, sharey=True)
     axs=axs.ravel()
-    for j, (bout, comb,discr, (xmin,xmax), par, dt_bout) in enumerate(zip(bouts, [False, True],[True, False], [(1,100), (0.1,20.0)], ['stridechain_length', 'pause_dur'], [1, dt])) :
+    for j, (bout, comb,discr, (xmin,xmax), par, dt_bout) in enumerate(zip(bouts, [False, True],[False, False], [(1,100), (0.4,20.0)], ['stridechain_length', 'pause_dur'], [1, dt])) :
         # if j==1 :
         #     continue
         print(f'------{bout}--------')
@@ -232,26 +232,26 @@ if __name__ == '__main__':
         # a, m, s, xmid, r = [dist0[k] for k in ['alpha', 'mu', 'sigma', 'switch', 'ratio']]
         dist0 =loadConf(d_id,'Ref')[bout]['best']
         print(-1, dist0)
+        u2, du2, c2, c2cum = compute_density(pp, xmin, xmax)
+        cdf0 = 1 - get_distro(x=u2, mode='cdf', **dist0)
+        pdf0 = get_distro(x=du2, mode='pdf', **dist0)
+        axs[j].loglog(u2, cdf0, 'g', lw=4, label='stored')
 
-        ls=['exp','sim', 'sim2', 'sim3', 'sim4', 'sim5', 'sim6']
+        ls=['exp','sim1', 'sim2', 'sim3', 'sim4', 'sim5', 'sim6']
         cols=['b', 'r','c', 'm', 'orange', 'grey', 'lightgreen']
-        for i in range(1) :
+        for i in range(5) :
         # for i, dur in enumerate([pp0, pp1]) :
             values, pdfs, cdfs, Ks, idx_Kmax, res, res_dict, best = fit_bout_distros(pp, xmin=xmin, xmax=xmax, fr=fr, xmid=np.nan, bout=bout, fit_by='cdf',
                                                                                      print_fits=False, combine=comb, discrete=discr, overlap=0.2)
             u2, du2, c2, c2cum = values
             p_cdf, e_cdf, l_cdf, lp_cdf = cdfs
-
-            cdf0 = 1 - get_distro(x=u2, mode='cdf', **dist0)
-            # cdf0/=cdf0[0]
-            pdf0 = 1 - get_distro(x=du2, mode='pdf', **dist0)
             # print(sum(pdf0))
             # print(cdf0[0],len(cdf0))
             l=ls[i]
             # axs[j].loglog(du2, c2, '.', color=cols[i], alpha=0.7)
             axs[j].loglog(u2, c2cum, '.', color=cols[i], alpha=0.7)
             axs[j].loglog(u2, cdfs[idx_Kmax], color=cols[i], lw=2, label=f'{l}_{i}')
-            axs[j].loglog(u2, cdf0, 'g', lw=2)
+
             print(i,c2cum[0], u2[0], len(u2), best[bout]['best'])
             pau_dist = BoutGenerator(**best[bout]['best'], dt=dt_bout)
             # pau_dist = logNpow_distro(**best[bout], dt=dt)

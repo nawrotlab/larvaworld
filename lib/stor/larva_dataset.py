@@ -1749,7 +1749,7 @@ class LarvaDataset:
         # for t, edges, mids, valid, d in zip(chunk_dur_in_ticks, all_edge_flag_ticks, all_mid_flag_ticks,
         #                                     all_valid_ticks, all_d):
             chunks = np.array([[a, b] for a, b in zip(edges[:-1], edges[1:]) if (b - a >= 0.6 * t)
-                               and (b - a <= 1.6 * t)
+                               and (b - a <= 1.5 * t)
                                and set(np.arange(a, b + 1)) <= set(valid)
                                and (any((m > a) and (m < b) for m in mids))
                                ]).astype(int)
@@ -2251,7 +2251,7 @@ class LarvaDataset:
     #         self.save()
     #     print('All bend-pauses detected')
 
-    def detect_pauses(self, recompute=False, stride_non_overlap=True, vel_par=None, min_dur=0.0,
+    def detect_pauses(self, recompute=False, stride_non_overlap=True, vel_par=None, min_dur=0.4,
                       is_last=True, show_output=True):
         cc = {'show_output': show_output,
               'is_last': False}

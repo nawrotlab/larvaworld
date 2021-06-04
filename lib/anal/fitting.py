@@ -528,7 +528,7 @@ def fit_bouts(dataset, id=None, store=False, bouts=['stride', 'pause']) :
                                            ['stridechain_length', 'pause_dur'],
                                            [True, False],
                                            [False, True],
-                                           [(1, 100), (0.1, 20.0)]):
+                                           [(1, 100), (0.4, 20.0)]):
         x0 = dataset.get_par(p).values
         dic[bout]=fit_bout_distros(x0, xmin, xmax, fr=dataset.fr, discrete=disc, print_fits=True,
                      dataset_id=id, bout=bout, combine=comb, store=store)
