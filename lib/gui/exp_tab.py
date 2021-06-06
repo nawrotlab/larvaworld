@@ -83,8 +83,10 @@ def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
         exp_conf = get_exp_conf(window, values, collapsibles)
         window['EXP_PROGRESSBAR'].update(0, max=exp_conf['sim_params']['sim_dur'] * 60 / exp_conf['sim_params']['dt'])
         exp_conf['enrich'] = True
+        # default_vis=dtypes.get_dict('visualization', mode='video', video_speed=60)
+        default_vis=dtypes.get_dict('visualization')
         vis_kwargs = collapsibles['Visualization'].get_dict(values, window) if 'Visualization' in list(
-            collapsibles.keys()) else dtypes.get_dict('visualization', mode='video', video_speed=60)
+            collapsibles.keys()) else default_vis
         d = run_sim(**exp_conf, vis_kwargs=vis_kwargs, progress_bar=window['EXP_PROGRESSBAR'])
         if d is not None:
             window['EXP_COMPLETE'].update(visible=True)
@@ -118,6 +120,7 @@ def update_sim(window, exp_id, collapsibles):
     window.Element('path').Update(value=f'single_runs/{exp_id}')
     window.Element('sim_dur').Update(value=sim['sim_dur'])
     window.Element('dt').Update(value=sim['dt'])
+    window.Element('sample_dataset').Update(value=sim['sample_dataset'])
     window['TOGGLE_Box2D'].set_state(sim['Box2D'])
 
     window['EXP_PROGRESSBAR'].update(0)

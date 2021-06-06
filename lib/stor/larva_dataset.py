@@ -6,6 +6,7 @@ from ast import literal_eval
 from distutils.dir_util import copy_tree
 
 import numpy as np
+import pandas as pd
 from fitter import Fitter
 from scipy.signal import argrelextrema, spectrogram
 from scipy.spatial.distance import euclidean
@@ -353,6 +354,15 @@ class LarvaDataset:
             self.load()
         self.step_data.drop(agents, level='AgentID', inplace=True)
         self.endpoint_data.drop(agents, inplace=True)
+        self.agent_ids = self.step_data.index.unique('AgentID').values
+        self.num_ticks = self.step_data.index.unique('Step').size
+        self.starting_tick = int(self.step_data.index.unique('Step')[0])
+        self.Nagents = len(self.agent_ids)
+        fs=[f'{self.aux_dir}/{f}' for f in os.listdir(self.aux_dir)]
+        ns = fun.flatten_list([[f'{f}/{n}' for n in os.listdir(f) if n.endswith('.csv')] for f in fs])
+        for n in ns :
+            df=pd.read_csv(n, index_col=0)
+            df.loc[~df.index.isin(agents)].to_csv(n, index=True, header=True)
         if is_last:
             self.save()
         if show_output:
@@ -1980,7 +1990,7 @@ class LarvaDataset:
         if show_output:
             print(f'Bearing to source {source} during {chunk} computed')
 
-    def detect_chunks(self, chunk_names, par, chunk_only=None, par_ranges=[[-np.inf, np.inf]],
+    def detect_chunks(self, chunk_names, par, chunk_only=None, par_ranges=[[-np.inf, np.inf]],ROU_ranges=[[-np.inf, np.inf]],
                       non_overlap_chunk=None, merged_chunk=None,store_min=[False], store_max=[False],
                       min_dur=0.0, is_last=True, show_output=True):
 
@@ -2003,7 +2013,7 @@ class LarvaDataset:
         else:
             data = [ss[par].xs(id, level='AgentID', drop_level=True) for id in ids]
 
-        for c, (Vmin, Vmax), storMin, storMax in zip(chunk_names, par_ranges, store_min, store_max):
+        for c, (Vmin, Vmax),(Amin, Amax), storMin, storMax in zip(chunk_names, par_ranges,ROU_ranges, store_min, store_max):
             S0 = np.zeros([N, Nids]) * np.nan
             S1 = np.zeros([N, Nids]) * np.nan
             Dur = np.zeros([N, Nids]) * np.nan
@@ -2017,12 +2027,18 @@ class LarvaDataset:
             p_dur = nam.dur(c)
             p_max = nam.max(nam.chunk_track(c, par))
             p_min = nam.min(nam.chunk_track(c, par))
-
+            # print(c)
             for i,(id,d) in enumerate(zip(ids, data)) :
                 ii0=d[(d < Vmax) & (d > Vmin)].index
                 # ii0=np.unique(np.hstack([ii00,ii00[np.where(np.diff(ii00, prepend=[-np.inf]) == 2)[0]]+1]))
                 s0s = ii0[np.where(np.diff(ii0, prepend=[-np.inf]) != 1)[0]]
                 s1s = ii0[np.where(np.diff(ii0, append=[np.inf]) != 1)[0]]
+                # print(len(s0s), len(s1s))
+                ROUs = np.array([np.trapz(d.loc[slice(s0,s1)].values)*self.dt for s0,s1 in zip(s0s,s1s)])
+                s0s=s0s[(ROUs <= Amax) & (ROUs >= Amin)]
+                s1s=s1s[(ROUs <= Amax) & (ROUs >= Amin)]
+                # print(len(s0s), len(s1s))
+
                 ds=(s1s-s0s)*self.dt
                 ii1 = np.where(ds >= min_dur)
                 ds = ds[ii1]
@@ -2367,7 +2383,7 @@ class LarvaDataset:
     ########## PARSING : TURNS ##########
     #######################################
 
-    def detect_turns(self, recompute=False, min_ang_vel=0.0, chunk_only=None, track_params=None,
+    def detect_turns(self, recompute=False, min_ang_vel=0.0,min_ang=5.0, chunk_only=None, track_params=None,
                      constant_bend_chunks=False, is_last=True, show_output=True, **kwargs):
         cc = {'show_output': show_output,
               'is_last': False}
@@ -2382,11 +2398,12 @@ class LarvaDataset:
 
         fo = 'front_orientation'
         fov = nam.vel(fo)
+        fou=nam.unwrap(fo)
         if track_params is None:
-            track_params = [nam.unwrap(fo), 'x', 'y']
+            track_params = [fou, 'x', 'y']
             # track_params = [b, unwrap(ho)]
 
-        self.detect_chunks(chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=fov,
+        self.detect_chunks(chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=fov, ROU_ranges=[[min_ang, np.inf], [-np.inf, -min_ang]],
                            par_ranges=[[min_ang_vel, np.inf], [-np.inf, -min_ang_vel]], merged_chunk='turn',
                            store_max=[True, False], store_min=[False, True], **cc, **kwargs)
 
@@ -2741,15 +2758,6 @@ class LarvaDataset:
                        'brain.crawler_params.step_to_length_std'
                        ]
 
-        # invalid_ids=[]
-        # for p in pars :
-        #     mu,std=e[p].mean(), e[p].std()
-        #     invalid_ids.append(e[e[p]>mu+Nstd*std].index.values.tolist())
-        #     invalid_ids.append(e[e[p]<mu-Nstd*std].index.values.tolist())
-        # invalid_ids=fun.unique_list(fun.flatten_list(invalid_ids))
-        # if len(invalid_ids) > 0 :
-        #     new_d.drop_agents(agents=invalid_ids)
-        #     new_d.load()
 
         v = new_d.endpoint_data[pars]
         v['length'] = v['length']/1000
@@ -2872,10 +2880,11 @@ class LarvaDataset:
         if is_last:
             self.save()
 
-    def set_id(self, id):
+    def set_id(self, id, save = True):
         self.id = id
         self.config['id'] = id
-        self.save_config()
+        if save :
+            self.save_config()
 
     def build_dirs(self):
         for i in self.dirs:
@@ -2901,21 +2910,24 @@ class LarvaDataset:
             path = os.path.join(self.data_dir, name)
             pdf.to_csv(path, index=True, header=True)
 
-    def split_dataset(self, larva_id_prefixes):
-        new_ids = [f'{self.id}_{f}' for f in larva_id_prefixes]
-        new_dirs = [f'{self.dir}/../{new_id}' for new_id in new_ids]
+    def split_dataset(self, groups=None, is_last=True):
+        if groups is None :
+            groups = fun.unique_list([id.split('_')[0] for id in self.agent_ids])
+        new_dirs = [f'{self.dir}/../{self.id}.{f}' for f in groups]
         if all([os.path.exists(new_dir) for new_dir in new_dirs]):
             new_ds = [LarvaDataset(new_dir) for new_dir in new_dirs]
         else:
             if self.step_data is None:
                 self.load()
             new_ds = []
-            for f, new_id, new_dir in zip(larva_id_prefixes, new_ids, new_dirs):
-                copy_tree(self.dir, new_dir)
-                new_d = LarvaDataset(new_dir)
-                new_d.set_id(new_id)
+            for f, new_dir in zip(groups, new_dirs):
                 invalid_ids = [id for id in self.agent_ids if not str.startswith(id, f)]
-                new_d.drop_agents(invalid_ids)
+                copy_tree(self.dir, new_dir)
+                new_d =LarvaDataset(new_dir)
+                new_d.drop_agents(invalid_ids, is_last=is_last)
+                # new_d.load()
+                # new_d.set_id(f'{self.id}_{f}', save=is_last)
+                new_d.set_id(f)
                 new_ds.append(new_d)
             print(f'Dataset {self.id} splitted in {[d.id for d in new_ds]}')
         return new_ds

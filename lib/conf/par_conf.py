@@ -231,6 +231,14 @@ def set_ParDb():
             [nam.scal(nam.straight_dst(cn)), f'{suf}_sstd', subsup('d', suf, 'st*'), subsup(hat('d'), suf, 'st*'),
              l_sc_dst])
         chunk_ar.append([nam.dur(cn), f'{suf}_t', sub('t', cn), sub(hat('t'), cn), l_time])
+        chunk_ar.append([f'{cn}_y', f'{suf}_y', sub('y', cn), sub(hat('y'), cn), l_dst])
+        chunk_ar.append([f'{cn}_x', f'{suf}_x', sub('x', cn), sub(hat('x'), cn), l_dst])
+        chunk_ar.append([f'y_at_{cn}_start', f'{suf}_y0', sub('y0', cn), sub(hat('y0'), cn), l_dst])
+        chunk_ar.append([f'y_at_{cn}_stop', f'{suf}_y1', sub('y1', cn), sub(hat('y1'), cn), l_dst])
+        chunk_ar.append([f'x_at_{cn}_start', f'{suf}_x0', sub('x0', cn), sub(hat('x0'), cn), l_dst])
+        chunk_ar.append([f'x_at_{cn}_stop', f'{suf}_x1', sub('x1', cn), sub(hat('x1'), cn), l_dst])
+        chunk_ar.append([f'{fou}_at_{cn}_start', f'{suf}_fo0', sub('fo0', cn), sub(hat('fo0'), cn), l_angle])
+        chunk_ar.append([f'{fou}_at_{cn}_stop', f'{suf}_fo1', sub('fo1', cn), sub(hat('fo1'), cn), l_angle])
         chunk_ar.append(
             [nam.mean(nam.dur(cn)), f'{suf}_t_mu', sub(bar('t'), cn), sub(bar(hat('t')), cn), l_time])
         chunk_ar.append(
@@ -432,6 +440,20 @@ def set_ParDb():
                            'unit': 'Turner activation',
                            # 'collect' : 'turner_activation'
                            }
+
+    par_db.loc['y'] = {'par': 'y',
+                           'symbol': '$y$',
+                           'exp_symbol': '$\hat{y}$',
+                           'unit': 'Y position $(mm)$',
+                           # 'collect' : 'turner_activation'
+                           }
+
+    par_db.loc['x'] = {'par': 'x',
+                       'symbol': '$x$',
+                       'exp_symbol': '$\hat{x}$',
+                       'unit': 'X position $(mm)$',
+                       # 'collect' : 'turner_activation'
+                       }
 
     # par_db.loc['deb_f_deviation'] = {'par': 'turner_activation',
     #                        'symbol': '$A_{tur}$',
@@ -681,4 +703,4 @@ if __name__ == '__main__':
     # print(mode(get_par('c_odor1')['dtype']))
     # print(get_par_dict(short='fov'))
     # print(par_db.loc['g_odor1'])
-    print(par_db.loc['l_mu'])
+    print(par_db.loc['tur_y1'])

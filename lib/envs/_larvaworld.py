@@ -951,12 +951,14 @@ class LarvaWorldSim(LarvaWorld):
 
     def create_larvae(self, larva_pars, parameter_dict={}):
         for group_id, group_pars in larva_pars.items():
+            # print(group_id)
             N=group_pars['N']
             a1, a2 = np.deg2rad(group_pars['orientation_range'])
             orientations = np.random.uniform(low=a1, high=a2, size=N).tolist()
             positions = fun.generate_xy_distro(N=N, **{k:group_pars[k] for k in ['mode', 'shape', 'loc', 'scale']})
+            sample_dataset = group_pars['sample_dataset'] if 'sample_dataset' in list(group_pars.keys()) else self.sample_dataset
             all_pars = self._generate_larva_pars(N, group_pars['model'], parameter_dict=parameter_dict,
-                                                 sample_dataset=self.sample_dataset)
+                                                 sample_dataset=sample_dataset)
 
             for i, (p, o, pars) in enumerate(zip(positions, orientations, all_pars)):
                 self.add_larva(position=p, orientation=o, id=f'{group_id}_{i}', pars=pars, group=group_id,

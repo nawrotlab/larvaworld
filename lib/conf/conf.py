@@ -363,6 +363,7 @@ if __name__ == '__main__':
         'capture_the_flag': env.flag_env,
         'catch_me': env.catch_me_env,
         'chemotaxis_RL': env.RL_chemorbit_env,
+        'food_at_bottom': env.food_at_bottom_env,
     }
     for k, v in env_dict.items():
         saveConf(v, 'Env', k)
@@ -370,21 +371,21 @@ if __name__ == '__main__':
     mod_dict = {
         'explorer': mod.exploring_larva,
         'navigator': mod.odor_larva,
-        'navigator_x2': mod.odor_larva_x2,
+        'navigator-x2': mod.odor_larva_x2,
         'immobile': mod.immobile_odor_larva,
-        'feeder': mod.feeding_larva,
+        'feeder-explorer': mod.feeding_larva,
         'feeder-navigator': mod.feeding_odor_larva,
-        'feeder-navigator_x2': mod.feeding_odor_larva_x2,
+        'feeder-navigator-x2': mod.feeding_odor_larva_x2,
         'rover': mod.growing_rover,
         'sitter': mod.growing_sitter,
         'imitation': mod.imitation_larva,
         'gamer': mod.flag_larva,
-        'gamer_L': mod.king_larva_L,
-        'gamer_R': mod.king_larva_R,
-        'follower_R': mod.follower_R,
-        'follower_L': mod.follower_L,
-        'RL_learner': mod.RL_odor_larva,
-        'RL_feeder': mod.RL_feed_odor_larva,
+        'gamer-L': mod.king_larva_L,
+        'gamer-R': mod.king_larva_R,
+        'follower-R': mod.follower_R,
+        'follower-L': mod.follower_L,
+        'RL-learner': mod.RL_odor_larva,
+        'RL-feeder': mod.RL_feed_odor_larva,
         'basic_navigator': mod.basic_larva,
         'explorer_3con': mod.exploring_3c_larva,
     }
@@ -437,20 +438,21 @@ if __name__ == '__main__':
         'capture_the_flag': exp.capture_the_flag,
         'catch_me': exp.catch_me,
         'chemotaxis_RL': exp.chemotaxis_RL,
+        'food_at_bottom': exp.food_at_bottom,
     }
     for k, v in exp_dict.items():
         saveConf(v, 'Exp', k)
 
-    reference_datasets ={
-        '' : '',
-        'reference' : 'reference',
-        'Fed' : 'Fed',
-        'Starved' : 'Starved',
-        'Deprived' : 'Deprived',
-    }
-
-    for k, v in reference_datasets.items():
-        saveConf(v, 'Ref', k)
+    # reference_datasets ={
+    #     '' : '',
+    #     'reference' : 'reference',
+    #     'Fed' : 'Fed',
+    #     'Starved' : 'Starved',
+    #     'Deprived' : 'Deprived',
+    # }
+    #
+    # for k, v in reference_datasets.items():
+    #     saveConf(v, 'Ref', k)
 
 def next_idx(exp, type='single'):
     try:
