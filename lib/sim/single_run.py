@@ -66,6 +66,15 @@ def sim_analysis(d: LarvaDataset, exp_type):
               'save_to': d.plot_dir,
               'subfolder': None}
 
+        fig_dict['orientation to center'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=None, par='orientation_to_center', **cc)
+        fig_dict['bearing to 270deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=270, par=None, **cc)
+        # fig_dict['bearing to -90deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=-90, par=None, **cc)
+        # fig_dict['bearing to 90deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=90, par=None, **cc)
+        # fig_dict['bearing to 0deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=0, par=None, **cc)
+        # fig_dict['bearing to 180deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=180, par=None, **cc)
+        # fig_dict['bearing to -180deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=-180, par=None, **cc)
+        # fig_dict['bearing to 40deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=40, par=None, **cc)
+        # fig_dict['bearing to -115deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=-115, par=None, **cc)
         fig_dict['bearing correction VS Y pos'] = plot_turn_amp(par_short='tur_y0', mode='hist', ref_angle=270, **cc)
         fig_dict['turn angle VS Y pos (hist)'] = plot_turn_amp(par_short='tur_y0', mode='hist',**cc)
 

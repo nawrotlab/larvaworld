@@ -2400,7 +2400,9 @@ class LarvaDataset:
         fov = nam.vel(fo)
         fou=nam.unwrap(fo)
         if track_params is None:
-            track_params = [fou, 'x', 'y']
+            track_params = [fou, 'x', 'y', 'orientation_to_center']
+        track_params = [p for p in track_params if p in s.columns]
+            # track_params = [fou, 'x', 'y']
             # track_params = [b, unwrap(ho)]
 
         self.detect_chunks(chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=fov, ROU_ranges=[[min_ang, np.inf], [-np.inf, -min_ang]],
@@ -2913,6 +2915,8 @@ class LarvaDataset:
     def split_dataset(self, groups=None, is_last=True):
         if groups is None :
             groups = fun.unique_list([id.split('_')[0] for id in self.agent_ids])
+        if len(groups)==1 :
+            return [self]
         new_dirs = [f'{self.dir}/../{self.id}.{f}' for f in groups]
         if all([os.path.exists(new_dir) for new_dir in new_dirs]):
             new_ds = [LarvaDataset(new_dir) for new_dir in new_dirs]

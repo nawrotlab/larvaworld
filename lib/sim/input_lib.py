@@ -93,11 +93,14 @@ def eval_keypress(k, screen, model):
     elif k == 'plot odorscapes':
         model.toggle('odorscape #', show=pygame.key.get_mods() & pygame.KMOD_CTRL)
     elif 'odorscape' in k:
-        idx = k.split(' ')[-1]
-        layer_id = list(model.odor_layers.keys())[idx]
-        layer = model.odor_layers[layer_id]
-        layer.visible = not layer.visible
-        model.toggle(layer_id, 'ON' if layer.visible else 'OFF')
+        idx = int(k.split(' ')[-1])
+        try :
+            layer_id = list(model.odor_layers.keys())[idx]
+            layer = model.odor_layers[layer_id]
+            layer.visible = not layer.visible
+            model.toggle(layer_id, 'ON' if layer.visible else 'OFF')
+        except :
+            pass
     elif k == 'snapshot':
         model.toggle('snapshot #')
     elif k == 'delete item':

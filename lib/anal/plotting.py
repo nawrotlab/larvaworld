@@ -686,7 +686,7 @@ def plot_bend_pauses(dataset, save_to=None):
 
     s = d.step_data[nam.dur('bend_pause')].dropna()
     durmin, durmax = np.min(s), np.max(s)
-    u,uu, c, ccum = compute_density(s, durmin, durmax)
+    u, uu, c, ccum = compute_density(s, durmin, durmax)
     alpha = 1 + len(s) / np.sum(np.log(s / durmin))
     beta = len(s) / np.sum(s - durmin)
     mu = np.mean(np.log(s))
@@ -1467,7 +1467,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         axs[-1].xaxis.set_major_locator(ticker.MaxNLocator(5))
     else:
         axs[-1].set_xticks(ticks=np.arange(0, np.max(max_ages), tickstep))
-    dataset_legend(leg_ids, leg_cols, ax=axs[0], loc='upper left',fontsize=20, prop={'size': 15})
+    dataset_legend(leg_ids, leg_cols, ax=axs[0], loc='upper left', fontsize=20, prop={'size': 15})
     # axs[0].legend(handles=[patches.Patch(color=c, label=id) for c, id in zip(leg_cols, leg_ids)],
     #               labels=leg_ids, fontsize=20, loc='upper left', prop={'size': 15})
     fig.subplots_adjust(top=0.95, bottom=0.2, left=0.1, right=0.93, hspace=0.02)
@@ -2285,7 +2285,8 @@ def plot_gut(datasets, labels=None, save_to=None, save_as=None, return_fig=False
     return process_plot(fig, save_to, filename, return_fig)
 
 
-def plot_food_amount(datasets, labels=None, save_to=None, save_as=None, filt_amount=False, scaled=False, return_fig=False):
+def plot_food_amount(datasets, labels=None, save_to=None, save_as=None, filt_amount=False, scaled=False,
+                     return_fig=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to)
     Nticks = len(datasets[0].step_data.index.unique('Step'))
     t0, t1 = 0, int(Nticks / datasets[0].fr / 60)
@@ -2391,13 +2392,14 @@ def plot_odor_concentration(datasets, labels=None, save_to=None, return_fig=Fals
 def plot_sensed_odor_concentration(datasets, labels=None, save_to=None, return_fig=False):
     return plot_timeplot(['dc_odor1'], datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
 
+
 def plot_Y_pos(datasets, labels=None, save_to=None, return_fig=False, show_first=False, legend_loc='lower left'):
-    return plot_timeplot(['y'], show_first=show_first, datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig, legend_loc=legend_loc)
+    return plot_timeplot(['y'], show_first=show_first, datasets=datasets, labels=labels, save_to=save_to,
+                         return_fig=return_fig, legend_loc=legend_loc)
 
 
 def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals=False, table=None, show_first=True,
-                  subfolder='timeplots',legend_loc='upper left', save_to=None, return_fig=False):
-
+                  subfolder='timeplots', legend_loc='upper left', save_to=None, return_fig=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder)
     N = len(par_shorts)
     cols = ['grey'] if N == 1 else fun.N_colors(N)
@@ -2406,13 +2408,13 @@ def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals
 
     fig, axs = plt.subplots(1, 1, figsize=(7.5, 5))
 
-    for d,d_col,d_lab in zip(datasets, colors, labels) :
+    for d, d_col, d_lab in zip(datasets, colors, labels):
         s = d.load_table(table) if table is not None else d.step_data
         # ylim=gui.retrieve_value(par_dict['lim'], Tuple[float,float])
 
         for short, c in zip(par_shorts, cols):
-            if Ndatasets>1 :
-                c=d_col
+            if Ndatasets > 1:
+                c = d_col
 
             par_dict = par_conf.get_par_dict(short=short)
             par = par_dict['par']
@@ -2458,7 +2460,7 @@ def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals
     if N > 1:
         axs.legend()
     axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
-    if Ndatasets>1 :
+    if Ndatasets > 1:
         dataset_legend(labels, colors, ax=axs, loc=legend_loc, fontsize=15)
         # axs.legend(
         # handles=[patches.Patch(facecolor=col, label=l, edgecolor='black') for col, l in zip(colors, labels)],
@@ -2528,7 +2530,6 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
     warnings.filterwarnings('ignore')
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
 
-
     if save_as is None:
         base_file = f'stridesNpauses_{mode}_{range}_{plot_fits}'
         filename = f'{base_file}.{suf}' if not only_fit_one else f'{base_file}_0.{suf}'
@@ -2543,14 +2544,14 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
     fit_filename = os.path.join(save_fits_to, save_fits_as)
 
     pause_par = nam.dur(pause_chunk)
-    if stridechain_duration :
+    if stridechain_duration:
         chain_par = nam.dur(nam.chain('stride'))
         chn_discr = False
         chain_xlabel = f'time $({time_unit})$'
         chn0 = 0.5
         chn1 = 50
         chn_t0, chn_t1 = 0, 10 ** 2
-    else :
+    else:
         chain_par = nam.length(nam.chain('stride'))
         chn_discr = True
         chain_xlabel = '# chained strides'
@@ -2611,52 +2612,53 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
     # fit_df['min_stride'] = np.clip(min_chains, a_min=chn0, a_max=+np.inf)
     # fit_df['max_stride'] = np.clip(max_chains, a_min=0, a_max=chn1)
 
-    fits={l : {} for l in labels}
+    fits = {l: {} for l in labels}
 
     fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=False, sharey=True)
     axs = axs.ravel()
 
-    distro_ls=['powerlaw', 'exponential', 'lognormal', 'lognorm-pow']
-    distro_cs=['c', 'g', 'm', 'k']
-
+    distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow']
+    distro_cs = ['c', 'g', 'm', 'k']
 
     for j, (pau_dur, chn_dur, c, label, fr) in enumerate(zip(pau_durs, chn_durs, colors, labels, frs)):
-        try :
-            ref=conf.loadConf(label, 'Ref')
-        except :
+        try:
+            ref = conf.loadConf(label, 'Ref')
+        except:
             ref = None
         for i, (x0, discr, xmin, xmax) in enumerate(
                 zip([chn_dur, pau_dur], [chn_discr, pau_discr], [chn0, pau0], [chn1, pau1])):
-            bout='stride' if i == 0 else 'pause'
-            combine=False
+            bout = 'stride' if i == 0 else 'pause'
+            combine = False
             # combine=False if i == 0 else True
             lws = [2, 2, 2, 2]
 
             if not refit_distros and ref is not None:
 
                 u2, du2, c2, c2cum = compute_density(x0, xmin, xmax)
-                fitted=ref[bout]['best']
-                pdfs=[get_distro(x=du2, **fitted, mode='pdf')]*4
-                cdfs=[1-get_distro(x=u2, **fitted, mode='cdf')]*4
-                idx_Kmax=0
+                fitted = ref[bout]['best']
+                pdfs = [get_distro(x=du2, **fitted, mode='pdf')] * 4
+                cdfs = [1 - get_distro(x=u2, **fitted, mode='cdf')] * 4
+                idx_Kmax = 0
 
-            else :
+            else:
                 values, pdfs, cdfs, Ks, idx_Kmax, res, res_dict, best = fit_bout_distros(x0, xmin, xmax, fr, discr,
-                                                                                   dataset_id=label, bout=bout, print_fits=print_fits, combine=combine)
+                                                                                         dataset_id=label, bout=bout,
+                                                                                         print_fits=print_fits,
+                                                                                         combine=combine)
 
                 u2, du2, c2, c2cum = values
                 lws[idx_Kmax] = 4
                 fits[label].update(res_dict)
             if mode == 'cdf':
                 ylabel = 'cumulative probability'
-                xrange=u2
-                y=c2cum
-                ddfs=cdfs
-                for ii in ddfs :
-                    if ii is not None :
-                        ii/=ii[0]
+                xrange = u2
+                y = c2cum
+                ddfs = cdfs
+                for ii in ddfs:
+                    if ii is not None:
+                        ii /= ii[0]
 
-            elif mode == 'pdf' :
+            elif mode == 'pdf':
                 ylabel = 'probability'
                 xrange = du2
                 y = c2
@@ -2666,18 +2668,18 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
                         ii /= sum(ii)
 
             axs[i].loglog(xrange, y, '.', color=c, alpha=0.7)
-            for z,(l,col,lw,ddf) in enumerate(zip(distro_ls, distro_cs,lws, ddfs)):
+            for z, (l, col, lw, ddf) in enumerate(zip(distro_ls, distro_cs, lws, ddfs)):
                 if ddf is None:
                     continue
-                if plot_fits=='best' and z==idx_Kmax :
-                    cc=c
-                elif plot_fits == 'all' :
-                    cc=col
-                else :
+                if plot_fits == 'best' and z == idx_Kmax:
+                    cc = c
+                elif plot_fits == 'all':
+                    cc = col
+                else:
                     continue
                 axs[i].loglog(xrange, ddf, color=cc, lw=lw, label=l)
 
-    for ii in [0,1] :
+    for ii in [0, 1]:
 
         if plot_fits == 'all':
             dataset_legend(distro_ls, distro_cs, ax=axs[ii], loc='lower left', fontsize=15)
@@ -2692,7 +2694,7 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
     axs[1].set_xlabel(pause_xlabel)
     axs[0].set_xlim([chn_t0, chn_t1])
     axs[1].set_xlim([pau_t0, pau_t1])
-    axs[1].set_ylim([10**-3.5, 10**0])
+    axs[1].set_ylim([10 ** -3.5, 10 ** 0])
     axs[0].set_title(r'$\bf{stridechains}$')
     axs[1].set_title(r'$\bf{pauses}$')
 
@@ -2703,7 +2705,7 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
     # print(fit_df['sigma_log_pause'])
     # plt.show()
     # raise
-    fit_df=pd.DataFrame.from_dict(fits,orient="index")
+    fit_df = pd.DataFrame.from_dict(fits, orient="index")
     fit_df.to_csv(fit_filename, index=True, header=True)
     return process_plot(fig, save_to, filename, return_fig)
 
@@ -3396,41 +3398,43 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
         print(f'Tests saved as {fit_filename}.')
     return process_plot(fig, save_to, filename, return_fig)
 
-def plot_turn_duration(datasets, labels=None, save_to=None, return_fig=False, legend=True, absolute=True) :
+
+def plot_turn_duration(datasets, labels=None, save_to=None, return_fig=False, legend=True, absolute=True):
     return plot_turn_amp(datasets, labels, par_short='tur_t', mode='scatter', legend=legend, absolute=absolute,
                          save_to=save_to, return_fig=return_fig)
+
 
 def plot_turn_amp(datasets, labels=None, par_short='tur_t', ref_angle=None,
                   subfolder='turn', mode='hist', cumy=True,
                   save_to=None, legend=True, absolute=True, return_fig=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
-    nn='turn_amp' if ref_angle is None else 'rel_turn_angle'
+    nn = 'turn_amp' if ref_angle is None else 'rel_turn_angle'
     filename = f'{nn}_VS_{par_short}_{mode}.{suf}'
 
     ypars, yunits = par_conf.par_dict_lists(shorts=['tur_fo'], to_return=['par', 'unit'])
     ypar = ypars[0]
     ylab = yunits[0]
-    ylim=None
+    ylim = None
 
-    if ref_angle is not None :
-        A0=float(ref_angle)
+    if ref_angle is not None:
+        A0 = float(ref_angle)
         # ylim = (-180, 180)
         pars_ref, = par_conf.par_dict_lists(shorts=['tur_fo0', 'tur_fo1'], to_return=['par'])
-        ys=[]
-        ylab=r'$\Delta\theta_{bearing} (deg)$'
-        cumylab=r'$\bar{\Delta\theta}_{bearing} (deg)$'
-        for d in datasets :
-            y0 = d.get_par(pars_ref[0]).dropna().values.flatten()-A0
-            y1 = d.get_par(pars_ref[1]).dropna().values.flatten()-A0
-            y0%=360
-            y1%=360
+        ys = []
+        ylab = r'$\Delta\theta_{bearing} (deg)$'
+        cumylab = r'$\bar{\Delta\theta}_{bearing} (deg)$'
+        for d in datasets:
+            y0 = d.get_par(pars_ref[0]).dropna().values.flatten() - A0
+            y1 = d.get_par(pars_ref[1]).dropna().values.flatten() - A0
+            y0 %= 360
+            y1 %= 360
             y0[y0 > 180] -= 360
             y1[y1 > 180] -= 360
-            y=np.abs(y0)-np.abs(y1)
+            y = np.abs(y0) - np.abs(y1)
             ys.append(y)
             # print(d.id, sum(y)/len(d.agent_ids))
 
-    else :
+    else:
         cumylab = r'$\bar{\Delta\theta}_{or} (deg)$'
         ys = [d.get_par(ypar).dropna().values.flatten() for d in datasets]
         if absolute:
@@ -3438,14 +3442,14 @@ def plot_turn_amp(datasets, labels=None, par_short='tur_t', ref_angle=None,
         # ylim=None
 
     xpars, xunits = par_conf.par_dict_lists(shorts=[par_short], to_return=['par', 'unit'])
-    xpar=xpars[0]
-    xlab=xunits[0]
+    xpar = xpars[0]
+    xlab = xunits[0]
 
     xs = [d.get_par(xpar).dropna().values.flatten() for d in datasets]
 
     if mode == 'scatter':
         fig, axs = plt.subplots(1, 1, figsize=(10, 10))
-        for x,y, l, c in zip(xs,ys, labels, colors):
+        for x, y, l, c in zip(xs, ys, labels, colors):
             plt.scatter(x=x, y=y, marker='o', s=5.0, color=c, alpha=0.5)
             m, k = np.polyfit(x, y, 1)
             axs.plot(x, m * x + k, linewidth=4, color=c, label=l)
@@ -3455,27 +3459,29 @@ def plot_turn_amp(datasets, labels=None, par_short='tur_t', ref_angle=None,
             plt.ylim(ylim)
             axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
             plt.subplots_adjust(bottom=0.1, top=0.95, left=0.15, right=0.95, wspace=0.01)
-    elif mode=='hist' :
-        fig=scatter_hist(xs, ys, labels, colors, xlabel=xlab, ylabel=ylab, ylim=ylim, cumylabel=cumylab,cumy=cumy)
+    elif mode == 'hist':
+        fig = scatter_hist(xs, ys, labels, colors, xlabel=xlab, ylabel=ylab, ylim=ylim, cumylabel=cumylab, cumy=cumy)
     # plt.show()
     # raise
     return process_plot(fig, save_to, filename, return_fig)
 
-def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cumylabel=None, ylim=None, fig=None, cumy=False) :
-    ticksize=15
-    labelsize=15
-    labelsize2=20
+
+def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cumylabel=None, ylim=None, fig=None,
+                 cumy=False):
+    ticksize = 15
+    labelsize = 15
+    labelsize2 = 20
     # definitions for the axes
     left, width = 0.15, 0.6
     bottom, height = 0.12, 0.4
     dh = 0.01
     # dw = 0.01
-    h=0.2
-    if not cumy :
-        height+=h
-    h1=bottom+dh+ h
-    h2=h1+height+dh
-    w1=left + width + dh
+    h = 0.2
+    if not cumy:
+        height += h
+    h1 = bottom + dh + h
+    h2 = h1 + height + dh
+    w1 = left + width + dh
 
     y0, y1 = np.min([np.min(y) for y in ys]), np.max([np.max(y) for y in ys])
     ybins = np.linspace(y0, y1, Nbins)
@@ -3489,21 +3495,21 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
     xbin_mids = xbins[:-1] + dx / 2
 
     rect_scatter = [left, h1, width, height]
-    rect_cumy = [left, h2, width, 1.1*h]
-    rect_histy = [w1+dh, h1, h, height]
+    rect_cumy = [left, h2, width, 1.1 * h]
+    rect_histy = [w1 + dh, h1, h, height]
     rect_histx = [left, bottom, width, h]
 
     # start with a rectangular Figure
-    if fig is None :
-        fig=plt.figure(figsize=(10, 8))
-    cc={
-        'left' :True,
-        'top' :False,
-        'bottom' :True,
-        'right' :False,
-        'labelsize' :ticksize,
-        'direction' :'in',
-        }
+    if fig is None:
+        fig = plt.figure(figsize=(10, 8))
+    cc = {
+        'left': True,
+        'top': False,
+        'bottom': True,
+        'right': False,
+        'labelsize': ticksize,
+        'direction': 'in',
+    }
     ax_scatter = plt.axes(rect_scatter)
     ax_scatter.tick_params(labelbottom=False, **cc)
     ax_histx = plt.axes(rect_histx)
@@ -3520,18 +3526,18 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
     # ax_histy.set_xlim(xmin=0.0)
 
     ax_histy.set_xlabel('pdf', fontsize=labelsize)
-    if xlabel is not None :
+    if xlabel is not None:
         ax_histx.set_xlabel(xlabel, fontsize=labelsize2)
-    if ylabel is not None :
+    if ylabel is not None:
         ax_scatter.set_ylabel(ylabel, fontsize=labelsize2)
 
-    if cumy :
+    if cumy:
         ax_cumy = plt.axes(rect_cumy)
         ax_cumy.tick_params(labelbottom=False, **cc)
         ax_cumy.set_xlim(ax_scatter.get_xlim())
-    xmax_ps, ymax_ps=[],[]
-    for x,y,l,c in zip(xs, ys, labels, colors) :
-        ax_scatter.scatter(x, y, marker='.',color=c,alpha=1.0, label=l)
+    xmax_ps, ymax_ps = [], []
+    for x, y, l, c in zip(xs, ys, labels, colors):
+        ax_scatter.scatter(x, y, marker='.', color=c, alpha=1.0, label=l)
         if show_zero:
             ax_scatter.axhline(0.0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
 
@@ -3541,7 +3547,7 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
         y_vs1 = y_vs1[:-1] + (y_vs1[1] - y_vs1[0]) / 2
         y_smooth = np.polyfit(y_vs1, y_vs0, 5)
         poly_y = np.poly1d(y_smooth)(y_vs1)
-        ax_histy.plot(poly_y,y_vs1,  color=c, linewidth=2)
+        ax_histy.plot(poly_y, y_vs1, color=c, linewidth=2)
 
         xw = np.ones_like(x) / float(len(x))
         x_vs0, x_vs1, x_patches = ax_histx.hist(x, bins=xbins, weights=xw, color=c, alpha=0.5)
@@ -3553,27 +3559,36 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
         xmax_ps.append(np.max(x_vs0))
         ymax_ps.append(np.max(y_vs0))
         ax_histx.set_ylabel('pdf', fontsize=labelsize)
-        if cumy :
-            xbinned_y=[y[(x0 <= x) & (x< x1)] for x0, x1 in zip(xbins[:-1], xbins[1:])]
-            cum_y=np.array([np.sum(y)/len(y) for y in xbinned_y])
-            ax_cumy.plot(xbin_mids,cum_y,  color=c, alpha=0.5)
-            if show_zero :
+        if cumy:
+            xbinned_y = [y[(x0 <= x) & (x < x1)] for x0, x1 in zip(xbins[:-1], xbins[1:])]
+            cum_y = np.array([np.sum(y) / len(y) for y in xbinned_y])
+            ax_cumy.plot(xbin_mids, cum_y, color=c, alpha=0.5)
+            if show_zero:
                 ax_cumy.axhline(0.0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
-            if cumylabel is not  None :
+            if cumylabel is not None:
                 ax_cumy.set_ylabel(cumylabel, fontsize=labelsize)
-    ax_histx.set_ylim([0.0, np.max(xmax_ps)+0.05])
-    ax_histy.set_xlim([0.0, np.max(ymax_ps)+0.05])
-    dataset_legend(labels, colors, ax=ax_scatter, loc='upper left', anchor=(1.0,1.6) if cumy else None, fontsize=10)
+    ax_histx.set_ylim([0.0, np.max(xmax_ps) + 0.05])
+    ax_histy.set_xlim([0.0, np.max(ymax_ps) + 0.05])
+    dataset_legend(labels, colors, ax=ax_scatter, loc='upper left', anchor=(1.0, 1.6) if cumy else None, fontsize=10)
 
     # plt.show()
     # raise
     return fig
 
-def dataset_legend(labels, colors, ax, loc=None, anchor=None, fontsize=None, handlelength=0.5, handleheight=0.5, **kwargs) :
-    ax.legend(
-        bbox_to_anchor=anchor,
-        handles=[patches.Patch(facecolor=c, label=l, edgecolor='black') for c, l in zip(colors, labels)],
-        labels=labels, loc=loc, handlelength=handlelength, handleheight=handleheight, fontsize=fontsize, **kwargs)
+
+def dataset_legend(labels, colors, ax=None, loc=None, anchor=None, fontsize=None, handlelength=0.5, handleheight=0.5,
+                   **kwargs):
+    if ax is None:
+        leg = plt.legend(
+            bbox_to_anchor=anchor,
+            handles=[patches.Patch(facecolor=c, label=l, edgecolor='black') for c, l in zip(colors, labels)],
+            labels=labels, loc=loc, handlelength=handlelength, handleheight=handleheight, fontsize=fontsize, **kwargs)
+    else:
+        leg = ax.legend(
+            bbox_to_anchor=anchor,
+            handles=[patches.Patch(facecolor=c, label=l, edgecolor='black') for c, l in zip(colors, labels)],
+            labels=labels, loc=loc, handlelength=handlelength, handleheight=handleheight, fontsize=fontsize, **kwargs)
+    return leg
 
 
 def plot_turns(datasets, labels=None, absolute=True, save_to=None, subfolder='turn', return_fig=False):
@@ -3587,19 +3602,18 @@ def plot_turns(datasets, labels=None, absolute=True, save_to=None, subfolder='tu
 
     ts = [d.get_par(par).dropna().values for d in datasets]
 
-
     r = 150
     Nbins = 30
 
     for data, col, l in zip(ts, colors, labels):
         # print(l, len(data))
-        if absolute :
-            data=np.abs(data)
-            r0,r1=np.min(data), r
+        if absolute:
+            data = np.abs(data)
+            r0, r1 = np.min(data), r
 
-        else :
-            r0,r1=-r,r
-            Nbins *=2
+        else:
+            r0, r1 = -r, r
+            Nbins *= 2
 
         x = np.linspace(r0, r1, Nbins)
         weights = np.ones_like(data) / float(len(data))
@@ -3607,52 +3621,97 @@ def plot_turns(datasets, labels=None, absolute=True, save_to=None, subfolder='tu
 
     axs.set_ylabel('probability, $P$')
     axs.set_xlabel(xlabel)
-    axs.set_xlim([r0,r1])
+    axs.set_xlim([r0, r1])
     axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
     axs.legend(loc='upper right', fontsize=10)
     fig.subplots_adjust(top=0.92, bottom=0.15, left=0.25, right=0.95, hspace=.005, wspace=0.05)
     return process_plot(fig, save_to, filename, return_fig)
 
 
-def plot_turn_Dorient2center(datasets, labels=None, min_angle=30.0, save_to=None, return_fig=False):
-    Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder='turn')
-    filename = f'turn_Dorient2center.{suf}'
-    fig, axs = plt.subplots(Ndatasets, 2, figsize=(10, 5 * Ndatasets), subplot_kw=dict(projection='polar'), sharex=True,
+def plot_turn_Dbearing(datasets, labels=None, min_angle=30.0, max_angle=180.0, ref_angle=None,
+                       par='orientation_to_center', Nplots=4, subfolder='turn', save_to=None, return_fig=False):
+    Nds, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
+    fig, axs = plt.subplots(Nds, Nplots, figsize=(5 * Nplots, 5 * Nds), subplot_kw=dict(projection='polar'),
                             sharey=True)
-    if Ndatasets > 1:
-        axs = axs.ravel()
-    p = 'orientation_to_center'
-    for k, (S, side) in enumerate(zip(['L', 'R'], ['left', 'right'])):
-        b0_par = f'{p}_at_{S}turn_start'
-        b1_par = f'{p}_at_{S}turn_stop'
-        bd_par = f'{S}turn_{p}'
-        b0s = [d.get_par(b0_par).dropna().values.flatten() for d in datasets]
-        b1s = [d.get_par(b1_par).dropna().values.flatten() for d in datasets]
-        dbs = [d.get_par(bd_par).dropna().values.flatten() for d in datasets]
+    axs = axs.ravel()
 
-        for i, (b0, b1, db, label, c) in enumerate(zip(b0s, b1s, dbs, labels, colors)):
-            B0 = np.deg2rad(b0[np.abs(db) > min_angle])
-            B1 = np.deg2rad(b1[np.abs(db) > min_angle])
-            circular_hist(axs[2 * i + k], B0, bins=16, alpha=0.3, label='start', color=c, offset=np.pi / 2)
-            circular_hist(axs[2 * i + k], B1, bins=16, alpha=0.6, label='stop', color=c, offset=np.pi / 2)
+    if par == 'orientation_to_center':
+        filename = f'turn_Dorient_to_center.{suf}'
+        ang0 = 0
+        norm = False
+    elif par is None and ref_angle is not None:
+        ang0 = ref_angle
+        norm = True
+        filename = f'turn_Dorient_to_{ang0}deg.{suf}'
+        par = nam.unwrap('front_orientation')
+    else:
+        raise ValueError('No parameter or target angle has been provided.')
 
-            arrow0 = patches.FancyArrowPatch((0, 0), (np.mean(B0), 0.3), zorder=2, mutation_scale=30, alpha=0.3,
-                                             facecolor=c,
-                                             edgecolor='black', fill=True, linewidth=0.5)
-            axs[2 * i + k].add_patch(arrow0)
-            arrow1 = patches.FancyArrowPatch((0, 0), (np.mean(B1), 0.3), zorder=2, mutation_scale=30, alpha=0.6,
-                                             facecolor=c,
-                                             edgecolor='black', fill=True, linewidth=0.5)
-            axs[2 * i + k].add_patch(arrow1)
+    def circNarrow(ax, data, alpha, label, color) :
+        circular_hist(ax, data, bins=16, alpha=alpha, label=label, color=color, offset=np.pi / 2)
+        arrow = patches.FancyArrowPatch((0, 0), (np.mean(data), 0.3), zorder=2, mutation_scale=30, alpha=alpha,
+                                        facecolor=color, edgecolor='black', fill=True, linewidth=0.5)
+        ax.add_patch(arrow)
 
-            # Visualise by radius of bins
-            # circular_hist(ax[1], angles1, offset=np.pi / 2, density=False)
-            axs[2 * i + k].legend(loc=[0.9, 0.9])
-        axs[2 * i + k].set_title(f'Bearing before and after a {side} turn.', fontsize=15, y=-0.2)
+
+    for i, (d, label, c) in enumerate(zip(datasets, labels, colors)):
+        ii = Nplots * i
+        for k, (S, side) in enumerate(zip(['L', 'R'], ['left', 'right'])):
+            b0_par = f'{par}_at_{S}turn_start'
+            b1_par = f'{par}_at_{S}turn_stop'
+            bd_par = f'{S}turn_{par}'
+            b0 = d.get_par(b0_par).dropna().values.flatten()
+            b1 = d.get_par(b1_par).dropna().values.flatten()
+            db = d.get_par(bd_par).dropna().values.flatten()
+
+            b0 -= ang0
+            b1 -= ang0
+            if norm:
+                b0 %= 360
+                b1 = b0 + db
+                b0[b0 > 180] -= 360
+                b1[b0 > 180] -= 360
+            B0 = np.deg2rad(b0[(np.abs(db) > min_angle) & (np.abs(db) < max_angle)])
+            B1 = np.deg2rad(b1[(np.abs(db) > min_angle) & (np.abs(db) < max_angle)])
+            # DB = np.deg2rad(db[(np.abs(db) > min_angle) & (np.abs(db) < max_angle)])
+            if Nplots == 2:
+                for tt, BB, aa in zip(['start', 'stop'], [B0, B1], [0.3, 0.6]):
+                    circNarrow(axs[ii + k], BB, aa, tt, c)
+                axs[ii + 1].legend(bbox_to_anchor=(-0.7, 0.1), loc='center', fontsize=12)
+            elif Nplots == 4:
+                B00 = B0[B0 < 0]
+                B10 = B1[B0 < 0]
+                # DB0=DB[B0<0]
+                B01 = B0[B0 > 0]
+                B11 = B1[B0 > 0]
+                # DB1=DB[B0>0]
+                for tt, BB, aa in zip([r'$\theta^{init}_{or}$', r'$\theta^{fin}_{or}$'], [(B01, B00), (B11, B10)], [0.3, 0.6]):
+                    for kk, ss, BBB in zip([0, 1], [r'$L_{sided}$', r'$R_{sided}$'], BB):
+                        circNarrow(axs[ii + k + 2 * kk], BBB, aa, f'{ss} {tt}', c)
+                        axs[ii + 1].legend(bbox_to_anchor=(-0.3, 0.1), loc='center', fontsize=12)
+                        axs[ii + 2 + 1].legend(bbox_to_anchor=(-0.3, 0.1), loc='center', fontsize=12)
+            if i == Nds - 1:
+                if Nplots == 2:
+                    axs[ii + k].set_title(f'Bearing due to {side} turn.', y=-0.4)
+                    # axs[ii+k].set_title(f'Bearing before and after a {side} turn.', fontsize=12, y=-0.4)
+                elif Nplots == 4:
+                    axs[ii + k].set_title(fr'$L_{{sided}}$ {side} turn.', y=-0.4)
+                    # axs[ii+2*k].set_title(f'Bearing before and after a left-starting {side} turn.', fontsize=12, y=-0.4)
+                    axs[ii + 2 + k].set_title(fr'$R_{{sided}}$ {side} turn.', y=-0.4)
+                    # axs[ii+2*k+1].set_title(f'Bearing before and after a right-starting {side} turn.', fontsize=12, y=-0.4)
     for ax in axs:
-        ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''])
-    plt.subplots_adjust(bottom=0.1, top=0.9, left=0.05, right=0.9, wspace=0.4, hspace=0.1)
+        ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''], fontsize=15)
+    dataset_legend(labels, colors, ax=axs[0], loc='upper center', anchor=(0.5, 0.99),
+                   bbox_transform=fig.transFigure)
+    plt.subplots_adjust(bottom=0.15, top=1 - 0.1, left=0.0, right=1.0, wspace=0.0, hspace=0.35)
+    # plt.show()
+    # raise
     return process_plot(fig, save_to, filename, return_fig)
+
+
+def plot_turn_Dorient2center(datasets, labels=None, save_to=None, return_fig=False, **kwargs):
+    return plot_turn_Dbearing(datasets, labels=labels, ref_angle=None, par='orientation_to_center', save_to=save_to,
+                              return_fig=return_fig, **kwargs)
 
 
 def plot_chunk_Dorient2source(datasets, labels=None, chunk='stride', source=(0.0, 0.0), Nbins=16, min_dur=0.0,
@@ -3828,15 +3887,16 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None):
     if labels is None:
         labels = [d.id for d in datasets]
     cc = {'datasets': datasets,
-              'labels': labels,
-              'save_to': save_to}
+          'labels': labels,
+          'save_to': save_to}
     for r in ['default']:
-    # for r in ['broad', 'default', 'restricted']:
+        # for r in ['broad', 'default', 'restricted']:
         for m in ['cdf', 'pdf']:
             for f in ['best', 'all']:
-                n=f'bout_{m}_fit_{f}_{r}'
+                n = f'bout_{m}_fit_{f}_{r}'
                 try:
-                    fig_dict[n] = plot_stridesNpauses(**cc, plot_fits=f,range=r, only_fit_one=False,mode=m,print_fits=False)
+                    fig_dict[n] = plot_stridesNpauses(**cc, plot_fits=f, range=r, only_fit_one=False, mode=m,
+                                                      print_fits=False)
                 except:
                     pass
     for m in ['minimal', 'limited', 'full']:
@@ -3892,7 +3952,7 @@ def targeted_analysis(datasets, labels=None, simVSexp=False, save_to=None, pref=
                 'save_to': save_to,
                 'subfolder': None}
     init_dir, res_dir = 'init', 'result'
-    plot_stridesNpauses(**anal_kws, plot_fits='best', time_unit='sec', range='default',print_fits=False,
+    plot_stridesNpauses(**anal_kws, plot_fits='best', time_unit='sec', range='default', print_fits=False,
                         save_as=f'bouts{pref}.pdf', save_fits_as=f'bout_fits{pref}.csv')
     plot_endpoint_params(**anal_kws, mode='stride_def', save_as=f'stride_pars{pref}.pdf',
                          save_fits_as=f'stride_pars_ttest{pref}.csv')
@@ -3932,8 +3992,8 @@ def save_plot(fig, filepath, filename=None):
 
 
 def plot_config(datasets, labels, save_to, subfolder=None):
-    if labels is None :
-        labels=[d.id for d in datasets]
+    if labels is None:
+        labels = [d.id for d in datasets]
     Ndatasets = len(datasets)
 
     if Ndatasets != len(labels):
@@ -4129,10 +4189,10 @@ def barplot(datasets, labels=None, par_shorts=['f_am'], coupled_labels=None, xla
         return process_plot(fig, save_to, filename, return_fig)
 
 
-def lineplot(datasets,  markers,labels=None, par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None,
+def lineplot(datasets, markers, labels=None, par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None,
              save_to=None,
              save_as=None, return_fig=False, show=False, leg_cols=None):
-    Ndatasets, colors, save_to,labels = plot_config(datasets, labels, save_to)
+    Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to)
     # w = 0.15
 
     if coupled_labels is not None:

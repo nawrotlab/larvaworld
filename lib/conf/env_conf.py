@@ -344,13 +344,14 @@ food_at_bottom_env = {'arena_params': arena(0.2, 0.2),
                                              default_color='green')),
                       'larva_params': larva_multi_distros(
                           sample_datasets=['Fed', 'Deprived', 'Starved'],
+                          # models=['feeder-explorer'],
                           models=['feeder-explorer', 'feeder-navigator'],
                           # groups=['olfaction off', 'olfaction on'],
                           # models=['explorer', 'navigator', 'feeder', 'feeder-navigator'],
                           # groups=['explorer', 'navigator', 'explorer-F', 'navigator-F'],
                           # colors=['red', 'blue'],
                           # colors=['orange', 'cyan', 'red', 'blue'],
-                          N=10, mode='uniform', shape='oval', loc=(0.0, 0.04), scale=(0.04, 0.001)),
+                          N=30, mode='uniform', shape='oval', loc=(0.0, 0.04), scale=(0.04, 0.001)),
 
                       'odorscape': gaussian_odor()
                       }

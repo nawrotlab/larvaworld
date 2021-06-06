@@ -139,5 +139,5 @@ catch_me = {
 food_at_bottom = {
     'env_params': 'food_at_bottom',
     'sim_params': dtypes.get_dict('sim_params', sim_dur=1.5, dt=0.09, sample_dataset='Fed'),
-    'collections': ['pose']
+    'collections': ['pose', 'dst2center']
 }

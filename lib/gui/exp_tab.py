@@ -44,8 +44,8 @@ def build_sim_tab():
                  sg.Spin(values=np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(), initial_value=0.1, key='dt',
                          **t6_kws), sg.Text('seconds', **t8_kws, justification='center')],
                 [sg.Text('Sample :', **t8_kws),
-                 sg.Combo(list(loadConfDict('Ref').keys()),default_value='reference', key='sample_dataset', enable_events=True, readonly=True,
-                           tooltip='The reference dataset to sample parameters from.', **t16_kws)
+                 sg.Combo(list(loadConfDict('Ref').keys()),default_value='reference', key='sample_dataset',
+                          enable_events=True, readonly=True,tooltip='The reference dataset to sample parameters from.', **t16_kws)
                  ],
                 named_bool_button('Box2D', False)]
     collapsibles['Configuration'] = Collapsible('Configuration', True, sim_conf)
@@ -72,6 +72,8 @@ def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
     if event == 'LOAD_EXP' and values['EXP_CONF'] != '':
         exp_id = values['EXP_CONF']
         update_sim(window, exp_id, collapsibles)
+        window['EXP_PROGRESSBAR'].update(0)
+        window['EXP_COMPLETE'].update(visible=False)
     elif event == 'SAVE_EXP':
         exp = get_exp_conf(window, values, collapsibles, as_entry=True)
         save_gui_conf(window, exp, 'Exp')
