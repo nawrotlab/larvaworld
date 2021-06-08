@@ -163,7 +163,7 @@ class LarvaSim(BodySim, Larva):
         self.build_energetics(larva_pars['energetics'])
         BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['physics'],
                          **larva_pars['body'], **kwargs)
-        self.build_gut(self.real_mass)
+        # self.build_gut(self.real_mass)
 
         self.reset_feeder()
         self.radius = self.sim_length / 2
@@ -185,13 +185,16 @@ class LarvaSim(BodySim, Larva):
 
     def compute_next_action(self):
         self.cum_dur += self.model.dt
-        pos=self.get_olfactor_position()
+        pos = self.get_olfactor_position()
         self.food_detected, food_quality = self.detect_food(pos)
         lin, ang, self.feeder_motion = self.brain.run(pos)
         self.set_ang_activity(ang)
         self.set_lin_activity(lin)
-        self.current_amount_eaten, self.feed_success = self.feed()
+        self.current_amount_eaten, self.feed_success = self.feed(self.food_detected, self.feeder_motion)
         if self.energetics:
+            # print(self.model.Nticks)
+
+                # print('ddd')
             self.run_energetics(self.food_detected, self.feed_success, self.current_amount_eaten, food_quality)
         # Paint the body to visualize effector state
         if self.model.color_behavior:
@@ -199,7 +202,7 @@ class LarvaSim(BodySim, Larva):
         else:
             self.set_color([self.default_color] * self.Nsegs)
 
-    def detect_food(self,pos):
+    def detect_food(self, pos):
 
         if self.brain.feeder is not None:
             # radius = self.brain.feeder.feed_radius * self.sim_length
@@ -230,37 +233,38 @@ class LarvaSim(BodySim, Larva):
         # print(np.round([t4 - t0, t1 - t0, t2 - t1, t3 - t2, t4 - t3], 5) * 100000)
         return None, None
 
-    def feed(self):
-        a_max = self.max_feed_amount
-        source = self.food_detected
+    def feed(self, source, motion):
+        a_max = self.max_V_bite
+        # source = self.food_detected
         # if self.feeder_motion :
         #     print(self.empty_gut_M)
-        if self.feeder_motion and source is not None and self.empty_gut_M >= a_max:
+        if motion and source is not None:
+            # if self.feeder_motion and source is not None and self.empty_gut_M >= a_max:
             grid = self.model.food_grid
-            amount = -grid.add_cell_value(source, -a_max) if grid else source.subtract_amount(a_max)
+            amount = -grid.add_cell_value(source, -a_max)*grid.density if grid else source.subtract_amount(a_max)*source.density
             self.feed_success_counter += 1
-            self.amount_eaten += amount
-            self.update_gut(amount)
+            self.amount_eaten += amount*1000
+            # self.update_gut(amount)
 
             return amount, True
         else:
-            return 0, True
+            return 0, False
 
     def reset_feeder(self):
         self.feed_success_counter = 0
         self.amount_eaten = 0
         self.feeder_motion = False
         try:
-            self.max_feed_amount = self.compute_max_feed_amount()
+            self.max_V_bite = self.get_max_V_bite()
         except:
-            self.max_feed_amount = None
+            self.max_V_bite = None
         try:
             self.brain.feeder.reset()
         except:
             pass
 
-    def compute_max_feed_amount(self):
-        return self.brain.feeder.feed_capacity * self.V ** (2 / 3)
+    def get_max_V_bite(self):
+        return self.brain.feeder.feed_capacity * self.V  # ** (2 / 3)
 
     def build_energetics(self, energetic_pars):
         self.real_length = None
@@ -271,18 +275,29 @@ class LarvaSim(BodySim, Larva):
         if energetic_pars is not None:
             self.energetics = True
             if energetic_pars['deb_on']:
+                self.temp_cum_amount_eaten =0
+                self.temp_mean_f =[]
                 self.hunger_as_EEB = energetic_pars['hunger_as_EEB']
-                self.absorption = energetic_pars['absorption']  # /60
-                self.f_decay = energetic_pars['f_decay']
-                self.f_exp_coef = np.exp(-self.f_decay * self.model.dt)
+                self.f_exp_coef = np.exp(-energetic_pars['f_decay'] * self.model.dt)
                 steps_per_day = 24 * 60
+                cc = {
+                    'id': self.unique_id,
+                    'steps_per_day': steps_per_day,
+                    'hunger_gain': energetic_pars['hunger_gain'],
+                    'absorption': energetic_pars['absorption'],
+                }
                 if self.hunger_as_EEB:
-                    self.deb = DEB(id=self.unique_id, steps_per_day=steps_per_day, base_hunger=self.brain.intermitter.base_EEB,
-                                   hunger_gain=energetic_pars['hunger_gain'])
+                    self.deb = DEB(base_hunger=self.brain.intermitter.base_EEB, **cc)
                 else:
-                    self.deb = DEB(id=self.unique_id, steps_per_day=steps_per_day, hunger_gain=energetic_pars['hunger_gain'], base_f=self.model.deb_base_f)
+                    self.deb = DEB(base_f=self.model.deb_base_f, **cc)
                 self.deb.grow_larva(hours_as_larva=self.model.hours_as_larva, epochs=self.model.deb_starvation_hours)
-                self.deb.set_steps_per_day(int(24 * 60 * 60 / self.model.dt))
+                if energetic_pars['DEB_dt'] is None :
+                    self.deb_step_every=1
+                    self.deb.set_steps_per_day(int(24 * 60 * 60 / self.model.dt))
+                else :
+                    self.deb_step_every = int(energetic_pars['DEB_dt']/ self.model.dt)
+                    self.deb.set_steps_per_day(int(24 * 60 * 60 / energetic_pars['DEB_dt']))
+                self.deb.assimilation_mode = energetic_pars['assimilation_mode']
                 self.real_length = self.deb.get_Lw()
                 self.real_mass = self.deb.get_Ww()
                 self.V = self.deb.get_V()
@@ -293,39 +308,39 @@ class LarvaSim(BodySim, Larva):
         else:
             self.energetics = False
 
-    def build_gut(self, mass):
-        self.gut_M_ratio = 0.11
-        self.gut_food_M = 0
-
-        self.gut_product_M = 0
-        self.amount_absorbed = 0
-        self.filled_gut_ratio = 0
-        # self.digestion_c = 80
-        self.absorption = 0.3
-
-        self.gut_M = self.gut_M_ratio * mass*1000 # in mg
-        self.empty_gut_M = self.gut_M
-
-
-    def update_gut(self, amount_eaten):
-        self.gut_M = self.gut_M_ratio * self.real_mass*1000 # in mg
-
-
-        # FIXME here I need to add the k_x but I don't know it
-        # For V1-morphs ingestion rate is proportional to L**3 . Kooijman p.269. Didn't use it.
-        # self.digestion_tau_unscaled = 24 * 60 * 60 / self.model.dt * self.gut_M_ratio * 550 / p_am
-        # Trying to use μ_Ax=11.5 from p.272
-        # self.digestion_tau_unscaled = 24*60*60/self.model.dt*self.gut_M_ratio*11.5/p_am
-        # self.digestion_tau = self.digestion_tau_unscaled * self.V ** (1 / 3)
-
-        self.gut_food_M += amount_eaten
-        gut_food_dM = 0.001 * self.gut_food_M * self.model.dt
-        self.gut_food_M -= gut_food_dM
-        absorbed_M = self.gut_product_M * self.absorption * self.model.dt
-        self.gut_product_M += (gut_food_dM - absorbed_M)
-        self.empty_gut_M = self.gut_M - self.gut_food_M - self.gut_product_M
-        self.amount_absorbed += absorbed_M
-        self.filled_gut_ratio = 1 - self.empty_gut_M / self.gut_M
+    # def build_gut(self, mass):
+    #     self.gut_M_ratio = 0.11
+    #     self.gut_food_M = 0
+    #
+    #     self.gut_product_M = 0
+    #     self.amount_absorbed = 0
+    #     self.gut_occupancy = 0
+    #     # self.digestion_c = 80
+    #     self.absorption = 0.3
+    #
+    #     self.gut_M = self.gut_M_ratio * mass*1000 # in mg
+    #     self.empty_gut_M = self.gut_M
+    #
+    #
+    # def update_gut(self, amount_eaten):
+    #     self.gut_M = self.gut_M_ratio * self.real_mass*1000 # in mg
+    #
+    #
+    #     # FIXME here I need to add the k_x but I don't know it
+    #     # For V1-morphs ingestion rate is proportional to L**3 . Kooijman p.269. Didn't use it.
+    #     # self.digestion_tau_unscaled = 24 * 60 * 60 / self.model.dt * self.gut_M_ratio * 550 / p_am
+    #     # Trying to use μ_Ax=11.5 from p.272
+    #     # self.digestion_tau_unscaled = 24*60*60/self.model.dt*self.gut_M_ratio*11.5/p_am
+    #     # self.digestion_tau = self.digestion_tau_unscaled * self.V ** (1 / 3)
+    #
+    #     self.gut_food_M += amount_eaten
+    #     gut_food_dM = 0.001 * self.gut_food_M * self.model.dt
+    #     self.gut_food_M -= gut_food_dM
+    #     absorbed_M = self.gut_product_M * self.absorption * self.model.dt
+    #     self.gut_product_M += (gut_food_dM - absorbed_M)
+    #     self.empty_gut_M = self.gut_M - self.gut_food_M - self.gut_product_M
+    #     self.amount_absorbed += absorbed_M
+    #     self.gut_occupancy = 1 - self.empty_gut_M / self.gut_M
     def build_brain(self, brain):
         modules = brain['modules']
         if brain['nengo']:
@@ -341,10 +356,19 @@ class LarvaSim(BodySim, Larva):
     def run_energetics(self, food_detected, feed_success, amount_eaten, food_quality):
         if self.deb:
             f = self.deb.get_f()
+            # print(feed_success)
             if feed_success:
-                f += food_quality * self.absorption * amount_eaten / self.max_feed_amount
+                f += food_quality * self.deb.absorption
+                # f += food_quality * self.deb.absorption * amount_eaten / self.max_V_bite
             f *= self.f_exp_coef
-            self.deb.run(f=f)
+            # print(self.f_exp_coef)
+            self.temp_cum_amount_eaten += amount_eaten
+            self.temp_mean_f.append(f)
+            if self.model.Nticks % self.deb_step_every == 0:
+                self.deb.run(f=np.mean(self.temp_mean_f), M_ingested=self.temp_cum_amount_eaten)
+                self.temp_cum_amount_eaten =0
+                self.temp_mean_f=[]
+
             self.real_length = self.deb.get_Lw()
             self.real_mass = self.deb.get_Ww()
             self.V = self.deb.get_V()
@@ -370,7 +394,7 @@ class LarvaSim(BodySim, Larva):
                 self.adjust_shape_to_mass()
                 self.adjust_body_vertices()
                 self.V = self.get_real_length() ** 3
-        self.max_feed_amount = self.compute_max_feed_amount()
+        self.max_V_bite = self.get_max_V_bite()
 
     def update_behavior_dict(self):
         behavior_dict = self.null_behavior_dict.copy()

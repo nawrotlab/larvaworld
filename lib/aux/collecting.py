@@ -82,7 +82,7 @@ effector_pars = {
     "scaled_amount_eaten": 'scaled_amount_eaten',
     "amount_absorbed": 'amount_absorbed',
     "feed_success_rate": 'feed_success_rate',
-    "filled_gut_ratio": 'filled_gut_ratio',
+    "gut_occupancy": 'gut_occupancy',
 
     "vel_freq": 'crawler_freq',
     "stride_dst_mean": 'stride_dst_mean_in_mm',
@@ -134,6 +134,10 @@ deb_pars = {
     "death_time_in_hours": 'death_time_in_hours',
     "hours_as_larva": 'hours_as_larva',
     "age": 'age_in_hours',
+    "food_absorption_efficiency": 'food_absorption_efficiency',
+    "amount_faeces": 'amount_faeces',
+    "faeces_ratio": 'faeces_ratio',
+
 }
 
 food_pars = {
@@ -258,21 +262,21 @@ output = {
                              'cum_dst', 'cum_scaled_dst',
                              'num_strides', 'stride_dur_ratio', 'vel_freq']},
     'feeder': {
-        'step': ['length', 'mass', 'amount_eaten', 'scaled_amount_eaten',
-                 'explore2exploit_balance', 'filled_gut_ratio', 'amount_absorbed'],
-        'endpoint': ['length', 'mass', 'num_feeds',
-                     # 'feed_success_rate',
-                     'amount_eaten', 'scaled_amount_eaten',
-                     'feed_dur_ratio', 'amount_absorbed']},
-    'deb': {'step': ['deb_f', 'deb_f_deviation', 'reserve', 'reserve_density',
-                     # 'structural_length', 'maturity', 'reproduction','structure','age_in_days',
-                     'hunger', 'puppation_buffer', 'cum_dst'],
+        'step': ['length', 'mass', 'amount_eaten', 'scaled_amount_eaten','explore2exploit_balance'],
+        'endpoint': ['length', 'mass', 'num_feeds','amount_eaten', 'scaled_amount_eaten','feed_dur_ratio']},
+
+    'deb': {'step': [
+        'deb_f', 'deb_f_deviation',
+        # 'reserve', 'reserve_density','hunger', 'puppation_buffer', 'cum_dst'
+    ],
             'endpoint': [
                 'cum_dst', 'cum_scaled_dst', 'pause_dur_ratio',
                 'num_strides', 'stride_dur_ratio', 'vel_freq',
                 'reserve_density', 'puppation_buffer', 'hunger',
                 'age', 'birth_time_in_hours', 'pupation_time_in_hours', 'death_time_in_hours', 'hours_as_larva'
             ]},
+    'gut' : {'step': ['gut_occupancy', 'amount_absorbed','food_absorption_efficiency','amount_faeces','faeces_ratio'],
+            'endpoint': ['amount_absorbed']},
     'pose': {'step': ['centroid_x', 'centroid_y', 'bend', 'front_orientation', 'rear_orientation'],
              'endpoint': ['length', 'cum_dur', 'final_x']},
     'nengo': {'step': ['crawler_activity', 'turner_activity', 'feeder_motion'],

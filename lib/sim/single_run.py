@@ -19,7 +19,12 @@ import lib.conf.dtype_dicts as dtypes
 def sim_enrichment(d: LarvaDataset, experiment):
     cc = {'show_output': False, 'is_last': False}
     d.build_dirs()
-    if experiment in ['growth', 'rovers_sitters']:
+
+    # if experiment in ['growth']:
+    #     pass
+
+    if experiment in ['rovers_sitters']:
+    # if experiment in ['growth', 'rovers_sitters']:
         d.deb_analysis(**cc)
     elif experiment == 'focus':
         d.angular_analysis(**cc)
@@ -39,10 +44,11 @@ def sim_enrichment(d: LarvaDataset, experiment):
         d.linear_analysis(**cc)
         d.angular_analysis(**cc)
         d.detect_turns(**cc)
+    print(f'    Dataset enriched!')
     return d
 
 
-def sim_analysis(d: LarvaDataset, exp_type):
+def sim_analysis(d: LarvaDataset, exp_type, show_output = False):
     if d is None:
         return
     s, e = d.step_data, d.endpoint_data
@@ -61,7 +67,7 @@ def sim_analysis(d: LarvaDataset, exp_type):
         fig_dict['scatter_x2'] = plot_endpoint_scatter(datasets=[d], par_shorts=['cum_sd', 'f_am'])
 
     elif exp_type in ['food_at_bottom']:
-        ds = d.split_dataset(is_last=False)
+        ds = d.split_dataset(is_last=False, show_output = show_output)
         cc = {'datasets': ds,
               'save_to': d.plot_dir,
               'subfolder': None}
@@ -91,9 +97,10 @@ def sim_analysis(d: LarvaDataset, exp_type):
         starvation_hours = d.config['starvation_hours']
         f = d.config['deb_base_f']
         deb_model = deb_default(epochs=starvation_hours, base_f=f)
+
         if exp_type == 'rovers_sitters':
             roversVSsitters = True
-            ds = d.split_dataset(groups=['Sitter', 'Rover'])
+            ds = d.split_dataset(groups=['Sitter', 'Rover'], show_output = show_output)
             labels = ['Sitters', 'Rovers']
         else:
             roversVSsitters = False
@@ -101,34 +108,41 @@ def sim_analysis(d: LarvaDataset, exp_type):
             labels = [d.id]
 
         deb_dicts = list(d.load_deb_dicts().values()) + [deb_model]
+        # print(d.load_deb_dicts().values())
         # deb_dicts = [deb_dict(d, id, starvation_hours=starvation_hours) for id in d.agent_ids] + [deb_model]
         c = {'save_to': d.plot_dir,
              'roversVSsitters': roversVSsitters}
         c1 = {'deb_dicts': deb_dicts[:-1],
               'sim_only': True}
-        for m in ['full', 'complete', 'minimal']:
-            l = f'{m}_comp'
-            save_as = f'{l}.pdf'
-            fig_dict[l] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c)
-        for m in ['full', 'complete']:
+
+        for m in [ 'reserve_density', 'feeding', 'food_ratio_1','food_ratio_2','food_mass_1','food_mass_2']:
             # for m in ['f', 'hunger', 'minimal', 'full', 'complete']:
-            for t in ['hours', 'seconds']:
-                for i, s in enumerate([True, False]):
-                    l = f'{m}_{t}_{i}'
-                    save_as = f'{l}.pdf'
-                    fig_dict[l] = plot_debs(save_as=save_as, mode=m, time_unit=t, **c, **c1)
-        cc = {'datasets': ds,
-              'labels': labels,
-              'save_to': d.plot_dir}
-        fig_dict['gut'] = plot_gut(**cc)
-        fig_dict['food_amount'] = plot_food_amount(**cc)
-        fig_dict['food_amount_filt'] = plot_food_amount(filt_amount=True, **cc)
-        fig_dict['pathlength'] = plot_pathlength(scaled=False, **cc)
-        fig_dict['endpoint'] = plot_endpoint_params(mode='deb', **cc)
-        try:
-            fig_dict['food_amount_barplot'] = barplot(par_shorts=['f_am'], **cc)
-        except:
-            pass
+            # for t in ['hours', 'seconds']:
+            # print(m)
+            for t in ['hours']:
+                save_as = f'{m}_in_{t}.pdf'
+                fig_dict[f'{m} ({t})'] = plot_debs(save_as=save_as, mode=m, time_unit=t, **c, **c1)
+        for m in ['growth', 'energy', 'full']:
+            save_as = f'{m}_vs_model.pdf'
+            fig_dict[f'{m} vs model'] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c)
+        if exp_type == 'rovers_sitters':
+            cc = {'datasets': ds,
+                  'labels': labels,
+                  'save_to': d.plot_dir}
+            fig_dict['faeces ratio'] = plot_timeplot(['f_out_r'], show_first=False, legend_loc='upper left', **cc)
+            fig_dict['faeces amount'] = plot_timeplot(['f_out'], show_first=False, legend_loc='upper left', **cc)
+            fig_dict['food absorption efficiency'] = plot_timeplot(['abs_r'], show_first=False, legend_loc='upper left', **cc)
+            fig_dict['food absorbed'] = plot_timeplot(['f_ab'], show_first=False, legend_loc='upper left', **cc)
+            fig_dict['food intake (timeplot)'] = plot_timeplot(['f_am'], show_first=False, legend_loc='upper left', **cc)
+            fig_dict['food intake'] = plot_food_amount(**cc)
+            fig_dict['food intake (filt)'] = plot_food_amount(filt_amount=True, **cc)
+            fig_dict['gut occupancy'] = plot_gut(**cc)
+            fig_dict['pathlength'] = plot_pathlength(scaled=False, **cc)
+            fig_dict['endpoint'] = plot_endpoint_params(mode='deb', **cc)
+            try:
+                fig_dict['food intake (barplot)'] = barplot(par_shorts=['f_am'], **cc)
+            except:
+                pass
 
 
     elif exp_type == 'dispersion':
@@ -186,6 +200,8 @@ def sim_analysis(d: LarvaDataset, exp_type):
         # fig_dict['best_gains'] = plot_timeplot(['g_odor1', 'g_odor2'], datasets=[d], show_first=False)
     elif exp_type == 'realistic_imitation':
         d.save_agent(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
+
+    print(f'    Analysis complete!')
     return fig_dict, results
 
 
@@ -248,14 +264,14 @@ def run_sim_basic(
     # env.prepare_odor_layer(int(odor_prep_time * 60 / env.dt))
     # Prepare the flies for a number of timesteps
     # env.prepare_flies(int(larva_prep_time * 60 / env.dt))
-    print(f'Initialized simulation {id}!')
+    print(f'---- Simulation {id} ----')
 
     # Run the simulation
     completed = env.run()
 
     if not completed:
         d.delete()
-        print(f'Simulation not completed!')
+        print(f'{id} simulation not completed!')
         res = None
     else:
         # Read the data collected during the simulation
@@ -270,6 +286,7 @@ def run_sim_basic(
         dur = end - start
         param_dict['duration'] = np.round(dur, 2)
 
+        print(f'    Completed in {np.round(dur).astype(int)} seconds!')
         # Save simulation data and parameters
         if save_data_flag:
             if enrich and experiment is not None:
@@ -286,7 +303,7 @@ def run_sim_basic(
             # Save the odor layer
             # if env.Nodors > 0:
             #     env.plot_odorscape(save_to=d.plot_dir)
-        print(f'Simulation completed in {dur} seconds!')
+
         res = d
     env.close()
     return res

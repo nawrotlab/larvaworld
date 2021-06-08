@@ -282,7 +282,7 @@ def deb_analysis(traj):
     deb_dicts = fun.flatten_list(
         [[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
     fig_dict = {}
-    for m in ['f', 'minimal', 'full'] :
+    for m in ['energy', 'growth', 'full'] :
         f=plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as=f'deb_{m}.pdf', mode=m)
         fig_dict[f'deb_{m}'] = f
     return df, fig_dict

@@ -376,6 +376,26 @@ class Larva(LarvaworldAgent):
         return self.deb.get_f()
 
     @property
+    def gut_occupancy(self):
+        return self.deb.get_gut_occupancy()
+
+    @property
+    def amount_absorbed(self):
+        return self.deb.get_M_absorbed()
+
+    @property
+    def amount_faeces(self):
+        return self.deb.get_M_faeces()
+
+    @property
+    def faeces_ratio(self):
+        return self.deb.get_R_faeces()
+
+    @property
+    def food_absorption_efficiency(self):
+        return self.deb.get_R_absorbed()
+
+    @property
     def deb_f_deviation(self):
         return self.deb.get_f() - 1
 
@@ -481,13 +501,14 @@ class Source(LarvaworldAgent):
             return p
 
 class Food(Source):
-    def __init__(self, amount=1.0, quality=1.0,default_color=None, **kwargs):
+    def __init__(self, amount=1.0, quality=1.0,default_color=None,density=0.17, **kwargs):
         # print(kwargs)
         if default_color is None :
             default_color = 'green'
         super().__init__(default_color=default_color,**kwargs)
         self.initial_amount = amount
         self.quality = quality
+        self.density = density
         self.amount = self.initial_amount
 
     def get_amount(self):

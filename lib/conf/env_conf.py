@@ -278,7 +278,7 @@ food_grid_env = {'arena_params': arena(0.03, 0.03),  # dish(0.006),
 
 growth_env = {'arena_params': arena(0.02, 0.02),  # dish(0.006),
               'food_params': food_param_conf(grid=dtypes.get_dict('food_grid')),
-              'larva_params': larva_distro(N=5, model='sitter'),
+              'larva_params': larva_distro(N=1, model='sitter'),
               'odorscape': None}
 
 # growth_env = {'arena_params': dish(0.01),  # dish(0.006),
@@ -287,13 +287,13 @@ growth_env = {'arena_params': arena(0.02, 0.02),  # dish(0.006),
 #               'larva_params': larva_distro(N=5, model='sitter'),
 #               'odorscape': None}
 
-growth_2x_env = {'arena_params': arena(0.02, 0.02),  # dish(0.006),
-                 'food_params': food_param_conf(grid=dtypes.get_dict('food_grid')),
-                 'larva_params': {
-                     **larva_distro(N=1, group='Rover', model='rover', default_color='blue'),
-                     **larva_distro(N=1, group='Sitter', model='sitter', default_color='red')
-                 },
-                 'odorscape': None}
+rovers_sitters_env = {'arena_params': arena(0.02, 0.02),  # dish(0.006),
+                      'food_params': food_param_conf(grid=dtypes.get_dict('food_grid')),
+                      'larva_params': {
+                          **larva_distro(N=1, group='Rover', model='rover', default_color='blue'),
+                          **larva_distro(N=1, group='Sitter', model='sitter', default_color='red')
+                      },
+                      'odorscape': None}
 
 test_env = {'arena_params': dish(0.1),
             'food_params': {
@@ -316,23 +316,24 @@ catch_me_env = {'arena_params': dish(0.05),
 
 
 def larva_multi_distros(models, groups=None, colors=None, sample_datasets=None, **kwargs):
-    if sample_datasets is not None :
+    if sample_datasets is not None:
         temp = list(itertools.product(models, sample_datasets))
         if groups is None:
-            groups = [f'{s}-{m}' for m,s in temp]
-    else :
+            groups = [f'{s}-{m}' for m, s in temp]
+    else:
         temp = None
         if groups is None:
             groups = models
     N = len(groups)
     if colors is None:
-        colors = fun.N_colors(N,as_rgb=True)
+        colors = fun.N_colors(N, as_rgb=True)
     d = {}
     for i in range(N):
-        if temp is None :
+        if temp is None:
             d.update(larva_distro(group=groups[i], model=models[i], default_color=colors[i], **kwargs))
-        else :
-            d.update(larva_distro(group=groups[i], model=temp[i][0],sample_dataset=temp[i][1], default_color=colors[i], **kwargs))
+        else:
+            d.update(larva_distro(group=groups[i], model=temp[i][0], sample_dataset=temp[i][1], default_color=colors[i],
+                                  **kwargs))
     return d
 
 
@@ -343,15 +344,15 @@ food_at_bottom_env = {'arena_params': arena(0.2, 0.2),
                                              odor_id='Odor', odor_intensity=2, odor_spread=0.0002, radius=0.001,
                                              default_color='green')),
                       'larva_params': larva_multi_distros(
-                          sample_datasets=['Fed', 'Deprived', 'Starved'],
+                          # sample_datasets=['Fed', 'Deprived', 'Starved'],
                           # models=['feeder-explorer'],
                           models=['feeder-explorer', 'feeder-navigator'],
-                          # groups=['olfaction off', 'olfaction on'],
+                          groups=['olfaction off', 'olfaction on'],
                           # models=['explorer', 'navigator', 'feeder', 'feeder-navigator'],
                           # groups=['explorer', 'navigator', 'explorer-F', 'navigator-F'],
                           # colors=['red', 'blue'],
                           # colors=['orange', 'cyan', 'red', 'blue'],
-                          N=30, mode='uniform', shape='oval', loc=(0.0, 0.04), scale=(0.04, 0.001)),
+                          N=100, mode='uniform', shape='oval', loc=(0.0, 0.04), scale=(0.04, 0.001)),
 
                       'odorscape': gaussian_odor()
                       }

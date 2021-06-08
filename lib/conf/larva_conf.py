@@ -105,12 +105,12 @@ brain_feeder_olfactor_x2 = dtypes.brain_dict(['turner', 'crawler', 'interference
 brain_rover = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'feeder'],
                                 turner=neural_turner,
                                 interference=default_coupling,
-                                intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.5))
+                                intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.37))
 
 brain_sitter = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'feeder'],
                                  turner=neural_turner,
                                  interference=default_coupling,
-                                 intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.65))
+                                 intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.67))
 
 brain_nengo = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'olfactor', 'feeder'],
                                 odor_dict={'Odor': {'mean': 150.0, 'std': 0.0}},

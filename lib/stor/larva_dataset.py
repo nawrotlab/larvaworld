@@ -46,7 +46,8 @@ class LarvaDataset:
                            **arena_pars,
                            **life_params
                            }
-            print(f'Initialized dataset {id} with new configuration')
+
+            # print(f'Initialized dataset {id} with new configuration')
         self.__dict__.update(self.config)
         self.arena_pars = {'arena_xdim': self.arena_xdim,
                            'arena_ydim': self.arena_ydim,
@@ -58,7 +59,7 @@ class LarvaDataset:
         if load_data:
             try:
                 self.load()
-                print('Data loaded successfully from stored csv files.')
+                # print('Data loaded successfully from stored csv files.')
             except:
                 print('Data not found. Load them manually.')
 
@@ -538,7 +539,7 @@ class LarvaDataset:
 
     def save(self, step_data=True, endpoint_data=True, food_endpoint_data=False):
         if self.save_data_flag == True:
-            print('Saving data')
+            # print('Saving data')
             self.build_dirs()
             if step_data:
                 self.step_data.to_csv(self.step_file_path, index=True, header=True)
@@ -634,12 +635,14 @@ class LarvaDataset:
     def load_deb_dicts(self, agent_ids=None):
         if agent_ids is None :
             agent_ids=self.agent_ids
+
         d={}
         for id in agent_ids :
             f=f'{self.deb_dir}/{id}.txt'
             with open(f) as tfp:
                 dic = json.load(tfp)
             d[id]=dic
+
         return d
 
     #####################################
@@ -2912,7 +2915,7 @@ class LarvaDataset:
             path = os.path.join(self.data_dir, name)
             pdf.to_csv(path, index=True, header=True)
 
-    def split_dataset(self, groups=None, is_last=True):
+    def split_dataset(self, groups=None, is_last=True, show_output=True):
         if groups is None :
             groups = fun.unique_list([id.split('_')[0] for id in self.agent_ids])
         if len(groups)==1 :
@@ -2928,12 +2931,13 @@ class LarvaDataset:
                 invalid_ids = [id for id in self.agent_ids if not str.startswith(id, f)]
                 copy_tree(self.dir, new_dir)
                 new_d =LarvaDataset(new_dir)
-                new_d.drop_agents(invalid_ids, is_last=is_last)
+                new_d.drop_agents(invalid_ids, is_last=is_last, show_output=show_output)
                 # new_d.load()
                 # new_d.set_id(f'{self.id}_{f}', save=is_last)
                 new_d.set_id(f)
                 new_ds.append(new_d)
-            print(f'Dataset {self.id} splitted in {[d.id for d in new_ds]}')
+            if show_output :
+                print(f'Dataset {self.id} splitted in {[d.id for d in new_ds]}')
         return new_ds
 
     def get_chunks(self, chunk, min_dur=0.0, max_dur=np.inf):

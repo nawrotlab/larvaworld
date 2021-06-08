@@ -12,9 +12,9 @@ from lib.aux import functions as fun
 
 
 class DEB:
-    def __init__(self, id='DEB model',species='default', steps_per_day=1, cv=0, T=298.15, eb=1.0,base_f = 1.0,
-                 aging=False, print_output=False, starvation_strategy=False, save_dict=True,
-                 base_hunger=0.5, hunger_gain=10, hours_as_larva=0, simulation=True):
+    def __init__(self, id='DEB model', species='default', steps_per_day=1, cv=0, T=298.15, eb=1.0, base_f=1.0,
+                 aging=False, print_output=False, starvation_strategy=False, assimilation_mode='f', save_dict=True,
+                 absorption=0.5, base_hunger=0.5, hunger_gain=10, hours_as_larva=0, simulation=True):
 
         # Drosophila model by default
         if species == 'default':
@@ -41,10 +41,12 @@ class DEB:
         self.cv = cv
         self.eb = eb
         self.base_f = base_f
-        self.f=base_f
+        self.f = base_f
         self.print_output = print_output
         self.simulation = simulation
-        self.epochs=[]
+        self.assimilation_mode = assimilation_mode
+        self.absorption = absorption
+        self.epochs = []
         self.dict_file = None
 
         # Larva stage flags
@@ -59,31 +61,34 @@ class DEB:
         self.death_time_in_hours = np.nan
 
         self.derived_pars()
+        self.init_gut()
         self.set_steps_per_day(steps_per_day)
 
         self.E = self.E0
         self.E_H = 0
         self.E_R = 0
         self.V = self.L0 ** 3
+
         self.update()
 
         self.run_embryo_stage()
         self.predict_larva_stage(f=self.base_f)
 
-        if save_dict :
+        if save_dict:
             self.dict = self.init_dict()
-        else :
-            self.dict=None
+        else:
+            self.dict = None
 
     def update(self):
         self.L = self.V ** (1 / 3)
         self.Lw = self.L / self.del_M
+        # self.Vw = self.Lw **3
         self.Ww = self.compute_Ww()
         self.e = self.compute_e()
         self.hunger = self.compute_hunger()
 
     def scale_time(self):
-        dt = self.dt*self.T_factor
+        dt = self.dt * self.T_factor
         # print(dt)
         self.F_m_dt = self.F_m * dt
         self.v_dt = self.v * dt
@@ -96,15 +101,18 @@ class DEB:
         self.p_Amm_dt = self.p_Amm * dt
         self.k_E_dt = self.k_E * dt
 
+        self.gut_Nticks = int(self.tau_gut / dt)
+
     def set_steps_per_day(self, steps_per_day):
         self.steps_per_day = steps_per_day
-        self.dt=1/steps_per_day
+        self.dt = 1 / steps_per_day
         self.scale_time()
 
     def derived_pars(self):
         kap = self.kap
         v = self.v
         p_Am = self.p_Am = self.z * self.p_M / kap
+        # print(p_Am, self.mu_X)
         self.E_M = p_Am / v
         self.E_V = self.mu_V * self.d_V / self.w_V
         k_M = self.k_M = self.p_M / self.E_G
@@ -128,6 +136,13 @@ class DEB:
 
         # For the larva the volume specific max assimilation rate p_Amm is used instead of the surface-specific p_Am
         self.p_Amm = p_Am / Lb
+        self.J_X_Amm = self.J_X_Am / Lb
+
+        # self.update_gut()
+
+        # DEB textbook p.91
+        # self.y_VE = (self.d_V / self.w_V)*self.mu_E/E_G
+        # self.J_E_Am = self.p_Am/self.mu_E
 
         self.uE0 = self.get_initial_reserve(eb=self.eb)
         self.U0 = self.uE0 * v ** 2 / g ** 2 / k_M ** 3
@@ -136,10 +151,34 @@ class DEB:
 
         self.v_Rm = (1 + lb / g) / (1 - lb)  # scaled max reprod buffer density
         self.v_Rj = self.s_j * self.v_Rm  # scaled reprod buffer density at pupation
+
         if self.print_output:
             print('------------------Egg------------------')
             print(f'Reserve energy  (mJ) :       {int(1000 * self.E0)}')
             print(f'Wet weight      (mg) :       {np.round(1000 * self.Ww0, 5)}')
+
+    # def get_V_bite(self):
+    #     return self.V_bite0 * self.V
+
+    # def get_bite_capacity(self):  # in mol
+    #     return self.get_V_bite() * self.d_X / self.w_X
+
+    # def get_E_bite(self):  # in mol
+    #     return self.get_V_bite() * self.d_X * self.mu_X / self.w_X
+
+    def get_V_gut(self):
+        return self.V_gm * self.V
+
+    def gut_max_capacity(self):  # in mol
+        return self.M_gm * self.V
+
+    def get_tau_gut(self, f=None):
+        if f is None:
+            f = self.base_f
+        #     Gut residence time for V1-morph
+
+        # return self.M_gm*self.L/self.J_X_Am/f
+        return self.M_gm / self.J_X_Amm / f
 
     def get_tau_b(self, eb=1.0):
         def get_tb(x, ab, xb):
@@ -239,9 +278,9 @@ class DEB:
         self.Ee = self.Ue * self.p_Am
         self.Wwe = self.compute_Ww(V=self.Le ** 3, E=self.Ee + self.E_Rj)  # g, wet weight at emergence
 
-        self.V=self.Le**3
-        self.E=self.Ee
-        self.E_H=self.E_He
+        self.V = self.Le ** 3
+        self.E = self.Ee
+        self.E_H = self.E_He
         self.update()
 
         self.emergence_time_in_hours = self.pupation_time_in_hours + np.round(self.t_e * 24, 1)
@@ -297,7 +336,8 @@ class DEB:
         t = 0
 
         while self.E_H < self.E_Hb:
-            p_S = self.p_M_dt * self.V + self.p_T_dt * self.V ** (2 / 3)  # This is in e/t and below needs to be volume-specific
+            p_S = self.p_M_dt * self.V + self.p_T_dt * self.V ** (
+                    2 / 3)  # This is in e/t and below needs to be volume-specific
             p_C = self.E * (E_G * self.v_dt / self.V ** (1 / 3) + p_S / self.V) / (kap * self.E / self.V + E_G)
             p_G = kap * p_C - p_S
             p_J = self.k_J_dt * self.E_H
@@ -316,13 +356,14 @@ class DEB:
         self.Wwb = self.compute_Ww(V=self.Lb ** 3, E=self.Eb)  # g, wet weight at birth
         self.birth_time_in_hours = np.round(self.t_b * 24, 2)
         self.stage = 'larva'
-        self.age=self.t_b
+        self.age = self.t_b
         if self.print_output:
             print('-------------Embryo stage-------------')
             print(f'Duration         (d) :      predicted {np.round(self.t_b, 3)} VS computed {np.round(t, 3)}')
             print('----------------Birth----------------')
             print(f'Wet weight      (mg) :      {np.round(self.Wwb * 1000, 5)}')
-            print(f'Physical length (mm) :      predicted {np.round(self.Lwb * 10, 3)} VS computed {np.round(Lw_b * 10, 3)}')
+            print(
+                f'Physical length (mm) :      predicted {np.round(self.Lwb * 10, 3)} VS computed {np.round(Lw_b * 10, 3)}')
 
     def run_larva_stage(self, f=1.0, dt=None):
         if dt is None:
@@ -331,8 +372,6 @@ class DEB:
         E_G = self.E_G
         g = self.g
         del_M = self.del_M
-
-
 
         t = 0
 
@@ -355,7 +394,8 @@ class DEB:
         self.Uj = Ej / self.p_Am
         self.uEj = self.lj ** 3 * (self.kap * self.kap_V + f / g)
         # self.uEj = self.Uj / self.v ** 2 * self.g ** 2 * self.k_M ** 3
-        self.Wwj=self.compute_Ww(V=self.Lj ** 3, E=Ej + self.E_Rj)  # g, wet weight at pupation, including reprod buffer
+        self.Wwj = self.compute_Ww(V=self.Lj ** 3,
+                                   E=Ej + self.E_Rj)  # g, wet weight at pupation, including reprod buffer
         # self.Wwj = self.Lj**3 * (1 + f * self.w_V) # g, wet weight at pupation, excluding reprod buffer at pupation
         # self.Wwj += self.E_Rj * self.w_E/ self.mu_E/ self.d_E # g, wet weight including reprod buffer
         self.pupation_time_in_hours = self.birth_time_in_hours + np.round(t * 24, 1)
@@ -365,22 +405,25 @@ class DEB:
             print(f'Duration         (d) :      predicted {np.round(self.t_j, 3)} VS computed {np.round(t, 3)}')
             print('---------------Pupation---------------')
             print(f'Wet weight      (mg) :      {np.round(self.Wwj * 1000, 5)}')
-            print(f'Physical length (mm) :      predicted {np.round(self.Lwj * 10, 3)} VS computed {np.round(Lw_j * 10, 3)}')
+            print(
+                f'Physical length (mm) :      predicted {np.round(self.Lwj * 10, 3)} VS computed {np.round(Lw_j * 10, 3)}')
 
     def compute_hunger(self):
         return np.clip(self.base_hunger + self.hunger_gain * (1 - self.get_e()), a_min=0, a_max=1)
 
-    def run(self, f=None):
-        if f is None :
-            f=self.base_f
-        self.f=f
+    def run(self, f=None, M_ingested=0):
+        if f is None:
+            f = self.base_f
+
+        self.f = f
         self.age += self.dt
 
         kap = self.kap
         E_G = self.E_G
 
         if self.E_R < self.E_Rj:
-            p_A = self.p_Amm_dt * f * self.V
+            self.update_gut(M_ingested)
+            p_A = self.get_p_A(f=f)
             p_S = self.p_M_dt * self.V
             p_C = self.E * (E_G * self.k_E_dt + p_S / self.V) / (kap * self.E / self.V + E_G)
             p_G = kap * p_C - p_S
@@ -389,15 +432,17 @@ class DEB:
             self.E += (p_A - p_C)
             self.V += p_G / E_G
             self.E_R += p_R
+
             self.update()
 
-        elif self.stage=='larva' :
+        elif self.stage == 'larva':
             self.pupation_time_in_hours = np.round(self.age * 24, 1)
             self.stage = 'pupa'
             # self.hours_as_larva = self.pupation_time_in_hours - self.birth_time_in_hours
-        if self.dict is not None :
+        if self.dict is not None:
             self.update_dict()
 
+        # print(np.round(self.age,5), np.round(self.gut_capacity*self.w_X*1000,5),np.round(self.mol_ingested*self.w_X*1000,5),np.round(self.mol_absorbed*self.w_E*1000,5),np.round(self.mol_out*self.w_P*1000,5), np.round(self.gut_occupancy*100,2), np.round(self.faeces_ratio,2), np.round(self.absorption_efficiency,2))
 
     def die(self):
         self.alive = False
@@ -409,10 +454,10 @@ class DEB:
         return self.f
 
     def compute_Ww(self, V=None, E=None):
-        if V is None :
-            V=self.V
-        if E is None :
-            E=self.E+self.E_R
+        if V is None:
+            V = self.V
+        if E is None:
+            E = self.E + self.E_R
         return V * self.d_V + E * self.w_E / self.mu_E
 
     def compute_e(self, V=None, E=None, E_M=None):
@@ -422,7 +467,7 @@ class DEB:
             E = self.E
         if E_M is None:
             E_M = self.E_M
-        return E/V/E_M
+        return E / V / E_M
 
     def get_Lw(self):
         # Structural L is in cm. We turn it to m
@@ -451,46 +496,47 @@ class DEB:
 
     def grow_larva(self, hours_as_larva=None, epochs=None, fs=None):
         if epochs is None:
-            if hours_as_larva is not None :
+            if hours_as_larva is not None:
                 self.hours_as_larva = hours_as_larva
                 N = int(self.steps_per_day / 24 * hours_as_larva)
                 for i in range(N):
-                    if self.stage=='larva' :
+                    if self.stage == 'larva':
                         self.run()
-            else :
+            else:
                 while self.stage == 'larva':
                     self.run()
-                self.hours_as_larva = self.pupation_time_in_hours-self.birth_time_in_hours
+                self.hours_as_larva = self.pupation_time_in_hours - self.birth_time_in_hours
         else:
             t = 0
-            Nepochs=len(epochs)
-            if fs is None :
-                fs=[0]*Nepochs
-            elif type(fs)==float :
-                fs=[fs]*Nepochs
-            elif len(fs)!=Nepochs :
-                raise ValueError (f'Number of functional response values : {len(fs)} does not much number of epochs : {Nepochs}')
-            max_age=(self.birth_time_in_hours+hours_as_larva)/24 if hours_as_larva is not None else np.inf
+            Nepochs = len(epochs)
+            if fs is None:
+                fs = [0] * Nepochs
+            elif type(fs) == float:
+                fs = [fs] * Nepochs
+            elif len(fs) != Nepochs:
+                raise ValueError(
+                    f'Number of functional response values : {len(fs)} does not much number of epochs : {Nepochs}')
+            max_age = (self.birth_time_in_hours + hours_as_larva) / 24 if hours_as_larva is not None else np.inf
             for (s0, s1), f in zip(epochs, fs):
                 N0 = int(self.steps_per_day / 24 * (s0 - t))
                 for i in range(N0):
-                    if self.stage == 'larva' and self.age<=max_age:
+                    if self.stage == 'larva' and self.age <= max_age:
                         self.run()
                 N1 = int(self.steps_per_day / 24 * (s1 - s0))
                 for i in range(N1):
-                    if self.stage == 'larva' and self.age<=max_age:
+                    if self.stage == 'larva' and self.age <= max_age:
                         self.run(f=f)
                 t += s1
-            if hours_as_larva is not None :
+            if hours_as_larva is not None:
                 self.hours_as_larva = hours_as_larva
                 N2 = int(self.steps_per_day / 24 * (hours_as_larva - t))
                 for i in range(N2):
                     if self.stage == 'larva':
                         self.run()
-            else :
+            else:
                 while self.stage == 'larva':
                     self.run()
-                self.hours_as_larva = self.pupation_time_in_hours-self.birth_time_in_hours
+                self.hours_as_larva = self.pupation_time_in_hours - self.birth_time_in_hours
             self.epochs = self.store_epochs(epochs)
 
     def get_pupation_buffer(self):
@@ -499,32 +545,73 @@ class DEB:
     def get_hunger(self):
         return self.hunger
 
+    def init_deb_dict(self):
+        self.deb_dict_keys = [
+            'age',
+            'mass',
+            'length',
+            'reserve',
+            'reserve_density',
+            'hunger',
+            'pupation_buffer',
+            'f']
+        self.deb_dict = {k: [] for k in self.deb_dict_keys}
+
+    def init_gut_dict(self):
+        self.gut_dict_keys = [
+            'M_gut',
+            'M_ingested',
+            'M_absorbed',
+            'M_faeces',
+            'M_not_digested',
+            'R_faeces',
+            'R_absorbed',
+            'R_not_digested',
+            'gut_occupancy',
+        ]
+        self.gut_dict = {k: [] for k in self.gut_dict_keys}
+
     def init_dict(self):
-        dict = {
-                'age': [],
-                'mass': [],
-                'length': [],
-                'reserve': [],
-                'reserve_density': [],
-                'hunger': [],
-                'pupation_buffer': [],
-                'f': []
-                }
-        return dict
+        self.init_deb_dict()
+        self.init_gut_dict()
+        return {**self.deb_dict, **self.gut_dict}
+
+    def update_deb_dict(self):
+        deb_dict_values = [
+            self.age * 24,
+            self.get_Ww() * 1000,
+            self.get_Lw() * 1000,
+            self.get_E(),
+            self.get_e(),
+            self.get_hunger(),
+            self.get_pupation_buffer(),
+            self.get_f()
+        ]
+        for k, v in zip(self.deb_dict_keys, deb_dict_values):
+            self.deb_dict[k].append(v)
+
+    def update_gut_dict(self):
+        gut_dict_values = [
+            self.get_M_gut(),
+            self.get_M_ingested(),
+            self.get_M_absorbed(),
+            self.get_M_faeces(),
+            self.get_M_not_digested(),
+            self.get_R_faeces(),
+            self.get_R_absorbed(),
+            self.get_R_not_digested(),
+            self.get_gut_occupancy()
+        ]
+        for k, v in zip(self.gut_dict_keys, gut_dict_values):
+            self.gut_dict[k].append(v)
 
     def update_dict(self):
-        d=self.dict
-        d['age'].append(self.age*24)
-        d['mass'].append(self.get_Ww()*1000)
-        d['length'].append(self.get_Lw()*1000)
-        d['reserve'].append(self.get_E())
-        d['reserve_density'].append(self.get_e())
-        d['hunger'].append(self.get_hunger())
-        d['pupation_buffer'].append(self.get_pupation_buffer())
-        d['f'].append(self.get_f())
+        self.update_deb_dict()
+        self.update_gut_dict()
+        self.dict = {**self.deb_dict, **self.gut_dict}
 
-    def finalize_dict(self):
-        d = self.dict
+    def finalize_deb_dict(self):
+        d = self.deb_dict
         d['birth'] = self.birth_time_in_hours
         d['pupation'] = self.pupation_time_in_hours
         d['emergence'] = self.emergence_time_in_hours
@@ -533,38 +620,141 @@ class DEB:
         d['simulation'] = self.simulation
         d['sim_start'] = self.hours_as_larva
         d['epochs'] = self.epochs
+        d['fr'] = 1 / (self.dt * 24 * 60 * 60)
 
-    def return_dict(self) :
+        self.dict = {**self.deb_dict, **self.gut_dict}
+
+    def return_dict(self):
         return self.dict
 
     def store_epochs(self, epochs):
-        t0= self.birth_time_in_hours
-        t1= self.pupation_time_in_hours
-        t2= self.death_time_in_hours
+        t0 = self.birth_time_in_hours
+        t1 = self.pupation_time_in_hours
+        t2 = self.death_time_in_hours
         epochs = [[s0 + t0, s1 + t0] for [s0, s1] in epochs]
-        for t in [t1,t2] :
+        for t in [t1, t2]:
             if not np.isnan(t):
-             epochs = [[s0, np.clip(s1, a_min=s0, a_max=t)] for [s0, s1] in epochs if s0 <= t]
+                epochs = [[s0, np.clip(s1, a_min=s0, a_max=t)] for [s0, s1] in epochs if s0 <= t]
         return epochs
 
     def save_dict(self, path):
-        if self.dict is not None :
-            self.finalize_dict()
-            self.dict_file=f'{path}/{self.id}.txt'
-            with open(self.dict_file, "w") as fp:
-                json.dump(self.dict, fp)
+        if self.dict is not None:
+            self.finalize_deb_dict()
+            self.dict_file = f'{path}/{self.id}.txt'
+            self.deb_dict_file = f'{path}/deb_{self.id}.txt'
+            self.gut_dict_file = f'{path}/gut_{self.id}.txt'
+            for f,d in zip([self.dict_file,self.deb_dict_file,self.gut_dict_file], [self.dict, self.deb_dict, self.gut_dict]) :
+                with open(f, "w") as fp:
+                    json.dump(d, fp)
 
-    def load_dict(self):
-        if self.dict_file is not None :
-            with open(self.dict_file) as tfp:
+    def load_dict(self, type='full'):
+        if type=='full' :
+            f=self.dict_file
+        elif type=='deb' :
+            f=self.deb_dict_file
+        elif type=='gut':
+            f=self.gut_dict_file
+        if f is not None:
+            with open(f) as tfp:
                 d = json.load(tfp)
             return d
 
+    def get_p_A(self, f):
+        if self.assimilation_mode == 'f':
+            p_A = self.p_Amm_dt * f * self.V
+        elif self.assimilation_mode == 'bite':
+            p_A = self.dE_absorbed
+        # print(self.p_Amm_dt * 1 * self.V*1000, self.update_gut(bite)*1000)
+        return p_A
+
+    def init_gut(self):
+        # Arbitrary parameters
+        self.M_gm = 0.001  # Max vol specific gut capacity (mol/cm**3)
+        self.V_gm = self.M_gm * self.w_V / self.d_V  # Max vol specific gut volume (-)
+        # print(self.V_gm, self.get_tau_gut()*24*self.T_factor)
+        self.tau_gut = self.get_tau_gut()
+        self.mol_not_digested = 0
+        self.mol_faeces = 0
+        self.mol_absorbed = 0
+        self.dE_absorbed = 0
+        self.mol_ingested = 0
+        self.gut_ps = []
+        self.gut_capacity = 0
+
+    def update_gut(self, M_ingested=0):
+        if len(self.gut_ps) > 0:
+            self.convert_gut_content()
+
+        if M_ingested > 0:
+            N = self.gut_Nticks
+            X = M_ingested / self.w_X
+            self.mol_ingested += X
+            self.gut_ps.insert(0, [N, 0, X / N])
+        self.compute_gut_metrics()
+
+    def convert_gut_content(self):
+        ps = np.array(self.gut_ps)
+        ps[:, 0] -= 1
+        self.mol_faeces += np.sum(ps[ps[:, 0] < 0][:, 1])
+        ps = ps[ps[:, 0] >= 0]
+        ps[:, 1] += ps[:, 2] * self.y_P_X
+        dPus = ps[:, 1] * self.absorption
+        # ps[:,2]+=dPus
+        ps[:, 1] -= dPus
+        dPu = np.sum(dPus)
+
+        self.mol_absorbed += dPu
+        self.dE_absorbed = dPu * self.mu_E
+        self.gut_ps = ps.tolist()
+
+    def compute_gut_metrics(self):
+        if len(self.gut_ps) == 0:
+            self.gut_capacity = 0
+        else:
+            ps = np.array(self.gut_ps)
+            gut_max = self.gut_max_capacity()
+            self.gut_capacity = np.sum(ps[:, 0] * ps[:, 2]) + np.sum(ps[:, 1])
+            while self.gut_capacity > gut_max:
+                N, P, dX = ps[-1, :]
+                self.mol_not_digested += N * dX
+                self.mol_faeces += P
+                ps = np.delete(ps, (-1), axis=0)
+                self.gut_capacity = np.sum(ps[:, 0] * ps[:, 2]) + np.sum(ps[:, 1])
+            self.gut_ps = ps.tolist()
+
+    def get_M_absorbed(self):
+        return self.mol_absorbed * self.w_E * 1000
+
+    def get_M_ingested(self):
+        return self.mol_ingested * self.w_X * 1000
+
+    def get_M_faeces(self):
+        return self.mol_faeces * self.w_P * 1000
+
+    def get_M_not_digested(self):
+        return self.mol_not_digested * self.w_X * 1000
+
+    def get_R_absorbed(self):
+        return self.mol_absorbed / self.mol_ingested if self.mol_ingested != 0 else 0
+
+    def get_R_faeces(self):
+        return self.mol_faeces / self.mol_ingested if self.mol_ingested != 0 else 0
+
+    def get_R_not_digested(self):
+        return self.mol_not_digested / self.mol_ingested if self.mol_ingested != 0 else 0
+
+    def get_gut_occupancy(self):
+        return self.gut_capacity / self.gut_max_capacity()
+
+    def get_M_gut(self):
+        return self.gut_capacity * self.w_V * 1000
+
+
 def deb_default(epochs=None, fs=None, base_f=1.0, steps_per_day=24 * 60, **kwargs):
-    deb = DEB(steps_per_day=steps_per_day, base_f=base_f,simulation=False, **kwargs)
+    deb = DEB(steps_per_day=steps_per_day, base_f=base_f, simulation=False, **kwargs)
     deb.grow_larva(epochs=epochs, fs=fs, hours_as_larva=None)
-    deb.finalize_dict()
-    d=deb.return_dict()
+    deb.finalize_deb_dict()
+    d = deb.return_dict()
     return d
 
 

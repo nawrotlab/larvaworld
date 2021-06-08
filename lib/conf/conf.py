@@ -355,7 +355,7 @@ if __name__ == '__main__':
         'uniform_food': env.uniform_food_env,
         'food_grid': env.food_grid_env,
         'growth': env.growth_env,
-        'rovers_sitters': env.growth_2x_env,
+        'rovers_sitters': env.rovers_sitters_env,
         'reorientation': env.reorientation_env,
         'realistic_imitation': env.imitation_env_p,
         'maze': env.maze_env,

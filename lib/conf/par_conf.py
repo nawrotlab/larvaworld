@@ -284,7 +284,9 @@ def set_ParDb():
         ['stride_reoccurence_rate', 'str_rr', sub('str', 'rr'), sub(hat('str'), 'rr'), '-'],
         ['length', 'l', 'l', hat('l'), l_body_length],
         ['amount_eaten', 'f_am', sub('m', 'feed'), sub(hat('m'), 'feed'), 'food intake (mg)'],
-        ['max_feed_amount', 'f_am_max', subsup('m', 'feed', 'm'), subsup(hat('m'), 'feed', 'm'), 'max food intake (mg)'],
+        ['amount_absorbed', 'f_ab', sub('m', 'absorbed'), sub(hat('m'), 'absorbed'), 'food absorbed (mg)'],
+        ['amount_faeces', 'f_out', sub('m', 'faeces'), sub(hat('m'), 'faeces'), 'faeces (mg)'],
+        ['max_V_bite', 'f_am_max', subsup('m', 'feed', 'm'), subsup(hat('m'), 'feed', 'm'), 'max food intake (mg)'],
         ['mass', 'm', 'm', hat('m'), l_mass],
         ['hunger', 'hunger', 'hunger', hat('hunger'), f'hunger (-)'],
         ['reserve_density', 'reserve_density', 'reserve_density', hat('reserve_density'), f'reserve density (-)'],
@@ -477,7 +479,25 @@ def set_ParDb():
                              # 'collect' : 'ang_activity'
                              }
 
+    par_db.loc['abs_r'] = {'par': 'food_absorption_efficiency',
+                            'symbol': r'$r_{absorption}$',
+                            'exp_symbol': '$\hat{r}_{absorption}$',
+                            'unit': 'food absorption ratio $(-)$',
+                            # 'lim': [-180, 180],
+                            # 'collect' : 'ang_activity'
+                            }
+
+    par_db.loc['f_out_r'] = {'par': 'faeces_ratio',
+                           'symbol': r'$r_{faeces}$',
+                           'exp_symbol': '$\hat{r}_{faeces}$',
+                           'unit': 'faeces ratio $(-)$',
+                           # 'lim': [-180, 180],
+                           # 'collect' : 'ang_activity'
+                           }
+
     par_db['lim'] = None
+    par_db['lim'].loc['f_out_r'] = [0, 1]
+    par_db['lim'].loc['abs_r'] = [0, 1]
     par_db['lim'].loc['fo2cen'] = [-180, 180]
     par_db['lim'].loc['b'] = [-180, 180]
     par_db['lim'].loc['fo'] = [0, 360]
@@ -485,7 +505,7 @@ def set_ParDb():
     par_db['lim'].loc['fov'] = [-300, 300]
     par_db['lim'].loc['rov'] = [-300, 300]
 
-    par_db['lim'].loc['f_am'] = [0.0, 10 ** -5]
+    # par_db['lim'].loc['f_am'] = [0.0, 10 ** -5]
     par_db['lim'].loc['hunger'] = [0.0, 1.0]
     par_db['lim'].loc['puppation_buffer'] = [0.0, 1.0]
     par_db['lim'].loc['reserve_density'] = [0.0, 2.0]

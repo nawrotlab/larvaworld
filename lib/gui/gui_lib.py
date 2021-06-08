@@ -1470,7 +1470,7 @@ class GraphList:
     def init_layout(self, name, fig_dict):
         list_key = f'{name}_GRAPH_LIST'
         values = list(fig_dict.keys())
-        h = int(np.max([len(values), 5]))
+        h = int(np.max([len(values), 10]))
         header=[sg.Text('Graphs', **t14_kws)]
         if self.next_to_header is not None :
             header+=self.next_to_header
@@ -1607,6 +1607,7 @@ class ClickableImage(Button) :
 def draw_canvas(canvas, figure, side='top', fill='both', expand=1):
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
     figure_canvas_agg.draw()
+    # figure_canvas_agg.get_tk_widget().pack()
     figure_canvas_agg.get_tk_widget().pack(side=side, fill=fill, expand=expand)
     return figure_canvas_agg
 

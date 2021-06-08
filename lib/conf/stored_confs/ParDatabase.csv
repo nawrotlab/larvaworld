@@ -3,8 +3,10 @@ cum_t,cum_dur,${t}_{cum}$,${\hat{t}}_{cum}$,time $(sec)$,,,cum_dur,<class 'float
 l_mu,length,$\bar{l}$,$\bar{\hat{l}}$,body length $(mm)$,,length_in_mm,body length,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 str_rr,stride_reoccurence_rate,${str}_{rr}$,${\hat{str}}_{rr}$,-,,,stride_reoccurence_rate,<class 'float'>,
 l,length,l,$\hat{l}$,body length $(mm)$,,length_in_mm,length,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-f_am,amount_eaten,${m}_{feed}$,${\hat{m}}_{feed}$,food intake (mg),"[0.0, 1e-05]",amount_eaten,amount_eaten,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-f_am_max,max_feed_amount,${m}_{feed}^{m}$,${\hat{m}}_{feed}^{m}$,max food intake (mg),,,max_feed_amount,<class 'float'>,
+f_am,amount_eaten,${m}_{feed}$,${\hat{m}}_{feed}$,food intake (mg),,amount_eaten,amount_eaten,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+f_ab,amount_absorbed,${m}_{absorbed}$,${\hat{m}}_{absorbed}$,food absorbed (mg),,amount_absorbed,amount_absorbed,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+f_out,amount_faeces,${m}_{faeces}$,${\hat{m}}_{faeces}$,faeces (mg),,amount_faeces,amount_faeces,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+f_am_max,max_V_bite,${m}_{feed}^{m}$,${\hat{m}}_{feed}^{m}$,max food intake (mg),,,max_V_bite,<class 'float'>,
 m,mass,m,$\hat{m}$,mass $(mg)$,,mass_in_mg,mass,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 hunger,hunger,hunger,$\hat{hunger}$,hunger (-),"[0.0, 1.0]",hunger,hunger,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 reserve_density,reserve_density,reserve_density,$\hat{reserve_density}$,reserve density (-),"[0.0, 2.0]",reserve_density,reserve_density,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
@@ -361,3 +363,5 @@ y,y,$y$,$\hat{y}$,Y position $(mm)$,,,y,<class 'float'>,
 x,x,$x$,$\hat{x}$,X position $(mm)$,,,x,<class 'float'>,
 Act_tur,turner_activity,$Act_{tur}$,$\hat{Act}_{tur}$,Turner activity,"[-20.0, 20.0]",ang_activity,turner_activity,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 fo2cen,orientation_to_center,$\theta_{or_{cen}}$,$\hat{theta}_{or_{cen}}$,orientation angle $(deg)$,"[-180, 180]",orientation_to_center_in_deg,orientation_to_center,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+abs_r,food_absorption_efficiency,$r_{absorption}$,$\hat{r}_{absorption}$,food absorption ratio $(-)$,"[0, 1]",food_absorption_efficiency,food_absorption_efficiency,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+f_out_r,faeces_ratio,$r_{faeces}$,$\hat{r}_{faeces}$,faeces ratio $(-)$,"[0, 1]",,faeces_ratio,<class 'float'>,

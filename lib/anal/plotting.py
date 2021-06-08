@@ -1357,34 +1357,60 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         leg_cols = cols
 
     labels0 = ['mass', 'length',
-               'reserve', 'f',
-               'reserve_density', 'hunger',
-               'pupation_buffer', 'explore2exploit_balance',
-               'f_filt']
+               'reserve', 'reserve_density', 'hunger',
+               'pupation_buffer',
+               'f','f_filt',
+               'explore2exploit_balance',
+               'M_gut','M_ingested','M_absorbed','M_faeces','M_not_digested',
+               'R_faeces','R_absorbed','R_not_digested','gut_occupancy'
+               ]
     ylabels0 = ['wet weight $(mg)$', 'body length $(mm)$',
-                r'reserve $(J)$', r'functional response $(-)$',
-                r'reserve density $(-)$', r'hunger drive $(-)$',
-                r'pupation buffer $(-)$', r'exploit VS explore $(-)$',
-                r'functional response $(-)$', ]
-    if mode == 'minimal':
-        idx = [2, 4, 5, 6]
+                r'reserve $(J)$', r'reserve density $(-)$', r'hunger drive $(-)$',
+                r'pupation buffer $(-)$',
+                r'functional response $(-)$', r'functional response $(-)$',
+                r'exploit VS explore $(-)$',
+               'gut content $(mg)$','food intake $(mg)$','food absorption $(mg)$','faeces $(mg)$','food not digested $(mg)$',
+               'faeces fraction','absorption efficiency','fraction not digested','gut occupancy'
+                ]
+    if mode == 'energy':
+        idx = [2, 3, 4, 5]
+    elif mode == 'growth':
+        idx = [0, 1, 5]
     elif mode == 'full':
-        idx = [0, 1, 2, 6]
-    elif mode == 'complete':
-        idx = [0, 1, 2, 4, 5, 6]
+        idx = [0, 1, 2, 3, 4, 5]
+    elif mode == 'feeding':
+        idx = [6, 7, 3, 4]
     elif mode in labels0:
         idx = [labels0.index(mode)]
+    elif mode == 'food_mass':
+        idx = [9, 10, 11, 12, 13]
+    elif mode == 'food_ratio':
+        idx = [17, 15, 16, 14]
+    elif mode == 'food_mass_1':
+        idx = [9, 10, 11]
+    elif mode == 'food_mass_2':
+        idx = [12, 13]
+    elif mode == 'food_ratio_1':
+        idx = [17, 15]
+    elif mode == 'food_ratio_2':
+        idx = [16, 14]
 
     labels = [labels0[i] for i in idx]
     ylabels = [ylabels0[i] for i in idx]
 
-    figsize = (15, 4 * len(labels))
+    figsize = (15, 6 * len(labels))
     fig, axs = plt.subplots(len(labels), figsize=figsize, sharex=True)
     axs = axs.ravel() if len(labels) > 1 else [axs]
 
     t0s, t1s, t2s, t3s, max_ages = [], [], [], [], []
     for d, id, c in zip(deb_dicts, ids, cols):
         t0, t1, t2, t3, age = d['birth'], d['pupation'], d['death'], d['sim_start'] + d['birth'], np.array(d['age'])
+        if sim_only :
+            t0-=t3
+            t1-=t3
+            t2-=t3
+            age-=t3
+            t3 = 0
         if time_unit == 'hours':
             pass
             tickstep = 24
@@ -1410,9 +1436,11 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         max_ages.append(age[-1])
 
         for j, (l, yl) in enumerate(zip(labels, ylabels)):
+
             if l == 'f_filt':
                 P = d['f']
-                sos = signal.butter(N=1, Wn=4, btype='lowpass', analog=False, fs=len(P) / (age[-1] - t0), output='sos')
+                # print(d['fr'])
+                sos = signal.butter(N=1, Wn=d['fr']/2.5, btype='lowpass', analog=False, fs=d['fr'], output='sos')
                 P = signal.sosfiltfilt(sos, P)
             else:
                 P = d[l]
@@ -1429,7 +1457,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             ax.set_ylabel(yl)
             ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
 
-            if l in ['pupation_buffer', 'explore2exploit_balance']:
+            if l in ['pupation_buffer', 'explore2exploit_balance', 'R_faeces','R_absorbed','R_not_digested','gut_occupancy']:
                 ax.set_ylim([0, 1])
             if l == 'f':
                 ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
@@ -1463,14 +1491,14 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         except:
             pass
     if sim_only:
-        axs[-1].set_xlim([np.min(t3s), np.max(max_ages)])
+        axs[-1].set_xlim([0, np.max(max_ages)])
         axs[-1].xaxis.set_major_locator(ticker.MaxNLocator(5))
     else:
         axs[-1].set_xticks(ticks=np.arange(0, np.max(max_ages), tickstep))
     dataset_legend(leg_ids, leg_cols, ax=axs[0], loc='upper left', fontsize=20, prop={'size': 15})
-    # axs[0].legend(handles=[patches.Patch(color=c, label=id) for c, id in zip(leg_cols, leg_ids)],
-    #               labels=leg_ids, fontsize=20, loc='upper left', prop={'size': 15})
-    fig.subplots_adjust(top=0.95, bottom=0.2, left=0.1, right=0.93, hspace=0.02)
+    fig.subplots_adjust(top=0.95, bottom=0.2, left=0.15, right=0.93, hspace=0.02)
+    # plt.show()
+    # raise
     return process_plot(fig, save_to, save_as, return_fig)
 
 
@@ -2268,7 +2296,7 @@ def plot_gut(datasets, labels=None, save_to=None, save_as=None, return_fig=False
     trange = np.linspace(t0, t1, Nticks)
     fig, axs = plt.subplots(1, 1, figsize=(10, 5))
     for d, lab, c in zip(datasets, labels, colors):
-        dst_df = d.step_data['filled_gut_ratio'] * 100
+        dst_df = d.step_data['gut_occupancy'] * 100
         dst_m = dst_df.groupby(level='Step').quantile(q=0.5)
         dst_u = dst_df.groupby(level='Step').quantile(q=0.75)
         dst_b = dst_df.groupby(level='Step').quantile(q=0.25)
@@ -2336,6 +2364,8 @@ def plot_food_amount(datasets, labels=None, save_to=None, save_as=None, filt_amo
     axs.xaxis.set_major_locator(ticker.MaxNLocator(5))
     axs.legend(loc='upper left', fontsize=9)
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.95, hspace=.005, wspace=0.05)
+    # plt.show()
+    # raise
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -2468,6 +2498,8 @@ def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals
     plt.subplots_adjust(bottom=0.15, left=0.2, right=0.95, top=0.95)
     # plt.show()
     filename = f'{par}.{suf}'
+    # plt.show()
+    # raise
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -3395,7 +3427,6 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
     axs[0].legend(loc='upper left', prop={'size': 20})
     if Ndatasets > 1:
         fit_df.to_csv(fit_filepath, index=True, header=True)
-        print(f'Tests saved as {fit_filename}.')
     return process_plot(fig, save_to, filename, return_fig)
 
 
@@ -3988,7 +4019,8 @@ def save_plot(fig, filepath, filename=None):
     # fig.clear()
     plt.close(fig)
     if filename is not None:
-        print(f'Plot saved as {filename}')
+        pass
+        # print(f'Plot saved as {filename}')
 
 
 def plot_config(datasets, labels, save_to, subfolder=None):

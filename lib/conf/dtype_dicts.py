@@ -352,7 +352,12 @@ all_null_dicts = {
                    'absorption': 0.5,
                    'hunger_as_EEB': True,
                    'hunger_gain': 12.0,
-                   'deb_on': True},
+                   'deb_on': True,
+                   'assimilation_mode': 'f',
+                   # 'DEB_dt' : None
+                   'DEB_dt' : 120.0
+                   },
+
     'crawler': {'waveform': 'realistic',
                 'freq_range': [0.5, 2.5],
                 'initial_freq': 'sample',  # From D1 fit
@@ -391,7 +396,7 @@ all_null_dicts = {
     'feeder': {'feeder_freq_range': [1.0, 3.0],
                'feeder_initial_freq': 2.0,
                'feed_radius': 0.1,
-               'feed_capacity': 0.00001},
+               'feed_capacity': 0.0002},
     'memory': {'DeltadCon': 0.1,
                'state_spacePerOdorSide': 0,
                'gain_space': [-300.0, -50.0, 50.0, 300.0],
@@ -528,7 +533,9 @@ def get_dict_dtypes(name, **kwargs):
                        'absorption': float,
                        'hunger_as_EEB': bool,
                        'hunger_gain': float,
-                       'deb_on': bool},
+                       'deb_on': bool,
+                       'assimilation_mode': ['f', 'bite'],
+                       'DEB_dt' : float},
         'crawler': {'waveform': ['realistic', 'square', 'gaussian', 'constant'],
                     'freq_range': Tuple[float, float],
                     'initial_freq': float,  # From D1 fit

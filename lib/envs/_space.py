@@ -113,9 +113,10 @@ class ValueGrid:
 
 
 class FoodGrid(ValueGrid):
-    def __init__(self, default_color=(0, 255, 0), quality=1, **kwargs):
+    def __init__(self, default_color=(0, 255, 0), quality=1, density=0.17, **kwargs):
         super().__init__(default_color=default_color, min_value=0.0, **kwargs)
         self.quality = quality
+        self.density = density
 
     def get_color(self, v):
         v0 = self.initial_value

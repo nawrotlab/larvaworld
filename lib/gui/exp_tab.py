@@ -82,6 +82,7 @@ def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
     elif event == 'CONF_LIFE':
         collapsibles['Life'].update(window, life_conf())
     elif event == 'RUN_EXP' and values['EXP_CONF'] != '':
+        window['EXP_COMPLETE'].update(visible=False)
         exp_conf = get_exp_conf(window, values, collapsibles)
         window['EXP_PROGRESSBAR'].update(0, max=exp_conf['sim_params']['sim_dur'] * 60 / exp_conf['sim_params']['dt'])
         exp_conf['enrich'] = True

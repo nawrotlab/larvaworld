@@ -39,16 +39,16 @@ reorientation = {
 }
 growth = {
     'env_params': 'growth',
-    'sim_params': dtypes.get_dict('sim_params', sim_dur=600.0),
+    'sim_params': dtypes.get_dict('sim_params', sim_dur=24*60.0, dt=0.2),
     # 'collect_effectors': ['feeder'],
     # 'collections': ['pose'],
-    'collections': ['feeder', 'deb'],
+    'collections': ['deb'],
 }
 rovers_sitters = {
 
     'env_params': 'rovers_sitters',
-    'sim_params': dtypes.get_dict('sim_params', sim_dur=600.0),
-    'collections': ['feeder', 'deb'],
+    'sim_params': dtypes.get_dict('sim_params', sim_dur=180.0, dt=0.2),
+    'collections': ['feeder', 'deb', 'gut'],
     # 'age_in_hours' : 0
     # 'starvation_hours': [[24, 48]]
 }
