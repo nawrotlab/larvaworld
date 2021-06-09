@@ -196,7 +196,11 @@ def set_ParDb():
         [lv, 'lv', sub('v', 'l'), sub(hat('v'), 'l'), l_vel],
         [la, 'la', sub(dot('v'), 'l'), sub(dot(hat('v')), 'l'), l_acc],
         [cum_d, 'cum_d', sub('d', 'cum'), sub(hat('d'), 'cum'), l_dst],
-        [fv, 'fv', sub('f', 'v'), sub(hat('f'), 'v'), l_freq],
+        ['dst_to_center', 'd_cent', sub('d', 'cent'), sub(hat('d'), 'cent'), l_dst],
+        ['dst_to_chemotax_odor', 'd_chem', sub('d', 'chem'), sub(hat('d'), 'chem'), l_dst],
+        # [d_, 'cum_d', sub('d', 'cum'), sub(hat('d'), 'cum'), l_dst],
+        [fv, 'fv', sub('f', 'v'), sub(hat('f'), 'v'), l_freq]
+
     ])
 
     sc_lin_ar = np.array([
@@ -316,7 +320,7 @@ def set_ParDb():
     tor_ar = generate_entries(bases=temp_tor, types=['mean', 'std']).tolist()
     tor_ar.append(['tortuosity', 'tor', 'tor', hat('tor'), '-'])
     tor_ar = np.array(tor_ar)
-    random_ar1 = generate_entries(bases=lin_ar[:-1, :].tolist(), types=['mean', 'std'])
+    random_ar1 = generate_entries(bases=lin_ar[:-1, :].tolist(), types=['mean', 'std', 'fin'])
     sc_random_ar1 = generate_entries(bases=random_ar1.tolist(), types=['scal'])
 
     srd_sc_random_ar1 = generate_entries(bases=sc_random_ar1.tolist(), types=['stride'])
@@ -728,4 +732,7 @@ if __name__ == '__main__':
     # print(mode(get_par('c_odor1')['dtype']))
     # print(get_par_dict(short='fov'))
     # print(par_db.loc['g_odor1'])
-    print(par_db.loc['disp40_fin'])
+    print('final_dst_to_chemotax_odor' in list(step_database.keys()))
+    print(par_in_db(par='final_dst_to_chemotax_odor'))
+    # print(get_par_dict(par='cum_dst', retrieve_from='par_db'))
+    print(par_db.loc['d_chem_fin'])

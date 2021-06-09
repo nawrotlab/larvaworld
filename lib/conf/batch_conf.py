@@ -16,7 +16,7 @@ def batch_methods(run='default', post='default', final='null'):
 
 
 odor_pref_batch = {
-    'exp': 'odor_preference',
+    'exp': 'odor_pref_test',
     'space_search': {
         'pars': ['CS.mean', 'UCS.mean'],
         'ranges': [(-100.0, 100.0), (-100.0, 100.0)],
@@ -59,15 +59,15 @@ chemotax_batch = {
         'Ngrid': [3, 3]
     },
     'methods': batch_methods(),
-    'optimization': optimization('final_scaled_dst_to_chemotax_odor'),
+    'optimization': optimization('final_dst_to_chemotax_odor'),
     'run_kwargs' : {'save_data_flag': False}
 }
 
 uniform_food_batch = {
     'exp': 'uniform_food',
     'space_search': {
-        'pars': ['EEB', 'feeder_interference_free_window'],
-        'ranges': [(0.0, 1.0), (0.0, 1.0)],
+        'pars': ['EEB', 'feeder_initial_freq'],
+        'ranges': [(0.0, 1.0), (1.5, 2.5)],
         'Ngrid': [3, 3]
     },
     'methods': batch_methods(),
