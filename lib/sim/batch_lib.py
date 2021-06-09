@@ -152,6 +152,7 @@ def load_default_configuration(traj, sim_config):
         sim_dict = fun.flatten_dict(sim, parent_key='sim_params', sep='.')
         for k, v in sim_dict.items():
             traj.f_aconf(k, v)
+        # print(sim_dict)
 
     if env is not None:
         env_dict = fun.flatten_dict(env, parent_key='env_params', sep='.')
@@ -333,7 +334,7 @@ def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag
     env_params = fun.reconstruct_dict(traj.f_get('env_params'))
     sim_params = fun.reconstruct_dict(traj.f_get('sim_params'))
     life_params = fun.reconstruct_dict(traj.f_get('life_params'))
-
+    # print(sim_params)
     sim_params['sim_id'] = f'run_{traj.v_idx}'
     d = run_sim(
         env_params=env_params,

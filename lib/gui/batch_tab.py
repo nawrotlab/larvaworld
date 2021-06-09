@@ -8,10 +8,10 @@ from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     save_gui_conf, delete_gui_conf, named_bool_button, GraphList, b12_kws, b_kws, \
     graphic_button, t10_kws, t12_kws, t18_kws, t8_kws, t6_kws, CollapsibleTable, w_kws, default_run_window, col_kws, \
     col_size, t24_kws
-from lib.gui.exp_tab import update_sim, get_exp_conf
+from lib.gui import exp_tab
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 import lib.conf.dtype_dicts as dtypes
-from lib.sim.single_run import get_exp_conf
+import lib.sim.single_run as run
 
 
 def update_batch(batch, window, collapsibles):
@@ -35,7 +35,7 @@ def get_batch(window, values, collapsibles, exp=None):
 
 
 def build_batch_tab():
-    dicts={}
+    dicts = {}
     collapsibles = {}
     graph_lists = {}
 
@@ -74,7 +74,7 @@ def build_batch_tab():
                        collapsibles['space_search'].get_section(),
                        collapsibles['Optimization'].get_section(),
                        [graph_lists['BATCH'].get_layout()]
-                       ],**col_kws, size=col_size(0.3))
+                       ], **col_kws, size=col_size(0.3))
 
     l_batch = [[l_batch0, graph_lists['BATCH'].canvas]]
     return l_batch, collapsibles, graph_lists, dicts
@@ -111,7 +111,7 @@ def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
             update_batch(conf, window, collapsibles)
             if 'EXP_CONF' in window.element_list():
                 window.Element('EXP_CONF').Update(value=conf['exp'])
-                update_sim(window, conf['exp'], collapsibles)
+                exp_tab.update_sim(window, conf['exp'], collapsibles)
             else:
                 dicts['batch_exp'] = conf['exp']
 
@@ -130,17 +130,11 @@ def eval_batch(event, values, window, collapsibles, dicts, graph_lists):
             if 'EXP_CONF' not in window.element_list() or values['EXP_CONF'] == '':
                 exp = dicts['batch_exp']
                 batch = get_batch(window, values, collapsibles, exp=exp)
-                sim_params = {
-                    'sim_id': None,
-                    'sim_dur': 1.0,
-                    'dt': 0.1,
-                    'path': None,
-                    'Box2D': False,
-                }
-                exp_conf = get_exp_conf(exp, sim_params)
+                sim_params = loadConf(exp, 'Exp')['sim_params']
+                exp_conf = run.get_exp_conf(exp, sim_params)
             else:
                 batch = get_batch(window, values, collapsibles)
-                exp_conf = get_exp_conf(window, values, collapsibles)
+                exp_conf = exp_tab.get_exp_conf(window, values, collapsibles)
             batch_kwargs = prepare_batch(batch, batch_id, exp_conf)
             # dicts['batch_kwargs']=batch_kwargs
             #
@@ -165,7 +159,7 @@ if __name__ == "__main__":
         'batch_results': {},
         'analysis_data': {},
     }
-    l, col, graphs,d = build_batch_tab()
+    l, col, graphs, d = build_batch_tab()
     dicts.update(d)
     w = sg.Window('Batch gui', l, size=(1800, 1200), **w_kws, location=(300, 100))
     while True:

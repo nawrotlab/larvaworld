@@ -416,7 +416,7 @@ all_null_dicts = {
     'sim_params': {
         'sim_id': None,
         'path': None,
-        'sim_dur': 3.0,
+        'sim_dur': 1.0,
         'dt': 0.1,
         'Box2D': False,
         'sample_dataset': 'reference'

@@ -61,33 +61,35 @@ def combine_videos_4to1(filenames=None, file_dir='.', save_as='combined_videos.m
 
     print(f'Videos combined as {final_file}')
 
+
 def append_pdf(input, output):
     [output.addPage(input.getPage(page_num)) for page_num in range(input.numPages)]
 
-def combine_pdfs(file_dir='.', save_as="final.pdf", pref='') :
+
+def combine_pdfs(file_dir='.', save_as="final.pdf", pref=''):
     merger = PdfFileMerger()
-    files=[]
+    files = []
     for dirpath, dirnames, filenames in os.walk(file_dir):
         for filename in [f for f in filenames if (f.endswith(".pdf") and f.startswith(pref))]:
             files.append(os.path.join(dirpath, filename))
     # print(files)
     files.sort()
-    for f in files :
+    for f in files:
         merger.append(PdfFileReader(open(f, 'rb')))
     filepath = os.path.join(file_dir, save_as)
     merger.write(filepath)
     print(f'Concatenated pdfs saved as {filepath}')
 
 
-def render_mpl_table(data, col_width=3.0, row_height=0.625, font_size=14,
-                     header_color='#40466e', row_colors=['#f1f1f2', 'W'], edge_color='W',
+def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14,
+                     header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black',
                      bbox=[0, 0, 1, 1], header_columns=0, ax=None, **kwargs):
     if ax is None:
         size = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
         fig, ax = plt.subplots(figsize=size)
         ax.axis('off')
-    else :
-        fig  = None
+    else:
+        fig = None
 
     mpl_table = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns, **kwargs)
 
@@ -97,7 +99,7 @@ def render_mpl_table(data, col_width=3.0, row_height=0.625, font_size=14,
     for k, cell in six.iteritems(mpl_table._cells):
         cell.set_edgecolor(edge_color)
         if k[0] == 0 or k[1] < header_columns:
-            cell.set_text_props(weight='bold', color='W')
+            cell.set_text_props(weight='bold', color='w')
             cell.set_facecolor(header_color)
         else:
             cell.set_facecolor(row_colors[k[0] % len(row_colors)])
