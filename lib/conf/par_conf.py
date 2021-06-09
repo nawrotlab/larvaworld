@@ -574,6 +574,11 @@ def set_ParDb():
         'pau_t_std': 'pause duration std',
         'str_tr': 'crawl time ratio',
         'pau_tr': 'pause time ratio',
+        'Ltur_tr': 'Lturn time ratio',
+        'Rtur_tr': 'Rturn time ratio',
+        'tur_tr': 'turn time ratio',
+        'sdisp40_fin': r'final dispersion$_{scaled}$ 40 sec',
+        'disp40_fin': r'final dispersion 40 sec',
         **{f'tor{ii}' : rf'tortuosity$_{{{ii} sec}}$' for ii in [2,5,10,20]},
         **{f'tor{ii}_mu' : rf'tortuosity$_{{{ii} sec}}$ mean' for ii in [2,5,10,20]},
         **{f'tor{ii}_std' : rf'tortuosity$_{{{ii} sec}}$ std' for ii in [2,5,10,20]},
@@ -723,4 +728,4 @@ if __name__ == '__main__':
     # print(mode(get_par('c_odor1')['dtype']))
     # print(get_par_dict(short='fov'))
     # print(par_db.loc['g_odor1'])
-    print(par_db.loc['tur_y1'])
+    print(par_db.loc['disp40_fin'])

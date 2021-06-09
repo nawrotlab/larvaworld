@@ -10,7 +10,7 @@ from lib.gui.env_tab import update_env, get_env
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     named_bool_button, save_gui_conf, delete_gui_conf, GraphList, CollapsibleTable, \
     graphic_button, t10_kws, t18_kws, w_kws, default_run_window, col_kws, col_size, window_size, t24_kws, t8_kws, \
-    t16_kws, t2_kws, t14_kws, t5_kws, t11_kws, t1_kws, t15_kws, t6_kws
+    t16_kws, t2_kws, t14_kws, t5_kws, t11_kws, t1_kws, t15_kws, t6_kws, t12_kws
 from lib.gui.draw_env import draw_env
 from lib.gui.life_conf import life_conf
 from lib.sim.single_run import run_sim, sim_analysis
@@ -43,9 +43,9 @@ def build_sim_tab():
                 [sg.Text('Timestep :', **t8_kws),
                  sg.Spin(values=np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(), initial_value=0.1, key='dt',
                          **t6_kws), sg.Text('seconds', **t8_kws, justification='center')],
-                [sg.Text('Sample :', **t8_kws),
+                [sg.Text('Sample :', **t11_kws),
                  sg.Combo(list(loadConfDict('Ref').keys()),default_value='reference', key='sample_dataset',
-                          enable_events=True, readonly=True,tooltip='The reference dataset to sample parameters from.', **t16_kws)
+                          enable_events=True, readonly=True,tooltip='The reference dataset to sample parameters from.', **t12_kws)
                  ],
                 named_bool_button('Box2D', False)]
     collapsibles['Configuration'] = Collapsible('Configuration', True, sim_conf)
@@ -57,8 +57,16 @@ def build_sim_tab():
     for s in [s1, s3]:
         collapsibles.update(s.get_subdicts())
     graph_lists['EXP'] = GraphList('EXP')
+
+    l_env = [sg.Col([
+        [sg.Text('Environment', **t12_kws, tooltip='The currently selected environment configuration')],
+
+         [sg.Combo(list(loadConfDict('Env').keys()), key='ENV_CONF2', enable_events=True, readonly=True,
+                  tooltip='The currently loaded environment.', **t24_kws)],
+    ])]
     l_conf = [[sg.Col([
         l_exp,
+        l_env,
         collapsibles['Configuration'].get_section(),
         collapsibles['Output'].get_section(),
         collapsibles['Life'].get_section(),
@@ -86,8 +94,8 @@ def eval_sim(event, values, window, collapsibles, dicts, graph_lists):
         exp_conf = get_exp_conf(window, values, collapsibles)
         window['EXP_PROGRESSBAR'].update(0, max=exp_conf['sim_params']['sim_dur'] * 60 / exp_conf['sim_params']['dt'])
         exp_conf['enrich'] = True
-        # default_vis=dtypes.get_dict('visualization', mode='video', video_speed=60)
-        default_vis=dtypes.get_dict('visualization')
+        default_vis=dtypes.get_dict('visualization', mode='video', video_speed=60)
+        # default_vis=dtypes.get_dict('visualization')
         vis_kwargs = collapsibles['Visualization'].get_dict(values, window) if 'Visualization' in list(
             collapsibles.keys()) else default_vis
         d = run_sim(**exp_conf, vis_kwargs=vis_kwargs, progress_bar=window['EXP_PROGRESSBAR'])
@@ -110,6 +118,7 @@ def update_sim(window, exp_id, collapsibles):
     exp_conf = loadConf(exp_id, 'Exp')
     sim = exp_conf['sim_params']
     env = exp_conf['env_params']
+    window.Element('ENV_CONF2').Update(value=env)
     if 'ENV_CONF' in window.element_list():
         if type(env) == str:
             window.Element('ENV_CONF').Update(value=env)
@@ -144,20 +153,36 @@ def get_sim_conf(window, values):
 
 def get_exp_conf(window, values, collapsibles, as_entry=False):
     sim=get_sim_conf(window, values)
-    if 'ENV_CONF' not in window.element_list() or values['ENV_CONF'] == '':
-        env = loadConf(values['EXP_CONF'], 'Exp')['env_params']
-        if not as_entry and type(env) == str:
-            env = loadConf(env, 'Env')
+    env_key = 'ENV_CONF' if 'ENV_CONF' in window.element_list() else 'ENV_CONF2'
+    env_str = values[env_key] if values[env_key] != '' else loadConf(values['EXP_CONF'], 'Exp')['env_params']
+    if as_entry :
+        env = env_str
+        sim['sim_id'] = None
+        sim['path'] = None
+    else :
+        if 'ENV_CONF' in window.element_list() and values['ENV_CONF'] != '':
+            env = get_env(window, values, collapsibles)
+        else :
+            env = loadConf(env_str, 'Env')
             for k, v in env['larva_params'].items():
                 if type(v['model']) == str:
                     v['model'] = loadConf(v['model'], 'Model')
-    else:
-        if not as_entry:
-            env = get_env(window, values, collapsibles)
-        else:
-            env = values['ENV_CONF']
-            sim['sim_id']=None
-            sim['path']=None
+
+
+    # if 'ENV_CONF' not in window.element_list() or values['ENV_CONF'] == '':
+    #     env = loadConf(values['EXP_CONF'], 'Exp')['env_params']
+    #     if not as_entry and type(env) == str:
+    #         env = loadConf(env, 'Env')
+    #         for k, v in env['larva_params'].items():
+    #             if type(v['model']) == str:
+    #                 v['model'] = loadConf(v['model'], 'Model')
+    # else:
+    #     if not as_entry:
+    #         env = get_env(window, values, collapsibles)
+    #     else:
+    #         env = values['ENV_CONF']
+    #         sim['sim_id']=None
+    #         sim['path']=None
 
     exp_conf = {'env_params': env,
                 'sim_params': sim,

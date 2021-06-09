@@ -12,6 +12,18 @@ from lib.gui.life_conf import life_conf
 from lib.sim.single_run import run_sim, sim_analysis
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 
+def env_col() :
+    l_env0 = [sg.Col([
+        [sg.Text('Environment', **t10_kws, tooltip='The currently selected environment configuration'),
+         graphic_button('load', 'LOAD_ENV', tooltip='Load a stored environment configuration.'),
+         graphic_button('edit', 'CONF_ENV', tooltip='Configure an existing or draw an entirely new environment.'),
+         graphic_button('data_add', 'SAVE_ENV', tooltip='Save a new environment configuration.'),
+         graphic_button('data_remove', 'DELETE_ENV', tooltip='Delete an existing environment configuration.'),
+         ],
+        [sg.Combo(list(loadConfDict('Env').keys()), key='ENV_CONF', enable_events=True, readonly=True,
+                  tooltip='The currently loaded environment.', **t24_kws)],
+    ])]
+    return l_env0
 
 def init_env(collapsibles):
     s1 = CollapsibleDict('Arena', True, dict=dtypes.get_dict('arena'), type_dict=dtypes.get_dict_dtypes('arena'))
@@ -92,16 +104,7 @@ def build_env_tab():
     for s in [s1, s2, s3, s4]:
         collapsibles.update(**s.get_subdicts())
 
-    l_env0 = [sg.Col([
-        [sg.Text('Environment', **t10_kws, tooltip='The currently selected environment configuration'),
-         graphic_button('load', 'LOAD_ENV', tooltip='Load a stored environment configuration.'),
-         graphic_button('edit', 'CONF_ENV', tooltip='Configure an existing or draw an entirely new environment.'),
-         graphic_button('data_add', 'SAVE_ENV', tooltip='Save a new environment configuration.'),
-         graphic_button('data_remove', 'DELETE_ENV', tooltip='Delete an existing environment configuration.'),
-         ],
-        [sg.Combo(list(loadConfDict('Env').keys()), key='ENV_CONF', enable_events=True, readonly=True,
-                  tooltip='The currently loaded environment.', **t24_kws)],
-    ])]
+    l_env0 = env_col()
     l_env1 = init_env(collapsibles)
     # l_env = [[sg.Col([l_env0, l_env1], **col_kws)]]
     l_env = [[sg.Col([l_env0, l_env1],**col_kws, size=col_size(0.5))]]

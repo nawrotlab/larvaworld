@@ -1479,8 +1479,9 @@ class GraphList:
 
     def init_canvas(self, name):
         canvas_key = f'{name}_CANVAS'
-        figure_w, figure_h = 800, 800
-        canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key=canvas_key, background_color='Lightblue')]], **col_kws)
+        s = (1200, 1200)
+        canvas = sg.Col([[sg.Canvas(size=s, key=canvas_key, background_color='Lightblue')]],
+                        scrollable=True,vertical_scroll_only=False,expand_y=True, expand_x=True)
         return canvas, canvas_key
 
     def draw_fig(self, window, fig):

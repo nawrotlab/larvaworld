@@ -27,9 +27,9 @@ from lib.stor import paths
 '''
 Generic plot function. Uses the next two functions internally'''
 
-plt_conf = {'axes.labelsize': 22,
-            'axes.titlesize': 30,
-            'figure.titlesize': 30,
+plt_conf = {'axes.labelsize': 20,
+            'axes.titlesize': 25,
+            'figure.titlesize': 25,
             'xtick.labelsize': 20,
             'ytick.labelsize': 20,
             'legend.fontsize': 20,
@@ -3266,7 +3266,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
         if mode == 'basic':
             par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
                           'str_tr', 'pau_tr', 'Ltur_tr', 'Rtur_tr',
-                          'tor20_mu', 'sdisp40_fin', 'b_mu', 'bv_mu']
+                          'tor20_mu', 'disp40_fin', 'b_mu', 'bv_mu']
         elif mode == 'minimal':
             par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
                           'cum_t', 'str_tr', 'pau_tr', 'tor',
@@ -3343,8 +3343,9 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
 
     Ncols = int(np.min([Npars, 4]))
     Nrows = int(np.ceil(Npars / Ncols))
+    fig_s=5
 
-    fig, axs = plt.subplots(Nrows, Ncols, figsize=(7 * Ncols, 7 * Nrows), sharey=True)
+    fig, axs = plt.subplots(Nrows, Ncols, figsize=(fig_s * Ncols, fig_s * Nrows), sharey=True)
     axs = axs.ravel() if Nrows * Ncols > 1 else [axs]
     for i, (p, symbol, xlabel, xlim, disp) in enumerate(zip(pars, symbols, xlabels, xlims, disps)):
         # if xlim is not None :
@@ -3422,7 +3423,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
                 axs[i].text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k', fontsize=15,
                             transform=axs[i].transAxes)
 
-    plt.subplots_adjust(wspace=0.02, hspace=0.3, left=0.07, right=0.97, top=1 - (0.1 / Nrows), bottom=0.12 / Nrows)
+    plt.subplots_adjust(wspace=0.02, hspace=0.15*Nrows, left=0.07, right=0.97, top=1 - (0.1 / Nrows), bottom=0.15 / Nrows)
     plt.ylim(ylim)
     axs[0].legend(loc='upper left', prop={'size': 20})
     if Ndatasets > 1:
