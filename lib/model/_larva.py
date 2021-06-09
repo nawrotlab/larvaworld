@@ -242,6 +242,7 @@ class LarvaSim(BodySim, Larva):
             # if self.feeder_motion and source is not None and self.empty_gut_M >= a_max:
             grid = self.model.food_grid
             amount = -grid.add_cell_value(source, -a_max)*grid.density if grid else source.subtract_amount(a_max)*source.density
+            # print(a_max, grid.density, a_max*grid.density, amount)
             self.feed_success_counter += 1
             self.amount_eaten += amount*1000
             # self.update_gut(amount)
@@ -264,6 +265,7 @@ class LarvaSim(BodySim, Larva):
             pass
 
     def get_max_V_bite(self):
+        # print(self.V*10**6)
         return self.brain.feeder.feed_capacity * self.V  # ** (2 / 3)
 
     def build_energetics(self, energetic_pars):

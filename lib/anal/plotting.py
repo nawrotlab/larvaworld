@@ -1361,17 +1361,22 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                'pupation_buffer',
                'f','f_filt',
                'explore2exploit_balance',
-               'M_gut','M_ingested','M_absorbed','M_faeces','M_not_digested',
-               'R_faeces','R_absorbed','R_not_digested','gut_occupancy'
+               'M_gut','M_ingested','M_absorbed','M_faeces','M_not_digested','M_not_absorbed',
+               'R_faeces','R_absorbed','R_not_digested','gut_occupancy',
+               'deb_p_A', 'sim_p_A', 'gut_p_A', 'gut_f'
                ]
     ylabels0 = ['wet weight $(mg)$', 'body length $(mm)$',
                 r'reserve $(J)$', r'reserve density $(-)$', r'hunger drive $(-)$',
                 r'pupation buffer $(-)$',
-                r'functional response $(-)$', r'functional response $(-)$',
+                r'f $^{sim}$ $(-)$', r'f $_{filt}^{sim}$ $(-)$',
                 r'exploit VS explore $(-)$',
-               'gut content $(mg)$','food intake $(mg)$','food absorption $(mg)$','faeces $(mg)$','food not digested $(mg)$',
-               'faeces fraction','absorption efficiency','fraction not digested','gut occupancy'
+               'gut content $(mg)$','food intake $(mg)$','food absorption $(mg)$',
+                'faeces $(mg)$','food not digested $(mg)$', 'product not absorbed $(mg)$',
+               'faeces fraction','absorption efficiency','fraction not digested','gut occupancy',
+                r'p$_{A}^{deb}$ $(\mu J)$', r'p$_{A}^{sim}$ $(\mu J)$', r'p$_{A}^{gut}$ $(\mu J)$', r'f $^{gut}$ $(-)$'
+                # r'(deb) assimilation energy $(J)$', r'(f) assimilation energy $(J)$', r'(gut) assimilation energy $(J)$'
                 ]
+    sharey=False
     if mode == 'energy':
         idx = [2, 3, 4, 5]
     elif mode == 'growth':
@@ -1383,23 +1388,29 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     elif mode in labels0:
         idx = [labels0.index(mode)]
     elif mode == 'food_mass':
-        idx = [9, 10, 11, 12, 13]
+        idx = [9, 10, 11, 12, 13, 14]
     elif mode == 'food_ratio':
-        idx = [17, 15, 16, 14]
+        idx = [17, 15, 16, 18]
     elif mode == 'food_mass_1':
         idx = [9, 10, 11]
     elif mode == 'food_mass_2':
-        idx = [12, 13]
+        idx = [12, 13, 14]
     elif mode == 'food_ratio_1':
-        idx = [17, 15]
+        idx = [18, 16]
     elif mode == 'food_ratio_2':
-        idx = [16, 14]
+        idx = [17, 15]
+    elif mode == 'assimilation':
+        idx = [19,20, 21]
+        sharey = True
+    elif mode == 'fs':
+        idx = [6, 7, 22]
+        sharey = True
 
     labels = [labels0[i] for i in idx]
     ylabels = [ylabels0[i] for i in idx]
 
-    figsize = (15, 6 * len(labels))
-    fig, axs = plt.subplots(len(labels), figsize=figsize, sharex=True)
+    figsize = (10, 8 * len(labels))
+    fig, axs = plt.subplots(len(labels), figsize=figsize, sharex=True, sharey=sharey)
     axs = axs.ravel() if len(labels) > 1 else [axs]
 
     t0s, t1s, t2s, t3s, max_ages = [], [], [], [], []
@@ -1440,7 +1451,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             if l == 'f_filt':
                 P = d['f']
                 # print(d['fr'])
-                sos = signal.butter(N=1, Wn=d['fr']/2.5, btype='lowpass', analog=False, fs=d['fr'], output='sos')
+                sos = signal.butter(N=1, Wn=d['fr']/1000, btype='lowpass', analog=False, fs=d['fr'], output='sos')
                 P = signal.sosfiltfilt(sos, P)
             else:
                 P = d[l]
@@ -1459,9 +1470,11 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
 
             if l in ['pupation_buffer', 'explore2exploit_balance', 'R_faeces','R_absorbed','R_not_digested','gut_occupancy']:
                 ax.set_ylim([0, 1])
-            if l == 'f':
+            if l == 'f' or mode=='fs':
                 ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
                 ax.set_ylim(ymin=0)
+            if mode == 'assimilation':
+                ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
 
         for t in [0, t0, t1, t2]:
             if not np.isnan(t):
@@ -1497,7 +1510,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         axs[-1].set_xticks(ticks=np.arange(0, np.max(max_ages), tickstep))
     dataset_legend(leg_ids, leg_cols, ax=axs[0], loc='upper left', fontsize=20, prop={'size': 15})
     fig.subplots_adjust(top=0.95, bottom=0.2, left=0.15, right=0.93, hspace=0.02)
-    # plt.show()
+    plt.show()
     # raise
     return process_plot(fig, save_to, save_as, return_fig)
 

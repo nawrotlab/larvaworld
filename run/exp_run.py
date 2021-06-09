@@ -1,6 +1,7 @@
 import argparse
 import sys
 import time
+import numpy as np
 
 sys.path.insert(0, '..')
 
@@ -44,4 +45,4 @@ if analysis:
 
 e = time.time()
 if d is not None:
-    print(f'Simulation completed in {e - s}')
+    print(f'    Single run completed in {np.round(e - s).astype(int)} seconds!')

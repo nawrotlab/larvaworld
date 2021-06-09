@@ -115,7 +115,7 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output = False):
         c1 = {'deb_dicts': deb_dicts[:-1],
               'sim_only': True}
 
-        for m in [ 'reserve_density', 'feeding', 'food_ratio_1','food_ratio_2','food_mass_1','food_mass_2']:
+        for m in ['reserve_density', 'fs', 'assimilation', 'food_ratio_1','food_ratio_2','food_mass_1','food_mass_2', 'feeding']:
             # for m in ['f', 'hunger', 'minimal', 'full', 'complete']:
             # for t in ['hours', 'seconds']:
             # print(m)
@@ -268,10 +268,10 @@ def run_sim_basic(
 
     # Run the simulation
     completed = env.run()
-
+    print()
     if not completed:
         d.delete()
-        print(f'{id} simulation not completed!')
+        print('    Simulation aborted!')
         res = None
     else:
         # Read the data collected during the simulation
@@ -286,7 +286,7 @@ def run_sim_basic(
         dur = end - start
         param_dict['duration'] = np.round(dur, 2)
 
-        print(f'    Completed in {np.round(dur).astype(int)} seconds!')
+        print(f'    Simulation completed in {np.round(dur).astype(int)} seconds!')
         # Save simulation data and parameters
         if save_data_flag:
             if enrich and experiment is not None:

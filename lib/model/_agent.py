@@ -377,23 +377,23 @@ class Larva(LarvaworldAgent):
 
     @property
     def gut_occupancy(self):
-        return self.deb.get_gut_occupancy()
+        return self.deb.gut.get_gut_occupancy()
 
     @property
     def amount_absorbed(self):
-        return self.deb.get_M_absorbed()
+        return self.deb.gut.get_M_absorbed()
 
     @property
     def amount_faeces(self):
-        return self.deb.get_M_faeces()
+        return self.deb.gut.get_M_faeces()
 
     @property
     def faeces_ratio(self):
-        return self.deb.get_R_faeces()
+        return self.deb.gut.get_R_faeces()
 
     @property
     def food_absorption_efficiency(self):
-        return self.deb.get_R_absorbed()
+        return self.deb.gut.get_R_absorbed()
 
     @property
     def deb_f_deviation(self):

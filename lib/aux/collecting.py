@@ -266,8 +266,8 @@ output = {
         'endpoint': ['length', 'mass', 'num_feeds','amount_eaten', 'scaled_amount_eaten','feed_dur_ratio']},
 
     'deb': {'step': [
-        'deb_f', 'deb_f_deviation',
-        # 'reserve', 'reserve_density','hunger', 'puppation_buffer', 'cum_dst'
+        'deb_f', 'deb_f_deviation','cum_dst'
+        # 'reserve', 'reserve_density','hunger', 'puppation_buffer',
     ],
             'endpoint': [
                 'cum_dst', 'cum_scaled_dst', 'pause_dur_ratio',

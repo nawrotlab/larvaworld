@@ -353,9 +353,9 @@ all_null_dicts = {
                    'hunger_as_EEB': True,
                    'hunger_gain': 12.0,
                    'deb_on': True,
-                   'assimilation_mode': 'f',
-                   # 'DEB_dt' : None
-                   'DEB_dt' : 120.0
+                   'assimilation_mode': 'gut',
+                   'DEB_dt' : None
+                   # 'DEB_dt' : 60.0
                    },
 
     'crawler': {'waveform': 'realistic',
@@ -534,7 +534,7 @@ def get_dict_dtypes(name, **kwargs):
                        'hunger_as_EEB': bool,
                        'hunger_gain': float,
                        'deb_on': bool,
-                       'assimilation_mode': ['f', 'bite'],
+                       'assimilation_mode': ['sim', 'gut'],
                        'DEB_dt' : float},
         'crawler': {'waveform': ['realistic', 'square', 'gaussian', 'constant'],
                     'freq_range': Tuple[float, float],
