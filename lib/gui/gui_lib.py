@@ -1772,6 +1772,8 @@ def save_gui_conf(window, conf, conf_type):
         conf_id = v[f'{cap}_ID']
         saveConf(conf, conf_type, conf_id)
         window[f'{cap}_CONF'].update(values=list(loadConfDict(conf_type).keys()), value=conf_id)
+        if f'{cap}_CONF2' in window.element_list():
+            window[f'{cap}_CONF2'].update(values=list(loadConfDict(conf_type).keys()), value=conf_id)
         # window[f'{cap}_CONF'].update()
 
 
