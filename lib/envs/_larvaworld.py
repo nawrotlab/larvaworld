@@ -827,20 +827,18 @@ class LarvaWorldSim(LarvaWorld):
         if collected_pars is None:
             collected_pars = {'step': [], 'endpoint': [], 'tables' : {} }
 
-        self.starvation_hours = life_params['starvation_hours']
-        if self.starvation_hours is None:
-            self.starvation_hours = []
+        self.epochs = life_params['epochs']
+        if self.epochs is None:
+            self.epochs = []
         self.hours_as_larva = life_params['hours_as_larva']
-        self.deb_base_f = life_params['deb_base_f']
+        self.substrate_quality = life_params['substrate_quality']
 
-        self.deb_starvation_hours = [[s0, np.clip(s1, a_min=s0, a_max=self.hours_as_larva)] for [s0, s1] in
-                                     self.starvation_hours if s0 < self.hours_as_larva]
-        self.sim_starvation_hours = [
+        self.sim_epochs = [
             [np.clip(s0 - self.hours_as_larva, a_min=0, a_max=+np.inf), s1 - self.hours_as_larva] for
-            [s0, s1] in self.starvation_hours if s1 > self.hours_as_larva]
-        if len(self.sim_starvation_hours) > 0:
-            on_ticks = [int(s0 * 60 * 60 / self.dt) for [s0, s1] in self.sim_starvation_hours]
-            off_ticks = [int(s1 * 60 * 60 / self.dt) for [s0, s1] in self.sim_starvation_hours]
+            [s0, s1] in self.epochs if s1 > self.hours_as_larva]
+        if len(self.sim_epochs) > 0:
+            on_ticks = [int(s0 * 60 * 60 / self.dt) for [s0, s1] in self.sim_epochs]
+            off_ticks = [int(s1 * 60 * 60 / self.dt) for [s0, s1] in self.sim_epochs]
             self.sim_clock.set_timer(on_ticks, off_ticks)
         self.starvation = self.sim_clock.timer_on
         self.count_bend_errors = count_bend_errors
@@ -860,36 +858,6 @@ class LarvaWorldSim(LarvaWorld):
 
         self.set_end_condition()
 
-    # def prepare_flies(self, timesteps):
-    #     for t in range(timesteps):
-    #         self.mock_step()
-        #     # for g in self.get_flies():
-        #     # if np.random.choice([0, 1]) == 0:
-        #     #     g.compute_next_action()
-        # if Nsec<self.dt :
-        #     return
-        # for g in self.get_flies():
-        #     g.turner.prepare_turner(Nsec)
-        # try:
-        #     g.crawler.iteration_counter = 0
-        #     g.crawler.total_t = 0
-        #     g.crawler.t = 0
-        # except:
-        #     pass
-        # try:
-        #     g.intermitter.reset()
-        # except:
-        #     pass
-        # try:
-        #     g.reset_feeder()
-        # except:
-        #     pass
-        # try:
-        #     g.set_ang_activity(0.0)
-        #     g.set_lin_activity(0.0)
-        # except :
-        #     pass
-        # raise ValueError
 
     def prepare_odor_layer(self, timesteps):
         for i in range(timesteps):
@@ -970,7 +938,7 @@ class LarvaWorldSim(LarvaWorld):
         self.sim_clock.tick_clock()
         self.Nticks += 1
 
-        if len(self.sim_starvation_hours) > 0:
+        if len(self.sim_epochs) > 0:
             self.starvation = self.sim_clock.timer_on
             if self.sim_clock.timer_opened:
                 if self.food_grid is not None:

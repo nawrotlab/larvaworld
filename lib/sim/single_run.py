@@ -10,7 +10,7 @@ import lib.stor.paths as paths
 from lib.anal.plotting import *
 from lib.aux.collecting import output, midline_xy_pars
 from lib.envs._larvaworld import LarvaWorldSim
-from lib.model.deb import deb_dict, deb_default
+from lib.model.deb import deb_default
 from lib.conf.conf import loadConf
 from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.dtype_dicts as dtypes
@@ -94,9 +94,7 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output = False):
         #     d.delete()
 
     elif exp_type in ['growth', 'rovers_sitters']:
-        starvation_hours = d.config['starvation_hours']
-        f = d.config['deb_base_f']
-        deb_model = deb_default(epochs=starvation_hours, base_f=f)
+        deb_model = deb_default(epochs=d.config['epochs'], substrate_quality=d.config['substrate_quality'])
 
         if exp_type == 'rovers_sitters':
             roversVSsitters = True
@@ -109,22 +107,25 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output = False):
 
         deb_dicts = list(d.load_deb_dicts().values()) + [deb_model]
         # print(d.load_deb_dicts().values())
-        # deb_dicts = [deb_dict(d, id, starvation_hours=starvation_hours) for id in d.agent_ids] + [deb_model]
+        # deb_dicts = [deb_dict(d, id, epochs=epochs) for id in d.agent_ids] + [deb_model]
         c = {'save_to': d.plot_dir,
              'roversVSsitters': roversVSsitters}
         c1 = {'deb_dicts': deb_dicts[:-1],
               'sim_only': True}
 
-        for m in ['reserve_density', 'fs', 'assimilation', 'food_ratio_1','food_ratio_2','food_mass_1','food_mass_2', 'feeding']:
+
+        for m in ['feeding','reserve_density', 'fs', 'assimilation', 'food_ratio_1','food_ratio_2','food_mass_1','food_mass_2']:
             # for m in ['f', 'hunger', 'minimal', 'full', 'complete']:
             # for t in ['hours', 'seconds']:
             # print(m)
             for t in ['hours']:
                 save_as = f'{m}_in_{t}.pdf'
                 fig_dict[f'{m} ({t})'] = plot_debs(save_as=save_as, mode=m, time_unit=t, **c, **c1)
-        for m in ['growth', 'energy', 'full']:
+
+        for m in ['energy','growth',  'full']:
             save_as = f'{m}_vs_model.pdf'
             fig_dict[f'{m} vs model'] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c)
+
         if exp_type == 'rovers_sitters':
             cc = {'datasets': ds,
                   'labels': labels,
@@ -228,6 +229,7 @@ def run_sim_basic(
     Box2D = sim_params['Box2D']
     sample_dataset = sim_params['sample_dataset']
 
+
     if save_to is None:
         save_to = paths.SimFolder
     if path is not None:
@@ -264,6 +266,7 @@ def run_sim_basic(
     # env.prepare_odor_layer(int(odor_prep_time * 60 / env.dt))
     # Prepare the flies for a number of timesteps
     # env.prepare_flies(int(larva_prep_time * 60 / env.dt))
+    print()
     print(f'---- Simulation {id} ----')
 
     # Run the simulation
@@ -336,9 +339,10 @@ def collection_conf(dataset, collections):
     return collected_pars
 
 
-def load_reference_dataset(dataset_id='reference'):
-    reference_dataset = LarvaDataset(dir=f'{paths.RefFolder}/{dataset_id}', load_data=False)
-    reference_dataset.load(step_data=False)
+def load_reference_dataset(dataset_id='reference', load_data=False):
+    reference_dataset = LarvaDataset(dir=f'{paths.RefFolder}/{dataset_id}', load_data=load_data)
+    if not load_data :
+        reference_dataset.load(step_data=False)
     return reference_dataset
 
 
@@ -381,8 +385,10 @@ def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, la
 
     exp_conf['env_params'] = env
     if 'life_params' not in list(exp_conf.keys()):
+
         if life_params is None:
             life_params = dtypes.get_dict('life')
+
 
         exp_conf['life_params'] = life_params
     exp_conf['sim_params'] = sim_params

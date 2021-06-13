@@ -267,6 +267,7 @@ all_null_dicts = {
             'quality': 1.0,
             'shape_vertices': None,
             'can_be_carried': False,
+            'type': 'standard',
         },
     'food_grid':
         {
@@ -274,6 +275,7 @@ all_null_dicts = {
             'grid_dims': (20, 20),
             'initial_value': 10 ** -3,
             'distribution': 'uniform',
+            'type': 'standard',
         },
     'arena':
         {
@@ -283,9 +285,9 @@ all_null_dicts = {
         },
     'life':
         {
-            'starvation_hours': None,
+            'epochs': None,
             'hours_as_larva': 0.0,
-            'deb_base_f': 1.0
+            'substrate_quality': 1.0
 
         },
     'odorscape': {'odorscape': 'Gaussian',
@@ -349,12 +351,12 @@ all_null_dicts = {
         'bend_correction_coef': 1.4,
     },
     'energetics': {'f_decay': 0.1,  # 0.1,  # 0.3
-                   'absorption': 0.5,
+                   'absorption': None,
                    'hunger_as_EEB': True,
-                   'hunger_gain': 12.0,
+                   'hunger_gain': 0.0,
                    'deb_on': True,
                    'assimilation_mode': 'gut',
-                   'DEB_dt' : None
+                   'DEB_dt': None
                    # 'DEB_dt' : 60.0
                    },
 
@@ -387,6 +389,9 @@ all_null_dicts = {
                     'stridechain_dist': 'fit',
                     'crawl_bouts': True,
                     'feed_bouts': False,
+                    'crawl_freq': 10 / 7,
+                    'feed_freq': 2.0,
+                    'feeder_reoccurence_rate': None,
                     'EEB_decay': 1.0,
                     'EEB': 0.0},
     'olfactor': {
@@ -396,7 +401,7 @@ all_null_dicts = {
     'feeder': {'feeder_freq_range': [1.0, 3.0],
                'feeder_initial_freq': 2.0,
                'feed_radius': 0.1,
-               'feed_capacity': 0.0002},
+               'V_bite': 0.0002},
     'memory': {'DeltadCon': 0.1,
                'state_spacePerOdorSide': 0,
                'gain_space': [-300.0, -50.0, 50.0, 300.0],
@@ -430,7 +435,6 @@ all_null_dicts = {
 }
 
 
-# print(all_null_dicts['arena']['arena_xdim','arena_ydim'])
 
 def get_dict_dtypes(name, **kwargs):
     from lib.conf import par_conf
@@ -448,6 +452,7 @@ def get_dict_dtypes(name, **kwargs):
                 'quality': float,
                 'shape_vertices': List[Tuple[float, float]],
                 'can_be_carried': bool,
+                'type': ['standard', 'cornmeal']
             },
         'food_grid':
             {
@@ -455,6 +460,7 @@ def get_dict_dtypes(name, **kwargs):
                 'grid_dims': Tuple[int, int],
                 'initial_value': float,
                 'distribution': ['uniform'],
+                'type': ['standard', 'cornmeal']
             },
         'arena':
             {
@@ -464,9 +470,9 @@ def get_dict_dtypes(name, **kwargs):
             },
         'life':
             {
-                'starvation_hours': List[Tuple[float, float]],
+                'epochs': List[Tuple[float, float]],
                 'hours_as_larva': float,
-                'deb_base_f': float
+                'substrate_quality': float
 
             },
         'odorscape': {'odorscape': ['Gaussian', 'Diffusion'],
@@ -534,8 +540,8 @@ def get_dict_dtypes(name, **kwargs):
                        'hunger_as_EEB': bool,
                        'hunger_gain': float,
                        'deb_on': bool,
-                       'assimilation_mode': ['sim', 'gut'],
-                       'DEB_dt' : float},
+                       'assimilation_mode': ['sim', 'gut', 'deb'],
+                       'DEB_dt': float},
         'crawler': {'waveform': ['realistic', 'square', 'gaussian', 'constant'],
                     'freq_range': Tuple[float, float],
                     'initial_freq': float,  # From D1 fit
@@ -565,6 +571,9 @@ def get_dict_dtypes(name, **kwargs):
                         'stridechain_dist': dict,
                         'crawl_bouts': bool,
                         'feed_bouts': bool,
+                        'crawl_freq': float,
+                        'feed_freq': float,
+                        'feeder_reoccurence_rate': float,
                         'EEB_decay': float,
                         'EEB': float},
         'olfactor': {
@@ -574,7 +583,7 @@ def get_dict_dtypes(name, **kwargs):
         'feeder': {'feeder_freq_range': Tuple[float, float],
                    'feeder_initial_freq': float,
                    'feed_radius': float,
-                   'feed_capacity': float},
+                   'V_bite': float},
         'memory': {'DeltadCon': float,
                    'state_spacePerOdorSide': int,
                    'gain_space': List[float],
@@ -683,7 +692,7 @@ def sim_dict(sim_id=None, sim_dur=3, dt=0.1, path=None, Box2D=False, exp_type=No
         'sim_dur': sim_dur,
         'dt': dt,
         'path': path,
-        'Box2D': Box2D
+        'Box2D': Box2D,
     }
 
 

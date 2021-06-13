@@ -10,6 +10,8 @@ from shapely.geometry import Point, Polygon
 
 import lib.aux.functions as fun
 import lib.aux.rendering as ren
+from lib.model.deb import Substrate
+
 
 class LarvaworldAgent:
     def __init__(self,unique_id: str,model, pos=None, default_color=None, radius=None,
@@ -293,7 +295,7 @@ class Larva(LarvaworldAgent):
 
     @property
     def num_strides(self):
-        return self.brain.crawler.iteration_counter
+        return self.brain.crawler.iteration_counter if self.brain.crawler is not None else self.brain.intermitter.stride_counter
 
     @property
     def stride_dur_ratio(self):
@@ -361,7 +363,11 @@ class Larva(LarvaworldAgent):
 
     @property
     def num_feeds(self):
-        return self.brain.feeder.iteration_counter
+        return self.brain.feeder.iteration_counter if self.brain.feeder is not None else self.brain.intermitter.feed_counter
+
+    @property
+    def mean_feed_freq(self):
+        return self.num_feeds / self.cum_dur
 
     @property
     def feed_dur_ratio(self):
@@ -380,8 +386,25 @@ class Larva(LarvaworldAgent):
         return self.deb.gut.get_gut_occupancy()
 
     @property
+    def ingested_body_mass_ratio(self):
+        return self.deb.gut.ingested_mass()/self.deb.Ww*100
+
+    @property
+    def ingested_body_volume_ratio(self):
+        return self.deb.gut.ingested_volume()/self.deb.V *100
+
+    @property
+    def ingested_gut_volume_ratio(self):
+        return self.deb.gut.ingested_volume() / (self.deb.V*self.deb.gut.V_gm) * 100
+
+    @property
+    def ingested_body_area_ratio(self):
+        return (self.deb.gut.ingested_volume()/self.deb.V)**(1/2)*100
+        # return (self.deb.gut.ingested_volume()/self.deb.V)**(2/3)*100
+
+    @property
     def amount_absorbed(self):
-        return self.deb.gut.get_M_absorbed()
+        return self.deb.gut.absorbed_mass('mg')
 
     @property
     def amount_faeces(self):
@@ -501,15 +524,19 @@ class Source(LarvaworldAgent):
             return p
 
 class Food(Source):
-    def __init__(self, amount=1.0, quality=1.0,default_color=None,density=0.17, **kwargs):
+    def __init__(self, amount=1.0, quality=1.0,default_color=None,type='standard', **kwargs):
         # print(kwargs)
         if default_color is None :
             default_color = 'green'
         super().__init__(default_color=default_color,**kwargs)
         self.initial_amount = amount
         self.quality = quality
-        self.density = density
         self.amount = self.initial_amount
+        self.type = self.type
+        self.substrate = Substrate(type=type)
+
+    def get_mol(self, V, **kwargs):
+        return self.substrate.get_mol(V=V, quality=self.quality, **kwargs)
 
     def get_amount(self):
         return self.amount

@@ -80,6 +80,10 @@ effector_pars = {
     "feeder_motion": 'feeder_motion',
     "amount_eaten": 'amount_eaten',
     "scaled_amount_eaten": 'scaled_amount_eaten',
+    "ingested_body_volume_ratio": 'ingested_body_volume_ratio',
+    "ingested_gut_volume_ratio": 'ingested_gut_volume_ratio',
+    "ingested_body_area_ratio": 'ingested_body_area_ratio',
+    "ingested_body_mass_ratio": 'ingested_body_mass_ratio',
     "amount_absorbed": 'amount_absorbed',
     "feed_success_rate": 'feed_success_rate',
     "gut_occupancy": 'gut_occupancy',
@@ -113,6 +117,7 @@ intermitter_pars = {
     "num_feeds": 'num_feeds',
     "feed_dur_ratio": 'feed_dur_ratio',
     "explore2exploit_balance": 'explore2exploit_balance',
+                       'mean_feed_freq': 'mean_feed_freq',
 
     "num_strides": 'num_strides',
     "stride_dur_ratio": 'stride_dur_ratio',
@@ -251,7 +256,7 @@ output = {
         'step': ['pause_id', 'pause_start', 'pause_stop', 'pause_dur'] + ['stridechain_id', 'stridechain_start',
                                                                           'stridechain_stop', 'stridechain_dur'],
         'endpoint': ['num_pauses', 'cum_pause_dur', 'pause_dur_ratio',
-                     'num_stridechains', 'cum_stridechain_dur', 'stridechain_dur_ratio']},
+                     'num_stridechains', 'cum_stridechain_dur', 'stridechain_dur_ratio', 'mean_feed_freq']},
     'olfactor': {'step': ['first_odor_concentration', 'olfactory_activation', 'first_odor_concentration_change'],
                  'endpoint': ['final_dispersion', 'final_scaled_dispersion',
                               'final_orientation_to_center', 'final_x']},
@@ -263,20 +268,24 @@ output = {
                              'num_strides', 'stride_dur_ratio', 'vel_freq']},
     'feeder': {
         'step': ['length', 'mass', 'amount_eaten', 'scaled_amount_eaten','explore2exploit_balance'],
-        'endpoint': ['length', 'mass', 'num_feeds','amount_eaten', 'scaled_amount_eaten','feed_dur_ratio']},
+        'endpoint': ['length', 'mass', 'num_feeds','amount_eaten', 'scaled_amount_eaten','feed_dur_ratio', 'mean_feed_freq']},
 
     'deb': {'step': [
-        'deb_f', 'deb_f_deviation','cum_dst'
-        # 'reserve', 'reserve_density','hunger', 'puppation_buffer',
+        'deb_f', 'deb_f_deviation','cum_dst','mass','length',
+        'reserve', 'reserve_density','hunger', 'puppation_buffer',
     ],
             'endpoint': [
-                'cum_dst', 'cum_scaled_dst', 'pause_dur_ratio',
+                'cum_dst', 'cum_scaled_dst', 'pause_dur_ratio','mass','length',
                 'num_strides', 'stride_dur_ratio', 'vel_freq',
                 'reserve_density', 'puppation_buffer', 'hunger',
                 'age', 'birth_time_in_hours', 'pupation_time_in_hours', 'death_time_in_hours', 'hours_as_larva'
             ]},
-    'gut' : {'step': ['gut_occupancy', 'amount_absorbed','food_absorption_efficiency','amount_faeces','faeces_ratio'],
-            'endpoint': ['amount_absorbed']},
+    'gut' : {'step': ['gut_occupancy', 'amount_absorbed','food_absorption_efficiency','amount_faeces','faeces_ratio',
+                      'ingested_body_area_ratio', 'ingested_body_volume_ratio','ingested_gut_volume_ratio','amount_eaten','scaled_amount_eaten',
+                      'ingested_body_mass_ratio'
+                      ],
+            'endpoint': ['amount_absorbed','amount_eaten',
+                         'ingested_body_area_ratio', 'ingested_body_volume_ratio','ingested_gut_volume_ratio','scaled_amount_eaten','ingested_body_mass_ratio']},
     'pose': {'step': ['centroid_x', 'centroid_y', 'bend', 'front_orientation', 'rear_orientation'],
              'endpoint': ['length', 'cum_dur', 'final_x']},
     'nengo': {'step': ['crawler_activity', 'turner_activity', 'feeder_motion'],
@@ -299,20 +308,3 @@ output = {
 }
 
 output_keys = list(output.keys())
-#
-# print(len(list(step_database.keys())))
-# print(len(list(endpoint_database.keys())))
-# print([a for a in list(endpoint_database.keys()) if a not in list(step_database.keys())])
-#
-# sigma=[]
-# e=[]
-# for k, v in output.items() :
-#     if v is not None :
-#         sigma+=v['step']
-#         e+=v['endpoint']
-
-# sigma=fun.unique_list(sigma)
-# e=fun.unique_list(e)
-#
-# print(len(sigma))
-# print(len(e))

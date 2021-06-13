@@ -391,6 +391,34 @@ def set_ParDb():
                            # 'collect' : None
                            }
 
+    par_db.loc['sf_am_V'] = {'par': 'ingested_body_volume_ratio',
+                           'symbol': '${m^{V}}_{feed}$',
+                           'exp_symbol': '${\hat{m^{V}}}_{feed}$',
+                           'unit': 'food intake as % larval volume',
+                           # 'collect' : None
+                           }
+
+    par_db.loc['sf_am_Vg'] = {'par': 'ingested_gut_volume_ratio',
+                             'symbol': '${m^{V_{gut}}_{feed}$',
+                             'exp_symbol': '${\hat{m^{V_{gut}}}}_{feed}$',
+                             'unit': 'food intake as % gut volume',
+                             # 'collect' : None
+                             }
+
+    par_db.loc['sf_am_A'] = {'par': 'ingested_body_area_ratio',
+                           'symbol': '${m^{A}}_{feed}$',
+                           'exp_symbol': '${\hat{m^{A}}}_{feed}$',
+                           'unit': 'food intake as % larval area',
+                           # 'collect' : None
+                           }
+
+    par_db.loc['sf_am_M'] = {'par': 'ingested_body_mass_ratio',
+                             'symbol': '${m^{M}}_{feed}$',
+                             'exp_symbol': '${\hat{m^{M}}}_{feed}$',
+                             'unit': 'food intake as % larval mass',
+                             # 'collect' : None
+                             }
+
     par_db.loc['g_odor1'] = {'par': 'first_odor_best_gain',
                              'symbol': '${G}_{odor_{1}}$',
                              'exp_symbol': '${\hat{G}_{odor_{1}}$',
@@ -499,6 +527,14 @@ def set_ParDb():
                            # 'collect' : 'ang_activity'
                            }
 
+    par_db.loc['f_fee_mu'] = {'par': 'mean_feed_freq',
+                             'symbol': sub(bar('f'), 'feed'),
+                             'exp_symbol': sub(hat(bar('f')), 'feed'),
+                             'unit': l_freq,
+                             # 'lim': [-180, 180],
+                             # 'collect' : 'ang_activity'
+                             }
+
     par_db['lim'] = None
     par_db['lim'].loc['f_out_r'] = [0, 1]
     par_db['lim'].loc['abs_r'] = [0, 1]
@@ -559,6 +595,7 @@ def set_ParDb():
         'v' : 'velocity',
         'l_mu' : 'body length',
         'fsv' : 'crawl frequency',
+        'f_fee_mu' : 'mean feed frequency',
         'str_sd_mu' : r'stridestep$_{scaled}$ mean',
         'str_sd_std' : r'stridestep$_{scaled}$ std',
         'b' : 'body bend',
@@ -730,9 +767,12 @@ if __name__ == '__main__':
     par_db = set_ParDb()
     set_ParShelve(par_db)
     # print(mode(get_par('c_odor1')['dtype']))
-    # print(get_par_dict(short='fov'))
+    # print(get_par_dict(short='sf_am')['par'])
+    # for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
+    #     p = get_par_dict(short=short)['par']
+    #     print(p)
     # print(par_db.loc['g_odor1'])
-    print('final_dst_to_chemotax_odor' in list(step_database.keys()))
-    print(par_in_db(par='final_dst_to_chemotax_odor'))
+    # print('final_dst_to_chemotax_odor' in list(step_database.keys()))
+    # print(par_in_db(par='final_dst_to_chemotax_odor'))
     # print(get_par_dict(par='cum_dst', retrieve_from='par_db'))
-    print(par_db.loc['d_chem_fin'])
+    print(par_db.loc['f_fee_mu'])

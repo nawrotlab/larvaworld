@@ -128,6 +128,13 @@ growing_rover = dtypes.larva_dict(brain_rover, body=dtypes.get_dict('body', init
 growing_sitter = dtypes.larva_dict(brain_sitter, body=dtypes.get_dict('body', initial_length=0.001),
                                    energetics=dtypes.get_dict('energetics', absorption=0.15))
 
+mock_brain_sitter = dtypes.brain_dict(['intermitter', 'feeder'],
+                                      intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.67))
+mock_growing_sitter = dtypes.larva_dict(mock_brain_sitter, body=dtypes.get_dict('body', initial_length=0.001, Nsegs=1),
+                                        energetics=dtypes.get_dict('energetics', absorption=0.15))
+
+mock_growing_rover =mock_growing_sitter
+
 nengo_larva = dtypes.larva_dict(brain_nengo)
 RL_odor_larva = dtypes.larva_dict(brain_RLolfactor, body=dtypes.get_dict('body', initial_length='sample'))
 RL_feed_odor_larva = dtypes.larva_dict(brain_RLolfactor_feeder, body=dtypes.get_dict('body', initial_length='sample'))
@@ -179,12 +186,13 @@ king_larva_L = dtypes.larva_dict(brain_olfactor_conf(ids=odors5, means=[150.0, 0
                                  odor=dtypes.get_dict('odor', odor_id='Left_odor', odor_intensity=2.0,
                                                       odor_spread=0.00005))
 
-body_3c = dtypes.get_dict('body', initial_length=3.85/1000, length_std=0.35/1000)
+body_3c = dtypes.get_dict('body', initial_length=3.85 / 1000, length_std=0.35 / 1000)
 freq_Fed = np.random.normal(1.244, 0.13)
 freq_Deprived = np.random.normal(1.4, 0.14)
 freq_Starved = np.random.normal(1.35, 0.15)
 
-crawler_3c = dtypes.get_dict('crawler', step_to_length_mu=0.18, step_to_length_std=0.055, initial_freq=1.35, freq_std=0.14)
+crawler_3c = dtypes.get_dict('crawler', step_to_length_mu=0.18, step_to_length_std=0.055, initial_freq=1.35,
+                             freq_std=0.14)
 pause_dist_Fed = {'range': (0.22, 69.0),
                   'name': 'lognormal',
                   'mu': -0.488,

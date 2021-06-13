@@ -393,12 +393,14 @@ class LarvaDataset:
         vels = ['vel', nam.scal('vel')]
         lin = ['dst', 'vel', 'acc']
         lins = lin + nam.scal(lin) + nam.cum(['dst', nam.scal('dst')]) + nam.max(vels) + nam.min(vels)
-        beh = ['stride', nam.chain('stride'), nam.non('stride'), 'pause', 'turn', 'Lturn', 'Rturn']
+        beh = ['stride', nam.chain('stride'), 'pause', 'turn', 'Lturn', 'Rturn']
         behs = nam.start(beh) + nam.stop(beh) + nam.id(beh) + nam.dur(beh) + nam.length(beh)
         str = [nam.dst('stride'), nam.straight_dst('stride'), nam.orient('stride'), 'dispersion']
         strs = str + nam.scal(str)
         var = ['spinelength', 'ang_color', 'lin_color']
         vpars = lins + self.ang_pars + self.xy_pars + behs + strs + var
+
+
 
         self.drop_step_pars(pars=[p for p in self.step_data.columns.values if p not in vpars],
                             is_last=False, show_output=show_output)
@@ -1676,60 +1678,57 @@ class LarvaDataset:
         if self.step_data is None:
             self.load()
         s, e = self.step_data, self.endpoint_data
-        Nticks = len(s.index.unique('Step'))
+        N = len(s.index.unique('Step'))
         ids = self.agent_ids
         Nids = len(ids)
         t0 = int(self.starting_tick)
 
-        chunk_start = nam.start(chunk)
-        chunk_stop = nam.stop(chunk)
-        chunk_id = nam.id(chunk)
-        chunk_dur = nam.dur(chunk)
-        chunk_contact = nam.contact(chunk)
-        chunk_or = nam.orient(chunk)
-        chunk_chain = nam.chain(chunk)
-        chunk_chain_dur = nam.dur(chunk_chain)
-        chunk_chain_length = nam.length(chunk_chain)
-        chunk_dst = nam.dst(chunk)
-        chunk_strdst = nam.straight_dst(chunk)
+        c_0 = nam.start(chunk)
+        c_1 = nam.stop(chunk)
+        c_id = nam.id(chunk)
+        c_dur = nam.dur(chunk)
+        c_contact = nam.contact(chunk)
+        c_or = nam.orient(chunk)
+        c_chain = nam.chain(chunk)
+        c_chain_dur = nam.dur(c_chain)
+        c_chain_l = nam.length(c_chain)
+        c_dst = nam.dst(chunk)
+        c_sdst = nam.straight_dst(chunk)
         if track_point is None :
             track_xy = ['x', 'y']
             track_dst = 'dst'
         else :
             track_xy = nam.xy(track_point)
-            # track_dst = 'dst'
             track_dst = nam.dst(track_point)
 
         if 'length' in e.columns.values:
             lengths = e['length'].values
-            scaled_chunk_strdst = nam.scal(chunk_strdst)
-            scaled_chunk_dst = nam.scal(chunk_dst)
+            scaled_chunk_strdst = nam.scal(c_sdst)
+            scaled_chunk_dst = nam.scal(c_dst)
         else:
             lengths = None
 
-        params = [chunk_dst, chunk_strdst]
-        control_pars += [track_dst] + track_xy
+        cpars= [track_dst] + track_xy + control_pars
 
-        start_array = np.zeros([Nticks, Nids]) * np.nan
-        stop_array = np.zeros([Nticks, Nids]) * np.nan
-        dur_array = np.zeros([Nticks, Nids]) * np.nan
-        contact_array = np.zeros([Nticks, Nids]) * np.nan
-        orientation_array = np.zeros([Nticks, Nids]) * np.nan
-        id_array = np.zeros([Nticks, Nids]) * np.nan
-        chunk_chain_length_array = np.zeros([Nticks, Nids]) * np.nan
-        chunk_chain_dur_array = np.zeros([Nticks, Nids]) * np.nan
-        dst_array = np.zeros([Nticks, Nids]) * np.nan
-        straight_dst_array = np.zeros([Nticks, Nids]) * np.nan
-        scaled_dst_array = np.zeros([Nticks, Nids]) * np.nan
-        scaled_straight_dst_array = np.zeros([Nticks, Nids]) * np.nan
+        start_array = np.zeros([N, Nids]) * np.nan
+        stop_array = np.zeros([N, Nids]) * np.nan
+        dur_array = np.zeros([N, Nids]) * np.nan
+        orientation_array = np.zeros([N, Nids]) * np.nan
+        id_array = np.zeros([N, Nids]) * np.nan
+        chunk_chain_length_array = np.zeros([N, Nids]) * np.nan
+        chunk_chain_dur_array = np.zeros([N, Nids]) * np.nan
+        dst_array = np.zeros([N, Nids]) * np.nan
+        straight_dst_array = np.zeros([N, Nids]) * np.nan
+        scaled_dst_array = np.zeros([N, Nids]) * np.nan
+        scaled_straight_dst_array = np.zeros([N, Nids]) * np.nan
 
-        arrays = [start_array, stop_array, dur_array, contact_array, id_array,
+        arrays = [start_array, stop_array, dur_array, id_array,
                   chunk_chain_length_array, chunk_chain_dur_array,
                   dst_array, straight_dst_array, scaled_dst_array, scaled_straight_dst_array, orientation_array]
 
-        pars = [chunk_start, chunk_stop, chunk_dur, chunk_contact, chunk_id,
-                chunk_chain_length, chunk_chain_dur,
-                chunk_dst, chunk_strdst, scaled_chunk_dst, scaled_chunk_strdst, chunk_or]
+        pars = [c_0, c_1, c_dur, c_id,
+                c_chain_l, c_chain_dur,
+                c_dst, c_sdst, scaled_chunk_dst, scaled_chunk_strdst, c_or]
 
         if vel_par:
             freqs = e[nam.freq(vel_par)]
@@ -1738,103 +1737,71 @@ class LarvaDataset:
                 print(f'Replacing {freqs.isna().sum()} nan values with population mean frequency : {mean_freq}')
             freqs.fillna(value=mean_freq, inplace=True)
             chunk_dur_in_ticks = {id : 1 / freqs[id] / self.dt for id in ids}
-            # chunk_dur_in_ticks = 1 / (freqs.values * self.dt)
-            control_pars.append(vel_par)
-            # chunk_dur_in_ticks = [11 for c in chunk_dur_in_ticks]
-            # chunk_dur_in_ticks = (1 / (freqs.values * self.dt)).astype(int)
+            cpars.append(vel_par)
         elif chunk_dur_in_sec:
             chunk_dur_in_ticks = {id : chunk_dur_in_sec / self.dt for id in ids}
-            # chunk_dur_in_ticks = np.ones(Nids) * chunk_dur_in_sec / self.dt
-        # all_d = [sigma.xs(id, level='AgentID', drop_level=True) for id in ids]
-        # all_mid_flag_ticks = [d[d[mid_flag] == True].index.values for d in all_d]
-        # all_edge_flag_ticks = [d[d[edge_flag] == True].index.values for d in all_d]
-        # all_valid_ticks = [d[control_pars].dropna().index.values for d in all_d]
-        # all_chunks = []
+
 
         for i,id in enumerate(ids) :
             t=chunk_dur_in_ticks[id]
-            # print(t)
-            d=copy.deepcopy(s.xs(id, level='AgentID', drop_level=True))
+            d=s.xs(id, level='AgentID', drop_level=True)
             edges=d[d[edge_flag] == True].index.values
             mids=d[d[mid_flag] == True].index.values
-            valid=d[control_pars].dropna().index.values
+            valid=d[cpars].dropna().index.values
 
-        # for t, edges, mids, valid, d in zip(chunk_dur_in_ticks, all_edge_flag_ticks, all_mid_flag_ticks,
-        #                                     all_valid_ticks, all_d):
+            d_dst=d[track_dst].values
+            d_xy=d[track_xy].values
+
             chunks = np.array([[a, b] for a, b in zip(edges[:-1], edges[1:]) if (b - a >= 0.6 * t)
                                and (b - a <= 1.5 * t)
                                and set(np.arange(a, b + 1)) <= set(valid)
                                and (any((m > a) and (m < b) for m in mids))
                                ]).astype(int)
             Nchunks = len(chunks)
-            # all_chunks.append(chunks)
-        # all_durs = []
-        # all_contacts = []
-        # for chunks in all_chunks:
-        #     if Nchunks==0 :
-        #         print(id)
             if Nchunks != 0:
                 durs = np.diff(chunks, axis=1)[:, 0] * self.dt
                 contacts = [int(stop1 == start2) for (start1, stop1), (start2, stop2) in
                             zip(chunks[:-1, :], chunks[1:, :])] + [0]
-            # else:
-            #     durs = []
-            #     contacts = []
-            # all_durs.append(durs)
-            # all_contacts.append(contacts)
-
-
-        # for i, (d, chunks, durs, contacts) in enumerate(zip(all_d, all_chunks, all_durs, all_contacts)):
-        #     Nchunks = len(chunks)
-        #     if Nchunks != 0:
-                starts = chunks[:, 0]
-                stops = chunks[:, 1]
-                start_array[starts - t0, i] = True
-                stop_array[stops - t0, i] = True
-                dur_array[stops - t0, i] = durs
-                contact_array[stops - t0, i] = contacts
+                s0s = chunks[:, 0]- t0
+                s1s = chunks[:, 1]- t0
+                start_array[s0s, i] = True
+                stop_array[s1s, i] = True
+                dur_array[s1s, i] = durs
                 chain_counter = 0
                 chain_dur_counter = 0
-                dists = np.zeros((Nchunks, 3)) * np.nan
-                for j, (start, stop, dur, contact) in enumerate(zip(starts, stops, durs, contacts)):
-
+                for j, (s0, s1, dur, contact) in enumerate(zip(s0s, s1s, durs, contacts)):
+                    if chain_counter > 0:
+                        s0+=1
+                    id_array[s0:s1+1, i] = j
                     chain_counter += 1
                     chain_dur_counter += dur
                     if contact == 0:
-                        if chain_counter>0 :
-                            id_array[start+ 1 - t0:stop+ 1 - t0, i] = j
-                        else :
-                            id_array[start - t0:stop + 1 - t0, i] = j
-                        chunk_chain_length_array[stop - t0, i] = chain_counter
-                        chunk_chain_dur_array[stop - t0, i] = chain_dur_counter
+                        chunk_chain_length_array[s1+1, i] = chain_counter
+                        chunk_chain_dur_array[s1+1 , i] = chain_dur_counter
                         chain_counter = 0
                         chain_dur_counter = 0
 
-                    dst = d.loc[slice(start+1, stop), track_dst].sum()
-                    xy = d.loc[slice(start, stop), track_xy].dropna().values
-                    straight_dst = euclidean(tuple(xy[-1]), tuple(xy[0]))
-                    orient = fun.angle_to_x_axis(xy[0], xy[-1])
-                    dists[j] = np.array([dst, straight_dst, orient])
-                dst_array[stops - t0, i] = dists[:, 0]
-                straight_dst_array[stops - t0, i] = dists[:, 1]
-                orientation_array[stops - t0, i] = dists[:, 2]
+                    dst_array[s1, i] = np.sum(d_dst[s0+1: s1])
+                    straight_dst_array[s1, i] = euclidean(tuple(d_xy[s1,:]), tuple(d_xy[s0,:]))
+                    orientation_array[s1, i] = fun.angle_to_x_axis(d_xy[s0], d_xy[s1])
+
 
                 if lengths is not None:
                     l = lengths[i]
-                    scaled_dst_array[stops - t0, i] = dists[:, 0] / l
-                    scaled_straight_dst_array[stops - t0, i] = dists[:, 1] / l
+                    scaled_dst_array[s1s, i] = dst_array[s1s, i] / l
+                    scaled_straight_dst_array[s1s, i] = straight_dst_array[s1s, i] / l
+
         for array, par in zip(arrays, pars):
             s[par] = array.flatten()
-
-        for pp in [chunk_dst, chunk_strdst] :
+        for pp in [c_dst, c_sdst] :
             e[nam.cum(pp)] = s[pp].groupby('AgentID').sum()
             e[nam.mean(pp)] = s[pp].groupby('AgentID').mean()
             e[nam.std(pp)] = s[pp].groupby('AgentID').std()
 
-        e['stride_reoccurence_rate'] = 1 - 1 / s[chunk_chain_length].groupby('AgentID').mean()
+        e['stride_reoccurence_rate'] = 1 - 1 / s[c_chain_l].groupby('AgentID').mean()
 
         if 'length' in e.columns.values:
-            for pp in [chunk_dst, chunk_strdst] :
+            for pp in [c_dst, c_sdst] :
                 spp=nam.scal(pp)
                 e[nam.cum(spp)] = e[nam.cum(pp)] / e['length']
                 e[nam.mean(spp)] = e[nam.mean(pp)] / e['length']
@@ -1842,7 +1809,7 @@ class LarvaDataset:
 
         self.compute_chunk_metrics([chunk], is_last=False, show_output=show_output)
         if self.save_data_flag:
-            self.create_par_distro_dataset([chunk_chain_dur, chunk_chain_length])
+            self.create_par_distro_dataset([c_chain_dur, c_chain_l])
 
         if is_last:
             self.save()
@@ -2311,7 +2278,7 @@ class LarvaDataset:
     #######################################
 
     def detect_strides(self, recompute=False, vel_par=None, track_point=None,
-                       non_chunks=True, is_last=True, show_output=True):
+                       non_chunks=False, is_last=True, show_output=True):
         cc = {'show_output': show_output,
               'is_last': False}
         if self.step_data is None:
@@ -2754,7 +2721,6 @@ class LarvaDataset:
             copy_tree(self.dir, path_dir)
         new_d = LarvaDataset(path_dir)
         new_d.set_id(dataset_id)
-        e = new_d.endpoint_data
         pars = ['length', 'scaled_vel_freq',
                 'stride_reoccurence_rate', 'scaled_stride_dst_mean', 'scaled_stride_dst_std']
         sample_pars = ['body.initial_length', 'brain.crawler_params.initial_freq',
@@ -2769,9 +2735,19 @@ class LarvaDataset:
         df = pd.DataFrame(v.values, columns=sample_pars)
         df.to_csv(path_data)
 
+
         fit_bouts(new_d, store=True, bouts=['stride', 'pause'])
 
-        # plot_stridesNpauses(datasets=[new_d], labels=[dataset_id], save_as='reference_bouts.pdf', save_fits_as=path_fits)
+        dic={
+            'crawl_freq' : v['scaled_vel_freq'].mean(),
+            'feed_freq' : v['feed_freq'].mean() if 'feed_freq' in v.columns else 2.0,
+            'feeder_reoccurence_rate' : None,
+            'dt' : self.dt,
+        }
+        saveConf(dic, conf_type='Ref', id=dataset_id, mode='update')
+        z = get_EEB_poly1d(dataset_id)
+        saveConf({'EEB_poly1d' : z.c.tolist()}, conf_type='Ref', id=dataset_id, mode='update')
+
         print(f'Reference dataset {dataset_id} saved.')
 
     def raw_or_filtered_xy(self, points, show_output=True):
@@ -2824,9 +2800,10 @@ class LarvaDataset:
             self.load()
         return self.step_data[['x', 'y']]
 
-    def delete(self):
+    def delete(self, show_output=True):
         shutil.rmtree(self.dir)
-        print('Dataset deleted')
+        if show_output:
+            print(f'Dataset {self.id} deleted')
 
     def compute_tortuosity(self, durs_in_sec=[2, 5, 10, 20], is_last=True, show_output=True):
         if self.endpoint_data is None:

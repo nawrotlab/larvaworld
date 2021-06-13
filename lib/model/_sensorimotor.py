@@ -335,6 +335,7 @@ class BodySim(BodyManager):
                 hp1 = hr1 + k * self.seg_lengths[0] / 2
                 hf1 = hr1 + k * self.seg_lengths[0]
             else:
+                hr1 = None
                 hp1 = hp0 + dxy
                 hf1 = hp1 + k * (self.get_sim_length() / 2)
 

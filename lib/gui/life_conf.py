@@ -4,7 +4,7 @@ import lib.conf.dtype_dicts as dtypes
 from lib.anal.plotting import plot_debs
 from lib.gui.gui_lib import check_toggles, b_kws, w_kws, delete_figure_agg, draw_canvas, t24_kws, t10_kws, col_kws, \
     t12_kws, t18_kws
-from lib.model.deb import deb_dict, deb_default
+from lib.model.deb import deb_default
 
 W, H = 1400, 700
 k = 2
@@ -35,7 +35,7 @@ deb_modes=['mass', 'length',
 def life_conf():
     sg.theme('LightGreen')
     life = dtypes.get_dict('life')
-    starvation_hours = []
+    epochs = []
 
     l0=[[sg.Text('Parameter : ', **t10_kws)],
         [sg.Listbox(deb_modes, size=(14, len(deb_modes)),default_values=['reserve'], k='deb_mode', enable_events=True)]
@@ -52,13 +52,13 @@ def life_conf():
           ]
 
     starvation_table=sg.Col([[sg.Text('Starvation epochs (h)', **t18_kws)],
-                 [sg.Table(values=starvation_hours[:][:], headings=['start', 'stop'], def_col_width=7,
+                 [sg.Table(values=epochs[:][:], headings=['start', 'stop'], def_col_width=7,
                            max_col_width=20, background_color='lightblue', header_background_color='lightorange',
                            auto_size_columns=False,
                            # display_row_numbers=True,
                            justification='center',
                            # font=w_kws['font'],
-                           num_rows=len(starvation_hours),
+                           num_rows=len(epochs),
                            alternating_row_color='lightyellow',
                            key='STARVATION'
                            )],
@@ -91,30 +91,30 @@ def life_conf():
         if e in [None, 'Cancel']:
             break
         elif e == 'Ok':
-            life = {'starvation_hours': starvation_hours,
+            life = {'epochs': epochs,
                     'hours_as_larva': v['SLIDER_age'],
-                    'deb_base_f': v['SLIDER_quality']
+                    'substrate_quality': v['SLIDER_quality']
                     }
             break  # exit
         elif e == 'Add':
             t1, t2 = v['SLIDER_starvation_start'], v['SLIDER_starvation_stop']
             if t2 > t1:
-                starvation_hours.append([t1, t2])
-                w.Element('STARVATION').Update(values=starvation_hours, num_rows=len(starvation_hours))
+                epochs.append([t1, t2])
+                w.Element('STARVATION').Update(values=epochs, num_rows=len(epochs))
                 w.Element('SLIDER_starvation_stop').Update(value=0.0)
                 w.Element('SLIDER_starvation_start').Update(value=0.0)
                 w.write_event_value('Draw', 'Draw the initial plot')
         elif e == 'Remove':
             if len(v['STARVATION']) > 0:
-                starvation_hours.remove(starvation_hours[v['STARVATION'][0]])
-                w.Element('STARVATION').Update(values=starvation_hours, num_rows=len(starvation_hours))
+                epochs.remove(epochs[v['STARVATION'][0]])
+                w.Element('STARVATION').Update(values=epochs, num_rows=len(epochs))
                 w.write_event_value('Draw', 'Draw the initial plot')
         elif e in ['SLIDER_quality', 'SLIDER_age']:
             w.write_event_value('Draw', 'Draw the initial plot')
         elif e == 'deb_mode':
             w.write_event_value('Draw', 'Draw the initial plot')
         elif e == 'Draw':
-            deb_model = deb_default(epochs=starvation_hours, base_f=v['SLIDER_quality'], hours_as_larva=v['SLIDER_age'])
+            deb_model = deb_default(epochs=epochs, substrate_quality=v['SLIDER_quality'], hours_as_larva=v['SLIDER_age'])
             fig, save_to, filename = plot_debs(deb_dicts=[deb_model], mode=v['deb_mode'][0], return_fig=True)
             if fig_agg:
                 delete_figure_agg(fig_agg)
@@ -125,7 +125,7 @@ def life_conf():
             w.Element('SLIDER_starvation_start').Update(value=v['SLIDER_starvation_stop'])
         for ii in ['starvation_start', 'starvation_stop', 'age']:
             w.Element(f'SLIDER_{ii}').Update(range=(0.0, deb_model['pupation'] - deb_model['birth']))
-        for t1,t2 in starvation_hours :
+        for t1,t2 in epochs :
             if t1<v['SLIDER_starvation_start']<t2 :
                 w.Element('SLIDER_starvation_start').Update(value=t2)
             elif v['SLIDER_starvation_start']<t1 and v['SLIDER_starvation_stop']>t1:

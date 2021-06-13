@@ -47,10 +47,11 @@ growth = {
 rovers_sitters = {
 
     'env_params': 'rovers_sitters',
-    'sim_params': dtypes.get_dict('sim_params', sim_dur=180.0, dt=0.2),
-    'collections': ['feeder', 'deb', 'gut'],
+    'sim_params': dtypes.get_dict('sim_params', sim_dur=180.0, dt=0.1),
+    'collections': ['deb', 'gut'],
+    # 'collections': ['feeder', 'deb', 'gut'],
     # 'age_in_hours' : 0
-    # 'starvation_hours': [[24, 48]]
+    # 'epochs': [[24, 48]]
 }
 odor_pref = {
     'env_params': 'odor_preference',
@@ -74,7 +75,7 @@ odor_pref_train = {
     'env_params': 'odor_pref_train',
     'sim_params': dtypes.get_dict('sim_params', sim_dur=35.0),
     'collections': ['olfactor', 'memory'],
-    'life_params': dtypes.get_dict('life', starvation_hours=[(1 / 12, 2 / 12), (3 / 12, 4 / 12), (5 / 12, 6 / 12)])
+    'life_params': dtypes.get_dict('life', epochs=[(1 / 12, 2 / 12), (3 / 12, 4 / 12), (5 / 12, 6 / 12)])
 }
 
 odor_pref_RL = {

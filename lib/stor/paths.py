@@ -15,7 +15,10 @@ SingleRunFolder = f'{SimFolder}/single_runs'
 BatchRunFolder = f'{SimFolder}/batch_runs'
 
 DebFolder = f'{SimFolder}/deb_runs'
-Deb_path = f'{get_parent_dir()}/lib/sim/deb_drosophila.csv'
+Deb_paths={n : f'{get_parent_dir()}/lib/sim/deb_{n}.csv' for n in ['rover', 'sitter', 'default']}
+# Deb_default = f'{get_parent_dir()}/lib/sim/deb_drosophila.csv'
+# Deb_rover = f'{get_parent_dir()}/lib/sim/deb_rover.csv'
+# Deb_sitter = f'{get_parent_dir()}/lib/sim/deb_sitter.csv'
 
 
 RefFolder = f'{DataFolder}/SampleGroup'
@@ -36,7 +39,7 @@ conf_paths = {
     'Model': f'{ConfFolder}/ModelConfs.txt',
     'Batch': f'{ConfFolder}/BatchConfs.txt',
     'Settings': f'{ConfFolder}/SetConfs.txt',
-    'Ref': f'{ConfFolder}/ReferenceDatasets.txt',
+    'Ref': f"{ConfFolder}/ReferenceDatasets.txt",
 }
 
 VideoSlideFolder = f'{get_parent_dir()}/lib/gui/video_slides'

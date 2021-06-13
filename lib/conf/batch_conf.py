@@ -78,7 +78,7 @@ uniform_food_batch = {
 rovers_sitters_batch = {
     'exp': 'rovers_sitters',
     'space_search': {
-        'pars': ['deb_base_f', 'hours_as_larva'],
+        'pars': ['substrate_quality', 'hours_as_larva'],
         'ranges': [(0.5, 0.8), (0, 100)],
         'Ngrid': [2, 2]
     },

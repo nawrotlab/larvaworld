@@ -17,7 +17,6 @@ from pypet.parameter import ObjectTable
 import matplotlib.pyplot as plt
 
 from lib.anal.plotting import plot_heatmap_PI, plot_endpoint_scatter, plot_debs, plot_3pars, plot_endpoint_params, plot_2d
-from lib.model.deb import deb_dict
 from lib.sim.single_run import run_sim
 import lib.aux.functions as fun
 import lib.stor.paths as paths
@@ -280,8 +279,10 @@ def deb_analysis(traj):
     else:
         new_ids = [f'{p_ns[0]} : {v}' for v in p_vs[0]] if len(p_ns) == 1 else [d.id for d in ds]
         plot_endpoint_params(ds, new_ids, mode='deb', save_to=parent_dir)
+    # deb_dicts = fun.flatten_list(
+    #     [[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
     deb_dicts = fun.flatten_list(
-        [[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
+        [list(d.load_deb_dicts().values()) for d in ds])
     fig_dict = {}
     for m in ['energy', 'growth', 'full'] :
         f=plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as=f'deb_{m}.pdf', mode=m)

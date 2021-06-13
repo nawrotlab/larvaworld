@@ -266,8 +266,13 @@ def saveConf(conf, conf_type, id=None, mode='overwrite'):
     if id is None:
         id = conf['id']
 
-    if mode=='update' and id in list(conf_dict.keys()):
-        conf_dict[id].update(conf)
+    if id in list(conf_dict.keys()) :
+        for k,v in conf.items() :
+            print(id,k,v)
+            if type(k)==dict and k in list(conf_dict[id].keys()) and mode=='update' :
+                conf_dict[id][k].update(conf[k])
+            else :
+                conf_dict[id][k] = v
     else :
         conf_dict[id] = conf
     saveConfDict(conf_dict, conf_type)
@@ -377,7 +382,9 @@ if __name__ == '__main__':
         'feeder-navigator': mod.feeding_odor_larva,
         'feeder-navigator-x2': mod.feeding_odor_larva_x2,
         'rover': mod.growing_rover,
+        'mock_rover': mod.mock_growing_rover,
         'sitter': mod.growing_sitter,
+        'mock_sitter': mod.mock_growing_sitter,
         'imitation': mod.imitation_larva,
         'gamer': mod.flag_larva,
         'gamer-L': mod.king_larva_L,
@@ -443,16 +450,6 @@ if __name__ == '__main__':
     for k, v in exp_dict.items():
         saveConf(v, 'Exp', k)
 
-    # reference_datasets ={
-    #     '' : '',
-    #     'reference' : 'reference',
-    #     'Fed' : 'Fed',
-    #     'Starved' : 'Starved',
-    #     'Deprived' : 'Deprived',
-    # }
-    #
-    # for k, v in reference_datasets.items():
-    #     saveConf(v, 'Ref', k)
 
 def next_idx(exp, type='single'):
     try:

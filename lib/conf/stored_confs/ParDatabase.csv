@@ -392,6 +392,10 @@ cum_sd_std,cum_scaled_dst_std,$\~{{d}_{cum}^{*}}$,$\~{{\hat{d}}_{cum}^{*}}$,scal
 fsv_mu,scaled_vel_freq_mean,$\bar{{f}_{v}^{*}}$,$\bar{{\hat{f}}_{v}^{*}}$,frequency $(Hz)$,,,scaled_vel_freq_mean,<class 'float'>,
 fsv_std,scaled_vel_freq_std,$\~{{f}_{v}^{*}}$,$\~{{\hat{f}}_{v}^{*}}$,frequency $(Hz)$,,,scaled_vel_freq_std,<class 'float'>,
 sf_am,scaled_amount_eaten,${m^{*}}_{feed}$,${\hat{m^{*}}}_{feed}$,food intake as % larval mass,,scaled_amount_eaten,scaled_amount_eaten,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+sf_am_V,ingested_body_volume_ratio,${m^{V}}_{feed}$,${\hat{m^{V}}}_{feed}$,food intake as % larval volume,,ingested_body_volume_ratio,ingested_body_volume_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+sf_am_Vg,ingested_gut_volume_ratio,${m^{V_{gut}}_{feed}$,${\hat{m^{V_{gut}}}}_{feed}$,food intake as % gut volume,,ingested_gut_volume_ratio,ingested_gut_volume_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+sf_am_A,ingested_body_area_ratio,${m^{A}}_{feed}$,${\hat{m^{A}}}_{feed}$,food intake as % larval area,,ingested_body_area_ratio,ingested_body_area_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+sf_am_M,ingested_body_mass_ratio,${m^{M}}_{feed}$,${\hat{m^{M}}}_{feed}$,food intake as % larval mass,,ingested_body_mass_ratio,ingested_body_mass_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 g_odor1,first_odor_best_gain,${G}_{odor_{1}}$,${\hat{G}_{odor_{1}}$,Gain G(t),"[-500.0, 500.0]",first_odor_best_gain,first_odor_best_gain,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 g_odor2,second_odor_best_gain,${G}_{odor_{2}}$,${\hat{G}_{odor_{2}}$,Gain G(t),"[-500.0, 500.0]",second_odor_best_gain,second_odor_best_gain,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 cum_reward,cum_reward,${R}_{cum}$,${\hat{R}_{cum}$,Reward R(t),,cum_reward,cum_reward,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
@@ -406,3 +410,4 @@ Act_tur,turner_activity,$Act_{tur}$,$\hat{Act}_{tur}$,Turner activity,"[-20.0, 2
 fo2cen,orientation_to_center,$\theta_{or_{cen}}$,$\hat{theta}_{or_{cen}}$,orientation angle $(deg)$,"[-180, 180]",orientation_to_center_in_deg,orientation_to_center,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 abs_r,food_absorption_efficiency,$r_{absorption}$,$\hat{r}_{absorption}$,food absorption ratio $(-)$,"[0, 1]",food_absorption_efficiency,food_absorption_efficiency,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
 f_out_r,faeces_ratio,$r_{faeces}$,$\hat{r}_{faeces}$,faeces ratio $(-)$,"[0, 1]",faeces_ratio,faeces_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+f_fee_mu,mean_feed_freq,${\bar{f}}_{feed}$,${\hat{\bar{f}}}_{feed}$,frequency $(Hz)$,,mean_feed_freq,mean feed frequency,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>

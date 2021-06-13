@@ -204,7 +204,6 @@ chemotax_env = {'arena_params': arena(0.1, 0.06),
                                              model='navigator'),
                 'odorscape': gaussian_odor()}
 
-# print(chemotax_env['food_params']['source_units'])
 
 chemorbit_env = {'arena_params': arena(0.1, 0.06),
                  'food_params': food_param_conf(list={**odor_source(id='Odor_source', odor_id='Odor',
@@ -279,6 +278,11 @@ food_grid_env = {'arena_params': arena(0.03, 0.03),  # dish(0.006),
 growth_env = {'arena_params': arena(0.02, 0.02),  # dish(0.006),
               'food_params': food_param_conf(grid=dtypes.get_dict('food_grid')),
               'larva_params': larva_distro(N=1, model='sitter'),
+              'odorscape': None}
+
+mock_growth_env = {'arena_params': arena(0.02, 0.02),  # dish(0.006),
+              'food_params': food_param_conf(grid=dtypes.get_dict('food_grid', grid_dims=(2,2), initial_value = 1000)),
+              'larva_params': larva_distro(N=1, model='mock_sitter'),
               'odorscape': None}
 
 # growth_env = {'arena_params': dish(0.01),  # dish(0.006),
