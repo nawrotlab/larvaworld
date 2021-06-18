@@ -10,6 +10,7 @@ import webcolors
 from mesa.datacollection import DataCollector
 
 from lib.conf.conf import loadConfDict, loadConf
+from lib.model.agents._larva import LarvaSim, LarvaReplay
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -27,8 +28,7 @@ import lib.aux.functions as fun
 from lib.aux import naming as nam
 from lib.envs._maze import Border
 import lib.conf.dtype_dicts as dtypes
-from lib.model import *
-from lib.model._agent import LarvaworldAgent
+from lib.model.agents._agent import LarvaworldAgent, Food, Larva
 from lib.sim.input_lib import evaluate_input, evaluate_graphs
 
 
@@ -38,7 +38,7 @@ class LarvaWorld:
         pygame.init()
         max_screen_height = pygame.display.Info().current_h
         cls.sim_screen_dim = int(max_screen_height * 2 / 3)
-        """Create a new model object and instantiate its RNG automatically."""
+        """Create a new model object_class and instantiate its RNG automatically."""
         cls._seed = kwargs.get("seed", None)
         cls.random = random.Random(cls._seed)
         return object.__new__(cls)
@@ -53,6 +53,9 @@ class LarvaWorld:
                  progress_bar=None,
                  space_in_mm = False
                  ):
+        # name='basic'
+        # self.par_dict = build_par_dict(dt=dt)
+        # self.collection = Collection(name, par_dict=self.par_dict)
         self.space_in_mm = space_in_mm
         self.progress_bar = progress_bar
         self.vis_kwargs = vis_kwargs
@@ -929,8 +932,11 @@ class LarvaWorldSim(LarvaWorld):
                                                  sample_dataset=sample_dataset)
 
             for i, (p, o, pars) in enumerate(zip(positions, orientations, all_pars)):
-                self.add_larva(position=p, orientation=o, id=f'{group_id}_{i}', pars=pars, group=group_id,
+                l=self.add_larva(position=p, orientation=o, id=f'{group_id}_{i}', pars=pars, group=group_id,
                                default_color=group_pars['default_color'])
+
+
+
 
     def step(self):
 
@@ -961,6 +967,11 @@ class LarvaWorldSim(LarvaWorld):
             self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
             self.update_trajectories(self.get_flies())
         self.larva_step_col.collect(self)
+        for c in self.group_collectors:
+            c.collect()
+        # for l in self.get_flies():
+        #     # l.compute_next_action()
+        #     l.collector.collect()
         # if self.table_collector is not None and self.Nticks%(int(3*60/self.dt))==0 :
         #     for name, table in self.table_collector.tables.items() :
         #         cols=list(table.keys())

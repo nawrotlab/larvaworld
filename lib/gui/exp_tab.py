@@ -13,7 +13,8 @@ from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     t16_kws, t2_kws, t14_kws, t5_kws, t11_kws, t1_kws, t15_kws, t6_kws, t12_kws
 from lib.gui.draw_env import draw_env
 from lib.gui.life_conf import life_conf
-from lib.sim.single_run import run_sim, sim_analysis
+from lib.sim.single_run import run_sim
+from lib.sim.analysis import sim_analysis
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 
 

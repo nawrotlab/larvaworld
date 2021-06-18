@@ -204,7 +204,7 @@ class TargetedDataCollector(DataCollector):
 
     def collect(self, model):
         schedule = getattr(model, self.schedule_id)
-        """ Collect all the data for the given model object. """
+        """ Collect all the data for the given model object_class. """
         if self.model_reporters:
             for var, reporter in self.model_reporters.items():
                 self.model_vars[var].append(reporter(model))
@@ -212,6 +212,7 @@ class TargetedDataCollector(DataCollector):
         if self.agent_reporters:
             agent_records = self._record_agents(model, schedule)
             self._agent_records[schedule.steps] = list(agent_records)
+            # print(agent_records)
 
     def generate_database(self, mode):
         if mode == 'step':
@@ -308,3 +309,4 @@ output = {
 }
 
 output_keys = list(output.keys())
+

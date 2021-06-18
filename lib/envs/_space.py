@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 import lib.aux.functions as fun
-from lib.model.deb import Substrate
+from lib.model.DEB.deb import Substrate
 
 
 class ValueGrid:
@@ -137,8 +137,8 @@ class FoodGrid(ValueGrid):
             for v, c in zip(vertices, colors):
                 viewer.draw_polygon(v, c, filled=True)
 
-    def get_mol(self, V, **kwargs):
-        return self.substrate.get_mol(V=V, quality=self.quality, **kwargs)
+    # def get_mol(self, V, **kwargs):
+    #     return self.substrate.get_mol(V=V, quality=self.quality, **kwargs)
 
 
 class ValueLayer(ValueGrid):

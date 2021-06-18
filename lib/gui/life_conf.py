@@ -4,7 +4,7 @@ import lib.conf.dtype_dicts as dtypes
 from lib.anal.plotting import plot_debs
 from lib.gui.gui_lib import check_toggles, b_kws, w_kws, delete_figure_agg, draw_canvas, t24_kws, t10_kws, col_kws, \
     t12_kws, t18_kws
-from lib.model.deb import deb_default
+from lib.model.energetics.deb import deb_default
 
 W, H = 1400, 700
 k = 2

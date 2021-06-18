@@ -9,7 +9,8 @@ from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     graphic_button, t10_kws, t18_kws, w_kws, default_run_window, col_kws, col_size, t24_kws
 from lib.gui.draw_env import draw_env
 from lib.gui.life_conf import life_conf
-from lib.sim.single_run import run_sim, sim_analysis
+from lib.sim.single_run import run_sim
+from lib.sim.analysis import sim_analysis
 from lib.conf.conf import loadConfDict, loadConf, next_idx
 
 def env_col() :

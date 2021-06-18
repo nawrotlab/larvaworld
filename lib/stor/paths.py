@@ -15,20 +15,17 @@ SingleRunFolder = f'{SimFolder}/single_runs'
 BatchRunFolder = f'{SimFolder}/batch_runs'
 
 DebFolder = f'{SimFolder}/deb_runs'
-Deb_paths={n : f'{get_parent_dir()}/lib/sim/deb_{n}.csv' for n in ['rover', 'sitter', 'default']}
-# Deb_default = f'{get_parent_dir()}/lib/sim/deb_drosophila.csv'
-# Deb_rover = f'{get_parent_dir()}/lib/sim/deb_rover.csv'
-# Deb_sitter = f'{get_parent_dir()}/lib/sim/deb_sitter.csv'
+Deb_paths={n : f'{get_parent_dir()}/lib/model/DEB/models/deb_{n}.csv' for n in ['rover', 'sitter', 'default']}
 
 
 RefFolder = f'{DataFolder}/SampleGroup'
-# RefFolder = f'{DataFolder}/reference'
 
 
 ConfFolder = f'{get_parent_dir()}/lib/conf/stored_confs'
 SimIdx_path = f'{ConfFolder}/SimIdx.txt'
 ParDb_path = f'{ConfFolder}/ParDatabase.csv'
 ParShelve_path = f'{ConfFolder}/ParShelve'
+ParDict_path = f'{ConfFolder}/ParDict.txt'
 LarvaShape_path = f'{ConfFolder}/larva_shape.csv'
 conf_paths = {
     'Data': f'{ConfFolder}/DataConfs.txt',

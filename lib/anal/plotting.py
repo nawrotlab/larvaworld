@@ -1,21 +1,16 @@
 import copy
 import heapq
 import itertools
-import warnings
 
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import cm, transforms, ticker, patches
-from matplotlib.patches import Patch
-from matplotlib.ticker import MaxNLocator, FixedLocator, FormatStrFormatter
+from matplotlib.ticker import FixedLocator, FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
 import statsmodels.api as sm
 from scipy import stats, signal, interpolate
 from scipy.stats import ttest_ind
 from sklearn.linear_model import LinearRegression
-import powerlaw as pow
 from PIL import Image
 
 from lib.anal.fitting import *
@@ -23,7 +18,7 @@ from lib.anal.combining import combine_images, combine_pdfs
 from lib.conf import par_conf, conf
 from lib.aux import functions as fun
 from lib.model import DEB
-from lib.model._effector import get_EEB_poly1d
+from lib.model.modules.intermitter import get_EEB_poly1d
 from lib.stor import paths
 
 '''
@@ -41,7 +36,12 @@ suf = 'pdf'
 
 
 # suf = 'png'
-
+# plot_kws={
+#     'save_to' : None,
+#     'save_as' : None,
+#     'return_fig' : False,
+#     'show' : False
+# }
 
 def mean_confidence_interval(data, confidence=0.95):
     n = len(data)
@@ -713,13 +713,16 @@ def plot_bend_pauses(dataset, save_to=None):
 
 
 def plot_sample_marked_strides(datasets, labels=None, agent_idx=0, agent_id=None, slice=[20, 40],
-                               subfolder='individuals', save_as=None, save_to=None, return_fig=False):
+                               subfolder='individuals',
+                               # **plot_kws
+                               save_as=None, save_to=None, return_fig=False, show=False
+                               ):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder)
     for d in datasets:
         if not hasattr(d, 'step_data'):
             d.load()
     if save_as is None:
-        temp = f'sample_marked_strides_{slice[0]}-{slice[1]}'
+        temp = f'sample_marked_strides_{slice[0]}-{slice[1]}' if slice is not None else f'sample_marked_strides'
         filename = f'{temp}_{agent_id}.pdf' if agent_id is not None else f'{temp}_{agent_idx}.pdf'
     else:
         filename = save_as
@@ -765,11 +768,12 @@ def plot_sample_marked_strides(datasets, labels=None, agent_idx=0, agent_id=None
         ax.plot(s[p].loc[s[nam.min(p)] == True], linestyle='None', lw=10, color='red', marker='^')
 
     plt.subplots_adjust(bottom=0.15, top=0.95, left=0.08, right=0.95, hspace=0.1)
-    return process_plot(fig, save_to, filename, return_fig)
+
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_sample_tracks(datasets, labels=None, mode='strides', agent_idx=0, agent_id=None, slice=[20, 40],
-                       subfolder='individuals', save_as=None, save_to=None, return_fig=False):
+                       subfolder='individuals', save_as=None, save_to=None, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder)
     for d in datasets:
         if not hasattr(d, 'step_data'):
@@ -832,11 +836,11 @@ def plot_sample_tracks(datasets, labels=None, mode='strides', agent_idx=0, agent
         ax.plot(s[p].loc[s[nam.min(p)] == True], linestyle='None', lw=10, color='red', marker='^')
 
     plt.subplots_adjust(bottom=0.15, top=0.95, left=0.08, right=0.95, hspace=0.1)
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_marked_strides(dataset, agent_ids=None, title=' ', show_legend=True, show_par_legend=False, slices=[],
-                        subfolder='individuals', return_fig=False):
+                        subfolder='individuals', return_fig=False, show=False):
     # We plot the complete or a slice of the timeseries of scal centroid velocity. The grey areas are stridechains
     d = dataset
 
@@ -851,7 +855,7 @@ def plot_marked_strides(dataset, agent_ids=None, title=' ', show_legend=True, sh
     figsize_long = (15 * 6 * 3, 5)
 
     par_shorts = ['sv']
-    # par_shorts = ['sv', 'fov']
+    # keys = ['sv', 'fov']
     pars, symbols, exp_symbols, ylabels, ylims = par_conf.par_dict_lists(shorts=par_shorts,
                                                                          to_return=['par', 'symbol', 'exp_symbol',
                                                                                     'unit', 'lim'])
@@ -897,7 +901,7 @@ def plot_marked_strides(dataset, agent_ids=None, title=' ', show_legend=True, sh
 
 def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
                       vertical_boundaries=False, min_turn_angle=0, slices=[], subfolder='individuals',
-                      return_fig=False):
+                      return_fig=False, show=False):
     # We plot the complete or a slice of the timeseries of scal centroid velocity. The grey areas are stridechains
     d = dataset
 
@@ -1011,7 +1015,8 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
 
 
 def plot_velocity_spect_hist(dataset, agent_id=None,
-                             titles=['scal velocity spectogram', 'scal velocity histogram'], return_fig=False):
+                             titles=['scal velocity spectogram', 'scal velocity histogram'], return_fig=False,
+                             show=False):
     # We plot the complete or a slice of the timeseries of scal centroid velocity. The grey areas are stridechains
     d = dataset
 
@@ -1055,7 +1060,7 @@ def plot_velocity_spect_hist(dataset, agent_id=None,
 
 
 def plot_strides(dataset, agent_id=None, radius_in_sec=None, save_as=f'parsed_strides.{suf}', save_to=None,
-                 return_fig=False):
+                 return_fig=False, show=False):
     d = dataset
     if agent_id is None:
         agent_id = d.agent_ids[0]
@@ -1224,7 +1229,7 @@ def plot_strides(dataset, agent_id=None, radius_in_sec=None, save_as=f'parsed_st
     combine_images(filenames=None, file_dir=save_to, save_as=save_as, save_to=save_to, size=size, figsize=figsize)
 
 
-def plot_pauses(dataset, Npauses=10, save_to=None, plot_simulated=False, return_fig=False):
+def plot_pauses(dataset, Npauses=10, save_to=None, plot_simulated=False, return_fig=False, show=False):
     if save_to is None:
         save_to = dataset.plot_dir
     dt = dataset.dt
@@ -1308,8 +1313,7 @@ def plot_pauses(dataset, Npauses=10, save_to=None, plot_simulated=False, return_
 
 def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSsitters=False,
               time_unit='hours', return_fig=False, sim_only=False,
-              datasets=None, labels=None, include_default_deb=False):
-    from lib.model.deb import deb_default
+              datasets=None, labels=None, show=False):
     warnings.filterwarnings('ignore')
     if save_to is None:
         save_to = paths.DebFolder
@@ -1317,17 +1321,11 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     if save_as is None:
         save_as = f'debs.{suf}'
     if deb_dicts is None:
-        default_deb_added = False
         deb_dicts = []
         for d, l in zip(datasets, labels):
-            epochs = d.config['epochs']
-            if include_default_deb and not default_deb_added:
-                deb_model = deb_default(epochs=epochs, substrate_quality=d.config['substrate_quality'])
-                deb_dicts.append(deb_model)
             dataset_deb_dicts = list(d.load_deb_dicts().values())
             deb_dicts.append(dataset_deb_dicts)
         deb_dicts = fun.flatten_list(deb_dicts)
-    # print(save_as)
     Ndebs = len(deb_dicts)
     ids = [d['id'] for d in deb_dicts]
     if Ndebs == 1:
@@ -1359,24 +1357,25 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     labels0 = ['mass', 'length',
                'reserve', 'reserve_density', 'hunger',
                'pupation_buffer',
-               'f','f_filt',
+               'f', 'f_filt',
                'explore2exploit_balance',
-               'M_gut','M_ingested','M_absorbed','M_faeces','M_not_digested','M_not_absorbed',
-               'R_faeces','R_absorbed','R_not_digested','gut_occupancy',
-               'deb_p_A', 'sim_p_A', 'gut_p_A', 'gut_f'
+               'M_gut', 'M_ingested', 'M_absorbed', 'M_faeces', 'M_not_digested', 'M_not_absorbed',
+               'R_faeces', 'R_absorbed', 'R_not_digested', 'gut_occupancy',
+               'deb_p_A', 'sim_p_A', 'gut_p_A', 'gut_f', 'gut_p_A_deviation'
                ]
     ylabels0 = ['wet weight $(mg)$', 'body length $(mm)$',
                 r'reserve $(J)$', r'reserve density $(-)$', r'hunger drive $(-)$',
                 r'pupation buffer $(-)$',
                 r'f $^{sim}$ $(-)$', r'f $_{filt}^{sim}$ $(-)$',
                 r'exploit VS explore $(-)$',
-               'gut content $(mg)$','food intake $(mg)$','food absorption $(mg)$',
-                'faeces $(mg)$','food not digested $(mg)$', 'product not absorbed $(mg)$',
-               'faeces fraction','absorption efficiency','fraction not digested','gut occupancy',
-                r'p$_{A}^{deb}$ $(\mu J)$', r'p$_{A}^{sim}$ $(\mu J)$', r'p$_{A}^{gut}$ $(\mu J)$', r'f $^{gut}$ $(-)$'
+                'gut content $(mg)$', 'food intake $(mg)$', 'food absorption $(mg)$',
+                'faeces $(mg)$', 'food not digested $(mg)$', 'product not absorbed $(mg)$',
+                'faeces fraction', 'absorption efficiency', 'fraction not digested', 'gut occupancy',
+                r'[p$_{A}^{deb}$] $(\mu J/cm^3)$', r'[p$_{A}^{sim}$] $(\mu J/cm^3)$',
+                r'[p$_{A}^{gut}$] $(\mu J/cm^3)$', r'f $^{gut}$ $(-)$', r'$\Delta$p$_{A}^{gut}$ $(-)$'
                 # r'(deb) assimilation energy $(J)$', r'(f) assimilation energy $(J)$', r'(gut) assimilation energy $(J)$'
                 ]
-    sharey=False
+    sharey = False
     if mode == 'energy':
         idx = [2, 3, 4, 5]
     elif mode == 'growth':
@@ -1400,11 +1399,19 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     elif mode == 'food_ratio_2':
         idx = [17, 15]
     elif mode == 'assimilation':
-        idx = [19,20, 21]
+        idx = [19, 20, 21]
         sharey = True
     elif mode == 'fs':
         idx = [6, 7, 22]
         sharey = True
+
+    tickstep = 24
+    time_unit_dict = {
+        'hours': 1,
+        'minutes': 60,
+        'seconds': 60 * 60,
+    }
+    t_coef = time_unit_dict[time_unit]
 
     labels = [labels0[i] for i in idx]
     ylabels = [ylabels0[i] for i in idx]
@@ -1417,33 +1424,21 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     for d, id, c in zip(deb_dicts, ids, cols):
         t0, t1, t2, t3, age = d['birth'], d['pupation'], d['death'], d['sim_start'] + d['birth'], np.array(d['age'])
         epochs = np.array(d['epochs'])
-        if sim_only :
-            t0-=t3
-            t1-=t3
-            t2-=t3
-            age-=t3
-            epochs-=t3
+        if sim_only:
+            t0 -= t3
+            t1 -= t3
+            t2 -= t3
+            age -= t3
+            epochs -= t3
             t3 = 0
 
-        if time_unit == 'hours':
-            pass
-            tickstep = 24
-        elif time_unit == 'minutes':
-            t0 *= 60
-            t1 *= 60
-            t2 *= 60
-            t3 *= 60
-            age *= 60
-            epochs *= 60
-            tickstep = 24 * 60
-        elif time_unit == 'seconds':
-            t0 *= 3600
-            t1 *= 3600
-            t2 *= 3600
-            t3 *= 3600
-            age *= 3600
-            epochs *= 3600
-            tickstep = 24 * 3600
+        t0 *= t_coef
+        t1 *= t_coef
+        t2 *= t_coef
+        t3 *= t_coef
+        age *= t_coef
+        epochs *= t_coef
+        tickstep *= t_coef
 
         t0s.append(t0)
         t1s.append(t1)
@@ -1455,7 +1450,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             # print(l, yl, len(age))
             if l == 'f_filt':
                 P = d['f']
-                sos = signal.butter(N=1, Wn=d['fr']/1000, btype='lowpass', analog=False, fs=d['fr'], output='sos')
+                sos = signal.butter(N=1, Wn=d['fr'] / 1000, btype='lowpass', analog=False, fs=d['fr'], output='sos')
                 P = signal.sosfiltfilt(sos, P)
             else:
                 P = d[l]
@@ -1473,17 +1468,16 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             ax.set_ylabel(yl, labelpad=15, fontsize=15)
             ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
             ax.tick_params(axis='y', labelsize=15)
-            ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+            ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 
-            if l in ['pupation_buffer', 'explore2exploit_balance', 'R_faeces','R_absorbed','R_not_digested','gut_occupancy']:
+            if l in ['pupation_buffer', 'explore2exploit_balance', 'R_faeces', 'R_absorbed', 'R_not_digested',
+                     'gut_occupancy']:
                 ax.set_ylim([0, 1])
-            if l == 'f' or mode=='fs':
+            if l == 'f' or mode == 'fs':
                 ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
                 # ax.set_ylim(ymin=0)
             if mode == 'assimilation':
                 ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
-
-
 
         for t in [0, t0, t1, t2]:
             if not np.isnan(t):
@@ -1518,17 +1512,12 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         ax.set_xlim([0, np.max(max_ages)])
         ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
     else:
-        # plt.xticks(np.arange(0, np.max(max_ages), tickstep))
-        for ax in axs :
+        for ax in axs:
             ax.set_xticks(ticks=np.arange(0, np.max(max_ages), tickstep))
-
 
     dataset_legend(leg_ids, leg_cols, ax=axs[0], loc='upper left', fontsize=20, prop={'size': 15})
     fig.subplots_adjust(top=0.95, bottom=0.2, left=0.15, right=0.93, hspace=0.02)
-    # plt.show()
-    # raise
-    # print(save_as)
-    return process_plot(fig, save_to, save_as, return_fig)
+    return process_plot(fig, save_to, save_as, return_fig, show)
 
 
 def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=None, pref=None, show=False):
@@ -2075,7 +2064,8 @@ def plot_bend_change_over_displacement(dataset, return_fig=False):
     return process_plot(fig, save_to, filename, return_fig)
 
 
-def plot_stride_Dbend(datasets, labels=None, show_text=False, subfolder='stride', save_to=None, return_fig=False):
+def plot_stride_Dbend(datasets, labels=None, show_text=False, subfolder='stride', save_to=None, return_fig=False,
+                      show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder)
     filename = f'stride_bend_change.{suf}'
 
@@ -2123,55 +2113,53 @@ def plot_stride_Dbend(datasets, labels=None, show_text=False, subfolder='stride'
                     transform=ax.transAxes)
         print(f'Bend correction during strides for {label} fitted as : db={m}*b + {k}')
     plt.subplots_adjust(bottom=0.2, top=0.95, left=0.25, right=0.95, wspace=0.01)
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
-def plot_EEB_vs_food_quality(samples=['Fed', 'Deprived', 'Starved'], dt=None, species_list=['rover', 'sitter', 'default'], **kwargs):
-
-
-
-
+def plot_EEB_vs_food_quality(samples=['Fed', 'Deprived', 'Starved'], dt=None,
+                             species_list=['rover', 'sitter', 'default'], **kwargs):
     qs = np.arange(0.01, 1, 0.01)
     # qs=[1.0,0.75,0.5,0.25,0.15]
 
-    fig, axs = plt.subplots(3, len(samples), figsize=(10*len(samples), 20))
+    fig, axs = plt.subplots(3, len(samples), figsize=(10 * len(samples), 20))
     axs = axs.ravel()
-    cols=fun.N_colors(len(species_list))
+    cols = fun.N_colors(len(species_list))
 
-    for i,sample in enumerate(samples) :
+    for i, sample in enumerate(samples):
         z = get_EEB_poly1d(sample_dataset=sample, dt=dt)
-        for col,species in zip(cols, species_list) :
+        for col, species in zip(cols, species_list):
             ss = []
             EEBs = []
-            cc={'color':col,
-                'label': species,
-                'marker' : '.'}
+            cc = {'color': col,
+                  'label': species,
+                  'marker': '.'}
             for q in qs:
                 deb = DEB(substrate_quality=q, species=species, **kwargs)
                 s = np.round(deb.feed_freq_estimate, 2)
                 ss.append(s)
                 EEBs.append(z(s))
 
-            axs[3*i].scatter(qs, ss,**cc)
-            axs[3*i+1].scatter(qs, EEBs,**cc)
-            axs[3*i+2].scatter(ss, EEBs,**cc)
+            axs[3 * i].scatter(qs, ss, **cc)
+            axs[3 * i + 1].scatter(qs, EEBs, **cc)
+            axs[3 * i + 2].scatter(ss, EEBs, **cc)
 
-        axs[3*i+0].set_xlabel('food quality')
-        axs[3*i+1].set_xlabel('food quality')
-        axs[3*i+2].set_xlabel(r'estimated feed freq $Hz$')
-        axs[3*i+0].set_ylabel(r'estimated feed freq $Hz$')
-        axs[3*i+1].set_ylabel('EEB')
-        axs[3*i+2].set_ylabel('EEB')
-        axs[3*i+1].set_ylim([0, 1])
-        axs[3*i+2].set_ylim([0, 1])
-    for ax in axs :
+        axs[3 * i + 0].set_xlabel('food quality')
+        axs[3 * i + 1].set_xlabel('food quality')
+        axs[3 * i + 2].set_xlabel(r'estimated feed freq $Hz$')
+        axs[3 * i + 0].set_ylabel(r'estimated feed freq $Hz$')
+        axs[3 * i + 1].set_ylabel('EEB')
+        axs[3 * i + 2].set_ylabel('EEB')
+        axs[3 * i + 1].set_ylim([0, 1])
+        axs[3 * i + 2].set_ylim([0, 1])
+    for ax in axs:
         ax.legend()
     # axs[2].set_xlim(r'estimated feed freq $Hz$')
     # axs[0].set_ylim(r'estimated feed freq $Hz$')
     plt.show()
 
+
 def plot_stride_Dorient(datasets, labels=None, simVSexp=False, absolute=True, subfolder='stride',
-                        save_to=None, legend=False, return_fig=False):
+                        save_to=None, legend=False, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder)
     filename = f'stride_orient_change.{suf}'
 
@@ -2206,11 +2194,11 @@ def plot_stride_Dorient(datasets, labels=None, simVSexp=False, absolute=True, su
             axs[i].legend()
     axs[0].set_ylabel('probability')
     plt.subplots_adjust(bottom=0.2, top=0.95, left=0.12, right=0.99, wspace=0.01)
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_interference(datasets, labels=None, mode='orientation', agent_idx=None, subfolder='interference',
-                      save_to=None, save_as=None, return_fig=False):
+                      save_to=None, save_as=None, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder)
     if save_as is None:
         save_as = f'interference_{mode}.{suf}' if agent_idx is None else f'interference_{mode}_agent_idx_{agent_idx}.{suf}'
@@ -2260,11 +2248,11 @@ def plot_interference(datasets, labels=None, mode='orientation', agent_idx=None,
     axs[-1].set_xlabel('$\phi_{stride}$')
 
     fig.subplots_adjust(top=0.97, bottom=0.2 / len(pars), left=0.12, right=0.95, hspace=.1, wspace=0.05)
-    return process_plot(fig, save_to, save_as, return_fig)
+    return process_plot(fig, save_to, save_as, return_fig, show)
 
 
 def plot_dispersion(datasets, labels=None, ranges=None, scaled=False, subfolder='dispersion', fig_cols=1, ymax=None,
-                    save_as=None, save_to=None, return_fig=False):
+                    save_as=None, save_to=None, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder)
     if ranges is None:
         ranges = [(0, 40)]
@@ -2310,10 +2298,11 @@ def plot_dispersion(datasets, labels=None, ranges=None, scaled=False, subfolder=
         axs.xaxis.set_major_locator(ticker.MaxNLocator(4))
         axs.legend(loc='upper left')
         fig.subplots_adjust(top=0.95, bottom=0.15, left=0.2 / fig_cols, right=0.95, hspace=.005, wspace=0.05)
-        return process_plot(fig, save_to, filename, return_fig)
+        return process_plot(fig, save_to, filename, return_fig, show)
 
 
-def plot_pathlength(datasets, labels=None, scaled=True, save_to=None, save_as=None, return_fig=False, unit='mm', xlab=None):
+def plot_pathlength(datasets, labels=None, scaled=True, save_to=None, save_as=None, return_fig=False, unit='mm',
+                    xlab=None, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to)
     Nticks = len(datasets[0].step_data.index.unique('Step'))
     t0, t1 = 0, int(Nticks / datasets[0].fr / 60)
@@ -2333,8 +2322,8 @@ def plot_pathlength(datasets, labels=None, scaled=True, save_to=None, save_as=No
     fig, axs = plt.subplots(1, 1, figsize=(7, 6))
     for d, lab, c in zip(datasets, labels, colors):
         dst_df = d.step_data['cum_dst']
-        if not scaled and unit=='cm' :
-            dst_df/=10
+        if not scaled and unit == 'cm':
+            dst_df /= 10
         # dst_df = d.step_data['cum_dst']/10
         dst_m = dst_df.groupby(level='Step').quantile(q=0.5)
         dst_u = dst_df.groupby(level='Step').quantile(q=0.75)
@@ -2342,18 +2331,18 @@ def plot_pathlength(datasets, labels=None, scaled=True, save_to=None, save_as=No
         plot_mean_and_range(x=trange, mean=dst_m, lb=dst_b, ub=dst_u, axis=axs, color_mean=c,
                             color_shading=c, label=lab)
     axs.set_ylabel(ylab)
-    if xlab is None :
-        xlab='time, $min$'
+    if xlab is None:
+        xlab = 'time, $min$'
     axs.set_xlabel(xlab)
     axs.set_xlim([trange[0], trange[-1]])
     axs.set_ylim(ymin=0)
     axs.xaxis.set_major_locator(ticker.MaxNLocator(5))
     axs.legend(loc='upper left')
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.2, right=0.95, hspace=.005, wspace=0.05)
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
-def plot_gut(datasets, labels=None, save_to=None, save_as=None, return_fig=False):
+def plot_gut(datasets, labels=None, save_to=None, save_as=None, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to)
     Nticks = len(datasets[0].step_data.index.unique('Step'))
     t0, t1 = 0, int(Nticks / datasets[0].fr / 60)
@@ -2383,11 +2372,11 @@ def plot_gut(datasets, labels=None, save_to=None, save_as=None, return_fig=False
     axs.yaxis.set_major_locator(ticker.MaxNLocator(5))
     axs.legend(loc='upper left', fontsize=9)
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.95, hspace=.005, wspace=0.05)
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_food_amount(datasets, labels=None, save_to=None, save_as=None, filt_amount=False, scaled=False,
-                     return_fig=False):
+                     return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to)
     Nticks = len(datasets[0].step_data.index.unique('Step'))
     t0, t1 = 0, int(Nticks / datasets[0].fr / 60)
@@ -2439,10 +2428,10 @@ def plot_food_amount(datasets, labels=None, save_to=None, save_as=None, filt_amo
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.95, hspace=.005, wspace=0.05)
     # plt.show()
     # raise
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
-def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False):
+def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False, show=False):
     filename = 'PI_heatmap.pdf'
     print('Creating heatmap')
     new_data = pd.read_csv(csv_filepath, index_col=0)
@@ -2485,34 +2474,32 @@ def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False):
     ax.set_xticklabels(Lgains[r.astype(int)])
     ax.set_yticklabels(Rgains[r.astype(int)])
     plt.subplots_adjust(left=0.15, right=0.95, bottom=0.15, top=0.95)
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
-def plot_odor_concentration(datasets, labels=None, save_to=None, return_fig=False):
-    return plot_timeplot(['c_odor1'], datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
+def plot_odor_concentration(**kwargs):
+    return plot_timeplot(['c_odor1'], **kwargs)
 
 
-def plot_sensed_odor_concentration(datasets, labels=None, save_to=None, return_fig=False):
-    return plot_timeplot(['dc_odor1'], datasets=datasets, labels=labels, save_to=save_to, return_fig=return_fig)
+def plot_sensed_odor_concentration(**kwargs):
+    return plot_timeplot(['dc_odor1'], **kwargs)
 
 
-def plot_Y_pos(datasets, labels=None, save_to=None, return_fig=False, show_first=False, legend_loc='lower left'):
-    return plot_timeplot(['y'], show_first=show_first, datasets=datasets, labels=labels, save_to=save_to,
-                         return_fig=return_fig, legend_loc=legend_loc)
+def plot_Y_pos(**kwargs):
+    return plot_timeplot(['y'], **kwargs)
 
 
 def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals=False, table=None, show_first=True,
-                  subfolder='timeplots', legend_loc='upper left', save_to=None,save_as=None, return_fig=False):
+                  subfolder='timeplots', legend_loc='upper left', save_to=None, save_as=None, return_fig=False,
+                  show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder)
     N = len(par_shorts)
     cols = ['grey'] if N == 1 else fun.N_colors(N)
     if not same_plot:
         raise NotImplementedError
 
-
     for short, c in zip(par_shorts, cols):
         fig, axs = plt.subplots(1, 1, figsize=(7.5, 5))
-
 
         par_dict = par_conf.get_par_dict(short=short)
         par = par_dict['par']
@@ -2556,9 +2543,6 @@ def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals
                     dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
                     axs.plot(trange, dc0, 'r')
 
-
-
-
         axs.set_ylabel(xlabel)
         axs.set_xlabel(time_label)
         axs.set_xlim([trange[0], trange[-1]])
@@ -2577,10 +2561,11 @@ def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals
 
         # plt.show()
         # raise
-        return process_plot(fig, save_to, filename, return_fig)
+        return process_plot(fig, save_to, filename, return_fig, show)
 
 
-def plot_navigation_index(datasets, labels=None, subfolder='source', save_as=None, save_to=None, return_fig=False):
+def plot_navigation_index(datasets, labels=None, subfolder='source', save_as=None, save_to=None, return_fig=False,
+                          show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
     filename = f'nav_index.{suf}' if save_as is None else save_as
 
@@ -2629,13 +2614,13 @@ def plot_navigation_index(datasets, labels=None, subfolder='source', save_as=Non
     axs[0].axhline(0.0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
     axs[1].axhline(0.0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
     # plt.show()
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause_chunk='pause', time_unit='sec',
                         plot_fits='all', range='default', print_fits=False, only_fit_one=True, mode='cdf',
                         subfolder='bouts', refit_distros=False,
-                        save_to=None, save_as=None, save_fits_to=None, save_fits_as=None, return_fig=False):
+                        save_to=None, save_as=None, save_fits_to=None, save_fits_as=None, return_fig=False, show=False):
     warnings.filterwarnings('ignore')
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
 
@@ -2816,10 +2801,10 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
     # raise
     fit_df = pd.DataFrame.from_dict(fits, orient="index")
     fit_df.to_csv(fit_filename, index=True, header=True)
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
-def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_fig=False):
+def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_fig=False, show=False):
     chunk = 'stride'
     Npoints = 64
     d = dataset
@@ -2919,7 +2904,7 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
         Input data.
 
     ax : matplotlib.axes.Axes
-        The axes object to draw the ellipse into.
+        The axes object_class to draw the ellipse into.
 
     n_std : float
         The number of standard deviations to determine the ellipse'sigma radiuses.
@@ -2988,7 +2973,8 @@ def plot_correlated_pars(dataset, pars, labels, save_to=None, save_as=f'correlat
 
 def plot_ang_pars(datasets, labels=None, simVSexp=False, absolute=True, include_turns=False, include_rear=False,
                   subfolder='turn',
-                  save_fits_as=None, save_as=None, save_to=None, Npars=3, par_legend=False, return_fig=False):
+                  save_fits_as=None, save_as=None, save_to=None, Npars=3, par_legend=False, return_fig=False,
+                  show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
     if Npars == 5:
         par_shorts = ['b', 'bv', 'ba', 'fov', 'foa']
@@ -3100,12 +3086,12 @@ def plot_ang_pars(datasets, labels=None, simVSexp=False, absolute=True, include_
     plt.subplots_adjust(bottom=0.15, top=0.95, left=0.3 / len(pars), right=0.99, wspace=0.01)
     if Ndatasets > 1:
         fit_df.to_csv(fit_filepath, index=True, header=True)
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_bout_ang_pars(datasets, labels=None, simVSexp=False, absolute=True, include_rear=True,
                        subfolder='turn', save_fits_as=None, save_as=None, save_to=None, par_legend=False,
-                       return_fig=False):
+                       return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
     par_shorts = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
     ranges = [250, 250, 50, 2000, 2000, 500] if include_rear else [200, 200, 2000, 2000]
@@ -3217,11 +3203,11 @@ def plot_bout_ang_pars(datasets, labels=None, simVSexp=False, absolute=True, inc
     # plt.show()
     if Ndatasets > 1:
         fit_df.to_csv(fit_filepath, index=True, header=True)
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_crawl_pars(datasets, labels=None, simVSexp=False, subfolder='endpoint',
-                    save_as=None, save_fits_as=None, save_to=None, par_legend=False, return_fig=False):
+                    save_as=None, save_fits_as=None, save_to=None, par_legend=False, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
     filename = f'crawl_pars.{suf}' if save_as is None else save_as
     fit_filename = 'ang_pars_ttest.csv' if save_fits_as is None else save_fits_as
@@ -3323,11 +3309,11 @@ def plot_crawl_pars(datasets, labels=None, simVSexp=False, subfolder='endpoint',
         fit_df.to_csv(fit_filepath, index=True, header=True)
     # plt.show()
     # raise
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, subfolder='endpoint',
-                         save_to=None, save_as=None, save_fits_as=None, return_fig=False):
+                         save_to=None, save_as=None, save_fits_as=None, return_fig=False, show=False):
     warnings.filterwarnings('ignore')
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
     for d in datasets:
@@ -3420,7 +3406,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
 
     Ncols = int(np.min([Npars, 4]))
     Nrows = int(np.ceil(Npars / Ncols))
-    fig_s=5
+    fig_s = 5
 
     fig, axs = plt.subplots(Nrows, Ncols, figsize=(fig_s * Ncols, fig_s * Nrows), sharey=True)
     axs = axs.ravel() if Nrows * Ncols > 1 else [axs]
@@ -3500,12 +3486,13 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
                 axs[i].text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k', fontsize=15,
                             transform=axs[i].transAxes)
 
-    plt.subplots_adjust(wspace=0.02, hspace=0.15*Nrows, left=0.07, right=0.97, top=1 - (0.1 / Nrows), bottom=0.15 / Nrows)
+    plt.subplots_adjust(wspace=0.02, hspace=0.15 * Nrows, left=0.07, right=0.97, top=1 - (0.1 / Nrows),
+                        bottom=0.15 / Nrows)
     plt.ylim(ylim)
     axs[0].legend(loc='upper left', prop={'size': 20})
     if Ndatasets > 1:
         fit_df.to_csv(fit_filepath, index=True, header=True)
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_turn_duration(datasets, labels=None, save_to=None, return_fig=False, legend=True, absolute=True):
@@ -3700,7 +3687,7 @@ def dataset_legend(labels, colors, ax=None, loc=None, anchor=None, fontsize=None
     return leg
 
 
-def plot_turns(datasets, labels=None, absolute=True, save_to=None, subfolder='turn', return_fig=False):
+def plot_turns(datasets, labels=None, absolute=True, save_to=None, subfolder='turn', return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
     filename = f'turns.{suf}'
     fig, axs = plt.subplots(1, 1, figsize=(6, 5))
@@ -3734,11 +3721,12 @@ def plot_turns(datasets, labels=None, absolute=True, save_to=None, subfolder='tu
     axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
     axs.legend(loc='upper right', fontsize=10)
     fig.subplots_adjust(top=0.92, bottom=0.15, left=0.25, right=0.95, hspace=.005, wspace=0.05)
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_turn_Dbearing(datasets, labels=None, min_angle=30.0, max_angle=180.0, ref_angle=None,
-                       par='orientation_to_center', Nplots=4, subfolder='turn', save_to=None, return_fig=False):
+                       par='orientation_to_center', Nplots=4, subfolder='turn', save_to=None, return_fig=False,
+                       show=False):
     Nds, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
     fig, axs = plt.subplots(Nds, Nplots, figsize=(5 * Nplots, 5 * Nds), subplot_kw=dict(projection='polar'),
                             sharey=True)
@@ -3756,12 +3744,11 @@ def plot_turn_Dbearing(datasets, labels=None, min_angle=30.0, max_angle=180.0, r
     else:
         raise ValueError('No parameter or target angle has been provided.')
 
-    def circNarrow(ax, data, alpha, label, color) :
+    def circNarrow(ax, data, alpha, label, color):
         circular_hist(ax, data, bins=16, alpha=alpha, label=label, color=color, offset=np.pi / 2)
         arrow = patches.FancyArrowPatch((0, 0), (np.mean(data), 0.3), zorder=2, mutation_scale=30, alpha=alpha,
                                         facecolor=color, edgecolor='black', fill=True, linewidth=0.5)
         ax.add_patch(arrow)
-
 
     for i, (d, label, c) in enumerate(zip(datasets, labels, colors)):
         ii = Nplots * i
@@ -3794,7 +3781,8 @@ def plot_turn_Dbearing(datasets, labels=None, min_angle=30.0, max_angle=180.0, r
                 B01 = B0[B0 > 0]
                 B11 = B1[B0 > 0]
                 # DB1=DB[B0>0]
-                for tt, BB, aa in zip([r'$\theta^{init}_{or}$', r'$\theta^{fin}_{or}$'], [(B01, B00), (B11, B10)], [0.3, 0.6]):
+                for tt, BB, aa in zip([r'$\theta^{init}_{or}$', r'$\theta^{fin}_{or}$'], [(B01, B00), (B11, B10)],
+                                      [0.3, 0.6]):
                     for kk, ss, BBB in zip([0, 1], [r'$L_{sided}$', r'$R_{sided}$'], BB):
                         circNarrow(axs[ii + k + 2 * kk], BBB, aa, f'{ss} {tt}', c)
                         axs[ii + 1].legend(bbox_to_anchor=(-0.3, 0.1), loc='center', fontsize=12)
@@ -3815,16 +3803,15 @@ def plot_turn_Dbearing(datasets, labels=None, min_angle=30.0, max_angle=180.0, r
     plt.subplots_adjust(bottom=0.15, top=1 - 0.1, left=0.0, right=1.0, wspace=0.0, hspace=0.35)
     # plt.show()
     # raise
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
-def plot_turn_Dorient2center(datasets, labels=None, save_to=None, return_fig=False, **kwargs):
-    return plot_turn_Dbearing(datasets, labels=labels, ref_angle=None, par='orientation_to_center', save_to=save_to,
-                              return_fig=return_fig, **kwargs)
+def plot_turn_Dorient2center(**kwargs):
+    return plot_turn_Dbearing(ref_angle=None, par='orientation_to_center', **kwargs)
 
 
 def plot_chunk_Dorient2source(datasets, labels=None, chunk='stride', source=(0.0, 0.0), Nbins=16, min_dur=0.0,
-                              plot_merged=False, save_to=None, return_fig=False):
+                              plot_merged=False, save_to=None, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=chunk)
     filename = f'{chunk}_Dorient2souce.{suf}'
     if plot_merged:
@@ -3909,7 +3896,7 @@ def plot_chunk_Dorient2source(datasets, labels=None, chunk='stride', source=(0.0
         ax.xaxis.set_major_locator(FixedLocator(ticks_loc))
         ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''])
     plt.subplots_adjust(bottom=0.2, top=0.8, left=0.05 * Ncols / 2, right=0.9, wspace=0.8, hspace=0.3)
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
@@ -4050,7 +4037,7 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None):
     return fig_dict
 
 
-def targeted_analysis(datasets, labels=None, simVSexp=False, save_to=None, pref=''):
+def targeted_analysis(datasets, labels=None, simVSexp=False, save_to=None, pref='', show=False):
     # with fun.suppress_stdout():
     if save_to is None:
         save_to = datasets[0].comp_plot_dir
@@ -4059,7 +4046,8 @@ def targeted_analysis(datasets, labels=None, simVSexp=False, save_to=None, pref=
     anal_kws = {'datasets': datasets,
                 'labels': labels,
                 'save_to': save_to,
-                'subfolder': None}
+                'subfolder': None,
+                'show': show}
     init_dir, res_dir = 'init', 'result'
     plot_stridesNpauses(**anal_kws, plot_fits='best', time_unit='sec', range='default', print_fits=False,
                         save_as=f'bouts{pref}.pdf', save_fits_as=f'bout_fits{pref}.csv')
@@ -4208,7 +4196,9 @@ def plot_nengo(d, save_to=None):
     save_plot(fig, filepath, filename)
 
 
-def process_plot(fig, save_to, filename, return_fig):
+def process_plot(fig, save_to, filename, return_fig, show=False):
+    if show:
+        plt.show()
     fig.patch.set_visible(False)
     if return_fig:
         return fig, save_to, filename
@@ -4234,9 +4224,6 @@ def barplot(datasets, labels=None, par_shorts=['f_am'], coupled_labels=None, xla
         new_ind = ind[::N] + (ind[N - 1] - ind[0]) / N
     else:
         ind = np.arange(0, w * Ndatasets, w)
-
-
-
 
     pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts,
                                                                   to_return=['par', 'symbol', 'exp_symbol', 'unit'])
@@ -4287,17 +4274,15 @@ def barplot(datasets, labels=None, par_shorts=['f_am'], coupled_labels=None, xla
             plt.ylabel(u)
         else:
             plt.ylabel(ylabel)
-        try :
+        try:
             plt.ylim(0, h)
-        except :
+        except:
             ax.set_ylim(ymin=0)
         # plt.ylim(0, 16)
         if xlabel is not None:
             plt.xlabel(xlabel)
         plt.subplots_adjust(hspace=0.05, top=0.95, bottom=0.15, left=0.15, right=0.95)
-        if show:
-            plt.show()
-        return process_plot(fig, save_to, filename, return_fig)
+        return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def lineplot(datasets, markers, labels=None, par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None,
@@ -4319,9 +4304,6 @@ def lineplot(datasets, markers, labels=None, par_shorts=['f_am'], coupled_labels
         # new_ind = ind[::N] + (ind[N - 1] - ind[0]) / N
     else:
         ind = np.arange(Ndatasets)
-
-
-
 
     pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts,
                                                                   to_return=['par', 'symbol', 'exp_symbol', 'unit'])
@@ -4379,9 +4361,7 @@ def lineplot(datasets, markers, labels=None, par_shorts=['f_am'], coupled_labels
         if xlabel is not None:
             plt.xlabel(xlabel)
         plt.subplots_adjust(hspace=0.05, top=0.95, bottom=0.15, left=0.15, right=0.95)
-        if show:
-            plt.show()
-        return process_plot(fig, save_to, filename, return_fig)
+        return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def label_diff(i, j, text, X, Y, ax):

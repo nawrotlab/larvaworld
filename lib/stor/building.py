@@ -7,20 +7,21 @@ from lib.aux.functions import match_larva_ids
 from lib.aux import functions as fun
 from lib.aux import naming as nam
 
+
 def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
-          use_tick_index=True, max_Nagents=np.inf, complete_ticks=True,
-          min_end_time_in_sec=0, min_duration_in_sec=0, start_time_in_sec=0):
-    d=dataset
-    raw_cols=build_conf['read_sequence']
-    raw_files=[]
+                   use_tick_index=True, max_Nagents=np.inf, complete_ticks=True,
+                   min_end_time_in_sec=0, min_duration_in_sec=0, start_time_in_sec=0):
+    d = dataset
+    raw_cols = build_conf['read_sequence']
+    raw_files = []
     all_invert_x = []
     for i, f in enumerate(raw_folders):
         files = [os.path.join(f, n) for n in os.listdir(f) if n.endswith('.csv')]
-        raw_files+=files
-        if build_conf['read_metadata'] :
-            all_invert_x+= get_invert_x_array(read_Schleyer_metadata(f), len(files))
+        raw_files += files
+        if build_conf['read_metadata']:
+            all_invert_x += get_invert_x_array(read_Schleyer_metadata(f), len(files))
     if len(all_invert_x) == 0:
-        all_invert_x = [False] *len(raw_files)
+        all_invert_x = [False] * len(raw_files)
     min_duration_in_ticks = int(min_duration_in_sec / d.dt)
     min_end_time_in_ticks = int(min_end_time_in_sec / d.dt)
     start_time_in_ticks = int(start_time_in_sec / d.dt)
@@ -64,7 +65,7 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
             agent_ids.append(agent_id)
             if appropriate_recordings_counter >= max_Nagents:
                 break
-    if len(dfs)==0 :
+    if len(dfs) == 0:
         return None, None
     if complete_ticks:
         min_tick, max_tick = np.min([df.index.min() for df in dfs]), np.max([df.index.max() for df in dfs])
@@ -100,42 +101,58 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
     step_data = step_data.mask(step_data == 'na', np.nan)
     return step_data, endpoint_data
 
-def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ticks=True,min_duration_in_sec=0,**kwargs):
-    temp_step_path=os.path.join(source_dir, 'step.csv')
-    temp_length_path=os.path.join(source_dir, 'length.csv')
-    def temp_save(step,length) :
+
+def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ticks=True, min_duration_in_sec=0,
+                  **kwargs):
+    temp_step_path = os.path.join(source_dir, 'step.csv')
+    temp_length_path = os.path.join(source_dir, 'length.csv')
+
+    def temp_save(step, length):
         step.to_csv(temp_step_path, index=True, header=True)
         length.to_csv(temp_length_path, index=True, header=True)
         print(f'Saved temporary dataset {dataset.id} successfully!')
-    def temp_load() :
+
+    def temp_load():
         step = pd.read_csv(temp_step_path, index_col=['Step', 'AgentID'])
         e = pd.read_csv(temp_length_path, index_col=0)
         return step, e
 
-    d=dataset
+    d = dataset
     fr = d.fr
     x_pars = [x for x, y in d.points_xy]
     y_pars = [y for x, y in d.points_xy]
 
-    try :
-        temp, e=temp_load()
+    try:
+        temp, e = temp_load()
         print('Loaded temporary data successfully!')
-    except :
+    except:
 
         t_file = os.path.join(source_dir, 't.txt')
         id_file = os.path.join(source_dir, 'larvaid.txt')
         x_file = os.path.join(source_dir, 'x_spine.txt')
         y_file = os.path.join(source_dir, 'y_spine.txt')
+        state_file = os.path.join(source_dir, 'state.txt')
+
         xs = pd.read_csv(x_file, header=None, sep='\t', names=x_pars)
         ys = pd.read_csv(y_file, header=None, sep='\t', names=y_pars)
         ts = pd.read_csv(t_file, header=None, sep='\t', names=['Step'])
+        try:
+            states = pd.read_csv(state_file, header=None, sep='\t', names=['state'])
+            # print('xx')
+        except:
+            states = None
+            # print('ddxx')
 
         ids = pd.read_csv(id_file, header=None, sep='\t', names=['AgentID'])
         ids['AgentID'] = [f'Larva_{10000 + i[0]}' for i in ids.values]
 
         min_t, max_t = float(ts.min()), float(ts.max())
 
-        temp = pd.concat([ids, ts, xs, ys], axis=1, sort=False)
+        par_list = [ids, ts, xs, ys]
+        if states is not None:
+            par_list.append(states)
+
+        temp = pd.concat(par_list, axis=1, sort=False)
         temp.set_index(keys=['AgentID'], inplace=True, drop=True)
         agent_ids = np.sort(temp.index.unique())
 
@@ -155,12 +172,12 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
         temp.reset_index(drop=False, inplace=True)
         temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
 
-        temp['spinelength']=np.nan
+        temp['spinelength'] = np.nan
         temp.reset_index(level='Step', drop=False, inplace=True)
         temp_ids = temp.index.unique().tolist()
-        ls=[]
-        for id in temp_ids :
-            ag_temp=temp.loc[id]
+        ls = []
+        for id in temp_ids:
+            ag_temp = temp.loc[id]
             xy = ag_temp[nam.xy(d.points, flat=True)].values
             spinelength = np.zeros(len(ag_temp)) * np.nan
             for j in range(xy.shape[0]):
@@ -170,14 +187,13 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
                 else:
                     sp_l = np.nan
                 spinelength[j] = sp_l
-            temp['spinelength'].loc[id]=spinelength
+            temp['spinelength'].loc[id] = spinelength
             ls.append(np.nanmean(spinelength))
-        e = pd.DataFrame({'length' : ls}, index=temp_ids)
+        e = pd.DataFrame({'length': ls}, index=temp_ids)
         temp.reset_index(drop=False, inplace=True)
         temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-        temp_save(temp,e)
+        temp_save(temp, e)
         # return None, None
-
 
     temp = match_larva_ids(s=temp, e=e, pars=['head_x', 'head_y'], **kwargs)
     # temp = match_larva_ids(sigma=temp, pars=['head_x', 'head_y'], e=e,min_Nids=min_Nids, dl=dl, **kwargs)
@@ -187,7 +203,7 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
     new_pairs = dict(zip(old_ids, new_ids))
     temp.rename(index=new_pairs, inplace=True)
     temp.reset_index(drop=False, inplace=True)
-    max_step =int(temp['Step'].max())
+    max_step = int(temp['Step'].max())
     temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
     temp.sort_index(level=['Step', 'AgentID'], inplace=True)
     # print(temp[temp.index.duplicated()])
@@ -195,7 +211,11 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
     if complete_ticks:
         trange = np.arange(max_step).astype(int)
         my_index = pd.MultiIndex.from_product([trange, new_ids], names=['Step', 'AgentID'])
-        step_data = pd.DataFrame(index=my_index, columns=x_pars + y_pars)
+        columns = x_pars + y_pars
+        if 'state' in temp.columns:
+            columns.append('state')
+
+        step_data = pd.DataFrame(index=my_index, columns=columns)
         step_data.update(temp)
     else:
         step_data = temp
@@ -208,13 +228,12 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
         step_data = step_data.loc[(slice(None), selected), :]
         endpoint_data = endpoint_data.loc[selected]
 
-    if min_duration_in_sec>0 :
-        selected = endpoint_data[endpoint_data['cum_dur']>=min_duration_in_sec].index.values
+    if min_duration_in_sec > 0:
+        selected = endpoint_data[endpoint_data['cum_dur'] >= min_duration_in_sec].index.values
         step_data = step_data.loc[(slice(None), selected), :]
         endpoint_data = endpoint_data.loc[selected]
 
     return step_data, endpoint_data
-
 
 
 def read_Schleyer_metadata(dir):

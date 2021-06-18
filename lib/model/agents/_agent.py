@@ -1,8 +1,6 @@
-import time
 from copy import deepcopy
 import numpy as np
 from Box2D import Box2D, b2ChainShape
-from matplotlib.patches import Circle
 from scipy.spatial.distance import euclidean
 from scipy.stats import multivariate_normal
 from shapely import affinity
@@ -10,7 +8,7 @@ from shapely.geometry import Point, Polygon
 
 import lib.aux.functions as fun
 import lib.aux.rendering as ren
-from lib.model.deb import Substrate
+from lib.model.DEB.deb import Substrate
 
 
 class LarvaworldAgent:
@@ -189,9 +187,20 @@ class Larva(LarvaworldAgent):
     def first_odor_concentration_change(self):
         return list(self.brain.olfactor.dCon.values())[0]
 
+    # @property
+    # def length_in_mm(self):
+    #     return self.get_real_length() * 1000
+
     @property
     def length_in_mm(self):
         return self.get_real_length() * 1000
+        # from lib.conf.par import TemporalPar, FractionPar
+        # k1 = TemporalPar(name='cum_dur')
+        # k2 = TemporalPar(name='cum_dur')
+        # k=FractionPar(name='some', exists=False, numerator=k1, denominator=k2)
+        # v = k.get_from(self)
+        # print(v)
+        # return v
 
     @property
     def mass_in_mg(self):
@@ -532,11 +541,11 @@ class Food(Source):
         self.initial_amount = amount
         self.quality = quality
         self.amount = self.initial_amount
-        self.type = self.type
+        self.type = type
         self.substrate = Substrate(type=type)
 
-    def get_mol(self, V, **kwargs):
-        return self.substrate.get_mol(V=V, quality=self.quality, **kwargs)
+    # def get_mol(self, V, **kwargs):
+    #     return self.substrate.get_mol(V=V, quality=self.quality, **kwargs)
 
     def get_amount(self):
         return self.amount

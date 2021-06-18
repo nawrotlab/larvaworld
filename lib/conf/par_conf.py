@@ -175,7 +175,7 @@ def set_ParDb():
 
         return np.array(entries)
 
-    cols = ['par', 'shortcut', 'symbol', 'exp_symbol', 'unit']
+    cols = ['par', 'key', 'symbol', 'exp_symbol', 'unit']
 
     temp_ang = [[b, 'b', 'b'],
                 [fo, 'fo', r'or_{f}'],
@@ -669,7 +669,7 @@ def set_dtype(par_db):
 
 
 def set_collect_from(par_db):
-    from lib.model._agent import LarvaworldAgent
+    from lib.model.agents._agent import LarvaworldAgent
     db = par_db.to_dict('index')
     for k in db.keys():
         if db[k]['par'] in step_database:
@@ -711,14 +711,14 @@ def get_par_dict(short=None, par=None, retrieve_from='shelve'):
         db = load_ParDb().to_dict('index')
     if short is not None:
         if short not in list(db.keys()):
-            raise ValueError(f'Parameter shortcut {short} does not exist in parameter database')
+            raise ValueError(f'Parameter key {short} does not exist in parameter database')
         dic = db[short]
     elif par is not None:
         for k in db.keys():
             if db[k]['par'] == par:
                 dic = db[k]
     else:
-        raise ValueError('Either the shortcut or the parameter name must be provided.')
+        raise ValueError('Either the key or the parameter name must be provided.')
     if retrieve_from == 'shelve':
         db.close()
     return dic
@@ -767,12 +767,12 @@ if __name__ == '__main__':
     par_db = set_ParDb()
     set_ParShelve(par_db)
     # print(mode(get_par('c_odor1')['dtype']))
-    # print(get_par_dict(short='sf_am')['par'])
-    # for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
-    #     p = get_par_dict(short=short)['par']
+    # print(get_par_dict(key='sf_am')['par'])
+    # for key in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
+    #     p = get_par_dict(key=key)['par']
     #     print(p)
     # print(par_db.loc['g_odor1'])
     # print('final_dst_to_chemotax_odor' in list(step_database.keys()))
     # print(par_in_db(par='final_dst_to_chemotax_odor'))
     # print(get_par_dict(par='cum_dst', retrieve_from='par_db'))
-    print(par_db.loc['f_fee_mu'])
+    print(par_db.loc['l'])

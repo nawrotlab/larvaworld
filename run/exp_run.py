@@ -5,7 +5,8 @@ import numpy as np
 
 sys.path.insert(0, '..')
 
-from lib.sim.single_run import run_sim, sim_analysis, get_exp_conf
+from lib.sim.single_run import run_sim, get_exp_conf
+from lib.sim.analysis import sim_analysis
 from lib.conf.conf import next_idx, loadConfDict
 from lib.aux import argparsers as prs
 

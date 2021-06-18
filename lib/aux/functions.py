@@ -1,4 +1,5 @@
 import collections
+import json
 import math
 import random
 import time
@@ -771,7 +772,7 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, max_co
         tt = c1[1] - c0[1]
         ll = np.abs(c1[3] - c0[3])
         if tt <= 0:
-            return max_error*2
+            return max_error * 2
         dd = np.sqrt(np.sum((c1[2] - c0[2]) ** 2))
         return wt * tt + wl * ll + ws * dd
 
@@ -789,11 +790,11 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, max_co
         return np.array([(c0[0], id1), error])
 
     def step(ls, ss, ids, mins, maxs, first_xy, last_xy, idx):
-        res = np.array([match(ids, mins, maxs, first_xy, last_xy, ls, idx+i) for i in range(Nidx)])
-        error=res[:,1].min()
-        id0,id1=res[np.argmin(res[:,1]),0]
+        res = np.array([match(ids, mins, maxs, first_xy, last_xy, ls, idx + i) for i in range(Nidx)])
+        error = res[:, 1].min()
+        id0, id1 = res[np.argmin(res[:, 1]), 0]
 
-        if error<max_error :
+        if error < max_error:
             ss.rename(index={id0: id1}, inplace=True)
             ls[id1] = ss['spinelength'].loc[id1].dropna().mean()
             ls.drop([id0], inplace=True)
@@ -1182,7 +1183,6 @@ def unique_list(l):
 #     return valid
 
 
-
 def agent_dict2list(dic, header='unique_id'):
     # print(dic)
     l = []
@@ -1245,15 +1245,34 @@ def mutate_value(v, range, scale=0.1):
     r0, r1 = range
     return float(np.round(np.clip(np.random.normal(loc=v, scale=scale * np.abs(r1 - r0)), a_min=r0, a_max=r1), 2))
 
-def weighted_mean(array, Nmax) :
+
+def weighted_mean(array, Nmax):
     y = np.bincount(array)
     i = np.nonzero(y)[0]
-    ws=np.vstack((i, y[i])).T
-    ws0 = ws[np.argsort(ws[:,1])[-Nmax:]]
-    s=np.sum(ws0[:,1])
+    ws = np.vstack((i, y[i])).T
+    ws0 = ws[np.argsort(ws[:, 1])[-Nmax:]]
+    s = np.sum(ws0[:, 1])
     # print(sigma)
-    m=np.sum(ws0[:,0]*ws0[:,1])/s
+    m = np.sum(ws0[:, 0] * ws0[:, 1]) / s
     # print(m)
     return m
 
 
+def load_dicts(files=None, pref=None, suf=None, folder='.', extension='txt'):
+    if files is None:
+        files = os.listdir(folder)
+        suf = extension if suf is None else f'{suf}.{extension}'
+        files = [f for f in files if str.endswith(f, suf)]
+        if pref is not None:
+            files = [f for f in files if str.startswith(f, pref)]
+    ds = []
+    for f in files:
+        n = f'{folder}/{f}'
+        with open(n) as tfp:
+            d = json.load(tfp)
+        ds.append(d)
+    return ds
+
+def save_dict(d, file) :
+    with open(file, "w") as fp:
+        json.dump(d, fp)

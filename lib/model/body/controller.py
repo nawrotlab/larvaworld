@@ -3,7 +3,8 @@ import math
 import numpy as np
 from shapely.geometry import LineString, Polygon, Point
 
-from lib.model import LarvaBody
+
+from lib.model.body.body import LarvaBody
 import lib.aux.functions as fun
 
 
@@ -34,7 +35,10 @@ class BodySim(BodyManager):
         self.ang_activity = 0
         self.ang_vel = 0
         # self.ang_vel_0 = 0
+        self.d_front_orientation=0
         self.body_bend = 0
+        self.d_body_bend=0
+        self.d_body_vel=0
         self.body_bend_0 = 0
         self.body_bend_vel = 0
         self.body_bend_vel_0 = 0
@@ -50,7 +54,7 @@ class BodySim(BodyManager):
         self.cum_dur = 0
 
         self.cum_dst = 0.0
-        self.step_dst = 0.0
+        self.dst = 0.0
 
         self.lin_mode = lin_mode
         self.ang_mode = ang_mode
@@ -77,6 +81,11 @@ class BodySim(BodyManager):
 
         k = 0.95
         self.tank_polygon = Polygon(self.model.tank_shape * k)
+
+        # from lib.conf.par import pargroups
+        # from lib.conf.par import AgentCollector
+        # g=pargroups['full']
+        # self.collector=AgentCollector(g,self)
 
     def step(self):
         self.restore_body_bend()
@@ -178,6 +187,9 @@ class BodySim(BodyManager):
 
         for o in self.carried_objects:
             o.pos = self.pos
+        # print(self.d_body_bend)
+        # self.collector.collect()
+        # print(self.collector.table['front angular acceleration'])
 
     def compute_new_lin_vel_vector(self, target_segment):
         # Option 1 : Create the linear velocity from orientation.
@@ -241,7 +253,7 @@ class BodySim(BodyManager):
         self.compute_spineangles()
         # More formal mathematical solution based on the restoration of the bending angle_to_x_axis of two segments attached to a point
         # See functions.py
-        d, l = self.step_dst, self.get_sim_length()
+        d, l = self.dst, self.get_sim_length()
         # First attempt. Complex. Does not solve problems
         # self.set_body_bend(restored_angle(self.body_bend, d, self.get_sim_length()))
         # Second attempt. Multiple angles (Npoints-2). Critical spinepoint carries the bend resistance
@@ -281,8 +293,8 @@ class BodySim(BodyManager):
         last_pos = self.trajectory[-1]
         if self.model.physics_engine:
             self.pos = self.get_global_midspine_of_body()
-        self.step_dst = np.sqrt(np.sum(np.array(self.pos - last_pos) ** 2))
-        self.cum_dst += self.step_dst
+        self.dst = np.sqrt(np.sum(np.array(self.pos - last_pos) ** 2))
+        self.cum_dst += self.dst
         self.trajectory.append(self.pos)
 
 
@@ -357,13 +369,14 @@ class BodySim(BodyManager):
             ang_vel = np.abs(ang_vel)*np.sign(ang_vel0)
         head.set_pose(hp1, o1)
         head.update_vertices(hp1, o1)
+        self.d_front_orientation=o1-o0
         if self.Nsegs > 1:
             self.position_rest_of_body(o1-o0, head_rear_pos=hr1, head_or=o1)
         self.pos = self.get_global_midspine_of_body() if self.Nsegs != 2 else hr1
         self.model.space.move_agent(self, self.pos)
         head.set_lin_vel(lin_vel)
         head.set_ang_vel(ang_vel)
-        self.step_dst = d
+        self.dst = d
         self.cum_dst += d
         self.trajectory.append(self.pos)
 
@@ -404,6 +417,7 @@ class BodySim(BodyManager):
 
     def compute_body_bend(self):
         curr = sum(self.spineangles[:self.Nangles_b])
+        self.d_body_bend=curr-self.body_bend
         self.body_bend_0 = self.body_bend
         self.body_bend = curr
         self.body_bend_vel_0=self.body_bend_vel

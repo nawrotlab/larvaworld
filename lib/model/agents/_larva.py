@@ -6,7 +6,11 @@ from copy import deepcopy
 from nengo import Simulator
 
 from lib.aux import functions as fun
-from lib.model import Larva, BodyReplay, BodySim, DEB, DefaultBrain, NengoBrain
+from lib.model.agents._agent import Larva
+from lib.model.body.controller import BodyReplay, BodySim
+from lib.model.modules.brain import DefaultBrain
+from lib.model.modules.nengobrain import NengoBrain
+from lib.model.DEB.deb import DEB
 
 
 class LarvaReplay(Larva, BodyReplay):
@@ -168,7 +172,7 @@ class LarvaSim(BodySim, Larva):
         self.reset_feeder()
         self.radius = self.sim_length / 2
 
-        self.food_detected, self.feeder_motion, self.current_mol_eaten,self.current_V_eaten, self.feed_success = None, False, 0,0, False
+        self.food_detected, self.feeder_motion, self.current_V_eaten, self.feed_success = None, False,0, False
 
     def update_odor_dicts(self, odor_dict):  #
 
@@ -190,12 +194,12 @@ class LarvaSim(BodySim, Larva):
         lin, ang, self.feeder_motion = self.brain.run(pos)
         self.set_ang_activity(ang)
         self.set_lin_activity(lin)
-        self.current_mol_eaten,self.current_V_eaten, self.feed_success = self.feed(self.food_detected, self.feeder_motion)
+        self.current_V_eaten, self.feed_success = self.feed(self.food_detected, self.feeder_motion)
         if self.energetics:
             # print(self.model.Nticks)
 
                 # print('ddd')
-            self.run_energetics(self.food_detected, self.feed_success, self.current_mol_eaten,self.current_V_eaten, food_quality)
+            self.run_energetics(self.food_detected, self.feed_success, self.current_V_eaten, food_quality)
         # Paint the body to visualize effector state
         if self.model.color_behavior:
             self.update_behavior_dict()
@@ -243,19 +247,19 @@ class LarvaSim(BodySim, Larva):
             grid = self.model.food_grid
             if grid :
                 V=-grid.add_cell_value(source, -a_max)
-                mol=grid.get_mol(V)
+                # mol=grid.get_mol(V)
             else :
                 V = source.subtract_amount(a_max)
-                mol = source.get_mol(V)
+                # mol = source.get_mol(V)
                 # amount = -grid.add_cell_value(source, -a_max)*grid.substrate.get_X() if grid else source.subtract_amount(a_max)*source.density
             # print(a_max, grid.density, a_max*grid.density, amount)
             self.feed_success_counter += 1
             self.amount_eaten += V*1000
             # self.update_gut(amount)
 
-            return mol,V, True
+            return V, True
         else:
-            return 0,0, False
+            return 0, False
 
     def reset_feeder(self):
         self.feed_success_counter = 0
@@ -283,7 +287,7 @@ class LarvaSim(BodySim, Larva):
         if energetic_pars is not None:
             self.energetics = True
             if energetic_pars['deb_on']:
-                self.temp_cum_mol_eaten =0
+                # self.temp_cum_mol_eaten =0
                 self.temp_cum_V_eaten =0
                 self.temp_mean_f =[]
                 self.hunger_as_EEB = energetic_pars['hunger_as_EEB']
@@ -364,7 +368,7 @@ class LarvaSim(BodySim, Larva):
             brain = DefaultBrain(agent=self, modules=modules, conf=brain)
         return brain
 
-    def run_energetics(self, food_detected, feed_success, mol_eaten,V_eaten, food_quality):
+    def run_energetics(self, food_detected, feed_success, V_eaten, food_quality):
         if self.deb:
             f = self.deb.get_f()
             # print(feed_success)
@@ -373,12 +377,12 @@ class LarvaSim(BodySim, Larva):
                 # f += food_quality * self.deb.absorption * amount_eaten / self.max_V_bite
             f *= self.f_exp_coef
             # print(self.f_exp_coef)
-            self.temp_cum_mol_eaten += mol_eaten
+            # self.temp_cum_mol_eaten += mol_eaten
             self.temp_cum_V_eaten +=V_eaten
             self.temp_mean_f.append(f)
             if self.model.Nticks % self.deb_step_every == 0:
-                self.deb.run(f=np.mean(self.temp_mean_f), X_mol=self.temp_cum_mol_eaten, X_V=self.temp_cum_V_eaten)
-                self.temp_cum_mol_eaten =0
+                self.deb.run(f=np.mean(self.temp_mean_f), X_V=self.temp_cum_V_eaten)
+                # self.temp_cum_mol_eaten =0
                 self.temp_cum_V_eaten =0
                 self.temp_mean_f=[]
 
@@ -400,11 +404,13 @@ class LarvaSim(BodySim, Larva):
                     #     self.brain.intermitter.EEB = dh / h0 * h0 + h0
                 else:
                     self.brain.intermitter.EEB = self.brain.intermitter.base_EEB
+                if self.brain.intermitter.feeder_reocurrence_as_EEB :
+                    self.brain.intermitter.feeder_reoccurence_rate=self.brain.intermitter.EEB
             self.adjust_body_vertices()
 
         else:
             if feed_success:
-                self.real_mass += mol_eaten * self.food_to_biomass_ratio
+                self.real_mass += V_eaten * self.food_to_biomass_ratio
                 self.adjust_shape_to_mass()
                 self.adjust_body_vertices()
                 self.V = self.get_real_length() ** 3
@@ -438,6 +444,7 @@ class LarvaSim(BodySim, Larva):
 
     @property
     def bend(self):
+        # return self.body_bend
         return np.rad2deg(self.body_bend)
 
     @property

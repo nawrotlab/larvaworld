@@ -3,7 +3,7 @@ import os
 import pygame
 import numpy as np
 import lib.gui.gui_lib as gui
-from lib.model import Larva, LarvaSim
+from lib.model.agents._larva import Larva, LarvaSim
 
 # shortcuts = {
 #     # 'trajectory_dt' : ['MINUS', 'PLUS'],

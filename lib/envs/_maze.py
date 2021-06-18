@@ -48,7 +48,7 @@ class Maze:
         self.maze_map = [[Cell(x, y) for y in range(ny)] for x in range(nx)]
 
     def cell_at(self, x, y):
-        """Return the Cell object at (x,y)."""
+        """Return the Cell object_class at (x,y)."""
 
         return self.maze_map[x][y]
 

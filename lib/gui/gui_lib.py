@@ -787,7 +787,7 @@ def popup_color_chooser(look_and_feel=None):
         """
         A User Defined Element - returns a Button that configured in a certain way.
         :param color: Tuple[str, str] ( color name, hex string)
-        :return: sg.Button object
+        :return: sg.Button object_class
         """
         return sg.B(button_color=('white', color[1]), pad=(0, 0), size=button_size, key=color,
                     tooltip=f'{color[0]}:{color[1]}', border_width=0)
@@ -1437,7 +1437,7 @@ def set_agent_kwargs(agent, **kwargs):
 
 def object_menu(selected, **kwargs):
     object_list = ['', 'Larva', 'Food', 'Border']
-    title = 'Select object mode'
+    title = 'Select object_class mode'
     layout = [
         [sg.Text(title)],
         [sg.Listbox(default_values=[selected], values=object_list, change_submits=False, size=(20, len(object_list)),

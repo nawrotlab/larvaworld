@@ -2,7 +2,9 @@ from nengo import *
 import numpy as np
 from nengo.networks import EnsembleArray
 
-from lib.model._effector import Brain, Intermitter, Oscillator_coupling
+from lib.model.modules.brain import Brain
+from lib.model.modules.basic import Oscillator_coupling
+from lib.model.modules.intermitter import NengoIntermitter
 
 
 class NengoBrain(Network, Brain):
@@ -23,7 +25,7 @@ class NengoBrain(Network, Brain):
                                           osc_coupling=self.osc_coupling,
                                           Nodors=self.agent.model.Nodors)
         if self.modules['intermitter']:
-            self.intermitter = Intermitter(dt=dt,
+            self.intermitter = NengoIntermitter(dt=dt,
                                            crawler=self.crawler, turner=self.turner, feeder=self.feeder,
                                            nengo_manager=self.nengo_manager,
                                            **self.conf['intermitter_params'])
@@ -91,7 +93,7 @@ class NengoBrain(Network, Brain):
                     return [0, 1]
 
             def oscillator_interference(x):
-                coup = input_manager.osc_coupling
+                coup = input_manager.coupling
                 c0 = coup.crawler_interference_start
                 cr = 1 - coup.feeder_interference_free_window / np.pi
                 f0 = coup.crawler_interference_start

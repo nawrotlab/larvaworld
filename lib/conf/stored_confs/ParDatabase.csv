@@ -1,27 +1,27 @@
 ,par,symbol,exp_symbol,unit,lim,collect,disp_name,dtype,collect_from
 cum_t,cum_dur,${t}_{cum}$,${\hat{t}}_{cum}$,time $(sec)$,,,cum_dur,<class 'float'>,
-l_mu,length,$\bar{l}$,$\bar{\hat{l}}$,body length $(mm)$,,length_in_mm,body length,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+l_mu,length,$\bar{l}$,$\bar{\hat{l}}$,body length $(mm)$,,length_in_mm,body length,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 str_rr,stride_reoccurence_rate,${str}_{rr}$,${\hat{str}}_{rr}$,-,,,stride_reoccurence_rate,<class 'float'>,
-l,length,l,$\hat{l}$,body length $(mm)$,,length_in_mm,length,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-f_am,amount_eaten,${m}_{feed}$,${\hat{m}}_{feed}$,food intake (mg),,amount_eaten,amount_eaten,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-f_ab,amount_absorbed,${m}_{absorbed}$,${\hat{m}}_{absorbed}$,food absorbed (mg),,amount_absorbed,amount_absorbed,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-f_out,amount_faeces,${m}_{faeces}$,${\hat{m}}_{faeces}$,faeces (mg),,amount_faeces,amount_faeces,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+l,length,l,$\hat{l}$,body length $(mm)$,,length_in_mm,length,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+f_am,amount_eaten,${m}_{feed}$,${\hat{m}}_{feed}$,food intake (mg),,amount_eaten,amount_eaten,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+f_ab,amount_absorbed,${m}_{absorbed}$,${\hat{m}}_{absorbed}$,food absorbed (mg),,amount_absorbed,amount_absorbed,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+f_out,amount_faeces,${m}_{faeces}$,${\hat{m}}_{faeces}$,faeces (mg),,amount_faeces,amount_faeces,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 f_am_max,max_V_bite,${m}_{feed}^{m}$,${\hat{m}}_{feed}^{m}$,max food intake (mg),,,max_V_bite,<class 'float'>,
-m,mass,m,$\hat{m}$,mass $(mg)$,,mass_in_mg,mass,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-hunger,hunger,hunger,$\hat{hunger}$,hunger (-),"[0.0, 1.0]",hunger,hunger,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-reserve_density,reserve_density,reserve_density,$\hat{reserve_density}$,reserve density (-),"[0.0, 2.0]",reserve_density,reserve_density,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-puppation_buffer,puppation_buffer,puppation_buffer,$\hat{puppation_buffer}$,puppation buffer (-),"[0.0, 1.0]",puppation_buffer,puppation_buffer,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-deb_f,deb_f,${f}_{deb}$,${\hat{f}}_{deb}$,functional response (-),"[0.0, 2.0]",deb_f,deb_f,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-deb_f_dev,deb_f_deviation,${f}_{deb}$,${\hat{f}}_{deb}$,functional response deviation (-),,deb_f_deviation,deb_f_deviation,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+m,mass,m,$\hat{m}$,mass $(mg)$,,mass_in_mg,mass,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+hunger,hunger,hunger,$\hat{hunger}$,hunger (-),"[0.0, 1.0]",hunger,hunger,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+reserve_density,reserve_density,reserve_density,$\hat{reserve_density}$,reserve density (-),"[0.0, 2.0]",reserve_density,reserve_density,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+puppation_buffer,puppation_buffer,puppation_buffer,$\hat{puppation_buffer}$,puppation buffer (-),"[0.0, 1.0]",puppation_buffer,puppation_buffer,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+deb_f,deb_f,${f}_{deb}$,${\hat{f}}_{deb}$,functional response (-),"[0.0, 2.0]",deb_f,deb_f,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+deb_f_dev,deb_f_deviation,${f}_{deb}$,${\hat{f}}_{deb}$,functional response deviation (-),,deb_f_deviation,deb_f_deviation,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 deb_f_mu,deb_f_mean,${\bar{f}}_{deb}$,${\hat{\bar{f}}}_{deb}$,functional response (-),,,deb_f_mean,<class 'float'>,
 lar_N,Nlarvae,${N}_{larvae}$,${\hat{N}}_{larvae}$,# larvae,,,Nlarvae,<class 'int'>,
-b,bend,$\theta_{b}$,$\hat{\theta}_{b}$,bend angle $(deg)$,"[-180, 180]",bend,body bend,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+b,bend,$\theta_{b}$,$\hat{\theta}_{b}$,bend angle $(deg)$,"[-180, 180]",bend,body bend,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 bv,bend_vel,$\dot{\theta}_{b}$,$\dot{\hat{\theta}}_{b}$,bending velocity $(deg/sec)$,,,bend velocity,<class 'float'>,
 ba,bend_acc,$\ddot{\theta}_{b}$,$\ddot{\hat{\theta}}_{b}$,bending acceleration $(deg^2/sec)$,,,bend_acc,<class 'float'>,
-fo,front_orientation,$\theta_{or_{f}}$,$\hat{\theta}_{or_{f}}$,orientation angle $(deg)$,"[0, 360]",front_orientation,front_orientation,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-fov,front_orientation_vel,$\dot{\theta}_{or_{f}}$,$\dot{\hat{\theta}}_{or_{f}}$,orientation velocity $(deg/sec)$,"[-300, 300]",front_orientation_vel,turn velocity,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+fo,front_orientation,$\theta_{or_{f}}$,$\hat{\theta}_{or_{f}}$,orientation angle $(deg)$,"[0, 360]",front_orientation,front_orientation,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+fov,front_orientation_vel,$\dot{\theta}_{or_{f}}$,$\dot{\hat{\theta}}_{or_{f}}$,orientation velocity $(deg/sec)$,"[-300, 300]",front_orientation_vel,turn velocity,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 foa,front_orientation_acc,$\ddot{\theta}_{or_{f}}$,$\ddot{\hat{\theta}}_{or_{f}}$,orientation acceleration $(deg^2/sec)$,,,front_orientation_acc,<class 'float'>,
-ro,rear_orientation,$\theta_{or_{r}}$,$\hat{\theta}_{or_{r}}$,rear orientation angle $(deg)$,"[0, 360]",rear_orientation,rear_orientation,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+ro,rear_orientation,$\theta_{or_{r}}$,$\hat{\theta}_{or_{r}}$,rear orientation angle $(deg)$,"[0, 360]",rear_orientation,rear_orientation,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 rov,rear_orientation_vel,$\dot{\theta}_{or_{r}}$,$\dot{\hat{\theta}}_{or_{r}}$,rear orientation velocity $(deg/sec)$,"[-300, 300]",,rear_orientation_vel,<class 'float'>,
 roa,rear_orientation_acc,$\ddot{\theta}_{or_{r}}$,$\ddot{\hat{\theta}}_{or_{r}}$,rear orientation acceleration $(deg^2/sec)$,,,rear_orientation_acc,<class 'float'>,
 d,dst,d,$\hat{d}$,distance $(mm)$,,,dst,<class 'float'>,
@@ -30,17 +30,17 @@ v,vel,v,$\hat{v}$,velocity $(mm/sec)$,,,velocity,<class 'float'>,
 a,acc,$\dot{v}$,$\dot{\hat{v}}$,acceleration $(mm/sec^2)$,,,acc,<class 'float'>,
 lv,lin_vel,${v}_{l}$,${\hat{v}}_{l}$,velocity $(mm/sec)$,,,lin_vel,<class 'float'>,
 la,lin_acc,${\dot{v}}_{l}$,${\dot{\hat{v}}}_{l}$,acceleration $(mm/sec^2)$,,,lin_acc,<class 'float'>,
-cum_d,cum_dst,${d}_{cum}$,${\hat{d}}_{cum}$,pathlength $(mm)$,,cum_dst_in_mm,cum_dst,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-d_cent,dst_to_center,${d}_{cent}$,${\hat{d}}_{cent}$,distance $(mm)$,,dst_to_center_in_mm,dst_to_center,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-d_chem,dst_to_chemotax_odor,${d}_{chem}$,${\hat{d}}_{chem}$,distance $(mm)$,,dst_to_chemotax_odor_in_mm,dst_to_chemotax_odor,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-fv,vel_freq,${f}_{v}$,${\hat{f}}_{v}$,frequency $(Hz)$,,crawler_freq,vel_freq,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+cum_d,cum_dst,${d}_{cum}$,${\hat{d}}_{cum}$,pathlength $(mm)$,,cum_dst_in_mm,cum_dst,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+d_cent,dst_to_center,${d}_{cent}$,${\hat{d}}_{cent}$,distance $(mm)$,,dst_to_center_in_mm,dst_to_center,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+d_chem,dst_to_chemotax_odor,${d}_{chem}$,${\hat{d}}_{chem}$,distance $(mm)$,,dst_to_chemotax_odor_in_mm,dst_to_chemotax_odor,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+fv,vel_freq,${f}_{v}$,${\hat{f}}_{v}$,frequency $(Hz)$,,crawler_freq,vel_freq,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 sd,scaled_dst,${d}^{*}$,${\hat{d}}^{*}$,scaled distance $(-)$,,,scaled_dst,<class 'float'>,
 sld,scaled_lin_dst,${d}_{l}^{*}$,${\hat{d}}_{l}^{*}$,scaled distance $(-)$,,,scaled_lin_dst,<class 'float'>,
 sv,scaled_vel,${v}^{*}$,${\hat{v}}^{*}$,scaled velocity $(sec^{-1})$,,,velocity$_{scaled}$,<class 'float'>,
 sa,scaled_acc,${\dot{v}}^{*}$,${\dot{\hat{v}}}^{*}$,scaled acceleration $(sec^{-2})$,,,scaled_acc,<class 'float'>,
 slv,scaled_lin_vel,${v}_{l}^{*}$,${\hat{v}}_{l}^{*}$,scaled velocity $(sec^{-1})$,,,scaled_lin_vel,<class 'float'>,
 sla,scaled_lin_acc,${\dot{v}}_{l}^{*}$,${\dot{\hat{v}}}_{l}^{*}$,scaled acceleration $(sec^{-2})$,,,scaled_lin_acc,<class 'float'>,
-cum_sd,cum_scaled_dst,${d}_{cum}^{*}$,${\hat{d}}_{cum}^{*}$,scaled pathlength,,cum_scaled_dst,cum_scaled_dst,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+cum_sd,cum_scaled_dst,${d}_{cum}^{*}$,${\hat{d}}_{cum}^{*}$,scaled pathlength,,cum_scaled_dst,cum_scaled_dst,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 fsv,scaled_vel_freq,${f}_{v}^{*}$,${\hat{f}}_{v}^{*}$,frequency $(Hz)$,"[1.0, 2.5]",,crawl frequency,<class 'float'>,
 str_d,stride_dst,${d}_{str}$,${\hat{d}}_{str}$,distance $(mm)$,,,stride_dst,<class 'float'>,
 str_sd,scaled_stride_dst,${d}_{str}^{*}$,${\hat{d}}_{str}^{*}$,scaled distance $(-)$,,,scaled_stride_dst,<class 'float'>,
@@ -62,8 +62,8 @@ str_t_max,stride_dur_max,${t}_{stride}^{m}$,${\hat{t}}_{stride}^{m}$,time $(sec)
 str0,stride_start,${t}_{stride}^{0}$,${\hat{t}}_{stride}^{0}$,time $(sec)$,,,stride_start,<class 'bool'>,
 str1,stride_stop,${t}_{stride}^{1}$,${\hat{t}}_{stride}^{1}$,time $(sec)$,,,stride_stop,<class 'bool'>,
 str_id,stride_id,${stride}_{id}$,${\hat{stride}}_{id}$,counts $(#)$,,,stride_id,<class 'str'>,
-str_tr,stride_dur_ratio,${r}_{stride}$,${\hat{r}}_{stride}$,% time crawling,"[0.3, 1.0]",stride_dur_ratio,crawl time ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-str_N,num_strides,${N}_{stridesigma}$,${\hat{N}}_{stridesigma}$,# stridesigma,,num_strides,num_strides,<class 'int'>,<class 'lib.model._agent.LarvaworldAgent'>
+str_tr,stride_dur_ratio,${r}_{stride}$,${\hat{r}}_{stride}$,% time crawling,"[0.3, 1.0]",stride_dur_ratio,crawl time ratio,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+str_N,num_strides,${N}_{stridesigma}$,${\hat{N}}_{stridesigma}$,# stridesigma,,num_strides,num_strides,<class 'int'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 non_str_t,non_stride_dur,${t}_{non_stride}$,${\hat{t}}_{non_stride}$,time $(sec)$,,,non_stride_dur,<class 'float'>,
 non_str_y,non_stride_y,${y}_{non_stride}$,${\hat{y}}_{non_stride}$,distance $(mm)$,,,non_stride_y,<class 'float'>,
 non_str_x,non_stride_x,${x}_{non_stride}$,${\hat{x}}_{non_stride}$,distance $(mm)$,,,non_stride_x,<class 'float'>,
@@ -86,7 +86,7 @@ pau_d,pause_dst,${d}_{pau}$,${\hat{d}}_{pau}$,distance $(mm)$,,,pause_dst,<class
 pau_sd,scaled_pause_dst,${d}_{pau}^{*}$,${\hat{d}}_{pau}^{*}$,scaled distance $(-)$,,,scaled_pause_dst,<class 'float'>,
 pau_std,pause_straight_dst,${d}_{pau}^{st}$,${\hat{d}}_{pau}^{st}$,distance $(mm)$,,,pause_straight_dst,<class 'float'>,
 pau_sstd,scaled_pause_straight_dst,${d}_{pau}^{st*}$,${\hat{d}}_{pau}^{st*}$,scaled distance $(-)$,,,scaled_pause_straight_dst,<class 'float'>,
-pau_t,pause_dur,${t}_{pause}$,${\hat{t}}_{pause}$,time $(sec)$,,pause_dur,pause_dur,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+pau_t,pause_dur,${t}_{pause}$,${\hat{t}}_{pause}$,time $(sec)$,,pause_dur,pause_dur,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 pau_y,pause_y,${y}_{pause}$,${\hat{y}}_{pause}$,distance $(mm)$,,,pause_y,<class 'float'>,
 pau_x,pause_x,${x}_{pause}$,${\hat{x}}_{pause}$,distance $(mm)$,,,pause_x,<class 'float'>,
 pau_y0,y_at_pause_start,${y0}_{pause}$,${\hat{y0}}_{pause}$,distance $(mm)$,,,y_at_pause_start,<class 'float'>,
@@ -97,13 +97,13 @@ pau_fo0,front_orientation_unwrapped_at_pause_start,${fo0}_{pause}$,${\hat{fo0}}_
 pau_fo1,front_orientation_unwrapped_at_pause_stop,${fo1}_{pause}$,${\hat{fo1}}_{pause}$,angle $(deg)$,,,front_orientation_unwrapped_at_pause_stop,<class 'float'>,
 pau_t_mu,pause_dur_mean,${\bar{t}}_{pause}$,${\bar{\hat{t}}}_{pause}$,time $(sec)$,"[0.0, 2.0]",,pause duration mean,<class 'float'>,
 pau_t_std,pause_dur_std,${\~{t}}_{pause}$,${\~{\hat{t}}}_{pause}$,time $(sec)$,,,pause duration std,<class 'float'>,
-cum_pau_t,cum_pause_dur,${t}_{pause}^{cum}$,${\hat{t}}_{pause}^{cum}$,time $(sec)$,,cum_pause_dur,cum_pause_dur,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+cum_pau_t,cum_pause_dur,${t}_{pause}^{cum}$,${\hat{t}}_{pause}^{cum}$,time $(sec)$,,cum_pause_dur,cum_pause_dur,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 pau_t_max,pause_dur_max,${t}_{pause}^{m}$,${\hat{t}}_{pause}^{m}$,time $(sec)$,,,pause_dur_max,<class 'float'>,
-pau0,pause_start,${t}_{pause}^{0}$,${\hat{t}}_{pause}^{0}$,time $(sec)$,,pause_start,pause_start,<class 'bool'>,<class 'lib.model._agent.LarvaworldAgent'>
-pau1,pause_stop,${t}_{pause}^{1}$,${\hat{t}}_{pause}^{1}$,time $(sec)$,,pause_stop,pause_stop,<class 'bool'>,<class 'lib.model._agent.LarvaworldAgent'>
-pau_id,pause_id,${pause}_{id}$,${\hat{pause}}_{id}$,counts $(#)$,,pause_id,pause_id,<class 'str'>,<class 'lib.model._agent.LarvaworldAgent'>
-pau_tr,pause_dur_ratio,${r}_{pause}$,${\hat{r}}_{pause}$,% time pausing,"[0.0, 0.5]",pause_dur_ratio,pause time ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-pau_N,num_pauses,${N}_{pausesigma}$,${\hat{N}}_{pausesigma}$,# pausesigma,,num_pauses,num_pauses,<class 'int'>,<class 'lib.model._agent.LarvaworldAgent'>
+pau0,pause_start,${t}_{pause}^{0}$,${\hat{t}}_{pause}^{0}$,time $(sec)$,,pause_start,pause_start,<class 'bool'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+pau1,pause_stop,${t}_{pause}^{1}$,${\hat{t}}_{pause}^{1}$,time $(sec)$,,pause_stop,pause_stop,<class 'bool'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+pau_id,pause_id,${pause}_{id}$,${\hat{pause}}_{id}$,counts $(#)$,,pause_id,pause_id,<class 'str'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+pau_tr,pause_dur_ratio,${r}_{pause}$,${\hat{r}}_{pause}$,% time pausing,"[0.0, 0.5]",pause_dur_ratio,pause time ratio,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+pau_N,num_pauses,${N}_{pausesigma}$,${\hat{N}}_{pausesigma}$,# pausesigma,,num_pauses,num_pauses,<class 'int'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 tur_d,turn_dst,${d}_{tur}$,${\hat{d}}_{tur}$,distance $(mm)$,,,turn_dst,<class 'float'>,
 tur_sd,scaled_turn_dst,${d}_{tur}^{*}$,${\hat{d}}_{tur}^{*}$,scaled distance $(-)$,,,scaled_turn_dst,<class 'float'>,
 tur_std,turn_straight_dst,${d}_{tur}^{st}$,${\hat{d}}_{tur}^{st}$,distance $(mm)$,,,turn_straight_dst,<class 'float'>,
@@ -186,13 +186,13 @@ fee_t_max,feed_dur_max,${t}_{feed}^{m}$,${\hat{t}}_{feed}^{m}$,time $(sec)$,,,fe
 fee0,feed_start,${t}_{feed}^{0}$,${\hat{t}}_{feed}^{0}$,time $(sec)$,,,feed_start,<class 'bool'>,
 fee1,feed_stop,${t}_{feed}^{1}$,${\hat{t}}_{feed}^{1}$,time $(sec)$,,,feed_stop,<class 'bool'>,
 fee_id,feed_id,${feed}_{id}$,${\hat{feed}}_{id}$,counts $(#)$,,,feed_id,<class 'str'>,
-fee_tr,feed_dur_ratio,${r}_{feed}$,${\hat{r}}_{feed}$,% time feeding,,feed_dur_ratio,feed_dur_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-fee_N,num_feeds,${N}_{feedsigma}$,${\hat{N}}_{feedsigma}$,# feeding events,,num_feeds,num_feeds,<class 'int'>,<class 'lib.model._agent.LarvaworldAgent'>
+fee_tr,feed_dur_ratio,${r}_{feed}$,${\hat{r}}_{feed}$,% time feeding,,feed_dur_ratio,feed_dur_ratio,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+fee_N,num_feeds,${N}_{feedsigma}$,${\hat{N}}_{feedsigma}$,# feeding events,,num_feeds,num_feeds,<class 'int'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 chn_d,stridechain_dst,${d}_{chn}$,${\hat{d}}_{chn}$,distance $(mm)$,,,stridechain_dst,<class 'float'>,
 chn_sd,scaled_stridechain_dst,${d}_{chn}^{*}$,${\hat{d}}_{chn}^{*}$,scaled distance $(-)$,,,scaled_stridechain_dst,<class 'float'>,
 chn_std,stridechain_straight_dst,${d}_{chn}^{st}$,${\hat{d}}_{chn}^{st}$,distance $(mm)$,,,stridechain_straight_dst,<class 'float'>,
 chn_sstd,scaled_stridechain_straight_dst,${d}_{chn}^{st*}$,${\hat{d}}_{chn}^{st*}$,scaled distance $(-)$,,,scaled_stridechain_straight_dst,<class 'float'>,
-chn_t,stridechain_dur,${t}_{stridechain}$,${\hat{t}}_{stridechain}$,time $(sec)$,,stridechain_dur,stridechain_dur,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+chn_t,stridechain_dur,${t}_{stridechain}$,${\hat{t}}_{stridechain}$,time $(sec)$,,stridechain_dur,stridechain_dur,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 chn_y,stridechain_y,${y}_{stridechain}$,${\hat{y}}_{stridechain}$,distance $(mm)$,,,stridechain_y,<class 'float'>,
 chn_x,stridechain_x,${x}_{stridechain}$,${\hat{x}}_{stridechain}$,distance $(mm)$,,,stridechain_x,<class 'float'>,
 chn_y0,y_at_stridechain_start,${y0}_{stridechain}$,${\hat{y0}}_{stridechain}$,distance $(mm)$,,,y_at_stridechain_start,<class 'float'>,
@@ -203,15 +203,15 @@ chn_fo0,front_orientation_unwrapped_at_stridechain_start,${fo0}_{stridechain}$,$
 chn_fo1,front_orientation_unwrapped_at_stridechain_stop,${fo1}_{stridechain}$,${\hat{fo1}}_{stridechain}$,angle $(deg)$,,,front_orientation_unwrapped_at_stridechain_stop,<class 'float'>,
 chn_t_mu,stridechain_dur_mean,${\bar{t}}_{stridechain}$,${\bar{\hat{t}}}_{stridechain}$,time $(sec)$,,,stridechain_dur_mean,<class 'float'>,
 chn_t_std,stridechain_dur_std,${\~{t}}_{stridechain}$,${\~{\hat{t}}}_{stridechain}$,time $(sec)$,,,stridechain_dur_std,<class 'float'>,
-cum_chn_t,cum_stridechain_dur,${t}_{stridechain}^{cum}$,${\hat{t}}_{stridechain}^{cum}$,time $(sec)$,,cum_stridechain_dur,cum_stridechain_dur,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+cum_chn_t,cum_stridechain_dur,${t}_{stridechain}^{cum}$,${\hat{t}}_{stridechain}^{cum}$,time $(sec)$,,cum_stridechain_dur,cum_stridechain_dur,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 chn_t_max,stridechain_dur_max,${t}_{stridechain}^{m}$,${\hat{t}}_{stridechain}^{m}$,time $(sec)$,,,stridechain_dur_max,<class 'float'>,
-chn0,stridechain_start,${t}_{stridechain}^{0}$,${\hat{t}}_{stridechain}^{0}$,time $(sec)$,,stridechain_start,stridechain_start,<class 'bool'>,<class 'lib.model._agent.LarvaworldAgent'>
-chn1,stridechain_stop,${t}_{stridechain}^{1}$,${\hat{t}}_{stridechain}^{1}$,time $(sec)$,,stridechain_stop,stridechain_stop,<class 'bool'>,<class 'lib.model._agent.LarvaworldAgent'>
-chn_l,stridechain_length,${stridechain}_{l}$,${\hat{stridechain}}_{l}$,counts $(#)$,,stridechain_length,stridechain_length,<class 'int'>,<class 'lib.model._agent.LarvaworldAgent'>
-chn_id,stridechain_id,${stridechain}_{id}$,${\hat{stridechain}}_{id}$,counts $(#)$,,stridechain_id,stridechain_id,<class 'str'>,<class 'lib.model._agent.LarvaworldAgent'>
-chn_tr,stridechain_dur_ratio,${r}_{stridechain}$,${\hat{r}}_{stridechain}$,time ratio $(-)$,,stridechain_dur_ratio,stridechain_dur_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-chn_N,num_stridechains,${N}_{stridechainsigma}$,${\hat{N}}_{stridechainsigma}$,# stridechainsigma,,num_stridechains,num_stridechains,<class 'int'>,<class 'lib.model._agent.LarvaworldAgent'>
-str_d_mu,stride_dst_mean,$\bar{{d}_{str}}$,$\bar{{\hat{d}}_{str}}$,distance $(mm)$,,stride_dst_mean_in_mm,stride_dst_mean,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+chn0,stridechain_start,${t}_{stridechain}^{0}$,${\hat{t}}_{stridechain}^{0}$,time $(sec)$,,stridechain_start,stridechain_start,<class 'bool'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+chn1,stridechain_stop,${t}_{stridechain}^{1}$,${\hat{t}}_{stridechain}^{1}$,time $(sec)$,,stridechain_stop,stridechain_stop,<class 'bool'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+chn_l,stridechain_length,${stridechain}_{l}$,${\hat{stridechain}}_{l}$,counts $(#)$,,stridechain_length,stridechain_length,<class 'int'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+chn_id,stridechain_id,${stridechain}_{id}$,${\hat{stridechain}}_{id}$,counts $(#)$,,stridechain_id,stridechain_id,<class 'str'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+chn_tr,stridechain_dur_ratio,${r}_{stridechain}$,${\hat{r}}_{stridechain}$,time ratio $(-)$,,stridechain_dur_ratio,stridechain_dur_ratio,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+chn_N,num_stridechains,${N}_{stridechainsigma}$,${\hat{N}}_{stridechainsigma}$,# stridechainsigma,,num_stridechains,num_stridechains,<class 'int'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+str_d_mu,stride_dst_mean,$\bar{{d}_{str}}$,$\bar{{\hat{d}}_{str}}$,distance $(mm)$,,stride_dst_mean_in_mm,stride_dst_mean,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 str_d_std,stride_dst_std,$\~{{d}_{str}}$,$\~{{\hat{d}}_{str}}$,distance $(mm)$,,,stride_dst_std,<class 'float'>,
 str_sd_mu,scaled_stride_dst_mean,$\bar{{d}_{str}^{*}}$,$\bar{{\hat{d}}_{str}^{*}}$,scaled distance $(-)$,"[0.1, 0.3]",,stridestep$_{scaled}$ mean,<class 'float'>,
 str_sd_std,scaled_stride_dst_std,$\~{{d}_{str}^{*}}$,$\~{{\hat{d}}_{str}^{*}}$,scaled distance $(-)$,"[0.0, 0.1]",,stridestep$_{scaled}$ std,<class 'float'>,
@@ -219,13 +219,13 @@ str_std_mu,stride_straight_dst_mean,$\bar{{d}_{str}^{st}}$,$\bar{{\hat{d}}_{str}
 str_std_std,stride_straight_dst_std,$\~{{d}_{str}^{st}}$,$\~{{\hat{d}}_{str}^{st}}$,distance $(mm)$,,,stride_straight_dst_std,<class 'float'>,
 str_sstd_mu,scaled_stride_straight_dst_mean,$\bar{{d}_{str}^{st*}}$,$\bar{{\hat{d}}_{str}^{st*}}$,scaled distance $(-)$,,,scaled_stride_straight_dst_mean,<class 'float'>,
 str_sstd_std,scaled_stride_straight_dst_std,$\~{{d}_{str}^{st*}}$,$\~{{\hat{d}}_{str}^{st*}}$,scaled distance $(-)$,"[0.0, 0.2]",,scaled_stride_straight_dst_std,<class 'float'>,
-disp,dispersion,disp,$\hat{disp}$,distance $(mm)$,,dispersion_in_mm,dispersion,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-sigmadisp,scaled_dispersion,${disp}^{*}$,${\hat{disp}}^{*}$,scaled distance $(-)$,,scaled_dispersion,scaled_dispersion,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+disp,dispersion,disp,$\hat{disp}$,distance $(mm)$,,dispersion_in_mm,dispersion,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+sigmadisp,scaled_dispersion,${disp}^{*}$,${\hat{disp}}^{*}$,scaled distance $(-)$,,scaled_dispersion,scaled_dispersion,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 disp_mu,dispersion_mean,$\bar{disp}$,$\bar{\hat{disp}}$,distance $(mm)$,,,dispersion_mean,<class 'float'>,
 sigmadisp_mu,scaled_dispersion_mean,${\bar{disp}}^{*}$,${\bar{\hat{disp}}}^{*}$,scaled distance $(-)$,,,scaled_dispersion_mean,<class 'float'>,
-disp_max,dispersion_max,${disp}_{max}$,${\hat{disp}}_{max}$,distance $(mm)$,,dispersion_max_in_mm,dispersion_max,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-sigmadisp_max,scaled_dispersion_max,${disp}_{max}^{*}$,${\hat{disp}}_{max}^{*}$,scaled distance $(-)$,,scaled_dispersion_max,scaled_dispersion_max,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-disp_fin,final_dispersion,${disp}_{fin}$,${\hat{disp}}_{fin}$,distance $(mm)$,,dispersion_in_mm,final_dispersion,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+disp_max,dispersion_max,${disp}_{max}$,${\hat{disp}}_{max}$,distance $(mm)$,,dispersion_max_in_mm,dispersion_max,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+sigmadisp_max,scaled_dispersion_max,${disp}_{max}^{*}$,${\hat{disp}}_{max}^{*}$,scaled distance $(-)$,,scaled_dispersion_max,scaled_dispersion_max,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+disp_fin,final_dispersion,${disp}_{fin}$,${\hat{disp}}_{fin}$,distance $(mm)$,,dispersion_in_mm,final_dispersion,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 sigmadisp_fin,scaled_final_dispersion,${disp}_{fin}^{*}$,${\hat{disp}}_{fin}^{*}$,scaled distance $(-)$,,,scaled_final_dispersion,<class 'float'>,
 disp40,40sec_dispersion,${disp}^{40}$,${\hat{disp}}^{40}$,distance $(mm)$,,,40sec_dispersion,<class 'float'>,
 sigmadisp40,scaled_40sec_dispersion,${{disp}^{40}}^{*}$,${{\hat{disp}}^{40}}^{*}$,scaled distance $(-)$,,,scaled_40sec_dispersion,<class 'float'>,
@@ -273,10 +273,10 @@ cum_d_std,cum_dst_std,$\~{{d}_{cum}}$,$\~{{\hat{d}}_{cum}}$,distance $(mm)$,,,cu
 cum_d_fin,final_cum_dst,${{d}_{cum}}_{fin}$,${{\hat{d}}_{cum}}_{fin}$,distance $(mm)$,,,final_cum_dst,<class 'float'>,
 d_cent_mu,dst_to_center_mean,$\bar{{d}_{cent}}$,$\bar{{\hat{d}}_{cent}}$,distance $(mm)$,,,dst_to_center_mean,<class 'float'>,
 d_cent_std,dst_to_center_std,$\~{{d}_{cent}}$,$\~{{\hat{d}}_{cent}}$,distance $(mm)$,,,dst_to_center_std,<class 'float'>,
-d_cent_fin,final_dst_to_center,${{d}_{cent}}_{fin}$,${{\hat{d}}_{cent}}_{fin}$,distance $(mm)$,,dst_to_center_in_mm,final_dst_to_center,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+d_cent_fin,final_dst_to_center,${{d}_{cent}}_{fin}$,${{\hat{d}}_{cent}}_{fin}$,distance $(mm)$,,dst_to_center_in_mm,final_dst_to_center,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 d_chem_mu,dst_to_chemotax_odor_mean,$\bar{{d}_{chem}}$,$\bar{{\hat{d}}_{chem}}$,distance $(mm)$,,,dst_to_chemotax_odor_mean,<class 'float'>,
 d_chem_std,dst_to_chemotax_odor_std,$\~{{d}_{chem}}$,$\~{{\hat{d}}_{chem}}$,distance $(mm)$,,,dst_to_chemotax_odor_std,<class 'float'>,
-d_chem_fin,final_dst_to_chemotax_odor,${{d}_{chem}}_{fin}$,${{\hat{d}}_{chem}}_{fin}$,distance $(mm)$,,dst_to_chemotax_odor_in_mm,final_dst_to_chemotax_odor,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+d_chem_fin,final_dst_to_chemotax_odor,${{d}_{chem}}_{fin}$,${{\hat{d}}_{chem}}_{fin}$,distance $(mm)$,,dst_to_chemotax_odor_in_mm,final_dst_to_chemotax_odor,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 sigmad_mu,scaled_dst_mean,$\bar{d}^{*}$,$\bar{\hat{d}}^{*}$,scaled distance $(-)$,,,scaled_dst_mean,<class 'float'>,
 sigmad_std,scaled_dst_std,$\~{d}^{*}$,$\~{\hat{d}}^{*}$,scaled distance $(-)$,,,scaled_dst_std,<class 'float'>,
 sigmad_fin,scaled_final_dst,${d}_{fin}^{*}$,${\hat{d}}_{fin}^{*}$,scaled distance $(-)$,,,scaled_final_dst,<class 'float'>,
@@ -318,7 +318,7 @@ str_cum_sd_mu,stride_cum_scaled_dst_mean,${\bar{{d}_{cum}^{*}}}_{str}$,${\bar{{\
 str_cum_sd_std,stride_cum_scaled_dst_std,${\~{{d}_{cum}^{*}}}_{str}$,${\~{{\hat{d}}_{cum}^{*}}}_{str}$,scaled distance $(-)$,,,stride_cum_scaled_dst_std,<class 'float'>,
 str_fsv_mu,stride_scaled_vel_freq_mean,${\bar{{f}_{v}^{*}}}_{str}$,${\bar{{\hat{f}}_{v}^{*}}}_{str}$,frequency $(Hz)$,,,stride_scaled_vel_freq_mean,<class 'float'>,
 str_fsv_std,stride_scaled_vel_freq_std,${\~{{f}_{v}^{*}}}_{str}$,${\~{{\hat{f}}_{v}^{*}}}_{str}$,frequency $(Hz)$,,,stride_scaled_vel_freq_std,<class 'float'>,
-str_sigmad_mu,stride_scaled_dst_mean,${\bar{d}^{*}}_{str}$,${\bar{\hat{d}}^{*}}_{str}$,scaled distance $(-)$,,stride_scaled_dst_mean,stride_scaled_dst_mean,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+str_sigmad_mu,stride_scaled_dst_mean,${\bar{d}^{*}}_{str}$,${\bar{\hat{d}}^{*}}_{str}$,scaled distance $(-)$,,stride_scaled_dst_mean,stride_scaled_dst_mean,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 str_sigmad_std,stride_scaled_dst_std,${\~{d}^{*}}_{str}$,${\~{\hat{d}}^{*}}_{str}$,scaled distance $(-)$,,,stride_scaled_dst_std,<class 'float'>,
 str_sigmad_fin,stride_scaled_final_dst,${{d}_{fin}^{*}}_{str}$,${{\hat{d}}_{fin}^{*}}_{str}$,scaled distance $(-)$,,,stride_scaled_final_dst,<class 'float'>,
 str_sigmald_mu,stride_scaled_lin_dst_mean,${\bar{{d}_{l}}^{*}}_{str}$,${\bar{{\hat{d}}_{l}}^{*}}_{str}$,scaled distance $(-)$,,,stride_scaled_lin_dst_mean,<class 'float'>,
@@ -391,23 +391,23 @@ cum_sd_mu,cum_scaled_dst_mean,$\bar{{d}_{cum}^{*}}$,$\bar{{\hat{d}}_{cum}^{*}}$,
 cum_sd_std,cum_scaled_dst_std,$\~{{d}_{cum}^{*}}$,$\~{{\hat{d}}_{cum}^{*}}$,scaled distance $(-)$,,,cum_scaled_dst_std,<class 'float'>,
 fsv_mu,scaled_vel_freq_mean,$\bar{{f}_{v}^{*}}$,$\bar{{\hat{f}}_{v}^{*}}$,frequency $(Hz)$,,,scaled_vel_freq_mean,<class 'float'>,
 fsv_std,scaled_vel_freq_std,$\~{{f}_{v}^{*}}$,$\~{{\hat{f}}_{v}^{*}}$,frequency $(Hz)$,,,scaled_vel_freq_std,<class 'float'>,
-sf_am,scaled_amount_eaten,${m^{*}}_{feed}$,${\hat{m^{*}}}_{feed}$,food intake as % larval mass,,scaled_amount_eaten,scaled_amount_eaten,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-sf_am_V,ingested_body_volume_ratio,${m^{V}}_{feed}$,${\hat{m^{V}}}_{feed}$,food intake as % larval volume,,ingested_body_volume_ratio,ingested_body_volume_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-sf_am_Vg,ingested_gut_volume_ratio,${m^{V_{gut}}_{feed}$,${\hat{m^{V_{gut}}}}_{feed}$,food intake as % gut volume,,ingested_gut_volume_ratio,ingested_gut_volume_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-sf_am_A,ingested_body_area_ratio,${m^{A}}_{feed}$,${\hat{m^{A}}}_{feed}$,food intake as % larval area,,ingested_body_area_ratio,ingested_body_area_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-sf_am_M,ingested_body_mass_ratio,${m^{M}}_{feed}$,${\hat{m^{M}}}_{feed}$,food intake as % larval mass,,ingested_body_mass_ratio,ingested_body_mass_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-g_odor1,first_odor_best_gain,${G}_{odor_{1}}$,${\hat{G}_{odor_{1}}$,Gain G(t),"[-500.0, 500.0]",first_odor_best_gain,first_odor_best_gain,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-g_odor2,second_odor_best_gain,${G}_{odor_{2}}$,${\hat{G}_{odor_{2}}$,Gain G(t),"[-500.0, 500.0]",second_odor_best_gain,second_odor_best_gain,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-cum_reward,cum_reward,${R}_{cum}$,${\hat{R}_{cum}$,Reward R(t),,cum_reward,cum_reward,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-D_olf,best_olfactor_decay,${D}_{olf}$,${\hat{D}_{olf}$,Olfactor decay coeeficient,,best_olfactor_decay,best_olfactor_decay,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-c_odor1,first_odor_concentration,${C}_{odor_{1}}$,${\hat{C}_{odor_{1}}$,"Concentration C(t), $\mu$M","[0.0, 8.0]",first_odor_concentration,first_odor_concentration,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-dc_odor1,first_odor_concentration_change,$\delta{C}_{odor_{1}}$,$\delta{\hat{C}_{odor_{1}}$,"Concentration change dC(t), $-$","[-0.05, 0.05]",first_odor_concentration_change,first_odor_concentration_change,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-A_olf,olfactory_activation,$A_{olf}$,$\hat{A}_{olf}$,Olfactory activation,"[-1.0, 1.0]",olfactory_activation,olfactory_activation,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-A_tur,turner_activation,$A_{tur}$,$\hat{A}_{tur}$,Turner activation,"[10.0, 40.0]",turner_activation,turner_activation,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+sf_am,scaled_amount_eaten,${m^{*}}_{feed}$,${\hat{m^{*}}}_{feed}$,food intake as % larval mass,,scaled_amount_eaten,scaled_amount_eaten,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+sf_am_V,ingested_body_volume_ratio,${m^{V}}_{feed}$,${\hat{m^{V}}}_{feed}$,food intake as % larval volume,,ingested_body_volume_ratio,ingested_body_volume_ratio,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+sf_am_Vg,ingested_gut_volume_ratio,${m^{V_{gut}}_{feed}$,${\hat{m^{V_{gut}}}}_{feed}$,food intake as % gut volume,,ingested_gut_volume_ratio,ingested_gut_volume_ratio,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+sf_am_A,ingested_body_area_ratio,${m^{A}}_{feed}$,${\hat{m^{A}}}_{feed}$,food intake as % larval area,,ingested_body_area_ratio,ingested_body_area_ratio,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+sf_am_M,ingested_body_mass_ratio,${m^{M}}_{feed}$,${\hat{m^{M}}}_{feed}$,food intake as % larval mass,,ingested_body_mass_ratio,ingested_body_mass_ratio,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+g_odor1,first_odor_best_gain,${G}_{odor_{1}}$,${\hat{G}_{odor_{1}}$,Gain G(t),"[-500.0, 500.0]",first_odor_best_gain,first_odor_best_gain,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+g_odor2,second_odor_best_gain,${G}_{odor_{2}}$,${\hat{G}_{odor_{2}}$,Gain G(t),"[-500.0, 500.0]",second_odor_best_gain,second_odor_best_gain,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+cum_reward,cum_reward,${R}_{cum}$,${\hat{R}_{cum}$,Reward R(t),,cum_reward,cum_reward,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+D_olf,best_olfactor_decay,${D}_{olf}$,${\hat{D}_{olf}$,Olfactor decay coeeficient,,best_olfactor_decay,best_olfactor_decay,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+c_odor1,first_odor_concentration,${C}_{odor_{1}}$,${\hat{C}_{odor_{1}}$,"Concentration C(t), $\mu$M","[0.0, 8.0]",first_odor_concentration,first_odor_concentration,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+dc_odor1,first_odor_concentration_change,$\delta{C}_{odor_{1}}$,$\delta{\hat{C}_{odor_{1}}$,"Concentration change dC(t), $-$","[-0.05, 0.05]",first_odor_concentration_change,first_odor_concentration_change,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+A_olf,olfactory_activation,$A_{olf}$,$\hat{A}_{olf}$,Olfactory activation,"[-1.0, 1.0]",olfactory_activation,olfactory_activation,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+A_tur,turner_activation,$A_{tur}$,$\hat{A}_{tur}$,Turner activation,"[10.0, 40.0]",turner_activation,turner_activation,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 y,y,$y$,$\hat{y}$,Y position $(mm)$,,,y,<class 'float'>,
 x,x,$x$,$\hat{x}$,X position $(mm)$,,,x,<class 'float'>,
-Act_tur,turner_activity,$Act_{tur}$,$\hat{Act}_{tur}$,Turner activity,"[-20.0, 20.0]",ang_activity,turner_activity,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-fo2cen,orientation_to_center,$\theta_{or_{cen}}$,$\hat{theta}_{or_{cen}}$,orientation angle $(deg)$,"[-180, 180]",orientation_to_center_in_deg,orientation_to_center,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-abs_r,food_absorption_efficiency,$r_{absorption}$,$\hat{r}_{absorption}$,food absorption ratio $(-)$,"[0, 1]",food_absorption_efficiency,food_absorption_efficiency,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-f_out_r,faeces_ratio,$r_{faeces}$,$\hat{r}_{faeces}$,faeces ratio $(-)$,"[0, 1]",faeces_ratio,faeces_ratio,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
-f_fee_mu,mean_feed_freq,${\bar{f}}_{feed}$,${\hat{\bar{f}}}_{feed}$,frequency $(Hz)$,,mean_feed_freq,mean feed frequency,<class 'float'>,<class 'lib.model._agent.LarvaworldAgent'>
+Act_tur,turner_activity,$Act_{tur}$,$\hat{Act}_{tur}$,Turner activity,"[-20.0, 20.0]",ang_activity,turner_activity,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+fo2cen,orientation_to_center,$\theta_{or_{cen}}$,$\hat{theta}_{or_{cen}}$,orientation angle $(deg)$,"[-180, 180]",orientation_to_center_in_deg,orientation_to_center,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+abs_r,food_absorption_efficiency,$r_{absorption}$,$\hat{r}_{absorption}$,food absorption ratio $(-)$,"[0, 1]",food_absorption_efficiency,food_absorption_efficiency,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+f_out_r,faeces_ratio,$r_{faeces}$,$\hat{r}_{faeces}$,faeces ratio $(-)$,"[0, 1]",faeces_ratio,faeces_ratio,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
+f_fee_mu,mean_feed_freq,${\bar{f}}_{feed}$,${\hat{\bar{f}}}_{feed}$,frequency $(Hz)$,,mean_feed_freq,mean feed frequency,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
