@@ -100,6 +100,13 @@ def foodNodor_source(id, pos=(0.0, 0.0), odor_id=None, odor_intensity=2.0, odor_
     return dtypes.get_dict('agent', class_name='Source', unique_id=id, as_entry=True, pos=pos, amount=amount,
                            odor_id=odor_id, odor_intensity=odor_intensity, odor_spread=odor_spread, **kwargs)
 
+def foodNodor_4corners(d=0.05) :
+    l=[foodNodor_source(id=f'Source_{i}', odor_id=f'Odor_{i}', pos=p,
+                            odor_intensity=300.0, default_color=c, radius=0.01) for i, (c, p) in
+           enumerate(zip(['blue', 'red', 'green', 'magenta'],
+                         [(-d, -d), (-d, d), (d, -d), (d, d)]))]
+    dic={**l[0], **l[1], **l[2], **l[3]}
+    return dic
 
 CS_UCS_odors = {**odor_source(id='CS_source', pos=(-0.04, 0.0), odor_id='CS', default_color='red'),
                 **odor_source(id='UCS_source', pos=(0.04, 0.0), odor_id='UCS', default_color='blue')}
@@ -204,7 +211,6 @@ chemotax_env = {'arena_params': arena(0.1, 0.06),
                                              model='navigator'),
                 'odorscape': gaussian_odor()}
 
-
 chemorbit_env = {'arena_params': arena(0.1, 0.06),
                  'food_params': food_param_conf(list={**odor_source(id='Odor_source', odor_id='Odor',
                                                                     default_color='blue')}),
@@ -228,6 +234,14 @@ RL_chemorbit_env = {'arena_params': dish(0.1),
                                                  scale=(0.04, 0.04), model='RL-learner'),
                     'odorscape': diffusion_odor()
                     }
+
+RL_4corners_env = {'arena_params': arena(0.2, 0.2),
+                   'food_params': food_param_conf(
+                       list=foodNodor_4corners()),
+                   'larva_params': larva_distro(N=10, mode='uniform', shape='circle', loc=(0.0, 0.0),
+                                                scale=(0.04, 0.04), model='RL-learner'),
+                   'odorscape': diffusion_odor()
+                   }
 
 maze_env = maze_conf(15, 0.1)
 
@@ -281,9 +295,10 @@ growth_env = {'arena_params': arena(0.02, 0.02),  # dish(0.006),
               'odorscape': None}
 
 mock_growth_env = {'arena_params': arena(0.02, 0.02),  # dish(0.006),
-              'food_params': food_param_conf(grid=dtypes.get_dict('food_grid', grid_dims=(2,2), initial_value = 1000)),
-              'larva_params': larva_distro(N=1, model='mock_sitter'),
-              'odorscape': None}
+                   'food_params': food_param_conf(
+                       grid=dtypes.get_dict('food_grid', grid_dims=(2, 2), initial_value=1000)),
+                   'larva_params': larva_distro(N=1, model='mock_sitter'),
+                   'odorscape': None}
 
 # growth_env = {'arena_params': dish(0.01),  # dish(0.006),
 #               'food_params': food_param_conf(list={**dtypes.get_dict('agent', class_name='Source', unique_id='Food',

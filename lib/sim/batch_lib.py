@@ -2,7 +2,7 @@
 This file is the template for a batch run of simulations.
 Simulations are managed through a pypet trajectory.
 Results are saved in hdf5 format.
-CAUTION : save_data_in_hdf5 parameters whether step_data and endpoint_data pandas dataframes are saved (in the hdf5 not as csvs). This takes LONG!!!
+CAUTION : save_data_in_hdf5 parameters whether step and end pandas dataframes are saved (in the hdf5 not as csvs). This takes LONG!!!
 Created by bagjohn on April 5th 2020
 '''
 import itertools
@@ -191,7 +191,7 @@ def null_processing(traj, dataset=None):
 
 
 def deb_processing(traj, dataset=None):
-    dataset.deb_analysis()
+    # dataset.deb_analysis()
     e=dataset.endpoint_data
     deb_f_mean = e['deb_f_mean'].mean()
     traj.f_add_result('deb_f_mean', deb_f_mean, comment='The average mean deb functional response')
@@ -281,8 +281,7 @@ def deb_analysis(traj):
         plot_endpoint_params(ds, new_ids, mode='deb', save_to=parent_dir)
     # deb_dicts = fun.flatten_list(
     #     [[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
-    deb_dicts = fun.flatten_list(
-        [list(d.load_deb_dicts().values()) for d in ds])
+    deb_dicts = fun.flatten_list([d.load_deb_dicts() for d in ds])
     fig_dict = {}
     for m in ['energy', 'growth', 'full'] :
         f=plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as=f'deb_{m}.pdf', mode=m)
@@ -359,8 +358,8 @@ def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag
         e = ObjectTable(data=d.endpoint_data, index=d.endpoint_data.index, columns=d.endpoint_data.columns.values,
                         copy=True)
         s = ObjectTable(data=temp, index=temp.index, columns=temp.columns.values, copy=True)
-        traj.f_add_result('endpoint_data', endpoint_data=e, comment='The simulation endpoint data')
-        traj.f_add_result('step_data', step_data=s, comment='The simulation step-by-step data')
+        traj.f_add_result('end', endpoint_data=e, comment='The simulation endpoint data')
+        traj.f_add_result('step', step_data=s, comment='The simulation step-by-step data')
     end = time.time()
     print(f'Single run {traj.v_idx} complete in {end - start} seconds')
     return d, results

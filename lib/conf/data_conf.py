@@ -56,19 +56,20 @@ SimDataConf = {'fr': 16.0,
                'Ncontour': 0
                }
 
-SimEnrichConf = {'rescale_by': None,
-                 'drop_collisions': False,
-                 'interpolate_nans': False,
-                 'filter_f': None,
-                 'length_and_centroid': False,
-                 'drop_contour': False,
-                 'drop_unused_pars': True,
-                 'drop_immobile': False,
-                 'ang_analysis': True,
-                 'lin_analysis': True,
-                 'dispersion_starts': [0],
-                 'bout_annotation': ['turn', 'stride', 'pause'],
-                 'mode': 'minimal'}
+SimEnrichConf = {
+    'preprocessing': {
+        'rescale_by': None,
+        'drop_collisions': False,
+        'interpolate_nans': False,
+        'filter_f': None
+    },
+    # 'drop_contour': False,
+    # 'drop_unused_pars': True,
+    'processing': ['angular', 'spatial'],
+    'to_drop': ['unused'],
+    'dispersion_starts': [0],
+    'bouts': ['turn', 'stride', 'pause'],
+    'mode': 'minimal'}
 
 SimConf = {'id': 'SimConf',
            'data': SimDataConf,
@@ -90,19 +91,18 @@ Schleyer_raw_cols = ['Step'] + \
 
 Sims_raw_cols = ['Step'] + nam.xy('centroid')
 
-SchleyerEnrichConf = {'rescale_by': None,
-                      'drop_collisions': True,
-                      'interpolate_nans': False,
-                      'filter_f': 2,
-                      'length_and_centroid': True,
-                      'drop_contour': False,
-                      'drop_unused_pars': True,
-                      'drop_immobile': False,
-                      'ang_analysis': True,
-                      'lin_analysis': True,
-                      'dispersion_starts': [0],
-                      'bout_annotation': ['turn', 'stride', 'pause'],
-                      'mode': 'minimal'}
+SchleyerEnrichConf = {
+    'preprocessing': {
+        'rescale_by': None,
+        'drop_collisions': False,
+        'interpolate_nans': False,
+        'filter_f': 2
+    },
+    'processing': ['angular', 'spatial'],
+    'to_drop': ['unused'],
+    'dispersion_starts': [0],
+    'bouts': ['turn', 'stride', 'pause'],
+    'mode': 'minimal'}
 
 SchleyerConf = {'id': 'SchleyerConf',
                 'data': SchleyerDataConf,
@@ -123,25 +123,20 @@ JovanicDataConf = {'fr': 11.27,
                    'Npoints': 11,
                    'Ncontour': 0}
 
-JovanicEnrichConf = {'rescale_by': None,
-                     'drop_collisions': False,
-                     'interpolate_nans': False,
-                     'filter_f': 2,
-                     'length_and_centroid': True,
-                     'drop_contour': False,
-                     'drop_unused_pars': False,
-                     # 'drop_unused_pars': True,
-                     'drop_immobile': False,
-                     'ang_analysis': True,
-                     'lin_analysis': True,
-                     'dispersion_starts': [0, 20],
-                     'dispersion_stops': [40, 80, 120, 160, 200],
-                     # 'dispersion_starts': [0, 10, 20, 30],
-                     # 'bout_annotation': ['stride', 'pause'],
-                     'bout_annotation': ['turn', 'stride', 'pause'],
-                     # 'mode': 'full'
-                     'mode': 'minimal'
-                     }
+JovanicEnrichConf = {
+    'preprocessing': {
+        'rescale_by': None,
+        'drop_collisions': False,
+        'interpolate_nans': False,
+        'filter_f': 2
+    },
+    'processing': ['angular', 'spatial'],
+    'to_drop': [],
+    'dispersion_starts': [0, 20],
+    'dispersion_stops': [40, 80, 120],
+    'bouts': ['turn', 'stride', 'pause'],
+    'mode': 'minimal'
+}
 
 JovanicConf = {'id': 'JovanicConf',
                'data': JovanicDataConf,

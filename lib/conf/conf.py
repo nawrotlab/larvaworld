@@ -153,7 +153,7 @@ def setEnrichConf():
                      'ang_analysis': ang_analysis,
                      'lin_analysis': lin_analysis,
                      'dispersion_starts': dispersion_starts,
-                     'bout_annotation': bout_annotation,
+                     'bouts': bout_annotation,
                      'mode': mode}
     return enrich_config
 
@@ -266,14 +266,13 @@ def saveConf(conf, conf_type, id=None, mode='overwrite'):
     if id is None:
         id = conf['id']
 
-    if id in list(conf_dict.keys()) :
-        for k,v in conf.items() :
-            print(id,k,v)
-            if type(k)==dict and k in list(conf_dict[id].keys()) and mode=='update' :
+    if id in list(conf_dict.keys()):
+        for k, v in conf.items():
+            if type(k) == dict and k in list(conf_dict[id].keys()) and mode == 'update':
                 conf_dict[id][k].update(conf[k])
-            else :
+            else:
                 conf_dict[id][k] = v
-    else :
+    else:
         conf_dict[id] = conf
     saveConfDict(conf_dict, conf_type)
     print(f'{conf_type} Configuration saved under the id : {id}')
@@ -313,8 +312,6 @@ def initializeDataGroup(id):
     for i in dirs:
         if not os.path.exists(i):
             os.makedirs(i)
-
-
 
 
 if __name__ == '__main__':
@@ -371,6 +368,7 @@ if __name__ == '__main__':
         'catch_me': env.catch_me_env,
         'chemotaxis_RL': env.RL_chemorbit_env,
         'food_at_bottom': env.food_at_bottom_env,
+        '4corners': env.RL_4corners_env,
     }
     for k, v in env_dict.items():
         saveConf(v, 'Env', k)
@@ -448,6 +446,7 @@ if __name__ == '__main__':
         'catch_me': exp.catch_me,
         'chemotaxis_RL': exp.chemotaxis_RL,
         'food_at_bottom': exp.food_at_bottom,
+        '4corners': exp.RL_4corners,
     }
     for k, v in exp_dict.items():
         saveConf(v, 'Exp', k)

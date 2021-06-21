@@ -221,7 +221,7 @@ if __name__ == '__main__':
     d_id='Fed'
     bouts=['stride', 'pause']
     # bout='pause'
-    # e=pd.read_csv(f'{RefFolder}/Starved/data/endpoint_data.csv', index_col=0)
+    # e=pd.read_csv(f'{RefFolder}/Starved/data/end.csv', index_col=0)
 
     fr=11.27
     dt=1/fr

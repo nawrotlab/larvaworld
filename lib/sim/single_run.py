@@ -48,10 +48,8 @@ def run_sim_basic(
     param_dict = locals()
     start = time.time()
     Nsteps = int(Nsec / dt)
-    # print(Nsteps)
-    # raise
-    # # FIXME This only takes the first configuration into account
-    # print(env_params['larva_params'].values())
+
+    # FIXME This only takes the first configuration into account
     Npoints = list(env_params['larva_params'].values())[0]['model']['body']['Nsegs'] + 1
 
     d = LarvaDataset(dir=dir_path, id=id, fr=1 / dt,
@@ -72,8 +70,8 @@ def run_sim_basic(
     # pargroup_names = ['pose', 'angular', 'dispersion']
     par_dict = build_par_dict(dt=env.dt)
     env.group_collectors = [GroupCollector(objects=env.get_flies(), name=n, par_dict=par_dict, common=True,
-                                           save_to=d.table_dir) for n in pargroup_names]
-                                                 # save_to=f'{d.table_dir}/{n}') for n in pargroup_names]
+                                           save_to=d.dir_dict['table']) for n in pargroup_names]
+    # save_to=f'{d.table_dir}/{n}') for n in pargroup_names]
     # Prepare the odor layer for a number of timesteps
     # odor_prep_time = 0.0
     # larva_prep_time = 0.5
@@ -95,9 +93,9 @@ def run_sim_basic(
         env.larva_end_col.collect(env)
         env.food_end_col.collect(env)
 
-        d.set_step_data(env.larva_step_col.get_agent_vars_dataframe())
-        d.set_end_data(env.larva_end_col.get_agent_vars_dataframe().droplevel('Step'))
-        d.set_food_end_data(env.food_end_col.get_agent_vars_dataframe().droplevel('Step'))
+        d.set_data(step=env.larva_step_col.get_agent_vars_dataframe(),
+                   end=env.larva_end_col.get_agent_vars_dataframe().droplevel('Step'),
+                   food=env.food_end_col.get_agent_vars_dataframe().droplevel('Step'))
 
         end = time.time()
         dur = end - start
@@ -111,23 +109,14 @@ def run_sim_basic(
             d.save()
             if env.table_collector is not None:
                 d.save_tables(env.table_collector.tables)
-            fun.dict_to_file(param_dict, d.sim_pars_file_path)
+            fun.dict_to_file(param_dict, d.dir_dict['sim'])
             for l in env.get_flies():
                 try:
-                    l.deb.save_dict(d.deb_dir)
+                    l.deb.save_dict(d.dir_dict['deb'])
                 except:
                     pass
             for c in env.group_collectors:
                 c.save()
-            # for l in env.get_flies():
-            #     try:
-            #         l.collector.save()
-            #     except:
-            #         pass
-            # Save the odor layer
-            # if env.Nodors > 0:
-            #     env.plot_odorscape(save_to=d.plot_dir)
-
         res = d
     env.close()
     # k=res.load_table('pose')
@@ -172,28 +161,8 @@ def collection_conf(dataset, collections):
 def load_reference_dataset(dataset_id='reference', load_data=False):
     reference_dataset = LarvaDataset(dir=f'{paths.RefFolder}/{dataset_id}', load_data=load_data)
     if not load_data:
-        reference_dataset.load(step_data=False)
+        reference_dataset.load(step=False)
     return reference_dataset
-
-
-# def generate_config(exp, sim_params, Nagents=None, life_params={}):
-#     config = copy.deepcopy(exp_types[exp])
-#     config['experiment'] = exp
-#     config['sim_params'] = sim_params
-#     config['life_params'] = life_params
-#
-#     if mode(config['env_params']) == str:
-#         config['env_params'] = loadConf(config['env_params'], 'Env')
-#
-#     if Nagents is not None:
-#         config['env_params']['larva_params']['Larva']['N'] = Nagents
-#     for k, v in config['env_params']['larva_params'].items():
-#         if mode(v['model']) == str:
-#             v['model'] = loadConf(v['model'], 'Model')
-#     # print(config['env_params']['larva_params']['Larva']['model'])
-#     # raise
-#     return config
-
 
 def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, larva_model=None):
     exp_conf = loadConf(exp_type, 'Exp')

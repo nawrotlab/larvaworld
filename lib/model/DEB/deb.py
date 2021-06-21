@@ -778,7 +778,9 @@ class DEB:
             d['epochs'] = self.epochs
             d['fr'] = 1 / (self.dt * 24 * 60 * 60)
             d['feed_freq_estimate'] = self.get_feed_freq_estimate()
-    
+            d['f_mean'] = np.mean(d['f'])
+            d['f_deviation_mean'] = np.mean(np.array(d['f'])-1)
+
             if self.gut is not None :
                 d['Nfeeds'] = self.gut.Nfeeds
                 d['mean_feed_freq'] = self.gut.Nfeeds/(self.age-self.birth_time_in_hours)/(60*60)

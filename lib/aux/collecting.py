@@ -125,7 +125,9 @@ intermitter_pars = {
 
 deb_pars = {
     "deb_f": 'deb_f',
+    "deb_f_mean": 'deb_f_mean',
     "deb_f_deviation": 'deb_f_deviation',
+    "deb_f_deviation_mean": 'deb_f_deviation_mean',
     "reserve": 'reserve',
     "reserve_density": 'reserve_density',
     "structural_length": 'structural_length',
@@ -278,7 +280,7 @@ output = {
             'endpoint': [
                 'cum_dst', 'cum_scaled_dst', 'pause_dur_ratio','mass','length',
                 'num_strides', 'stride_dur_ratio', 'vel_freq',
-                'reserve_density', 'puppation_buffer', 'hunger',
+                'reserve_density', 'puppation_buffer', 'hunger','deb_f_mean', 'deb_f_deviation_mean',
                 'age', 'birth_time_in_hours', 'pupation_time_in_hours', 'death_time_in_hours', 'hours_as_larva'
             ]},
     'gut' : {'step': ['gut_occupancy', 'amount_absorbed','food_absorption_efficiency','amount_faeces','faeces_ratio',

@@ -5,7 +5,7 @@ import pandas as pd
 
 from distutils.dir_util import copy_tree
 
-from lib.anal.plotting import comparative_analysis, plot_marked_strides, plot_marked_turns
+from lib.anal.plotting import comparative_analysis, plot_marked_turns, plot_sample_marked_strides
 from lib.stor.building import build_Jovanic, build_Schleyer
 from lib.conf.conf import *
 from lib.stor.datagroup import LarvaDataGroup
@@ -34,7 +34,7 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
         if conf_id == 'JovanicConf':
             # with fun.suppress_stdout():
             step_data, endpoint_data = build_Jovanic(d, build_conf, source_dir=f'{datagroup.raw_dir}/{raw}', **kwargs)
-            # if step_data is None and endpoint_data is None :
+            # if step is None and end is None :
             #     print(f'Temporarily saved {d.id} dataset')
             #     continue
         elif conf_id == 'SchleyerConf':
@@ -45,9 +45,10 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
 
         step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
         endpoint_data.sort_index(inplace=True)
-        d.set_step_data(step_data)
-        d.set_end_data(endpoint_data)
-        d.save(food_endpoint_data=False)
+        d.set_data(step=step_data, end=endpoint_data)
+        # d.set_step_data(step)
+        # d.set_end_data(end)
+        d.save(food=False)
         d.agent_ids = d.step_data.index.unique('AgentID').values
         d.num_ticks = d.step_data.index.unique('Step').size
         d.starting_tick = d.step_data.index.unique('Step')[0]
@@ -120,7 +121,7 @@ def analyse_datasets(datagroup_id, save_to=None, sample_individuals=False, **kwa
         save_to = LarvaDataGroup(datagroup_id).plot_dir
     if sample_individuals:
         for d in ds:
-            plot_marked_strides(dataset=d, agent_ids=d.agent_ids[:1], title=' ')
+            plot_sample_marked_strides(datasets=[d], agent_idx=0, slice=[0, 180])
             try:
                 plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:1])
             except:
@@ -167,11 +168,11 @@ def compute_PIs(datagroup_id, save_to=None, **kwargs):
 #     N=sum([d.Nagents for d in datasets])
 #     s0,e0=[], []
 #     for i, d in enumerate(datasets) :
-#         sigma = copy.deepcopy(d.step_data)
-#         e = copy.deepcopy(d.endpoint_data)
+#         sigma = copy.deepcopy(d.step)
+#         e = copy.deepcopy(d.end)
 #         sigma.index['AgentID']= f'D{i}_' + sigma.index['AgentID'].astype('str')
 #         e.index['AgentID']= f'D{i}_' + e.index['AgentID'].astype('str')
-#         # e = copy.deepcopy(d.endpoint_data)
+#         # e = copy.deepcopy(d.end)
 #         s0.append(sigma)
 #         e0.append(e)
 #     s0=

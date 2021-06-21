@@ -84,6 +84,12 @@ odor_pref_RL = {
     'collections': ['memory'],
 }
 
+RL_4corners = {
+    'env_params': '4corners',
+    'sim_params': dtypes.get_dict('sim_params'),
+    'collections': ['memory'],
+}
+
 chemorbit = {
     'env_params': 'chemotaxis_local',
     'sim_params': dtypes.get_dict('sim_params', sim_dur=10.0),

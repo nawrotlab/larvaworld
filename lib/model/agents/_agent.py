@@ -391,6 +391,10 @@ class Larva(LarvaworldAgent):
         return self.deb.get_f()
 
     @property
+    def deb_f_mean(self):
+        return np.mean(self.deb.dict['f'])
+
+    @property
     def gut_occupancy(self):
         return self.deb.gut.get_gut_occupancy()
 
@@ -430,6 +434,10 @@ class Larva(LarvaworldAgent):
     @property
     def deb_f_deviation(self):
         return self.deb.get_f() - 1
+
+    @property
+    def deb_f_deviation_mean(self):
+        return np.mean(np.array(self.deb.dict['f']) - 1)
 
     @property
     def reserve(self):

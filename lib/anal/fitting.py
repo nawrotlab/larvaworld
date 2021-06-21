@@ -1,15 +1,17 @@
 import os
 import warnings
-
+import pandas as pd
 import numpy as np
 import scipy as sp
+from fitter import Fitter
 from matplotlib import pyplot as plt
 import scipy.stats as st
-from scipy.stats import ks_2samp
+from scipy.stats import ks_2samp, stats
 
 from lib.aux import naming as nam
 from lib.aux import functions as fun
 from lib.conf.conf import saveConf
+
 
 
 def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
@@ -26,7 +28,7 @@ def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
         s = d.step_data.loc[d.step_data[nam.id(chunk_only)].dropna().index]
     else:
         s = d.step_data
-    # sigma = d.step_data
+    # sigma = d.step
     # TURNER PARAMETERS
     # -----------------------
 
@@ -761,3 +763,131 @@ def analyse_bouts(dataset, parameter, scale_coef=1, label=None, xlabel=r'time$(s
     fig.subplots_adjust(top=0.92, bottom=0.15, left=0.1, right=0.95, hspace=.005, wspace=0.005)
     fig.savefig(filepath, dpi=300)
     print(f'Plot saved as {filepath}.')
+
+def fit_distribution(dataset, parameters, num_sample=None, num_candidate_dist=10, time_to_fit=120,
+                     candidate_distributions=None, distributions=None, save_fits=False,
+                     chunk_only=None, absolute=False):
+    d=dataset
+    if d.step_data is None or d.endpoint_data:
+        d.load()
+    if chunk_only is not None:
+        s = d.step_data.loc[d.step_data[nam.id(chunk_only)].dropna().index]
+    else:
+        s = d.step_data
+    all_dists = sorted([k for k in stats._continuous_distns.__all__ if not (
+        (k.startswith('rv_') or k.endswith('_gen') or (k == 'levy_stable') or (k == 'weibull_min')))])
+    dists = []
+    for k in all_dists:
+        dist = getattr(stats.distributions, k)
+        if dist.shapes is None:
+            dists.append(k)
+        elif len(dist.shapes) <= 1:
+            dists.append(k)
+    results = []
+    for i, p in enumerate(parameters):
+        try:
+            dd = d.endpoint_data[p].dropna().values
+        except:
+            dd = s[p].dropna().values
+        if absolute:
+            dd = np.abs(dd)
+        if distributions is None:
+            if candidate_distributions is None:
+                if num_sample is None:
+                    ids = d.agent_ids
+                else:
+                    ids = d.agent_ids[:num_sample]
+                try:
+                    sample = s.loc[(slice(None), ids), p].dropna().values
+                except:
+                    sample = d.endpoint_data.loc[ids, p].dropna().values
+                if absolute:
+                    sample = np.abs(sample)
+                f = Fitter(sample)
+                f.distributions = dists
+                f.fit()
+                dists = f.summary(Nbest=num_candidate_dist).index.values
+            else:
+                dists = candidate_distributions
+            ff = Fitter(dd)
+            ff.distributions = dists
+            ff.timeout = time_to_fit
+            ff.fit()
+            distribution = ff.get_best()
+        else:
+            distribution = distributions[i]
+        name = list(distribution.keys())[0]
+        args = list(distribution.values())[0]
+        stat, pv = stats.kstest(dd, name, args=args)
+        print(
+            f'Parameter {p} was fitted best by a {name} of args {args} with statistic {stat} and p-value {pv}')
+        results.append((name, args, stat, pv))
+
+    if save_fits:
+        fits = [[p, nam, args, st, pv] for p, (nam, args, st, pv)
+                in zip(parameters, results)]
+        fits_pd = pd.DataFrame(fits, columns=['parameter', 'dist_name', 'dist_args', 'statistic', 'p_value'])
+        fits_pd = fits_pd.set_index('parameter')
+        try:
+            d.fit_data = pd.read_csv(d.dir_dict['conf'], index_col=['parameter'])
+            d.fit_data = fits_pd.combine_first(d.fit_data)
+            print('Updated fits')
+        except:
+            d.fit_data = fits_pd
+            print('Initialized fits')
+        d.fit_data.to_csv(d.dir_dict['conf'], index=True, header=True)
+    return results
+
+def fit_dataset(dataset, target_dir, target_point=None, fit_filename=None,
+                angular_fit=True, endpoint_fit=True, bout_fit=True, crawl_fit=True,
+                absolute=False,save_to=None):
+    d = dataset
+    if save_to is None:
+        save_to = d.dir_dict['comp_plot']
+    if not os.path.exists(save_to):
+        os.makedirs(save_to)
+    from lib.stor.larva_dataset import LarvaDataset
+    dd = LarvaDataset(dir=target_dir, load_data=False)
+    file = dd.dir_dict['conf'] if fit_filename is None else os.path.join(dd.data_dir, fit_filename)
+
+    if angular_fit:
+        ang_fits = fit_angular_params(d=d, fit_filepath=file, absolute=absolute,
+                                      save_to=save_to, save_as='angular_fit.pdf')
+    if endpoint_fit:
+        end_fits = fit_endpoint_params(d=d, fit_filepath=file,
+                                       save_to=save_to, save_as='endpoint_fit.pdf')
+    if crawl_fit:
+        crawl_fits = fit_crawl_params(d=d, target_point=target_point, fit_filepath=file,
+                                      save_to=save_to,
+                                      save_as='crawl_fit.pdf')
+    if bout_fit:
+        bout_fits = fit_bout_params(d=d, fit_filepath=file, save_to=save_to,
+                                    save_as='bout_fit.pdf')
+
+def fit_distributions_from_file(dataset, filepath, selected_pars=None, save_fits=True):
+    d=dataset
+    pars, dists, stats = d.load_fits(filepath=filepath, selected_pars=selected_pars)
+    results = fit_distribution(dataset=d,parameters=pars, distributions=dists, save_fits=save_fits)
+    global_fit = 0
+    for s, (dist_name, dist_args, statistic, p_value) in zip(stats, results):
+        global_fit += np.clip(statistic - s, a_min=0, a_max=np.inf)
+    return global_fit
+
+def fit_geom_to_stridechains(dataset, is_last=True):
+    d = dataset
+    if d.step_data is None:
+        d.load()
+    stridechains = d.step_data[nam.length(nam.chain('stride'))]
+    # self.end['stride_reoccurence_rate'] = 1 - 1 / stridechains.mean()
+    mean, std = stridechains.mean(), stridechains.std()
+    print(f'Mean and std of stride reoccurence rate among larvae : {mean}, {std}')
+    p, sse = fun.fit_geom_distribution(stridechains.dropna().values)
+    print(f'Stride reoccurence rate is {1 - p}')
+    d.stride_reoccurence_rate = 1 - p
+    d.stride_reoccurence_rate_sse = sse
+    d.config['stride_reoccurence_rate'] = d.stride_reoccurence_rate
+    d.config['stride_reoccurence_rate_sse'] = d.stride_reoccurence_rate_sse
+    d.save_config()
+    if is_last:
+        d.save()
+    print('Geometric distribution fitted to stridechains')

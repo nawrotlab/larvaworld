@@ -1072,7 +1072,7 @@ class LarvaWorldReplay(LarvaWorld):
                                p not in fun.flatten_list(self.dataset.contour_xy) + fun.flatten_list(
                                    self.dataset.points_xy)]
 
-        # self.starting_tick = self.step_data.index.unique('Step')[0]
+        # self.starting_tick = self.step.index.unique('Step')[0]
         try:
             self.lengths = self.endpoint_data['length'].values
         except:

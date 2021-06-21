@@ -1153,14 +1153,17 @@ def segment_body(N, xy0, seg_ratio=None, centered=True):
 
 
 @contextmanager
-def suppress_stdout():
+def suppress_stdout(show_output):
     with open(os.devnull, "w") as devnull:
         old_stdout = sys.stdout
-        sys.stdout = devnull
+        if not show_output:
+            sys.stdout = devnull
         try:
             yield
         finally:
             sys.stdout = old_stdout
+        # else :
+        #     pass
 
 
 def unique_list(l):

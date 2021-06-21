@@ -1,9 +1,9 @@
-import numpy
+import numpy as np
 
 from lib.anal.plotting import plot_endpoint_scatter, plot_turn_Dbearing, plot_turn_amp, plot_turns, plot_timeplot, \
     plot_navigation_index, plot_debs, plot_food_amount, plot_gut, plot_pathlength, plot_endpoint_params, barplot, \
-    comparative_analysis, plot_marked_strides, plot_marked_turns, plot_chunk_Dorient2source, plot_distance_to_source
-from lib.aux import functions
+    comparative_analysis, plot_marked_turns, plot_chunk_Dorient2source, plot_sample_marked_strides
+from lib.aux import functions as fun
 from lib.conf import dtype_dicts as dtypes
 from lib.model.DEB.deb import deb_default
 from lib.sim.single_run import load_reference_dataset
@@ -67,7 +67,7 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output = False):
             ds = [d]
             labels = [d.id]
 
-        deb_dicts = list(d.load_deb_dicts().values()) + [deb_model]
+        deb_dicts = d.load_deb_dicts() + [deb_model]
         # print(d.load_deb_dicts().values())
         # deb_dicts = [deb_dict(d, id, epochs=epochs) for id in d.agent_ids] + [deb_model]
         c = {'save_to': d.plot_dir,
@@ -117,7 +117,8 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output = False):
         # targeted_analysis(ds)
         dic0 = comparative_analysis(datasets=ds, labels=labels, simVSexp=True, save_to=None)
         fig_dict.update(dic0)
-        dic1 = plot_marked_strides(dataset=d, agent_ids=d.agent_ids[:3], title=' ', slices=[[10, 50], [60, 100]])
+        dic1 = {f'marked_strides_idx_0_slice_{s0}-{s1}' : plot_sample_marked_strides(datasets=[d], agent_idx=0, slice=[s0, s1]) for (s0,s1) in [(10,50), (60,100)]}
+        # dic1 = plot_marked_strides(dataset=d, agent_ids=d.agent_ids[:3], title=' ', slices=[[10, 50], [60, 100]])
         fig_dict.update(dic1)
         dic2 = plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:3], min_turn_angle=20)
         fig_dict.update(dic2)
@@ -136,8 +137,13 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output = False):
             # fig_dict['turn_Dorient2center'] = plot_turn_Dorient2center(datasets=[d], labels=[d.id])
         for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
             fig_dict[p] = plot_timeplot([p], datasets=[d])
-        dic = plot_distance_to_source(dataset=d, exp_type=exp_type)
-        fig_dict.update(dic)
+        for p in ['d_cent', 'd_chem', 'sd_cent', 'sd_chem']:
+            try :
+                fig_dict[p] = plot_timeplot([p], datasets=[d], show_first=True)
+            except :
+                pass
+        # dic = plot_distance_to_source(dataset=d, exp_type=exp_type)
+        # fig_dict.update(dic)
         vis_kwargs = dtypes.get_dict('visualization', mode='image', image_mode='final', show_display=False,
                                      random_colors=True, trajectories=True, trajectory_dt=0,
                                      visible_clock=False, visible_scale=False, media_name='single_trajectory')
