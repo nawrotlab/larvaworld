@@ -432,7 +432,7 @@ if __name__ == '__main__':
         'odor_pref_test': exp.odor_pref_test,
         'odor_pref_test_on_food': exp.odor_pref_test_on_food,
         'odor_pref_train': exp.odor_pref_train,
-        'odor_preference_RL': exp.odor_pref_RL,
+        'odor_pref_RL': exp.odor_pref_RL,
         'patchy_food': exp.patchy_food,
         'uniform_food': exp.uniform_food,
         'food_grid': exp.food_grid,

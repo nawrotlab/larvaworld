@@ -31,11 +31,7 @@ life_kwargs = prs.get_life_kwargs(args)
 vis_kwargs = prs.get_vis_kwargs(args)
 place_kwargs = prs.get_place_kwargs(args)
 
-if sim_kwargs['sim_id'] is None:
-    idx = next_idx(exp_type)
-    sim_kwargs['sim_id'] = f'{exp_type}_{idx}'
-if sim_kwargs['path'] is None:
-    sim_kwargs['path'] = f'single_runs/{exp_type}'
+
 
 exp_conf = get_exp_conf(exp_type,  sim_kwargs, life_kwargs, enrich=True, **place_kwargs)
 

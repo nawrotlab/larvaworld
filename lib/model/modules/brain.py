@@ -4,7 +4,7 @@ from lib.model.modules.basic import Oscillator_coupling
 from lib.model.modules.crawler import Crawler
 from lib.model.modules.feeder import Feeder
 from lib.model.modules.intermitter import Intermitter
-from lib.model.modules.memory import RLmemory
+from lib.model.modules.memory import RLmemory, SimpleMemory
 from lib.model.modules.olfactor import Olfactor
 from lib.model.modules.turner import Turner
 
@@ -38,6 +38,7 @@ class DefaultBrain(Brain):
         self.intermitter = Intermitter(dt=dt, crawler=self.crawler, feeder=self.feeder,
                                            **c['intermitter_params']) if m['intermitter'] else None
         o=self.olfactor = Olfactor(dt=dt, **c['olfactor_params']) if m['olfactor'] else None
+        # self.memory = SimpleMemory(brain=self, dt=dt, decay_coef=o.decay_coef, gain=o.gain, **c['memory_params']) if m['memory'] else None
         self.memory = RLmemory(brain=self, dt=dt, decay_coef=o.decay_coef, gain=o.gain, **c['memory_params']) if m['memory'] else None
 
     def run(self, pos):
@@ -55,6 +56,7 @@ class DefaultBrain(Brain):
                                                                             self.olfactor.decay_coef)
         lin = self.crawler.step(self.agent.get_sim_length()) if self.crawler else 0
         self.olfactory_activation = self.olfactor.step(self.sense_odors(pos)) if self.olfactor else 0
+        # print(np.round(list(self.sense_odors(pos).values()),4))
         # ... and finally step the turner...
         ang = self.turner.step(inhibited=self.coupling.step(crawler=self.crawler, feeder=self.feeder),
                                attenuation=self.coupling.attenuation,

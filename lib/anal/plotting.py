@@ -1599,16 +1599,20 @@ def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals
     cols = ['grey'] if N == 1 else fun.N_colors(N)
     if not same_plot:
         raise NotImplementedError
-
+    if N ==1 :
+        filename = f'{par_shorts[0]}.{suf}' if save_as is None else save_as
+    elif N==2 :
+        filename = f'{par_shorts[0]}_VS_{par_shorts[1]}.{suf}' if save_as is None else save_as
+    else :
+        filename = f'{N}_pars.{suf}' if save_as is None else save_as
+    fig, axs = plt.subplots(1, 1, figsize=(7.5, 5))
     for short, c in zip(par_shorts, cols):
-        fig, axs = plt.subplots(1, 1, figsize=(7.5, 5))
-
         par_dict = par_conf.get_par_dict(short=short)
         par = par_dict['par']
         symbol = par_dict['symbol']
         xlabel = par_dict['unit']
         ylim = par_dict['lim']
-        filename = f'{par}.{suf}' if save_as is None else save_as
+
         for d, d_col, d_lab in zip(datasets, colors, labels):
             if Ndatasets > 1:
                 c = d_col
@@ -1643,19 +1647,19 @@ def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals
                     dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
                     axs.plot(trange, dc0, 'r')
 
-        axs.set_ylabel(xlabel)
-        axs.set_xlabel(time_label)
-        axs.set_xlim([trange[0], trange[-1]])
-        if ylim is not None:
-            axs.set_ylim(ylim)
-        if N > 1:
-            axs.legend()
-        axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
-        if Ndatasets > 1:
-            dataset_legend(labels, colors, ax=axs, loc=legend_loc, fontsize=15)
+    axs.set_ylabel(xlabel)
+    axs.set_xlabel(time_label)
+    axs.set_xlim([trange[0], trange[-1]])
+    if ylim is not None:
+        axs.set_ylim(ylim)
+    if N > 1:
+        axs.legend()
+    axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
+    if Ndatasets > 1:
+        dataset_legend(labels, colors, ax=axs, loc=legend_loc, fontsize=15)
 
-        plt.subplots_adjust(bottom=0.15, left=0.2, right=0.95, top=0.95)
-        return process_plot(fig, save_to, filename, return_fig, show)
+    plt.subplots_adjust(bottom=0.15, left=0.2, right=0.95, top=0.95)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_navigation_index(datasets, labels=None, subfolder='source', save_as=None, save_to=None, return_fig=False,show=False):

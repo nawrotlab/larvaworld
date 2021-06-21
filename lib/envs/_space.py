@@ -155,8 +155,10 @@ class GaussianValueLayer(ValueLayer):
         pass
 
     def get_value(self, pos):
+
         value = 0
         for s in self.sources:
+            # print(s.unique_id, s.odor_peak_value)
             p = s.get_position()
             rel_pos = [pos[0] - p[0], pos[1] - p[1]]
             value += s.get_gaussian_odor_value(rel_pos)

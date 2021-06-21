@@ -88,13 +88,13 @@ class Intermitter(Effector):
     def step(self):
         self.initialize()
         super().count_time()
-        super().count_ticks()
+        # super().count_ticks()
         self.update_state()
 
     def disinhibit_locomotion(self):
         if np.random.uniform(0, 1, 1) >= self.EEB:
             if self.crawl_bouts:
-                self.current_stridechain_length = np.round(self.stridechain_dist.sample())
+                self.current_stridechain_length = self.stridechain_dist.sample()
                 self.stridechain_start = True
                 if self.crawler is not None:
                     self.crawler.start_effector()
@@ -109,8 +109,6 @@ class Intermitter(Effector):
                     self.feeder.start_effector()
                 if self.crawler is not None:
                     self.crawler.stop_effector()
-                # else:
-                #     self.current_feed_duration = 1 / self.feed_freq
 
     def inhibit_locomotion(self):
         self.current_pause_duration = self.pause_dist.sample()
@@ -122,8 +120,7 @@ class Intermitter(Effector):
 
     def update_state(self):
         if self.current_stridechain_length is not None:
-            if (self.crawler is not None and self.crawler.complete_iteration) or (
-                    self.crawler is None and self.ticks >= (self.current_numstrides + 1) * self.crawl_ticks):
+            if self.crawler.complete_iteration:
                 self.current_numstrides += 1
                 self.stride_stop = True
                 self.stride_counter += 1
@@ -136,8 +133,7 @@ class Intermitter(Effector):
                 self.stridechain_id = self.stridechain_counter
 
         elif self.current_feedchain_length is not None:
-            if (self.feeder is not None and self.feeder.complete_iteration) or (
-                    self.feeder is None and self.ticks >= (self.current_feedchain_length) * self.feed_ticks):
+            if self.feeder.complete_iteration:
                 self.current_numfeeds += 1
                 self.feed_stop = True
                 self.feed_counter += 1
@@ -163,7 +159,6 @@ class Intermitter(Effector):
         self.cum_stridechain_dur += self.stridechain_dur
         self.stridechain_length = self.current_stridechain_length
         self.t = 0
-        self.ticks = 0
         self.stridechain_stop = True
         self.current_numstrides = 0
         self.current_stridechain_length = None
@@ -174,7 +169,6 @@ class Intermitter(Effector):
         self.cum_feedchain_dur += self.feedchain_dur
         self.feedchain_length = self.current_feedchain_length
         self.t = 0
-        self.ticks = 0
         self.feedchain_stop = True
         self.current_feedchain_length = None
 
@@ -184,11 +178,14 @@ class Intermitter(Effector):
         self.cum_pause_dur += self.pause_dur
         self.current_pause_duration = None
         self.t = 0
-        self.ticks = 0
         self.pause_stop = True
 
     def get_mean_feed_freq(self):
-        return self.feed_counter / (self.total_ticks*self.dt)
+        try :
+            f= self.feed_counter / (self.total_ticks*self.dt)
+        except :
+            f= self.feed_counter / self.total_t
+        return f
 
 
 class NengoIntermitter(Intermitter):

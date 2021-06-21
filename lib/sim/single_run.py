@@ -8,7 +8,7 @@ from lib.anal.plotting import *
 from lib.aux.collecting import output, midline_xy_pars
 from lib.conf.par import build_par_dict, Collection, AgentCollector, GroupCollector
 from lib.envs._larvaworld import LarvaWorldSim
-from lib.conf.conf import loadConf
+from lib.conf.conf import loadConf, next_idx
 from lib.sim.enrichment import sim_enrichment
 from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.dtype_dicts as dtypes
@@ -27,6 +27,8 @@ def run_sim_basic(
         par_config=dat.SimParConf,
         seed=1,
         **kwargs):
+    # print(life_params)
+    # print(sim_params['sim_dur'])
     if collections is None:
         collections = ['pose']
     np.random.seed(seed)
@@ -143,7 +145,6 @@ def collection_conf(dataset, collections):
     for c in collections:
         if c == 'midline':
             step_pars += list(midline_xy_pars(N=d.Nsegs).keys())
-            # step_pars += fun.flatten_list(d.points_xy)
         elif c == 'contour':
             step_pars += fun.flatten_list(d.contour_xy)
         else:
@@ -166,7 +167,6 @@ def load_reference_dataset(dataset_id='reference', load_data=False):
 
 def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, larva_model=None):
     exp_conf = loadConf(exp_type, 'Exp')
-
     env = exp_conf['env_params']
     if type(env) == str:
         env = loadConf(env, 'Env')
@@ -184,11 +184,17 @@ def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, la
 
     exp_conf['env_params'] = env
     if 'life_params' not in list(exp_conf.keys()):
-
         if life_params is None:
             life_params = dtypes.get_dict('life')
-
         exp_conf['life_params'] = life_params
+
+    if sim_params['sim_id'] is None:
+        idx = next_idx(exp_type)
+        sim_params['sim_id'] = f'{exp_type}_{idx}'
+    if sim_params['path'] is None:
+        sim_params['path'] = f'single_runs/{exp_type}'
+    if sim_params['sim_dur'] is None:
+        sim_params['sim_dur'] = exp_conf['sim_params']['sim_dur']
     exp_conf['sim_params'] = sim_params
     exp_conf['experiment'] = exp_type
     exp_conf['enrich'] = enrich

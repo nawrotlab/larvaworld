@@ -53,21 +53,21 @@ rovers_sitters = {
     # 'age_in_hours' : 0
     # 'epochs': [[24, 48]]
 }
-odor_pref = {
-    'env_params': 'odor_preference',
-    'sim_params': dtypes.get_dict('sim_params'),
-    'collections': ['olfactor'],
-}
+# odor_pref = {
+#     'env_params': 'odor_preference',
+#     'sim_params': dtypes.get_dict('sim_params', sim_dur=5.0),
+#     'collections': ['olfactor'],
+# }
 
 odor_pref_test = {
     'env_params': 'odor_pref_test',
-    'sim_params': dtypes.get_dict('sim_params'),
+    'sim_params': dtypes.get_dict('sim_params', sim_dur=5.0),
     'collections': ['olfactor'],
 }
 
 odor_pref_test_on_food = {
     'env_params': 'odor_pref_test_on_food',
-    'sim_params': dtypes.get_dict('sim_params'),
+    'sim_params': dtypes.get_dict('sim_params', sim_dur=5.0),
     'collections': ['olfactor', 'feeder'],
 }
 
@@ -80,7 +80,7 @@ odor_pref_train = {
 
 odor_pref_RL = {
     'env_params': 'odor_preference_RL',
-    'sim_params': dtypes.get_dict('sim_params'),
+    'sim_params': dtypes.get_dict('sim_params', sim_dur=105.0),
     'collections': ['memory'],
 }
 

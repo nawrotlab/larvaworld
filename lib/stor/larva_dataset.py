@@ -58,7 +58,7 @@ class LarvaDataset:
             self.step_data = step
             self.agent_ids = step.index.unique('AgentID').values
             self.num_ticks = step.index.unique('Step').size
-            self.starting_tick = step.index.unique('Step')[0]
+            self.starting_tick = step.index.unique('Step')[0] if self.num_ticks>0 else 0
         if end is not None:
             self.endpoint_data = end
         if food is not None:
@@ -491,6 +491,7 @@ class LarvaDataset:
             'distro': os.path.join(self.aux_dir, 'par_distros'),
             'stride': os.path.join(self.aux_dir, 'par_during_stride'),
             'dispersion': os.path.join(self.aux_dir, 'dispersion'),
+            'table': os.path.join(self.aux_dir, 'tables'),
             'step': os.path.join(self.data_dir, 'step.csv'),
             'end': os.path.join(self.data_dir, 'end.csv'),
             'food': os.path.join(self.data_dir, 'food.csv'),

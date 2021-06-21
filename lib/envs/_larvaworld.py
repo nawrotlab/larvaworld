@@ -596,14 +596,19 @@ class LarvaWorld:
             self.CS_trial_counter=1
             self.UCS_trial_counter=0
             print()
-            print(f'Training trial {self.CS_trial_counter} with CS started at {self.sim_clock.minute} : {self.sim_clock.second}')
+            print(f'Training trial {self.CS_trial_counter} with CS started at {self.sim_clock.minute}:{self.sim_clock.second}')
             for f in self.get_food():
                 if f.unique_id == 'CS_source':
                     self.CS_source = f
                 elif f.unique_id == 'UCS_source':
                     self.UCS_source = f
+            # print(self.CS_source.odor_intensity, self.UCS_source.odor_intensity)
             self.CS_source.odor_intensity = 2.0
             self.UCS_source.odor_intensity = 0.0
+            self.CS_source.set_odor_dist()
+            self.UCS_source.set_odor_dist()
+            # print(self.CS_source.odor_intensity, self.UCS_source.odor_intensity)
+            # raise
 
     def check_end_condition(self):
         if self.experiment == 'capture_the_flag':
@@ -660,27 +665,37 @@ class LarvaWorld:
             self.sim_state.set_text(f'L:{np.round(self.score["Left"],1)} vs R:{np.round(self.score["Right"],1)}')
 
         elif self.experiment == 'odor_pref_train':
+
             if self.sim_clock.timer_opened :
                 self.UCS_trial_counter+=1
                 print()
                 print(f'Starvation trial {self.UCS_trial_counter} with UCS started at {self.sim_clock.minute}:{self.sim_clock.second}')
                 self.CS_source.odor_intensity=0.0
                 self.UCS_source.odor_intensity=2.0
+                self.CS_source.set_odor_dist()
+                self.UCS_source.set_odor_dist()
                 self.move_larvae_to_center()
             if self.sim_clock.timer_closed :
                 self.CS_trial_counter += 1
-                print()
-                print(f'Training trial {self.CS_trial_counter} with CS started at {self.sim_clock.minute}:{self.sim_clock.second}')
-                self.CS_source.odor_intensity = 2.0
-                self.UCS_source.odor_intensity = 0.0
-                self.move_larvae_to_center()
-            if self.sim_clock.next_on is None and self.sim_clock.next_off is None :
-                print()
-                print(f'Test trial started at {self.sim_clock.minute}:{self.sim_clock.second}')
-                self.CS_source.odor_intensity = 2.0
-                self.UCS_source.odor_intensity = 2.0
-                self.move_larvae_to_center()
+                if self.CS_trial_counter<=3 :
+                    print()
+                    print(f'Training trial {self.CS_trial_counter} with CS started at {self.sim_clock.minute}:{self.sim_clock.second}')
+                    self.CS_source.odor_intensity = 2.0
+                    self.UCS_source.odor_intensity = 0.0
+                    self.CS_source.set_odor_dist()
+                    self.UCS_source.set_odor_dist()
+                    self.move_larvae_to_center()
+                else :
+                    # if self.sim_clock.next_on is None and self.sim_clock.next_off is None :
+                    print()
+                    print(f'Test trial started at {self.sim_clock.minute}:{self.sim_clock.second}')
+                    self.CS_source.odor_intensity = 2.0
+                    self.UCS_source.odor_intensity = 2.0
+                    self.CS_source.set_odor_dist()
+                    self.UCS_source.set_odor_dist()
+                    self.move_larvae_to_center()
             if self.sim_clock.minute>=35 :
+                print()
                 print(f'Test trial ended at {self.sim_clock.minute}:{self.sim_clock.second}')
 
     def move_larvae_to_center(self) :

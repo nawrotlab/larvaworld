@@ -48,6 +48,7 @@ class Olfactor(Effector):
         return self.gain
 
     def step(self, cons):
+        # print(cons)
         if len(cons) == 0:
             self.activation = 0
         else:

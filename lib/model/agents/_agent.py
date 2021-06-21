@@ -570,6 +570,7 @@ class Food(Source):
         return np.min([amount, prev_amount])
 
     def draw(self, viewer, filled=True):
+
         # if self.get_shape() is None :
         #     return
         p, c, r = self.get_position(), self.color, self.radius
