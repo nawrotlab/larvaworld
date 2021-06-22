@@ -49,6 +49,12 @@ def ast(p):
 def th(p):
     return fr'$\theta_{{{p.replace("$", "")}}}$'
 
+def Delta(p):
+    return fr'$\Delta{{{p.replace("$", "")}}}$'
+
+def delta(p):
+    return fr'$\delta{{{p.replace("$", "")}}}$'
+
 
 def hat_th(p):
     return fr'$\hat{{\theta}}_{{{p}}}$'
@@ -773,6 +779,6 @@ if __name__ == '__main__':
     #     print(p)
     # print(par_db.loc['g_odor1'])
     # print('final_dst_to_chemotax_odor' in list(step_database.keys()))
-    # print(par_in_db(par='final_dst_to_chemotax_odor'))
+    print(par_in_db(par='final_dst_to_chemotax_odor'))
     # print(get_par_dict(par='cum_dst', retrieve_from='par_db'))
     print(par_db.loc['l'])

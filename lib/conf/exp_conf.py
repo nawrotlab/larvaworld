@@ -73,9 +73,9 @@ odor_pref_test_on_food = {
 
 odor_pref_train = {
     'env_params': 'odor_pref_train',
-    'sim_params': dtypes.get_dict('sim_params', sim_dur=35.0),
+    'sim_params': dtypes.get_dict('sim_params', sim_dur=41.0),
     'collections': ['olfactor', 'memory'],
-    'life_params': dtypes.get_dict('life', epochs=[(1 / 12, 2 / 12), (3 / 12, 4 / 12), (5 / 12, 6 / 12)])
+    'life_params': dtypes.get_dict('life', epochs=[(1 / 12, 2 / 12), (3 / 12, 4 / 12), (5 / 12, 6 / 12), (7 / 12, 8 / 12)])
 }
 
 odor_pref_RL = {

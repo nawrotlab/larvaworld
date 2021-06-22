@@ -4,7 +4,7 @@ import os
 import webbrowser
 from ast import literal_eval
 from typing import List, Tuple, Type
-
+from pydoc import locate
 import numpy as np
 import PySimpleGUI as sg
 import operator
@@ -877,6 +877,7 @@ def retrieve_value(v, t):
         elif t == Tuple[int, int]:
             vv = tuple([int(x) for x in v.split()])
     elif t == Type and type(v) == str:
+        # print(t,v)
         if 'str' in v:
             vv = str
         elif 'float' in v:
@@ -885,6 +886,9 @@ def retrieve_value(v, t):
             vv = bool
         elif 'int' in v:
             vv = int
+        else :
+            vv = locate(v)
+            # print(vv)
 
     elif t == tuple or t == list:
         try:

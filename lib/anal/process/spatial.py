@@ -500,6 +500,25 @@ def fixate_larva(s, Npoints, Ncontour, point, secondary_point=None, arena_dims=N
     print('Fixed-point dataset generated')
     return s, bg
 
+def compute_preference_index(poses, arena_dims, return_num=False, return_all=False):
+    X,Y=arena_dims
+    N=len(poses)
+    xs=np.array([p[0] for p in poses])
+    r = 0.2 * X
+    N_l = xs[xs <= -r / 2].shape[0]
+    N_r = xs[xs >= +r / 2].shape[0]
+    N_m = xs[(xs <= +r / 2) & (xs >= -r / 2)].shape[0]
+    # print(N,N_l,N_r,N_m)
+    pI = np.round((N_l - N_r) / N, 3)
+    if return_num:
+        if return_all:
+            return pI, N, N_l, N_r
+        else:
+            return pI, N
+    else:
+        return pI
+
+
 if __name__ == '__main__':
     from lib.stor.managing import get_datasets
     d = get_datasets(datagroup_id='SimGroup', last_common='single_runs', names=['dish/ppp'], mode='load')[0]

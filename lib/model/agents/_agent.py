@@ -78,7 +78,11 @@ class LarvaworldAgent:
         self.id_box.color = self.default_color
         self.set_color(color)
 
-    def set_odor_dist(self):
+    def set_odor_dist(self, intensity=None, spread=None):
+        if intensity is not None :
+            self.odor_intensity=intensity
+        if spread is not None :
+            self.odor_spread=spread
         self.odor_dist = multivariate_normal([0, 0], [[self.odor_spread, 0], [0, self.odor_spread]])
         self.odor_peak_value = self.odor_intensity / self.odor_dist.pdf([0, 0])
 
@@ -94,11 +98,11 @@ class LarvaworldAgent:
     def get_odor_spread(self):
         return self.odor_spread
 
-    def set_odor(self, odor_id, intensity=2, spread=0.0002):
-        self.set_odor_id(odor_id)
-        self.set_scaled_odor_intensity(intensity)
-        self.set_scaled_odor_spread(spread)
-        self.set_odor_dist()
+    # def set_odor(self, odor_id, intensity=2, spread=0.0002):
+    #     self.set_odor_id(odor_id)
+    #     self.set_odor_intensity(intensity)
+    #     self.set_scaled_odor_spread(spread)
+    #     self.set_odor_dist()
 
     def get_gaussian_odor_value(self, pos):
         return self.odor_dist.pdf(pos) * self.odor_peak_value
@@ -388,7 +392,7 @@ class Larva(LarvaworldAgent):
 
     @property
     def deb_f(self):
-        return self.deb.get_f()
+        return self.deb.f
 
     @property
     def deb_f_mean(self):
@@ -433,7 +437,7 @@ class Larva(LarvaworldAgent):
 
     @property
     def deb_f_deviation(self):
-        return self.deb.get_f() - 1
+        return self.deb.f - 1
 
     @property
     def deb_f_deviation_mean(self):
@@ -441,23 +445,23 @@ class Larva(LarvaworldAgent):
 
     @property
     def reserve(self):
-        return self.deb.get_E()
+        return self.deb.E
 
     @property
     def reserve_density(self):
-        return self.deb.get_e()
+        return self.deb.e
 
     @property
     def structural_length(self):
-        return self.deb.get_L()
+        return self.deb.L
 
     @property
     def maturity(self):
-        return self.deb.get_E_H() * 1000 #in mJ
+        return self.deb.E_H * 1000 #in mJ
 
     @property
     def reproduction(self):
-        return self.deb.get_E_R() * 1000 #in mJ
+        return self.deb.E_R * 1000 #in mJ
 
     @property
     def puppation_buffer(self):
@@ -465,7 +469,7 @@ class Larva(LarvaworldAgent):
 
     @property
     def structure(self):
-        return self.deb.get_V() * self.deb.E_V * 1000 #in mJ
+        return self.deb.V * self.deb.E_V * 1000 #in mJ
 
     @property
     def age_in_hours(self):

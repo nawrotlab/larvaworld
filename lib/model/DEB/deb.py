@@ -195,6 +195,7 @@ class DEB:
         self.V = self.L0 ** 3
         self.deb_p_A = 0
         self.sim_p_A = 0
+        self.gut_p_A = 0
 
         self.substrate = Substrate(type=substrate_type, quality=substrate_quality)
         self.substrate_quality = substrate_quality
@@ -204,8 +205,8 @@ class DEB:
         # self.substrate_X_ratio=self.substrate.get_X_ratio(quality=substrate_quality)
         self.f = self.base_f
         self.V_bite = V_bite
-        self.F = self.get_F()
-        self.feed_freq_estimate = self.get_feed_freq_estimate()
+        # self.F = self.get_F()
+        # self.feed_freq_estimate = self.get_feed_freq_estimate()
 
         self.gut=Gut(deb=self, V_bite=self.V_bite, save_dict=save_dict) if use_gut else None
         self.set_steps_per_day(steps_per_day)
@@ -261,8 +262,8 @@ class DEB:
         # self.substrate_C = self.substrate.get_C(quality=quality)
         # self.substrate_X_ratio = self.substrate.get_X_ratio(quality=quality)
         self.f = self.base_f
-        self.F=self.get_F()
-        self.feed_freq_estimate = self.get_feed_freq_estimate()
+        # self.F=self.get_F()
+        # self.feed_freq_estimate = self.get_feed_freq_estimate()
         if self.gut is not None :
             self.gut.get_tau_gut(self.base_f, self.J_X_Am, self.Lb)
             self.gut.get_Nticks(self.dt * self.T_factor)
@@ -559,7 +560,7 @@ class DEB:
                 f'Physical length (mm) :      predicted {np.round(self.Lwj * 10, 3)} VS computed {np.round(Lw_j * 10, 3)}')
 
     def compute_hunger(self):
-        h= np.clip(self.base_hunger + self.hunger_gain * (1 - self.get_e()), a_min=0, a_max=1)
+        h= np.clip(self.base_hunger + self.hunger_gain * (1 - self.e), a_min=0, a_max=1)
 
         return h
 
@@ -610,21 +611,17 @@ class DEB:
         J_X_A=self.J_X_Amm*self.V*f
         return J_X_A
 
-    def get_F(self): # Vol specific filtering rate (cm**3/(d*cm**3) -> vol of environment/vol of individual*day
+    @property
+    def F(self): # Vol specific filtering rate (cm**3/(d*cm**3) -> vol of environment/vol of individual*day
         F = (self.F_mm ** -1 + self.substrate.X * self.J_X_Amm ** -1) ** -1
         # Simpler : F=f*J_X_Amm/X
         return F
 
-    def get_feed_freq_estimate(self, unit='sec'): # V_bite : Vol spec vol of food per feeding motion
-        freq=self.F/self.V_bite*self.T_factor
-        # freq=self.F/self.V_bite/self.y_E_X #*self.T_factor
-        if unit=='sec':
-            freq/=(24*60*60)
-        # print(self.T_factor)
+    @property
+    def fr_feed(self):
+        freq = self.F / self.V_bite * self.T_factor
+        freq /= (24 * 60 * 60)
         return freq
-
-    def get_f(self):
-        return self.f
 
     def compute_Ww(self, V=None, E=None):
         if V is None:
@@ -646,26 +643,6 @@ class DEB:
         # Structural L is in cm. We turn it to m
         return self.Lw * 10 / 1000
 
-    def get_L(self):
-        return self.L
-
-    def get_Ww(self):
-        return self.Ww
-
-    def get_E_R(self):
-        return self.E_R
-
-    def get_E_H(self):
-        return self.E_H
-
-    def get_V(self):
-        return self.V
-
-    def get_E(self):
-        return self.E
-
-    def get_e(self):
-        return self.e
 
     def grow_larva(self, hours_as_larva=None, epochs=None, fs=None):
         c= {'assimilation_mode' : 'sim'}
@@ -723,11 +700,9 @@ class DEB:
             self.epochs = self.store_epochs(epochs)
             # print(fs, epochs, self.epochs)
 
-    def get_pupation_buffer(self):
+    @ property
+    def pupation_buffer(self):
         return self.E_R / self.E_Rj
-
-    def get_hunger(self):
-        return self.hunger
 
     def init_dict(self):
         self.dict_keys = [
@@ -748,17 +723,15 @@ class DEB:
     def update_dict(self):
         dict_values = [
             self.age * 24,
-            self.get_Ww() * 1000,
-            self.get_Lw() * 1000,
-            self.get_E(),
-            self.get_e(),
-            self.get_hunger(),
-            self.get_pupation_buffer(),
-            self.get_f(),
+            self.Ww * 1000,
+            self.Lw * 10,
+            self.E,
+            self.e,
+            self.hunger,
+            self.pupation_buffer,
+            self.f,
             self.deb_p_A / self.V,
-            # self.deb_p_A * 10 ** 6,
             self.sim_p_A / self.V,
-            # self.sim_p_A * 10 ** 6,
         ]
         for k, v in zip(self.dict_keys, dict_values):
             self.dict[k].append(v)
@@ -777,7 +750,7 @@ class DEB:
             d['sim_start'] = self.hours_as_larva
             d['epochs'] = self.epochs
             d['fr'] = 1 / (self.dt * 24 * 60 * 60)
-            d['feed_freq_estimate'] = self.get_feed_freq_estimate()
+            d['feed_freq_estimate'] = self.fr_feed
             d['f_mean'] = np.mean(d['f'])
             d['f_deviation_mean'] = np.mean(np.array(d['f'])-1)
 
@@ -828,18 +801,6 @@ class DEB:
                 with open(f, "w") as fp:
                     json.dump(d, fp)
 
-    # def load_dict(self, type='full'):
-    #     if type=='full' :
-    #         f=self.dict_file
-    #     elif type=='deb' :
-    #         f=self.deb_dict_file
-    #     elif type=='gut':
-    #         f=self.gut_dict_file
-    #     if f is not None:
-    #         with open(f) as tfp:
-    #             d = json.load(tfp)
-    #         return d
-
     def load_dict(self):
         f=self.dict_file
         if f is not None:
@@ -848,17 +809,12 @@ class DEB:
             return d
 
     def get_p_A(self, f, assimilation_mode):
-        # if self.gut is not None :
-        #     a=(self.p_Amm_dt/self.mu_E-self.J_X_Amm_dt*self.y_E_X)/1
-        #     print(a)
-        # if self.get_pupation_buffer()>0.999 :
-        #     print(self.id, self.p_Amm_dt, self.base_f)
         self.deb_p_A = self.p_Amm_dt * self.base_f * self.V
         self.sim_p_A = self.p_Amm_dt * f * self.V
+        self.gut_p_A = self.gut.p_A
         if assimilation_mode == 'sim':
             return self.sim_p_A
         elif assimilation_mode == 'gut':
-            # print('fff')
             return self.gut.p_A
         elif assimilation_mode == 'deb':
             return self.deb_p_A
@@ -921,7 +877,7 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample='Fed', use_hun
                     inter.feeder_reoccurence_rate=inter.EEB
             if deb.age * 24>counter :
                 # print(counter, np.mean(feed_dict)/deb_dt-deb.feed_freq_estimate)
-                print(counter, int(deb.get_pupation_buffer()*100))
+                print(counter, int(deb.pupation_buffer*100))
                 counter+=24
     deb.finalize_dict()
     # print(inter.get_mean_feed_freq(), deb.get_feed_freq_estimate())
@@ -946,8 +902,8 @@ if __name__ == '__main__':
         q=1
         V_bite=0.0005
         deb=DEB(substrate_quality=q, assimilation_mode='sim', steps_per_day=24*60, V_bite=V_bite, substrate_type=s)
-        dt_bite=1/deb.get_feed_freq_estimate(unit='day')
-        print(deb.J_X_Amm*deb.base_f*dt_bite)
+        # dt_bite=1/deb.get_feed_freq_estimate(unit='day')
+        # print(deb.J_X_Amm*deb.base_f*dt_bite)
         # print(1/deb.get_feed_freq_estimate())
         print(deb.substrate.get_mol(deb.V_bite, quality=deb.substrate_quality))
         continue
@@ -959,7 +915,7 @@ if __name__ == '__main__':
         while (deb.stage != 'pupa' and deb.alive):
             deb.run()
             if deb.age * 24 > counter:
-                print(counter, int(deb.get_pupation_buffer() * 100), deb.get_feed_freq_estimate(unit='sec'))
+                print(counter, int(deb.pupation_buffer * 100), deb.fr_feed)
                 # print(deb.hunger, inter.EEB)
                 counter += 5
     # a=Substrate()

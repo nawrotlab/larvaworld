@@ -1,6 +1,7 @@
 import copy
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import numpy as np
+from siunits import BaseUnit, Composite, DerivedUnit
 
 vis_render_dtypes = {
     'mode': [None, 'video', 'image'],
@@ -431,9 +432,25 @@ all_null_dicts = {
         'name': 'lognormal',
         'mu': 1.0,
         'sigma': 0.0
+    },
+    'par': {
+        'p': None,
+        'u': None,
+        'k': None,
+        's': None,
+        'o': None,
+        'lim': None,
+        'd': None,
+        'exists': True,
+        'func': None,
+        'const': None,
+        'diff': False,
+        'cum': False,
+        'k0' : None,
+            'k_num' : None,
+            'k_den' : None,
     }
 }
-
 
 
 def get_dict_dtypes(name, **kwargs):
@@ -614,6 +631,23 @@ def get_dict_dtypes(name, **kwargs):
             'name': 'lognormal',
             'mu': float,
             'sigma': float
+        },
+        'par': {
+            'p': str,
+            'u': Union[BaseUnit, Composite, DerivedUnit],
+            'k': str,
+            's': str,
+            'o': type,
+            'lim': Tuple[float, float],
+            'd': str,
+            'exists': bool,
+            'func': any,
+            'const': any,
+            'diff': bool,
+            'cum': bool,
+            'k0' : str,
+            'k_num' : str,
+            'k_den' : str,
         }
 
     }

@@ -108,19 +108,19 @@ def foodNodor_4corners(d=0.05) :
     dic={**l[0], **l[1], **l[2], **l[3]}
     return dic
 
-CS_UCS_odors = {**odor_source(id='CS_source', pos=(-0.04, 0.0), odor_id='CS', default_color='red'),
-                **odor_source(id='UCS_source', pos=(0.04, 0.0), odor_id='UCS', default_color='blue')}
+CS_UCS_odors = {**odor_source(id='CS', pos=(-0.04, 0.0), odor_id='CS', default_color='red'),
+                **odor_source(id='UCS', pos=(0.04, 0.0), odor_id='UCS', default_color='blue')}
 
 CS_UCS_odors_RL = {
-    **foodNodor_source(id='CS_source', pos=(-0.05, 0.0), odor_id='CS', default_color='red', radius=0.015),
-    **odor_source(id='UCS_source', pos=(0.05, 0.0), odor_id='UCS', default_color='blue', radius=0.015),
+    **foodNodor_source(id='CS', pos=(-0.05, 0.0), odor_id='CS', default_color='red', radius=0.015),
+    **odor_source(id='UCS', pos=(0.05, 0.0), odor_id='UCS', default_color='blue', radius=0.015),
 }
 
 
 # CS_UCS_odors_RL = {
-#     **foodNodor_source(id='CS_source', pos=(-0.03, 0.0), odor_id='CS', default_color='red', odor_intensity=300.0,
+#     **foodNodor_source(id='CS', pos=(-0.03, 0.0), odor_id='CS', default_color='red', odor_intensity=300.0,
 #                        radius=0.015),
-#     **odor_source(id='UCS_source', pos=(0.03, 0.0), odor_id='UCS', default_color='blue', odor_intensity=300.0, radius=0.015),
+#     **odor_source(id='UCS', pos=(0.03, 0.0), odor_id='UCS', default_color='blue', odor_intensity=300.0, radius=0.015),
 # }
 
 

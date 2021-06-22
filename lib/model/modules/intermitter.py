@@ -376,6 +376,6 @@ def get_best_EEB(deb, sample_dataset=None, dt=None, **kwargs):
     if type(deb) == dict:
         s = deb['feed_freq_estimate']
     else:
-        s = deb.feed_freq_estimate
+        s = deb.fr_feed
 
     return np.clip(z(s), a_min=0, a_max=1)

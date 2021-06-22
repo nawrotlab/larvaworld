@@ -13,7 +13,7 @@ reserve_density,reserve_density,reserve_density,$\hat{reserve_density}$,reserve 
 puppation_buffer,puppation_buffer,puppation_buffer,$\hat{puppation_buffer}$,puppation buffer (-),"[0.0, 1.0]",puppation_buffer,puppation_buffer,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 deb_f,deb_f,${f}_{deb}$,${\hat{f}}_{deb}$,functional response (-),"[0.0, 2.0]",deb_f,deb_f,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 deb_f_dev,deb_f_deviation,${f}_{deb}$,${\hat{f}}_{deb}$,functional response deviation (-),,deb_f_deviation,deb_f_deviation,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
-deb_f_mu,deb_f_mean,${\bar{f}}_{deb}$,${\hat{\bar{f}}}_{deb}$,functional response (-),,,deb_f_mean,<class 'float'>,
+deb_f_mu,deb_f_mean,${\bar{f}}_{deb}$,${\hat{\bar{f}}}_{deb}$,functional response (-),,deb_f_mean,deb_f_mean,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 lar_N,Nlarvae,${N}_{larvae}$,${\hat{N}}_{larvae}$,# larvae,,,Nlarvae,<class 'int'>,
 b,bend,$\theta_{b}$,$\hat{\theta}_{b}$,bend angle $(deg)$,"[-180, 180]",bend,body bend,<class 'float'>,<class 'lib.model.agents._agent.LarvaworldAgent'>
 bv,bend_vel,$\dot{\theta}_{b}$,$\dot{\hat{\theta}}_{b}$,bending velocity $(deg/sec)$,,,bend velocity,<class 'float'>,

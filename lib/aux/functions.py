@@ -1,6 +1,7 @@
 import collections
 import json
 import math
+import pickle
 import random
 import time
 from scipy.optimize import minimize
@@ -1261,7 +1262,7 @@ def weighted_mean(array, Nmax):
     return m
 
 
-def load_dicts(files=None, pref=None, suf=None, folder='.', extension='txt'):
+def load_dicts(files=None, pref=None, suf=None, folder=None, extension='txt', use_pickle=True):
     if files is None:
         files = os.listdir(folder)
         suf = extension if suf is None else f'{suf}.{extension}'
@@ -1270,12 +1271,20 @@ def load_dicts(files=None, pref=None, suf=None, folder='.', extension='txt'):
             files = [f for f in files if str.startswith(f, pref)]
     ds = []
     for f in files:
-        n = f'{folder}/{f}'
-        with open(n) as tfp:
-            d = json.load(tfp)
+        n = f'{folder}/{f}' if folder is not None else f
+        if use_pickle :
+            with open(n, 'rb') as tfp:
+                d = pickle.load(tfp)
+        else :
+            with open(n) as tfp:
+                d = json.load(tfp)
         ds.append(d)
     return ds
 
-def save_dict(d, file) :
-    with open(file, "w") as fp:
-        json.dump(d, fp)
+def save_dict(d, file, use_pickle=True) :
+    if use_pickle :
+        with open(file, 'wb') as fp:
+            pickle.dump(d, fp, protocol=pickle.HIGHEST_PROTOCOL)
+    else :
+        with open(file, "w") as fp:
+            json.dump(d, fp)

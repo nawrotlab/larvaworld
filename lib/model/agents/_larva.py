@@ -287,7 +287,6 @@ class LarvaSim(BodySim, Larva):
         if energetic_pars is not None:
             self.energetics = True
             if energetic_pars['deb_on']:
-                # self.temp_cum_mol_eaten =0
                 self.temp_cum_V_eaten =0
                 self.temp_mean_f =[]
                 self.hunger_as_EEB = energetic_pars['hunger_as_EEB']
@@ -313,9 +312,9 @@ class LarvaSim(BodySim, Larva):
                     self.deb_step_every = int(energetic_pars['DEB_dt']/ self.model.dt)
                     self.deb.set_steps_per_day(int(24 * 60 * 60 / energetic_pars['DEB_dt']))
                 self.deb.assimilation_mode = energetic_pars['assimilation_mode']
-                self.real_length = self.deb.get_Lw()
-                self.real_mass = self.deb.get_Ww()
-                self.V = self.deb.get_V()
+                self.real_length = self.deb.Lw * 10 / 1000
+                self.real_mass = self.deb.Ww
+                self.V = self.deb.V
 
             else:
                 self.deb = None
@@ -323,39 +322,6 @@ class LarvaSim(BodySim, Larva):
         else:
             self.energetics = False
 
-    # def build_gut(self, mass):
-    #     self.gut_M_ratio = 0.11
-    #     self.gut_food_M = 0
-    #
-    #     self.gut_product_M = 0
-    #     self.amount_absorbed = 0
-    #     self.gut_occupancy = 0
-    #     # self.digestion_c = 80
-    #     self.absorption = 0.3
-    #
-    #     self.gut_M = self.gut_M_ratio * mass*1000 # in mg
-    #     self.empty_gut_M = self.gut_M
-    #
-    #
-    # def update_gut(self, amount_eaten):
-    #     self.gut_M = self.gut_M_ratio * self.real_mass*1000 # in mg
-    #
-    #
-    #     # FIXME here I need to add the k_x but I don't know it
-    #     # For V1-morphs ingestion rate is proportional to L**3 . Kooijman p.269. Didn't use it.
-    #     # self.digestion_tau_unscaled = 24 * 60 * 60 / self.model.dt * self.gut_M_ratio * 550 / p_am
-    #     # Trying to use μ_Ax=11.5 from p.272
-    #     # self.digestion_tau_unscaled = 24*60*60/self.model.dt*self.gut_M_ratio*11.5/p_am
-    #     # self.digestion_tau = self.digestion_tau_unscaled * self.V ** (1 / 3)
-    #
-    #     self.gut_food_M += amount_eaten
-    #     gut_food_dM = 0.001 * self.gut_food_M * self.model.dt
-    #     self.gut_food_M -= gut_food_dM
-    #     absorbed_M = self.gut_product_M * self.absorption * self.model.dt
-    #     self.gut_product_M += (gut_food_dM - absorbed_M)
-    #     self.empty_gut_M = self.gut_M - self.gut_food_M - self.gut_product_M
-    #     self.amount_absorbed += absorbed_M
-    #     self.gut_occupancy = 1 - self.empty_gut_M / self.gut_M
     def build_brain(self, brain):
         modules = brain['modules']
         if brain['nengo']:
@@ -370,38 +336,26 @@ class LarvaSim(BodySim, Larva):
 
     def run_energetics(self, food_detected, feed_success, V_eaten, food_quality):
         if self.deb:
-            f = self.deb.get_f()
-            # print(feed_success)
+            f = self.deb.f
             if feed_success:
                 f += food_quality * self.deb.absorption
-                # f += food_quality * self.deb.absorption * amount_eaten / self.max_V_bite
             f *= self.f_exp_coef
-            # print(self.f_exp_coef)
-            # self.temp_cum_mol_eaten += mol_eaten
             self.temp_cum_V_eaten +=V_eaten
             self.temp_mean_f.append(f)
             if self.model.Nticks % self.deb_step_every == 0:
                 self.deb.run(f=np.mean(self.temp_mean_f), X_V=self.temp_cum_V_eaten)
-                # self.temp_cum_mol_eaten =0
                 self.temp_cum_V_eaten =0
                 self.temp_mean_f=[]
 
-            self.real_length = self.deb.get_Lw()
-            self.real_mass = self.deb.get_Ww()
-            self.V = self.deb.get_V()
+            self.real_length = self.deb.Lw * 10 / 1000
+            self.real_mass = self.deb.Ww
+            self.V = self.deb.V
 
             if food_detected is None:
                 self.brain.intermitter.EEB *= self.brain.intermitter.EEB_exp_coef
             else:
-                # h0=self.deb.base_hunger
                 if self.hunger_as_EEB:
                     self.brain.intermitter.EEB = self.deb.hunger
-                    # self.brain.intermitter.EEB = self.deb.base_hunger
-                    # dh = self.deb.hunger - h0
-                    # if dh > 0:
-                    #     self.brain.intermitter.EEB = dh / (1 - h0) * (1 - h0) + h0
-                    # else:
-                    #     self.brain.intermitter.EEB = dh / h0 * h0 + h0
                 else:
                     self.brain.intermitter.EEB = self.brain.intermitter.base_EEB
                 if self.brain.intermitter.feeder_reocurrence_as_EEB :

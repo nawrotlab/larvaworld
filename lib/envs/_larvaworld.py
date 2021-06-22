@@ -9,8 +9,10 @@ from typing import List, Any
 import webcolors
 from mesa.datacollection import DataCollector
 
+from lib.anal.process.spatial import compute_preference_index
 from lib.conf.conf import loadConfDict, loadConf
 from lib.model.agents._larva import LarvaSim, LarvaReplay
+from lib.sim.conditions import PrefTrainCondition, get_exp_condition
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -51,7 +53,7 @@ class LarvaWorld:
                  touch_sensors=False, allow_clicks=True,
                  experiment=None,
                  progress_bar=None,
-                 space_in_mm = False
+                 space_in_mm=False
                  ):
         # name='basic'
         # self.par_dict = build_par_dict(dt=dt)
@@ -131,8 +133,6 @@ class LarvaWorld:
 
         self.end_condition_met = False
 
-
-
     def toggle(self, name, value=None, show=False, minus=False, plus=False):
 
         if name == 'snapshot #':
@@ -160,7 +160,7 @@ class LarvaWorld:
             value = 'ON' if getattr(self, name) else 'OFF'
         self.screen_texts[name].text = f'{name} {value}'
         self.screen_texts[name].end_time = pygame.time.get_ticks() + 2000
-        self.screen_texts[name].start_time = pygame.time.get_ticks()+int(self.dt*1000)
+        self.screen_texts[name].start_time = pygame.time.get_ticks() + int(self.dt * 1000)
 
         if name == 'visible_ids':
             for a in self.get_flies() + self.get_food():
@@ -273,6 +273,7 @@ class LarvaWorld:
         # del self.active_larva_schedule
         if self._screen is not None:
             self._screen.close_requested()
+
     # def delete(self):
     #     self.close()
     #     pygame.quit()
@@ -339,7 +340,6 @@ class LarvaWorld:
 
         self.draw_screen_texts(screen)
 
-
     def draw_arena(self, screen, background_motion):
         screen.set_bounds(*self.space_edges_for_screen)
         arena_drawn = False
@@ -365,12 +365,12 @@ class LarvaWorld:
         for name, text in self.screen_texts.items():
             text.render(width, height)
 
-    def render(self, velocity_arrows=False, tick=None, background_motion = [0, 0, 0]):
+    def render(self, velocity_arrows=False, tick=None, background_motion=[0, 0, 0]):
         # if self.background_motion is None or tick is None:
         #     background_motion = [0, 0, 0]
         # else:
         #     background_motion = self.background_motion[:, tick]
-        if self.background_motion and tick :
+        if self.background_motion and tick:
             background_motion = self.background_motion[:, tick]
         if self._screen is None:
             if self.vis_kwargs['render']['mode'] == 'video':
@@ -516,8 +516,8 @@ class LarvaWorld:
             return f'Larva_{N}'
 
     def run(self, Nsteps=None):
-        mode= self.vis_kwargs['render']['mode']
-        img_mode= self.vis_kwargs['render']['image_mode']
+        mode = self.vis_kwargs['render']['mode']
+        img_mode = self.vis_kwargs['render']['image_mode']
         # pygame.init()
         # import pygame_gui
         # manager = pygame_gui.UIManager((800, 600))
@@ -531,19 +531,19 @@ class LarvaWorld:
             Nsteps = self.Nsteps
         warnings.filterwarnings('ignore')
         # import time
-        if self.progress_bar is None :
+        if self.progress_bar is None:
             self.progress_bar = progressbar.ProgressBar(max_value=Nsteps)
-        bar=self.progress_bar
+        bar = self.progress_bar
         while self.is_running and self.Nticks < Nsteps and not self.end_condition_met:
             if not self.sim_paused:
                 self.step()
                 bar.update(self.Nticks)
-            if mode=='video' :
+            if mode == 'video':
                 if img_mode != 'snapshots':
                     self.render(tick=self.Nticks)
                 elif (self.Nticks - 1) % self.snapshot_interval == 0:
                     self.render(tick=self.Nticks)
-            elif mode== 'image':
+            elif mode == 'image':
                 if img_mode == 'overlap':
                     self.render(tick=self.Nticks)
                 elif img_mode == 'snapshots':
@@ -558,167 +558,125 @@ class LarvaWorld:
             self.render(tick=self.Nticks)
             self.toggle(name='snapshot #')
             self._screen.render()
-        if self._screen :
+        if self._screen:
             self._screen.close()
         return self.is_running
 
     def set_end_condition(self):
-        if self.experiment == 'capture_the_flag':
-            for f in self.get_food():
-                if f.unique_id == 'Flag':
-                    self.flag = f
-                elif f.unique_id == 'Left_base':
-                    self.l_base = f
-                elif f.unique_id == 'Right_base':
-                    self.r_base = f
-            self.l_base_p = self.l_base.get_position()
-            self.r_base_p = self.r_base.get_position()
-            self.l_dst0 = self.flag.radius * 2 + self.l_base.radius * 2
-            self.r_dst0 = self.flag.radius * 2 + self.r_base.radius * 2
+        self.exp_condition = get_exp_condition(self.experiment)(self)
 
-        elif self.experiment == 'keep_the_flag':
-            for f in self.get_food():
-                if f.unique_id == 'Flag':
-                    self.flag = f
-            self.l_t = 0
-            self.r_t = 0
+        # if self.experiment == 'capture_the_flag':
+        #     for f in self.get_food():
+        #         if f.unique_id == 'Flag':
+        #             self.flag = f
+        #         elif f.unique_id == 'Left_base':
+        #             self.l_base = f
+        #         elif f.unique_id == 'Right_base':
+        #             self.r_base = f
+        #     self.l_base_p = self.l_base.get_position()
+        #     self.r_base_p = self.r_base.get_position()
+        #     self.l_dst0 = self.flag.radius * 2 + self.l_base.radius * 2
+        #     self.r_dst0 = self.flag.radius * 2 + self.r_base.radius * 2
+        #
+        # elif self.experiment == 'keep_the_flag':
+        #     for f in self.get_food():
+        #         if f.unique_id == 'Flag':
+        #             self.flag = f
+        #     self.l_t = 0
+        #     self.r_t = 0
+        #
+        # elif self.experiment == 'catch_me':
+        #     self.target_group = 'Left' if random.uniform(0, 1) > 0.5 else 'Right'
+        #     self.follower_group = 'Right' if self.target_group == 'Left' else 'Left'
+        #     for f in self.get_flies():
+        #         if f.group == self.target_group:
+        #             f.brain.olfactor.gain = {id: -v for id, v in f.brain.olfactor.gain.items()}
+        #     self.score = {self.target_group: 0.0,
+        #                   self.follower_group: 0.0}
 
-        elif self.experiment == 'catch_me' :
-            self.target_group='Left' if random.uniform(0,1)>0.5 else 'Right'
-            self.follower_group = 'Right' if self.target_group=='Left' else 'Left'
-            for f in self.get_flies() :
-                if f.group==self.target_group :
-                    f.brain.olfactor.gain = {id : -v for id,v in f.brain.olfactor.gain.items()}
-            self.score = {self.target_group : 0.0,
-                          self.follower_group : 0.0}
+        # elif self.experiment == 'odor_pref_train':
+        #     self.exp_condition=PrefTrainCondition(self)
 
-        elif self.experiment == 'odor_pref_train' :
-            self.CS_trial_counter=1
-            self.UCS_trial_counter=0
-            print()
-            print(f'Training trial {self.CS_trial_counter} with CS started at {self.sim_clock.minute}:{self.sim_clock.second}')
-            for f in self.get_food():
-                if f.unique_id == 'CS_source':
-                    self.CS_source = f
-                elif f.unique_id == 'UCS_source':
-                    self.UCS_source = f
-            # print(self.CS_source.odor_intensity, self.UCS_source.odor_intensity)
-            self.CS_source.odor_intensity = 2.0
-            self.UCS_source.odor_intensity = 0.0
-            self.CS_source.set_odor_dist()
-            self.UCS_source.set_odor_dist()
-            # print(self.CS_source.odor_intensity, self.UCS_source.odor_intensity)
-            # raise
 
     def check_end_condition(self):
-        if self.experiment == 'capture_the_flag':
-            flag_p = self.flag.get_position()
-            l_dst = -self.l_dst0 + fun.compute_dst(flag_p, self.l_base_p)
-            r_dst = -self.r_dst0 + fun.compute_dst(flag_p, self.r_base_p)
-            l_dst = np.round(l_dst * 1000, 2)
-            r_dst = np.round(r_dst * 1000, 2)
-            if l_dst < 0:
-                print('Left group wins')
-                self.end_condition_met = True
-            elif r_dst < 0:
-                print('Right group wins')
-                self.end_condition_met = True
-            self.sim_state.set_text(f'L:{l_dst} vs R:{r_dst}')
+        self.exp_condition.check(self)
+        # if self.experiment == 'capture_the_flag':
+        #     flag_p = self.flag.get_position()
+        #     l_dst = -self.l_dst0 + fun.compute_dst(flag_p, self.l_base_p)
+        #     r_dst = -self.r_dst0 + fun.compute_dst(flag_p, self.r_base_p)
+        #     l_dst = np.round(l_dst * 1000, 2)
+        #     r_dst = np.round(r_dst * 1000, 2)
+        #     if l_dst < 0:
+        #         print('Left group wins')
+        #         self.end_condition_met = True
+        #     elif r_dst < 0:
+        #         print('Right group wins')
+        #         self.end_condition_met = True
+        #     self.sim_state.set_text(f'L:{l_dst} vs R:{r_dst}')
+        #
+        # elif self.experiment == 'keep_the_flag':
+        #     dur = 180
+        #     carrier = self.flag.is_carried_by
+        #     if carrier is None:
+        #         self.l_t = 0
+        #         self.r_t = 0
+        #     elif carrier.group == 'Left':
+        #         self.l_t += self.dt
+        #         self.r_t = 0
+        #         if self.l_t - dur > 0:
+        #             print('Left group wins')
+        #             self.end_condition_met = True
+        #     elif carrier.group == 'Right':
+        #         self.r_t += self.dt
+        #         self.l_t = 0
+        #         if self.r_t - dur > 0:
+        #             print('Right group wins')
+        #             self.end_condition_met = True
+        #     self.sim_state.set_text(f'L:{np.round(dur - self.l_t, 2)} vs R:{np.round(dur - self.r_t, 2)}')
+        #
+        # elif self.experiment == 'catch_me':
+        #     def set_target_group(group):
+        #         self.target_group = group
+        #         self.follower_group = 'Right' if self.target_group == 'Left' else 'Left'
+        #         for f in self.get_flies():
+        #             f.brain.olfactor.gain = {id: -v for id, v in f.brain.olfactor.gain.items()}
+        #
+        #     targets = {f: f.get_position() for f in self.get_flies() if f.group == self.target_group}
+        #     followers = [f for f in self.get_flies() if f.group == self.follower_group]
+        #     for f in followers:
+        #         if any([f.contained(p) for p in list(targets.values())]):
+        #             set_target_group(f.group)
+        #             break
+        #     self.score[self.target_group] += self.dt
+        #     for group, score in self.score.items():
+        #         if score >= 1200.0:
+        #             print(f'{group} group wins')
+        #             self.end_condition_met = True
+        #     self.sim_state.set_text(f'L:{np.round(self.score["Left"], 1)} vs R:{np.round(self.score["Right"], 1)}')
 
-        elif self.experiment == 'keep_the_flag':
-            dur = 180
-            carrier = self.flag.is_carried_by
-            if carrier is None:
-                self.l_t = 0
-                self.r_t = 0
-            elif carrier.group == 'Left':
-                self.l_t += self.dt
-                self.r_t = 0
-                if self.l_t - dur > 0:
-                    print('Left group wins')
-                    self.end_condition_met = True
-            elif carrier.group == 'Right':
-                self.r_t += self.dt
-                self.l_t = 0
-                if self.r_t - dur > 0:
-                    print('Right group wins')
-                    self.end_condition_met = True
-            self.sim_state.set_text(f'L:{np.round(dur - self.l_t, 2)} vs R:{np.round(dur - self.r_t, 2)}')
+        # elif self.experiment == 'odor_pref_train':
+        #     self.exp_condition.check(self)
 
-        elif self.experiment == 'catch_me':
-            def set_target_group(group) :
-                self.target_group = group
-                self.follower_group = 'Right' if self.target_group == 'Left' else 'Left'
-                for f in self.get_flies():
-                    f.brain.olfactor.gain = {id: -v for id, v in f.brain.olfactor.gain.items()}
-            targets={f:f.get_position() for f in self.get_flies() if f.group==self.target_group}
-            followers=[f for f in self.get_flies() if f.group==self.follower_group]
-            for f in followers :
-                if any([f.contained(p) for p in list(targets.values())]):
-                    set_target_group(f.group)
-                    break
-            self.score[self.target_group]+=self.dt
-            for group,score in self.score.items() :
-                if score>=1200.0 :
-                    print(f'{group} group wins')
-                    self.end_condition_met = True
-            self.sim_state.set_text(f'L:{np.round(self.score["Left"],1)} vs R:{np.round(self.score["Right"],1)}')
 
-        elif self.experiment == 'odor_pref_train':
+    def move_larvae_to_center(self):
+        N = len(self.get_flies())
+        orientations = np.random.uniform(low=0.0, high=np.pi * 2, size=N).tolist()
+        positions = fun.generate_xy_distro(N=N, mode='uniform', scale=(0.005, 0.015), loc=(0.0, 0.0), shape='oval')
 
-            if self.sim_clock.timer_opened :
-                self.UCS_trial_counter+=1
-                print()
-                print(f'Starvation trial {self.UCS_trial_counter} with UCS started at {self.sim_clock.minute}:{self.sim_clock.second}')
-                self.CS_source.odor_intensity=0.0
-                self.UCS_source.odor_intensity=2.0
-                self.CS_source.set_odor_dist()
-                self.UCS_source.set_odor_dist()
-                self.move_larvae_to_center()
-            if self.sim_clock.timer_closed :
-                self.CS_trial_counter += 1
-                if self.CS_trial_counter<=3 :
-                    print()
-                    print(f'Training trial {self.CS_trial_counter} with CS started at {self.sim_clock.minute}:{self.sim_clock.second}')
-                    self.CS_source.odor_intensity = 2.0
-                    self.UCS_source.odor_intensity = 0.0
-                    self.CS_source.set_odor_dist()
-                    self.UCS_source.set_odor_dist()
-                    self.move_larvae_to_center()
-                else :
-                    # if self.sim_clock.next_on is None and self.sim_clock.next_off is None :
-                    print()
-                    print(f'Test trial started at {self.sim_clock.minute}:{self.sim_clock.second}')
-                    self.CS_source.odor_intensity = 2.0
-                    self.UCS_source.odor_intensity = 2.0
-                    self.CS_source.set_odor_dist()
-                    self.UCS_source.set_odor_dist()
-                    self.move_larvae_to_center()
-            if self.sim_clock.minute>=35 :
-                print()
-                print(f'Test trial ended at {self.sim_clock.minute}:{self.sim_clock.second}')
-
-    def move_larvae_to_center(self) :
-        N=len(self.get_flies())
-        orientations = np.random.uniform(low=0.0, high=np.pi*2, size=N).tolist()
-        positions = fun.generate_xy_distro(N=N, mode='uniform', scale=(0.005,0.015), loc=(0.0,0.0), shape='oval')
-
-        for l, p, o in zip(self.get_flies(), positions, orientations) :
-            temp=np.array([-np.cos(o), -np.sin(o)])
+        for l, p, o in zip(self.get_flies(), positions, orientations):
+            temp = np.array([-np.cos(o), -np.sin(o)])
             head = l.get_head()
-            head.set_pose(p,o)
-            head.update_vertices(p,o)
-            for i, seg in enumerate(l.segs[1:]) :
+            head.set_pose(p, o)
+            head.update_vertices(p, o)
+            for i, seg in enumerate(l.segs[1:]):
                 seg.set_orientation(o)
                 prev_p = l.get_global_rear_end_of_seg(seg_index=i)
-                new_p = prev_p + temp * l.seg_lengths[i+1] / 2
+                new_p = prev_p + temp * l.seg_lengths[i + 1] / 2
                 seg.set_position(new_p)
                 seg.set_lin_vel(0.0)
                 seg.set_ang_vel(0.0)
             l.pos = l.get_global_midspine_of_body()
             self.space.move_agent(l, l.pos)
-
-
 
     def create_borders(self, lines):
         s = self.scaling_factor
@@ -783,7 +741,7 @@ class LarvaWorld:
 
     def draw_screen_texts(self, screen):
         for name, text in self.screen_texts.items():
-            if text and text.start_time<pygame.time.get_ticks() < text.end_time:
+            if text and text.start_time < pygame.time.get_ticks() < text.end_time:
                 text.visible = True
                 text.draw(screen)
             else:
@@ -838,12 +796,12 @@ class LarvaWorld:
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, collected_pars=None,
                  id='Unnamed_Simulation', larva_collisions=True, count_bend_errors=False,
-                 life_params=None,sample_dataset='reference',
+                 life_params=None, sample_dataset='reference',
                  parameter_dict={}, **kwargs):
         super().__init__(id=id, **kwargs)
-        self.sample_dataset=sample_dataset
+        self.sample_dataset = sample_dataset
         if collected_pars is None:
-            collected_pars = {'step': [], 'endpoint': [], 'tables' : {} }
+            collected_pars = {'step': [], 'endpoint': [], 'tables': {}}
 
         self.epochs = life_params['epochs']
         if self.epochs is None:
@@ -875,7 +833,6 @@ class LarvaWorldSim(LarvaWorld):
             self.eliminate_overlap()
 
         self.set_end_condition()
-
 
     def prepare_odor_layer(self, timesteps):
         for i in range(timesteps):
@@ -911,7 +868,7 @@ class LarvaWorldSim(LarvaWorld):
 
     def _generate_larva_pars(self, N, larva_pars, parameter_dict={}, sample_dataset='reference'):
         if larva_pars['brain']['intermitter_params']:
-            for bout,dist in zip(['pause', 'stride'],['pause_dist', 'stridechain_dist']):
+            for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
                 if larva_pars['brain']['intermitter_params'][dist] == 'fit':
                     larva_pars['brain']['intermitter_params'][dist] = loadConf(sample_dataset, 'Ref')[bout]['best']
                     # larva_pars['brain']['intermitter_params'][dist] = get_sample_bout_distro(bout=bout, sample_dataset=sample_dataset)
@@ -927,8 +884,8 @@ class LarvaWorldSim(LarvaWorld):
                 for p, s in zip(pars, samples):
                     flat_l.update({p: s[i]})
                 all_larva_pars.append(unflatten(flat_l))
-        else :
-            all_larva_pars=[larva_pars]*N
+        else:
+            all_larva_pars = [larva_pars] * N
 
         for k, vs in parameter_dict.items():
             for l, v in zip(all_larva_pars, vs):
@@ -938,20 +895,18 @@ class LarvaWorldSim(LarvaWorld):
     def create_larvae(self, larva_pars, parameter_dict={}):
         for group_id, group_pars in larva_pars.items():
             # print(group_id)
-            N=group_pars['N']
+            N = group_pars['N']
             a1, a2 = np.deg2rad(group_pars['orientation_range'])
             orientations = np.random.uniform(low=a1, high=a2, size=N).tolist()
-            positions = fun.generate_xy_distro(N=N, **{k:group_pars[k] for k in ['mode', 'shape', 'loc', 'scale']})
-            sample_dataset = group_pars['sample_dataset'] if 'sample_dataset' in list(group_pars.keys()) else self.sample_dataset
+            positions = fun.generate_xy_distro(N=N, **{k: group_pars[k] for k in ['mode', 'shape', 'loc', 'scale']})
+            sample_dataset = group_pars['sample_dataset'] if 'sample_dataset' in list(
+                group_pars.keys()) else self.sample_dataset
             all_pars = self._generate_larva_pars(N, group_pars['model'], parameter_dict=parameter_dict,
                                                  sample_dataset=sample_dataset)
 
             for i, (p, o, pars) in enumerate(zip(positions, orientations, all_pars)):
-                l=self.add_larva(position=p, orientation=o, id=f'{group_id}_{i}', pars=pars, group=group_id,
-                               default_color=group_pars['default_color'])
-
-
-
+                l = self.add_larva(position=p, orientation=o, id=f'{group_id}_{i}', pars=pars, group=group_id,
+                                   default_color=group_pars['default_color'])
 
     def step(self):
 
@@ -1049,7 +1004,8 @@ class LarvaWorldSim(LarvaWorld):
         self.food_end_col = TargetedDataCollector(schedule_id='all_food_schedule', mode='endpoint',
                                                   pars=['initial_amount', 'final_amount'])
 
-        self.table_collector = DataCollector(tables=collected_pars['tables']) if len(collected_pars['tables'])>0 else None
+        self.table_collector = DataCollector(tables=collected_pars['tables']) if len(
+            collected_pars['tables']) > 0 else None
 
     def eliminate_overlap(self):
         scale = 3.0

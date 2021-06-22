@@ -1,15 +1,21 @@
+import copy
 import os
+from typing import Tuple, Type, Union
+
 import pandas as pd
 import numpy as np
 from scipy.spatial.distance import euclidean
+from siunits import Composite, DerivedUnit, BaseUnit
 
 from lib.aux import functions as fun
 from lib.aux import naming as nam
 from lib.stor import paths
-from lib.conf.par_conf import sup, sub, th, dot, ddot
+from lib.conf.par_conf import sup, sub, th, dot, ddot, subsup, Delta, delta
 from lib.model.DEB.deb import DEB
 from lib.model.agents._agent import LarvaworldAgent
+import siunits as siu
 
+import lib.conf.dtype_dicts as dtypes
 # default_unit_dict = {
 #     'distance': 'm',
 #     'length': 'm',
@@ -72,356 +78,82 @@ from lib.model.agents._agent import LarvaworldAgent
 
 
 class Parameter:
-    def __init__(self, unit, name, type, key=None, symbol=None, power=None, object_class=None, lim=None,
-                 disp=None, exists=True, func=None, return_unit=None, constant=None, par_dict=None, fraction=False):
+    def __init__(self, p, u, k=None, s=None, o=None, lim=None,
+                 d=None, exists=True, func=None, const=None, par_dict=None, fraction=False,
+                 diff=False, cum=False, k0=None, k_num=None, k_den=None):
         self.fraction = fraction
         self.func = func
         self.exists = exists
-        self.name = name
-        if key is None:
-            key = name
-        self.key = key
-        if symbol is None:
-            symbol = self.key
-        self.symbol = symbol
-        self.type = type
-        self.unit = unit
-        if return_unit is None:
-            return_unit = self.unit
-        self.return_unit = return_unit
-        self.power = power
-        if object_class is None:
-            object_class = LarvaworldAgent
-        self.object_class = object_class
+        self.p = p
+        if k is None:
+            k = p
+        self.k = k
+        if s is None:
+            s = self.k
+        self.s = s
+
+        if o is None:
+            o = LarvaworldAgent
+        self.o = o
         self.lim = lim
-        if disp is None:
-            disp = name
-        self.disp = disp
-        self.constant = constant
+        if d is None:
+            d = p
+        self.d = d
+        self.const = const
+        self.diff = diff
+        self.cum = cum
+        self.k0 = k0
+        self.k_num = k_num
+        self.k_den = k_den
+        self.p0 = par_dict[k0] if k0 is not None else None
+        self.p_num = par_dict[k_num] if k_num is not None else None
+        self.p_den = par_dict[k_den] if k_den is not None else None
+        self.previous = np.nan
+        if self.p_num is not None and self.p_den is not None :
+            # print(self.par, unit, self.numerator_par.unit, self.denominator_par.unit, self.numerator_par.unit*self.denominator_par.unit)
+            u = self.p_num.u/self.p_den.u
+            # print(self.par, unit)
+        elif u is None :
+            u=1*siu.j**0
+        self.u = u
 
-        par_dict[self.key] = self
-        # return {self.key : self}
-
-    def convert_to(self, u):
-        raise ValueError('Implemented by subclasses')
-
-
-
-    def get_from(self, object, unit=None):
-        if unit is None:
-            unit = self.return_unit
-        if not self.fraction :
-            if self.constant is not None:
-                v = self.constant
-            elif self.func is not None:
-                v = self.func(object)
-            elif self.exists:
-                v = getattr(object, self.name)
-            vv = v * self.convert_to(unit)
-            vv = self.post_process(vv, unit)
-        else:
-            u_n, u_v = unit
-            v_n = self.numerator.get_from(object, u_n)
-            v_d = self.denominator.get_from(object, u_v)
-            vv = v_n / v_d
-        return vv
-
-    def get_unit(self):
-        if self.power == 1 or self.power is None:
-            return self.unit
-        else:
-            return sup(self.unit, self.power)
-            # return f'{self.unit}^{self.power}'
-
-    def post_process(self, v, u):
+    def get_from(self, o, u=True):
+        # print(self.p,o)
+        if self.const is not None :
+            v = self.const
+        elif self.func is not None:
+            v = self.func(o)
+        elif self.exists:
+            v = getattr(o, self.p)
+        elif self.p0 is not None:
+            v = self.p0.get_from(o, u=False)
+            # print(self.key, self.base_par.key, v)
+        elif self.fraction :
+            v_n = self.p_num.get_from(o, u=False)
+            v_d = self.p_den.get_from(o, u=False)
+            v = v_n / v_d
+        # v = self.preprocess(v)
+        v = self.postprocess(v)
+        if u :
+            v*=self.u
         return v
 
+    #
+    # def preprocess(self, v):
+    #     return v
 
-class SpatialPar(Parameter):
-    def __init__(self, unit=None, name='length', type='length', power=1, **kwargs):
-        if unit is None:
-            unit = 'm'
-        super().__init__(unit=unit, name=name, type=type, power=power, **kwargs)
-
-    def convert_to(self, u=None):
-        u0 = self.unit
-        if u is None:
-            u = self.return_unit
-        if u == u0:
-            c = 1
-        elif u0 == 'mm':
-            if u == 'cm':
-                c = 10 ** -1
-            if u == 'm':
-                c = 10 ** -3
-        elif u0 == 'm':
-            if u == 'cm':
-                c = 10 ** 2
-            if u == 'mm':
-                c = 10 ** 3
-        elif u0 == 'cm':
-            if u == 'm':
-                c = 10 ** -2
-            if u == 'mm':
-                c = 10 ** 1
-        return c ** self.power
-
-class Dst2DPar(SpatialPar):
-    def __init__(self, p, name=None,key=None,**kwargs):
-        if p is None :
-            func = lambda o: euclidean(o.pos, o.initial_pos) / o.model.scaling_factor
+    def postprocess(self,v):
+        v0=self.previous
+        if self.diff :
+            self.previous=v
+            return v - v0
+        elif self.cum :
+            self.previous=v+v0
+            return v + v0
         else :
-            func=lambda o: euclidean(o.pos,p) / o.model.scaling_factor
-        if name is None :
-            if p==(0,0) :
-                name = 'distance to center'
-            else :
-                name=f'distance to {p}'
-        if key is None :
-            if p==(0,0) :
-                key='d_cen'
-            else :
-                key=f'd_{p}'
-            # key=f'd_{p}'
-        # print(key)
-        super().__init__(name=name,key=key, exists=False, func=func, **kwargs)
+            self.previous = v
+            return v
 
-
-
-
-class VolumePar(SpatialPar):
-    def __init__(self, name='volume', **kwargs):
-        super().__init__(name=name, type='volume', power=3, **kwargs)
-
-
-class AreaPar(SpatialPar):
-    def __init__(self, name='area', **kwargs):
-        super().__init__(name=name, type='area', power=2, **kwargs)
-
-
-class TemporalPar(Parameter):
-    def __init__(self, unit=None, name='time', power=1, **kwargs):
-        if unit is None:
-            unit = 'sec'
-        super().__init__(unit=unit, name=name, type='time', power=power, **kwargs)
-
-    def convert_to(self, u=None):
-        u0 = self.unit
-        if u is None:
-            u = self.return_unit
-        if u == u0:
-            c = 1
-        if u0 == 'sec':
-            if u == 'min':
-                c = 1 / 60
-            elif u == 'hour':
-                c = 1 / (60 * 60)
-            elif u == 'day':
-                c = 1 / (60 * 60 * 24)
-
-        elif u0 == 'min':
-            if u == 'hour':
-                c = 1 / 60
-            elif u == 'day':
-                c = 1 / (60 * 24)
-            elif u == 'sec':
-                c = 60
-
-        elif u0 == 'hour':
-            if u == 'day':
-                c = 1 / 24
-            elif u == 'min':
-                c = 60
-            elif u == 'sec':
-                c = 60 * 60
-        elif u0 == 'day':
-            if u == 'hour':
-                c = 24
-            elif u == 'min':
-                c = 24 * 60
-            elif u == 'sec':
-                c = 24 * 60 * 60
-        return c ** self.power
-
-
-class AnglePar(Parameter):
-    def __init__(self, unit='deg', name='angle', symbol=None, power=1, theta_base=None,
-                 unwrapped=True, deg_lim=(0, 360), rad_lim=(0, 2 * np.pi), **kwargs):
-        if symbol is None and theta_base is not None:
-            symbol = th(theta_base)
-        super().__init__(unit=unit, name=name, type='angle', power=power, symbol=symbol, **kwargs)
-        self.unwrapped = unwrapped
-        self.deg_lim = deg_lim
-        self.rad_lim = rad_lim
-        self.wrap_dic = {'rad': (2 * np.pi, self.rad_lim), 'deg': (360, self.deg_lim)}
-
-    def convert_to(self, u=None):
-        u0 = self.unit
-        if u is None:
-            u = self.return_unit
-        if u == u0:
-            c = 1
-        if u0 == 'deg' and u == 'rad':
-            c = np.pi / 180
-        elif u == 'deg' and u0 == 'rad':
-            c = 180 / np.pi
-        return c
-
-    def post_process(self, v, u):
-        if not self.unwrapped:
-            c, (l0, l1) = self.wrap_dic[u]
-            v %= c
-            if v > l1:
-                v -= c
-        return v
-
-class Or2DPar(AnglePar):
-    def __init__(self, p, name=None,key=None,**kwargs):
-        func = lambda o: fun.angle_dif(o.get_head().get_normalized_orientation(),fun.angle_to_x_axis(o.pos, p))
-        if name is None:
-            if p == (0, 0):
-                name = 'orientation to center'
-            else:
-                name = f'orientation to {p}'
-        if key is None:
-            if p == (0, 0):
-                key = 'o_cen'
-            else:
-                key = f'o_{p}'
-        super().__init__(name=name,key=key, exists=False, func=func, **kwargs)
-
-
-class EnergyPar(Parameter):
-    def __init__(self, unit=None, name='energy', power=1, **kwargs):
-        if unit is None:
-            unit = 'J'
-        super().__init__(unit=unit, name=name, type='energy', power=power, **kwargs)
-
-    def convert_to(self, u=None):
-        u0 = self.unit
-        if u is None:
-            u = self.return_unit
-        if u == u0:
-            c = 1
-        if u0 == 'J' and u == 'mJ':
-            c = 10 ** 3
-        elif u == 'J' and u0 == 'mJ':
-            c = 10 ** -3
-        return c ** self.power
-
-class ConcentrationPar(Parameter):
-    def __init__(self, odor_idx, diff=False, unit=None, name=None, **kwargs):
-        if unit is None:
-            unit = '$\mu$M'
-        if not diff :
-            func=lambda o: list(o.brain.olfactor.Con.values())[odor_idx]
-            key = f'C_od{odor_idx}'
-            if name is None:
-                name = f'Odor {odor_idx} concentration'
-        else :
-            func=lambda o: list(o.brain.olfactor.dCon.values())[odor_idx]
-            key = f'dC_od{odor_idx}'
-            if name is None :
-                name = f'delta Odor {odor_idx} concentration'
-        super().__init__(unit=unit, name=name, key=key, type='concentration', exists=False, func=func, **kwargs)
-
-    def convert_to(self, u=None):
-        u0 = self.unit
-        if u is None:
-            u = self.return_unit
-        if u == u0:
-            c = 1
-        if u0 == '$\mu$M' and u == 'mM':
-            c = 10 ** -3
-        elif u == '$\mu$M' and u0 == 'mM':
-            c = 10 ** 3
-        return c
-
-class FractionPar(Parameter):
-    def __init__(self, numerator, denominator, type=None, unit=None, name=None, return_unit=None, **kwargs):
-        if name is None:
-            name = f'{numerator.name}/{denominator.name}'
-        if type is None:
-            type = f'{numerator.type}/{denominator.type}'
-        if unit is None:
-            unit = (numerator.unit, denominator.unit)
-        if return_unit is None:
-            return_unit = (numerator.return_unit, denominator.return_unit)
-        super().__init__(unit=unit, return_unit=return_unit, type=type, name=name,fraction=True, **kwargs)
-        self.numerator = numerator
-        self.denominator = denominator
-
-    def convert_to(self, u=None):
-        u0 = self.unit
-        if u is None:
-            u = self.return_unit
-        if u == u0:
-            c = 1
-        else:
-            u_n, u_d = u
-            if u_n == self.numerator.unit and u_d == self.denominator.unit:
-                c = 1
-            else:
-                c_n = self.numerator.convert_to(u_n)
-                c_d = self.denominator.convert_to(u_d)
-                c = c_n / c_d
-        return c
-
-    def get_unit(self):
-        u_n = self.numerator.get_unit()
-        u_d = self.denominator.get_unit()
-        try:
-            u_d0, u_dp = u_d.split('^')
-            u_dp = u_dp.replace("{", "")
-            u_dp = u_dp.replace("}", "")
-            u_dp = u_dp.replace("$", "")
-            return f'{u_n}{sup(u_d0, -1 * int(u_dp))}'
-        except:
-            return f'{u_n}{sup(u_d, -1)}'
-
-
-class ScaledSpatialPar(FractionPar) :
-    def __init__(self, p_key, par_dict, name=None, **kwargs):
-        p=par_dict[p_key]
-        if name is None :
-            name=nam.scal(p.name)
-        super().__init__(name=name, key=f's{p.key}', numerator=p,
-                         denominator=par_dict['l'], exists=False, par_dict=par_dict, **kwargs),
-
-class RatePar(FractionPar):
-    def __init__(self, numerator, denominator=None, type=None, d_unit=None, **kwargs):
-        if denominator is None:
-            denominator = TemporalPar(unit=d_unit)
-        if type is None:
-            type = f'{numerator.type} rate'
-        super().__init__(numerator=numerator, denominator=denominator, type=type, **kwargs)
-
-
-class DiffAngPar(AnglePar):
-    def __init__(self, par, name=None, disp=None, **kwargs):
-        if name is None:
-            name = f'd_{par.name}'
-        if disp is None:
-            disp = f'delta {par.disp}'
-        super().__init__(name=name, disp=disp, key=f'd{par.key}', power=par.power,
-                         unit=par.unit, return_unit=par.return_unit, **kwargs)
-
-class EnergyRatePar(RatePar):
-    def __init__(self, numerator=None, type=None, n_unit=None, **kwargs):
-        if numerator is None:
-            numerator = EnergyPar(unit=n_unit)
-        if type is None:
-            type = 'energy rate'
-        super().__init__(numerator=numerator, type=type, **kwargs)
-
-
-class VolumeRatePar(RatePar):
-    def __init__(self, numerator=None, type=None, n_unit=None, **kwargs):
-        if numerator is None:
-            numerator = VolumePar(unit=n_unit)
-        if type is None:
-            type = 'volume rate'
-        super().__init__(numerator=numerator, type=type, **kwargs)
 
 
 class Collection:
@@ -516,58 +248,36 @@ class GroupCollector :
                 ddf.to_csv(f, index=True, header=True)
 
 
-def add_moments(k_p, par_dict,n_pref='', k_pref='', n_vel='vel', n_acc='acc', k_vel='v', k_acc='a', r_vel=None, r_acc=None, **kwargs):
-    n_vel=f'{n_pref}{n_vel}'
-    n_acc=f'{n_pref}{n_acc}'
-    k_vel=f'{k_pref}{k_vel}'
-    k_acc=f'{k_pref}{k_acc}'
-    p=par_dict[k_p]
-    v = RatePar(name=n_vel, numerator=p, denominator=par_dict['dt'], key=k_vel,symbol=dot(p.symbol),
-                exists=False, return_unit=r_vel, par_dict=par_dict, **kwargs)
-    a = RatePar(name=n_acc, numerator=p, denominator=par_dict['dt2'], key=k_acc,symbol=ddot(p.symbol),
-                exists=False, return_unit=r_acc, par_dict=par_dict, **kwargs)
-    return [v, a]
 
-def build_par_dict(dt=0.1) :
-    d={}
-    c = {
-        'par_dict': d
-    }
-    cc = {
-        'unit': 'rad',
-        'return_unit': 'deg',
-    }
+#     AnglePar(name='body_bend', key='b', theta_base='b', disp='bend', **cc, **c),
+#     AnglePar(name='front_orientation', key='fo', theta_base=sub('or', 'f'),#disp='front orientation',
+#              func=lambda o: o.get_head().get_orientation(), unwrapped=False, **cc, **c),
+#     AnglePar(name=nam.unwrap('front_orientation'), key='fou', theta_base=sub('or', 'f'),#disp='front orientation unwrapped',
+#              func=lambda o: o.get_head().get_orientation(), unwrapped=True, **cc, **c),
+#     DiffAngPar(name='d_body_bend', par=d['b'], **c),
+#     DiffAngPar(name='d_front_orientation', par=d['fou'], **c),
+#     AnglePar(name='rear_orientation', key='ro', theta_base=sub('or', 'r'),#disp='rear orientation',
+#              func=lambda o: o.get_tail().get_orientation(), unwrapped=False, **cc, **c),
+#     AnglePar(name=nam.unwrap('rear_orientation'), key='rou', theta_base=sub('or', 'r'),#disp='rear orientation unwrapped',
+#              func=lambda o: o.get_tail().get_orientation(), unwrapped=True, **cc, **c),
+#     Or2DPar(p=(0,0), **cc, **c)
+#     TemporalPar(name='dt', constant=dt, unit='sec', **c),
+#     TemporalPar(name='dt2', constant=dt ** 2, unit='sec', power=2, **c),
+#     SpatialPar(name='length', key='l', func=lambda o: o.get_real_length(), **c),
+#     SpatialPar(name='dst', key='d', **c),
+#     # SpatialPar(name='dst', key='d', disp='distance', **c),
+#     SpatialPar(name='x', func=lambda o: o.pos[0] / o.model.scaling_factor, **c),
+#     SpatialPar(name='y', func=lambda o: o.pos[1] / o.model.scaling_factor, **c),
+#     for n,k,p in [[None, None, (0, 0)],[None, None, (0.8, 0.0)], ['dispersion', 'dsp', None]] :
+#         Dst2DPar(name=n, key=k, p=p, **c),
+#     for p_s in ['d', 'd_cen', 'dsp', 'd_(0.8, 0.0)'] :
+#         ScaledSpatialPar(p_key=p_s, **c),
+#     for k_p,n_pref,k_pref in[['d', '', ''], ['db', 'bend_', 'b'], ['dfou', 'front_orientation_', 'fo'], ['sd', 'scaled_', 's']] :
+#         add_moments(k_p=k_p, n_pref=n_pref, k_pref=k_pref, **c)
+#     for i in range(4) :
+#         ConcentrationPar(i,diff=False,**c)
+#         ConcentrationPar(i, diff=True, **c)
 
-    AnglePar(name='body_bend', key='b', theta_base='b', disp='bend', **cc, **c),
-    AnglePar(name='front_orientation', key='fo', theta_base=sub('or', 'f'),#disp='front orientation',
-             func=lambda o: o.get_head().get_orientation(), unwrapped=False, **cc, **c),
-    AnglePar(name=nam.unwrap('front_orientation'), key='fou', theta_base=sub('or', 'f'),#disp='front orientation unwrapped',
-             func=lambda o: o.get_head().get_orientation(), unwrapped=True, **cc, **c),
-    DiffAngPar(name='d_body_bend', par=d['b'], **c),
-    DiffAngPar(name='d_front_orientation', par=d['fou'], **c),
-    AnglePar(name='rear_orientation', key='ro', theta_base=sub('or', 'r'),#disp='rear orientation',
-             func=lambda o: o.get_tail().get_orientation(), unwrapped=False, **cc, **c),
-    AnglePar(name=nam.unwrap('rear_orientation'), key='rou', theta_base=sub('or', 'r'),#disp='rear orientation unwrapped',
-             func=lambda o: o.get_tail().get_orientation(), unwrapped=True, **cc, **c),
-    Or2DPar(p=(0,0), **cc, **c)
-    TemporalPar(name='dt', constant=dt, unit='sec', **c),
-    TemporalPar(name='dt2', constant=dt ** 2, unit='sec', power=2, **c),
-    SpatialPar(name='length', key='l', func=lambda o: o.get_real_length(), **c),
-    SpatialPar(name='dst', key='d', **c),
-    # SpatialPar(name='dst', key='d', disp='distance', **c),
-    SpatialPar(name='x', func=lambda o: o.pos[0] / o.model.scaling_factor, **c),
-    SpatialPar(name='y', func=lambda o: o.pos[1] / o.model.scaling_factor, **c),
-    for n,k,p in [[None, None, (0, 0)],[None, None, (0.8, 0.0)], ['dispersion', 'dsp', None]] :
-        Dst2DPar(name=n, key=k, p=p, **c),
-    for p_s in ['d', 'd_cen', 'dsp', 'd_(0.8, 0.0)'] :
-        ScaledSpatialPar(p_key=p_s, **c),
-    for k_p,n_pref,k_pref in[['d', '', ''], ['db', 'bend_', 'b'], ['dfou', 'front_orientation_', 'fo'], ['sd', 'scaled_', 's']] :
-        add_moments(k_p=k_p, n_pref=n_pref, k_pref=k_pref, **c)
-    for i in range(4) :
-        ConcentrationPar(i,diff=False,**c)
-        ConcentrationPar(i, diff=True, **c)
-    # fun.save_dict(d, paths.ParDict_path)
-    return d
 
 collection_dict={
     'stride' : ['x', 'y', 'b','fou','rou', 'sv', 'd', 'fov', 'bv'],
@@ -577,10 +287,118 @@ collection_dict={
     'odor' : ['C_od0', 'C_od1','C_od2','dC_od0', 'dC_od1','dC_od2'],
 }
 
+
+def load_ParDict() :
+    dic=fun.load_dicts([paths.ParDict_path])[0]
+    return dic
+
+
+def add_par(dic, **kwargs) :
+    p=dtypes.get_dict('par', **kwargs)
+    k=p['k']
+    if k in dic.keys() :
+        raise ValueError (f'Key {k} already exists')
+    dic[k]=Parameter(**p, par_dict=dic)
+    return dic
+
+def add_diff_par(dic, k0) :
+    b=dic[k0]
+    dic=add_par(dic,p=f'D_{b.p}' , k=f'D_{k0}', u=b.u, d=f'{b.d} change', s=Delta(b.s), exists=False, diff=True, k0=k0)
+    return dic
+
+
+def add_rate_par(dic, k0) :
+    b = dic[k0]
+    dic = add_par(dic, p=f'd_{k0}', k=f'd_{k0}', d=f'{b.d} change',s=dot(b.s), exists=False, fraction=True, k_num=f'D_{k0}',k_den='D_t')
+    return dic
+
+def add_Vspec_par(dic, k0) :
+    b = dic[k0]
+    dic = add_par(dic, p=f'[{k0}]', k=f'[{k0}]', d=f'volume specific {b.d}',s=f'[{b.s}]', exists=False, fraction=True, k_num=k0, k_den='V')
+    return dic
+
+
+
+def build_par_dict() :
+    siu.day = siu.s * 24 * 60 * 60
+    siu.cm = siu.m * 10 ** -2
+    siu.g = siu.kg * 10 ** -3
+    siu.deg=siu.rad/np.pi*180
+    df = {}
+    # df = pd.DataFrame(columns=list(dtypes.get_dict('par').keys()))
+    df = add_par(df, p='L', k='L', u=1*siu.cm, o=DEB, d='structural length', s='L')
+    df = add_par(df, p='Lw', k='Lw', u=1*siu.cm, o=DEB, d='physical length', s=sub('L', 'w'))
+    df = add_par(df, p='V', k='V', u=1*siu.cm ** 3, o=DEB, d='structural volume', s='V')
+    df = add_par(df, p='Ww', k='Ww', u=1*siu.g, o=DEB, d='wet weight', s=sub('W', 'w'))
+    df = add_par(df, p='age', k='t', u=1*siu.day, o=DEB, d='age', s='t')
+    df = add_par(df, p='hunger', k='H', o=DEB, d='hunger drive', s='H')
+    df = add_par(df, p='E', k='E', u=1*siu.j, o=DEB, d='reserve energy', s='E')
+    df = add_par(df, p='E_H', k='E_H', u=1*siu.j, o=DEB, d='maturity energy', s=sub('E', 'H'))
+    df = add_par(df, p='E_R', k='E_R', u=1*siu.j, o=DEB, d='reproduction buffer', s=sub('E', 'R'))
+    df = add_par(df, p='deb_p_A', k='deb_p_A', u=1*siu.j, o=DEB, d='assimilation energy (model)',s=subsup('p', 'A', 'deb'))
+    df = add_par(df, p='sim_p_A', k='sim_p_A', u=1*siu.j, o=DEB, d='assimilation energy (sim)',s=subsup('p', 'A', 'sim'))
+    df = add_par(df, p='gut_p_A', k='gut_p_A', u=1*siu.j, o=DEB, d='assimilation energy (gut)',s=subsup('p', 'A', 'gut'))
+    df = add_par(df, p='e', k='e', o=DEB, d='scaled reserve density', s='e')
+    df = add_par(df, p='f', k='f', o=DEB, d='scaled functional response', s='f')
+    df = add_par(df, p='base_f', k='f0', o=DEB, d='base scaled functional response',s=sub('f', 0))
+    df = add_par(df, p='F', k='[F]',u=siu.s**-1 / (24 * 60 * 60), o=DEB, d='volume specific filtering rate',s=dot('[F]'))
+    df = add_par(df, p='fr_feed', k='fr_f',u=siu.s**-1, o=DEB, d='feed motion frequency (estimate)',s=sub(dot('fr'), 'feed'))
+    df = add_par(df, p='pupation_buffer', k='pupation', o=DEB, d='pupation ratio',s=sub('r', 'pupation'))
+
+    df = add_diff_par(df, k0='t')
+    for k0 in ['f', 'e', 'H'] :
+        df = add_diff_par(df, k0=k0)
+        df = add_rate_par(df, k0=k0)
+
+    for k0 in ['E', 'Ww', 'E_R', 'E_H'] :
+        df = add_Vspec_par(df, k0=k0)
+
+    fun.save_dict(df, paths.ParDict_path)
+    return df
+
+
+
+
 if __name__ == '__main__':
-    d=build_par_dict(0.1)
-    print(list(d.keys()))
-    print(d['fov'].symbol)
+    # build_par_dict()
+    # raise
+
+
+
+    deb = DEB(id='test_DEB', steps_per_day=24*60)
+    deb.grow_larva()
+    print(deb.fr_feed)
+
+    dic=load_ParDict()
+
+
+    for i in range(5) :
+
+        for k,v in dic.items() :
+            if k in ['fr_f'] :
+                print(k, v.get_from(deb))
+            # print(k, v.get_from(deb))
+        deb.run()
+    #
+    # print(b.values())
+    # df=pd.DataFrame.from_dict(b)
+
+    # k=[dtypes.get_dict('par', par='L', unit=u.cm, key='L', object_class=DEB, disp='structural length'),
+    #     dtypes.get_dict('par', par='Lw', unit=u.cm, key='Lw', object_class=DEB, disp='physical length')]
+    # df=df.append(k, ignore_index=True)
+    # print(b['L'].get_from(deb))
+    # df=pd.read_csv(paths.ParDict_path, index_col=0)
+    # print(type(DEB.__class__))
+    # print(type(df['unit'].values[0]))
+    # print(type(df['object_class'].values[0]))
+    # print(u.cm.__class__)
+    # dic = {k: Parameter(**df.loc[k]) for k in df.index.values}
+    # print(dic['L'].get_from(deb))
+    raise
+
+    print(df)
+
+
     # k1 = VolumePar(name='V', object_class=DEB, unit='cm')
     # # k=SpatialPar(name='L', object_class=DEB, unit='cm')
     # k2 = FractionPar(name='F_m', object_class=DEB, numerator=VolumeRatePar(n_unit='cm', d_unit='day'),
@@ -596,8 +414,9 @@ if __name__ == '__main__':
     # # print(k.get_from(deb,(('cm','hour'), 'cm')), getattr(deb, k.name)/24)
     # print(k.get_unit(), k.type)
     #
-    # import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
     #
-    # plt.plot(np.arange(10), np.arange(10))
-    # plt.xlabel(k.get_unit())
-    # plt.show()
+    plt.plot(np.arange(10), np.arange(10))
+    plt.xlabel(df['unit'].iloc[1]/1973*u.day)
+    # plt.xlabel([d[k].symbol for k in list(d.keys())])
+    plt.show()
