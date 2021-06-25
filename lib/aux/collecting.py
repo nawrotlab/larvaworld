@@ -4,7 +4,7 @@ from operator import attrgetter
 from mesa.datacollection import DataCollector
 
 import lib.aux.functions as fun
-
+import lib.aux.naming as nam
 body_pars = {
     "length": 'length_in_mm',
     "mass": 'mass_in_mg',
@@ -117,7 +117,7 @@ intermitter_pars = {
     "num_feeds": 'num_feeds',
     "feed_dur_ratio": 'feed_dur_ratio',
     "explore2exploit_balance": 'explore2exploit_balance',
-                       'mean_feed_freq': 'mean_feed_freq',
+    'mean_feed_freq': 'mean_feed_freq',
 
     "num_strides": 'num_strides',
     "stride_dur_ratio": 'stride_dur_ratio',
@@ -165,7 +165,7 @@ step_database = {
 
 endpoint_database = {
     "sim_dur": 'sim_dur',
-    "cum_dur": 'cum_dur',
+    nam.cum('dur'): 'cum_dur',
     **pos_xy,
     **orientation_pars,
     **lin_pars,
@@ -270,30 +270,35 @@ output = {
                              'cum_dst', 'cum_scaled_dst',
                              'num_strides', 'stride_dur_ratio', 'vel_freq']},
     'feeder': {
-        'step': ['length', 'mass', 'amount_eaten', 'scaled_amount_eaten','explore2exploit_balance'],
-        'endpoint': ['length', 'mass', 'num_feeds','amount_eaten', 'scaled_amount_eaten','feed_dur_ratio', 'mean_feed_freq']},
+        'step': ['length', 'mass', 'amount_eaten', 'scaled_amount_eaten', 'explore2exploit_balance'],
+        'endpoint': ['length', 'mass', 'num_feeds', 'amount_eaten', 'scaled_amount_eaten', 'feed_dur_ratio',
+                     'mean_feed_freq']},
 
     'deb': {'step': [
-        'deb_f', 'deb_f_deviation','cum_dst','mass','length',
-        'reserve', 'reserve_density','hunger', 'puppation_buffer',
+        'deb_f', 'deb_f_deviation', 'cum_dst', 'mass', 'length',
+        'reserve', 'reserve_density', 'hunger', 'puppation_buffer',
     ],
-            'endpoint': [
-                'cum_dst', 'cum_scaled_dst', 'pause_dur_ratio','mass','length',
-                'num_strides', 'stride_dur_ratio', 'vel_freq',
-                'reserve_density', 'puppation_buffer', 'hunger','deb_f_mean', 'deb_f_deviation_mean',
-                'age', 'birth_time_in_hours', 'pupation_time_in_hours', 'death_time_in_hours', 'hours_as_larva'
-            ]},
-    'gut' : {'step': ['gut_occupancy', 'amount_absorbed','food_absorption_efficiency','amount_faeces','faeces_ratio',
-                      'ingested_body_area_ratio', 'ingested_body_volume_ratio','ingested_gut_volume_ratio','amount_eaten','scaled_amount_eaten',
-                      'ingested_body_mass_ratio'
-                      ],
-            'endpoint': ['amount_absorbed','amount_eaten',
-                         'ingested_body_area_ratio', 'ingested_body_volume_ratio','ingested_gut_volume_ratio','scaled_amount_eaten','ingested_body_mass_ratio']},
+        'endpoint': [
+            'cum_dst', 'cum_scaled_dst', 'pause_dur_ratio', 'mass', 'length',
+            'num_strides', 'stride_dur_ratio', 'vel_freq',
+            'reserve_density', 'puppation_buffer', 'hunger', 'deb_f_mean', 'deb_f_deviation_mean',
+            'age', 'birth_time_in_hours', 'pupation_time_in_hours', 'death_time_in_hours', 'hours_as_larva'
+        ]},
+    'gut': {'step': ['gut_occupancy', 'amount_absorbed', 'food_absorption_efficiency', 'amount_faeces', 'faeces_ratio',
+                     'ingested_body_area_ratio', 'ingested_body_volume_ratio', 'ingested_gut_volume_ratio',
+                     'amount_eaten', 'scaled_amount_eaten',
+                     'ingested_body_mass_ratio'
+                     ],
+            'endpoint': ['amount_absorbed', 'amount_eaten',
+                         'ingested_body_area_ratio', 'ingested_body_volume_ratio', 'ingested_gut_volume_ratio',
+                         'scaled_amount_eaten', 'ingested_body_mass_ratio']},
     'pose': {'step': ['centroid_x', 'centroid_y', 'bend', 'front_orientation', 'rear_orientation'],
-             'endpoint': ['length', 'cum_dur', 'final_x']},
+             'endpoint': ['length', 'cum_dur', 'final_x'],
+             # 'groups': ['pose', 'spatial', 'angular', 'dispersion', 'bouts','end']
+             },
     'nengo': {'step': ['crawler_activity', 'turner_activity', 'feeder_motion'],
               'endpoint': []},
-    'dst2center': {'step': [
+    'source vincinity': {'step': [
         'dispersion', 'scaled_dispersion',
         'dst_to_center', 'scaled_dst_to_center', 'orientation_to_center'
     ],
@@ -301,14 +306,18 @@ output = {
                      'max_dst_to_center', 'max_scaled_dst_to_center',
                      'mean_dst_to_center', 'mean_scaled_dst_to_center',
                      ]},
-    'chemotax_dst': {'step': ['dst_to_chemotax_odor', 'scaled_dst_to_chemotax_odor'],
+    'source approach': {'step': ['dst_to_chemotax_odor', 'scaled_dst_to_chemotax_odor'],
                      'endpoint': ['final_dst_to_chemotax_odor', 'final_scaled_dst_to_chemotax_odor']},
     'memory': {'step': [],
                'endpoint': [],
-               'tables': {'best_gains': ['unique_id', 'first_odor_best_gain', 'second_odor_best_gain', 'cum_reward', 'best_olfactor_decay']}},
+               'tables': {'best_gains': ['unique_id', 'first_odor_best_gain', 'second_odor_best_gain', 'cum_reward',
+                                         'best_olfactor_decay']}},
     'midline': None,
     'contour': None
 }
 
 output_keys = list(output.keys())
 
+# output2={
+#
+# }

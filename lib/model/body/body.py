@@ -218,7 +218,10 @@ class Box2DPolygon(Box2DSegment):
 class DefaultSegment(BodySegment):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # print(self.seg_vertices[0], self.pos)
         self.update_vertices(self.pos, self.orientation)
+        # print(self.seg_vertices[0], self.pos)
+        # print(self.vertices, self.pos)
 
         self.lin_vel = 0.0
         self.ang_vel = 0.0
@@ -292,10 +295,9 @@ class LarvaBody:
         if self.real_length is None:
             self.real_length = float(np.random.normal(loc=initial_length, scale=length_std, size=1))
 
-        self.sim_length = self.real_length * model.scaling_factor
         self.seg_lengths = [self.sim_length * r for r in self.seg_ratio]
         self.seg_vertices = [v * self.sim_length for v in self.base_seg_vertices]
-
+        # print(self.seg_vertices)
         self.set_head_edges()
 
         if not hasattr(self, 'real_mass'):
@@ -306,7 +308,7 @@ class LarvaBody:
         if not hasattr(self, 'V'):
             self.V = None
         if self.V is None:
-            self.V = self.get_real_length() ** 3
+            self.V = self.real_length ** 3
 
         self.segs = self.generate_segs(pos, orientation, joint_type=joint_type)
 
@@ -317,11 +319,9 @@ class LarvaBody:
         if self.model.touch_sensors:
             self.add_touch_sensors()
 
-    def get_real_length(self):
-        return self.real_length
-
-    def get_sim_length(self):
-        return self.sim_length
+    @ property
+    def sim_length(self):
+        return self.real_length * self.model.scaling_factor
 
     def get_real_mass(self):
         return self.real_mass

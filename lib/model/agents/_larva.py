@@ -20,7 +20,10 @@ class LarvaReplay(Larva, BodyReplay):
         self.chunk_ids = None
         self.trajectory = []
         self.color = deepcopy(self.default_color)
-        self.sim_length = length
+        # self.real_length = length * 1000
+        self.real_length = length
+        # self.sim_length = length
+        # print(self.sim_length, length)
 
         N = len(data.index.unique().values)
         Nmid = self.model.Npoints
@@ -64,6 +67,7 @@ class LarvaReplay(Larva, BodyReplay):
         self.vertices = self.con_ar[i]
         self.cen_pos = self.cen_ar[i]
         self.pos = self.pos_ar[i]
+        # print(self.pos)
         self.trajectory = self.pos_ar[:i, :].tolist()
         self.angles = self.ang_ar[i]
         self.orients = self.or_ar[i]
@@ -120,9 +124,7 @@ class LarvaReplay(Larva, BodyReplay):
                     seg.draw(viewer)
             elif len(self.vertices) > 0:
                 viewer.draw_polygon(self.vertices, filled=True, color=self.color)
-        # return
-        # viewer.draw_polygon(self.get_shape().boundary.coords, self.color, filled=True, width=self.radius / 10)
-        # return
+
         if self.model.draw_centroid:
             if not np.isnan(self.cen_pos).any():
                 pos = self.cen_pos
@@ -367,7 +369,7 @@ class LarvaSim(BodySim, Larva):
                 self.real_mass += V_eaten * self.food_to_biomass_ratio
                 self.adjust_shape_to_mass()
                 self.adjust_body_vertices()
-                self.V = self.get_real_length() ** 3
+                self.V = self.real_length ** 3
         self.max_V_bite = self.get_max_V_bite()
 
     def update_behavior_dict(self):
@@ -391,6 +393,14 @@ class LarvaSim(BodySim, Larva):
     @property
     def front_orientation(self):
         return np.rad2deg(self.get_head().get_normalized_orientation())
+
+    @property
+    def front_orientation_unwrapped(self):
+        return np.rad2deg(self.get_head().get_orientation())
+
+    @property
+    def rear_orientation_unwrapped(self):
+        return np.rad2deg(self.get_tail().get_orientation())
 
     @property
     def rear_orientation(self):

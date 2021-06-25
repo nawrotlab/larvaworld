@@ -232,28 +232,28 @@ def store_global_linear_metrics(s,e, point):
     dic = {
         'x': nam.xy(point)[0],
         'y': nam.xy(point)[1],
-        'dst': nam.dst(point),
-        'vel': nam.vel(point),
-        'acc': nam.acc(point),
-        nam.scal('dst'): nam.scal(nam.dst(point)),
-        nam.scal('vel'): nam.scal(nam.vel(point)),
-        nam.scal('acc'): nam.scal(nam.acc(point)),
-        nam.cum('dst'): nam.cum(nam.dst(point)),
-        nam.cum(nam.scal('dst')): nam.cum(nam.scal(nam.dst(point)))}
+        nam.dst(''): nam.dst(point),
+        nam.vel(''): nam.vel(point),
+        nam.acc(''): nam.acc(point),
+        nam.scal(nam.dst('')): nam.scal(nam.dst(point)),
+        nam.scal(nam.vel('')): nam.scal(nam.vel(point)),
+        nam.scal(nam.acc('')): nam.scal(nam.acc(point)),
+        nam.cum(nam.dst('')): nam.cum(nam.dst(point)),
+        nam.cum(nam.scal(nam.dst(''))): nam.cum(nam.scal(nam.dst(point)))}
     for k, v in dic.items():
         try:
             s[k] = s[v]
         except:
             pass
-    e[nam.cum('dst')] = e[nam.cum(nam.dst(point))]
+    e[nam.cum(nam.dst(''))] = e[nam.cum(nam.dst(point))]
     e[nam.final('x')] = [s['x'].xs(id, level='AgentID').dropna().values[-1] for id in ids]
     e[nam.final('y')] = [s['y'].xs(id, level='AgentID').dropna().values[-1] for id in ids]
     e[nam.initial('x')] = [s['x'].xs(id, level='AgentID').dropna().values[0] for id in ids]
     e[nam.initial('y')] = [s['y'].xs(id, level='AgentID').dropna().values[0] for id in ids]
-    e[nam.mean('vel')] = e[nam.cum(nam.dst(point))] / e['cum_dur']
+    e[nam.mean(nam.vel(''))] = e[nam.cum(nam.dst(point))] / e[nam.cum('dur')]
     try:
-        e[nam.cum(nam.scal('dst'))] = e[nam.cum(nam.scal(nam.dst(point)))]
-        e[nam.mean(nam.scal('vel'))] = e[nam.mean('vel')] / e['length']
+        e[nam.cum(nam.scal(nam.dst('')))] = e[nam.cum(nam.scal(nam.dst(point)))]
+        e[nam.mean(nam.scal(nam.vel('')))] = e[nam.mean(nam.vel(''))] / e['length']
     except:
         pass
 
@@ -326,7 +326,7 @@ def compute_dispersion(s,e,dt, point, recompute=False, starts=[0], stops=[40], d
     print('Dispersions computed')
 
 def compute_tortuosity(s,e,dt, durs_in_sec=[2, 5, 10, 20]):
-    e['tortuosity'] = 1 - e['final_dispersion'] / e['cum_dst']
+    e['tortuosity'] = 1 - e[nam.final('dispersion')] / e[nam.cum(nam.dst(''))]
     durs = [int(1/dt * d) for d in durs_in_sec]
     Ndurs = len(durs)
     if Ndurs > 0:
@@ -366,8 +366,8 @@ def compute_tortuosity(s,e,dt, durs_in_sec=[2, 5, 10, 20]):
 
 def compute_orientation_to_origin(s,e,point, origin=np.array([0, 0])):
     ids = s.index.unique('AgentID').values
-    o = 'orientation_to_origin'
-    fo = 'front_orientation'
+    o = nam.bearing2('origin')
+    fo = nam.orient('front')
     abs_o = nam.abs(o)
     final_o = nam.final(o)
     mean_abs_o = nam.mean(abs_o)

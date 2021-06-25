@@ -1,4 +1,5 @@
 from lib.stor.larva_dataset import LarvaDataset
+from lib.stor import paths
 
 
 def sim_enrichment(d: LarvaDataset, experiment):
@@ -6,8 +7,10 @@ def sim_enrichment(d: LarvaDataset, experiment):
     if experiment in ['rovers_sitters']:
         pass
     elif experiment == 'dish':
-        d.preprocess(**cc)
-        d.process(**cc)
+        # pass
+        # d.preprocess(**cc)
+        if not paths.new_format :
+            d.process(**cc)
         d.detect_bouts(**cc)
     elif experiment == 'focus':
         d.process(types=['angular'], **cc)
@@ -15,11 +18,18 @@ def sim_enrichment(d: LarvaDataset, experiment):
     elif experiment == 'dispersion':
         d.enrich(**cc)
     elif experiment in ['chemotaxis_local', 'chemotaxis_diffusion']:
-        d.enrich(source=(0.0, 0.0), **cc)
+        if not paths.new_format :
+            d.enrich(source=(0.0, 0.0), **cc)
+        else :
+            d.detect_bouts(**cc)
     elif experiment in ['chemotaxis_approach']:
-        d.enrich(source=(0.04, 0.0), **cc)
+        if not paths.new_format:
+            d.enrich(source=(0.04, 0.0), **cc)
+        else :
+            d.detect_bouts(**cc)
     elif experiment in ['food_at_bottom']:
-        d.process(**cc)
+        if not paths.new_format:
+            d.process(**cc)
         d.detect_bouts(bouts=['turn'], **cc)
     print(f'    Dataset enriched!')
     return d

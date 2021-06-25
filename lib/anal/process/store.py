@@ -8,7 +8,10 @@ import lib.conf.dtype_dicts as dtypes
 
 
 def create_par_distro_dataset(s, pars, dir):
+    # print(pars)
     pars_to_store = [p for p in pars if p in s.columns]
+    # print(pars_to_store)
+    # raise
     filenames = [f'{p}.csv' for p in pars_to_store]
     for p, filename in zip(pars_to_store, filenames):
         p_data = s[p].dropna().reset_index(level=0, drop=True)

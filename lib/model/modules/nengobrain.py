@@ -179,7 +179,7 @@ class NengoBrain(Network, Brain):
         return event
 
     def run(self,pos):
-        l=self.agent.get_sim_length()
+        l=self.agent.sim_length
         N = self.Nsteps
         man = self.nengo_manager
         man.set_odor_concentrations(self.sense_odors(pos) if self.olfactor else {})

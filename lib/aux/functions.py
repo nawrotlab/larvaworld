@@ -1,9 +1,12 @@
 import collections
+import copy
 import json
 import math
 import pickle
 import random
 import time
+from operator import attrgetter
+
 from scipy.optimize import minimize
 from collections import deque
 from numpy.lib import scimath
@@ -151,11 +154,13 @@ def angle_to_x_axis(point_1, point_2, in_deg=True):
 def angle_dif(angle_1, angle_2, in_deg=True):
     dif = angle_1 - angle_2
     if in_deg:
+        dif%=360
         if dif > 180:
             dif -= 2 * 180
         elif dif < -180:
             dif += 2 * 180
     else:
+        dif%=2*np.pi
         if dif > np.pi:
             dif -= np.pi * 2
         elif dif < -np.pi:
@@ -1288,3 +1293,14 @@ def save_dict(d, file, use_pickle=True) :
     else :
         with open(file, "w") as fp:
             json.dump(d, fp)
+
+def split_si_composite(df) :
+    ddf=copy.deepcopy(df)
+    unit_dict={}
+    for c in df.columns :
+        # print(c)
+        # print(c, df[c].apply(attrgetter('coef')))
+        ddf[c] = df[c].apply(attrgetter('coef'))
+        unit_dict[c] = df[c].iloc[0].unit
+        # us=df[c].apply(attrgetter('unit')).values.tolist()
+    return ddf, unit_dict

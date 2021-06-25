@@ -15,8 +15,9 @@ from PIL import Image
 
 from lib.anal.fitting import *
 from lib.anal.combining import combine_images, combine_pdfs
-from lib.conf import par_conf, conf
+from lib.conf import conf
 from lib.aux import functions as fun
+from lib.conf.par import getPar
 from lib.model import DEB
 from lib.model.modules.intermitter import get_EEB_poly1d
 from lib.stor import paths
@@ -205,26 +206,23 @@ def plot_bend_pauses(dataset, save_to=None):
     fig.savefig(filepath, dpi=300)
     print(f'Image saved as {filepath}')
 
-def plot_sample_marked_strides(datasets, labels=None, agent_idx=0, agent_id=None, slice=[20, 40],
-                               subfolder='individuals',save_as=None, save_to=None, return_fig=False, show=False):
+def plot_marked_strides(datasets, labels=None, agent_idx=0, agent_id=None, slice=[20, 40],
+                        subfolder='individuals', save_as=None, save_to=None, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder)
     for d in datasets:
         if not hasattr(d, 'step'):
             d.load()
     if save_as is None:
-        temp = f'sample_marked_strides_{slice[0]}-{slice[1]}' if slice is not None else f'sample_marked_strides'
+        temp = f'marked_strides_{slice[0]}-{slice[1]}' if slice is not None else f'marked_strides'
         filename = f'{temp}_{agent_id}.pdf' if agent_id is not None else f'{temp}_{agent_idx}.pdf'
     else:
         filename = save_as
 
     chunks = ['stride', 'pause']
     chunk_cols = ['lightblue', 'grey']
-    pars, ylabels, ylims = par_conf.par_dict_lists(shorts=['sv'], to_return=['par', 'unit', 'lim'])
-    p = pars[0]
-    ylab = 'scaled speed'
-    # ylab=ylabels[0]
+
+    p,ylab=getPar('sv', to_return=['d', 'l'])
     ylim = 1.0
-    # ylim=ylims[0]
 
     figx = 15 * 6 * 3 if slice is None else int((slice[1] - slice[0]) / 3)
     figy = 5
@@ -277,21 +275,17 @@ def plot_sample_tracks(datasets, labels=None, mode='strides', agent_idx=0, agent
     if mode == 'strides':
         chunks = ['stride', 'pause']
         chunk_cols = ['lightblue', 'grey']
-        pars, ylabels, ylims = par_conf.par_dict_lists(shorts=['sv'], to_return=['par', 'unit', 'lim'])
-        p = pars[0]
-        ylab = 'scaled speed'
+
+        p, ylab, ylim = getPar('sv', to_return=['d', 'l', 'lim'])
         ylim = 1.0
-        # ylim=ylims[0]
     elif mode == 'turns':
         chunks = ['Rturn', 'Lturn']
         chunk_cols = ['lightgreen', 'orange']
-        # xlims = [None, None] + slices
 
-        # ymax=1.0
 
         b = 'bend'
         bv = nam.vel(b)
-        ho = 'front_orientation'
+        ho = nam.orient('front')
         hov = nam.vel(ho)
 
     figx = 15 * 6 * 3 if slice is None else int((slice[1] - slice[0]) / 3)
@@ -347,14 +341,6 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
         filepath_slices.append(f'{xx}_slice_{i}.{suf}')
     generic_filepaths = [filepath_full_long, filepath_full] + filepath_slices
 
-    # filepath_slice = os.path.join(save_to, f'marked_turns_slice_min_angle_{min_turn_angle}.pdf')
-    # # filepath_full = 'marked_turns_full_dur.pdf'
-    # filepath_full_long = os.path.join(save_to, f'marked_turns_full_min_angle_{min_turn_angle}.pdf')
-    # filepaths=[filepath_slice, filepath_full_long]
-    # filepath_slice_1 = 'marked_strides_slice_dur_1.pdf'
-    # filepath_slice_2 = 'marked_strides_slice_dur_2.pdf'
-    # filepath_slice_3 = 'marked_strides_slice_dur_3.pdf'
-
     figsize_short = (20, 5)
     figsize_long = (15 * 6, 5)
     figsizes = [figsize_long, figsize_short] + [figsize_short] * len(generic_filepaths)
@@ -365,7 +351,7 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
 
     b = 'bend'
     bv = nam.vel(b)
-    ho = 'front_orientation'
+    ho = nam.orient('front')
     hov = nam.vel(ho)
     fig_dict = {}
     for agent_id in agent_ids:
@@ -395,7 +381,7 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
                     stop_indexes = s.index[s[stop_flag] == True]
                     start_indexes = s.index[s[start_flag] == True]
                     if min_turn_angle > 0:
-                        angle_flag = nam.chunk_track(chunk, nam.unwrap('front_orientation'))
+                        angle_flag = nam.chunk_track(chunk, nam.unwrap(nam.orient('front')))
                         angles = np.abs(s[angle_flag].dropna().values)
                         stop_indexes = stop_indexes[angles > min_turn_angle]
                         start_indexes = start_indexes[angles > min_turn_angle]
@@ -897,7 +883,7 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
     avels = nam.vel(d.angles)
     if not set(avels).issubset(s.columns.values):
         raise ValueError('Spineangle angular velocities do not exist in step')
-    hov = nam.vel('front_orientation')
+    hov = nam.vel(nam.orient('front'))
     N = d.Nangles
     k = range(N)
     s = s.loc[s[avels].dropna().index.values].copy()
@@ -951,7 +937,6 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
         reg = LinearRegression().fit(X, y)
         scores1.append(reg.score(X, y))
         coefs1.append(reg.coef_)
-    # fig.suptitle('Reorientation prediction by cum angles')
     axs[0].scatter(np.arange(1, N + 1), scores1, c='blue', alpha=1.0, marker=",", label='single', s=200)
     axs[0].plot(np.arange(1, N + 1), scores1, c='blue')
     axs[0].set_xticks(ticks=np.arange(1, N + 1))
@@ -1153,8 +1138,8 @@ def plot_bend_change_over_displacement(dataset, return_fig=False):
         os.makedirs(save_to)
     figsize = (5, 5)
 
-    b, o = 'bend', nam.unwrap('front_orientation')
-    bv, ov = nam.vel(b), nam.vel('front_orientation')
+    b, o = 'bend', nam.unwrap(nam.orient('front'))
+    bv, ov = nam.vel(b), nam.vel(nam.orient('front'))
     sd = nam.scal(dataset.distance)
 
     ind = s[sd].dropna().index
@@ -1270,8 +1255,7 @@ def plot_stride_Dorient(datasets, labels=None, simVSexp=False, absolute=True, su
     filename = f'stride_orient_change.{suf}'
 
     par_shorts = ['str_fo', 'str_ro']
-    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts,
-                                                                    to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+    pars, sim_labels, exp_labels, xlabels = getPar(par_shorts, to_return=['d', 's', 's', 'l'])
 
     ranges = [80, 80]
 
@@ -1320,8 +1304,7 @@ def plot_interference(datasets, labels=None, mode='orientation', agent_idx=None,
     elif mode == 'spinelength':
         par_shorts.append('l')
 
-    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts,
-                                                                  to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+    pars, sim_labels, exp_labels, units = getPar(par_shorts, to_return=['d', 's', 's', 'l'])
     fig, axs = plt.subplots(len(pars), 1, figsize=(10, len(pars) * 5), sharex=True)
     axs = axs.ravel()
 
@@ -1605,58 +1588,54 @@ def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals
         filename = f'{par_shorts[0]}_VS_{par_shorts[1]}.{suf}' if save_as is None else save_as
     else :
         filename = f'{N}_pars.{suf}' if save_as is None else save_as
-    fig, axs = plt.subplots(1, 1, figsize=(7.5, 5))
+    fig, ax = plt.subplots(1, 1, figsize=(7.5, 5))
     for short, c in zip(par_shorts, cols):
-        par_dict = par_conf.get_par_dict(short=short)
-        par = par_dict['par']
-        symbol = par_dict['symbol']
-        xlabel = par_dict['unit']
-        ylim = par_dict['lim']
+        p, symbol, ylab, ylim = getPar(short, to_return=['d', 's', 'l', 'lim'])
+
 
         for d, d_col, d_lab in zip(datasets, colors, labels):
             if Ndatasets > 1:
                 c = d_col
             s = d.load_aux(type='table',name=table) if table is not None else d.step_data
-            if par not in list(s.keys()):
-                print(f'Parameter {par} does not exist in dataset')
+            if p not in list(s.keys()):
+                print(f'Parameter {p} does not exist in dataset')
                 continue
-            dc = s[par]
+            dc = s[p]
             dc_m = dc.groupby(level='Step').quantile(q=0.5)
             Nticks = len(dc_m)
             if table is None:
-                dur = int(Nticks / d.fr)
-                trange = np.linspace(0, dur, Nticks)
-                time_label = 'time, $sec$'
+                x = np.linspace(0, int(Nticks / d.fr), Nticks)
+                xlab = 'time, $sec$'
             else:
-                trange = np.arange(Nticks)
-                time_label = 'timesteps'
+                x = np.arange(Nticks)
+                xlab = 'timesteps'
 
             if individuals:
-                for agent_id in dc.index.get_level_values('AgentID'):
-                    dc_single = dc.xs(agent_id, level='AgentID')
-                    axs.plot(trange, dc_single, color=c, linewidth=1)
-                axs.plot(trange, dc_m, 'r', linewidth=2)
+                for id in dc.index.get_level_values('AgentID'):
+                    dc_single = dc.xs(id, level='AgentID')
+                    ax.plot(x, dc_single, color=c, linewidth=1)
+                ax.plot(x, dc_m, 'r', linewidth=2)
             else:
 
                 dc_u = dc.groupby(level='Step').quantile(q=0.75)
                 dc_b = dc.groupby(level='Step').quantile(q=0.25)
 
-                plot_mean_and_range(x=trange, mean=dc_m, lb=dc_u, ub=dc_b, axis=axs, color_mean=c, color_shading=c,
+                plot_mean_and_range(x=x, mean=dc_m, lb=dc_u, ub=dc_b, axis=ax, color_mean=c, color_shading=c,
                                     label=symbol)
                 if show_first:
                     dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
-                    axs.plot(trange, dc0, 'r')
+                    ax.plot(x, dc0, 'r')
 
-    axs.set_ylabel(xlabel)
-    axs.set_xlabel(time_label)
-    axs.set_xlim([trange[0], trange[-1]])
+    ax.set_ylabel(ylab)
+    ax.set_xlabel(xlab)
+    ax.set_xlim([x[0], x[-1]])
     if ylim is not None:
-        axs.set_ylim(ylim)
+        ax.set_ylim(ylim)
     if N > 1:
-        axs.legend()
-    axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
+        ax.legend()
+    ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
     if Ndatasets > 1:
-        dataset_legend(labels, colors, ax=axs, loc=legend_loc, fontsize=15)
+        dataset_legend(labels, colors, ax=ax, loc=legend_loc, fontsize=15)
 
     plt.subplots_adjust(bottom=0.15, left=0.2, right=0.95, top=0.95)
     return process_plot(fig, save_to, filename, return_fig, show)
@@ -1921,7 +1900,7 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
     svels = nam.scal(nam.vel(d.points))
     lvels = nam.scal(nam.lin(nam.vel(d.points[1:])))
     ids = d.agent_ids
-    hov = nam.vel('front_orientation')
+    hov = nam.vel(nam.orient('front'))
 
     if use_component:
         lin_vels = lvels
@@ -2084,11 +2063,10 @@ def plot_ang_pars(datasets, labels=None, simVSexp=False, absolute=True, include_
         par_shorts += ['rov', 'roa']
         ranges += [200, 2000]
     if include_turns:
-        par_shorts += ['tur_fo']
+        par_shorts += ['tur_fou']
         ranges += [100]
 
-    pars, sim_labels, exp_labels, xlabels = par_conf.par_dict_lists(shorts=par_shorts,
-                                                                    to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+    pars, sim_labels, exp_labels, xlabels = getPar(par_shorts, to_return=['d', 's', 's', 'l'])
 
     filename = f'angular_pars_{len(pars)}.{suf}' if save_as is None else save_as
     fit_filename = 'ang_pars_ttest.csv' if save_fits_as is None else save_fits_as
@@ -2117,20 +2095,8 @@ def plot_ang_pars(datasets, labels=None, simVSexp=False, absolute=True, include_
             else:
                 r1, r2 = -r, r
             vs.append(v)
-            # if p=='bend_vel' :
-            #     vs.append(v)
-            # if len(vs)==2:
-            #     st, pv = ks_2samp(vs[0].T[0], vs[1].T[0])
-            #     print(st,pv)
-            #     raise
             x = np.linspace(r1, r2, nbins)
             weights = np.ones_like(v) / float(len(v))
-            # exp_weights = np.ones_like(exp) / float(len(exp))
-            # sim_weights = np.ones_like(exp) / float(len(exp))
-            # sns.distplot(exp, color="red", ax=axs[i], bins=x, hist=False, label=sim_labels[i],
-            #              hist_kws={'weights': sim_weights})
-            # sns.distplot(exp, color="blue", ax=axs[i], bins=x, hist=False, label=exp_labels[i],
-            #              hist_kws={'weights': exp_weights})
             axs[i].hist(v, color=colors[j], bins=x, label=p_lab[j], weights=weights, alpha=0.8, histtype='step',
                         linewidth=2)
             axs[i].set_xlim(xmin=0)
@@ -2191,10 +2157,7 @@ def plot_bout_ang_pars(datasets, labels=None, simVSexp=False, absolute=True, inc
     ranges = [250, 250, 50, 2000, 2000, 500] if include_rear else [200, 200, 2000, 2000]
     ylim = 0.04
 
-    pars, sim_labels, exp_labels, xlabels, xlims, disps = par_conf.par_dict_lists(shorts=par_shorts,
-                                                                                  to_return=['par', 'symbol',
-                                                                                             'exp_symbol', 'unit',
-                                                                                             'lim', 'disp_name'])
+    pars, sim_labels, exp_labels, xlabels, xlims, disps = getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim', 'd'])
 
     chunks = ['stride', 'pause']
     chunk_cols = ['green', 'purple']
@@ -2233,20 +2196,8 @@ def plot_bout_ang_pars(datasets, labels=None, simVSexp=False, absolute=True, inc
                 else:
                     r1, r2 = -r, r
                 vs.append(v)
-                # if p=='bend_vel' :
-                #     vs.append(v)
-                # if len(vs)==2:
-                #     st, pv = ks_2samp(vs[0].T[0], vs[1].T[0])
-                #     print(st,pv)
-                #     raise
                 x = np.linspace(r1, r2, nbins)
                 weights = np.ones_like(v) / float(len(v))
-                # exp_weights = np.ones_like(exp) / float(len(exp))
-                # sim_weights = np.ones_like(exp) / float(len(exp))
-                # sns.distplot(exp, color="red", ax=axs[i], bins=x, hist=False, label=sim_labels[i],
-                #              hist_kws={'weights': sim_weights})
-                # sns.distplot(exp, color="blue", ax=axs[i], bins=x, hist=False, label=exp_labels[i],
-                #              hist_kws={'weights': exp_weights})
                 axs[i].hist(v, color=col, bins=x, label=c, weights=weights, alpha=1.0, histtype='step', linewidth=2)
                 axs[i].set_xlim([r1, r2])
 
@@ -2308,9 +2259,7 @@ def plot_crawl_pars(datasets, labels=None, simVSexp=False, subfolder='endpoint',
     fit_filepath = os.path.join(save_to, fit_filename)
 
     par_shorts = ['str_N', 'str_tr', 'cum_d']
-    pars, sim_labels, exp_labels, xlabels, xlims = par_conf.par_dict_lists(shorts=par_shorts,
-                                                                           to_return=['par', 'symbol', 'exp_symbol',
-                                                                                      'unit', 'lim'])
+    pars, sim_labels, exp_labels, xlabels, xlims = getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim'])
     # ranges = [(100, 300), (0.5, 1.0), (80, 320)]
 
     if simVSexp:
@@ -2432,7 +2381,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
         elif mode == 'stride_def':
             par_shorts = ['l_mu', 'fsv', 'str_sd_mu', 'str_sd_std']
         elif mode == 'reorientation':
-            par_shorts = ['str_fo_mu', 'str_fo_std', 'tur_fo_mu', 'tur_fo_std']
+            par_shorts = ['str_fo_mu', 'str_fo_std', 'tur_fou_mu', 'tur_fou_std']
         elif mode == 'tortuosity':
             par_shorts = ['tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu']
         elif mode == 'result':
@@ -2444,7 +2393,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
                           'tor5_mu', 'tor5_std', 'tor20_mu', 'tor20_std',
                           'tor', 'sdisp_mu', 'sdisp40_max', 'sdisp40_fin',
                           'b_mu', 'b_std', 'bv_mu', 'bv_std',
-                          'Ltur_tr', 'Rtur_tr', 'Ltur_fo_mu', 'Rtur_fo_mu']
+                          'Ltur_tr', 'Rtur_tr', 'Ltur_fou_mu', 'Rtur_fou_mu']
 
         elif mode == 'full':
 
@@ -2462,7 +2411,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
                           'sdisp_mu', 'sdisp_fin', 'sdisp40_fin', 'sdisp40_max',
                           'Ltur_t_mu', 'Ltur_t_std', 'cum_Ltur_t', 'Ltur_tr',
                           'Rtur_t_mu', 'Rtur_t_std', 'cum_Rtur_t', 'Rtur_tr',
-                          'Ltur_fo_mu', 'Ltur_fo_std', 'Rtur_fo_mu', 'Rtur_fo_std',
+                          'Ltur_fou_mu', 'Ltur_fou_std', 'Rtur_fou_mu', 'Rtur_fou_std',
                           'b_mu', 'b_std', 'bv_mu', 'bv_std',
                           ]
 
@@ -2481,11 +2430,9 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
         else:
             raise ValueError('Provide parameter shortcuts or define a mode')
 
-    pars, = par_conf.par_dict_lists(shorts=par_shorts, to_return=['par'])
+    pars,  = getPar(par_shorts, to_return=['d'])
     pars = [p for p in pars if all([p in d.endpoint_data.columns for d in datasets])]
-    symbols, exp_symbols, xlabels, xlims, disps = par_conf.par_dict_lists(pars=pars,
-                                                                          to_return=['symbol', 'exp_symbol', 'unit',
-                                                                                     'lim', 'disp_name'])
+    symbols, exp_symbols, xlabels, xlims, disps = getPar(par_shorts, to_return=['s', 's', 'l', 'lim', 'd'])
 
     if mode == 'stride_def':
         xlims = [[2.5, 4.8], [0.8, 2.0], [0.1, 0.25], [0.02, 0.09]]
@@ -2596,20 +2543,18 @@ def plot_turn_duration(datasets, labels=None, save_to=None, return_fig=False, le
 
 def plot_turn_amp(datasets, labels=None, par_short='tur_t', ref_angle=None,
                   subfolder='turn', mode='hist', cumy=True,
-                  save_to=None, legend=True, absolute=True, return_fig=False):
+                  save_to=None, legend=True, show=False, absolute=True, return_fig=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
     nn = 'turn_amp' if ref_angle is None else 'rel_turn_angle'
     filename = f'{nn}_VS_{par_short}_{mode}.{suf}'
 
-    ypars, yunits = par_conf.par_dict_lists(shorts=['tur_fo'], to_return=['par', 'unit'])
-    ypar = ypars[0]
-    ylab = yunits[0]
-    ylim = None
+    ypar, ylab, ylim = getPar('tur_fou', to_return=['d', 'l', 'lim'])
+
 
     if ref_angle is not None:
         A0 = float(ref_angle)
         # ylim = (-180, 180)
-        pars_ref, = par_conf.par_dict_lists(shorts=['tur_fo0', 'tur_fo1'], to_return=['par'])
+        pars_ref, = getPar(['tur_fo0', 'tur_fo1'], to_return=['d'])
         ys = []
         ylab = r'$\Delta\theta_{bearing} (deg)$'
         cumylab = r'$\bar{\Delta\theta}_{bearing} (deg)$'
@@ -2631,9 +2576,7 @@ def plot_turn_amp(datasets, labels=None, par_short='tur_t', ref_angle=None,
             ys = [np.abs(y) for y in ys]
         # ylim=None
 
-    xpars, xunits = par_conf.par_dict_lists(shorts=[par_short], to_return=['par', 'unit'])
-    xpar = xpars[0]
-    xlab = xunits[0]
+    xpar, xlab = getPar(par_short, to_return=['d', 'l'])
 
     xs = [d.get_par(xpar).dropna().values.flatten() for d in datasets]
 
@@ -2653,7 +2596,7 @@ def plot_turn_amp(datasets, labels=None, par_short='tur_t', ref_angle=None,
         fig = scatter_hist(xs, ys, labels, colors, xlabel=xlab, ylabel=ylab, ylim=ylim, cumylabel=cumylab, cumy=cumy)
     # plt.show()
     # raise
-    return process_plot(fig, save_to, filename, return_fig)
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cumylabel=None, ylim=None, fig=None,
@@ -2785,10 +2728,7 @@ def plot_turns(datasets, labels=None, absolute=True, save_to=None, subfolder='tu
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
     filename = f'turns.{suf}'
     fig, axs = plt.subplots(1, 1, figsize=(6, 5))
-
-    pars, units = par_conf.par_dict_lists(shorts=['tur_fo'], to_return=['par', 'unit'])
-    par = pars[0]
-    xlabel = units[0]
+    par, xlabel = getPar('tur_fou', to_return=['d', 'l'])
 
     ts = [d.get_par(par).dropna().values for d in datasets]
 
@@ -2796,7 +2736,6 @@ def plot_turns(datasets, labels=None, absolute=True, save_to=None, subfolder='tu
     Nbins = 30
 
     for data, col, l in zip(ts, colors, labels):
-        # print(l, len(data))
         if absolute:
             data = np.abs(data)
             r0, r1 = np.min(data), r
@@ -2819,14 +2758,14 @@ def plot_turns(datasets, labels=None, absolute=True, save_to=None, subfolder='tu
 
 
 def plot_turn_Dbearing(datasets, labels=None, min_angle=30.0, max_angle=180.0, ref_angle=None,
-                       par='orientation_to_center', Nplots=4, subfolder='turn', save_to=None, return_fig=False,
+                       par=nam.bearing2('center'), Nplots=4, subfolder='turn', save_to=None, return_fig=False,
                        show=False):
     Nds, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
     fig, axs = plt.subplots(Nds, Nplots, figsize=(5 * Nplots, 5 * Nds), subplot_kw=dict(projection='polar'),
                             sharey=True)
     axs = axs.ravel()
 
-    if par == 'orientation_to_center':
+    if par == nam.bearing2('center'):
         filename = f'turn_Dorient_to_center.{suf}'
         ang0 = 0
         norm = False
@@ -2834,7 +2773,7 @@ def plot_turn_Dbearing(datasets, labels=None, min_angle=30.0, max_angle=180.0, r
         ang0 = ref_angle
         norm = True
         filename = f'turn_Dorient_to_{ang0}deg.{suf}'
-        par = nam.unwrap('front_orientation')
+        par = nam.unwrap(nam.orient('front'))
     else:
         raise ValueError('No parameter or target angle has been provided.')
 
@@ -2846,10 +2785,11 @@ def plot_turn_Dbearing(datasets, labels=None, min_angle=30.0, max_angle=180.0, r
 
     for i, (d, label, c) in enumerate(zip(datasets, labels, colors)):
         ii = Nplots * i
-        for k, (S, side) in enumerate(zip(['L', 'R'], ['left', 'right'])):
-            b0_par = f'{par}_at_{S}turn_start'
-            b1_par = f'{par}_at_{S}turn_stop'
-            bd_par = f'{S}turn_{par}'
+        for k, (chunk, side) in enumerate(zip(['Lturn', 'Rturn'], ['left', 'right'])):
+            b0_par = nam.at(par, nam.start(chunk))
+            b1_par = nam.at(par, nam.stop(chunk))
+            bd_par = nam.chunk_track(chunk,par)
+
             b0 = d.get_par(b0_par).dropna().values.flatten()
             b1 = d.get_par(b1_par).dropna().values.flatten()
             db = d.get_par(bd_par).dropna().values.flatten()
@@ -2901,7 +2841,7 @@ def plot_turn_Dbearing(datasets, labels=None, min_angle=30.0, max_angle=180.0, r
 
 
 def plot_turn_Dorient2center(**kwargs):
-    return plot_turn_Dbearing(ref_angle=None, par='orientation_to_center', **kwargs)
+    return plot_turn_Dbearing(ref_angle=None, par=nam.bearing2('center'), **kwargs)
 
 
 def plot_chunk_Dorient2source(datasets, labels=None, chunk='stride', source=(0.0, 0.0), Nbins=16, min_dur=0.0,
@@ -2933,7 +2873,7 @@ def plot_chunk_Dorient2source(datasets, labels=None, chunk='stride', source=(0.0
         b1s = [d.get_par(b1_par).dropna().values for d in datasets]
         dbs = [d.get_par(db_par).dropna().values for d in datasets]
     except:
-        ho = nam.unwrap('front_orientation')
+        ho = nam.unwrap(nam.orient('front'))
         ho0_par = f'{ho}_at_{chunk}_start'
         ho1_par = f'{ho}_at_{chunk}_stop'
 
@@ -3069,7 +3009,7 @@ def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
     return n, bins, patches
 
 
-def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None):
+def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None, **kwargs):
     fig_dict = {}
     warnings.filterwarnings('ignore')
     if save_to is None:
@@ -3086,16 +3026,16 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None):
                 n = f'bout_{m}_fit_{f}_{r}'
                 try:
                     fig_dict[n] = plot_stridesNpauses(**cc, plot_fits=f, range=r, only_fit_one=False, mode=m,
-                                                      print_fits=False)
+                                                      print_fits=False, **kwargs)
                 except:
                     pass
     for m in ['minimal', 'limited', 'full']:
-        fig_dict[f'endpoint_{m}'] = plot_endpoint_params(**cc, mode=m)
+        fig_dict[f'endpoint_{m}'] = plot_endpoint_params(**cc, mode=m, **kwargs)
     for m in ['orientation', 'orientation_x2', 'bend', 'spinelength']:
         for agent_idx in [None, 0, 1]:
             i = '' if agent_idx is None else f'_{agent_idx}'
             try:
-                fig_dict[f'interference_{m}{i}'] = plot_interference(**cc, mode=m, agent_idx=agent_idx)
+                fig_dict[f'interference_{m}{i}'] = plot_interference(**cc, mode=m, agent_idx=agent_idx, **kwargs)
             except:
                 pass
     for scaled in [True, False]:
@@ -3104,34 +3044,34 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None):
                 s = 'scaled_' if scaled else ''
                 l = f'{s}dispersion_{r0}->{r1}_{fig_cols}'
                 try:
-                    fig_dict[l] = plot_dispersion(**cc, scaled=scaled, fig_cols=fig_cols, ranges=[(r0, r1)])
+                    fig_dict[l] = plot_dispersion(**cc, scaled=scaled, fig_cols=fig_cols, ranges=[(r0, r1)], **kwargs)
                 except:
                     pass
 
     try:
-        fig_dict['stride_Dbend'] = plot_stride_Dbend(**cc, show_text=False)
+        fig_dict['stride_Dbend'] = plot_stride_Dbend(**cc, show_text=False, **kwargs)
     except:
         pass
     try:
-        fig_dict['stride_Dorient'] = plot_stride_Dorient(**cc, simVSexp=simVSexp, absolute=True)
+        fig_dict['stride_Dorient'] = plot_stride_Dorient(**cc, simVSexp=simVSexp, absolute=True, **kwargs)
     except:
         pass
     try:
-        fig_dict['ang_pars'] = plot_ang_pars(**cc, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=3)
+        fig_dict['ang_pars'] = plot_ang_pars(**cc, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=3, **kwargs)
     except:
         pass
     try:
-        fig_dict['calibration'] = calibration_plot(save_to=save_to)
+        fig_dict['calibration'] = calibration_plot(save_to=save_to, **kwargs)
     except:
         pass
-    fig_dict['crawl_pars'] = plot_crawl_pars(**cc, simVSexp=simVSexp)
-    fig_dict['turns'] = plot_turns(**cc)
-    fig_dict['turn_duration'] = plot_turn_amp(**cc)
+    fig_dict['crawl_pars'] = plot_crawl_pars(**cc, simVSexp=simVSexp, **kwargs)
+    fig_dict['turns'] = plot_turns(**cc, **kwargs)
+    fig_dict['turn_duration'] = plot_turn_amp(**cc, **kwargs)
     combine_pdfs(file_dir=save_to)
     return fig_dict
 
 
-def targeted_analysis(datasets, labels=None, simVSexp=False, save_to=None, pref='', show=False):
+def targeted_analysis(datasets, labels=None, simVSexp=False, save_to=None, pref='', show=False, **kwargs):
     # with fun.suppress_stdout():
     if save_to is None:
         save_to = datasets[0].dir_dict['comp_plot']
@@ -3144,18 +3084,18 @@ def targeted_analysis(datasets, labels=None, simVSexp=False, save_to=None, pref=
                 'show': show}
     # init_dir, res_dir = 'init', 'result'
     plot_stridesNpauses(**anal_kws, plot_fits='best', time_unit='sec', range='default', print_fits=False,
-                        save_as=f'bouts{pref}.pdf', save_fits_as=f'bout_fits{pref}.csv')
+                        save_as=f'bouts{pref}.pdf', save_fits_as=f'bout_fits{pref}.csv', **kwargs)
     plot_endpoint_params(**anal_kws, mode='stride_def', save_as=f'stride_pars{pref}.pdf',
-                         save_fits_as=f'stride_pars_ttest{pref}.csv')
+                         save_fits_as=f'stride_pars_ttest{pref}.csv', **kwargs)
 
-    plot_interference(**anal_kws, mode='orientation', save_as=f'interference{pref}.pdf')
-    plot_crawl_pars(**anal_kws, save_as=f'crawl_pars{pref}.pdf', save_fits_as=f'crawl_pars_ttest{pref}.csv')
-    plot_ang_pars(**anal_kws, Npars=3, save_as=f'ang_pars{pref}.pdf', save_fits_as=f'ang_pars_ttest{pref}.csv')
-    plot_endpoint_params(**anal_kws, mode='result', save_as=f'results{pref}.pdf')
-    plot_endpoint_params(**anal_kws, mode='reorientation', save_as=f'reorientation{pref}.pdf')
-    plot_endpoint_params(**anal_kws, mode='tortuosity', save_as=f'tortuosity{pref}.pdf')
-    plot_dispersion(**anal_kws, scaled=True, fig_cols=2, ranges=[(0, 80)], ymax=18, save_as=f'dispersion{pref}.pdf')
-    plot_sample_marked_strides(**anal_kws, agent_idx=1, slice=[0, 180], save_as=f'sample_tracks{pref}.pdf')
+    plot_interference(**anal_kws, mode='orientation', save_as=f'interference{pref}.pdf', **kwargs)
+    plot_crawl_pars(**anal_kws, save_as=f'crawl_pars{pref}.pdf', save_fits_as=f'crawl_pars_ttest{pref}.csv', **kwargs)
+    plot_ang_pars(**anal_kws, Npars=3, save_as=f'ang_pars{pref}.pdf', save_fits_as=f'ang_pars_ttest{pref}.csv', **kwargs)
+    plot_endpoint_params(**anal_kws, mode='result', save_as=f'results{pref}.pdf', **kwargs)
+    plot_endpoint_params(**anal_kws, mode='reorientation', save_as=f'reorientation{pref}.pdf', **kwargs)
+    plot_endpoint_params(**anal_kws, mode='tortuosity', save_as=f'tortuosity{pref}.pdf', **kwargs)
+    plot_dispersion(**anal_kws, scaled=True, fig_cols=2, ranges=[(0, 80)], ymax=18, save_as=f'dispersion{pref}.pdf', **kwargs)
+    plot_marked_strides(**anal_kws, agent_idx=1, slice=[0, 180], save_as=f'sample_tracks{pref}.pdf', **kwargs)
 
 
 def dual_half_circle(center, radius, angle=0, ax=None, colors=('W', 'k'), **kwargs):
@@ -3222,8 +3162,7 @@ def plot_endpoint_scatter(datasets, labels=None, save_to=None, par_shorts=None, 
     filepath = os.path.join(save_to, filename)
     for i, (p0, p1) in enumerate(pairs):
         ax = axs[i]
-        pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=[p0, p1],
-                                                                      to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+        pars, sim_labels, exp_labels, units = getPar([p0, p1],to_return=['d', 's', 's', 'l'])
 
         v0_all = [d.endpoint_data[pars[0]].values for d in datasets]
         v1_all = [d.endpoint_data[pars[1]].values for d in datasets]
@@ -3319,8 +3258,7 @@ def barplot(datasets, labels=None, par_shorts=['f_am'], coupled_labels=None, xla
     else:
         ind = np.arange(0, w * Ndatasets, w)
 
-    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts,
-                                                                  to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+    pars, sim_labels, exp_labels, units = getPar(par_shorts, to_return=['d', 's', 's', 'l'])
 
     # Pull the formatting out here
     bar_kwargs = {'width': w, 'color': colors, 'linewidth': 2, 'zorder': 5, 'align': 'center', 'edgecolor': 'black'}
@@ -3398,8 +3336,7 @@ def lineplot(datasets, markers, labels=None, par_shorts=['f_am'], coupled_labels
     else:
         ind = np.arange(Ndatasets)
 
-    pars, sim_labels, exp_labels, units = par_conf.par_dict_lists(shorts=par_shorts,
-                                                                  to_return=['par', 'symbol', 'exp_symbol', 'unit'])
+    pars, sim_labels, exp_labels, units = getPar(par_shorts, to_return=['d', 's', 's', 'l'])
 
     # Pull the formatting out here
     plot_kwargs = {'linewidth': 2, 'zorder': 5}
@@ -3524,7 +3461,7 @@ graph_dict = {
     'runs & pauses': plot_stridesNpauses,
     'turn duration': plot_turn_duration,
     'turn amplitude': plot_turns,
-    'marked_strides': plot_sample_marked_strides,
+    'marked_strides': plot_marked_strides,
     'turn amplitude VS Y pos': plot_turn_amp,
     'turn Dbearing to center': plot_turn_Dorient2center,
     'chunk Dbearing to source': plot_chunk_Dorient2source,

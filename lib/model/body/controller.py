@@ -253,7 +253,7 @@ class BodySim(BodyManager):
         self.compute_spineangles()
         # More formal mathematical solution based on the restoration of the bending angle_to_x_axis of two segments attached to a point
         # See functions.py
-        d, l = self.dst, self.get_sim_length()
+        d, l = self.dst, self.sim_length
         # First attempt. Complex. Does not solve problems
         # self.set_body_bend(restored_angle(self.body_bend, d, self.get_sim_length()))
         # Second attempt. Multiple angles (Npoints-2). Critical spinepoint carries the bend resistance
@@ -349,7 +349,7 @@ class BodySim(BodyManager):
             else:
                 hr1 = None
                 hp1 = hp0 + dxy
-                hf1 = hp1 + k * (self.get_sim_length() / 2)
+                hf1 = hp1 + k * (self.sim_length / 2)
 
             in_tank = fun.inside_polygon(points=[hf1, hp1], tank_polygon=self.tank_polygon)
             return in_tank, o1, hr1, hp1
@@ -377,6 +377,7 @@ class BodySim(BodyManager):
         head.set_lin_vel(lin_vel)
         head.set_ang_vel(ang_vel)
         self.dst = d
+        # print(d)
         self.cum_dst += d
         self.trajectory.append(self.pos)
 

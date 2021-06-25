@@ -8,7 +8,7 @@ import lib.aux.functions as fun
 import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.plotting import plot_spatiotemporal_variation, plot_bend2orientation_analysis, \
-    plot_sliding_window_analysis, plot_sample_marked_strides, plot_stride_distribution
+    plot_sliding_window_analysis, plot_marked_strides, plot_stride_distribution
 from lib.anal.process.angular import compute_orientations, compute_spineangles, compute_angular_metrics
 from lib.anal.process.basic import compute_extrema
 from lib.anal.process.bouts import detect_contacting_chunks
@@ -210,7 +210,7 @@ def stride_analysis(dataset, agent_id=None, flag=None, par_to_track=None, stride
     d = dataset
     if stride_max_flag_analysis:
         stride_max_flag_phase_analysis(dataset=d, agent_id=agent_id, flag=flag, par=par_to_track)
-    plot_sample_marked_strides(datasets=[d], agent_idx=0, agent_id=agent_id, slice=[0, 180])
+    plot_marked_strides(datasets=[d], agent_idx=0, agent_id=agent_id, slice=[0, 180])
     plot_stride_distribution(dataset=d, agent_id=agent_id, save_to=None)
 
 # def multiparse_by_sliding_window(dataset, data, par, flag, radius_in_sec, condition='True',

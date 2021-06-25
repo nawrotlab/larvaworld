@@ -11,14 +11,36 @@ import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.process.basic import compute_extrema, compute_freq
 from lib.anal.process.store import create_par_distro_dataset, create_chunk_dataset
+from lib.conf.par import load_ParDict
+from lib.stor import paths
 
 
 def detect_bouts(s,e,dt,Npoints,point, config=None, bouts=['stride', 'pause', 'turn'],
-                 recompute=False, track_point=None, track_pars=None,
-                 non_chunks=False,distro_dir=None,stride_p_dir=None,source=None, show_output=True,  **kwargs):
-    if track_pars is None:
-        track_pars = [nam.unwrap('front_orientation'), nam.unwrap('rear_orientation'), 'bend', 'x', 'y',
-                      'orientation_to_center']
+                 recompute=False, track_point=None, track_pars=None,chunk_pars=None,
+                 vel_par=None, ang_vel_par=None, bend_vel_par=None,min_ang=5.0,
+                 non_chunks=False,distro_dir=None,stride_p_dir=None,source=None, show_output=True, **kwargs):
+
+    if paths.new_format :
+        dic = load_ParDict()
+        if vel_par is None :
+            vel_par=dic['sv']['d']
+        if ang_vel_par is None :
+            ang_vel_par=dic['fov']['d']
+        if bend_vel_par is None :
+            bend_vel_par=dic['bv']['d']
+        if track_pars is None:
+            track_pars = [dic[k]['d'] for k in ['fou', 'rou','fo', 'ro', 'b', 'x', 'y', 'o_cent']]
+        if chunk_pars is None :
+            chunk_pars=[dic[k]['d'] for k in ['sv', 'fov', 'rov', 'bv', 'l']]
+        # if get_unit(dic['fo'].d).name()=='radian' :
+        min_ang=np.deg2rad(min_ang)
+        # raise
+    else :
+        if track_pars is None:
+            track_pars = [nam.unwrap(nam.orient('front')),nam.orient('front'), nam.unwrap(nam.orient('rear')),nam.orient('rear'), 'bend', 'x', 'y',
+                          nam.bearing2('center')]
+        if chunk_pars is None :
+            chunk_pars=[vel_par, 'spinelength', nam.vel(nam.orient('front')),nam.vel(nam.orient('rear')),nam.vel('bend')]
     track_pars = [p for p in track_pars if p in s.columns]
     if track_point is None:
         track_point = point
@@ -36,11 +58,11 @@ def detect_bouts(s,e,dt,Npoints,point, config=None, bouts=['stride', 'pause', 't
     }
     with fun.suppress_stdout(show_output):
         if 'stride' in bouts:
-            detect_strides(**c, non_chunks=non_chunks, **kwargs)
+            detect_strides(**c, non_chunks=non_chunks,vel_par=vel_par,chunk_pars=chunk_pars, **kwargs)
         if 'pause' in bouts:
-            detect_pauses(**c, **kwargs)
+            detect_pauses(**c,vel_par=vel_par, **kwargs)
         if 'turn' in bouts:
-            detect_turns(**c, **kwargs)
+            detect_turns(**c,ang_vel_par=ang_vel_par, bend_vel_par=bend_vel_par,min_ang=min_ang, **kwargs)
         if source is not None :
             for b in bouts :
                 compute_chunk_bearing2source(s, b, source=source, distro_dir=distro_dir)
@@ -48,24 +70,28 @@ def detect_bouts(s,e,dt,Npoints,point, config=None, bouts=['stride', 'pause', 't
 
 
 
-def detect_turns(s, e, dt, track_pars, recompute=False, min_ang_vel=0.0, min_ang=5.0, chunk_only=None,
+def detect_turns(s, e, dt, track_pars, recompute=False, min_ang_vel=0.0, min_ang=5.0,
+                 ang_vel_par=None, bend_vel_par=None,chunk_only=None,
                  constant_bend_chunks=False, distro_dir=None, **kwargs):
     if set(nam.num(['Lturn', 'Rturn'])).issubset(e.columns.values) and not recompute:
         print('Turns are already detected. If you want to recompute it, set recompute_turns to True')
         return
     ss = s.loc[s[nam.id(chunk_only)].dropna().index] if chunk_only is not None else s
 
-    fo = 'front_orientation'
-    fov = nam.vel(fo)
+    if ang_vel_par is None :
+        ang_vel_par = nam.vel(nam.orient('front'))
+    if bend_vel_par is None :
+        bend_vel_par = nam.vel('bend')
 
-    detect_chunks(s,e,dt,chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=fov,
+
+    detect_chunks(s,e,dt,chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=ang_vel_par,
                        ROU_ranges=[[min_ang, np.inf], [-np.inf, -min_ang]],
                        par_ranges=[[min_ang_vel, np.inf], [-np.inf, -min_ang_vel]], merged_chunk='turn',
                        store_max=[True, False], store_min=[False, True])
     track_pars_in_chunks(s,e,chunks=['Lturn', 'Rturn'], pars=track_pars, merged_chunk='turn', distro_dir=distro_dir)
     if constant_bend_chunks:
         print('Additionally detecting constant bend chunks.')
-        detect_chunks(s,e,dt,chunk_names=['constant_bend'], chunk_only=chunk_only, par=nam.vel('bend'),
+        detect_chunks(s,e,dt,chunk_names=['constant_bend'], chunk_only=chunk_only, par=bend_vel_par,
                            par_ranges=[[-min_ang_vel, min_ang_vel]])
     print('All turns detected')
 
@@ -79,7 +105,7 @@ def detect_pauses(s, e, dt, track_pars,config=None, recompute=False, stride_non_
     sv_thr = config['scaled_vel_threshold'] if config is not None else 0.3
     par_range = [-np.inf, sv_thr]
     if vel_par is None:
-        vel_par = nam.scal('vel')
+        vel_par = nam.scal(nam.vel(''))
     non_overlap_chunk = 'stride' if stride_non_overlap else None
 
     detect_chunks(s, e, dt, chunk_names=[c], par=vel_par, par_ranges=[par_range],
@@ -93,7 +119,8 @@ def detect_pauses(s, e, dt, track_pars,config=None, recompute=False, stride_non_
 
 
 def detect_strides(s, e, dt, config=None, recompute=False, vel_par=None, track_point=None, track_pars=None,
-                   non_chunks=False, distro_dir=None, stride_p_dir=None, **kwargs):
+                   chunk_pars=[],non_chunks=False, distro_dir=None, stride_p_dir=None, **kwargs):
+
     c = 'stride'
     if nam.num(c) in e.columns.values and not recompute:
         print('Strides are already detected. If you want to recompute it, set recompute to True')
@@ -101,7 +128,7 @@ def detect_strides(s, e, dt, config=None, recompute=False, vel_par=None, track_p
 
     sv_thr = config['scaled_vel_threshold'] if config is not None else 0.3
     if vel_par is None:
-        vel_par = nam.scal('vel')
+        vel_par = nam.scal(nam.vel(''))
     mid_flag = nam.max(vel_par)
     edge_flag = nam.min(vel_par)
 
@@ -112,12 +139,10 @@ def detect_strides(s, e, dt, config=None, recompute=False, vel_par=None, track_p
                              track_point=track_point, distro_dir=distro_dir)
     if non_chunks:
         detect_non_chunks(s, e, dt, chunk_name=c, guide_parameter=vel_par)
-    track_pars_in_chunks(s, e, chunks=[c], pars=track_pars)
+    track_pars_in_chunks(s, e, chunks=[c], pars=track_pars,distro_dir=distro_dir)
 
     if stride_p_dir is not None:
-        create_chunk_dataset(s, c, pars=[vel_par, 'spinelength', nam.vel('front_orientation'),
-                                         nam.vel('rear_orientation'),
-                                         nam.vel('bend')], dir=stride_p_dir)
+        create_chunk_dataset(s, c, pars=chunk_pars, dir=stride_p_dir)
     if distro_dir is not None:
         create_par_distro_dataset(s, [nam.dur(c)], distro_dir)
 
@@ -160,6 +185,7 @@ def detect_chunks(s, e, dt, chunk_names, par, chunk_only=None, par_ranges=[[-np.
         p_max = nam.max(nam.chunk_track(c, par))
         p_min = nam.min(nam.chunk_track(c, par))
         for i, (id, d) in enumerate(zip(ids, data)):
+
             ii0 = d[(d < Vmax) & (d > Vmin)].index
             # ii0=np.unique(np.hstack([ii00,ii00[np.where(np.diff(ii00, prepend=[-np.inf]) == 2)[0]]+1]))
             s0s = ii0[np.where(np.diff(ii0, prepend=[-np.inf]) != 1)[0]]
@@ -186,6 +212,7 @@ def detect_chunks(s, e, dt, chunk_names, par, chunk_only=None, par_ranges=[[-np.
 
         for a, p in zip([S0, S1, Dur, Id, Max, Min], [p_s0, p_s1, p_dur, p_id, p_max, p_min]):
             a = a.flatten()
+            # print(p,a)
             s[p] = a
     compute_chunk_metrics(s, e, chunk_names)
     if merged_chunk is not None:
@@ -275,11 +302,12 @@ def compute_chunk_metrics(s, e, chunks):
         e[nam.cum(dur)] = s[dur].groupby('AgentID').sum()
         e[nam.mean(dur)] = s[dur].groupby('AgentID').mean()
         e[nam.std(dur)] = s[dur].groupby('AgentID').std()
-        e[nam.dur_ratio(c)] = e[nam.cum(dur)] / e['cum_dur']
+        e[nam.dur_ratio(c)] = e[nam.cum(dur)] / e[nam.cum('dur')]
 
 
-def detect_contacting_chunks(s, e, dt, chunk, track_point=None, mid_flag=None, edge_flag=None, control_pars=[],
+def detect_contacting_chunks(s, e, dt, chunk='stride', track_point=None, mid_flag=None, edge_flag=None, control_pars=[],
                              vel_par=None, chunk_dur_in_sec=None, distro_dir=None):
+
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     t0 = s.index.unique('Step').min()
@@ -295,17 +323,18 @@ def detect_contacting_chunks(s, e, dt, chunk, track_point=None, mid_flag=None, e
     c_chain_l = nam.length(c_chain)
     c_dst = nam.dst(chunk)
     c_sdst = nam.straight_dst(chunk)
-    if track_point is None:
+    scaled_chunk_strdst = nam.scal(c_sdst)
+    scaled_chunk_dst = nam.scal(c_dst)
+
+    if track_point in [None, 'centroid']:
         track_xy = ['x', 'y']
-        track_dst = 'dst' if 'dst' in s.columns else 'd'
+        track_dst = 'dst' if 'dst' in s.columns else 'distance'
     else:
         track_xy = nam.xy(track_point)
         track_dst = nam.dst(track_point)
 
     if 'length' in e.columns.values:
         lengths = e['length'].values
-        scaled_chunk_strdst = nam.scal(c_sdst)
-        scaled_chunk_dst = nam.scal(c_dst)
     else:
         lengths = None
 
@@ -339,6 +368,10 @@ def detect_contacting_chunks(s, e, dt, chunk, track_point=None, mid_flag=None, e
         freqs.fillna(value=mean_freq, inplace=True)
         chunk_dur_in_ticks = {id: 1 / freqs[id] / dt for id in ids}
         cpars.append(vel_par)
+        if edge_flag is None :
+            edge_flag=nam.min(vel_par)
+        if mid_flag is None :
+            mid_flag=nam.max(vel_par)
     elif chunk_dur_in_sec:
         chunk_dur_in_ticks = {id: chunk_dur_in_sec / dt for id in ids}
 
@@ -453,9 +486,8 @@ def track_pars_in_chunks(s, e, chunks, pars, mode='dif', merged_chunk=None, dist
             p_tracks = nam.max(nam.chunk_track(c, pars))
         elif mode == 'min':
             p_tracks = nam.min(nam.chunk_track(c, pars))
-        p0s = [f'{p}_at_{c0}' for p in pars]
-        p1s = [f'{p}_at_{c1}' for p in pars]
-
+        p0s = [nam.at(p, c0) for p in pars]
+        p1s = [nam.at(p, c1) for p in pars]
         for p, p_track, p0, p1 in zip(pars, p_tracks, p0s, p1s):
             p_pars = [p_track, p0, p1]
             p_array = np.zeros([Nticks, Nids, len(p_pars)]) * np.nan
@@ -482,9 +514,9 @@ def track_pars_in_chunks(s, e, chunks, pars, mode='dif', merged_chunk=None, dist
     if merged_chunk is not None:
         mc0, mc1, mcdur = nam.start(merged_chunk), nam.stop(merged_chunk), nam.dur(merged_chunk)
         for p in pars:
-            p_mc0, p_mc1, p_mc = f'{p}_at_{mc0}', f'{p}_at_{mc1}', nam.chunk_track(merged_chunk, p)
-            s[p_mc0] = s[[f'{p}_at_{nam.start(c)}' for c in chunks]].sum(axis=1, min_count=1)
-            s[p_mc1] = s[[f'{p}_at_{nam.stop(c)}' for c in chunks]].sum(axis=1, min_count=1)
+            p_mc0, p_mc1, p_mc = nam.at(p, mc0),nam.at(p, mc1), nam.chunk_track(merged_chunk, p)
+            s[p_mc0] = s[[nam.at(p, nam.start(c)) for c in chunks]].sum(axis=1, min_count=1)
+            s[p_mc1] = s[[nam.at(p, nam.stop(c)) for c in chunks]].sum(axis=1, min_count=1)
             s[p_mc] = s[[nam.chunk_track(c, p) for c in chunks]].sum(axis=1, min_count=1)
 
             if distro_dir is not None:
@@ -500,7 +532,7 @@ def track_pars_in_chunks(s, e, chunks, pars, mode='dif', merged_chunk=None, dist
 def compute_chunk_bearing2source(s,chunk, source=(-50.0, 0.0), distro_dir=None):
     c0 = nam.start(chunk)
     c1 = nam.stop(chunk)
-    ho = nam.unwrap('front_orientation')
+    ho = nam.unwrap(nam.orient('front'))
     ho0_par = f'{ho}_at_{c0}'
     ho1_par = f'{ho}_at_{c1}'
 
@@ -510,9 +542,9 @@ def compute_chunk_bearing2source(s,chunk, source=(-50.0, 0.0), distro_dir=None):
     y0_par = f'y_at_{c0}'
     y1_par = f'y_at_{c1}'
 
-    b0_par = f'bearing_to_{source}_at_{c0}'
-    b1_par = f'bearing_to_{source}_at_{c1}'
-    db_par = f'{chunk}_bearing_to_{source}_correction'
+    b0_par = f'{nam.bearing2(source)}_at_{c0}'
+    b1_par = f'{nam.bearing2(source)}_at_{c1}'
+    db_par = f'{chunk}_{nam.bearing2(source)}_correction'
 
     b0 = fun.compute_bearing2source(s[x0_par].dropna().values, s[y0_par].dropna().values,
                                     s[ho0_par].dropna().values, loc=source, in_deg=True)
@@ -531,26 +563,6 @@ def compute_chunk_bearing2source(s,chunk, source=(-50.0, 0.0), distro_dir=None):
 
 if __name__ == '__main__':
     from lib.stor.managing import get_datasets
-
     d = get_datasets(datagroup_id='SimGroup', last_common='single_runs', names=['dish/wwr'], mode='load')[0]
-
     s = d.step_data
-    print(s.columns)
     d.detect_bouts(show_output=True)
-    # e=d.end
-    # dt=d.dt
-    # Npoints=d.Npoints
-    # points=d.points
-    # angles=d.angles
-    # segs=d.segs
-    # point=d.point
-    # config=d.config
-    # par_distro_dir=d.par_distro_dir
-    print(s.columns)
-    # angular_processing(s,e,dt,Npoints,config, mode='full', dir=par_distro_dir)
-    # compute_spatial_metrics(s,e,dt, points=['centroid'])
-    # compute_extrema(s,dt, parameters=[nam.scal(nam.vel('centroid'))], interval_in_sec=0.3)
-    # compute_freq(s,e,dt, parameters=[nam.scal(nam.vel('centroid'))], freq_range=[0.7, 1.8])
-    # # s,e = compute_spatial_metrics(s,e,dt, points=['centroid'])
-    # print(s.columns)
-    # d.save()

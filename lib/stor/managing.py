@@ -5,7 +5,7 @@ import pandas as pd
 
 from distutils.dir_util import copy_tree
 
-from lib.anal.plotting import comparative_analysis, plot_marked_turns, plot_sample_marked_strides
+from lib.anal.plotting import comparative_analysis, plot_marked_turns, plot_marked_strides
 from lib.stor.building import build_Jovanic, build_Schleyer
 from lib.conf.conf import *
 from lib.stor.datagroup import LarvaDataGroup
@@ -121,7 +121,7 @@ def analyse_datasets(datagroup_id, save_to=None, sample_individuals=False, **kwa
         save_to = LarvaDataGroup(datagroup_id).plot_dir
     if sample_individuals:
         for d in ds:
-            plot_sample_marked_strides(datasets=[d], agent_idx=0, slice=[0, 180])
+            plot_marked_strides(datasets=[d], agent_idx=0, slice=[0, 180])
             try:
                 plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:1])
             except:

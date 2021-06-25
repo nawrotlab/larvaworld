@@ -54,7 +54,7 @@ class DefaultBrain(Brain):
                                                                             self.olfactor.get_dCon(),
                                                                             reward,
                                                                             self.olfactor.decay_coef)
-        lin = self.crawler.step(self.agent.get_sim_length()) if self.crawler else 0
+        lin = self.crawler.step(self.agent.sim_length) if self.crawler else 0
         self.olfactory_activation = self.olfactor.step(self.sense_odors(pos)) if self.olfactor else 0
         # print(np.round(list(self.sense_odors(pos).values()),4))
         # ... and finally step the turner...

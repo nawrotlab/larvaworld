@@ -44,7 +44,6 @@ class LarvaworldGui:
         self.tabs = tabs
         c = {'layout': self.get_layout(), 'size': gui.window_size, 'location': (300, 100), **gui.w_kws}
         self.window = sg.Window('Larvaworld gui', **c)
-        # self.window.maximize()
 
     def run(self):
         while True:

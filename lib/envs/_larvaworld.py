@@ -11,6 +11,7 @@ from mesa.datacollection import DataCollector
 
 from lib.anal.process.spatial import compute_preference_index
 from lib.conf.conf import loadConfDict, loadConf
+from lib.conf.par import GroupCollector, CompGroupCollector
 from lib.model.agents._larva import LarvaSim, LarvaReplay
 from lib.sim.conditions import PrefTrainCondition, get_exp_condition
 
@@ -55,9 +56,6 @@ class LarvaWorld:
                  progress_bar=None,
                  space_in_mm=False
                  ):
-        # name='basic'
-        # self.par_dict = build_par_dict(dt=dt)
-        # self.collection = Collection(name, par_dict=self.par_dict)
         self.space_in_mm = space_in_mm
         self.progress_bar = progress_bar
         self.vis_kwargs = vis_kwargs
@@ -563,7 +561,8 @@ class LarvaWorld:
         return self.is_running
 
     def set_end_condition(self):
-        self.exp_condition = get_exp_condition(self.experiment)(self)
+        k = get_exp_condition(self.experiment)
+        self.exp_condition = k(self) if k is not None else None
 
         # if self.experiment == 'capture_the_flag':
         #     for f in self.get_food():
@@ -597,9 +596,9 @@ class LarvaWorld:
         # elif self.experiment == 'odor_pref_train':
         #     self.exp_condition=PrefTrainCondition(self)
 
-
     def check_end_condition(self):
-        self.exp_condition.check(self)
+        if self.exp_condition is not None:
+            self.exp_condition.check(self)
         # if self.experiment == 'capture_the_flag':
         #     flag_p = self.flag.get_position()
         #     l_dst = -self.l_dst0 + fun.compute_dst(flag_p, self.l_base_p)
@@ -656,7 +655,6 @@ class LarvaWorld:
 
         # elif self.experiment == 'odor_pref_train':
         #     self.exp_condition.check(self)
-
 
     def move_larvae_to_center(self):
         N = len(self.get_flies())
@@ -936,9 +934,9 @@ class LarvaWorldSim(LarvaWorld):
         if self.physics_engine:
             self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
             self.update_trajectories(self.get_flies())
-        self.larva_step_col.collect(self)
-        for c in self.group_collectors:
-            c.collect()
+        if self.larva_step_col is not None:
+            self.larva_step_col.collect(self)
+        self.step_group_collector.collect()
         # for l in self.get_flies():
         #     # l.compute_next_action()
         #     l.collector.collect()
@@ -996,16 +994,24 @@ class LarvaWorldSim(LarvaWorld):
 
     def create_data_collectors(self, collected_pars):
         self.larva_step_col = TargetedDataCollector(schedule_id='active_larva_schedule', mode='step',
-                                                    pars=collected_pars['step'])
+                                                    pars=collected_pars['step']) if len(
+            collected_pars['step']) > 0 else None
 
         self.larva_end_col = TargetedDataCollector(schedule_id='active_larva_schedule', mode='endpoint',
-                                                   pars=collected_pars['endpoint'])
+                                                   pars=collected_pars['endpoint']) if len(
+            collected_pars['endpoint']) > 0 else None
 
         self.food_end_col = TargetedDataCollector(schedule_id='all_food_schedule', mode='endpoint',
                                                   pars=['initial_amount', 'final_amount'])
 
         self.table_collector = DataCollector(tables=collected_pars['tables']) if len(
             collected_pars['tables']) > 0 else None
+
+        self.step_group_collector = CompGroupCollector(objects=self.get_flies(), names=collected_pars['step_groups'],
+                                                       save_units=True, common=True, save_as='step.csv')
+
+        self.end_group_collector = CompGroupCollector(objects=self.get_flies(), names=collected_pars['end_groups'],
+                                                       save_units=True, common=True, save_as='end.csv')
 
     def eliminate_overlap(self):
         scale = 3.0
@@ -1048,7 +1054,8 @@ class LarvaWorldReplay(LarvaWorld):
             self.lengths = self.endpoint_data['length'].values
         except:
             self.lengths = np.ones(self.num_agents) * 5
-
+        # print(self.lengths)
+        # raise
         self.pars = self.step_data.columns.values
         self.mid_pars = [p for p in fun.flatten_list(dataset.points_xy) if p in self.pars]
         self.Npoints = int(len(self.mid_pars) / 2)
@@ -1091,7 +1098,10 @@ class LarvaWorldReplay(LarvaWorld):
                              food_pars=self.env_pars['food_params'])
 
     def create_flies(self):
+        # print(self.agent_ids)
         for i, id in enumerate(self.agent_ids):
+            # print(i,id)
+            # print(self.lengths[i])
             data = self.step_data.xs(id, level='AgentID', drop_level=True)
             f = LarvaReplay(model=self, unique_id=id, length=self.lengths[i], data=data)
             self.active_larva_schedule.add(f)

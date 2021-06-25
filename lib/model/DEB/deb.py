@@ -819,7 +819,6 @@ class DEB:
         elif assimilation_mode == 'deb':
             return self.deb_p_A
 
-
 def deb_default(id='DEB model', epochs=None, fs=None, substrate_quality=1.0, steps_per_day=24 * 60, **kwargs):
     deb = DEB(id=id, steps_per_day=steps_per_day, substrate_quality=substrate_quality, simulation=False, use_gut=False, **kwargs)
     # print(id, deb.base_f)
@@ -888,12 +887,6 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample='Fed', use_hun
     else :
         d_mod = deb_default(id=model_id,save_dict=save_dict,**kwargs)
         return d_sim, d_mod
-
-
-    
-
-
-
 
 if __name__ == '__main__':
     dt_bite=1/(24*60*60)*2

@@ -26,6 +26,9 @@ SimIdx_path = f'{ConfFolder}/SimIdx.txt'
 ParDb_path = f'{ConfFolder}/ParDatabase.csv'
 ParShelve_path = f'{ConfFolder}/ParShelve'
 ParDict_path = f'{ConfFolder}/ParDict.csv'
+ParDf_path= f'{ConfFolder}/ParDf.csv'
+# ParDict_path3 = f'{ConfFolder}/ParDict3.csv'
+UnitDict_path = f'{ConfFolder}/UnitDict.csv'
 LarvaShape_path = f'{ConfFolder}/larva_shape.csv'
 conf_paths = {
     'Data': f'{ConfFolder}/DataConfs.txt',
@@ -41,3 +44,6 @@ conf_paths = {
 
 VideoSlideFolder = f'{get_parent_dir()}/lib/gui/video_slides'
 IntroSlideFolder = f'{get_parent_dir()}/lib/gui/intro_slides'
+
+# new_format = False
+new_format = True

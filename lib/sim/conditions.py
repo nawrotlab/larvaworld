@@ -11,7 +11,7 @@ def get_exp_condition(exp):
         'capture_the_flag': CaptureFlagCondition,
         # 'odor_pref_train': PrefTrainCondition,
     }
-    return exp_condition_dict[exp]
+    return exp_condition_dict[exp] if exp in exp_condition_dict.keys() else None
 
 
 class PrefTrainCondition:

@@ -2,16 +2,21 @@
 import datetime
 import time
 import pickle
+from operator import attrgetter
 
 import lib.conf.data_conf as dat
 from lib.anal.plotting import *
+
 from lib.aux.collecting import output, midline_xy_pars
-from lib.conf.par import build_par_dict, Collection, AgentCollector, GroupCollector
+from lib.conf.par import build_par_dict, GroupCollector, collection_dict, combo_collection_dict
 from lib.envs._larvaworld import LarvaWorldSim
 from lib.conf.conf import loadConf, next_idx
 from lib.sim.enrichment import sim_enrichment
 from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.dtype_dicts as dtypes
+
+
+
 
 
 def run_sim_basic(
@@ -29,8 +34,8 @@ def run_sim_basic(
         **kwargs):
     # print(life_params)
     # print(sim_params['sim_dur'])
-    if collections is None:
-        collections = ['pose']
+
+
     np.random.seed(seed)
     id = sim_params['sim_id']
     dt = sim_params['dt']
@@ -67,22 +72,8 @@ def run_sim_basic(
                         life_params=life_params, Nsteps=Nsteps,
                         save_to=d.vis_dir, experiment=experiment,
                         **kwargs, vis_kwargs=vis_kwargs)
-    pargroup_names = []
-    # pargroup_names = ['stride']
-    # pargroup_names = ['pose', 'angular', 'dispersion']
-    par_dict = build_par_dict(dt=env.dt)
-    env.group_collectors = [GroupCollector(objects=env.get_flies(), name=n, par_dict=par_dict, common=True,
-                                           save_to=d.dir_dict['table']) for n in pargroup_names]
-    # save_to=f'{d.table_dir}/{n}') for n in pargroup_names]
-    # Prepare the odor layer for a number of timesteps
-    # odor_prep_time = 0.0
-    # larva_prep_time = 0.5
-    # env.prepare_odor_layer(int(odor_prep_time * 60 / env.dt))
-    # Prepare the flies for a number of timesteps
-    # env.prepare_flies(int(larva_prep_time * 60 / env.dt))
     print()
     print(f'---- Simulation {id} ----')
-
     # Run the simulation
     completed = env.run()
     print()
@@ -91,71 +82,106 @@ def run_sim_basic(
         print('    Simulation aborted!')
         res = None
     else:
-        # Read the data collected during the simulation
-        env.larva_end_col.collect(env)
-        env.food_end_col.collect(env)
-
-        d.set_data(step=env.larva_step_col.get_agent_vars_dataframe(),
-                   end=env.larva_end_col.get_agent_vars_dataframe().droplevel('Step'),
-                   food=env.food_end_col.get_agent_vars_dataframe().droplevel('Step'))
-
         end = time.time()
         dur = end - start
         param_dict['duration'] = np.round(dur, 2)
-
         print(f'    Simulation completed in {np.round(dur).astype(int)} seconds!')
-        # Save simulation data and parameters
-        if save_data_flag:
-            if enrich and experiment is not None:
-                d = sim_enrichment(d, experiment)
-            d.save()
-            if env.table_collector is not None:
-                d.save_tables(env.table_collector.tables)
-            fun.dict_to_file(param_dict, d.dir_dict['sim'])
-            for l in env.get_flies():
-                try:
-                    l.deb.save_dict(d.dir_dict['deb'])
-                except:
-                    pass
-            for c in env.group_collectors:
-                c.save()
-        res = d
+        res=store_sim_data(env, d, save_data_flag, enrich, experiment, param_dict)
     env.close()
-    # k=res.load_table('pose')
-    # k['dst']=k['d']
-    #
-    # # print([par_dict[v].unit for v in k.columns])
-    # print(k.columns)
-    # res.detect_strides(table_name='stride')
-    # print(k.columns)
-    # k = res.load_table('stride')
-    # print(k.columns)
     return res
 
 
 ser = pickle.dumps(run_sim_basic)
 run_sim = pickle.loads(ser)
 
+def store_sim_data(env, d, save_data_flag, enrich, experiment, param_dict):
+    # Read the data collected during the simulation
+    if not paths.new_format :
+        # old format
+        if env.larva_step_col is not None:
+            step = env.larva_step_col.get_agent_vars_dataframe()
+        else:
+            step = None
+        if env.larva_end_col is not None:
+            env.larva_end_col.collect(env)
+            end = env.larva_end_col.get_agent_vars_dataframe().droplevel('Step')
+        else:
+            end = None
+        if env.food_end_col is not None:
+            env.food_end_col.collect(env)
+            food = env.food_end_col.get_agent_vars_dataframe().droplevel('Step')
+        else:
+            food = None
+        if env.table_collector is not None:
+            d.save_tables(env.table_collector.tables)
+        d.set_data(step=step,
+                   end=end,
+                   food=food)
+
+    else :
+        # new format
+        save_to = d.dir_dict['table'] if save_data_flag else None
+
+        df = env.step_group_collector.save(save_to=save_to)
+
+        # print(df.columns)
+
+        env.end_group_collector.collect(df=df)
+        df0 = env.end_group_collector.save(save_to=save_to)
+        df0=df0.droplevel('Step')
+        d.set_data(step=df, end=df0)
+    if enrich and experiment is not None:
+        d = sim_enrichment(d, experiment)
+    # Save simulation data and parameters
+    if save_data_flag:
+        d.save()
+        fun.dict_to_file(param_dict, d.dir_dict['sim'])
+        for l in env.get_flies():
+            try:
+                l.deb.save_dict(d.dir_dict['deb'])
+            except:
+                pass
+    return d
+
 
 def collection_conf(dataset, collections):
-    d = dataset
-    step_pars = []
-    end_pars = []
-    tables = {}
-    for c in collections:
-        if c == 'midline':
-            step_pars += list(midline_xy_pars(N=d.Nsegs).keys())
-        elif c == 'contour':
-            step_pars += fun.flatten_list(d.contour_xy)
-        else:
-            step_pars += output[c]['step']
-            end_pars += output[c]['endpoint']
-        if 'tables' in list(output[c].keys()):
-            tables.update(output[c]['tables'])
+    if not paths.new_format :
+        if collections is None:
+            collections = ['pose']
+        cd=output
+        d = dataset
+        step_pars = []
+        end_pars = []
+        tables = {}
+        # groups = []
+        for c in collections:
+            if c == 'midline':
+                step_pars += list(midline_xy_pars(N=d.Nsegs).keys())
+            elif c == 'contour':
+                step_pars += fun.flatten_list(d.contour_xy)
+            else:
+                step_pars += cd[c]['step']
+                end_pars += cd[c]['endpoint']
+            if 'tables' in list(cd[c].keys()):
+                tables.update(cd[c]['tables'])
+            # if 'groups' in list(cd[c].keys()):
+            #     groups += cd[c]['groups']
 
-    collected_pars = {'step': fun.unique_list(step_pars),
-                      'endpoint': fun.unique_list(end_pars),
-                      'tables': tables}
+        collected_pars = {'step': fun.unique_list(step_pars),
+                          'endpoint': fun.unique_list(end_pars),
+                          'tables': tables,
+                          'step_groups': [],
+                          'end_groups': [],
+                          }
+
+    else :
+        cd = combo_collection_dict
+        cs=[cd[c] for c in collections if c in cd.keys()]
+        collected_pars = {'step': [],
+                          'endpoint': [],
+                          'tables': {},
+                          'step_groups': fun.flatten_list([c['step'] for c in cs]),
+                          'end_groups': fun.flatten_list([c['end'] for c in cs])}
     return collected_pars
 
 
@@ -164,6 +190,7 @@ def load_reference_dataset(dataset_id='reference', load_data=False):
     if not load_data:
         reference_dataset.load(step=False)
     return reference_dataset
+
 
 def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, larva_model=None):
     exp_conf = loadConf(exp_type, 'Exp')

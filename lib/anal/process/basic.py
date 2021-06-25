@@ -10,6 +10,7 @@ from lib.anal.process.spatial import spatial_processing
 
 
 def compute_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
+
     if abs_threshold is None:
         abs_threshold = [+np.inf, -np.inf]
     order = np.round(interval_in_sec / dt).astype(int)
@@ -169,9 +170,9 @@ def preprocess(s,e,dt,Npoints, dic, config=None,  recompute=False,show_output=Tr
 def generate_traj_colors(s, sp_vel=None, ang_vel=None):
     N = len(s.index.unique('Step'))
     if sp_vel is None :
-        sp_vel =nam.scal('vel')
+        sp_vel =nam.scal(nam.vel(''))
     if ang_vel is None :
-        ang_vel =nam.vel('front_orientation')
+        ang_vel =nam.vel(nam.orient('front'))
     pars = [sp_vel, ang_vel]
     edge_colors = [[(255, 0, 0), (0, 255, 0)], [(255, 0, 0), (0, 255, 0)]]
     labels = ['lin_color', 'ang_color']
@@ -215,21 +216,4 @@ if __name__ == '__main__':
     from lib.stor.managing import get_datasets
     d = get_datasets(datagroup_id='SimGroup', last_common='single_runs', names=['dish/ppp'], mode='load')[0]
     s=d.step_data
-    # e=d.end
-    # dt=d.dt
-    # Npoints=d.Npoints
-    # points=d.points
-    # angles=d.angles
-    # segs=d.segs
-    # point=d.point
-    # config=d.config
-    # par_distro_dir=d.par_distro_dir
-    print(s.columns)
     d.perform_angular_analysis(show_output=True)
-    # angular_processing(s,e,dt,Npoints,config, mode='full', dir=par_distro_dir)
-    # compute_spatial_metrics(s,e,dt, points=['centroid'])
-    # compute_extrema(s,dt, parameters=[nam.scal(nam.vel('centroid'))], interval_in_sec=0.3)
-    # compute_freq(s,e,dt, parameters=[nam.scal(nam.vel('centroid'))], freq_range=[0.7, 1.8])
-    # # s,e = compute_spatial_metrics(s,e,dt, points=['centroid'])
-    print(s.columns)
-    # d.save()

@@ -49,8 +49,10 @@ def ast(p):
 def th(p):
     return fr'$\theta_{{{p.replace("$", "")}}}$'
 
+
 def Delta(p):
     return fr'$\Delta{{{p.replace("$", "")}}}$'
+
 
 def delta(p):
     return fr'$\delta{{{p.replace("$", "")}}}$'
@@ -97,7 +99,7 @@ def set_ParDb():
     bv, fov, rov = nam.vel([b, fo, ro])
     ba, foa, roa = nam.acc([b, fo, ro])
     fou, rou = nam.unwrap([fo, ro])
-    d, v, a = 'dst', 'vel', 'acc'
+    d, v, a = nam.dst(''), nam.vel(''), nam.acc('')
     sd, sv, sa = nam.scal([d, v, a])
     ld, lv, la = nam.lin([d, v, a])
     sld, slv, sla = nam.scal([ld, lv, la])
@@ -216,6 +218,9 @@ def set_ParDb():
         [sa, 'sa', sup(dot('v'), '*'), sup(dot(hat('v')), '*'), l_sc_acc],
         [slv, 'slv', subsup('v', 'l', '*'), subsup(hat('v'), 'l', '*'), l_sc_vel],
         [sla, 'sla', subsup(dot('v'), 'l', '*'), subsup(dot(hat('v')), 'l', '*'), l_sc_acc],
+        [nam.scal(nam.dst2('center')), 'sd_cent', subsup('d', 'cent', '*'), subsup(hat('d'), 'cent', '*'), l_sc_dst],
+        [nam.scal(nam.dst2('chemotax_odor')), 'sd_chem', subsup('d', 'chem', '*'), subsup(hat('d'), 'chem', '*'),
+         l_sc_dst],
         [cum_sd, 'cum_sd', subsup('d', 'cum', '*'), subsup(hat('d'), 'cum', '*'), l_sc_dst],
         [fsv, 'fsv', subsup('f', 'v', '*'), subsup(hat('f'), 'v', '*'), l_freq],
     ])
@@ -289,7 +294,7 @@ def set_ParDb():
     dsp_ar = np.array(dsp_ar)
 
     par_ar = np.array([
-        ['cum_dur', 'cum_t', sub('t', 'cum'), sub(hat('t'), 'cum'), l_time],
+        [nam.cum('dur'), 'cum_t', sub('t', 'cum'), sub(hat('t'), 'cum'), l_time],
         ['length', 'l_mu', bar('l'), bar(hat('l')), l_body_length],
         ['stride_reoccurence_rate', 'str_rr', sub('str', 'rr'), sub(hat('str'), 'rr'), '-'],
         ['length', 'l', 'l', hat('l'), l_body_length],
@@ -307,13 +312,17 @@ def set_ParDb():
         ['Nlarvae', 'lar_N', sub('N', 'larvae'), sub(hat('N'), 'larvae'), f'# larvae'],
     ])
 
-    orient_ar = np.array([[f'turn_{fou}', 'tur_fo', r'$\theta_{turn}$', r'$\hat{\theta}_{turn}$', l_angle],
-                          [f'Lturn_{fou}', 'Ltur_fo', r'$\theta_{Lturn}$', r'$\hat{\theta}_{Lturn}$', l_angle],
-                          [f'Rturn_{fou}', 'Rtur_fo', r'$\theta_{Rturn}$', r'$\hat{\theta}_{Rturn}$', l_angle],
-                          [srd_fo, 'str_fo', r'$\Delta{\theta}_{or_{f}}$', r'$\Delta{\hat{\theta}}_{or_{f}}$', l_angle],
-                          [srd_ro, 'str_ro', r'$\Delta{\theta}_{or_{r}}$', r'$\Delta{\hat{\theta}}_{or_{r}}$', l_angle],
-                          [srd_b, 'str_b', r'$\Delta{\theta}_{b}$', r'$\Delta{\hat{\theta}}_{b}$', l_angle]
-                          ])
+    orient_ar = np.array([
+        [f'turn_{fou}', 'tur_fou', r'$\theta_{turn}$', r'$\hat{\theta}_{turn}$', l_angle],
+        [f'Lturn_{fou}', 'Ltur_fou', r'$\theta_{Lturn}$', r'$\hat{\theta}_{Lturn}$', l_angle],
+        [f'Rturn_{fou}', 'Rtur_fou', r'$\theta_{Rturn}$', r'$\hat{\theta}_{Rturn}$', l_angle],
+        [f'turn_{fo}', 'tur_fo', r'$\theta_{turn}$', r'$\hat{\theta}_{turn}$', l_angle],
+        [f'Lturn_{fo}', 'Ltur_fo', r'$\theta_{Lturn}$', r'$\hat{\theta}_{Lturn}$', l_angle],
+        [f'Rturn_{fo}', 'Rtur_fo', r'$\theta_{Rturn}$', r'$\hat{\theta}_{Rturn}$', l_angle],
+        [srd_fo, 'str_fo', r'$\Delta{\theta}_{or_{f}}$', r'$\Delta{\hat{\theta}}_{or_{f}}$', l_angle],
+        [srd_ro, 'str_ro', r'$\Delta{\theta}_{or_{r}}$', r'$\Delta{\hat{\theta}}_{or_{r}}$', l_angle],
+        [srd_b, 'str_b', r'$\Delta{\theta}_{b}$', r'$\Delta{\hat{\theta}}_{b}$', l_angle]
+    ])
 
     temp_tor = []
     for i in [2, 5, 10, 20]:
@@ -385,6 +394,8 @@ def set_ParDb():
 
     par_db['unit'].loc['str_fo'] = r'$\Delta\theta_{or}$ over strides $(deg)$'
     par_db['unit'].loc['str_ro'] = r'$\Delta\theta_{or_{r}}$ over strides $(deg)$'
+    par_db['unit'].loc['tur_fou'] = r'$\Delta\theta_{or}$ over turns $(deg)$'
+    par_db['unit'].loc['tur_rou'] = r'$\Delta\theta_{or_{r}}$ over turns $(deg)$'
     par_db['unit'].loc['tur_fo'] = r'$\Delta\theta_{or}$ over turns $(deg)$'
     par_db['unit'].loc['tur_ro'] = r'$\Delta\theta_{or_{r}}$ over turns $(deg)$'
 
@@ -398,25 +409,25 @@ def set_ParDb():
                            }
 
     par_db.loc['sf_am_V'] = {'par': 'ingested_body_volume_ratio',
-                           'symbol': '${m^{V}}_{feed}$',
-                           'exp_symbol': '${\hat{m^{V}}}_{feed}$',
-                           'unit': 'food intake as % larval volume',
-                           # 'collect' : None
-                           }
-
-    par_db.loc['sf_am_Vg'] = {'par': 'ingested_gut_volume_ratio',
-                             'symbol': '${m^{V_{gut}}_{feed}$',
-                             'exp_symbol': '${\hat{m^{V_{gut}}}}_{feed}$',
-                             'unit': 'food intake as % gut volume',
+                             'symbol': '${m^{V}}_{feed}$',
+                             'exp_symbol': '${\hat{m^{V}}}_{feed}$',
+                             'unit': 'food intake as % larval volume',
                              # 'collect' : None
                              }
 
+    par_db.loc['sf_am_Vg'] = {'par': 'ingested_gut_volume_ratio',
+                              'symbol': '${m^{V_{gut}}_{feed}$',
+                              'exp_symbol': '${\hat{m^{V_{gut}}}}_{feed}$',
+                              'unit': 'food intake as % gut volume',
+                              # 'collect' : None
+                              }
+
     par_db.loc['sf_am_A'] = {'par': 'ingested_body_area_ratio',
-                           'symbol': '${m^{A}}_{feed}$',
-                           'exp_symbol': '${\hat{m^{A}}}_{feed}$',
-                           'unit': 'food intake as % larval area',
-                           # 'collect' : None
-                           }
+                             'symbol': '${m^{A}}_{feed}$',
+                             'exp_symbol': '${\hat{m^{A}}}_{feed}$',
+                             'unit': 'food intake as % larval area',
+                             # 'collect' : None
+                             }
 
     par_db.loc['sf_am_M'] = {'par': 'ingested_body_mass_ratio',
                              'symbol': '${m^{M}}_{feed}$',
@@ -440,18 +451,18 @@ def set_ParDb():
                              }
 
     par_db.loc['cum_reward'] = {'par': 'cum_reward',
-                             'symbol': '${R}_{cum}$',
-                             'exp_symbol': '${\hat{R}_{cum}$',
-                             'unit': 'Reward R(t)',
-                             # 'collect' : 'first_odor_concentration'
-                             }
+                                'symbol': '${R}_{cum}$',
+                                'exp_symbol': '${\hat{R}_{cum}$',
+                                'unit': 'Reward R(t)',
+                                # 'collect' : 'first_odor_concentration'
+                                }
 
     par_db.loc['D_olf'] = {'par': 'best_olfactor_decay',
-                             'symbol': '${D}_{olf}$',
-                             'exp_symbol': '${\hat{D}_{olf}$',
-                             'unit': 'Olfactor decay coeeficient',
-                             # 'collect' : 'first_odor_concentration'
-                             }
+                           'symbol': '${D}_{olf}$',
+                           'exp_symbol': '${\hat{D}_{olf}$',
+                           'unit': 'Olfactor decay coeeficient',
+                           # 'collect' : 'first_odor_concentration'
+                           }
 
     par_db.loc['c_odor1'] = {'par': 'first_odor_concentration',
                              'symbol': '${C}_{odor_{1}}$',
@@ -482,11 +493,11 @@ def set_ParDb():
                            }
 
     par_db.loc['y'] = {'par': 'y',
-                           'symbol': '$y$',
-                           'exp_symbol': '$\hat{y}$',
-                           'unit': 'Y position $(mm)$',
-                           # 'collect' : 'turner_activation'
-                           }
+                       'symbol': '$y$',
+                       'exp_symbol': '$\hat{y}$',
+                       'unit': 'Y position $(mm)$',
+                       # 'collect' : 'turner_activation'
+                       }
 
     par_db.loc['x'] = {'par': 'x',
                        'symbol': '$x$',
@@ -510,36 +521,36 @@ def set_ParDb():
                              }
 
     par_db.loc['fo2cen'] = {'par': 'orientation_to_center',
-                             'symbol': r'$\theta_{or_{cen}}$',
-                             'exp_symbol': '$\hat{theta}_{or_{cen}}$',
-                             'unit': 'orientation angle $(deg)$',
-                             # 'lim': [-180, 180],
-                             # 'collect' : 'ang_activity'
-                             }
-
-    par_db.loc['abs_r'] = {'par': 'food_absorption_efficiency',
-                            'symbol': r'$r_{absorption}$',
-                            'exp_symbol': '$\hat{r}_{absorption}$',
-                            'unit': 'food absorption ratio $(-)$',
+                            'symbol': r'$\theta_{or_{cen}}$',
+                            'exp_symbol': '$\hat{theta}_{or_{cen}}$',
+                            'unit': 'orientation angle $(deg)$',
                             # 'lim': [-180, 180],
                             # 'collect' : 'ang_activity'
                             }
 
-    par_db.loc['f_out_r'] = {'par': 'faeces_ratio',
-                           'symbol': r'$r_{faeces}$',
-                           'exp_symbol': '$\hat{r}_{faeces}$',
-                           'unit': 'faeces ratio $(-)$',
+    par_db.loc['abs_r'] = {'par': 'food_absorption_efficiency',
+                           'symbol': r'$r_{absorption}$',
+                           'exp_symbol': '$\hat{r}_{absorption}$',
+                           'unit': 'food absorption ratio $(-)$',
                            # 'lim': [-180, 180],
                            # 'collect' : 'ang_activity'
                            }
 
-    par_db.loc['f_fee_mu'] = {'par': 'mean_feed_freq',
-                             'symbol': sub(bar('f'), 'feed'),
-                             'exp_symbol': sub(hat(bar('f')), 'feed'),
-                             'unit': l_freq,
+    par_db.loc['f_out_r'] = {'par': 'faeces_ratio',
+                             'symbol': r'$r_{faeces}$',
+                             'exp_symbol': '$\hat{r}_{faeces}$',
+                             'unit': 'faeces ratio $(-)$',
                              # 'lim': [-180, 180],
                              # 'collect' : 'ang_activity'
                              }
+
+    par_db.loc['f_fee_mu'] = {'par': 'mean_feed_freq',
+                              'symbol': sub(bar('f'), 'feed'),
+                              'exp_symbol': sub(hat(bar('f')), 'feed'),
+                              'unit': l_freq,
+                              # 'lim': [-180, 180],
+                              # 'collect' : 'ang_activity'
+                              }
 
     par_db['lim'] = None
     par_db['lim'].loc['f_out_r'] = [0, 1]
@@ -559,8 +570,8 @@ def set_ParDb():
 
     par_db['lim'].loc['g_odor1'] = [-500.0, 500.0]
     par_db['lim'].loc['g_odor2'] = [-500.0, 500.0]
-    par_db['lim'].loc['c_odor1'] = [0.0, 8.0]
-    par_db['lim'].loc['dc_odor1'] = [-0.05, 0.05]
+    # par_db['lim'].loc['c_odor1'] = [0.0, 8.0]
+    # par_db['lim'].loc['dc_odor1'] = [-0.05, 0.05]
     par_db['lim'].loc['A_olf'] = [-1.0, 1.0]
     par_db['lim'].loc['A_tur'] = [10.0, 40.0]
     par_db['lim'].loc['Act_tur'] = [-20.0, 20.0]
@@ -579,6 +590,8 @@ def set_ParDb():
     par_db['lim'].loc['tor20_mu'] = [0.0, 0.5]
     par_db['lim'].loc['str_fo_mu'] = [-5.0, 5.0]
     par_db['lim'].loc['str_fo_std'] = [10.0, 40.0]
+    par_db['lim'].loc['tur_fou_mu'] = [5.0, 25.0]
+    par_db['lim'].loc['tur_fou_std'] = [10.0, 40.0]
     par_db['lim'].loc['tur_fo_mu'] = [5.0, 25.0]
     par_db['lim'].loc['tur_fo_std'] = [10.0, 40.0]
     par_db['lim'].loc['b_mu'] = [-5.0, 5.0]
@@ -594,19 +607,19 @@ def set_ParDb():
     for k, v in step_database.items():
         par_db['collect'].loc[par_db['par'] == k] = v
 
-    par_db['disp_name']=par_db['par']
-    disp_dict={
-        'sv' : r'velocity$_{scaled}$',
-        'sv_mu' : r'mean velocity$_{scaled}$',
-        'v' : 'velocity',
-        'l_mu' : 'body length',
-        'fsv' : 'crawl frequency',
-        'f_fee_mu' : 'mean feed frequency',
-        'str_sd_mu' : r'stridestep$_{scaled}$ mean',
-        'str_sd_std' : r'stridestep$_{scaled}$ std',
-        'b' : 'body bend',
-        'b_mu' : 'body bend mean',
-        'b_std' : 'body bend std',
+    par_db['disp_name'] = par_db['par']
+    disp_dict = {
+        'sv': r'velocity$_{scaled}$',
+        'sv_mu': r'mean velocity$_{scaled}$',
+        'v': 'velocity',
+        'l_mu': 'body length',
+        'fsv': 'crawl frequency',
+        'f_fee_mu': 'mean feed frequency',
+        'str_sd_mu': r'stridestep$_{scaled}$ mean',
+        'str_sd_std': r'stridestep$_{scaled}$ std',
+        'b': 'body bend',
+        'b_mu': 'body bend mean',
+        'b_std': 'body bend std',
         'bv': 'bend velocity',
         'bv_mu': 'bend velocity mean',
         'bv_std': 'bend velocity std',
@@ -615,6 +628,8 @@ def set_ParDb():
         'fov_std': 'turn velocity std',
         'str_fo_mu': r'stride $\Delta_{or}$ mean',
         'str_fo_std': r'stride $\Delta_{or}$ std',
+        'tur_fou_mu': 'turn angle mean',
+        'tur_fou_std': 'turn angle std',
         'tur_fo_mu': 'turn angle mean',
         'tur_fo_std': 'turn angle std',
         'pau_t_mu': 'pause duration mean',
@@ -626,11 +641,11 @@ def set_ParDb():
         'tur_tr': 'turn time ratio',
         'sdisp40_fin': r'final dispersion$_{scaled}$ 40 sec',
         'disp40_fin': r'final dispersion 40 sec',
-        **{f'tor{ii}' : rf'tortuosity$_{{{ii} sec}}$' for ii in [2,5,10,20]},
-        **{f'tor{ii}_mu' : rf'tortuosity$_{{{ii} sec}}$ mean' for ii in [2,5,10,20]},
-        **{f'tor{ii}_std' : rf'tortuosity$_{{{ii} sec}}$ std' for ii in [2,5,10,20]},
+        **{f'tor{ii}': rf'tortuosity$_{{{ii} sec}}$' for ii in [2, 5, 10, 20]},
+        **{f'tor{ii}_mu': rf'tortuosity$_{{{ii} sec}}$ mean' for ii in [2, 5, 10, 20]},
+        **{f'tor{ii}_std': rf'tortuosity$_{{{ii} sec}}$ std' for ii in [2, 5, 10, 20]},
     }
-    for kk,vv in disp_dict.items() :
+    for kk, vv in disp_dict.items():
         par_db['disp_name'].loc[kk] = vv
 
     par_db = set_dtype(par_db)
@@ -710,7 +725,7 @@ def set_ParShelve(par_db):
 
 
 def get_par_dict(short=None, par=None, retrieve_from='shelve'):
-    dic=None
+    dic = None
     if retrieve_from == 'shelve':
         db = shelve.open(paths.ParShelve_path)
     elif retrieve_from == 'par_db':
@@ -730,7 +745,7 @@ def get_par_dict(short=None, par=None, retrieve_from='shelve'):
     return dic
 
 
-def par_dict_lists(shorts=None, pars=None, retrieve_from='shelve',to_return=['par', 'symbol', 'unit', 'lim']):
+def par_dict_lists(shorts=None, pars=None, retrieve_from='shelve', to_return=['par', 'symbol', 'unit', 'lim']):
     if shorts is not None:
         par_dicts = [get_par_dict(short=short, retrieve_from=retrieve_from) for short in shorts]
     elif pars is not None:
@@ -779,6 +794,6 @@ if __name__ == '__main__':
     #     print(p)
     # print(par_db.loc['g_odor1'])
     # print('final_dst_to_chemotax_odor' in list(step_database.keys()))
-    print(par_in_db(par='final_dst_to_chemotax_odor'))
-    # print(get_par_dict(par='cum_dst', retrieve_from='par_db'))
-    print(par_db.loc['l'])
+    # print(par_in_db(par='stride_start'))
+    # print(get_par_dict(par='stride_start', retrieve_from='par_db'))
+    print(par_db.loc['tur_id'])

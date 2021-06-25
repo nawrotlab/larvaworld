@@ -1,6 +1,7 @@
 import copy
 import inspect
 import os
+import time
 import webbrowser
 from ast import literal_eval
 from typing import List, Tuple, Type
@@ -1174,7 +1175,7 @@ def named_list_layout(text, key, choices, readonly=True, enable_events=True):
 
 class Collapsible:
     def __init__(self, name, state, content, disp_name=None, toggle=None, disabled=False, next_to_header=None,
-                 auto_open=True):
+                 auto_open=False):
         self.name = name
         if disp_name is None:
             disp_name = name
@@ -1182,15 +1183,18 @@ class Collapsible:
         self.state = state
         self.toggle = toggle
         self.auto_open = auto_open
-        cc={'enable_events' : True, 'text_color' :'black'}
-        self.sec_symbol=sg.T(SYMBOL_DOWN if state else SYMBOL_UP, k=f'OPEN SEC {name}', **cc,**t2_kws )
-        header = [self.sec_symbol,sg.T(disp_name, **cc,**t12_kws )]
+        self.sec_symbol=self.get_symbol()
+        header = [self.sec_symbol,sg.T(disp_name,enable_events=True, text_color='black',**t12_kws )]
         if toggle is not None:
             header.append(BoolButton(name, toggle, disabled))
         if next_to_header is not None:
             header += next_to_header
-        self.content=collapse(content, f'SEC {name}', visible=state)
-        self.section = [header, [self.content]]
+        temp=collapse(content,f'SEC {name}', state)
+        self.section = [header, [temp]]
+
+    def get_symbol(self):
+        return sg.T(SYMBOL_DOWN if self.state else SYMBOL_UP, k=f'OPEN SEC {self.name}',
+                    enable_events=True, text_color='black', **t2_kws)
 
     def get_section(self, as_col=True):
         return [sg.Col(self.section)] if as_col else self.section
@@ -1339,11 +1343,15 @@ class CollapsibleDict(Collapsible):
         if dict_name is None:
             dict_name = name
         self.dict_name = dict_name
+        # s0=time.time()
         self.sectiondict = SectionDict(name=dict_name, dict=dict, type_dict=type_dict,
                                        toggled_subsections=toggled_subsections)
         content = self.sectiondict.init_section()
+        # s1 = time.time()
         super().__init__(name, state, content, **kwargs)
 
+        # s2 = time.time()
+        # print(int((s1-s0)*100000),int((s2-s1)*100000))
     def get_dict(self, values, window, check_toggle=True):
         if self.state is None:
             return None

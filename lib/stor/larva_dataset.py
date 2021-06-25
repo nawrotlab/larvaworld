@@ -3,6 +3,8 @@ import os.path
 import shutil
 from distutils.dir_util import copy_tree
 
+import pandas as pd
+
 from lib.anal.process.basic import preprocess, process
 from lib.anal.process.bouts import detect_bouts
 from lib.anal.process.spatial import align_trajectories, fixate_larva
@@ -103,14 +105,16 @@ class LarvaDataset:
         self.num_ticks = self.step_data.index.unique('Step').size
         self.starting_tick = int(self.step_data.index.unique('Step')[0])
         self.Nagents = len(self.agent_ids)
-        try:
-            fs = [f'{self.aux_dir}/{f}' for f in os.listdir(self.aux_dir)]
-            ns = fun.flatten_list([[f'{f}/{n}' for n in os.listdir(f) if n.endswith('.csv')] for f in fs])
-            for n in ns:
+        fs = [f'{self.aux_dir}/{f}' for f in os.listdir(self.aux_dir)]
+        ns = fun.flatten_list([[f'{f}/{n}' for n in os.listdir(f) if n.endswith('.csv')] for f in fs])
+        for n in ns:
+            # print(n)
+            try:
                 df = pd.read_csv(n, index_col=0)
                 df.loc[~df.index.isin(agents)].to_csv(n, index=True, header=True)
-        except:
-            pass
+                # print('ddd')
+            except:
+                pass
         if is_last:
             self.save()
         if show_output:
@@ -143,9 +147,9 @@ class LarvaDataset:
             print(f'{len(pars)} parameters dropped. {len(s.columns)} remain.')
 
     def get_unused_pars(self):
-        vels = ['vel', nam.scal('vel')]
-        lin = ['dst', 'vel', 'acc']
-        lins = lin + nam.scal(lin) + nam.cum(['dst', nam.scal('dst')]) + nam.max(vels) + nam.min(vels)
+        vels = [nam.vel(''), nam.scal(nam.vel(''))]
+        lin = [nam.dst(''), nam.vel(''), nam.acc('')]
+        lins = lin + nam.scal(lin) + nam.cum([nam.dst(''), nam.scal(nam.dst(''))]) + nam.max(vels) + nam.min(vels)
         beh = ['stride', nam.chain('stride'), 'pause', 'turn', 'Lturn', 'Rturn']
         behs = nam.start(beh) + nam.stop(beh) + nam.id(beh) + nam.dur(beh) + nam.length(beh)
         str = [nam.dst('stride'), nam.straight_dst('stride'), nam.orient('stride'), 'dispersion']
@@ -232,11 +236,29 @@ class LarvaDataset:
                 raise ValueError('Neither filename nor parameter provided')
         dir = self.dir_dict[type]
         path = f'{dir}/{file}'
+        # print(path)
+        # raise
+        u_path=f'{dir}/units.csv'
         index_col = 0 if type != 'table' else ['Step', 'AgentID']
+
+
         try:
-            return pd.read_csv(path, index_col=index_col)
+            df= pd.read_csv(path, index_col=index_col)
         except:
-            raise ValueError(f'No data found at {path}')
+            try :
+                dic= fun.load_dicts([path])[0]
+                df=pd.DataFrame.from_dict(dic)
+                df.index.set_names(index_col, inplace=True)
+                # return df
+            except :
+                raise ValueError(f'No data found at {path}')
+
+        if type != 'table' :
+            return df
+        else :
+            u_dic = fun.load_dicts([u_path])[0]
+            return df, u_dic
+
 
     def load_deb_dicts(self, ids=None):
         if ids is None:
@@ -254,7 +276,8 @@ class LarvaDataset:
         elif type(track_point) == int:
             track_point = 'centroid' if track_point == -1 else self.points[track_point]
 
-        pos_p = nam.xy(track_point) if set(nam.xy(track_point)).issubset(self.step_data.columns) else []
+        pos_p = nam.xy(track_point) if set(nam.xy(track_point)).issubset(self.step_data.columns) else ['x', 'y']
+        # pos_p = nam.xy(track_point) if set(nam.xy(track_point)).issubset(self.step_data.columns) else []
         point_p = nam.xy(self.points, flat=True) if len(self.points_xy) >= 1 else []
         cent_p = self.cent_xy if len(self.cent_xy) >= 1 else []
         contour_p = nam.xy(self.contour, flat=True) if len(self.contour_xy) >= 1 else []
@@ -307,6 +330,7 @@ class LarvaDataset:
             if arena_pars is None:
                 arena_pars = self.arena_pars
             env_params = {'arena_params': arena_pars}
+        # arena_dims = [env_params['arena_params'][k] * 1 for k in ['arena_xdim', 'arena_ydim']]
         arena_dims = [env_params['arena_params'][k] * 1000 for k in ['arena_xdim', 'arena_ydim']]
         env_params['arena_params']['arena_xdim'] = arena_dims[0]
         env_params['arena_params']['arena_ydim'] = arena_dims[1]
@@ -472,7 +496,7 @@ class LarvaDataset:
 
         ang = ['front_orientation', 'rear_orientation', 'bend']
         self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang)
-        self.xy_pars = nam.xy(self.points + self.contour + ['centroid'], flat=True) + ['x', 'y']
+        self.xy_pars = nam.xy(self.points + self.contour + ['centroid'], flat=True) + nam.xy('')
 
     def define_paths(self, dir):
         self.dir = dir
@@ -536,10 +560,10 @@ class LarvaDataset:
         warnings.filterwarnings('ignore')
         c = {'show_output': show_output,
              'is_last': False}
-        self.preprocess(**c, recompute=recompute, mode=mode, dic=preprocessing)
+        self.preprocess(**c, recompute=recompute, mode=mode, dic=preprocessing, **kwargs)
         self.process(types=processing, recompute=recompute, mode=mode, dsp_starts=dispersion_starts,
-                     dsp_stops=dispersion_stops, source=source, **c)
-        self.detect_bouts(bouts=bouts, recompute=recompute, source=source, **c)
+                     dsp_stops=dispersion_stops, source=source, **c, **kwargs)
+        self.detect_bouts(bouts=bouts, recompute=recompute, source=source, **c, **kwargs)
         self.drop_pars(groups=to_drop, **c)
         if is_last:
             self.save()
@@ -556,8 +580,10 @@ class LarvaDataset:
             copy_tree(self.dir, path_dir)
         new_d = LarvaDataset(path_dir)
         new_d.set_id(dataset_id)
-        pars = ['length', 'scaled_vel_freq',
-                'stride_reoccurence_rate', 'scaled_stride_dst_mean', 'scaled_stride_dst_std']
+        pars = ['length', nam.freq(nam.scal(nam.vel(''))),
+                'stride_reoccurence_rate',
+                nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))),
+                nam.std(nam.scal(nam.chunk_track('stride', nam.dst(''))))]
         sample_pars = ['body.initial_length', 'brain.crawler_params.initial_freq',
                        'brain.intermitter_params.crawler_reoccurence_rate',
                        'brain.crawler_params.step_to_length_mu',
@@ -572,8 +598,8 @@ class LarvaDataset:
         fit_bouts(new_d, store=True, bouts=['stride', 'pause'])
 
         dic = {
-            'crawl_freq': v['scaled_vel_freq'].mean(),
-            'feed_freq': v['feed_freq'].mean() if 'feed_freq' in v.columns else 2.0,
+            nam.freq('crawl'): v[nam.freq(nam.scal(nam.vel('')))].mean(),
+            nam.freq('feed'): v[nam.freq('feed')].mean() if nam.freq('feed') in v.columns else 2.0,
             'feeder_reoccurence_rate': None,
             'dt': self.dt,
         }
@@ -600,7 +626,9 @@ class LarvaDataset:
 
     def get_par(self, par, endpoint_par=True):
         try:
+            # print(par)
             p_df = self.load_aux(type='distro', name=par)
+            # print('dddd')
         except:
             if endpoint_par:
                 if not hasattr(self, 'end'):
@@ -667,38 +695,7 @@ class LarvaDataset:
         s = copy.deepcopy(self.step_data)
         e = self.endpoint_data
         counts = s[t].dropna().groupby('AgentID').count()
-        # sigma = sigma.dropna(subset=[id])
         ser1 = s[id].loc[s[t] >= min_dur]
-        # ser2=sigma[id].loc[sigma[t] <min_dur]
         ser1.reset_index(level='Step', drop=True, inplace=True)
-        # ser2.reset_index(level='Step', drop=True, inplace=True)
         ser1 = ser1.reset_index(drop=False).values.tolist()
-        # ser2=ser2.reset_index(drop=False).values.tolist()
         s = s.loc[s[id]]
-        # union of the series
-        # union = pd.Series(np.union1d(ser1, ser2))
-
-        # intersection of the series
-        # intersect = pd.Series(np.intersect1d(ser1, ser2))
-
-        # uncommon elements in both the series
-        # notcommonseries = union[~union.isin(intersect)]
-        # print([kk for kk in ser1 if kk in ser2])
-        # aa=sigma[[id, t,s0,s1]].loc[sigma[id]==1.0]
-        # print(intersect)
-        # print(ser2['Larva_222', :])
-        # print(ser1['Larva_222', :])
-        # displaying the result
-        # print(len(notcommonseries), len(intersect), len(union), len(sigma[t].dropna().values.tolist()))
-        # print(e['num_strides'].sum(), len(ser1), len(ser2))
-        # valid.reset_index(level='Step', drop=True, inplace=True)
-        # invalid.reset_index(level='Step', drop=True, inplace=True)
-        # b=pd.merge(valid, invalid, how='outer')
-        # print(b.loc[b.duplicated().index])
-        # merged = valid.merge(invalid, indicator=True, how='outer')
-        # merged[merged['_merge'] == 'right_only']
-        # print(pd.Series(np.intersect1d(valid, invalid)))
-        # print(sigma[[id,t,s0,s1]].loc[sigma[id]==370.0])
-        # print(sigma[[id,t,s0,s1]].loc[sigma[id]==374.0])
-        # print(pd.concat([valid,invalid]).drop_duplicates(keep=False))
-        # print(len(valid.values)+len(invalid.values)-sum(counts.values))
