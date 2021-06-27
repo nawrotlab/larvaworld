@@ -98,7 +98,7 @@ def draw_arena(graph, arena_pars):
     # pass
 
 
-def reset_arena(window, graph, arena_pars, env_db):
+def reset_arena(w, graph, arena_pars, env_db):
     db = copy.deepcopy(env_db)
 
     s, arena = draw_arena(graph, arena_pars)
@@ -119,7 +119,7 @@ def reset_arena(window, graph, arena_pars, env_db):
         temp = graph.draw_lines(points=points, color=pars['default_color'],
                                width=int(pars['width'] * s))
         db['b']['figs'][temp] = id
-    window['out'].update(value='Arena has been reset.')
+    w['out'].update(value='Arena has been reset.')
     return s, arena, db
 
 
@@ -235,18 +235,18 @@ def draw_env(env=None):
     collapsibles = {}
     if env is None:
         env = {'border_list': {},
-               'arena_params': dtypes.get_dict('arena'),
+               'arena': dtypes.get_dict('arena'),
                'food_params': {'source_units': {}, 'source_groups': {}, 'food_grid': None},
-               'larva_params': {}
+               'larva_groups': {}
                }
-    arena_pars = env['arena_params']
+    arena_pars = env['arena']
     items = [env['border_list'],
              env['food_params']['source_units'], env['food_params']['source_groups'],
-             {}, env['larva_params']]
+             {}, env['larva_groups']]
     env_db = {k: {'items': ii, 'figs': {}} for k, ii in zip(['b', 's_u', 's_g', 'l_u', 'l_g'], items)}
     sample_fig, sample_pars = None, {}
 
-    collapsibles['Arena'] = CollapsibleDict('Arena', True,
+    collapsibles['arena'] = CollapsibleDict('arena', True,
                                             dict=arena_pars, type_dict=dtypes.get_dict_dtypes('arena'),
                                             next_to_header=[
                                                 graphic_button('burn', 'RESET_ARENA', tooltip='Reset to the initial arena. All drawn items will be erased.'),
@@ -282,7 +282,7 @@ def draw_env(env=None):
     ]
 
     col1 = [
-        collapsibles['Arena'].get_section(),
+        collapsibles['arena'].get_section(),
         [sg.Graph(
             canvas_size=(W, H),
             graph_bottom_left=(0, 0),
@@ -311,20 +311,20 @@ def draw_env(env=None):
         if e in [None, 'Cancel']:
             break
         elif e == 'Ok':
-            env['arena_params'] = collapsibles['Arena'].get_dict(v, w)
+            env['arena'] = collapsibles['arena'].get_dict(v, w)
             env['border_list'] = db['b']['items']
             env['food_params']['source_units'] = db['s_u']['items']
             env['food_params']['source_groups'] = db['s_g']['items']
-            env['larva_params'] = db['l_g']['items']
+            env['larva_groups'] = db['l_g']['items']
             break  # exit
         # check_collapsibles(w, e, collapsibles)
         # check_toggles(w, e)
         check_togglesNcollapsibles(w, e, collapsibles)
         if e == 'RESET_ARENA':
-            s, arena, db = reset_arena(window=w, graph=graph, arena_pars=arena_pars, env_db=env_db)
+            s, arena, db = reset_arena(w, graph, arena_pars, env_db)
         elif e == 'NEW_ARENA':
             w['out'].update(value='New arena initialized. All items erased.')
-            s, arena = draw_arena(graph, collapsibles['Arena'].get_dict(v, w))
+            s, arena = draw_arena(graph, collapsibles['arena'].get_dict(v, w))
             db = {k: {'items': {}, 'figs': {}} for k in ['b', 's_u', 's_g', 'l_u', 'l_g']}
 
         if arena is None:
@@ -397,7 +397,7 @@ def draw_env(env=None):
                                         db[k]['figs'][f] = id
                 elif v['SOURCE'] or v['BORDER'] or v['LARVA']:
                     P1, P2 = scale_xy(start_point, s), scale_xy(end_point, s)
-                    if any([out_of_bounds(P, collapsibles['Arena'].get_dict(v, w)) for P in [P1, P2]]):
+                    if any([out_of_bounds(P, collapsibles['arena'].get_dict(v, w)) for P in [P1, P2]]):
                         current = {}
                     else:
                         if v['SOURCE'] and not check_abort('SOURCE', w, v, db['s_u']['items'], db['s_g']['items']):

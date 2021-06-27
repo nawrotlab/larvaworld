@@ -53,7 +53,7 @@ def vel(params):
 
 
 def acc(params):
-    s = 'acc'
+    s = 'acceleration'
     return name(s, params, 'suf')
 
 

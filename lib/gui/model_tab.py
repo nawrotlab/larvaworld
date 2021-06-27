@@ -1,129 +1,78 @@
 import copy
-import time
-
 import PySimpleGUI as sg
 
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, save_gui_conf, delete_gui_conf, b12_kws, \
-    b6_kws, CollapsibleTable, graphic_button, t10_kws, t12_kws, t18_kws, w_kws, default_run_window, col_kws, col_size
-
-from lib.conf.conf import loadConfDict, loadConf
-
+    b6_kws, CollapsibleTable, graphic_button, t10_kws, t12_kws, t18_kws, w_kws, col_kws, col_size
 import lib.conf.dtype_dicts as dtypes
+from lib.gui.tab import GuiTab, SelectionList
 
 
-def init_model():
-    c = {}
-    l1=[]
-    for name, kwargs in zip(['Physics', 'Energetics', 'Body', 'Odor'],
-                                    [{}, {'toggle': True}, {}, {}]):
-        n=name.lower()
-        c[name] = CollapsibleDict(name, False, dict=dtypes.get_dict(n),type_dict=dtypes.get_dict_dtypes(n), **kwargs)
-        l1.append(c[name].get_section())
+class ModelTab(GuiTab):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-    s1 = CollapsibleTable('odor_gains', False, headings=['id', 'mean', 'std'], dict={},
-                          disp_name='Odor gains', type_dict=dtypes.get_dict_dtypes('odor_gain'))
+    def update(self, w, c, conf, id=None):
+        for n in ['physics', 'energetics', 'body', 'odor']:
+            c[n].update(w, conf[n])
+        module_dict = conf['brain']['modules']
+        for k, v in module_dict.items():
+            dic = conf['brain'][f'{k}_params']
+            if k == 'olfactor':
+                if dic is not None:
+                    odor_gains = dic['odor_dict']
+                    dic.pop('odor_dict')
+                else:
+                    odor_gains = {}
+                c['odor_gains'].update(w, odor_gains)
+            c[k.upper()].update(w, dic)
+        temp = copy.deepcopy(module_dict)
+        for k in list(temp.keys()):
+            temp[k.upper()] = temp.pop(k)
+        c['Brain'].update(w, temp, use_prefix=False)
 
-    c.update(**s1.get_subdicts())
-    l1.append(c['odor_gains'].get_section())
-    non_brain_layout = sg.Col(l1, **col_kws, size=col_size(0.25))
-    # e0=time.time()
+    def get(self, w, v, c, as_entry=True):
+        module_dict = dict(zip(dtypes.module_keys, [w[f'TOGGLE_{k.upper()}'].get_state() for k in dtypes.module_keys]))
+        m = {}
 
-    ss = [CollapsibleDict(k.upper(), False, dict=dtypes.get_dict(k), type_dict=dtypes.get_dict_dtypes(k),
-                            dict_name=k.upper(), toggle=True, auto_open=False, disp_name=k) for k in dtypes.module_keys]
+        for n in ['physics', 'energetics', 'body', 'odor']:
+            m[n] = None if c[n].state is None else c[n].get_dict(v, w)
 
-    l2=[s.get_section() for s in ss]
-    for s in ss :
-        c.update(s.get_subdicts())
+        b = {}
+        b['modules'] = module_dict
+        for k in module_dict.keys():
+            b[f'{k}_params'] = c[k.upper()].get_dict(v, w)
+        if b['olfactor_params'] is not None:
+            b['olfactor_params']['odor_dict'] = c['odor_gains'].dict
+        b['nengo'] = False
+        m['brain'] = b
 
-    b = Collapsible('Brain', True, l2)
-    brain_layout = sg.Col([b.get_section()],**col_kws, size=col_size(0.25))
+        return copy.deepcopy(m)
 
-    m = Collapsible('Model', True, [[brain_layout, non_brain_layout]])
-    l=m.get_section()
+    def build(self):
+        l0 = SelectionList(tab=self,conftype='Model',actions=['load', 'save', 'delete'])
+        self.selectionlists = [l0]
 
-    for s in ss+[b,m] :
-        c.update(s.get_subdicts())
+        c1 = [CollapsibleDict(n, False, dict=dtypes.get_dict(n), type_dict=dtypes.get_dict_dtypes(n),
+                              disp_name=n.capitalize(), **kwargs)
+              for n, kwargs in zip(['physics', 'energetics', 'body', 'odor'], [{}, {'toggle': True}, {}, {}])]
+        s1 = CollapsibleTable('odor_gains', False, headings=['id', 'mean', 'std'], dict={},
+                              disp_name='Odor gains', type_dict=dtypes.get_dict_dtypes('odor_gain'))
+        l1 = [i.get_section() for i in c1 + [s1]]
+        c2 = [CollapsibleDict(k.upper(), False, dict=dtypes.get_dict(k), type_dict=dtypes.get_dict_dtypes(k),
+                              toggle=True, disp_name=k.capitalize()) for k in dtypes.module_keys]
+        l2 = [i.get_section() for i in c2]
+        b = Collapsible('Brain', True, l2)
 
-    return l,c
+        l3=[sg.Col([b.get_section()], **col_kws, size=col_size(0.25)),
+                                         sg.Col(l1, **col_kws, size=col_size(0.25))]
+        c = {}
+        for s in c2 + c1 + [s1, b]:
+            c.update(s.get_subdicts())
+        l = [[sg.Col([l0.l, l3], vertical_alignment='t')]]
+        return l, c, {}, {}
 
-
-def update_model(larva_model, window, collapsibles):
-    for name in ['Physics', 'Energetics', 'Body', 'Odor']:
-        collapsibles[name].update(window, larva_model[name.lower()])
-    module_dict = larva_model['brain']['modules']
-    for k, v in module_dict.items():
-        dic = larva_model['brain'][f'{k}_params']
-        if k == 'olfactor':
-            if dic is not None:
-                odor_gains = dic['odor_dict']
-                dic.pop('odor_dict')
-            else :
-                odor_gains = {}
-            collapsibles['odor_gains'].update_table(window, odor_gains)
-        collapsibles[k.upper()].update(window, dic)
-    module_dict_upper = copy.deepcopy(module_dict)
-    for k in list(module_dict_upper.keys()):
-        module_dict_upper[k.upper()] = module_dict_upper.pop(k)
-    collapsibles['Brain'].update(window, module_dict_upper, use_prefix=False)
-
-
-def get_model(window, values, collapsibles):
-    module_dict = dict(zip(dtypes.module_keys, [window[f'TOGGLE_{k.upper()}'].get_state() for k in dtypes.module_keys]))
-    model = {}
-    model['brain'] = {}
-    model['brain']['modules'] = module_dict
-
-    for name in ['Physics', 'Energetics', 'Body', 'Odor']:
-        model[name.lower()] = None  if collapsibles[name].state is None else collapsibles[name].get_dict(values, window)
-
-    for k, v in module_dict.items():
-        model['brain'][f'{k}_params'] = collapsibles[k.upper()].get_dict(values, window)
-    if model['brain']['olfactor_params'] is not None:
-        model['brain']['olfactor_params']['odor_dict'] = collapsibles['odor_gains'].dict
-    model['brain']['nengo'] = False
-    return copy.deepcopy(model)
-
-
-def build_model_tab():
-    l0 = [sg.Col([
-        [sg.Text('Larva model',**t10_kws),
-         graphic_button('load', 'LOAD_MODEL', tooltip='Load a larva model to inspect its parameters.'),
-         graphic_button('data_add', 'SAVE_MODEL', tooltip='Save a new larva model to use in simulations.'),
-         graphic_button('data_remove', 'DELETE_MODEL', tooltip='Delete an existing larva model.')],
-         [sg.Combo(list(loadConfDict('Model').keys()), key='MODEL_CONF', enable_events=True, readonly=True,
-                   **t18_kws, tooltip='The currently loaded larva model.')],
-    ])]
-
-    l1,c = init_model()
-    l = [[sg.Col([l0, l1],vertical_alignment='t')]]
-    return l, c, {}, {}
-
-
-def eval_model(event, values, window, collapsibles, dicts, graph_lists):
-    if event == 'LOAD_MODEL':
-        if values['MODEL_CONF'] != '':
-            conf = loadConf(values['MODEL_CONF'], 'Model')
-            update_model(conf, window, collapsibles)
-
-    elif event == 'SAVE_MODEL':
-        model = get_model(window, values, collapsibles)
-        save_gui_conf(window, model, 'Model')
-
-    elif event == 'DELETE_MODEL':
-        delete_gui_conf(window, values, 'Model')
-
-    return dicts, graph_lists
 
 if __name__ == "__main__":
-    sg.theme('LightGreen')
-    n='model'
-    l, c, g, d = build_model_tab()
-    w = sg.Window(f'{n} gui', l, size=(1800, 1200), **w_kws, location=(300, 100))
-    while True:
-        e, v = w.read()
-        if e in (None, 'Exit'):
-            break
-        default_run_window(w, e, v, c, g)
-        d, g = eval_model(e,v,w, collapsibles=c, dicts=d, graph_lists=g)
-    w.close()
-
+    from lib.gui.gui import LarvaworldGui
+    larvaworld_gui = LarvaworldGui(tabs=['larva-model'])
+    larvaworld_gui.run()

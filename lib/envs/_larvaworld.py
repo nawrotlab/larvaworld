@@ -115,7 +115,7 @@ class LarvaWorld:
 
         # Add mesa schecule to use datacollector class
         self.create_schedules()
-        self.create_arena(**self.env_pars['arena_params'])
+        self.create_arena(**self.env_pars['arena'])
         self.space = self.create_space(Box2D)
         if 'border_list' in list(self.env_pars.keys()):
             for id, pars in self.env_pars['border_list'].items():
@@ -478,7 +478,7 @@ class LarvaWorld:
 
     def add_larva(self, position, orientation=None, id=None, pars=None, group=None, default_color=None):
         if group is None and pars is None:
-            group, distro = list(self.env_pars['larva_params'].items())[0]
+            group, distro = list(self.env_pars['larva_groups'].items())[0]
             pars = self._generate_larva_pars(1, distro['model'])[0]
             if default_color is None:
                 default_color = distro['default_color']
@@ -820,7 +820,7 @@ class LarvaWorldSim(LarvaWorld):
         self.larva_collisions = larva_collisions
 
         self._place_food(self.env_pars['food_params'])
-        self.create_larvae(larva_pars=self.env_pars['larva_params'], parameter_dict=parameter_dict)
+        self.create_larvae(larva_pars=self.env_pars['larva_groups'], parameter_dict=parameter_dict)
         if self.env_pars['odorscape'] is not None:
             self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars['odorscape'])
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)

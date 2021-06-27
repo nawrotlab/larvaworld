@@ -291,6 +291,14 @@ class Parameter:
                         v = vs.apply(self.operator)
                     else:
                         v = np.nan
+                elif self.operator == 'freq':
+                    if df is not None:
+                        vs = df[self.p0.d].xs(o.unique_id, level='AgentID').dropna()
+                        dt=self.par_dict['dt'].get_from(o, u=False)
+                        v = fun.freq(vs,dt)
+                    else:
+                        v = np.nan
+
             elif self.fraction:
                 v_n = self.p_num.get_from(o, u=False, tick=tick)
                 v_d = self.p_den.get_from(o, u=False, tick=tick)
@@ -405,6 +413,15 @@ def add_max_par(dic, k0, d=None):
                   k0=k0)
     return dic
 
+def add_freq_par(dic, k0, d=None):
+    b = dic[k0]
+    if d is None:
+        d = nam.freq(b.d)
+        # d = f'total {b.d}'
+    dic = add_par(dic, p=nam.freq(b.p), k=f'f{b.k}', u=1*siu.hz, d=d, s=sub(b.s, 'freq'), exists=False, operator='freq',
+                  k0=k0)
+    return dic
+
 
 def add_rate_par(dic, k0=None, k_time='t', p=None, k=None, d=None, s=None, k_num=None, k_den=None):
     if k0 is not None:
@@ -458,7 +475,7 @@ def add_chunk(dic, pc, kc) :
 
     return dic
 
-def add_chunk_track(dic,kc, k) :
+def add_chunk_track(dic,kc, k, extrema=True) :
     bc=dic[kc]
     b=dic[k]
     u = dic[k].u
@@ -466,8 +483,11 @@ def add_chunk_track(dic,kc, k) :
     p0,p1=nam.at(b.p,b0.p),nam.at(b.p,b1.p)
 
     dic = add_par(dic, p=nam.chunk_track(bc.p,b.p), k=f'{kc}_{k}', u=u, d=nam.chunk_track(bc.p,b.p), s=sub(Delta(b.s), kc),exists=False)
-    dic = add_par(dic, p=p0, k=f'{kc}_{k}0', u=u, d=p0, s=subsup(b.s, kc, 0),exists=False)
-    dic = add_par(dic, p=p1, k=f'{kc}_{k}1', u=u, d=p1, s=subsup(b.s, kc, 1),exists=False)
+    dic=add_mean_par(dic, k0=f'{kc}_{k}')
+    dic=add_std_par(dic, k0=f'{kc}_{k}')
+    if extrema :
+        dic = add_par(dic, p=p0, k=f'{kc}_{k}0', u=u, d=p0, s=subsup(b.s, kc, 0),exists=False)
+        dic = add_par(dic, p=p1, k=f'{kc}_{k}1', u=u, d=p1, s=subsup(b.s, kc, 1),exists=False)
     return dic
 
 
@@ -623,10 +643,17 @@ def build_par_dict(save=True, df=None):
         df[k].s = ast(df[k0].s)
 
     for k0 in ['dsp', 'sdsp', 'd_cent', 'd_chem', 'sd_cent', 'sd_chem']:
-        add_mean_par(df, k0=k0)
-        add_std_par(df, k0=k0)
-        add_min_par(df, k0=k0)
-        add_max_par(df, k0=k0)
+        df =add_mean_par(df, k0=k0)
+        df =add_std_par(df, k0=k0)
+        df =add_min_par(df, k0=k0)
+        df =add_max_par(df, k0=k0)
+
+    for k0 in ['l', 'sv']:
+        df =add_mean_par(df, k0=k0)
+        # print(df[f'{df[k0].k}_mu'].d)
+
+    for k0 in ['sv']:
+        df =add_freq_par(df, k0=k0)
 
     for i, n in enumerate(['first', 'second', 'third']):
         k = f'c_odor{i + 1}'
@@ -644,6 +671,27 @@ def build_par_dict(save=True, df=None):
         df=add_chunk(df, pc=pc, kc=kc)
         for k in ['x', 'y', 'fo', 'fou', 'fov', 'b', 'bv', 'v', 'sv'] :
             df=add_chunk_track(df, kc=kc, k=k)
+        if pc=='stride':
+            for k in ['d','sd']:
+            # for k in [nam.cum('d'), nam.cum('sd')]:
+                df = add_par(df, p=nam.chunk_track(pc, df[k].p), k=f'{kc}_{k}', u=df[k].u, d=nam.chunk_track(pc, df[k].p),
+                          s=sub(Delta(df[k].s), kc), exists=False)
+                df=add_mean_par(df, k0=f'{kc}_{k}')
+                df=add_std_par(df, k0=f'{kc}_{k}')
+
+    for i in ['',2,5,10,20] :
+        if i=='' :
+            p='tortuosity'
+        else :
+            p=f'tortuosity_{i}'
+        k=f'tor{i}'
+        df = add_par(df, p=p, k=k, d=p,s=sub('tor', i), exists=False)
+        df = add_mean_par(df, k0=k)
+        df = add_std_par(df, k0=k)
+        # print(df[f'{k}_mu'].d)
+
+
+
 
     for k, p in df.items():
         p.par_dict = df
@@ -664,12 +712,14 @@ chunk_dict={
 
 collection_dict = {
     'bouts': ['x', 'y', 'b', 'fou', 'rou','v', 'sv', 'd', 'fov', 'bv', 'sd', 'o_cent'],
+    # 'bouts': ['str_d_mu', 'str_sd_mu'],
     'basic': ['x', 'y', 'b', 'fo'],
-    'e_basic': ['l', nam.cum('d'), f's{nam.cum("d")}', nam.cum('t'), 'x', 'y'],
+    'e_basic': ['l_mu', nam.cum('d'), f's{nam.cum("d")}', nam.cum('t'), 'x', 'y', 'sv_mu'],
     'e_dispersion': ['dsp', 'sdsp', 'dsp_max', 'sdsp_max'],
     'spatial': fun.flatten_list([[k, f's{k}'] for k in
                                  ['dsp', 'd', 'v', 'a', 'D_x', 'xv', 'xa', 'D_y', 'yv', 'ya', nam.cum('d'),
                                   nam.cum('D_x'), nam.cum('D_y'), ]]),
+    'e_spatial' : [f'tor{i}_mu' for i in ['',2,5,10,20]],
     'angular': ['b', 'bv', 'ba', 'fo', 'fov', 'foa', 'ro', 'rov', 'roa'],
 
     'chemorbit': ['d_cent', 'sd_cent', 'o_cent'],
@@ -751,7 +801,7 @@ def getPar(k, to_return=['d', 'l']) :
 
 if __name__ == '__main__':
     dic=build_par_dict()
-    print(dic['dt'].const)
+    print(dic['tor2_mu'].d)
     # dic=reconstruct_ParDict()
     # a=dic['fou'].u.unit
     # print(a==siu.deg)

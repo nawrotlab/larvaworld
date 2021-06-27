@@ -7,11 +7,12 @@ def sim_enrichment(d: LarvaDataset, experiment):
     if experiment in ['rovers_sitters']:
         pass
     elif experiment == 'dish':
-        # pass
-        # d.preprocess(**cc)
         if not paths.new_format :
             d.process(**cc)
+        else :
+            d.process(types=['angular'],**cc)
         d.detect_bouts(**cc)
+        # print(p for p in d.endpoint_data.columns if p.startswith('t'))
     elif experiment == 'focus':
         d.process(types=['angular'], **cc)
         d.detect_bouts(bouts=['turn'], **cc)

@@ -538,7 +538,7 @@ def fit_bouts(dataset, id=None, store=False, bouts=['stride', 'pause']) :
 
 def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=True,
                      dataset_id='dataset', bout='pause', combine=True, store=False, fit_by='cdf'):
-    with fun.suppress_stdout():
+    with fun.suppress_stdout(False):
         warnings.filterwarnings('ignore')
         x = x0[x0 >= xmin]
         x = x[x <= xmax]

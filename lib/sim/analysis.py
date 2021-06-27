@@ -2,7 +2,7 @@ import numpy as np
 
 from lib.anal.plotting import plot_endpoint_scatter, plot_turn_Dbearing, plot_turn_amp, plot_turns, plot_timeplot, \
     plot_navigation_index, plot_debs, plot_food_amount, plot_gut, plot_pathlength, plot_endpoint_params, barplot, \
-    comparative_analysis, plot_marked_turns, plot_chunk_Dorient2source, plot_marked_strides
+    comparative_analysis, plot_marked_turns, plot_chunk_Dorient2source, plot_marked_strides, targeted_analysis
 from lib.aux import functions as fun
 from lib.conf import dtype_dicts as dtypes
 from lib.model.DEB.deb import deb_default
@@ -11,7 +11,7 @@ from lib.stor.larva_dataset import LarvaDataset
 
 
 def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
-    ccc={'show' : True}
+    ccc={'show' : False}
     if d is None:
         return
     # s, e = d.step_data, d.endpoint_data
@@ -172,10 +172,11 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
         fig_dict['olfactor_decay_table_inds'] = plot_timeplot(['D_olf'],save_as='olfactor_decay_inds.pdf', individuals=True, **c)
     elif exp_type == 'realistic_imitation':
         d.save_agent(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
-    # if exp_type=='dish' :
-    #     fig_dict = {f'stride_track_idx_0_in_{s0}-{s1}': plot_marked_strides(datasets=[d], agent_idx=0,
-    #                                                                         slice=[s0, s1], **ccc) for (s0, s1) in
-    #             [(0,60)]}
+    if exp_type=='dish' :
+        targeted_analysis([d])
+        fig_dict = {f'stride_track_idx_0_in_{s0}-{s1}': plot_marked_strides(datasets=[d], agent_idx=0,
+                                                                            slice=[s0, s1], **ccc) for (s0, s1) in
+                [(0,60)]}
 
     print(f'    Analysis complete!')
     return fig_dict, results

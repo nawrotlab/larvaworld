@@ -736,6 +736,10 @@ t24_kws = {'size': (24, 1)}
 #
 #     def update(self, t):
 #         self.UpdateBar(t)
+def get_disp_name(name) -> str :
+    n=name.capitalize()
+    n = n.replace('_', ' ')
+    return n
 
 
 def graphic_button(name, key,**kwargs):
@@ -1178,7 +1182,7 @@ class Collapsible:
                  auto_open=False):
         self.name = name
         if disp_name is None:
-            disp_name = name
+            disp_name = get_disp_name(name)
         self.disp_name = disp_name
         self.state = state
         self.toggle = toggle
@@ -1252,7 +1256,7 @@ class Collapsible:
 
 
 class CollapsibleTable(Collapsible):
-    def __init__(self, name, state, dict, type_dict, headings, **kwargs):
+    def __init__(self, name, state,  type_dict, headings, dict={}, **kwargs):
         self.dict = dict
         self.type_dict = type_dict
         if 'unique_id' in list(type_dict.keys()):
@@ -1317,7 +1321,7 @@ class CollapsibleTable(Collapsible):
                             )]]
         return layout
 
-    def update_table(self, window, dic):
+    def update(self, window, dic):
         self.dict = dic
         self.data = self.set_data(dic)
         window[self.key].update(values=self.data, num_rows=len(self.data))
@@ -1329,13 +1333,16 @@ class CollapsibleTable(Collapsible):
     def edit_table(self, window):
         if self.header is not None:
             dic = set_agent_dict(self.dict, self.type_dict, header=self.header, title=self.disp_name)
-            self.update_table(window, dic)
+            self.update(window, dic)
         else :
             t0=[dict(zip(self.headings, l)) for l in self.data] if self.data!=[[''] * self.Ncols] else []
             t1 = gui_table(t0, self.type_dict, title='Parameter space')
             if t1!=t0:
                 dic={k : [l[k] for l in t1] for k in self.headings}
-                self.update_table(window, dic)
+                self.update(window, dic)
+
+    def get_dict(self, *args,**kwargs):
+        return self.dict
 
 
 class CollapsibleDict(Collapsible):
@@ -1343,15 +1350,11 @@ class CollapsibleDict(Collapsible):
         if dict_name is None:
             dict_name = name
         self.dict_name = dict_name
-        # s0=time.time()
         self.sectiondict = SectionDict(name=dict_name, dict=dict, type_dict=type_dict,
                                        toggled_subsections=toggled_subsections)
         content = self.sectiondict.init_section()
-        # s1 = time.time()
         super().__init__(name, state, content, **kwargs)
 
-        # s2 = time.time()
-        # print(int((s1-s0)*100000),int((s2-s1)*100000))
     def get_dict(self, values, window, check_toggle=True):
         if self.state is None:
             return None
@@ -1838,3 +1841,4 @@ def load_shortcuts():
             conf['keys'].update(dic)
         conf['pygame_keys'] = {k: dtypes.get_pygame_key(v) for k, v in conf['keys'].items()}
     return conf
+

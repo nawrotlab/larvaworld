@@ -155,8 +155,52 @@ def compute_angular_metrics(s, dt, segs, angles, mode='minimal'):
         s[a] = A[:, k, :].flatten()
     print('All angular parameters computed')
 
+def compute_tortuosity(s,e,dt, durs_in_sec=[2, 5, 10, 20]):
+    dsp_par=nam.final('dispersion') if nam.final('dispersion') in e.columns else 'dispersion'
+    # print(e[dsp_par])
+    # print(e[nam.cum(nam.dst(''))])
+    e['tortuosity'] = 1 - e[dsp_par] / e[nam.cum(nam.dst(''))]
+    durs = [int(1/dt * d) for d in durs_in_sec]
+    Ndurs = len(durs)
+    if Ndurs > 0:
+        ids = s.index.unique('AgentID').values
+        Nids = len(ids)
+        ds = [s[['x', 'y']].xs(id, level='AgentID') for id in ids]
+        ds = [d.loc[d.first_valid_index(): d.last_valid_index()].values for d in ds]
+        for j, r in enumerate(durs):
+            par = f'tortuosity_{durs_in_sec[j]}'
+            par_m, par_s = nam.mean(par), nam.std(par)
+            T_m = np.ones(Nids) * np.nan
+            T_s = np.ones(Nids) * np.nan
+            for z, id in enumerate(ids):
+                si = ds[z]
+                u = len(si) % r
+                if u > 1:
+                    si0 = si[:-u + 1]
+                else:
+                    si0 = si[:-r + 1]
+                k = int(len(si0) / r)
+                T = []
+                for i in range(k):
+                    t = si0[i * r:i * r + r + 1, :]
+                    if np.isnan(t).any():
+                        continue
+                    else:
+                        t_D = np.sum(np.sqrt(np.sum(np.diff(t, axis=0) ** 2, axis=1)))
+                        t_L = np.sqrt(np.sum(np.array(t[-1, :] - t[0, :]) ** 2))
+                        t_T = 1 - t_L / t_D
+                        T.append(t_T)
+                T_m[z] = np.mean(T)
+                T_s[z] = np.std(T)
+            e[par_m] = T_m
+            e[par_s] = T_s
 
-def angular_processing(s, e, dt, Npoints, config=None, recompute=False, mode='minimal', distro_dir=None, **kwargs):
+    print('Tortuosities computed')
+
+def angular_processing(s, e, dt, Npoints, config=None, recompute=False, mode='minimal', distro_dir=None,
+                       tor_durs=[2, 5, 10, 20],**kwargs):
+    # print('xxxxxxxxxxxxx')
+
     N = Npoints
     points = nam.midline(N, type='point')
     Nangles = np.clip(N - 2, a_min=0, a_max=None)
@@ -172,6 +216,7 @@ def angular_processing(s, e, dt, Npoints, config=None, recompute=False, mode='mi
         compute_bend(s, points, angles, config, mode=mode)
     compute_angular_metrics(s, dt, segs, angles, mode=mode)
     compute_LR_bias(s, e)
+    compute_tortuosity(s, e, dt, durs_in_sec=tor_durs)
     if distro_dir is not None:
         create_par_distro_dataset(s, ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), dir=distro_dir)
     print(f'Completed {mode} angular processing.')

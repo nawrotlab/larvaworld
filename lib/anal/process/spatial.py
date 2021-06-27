@@ -258,7 +258,7 @@ def store_global_linear_metrics(s,e, point):
         pass
 
 def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recompute=False,
-                       dsp_starts=[0], dsp_stops=[40], dsp_dir=None, tor_durs=[2, 5, 10, 20],source=None, **kwargs):
+                       dsp_starts=[0], dsp_stops=[40], dsp_dir=None, source=None, **kwargs):
 
     compute_length(s, e, Npoints, mode=mode, recompute=recompute)
     compute_centroid_from_contour(s, Ncontour, recompute=recompute)
@@ -266,7 +266,7 @@ def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recom
     compute_linear_metrics(s, e, dt, Npoints,point,mode=mode)
     store_global_linear_metrics(s,e, point)
     compute_dispersion(s, e, dt, point, recompute=recompute, starts=dsp_starts, stops=dsp_stops, dir=dsp_dir)
-    compute_tortuosity(s, e, dt, durs_in_sec=tor_durs)
+    # compute_tortuosity(s, e, dt, durs_in_sec=tor_durs)
     if source is not None:
         compute_orientation_to_origin(s,e,point, origin=source)
         compute_dst_to_origin(s,e,dt,point, origin=source)
@@ -325,44 +325,7 @@ def compute_dispersion(s,e,dt, point, recompute=False, starts=[0], stops=[40], d
         create_dispersion_dataset(s,par=p, scaled=False, dir=dir)
     print('Dispersions computed')
 
-def compute_tortuosity(s,e,dt, durs_in_sec=[2, 5, 10, 20]):
-    e['tortuosity'] = 1 - e[nam.final('dispersion')] / e[nam.cum(nam.dst(''))]
-    durs = [int(1/dt * d) for d in durs_in_sec]
-    Ndurs = len(durs)
-    if Ndurs > 0:
-        ids = s.index.unique('AgentID').values
-        Nids = len(ids)
-        ds = [s[['x', 'y']].xs(id, level='AgentID') for id in ids]
-        ds = [d.loc[d.first_valid_index(): d.last_valid_index()].values for d in ds]
-        for j, r in enumerate(durs):
-            par = f'tortuosity_{durs_in_sec[j]}'
-            par_m, par_s = nam.mean(par), nam.std(par)
-            T_m = np.ones(Nids) * np.nan
-            T_s = np.ones(Nids) * np.nan
-            for z, id in enumerate(ids):
-                si = ds[z]
-                u = len(si) % r
-                if u > 1:
-                    si0 = si[:-u + 1]
-                else:
-                    si0 = si[:-r + 1]
-                k = int(len(si0) / r)
-                T = []
-                for i in range(k):
-                    t = si0[i * r:i * r + r + 1, :]
-                    if np.isnan(t).any():
-                        continue
-                    else:
-                        t_D = np.sum(np.sqrt(np.sum(np.diff(t, axis=0) ** 2, axis=1)))
-                        t_L = np.sqrt(np.sum(np.array(t[-1, :] - t[0, :]) ** 2))
-                        t_T = 1 - t_L / t_D
-                        T.append(t_T)
-                T_m[z] = np.mean(T)
-                T_s[z] = np.std(T)
-            e[par_m] = T_m
-            e[par_s] = T_s
 
-    print('Tortuosities computed')
 
 def compute_orientation_to_origin(s,e,point, origin=np.array([0, 0])):
     ids = s.index.unique('AgentID').values

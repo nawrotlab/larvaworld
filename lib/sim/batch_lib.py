@@ -81,7 +81,7 @@ def prepare_batch(batch, batch_id, exp_conf):
         'dir': batch['exp'],
         'batch_id': batch_id,
         'sim_config': exp_conf,
-        **batch_methods(**batch['methods']),
+        **batch_methods(**batch['batch_methods']),
         'optimization': batch['optimization'],
         'run_kwargs': batch['run_kwargs'],
         'post_kwargs': {},

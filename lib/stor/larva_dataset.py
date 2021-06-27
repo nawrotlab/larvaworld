@@ -162,6 +162,7 @@ class LarvaDataset:
     def load(self, step=True, end=True, food=False):
         if step:
             self.step_data = pd.read_csv(self.dir_dict['step'], index_col=['Step', 'AgentID'])
+            # print(self.step_data)
             self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
             self.agent_ids = self.step_data.index.unique('AgentID').values
             self.num_ticks = self.step_data.index.unique('Step').size
@@ -169,6 +170,7 @@ class LarvaDataset:
             self.Nagents = len(self.agent_ids)
         if end:
             self.endpoint_data = pd.read_csv(self.dir_dict['end'], index_col=0)
+
             self.endpoint_data.sort_index(inplace=True)
             self.Nagents = len(self.endpoint_data.index.values)
         if food:
@@ -329,11 +331,11 @@ class LarvaDataset:
         if env_params is None:
             if arena_pars is None:
                 arena_pars = self.arena_pars
-            env_params = {'arena_params': arena_pars}
-        # arena_dims = [env_params['arena_params'][k] * 1 for k in ['arena_xdim', 'arena_ydim']]
-        arena_dims = [env_params['arena_params'][k] * 1000 for k in ['arena_xdim', 'arena_ydim']]
-        env_params['arena_params']['arena_xdim'] = arena_dims[0]
-        env_params['arena_params']['arena_ydim'] = arena_dims[1]
+            env_params = {'arena': arena_pars}
+        # arena_dims = [env_params['arena'][k] * 1 for k in ['arena_xdim', 'arena_ydim']]
+        arena_dims = [env_params['arena'][k] * 1000 for k in ['arena_xdim', 'arena_ydim']]
+        env_params['arena']['arena_xdim'] = arena_dims[0]
+        env_params['arena']['arena_ydim'] = arena_dims[1]
 
         if transposition is not None:
             s = align_trajectories(s, self.Npoints, self.Ncontour, track_point=track_point, arena_dims=arena_dims,

@@ -92,7 +92,7 @@ RL_4corners = {
 
 chemorbit = {
     'env_params': 'chemotaxis_local',
-    'sim_params': dtypes.get_dict('sim_params', sim_dur=10.0),
+    'sim_params': dtypes.get_dict('sim_params', sim_dur=1.0),
     # 'collections': ['dst2center'],
     'collections': ['turner', 'olfactor', 'pose', 'source vincinity'],
 }

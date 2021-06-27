@@ -2431,7 +2431,9 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
             raise ValueError('Provide parameter shortcuts or define a mode')
 
     pars,  = getPar(par_shorts, to_return=['d'])
+    # print(pars)
     pars = [p for p in pars if all([p in d.endpoint_data.columns for d in datasets])]
+    # print(pars)
     symbols, exp_symbols, xlabels, xlims, disps = getPar(par_shorts, to_return=['s', 's', 'l', 'lim', 'd'])
 
     if mode == 'stride_def':

@@ -57,11 +57,11 @@ def run_sim_basic(
     Nsteps = int(Nsec / dt)
 
     # FIXME This only takes the first configuration into account
-    Npoints = list(env_params['larva_params'].values())[0]['model']['body']['Nsegs'] + 1
+    Npoints = list(env_params['larva_groups'].values())[0]['model']['body']['Nsegs'] + 1
 
     d = LarvaDataset(dir=dir_path, id=id, fr=1 / dt,
                      Npoints=Npoints, Ncontour=0, sample_dataset=sample_dataset,
-                     arena_pars=env_params['arena_params'],
+                     arena_pars=env_params['arena'],
                      par_conf=par_config, save_data_flag=save_data_flag, load_data=False,
                      life_params=life_params
                      )
@@ -121,14 +121,11 @@ def store_sim_data(env, d, save_data_flag, enrich, experiment, param_dict):
     else :
         # new format
         save_to = d.dir_dict['table'] if save_data_flag else None
-
         df = env.step_group_collector.save(save_to=save_to)
-
-        # print(df.columns)
-
         env.end_group_collector.collect(df=df)
         df0 = env.end_group_collector.save(save_to=save_to)
-        df0=df0.droplevel('Step')
+        if df0 is not None :
+            df0=df0.droplevel('Step')
         d.set_data(step=df, end=df0)
     if enrich and experiment is not None:
         d = sim_enrichment(d, experiment)
@@ -199,13 +196,13 @@ def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, la
         env = loadConf(env, 'Env')
 
     if N is not None:
-        for k in list(env['larva_params'].keys()):
-            env['larva_params'][k]['N'] = N
+        for k in list(env['larva_groups'].keys()):
+            env['larva_groups'][k]['N'] = N
     if larva_model is not None:
-        for k in list(env['larva_params'].keys()):
-            env['larva_params'][k]['model'] = larva_model
+        for k in list(env['larva_groups'].keys()):
+            env['larva_groups'][k]['model'] = larva_model
 
-    for k, v in env['larva_params'].items():
+    for k, v in env['larva_groups'].items():
         if type(v['model']) == str:
             v['model'] = loadConf(v['model'], 'Model')
 

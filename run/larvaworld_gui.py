@@ -4,6 +4,7 @@ import sys
 import time
 
 sys.path.insert(0, '..')
+# from lib.gui_old0.gui import LarvaworldGui
 from lib.gui.gui import LarvaworldGui
 
 if __name__ == "__main__":
@@ -12,5 +13,5 @@ if __name__ == "__main__":
     s1 = time.time()
     print(s1-s0)
     # larvaworld_gui = LarvaworldGui(tabs=['exp'])
-    # larvaworld_gui = LarvaworldGui(tabs=['model', 'exp', 'settings'])
+    # larvaworld_gui = LarvaworldGui(tabs=['simulation', 'batch-run'])
     larvaworld_gui.run()

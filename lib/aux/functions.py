@@ -17,7 +17,7 @@ import numpy as np
 from fitter import Fitter
 from matplotlib import cm, colors
 from pypet import ParameterGroup, Parameter
-from scipy.signal import butter, sosfiltfilt
+from scipy.signal import butter, sosfiltfilt, spectrogram
 import scipy.stats as st
 from shapely.geometry import Point
 import scipy as sp
@@ -1304,3 +1304,16 @@ def split_si_composite(df) :
         unit_dict[c] = df[c].iloc[0].unit
         # us=df[c].apply(attrgetter('unit')).values.tolist()
     return ddf, unit_dict
+
+def freq(d, dt, range=[0.7, 1.8]) :
+    try:
+        f, t, Sxx = spectrogram(d, fs=1 / dt)
+        # keep only frequencies of interest
+        f0, f1 = range
+        valid = np.where((f >= f0) & (f <= f1))
+        f = f[valid]
+        Sxx = Sxx[valid, :][0]
+        max_freq = f[np.argmax(np.nanmedian(Sxx, axis=1))]
+    except:
+        max_freq = np.nan
+    return max_freq
