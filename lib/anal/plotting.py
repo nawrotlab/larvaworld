@@ -17,7 +17,7 @@ from lib.anal.fitting import *
 from lib.anal.combining import combine_images, combine_pdfs
 from lib.conf import conf
 from lib.aux import functions as fun
-from lib.conf.par import getPar
+from lib.conf.par import getPar, chunk_dict
 from lib.model import DEB
 from lib.model.modules.intermitter import get_EEB_poly1d
 from lib.stor import paths
@@ -248,6 +248,19 @@ def plot_marked_strides(datasets, labels=None, agent_idx=0, agent_id=None, slice
             s0s = s.index[s[nam.start(c)] == True]
             s1s = s.index[s[nam.stop(c)] == True]
             for s0, s1 in zip(s0s, s1s):
+                # kkk=s['state'].loc[s0:s1].values
+                # print(kkk)
+                # if c=='pause' :
+                #     if all([kkk[i]==1 for i in range(len(kkk))]) :
+                #         col2='red'
+                #     elif all([kkk[i]==2 for i in range(len(kkk))]) :
+                #         col2='green'
+                #     elif all([kkk[i]==3 for i in range(len(kkk))]) :
+                #         col2='black'
+                #     else :
+                #         col2=col
+                # else :
+                #     col2=col
                 ax.axvspan(s0, s1, color=col, alpha=1.0)
                 ax.axvline(s0, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
                 ax.axvline(s1, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
@@ -1350,7 +1363,11 @@ def plot_dispersion(datasets, labels=None, ranges=None, scaled=False, subfolder=
             par = f'dispersion'
         else:
             par = f'dispersion_{r0}_{r1}'
-        dsp_dfs = [d.load_aux(type='dispersion',name=par if not scaled else nam.scal(par)) for d in datasets]
+        # try :
+
+        # except :
+        #     dsp_dfs = [d.endpoint_data[par if not scaled else nam.scal(par)] for d in datasets]
+
         if scaled:
             filename = f'scaled_dispersion_{r0}-{r1}_{fig_cols}.{suf}'
             ylab = 'scaled dispersion'
@@ -1364,7 +1381,8 @@ def plot_dispersion(datasets, labels=None, ranges=None, scaled=False, subfolder=
         trange = np.linspace(r0, r1, Nticks)
         fig, axs = plt.subplots(1, 1, figsize=(5 * fig_cols, 5))
 
-        for dsp_df, lab, c in zip(dsp_dfs, labels, colors):
+        for d, lab, c in zip(datasets, labels, colors):
+            dsp_df = d.load_aux(type='dispersion', name=par if not scaled else nam.scal(par))
             dsp_m = dsp_df['median'].values
             dsp_u = dsp_df['upper'].values
             dsp_b = dsp_df['lower'].values
@@ -1600,6 +1618,7 @@ def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals
             if p not in list(s.keys()):
                 print(f'Parameter {p} does not exist in dataset')
                 continue
+            # print(s[p])
             dc = s[p]
             dc_m = dc.groupby(level='Step').quantile(q=0.5)
             Nticks = len(dc_m)
@@ -1695,7 +1714,7 @@ def plot_navigation_index(datasets, labels=None, subfolder='source', save_as=Non
 
 def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause_chunk='pause', time_unit='sec',
                         plot_fits='all', range='default', print_fits=False, only_fit_one=True, mode='cdf',
-                        subfolder='bouts', refit_distros=False,
+                        subfolder='bouts', refit_distros=False,test_detection=False,
                         save_to=None, save_as=None, save_fits_to=None, save_fits_as=None, return_fig=False, show=False):
     warnings.filterwarnings('ignore')
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
@@ -1741,6 +1760,7 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
     frs = []
     for label, dataset in zip(labels, datasets):
         frs.append(dataset.fr)
+
         pau_dur = dataset.get_par(pause_par).dropna().values
         chn_dur = dataset.get_par(chain_par).dropna().values
         if time_unit == 'ms':
@@ -1758,6 +1778,19 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
         pau_durs.append(pau_dur)
         chn_durs.append(chn_dur)
 
+    if test_detection:
+        for l,d,col in zip(labels, datasets, colors) :
+            dic = {id: d.load_aux('bouts', file=f'{id}.txt', as_df=False) for id in d.agent_ids}
+            pau_dur = np.array(fun.flatten_list([ddic[pause_par] for ddic in dic.values()]))
+            chn_dur = np.array(fun.flatten_list([ddic[chain_par] for ddic in dic.values()]))
+            pau_durs.append(pau_dur)
+            chn_durs.append(chn_dur)
+            labels.append(f'{l} truth')
+            frs.append(d.fr)
+            colors.append(f'dark{col}')
+
+
+
     min_pauses, max_pauses = [np.min(dur) for dur in pau_durs], [np.max(dur) for dur in pau_durs]
     min_chains, max_chains = [np.min(dur) for dur in chn_durs], [np.max(dur) for dur in chn_durs]
 
@@ -1769,19 +1802,6 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
         chn0, chn1 = np.max(min_chains), np.min(max_chains)
     elif range == 'default':
         pass
-
-    # pau0=1.5
-    # print('ssss')
-
-    # stored_pars = [
-    #     [f'alpha_{p}', f'KS_pow_{p}', f'lambda_{p}', f'KS_exp_{p}', f'mu_log_{p}', f'sigma_log_{p}', f'KS_log_{p}', f'mu_logNpow_{p}', f'sigma_logNpow_{p}',f'alpha_logNpow_{p}', f'switch_logNpow_{p}',f'ratio_logNpow_{p}',f'overlap_logNpow_{p}', f'KS_logNpow_{p}'] for
-    #     p in ps]
-    # fit_df = pd.DataFrame(index=labels)
-    # fit_df['min_pause'] = np.clip(min_pauses, a_min=pau0, a_max=+np.inf)
-    # fit_df['max_pause'] = np.clip(max_pauses, a_min=0, a_max=pau1)
-    # fit_df['min_stride'] = np.clip(min_chains, a_min=chn0, a_max=+np.inf)
-    # fit_df['max_stride'] = np.clip(max_chains, a_min=0, a_max=chn1)
-
     fits = {l: {} for l in labels}
 
     fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=False, sharey=True)
@@ -1853,12 +1873,7 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
 
         if plot_fits == 'all':
             dataset_legend(distro_ls, distro_cs, ax=axs[ii], loc='lower left', fontsize=15)
-            # axs[ii].legend(handles=[patches.Patch(facecolor=col, label=l, edgecolor='black') for col, l in zip(distro_cs, distro_ls)],
-            #       labels=distro_ls, loc='lower left', handlelength=0.5, handleheight=0.5, fontsize=15)
         dataset_legend(labels, colors, ax=axs[ii], loc='upper right', fontsize=15)
-        # axs[ii].legend(
-        #     handles=[patches.Patch(facecolor=col, label=l, edgecolor='black') for col, l in zip(colors, labels)],
-        #     labels=labels, loc='upper right', handlelength=0.5, handleheight=0.5, fontsize=15)
     axs[0].set_ylabel(ylabel)
     axs[0].set_xlabel(chain_xlabel)
     axs[1].set_xlabel(pause_xlabel)
@@ -1867,14 +1882,7 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
     axs[1].set_ylim([10 ** -3.5, 10 ** 0])
     axs[0].set_title(r'$\bf{stridechains}$')
     axs[1].set_title(r'$\bf{pauses}$')
-
     fig.subplots_adjust(top=0.92, bottom=0.15, left=0.15, right=0.95, hspace=.005, wspace=0.05)
-    # print(fit_df)
-    # print(fit_df['KS_logNpow_pause'])
-    # print(fit_df['mu_log_pause'])
-    # print(fit_df['sigma_log_pause'])
-    # plt.show()
-    # raise
     fit_df = pd.DataFrame.from_dict(fits, orient="index")
     fit_df.to_csv(fit_filename, index=True, header=True)
     return process_plot(fig, save_to, filename, return_fig, show)
@@ -2376,7 +2384,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
         elif mode == 'minimal':
             par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
                           'cum_t', 'str_tr', 'pau_tr', 'tor',
-                          'tor5_mu', 'tor20_mu', 'sdisp40_max', 'sdisp40_fin',
+                          'tor5_mu', 'tor20_mu', 'disp_0_40_max', 'disp_0_40_fin',
                           'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr']
         elif mode == 'stride_def':
             par_shorts = ['l_mu', 'fsv', 'str_sd_mu', 'str_sd_std']
@@ -2723,6 +2731,7 @@ def dataset_legend(labels, colors, ax=None, loc=None, anchor=None, fontsize=None
             bbox_to_anchor=anchor,
             handles=[patches.Patch(facecolor=c, label=l, edgecolor='black') for c, l in zip(colors, labels)],
             labels=labels, loc=loc, handlelength=handlelength, handleheight=handleheight, fontsize=fontsize, **kwargs)
+        ax.add_artist(leg)
     return leg
 
 
@@ -2867,9 +2876,10 @@ def plot_chunk_Dorient2source(datasets, labels=None, chunk='stride', source=(0.0
     chunk_dur = nam.dur(chunk)
     durs = [d.get_par(chunk_dur) for d in datasets]
 
-    b0_par = f'bearing_to_{source}_at_{chunk}_start'
-    b1_par = f'bearing_to_{source}_at_{chunk}_stop'
-    db_par = f'{chunk}_bearing_to_{source}_correction'
+    temp='o_cent' if source==(0,0) else 'o_chem'
+    chunk_k=[k for k in chunk_dict if chunk_dict[k]==chunk][0]
+    ks = [f'{chunk_k}_{temp}{i}' for i in [0,1,'']]
+    b0_par,b1_par,db_par = getPar(ks, to_return=['d'])[0]
     try:
         b0s = [d.get_par(b0_par).dropna().values for d in datasets]
         b1s = [d.get_par(b1_par).dropna().values for d in datasets]
@@ -2898,6 +2908,7 @@ def plot_chunk_Dorient2source(datasets, labels=None, chunk='stride', source=(0.0
         b1s.insert(0, np.vstack(b1s))
         dbs.insert(0, np.vstack(dbs))
         durs.insert(0, np.vstack(durs))
+
     for i, (b0, b1, db, dur, label, c) in enumerate(zip(b0s, b1s, dbs, durs, labels, colors)):
         b0 = b0[dur > min_dur]
         b1 = b1[dur > min_dur]
@@ -3141,10 +3152,10 @@ def plot_config(datasets, labels, save_to, subfolder=None):
     return Ndatasets, colors, save_to, labels
 
 
-def plot_endpoint_scatter(datasets, labels=None, save_to=None, par_shorts=None, return_fig=False):
+def plot_endpoint_scatter(datasets, labels=None, save_to=None, keys=None, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to)
 
-    pairs = list(itertools.combinations(par_shorts, 2))
+    pairs = list(itertools.combinations(keys, 2))
     Npairs = len(pairs)
     if Npairs % 3 == 0:
         Nx, Ny = 3, int(Npairs / 3)
@@ -3160,8 +3171,8 @@ def plot_endpoint_scatter(datasets, labels=None, save_to=None, par_shorts=None, 
         filename = f'endpoint_scatterplot.{suf}'
     else:
         axs = [axs]
-        filename = f'{par_shorts[1]}_vs_{par_shorts[0]}.{suf}'
-    filepath = os.path.join(save_to, filename)
+        filename = f'{keys[1]}_vs_{keys[0]}.{suf}'
+    # filepath = os.path.join(save_to, filename)
     for i, (p0, p1) in enumerate(pairs):
         ax = axs[i]
         pars, sim_labels, exp_labels, units = getPar([p0, p1],to_return=['d', 's', 's', 'l'])
@@ -3181,8 +3192,7 @@ def plot_endpoint_scatter(datasets, labels=None, save_to=None, par_shorts=None, 
         ax.set_xlim(v0_r)
         ax.set_ylim(v1_r)
         ax.ticklabel_format(useMathText=True, scilimits=(0, 0))
-    save_plot(fig, filepath, filename)
-    return fig
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_nengo(d, save_to=None):
@@ -3275,9 +3285,7 @@ def barplot(datasets, labels=None, par_shorts=['f_am'], coupled_labels=None, xla
         means = [v.mean() for v in values]
         stds = [v.std() for v in values]
         fig, ax = plt.subplots(figsize=(9, 6))
-        # ax.p1 = plt.plot(ind, means,**plot_kwargs)
         ax.p1 = plt.bar(ind, means, **bar_kwargs)
-        # print(ind)
         ax.errs = plt.errorbar(ind, means, yerr=stds, **err_kwargs)
 
         if not coupled_labels:
@@ -3301,9 +3309,6 @@ def barplot(datasets, labels=None, par_shorts=['f_am'], coupled_labels=None, xla
         else:
             plt.xticks(new_ind, coupled_labels, color='k')
             dataset_legend(leg_ids, leg_cols, ax=ax, loc='upper left', handlelength=1, handleheight=1)
-            # plt.legend(
-            #     handles=[patches.Patch(facecolor=c, label=id, edgecolor='black') for c, id in zip(leg_cols, leg_ids)],
-            #     labels=leg_ids, loc='upper left', handlelength=1, handleheight=1)
         if ylabel is None:
             plt.ylabel(u)
         else:
@@ -3312,7 +3317,6 @@ def barplot(datasets, labels=None, par_shorts=['f_am'], coupled_labels=None, xla
             plt.ylim(0, h)
         except:
             ax.set_ylim(ymin=0)
-        # plt.ylim(0, 16)
         if xlabel is not None:
             plt.xlabel(xlabel)
         plt.subplots_adjust(hspace=0.05, top=0.95, bottom=0.15, left=0.15, right=0.95)

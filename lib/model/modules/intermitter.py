@@ -1,5 +1,8 @@
-import numpy as np
+import os
 
+import numpy as np
+from lib.aux import naming as nam
+from lib.aux import functions as fun
 from lib.aux import sampling as sampling
 from lib.conf import dtype_dicts as dtypes
 from lib.conf.conf import loadConf
@@ -7,13 +10,16 @@ from lib.model.modules.basic import Effector
 
 
 class Intermitter(Effector):
-    def __init__(self, crawler=None, crawl_bouts=False,
+    def __init__(self, brain, crawler=None, crawl_bouts=False,
                  feeder=None, feed_bouts=False,
                  pause_dist=None, stridechain_dist=None, crawl_freq=10 / 7, feed_freq=2.0,
-                 EEB_decay=1,
+                 EEB_decay=1,save_to=None,
                  EEB=0.5, feeder_reoccurence_rate=None, feeder_reocurrence_as_EEB=True,
                  **kwargs):
         super().__init__(**kwargs)
+        self.brain = brain
+        self.save_to = save_to
+
         self.crawler = crawler
         self.feeder = feeder
         self.EEB = EEB
@@ -84,6 +90,14 @@ class Intermitter(Effector):
         self.cum_feedchain_dur = 0
         self.current_numfeeds = 0
         self.feed_counter = 0
+
+        self.stridechain_lengths = []
+        self.stridechain_durs = []
+        self.feedchain_lengths = []
+        self.feedchain_durs = []
+        self.pause_durs = []
+        self.feed_durs = []
+        self.stride_durs = []
 
     def step(self):
         self.initialize()
@@ -158,6 +172,8 @@ class Intermitter(Effector):
         self.stridechain_dur = self.t
         self.cum_stridechain_dur += self.stridechain_dur
         self.stridechain_length = self.current_stridechain_length
+        self.stridechain_lengths.append(self.current_stridechain_length)
+        self.stridechain_durs.append(self.stridechain_dur)
         self.t = 0
         self.stridechain_stop = True
         self.current_numstrides = 0
@@ -168,6 +184,8 @@ class Intermitter(Effector):
         self.feedchain_dur = self.t
         self.cum_feedchain_dur += self.feedchain_dur
         self.feedchain_length = self.current_feedchain_length
+        self.feedchain_lengths.append(self.current_feedchain_length)
+        self.feedchain_durs.append(self.feedchain_dur)
         self.t = 0
         self.feedchain_stop = True
         self.current_feedchain_length = None
@@ -176,6 +194,7 @@ class Intermitter(Effector):
         self.pause_counter += 1
         self.pause_dur = self.t
         self.cum_pause_dur += self.pause_dur
+        self.pause_durs.append(self.pause_dur)
         self.current_pause_duration = None
         self.t = 0
         self.pause_stop = True
@@ -186,6 +205,44 @@ class Intermitter(Effector):
         except :
             f= self.feed_counter / self.total_t
         return f
+
+    def build_dict(self):
+        d={}
+        d[nam.cum('t')] = self.total_t
+        d[nam.num('tick')] = self.total_ticks
+        for c in ['feedchain', 'stridechain', 'pause'] :
+            t=nam.dur(c)
+            l=nam.length(c)
+            N=nam.num(c)
+            cum_t=nam.cum(t)
+            rt=nam.dur_ratio(c)
+            d[t]=getattr(self, f'{t}s')
+            d[N]=getattr(self, f'{c}_counter')
+            d[cum_t]=getattr(self, cum_t)
+            d[rt]=d[cum_t]/d[nam.cum('t')]
+            if c in ['feedchain', 'stridechain'] :
+                d[l]=getattr(self, f'{l}s')
+        d[nam.num('feed')]=sum(d[nam.length('feedchain')])
+        d[nam.num('stride')]=sum(d[nam.length('stridechain')])
+        d[nam.mean(nam.freq('feed'))]=d[nam.num('feed')]/d[nam.cum('t')]
+        d[nam.mean(nam.freq('stride'))]=d[nam.num('stride')]/d[nam.cum('t')]
+
+        return d
+
+    def save_dict(self, path=None):
+        dic=self.build_dict()
+        if path is None :
+            if self.save_to is not None :
+                path=self.save_to
+            else :
+                raise ValueError ('No path to save intermittency dict')
+        if dic is not None:
+            file = f'{path}/{self.brain.agent.unique_id}.txt'
+            if not os.path.exists(path):
+                os.makedirs(path)
+            fun.save_dict(dic, file)
+
+
 
 
 class NengoIntermitter(Intermitter):
@@ -217,9 +274,7 @@ class NengoIntermitter(Intermitter):
 class OfflineIntermitter(Intermitter):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.stridechain_lengths = []
-        self.feedchain_lengths = []
-        self.pause_durs = []
+
 
     def step(self):
         super().count_ticks()

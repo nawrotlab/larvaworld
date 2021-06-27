@@ -368,7 +368,8 @@ class LarvaWorld:
         #     background_motion = [0, 0, 0]
         # else:
         #     background_motion = self.background_motion[:, tick]
-        if self.background_motion and tick:
+        # print(self.background_motion, tick)
+        if self.background_motion is not None and tick is not None:
             background_motion = self.background_motion[:, tick]
         if self._screen is None:
             if self.vis_kwargs['render']['mode'] == 'video':
@@ -1066,6 +1067,9 @@ class LarvaWorldReplay(LarvaWorld):
         self.cen_pars = [p for p in dataset.cent_xy if p in self.pars]
 
         Nsegs = self.draw_Nsegs
+        # print(self.draw_Nsegs)
+        # print(self.draw_Nsegs)
+        # print(self.draw_Nsegs)
         if Nsegs is not None:
             if Nsegs == self.Npoints - 1:
                 self.or_pars = [p for p in nam.orient(dataset.segs) if p in self.pars]

@@ -3,11 +3,9 @@ import threading
 import PySimpleGUI as sg
 import lib.conf.dtype_dicts as dtypes
 
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
-    named_bool_button, save_gui_conf, delete_gui_conf, GraphList, CollapsibleTable, \
-    graphic_button, t10_kws, t18_kws, w_kws, default_run_window, col_kws, col_size, t24_kws
+from lib.gui.gui_lib import CollapsibleDict, Collapsible, CollapsibleTable, col_kws, col_size
 from lib.gui.draw_env import draw_env
-from lib.conf.conf import loadConfDict, loadConf
+from lib.conf.conf import loadConf
 from lib.gui.tab import GuiTab, SelectionList
 
 

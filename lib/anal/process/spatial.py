@@ -1,4 +1,7 @@
 import itertools
+import math
+import time
+
 from sklearn.metrics.pairwise import nan_euclidean_distances
 import numpy as np
 import pandas as pd
@@ -8,6 +11,7 @@ import lib.aux.functions as fun
 import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.process.store import create_dispersion_dataset
+from lib.conf.par import getPar
 
 
 def raw_or_filtered_xy(s, points):
@@ -23,7 +27,8 @@ def raw_or_filtered_xy(s, points):
         print('No xy coordinates exist. Not computing spatial metrics')
         return
 
-def compute_linear_metrics(s, e, dt, Npoints,point,mode='minimal'):
+
+def compute_linear_metrics(s, e, dt, Npoints, point, mode='minimal'):
     points = nam.midline(Npoints, type='point')
     Nsegs = np.clip(Npoints - 1, a_min=0, a_max=None)
     segs = nam.midline(Nsegs, type='seg')
@@ -31,10 +36,10 @@ def compute_linear_metrics(s, e, dt, Npoints,point,mode='minimal'):
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     Nticks = len(s.index.unique('Step'))
-    if 'length' in e.columns.values:
-        lengths = e['length'].values
-    else:
-        lengths = None
+    # if 'length' in e.columns.values:
+    #     lengths = e['length'].values
+    # else:
+    #     lengths = None
 
     if mode == 'full':
         print(f'Computing linear distances, velocities and accelerations for {len(points) - 1} points')
@@ -81,12 +86,12 @@ def compute_linear_metrics(s, e, dt, Npoints,point,mode='minimal'):
             Dcum[1:, i] = cum_d
             V[1:, i] = v
             A[2:, i] = a
-            if lengths is not None:
-                l = lengths[i]
-                sD[1:, i] = d / l
-                sDcum[1:, i] = cum_d / l
-                sV[1:, i] = v / l
-                sA[2:, i] = a / l
+            # if lengths is not None:
+            #     l = lengths[i]
+            #     sD[1:, i] = d / l
+            #     sDcum[1:, i] = cum_d / l
+            #     sV[1:, i] = v / l
+            #     sA[2:, i] = a / l
 
         s[dst] = D.flatten()
         s[cum_dst] = Dcum.flatten()
@@ -94,24 +99,28 @@ def compute_linear_metrics(s, e, dt, Npoints,point,mode='minimal'):
         s[acc] = A.flatten()
         e[nam.cum(dst)] = Dcum[-1, :]
 
-        if lengths is not None:
-            s[nam.scal(dst)] = sD.flatten()
-            s[nam.cum(nam.scal(dst))] = sDcum.flatten()
-            s[nam.scal(vel)] = sV.flatten()
-            s[nam.scal(acc)] = sA.flatten()
-            e[nam.cum(nam.scal(dst))] = sDcum[-1, :]
+        # if lengths is not None:
+        #     s[nam.scal(dst)] = sD.flatten()
+        #     s[nam.cum(nam.scal(dst))] = sDcum.flatten()
+        #     s[nam.scal(vel)] = sV.flatten()
+        #     s[nam.scal(acc)] = sA.flatten()
+        #     e[nam.cum(nam.scal(dst))] = sDcum[-1, :]
 
+    pars = fun.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
+
+    scale_to_length(s, e, pars=pars)
     print('All linear parameters computed')
 
-def compute_spatial_metrics(s, e, dt, Npoints,point, mode='minimal'):
+
+def compute_spatial_metrics(s, e, dt, Npoints, point, mode='minimal'):
     points = nam.midline(Npoints, type='point')
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     Nticks = len(s.index.unique('Step'))
-    if 'length' in e.columns.values:
-        lengths = e['length'].values
-    else:
-        lengths = None
+    # if 'length' in e.columns.values:
+    #     lengths = e['length'].values
+    # else:
+    #     lengths = None
 
     if mode == 'full':
         print(f'Computing distances, velocities and accelerations for {len(points)} points')
@@ -119,8 +128,7 @@ def compute_spatial_metrics(s, e, dt, Npoints,point, mode='minimal'):
     elif mode == 'minimal':
         print(f'Computing distances, velocities and accelerations for a single spinepoint')
         points = [point]
-
-
+    points+=['']
 
     points = np.unique(points).tolist()
     points = [p for p in points if set(nam.xy(p)).issubset(s.columns.values)]
@@ -153,12 +161,12 @@ def compute_spatial_metrics(s, e, dt, Npoints,point, mode='minimal'):
             Dcum[1:, i] = cum_d
             V[1:, i] = v
             A[2:, i] = a
-            if lengths is not None:
-                l = lengths[i]
-                sD[1:, i] = d / l
-                sDcum[1:, i] = cum_d / l
-                sV[1:, i] = v / l
-                sA[2:, i] = a / l
+            # if lengths is not None:
+            #     l = lengths[i]
+            #     sD[1:, i] = d / l
+            #     sDcum[1:, i] = cum_d / l
+            #     sV[1:, i] = v / l
+            #     sA[2:, i] = a / l
 
         s[dst] = D.flatten()
         s[cum_dst] = Dcum.flatten()
@@ -166,21 +174,24 @@ def compute_spatial_metrics(s, e, dt, Npoints,point, mode='minimal'):
         s[acc] = A.flatten()
         e[nam.cum(dst)] = Dcum[-1, :]
 
-        if lengths is not None:
-            s[nam.scal(dst)] = sD.flatten()
-            s[nam.cum(nam.scal(dst))] = sDcum.flatten()
-            s[nam.scal(vel)] = sV.flatten()
-            s[nam.scal(acc)] = sA.flatten()
-            e[nam.cum(nam.scal(dst))] = sDcum[-1, :]
+        # if lengths is not None:
+        #     s[nam.scal(dst)] = sD.flatten()
+        #     s[nam.cum(nam.scal(dst))] = sDcum.flatten()
+        #     s[nam.scal(vel)] = sV.flatten()
+        #     s[nam.scal(acc)] = sA.flatten()
+        #     e[nam.cum(nam.scal(dst))] = sDcum[-1, :]
+    pars=fun.flatten_list(xy_params)+dsts+cum_dsts+vels+accs
 
+    scale_to_length(s,e,pars=pars)
     print('All spatial parameters computed')
 
-def compute_length(s, e, Npoints, mode='minimal',recompute=False):
+
+def compute_length(s, e, Npoints, mode='minimal', recompute=False):
     if 'length' in e.columns.values and not recompute:
         print('Length is already computed. If you want to recompute it, set recompute_length to True')
         return
     points = nam.midline(Npoints, type='point')
-    xy_pars=nam.xy(points, flat=True)
+    xy_pars = nam.xy(points, flat=True)
     if not set(xy_pars).issubset(s.columns):
         print(f'XY coordinates not found for the {Npoints} midline points. Body length can not be computed.')
         return
@@ -208,6 +219,7 @@ def compute_length(s, e, Npoints, mode='minimal',recompute=False):
     e['length'] = s['length'].groupby('AgentID').quantile(q=0.5)
     print('All lengths computed.')
 
+
 def compute_centroid_from_contour(s, Ncontour, recompute=False):
     if set(nam.xy('centroid')).issubset(s.columns.values) and not recompute:
         print('Centroid is already computed. If you want to recompute it, set recompute_centroid to True')
@@ -227,7 +239,8 @@ def compute_centroid_from_contour(s, Ncontour, recompute=False):
         s[nam.xy('centroid')[1]] = c[:, 1]
     print('Centroid coordinates computed.')
 
-def store_global_linear_metrics(s,e, point):
+
+def store_global_linear_metrics(s, e, point):
     ids = s.index.unique('AgentID').values
     dic = {
         'x': nam.xy(point)[0],
@@ -245,42 +258,50 @@ def store_global_linear_metrics(s,e, point):
             s[k] = s[v]
         except:
             pass
-    e[nam.cum(nam.dst(''))] = e[nam.cum(nam.dst(point))]
-    e[nam.final('x')] = [s['x'].xs(id, level='AgentID').dropna().values[-1] for id in ids]
-    e[nam.final('y')] = [s['y'].xs(id, level='AgentID').dropna().values[-1] for id in ids]
-    e[nam.initial('x')] = [s['x'].xs(id, level='AgentID').dropna().values[0] for id in ids]
-    e[nam.initial('y')] = [s['y'].xs(id, level='AgentID').dropna().values[0] for id in ids]
-    e[nam.mean(nam.vel(''))] = e[nam.cum(nam.dst(point))] / e[nam.cum('dur')]
+    e[nam.cum(nam.dst(''))] = s[nam.dst('')].groupby('AgentID').sum()
+    # e[nam.cum(nam.dst(''))] = e[nam.cum(nam.dst(point))]
+    # e[nam.max(d)] = s[d].groupby('AgentID').max()
+    # e[nam.mean(d)] = s[d].groupby('AgentID').mean()
+    # e[nam.final(d)] = s[d].dropna().groupby('AgentID').last()
+    # e[nam.mean(nam.abs(o))] = s[nam.abs(o)].groupby('AgentID').mean()
+    e[nam.final('x')] = s['x'].dropna().groupby('AgentID').last()
+    e[nam.final('y')] = s['y'].dropna().groupby('AgentID').last()
+    e[nam.initial('x')] = s['x'].dropna().groupby('AgentID').first()
+    e[nam.initial('y')] = s['y'].dropna().groupby('AgentID').first()
+    e[nam.mean(nam.vel(''))] = e[nam.cum(nam.dst(''))] / e[nam.cum('dur')]
     try:
-        e[nam.cum(nam.scal(nam.dst('')))] = e[nam.cum(nam.scal(nam.dst(point)))]
+        e[nam.cum(nam.scal(nam.dst('')))] = e[nam.cum(nam.scal(nam.dst('')))]
         e[nam.mean(nam.scal(nam.vel('')))] = e[nam.mean(nam.vel(''))] / e['length']
     except:
         pass
 
-def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recompute=False,
-                       dsp_starts=[0], dsp_stops=[40], dsp_dir=None, source=None, **kwargs):
 
+def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recompute=False,
+                       dsp_starts=[0], dsp_stops=[40], dsp_dir=None, tor_durs=[2, 5, 10, 20], source=None, **kwargs):
     compute_length(s, e, Npoints, mode=mode, recompute=recompute)
     compute_centroid_from_contour(s, Ncontour, recompute=recompute)
-    compute_spatial_metrics(s, e, dt, Npoints,point,mode=mode)
-    compute_linear_metrics(s, e, dt, Npoints,point,mode=mode)
-    store_global_linear_metrics(s,e, point)
+    compute_spatial_metrics(s, e, dt, Npoints, point, mode=mode)
+    compute_linear_metrics(s, e, dt, Npoints, point, mode=mode)
+    store_global_linear_metrics(s, e, point)
     compute_dispersion(s, e, dt, point, recompute=recompute, starts=dsp_starts, stops=dsp_stops, dir=dsp_dir)
-    # compute_tortuosity(s, e, dt, durs_in_sec=tor_durs)
+    compute_tortuosity(s, e, dt, durs_in_sec=tor_durs)
     if source is not None:
-        compute_orientation_to_origin(s,e,point, origin=source)
-        compute_dst_to_origin(s,e,dt,point, origin=source)
+        compute_bearingNdst2source(s, e, source=source)
+        # compute_dst2source(s, e, dt, point, source=source)
     print(f'Completed {mode} spatial processing.')
-    return s,e
+    return s, e
 
 
-def compute_dispersion(s,e,dt, point, recompute=False, starts=[0], stops=[40], dir=None):
+def compute_dispersion(s, e, dt, point, recompute=False, starts=[0], stops=[40], dir=None):
     ids = s.index.unique('AgentID').values
+    ps=[]
+    pps=[]
     for s0, s1 in itertools.product(starts, stops):
         if s0 == 0 and s1 == 40:
             p = f'dispersion'
         else:
             p = f'dispersion_{s0}_{s1}'
+        ps.append(p)
 
         t0 = int(s0 / dt)
         # p40 = f'40sec_{p}'
@@ -289,9 +310,11 @@ def compute_dispersion(s,e,dt, point, recompute=False, starts=[0], stops=[40], d
         mp = nam.max(p)
         # mp, mp40 = nam.max([p, p40])
         mup = nam.mean(p)
+        pps+=[fp,mp,mup]
 
         if set([mp]).issubset(e.columns.values) and not recompute:
-            print(f'Dispersion in {s0}-{s1} sec is already detected. If you want to recompute it, set recompute_dispersion to True')
+            print(
+                f'Dispersion in {s0}-{s1} sec is already detected. If you want to recompute it, set recompute_dispersion to True')
             continue
         print(f'Computing dispersion in {s0}-{s1} sec based on {point}')
         for id in ids:
@@ -306,67 +329,103 @@ def compute_dispersion(s,e,dt, point, recompute=False, starts=[0], stops=[40], d
             d[:t0] = np.nan
             s.loc[(slice(None), id), p] = d
             e.loc[id, mp] = np.nanmax(d)
-            # e.loc[id, mp40] = np.nanmax(d[:int(40 / self.dt)])
-            # e.loc[id, fp40] = d[int(40 / self.dt)]
             e.loc[id, mup] = np.nanmean(d)
             e.loc[id, fp] = s[p].xs(id, level='AgentID').dropna().values[-1]
 
-            try:
-                l = e.loc[id, 'length']
-                s.loc[(slice(None), id), nam.scal(p)] = d / l
-                e.loc[id, nam.scal(mp)] = e.loc[id, mp] / l
-                # e.loc[id, nam.scal(mp40)] = e.loc[id, mp40] / l
-                # e.loc[id, nam.scal(fp40)] = e.loc[id, fp40] / l
-                e.loc[id, nam.scal(mup)] = e.loc[id, mup] / l
-                e.loc[id, nam.scal(fp)] = e.loc[id, fp] / l
-            except:
-                pass
-        create_dispersion_dataset(s,par=p, scaled=True, dir=dir)
-        create_dispersion_dataset(s,par=p, scaled=False, dir=dir)
+            # try:
+            #     l = e.loc[id, 'length']
+            #     s.loc[(slice(None), id), nam.scal(p)] = d / l
+            #     e.loc[id, nam.scal(mp)] = e.loc[id, mp] / l
+            #     # e.loc[id, nam.scal(mp40)] = e.loc[id, mp40] / l
+            #     # e.loc[id, nam.scal(fp40)] = e.loc[id, fp40] / l
+            #     e.loc[id, nam.scal(mup)] = e.loc[id, mup] / l
+            #     e.loc[id, nam.scal(fp)] = e.loc[id, fp] / l
+            # except:
+            #     pass
+    scale_to_length(s,e, pars=ps+pps)
+    for p in ps :
+        create_dispersion_dataset(s, par=p, scaled=True, dir=dir)
+        create_dispersion_dataset(s, par=p, scaled=False, dir=dir)
     print('Dispersions computed')
 
 
+def compute_tortuosity(s, e, dt, durs_in_sec=[2, 5, 10, 20]):
+    dsp_par = nam.final('dispersion') if nam.final('dispersion') in e.columns else 'dispersion'
+    e['tortuosity'] = 1 - e[dsp_par] / e[nam.cum(nam.dst(''))]
+    durs = [int(1 / dt * d) for d in durs_in_sec]
+    Ndurs = len(durs)
+    if Ndurs > 0:
+        ids = s.index.unique('AgentID').values
+        Nids = len(ids)
+        ds = [s[['x', 'y']].xs(id, level='AgentID') for id in ids]
+        ds = [d.loc[d.first_valid_index(): d.last_valid_index()].values for d in ds]
+        for j, r in enumerate(durs):
+            par = f'tortuosity_{durs_in_sec[j]}'
+            par_m, par_s = nam.mean(par), nam.std(par)
+            T_m = np.ones(Nids) * np.nan
+            T_s = np.ones(Nids) * np.nan
+            for z, id in enumerate(ids):
+                si = ds[z]
+                u = len(si) % r
+                if u > 1:
+                    si0 = si[:-u + 1]
+                else:
+                    si0 = si[:-r + 1]
+                k = int(len(si0) / r)
+                T = []
+                for i in range(k):
+                    t = si0[i * r:i * r + r + 1, :]
+                    if np.isnan(t).any():
+                        continue
+                    else:
+                        t_D = np.sum(np.sqrt(np.sum(np.diff(t, axis=0) ** 2, axis=1)))
+                        t_L = np.sqrt(np.sum(np.array(t[-1, :] - t[0, :]) ** 2))
+                        t_T = 1 - t_L / t_D
+                        T.append(t_T)
+                T_m[z] = np.mean(T)
+                T_s[z] = np.std(T)
+            e[par_m] = T_m
+            e[par_s] = T_s
 
-def compute_orientation_to_origin(s,e,point, origin=np.array([0, 0])):
-    ids = s.index.unique('AgentID').values
-    o = nam.bearing2('origin')
-    fo = nam.orient('front')
-    abs_o = nam.abs(o)
-    final_o = nam.final(o)
-    mean_abs_o = nam.mean(abs_o)
-    print(f'Computing orientation to origin based on {point}')
-    s[o] = s.apply(lambda r: fun.angle_sum(fun.angle_to_x_axis(r[nam.xy(point)].values, origin), r[fo]), axis=1)
-    s[abs_o] = np.abs(s[o].values)
-    for id in ids:
-        e.loc[id, final_o] = s[o].xs(id, level='AgentID').dropna().values[-1]
-        e.loc[id, mean_abs_o] = s[abs_o].xs(id, level='AgentID').dropna().mean()
-    print('Orientation to origin computed')
+    print('Tortuosities computed')
 
-def compute_dst_to_origin(s,e,dt, point, origin=np.array([0, 0]), start_time_in_sec=0.0):
-    ids = s.index.unique('AgentID').values
-    p = point
-    print(f'Computing distance to origin based on {p}')
-    p_d = 'dst_to_origin'
-    p_fin = nam.final(p_d)
-    p_max = nam.max(p_d)
-    p_mu = nam.mean(p_d)
-    t0 = int(start_time_in_sec / dt)
-    for id in ids:
-        xy_data = s[nam.xy(p)].xs(id, level='AgentID', drop_level=True)
-        d = nan_euclidean_distances(list(xy_data.values), [origin])[:, 0]
-        s.loc[(slice(None), id), p_d] = d
-        e.loc[id, p_max] = np.nanmax(d)
-        e.loc[id, p_mu] = np.nanmean(d[t0:])
-        e.loc[id, p_fin] = d[~np.isnan(d)][-1]
-        try:
-            l = e.loc[id, 'length']
-            s.loc[(slice(None), id), nam.scal(p_d)] = d / l
-            e.loc[id, nam.scal(p_max)] = e.loc[id, p_max] / l
-            e.loc[id, nam.scal(p_mu)] = e.loc[id, p_mu] / l
-            e.loc[id, nam.scal(p_fin)] = e.loc[id, p_fin] / l
-        except:
-            pass
-    print('Distance to origin computed')
+
+def compute_bearingNdst2source(s, e, source=(0, 0)):
+    # ids = s.index.unique('AgentID').values
+    ii = 'cent' if source == (0, 0) else 'chem'
+    o, fo, d = getPar([f'o_{ii}', 'fo', f'd_{ii}'], to_return=['d'])[0]
+    xy = nam.xy('')
+    print(f'Computing bearing and distance to source based on xy position')
+    temp=np.array(source) - s[xy].values
+    s[o] = (s[fo] + 180 - np.rad2deg(np.arctan2(temp[:,1], temp[:,0]))) % 360 - 180
+    s[nam.abs(o)] = s[o].abs()
+    # s1 = time.time()
+    s[d] = nan_euclidean_distances(s[xy].values.tolist(), [source])[:, 0]
+    # s2 = time.time()
+    e[nam.max(d)] = s[d].groupby('AgentID').max()
+    e[nam.mean(d)] = s[d].groupby('AgentID').mean()
+    e[nam.final(d)] = s[d].dropna().groupby('AgentID').last()
+    e[nam.mean(nam.abs(o))] = s[nam.abs(o)].groupby('AgentID').mean()
+    # s3 = time.time()
+    if 'length' in e.columns:
+        l = e['length']
+
+        def rowIndex(row):
+            return row.name[1]
+
+        def rowLength(row):
+            return l.loc[rowIndex(row)]
+
+        def rowFunc(row):
+            return row[d] / rowLength(row)
+
+        s[nam.scal(d)] = s.apply(rowFunc, axis=1)
+        e[nam.scal(nam.max(d))] = e[nam.max(d)] / l
+        e[nam.scal(nam.mean(d))] = e[nam.mean(d)] / l
+        e[nam.scal(nam.final(d))] = e[nam.final(d)] / l
+    # s4 = time.time()
+    # print([s1 - s0, s2 - s1, s3 - s2, s4 - s3])
+    print('Bearing and distance to source computed')
 
 
 def align_trajectories(s, Npoints, Ncontour, track_point, arena_dims=None, mode='origin'):
@@ -392,7 +451,7 @@ def align_trajectories(s, Npoints, Ncontour, track_point, arena_dims=None, mode=
             print('Centralizing trajectories in arena center')
             x0, y0 = arena_dims
         else:
-            raise ValueError ('Arena dimensions must be provided ')
+            raise ValueError('Arena dimensions must be provided ')
         xy = [[x0 / 2, y0 / 2] for agent_id in ids]
     elif mode == 'center':
         print('Centralizing trajectories in trajectory center using min-max positions')
@@ -405,6 +464,7 @@ def align_trajectories(s, Npoints, Ncontour, track_point, arena_dims=None, mode=
             s.loc[(slice(None), id), x] -= p[0]
             s.loc[(slice(None), id), y] -= p[1]
     return s
+
 
 def fixate_larva(s, Npoints, Ncontour, point, secondary_point=None, arena_dims=None):
     if arena_dims is None:
@@ -463,10 +523,11 @@ def fixate_larva(s, Npoints, Ncontour, point, secondary_point=None, arena_dims=N
     print('Fixed-point dataset generated')
     return s, bg
 
+
 def compute_preference_index(poses, arena_dims, return_num=False, return_all=False):
-    X,Y=arena_dims
-    N=len(poses)
-    xs=np.array([p[0] for p in poses])
+    X, Y = arena_dims
+    N = len(poses)
+    xs = np.array([p[0] for p in poses])
     r = 0.2 * X
     N_l = xs[xs <= -r / 2].shape[0]
     N_r = xs[xs >= +r / 2].shape[0]
@@ -481,26 +542,33 @@ def compute_preference_index(poses, arena_dims, return_num=False, return_all=Fal
     else:
         return pI
 
+def scale_to_length(s,e,pars=None, keys=None):
+    l_par='length'
+    if l_par not in e.keys() :
+        return
+    l=e[l_par]
+    if pars is None :
+        if keys is not None :
+            pars=getPar(keys, to_return=['d'])[0]
+        else :
+            raise ValueError ('No parameter names or keys provided.')
+    s_pars=[p for p in pars if p in s.columns]
+    ids=s.index.get_level_values('AgentID').values
+    ls=l.loc[ids].values
+    if len(s_pars)>0 :
+        s[nam.scal(s_pars)] = (s[s_pars].values.T / ls).T
+    e_pars = [p for p in pars if p in e.columns]
+    if len(e_pars) > 0:
+        e[nam.scal(e_pars)]=(e[e_pars].values.T/l.values).T
+
+
+
 
 if __name__ == '__main__':
     from lib.stor.managing import get_datasets
-    d = get_datasets(datagroup_id='SimGroup', last_common='single_runs', names=['dish/ppp'], mode='load')[0]
-    s=d.step_data
-    # e=d.end
-    # dt=d.dt
-    # Npoints=d.Npoints
-    # points=d.points
-    # angles=d.angles
-    # segs=d.segs
-    # point=d.point
-    # config=d.config
-    # par_distro_dir=d.par_distro_dir
-    print(s.columns)
-    d.spatial_processing(show_output=True)
-    # angular_processing(s,e,dt,Npoints,config, mode='full', dir=par_distro_dir)
-    # compute_spatial_metrics(s,e,dt, points=['centroid'])
-    # compute_extrema(s,dt, parameters=[nam.scal(nam.vel('centroid'))], interval_in_sec=0.3)
-    # compute_freq(s,e,dt, parameters=[nam.scal(nam.vel('centroid'))], freq_range=[0.7, 1.8])
-    # # s,e = compute_spatial_metrics(s,e,dt, points=['centroid'])
-    print(s.columns)
-    # d.save()
+
+    d = get_datasets(datagroup_id='SimGroup', last_common='single_runs', names=['dish/a'], mode='load')[0]
+    s = d.step_data
+    e = d.endpoint_data
+    scale_to_length(s, e,keys=['x', 'y','v','a', 'd', 'cum_d'])
+    # d.spatial_processing(show_output=True)

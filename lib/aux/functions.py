@@ -157,7 +157,7 @@ def angle_dif(angle_1, angle_2, in_deg=True):
         dif%=360
         if dif > 180:
             dif -= 2 * 180
-        elif dif < -180:
+        elif dif <= -180:
             dif += 2 * 180
     else:
         dif%=2*np.pi

@@ -10,22 +10,22 @@ dish = {
 uniform_food = {
     'env_params': 'uniform_food',
     'sim_params': dtypes.get_dict('sim_params'),
-    'collections': ['crawler', 'feeder', 'intermitter'],
+    'collections': ['feeder'],
 }
 patchy_food = {
     'env_params': 'patchy_food',
     'sim_params': dtypes.get_dict('sim_params'),
-    'collections': ['crawler', 'feeder', 'intermitter'],
+    'collections': ['feeder'],
 }
 food_grid = {
     'env_params': 'food_grid',
     'sim_params': dtypes.get_dict('sim_params'),
-    'collections': ['crawler', 'feeder', 'intermitter'],
+    'collections': ['feeder', 'pose'],
 }
 focus = {
     'env_params': 'focus',
     'sim_params': dtypes.get_dict('sim_params'),
-    'collections': ['turner', 'pose'],
+    'collections': ['pose'],
 }
 imitation = {
     'env_params': 'realistic_imitation',
@@ -35,7 +35,7 @@ imitation = {
 reorientation = {
     'env_params': 'reorientation',
     'sim_params': dtypes.get_dict('sim_params'),
-    'collections': ['turner', 'olfactor', 'pose'],
+    'collections': ['olfactor', 'pose'],
 }
 growth = {
     'env_params': 'growth',
@@ -62,7 +62,7 @@ rovers_sitters = {
 odor_pref_test = {
     'env_params': 'odor_pref_test',
     'sim_params': dtypes.get_dict('sim_params', sim_dur=5.0),
-    'collections': ['olfactor'],
+    'collections': ['olfactor', 'pose'],
 }
 
 odor_pref_test_on_food = {
@@ -94,25 +94,25 @@ chemorbit = {
     'env_params': 'chemotaxis_local',
     'sim_params': dtypes.get_dict('sim_params', sim_dur=1.0),
     # 'collections': ['dst2center'],
-    'collections': ['turner', 'olfactor', 'pose', 'source vincinity'],
+    'collections': ['olfactor', 'pose'],
 }
 
 chemorbit_diffusion = {
     'env_params': 'chemotaxis_diffusion',
     'sim_params': dtypes.get_dict('sim_params', sim_dur=10.0),
-    'collections': ['turner', 'source vincinity', 'pose'],
+    'collections': ['pose'],
 }
 
 chemotax = {
     'env_params': 'chemotaxis_approach',
     'sim_params': dtypes.get_dict('sim_params'),
-    'collections': ['turner', 'olfactor', 'pose', 'source approach'],
+    'collections': ['olfactor', 'pose'],
 }
 
 chemotaxis_RL = {
     'env_params': 'chemotaxis_RL',
     'sim_params': dtypes.get_dict('sim_params'),
-    'collections': ['source vincinity', 'memory'],
+    'collections': ['memory'],
 }
 
 dispersion = {
@@ -124,7 +124,7 @@ dispersion = {
 maze = {
     'env_params': 'maze',
     'sim_params': dtypes.get_dict('sim_params', sim_dur=10.0),
-    'collections': ['olfactor', 'pose', 'source vincinity'],
+    'collections': ['olfactor', 'pose'],
 }
 capture_the_flag = {
     'env_params': 'capture_the_flag',
@@ -146,6 +146,6 @@ catch_me = {
 food_at_bottom = {
     'env_params': 'food_at_bottom',
     'sim_params': dtypes.get_dict('sim_params', sim_dur=1.5, dt=0.09, sample_dataset='Fed'),
-    'collections': ['pose', 'source vincinity']
+    'collections': ['pose']
 }
 

@@ -138,6 +138,10 @@ def store_sim_data(env, d, save_data_flag, enrich, experiment, param_dict):
                 l.deb.save_dict(d.dir_dict['deb'])
             except:
                 pass
+        for l in env.get_flies():
+            l.brain.intermitter.save_dict(d.dir_dict['bouts'])
+            # except:
+            #     pass
     return d
 
 
@@ -164,8 +168,11 @@ def collection_conf(dataset, collections):
             # if 'groups' in list(cd[c].keys()):
             #     groups += cd[c]['groups']
 
-        collected_pars = {'step': fun.unique_list(step_pars),
-                          'endpoint': fun.unique_list(end_pars),
+        step=fun.unique_list(step_pars)
+        end=fun.unique_list(end_pars)
+
+        collected_pars = {'step': step,
+                          'endpoint': end,
                           'tables': tables,
                           'step_groups': [],
                           'end_groups': [],

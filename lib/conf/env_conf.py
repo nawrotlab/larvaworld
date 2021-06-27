@@ -284,7 +284,7 @@ patchy_food_env = {'arena': arena(0.2, 0.2),
                    'larva_groups': larva_distro(N=25, model='feeder-navigator'),
                    'odorscape': gaussian_odor()}
 
-food_grid_env = {'arena': arena(0.03, 0.03),  # dish(0.006),
+food_grid_env = {'arena': arena(0.2, 0.2),  # dish(0.006),
                  'food_params': food_param_conf(grid=dtypes.get_dict('food_grid')),
                  'larva_groups': larva_distro(N=25, model='feeder-explorer'),
                  'odorscape': None}

@@ -20,10 +20,7 @@ class LarvaReplay(Larva, BodyReplay):
         self.chunk_ids = None
         self.trajectory = []
         self.color = deepcopy(self.default_color)
-        # self.real_length = length * 1000
         self.real_length = length
-        # self.sim_length = length
-        # print(self.sim_length, length)
 
         N = len(data.index.unique().values)
         Nmid = self.model.Npoints
@@ -57,6 +54,7 @@ class LarvaReplay(Larva, BodyReplay):
                 self.beh_ar[:, i] = np.array([not v for v in np.isnan(data[p].values).tolist()])
         self.pos = self.pos_ar[0]
         if Nsegs is not None:
+            print(self.sim_length, self.pos, self.model.arena_dims)
             # FIXME Here the sim_length is not divided by 1000 because all xy coords are in mm
             BodyReplay.__init__(self, model, pos=self.pos, orientation=self.or_ar[0][0],
                                 initial_length=self.sim_length, length_std=0, Nsegs=Nsegs, interval=0)

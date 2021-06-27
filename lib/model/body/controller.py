@@ -27,23 +27,13 @@ class BodySim(BodyManager):
 
         self.body_spring_k = body_spring_k
         self.bend_correction_coef = bend_correction_coef
-        # self.density = density
 
         self.head_contacts_ground = True
         self.trajectory = [self.pos]
         self.lin_activity = 0
         self.ang_activity = 0
         self.ang_vel = 0
-        # self.ang_vel_0 = 0
-        self.d_front_orientation=0
         self.body_bend = 0
-        self.d_body_bend=0
-        self.d_body_vel=0
-        self.body_bend_0 = 0
-        self.body_bend_vel = 0
-        self.body_bend_vel_0 = 0
-        self.body_bend_acc = 0
-        self.body_bend_acc_0 = 0
         self.body_bend_errors = 0
         self.Nangles_b = int(self.Nangles + 1 / 2)
         self.spineangles = [0.0]*self.Nangles
@@ -110,23 +100,12 @@ class BodySim(BodyManager):
                     for i in np.arange(1, self.mid_seg_index, 1):
                         self.segs[i].set_ang_vel(ang_vel / i)
             elif self.ang_mode == 'torque':
-                # unused_ang_vel = self.compute_ang_vel(ang_velocity=self.get_head().get_angularvelocity(),
-                #                                                ang_damping=False)
-                # TODO THis needs to be calibrated according to the real larva
                 self.torque = self.ang_activity * self.torque_coef*10000
                 self.segs[0]._body.ApplyTorque(self.torque, wake=True)
                 if self.Nsegs > 1:
                     for i in np.arange(1, self.mid_seg_index, 1):
                         self.segs[i]._body.ApplyTorque(self.torque / i, wake=True)
-                # if self.Nsegs >= 4:
-                #     self.segs[1]._body.ApplyTorque(torque * 3 / 4, wake=True)
-                #     if self.Nsegs >= 8:
-                #         self.segs[2]._body.ApplyTorque(torque * 2 / 3, wake=True)
-                #         if self.Nsegs >= 12:
-                #             self.segs[3]._body.ApplyTorque(torque / 2, wake=True)
-            # self.segs[1]._body.ApplyTorque(self.torque*2/2, wake=True)
-            # self.segs[2]._body.ApplyTorque(self.torque*2/3, wake=True)
-            # self.segs[3]._body.ApplyTorque(self.torque*2/4, wake=True)
+
 
             # Linear component
             # Option : Apply to single body segment
@@ -187,9 +166,6 @@ class BodySim(BodyManager):
 
         for o in self.carried_objects:
             o.pos = self.pos
-        # print(self.d_body_bend)
-        # self.collector.collect()
-        # print(self.collector.table['front angular acceleration'])
 
     def compute_new_lin_vel_vector(self, target_segment):
         # Option 1 : Create the linear velocity from orientation.
@@ -273,9 +249,6 @@ class BodySim(BodyManager):
                                                     correction_coef=self.bend_correction_coef)
         self.compute_body_bend()
 
-    def set_torque(self, value):
-        self.torque = value
-
     def set_lin_activity(self, value):
         self.lin_activity = value
 
@@ -283,11 +256,6 @@ class BodySim(BodyManager):
         self.ang_activity = value
         # print(value, self.ang_activity)
 
-    def get_body_bend(self):
-        return self.body_bend
-
-    def set_body_bend(self, value):
-        self.body_bend = value
 
     def update_trajectory(self):
         last_pos = self.trajectory[-1]
@@ -369,7 +337,6 @@ class BodySim(BodyManager):
             ang_vel = np.abs(ang_vel)*np.sign(ang_vel0)
         head.set_pose(hp1, o1)
         head.update_vertices(hp1, o1)
-        self.d_front_orientation=o1-o0
         if self.Nsegs > 1:
             self.position_rest_of_body(o1-o0, head_rear_pos=hr1, head_or=o1)
         self.pos = self.get_global_midspine_of_body() if self.Nsegs != 2 else hr1
@@ -377,7 +344,6 @@ class BodySim(BodyManager):
         head.set_lin_vel(lin_vel)
         head.set_ang_vel(ang_vel)
         self.dst = d
-        # print(d)
         self.cum_dst += d
         self.trajectory.append(self.pos)
 
@@ -417,11 +383,4 @@ class BodySim(BodyManager):
         self.spineangles = [fun.angle_dif(seg_ors[i], seg_ors[i + 1], in_deg=False) for i in range(self.Nangles)]
 
     def compute_body_bend(self):
-        curr = sum(self.spineangles[:self.Nangles_b])
-        self.d_body_bend=curr-self.body_bend
-        self.body_bend_0 = self.body_bend
-        self.body_bend = curr
-        self.body_bend_vel_0=self.body_bend_vel
-        self.body_bend_acc_0=self.body_bend_acc
-        self.body_bend_vel= (self.body_bend - self.body_bend_0) / self.model.dt
-        self.body_bend_acc= (self.body_bend_vel - self.body_bend_vel_0) / self.model.dt
+        self.body_bend = sum(self.spineangles[:self.Nangles_b])

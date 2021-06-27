@@ -10,6 +10,7 @@ import lib.aux.functions as fun
 import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.process.basic import compute_extrema, compute_freq
+from lib.anal.process.spatial import scale_to_length
 from lib.anal.process.store import create_par_distro_dataset, create_chunk_dataset
 from lib.conf.par import load_ParDict
 from lib.stor import paths
@@ -20,27 +21,39 @@ def detect_bouts(s,e,dt,Npoints,point, config=None, bouts=['stride', 'pause', 't
                  vel_par=None, ang_vel_par=None, bend_vel_par=None,min_ang=5.0,
                  non_chunks=False,distro_dir=None,stride_p_dir=None,source=None, show_output=True, **kwargs):
 
-    if paths.new_format :
-        dic = load_ParDict()
-        if vel_par is None :
-            vel_par=dic['sv']['d']
-        if ang_vel_par is None :
-            ang_vel_par=dic['fov']['d']
-        if bend_vel_par is None :
-            bend_vel_par=dic['bv']['d']
-        if track_pars is None:
-            track_pars = [dic[k]['d'] for k in ['fou', 'rou','fo', 'ro', 'b', 'x', 'y', 'o_cent']]
-        if chunk_pars is None :
-            chunk_pars=[dic[k]['d'] for k in ['sv', 'fov', 'rov', 'bv', 'l']]
-        # if get_unit(dic['fo'].d).name()=='radian' :
-        min_ang=np.deg2rad(min_ang)
-        # raise
-    else :
-        if track_pars is None:
-            track_pars = [nam.unwrap(nam.orient('front')),nam.orient('front'), nam.unwrap(nam.orient('rear')),nam.orient('rear'), 'bend', 'x', 'y',
-                          nam.bearing2('center')]
-        if chunk_pars is None :
-            chunk_pars=[vel_par, 'spinelength', nam.vel(nam.orient('front')),nam.vel(nam.orient('rear')),nam.vel('bend')]
+    # if paths.new_format :
+    #     dic = load_ParDict()
+    #     if vel_par is None :
+    #         vel_par=dic['sv']['d']
+    #     if ang_vel_par is None :
+    #         ang_vel_par=dic['fov']['d']
+    #     if bend_vel_par is None :
+    #         bend_vel_par=dic['bv']['d']
+    #     if track_pars is None:
+    #         track_pars = [dic[k]['d'] for k in ['fou', 'rou','fo', 'ro', 'b', 'x', 'y', 'o_cent', 'o_chem']]
+    #     if chunk_pars is None :
+    #         chunk_pars=[dic[k]['d'] for k in ['sv', 'fov', 'rov', 'bv', 'l']]
+    #     # if get_unit(dic['fo'].d).name()=='radian' :
+    #     min_ang=np.deg2rad(min_ang)
+    #     # raise
+    # else :
+    #     if track_pars is None:
+    #         track_pars = [nam.unwrap(nam.orient('front')),nam.orient('front'), nam.unwrap(nam.orient('rear')),nam.orient('rear'), 'bend', 'x', 'y',
+    #                       nam.bearing2('center')]
+    #     if chunk_pars is None :
+    #         chunk_pars=[vel_par, 'spinelength', nam.vel(nam.orient('front')),nam.vel(nam.orient('rear')),nam.vel('bend')]
+
+    dic = load_ParDict()
+    if vel_par is None:
+        vel_par = dic['sv']['d']
+    if ang_vel_par is None:
+        ang_vel_par = dic['fov']['d']
+    if bend_vel_par is None:
+        bend_vel_par = dic['bv']['d']
+    if track_pars is None:
+        track_pars = [dic[k]['d'] for k in ['fou', 'rou', 'fo', 'ro', 'b', 'x', 'y', 'o_cent', 'o_chem']]
+    if chunk_pars is None:
+        chunk_pars = [dic[k]['d'] for k in ['sv', 'fov', 'rov', 'bv', 'l']]
     track_pars = [p for p in track_pars if p in s.columns]
     if track_point is None:
         track_point = point
@@ -323,8 +336,8 @@ def detect_contacting_chunks(s, e, dt, chunk='stride', track_point=None, mid_fla
     c_chain_l = nam.length(c_chain)
     c_dst = nam.dst(chunk)
     c_sdst = nam.straight_dst(chunk)
-    scaled_chunk_strdst = nam.scal(c_sdst)
-    scaled_chunk_dst = nam.scal(c_dst)
+    # scaled_chunk_strdst = nam.scal(c_sdst)
+    # scaled_chunk_dst = nam.scal(c_dst)
 
     if track_point in [None, 'centroid']:
         track_xy = ['x', 'y']
@@ -333,10 +346,10 @@ def detect_contacting_chunks(s, e, dt, chunk='stride', track_point=None, mid_fla
         track_xy = nam.xy(track_point)
         track_dst = nam.dst(track_point)
 
-    if 'length' in e.columns.values:
-        lengths = e['length'].values
-    else:
-        lengths = None
+    # if 'length' in e.columns.values:
+    #     lengths = e['length'].values
+    # else:
+    #     lengths = None
 
     cpars = [track_dst] + track_xy + control_pars
     cpars = [p for p in cpars if p in s.columns]
@@ -350,16 +363,16 @@ def detect_contacting_chunks(s, e, dt, chunk='stride', track_point=None, mid_fla
     chunk_chain_dur_array = np.zeros([N, Nids]) * np.nan
     dst_array = np.zeros([N, Nids]) * np.nan
     straight_dst_array = np.zeros([N, Nids]) * np.nan
-    scaled_dst_array = np.zeros([N, Nids]) * np.nan
-    scaled_straight_dst_array = np.zeros([N, Nids]) * np.nan
+    # scaled_dst_array = np.zeros([N, Nids]) * np.nan
+    # scaled_straight_dst_array = np.zeros([N, Nids]) * np.nan
 
     arrays = [start_array, stop_array, dur_array, id_array,
               chunk_chain_length_array, chunk_chain_dur_array,
-              dst_array, straight_dst_array, scaled_dst_array, scaled_straight_dst_array, orientation_array]
+              dst_array, straight_dst_array,  orientation_array]
 
     pars = [c_0, c_1, c_dur, c_id,
             c_chain_l, c_chain_dur,
-            c_dst, c_sdst, scaled_chunk_dst, scaled_chunk_strdst, c_or]
+            c_dst, c_sdst, c_or]
 
     if vel_par:
         freqs = e[nam.freq(vel_par)]
@@ -418,10 +431,10 @@ def detect_contacting_chunks(s, e, dt, chunk='stride', track_point=None, mid_fla
                 straight_dst_array[s1, i] = euclidean(tuple(d_xy[s1, :]), tuple(d_xy[s0, :]))
                 orientation_array[s1, i] = fun.angle_to_x_axis(d_xy[s0], d_xy[s1])
 
-            if lengths is not None:
-                l = lengths[i]
-                scaled_dst_array[s1s, i] = dst_array[s1s, i] / l
-                scaled_straight_dst_array[s1s, i] = straight_dst_array[s1s, i] / l
+            # if lengths is not None:
+            #     l = lengths[i]
+            #     scaled_dst_array[s1s, i] = dst_array[s1s, i] / l
+            #     scaled_straight_dst_array[s1s, i] = straight_dst_array[s1s, i] / l
 
     for array, par in zip(arrays, pars):
         s[par] = array.flatten()
@@ -432,13 +445,15 @@ def detect_contacting_chunks(s, e, dt, chunk='stride', track_point=None, mid_fla
 
     e['stride_reoccurence_rate'] = 1 - 1 / s[c_chain_l].groupby('AgentID').mean()
 
-    if 'length' in e.columns.values:
-        for pp in [c_dst, c_sdst]:
-            spp = nam.scal(pp)
-            e[nam.cum(spp)] = e[nam.cum(pp)] / e['length']
-            e[nam.mean(spp)] = e[nam.mean(pp)] / e['length']
-            e[nam.std(spp)] = e[nam.std(pp)] / e['length']
-
+    # if 'length' in e.columns.values:
+    #     for pp in [c_dst, c_sdst]:
+    #         spp = nam.scal(pp)
+    #         e[nam.cum(spp)] = e[nam.cum(pp)] / e['length']
+    #         e[nam.mean(spp)] = e[nam.mean(pp)] / e['length']
+    #         e[nam.std(spp)] = e[nam.std(pp)] / e['length']
+    pars=[c_dst, c_sdst]
+    pars=pars+nam.cum(pars)+nam.mean(pars)+nam.std(pars)
+    scale_to_length(s,e,pars=pars)
     compute_chunk_metrics(s, e, [chunk])
     if distro_dir is not None:
         create_par_distro_dataset(s, [c_chain_dur, c_chain_l], dir=distro_dir)

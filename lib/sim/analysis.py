@@ -2,7 +2,8 @@ import numpy as np
 
 from lib.anal.plotting import plot_endpoint_scatter, plot_turn_Dbearing, plot_turn_amp, plot_turns, plot_timeplot, \
     plot_navigation_index, plot_debs, plot_food_amount, plot_gut, plot_pathlength, plot_endpoint_params, barplot, \
-    comparative_analysis, plot_marked_turns, plot_chunk_Dorient2source, plot_marked_strides, targeted_analysis
+    comparative_analysis, plot_marked_turns, plot_chunk_Dorient2source, plot_marked_strides, targeted_analysis, \
+    plot_stridesNpauses, plot_ang_pars
 from lib.aux import functions as fun
 from lib.conf import dtype_dicts as dtypes
 from lib.model.DEB.deb import deb_default
@@ -11,10 +12,9 @@ from lib.stor.larva_dataset import LarvaDataset
 
 
 def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
-    ccc={'show' : False}
+    ccc={'show' : True}
     if d is None:
         return
-    # s, e = d.step_data, d.endpoint_data
     fig_dict = {}
     results = {}
     if exp_type in ['patchy_food', 'uniform_food', 'food_grid']:
@@ -26,8 +26,13 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
         # print(cN, pN, fN)
         # cum_sd, f_success=e['cum_scaled_dst'].values, e['feed_success_rate'].values
         # print(cum_sd, f_success)
-        fig_dict['scatter_x4'] = plot_endpoint_scatter(datasets=[d], par_shorts=['cum_sd', 'f_am', 'str_tr', 'fee_tr'], **ccc)
-        fig_dict['scatter_x2'] = plot_endpoint_scatter(datasets=[d], par_shorts=['cum_sd', 'f_am'], **ccc)
+
+        fig_dict['angular'] = plot_ang_pars(datasets=[d], **ccc)
+        fig_dict['bouts'] = plot_stridesNpauses(datasets=[d], plot_fits=None, only_fit_one=False, test_detection=True,
+                                                **ccc)
+
+        fig_dict['scatter_x4'] = plot_endpoint_scatter(datasets=[d], keys=['scum_d', 'f_am', 'str_tr', 'pau_tr'], **ccc)
+        fig_dict['scatter_x2'] = plot_endpoint_scatter(datasets=[d], keys=['scum_d', 'f_am'], **ccc)
 
     elif exp_type in ['food_at_bottom']:
         ds = d.split_dataset(is_last=False, show_output=show_output)
@@ -46,9 +51,6 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
         fig_dict['navigation index'] = plot_navigation_index(**cc)
         fig_dict['orientation to center'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=None, **cc)
         fig_dict['bearing to 270deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=270, par=None, **cc)
-
-        # for d in datasets :
-        #     d.delete()
 
     elif exp_type in ['growth', 'rovers_sitters']:
         deb_model = deb_default(epochs=d.config['epochs'], substrate_quality=d.config['substrate_quality'])
@@ -131,21 +133,18 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
             ps = ['o_chem', 'sd_chem', 'd_chem']
             source = (0.04, 0.0)
         for p in ps:
-            try :
-                fig_dict[p] = plot_timeplot([p], datasets=[d], show_first=True, **ccc)
-            except :
-                pass
+            fig_dict[p] = plot_timeplot([p], datasets=[d], show_first=True, **ccc)
         for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
-            try:
-                fig_dict[p] = plot_timeplot([p], datasets=[d], **ccc)
-            except:
-                pass
+            fig_dict[p] = plot_timeplot([p], datasets=[d], **ccc)
         for chunk in ['turn', 'stride', 'pause']:
             for dur in [0.0, 0.5, 1.0]:
-                fig_dict[f'{chunk}_Dorient2source_min_{dur}_sec'] = plot_chunk_Dorient2source(datasets=[d],
+                try :
+                    fig_dict[f'{chunk}_bearing2source_min_{dur}_sec'] = plot_chunk_Dorient2source(datasets=[d],
                                                                                               chunk=chunk,
                                                                                               source=source,
                                                                                               min_dur=dur, **ccc)
+                except:
+                    pass
         vis_kwargs = dtypes.get_dict('visualization', mode='image', image_mode='final', show_display=False,
                                      random_colors=True, trajectories=True,
                                      visible_clock=False, visible_scale=False, media_name='single_trajectory')
@@ -153,7 +152,7 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
 
 
 
-    elif exp_type in ['odor_pref_test', 'odor_pref_train', 'odor_pref_test_on_food']:
+    if 'odor_pref' in exp_type :
         ind = d.compute_preference_index()
         print(f'Preference for left odor : {np.round(ind, 3)}')
         results['PI'] = ind

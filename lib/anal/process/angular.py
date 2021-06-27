@@ -11,9 +11,8 @@ from lib.anal.process.store import create_par_distro_dataset
 def compute_spineangles(s, angles, points, config=None, chunk_only=None, mode='full'):
     r = config['front_body_ratio'] if config is not None else 0.5
     bend_angles = angles[:int(np.round(r * len(angles)))]
-    if chunk_only is None:
-        s = s.copy(deep=False)
-    else:
+    # print(bend_angles)
+    if chunk_only is not None:
         print(f'Computation restricted to {chunk_only} chunks')
         s = s.loc[s[nam.id(chunk_only)].dropna().index.values].copy(deep=False)
     xy = [nam.xy(points[i]) for i in range(len(points))]
@@ -155,52 +154,8 @@ def compute_angular_metrics(s, dt, segs, angles, mode='minimal'):
         s[a] = A[:, k, :].flatten()
     print('All angular parameters computed')
 
-def compute_tortuosity(s,e,dt, durs_in_sec=[2, 5, 10, 20]):
-    dsp_par=nam.final('dispersion') if nam.final('dispersion') in e.columns else 'dispersion'
-    # print(e[dsp_par])
-    # print(e[nam.cum(nam.dst(''))])
-    e['tortuosity'] = 1 - e[dsp_par] / e[nam.cum(nam.dst(''))]
-    durs = [int(1/dt * d) for d in durs_in_sec]
-    Ndurs = len(durs)
-    if Ndurs > 0:
-        ids = s.index.unique('AgentID').values
-        Nids = len(ids)
-        ds = [s[['x', 'y']].xs(id, level='AgentID') for id in ids]
-        ds = [d.loc[d.first_valid_index(): d.last_valid_index()].values for d in ds]
-        for j, r in enumerate(durs):
-            par = f'tortuosity_{durs_in_sec[j]}'
-            par_m, par_s = nam.mean(par), nam.std(par)
-            T_m = np.ones(Nids) * np.nan
-            T_s = np.ones(Nids) * np.nan
-            for z, id in enumerate(ids):
-                si = ds[z]
-                u = len(si) % r
-                if u > 1:
-                    si0 = si[:-u + 1]
-                else:
-                    si0 = si[:-r + 1]
-                k = int(len(si0) / r)
-                T = []
-                for i in range(k):
-                    t = si0[i * r:i * r + r + 1, :]
-                    if np.isnan(t).any():
-                        continue
-                    else:
-                        t_D = np.sum(np.sqrt(np.sum(np.diff(t, axis=0) ** 2, axis=1)))
-                        t_L = np.sqrt(np.sum(np.array(t[-1, :] - t[0, :]) ** 2))
-                        t_T = 1 - t_L / t_D
-                        T.append(t_T)
-                T_m[z] = np.mean(T)
-                T_s[z] = np.std(T)
-            e[par_m] = T_m
-            e[par_s] = T_s
 
-    print('Tortuosities computed')
-
-def angular_processing(s, e, dt, Npoints, config=None, recompute=False, mode='minimal', distro_dir=None,
-                       tor_durs=[2, 5, 10, 20],**kwargs):
-    # print('xxxxxxxxxxxxx')
-
+def angular_processing(s, e, dt, Npoints, config=None, recompute=False, mode='minimal', distro_dir=None, **kwargs):
     N = Npoints
     points = nam.midline(N, type='point')
     Nangles = np.clip(N - 2, a_min=0, a_max=None)
@@ -216,7 +171,6 @@ def angular_processing(s, e, dt, Npoints, config=None, recompute=False, mode='mi
         compute_bend(s, points, angles, config, mode=mode)
     compute_angular_metrics(s, dt, segs, angles, mode=mode)
     compute_LR_bias(s, e)
-    compute_tortuosity(s, e, dt, durs_in_sec=tor_durs)
     if distro_dir is not None:
         create_par_distro_dataset(s, ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), dir=distro_dir)
     print(f'Completed {mode} angular processing.')

@@ -5,7 +5,7 @@ import lib.conf.dtype_dicts as dtypes
 
 from lib.aux.collecting import output_keys
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
-    named_bool_button, save_gui_conf, delete_gui_conf, GraphList, graphic_button, t10_kws, col_kws, col_size, t24_kws, \
+    named_bool_button,  GraphList, graphic_button, t10_kws, col_kws, col_size, t24_kws, \
     t8_kws, \
     t16_kws, t11_kws, t6_kws, t12_kws
 from lib.gui.tab import GuiTab, SelectionList

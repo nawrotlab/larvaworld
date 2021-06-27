@@ -45,5 +45,5 @@ conf_paths = {
 VideoSlideFolder = f'{get_parent_dir()}/lib/gui/video_slides'
 IntroSlideFolder = f'{get_parent_dir()}/lib/gui/intro_slides'
 
-# new_format = False
-new_format = True
+new_format = False
+# new_format = True

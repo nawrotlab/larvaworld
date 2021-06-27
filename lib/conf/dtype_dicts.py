@@ -3,6 +3,8 @@ from typing import List, Tuple, Union
 import numpy as np
 from siunits import BaseUnit, Composite, DerivedUnit
 
+# from lib.conf.par import runtime_pars
+
 vis_render_dtypes = {
     'mode': [None, 'video', 'image'],
     'image_mode': [None, 'final', 'snapshots', 'overlap'],
@@ -526,7 +528,7 @@ def get_dict_dtypes(name, **kwargs):
             'draw_Nsegs': int,
         },
         'optimization': {
-            'fit_par': par_conf.get_runtime_pars(),
+            'fit_par': str,
             'operations': {
                 'mean': bool,
                 'std': bool,

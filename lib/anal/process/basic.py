@@ -7,6 +7,7 @@ import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.process.angular import angular_processing
 from lib.anal.process.spatial import spatial_processing
+from lib.conf.par import getPar
 
 
 def compute_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
@@ -102,7 +103,7 @@ def filter(s, dt, Npoints, config=None, freq=2, N=1, inplace=True, recompute=Fal
     if config is not None :
         config['filtered_at'] = freq
 
-    points = nam.midline(Npoints, type='point') + ['centroid']
+    points = nam.midline(Npoints, type='point') + ['centroid', '']
     pars = nam.xy(points, flat=True)
     pars = [p for p in pars if p in s.columns]
     data = np.dstack(list(s[pars].groupby('AgentID').apply(pd.DataFrame.to_numpy)))
@@ -114,7 +115,7 @@ def filter(s, dt, Npoints, config=None, freq=2, N=1, inplace=True, recompute=Fal
 
 def interpolate_nans(s, Npoints, pars=None):
     if pars is None :
-        points = nam.midline(Npoints, type='point') + ['centroid']
+        points = nam.midline(Npoints, type='point') + ['centroid', '']
         pars = nam.xy(points, flat=True)
     pars = [p for p in pars if p in s.columns]
     for p in pars:
@@ -130,7 +131,7 @@ def rescale(s,e, Npoints, config=None, recompute=False, scale=1.0):
             return
     if config is not None :
         config['rescaled_by'] = scale
-    points = nam.midline(Npoints, type='point') + ['centroid']
+    points = nam.midline(Npoints, type='point') + ['centroid','']
     pars=nam.xy(points, flat=True) + nam.dst(points) + nam.vel(points) + nam.acc(points) + ['spinelength']
     lin_pars = [p for p in pars if p in s.columns]
     for p in lin_pars:
@@ -146,14 +147,18 @@ def exclude_rows(s,e, dt,  flag, accepted=None, rejected=None):
         if rejected is not None:
             s.loc[s[flag] == rejected[0]] = np.nan
 
+        p=getPar('cum_t', to_return=['d'])[0]
         for id in s.index.unique('AgentID').values:
-            e.loc[id, 'num_ticks'] = len(s.xs(id, level='AgentID', drop_level=True).dropna())
-            e.loc[id, 'cum_dur'] = e.loc[id, 'num_ticks'] * dt
+            # e.loc[id, 'num_ticks'] = len(s.xs(id, level='AgentID', drop_level=True).dropna())
+            e.loc[id, p] = len(s.xs(id, level='AgentID', drop_level=True).dropna()) * dt
+            # e.loc[id, 'cum_dur'] = e.loc[id, 'num_ticks'] * dt
 
         print(f'Rows excluded according to {flag}.')
 
 def preprocess(s,e,dt,Npoints, dic, config=None,  recompute=False,show_output=True,**kwargs) :
+    print('ddd')
     with fun.suppress_stdout(show_output):
+        print('ddddddd')
         if dic is None :
             return s, e
         else :
@@ -170,9 +175,9 @@ def preprocess(s,e,dt,Npoints, dic, config=None,  recompute=False,show_output=Tr
 def generate_traj_colors(s, sp_vel=None, ang_vel=None):
     N = len(s.index.unique('Step'))
     if sp_vel is None :
-        sp_vel =nam.scal(nam.vel(''))
+        sp_vel =getPar('sv', to_return=['d'])[0]
     if ang_vel is None :
-        ang_vel =nam.vel(nam.orient('front'))
+        ang_vel =getPar('fov', to_return=['d'])[0]
     pars = [sp_vel, ang_vel]
     edge_colors = [[(255, 0, 0), (0, 255, 0)], [(255, 0, 0), (0, 255, 0)]]
     labels = ['lin_color', 'ang_color']

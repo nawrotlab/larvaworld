@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from lib.conf import par_conf
 from lib.conf.conf import loadConfDict, saveConf, deleteConf
 import lib.aux.functions as fun
+from lib.conf.par import runtime_pars, getPar
 from lib.stor import paths
 import lib.conf.dtype_dicts as dtypes
 import lib.gui.graphics as graphics
@@ -1070,12 +1071,13 @@ class SectionDict:
         self.subdicts = {}
 
     def init_section(self):
-        if self.init_dict is not None:
-            dic = self.init_dict
-        else:
-            return []
+        # if self.init_dict is not None:
+        #     dic = self.init_dict
+        # else:
+        #     print(self.name, 'dddddddddddddddd')
+        #     return []
         l = []
-        for k, v in dic.items():
+        for k, v in self.init_dict.items():
             k0 = f'{self.name}_{k}'
             if type(v) == bool:
                 l.append(named_bool_button(k, v, k0))
@@ -1083,8 +1085,7 @@ class SectionDict:
                 type_dict = self.type_dict[k] if self.type_dict is not None else None
                 self.subdicts[k0] = CollapsibleDict(k0, False, disp_name=k, dict=v, type_dict=type_dict,
                                                     toggle=self.toggled_subsections)
-                ll = self.subdicts[k0].get_section()
-                l.append(ll)
+                l.append(self.subdicts[k0].get_section())
             else:
                 temp = sg.In(v, key=k0)
                 if self.type_dict is not None:
@@ -1639,7 +1640,8 @@ class DynamicGraph:
         sg.theme('DarkBlue15')
         self.agent = agent
         if available_pars is None:
-            available_pars = par_conf.get_runtime_pars()
+            available_pars = runtime_pars
+            # available_pars = par_conf.get_runtime_pars()
         self.available_pars = available_pars
         self.pars = pars
         self.dt = self.agent.model.dt
@@ -1672,7 +1674,6 @@ class DynamicGraph:
         self.canvas = self.canvas_elem.TKCanvas
         self.fig_agg = None
 
-        # self.update_pars()
         self.layout = 1
 
     def evaluate(self):
@@ -1719,14 +1720,15 @@ class DynamicGraph:
             else:
                 y = y_nan
                 y[-dif:] = self.yranges[p]
-                # y = np.pad(self.yranges[p], (-dif, 0), constant_values=np.nan)
             ys.append(y)
         return ys
 
     def update_pars(self):
-        to_return = ['par', 'symbol', 'exp_symbol', 'unit', 'lim', 'collect']
-        self.pars, self.sim_symbols, self.exp_symbols, self.units, self.ylims, self.par_collects = par_conf.par_dict_lists(
-            pars=self.pars, to_return=to_return)
+        # to_return = ['par', 'symbol', 'exp_symbol', 'unit', 'lim', 'collect']
+        # self.pars, self.sim_symbols, self.exp_symbols, self.units, self.ylims, self.par_collects = par_conf.par_dict_lists(
+        #     pars=self.pars, to_return=to_return)
+
+        self.pars, self.symbols, self.units, self.ylims, self.par_collects =getPar(d=self.pars, to_return=['d', 's', 'l', 'lim', 'p'])
         self.Npars = len(self.pars)
         self.yranges = {}
 
@@ -1737,7 +1739,7 @@ class DynamicGraph:
             self.axs = [axs]
         Nticks = int(self.init_dur / self.dt)
         for i, (ax, p, l, u, lim, p_col) in enumerate(
-                zip(self.axs, self.pars, self.sim_symbols, self.units, self.ylims, self.par_collects)):
+                zip(self.axs, self.pars, self.symbols, self.units, self.ylims, self.par_collects)):
             if hasattr(self.agent, p_col):
                 p0 = p_col
             else:
@@ -1758,46 +1760,46 @@ class DynamicGraph:
         if self.fig_agg:
             delete_figure_agg(self.fig_agg)
         self.fig_agg = draw_canvas(self.canvas, self.fig)
-
-
-def fullNcap(conf_type):
-    if conf_type == 'Env':
-        full = 'environment'
-        cap = 'ENV'
-    elif conf_type == 'Batch':
-        full = 'batch'
-        cap = 'BATCH'
-    elif conf_type == 'Model':
-        full = 'model'
-        cap = 'MODEL'
-    elif conf_type == 'Exp':
-        full = 'experiment'
-        cap = 'EXP'
-    return full, cap
-
-
-def save_gui_conf(window, conf, conf_type):
-    full, cap = fullNcap(conf_type)
-    l = [
-        named_list_layout(f'Store new {full}', f'{cap}_ID', list(loadConfDict(conf_type).keys()),
-                          readonly=False, enable_events=False),
-        [sg.Ok(), sg.Cancel()]]
-    e, v = sg.Window(f'{full} configuration', l).read(close=True)
-    if e == 'Ok':
-        conf_id = v[f'{cap}_ID']
-        saveConf(conf, conf_type, conf_id)
-        window[f'{cap}_CONF'].update(values=list(loadConfDict(conf_type).keys()), value=conf_id)
-        if f'{cap}_CONF2' in window.element_list():
-            window[f'{cap}_CONF2'].update(values=list(loadConfDict(conf_type).keys()), value=conf_id)
-        # window[f'{cap}_CONF'].update()
-
-
-def delete_gui_conf(window, values, conf_type):
-    full, cap = fullNcap(conf_type)
-    if values[f'{cap}_CONF'] != '':
-        deleteConf(values[f'{cap}_CONF'], conf_type)
-        window[f'{cap}_CONF'].update(values=list(loadConfDict(conf_type).keys()))
-        window[f'{cap}_CONF'].update(value='')
+#
+#
+# def fullNcap(conf_type):
+#     if conf_type == 'Env':
+#         full = 'environment'
+#         cap = 'ENV'
+#     elif conf_type == 'Batch':
+#         full = 'batch'
+#         cap = 'BATCH'
+#     elif conf_type == 'Model':
+#         full = 'model'
+#         cap = 'MODEL'
+#     elif conf_type == 'Exp':
+#         full = 'experiment'
+#         cap = 'EXP'
+#     return full, cap
+#
+#
+# def save_gui_conf(window, conf, conf_type):
+#     full, cap = fullNcap(conf_type)
+#     l = [
+#         named_list_layout(f'Store new {full}', f'{cap}_ID', list(loadConfDict(conf_type).keys()),
+#                           readonly=False, enable_events=False),
+#         [sg.Ok(), sg.Cancel()]]
+#     e, v = sg.Window(f'{full} configuration', l).read(close=True)
+#     if e == 'Ok':
+#         conf_id = v[f'{cap}_ID']
+#         saveConf(conf, conf_type, conf_id)
+#         window[f'{cap}_CONF'].update(values=list(loadConfDict(conf_type).keys()), value=conf_id)
+#         if f'{cap}_CONF2' in window.element_list():
+#             window[f'{cap}_CONF2'].update(values=list(loadConfDict(conf_type).keys()), value=conf_id)
+#         # window[f'{cap}_CONF'].update()
+#
+#
+# def delete_gui_conf(window, values, conf_type):
+#     full, cap = fullNcap(conf_type)
+#     if values[f'{cap}_CONF'] != '':
+#         deleteConf(values[f'{cap}_CONF'], conf_type)
+#         window[f'{cap}_CONF'].update(values=list(loadConfDict(conf_type).keys()))
+#         window[f'{cap}_CONF'].update(value='')
 
 
 def check_collapsibles(window, event, collapsibles):
@@ -1810,27 +1812,27 @@ def check_toggles(window, event):
     if 'TOGGLE' in event:
         window[event].toggle()
 
-def check_togglesNcollapsibles(window, event, collapsibles) :
-    check_collapsibles(window, event, collapsibles)
-    if 'TOGGLE' in event:
-        window[event].toggle()
-        name=event[7:]
-        if name in list(collapsibles.keys()) :
-            collapsibles[name].toggle=not collapsibles[name].toggle
+def check_togglesNcollapsibles(w, e, c) :
+    check_collapsibles(w, e, c)
+    if 'TOGGLE' in e:
+        w[e].toggle()
+        name=e[7:]
+        if name in list(c.keys()) :
+            c[name].toggle=not c[name].toggle
 
 
-def default_run_window(window, event, values, collapsibles={}, graph_lists={}):
+def default_run_window(w, e, v, c={}, g={}):
     # if event in (None, 'Exit'):
     #     break
     # check_toggles(window, event)
     # check_collapsibles(window, event, collapsibles)
-    check_togglesNcollapsibles(window, event, collapsibles)
-    for name, graph_list in graph_lists.items():
-        if event == graph_list.list_key:
-            graph_list.evaluate(window, values[graph_list.list_key])
+    check_togglesNcollapsibles(w, e, c)
+    for name, graph_list in g.items():
+        if e == graph_list.list_key:
+            graph_list.evaluate(w, v[graph_list.list_key])
 
-    if event.startswith('EDIT_TABLE'):
-        collapsibles[event.split()[-1]].edit_table(window)
+    if e.startswith('EDIT_TABLE'):
+        c[e.split()[-1]].edit_table(w)
 
 def load_shortcuts():
     try:

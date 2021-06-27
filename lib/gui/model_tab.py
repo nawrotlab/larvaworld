@@ -1,8 +1,7 @@
 import copy
 import PySimpleGUI as sg
 
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, save_gui_conf, delete_gui_conf, b12_kws, \
-    b6_kws, CollapsibleTable, graphic_button, t10_kws, t12_kws, t18_kws, w_kws, col_kws, col_size
+from lib.gui.gui_lib import CollapsibleDict, Collapsible,CollapsibleTable, col_kws, col_size
 import lib.conf.dtype_dicts as dtypes
 from lib.gui.tab import GuiTab, SelectionList
 

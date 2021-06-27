@@ -230,7 +230,7 @@ class LarvaDataset:
             agent_data.to_csv(file_path, index=True, header=header)
         print('All agent data saved.')
 
-    def load_aux(self, type, name=None, file=None):
+    def load_aux(self, type, name=None, file=None, as_df=True):
         if file is None:
             if name is not None:
                 file = f'{name}.csv'
@@ -248,9 +248,10 @@ class LarvaDataset:
             df= pd.read_csv(path, index_col=index_col)
         except:
             try :
-                dic= fun.load_dicts([path])[0]
-                df=pd.DataFrame.from_dict(dic)
-                df.index.set_names(index_col, inplace=True)
+                df= fun.load_dicts([path])[0]
+                if as_df :
+                    df=pd.DataFrame.from_dict(df)
+                    df.index.set_names(index_col, inplace=True)
                 # return df
             except :
                 raise ValueError(f'No data found at {path}')
@@ -333,7 +334,7 @@ class LarvaDataset:
                 arena_pars = self.arena_pars
             env_params = {'arena': arena_pars}
         # arena_dims = [env_params['arena'][k] * 1 for k in ['arena_xdim', 'arena_ydim']]
-        arena_dims = [env_params['arena'][k] * 1000 for k in ['arena_xdim', 'arena_ydim']]
+        arena_dims = [env_params['arena'][k] * 100 for k in ['arena_xdim', 'arena_ydim']]
         env_params['arena']['arena_xdim'] = arena_dims[0]
         env_params['arena']['arena_ydim'] = arena_dims[1]
 
@@ -357,6 +358,7 @@ class LarvaDataset:
         if save_to is None:
             save_to = self.vis_dir
         Nsteps = len(s.index.unique('Step').values)
+
         replay_env = LarvaWorldReplay(id=replay_id, env_params=env_params, space_in_mm=space_in_mm, dt=self.dt,
                                       vis_kwargs=vis_kwargs, save_to=save_to, background_motion=bg,
                                       dataset=self, step_data=s, endpoint_data=e, Nsteps=Nsteps, draw_Nsegs=draw_Nsegs,
@@ -397,10 +399,12 @@ class LarvaDataset:
     def compute_preference_index(self, arena_diameter_in_mm=None, return_num=False, return_all=False, show_output=True):
         if not hasattr(self, 'end'):
             self.load(step=False)
+        e=self.endpoint_data
         if arena_diameter_in_mm is None:
             arena_diameter_in_mm = self.arena_xdim * 1000
         r = 0.2 * arena_diameter_in_mm
-        d = self.endpoint_data[nam.final('x')]
+        p='x' if 'x' in e.keys() else nam.final('x')
+        d = e[p]
         N = d.count()
         N_l = d[d <= -r / 2].count()
         N_r = d[d >= +r / 2].count()
@@ -517,6 +521,7 @@ class LarvaDataset:
             'distro': os.path.join(self.aux_dir, 'par_distros'),
             'stride': os.path.join(self.aux_dir, 'par_during_stride'),
             'dispersion': os.path.join(self.aux_dir, 'dispersion'),
+            'bouts': os.path.join(self.aux_dir, 'bouts'),
             'table': os.path.join(self.aux_dir, 'tables'),
             'step': os.path.join(self.data_dir, 'step.csv'),
             'end': os.path.join(self.data_dir, 'end.csv'),

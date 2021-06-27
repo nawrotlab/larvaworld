@@ -279,7 +279,9 @@ class Parameter:
             v = self.const
         if tick != self.tick:
             if self.func is not None:
-                v = self.func(o)
+                # print(self.k)
+                v = getattr(self, self.func[0])(o, **self.func[1])
+                # print(v)
             elif self.exists:
                 v = getattr(o, self.p)
             elif self.p0 is not None:
@@ -298,6 +300,12 @@ class Parameter:
                         v = fun.freq(vs,dt)
                     else:
                         v = np.nan
+                elif self.operator == 'final':
+                    if df is not None:
+                        vs = df[self.p0.d].xs(o.unique_id, level='AgentID').dropna()
+                        v = vs[-1]
+                    else:
+                        v = np.nan
 
             elif self.fraction:
                 v_n = self.p_num.get_from(o, u=False, tick=tick)
@@ -307,7 +315,6 @@ class Parameter:
                 v = euclidean(getattr(o, 'pos'), self.dst2source)
             elif self.dispersion:
                 v = euclidean(tuple(getattr(o, 'pos')), tuple(getattr(o, 'initial_pos')))
-                # v = euclidean(tuple(getattr(o, 'pos')), tuple(getattr(o, 'initial_pos')))
             elif self.or2source is not None:
                 v = fun.angle_dif(getattr(o, 'front_orientation'),fun.angle_to_x_axis(getattr(o, 'pos'), self.or2source))
             v = self.postprocess(v)
@@ -318,10 +325,26 @@ class Parameter:
             v *= self.u
         return v
 
-    def xy(self, o, u=False, tick=None):
-        x = self.par_dict['x'].get_from(o, u=u, tick=tick)
-        y = self.par_dict['y'].get_from(o, u=u, tick=tick)
-        return x, y
+
+    def xy(self, o, tick):
+        return getattr(o, 'trajectory')[tick]
+    # def xy(self, o, u=False, tick=None):
+    #     x = self.par_dict['x'].get_from(o, u=u, tick=tick)
+    #     y = self.par_dict['y'].get_from(o, u=u, tick=tick)
+    #     return x, y
+
+    def d_2D(self,o,t0,t1):
+        dt=self.par_dict['dt'].get_from(o, u=False)
+        tick0=int(t0/dt)
+        tick1=int(t1/dt)
+        # xs = df['x'].xs(o.unique_id, level='AgentID').values
+        # ys = df['y'].xs(o.unique_id, level='AgentID').values
+        # xy0=xs[tick0], ys[tick0]
+        # xy1=xs[tick1], ys[tick1]
+        d=euclidean(self.xy(o,tick1), self.xy(o,tick0))
+        return d
+
+
 
     def postprocess(self, v):
         if self.operator == 'diff':
@@ -413,6 +436,15 @@ def add_max_par(dic, k0, d=None):
                   k0=k0)
     return dic
 
+def add_fin_par(dic, k0, d=None):
+    b = dic[k0]
+    if d is None:
+        d = nam.final(b.d)
+        # d = f'total {b.d}'
+    dic = add_par(dic, p=nam.final(b.p), k=f'{b.k}_fin', u=b.u, d=d, s=sub(b.s, 'fin'), exists=False, operator='final',
+                  k0=k0)
+    return dic
+
 def add_freq_par(dic, k0, d=None):
     b = dic[k0]
     if d is None:
@@ -420,6 +452,28 @@ def add_freq_par(dic, k0, d=None):
         # d = f'total {b.d}'
     dic = add_par(dic, p=nam.freq(b.p), k=f'f{b.k}', u=1*siu.hz, d=d, s=sub(b.s, 'freq'), exists=False, operator='freq',
                   k0=k0)
+    return dic
+
+def add_dsp_par(dic, range=(0,40)) :
+    a='dispersion'
+    k0='dsp'
+    r0,r1=range
+    p=f'{a}_{r0}_{r1}'
+    k=f'{k0}_{r0}_{r1}'
+    dic = add_par(dic, p=p, k=k, d=p, s=subsup(k0,r0,r1), exists=False, func=('d_2D', {'t0':r0, 't1':r1}))
+    # dic = add_rate_par(dic, k_den='l', k_num=k)
+    kk = f's{k}'
+    dic = add_rate_par(dic, k_den='l', k_num=k, k=kk)
+    dic[kk].d = nam.scal(dic[k].d)
+    dic[kk].p = nam.scal(dic[k].p)
+    dic[kk].s = ast(dic[k].s)
+
+    dic = add_mean_par(dic, k0=k)
+    dic = add_std_par(dic, k0=k)
+    dic = add_min_par(dic, k0=k)
+    dic = add_max_par(dic, k0=k)
+    dic = add_fin_par(dic, k0=k)
+
     return dic
 
 
@@ -593,8 +647,8 @@ def build_par_dict(save=True, df=None):
     df = add_par(df, p=nam.dst2('source'), k='d_chem', u=1 * siu.m, o=Larva, d=nam.dst2('source'),
                  s=sub('d', 'source'), exists=False, dst2source=(0.04, 0.0))
 
-    df = add_par(df, p='x', k='x', u=1 * siu.mm, o=Larva, d='x', s='x')
-    df = add_par(df, p='y', k='y', u=1 * siu.mm, o=Larva, d='y', s='y')
+    df = add_par(df, p='x', k='x', u=1 * siu.m, o=Larva, d='x', s='x')
+    df = add_par(df, p='y', k='y', u=1 * siu.m, o=Larva, d='y', s='y')
 
     # df = add_par(df, p='x0', k='x0', u=1 * siu.m, o=Larva, d='x0', s=sub('x',0))
     # df = add_par(df, p='y0', k='y0', u=1 * siu.m, o=Larva, d='y0', s=sub('y',0))
@@ -634,6 +688,8 @@ def build_par_dict(save=True, df=None):
     df = add_cum_par(df, k0='D_x')
     df = add_cum_par(df, k0='D_y')
 
+    for i in [(0,40), (0,80), (20,80)] :
+        df = add_dsp_par(df, range=i)
     for k0 in ['d', 'v', 'a', 'D_x', 'xv', 'xa', 'D_y', 'yv', 'ya', nam.cum('d'), nam.cum('D_x'), nam.cum('D_y'),
                'd_chem', 'd_cent', 'dsp']:
         k = f's{k0}'
@@ -658,9 +714,12 @@ def build_par_dict(save=True, df=None):
     for i, n in enumerate(['first', 'second', 'third']):
         k = f'c_odor{i + 1}'
         df = add_par(df, p=f'{n}_odor_concentration', k=k, u=1 * siu.microM, o=Larva,d=f'Odor {i+1} Conc', s=sub('C', i+1))
-        df = add_diff_par(df, k0=k)
-        df = add_rate_par(df, k0=k, k=f'dc_odor{i+1}',k_den='dt', s=sub(dot('C'), i+1))
+        df = add_par(df, p=f'{n}_odor_concentration_change', k=f'd{k}', u=1 * siu.microM, o=Larva,d=f'Odor {i+1} DConc', s=sub(dot('C'), i+1))
+        # df = add_diff_par(df, k0=k)
+        # df = add_rate_par(df, k0=k, k=f'dc_odor{i+1}',k_den='dt', s=sub(dot('C'), i+1))
 
+    df = add_par(df, p='amount_eaten', k='f_am', u=1*siu.m**3, o=Larva, d='ingested food volume', s=sub('V', 'ingested'))
+    df = add_par(df, p='lin_activity', k='Act_cr', o=Larva, d='crawler output', s=sub('A', 'crawl'))
     df = add_par(df, p='ang_activity', k='Act_tur', o=Larva, d='turner output', s=subsup('A', 'tur', 'out'))
     df = add_par(df, p='turner_activation', k='A_tur', o=Larva, d='turner input', s=subsup('A', 'tur', 'in'), lim=(10,40))
     df = add_par(df, p='olfactory_activation', k='A_olf', o=Larva, d='olfactory activation',
@@ -669,7 +728,7 @@ def build_par_dict(save=True, df=None):
 
     for kc,pc in chunk_dict.items() :
         df=add_chunk(df, pc=pc, kc=kc)
-        for k in ['x', 'y', 'fo', 'fou', 'fov', 'b', 'bv', 'v', 'sv'] :
+        for k in ['x', 'y', 'fo', 'fou', 'fov', 'b', 'bv', 'v', 'sv', 'o_cent', 'o_chem', 'd_cent', 'd_chem', 'sd_cent', 'sd_chem'] :
             df=add_chunk_track(df, kc=kc, k=k)
         if pc=='stride':
             for k in ['d','sd']:
@@ -688,10 +747,6 @@ def build_par_dict(save=True, df=None):
         df = add_par(df, p=p, k=k, d=p,s=sub('tor', i), exists=False)
         df = add_mean_par(df, k0=k)
         df = add_std_par(df, k0=k)
-        # print(df[f'{k}_mu'].d)
-
-
-
 
     for k, p in df.items():
         p.par_dict = df
@@ -705,7 +760,7 @@ chunk_dict={
     'fee' : 'feed',
     'tur' : 'turn',
     'Ltur' : 'Lturn',
-    'Rtur' : 'Rturn',
+    'Rtur' : 'Return',
     'str_c' : nam.chain('stride'),
     'fee_c' : nam.chain('feed')
             }
@@ -715,7 +770,7 @@ collection_dict = {
     # 'bouts': ['str_d_mu', 'str_sd_mu'],
     'basic': ['x', 'y', 'b', 'fo'],
     'e_basic': ['l_mu', nam.cum('d'), f's{nam.cum("d")}', nam.cum('t'), 'x', 'y', 'sv_mu'],
-    'e_dispersion': ['dsp', 'sdsp', 'dsp_max', 'sdsp_max'],
+    'e_dispersion': ['dsp', 'sdsp', 'dsp_max', 'sdsp_max', 'dsp_0_40', 'dsp_0_80', 'dsp_20_80','sdsp_0_40', 'sdsp_0_80', 'sdsp_20_80'],
     'spatial': fun.flatten_list([[k, f's{k}'] for k in
                                  ['dsp', 'd', 'v', 'a', 'D_x', 'xv', 'xa', 'D_y', 'yv', 'ya', nam.cum('d'),
                                   nam.cum('D_x'), nam.cum('D_y'), ]]),
@@ -779,14 +834,29 @@ def reconstruct_ParDict(test=False):
 build_par_dict()
 ParFrame = load_ParDict()
 
-def getPar(k, to_return=['d', 'l']) :
+runtime_pars=[v['d'] for k,v in ParFrame.items() if v['o']==Larva and not k in build_constants().keys()]
+
+def getPar(k=None,p=None, d=None, to_return=['d', 'l'], new_format=True) :
+    if new_format is None :
+        new_format=paths.new_format
     dic={
         'd' : 'par',
         'l' : 'unit',
         's' : 'symbol',
         'lim' : 'lim',
          }
-    if paths.new_format :
+    if new_format :
+        if k is None :
+            if p is not None :
+                if type(p) == str:
+                    k=[k for k in ParFrame.keys() if ParFrame[k]['p']==p][0]
+                elif type(p) == list:
+                    k = fun.flatten_list([[k for k in ParFrame.keys() if ParFrame[k]['p'] == p0][0] for p0 in p])
+            elif d is not None :
+                if type(d) == str:
+                    k=[k for k in ParFrame.keys() if ParFrame[k]['d']==d][0]
+                elif type(d) == list:
+                    k = fun.flatten_list([[k for k in ParFrame.keys() if ParFrame[k]['d'] == d0][0] for d0 in d])
         if type(k) == str:
             return [ParFrame[k][i] for i in to_return]
         elif type(k) == list:
@@ -800,11 +870,15 @@ def getPar(k, to_return=['d', 'l']) :
             return res
 
 if __name__ == '__main__':
-    dic=build_par_dict()
-    print(dic['tor2_mu'].d)
-    # dic=reconstruct_ParDict()
-    # a=dic['fou'].u.unit
-    # print(a==siu.deg)
+    # dic=build_par_dict()
+    # dic=load_ParDict()
+    # a=[v['d'] for v in load_ParDict().values() if v['o']==Larva]
+    print(runtime_pars)
+    # print(dic['cum_d'])
+    # print(dic['scum_d'])
+    # print(getPar('sv', to_return=['d', 'p', 'l']))
+    # print(getPar(d='scaled_velocity', to_return=['d', 'p', 'l']))
+
     raise
     for k in ParFrame.keys() :
         try :

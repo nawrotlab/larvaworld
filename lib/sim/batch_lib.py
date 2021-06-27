@@ -251,7 +251,7 @@ def end_scatter_generation(traj):
     for i in [1,2,3] :
         l=f'end_parshorts_{i}'
         par_shorts=getattr(traj.config, l)
-        f=plot_endpoint_scatter(**kwargs, par_shorts=par_shorts)
+        f=plot_endpoint_scatter(**kwargs, keys=par_shorts)
         p1, p2 = par_shorts
         fig_dict[f'{p1}VS{p2}'] = f
     return df, fig_dict

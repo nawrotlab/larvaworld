@@ -275,8 +275,8 @@ def set_ParDb():
         chunk_ar.append([nam.num(cn), f'{suf}_N', sub('N', f'{cn}sigma'), sub(hat('N'), f'{cn}sigma'), f'# {cn}sigma'])
     chunk_ar = np.array(chunk_ar)
 
-    temp_dsp = [[dsp, 'disp', 'disp', hat('disp')],
-                [dsp40, 'disp40', sup('disp', 40), sup(hat('disp'), 40)]]
+    temp_dsp = [[dsp, 'dsp', 'dsp', hat('dsp')],
+                [dsp40, 'dsp40', sup('dsp', 40), sup(hat('dsp'), 40)]]
 
     dsp_ar = []
     for (fn, sn, sym, esym) in temp_dsp:
@@ -607,8 +607,8 @@ def set_ParDb():
     for k, v in step_database.items():
         par_db['collect'].loc[par_db['par'] == k] = v
 
-    par_db['disp_name'] = par_db['par']
-    disp_dict = {
+    par_db['dsp_name'] = par_db['par']
+    dsp_dict = {
         'sv': r'velocity$_{scaled}$',
         'sv_mu': r'mean velocity$_{scaled}$',
         'v': 'velocity',
@@ -639,14 +639,14 @@ def set_ParDb():
         'Ltur_tr': 'Lturn time ratio',
         'Rtur_tr': 'Rturn time ratio',
         'tur_tr': 'turn time ratio',
-        'sdisp40_fin': r'final dispersion$_{scaled}$ 40 sec',
-        'disp40_fin': r'final dispersion 40 sec',
+        'sdsp40_fin': r'final dispersion$_{scaled}$ 40 sec',
+        'dsp40_fin': r'final dispersion 40 sec',
         **{f'tor{ii}': rf'tortuosity$_{{{ii} sec}}$' for ii in [2, 5, 10, 20]},
         **{f'tor{ii}_mu': rf'tortuosity$_{{{ii} sec}}$ mean' for ii in [2, 5, 10, 20]},
         **{f'tor{ii}_std': rf'tortuosity$_{{{ii} sec}}$ std' for ii in [2, 5, 10, 20]},
     }
-    for kk, vv in disp_dict.items():
-        par_db['disp_name'].loc[kk] = vv
+    for kk, vv in dsp_dict.items():
+        par_db['dsp_name'].loc[kk] = vv
 
     par_db = set_dtype(par_db)
     par_db = set_collect_from(par_db)
@@ -678,13 +678,10 @@ def set_dtype(par_db):
             db[k]['dtype'] = int
         elif str(k).endswith('mu') or str(k).endswith('std'):
             db[k]['dtype'] = float
-        elif 'fo' in k or 'ro' in k or 'disp' in k:
+        elif 'fo' in k or 'ro' in k or 'dsp' in k:
             db[k]['dtype'] = float
         else:
             db[k]['dtype'] = float
-        # elif 'disp' in k or 'ro' in k :
-        # elif 'disp' in k or 'ro' in k :
-        #     print(k)
     par_db = pd.DataFrame.from_dict(db, orient='index')
     return par_db
 
@@ -796,4 +793,5 @@ if __name__ == '__main__':
     # print('final_dst_to_chemotax_odor' in list(step_database.keys()))
     # print(par_in_db(par='stride_start'))
     # print(get_par_dict(par='stride_start', retrieve_from='par_db'))
-    print(par_db.loc['tur_id'])
+    # print([k for k in par_db.index if k.startswith('dsp')])
+    print(par_db.loc['dsp40'])

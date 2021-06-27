@@ -207,42 +207,46 @@ class Larva(LarvaworldAgent):
     def first_odor_concentration_change(self):
         return list(self.brain.olfactor.dCon.values())[0]
 
+    @property
+    def second_odor_concentration_change(self):
+        return list(self.brain.olfactor.dCon.values())[1]
+
     # @property
     # def length_in_mm(self):
     #     return self.get_real_length() * 1000
 
-    @property
-    def length_in_mm(self):
-        return self.real_length * 1000
-        # from lib.conf.par import TemporalPar, FractionPar
-        # k1 = TemporalPar(name='cum_dur')
-        # k2 = TemporalPar(name='cum_dur')
-        # k=FractionPar(name='some', exists=False, numerator=k1, denominator=k2)
-        # v = k.get_from(self)
-        # print(v)
-        # return v
+    # @property
+    # def length_in_mm(self):
+    #     return self.real_length * 1000
+    #     # from lib.conf.par import TemporalPar, FractionPar
+    #     # k1 = TemporalPar(name='cum_dur')
+    #     # k2 = TemporalPar(name='cum_dur')
+    #     # k=FractionPar(name='some', exists=False, numerator=k1, denominator=k2)
+    #     # v = k.get_from(self)
+    #     # print(v)
+    #     # return v
 
-    @property
-    def mass_in_mg(self):
-        return self.get_real_mass() * 1000
+    # @property
+    # def mass_in_mg(self):
+    #     return self.get_real_mass() * 1000
 
     @property
     def scaled_amount_eaten(self):
         return self.amount_eaten / self.get_real_mass()
 
-    @property
-    def orientation_to_center_in_deg(self):
-        return fun.angle_dif(np.rad2deg(self.get_head().get_normalized_orientation()),
-                             fun.angle_to_x_axis(self.get_position(), (0, 0),
-                                                 in_deg=True), in_deg=True)
+    # @property
+    # def orientation_to_center_in_deg(self):
+    #     return fun.angle_dif(np.rad2deg(self.get_head().get_normalized_orientation()),
+    #                          fun.angle_to_x_axis(self.get_position(), (0, 0),
+    #                                              in_deg=True), in_deg=True)
 
     @property
     def x(self):
-        return self.pos[0] * 1000 / self.model.scaling_factor
+        return self.pos[0] / self.model.scaling_factor
 
     @property
     def y(self):
-        return self.pos[1] * 1000 / self.model.scaling_factor
+        return self.pos[1] / self.model.scaling_factor
 
     @property
     def x0(self):

@@ -455,6 +455,7 @@ class LarvaBody:
                                      seg_vertices=self.seg_vertices[i],
                                      color=self.seg_colors[i])
                 segs.append(seg)
+            # print(position)
             self.model.space.place_agent(self, position)
         return segs
 

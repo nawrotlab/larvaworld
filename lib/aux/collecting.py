@@ -5,6 +5,8 @@ from mesa.datacollection import DataCollector
 
 import lib.aux.functions as fun
 import lib.aux.naming as nam
+
+
 body_pars = {
     "length": 'length_in_mm',
     "mass": 'mass_in_mg',
@@ -13,49 +15,49 @@ body_pars = {
 pos_xy = {
     "centroid_x": 'x',
     "centroid_y": 'y',
-    "final_x": 'x',
-    "final_y": 'y'
+    # "final_x": 'x',
+    # "final_y": 'y'
 }
 
 orientation_pars = {
     "front_orientation": 'front_orientation',
     "rear_orientation": 'rear_orientation',
-    "orientation_to_center": 'orientation_to_center_in_deg',
-    "final_orientation_to_center": 'orientation_to_center_in_deg',
+    # "orientation_to_center": 'orientation_to_center_in_deg',
+    # "final_orientation_to_center": 'orientation_to_center_in_deg',
 }
 
 lin_pars = {
-    "dst_to_center": 'dst_to_center_in_mm',
-    "scaled_dst_to_center": 'scaled_dst_to_center',
-    "dst_to_chemotax_odor": 'dst_to_chemotax_odor_in_mm',
-    "scaled_dst_to_chemotax_odor": 'scaled_dst_to_chemotax_odor',
+    # "dst_to_center": 'dst_to_center_in_mm',
+    # "scaled_dst_to_center": 'scaled_dst_to_center',
+    # "dst_to_chemotax_odor": 'dst_to_chemotax_odor_in_mm',
+    # "scaled_dst_to_chemotax_odor": 'scaled_dst_to_chemotax_odor',
 
-    "dispersion": 'dispersion_in_mm',
-    "scaled_dispersion": 'scaled_dispersion',
-    "dispersion_max": 'dispersion_max_in_mm',
-    "scaled_dispersion_max": 'scaled_dispersion_max',
-
-    "cum_dst": 'cum_dst_in_mm',
-    "cum_scaled_dst": 'cum_scaled_dst',
-    "final_dispersion": 'dispersion_in_mm',
-    "final_scaled_dispersion": 'scaled_dispersion',
-    "final_dst_to_center": 'dst_to_center_in_mm',
-    "final_scaled_dst_to_center": 'scaled_dst_to_center',
-
-    "max_dst_to_center": 'max_dst_to_center_in_mm',
-    "max_scaled_dst_to_center": 'max_scaled_dst_to_center',
-    "mean_scaled_dst_to_center": 'mean_scaled_dst_to_center',
-    "mean_dst_to_center": 'mean_dst_to_center_in_mm',
-
-    "final_dst_to_chemotax_odor": 'dst_to_chemotax_odor_in_mm',
-    "final_scaled_dst_to_chemotax_odor": 'scaled_dst_to_chemotax_odor',
+    # "dispersion": 'dispersion_in_mm',
+    # "scaled_dispersion": 'scaled_dispersion',
+    # "dispersion_max": 'dispersion_max_in_mm',
+    # "scaled_dispersion_max": 'scaled_dispersion_max',
+    #
+    # "cum_dst": 'cum_dst_in_mm',
+    # "cum_scaled_dst": 'cum_scaled_dst',
+    # "final_dispersion": 'dispersion_in_mm',
+    # "final_scaled_dispersion": 'scaled_dispersion',
+    # "final_dst_to_center": 'dst_to_center_in_mm',
+    # "final_scaled_dst_to_center": 'scaled_dst_to_center',
+    #
+    # "max_dst_to_center": 'max_dst_to_center_in_mm',
+    # "max_scaled_dst_to_center": 'max_scaled_dst_to_center',
+    # "mean_scaled_dst_to_center": 'mean_scaled_dst_to_center',
+    # "mean_dst_to_center": 'mean_dst_to_center_in_mm',
+    #
+    # "final_dst_to_chemotax_odor": 'dst_to_chemotax_odor_in_mm',
+    # "final_scaled_dst_to_chemotax_odor": 'scaled_dst_to_chemotax_odor',
 }
 
 ang_pars = {
     "front_orientation_vel": 'front_orientation_vel',
     "bend": 'bend',
     "body_bend_vel": 'body_bend_vel',
-    "body_bend_acc": 'body_bend_acc',
+    # "body_bend_acc": 'body_bend_acc',
     # "torque": lambda a : a.torque,
     "torque": 'torque',
     "body_bend_errors": 'body_bend_errors',
@@ -73,7 +75,7 @@ effector_pars = {
     "best_olfactor_decay": 'best_olfactor_decay',
 
     "turner_activation": 'turner_activation',
-    "turner_activity": 'ang_activity',
+    "turner output": 'ang_activity',
 
     "crawler_activity": 'lin_activity',
 
@@ -180,8 +182,11 @@ endpoint_database = {
 # Extension of DataCollector class so that it only collects from a given schedule
 class TargetedDataCollector(DataCollector):
     def __init__(self, schedule_id, mode, pars):
-        self.database = self.generate_database(mode)
-        agent_reporters = dict((k, self.database[k]) for k in pars if k in self.database)
+        # self.database = self.generate_database(mode)
+        from lib.conf.par import load_ParDict
+        dic=load_ParDict()
+        agent_reporters = dict((dic[k]['d'], dic[k]['p']) for k in pars if k in dic.keys())
+        # agent_reporters = dict((k, self.database[k]) for k in pars if k in self.database)
         super().__init__(agent_reporters=agent_reporters)
         self.schedule_id = schedule_id
 
@@ -255,24 +260,26 @@ def contour_xy_pars(N=22):
 
 
 output = {
-    'intermitter': {
-        'step': ['pause_id', 'pause_start', 'pause_stop', 'pause_dur'] + ['stridechain_id', 'stridechain_start',
-                                                                          'stridechain_stop', 'stridechain_dur'],
-        'endpoint': ['num_pauses', 'cum_pause_dur', 'pause_dur_ratio',
-                     'num_stridechains', 'cum_stridechain_dur', 'stridechain_dur_ratio', 'mean_feed_freq']},
-    'olfactor': {'step': ['first_odor_concentration', 'olfactory_activation', 'first_odor_concentration_change'],
-                 'endpoint': ['final_dispersion', 'final_scaled_dispersion',
-                              'final_orientation_to_center', 'final_x']},
-    'turner': {'step': ['turner_activation', 'turner_activity', 'torque'],
-               'endpoint': []},
-    'crawler': {'step': ['crawler_activity'],
-                'endpoint': ['stride_scaled_dst_mean', 'stride_dst_mean',
-                             'cum_dst', 'cum_scaled_dst',
-                             'num_strides', 'stride_dur_ratio', 'vel_freq']},
+    # 'intermitter': {
+    #     'step': ['pause_id', 'pause_start', 'pause_stop', 'pause_dur'] + ['stridechain_id', 'stridechain_start',
+    #                                                                       'stridechain_stop', 'stridechain_dur'],
+    #     'endpoint': ['pau_N', 'cum_pau_t', 'pau_tr',
+    #                  'num_stridechains', 'cum_stridechain_dur', 'stridechain_dur_ratio', 'mean_feed_freq']},
+    'olfactor': {'step': ['c_odor1','dc_odor1','c_odor2','dc_odor2', 'A_olf','Act_tur', 'A_tur', 'Act_cr'],
+    # 'olfactor': {'step': ['first_odor_concentration', 'olfactory_activation', 'first_odor_concentration_change'],
+                 'endpoint': []},
+
+    # 'turner': {'step': ['Act_tur', 'A_tur'],
+    # # 'turner': {'step': ['turner_activation', 'turner output', 'torque'],
+    # # 'turner': {'step': ['turner_activation', 'turner_activity', 'torque'],
+    #            'endpoint': []},
+    # 'crawler': {'step': ['crawler_activity'],
+    #             'endpoint': ['stride_scaled_dst_mean', 'stride_dst_mean',
+    #                          'cum_dst', 'cum_scaled_dst',
+    #                          'num_strides', 'stride_dur_ratio', 'vel_freq']},
     'feeder': {
-        'step': ['length', 'mass', 'amount_eaten', 'scaled_amount_eaten', 'explore2exploit_balance'],
-        'endpoint': ['length', 'mass', 'num_feeds', 'amount_eaten', 'scaled_amount_eaten', 'feed_dur_ratio',
-                     'mean_feed_freq']},
+        'step': ['l', 'f_am', 'scaled_amount_eaten', 'explore2exploit_balance'],
+        'endpoint': ['l',  'f_am', 'scaled_amount_eaten',]},
 
     'deb': {'step': [
         'deb_f', 'deb_f_deviation', 'cum_dst', 'mass', 'length',
@@ -292,22 +299,22 @@ output = {
             'endpoint': ['amount_absorbed', 'amount_eaten',
                          'ingested_body_area_ratio', 'ingested_body_volume_ratio', 'ingested_gut_volume_ratio',
                          'scaled_amount_eaten', 'ingested_body_mass_ratio']},
-    'pose': {'step': ['centroid_x', 'centroid_y', 'bend', 'front_orientation', 'rear_orientation'],
-             'endpoint': ['length', 'cum_dur', 'final_x'],
-             # 'groups': ['pose', 'spatial', 'angular', 'dispersion', 'bouts','end']
-             },
-    'nengo': {'step': ['crawler_activity', 'turner_activity', 'feeder_motion'],
-              'endpoint': []},
-    'source vincinity': {'step': [
-        'dispersion', 'scaled_dispersion',
-        'dst_to_center', 'scaled_dst_to_center', 'orientation_to_center'
-    ],
-        'endpoint': ['final_dst_to_center', 'final_scaled_dst_to_center',
-                     'max_dst_to_center', 'max_scaled_dst_to_center',
-                     'mean_dst_to_center', 'mean_scaled_dst_to_center',
-                     ]},
-    'source approach': {'step': ['dst_to_chemotax_odor', 'scaled_dst_to_chemotax_odor'],
-                     'endpoint': ['final_dst_to_chemotax_odor', 'final_scaled_dst_to_chemotax_odor']},
+    'pose': {'step': ['x', 'y', 'b', 'fo', 'ro'],
+    # 'pose': {'step': ['centroid_x', 'centroid_y', 'bend', 'front_orientation', 'rear_orientation'],
+             'endpoint': ['l', 'cum_t', 'x']},
+             # 'endpoint': ['length', 'cum_dur']},
+    # 'nengo': {'step': ['crawler_activity', 'turner_activity', 'feeder_motion'],
+    #           'endpoint': []},
+    # 'source vincinity': {'step': [
+    #     'dispersion', 'scaled_dispersion',
+    #     'dst_to_center', 'scaled_dst_to_center', 'orientation_to_center'
+    # ],
+    #     'endpoint': ['final_dst_to_center', 'final_scaled_dst_to_center',
+    #                  'max_dst_to_center', 'max_scaled_dst_to_center',
+    #                  'mean_dst_to_center', 'mean_scaled_dst_to_center',
+    #                  ]},
+    # 'source approach': {'step': ['dst_to_chemotax_odor', 'scaled_dst_to_chemotax_odor'],
+    #                  'endpoint': ['final_dst_to_chemotax_odor', 'final_scaled_dst_to_chemotax_odor']},
     'memory': {'step': [],
                'endpoint': [],
                'tables': {'best_gains': ['unique_id', 'first_odor_best_gain', 'second_odor_best_gain', 'cum_reward',

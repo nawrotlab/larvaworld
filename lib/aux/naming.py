@@ -29,7 +29,10 @@ def xy(points, flat=False):
 
 def dst(points):
     s = 'dst'
-    return name(s, points, 'suf')
+    if points == '':
+        return s
+    else:
+        return name(s, points, 'suf')
 
 
 def dst2(points, **kwargs):
@@ -49,12 +52,18 @@ def straight_dst(points):
 
 def vel(params):
     s='velocity'
-    return name(s, params, 'suf')
+    if params == '':
+        return s
+    else:
+        return name(s, params, 'suf')
 
 
 def acc(params):
     s = 'acceleration'
-    return name(s, params, 'suf')
+    if params == '':
+        return s
+    else:
+        return name(s, params, 'suf')
 
 
 def lin(params):
