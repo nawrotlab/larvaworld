@@ -5,7 +5,7 @@ from lib.gui.analysis_tab import AnalysisTab
 from lib.gui.batch_tab import BatchTab
 from lib.gui.env_tab import EnvTab
 from lib.gui.sim_tab import SimTab
-from lib.gui.tab import IntroTab, VideoTab
+from lib.gui.tab import IntroTab, VideoTab, TutorialTab
 from lib.gui.model_tab import ModelTab
 from lib.gui.settings_tab import SettingsTab
 import lib.gui.gui_lib as gui
@@ -16,7 +16,9 @@ matplotlib.use('TkAgg')
 class LarvaworldGui:
 
     def __init__(self, tabs=None):
-        self.tab_dict = {'introduction': (IntroTab,None),
+        self.tab_dict = {
+            'introduction': (IntroTab,None),
+            'tutorials': (TutorialTab,None),
                          'larva-model': (ModelTab,'Model'),
                          'environment': (EnvTab,'Env'),
                          'simulation': (SimTab,'Exp'),

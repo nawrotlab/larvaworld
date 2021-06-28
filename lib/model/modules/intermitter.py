@@ -10,7 +10,7 @@ from lib.model.modules.basic import Effector
 
 
 class Intermitter(Effector):
-    def __init__(self, brain, crawler=None, crawl_bouts=False,
+    def __init__(self, brain=None, crawler=None, crawl_bouts=False,
                  feeder=None, feed_bouts=False,
                  pause_dist=None, stridechain_dist=None, crawl_freq=10 / 7, feed_freq=2.0,
                  EEB_decay=1,save_to=None,
