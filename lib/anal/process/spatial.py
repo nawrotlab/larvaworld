@@ -248,11 +248,12 @@ def store_global_linear_metrics(s, e, point):
         nam.dst(''): nam.dst(point),
         nam.vel(''): nam.vel(point),
         nam.acc(''): nam.acc(point),
-        nam.scal(nam.dst('')): nam.scal(nam.dst(point)),
-        nam.scal(nam.vel('')): nam.scal(nam.vel(point)),
-        nam.scal(nam.acc('')): nam.scal(nam.acc(point)),
+        # nam.scal(nam.dst('')): nam.scal(nam.dst(point)),
+        # nam.scal(nam.vel('')): nam.scal(nam.vel(point)),
+        # nam.scal(nam.acc('')): nam.scal(nam.acc(point)),
         nam.cum(nam.dst('')): nam.cum(nam.dst(point)),
-        nam.cum(nam.scal(nam.dst(''))): nam.cum(nam.scal(nam.dst(point)))}
+        # nam.cum(nam.scal(nam.dst(''))): nam.cum(nam.scal(nam.dst(point)))
+    }
     for k, v in dic.items():
         try:
             s[k] = s[v]
@@ -269,11 +270,16 @@ def store_global_linear_metrics(s, e, point):
     e[nam.initial('x')] = s['x'].dropna().groupby('AgentID').first()
     e[nam.initial('y')] = s['y'].dropna().groupby('AgentID').first()
     e[nam.mean(nam.vel(''))] = e[nam.cum(nam.dst(''))] / e[nam.cum('dur')]
-    try:
-        e[nam.cum(nam.scal(nam.dst('')))] = e[nam.cum(nam.scal(nam.dst('')))]
-        e[nam.mean(nam.scal(nam.vel('')))] = e[nam.mean(nam.vel(''))] / e['length']
-    except:
-        pass
+
+    scale_to_length(s,e,pars=[nam.dst(''), nam.vel(''), nam.acc('')])
+
+    e[nam.cum(nam.scal(nam.dst('')))] = s[nam.scal(nam.dst(''))].groupby('AgentID').sum()
+    e[nam.mean(nam.scal(nam.vel('')))] = e[nam.cum(nam.scal(nam.dst('')))] / e[nam.cum('dur')]
+    # try:
+    #     # e[nam.cum(nam.scal(nam.dst('')))] = e[nam.cum(nam.scal(nam.dst('')))]
+    #     e[nam.mean(nam.scal(nam.vel('')))] = e[nam.mean(nam.vel(''))] / e['length']
+    # except:
+    #     pass
 
 
 def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recompute=False, **kwargs):

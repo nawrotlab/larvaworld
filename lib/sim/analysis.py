@@ -27,12 +27,12 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
         # cum_sd, f_success=e['cum_scaled_dst'].values, e['feed_success_rate'].values
         # print(cum_sd, f_success)
 
-        fig_dict['angular'] = plot_ang_pars(datasets=[d], **ccc)
-        fig_dict['bouts'] = plot_stridesNpauses(datasets=[d], plot_fits=None, only_fit_one=False, test_detection=True,
-                                                **ccc)
+        # fig_dict['angular'] = plot_ang_pars(datasets=[d], **ccc)
+        # fig_dict['bouts'] = plot_stridesNpauses(datasets=[d], plot_fits=None, only_fit_one=False, test_detection=True,
+        #                                         **ccc)
 
-        fig_dict['scatter_x4'] = plot_endpoint_scatter(datasets=[d], keys=['scum_d', 'f_am', 'str_tr', 'pau_tr'], **ccc)
-        fig_dict['scatter_x2'] = plot_endpoint_scatter(datasets=[d], keys=['scum_d', 'f_am'], **ccc)
+        fig_dict['scatter_x4'] = plot_endpoint_scatter(datasets=[d], keys=['cum_sd', 'f_am', 'str_tr', 'pau_tr'], **ccc)
+        fig_dict['scatter_x2'] = plot_endpoint_scatter(datasets=[d], keys=['cum_sd', 'f_am'], **ccc)
 
     elif exp_type in ['food_at_bottom']:
         ds = d.split_dataset(is_last=False, show_output=show_output)

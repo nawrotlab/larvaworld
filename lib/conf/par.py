@@ -951,9 +951,10 @@ def getPar(k=None,p=None, d=None, to_return=['d', 'l'], new_format=True) :
             return res
 
 if __name__ == '__main__':
-    dic=build_par_dict()
+    # dic=build_par_dict()
     dic=load_ParDict()
-    print(dic['sd_chem_fin'])
+    print(getPar(d=nam.scal(nam.cum(nam.dst(''))), to_return=['k']))
+    # print(dic['scum_d'])
 
 
     raise

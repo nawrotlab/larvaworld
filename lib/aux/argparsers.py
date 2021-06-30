@@ -183,24 +183,24 @@ def get_build_kwargs(args):
 
 
 def add_sim_kwargs(parser):
-    parser.add_argument('-id', '--sim_id', type=str, help='The id of the simulation')
+    parser.add_argument('-id', '--sim_ID', type=str, help='The id of the simulation')
     parser.add_argument('-path', '--path', type=str, help='The path to save the simulation dataset')
-    parser.add_argument('-t', '--sim_dur', type=float, nargs='?', default=None,
+    parser.add_argument('-t', '--duration', type=float, nargs='?', default=None,
                         help='The duration of the simulation in min')
-    parser.add_argument('-dt', '--dt', type=float, nargs='?', default=0.1, help='The timestep of the simulation in sec')
+    parser.add_argument('-dt', '--timestep', type=float, nargs='?', default=0.1, help='The timestep of the simulation in sec')
     parser.add_argument('-Box2D', '--Box2D', action="store_true", help='Use the Box2D physics engine')
-    parser.add_argument('-sample', '--sample_dataset', type=str, nargs='?', default='reference',choices=list(loadConfDict('Ref').keys()),
+    parser.add_argument('-sample', '--sample', type=str, nargs='?', default='reference',choices=list(loadConfDict('Ref').keys()),
                         help='The dataset to sample the parameters from')
     return parser
 
 
 def get_sim_kwargs(args):
-    sim_kwargs = {'sim_id': args.sim_id,
-                  'sim_dur': args.sim_dur,
+    sim_kwargs = {'sim_ID': args.sim_ID,
+                  'duration': args.duration,
                   'path': args.path,
-                  'dt': args.dt,
+                  'timestep': args.timestep,
                   'Box2D': args.Box2D,
-                  'sample_dataset': args.sample_dataset,
+                  'sample': args.sample,
                   }
     return sim_kwargs
 

@@ -422,12 +422,12 @@ all_null_dicts = {
                 'feeder': False,
                 'memory': False},
     'sim_params': {
-        'sim_id': None,
-        'path': None,
-        'sim_dur': 1.0,
-        'dt': 0.1,
+        'sim_ID': None,
+        'path': 'single_runs',
+        'duration': 1.0,
+        'timestep': 0.1,
         'Box2D': False,
-        'sample_dataset': 'reference'
+        'sample': 'reference'
     },
     'logn_dist': {
         'range': (0.0, 2.0),
@@ -664,12 +664,12 @@ def get_dict_dtypes(name, **kwargs):
                     'memory': bool},
 
         'sim_params': {
-            'sim_id': str,
+            'sim_ID': str,
             'path': str,
-            'sim_dur': float,
-            'dt': float,
+            'duration': np.round(np.arange(0.0, 100.1, 0.1), 1).tolist(),
+            'timestep': np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(),
             'Box2D': bool,
-            'sample_dataset': list(loadConfDict('Ref').keys())
+            'sample': list(loadConfDict('Ref').keys())
         },
         'logn_dist': {
             'range': Tuple[float, float],
@@ -789,17 +789,17 @@ def get_distro_dtypes(class_name, basic=True):
     return dtypes
 
 
-def sim_dict(sim_id=None, sim_dur=3, dt=0.1, path=None, Box2D=False, exp_type=None):
+def sim_dict(sim_ID=None, duration=3, dt=0.1, path=None, Box2D=False, exp_type=None):
     from lib.conf.conf import next_idx
     if exp_type is not None:
-        if sim_id is None:
-            sim_id = f'{exp_type}_{next_idx(exp_type)}'
+        if sim_ID is None:
+            sim_ID = f'{exp_type}_{next_idx(exp_type)}'
         if path is None:
             path = f'single_runs/{exp_type}'
     return {
-        'sim_id': sim_id,
-        'sim_dur': sim_dur,
-        'dt': dt,
+        'sim_ID': sim_ID,
+        'duration': duration,
+        'timestep': dt,
         'path': path,
         'Box2D': Box2D,
     }

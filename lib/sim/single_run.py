@@ -37,12 +37,12 @@ def run_sim_basic(
 
 
     np.random.seed(seed)
-    id = sim_params['sim_id']
-    dt = sim_params['dt']
-    Nsec = sim_params['sim_dur'] * 60
+    id = sim_params['sim_ID']
+    dt = sim_params['timestep']
+    Nsec = sim_params['duration'] * 60
     path = sim_params['path']
     Box2D = sim_params['Box2D']
-    sample_dataset = sim_params['sample_dataset']
+    sample = sim_params['sample']
 
     if save_to is None:
         save_to = paths.SimFolder
@@ -60,14 +60,14 @@ def run_sim_basic(
     Npoints = list(env_params['larva_groups'].values())[0]['model']['body']['Nsegs'] + 1
 
     d = LarvaDataset(dir=dir_path, id=id, fr=1 / dt,
-                     Npoints=Npoints, Ncontour=0, sample_dataset=sample_dataset,
+                     Npoints=Npoints, Ncontour=0, sample_dataset=sample,
                      arena_pars=env_params['arena'],
                      par_conf=par_config, save_data_flag=save_data_flag, load_data=False,
                      life_params=life_params
                      )
 
     output = collection_conf(dataset=d, collections=collections)
-    env = LarvaWorldSim(id=id, dt=dt, Box2D=Box2D, sample_dataset=sample_dataset,
+    env = LarvaWorldSim(id=id, dt=dt, Box2D=Box2D, sample_dataset=sample,
                         env_params=env_params, output=output,
                         life_params=life_params, Nsteps=Nsteps,
                         save_to=d.vis_dir, experiment=experiment,
@@ -128,6 +128,7 @@ def store_sim_data(env, d, save_data_flag, enrichment, param_dict):
             df0=df0.droplevel('Step')
         d.set_data(step=df, end=df0)
     d.enrich(**enrichment)
+    # print(d.step_data['cum_scaled_dst'])
     # d = sim_enrichment(d, experiment)
     # Save simulation data and parameters
     if save_data_flag:
@@ -219,13 +220,13 @@ def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, la
             life_params = dtypes.get_dict('life')
         exp_conf['life_params'] = life_params
 
-    if sim_params['sim_id'] is None:
+    if sim_params['sim_ID'] is None:
         idx = next_idx(exp_type)
-        sim_params['sim_id'] = f'{exp_type}_{idx}'
+        sim_params['sim_ID'] = f'{exp_type}_{idx}'
     if sim_params['path'] is None:
         sim_params['path'] = f'single_runs/{exp_type}'
-    if sim_params['sim_dur'] is None:
-        sim_params['sim_dur'] = exp_conf['sim_params']['sim_dur']
+    if sim_params['duration'] is None:
+        sim_params['duration'] = exp_conf['sim_params']['duration']
     exp_conf['sim_params'] = sim_params
     exp_conf['experiment'] = exp_type
     # exp_conf['enrichment'] = enrich

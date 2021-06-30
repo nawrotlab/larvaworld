@@ -738,7 +738,8 @@ t24_kws = {'size': (24, 1)}
 #     def update(self, t):
 #         self.UpdateBar(t)
 def get_disp_name(name) -> str :
-    n=name.capitalize()
+    # n=name.capitalize()
+    n = "%s%s" % (name[0].upper(), name[1:])
     n = n.replace('_', ' ')
     return n
 
@@ -1078,20 +1079,30 @@ class SectionDict:
         #     return []
         l = []
         for k, v in self.init_dict.items():
+            k_disp=get_disp_name(k)
             k0 = f'{self.name}_{k}'
             if type(v) == bool:
-                l.append(named_bool_button(k, v, k0))
+                l.append(named_bool_button(k_disp, v, k0))
+                # l.append(named_bool_button(k, v, k0))
             elif type(v) == dict:
                 type_dict = self.type_dict[k] if self.type_dict is not None else None
                 self.subdicts[k0] = CollapsibleDict(k0, False, disp_name=k, dict=v, type_dict=type_dict,
                                                     toggle=self.toggled_subsections)
                 l.append(self.subdicts[k0].get_section())
+            # elif type(v) == float:
+            #     temp =[sg.Text(f'{k_disp}:', **t8_kws),
+            #      sg.Spin(values=np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(), initial_value=v, key=k0,
+            #              **t6_kws), sg.Text('seconds', **t8_kws, justification='center')]
+            #     l.append(temp)
             else:
                 temp = sg.In(v, key=k0)
                 if self.type_dict is not None:
                     if type(self.type_dict[k]) == list:
-                        temp = sg.Combo(self.type_dict[k], default_value=v, key=k0, enable_events=True, readonly=True)
-                l.append([sg.Text(f'{k}:'), temp])
+                        if type(v)==float :
+                            temp =sg.Spin(values=self.type_dict[k], initial_value=v, key=k0)
+                        else :
+                            temp = sg.Combo(self.type_dict[k], default_value=v, key=k0, enable_events=True, readonly=True)
+                l.append([sg.Text(f'{k_disp}:'), temp])
         return l
 
     def get_dict(self, values, window):

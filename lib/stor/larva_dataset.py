@@ -548,13 +548,8 @@ class LarvaDataset:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
-    def enrich(self,
-               preprocessing,
-               processing,
-               annotation,
-               enrich_aux,
-               to_drop=[], show_output=True,
-               is_last=True, **kwargs):
+    def enrich(self,preprocessing,processing,annotation,enrich_aux,
+               to_drop=[], show_output=False,is_last=True, **kwargs):
         print()
         print(f'--- Enriching dataset {self.id} with derived parameters ---')
         self.config['front_body_ratio'] = 0.5
