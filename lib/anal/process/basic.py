@@ -6,7 +6,8 @@ import lib.aux.functions as fun
 import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.process.angular import angular_processing
-from lib.anal.process.spatial import spatial_processing
+from lib.anal.process.spatial import spatial_processing, compute_bearingNdst2source, compute_dispersion, \
+    compute_tortuosity
 from lib.conf.par import getPar
 
 
@@ -155,19 +156,17 @@ def exclude_rows(s,e, dt,  flag, accepted=None, rejected=None):
 
         print(f'Rows excluded according to {flag}.')
 
-def preprocess(s,e,dt,Npoints, dic, config=None,  recompute=False,show_output=True,**kwargs) :
+def preprocess(s,e,dt,Npoints, rescale_by=None,drop_collisions=False,interpolate_nans=False,filter_f=None,
+               config=None,  recompute=False,show_output=True,**kwargs) :
     with fun.suppress_stdout(show_output):
-        if dic is None :
-            return s, e
-        else :
-            if dic['rescale_by'] is not None :
-                rescale(s,e,Npoints, config, recompute=recompute, scale=dic['rescale_by'])
-            if dic['drop_collisions'] :
-                exclude_rows(s,e,dt, flag='collision_flag', accepted=[0])
-            if dic['interpolate_nans'] :
-                interpolate_nans(s, Npoints)
-            if dic['filter_f'] is not None :
-                filter(s, dt, Npoints, config, recompute=recompute, freq=dic['filter_f'])
+        if rescale_by is not None :
+            rescale(s,e,Npoints, config, recompute=recompute, scale=rescale_by)
+        if drop_collisions :
+            exclude_rows(s,e,dt, flag='collision_flag', accepted=[0])
+        if interpolate_nans :
+            interpolate_nans(s, Npoints)
+        if filter_f is not None :
+            filter(s, dt, Npoints, config, recompute=recompute, freq=filter_f)
         return s,e
 
 def generate_traj_colors(s, sp_vel=None, ang_vel=None):
@@ -190,8 +189,11 @@ def generate_traj_colors(s, sp_vel=None, ang_vel=None):
             s[l] = [(np.nan, np.nan, np.nan)] * N
     return s
 
-def process(s,e,dt,Npoints,Ncontour, point, config=None, types=['angular', 'spatial'], mode='minimal',traj_colors=True,
-            distro_dir=None, dsp_dir=None, show_output=True, **kwargs):
+def process(s,e,dt,Npoints,Ncontour, point, config=None,
+            types=['angular', 'spatial', 'source', 'dispersion', 'tortuosity'],
+            mode='minimal',traj_colors=True,
+            distro_dir=None, dsp_dir=None, show_output=True,
+            source=None,dsp_starts=[0], dsp_stops=[40], tor_durs=[2, 5, 10, 20],  **kwargs):
     c = {
         's': s,
         'e': e,
@@ -208,6 +210,14 @@ def process(s,e,dt,Npoints,Ncontour, point, config=None, types=['angular', 'spat
             angular_processing(**c, distro_dir=distro_dir, **kwargs)
         if 'spatial' in types:
             spatial_processing(**c, dsp_dir=dsp_dir, **kwargs)
+        if 'source' in types:
+            if source is not None:
+                compute_bearingNdst2source(s, e, source=source, **kwargs)
+        if 'dispersion' in types:
+            compute_dispersion(s, e, dt, point, starts=dsp_starts, stops=dsp_stops, dir=dsp_dir, **kwargs)
+
+        if 'tortuosity' in types:
+            compute_tortuosity(s, e, dt, durs_in_sec=tor_durs, **kwargs)
         if traj_colors :
             try :
                 generate_traj_colors(s=s, sp_vel=None, ang_vel=None)

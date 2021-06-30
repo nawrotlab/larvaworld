@@ -18,31 +18,29 @@ class BatchTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-
-    def update(self,w, c, conf, id):
+    def update(self, w, c, conf, id):
         w.Element(f'{self.name}_id').Update(value=f'{id}_{next_idx(id, type="batch")}')
         w.Element(f'{self.name}_path').Update(value=id)
-        for n in ['batch_methods', 'optimization', 'space_search'] :
+        for n in ['batch_methods', 'optimization', 'space_search']:
             c[n].update(w, conf[n])
         w['TOGGLE_save_data_flag'].set_state(state=conf['run_kwargs']['save_data_flag'])
         # for i in range(2) :
         #     k=f'simulation_CONF{i}'
         #     w.Element(k, silent_on_error=True).Update(value=conf['exp'])
 
-
-    def get(self,w, v, c, **kwargs):
+    def get(self, w, v, c, **kwargs):
         conf = {
-            **{n : c[n].get_dict(v, w) for n in ['batch_methods','optimization','space_search']},
+            **{n: c[n].get_dict(v, w) for n in ['batch_methods', 'optimization', 'space_search']},
             # 'exp': v['simulation_CONF1'],
             'run_kwargs': {'save_data_flag': w['TOGGLE_save_data_flag'].metadata.state}
         }
         return copy.deepcopy(conf)
 
-
     def build(self):
-        l_sim=SelectionList(tab=self,conftype='Exp', idx=1)
-        l_batch=SelectionList(tab=self,conftype='Batch',actions=['load', 'save', 'delete', 'run'], sublists={'exp' : l_sim})
-        self.selectionlists=[l_batch,l_sim]
+        l_sim = SelectionList(tab=self, conftype='Exp', idx=1)
+        l_batch = SelectionList(tab=self, conftype='Batch', actions=['load', 'save', 'delete', 'run'],
+                                sublists={'exp': l_sim})
+        self.selectionlists = [l_batch, l_sim]
         batch_conf = [[sg.Text('Batch id:', **t10_kws), sg.In('unnamed_batch_0', key=f'{self.name}_id', **t18_kws)],
                       [sg.Text('Path:', **t10_kws), sg.In('unnamed_batch', key=f'{self.name}_path', **t18_kws)],
                       named_bool_button('Save data', False, toggle_name='save_data_flag'),
@@ -59,7 +57,7 @@ class BatchTab(GuiTab):
         g1 = GraphList(self.name)
         l_batch0 = sg.Col([l_batch.l,
                            l_sim.l,
-                           *[s.get_section() for s in [s0,s1, s2, s3]],
+                           *[s.get_section() for s in [s0, s1, s2, s3]],
                            [g1.get_layout()]
                            ], **col_kws, size=col_size(0.3))
 
@@ -69,15 +67,28 @@ class BatchTab(GuiTab):
         for s in [s0, s1, s2, s3]:
             c.update(s.get_subdicts())
         g = {g1.name: g1}
+        d ={'batch_results':{'df' : None, 'fig_dict' : None}}
         # print(l)
-        return l, c, g, {}
+        return l, c, g, d
 
-    def run(self, v,w, d, g, conf,id):
+    def run(self, v, w, c, d, g, conf, id):
         from lib.sim.batch_lib import prepare_batch, batch_run
-        exp=conf['exp']
-        sim_params = loadConf(exp, 'Exp')['sim_params']
-        exp_conf = run.get_exp_conf(exp, sim_params)
-        batch_kwargs = prepare_batch(conf, id, exp_conf)
+        # exp=conf['exp']
+        # exp_conf = {'env_params': loadConf(exp['env_params'], 'Env'),
+        #             'sim_params': exp['sim_params'],
+        #             'life_params': exp['life_params'] if 'life_params' in exp.keys() else dtypes.get_dict('life'),
+        #             'collections': exp['collections'],
+        #             'enrichment': exp['enrichment'] if 'enrichment' in exp.keys() else dtypes.get_dict('enrichment'),
+        #             }
+
+        # for kk, vv in exp_conf['env_params']['larva_groups'].items():
+        #     if type(vv['model']) == str:
+        #         vv['model'] = loadConf(vv['model'], 'Model')
+        # sim_params = loadConf(exp, 'Exp')['sim_params']
+        # exp_conf = run.get_exp_conf(exp, sim_params)
+        conf['exp']['sim_params']['path'] = id
+        batch_kwargs = prepare_batch(conf, v[f'{self.name}_id'])
+        # print(list(batch_kwargs.keys()))
         # batch_kwargs = prepare_batch(conf, batch_id, exp_conf)
         # dicts['batch_kwargs']=batch_kwargs
         #
@@ -93,9 +104,8 @@ class BatchTab(GuiTab):
         return d, g
 
 
-
-
 if __name__ == "__main__":
     from lib.gui.gui import LarvaworldGui
+
     larvaworld_gui = LarvaworldGui(tabs=['batch-run'])
     larvaworld_gui.run()

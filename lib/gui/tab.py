@@ -3,7 +3,7 @@ import webbrowser
 
 import PySimpleGUI as sg
 import numpy as np
-from lib.conf.conf import loadConfDict, saveConf, deleteConf, loadConf
+from lib.conf.conf import loadConfDict, saveConf, deleteConf, loadConf, expandConf
 from lib.gui.gui_lib import ClickableImage, window_size, t10_kws, graphic_button, t24_kws, named_list_layout, t8_kws
 import lib.stor.paths as paths
 
@@ -148,10 +148,12 @@ class SelectionList:
         elif e == f'RUN_{n}' and id != '':
             # print([v[l.k] for l in self.tab.selectionlists])
             conf = self.tab.get(w, v, c, as_entry=False)
+            # print(conf)
             for kk, vv in self.sublists.items():
                 # print(self.k, kk, vv.k, vv.conftype)
-                conf[kk] = loadConf(id=v[vv.k], conf_type=vv.conftype)
-            d,g=self.tab.run(v,w,c,d,g, conf,id)
+                conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
+            # print(conf)
+            d,g=self.tab.run(v,w,c,d,g, conf, id)
             self.set_d(d)
             self.set_g(g)
         elif e == f'EDIT_{n}':
@@ -224,7 +226,7 @@ class GuiTab:
         d = self.gui.dicts
         self.eval(e, v, w, c, d, g)
 
-    def run(self, v, w, d, g, conf):
+    def run(self, v, w,c, d, g, conf, id):
         pass
         # return d, g
 

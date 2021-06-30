@@ -211,7 +211,7 @@ def get_dict(name, class_name=None, basic=True, as_entry=False, **kwargs):
     elif name == 'agent':
         d = null_agent(class_name=class_name)
     dic = copy.deepcopy(d)
-    if name == 'visualization':
+    if name in ['visualization', 'enrichment']:
         for k, v in dic.items():
             if k in list(kwargs.keys()):
                 dic[k] = kwargs[k]
@@ -450,15 +450,52 @@ all_null_dicts = {
         'operator': None,
         # 'diff': False,
         # 'cum': False,
-        'k0' : None,
-            'k_num' : None,
-            'k_den' : None,
-            'dst2source' : None,
-            'or2source' : None,
-            'dispersion' : False,
-'wrap_mode' : None
-    }
+        'k0': None,
+        'k_num': None,
+        'k_den': None,
+        'dst2source': None,
+        'or2source': None,
+        'dispersion': False,
+        'wrap_mode': None
+    },
+    'preprocessing': {
+        'rescale_by': None,
+        'drop_collisions': False,
+        'interpolate_nans': False,
+        'filter_f': None
+    },
+    'processing': {'types': [],
+                   'dsp_starts': [], 'dsp_stops': [],
+                   'tor_durs': []},
+    'annotation': {'bouts': [], 'track_point': None,
+                   'track_pars': None, 'chunk_pars': None,
+                   'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 0.0,
+                   'non_chunks': False},
+    'enrich_aux': {'recompute': False,
+                   'mode': 'minimal',
+                   'source': None,
+                   },
+
 }
+all_null_dicts['enrichment'] = {k: all_null_dicts[k] for k in
+                                ['preprocessing', 'processing', 'annotation', 'enrich_aux']}
+
+all_null_dicts['exp_conf'] = {'env_params': None,
+                              'sim_params': get_dict('sim_params'),
+                              'life_params': get_dict('life'),
+                              'collections': ['pose'],
+                              'enrichment': get_dict('enrichment')
+                              }
+
+
+def default_enrichment(**kwargs):
+    d = {'types': ['angular', 'spatial', 'source', 'dispersion', 'tortuosity'],
+         'dsp_starts': [0, 20], 'dsp_stops': [40, 80], 'tor_durs': [2, 5, 10, 20],
+         'min_ang': 5.0, 'bouts': ['stride', 'pause', 'turn']
+         }
+
+    d.update(**kwargs)
+    return get_dict('enrichment', **d)
 
 
 def get_dict_dtypes(name, **kwargs):
@@ -652,19 +689,43 @@ def get_dict_dtypes(name, **kwargs):
             'exists': bool,
             'func': any,
             'const': any,
-            'operator' : [None, 'diff', 'cum', 'max', 'min', 'mean', 'std'],
+            'operator': [None, 'diff', 'cum', 'max', 'min', 'mean', 'std', 'final'],
             # 'diff': bool,
             # 'cum': bool,
-            'k0' : str,
-            'k_num' : str,
-            'k_den' : str,
+            'k0': str,
+            'k_num': str,
+            'k_den': str,
             'dst2source': Tuple[float, float],
             'or2source': Tuple[float, float],
             'dispersion': bool,
-        'wrap_mode' : [None, 'zero', 'positive']
-        }
+            'wrap_mode': [None, 'zero', 'positive']
+        },
+        'preprocessing': {
+            'rescale_by': float,
+            'drop_collisions': bool,
+            'interpolate_nans': bool,
+            'filter_f': float
+        },
+        'processing': {'types': ['angular', 'spatial', 'source', 'dispersion', 'tortuosity'],
+                       'dsp_starts': List[float], 'dsp_stops': List[float],
+                       'tor_durs': List[float]},
+        'annotation': {'bouts': ['stride', 'pause', 'turn'], 'track_point': str,
+                       'track_pars': List[str], 'chunk_pars': List[str],
+                       'vel_par': str, 'ang_vel_par': str, 'bend_vel_par': str, 'min_ang': float,
+                       'non_chunks': bool},
+        'enrich_aux': {'recompute': bool,
+                       'mode': ['minimal', 'full'],
+                       'source': Tuple[float, float],
+                       }
 
     }
+    all_dtypes['enrichment'] = {k: all_dtypes[k] for k in ['preprocessing', 'processing', 'annotation', 'enrich_aux']}
+    all_null_dicts['exp_conf'] = {'env_params': str,
+                                  'sim_params': dict,
+                                  'life_params': dict,
+                                  'collections': List[str],
+                                  'enrichment': dict,
+                                  }
     if name in list(all_dtypes.keys()):
         return all_dtypes[name]
     elif name == 'distro':

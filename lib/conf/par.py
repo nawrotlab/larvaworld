@@ -276,6 +276,7 @@ class Parameter:
         return f'{self.d},  {self.s}$({self.u.unit.abbrev})$'
 
     def get_from(self, o, u=True, tick=None, df=None):
+        # print(o,u,tick,df)
         if self.const is not None:
             v = self.const
         if tick != self.tick:
@@ -313,11 +314,11 @@ class Parameter:
                 v_d = self.p_den.get_from(o, u=False, tick=tick)
                 v = v_n / v_d
             elif self.dst2source is not None:
-                v = euclidean(getattr(o, 'pos'), self.dst2source)
+                v = euclidean(self.xy(o=o,tick=tick,df=df), self.dst2source)
             elif self.dispersion:
-                v = euclidean(tuple(getattr(o, 'pos')), tuple(getattr(o, 'initial_pos')))
+                v = euclidean(self.xy(o=o,tick=tick,df=df), self.xy0(o=o,df=df))
             elif self.or2source is not None:
-                v = fun.angle_dif(getattr(o, 'front_orientation'),fun.angle_to_x_axis(getattr(o, 'pos'), self.or2source))
+                v = fun.angle_dif(getattr(o, 'front_orientation'),fun.angle_to_x_axis(self.xy(o=o,tick=tick,df=df), self.or2source))
             v = self.postprocess(v)
             self.tick = tick
         else:
@@ -327,8 +328,27 @@ class Parameter:
         return v
 
 
-    def xy(self, o, tick):
-        return getattr(o, 'trajectory')[tick]
+    def xy(self, o, tick, df=None):
+        # print(o,type(o),df)
+        if type(o) == str and df is not None:
+            # print('ssssssssssssssssssssss')
+            xys=df[nam.xy('')].xs(o, level='AgentID')
+            xy = tuple(xys.values[-1,:])
+        else:
+            if tick is not None :
+                xy = getattr(o, 'trajectory')[tick]
+            else :
+                xy = getattr(o, 'pos')
+        return xy
+        # return getattr(o, 'trajectory')[tick]
+
+    def xy0(self, o, df=None):
+        if type(o) == str and df is not None:
+            xys=df[nam.xy('')].xs(o, level='AgentID')
+            xy0 = tuple(xys.values[0,:])
+        else:
+            xy0 = getattr(o, 'initial_pos')
+        return xy0
     # def xy(self, o, u=False, tick=None):
     #     x = self.par_dict['x'].get_from(o, u=u, tick=tick)
     #     y = self.par_dict['y'].get_from(o, u=u, tick=tick)
@@ -805,6 +825,13 @@ def build_par_dict(save=True, df=None):
         save_ParDict_frame(df)
     return df
 
+def post_get_par(dataset, par):
+    # print(dataset.step_data)
+    k=getPar(d=par, to_return=['k'])[0]
+    p=ParDict[k]
+    vs=[p.get_from(o,u=False,tick=None, df=dataset.step_data) for o in dataset.agent_ids]
+    # print(vs)
+    return vs
 chunk_dict={
     'str' : 'stride',
     'pau' : 'pause',
@@ -829,9 +856,9 @@ collection_dict = {
     'angular': ['b', 'bv', 'ba', 'fo', 'fov', 'foa', 'ro', 'rov', 'roa'],
 
     'chemorbit': ['d_cent', 'sd_cent', 'o_cent'],
-    'e_chemorbit': fun.flatten_list([[k, f'{k}_mu', f'{k}_std', f'{k}_max'] for k in ['d_cent', 'sd_cent']]),
+    'e_chemorbit': fun.flatten_list([[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_cent', 'sd_cent']]),
     'chemotax': ['d_chem', 'sd_chem', 'o_chem'],
-    'e_chemotax': fun.flatten_list([[k, f'{k}_mu', f'{k}_std', f'{k}_max'] for k in ['d_chem', 'sd_chem']]),
+    'e_chemotax': fun.flatten_list([[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_chem', 'sd_chem']]),
 
     'olfactor': ['Act_tur', 'A_tur', 'A_olf'],
     'odors': ['c_odor1', 'c_odor2', 'c_odor3', 'dc_odor1', 'dc_odor2', 'dc_odor3'],
@@ -840,8 +867,8 @@ collection_dict = {
 
 combo_collection_dict = {
     'pose': {'step': ['basic', 'bouts', 'spatial', 'angular'], 'end': ['e_basic', 'e_dispersion']},
-    'source vincinity': {'step': ['chemorbit'], 'end': ['e_chemorbit']},
-    'source approach': {'step': ['chemotax'], 'end': ['e_chemotax']},
+    'source_vincinity': {'step': ['chemorbit'], 'end': ['e_chemorbit']},
+    'source_approach': {'step': ['chemotax'], 'end': ['e_chemotax']},
     'olfactor': {'step': ['odors', 'olfactor'], 'end': []},
 }
 
@@ -885,7 +912,7 @@ def reconstruct_ParDict(test=False):
     return dic
 
 
-build_par_dict()
+ParDict=build_par_dict()
 ParFrame = load_ParDict()
 
 runtime_pars=[v['d'] for k,v in ParFrame.items() if v['o']==Larva and not k in build_constants().keys()]
@@ -926,7 +953,7 @@ def getPar(k=None,p=None, d=None, to_return=['d', 'l'], new_format=True) :
 if __name__ == '__main__':
     dic=build_par_dict()
     dic=load_ParDict()
-    print(dic['str_sd_mu'])
+    print(dic['sd_chem_fin'])
 
 
     raise

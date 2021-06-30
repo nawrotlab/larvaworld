@@ -11,7 +11,6 @@ from lib.aux.collecting import output_dict, midline_xy_pars
 from lib.conf.par import combo_collection_dict
 from lib.envs._larvaworld import LarvaWorldSim
 from lib.conf.conf import loadConf, next_idx
-from lib.sim.enrichment import sim_enrichment
 from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.dtype_dicts as dtypes
 
@@ -24,10 +23,11 @@ def run_sim_basic(
         env_params,
         vis_kwargs=dtypes.get_dict('visualization'),
         life_params=dtypes.get_dict('life'),
+        enrichment=dtypes.get_dict('enrichment'),
         collections=None,
         save_to=None,
         save_data_flag=True,
-        enrich=False,
+        # enrich=False,
         experiment=None,
         par_config=dat.SimParConf,
         seed=1,
@@ -86,7 +86,7 @@ def run_sim_basic(
         dur = end - start
         param_dict['duration'] = np.round(dur, 2)
         print(f'    Simulation completed in {np.round(dur).astype(int)} seconds!')
-        res=store_sim_data(env, d, save_data_flag, enrich, experiment, param_dict)
+        res=store_sim_data(env, d, save_data_flag, enrichment, param_dict)
     env.close()
     return res
 
@@ -94,7 +94,7 @@ def run_sim_basic(
 ser = pickle.dumps(run_sim_basic)
 run_sim = pickle.loads(ser)
 
-def store_sim_data(env, d, save_data_flag, enrich, experiment, param_dict):
+def store_sim_data(env, d, save_data_flag, enrichment, param_dict):
     # Read the data collected during the simulation
     if not paths.new_format :
         # old format
@@ -127,8 +127,8 @@ def store_sim_data(env, d, save_data_flag, enrich, experiment, param_dict):
         if df0 is not None :
             df0=df0.droplevel('Step')
         d.set_data(step=df, end=df0)
-    if enrich and experiment is not None:
-        d = sim_enrichment(d, experiment)
+    d.enrich(**enrichment)
+    # d = sim_enrichment(d, experiment)
     # Save simulation data and parameters
     if save_data_flag:
         d.save()
@@ -228,5 +228,5 @@ def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, la
         sim_params['sim_dur'] = exp_conf['sim_params']['sim_dur']
     exp_conf['sim_params'] = sim_params
     exp_conf['experiment'] = exp_type
-    exp_conf['enrich'] = enrich
+    # exp_conf['enrichment'] = enrich
     return exp_conf

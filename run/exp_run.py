@@ -33,7 +33,7 @@ place_kwargs = prs.get_place_kwargs(args)
 
 
 
-exp_conf = get_exp_conf(exp_type,  sim_kwargs, life_kwargs, enrich=True, **place_kwargs)
+exp_conf = get_exp_conf(exp_type,  sim_kwargs, life_kwargs, **place_kwargs)
 
 d = run_sim(**exp_conf, vis_kwargs=vis_kwargs, save_data_flag=not args.no_save)
 

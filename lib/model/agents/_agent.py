@@ -155,6 +155,14 @@ class Larva(LarvaworldAgent):
         return color
 
     @property
+    def final_dst_to_source(self):
+        return euclidean(self.pos, (0.04,0))
+
+    @property
+    def final_dst_to_center(self):
+        return euclidean(self.pos, (0, 0))
+
+    @property
     def turner_activation(self):
         return self.brain.turner.activation
 

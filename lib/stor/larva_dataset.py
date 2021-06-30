@@ -6,7 +6,7 @@ from distutils.dir_util import copy_tree
 import pandas as pd
 
 from lib.anal.process.basic import preprocess, process
-from lib.anal.process.bouts import detect_bouts
+from lib.anal.process.bouts import annotate
 from lib.anal.process.spatial import align_trajectories, fixate_larva
 from lib.anal.plotting import *
 import lib.conf.env_conf as env
@@ -384,7 +384,7 @@ class LarvaDataset:
         if is_last:
             self.save()
 
-    def preprocess(self, dic=None, is_last=True, **kwargs):
+    def preprocess(self, is_last=True, **kwargs):
         c = {
             's': self.step_data,
             'e': self.endpoint_data,
@@ -392,7 +392,7 @@ class LarvaDataset:
             'Npoints': self.Npoints,
             'config': self.config,
         }
-        preprocess(**c, dic=dic, **kwargs)
+        preprocess(**c, **kwargs)
         if is_last:
             self.save()
 
@@ -440,7 +440,7 @@ class LarvaDataset:
         else:
             return exp_bends, exp_bendvels
 
-    def detect_bouts(self, is_last=True, **kwargs):
+    def annotate(self, is_last=True, **kwargs):
         c = {
             's': self.step_data,
             'e': self.endpoint_data,
@@ -452,7 +452,7 @@ class LarvaDataset:
             'stride_p_dir': self.dir_dict['stride'],
         }
 
-        detect_bouts(**c, **kwargs)
+        annotate(**c, **kwargs)
 
         if is_last:
             self.save()
@@ -549,16 +549,11 @@ class LarvaDataset:
             self.acceleration = nam.lin(self.acceleration)
 
     def enrich(self,
-               preprocessing={
-                   'rescale_by': None,
-                   'drop_collisions': False,
-                   'interpolate_nans': False,
-                   'filter_f': None
-               },
-               processing=['angular', 'spatial'],
-               to_drop=[], mode='minimal', dispersion_starts=[0, 20], dispersion_stops=[40, 80],
-               bouts=['turn', 'stride', 'pause'],
-               source=None, show_output=True, recompute=False,
+               preprocessing,
+               processing,
+               annotation,
+               enrich_aux,
+               to_drop=[], show_output=True,
                is_last=True, **kwargs):
         print()
         print(f'--- Enriching dataset {self.id} with derived parameters ---')
@@ -567,10 +562,10 @@ class LarvaDataset:
         warnings.filterwarnings('ignore')
         c = {'show_output': show_output,
              'is_last': False}
-        self.preprocess(**c, recompute=recompute, mode=mode, dic=preprocessing, **kwargs)
-        self.process(types=processing, recompute=recompute, mode=mode, dsp_starts=dispersion_starts,
-                     dsp_stops=dispersion_stops, source=source, **c, **kwargs)
-        self.detect_bouts(bouts=bouts, recompute=recompute, source=source, **c, **kwargs)
+
+        self.preprocess( **preprocessing,**c, **enrich_aux, **kwargs)
+        self.process(**processing, **enrich_aux, **c, **kwargs)
+        self.annotate(**annotation, **enrich_aux, **c, **kwargs)
         self.drop_pars(groups=to_drop, **c)
         if is_last:
             self.save()

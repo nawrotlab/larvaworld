@@ -251,6 +251,18 @@ def loadConf(id, conf_type):
     except:
         raise ValueError(f'{conf_type} Configuration {id} does not exist')
 
+def expandConf(id, conf_type):
+    conf = loadConf(id, conf_type)
+    if conf_type=='Batch' :
+        conf['exp'] = expandConf(conf['exp'], 'Exp')
+    elif conf_type=='Exp' :
+        conf['env_params']=expandConf(conf['env_params'], 'Env')
+    elif conf_type=='Env' :
+        for k, v in conf['larva_groups'].items():
+            if type(v['model']) == str:
+                v['model'] = loadConf(v['model'], 'Model')
+    return conf
+
 
 def loadConfDict(conf_type):
     with open(paths.conf_paths[conf_type]) as tfp:

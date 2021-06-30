@@ -276,23 +276,17 @@ def store_global_linear_metrics(s, e, point):
         pass
 
 
-def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recompute=False,
-                       dsp_starts=[0], dsp_stops=[40], dsp_dir=None, tor_durs=[2, 5, 10, 20], source=None, **kwargs):
+def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recompute=False, **kwargs):
     compute_length(s, e, Npoints, mode=mode, recompute=recompute)
     compute_centroid_from_contour(s, Ncontour, recompute=recompute)
     compute_spatial_metrics(s, e, dt, Npoints, point, mode=mode)
     compute_linear_metrics(s, e, dt, Npoints, point, mode=mode)
     store_global_linear_metrics(s, e, point)
-    compute_dispersion(s, e, dt, point, recompute=recompute, starts=dsp_starts, stops=dsp_stops, dir=dsp_dir)
-    compute_tortuosity(s, e, dt, durs_in_sec=tor_durs)
-    if source is not None:
-        compute_bearingNdst2source(s, e, source=source)
-        # compute_dst2source(s, e, dt, point, source=source)
     print(f'Completed {mode} spatial processing.')
     return s, e
 
 
-def compute_dispersion(s, e, dt, point, recompute=False, starts=[0], stops=[40], dir=None):
+def compute_dispersion(s, e, dt, point, recompute=False, starts=[0], stops=[40], dir=None,**kwargs):
     ids = s.index.unique('AgentID').values
     ps=[]
     pps=[]
@@ -349,7 +343,7 @@ def compute_dispersion(s, e, dt, point, recompute=False, starts=[0], stops=[40],
     print('Dispersions computed')
 
 
-def compute_tortuosity(s, e, dt, durs_in_sec=[2, 5, 10, 20]):
+def compute_tortuosity(s, e, dt, durs_in_sec=[2, 5, 10, 20],**kwargs):
     dsp_par = nam.final('dispersion') if nam.final('dispersion') in e.columns else 'dispersion'
     e['tortuosity'] = 1 - e[dsp_par] / e[nam.cum(nam.dst(''))]
     durs = [int(1 / dt * d) for d in durs_in_sec]
@@ -390,9 +384,9 @@ def compute_tortuosity(s, e, dt, durs_in_sec=[2, 5, 10, 20]):
     print('Tortuosities computed')
 
 
-def compute_bearingNdst2source(s, e, source=(0, 0)):
+def compute_bearingNdst2source(s, e, source=(0, 0),**kwargs):
     # ids = s.index.unique('AgentID').values
-    ii = 'cent' if source == (0, 0) else 'chem'
+    ii = 'cent' if source[0]==source[1]==0 else 'chem'
     o, fo, d = getPar([f'o_{ii}', 'fo', f'd_{ii}'], to_return=['d'])[0]
     xy = nam.xy('')
     print(f'Computing bearing and distance to source based on xy position')

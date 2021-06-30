@@ -212,10 +212,7 @@ class TargetedDataCollector(DataCollector):
                 dic.update({d:p})
             except :
                 pass
-
         return dic
-
-
 
 
     def _record_agents(self, model, schedule):
@@ -337,7 +334,11 @@ output_dict = {
                'tables': {'best_gains': ['unique_id', 'first_odor_best_gain', 'second_odor_best_gain', 'cum_reward',
                                          'best_olfactor_decay']}},
     'midline': None,
-    'contour': None
+    'contour': None,
+# 'source_vincinity': {'step': ['d_cent', 'sd_cent', 'o_cent'], 'endpoint': fun.flatten_list([[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_cent', 'sd_cent']])},
+'source_vincinity': {'step': [], 'endpoint': ['d_cent_fin']},
+    'source_approach': {'step': [], 'endpoint': ['d_chem_fin']},
+    # 'source_approach': {'step': ['d_chem', 'sd_chem', 'o_chem'], 'endpoint': fun.flatten_list([[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_chem', 'sd_chem']])},
 }
 
 output_keys = list(output_dict.keys())

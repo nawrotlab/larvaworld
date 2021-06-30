@@ -727,8 +727,6 @@ class LarvaWorldSim(LarvaWorld):
                  parameter_dict={}, **kwargs):
         super().__init__(id=id, **kwargs)
         self.sample_dataset = sample_dataset
-
-
         self.epochs = life_params['epochs']
         if self.epochs is None:
             self.epochs = []
@@ -839,14 +837,7 @@ class LarvaWorldSim(LarvaWorld):
         self.sim_clock.tick_clock()
         self.Nticks += 1
 
-        if len(self.sim_epochs) > 0:
-            self.starvation = self.sim_clock.timer_on
-            if self.sim_clock.timer_opened:
-                if self.food_grid is not None:
-                    self.food_grid.empty_grid()
-            if self.sim_clock.timer_closed:
-                if self.food_grid is not None:
-                    self.food_grid.reset()
+        self.resolve_epochs()
 
         if not self.larva_collisions:
             self.larva_bodies = self.get_larva_bodies()
@@ -864,14 +855,6 @@ class LarvaWorldSim(LarvaWorld):
         if self.larva_step_col is not None:
             self.larva_step_col.collect(self)
         self.step_group_collector.collect()
-        # for l in self.get_flies():
-        #     # l.compute_next_action()
-        #     l.collector.collect()
-        # if self.table_collector is not None and self.Nticks%(int(3*60/self.dt))==0 :
-        #     for name, table in self.table_collector.tables.items() :
-        #         cols=list(table.keys())
-        #         for l in self.get_flies() :
-        #             self.table_collector.add_table_row(table_name=name, row={col : getattr(l, col) for col in cols})
 
         self.check_end_condition()
 
@@ -948,6 +931,16 @@ class LarvaWorldSim(LarvaWorld):
                     else:
                         # overlap=False
                         break
+
+    def resolve_epochs(self):
+        if len(self.sim_epochs) > 0:
+            self.starvation = self.sim_clock.timer_on
+            if self.sim_clock.timer_opened:
+                if self.food_grid is not None:
+                    self.food_grid.empty_grid()
+            if self.sim_clock.timer_closed:
+                if self.food_grid is not None:
+                    self.food_grid.reset()
 
 
 class LarvaWorldReplay(LarvaWorld):

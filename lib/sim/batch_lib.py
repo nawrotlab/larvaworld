@@ -16,7 +16,9 @@ from pypet import Environment, cartesian_product, load_trajectory, pypetconstant
 from pypet.parameter import ObjectTable
 import matplotlib.pyplot as plt
 
-from lib.anal.plotting import plot_heatmap_PI, plot_endpoint_scatter, plot_debs, plot_3pars, plot_endpoint_params, plot_2d
+from lib.anal.plotting import plot_heatmap_PI, plot_endpoint_scatter, plot_debs, plot_3pars, plot_endpoint_params, \
+    plot_2d
+
 from lib.sim.single_run import run_sim
 import lib.aux.functions as fun
 import lib.stor.paths as paths
@@ -47,6 +49,7 @@ Examples of this default batch run are given in  :
 - feed_scatter_batchrun.py for feed_scatter_experiment
 '''
 
+
 def batch_methods(run='default', post='default', final='null'):
     process_method_dict = {
         'null': null_processing,
@@ -71,16 +74,18 @@ def batch_methods(run='default', post='default', final='null'):
             'post_process_method': post_process_method_dict[post],
             'final_process_method': final_process_method_dict[final], }
 
-def prepare_batch(batch, batch_id, exp_conf):
+
+def prepare_batch(batch, batch_id):
     space = grid_search_dict(**batch['space_search'])
-    if batch['optimization'] is not None :
+    if batch['optimization'] is not None:
         batch['optimization']['ranges'] = np.array(batch['space_search']['ranges'])
-    exp_conf['sim_params']['path']=batch_id
+
+    # exp_conf['sim_params']['path'] = batch_type
     prepared_batch = {
         'space': space,
-        'dir': batch['exp'],
+        'dir': batch_id,
         'batch_id': batch_id,
-        'sim_config': exp_conf,
+        'sim_config': batch['exp'],
         **batch_methods(**batch['batch_methods']),
         'optimization': batch['optimization'],
         'run_kwargs': batch['run_kwargs'],
@@ -132,7 +137,7 @@ def get_results(traj, res_names=None):
 
 def save_results_df(traj):
     runs_idx, p_ns, p_n0s, p_vs, r_ns, r_vs = get_results(traj, res_names=None)
-    cols=list(p_ns)+list(r_ns)
+    cols = list(p_ns) + list(r_ns)
     df = pd.DataFrame(np.array(p_vs + r_vs).T, index=runs_idx, columns=cols)
     df.index.name = 'run_idx'
     try:
@@ -145,8 +150,8 @@ def save_results_df(traj):
 
 
 def load_default_configuration(traj, sim_config):
-    env, sim, life, collections = sim_config['env_params'], sim_config[
-        'sim_params'], sim_config['life_params'], sim_config['collections']
+    env, sim, life, collections, enrichment = sim_config['env_params'], sim_config[
+        'sim_params'], sim_config['life_params'], sim_config['collections'], sim_config['enrichment']
     if sim is not None:
         sim_dict = fun.flatten_dict(sim, parent_key='sim_params', sep='.')
         for k, v in sim_dict.items():
@@ -162,20 +167,35 @@ def load_default_configuration(traj, sim_config):
         life_dict = fun.flatten_dict(life, parent_key='life_params', sep='.')
         for k, v in life_dict.items():
             traj.f_apar(k, v)
+    if enrichment is not None:
+        enrichment_dict = fun.flatten_dict(enrichment, parent_key='enrichment', sep='.')
+        for k, v in enrichment_dict.items():
+            traj.f_apar(k, v)
 
     traj.f_aconf('collections', collections)
     return traj
 
 
-def default_processing(traj, dataset=None):
+def default_processing(traj, d=None):
     p = traj.config.fit_par
-    ops_mean=traj.config.operations.mean
-    ops_std=traj.config.operations.std
-    ops_abs=traj.config.operations.abs
-    try:
-        vals=dataset.endpoint_data[p].values
-    except:
-        vals=dataset.step_data[p].groupby('AgentID').mean()
+    s, e = d.step_data, d.endpoint_data
+    if p in e.columns:
+        vals = e[p].values
+    elif p in s.columns:
+        vals = s[p].groupby('AgentID').mean()
+    else:
+        # d.process(types='source',source=(0.04,0), show_output=True)
+        # s, e = d.step_data, d.endpoint_data
+        # vals = e[p].values
+        # # try :
+        # from lib.conf.par import post_get_par
+        # vals=post_get_par(d,p)
+        # except :
+        raise ValueError('Could not retrieve fit parameter from dataset')
+
+    ops_mean = traj.config.operations.mean
+    ops_std = traj.config.operations.std
+    ops_abs = traj.config.operations.abs
     if ops_abs:
         vals = np.abs(vals)
     if ops_mean:
@@ -183,16 +203,16 @@ def default_processing(traj, dataset=None):
     elif ops_std:
         fit = np.std(vals)
     traj.f_add_result(p, fit, comment='The fit')
-    return dataset, fit
+    return d, fit
 
 
-def null_processing(traj, dataset=None):
-    return dataset, np.nan
+def null_processing(traj, d=None):
+    return d, np.nan
 
 
-def deb_processing(traj, dataset=None):
+def deb_processing(traj, d=None):
     # dataset.deb_analysis()
-    e=dataset.endpoint_data
+    e = d.endpoint_data
     deb_f_mean = e['deb_f_mean'].mean()
     traj.f_add_result('deb_f_mean', deb_f_mean, comment='The average mean deb functional response')
     deb_f_deviation_mean = e['deb_f_deviation_mean'].mean()
@@ -203,7 +223,7 @@ def deb_processing(traj, dataset=None):
     reserve_density = e['reserve_density'].mean()
     traj.f_add_result('reserve_density', reserve_density, comment='The average final reserve density')
 
-    return dataset, np.nan
+    return d, np.nan
 
 
 def null_post_processing(traj, result_tuple):
@@ -211,7 +231,7 @@ def null_post_processing(traj, result_tuple):
 
 
 def plot_results(traj, df):
-    fig_dict={}
+    fig_dict = {}
     filepath = traj.config.dir_path
     p_ns = [traj.f_get(p).v_name for p in traj.f_get_explored_parameters()]
     r_ns = np.unique([traj.f_get(r).v_name for r in traj.f_get_results()])
@@ -220,14 +240,14 @@ def plot_results(traj, df):
               'show': False}
     for r_n in r_ns:
         if len(p_ns) == 1:
-            fig=plot_2d(labels=p_ns + [r_n], pref=r_n, **kwargs)
-            fig_dict[f'{p_ns[0]}VS{r_n}']=fig
+            fig = plot_2d(labels=p_ns + [r_n], pref=r_n, **kwargs)
+            fig_dict[f'{p_ns[0]}VS{r_n}'] = fig
         elif len(p_ns) == 2:
-            dic=plot_3pars(labels=p_ns + [r_n], pref=r_n, **kwargs)
+            dic = plot_3pars(labels=p_ns + [r_n], pref=r_n, **kwargs)
             fig_dict.update(dic)
         elif len(p_ns) > 2:
             for i, pair in enumerate(itertools.combinations(p_ns, 2)):
-                dic=plot_3pars(labels=list(pair) + [r_n], pref=f'{i}_{r_n}', **kwargs)
+                dic = plot_3pars(labels=list(pair) + [r_n], pref=f'{i}_{r_n}', **kwargs)
                 fig_dict.update(dic)
     return fig_dict
 
@@ -244,14 +264,14 @@ def end_scatter_generation(traj):
     dirs = [f'{parent_dir}/{d}' for d in os.listdir(parent_dir)]
     dirs.sort()
     ds = [LarvaDataset(dir) for dir in dirs]
-    fig_dict= {}
+    fig_dict = {}
     kwargs = {'datasets': ds,
               'labels': [d.id for d in ds],
               'save_to': traj.config.dir_path}
-    for i in [1,2,3] :
-        l=f'end_parshorts_{i}'
-        par_shorts=getattr(traj.config, l)
-        f=plot_endpoint_scatter(**kwargs, keys=par_shorts)
+    for i in [1, 2, 3]:
+        l = f'end_parshorts_{i}'
+        par_shorts = getattr(traj.config, l)
+        f = plot_endpoint_scatter(**kwargs, keys=par_shorts)
         p1, p2 = par_shorts
         fig_dict[f'{p1}VS{p2}'] = f
     return df, fig_dict
@@ -283,8 +303,8 @@ def deb_analysis(traj):
     #     [[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
     deb_dicts = fun.flatten_list([d.load_deb_dicts() for d in ds])
     fig_dict = {}
-    for m in ['energy', 'growth', 'full'] :
-        f=plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as=f'deb_{m}.pdf', mode=m)
+    for m in ['energy', 'growth', 'full']:
+        f = plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as=f'deb_{m}.pdf', mode=m)
         fig_dict[f'deb_{m}'] = f
     return df, fig_dict
 
@@ -334,7 +354,7 @@ def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag
     env_params = fun.reconstruct_dict(traj.f_get('env_params'))
     sim_params = fun.reconstruct_dict(traj.f_get('sim_params'))
     life_params = fun.reconstruct_dict(traj.f_get('life_params'))
-    # print(sim_params)
+    enrichment = fun.reconstruct_dict(traj.f_get('enrichment'))
     sim_params['sim_id'] = f'run_{traj.v_idx}'
     d = run_sim(
         env_params=env_params,
@@ -343,6 +363,8 @@ def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag
         collections=traj.collections,
         vis_kwargs=dtypes.get_dict('visualization'),
         save_data_flag=save_data_flag,
+        enrichment=enrichment,
+        # enrich=True,
         **kwargs)
 
     if process_method is None:
@@ -386,13 +408,17 @@ def _batch_run(dir='unnamed',
                post_kwargs={},
                run_kwargs={}
                ):
-    saved_args = locals()
+    # print(dir)
+    # raise
+    # saved_args = locals()
     traj_name = f'{batch_id}_traj'
-    parent_dir_path = f'{paths.BatchRunFolder}/{dir}'
-    dir_path = os.path.join(parent_dir_path, batch_id)
+    parent_dir = f'{paths.BatchRunFolder}/{dir}'
+    dir_path = os.path.join(parent_dir, batch_id)
     filename = f'{dir_path}/{batch_id}.hdf5'
     build_new = True
-    if os.path.exists(parent_dir_path) and os.path.exists(dir_path) and overwrite == False:
+    # print(dir_path)
+    # raise
+    if os.path.exists(parent_dir) and os.path.exists(dir_path) and overwrite == False:
         build_new = False
         try:
             env = Environment(continuable=True)
@@ -412,14 +438,7 @@ def _batch_run(dir='unnamed',
                 print('Neither of resuming or expanding of existing trajectory worked')
 
     if build_new:
-        if multiprocessing:
-            multiproc = True
-            resumable = False
-            wrap_mode = pypetconstants.WRAP_MODE_QUEUE
-        else:
-            multiproc = False
-            resumable = True
-            wrap_mode = pypetconstants.WRAP_MODE_LOCK
+
         env = Environment(trajectory=traj_name,
                           filename=filename,
                           file_title=batch_id,
@@ -428,14 +447,14 @@ def _batch_run(dir='unnamed',
                           overwrite_file=True,
                           resumable=False,
                           resume_folder=dir_path,
-                          multiproc=multiproc,
+                          multiproc=multiprocessing,
                           ncores=4,
                           use_pool=True,  # Our runs are inexpensive we can get rid of overhead by using a pool
                           freeze_input=True,  # We can avoid some overhead by freezing the input to the pool
-                          wrap_mode=wrap_mode,
+                          wrap_mode=pypetconstants.WRAP_MODE_QUEUE if multiprocessing else pypetconstants.WRAP_MODE_LOCK,
                           graceful_exit=True)
         print('Created novel environment')
-        traj = prepare_traj(env.traj, sim_config, params, batch_id, parent_dir_path, dir_path)
+        traj = prepare_traj(env.traj, sim_config, params, batch_id, parent_dir, dir_path)
         traj = config_traj(traj, optimization)
         traj.f_explore(space)
 
@@ -446,8 +465,7 @@ def _batch_run(dir='unnamed',
     env.disable_logging()
     print('Batch run complete')
     if final_process_method is not None:
-        results = final_process_method(env.traj)
-        return results
+        return final_process_method(env.traj)
 
 
 def config_traj(traj, optimization):
@@ -548,6 +566,6 @@ def heat_map_generation(traj):
     for Lgain, Rgain, PI in zip(Lgains, Rgains, PIs):
         df[Rgain].loc[Lgain] = PI
     df.to_csv(csv_filepath, index=True, header=True)
-    fig=plot_heatmap_PI(save_to=traj.config.dir_path, csv_filepath=csv_filepath)
-    fig_dict={'PI_heatmap' : fig}
+    fig = plot_heatmap_PI(save_to=traj.config.dir_path, csv_filepath=csv_filepath)
+    fig_dict = {'PI_heatmap': fig}
     return df, fig_dict

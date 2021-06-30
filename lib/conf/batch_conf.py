@@ -1,3 +1,7 @@
+# from lib.conf.par import load_ParDict
+#
+# par_dict=load_ParDict()
+
 def optimization(fit_par, minimize=True, threshold=0.0001, max_Nsims=10, Nbest=4, operations={'mean' : True, 'std': False, 'abs' : False}):
     return {
         'fit_par': fit_par,
@@ -35,7 +39,7 @@ chemorbit_batch = {
         'Ngrid': [3, 3]
     },
     'batch_methods': batch_methods(),
-    'optimization': optimization('scaled_dispersion'),
+    'optimization': optimization('final_dst_to_center'),
     'run_kwargs' : {'save_data_flag': False}
 }
 
@@ -59,7 +63,8 @@ chemotax_batch = {
         'Ngrid': [3, 3]
     },
     'batch_methods': batch_methods(),
-    'optimization': optimization('final_dst_to_chemotax_odor'),
+    # 'optimization': optimization('x'),
+    'optimization': optimization('final_dst_to_source'),
     'run_kwargs' : {'save_data_flag': False}
 }
 

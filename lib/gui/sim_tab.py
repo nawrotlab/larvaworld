@@ -64,15 +64,16 @@ class SimTab(GuiTab):
         return l, c, g, d
 
     def run(self, v, w,c,d,g, conf,id):
-        for k, v in conf['env_params']['larva_groups'].items():
-            if type(v['model']) == str:
-                v['model'] = loadConf(v['model'], 'Model')
+        # for k, v in conf['env_params']['larva_groups'].items():
+        #     if type(v['model']) == str:
+        #         v['model'] = loadConf(v['model'], 'Model')
 
         N=conf['sim_params']['sim_dur'] * 60 / conf['sim_params']['dt']
         p=self.selectionlists[0].progressbar
         p.run(w, max=N)
-        conf['enrich'] = True
+        # conf['enrich'] = True
         conf['experiment'] = id
+        # print(conf.keys())
         # default_vis = dtypes.get_dict('visualization', mode='video', video_speed=60)
         default_vis=dtypes.get_dict('visualization')
         vis_kwargs = c['Visualization'].get_dict(v, w) if 'Visualization' in list(
@@ -125,6 +126,7 @@ class SimTab(GuiTab):
                 'sim_params': sim,
                 'collections': [k for k in output_keys if c['Output'].get_dict(v, w)[k]],
                 'life_params': c['Life'].get_dict(v, w),
+                'enrichment': loadConf(v[self.selectionlists[0].k], 'Exp')['enrichment'],
                 }
         return conf
 

@@ -343,7 +343,6 @@ class LarvaBody:
         self.real_length = np.sqrt(self.real_mass / (self.density * self.width_to_length_ratio))
 
     def adjust_body_vertices(self):
-        self.sim_length = self.real_length * self.model.scaling_factor
         self.radius = self.sim_length / 2
         self.seg_lengths = [self.sim_length * r for r in self.seg_ratio]
         self.seg_vertices = [v * self.sim_length for v in self.base_seg_vertices]
