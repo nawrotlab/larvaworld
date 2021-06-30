@@ -726,6 +726,7 @@ class LarvaWorldSim(LarvaWorld):
                  life_params=None, sample_dataset='reference',
                  parameter_dict={}, **kwargs):
         super().__init__(id=id, **kwargs)
+
         self.sample_dataset = sample_dataset
         self.epochs = life_params['epochs']
         if self.epochs is None:

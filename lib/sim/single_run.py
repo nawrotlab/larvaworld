@@ -58,7 +58,6 @@ def run_sim_basic(
 
     # FIXME This only takes the first configuration into account
     Npoints = list(env_params['larva_groups'].values())[0]['model']['body']['Nsegs'] + 1
-
     d = LarvaDataset(dir=dir_path, id=id, fr=1 / dt,
                      Npoints=Npoints, Ncontour=0, sample_dataset=sample,
                      arena_pars=env_params['arena'],

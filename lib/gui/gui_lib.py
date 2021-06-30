@@ -1358,10 +1358,13 @@ class CollapsibleTable(Collapsible):
 
 
 class CollapsibleDict(Collapsible):
-    def __init__(self, name, state, dict, dict_name=None, type_dict=None, toggled_subsections=True, **kwargs):
+    def __init__(self, name, state, dict=None, dict_name=None, type_dict=None, toggled_subsections=True,default=False, **kwargs):
         if dict_name is None:
             dict_name = name
         self.dict_name = dict_name
+        if default and dict is None and type_dict is None :
+            dict=dtypes.get_dict(name)
+            type_dict=dtypes.get_dict_dtypes(name)
         self.sectiondict = SectionDict(name=dict_name, dict=dict, type_dict=type_dict,
                                        toggled_subsections=toggled_subsections)
         content = self.sectiondict.init_section()

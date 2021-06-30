@@ -47,7 +47,7 @@ class EnvTab(GuiTab):
         c = {}
         for s in [s1, s2, s3, s4]:
             c.update(**s.get_subdicts())
-        c1 = [CollapsibleDict(n, False, dict=dtypes.get_dict(n), type_dict=dtypes.get_dict_dtypes(n), **kw)
+        c1 = [CollapsibleDict(n, False, default=True, **kw)
               for n, kw in zip(['arena', 'food_grid', 'odorscape'], [{}, {'toggle': True}, {}])]
         for s in c1:
             c.update(s.get_subdicts())

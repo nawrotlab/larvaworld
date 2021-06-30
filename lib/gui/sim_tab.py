@@ -45,10 +45,10 @@ class SimTab(GuiTab):
                               sublists={'env_params': l_env})
         self.selectionlists = [l_sim, l_env]
         # s1 = self.build_sim_collapsible()
-        s1 = CollapsibleDict('sim_params', True, dict=dtypes.get_dict('sim_params'), type_dict=dtypes.get_dict_dtypes('sim_params'), disp_name='Configuration')
+        s1 = CollapsibleDict('sim_params', True, default=True, disp_name='Configuration')
         output_dict = dict(zip(output_keys, [False] * len(output_keys)))
         s2 = CollapsibleDict('Output', False, dict=output_dict, auto_open=False)
-        s3 = CollapsibleDict('Life', False, dict=dtypes.get_dict('life'), type_dict=dtypes.get_dict_dtypes('life'),
+        s3 = CollapsibleDict('life', False, default=True,
                              next_to_header=[graphic_button('edit', 'CONF_LIFE',
                                                             tooltip='Configure the life history of the simulated larvae.')])
 
@@ -102,8 +102,7 @@ class SimTab(GuiTab):
         # sim = conf['sim_params']
         output_dict = dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys]))
         c['Output'].update(w, output_dict)
-        # life = conf['life_params'] if 'life_params' in list(conf.keys()) else dtypes.get_dict('life')
-        c['Life'].update(w, conf['life_params'])
+        c['life'].update(w, conf['life_params'])
 
         sim=copy.deepcopy(conf['sim_params'])
         sim.update({'sim_ID' : f'{id}_{next_idx(id)}', 'path' : f'single_runs/{id}'})
@@ -130,7 +129,7 @@ class SimTab(GuiTab):
                 'sim_params': c['sim_params'].get_dict(v, w),
                 # 'sim_params': sim,
                 'collections': [k for k in output_keys if c['Output'].get_dict(v, w)[k]],
-                'life_params': c['Life'].get_dict(v, w),
+                'life_params': c['life'].get_dict(v, w),
                 'enrichment': loadConf(v[self.selectionlists[0].k], 'Exp')['enrichment'],
                 }
         return conf

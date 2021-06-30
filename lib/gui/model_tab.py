@@ -51,11 +51,9 @@ class ModelTab(GuiTab):
         l0 = SelectionList(tab=self,conftype='Model',actions=['load', 'save', 'delete'])
         self.selectionlists = [l0]
 
-        c1 = [CollapsibleDict(n, False, dict=dtypes.get_dict(n), type_dict=dtypes.get_dict_dtypes(n),
-                              disp_name=n.capitalize(), **kwargs)
+        c1 = [CollapsibleDict(n, False, default=True, **kwargs)
               for n, kwargs in zip(['physics', 'energetics', 'body', 'odor'], [{}, {'toggle': True}, {}, {}])]
-        s1 = CollapsibleTable('odor_gains', False, headings=['id', 'mean', 'std'], dict={},
-                              disp_name='Odor gains', type_dict=dtypes.get_dict_dtypes('odor_gain'))
+        s1 = CollapsibleTable('odor_gains', False, headings=['id', 'mean', 'std'], dict={}, type_dict=dtypes.get_dict_dtypes('odor_gain'))
         l1 = [i.get_section() for i in c1 + [s1]]
         c2 = [CollapsibleDict(k.upper(), False, dict=dtypes.get_dict(k), type_dict=dtypes.get_dict_dtypes(k),
                               toggle=True, disp_name=k.capitalize()) for k in dtypes.module_keys]

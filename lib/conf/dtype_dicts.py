@@ -204,6 +204,7 @@ def get_pygame_key(key):
 
 
 def get_dict(name, class_name=None, basic=True, as_entry=False, **kwargs):
+    # print(name)
     if name in list(all_null_dicts.keys()):
         d = all_null_dicts[name]
     elif name == 'distro':
@@ -487,8 +488,20 @@ all_null_dicts['exp_conf'] = {'env_params': None,
                               'enrichment': get_dict('enrichment')
                               }
 
+all_null_dicts['batch_conf'] = {'exp': None,
+                                'space_search': get_dict('space_search'),
+                                'batch_methods': get_dict('batch_methods'),
+                                'optimization': None,
+                                'run_kwargs': {'save_data_flag': False},
+                                'post_kwargs': {},
+                                }
 
-def default_enrichment(**kwargs):
+all_null_dicts['food_params'] = {'source_groups': {},
+                                 'food_grid': None,
+                                 'source_units': {}}
+
+
+def base_enrich(**kwargs):
     d = {'types': ['angular', 'spatial', 'source', 'dispersion', 'tortuosity'],
          'dsp_starts': [0, 20], 'dsp_stops': [40, 80], 'tor_durs': [2, 5, 10, 20],
          'min_ang': 5.0, 'bouts': ['stride', 'pause', 'turn']
@@ -720,12 +733,22 @@ def get_dict_dtypes(name, **kwargs):
 
     }
     all_dtypes['enrichment'] = {k: all_dtypes[k] for k in ['preprocessing', 'processing', 'annotation', 'enrich_aux']}
-    all_null_dicts['exp_conf'] = {'env_params': str,
-                                  'sim_params': dict,
-                                  'life_params': dict,
-                                  'collections': List[str],
-                                  'enrichment': dict,
-                                  }
+    all_dtypes['exp_conf'] = {'env_params': str,
+                              'sim_params': dict,
+                              'life_params': dict,
+                              'collections': List[str],
+                              'enrichment': dict,
+                              }
+    all_dtypes['batch_conf'] = {'exp': str,
+                                'space_search': dict,
+                                'batch_methods': dict,
+                                'optimization': dict,
+                                'run_kwargs': dict,
+                                'post_kwargs': dict,
+                                }
+    all_dtypes['food_params'] = {'source_groups': dict,
+                                 'food_grid': dict,
+                                 'source_units': dict}
     if name in list(all_dtypes.keys()):
         return all_dtypes[name]
     elif name == 'distro':

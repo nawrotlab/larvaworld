@@ -350,12 +350,13 @@ def post_processing(traj, result_tuple):
 
 
 def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag=False, **kwargs):
+
     start = time.time()
     env_params = fun.reconstruct_dict(traj.f_get('env_params'))
     sim_params = fun.reconstruct_dict(traj.f_get('sim_params'))
     life_params = fun.reconstruct_dict(traj.f_get('life_params'))
     enrichment = fun.reconstruct_dict(traj.f_get('enrichment'))
-    sim_params['sim_id'] = f'run_{traj.v_idx}'
+    sim_params['sim_ID'] = f'run_{traj.v_idx}'
     d = run_sim(
         env_params=env_params,
         sim_params=sim_params,

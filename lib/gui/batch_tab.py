@@ -46,11 +46,9 @@ class BatchTab(GuiTab):
                       named_bool_button('Save data', False, toggle_name='save_data_flag'),
                       ]
         s0 = Collapsible(f'{self.name}_CONFIGURATION', True, batch_conf, disp_name='Configuration')
-        s1 = CollapsibleDict('batch_methods', False, dict=dtypes.get_dict('batch_methods'),
-                             type_dict=dtypes.get_dict_dtypes('batch_methods'))
+        s1 = CollapsibleDict('batch_methods', False, default=True)
 
-        s2 = CollapsibleDict('optimization', False, dict=dtypes.get_dict('optimization'),
-                             type_dict=dtypes.get_dict_dtypes('optimization'),
+        s2 = CollapsibleDict('optimization', False, default=True,
                              toggle=True, disabled=True, toggled_subsections=None)
         s3 = CollapsibleTable('space_search', False, headings=['pars', 'ranges', 'Ngrid'], dict={},
                               type_dict=dtypes.get_dict_dtypes('space_search'))
@@ -73,19 +71,6 @@ class BatchTab(GuiTab):
 
     def run(self, v, w, c, d, g, conf, id):
         from lib.sim.batch_lib import prepare_batch, batch_run
-        # exp=conf['exp']
-        # exp_conf = {'env_params': loadConf(exp['env_params'], 'Env'),
-        #             'sim_params': exp['sim_params'],
-        #             'life_params': exp['life_params'] if 'life_params' in exp.keys() else dtypes.get_dict('life'),
-        #             'collections': exp['collections'],
-        #             'enrichment': exp['enrichment'] if 'enrichment' in exp.keys() else dtypes.get_dict('enrichment'),
-        #             }
-
-        # for kk, vv in exp_conf['env_params']['larva_groups'].items():
-        #     if type(vv['model']) == str:
-        #         vv['model'] = loadConf(vv['model'], 'Model')
-        # sim_params = loadConf(exp, 'Exp')['sim_params']
-        # exp_conf = run.get_exp_conf(exp, sim_params)
         conf['exp']['sim_params']['path'] = id
         batch_kwargs = prepare_batch(conf, v[f'{self.name}_id'])
         # print(list(batch_kwargs.keys()))
