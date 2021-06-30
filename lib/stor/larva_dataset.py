@@ -633,9 +633,7 @@ class LarvaDataset:
 
     def get_par(self, par, endpoint_par=True):
         try:
-            # print(par)
             p_df = self.load_aux(type='distro', name=par)
-            # print('dddd')
         except:
             if endpoint_par:
                 if not hasattr(self, 'end'):

@@ -1,7 +1,10 @@
 """Here we state all possible collected parameters for the simulations"""
 import numpy as np
 from operator import attrgetter
+
+from mesa import Model
 from mesa.datacollection import DataCollector
+from mesa.time import RandomActivation
 
 import lib.aux.functions as fun
 import lib.aux.naming as nam
@@ -178,48 +181,62 @@ endpoint_database = {
     **deb_pars,
     **food_pars}
 
+class NamedRandomActivation(RandomActivation) :
+    def __init__(self, id, model, **kwargs):
+        super().__init__(model)
+        self.id=id
+
 
 # Extension of DataCollector class so that it only collects from a given schedule
 class TargetedDataCollector(DataCollector):
-    def __init__(self, schedule_id, mode, pars):
-        # self.database = self.generate_database(mode)
+    def __init__(self, schedule, pars):
+        self.schedule = schedule
+        super().__init__(agent_reporters=self.valid_reporters(pars))
+        self.prefix = [f'model.{self.schedule.id}.steps', 'unique_id']
+        self.rep_funcs = self.agent_reporters.values()
+        if all([hasattr(rep, 'attribute_name') for rep in self.rep_funcs]):
+            attributes = [func.attribute_name for func in self.rep_funcs]
+            self.reports = attrgetter(*self.prefix + attributes)
+        else :
+            self.reports = None
+
+    def valid_reporters(self, pars):
         from lib.conf.par import load_ParDict
-        dic=load_ParDict()
-        agent_reporters = dict((dic[k]['d'], dic[k]['p']) for k in pars if k in dic.keys())
-        # agent_reporters = dict((k, self.database[k]) for k in pars if k in self.database)
-        super().__init__(agent_reporters=agent_reporters)
-        self.schedule_id = schedule_id
+        dic0 = load_ParDict()
+        ks = [k for k in pars if k in dic0.keys()]
+        dic={}
+        for k in ks :
+            d,p=dic0[k]['d'], dic0[k]['p']
+            try :
+                temp=[getattr(l, p) for l in self.schedule.agents]
+                dic.update({d:p})
+            except :
+                pass
+
+        return dic
+
+
+
 
     def _record_agents(self, model, schedule):
-        # if schedule_id is None :
-        #     schedule_id=self.schedule_id
-        # this_schedule = getattr(model, f'{self.schedule_id}')
-        """ Record agents data in a mapping of functions and agents. """
-        rep_funcs = self.agent_reporters.values()
-        if all([hasattr(rep, 'attribute_name') for rep in rep_funcs]):
-            prefix = [f'model.{self.schedule_id}.steps', 'unique_id']
-            # prefix = [f'model.t.steps', 'unique_id']
-            attributes = [func.attribute_name for func in rep_funcs]
-            get_reports = attrgetter(*prefix + attributes)
+        if self.reports is not None:
+            return map(self.reports, schedule.agents)
         else:
             def get_reports(agent):
                 prefix = (schedule.steps, agent.unique_id)
-                reports = tuple(rep(agent) for rep in rep_funcs)
+                reports = tuple(rep(agent) for rep in self.rep_funcs)
                 return prefix + reports
-        agent_records = map(get_reports, schedule.agents)
-        return agent_records
+            return map(get_reports, schedule.agents)
 
     def collect(self, model):
-        schedule = getattr(model, self.schedule_id)
         """ Collect all the data for the given model object_class. """
         if self.model_reporters:
             for var, reporter in self.model_reporters.items():
                 self.model_vars[var].append(reporter(model))
 
         if self.agent_reporters:
-            agent_records = self._record_agents(model, schedule)
-            self._agent_records[schedule.steps] = list(agent_records)
-            # print(agent_records)
+            agent_records = self._record_agents(model, self.schedule)
+            self._agent_records[self.schedule.steps] = list(agent_records)
 
     def generate_database(self, mode):
         if mode == 'step':
@@ -259,7 +276,7 @@ def contour_xy_pars(N=22):
     return contour_xy
 
 
-output = {
+output_dict = {
     # 'intermitter': {
     #     'step': ['pause_id', 'pause_start', 'pause_stop', 'pause_dur'] + ['stridechain_id', 'stridechain_start',
     #                                                                       'stridechain_stop', 'stridechain_dur'],
@@ -323,7 +340,7 @@ output = {
     'contour': None
 }
 
-output_keys = list(output.keys())
+output_keys = list(output_dict.keys())
 
 # output2={
 #

@@ -7,6 +7,7 @@ import random
 import time
 from operator import attrgetter
 
+from matplotlib.backends.backend_pdf import PdfPages
 from scipy.optimize import minimize
 from collections import deque
 from numpy.lib import scimath
@@ -1317,3 +1318,22 @@ def freq(d, dt, range=[0.7, 1.8]) :
     except:
         max_freq = np.nan
     return max_freq
+
+def df2pdf(df, path, **kwargs) :
+    # https://stackoverflow.com/questions/32137396/how-do-i-plot-only-a-table-in-matplotlib
+    fig, ax = plt.subplots(figsize=(12, 4))
+    ax.axis('tight')
+    ax.axis('off')
+    the_table = ax.table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center', **kwargs)
+    # the_table.set_fontsize(20)
+    the_table.scale(1, 2)
+    from matplotlib.font_manager import FontProperties
+
+    for (row, col), cell in the_table.get_celld().items():
+        if (row == 0) or (col == -1):
+            cell.set_text_props(fontproperties=FontProperties(weight='bold'))
+
+    # https://stackoverflow.com/questions/4042192/reduce-left-and-right-margins-in-matplotlib-plot
+    pp = PdfPages(path)
+    pp.savefig(fig, bbox_inches='tight')
+    pp.close()

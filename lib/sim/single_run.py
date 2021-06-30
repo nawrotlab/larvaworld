@@ -7,8 +7,8 @@ from operator import attrgetter
 import lib.conf.data_conf as dat
 from lib.anal.plotting import *
 
-from lib.aux.collecting import output, midline_xy_pars
-from lib.conf.par import build_par_dict, GroupCollector, collection_dict, combo_collection_dict
+from lib.aux.collecting import output_dict, midline_xy_pars
+from lib.conf.par import combo_collection_dict
 from lib.envs._larvaworld import LarvaWorldSim
 from lib.conf.conf import loadConf, next_idx
 from lib.sim.enrichment import sim_enrichment
@@ -66,9 +66,9 @@ def run_sim_basic(
                      life_params=life_params
                      )
 
-    collected_pars = collection_conf(dataset=d, collections=collections)
+    output = collection_conf(dataset=d, collections=collections)
     env = LarvaWorldSim(id=id, dt=dt, Box2D=Box2D, sample_dataset=sample_dataset,
-                        env_params=env_params, collected_pars=collected_pars,
+                        env_params=env_params, output=output,
                         life_params=life_params, Nsteps=Nsteps,
                         save_to=d.vis_dir, experiment=experiment,
                         **kwargs, vis_kwargs=vis_kwargs)
@@ -149,7 +149,7 @@ def collection_conf(dataset, collections):
     if not paths.new_format :
         if collections is None:
             collections = ['pose']
-        cd=output
+        cd=output_dict
         d = dataset
         step_pars = []
         end_pars = []
@@ -171,8 +171,8 @@ def collection_conf(dataset, collections):
         step=fun.unique_list(step_pars)
         end=fun.unique_list(end_pars)
 
-        collected_pars = {'step': step,
-                          'endpoint': end,
+        output = {'step': step,
+                          'end': end,
                           'tables': tables,
                           'step_groups': [],
                           'end_groups': [],
@@ -181,12 +181,12 @@ def collection_conf(dataset, collections):
     else :
         cd = combo_collection_dict
         cs=[cd[c] for c in collections if c in cd.keys()]
-        collected_pars = {'step': [],
-                          'endpoint': [],
+        output = {'step': [],
+                          'end': [],
                           'tables': {},
                           'step_groups': fun.flatten_list([c['step'] for c in cs]),
                           'end_groups': fun.flatten_list([c['end'] for c in cs])}
-    return collected_pars
+    return output
 
 
 def load_reference_dataset(dataset_id='reference', load_data=False):

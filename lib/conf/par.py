@@ -11,7 +11,8 @@ from siunits import Composite, DerivedUnit, BaseUnit
 from lib.aux import functions as fun
 from lib.aux import naming as nam
 from lib.stor import paths
-from lib.conf.par_conf import sup, sub, th, dot, ddot, subsup, Delta, delta, ast, bar, wave, par_dict_lists
+from lib.conf.par_conf import sup, sub, th, dot, ddot, subsup, Delta, delta, ast, bar, wave, par_dict_lists, paren, \
+    brack, odot, circledcirc, circledast, ddot_th, dot_th
 from lib.model.DEB.deb import DEB
 from lib.model.agents._agent import LarvaworldAgent, Larva
 import siunits as siu
@@ -368,6 +369,9 @@ class Parameter:
 
 
 
+
+
+
 def add_par(dic, **kwargs):
     p = dtypes.get_dict('par', **kwargs)
     k = p['k']
@@ -391,7 +395,7 @@ def add_cum_par(dic, k0, d=None,p=None, s=None, k=None):
     if p is None:
         p = nam.cum(b.p)
     if s is None:
-        s = sup(b.s, 'cum')
+        s = sub(b.s, 'cum')
     if k is None:
         k = nam.cum(k0)
         # d = f'total {b.d}'
@@ -399,50 +403,57 @@ def add_cum_par(dic, k0, d=None,p=None, s=None, k=None):
     return dic
 
 
-def add_mean_par(dic, k0, d=None):
+def add_mean_par(dic, k0, d=None, s=None):
     b = dic[k0]
     if d is None:
         d = nam.mean(b.d)
         # d = f'total {b.d}'
-    dic = add_par(dic, p=nam.mean(b.p), k=f'{b.k}_mu', u=b.u, d=d, s=bar(b.s), exists=False, operator='mean', k0=k0)
+    if s is None :
+        s=bar(b.s)
+    dic = add_par(dic, p=nam.mean(b.p), k=f'{b.k}_mu', u=b.u, d=d, s=s, exists=False, operator='mean', k0=k0)
     return dic
 
 
-def add_std_par(dic, k0, d=None):
+def add_std_par(dic, k0, d=None, s=None):
     b = dic[k0]
     if d is None:
         d = nam.std(b.d)
         # d = f'total {b.d}'
-    dic = add_par(dic, p=nam.std(b.p), k=f'{b.k}_std', u=b.u, d=d, s=wave(b.s), exists=False, operator='std', k0=k0)
+    if s is None :
+        s=wave(b.s)
+    dic = add_par(dic, p=nam.std(b.p), k=f'{b.k}_std', u=b.u, d=d, s=s, exists=False, operator='std', k0=k0)
     return dic
 
 
-def add_min_par(dic, k0, d=None):
+def add_min_par(dic, k0, d=None, s=None):
     b = dic[k0]
     if d is None:
         d = nam.min(b.d)
         # d = f'total {b.d}'
-    dic = add_par(dic, p=nam.min(b.p), k=f'{b.k}_min', u=b.u, d=d, s=sub(b.s, 'min'), exists=False, operator='min',
-                  k0=k0)
+    if s is None :
+        s=sub(b.s, 'min')
+    dic = add_par(dic, p=nam.min(b.p), k=f'{b.k}_min', u=b.u, d=d, s=s, exists=False, operator='min',k0=k0)
     return dic
 
 
-def add_max_par(dic, k0, d=None):
+def add_max_par(dic, k0, d=None, s=None):
     b = dic[k0]
     if d is None:
         d = nam.max(b.d)
         # d = f'total {b.d}'
-    dic = add_par(dic, p=nam.max(b.p), k=f'{b.k}_max', u=b.u, d=d, s=sub(b.s, 'max'), exists=False, operator='max',
-                  k0=k0)
+    if s is None :
+        s=sub(b.s, 'max')
+    dic = add_par(dic, p=nam.max(b.p), k=f'{b.k}_max', u=b.u, d=d, s=s, exists=False, operator='max',k0=k0)
     return dic
 
-def add_fin_par(dic, k0, d=None):
+def add_fin_par(dic, k0, d=None, s=None):
     b = dic[k0]
     if d is None:
         d = nam.final(b.d)
         # d = f'total {b.d}'
-    dic = add_par(dic, p=nam.final(b.p), k=f'{b.k}_fin', u=b.u, d=d, s=sub(b.s, 'fin'), exists=False, operator='final',
-                  k0=k0)
+    if s is None :
+        s=sub(b.s, 'fin')
+    dic = add_par(dic, p=nam.final(b.p), k=f'{b.k}_fin', u=b.u, d=d, s=s, exists=False, operator='final',k0=k0)
     return dic
 
 def add_freq_par(dic, k0, d=None):
@@ -457,22 +468,21 @@ def add_freq_par(dic, k0, d=None):
 def add_dsp_par(dic, range=(0,40)) :
     a='dispersion'
     k0='dsp'
+    s0=circledast('d')
     r0,r1=range
     p=f'{a}_{r0}_{r1}'
     k=f'{k0}_{r0}_{r1}'
-    dic = add_par(dic, p=p, k=k, d=p, s=subsup(k0,r0,r1), exists=False, func=('d_2D', {'t0':r0, 't1':r1}))
+    dic = add_par(dic, p=p, k=k, d=p, s=subsup(s0,f'{r0}',f'{r1}'), exists=False, func=('d_2D', {'t0':r0, 't1':r1}))
     # dic = add_rate_par(dic, k_den='l', k_num=k)
-    kk = f's{k}'
-    dic = add_rate_par(dic, k_den='l', k_num=k, k=kk)
-    dic[kk].d = nam.scal(dic[k].d)
-    dic[kk].p = nam.scal(dic[k].p)
-    dic[kk].s = ast(dic[k].s)
-
-    dic = add_mean_par(dic, k0=k)
-    dic = add_std_par(dic, k0=k)
-    dic = add_min_par(dic, k0=k)
-    dic = add_max_par(dic, k0=k)
-    dic = add_fin_par(dic, k0=k)
+    dic = add_scaled_par(dic, k0=k, s=subsup(paren(k0),f'{r0}',f'{r1}'))
+    # dic = add_rate_par(dic, k_den='l', k_num=k, k=kk)
+    #
+    for k00 in [k, f's{k}'] :
+        dic = add_mean_par(dic, k0=k00)
+        dic = add_std_par(dic, k0=k00)
+        dic = add_min_par(dic, k0=k00)
+        dic = add_max_par(dic, k0=k00)
+        dic = add_fin_par(dic, k0=k00)
 
     return dic
 
@@ -506,25 +516,34 @@ def add_Vspec_par(dic, k0):
 def add_chunk(dic, pc, kc) :
     p0,p1, pt, pid, ptr, pN=nam.start(pc), nam.stop(pc), nam.dur(pc),nam.id(pc),nam.dur_ratio(pc), nam.num(pc)
 
-    dic = add_par(dic, p=pc, k=kc, d=pc, s=kc, exists=False)
-    dic = add_par(dic, p=p0, k=f'{kc}0',u=1*siu.s, d=p0, s=subsup('t', pc, 0), exists=False)
-    dic = add_par(dic, p=p1, k=f'{kc}1',u=1*siu.s, d=p1, s=subsup('t', pc, 1), exists=False)
-    dic = add_par(dic, p=pt, k=f'{kc}_t',u=1*siu.s, d=pt, s=sub(Delta('t'), pc), exists=False)
-    dic = add_par(dic, p=pid, k=f'{kc}_id', d=pid, s=sub('idx', pc), exists=False)
-    dic = add_par(dic, p=ptr, k=f'{kc}_tr', d=ptr, s=sub('r', pc), exists=False)
-    dic = add_par(dic, p=pN, k=f'{kc}_N', d=pN, s=sub('N', f'{pc}sigma'), exists=False)
+    dic = add_par(dic, p=pc, k=kc, d=pc, s=f'${kc}$', exists=False)
+    b=dic[kc]
+    dic = add_par(dic, p=p0, k=f'{kc}0',u=1*siu.s, d=p0, s=subsup('t', kc, 0), exists=False)
+    dic = add_par(dic, p=p1, k=f'{kc}1',u=1*siu.s, d=p1, s=subsup('t', kc, 1), exists=False)
 
-    k0s=[f'{kc}_t']
+    dic = add_par(dic, p=pid, k=f'{kc}_id', d=pid, s=sub('idx', kc), exists=False)
+    dic = add_par(dic, p=ptr, k=f'{kc}_tr', d=ptr, s=sub('r', kc), exists=False)
+    dic = add_par(dic, p=pN, k=f'{kc}_N', d=pN, s=sub('N', f'{pc}s'), exists=False)
+
+    k00=f'{kc}_t'
+    s00 =Delta('t')
+    dic = add_par(dic, p=pt, k=k00, u=1 * siu.s, d=pt, s=sub(s00, kc), exists=False)
+    dic = add_cum_par(dic, k0=k00)
+    dic = add_mean_par(dic, k0=k00, s=sub(bar(s00), kc))
+    dic = add_std_par(dic, k0=k00, s=sub(wave(s00), kc))
+    dic = add_min_par(dic, k0=k00)
+    dic = add_max_par(dic, k0=k00)
+
+
     if str.endswith(pc, 'chain') :
         pl=nam.length(pc)
-        dic = add_par(dic, p=pl, k=f'{kc}_l', d=pl, s=sub('l', pc), exists=False)
-        k0s.append(f'{kc}_l')
-    for k0 in k0s :
-        dic = add_cum_par(dic, k0=k0)
-        dic = add_mean_par(dic, k0=k0)
-        dic = add_std_par(dic, k0=k0)
-        dic = add_min_par(dic, k0=k0)
-        dic = add_max_par(dic, k0=k0)
+        k00 = f'{kc}_l'
+        dic = add_par(dic, p=pl, k=k00, d=pl, s=sub('l', kc), exists=False)
+        dic = add_cum_par(dic, k0=k00)
+        dic = add_mean_par(dic, k0=k00, s=sub(bar('l'), kc))
+        dic = add_std_par(dic, k0=k00, s=sub(wave('l'), kc))
+        dic = add_min_par(dic, k0=k00)
+        dic = add_max_par(dic, k0=k00)
 
 
     return dic
@@ -536,20 +555,32 @@ def add_chunk_track(dic,kc, k, extrema=True) :
     b0,b1=dic[f'{kc}0'],dic[f'{kc}1']
     p0,p1=nam.at(b.p,b0.p),nam.at(b.p,b1.p)
 
-    dic = add_par(dic, p=nam.chunk_track(bc.p,b.p), k=f'{kc}_{k}', u=u, d=nam.chunk_track(bc.p,b.p), s=sub(Delta(b.s), kc),exists=False)
-    dic=add_mean_par(dic, k0=f'{kc}_{k}')
-    dic=add_std_par(dic, k0=f'{kc}_{k}')
+    k00=f'{kc}_{k}'
+    s00=Delta(b.s)
+    dic = add_par(dic, p=nam.chunk_track(bc.p,b.p), k=k00, u=u, d=nam.chunk_track(bc.p,b.p), s=sub(s00, kc),exists=False)
+    dic=add_mean_par(dic, k0=k00, s=sub(bar(s00), kc))
+    dic=add_std_par(dic, k0=k00, s=sub(wave(s00), kc))
     if extrema :
         dic = add_par(dic, p=p0, k=f'{kc}_{k}0', u=u, d=p0, s=subsup(b.s, kc, 0),exists=False)
         dic = add_par(dic, p=p1, k=f'{kc}_{k}1', u=u, d=p1, s=subsup(b.s, kc, 1),exists=False)
     return dic
 
+def add_scaled_par(dic, k0, s=None) :
+    k_den = 'l'
+    k_num=k0
+    b=dic[k0]
+    d=nam.scal(b.d)
+    if s is None :
+        s=paren(b.s)
+    dic = add_par(dic, p=d, k=f's{k0}', d=d, s=s, exists=False, fraction=True, k_num=k_num, k_den=k_den)
+    return dic
+
 
 def build_constants() :
     df={}
-    df = add_par(df, p='x0', k='x0', u=1 * siu.m, o=Larva, d='x0', s=sub('x', 0))
-    df = add_par(df, p='y0', k='y0', u=1 * siu.m, o=Larva, d='y0', s=sub('y', 0))
-    df = add_par(df, p='dt', k='dt', u=1 * siu.s, o=Larva, d='dt', s='dt')
+    df = add_par(df, p='x0', k='x0', u=1 * siu.m, o=Larva, d='initial x coordinate', s=sub('x', 0))
+    df = add_par(df, p='y0', k='y0', u=1 * siu.m, o=Larva, d='initial y coordinate', s=sub('y', 0))
+    df = add_par(df, p='dt', k='dt', u=1 * siu.s, o=Larva, d='timestep', s='$dt$')
     df = add_par(df, p='real_length', k='l', u=1 * siu.m, o=Larva, d='length', s='l')
     return df
 
@@ -560,7 +591,7 @@ def build_DEB_par_dict(df=None) :
     df = add_par(df, p='Lw', k='Lw', u=1 * siu.cm, o=DEB, d='physical length', s=sub('L', 'w'))
     df = add_par(df, p='V', k='V', u=1 * siu.cm ** 3, o=DEB, d='structural volume', s='V')
     df = add_par(df, p='Ww', k='Ww', u=1 * siu.g, o=DEB, d='wet weight', s=sub('W', 'w'))
-    df = add_par(df, p='age', k='age', u=1 * siu.day, o=DEB, d='age', s='age')
+    df = add_par(df, p='age', k='age', u=1 * siu.day, o=DEB, d='age', s='a')
     df = add_par(df, p='hunger', k='H', o=DEB, d='hunger drive', s='H')
     df = add_par(df, p='E', k='E', u=1 * siu.j, o=DEB, d='reserve energy', s='E')
     df = add_par(df, p='E_H', k='E_H', u=1 * siu.j, o=DEB, d='maturity energy', s=sub('E', 'H'))
@@ -574,10 +605,10 @@ def build_DEB_par_dict(df=None) :
     df = add_par(df, p='e', k='e', o=DEB, d='scaled reserve density', s='e')
     df = add_par(df, p='f', k='f', o=DEB, d='scaled functional response', s='f')
     df = add_par(df, p='base_f', k='f0', o=DEB, d='base scaled functional response', s=sub('f', 0))
-    df = add_par(df, p='F', k='[F]', u=siu.hz / (24 * 60 * 60), o=DEB, d='volume specific filtering rate', s=dot('[F]'))
+    df = add_par(df, p='F', k='[F]', u=siu.hz / (24 * 60 * 60), o=DEB, d='volume specific filtering rate', s=brack(dot('F')))
     df = add_par(df, p='fr_feed', k='fr_f', u=1 * siu.hz, o=DEB, d='feed motion frequency (estimate)',
                  s=sub(dot('fr'), 'feed'))
-    df = add_par(df, p='pupation_buffer', k='pupation', o=DEB, d='pupation ratio', s=sub('r', 'pupation'))
+    df = add_par(df, p='pupation_buffer', k='pupation', o=DEB, d='pupation ratio', s=sub('r', 'pup'))
 
     df = add_diff_par(df, k0='age')
     for k0 in ['f', 'e', 'H']:
@@ -589,6 +620,134 @@ def build_DEB_par_dict(df=None) :
 
     return df
 
+
+def build_spatial_par_dict(df):
+    d=nam.dst('')
+    std=nam.straight_dst('')
+    df = add_par(df, p=d, k='d', u=1 * siu.m, o=Larva, d=d, s='d')
+    df = add_par(df, p=std, k='std', u=1 * siu.m, o=Larva, d=std, s='d')
+    df = add_par(df, p='dispersion', k='dsp', u=1 * siu.m, o=Larva, d='dispersion', s=circledast('d'), exists=False,
+                 dispersion=True)
+
+    df = add_par(df, p=nam.dst2('center'), k='d_cent', u=1 * siu.m, o=Larva, d=nam.dst2('center'), s=odot('d'),
+                 exists=False, dst2source=(0, 0))
+    df = add_par(df, p=nam.dst2('source'), k='d_chem', u=1 * siu.m, o=Larva, d=nam.dst2('source'),
+                 s=circledcirc('d'), exists=False, dst2source=(0.04, 0.0))
+
+    df = add_par(df, p='x', k='x', u=1 * siu.m, o=Larva, d='x', s='x')
+    df = add_par(df, p='y', k='y', u=1 * siu.m, o=Larva, d='y', s='y')
+
+    df = add_diff_par(df, k0='x')
+    df = add_diff_par(df, k0='y')
+
+    space_ks = ['d', 'D_x', 'D_y', 'd_chem', 'd_cent', 'dsp', 'std']
+
+
+
+    for k0 in space_ks:
+        df = add_scaled_par(df, k0=k0)
+
+
+    for k00 in space_ks :
+        for k0 in [k00, f's{k00}'] :
+            df = add_cum_par(df, k0=k0)
+            df = add_mean_par(df, k0=k0)
+            df = add_std_par(df, k0=k0)
+            df = add_min_par(df, k0=k0)
+            df = add_max_par(df, k0=k0)
+            df = add_fin_par(df, k0=k0)
+    v = nam.vel('')
+    a = nam.acc('')
+    sv, sa = nam.scal([v, a])
+    df = add_rate_par(df, k_num='d', k_den='dt', k='v', p=v, d=v, s='v')
+    df = add_rate_par(df, k_num='v', k_den='dt', k='a', p=a, d=a, s='a')
+    df = add_rate_par(df, k_num='sd', k_den='dt', k='sv', p=sv, d=sv, s=paren('v'))
+    df = add_rate_par(df, k_num='sv', k_den='dt', k='sa', p=sa, d=sa, s=paren('a'))
+
+    for i in [(0,40), (0,80), (20,80)] :
+        df = add_dsp_par(df, range=i)
+
+    for k0 in ['l', 'v', 'sv']:
+        df =add_mean_par(df, k0=k0)
+        # print(df[f'{df[k0].k}_mu'].d)
+
+    for k0 in ['sv']:
+        df =add_freq_par(df, k0=k0)
+
+    for i in ['',2,5,10,20] :
+        if i=='' :
+            p='tortuosity'
+        else :
+            p=f'tortuosity_{i}'
+        k0='tor'
+        k=f'{k0}{i}'
+        df = add_par(df, p=p, k=k, d=p,s=sub(k0, i), exists=False)
+        df = add_mean_par(df, k0=k, s=sub(bar(k0), i))
+        df = add_std_par(df, k0=k, s=sub(wave(k0), i))
+    return df
+
+
+def build_angular_par_dict(df):
+    df = add_par(df, p=nam.bearing2('center'), k='o_cent', u=1 * siu.deg, o=Larva, d=nam.bearing2('center'),
+                 s=odot(th('or')), exists=False, or2source=(0, 0), wrap_mode='zero')
+    df = add_par(df, p=nam.bearing2('source'), k='o_chem', u=1 * siu.deg, o=Larva, d=nam.bearing2('source'),
+                 s=circledcirc(th('or')), exists=False, or2source=(0.04, 0.0), wrap_mode='zero')
+
+    df = add_par(df, p='bend', k='b', u=1 * siu.deg, o=Larva, d='bend', s=th('b'), wrap_mode='zero')
+    fo = sub('or', 'f')
+    # fo='or_f'
+    ro = sub('or', 'r')
+    # ro='or_r'
+    df = add_par(df, p='front_orientation', k='fo', u=1 * siu.deg, o=Larva, d=nam.orient('front'), s=th(fo),
+                 wrap_mode='positive')
+    df = add_par(df, p='rear_orientation', k='ro', u=1 * siu.deg, o=Larva, d=nam.orient('rear'), s=th(ro),
+                 wrap_mode='positive')
+    df = add_par(df, p='front_orientation_unwrapped', k='fou', u=1 * siu.deg, o=Larva,
+                 d=nam.unwrap(nam.orient('front')),
+                 s=th(fo), wrap_mode=None)
+    df = add_par(df, p='rear_orientation_unwrapped', k='rou', u=1 * siu.deg, o=Larva, d=nam.unwrap(nam.orient('rear')),
+                 s=th(ro), wrap_mode=None)
+
+
+
+    for k0, kv, ka, s in zip(['b', 'fou', 'rou'], ['bv', 'fov', 'rov'],
+                          ['ba', 'foa', 'roa'], ['b', fo, ro]):
+        df = add_diff_par(df, k0=k0)
+        df = add_rate_par(df, k0=k0, k_den='dt', k=kv)
+
+        if k0 == 'fou':
+            k0 = 'fo'
+        elif k0 == 'rou':
+            k0 = 'ro'
+        df[kv].d = nam.vel(df[k0].d)
+        df[kv].s = dot_th(s)
+        df = add_diff_par(df, k0=kv)
+        df = add_rate_par(df, k0=kv, k_den='dt', k=ka)
+        df[ka].d = nam.acc(df[k0].d)
+        df[ka].s = ddot_th(s)
+        # df[ka].d = f'{df[k0].d} acceleration'
+
+    for k0 in ['b', 'bv'] :
+        df=add_mean_par(df,k0=k0)
+        df=add_std_par(df,k0=k0)
+
+    return df
+
+def build_chunk_par_dict(df) :
+    for kc,pc in chunk_dict.items() :
+        df=add_chunk(df, pc=pc, kc=kc)
+        for k in ['x', 'y', 'fo', 'fou', 'fov','ro', 'rou', 'rov', 'b', 'bv', 'v', 'sv', 'o_cent', 'o_chem', 'd_cent', 'd_chem', 'sd_cent', 'sd_chem'] :
+            df=add_chunk_track(df, kc=kc, k=k)
+        if pc=='stride':
+            for k in ['d','sd', 'std', 'sstd']:
+            # for k in [nam.cum('d'), nam.cum('sd')]:
+                df = add_par(df, p=nam.chunk_track(pc, df[k].p), k=f'{kc}_{k}', u=df[k].u, d=nam.chunk_track(pc, df[k].p),
+                          s=sub(Delta(df[k].s), kc), exists=False)
+                df=add_mean_par(df, k0=f'{kc}_{k}')
+                df=add_std_par(df, k0=f'{kc}_{k}')
+    return df
+
+
 def build_par_dict(save=True, df=None):
     siu.day = siu.s * 24 * 60 * 60
     siu.cm = siu.m * 10 ** -2
@@ -599,117 +758,31 @@ def build_par_dict(save=True, df=None):
     siu.microM = siu.mol * 10 ** -6
     if df is None :
         df =build_constants()
-    # df = {}
-    # df = pd.DataFrame(columns=list(dtypes.get_dict('par').keys()))
-    # df = add_par(df, p='L', k='L', u=1 * siu.cm, o=DEB, d='structural length', s='L')
-    # df = add_par(df, p='Lw', k='Lw', u=1 * siu.cm, o=DEB, d='physical length', s=sub('L', 'w'))
-    # df = add_par(df, p='V', k='V', u=1 * siu.cm ** 3, o=DEB, d='structural volume', s='V')
-    # df = add_par(df, p='Ww', k='Ww', u=1 * siu.g, o=DEB, d='wet weight', s=sub('W', 'w'))
-    # df = add_par(df, p='age', k='age', u=1 * siu.day, o=DEB, d='age', s='age')
-    # df = add_par(df, p='hunger', k='H', o=DEB, d='hunger drive', s='H')
-    # df = add_par(df, p='E', k='E', u=1 * siu.j, o=DEB, d='reserve energy', s='E')
-    # df = add_par(df, p='E_H', k='E_H', u=1 * siu.j, o=DEB, d='maturity energy', s=sub('E', 'H'))
-    # df = add_par(df, p='E_R', k='E_R', u=1 * siu.j, o=DEB, d='reproduction buffer', s=sub('E', 'R'))
-    # df = add_par(df, p='deb_p_A', k='deb_p_A', u=1 * siu.j, o=DEB, d='assimilation energy (model)',
-    #              s=subsup('p', 'A', 'deb'))
-    # df = add_par(df, p='sim_p_A', k='sim_p_A', u=1 * siu.j, o=DEB, d='assimilation energy (sim)',
-    #              s=subsup('p', 'A', 'sim'))
-    # df = add_par(df, p='gut_p_A', k='gut_p_A', u=1 * siu.j, o=DEB, d='assimilation energy (gut)',
-    #              s=subsup('p', 'A', 'gut'))
-    # df = add_par(df, p='e', k='e', o=DEB, d='scaled reserve density', s='e')
-    # df = add_par(df, p='f', k='f', o=DEB, d='scaled functional response', s='f')
-    # df = add_par(df, p='base_f', k='f0', o=DEB, d='base scaled functional response', s=sub('f', 0))
-    # df = add_par(df, p='F', k='[F]', u=siu.hz / (24 * 60 * 60), o=DEB, d='volume specific filtering rate', s=dot('[F]'))
-    # df = add_par(df, p='fr_feed', k='fr_f', u=1 * siu.hz, o=DEB, d='feed motion frequency (estimate)',
-    #              s=sub(dot('fr'), 'feed'))
-    # df = add_par(df, p='pupation_buffer', k='pupation', o=DEB, d='pupation ratio', s=sub('r', 'pupation'))
-    #
-    # df = add_diff_par(df, k0='age')
-    # for k0 in ['f', 'e', 'H']:
-    #     df = add_diff_par(df, k0=k0)
-    #     df = add_rate_par(df, k0=k0, k_time='age')
-    #
-    # for k0 in ['E', 'Ww', 'E_R', 'E_H']:
-    #     df = add_Vspec_par(df, k0=k0)
 
-    # df = add_par(df, p='real_length', k='l', u=1 * siu.m, o=Larva, d='length', s='l')
     df=build_DEB_par_dict(df)
-
-    df = add_par(df, p='dst', k='d', u=1 * siu.m, o=Larva, d='dst', s='d')
-    df = add_par(df, p='dispersion', k='dsp', u=1 * siu.m, o=Larva, d='dispersion', s='dsp', exists=False,
-                 dispersion=True)
-    df = add_par(df, p=nam.bearing2('center'), k='o_cent', u=1 * siu.deg, o=Larva, d=nam.bearing2('center'),
-                 s=sup(th('or'), 'cen'), exists=False, or2source=(0, 0),wrap_mode='zero')
-    df = add_par(df, p=nam.bearing2('source'), k='o_chem', u=1 * siu.deg, o=Larva, d=nam.bearing2('source'),
-                 s=sup(th('or'), 'source'), exists=False, or2source=(0.04, 0.0),wrap_mode='zero')
-    df = add_par(df, p=nam.dst2('center'), k='d_cent', u=1 * siu.m, o=Larva, d=nam.dst2('center'), s=sub('d', 'cen'),
-                 exists=False, dst2source=(0, 0))
-    df = add_par(df, p=nam.dst2('source'), k='d_chem', u=1 * siu.m, o=Larva, d=nam.dst2('source'),
-                 s=sub('d', 'source'), exists=False, dst2source=(0.04, 0.0))
-
-    df = add_par(df, p='x', k='x', u=1 * siu.m, o=Larva, d='x', s='x')
-    df = add_par(df, p='y', k='y', u=1 * siu.m, o=Larva, d='y', s='y')
-
-    # df = add_par(df, p='x0', k='x0', u=1 * siu.m, o=Larva, d='x0', s=sub('x',0))
-    # df = add_par(df, p='y0', k='y0', u=1 * siu.m, o=Larva, d='y0', s=sub('y',0))
-    # df = add_par(df, p='initial_pos', k='xy0', u=(1 * siu.m, 1 * siu.m), o=Larva, d='initial_pos', s=sub('xy', 0))
-    df = add_par(df, p='bend', k='b', u=1 * siu.deg, o=Larva, d='bend', s=th('b'),wrap_mode='zero')
-
-    df = add_par(df, p='front_orientation', k='fo', u=1 * siu.deg, o=Larva, d=nam.orient('front'), s=sub(th('or'), 'f'),wrap_mode='positive')
-    df = add_par(df, p='rear_orientation', k='ro', u=1 * siu.deg, o=Larva, d=nam.orient('rear'), s=sub(th('or'), 'r'),wrap_mode='positive')
-    df = add_par(df, p='front_orientation_unwrapped', k='fou', u=1 * siu.deg, o=Larva, d=nam.unwrap(nam.orient('front')),
-                 s=sub(th('or'), 'f'),wrap_mode=None)
-    df = add_par(df, p='rear_orientation_unwrapped', k='rou', u=1 * siu.deg, o=Larva, d=nam.unwrap(nam.orient('rear')),
-                 s=sub(th('or'), 'r'),wrap_mode=None)
-
 
     # df = add_par(df, p='dt', k='dt', u=1 * siu.s, o=Larva, d='dt', s='dt')
     # df = add_par(df, p='cum_dur', k='t', u=1 * siu.s, o=Larva, d=nam.cum('dur'), s='t')
-    df = add_cum_par(df, p='cum_dur',k0='dt',d=nam.cum('dur'),k=nam.cum('t'),s=sub('t', 'cum'))
+    df = add_cum_par(df, p='cum_dur', k0='dt', d=nam.cum('dur'), k=nam.cum('t'), s=sub('t', 'cum'))
     # df = add_par(df, p='cum_dur', k='t', u=1 * siu.s, o=Larva, d='time', s='t')
     # df = add_diff_par(df, k0='t')
-    for k0, kv, ka in zip(['b', 'fou', 'rou', 'x', 'y'], ['bv', 'fov', 'rov', 'xv', 'yv'],
-                          ['ba', 'foa', 'roa', 'xa', 'ya']):
-        df = add_diff_par(df, k0=k0)
-        df = add_rate_par(df, k0=k0, k_den='dt', k=kv)
-        df = add_diff_par(df, k0=kv)
-        df = add_rate_par(df, k0=kv, k_den='dt', k=ka)
-        if k0 == 'fou':
-            k0 = 'fo'
-        elif k0 == 'rou':
-            k0 = 'ro'
-        df[kv].d = nam.vel(df[k0].d)
-        df[ka].d = nam.acc(df[k0].d)
-        # df[ka].d = f'{df[k0].d} acceleration'
 
-    df = add_rate_par(df, k_num='d', k_den='dt', k='v', p=nam.vel(''), d=nam.vel(''), s='v')
-    df = add_rate_par(df, k_num='v', k_den='dt', k='a', p=nam.acc(''), d=nam.acc(''), s='a')
-    df = add_cum_par(df, k0='d')
-    df = add_cum_par(df, k0='D_x')
-    df = add_cum_par(df, k0='D_y')
 
-    for i in [(0,40), (0,80), (20,80)] :
-        df = add_dsp_par(df, range=i)
-    for k0 in ['d', 'v', 'a', 'D_x', 'xv', 'xa', 'D_y', 'yv', 'ya', nam.cum('d'), nam.cum('D_x'), nam.cum('D_y'),
-               'd_chem', 'd_cent', 'dsp']:
-        k = f's{k0}'
-        df = add_rate_par(df, k_den='l', k_num=k0, k=k)
-        df[k].d = nam.scal(df[k0].d)
-        df[k].p = nam.scal(df[k0].p)
-        df[k].s = ast(df[k0].s)
+    df=build_spatial_par_dict(df)
+    df=build_angular_par_dict(df)
+    df=build_chunk_par_dict(df)
 
-    for k0 in ['dsp', 'sdsp', 'd_cent', 'd_chem', 'sd_cent', 'sd_chem']:
-        df =add_mean_par(df, k0=k0)
-        df =add_std_par(df, k0=k0)
-        df =add_min_par(df, k0=k0)
-        df =add_max_par(df, k0=k0)
+    df = add_par(df, p='amount_eaten', k='f_am', u=1 * siu.m ** 3, o=Larva, d='ingested food volume',
+                 s=sub('V', 'ingested'))
+    df = add_par(df, p='lin_activity', k='Act_cr', o=Larva, d='crawler output', s=sub('A', 'crawl'))
+    df = add_par(df, p='ang_activity', k='Act_tur', o=Larva, d='turner output', s=subsup('A', 'tur', 'out'))
+    df = add_par(df, p='turner_activation', k='A_tur', o=Larva, d='turner input', s=subsup('A', 'tur', 'in'),
+                 lim=(10, 40))
+    df = add_par(df, p='olfactory_activation', k='A_olf', o=Larva, d='olfactory activation',
+                 s=sub('A', 'olf'), lim=(-1, 1))
 
-    for k0 in ['l', 'sv']:
-        df =add_mean_par(df, k0=k0)
-        # print(df[f'{df[k0].k}_mu'].d)
 
-    for k0 in ['sv']:
-        df =add_freq_par(df, k0=k0)
+
 
     for i, n in enumerate(['first', 'second', 'third']):
         k = f'c_odor{i + 1}'
@@ -718,35 +791,13 @@ def build_par_dict(save=True, df=None):
         # df = add_diff_par(df, k0=k)
         # df = add_rate_par(df, k0=k, k=f'dc_odor{i+1}',k_den='dt', s=sub(dot('C'), i+1))
 
-    df = add_par(df, p='amount_eaten', k='f_am', u=1*siu.m**3, o=Larva, d='ingested food volume', s=sub('V', 'ingested'))
-    df = add_par(df, p='lin_activity', k='Act_cr', o=Larva, d='crawler output', s=sub('A', 'crawl'))
-    df = add_par(df, p='ang_activity', k='Act_tur', o=Larva, d='turner output', s=subsup('A', 'tur', 'out'))
-    df = add_par(df, p='turner_activation', k='A_tur', o=Larva, d='turner input', s=subsup('A', 'tur', 'in'), lim=(10,40))
-    df = add_par(df, p='olfactory_activation', k='A_olf', o=Larva, d='olfactory activation',
-                 s=sub('A', 'olf'), lim=(-1,1))
 
 
-    for kc,pc in chunk_dict.items() :
-        df=add_chunk(df, pc=pc, kc=kc)
-        for k in ['x', 'y', 'fo', 'fou', 'fov', 'b', 'bv', 'v', 'sv', 'o_cent', 'o_chem', 'd_cent', 'd_chem', 'sd_cent', 'sd_chem'] :
-            df=add_chunk_track(df, kc=kc, k=k)
-        if pc=='stride':
-            for k in ['d','sd']:
-            # for k in [nam.cum('d'), nam.cum('sd')]:
-                df = add_par(df, p=nam.chunk_track(pc, df[k].p), k=f'{kc}_{k}', u=df[k].u, d=nam.chunk_track(pc, df[k].p),
-                          s=sub(Delta(df[k].s), kc), exists=False)
-                df=add_mean_par(df, k0=f'{kc}_{k}')
-                df=add_std_par(df, k0=f'{kc}_{k}')
 
-    for i in ['',2,5,10,20] :
-        if i=='' :
-            p='tortuosity'
-        else :
-            p=f'tortuosity_{i}'
-        k=f'tor{i}'
-        df = add_par(df, p=p, k=k, d=p,s=sub('tor', i), exists=False)
-        df = add_mean_par(df, k0=k)
-        df = add_std_par(df, k0=k)
+
+    #
+
+
 
     for k, p in df.items():
         p.par_dict = df
@@ -769,7 +820,7 @@ collection_dict = {
     'bouts': ['x', 'y', 'b', 'fou', 'rou','v', 'sv', 'd', 'fov', 'bv', 'sd', 'o_cent'],
     # 'bouts': ['str_d_mu', 'str_sd_mu'],
     'basic': ['x', 'y', 'b', 'fo'],
-    'e_basic': ['l_mu', nam.cum('d'), f's{nam.cum("d")}', nam.cum('t'), 'x', 'y', 'sv_mu'],
+    'e_basic': ['l_mu', nam.cum('d'), f'{nam.cum("sd")}', nam.cum('t'), 'x', 'y', 'sv_mu'],
     'e_dispersion': ['dsp', 'sdsp', 'dsp_max', 'sdsp_max', 'dsp_0_40', 'dsp_0_80', 'dsp_20_80','sdsp_0_40', 'sdsp_0_80', 'sdsp_20_80'],
     'spatial': fun.flatten_list([[k, f's{k}'] for k in
                                  ['dsp', 'd', 'v', 'a', 'D_x', 'xv', 'xa', 'D_y', 'yv', 'ya', nam.cum('d'),
@@ -801,16 +852,19 @@ def load_ParDict():
     return dic
 
 
-def save_ParDict_frame(df):
+def save_ParDict_frame(df, save_pdf=False):
     import inspect
     args = list(inspect.signature(Parameter.__init__).parameters.keys())
     args = [a for a in args if a not in ['self', 'par_dict']]
     d = {k: {a: getattr(p, a) for a in args} for k, p in df.items()}
     fun.save_dict(d, paths.ParDict_path)
-    # fun.save_dict(d, paths.ParDict_path2, use_pickle=False)
-    df=pd.DataFrame.from_dict(d, orient='index')
-    df.to_csv(paths.ParDf_path)
-    # fun.save_dict(d, paths.ParDict_path3)
+    if save_pdf :
+        dd= [{'symbol': p.s, 'unit': p.u.unit.abbrev, 'codename': k, 'interpretation': p.d} for i,(k, p) in enumerate(df.items()) if 240<i<280]
+        ddf = pd.DataFrame.from_records(dd)
+        ws = np.array([1, 1, 1, 5])
+        ws = (ws / sum(ws))
+        ddf.to_csv(paths.ParDf_path)
+        fun.df2pdf(ddf, paths.ParPdf_path, colWidths=ws, edges='horizontal')
     return d
 
 
@@ -870,14 +924,10 @@ def getPar(k=None,p=None, d=None, to_return=['d', 'l'], new_format=True) :
             return res
 
 if __name__ == '__main__':
-    # dic=build_par_dict()
-    # dic=load_ParDict()
-    # a=[v['d'] for v in load_ParDict().values() if v['o']==Larva]
-    print(runtime_pars)
-    # print(dic['cum_d'])
-    # print(dic['scum_d'])
-    # print(getPar('sv', to_return=['d', 'p', 'l']))
-    # print(getPar(d='scaled_velocity', to_return=['d', 'p', 'l']))
+    dic=build_par_dict()
+    dic=load_ParDict()
+    print(dic['str_sd_mu'])
+
 
     raise
     for k in ParFrame.keys() :

@@ -18,6 +18,7 @@ def base(method, input, **kwargs):
         return [method(i, **kwargs) for i in input]
 
 
+
 def bar(p):
     return rf'$\bar{{{p.replace("$", "")}}}$'
 
@@ -53,6 +54,9 @@ def th(p):
 def Delta(p):
     return fr'$\Delta{{{p.replace("$", "")}}}$'
 
+def sum(p):
+    return fr'$\sum{{{p.replace("$", "")}}}$'
+
 
 def delta(p):
     return fr'$\delta{{{p.replace("$", "")}}}$'
@@ -65,17 +69,34 @@ def hat_th(p):
 def dot(p):
     return fr'$\dot{{{p.replace("$", "")}}}$'
 
+def circledcirc(p):
+    return f'${p.replace("$", "")}^{{\circledcirc}}$'
+
+def circledast(p):
+    return f'${p.replace("$", "")}^{{\circledast}}$'
+
+def odot(p):
+    return f'${p.replace("$", "")}^{{\odot}}$'
+    # return fr'$\odot{{{p.replace("$", "")}}}$'
+
+def paren(p):
+    return fr'$({{{p.replace("$", "")}}})$'
+
+def brack(p):
+    return fr'$[{{{p.replace("$", "")}}}]$'
+
+
 
 def ddot(p):
     return fr'$\ddot{{{p.replace("$", "")}}}$'
 
 
 def dot_th(p):
-    return fr'$\dot{{\theta}}_{{{p}}}$'
+    return fr'$\dot{{\theta}}_{{{p.replace("$", "")}}}$'
 
 
 def ddot_th(p):
-    return fr'$\ddot{{\theta}}_{{{p}}}$'
+    return fr'$\ddot{{\theta}}_{{{p.replace("$", "")}}}$'
 
 
 def dot_hat_th(p):

@@ -481,15 +481,7 @@ class SimulationState(ScreenItem):
         self.text = text
 
 
-def draw_velocity_arrow(_screen, agent):
-    start = agent.get_centroid_position()
-    lin_vel = np.array(agent.get_head().get_linearvelocity_amp())
-    if lin_vel < 0.001:
-        # FIXME This produces bug
-        # _screen.draw_circle(start, agent.get_sim_length() / 5, color=(255, 0, 0), width=.01)
-        pass
-    else:
-        _screen.draw_arrow(start, start + lin_vel / 100, color=(0, 0, 255), width=.01)
+
 
 
 def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, traj_color=None):

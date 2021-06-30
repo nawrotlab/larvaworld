@@ -12,7 +12,7 @@ from lib.stor.larva_dataset import LarvaDataset
 
 
 def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
-    ccc={'show' : True}
+    ccc={'show' : False}
     if d is None:
         return
     fig_dict = {}

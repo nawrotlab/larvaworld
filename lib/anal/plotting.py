@@ -18,7 +18,7 @@ from lib.anal.combining import combine_images, combine_pdfs
 from lib.conf import conf
 from lib.aux import functions as fun
 from lib.conf.par import getPar, chunk_dict
-from lib.model import DEB
+from lib.model.DEB.deb import DEB
 from lib.model.modules.intermitter import get_EEB_poly1d
 from lib.stor import paths
 
@@ -337,14 +337,14 @@ def plot_sample_tracks(datasets, labels=None, mode='strides', agent_idx=0, agent
 
 def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
                       vertical_boundaries=False, min_turn_angle=0, slices=[], subfolder='individuals',
-                      return_fig=False, show=False):
+                      save_to=None,return_fig=False, show=False):
+    Ndatasets, colors, save_to, labels = plot_config(datasets=[dataset], labels=[dataset.id], save_to=save_to, subfolder=subfolder)
     # We plot the complete or a slice of the timeseries of scal centroid velocity. The grey areas are stridechains
     d = dataset
 
     if agent_ids is None:
         agent_ids = d.agent_ids
 
-    save_to = os.path.join(d.plot_dir, subfolder)
 
     xx = f'marked_turns_min_angle_{min_turn_angle}'
     filepath_full = f'{xx}_full.{suf}'
@@ -938,10 +938,6 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
     fig = plt.figure(figsize=figsize)
     fig, axs = plt.subplots(1, 2, figsize=figsize)
     axs = axs.ravel()
-    # set up subplot grid
-    # gridspec.GridSpec(2, 2)
-
-    # plt.subplot2grid((2, 2), (0, 0), colspan=1, rowspan=1)
 
     scores1 = []
     coefs1 = []
@@ -1221,7 +1217,9 @@ def plot_stride_Dbend(datasets, labels=None, show_text=False, subfolder='stride'
 
 
 def plot_EEB_vs_food_quality(samples=['Fed', 'Deprived', 'Starved'], dt=None,
-                             species_list=['rover', 'sitter', 'default'], **kwargs):
+                             species_list=['rover', 'sitter', 'default'], save_to=None, return_fig=False,
+                      show=False, **kwargs):
+    filename = f'EEB_vs_food_quality.{suf}'
     qs = np.arange(0.01, 1, 0.01)
     # qs=[1.0,0.75,0.5,0.25,0.15]
 
@@ -1239,7 +1237,7 @@ def plot_EEB_vs_food_quality(samples=['Fed', 'Deprived', 'Starved'], dt=None,
                   'marker': '.'}
             for q in qs:
                 deb = DEB(substrate_quality=q, species=species, **kwargs)
-                s = np.round(deb.feed_freq_estimate, 2)
+                s = np.round(deb.fr_feed, 2)
                 ss.append(s)
                 EEBs.append(z(s))
 
@@ -1257,9 +1255,7 @@ def plot_EEB_vs_food_quality(samples=['Fed', 'Deprived', 'Starved'], dt=None,
         axs[3 * i + 2].set_ylim([0, 1])
     for ax in axs:
         ax.legend()
-    # axs[2].set_xlim(r'estimated feed freq $Hz$')
-    # axs[0].set_ylim(r'estimated feed freq $Hz$')
-    plt.show()
+    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def plot_stride_Dorient(datasets, labels=None, simVSexp=False, absolute=True, subfolder='stride',
@@ -1363,10 +1359,6 @@ def plot_dispersion(datasets, labels=None, ranges=None, scaled=False, subfolder=
             par = f'dispersion'
         else:
             par = f'dispersion_{r0}_{r1}'
-        # try :
-
-        # except :
-        #     dsp_dfs = [d.endpoint_data[par if not scaled else nam.scal(par)] for d in datasets]
 
         if scaled:
             filename = f'scaled_dispersion_{r0}-{r1}_{fig_cols}.{suf}'
@@ -1382,16 +1374,12 @@ def plot_dispersion(datasets, labels=None, ranges=None, scaled=False, subfolder=
         fig, axs = plt.subplots(1, 1, figsize=(5 * fig_cols, 5))
 
         for d, lab, c in zip(datasets, labels, colors):
-            dsp_df = d.load_aux(type='dispersion', name=par if not scaled else nam.scal(par))
-            dsp_m = dsp_df['median'].values
-            dsp_u = dsp_df['upper'].values
-            dsp_b = dsp_df['lower'].values
-
-            dsp_m = dsp_m[t0:t1]
-            dsp_u = dsp_u[t0:t1]
-            dsp_b = dsp_b[t0:t1]
-            plot_mean_and_range(x=trange, mean=dsp_m, lb=dsp_b, ub=dsp_u, axis=axs, color_mean=c,
-                                color_shading=c, label=lab)
+            dsp = d.load_aux(type='dispersion', name=par if not scaled else nam.scal(par))
+            plot_mean_and_range(x=trange,
+                                mean=dsp['median'].values[t0:t1],
+                                lb=dsp['upper'].values[t0:t1],
+                                ub=dsp['lower'].values[t0:t1],
+                                axis=axs, color_mean=c, color_shading=c, label=lab)
         if ymax is not None:
             axs.set_ylim(ymax=ymax)
         axs.set_ylabel(ylab)
@@ -2384,7 +2372,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
         elif mode == 'minimal':
             par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
                           'cum_t', 'str_tr', 'pau_tr', 'tor',
-                          'tor5_mu', 'tor20_mu', 'disp_0_40_max', 'disp_0_40_fin',
+                          'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
                           'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr']
         elif mode == 'stride_def':
             par_shorts = ['l_mu', 'fsv', 'str_sd_mu', 'str_sd_std']
@@ -2399,24 +2387,24 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
             par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
                           'cum_t', 'str_tr', 'pau_tr', 'pau_t_mu',
                           'tor5_mu', 'tor5_std', 'tor20_mu', 'tor20_std',
-                          'tor', 'sdisp_mu', 'sdisp40_max', 'sdisp40_fin',
+                          'tor', 'sdsp_mu', 'sdsp_0_40_max', 'sdsp_0_40_fin',
                           'b_mu', 'b_std', 'bv_mu', 'bv_std',
                           'Ltur_tr', 'Rtur_tr', 'Ltur_fou_mu', 'Rtur_fou_mu']
 
         elif mode == 'full':
 
-            par_shorts = ['l_mu', 'str_N', 'str_rr', 'fsv',
+            par_shorts = ['l_mu', 'str_N', 'fsv',
                           'cum_d', 'cum_sd', 'v_mu', 'sv_mu',
                           'str_d_mu', 'str_d_std', 'str_sd_mu', 'str_sd_std',
                           'str_std_mu', 'str_std_std', 'str_sstd_mu', 'str_sstd_std',
                           'str_fo_mu', 'str_fo_std', 'str_ro_mu', 'str_ro_std',
                           'str_b_mu', 'str_b_std', 'str_t_mu', 'str_t_std',
-                          'cum_t', 'str_tr', 'pau_tr', 'non_str_tr',
+                          'cum_t', 'str_tr', 'pau_tr',
                           'pau_N', 'pau_t_mu', 'pau_t_std', 'tor',
                           'tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu',
                           'tor2_std', 'tor5_std', 'tor10_std', 'tor20_std',
-                          'disp_mu', 'disp_fin', 'disp40_fin', 'disp40_max',
-                          'sdisp_mu', 'sdisp_fin', 'sdisp40_fin', 'sdisp40_max',
+                          'dsp_mu', 'dsp_fin', 'dsp_0_40_fin', 'dsp_0_40_max',
+                          'sdsp_mu', 'sdsp_fin', 'sdsp_0_40_fin', 'sdsp_0_40_max',
                           'Ltur_t_mu', 'Ltur_t_std', 'cum_Ltur_t', 'Ltur_tr',
                           'Rtur_t_mu', 'Rtur_t_std', 'cum_Rtur_t', 'Rtur_tr',
                           'Ltur_fou_mu', 'Ltur_fou_std', 'Rtur_fou_mu', 'Rtur_fou_std',

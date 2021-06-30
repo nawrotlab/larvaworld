@@ -156,9 +156,7 @@ def exclude_rows(s,e, dt,  flag, accepted=None, rejected=None):
         print(f'Rows excluded according to {flag}.')
 
 def preprocess(s,e,dt,Npoints, dic, config=None,  recompute=False,show_output=True,**kwargs) :
-    print('ddd')
     with fun.suppress_stdout(show_output):
-        print('ddddddd')
         if dic is None :
             return s, e
         else :
