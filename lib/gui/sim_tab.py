@@ -56,7 +56,7 @@ class SimTab(GuiTab):
         l_conf = [[sg.Col([
             l_sim.l,
             l_env.l,
-            *[i.get_section() for i in [s1, s2, s3]],
+            *[i.get_layout() for i in [s1, s2, s3]],
             [g1.get_layout()]
         ])]]
         l = [[sg.Col(l_conf, **col_kws, size=col_size(0.25)), g1.canvas]]

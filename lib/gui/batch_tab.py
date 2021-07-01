@@ -57,7 +57,7 @@ class BatchTab(GuiTab):
         g1 = GraphList(self.name)
         l_batch0 = sg.Col([l_batch.l,
                            l_sim.l,
-                           *[s.get_section() for s in [s0, s1, s2, s3]],
+                           *[s.get_layout() for s in [s0, s1, s2, s3]],
                            [g1.get_layout()]
                            ], **col_kws, size=col_size(0.3))
 

@@ -47,11 +47,13 @@ class LarvaworldGui:
 
             e, v = self.window.read()
             if e in (None, 'Exit'):
+                self.window.close()
                 break
-            gui.default_run_window(self.window, e, v, self.collapsibles, self.graph_lists)
+            else :
+                gui.default_run_window(self.window, e, v, self.collapsibles, self.graph_lists)
 
-            n = v['ACTIVE_TAB'].split()[0]
-            self.tabs[n].eval0(e=e, v=v)
+                n = v['ACTIVE_TAB'].split()[0]
+                self.tabs[n].eval0(e=e, v=v)
             # self.dicts, self.graph_lists = self.tabs[n].eval0(e=e, v=v)
 
 
@@ -69,7 +71,7 @@ class LarvaworldGui:
             #     # thread, message, progress, timeout = None, '', 0, None  # reset variables for next run
             #     graph_lists['BATCH'].update(W, dicts['batch_results']['fig_dict'])
             # print(v)
-        self.window.close()
+        # self.window.close()
 
     def build(self, tabs):
         ls, cs, ds, gs, ts = [], {}, {}, {},{}

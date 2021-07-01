@@ -70,8 +70,8 @@ def add_agent_layout(name0, color, collapsibles):
          [sg.T('', **t2_kws), sg.R('group id', 2, disabled=True, k=f'{name}_group', enable_events=True, **t5_kws),
           sg.In(k=f'{name}_group_id')],
          color_pick_layout(name, color),
-         [sg.T('', **t5_kws), *collapsibles[f'{name}_DISTRO'].get_section()],
-         [sg.T('', **t5_kws), *collapsibles[f'{name}_ODOR'].get_section()]]
+         [sg.T('', **t5_kws), *collapsibles[f'{name}_DISTRO'].get_layout()],
+         [sg.T('', **t5_kws), *collapsibles[f'{name}_ODOR'].get_layout()]]
     return l, collapsibles
 
 
@@ -266,7 +266,7 @@ def draw_env(env=None):
     col2 = [
         *larva_l, *source_l,
 
-        [sg.T('', **t5_kws), *collapsibles['SOURCE_FOOD'].get_section()],
+        [sg.T('', **t5_kws), *collapsibles['SOURCE_FOOD'].get_layout()],
         [sg.T('', **t5_kws), sg.T('shape', **t5_kws),
          sg.Combo(['rect', 'circle'], default_value='circle', k='SOURCE_shape', enable_events=True, readonly=True)],
 
@@ -282,7 +282,7 @@ def draw_env(env=None):
     ]
 
     col1 = [
-        collapsibles['arena'].get_section(),
+        collapsibles['arena'].get_layout(),
         [sg.Graph(
             canvas_size=(W, H),
             graph_bottom_left=(0, 0),

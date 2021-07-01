@@ -54,13 +54,13 @@ class ModelTab(GuiTab):
         c1 = [CollapsibleDict(n, False, default=True, **kwargs)
               for n, kwargs in zip(['physics', 'energetics', 'body', 'odor'], [{}, {'toggle': True}, {}, {}])]
         s1 = CollapsibleTable('odor_gains', False, headings=['id', 'mean', 'std'], dict={}, type_dict=dtypes.get_dict_dtypes('odor_gain'))
-        l1 = [i.get_section() for i in c1 + [s1]]
+        l1 = [i.get_layout() for i in c1 + [s1]]
         c2 = [CollapsibleDict(k.upper(), False, dict=dtypes.get_dict(k), type_dict=dtypes.get_dict_dtypes(k),
                               toggle=True, disp_name=k.capitalize()) for k in dtypes.module_keys]
-        l2 = [i.get_section() for i in c2]
+        l2 = [i.get_layout() for i in c2]
         b = Collapsible('Brain', True, l2)
 
-        l3=[sg.Col([b.get_section()], **col_kws, size=col_size(0.25)),
+        l3=[sg.Col([b.get_layout()], **col_kws, size=col_size(0.25)),
                                          sg.Col(l1, **col_kws, size=col_size(0.25))]
         c = {}
         for s in c2 + c1 + [s1, b]:

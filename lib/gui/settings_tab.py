@@ -31,7 +31,7 @@ class SettingsTab(GuiTab):
                 # [sg.T("", **t8_kws)]
             ]
             collapsibles[col_title]=Collapsible(col_title, state=False, disp_name=title, content=ll)
-            l += collapsibles[col_title].get_section(as_col=False)
+            l += collapsibles[col_title].get_layout(as_col=False)
 
         dicts = {'shortcuts': conf}
         dicts['shortcuts']['cur'] = None
@@ -56,14 +56,14 @@ class SettingsTab(GuiTab):
                                                                            'Restart Larvaworld after changing shortcuts.')])
         s4 = Collapsible('Mouse', False, content=l_mouse)
 
-        l_controls = [[sg.Col([s3.get_section(),s4.get_section()])]]
+        l_controls = [[sg.Col([s3.get_layout(), s4.get_layout()])]]
 
         s5 = Collapsible('Controls', True, content=l_controls)
         for s in [s1, s2, s3, s4, s5]:
             collapsibles.update(s.get_subdicts())
-        l_set = [[sg.Col(s1.get_section(as_col=False), **col_kws, size=col_size(0.25)),
-                  sg.Col(s2.get_section(as_col=False), **col_kws, size=col_size(0.25)),
-                  sg.Col(s5.get_section(as_col=False), **col_kws, size=col_size(0.25),
+        l_set = [[sg.Col(s1.get_layout(as_col=False), **col_kws, size=col_size(0.25)),
+                  sg.Col(s2.get_layout(as_col=False), **col_kws, size=col_size(0.25)),
+                  sg.Col(s5.get_layout(as_col=False), **col_kws, size=col_size(0.25),
                          scrollable=False, vertical_scroll_only=True),
                   ]
                  ]

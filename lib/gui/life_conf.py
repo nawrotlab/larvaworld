@@ -72,7 +72,7 @@ def life_conf():
                               drop_down=False, single_line=False)
 
     l0 = sg.Col([
-        sub.get_section(),
+        sub.get_layout(),
         [l_DEB]
     ], size=l1_size)
 

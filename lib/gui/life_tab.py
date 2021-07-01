@@ -1,13 +1,9 @@
-import copy
-import threading
 import PySimpleGUI as sg
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.plotting import plot_debs
 
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, CollapsibleTable, col_kws, col_size, t12_kws, graphic_button, \
-    t18_kws, b_kws, t24_kws, named_list_layout, save_conf_window, delete_figure_agg, draw_canvas, Table, GraphList
-from lib.gui.draw_env import draw_env
-from lib.conf.conf import loadConf
+from lib.gui.gui_lib import CollapsibleDict, col_kws, col_size, t12_kws, graphic_button, \
+    t18_kws, b_kws, t24_kws, Table, GraphList
 from lib.gui.tab import GuiTab, SelectionList
 from lib.model.DEB.deb import deb_default
 
@@ -15,22 +11,13 @@ from lib.model.DEB.deb import deb_default
 class LifeTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-        # self.epochs = []
-        # self.epoch_qs = []
         self.Sq, self.Sa = 'SLIDER_quality', 'SLIDER_age'
         self.s0, self.s1 = 'start', 'stop'
         self.S0, self.S1 = [f'SLIDER_epoch_{s}' for s in [self.s0, self.s1]]
         self.ep = 'rearing epoch'
         self.K = 'EPOCHS'
-        self.fig_agg = None
 
-    def deb_model(self,w,v,c):
-        epochs = w.Element(self.K).get()
-        dic = deb_default(epochs=[(t1, t2) for t1, t2, q in epochs], epoch_qs=[q for t1, t2, q in epochs],
-                          substrate_quality=v[self.Sq], hours_as_larva=v[self.Sa],
-                          substrate_type=c['substrate'].header_value)
-        return dic
+
 
     def update(self,w, c, conf, id=None):
         c['substrate'].update_header(w, conf['substrate_type'])
@@ -40,14 +27,18 @@ class LifeTab(GuiTab):
         if conf['epochs'] is not None :
             epochs=[[t0,t1,q] for (t0,t1),q in zip(conf['epochs'], conf['epoch_qs'])]
             w.Element(self.K).Update(values=epochs, num_rows=len(epochs))
+        else :
+            w.Element(self.K).Update(values=[], num_rows=0)
+
+        w.write_event_value('Draw', 'Draw the initial plot')
 
 
 
     def get(self,w, v, c, as_entry=False):
         epochs=w.Element(self.K).get()
         life = {
-            'epochs': epochs[:, :2].tolist() if len(epochs) > 0 else None,
-            'epoch_qs': epochs[:, 2].tolist() if len(epochs) > 0 else None,
+            'epochs': [(t1, t2) for t1, t2, q in epochs] if len(epochs) > 0 else None,
+            'epoch_qs': [q for t1, t2, q in epochs] if len(epochs) > 0 else None,
             'hours_as_larva': v[self.Sa],
             'substrate_quality': v[self.Sq],
             'substrate_type': c['substrate'].header_value,
@@ -57,15 +48,10 @@ class LifeTab(GuiTab):
 
 
     def build(self):
-        W, H = 1600, 800
-        k = 2
         sl1_kws = {
             'size': (40, 20),
             'enable_events': True,
-            'orientation': 'h',
-            'pad': ((k, k), (k, k)),
-            # 'relief': RELIEF_SOLID,
-
+            'orientation': 'h'
         }
 
         deb_modes = ['mass', 'length',
@@ -96,12 +82,6 @@ class LifeTab(GuiTab):
 
         sub = CollapsibleDict('substrate', False, default=True, header_dict=dtypes.substrate_dict,
                               header_value='standard')
-
-
-        l_DEB = named_list_layout(text='DEB Parameter : ', key='deb_mode', choices=deb_modes, default_value='reserve',
-                                  drop_down=False, single_line=False)
-
-
 
         l1 = sg.Col([[sg.Text('Epoch start (h) : ', **t24_kws)],
                      [sg.Slider(range=(0, 150), default_value=0, key=self.S0,
@@ -139,19 +119,17 @@ class LifeTab(GuiTab):
             # [sg.B('Remove', **b_kws, **pad2), sg.B('Add', **b_kws, **pad2)]
         ], size=l2_size, **col_kws)
 
-        g1=GraphList(self.name, fig_dict={m : plot_debs for m in deb_modes}, next_to_header=None, default_values=['reserve'],
-                 canvas_size=r1_size, list_size=None, list_header='DEB parameters', auto_eval=False)
+        g1=GraphList(self.name, fig_dict={m : plot_debs for m in deb_modes}, default_values=['reserve'],
+                 canvas_size=r1_size, list_header='DEB parameters', auto_eval=False)
 
         l0 = sg.Col([
             sl0.l,
-            sub.get_section(),
+            sub.get_layout(),
             [g1.get_layout()]
-            # [l_DEB]
         ], size=l1_size)
 
         l = [
             [l0, g1.canvas],
-            # [l0, sg.Col([[sg.Canvas(size=r1_size, key='-CANVAS-')]])],
             [l_tab, l1,l2],
         ]
 
@@ -159,15 +137,9 @@ class LifeTab(GuiTab):
         g = {g1.name: g1}
         return l, c, g, {}
 
-    # def edit(self,env=None):
-    #     return draw_env(env)
-
     def eval(self, e, v, w, c, d, g):
-        # canvas_elem = w.FindElement('-CANVAS-')
-        # canvas = canvas_elem.TKCanvas
         S0,S1,Sa,Sq,K,ep=self.S0,self.S1,self.Sa,self.Sq,self.K,self.ep
         if e == g[self.name].list_key:
-        # if e == 'deb_mode':
             w.write_event_value('Draw', 'Draw the initial plot')
         elif e == f'ADD {ep}':
             t1, t2, q =row= v[S0], v[S1], v[Sq]
@@ -185,15 +157,11 @@ class LifeTab(GuiTab):
             w.write_event_value('Draw', 'Draw the initial plot')
 
         elif e == 'Draw':
-            D = self.deb_model(w,v,c)
+            D = deb_default(**self.get(w, v, c))
             for Sii in [S0, S1, Sa]:
                 w.Element(Sii).Update(range=(0.0, D['pupation'] - D['birth']))
             fig, save_to, filename = plot_debs(deb_dicts=[D], mode=v[g[self.name].list_key][0], return_fig=True)
-            # fig, save_to, filename = plot_debs(deb_dicts=[D], mode=v['deb_mode'][0], return_fig=True)
             g[self.name].draw_fig(w,fig)
-            # if self.fig_agg:
-            #     delete_figure_agg(self.fig_agg)
-            # self.fig_agg = draw_canvas(canvas, fig)
 
         elif e in [S0, S1]:
             if e == S0 and v[S0] > v[S1]:

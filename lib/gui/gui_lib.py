@@ -1110,7 +1110,7 @@ class SectionDict:
                 type_dict = self.type_dict[k] if self.type_dict is not None else None
                 self.subdicts[k0] = CollapsibleDict(k0, False, disp_name=k, dict=v, type_dict=type_dict,
                                                     toggle=self.toggled_subsections)
-                l.append(self.subdicts[k0].get_section())
+                l.append(self.subdicts[k0].get_layout())
             # elif type(v) == float:
             #     temp =[sg.Text(f'{k_disp}:', **t8_kws),
             #      sg.Spin(values=np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(), initial_value=v, key=k0,
@@ -1235,9 +1235,7 @@ class Collapsible:
         self.header_key=f'SELECT LIST {name}'
         if header_dict is None:
             header_disp = [sg.T(disp_name, enable_events=True, text_color='black', **t12_kws)]
-            # self.header_list_key = None
         else:
-            # self.header_list_key = f'{self.name}_header_list'
             header_disp = named_list_layout(text=f'{disp_name}:', choices=list(header_dict.keys()),
                                             default_value=header_value, key=self.header_key, list_width=10)
 
@@ -1246,18 +1244,17 @@ class Collapsible:
             header.append(BoolButton(name, toggle, disabled))
         if next_to_header is not None:
             header += next_to_header
-        temp = collapse(content, f'SEC {name}', state)
-        self.section = [header, [temp]]
+        temp = collapse(content, f'SEC {self.name}', self.state)
+        self.layout = [header, [temp]]
 
     def get_symbol(self):
         return sg.T(SYMBOL_DOWN if self.state else SYMBOL_UP, k=f'OPEN SEC {self.name}',
                     enable_events=True, text_color='black', **t2_kws)
 
-    def get_section(self, as_col=True):
-        return [sg.Col(self.section)] if as_col else self.section
+    def get_layout(self, as_col=True):
+        return [sg.Col(self.layout)] if as_col else self.layout
 
-    def set_section(self, section):
-        self.section = section
+
 
     def update(self, window, dict, use_prefix=True):
         if dict is None:
@@ -1341,10 +1338,10 @@ class CollapsibleTable(Collapsible):
         self.Ncols = len(headings)
         self.data = self.set_data(dict)
         self.key = f'TABLE {name}'
-        self.layout = self.get_layout()
+        content = self.get_content()
         self.edit_key = f'EDIT_TABLE {name}'
         b = [graphic_button('edit', self.edit_key, tooltip=f'Create new {name}')]
-        super().__init__(name, state, content=self.layout, next_to_header=b, **kwargs)
+        super().__init__(name, state, content=content, next_to_header=b, **kwargs)
 
     def set_data(self, dic):
         if len(dic) != 0:
@@ -1368,8 +1365,8 @@ class CollapsibleTable(Collapsible):
             data = [[''] * self.Ncols]
         return data
 
-    def get_layout(self):
-        layout = [[sg.Table(values=self.data[:][:], headings=self.headings, col_widths=self.col_widths,
+    def get_content(self):
+        content = [[sg.Table(values=self.data[:][:], headings=self.headings, col_widths=self.col_widths,
                             max_col_width=30, background_color='lightblue',
                             auto_size_columns=False,
                             # display_row_numbers=True,
@@ -1379,7 +1376,7 @@ class CollapsibleTable(Collapsible):
                             alternating_row_color='lightyellow',
                             key=self.key
                             )]]
-        return layout
+        return content
 
     def update(self, window, dic):
         self.dict = dic
@@ -1588,7 +1585,7 @@ class GraphList:
     def init_canvas(self, name):
         canvas_key = f'{name}_CANVAS'
         canvas = sg.Col([[sg.Canvas(size=self.canvas_size, key=canvas_key, background_color='Lightblue')]],
-                        scrollable=True, vertical_scroll_only=False, expand_y=True, expand_x=True)
+                        scrollable=False, vertical_scroll_only=False, expand_y=True, expand_x=True)
         return canvas, canvas_key
 
     def draw_fig(self, window, fig):
