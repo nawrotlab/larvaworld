@@ -41,6 +41,7 @@ conf_paths = {
     'Batch': f'{ConfFolder}/BatchConfs.txt',
     'Settings': f'{ConfFolder}/SetConfs.txt',
     'Ref': f"{ConfFolder}/ReferenceDatasets.txt",
+    'Life': f"{ConfFolder}/LifeConfs.txt",
 }
 
 VideoSlideFolder = f'{get_parent_dir()}/lib/gui/video_slides'

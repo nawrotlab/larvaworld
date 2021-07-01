@@ -265,9 +265,12 @@ def expandConf(id, conf_type):
 
 
 def loadConfDict(conf_type):
-    with open(paths.conf_paths[conf_type]) as tfp:
-        Conf_dict = json.load(tfp)
-    return Conf_dict
+    try :
+        with open(paths.conf_paths[conf_type]) as tfp:
+            Conf_dict = json.load(tfp)
+        return Conf_dict
+    except :
+        return {}
 
 
 def saveConf(conf, conf_type, id=None, mode='overwrite'):

@@ -1069,6 +1069,20 @@ def update_window_from_dict(window, dic, prefix=None):
             else:
                 window.Element(k).Update(value=v)
 
+def save_conf_window(conf, conftype, disp=None) :
+    if disp is None:
+        disp=conftype
+    l = [
+        named_list_layout(f'Store new {disp}', f'{disp}_ID', list(loadConfDict(conftype).keys()),
+                          readonly=False, enable_events=False),
+        [sg.Ok(), sg.Cancel()]]
+    e, v = sg.Window(f'{disp} configuration', l).read(close=True)
+    if e == 'Ok':
+        id = v[f'{disp}_ID']
+        saveConf(conf, conftype, id)
+        return id
+    elif e == 'Cancel':
+        return None
 
 class SectionDict:
     def __init__(self, name, dict, type_dict=None, toggled_subsections=True):
@@ -1218,13 +1232,14 @@ class Collapsible:
         self.sec_symbol = self.get_symbol()
         self.header_dict = header_dict
         self.header_value = header_value
+        self.header_key=f'SELECT LIST {name}'
         if header_dict is None:
             header_disp = [sg.T(disp_name, enable_events=True, text_color='black', **t12_kws)]
             # self.header_list_key = None
         else:
             # self.header_list_key = f'{self.name}_header_list'
             header_disp = named_list_layout(text=f'{disp_name}:', choices=list(header_dict.keys()),
-                                            default_value=header_value, key=f'SELECT LIST {name}', list_width=10)
+                                            default_value=header_value, key=self.header_key, list_width=10)
 
         header = [self.sec_symbol] + header_disp
         if toggle is not None:
@@ -1257,6 +1272,7 @@ class Collapsible:
 
     def update_header(self, window, id):
         self.header_value = id
+        window.Element(self.header_key).Update(value=id)
         self.update(window, self.header_dict[id])
 
 
@@ -1417,6 +1433,21 @@ class CollapsibleDict(Collapsible):
         all_subdicts = {**subdicts, **self.sectiondict.get_subdicts()}
         return all_subdicts
 
+class Table(sg.Table) :
+    def add_row(self, window, row, sort_idx=None):
+        vs=self.get()
+        vs.append(row)
+        if sort_idx is not None :
+            vs.sort(key=lambda x: x[sort_idx])
+        # self.epochs.append([t1, t2, q])
+        # self.epochs.sort(key=lambda x: x[0])
+        window.Element(self.Key).Update(values=vs, num_rows=len(vs))
+
+    def remove_row(self, window, idx):
+        vs = self.get()
+        vs.remove(vs[idx])
+        window.Element(self.Key).Update(values=vs, num_rows=len(vs))
+
 
 # class CollapsibleSelectionDict(CollapsibleDict):
 #     def __init__(self, name, state, dict=None, dict_name=None, type_dict=None, **kwargs):
@@ -1527,8 +1558,10 @@ def object_menu(selected, **kwargs):
 
 class GraphList:
     def __init__(self, name, fig_dict={}, next_to_header=None, default_values=None,
-                 canvas_size=(1200, 1200), list_size=None):
+                 canvas_size=(1200, 1200), list_size=None, list_header='Graphs', auto_eval=True):
+        self.auto_eval = auto_eval
         self.list_size = list_size
+        self.list_header = list_header
         self.canvas_size = canvas_size
         self.name = name
         self.next_to_header = next_to_header
@@ -1542,7 +1575,7 @@ class GraphList:
         list_key = f'{name}_GRAPH_LIST'
         values = list(fig_dict.keys())
         h = int(np.max([len(values), 10]))
-        header = [sg.Text('Graphs', **t14_kws)]
+        header = [sg.Text(self.list_header, **t14_kws)]
         if self.next_to_header is not None:
             header += self.next_to_header
         if self.list_size is None:
@@ -1568,7 +1601,7 @@ class GraphList:
         window.Element(self.list_key).Update(values=list(fig_dict.keys()))
 
     def evaluate(self, window, list_values):
-        if len(list_values) > 0:
+        if len(list_values) > 0 and self.auto_eval:
             choice = list_values[0]
             fig = self.fig_dict[choice]
             self.draw_fig(window, fig)

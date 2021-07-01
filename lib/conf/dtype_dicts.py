@@ -317,8 +317,10 @@ all_null_dicts = {
     'life':
         {
             'epochs': None,
+            'epoch_qs': None,
             'hours_as_larva': 0.0,
-            'substrate_quality': 1.0
+            'substrate_quality': 1.0,
+            'substrate_type': 'standard',
 
         },
     'odorscape': {'odorscape': 'Gaussian',
@@ -574,9 +576,10 @@ def get_dict_dtypes(name, **kwargs):
         'life':
             {
                 'epochs': List[Tuple[float, float]],
+                'epoch_qs': List[float],
                 'hours_as_larva': float,
-                'substrate_quality': float
-
+                'substrate_quality': float,
+                'substrate_type': list(substrate_dict.keys()),
             },
         'odorscape': {'odorscape': ['Gaussian', 'Diffusion'],
                       'grid_dims': tuple,

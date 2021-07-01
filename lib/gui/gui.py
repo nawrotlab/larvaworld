@@ -4,11 +4,13 @@ import matplotlib
 from lib.gui.analysis_tab import AnalysisTab
 from lib.gui.batch_tab import BatchTab
 from lib.gui.env_tab import EnvTab
+from lib.gui.life_tab import LifeTab
 from lib.gui.sim_tab import SimTab
 from lib.gui.tab import IntroTab, VideoTab, TutorialTab
 from lib.gui.model_tab import ModelTab
 from lib.gui.settings_tab import SettingsTab
 import lib.gui.gui_lib as gui
+import lib.aux.functions as fun
 
 matplotlib.use('TkAgg')
 
@@ -21,6 +23,7 @@ class LarvaworldGui:
             'tutorials': (TutorialTab,None),
                          'larva-model': (ModelTab,'Model'),
                          'environment': (EnvTab,'Env'),
+                         'life-history': (LifeTab,'Life'),
                          'simulation': (SimTab,'Exp'),
                          'batch-run': (BatchTab,'Batch'),
                          'analysis': (AnalysisTab,None),
@@ -39,7 +42,9 @@ class LarvaworldGui:
 
 
     def run(self):
+
         while True:
+
             e, v = self.window.read()
             if e in (None, 'Exit'):
                 break

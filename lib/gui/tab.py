@@ -4,7 +4,8 @@ import webbrowser
 import PySimpleGUI as sg
 import numpy as np
 from lib.conf.conf import loadConfDict, saveConf, deleteConf, loadConf, expandConf
-from lib.gui.gui_lib import ClickableImage, window_size, t10_kws, graphic_button, t24_kws, named_list_layout, t8_kws
+from lib.gui.gui_lib import ClickableImage, window_size, t10_kws, graphic_button, t24_kws, named_list_layout, t8_kws, \
+    save_conf_window
 import lib.stor.paths as paths
 
 class ProgressBarLayout :
@@ -30,7 +31,9 @@ class ProgressBarLayout :
 
 
 class SelectionList:
-    def __init__(self, tab, conftype, disp=None, actions=[], sublists={},idx=None, progress=False, **kwargs):
+    def __init__(self, tab, conftype, disp=None, actions=[], sublists={},idx=None, progress=False,
+                 width=24, **kwargs):
+        self.width = width
         self.tab = tab
         self.conftype = conftype
         self.actions = actions
@@ -105,7 +108,7 @@ class SelectionList:
             [sg.Text(n.capitalize(), **t10_kws), *bs],
             [sg.Combo(self.confs, key=self.k, enable_events=True,
                       tooltip=f'The currently loaded {n}.', readonly=True,
-                      size=(24, self.Nconfs)
+                      size=(self.width, self.Nconfs)
                       )]
         ]
         if self.progressbar is not None :
@@ -160,7 +163,7 @@ class SelectionList:
 
     def update(self, w, id='', all=False):
         # w=self.w()
-        w.Element(self.k).Update(values=self.confs, value=id)
+        w.Element(self.k).Update(values=self.confs, value=id, size=(self.width, self.Nconfs))
         # w[self.k].update(values=list(loadConfDict(self.conftype).keys()), value=id)
         if all:
             for i in range(5):
@@ -169,18 +172,7 @@ class SelectionList:
                     w[k].update(values=self.confs, value=id)
 
     def save(self, conf):
-        n = self.disp
-        l = [
-            named_list_layout(f'Store new {n}', f'{n}_ID', list(loadConfDict(self.conftype).keys()),
-                              readonly=False, enable_events=False),
-            [sg.Ok(), sg.Cancel()]]
-        e, v = sg.Window(f'{n} configuration', l).read(close=True)
-        if e == 'Ok':
-            id = v[f'{n}_ID']
-            saveConf(conf, self.conftype, id)
-            return id
-        elif e== 'Cancel' :
-            return None
+        return save_conf_window(conf, self.conftype, disp=self.disp)
 
         # for i in range(3):
         #     k = f'{self.conf_k}{i}'

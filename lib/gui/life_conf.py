@@ -3,7 +3,7 @@ from PySimpleGUI import RELIEF_RAISED, RELIEF_SUNKEN, RELIEF_SOLID
 
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.plotting import plot_debs
-from lib.gui.gui_lib import default_run_window, named_list_layout
+from lib.gui.gui_lib import default_run_window, named_list_layout, graphic_button, save_conf_window
 from lib.gui.gui_lib import check_toggles, b_kws, w_kws, delete_figure_agg, draw_canvas, t24_kws, t10_kws, col_kws, \
     t12_kws, t18_kws, col_size, t14_kws, Collapsible, CollapsibleDict
 from lib.gui.tab import SelectionList
@@ -28,7 +28,7 @@ sl2_kws = {
     'size': (30, 10),
     'enable_events': True,
     'orientation': 'h',
-    'pad': ((k, k), (10*k, 10*k)),
+    'pad': ((k, k), (10 * k, 10 * k)),
     # 'background_color' : 'lightblue'
 }
 
@@ -48,11 +48,13 @@ def life_conf():
     sg.theme('LightGreen')
     life = dtypes.get_dict('life')
     epochs = []
+    epoch_qs = []
     Sq, Sa = 'SLIDER_quality', 'SLIDER_age'
     s0, s1 = 'start', 'stop'
     st0, st1 = [f'starvation_{s}' for s in [s0, s1]]
     S0, S1 = [f'Slider_{s}' for s in [st0, st1]]
     K = 'STARVATION'
+    ep = 'rearing epoch'
 
     y = 0.5
     x1 = 0.2
@@ -76,24 +78,30 @@ def life_conf():
 
     l2 = [[sg.Text('Food quality : ', **t24_kws)],
           [sg.Slider(range=(0.0, 1.0), default_value=1.0, key=Sq,
-              tick_interval=0.25, resolution=0.01, **sl1_kws)],
+                     tick_interval=0.25, resolution=0.01, **sl1_kws)],
           [sg.Text('', **t24_kws)],
           [sg.Text('', size=(10, 1)), sg.Ok(**b_kws), sg.Cancel(**b_kws)],
           ]
 
-    starvation_table = sg.Col([[sg.Text('Starvation epochs (h)', **t18_kws)],
-                               [sg.Table(values=epochs[:][:], headings=[s0, s1, 'quality'], def_col_width=7,
-                                         max_col_width=24, background_color='lightblue',
-                                         header_background_color='lightorange',
-                                         auto_size_columns=False,
-                                         # display_row_numbers=True,
-                                         justification='center',
-                                         # font=w_kws['font'],
-                                         num_rows=len(epochs),
-                                         alternating_row_color='lightyellow',
-                                         key=K
-                                         )],
-                               [sg.B('Remove', **b_kws, **pad2), sg.B('Add', **b_kws, **pad2)]], **col_kws)
+    starvation_table = sg.Col([[
+        sg.Text(f'{ep.capitalize()}s (h)', **t18_kws),
+        graphic_button('add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
+        graphic_button('remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.'),
+        graphic_button('data_add', f'ADD life', tooltip=f'Add a life history configuration.')
+    ],
+        [sg.Table(values=epochs[:][:], headings=[s0, s1, 'quality'], def_col_width=7,
+                  max_col_width=24, background_color='lightblue',
+                  header_background_color='lightorange',
+                  auto_size_columns=False,
+                  # display_row_numbers=True,
+                  justification='center',
+                  # font=w_kws['font'],
+                  num_rows=len(epochs),
+                  alternating_row_color='lightyellow',
+                  key=K
+                  )],
+        # [sg.B('Remove', **b_kws, **pad2), sg.B('Add', **b_kws, **pad2)]
+    ], **col_kws)
 
     l1 = [
         [starvation_table,
@@ -120,6 +128,7 @@ def life_conf():
 
     while True:
         e, v = w.read()
+
         # print(e)
 
         def deb_model():
@@ -128,18 +137,25 @@ def life_conf():
                               substrate_type=collapsibles['substrate'].header_value)
             return dic
 
+        def get_life_dict():
+            life = {
+                'epochs': [(t1, t2) for t1, t2, q in epochs] if len(epochs) > 0 else None,
+                'epoch_qs': [q for t1, t2, q in epochs] if len(epochs) > 0 else None,
+                'hours_as_larva': v[Sa],
+                'substrate_quality': v[Sq],
+                'substrate_type': collapsibles['substrate'].header_value,
+            }
+            return life
+
         if e in [None, 'Cancel']:
             break
         elif e == 'Ok':
-            life = {'epochs': epochs,
-                    'hours_as_larva': v[Sa],
-                    'substrate_quality': v[Sq]
-                    }
+            life = get_life_dict()
             print(life)
             break  # exit
         elif e == 'deb_mode':
             w.write_event_value('Draw', 'Draw the initial plot')
-        elif e == 'Add':
+        elif e == f'ADD {ep}':
             t1, t2, q = v[S0], v[S1], v[Sq]
             if t2 > t1:
                 epochs.append([t1, t2, q])
@@ -149,13 +165,17 @@ def life_conf():
                 w.Element(S0).Update(value=0.0)
                 w.Element(Sq).Update(value=1.0)
                 w.write_event_value('Draw', 'Draw the initial plot')
-        elif e == 'Remove':
+        elif e == f'REMOVE {ep}':
             if len(v[K]) > 0:
                 epochs.remove(epochs[v[K][0]])
                 w.Element(K).Update(values=epochs, num_rows=len(epochs))
                 w.write_event_value('Draw', 'Draw the initial plot')
-        elif e in [Sq, Sa]:
-        # elif e == f'{Sq}+UP':
+        elif e == 'ADD life':
+            life = get_life_dict()
+            id = save_conf_window(life, 'Life', disp='life history')
+        elif e in [Sq]:
+        # elif e in [Sq, Sa]:
+            # elif e == f'{Sq}+UP':
             w.write_event_value('Draw', 'Draw the initial plot')
 
         elif e == 'Draw':
