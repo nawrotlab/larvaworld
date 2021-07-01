@@ -397,12 +397,14 @@ class LarvaDataset:
             self.save()
 
     def compute_preference_index(self, arena_diameter_in_mm=None, return_num=False, return_all=False, show_output=True):
-        if not hasattr(self, 'end'):
+        if not hasattr(self, 'endpoint_data'):
             self.load(step=False)
         e=self.endpoint_data
-        if arena_diameter_in_mm is None:
-            arena_diameter_in_mm = self.arena_xdim * 1000
-        r = 0.2 * arena_diameter_in_mm
+        # print(e)
+        # print(self.arena_pars)
+        # if arena_diameter_in_mm is None:
+        #     arena_diameter_in_mm = self.arena_xdim * 1000
+        r = 0.2 * self.arena_xdim
         p='x' if 'x' in e.keys() else nam.final('x')
         d = e[p]
         N = d.count()

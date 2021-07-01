@@ -31,8 +31,10 @@ class BatchTab(GuiTab):
     def get(self, w, v, c, **kwargs):
         conf = {
             **{n: c[n].get_dict(v, w) for n in ['batch_methods', 'optimization', 'space_search']},
-            # 'exp': v['simulation_CONF1'],
-            'run_kwargs': {'save_data_flag': w['TOGGLE_save_data_flag'].metadata.state}
+            'run_kwargs': {
+                'save_data_flag': w['TOGGLE_save_data_flag'].metadata.state,
+                'enrichment': loadConf(v[self.selectionlists[0].k], 'Batch')['run_kwargs']['enrichment'],
+                           }
         }
         return copy.deepcopy(conf)
 

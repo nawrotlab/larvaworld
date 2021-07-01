@@ -206,18 +206,19 @@ def process(s,e,dt,Npoints,Ncontour, point, config=None,
     }
 
     with fun.suppress_stdout(show_output):
-        if 'angular' in types:
-            angular_processing(**c, distro_dir=distro_dir, **kwargs)
-        if 'spatial' in types:
-            spatial_processing(**c, dsp_dir=dsp_dir, **kwargs)
-        if 'source' in types:
-            if source is not None:
-                compute_bearingNdst2source(s, e, source=source, **kwargs)
-        if 'dispersion' in types:
-            compute_dispersion(s, e, dt, point, starts=dsp_starts, stops=dsp_stops, dir=dsp_dir, **kwargs)
+        if type(types)==list:
+            if 'angular' in types:
+                angular_processing(**c, distro_dir=distro_dir, **kwargs)
+            if 'spatial' in types:
+                spatial_processing(**c, dsp_dir=dsp_dir, **kwargs)
+            if 'source' in types:
+                if source is not None:
+                    compute_bearingNdst2source(s, e, source=source, **kwargs)
+            if 'dispersion' in types and type(dsp_starts)==list and type(dsp_stops)==list:
+                compute_dispersion(s, e, dt, point, starts=dsp_starts, stops=dsp_stops, dir=dsp_dir, **kwargs)
 
-        if 'tortuosity' in types:
-            compute_tortuosity(s, e, dt, durs_in_sec=tor_durs, **kwargs)
+            if 'tortuosity' in types and type(tor_durs)==list:
+                compute_tortuosity(s, e, dt, durs_in_sec=tor_durs, **kwargs)
         if traj_colors :
             try :
                 generate_traj_colors(s=s, sp_vel=None, ang_vel=None)

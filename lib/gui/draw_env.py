@@ -307,6 +307,7 @@ def draw_env(env=None):
 
     while True:
         e, v = w.read()
+        # print(e)
         info = w["info"]
         if e in [None, 'Cancel']:
             break
@@ -319,7 +320,7 @@ def draw_env(env=None):
             break  # exit
         # check_collapsibles(w, e, collapsibles)
         # check_toggles(w, e)
-        check_togglesNcollapsibles(w, e, collapsibles)
+        check_togglesNcollapsibles(w, e, v,collapsibles)
         if e == 'RESET_ARENA':
             s, arena, db = reset_arena(w, graph, arena_pars, env_db)
         elif e == 'NEW_ARENA':

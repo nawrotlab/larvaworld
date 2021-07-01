@@ -520,7 +520,7 @@ def plot_pauses(dataset, Npauses=10, save_to=None, plot_simulated=False, return_
 
 
 def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSsitters=False,
-              time_unit='hours', return_fig=False, sim_only=False,
+              time_unit='hours', return_fig=False, sim_only=False, force_ymin=None,color_epoch_quality=True,
               datasets=None, labels=None, show=False):
     warnings.filterwarnings('ignore')
     if save_to is None:
@@ -623,15 +623,23 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
 
     labels = [labels0[i] for i in idx]
     ylabels = [ylabels0[i] for i in idx]
+    Npars=len(labels)
+    figsize = (15, 4 * Npars)
+    fig, axs = plt.subplots(Npars, figsize=figsize, sharex=True, sharey=sharey)
+    axs = axs.ravel() if Npars > 1 else [axs]
 
-    figsize = (15, 3 * len(labels))
-    fig, axs = plt.subplots(len(labels), figsize=figsize, sharex=True, sharey=sharey)
-    axs = axs.ravel() if len(labels) > 1 else [axs]
+    rr0,gg0,bb0=q_col1=np.array([255, 0, 0])/255
+    rr1,gg1,bb1=q_col2=np.array([0, 255, 0])/255
+    quality_col_range=np.array([rr1-rr0,gg1-gg0,bb1-bb0])
 
     t0s, t1s, t2s, t3s, max_ages = [], [], [], [], []
     for d, id, c in zip(deb_dicts, ids, cols):
         t0, t1, t2, t3, age = d['birth'], d['pupation'], d['death'], d['sim_start'] + d['birth'], np.array(d['age'])
         epochs = np.array(d['epochs'])
+        if 'epoch_qs' in d.keys() :
+            epoch_qs=np.array(d['epoch_qs'])
+        else :
+            epoch_qs=np.zeros(len(epochs))
         if sim_only:
             t0 -= t3
             t1 -= t3
@@ -669,10 +677,11 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             ax.axvline(t1, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
             ax.axvline(t2, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
             if d['simulation']:
-                # ax.axvline(t3, color='grey', alpha=0.3, linestyle='dashed', linewidth=3)
                 ax.axvspan(0, t3, color='grey', alpha=0.05)
-            for st0, st1 in epochs:
-                ax.axvspan(st0, st1, color=c, alpha=0.2)
+            for (st0, st1),qq in zip(epochs,epoch_qs):
+                q_col = q_col1 + qq * quality_col_range if color_epoch_quality else c
+                ax.axvspan(st0, st1, color=q_col, alpha=0.2)
+
             ax.set_ylabel(yl, labelpad=15, fontsize=15)
             ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
             ax.tick_params(axis='y', labelsize=15)
@@ -681,6 +690,10 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             if l in ['pupation_buffer', 'explore2exploit_balance', 'R_faeces', 'R_absorbed', 'R_not_digested',
                      'gut_occupancy']:
                 ax.set_ylim([0, 1])
+            if force_ymin is not None :
+                ax.set_ylim(ymin=force_ymin)
+            if not sim_only :
+                ax.set_xlim(xmin=0)
             if l == 'f' or mode == 'fs':
                 ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
                 # ax.set_ylim(ymin=0)
@@ -690,8 +703,10 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         for t in [0, t0, t1, t2]:
             if not np.isnan(t):
                 try:
-                    ax.annotate('', xy=(t, 0), xycoords='data',
-                                xytext=(t, -0.2), textcoords='data',
+                    y0,y1=ax.get_ylim()
+                    ytext=y0-0.2*(y1-y0)
+                    ax.annotate('', xy=(t, y0), xycoords='data',
+                                xytext=(t, ytext), textcoords='data',
                                 arrowprops=dict(color='black', shrink=0.08, alpha=0.6)
                                 )
                 except:
@@ -710,8 +725,10 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     text_xs = [0, T0, T1, T2]
     for text, x in zip(texts, text_xs):
         try:
-            ax.annotate(text, xy=(x, 0), xycoords='data', fontsize=fontsize,
-                        xytext=(x, y), textcoords='data',
+            y0, y1 = ax.get_ylim()
+            ytext = y0 - 0.2 * (y1 - y0)
+            ax.annotate(text, xy=(x, y0), xycoords='data', fontsize=fontsize,
+                        xytext=(x, ytext), textcoords='data',
                         horizontalalignment='center', verticalalignment='top')
         except:
             pass
@@ -724,7 +741,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             ax.set_xticks(ticks=np.arange(0, np.max(max_ages), tickstep))
 
     dataset_legend(leg_ids, leg_cols, ax=axs[0], loc='upper left', fontsize=20, prop={'size': 15})
-    fig.subplots_adjust(top=0.95, bottom=0.2, left=0.15, right=0.93, hspace=0.02)
+    fig.subplots_adjust(top=0.95, bottom=0.25, left=0.15, right=0.93, hspace=0.02)
     return process_plot(fig, save_to, save_as, return_fig, show)
 
 

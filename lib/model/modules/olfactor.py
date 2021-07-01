@@ -71,6 +71,7 @@ class Olfactor(Effector):
         self.dCon = {}
         self.Nodors = len(odor_dict)
         self.odor_ids = list(odor_dict.keys())
+        # print(odor_dict)
         for id, p in odor_dict.items():
             if type(p) == dict:
                 m, s = p['mean'], p['std']

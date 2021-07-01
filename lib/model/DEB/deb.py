@@ -32,43 +32,44 @@ class Substrate:
         self.quality = quality # cm**3
         # Molecular weights (g/mol)
         self.w_dict={
-            'glu' : 180.18,
-            'dex' : 198.17,
+            'glucose' : 180.18,
+            'dextrose' : 198.17,
             'saccharose' : 342.30,
             'yeast' : 274.3, # Baker's yeast
             'agar' : 336.33,
             'cornmeal' : 359.33,
             'water' : 18.01528,
         }
+        self.d_dict=dtypes.substrate_dict[type]
         # Compound densities (g/cm**3)
-        if type=='standard' :
-            self.d_dict = {
-                'glu': 100 / 1000,
-                'dex': 0,
-                'saccharose': 0,
-                'yeast': 50 / 1000,
-                'agar': 16 / 1000,
-                'cornmeal': 0,
-            }
-        elif type=='cornmeal' :
-            self.d_dict = {
-                'glu':  517 / 17000,
-                'dex': 1033 / 17000,
-                'saccharose': 0,
-                'yeast': 0,
-                'agar': 93 / 17000,
-                'cornmeal': 1716 / 17000,
-            }
-
-        elif type=='PED_tracker' :
-            self.d_dict = {
-                'glu':  0,
-                'dex': 0,
-                'saccharose': 2/200,
-                'yeast': 3*self.V_drop*self.d_yeast_drop/0.1,
-                'agar': 500*2 / 200,
-                'cornmeal': 0,
-            }
+        # if type=='standard' :
+        #     self.d_dict = {
+        #         'glucose': 100 / 1000,
+        #         'dextrose': 0,
+        #         'saccharose': 0,
+        #         'yeast': 50 / 1000,
+        #         'agar': 16 / 1000,
+        #         'cornmeal': 0,
+        #     }
+        # elif type=='cornmeal' :
+        #     self.d_dict = {
+        #         'glucose':  517 / 17000,
+        #         'dextrose': 1033 / 17000,
+        #         'saccharose': 0,
+        #         'yeast': 0,
+        #         'agar': 93 / 17000,
+        #         'cornmeal': 1716 / 17000,
+        #     }
+        #
+        # elif type=='PED_tracker' :
+        #     self.d_dict = {
+        #         'glucose':  0,
+        #         'dextrose': 0,
+        #         'saccharose': 2/200,
+        #         'yeast': 3*self.V_drop*self.d_yeast_drop/0.1,
+        #         'agar': 500*2 / 200,
+        #         'cornmeal': 0,
+        #     }
         
         self.d = self.d_water + sum(list(self.d_dict.values()))
         self.C=self.get_C()
@@ -79,7 +80,7 @@ class Substrate:
 
         # self.K=K
 
-    def get_X(self, quality=None, compounds = ['glu', 'dex', 'yeast', 'cornmeal', 'saccharose'], return_sum=True):
+    def get_X(self, quality=None, compounds = ['glucose', 'dextrose', 'yeast', 'cornmeal', 'saccharose'], return_sum=True):
         if quality is None :
             quality=self.quality
         # print(type(quality))
@@ -173,6 +174,8 @@ class DEB:
         if y_E_X is not None :
             self.y_E_X = y_E_X
         self.epochs = []
+        self.epoch_fs = []
+        self.epoch_qs = []
         self.dict_file = None
 
         # Larva stage flags
@@ -644,7 +647,7 @@ class DEB:
         return self.Lw * 10 / 1000
 
 
-    def grow_larva(self, hours_as_larva=None, epochs=None, fs=None):
+    def grow_larva(self, hours_as_larva=None, epochs=None, epoch_qs=None):
         c= {'assimilation_mode' : 'sim'}
         if epochs is None or epochs==[]:
             if hours_as_larva is not None:
@@ -667,16 +670,17 @@ class DEB:
             t = 0
             Nepochs = len(epochs)
             # print(fs, growth_epochs, epochs)
-            if fs is None:
-                fs = [0] * Nepochs
-            elif type(fs) == float:
-                fs = [fs] * Nepochs
-            elif len(fs) != Nepochs:
+            if epoch_qs is None:
+                epoch_qs = [0] * Nepochs
+            elif type(epoch_qs) == float:
+                epoch_qs = [epoch_qs] * Nepochs
+            elif len(epoch_qs) != Nepochs:
                 raise ValueError(
-                    f'Number of functional response values : {len(fs)} does not much number of epochs : {Nepochs}')
+                    f'Number of functional response values : {len(epoch_qs)} does not much number of epochs : {Nepochs}')
             # print(fs, growth_epochs)
+            epoch_fs=[self.substrate.get_f(K=self.K, quality=q) for q in epoch_qs]
             max_age = (self.birth_time_in_hours + hours_as_larva) / 24 if hours_as_larva is not None else np.inf
-            for (s0, s1), f in zip(growth_epochs, fs[:len(growth_epochs)]):
+            for (s0, s1), f in zip(growth_epochs, epoch_fs[:len(growth_epochs)]):
                 N0 = int(self.steps_per_day / 24 * (s0 - t))
                 for i in range(N0):
                     if self.stage == 'larva' and self.age <= max_age:
@@ -686,7 +690,7 @@ class DEB:
                     if self.stage == 'larva' and self.age <= max_age:
                         # print(f)
                         self.run(f=f, **c)
-                t += s1
+                t = s1
             if hours_as_larva is not None:
                 self.hours_as_larva = hours_as_larva
                 N2 = int(self.steps_per_day / 24 * (hours_as_larva - t))
@@ -697,7 +701,8 @@ class DEB:
                 while self.stage == 'larva':
                     self.run(**c)
                 self.hours_as_larva = self.pupation_time_in_hours - self.birth_time_in_hours
-            self.epochs = self.store_epochs(epochs)
+            self.epochs, self.epoch_qs = self.store_epochs(epochs, epoch_qs)
+            self.epoch_fs = [self.substrate.get_f(K=self.K, quality=q) for q in self.epoch_qs]
             # print(fs, epochs, self.epochs)
 
     @ property
@@ -749,6 +754,8 @@ class DEB:
             d['simulation'] = self.simulation
             d['sim_start'] = self.hours_as_larva
             d['epochs'] = self.epochs
+            d['epoch_fs'] = self.epoch_fs
+            d['epoch_qs'] = self.epoch_qs
             d['fr'] = 1 / (self.dt * 24 * 60 * 60)
             d['feed_freq_estimate'] = self.fr_feed
             d['f_mean'] = np.mean(d['f'])
@@ -769,15 +776,17 @@ class DEB:
         else :
             return {**self.dict, **self.gut.dict}
 
-    def store_epochs(self, epochs):
+    def store_epochs(self, epochs, fs):
         t0 = self.birth_time_in_hours
         t1 = self.pupation_time_in_hours
         t2 = self.death_time_in_hours
         epochs = [[s0 + t0, s1 + t0] for [s0, s1] in epochs]
         for t in [t1, t2]:
             if not np.isnan(t):
-                epochs = [[s0, np.clip(s1, a_min=s0, a_max=t)] for [s0, s1] in epochs if s0 <= t]
-        return epochs
+                f_epochs = [[(s0, np.clip(s1, a_min=s0, a_max=t)),f] for [s0, s1], f in zip(epochs,fs) if s0 <= t]
+        epochs=[(s0,s1) for (s0,s1),f in f_epochs]
+        fs=[f for (s0,s1),f in f_epochs]
+        return epochs,fs
 
     def save_dict(self, path=None):
         if path is None :
@@ -811,18 +820,19 @@ class DEB:
     def get_p_A(self, f, assimilation_mode):
         self.deb_p_A = self.p_Amm_dt * self.base_f * self.V
         self.sim_p_A = self.p_Amm_dt * f * self.V
-        self.gut_p_A = self.gut.p_A
+
         if assimilation_mode == 'sim':
             return self.sim_p_A
         elif assimilation_mode == 'gut':
+            self.gut_p_A = self.gut.p_A
             return self.gut.p_A
         elif assimilation_mode == 'deb':
             return self.deb_p_A
 
-def deb_default(id='DEB model', epochs=None, fs=None, substrate_quality=1.0, steps_per_day=24 * 60, **kwargs):
+def deb_default(id='DEB model', epochs=None, epoch_qs=None, substrate_quality=1.0, steps_per_day=24 * 60, **kwargs):
     deb = DEB(id=id, steps_per_day=steps_per_day, substrate_quality=substrate_quality, simulation=False, use_gut=False, **kwargs)
     # print(id, deb.base_f)
-    deb.grow_larva(epochs=epochs, fs=fs, hours_as_larva=None)
+    deb.grow_larva(epochs=epochs, epoch_qs=epoch_qs, hours_as_larva=None)
     deb.finalize_dict()
     d = deb.return_dict()
     return d
@@ -890,15 +900,16 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample='Fed', use_hun
 
 if __name__ == '__main__':
     dt_bite=1/(24*60*60)*2
-    for s in ['standard'] :
-    # for s in ['standard', 'cornmeal', 'PED_tracker'] :
+    # for s in ['standard'] :
+    for s in ['standard', 'cornmeal', 'PED_tracker'] :
         q=1
         V_bite=0.0005
         deb=DEB(substrate_quality=q, assimilation_mode='sim', steps_per_day=24*60, V_bite=V_bite, substrate_type=s)
         # dt_bite=1/deb.get_feed_freq_estimate(unit='day')
         # print(deb.J_X_Amm*deb.base_f*dt_bite)
         # print(1/deb.get_feed_freq_estimate())
-        print(deb.substrate.get_mol(deb.V_bite, quality=deb.substrate_quality))
+        print(s)
+        print([[q, deb.substrate.get_f(K=deb.K, quality=q)] for q in np.arange(0,1.01,0.5)])
         continue
         th_F=0.01
         th_X=deb.gut.V_gm

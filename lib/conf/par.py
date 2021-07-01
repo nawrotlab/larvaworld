@@ -792,7 +792,7 @@ def build_par_dict(save=True, df=None):
     df=build_angular_par_dict(df)
     df=build_chunk_par_dict(df)
 
-    df = add_par(df, p='amount_eaten', k='f_am', u=1 * siu.m ** 3, o=Larva, d='ingested food volume',
+    df = add_par(df, p='amount_eaten', k='f_am', u=1 * siu.m ** 3, o=Larva, d='ingested_food_volume',
                  s=sub('V', 'ingested'))
     df = add_par(df, p='lin_activity', k='Act_cr', o=Larva, d='crawler output', s=sub('A', 'crawl'))
     df = add_par(df, p='ang_activity', k='Act_tur', o=Larva, d='turner output', s=subsup('A', 'tur', 'out'))

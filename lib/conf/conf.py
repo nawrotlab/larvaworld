@@ -483,4 +483,6 @@ def next_idx(exp, type='single'):
         json.dump(idx_dict, fp)
     return idx_dict[type][exp]
 
+# print(env_dict['odor_pref_test']['food_params']['source_units'])
+
 

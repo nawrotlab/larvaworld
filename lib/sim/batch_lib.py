@@ -161,6 +161,7 @@ def load_default_configuration(traj, sim_config):
     if env is not None:
         env_dict = fun.flatten_dict(env, parent_key='env_params', sep='.')
         for k, v in env_dict.items():
+            # print(k,v)
             traj.f_apar(k, v)
 
     if life is not None:
@@ -349,24 +350,30 @@ def post_processing(traj, result_tuple):
     traj.f_store()
 
 
-def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag=False, **kwargs):
-
+def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag=False,
+               enrichment=None, **kwargs):
+    # print(enrichment)
+    # raise
     start = time.time()
     env_params = fun.reconstruct_dict(traj.f_get('env_params'))
     sim_params = fun.reconstruct_dict(traj.f_get('sim_params'))
     life_params = fun.reconstruct_dict(traj.f_get('life_params'))
-    enrichment = fun.reconstruct_dict(traj.f_get('enrichment'))
+    # enrichment = fun.reconstruct_dict(traj.f_get('enrichment'))
+    collections=traj.collections
     sim_params['sim_ID'] = f'run_{traj.v_idx}'
     d = run_sim(
         env_params=env_params,
         sim_params=sim_params,
         life_params=life_params,
-        collections=traj.collections,
+        collections=collections,
         vis_kwargs=dtypes.get_dict('visualization'),
         save_data_flag=save_data_flag,
         enrichment=enrichment,
         # enrich=True,
         **kwargs)
+
+    # print(d.step_data)
+    # print(d.endpoint_data)
 
     if process_method is None:
         results = np.nan
@@ -409,6 +416,7 @@ def _batch_run(dir='unnamed',
                post_kwargs={},
                run_kwargs={}
                ):
+    s0=time.time()
     # print(dir)
     # raise
     # saved_args = locals()
@@ -466,7 +474,10 @@ def _batch_run(dir='unnamed',
     env.disable_logging()
     print('Batch run complete')
     if final_process_method is not None:
-        return final_process_method(env.traj)
+        res = final_process_method(env.traj)
+    s1 = time.time()
+    print(f'Batch-run completed in {np.round(s1-s0).astype(int)} seconds!')
+    return res
 
 
 def config_traj(traj, optimization):

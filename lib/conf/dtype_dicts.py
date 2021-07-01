@@ -257,6 +257,33 @@ def null_distro(class_name, basic=True):
                 pass
     return distro
 
+# Compound densities (g/cm**3)
+substrate_dict = {
+    'standard': {
+        'glucose': 100 / 1000,
+        'dextrose': 0,
+        'saccharose': 0,
+        'yeast': 50 / 1000,
+        'agar': 16 / 1000,
+        'cornmeal': 0,
+    },
+    'cornmeal': {
+                'glucose':  517 / 17000,
+                'dextrose': 1033 / 17000,
+                'saccharose': 0,
+                'yeast': 0,
+                'agar': 93 / 17000,
+                'cornmeal': 1716 / 17000,
+            },
+    'PED_tracker': {
+        'glucose': 0,
+        'dextrose': 0,
+        'saccharose': 2 / 200,
+        'yeast': 3 * 0.05 * 0.125 / 0.1,
+        'agar': 500 * 2 / 200,
+        'cornmeal': 0,
+    }
+}
 
 all_null_dicts = {
     'odor':
@@ -465,10 +492,10 @@ all_null_dicts = {
         'interpolate_nans': False,
         'filter_f': None
     },
-    'processing': {'types': [],
-                   'dsp_starts': [], 'dsp_stops': [],
-                   'tor_durs': []},
-    'annotation': {'bouts': [], 'track_point': None,
+    'processing': {'types': None,
+                   'dsp_starts': None, 'dsp_stops': None,
+                   'tor_durs': None},
+    'annotation': {'bouts': None, 'track_point': None,
                    'track_pars': None, 'chunk_pars': None,
                    'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 0.0,
                    'non_chunks': False},
@@ -476,6 +503,7 @@ all_null_dicts = {
                    'mode': 'minimal',
                    'source': None,
                    },
+    'substrate' : substrate_dict['standard']
 
 }
 all_null_dicts['enrichment'] = {k: all_null_dicts[k] for k in
@@ -729,7 +757,8 @@ def get_dict_dtypes(name, **kwargs):
         'enrich_aux': {'recompute': bool,
                        'mode': ['minimal', 'full'],
                        'source': Tuple[float, float],
-                       }
+                       },
+        'substrate': { k : float for k in substrate_dict['standard'].keys()}
 
     }
     all_dtypes['enrichment'] = {k: all_dtypes[k] for k in ['preprocessing', 'processing', 'annotation', 'enrich_aux']}
@@ -865,3 +894,6 @@ def new_odor_dict(ids: list, means: list, stds=None) -> dict:
         odor_dict[id] = {'mean': m,
                          'std': s}
     return odor_dict
+
+
+

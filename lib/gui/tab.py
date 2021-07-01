@@ -141,18 +141,15 @@ class SelectionList:
             for kk, vv in self.sublists.items():
                 conf[kk] = v[vv.k]
             id = self.save(conf)
-            self.update(w, id)
+            if id is not None :
+                self.update(w, id)
         elif e == f'DELETE_{n}' and id != '':
             deleteConf(id, k0)
             self.update(w)
         elif e == f'RUN_{n}' and id != '':
-            # print([v[l.k] for l in self.tab.selectionlists])
             conf = self.tab.get(w, v, c, as_entry=False)
-            # print(conf)
             for kk, vv in self.sublists.items():
-                # print(self.k, kk, vv.k, vv.conftype)
                 conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
-            # print(conf)
             d,g=self.tab.run(v,w,c,d,g, conf, id)
             self.set_d(d)
             self.set_g(g)
@@ -160,7 +157,6 @@ class SelectionList:
             conf = self.tab.get(w, v, c, as_entry=False)
             new_conf = self.tab.edit(conf)
             self.tab.update(w, c, new_conf, id=None)
-            # self.update(new_env, w, c)
 
     def update(self, w, id='', all=False):
         # w=self.w()
@@ -182,7 +178,9 @@ class SelectionList:
         if e == 'Ok':
             id = v[f'{n}_ID']
             saveConf(conf, self.conftype, id)
-        return id
+            return id
+        elif e== 'Cancel' :
+            return None
 
         # for i in range(3):
         #     k = f'{self.conf_k}{i}'
