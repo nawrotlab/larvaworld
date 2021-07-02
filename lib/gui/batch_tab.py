@@ -71,8 +71,8 @@ class BatchTab(GuiTab):
 
     def run(self, v, w, c, d, g, conf, id):
         from lib.sim.batch_lib import prepare_batch, batch_run
-        conf['exp']['sim_params']['path'] = id
-        batch_kwargs = prepare_batch(conf, v[f'{self.name}_id'])
+        # conf['exp']['sim_params']['path'] = id
+        batch_kwargs = prepare_batch(conf, v[f'{self.name}_id'], id)
         # print(list(batch_kwargs.keys()))
         # batch_kwargs = prepare_batch(conf, batch_id, exp_conf)
         # dicts['batch_kwargs']=batch_kwargs

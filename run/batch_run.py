@@ -46,9 +46,9 @@ for k in ['pars', 'ranges', 'Ngrid'] :
         space_kwargs[k] = batch_conf['space_search'][k]
 batch_conf['space_search']=space_kwargs
 
-exp_conf = get_exp_conf(batch_conf['exp'],  sim_kwargs, life_kwargs, **place_kwargs)
+batch_conf['exp'] = get_exp_conf(batch_conf['exp'],  sim_kwargs, life_kwargs, **place_kwargs)
 
-batch_kwargs = prepare_batch(batch_conf, batch_id, exp_conf)
+batch_kwargs = prepare_batch(batch_conf, batch_id, batch_type)
 
 batch_run(**batch_kwargs)
 

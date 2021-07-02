@@ -75,16 +75,17 @@ def batch_methods(run='default', post='default', final='null'):
             'finfunc': final_process_method_dict[final], }
 
 
-def prepare_batch(batch, batch_id):
+def prepare_batch(batch, batch_id, batch_type):
     space = grid_search_dict(**batch['space_search'])
     if batch['optimization'] is not None:
         batch['optimization']['ranges'] = np.array(batch['space_search']['ranges'])
     print(list(batch.keys()))
     # exp_conf['sim_params']['path'] = batch_type
     prepared_batch = {
-        'space': space,
+        'batch_type': batch_type,
         'batch_id': batch_id,
         'exp': batch['exp'],
+        'space': space,
         **batch_methods(**batch['batch_methods']),
         'optimization': batch['optimization'],
         'exp_kws': batch['exp_kws'],
@@ -332,6 +333,7 @@ def post_processing(traj, result_tuple):
 def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}):
     sim = fun.reconstruct_dict(traj.f_get('sim_params'))
     sim['sim_ID'] = f'run_{traj.v_idx}'
+    sim['path'] = traj.config.dataset_path
     with fun.suppress_stdout(False):
         d = run_sim(
             env_params=fun.reconstruct_dict(traj.f_get('env_params')),
@@ -355,10 +357,11 @@ def batch_run(*args, **kwargs):
     return _batch_run(*args, **kwargs)
 
 
-def get_batch_env(batch_id, dir_path, overwrite, exp, params, optimization, space, **env_kws):
+def get_batch_env(batch_id, dir_path, exp, params, optimization, space, **env_kws):
     traj_name = f'{batch_id}_traj'
     filename = f'{dir_path}/{batch_id}.hdf5'
-    if os.path.exists(dir_path) and overwrite == False:
+    if os.path.exists(dir_path):
+    # if os.path.exists(dir_path) and overwrite == False:
         try:
             env = Environment(continuable=True)
             env.resume(trajectory_name=traj_name, resume_folder=dir_path)
@@ -386,7 +389,9 @@ def get_batch_env(batch_id, dir_path, overwrite, exp, params, optimization, spac
             raise ValueError('Loading, resuming or creating a new environment failed')
 
 
-def _batch_run(batch_id='template',
+def _batch_run(
+        batch_type='unnamed',
+        batch_id='template',
                space=None,
                save_hdf5=False,
                runfunc=single_run,
@@ -395,7 +400,7 @@ def _batch_run(batch_id='template',
                finfunc=None,
                multiproc=True,
                resumable=True,
-               overwrite=False,
+               # overwrite=False,
                exp=None,
                params=None,
                optimization=None,
@@ -403,20 +408,21 @@ def _batch_run(batch_id='template',
                exp_kws={}
                ):
     s0 = time.time()
-    dir_path = f'{paths.BatchRunFolder}/{batch_id}'
+    dir_path = f'{paths.BatchRunFolder}/{batch_type}/{batch_id}'
     env_kws = {
         'file_title': batch_id,
         'comment': f'{batch_id} batch run!',
         'multiproc': multiproc,
         'resumable': resumable,
         'large_overview_tables': True,
+        'summary_tables': True,
         'overwrite_file': True,
         'resume_folder': dir_path,
         'ncores': 4,
         # 'ncores': os.cpu_count(),
         'use_pool': True,  # Our runs are inexpensive we can get rid of overhead by using a pool
         'freeze_input': True,  # We can avoid some overhead by freezing the input to the pool
-        'wrap_mode': pypetconstants.WRAP_MODE_LOCK,
+        # 'wrap_mode': pypetconstants.WRAP_MODE_LOCK,
         # wrap_mode=pypetconstants.WRAP_MODE_QUEUE if multiproc else pypetconstants.WRAP_MODE_LOCK,
         'graceful_exit': True,
     }
@@ -431,7 +437,7 @@ def _batch_run(batch_id='template',
                        }
     }
     env = get_batch_env(batch_id, dir_path,
-                        overwrite=overwrite,
+                        # overwrite=overwrite,
                         exp=exp,
                         params=params,
                         optimization=optimization,
