@@ -1179,20 +1179,6 @@ def unique_list(l):
     return [x for x in l if not (x in seen or seen_add(x))]
 
 
-# def agents_spatial_query(pos, radius, agent_list):
-#     if len(agent_list) == 0:
-#         return []
-#
-#     agent_positions = np.array([agent.get_position() for agent in agent_list])
-#     agent_radii = np.array([agent.get_radius() for agent in agent_list])
-#     dsts = np.linalg.norm(agent_positions - pos, axis=1) - agent_radii
-#     inds = np.where(dsts <= radius)[0]
-#     valid = [agent_list[i] for i in inds if agent_list[i].amount > 0]
-#     valid = [a for a in agent_list if (a.contained(pos) and a.amount>0)]
-#     # print(valid)
-#     return valid
-
-
 def agent_dict2list(dic, header='unique_id'):
     # print(dic)
     l = []

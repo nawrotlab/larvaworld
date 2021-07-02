@@ -229,6 +229,42 @@ class GuiTab:
     def update(self, w, c, conf, id):
         pass
 
+    def fork(self, func, kwargs):
+        import os
+        import signal
+        import sys
+        def handle_signal(signum, frame):
+            print('Caught signal "%s"' % signum)
+            if signum == signal.SIGTERM:
+                print('SIGTERM. Exiting!')
+                sys.exit(1)
+            elif signum == signal.SIGHUP:
+                print('SIGHUP')
+            elif signum == signal.SIGUSR1:
+                print('SIGUSR1 Calling wait()')
+                pid, status = os.wait()
+                print('PID was: %s.' % pid)
+
+        print('Starting..')
+        signal.signal(signal.SIGCHLD, handle_signal)
+        signal.signal(signal.SIGHUP, handle_signal)
+        signal.signal(signal.SIGTERM, handle_signal)
+        signal.signal(signal.SIGUSR1, handle_signal)
+
+        try:
+            ff_pid = os.fork()
+        except OSError as err:
+            print('Unable to fork: %s' % err)
+        # print(ff_pid)
+        if ff_pid > 0:
+            # Parent.
+            print('First fork.')
+            print('Child PID: %d' % ff_pid)
+        elif ff_pid == 0:
+            res=func(**kwargs)
+            # return res
+            # sys.exit(0)
+
 
 class IntroTab(GuiTab):
     # def __init__(self, **kwargs):

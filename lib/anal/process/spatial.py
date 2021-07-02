@@ -147,10 +147,6 @@ def compute_spatial_metrics(s, e, dt, Npoints, point, mode='minimal'):
         Dcum = np.zeros([Nticks, Nids]) * np.nan
         V = np.zeros([Nticks, Nids]) * np.nan
         A = np.zeros([Nticks, Nids]) * np.nan
-        sD = np.zeros([Nticks, Nids]) * np.nan
-        sDcum = np.zeros([Nticks, Nids]) * np.nan
-        sV = np.zeros([Nticks, Nids]) * np.nan
-        sA = np.zeros([Nticks, Nids]) * np.nan
 
         for i, data in enumerate(all_d):
             v, d = fun.compute_velocity(xy=data[xy].values, dt=dt, return_dst=True)

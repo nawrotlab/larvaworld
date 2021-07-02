@@ -153,15 +153,16 @@ class LifeTab(GuiTab):
             if len(v[K]) > 0:
                 w.Element(K).remove_row(w, v[K][0])
                 w.write_event_value('Draw', 'Draw the initial plot')
-        elif e in [Sq]:
-            w.write_event_value('Draw', 'Draw the initial plot')
+        # elif e in [Sq]:
+        #     w.write_event_value('Draw', 'Draw the initial plot')
 
         elif e == 'Draw':
-            D = deb_default(**self.get(w, v, c))
-            for Sii in [S0, S1, Sa]:
-                w.Element(Sii).Update(range=(0.0, D['pupation'] - D['birth']))
-            fig, save_to, filename = plot_debs(deb_dicts=[D], mode=v[g[self.name].list_key][0], return_fig=True)
-            g[self.name].draw_fig(w,fig)
+            if v[Sq]>0 :
+                D = deb_default(**self.get(w, v, c))
+                for Sii in [S0, S1, Sa]:
+                    w.Element(Sii).Update(range=(0.0, D['pupation'] - D['birth']))
+                fig, save_to, filename = plot_debs(deb_dicts=[D], mode=v[g[self.name].list_key][0], return_fig=True)
+                g[self.name].draw_fig(w,fig)
 
         elif e in [S0, S1]:
             if e == S0 and v[S0] > v[S1]:

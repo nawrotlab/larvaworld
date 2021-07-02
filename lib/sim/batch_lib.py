@@ -83,7 +83,6 @@ def prepare_batch(batch, batch_id):
     # exp_conf['sim_params']['path'] = batch_type
     prepared_batch = {
         'space': space,
-        'dir': batch_id,
         'batch_id': batch_id,
         'sim_config': batch['exp'],
         **batch_methods(**batch['batch_methods']),
@@ -352,33 +351,28 @@ def post_processing(traj, result_tuple):
 
 def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag=False,
                enrichment=None, **kwargs):
-    # print(enrichment)
-    # raise
     start = time.time()
     env_params = fun.reconstruct_dict(traj.f_get('env_params'))
     sim_params = fun.reconstruct_dict(traj.f_get('sim_params'))
     life_params = fun.reconstruct_dict(traj.f_get('life_params'))
     # enrichment = fun.reconstruct_dict(traj.f_get('enrichment'))
-    collections=traj.collections
+    collections = traj.collections
     sim_params['sim_ID'] = f'run_{traj.v_idx}'
-    d = run_sim(
-        env_params=env_params,
-        sim_params=sim_params,
-        life_params=life_params,
-        collections=collections,
-        vis_kwargs=dtypes.get_dict('visualization'),
-        save_data_flag=save_data_flag,
-        enrichment=enrichment,
-        # enrich=True,
-        **kwargs)
+    with fun.suppress_stdout(False):
+        d = run_sim(
+            env_params=env_params,
+            sim_params=sim_params,
+            life_params=life_params,
+            collections=collections,
+            vis_kwargs=dtypes.get_dict('visualization'),
+            save_data_flag=save_data_flag,
+            enrichment=enrichment,
+            **kwargs)
 
-    # print(d.step_data)
-    # print(d.endpoint_data)
-
-    if process_method is None:
-        results = np.nan
-    else:
-        d, results = process_method(traj, d)
+        if process_method is None:
+            results = np.nan
+        else:
+            d, results = process_method(traj, d)
 
     # FIXME  For some reason the multiindex dataframe cannot be saved as it is.
     #  So I have to drop a level (and it does not work if I add it again).
@@ -399,15 +393,68 @@ def batch_run(*args, **kwargs):
     return _batch_run(*args, **kwargs)
 
 
-def _batch_run(dir='unnamed',
-               batch_id='template',
+def get_batch_env(batch_id, dir_path,overwrite,sim_config,params,optimization, space,**env_kwargs):
+    traj_name = f'{batch_id}_traj'
+    filename = f'{dir_path}/{batch_id}.hdf5'
+    # build_new = True
+    if os.path.exists(dir_path) and overwrite == False:
+        print('Resuming existing trajectory')
+        try:
+            env = Environment(continuable=True)
+            env.resume(trajectory_name=traj_name, resume_folder=dir_path)
+            print('Resumed existing trajectory')
+            return env
+            # build_new = False
+        except:
+            pass
+    print('Loading existing trajectory')
+    try:
+        traj = load_trajectory(filename=filename, name=traj_name, load_all=0)
+        env = Environment(trajectory=traj, **env_kwargs)
+        traj = config_traj(traj, optimization)
+        traj.f_load(index=None, load_parameters=2, load_results=0)
+        traj.f_expand(space)
+        print('Loaded existing trajectory')
+        return env
+        # build_new = False
+    except:
+        print('Creating novel environment')
+
+        # if build_new:
+        try:
+            env = Environment(trajectory=traj_name,
+                          filename=filename,
+                          # file_title=batch_id,
+                          # comment=f'{batch_id} batch run!',
+                          # large_overview_tables=True,
+                          # overwrite_file=True,
+                          # resumable=resumable,
+                          # resume_folder=dir_path,
+                          # multiproc=multiproc,
+                          # ncores=os.cpu_count(),
+                          # use_pool=True,  # Our runs are inexpensive we can get rid of overhead by using a pool
+                          # freeze_input=True,  # We can avoid some overhead by freezing the input to the pool
+                          # wrap_mode=pypetconstants.WRAP_MODE_LOCK,
+                          # wrap_mode=pypetconstants.WRAP_MODE_QUEUE if multiproc else pypetconstants.WRAP_MODE_LOCK,
+                          # graceful_exit=True,
+                          **env_kwargs)
+            print('Created novel environment')
+            traj = prepare_traj(env.traj, sim_config, params, batch_id, dir_path)
+            traj = config_traj(traj, optimization)
+            traj.f_explore(space)
+            return env
+        except :
+            raise ValueError ('Loading, resuming or creating a new environment failed')
+
+
+def _batch_run(batch_id='template',
                space=None,
                save_data_in_hdf5=False,
                single_method=single_run,
                process_method=null_processing,
                post_process_method=None,
                final_process_method=None,
-               multiprocessing=True,
+               multiproc=True,
                resumable=True,
                overwrite=False,
                sim_config=None,
@@ -416,57 +463,32 @@ def _batch_run(dir='unnamed',
                post_kwargs={},
                run_kwargs={}
                ):
-    s0=time.time()
-    # print(dir)
-    # raise
-    # saved_args = locals()
-    traj_name = f'{batch_id}_traj'
+    s0 = time.time()
     parent_dir = f'{paths.BatchRunFolder}/{dir}'
     dir_path = os.path.join(parent_dir, batch_id)
-    filename = f'{dir_path}/{batch_id}.hdf5'
-    build_new = True
-    # print(dir_path)
-    # raise
-    if os.path.exists(parent_dir) and os.path.exists(dir_path) and overwrite == False:
-        build_new = False
-        try:
-            env = Environment(continuable=True)
-            env.resume(trajectory_name=traj_name, resume_folder=dir_path)
-            print('Resumed existing trajectory')
-            build_new = False
-        except:
-            try:
-                traj = load_trajectory(filename=filename, name=traj_name, load_all=0)
-                env = Environment(trajectory=traj, multiproc=True, ncores=4)
-                traj = config_traj(traj, optimization)
-                traj.f_load(index=None, load_parameters=2, load_results=0)
-                traj.f_expand(space)
-                print('Loaded existing trajectory')
-                build_new = False
-            except:
-                print('Neither of resuming or expanding of existing trajectory worked')
-
-    if build_new:
-
-        env = Environment(trajectory=traj_name,
-                          filename=filename,
-                          file_title=batch_id,
-                          comment=f'{batch_id} batch run!',
-                          large_overview_tables=True,
-                          overwrite_file=True,
-                          resumable=False,
-                          resume_folder=dir_path,
-                          multiproc=multiprocessing,
-                          ncores=4,
-                          use_pool=True,  # Our runs are inexpensive we can get rid of overhead by using a pool
-                          freeze_input=True,  # We can avoid some overhead by freezing the input to the pool
-                          wrap_mode=pypetconstants.WRAP_MODE_QUEUE if multiprocessing else pypetconstants.WRAP_MODE_LOCK,
-                          graceful_exit=True)
-        print('Created novel environment')
-        traj = prepare_traj(env.traj, sim_config, params, batch_id, parent_dir, dir_path)
-        traj = config_traj(traj, optimization)
-        traj.f_explore(space)
-
+    env_kwargs = {
+        'file_title': batch_id,
+        'comment': f'{batch_id} batch run!',
+        'multiproc': multiproc,
+        'resumable': resumable,
+        'large_overview_tables': True,
+        'overwrite_file': True,
+        'resume_folder': dir_path,
+        'ncores': 4,
+        # 'ncores': os.cpu_count(),
+        'use_pool': True,  # Our runs are inexpensive we can get rid of overhead by using a pool
+        'freeze_input': True,  # We can avoid some overhead by freezing the input to the pool
+        'wrap_mode': pypetconstants.WRAP_MODE_LOCK,
+        # wrap_mode=pypetconstants.WRAP_MODE_QUEUE if multiproc else pypetconstants.WRAP_MODE_LOCK,
+        'graceful_exit': True,
+    }
+    env = get_batch_env(batch_id, dir_path,
+                        overwrite=overwrite,
+                        sim_config=sim_config,
+                        params=params,
+                        optimization=optimization,
+                        space=space,
+                        **env_kwargs)
     if post_process_method is not None:
         env.add_postprocessing(post_process_method, **post_kwargs)
     env.run(single_method, process_method, save_data_in_hdf5=save_data_in_hdf5, save_to=dir_path,
@@ -476,7 +498,7 @@ def _batch_run(dir='unnamed',
     if final_process_method is not None:
         res = final_process_method(env.traj)
     s1 = time.time()
-    print(f'Batch-run completed in {np.round(s1-s0).astype(int)} seconds!')
+    print(f'Batch-run completed in {np.round(s1 - s0).astype(int)} seconds!')
     return res
 
 
@@ -488,7 +510,7 @@ def config_traj(traj, optimization):
     return traj
 
 
-def prepare_traj(traj, sim_config, params, batch_id, parent_dir_path, dir_path):
+def prepare_traj(traj, sim_config, params, batch_id, dir_path):
     traj = load_default_configuration(traj, sim_config)
     if params is not None:
         for p in params:
@@ -497,7 +519,7 @@ def prepare_traj(traj, sim_config, params, batch_id, parent_dir_path, dir_path):
     plot_path = os.path.join(dir_path, f'{batch_id}.pdf')
     data_path = os.path.join(dir_path, f'{batch_id}.csv')
 
-    traj.f_aconf('parent_dir_path', parent_dir_path, comment='Parent directory')
+    # traj.f_aconf('parent_dir_path', parent_dir_path, comment='Parent directory')
     traj.f_aconf('dir_path', dir_path, comment='Directory for saving data')
     traj.f_aconf('plot_path', plot_path, comment='File for saving plot')
     traj.f_aconf('data_path', data_path, comment='File for saving data')

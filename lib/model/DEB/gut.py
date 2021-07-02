@@ -265,5 +265,6 @@ class Gut:
         elif unit == 'mg':
             return m * 1000
 
+    @property
     def ingested_volume(self):
         return self.mol_ingested * self.deb.w_X / self.deb.d_X

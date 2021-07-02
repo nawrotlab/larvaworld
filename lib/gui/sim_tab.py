@@ -78,7 +78,11 @@ class SimTab(GuiTab):
         default_vis=dtypes.get_dict('visualization')
         vis_kwargs = c['Visualization'].get_dict(v, w) if 'Visualization' in list(
             c.keys()) else default_vis
-        dd = run_sim(**conf, vis_kwargs=vis_kwargs, progress_bar=w[p.k])
+        kws={**conf,
+             'vis_kwargs' : vis_kwargs,
+             'progress_bar' : w[p.k]
+             }
+        dd = run_sim(**kws)
         if dd is not None:
             w[p.k_complete].update(visible=True)
             if 'analysis_data' in d.keys() :

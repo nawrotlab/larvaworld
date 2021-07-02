@@ -743,7 +743,7 @@ class DEB:
         if self.gut is not None :
             self.gut.update_dict()
 
-    def finalize_dict(self):
+    def finalize_dict(self, path=None):
         if self.dict is not None :
             d = self.dict
             d['birth'] = self.birth_time_in_hours
@@ -765,8 +765,7 @@ class DEB:
                 d['Nfeeds'] = self.gut.Nfeeds
                 d['mean_feed_freq'] = self.gut.Nfeeds/(self.age-self.birth_time_in_hours)/(60*60)
             
-        if self.save_to is not None :
-            self.save_dict()
+        self.save_dict(path)
 
 
 

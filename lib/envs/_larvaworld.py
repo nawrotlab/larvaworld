@@ -549,38 +549,6 @@ class LarvaWorld:
         k = get_exp_condition(self.experiment)
         self.exp_condition = k(self) if k is not None else None
 
-        # if self.experiment == 'capture_the_flag':
-        #     for f in self.get_food():
-        #         if f.unique_id == 'Flag':
-        #             self.flag = f
-        #         elif f.unique_id == 'Left_base':
-        #             self.l_base = f
-        #         elif f.unique_id == 'Right_base':
-        #             self.r_base = f
-        #     self.l_base_p = self.l_base.get_position()
-        #     self.r_base_p = self.r_base.get_position()
-        #     self.l_dst0 = self.flag.radius * 2 + self.l_base.radius * 2
-        #     self.r_dst0 = self.flag.radius * 2 + self.r_base.radius * 2
-        #
-        # elif self.experiment == 'keep_the_flag':
-        #     for f in self.get_food():
-        #         if f.unique_id == 'Flag':
-        #             self.flag = f
-        #     self.l_t = 0
-        #     self.r_t = 0
-        #
-        # elif self.experiment == 'catch_me':
-        #     self.target_group = 'Left' if random.uniform(0, 1) > 0.5 else 'Right'
-        #     self.follower_group = 'Right' if self.target_group == 'Left' else 'Left'
-        #     for f in self.get_flies():
-        #         if f.group == self.target_group:
-        #             f.brain.olfactor.gain = {id: -v for id, v in f.brain.olfactor.gain.items()}
-        #     self.score = {self.target_group: 0.0,
-        #                   self.follower_group: 0.0}
-
-        # elif self.experiment == 'odor_pref_train':
-        #     self.exp_condition=PrefTrainCondition(self)
-
     def check_end_condition(self):
         if self.exp_condition is not None:
             self.exp_condition.check(self)
@@ -847,6 +815,7 @@ class LarvaWorldSim(LarvaWorld):
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
 
         for l in self.get_flies():
+            # print(l.unique_id)
             l.compute_next_action()
         self.active_larva_schedule.step()
         self.active_food_schedule.step()

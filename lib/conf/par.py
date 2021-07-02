@@ -10,9 +10,10 @@ from siunits import Composite, DerivedUnit, BaseUnit
 
 from lib.aux import functions as fun
 from lib.aux import naming as nam
+from lib.model.DEB.gut import Gut
 from lib.stor import paths
 from lib.conf.par_conf import sup, sub, th, dot, ddot, subsup, Delta, delta, ast, bar, wave, par_dict_lists, paren, \
-    brack, odot, circledcirc, circledast, ddot_th, dot_th
+    brack, odot, circledcirc, circledast, ddot_th, dot_th, get_par_dict
 from lib.model.DEB.deb import DEB
 from lib.model.agents._agent import LarvaworldAgent, Larva
 import siunits as siu
@@ -640,6 +641,22 @@ def build_DEB_par_dict(df=None) :
 
     return df
 
+def build_gut_par_dict(df=None) :
+    if df is None :
+        df={}
+    df = add_par(df, p='ingested_volume', k='f_am_V', u=1 * siu.m ** 3, o=Gut, d='ingested_food_volume',
+                 s=sub('V', 'in'))
+    df = add_par(df, p='ingested_gut_volume_ratio', k='sf_am_Vg', o=Larva, d='ingested_gut_volume_ratio',
+                 s=subsup('[V]', 'in', 'gut'))
+    df = add_par(df, p='ingested_body_volume_ratio', k='sf_am_V', o=Larva, d='ingested_body_volume_ratio',
+                 s=sub('[V]', 'in'))
+    df = add_par(df, p='ingested_body_area_ratio', k='sf_am_A', o=Larva, d='ingested_body_area_ratio',
+                 s=sub('{V}', 'in'))
+    df = add_par(df, p='ingested_body_mass_ratio', k='sf_am_M', o=Larva, d='ingested_body_mass_ratio',
+                 s=sub('[M]', 'in'))
+
+    return df
+
 
 def build_spatial_par_dict(df):
     d=nam.dst('')
@@ -780,6 +797,7 @@ def build_par_dict(save=True, df=None):
         df =build_constants()
 
     df=build_DEB_par_dict(df)
+    df=build_gut_par_dict(df)
 
     # df = add_par(df, p='dt', k='dt', u=1 * siu.s, o=Larva, d='dt', s='dt')
     # df = add_par(df, p='cum_dur', k='t', u=1 * siu.s, o=Larva, d=nam.cum('dur'), s='t')
@@ -793,13 +811,14 @@ def build_par_dict(save=True, df=None):
     df=build_chunk_par_dict(df)
 
     df = add_par(df, p='amount_eaten', k='f_am', u=1 * siu.m ** 3, o=Larva, d='ingested_food_volume',
-                 s=sub('V', 'ingested'))
+                 s=sub('V', 'in'))
+    df = add_par(df, p='scaled_amount_eaten', k='sf_am', o=Larva, d='ingested_food_volume_ratio',
+                 s=sub('[V]', 'in'))
     df = add_par(df, p='lin_activity', k='Act_cr', o=Larva, d='crawler output', s=sub('A', 'crawl'))
     df = add_par(df, p='ang_activity', k='Act_tur', o=Larva, d='turner output', s=subsup('A', 'tur', 'out'))
-    df = add_par(df, p='turner_activation', k='A_tur', o=Larva, d='turner input', s=subsup('A', 'tur', 'in'),
-                 lim=(10, 40))
-    df = add_par(df, p='olfactory_activation', k='A_olf', o=Larva, d='olfactory activation',
-                 s=sub('A', 'olf'), lim=(-1, 1))
+    df = add_par(df, p='turner_activation', k='A_tur', o=Larva, d='turner input', s=subsup('A', 'tur', 'in'),lim=(10, 40))
+    df = add_par(df, p='olfactory_activation', k='A_olf', o=Larva, d='olfactory activation',s=sub('A', 'olf'), lim=(-1, 1))
+    df = add_par(df, p='exploitVSexplore_balance', k='EEB', o=Larva, d='exploitVSexplore_balance',s='EEB', lim=(0, 1))
 
 
 
@@ -951,11 +970,15 @@ def getPar(k=None,p=None, d=None, to_return=['d', 'l'], new_format=True) :
             return res
 
 if __name__ == '__main__':
+    for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
+        p = getPar(short, to_return=['d'])[0]
+        print(p)
     # dic=build_par_dict()
     dic=load_ParDict()
-    print(getPar(d=nam.scal(nam.cum(nam.dst(''))), to_return=['k']))
-    # print(dic['scum_d'])
-
+    # print(getPar(d=nam.scal(nam.cum(nam.dst(''))), to_return=['k']))
+    print(dic['sf_am'])
+    # d,u=getPar('cum_d', to_return=['d', 'u'])
+    # print(u.unit==siu.m)
 
     raise
     for k in ParFrame.keys() :

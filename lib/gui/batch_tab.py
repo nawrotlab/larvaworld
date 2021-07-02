@@ -1,4 +1,5 @@
 import copy
+
 import threading
 
 import PySimpleGUI as sg
@@ -82,6 +83,7 @@ class BatchTab(GuiTab):
         # thread = threading.Thread(target=batch_run, kwargs=batch_kwargs, daemon=True)
         # thread.start()
 
+        # df, fig_dict = self.fork(batch_run, batch_kwargs)
         df, fig_dict = batch_run(**batch_kwargs)
         df_ax, df_fig = render_mpl_table(df)
         fig_dict['dataframe'] = df_fig
@@ -89,6 +91,9 @@ class BatchTab(GuiTab):
         d['batch_results']['fig_dict'] = fig_dict
         g[self.name].update(w, d['batch_results']['fig_dict'])
         return d, g
+
+
+
 
 
 if __name__ == "__main__":

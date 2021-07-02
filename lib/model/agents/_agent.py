@@ -444,15 +444,15 @@ class Larva(LarvaworldAgent):
 
     @property
     def ingested_body_volume_ratio(self):
-        return self.deb.gut.ingested_volume()/self.deb.V *100
+        return self.deb.gut.ingested_volume/self.deb.V *100
 
     @property
     def ingested_gut_volume_ratio(self):
-        return self.deb.gut.ingested_volume() / (self.deb.V*self.deb.gut.V_gm) * 100
+        return self.deb.gut.ingested_volume / (self.deb.V*self.deb.gut.V_gm) * 100
 
     @property
     def ingested_body_area_ratio(self):
-        return (self.deb.gut.ingested_volume()/self.deb.V)**(1/2)*100
+        return (self.deb.gut.ingested_volume/self.deb.V)**(1/2)*100
         # return (self.deb.gut.ingested_volume()/self.deb.V)**(2/3)*100
 
     @property
@@ -536,7 +536,7 @@ class Larva(LarvaworldAgent):
     #     return self.brain.intermitter.feeder_reoccurence_rate
 
     @property
-    def explore2exploit_balance(self):
+    def exploitVSexplore_balance(self):
         return self.brain.intermitter.EEB
 
 

@@ -9,7 +9,6 @@ from mesa.time import RandomActivation
 import lib.aux.functions as fun
 import lib.aux.naming as nam
 
-
 body_pars = {
     "length": 'length_in_mm',
     "mass": 'mass_in_mg',
@@ -181,10 +180,11 @@ endpoint_database = {
     **deb_pars,
     **food_pars}
 
-class NamedRandomActivation(RandomActivation) :
+
+class NamedRandomActivation(RandomActivation):
     def __init__(self, id, model, **kwargs):
         super().__init__(model)
-        self.id=id
+        self.id = id
 
 
 # Extension of DataCollector class so that it only collects from a given schedule
@@ -197,23 +197,22 @@ class TargetedDataCollector(DataCollector):
         if all([hasattr(rep, 'attribute_name') for rep in self.rep_funcs]):
             attributes = [func.attribute_name for func in self.rep_funcs]
             self.reports = attrgetter(*self.prefix + attributes)
-        else :
+        else:
             self.reports = None
 
     def valid_reporters(self, pars):
         from lib.conf.par import load_ParDict
         dic0 = load_ParDict()
         ks = [k for k in pars if k in dic0.keys()]
-        dic={}
-        for k in ks :
-            d,p=dic0[k]['d'], dic0[k]['p']
-            try :
-                temp=[getattr(l, p) for l in self.schedule.agents]
-                dic.update({d:p})
-            except :
+        dic = {}
+        for k in ks:
+            d, p = dic0[k]['d'], dic0[k]['p']
+            try:
+                temp = [getattr(l, p) for l in self.schedule.agents]
+                dic.update({d: p})
+            except:
                 pass
         return dic
-
 
     def _record_agents(self, model, schedule):
         if self.reports is not None:
@@ -223,6 +222,7 @@ class TargetedDataCollector(DataCollector):
                 prefix = (schedule.steps, agent.unique_id)
                 reports = tuple(rep(agent) for rep in self.rep_funcs)
                 return prefix + reports
+
             return map(get_reports, schedule.agents)
 
     def collect(self, model):
@@ -274,71 +274,25 @@ def contour_xy_pars(N=22):
 
 
 output_dict = {
-    # 'intermitter': {
-    #     'step': ['pause_id', 'pause_start', 'pause_stop', 'pause_dur'] + ['stridechain_id', 'stridechain_start',
-    #                                                                       'stridechain_stop', 'stridechain_dur'],
-    #     'endpoint': ['pau_N', 'cum_pau_t', 'pau_tr',
-    #                  'num_stridechains', 'cum_stridechain_dur', 'stridechain_dur_ratio', 'mean_feed_freq']},
-    'olfactor': {'step': ['c_odor1','dc_odor1','c_odor2','dc_odor2', 'A_olf','Act_tur', 'A_tur', 'Act_cr'],
-    # 'olfactor': {'step': ['first_odor_concentration', 'olfactory_activation', 'first_odor_concentration_change'],
+    'olfactor': {'step': ['c_odor1', 'dc_odor1', 'c_odor2', 'dc_odor2', 'A_olf', 'Act_tur', 'A_tur', 'Act_cr'],
                  'endpoint': []},
 
-    # 'turner': {'step': ['Act_tur', 'A_tur'],
-    # # 'turner': {'step': ['turner_activation', 'turner output', 'torque'],
-    # # 'turner': {'step': ['turner_activation', 'turner_activity', 'torque'],
-    #            'endpoint': []},
-    # 'crawler': {'step': ['crawler_activity'],
-    #             'endpoint': ['stride_scaled_dst_mean', 'stride_dst_mean',
-    #                          'cum_dst', 'cum_scaled_dst',
-    #                          'num_strides', 'stride_dur_ratio', 'vel_freq']},
     'feeder': {
-        'step': ['l', 'f_am', 'scaled_amount_eaten', 'explore2exploit_balance'],
-        'endpoint': ['l',  'f_am', 'scaled_amount_eaten',]},
+        'step': ['l','m', 'f_am', 'sf_am', 'EEB'],
+        'endpoint': ['l','m', 'f_am', 'sf_am', ]},
 
-    'deb': {'step': [
-        'deb_f', 'deb_f_deviation', 'cum_dst', 'mass', 'length',
-        'reserve', 'reserve_density', 'hunger', 'puppation_buffer',
-    ],
-        'endpoint': [
-            'cum_dst', 'cum_scaled_dst', 'pause_dur_ratio', 'mass', 'length',
-            'num_strides', 'stride_dur_ratio', 'vel_freq',
-            'reserve_density', 'puppation_buffer', 'hunger', 'deb_f_mean', 'deb_f_deviation_mean',
-            'age', 'birth_time_in_hours', 'pupation_time_in_hours', 'death_time_in_hours', 'hours_as_larva'
-        ]},
-    'gut': {'step': ['gut_occupancy', 'amount_absorbed', 'food_absorption_efficiency', 'amount_faeces', 'faeces_ratio',
-                     'ingested_body_area_ratio', 'ingested_body_volume_ratio', 'ingested_gut_volume_ratio',
-                     'amount_eaten', 'scaled_amount_eaten',
-                     'ingested_body_mass_ratio'
-                     ],
-            'endpoint': ['amount_absorbed', 'amount_eaten',
-                         'ingested_body_area_ratio', 'ingested_body_volume_ratio', 'ingested_gut_volume_ratio',
-                         'scaled_amount_eaten', 'ingested_body_mass_ratio']},
+    'gut': {'step': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M'],
+            'endpoint': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']},
     'pose': {'step': ['x', 'y', 'b', 'fo', 'ro'],
-    # 'pose': {'step': ['centroid_x', 'centroid_y', 'bend', 'front_orientation', 'rear_orientation'],
              'endpoint': ['l', 'cum_t', 'x']},
-             # 'endpoint': ['length', 'cum_dur']},
-    # 'nengo': {'step': ['crawler_activity', 'turner_activity', 'feeder_motion'],
-    #           'endpoint': []},
-    # 'source vincinity': {'step': [
-    #     'dispersion', 'scaled_dispersion',
-    #     'dst_to_center', 'scaled_dst_to_center', 'orientation_to_center'
-    # ],
-    #     'endpoint': ['final_dst_to_center', 'final_scaled_dst_to_center',
-    #                  'max_dst_to_center', 'max_scaled_dst_to_center',
-    #                  'mean_dst_to_center', 'mean_scaled_dst_to_center',
-    #                  ]},
-    # 'source approach': {'step': ['dst_to_chemotax_odor', 'scaled_dst_to_chemotax_odor'],
-    #                  'endpoint': ['final_dst_to_chemotax_odor', 'final_scaled_dst_to_chemotax_odor']},
     'memory': {'step': [],
                'endpoint': [],
                'tables': {'best_gains': ['unique_id', 'first_odor_best_gain', 'second_odor_best_gain', 'cum_reward',
                                          'best_olfactor_decay']}},
     'midline': None,
     'contour': None,
-# 'source_vincinity': {'step': ['d_cent', 'sd_cent', 'o_cent'], 'endpoint': fun.flatten_list([[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_cent', 'sd_cent']])},
-'source_vincinity': {'step': [], 'endpoint': ['d_cent_fin']},
+    'source_vincinity': {'step': [], 'endpoint': ['d_cent_fin']},
     'source_approach': {'step': [], 'endpoint': ['d_chem_fin']},
-    # 'source_approach': {'step': ['d_chem', 'sd_chem', 'o_chem'], 'endpoint': fun.flatten_list([[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_chem', 'sd_chem']])},
 }
 
 output_keys = list(output_dict.keys())

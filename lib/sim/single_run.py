@@ -1,4 +1,5 @@
 """ Run a simulation and save the parameters and data to files."""
+import copy
 import datetime
 import time
 import pickle
@@ -10,31 +11,24 @@ from lib.anal.plotting import *
 from lib.aux.collecting import output_dict, midline_xy_pars
 from lib.conf.par import combo_collection_dict
 from lib.envs._larvaworld import LarvaWorldSim
-from lib.conf.conf import loadConf, next_idx
+from lib.conf.conf import loadConf, next_idx, expandConf
 from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.dtype_dicts as dtypes
-
-
-
 
 
 def run_sim_basic(
         sim_params,
         env_params,
-        vis_kwargs=dtypes.get_dict('visualization'),
-        life_params=dtypes.get_dict('life'),
-        enrichment=dtypes.get_dict('enrichment'),
-        collections=None,
+        vis_kwargs,
+        life_params,
+        enrichment,
+        collections,
         save_to=None,
         save_data_flag=True,
-        # enrich=False,
         experiment=None,
         par_config=dat.SimParConf,
         seed=1,
         **kwargs):
-    # print(life_params)
-    # print(sim_params['sim_dur'])
-
 
     np.random.seed(seed)
     id = sim_params['sim_ID']
@@ -85,7 +79,7 @@ def run_sim_basic(
         dur = end - start
         param_dict['duration'] = np.round(dur, 2)
         print(f'    Simulation completed in {np.round(dur).astype(int)} seconds!')
-        res=store_sim_data(env, d, save_data_flag, enrichment, param_dict)
+        res = store_sim_data(env, d, save_data_flag, enrichment, param_dict)
     env.close()
     return res
 
@@ -93,9 +87,10 @@ def run_sim_basic(
 ser = pickle.dumps(run_sim_basic)
 run_sim = pickle.loads(ser)
 
+
 def store_sim_data(env, d, save_data_flag, enrichment, param_dict):
     # Read the data collected during the simulation
-    if not paths.new_format :
+    if not paths.new_format:
         # old format
         if env.larva_step_col is not None:
             step = env.larva_step_col.get_agent_vars_dataframe()
@@ -117,44 +112,41 @@ def store_sim_data(env, d, save_data_flag, enrichment, param_dict):
                    end=end,
                    food=food)
 
-    else :
+    else:
         # new format
         save_to = d.dir_dict['table'] if save_data_flag else None
         df = env.step_group_collector.save(save_to=save_to)
         env.end_group_collector.collect(df=df)
         df0 = env.end_group_collector.save(save_to=save_to)
-        if df0 is not None :
-            df0=df0.droplevel('Step')
+        if df0 is not None:
+            df0 = df0.droplevel('Step')
         d.set_data(step=df, end=df0)
+
     d.enrich(**enrichment)
-    # print(d.step_data['cum_scaled_dst'])
-    # d = sim_enrichment(d, experiment)
     # Save simulation data and parameters
     if save_data_flag:
         d.save()
         fun.dict_to_file(param_dict, d.dir_dict['sim'])
         for l in env.get_flies():
-            try:
-                l.deb.save_dict(d.dir_dict['deb'])
-            except:
-                pass
-        for l in env.get_flies():
-            l.brain.intermitter.save_dict(d.dir_dict['bouts'])
+            if hasattr(l,'deb') and l.deb is not None:
+                l.deb.finalize_dict(d.dir_dict['deb'])
+            if l.brain.intermitter is not None:
+                l.brain.intermitter.save_dict(d.dir_dict['bouts'])
+
             # except:
             #     pass
     return d
 
 
 def collection_conf(dataset, collections):
-    if not paths.new_format :
+    if not paths.new_format:
         if collections is None:
             collections = ['pose']
-        cd=output_dict
+        cd = output_dict
         d = dataset
         step_pars = []
         end_pars = []
         tables = {}
-        # groups = []
         for c in collections:
             if c == 'midline':
                 step_pars += list(midline_xy_pars(N=d.Nsegs).keys())
@@ -165,59 +157,43 @@ def collection_conf(dataset, collections):
                 end_pars += cd[c]['endpoint']
             if 'tables' in list(cd[c].keys()):
                 tables.update(cd[c]['tables'])
-            # if 'groups' in list(cd[c].keys()):
-            #     groups += cd[c]['groups']
-
-        step=fun.unique_list(step_pars)
-        end=fun.unique_list(end_pars)
-
+        step = fun.unique_list(step_pars)
+        end = fun.unique_list(end_pars)
         output = {'step': step,
-                          'end': end,
-                          'tables': tables,
-                          'step_groups': [],
-                          'end_groups': [],
-                          }
+                  'end': end,
+                  'tables': tables,
+                  'step_groups': [],
+                  'end_groups': [],
+                  }
 
-    else :
+    else:
         cd = combo_collection_dict
-        cs=[cd[c] for c in collections if c in cd.keys()]
+        cs = [cd[c] for c in collections if c in cd.keys()]
         output = {'step': [],
-                          'end': [],
-                          'tables': {},
-                          'step_groups': fun.flatten_list([c['step'] for c in cs]),
-                          'end_groups': fun.flatten_list([c['end'] for c in cs])}
+                  'end': [],
+                  'tables': {},
+                  'step_groups': fun.flatten_list([c['step'] for c in cs]),
+                  'end_groups': fun.flatten_list([c['end'] for c in cs])}
     return output
 
 
-def load_reference_dataset(dataset_id='reference', load_data=False):
-    reference_dataset = LarvaDataset(dir=f'{paths.RefFolder}/{dataset_id}', load_data=load_data)
-    if not load_data:
-        reference_dataset.load(step=False)
-    return reference_dataset
+def load_reference_dataset(dataset_id='reference', load=False):
+    d = LarvaDataset(dir=f'{paths.RefFolder}/{dataset_id}', load_data=load)
+    if not load:
+        d.load(step=False)
+    return d
 
 
-def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, larva_model=None):
-    exp_conf = loadConf(exp_type, 'Exp')
-    env = exp_conf['env_params']
-    if type(env) == str:
-        env = loadConf(env, 'Env')
+def get_exp_conf(exp_type, sim_params, life_params=None, N=None, larva_model=None):
+    conf = copy.deepcopy(expandConf(exp_type, 'Exp'))
 
-    if N is not None:
-        for k in list(env['larva_groups'].keys()):
-            env['larva_groups'][k]['N'] = N
-    if larva_model is not None:
-        for k in list(env['larva_groups'].keys()):
-            env['larva_groups'][k]['model'] = larva_model
-
-    for k, v in env['larva_groups'].items():
-        if type(v['model']) == str:
-            v['model'] = loadConf(v['model'], 'Model')
-
-    exp_conf['env_params'] = env
-    if 'life_params' not in list(exp_conf.keys()):
-        if life_params is None:
-            life_params = dtypes.get_dict('life')
-        exp_conf['life_params'] = life_params
+    for k in list(conf['env_params']['larva_groups'].keys()):
+        if N is not None:
+            conf['env_params']['larva_groups'][k]['N'] = N
+        if larva_model is not None:
+            conf['env_params']['larva_groups'][k]['model'] = loadConf(larva_model, 'Model')
+    if life_params is not None:
+        conf['life_params'] = life_params
 
     if sim_params['sim_ID'] is None:
         idx = next_idx(exp_type)
@@ -225,8 +201,7 @@ def get_exp_conf(exp_type, sim_params, life_params=None, enrich=True, N=None, la
     if sim_params['path'] is None:
         sim_params['path'] = f'single_runs/{exp_type}'
     if sim_params['duration'] is None:
-        sim_params['duration'] = exp_conf['sim_params']['duration']
-    exp_conf['sim_params'] = sim_params
-    exp_conf['experiment'] = exp_type
-    # exp_conf['enrichment'] = enrich
-    return exp_conf
+        sim_params['duration'] = conf['sim_params']['duration']
+    conf['sim_params'] = sim_params
+    conf['experiment'] = exp_type
+    return conf

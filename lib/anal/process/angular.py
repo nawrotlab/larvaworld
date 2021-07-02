@@ -68,13 +68,13 @@ def compute_orientations(s, points, segs, config=None, mode='full'):
         f1, f2 = 1, 2
         r1, r2 = -2, -1
     else:
-        for key in ['front_vector_start', 'front_vector_stop', 'rear_vector_start', 'rear_vector_stop']:
+        for key in ['front_vector', 'rear_vector']:
             if config[key] is None:
                 print('Front and rear vectors are not defined. Can not compute orients')
                 return
         else:
-            f1, f2 = config['front_vector_start'], config['front_vector_stop']
-            r1, r2 = config['rear_vector_start'], config['rear_vector_stop']
+            f1, f2 = config['front_vector']
+            r1, r2 = config['rear_vector']
 
     xy = [nam.xy(points[i]) for i in range(len(points))]
     print(f'Computing front and rear orients')

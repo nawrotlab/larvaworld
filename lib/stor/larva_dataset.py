@@ -263,11 +263,11 @@ class LarvaDataset:
             return df, u_dic
 
 
-    def load_deb_dicts(self, ids=None):
+    def load_deb_dicts(self, ids=None, **kwargs):
         if ids is None:
             ids = self.agent_ids
         files = [f'{id}.txt' for id in ids]
-        ds = fun.load_dicts(files=files, folder=self.dir_dict['deb'])
+        ds = fun.load_dicts(files=files, folder=self.dir_dict['deb'], **kwargs)
         return ds
 
     def get_par_list(self, track_point=None):
@@ -670,6 +670,7 @@ class LarvaDataset:
             if self.step_data is None:
                 self.load()
             new_ds = []
+            # print(self.agent_ids)
             for f, new_dir in zip(groups, new_dirs):
                 invalid_ids = [id for id in self.agent_ids if not str.startswith(id, f)]
                 copy_tree(self.dir, new_dir)
