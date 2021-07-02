@@ -522,8 +522,8 @@ all_null_dicts['batch_conf'] = {'exp': None,
                                 'space_search': get_dict('space_search'),
                                 'batch_methods': get_dict('batch_methods'),
                                 'optimization': None,
-                                'run_kwargs': {'save_data_flag': False},
-                                'post_kwargs': {},
+                                'exp_kws': {'save_data_flag': False},
+                                'post_kws': {},
                                 }
 
 all_null_dicts['food_params'] = {'source_groups': {},
@@ -775,8 +775,8 @@ def get_dict_dtypes(name, **kwargs):
                                 'space_search': dict,
                                 'batch_methods': dict,
                                 'optimization': dict,
-                                'run_kwargs': dict,
-                                'post_kwargs': dict,
+                                'exp_kws': dict,
+                                'post_kws': dict,
                                 }
     all_dtypes['food_params'] = {'source_groups': dict,
                                  'food_grid': dict,

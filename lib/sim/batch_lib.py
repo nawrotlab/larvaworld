@@ -2,7 +2,7 @@
 This file is the template for a batch run of simulations.
 Simulations are managed through a pypet trajectory.
 Results are saved in hdf5 format.
-CAUTION : save_data_in_hdf5 parameters whether step and end pandas dataframes are saved (in the hdf5 not as csvs). This takes LONG!!!
+CAUTION : save_hdf5 parameters whether step and end pandas dataframes are saved (in the hdf5 not as csvs). This takes LONG!!!
 Created by bagjohn on April 5th 2020
 '''
 import itertools
@@ -70,25 +70,25 @@ def batch_methods(run='default', post='default', final='null'):
         'odor_preference': heat_map_generation,
     }
 
-    return {'process_method': process_method_dict[run],
-            'post_process_method': post_process_method_dict[post],
-            'final_process_method': final_process_method_dict[final], }
+    return {'procfunc': process_method_dict[run],
+            'postfunc': post_process_method_dict[post],
+            'finfunc': final_process_method_dict[final], }
 
 
 def prepare_batch(batch, batch_id):
     space = grid_search_dict(**batch['space_search'])
     if batch['optimization'] is not None:
         batch['optimization']['ranges'] = np.array(batch['space_search']['ranges'])
-
+    print(list(batch.keys()))
     # exp_conf['sim_params']['path'] = batch_type
     prepared_batch = {
         'space': space,
         'batch_id': batch_id,
-        'sim_config': batch['exp'],
+        'exp': batch['exp'],
         **batch_methods(**batch['batch_methods']),
         'optimization': batch['optimization'],
-        'run_kwargs': batch['run_kwargs'],
-        'post_kwargs': {},
+        'exp_kws': batch['exp_kws'],
+        'post_kws': {},
     }
 
     return prepared_batch
@@ -148,31 +148,11 @@ def save_results_df(traj):
     return df
 
 
-def load_default_configuration(traj, sim_config):
-    env, sim, life, collections, enrichment = sim_config['env_params'], sim_config[
-        'sim_params'], sim_config['life_params'], sim_config['collections'], sim_config['enrichment']
-    if sim is not None:
-        sim_dict = fun.flatten_dict(sim, parent_key='sim_params', sep='.')
-        for k, v in sim_dict.items():
-            traj.f_aconf(k, v)
-        # print(sim_dict)
-
-    if env is not None:
-        env_dict = fun.flatten_dict(env, parent_key='env_params', sep='.')
-        for k, v in env_dict.items():
-            # print(k,v)
+def load_default_configuration(traj, exp):
+    for k in ['env_params', 'sim_params', 'life_params','enrichment'] :
+        dic = fun.flatten_dict(exp[k], parent_key=k, sep='.')
+        for k, v in dic.items():
             traj.f_apar(k, v)
-
-    if life is not None:
-        life_dict = fun.flatten_dict(life, parent_key='life_params', sep='.')
-        for k, v in life_dict.items():
-            traj.f_apar(k, v)
-    if enrichment is not None:
-        enrichment_dict = fun.flatten_dict(enrichment, parent_key='enrichment', sep='.')
-        for k, v in enrichment_dict.items():
-            traj.f_apar(k, v)
-
-    traj.f_aconf('collections', collections)
     return traj
 
 
@@ -260,8 +240,8 @@ def null_final_processing(traj):
 
 def end_scatter_generation(traj):
     df = save_results_df(traj)
-    parent_dir = traj.config.dataset_path
-    dirs = [f'{parent_dir}/{d}' for d in os.listdir(parent_dir)]
+    data_dir = traj.config.dataset_path
+    dirs = [f'{data_dir}/{d}' for d in os.listdir(data_dir)]
     dirs.sort()
     ds = [LarvaDataset(dir) for dir in dirs]
     fig_dict = {}
@@ -279,7 +259,7 @@ def end_scatter_generation(traj):
 
 def deb_analysis(traj):
     data_dir = traj.config.dataset_path
-    parent_dir = traj.config.dir_path
+    save_to = traj.config.dir_path
     df = save_results_df(traj)
 
     p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
@@ -298,13 +278,13 @@ def deb_analysis(traj):
         new_ids = [None]
     else:
         new_ids = [f'{p_ns[0]} : {v}' for v in p_vs[0]] if len(p_ns) == 1 else [d.id for d in ds]
-        plot_endpoint_params(ds, new_ids, mode='deb', save_to=parent_dir)
+        plot_endpoint_params(ds, new_ids, mode='deb', save_to=save_to)
     # deb_dicts = fun.flatten_list(
     #     [[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
     deb_dicts = fun.flatten_list([d.load_deb_dicts() for d in ds])
     fig_dict = {}
     for m in ['energy', 'growth', 'full']:
-        f = plot_debs(deb_dicts=deb_dicts, save_to=parent_dir, save_as=f'deb_{m}.pdf', mode=m)
+        f = plot_debs(deb_dicts=deb_dicts, save_to=save_to, save_as=f'deb_{m}.pdf', mode=m)
         fig_dict[f'deb_{m}'] = f
     return df, fig_dict
 
@@ -349,43 +329,25 @@ def post_processing(traj, result_tuple):
     traj.f_store()
 
 
-def single_run(traj, process_method=None, save_data_in_hdf5=True, save_data_flag=False,
-               enrichment=None, **kwargs):
-    start = time.time()
-    env_params = fun.reconstruct_dict(traj.f_get('env_params'))
-    sim_params = fun.reconstruct_dict(traj.f_get('sim_params'))
-    life_params = fun.reconstruct_dict(traj.f_get('life_params'))
-    # enrichment = fun.reconstruct_dict(traj.f_get('enrichment'))
-    collections = traj.collections
-    sim_params['sim_ID'] = f'run_{traj.v_idx}'
+def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}):
+    sim = fun.reconstruct_dict(traj.f_get('sim_params'))
+    sim['sim_ID'] = f'run_{traj.v_idx}'
     with fun.suppress_stdout(False):
         d = run_sim(
-            env_params=env_params,
-            sim_params=sim_params,
-            life_params=life_params,
-            collections=collections,
-            vis_kwargs=dtypes.get_dict('visualization'),
-            save_data_flag=save_data_flag,
-            enrichment=enrichment,
-            **kwargs)
+            env_params=fun.reconstruct_dict(traj.f_get('env_params')),
+            sim_params=sim,
+            life_params=fun.reconstruct_dict(traj.f_get('life_params')),
+            **exp_kws)
 
-        if process_method is None:
+        if procfunc is None:
             results = np.nan
         else:
-            d, results = process_method(traj, d)
+            d, results = procfunc(traj, d)
 
-    # FIXME  For some reason the multiindex dataframe cannot be saved as it is.
-    #  So I have to drop a level (and it does not work if I add it again).
-    #  Also if I drop the AgentID, it has a problem because it does not find Step 0
-    if save_data_in_hdf5 == True:
-        temp = d.step_data.reset_index(level='Step', drop=False, inplace=False)
-        e = ObjectTable(data=d.endpoint_data, index=d.endpoint_data.index, columns=d.endpoint_data.columns.values,
-                        copy=True)
-        s = ObjectTable(data=temp, index=temp.index, columns=temp.columns.values, copy=True)
+    if save_hdf5:
+        s,e=[ObjectTable(data=k, index=k.index, columns=k.columns.values, copy=True) for k in [d.step_data.reset_index(level='Step'), d.endpoint_data]]
         traj.f_add_result('end', endpoint_data=e, comment='The simulation endpoint data')
         traj.f_add_result('step', step_data=s, comment='The simulation step-by-step data')
-    end = time.time()
-    print(f'Single run {traj.v_idx} complete in {end - start} seconds')
     return d, results
 
 
@@ -393,80 +355,56 @@ def batch_run(*args, **kwargs):
     return _batch_run(*args, **kwargs)
 
 
-def get_batch_env(batch_id, dir_path,overwrite,sim_config,params,optimization, space,**env_kwargs):
+def get_batch_env(batch_id, dir_path, overwrite, exp, params, optimization, space, **env_kws):
     traj_name = f'{batch_id}_traj'
     filename = f'{dir_path}/{batch_id}.hdf5'
-    # build_new = True
     if os.path.exists(dir_path) and overwrite == False:
-        print('Resuming existing trajectory')
         try:
             env = Environment(continuable=True)
             env.resume(trajectory_name=traj_name, resume_folder=dir_path)
             print('Resumed existing trajectory')
             return env
-            # build_new = False
         except:
             pass
-    print('Loading existing trajectory')
     try:
         traj = load_trajectory(filename=filename, name=traj_name, load_all=0)
-        env = Environment(trajectory=traj, **env_kwargs)
+        env = Environment(trajectory=traj, **env_kws)
         traj = config_traj(traj, optimization)
         traj.f_load(index=None, load_parameters=2, load_results=0)
         traj.f_expand(space)
         print('Loaded existing trajectory')
         return env
-        # build_new = False
     except:
-        print('Creating novel environment')
-
-        # if build_new:
         try:
-            env = Environment(trajectory=traj_name,
-                          filename=filename,
-                          # file_title=batch_id,
-                          # comment=f'{batch_id} batch run!',
-                          # large_overview_tables=True,
-                          # overwrite_file=True,
-                          # resumable=resumable,
-                          # resume_folder=dir_path,
-                          # multiproc=multiproc,
-                          # ncores=os.cpu_count(),
-                          # use_pool=True,  # Our runs are inexpensive we can get rid of overhead by using a pool
-                          # freeze_input=True,  # We can avoid some overhead by freezing the input to the pool
-                          # wrap_mode=pypetconstants.WRAP_MODE_LOCK,
-                          # wrap_mode=pypetconstants.WRAP_MODE_QUEUE if multiproc else pypetconstants.WRAP_MODE_LOCK,
-                          # graceful_exit=True,
-                          **env_kwargs)
+            env = Environment(trajectory=traj_name,filename=filename,**env_kws)
             print('Created novel environment')
-            traj = prepare_traj(env.traj, sim_config, params, batch_id, dir_path)
+            traj = prepare_traj(env.traj, exp, params, batch_id, dir_path)
             traj = config_traj(traj, optimization)
             traj.f_explore(space)
             return env
-        except :
-            raise ValueError ('Loading, resuming or creating a new environment failed')
+        except:
+            raise ValueError('Loading, resuming or creating a new environment failed')
 
 
 def _batch_run(batch_id='template',
                space=None,
-               save_data_in_hdf5=False,
-               single_method=single_run,
-               process_method=null_processing,
-               post_process_method=None,
-               final_process_method=None,
+               save_hdf5=False,
+               runfunc=single_run,
+               procfunc=None,
+               postfunc=None,
+               finfunc=None,
                multiproc=True,
                resumable=True,
                overwrite=False,
-               sim_config=None,
+               exp=None,
                params=None,
                optimization=None,
-               post_kwargs={},
-               run_kwargs={}
+               post_kws={},
+               exp_kws={}
                ):
     s0 = time.time()
-    parent_dir = f'{paths.BatchRunFolder}/{dir}'
-    dir_path = os.path.join(parent_dir, batch_id)
-    env_kwargs = {
+    dir_path = f'{paths.BatchRunFolder}/{batch_id}'
+    env_kws = {
         'file_title': batch_id,
         'comment': f'{batch_id} batch run!',
         'multiproc': multiproc,
@@ -482,21 +420,30 @@ def _batch_run(batch_id='template',
         # wrap_mode=pypetconstants.WRAP_MODE_QUEUE if multiproc else pypetconstants.WRAP_MODE_LOCK,
         'graceful_exit': True,
     }
+    run_kws = {
+        'runfunc': runfunc,
+        'procfunc': procfunc,
+        'save_hdf5': save_hdf5,
+        'exp_kws': {**exp_kws,
+                       'save_to': dir_path,
+                       'vis_kwargs':dtypes.get_dict('visualization'),
+                       'collections' : exp['collections']
+                       }
+    }
     env = get_batch_env(batch_id, dir_path,
                         overwrite=overwrite,
-                        sim_config=sim_config,
+                        exp=exp,
                         params=params,
                         optimization=optimization,
                         space=space,
-                        **env_kwargs)
-    if post_process_method is not None:
-        env.add_postprocessing(post_process_method, **post_kwargs)
-    env.run(single_method, process_method, save_data_in_hdf5=save_data_in_hdf5, save_to=dir_path,
-            **run_kwargs)
+                        **env_kws)
+    if postfunc is not None:
+        env.add_postprocessing(postfunc, **post_kws)
+    env.run(**run_kws)
     env.disable_logging()
     print('Batch run complete')
-    if final_process_method is not None:
-        res = final_process_method(env.traj)
+    if finfunc is not None:
+        res = finfunc(env.traj)
     s1 = time.time()
     print(f'Batch-run completed in {np.round(s1 - s0).astype(int)} seconds!')
     return res
@@ -510,20 +457,17 @@ def config_traj(traj, optimization):
     return traj
 
 
-def prepare_traj(traj, sim_config, params, batch_id, dir_path):
-    traj = load_default_configuration(traj, sim_config)
+def prepare_traj(traj, exp, params, batch_id, dir_path):
+    traj = load_default_configuration(traj, exp)
     if params is not None:
         for p in params:
             traj.f_apar(p, 0.0)
 
-    plot_path = os.path.join(dir_path, f'{batch_id}.pdf')
-    data_path = os.path.join(dir_path, f'{batch_id}.csv')
 
-    # traj.f_aconf('parent_dir_path', parent_dir_path, comment='Parent directory')
     traj.f_aconf('dir_path', dir_path, comment='Directory for saving data')
-    traj.f_aconf('plot_path', plot_path, comment='File for saving plot')
-    traj.f_aconf('data_path', data_path, comment='File for saving data')
-    traj.f_aconf('dataset_path', f'{dir_path}/{batch_id}', comment='Directory for saving datasets')
+    traj.f_aconf('plot_path', f'{dir_path}/{batch_id}.pdf', comment='File for saving plot')
+    traj.f_aconf('data_path', f'{dir_path}/{batch_id}.csv', comment='File for saving data')
+    traj.f_aconf('dataset_path', f'{dir_path}/datasets', comment='Directory for saving datasets')
     return traj
 
 

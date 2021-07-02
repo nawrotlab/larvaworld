@@ -24,17 +24,14 @@ class BatchTab(GuiTab):
         w.Element(f'{self.name}_path').Update(value=id)
         for n in ['batch_methods', 'optimization', 'space_search']:
             c[n].update(w, conf[n])
-        w['TOGGLE_save_data_flag'].set_state(state=conf['run_kwargs']['save_data_flag'])
-        # for i in range(2) :
-        #     k=f'simulation_CONF{i}'
-        #     w.Element(k, silent_on_error=True).Update(value=conf['exp'])
+        w['TOGGLE_save_data_flag'].set_state(state=conf['exp_kws']['save_data_flag'])
 
     def get(self, w, v, c, **kwargs):
         conf = {
             **{n: c[n].get_dict(v, w) for n in ['batch_methods', 'optimization', 'space_search']},
-            'run_kwargs': {
+            'exp_kws': {
                 'save_data_flag': w['TOGGLE_save_data_flag'].metadata.state,
-                'enrichment': loadConf(v[self.selectionlists[0].k], 'Batch')['run_kwargs']['enrichment'],
+                'enrichment': loadConf(v[self.selectionlists[0].k], 'Batch')['exp_kws']['enrichment'],
                            }
         }
         return copy.deepcopy(conf)

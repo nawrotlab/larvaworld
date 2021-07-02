@@ -27,12 +27,12 @@ def batch(exp, en=None, o=None, o_kws={}, **kwargs):
         enrichment = dtypes.get_dict('enrichment', source=en['source'], types=['source'])
     else:
         raise NotImplementedError
-    run_kwargs = {'save_data_flag': False, 'enrichment': enrichment}
+    exp_kws = {'save_data_flag': False, 'enrichment': enrichment}
     if o is not None:
         opt = optimization(o, **o_kws)
     else:
         opt = None
-    return dtypes.get_dict('batch_conf', exp=exp, run_kwargs=run_kwargs, optimization=opt, **kwargs)
+    return dtypes.get_dict('batch_conf', exp=exp, exp_kws=exp_kws, optimization=opt, **kwargs)
 
 
 batch_dict = {
@@ -97,7 +97,7 @@ batch_dict = {
 # #     },
 # #     'batch_methods': batch_methods(run='odor_preference', post='null', final='odor_preference'),
 # #     'optimization': None,
-# #     'run_kwargs': {'save_data_flag': False}
+# #     'exp_kws': {'save_data_flag': False}
 # # }
 #
 # chemorbit_batch = batch('chemotaxis_local',
@@ -123,7 +123,7 @@ batch_dict = {
 # #     },
 # #     'batch_methods': batch_methods(),
 # #     'optimization': optimization('final_dst_to_center'),
-# #     'run_kwargs': {'save_data_flag': False}
+# #     'exp_kws': {'save_data_flag': False}
 # # }
 #
 # food_grid_batch = batch('food_grid',
@@ -142,7 +142,7 @@ batch_dict = {
 # #     },
 # #     'batch_methods': batch_methods(),
 # #     'optimization': optimization('amount_eaten'),
-# #     'run_kwargs': {'save_data_flag': False}
+# #     'exp_kws': {'save_data_flag': False}
 # # }
 #
 # chemotax_batch = batch('chemotaxis_approach',
@@ -162,7 +162,7 @@ batch_dict = {
 # #     'batch_methods': batch_methods(),
 # #     # 'optimization': optimization('x'),
 # #     'optimization': optimization('final_dst_to_source'),
-# #     'run_kwargs': {'save_data_flag': False}
+# #     'exp_kws': {'save_data_flag': False}
 # # }
 #
 # patchy_food_batch = batch('patchy_food',
@@ -181,7 +181,7 @@ batch_dict = {
 # #     },
 # #     'batch_methods': batch_methods(),
 # #     'optimization': optimization('ingested food volume'),
-# #     'run_kwargs': {'save_data_flag': False}
+# #     'exp_kws': {'save_data_flag': False}
 # # }
 #
 # rovers_sitters_batch = batch('rovers_sitters',
@@ -200,7 +200,7 @@ batch_dict = {
 # #     },
 # #     'batch_methods': batch_methods(run='deb', post='null', final='deb'),
 # #     'optimization': None,
-# #     'run_kwargs': {'save_data_flag': True}
+# #     'exp_kws': {'save_data_flag': True}
 # # }
 #
 # growth_batch = batch('growth',
@@ -220,5 +220,5 @@ batch_dict = {
 # #     },
 # #     'batch_methods': batch_methods(),
 # #     'optimization': optimization('deb_f_deviation', max_Nsims=20, operations={'mean': True, 'abs': True}),
-# #     'run_kwargs': {'save_data_flag': False}
+# #     'exp_kws': {'save_data_flag': False}
 # # }
