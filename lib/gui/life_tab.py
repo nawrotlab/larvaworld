@@ -83,10 +83,10 @@ class LifeTab(GuiTab):
         sub = CollapsibleDict('substrate', False, default=True, header_dict=dtypes.substrate_dict,
                               header_value='standard')
 
-        l1 = sg.Col([[sg.Text('Epoch start (h) : ', **t24_kws)],
+        l1 = sg.Col([[sg.Text('Epoch start (hours) : ', **t24_kws)],
                      [sg.Slider(range=(0, 150), default_value=0, key=self.S0,
                                 tick_interval=24, resolution=1,trough_color='green', **sl1_kws)],
-                     [sg.Text('Epoch stop (h) : ', **t24_kws)],
+                     [sg.Text('Epoch stop (hours) : ', **t24_kws)],
                      [sg.Slider(range=(0, 150), default_value=0, key=self.S1,
                                 tick_interval=24, resolution=1,trough_color='red', **sl1_kws)],
                      ], size=r2_size, **col_kws)
@@ -94,7 +94,7 @@ class LifeTab(GuiTab):
         l2 = sg.Col([[sg.Text('Food quality : ', **t24_kws)],
               [sg.Slider(range=(0.0, 1.0), default_value=1.0, key=self.Sq,
                          tick_interval=0.25, resolution=0.01, **sl1_kws)],
-              [sg.Text('Starting age (h): ', **t24_kws)],
+              [sg.Text('Starting age (hours post-hatch): ', **t24_kws)],
               [sg.Slider(range=(0, 150), default_value=0, key=self.Sa,
                          tick_interval=24, resolution=1, **sl1_kws)],
               ], size=r2_size, **col_kws)

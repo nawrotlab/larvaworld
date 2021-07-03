@@ -645,7 +645,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
 
     t0s, t1s, t2s, t3s, max_ages = [], [], [], [], []
     for d, id, c in zip(deb_dicts, ids, cols):
-        t0, t1, t2, t3, age = d['birth'], d['pupation'], d['death'], d['sim_start'] + d['birth'], np.array(d['age'])
+        t0_sim, t0, t1, t2, t3, age = d['sim_start'],d['birth'], d['pupation'], d['death'], d['hours_as_larva'] + d['birth'], np.array(d['age'])
         t00=0
         epochs = np.array(d['epochs'])
         if 'epoch_qs' in d.keys():
@@ -653,6 +653,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         else:
             epoch_qs = np.zeros(len(epochs))
         if sim_only:
+            t0_sim -= t3
             t00 -= t3
             t0 -= t3
             t1 -= t3
@@ -661,6 +662,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             epochs -= t3
             t3 = 0
 
+        t0_sim *= t_coef
         t00 *= t_coef
         t0 *= t_coef
         t1 *= t_coef
@@ -691,6 +693,8 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             ax.axvline(t1, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
             ax.axvline(t2, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
             ax.axvspan(t00, t0, color='darkgrey', alpha=0.5)
+            ax.axvspan(t0, t0_sim, color='lightgrey', alpha=0.5)
+
 
             if d['simulation']:
                 ax.axvspan(t0, t3, color='grey', alpha=0.05)
@@ -718,7 +722,33 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                 y0, y1 = ax.get_ylim()
                 ytext = y0 + 0.5 * (y1 - y0)
                 xtext = t00 + 0.5 * (t0 - t00)
-                ax.annotate('$incubation$',rotation=90,fontsize=30,va='center',ha='center',
+                ax.annotate('$incubation$',rotation=90,fontsize=25,va='center',ha='center',
+                            xy=(xtext, ytext), xycoords='data',
+                            )
+            except:
+                pass
+            try:
+                y0, y1 = ax.get_ylim()
+                ytext = y0 + 0.8 * (y1 - y0)
+                xpre = t0 + 0.5 * (t0_sim-t0)
+                if t0_sim-t0>0.2*(np.max(age)-t00) :
+                    ax.annotate('$prediction$',rotation=0,fontsize=20,va='center',ha='center',
+                                xy=(xpre, ytext), xycoords='data',
+                                )
+                xsim = t0_sim + 0.5 * (np.max(age) - t0_sim)
+                if np.max(age) - t0_sim > 0.2 * (np.max(age) - t00):
+                    ax.annotate('$simulation$', rotation=0, fontsize=20, va='center', ha='center',
+                                xy=(xsim, ytext), xycoords='data',
+                                )
+            except:
+                pass
+            try:
+                y0, y1 = ax.get_ylim()
+                x0, x1 = ax.get_xlim()
+                ytext = y0 + 0.5 * (y1 - y0)
+                xtext = t3 + 0.5 * (x1 - t3)
+                ax.axvspan(t3, x1, color='darkgrey', alpha=0.5)
+                ax.annotate('$pupation$',rotation=90,fontsize=25,va='center',ha='center',
                             xy=(xtext, ytext), xycoords='data',
                             )
             except:
@@ -761,6 +791,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         ax.set_xlim([0, np.max(max_ages)])
         ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
     else:
+        # ax.set_xlim([0, np.max(max_ages)])
         for ax in axs:
             ax.set_xticks(ticks=np.arange(0, np.max(max_ages), tickstep))
 

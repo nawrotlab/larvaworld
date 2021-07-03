@@ -162,6 +162,7 @@ class DEB:
         self.T = T
         self.L0 = 10 ** -10
         self.hours_as_larva = hours_as_larva
+        self.sim_start = hours_as_larva
         self.id = id
         self.cv = cv
         self.eb = eb
@@ -509,6 +510,7 @@ class DEB:
 
         self.Wwb = self.compute_Ww(V=self.Lb ** 3, E=self.Eb)  # g, wet weight at birth
         self.birth_time_in_hours = np.round(self.t_b * 24, 2)
+        self.sim_start+=self.birth_time_in_hours
         self.stage = 'larva'
         self.age = self.t_b
         if self.print_output:
@@ -752,7 +754,8 @@ class DEB:
             d['death'] = self.death_time_in_hours
             d['id'] = self.id
             d['simulation'] = self.simulation
-            d['sim_start'] = self.hours_as_larva
+            d['hours_as_larva'] = self.hours_as_larva
+            d['sim_start'] = self.sim_start
             d['epochs'] = self.epochs
             d['epoch_fs'] = self.epoch_fs
             d['epoch_qs'] = self.epoch_qs
