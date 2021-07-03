@@ -78,7 +78,6 @@ class BatchTab(GuiTab):
             c.update(s.get_subdicts())
         g = {g1.name: g1}
         d ={'batch_results':{'df' : None, 'fig_dict' : None}}
-        # print(l)
         return l, c, g, d
 
     def run(self, v, w, c, d, g, conf, id):

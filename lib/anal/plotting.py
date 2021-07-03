@@ -646,12 +646,14 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     t0s, t1s, t2s, t3s, max_ages = [], [], [], [], []
     for d, id, c in zip(deb_dicts, ids, cols):
         t0, t1, t2, t3, age = d['birth'], d['pupation'], d['death'], d['sim_start'] + d['birth'], np.array(d['age'])
+        t00=0
         epochs = np.array(d['epochs'])
         if 'epoch_qs' in d.keys():
             epoch_qs = np.array(d['epoch_qs'])
         else:
             epoch_qs = np.zeros(len(epochs))
         if sim_only:
+            t00 -= t3
             t0 -= t3
             t1 -= t3
             t2 -= t3
@@ -659,6 +661,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             epochs -= t3
             t3 = 0
 
+        t00 *= t_coef
         t0 *= t_coef
         t1 *= t_coef
         t2 *= t_coef
@@ -687,8 +690,10 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             ax.axvline(t0, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
             ax.axvline(t1, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
             ax.axvline(t2, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
+            ax.axvspan(t00, t0, color='darkgrey', alpha=0.5)
+
             if d['simulation']:
-                ax.axvspan(0, t3, color='grey', alpha=0.05)
+                ax.axvspan(t0, t3, color='grey', alpha=0.05)
             for (st0, st1), qq in zip(epochs, epoch_qs):
                 q_col = q_col1 + qq * quality_col_range if color_epoch_quality else c
                 ax.axvspan(st0, st1, color=q_col, alpha=0.2)
@@ -707,9 +712,17 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                 ax.set_xlim(xmin=0)
             if l == 'f' or mode == 'fs':
                 ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
-                # ax.set_ylim(ymin=0)
             if mode == 'assimilation':
                 ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
+            try:
+                y0, y1 = ax.get_ylim()
+                ytext = y0 + 0.5 * (y1 - y0)
+                xtext = t00 + 0.5 * (t0 - t00)
+                ax.annotate('$incubation$',rotation=90,fontsize=30,va='center',ha='center',
+                            xy=(xtext, ytext), xycoords='data',
+                            )
+            except:
+                pass
 
         for t in [0, t0, t1, t2]:
             if not np.isnan(t):

@@ -41,10 +41,10 @@ class SimTab(GuiTab):
 
     def build(self):
         l_env = SelectionList(tab=self, conftype='Env', idx=1)
-        s3 = SelectionList(tab=self, conftype='Life', idx=1, with_dict=True, header_value='default',
+        l_life = SelectionList(tab=self, conftype='Life', idx=1, with_dict=True, header_value='default',
                            text_kws=t14_kws, value_kws=t10_kws, width=12, header_text_kws=t9_kws)
         l_sim = SelectionList(tab=self, conftype='Exp', actions=['load', 'save', 'delete', 'run'], progress=True,
-                              sublists={'env_params': l_env, 'life_params' : s3})
+                              sublists={'env_params': l_env, 'life_params' : l_life})
 
         # s1 = self.build_sim_collapsible()
         s1 = CollapsibleDict('sim_params', True, default=True, disp_name='Configuration', text_kws=t8_kws)
@@ -54,19 +54,16 @@ class SimTab(GuiTab):
         #                       header_value='default', header_list_width=14,text_kws=t14_kws, value_kws=t10_kws)
 
 
-        self.selectionlists = [l_sim, l_env, s3]
+        self.selectionlists = [l_sim, l_env, l_life]
         g1 = GraphList(self.name)
         l_conf = [[sg.Col([
-            l_sim.l,
-            l_env.l,
-            *[i.get_layout() for i in [s1, s2, s3]],
+            *[i.get_layout() for i in [l_sim, l_env,s1, s2, l_life]],
             [g1.get_layout()]
         ])]]
         l = [[sg.Col(l_conf, **col_kws, size=col_size(0.2)), g1.canvas]]
 
         c = {}
-        for i in [s1, s2, s3]:
-            # print(i.get_subdicts())
+        for i in [s1, s2, l_life]:
             c.update(i.get_subdicts())
         g = {g1.name: g1}
         d={}
@@ -102,9 +99,9 @@ class SimTab(GuiTab):
         return d,g
 
 
-    def eval(self, e, v, w, c, d, g):
-        if e == 'CONF_LIFE':
-            c['Life'].update(w, life_conf())
+    # def eval(self, e, v, w, c, d, g):
+    #     if e == 'CONF_LIFE':
+    #         c['Life'].update(w, life_conf())
 
     def update(self, w,  c, conf, id):
         # sim = conf['sim_params']
@@ -137,7 +134,7 @@ class SimTab(GuiTab):
                 'sim_params': c['sim_params'].get_dict(v, w),
                 # 'sim_params': sim,
                 'collections': [k for k in output_keys if c['Output'].get_dict(v, w)[k]],
-                'life_params': c['life'].get_dict(v, w),
+                # 'life_params': c['life'].get_dict(v, w),
                 'enrichment': loadConf(v[self.selectionlists[0].k], 'Exp')['enrichment'],
                 }
         return conf

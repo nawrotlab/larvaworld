@@ -171,7 +171,6 @@ class SelectionList:
         w.Element(self.k).Update(values=self.confs, value=id, size=(self.width, self.Nconfs))
         if self.collapsible is not None :
             self.collapsible.update_header(w,id)
-        # w[self.k].update(values=list(loadConfDict(self.conftype).keys()), value=id)
         if all:
             for i in range(5):
                 k = f'{self.k0}{i}'
