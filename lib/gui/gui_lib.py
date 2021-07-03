@@ -717,9 +717,13 @@ t8_kws = {'size': (8, 1)
           }
 t6_kws = {'size': (6, 1)
           }
+t9_kws = {'size': (9, 1)
+           }
 t10_kws = {'size': (10, 1)
            }
 t12_kws = {'size': (12, 1)
+           }
+t13_kws = {'size': (13, 1)
            }
 t16_kws = {'size': (16, 1)
            }
@@ -1093,7 +1097,7 @@ class SectionDict:
         self.name = name
         self.subdicts = {}
 
-    def init_section(self):
+    def init_section(self, text_kws={}, value_kws={}):
         # if self.init_dict is not None:
         #     dic = self.init_dict
         # else:
@@ -1117,15 +1121,17 @@ class SectionDict:
             #              **t6_kws), sg.Text('seconds', **t8_kws, justification='center')]
             #     l.append(temp)
             else:
-                temp = sg.In(v, key=k0)
+                temp = sg.In(v, key=k0, **value_kws)
                 if self.type_dict is not None:
                     if type(self.type_dict[k]) == list:
+
                         if type(v) == float:
-                            temp = sg.Spin(values=self.type_dict[k], initial_value=v, key=k0)
+                            # print(self.name, v, type(v))
+                            temp = sg.Spin(values=self.type_dict[k], initial_value=v, key=k0, **value_kws)
                         else:
                             temp = sg.Combo(self.type_dict[k], default_value=v, key=k0, enable_events=True,
-                                            readonly=True)
-                l.append([sg.Text(f'{k_disp}:'), temp])
+                                            readonly=True, **value_kws)
+                l.append([sg.Text(f'{k_disp}:', **text_kws), temp])
         return l
 
     def get_dict(self, values, window):
@@ -1205,23 +1211,32 @@ class BoolButton(Button):
 
 
 def named_list_layout(text, key, choices, default_value=None,drop_down=True,list_width=20,
-                      readonly=True, enable_events=True, single_line=True):
-    t=sg.Text(text, size=(len(text),1))
+                      readonly=True, enable_events=True, single_line=True, next_to_header=None, as_col=True, list_kws={},
+                      header_text_kws=None):
+    if header_text_kws is None :
+        header_text_kws={'size' : (len(text),1)}
+    t=[sg.Text(text, **header_text_kws)]
+    if next_to_header is not None :
+        t+=next_to_header
     if drop_down :
-        l=sg.Combo(choices, key=key, default_value=default_value,
-                   size=(list_width,1),enable_events=enable_events, readonly=readonly)
+        l=[sg.Combo(choices, key=key, default_value=default_value,
+                   size=(list_width,1),enable_events=enable_events, readonly=readonly, **list_kws)]
     else :
-        l = sg.Listbox(choices, key=key, default_values=[default_value],
-                       size=(list_width,len(choices)),enable_events=enable_events)
+        l = [sg.Listbox(choices, key=key, default_values=[default_value],
+                       size=(list_width,len(choices)),enable_events=enable_events, **list_kws)]
     if single_line :
-        return [t, l]
+        return t + l
     else :
-        return sg.Col([[t], [l]])
+        if as_col :
+            return sg.Col([t, l])
+        else :
+            return[t, l]
 
 
 class Collapsible:
     def __init__(self, name, state, content, disp_name=None, toggle=None, disabled=False, next_to_header=None,
-                 auto_open=False, header_dict=None, header_value=None):
+                 auto_open=False, header_dict=None, header_value=None, header_list_width=10,header_list_kws={},
+                 header_text_kws=t12_kws,header_key=None, **kwargs):
         self.name = name
         if disp_name is None:
             disp_name = get_disp_name(name)
@@ -1232,12 +1247,16 @@ class Collapsible:
         self.sec_symbol = self.get_symbol()
         self.header_dict = header_dict
         self.header_value = header_value
-        self.header_key=f'SELECT LIST {name}'
+        if header_key is None :
+            header_key =f'SELECT LIST {name}'
+        self.header_key=header_key
         if header_dict is None:
-            header_disp = [sg.T(disp_name, enable_events=True, text_color='black', **t12_kws)]
+            header_disp = [sg.T(disp_name, enable_events=True, text_color='black', **header_text_kws)]
         else:
             header_disp = named_list_layout(text=f'{disp_name}:', choices=list(header_dict.keys()),
-                                            default_value=header_value, key=self.header_key, list_width=10)
+                                            default_value=header_value, key=self.header_key,
+                                            list_width=header_list_width, list_kws=header_list_kws,
+                                            header_text_kws=header_text_kws)
 
         header = [self.sec_symbol] + header_disp
         if toggle is not None:
@@ -1257,6 +1276,10 @@ class Collapsible:
 
 
     def update(self, window, dict, use_prefix=True):
+        # print(self.header_dict,list(dict.keys())[0])
+        # if self.header_dict is not None and list(dict.keys())[0] in self.header_dict.keys():
+        #     self.update_header(window, list(dict.values())[0])
+        # else :
         if dict is None:
             self.disable(window)
         elif self.toggle == False:
@@ -1404,7 +1427,7 @@ class CollapsibleTable(Collapsible):
 
 class CollapsibleDict(Collapsible):
     def __init__(self, name, state, dict=None, dict_name=None, type_dict=None, toggled_subsections=True, default=False,
-                 **kwargs):
+                 text_kws={},value_kws={},**kwargs):
         if dict_name is None:
             dict_name = name
         self.dict_name = dict_name
@@ -1413,7 +1436,7 @@ class CollapsibleDict(Collapsible):
             type_dict = dtypes.get_dict_dtypes(name)
         self.sectiondict = SectionDict(name=dict_name, dict=dict, type_dict=type_dict,
                                        toggled_subsections=toggled_subsections)
-        content = self.sectiondict.init_section()
+        content = self.sectiondict.init_section(text_kws=text_kws,value_kws=value_kws)
         super().__init__(name, state, content, **kwargs)
 
     def get_dict(self, values, window, check_toggle=True):
@@ -1854,47 +1877,6 @@ class DynamicGraph:
             delete_figure_agg(self.fig_agg)
         self.fig_agg = draw_canvas(self.canvas, self.fig)
 
-
-#
-#
-# def fullNcap(conf_type):
-#     if conf_type == 'Env':
-#         full = 'environment'
-#         cap = 'ENV'
-#     elif conf_type == 'Batch':
-#         full = 'batch'
-#         cap = 'BATCH'
-#     elif conf_type == 'Model':
-#         full = 'model'
-#         cap = 'MODEL'
-#     elif conf_type == 'Exp':
-#         full = 'experiment'
-#         cap = 'EXP'
-#     return full, cap
-#
-#
-# def save_gui_conf(window, conf, conf_type):
-#     full, cap = fullNcap(conf_type)
-#     l = [
-#         named_list_layout(f'Store new {full}', f'{cap}_ID', list(loadConfDict(conf_type).keys()),
-#                           readonly=False, enable_events=False),
-#         [sg.Ok(), sg.Cancel()]]
-#     e, v = sg.Window(f'{full} configuration', l).read(close=True)
-#     if e == 'Ok':
-#         conf_id = v[f'{cap}_ID']
-#         saveConf(conf, conf_type, conf_id)
-#         window[f'{cap}_CONF'].update(values=list(loadConfDict(conf_type).keys()), value=conf_id)
-#         if f'{cap}_CONF2' in window.element_list():
-#             window[f'{cap}_CONF2'].update(values=list(loadConfDict(conf_type).keys()), value=conf_id)
-#         # window[f'{cap}_CONF'].update()
-#
-#
-# def delete_gui_conf(window, values, conf_type):
-#     full, cap = fullNcap(conf_type)
-#     if values[f'{cap}_CONF'] != '':
-#         deleteConf(values[f'{cap}_CONF'], conf_type)
-#         window[f'{cap}_CONF'].update(values=list(loadConfDict(conf_type).keys()))
-#         window[f'{cap}_CONF'].update(value='')
 
 
 def check_collapsibles(window, event, values, collapsibles):

@@ -21,14 +21,14 @@ class LarvaworldGui:
         self.tab_dict = {
             'introduction': (IntroTab,None),
             'tutorials': (TutorialTab,None),
-                         'larva-model': (ModelTab,'Model'),
-                         'environment': (EnvTab,'Env'),
-                         'life-history': (LifeTab,'Life'),
-                         'simulation': (SimTab,'Exp'),
-                         'batch-run': (BatchTab,'Batch'),
-                         'analysis': (AnalysisTab,None),
-                         'videos': (VideoTab,None),
-                         'settings': (SettingsTab,None)
+                         'larva-model': (ModelTab,'Model', 'model_conf'),
+                         'environment': (EnvTab,'Env', 'env_conf'),
+                         'life-history': (LifeTab,'Life', 'life'),
+                         'simulation': (SimTab,'Exp', 'exp_conf'),
+                         'batch-run': (BatchTab,'Batch', 'batch_conf'),
+                         'analysis': (AnalysisTab,None,None),
+                         'videos': (VideoTab,None,None),
+                         'settings': (SettingsTab,None,None)
                          }
 
         if tabs is None:

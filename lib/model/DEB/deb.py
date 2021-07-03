@@ -766,6 +766,7 @@ class DEB:
                 d['mean_feed_freq'] = self.gut.Nfeeds/(self.age-self.birth_time_in_hours)/(60*60)
             
         self.save_dict(path)
+        return d
 
 
 
@@ -792,7 +793,8 @@ class DEB:
             if self.save_to is not None :
                 path=self.save_to
             else :
-                raise ValueError ('No path to save DEB dict')
+                return
+                # raise ValueError ('No path to save DEB dict')
         if self.dict is not None:
             # self.finalize_dict()
             self.dict_file = f'{path}/{self.id}.txt'

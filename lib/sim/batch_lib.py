@@ -50,31 +50,6 @@ Examples of this default batch run are given in  :
 '''
 
 
-def batch_methods(run='default', post='default', final='null'):
-    process_method_dict = {
-        'null': null_processing,
-        'default': default_processing,
-        'deb': deb_processing,
-        'odor_preference': PI_computation,
-    }
-
-    post_process_method_dict = {
-        'null': null_post_processing,
-        'default': post_processing,
-    }
-
-    final_process_method_dict = {
-        'null': null_final_processing,
-        'deb': deb_analysis,
-        'scatterplots': end_scatter_generation,
-        'odor_preference': heat_map_generation,
-    }
-
-    return {'procfunc': process_method_dict[run],
-            'postfunc': post_process_method_dict[post],
-            'finfunc': final_process_method_dict[final], }
-
-
 def prepare_batch(batch, batch_id, batch_type):
     space = grid_search_dict(**batch['space_search'])
     if batch['optimization'] is not None:
@@ -150,7 +125,7 @@ def save_results_df(traj):
 
 
 def load_default_configuration(traj, exp):
-    for k in ['env_params', 'sim_params', 'life_params','enrichment'] :
+    for k in ['env_params', 'sim_params', 'life_params', 'enrichment']:
         dic = fun.flatten_dict(exp[k], parent_key=k, sep='.')
         for k, v in dic.items():
             traj.f_apar(k, v)
@@ -347,7 +322,8 @@ def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}):
             d, results = procfunc(traj, d)
 
     if save_hdf5:
-        s,e=[ObjectTable(data=k, index=k.index, columns=k.columns.values, copy=True) for k in [d.step_data.reset_index(level='Step'), d.endpoint_data]]
+        s, e = [ObjectTable(data=k, index=k.index, columns=k.columns.values, copy=True) for k in
+                [d.step_data.reset_index(level='Step'), d.endpoint_data]]
         traj.f_add_result('end', endpoint_data=e, comment='The simulation endpoint data')
         traj.f_add_result('step', step_data=s, comment='The simulation step-by-step data')
     return d, results
@@ -357,11 +333,11 @@ def batch_run(*args, **kwargs):
     return _batch_run(*args, **kwargs)
 
 
-def get_batch_env(batch_id, dir_path, exp, params, optimization, space, **env_kws):
-    traj_name = f'{batch_id}_traj'
-    filename = f'{dir_path}/{batch_id}.hdf5'
+def get_batch_env(batch_id, batch_type, dir_path, parent_dir_path, exp, params, optimization, space, **env_kws):
+    traj_name = batch_id
+    filename = f'{parent_dir_path}/{batch_type}.hdf5'
     if os.path.exists(dir_path):
-    # if os.path.exists(dir_path) and overwrite == False:
+        # if os.path.exists(dir_path) and overwrite == False:
         try:
             env = Environment(continuable=True)
             env.resume(trajectory_name=traj_name, resume_folder=dir_path)
@@ -379,7 +355,7 @@ def get_batch_env(batch_id, dir_path, exp, params, optimization, space, **env_kw
         return env
     except:
         try:
-            env = Environment(trajectory=traj_name,filename=filename,**env_kws)
+            env = Environment(trajectory=traj_name, filename=filename, **env_kws)
             print('Created novel environment')
             traj = prepare_traj(env.traj, exp, params, batch_id, dir_path)
             traj = config_traj(traj, optimization)
@@ -392,31 +368,34 @@ def get_batch_env(batch_id, dir_path, exp, params, optimization, space, **env_kw
 def _batch_run(
         batch_type='unnamed',
         batch_id='template',
-               space=None,
-               save_hdf5=False,
-               runfunc=single_run,
-               procfunc=None,
-               postfunc=None,
-               finfunc=None,
-               multiproc=True,
-               resumable=True,
-               # overwrite=False,
-               exp=None,
-               params=None,
-               optimization=None,
-               post_kws={},
-               exp_kws={}
-               ):
+        space=None,
+        save_hdf5=False,
+        runfunc=single_run,
+        procfunc=None,
+        postfunc=None,
+        finfunc=None,
+        multiproc=True,
+        resumable=True,
+        exp=None,
+        params=None,
+        optimization=None,
+        post_kws={},
+        exp_kws={}
+):
     s0 = time.time()
-    dir_path = f'{paths.BatchRunFolder}/{batch_type}/{batch_id}'
+    parent_dir_path = f'{paths.BatchRunFolder}/{batch_type}'
+    dir_path = f'{parent_dir_path}/{batch_id}'
     env_kws = {
-        'file_title': batch_id,
-        'comment': f'{batch_id} batch run!',
+        'file_title': batch_type,
+        # 'file_title': batch_id,
+        'comment': f'{batch_type} batch run!',
+        # 'comment': f'{batch_id} batch run!',
         'multiproc': multiproc,
         'resumable': resumable,
+        'small_overview_tables': True,
         'large_overview_tables': True,
         'summary_tables': True,
-        'overwrite_file': True,
+        'overwrite_file': False,
         'resume_folder': dir_path,
         'ncores': 4,
         # 'ncores': os.cpu_count(),
@@ -431,13 +410,12 @@ def _batch_run(
         'procfunc': procfunc,
         'save_hdf5': save_hdf5,
         'exp_kws': {**exp_kws,
-                       'save_to': dir_path,
-                       'vis_kwargs':dtypes.get_dict('visualization'),
-                       'collections' : exp['collections']
-                       }
+                    'save_to': dir_path,
+                    'vis_kwargs': dtypes.get_dict('visualization'),
+                    'collections': exp['collections']
+                    }
     }
-    env = get_batch_env(batch_id, dir_path,
-                        # overwrite=overwrite,
+    env = get_batch_env(batch_id, batch_type, dir_path, parent_dir_path,
                         exp=exp,
                         params=params,
                         optimization=optimization,
@@ -468,7 +446,6 @@ def prepare_traj(traj, exp, params, batch_id, dir_path):
     if params is not None:
         for p in params:
             traj.f_apar(p, 0.0)
-
 
     traj.f_aconf('dir_path', dir_path, comment='Directory for saving data')
     traj.f_aconf('plot_path', f'{dir_path}/{batch_id}.pdf', comment='File for saving plot')
@@ -553,3 +530,52 @@ def heat_map_generation(traj):
     fig = plot_heatmap_PI(save_to=traj.config.dir_path, csv_filepath=csv_filepath)
     fig_dict = {'PI_heatmap': fig}
     return df, fig_dict
+
+
+def load_traj(batch_type, batch_id):
+    parent_dir_path = f'{paths.BatchRunFolder}/{batch_type}'
+    filename = f'{parent_dir_path}/{batch_type}.hdf5'
+    traj = load_trajectory(filename=filename, name=batch_id, load_all=2)
+    return traj
+
+
+def existing_trajs(batch_type):
+    import h5py
+    filename = f'{paths.BatchRunFolder}/{batch_type}/{batch_type}.hdf5'
+    try :
+        f = h5py.File(filename, 'r')
+        return list(f.keys())
+    except :
+        return []
+
+def delete_traj(batch_type, traj_name):
+    import h5py
+    filename = f'{paths.BatchRunFolder}/{batch_type}/{batch_type}.hdf5'
+    with h5py.File(filename, 'r+') as f :
+        del f[traj_name]
+
+
+procfunc_dict = {
+    'null': null_processing,
+    'default': default_processing,
+    'deb': deb_processing,
+    'odor_preference': PI_computation,
+}
+
+postfunc_dict = {
+    'null': null_post_processing,
+    'default': post_processing,
+}
+
+finfunc_dict = {
+    'null': null_final_processing,
+    'deb': deb_analysis,
+    'scatterplots': end_scatter_generation,
+    'odor_preference': heat_map_generation,
+}
+
+
+def batch_methods(run='default', post='default', final='null'):
+    return {'procfunc': procfunc_dict[run],
+            'postfunc': postfunc_dict[post],
+            'finfunc': finfunc_dict[final], }

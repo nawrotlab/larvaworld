@@ -38,9 +38,11 @@ exp_dict = {
     'odor_pref_test': exp('odor_pref_test', sim={'duration': 5.0}, c=['olfactor']),
     'odor_pref_test_on_food': exp('odor_pref_test_on_food', sim={'duration': 5.0}, c=['olfactor', 'feeder']),
     'odor_pref_train': exp('odor_pref_train', sim={'duration': 41.0}, c=['olfactor', 'memory'],
-                           life_params=dtypes.get_dict('life',
-                                                       epochs=[(1 / 12, 2 / 12), (3 / 12, 4 / 12), (5 / 12, 6 / 12),
-                                                               (7 / 12, 8 / 12)], epoch_qs=[0, 0, 0, 0])),
+life_params='odor_preference'
+                           # life_params=dtypes.get_dict('life',
+                           #                             epochs=[(1 / 12, 2 / 12), (3 / 12, 4 / 12), (5 / 12, 6 / 12),
+                           #                                     (7 / 12, 8 / 12)], epoch_qs=[0.0, 0.0, 0.0, 0.0])
+                                                               ),
     'odor_pref_RL': exp('odor_preference_RL', sim={'duration': 105.0}, c=['memory']),
     'patchy_food': exp('patchy_food', c=['feeder'], en=True),
     'uniform_food': exp('uniform_food', c=['feeder'], en=True),

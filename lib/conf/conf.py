@@ -257,6 +257,7 @@ def expandConf(id, conf_type):
         conf['exp'] = expandConf(conf['exp'], 'Exp')
     elif conf_type=='Exp' :
         conf['env_params']=expandConf(conf['env_params'], 'Env')
+        conf['life_params'] = loadConf(conf['life_params'], 'Life')
     elif conf_type=='Env' :
         for k, v in conf['larva_groups'].items():
             if type(v['model']) == str:

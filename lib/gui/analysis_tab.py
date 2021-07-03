@@ -3,7 +3,8 @@ import PySimpleGUI as sg
 import numpy as np
 # from tkinter import *
 
-from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, t10_kws, t16_kws, default_run_window, w_kws
+from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, t10_kws, t16_kws, default_run_window, \
+    w_kws, named_list_layout, col_size, col_kws
 from lib.gui.tab import GuiTab
 from lib.stor import paths
 from lib.anal.plotting import graph_dict
@@ -47,11 +48,13 @@ class AnalysisTab(GuiTab):
                             tooltip='Browse to add datasets to the analysis list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
              ],
 
-            [sg.Col([[sg.Listbox(values=list(data.keys()), size=(25, 5), key='DATASET_IDS', enable_events=True),
-                      ]])]]
+            [sg.Col([[sg.Listbox(values=list(data.keys()), size=(25, 5), key='DATASET_IDS', enable_events=True)]])]
+        ]
+
+
 
         graph_lists['ANALYSIS'] = g = ButtonGraphList(name='ANALYSIS', fig_dict=graph_dict)
-        l = [[sg.Col(data_list + g.get_layout(as_col=False), vertical_alignment='t'), g.canvas]]
+        l = [[sg.Col(data_list + g.get_layout(as_col=False), size=col_size(0.2), **col_kws), g.canvas]]
         return l, {}, graph_lists, dicts
 
 

@@ -513,7 +513,8 @@ all_null_dicts['enrichment'] = {k: all_null_dicts[k] for k in
 
 all_null_dicts['exp_conf'] = {'env_params': None,
                               'sim_params': get_dict('sim_params'),
-                              'life_params': get_dict('life'),
+                              'life_params': 'default',
+                              # 'life_params': get_dict('life'),
                               'collections': ['pose'],
                               'enrichment': get_dict('enrichment')
                               }
@@ -577,8 +578,8 @@ def get_dict_dtypes(name, **kwargs):
             {
                 'epochs': List[Tuple[float, float]],
                 'epoch_qs': List[float],
-                'hours_as_larva': float,
-                'substrate_quality': float,
+                'hours_as_larva': np.round(np.arange(0.0, 250.001, 1.0), 1).tolist(),
+                'substrate_quality': np.round(np.arange(0.0, 1.001, 0.01), 3).tolist(),
                 'substrate_type': list(substrate_dict.keys()),
             },
         'odorscape': {'odorscape': ['Gaussian', 'Diffusion'],
@@ -767,7 +768,7 @@ def get_dict_dtypes(name, **kwargs):
     all_dtypes['enrichment'] = {k: all_dtypes[k] for k in ['preprocessing', 'processing', 'annotation', 'enrich_aux']}
     all_dtypes['exp_conf'] = {'env_params': str,
                               'sim_params': dict,
-                              'life_params': dict,
+                              'life_params': str,
                               'collections': List[str],
                               'enrichment': dict,
                               }

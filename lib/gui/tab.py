@@ -5,8 +5,9 @@ import PySimpleGUI as sg
 import numpy as np
 from lib.conf.conf import loadConfDict, saveConf, deleteConf, loadConf, expandConf
 from lib.gui.gui_lib import ClickableImage, window_size, t10_kws, graphic_button, t24_kws, named_list_layout, t8_kws, \
-    save_conf_window
+    save_conf_window, CollapsibleDict
 import lib.stor.paths as paths
+import lib.conf.dtype_dicts as dtypes
 
 class ProgressBarLayout :
     def __init__(self, list):
@@ -32,7 +33,8 @@ class ProgressBarLayout :
 
 class SelectionList:
     def __init__(self, tab, conftype, disp=None, actions=[], sublists={},idx=None, progress=False,
-                 width=24, **kwargs):
+                 width=24,with_dict=False, **kwargs):
+        self.with_dict = with_dict
         self.width = width
         self.tab = tab
         self.conftype = conftype
@@ -82,7 +84,7 @@ class SelectionList:
     def set_d(self, d):
         self.tab.gui.dicts =d
 
-    def build(self, append=[]):
+    def build(self, append=[],**kwargs):
 
         acts = self.actions
         n = self.disp
@@ -104,22 +106,24 @@ class SelectionList:
         if 'run' in acts:
             bs.append(graphic_button('play', f'RUN_{n}', tooltip=f'Run the selected {n}.'))
 
-        temp=[
-            [sg.Text(n.capitalize(), **t10_kws), *bs],
-            [sg.Combo(self.confs, key=self.k, enable_events=True,
-                      tooltip=f'The currently loaded {n}.', readonly=True,
-                      size=(self.width, self.Nconfs)
-                      )]
-        ]
+        if self.with_dict :
+            nn=self.tab.gui.tab_dict[n][2]
+            self.collapsible = CollapsibleDict(n, True, dict=dtypes.get_dict(nn),type_dict=dtypes.get_dict_dtypes(nn),
+                                               header_list_width=self.width, header_dict=loadConfDict(self.conftype),next_to_header=bs,header_key=self.k,
+                              header_list_kws={'tooltip' : f'The currently loaded {n}.'},**kwargs)
+
+
+            temp=self.collapsible.get_layout(as_col=False)
+
+        else :
+            self.collapsible =None
+            temp = named_list_layout(text=n.capitalize(), key=self.k, choices=self.confs, default_value=None,
+                                 drop_down=True,list_width=self.width,single_line=False, next_to_header=bs, as_col=False,
+                                 list_kws={'tooltip' : f'The currently loaded {n}.'})
+
         if self.progressbar is not None :
             temp.append(self.progressbar.l)
-        # if len(append)>0 :
-        #     temp.append(append)
-
-        # tt=[sg.Text(n.capitalize(), **t10_kws), *bs]
-        # print(self.k)
         l = [sg.Col(temp)]
-        # print(self.k)
         return l
 
     def eval(self, e, v):
@@ -160,10 +164,13 @@ class SelectionList:
             conf = self.tab.get(w, v, c, as_entry=False)
             new_conf = self.tab.edit(conf)
             self.tab.update(w, c, new_conf, id=None)
+        elif self.collapsible is not None and e == self.collapsible.header_key :
+            self.collapsible.update_header(w,id)
 
     def update(self, w, id='', all=False):
-        # w=self.w()
         w.Element(self.k).Update(values=self.confs, value=id, size=(self.width, self.Nconfs))
+        if self.collapsible is not None :
+            self.collapsible.update_header(w,id)
         # w[self.k].update(values=list(loadConfDict(self.conftype).keys()), value=id)
         if all:
             for i in range(5):
@@ -185,6 +192,15 @@ class SelectionList:
         else:
             idx = int(np.min([i for i in range(5) if f'{k0}{i}' not in w.AllKeysDict.keys()]))
         return f'{k0}{idx}'
+
+    def get_layout(self):
+        return self.l
+
+    def get_subdicts(self):
+        if self.collapsible is not None :
+            return self.collapsible.get_subdicts()
+        else :
+            return {}
 
     @property
     def confs(self):

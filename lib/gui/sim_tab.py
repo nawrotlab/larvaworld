@@ -9,7 +9,7 @@ from lib.aux.collecting import output_keys
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     named_bool_button, GraphList, graphic_button, t10_kws, col_kws, col_size, t24_kws, \
     t8_kws, \
-    t16_kws, t11_kws, t6_kws, t12_kws, t14_kws
+    t16_kws, t11_kws, t6_kws, t12_kws, t14_kws, t13_kws, t9_kws
 from lib.gui.tab import GuiTab, SelectionList
 from lib.gui.life_conf import life_conf
 from lib.sim.single_run import run_sim
@@ -41,17 +41,20 @@ class SimTab(GuiTab):
 
     def build(self):
         l_env = SelectionList(tab=self, conftype='Env', idx=1)
+        s3 = SelectionList(tab=self, conftype='Life', idx=1, with_dict=True, header_value='default',
+                           text_kws=t14_kws, value_kws=t10_kws, width=12, header_text_kws=t9_kws)
         l_sim = SelectionList(tab=self, conftype='Exp', actions=['load', 'save', 'delete', 'run'], progress=True,
-                              sublists={'env_params': l_env})
-        self.selectionlists = [l_sim, l_env]
+                              sublists={'env_params': l_env, 'life_params' : s3})
+
         # s1 = self.build_sim_collapsible()
-        s1 = CollapsibleDict('sim_params', True, default=True, disp_name='Configuration')
+        s1 = CollapsibleDict('sim_params', True, default=True, disp_name='Configuration', text_kws=t8_kws)
         output_dict = dict(zip(output_keys, [False] * len(output_keys)))
         s2 = CollapsibleDict('Output', False, dict=output_dict, auto_open=False)
-        s3 = CollapsibleDict('life', False, default=True,
-                             next_to_header=[graphic_button('edit', 'CONF_LIFE',
-                                                            tooltip='Configure the life history of the simulated larvae.')])
+        # s3 = CollapsibleDict('life', False, default=True,header_dict=loadConfDict('Life'),
+        #                       header_value='default', header_list_width=14,text_kws=t14_kws, value_kws=t10_kws)
 
+
+        self.selectionlists = [l_sim, l_env, s3]
         g1 = GraphList(self.name)
         l_conf = [[sg.Col([
             l_sim.l,
@@ -59,10 +62,11 @@ class SimTab(GuiTab):
             *[i.get_layout() for i in [s1, s2, s3]],
             [g1.get_layout()]
         ])]]
-        l = [[sg.Col(l_conf, **col_kws, size=col_size(0.25)), g1.canvas]]
+        l = [[sg.Col(l_conf, **col_kws, size=col_size(0.2)), g1.canvas]]
 
         c = {}
         for i in [s1, s2, s3]:
+            # print(i.get_subdicts())
             c.update(i.get_subdicts())
         g = {g1.name: g1}
         d={}
@@ -106,7 +110,7 @@ class SimTab(GuiTab):
         # sim = conf['sim_params']
         output_dict = dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys]))
         c['Output'].update(w, output_dict)
-        c['life'].update(w, conf['life_params'])
+        # c['life'].update_header(w, conf['life_params'])
 
         sim=copy.deepcopy(conf['sim_params'])
         sim.update({'sim_ID' : f'{id}_{next_idx(id)}', 'path' : f'single_runs/{id}'})
