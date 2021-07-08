@@ -84,7 +84,7 @@ class SelectionList:
     def set_d(self, d):
         self.tab.gui.dicts =d
 
-    def build(self, append=[],**kwargs):
+    def build(self, append=[],as_col=True,**kwargs):
 
         acts = self.actions
         n = self.disp
@@ -105,6 +105,10 @@ class SelectionList:
                                      tooltip=f'Delete an existing {n} configuration.'))
         if 'run' in acts:
             bs.append(graphic_button('play', f'RUN_{n}', tooltip=f'Run the selected {n}.'))
+        if 'search' in acts:
+            bs.append(graphic_button('search_add', f'SEARCH_{n}', initial_folder=paths.DataFolder, change_submits=True,
+                           enable_events=True, target=(0, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
+                           tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.'))
 
         if self.with_dict :
             nn=self.tab.gui.tab_dict[n][2]
@@ -123,8 +127,12 @@ class SelectionList:
 
         if self.progressbar is not None :
             temp.append(self.progressbar.l)
-        l = [sg.Col(temp)]
-        return l
+        if as_col :
+            return [sg.Col(temp)]
+        else :
+            return temp
+        # l = [sg.Col(temp)]
+        # return l
 
     def eval(self, e, v):
         w = self.w()

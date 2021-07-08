@@ -163,6 +163,29 @@ def compute_PIs(datagroup_id, save_to=None, **kwargs):
     df.to_csv(f'{save_to}/{filename}', header=True, index=True)
     print(f'PIs saved as {filename}')
 
+def detect_dataset(datagroup_id, folder_path):
+    conf = loadConf(datagroup_id, 'Group')
+    if 'detect' in conf.keys() :
+        d = conf['detect']
+        dF,df=d['folder'], d['file']
+        dFp, dFs=dF['pref'],dF['suf']
+        dfp, dfs,df_=df['pref'],df['suf'],df['sep']
+        fn = folder_path.split('/')[-1]
+        fs = os.listdir(folder_path)
+        if (dFp is not None and fn.startswith(dFp)) or (dFs is not None and fn.endswith(dFs)):
+            return [fn]
+
+        elif dfp is not None :
+            return [f.split(df_)[1:][0] for f in fs if f.startswith(dfp)]
+        elif dfs is not None :
+            return [f.split(df_)[:-1][0] for f in fs if f.endswith(dfs)]
+        else:
+            return []
+
+
+    else :
+        return []
+
 # def merge_datasets(datasets, id, dir) :
 #     d0=LarvaDataset(dir, id=id)
 #     N=sum([d.Nagents for d in datasets])

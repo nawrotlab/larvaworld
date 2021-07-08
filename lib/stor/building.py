@@ -81,10 +81,8 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
                                                   'cum_dur': len(df) * d.dt}, ignore_index=True)
             ddf.update(df)
             ddf = ddf.assign(AgentID=agent_id).set_index('AgentID', append=True)
-            if i == 0:
-                step_data = ddf
-            else:
-                step_data = step_data.append(ddf)
+            step_data = ddf if i == 0 else step_data.append(ddf)
+
     else:
         for i, (df, agent_id) in enumerate(zip(dfs, agent_ids)):
             endpoint_data = endpoint_data.append({'AgentID': agent_id,
@@ -104,8 +102,8 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
 
 def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ticks=True, min_duration_in_sec=0,
                   **kwargs):
-    temp_step_path = os.path.join(source_dir, 'step.csv')
-    temp_length_path = os.path.join(source_dir, 'length.csv')
+    temp_step_path = f'{source_dir}_step.csv'
+    temp_length_path = f'{source_dir}_length.csv'
 
     def temp_save(step, length):
         step.to_csv(temp_step_path, index=True, header=True)
@@ -127,11 +125,17 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
         print('Loaded temporary data successfully!')
     except:
 
-        t_file = os.path.join(source_dir, 't.txt')
-        id_file = os.path.join(source_dir, 'larvaid.txt')
-        x_file = os.path.join(source_dir, 'x_spine.txt')
-        y_file = os.path.join(source_dir, 'y_spine.txt')
-        state_file = os.path.join(source_dir, 'state.txt')
+        t_file = f'{source_dir}_t.txt'
+        # t_file = os.path.join(source_dir, 't.txt')
+        id_file = f'{source_dir}_larvaid.txt'
+        # id_file = os.path.join(source_dir, 'larvaid.txt')
+        x_file = f'{source_dir}_x_spine.txt'
+        # x_file = os.path.join(source_dir, 'x_spine.txt')
+        y_file = f'{source_dir}_y_spine.txt'
+        # y_file = os.path.join(source_dir, 'y_spine.txt')
+        state_file = f'{source_dir}_global_state_large_state.txt'
+        # state_file = f'{source_dir}_state.txt'
+        # state_file = os.path.join(source_dir, 'state.txt')
 
         xs = pd.read_csv(x_file, header=None, sep='\t', names=x_pars)
         ys = pd.read_csv(y_file, header=None, sep='\t', names=y_pars)

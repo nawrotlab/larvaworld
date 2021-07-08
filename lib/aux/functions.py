@@ -1323,3 +1323,9 @@ def df2pdf(df, path, **kwargs) :
     pp = PdfPages(path)
     pp.savefig(fig, bbox_inches='tight')
     pp.close()
+
+def remove_prefix(text, prefix):
+    if text.startswith(prefix):
+        return text[len(prefix):]
+    return text  # or whatever
+

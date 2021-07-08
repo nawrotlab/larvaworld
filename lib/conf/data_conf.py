@@ -126,7 +126,11 @@ SchleyerGroup = {
     'conf': 'SchleyerConf',
     'path': 'SchleyerGroup',
     'arena_pars': env.dish(0.15),
-    'subgroups': ['no_odor', 'Ntrials', 'odor_conc', 'FRU_conc', 'new-reward-punishment']
+    'subgroups': ['no_odor', 'Ntrials', 'odor_conc', 'FRU_conc', 'new-reward-punishment'],
+    'detect': {
+        'folder' : {'pref' : 'box', 'suf' : None},
+        'file' : {'pref' : None, 'suf' : None, 'sep' : None}
+    }
 }
 
 JovanicDataConf = {'fr': 11.27,
@@ -162,7 +166,11 @@ JovanicGroup = {
     'genotypes': ['AttP2@UAS_TNT', 'AttP240@UAS_TNT'],
     'subgroups': ['AttP2@UAS_TNT', 'AttP240@UAS_TNT', 'FoodPatches'],
     'conditions': ['Fed', 'ProteinDeprived', 'Starved'],
-    'arena_pars': env.arena(0.193, 0.193)
+    'arena_pars': env.arena(0.193, 0.193),
+'detect': {
+        'folder' : {'pref' : None, 'suf' : None},
+        'file' : {'pref' : None, 'suf' : 'larvaid.txt', 'sep' : '_'}
+    }
 }
 
 TestGroup = {
