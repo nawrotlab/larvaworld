@@ -156,7 +156,7 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
         print(f'Preference for left odor : {np.round(ind, 3)}')
         results['PI'] = ind
 
-    if exp_type in ['odor_pref_RL', 'odor_pref_train', 'chemotaxis_RL']:
+    if exp_type in ['odor_pref_RL', 'chemotaxis_RL']:
         c = {
             'datasets': [d],
             'show_first': False,

@@ -11,7 +11,6 @@ from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
     t8_kws, \
     t16_kws, t11_kws, t6_kws, t12_kws, t14_kws, t13_kws, t9_kws
 from lib.gui.tab import GuiTab, SelectionList
-from lib.gui.life_conf import life_conf
 from lib.sim.single_run import run_sim
 from lib.sim.analysis import sim_analysis
 from lib.conf.conf import loadConfDict, loadConf, next_idx
