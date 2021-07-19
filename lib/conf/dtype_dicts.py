@@ -438,6 +438,7 @@ all_null_dicts = {
     'memory': {'DeltadCon': 0.1,
                'state_spacePerOdorSide': 0,
                'gain_space': [-300.0, -50.0, 50.0, 300.0],
+               'decay_coef_space': None,
                'update_dt': 1,
                'alpha': 0.05,
                'gamma': 0.6,
@@ -694,6 +695,7 @@ def get_dict_dtypes(name, **kwargs):
         'memory': {'DeltadCon': float,
                    'state_spacePerOdorSide': int,
                    'gain_space': List[float],
+                   'decay_coef_space': List[float],
                    'update_dt': float,
                    'alpha': float,
                    'gamma': float,
@@ -711,7 +713,7 @@ def get_dict_dtypes(name, **kwargs):
         'sim_params': {
             'sim_ID': str,
             'path': str,
-            'duration': np.round(np.arange(0.0, 100.1, 0.1), 1).tolist(),
+            'duration': np.round(np.arange(0.0, 200.1, 0.1), 1).tolist(),
             'timestep': np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(),
             'Box2D': bool,
             'sample': list(loadConfDict('Ref').keys())

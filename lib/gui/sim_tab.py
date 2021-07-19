@@ -24,7 +24,7 @@ class SimTab(GuiTab):
         sim_conf = [[sg.Text('Sim id :', **t8_kws), sg.In('unnamed_sim', key='sim_ID', **t16_kws)],
                     [sg.Text('Path :', **t8_kws), sg.In('single_runs', key='path', **t16_kws)],
                     [sg.Text('Duration :', **t8_kws),
-                     sg.Spin(values=np.round(np.arange(0.0, 100.1, 0.1), 1).tolist(), initial_value=3.0, key='duration',
+                     sg.Spin(values=np.round(np.arange(0.0, 200.1, 0.1), 1).tolist(), initial_value=3.0, key='duration',
                              **t6_kws), sg.Text('minutes', **t8_kws, justification='center')],
                     [sg.Text('Timestep :', **t8_kws),
                      sg.Spin(values=np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(), initial_value=0.1, key='timestep',
@@ -109,6 +109,7 @@ class SimTab(GuiTab):
         # c['life'].update_header(w, conf['life_params'])
 
         sim=copy.deepcopy(conf['sim_params'])
+        print(sim)
         sim.update({'sim_ID' : f'{id}_{next_idx(id)}', 'path' : f'single_runs/{id}'})
         c['sim_params'].update(w, sim)
         # w.Element('sim_ID').Update(value=f'{id}_{next_idx(id)}')

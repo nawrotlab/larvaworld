@@ -43,7 +43,7 @@ life_params='odor_preference'
                            #                             epochs=[(1 / 12, 2 / 12), (3 / 12, 4 / 12), (5 / 12, 6 / 12),
                            #                                     (7 / 12, 8 / 12)], epoch_qs=[0.0, 0.0, 0.0, 0.0])
                                                                ),
-    'odor_pref_RL': exp('odor_preference_RL', sim={'duration': 105.0}, c=['memory']),
+    'odor_pref_RL': exp('odor_preference_RL', sim={'duration': 105.0}, c=['olfactor','memory']),
     'patchy_food': exp('patchy_food', c=['feeder'], en=True),
     'uniform_food': exp('uniform_food', c=['feeder'], en=True),
     'food_grid': exp('food_grid', c=['feeder'], en=True),

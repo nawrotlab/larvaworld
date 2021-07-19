@@ -1367,7 +1367,7 @@ class CollapsibleTable(Collapsible):
         super().__init__(name, state, content=content, next_to_header=b, **kwargs)
 
     def set_data(self, dic):
-        if len(dic) != 0:
+        if dic is not None and len(dic) != 0:
             if self.header is not None:
                 data = []
                 for id, pars in dic.items():
@@ -1401,7 +1401,7 @@ class CollapsibleTable(Collapsible):
                             )]]
         return content
 
-    def update(self, window, dic):
+    def update(self, window, dic, use_prefix=True):
         self.dict = dic
         self.data = self.set_data(dic)
         window[self.key].update(values=self.data, num_rows=len(self.data))

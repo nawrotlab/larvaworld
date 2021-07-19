@@ -12,7 +12,7 @@ from lib.stor.larva_dataset import LarvaDataset
 
 
 def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
-    ccc={'show' : False}
+    ccc = {'show': False}
     if d is None:
         return
     fig_dict = {}
@@ -40,7 +40,6 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
               'save_to': d.plot_dir,
               'subfolder': None,
               **ccc}
-
 
         fig_dict['bearing correction VS Y pos'] = plot_turn_amp(par_short='tur_y0', mode='hist', ref_angle=270, **cc)
         fig_dict['turn angle VS Y pos (hist)'] = plot_turn_amp(par_short='tur_y0', mode='hist', **cc)
@@ -84,12 +83,12 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
                   'labels': labels,
                   'save_to': d.plot_dir,
                   **ccc}
-            cc1 = {'show_first' : False, 'legend_loc' : 'upper_left', **cc}
+            cc1 = {'show_first': False, 'legend_loc': 'upper_left', **cc}
 
             fig_dict['faeces ratio'] = plot_timeplot(['f_out_r'], **cc1)
             fig_dict['faeces amount'] = plot_timeplot(['f_out'], **cc1)
             fig_dict['food absorption efficiency'] = plot_timeplot(['abs_r'], **cc1)
-            fig_dict['food absorbed'] = plot_timeplot(['f_ab'],  **cc1)
+            fig_dict['food absorbed'] = plot_timeplot(['f_ab'], **cc1)
             fig_dict['food intake (timeplot)'] = plot_timeplot(['f_am'], **cc1)
 
             fig_dict['food intake'] = plot_food_amount(**cc)
@@ -124,9 +123,8 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
 
     elif exp_type in ['chemotaxis_approach', 'chemotaxis_local', 'chemotaxis_diffusion']:
 
-
         if exp_type in ['chemotaxis_local', 'chemotaxis_diffusion']:
-            ps=['o_cent', 'sd_cent', 'd_cent']
+            ps = ['o_cent', 'sd_cent', 'd_cent']
             source = (0.0, 0.0)
         elif exp_type in ['chemotaxis_approach']:
             ps = ['o_chem', 'sd_chem', 'd_chem']
@@ -137,11 +135,11 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
             fig_dict[p] = plot_timeplot([p], datasets=[d], **ccc)
         for chunk in ['turn', 'stride', 'pause']:
             for dur in [0.0, 0.5, 1.0]:
-                try :
+                try:
                     fig_dict[f'{chunk}_bearing2source_min_{dur}_sec'] = plot_chunk_Dorient2source(datasets=[d],
-                                                                                              chunk=chunk,
-                                                                                              source=source,
-                                                                                              min_dur=dur, **ccc)
+                                                                                                  chunk=chunk,
+                                                                                                  source=source,
+                                                                                                  min_dur=dur, **ccc)
                 except:
                     pass
         vis_kwargs = dtypes.get_dict('visualization', mode='image', image_mode='final', show_display=False,
@@ -149,9 +147,7 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
                                      visible_clock=False, visible_scale=False, media_name='single_trajectory')
         d.visualize(agent_ids=[d.agent_ids[0]], vis_kwargs=vis_kwargs)
 
-
-
-    if 'odor_pref' in exp_type :
+    if 'odor_pref' in exp_type:
         ind = d.compute_preference_index()
         print(f'Preference for left odor : {np.round(ind, 3)}')
         results['PI'] = ind
@@ -163,18 +159,22 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
             'table': 'best_gains',
             **ccc
         }
+
+
+
         g_keys = ['g_odor1'] if exp_type == 'chemotaxis_RL' else ['g_odor1', 'g_odor2']
-        fig_dict['best_gains_table'] = plot_timeplot(g_keys,save_as='best_gains.pdf', **c)
-        fig_dict['reward_table'] = plot_timeplot(['cum_reward'],save_as='reward.pdf', **c)
-        fig_dict['olfactor_decay_table'] = plot_timeplot(['D_olf'],save_as='olfactor_decay.pdf', **c)
-        fig_dict['olfactor_decay_table_inds'] = plot_timeplot(['D_olf'],save_as='olfactor_decay_inds.pdf', individuals=True, **c)
+        fig_dict['best_gains_table'] = plot_timeplot(g_keys, save_as='best_gains.pdf', **c)
+        fig_dict['olfactor_decay_table'] = plot_timeplot(['D_olf'], save_as='olfactor_decay.pdf', **c)
+        fig_dict['olfactor_decay_table_inds'] = plot_timeplot(['D_olf'], save_as='olfactor_decay_inds.pdf',
+                                                              individuals=True, **c)
+        fig_dict['reward_table'] = plot_timeplot(['cum_reward'], save_as='reward.pdf', **c)
     elif exp_type == 'realistic_imitation':
         d.save_agent(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
-    if exp_type=='dish' :
+    if exp_type == 'dish':
         targeted_analysis([d])
         fig_dict = {f'stride_track_idx_0_in_{s0}-{s1}': plot_marked_strides(datasets=[d], agent_idx=0,
                                                                             slice=[s0, s1], **ccc) for (s0, s1) in
-                [(0,60)]}
+                    [(0, 60)]}
 
     print(f'    Analysis complete!')
     return fig_dict, results

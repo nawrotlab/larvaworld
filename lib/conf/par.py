@@ -827,6 +827,12 @@ def build_par_dict(save=True, df=None):
         k = f'c_odor{i + 1}'
         df = add_par(df, p=f'{n}_odor_concentration', k=k, u=1 * siu.microM, o=Larva,d=f'Odor {i+1} Conc', s=sub('C', i+1))
         df = add_par(df, p=f'{n}_odor_concentration_change', k=f'd{k}', u=1 * siu.microM, o=Larva,d=f'Odor {i+1} DConc', s=sub(dot('C'), i+1))
+        kk = f'g_odor{i + 1}'
+        df = add_par(df, p=f'{n}_odor_best_gain', k=kk, o=Larva, d=f'Odor {i + 1} Gain',
+                     s=sub('G', i + 1))
+        # df = add_par(df, p=f'{n}_odor_concentration_change', k=f'd{k}', u=1 * siu.microM, o=Larva,
+        #              d=f'Odor {i + 1} DConc', s=sub(dot('C'), i + 1))
+
         # df = add_diff_par(df, k0=k)
         # df = add_rate_par(df, k0=k, k=f'dc_odor{i+1}',k_den='dt', s=sub(dot('C'), i+1))
 
@@ -970,13 +976,13 @@ def getPar(k=None,p=None, d=None, to_return=['d', 'l'], new_format=True) :
             return res
 
 if __name__ == '__main__':
-    for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
-        p = getPar(short, to_return=['d'])[0]
-        print(p)
+    # for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
+    #     p = getPar(short, to_return=['d'])[0]
+    #     print(p)
     # dic=build_par_dict()
     dic=load_ParDict()
     # print(getPar(d=nam.scal(nam.cum(nam.dst(''))), to_return=['k']))
-    print(dic['sf_am'])
+    print(dic['D_olf'])
     # d,u=getPar('cum_d', to_return=['d', 'u'])
     # print(u.unit==siu.m)
 
