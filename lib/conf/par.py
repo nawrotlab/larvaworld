@@ -982,7 +982,8 @@ if __name__ == '__main__':
     # dic=build_par_dict()
     dic=load_ParDict()
     # print(getPar(d=nam.scal(nam.cum(nam.dst(''))), to_return=['k']))
-    print(dic['D_olf'])
+    # print(dic['D_olf'])
+    # print(dic['D_olf'])
     # d,u=getPar('cum_d', to_return=['d', 'u'])
     # print(u.unit==siu.m)
 
