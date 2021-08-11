@@ -970,12 +970,12 @@ def build_table_window(data, pars_dict, title, return_layout=False):
 
     # Create the window
     table_window = sg.Window(title, layout, default_element_size=(20, 1), element_padding=(1, 1),
-                             return_keyboard_events=True, finalize=True)
+                             return_keyboard_events=True, finalize=True, force_toplevel=True)
     table_window.close_destroys_window = True
     return Nagents, Npars, pars, table_window
 
 
-def gui_table(data, pars_dict, title='Agent list'):
+def gui_table(data, pars_dict, title='Agent list', sortable=False):
     data0 = copy.deepcopy(data)
     """
         Another simple table created from Input Text Elements.  This demo adds the ability to "navigate" around the drawing using
@@ -1013,7 +1013,7 @@ def gui_table(data, pars_dict, title='Agent list'):
                 r = r - 1 * (r > 0)
         except:
             pass
-        if event in pars:  # Perform a sort if a column heading was clicked
+        if sortable and event in pars:  # Perform a sort if a column heading was clicked
             col_clicked = pars.index(event)
             try:
                 table = [[int(values[(row, col)]) for col in range(Npars)] for row in range(Nagents)]
@@ -1112,7 +1112,7 @@ class SectionDict:
                 # l.append(named_bool_button(k, v, k0))
             elif type(v) == dict:
                 type_dict = self.type_dict[k] if self.type_dict is not None else None
-                self.subdicts[k0] = CollapsibleDict(k0, False, disp_name=k, dict=v, type_dict=type_dict,
+                self.subdicts[k0] = CollapsibleDict(k0, True, disp_name=k, dict=v, type_dict=type_dict,
                                                     toggle=self.toggled_subsections)
                 l.append(self.subdicts[k0].get_layout())
             # elif type(v) == float:

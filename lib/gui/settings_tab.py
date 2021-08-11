@@ -49,7 +49,7 @@ class SettingsTab(GuiTab):
 
         s1 = CollapsibleDict('Visualization', True, dict=dtypes.get_dict('visualization', mode='video', video_speed=60),
                              type_dict=dtypes.get_dict_dtypes('visualization'), toggled_subsections=None)
-        s2 = CollapsibleDict('replay', False, default=True, toggled_subsections=False)
+        s2 = CollapsibleDict('replay', True, default=True, toggled_subsections=False)
         s3 = Collapsible('Keyboard', True, content=l_short, next_to_header=[
                                                     graphic_button('burn', 'RESET_SHORTCUTS',
                                                                    tooltip='Reset all shortcuts to the defaults. '
@@ -61,9 +61,9 @@ class SettingsTab(GuiTab):
         s5 = Collapsible('Controls', True, content=l_controls)
         for s in [s1, s2, s3, s4, s5]:
             collapsibles.update(s.get_subdicts())
-        l_set = [[sg.Col(s1.get_layout(as_col=False), **col_kws, size=col_size(0.25)),
-                  sg.Col(s2.get_layout(as_col=False), **col_kws, size=col_size(0.25)),
-                  sg.Col(s5.get_layout(as_col=False), **col_kws, size=col_size(0.25),
+        l_set = [[sg.Col(s1.get_layout(as_col=False), **col_kws, size=col_size(1/3)),
+                  sg.Col(s2.get_layout(as_col=False), **col_kws, size=col_size(1/3)),
+                  sg.Col(s5.get_layout(as_col=False), **col_kws, size=col_size(1/3),
                          scrollable=False, vertical_scroll_only=True),
                   ]
                  ]
@@ -108,4 +108,11 @@ class SettingsTab(GuiTab):
                 d['shortcuts']['cur'] = None
                 saveConfDict(d['shortcuts'], 'Settings')
         return d, g
+
+
+if __name__ == "__main__":
+    from lib.gui.gui import LarvaworldGui
+
+    larvaworld_gui = LarvaworldGui(tabs=['settings'])
+    larvaworld_gui.run()
 
