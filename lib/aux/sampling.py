@@ -6,7 +6,7 @@ import scipy.stats as stats
 from scipy.stats import truncnorm, lognorm, rv_discrete
 
 from lib.anal.fitting import compute_density, powerlaw_cdf, exponential_cdf, lognorm_cdf, powerlaw_pdf, logNpow_pdf, \
-    fit_bout_distros, logNpow_cdf, get_best_distro, get_distro, lognormal_pdf, exponential_pdf
+    fit_bout_distros, logNpow_cdf, get_best_distro, get_distro, lognormal_pdf, exponential_pdf, levy_cdf, levy_pdf
 from lib.conf.conf import loadConf
 from lib.stor.paths import RefFolder
 
@@ -94,7 +94,8 @@ class BoutGenerator :
             'exponential': {'cdf': exponential_cdf, 'pdf': exponential_pdf, 'args': ['beta'], 'rvs': exponential_discrete},
             'lognormal': {'cdf': lognorm_cdf, 'pdf': lognormal_pdf, 'args': ['mu', 'sigma'], 'rvs': lognormal_discrete},
             'logNpow': {'cdf': logNpow_cdf, 'pdf': logNpow_pdf,
-                        'args': ['alpha', 'mu', 'sigma', 'switch', 'ratio', 'overlap'], 'rvs': logNpow_distro}
+                        'args': ['alpha', 'mu', 'sigma', 'switch', 'ratio', 'overlap'], 'rvs': logNpow_distro},
+            'levy': {'cdf': levy_cdf, 'pdf': levy_pdf, 'args': ['mu', 'sigma'], 'rvs': levy_discrete},
         }
         self.xmin, self.xmax = range
         self.funct = ddfs[name][mode]
@@ -169,13 +170,22 @@ def lognormal_discrete2(mu, sigma, range, dt=1, **kwargs):
     return stats.rv_discrete(values=(xrng, pk2))
 
 def lognormal_discrete(mu, sigma, range, dt=1, **kwargs):
-    # print(mu,sigma,range)
     xmin, xmax = range
     x0, x1 = int(xmin / dt), int(xmax / dt)
     xx = np.arange(x0, x1+1)
     x = xx * dt
     pmf = lognormal_pdf(x, mu, sigma)
     pmf /= pmf.sum()
+    return stats.rv_discrete(values=(xx, pmf))
+
+def levy_discrete(mu, sigma, range, dt=1, **kwargs):
+    xmin, xmax = range
+    x0, x1 = int(xmin / dt), int(xmax / dt)
+    xx = np.arange(x0, x1+1)
+    x = xx * dt
+    pmf = levy_pdf(x, mu, sigma)
+    pmf /= pmf.sum()
+    # print(xx,pmf)
     return stats.rv_discrete(values=(xx, pmf))
 
 

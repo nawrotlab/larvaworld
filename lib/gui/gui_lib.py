@@ -1104,7 +1104,12 @@ class SectionDict:
         #     print(self.name, 'dddddddddddddddd')
         #     return []
         l = []
+        # print()
+        # print()
+        # print(self.type_dict)
         for k, v in self.init_dict.items():
+            # print(k,v,type(v))
+            # print(self.type_dict)
             k_disp = get_disp_name(k)
             k0 = f'{self.name}_{k}'
             if type(v) == bool:
@@ -1122,7 +1127,9 @@ class SectionDict:
             #     l.append(temp)
             else:
                 temp = sg.In(v, key=k0, **value_kws)
-                if self.type_dict is not None:
+                if self.type_dict is not None :
+                    # print(self.type_dict)
+                # if self.type_dict is not None and k in list(self.type_dict.keys()):
                     if type(self.type_dict[k]) == list:
 
                         if type(v) == float:

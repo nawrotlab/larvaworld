@@ -391,6 +391,7 @@ if __name__ == '__main__':
 
     mod_dict = {
         'explorer': mod.exploring_larva,
+        'Levy-walker': mod.Levy_walker,
         'navigator': mod.odor_larva,
         'navigator-x2': mod.odor_larva_x2,
         'immobile': mod.immobile_odor_larva,

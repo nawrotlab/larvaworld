@@ -133,7 +133,7 @@ mock_brain_sitter = dtypes.brain_dict(['intermitter', 'feeder'],
 mock_growing_sitter = dtypes.larva_dict(mock_brain_sitter, body=dtypes.get_dict('body', initial_length=0.001, Nsegs=1),
                                         energetics=dtypes.get_dict('energetics', absorption=0.15))
 
-mock_growing_rover =mock_growing_sitter
+mock_growing_rover = mock_growing_sitter
 
 nengo_larva = dtypes.larva_dict(brain_nengo)
 RL_odor_larva = dtypes.larva_dict(brain_RLolfactor, body=dtypes.get_dict('body', initial_length='sample'))
@@ -218,6 +218,34 @@ stridechain_dist_Starved = {'range': (1, 191),
                             'name': 'lognormal',
                             'mu': 1.227,
                             'sigma': 1.052}
+
+stridechain_dist_levy = {
+    'fit': False,
+    'range': (1, 120),
+    'name': 'levy',
+    'mu': 0,
+    'sigma': 1
+}
+# stridechain_dist_levy = dtypes.get_dict('levy_dist', range=(1, 120), mu=1.1, sigma=0.95)
+pause_dist_levy = {
+                      'fit': False,
+                      'range': (0.22, 56.0),
+                      'name': 'levy',
+                      'mu': 0,
+                      'sigma': 0.09
+                  }
+# pause_dist_levy = dtypes.get_dict('levy_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74)
+
+Levy_brain = dtypes.brain_dict(['turner', 'crawler','interference', 'intermitter'],
+                               turner=sinusoidal_turner,
+                               crawler=dtypes.get_dict('crawler', waveform='constant', initial_amp=0.0012),
+                               interference=dtypes.get_dict('interference', attenuation=0.0),
+                               # interference=dtypes.get_dict('interference', crawler_phi_range=[0.0,2.0], attenuation=0.0),
+                               intermitter=dtypes.get_dict('intermitter', pause_dist=pause_dist_levy,
+                                                           stridechain_dist=stridechain_dist_levy)
+                               )
+
+Levy_walker = dtypes.larva_dict(Levy_brain, body=dtypes.get_dict('body', initial_length='sample'))
 
 stridechain_dist_3c = dtypes.get_dict('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)
 pause_dist_3c = dtypes.get_dict('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74)

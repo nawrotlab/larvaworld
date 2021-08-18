@@ -70,9 +70,7 @@ class Oscillator(Effector):
 
 
 class Oscillator_coupling():
-    def __init__(self, crawler_phi_range=[0.0, 0.0],
-                 feeder_phi_range=[0.0, 0.0],
-                 attenuation=0.0):
+    def __init__(self, crawler_phi_range=[0.0, 0.0],feeder_phi_range=[0.0, 0.0],attenuation=0.0):
         self.crawler_phi_range = crawler_phi_range
         self.feeder_phi_range = feeder_phi_range
         self.attenuation = attenuation
@@ -85,12 +83,13 @@ class Oscillator_coupling():
             if crawler.effector:
                 phi = crawler.phi / np.pi
                 p0, p1 = self.crawler_phi_range
-                if crawler.waveform == 'realistic' and (phi < p0 or phi > p1):
+                if crawler.waveform in ['realistic', 'gaussian'] and (phi < p0 or phi > p1):
                     return True
                 elif crawler.waveform == 'square' and not phi <= 2 * crawler.square_signal_duty:
                     return True
-                elif crawler.waveform == 'gaussian' and (phi < p0 or phi > p1):
+                elif crawler.waveform == 'constant':
                     return True
+
 
         if feeder is not None:
             if feeder.effector:
@@ -99,5 +98,3 @@ class Oscillator_coupling():
                 if p0 < phi < p1:
                     return True
         return False
-        # if self.crawler_inhibits_bend or self.feeder_inhibits_bend :
-        #     self.turner_inhibition=True

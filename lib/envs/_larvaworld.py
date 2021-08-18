@@ -762,7 +762,8 @@ class LarvaWorldSim(LarvaWorld):
     def _generate_larva_pars(self, N, larva_pars, parameter_dict={}, sample_dataset='reference'):
         if larva_pars['brain']['intermitter_params']:
             for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
-                if larva_pars['brain']['intermitter_params'][dist] == 'fit':
+                if larva_pars['brain']['intermitter_params'][dist]['fit']:
+                # if larva_pars['brain']['intermitter_params'][dist] == 'fit':
                     larva_pars['brain']['intermitter_params'][dist] = loadConf(sample_dataset, 'Ref')[bout]['best']
                     # larva_pars['brain']['intermitter_params'][dist] = get_sample_bout_distro(bout=bout, sample_dataset=sample_dataset)
         flat_larva_pars = fun.flatten_dict(larva_pars)

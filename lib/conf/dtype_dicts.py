@@ -257,6 +257,7 @@ def null_distro(class_name, basic=True):
                 pass
     return distro
 
+
 # Compound densities (g/cm**3)
 substrate_dict = {
     'standard': {
@@ -268,13 +269,13 @@ substrate_dict = {
         'cornmeal': 0,
     },
     'cornmeal': {
-                'glucose':  517 / 17000,
-                'dextrose': 1033 / 17000,
-                'saccharose': 0,
-                'yeast': 0,
-                'agar': 93 / 17000,
-                'cornmeal': 1716 / 17000,
-            },
+        'glucose': 517 / 17000,
+        'dextrose': 1033 / 17000,
+        'saccharose': 0,
+        'yeast': 0,
+        'agar': 93 / 17000,
+        'cornmeal': 1716 / 17000,
+    },
     'PED_tracker': {
         'glucose': 0,
         'dextrose': 0,
@@ -283,6 +284,15 @@ substrate_dict = {
         'agar': 500 * 2 / 200,
         'cornmeal': 0,
     }
+}
+
+null_bout_dist = {
+    'fit': True,
+    'range': [None, None],
+    'name': None,
+    'mu': None,
+    'sigma': None,
+    # 'c': None
 }
 
 all_null_dicts = {
@@ -418,8 +428,11 @@ all_null_dicts = {
         'feeder_phi_range': [0.0, 0.0],
         'attenuation': 1.0
     },
-    'intermitter': {'pause_dist': 'fit',
-                    'stridechain_dist': 'fit',
+    'intermitter': {
+        # 'pause_dist': 'fit',
+        'pause_dist': null_bout_dist,
+                    # 'stridechain_dist': 'fit',
+                    'stridechain_dist': null_bout_dist,
                     'crawl_bouts': True,
                     'feed_bouts': False,
                     'crawl_freq': 10 / 7,
@@ -466,6 +479,12 @@ all_null_dicts = {
         'mu': 1.0,
         'sigma': 0.0
     },
+    'levy_dist': {
+        'range': (0.0, 2.0),
+        'name': 'levy',
+        'mu': 1.0,
+        'sigma': 0.0
+    },
     'par': {
         'p': None,
         'u': None,
@@ -506,7 +525,7 @@ all_null_dicts = {
                    'mode': 'minimal',
                    'source': None,
                    },
-    'substrate' : substrate_dict['standard']
+    'substrate': substrate_dict['standard']
 
 }
 all_null_dicts['enrichment'] = {k: all_null_dicts[k] for k in
@@ -546,6 +565,17 @@ def base_enrich(**kwargs):
 def get_dict_dtypes(name, **kwargs):
     from lib.conf import par_conf
     from lib.conf.conf import loadConfDict
+
+    bout_dist_dtypes = {
+        'fit': bool,
+        'range': Tuple[float, float],
+        # 'name': str,
+        'name': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy'],
+        'mu': float,
+        'sigma': float,
+        # 'c': float
+    }
+
     all_dtypes = {
         'odor':
             {'odor_id': str,
@@ -675,8 +705,11 @@ def get_dict_dtypes(name, **kwargs):
             'feeder_phi_range': Tuple[float, float],
             'attenuation': float
         },
-        'intermitter': {'pause_dist': dict,
-                        'stridechain_dist': dict,
+        'intermitter': {
+            'pause_dist': bout_dist_dtypes,
+            # 'pause_dist': dict,
+                        'stridechain_dist': bout_dist_dtypes,
+                        # 'stridechain_dist': dict,
                         'crawl_bouts': bool,
                         'feed_bouts': bool,
                         'crawl_freq': float,
@@ -724,6 +757,13 @@ def get_dict_dtypes(name, **kwargs):
             'mu': float,
             'sigma': float
         },
+        'levy_dist': {
+            'range': Tuple[float, float],
+            'name': 'levy',
+            'mu': float,
+            'sigma': float
+        },
+
         'par': {
             'p': str,
             'u': Union[BaseUnit, Composite, DerivedUnit],
@@ -764,7 +804,7 @@ def get_dict_dtypes(name, **kwargs):
                        'mode': ['minimal', 'full'],
                        'source': Tuple[float, float],
                        },
-        'substrate': { k : float for k in substrate_dict['standard'].keys()}
+        'substrate': {k: float for k in substrate_dict['standard'].keys()}
 
     }
     all_dtypes['enrichment'] = {k: all_dtypes[k] for k in ['preprocessing', 'processing', 'annotation', 'enrich_aux']}
@@ -900,6 +940,3 @@ def new_odor_dict(ids: list, means: list, stds=None) -> dict:
         odor_dict[id] = {'mean': m,
                          'std': s}
     return odor_dict
-
-
-

@@ -1867,8 +1867,9 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
     fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=False, sharey=True)
     axs = axs.ravel()
 
-    distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow']
-    distro_cs = ['c', 'g', 'm', 'k']
+    distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy']
+    distro_cs = ['c', 'g', 'm', 'k', 'yellow']
+    num_distros=len(distro_ls)
 
     for j, (pau_dur, chn_dur, c, label, fr) in enumerate(zip(pau_durs, chn_durs, colors, labels, frs)):
         try:
@@ -1880,14 +1881,14 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
             bout = 'stride' if i == 0 else 'pause'
             combine = False
             # combine=False if i == 0 else True
-            lws = [2, 2, 2, 2]
+            lws = [2]*num_distros
 
             if not refit_distros and ref is not None:
 
                 u2, du2, c2, c2cum = compute_density(x0, xmin, xmax)
                 fitted = ref[bout]['best']
-                pdfs = [get_distro(x=du2, **fitted, mode='pdf')] * 4
-                cdfs = [1 - get_distro(x=u2, **fitted, mode='cdf')] * 4
+                pdfs = [get_distro(x=du2, **fitted, mode='pdf')] * num_distros
+                cdfs = [1 - get_distro(x=u2, **fitted, mode='cdf')] * num_distros
                 idx_Kmax = 0
 
             else:
@@ -1930,7 +1931,6 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
                 axs[i].loglog(xrange, ddf, color=cc, lw=lw, label=l)
 
     for ii in [0, 1]:
-
         if plot_fits == 'all':
             dataset_legend(distro_ls, distro_cs, ax=axs[ii], loc='lower left', fontsize=15)
         dataset_legend(labels, colors, ax=axs[ii], loc='upper right', fontsize=15)
