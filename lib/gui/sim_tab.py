@@ -44,22 +44,18 @@ class SimTab(GuiTab):
                            text_kws=t14_kws, value_kws=t10_kws, width=12, header_text_kws=t9_kws)
         l_sim = SelectionList(tab=self, conftype='Exp', actions=['load', 'save', 'delete', 'run'], progress=True,
                               sublists={'env_params': l_env, 'life_params' : l_life})
-
-        # s1 = self.build_sim_collapsible()
         s1 = CollapsibleDict('sim_params', True, default=True, disp_name='Configuration', text_kws=t8_kws)
         output_dict = dict(zip(output_keys, [False] * len(output_keys)))
         s2 = CollapsibleDict('Output', False, dict=output_dict, auto_open=False)
-        # s3 = CollapsibleDict('life', False, default=True,header_dict=loadConfDict('Life'),
-        #                       header_value='default', header_list_width=14,text_kws=t14_kws, value_kws=t10_kws)
-
 
         self.selectionlists = [l_sim, l_env, l_life]
         g1 = GraphList(self.name)
         l_conf = [[sg.Col([
             *[i.get_layout() for i in [l_sim, l_env,s1, s2, l_life]],
-            [g1.get_layout()]
+            # [g1.get_layout()]
         ])]]
-        l = [[sg.Col(l_conf, **col_kws, size=col_size(0.2)), g1.canvas]]
+        l = [[sg.Col(l_conf, **col_kws, size=col_size(0.2)), g1.canvas, sg.Col(g1.get_layout(as_col=False), size=col_size(0.2))]]
+        # l = [[sg.Col(l_conf, **col_kws, size=col_size(0.2)), g1.canvas]]
 
         c = {}
         for i in [s1, s2, l_life]:
@@ -97,39 +93,14 @@ class SimTab(GuiTab):
             p.reset(w)
         return d,g
 
-
-    # def eval(self, e, v, w, c, d, g):
-    #     if e == 'CONF_LIFE':
-    #         c['Life'].update(w, life_conf())
-
     def update(self, w,  c, conf, id):
-        # sim = conf['sim_params']
         output_dict = dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys]))
         c['Output'].update(w, output_dict)
-        # c['life'].update_header(w, conf['life_params'])
-
         sim=copy.deepcopy(conf['sim_params'])
-        print(sim)
         sim.update({'sim_ID' : f'{id}_{next_idx(id)}', 'path' : f'single_runs/{id}'})
         c['sim_params'].update(w, sim)
-        # w.Element('sim_ID').Update(value=f'{id}_{next_idx(id)}')
-        # w.Element('path').Update(value=f'single_runs/{id}')
-        # for n in ['duration', 'timestep', 'sample']:
-        #     w.Element(n).Update(value=sim[n])
-        # w['TOGGLE_Box2D'].set_state(sim['Box2D'])
-
-
-
 
     def get(self, w, v, c, as_entry=True):
-        # sim = {
-        #     'sim_ID': str(v['sim_ID']),
-        #     'duration': float(v['duration']),
-        #     'timestep': float(v['timestep']),
-        #     'path': str(v['path']),
-        #     'sample': str(v['sample']),
-        #     'Box2D': w['TOGGLE_Box2D'].get_state(),
-        # }
         conf = {
                 'sim_params': c['sim_params'].get_dict(v, w),
                 # 'sim_params': sim,
@@ -142,6 +113,5 @@ class SimTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.gui import LarvaworldGui
-
     larvaworld_gui = LarvaworldGui(tabs=['simulation'])
     larvaworld_gui.run()

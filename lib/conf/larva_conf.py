@@ -238,8 +238,10 @@ Levy_brain = dtypes.brain_dict(['turner', 'crawler','interference', 'intermitter
                                turner=sinusoidal_turner,
                                crawler=dtypes.get_dict('crawler', waveform='constant', initial_amp=0.0012),
                                interference=dtypes.get_dict('interference', attenuation=0.0),
-                               intermitter=dtypes.get_dict('intermitter', pause_dist=pause_dist_levy,
-                                                           stridechain_dist=stridechain_dist_levy)
+                               intermitter=dtypes.get_dict('intermitter',
+                                                           pause_dist=pause_dist_levy,
+                                                           stridechain_dist=stridechain_dist_levy
+                                                           )
                                )
 
 Levy_walker = dtypes.larva_dict(Levy_brain, body=dtypes.get_dict('body', initial_length='sample'))

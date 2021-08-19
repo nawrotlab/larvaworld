@@ -131,9 +131,9 @@ class PreprocessTab(GuiTab):
         elif e == f'BUILD_{self.raw_key}':
             for id,dir in d[self.raw_key].items() :
                 fdir=fun.remove_prefix(dir, f'{self.raw_folder}/')
-                print(dir)
-                print(self.raw_folder)
-                print(fdir)
+                # print(dir)
+                # print(self.raw_folder)
+                # print(fdir)
                 # fdir.removeprefix(f'{self.raw_folder}/')
                 # fdir=dir.replace(f'{self.raw_folder}/', '')
                 dd = build_datasets(datagroup_id=self.datagroup_id(v), folders=[id], ids=[id],names=[fdir], raw_folders=[f'{fdir}/{id}'])[0]

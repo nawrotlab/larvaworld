@@ -67,11 +67,12 @@ class BatchTab(GuiTab):
         l_batch0 = sg.Col([l_batch.l,
                            l_sim.l,
                            *[s.get_layout() for s in [s0, s1, s2, s3]],
-                           [g1.get_layout()],
+                           # [g1.get_layout()],
                            [traj_l],
                            ], **col_kws, size=col_size(0.2))
 
-        l = [[l_batch0, g1.canvas]]
+        l = [[l_batch0, g1.canvas,sg.Col(g1.get_layout(as_col=False), size=col_size(0.2))]]
+        # l = [[l_batch0, g1.canvas]]
 
         c = {}
         for s in [s0, s1, s2, s3]:

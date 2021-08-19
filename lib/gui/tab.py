@@ -14,7 +14,6 @@ class ProgressBarLayout :
         self.list=list
         n=self.list.disp
         self.k=f'{n}_PROGRESSBAR'
-        # print(self.k)
         self.k_complete=f'{n}_COMPLETE'
         self.l = [sg.Text('Progress :', **t8_kws),
                   sg.ProgressBar(100, orientation='h', size=(8.8, 20), key=self.k,
@@ -91,7 +90,6 @@ class SelectionList:
         bs = []
         if self.progressbar is not None :
             append+=self.progressbar.l
-            # print('ssss')
 
 
         if 'load' in acts:
@@ -226,6 +224,11 @@ class GuiTab:
         self.name = name
         self.gui = gui
         self.selectionlists = []
+        self.graph_list=None
+
+    @property
+    def aux_dict(self):
+        return self.gui.dicts[self.name]
 
     def build(self):
         return None, {}, {}, {}
@@ -278,7 +281,6 @@ class GuiTab:
             ff_pid = os.fork()
         except OSError as err:
             print('Unable to fork: %s' % err)
-        # print(ff_pid)
         if ff_pid > 0:
             # Parent.
             print('First fork.')
@@ -287,6 +289,8 @@ class GuiTab:
             res=func(**kwargs)
             # return res
             # sys.exit(0)
+
+
 
 
 class IntroTab(GuiTab):
