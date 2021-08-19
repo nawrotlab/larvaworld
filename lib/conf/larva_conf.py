@@ -226,21 +226,18 @@ stridechain_dist_levy = {
     'mu': 0,
     'sigma': 1
 }
-# stridechain_dist_levy = dtypes.get_dict('levy_dist', range=(1, 120), mu=1.1, sigma=0.95)
 pause_dist_levy = {
                       'fit': False,
-                      'range': (0.22, 56.0),
-                      'name': 'levy',
-                      'mu': 0,
-                      'sigma': 0.09
+                      'range': (0.01, 3.0),
+                      'name': 'uniform',
+                      # 'mu': 0.8,
+                      # 'sigma': 0.7
                   }
-# pause_dist_levy = dtypes.get_dict('levy_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74)
 
 Levy_brain = dtypes.brain_dict(['turner', 'crawler','interference', 'intermitter'],
                                turner=sinusoidal_turner,
                                crawler=dtypes.get_dict('crawler', waveform='constant', initial_amp=0.0012),
                                interference=dtypes.get_dict('interference', attenuation=0.0),
-                               # interference=dtypes.get_dict('interference', crawler_phi_range=[0.0,2.0], attenuation=0.0),
                                intermitter=dtypes.get_dict('intermitter', pause_dist=pause_dist_levy,
                                                            stridechain_dist=stridechain_dist_levy)
                                )

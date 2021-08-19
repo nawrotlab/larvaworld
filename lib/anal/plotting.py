@@ -399,6 +399,7 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
                 num_chunks = len(turn_epochs)
                 colors = [cmap(i) for i in np.arange(num_chunks)]
                 epoch_handles = []
+                temp=None
                 for i, (chunk, color) in enumerate(zip(turn_epochs, colors)):
                     start_flag = f'{chunk}_start'
                     stop_flag = f'{chunk}_stop'
@@ -416,7 +417,8 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
                         if vertical_boundaries:
                             plt.axvline(start, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
                             plt.axvline(stop, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
-                    epoch_handles.append(temp)
+                    if temp is not None:
+                        epoch_handles.append(temp)
             ax1 = b0.plot(label=r'$\theta_{b}$', lw=2, color='blue')
             ax1.set_ylabel(r'angle $(deg)$')
             ax1.set_xlabel(r'time $(sec)$')
@@ -1867,8 +1869,8 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
     fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=False, sharey=True)
     axs = axs.ravel()
 
-    distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy']
-    distro_cs = ['c', 'g', 'm', 'k', 'yellow']
+    distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy', 'normal', 'uniform']
+    distro_cs = ['c', 'g', 'm', 'k', 'yellow', 'brown', 'purple']
     num_distros=len(distro_ls)
 
     for j, (pau_dur, chn_dur, c, label, fr) in enumerate(zip(pau_durs, chn_durs, colors, labels, frs)):

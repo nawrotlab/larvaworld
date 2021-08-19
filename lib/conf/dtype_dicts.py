@@ -479,12 +479,12 @@ all_null_dicts = {
         'mu': 1.0,
         'sigma': 0.0
     },
-    'levy_dist': {
-        'range': (0.0, 2.0),
-        'name': 'levy',
-        'mu': 1.0,
-        'sigma': 0.0
-    },
+    # 'levy_dist': {
+    #     'range': (0.0, 2.0),
+    #     'name': 'levy',
+    #     'mu': 1.0,
+    #     'sigma': 0.0
+    # },
     'par': {
         'p': None,
         'u': None,
@@ -570,7 +570,7 @@ def get_dict_dtypes(name, **kwargs):
         'fit': bool,
         'range': Tuple[float, float],
         # 'name': str,
-        'name': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy'],
+        'name': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy', 'normal', 'uniform'],
         'mu': float,
         'sigma': float,
         # 'c': float
@@ -757,13 +757,6 @@ def get_dict_dtypes(name, **kwargs):
             'mu': float,
             'sigma': float
         },
-        'levy_dist': {
-            'range': Tuple[float, float],
-            'name': 'levy',
-            'mu': float,
-            'sigma': float
-        },
-
         'par': {
             'p': str,
             'u': Union[BaseUnit, Composite, DerivedUnit],

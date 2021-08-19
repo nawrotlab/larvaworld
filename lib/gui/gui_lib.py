@@ -1672,13 +1672,13 @@ class ButtonGraphList(GraphList):
 
     def generate(self, window, data):
         if self.func is not None and len(list(data.keys())) > 0:
-            try:
-                self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()),
-                                                                 return_fig=True, **self.func_kwargs)
-                self.draw_fig(window, self.fig)
-            except:
-                print('Plot not available for these datasets')
-                self.fig, self.save_to, self.save_as = None, '', ''
+            # try:
+            self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()),
+                                                             return_fig=True, **self.func_kwargs)
+            self.draw_fig(window, self.fig)
+            # except:
+            #     print('Plot not available for these datasets')
+            #     self.fig, self.save_to, self.save_as = None, '', ''
 
     def save_fig(self):
         if self.fig is not None:

@@ -6,7 +6,7 @@ import scipy as sp
 from fitter import Fitter
 from matplotlib import pyplot as plt
 import scipy.stats as st
-from scipy.stats import ks_2samp, stats, levy
+from scipy.stats import ks_2samp, stats, levy, norm,uniform
 
 from lib.aux import naming as nam
 from lib.aux import functions as fun
@@ -376,18 +376,26 @@ def levy_pdf(x, mu, sigma):
     return res
 
 def levy_cdf(x, mu, sigma):
-    res=sp.special.erf(np.sqrt(sigma/(2*(x-mu))))
+    res=1-sp.special.erf(np.sqrt(sigma/(2*(x-mu))))
+    if np.isnan(res[0]) :
+        res[0]=0
     return res
 
+def norm_pdf(x, mu, sigma):
+    res=1/(sigma*np.sqrt(2*np.pi))*np.exp(-0.5*((x-mu)/sigma)**2)
+    return res
 
-# def powerlaw_pdf2(x, xmin, alpha, normalized=True):
-#     res = (alpha - 1) / xmin * (x / xmin) ** (-alpha)
-#     if normalized:
-#         cdf0 = 1 - powerlaw_cdf(np.max(x), xmin, alpha)
-#         res = res / cdf0
-#         res = res / np.sum(res)
-#     return res
+def norm_cdf(x, mu, sigma):
+    res=0.5*(1+sp.special.erf((x-mu)/(sigma*np.sqrt(2))))
+    if np.isnan(res[0]) :
+        res[0]=0
+    return res
 
+def uniform_pdf(x, xmin, xmax):
+    return uniform.pdf(x, xmin, xmin+xmax)
+
+def uniform_cdf(x, xmin, xmax):
+    return uniform.cdf(x, xmin, xmin+xmax)
 
 def exponential_cdf(x, xmin, beta):
     return 1 - np.exp(-beta * (x - xmin))
@@ -444,7 +452,8 @@ def get_distro(name, x, range, mode='cdf', **kwargs) :
              'exponential' : {'cdf' : exponential_cdf, 'pdf': exponential_pdf, 'args' : ['beta'],'rvs' :''},
              'lognormal' : {'cdf' : lognorm_cdf, 'pdf': lognormal_pdf, 'args' : ['mu', 'sigma'], 'rvs' :''},
              'logNpow' : {'cdf' : logNpow_cdf, 'pdf': logNpow_pdf, 'args' : ['alpha', 'mu', 'sigma', 'switch', 'ratio', 'overlap'], 'rvs' : 'logNpow_distro'},
-             'levy' : {'cdf' : levy_cdf, 'pdf': levy_pdf, 'args' : ['mu', 'sigma'], 'rvs' : ''}
+             'levy' : {'cdf' : levy_cdf, 'pdf': levy_pdf, 'args' : ['mu', 'sigma'], 'rvs' : ''},
+             'norm' : {'cdf' : norm_cdf, 'pdf': norm_pdf, 'args' : ['mu', 'sigma'], 'rvs' : ''}
     }
     xmin, xmax=range
     func=ddfs[name][mode]
@@ -574,6 +583,14 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
         lev_cdf = 1 - levy_cdf(u2, m_lev, s_lev)
         lev_pdf = levy_pdf(du2, m_lev, s_lev)
 
+        m_nor, s_nor = norm.fit(x)
+        nor_cdf = 1 - norm_cdf(u2, m_nor, s_nor)
+        nor_pdf = norm_pdf(du2, m_nor, s_nor)
+
+        # m_nor, s_nor = norm.fit(x)
+        uni_cdf = 1-uniform_cdf(u2, xmin, xmin+xmax)
+        uni_pdf = uniform_pdf(du2, xmin, xmin+xmax)
+
 
 
         if np.isnan(xmid) and combine:
@@ -594,12 +611,16 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
             KS_logn = MSE(c2cum, l_cdf)
             KS_lognNpow = MSE(c2cum, lp_cdf) if lp_cdf is not None else np.nan
             KS_lev = MSE(c2cum, lev_cdf)
+            KS_norm = MSE(c2cum, nor_cdf)
+            KS_uni = MSE(c2cum, uni_cdf)
         elif fit_by=='pdf' :
             KS_pow = MSE(c2, p_pdf)
             KS_exp = MSE(c2, e_pdf)
             KS_logn = MSE(c2, l_pdf)
             KS_lognNpow = MSE(c2, lp_pdf) if lp_pdf is not None else np.nan
             KS_lev = MSE(c2, lev_pdf)
+            KS_norm = MSE(c2, nor_pdf)
+            KS_uni = MSE(c2, uni_pdf)
         # p_st, p_pv = ks_2samp(c2cum , p_cdf)
 
         #
@@ -608,14 +629,13 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
         #
         # l_st, l_pv = ks_2samp(c2cum, l_cdf)
 
-        Ks = np.array([KS_pow, KS_exp, KS_logn, KS_lognNpow, KS_lev])
+        Ks = np.array([KS_pow, KS_exp, KS_logn, KS_lognNpow, KS_lev, KS_norm, KS_uni])
         # idx_Kmax = 3
         idx_Kmax = np.nanargmin(Ks)
 
-        res = np.round([a, KS_pow, b, KS_exp, m, s, KS_logn, mm, ss, aa, xmid, r, overlap, KS_lognNpow,m_lev, s_lev, KS_lev, xmin, xmax], 5)
-        pdfs = [p_pdf, e_pdf, l_pdf, lp_pdf, lev_pdf]
-        cdfs = [p_cdf, e_cdf, l_cdf, lp_cdf, lev_cdf]
-    # print(sum(c2), sum(c2cum))
+        res = np.round([a, KS_pow, b, KS_exp, m, s, KS_logn, mm, ss, aa, xmid, r, overlap, KS_lognNpow,m_lev, s_lev, KS_lev,m_nor, s_nor, KS_norm, KS_uni,xmin, xmax], 5)
+        pdfs = [p_pdf, e_pdf, l_pdf, lp_pdf, lev_pdf, nor_pdf, uni_pdf]
+        cdfs = [p_cdf, e_cdf, l_cdf, lp_cdf, lev_cdf, nor_cdf, uni_cdf]
     p = bout
 
     names = [f'alpha_{p}', f'KS_pow_{p}',
@@ -624,6 +644,8 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
              f'mu_logNpow_{p}', f'sigma_logNpow_{p}', f'alpha_logNpow_{p}', f'switch_logNpow_{p}', f'ratio_logNpow_{p}',
              f'overlap_logNpow_{p}', f'KS_logNpow_{p}',
              f'mu_levy_{p}', f'sigma_levy_{p}', f'KS_levy_{p}',
+             f'mu_norm_{p}', f'sigma_norm_{p}', f'KS_norm_{p}',
+             f'KS_uni_{p}',
              f'min_{p}', f'max_{p}']
     res_dict = dict(zip(names, res))
 
@@ -633,6 +655,8 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
              'mu_logNpow', 'sigma_logNpow', 'alpha_logNpow', 'switch_logNpow', 'ratio_logNpow',
              'overlap_logNpow', 'KS_logNpow',
               f'mu_levy', f'sigma_levy', f'KS_levy',
+              f'mu_norm', f'sigma_norm', f'KS_norm',
+              f'KS_uni',
              'xmin', 'xmax']
     res_dict2 = dict(zip(names2, res))
     best = {bout: {'best' : get_best_distro(p, res_dict, idx_Kmax=idx_Kmax),
@@ -651,11 +675,14 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
         print("lognormal mean,std:", m, s)
         print("lognormal-powerlaw mean,std, alpha, switch, ratio, overlap :", mm, ss, aa, xmid, r, overlap)
         print("levy loc,scale:", m_lev, s_lev)
+        print("normal loc,scale:", m_nor, s_nor)
         print('MSE pow', KS_pow)
         print('MSE exp', KS_exp)
         print('MSE logn', KS_logn)
         print('MSE lognNpow', KS_lognNpow)
         print('MSE levy', KS_lev)
+        print('MSE normal', KS_norm)
+        print('MSE uniform', KS_uni)
         # print('KS2 pow', p_st, p_pv)
         # print('KS2 exp', e_st, e_pv)
         # print('KS2 logn', l_st, l_pv)
@@ -673,7 +700,7 @@ def get_best_distro(bout, f, idx_Kmax=None):
     k = bout
     r = (f[f'min_{k}'], f[f'max_{k}'])
     if idx_Kmax is None:
-        idx_Kmax = np.argmin([f[f'KS_{d}_{k}'] for d in ['pow', 'exp', 'log', 'logNpow']])
+        idx_Kmax = np.argmin([f[f'KS_{d}_{k}'] for d in ['pow', 'exp', 'log', 'logNpow', 'levy', 'norm', 'uni']])
     # ind = np.argmin(f[[f'KS_pow_{k}', f'KS_exp_{k}', f'KS_log_{k}', f'KS_logNpow_{k}']])
     if idx_Kmax == 0:
         distro = {'range': r,
@@ -699,6 +726,19 @@ def get_best_distro(bout, f, idx_Kmax=None):
                   'ratio': f[f'ratio_{n}_{k}'],
                   'overlap': f[f'overlap_{n}_{k}'],
                   }
+    elif idx_Kmax == 4:
+        distro = {'range': r,
+                  'name': 'levy',
+                  'mu': f[f'mu_levy_{k}'],
+                  'sigma': f[f'sigma_levy_{k}']}
+    elif idx_Kmax == 5:
+        distro = {'range': r,
+                  'name': 'normal',
+                  'mu': f[f'mu_norm_{k}'],
+                  'sigma': f[f'sigma_norm_{k}']}
+    elif idx_Kmax == 6:
+        distro = {'range': r,
+                  'name': 'uniform'}
     return distro
 
 
