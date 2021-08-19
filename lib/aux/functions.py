@@ -4,6 +4,7 @@ import json
 import math
 import pickle
 import random
+# import string
 import time
 from operator import attrgetter
 
@@ -1328,4 +1329,24 @@ def remove_prefix(text, prefix):
     if text.startswith(prefix):
         return text[len(prefix):]
     return text  # or whatever
+
+# function takes in a hex color and outputs it inverted
+def invert_color(col, return_self=False):
+    # print(col)
+    if type(col)==list and len(col)==3:
+        if not all([0<=i<=1 for i in col]) :
+            col=list(np.array(col)/255)
+        # print(col)
+        col = colors.rgb2hex(col)
+        # print(col)
+        # print(col)
+    elif col[0]!='#' :
+        col=colors.cnames[col]
+    table = str.maketrans('0123456789abcdef', 'fedcba9876543210')
+    col2= '#' + col[1:].lower().translate(table).upper()
+    if not return_self :
+        return col2
+    else :
+        return col,col2
+
 

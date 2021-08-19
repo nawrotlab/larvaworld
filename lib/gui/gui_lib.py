@@ -1330,19 +1330,23 @@ class CollapsibleTable(Collapsible):
         else:
             self.header = None
         self.headings = headings
+        self.Ncols = len(headings)
         self.col_widths = []
+        self.col_visible=[True]*self.Ncols
         for i, p in enumerate(self.headings):
             if p in ['id', 'group']:
                 self.col_widths.append(10)
             elif p in ['color']:
                 self.col_widths.append(8)
+                self.color_idx=i
+                self.col_visible[i]=False
             elif p in ['model']:
                 self.col_widths.append(14)
             elif type_dict[p] in [int, float]:
-                self.col_widths.append(np.max([len(p), 5]))
+                self.col_widths.append(np.max([len(p), 6]))
             else:
                 self.col_widths.append(10)
-        self.Ncols = len(headings)
+
         self.data = self.set_data(dict)
         self.key = f'TABLE {name}'
         content = self.get_content()
@@ -1374,8 +1378,9 @@ class CollapsibleTable(Collapsible):
 
     def get_content(self):
         content = [[sg.Table(values=self.data[:][:], headings=self.headings, col_widths=self.col_widths,
-                             max_col_width=30, background_color='lightblue',
+                             max_col_width=30, background_color='lightblue',header_font=('Helvetica', 8, 'bold'),
                              auto_size_columns=False,
+                             visible_column_map=self.col_visible,
                              # display_row_numbers=True,
                              justification='center',
                              font=w_kws['font'],
@@ -1388,7 +1393,13 @@ class CollapsibleTable(Collapsible):
     def update(self, window, dic, use_prefix=True):
         self.dict = dic
         self.data = self.set_data(dic)
-        window[self.key].update(values=self.data, num_rows=len(self.data))
+        row_cols = []
+        for i in range(len(self.data)) :
+            c0=self.data[i][self.color_idx]
+            c2,c1 = fun.invert_color(c0, return_self=True) if c0!='' else ['lightblue', 'black']
+            row_cols.append((i,c1,c2))
+        # print(row_cols)
+        window[self.key].update(values=self.data, num_rows=len(self.data), row_colors=row_cols)
         if self.data[0][0] != '':
             self.open(window)
         else:

@@ -832,12 +832,12 @@ def get_agent_dtypes(class_name):
     dtypes = {
         'unique_id': str,
         'default_color': str,
-        'group': str,
+        # 'group': str,
     }
     if class_name in ['Larva', 'LarvaSim', 'LarvaReplay']:
-        dtypes = {**dtypes, **get_dict_dtypes('odor')}
+        dtypes = {**dtypes,'group': str, **get_dict_dtypes('odor')}
     elif class_name in ['Source', 'Food']:
-        dtypes = {**dtypes, **get_dict_dtypes('odor'), **get_dict_dtypes('food'), 'can_be_carried': bool,
+        dtypes = {**dtypes,'group': str, **get_dict_dtypes('odor'), **get_dict_dtypes('food'), 'can_be_carried': bool,
                   'pos': Tuple[float, float]}
     elif class_name in ['Border']:
         dtypes = {**dtypes, 'width': float, 'points': List[Tuple[float, float]]}

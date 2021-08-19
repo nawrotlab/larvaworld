@@ -213,12 +213,10 @@ class EnvTab(GuiTab):
         elif not e.startswith('-GRAPH-'):
             self.graph.Widget.config(cursor='left_ptr')
         db = self.aux_dict['env_db']
-        # p11, p22 = self.drag_ps
         if e == self.graph_list.canvas_key:
             x, y = v[self.graph_list.canvas_key]
             if not dic['dragging']:
                 self.set_drag_ps(p1=(x, y))
-                # p11 = dic['start_point'] = (x, y)
                 dic['dragging'] = True
                 dic['drag_figures'] = [f for f in self.graph.get_figures_at_location((x, y)) if f != dic['arena']]
                 dic['last_xy'] = x, y
@@ -346,6 +344,7 @@ class EnvTab(GuiTab):
                 units['figs'][prior_rect] = id
                 units['items'].update(current)
                 w[f'{o}_id'].update(value=f"BORDER_{len(units['items'].keys())}")
+                c['border_list'].update(w, units['items'])
             elif v['SOURCE']:
                 o = 'SOURCE'
                 units, groups = db['s_u'], db['s_g']
@@ -356,6 +355,7 @@ class EnvTab(GuiTab):
                     units['items'].update(current)
                     w[f'{o}_id'].update(value=f"SOURCE_{len(units['items'].keys())}")
                     w[f'{o}_ODOR_odor_id'].update(value='')
+                    c['source_units'].update(w, units['items'])
                 elif v[f'{o}_group'] and sample_pars != {}:
                     id = v[f'{o}_group_id']
                     if current == {}:
@@ -374,6 +374,7 @@ class EnvTab(GuiTab):
                         self.delete_prior()
                         self.delete_prior(dic['sample_fig'])
                         dic['sample_fig'], dic['sample_pars'] = None, {}
+                        c['source_groups'].update(w, groups['items'])
             elif v['LARVA'] and current != {}:
                 o = 'LARVA'
                 units, groups = db['l_u'], db['l_g']
@@ -390,6 +391,7 @@ class EnvTab(GuiTab):
                         groups['figs'][f] = id
                     self.delete_prior()
                     sample_larva_pars = {}
+                    c['larva_groups'].update(w, groups['items'])
             else:
                 self.delete_prior()
             self.aux_reset()
@@ -478,12 +480,15 @@ class EnvTab(GuiTab):
         self.aux_dict['env_db']=db
 
     def scale_xy(self, xy, reverse=False):
+        if xy is None :
+            return None
         W, H = self.graph_list.canvas_size
         s=self.s
+        x,y=xy
         if reverse :
-            return xy[0] * s + W / 2, xy[1] * s + H / 2
+            return x * s + W / 2, y * s + H / 2
         else :
-            return (xy[0] - W / 2) / s, (xy[1] - H / 2) / s
+            return (x - W / 2) / s, (y - H / 2) / s
 
 
     def out_of_bounds(self, xy, v, w, c):
