@@ -16,6 +16,54 @@ class EnvTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.canvas_size=(800,800)
+        # SL=self.k_S, self.k_L='SOURCE','LARVA'
+        # SLg=self.k_S_g, self.k_L_g=[f'{i}_group' for i in SL]
+        # self.k_S_0, self.k_L_0=[f'{i}_id' for i in SL]
+        # self.k_S_1, self.k_L_1=[f'{i}_single' for i in SL]
+        # self.k_S_d, self.k_L_d=[f'{i}_DISTRO' for i in SL]
+        # SLo=self.k_S_o, self.k_L_o=[f'{i}_ODOR' for i in SL]
+        # self.kT_S_o, self.kT_L_o=[f'TOGGLE_{i}' for i in SLo]
+        # self.k_S_o0, self.k_L_o0=[f'{i}_odor_id' for i in SLo]
+        # self.k_S_g0, self.k_L_g0=[f'{i}_id' for i in SLg]
+        # self.k_S_oM, self.k_L_oM=[f'{i}_odor_intensity' for i in SLo]
+        # self.k_S_oS, self.k_L_oS=[f'{i}_odor_spread' for i in SLo]
+        # self.k_f='food'
+        # self.k_fM=f'{self.k_f}_amount'
+
+    # @property
+    def food_on(self,w):
+        return w['TOGGLE_food'].get_state()
+
+    def odor_on(self,w, n):
+        o = f'{n}_ODOR'
+        To = f'TOGGLE_{o}'
+        return w[To].get_state()
+
+    @property
+    def food_ks(self):
+        k_f = 'food'
+        k_fM = f'{k_f}_amount'
+        return k_f, k_fM
+
+    def odor_ks(self, i):
+        o=f'{i}_ODOR'
+        o0=f'{o}_odor_id'
+        oM=f'{o}_odor_intensity'
+        oS=f'{o}_odor_spread'
+        # To=f'TOGGLE_{o}'
+        return o, o0,oM,oS
+
+    def group_ks(self, i):
+        s=f'{i}_single'
+        g=f'{i}_group'
+        s0=f'{i}_id'
+        g0=f'{g}_id'
+        D=f'{i}_DISTRO'
+        DN=f'{D}_N'
+        Dm=f'{D}_mode'
+        Ds=f'{D}_shape'
+        return g,g0,D,DN,Dm,Ds, s,s0
+
 
     def arena_pars(self, v, w, c):
         dic=c['arena'].get_dict(v, w)
@@ -94,33 +142,33 @@ class EnvTab(GuiTab):
         l = sg.Col([l1.l, *l2], **col_kws, size=col_size(0.25))
         return l, c, {}, {}
 
-    def add_agent_layout(self, name0, color, collapsibles):
-        name = name0.upper()
+    def add_agent_layout(self, n0, color, collapsibles):
+        n = n0.upper()
+        g, g0, D, DN, Dm, Ds, s, s0 = self.group_ks(n)
+        o, o0, oM, oS = self.odor_ks(n)
 
-        collapsibles[f'{name}_DISTRO'] = CollapsibleDict(f'{name}_DISTRO', False,
-                                                         dict=dtypes.get_dict('distro', class_name=name0),
-                                                         type_dict=dtypes.get_dict_dtypes('distro', class_name=name0),
-                                                         toggle=False, disabled=True, disp_name='distribution')
+        s1 = CollapsibleDict(D, False, dict=dtypes.get_dict('distro', class_name=n0),
+                             type_dict=dtypes.get_dict_dtypes('distro', class_name=n0),
+                             toggle=False, disabled=True, disp_name='distribution')
 
-        collapsibles[f'{name}_ODOR'] = CollapsibleDict(f'{name}_ODOR', False, dict=dtypes.get_dict('odor'),
+        s2 = CollapsibleDict(o, False, dict=dtypes.get_dict('odor'),
                                                        type_dict=dtypes.get_dict_dtypes('odor'),
                                                        toggle=False, disp_name='odor')
 
-        l = [[sg.R(f'Add {name0}', 1, k=name, enable_events=True)],
-             [sg.T('', **t2_kws),
-              sg.R('single id', 2, disabled=True, k=f'{name}_single', enable_events=True, **t5_kws),
-              sg.In(f'{name}_0', k=f'{name}_id')],
-             [sg.T('', **t2_kws), sg.R('group id', 2, disabled=True, k=f'{name}_group', enable_events=True, **t5_kws),
-              sg.In(k=f'{name}_group_id')],
-             color_pick_layout(name, color),
-             [sg.T('', **t5_kws), *collapsibles[f'{name}_DISTRO'].get_layout()],
-             [sg.T('', **t5_kws), *collapsibles[f'{name}_ODOR'].get_layout()]]
+        for ss in [s1,s2]:
+            collapsibles.update(ss.get_subdicts())
+
+        l = [[sg.R(f'Add {n0}', 1, k=n, enable_events=True)],
+             [sg.T('', **t2_kws),sg.R('single id', 2, disabled=True, k=s, enable_events=True, **t5_kws),sg.In(n, k=s0)],
+             [sg.T('', **t2_kws), sg.R('group id', 2, disabled=True, k=g, enable_events=True, **t5_kws),sg.In(k=g0)],
+             color_pick_layout(n, color),
+             [sg.T('', **t5_kws), *s1.get_layout()],
+             [sg.T('', **t5_kws), *s2.get_layout()]]
         return l, collapsibles
 
     def build_draw_env(self):
         dic={
             'env_db': self.set_env_db(),
-            # 'arena_pars': arena_pars,
             's': None,
             'arena': None,
             'sample_fig': None,
@@ -139,24 +187,23 @@ class EnvTab(GuiTab):
 
         c = {}
         s2 = CollapsibleDict('food', False, default=True, toggle=False)
-
-        for i in [s2]:
-        # for i in [s1, s2]:
-            c.update(i.get_subdicts())
+        c.update(s2.get_subdicts())
         source_l, c = self.add_agent_layout('Source', 'green', c)
         larva_l, c = self.add_agent_layout('Larva', 'black', c)
 
+        b='BORDER'
+        b0=f'{b}_id'
+        bw=f'{b}_width'
         col2 = [
             *larva_l, *source_l,
             [sg.T('', **t5_kws), *s2.get_layout()],
             [sg.T('', **t5_kws), sg.T('shape', **t5_kws),
              sg.Combo(['rect', 'circle'], default_value='circle', k='SOURCE_shape', enable_events=True, readonly=True)],
 
-            [sg.R('Add Border', 1, k='BORDER', enable_events=True)],
-            [sg.T('', **t5_kws), sg.T('id', **t5_kws),
-             sg.In('', k='BORDER_id')],
-            [sg.T('', **t5_kws), sg.T('width', **t5_kws), sg.In(0.001, k='BORDER_width')],
-            color_pick_layout('BORDER', 'black'),
+            [sg.R('Add Border', 1, k=b, enable_events=True)],
+            [sg.T('', **t5_kws), sg.T('id', **t5_kws), sg.In(b, k=b0)],
+            [sg.T('', **t5_kws), sg.T('width', **t5_kws), sg.In(0.001, k=bw)],
+            color_pick_layout(b, 'black'),
 
             [sg.R('Erase item', 1, k='-ERASE-', enable_events=True)],
             [sg.R('Move item', 1, True, k='-MOVE-', enable_events=True)],
@@ -198,7 +245,9 @@ class EnvTab(GuiTab):
 
 
     def eval(self,e, v, w, c, d, g):
-        self.graph.bind('<Button-3>', '+RIGHT+')
+        S,L,B='SOURCE','LARVA', 'BORDER'
+        gg=self.graph
+        gg.bind('<Button-3>', '+RIGHT+')
         dic = d[self.name]
         info = w["info"]
         if e == 'RESET_ARENA':
@@ -209,16 +258,16 @@ class EnvTab(GuiTab):
             self.aux_dict['env_db'] = self.set_env_db()
 
         if e == '-MOVE-':
-            self.graph.Widget.config(cursor='fleur')
+            gg.Widget.config(cursor='fleur')
         elif not e.startswith('-GRAPH-'):
-            self.graph.Widget.config(cursor='left_ptr')
+            gg.Widget.config(cursor='left_ptr')
         db = self.aux_dict['env_db']
         if e == self.graph_list.canvas_key:
             x, y = v[self.graph_list.canvas_key]
             if not dic['dragging']:
                 self.set_drag_ps(p1=(x, y))
                 dic['dragging'] = True
-                dic['drag_figures'] = [f for f in self.graph.get_figures_at_location((x, y)) if f != dic['arena']]
+                dic['drag_figures'] = [f for f in gg.get_figures_at_location((x, y)) if f != dic['arena']]
                 dic['last_xy'] = x, y
             else:
                 self.set_drag_ps(p2=(x, y))
@@ -244,8 +293,8 @@ class EnvTab(GuiTab):
                                     elif k == 'b':
                                         db[k]['items'][id]['points'] = [(X0 + delta_X, Y0 + delta_Y) for X0, Y0 in
                                                                         db[k]['items'][id]['points']]
-                                    self.graph.move_figure(f, delta_x, delta_y)
-                        self.graph.update()
+                                    gg.move_figure(f, delta_x, delta_y)
+                        gg.update()
                 elif v['-ERASE-']:
                     for fig in dic['drag_figures']:
                         for k in list(db.keys()):
@@ -254,7 +303,7 @@ class EnvTab(GuiTab):
                                 w['out'].update(value=f"Item {id} erased")
                                 figs = [k for k, v in db[k]['figs'].items() if v == id]
                                 for f in figs:
-                                    self.graph.delete_figure(f)
+                                    gg.delete_figure(f)
                                     db[k]['figs'].pop(f)
                                 db[k]['items'].pop(id)
                 elif v['-INSPECT-']:
@@ -267,17 +316,17 @@ class EnvTab(GuiTab):
                                     figs = self.inspect_distro(**db[k]['items'][id])
                                     for f in figs:
                                         db[k]['figs'][f] = id
-                elif v['SOURCE'] or v['BORDER'] or v['LARVA']:
+                elif v[S] or v[B] or v[L]:
                     P1, P2 = self.get_drag_ps(scaled=True)
                     p1, p2 = self.get_drag_ps(scaled=False)
                     if any([self.out_of_bounds(P, v, w, c) for P in [P1, P2]]):
                         dic['current'] = {}
                     else:
-                        if v['SOURCE'] and not self.check_abort('SOURCE', w, v, db['s_u']['items'], db['s_g']['items']):
-                            o = 'SOURCE'
+                        if v[S] and not self.check_abort(S, w, v, db['s_u']['items'], db['s_g']['items']):
+                            o = S
                             color = v[f'{o}_color']
                             if v['SOURCE_single'] or (v['SOURCE_group'] and dic['sample_fig'] is None):
-                                fill_color = color if w['TOGGLE_food'].get_state() else None
+                                fill_color = color if self.food_on(w) else None
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{o}_shape'], p1=p1, p2=p2,
                                                                line_color=color, fill_color=fill_color)
                                 temp = np.max(np.abs(np.array(p2) - np.array(p1)))
@@ -303,8 +352,8 @@ class EnvTab(GuiTab):
                                 }}
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{o}_DISTRO_shape'], p1=p1,
                                                                p2=p2, line_color=color)
-                        elif v['LARVA'] and not self.check_abort('LARVA', w, v, db['l_u']['items'], db['l_g']['items']):
-                            o = 'LARVA'
+                        elif v[L] and not self.check_abort(L, w, v, db['l_u']['items'], db['l_g']['items']):
+                            o = L
                             color = v[f'{o}_color']
                             sample_larva_pars = {'default_color': color,
                                                  **c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False),
@@ -318,7 +367,7 @@ class EnvTab(GuiTab):
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{o}_DISTRO_shape'], p1=p1,
                                                                p2=p2, line_color=color)
 
-                        elif v['BORDER']:
+                        elif v[B]:
                             id = v['BORDER_id']
                             if id in list(db['b']['items'].keys()) or id == '':
                                 info.update(value=f"Border id {id} already exists or is empty")
@@ -336,8 +385,8 @@ class EnvTab(GuiTab):
         elif e.endswith('+UP'):  # The drawing has ended because mouse up
             P1, P2 = self.get_drag_ps(scaled=True)
             current, prior_rect, sample_pars = dic['current'], dic['prior_rect'], dic['sample_pars']
-            if v['BORDER'] and current != {}:
-                o = 'BORDER'
+            if v[B] and current != {}:
+                o = B
                 units = db['b']
                 id = v[f'{o}_id']
                 w['out'].update(value=f"Border {id} placed from {P1} to {P2}")
@@ -345,8 +394,8 @@ class EnvTab(GuiTab):
                 units['items'].update(current)
                 w[f'{o}_id'].update(value=f"BORDER_{len(units['items'].keys())}")
                 c['border_list'].update(w, units['items'])
-            elif v['SOURCE']:
-                o = 'SOURCE'
+            elif v[S]:
+                o = S
                 units, groups = db['s_u'], db['s_g']
                 if v[f'{o}_single'] and current != {}:
                     id = v[f'{o}_id']
@@ -375,8 +424,8 @@ class EnvTab(GuiTab):
                         self.delete_prior(dic['sample_fig'])
                         dic['sample_fig'], dic['sample_pars'] = None, {}
                         c['source_groups'].update(w, groups['items'])
-            elif v['LARVA'] and current != {}:
-                o = 'LARVA'
+            elif v[L] and current != {}:
+                o = L
                 units, groups = db['l_u'], db['l_g']
                 if v[f'{o}_single']:
                     pass
@@ -396,7 +445,7 @@ class EnvTab(GuiTab):
                 self.delete_prior()
             self.aux_reset()
 
-        for o in ['SOURCE', 'LARVA']:
+        for o in [S, L]:
             w[f'{o}_single'].update(disabled=not v[o])
             w[f'{o}_group'].update(disabled=not v[o])
             c[f'{o}_DISTRO'].disable(w) if not v[f'{o}_group'] else c[f'{o}_DISTRO'].enable(w)
@@ -536,52 +585,53 @@ class EnvTab(GuiTab):
         return temp
 
     def check_abort(self, name, w, v, units, groups):
-        o = name
+        n=name
+        n0=n.lower()
+        g,g0,D,DN,Dm,Ds, s,s0=self.group_ks(n)
+        o, o0, oM, oS=self.odor_ks(n)
+        f, fM=self.food_ks
         info = w['info']
         abort = True
-        odor_on = w[f'TOGGLE_{o}_ODOR'].get_state()
+        O = self.odor_on(w,name)
+        F = self.food_on(w)
 
-        if not odor_on:
-            w[f'{o}_ODOR_odor_id'].update(value=None)
-            w[f'{o}_ODOR_odor_intensity'].update(value=0.0)
+        if not O:
+            w[o0].update(value=None)
+            w[oM].update(value=0.0)
 
-        if o == 'SOURCE':
-            food_on = w['TOGGLE_food'].get_state()
-            if not odor_on and not food_on:
+        if n == 'SOURCE':
+            if not O and not F:
                 info.update(value=f"Assign food and/or odor to the drawn source")
                 return True
-            elif food_on and float(v[f'food_amount']) == 0.0:
-                w[f'food_amount'].update(value=10 ** -3)
+            elif F and float(v[fM]) == 0.0:
+                w[fM].update(value=10 ** -3)
                 info.update(value=f"Source food amount set to default")
                 return True
-            elif not food_on and float(v[f'food_amount']) != 0.0:
-                w[f'food_amount'].update(value=0.0)
+            elif not F and float(v[fM]) != 0.0:
+                w[fM].update(value=0.0)
                 info.update(value=f"Source food amount set to 0")
 
-        if v[f'{o}_group_id'] == '' and v[f'{o}_id'] == '':
-            info.update(value=f"Both {o.lower()} single id and group id are empty")
-        elif not v[f'{o}_group'] and not v[f'{o}_single']:
-            info.update(value=f"Select to add a single or a group of {o.lower()}sigma")
-        elif v[f'{o}_single'] and (
-                v[f'{o}_id'] in list(units.keys()) or v[f'{o}_id'] == ''):
-            info.update(value=f"{o.lower()} id {v[f'{o}_id']} already exists or is empty")
-        elif odor_on and v[f'{o}_ODOR_odor_id'] == '':
+        if v[g0] == '' and v[s0] == '':
+            info.update(value=f"Both {n0} single id and group id are empty")
+        elif not v[g] and not v[s]:
+            info.update(value=f"Select to add a single or a group of {n0}s")
+        elif v[s] and (v[s0] in list(units.keys()) or v[s0] == ''):
+            info.update(value=f"{n0} id {v[s0]} already exists or is empty")
+        elif O and v[o0] == '':
             info.update(value=f"Default odor id automatically assigned to the odor")
-            id = v[f'{o}_group_id'] if v[f'{o}_group_id'] != '' else v[f'{o}_id']
-            w[f'{o}_ODOR_odor_id'].update(value=f'{id}_odor')
-        elif odor_on and not float(v[f'{o}_ODOR_odor_intensity']) > 0:
+            id = v[g0] if v[g0] != '' else v[s0]
+            w[o0].update(value=f'{id}_odor')
+        elif O and not float(v[oM]) > 0:
             info.update(value=f"Assign positive odor intensity to the drawn odor source")
-        elif odor_on and (
-                v[f'{o}_ODOR_odor_spread'] == '' or not float(v[f'{o}_ODOR_odor_spread']) > 0):
+        elif O and (v[oS] == '' or not float(v[oS]) > 0):
             info.update(value=f"Assign positive spread to the odor")
-        elif v[f'{o}_group'] and (
-                v[f'{o}_group_id'] in list(groups.keys()) or v[f'{o}_group_id'] == ''):
-            info.update(value=f"{o.lower()} group id {v[f'{o}_group_id']} already exists or is empty")
-        elif v[f'{o}_group'] and v[f'{o}_DISTRO_mode'] in ['', None]:
+        elif v[g] and (v[g0] in list(groups.keys()) or v[g0] == ''):
+            info.update(value=f"{n0} group id {v[g0]} already exists or is empty")
+        elif v[g] and v[Dm] in ['', None]:
             info.update(value=f"Define a distribution mode")
-        elif v[f'{o}_group'] and v[f'{o}_DISTRO_shape'] in ['', None]:
+        elif v[g] and v[Ds] in ['', None]:
             info.update(value=f"Define a distribution shape")
-        elif v[f'{o}_group'] and not int(v[f'{o}_DISTRO_N']) > 0:
+        elif v[g] and not int(v[DN]) > 0:
             info.update(value=f"Assign a positive integer number of items for the distribution")
         else:
             abort = False

@@ -565,10 +565,16 @@ def base_enrich(**kwargs):
 def get_dict_dtypes(name, **kwargs):
     from lib.conf import par_conf
     from lib.conf.conf import loadConfDict
+    def list_from_0(end=1.0, integer=False, steps=100, decimals=2):
+        a= np.round(np.linspace(0.0, end, steps), decimals)
+        if integer :
+            a=a.astype(int)
+        return a.tolist()
+
 
     bout_dist_dtypes = {
         'fit': bool,
-        'range': Tuple[float, float],
+        'range': (0.0, 100.0),
         # 'name': str,
         'name': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy', 'normal', 'uniform'],
         'mu': float,
@@ -609,8 +615,8 @@ def get_dict_dtypes(name, **kwargs):
             {
                 'epochs': List[Tuple[float, float]],
                 'epoch_qs': List[float],
-                'hours_as_larva': np.round(np.arange(0.0, 250.001, 1.0), 1).tolist(),
-                'substrate_quality': np.round(np.arange(0.0, 1.001, 0.01), 3).tolist(),
+                'hours_as_larva': list_from_0(end=250, steps=250, integer=True),
+                'substrate_quality': list_from_0(),
                 'substrate_type': list(substrate_dict.keys()),
             },
         'odorscape': {'odorscape': ['Gaussian', 'Diffusion'],
@@ -701,9 +707,10 @@ def get_dict_dtypes(name, **kwargs):
                    'freq_range': Tuple[float, float],
                    },
         'interference': {
-            'crawler_phi_range': Tuple[float, float],  # np.pi * 0.55,  # 0.9, #,
-            'feeder_phi_range': Tuple[float, float],
-            'attenuation': float
+            'crawler_phi_range': (0.0, 2.0),  # np.pi * 0.55,  # 0.9, #,
+            # 'crawler_phi_range': Tuple[float, float],  # np.pi * 0.55,  # 0.9, #,
+            'feeder_phi_range': (0.0, 2.0),
+            'attenuation': list_from_0()
         },
         'intermitter': {
             'pause_dist': bout_dist_dtypes,
@@ -712,11 +719,11 @@ def get_dict_dtypes(name, **kwargs):
                         # 'stridechain_dist': dict,
                         'crawl_bouts': bool,
                         'feed_bouts': bool,
-                        'crawl_freq': float,
-                        'feed_freq': float,
-                        'feeder_reoccurence_rate': float,
-                        'EEB_decay': float,
-                        'EEB': float},
+                        'crawl_freq': list_from_0(end=2.0, steps=200),
+                        'feed_freq': list_from_0(end=4.0, steps=400),
+                        'feeder_reoccurence_rate': list_from_0(),
+                        'EEB_decay': list_from_0(end=2.0, steps=200),
+                        'EEB': list_from_0()},
         'olfactor': {
             'perception': ['log', 'linear'],
             'olfactor_noise': float,

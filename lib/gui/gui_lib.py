@@ -10,7 +10,7 @@ import numpy as np
 import PySimpleGUI as sg
 import operator
 
-from PySimpleGUI import BUTTON_TYPE_COLOR_CHOOSER, Button
+from PySimpleGUI import BUTTON_TYPE_COLOR_CHOOSER, Button, Element, ELEM_TYPE_INPUT_SPIN, Pane
 from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
@@ -1059,13 +1059,16 @@ def update_window_from_dict(window, dic, prefix=None):
             if prefix is not None:
                 k = f'{prefix}_{k}'
             if type(v) == bool:
-                window[f'TOGGLE_{k}'].set_state(v)
+                b=window[f'TOGGLE_{k}']
+                if isinstance(b, BoolButton) :
+                    b.set_state(v)
+
             elif type(v) == dict:
-                if prefix is not None:
-                    new_prefix = k
-                else:
-                    new_prefix = None
+                new_prefix = k if prefix is not None else None
                 update_window_from_dict(window, v, prefix=new_prefix)
+            elif isinstance(window[k], TupleSpin):
+                # print(k)
+                window[k].update(window, v)
             elif v is None:
                 window.Element(k).Update(value='')
             else:
@@ -1117,12 +1120,19 @@ class SectionDict:
             else:
                 temp = sg.In(v, key=k0, **value_kws)
                 if self.type_dict is not None:
+                    # print(k, self.type_dict[k], type(self.type_dict[k]))
                     if type(self.type_dict[k]) == list:
+
                         if type(v) == float:
                             temp = sg.Spin(values=self.type_dict[k], initial_value=v, key=k0, **value_kws)
                         else:
                             temp = sg.Combo(self.type_dict[k], default_value=v, key=k0, enable_events=True,
                                             readonly=True, **value_kws)
+                    elif type(self.type_dict[k]) in [tuple, Tuple[float, float], Tuple[int, int]]:
+                        # print(k, v, self.type_dict[k], type(self.type_dict[k]))
+                        temp = TupleSpin(range=self.type_dict[k], initial_value=v, key=k0, **value_kws)
+
+                            # temp = sg.Spin(values=self.type_dict[k], initial_value=v, key=k0, **value_kws)
                 l.append([sg.Text(f'{k_disp}:', **text_kws), temp])
         return l
 
@@ -1162,6 +1172,42 @@ class SectionDict:
         for s in list(self.subdicts.values()):
             subdicts.update(s.get_subdicts())
         return subdicts
+
+
+class TupleSpin(Pane) :
+    def __init__(self, initial_value, range, key, **value_kws):
+        w,h=w_kws['default_button_element_size']
+        # size=(int(w/2), h)
+        value_kws.update({'size': (w-1,h)})
+        self.initial_value = initial_value
+        v0,v1=initial_value if type(initial_value)==tuple else (None,None)
+        r0, r1 = self.range =range
+        arange = np.linspace(r0,r1,1000).tolist()
+        self.key=key
+        self.k0,self.k1=[f'{key}_{i}' for i in [0,1]]
+        self.s0 = sg.Spin(values=arange, initial_value=v0, key=self.k0,**value_kws)
+        self.s1 = sg.Spin(values=arange, initial_value=v1, key=self.k1, **value_kws)
+        super().__init__(pane_list=[self.get_layout()], key=self.key)
+
+    def get(self):
+        return self.s0.get(), self.s1.get()
+
+    def get_layout(self):
+        l = sg.Col([[self.s0, self.s1]])
+        return l
+
+    def update(self, window, value):
+        if value not in [None, '', (None,None), [None,None]] :
+            v0,v1=value
+        else :
+            v0,v1=['','']
+        window.Element(self.k0).Update(value=v0)
+        window.Element(self.k1).Update(value=v1)
+
+
+        # return window
+
+
 
 
 def named_bool_button(name, state, toggle_name=None):
@@ -1333,6 +1379,7 @@ class CollapsibleTable(Collapsible):
         self.Ncols = len(headings)
         self.col_widths = []
         self.col_visible=[True]*self.Ncols
+        self.color_idx = None
         for i, p in enumerate(self.headings):
             if p in ['id', 'group']:
                 self.col_widths.append(10)
@@ -1393,17 +1440,16 @@ class CollapsibleTable(Collapsible):
     def update(self, window, dic, use_prefix=True):
         self.dict = dic
         self.data = self.set_data(dic)
-        row_cols = []
-        for i in range(len(self.data)) :
-            c0=self.data[i][self.color_idx]
-            c2,c1 = fun.invert_color(c0, return_self=True) if c0!='' else ['lightblue', 'black']
-            row_cols.append((i,c1,c2))
-        # print(row_cols)
+        if self.color_idx is not None :
+            row_cols = []
+            for i in range(len(self.data)) :
+                c0=self.data[i][self.color_idx]
+                c2,c1 = fun.invert_color(c0, return_self=True) if c0!='' else ['lightblue', 'black']
+                row_cols.append((i,c1,c2))
+        else :
+            row_cols=None
         window[self.key].update(values=self.data, num_rows=len(self.data), row_colors=row_cols)
-        if self.data[0][0] != '':
-            self.open(window)
-        else:
-            self.close(window)
+        self.open(window) if self.data[0][0] != '' else self.close(window)
 
     def edit_table(self, window):
         if self.header is not None:
