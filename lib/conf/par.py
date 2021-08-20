@@ -979,10 +979,10 @@ if __name__ == '__main__':
     # for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
     #     p = getPar(short, to_return=['d'])[0]
     #     print(p)
-    # dic=build_par_dict()
-    dic=load_ParDict()
-    # print(getPar(d=nam.scal(nam.cum(nam.dst(''))), to_return=['k']))
-    # print(dic['D_olf'])
+    dic=build_par_dict()
+    # dic=load_ParDict()
+    # print(getPar(k='bv'))
+    # print(dic['b'])
     # print(dic['D_olf'])
     # d,u=getPar('cum_d', to_return=['d', 'u'])
     # print(u.unit==siu.m)

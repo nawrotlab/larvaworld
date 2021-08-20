@@ -782,8 +782,10 @@ def graphic_button(name, key, **kwargs):
          'border_width': 0,
          # **b_kws
          }
-
-    return sg.B(image_data=dic[name], k=key, **c, **kwargs)
+    b=sg.B(image_data=dic[name], k=key, **c, **kwargs)
+    # print(b.Target)
+    # print(b.Position)
+    return b
 
 
 # sg.theme('LightGreen')
@@ -1122,11 +1124,11 @@ class SectionDict:
                 if self.type_dict is not None:
                     # print(k, self.type_dict[k], type(self.type_dict[k]))
                     if type(self.type_dict[k]) == list:
-
-                        if type(v) == float:
-                            temp = sg.Spin(values=self.type_dict[k], initial_value=v, key=k0, **value_kws)
+                        values=self.type_dict[k]
+                        if all([type(i) in [int,float] for i in values]):
+                            temp = sg.Spin(values=values, initial_value=v, key=k0, **value_kws)
                         else:
-                            temp = sg.Combo(self.type_dict[k], default_value=v, key=k0, enable_events=True,
+                            temp = sg.Combo(values, default_value=v, key=k0, enable_events=True,
                                             readonly=True, **value_kws)
                     elif type(self.type_dict[k]) in [tuple, Tuple[float, float], Tuple[int, int]]:
                         # print(k, v, self.type_dict[k], type(self.type_dict[k]))
@@ -1175,14 +1177,16 @@ class SectionDict:
 
 
 class TupleSpin(Pane) :
-    def __init__(self, initial_value, range, key, **value_kws):
+    def __init__(self, initial_value, range, key, steps=100, decimals=2, **value_kws):
         w,h=w_kws['default_button_element_size']
         # size=(int(w/2), h)
         value_kws.update({'size': (w-1,h)})
+        self.steps = steps
         self.initial_value = initial_value
         v0,v1=initial_value if type(initial_value)==tuple else (None,None)
+        self.integer=True if all([type(v0)==int, type(v1)==int]) else False
         r0, r1 = self.range =range
-        arange = np.linspace(r0,r1,1000).tolist()
+        arange = fun.value_list(r0,r1,self.integer, steps, decimals)
         self.key=key
         self.k0,self.k1=[f'{key}_{i}' for i in [0,1]]
         self.s0 = sg.Spin(values=arange, initial_value=v0, key=self.k0,**value_kws)
@@ -1621,7 +1625,8 @@ def object_menu(selected, **kwargs):
 class GraphList:
     def __init__(self, name, fig_dict={}, next_to_header=None, default_values=None,
                  canvas_size=(1000, 800), list_size=None, list_header='Graphs', auto_eval=True,
-                 canvas_kws={'background_color':'Lightblue'}, graph=False):
+                 canvas_kws={'background_color':'Lightblue'}, graph=False,
+                 canvas_col_kws={'scrollable':False, 'vertical_scroll_only':False, 'expand_y':True, 'expand_x':True}):
         self.auto_eval = auto_eval
         self.list_size = list_size
         self.list_header = list_header
@@ -1630,7 +1635,7 @@ class GraphList:
         self.next_to_header = next_to_header
         self.fig_dict = fig_dict
         self.layout, self.list_key = self.init_layout(name, fig_dict, default_values)
-        self.canvas, self.canvas_key, self.canvas_element = self.init_canvas(name, canvas_kws, graph)
+        self.canvas, self.canvas_key, self.canvas_element = self.init_canvas(name, canvas_kws, canvas_col_kws, graph)
         self.fig_agg = None
         self.draw_key = 'unreachable'
 
@@ -1648,7 +1653,7 @@ class GraphList:
                                  key=list_key, auto_size_text=True)]]
         return l, list_key
 
-    def init_canvas(self, name, canvas_kws, graph=False):
+    def init_canvas(self, name, canvas_kws,canvas_col_kws, graph=False):
         canvas_key = f'{name}_CANVAS'
         kws={
             # 'size': self.canvas_size,
@@ -1658,8 +1663,7 @@ class GraphList:
             g=sg.Graph(canvas_size=self.canvas_size, **kws)
         else :
             g = sg.Canvas(size=self.canvas_size,**kws)
-        canvas = sg.Col([[g]],
-                        scrollable=False, vertical_scroll_only=False, expand_y=True, expand_x=True)
+        canvas = sg.Col([[g]],**canvas_col_kws)
         return canvas, canvas_key, g
 
     def draw_fig(self, window, fig):
@@ -1716,9 +1720,12 @@ class ButtonGraphList(GraphList):
 
     def generate(self, window, data):
         if self.func is not None and len(list(data.keys())) > 0:
-            self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()),
-                                                             return_fig=True, **self.func_kwargs)
-            self.draw_fig(window, self.fig)
+            try:
+                self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()),
+                                                                 return_fig=True, **self.func_kwargs)
+                self.draw_fig(window, self.fig)
+            except :
+                print('Plot not available')
 
     def save_fig(self):
         if self.fig is not None:

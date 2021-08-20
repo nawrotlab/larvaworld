@@ -411,14 +411,16 @@ def detect_contacting_chunks(s, e, dt, chunk='stride', track_point=None, mid_fla
                         zip(chunks[:-1, :], chunks[1:, :])] + [0]
             s0s = chunks[:, 0] - t0
             s1s = chunks[:, 1] - t0
-            start_array[s0s, i] = True
-            stop_array[s1s, i] = True
+            # start_array[s0s, i] = True
+            # stop_array[s1s, i] = True
             dur_array[s1s, i] = durs
             chain_counter = 0
             chain_dur_counter = 0
             for j, (s0, s1, dur, contact) in enumerate(zip(s0s, s1s, durs, contacts)):
                 if chain_counter > 0:
                     s0 += 1
+                start_array[s0, i] = True
+                stop_array[s1, i] = True
                 id_array[s0:s1 + 1, i] = j
                 chain_counter += 1
                 chain_dur_counter += dur

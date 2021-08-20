@@ -108,11 +108,12 @@ SchleyerEnrichConf = {
         'interpolate_nans': False,
         'filter_f': 2
     },
-    'processing': ['angular', 'spatial'],
+    # 'processing': ['angular', 'spatial'],
     'to_drop': ['unused'],
-    'dispersion_starts': [0],
-    'bouts': ['turn', 'stride', 'pause'],
-    'mode': 'minimal'}
+    # 'dispersion_starts': [0],
+    # 'bouts': ['turn', 'stride', 'pause'],
+    # 'mode': 'minimal'
+}
 
 SchleyerConf = {'id': 'SchleyerConf',
                 'data': SchleyerDataConf,

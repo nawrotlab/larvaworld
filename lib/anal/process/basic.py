@@ -97,7 +97,7 @@ def compute_freq(s, e, dt, parameters, freq_range=None, compare_params=False):
 
 def filter(s, dt, Npoints, config=None, freq=2, N=1, inplace=True, recompute=False):
     if not recompute and config is not None :
-        if config['filtered_at'] not in [None, np.nan] :
+        if config['filtered_at'] not in [None, np.nan, 'nan'] :
             prev = config['filtered_at']
             print(f'Dataset already filtered at {prev}. If you want to apply additional filter set recompute to True')
             return

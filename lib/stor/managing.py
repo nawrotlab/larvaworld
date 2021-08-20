@@ -28,9 +28,13 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
     #     names=names*len(raw_folders)
     # else :
     #     raise ValueError('Raw folders must be set to all or each')
+
     ds = get_datasets(datagroup_id=datagroup_id, last_common='processed', names=names,
                       folders=folders, suffixes=suffixes, mode='initialize', ids=ids, arena_pars=arena_pars)
     for d, raw in zip(ds, raw_folders):
+        # print(len(raw_folders))
+        # print(raw_folders)
+        # print(raw)
         if conf_id == 'JovanicConf':
             # with fun.suppress_stdout():
             step_data, endpoint_data = build_Jovanic(d, build_conf, source_dir=f'{datagroup.raw_dir}/{raw}', **kwargs)
@@ -38,8 +42,15 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
             #     print(f'Temporarily saved {d.id} dataset')
             #     continue
         elif conf_id == 'SchleyerConf':
-            step_data, endpoint_data = build_Schleyer(d, build_conf,
-                                                      raw_folders=[f'{datagroup.raw_dir}/{r}' for r in raw], **kwargs)
+            if type(raw)==str :
+                temp=[f'{datagroup.raw_dir}/{raw}']
+            elif type(raw)==list :
+                temp=[f'{datagroup.raw_dir}/{r}' for r in raw]
+            # print(raw)
+            # print(temp)
+            # print(datagroup.raw_dir)
+            # print([f'{datagroup.raw_dir}/{r}' for r in raw])
+            step_data, endpoint_data = build_Schleyer(d, build_conf,raw_folders=temp, **kwargs)
         else:
             raise ValueError(f'Configuration {conf_id} is not supported for building new datasets')
 
@@ -75,6 +86,7 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
     if ids is None:
         ids = new_ids
     dirs = [f'{f}/{n}' for (f, n) in list(product(folders, names))]
+    # print(dirs)
     ds = []
     for dir, id in zip(dirs, ids):
         # print(dir)

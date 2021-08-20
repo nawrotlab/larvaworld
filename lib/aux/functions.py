@@ -1349,4 +1349,10 @@ def invert_color(col, return_self=False):
     else :
         return col,col2
 
+def value_list(start=0.0,end=1.0, integer=False, steps=100, decimals=2):
+    a= np.round(np.linspace(start, end, steps), decimals)
+    if integer :
+        a=a.astype(int)
+    return a.tolist()
+
 

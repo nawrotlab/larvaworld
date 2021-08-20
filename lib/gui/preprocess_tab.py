@@ -10,7 +10,7 @@ from lib.stor import paths
 from lib.anal.plotting import graph_dict
 from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.dtype_dicts as dtypes
-from lib.stor.managing import detect_dataset, build_datasets
+from lib.stor.managing import detect_dataset, build_datasets, enrich_datasets
 import lib.aux.functions as fun
 
 class PreprocessTab(GuiTab):
@@ -21,6 +21,7 @@ class PreprocessTab(GuiTab):
         self.raw_ids_key=f'{self.raw_key}_IDS'
         self.proc_ids_key=f'{self.proc_key}_IDS'
         self.raw_folder=None
+        self.proc_folder=None
 
     def datagroup_id(self,v):
         return v[self.selectionlists[0].k]
@@ -43,9 +44,12 @@ class PreprocessTab(GuiTab):
 
     def update(self,w, c, conf, id=None):
         p=conf['path']
-        path=os.path.normpath(f'{paths.DataFolder}/{p}/raw')
-        w[self.raw_key].InitialFolder=path
-        self.raw_folder = path
+        pp=os.path.normpath(f'{paths.DataFolder}/{p}')
+        # path=os.path.normpath(f'{paths.DataFolder}/{p}/raw')
+        w[self.raw_key].InitialFolder=f'{pp}/raw'
+        self.raw_folder = f'{pp}/raw'
+        w[self.proc_key].InitialFolder = f'{pp}/processed'
+        self.proc_folder = f'{pp}/processed'
         # w.Element(self.raw_key).InitialFolder=path
         # w.Element(self.raw_key).Update(initial_folder=path)
         # c['substrate'].update_header(w, conf['substrate_type'])
@@ -68,10 +72,10 @@ class PreprocessTab(GuiTab):
         raw_list = [
             [sg.Text(get_disp_name(self.raw_key), **t8_kws),
              graphic_button('burn', f'BUILD_{self.raw_key}', tooltip='Build a dataset from raw files.'),
-             graphic_button('remove', f'REMOVE_{self.raw_key}', tooltip='Remove a dataset from the analysis list.'),
+             graphic_button('remove', f'REMOVE{self.raw_key}', tooltip='Remove a dataset from the analysis list.'),
              # graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
              # graphic_button('box_add', 'Add ref', tooltip='Add the reference experimental dataset to the analysis list.'),
-             graphic_button('edit', f'CHANGE_ID_{self.raw_key}', tooltip='Change the dataset ID transiently or permanently.'),
+             graphic_button('edit', f'CHANGE_ID {self.raw_key}', tooltip='Change the dataset ID transiently or permanently.'),
              graphic_button('search_add', key=self.raw_key, initial_folder=paths.SingleRunFolder, change_submits=True,
                             enable_events=True,
                             target=(1, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
@@ -84,15 +88,15 @@ class PreprocessTab(GuiTab):
         proc_list = [
             [sg.Text(get_disp_name(self.proc_key), **t8_kws),
              # graphic_button('burn', f'BUILD_{self.raw_key}', tooltip='Build a dataset from raw files.'),
-             # graphic_button('remove', f'REMOVE_{self.raw_key}', tooltip='Remove a dataset from the analysis list.'),
+             graphic_button('remove', f'REMOVE {self.proc_key}', tooltip='Remove a dataset from the analysis list.'),
              # graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
-             # graphic_button('box_add', 'Add ref', tooltip='Add the reference experimental dataset to the analysis list.'),
-             # graphic_button('edit', f'CHANGE_ID_{self.raw_key}',
-             #                tooltip='Change the dataset ID transiently or permanently.'),
-             # graphic_button('search_add', key=self.raw_key, initial_folder=paths.SingleRunFolder, change_submits=True,
-             #                enable_events=True,
-             #                target=(1, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
-             #                tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
+             graphic_button('data_add', 'Enrich', tooltip='Enrich the dataset.'),
+             graphic_button('edit', f'CHANGE_ID {self.proc_key}',
+                            tooltip='Change the dataset ID transiently or permanently.'),
+             graphic_button('search_add', key=self.proc_key, initial_folder=paths.SingleRunFolder, change_submits=True,
+                            enable_events=True,
+                            target=(1, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
+                            tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
              ],
 
             [sg.Col([[sg.Listbox(values=list(dicts[self.proc_key].keys()), size=(25, 5), key=self.proc_ids_key,
@@ -114,31 +118,37 @@ class PreprocessTab(GuiTab):
 
 
     def eval(self, e, v, w, c, d, g):
-        if e == self.raw_key and self.datagroup_id(v)!='':
-            dr = v[self.raw_key]
+        if e in [self.raw_key, self.proc_key] and self.datagroup_id(v)!='':
+            k = e
+            k0 = f'{k}_IDS'
+            dr = v[k]
             if dr != '':
                 ids=detect_dataset(self.datagroup_id(v), dr)
                 if len(ids)>0 :
                     for id in ids :
-                        d[self.raw_key][id] = dr
-                    w.Element(self.raw_ids_key).Update(values=list(d[self.raw_key].keys()))
-        elif e == f'REMOVE_{self.raw_key}':
-            if len(v[self.raw_ids_key]) > 0:
-                d[self.raw_key].pop(v[self.raw_ids_key][0], None)
-                w.Element(self.raw_ids_key).Update(values=list(d[self.raw_key].keys()))
-        elif e == f'CHANGE_ID_{self.raw_key}':
-            d[self.raw_key] = self.change_dataset_id(w, v, d[self.raw_key])
+                        d[k][id] = dr
+                    w.Element(k0).Update(values=list(d[k].keys()))
+        elif e.startswith('REMOVE'):
+            k = e.split()[-1]
+            k0=f'{k}_IDS'
+            if len(v[k0]) > 0:
+                d[k].pop(v[k0][0], None)
+                w.Element(k0).Update(values=list(d[k].keys()))
+        elif e.startswith('CHANGE_ID'):
+            k=e.split()[-1]
+            d[k] = self.change_dataset_id(w, v, d[k])
         elif e == f'BUILD_{self.raw_key}':
             for id,dir in d[self.raw_key].items() :
                 fdir=fun.remove_prefix(dir, f'{self.raw_folder}/')
-                # print(dir)
-                # print(self.raw_folder)
-                # print(fdir)
-                # fdir.removeprefix(f'{self.raw_folder}/')
-                # fdir=dir.replace(f'{self.raw_folder}/', '')
-                dd = build_datasets(datagroup_id=self.datagroup_id(v), folders=[id], ids=[id],names=[fdir], raw_folders=[f'{fdir}/{id}'])[0]
+                raw_folders = [fdir]
+                dd = build_datasets(datagroup_id=self.datagroup_id(v), folders=None, ids=[id],names=[fdir], raw_folders=raw_folders)[0]
                 d[self.proc_key][dd.id]=dd
                 w.Element(self.proc_ids_key).Update(values=list(d[self.proc_key].keys()))
+        elif e == 'Enrich':
+            for id,dir in d[self.proc_key].items() :
+                fdir=fun.remove_prefix(dir, f'{self.raw_folder}/')
+                dd = enrich_datasets(datagroup_id=self.datagroup_id(v), names=[fdir])[0]
+                d[self.proc_key][id]=dd
         return d, g
 
 if __name__ == "__main__":

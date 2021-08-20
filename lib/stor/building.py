@@ -16,6 +16,7 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
     raw_files = []
     all_invert_x = []
     for i, f in enumerate(raw_folders):
+        # print(f)
         files = [os.path.join(f, n) for n in os.listdir(f) if n.endswith('.csv')]
         raw_files += files
         if build_conf['read_metadata']:

@@ -3,6 +3,8 @@ from typing import List, Tuple, Union
 import numpy as np
 from siunits import BaseUnit, Composite, DerivedUnit
 
+import lib.aux.functions as fun
+
 # from lib.conf.par import runtime_pars
 
 vis_render_dtypes = {
@@ -565,11 +567,7 @@ def base_enrich(**kwargs):
 def get_dict_dtypes(name, **kwargs):
     from lib.conf import par_conf
     from lib.conf.conf import loadConfDict
-    def list_from_0(end=1.0, integer=False, steps=100, decimals=2):
-        a= np.round(np.linspace(0.0, end, steps), decimals)
-        if integer :
-            a=a.astype(int)
-        return a.tolist()
+
 
 
     bout_dist_dtypes = {
@@ -585,44 +583,44 @@ def get_dict_dtypes(name, **kwargs):
     all_dtypes = {
         'odor':
             {'odor_id': str,
-             'odor_intensity': float,
-             'odor_spread': float
+             'odor_intensity': fun.value_list(end=500.0, steps=100, decimals=2),
+             'odor_spread': fun.value_list(end=100.0, steps=1000, decimals=2)
              },
         'food':
             {
-                'radius': float,
-                'amount': float,
-                'quality': float,
+                'radius': fun.value_list(end=10.0, steps=100, decimals=2),
+                'amount': fun.value_list(end=100.0, steps=1000, decimals=2),
+                'quality': fun.value_list(),
                 'shape_vertices': List[Tuple[float, float]],
                 'can_be_carried': bool,
-                'type': ['standard', 'cornmeal']
+                'type': list(substrate_dict.keys())
             },
         'food_grid':
             {
                 'unique_id': str,
-                'grid_dims': Tuple[int, int],
-                'initial_value': float,
+                'grid_dims': (10,1000),
+                'initial_value': fun.value_list(end=100.0, steps=1000, decimals=2),
                 'distribution': ['uniform'],
-                'type': ['standard', 'cornmeal']
+                'type': list(substrate_dict.keys())
             },
         'arena':
             {
-                'arena_xdim': float,
-                'arena_ydim': float,
+                'arena_xdim': fun.value_list(end=10.0, steps=1000, decimals=3),
+                'arena_ydim': fun.value_list(end=10.0, steps=1000, decimals=3),
                 'arena_shape': ['circular', 'rectangular']
             },
         'life':
             {
                 'epochs': List[Tuple[float, float]],
                 'epoch_qs': List[float],
-                'hours_as_larva': list_from_0(end=250, steps=250, integer=True),
-                'substrate_quality': list_from_0(),
+                'hours_as_larva': fun.value_list(end=250, steps=250, integer=True),
+                'substrate_quality': fun.value_list(),
                 'substrate_type': list(substrate_dict.keys()),
             },
         'odorscape': {'odorscape': ['Gaussian', 'Diffusion'],
-                      'grid_dims': tuple,
-                      'evap_const': float,
-                      'gaussian_sigma': Tuple[float, float],
+                      'grid_dims': (10, 1000),
+                      'evap_const': fun.value_list(),
+                      'gaussian_sigma': (0.0, 10.0),
                       },
         'odor_gain': {
             'unique_id': str,
@@ -636,15 +634,15 @@ def get_dict_dtypes(name, **kwargs):
                 'arena_shape': ['circular', 'rectangular']
             },
             'env_params': [''] + list(loadConfDict('Env').keys()),
-            'track_point': int,
+            'track_point': fun.value_list(1,12, steps=12, integer=True),
             'dynamic_color': [None, 'lin_color', 'ang_color'],
             'agent_ids': list,
-            'time_range': Tuple[float, float],
+            'time_range': (0.0,3600.0),
             'transposition': [None, 'origin', 'arena', 'center'],
-            'fix_point': int,
+            'fix_point': fun.value_list(1,12, steps=12, integer=True),
             'secondary_fix_point': ['', 1, -1],
             'use_background': bool,
-            'draw_Nsegs': int,
+            'draw_Nsegs': fun.value_list(1,12, steps=12, integer=True),
         },
         'optimization': {
             'fit_par': str,
@@ -654,9 +652,9 @@ def get_dict_dtypes(name, **kwargs):
                 'abs': bool,
             },
             'minimize': bool,
-            'threshold': float,
-            'max_Nsims': int,
-            'Nbest': int
+            'threshold': fun.value_list(),
+            'max_Nsims': fun.value_list(2,1002, steps=1000, integer=True),
+            'Nbest': fun.value_list(2,42, steps=40, integer=True)
         },
         'batch_methods': {
             'run': ['null', 'default', 'deb', 'odor_preference'],
@@ -710,7 +708,7 @@ def get_dict_dtypes(name, **kwargs):
             'crawler_phi_range': (0.0, 2.0),  # np.pi * 0.55,  # 0.9, #,
             # 'crawler_phi_range': Tuple[float, float],  # np.pi * 0.55,  # 0.9, #,
             'feeder_phi_range': (0.0, 2.0),
-            'attenuation': list_from_0()
+            'attenuation': fun.value_list()
         },
         'intermitter': {
             'pause_dist': bout_dist_dtypes,
@@ -719,19 +717,19 @@ def get_dict_dtypes(name, **kwargs):
                         # 'stridechain_dist': dict,
                         'crawl_bouts': bool,
                         'feed_bouts': bool,
-                        'crawl_freq': list_from_0(end=2.0, steps=200),
-                        'feed_freq': list_from_0(end=4.0, steps=400),
-                        'feeder_reoccurence_rate': list_from_0(),
-                        'EEB_decay': list_from_0(end=2.0, steps=200),
-                        'EEB': list_from_0()},
+                        'crawl_freq': fun.value_list(end=2.0, steps=200),
+                        'feed_freq': fun.value_list(end=4.0, steps=400),
+                        'feeder_reoccurence_rate': fun.value_list(),
+                        'EEB_decay': fun.value_list(end=2.0, steps=200),
+                        'EEB': fun.value_list()},
         'olfactor': {
             'perception': ['log', 'linear'],
-            'olfactor_noise': float,
-            'decay_coef': float},
-        'feeder': {'feeder_freq_range': Tuple[float, float],
-                   'feeder_initial_freq': float,
-                   'feed_radius': float,
-                   'V_bite': float},
+            'olfactor_noise': fun.value_list(),
+            'decay_coef': fun.value_list(end=2.0, steps=200)},
+        'feeder': {'feeder_freq_range':(0.0, 4.0),
+                   'feeder_initial_freq': fun.value_list(end=4.0, steps=400),
+                   'feed_radius': fun.value_list(start=0.01, end=1.0, steps=1000, decimals=2),
+                   'V_bite': fun.value_list(start=0.0001, end=0.01, steps=1000, decimals=4)},
         'memory': {'DeltadCon': float,
                    'state_spacePerOdorSide': int,
                    'gain_space': List[float],

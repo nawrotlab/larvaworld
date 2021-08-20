@@ -103,7 +103,6 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
 
 
     elif exp_type == 'dispersion':
-
         target_dataset = load_reference_dataset(dataset_id=d.config['sample_dataset'])
         ds = [d, target_dataset]
         labels = ['simulated', 'empirical']
@@ -118,11 +117,7 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
         dic2 = plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:3], min_turn_angle=20, **ccc)
         fig_dict.update(dic2)
 
-
-
-
     elif exp_type in ['chemotaxis_approach', 'chemotaxis_local', 'chemotaxis_diffusion']:
-
         if exp_type in ['chemotaxis_local', 'chemotaxis_diffusion']:
             ps = ['o_cent', 'sd_cent', 'd_cent']
             source = (0.0, 0.0)

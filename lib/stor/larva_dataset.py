@@ -182,6 +182,10 @@ class LarvaDataset:
             # print('Saving data')
             # self.build_dirs()
             if step:
+                # print(self.step_data['bend_velocity'])
+                # print(list(self.step_data.columns)[10:20])
+                # print(list(self.step_data.columns)[20:30])
+                # print(list(self.step_data.columns)[30:])
                 self.step_data.to_csv(self.dir_dict['step'], index=True, header=True)
             if end:
                 self.endpoint_data.to_csv(self.dir_dict['end'], index=True, header=True)
@@ -550,7 +554,7 @@ class LarvaDataset:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
-    def enrich(self,preprocessing,processing,annotation,enrich_aux,
+    def enrich(self,preprocessing={},processing={},annotation={},enrich_aux={},
                to_drop=[], show_output=False,is_last=True, **kwargs):
         print()
         print(f'--- Enriching dataset {self.id} with derived parameters ---')

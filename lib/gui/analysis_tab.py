@@ -53,9 +53,10 @@ class AnalysisTab(GuiTab):
 
 
 
-        graph_lists['ANALYSIS'] = g = ButtonGraphList(name='ANALYSIS', fig_dict=graph_dict)
-        l = [[sg.Col(data_list, size=col_size(0.2), **col_kws), g.canvas, sg.Col(g.get_layout(as_col=False), size=col_size(0.2))]]
-        # l = [[sg.Col(data_list + g.get_layout(as_col=False), size=col_size(0.2), **col_kws), g.canvas]]
+        graph_lists['ANALYSIS'] = g = ButtonGraphList(name='ANALYSIS', fig_dict=graph_dict, canvas_col_kws={'size' : col_size(0.6), 'scrollable':True, **col_kws})
+        l = [[sg.Col(data_list, size=col_size(0.2), **col_kws),
+              g.canvas,
+              sg.Col(g.get_layout(as_col=False), size=col_size(0.2), **col_kws)]]
         return l, {}, graph_lists, dicts
 
 
