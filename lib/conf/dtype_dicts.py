@@ -10,7 +10,7 @@ import lib.aux.functions as fun
 vis_render_dtypes = {
     'mode': [None, 'video', 'image'],
     'image_mode': [None, 'final', 'snapshots', 'overlap'],
-    'video_speed': int,
+    'video_speed': fun.value_list(1,60, steps=60, integer=True),
     'media_name': str,
     'show_display': bool,
 }
@@ -21,7 +21,7 @@ vis_draw_dtypes = {
     'draw_midline': bool,
     'draw_contour': bool,
     'trajectories': bool,
-    'trajectory_dt': float,
+    'trajectory_dt': fun.value_list(0.0,100.0, steps=1000, decimals=1),
 }
 
 vis_color_dtypes = {
@@ -583,7 +583,7 @@ def get_dict_dtypes(name, **kwargs):
     all_dtypes = {
         'odor':
             {'odor_id': str,
-             'odor_intensity': fun.value_list(end=500.0, steps=100, decimals=2),
+             'odor_intensity': fun.value_list(end=1000.0, steps=10000, decimals=2),
              'odor_spread': fun.value_list(end=100.0, steps=1000, decimals=2)
              },
         'food':
@@ -666,43 +666,43 @@ def get_dict_dtypes(name, **kwargs):
                          'Ngrid': int},
 
         'visualization': vis_dtypes,
-        'body': {'initial_length': float,
-                 'length_std': float,
-                 'Nsegs': int,
+        'body': {'initial_length': fun.value_list(0.0,0.01, steps=100, decimals=4),
+                 'length_std': fun.value_list(0.0,0.01, steps=100, decimals=4),
+                 'Nsegs':  fun.value_list(1,12, steps=12, integer=True),
                  'seg_ratio': List[float]  # [5 / 11, 6 / 11]
                  },
         'physics': {
-            'torque_coef': float,
-            'ang_damping': float,
-            'body_spring_k': float,
-            'bend_correction_coef': float,
+            'torque_coef': fun.value_list(),
+            'ang_damping': fun.value_list(),
+            'body_spring_k': fun.value_list(),
+            'bend_correction_coef': fun.value_list(),
         },
-        'energetics': {'f_decay': float,
-                       'absorption': float,
+        'energetics': {'f_decay': fun.value_list(),
+                       'absorption': fun.value_list(),
                        'hunger_as_EEB': bool,
-                       'hunger_gain': float,
+                       'hunger_gain': fun.value_list(),
                        'deb_on': bool,
                        'assimilation_mode': ['sim', 'gut', 'deb'],
-                       'DEB_dt': float},
+                       'DEB_dt': fun.value_list()},
         'crawler': {'waveform': ['realistic', 'square', 'gaussian', 'constant'],
-                    'freq_range': Tuple[float, float],
-                    'initial_freq': float,  # From D1 fit
-                    'freq_std': float,  # From D1 fit
-                    'step_to_length_mu': float,  # From D1 fit
-                    'step_to_length_std': float,  # From D1 fit
-                    'initial_amp': float,
-                    'crawler_noise': float,
-                    'max_vel_phase': float
+                    'freq_range': (0.0,2.0),
+                    'initial_freq': fun.value_list(end=2.0, steps=200),  # From D1 fit
+                    'freq_std': fun.value_list(end=2.0, steps=200),  # From D1 fit
+                    'step_to_length_mu': fun.value_list(),  # From D1 fit
+                    'step_to_length_std': fun.value_list(),  # From D1 fit
+                    'initial_amp': fun.value_list(end=2.0, steps=200),
+                    'crawler_noise': fun.value_list(),
+                    'max_vel_phase': fun.value_list(end=2.0, steps=200)
                     },
         'turner': {'mode': ['', 'neural', 'sinusoidal'],
-                   'base_activation': float,
-                   'activation_range': Tuple[float, float],
-                   'noise': float,
-                   'activation_noise': float,
-                   'initial_amp': float,
-                   'amp_range': Tuple[float, float],
-                   'initial_freq': float,
-                   'freq_range': Tuple[float, float],
+                   'base_activation': fun.value_list(end=100.0, steps=1000, decimals=1),
+                   'activation_range': (0.0,100.0),
+                   'noise': fun.value_list(),
+                   'activation_noise': fun.value_list(),
+                   'initial_amp': fun.value_list(end=2.0, steps=200),
+                   'amp_range': (0.0,2.0),
+                   'initial_freq': fun.value_list(end=2.0, steps=200),
+                   'freq_range': (0.0,2.0),
                    },
         'interference': {
             'crawler_phi_range': (0.0, 2.0),  # np.pi * 0.55,  # 0.9, #,

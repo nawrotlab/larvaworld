@@ -980,6 +980,7 @@ if __name__ == '__main__':
     #     p = getPar(short, to_return=['d'])[0]
     #     print(p)
     dic=build_par_dict()
+    print(runtime_pars)
     # dic=load_ParDict()
     # print(getPar(k='bv'))
     # print(dic['b'])
