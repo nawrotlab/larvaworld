@@ -70,12 +70,8 @@ class SimTab(GuiTab):
         p=self.selectionlists[0].progressbar
         p.run(w, max=N)
         conf['experiment'] = id
-        # default_vis = dtypes.get_dict('visualization', mode='video', video_speed=60)
-        default_vis=dtypes.get_dict('visualization')
-        vis_kwargs = c['Visualization'].get_dict(v, w) if 'Visualization' in list(
-            c.keys()) else default_vis
         kws={**conf,
-             'vis_kwargs' : vis_kwargs,
+             'vis_kwargs' : self.gui.get_vis_kwargs(v),
              'progress_bar' : w[p.k]
              }
         dd = run_sim(**kws)

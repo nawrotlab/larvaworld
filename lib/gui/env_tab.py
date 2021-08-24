@@ -16,19 +16,6 @@ class EnvTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.canvas_size=(800,800)
-        # SL=self.k_S, self.k_L='SOURCE','LARVA'
-        # SLg=self.k_S_g, self.k_L_g=[f'{i}_group' for i in SL]
-        # self.k_S_0, self.k_L_0=[f'{i}_id' for i in SL]
-        # self.k_S_1, self.k_L_1=[f'{i}_single' for i in SL]
-        # self.k_S_d, self.k_L_d=[f'{i}_DISTRO' for i in SL]
-        # SLo=self.k_S_o, self.k_L_o=[f'{i}_ODOR' for i in SL]
-        # self.kT_S_o, self.kT_L_o=[f'TOGGLE_{i}' for i in SLo]
-        # self.k_S_o0, self.k_L_o0=[f'{i}_odor_id' for i in SLo]
-        # self.k_S_g0, self.k_L_g0=[f'{i}_id' for i in SLg]
-        # self.k_S_oM, self.k_L_oM=[f'{i}_odor_intensity' for i in SLo]
-        # self.k_S_oS, self.k_L_oS=[f'{i}_odor_spread' for i in SLo]
-        # self.k_f='food'
-        # self.k_fM=f'{self.k_f}_amount'
 
     # @property
     def food_on(self,w):
