@@ -206,30 +206,13 @@ def get_exp_conf(exp_type, sim_params, life_params=None, N=None, larva_model=Non
     return conf
 
 
-def run_essay(id, exp_types,durations, vis_kwargs, N=None, larva_model=None):
-# def run_essay(essay_type, essay_params, vis_kwargs, N=None, larva_model=None):
-#     id = essay_params['essay_ID']
-#     essay_params.pop('essay_ID')
-#     essay = loadConf(essay_type, 'Essay')
-#     exp_types = essay['exp_types']
-#     durations = essay['durations']
+def run_essay(id,path, exp_types,durations, vis_kwargs, **kwargs):
     ds = []
     for i, (exp_type, dur) in enumerate(zip(exp_types, durations)):
-        sim=dtypes.get_dict('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=f'essays/{id}')
-    # for i, env in enumerate(essay['envs']):
-    #     sim = {**essay_params, 'sim_ID': f'{id}_{i}'}
-        # conf = {
-        #     'sim_params': sim,
-        #     'env_params': expandConf(env, 'Env'),
-        #     'life_params': loadConf(essay['life_params'], 'Life'),
-        #     'enrichment': essay['enrichment'],
-        #     'collections': essay['collections'],
-        #     'vis_kwargs': vis_kwargs,
-        # }
-        conf = get_exp_conf(exp_type = exp_type, sim_params=sim)
+        sim=dtypes.get_dict('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
+        conf = get_exp_conf(exp_type = exp_type, sim_params=sim, **kwargs)
         d = run_sim(**conf, vis_kwargs=vis_kwargs)
         ds.append(d)
-
     return ds
 
 

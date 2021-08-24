@@ -25,6 +25,7 @@ class EssayTab(GuiTab):
         self.exp_figures_key='Essay_exp_figures'
 
     def build(self):
+        s1 = CollapsibleDict('essay_params', True, default=True, disp_name='Configuration', text_kws=t8_kws)
         l_essay = SelectionList(tab=self, conftype='Essay', actions=['load', 'save', 'delete', 'run'],
                               # progress=True,
                               # sublists={'env_params': l_env, 'life_params' : l_life}
@@ -41,7 +42,7 @@ class EssayTab(GuiTab):
         g2 = GraphList(self.exp_figures_key, list_header='Experiment data',canvas_size=(1000, 500),
                        fig_dict={})
         l_conf = [[sg.Col([
-            *[i.get_layout() for i in [l_essay]],
+            *[i.get_layout() for i in [l_essay, s1]],
             [l_exps]
         ])]]
         gg=sg.Col([
@@ -54,8 +55,8 @@ class EssayTab(GuiTab):
               ]]
 
         c = {}
-        # for i in [s1]:
-        #     c.update(i.get_subdicts())
+        for i in [s1]:
+            c.update(i.get_subdicts())
         g = {g1.name: g1, g2.name:g2}
         d = {}
         d['essay_results'] = {'fig_dict': {}}
@@ -70,6 +71,12 @@ class EssayTab(GuiTab):
     def update(self, w, c, conf, id):
         exps=list(conf.keys())
         w.Element(self.essay_exps_key).Update(values=exps)
+
+        # essay = copy.deepcopy(conf['essay_params'])
+        essay=dtypes.get_dict('essay_params', essay_ID = f'{id}_{next_idx(id)}', path = f'essays/{id}')
+        # essay.update({'essay_ID': f'{id}_{next_idx(id)}', 'path': f'essays/{id}'})
+        c['essay_params'].update(w, essay)
+
         if id=='roversVSsitters' :
             exp_figs=paths.RoverSitterFigFolder
             temp = {f.split('.')[0]: f'{exp_figs}/{f}' for f in os.listdir(exp_figs)}
@@ -95,12 +102,15 @@ class EssayTab(GuiTab):
         return d, g
 
     def run_essay_exp(self, v, w, c, d, g, essay_exp):
+        essay_params =  c['essay_params'].get_dict(v, w)
+        essay_id=essay_params['essay_ID']
         essay_type = v[self.selectionlists[0].k]
         conf=loadConf(essay_type, 'Essay')
         essay = conf[essay_exp]
         kws = {
             # **conf,
-            'id' : f'{essay_type}_{essay_exp}',
+            'id' : f'{essay_id}_{essay_exp}',
+            'path' : essay_params['path'],
             'vis_kwargs': c['Visualization'].get_dict(v, w) if 'Visualization' in list(
                 c.keys()) else dtypes.get_dict('visualization'),
             'exp_types': essay['exp_types'],

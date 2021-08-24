@@ -486,10 +486,10 @@ all_null_dicts = {
     'essay_params': {
         'essay_ID': None,
         'path': 'essays',
-        'duration': 1.0,
-        'timestep': 0.1,
-        'Box2D': False,
-        'sample': 'reference'
+        # 'duration': 1.0,
+        # 'timestep': 0.1,
+        # 'Box2D': False,
+        # 'sample': 'reference'
     },
     'logn_dist': {
         'range': (0.0, 2.0),
@@ -775,10 +775,10 @@ def get_dict_dtypes(name, **kwargs):
         'essay_params': {
             'essay_ID': str,
             'path': str,
-            'duration': np.round(np.arange(0.0, 2000.1, 0.1), 1).tolist(),
-            'timestep': np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(),
-            'Box2D': bool,
-            'sample': list(loadConfDict('Ref').keys())
+            # 'duration': np.round(np.arange(0.0, 2000.1, 0.1), 1).tolist(),
+            # 'timestep': np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(),
+            # 'Box2D': bool,
+            # 'sample': list(loadConfDict('Ref').keys())
         },
         'logn_dist': {
             'range': Tuple[float, float],
