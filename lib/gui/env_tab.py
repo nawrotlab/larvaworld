@@ -125,8 +125,8 @@ class EnvTab(GuiTab):
         c2 = Collapsible('Sources', True, l1)
         c.update(c2.get_subdicts())
         l2 = [c[n].get_layout() for n in ['arena', 'larva_groups', 'Sources', 'border_list', 'odorscape']]
-        l1 = SelectionList(tab=self, conftype='Env', actions=['load', 'save', 'delete'])
-        self.selectionlists = [l1]
+        l1 = SelectionList(tab=self, actions=['load', 'save', 'delete'])
+        self.selectionlists = {sl.conftype : sl for sl in [l1]}
         l = sg.Col([l1.l, *l2], **col_kws, size=col_size(0.25))
         return l, c, {}, {}
 

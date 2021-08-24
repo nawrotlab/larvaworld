@@ -13,42 +13,24 @@ from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
 from lib.gui.tab import GuiTab, SelectionList
 from lib.sim.single_run import run_sim
 from lib.sim.analysis import sim_analysis
-from lib.conf.conf import loadConfDict, loadConf, next_idx
+from lib.conf.conf import next_idx
 
 
 class SimTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    # def build_sim_collapsible(self):
-    #     sim_conf = [[sg.Text('Sim id :', **t8_kws), sg.In('unnamed_sim', key='sim_ID', **t16_kws)],
-    #                 [sg.Text('Path :', **t8_kws), sg.In('single_runs', key='path', **t16_kws)],
-    #                 [sg.Text('Duration :', **t8_kws),
-    #                  sg.Spin(values=np.round(np.arange(0.0, 200.1, 0.1), 1).tolist(), initial_value=3.0, key='duration',
-    #                          **t6_kws), sg.Text('minutes', **t8_kws, justification='center')],
-    #                 [sg.Text('Timestep :', **t8_kws),
-    #                  sg.Spin(values=np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(), initial_value=0.1, key='timestep',
-    #                          **t6_kws), sg.Text('seconds', **t8_kws, justification='center')],
-    #                 [sg.Text('Sample :', **t8_kws),
-    #                  sg.Combo(list(loadConfDict('Ref').keys()), default_value='reference', key='sample',
-    #                           enable_events=True, readonly=True,
-    #                           tooltip='The reference dataset to sample parameters from.', **t14_kws)
-    #                  ],
-    #                 named_bool_button('Box2D', False)]
-    #     s1 = Collapsible('Configuration', True, sim_conf)
-    #     return s1
-
     def build(self):
         l_env = SelectionList(tab=self, conftype='Env', idx=1)
         l_life = SelectionList(tab=self, conftype='Life', idx=1, with_dict=True, header_value='default',
                            text_kws=t14_kws, value_kws=t10_kws, width=12, header_text_kws=t9_kws)
-        l_sim = SelectionList(tab=self, conftype='Exp', actions=['load', 'save', 'delete', 'run'], progress=True,
+        l_sim = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'], progress=True,
                               sublists={'env_params': l_env, 'life_params' : l_life})
         s1 = CollapsibleDict('sim_params', True, default=True, disp_name='Configuration', text_kws=t8_kws)
         output_dict = dict(zip(output_keys, [False] * len(output_keys)))
         s2 = CollapsibleDict('Output', False, dict=output_dict, auto_open=False)
 
-        self.selectionlists = [l_sim, l_env, l_life]
+        self.selectionlists = {sl.conftype : sl for sl in [l_env, l_sim, l_life]}
         g1 = GraphList(self.name)
         l_conf = [[sg.Col([
             *[i.get_layout() for i in [l_sim, l_env,s1, s2, l_life]],
@@ -67,7 +49,7 @@ class SimTab(GuiTab):
 
     def run(self, v, w,c,d,g, conf,id):
         N=conf['sim_params']['duration'] * 60 / conf['sim_params']['timestep']
-        p=self.selectionlists[0].progressbar
+        p=self.base_list.progressbar
         p.run(w, max=N)
         conf['experiment'] = id
         kws={**conf,
@@ -102,7 +84,7 @@ class SimTab(GuiTab):
                 # 'sim_params': sim,
                 'collections': [k for k in output_keys if c['Output'].get_dict(v, w)[k]],
                 # 'life_params': c['life'].get_dict(v, w),
-                'enrichment': loadConf(v[self.selectionlists[0].k], 'Exp')['enrichment'],
+                'enrichment': self.current_conf(v)['enrichment'],
                 }
         return conf
 

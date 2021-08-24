@@ -22,7 +22,7 @@ class EssayTab(GuiTab):
 
     def build(self):
         s1 = CollapsibleDict('essay_params', True, default=True, disp_name='Configuration', text_kws=t8_kws)
-        l_essay = SelectionList(tab=self, conftype='Essay', actions=['load', 'save', 'delete', 'run'],
+        l_essay = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'],
                                 # progress=True,
                                 # sublists={'env_params': l_env, 'life_params' : l_life}
                                 )
@@ -30,7 +30,7 @@ class EssayTab(GuiTab):
             graphic_button('play', f'RUN_{self.essay_exps_key}', tooltip='Run the selected essay experiment.')]
         l_exps = named_list_layout(text='Experiments', key=self.essay_exps_key, choices=[], drop_down=False,
                                    single_line=False, next_to_header=next_to_header)
-        self.selectionlists = [l_essay]
+        self.selectionlists = {sl.conftype : sl for sl in [l_essay]}
         g1 = GraphList(self.name, list_header='Simulation results', canvas_size=(1000, 500))
         g2 = GraphList(self.exp_figures_key, list_header='Experiment data', canvas_size=(1000, 500),
                        fig_dict={})
@@ -92,7 +92,7 @@ class EssayTab(GuiTab):
     def run_essay_exp(self, v, w, c, d, g, essay_exp):
         essay_params = c['essay_params'].get_dict(v, w)
         essay_id = essay_params['essay_ID']
-        essay_type = v[self.selectionlists[0].k]
+        essay_type = self.current_ID(v)
         conf = loadConf(essay_type, 'Essay')
         essay = conf[essay_exp]
         kws = {

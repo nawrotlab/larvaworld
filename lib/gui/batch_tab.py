@@ -18,10 +18,6 @@ class BatchTab(GuiTab):
         self.batch_path_key=f'{self.name}_path'
         self.batch_trajs_key=f'{self.name}_trajs'
 
-    @ property
-    def batch_type_key(self):
-        return self.selectionlists[0].k
-
     def update(self, w, c, conf, id):
         w.Element(self.batch_id_key).Update(value=f'{id}_{next_idx(id, type="batch")}')
         w.Element(self.batch_path_key).Update(value=id)
@@ -36,16 +32,16 @@ class BatchTab(GuiTab):
             **{n: c[n].get_dict(v, w) for n in ['batch_methods', 'optimization', 'space_search']},
             'exp_kws': {
                 'save_data_flag': w['TOGGLE_save_data_flag'].metadata.state,
-                'enrichment': loadConf(v[self.batch_type_key], 'Batch')['exp_kws']['enrichment'],
+                'enrichment': self.current_conf(v)['exp_kws']['enrichment'],
                            }
         }
         return copy.deepcopy(conf)
 
     def build(self):
         l_sim = SelectionList(tab=self, conftype='Exp', idx=1)
-        l_batch = SelectionList(tab=self, conftype='Batch', actions=['load', 'save', 'delete', 'run'],
+        l_batch = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'],
                                 sublists={'exp': l_sim})
-        self.selectionlists = [l_batch, l_sim]
+        self.selectionlists = {sl.conftype : sl for sl in [l_batch, l_sim]}
         batch_conf = [[sg.Text('Batch id:', **t8_kws), sg.In('unnamed_batch_0', key=self.batch_id_key, **t16_kws)],
                       [sg.Text('Path:', **t8_kws), sg.In('unnamed_batch', key=self.batch_path_key, **t16_kws)],
                       named_bool_button('Save data', False, toggle_name='save_data_flag'),
@@ -95,18 +91,19 @@ class BatchTab(GuiTab):
         return d, g
 
     def eval(self, e, v, w, c, d, g):
-        if e==self.batch_trajs_key :
-            traj_name=v[self.batch_trajs_key][0]
-            w.Element(self.batch_id_key).Update(value=traj_name)
-            traj=load_traj(v[self.batch_type_key], traj_name)
-            func=finfunc_dict[c['batch_methods'].get_dict(v, w)['final']]
-            df, fig_dict = func(traj)
-            self.draw(df, fig_dict,w,d,g)
-        elif e=='REMOVE_traj' :
-            if len(v[self.batch_trajs_key])>0 :
-                traj_name = v[self.batch_trajs_key][0]
-                delete_traj(v[self.batch_type_key], traj_name)
-                w.Element(self.batch_trajs_key).Update(values=existing_trajs(v[self.batch_type_key]))
+        id0=self.current_ID(v)
+        trajs=v[self.batch_trajs_key]
+        if len(trajs) > 0:
+            traj0 = trajs[0]
+            if e==self.batch_trajs_key :
+                w.Element(self.batch_id_key).Update(value=traj0)
+                traj=load_traj(id0, traj0)
+                func=finfunc_dict[c['batch_methods'].get_dict(v, w)['final']]
+                df, fig_dict = func(traj)
+                self.draw(df, fig_dict,w,d,g)
+            elif e=='REMOVE_traj' :
+                delete_traj(id0, traj0)
+                w.Element(self.batch_trajs_key).Update(values=existing_trajs(id0))
 
 
     def draw(self, df, fig_dict,w,d,g):

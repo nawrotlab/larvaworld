@@ -81,7 +81,8 @@ class LarvaworldGui:
     def build(self, tabs):
         ls, cs, ds, gs, ts = [], {}, {}, {}, {}
         for n in tabs:
-            ts[n] = self.tab_dict[n][0](name=n, gui=self)
+            ii=self.tab_dict[n]
+            ts[n] = ii[0](name=n, gui=self, conftype=ii[1])
             l, c, d, g = ts[n].build()
             cs.update(c)
             ds.update(d)

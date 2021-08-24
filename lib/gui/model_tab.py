@@ -48,8 +48,8 @@ class ModelTab(GuiTab):
         return copy.deepcopy(m)
 
     def build(self):
-        l0 = SelectionList(tab=self,conftype='Model',actions=['load', 'save', 'delete'])
-        self.selectionlists = [l0]
+        l0 = SelectionList(tab=self,actions=['load', 'save', 'delete'])
+        self.selectionlists = {sl.conftype : sl for sl in [l0]}
 
         c1 = [CollapsibleDict(n, False, default=True, **kwargs)
               for n, kwargs in zip(['physics', 'energetics', 'body', 'odor'], [{}, {'toggle': True}, {}, {}])]

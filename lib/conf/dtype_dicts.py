@@ -776,11 +776,7 @@ def get_dict_dtypes(name, **kwargs):
         'essay_params': {
             'essay_ID': str,
             'path': str,
-            'N': fun.value_list(1,100, steps=100, integer=True),
-            # 'duration': np.round(np.arange(0.0, 2000.1, 0.1), 1).tolist(),
-            # 'timestep': np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(),
-            # 'Box2D': bool,
-            # 'sample': list(loadConfDict('Ref').keys())
+            'N': fun.value_list(1,100, steps=100, integer=True)
         },
         'logn_dist': {
             'range': Tuple[float, float],

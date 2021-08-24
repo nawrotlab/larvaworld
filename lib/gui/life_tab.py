@@ -77,8 +77,8 @@ class LifeTab(GuiTab):
         r1_size = col_size(x_frac=1 - x1, y_frac=y)
         r2_size = col_size(x_frac=(1 - x2)/2, y_frac=1 - y)
 
-        sl0 = SelectionList(tab=self, conftype='Life', actions=['load', 'save', 'delete'])
-        self.selectionlists = [sl0]
+        sl0 = SelectionList(tab=self, actions=['load', 'save', 'delete'])
+        self.selectionlists = {sl.conftype : sl for sl in [sl0]}
 
         sub = CollapsibleDict('substrate', False, default=True, header_dict=dtypes.substrate_dict,
                               header_value='standard')
@@ -103,7 +103,6 @@ class LifeTab(GuiTab):
             sg.Text(f'{ep.capitalize()}s (h)', **t18_kws),
             graphic_button('add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
             graphic_button('remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.'),
-            # graphic_button('data_add', f'ADD life', tooltip=f'Add a life history configuration.')
         ],
             [Table(values=[], headings=[self.s0, self.s1, 'quality'], def_col_width=7,
                       max_col_width=24, background_color='lightblue',

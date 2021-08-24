@@ -31,12 +31,12 @@ class ProgressBarLayout :
 
 
 class SelectionList:
-    def __init__(self, tab, conftype, disp=None, actions=[], sublists={},idx=None, progress=False,
+    def __init__(self, tab, conftype=None, disp=None, actions=[], sublists={},idx=None, progress=False,
                  width=24,with_dict=False, **kwargs):
         self.with_dict = with_dict
         self.width = width
         self.tab = tab
-        self.conftype = conftype
+        self.conftype = conftype if conftype is not None else tab.conftype
         self.actions = actions
 
         if disp is None:
@@ -220,22 +220,35 @@ class SelectionList:
 
 
 class GuiTab:
-    def __init__(self, name, gui):
+    def __init__(self, name, gui, conftype=None):
         self.name = name
         self.gui = gui
-        self.selectionlists = []
+        self.conftype = conftype
+        self.selectionlists = {}
         self.graph_list=None
 
     @property
     def aux_dict(self):
         return self.gui.dicts[self.name]
 
+    @property
+    def base_list(self):
+        return self.selectionlists[self.conftype] if self.conftype is not None else None
+
+    def current_ID(self, v):
+        l=self.base_list
+        return v[l.k] if l is not None else None
+
+    def current_conf(self, v):
+        id=self.current_ID(v)
+        return loadConf(id, self.conftype) if id is not None else None
+
     def build(self):
         return None, {}, {}, {}
 
     def eval0(self, e, v):
-        for i in self.selectionlists:
-            i.eval(e, v)
+        for sl_name,sl in self.selectionlists.items():
+            sl.eval(e, v)
         w = self.gui.window
         c = self.gui.collapsibles
         g = self.gui.graph_lists

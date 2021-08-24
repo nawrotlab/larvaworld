@@ -23,9 +23,6 @@ class PreprocessTab(GuiTab):
         self.raw_folder=None
         self.proc_folder=None
 
-    def datagroup_id(self,v):
-        return v[self.selectionlists[0].k]
-
     def change_dataset_id(self,window, values, data):
         if len(values[self.raw_ids_key]) > 0:
             old_id = values[self.raw_ids_key][0]
@@ -103,9 +100,8 @@ class PreprocessTab(GuiTab):
                                  enable_events=True)]])]
         ]
 
-        l_group = SelectionList(tab=self, conftype='Group', disp='Data group', actions=['load'])
-        # l_group = SelectionList(tab=self, conftype='Group', actions=['load', 'save', 'delete'])
-        self.selectionlists = [l_group]
+        l_group = SelectionList(tab=self, disp='Data group', actions=['load'])
+        self.selectionlists = {sl.conftype : sl for sl in [l_group]}
 
 
         g = ButtonGraphList(name=self.name, fig_dict={})
@@ -118,12 +114,13 @@ class PreprocessTab(GuiTab):
 
 
     def eval(self, e, v, w, c, d, g):
-        if e in [self.raw_key, self.proc_key] and self.datagroup_id(v)!='':
+        id0=self.current_ID(v)
+        if e in [self.raw_key, self.proc_key] and id0!= '':
             k = e
             k0 = f'{k}_IDS'
             dr = v[k]
             if dr != '':
-                ids=detect_dataset(self.datagroup_id(v), dr)
+                ids=detect_dataset(id0, dr)
                 if len(ids)>0 :
                     for id in ids :
                         d[k][id] = dr
@@ -141,13 +138,13 @@ class PreprocessTab(GuiTab):
             for id,dir in d[self.raw_key].items() :
                 fdir=fun.remove_prefix(dir, f'{self.raw_folder}/')
                 raw_folders = [fdir]
-                dd = build_datasets(datagroup_id=self.datagroup_id(v), folders=None, ids=[id],names=[fdir], raw_folders=raw_folders)[0]
+                dd = build_datasets(datagroup_id=id0, folders=None, ids=[id], names=[fdir], raw_folders=raw_folders)[0]
                 d[self.proc_key][dd.id]=dd
                 w.Element(self.proc_ids_key).Update(values=list(d[self.proc_key].keys()))
         elif e == 'Enrich':
             for id,dir in d[self.proc_key].items() :
                 fdir=fun.remove_prefix(dir, f'{self.raw_folder}/')
-                dd = enrich_datasets(datagroup_id=self.datagroup_id(v), names=[fdir])[0]
+                dd = enrich_datasets(datagroup_id=id0, names=[fdir])[0]
                 d[self.proc_key][id]=dd
         return d, g
 
