@@ -61,38 +61,39 @@ class PreprocessTab(GuiTab):
 
 
     def build(self):
-        dicts = {self.raw_key: {},self.proc_key: {}}
+        kR, kP = self.raw_key, self.proc_key
+        dicts = {kR: {},kP: {}}
         raw_list = [
-            [sg.Text(get_disp_name(self.raw_key), **t8_kws),
-             graphic_button('burn', f'BUILD_{self.raw_key}', tooltip='Build a dataset from raw files.'),
-             graphic_button('remove', f'REMOVE{self.raw_key}', tooltip='Remove a dataset from the analysis list.'),
+            [sg.Text(get_disp_name(kR), **t8_kws),
+             graphic_button('burn', f'BUILD_{kR}', tooltip='Build a dataset from raw files.'),
+             graphic_button('remove', f'REMOVE {kR}', tooltip='Remove a dataset from the analysis list.'),
              # graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
              # graphic_button('box_add', 'Add ref', tooltip='Add the reference experimental dataset to the analysis list.'),
-             graphic_button('edit', f'CHANGE_ID {self.raw_key}', tooltip='Change the dataset ID transiently or permanently.'),
-             graphic_button('search_add', key=self.raw_key, initial_folder=paths.SingleRunFolder, change_submits=True,
+             graphic_button('edit', f'CHANGE_ID {kR}', tooltip='Change the dataset ID transiently or permanently.'),
+             graphic_button('search_add', key=kR, initial_folder=paths.SingleRunFolder, change_submits=True,
                             enable_events=True,
                             target=(1, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
                             tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
              ],
 
-            [sg.Col([[sg.Listbox(values=list(dicts[self.raw_key].keys()), size=(25, 5), key=self.raw_ids_key, enable_events=True)]])]
+            [sg.Col([[sg.Listbox(values=list(dicts[kR].keys()), size=(25, 5), key=self.raw_ids_key, enable_events=True)]])]
         ]
 
         proc_list = [
-            [sg.Text(get_disp_name(self.proc_key), **t8_kws),
+            [sg.Text(get_disp_name(kP), **t8_kws),
              # graphic_button('burn', f'BUILD_{self.raw_key}', tooltip='Build a dataset from raw files.'),
-             graphic_button('remove', f'REMOVE {self.proc_key}', tooltip='Remove a dataset from the analysis list.'),
+             graphic_button('remove', f'REMOVE {kP}', tooltip='Remove a dataset from the analysis list.'),
              # graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
              graphic_button('data_add', 'Enrich', tooltip='Enrich the dataset.'),
-             graphic_button('edit', f'CHANGE_ID {self.proc_key}',
+             graphic_button('edit', f'CHANGE_ID {kP}',
                             tooltip='Change the dataset ID transiently or permanently.'),
-             graphic_button('search_add', key=self.proc_key, initial_folder=paths.SingleRunFolder, change_submits=True,
+             graphic_button('search_add', key=kP, initial_folder=paths.SingleRunFolder, change_submits=True,
                             enable_events=True,
                             target=(1, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
                             tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
              ],
 
-            [sg.Col([[sg.Listbox(values=list(dicts[self.proc_key].keys()), size=(25, 5), key=self.proc_ids_key,
+            [sg.Col([[sg.Listbox(values=list(dicts[kP].keys()), size=(25, 5), key=self.proc_ids_key,
                                  enable_events=True)]])]
         ]
 

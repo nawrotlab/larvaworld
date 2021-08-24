@@ -16,25 +16,28 @@ class AnalysisTab(GuiTab):
         super().__init__(**kwargs)
 
 
-    def change_dataset_id(self,w, values, data):
-        if len(values['DATASET_IDS']) > 0:
-            old_id = values['DATASET_IDS'][0]
+    def change_dataset_id(self,w, values):
+        k0 = 'DATASET_IDS'
+        v0 = values[k0]
+        data=self.base_dict
+        if len(v0) > 0:
+            old_id = v0[0]
             l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(k='NEW_ID', size=(10, 1))],
                  [sg.Button('Store'), sg.Ok(), sg.Cancel()]]
             e, v = sg.Window('Change dataset ID', l).read(close=True)
+            new_id=v['NEW_ID']
             if e == 'Ok':
-                data[v['NEW_ID']] = data.pop(old_id)
-                w.Element('DATASET_IDS').Update(values=list(data.keys()))
+                data[new_id] = data.pop(old_id)
+                w.Element(k0).Update(values=list(data.keys()))
             elif e == 'Store':
                 d = data[old_id]
-                d.set_id(v['NEW_ID'])
-                data[v['NEW_ID']] = data.pop(old_id)
-                w.Element('DATASET_IDS').Update(values=list(data.keys()))
-        return data
+                d.set_id(new_id)
+                data[new_id] = data.pop(old_id)
+                w.Element(k0).Update(values=list(data.keys()))
+        # return data
 
 
     def build(self):
-        graph_lists = {}
         dicts = {self.name: {}}
         data_list = [
             [sg.Text('Datasets', **t8_kws),
@@ -52,10 +55,11 @@ class AnalysisTab(GuiTab):
 
 
 
-        graph_lists[self.name] = g = ButtonGraphList(name=self.name, fig_dict=graph_dict, canvas_col_kws={'size' : col_size(0.6), 'scrollable':True, **col_kws})
+        g = ButtonGraphList(name=self.name, fig_dict=graph_dict, canvas_col_kws={'size' : col_size(0.6), 'scrollable':True, **col_kws})
         l = [[sg.Col(data_list, size=col_size(0.2), **col_kws),
               g.canvas,
               sg.Col(g.get_layout(as_col=False), size=col_size(0.2), **col_kws)]]
+        graph_lists = {g.name: g}
         return l, {}, graph_lists, dicts
 
 
@@ -75,7 +79,6 @@ class AnalysisTab(GuiTab):
                 w.Element(k0).Update(values=list(self.base_dict.keys()))
 
         elif e == 'Add ref':
-            # sample_dataset='reference'
             dd = LarvaDataset(dir=f'{paths.RefFolder}/reference')
             self.base_dict[dd.id] = dd
             w.Element(k0).Update(values=list(self.base_dict.keys()))
@@ -84,7 +87,7 @@ class AnalysisTab(GuiTab):
                 self.base_dict.pop(v0[0], None)
                 w.Element(k0).Update(values=list(self.base_dict.keys()))
         elif e == 'Change ID':
-            self.base_dict = self.change_dataset_id(w, v, self.base_dict)
+            self.change_dataset_id(w, v)
         elif e == 'Replay':
             if len(v0) > 0:
                 dd = self.base_dict[v0[0]]
