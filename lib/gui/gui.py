@@ -104,3 +104,10 @@ class LarvaworldGui:
         vis_kwargs=c['Visualization'].get_dict(v, w) if 'Visualization' in list(
             c.keys()) else dtypes.get_dict('visualization')
         return vis_kwargs
+
+    def get_replay_kwargs(self, v):
+        c=self.collapsibles
+        w=self.window
+        replay_kwargs=c['Replay'].get_dict(v, w) if 'Replay' in list(
+            c.keys()) else dtypes.get_dict('replay', arena_pars=None)
+        return replay_kwargs

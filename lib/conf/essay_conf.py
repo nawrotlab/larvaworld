@@ -1,8 +1,9 @@
 from lib.conf.larva_conf import *
 from lib.conf.env_conf import *
 from lib.conf import dtype_dicts as dtypes
+from lib.stor import paths
 
-rover_sitter_essay = {
+rover_sitter_essay = {'experiments':{
     'pathlength': {
         'exp_types': ['rovers_sitters_on_standard', 'rovers_sitters_on_agar'],
         'durations': [20, 20]
@@ -37,6 +38,7 @@ rover_sitter_essay = {
         ],
         'durations': [120]
     }
-}
+},
+'exp_fig_folder' : paths.RoverSitterFigFolder}
 
 essay_dict = {'roversVSsitters': rover_sitter_essay}

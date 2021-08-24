@@ -16,7 +16,7 @@ class AnalysisTab(GuiTab):
         super().__init__(**kwargs)
 
 
-    def change_dataset_id(self,window, values, data):
+    def change_dataset_id(self,w, values, data):
         if len(values['DATASET_IDS']) > 0:
             old_id = values['DATASET_IDS'][0]
             l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(k='NEW_ID', size=(10, 1))],
@@ -24,19 +24,18 @@ class AnalysisTab(GuiTab):
             e, v = sg.Window('Change dataset ID', l).read(close=True)
             if e == 'Ok':
                 data[v['NEW_ID']] = data.pop(old_id)
-                window.Element('DATASET_IDS').Update(values=list(data.keys()))
+                w.Element('DATASET_IDS').Update(values=list(data.keys()))
             elif e == 'Store':
                 d = data[old_id]
                 d.set_id(v['NEW_ID'])
                 data[v['NEW_ID']] = data.pop(old_id)
-                window.Element('DATASET_IDS').Update(values=list(data.keys()))
+                w.Element('DATASET_IDS').Update(values=list(data.keys()))
         return data
 
 
     def build(self):
         graph_lists = {}
-        dicts = {'analysis_data': {}}
-        data = dicts['analysis_data']
+        dicts = {self.name: {}}
         data_list = [
             [sg.Text('Datasets', **t8_kws),
              graphic_button('remove', 'Remove', tooltip='Remove a dataset from the analysis list.'),
@@ -48,12 +47,12 @@ class AnalysisTab(GuiTab):
                             tooltip='Browse to add datasets to the analysis list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
              ],
 
-            [sg.Col([[sg.Listbox(values=list(data.keys()), size=(25, 5), key='DATASET_IDS', enable_events=True)]])]
+            [sg.Col([[sg.Listbox(values=list(dicts[self.name].keys()), size=(25, 5), key='DATASET_IDS', enable_events=True)]])]
         ]
 
 
 
-        graph_lists['ANALYSIS'] = g = ButtonGraphList(name='ANALYSIS', fig_dict=graph_dict, canvas_col_kws={'size' : col_size(0.6), 'scrollable':True, **col_kws})
+        graph_lists[self.name] = g = ButtonGraphList(name=self.name, fig_dict=graph_dict, canvas_col_kws={'size' : col_size(0.6), 'scrollable':True, **col_kws})
         l = [[sg.Col(data_list, size=col_size(0.2), **col_kws),
               g.canvas,
               sg.Col(g.get_layout(as_col=False), size=col_size(0.2), **col_kws)]]
@@ -61,50 +60,42 @@ class AnalysisTab(GuiTab):
 
 
     def eval(self, e, v, w, c, d, g):
-        if e == 'DATASET_DIR':
-            dr = v['DATASET_DIR']
-            if dr != '':
-                if os.path.exists(f'{dr}/data'):
-                    dd = LarvaDataset(dir=dr)
-                    d['analysis_data'][dd.id] = dd
+        k0,kD='DATASET_IDS', 'DATASET_DIR'
+        v0,vD=v[k0], v[kD]
+        if e == kD:
+            if vD != '':
+                if os.path.exists(f'{vD}/data'):
+                    dd = LarvaDataset(dir=vD)
+                    self.base_dict[dd.id] = dd
                 else:
-                    for ddr in [x[0] for x in os.walk(dr)]:
+                    for ddr in [x[0] for x in os.walk(vD)]:
                         if os.path.exists(f'{ddr}/data'):
                             dd = LarvaDataset(dir=ddr)
-                            d['analysis_data'][dd.id] = dd
-                w.Element('DATASET_IDS').Update(values=list(d['analysis_data'].keys()))
+                            self.base_dict[dd.id] = dd
+                w.Element(k0).Update(values=list(self.base_dict.keys()))
 
         elif e == 'Add ref':
-            sample_dataset='reference'
-            dd = LarvaDataset(dir=f'{paths.RefFolder}/{sample_dataset}')
-            d['analysis_data'][dd.id] = dd
-            w.Element('DATASET_IDS').Update(values=list(d['analysis_data'].keys()))
+            # sample_dataset='reference'
+            dd = LarvaDataset(dir=f'{paths.RefFolder}/reference')
+            self.base_dict[dd.id] = dd
+            w.Element(k0).Update(values=list(self.base_dict.keys()))
         elif e == 'Remove':
-            if len(v['DATASET_IDS']) > 0:
-                d['analysis_data'].pop(v['DATASET_IDS'][0], None)
-                w.Element('DATASET_IDS').Update(values=list(d['analysis_data'].keys()))
+            if len(v0) > 0:
+                self.base_dict.pop(v0[0], None)
+                w.Element(k0).Update(values=list(self.base_dict.keys()))
         elif e == 'Change ID':
-            d['analysis_data'] = self.change_dataset_id(w, v, d['analysis_data'])
+            self.base_dict = self.change_dataset_id(w, v, self.base_dict)
         elif e == 'Replay':
-            if len(v['DATASET_IDS']) > 0:
-                dd = d['analysis_data'][v['DATASET_IDS'][0]]
-                if 'Visualization' in list(c.keys()):
-                    vis_kwargs = c['Visualization'].get_dict(v, w)
-                else:
-                    vis_kwargs = dtypes.get_dict('visualization', mode='video', video_speed=60)
-
-                if 'Replay' in list(c.keys()):
-                    replay_kwargs = c['Replay'].get_dict(v, w)
-                else:
-                    replay_kwargs = dtypes.get_dict('replay', arena_pars=None)
-                dd.visualize(vis_kwargs=vis_kwargs, **replay_kwargs)
+            if len(v0) > 0:
+                dd = self.base_dict[v0[0]]
+                dd.visualize(vis_kwargs=self.gui.get_vis_kwargs(v), **self.gui.get_replay_kwargs(v))
 
         elif e == 'ANALYSIS_SAVE_FIG':
-            g['ANALYSIS'].save_fig()
+            self.graph_list.save_fig()
         elif e == 'ANALYSIS_FIG_ARGS':
-            g['ANALYSIS'].set_fig_args()
+            self.graph_list.set_fig_args()
         elif e == 'ANALYSIS_DRAW_FIG':
-            g['ANALYSIS'].generate(w, d['analysis_data'])
+            self.graph_list.generate(w, self.base_dict)
         return d, g
 
 if __name__ == "__main__":

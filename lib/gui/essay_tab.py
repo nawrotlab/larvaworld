@@ -55,21 +55,21 @@ class EssayTab(GuiTab):
         return l, c, g, d
 
     def run(self, v, w, c, d, g, conf, id):
-        conf = loadConf(id, 'Essay')
-        for essay_exp in list(conf.keys()):
+        conf = loadConf(id, self.conftype)
+        for essay_exp in list(conf['experiments'].keys()):
             d, g = self.run_essay_exp(v, w, c, d, g, essay_exp)
         return d, g
 
     def update(self, w, c, conf, id):
-        exps = list(conf.keys())
+        exps = list(conf['experiments'].keys())
         w.Element(self.essay_exps_key).Update(values=exps)
         essay = dtypes.get_dict('essay_params', essay_ID=f'{id}_{next_idx(id)}', path=f'essays/{id}')
         c['essay_params'].update(w, essay)
 
-        if id == 'roversVSsitters':
-            exp_figs = paths.RoverSitterFigFolder
-            temp = {f.split('.')[0]: f'{exp_figs}/{f}' for f in os.listdir(exp_figs)}
-            self.gui.graph_lists[self.exp_figures_key].update(w, temp)
+        fdir=conf['exp_fig_folder']
+
+        temp = {f.split('.')[0]: f'{fdir}/{f}' for f in os.listdir(fdir)}
+        self.gui.graph_lists[self.exp_figures_key].update(w, temp)
 
     def get(self, w, v, c, as_entry=True):
         conf = {
@@ -90,25 +90,24 @@ class EssayTab(GuiTab):
         return d, g
 
     def run_essay_exp(self, v, w, c, d, g, essay_exp):
-        essay_params = c['essay_params'].get_dict(v, w)
-        essay_id = essay_params['essay_ID']
+        pars = c['essay_params'].get_dict(v, w)
+        id = pars['essay_ID']
         essay_type = self.current_ID(v)
-        conf = loadConf(essay_type, 'Essay')
-        essay = conf[essay_exp]
+        essay = loadConf(essay_type, self.conftype)[essay_exp]
         kws = {
-            'id': f'{essay_id}_{essay_exp}',
-            'path': essay_params['path'],
+            'id': f'{id}_{essay_exp}',
+            'path': pars['path'],
             'vis_kwargs': self.gui.get_vis_kwargs(v),
             'exp_types': essay['exp_types'],
             'durations': essay['durations'],
-            'N': essay_params['N'],
+            'N': pars['N'],
         }
         ds0 = run_essay(**kws)
         if ds0 is not None:
             fig_dict, results = essay_analysis(essay_type, essay_exp, ds0)
             self.base_dict[essay_exp] = {'exp_fig_dict': fig_dict, 'results': results}
             self.base_dict['fig_dict'].update(fig_dict)
-            g[self.name].update(w, self.base_dict['fig_dict'])
+            self.graph_list.update(w, self.base_dict['fig_dict'])
         return d, g
 
 

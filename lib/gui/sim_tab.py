@@ -44,7 +44,7 @@ class SimTab(GuiTab):
             c.update(i.get_subdicts())
         g = {g1.name: g1}
         d={}
-        d['sim_results']={'datasets' : [], 'fig_dict' : None}
+        d[self.name]={'datasets' : [], 'fig_dict' : None}
         return l, c, g, d
 
     def run(self, v, w,c,d,g, conf,id):
@@ -59,14 +59,14 @@ class SimTab(GuiTab):
         dd = run_sim(**kws)
         if dd is not None:
             w[p.k_complete].update(visible=True)
-            if 'analysis_data' in d.keys() :
-                d['analysis_data'][dd.id] = dd
+            if 'analysis' in d.keys() :
+                d['analysis'][dd.id] = dd
             if 'DATASET_IDS' in w.AllKeysDict.keys():
-                w.Element('DATASET_IDS').Update(values=list(d['analysis_data'].keys()))
-            d['sim_results']['datasets'].append(dd)
+                w.Element('DATASET_IDS').Update(values=list(d['analysis'].keys()))
+            self.base_dict['datasets'].append(dd)
             fig_dict, results = sim_analysis(dd, conf['experiment'])
-            d['sim_results']['fig_dict'] = fig_dict
-            g[self.name].update(w, fig_dict)
+            self.base_dict['fig_dict'] = fig_dict
+            self.graph_list.update(w, fig_dict)
         else:
             p.reset(w)
         return d,g
