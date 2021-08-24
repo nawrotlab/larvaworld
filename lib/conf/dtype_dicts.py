@@ -298,7 +298,7 @@ substrate_dict = {
 
 null_bout_dist = {
     'fit': True,
-    'range': [None, None],
+    'range': None,
     'name': None,
     'mu': None,
     'sigma': None,
@@ -668,7 +668,7 @@ def get_dict_dtypes(name, **kwargs):
                 'abs': bool,
             },
             'minimize': bool,
-            'threshold': fun.value_list(),
+            'threshold': fun.value_list(0.000001, 1.0, steps=1000000, decimals=6),
             'max_Nsims': fun.value_list(2,1002, steps=1000, integer=True),
             'Nbest': fun.value_list(2,42, steps=40, integer=True)
         },
