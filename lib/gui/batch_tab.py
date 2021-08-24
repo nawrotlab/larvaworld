@@ -63,22 +63,19 @@ class BatchTab(GuiTab):
         l_batch0 = sg.Col([l_batch.l,
                            l_sim.l,
                            *[s.get_layout() for s in [s0, s1, s2, s3]],
-                           # [g1.get_layout()],
                            [traj_l],
                            ], **col_kws, size=col_size(0.2))
 
         l = [[l_batch0, g1.canvas,sg.Col(g1.get_layout(as_col=False), size=col_size(0.2))]]
-        # l = [[l_batch0, g1.canvas]]
 
         c = {}
         for s in [s0, s1, s2, s3]:
             c.update(s.get_subdicts())
         g = {g1.name: g1}
-        d ={'batch_results':{'df' : None, 'fig_dict' : None}}
+        d ={self.name:{'df' : None, 'fig_dict' : None}}
         return l, c, g, d
 
     def run(self, v, w, c, d, g, conf, id):
-
         batch_id=v[self.batch_id_key]
         batch_kwargs = prepare_batch(conf, batch_id, id)
 
@@ -86,32 +83,33 @@ class BatchTab(GuiTab):
         # thread.start()
 
         df, fig_dict = batch_run(**batch_kwargs)
-        self.draw(df, fig_dict,w,d,g)
+        self.draw(df, fig_dict,w)
         w.Element(self.batch_trajs_key).Update(values=existing_trajs(id))
         return d, g
 
     def eval(self, e, v, w, c, d, g):
         id0=self.current_ID(v)
-        trajs=v[self.batch_trajs_key]
+        k_trajs=self.batch_trajs_key
+        trajs=v[k_trajs]
         if len(trajs) > 0:
             traj0 = trajs[0]
-            if e==self.batch_trajs_key :
+            if e==k_trajs :
                 w.Element(self.batch_id_key).Update(value=traj0)
                 traj=load_traj(id0, traj0)
                 func=finfunc_dict[c['batch_methods'].get_dict(v, w)['final']]
                 df, fig_dict = func(traj)
-                self.draw(df, fig_dict,w,d,g)
+                self.draw(df, fig_dict,w)
             elif e=='REMOVE_traj' :
                 delete_traj(id0, traj0)
-                w.Element(self.batch_trajs_key).Update(values=existing_trajs(id0))
+                w.Element(k_trajs).Update(values=existing_trajs(id0))
 
 
-    def draw(self, df, fig_dict,w,d,g):
+    def draw(self, df, fig_dict,w):
         df_ax, df_fig = render_mpl_table(df)
         fig_dict['dataframe'] = df_fig
-        d['batch_results']['df'] = df
-        d['batch_results']['fig_dict'] = fig_dict
-        g[self.name].update(w, d['batch_results']['fig_dict'])
+        self.base_dict['df'] = df
+        self.base_dict['fig_dict'] = fig_dict
+        self.graph_list.update(w, fig_dict)
 
 
 if __name__ == "__main__":

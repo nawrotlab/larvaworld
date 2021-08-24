@@ -106,9 +106,9 @@ class EssayTab(GuiTab):
         ds0 = run_essay(**kws)
         if ds0 is not None:
             fig_dict, results = essay_analysis(essay_type, essay_exp, ds0)
-            d[self.name][essay_exp] = {'exp_fig_dict': fig_dict, 'results': results}
-            d[self.name]['fig_dict'].update(fig_dict)
-            g[self.name].update(w, d[self.name]['fig_dict'])
+            self.base_dict[essay_exp] = {'exp_fig_dict': fig_dict, 'results': results}
+            self.base_dict['fig_dict'].update(fig_dict)
+            g[self.name].update(w, self.base_dict['fig_dict'])
         return d, g
 
 

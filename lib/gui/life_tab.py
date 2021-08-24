@@ -138,44 +138,46 @@ class LifeTab(GuiTab):
 
     def eval(self, e, v, w, c, d, g):
         S0,S1,Sa,Sq,K,ep=self.S0,self.S1,self.Sa,self.Sq,self.K,self.ep
-        if e == g[self.name].list_key:
+        v0, v1, q = row = v[S0], v[S1], v[Sq]
+        Ks=v[K]
+        if e == self.graphlist_k:
             w.write_event_value('Draw', 'Draw the initial plot')
         elif e == f'ADD {ep}':
-            t1, t2, q =row= v[S0], v[S1], v[Sq]
-            if t2 > t1:
+
+            if v1 > v0:
                 w.Element(K).add_row(w,row, sort_idx=0)
                 w.Element(S1).Update(value=0.0)
                 w.Element(S0).Update(value=0.0)
                 w.Element(Sq).Update(value=1.0)
                 w.write_event_value('Draw', 'Draw the initial plot')
         elif e == f'REMOVE {ep}':
-            if len(v[K]) > 0:
-                w.Element(K).remove_row(w, v[K][0])
+            if len(Ks) > 0:
+                w.Element(K).remove_row(w, Ks[0])
                 w.write_event_value('Draw', 'Draw the initial plot')
         # elif e in [Sq]:
         #     w.write_event_value('Draw', 'Draw the initial plot')
 
         elif e == 'Draw':
-            if v[Sq]>0 :
+            if q>0 :
                 D = deb_default(**self.get(w, v, c))
                 for Sii in [S0, S1, Sa]:
                     w.Element(Sii).Update(range=(0.0, D['pupation'] - D['birth']))
-                fig, save_to, filename = plot_debs(deb_dicts=[D], mode=v[g[self.name].list_key][0], return_fig=True)
-                g[self.name].draw_fig(w,fig)
+                fig, save_to, filename = plot_debs(deb_dicts=[D], mode=v[self.graphlist_k][0], return_fig=True)
+                self.graph_list.draw_fig(w,fig)
 
         elif e in [S0, S1]:
-            if e == S0 and v[S0] > v[S1]:
-                w.Element(S1).Update(value=v[S0])
-            elif e == S1 and v[S1] < v[S0]:
-                w.Element(S0).Update(value=v[S1])
+            if e == S0 and v0 > v1:
+                w.Element(S1).Update(value=v0)
+            elif e == S1 and v1 < v0:
+                w.Element(S0).Update(value=v1)
             for t1, t2, q in w.Element(K).get():
-                if t1 < v[S0] < t2:
+                if t1 < v0 < t2:
                     w.Element(S0).Update(value=t2)
-                elif v[S0] < t1 and v[S1] > t1:
+                elif v0 < t1 and v1 > t1:
                     w.Element(S1).Update(value=t1)
-                if t1 < v[S1] < t2:
+                if t1 < v1 < t2:
                     w.Element(S1).Update(value=t1)
-                elif v[S1] > t2 and v[S0] < t2:
+                elif v1 > t2 and v0 < t2:
                     w.Element(S0).Update(value=t2)
 
 

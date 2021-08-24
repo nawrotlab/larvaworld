@@ -40,7 +40,7 @@ class SelectionList:
         self.actions = actions
 
         if disp is None:
-            disps = [k for k, v in self.tab.gui.tab_dict.items() if v[1] == conftype]
+            disps = [k for k, v in self.tab.gui.tab_dict.items() if v[1] == self.conftype]
             if len(disps) == 1:
                 disp = disps[0]
             elif len(disps) > 1:
@@ -225,15 +225,39 @@ class GuiTab:
         self.gui = gui
         self.conftype = conftype
         self.selectionlists = {}
-        self.graph_list=None
+        # self.graph_list=None
 
     @property
-    def aux_dict(self):
-        return self.gui.dicts[self.name]
+    def graph_list(self):
+        gs = self.gui.graph_lists
+        n = self.name
+        if n in list(gs.keys()):
+            return gs[n]
+        else:
+            return None
+
+    @property
+    def canvas_k(self):
+        g=self.graph_list
+        return g.canvas_key if g is not None else None
+
+    @property
+    def graphlist_k(self):
+        g = self.graph_list
+        return g.list_key if g is not None else None
 
     @property
     def base_list(self):
         return self.selectionlists[self.conftype] if self.conftype is not None else None
+
+    @property
+    def base_dict(self):
+        ds=self.gui.dicts
+        n=self.name
+        if n in list(ds.keys()) :
+            return ds[n]
+        else :
+            return None
 
     def current_ID(self, v):
         l=self.base_list

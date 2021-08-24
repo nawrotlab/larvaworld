@@ -3,12 +3,9 @@ import PySimpleGUI as sg
 import numpy as np
 # from tkinter import *
 
-from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, t10_kws, t16_kws, default_run_window, \
-    w_kws, named_list_layout, col_size, col_kws, get_disp_name
+from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, col_size, col_kws, get_disp_name
 from lib.gui.tab import GuiTab, SelectionList
 from lib.stor import paths
-from lib.anal.plotting import graph_dict
-from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.dtype_dicts as dtypes
 from lib.stor.managing import detect_dataset, build_datasets, enrich_datasets
 import lib.aux.functions as fun
@@ -23,26 +20,27 @@ class PreprocessTab(GuiTab):
         self.raw_folder=None
         self.proc_folder=None
 
-    def change_dataset_id(self,window, values, data):
-        if len(values[self.raw_ids_key]) > 0:
-            old_id = values[self.raw_ids_key][0]
-            l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(k='NEW_ID', size=(10, 1))],
+    def change_dataset_id(self,w, v, data):
+        k = 'NEW_ID'
+        kR0=self.raw_ids_key
+        if len(v[kR0]) > 0:
+            old_id = v[kR0][0]
+            l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(k=k, size=(10, 1))],
                  [sg.Button('Store'), sg.Ok(), sg.Cancel()]]
-            e, v = sg.Window('Change dataset ID', l).read(close=True)
+            e, v2 = sg.Window('Change dataset ID', l).read(close=True)
             if e == 'Ok':
-                data[v['NEW_ID']] = data.pop(old_id)
-                window.Element(self.raw_ids_key).Update(values=list(data.keys()))
+                data[v2[k]] = data.pop(old_id)
+                w.Element(kR0).Update(values=list(data.keys()))
             elif e == 'Store':
                 d = data[old_id]
-                d.set_id(v['NEW_ID'])
-                data[v['NEW_ID']] = data.pop(old_id)
-                window.Element(self.raw_ids_key).Update(values=list(data.keys()))
+                d.set_id(v2[k])
+                data[v2[k]] = data.pop(old_id)
+                w.Element(kR0).Update(values=list(data.keys()))
         return data
 
     def update(self,w, c, conf, id=None):
         p=conf['path']
         pp=os.path.normpath(f'{paths.DataFolder}/{p}')
-        # path=os.path.normpath(f'{paths.DataFolder}/{p}/raw')
         w[self.raw_key].InitialFolder=f'{pp}/raw'
         self.raw_folder = f'{pp}/raw'
         w[self.proc_key].InitialFolder = f'{pp}/processed'
@@ -63,8 +61,6 @@ class PreprocessTab(GuiTab):
 
 
     def build(self):
-
-        dicts = {}
         dicts = {self.raw_key: {},self.proc_key: {}}
         raw_list = [
             [sg.Text(get_disp_name(self.raw_key), **t8_kws),
@@ -105,17 +101,16 @@ class PreprocessTab(GuiTab):
 
 
         g = ButtonGraphList(name=self.name, fig_dict={})
-        # l = [[sg.Col(data_list, size=col_size(0.2), **col_kws)]]
         l = [[sg.Col([l_group.get_layout()]+raw_list+proc_list, size=col_size(0.2), **col_kws)]]
-        # l = [[sg.Col([l_group.get_layout(), [g.get_layout(as_col=True)]], size=col_size(0.2), **col_kws), g.canvas]]
         graph_lists = {g.name : g}
-        # l = [[sg.Col(data_list + g.get_layout(as_col=False), size=col_size(0.2), **col_kws), g.canvas]]
         return l, {}, graph_lists, dicts
 
 
     def eval(self, e, v, w, c, d, g):
         id0=self.current_ID(v)
-        if e in [self.raw_key, self.proc_key] and id0!= '':
+        kR, kP=self.raw_key, self.proc_key
+        fR = self.raw_folder
+        if e in [kR, kP] and id0!= '':
             k = e
             k0 = f'{k}_IDS'
             dr = v[k]
@@ -134,18 +129,18 @@ class PreprocessTab(GuiTab):
         elif e.startswith('CHANGE_ID'):
             k=e.split()[-1]
             d[k] = self.change_dataset_id(w, v, d[k])
-        elif e == f'BUILD_{self.raw_key}':
-            for id,dir in d[self.raw_key].items() :
-                fdir=fun.remove_prefix(dir, f'{self.raw_folder}/')
+        elif e == f'BUILD_{kR}':
+            for id,dir in d[kR].items() :
+                fdir=fun.remove_prefix(dir, f'{fR}/')
                 raw_folders = [fdir]
                 dd = build_datasets(datagroup_id=id0, folders=None, ids=[id], names=[fdir], raw_folders=raw_folders)[0]
-                d[self.proc_key][dd.id]=dd
-                w.Element(self.proc_ids_key).Update(values=list(d[self.proc_key].keys()))
+                d[kP][dd.id]=dd
+                w.Element(self.proc_ids_key).Update(values=list(d[kP].keys()))
         elif e == 'Enrich':
-            for id,dir in d[self.proc_key].items() :
-                fdir=fun.remove_prefix(dir, f'{self.raw_folder}/')
+            for id,dir in d[kP].items() :
+                fdir=fun.remove_prefix(dir, f'{fR}/')
                 dd = enrich_datasets(datagroup_id=id0, names=[fdir])[0]
-                d[self.proc_key][id]=dd
+                d[kP][id]=dd
         return d, g
 
 if __name__ == "__main__":
