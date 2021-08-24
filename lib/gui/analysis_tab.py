@@ -41,8 +41,7 @@ class AnalysisTab(GuiTab):
 
         bs=[graphic_button('remove', 'Remove', tooltip='Remove a dataset from the analysis list.'),
              graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
-             graphic_button('box_add', 'Add ref',
-                            tooltip='Add the reference experimental dataset to the analysis list.'),
+             graphic_button('box_add', 'Add ref',tooltip='Add the reference experimental dataset to the analysis list.'),
              graphic_button('edit', 'Change ID', tooltip='Change the dataset ID transiently or permanently.'),
              graphic_button('search_add', 'DATASET_DIR', initial_folder=paths.SingleRunFolder, change_submits=True,
                             enable_events=True, target=(0, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,

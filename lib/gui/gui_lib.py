@@ -1258,7 +1258,7 @@ class BoolButton(Button):
 
 def change_dataset_id(w, v, dic, k0):
     v0 = v[k0]
-    # print(k0,v0,dic)
+    print(k0,v0,dic)
     k = 'NEW_ID'
     if len(v0) > 0:
         old_id = v0[0]
