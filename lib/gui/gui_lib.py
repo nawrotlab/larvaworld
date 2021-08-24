@@ -1256,11 +1256,33 @@ class BoolButton(Button):
             image = graphics.on_image_disabled if state else graphics.off_image_disabled
         return image
 
+def change_dataset_id(w, v, dic, k0):
+    v0 = v[k0]
+    # print(k0,v0,dic)
+    k = 'NEW_ID'
+    if len(v0) > 0:
+        old_id = v0[0]
+        l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(k=k, size=(10, 1))],
+             [sg.Button('Store'), sg.Ok(), sg.Cancel()]]
+        e1, v1 = sg.Window('Change dataset ID', l).read(close=True)
+        new_id=v1[k]
+        if e1 == 'Ok':
+            dic[new_id] = dic.pop(old_id)
+            w.Element(k0).Update(values=list(dic.keys()))
+        elif e1 == 'Store':
+            d = dic[old_id]
+            d.set_id(new_id)
+            dic[new_id] = dic.pop(old_id)
+            w.Element(k0).Update(values=list(dic.keys()))
+    return dic
+
 
 def named_list_layout(text, key, choices, default_value=None, drop_down=True, list_width=20,
                       readonly=True, enable_events=True, single_line=True, next_to_header=None, as_col=True,
-                      list_kws={},
+                      list_kws={},list_height=None,
                       header_text_kws=None):
+    if list_height is None :
+        list_height=len(choices)
     if header_text_kws is None:
         header_text_kws = {'size': (len(text), 1)}
     t = [sg.Text(text, **header_text_kws)]
@@ -1271,7 +1293,7 @@ def named_list_layout(text, key, choices, default_value=None, drop_down=True, li
                       size=(list_width, 1), enable_events=enable_events, readonly=readonly, **list_kws)]
     else:
         l = [sg.Listbox(choices, key=key, default_values=[default_value],
-                        size=(list_width, len(choices)), enable_events=enable_events, **list_kws)]
+                        size=(list_width, list_height), enable_events=enable_events, **list_kws)]
     if single_line:
         return t + l
     else:

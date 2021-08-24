@@ -3,7 +3,8 @@ import PySimpleGUI as sg
 import numpy as np
 # from tkinter import *
 
-from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, col_size, col_kws, get_disp_name
+from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, col_size, col_kws, get_disp_name, \
+    change_dataset_id, named_list_layout
 from lib.gui.tab import GuiTab, SelectionList
 from lib.stor import paths
 import lib.conf.dtype_dicts as dtypes
@@ -20,23 +21,23 @@ class PreprocessTab(GuiTab):
         self.raw_folder=None
         self.proc_folder=None
 
-    def change_dataset_id(self,w, v, data):
-        k = 'NEW_ID'
-        kR0=self.raw_ids_key
-        if len(v[kR0]) > 0:
-            old_id = v[kR0][0]
-            l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(k=k, size=(10, 1))],
-                 [sg.Button('Store'), sg.Ok(), sg.Cancel()]]
-            e, v2 = sg.Window('Change dataset ID', l).read(close=True)
-            if e == 'Ok':
-                data[v2[k]] = data.pop(old_id)
-                w.Element(kR0).Update(values=list(data.keys()))
-            elif e == 'Store':
-                d = data[old_id]
-                d.set_id(v2[k])
-                data[v2[k]] = data.pop(old_id)
-                w.Element(kR0).Update(values=list(data.keys()))
-        return data
+    # def change_dataset_id(self,w, v, data):
+    #     k = 'NEW_ID'
+    #     kR0=self.raw_ids_key
+    #     if len(v[kR0]) > 0:
+    #         old_id = v[kR0][0]
+    #         l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(k=k, size=(10, 1))],
+    #              [sg.Button('Store'), sg.Ok(), sg.Cancel()]]
+    #         e, v2 = sg.Window('Change dataset ID', l).read(close=True)
+    #         if e == 'Ok':
+    #             data[v2[k]] = data.pop(old_id)
+    #             w.Element(kR0).Update(values=list(data.keys()))
+    #         elif e == 'Store':
+    #             d = data[old_id]
+    #             d.set_id(v2[k])
+    #             data[v2[k]] = data.pop(old_id)
+    #             w.Element(kR0).Update(values=list(data.keys()))
+    #     return data
 
     def update(self,w, c, conf, id=None):
         p=conf['path']
@@ -63,26 +64,23 @@ class PreprocessTab(GuiTab):
     def build(self):
         kR, kP = self.raw_key, self.proc_key
         dicts = {kR: {},kP: {}}
-        raw_list = [
-            [sg.Text(get_disp_name(kR), **t8_kws),
-             graphic_button('burn', f'BUILD_{kR}', tooltip='Build a dataset from raw files.'),
+
+        raw_bs=[graphic_button('burn', f'BUILD_{kR}', tooltip='Build a dataset from raw files.'),
              graphic_button('remove', f'REMOVE {kR}', tooltip='Remove a dataset from the analysis list.'),
              # graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
              # graphic_button('box_add', 'Add ref', tooltip='Add the reference experimental dataset to the analysis list.'),
-             graphic_button('edit', f'CHANGE_ID {kR}', tooltip='Change the dataset ID transiently or permanently.'),
+             # graphic_button('edit', f'CHANGE_ID {kR}', tooltip='Change the dataset ID transiently or permanently.'),
              graphic_button('search_add', key=kR, initial_folder=paths.SingleRunFolder, change_submits=True,
                             enable_events=True,
                             target=(1, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
                             tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
-             ],
+             ]
 
-            [sg.Col([[sg.Listbox(values=list(dicts[kR].keys()), size=(25, 5), key=self.raw_ids_key, enable_events=True)]])]
-        ]
+        raw_list = named_list_layout(get_disp_name(kR), self.raw_ids_key, list(dicts[kR].keys()),
+                                      drop_down=False, list_width=25, list_height=5,
+                                      single_line=False, next_to_header=raw_bs, as_col=False)
 
-        proc_list = [
-            [sg.Text(get_disp_name(kP), **t8_kws),
-             # graphic_button('burn', f'BUILD_{self.raw_key}', tooltip='Build a dataset from raw files.'),
-             graphic_button('remove', f'REMOVE {kP}', tooltip='Remove a dataset from the analysis list.'),
+        proc_bs=[graphic_button('remove', f'REMOVE {kP}', tooltip='Remove a dataset from the analysis list.'),
              # graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
              graphic_button('data_add', 'Enrich', tooltip='Enrich the dataset.'),
              graphic_button('edit', f'CHANGE_ID {kP}',
@@ -91,11 +89,12 @@ class PreprocessTab(GuiTab):
                             enable_events=True,
                             target=(1, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
                             tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
-             ],
+             ]
 
-            [sg.Col([[sg.Listbox(values=list(dicts[kP].keys()), size=(25, 5), key=self.proc_ids_key,
-                                 enable_events=True)]])]
-        ]
+        proc_list = named_list_layout(get_disp_name(kP), self.proc_ids_key, list(dicts[kP].keys()),
+                                     drop_down=False, list_width=25, list_height=5,
+                                     single_line=False, next_to_header=proc_bs, as_col=False)
+
 
         l_group = SelectionList(tab=self, disp='Data group', actions=['load'])
         self.selectionlists = {sl.conftype : sl for sl in [l_group]}
@@ -129,7 +128,7 @@ class PreprocessTab(GuiTab):
                 w.Element(k0).Update(values=list(d[k].keys()))
         elif e.startswith('CHANGE_ID'):
             k=e.split()[-1]
-            d[k] = self.change_dataset_id(w, v, d[k])
+            d[k] = change_dataset_id(w, v, d[k], k0=f'{k}_IDS')
         elif e == f'BUILD_{kR}':
             for id,dir in d[kR].items() :
                 fdir=fun.remove_prefix(dir, f'{fR}/')
