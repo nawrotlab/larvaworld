@@ -37,6 +37,7 @@ conf_paths = {
     'Env': f'{ConfFolder}/EnvConfs.txt',
     'Par': f'{ConfFolder}/ParConfs.txt',
     'Exp': f'{ConfFolder}/ExpConfs.txt',
+    'Essay': f'{ConfFolder}/EssayConfs.txt',
     'Model': f'{ConfFolder}/ModelConfs.txt',
     'Batch': f'{ConfFolder}/BatchConfs.txt',
     'Settings': f'{ConfFolder}/SetConfs.txt',
@@ -47,6 +48,7 @@ conf_paths = {
 VideoSlideFolder = f'{get_parent_dir()}/lib/gui/video_slides'
 IntroSlideFolder = f'{get_parent_dir()}/lib/gui/intro_slides'
 TutorialSlideFolder = f'{get_parent_dir()}/lib/gui/tutorial_slides'
+RoverSitterFigFolder = f'{get_parent_dir()}/lib/gui/roversVSsitters_exp_figures'
 
 new_format = False
 # new_format = True

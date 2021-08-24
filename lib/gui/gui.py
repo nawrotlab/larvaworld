@@ -4,6 +4,7 @@ import matplotlib
 from lib.gui.analysis_tab import AnalysisTab
 from lib.gui.batch_tab import BatchTab
 from lib.gui.env_tab import EnvTab
+from lib.gui.essay_tab import EssayTab
 from lib.gui.life_tab import LifeTab
 from lib.gui.preprocess_tab import PreprocessTab
 from lib.gui.sim_tab import SimTab
@@ -26,6 +27,7 @@ class LarvaworldGui:
             'environment': (EnvTab, 'Env', 'env_conf'),
             'life-history': (LifeTab, 'Life', 'life'),
             'simulation': (SimTab, 'Exp', 'exp_conf'),
+            'essay': (EssayTab, 'Essay', 'essay_conf'),
             'batch-run': (BatchTab, 'Batch', 'batch_conf'),
             'analysis': (AnalysisTab, None, None),
             'groups': (PreprocessTab, 'Group', None),

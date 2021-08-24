@@ -1468,7 +1468,7 @@ def plot_dispersion(datasets, labels=None, ranges=None, scaled=False, subfolder=
 
 
 def plot_pathlength(datasets, labels=None, scaled=True, save_to=None, save_as=None, return_fig=False, unit='mm',
-                    xlab=None, show=False):
+                    xlabel=None, show=False, **kwargs):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to)
     Nticks = len(datasets[0].step_data.index.unique('Step'))
     t0, t1 = 0, int(Nticks / datasets[0].fr / 60)
@@ -1498,9 +1498,9 @@ def plot_pathlength(datasets, labels=None, scaled=True, save_to=None, save_as=No
         plot_mean_and_range(x=trange, mean=dst_m, lb=dst_b, ub=dst_u, axis=axs, color_mean=c,
                             color_shading=c, label=lab)
     axs.set_ylabel(ylab)
-    if xlab is None:
-        xlab = 'time, $min$'
-    axs.set_xlabel(xlab)
+    if xlabel is None:
+        xlabel = 'time, $min$'
+    axs.set_xlabel(xlabel)
     axs.set_xlim([trange[0], trange[-1]])
     axs.set_ylim(ymin=0)
     axs.xaxis.set_major_locator(ticker.MaxNLocator(5))
@@ -1543,7 +1543,7 @@ def plot_gut(datasets, labels=None, save_to=None, save_as=None, return_fig=False
 
 
 def plot_food_amount(datasets, labels=None, save_to=None, save_as=None, filt_amount=False, scaled=False,
-                     return_fig=False, show=False):
+                     return_fig=False, show=False, **kwargs):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to)
     Nticks = len(datasets[0].step_data.index.unique('Step'))
     t0, t1 = 0, int(Nticks / datasets[0].fr / 60)
@@ -1658,7 +1658,7 @@ def plot_Y_pos(**kwargs):
 
 def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals=False, table=None, show_first=True,
                   subfolder='timeplots', legend_loc='upper left', save_to=None, save_as=None, return_fig=False,
-                  show=False):
+                  show=False, **kwargs):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder)
     N = len(par_shorts)
     cols = ['grey'] if N == 1 else fun.N_colors(N)
@@ -3319,7 +3319,7 @@ def process_plot(fig, save_to, filename, return_fig, show=False):
 
 
 def barplot(datasets, labels=None, par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None, save_to=None,
-            save_as=None, return_fig=False, show=False, leg_cols=None):
+            save_as=None, return_fig=False, show=False, leg_cols=None, **kwargs):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to)
     w = 0.15
 
@@ -3389,7 +3389,7 @@ def barplot(datasets, labels=None, par_shorts=['f_am'], coupled_labels=None, xla
 
 
 def lineplot(datasets, markers, labels=None, par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None,
-             save_to=None, save_as=None, return_fig=False, show=False, leg_cols=None):
+             save_to=None, save_as=None, return_fig=False, show=False, leg_cols=None, **kwargs):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to)
     # w = 0.15
 

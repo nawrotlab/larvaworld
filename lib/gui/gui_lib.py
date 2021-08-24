@@ -4,6 +4,7 @@ import os
 import time
 import webbrowser
 from ast import literal_eval
+from tkinter import PhotoImage
 from typing import List, Tuple, Type
 from pydoc import locate
 import numpy as np
@@ -679,7 +680,7 @@ color_map = {
     'YellowGreen': '#9ACD32',
 }
 
-window_size = (1800, 1200)
+window_size = (2000, 1200)
 
 
 def col_size(x_frac, y_frac=1.0, win_size=None):
@@ -1149,6 +1150,8 @@ class SectionDict:
                     new_dict[k] = window[f'TOGGLE_{k0}'].get_state()
                 elif type(v) == dict:
                     new_dict[k] = self.subdicts[k0].get_dict(values, window)
+                elif type(v) == tuple:
+                    new_dict[k] = window[k0].get()
                 else:
                     vv = values[k0]
                     vv = retrieve_value(vv, type(v))
@@ -1165,6 +1168,8 @@ class SectionDict:
                         new_dict[k] = self.subdicts[k0].get_dict(values, window)
                     except:
                         pass
+                elif type(t) == tuple:
+                    new_dict[k] = window[k0].get()
                 else:
                     new_dict[k] = retrieve_value(values[k0], t)
         return new_dict
@@ -1643,6 +1648,7 @@ class GraphList:
         list_key = f'{name}_GRAPH_LIST'
         values = list(fig_dict.keys())
         h = int(np.max([len(values), 10]))
+
         header = [sg.Text(self.list_header, **t14_kws)]
         if self.next_to_header is not None:
             header += self.next_to_header
@@ -1679,7 +1685,10 @@ class GraphList:
         if len(list_values) > 0 and self.auto_eval:
             choice = list_values[0]
             fig = self.fig_dict[choice]
-            self.draw_fig(window, fig)
+            if type(fig)==str and os.path.isfile(fig) :
+                self.show_fig(window, fig)
+            else :
+                self.draw_fig(window, fig)
 
     def get_layout(self, as_col=True):
         return sg.Col(self.layout) if as_col else self.layout
@@ -1687,6 +1696,16 @@ class GraphList:
         #     return sg.Col(self.layout)
         # else:
         #     return self.layout
+
+    def show_fig(self, window, fig):
+        # if self.fig_agg:
+        #     delete_figure_agg(self.fig_agg)
+        c=window[self.canvas_key].TKCanvas
+        c.pack()
+        img = PhotoImage(file=fig)
+        c.create_image(250, 250, image=img)
+        self.fig_agg = img
+        # self.fig_agg = draw_canvas(window[self.canvas_element].TKCanvas, fig)
 
 
 class ButtonGraphList(GraphList):

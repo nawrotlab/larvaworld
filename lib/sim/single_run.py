@@ -29,7 +29,6 @@ def run_sim_basic(
         par_config=dat.SimParConf,
         seed=1,
         **kwargs):
-
     np.random.seed(seed)
     id = sim_params['sim_ID']
     dt = sim_params['timestep']
@@ -128,7 +127,7 @@ def store_sim_data(env, d, save_data_flag, enrichment, param_dict):
         d.save()
         fun.dict_to_file(param_dict, d.dir_dict['sim'])
         for l in env.get_flies():
-            if hasattr(l,'deb') and l.deb is not None:
+            if hasattr(l, 'deb') and l.deb is not None:
                 l.deb.finalize_dict(d.dir_dict['deb'])
             if l.brain.intermitter is not None:
                 l.brain.intermitter.save_dict(d.dir_dict['bouts'])
@@ -205,3 +204,32 @@ def get_exp_conf(exp_type, sim_params, life_params=None, N=None, larva_model=Non
     conf['sim_params'] = sim_params
     conf['experiment'] = exp_type
     return conf
+
+
+def run_essay(id, exp_types,durations, vis_kwargs, N=None, larva_model=None):
+# def run_essay(essay_type, essay_params, vis_kwargs, N=None, larva_model=None):
+#     id = essay_params['essay_ID']
+#     essay_params.pop('essay_ID')
+#     essay = loadConf(essay_type, 'Essay')
+#     exp_types = essay['exp_types']
+#     durations = essay['durations']
+    ds = []
+    for i, (exp_type, dur) in enumerate(zip(exp_types, durations)):
+        sim=dtypes.get_dict('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=f'essays/{id}')
+    # for i, env in enumerate(essay['envs']):
+    #     sim = {**essay_params, 'sim_ID': f'{id}_{i}'}
+        # conf = {
+        #     'sim_params': sim,
+        #     'env_params': expandConf(env, 'Env'),
+        #     'life_params': loadConf(essay['life_params'], 'Life'),
+        #     'enrichment': essay['enrichment'],
+        #     'collections': essay['collections'],
+        #     'vis_kwargs': vis_kwargs,
+        # }
+        conf = get_exp_conf(exp_type = exp_type, sim_params=sim)
+        d = run_sim(**conf, vis_kwargs=vis_kwargs)
+        ds.append(d)
+
+    return ds
+
+

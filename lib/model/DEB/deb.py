@@ -784,9 +784,12 @@ class DEB:
         t1 = self.pupation_time_in_hours
         t2 = self.death_time_in_hours
         epochs = [[s0 + t0, s1 + t0] for [s0, s1] in epochs]
+        # print(t0,t1,t2,epochs, fs)
         for t in [t1, t2]:
             if not np.isnan(t):
                 f_epochs = [[(s0, np.clip(s1, a_min=s0, a_max=t)),f] for [s0, s1], f in zip(epochs,fs) if s0 <= t]
+            else :
+                f_epochs = [[(s0, s1), f] for [s0, s1], f in zip(epochs, fs)]
         epochs=[(s0,s1) for (s0,s1),f in f_epochs]
         fs=[f for (s0,s1),f in f_epochs]
         return epochs,fs

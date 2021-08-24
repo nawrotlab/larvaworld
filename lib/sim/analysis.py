@@ -3,11 +3,13 @@ import numpy as np
 from lib.anal.plotting import plot_endpoint_scatter, plot_turn_Dbearing, plot_turn_amp, plot_turns, plot_timeplot, \
     plot_navigation_index, plot_debs, plot_food_amount, plot_gut, plot_pathlength, plot_endpoint_params, barplot, \
     comparative_analysis, plot_marked_turns, plot_chunk_Dorient2source, plot_marked_strides, targeted_analysis, \
-    plot_stridesNpauses, plot_ang_pars, plot_interference
+    plot_stridesNpauses, plot_ang_pars, plot_interference, lineplot
 from lib.aux import functions as fun
 from lib.conf import dtype_dicts as dtypes
+from lib.conf.par import getPar
 from lib.model.DEB.deb import deb_default
 from lib.sim.single_run import load_reference_dataset
+from lib.stor import paths
 from lib.stor.larva_dataset import LarvaDataset
 
 
@@ -50,6 +52,15 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
         fig_dict['navigation index'] = plot_navigation_index(**cc)
         fig_dict['orientation to center'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=None, **cc)
         fig_dict['bearing to 270deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=270, par=None, **cc)
+
+    elif exp_type in ['rovers_sitters_on_standard', 'rovers_sitters_on_agar']:
+        s = exp_type.split('_')[-1]
+        ds = d.split_dataset(groups=['Rover', 'Sitter'], show_output=show_output)
+        debs = d.load_deb_dicts(use_pickle=False)
+        d.delete(show_output=show_output)
+        fig_dict[f'RS hunger on {s} '] = plot_debs(deb_dicts=debs, save_as=f'deb_on_{s}.pdf',
+                                                   mode='hunger', sim_only=True, roversVSsitters=True,
+                                                   save_to=d.plot_dir, show=False)
 
     elif exp_type in ['growth', 'rovers_sitters']:
         deb_model = deb_default(epochs=d.config['epochs'], substrate_quality=d.config['substrate_quality'])
@@ -155,8 +166,6 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
             **ccc
         }
 
-
-
         g_keys = ['g_odor1'] if exp_type == 'chemotaxis_RL' else ['g_odor1', 'g_odor2']
         fig_dict['best_gains_table'] = plot_timeplot(g_keys, save_as='best_gains.pdf', **c)
         fig_dict['olfactor_decay_table'] = plot_timeplot(['D_olf'], save_as='olfactor_decay.pdf', **c)
@@ -173,3 +182,98 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
 
     print(f'    Analysis complete!')
     return fig_dict, results
+
+
+def essay_analysis(essay_type, exp, ds0, show_output=False):
+    parent_dir = f'essays/{essay_type}/global_test'
+    plot_dir = f'{paths.SimFolder}/{parent_dir}/plots'
+    ccc = {'show': False}
+    if len(ds0) == 0 or any([d0 is None for d0 in ds0]):
+        return {}, {}
+    figs = {}
+    results = {}
+
+    if essay_type=='roversVSsitters' :
+        RS_leg_cols = ['black', 'white']
+        markers = ['D', 's']
+        ls = [r'$for^{R}$', r'$for^{S}$']
+        shorts = ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']
+        def dsNls(ds0, all_ls) :
+            all_ds = []
+            for d in ds0:
+                ds, debs = split_rovers_sitters(d)
+                all_ds.append(ds)
+            dds = fun.flatten_list(all_ds)
+            lls = fun.flatten_list(all_ls)
+            return {'datasets': dds,
+                      'labels': lls,
+                    'save_to': plot_dir,
+                      'leg_cols': RS_leg_cols,
+                      'markers' : markers,
+                    **ccc
+                    }
+
+
+        if exp == 'pathlength':
+            all_ls = [[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in ['Agar', 'Yeast']]
+            dNl_kws=dsNls(ds0, all_ls)
+            kwargs = {
+                **dNl_kws,
+                      'xlabel': r'time on substrate_type $(min)$',
+                      }
+            figs['pathlength'] = plot_pathlength(scaled=False, save_as=f'00_PATHLENGTH.pdf', unit='cm', **kwargs)
+
+        elif exp == 'intake':
+            sim_times = [10, 15, 20]
+            all_ls = [ls for d in ds0]
+            dNl_kws = dsNls(ds0, all_ls)
+            kwargs = {**dNl_kws,
+                      'coupled_labels': sim_times,
+                      'xlabel': r'Time spent on food $(min)$'}
+            for s in shorts:
+                p = getPar(s, to_return=['d'])[0]
+                figs[f'intake {p}'] = barplot(par_shorts=[s], save_as=f'01_AD_LIBITUM_{p}.pdf', **kwargs)
+
+        elif exp== 'starvation':
+            hs = [0, 1, 2, 3, 4]
+            all_ls = [ls for d in ds0]
+            dNl_kws = dsNls(ds0, all_ls)
+            kwargs = {**dNl_kws,
+                      'coupled_labels': hs,
+                      'xlabel': r'Food deprivation $(h)$'}
+            for s in shorts:
+                p = getPar(s, to_return=['d'])[0]
+                figs[f'post-starvation {p}'] = lineplot(par_shorts=[s],save_as=f'03_POST-STARVATION_{p}.pdf', **kwargs)
+
+        elif exp== 'quality':
+            deb_base_fs = [1.0, 0.75, 0.5, 0.25, 0.15]
+            deb_base_fs_labels = [int(f * 100) for f in deb_base_fs]
+            all_ls = [ls for d in ds0]
+            dNl_kws = dsNls(ds0, all_ls)
+            kwargs = {**dNl_kws,
+                      'coupled_labels': deb_base_fs_labels,
+                      'xlabel': 'Food quality (%)'
+                      }
+            for s in shorts:
+                p = getPar(s, to_return=['d'])[0]
+                figs[f'rearing-quality {p}'] = barplot(par_shorts=[s],save_as=f'02_REARING_{p}.pdf', **kwargs)
+
+        elif exp== 'refeeding':
+            h = 3
+            n = f'04_REFEEDING_after_{h}h_starvation_'
+            all_ls = [ls for d in ds0]
+            kwargs = dsNls(ds0, all_ls)
+            figs[f'refeeding food-intake'] =plot_food_amount(scaled=True, save_as=f'{n}scaled_intake.pdf', **kwargs)
+            figs[f'refeeding food-intake(filt)'] =plot_food_amount(scaled=True, filt_amount=True, save_as=f'{n}scaled_intake_filt.pdf', **kwargs)
+            for s in shorts:
+                p = getPar(s, to_return=['d'])[0]
+                figs[f'refeeding {p}'] = plot_timeplot(par_shorts=[s], show_first=False, subfolder=None, save_as=f'{n}{p}.pdf', **kwargs)
+
+    print(f'    Analysis complete!')
+    return figs, results
+
+def split_rovers_sitters(d) :
+    ds = d.split_dataset(groups=['Rover', 'Sitter'], show_output=False)
+    debs = d.load_deb_dicts(use_pickle=False)
+    d.delete(show_output=False)
+    return ds, debs

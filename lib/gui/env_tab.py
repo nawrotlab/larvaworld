@@ -104,6 +104,7 @@ class EnvTab(GuiTab):
             'food_params': {n: c[n].get_dict(v, w) for n in ['source_groups', 'source_units', 'food_grid']},
             **{n: c[n].get_dict(v, w) for n in ['larva_groups', 'border_list', 'arena', 'odorscape']}
         }
+        print(env['food_params']['food_grid'])
 
         env0 = copy.deepcopy(env)
         if not as_entry:

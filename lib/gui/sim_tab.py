@@ -20,23 +20,23 @@ class SimTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def build_sim_collapsible(self):
-        sim_conf = [[sg.Text('Sim id :', **t8_kws), sg.In('unnamed_sim', key='sim_ID', **t16_kws)],
-                    [sg.Text('Path :', **t8_kws), sg.In('single_runs', key='path', **t16_kws)],
-                    [sg.Text('Duration :', **t8_kws),
-                     sg.Spin(values=np.round(np.arange(0.0, 200.1, 0.1), 1).tolist(), initial_value=3.0, key='duration',
-                             **t6_kws), sg.Text('minutes', **t8_kws, justification='center')],
-                    [sg.Text('Timestep :', **t8_kws),
-                     sg.Spin(values=np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(), initial_value=0.1, key='timestep',
-                             **t6_kws), sg.Text('seconds', **t8_kws, justification='center')],
-                    [sg.Text('Sample :', **t8_kws),
-                     sg.Combo(list(loadConfDict('Ref').keys()), default_value='reference', key='sample',
-                              enable_events=True, readonly=True,
-                              tooltip='The reference dataset to sample parameters from.', **t14_kws)
-                     ],
-                    named_bool_button('Box2D', False)]
-        s1 = Collapsible('Configuration', True, sim_conf)
-        return s1
+    # def build_sim_collapsible(self):
+    #     sim_conf = [[sg.Text('Sim id :', **t8_kws), sg.In('unnamed_sim', key='sim_ID', **t16_kws)],
+    #                 [sg.Text('Path :', **t8_kws), sg.In('single_runs', key='path', **t16_kws)],
+    #                 [sg.Text('Duration :', **t8_kws),
+    #                  sg.Spin(values=np.round(np.arange(0.0, 200.1, 0.1), 1).tolist(), initial_value=3.0, key='duration',
+    #                          **t6_kws), sg.Text('minutes', **t8_kws, justification='center')],
+    #                 [sg.Text('Timestep :', **t8_kws),
+    #                  sg.Spin(values=np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(), initial_value=0.1, key='timestep',
+    #                          **t6_kws), sg.Text('seconds', **t8_kws, justification='center')],
+    #                 [sg.Text('Sample :', **t8_kws),
+    #                  sg.Combo(list(loadConfDict('Ref').keys()), default_value='reference', key='sample',
+    #                           enable_events=True, readonly=True,
+    #                           tooltip='The reference dataset to sample parameters from.', **t14_kws)
+    #                  ],
+    #                 named_bool_button('Box2D', False)]
+    #     s1 = Collapsible('Configuration', True, sim_conf)
+    #     return s1
 
     def build(self):
         l_env = SelectionList(tab=self, conftype='Env', idx=1)

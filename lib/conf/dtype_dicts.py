@@ -262,6 +262,14 @@ def null_distro(class_name, basic=True):
 
 # Compound densities (g/cm**3)
 substrate_dict = {
+'agar': {
+        'glucose': 0,
+        'dextrose': 0,
+        'saccharose': 0,
+        'yeast': 0,
+        'agar': 16 / 1000,
+        'cornmeal': 0,
+    },
     'standard': {
         'glucose': 100 / 1000,
         'dextrose': 0,
@@ -475,6 +483,14 @@ all_null_dicts = {
         'Box2D': False,
         'sample': 'reference'
     },
+    'essay_params': {
+        'essay_ID': None,
+        'path': 'essays',
+        'duration': 1.0,
+        'timestep': 0.1,
+        'Box2D': False,
+        'sample': 'reference'
+    },
     'logn_dist': {
         'range': (0.0, 2.0),
         'name': 'lognormal',
@@ -599,7 +615,7 @@ def get_dict_dtypes(name, **kwargs):
             {
                 'unique_id': str,
                 'grid_dims': (10,1000),
-                'initial_value': fun.value_list(end=100.0, steps=1000, decimals=2),
+                'initial_value': fun.value_list(start=0.0, end=1.0, steps=10000, decimals=4),
                 'distribution': ['uniform'],
                 'type': list(substrate_dict.keys())
             },
@@ -751,7 +767,15 @@ def get_dict_dtypes(name, **kwargs):
         'sim_params': {
             'sim_ID': str,
             'path': str,
-            'duration': np.round(np.arange(0.0, 200.1, 0.1), 1).tolist(),
+            'duration': np.round(np.arange(0.0, 2000.1, 0.1), 1).tolist(),
+            'timestep': np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(),
+            'Box2D': bool,
+            'sample': list(loadConfDict('Ref').keys())
+        },
+        'essay_params': {
+            'essay_ID': str,
+            'path': str,
+            'duration': np.round(np.arange(0.0, 2000.1, 0.1), 1).tolist(),
             'timestep': np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(),
             'Box2D': bool,
             'sample': list(loadConfDict('Ref').keys())

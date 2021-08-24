@@ -56,3 +56,5 @@ exp_dict = {
     'food_at_bottom': exp('food_at_bottom', sim={'duration': 20.0, 'timestep': 0.09, 'sample': 'Fed'}, en=True),
     '4corners': exp('4corners', c=['memory'])
 }
+
+

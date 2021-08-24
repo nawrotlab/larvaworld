@@ -12,6 +12,7 @@ import lib.conf.larva_conf as mod
 import lib.conf.data_conf as dat
 import lib.conf.batch_conf as bat
 import lib.conf.exp_conf as exp
+import lib.conf.essay_conf as essay
 
 
 def get_input(message, itype, default='', accepted=None, range=None):
@@ -467,6 +468,9 @@ if __name__ == '__main__':
     # }
     for k, v in exp.exp_dict.items():
         saveConf(v, 'Exp', k)
+
+    for k, v in essay.essay_dict.items():
+        saveConf(v, 'Essay', k)
 
 
 def next_idx(exp, type='single'):
