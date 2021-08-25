@@ -679,7 +679,8 @@ def get_dict_dtypes(name, **kwargs):
             'final': ['null', 'scatterplots', 'deb', 'odor_preference'],
         },
         'space_search': {'pars': str,
-                         'ranges': Tuple[float, float],
+                         'ranges': Union[Tuple[float, float], Tuple[int, int]],
+                         # 'ranges': Tuple[float, float],
                          'Ngrid': int},
 
         'visualization': vis_dtypes,

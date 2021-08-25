@@ -5,7 +5,7 @@ import time
 import webbrowser
 from ast import literal_eval
 from tkinter import PhotoImage
-from typing import List, Tuple, Type
+from typing import List, Tuple, Type, Union
 from pydoc import locate
 import numpy as np
 import PySimpleGUI as sg
@@ -885,7 +885,7 @@ def retrieve_value(v, t):
                 vv = [int(x) for x in v.split(',')]
         elif type(v) == list:
             vv = v
-    elif t in [Tuple[float, float], Tuple[int, int], ] and type(v) == str:
+    elif t in [Tuple[float, float], Tuple[int, int], Union[Tuple[float, float], Tuple[int, int]]] and type(v) == str:
         v = v.replace('{', '')
         v = v.replace('}', '')
         v = v.replace('[', '')
@@ -898,6 +898,8 @@ def retrieve_value(v, t):
             vv = tuple([float(x) for x in v.split()])
         elif t == Tuple[int, int]:
             vv = tuple([int(x) for x in v.split()])
+        elif t==Union[Tuple[float, float], Tuple[int, int]]:
+            vv = tuple([float(x) if '.' in x else int(x) for x in v.split()])
     elif t == Type and type(v) == str:
         if 'str' in v:
             vv = str

@@ -28,11 +28,16 @@ class BatchTab(GuiTab):
         w.Element(self.batch_trajs_key).Update(values=existing_trajs(id))
 
     def get(self, w, v, c, **kwargs):
+        try :
+            enrichment=self.current_conf(v)['exp_kws']['enrichment']
+        except :
+            enrichment=loadConf(v[self.selectionlists['Exp'].k], 'Exp')['enrichment']
         conf = {
             **{n: c[n].get_dict(v, w) for n in ['batch_methods', 'optimization', 'space_search']},
             'exp_kws': {
                 'save_data_flag': w['TOGGLE_save_data_flag'].metadata.state,
-                'enrichment': self.current_conf(v)['exp_kws']['enrichment'],
+                'enrichment': enrichment,
+                # 'enrichment': self.current_conf(v)['exp_kws']['enrichment'],
                            }
         }
         return copy.deepcopy(conf)
