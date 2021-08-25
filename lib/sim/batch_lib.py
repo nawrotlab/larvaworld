@@ -475,8 +475,10 @@ def grid_search_dict(pars, ranges, Ngrid, values=None):
             raise ValueError('Ranges of parameters not provided')
         values_dict = {}
         for par, (low, high), s in zip(pars, ranges, Ngrid):
-            range = np.linspace(low, high, s).tolist()
-            values_dict.update({par: range})
+            range = np.linspace(low, high, s)
+            if type(low)==int and type(high)==int :
+                range=range.astype(int)
+            values_dict.update({par: range.tolist()})
     space = cartesian_product(values_dict)
     return space
 
