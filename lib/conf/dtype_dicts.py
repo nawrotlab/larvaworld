@@ -466,7 +466,7 @@ all_null_dicts = {
                'alpha': 0.05,
                'gamma': 0.6,
                'epsilon': 0.3,
-               'train_dur': 20,
+               'train_dur': 20.0,
                },
     'modules': {'turner': False,
                 'crawler': False,
