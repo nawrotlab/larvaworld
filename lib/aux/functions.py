@@ -1330,6 +1330,11 @@ def remove_prefix(text, prefix):
         return text[len(prefix):]
     return text  # or whatever
 
+def remove_suffix(text, suffix):
+    if text.endswith(suffix):
+        return text[:-len(suffix)]
+    return text  # or whatever
+
 # function takes in a hex color and outputs it inverted
 def invert_color(col, return_self=False):
     # print(col)
@@ -1349,10 +1354,13 @@ def invert_color(col, return_self=False):
     else :
         return col,col2
 
-def value_list(start=0.0,end=1.0, integer=False, steps=100, decimals=2):
+def value_list(start=0.0,end=1.0, integer=False, steps=100, decimals=2, allow_None=False):
     a= np.round(np.linspace(start, end, steps), decimals)
     if integer :
         a=a.astype(int)
-    return a.tolist()
+    if allow_None :
+        return [''] + a.tolist()
+    else :
+        return a.tolist()
 
 

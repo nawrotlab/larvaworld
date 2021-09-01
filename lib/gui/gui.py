@@ -98,11 +98,11 @@ class LarvaworldGui:
         # l0 = [[sg.Pane([sg.Col([l_tabs]), sg.Col([[self.terminal]])], handle_size=30)]]
         return l0, cs, ds, gs, ts
 
-    def get_vis_kwargs(self, v):
+    def get_vis_kwargs(self, v, **kwargs):
         c=self.collapsibles
         w=self.window
         vis_kwargs=c['Visualization'].get_dict(v, w) if 'Visualization' in list(
-            c.keys()) else dtypes.get_dict('visualization')
+            c.keys()) else dtypes.get_dict('visualization', **kwargs)
         return vis_kwargs
 
     def get_replay_kwargs(self, v):

@@ -544,6 +544,10 @@ all_null_dicts = {
                    'mode': 'minimal',
                    'source': None,
                    },
+    'build_conf' : {
+'min_duration_in_sec' : 0.0,
+'max_Nagents' : 1000,
+    },
     'substrate': substrate_dict['standard']
 
 }
@@ -825,6 +829,10 @@ def get_dict_dtypes(name, **kwargs):
                        'mode': ['minimal', 'full'],
                        'source': Tuple[float, float],
                        },
+        'build_conf': {
+            'min_duration_in_sec': fun.value_list(start=0.0, end=3600.0, steps=36000, decimals=1),
+            'max_Nagents': fun.value_list(start=1, end=1000, steps=1000, integer=True),
+        },
         'substrate': {k: float for k in substrate_dict['standard'].keys()}
 
     }

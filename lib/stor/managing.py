@@ -10,55 +10,38 @@ from lib.stor.building import build_Jovanic, build_Schleyer
 from lib.conf.conf import *
 from lib.stor.datagroup import LarvaDataGroup
 from lib.stor.larva_dataset import LarvaDataset
+import lib.aux.functions as fun
 
 
 def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None,
-                   ids=None, arena_pars=None,names=['raw'], **kwargs):
+                   ids=None, arena_pars=None, names=['raw'],**kwargs):
     warnings.filterwarnings('ignore')
-    datagroup = LarvaDataGroup(datagroup_id)
-    build_conf = datagroup.get_conf()['build']
-    conf_id = datagroup.get_conf()['id']
+    g = LarvaDataGroup(datagroup_id)
+    build_conf = g.get_conf()['build']
+    conf_id = g.get_conf()['id']
     if raw_folders == 'all':
-        raw_folders = [np.sort(os.listdir(datagroup.raw_dir))]
+        raw_folders = [np.sort(os.listdir(g.raw_dir))]
         names = ['merged']
     elif raw_folders == 'each':
-        raw_folders = [[f] for f in np.sort(os.listdir(datagroup.raw_dir))]
+        raw_folders = [[f] for f in np.sort(os.listdir(g.raw_dir))]
         names = [f'{f[0]}' for f in raw_folders]
-    # elif len(raw_folders)>0 and len(names)==1 :
-    #     names=names*len(raw_folders)
-    # else :
-    #     raise ValueError('Raw folders must be set to all or each')
 
     ds = get_datasets(datagroup_id=datagroup_id, last_common='processed', names=names,
                       folders=folders, suffixes=suffixes, mode='initialize', ids=ids, arena_pars=arena_pars)
     for d, raw in zip(ds, raw_folders):
-        # print(len(raw_folders))
-        # print(raw_folders)
-        # print(raw)
         if conf_id == 'JovanicConf':
-            # with fun.suppress_stdout():
-            step_data, endpoint_data = build_Jovanic(d, build_conf, source_dir=f'{datagroup.raw_dir}/{raw}', **kwargs)
-            # if step is None and end is None :
-            #     print(f'Temporarily saved {d.id} dataset')
-            #     continue
+            step, end = build_Jovanic(d, build_conf, source_dir=f'{g.raw_dir}/{raw}',**kwargs)
         elif conf_id == 'SchleyerConf':
-            if type(raw)==str :
-                temp=[f'{datagroup.raw_dir}/{raw}']
-            elif type(raw)==list :
-                temp=[f'{datagroup.raw_dir}/{r}' for r in raw]
-            # print(raw)
-            # print(temp)
-            # print(datagroup.raw_dir)
-            # print([f'{datagroup.raw_dir}/{r}' for r in raw])
-            step_data, endpoint_data = build_Schleyer(d, build_conf,raw_folders=temp, **kwargs)
+            if type(raw) == str:
+                temp = [f'{g.raw_dir}/{raw}']
+            elif type(raw) == list:
+                temp = [f'{g.raw_dir}/{r}' for r in raw]
+            step, end = build_Schleyer(d, build_conf, raw_folders=temp,**kwargs)
         else:
             raise ValueError(f'Configuration {conf_id} is not supported for building new datasets')
-
-        step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
-        endpoint_data.sort_index(inplace=True)
-        d.set_data(step=step_data, end=endpoint_data)
-        # d.set_step_data(step)
-        # d.set_end_data(end)
+        step.sort_index(level=['Step', 'AgentID'], inplace=True)
+        end.sort_index(inplace=True)
+        d.set_data(step=step, end=end)
         d.save(food=False)
         d.agent_ids = d.step_data.index.unique('AgentID').values
         d.num_ticks = d.step_data.index.unique('Step').size
@@ -73,7 +56,6 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
     data_conf = datagroup.get_conf()['data']
     par_conf = datagroup.get_par_conf()
     last_common = f'{datagroup.get_path()}/{last_common}'
-
     if folders is None:
         new_ids = ['']
         folders = [last_common]
@@ -86,10 +68,8 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
     if ids is None:
         ids = new_ids
     dirs = [f'{f}/{n}' for (f, n) in list(product(folders, names))]
-    # print(dirs)
     ds = []
     for dir, id in zip(dirs, ids):
-        # print(dir)
         if mode == 'load':
             if not os.path.exists(dir):
                 print(f'No dataset found at {dir}')
@@ -106,24 +86,25 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
             d = LarvaDataset(dir=dir, id=id, par_conf=par_conf, arena_pars=arena_pars,
                              load_data=False, **data_conf)
         ds.append(d)
-    print(f'{len(ds)} datasets loaded.')
+    # print(f'{len(ds)} datasets loaded.')
     return ds
 
 
-def enrich_datasets(datagroup_id, names, keep_raw=False, enrich_conf=None, **kwargs):
+def enrich_datasets(datagroup_id, datasets=None, names=None, keep_raw=False, enrich_conf=None, **kwargs):
     warnings.filterwarnings('ignore')
-    ds = get_datasets(datagroup_id, last_common='processed', names=names, mode='load', **kwargs)
+    if datasets is None and names is not None :
+        datasets = get_datasets(datagroup_id, last_common='processed', names=names, mode='load', **kwargs)
     if keep_raw:
-        raw_names=[f'raw_{n}' for n in names]
+        raw_names = [f'raw_{n}' for n in names]
         raw_ds = get_datasets(datagroup_id, last_common='processed', names=raw_names, mode='initialize', **kwargs)
-        for raw, new in zip(raw_ds, ds):
+        for raw, new in zip(raw_ds, datasets):
             copy_tree(new.dir, raw.dir)
-    if enrich_conf is None :
+    if enrich_conf is None:
         enrich_conf = LarvaDataGroup(datagroup_id).get_conf()['enrich']
 
     # with fun.suppress_stdout():
 
-    ds = [d.enrich(**enrich_conf, **kwargs) for d in ds]
+    ds = [d.enrich(**enrich_conf, **kwargs) for d in datasets]
     return ds
 
 
@@ -142,14 +123,14 @@ def analyse_datasets(datagroup_id, save_to=None, sample_individuals=False, **kwa
     return fig_dict
 
 
-def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={},replay_kwargs={}, **kwargs):
+def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={}, replay_kwargs={}, **kwargs):
     warnings.filterwarnings('ignore')
     ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
     if save_to is None and len(ds) > 1:
         save_to = LarvaDataGroup(datagroup_id).vis_dir
-    if save_as is None :
-        save_as=[d.id for d in ds]
-    for d,n in zip(ds, save_as):
+    if save_as is None:
+        save_as = [d.id for d in ds]
+    for d, n in zip(ds, save_as):
         vis_kwargs['media_name'] = n
         d.visualize(save_to=save_to, vis_kwargs=vis_kwargs, **replay_kwargs)
 
@@ -175,28 +156,48 @@ def compute_PIs(datagroup_id, save_to=None, **kwargs):
     df.to_csv(f'{save_to}/{filename}', header=True, index=True)
     print(f'PIs saved as {filename}')
 
-def detect_dataset(datagroup_id, folder_path):
+
+def detect_dataset(datagroup_id, folder_path, **kwargs):
+    ids, dirs = [], []
     conf = loadConf(datagroup_id, 'Group')
-    if 'detect' in conf.keys() :
+    if 'detect' in conf.keys():
         d = conf['detect']
-        dF,df=d['folder'], d['file']
-        dFp, dFs=dF['pref'],dF['suf']
-        dfp, dfs,df_=df['pref'],df['suf'],df['sep']
+        dF, df = d['folder'], d['file']
+        dFp, dFs = dF['pref'], dF['suf']
+        dfp, dfs, df_ = df['pref'], df['suf'], df['sep']
+
         fn = folder_path.split('/')[-1]
+        if dFp is not None:
+            if fn.startswith(dFp):
+                ids, dirs = [fn], [folder_path]
+            else:
+                ids, dirs = detect_dataset_in_subdirs(datagroup_id, folder_path, fn, **kwargs)
+        elif dFs is not None:
+            if fn.startswith(dFs):
+                ids, dirs = [fn], [folder_path]
+            else:
+                ids, dirs = detect_dataset_in_subdirs(datagroup_id, folder_path, fn, **kwargs)
+        elif dfp is not None:
+            fs = os.listdir(folder_path)
+            ids, dirs = [f.split(df_)[1:][0] for f in fs if f.startswith(dfp)], [folder_path]
+        elif dfs is not None:
+            fs = os.listdir(folder_path)
+            ids, dirs = [f.split(df_)[:-1][0] for f in fs if f.endswith(dfs)], [folder_path]
+    return ids, dirs
+
+def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False) :
+    fn=last_dir
+    ids, dirs = [], []
+    if os.path.isdir(folder_path) :
         fs = os.listdir(folder_path)
-        if (dFp is not None and fn.startswith(dFp)) or (dFs is not None and fn.endswith(dFs)):
-            return [fn]
-
-        elif dfp is not None :
-            return [f.split(df_)[1:][0] for f in fs if f.startswith(dfp)]
-        elif dfs is not None :
-            return [f.split(df_)[:-1][0] for f in fs if f.endswith(dfs)]
-        else:
-            return []
-
-
-    else :
-        return []
+        for f in fs:
+            id, dir = detect_dataset(datagroup_id, f'{folder_path}/{f}', full_ID=full_ID)
+            if full_ID :
+                ids += [f'{fn}/{id0}' for id0 in id]
+            else :
+                ids+=id
+            dirs += dir
+    return ids, dirs
 
 # def merge_datasets(datasets, id, dir) :
 #     d0=LarvaDataset(dir, id=id)
@@ -238,3 +239,32 @@ def detect_dataset(datagroup_id, folder_path):
 
 # k=build_datasets('TestGroup', names=['raw_merged'], raw_folders=[['dish_0','dish_1','dish_2']],
 #                  folders=None, ids=None)
+
+if __name__ == "__main__":
+    # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw'
+    # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc'
+    # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High'
+    # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High/AM+'
+    # folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/High/EM+/full_dish'
+    # ids=detect_dataset(datagroup_id='SchleyerGroup', folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High/box1-2016-05-23_12_41_17')
+    # ids, dirs = detect_dataset(datagroup_id='SchleyerGroup', folder_path=folder_path, full_ID=True)
+    # print(os.listdir(folder_path))
+    # print(ids)
+    print()
+    # print(dirs)
+    # dr = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/High/AM+/box1-2016-05-23_12_41_17'
+    # d = LarvaDataset(dir=dr)
+    # s,e=d.step_data, d.endpoint_data
+    # k=os.path.exists(d.dir_dict['conf'])
+    # print(k)
+    #
+    # with open(d.dir_dict['conf']) as tfp:
+    #     c = json.load(tfp)
+    # # print(os.listdir(d.data_dir))
+    # print(s['point5_x'].dropna().max())
+    # print(s['point5_x'].dropna().min())
+    # print(s['point5_y'].dropna().max())
+    # print(s['point5_y'].dropna().min())
+    # print(d.config)
+    # d.visualize()
+

@@ -9,96 +9,89 @@ from lib.aux import naming as nam
 
 
 def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
-                   use_tick_index=True, max_Nagents=np.inf, complete_ticks=True,
+                   use_tick_index=True, max_Nagents=None, complete_ticks=True,
                    min_end_time_in_sec=0, min_duration_in_sec=0, start_time_in_sec=0):
     d = dataset
-    raw_cols = build_conf['read_sequence']
-    raw_files = []
-    all_invert_x = []
+    dt=d.dt
+    cols0 = build_conf['read_sequence']
+    raw_fs = []
+    inv_xs = []
     for i, f in enumerate(raw_folders):
-        # print(f)
-        files = [os.path.join(f, n) for n in os.listdir(f) if n.endswith('.csv')]
-        raw_files += files
+        fs = [os.path.join(f, n) for n in os.listdir(f) if n.endswith('.csv')]
+        raw_fs += fs
         if build_conf['read_metadata']:
-            all_invert_x += get_invert_x_array(read_Schleyer_metadata(f), len(files))
-    if len(all_invert_x) == 0:
-        all_invert_x = [False] * len(raw_files)
-    min_duration_in_ticks = int(min_duration_in_sec / d.dt)
-    min_end_time_in_ticks = int(min_end_time_in_sec / d.dt)
-    start_time_in_ticks = int(start_time_in_sec / d.dt)
+            inv_xs += get_invert_x_array(read_Schleyer_metadata(f), len(fs))
+    if len(inv_xs) == 0:
+        inv_xs = [False] * len(raw_fs)
 
     if save_mode == 'full':
-        save_sequence = raw_cols[1:]
+        cols1 = cols0[1:]
     elif save_mode == 'minimal':
-        save_sequence = nam.xy(d.point)
+        cols1 = nam.xy(d.point)
     elif save_mode == 'semifull':
-        save_sequence = nam.xy(d.points, flat=True) + nam.xy(d.contour, flat=True) + [
+        cols1 = nam.xy(d.points, flat=True) + nam.xy(d.contour, flat=True) + [
             'collision_flag']
     elif save_mode == 'spinepointsNcollision':
-        save_sequence = nam.xy(d.points, flat=True) + ['collision_flag']
+        cols1 = nam.xy(d.points, flat=True) + ['collision_flag']
     elif save_mode == 'points':
-        save_sequence = nam.xy(d.points, flat=True)
+        cols1 = nam.xy(d.points, flat=True)
 
-    x_pars = [p for p in save_sequence if p.endswith('x')]
-
-    endpoint_data = pd.DataFrame(columns=['AgentID', 'num_ticks', 'cum_dur'])
-    appropriate_recordings_counter = 0
+    end = pd.DataFrame(columns=['AgentID', 'num_ticks', 'cum_dur'])
+    Nvalid = 0
     dfs = []
-    agent_ids = []
-    for filename, invert_x in zip(raw_files, all_invert_x):
-        df = pd.read_csv(filename, header=None, index_col=0, names=raw_cols)
+    ids = []
+    for f, inv_x in zip(raw_fs, inv_xs):
+        df = pd.read_csv(f, header=None, index_col=0, names=cols0)
         # FIXME This has been added because some csv in Schleyer datasets have index=NA. This happens if a larva is lost and refound by tracker
         df = df.dropna()
         if use_tick_index == False:
             df.index = np.arange(len(df))
 
-        if len(df) >= min_duration_in_ticks and df.index.max() >= min_end_time_in_ticks:
-            df = df[df.index >= start_time_in_ticks]
-            df = df[save_sequence]
+        if len(df) >= int(min_duration_in_sec / dt) and df.index.max() >= int(min_end_time_in_sec / dt):
+            df = df[df.index >= int(start_time_in_sec / dt)]
+            df = df[cols1]
             df = df.apply(pd.to_numeric, errors='coerce')
-            if invert_x:
-                for x_par in x_pars:
+            if inv_x:
+                for x_par in [p for p in cols1 if p.endswith('x')]:
                     df[x_par] *= -1
+            # # This scales mm to meters
+            # for p in cols1 :
+            #     if p.endswith('x') or p.endswith('y') :
+            #         df[p] *= 0.001
 
-            appropriate_recordings_counter += 1
-            agent_id = f'Larva_{appropriate_recordings_counter}'
+            Nvalid += 1
             dfs.append(df)
-            agent_ids.append(agent_id)
-            if appropriate_recordings_counter >= max_Nagents:
+            ids.append(f'Larva_{Nvalid}')
+            if max_Nagents is not None and Nvalid >= max_Nagents:
                 break
     if len(dfs) == 0:
         return None, None
     if complete_ticks:
-        min_tick, max_tick = np.min([df.index.min() for df in dfs]), np.max([df.index.max() for df in dfs])
-        trange = np.arange(min_tick, max_tick + 1).tolist()
+        t0, t1 = np.min([df.index.min() for df in dfs]), np.max([df.index.max() for df in dfs])
+        df0 = pd.DataFrame(np.nan, index=np.arange(t0, t1 + 1).tolist(), columns=cols1)
+        df0.index.name = 'Step'
 
-        df_empty = pd.DataFrame(np.nan, index=trange, columns=save_sequence)
-        df_empty.index.name = 'Step'
-
-        for i, (df, agent_id) in enumerate(zip(dfs, agent_ids)):
-            ddf = df_empty.copy(deep=True)
-            endpoint_data = endpoint_data.append({'AgentID': agent_id,
-                                                  'num_ticks': len(df),
-                                                  'cum_dur': len(df) * d.dt}, ignore_index=True)
+        for i, (df, id) in enumerate(zip(dfs, ids)):
+            ddf = df0.copy(deep=True)
+            end = end.append({'AgentID': id,
+                              'num_ticks': len(df),
+                              'cum_dur': len(df) * dt}, ignore_index=True)
             ddf.update(df)
-            ddf = ddf.assign(AgentID=agent_id).set_index('AgentID', append=True)
-            step_data = ddf if i == 0 else step_data.append(ddf)
+            ddf = ddf.assign(AgentID=id).set_index('AgentID', append=True)
+            step = ddf if i == 0 else step.append(ddf)
 
     else:
-        for i, (df, agent_id) in enumerate(zip(dfs, agent_ids)):
-            endpoint_data = endpoint_data.append({'AgentID': agent_id,
-                                                  'num_ticks': len(df),
-                                                  'cum_dur': len(df) * d.dt}, ignore_index=True)
-            df = df.assign(AgentID=agent_id).set_index('AgentID', append=True)
-            if i == 0:
-                step_data = df
-            else:
-                step_data = step_data.append(df)
-    endpoint_data.set_index('AgentID', inplace=True)
+        for i, (df, id) in enumerate(zip(dfs, ids)):
+            end = end.append({'AgentID': id,
+                              'num_ticks': len(df),
+                              'cum_dur': len(df) * dt}, ignore_index=True)
+            df = df.assign(AgentID=id).set_index('AgentID', append=True)
+            step = df if i == 0 else step.append(df)
+    end.set_index('AgentID', inplace=True)
 
     # I add this because some 'na' values were found
-    step_data = step_data.mask(step_data == 'na', np.nan)
-    return step_data, endpoint_data
+    step = step.mask(step == 'na', np.nan)
+    return step, end
 
 
 def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ticks=True, min_duration_in_sec=0,
@@ -143,10 +136,8 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
         ts = pd.read_csv(t_file, header=None, sep='\t', names=['Step'])
         try:
             states = pd.read_csv(state_file, header=None, sep='\t', names=['state'])
-            # print('xx')
         except:
             states = None
-            # print('ddxx')
 
         ids = pd.read_csv(id_file, header=None, sep='\t', names=['AgentID'])
         ids['AgentID'] = [f'Larva_{10000 + i[0]}' for i in ids.values]

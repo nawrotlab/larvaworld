@@ -2,9 +2,11 @@ import os
 import PySimpleGUI as sg
 import numpy as np
 # from tkinter import *
+from PySimpleGUI import LISTBOX_SELECT_MODE_SINGLE, LISTBOX_SELECT_MODE_MULTIPLE, LISTBOX_SELECT_MODE_BROWSE, \
+    LISTBOX_SELECT_MODE_EXTENDED
 
 from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, col_size, col_kws, get_disp_name, \
-    change_dataset_id, named_list_layout
+    change_dataset_id, named_list_layout, build_datasets_window
 from lib.gui.tab import GuiTab, SelectionList
 from lib.stor import paths
 import lib.conf.dtype_dicts as dtypes
@@ -70,15 +72,20 @@ class PreprocessTab(GuiTab):
                   graphic_button('remove', f'REMOVE {kR}', tooltip='Remove a dataset from the analysis list.'),
                   graphic_button('search_add', key=kR, initial_folder=paths.SingleRunFolder, change_submits=True,
                                  enable_events=True,
+                                 # size=(200,500),
+                                 # auto_size_button=True,
                                  target=(1, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
                                  tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
                   ]
 
         raw_list = named_list_layout(get_disp_name(kR), self.raw_ids_key, list(dicts[kR].keys()),
                                      drop_down=False, list_width=25, list_height=5,
-                                     single_line=False, next_to_header=raw_bs, as_col=False)
+                                     single_line=False, next_to_header=raw_bs, as_col=False,
+                                     list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED})
 
-        proc_bs = [graphic_button('remove', f'REMOVE {kP}', tooltip='Remove a dataset from the analysis list.'),
+        proc_bs = [
+            graphic_button('play', f'Replay {kP}', tooltip='Replay/Visualize the dataset.'),
+            graphic_button('remove', f'REMOVE {kP}', tooltip='Remove a dataset from the analysis list.'),
                    # graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
                    graphic_button('data_add', 'Enrich', tooltip='Enrich the dataset.'),
                    graphic_button('edit', f'CHANGE_ID {kP}',
@@ -91,7 +98,8 @@ class PreprocessTab(GuiTab):
 
         proc_list = named_list_layout(get_disp_name(kP), self.proc_ids_key, list(dicts[kP].keys()),
                                       drop_down=False, list_width=25, list_height=5,
-                                      single_line=False, next_to_header=proc_bs, as_col=False)
+                                      single_line=False, next_to_header=proc_bs, as_col=False,
+                                     list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED})
 
         l_group = SelectionList(tab=self, disp='Data group', actions=['load'])
         self.selectionlists = {sl.conftype: sl for sl in [l_group]}
@@ -108,37 +116,44 @@ class PreprocessTab(GuiTab):
         if e in [kR, kP] and id0 != '':
             k = e
             k0 = f'{k}_IDS'
-            dr = v[k]
-            if dr != '':
-                ids = detect_dataset(id0, dr)
+            dr0 = v[k]
+            if dr0 != '':
+                ids, dirs = detect_dataset(id0, dr0)
                 if len(ids) > 0:
-                    for id in ids:
+                    for id, dr in zip(ids, dirs):
                         if e == kR:
                             d[k][id] = dr
                         elif e == kP:
-                            d[k][id] = LarvaDataset(dir=dr)
+                            dd=LarvaDataset(dir=dr)
+                            d[k][dd.id] = dd
                     w.Element(k0).Update(values=list(d[k].keys()))
         elif e.startswith('REMOVE'):
             k = e.split()[-1]
             k0 = f'{k}_IDS'
-            if len(v[k0]) > 0:
-                d[k].pop(v[k0][0], None)
+            ids=v[k0]
+            if len(ids) > 0:
+                for i in range(len(ids)) :
+                    d[k].pop(ids[i], None)
                 w.Element(k0).Update(values=list(d[k].keys()))
         elif e.startswith('CHANGE_ID'):
             k = e.split()[-1]
             d[k] = change_dataset_id(w, v, d[k], k0=f'{k}_IDS')
         elif e == f'BUILD_{kR}':
-            for id, dir in d[kR].items():
-                fdir = fun.remove_prefix(dir, f'{fR}/')
-                raw_folders = [fdir]
-                dd = build_datasets(datagroup_id=id0, folders=None, ids=[id], names=[fdir], raw_folders=raw_folders)[0]
-                d[kP][dd.id] = dd
+            raw_dic={id:dir for id, dir in d[kR].items() if id in v[f'{kR}_IDS']}
+            if len(raw_dic)>0 :
+                proc_dir = build_datasets_window(datagroup_id=id0, raw_folder=fR, raw_dic=raw_dic)
+                d[kP].update(proc_dir)
                 w.Element(self.proc_ids_key).Update(values=list(d[kP].keys()))
         elif e == 'Enrich':
-            for id, dir in d[kP].items():
-                fdir = fun.remove_prefix(dir, f'{fR}/')
-                dd = enrich_datasets(datagroup_id=id0, names=[fdir])[0]
-                d[kP][id] = dd
+            for id, dd in d[kP].items():
+                if id in v[f'{kP}_IDS']:
+                    dd = enrich_datasets(datagroup_id=id0, datasets=[dd])[0]
+                    d[kP][id] = dd
+        elif e == f'Replay {kP}':
+            ids = v[f'{kP}_IDS']
+            if len(ids) > 0:
+                dd = d[kP][ids[0]]
+                dd.visualize(vis_kwargs=self.gui.get_vis_kwargs(v, mode='video'), **self.gui.get_replay_kwargs(v))
         return d, g
 
 

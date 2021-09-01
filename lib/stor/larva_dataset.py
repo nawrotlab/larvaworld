@@ -12,7 +12,7 @@ from lib.anal.plotting import *
 import lib.conf.env_conf as env
 from lib.conf.data_conf import SimParConf
 from lib.model.modules.intermitter import get_EEB_poly1d
-
+import lib.conf.dtype_dicts as dtypes
 from lib.stor.paths import RefFolder
 from lib.envs._larvaworld import LarvaWorldReplay
 
@@ -49,6 +49,7 @@ class LarvaDataset:
         self.configure_body()
         self.define_linear_metrics(self.config)
         if load_data:
+            # self.load()
             try:
                 self.load()
                 # print('Data loaded successfully from stored csv files.')
@@ -282,9 +283,9 @@ class LarvaDataset:
             track_point = self.point
         elif type(track_point) == int:
             track_point = 'centroid' if track_point == -1 else self.points[track_point]
-
+        if not set(nam.xy(track_point)).issubset(self.step_data.columns):
+            track_point = self.points[int(self.Nsegs / 2)]
         pos_p = nam.xy(track_point) if set(nam.xy(track_point)).issubset(self.step_data.columns) else ['x', 'y']
-        # pos_p = nam.xy(track_point) if set(nam.xy(track_point)).issubset(self.step_data.columns) else []
         point_p = nam.xy(self.points, flat=True) if len(self.points_xy) >= 1 else []
         cent_p = self.cent_xy if len(self.cent_xy) >= 1 else []
         contour_p = nam.xy(self.contour, flat=True) if len(self.contour_xy) >= 1 else []
@@ -315,14 +316,17 @@ class LarvaDataset:
         e = copy.deepcopy(self.endpoint_data.loc[ids])
         return s, e, ids
 
-    def visualize(self, vis_kwargs, agent_ids=None, save_to=None, time_range=None, draw_Nsegs=None,
+    def visualize(self, vis_kwargs=None, agent_ids=None, save_to=None, time_range=None, draw_Nsegs=None,
                   arena_pars=None, env_params=None, space_in_mm=True, track_point=None, dynamic_color=None,
                   transposition=None, fix_point=None, secondary_fix_point=None, **kwargs):
+        if vis_kwargs is None :
+            vis_kwargs=dtypes.get_dict('visualization', mode='video')
 
         pars, pos_xy_pars, track_point = self.get_par_list(track_point)
         s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range=time_range,
                                              dynamic_color=dynamic_color)
         contour_xy = nam.xy(self.contour, flat=True)
+        # print(contour_xy)
         if (len(contour_xy) == 0 or not set(contour_xy).issubset(s.columns)) and draw_Nsegs is None:
             draw_Nsegs = self.Nsegs
         if len(ids) == 1:
@@ -338,9 +342,10 @@ class LarvaDataset:
                 arena_pars = self.arena_pars
             env_params = {'arena': arena_pars}
         # arena_dims = [env_params['arena'][k] * 1 for k in ['arena_xdim', 'arena_ydim']]
-        arena_dims = [env_params['arena'][k] * 100 for k in ['arena_xdim', 'arena_ydim']]
+        arena_dims = [env_params['arena'][k] * 1000 for k in ['arena_xdim', 'arena_ydim']]
         env_params['arena']['arena_xdim'] = arena_dims[0]
         env_params['arena']['arena_ydim'] = arena_dims[1]
+
 
         if transposition is not None:
             s = align_trajectories(s, self.Npoints, self.Ncontour, track_point=track_point, arena_dims=arena_dims,
@@ -481,6 +486,7 @@ class LarvaDataset:
 
     def configure_body(self):
         N, Nc = self.Npoints, self.Ncontour
+        # print(N,Nc)
         self.points = nam.midline(N, type='point')
         self.Nangles = np.clip(N - 2, a_min=0, a_max=None)
         self.angles = [f'angle{i}' for i in range(self.Nangles)]

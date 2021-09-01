@@ -683,7 +683,7 @@ color_map = {
 window_size = (2000, 1200)
 
 
-def col_size(x_frac, y_frac=1.0, win_size=None):
+def col_size(x_frac=1.0, y_frac=1.0, win_size=None):
     if win_size is None:
         win_size = window_size
     return int(win_size[0] * x_frac), int(win_size[1] * y_frac)
@@ -735,6 +735,8 @@ t15_kws = {'size': (15, 1)}
 t11_kws = {'size': (11, 1)}
 
 t40_kws = {'size': (40, 1)}
+t30_kws = {'size': (30, 1)}
+t35_kws = {'size': (35, 1)}
 
 t5_kws = {'size': (5, 1)}
 t2_kws = {'size': (2, 1)}
@@ -781,11 +783,8 @@ def graphic_button(name, key, **kwargs):
     }
     c = {'button_color': (sg.theme_background_color(), sg.theme_background_color()),
          'border_width': 0,
-         # **b_kws
          }
-    b=sg.B(image_data=dic[name], k=key, **c, **kwargs)
-    # print(b.Target)
-    # print(b.Position)
+    b = sg.B(image_data=dic[name], k=key, **c, **kwargs)
     return b
 
 
@@ -850,6 +849,8 @@ def color_pick_layout(name, color=None):
 
 
 def retrieve_value(v, t):
+    # print(v)
+    # print(t)
     if v in ['', 'None', None]:
         vv = None
     elif v in ['sample', 'fit']:
@@ -898,7 +899,7 @@ def retrieve_value(v, t):
             vv = tuple([float(x) for x in v.split()])
         elif t == Tuple[int, int]:
             vv = tuple([int(x) for x in v.split()])
-        elif t==Union[Tuple[float, float], Tuple[int, int]]:
+        elif t == Union[Tuple[float, float], Tuple[int, int]]:
             vv = tuple([float(x) if '.' in x else int(x) for x in v.split()])
     elif t == Type and type(v) == str:
         if 'str' in v:
@@ -925,6 +926,8 @@ def retrieve_value(v, t):
     elif type(t) == list:
         vv = retrieve_value(v, type(t[0]))
         if vv not in t:
+            # print(vv)
+            # print(t)
             raise ValueError(f'Retrieved value {vv} not in list {t}')
     else:
         vv = v
@@ -1064,8 +1067,8 @@ def update_window_from_dict(window, dic, prefix=None):
             if prefix is not None:
                 k = f'{prefix}_{k}'
             if type(v) == bool:
-                b=window[f'TOGGLE_{k}']
-                if isinstance(b, BoolButton) :
+                b = window[f'TOGGLE_{k}']
+                if isinstance(b, BoolButton):
                     b.set_state(v)
 
             elif type(v) == dict:
@@ -1127,8 +1130,8 @@ class SectionDict:
                 if self.type_dict is not None:
                     # print(k, self.type_dict[k], type(self.type_dict[k]))
                     if type(self.type_dict[k]) == list:
-                        values=self.type_dict[k]
-                        if all([type(i) in [int,float] for i in values]):
+                        values = self.type_dict[k]
+                        if all([type(i) in [int, float] for i in values if i not in ['', None]]):
                             temp = sg.Spin(values=values, initial_value=v, key=k0, **value_kws)
                         else:
                             temp = sg.Combo(values, default_value=v, key=k0, enable_events=True,
@@ -1137,7 +1140,7 @@ class SectionDict:
                         # print(k, v, self.type_dict[k], type(self.type_dict[k]))
                         temp = TupleSpin(range=self.type_dict[k], initial_value=v, key=k0, **value_kws)
 
-                            # temp = sg.Spin(values=self.type_dict[k], initial_value=v, key=k0, **value_kws)
+                        # temp = sg.Spin(values=self.type_dict[k], initial_value=v, key=k0, **value_kws)
                 l.append([sg.Text(f'{k_disp}:', **text_kws), temp])
         return l
 
@@ -1183,20 +1186,20 @@ class SectionDict:
         return subdicts
 
 
-class TupleSpin(Pane) :
+class TupleSpin(Pane):
     def __init__(self, initial_value, range, key, steps=100, decimals=2, **value_kws):
-        w,h=w_kws['default_button_element_size']
+        w, h = w_kws['default_button_element_size']
         # size=(int(w/2), h)
-        value_kws.update({'size': (w-1,h)})
+        value_kws.update({'size': (w - 1, h)})
         self.steps = steps
         self.initial_value = initial_value
-        v0,v1=initial_value if type(initial_value)==tuple else (None,None)
-        self.integer=True if all([type(v0)==int, type(v1)==int]) else False
-        r0, r1 = self.range =range
-        arange = fun.value_list(r0,r1,self.integer, steps, decimals)
-        self.key=key
-        self.k0,self.k1=[f'{key}_{i}' for i in [0,1]]
-        self.s0 = sg.Spin(values=arange, initial_value=v0, key=self.k0,**value_kws)
+        v0, v1 = initial_value if type(initial_value) == tuple else (None, None)
+        self.integer = True if all([type(v0) == int, type(v1) == int]) else False
+        r0, r1 = self.range = range
+        arange = fun.value_list(r0, r1, self.integer, steps, decimals)
+        self.key = key
+        self.k0, self.k1 = [f'{key}_{i}' for i in [0, 1]]
+        self.s0 = sg.Spin(values=arange, initial_value=v0, key=self.k0, **value_kws)
         self.s1 = sg.Spin(values=arange, initial_value=v1, key=self.k1, **value_kws)
         super().__init__(pane_list=[self.get_layout()], key=self.key)
 
@@ -1208,23 +1211,20 @@ class TupleSpin(Pane) :
         return l
 
     def update(self, window, value):
-        if value not in [None, '', (None,None), [None,None]] :
-            v0,v1=value
-        else :
-            v0,v1=['','']
+        if value not in [None, '', (None, None), [None, None]]:
+            v0, v1 = value
+        else:
+            v0, v1 = ['', '']
         window.Element(self.k0).Update(value=v0)
         window.Element(self.k1).Update(value=v1)
-
 
         # return window
 
 
-
-
-def named_bool_button(name, state, toggle_name=None):
+def named_bool_button(name, state, toggle_name=None, t_kws={}):
     if toggle_name is None:
         toggle_name = name
-    return [sg.Text(f'{name} :'), BoolButton(toggle_name, state)]
+    return [sg.Text(f'{name} :', **t_kws), BoolButton(toggle_name, state)]
 
 
 class BoolButton(Button):
@@ -1258,33 +1258,111 @@ class BoolButton(Button):
             image = graphics.on_image_disabled if state else graphics.off_image_disabled
         return image
 
+
+def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
+    w_size = (1400, 800)
+
+    proc_dir = {}
+    t_kws = t40_kws
+    h_kws = {
+        'font': ('Helvetica', 8, 'bold'),
+        'justification': 'center',
+    }
+    b_merged = named_bool_button(name='Merge', state=False, toggle_name=None)
+    l00 = sg.Col([[sg.T('RAW DATASETS', **h_kws, **t_kws), sg.T('  -->  ', **h_kws, **t8_kws),
+                   sg.T('NEW DATASETS', **h_kws, **t_kws)] + b_merged])
+    # l00 = sg.Col([[sg.T('RAW DATASETS', **h_kws, **t_kws),sg.T('  -->  ', **h_kws, **t8_kws),  sg.T('NEW DATASETS', **h_kws, **t_kws)]])
+    l01 = sg.Col([
+        [sg.T(id, **t_kws), sg.T('  -->  ', **t8_kws), sg.In(default_text=id, k=f'new_{id}', **t_kws)] for id in
+        list(raw_dic.keys())],
+        vertical_scroll_only=True, scrollable=True, expand_y=True, vertical_alignment='top',
+        size=col_size(y_frac=0.5, win_size=w_size))
+
+    s1 = CollapsibleDict('build_conf', True, default=True, disp_name='Configuration', text_kws=t24_kws,
+                         value_kws=t5_kws)
+    c = {}
+    for s in [s1]:
+        c.update(**s.get_subdicts())
+    # l2=sg.Col([[sg.Ok(), sg.Cancel()]],size=col_size(y_frac=0.2, win_size=w_size))
+    l = [[sg.Col([
+        [l00],
+        [l01],
+        s1.get_layout(),
+        [sg.Col([[sg.Ok(), sg.Cancel()]], size=col_size(y_frac=0.2, win_size=w_size))],
+    ])]]
+    w = sg.Window('Build new datasets from raw files', l, size=w_size)
+    while True:
+        e, v = w.read()
+        if e in (None, 'Exit', 'Cancel'):
+            w.close()
+            break
+        else:
+            check_togglesNcollapsibles(w, e, v, c)
+            merge = w['TOGGLE_Merge'].get_state()
+            for i, (id, dir) in enumerate(raw_dic.items()):
+                if i != 0:
+                    w.Element(f'new_{id}').Update(visible=not merge)
+            if e == 'Ok':
+                conf = s1.get_dict(values=v, window=w)
+                kws = {
+                    'datagroup_id': datagroup_id,
+                    'folders': None,
+                    **conf}
+                w.close()
+                from lib.stor.managing import build_datasets
+                if not merge:
+                    for id, dir in raw_dic.items():
+                        new_id = v[f'new_{id}']
+                        fdir = fun.remove_prefix(dir, f'{raw_folder}/')
+                        if dirs_as_ids:
+                            temp = fun.remove_suffix(fdir, f'{id}')
+                            names = [f'{temp}{new_id}']
+                        else:
+                            names = [fdir]
+                        dd = build_datasets(ids=[new_id], names=names, raw_folders=[fdir], **kws)[0]
+                        proc_dir[dd.id] = dd
+                else:
+                    id0 = f'{list(raw_dic.keys())[0]}'
+                    fdir = [fun.remove_prefix(dir, f'{raw_folder}/') for dir in raw_dic.values()]
+                    new_id = v[f'new_{id0}']
+                    temp = fun.remove_suffix(fdir[0], id0)
+                    names = [f'{temp}{new_id}']
+                    # print([new_id])
+                    # print(names)
+                    # print(fdir)
+                    dd = build_datasets(ids=[new_id], names=names, raw_folders=[fdir], **kws)[0]
+                    proc_dir[dd.id] = dd
+                break
+    return proc_dir
+
+
 def change_dataset_id(w, v, dic, k0):
     v0 = v[k0]
-    print(k0,v0,dic)
     k = 'NEW_ID'
     if len(v0) > 0:
-        old_id = v0[0]
-        l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(k=k, size=(10, 1))],
-             [sg.Button('Store'), sg.Ok(), sg.Cancel()]]
-        e1, v1 = sg.Window('Change dataset ID', l).read(close=True)
-        new_id=v1[k]
-        if e1 == 'Ok':
-            dic[new_id] = dic.pop(old_id)
-            w.Element(k0).Update(values=list(dic.keys()))
-        elif e1 == 'Store':
-            d = dic[old_id]
-            d.set_id(new_id)
-            dic[new_id] = dic.pop(old_id)
-            w.Element(k0).Update(values=list(dic.keys()))
+        for i in range(len(v0)):
+            old_id = v0[i]
+            l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(default_text=old_id, k=k, size=(10, 1))],
+                 [sg.Button('Store'), sg.Ok(), sg.Cancel()]]
+            e1, v1 = sg.Window('Change dataset ID', l).read(close=True)
+            new_id = v1[k]
+            if e1 == 'Ok':
+                dic[new_id] = dic.pop(old_id)
+                w.Element(k0).Update(values=list(dic.keys()))
+            elif e1 == 'Store':
+                d = dic[old_id]
+                d.set_id(new_id)
+                dic[new_id] = dic.pop(old_id)
+                w.Element(k0).Update(values=list(dic.keys()))
     return dic
 
 
 def named_list_layout(text, key, choices, default_value=None, drop_down=True, list_width=20,
                       readonly=True, enable_events=True, single_line=True, next_to_header=None, as_col=True,
-                      list_kws={},list_height=None,
+                      list_kws={}, list_height=None,
                       header_text_kws=None):
-    if list_height is None :
-        list_height=len(choices)
+    if list_height is None:
+        list_height = len(choices)
     if header_text_kws is None:
         header_text_kws = {'size': (len(text), 1)}
     t = [sg.Text(text, **header_text_kws)]
@@ -1411,15 +1489,15 @@ class CollapsibleTable(Collapsible):
         self.headings = headings
         self.Ncols = len(headings)
         self.col_widths = []
-        self.col_visible=[True]*self.Ncols
+        self.col_visible = [True] * self.Ncols
         self.color_idx = None
         for i, p in enumerate(self.headings):
             if p in ['id', 'group']:
                 self.col_widths.append(10)
             elif p in ['color']:
                 self.col_widths.append(8)
-                self.color_idx=i
-                self.col_visible[i]=False
+                self.color_idx = i
+                self.col_visible[i] = False
             elif p in ['model']:
                 self.col_widths.append(14)
             elif type_dict[p] in [int, float]:
@@ -1458,7 +1536,7 @@ class CollapsibleTable(Collapsible):
 
     def get_content(self):
         content = [[sg.Table(values=self.data[:][:], headings=self.headings, col_widths=self.col_widths,
-                             max_col_width=30, background_color='lightblue',header_font=('Helvetica', 8, 'bold'),
+                             max_col_width=30, background_color='lightblue', header_font=('Helvetica', 8, 'bold'),
                              auto_size_columns=False,
                              visible_column_map=self.col_visible,
                              # display_row_numbers=True,
@@ -1473,14 +1551,14 @@ class CollapsibleTable(Collapsible):
     def update(self, window, dic, use_prefix=True):
         self.dict = dic
         self.data = self.set_data(dic)
-        if self.color_idx is not None :
+        if self.color_idx is not None:
             row_cols = []
-            for i in range(len(self.data)) :
-                c0=self.data[i][self.color_idx]
-                c2,c1 = fun.invert_color(c0, return_self=True) if c0!='' else ['lightblue', 'black']
-                row_cols.append((i,c1,c2))
-        else :
-            row_cols=None
+            for i in range(len(self.data)):
+                c0 = self.data[i][self.color_idx]
+                c2, c1 = fun.invert_color(c0, return_self=True) if c0 != '' else ['lightblue', 'black']
+                row_cols.append((i, c1, c2))
+        else:
+            row_cols = None
         window[self.key].update(values=self.data, num_rows=len(self.data), row_colors=row_cols)
         self.open(window) if self.data[0][0] != '' else self.close(window)
 
@@ -1654,8 +1732,9 @@ def object_menu(selected, **kwargs):
 class GraphList:
     def __init__(self, name, fig_dict={}, next_to_header=None, default_values=None,
                  canvas_size=(1000, 800), list_size=None, list_header='Graphs', auto_eval=True,
-                 canvas_kws={'background_color':'Lightblue'}, graph=False,
-                 canvas_col_kws={'scrollable':False, 'vertical_scroll_only':False, 'expand_y':True, 'expand_x':True}):
+                 canvas_kws={'background_color': 'Lightblue'}, graph=False,
+                 canvas_col_kws={'scrollable': False, 'vertical_scroll_only': False, 'expand_y': True,
+                                 'expand_x': True}):
         self.auto_eval = auto_eval
         self.list_size = list_size
         self.list_header = list_header
@@ -1683,17 +1762,17 @@ class GraphList:
                                  key=list_key, auto_size_text=True)]]
         return l, list_key
 
-    def init_canvas(self, name, canvas_kws,canvas_col_kws, graph=False):
+    def init_canvas(self, name, canvas_kws, canvas_col_kws, graph=False):
         canvas_key = f'{name}_CANVAS'
-        kws={
+        kws = {
             # 'size': self.canvas_size,
-             'key' :canvas_key,
-             **canvas_kws}
-        if graph :
-            g=sg.Graph(canvas_size=self.canvas_size, **kws)
-        else :
-            g = sg.Canvas(size=self.canvas_size,**kws)
-        canvas = sg.Col([[g]],**canvas_col_kws)
+            'key': canvas_key,
+            **canvas_kws}
+        if graph:
+            g = sg.Graph(canvas_size=self.canvas_size, **kws)
+        else:
+            g = sg.Canvas(size=self.canvas_size, **kws)
+        canvas = sg.Col([[g]], **canvas_col_kws)
         return canvas, canvas_key, g
 
     def draw_fig(self, window, fig):
@@ -1709,9 +1788,9 @@ class GraphList:
         if len(list_values) > 0 and self.auto_eval:
             choice = list_values[0]
             fig = self.fig_dict[choice]
-            if type(fig)==str and os.path.isfile(fig) :
+            if type(fig) == str and os.path.isfile(fig):
                 self.show_fig(window, fig)
-            else :
+            else:
                 self.draw_fig(window, fig)
 
     def get_layout(self, as_col=True):
@@ -1724,7 +1803,7 @@ class GraphList:
     def show_fig(self, window, fig):
         # if self.fig_agg:
         #     delete_figure_agg(self.fig_agg)
-        c=window[self.canvas_key].TKCanvas
+        c = window[self.canvas_key].TKCanvas
         c.pack()
         img = PhotoImage(file=fig)
         c.create_image(250, 250, image=img)
@@ -1767,7 +1846,7 @@ class ButtonGraphList(GraphList):
                 self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()),
                                                                  return_fig=True, **self.func_kwargs)
                 self.draw_fig(window, self.fig)
-            except :
+            except:
                 print('Plot not available')
 
     def save_fig(self):
