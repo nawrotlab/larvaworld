@@ -28,6 +28,9 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
 
     ds = get_datasets(datagroup_id=datagroup_id, last_common='processed', names=names,
                       folders=folders, suffixes=suffixes, mode='initialize', ids=ids, arena_pars=arena_pars)
+    print()
+    print(f'------ Building {len(ds)} datasets ------')
+    print()
     for d, raw in zip(ds, raw_folders):
         if conf_id == 'JovanicConf':
             step, end = build_Jovanic(d, build_conf, source_dir=f'{g.raw_dir}/{raw}',**kwargs)
@@ -46,7 +49,10 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
         d.agent_ids = d.step_data.index.unique('AgentID').values
         d.num_ticks = d.step_data.index.unique('Step').size
         d.starting_tick = d.step_data.index.unique('Step')[0]
-        print(f'Dataset {d.id} created with {len(d.agent_ids)} larvae!')
+        print(f'--- Dataset {d.id} created with {len(d.agent_ids)} larvae! ---')
+    print()
+    print(f'------ {len(ds)} datasets built------')
+    print()
     return ds
 
 
@@ -75,7 +81,6 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
                 print(f'No dataset found at {dir}')
                 continue
             d = LarvaDataset(dir=dir, load_data=load_data)
-            # d = LarvaDataset(dir=dir, load_data=load_data, id=id)
         elif mode == 'initialize':
             try:
                 shutil.rmtree(dir)
@@ -86,11 +91,11 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
             d = LarvaDataset(dir=dir, id=id, par_conf=par_conf, arena_pars=arena_pars,
                              load_data=False, **data_conf)
         ds.append(d)
-    # print(f'{len(ds)} datasets loaded.')
     return ds
 
 
 def enrich_datasets(datagroup_id, datasets=None, names=None, keep_raw=False, enrich_conf=None, **kwargs):
+
     warnings.filterwarnings('ignore')
     if datasets is None and names is not None :
         datasets = get_datasets(datagroup_id, last_common='processed', names=names, mode='load', **kwargs)
@@ -101,12 +106,13 @@ def enrich_datasets(datagroup_id, datasets=None, names=None, keep_raw=False, enr
             copy_tree(new.dir, raw.dir)
     if enrich_conf is None:
         enrich_conf = LarvaDataGroup(datagroup_id).get_conf()['enrich']
-
-    # with fun.suppress_stdout():
-    # print(datasets)
+    print()
+    print(f'------ Enriching {len(datasets)} datasets ------')
+    print()
     ds = [d.enrich(**enrich_conf, **kwargs) for d in datasets]
-    print('Datasets enriched')
-    # print(ds)
+    print()
+    print(f'------ {len(ds)} datasets enriched ------')
+    print()
     return ds
 
 

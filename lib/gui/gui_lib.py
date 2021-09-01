@@ -23,6 +23,7 @@ from lib.conf.par import runtime_pars, getPar
 from lib.stor import paths
 import lib.conf.dtype_dicts as dtypes
 import lib.gui.graphics as graphics
+from lib.stor.datagroup import LarvaDataGroup
 
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'
@@ -1263,23 +1264,23 @@ class BoolButton(Button):
 
 
 def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
+    M,E='Merge', 'Enumerate'
+    E0=f'{E}_id'
     proc_dir = {}
-    if len(raw_dic) == 0:
+    N=len(raw_dic)
+    if N == 0:
         return proc_dir
+    # print(f'Building {N} new datasets')
     w_size = (1400, 800)
-
-
     t_kws = t30_kws
     h_kws = {
         'font': ('Helvetica', 8, 'bold'),
         'justification': 'center',
     }
-    b_merged = named_bool_button(name='Merge', state=False, toggle_name=None)
-    b_num=named_bool_button(name='Enumerate', state=False, toggle_name=None, input_key='base_name', input_text='dish')
+    b_merged = named_bool_button(name=M, state=False, toggle_name=None)
+    b_num=named_bool_button(name=E, state=False, toggle_name=None, input_key=E0, input_text='dish')
     l00 = sg.Col([[sg.T('RAW DATASETS', **h_kws, **t_kws),
-                   # sg.T('  -->  ', **h_kws, **t8_kws),
                    *b_merged,
-                   # sg.T('  -->  ', **h_kws, **t8_kws),
                    sg.T('NEW DATASETS', **h_kws, **t_kws),
                    *b_num] ])
     l01 = sg.Col([
@@ -1307,18 +1308,17 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
             break
         else:
             toggled=check_togglesNcollapsibles(w, e, v, c)
-            merge = w['TOGGLE_Merge'].get_state()
+            merge = w[f'TOGGLE_{M}'].get_state()
             for i, (id, dir) in enumerate(raw_dic.items()):
                 if i != 0:
                     w.Element(f'new_{id}').Update(visible=not merge)
-            enum = w['TOGGLE_Enumerate'].get_state()
-            # w.Element('base_name').Update(visible=enum)
-            if 'Enumerate' in toggled :
+            enum = w[f'TOGGLE_{E}'].get_state()
+            if E in toggled :
                 if not enum :
                     for i, (id, dir) in enumerate(raw_dic.items()):
                         w.Element(f'new_{id}').Update(value=id)
                 else :
-                    v_enum=v['base_name']
+                    v_enum=v[E0]
                     for i, (id, dir) in enumerate(raw_dic.items()):
                         w.Element(f'new_{id}').Update(value=f'{v_enum}_{i}')
             if e == 'Ok':
@@ -1350,6 +1350,42 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
                     proc_dir[dd.id] = dd
                 break
     return proc_dir
+
+def enrich_datasets_window(datagroup_id, ds):
+    enrich_conf = LarvaDataGroup(datagroup_id).get_conf()['enrich']
+    N=len(ds)
+    if N == 0:
+        return []
+
+    w_size = (1400, 800)
+
+    s1 = CollapsibleDict('enrichment', True,dict=enrich_conf,type_dict=dtypes.get_dict('enrichment'),
+                         disp_name='Configuration', text_kws=t12_kws,
+                         value_kws=t5_kws)
+    c = {}
+    for s in [s1]:
+        c.update(**s.get_subdicts())
+    l = [[sg.Col([
+        # [l00],
+        # [l01],
+        s1.get_layout(),
+        [sg.Col([[sg.Ok(), sg.Cancel()]], size=col_size(y_frac=0.2, win_size=w_size))],
+    ])]]
+    w = sg.Window('Enrich datasets with derived parameters', l, size=w_size)
+    while True:
+        e, v = w.read()
+        if e in (None, 'Exit', 'Cancel'):
+            w.close()
+            break
+        else:
+            toggled=check_togglesNcollapsibles(w, e, v, c)
+            if e == 'Ok':
+                conf = s1.get_dict(values=v, window=w)
+                w.close()
+                from lib.stor.managing import enrich_datasets
+                enrich_datasets(datagroup_id=datagroup_id, datasets=ds, enrich_conf=conf)
+                break
+    return ds
 
 
 def change_dataset_id(w, v, dic, k0):

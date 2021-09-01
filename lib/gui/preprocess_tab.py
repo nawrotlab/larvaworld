@@ -6,7 +6,7 @@ from PySimpleGUI import LISTBOX_SELECT_MODE_SINGLE, LISTBOX_SELECT_MODE_MULTIPLE
     LISTBOX_SELECT_MODE_EXTENDED
 
 from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, col_size, col_kws, get_disp_name, \
-    change_dataset_id, named_list_layout, build_datasets_window
+    change_dataset_id, named_list_layout, build_datasets_window, enrich_datasets_window
 from lib.gui.tab import GuiTab, SelectionList
 from lib.stor import paths
 import lib.conf.dtype_dicts as dtypes
@@ -143,14 +143,9 @@ class PreprocessTab(GuiTab):
             d[kP].update(proc_dir)
             w.Element(self.proc_ids_key).Update(values=list(d[kP].keys()))
         elif e == f'ENRICH {kP}':
-            # print(d[kP])
-            for id, dd in d[kP].items():
-                if id in v[f'{kP}_IDS']:
-
-                    dd = enrich_datasets(datagroup_id=id0, datasets=[dd])[0]
-                    # print(dd)
-                    d[kP][id] = dd
-            # print(d[kP])
+            dds=[dd for id, dd in d[kP].items() if id in v[f'{kP}_IDS']]
+            dds=enrich_datasets_window(datagroup_id=id0, ds=dds)
+            # enrich_datasets(datagroup_id=id0, datasets=dds)
         elif e == f'REPLAY {kP}':
             ids = v[f'{kP}_IDS']
             if len(ids) > 0:

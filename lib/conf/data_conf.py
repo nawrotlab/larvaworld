@@ -101,18 +101,24 @@ Schleyer_raw_cols = ['Step'] + \
 
 Sims_raw_cols = ['Step'] + nam.xy('centroid')
 
-SchleyerEnrichConf = {
-    'preprocessing': {
+SchleyerEnrichConf = {'preprocessing': {
         'rescale_by': None,
-        'drop_collisions': False,
+        'drop_collisions': True,
         'interpolate_nans': False,
         'filter_f': 2
     },
-    # 'processing': ['angular', 'spatial'],
-    'to_drop': ['unused'],
-    # 'dispersion_starts': [0],
-    # 'bouts': ['turn', 'stride', 'pause'],
-    # 'mode': 'minimal'
+    'processing': {'types': ['angular', 'spatial', 'dispersion', 'tortuosity'],
+                   'dsp_starts': [0, 20], 'dsp_stops': [40, 80, 120],
+                   'tor_durs': [2, 5, 10, 20]},
+    'annotation': {'bouts': ['stride', 'pause', 'turn'], 'track_point': None,
+                   'track_pars': None, 'chunk_pars': None,
+                   'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 5.0,
+                   'non_chunks': False},
+    'enrich_aux': {'recompute': False,
+                   'mode': 'minimal',
+                   'source': None,
+                   },
+# 'to_drop': [],
 }
 
 SchleyerConf = {'id': 'SchleyerConf',
@@ -138,20 +144,28 @@ JovanicDataConf = {'fr': 11.27,
                    'Npoints': 11,
                    'Ncontour': 0}
 
+
 JovanicEnrichConf = {
-    'preprocessing': {
+'preprocessing': {
         'rescale_by': None,
         'drop_collisions': False,
         'interpolate_nans': False,
         'filter_f': 2
     },
-    'processing': ['angular', 'spatial'],
-    'to_drop': [],
-    'dispersion_starts': [0, 20],
-    'dispersion_stops': [40, 80, 120],
-    'bouts': ['turn', 'stride', 'pause'],
-    'mode': 'minimal'
+    'processing': {'types': ['angular', 'spatial', 'dispersion', 'tortuosity'],
+                   'dsp_starts': [0, 20], 'dsp_stops': [40, 80, 120],
+                   'tor_durs': [2, 5, 10, 20]},
+    'annotation': {'bouts': ['stride', 'pause', 'turn'], 'track_point': None,
+                   'track_pars': None, 'chunk_pars': None,
+                   'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 5.0,
+                   'non_chunks': False},
+    'enrich_aux': {'recompute': False,
+                   'mode': 'minimal',
+                   'source': None,
+                   },
+# 'to_drop': [],
 }
+
 
 JovanicConf = {'id': 'JovanicConf',
                'data': JovanicDataConf,
