@@ -68,7 +68,7 @@ class PreprocessTab(GuiTab):
         kR, kP = self.raw_key, self.proc_key
         dicts = {kR: {}, kP: {}}
 
-        raw_bs = [graphic_button('burn', f'BUILD_{kR}', tooltip='Build a dataset from raw files.'),
+        raw_bs = [graphic_button('burn', f'BUILD {kR}', tooltip='Build a dataset from raw files.'),
                   graphic_button('remove', f'REMOVE {kR}', tooltip='Remove a dataset from the analysis list.'),
                   graphic_button('search_add', key=kR, initial_folder=paths.SingleRunFolder, change_submits=True,
                                  enable_events=True,
@@ -84,10 +84,10 @@ class PreprocessTab(GuiTab):
                                      list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED})
 
         proc_bs = [
-            graphic_button('play', f'Replay {kP}', tooltip='Replay/Visualize the dataset.'),
+            graphic_button('play', f'REPLAY {kP}', tooltip='Replay/Visualize the dataset.'),
             graphic_button('remove', f'REMOVE {kP}', tooltip='Remove a dataset from the analysis list.'),
                    # graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
-                   graphic_button('data_add', 'Enrich', tooltip='Enrich the dataset.'),
+                   graphic_button('data_add', f'ENRICH {kP}', tooltip='Enrich the dataset.'),
                    graphic_button('edit', f'CHANGE_ID {kP}',
                                   tooltip='Change the dataset ID transiently or permanently.'),
                    graphic_button('search_add', key=kP, initial_folder=paths.SingleRunFolder, change_submits=True,
@@ -131,25 +131,27 @@ class PreprocessTab(GuiTab):
             k = e.split()[-1]
             k0 = f'{k}_IDS'
             ids=v[k0]
-            if len(ids) > 0:
-                for i in range(len(ids)) :
-                    d[k].pop(ids[i], None)
-                w.Element(k0).Update(values=list(d[k].keys()))
+            for i in range(len(ids)) :
+                d[k].pop(ids[i], None)
+            w.Element(k0).Update(values=list(d[k].keys()))
         elif e.startswith('CHANGE_ID'):
             k = e.split()[-1]
             d[k] = change_dataset_id(w, v, d[k], k0=f'{k}_IDS')
-        elif e == f'BUILD_{kR}':
+        elif e == f'BUILD {kR}':
             raw_dic={id:dir for id, dir in d[kR].items() if id in v[f'{kR}_IDS']}
-            if len(raw_dic)>0 :
-                proc_dir = build_datasets_window(datagroup_id=id0, raw_folder=fR, raw_dic=raw_dic)
-                d[kP].update(proc_dir)
-                w.Element(self.proc_ids_key).Update(values=list(d[kP].keys()))
-        elif e == 'Enrich':
+            proc_dir = build_datasets_window(datagroup_id=id0, raw_folder=fR, raw_dic=raw_dic)
+            d[kP].update(proc_dir)
+            w.Element(self.proc_ids_key).Update(values=list(d[kP].keys()))
+        elif e == f'ENRICH {kP}':
+            # print(d[kP])
             for id, dd in d[kP].items():
                 if id in v[f'{kP}_IDS']:
+
                     dd = enrich_datasets(datagroup_id=id0, datasets=[dd])[0]
+                    # print(dd)
                     d[kP][id] = dd
-        elif e == f'Replay {kP}':
+            # print(d[kP])
+        elif e == f'REPLAY {kP}':
             ids = v[f'{kP}_IDS']
             if len(ids) > 0:
                 dd = d[kP][ids[0]]

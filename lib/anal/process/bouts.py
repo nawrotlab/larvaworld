@@ -171,7 +171,7 @@ def detect_chunks(s, e, dt, chunk_names, par, chunk_only=None, par_ranges=[[-np.
     Nids = len(ids)
     output = f'Detecting chunks-on-condition for {Nids} agents'
     N = len(s.index.unique('Step'))
-    t0 = s.index.unique('Step').min()
+    t0 = int(s.index.unique('Step').min())
     if min_dur == 0.0:
         min_dur = dt
     ss = s.loc[s[nam.id(chunk_only)].dropna().index] if chunk_only is not None else s
@@ -244,7 +244,7 @@ def detect_non_chunks(s, e, dt, chunk_name, guide_parameter, non_chunk_name=None
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     Nticks = len(s.index.unique('Step'))
-    t0 = s.index.unique('Step').min()
+    t0 = int(s.index.unique('Step').min())
     min_dur = int(min_dur / dt)
     chunk_id = nam.id(chunk_name)
     if non_chunk_name is None:
@@ -324,7 +324,7 @@ def detect_contacting_chunks(s, e, dt, chunk='stride', track_point=None, mid_fla
 
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
-    t0 = s.index.unique('Step').min()
+    t0 = int(s.index.unique('Step').min())
     N = len(s.index.unique('Step'))
 
     c_0 = nam.start(chunk)
@@ -411,8 +411,11 @@ def detect_contacting_chunks(s, e, dt, chunk='stride', track_point=None, mid_fla
                         zip(chunks[:-1, :], chunks[1:, :])] + [0]
             s0s = chunks[:, 0] - t0
             s1s = chunks[:, 1] - t0
+            # s0s=[int(s0) for s0 in s0s]
+            # s1s=[int(s1) for s1 in s1s]
             # start_array[s0s, i] = True
             # stop_array[s1s, i] = True
+            # print(s1s, i, durs)
             dur_array[s1s, i] = durs
             chain_counter = 0
             chain_dur_counter = 0
@@ -488,7 +491,7 @@ def track_pars_in_chunks(s, e, chunks, pars, mode='dif', merged_chunk=None, dist
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     Nticks = len(s.index.unique('Step'))
-    t0 = s.index.unique('Step').min()
+    t0 = int(s.index.unique('Step').min())
     all_d = [s.xs(id, level='AgentID', drop_level=True) for id in ids]
 
     for c in chunks:

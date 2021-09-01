@@ -576,6 +576,7 @@ class LarvaDataset:
         self.drop_pars(groups=to_drop, **c)
         if is_last:
             self.save()
+        return self
 
     def create_reference_dataset(self, dataset_id='reference', Nstd=3, overwrite=False):
         if self.endpoint_data is None:

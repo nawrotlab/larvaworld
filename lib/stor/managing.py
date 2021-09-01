@@ -103,8 +103,10 @@ def enrich_datasets(datagroup_id, datasets=None, names=None, keep_raw=False, enr
         enrich_conf = LarvaDataGroup(datagroup_id).get_conf()['enrich']
 
     # with fun.suppress_stdout():
-
+    # print(datasets)
     ds = [d.enrich(**enrich_conf, **kwargs) for d in datasets]
+    print('Datasets enriched')
+    # print(ds)
     return ds
 
 

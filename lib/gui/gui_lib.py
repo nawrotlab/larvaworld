@@ -1221,10 +1221,13 @@ class TupleSpin(Pane):
         # return window
 
 
-def named_bool_button(name, state, toggle_name=None, t_kws={}):
+def named_bool_button(name, state, toggle_name=None, t_kws={}, input_key=None, input_text=''):
     if toggle_name is None:
         toggle_name = name
-    return [sg.Text(f'{name} :', **t_kws), BoolButton(toggle_name, state)]
+    l= [sg.Text(f'{name} :', **t_kws), BoolButton(toggle_name, state)]
+    if input_key is not None :
+        l.append(sg.In(input_text, k=input_key, visible=True))
+    return l
 
 
 class BoolButton(Button):
@@ -1260,18 +1263,25 @@ class BoolButton(Button):
 
 
 def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
+    proc_dir = {}
+    if len(raw_dic) == 0:
+        return proc_dir
     w_size = (1400, 800)
 
-    proc_dir = {}
-    t_kws = t40_kws
+
+    t_kws = t30_kws
     h_kws = {
         'font': ('Helvetica', 8, 'bold'),
         'justification': 'center',
     }
     b_merged = named_bool_button(name='Merge', state=False, toggle_name=None)
-    l00 = sg.Col([[sg.T('RAW DATASETS', **h_kws, **t_kws), sg.T('  -->  ', **h_kws, **t8_kws),
-                   sg.T('NEW DATASETS', **h_kws, **t_kws)] + b_merged])
-    # l00 = sg.Col([[sg.T('RAW DATASETS', **h_kws, **t_kws),sg.T('  -->  ', **h_kws, **t8_kws),  sg.T('NEW DATASETS', **h_kws, **t_kws)]])
+    b_num=named_bool_button(name='Enumerate', state=False, toggle_name=None, input_key='base_name', input_text='dish')
+    l00 = sg.Col([[sg.T('RAW DATASETS', **h_kws, **t_kws),
+                   # sg.T('  -->  ', **h_kws, **t8_kws),
+                   *b_merged,
+                   # sg.T('  -->  ', **h_kws, **t8_kws),
+                   sg.T('NEW DATASETS', **h_kws, **t_kws),
+                   *b_num] ])
     l01 = sg.Col([
         [sg.T(id, **t_kws), sg.T('  -->  ', **t8_kws), sg.In(default_text=id, k=f'new_{id}', **t_kws)] for id in
         list(raw_dic.keys())],
@@ -1283,7 +1293,6 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
     c = {}
     for s in [s1]:
         c.update(**s.get_subdicts())
-    # l2=sg.Col([[sg.Ok(), sg.Cancel()]],size=col_size(y_frac=0.2, win_size=w_size))
     l = [[sg.Col([
         [l00],
         [l01],
@@ -1297,11 +1306,21 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
             w.close()
             break
         else:
-            check_togglesNcollapsibles(w, e, v, c)
+            toggled=check_togglesNcollapsibles(w, e, v, c)
             merge = w['TOGGLE_Merge'].get_state()
             for i, (id, dir) in enumerate(raw_dic.items()):
                 if i != 0:
                     w.Element(f'new_{id}').Update(visible=not merge)
+            enum = w['TOGGLE_Enumerate'].get_state()
+            # w.Element('base_name').Update(visible=enum)
+            if 'Enumerate' in toggled :
+                if not enum :
+                    for i, (id, dir) in enumerate(raw_dic.items()):
+                        w.Element(f'new_{id}').Update(value=id)
+                else :
+                    v_enum=v['base_name']
+                    for i, (id, dir) in enumerate(raw_dic.items()):
+                        w.Element(f'new_{id}').Update(value=f'{v_enum}_{i}')
             if e == 'Ok':
                 conf = s1.get_dict(values=v, window=w)
                 kws = {
@@ -1327,9 +1346,6 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
                     new_id = v[f'new_{id0}']
                     temp = fun.remove_suffix(fdir[0], id0)
                     names = [f'{temp}{new_id}']
-                    # print([new_id])
-                    # print(names)
-                    # print(fdir)
                     dd = build_datasets(ids=[new_id], names=names, raw_folders=[fdir], **kws)[0]
                     proc_dir[dd.id] = dd
                 break
@@ -2069,12 +2085,15 @@ def check_toggles(window, event):
 
 
 def check_togglesNcollapsibles(w, e, v, c):
+    toggled=[]
     check_collapsibles(w, e, v, c)
     if 'TOGGLE' in e:
         w[e].toggle()
         name = e[7:]
         if name in list(c.keys()):
             c[name].toggle = not c[name].toggle
+        toggled.append(name)
+    return toggled
 
 
 def default_run_window(w, e, v, c={}, g={}):
