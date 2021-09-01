@@ -852,7 +852,7 @@ def color_pick_layout(name, color=None):
 def retrieve_value(v, t):
     # print(v)
     # print(t)
-    if v in ['', 'None', None]:
+    if v in ['', 'None', None, ('',''), ('', '')]:
         vv = None
     elif v in ['sample', 'fit']:
         vv = v
@@ -1119,7 +1119,7 @@ class SectionDict:
             elif type(v) == dict:
                 type_dict = self.type_dict[k] if self.type_dict is not None else None
                 self.subdicts[k0] = CollapsibleDict(k0, True, disp_name=k, dict=v, type_dict=type_dict,
-                                                    toggle=self.toggled_subsections)
+                                                    toggle=self.toggled_subsections, toggled_subsections=self.toggled_subsections)
                 l.append(self.subdicts[k0].get_layout())
             # elif type(v) == float:
             #     temp =[sg.Text(f'{k_disp}:', **t8_kws),
@@ -1353,15 +1353,14 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
 
 def enrich_datasets_window(datagroup_id, ds):
     enrich_conf = LarvaDataGroup(datagroup_id).get_conf()['enrich']
+    print(enrich_conf)
     N=len(ds)
     if N == 0:
         return []
 
     w_size = (1400, 800)
 
-    s1 = CollapsibleDict('enrichment', True,dict=enrich_conf,type_dict=dtypes.get_dict('enrichment'),
-                         disp_name='Configuration', text_kws=t12_kws,
-                         value_kws=t5_kws)
+    s1 = CollapsibleDict('enrichment', True,dict=enrich_conf,type_dict=dtypes.get_dict('enrichment'))
     c = {}
     for s in [s1]:
         c.update(**s.get_subdicts())
@@ -1381,9 +1380,11 @@ def enrich_datasets_window(datagroup_id, ds):
             toggled=check_togglesNcollapsibles(w, e, v, c)
             if e == 'Ok':
                 conf = s1.get_dict(values=v, window=w)
+                print(conf)
                 w.close()
                 from lib.stor.managing import enrich_datasets
-                enrich_datasets(datagroup_id=datagroup_id, datasets=ds, enrich_conf=conf)
+                enrich_datasets(datagroup_id=datagroup_id, datasets=ds, enrich_conf=enrich_conf)
+                # enrich_datasets(datagroup_id=datagroup_id, datasets=ds, enrich_conf=conf)
                 break
     return ds
 

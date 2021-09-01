@@ -6,10 +6,11 @@ from PySimpleGUI import LISTBOX_SELECT_MODE_SINGLE, LISTBOX_SELECT_MODE_MULTIPLE
     LISTBOX_SELECT_MODE_EXTENDED
 
 from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, col_size, col_kws, get_disp_name, \
-    change_dataset_id, named_list_layout, build_datasets_window, enrich_datasets_window
+    change_dataset_id, named_list_layout, build_datasets_window, enrich_datasets_window, CollapsibleDict
 from lib.gui.tab import GuiTab, SelectionList
 from lib.stor import paths
 import lib.conf.dtype_dicts as dtypes
+from lib.stor.datagroup import LarvaDataGroup
 from lib.stor.larva_dataset import LarvaDataset
 from lib.stor.managing import detect_dataset, build_datasets, enrich_datasets
 import lib.aux.functions as fun
@@ -50,6 +51,10 @@ class PreprocessTab(GuiTab):
         self.raw_folder = f'{pp}/raw'
         w[self.proc_key].InitialFolder = f'{pp}/processed'
         self.proc_folder = f'{pp}/processed'
+
+        c['enrichment'].update(w, LarvaDataGroup(id).get_conf()['enrich'])
+        # c['enrichment'].update(w, conf['conf']['enrich'])
+            # c[n].update(w, conf[n])
         # w.Element(self.raw_key).InitialFolder=path
         # w.Element(self.raw_key).Update(initial_folder=path)
         # c['substrate'].update_header(w, conf['substrate_type'])
@@ -105,9 +110,16 @@ class PreprocessTab(GuiTab):
         self.selectionlists = {sl.conftype: sl for sl in [l_group]}
 
         g = ButtonGraphList(name=self.name, fig_dict={})
-        l = [[sg.Col([l_group.get_layout()] + raw_list + proc_list, size=col_size(0.2), **col_kws)]]
+        s1 = CollapsibleDict('enrichment', True, default=True,toggled_subsections=None)
+        c = {}
+        for s in [s1]:
+            c.update(**s.get_subdicts())
+
+        l = [[sg.Col([l_group.get_layout()] + raw_list + proc_list + s1.get_layout(as_col=False), size=col_size(0.2), **col_kws)]]
         graph_lists = {g.name: g}
-        return l, {}, graph_lists, dicts
+        return l, c, graph_lists, dicts
+
+
 
     def eval(self, e, v, w, c, d, g):
         id0 = self.current_ID(v)
@@ -118,15 +130,18 @@ class PreprocessTab(GuiTab):
             k0 = f'{k}_IDS'
             dr0 = v[k]
             if dr0 != '':
-                ids, dirs = detect_dataset(id0, dr0)
-                if len(ids) > 0:
-                    for id, dr in zip(ids, dirs):
-                        if e == kR:
-                            d[k][id] = dr
-                        elif e == kP:
-                            dd=LarvaDataset(dir=dr)
-                            d[k][dd.id] = dd
-                    w.Element(k0).Update(values=list(d[k].keys()))
+                if e == kR:
+                    d[k] = detect_dataset(id0, dr0, raw=True)
+                    # if len(ids) > 0:
+                    #     for id, dr in zip(ids, dirs):
+                    #         d[k][id] = dr
+                elif e == kP:
+                    d[k] = detect_dataset(id0, dr0, raw=False)
+                    # if len(ids) > 0:
+                    #     for id, dd in zip(ids, dds):
+                    #         # dd=LarvaDataset(dir=dr)
+                    #         d[k][dd.id] = dd
+                w.Element(k0).Update(values=list(d[k].keys()))
         elif e.startswith('REMOVE'):
             k = e.split()[-1]
             k0 = f'{k}_IDS'
@@ -144,13 +159,15 @@ class PreprocessTab(GuiTab):
             w.Element(self.proc_ids_key).Update(values=list(d[kP].keys()))
         elif e == f'ENRICH {kP}':
             dds=[dd for id, dd in d[kP].items() if id in v[f'{kP}_IDS']]
-            dds=enrich_datasets_window(datagroup_id=id0, ds=dds)
-            # enrich_datasets(datagroup_id=id0, datasets=dds)
+            # print(c['enrichment'].get_dict(v,w))
+            # dds=enrich_datasets_window(datagroup_id=id0, ds=dds)
+            enrich_datasets(datagroup_id=id0, datasets=dds, enrich_conf=c['enrichment'].get_dict(v,w))
         elif e == f'REPLAY {kP}':
             ids = v[f'{kP}_IDS']
             if len(ids) > 0:
                 dd = d[kP][ids[0]]
                 dd.visualize(vis_kwargs=self.gui.get_vis_kwargs(v, mode='video'), **self.gui.get_replay_kwargs(v))
+        print(c['enrichment'].get_dict(v,w))
         return d, g
 
 

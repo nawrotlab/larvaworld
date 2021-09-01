@@ -190,7 +190,7 @@ def generate_traj_colors(s, sp_vel=None, ang_vel=None):
     return s
 
 def process(s,e,dt,Npoints,Ncontour, point, config=None,
-            types=['angular', 'spatial', 'source', 'dispersion', 'tortuosity'],
+            types={'angular':True, 'spatial':True, 'source':True, 'dispersion':True, 'tortuosity':True},
             mode='minimal',traj_colors=True,
             distro_dir=None, dsp_dir=None, show_output=True,
             source=None,dsp_starts=[0], dsp_stops=[40], tor_durs=[2, 5, 10, 20],  **kwargs):
@@ -207,17 +207,20 @@ def process(s,e,dt,Npoints,Ncontour, point, config=None,
 
     with fun.suppress_stdout(show_output):
         if type(types)==list:
-            if 'angular' in types:
+            if types['angular']:
+            # if 'angular' in types:
                 angular_processing(**c, distro_dir=distro_dir, **kwargs)
-            if 'spatial' in types:
+            if types['spatial']:
+            # if 'spatial' in types:
                 spatial_processing(**c, dsp_dir=dsp_dir, **kwargs)
-            if 'source' in types:
+            if types['source']:
+            # if 'source' in types:
                 if source is not None:
                     compute_bearingNdst2source(s, e, source=source, **kwargs)
-            if 'dispersion' in types and type(dsp_starts)==list and type(dsp_stops)==list:
+            if types['dispersion'] and type(dsp_starts)==list and type(dsp_stops)==list:
                 compute_dispersion(s, e, dt, point, starts=dsp_starts, stops=dsp_stops, dir=dsp_dir, **kwargs)
 
-            if 'tortuosity' in types and type(tor_durs)==list:
+            if types['tortuosity'] and type(tor_durs)==list:
                 compute_tortuosity(s, e, dt, durs_in_sec=tor_durs, **kwargs)
         if traj_colors :
             try :

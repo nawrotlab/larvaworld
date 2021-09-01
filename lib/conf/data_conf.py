@@ -102,15 +102,15 @@ Schleyer_raw_cols = ['Step'] + \
 Sims_raw_cols = ['Step'] + nam.xy('centroid')
 
 SchleyerEnrichConf = {'preprocessing': {
-        'rescale_by': None,
+        'rescale_by': 1.0,
         'drop_collisions': True,
         'interpolate_nans': False,
-        'filter_f': 2
+        'filter_f': 2.0
     },
-    'processing': {'types': ['angular', 'spatial', 'dispersion', 'tortuosity'],
+    'processing': {'types': {'angular':True, 'spatial':True, 'source':False, 'dispersion':True, 'tortuosity':True},
                    'dsp_starts': [0, 20], 'dsp_stops': [40, 80, 120],
                    'tor_durs': [2, 5, 10, 20]},
-    'annotation': {'bouts': ['stride', 'pause', 'turn'], 'track_point': None,
+    'annotation': {'bouts': {'stride':True, 'pause':True, 'turn':True}, 'track_point': None,
                    'track_pars': None, 'chunk_pars': None,
                    'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 5.0,
                    'non_chunks': False},
@@ -147,15 +147,15 @@ JovanicDataConf = {'fr': 11.27,
 
 JovanicEnrichConf = {
 'preprocessing': {
-        'rescale_by': None,
+        'rescale_by': 1.0,
         'drop_collisions': False,
         'interpolate_nans': False,
-        'filter_f': 2
+        'filter_f': 2.0
     },
-    'processing': {'types': ['angular', 'spatial', 'dispersion', 'tortuosity'],
+    'processing': {'types': {'angular':True, 'spatial':True, 'source':False, 'dispersion':True, 'tortuosity':True},
                    'dsp_starts': [0, 20], 'dsp_stops': [40, 80, 120],
                    'tor_durs': [2, 5, 10, 20]},
-    'annotation': {'bouts': ['stride', 'pause', 'turn'], 'track_point': None,
+    'annotation': {'bouts': {'stride':True, 'pause':True, 'turn':True}, 'track_point': None,
                    'track_pars': None, 'chunk_pars': None,
                    'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 5.0,
                    'non_chunks': False},

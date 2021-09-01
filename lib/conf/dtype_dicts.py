@@ -528,15 +528,15 @@ all_null_dicts = {
         'wrap_mode': None
     },
     'preprocessing': {
-        'rescale_by': None,
+        'rescale_by': 1.0,
         'drop_collisions': False,
         'interpolate_nans': False,
-        'filter_f': None
+        'filter_f': 2.0
     },
-    'processing': {'types': None,
+    'processing': {'types': {'angular':True, 'spatial':True, 'source':True, 'dispersion':True, 'tortuosity':True},
                    'dsp_starts': None, 'dsp_stops': None,
                    'tor_durs': None},
-    'annotation': {'bouts': None, 'track_point': None,
+    'annotation': {'bouts': {'stride':True, 'pause':True, 'turn':True}, 'track_point': None,
                    'track_pars': None, 'chunk_pars': None,
                    'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 0.0,
                    'non_chunks': False},
@@ -576,9 +576,11 @@ all_null_dicts['food_params'] = {'source_groups': {},
 
 
 def base_enrich(**kwargs):
-    d = {'types': ['angular', 'spatial', 'source', 'dispersion', 'tortuosity'],
+    d = {
+        'types': {'angular':True, 'spatial':True, 'source':True, 'dispersion':True, 'tortuosity':True},
+        # 'types': ['angular', 'spatial', 'source', 'dispersion', 'tortuosity'],
          'dsp_starts': [0, 20], 'dsp_stops': [40, 80], 'tor_durs': [2, 5, 10, 20],
-         'min_ang': 5.0, 'bouts': ['stride', 'pause', 'turn']
+         'min_ang': 5.0, 'bouts': {'stride':True, 'pause':True, 'turn':True}
          }
 
     d.update(**kwargs)
@@ -813,21 +815,23 @@ def get_dict_dtypes(name, **kwargs):
             'wrap_mode': [None, 'zero', 'positive']
         },
         'preprocessing': {
-            'rescale_by': float,
+            'rescale_by': fun.value_list(end=100.0, steps=100000, decimals=3),
             'drop_collisions': bool,
             'interpolate_nans': bool,
-            'filter_f': float
+            'filter_f': fun.value_list(end=10.0, steps=10000, decimals=3)
         },
-        'processing': {'types': ['angular', 'spatial', 'source', 'dispersion', 'tortuosity'],
+        'processing': {'types': {'angular':bool, 'spatial':bool, 'source':bool, 'dispersion':bool, 'tortuosity':bool},
                        'dsp_starts': List[float], 'dsp_stops': List[float],
                        'tor_durs': List[float]},
-        'annotation': {'bouts': ['stride', 'pause', 'turn'], 'track_point': str,
+        'annotation': {'bouts': {'stride':bool, 'pause':bool, 'turn':bool},
+                       'track_point': str,
                        'track_pars': List[str], 'chunk_pars': List[str],
-                       'vel_par': str, 'ang_vel_par': str, 'bend_vel_par': str, 'min_ang': float,
+                       'vel_par': str, 'ang_vel_par': str, 'bend_vel_par': str, 'min_ang': fun.value_list(end=180.0, steps=1900, decimals=1),
                        'non_chunks': bool},
         'enrich_aux': {'recompute': bool,
                        'mode': ['minimal', 'full'],
-                       'source': Tuple[float, float],
+                       'source': (-100.0, 100.0),
+                       # 'source': Tuple[float, float],
                        },
         'build_conf': {
             'min_duration_in_sec': fun.value_list(start=0.0, end=3600.0, steps=36000, decimals=1),
