@@ -10,7 +10,7 @@ from lib.aux import naming as nam
 
 def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
                    use_tick_index=True, max_Nagents=None, complete_ticks=True,
-                   min_end_time_in_sec=0, min_duration_in_sec=0, start_time_in_sec=0):
+                   min_end_time_in_sec=0, min_duration_in_sec=0, start_time_in_sec=0, **kwargs):
     d = dataset
     dt=d.dt
     cols0 = build_conf['read_sequence']
@@ -31,10 +31,10 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
     elif save_mode == 'semifull':
         cols1 = nam.xy(d.points, flat=True) + nam.xy(d.contour, flat=True) + [
             'collision_flag']
-    elif save_mode == 'spinepointsNcollision':
-        cols1 = nam.xy(d.points, flat=True) + ['collision_flag']
+    # elif save_mode == 'spinepointsNcollision':
+    #     cols1 = nam.xy(d.points, flat=True) + ['collision_flag']
     elif save_mode == 'points':
-        cols1 = nam.xy(d.points, flat=True)
+        cols1 = nam.xy(d.points, flat=True) + ['collision_flag']
 
     end = pd.DataFrame(columns=['AgentID', 'num_ticks', 'cum_dur'])
     Nvalid = 0

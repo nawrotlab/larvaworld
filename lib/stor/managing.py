@@ -48,15 +48,21 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
             step, end = build_Schleyer(d, build_conf, raw_folders=temp,**kwargs)
         else:
             raise ValueError(f'Configuration {conf_id} is not supported for building new datasets')
-        step.sort_index(level=['Step', 'AgentID'], inplace=True)
-        end.sort_index(inplace=True)
-        d.set_data(step=step, end=end)
-        d.config['group_id']=group_id
-        d.save(food=False)
-        d.agent_ids = d.step_data.index.unique('AgentID').values
-        d.num_ticks = d.step_data.index.unique('Step').size
-        d.starting_tick = d.step_data.index.unique('Step')[0]
-        print(f'--- Dataset {d.id} created with {len(d.agent_ids)} larvae! ---')
+        if step is not None :
+            step.sort_index(level=['Step', 'AgentID'], inplace=True)
+            end.sort_index(inplace=True)
+            d.set_data(step=step, end=end)
+            d.config['group_id']=group_id
+            d.save(food=False)
+            d.agent_ids = d.step_data.index.unique('AgentID').values
+            d.num_ticks = d.step_data.index.unique('Step').size
+            d.starting_tick = d.step_data.index.unique('Step')[0]
+            print(f'--- Dataset {d.id} created with {len(d.agent_ids)} larvae! ---')
+        else :
+            print(f'--- Failed to create dataset {d.id}! ---')
+            # ds.remove(d)
+            d.delete()
+            d=None
     # print()
     # print(f'------ {len(ds)} datasets built------')
     # print()
@@ -280,50 +286,60 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
 
 if __name__ == "__main__":
     # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw'
-    # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc'
+    folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc'
     # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High'
-    # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High/AM+'
+    # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/High/AM+/High_AM_0'
     # folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/test/high_AM_160sec'
-
+    dic=detect_dataset(folder_path = folder_path, raw=False)
+    ds = list(dic.values())
     # d = LarvaDataset(dir=folder_path)
     # ids=detect_dataset(datagroup_id='SchleyerGroup', folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High/box1-2016-05-23_12_41_17')
     # ids, dirs = detect_dataset(datagroup_id='SchleyerGroup', folder_path=folder_path, full_ID=True)
     # print(os.listdir(folder_path))
-    # print(ids)
-    ds0=[]
-    for ii in ['AM+', 'EM+'] :
-        folder_path = f'/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/Low/{ii}'
-        dic=detect_dataset(folder_path = folder_path, raw=False)
-        ds = list(dic.values())
-        ds0.append(ds)
-    ds0=fun.flatten_list(ds0)
-
+    # print(list(dic.keys()))
+    # ds0=[]
+    # for ii in ['AM+', 'EM+'] :
+    #     folder_path = f'/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/Low/{ii}'
+    #     dic=detect_dataset(folder_path = folder_path, raw=False)
+    #     ds = list(dic.values())
+    #     ds0.append(ds)
+    # ds0=fun.flatten_list(ds0)
+    #
     from lib.anal.plotting import boxplot_PI
-    boxplot_PI(datasets=ds0, return_fig=True, show=True, save_to='.')
+    boxplot_PI(datasets=ds, return_fig=True, show=True,
+               # coupled_labels=True
+               # coupled_labels=['Low', 'Medium', 'High']
+               # coupled_group_ids={
+               #     'Low' : ['Low_AM', 'Low_EM'],
+               #     'Medium' : ['Medium_AM', 'Medium_EM'],
+               #     'High' : ['High_AM', 'High_EM'],
+               #                    },
+               # common_ids=['AM', 'EM']
+               )
 
     # from lib.anal.plotting import plot_endpoint_params
     # plot_endpoint_params(datasets=ds, mode='basic', show=True)
-    raise
+    # raise
     # print()
     # print(dirs)
     # dr = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/High/AM+/box1-2016-05-23_12_41_17'
     # d = LarvaDataset(dir=dr)
-    par_shorts =['l', 'fsv', 'sv_mu', 'sstr_d_mu',
-     'cum_t', 'str_tr', 'pau_tr', 'tor',
-     'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
-     'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr']
-    from lib.conf.par import getPar
-    pars, = getPar(par_shorts, to_return=['d'])
-    print(pars)
-    d = ds[0]
-    pars = [p for p in pars if all([p in d.endpoint_data.columns for d in [d]])]
-    print(pars)
+    # par_shorts =['l', 'fsv', 'sv_mu', 'sstr_d_mu',
+    #  'cum_t', 'str_tr', 'pau_tr', 'tor',
+    #  'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
+    #  'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr']
+    # from lib.conf.par import getPar
+    # pars, = getPar(par_shorts, to_return=['d'])
+    # print(pars)
+    # d = ds[0]
+    # pars = [p for p in pars if all([p in d.endpoint_data.columns for d in [d]])]
+    # print(pars)
     # symbols, exp_symbols, xlabels, xlims, disps = getPar(par_shorts, to_return=['s', 's', 'l', 'lim', 'd'])
     # print(pars)
     # d=ds[0]
-    s,e=d.step_data, d.endpoint_data
+    # s,e=d.step_data, d.endpoint_data
     # print(e.columns)
-    print(e['scaled_stride_dst_mean'])
+    # print(e['scaled_stride_dst_mean'])
     # print(e['length_mean'].mean())
     import matplotlib.pyplot as plt
     # plt.hist(e['length'])

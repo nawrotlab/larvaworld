@@ -1600,11 +1600,7 @@ def plot_food_amount(datasets, labels=None, save_to=None, save_as=None, filt_amo
 
 
 def boxplot_PI(datasets, labels=None, subfolder='source', save_as=None,
-               save_to=None, return_fig=False, show=False, xlabel='') :
-    group_ids=fun.unique_list([d.config['group_id'] for d in datasets])
-    Ngroups=len(group_ids)
-    colors = fun.N_colors(Ngroups, as_rgb=False)
-    palette = {id: c for id, c in zip(group_ids, colors)}
+               save_to=None, return_fig=False, show=False, xlabel='conditions') :
 
     if save_to is None:
         save_to = datasets[0].dir_dict['comp_plot']
@@ -1614,29 +1610,52 @@ def boxplot_PI(datasets, labels=None, subfolder='source', save_as=None,
         os.makedirs(save_to)
     filename = f'PI_boxplot.{suf}' if save_as is None else save_as
 
+    group_ids=fun.unique_list([d.config['group_id'] for d in datasets])
+    Ngroups=len(group_ids)
+    common_ids = fun.unique_list([l.split('_')[-1] for l in group_ids])
+    Ncommon = len(common_ids)
+    pair_ids = fun.unique_list([l.split('_')[0] for l in group_ids])
+    Npairs = len(pair_ids)
+    coupled_labels=True if Ngroups==Npairs*Ncommon else False
+
+
     all_PIs = []
+    all_PIs_dict = {}
     for group_id in group_ids :
         group_ds=[d for d in datasets if d.config['group_id']==group_id]
         PIdicts = [d.config['PI'] for d in group_ds]
         PIs = [dic['PI'] for dic in PIdicts]
         all_PIs.append(PIs)
-    PI_array = np.array(all_PIs).T
-    df1 = pd.DataFrame(PI_array, columns=group_ids).assign(Trial=1)
-    # df2 = pd.DataFrame(np.random.randn(5, 5), columns=list(range(1, 6))).assign(Trial=2)
-    # df3 = pd.DataFrame(np.random.randn(5, 5), columns=list(range(1, 6))).assign(Trial=3)
+        all_PIs_dict[group_id]=PIs
 
-    cdf = pd.concat([df1])  # CONCATENATE
-    # cdf = pd.concat([df1, df2, df3])  # CONCATENATE
+    if coupled_labels :
+        colors = fun.N_colors(Ncommon)
+        palette = {id: c for id, c in zip(common_ids, colors)}
+        pair_dfs=[]
+        for pair_id in pair_ids :
+            paired_group_ids=[f'{pair_id}_{common_id}' for common_id in common_ids]
+            pair_PIs=[all_PIs_dict[id] for id in paired_group_ids]
+            pair_PI_array = fun.boolean_indexing(pair_PIs).T
+            pair_df = pd.DataFrame(pair_PI_array, columns=common_ids).assign(Trial=pair_id)
+            pair_dfs.append(pair_df)
+            cdf = pd.concat(pair_dfs)  # CONCATENATE
+
+    else :
+        colors = fun.N_colors(Ngroups)
+        palette = {id: c for id, c in zip(group_ids, colors)}
+        PI_array = fun.boolean_indexing(all_PIs).T
+        df = pd.DataFrame(PI_array, columns=group_ids).assign(Trial=1)
+        cdf = pd.concat([df])  # CONCATENATE
     mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Group'])  # MELT
 
-    # print(mdf.head())
-    fig, ax = plt.subplots()
-    sns.boxplot(x="Trial", y="value", hue="Group", data=mdf, palette=palette, ax=ax)  # RUN PLOT
+    fig, ax = plt.subplots(1, 1, figsize=(8, 5))
+    sns.boxplot(x="Trial", y="value", hue="Group", data=mdf, palette=palette, ax=ax, width=.5,
+                fliersize=3, linewidth=None,whis=1.0)  # RUN PLOT
     ax.set_ylabel('Odor preference')
     ax.set_xlabel(xlabel)
     ax.set_ylim([-1, 1])
-    # plt.show()
-    # fig, axs = plt.subplots(2, 1, figsize=(20, 20), sharex=True, sharey=True)
+    ax.legend(loc='lower left', fontsize=12)
+    fig.subplots_adjust(top=0.9, bottom=0.15, left=0.2, right=0.9, hspace=.005, wspace=0.05)
     return process_plot(fig, save_to, filename, return_fig, show)
 
 def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False, show=False):

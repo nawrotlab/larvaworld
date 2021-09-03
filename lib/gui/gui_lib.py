@@ -1309,7 +1309,7 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
     N = len(raw_dic)
     if N == 0:
         return proc_dir
-    w_size = (1400, 800)
+    w_size = (1200, 800)
     h_kws = {
         'font': ('Helvetica', 8, 'bold'),
         'justification': 'center',
@@ -1317,18 +1317,16 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
     b_merged = named_bool_button(name=M, state=False, toggle_name=None)
     b_num = named_bool_button(name=E, state=False, toggle_name=None, input_key=E0, input_text='dish')
     group_id=[sg.T('Group ID :', **t_kws(8)), sg.In(k='import_group_id', **t_kws(14))]
-    l00 = sg.Col([[                   *group_id,
-                   *b_merged,
-                   *b_num],
+    l00 = sg.Col([[*group_id,*b_merged,*b_num],
                   [sg.T('RAW DATASETS', **h_kws, **t_kws(30)),sg.T('NEW DATASETS', **h_kws, **t_kws(30))]])
     l01 = sg.Col([
         [sg.T(id, **t_kws(30)), sg.T('  -->  ', **t_kws(8)), sg.In(default_text=id, k=f'new_{id}', **t_kws(30))] for id in
         list(raw_dic.keys())],
         vertical_scroll_only=True, scrollable=True, expand_y=True, vertical_alignment='top',
-        size=col_size(y_frac=0.5, win_size=w_size))
+        size=col_size(y_frac=0.4, win_size=w_size))
 
     s1 = CollapsibleDict('build_conf', True, default=True, disp_name='Configuration', text_kws=t_kws(24),
-                         value_kws=t_kws(5))
+                         value_kws=t_kws(8))
     c = {}
     for s in [s1]:
         c.update(**s.get_subdicts())
@@ -1380,7 +1378,11 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
                         else:
                             names = [fdir]
                         dd = build_datasets(ids=[new_id], names=names, raw_folders=[fdir], **kws)[0]
-                        proc_dir[dd.id] = dd
+                        if dd is not None :
+                            proc_dir[new_id] = dd
+                        else :
+                            del proc_dir[new_id]
+
                 else:
                     print(f'------ Building a single merged dataset ------')
                     id0 = f'{list(raw_dic.keys())[0]}'

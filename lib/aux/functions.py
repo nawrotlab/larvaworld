@@ -1363,4 +1363,9 @@ def value_list(start=0.0,end=1.0, integer=False, steps=100, decimals=2, allow_No
     else :
         return a.tolist()
 
-
+def boolean_indexing(v, fillval=np.nan):
+    lens = np.array([len(item) for item in v])
+    mask = lens[:,None] > np.arange(lens.max())
+    out = np.full(mask.shape,fillval)
+    out[mask] = np.concatenate(v)
+    return out

@@ -218,8 +218,20 @@ def process(s,e,dt,Npoints,Ncontour, point, config=None,
         if types['tortuosity'] and type(tor_durs)==list:
             compute_tortuosity(s, e, dt, durs_in_sec=tor_durs, **kwargs)
         if types['PI']:
-            px = 'x' if 'x' in e.keys() else nam.final('x')
-            xs = e[px].values
+            if 'x' in e.keys() :
+                px = 'x'
+                xs = e[px].values
+            elif nam.final('x') in e.keys() :
+                px = nam.final('x')
+                xs = e[px].values
+            elif 'x' in s.keys() :
+                px = 'x'
+                xs = s[px].dropna().groupby('AgentID').last().values
+            elif 'centroid_x' in s.keys() :
+                px = 'centroid_x'
+                xs = s[px].dropna().groupby('AgentID').last().values
+            else :
+                raise ValueError ('No x coordinate found')
             PI, N, N_l, N_r = compute_preference_index(xs=xs, arena_xdim=config['arena_xdim'], return_num=True, return_all=True)
             config['PI']={'PI':PI, 'N':N, 'N_l':N_l, 'N_r':N_r}
         if traj_colors :
