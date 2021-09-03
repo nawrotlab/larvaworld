@@ -28,9 +28,9 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
 
     ds = get_datasets(datagroup_id=datagroup_id, last_common='processed', names=names,
                       folders=folders, suffixes=suffixes, mode='initialize', ids=ids, arena_pars=arena_pars)
-    print()
-    print(f'------ Building {len(ds)} datasets ------')
-    print()
+    # print()
+    # print(f'------ Building {len(ds)} datasets ------')
+    # print()
     for d, raw in zip(ds, raw_folders):
         if conf_id == 'JovanicConf':
             step, end = build_Jovanic(d, build_conf, source_dir=f'{g.raw_dir}/{raw}',**kwargs)
@@ -50,9 +50,9 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
         d.num_ticks = d.step_data.index.unique('Step').size
         d.starting_tick = d.step_data.index.unique('Step')[0]
         print(f'--- Dataset {d.id} created with {len(d.agent_ids)} larvae! ---')
-    print()
-    print(f'------ {len(ds)} datasets built------')
-    print()
+    # print()
+    # print(f'------ {len(ds)} datasets built------')
+    # print()
     return ds
 
 
@@ -95,7 +95,6 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
 
 
 def enrich_datasets(datagroup_id, datasets=None, names=None, keep_raw=False, enrich_conf=None, **kwargs):
-
     warnings.filterwarnings('ignore')
     if datasets is None and names is not None :
         datasets = get_datasets(datagroup_id, last_common='processed', names=names, mode='load', **kwargs)
@@ -110,7 +109,7 @@ def enrich_datasets(datagroup_id, datasets=None, names=None, keep_raw=False, enr
     print(f'------ Enriching {len(datasets)} datasets ------')
     print()
     ds = [d.enrich(**enrich_conf, **kwargs) for d in datasets]
-    print()
+    # print()
     print(f'------ {len(ds)} datasets enriched ------')
     print()
     return ds
@@ -165,7 +164,7 @@ def compute_PIs(datagroup_id, save_to=None, **kwargs):
     print(f'PIs saved as {filename}')
 
 
-def detect_dataset(datagroup_id, folder_path,raw=True, **kwargs):
+def detect_dataset(datagroup_id=None, folder_path=None,raw=True, **kwargs):
     dic={}
     if raw :
         # ids, dirs = [], []
@@ -278,16 +277,41 @@ if __name__ == "__main__":
     # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc'
     # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High'
     # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High/AM+'
-    # folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/High/EM+/full_dish'
+    folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/test/high_AM_160sec'
+    # folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/test/high_AM_160sec'
+    d = LarvaDataset(dir=folder_path)
     # ids=detect_dataset(datagroup_id='SchleyerGroup', folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High/box1-2016-05-23_12_41_17')
     # ids, dirs = detect_dataset(datagroup_id='SchleyerGroup', folder_path=folder_path, full_ID=True)
     # print(os.listdir(folder_path))
     # print(ids)
-    print()
+    from lib.anal.plotting import plot_endpoint_params
+    plot_endpoint_params(datasets=[d], labels=None, mode='basic', par_shorts=['l', 'fsv', 'sv_mu', 'str_sd_mu'], subfolder='endpoint',
+                         save_to=None, save_as=None, save_fits_as=None, return_fig=False, show=True)
+    # print()
     # print(dirs)
     # dr = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/High/AM+/box1-2016-05-23_12_41_17'
     # d = LarvaDataset(dir=dr)
+    # par_shorts = ['l_mu',
+                  # 'fsv', 'sv_mu', 'str_sd_mu',
+                  # 'cum_t', 'str_tr', 'pau_tr', 'tor',
+                  # 'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
+                  # 'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'
+                  # ]
+    # from lib.conf.par import getPar
+    # pars, = getPar(par_shorts, to_return=['d'])
+    # pars = [p for p in pars if all([p in d.endpoint_data.columns for d in [d]])]
+    # symbols, exp_symbols, xlabels, xlims, disps = getPar(par_shorts, to_return=['s', 's', 'l', 'lim', 'd'])
+    # print(pars)
     # s,e=d.step_data, d.endpoint_data
+    # print(e['length'].mean())
+    # print(e['length_mean'].mean())
+    import matplotlib.pyplot as plt
+    # plt.hist(e['length'])
+    # plt.show()
+    # print(s.columns)
+    # f=d.config['filtered_at']
+    # print(f in [np.nan, None, 'None'])
+    # print(np.isnan(f))
     # k=os.path.exists(d.dir_dict['conf'])
     # print(k)
     #

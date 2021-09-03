@@ -10,6 +10,7 @@ from lib.stor import paths
 from lib.anal.plotting import graph_dict
 from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.dtype_dicts as dtypes
+from lib.stor.managing import detect_dataset
 
 
 class AnalysisTab(GuiTab):
@@ -66,14 +67,15 @@ class AnalysisTab(GuiTab):
         v0, vD = v[k0], v[kD]
         if e == kD:
             if vD != '':
-                if os.path.exists(f'{vD}/data'):
-                    dd = LarvaDataset(dir=vD)
-                    self.base_dict[dd.id] = dd
-                else:
-                    for ddr in [x[0] for x in os.walk(vD)]:
-                        if os.path.exists(f'{ddr}/data'):
-                            dd = LarvaDataset(dir=ddr)
-                            self.base_dict[dd.id] = dd
+                self.base_dict.update(detect_dataset(folder_path = vD, raw=False))
+                # if os.path.exists(f'{vD}/data'):
+                #     dd = LarvaDataset(dir=vD)
+                #     self.base_dict[dd.id] = dd
+                # else:
+                #     for ddr in [x[0] for x in os.walk(vD)]:
+                #         if os.path.exists(f'{ddr}/data'):
+                #             dd = LarvaDataset(dir=ddr)
+                #             self.base_dict[dd.id] = dd
                 w.Element(k0).Update(values=list(self.base_dict.keys()))
 
         elif e == 'Add ref':

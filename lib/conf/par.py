@@ -980,9 +980,11 @@ if __name__ == '__main__':
     #     p = getPar(short, to_return=['d'])[0]
     #     print(p)
     dic=build_par_dict()
-    print(runtime_pars)
+    # print(dic.keys())
+    # print(runtime_pars)
     # dic=load_ParDict()
-    # print(getPar(k='bv'))
+    print(getPar(k='l_mu'))
+    print(getPar(k='l'))
     # print(dic['b'])
     # print(dic['D_olf'])
     # d,u=getPar('cum_d', to_return=['d', 'u'])

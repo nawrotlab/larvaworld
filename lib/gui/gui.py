@@ -6,7 +6,7 @@ from lib.gui.batch_tab import BatchTab
 from lib.gui.env_tab import EnvTab
 from lib.gui.essay_tab import EssayTab
 from lib.gui.life_tab import LifeTab
-from lib.gui.preprocess_tab import PreprocessTab
+from lib.gui.import_tab import ImportTab
 from lib.gui.sim_tab import SimTab
 from lib.gui.tab import IntroTab, VideoTab, TutorialTab
 from lib.gui.model_tab import ModelTab
@@ -31,7 +31,7 @@ class LarvaworldGui:
             'essay': (EssayTab, 'Essay', 'essay_conf'),
             'batch-run': (BatchTab, 'Batch', 'batch_conf'),
             'analysis': (AnalysisTab, None, None),
-            'groups': (PreprocessTab, 'Group', None),
+            'import': (ImportTab, 'Group', None),
             'videos': (VideoTab, None, None),
             'settings': (SettingsTab, None, None)
         }

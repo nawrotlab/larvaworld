@@ -72,18 +72,15 @@ def annotate(s, e, dt, Npoints, point, config=None,
         'stride_p_dir': stride_p_dir,
     }
     with fun.suppress_stdout(show_output):
-        if type(bouts) == list:
-            if bouts['stride']:
-                detect_strides(**c, non_chunks=non_chunks,vel_par=vel_par,chunk_pars=chunk_pars, **kwargs)
-            if bouts['pause']:
-            # if 'pause' in bouts:
-                detect_pauses(**c,vel_par=vel_par, **kwargs)
-            if bouts['turn']:
-            # if 'turn' in bouts:
-                detect_turns(**c,ang_vel_par=ang_vel_par, bend_vel_par=bend_vel_par,min_ang=min_ang, **kwargs)
-            if source is not None :
-                for b in bouts :
-                    compute_chunk_bearing2source(s, b, source=source, distro_dir=distro_dir)
+        if bouts['stride']:
+            detect_strides(**c, non_chunks=non_chunks,vel_par=vel_par,chunk_pars=chunk_pars, **kwargs)
+        if bouts['pause']:
+            detect_pauses(**c,vel_par=vel_par, **kwargs)
+        if bouts['turn']:
+            detect_turns(**c,ang_vel_par=ang_vel_par, bend_vel_par=bend_vel_par,min_ang=min_ang, **kwargs)
+        if source is not None :
+            for b in bouts :
+                compute_chunk_bearing2source(s, b, source=source, distro_dir=distro_dir)
     return s,e
 
 

@@ -1,6 +1,7 @@
 import numpy as np
 from lib.aux import naming as nam
 import lib.conf.env_conf as env
+import lib.conf.dtype_dicts as dtypes
 
 PaisiosParConf = {'bend': 'from_vectors',
                   'front_vector': (2,4),
@@ -118,7 +119,7 @@ SchleyerEnrichConf = {'preprocessing': {
                    'mode': 'minimal',
                    'source': None,
                    },
-# 'to_drop': [],
+'to_drop': dtypes.get_dict('to_drop'),
 }
 
 SchleyerConf = {'id': 'SchleyerConf',
@@ -163,7 +164,7 @@ JovanicEnrichConf = {
                    'mode': 'minimal',
                    'source': None,
                    },
-# 'to_drop': [],
+'to_drop': dtypes.get_dict('to_drop'),
 }
 
 

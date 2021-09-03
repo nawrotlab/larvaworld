@@ -97,8 +97,8 @@ def compute_freq(s, e, dt, parameters, freq_range=None, compare_params=False):
 
 def filter(s, dt, Npoints, config=None, freq=2, N=1, inplace=True, recompute=False):
     if not recompute and config is not None :
-        if config['filtered_at'] not in [None, np.nan, 'nan'] :
-            prev = config['filtered_at']
+        prev = config['filtered_at']
+        if prev not in [None, np.nan, 'nan'] and not np.isnan(prev):
             print(f'Dataset already filtered at {prev}. If you want to apply additional filter set recompute to True')
             return
     if config is not None :
@@ -126,8 +126,8 @@ def interpolate_nans(s, Npoints, pars=None):
 
 def rescale(s,e, Npoints, config=None, recompute=False, scale=1.0):
     if not recompute and config is not None :
-        if config['rescaled_by'] not in [None, np.nan] :
-            prev = config['rescaled_by']
+        prev = config['rescaled_by']
+        if prev not in [None, np.nan] and not np.isnan(prev):
             print(f'Dataset already rescaled by {prev}. If you want to rescale again set recompute to True')
             return
     if config is not None :
@@ -206,22 +206,17 @@ def process(s,e,dt,Npoints,Ncontour, point, config=None,
     }
 
     with fun.suppress_stdout(show_output):
-        if type(types)==list:
-            if types['angular']:
-            # if 'angular' in types:
-                angular_processing(**c, distro_dir=distro_dir, **kwargs)
-            if types['spatial']:
-            # if 'spatial' in types:
-                spatial_processing(**c, dsp_dir=dsp_dir, **kwargs)
-            if types['source']:
-            # if 'source' in types:
-                if source is not None:
-                    compute_bearingNdst2source(s, e, source=source, **kwargs)
-            if types['dispersion'] and type(dsp_starts)==list and type(dsp_stops)==list:
-                compute_dispersion(s, e, dt, point, starts=dsp_starts, stops=dsp_stops, dir=dsp_dir, **kwargs)
-
-            if types['tortuosity'] and type(tor_durs)==list:
-                compute_tortuosity(s, e, dt, durs_in_sec=tor_durs, **kwargs)
+        if types['angular']:
+            angular_processing(**c, distro_dir=distro_dir, **kwargs)
+        if types['spatial']:
+            spatial_processing(**c, dsp_dir=dsp_dir, **kwargs)
+        if types['source']:
+            if source is not None:
+                compute_bearingNdst2source(s, e, source=source, **kwargs)
+        if types['dispersion'] and type(dsp_starts)==list and type(dsp_stops)==list:
+            compute_dispersion(s, e, dt, point, starts=dsp_starts, stops=dsp_stops, dir=dsp_dir, **kwargs)
+        if types['tortuosity'] and type(tor_durs)==list:
+            compute_tortuosity(s, e, dt, durs_in_sec=tor_durs, **kwargs)
         if traj_colors :
             try :
                 generate_traj_colors(s=s, sp_vel=None, ang_vel=None)

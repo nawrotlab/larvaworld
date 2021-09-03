@@ -16,11 +16,11 @@ from lib.stor.managing import detect_dataset, build_datasets, enrich_datasets
 import lib.aux.functions as fun
 
 
-class PreprocessTab(GuiTab):
+class ImportTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.raw_key = 'raw_data'
-        self.proc_key = 'processed_data'
+        self.proc_key = 'imported_data'
         self.raw_ids_key = f'{self.raw_key}_IDS'
         self.proc_ids_key = f'{self.proc_key}_IDS'
         self.raw_folder = None
@@ -115,7 +115,10 @@ class PreprocessTab(GuiTab):
         for s in [s1]:
             c.update(**s.get_subdicts())
 
-        l = [[sg.Col([l_group.get_layout()] + raw_list + proc_list + s1.get_layout(as_col=False), size=col_size(0.2), **col_kws)]]
+        l = [
+            [sg.Col([l_group.get_layout()] + raw_list + proc_list, size=col_size(0.2), **col_kws)]+
+            s1.get_layout(size=col_size(0.2), **col_kws)
+             ]
         graph_lists = {g.name: g}
         return l, c, graph_lists, dicts
 
@@ -131,12 +134,12 @@ class PreprocessTab(GuiTab):
             dr0 = v[k]
             if dr0 != '':
                 if e == kR:
-                    d[k] = detect_dataset(id0, dr0, raw=True)
+                    d[k].update(detect_dataset(id0, dr0, raw=True))
                     # if len(ids) > 0:
                     #     for id, dr in zip(ids, dirs):
                     #         d[k][id] = dr
                 elif e == kP:
-                    d[k] = detect_dataset(id0, dr0, raw=False)
+                    d[k].update(detect_dataset(id0, dr0, raw=False))
                     # if len(ids) > 0:
                     #     for id, dd in zip(ids, dds):
                     #         # dd=LarvaDataset(dir=dr)
@@ -165,12 +168,11 @@ class PreprocessTab(GuiTab):
             if len(ids) > 0:
                 dd = d[kP][ids[0]]
                 dd.visualize(vis_kwargs=self.gui.get_vis_kwargs(v, mode='video'), **self.gui.get_replay_kwargs(v))
-        # print(c['enrichment'].get_dict(v,w))
         return d, g
 
 
 if __name__ == "__main__":
     from lib.gui.gui import LarvaworldGui
 
-    larvaworld_gui = LarvaworldGui(tabs=['groups'])
+    larvaworld_gui = LarvaworldGui(tabs=['import', 'analysis'])
     larvaworld_gui.run()

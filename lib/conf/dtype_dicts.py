@@ -544,6 +544,9 @@ all_null_dicts = {
                    'mode': 'minimal',
                    'source': None,
                    },
+    'to_drop' : {'groups': {n: False for n in
+                      ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn',
+                       'unused']}},
     'build_conf' : {
 'min_duration_in_sec' : 0.0,
 'max_Nagents' : 1000,
@@ -552,7 +555,7 @@ all_null_dicts = {
 
 }
 all_null_dicts['enrichment'] = {k: all_null_dicts[k] for k in
-                                ['preprocessing', 'processing', 'annotation', 'enrich_aux']}
+                                ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
 
 all_null_dicts['exp_conf'] = {'env_params': None,
                               'sim_params': get_dict('sim_params'),
@@ -837,6 +840,10 @@ def get_dict_dtypes(name, **kwargs):
                        'source': (-100.0, 100.0),
                        # 'source': Tuple[float, float],
                        },
+        'to_drop': {'groups': {n: bool for n in
+                               ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn',
+                                'turn',
+                                'unused']}},
         'build_conf': {
             'min_duration_in_sec': fun.value_list(start=0.0, end=3600.0, steps=36000, decimals=1),
             'max_Nagents': fun.value_list(start=1, end=1000, steps=1000, integer=True),
@@ -844,7 +851,7 @@ def get_dict_dtypes(name, **kwargs):
         'substrate': {k: float for k in substrate_dict['standard'].keys()}
 
     }
-    all_dtypes['enrichment'] = {k: all_dtypes[k] for k in ['preprocessing', 'processing', 'annotation', 'enrich_aux']}
+    all_dtypes['enrichment'] = {k: all_dtypes[k] for k in ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
     all_dtypes['exp_conf'] = {'env_params': str,
                               'sim_params': dict,
                               'life_params': str,

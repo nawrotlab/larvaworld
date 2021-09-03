@@ -2438,37 +2438,34 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
 
     ylim = [0.0, 0.25]
     nbins = 20
-
+    l_par='l' # 'l_mu
     if par_shorts is None:
         if mode == 'basic':
-            par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
+            par_shorts = [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
                           'str_tr', 'pau_tr', 'Ltur_tr', 'Rtur_tr',
-                          'tor20_mu', 'disp40_fin', 'b_mu', 'bv_mu']
+                          'tor20_mu', 'dsp_0_40_fin', 'b_mu', 'bv_mu']
         elif mode == 'minimal':
-            par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
+            par_shorts = [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
                           'cum_t', 'str_tr', 'pau_tr', 'tor',
                           'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
                           'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr']
         elif mode == 'stride_def':
-            par_shorts = ['l_mu', 'fsv', 'str_sd_mu', 'str_sd_std']
+            par_shorts = [l_par, 'fsv', 'str_sd_mu', 'str_sd_std']
         elif mode == 'reorientation':
             par_shorts = ['str_fo_mu', 'str_fo_std', 'tur_fou_mu', 'tur_fou_std']
         elif mode == 'tortuosity':
             par_shorts = ['tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu']
         elif mode == 'result':
             par_shorts = ['sv_mu', 'str_tr', 'pau_tr', 'pau_t_mu']
-
         elif mode == 'limited':
-            par_shorts = ['l_mu', 'fsv', 'sv_mu', 'str_sd_mu',
+            par_shorts = [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
                           'cum_t', 'str_tr', 'pau_tr', 'pau_t_mu',
                           'tor5_mu', 'tor5_std', 'tor20_mu', 'tor20_std',
                           'tor', 'sdsp_mu', 'sdsp_0_40_max', 'sdsp_0_40_fin',
                           'b_mu', 'b_std', 'bv_mu', 'bv_std',
                           'Ltur_tr', 'Rtur_tr', 'Ltur_fou_mu', 'Rtur_fou_mu']
-
         elif mode == 'full':
-
-            par_shorts = ['l_mu', 'str_N', 'fsv',
+            par_shorts = [l_par, 'str_N', 'fsv',
                           'cum_d', 'cum_sd', 'v_mu', 'sv_mu',
                           'str_d_mu', 'str_d_std', 'str_sd_mu', 'str_sd_std',
                           'str_std_mu', 'str_std_std', 'str_sstd_mu', 'str_sstd_std',
@@ -2485,31 +2482,25 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
                           'Ltur_fou_mu', 'Ltur_fou_std', 'Rtur_fou_mu', 'Rtur_fou_std',
                           'b_mu', 'b_std', 'bv_mu', 'bv_std',
                           ]
-
         elif mode == 'deb':
-
             par_shorts = [
                 'deb_f_mu', 'hunger', 'reserve_density', 'puppation_buffer',
                 'cum_d', 'cum_sd', 'str_N', 'fee_N',
                 'str_tr', 'pau_tr', 'fee_tr', 'f_am',
-                'l_mu', 'm'
+                l_par, 'm'
                 # 'tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu',
                 # 'v_mu', 'sv_mu',
 
             ]
-
         else:
             raise ValueError('Provide parameter shortcuts or define a mode')
 
     pars, = getPar(par_shorts, to_return=['d'])
-    # print(pars)
     pars = [p for p in pars if all([p in d.endpoint_data.columns for d in datasets])]
-    # print(pars)
     symbols, exp_symbols, xlabels, xlims, disps = getPar(par_shorts, to_return=['s', 's', 'l', 'lim', 'd'])
 
     if mode == 'stride_def':
         xlims = [[2.5, 4.8], [0.8, 2.0], [0.1, 0.25], [0.02, 0.09]]
-    # raise
     if Ndatasets > 1:
         fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(labels, 2)])
         fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=('dataset1', 'dataset2'))
@@ -2517,7 +2508,6 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
 
     lw = 3
     Npars = len(pars)
-
     Ncols = int(np.min([Npars, 4]))
     Nrows = int(np.ceil(Npars / Ncols))
     fig_s = 5
