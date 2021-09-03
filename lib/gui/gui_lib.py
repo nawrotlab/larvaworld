@@ -756,6 +756,7 @@ def graphic_button(name, key, **kwargs):
         'burn': graphics.Button_Burn,
         'globe_active': graphics.Globe_Active,
         'globe_inactive': graphics.Globe_Inactive,
+        'checkbox_full': graphics.Checkbox_Full,
     }
     c = {'button_color': (sg.theme_background_color(), sg.theme_background_color()),
          'border_width': 0,
@@ -1261,10 +1262,10 @@ class MultiSpin(Pane):
             self.N -= 1
 
 
-def named_bool_button(name, state, toggle_name=None, tt_kws={}, input_key=None, input_text=''):
+def named_bool_button(name, state, toggle_name=None, tt_kws={}, input_key=None, input_text='', **kwargs):
     if toggle_name is None:
         toggle_name = name
-    l = [sg.Text(f'{name} :', **tt_kws), BoolButton(toggle_name, state)]
+    l = [sg.Text(f'{name} :', **tt_kws), BoolButton(toggle_name, state, **kwargs)]
     if input_key is not None:
         l.append(sg.In(input_text, k=input_key, visible=True, **t_kws(14)))
     return l
@@ -1307,6 +1308,13 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
     E0 = f'{E}_id'
     proc_dir = {}
     N = len(raw_dic)
+    raw_ids = list(raw_dic.keys())
+    raw_dirs = list(raw_dic.values())
+    raw_dirs = [fun.remove_prefix(dr, f'{raw_folder}/') for dr in raw_dirs]
+    raw_dirs = [fun.remove_suffix(dr, f'/{id}') for dr, id in zip(raw_dirs, raw_ids)]
+    raw_dirs = fun.unique_list(raw_dirs)
+    groupID0=raw_dirs[0] if len(raw_dirs)==1 else ''
+    # groupID0= else ''
     if N == 0:
         return proc_dir
     w_size = (1200, 800)
@@ -1315,9 +1323,10 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
         'justification': 'center',
     }
     b_merged = named_bool_button(name=M, state=False, toggle_name=None)
-    b_num = named_bool_button(name=E, state=False, toggle_name=None, input_key=E0, input_text='dish')
-    group_id=[sg.T('Group ID :', **t_kws(8)), sg.In(k='import_group_id', **t_kws(14))]
-    l00 = sg.Col([[*group_id,*b_merged,*b_num],
+    b_num = named_bool_button(name=E, state=False, toggle_name=None, disabled=False)
+    # b_num = named_bool_button(name=E, state=False, toggle_name=None, input_key=E0, input_text='dish')
+    group_id=[sg.T('Group ID :', **t_kws(8)), sg.In(default_text=groupID0, k='import_group_id', **t_kws(14))]
+    l00 = sg.Col([[*group_id,*b_num,*b_merged],
                   [sg.T('RAW DATASETS', **h_kws, **t_kws(30)),sg.T('NEW DATASETS', **h_kws, **t_kws(30))]])
     l01 = sg.Col([
         [sg.T(id, **t_kws(30)), sg.T('  -->  ', **t_kws(8)), sg.In(default_text=id, k=f'new_{id}', **t_kws(30))] for id in
@@ -1339,6 +1348,8 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
     w = sg.Window('Build new datasets from raw files', l, size=w_size)
     while True:
         e, v = w.read()
+        gID=v['import_group_id']
+
         if e in (None, 'Exit', 'Cancel'):
             w.close()
             break
@@ -1354,16 +1365,17 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
                     for i, (id, dir) in enumerate(raw_dic.items()):
                         w.Element(f'new_{id}').Update(value=id)
                 else:
-                    v_enum = v[E0]
+                    # v_enum = v['import_group_id']
+                    # v_enum = v[E0]
                     for i, (id, dir) in enumerate(raw_dic.items()):
-                        w.Element(f'new_{id}').Update(value=f'{v_enum}_{i}')
+                        w.Element(f'new_{id}').Update(value=f'{gID}_{i}')
+                        # w.Element(f'new_{id}').Update(value=f'{v_enum}_{i}')
             if e == 'Ok':
                 conf = s1.get_dict(values=v, window=w)
-                # group_ids=v['import_group_id']
                 kws = {
                     'datagroup_id': datagroup_id,
                     'folders': None,
-                    'group_ids': v['import_group_id'],
+                    'group_ids': gID,
                     **conf}
                 w.close()
                 from lib.stor.managing import build_datasets
@@ -1427,7 +1439,6 @@ def enrich_datasets_window(datagroup_id, ds):
                 w.close()
                 from lib.stor.managing import enrich_datasets
                 enrich_datasets(datagroup_id=datagroup_id, datasets=ds, enrich_conf=enrich_conf)
-                # enrich_datasets(datagroup_id=datagroup_id, datasets=ds, enrich_conf=conf)
                 break
     return ds
 

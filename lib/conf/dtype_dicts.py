@@ -548,11 +548,12 @@ all_null_dicts = {
                       ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn',
                        'unused']}},
     'build_conf' : {
-'min_duration_in_sec' : 0.0,
-'min_end_time_in_sec' : 0.0,
-'start_time_in_sec' : 0.0,
+'min_duration_in_sec' : 10.0,
+'min_end_time_in_sec' : 170.0,
+'start_time_in_sec' : 160.0,
 'max_Nagents' : 1000,
-'save_mode': 'semifull'
+'save_mode': 'minimal'
+# 'save_mode': 'semifull'
     },
     'substrate': substrate_dict['standard']
 

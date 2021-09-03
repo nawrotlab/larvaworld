@@ -2,8 +2,11 @@ import os
 
 
 def get_parent_dir():
-    p = os.path.dirname(os.path.abspath(__file__))
-    p = os.path.join(p, '../..')
+    p=os.path.abspath(__file__)
+    p = os.path.dirname(p)
+    p = os.path.dirname(p)
+    p = os.path.dirname(p)
+    # p = os.path.join(p, '../..')
     return p
 
 

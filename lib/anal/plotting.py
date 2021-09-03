@@ -1613,8 +1613,10 @@ def boxplot_PI(datasets, labels=None, subfolder='source', save_as=None,
     group_ids=fun.unique_list([d.config['group_id'] for d in datasets])
     Ngroups=len(group_ids)
     common_ids = fun.unique_list([l.split('_')[-1] for l in group_ids])
+    # common_ids = sorted(common_ids)
     Ncommon = len(common_ids)
     pair_ids = fun.unique_list([l.split('_')[0] for l in group_ids])
+    pair_ids=sorted(pair_ids)
     Npairs = len(pair_ids)
     coupled_labels=True if Ngroups==Npairs*Ncommon else False
 

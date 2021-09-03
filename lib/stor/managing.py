@@ -286,7 +286,8 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
 
 if __name__ == "__main__":
     # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw'
-    folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc'
+    folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/odor_conc'
+    # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/Ntrials'
     # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High'
     # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/High/AM+/High_AM_0'
     # folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/test/high_AM_160sec'

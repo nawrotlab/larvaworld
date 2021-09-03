@@ -54,7 +54,9 @@ class ImportTab(GuiTab):
         kR, kP = self.raw_key, self.proc_key
         dicts = {kR: {}, kP: {}}
 
-        raw_bs = [graphic_button('burn', f'BUILD {kR}', tooltip='Build a dataset from raw files.'),
+        raw_bs = [
+            graphic_button('checkbox_full', f'SELECT_ALL {kR}', tooltip='Select all list elements.'),
+            graphic_button('burn', f'BUILD {kR}', tooltip='Build a dataset from raw files.'),
                   graphic_button('remove', f'REMOVE {kR}', tooltip='Remove a dataset from the analysis list.'),
                   graphic_button('search_add', key=kR, initial_folder=paths.SingleRunFolder, change_submits=True,
                                  enable_events=True,
@@ -70,6 +72,7 @@ class ImportTab(GuiTab):
                                      list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED})
 
         proc_bs = [
+            graphic_button('checkbox_full', f'SELECT_ALL {kP}', tooltip='Select all list elements.'),
             graphic_button('play', f'REPLAY {kP}', tooltip='Replay/Visualize the dataset.'),
             graphic_button('remove', f'REMOVE {kP}', tooltip='Remove a dataset from the analysis list.'),
                    # graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
@@ -97,8 +100,8 @@ class ImportTab(GuiTab):
             c.update(**s.get_subdicts())
 
         l = [
-            [sg.Col([l_group.get_layout()] + raw_list + proc_list, size=col_size(0.2), **col_kws)]+
-            s1.get_layout(size=col_size(0.2), **col_kws)
+            [sg.Col([l_group.get_layout()] + raw_list + proc_list, size=col_size(0.25), **col_kws)]+
+            s1.get_layout(size=col_size(0.25), **col_kws)
              ]
         graph_lists = {g.name: g}
         return l, c, graph_lists, dicts
@@ -124,6 +127,13 @@ class ImportTab(GuiTab):
                     #         # dd=LarvaDataset(dir=dr)
                     #         d[k][dd.id] = dd
                 w.Element(k0).Update(values=list(d[k].keys()))
+        elif e.startswith('SELECT_ALL'):
+            k = e.split()[-1]
+            k0 = f'{k}_IDS'
+            # ids=v[k0]
+            # for i in range(len(ids)) :
+            #     d[k].pop(ids[i], None)
+            w.Element(k0).Update(set_to_index=np.arange(len(d[k])).tolist())
         elif e.startswith('REMOVE'):
             k = e.split()[-1]
             k0 = f'{k}_IDS'
