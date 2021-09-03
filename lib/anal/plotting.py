@@ -2,6 +2,7 @@ import copy
 import heapq
 import itertools
 
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import siunits
@@ -1598,6 +1599,46 @@ def plot_food_amount(datasets, labels=None, save_to=None, save_as=None, filt_amo
     return process_plot(fig, save_to, filename, return_fig, show)
 
 
+def boxplot_PI(datasets, labels=None, subfolder='source', save_as=None,
+               save_to=None, return_fig=False, show=False, xlabel='') :
+    group_ids=fun.unique_list([d.config['group_id'] for d in datasets])
+    Ngroups=len(group_ids)
+    colors = fun.N_colors(Ngroups, as_rgb=False)
+    palette = {id: c for id, c in zip(group_ids, colors)}
+
+    if save_to is None:
+        save_to = datasets[0].dir_dict['comp_plot']
+    if subfolder is not None:
+        save_to = f'{save_to}/{subfolder}'
+    if not os.path.exists(save_to):
+        os.makedirs(save_to)
+    filename = f'PI_boxplot.{suf}' if save_as is None else save_as
+
+    all_PIs = []
+    for group_id in group_ids :
+        group_ds=[d for d in datasets if d.config['group_id']==group_id]
+        PIdicts = [d.config['PI'] for d in group_ds]
+        PIs = [dic['PI'] for dic in PIdicts]
+        all_PIs.append(PIs)
+    PI_array = np.array(all_PIs).T
+    df1 = pd.DataFrame(PI_array, columns=group_ids).assign(Trial=1)
+    # df2 = pd.DataFrame(np.random.randn(5, 5), columns=list(range(1, 6))).assign(Trial=2)
+    # df3 = pd.DataFrame(np.random.randn(5, 5), columns=list(range(1, 6))).assign(Trial=3)
+
+    cdf = pd.concat([df1])  # CONCATENATE
+    # cdf = pd.concat([df1, df2, df3])  # CONCATENATE
+    mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Group'])  # MELT
+
+    # print(mdf.head())
+    fig, ax = plt.subplots()
+    sns.boxplot(x="Trial", y="value", hue="Group", data=mdf, palette=palette, ax=ax)  # RUN PLOT
+    ax.set_ylabel('Odor preference')
+    ax.set_xlabel(xlabel)
+    ax.set_ylim([-1, 1])
+    # plt.show()
+    # fig, axs = plt.subplots(2, 1, figsize=(20, 20), sharex=True, sharey=True)
+    return process_plot(fig, save_to, filename, return_fig, show)
+
 def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False, show=False):
     filename = 'PI_heatmap.pdf'
     print('Creating heatmap')
@@ -2441,16 +2482,16 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
     l_par='l' # 'l_mu
     if par_shorts is None:
         if mode == 'basic':
-            par_shorts = [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
+            par_shorts = [l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
                           'str_tr', 'pau_tr', 'Ltur_tr', 'Rtur_tr',
                           'tor20_mu', 'dsp_0_40_fin', 'b_mu', 'bv_mu']
         elif mode == 'minimal':
-            par_shorts = [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
+            par_shorts = [l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
                           'cum_t', 'str_tr', 'pau_tr', 'tor',
                           'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
                           'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr']
         elif mode == 'stride_def':
-            par_shorts = [l_par, 'fsv', 'str_sd_mu', 'str_sd_std']
+            par_shorts = [l_par, 'fsv', 'sstr_d_mu', 'sstr_d_std']
         elif mode == 'reorientation':
             par_shorts = ['str_fo_mu', 'str_fo_std', 'tur_fou_mu', 'tur_fou_std']
         elif mode == 'tortuosity':
@@ -2458,7 +2499,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
         elif mode == 'result':
             par_shorts = ['sv_mu', 'str_tr', 'pau_tr', 'pau_t_mu']
         elif mode == 'limited':
-            par_shorts = [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
+            par_shorts = [l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
                           'cum_t', 'str_tr', 'pau_tr', 'pau_t_mu',
                           'tor5_mu', 'tor5_std', 'tor20_mu', 'tor20_std',
                           'tor', 'sdsp_mu', 'sdsp_0_40_max', 'sdsp_0_40_fin',
@@ -2467,8 +2508,8 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
         elif mode == 'full':
             par_shorts = [l_par, 'str_N', 'fsv',
                           'cum_d', 'cum_sd', 'v_mu', 'sv_mu',
-                          'str_d_mu', 'str_d_std', 'str_sd_mu', 'str_sd_std',
-                          'str_std_mu', 'str_std_std', 'str_sstd_mu', 'str_sstd_std',
+                          'str_d_mu', 'str_d_std', 'sstr_d_mu', 'sstr_d_std',
+                          'str_std_mu', 'str_std_std', 'sstr_std_mu', 'sstr_std_std',
                           'str_fo_mu', 'str_fo_std', 'str_ro_mu', 'str_ro_std',
                           'str_b_mu', 'str_b_std', 'str_t_mu', 'str_t_std',
                           'cum_t', 'str_tr', 'pau_tr',
@@ -2576,7 +2617,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
                     continue
                 rad = 0.04
                 yy = 0.95 - (z - ii) * 0.08
-                xx = 0.8
+                xx = 0.7
                 dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=axs[i], colors=(c1, c2),
                                  transform=axs[i].transAxes)
                 pv = fit_df[f'P_{p}'].loc[(l1, l2)]
@@ -2590,10 +2631,10 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
                 axs[i].text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k', fontsize=15,
                             transform=axs[i].transAxes)
 
-    plt.subplots_adjust(wspace=0.02, hspace=0.15 * Nrows, left=0.07, right=0.97, top=1 - (0.1 / Nrows),
-                        bottom=0.15 / Nrows)
+    plt.subplots_adjust(wspace=0.1, hspace=0.2 * Nrows, left=0.1, right=0.97, top=1 - (0.1 / Nrows),
+                        bottom=0.17 / Nrows)
     plt.ylim(ylim)
-    axs[0].legend(loc='upper left', prop={'size': 20})
+    axs[0].legend(loc='upper left', prop={'size': 15})
     if Ndatasets > 1:
         fit_df.to_csv(fit_filepath, index=True, header=True)
     return process_plot(fig, save_to, filename, return_fig, show)
@@ -3530,6 +3571,7 @@ graph_dict = {
     'C odor (perceived)': plot_sensed_odor_concentration,
     'navigation index': plot_navigation_index,
     'Y pos': plot_Y_pos,
+    'PI (boxplot)': boxplot_PI,
     'pathlength': plot_pathlength,
     'food intake (timeplot)': plot_food_amount,
     'gut': plot_gut,

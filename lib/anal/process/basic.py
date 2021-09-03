@@ -7,7 +7,7 @@ import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.process.angular import angular_processing
 from lib.anal.process.spatial import spatial_processing, compute_bearingNdst2source, compute_dispersion, \
-    compute_tortuosity
+    compute_tortuosity, compute_preference_index
 from lib.conf.par import getPar
 
 
@@ -190,7 +190,7 @@ def generate_traj_colors(s, sp_vel=None, ang_vel=None):
     return s
 
 def process(s,e,dt,Npoints,Ncontour, point, config=None,
-            types={'angular':True, 'spatial':True, 'source':True, 'dispersion':True, 'tortuosity':True},
+            types={'angular':True, 'spatial':True, 'source':True, 'dispersion':True, 'tortuosity':True, 'PI':True},
             mode='minimal',traj_colors=True,
             distro_dir=None, dsp_dir=None, show_output=True,
             source=None,dsp_starts=[0], dsp_stops=[40], tor_durs=[2, 5, 10, 20],  **kwargs):
@@ -217,6 +217,11 @@ def process(s,e,dt,Npoints,Ncontour, point, config=None,
             compute_dispersion(s, e, dt, point, starts=dsp_starts, stops=dsp_stops, dir=dsp_dir, **kwargs)
         if types['tortuosity'] and type(tor_durs)==list:
             compute_tortuosity(s, e, dt, durs_in_sec=tor_durs, **kwargs)
+        if types['PI']:
+            px = 'x' if 'x' in e.keys() else nam.final('x')
+            xs = e[px].values
+            PI, N, N_l, N_r = compute_preference_index(xs=xs, arena_xdim=config['arena_xdim'], return_num=True, return_all=True)
+            config['PI']={'PI':PI, 'N':N, 'N_l':N_l, 'N_r':N_r}
         if traj_colors :
             try :
                 generate_traj_colors(s=s, sp_vel=None, ang_vel=None)

@@ -4,10 +4,10 @@ import lib.conf.env_conf as env
 import lib.conf.dtype_dicts as dtypes
 
 PaisiosParConf = {'bend': 'from_vectors',
-                  'front_vector': (2,4),
+                  'front_vector': (2, 4),
                   # 'front_vector_start': 2,
                   # 'front_vector_stop': 4,
-                  'rear_vector_start': (7,11),
+                  'rear_vector_start': (7, 11),
                   # 'rear_vector_start': 7,
                   # 'rear_vector_stop': 11,
                   'front_body_ratio': 0.5,
@@ -16,10 +16,10 @@ PaisiosParConf = {'bend': 'from_vectors',
                   'scaled_vel_threshold': 0.2}
 
 SinglepointParConf = {'bend': None,
-                      'front_vector': (None,None),
+                      'front_vector': (None, None),
                       # 'front_vector_start': None,
                       # 'front_vector_stop': None,
-                      'rear_vector': (None,None),
+                      'rear_vector': (None, None),
                       # 'rear_vector_start': None,
                       # 'rear_vector_stop': None,
                       'front_body_ratio': None,
@@ -28,10 +28,10 @@ SinglepointParConf = {'bend': None,
                       'scaled_vel_threshold': None}
 
 SchleyerParConf = {'bend': 'from_angles',
-                   'front_vector': (1,2),
+                   'front_vector': (1, 2),
                    # 'front_vector_start': 1,
                    # 'front_vector_stop': 2,
-                   'rear_vector': (7,11),
+                   'rear_vector': (7, 11),
                    # 'rear_vector_start': 7,
                    # 'rear_vector_stop': 11,
                    'front_body_ratio': 0.5,
@@ -40,10 +40,10 @@ SchleyerParConf = {'bend': 'from_angles',
                    'scaled_vel_threshold': 0.2}
 
 JovanicParConf = {'bend': 'from_angles',
-                  'front_vector': (2,3),
+                  'front_vector': (2, 3),
                   # 'front_vector_start': 2,
                   # 'front_vector_stop': 3,
-                  'rear_vector': (7,8),
+                  'rear_vector': (7, 8),
                   # 'rear_vector_start': 7,
                   # 'rear_vector_stop': 8,
                   'front_body_ratio': 0.5,
@@ -52,10 +52,10 @@ JovanicParConf = {'bend': 'from_angles',
                   'scaled_vel_threshold': 0.2}
 
 SimParConf = {'bend': 'from_angles',
-              'front_vector': (1,2),
+              'front_vector': (1, 2),
               # 'front_vector_start': 1,
               # 'front_vector_stop': 2,
-              'rear_vector': (-2,-1),
+              'rear_vector': (-2, -1),
               # 'rear_vector_start': -2,
               # 'rear_vector_stop': -1,
               'point_idx': np.nan,
@@ -102,16 +102,17 @@ Schleyer_raw_cols = ['Step'] + \
 
 Sims_raw_cols = ['Step'] + nam.xy('centroid')
 
-SchleyerEnrichConf = {'preprocessing': {
-        'rescale_by': 1.0,
-        'drop_collisions': True,
-        'interpolate_nans': False,
-        'filter_f': 2.0
-    },
-    'processing': {'types': {'angular':True, 'spatial':True, 'source':False, 'dispersion':True, 'tortuosity':True},
+SchleyerEnrichConf = {
+    'preprocessing': {
+    'rescale_by': 1.0,
+    'drop_collisions': True,
+    'interpolate_nans': False,
+    'filter_f': 2.0
+},
+    'processing': {'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': True, 'tortuosity': True, 'PI':True},
                    'dsp_starts': [0, 20], 'dsp_stops': [40, 80, 120],
                    'tor_durs': [2, 5, 10, 20]},
-    'annotation': {'bouts': {'stride':True, 'pause':True, 'turn':True}, 'track_point': None,
+    'annotation': {'bouts': {'stride': True, 'pause': True, 'turn': True}, 'track_point': None,
                    'track_pars': None, 'chunk_pars': None,
                    'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 5.0,
                    'non_chunks': False},
@@ -119,7 +120,9 @@ SchleyerEnrichConf = {'preprocessing': {
                    'mode': 'minimal',
                    'source': None,
                    },
-'to_drop': dtypes.get_dict('to_drop'),
+    'to_drop': dtypes.get_dict('to_drop', groups={**{n: True for n in
+                                                   ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
+                                                    'Rturn', 'turn', 'unused']}, **{'midline': False, 'contour': False}}),
 }
 
 SchleyerConf = {'id': 'SchleyerConf',
@@ -136,8 +139,8 @@ SchleyerGroup = {
     'arena_pars': env.dish(0.15),
     'subgroups': ['no_odor', 'Ntrials', 'odor_conc', 'FRU_conc', 'new-reward-punishment'],
     'detect': {
-        'folder' : {'pref' : 'box', 'suf' : None},
-        'file' : {'pref' : None, 'suf' : None, 'sep' : None}
+        'folder': {'pref': 'box', 'suf': None},
+        'file': {'pref': None, 'suf': None, 'sep': None}
     }
 }
 
@@ -145,18 +148,17 @@ JovanicDataConf = {'fr': 11.27,
                    'Npoints': 11,
                    'Ncontour': 0}
 
-
 JovanicEnrichConf = {
-'preprocessing': {
+    'preprocessing': {
         'rescale_by': 1.0,
         'drop_collisions': False,
         'interpolate_nans': False,
         'filter_f': 2.0
     },
-    'processing': {'types': {'angular':True, 'spatial':True, 'source':False, 'dispersion':True, 'tortuosity':True},
+    'processing': {'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': True, 'tortuosity': True, 'PI':False},
                    'dsp_starts': [0, 20], 'dsp_stops': [40, 80, 120],
                    'tor_durs': [2, 5, 10, 20]},
-    'annotation': {'bouts': {'stride':True, 'pause':True, 'turn':True}, 'track_point': None,
+    'annotation': {'bouts': {'stride': True, 'pause': True, 'turn': True}, 'track_point': None,
                    'track_pars': None, 'chunk_pars': None,
                    'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 5.0,
                    'non_chunks': False},
@@ -164,9 +166,8 @@ JovanicEnrichConf = {
                    'mode': 'minimal',
                    'source': None,
                    },
-'to_drop': dtypes.get_dict('to_drop'),
+    'to_drop': dtypes.get_dict('to_drop'),
 }
-
 
 JovanicConf = {'id': 'JovanicConf',
                'data': JovanicDataConf,
@@ -183,9 +184,9 @@ JovanicGroup = {
     'subgroups': ['AttP2@UAS_TNT', 'AttP240@UAS_TNT', 'FoodPatches'],
     'conditions': ['Fed', 'ProteinDeprived', 'Starved'],
     'arena_pars': env.arena(0.193, 0.193),
-'detect': {
-        'folder' : {'pref' : None, 'suf' : None},
-        'file' : {'pref' : None, 'suf' : 'larvaid.txt', 'sep' : '_'}
+    'detect': {
+        'folder': {'pref': None, 'suf': None},
+        'file': {'pref': None, 'suf': 'larvaid.txt', 'sep': '_'}
     }
 }
 

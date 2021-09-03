@@ -6,7 +6,7 @@ import numpy as np
 
 import lib.conf.dtype_dicts as dtypes
 
-from lib.gui.gui_lib import CollapsibleDict, GraphList, graphic_button, col_kws, col_size, t8_kws, named_list_layout
+from lib.gui.gui_lib import CollapsibleDict, GraphList, graphic_button, col_kws, col_size, named_list_layout, t_kws
 from lib.gui.tab import GuiTab, SelectionList
 from lib.sim.single_run import run_essay
 from lib.sim.analysis import essay_analysis
@@ -19,9 +19,10 @@ class EssayTab(GuiTab):
         super().__init__(**kwargs)
         self.essay_exps_key = 'Essay_exps'
         self.exp_figures_key = 'Essay_exp_figures'
+        self.canvas_size = (1000, 500)
 
     def build(self):
-        s1 = CollapsibleDict('essay_params', True, default=True, disp_name='Configuration', text_kws=t8_kws)
+        s1 = CollapsibleDict('essay_params', True, default=True, disp_name='Configuration', text_kws=t_kws(8))
         l_essay = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'],
                                 # progress=True,
                                 # sublists={'env_params': l_env, 'life_params' : l_life}
@@ -31,9 +32,8 @@ class EssayTab(GuiTab):
         l_exps = named_list_layout(text='Experiments', key=self.essay_exps_key, choices=[], drop_down=False,
                                    single_line=False, next_to_header=next_to_header)
         self.selectionlists = {sl.conftype : sl for sl in [l_essay]}
-        g1 = GraphList(self.name, list_header='Simulation results', canvas_size=(1000, 500))
-        g2 = GraphList(self.exp_figures_key, list_header='Experiment data', canvas_size=(1000, 500),
-                       fig_dict={})
+        g1 = GraphList(self.name, list_header='Simulated', canvas_size=self.canvas_size)
+        g2 = GraphList(self.exp_figures_key, list_header='Observed', canvas_size=self.canvas_size,fig_dict={})
         l_conf = [[sg.Col([
             *[i.get_layout() for i in [l_essay, s1]],
             [l_exps]

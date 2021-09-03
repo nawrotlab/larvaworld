@@ -3,8 +3,7 @@ import PySimpleGUI as sg
 import numpy as np
 # from tkinter import *
 
-from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, t10_kws, t16_kws, default_run_window, \
-    w_kws, named_list_layout, col_size, col_kws, change_dataset_id
+from lib.gui.gui_lib import ButtonGraphList, graphic_button, named_list_layout, col_size, col_kws, change_dataset_id
 from lib.gui.tab import GuiTab
 from lib.stor import paths
 from lib.anal.plotting import graph_dict
@@ -16,6 +15,10 @@ from lib.stor.managing import detect_dataset
 class AnalysisTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        col_frac = 0.2
+        self.canvas_size = col_size(x_frac=1 - 2 * col_frac, y_frac=0.8)
+        self.canvas_col_size = col_size(x_frac=1 - 2 * col_frac)
+        self.col_size=col_size(col_frac)
 
     # def change_dataset_id(self,w, v, dic, k0):
     #     # k0 = 'DATASET_IDS'
@@ -38,6 +41,7 @@ class AnalysisTab(GuiTab):
     # return data
 
     def build(self):
+
         dicts = {self.name: {}}
 
         bs=[graphic_button('remove', 'Remove', tooltip='Remove a dataset from the analysis list.'),
@@ -54,11 +58,11 @@ class AnalysisTab(GuiTab):
 
 
 
-        g = ButtonGraphList(name=self.name, fig_dict=graph_dict,
-                            canvas_col_kws={'size': col_size(0.6), 'scrollable': True, **col_kws})
-        l = [[sg.Col(data_list, size=col_size(0.2), **col_kws),
+        g = ButtonGraphList(name=self.name, fig_dict=graph_dict,canvas_size=self.canvas_size,
+                            canvas_col_kws={'size': self.canvas_col_size, 'scrollable': True, **col_kws})
+        l = [[sg.Col(data_list, size=self.col_size, **col_kws),
               g.canvas,
-              sg.Col(g.get_layout(as_col=False), size=col_size(0.2), **col_kws)]]
+              g.get_layout(size=self.col_size, **col_kws)]]
         gs = {g.name: g}
         return l, {}, gs, dicts
 
@@ -68,14 +72,6 @@ class AnalysisTab(GuiTab):
         if e == kD:
             if vD != '':
                 self.base_dict.update(detect_dataset(folder_path = vD, raw=False))
-                # if os.path.exists(f'{vD}/data'):
-                #     dd = LarvaDataset(dir=vD)
-                #     self.base_dict[dd.id] = dd
-                # else:
-                #     for ddr in [x[0] for x in os.walk(vD)]:
-                #         if os.path.exists(f'{ddr}/data'):
-                #             dd = LarvaDataset(dir=ddr)
-                #             self.base_dict[dd.id] = dd
                 w.Element(k0).Update(values=list(self.base_dict.keys()))
 
         elif e == 'Add ref':
@@ -92,7 +88,8 @@ class AnalysisTab(GuiTab):
             if len(v0) > 0:
                 dd = self.base_dict[v0[0]]
                 dd.visualize(vis_kwargs=self.gui.get_vis_kwargs(v), **self.gui.get_replay_kwargs(v))
-
+        elif e == f'{self.name}_REFRESH_FIGS':
+            self.graph_list.refresh_figs(w, self.base_dict)
         elif e == f'{self.name}_SAVE_FIG':
             self.graph_list.save_fig()
         elif e == f'{self.name}_FIG_ARGS':

@@ -5,9 +5,7 @@ import numpy as np
 import PySimpleGUI as sg
 import lib.conf.dtype_dicts as dtypes
 import lib.aux.functions as fun
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, CollapsibleTable, col_kws, col_size, t40_kws, b_kws, t5_kws, \
-    color_pick_layout, graphic_button, t2_kws, GraphList, retrieve_dict
-from lib.gui.draw_env import draw_env, build_draw_env
+from lib.gui.gui_lib import CollapsibleDict, Collapsible, CollapsibleTable, col_kws, col_size, color_pick_layout, graphic_button, GraphList, retrieve_dict, t_kws
 from lib.conf.conf import loadConf
 from lib.gui.tab import GuiTab, SelectionList
 
@@ -147,11 +145,11 @@ class EnvTab(GuiTab):
             collapsibles.update(ss.get_subdicts())
 
         l = [[sg.R(f'Add {n0}', 1, k=n, enable_events=True)],
-             [sg.T('', **t2_kws),sg.R('single id', 2, disabled=True, k=s, enable_events=True, **t5_kws),sg.In(n, k=s0)],
-             [sg.T('', **t2_kws), sg.R('group id', 2, disabled=True, k=g, enable_events=True, **t5_kws),sg.In(k=g0)],
+             [sg.T('', **t_kws(2)),sg.R('single id', 2, disabled=True, k=s, enable_events=True, **t_kws(5)),sg.In(n, k=s0)],
+             [sg.T('', **t_kws(2)), sg.R('group id', 2, disabled=True, k=g, enable_events=True, **t_kws(5)),sg.In(k=g0)],
              color_pick_layout(n, color),
-             [sg.T('', **t5_kws), *s1.get_layout()],
-             [sg.T('', **t5_kws), *s2.get_layout()]]
+             [sg.T('', **t_kws(5)), *s1.get_layout()],
+             [sg.T('', **t_kws(5)), *s2.get_layout()]]
         return l, collapsibles
 
     def build_draw_env(self):
@@ -184,13 +182,13 @@ class EnvTab(GuiTab):
         bw=f'{b}_width'
         col2 = [
             *larva_l, *source_l,
-            [sg.T('', **t5_kws), *s2.get_layout()],
-            [sg.T('', **t5_kws), sg.T('shape', **t5_kws),
+            [sg.T('', **t_kws(5)), *s2.get_layout()],
+            [sg.T('', **t_kws(5)), sg.T('shape', **t_kws(5)),
              sg.Combo(['rect', 'circle'], default_value='circle', k='SOURCE_shape', enable_events=True, readonly=True)],
 
             [sg.R('Add Border', 1, k=b, enable_events=True)],
-            [sg.T('', **t5_kws), sg.T('id', **t5_kws), sg.In(b, k=b0)],
-            [sg.T('', **t5_kws), sg.T('width', **t5_kws), sg.In(0.001, k=bw)],
+            [sg.T('', **t_kws(5)), sg.T('id', **t_kws(5)), sg.In(b, k=b0)],
+            [sg.T('', **t_kws(5)), sg.T('width', **t_kws(5)), sg.In(0.001, k=bw)],
             color_pick_layout(b, 'black'),
 
             [sg.R('Erase item', 1, k='-ERASE-', enable_events=True)],
@@ -210,8 +208,8 @@ class EnvTab(GuiTab):
         col1 = [
             # s1.get_layout(),
             [g1.canvas],
-            [sg.T('Hints : '), sg.T('', k='info', **t40_kws)],
-            [sg.T('Actions : '), sg.T('', k='out', **t40_kws)],
+            [sg.T('Hints : '), sg.T('', k='info', **t_kws(40))],
+            [sg.T('Actions : '), sg.T('', k='out', **t_kws(40))],
         ]
         l = sg.Col([[sg.Col(col1, **col_kws), sg.Col(col2, **col_kws)]], **col_kws, size=col_size(0.75))
 

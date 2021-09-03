@@ -3,8 +3,7 @@ import threading
 import PySimpleGUI as sg
 
 from lib.anal.combining import render_mpl_table
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, named_bool_button, GraphList, t10_kws, t18_kws, \
-    CollapsibleTable, col_kws, col_size, named_list_layout, graphic_button, t16_kws, t8_kws
+from lib.gui.gui_lib import CollapsibleDict, Collapsible, named_bool_button, GraphList, CollapsibleTable, col_kws, col_size, named_list_layout, graphic_button, t_kws
 from lib.conf.conf import loadConf, next_idx
 import lib.conf.dtype_dicts as dtypes
 from lib.gui.tab import GuiTab, SelectionList
@@ -47,8 +46,8 @@ class BatchTab(GuiTab):
         l_batch = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'],
                                 sublists={'exp': l_sim})
         self.selectionlists = {sl.conftype : sl for sl in [l_batch, l_sim]}
-        batch_conf = [[sg.Text('Batch id:', **t8_kws), sg.In('unnamed_batch_0', key=self.batch_id_key, **t16_kws)],
-                      [sg.Text('Path:', **t8_kws), sg.In('unnamed_batch', key=self.batch_path_key, **t16_kws)],
+        batch_conf = [[sg.Text('Batch id:', **t_kws(8)), sg.In('unnamed_batch_0', key=self.batch_id_key, **t_kws(16))],
+                      [sg.Text('Path:', **t_kws(8)), sg.In('unnamed_batch', key=self.batch_path_key, **t_kws(16))],
                       named_bool_button('Save data', False, toggle_name='save_data_flag'),
                       ]
         s0 = Collapsible(f'{self.name}_CONFIGURATION', True, batch_conf, disp_name='Configuration')

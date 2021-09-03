@@ -5,8 +5,8 @@ import numpy as np
 
 import lib.aux.functions as fun
 import lib.conf.dtype_dicts as dtypes
-from lib.gui.gui_lib import CollapsibleDict, retrieve_dict, t5_kws, t2_kws, color_pick_layout, \
-    t40_kws, b_kws, w_kws, graphic_button, check_togglesNcollapsibles
+from lib.gui.gui_lib import CollapsibleDict, retrieve_dict, color_pick_layout, b_kws, w_kws, graphic_button, \
+    check_togglesNcollapsibles, t_kws
 
 """
     Demo - Drawing and moving demo
@@ -62,14 +62,14 @@ def add_agent_layout(name0, color, collapsibles):
                                                    toggle=False, disp_name='odor')
 
     l = [[sg.R(f'Add {name0}', 1, k=name, enable_events=True)],
-         [sg.T('', **t2_kws),
-          sg.R('single id', 2, disabled=True, k=f'{name}_single', enable_events=True, **t5_kws),
+         [sg.T('', **t_kws(2)),
+          sg.R('single id', 2, disabled=True, k=f'{name}_single', enable_events=True, **t_kws(5)),
           sg.In(f'{name}_0', k=f'{name}_id')],
-         [sg.T('', **t2_kws), sg.R('group id', 2, disabled=True, k=f'{name}_group', enable_events=True, **t5_kws),
+         [sg.T('', **t_kws(2)), sg.R('group id', 2, disabled=True, k=f'{name}_group', enable_events=True, **t_kws(5)),
           sg.In(k=f'{name}_group_id')],
          color_pick_layout(name, color),
-         [sg.T('', **t5_kws), *collapsibles[f'{name}_DISTRO'].get_layout()],
-         [sg.T('', **t5_kws), *collapsibles[f'{name}_ODOR'].get_layout()]]
+         [sg.T('', **t_kws(5)), *collapsibles[f'{name}_DISTRO'].get_layout()],
+         [sg.T('', **t_kws(5)), *collapsibles[f'{name}_ODOR'].get_layout()]]
     return l, collapsibles
 
 
@@ -264,14 +264,14 @@ def build_draw_env():
     col2 = [
         *larva_l, *source_l,
 
-        [sg.T('', **t5_kws), *s2.get_layout()],
-        [sg.T('', **t5_kws), sg.T('shape', **t5_kws),
+        [sg.T('', **t_kws(5)), *s2.get_layout()],
+        [sg.T('', **t_kws(5)), sg.T('shape', **t_kws(5)),
          sg.Combo(['rect', 'circle'], default_value='circle', k='SOURCE_shape', enable_events=True, readonly=True)],
 
         [sg.R('Add Border', 1, k='BORDER', enable_events=True)],
-        [sg.T('', **t5_kws), sg.T('id', **t5_kws),
+        [sg.T('', **t_kws(5)), sg.T('id', **t_kws(5)),
          sg.In('', k='BORDER_id')],
-        [sg.T('', **t5_kws), sg.T('width', **t5_kws), sg.In(0.001, k='BORDER_width')],
+        [sg.T('', **t_kws(5)), sg.T('width', **t_kws(5)), sg.In(0.001, k='BORDER_width')],
         color_pick_layout('BORDER', 'black'),
 
         [sg.R('Erase item', 1, k='-ERASE-', enable_events=True)],
@@ -289,8 +289,8 @@ def build_draw_env():
             change_submits=True,  # mouse click events
             background_color='black',
             drag_submits=True)],
-        [sg.T('Hints : '), sg.T('', k='info', **t40_kws)],
-        [sg.T('Actions : '), sg.T('', k='out', **t40_kws)],
+        [sg.T('Hints : '), sg.T('', k='info', **t_kws(40))],
+        [sg.T('Actions : '), sg.T('', k='out', **t_kws(40))],
         [sg.B('Ok', **b_kws), sg.B('Cancel', **b_kws)]
     ]
     l = [[sg.Col(col1), sg.Col(col2)]]

@@ -40,7 +40,7 @@ class PrefTrainCondition:
                 env.UCS.set_odor_dist(intensity=2.0)
                 env.move_larvae_to_center()
             else:
-                PI = compute_preference_index(poses=[l.pos for l in env.get_flies()], arena_dims=env.arena_dims)
+                PI = compute_preference_index(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
                 print()
                 print(f'Test trial on food ended at {m}:{s} with PI={PI}')
                 print()
@@ -61,7 +61,7 @@ class PrefTrainCondition:
                 env.UCS.set_odor_dist(intensity=2.0)
                 env.move_larvae_to_center()
         if env.sim_clock.minute >= 40:
-            PI = compute_preference_index(poses=[l.pos for l in env.get_flies()], arena_dims=env.arena_dims)
+            PI = compute_preference_index(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
             print()
             print(f'Test trial without food ended at {m}:{s} with PI={PI}')
             env.end_condition_met = True

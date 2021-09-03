@@ -4,8 +4,8 @@ import PySimpleGUI as sg
 import pygame
 
 from lib.conf.conf import loadConfDict, saveConfDict
-from lib.gui.gui_lib import t8_kws, graphic_button, default_run_window, CollapsibleDict, Collapsible, col_kws, col_size, \
-    w_kws, t16_kws, t2_kws, t12_kws, load_shortcuts, t10_kws
+from lib.gui.gui_lib import graphic_button, default_run_window, CollapsibleDict, Collapsible, col_kws, col_size, \
+    w_kws, t_kws, load_shortcuts
 import lib.conf.dtype_dicts as dtypes
 from lib.gui.tab import GuiTab
 
@@ -23,10 +23,10 @@ class SettingsTab(GuiTab):
             col_title=f'shortcuts_{title}'
             ll = [
                 # [sg.T(title, **t16_kws)],
-                *[[sg.T("", **t2_kws), sg.T(k, **t16_kws),
+                *[[sg.T("", **t_kws(2)), sg.T(k, **t_kws(16)),
                    sg.In(default_text=conf['keys'][k], key=f'SHORT {k}', disabled=True,
                          disabled_readonly_background_color='black', enable_events=True,
-                         text_color='white', **t10_kws, justification='center'),
+                         text_color='white', **t_kws(10), justification='center'),
                    graphic_button('edit', f'EDIT_SHORTCUT  {k}', tooltip=f'Edit shortcut for {k}')] for k in list(dic.keys())],
                 # [sg.T("", **t8_kws)]
             ]
@@ -41,9 +41,9 @@ class SettingsTab(GuiTab):
     def build(self):
         collapsibles = {}
         l_short, dicts = self.build_shortcut_layout(collapsibles)
-        l_mouse=[*[[sg.T("", **t2_kws), sg.T(k, **t16_kws),
+        l_mouse=[*[[sg.T("", **t_kws(2)), sg.T(k, **t_kws(16)),
                    sg.T(v, key=f'SHORT {k}', background_color='black',
-                         text_color='white', **t10_kws, justification='center')] for k,v in dtypes.mouse_controls.items()],
+                         text_color='white', **t_kws(10), justification='center')] for k,v in dtypes.mouse_controls.items()],
                 # [sg.T("", **t8_kws)]
                  ]
 

@@ -684,6 +684,7 @@ color_map = {
 window_size = (2000, 1200)
 
 
+
 def col_size(x_frac=1.0, y_frac=1.0, win_size=None):
     if win_size is None:
         win_size = window_size
@@ -715,34 +716,8 @@ b6_kws = {'font': ('size', 6),
 b12_kws = {'font': ('size', 6),
            'size': (12, 1)}
 
-t8_kws = {'size': (8, 1)
-          }
-t6_kws = {'size': (6, 1)
-          }
-t9_kws = {'size': (9, 1)
-          }
-t10_kws = {'size': (10, 1)
-           }
-t12_kws = {'size': (12, 1)
-           }
-t13_kws = {'size': (13, 1)
-           }
-t16_kws = {'size': (16, 1)
-           }
-t18_kws = {'size': (18, 1)
-           }
-t14_kws = {'size': (14, 1)}
-t15_kws = {'size': (15, 1)}
-t11_kws = {'size': (11, 1)}
-
-t40_kws = {'size': (40, 1)}
-t30_kws = {'size': (30, 1)}
-t35_kws = {'size': (35, 1)}
-
-t5_kws = {'size': (5, 1)}
-t2_kws = {'size': (2, 1)}
-t1_kws = {'size': (1, 1)}
-t24_kws = {'size': (24, 1)}
+def t_kws(w, h=1) :
+    return {'size': (w, h)}
 
 
 # class GuiProgressBar(sg.ProgressBar) :
@@ -789,7 +764,6 @@ def graphic_button(name, key, **kwargs):
     return b
 
 
-# sg.theme('LightGreen')
 def popup_color_chooser(look_and_feel=None):
     """
 
@@ -841,9 +815,9 @@ def popup_color_chooser(look_and_feel=None):
 
 
 def color_pick_layout(name, color=None):
-    return [sg.T('', **t5_kws), sg.T('color', **t5_kws),
+    return [sg.T('', **t_kws(5)), sg.T('color', **t_kws(5)),
             sg.Combo(list(color_map.keys()), default_value=color, k=f'{name}_color', enable_events=True, readonly=False,
-                     **t10_kws),
+                     **t_kws(10)),
             graphic_button('pick_color', f'PICK {name}_color', button_type=BUTTON_TYPE_COLOR_CHOOSER,
                            target=f'{name}_color',
                            enable_events=True)]
@@ -952,17 +926,17 @@ def set_agent_dict(dic, type_dic, header='unique_id', title='Agent list'):
 
 
 def build_table_window(data, pars_dict, title, return_layout=False):
-    t12_kws_c = {**t12_kws,
+    t12_kws_c = {**t_kws(12),
                  'justification': 'center'}
 
     pars = list(pars_dict.keys())
     par_types = list(pars_dict.values())
     Nagents, Npars = len(data), len(pars)
-    layout = [[sg.Text(' ', **t2_kws)] + [sg.Text(p, key=p, enable_events=True, **t12_kws_c) for p in pars]] + \
-             [[sg.T(i + 1, **t2_kws)] +
+    layout = [[sg.Text(' ', **t_kws(2))] + [sg.Text(p, key=p, enable_events=True, **t12_kws_c) for p in pars]] + \
+             [[sg.T(i + 1, **t_kws(2))] +
               [sg.In(data[i][p], key=(i, p), **t12_kws_c) if type(pars_dict[p]) != list else sg.Combo(
                   pars_dict[p], default_value=data[i][p], key=(i, p), enable_events=True, readonly=True,
-                  **t12_kws) for p in pars] for i in range(Nagents)] + \
+                  **t_kws(12)) for p in pars] for i in range(Nagents)] + \
              [[sg.Button('Add', **b6_kws), sg.Button('Remove', **b6_kws),
                sg.Button('Ok', **b6_kws), sg.Button('Cancel', **b6_kws)]]
 
@@ -1287,12 +1261,12 @@ class MultiSpin(Pane):
             self.N -= 1
 
 
-def named_bool_button(name, state, toggle_name=None, t_kws={}, input_key=None, input_text=''):
+def named_bool_button(name, state, toggle_name=None, tt_kws={}, input_key=None, input_text=''):
     if toggle_name is None:
         toggle_name = name
-    l = [sg.Text(f'{name} :', **t_kws), BoolButton(toggle_name, state)]
+    l = [sg.Text(f'{name} :', **tt_kws), BoolButton(toggle_name, state)]
     if input_key is not None:
-        l.append(sg.In(input_text, k=input_key, visible=True))
+        l.append(sg.In(input_text, k=input_key, visible=True, **t_kws(14)))
     return l
 
 
@@ -1336,25 +1310,25 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
     if N == 0:
         return proc_dir
     w_size = (1400, 800)
-    t_kws = t30_kws
     h_kws = {
         'font': ('Helvetica', 8, 'bold'),
         'justification': 'center',
     }
     b_merged = named_bool_button(name=M, state=False, toggle_name=None)
     b_num = named_bool_button(name=E, state=False, toggle_name=None, input_key=E0, input_text='dish')
-    l00 = sg.Col([[sg.T('RAW DATASETS', **h_kws, **t_kws),
+    group_id=[sg.T('Group ID :', **t_kws(8)), sg.In(k='import_group_id', **t_kws(14))]
+    l00 = sg.Col([[                   *group_id,
                    *b_merged,
-                   sg.T('NEW DATASETS', **h_kws, **t_kws),
-                   *b_num]])
+                   *b_num],
+                  [sg.T('RAW DATASETS', **h_kws, **t_kws(30)),sg.T('NEW DATASETS', **h_kws, **t_kws(30))]])
     l01 = sg.Col([
-        [sg.T(id, **t_kws), sg.T('  -->  ', **t8_kws), sg.In(default_text=id, k=f'new_{id}', **t_kws)] for id in
+        [sg.T(id, **t_kws(30)), sg.T('  -->  ', **t_kws(8)), sg.In(default_text=id, k=f'new_{id}', **t_kws(30))] for id in
         list(raw_dic.keys())],
         vertical_scroll_only=True, scrollable=True, expand_y=True, vertical_alignment='top',
         size=col_size(y_frac=0.5, win_size=w_size))
 
-    s1 = CollapsibleDict('build_conf', True, default=True, disp_name='Configuration', text_kws=t24_kws,
-                         value_kws=t5_kws)
+    s1 = CollapsibleDict('build_conf', True, default=True, disp_name='Configuration', text_kws=t_kws(24),
+                         value_kws=t_kws(5))
     c = {}
     for s in [s1]:
         c.update(**s.get_subdicts())
@@ -1387,9 +1361,11 @@ def build_datasets_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
                         w.Element(f'new_{id}').Update(value=f'{v_enum}_{i}')
             if e == 'Ok':
                 conf = s1.get_dict(values=v, window=w)
+                # group_ids=v['import_group_id']
                 kws = {
                     'datagroup_id': datagroup_id,
                     'folders': None,
+                    'group_ids': v['import_group_id'],
                     **conf}
                 w.close()
                 from lib.stor.managing import build_datasets
@@ -1503,7 +1479,7 @@ def named_list_layout(text, key, choices, default_value=None, drop_down=True, li
 class Collapsible:
     def __init__(self, name, state, content, disp_name=None, toggle=None, disabled=False, next_to_header=None,
                  auto_open=False, header_dict=None, header_value=None, header_list_width=10, header_list_kws={},
-                 header_text_kws=t12_kws, header_key=None, **kwargs):
+                 header_text_kws=t_kws(12), header_key=None, **kwargs):
         self.name = name
         if disp_name is None:
             disp_name = get_disp_name(name)
@@ -1535,7 +1511,7 @@ class Collapsible:
 
     def get_symbol(self):
         return sg.T(SYMBOL_DOWN if self.state else SYMBOL_UP, k=f'OPEN SEC {self.name}',
-                    enable_events=True, text_color='black', **t2_kws)
+                    enable_events=True, text_color='black', **t_kws(2))
 
     def get_layout(self, as_col=True, **kwargs):
         return [sg.Col(self.layout, **kwargs)] if as_col else self.layout
@@ -1869,7 +1845,7 @@ class GraphList:
         values = list(fig_dict.keys())
         h = int(np.max([len(values), 10]))
 
-        header = [sg.Text(self.list_header, **t14_kws)]
+        header = [sg.T(self.list_header, **t_kws(10))]
         if self.next_to_header is not None:
             header += self.next_to_header
         if self.list_size is None:
@@ -1892,46 +1868,44 @@ class GraphList:
         canvas = sg.Col([[g]], **canvas_col_kws)
         return canvas, canvas_key, g
 
-    def draw_fig(self, window, fig):
+    def draw_fig(self, w, fig):
         if self.fig_agg:
             delete_figure_agg(self.fig_agg)
-        self.fig_agg = draw_canvas(window[self.canvas_key].TKCanvas, fig)
+        self.fig_agg = draw_canvas(w[self.canvas_key].TKCanvas, fig)
 
-    def update(self, window, fig_dict):
+    def update(self, w, fig_dict):
         self.fig_dict = fig_dict
-        window.Element(self.list_key).Update(values=list(fig_dict.keys()))
+        w.Element(self.list_key).Update(values=list(fig_dict.keys()))
 
-    def evaluate(self, window, list_values):
+    def evaluate(self, w, list_values):
         if len(list_values) > 0 and self.auto_eval:
             choice = list_values[0]
             fig = self.fig_dict[choice]
             if type(fig) == str and os.path.isfile(fig):
-                self.show_fig(window, fig)
+                self.show_fig(w, fig)
             else:
-                self.draw_fig(window, fig)
+                self.draw_fig(w, fig)
 
-    def get_layout(self, as_col=True):
-        return sg.Col(self.layout) if as_col else self.layout
+    def get_layout(self, as_col=True, **kwargs):
+        return sg.Col(self.layout, **kwargs) if as_col else self.layout
         # if as_col:
         #     return sg.Col(self.layout)
         # else:
         #     return self.layout
 
-    def show_fig(self, window, fig):
-        # if self.fig_agg:
-        #     delete_figure_agg(self.fig_agg)
-        c = window[self.canvas_key].TKCanvas
+    def show_fig(self, w, fig):
+        c = w[self.canvas_key].TKCanvas
         c.pack()
         img = PhotoImage(file=fig)
         c.create_image(250, 250, image=img)
         self.fig_agg = img
-        # self.fig_agg = draw_canvas(window[self.canvas_element].TKCanvas, fig)
 
 
 class ButtonGraphList(GraphList):
     def __init__(self, name, **kwargs):
         self.draw_key = f'{name}_DRAW_FIG'
         l = [
+            graphic_button('load', f'{name}_REFRESH_FIGS', tooltip='Detect available graphs.'),
             graphic_button('equalizer', f'{name}_FIG_ARGS', tooltip='Configure the graph arguments.'),
             # graphic_button('preferences', f'{self.name}_SAVEd_FIG'),
             graphic_button('chart', self.draw_key, tooltip='Draw the graph.'),
@@ -1940,62 +1914,75 @@ class ButtonGraphList(GraphList):
         super().__init__(name=name, next_to_header=l, **kwargs)
 
         self.fig, self.save_to, self.save_as = None, '', ''
-        self.func, self.func_kwargs = None, {}
+        self.func, self.func_kws = None, {}
 
-    def evaluate(self, window, list_values):
+    def evaluate(self, w, list_values):
         if len(list_values) > 0:
             choice = list_values[0]
             if self.fig_dict[choice] != self.func:
                 self.func = self.fig_dict[choice]
-                self.func_kwargs = self.get_graph_kwargs(self.func)
+                self.func_kws = self.get_graph_kws(self.func)
 
-    def get_graph_kwargs(self, func):
+    def get_graph_kws(self, func):
         signature = inspect.getfullargspec(func)
-        if signature.defaults is None :
+        vs=signature.defaults
+        if vs is None :
             return {}
-        kwargs = dict(zip(signature.args[-len(signature.defaults):], signature.defaults))
+        kws = dict(zip(signature.args[-len(vs):], vs))
         for k in ['datasets', 'labels', 'save_to', 'save_as', 'return_fig', 'deb_dicts']:
-            if k in kwargs.keys():
-                del kwargs[k]
-        return kwargs
+            if k in kws.keys():
+                del kws[k]
+        return kws
 
-    def generate(self, window, data):
+    def generate(self, w, data):
         if self.func is not None and len(list(data.keys())) > 0:
-            self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()),
-                                                             return_fig=True, **self.func_kwargs)
-            self.draw_fig(window, self.fig)
-            # try:
-            #     self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()),
-            #                                                      return_fig=True, **self.func_kwargs)
-            #     self.draw_fig(window, self.fig)
-            # except:
-            #     print('Plot not available')
+            try:
+                self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()),
+                                                                 return_fig=True, **self.func_kws)
+                self.draw_fig(w, self.fig)
+            except:
+                print('Plot not available')
+
+    def refresh_figs(self, w, data):
+        k=self.list_key
+        w.Element(k).Update(values=list(self.fig_dict.keys()))
+        if len(data)>0 :
+            valid= []
+            for i,(name,func) in enumerate(self.fig_dict.items()):
+                w.Element(k).Update(set_to_index=i)
+                w.refresh()
+                try:
+                    fig, save_to, save_as = func(datasets=list(data.values()), labels=list(data.keys()),
+                                                 return_fig=True, **self.get_graph_kws(func))
+                    valid.append(name)
+                except :
+                    pass
+            w.Element(k).Update(values=valid, set_to_index=None)
 
     def save_fig(self):
+        kDir, kFil='SAVE_AS', 'SAVE_TO'
         if self.fig is not None:
-            layout = [
-                [sg.Text('Filename', size=(10, 1)), sg.In(default_text=self.save_as, k='SAVE_AS', size=(80, 1))],
-                [sg.Text('Directory', size=(10, 1)), sg.In(self.save_to, k='SAVE_TO', size=(80, 1)),
-                 sg.FolderBrowse(initial_folder=paths.get_parent_dir(), key='SAVE_TO', change_submits=True)],
+            l = [
+                [sg.T('Filename', **t_kws(10)), sg.In(default_text=self.save_as, k=kDir, **t_kws(80))],
+                [sg.T('Directory', **t_kws(10)), sg.In(self.save_to, k=kFil, **t_kws(80)),
+                 sg.FolderBrowse(initial_folder=paths.get_parent_dir(), key=kFil, change_submits=True)],
                 [sg.Ok(), sg.Cancel()]]
 
-            event, values = sg.Window('Save figure', layout).read(close=True)
-            if event == 'Ok':
-                save_as = values['SAVE_AS']
-                save_to = values['SAVE_TO']
-                filepath = os.path.join(save_to, save_as)
-                self.fig.savefig(filepath, dpi=300)
-                print(f'Plot saved as {save_as}')
+            e, v = sg.Window('Save figure', l).read(close=True)
+            if e == 'Ok':
+                path = os.path.join(v[kFil], v[kDir])
+                self.fig.savefig(path, dpi=300)
+                print(f'Plot saved as {v[kDir]}')
 
     def set_fig_args(self):
-        self.func_kwargs = set_kwargs(self.func_kwargs, title='Graph arguments')
+        self.func_kws = set_kwargs(self.func_kws, title='Graph arguments')
 
 
 def delete_objects_window(selected):
     ids = [sel.unique_id for sel in selected]
     title = 'Delete objects?'
     layout = [
-        [sg.Text(title)],
+        [sg.T(title)],
         [sg.Listbox(default_values=ids, values=ids, change_submits=False, size=(20, len(ids)), key='DELETE_OBJECTS',
                     enable_events=True)],
         [sg.Ok(), sg.Cancel()]]
@@ -2033,12 +2020,13 @@ class ClickableImage(Button):
         webbrowser.open(self.link)
 
 
-def draw_canvas(canvas, figure, side='top', fill='both', expand=1):
-    figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
-    figure_canvas_agg.draw()
+def draw_canvas(canvas, figure, side='right', fill='both', expand=True):
+    agg = FigureCanvasTkAgg(figure, canvas)
+    agg.draw()
     # figure_canvas_agg.get_tk_widget().pack()
-    figure_canvas_agg.get_tk_widget().pack(side=side, fill=fill, expand=expand)
-    return figure_canvas_agg
+    agg.get_tk_widget().pack(side=side, fill=fill, expand=expand)
+    # canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+    return agg
 
 
 def delete_figure_agg(figure_agg):
@@ -2065,19 +2053,18 @@ class DynamicGraph:
 
         Ncols = 4
         par_lists = [list(a) for a in np.array_split(self.available_pars, Ncols)]
-        par_layout = [[sg.Text('Choose parameters')],
-                      [sg.Col([*[[sg.CB(p, key=f'k_{p}', **t24_kws)] for p in par_lists[i]]]) for i in
+        par_layout = [[sg.T('Choose parameters')],
+                      [sg.Col([*[[sg.CB(p, key=f'k_{p}', **t_kws(24))] for p in par_lists[i]]]) for i in
                        range(Ncols)],
-                      [sg.Button('Ok', **t8_kws), sg.Button('Cancel', **t8_kws)]
+                      [sg.Button('Ok', **t_kws(8)), sg.Button('Cancel', **t_kws(8))]
                       ]
 
         graph_layout = [
-            # [sg.Text(f'{self.agent.unique_id} : {self.par}', size=(40, 1), justification='center', font='Helvetica 20')],
             [sg.Canvas(size=(1280, 1200), key='-CANVAS-')],
-            [sg.Text('Time in seconds to display on screen')],
+            [sg.T('Time in seconds to display on screen')],
             [sg.Slider(range=(0.1, 60), default_value=self.init_dur, size=(40, 10), orientation='h',
                        key='-SLIDER-TIME-')],
-            [sg.Button('Choose', **t8_kws)]
+            [sg.Button('Choose', **t_kws(8))]
         ]
         layout = [[sg.Column(par_layout, key='-COL1-'), sg.Column(graph_layout, visible=False, key='-COL2-')]]
         self.window = sg.Window(f'{self.agent.unique_id} Dynamic Graph', layout, finalize=True, location=(0, 0),

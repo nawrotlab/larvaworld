@@ -1,12 +1,11 @@
 import os
 import PySimpleGUI as sg
 import numpy as np
-# from tkinter import *
 from PySimpleGUI import LISTBOX_SELECT_MODE_SINGLE, LISTBOX_SELECT_MODE_MULTIPLE, LISTBOX_SELECT_MODE_BROWSE, \
     LISTBOX_SELECT_MODE_EXTENDED
 
-from lib.gui.gui_lib import t8_kws, ButtonGraphList, b6_kws, graphic_button, col_size, col_kws, get_disp_name, \
-    change_dataset_id, named_list_layout, build_datasets_window, enrich_datasets_window, CollapsibleDict
+from lib.gui.gui_lib import ButtonGraphList, graphic_button, col_size, col_kws, get_disp_name, \
+    change_dataset_id, named_list_layout, build_datasets_window, CollapsibleDict
 from lib.gui.tab import GuiTab, SelectionList
 from lib.stor import paths
 import lib.conf.dtype_dicts as dtypes
@@ -25,24 +24,6 @@ class ImportTab(GuiTab):
         self.proc_ids_key = f'{self.proc_key}_IDS'
         self.raw_folder = None
         self.proc_folder = None
-
-    # def change_dataset_id(self,w, v, data):
-    #     k = 'NEW_ID'
-    #     kR0=self.raw_ids_key
-    #     if len(v[kR0]) > 0:
-    #         old_id = v[kR0][0]
-    #         l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(k=k, size=(10, 1))],
-    #              [sg.Button('Store'), sg.Ok(), sg.Cancel()]]
-    #         e, v2 = sg.Window('Change dataset ID', l).read(close=True)
-    #         if e == 'Ok':
-    #             data[v2[k]] = data.pop(old_id)
-    #             w.Element(kR0).Update(values=list(data.keys()))
-    #         elif e == 'Store':
-    #             d = data[old_id]
-    #             d.set_id(v2[k])
-    #             data[v2[k]] = data.pop(old_id)
-    #             w.Element(kR0).Update(values=list(data.keys()))
-    #     return data
 
     def update(self, w, c, conf, id=None):
         p = conf['path']
@@ -122,8 +103,6 @@ class ImportTab(GuiTab):
         graph_lists = {g.name: g}
         return l, c, graph_lists, dicts
 
-
-
     def eval(self, e, v, w, c, d, g):
         id0 = self.current_ID(v)
         kR, kP = self.raw_key, self.proc_key
@@ -169,7 +148,6 @@ class ImportTab(GuiTab):
                 dd = d[kP][ids[0]]
                 dd.visualize(vis_kwargs=self.gui.get_vis_kwargs(v, mode='video'), **self.gui.get_replay_kwargs(v))
         return d, g
-
 
 if __name__ == "__main__":
     from lib.gui.gui import LarvaworldGui

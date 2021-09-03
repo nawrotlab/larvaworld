@@ -776,12 +776,15 @@ def build_chunk_par_dict(df) :
         for k in ['x', 'y', 'fo', 'fou', 'fov','ro', 'rou', 'rov', 'b', 'bv', 'v', 'sv', 'o_cent', 'o_chem', 'd_cent', 'd_chem', 'sd_cent', 'sd_chem'] :
             df=add_chunk_track(df, kc=kc, k=k)
         if pc=='stride':
-            for k in ['d','sd', 'std', 'sstd']:
+            for k in ['d', 'std']:
+            # for k in ['d','sd', 'std', 'sstd']:
             # for k in [nam.cum('d'), nam.cum('sd')]:
                 df = add_par(df, p=nam.chunk_track(pc, df[k].p), k=f'{kc}_{k}', u=df[k].u, d=nam.chunk_track(pc, df[k].p),
                           s=sub(Delta(df[k].s), kc), exists=False)
                 df=add_mean_par(df, k0=f'{kc}_{k}')
                 df=add_std_par(df, k0=f'{kc}_{k}')
+                for k0 in [f'{kc}_{k}', f'{kc}_{k}_mu', f'{kc}_{k}_std']:
+                    df = add_scaled_par(df, k0=k0)
     return df
 
 
@@ -863,7 +866,7 @@ chunk_dict={
     'fee' : 'feed',
     'tur' : 'turn',
     'Ltur' : 'Lturn',
-    'Rtur' : 'Return',
+    'Rtur' : 'Rturn',
     'str_c' : nam.chain('stride'),
     'fee_c' : nam.chain('feed')
             }
@@ -983,8 +986,8 @@ if __name__ == '__main__':
     # print(dic.keys())
     # print(runtime_pars)
     # dic=load_ParDict()
-    print(getPar(k='l_mu'))
-    print(getPar(k='l'))
+    print(getPar(k='sstr_d_mu'))
+    # print(getPar(k='str_sd_mu'))
     # print(dic['b'])
     # print(dic['D_olf'])
     # d,u=getPar('cum_d', to_return=['d', 'u'])

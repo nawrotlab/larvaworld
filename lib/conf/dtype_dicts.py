@@ -533,7 +533,7 @@ all_null_dicts = {
         'interpolate_nans': False,
         'filter_f': 2.0
     },
-    'processing': {'types': {'angular':True, 'spatial':True, 'source':True, 'dispersion':True, 'tortuosity':True},
+    'processing': {'types': {'angular':True, 'spatial':True, 'source':False, 'dispersion':True, 'tortuosity':True, 'PI' : False},
                    'dsp_starts': None, 'dsp_stops': None,
                    'tor_durs': None},
     'annotation': {'bouts': {'stride':True, 'pause':True, 'turn':True}, 'track_point': None,
@@ -823,7 +823,7 @@ def get_dict_dtypes(name, **kwargs):
             'interpolate_nans': bool,
             'filter_f': fun.value_list(end=10.0, steps=10000, decimals=3)
         },
-        'processing': {'types': {'angular':bool, 'spatial':bool, 'source':bool, 'dispersion':bool, 'tortuosity':bool},
+        'processing': {'types': {'angular':bool, 'spatial':bool, 'source':bool, 'dispersion':bool, 'tortuosity':bool, 'PI' : bool},
                        'dsp_starts': {'type' : list, 'value_list' : fun.value_list(start=0, end=180, steps=181, integer=True)},
                        # 'dsp_starts': List[float],
                        'dsp_stops': {'type' : list, 'value_list' : fun.value_list(start=0, end=180, steps=181, integer=True)},

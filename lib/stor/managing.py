@@ -14,7 +14,7 @@ import lib.aux.functions as fun
 
 
 def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None,
-                   ids=None, arena_pars=None, names=['raw'],**kwargs):
+                   ids=None, arena_pars=None, names=['raw'], group_ids=None, **kwargs):
     warnings.filterwarnings('ignore')
     g = LarvaDataGroup(datagroup_id)
     build_conf = g.get_conf()['build']
@@ -31,7 +31,13 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
     # print()
     # print(f'------ Building {len(ds)} datasets ------')
     # print()
-    for d, raw in zip(ds, raw_folders):
+    if group_ids in [None, '']:
+        group_ids =[d.id for d in ds]
+    elif type(group_ids)==str:
+        group_ids=[group_ids]*len(ds)
+    elif len(group_ids)!=len(ds) :
+        raise ValueError (f'Number of datasets ({len(ds)}) does not match number of provided group-IDs ({len(group_ids)})')
+    for d, raw, group_id in zip(ds, raw_folders, group_ids):
         if conf_id == 'JovanicConf':
             step, end = build_Jovanic(d, build_conf, source_dir=f'{g.raw_dir}/{raw}',**kwargs)
         elif conf_id == 'SchleyerConf':
@@ -45,6 +51,7 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
         step.sort_index(level=['Step', 'AgentID'], inplace=True)
         end.sort_index(inplace=True)
         d.set_data(step=step, end=end)
+        d.config['group_id']=group_id
         d.save(food=False)
         d.agent_ids = d.step_data.index.unique('AgentID').values
         d.num_ticks = d.step_data.index.unique('Step').size
@@ -142,11 +149,12 @@ def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={}, 
         d.visualize(save_to=save_to, vis_kwargs=vis_kwargs, **replay_kwargs)
 
 
-def compute_PIs(datagroup_id, save_to=None, **kwargs):
-    filename = 'PIs.csv'
-    ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
+def compute_PIs(datagroup_id=None, save_to=None,ds=None,save_as='PIs.csv', **kwargs):
+    # filename = 'PIs.csv'
+    if ds is None :
+        ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
     ids = [d.id for d in ds]
-    if save_to is None and len(ds) > 1:
+    if save_to is None and len(ds) > 1 and datagroup_id is not None:
         save_to = f'{LarvaDataGroup(datagroup_id).plot_dir}/PIs'
     if not os.path.exists(save_to):
         os.makedirs(save_to)
@@ -156,12 +164,10 @@ def compute_PIs(datagroup_id, save_to=None, **kwargs):
         PI, N = d.compute_preference_index(return_num=True)
         PIs.append(PI)
         Ns.append(N)
-        # print(j, PI, N)
-    # for i in range(len(PIs)):
-    #     print(exp_labels[i], PIs[i], Ns[i])
     df = pd.DataFrame({'PI': PIs, 'N': Ns}, index=ids)
-    df.to_csv(f'{save_to}/{filename}', header=True, index=True)
-    print(f'PIs saved as {filename}')
+    df.to_csv(f'{save_to}/{save_as}', header=True, index=True)
+    print(f'PIs saved as {save_as}')
+    print(df)
 
 
 def detect_dataset(datagroup_id=None, folder_path=None,raw=True, **kwargs):
@@ -277,33 +283,47 @@ if __name__ == "__main__":
     # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc'
     # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High'
     # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High/AM+'
-    folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/test/high_AM_160sec'
     # folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/test/high_AM_160sec'
-    d = LarvaDataset(dir=folder_path)
+
+    # d = LarvaDataset(dir=folder_path)
     # ids=detect_dataset(datagroup_id='SchleyerGroup', folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High/box1-2016-05-23_12_41_17')
     # ids, dirs = detect_dataset(datagroup_id='SchleyerGroup', folder_path=folder_path, full_ID=True)
     # print(os.listdir(folder_path))
     # print(ids)
-    from lib.anal.plotting import plot_endpoint_params
-    plot_endpoint_params(datasets=[d], labels=None, mode='basic', par_shorts=['l', 'fsv', 'sv_mu', 'str_sd_mu'], subfolder='endpoint',
-                         save_to=None, save_as=None, save_fits_as=None, return_fig=False, show=True)
+    ds0=[]
+    for ii in ['AM+', 'EM+'] :
+        folder_path = f'/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/Low/{ii}'
+        dic=detect_dataset(folder_path = folder_path, raw=False)
+        ds = list(dic.values())
+        ds0.append(ds)
+    ds0=fun.flatten_list(ds0)
+
+    from lib.anal.plotting import boxplot_PI
+    boxplot_PI(datasets=ds0, return_fig=True, show=True, save_to='.')
+
+    # from lib.anal.plotting import plot_endpoint_params
+    # plot_endpoint_params(datasets=ds, mode='basic', show=True)
+    raise
     # print()
     # print(dirs)
     # dr = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/High/AM+/box1-2016-05-23_12_41_17'
     # d = LarvaDataset(dir=dr)
-    # par_shorts = ['l_mu',
-                  # 'fsv', 'sv_mu', 'str_sd_mu',
-                  # 'cum_t', 'str_tr', 'pau_tr', 'tor',
-                  # 'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
-                  # 'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'
-                  # ]
-    # from lib.conf.par import getPar
-    # pars, = getPar(par_shorts, to_return=['d'])
-    # pars = [p for p in pars if all([p in d.endpoint_data.columns for d in [d]])]
+    par_shorts =['l', 'fsv', 'sv_mu', 'sstr_d_mu',
+     'cum_t', 'str_tr', 'pau_tr', 'tor',
+     'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
+     'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr']
+    from lib.conf.par import getPar
+    pars, = getPar(par_shorts, to_return=['d'])
+    print(pars)
+    d = ds[0]
+    pars = [p for p in pars if all([p in d.endpoint_data.columns for d in [d]])]
+    print(pars)
     # symbols, exp_symbols, xlabels, xlims, disps = getPar(par_shorts, to_return=['s', 's', 'l', 'lim', 'd'])
     # print(pars)
-    # s,e=d.step_data, d.endpoint_data
-    # print(e['length'].mean())
+    # d=ds[0]
+    s,e=d.step_data, d.endpoint_data
+    # print(e.columns)
+    print(e['scaled_stride_dst_mean'])
     # print(e['length_mean'].mean())
     import matplotlib.pyplot as plt
     # plt.hist(e['length'])

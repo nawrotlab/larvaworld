@@ -6,10 +6,7 @@ import numpy as np
 import lib.conf.dtype_dicts as dtypes
 
 from lib.aux.collecting import output_keys
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, \
-    named_bool_button, GraphList, graphic_button, t10_kws, col_kws, col_size, t24_kws, \
-    t8_kws, \
-    t16_kws, t11_kws, t6_kws, t12_kws, t14_kws, t13_kws, t9_kws
+from lib.gui.gui_lib import CollapsibleDict, GraphList, col_kws, col_size, t_kws
 from lib.gui.tab import GuiTab, SelectionList
 from lib.sim.single_run import run_sim
 from lib.sim.analysis import sim_analysis
@@ -23,10 +20,10 @@ class SimTab(GuiTab):
     def build(self):
         l_env = SelectionList(tab=self, conftype='Env', idx=1)
         l_life = SelectionList(tab=self, conftype='Life', idx=1, with_dict=True, header_value='default',
-                           text_kws=t14_kws, value_kws=t10_kws, width=12, header_text_kws=t9_kws)
+                           text_kws=t_kws(14), value_kws=t_kws(10), width=12, header_text_kws=t_kws(9))
         l_sim = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'], progress=True,
                               sublists={'env_params': l_env, 'life_params' : l_life})
-        s1 = CollapsibleDict('sim_params', True, default=True, disp_name='Configuration', text_kws=t8_kws)
+        s1 = CollapsibleDict('sim_params', True, default=True, disp_name='Configuration', text_kws=t_kws(8))
         output_dict = dict(zip(output_keys, [False] * len(output_keys)))
         s2 = CollapsibleDict('Output', False, dict=output_dict, auto_open=False)
 

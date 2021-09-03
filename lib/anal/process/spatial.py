@@ -520,15 +520,12 @@ def fixate_larva(s, Npoints, Ncontour, point, secondary_point=None, arena_dims=N
     return s, bg
 
 
-def compute_preference_index(poses, arena_dims, return_num=False, return_all=False):
-    X, Y = arena_dims
-    N = len(poses)
-    xs = np.array([p[0] for p in poses])
-    r = 0.2 * X
+def compute_preference_index(arena_xdim,xs,  return_num=False, return_all=False):
+    N = len(xs)
+    r = 0.2 * arena_xdim
     N_l = xs[xs <= -r / 2].shape[0]
     N_r = xs[xs >= +r / 2].shape[0]
     N_m = xs[(xs <= +r / 2) & (xs >= -r / 2)].shape[0]
-    # print(N,N_l,N_r,N_m)
     pI = np.round((N_l - N_r) / N, 3)
     if return_num:
         if return_all:

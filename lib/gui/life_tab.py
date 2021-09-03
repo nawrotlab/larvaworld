@@ -2,8 +2,7 @@ import PySimpleGUI as sg
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.plotting import plot_debs
 
-from lib.gui.gui_lib import CollapsibleDict, col_kws, col_size, t12_kws, graphic_button, \
-    t18_kws, b_kws, t24_kws, Table, GraphList
+from lib.gui.gui_lib import CollapsibleDict, col_kws, col_size, graphic_button, Table, GraphList, t_kws
 from lib.gui.tab import GuiTab, SelectionList
 from lib.model.DEB.deb import deb_default
 
@@ -83,24 +82,24 @@ class LifeTab(GuiTab):
         sub = CollapsibleDict('substrate', False, default=True, header_dict=dtypes.substrate_dict,
                               header_value='standard')
 
-        l1 = sg.Col([[sg.Text('Epoch start (hours) : ', **t24_kws)],
+        l1 = sg.Col([[sg.Text('Epoch start (hours) : ', **t_kws(24))],
                      [sg.Slider(range=(0, 150), default_value=0, key=self.S0,
                                 tick_interval=24, resolution=1,trough_color='green', **sl1_kws)],
-                     [sg.Text('Epoch stop (hours) : ', **t24_kws)],
+                     [sg.Text('Epoch stop (hours) : ', **t_kws(24))],
                      [sg.Slider(range=(0, 150), default_value=0, key=self.S1,
                                 tick_interval=24, resolution=1,trough_color='red', **sl1_kws)],
                      ], size=r2_size, **col_kws)
 
-        l2 = sg.Col([[sg.Text('Food quality : ', **t24_kws)],
+        l2 = sg.Col([[sg.Text('Food quality : ', **t_kws(24))],
               [sg.Slider(range=(0.0, 1.0), default_value=1.0, key=self.Sq,
                          tick_interval=0.25, resolution=0.01, **sl1_kws)],
-              [sg.Text('Starting age (hours post-hatch): ', **t24_kws)],
+              [sg.Text('Starting age (hours post-hatch): ', **t_kws(24))],
               [sg.Slider(range=(0, 150), default_value=0, key=self.Sa,
                          tick_interval=24, resolution=1, **sl1_kws)],
               ], size=r2_size, **col_kws)
 
         l_tab = sg.Col([[
-            sg.Text(f'{ep.capitalize()}s (h)', **t18_kws),
+            sg.Text(f'{ep.capitalize()}s (h)', **t_kws(18)),
             graphic_button('add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
             graphic_button('remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.'),
         ],

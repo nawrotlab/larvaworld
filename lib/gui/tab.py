@@ -4,8 +4,8 @@ import webbrowser
 import PySimpleGUI as sg
 import numpy as np
 from lib.conf.conf import loadConfDict, saveConf, deleteConf, loadConf, expandConf
-from lib.gui.gui_lib import ClickableImage, window_size, t10_kws, graphic_button, t24_kws, named_list_layout, t8_kws, \
-    save_conf_window, CollapsibleDict
+from lib.gui.gui_lib import ClickableImage, window_size, graphic_button, named_list_layout, save_conf_window, \
+    CollapsibleDict, t_kws
 import lib.stor.paths as paths
 import lib.conf.dtype_dicts as dtypes
 
@@ -15,7 +15,7 @@ class ProgressBarLayout :
         n=self.list.disp
         self.k=f'{n}_PROGRESSBAR'
         self.k_complete=f'{n}_COMPLETE'
-        self.l = [sg.Text('Progress :', **t8_kws),
+        self.l = [sg.Text('Progress :', **t_kws(8)),
                   sg.ProgressBar(100, orientation='h', size=(8.8, 20), key=self.k,
                                  bar_color=('green', 'lightgrey'), border_width=3),
                   graphic_button('check', self.k_complete, visible=False,
