@@ -26,29 +26,12 @@ class ImportTab(GuiTab):
         self.proc_folder = None
 
     def update(self, w, c, conf, id=None):
-        p = conf['path']
-        pp = os.path.normpath(f'{paths.DataFolder}/{p}')
-        w[self.raw_key].InitialFolder = f'{pp}/raw'
-        self.raw_folder = f'{pp}/raw'
-        w[self.proc_key].InitialFolder = f'{pp}/processed'
-        self.proc_folder = f'{pp}/processed'
-
-        c['enrichment'].update(w, LarvaDataGroup(id).get_conf()['enrich'])
-        # c['enrichment'].update(w, conf['conf']['enrich'])
-            # c[n].update(w, conf[n])
-        # w.Element(self.raw_key).InitialFolder=path
-        # w.Element(self.raw_key).Update(initial_folder=path)
-        # c['substrate'].update_header(w, conf['substrate_type'])
-        #
-        # w.Element(self.Sq).Update(value=conf['substrate_quality'])
-        # w.Element(self.Sa).Update(value=conf['hours_as_larva'])
-        # if conf['epochs'] is not None :
-        #     epochs=[[t0,t1,q] for (t0,t1),q in zip(conf['epochs'], conf['epoch_qs'])]
-        #     w.Element(self.K).Update(values=epochs, num_rows=len(epochs))
-        # else :
-        #     w.Element(self.K).Update(values=[], num_rows=0)
-        #
-        # w.write_event_value('Draw', 'Draw the initial plot')
+        datagroup = LarvaDataGroup(id)
+        w[self.raw_key].InitialFolder = datagroup.raw_dir
+        self.raw_folder = datagroup.raw_dir
+        w[self.proc_key].InitialFolder = datagroup.proc_dir
+        self.proc_folder = datagroup.proc_dir
+        c['enrichment'].update(w, datagroup.get_conf()['enrich'])
 
     def build(self):
         kR, kP = self.raw_key, self.proc_key
@@ -75,13 +58,10 @@ class ImportTab(GuiTab):
             graphic_button('checkbox_full', f'SELECT_ALL {kP}', tooltip='Select all list elements.'),
             graphic_button('play', f'REPLAY {kP}', tooltip='Replay/Visualize the dataset.'),
             graphic_button('remove', f'REMOVE {kP}', tooltip='Remove a dataset from the analysis list.'),
-                   # graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
                    graphic_button('data_add', f'ENRICH {kP}', tooltip='Enrich the dataset.'),
-                   graphic_button('edit', f'CHANGE_ID {kP}',
-                                  tooltip='Change the dataset ID transiently or permanently.'),
+                   graphic_button('edit', f'CHANGE_ID {kP}',tooltip='Change the dataset ID transiently or permanently.'),
                    graphic_button('search_add', key=kP, initial_folder=paths.SingleRunFolder, change_submits=True,
-                                  enable_events=True,
-                                  target=(3, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
+                                  enable_events=True,target=(3, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
                                   tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
                    ]
 
