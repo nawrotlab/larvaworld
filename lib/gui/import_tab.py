@@ -5,7 +5,7 @@ from PySimpleGUI import LISTBOX_SELECT_MODE_SINGLE, LISTBOX_SELECT_MODE_MULTIPLE
     LISTBOX_SELECT_MODE_EXTENDED
 
 from lib.gui.gui_lib import ButtonGraphList, graphic_button, col_size, col_kws, get_disp_name, \
-    change_dataset_id, named_list_layout, build_datasets_window, CollapsibleDict
+    change_dataset_id, named_list, import_window, CollapsibleDict
 from lib.gui.tab import GuiTab, SelectionList
 from lib.stor import paths
 import lib.conf.dtype_dicts as dtypes
@@ -49,10 +49,10 @@ class ImportTab(GuiTab):
                                  tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
                   ]
 
-        raw_list = named_list_layout(get_disp_name(kR), self.raw_ids_key, list(dicts[kR].keys()),
-                                     drop_down=False, list_width=25, list_height=5,
-                                     single_line=False, next_to_header=raw_bs, as_col=False,
-                                     list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED})
+        raw_list = named_list(get_disp_name(kR), self.raw_ids_key, list(dicts[kR].keys()),
+                              drop_down=False, list_width=25, list_height=5,
+                              single_line=False, next_to_header=raw_bs, as_col=False,
+                              list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED})
 
         proc_bs = [
             graphic_button('checkbox_full', f'SELECT_ALL {kP}', tooltip='Select all list elements.'),
@@ -65,10 +65,10 @@ class ImportTab(GuiTab):
                                   tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
                    ]
 
-        proc_list = named_list_layout(get_disp_name(kP), self.proc_ids_key, list(dicts[kP].keys()),
-                                      drop_down=False, list_width=25, list_height=5,
-                                      single_line=False, next_to_header=proc_bs, as_col=False,
-                                     list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED})
+        proc_list = named_list(get_disp_name(kP), self.proc_ids_key, list(dicts[kP].keys()),
+                               drop_down=False, list_width=25, list_height=5,
+                               single_line=False, next_to_header=proc_bs, as_col=False,
+                               list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED})
 
         l_group = SelectionList(tab=self, disp='Data group', actions=['load'])
         self.selectionlists = {sl.conftype: sl for sl in [l_group]}
@@ -126,7 +126,7 @@ class ImportTab(GuiTab):
             d[k] = change_dataset_id(w, v, d[k], k0=f'{k}_IDS')
         elif e == f'BUILD {kR}':
             raw_dic={id:dir for id, dir in d[kR].items() if id in v[f'{kR}_IDS']}
-            proc_dir = build_datasets_window(datagroup_id=id0, raw_folder=fR, raw_dic=raw_dic)
+            proc_dir = import_window(datagroup_id=id0, raw_folder=fR, raw_dic=raw_dic)
             d[kP].update(proc_dir)
             w.Element(self.proc_ids_key).Update(values=list(d[kP].keys()))
         elif e == f'ENRICH {kP}':

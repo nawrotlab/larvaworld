@@ -6,7 +6,7 @@ import numpy as np
 
 import lib.conf.dtype_dicts as dtypes
 
-from lib.gui.gui_lib import CollapsibleDict, GraphList, graphic_button, col_kws, col_size, named_list_layout, t_kws
+from lib.gui.gui_lib import CollapsibleDict, GraphList, graphic_button, col_kws, col_size, named_list, t_kws
 from lib.gui.tab import GuiTab, SelectionList
 from lib.sim.single_run import run_essay
 from lib.sim.analysis import essay_analysis
@@ -29,8 +29,8 @@ class EssayTab(GuiTab):
                                 )
         next_to_header = [
             graphic_button('play', f'RUN_{self.essay_exps_key}', tooltip='Run the selected essay experiment.')]
-        l_exps = named_list_layout(text='Experiments', key=self.essay_exps_key, choices=[], drop_down=False,
-                                   single_line=False, next_to_header=next_to_header)
+        l_exps = named_list(text='Experiments', key=self.essay_exps_key, choices=[], drop_down=False,
+                            single_line=False, next_to_header=next_to_header)
         self.selectionlists = {sl.conftype : sl for sl in [l_essay]}
         g1 = GraphList(self.name, list_header='Simulated', canvas_size=self.canvas_size)
         g2 = GraphList(self.exp_figures_key, list_header='Observed', canvas_size=self.canvas_size,fig_dict={})
@@ -43,9 +43,7 @@ class EssayTab(GuiTab):
             [g2.canvas, g2.get_layout()]
         ],
             size=col_size(0.8), **col_kws)
-        l = [[sg.Col(l_conf, **col_kws, size=col_size(0.2)),
-              gg
-              ]]
+        l = [[sg.Col(l_conf, **col_kws, size=col_size(0.2)),gg]]
 
         c = {}
         for i in [s1]:

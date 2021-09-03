@@ -4,7 +4,7 @@ import webbrowser
 import PySimpleGUI as sg
 import numpy as np
 from lib.conf.conf import loadConfDict, saveConf, deleteConf, loadConf, expandConf
-from lib.gui.gui_lib import ClickableImage, window_size, graphic_button, named_list_layout, save_conf_window, \
+from lib.gui.gui_lib import ClickableImage, window_size, graphic_button, named_list, save_conf_window, \
     CollapsibleDict, t_kws
 import lib.stor.paths as paths
 import lib.conf.dtype_dicts as dtypes
@@ -119,9 +119,9 @@ class SelectionList:
 
         else :
             self.collapsible =None
-            temp = named_list_layout(text=n.capitalize(), key=self.k, choices=self.confs, default_value=None,
-                                 drop_down=True,list_width=self.width,single_line=False, next_to_header=bs, as_col=False,
-                                 list_kws={'tooltip' : f'The currently loaded {n}.'})
+            temp = named_list(text=n.capitalize(), key=self.k, choices=self.confs, default_value=None,
+                              drop_down=True, list_width=self.width, single_line=False, next_to_header=bs, as_col=False,
+                              list_kws={'tooltip' : f'The currently loaded {n}.'})
 
         if self.progressbar is not None :
             temp.append(self.progressbar.l)
@@ -426,18 +426,18 @@ class TutorialTab(GuiTab):
 
         return l_tut, {}, {}, {}
 
-    def eval(self, event, values, window, collapsibles, dicts, graph_lists):
-        if 'BUTTON 1' in event:
+    def eval(self, e, v, w, c, d, g):
+        if 'BUTTON 1' in e:
             webbrowser.open_new(paths.TutorialSlideFolder + "/1.mp4")
-        if 'BUTTON 2' in event:
+        if 'BUTTON 2' in e:
             webbrowser.open_new(paths.TutorialSlideFolder + "/2.mp4")
-        if 'BUTTON 3' in event:
+        if 'BUTTON 3' in e:
             webbrowser.open_new(paths.TutorialSlideFolder + "/3.mp4")
-        if 'BUTTON 4' in event:
+        if 'BUTTON 4' in e:
             webbrowser.open_new(paths.TutorialSlideFolder + "/4.mp4")
-        if 'GLOSSARY' in event:
+        if 'GLOSSARY' in e:
             webbrowser.open_new(paths.TutorialSlideFolder + "/Glossary.pdf")
-        return dicts, graph_lists
+        return d, g
 
 
 if __name__ == "__main__":

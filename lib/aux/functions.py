@@ -1181,7 +1181,6 @@ def unique_list(l):
 
 
 def agent_dict2list(dic, header='unique_id'):
-    # print(dic)
     l = []
     for id, pars in dic.items():
         pars[header] = id

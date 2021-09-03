@@ -31,7 +31,6 @@ class SimTab(GuiTab):
         g1 = GraphList(self.name)
         l_conf = [[sg.Col([
             *[i.get_layout() for i in [l_sim, l_env,s1, s2, l_life]],
-            # [g1.get_layout()]
         ])]]
         l = [[sg.Col(l_conf, **col_kws, size=col_size(0.2)), g1.canvas, sg.Col(g1.get_layout(as_col=False), size=col_size(0.2))]]
         # l = [[sg.Col(l_conf, **col_kws, size=col_size(0.2)), g1.canvas]]
@@ -78,9 +77,7 @@ class SimTab(GuiTab):
     def get(self, w, v, c, as_entry=True):
         conf = {
                 'sim_params': c['sim_params'].get_dict(v, w),
-                # 'sim_params': sim,
                 'collections': [k for k in output_keys if c['Output'].get_dict(v, w)[k]],
-                # 'life_params': c['life'].get_dict(v, w),
                 'enrichment': self.current_conf(v)['enrichment'],
                 }
         return conf

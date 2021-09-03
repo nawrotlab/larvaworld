@@ -614,11 +614,11 @@ def get_dict_dtypes(name, **kwargs):
         'odor':
             {'odor_id': str,
              'odor_intensity': fun.value_list(end=1000.0, steps=10000, decimals=2),
-             'odor_spread': fun.value_list(end=100.0, steps=1000, decimals=2)
+             'odor_spread': fun.value_list(end=10.0, steps=100000, decimals=5)
              },
         'food':
             {
-                'radius': fun.value_list(end=10.0, steps=100, decimals=2),
+                'radius': fun.value_list(end=10.0, steps=10000, decimals=4),
                 'amount': fun.value_list(end=100.0, steps=1000, decimals=2),
                 'quality': fun.value_list(),
                 'shape_vertices': List[Tuple[float, float]],

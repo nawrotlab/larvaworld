@@ -3,7 +3,7 @@ import threading
 import PySimpleGUI as sg
 
 from lib.anal.combining import render_mpl_table
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, named_bool_button, GraphList, CollapsibleTable, col_kws, col_size, named_list_layout, graphic_button, t_kws
+from lib.gui.gui_lib import CollapsibleDict, Collapsible, named_bool_button, GraphList, CollapsibleTable, col_kws, col_size, named_list, graphic_button, t_kws
 from lib.conf.conf import loadConf, next_idx
 import lib.conf.dtype_dicts as dtypes
 from lib.gui.tab import GuiTab, SelectionList
@@ -59,10 +59,10 @@ class BatchTab(GuiTab):
                               type_dict=dtypes.get_dict_dtypes('space_search'))
         g1 = GraphList(self.name)
 
-        traj_l = named_list_layout(f'{self.name.capitalize()}s', key=self.batch_trajs_key, choices=[],
-                                   default_value=None, drop_down=False, list_width=24,
-                                   readonly=True, enable_events=True, single_line=False,
-                                   next_to_header=[graphic_button('remove', 'REMOVE_traj', tooltip='Remove a batch-run trajectory.')])
+        traj_l = named_list(f'{self.name.capitalize()}s', key=self.batch_trajs_key, choices=[],
+                            default_value=None, drop_down=False, list_width=24,
+                            readonly=True, enable_events=True, single_line=False,
+                            next_to_header=[graphic_button('remove', 'REMOVE_traj', tooltip='Remove a batch-run trajectory.')])
 
         l_batch0 = sg.Col([l_batch.l,
                            l_sim.l,

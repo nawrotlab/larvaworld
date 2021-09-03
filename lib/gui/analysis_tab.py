@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 import numpy as np
 # from tkinter import *
 
-from lib.gui.gui_lib import ButtonGraphList, graphic_button, named_list_layout, col_size, col_kws, change_dataset_id
+from lib.gui.gui_lib import ButtonGraphList, graphic_button, named_list, col_size, col_kws, change_dataset_id
 from lib.gui.tab import GuiTab
 from lib.stor import paths
 from lib.anal.plotting import graph_dict
@@ -52,9 +52,9 @@ class AnalysisTab(GuiTab):
                             enable_events=True, target=(0, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
                             tooltip='Browse to add datasets to the analysis list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
              ]
-        data_list = named_list_layout('Datasets', 'DATASET_IDS', list(dicts[self.name].keys()),
-                                      drop_down=False, list_width=25, list_height=10,
-                                      single_line=False, next_to_header=bs,as_col=False)
+        data_list = named_list('Datasets', 'DATASET_IDS', list(dicts[self.name].keys()),
+                               drop_down=False, list_width=25, list_height=10,
+                               single_line=False, next_to_header=bs, as_col=False)
 
 
 
