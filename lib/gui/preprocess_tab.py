@@ -159,15 +159,13 @@ class PreprocessTab(GuiTab):
             w.Element(self.proc_ids_key).Update(values=list(d[kP].keys()))
         elif e == f'ENRICH {kP}':
             dds=[dd for id, dd in d[kP].items() if id in v[f'{kP}_IDS']]
-            # print(c['enrichment'].get_dict(v,w))
-            # dds=enrich_datasets_window(datagroup_id=id0, ds=dds)
             enrich_datasets(datagroup_id=id0, datasets=dds, enrich_conf=c['enrichment'].get_dict(v,w))
         elif e == f'REPLAY {kP}':
             ids = v[f'{kP}_IDS']
             if len(ids) > 0:
                 dd = d[kP][ids[0]]
                 dd.visualize(vis_kwargs=self.gui.get_vis_kwargs(v, mode='video'), **self.gui.get_replay_kwargs(v))
-        print(c['enrichment'].get_dict(v,w))
+        # print(c['enrichment'].get_dict(v,w))
         return d, g
 
 

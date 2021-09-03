@@ -10,5 +10,4 @@ if __name__ == "__main__":
     s0=time.time()
     larvaworld_gui = LarvaworldGui()
     s1 = time.time()
-    print(s1-s0)
     larvaworld_gui.run()

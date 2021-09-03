@@ -850,8 +850,8 @@ def color_pick_layout(name, color=None):
 
 
 def retrieve_value(v, t):
-    # print(v)
-    # print(t)
+    # print(v, type(v))
+
     if v in ['', 'None', None, ('',''), ('', '')]:
         vv = None
     elif v in ['sample', 'fit']:
@@ -913,7 +913,6 @@ def retrieve_value(v, t):
             vv = int
         else:
             vv = locate(v)
-
     elif t == tuple or t == list:
         try:
             vv = literal_eval(v)
@@ -921,14 +920,9 @@ def retrieve_value(v, t):
             vv = [float(x) for x in v.split()]
             if t == tuple:
                 vv = tuple(vv)
-
-    # elif mode(t) == dict:
-    #     vv = v
     elif type(t) == list:
         vv = retrieve_value(v, type(t[0]))
         if vv not in t:
-            # print(vv)
-            # print(t)
             raise ValueError(f'Retrieved value {vv} not in list {t}')
     else:
         vv = v
@@ -1071,12 +1065,10 @@ def update_window_from_dict(window, dic, prefix=None):
                 b = window[f'TOGGLE_{k}']
                 if isinstance(b, BoolButton):
                     b.set_state(v)
-
             elif type(v) == dict:
                 new_prefix = k if prefix is not None else None
                 update_window_from_dict(window, v, prefix=new_prefix)
-            elif isinstance(window[k], TupleSpin):
-                # print(k)
+            elif isinstance(window[k], TupleSpin) or isinstance(window[k], MultiSpin):
                 window[k].update(window, v)
             elif v is None:
                 window.Element(k).Update(value='')
@@ -1110,6 +1102,7 @@ class SectionDict:
         self.subdicts = {}
 
     def init_section(self, text_kws={}, value_kws={}):
+        d=self.type_dict
         l = []
         for k, v in self.init_dict.items():
             k_disp = get_disp_name(k)
@@ -1117,7 +1110,7 @@ class SectionDict:
             if type(v) == bool:
                 l.append(named_bool_button(k_disp, v, k0))
             elif type(v) == dict:
-                type_dict = self.type_dict[k] if self.type_dict is not None else None
+                type_dict = d[k] if d is not None else None
                 self.subdicts[k0] = CollapsibleDict(k0, True, disp_name=k, dict=v, type_dict=type_dict,
                                                     toggle=self.toggled_subsections, toggled_subsections=self.toggled_subsections)
                 l.append(self.subdicts[k0].get_layout())
@@ -1128,20 +1121,24 @@ class SectionDict:
             #     l.append(temp)
             else:
                 temp = sg.In(v, key=k0, **value_kws)
-                if self.type_dict is not None:
+                if d is not None:
                     # print(k, self.type_dict[k], type(self.type_dict[k]))
-                    if type(self.type_dict[k]) == list:
-                        values = self.type_dict[k]
+                    if type(d[k]) == list:
+                        values = d[k]
                         if all([type(i) in [int, float] for i in values if i not in ['', None]]):
                             temp = sg.Spin(values=values, initial_value=v, key=k0, **value_kws)
                         else:
                             temp = sg.Combo(values, default_value=v, key=k0, enable_events=True,
                                             readonly=True, **value_kws)
-                    elif type(self.type_dict[k]) in [tuple, Tuple[float, float], Tuple[int, int]]:
+                    elif type(d[k]) in [tuple, Tuple[float, float], Tuple[int, int]]:
                         # print(k, v, self.type_dict[k], type(self.type_dict[k]))
-                        temp = TupleSpin(range=self.type_dict[k], initial_value=v, key=k0, **value_kws)
+                        temp = TupleSpin(range=d[k], initial_value=v, key=k0, **value_kws)
+                    elif type(d[k]) == dict and list(d[k].keys())==['type', 'value_list']:
+                        if d[k]['type'] == list :
 
-                        # temp = sg.Spin(values=self.type_dict[k], initial_value=v, key=k0, **value_kws)
+                    # elif type(self.type_dict[k]) in [list, List[float], List[int]]:
+                            temp = MultiSpin(value_list=d[k]['value_list'], initial_value=v, key=k0, **value_kws)
+                            # print('ff')
                 l.append([sg.Text(f'{k_disp}:', **text_kws), temp])
         return l
 
@@ -1162,7 +1159,6 @@ class SectionDict:
                     vv = values[k0]
                     vv = retrieve_value(vv, type(v))
                     new_dict[k] = vv
-
         else:
             for i, (k, t) in enumerate(self.type_dict.items()):
                 k0 = f'{self.name}_{k}'
@@ -1178,6 +1174,7 @@ class SectionDict:
                     new_dict[k] = window[k0].get()
                 else:
                     new_dict[k] = retrieve_value(values[k0], t)
+                    print(k, values[k0], type(values[k0]), new_dict[k], type(new_dict[k]))
         return new_dict
 
     def get_subdicts(self):
@@ -1220,6 +1217,95 @@ class TupleSpin(Pane):
         window.Element(self.k1).Update(value=v1)
 
         # return window
+
+class MultiSpin(Pane):
+    def __init__(self, initial_value, value_list, key, steps=100, decimals=2,Nspins=3, **value_kws):
+        w, h = w_kws['default_button_element_size']
+        value_kws.update({'size': (w - 3, h)})
+        # b_kws={'size' : (1,1)}
+        self.Nspins = Nspins
+        self.steps = steps
+        self.initial_value = initial_value
+        value_list = ['']+value_list
+        if initial_value is None :
+            v_spins=['']*Nspins
+            self.N=0
+        elif type(initial_value) in [list, tuple] :
+            self.N = len(initial_value)
+            v_spins=[vv for vv in initial_value]+['']*(Nspins-self.N)
+        # print(v_spins)
+        # r0, r1 = self.range = r
+        # self.integer = True if all([type(vv) == int or vv=='' for vv in value_list]) else False
+        # arange = fun.value_list(r0, r1, self.integer, steps, decimals)
+        self.key = key
+        self.add_key, self.remove_key=f'SPIN+ {key}', f'SPIN- {key}'
+        self.k_spins = [f'{key}_{i}' for i in range(Nspins)]
+        visibles=[True]*(self.N+1)+[True]*(Nspins-self.N-1)
+        self.spins = [sg.Spin(values=value_list, initial_value=vv, key=kk,visible=vis,
+                              **value_kws) for vv,kk, vis in zip(v_spins, self.k_spins, visibles)]
+        add_button=graphic_button('add', self.add_key, tooltip='Add another item in the list.')
+        remove_button=graphic_button('remove', self.remove_key, tooltip='Remove last item in the list.')
+        self.buttons=sg.Col([[add_button], [remove_button]])
+        super().__init__(pane_list=[self.get_layout()], key=self.key)
+
+    def get(self):
+        vs = [s.get() for s in self.spins if s.get() not in [None, '']]
+        vs = vs if len(vs)>0 else None
+        print(vs)
+        return vs
+
+    def get_layout(self):
+        l = sg.Col([self.spins])
+        # l = sg.Col([[self.buttons, sg.Col([self.spins])]])
+        return l
+
+    def update(self, window, value):
+        if value in [None, '', (None, None), [None, None]]:
+            self.N = 0
+            for i,k in enumerate(self.k_spins) :
+                window.Element(k).Update(value='')
+                # if i>0 :
+                #     window.Element(k).Update(visible=False)
+        elif type(value) in [list, tuple]:
+            self.N = len(value)
+            for i,k in enumerate(self.k_spins) :
+                if i<self.N :
+                    window.Element(k).Update(value=value[i], visible=True)
+                else :
+                    window.Element(k).Update(value='',visible=True)
+                    # window.Element(k).Update(value='',visible=False)
+
+    def add_spin(self, window):
+        # vs0=self.get()
+        # print(vs0)
+        # if vs0 is not None :
+        #
+        #     self.update(window, vs0+[2])
+        # print(self.N, self.Nspins)
+        if self.N<self.Nspins :
+            self.N+=1
+            # window[self.k_spins[self.N]].update(value=None, visible=True)
+            # window.Element(self.k_spins[1]).Update(visible=True)
+            # window.Element(self.k_spins[self.N]).Update(visible=True)
+            window.Element(self.k_spins[self.N]).Update(value='', visible=True)
+            # window.Element(self.k_spins[self.N]).Update(visible=True)
+        #     # window.refresh()
+        #     vs0 = self.get()
+        #     print(vs0)
+        #     print(self.N)
+
+    def remove_spin(self, window):
+        # vs0 = self.get()
+        # if vs0 is not None and len(vs0)>1:
+        #     self.update(window, vs0[:-1])
+        if self.N > 0 :
+            # window[self.k_spins[self.N]].update(value=None, visible=False)
+            # window.Element(self.k_spins[self.N]).Update(visible=False)
+            # window.Element(self.k_spins[self.N]).Update(value=None)
+            window.Element(self.k_spins[self.N]).Update(value='', visible=False)
+            # window.refresh()
+            self.N -= 1
+
 
 
 def named_bool_button(name, state, toggle_name=None, t_kws={}, input_key=None, input_text=''):
@@ -2106,6 +2192,16 @@ class DynamicGraph:
             delete_figure_agg(self.fig_agg)
         self.fig_agg = draw_canvas(self.canvas, self.fig)
 
+def check_multispins(w, e) :
+    if e.startswith('SPIN+'):
+        k = e.split()[-1]
+        # w[k].add_spin(w)
+        w.Element(k).add_spin(w)
+    elif e.startswith('SPIN-'):
+        k = e.split()[-1]
+        # w[k].remove_spin(w)
+        w.Element(k).remove_spin(w)
+
 
 def check_collapsibles(window, event, values, collapsibles):
     if event.startswith('OPEN SEC'):
@@ -2139,6 +2235,7 @@ def default_run_window(w, e, v, c={}, g={}):
     # check_toggles(window, event)
     # check_collapsibles(window, event, collapsibles)
     check_togglesNcollapsibles(w, e, v, c)
+    check_multispins(w,e)
     for name, graph_list in g.items():
         if e == graph_list.list_key:
             graph_list.evaluate(w, v[graph_list.list_key])
