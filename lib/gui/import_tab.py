@@ -71,14 +71,14 @@ class ImportTab(GuiTab):
 
     def eval(self, e, v, w, c, d, g):
 
-        kR, kP = self.raw_key, self.proc_key
-        fR = self.raw_folder
-        if e == f'BUILD {kR}':
-            id0 = self.current_ID(v)
-            raw_dic = {id: dir for id, dir in d[kR].items() if id in v[f'{kR}_IDS']}
-            proc_dir = import_window(datagroup_id=id0, raw_folder=fR, raw_dic=raw_dic)
-            d[kP].update(proc_dir)
-            w.Element(self.proc_ids_key).Update(values=list(d[kP].keys()))
+        # kR, kP = self.raw_key, self.proc_key
+        # fR = self.raw_folder
+        # if e == f'BUILD {kR}':
+        #     id0 = self.current_ID(v)
+        #     raw_dic = {id: dir for id, dir in d[kR].items() if id in v[f'{kR}_IDS']}
+        #     proc_dir = import_window(datagroup_id=id0, raw_folder=fR, raw_dic=raw_dic)
+        #     d[kP].update(proc_dir)
+        #     w.Element(self.proc_ids_key).Update(values=list(d[kP].keys()))
         return d, g
 
 

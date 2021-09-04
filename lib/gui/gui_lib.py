@@ -25,7 +25,7 @@ from lib.stor import paths
 import lib.conf.dtype_dicts as dtypes
 import lib.gui.graphics as graphics
 from lib.stor.datagroup import LarvaDataGroup
-from lib.stor.larva_dataset import LarvaDataset
+
 
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'
@@ -895,14 +895,18 @@ class DataList:
                 dd.visualize(vis_kwargs=self.tab.gui.get_vis_kwargs(v, mode='video'),
                              **self.tab.gui.get_replay_kwargs(v))
         elif e == f'ADD REF {n}':
+            from lib.stor.larva_dataset import LarvaDataset
             dd = LarvaDataset(dir=f'{paths.RefFolder}/reference')
             d0[dd.id] = dd
             w.Element(k).Update(values=list(d0.keys()))
-        # elif e == f'BUILD {n}':
-        #     raw_dic = {id: dir for id, dir in d0.items() if id in v[k]}
-        #     proc_dir = import_window(datagroup_id=datagroup_id, raw_folder=self.tab.raw_folder, raw_dic=raw_dic)
-        #     d0.update(proc_dir)
-        #     w.Element(k).Update(values=list(d0.keys()))
+        elif e == f'BUILD {n}':
+            dl1=self.tab.datalists[self.tab.proc_key]
+            d1=dl1.dict
+            k1=dl1.list_key
+            raw_dic = {id: dir for id, dir in d0.items() if id in v[k]}
+            proc_dir = import_window(datagroup_id=datagroup_id, raw_folder=self.tab.raw_folder, raw_dic=raw_dic)
+            d1.update(proc_dir)
+            w.Element(k1).Update(values=list(d1.keys()))
         elif e == f'ENRICH {n}':
             dds = [dd for id, dd in d0.items() if id in v[k]]
             enrich_datasets(datagroup_id=datagroup_id, datasets=dds, enrich_conf=c['enrichment'].get_dict(v, w))
