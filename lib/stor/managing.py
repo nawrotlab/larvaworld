@@ -178,8 +178,9 @@ def compute_PIs(datagroup_id=None, save_to=None,ds=None,save_as='PIs.csv', **kwa
 
 def detect_dataset(datagroup_id=None, folder_path=None,raw=True, **kwargs):
     dic={}
+    if folder_path in ['', None]:
+        return dic
     if raw :
-        # ids, dirs = [], []
         conf = loadConf(datagroup_id, 'Group')
         if 'detect' in conf.keys():
             d = conf['detect']

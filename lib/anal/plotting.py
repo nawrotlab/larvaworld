@@ -1599,11 +1599,11 @@ def plot_food_amount(datasets, labels=None, save_to=None, save_as=None, filt_amo
     return process_plot(fig, save_to, filename, return_fig, show)
 
 
-def boxplot_PI(datasets, labels=None, subfolder='source', save_as=None,sort_labels=False,
+def boxplot_PI(datasets, labels=None, subfolder=None, save_as=None,sort_labels=False,
                save_to=None, return_fig=False, show=False, xlabel='Trials') :
 
     if save_to is None:
-        save_to = datasets[0].dir_dict['comp_plot']
+        save_to = paths.OdorPrefFigFolder
     if subfolder is not None:
         save_to = f'{save_to}/{subfolder}'
     if not os.path.exists(save_to):

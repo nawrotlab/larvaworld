@@ -23,10 +23,7 @@ class EssayTab(GuiTab):
 
     def build(self):
         s1 = CollapsibleDict('essay_params', True, default=True, disp_name='Configuration', text_kws=t_kws(8))
-        l_essay = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'],
-                                # progress=True,
-                                # sublists={'env_params': l_env, 'life_params' : l_life}
-                                )
+        l_essay = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'])
         next_to_header = [
             graphic_button('play', f'RUN_{self.essay_exps_key}', tooltip='Run the selected essay experiment.')]
         l_exps = named_list(text='Experiments', key=self.essay_exps_key, choices=[], drop_down=False,

@@ -83,7 +83,7 @@ class SelectionList:
     def set_d(self, d):
         self.tab.gui.dicts =d
 
-    def build(self, append=[],as_col=True,**kwargs):
+    def build(self, append=[],**kwargs):
 
         acts = self.actions
         n = self.disp
@@ -125,21 +125,14 @@ class SelectionList:
 
         if self.progressbar is not None :
             temp.append(self.progressbar.l)
-        if as_col :
-            return [sg.Col(temp)]
-        else :
-            return temp
+        return temp
         # l = [sg.Col(temp)]
         # return l
 
-    def eval(self, e, v):
-        w = self.w()
-        c = self.c()
+    def eval(self, e, v, w, c, d, g):
         n = self.disp
         id = v[self.k]
         k0 = self.conftype
-        g=self.g()
-        d=self.d()
 
         if e == f'LOAD_{n}' and id != '':
             conf = loadConf(id, k0)
@@ -198,8 +191,8 @@ class SelectionList:
             idx = int(np.min([i for i in range(5) if f'{k0}{i}' not in w.AllKeysDict.keys()]))
         return f'{k0}{idx}'
 
-    def get_layout(self):
-        return self.l
+    def get_layout(self, as_col=True, **kwargs):
+        return [sg.Col(self.l, **kwargs)] if as_col else self.l
 
     def get_subdicts(self):
         if self.collapsible is not None :
@@ -225,6 +218,7 @@ class GuiTab:
         self.gui = gui
         self.conftype = conftype
         self.selectionlists = {}
+        self.datalists = {}
         # self.graph_list=None
 
     @property
@@ -271,12 +265,15 @@ class GuiTab:
         return None, {}, {}, {}
 
     def eval0(self, e, v):
-        for sl_name,sl in self.selectionlists.items():
-            sl.eval(e, v)
+
         w = self.gui.window
         c = self.gui.collapsibles
         g = self.gui.graph_lists
         d = self.gui.dicts
+        for sl_name,sl in self.selectionlists.items():
+            sl.eval(e, v, w, c, d, g)
+        for dl_name,dl in self.datalists.items():
+            dl.eval(e, v, w, c, d, g)
         self.eval(e, v, w, c, d, g)
 
     def run(self, v, w,c, d, g, conf, id):

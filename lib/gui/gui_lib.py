@@ -11,7 +11,8 @@ import numpy as np
 import PySimpleGUI as sg
 import operator
 
-from PySimpleGUI import BUTTON_TYPE_COLOR_CHOOSER, Button, Element, ELEM_TYPE_INPUT_SPIN, Pane
+from PySimpleGUI import BUTTON_TYPE_COLOR_CHOOSER, Button, Element, ELEM_TYPE_INPUT_SPIN, Pane, \
+    LISTBOX_SELECT_MODE_EXTENDED
 from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
@@ -24,6 +25,7 @@ from lib.stor import paths
 import lib.conf.dtype_dicts as dtypes
 import lib.gui.graphics as graphics
 from lib.stor.datagroup import LarvaDataGroup
+from lib.stor.larva_dataset import LarvaDataset
 
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'
@@ -690,7 +692,6 @@ def col_size(x_frac=1.0, y_frac=1.0, win_size=None):
     return int(win_size[0] * x_frac), int(win_size[1] * y_frac)
 
 
-
 w_kws = {
     'finalize': True,
     'resizable': True,
@@ -763,6 +764,149 @@ def graphic_button(name, key, **kwargs):
          }
     b = sg.B(image_data=dic[name], k=key, **c, **kwargs)
     return b
+
+
+def browse_button(name, initial_folder=paths.DataFolder, target=(0, -1), tooltip=None, **kwargs):
+    if tooltip is None:
+        tooltip = 'Browse to add items to the list.\n Either directly select a directory or a parent folder containing multiple subdirectories.'
+    b = graphic_button('search_add', key=f'BROWSE {name}', initial_folder=initial_folder, change_submits=True,
+                       enable_events=True, target=target, button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
+                       tooltip=tooltip, **kwargs)
+    return b
+
+
+def remove_button(name, tooltip=None, **kwargs):
+    if tooltip is None:
+        tooltip = 'Remove an item from the list.'
+    b = graphic_button('remove', f'REMOVE {name}', tooltip=tooltip, **kwargs)
+    return b
+
+
+def sel_all_button(name, tooltip=None, **kwargs):
+    if tooltip is None:
+        tooltip = 'Select all list elements.'
+    b = graphic_button('checkbox_full', f'SELECT_ALL {name}', tooltip=tooltip, **kwargs)
+    return b
+
+
+def changeID_button(name, tooltip=None, **kwargs):
+    if tooltip is None:
+        tooltip = 'Change the dataset ID transiently or permanently.'
+    b = graphic_button('edit', f'CHANGE_ID {name}', tooltip=tooltip, **kwargs)
+    return b
+
+
+def replay_button(name, tooltip=None, **kwargs):
+    if tooltip is None:
+        tooltip = 'Replay/Visualize the dataset.'
+    b = graphic_button('play', f'REPLAY {name}', tooltip=tooltip, **kwargs)
+    return b
+
+
+def import_button(name, tooltip=None, **kwargs):
+    if tooltip is None:
+        tooltip = 'Build a dataset from raw files.'
+    b = graphic_button('burn', f'BUILD {name}', tooltip=tooltip, **kwargs)
+    return b
+
+
+def enrich_button(name, tooltip=None, **kwargs):
+    if tooltip is None:
+        tooltip = 'Enrich the dataset.'
+    b = graphic_button('data_add', f'ENRICH {name}', tooltip=tooltip, **kwargs)
+    return b
+
+
+def add_ref_button(name, tooltip=None, **kwargs):
+    if tooltip is None:
+        tooltip = 'Add the reference experimental dataset to the list.'
+    b = graphic_button('box_add', f'ADD REF {name}', tooltip=tooltip, **kwargs)
+    return b
+
+
+button_dict = {
+    'import': import_button,
+    'enrich': enrich_button,
+    'add_ref': add_ref_button,
+    'select_all': sel_all_button,
+    'remove': remove_button,
+    'changeID': changeID_button,
+    'browse': browse_button,
+    'replay': replay_button
+}
+
+
+class DataList:
+    def __init__(self, name, tab, dict={}, buttons=['select_all', 'remove', 'changeID', 'browse'], button_args={},
+                 raw=False, **kwargs):
+        self.name = name
+        self.tab = tab
+        self.dict = dict
+        self.buttons = buttons
+        self.button_args = button_args
+        self.raw = raw
+        self.list_key = f'{self.name}_IDS'
+        self.browse_key = f'BROWSE {self.name}'
+        self.layout = self.build_layout(**kwargs)
+
+    def build_buttons(self):
+        bl = []
+        for n in self.buttons:
+            if n in list(self.button_args.keys()):
+                kws = self.button_args[n]
+            else:
+                kws = {}
+            l = button_dict[n](self.name, **kws)
+            bl.append(l)
+        return bl
+
+    def build_layout(self, **kwargs):
+        bl = self.build_buttons()
+        l = named_list(get_disp_name(self.name), self.list_key, list(self.dict.keys()),
+                       drop_down=False, list_width=25, list_height=5,
+                       single_line=False, next_to_header=bl, as_col=False,
+                       list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED}, **kwargs)
+        return l
+
+    def get_layout(self, as_col=True, **kwargs):
+        return [sg.Col(self.layout, **kwargs)] if as_col else self.layout
+
+    def eval(self, e, v, w, c, d, g):
+        from lib.stor.managing import detect_dataset, enrich_datasets
+        n = self.name
+        k = self.list_key
+        d0 = self.dict
+        v0 = v[k]
+        datagroup_id = self.tab.current_ID(v) if self.raw else None
+        if e == self.browse_key:
+            d0.update(detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw))
+            w.Element(k).Update(values=list(d0.keys()))
+        elif e == f'SELECT_ALL {n}':
+            w.Element(k).Update(set_to_index=np.arange(len(d0)).tolist())
+        elif e == f'REMOVE {n}':
+            for i in range(len(v0)):
+                d0.pop(v0[i], None)
+            w.Element(k).Update(values=list(d0.keys()))
+        elif e == f'CHANGE_ID {n}':
+            d0 = change_dataset_id(w, v, d0, k0=k)
+        elif e == f'REPLAY {n}':
+            if len(v0) > 0:
+                dd = d0[v0[0]]
+                dd.visualize(vis_kwargs=self.tab.gui.get_vis_kwargs(v, mode='video'),
+                             **self.tab.gui.get_replay_kwargs(v))
+        elif e == f'ADD REF {n}':
+            dd = LarvaDataset(dir=f'{paths.RefFolder}/reference')
+            d0[dd.id] = dd
+            w.Element(k).Update(values=list(d0.keys()))
+        # elif e == f'BUILD {n}':
+        #     raw_dic = {id: dir for id, dir in d0.items() if id in v[k]}
+        #     proc_dir = import_window(datagroup_id=datagroup_id, raw_folder=self.tab.raw_folder, raw_dic=raw_dic)
+        #     d0.update(proc_dir)
+        #     w.Element(k).Update(values=list(d0.keys()))
+        elif e == f'ENRICH {n}':
+            dds = [dd for id, dd in d0.items() if id in v[k]]
+            enrich_datasets(datagroup_id=datagroup_id, datasets=dds, enrich_conf=c['enrichment'].get_dict(v, w))
+        self.dict = d0
 
 
 # def popup_color_chooser(look_and_feel=None):
@@ -1002,7 +1146,8 @@ def gui_table(data, pars_dict, title='Agent list', sortable=False):
         if cell != (r, c):
             cell = r, c
             w[cell].set_focus()  # set the focus on the element moved to
-            w[cell].update(select=True)  # when setting focus, also highlight the data in the element so typing overwrites
+            w[cell].update(
+                select=True)  # when setting focus, also highlight the data in the element so typing overwrites
         if e == 'Add':
             data = get_table(v, pars_dict, Nrows)
             try:
@@ -1792,7 +1937,7 @@ def object_menu(selected, **kwargs):
 class GraphList:
     def __init__(self, name, fig_dict={}, next_to_header=None, default_values=None,
                  canvas_size=(1000, 800), list_size=None, list_header='Graphs', auto_eval=True,
-                 canvas_kws={'background_color': 'Lightblue'}, graph=False,subsample=1,
+                 canvas_kws={'background_color': 'Lightblue'}, graph=False, subsample=1,
                  canvas_col_kws={'scrollable': False, 'vertical_scroll_only': False, 'expand_y': True,
                                  'expand_x': True}):
         self.subsample = subsample
@@ -1865,9 +2010,9 @@ class GraphList:
         c = w[self.canvas_key].TKCanvas
         c.pack()
         img = PhotoImage(file=fig)
-        img=img.subsample(self.subsample)
-        W,H=self.canvas_size
-        c.create_image(int(W/2), int(H/2), image=img)
+        img = img.subsample(self.subsample)
+        W, H = self.canvas_size
+        c.create_image(int(W / 2), int(H / 2), image=img)
         # c.create_image(250, 250, image=img)
         self.fig_agg = img
 
@@ -1954,7 +2099,7 @@ def delete_objects_window(selected):
     title = 'Delete objects?'
     l = [
         [sg.T(title)],
-        [sg.Listbox(default_values=ids, values=ids, size=(20, len(ids)), k='DELETE_OBJECTS',enable_events=True)],
+        [sg.Listbox(default_values=ids, values=ids, size=(20, len(ids)), k='DELETE_OBJECTS', enable_events=True)],
         [sg.Ok(), sg.Cancel()]]
     w = sg.Window(title, l)
     while True:
@@ -2012,7 +2157,7 @@ class DynamicGraph:
         self.pars = pars
         self.dt = self.agent.model.dt
         self.init_dur = 20
-        W, H  = (1550, 1000)
+        W, H = (1550, 1000)
         Wc, Hc = self.canvas_size = (W - 50, H - 200)
         self.my_dpi = 96
         self.figsize = (int(Wc / self.my_dpi), int(Hc / self.my_dpi))
@@ -2020,8 +2165,8 @@ class DynamicGraph:
         Ncols = 4
         par_lists = [list(a) for a in np.array_split(self.available_pars, Ncols)]
         l0 = [[sg.T('Choose parameters')],
-                      [sg.Col([*[[sg.CB(p, k=f'k_{p}', **t_kws(24))] for p in par_lists[i]]]) for i in range(Ncols)],
-                      [sg.B('Ok', **t_kws(8)), sg.B('Cancel', **t_kws(8))]]
+              [sg.Col([*[[sg.CB(p, k=f'k_{p}', **t_kws(24))] for p in par_lists[i]]]) for i in range(Ncols)],
+              [sg.B('Ok', **t_kws(8)), sg.B('Cancel', **t_kws(8))]]
 
         l1 = [
             [sg.Canvas(size=(1280, 1200), k='-CANVAS-')],
@@ -2086,7 +2231,7 @@ class DynamicGraph:
         return ys
 
     def update_pars(self):
-        self.pars, syms, us, lims, pcs = getPar(d=self.pars,to_return=['d', 's', 'l', 'lim', 'p'])
+        self.pars, syms, us, lims, pcs = getPar(d=self.pars, to_return=['d', 's', 'l', 'lim', 'p'])
         self.Npars = len(self.pars)
         self.yranges = {}
 
