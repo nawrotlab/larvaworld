@@ -2,6 +2,7 @@ import os
 import PySimpleGUI as sg
 import numpy as np
 # from tkinter import *
+from PySimpleGUI import LISTBOX_SELECT_MODE_EXTENDED
 
 from lib.gui.gui_lib import ButtonGraphList, graphic_button, named_list, col_size, col_kws, change_dataset_id
 from lib.gui.tab import GuiTab
@@ -19,6 +20,7 @@ class AnalysisTab(GuiTab):
         self.canvas_size = col_size(x_frac=1 - 2 * col_frac, y_frac=0.8)
         self.canvas_col_size = col_size(x_frac=1 - 2 * col_frac)
         self.col_size=col_size(col_frac)
+        self.data_key = 'DATASET'
 
     # def change_dataset_id(self,w, v, dic, k0):
     #     # k0 = 'DATASET_IDS'
@@ -41,20 +43,24 @@ class AnalysisTab(GuiTab):
     # return data
 
     def build(self):
-
+        initial_folder=f'{paths.DataFolder}/SchleyerGroup/processed'
+        # initial_folder=paths.SingleRunFolder
         dicts = {self.name: {}}
 
-        bs=[graphic_button('remove', 'Remove', tooltip='Remove a dataset from the analysis list.'),
+        bs=[
+            graphic_button('checkbox_full', f'SELECT_ALL {self.data_key}', tooltip='Select all list elements.'),
+            graphic_button('remove', 'Remove', tooltip='Remove a dataset from the analysis list.'),
              graphic_button('play', 'Replay', tooltip='Replay/Visualize the dataset.'),
              graphic_button('box_add', 'Add ref',tooltip='Add the reference experimental dataset to the analysis list.'),
              graphic_button('edit', 'Change ID', tooltip='Change the dataset ID transiently or permanently.'),
-             graphic_button('search_add', 'DATASET_DIR', initial_folder=paths.SingleRunFolder, change_submits=True,
+             graphic_button('search_add', 'DATASET_DIR', initial_folder=initial_folder, change_submits=True,
                             enable_events=True, target=(0, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
                             tooltip='Browse to add datasets to the analysis list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
              ]
         data_list = named_list('Datasets', 'DATASET_IDS', list(dicts[self.name].keys()),
                                drop_down=False, list_width=25, list_height=10,
-                               single_line=False, next_to_header=bs, as_col=False)
+                               single_line=False, next_to_header=bs, as_col=False,
+                               list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED})
 
 
 
@@ -73,14 +79,18 @@ class AnalysisTab(GuiTab):
             if vD != '':
                 self.base_dict.update(detect_dataset(folder_path = vD, raw=False))
                 w.Element(k0).Update(values=list(self.base_dict.keys()))
-
+        elif e.startswith('SELECT_ALL'):
+            k = e.split()[-1]
+            k0 = f'{k}_IDS'
+            w.Element(k0).Update(set_to_index=np.arange(len(self.base_dict)).tolist())
         elif e == 'Add ref':
             dd = LarvaDataset(dir=f'{paths.RefFolder}/reference')
             self.base_dict[dd.id] = dd
             w.Element(k0).Update(values=list(self.base_dict.keys()))
         elif e == 'Remove':
             if len(v0) > 0:
-                self.base_dict.pop(v0[0], None)
+                for i in range(len(v0)):
+                    self.base_dict.pop(v0[i], None)
                 w.Element(k0).Update(values=list(self.base_dict.keys()))
         elif e == 'Change ID':
             change_dataset_id(w, v, self.base_dict, k0='DATASET_IDS')

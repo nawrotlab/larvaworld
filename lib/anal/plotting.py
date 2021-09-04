@@ -1599,8 +1599,8 @@ def plot_food_amount(datasets, labels=None, save_to=None, save_as=None, filt_amo
     return process_plot(fig, save_to, filename, return_fig, show)
 
 
-def boxplot_PI(datasets, labels=None, subfolder='source', save_as=None,
-               save_to=None, return_fig=False, show=False, xlabel='conditions') :
+def boxplot_PI(datasets, labels=None, subfolder='source', save_as=None,sort_labels=False,
+               save_to=None, return_fig=False, show=False, xlabel='Trials') :
 
     if save_to is None:
         save_to = datasets[0].dir_dict['comp_plot']
@@ -1613,12 +1613,25 @@ def boxplot_PI(datasets, labels=None, subfolder='source', save_as=None,
     group_ids=fun.unique_list([d.config['group_id'] for d in datasets])
     Ngroups=len(group_ids)
     common_ids = fun.unique_list([l.split('_')[-1] for l in group_ids])
-    # common_ids = sorted(common_ids)
+
     Ncommon = len(common_ids)
     pair_ids = fun.unique_list([l.split('_')[0] for l in group_ids])
-    pair_ids=sorted(pair_ids)
+
     Npairs = len(pair_ids)
     coupled_labels=True if Ngroups==Npairs*Ncommon else False
+
+    if Npairs==3 and all([l in pair_ids for l in ['Low','Medium', 'High']]) :
+        pair_ids = ['Low','Medium', 'High']
+        xlabel= 'Substate fructose concentration'
+    elif Npairs==3 and all([l in pair_ids for l in ['1:20','1:200', '1:2000']]) :
+        pair_ids = ['1:20','1:200', '1:2000']
+        xlabel= 'Odor concentration'
+    if Ncommon==2 and all([l in common_ids for l in ['AM','EM']]) :
+        common_ids = ['EM','AM']
+
+    if sort_labels :
+        common_ids = sorted(common_ids)
+        pair_ids = sorted(pair_ids)
 
 
     all_PIs = []
@@ -1650,7 +1663,7 @@ def boxplot_PI(datasets, labels=None, subfolder='source', save_as=None,
         cdf = pd.concat([df])  # CONCATENATE
     mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Group'])  # MELT
 
-    fig, ax = plt.subplots(1, 1, figsize=(8, 5))
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
     sns.boxplot(x="Trial", y="value", hue="Group", data=mdf, palette=palette, ax=ax, width=.5,
                 fliersize=3, linewidth=None,whis=1.0)  # RUN PLOT
     ax.set_ylabel('Odor preference')

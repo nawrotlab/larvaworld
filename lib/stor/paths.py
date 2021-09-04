@@ -51,8 +51,11 @@ conf_paths = {
 VideoSlideFolder = f'{get_parent_dir()}/lib/gui/video_slides'
 IntroSlideFolder = f'{get_parent_dir()}/lib/gui/intro_slides'
 TutorialSlideFolder = f'{get_parent_dir()}/lib/gui/tutorial_slides'
-RoverSitterFigFolder = f'{get_parent_dir()}/lib/gui/roversVSsitters_exp_figures'
+
 ModelFigFolder = f'{get_parent_dir()}/lib/gui/model_figures'
+ExpFigFolder = f'{get_parent_dir()}/lib/gui/exp_figures'
+RoverSitterFigFolder = f'{ExpFigFolder}/roversVSsitters'
+OdorPrefFigFolder = f'{ExpFigFolder}/odor_preference'
 
 new_format = False
 # new_format = True
