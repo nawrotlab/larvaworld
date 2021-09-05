@@ -174,7 +174,6 @@ def save_conf_window(conf, conftype, disp=None):
 class SectionDict:
     def __init__(self, name, dict, type_dict=None, toggled_subsections=True):
         self.init_dict = dict
-        # self.named_init_dict=self.named_dict(dict)
         self.type_dict = type_dict
         self.toggled_subsections = toggled_subsections
         self.name = name
@@ -187,30 +186,30 @@ class SectionDict:
             k_disp = get_disp_name(k)
             k0 = f'{self.name}_{k}'
             if type(v) == bool:
-                l.append(named_bool_button(k_disp, v, k0))
+                ii=named_bool_button(k_disp, v, k0)
             elif type(v) == dict:
                 type_dict = d[k] if d is not None else None
                 self.subdicts[k0] = CollapsibleDict(k0, True, disp_name=k, dict=v, type_dict=type_dict,
                                                     toggle=self.toggled_subsections,
                                                     toggled_subsections=self.toggled_subsections)
-                l.append(self.subdicts[k0].get_layout())
+                ii=self.subdicts[k0].get_layout()
             else:
-                temp = sg.In(v, key=k0, **value_kws)
-                if d is not None:
-                    t0 = d[k]
-                    t = type(t0)
-                    if t == list:
-                        if all([type(i) in [int, float] for i in t0 if i not in ['', None]]):
-                            temp = sg.Spin(values=t0, initial_value=v, key=k0, **value_kws)
-                        else:
-                            temp = sg.Combo(t0, default_value=v, key=k0, enable_events=True,
-                                            readonly=True, **value_kws)
-                    elif t in [tuple, Tuple[float, float], Tuple[int, int]]:
-                        temp = TupleSpin(range=t0, initial_value=v, key=k0, **value_kws)
-                    elif t == dict and list(t0.keys()) == ['type', 'value_list']:
-                        if t0['type'] == list:
-                            temp = MultiSpin(value_list=t0['value_list'], initial_value=v, key=k0, **value_kws)
-                l.append([sg.Text(f'{k_disp}:', **text_kws), temp])
+                t0 = d[k]
+                t = type(t0)
+                if t == list:
+                    if all([type(i) in [int, float] for i in t0 if i not in ['', None]]):
+                        temp = sg.Spin(values=t0, initial_value=v, key=k0, **value_kws)
+                    else:
+                        temp = sg.Combo(t0, default_value=v, key=k0, enable_events=True,
+                                        readonly=True, **value_kws)
+                elif t in [tuple, Tuple[float, float], Tuple[int, int]]:
+                    temp = TupleSpin(range=t0, initial_value=v, key=k0, **value_kws)
+                elif t == dict and list(t0.keys()) == ['type', 'value_list'] and t0['type'] == list:
+                    temp = MultiSpin(value_list=t0['value_list'], initial_value=v, key=k0, **value_kws)
+                else :
+                    temp = sg.In(v, key=k0, **value_kws)
+                ii =[sg.Text(f'{k_disp}:', **text_kws), temp]
+            l.append(ii)
         return l
 
     def get_type(self, k, v):

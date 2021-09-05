@@ -14,27 +14,26 @@ class SettingsTab(GuiTab):
     #     super().__init__(**kwargs)
 
 
-    def build_shortcut_layout(self, collapsibles):
+    def build_shortcut_layout(self, c):
         conf=load_shortcuts()
 
         l = []
         for title, dic in dtypes.default_shortcuts.items():
-            col_title=f'shortcuts_{title}'
             ll = [
-                # [sg.T(title, **t16_kws)],
                 *[[sg.T("", **t_kws(2)), sg.T(k, **t_kws(16)),
                    sg.In(default_text=conf['keys'][k], key=f'SHORT {k}', disabled=True,
                          disabled_readonly_background_color='black', enable_events=True,
                          text_color='white', **t_kws(10), justification='center'),
                    graphic_button('edit', f'EDIT_SHORTCUT  {k}', tooltip=f'Edit shortcut for {k}')] for k in list(dic.keys())],
-                # [sg.T("", **t8_kws)]
             ]
-            collapsibles[col_title]=Collapsible(col_title, state=False, disp_name=title, content=ll)
-            l += collapsibles[col_title].get_layout(as_col=False)
+            c0=Collapsible(f'shortcuts_{title}', state=False, disp_name=title, content=ll)
+            l += c0.get_layout(as_col=False)
+            c.update(c0.get_subdicts())
 
-        dicts = {'shortcuts': conf}
-        dicts['shortcuts']['cur'] = None
-        return l, dicts
+
+        d = {'shortcuts': conf}
+        d['shortcuts']['cur'] = None
+        return l, d
 
 
     def build(self):
@@ -60,7 +59,7 @@ class SettingsTab(GuiTab):
         l = [[
             gui_col([s1], 0.33),
             gui_col([s2], 0.33),
-            gui_col([s5], 0.34, scrollable=False, vertical_scroll_only=True),
+            gui_col([s5], 0.34),
                   ]]
         return l, c, {}, d
 

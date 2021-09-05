@@ -36,7 +36,11 @@ def graphic_button(name, key, **kwargs):
     c = {'button_color': (sg.theme_background_color(), sg.theme_background_color()),
          'border_width': 0,
          }
-    b = sg.B(image_data=dic[name], k=key, **c, **kwargs)
+    try :
+        bs64=dic[name]
+    except :
+        bs64=getattr(graphics, name)
+    b = sg.B(image_data=bs64, k=key, **c, **kwargs)
     return b
 
 
