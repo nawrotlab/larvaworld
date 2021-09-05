@@ -47,6 +47,9 @@ conf_paths = {
     'Life': f"{ConfFolder}/LifeConfs.txt",
 }
 
+Dtypes_path=f'{ConfFolder}/dtypes.txt'
+NullDicts_path=f'{ConfFolder}/null_dicts.txt'
+
 MediaFolder = f'{get_parent_dir()}/lib/media'
 VideoSlideFolder = f'{MediaFolder}/video_slides'
 IntroSlideFolder = f'{MediaFolder}/intro_slides'

@@ -2,17 +2,15 @@ import json
 import sys
 import shutil
 import os
+
 import numpy as np
 
-from lib.stor import paths as paths
+from lib.stor import paths
 
 sys.path.insert(0, paths.get_parent_dir())
 
-import lib.conf.larva_conf as mod
-import lib.conf.data_conf as dat
-import lib.conf.batch_conf as bat
-import lib.conf.exp_conf as exp
-import lib.conf.essay_conf as essay
+
+
 
 
 def get_input(message, itype, default='', accepted=None, range=None):
@@ -331,8 +329,35 @@ def initializeDataGroup(id):
             os.makedirs(i)
 
 
+def next_idx(exp, type='single'):
+    try:
+        with open(paths.SimIdx_path) as tfp:
+            idx_dict = json.load(tfp)
+    except:
+        exp_names = list(loadConfDict('Exp').keys())
+        batch_names = list(loadConfDict('Batch').keys())
+        exp_idx_dict = dict(zip(exp_names, [0] * len(exp_names)))
+        batch_idx_dict = dict(zip(batch_names, [0] * len(batch_names)))
+        # batch_idx_dict.update(loadConfDict('Batch'))
+        idx_dict = {'single': exp_idx_dict,
+                    'batch': batch_idx_dict}
+    if not exp in idx_dict[type].keys():
+        idx_dict[type][exp] = 0
+    idx_dict[type][exp] += 1
+    with open(paths.SimIdx_path, "w") as fp:
+        json.dump(idx_dict, fp)
+    return idx_dict[type][exp]
+
+# print(env_dict['odor_pref_test']['food_params']['source_units'])
+
+
 if __name__ == '__main__':
     import lib.conf.env_conf as env
+    import lib.conf.essay_conf as essay
+    import lib.conf.larva_conf as mod
+    import lib.conf.data_conf as dat
+    import lib.conf.batch_conf as bat
+    import lib.conf.exp_conf as exp
 
     dat_list = [
         dat.SchleyerConf,
@@ -471,27 +496,4 @@ if __name__ == '__main__':
 
     for k, v in essay.essay_dict.items():
         saveConf(v, 'Essay', k)
-
-
-def next_idx(exp, type='single'):
-    try:
-        with open(paths.SimIdx_path) as tfp:
-            idx_dict = json.load(tfp)
-    except:
-        exp_names = list(loadConfDict('Exp').keys())
-        batch_names = list(loadConfDict('Batch').keys())
-        exp_idx_dict = dict(zip(exp_names, [0] * len(exp_names)))
-        batch_idx_dict = dict(zip(batch_names, [0] * len(batch_names)))
-        # batch_idx_dict.update(loadConfDict('Batch'))
-        idx_dict = {'single': exp_idx_dict,
-                    'batch': batch_idx_dict}
-    if not exp in idx_dict[type].keys():
-        idx_dict[type][exp] = 0
-    idx_dict[type][exp] += 1
-    with open(paths.SimIdx_path, "w") as fp:
-        json.dump(idx_dict, fp)
-    return idx_dict[type][exp]
-
-# print(env_dict['odor_pref_test']['food_params']['source_units'])
-
 

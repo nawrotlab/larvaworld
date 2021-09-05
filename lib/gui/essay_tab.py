@@ -31,14 +31,6 @@ class EssayTab(GuiTab):
         g1 = GraphList(self.name, list_header='Simulated', canvas_size=self.canvas_size)
         g2 = GraphList(self.exp_figures_key, list_header='Observed', canvas_size=self.canvas_size,fig_dict={})
 
-        # r1=gui_row([g1.canvas,g1], 0.8, 0.5)
-        # r2=gui_row([g2.canvas,g2], 0.8, 0.5)
-        # gg = sg.Col([[r1],[r2]])
-        # raise
-        #     [gui_col([g1.canvas,g1], 0.8, 0.5)],
-        #     [gui_col([g2.canvas, g2], 0.8, 0.5)]
-        # ],
-        #     size=col_size(0.8), **col_kws)
         l = [[
             gui_col([sl1, s1, dl1], 0.2),
             gui_col([g1.canvas, g2.canvas], 0.6),

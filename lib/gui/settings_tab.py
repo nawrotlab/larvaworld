@@ -1,6 +1,8 @@
 import time
 import PySimpleGUI as sg
 
+import lib.conf.conf
+import lib.conf.init_dtypes
 from lib.conf.conf import saveConfDict
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, load_shortcuts
 from lib.gui.aux import t_kws, gui_col
@@ -18,7 +20,7 @@ class SettingsTab(GuiTab):
         conf=load_shortcuts()
 
         l = []
-        for title, dic in dtypes.default_shortcuts.items():
+        for title, dic in lib.conf.init_dtypes.default_shortcuts.items():
             ll = [
                 *[[sg.T("", **t_kws(2)), sg.T(k, **t_kws(16)),
                    sg.In(default_text=conf['keys'][k], key=f'SHORT {k}', disabled=True,
@@ -41,7 +43,7 @@ class SettingsTab(GuiTab):
         l_short, d = self.build_shortcut_layout(c)
         l_mouse=[*[[sg.T("", **t_kws(2)), sg.T(k, **t_kws(16)),
                    sg.T(v, key=f'SHORT {k}', background_color='black',
-                         text_color='white', **t_kws(10), justification='center')] for k,v in dtypes.mouse_controls.items()],
+                         text_color='white', **t_kws(10), justification='center')] for k,v in lib.conf.init_dtypes.mouse_controls.items()],
                  ]
 
         s1 = CollapsibleDict('Visualization', True, dict=dtypes.get_dict('visualization', mode='video', video_speed=60),
@@ -69,7 +71,7 @@ class SettingsTab(GuiTab):
         cur = d['shortcuts']['cur']
         if e == 'RESET_SHORTCUTS':
             d['shortcuts']['cur'] = None
-            for title, dic in dtypes.default_shortcuts.items():
+            for title, dic in lib.conf.init_dtypes.default_shortcuts.items():
                 for k, v in dic.items():
                     w[f'SHORT {k}'].update(disabled=True, value=v)
                     d['shortcuts']['keys'][k] = v

@@ -11,6 +11,7 @@ class ModelTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.fields=['physics', 'energetics', 'body', 'odor']
+        self.module_keys = list(dtypes.get_dict('modules').keys())
 
     def update(self, w, c, conf, id=None):
         for n in self.fields:
@@ -32,7 +33,7 @@ class ModelTab(GuiTab):
         c['Brain'].update(w, temp, use_prefix=False)
 
     def get(self, w, v, c, as_entry=True):
-        module_dict = dict(zip(dtypes.module_keys, [w[f'TOGGLE_{k.upper()}'].get_state() for k in dtypes.module_keys]))
+        module_dict = dict(zip(self.module_keys, [w[f'TOGGLE_{k.upper()}'].get_state() for k in self.module_keys]))
         m = {}
 
         for n in self.fields:
@@ -55,7 +56,7 @@ class ModelTab(GuiTab):
               for n, kwargs in zip(self.fields, [{}, {'toggle': True}, {}, {}])]
         s1 = CollapsibleTable('odor_gains', False, headings=['id', 'mean', 'std'], dict={}, type_dict=dtypes.get_dict_dtypes('odor_gain'))
         c2 = [CollapsibleDict(k.upper(), False, dict=dtypes.get_dict(k), type_dict=dtypes.get_dict_dtypes(k),
-                              toggle=True, disp_name=k.capitalize()) for k in dtypes.module_keys]
+                              toggle=True, disp_name=k.capitalize()) for k in self.module_keys]
         l2 = [i.get_layout() for i in c2]
         b = Collapsible('Brain', False, l2)
 

@@ -1,5 +1,8 @@
 import PySimpleGUI as sg
+
+import lib.conf.conf
 import lib.conf.dtype_dicts as dtypes
+import lib.conf.init_dtypes
 from lib.anal.plotting import plot_debs
 
 from lib.gui.gui_lib import CollapsibleDict, Table, GraphList, SelectionList
@@ -80,7 +83,7 @@ class LifeTab(GuiTab):
 
         sl0 = SelectionList(tab=self, actions=['load', 'save', 'delete'])
 
-        sub = CollapsibleDict('substrate', False, default=True, header_dict=dtypes.substrate_dict,
+        sub = CollapsibleDict('substrate', False, default=True, header_dict=lib.conf.init_dtypes.substrate_dict,
                               header_value='standard')
 
         l1 = sg.Col([[sg.T('Epoch start (hours) : ', **t_kws(24))],

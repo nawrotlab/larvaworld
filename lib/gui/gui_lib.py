@@ -13,6 +13,8 @@ from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
+import lib.conf.conf
+import lib.conf.init_dtypes
 from lib.conf.conf import loadConfDict, saveConf, deleteConf, loadConf, expandConf
 import lib.aux.functions as fun
 from lib.conf.par import runtime_pars, getPar
@@ -1296,7 +1298,7 @@ def load_shortcuts():
         conf = loadConfDict('Settings')
     except:
         conf = {'keys': {}, 'pygame_keys': {}}
-        for title, dic in dtypes.default_shortcuts.items():
+        for title, dic in lib.conf.init_dtypes.default_shortcuts.items():
             conf['keys'].update(dic)
         conf['pygame_keys'] = {k: dtypes.get_pygame_key(v) for k, v in conf['keys'].items()}
     return conf

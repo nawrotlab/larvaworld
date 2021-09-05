@@ -7,6 +7,8 @@ import os
 import numpy as np
 from scipy.integrate import quad, solve_ivp
 
+import lib.conf.conf
+import lib.conf.init_dtypes
 from lib.conf.conf import loadConf
 from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB
 from lib.model.DEB.gut import Gut
@@ -40,7 +42,7 @@ class Substrate:
             'cornmeal' : 359.33,
             'water' : 18.01528,
         }
-        self.d_dict=dtypes.substrate_dict[type]
+        self.d_dict= lib.conf.init_dtypes.substrate_dict[type]
         # Compound densities (g/cm**3)
         # if type=='standard' :
         #     self.d_dict = {

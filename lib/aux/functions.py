@@ -1264,14 +1264,24 @@ def load_dicts(files=None, pref=None, suf=None, folder=None, extension='txt', us
     ds = []
     for f in files:
         n = f'{folder}/{f}' if folder is not None else f
-        if use_pickle :
-            with open(n, 'rb') as tfp:
-                d = pickle.load(tfp)
-        else :
-            with open(n) as tfp:
-                d = json.load(tfp)
+        d=load_dict(n, use_pickle=use_pickle)
+        # if use_pickle :
+        #     with open(n, 'rb') as tfp:
+        #         d = pickle.load(tfp)
+        # else :
+        #     with open(n) as tfp:
+        #         d = json.load(tfp)
         ds.append(d)
     return ds
+
+def load_dict(file, use_pickle=True) :
+    if use_pickle:
+        with open(file, 'rb') as tfp:
+            d = pickle.load(tfp)
+    else:
+        with open(file) as tfp:
+            d = json.load(tfp)
+    return d
 
 def save_dict(d, file, use_pickle=True) :
     if use_pickle :

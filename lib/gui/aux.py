@@ -64,7 +64,8 @@ def retrieve_value(v, t):
         vv = int(v)
     elif type(v) == t:
         vv = v
-    elif t in [List[Tuple[float, float]], List[float], List[int]]:
+    elif t in ['List[tuple]', 'List[float]', 'List[int]']:
+    # elif t in [List[tuple], List[float], List[int]]:
         if type(v) == str:
             v = v.replace('{', ' ')
             v = v.replace('}', ' ')
@@ -73,16 +74,16 @@ def retrieve_value(v, t):
             v = v.replace('(', ' ')
             v = v.replace(')', ' ')
 
-            if t == List[Tuple[float, float]]:
+            if t == 'List[tuple]':
                 v = v.replace(',', ' ')
                 vv = [tuple([float(x) for x in t.split()]) for t in v.split('   ')]
-            elif t == List[float]:
+            elif t == 'List[float]':
                 vv = [float(x) for x in v.split(',')]
-            elif t == List[int]:
+            elif t == 'List[int]':
                 vv = [int(x) for x in v.split(',')]
         elif type(v) == list:
             vv = v
-    elif t in [Tuple[float, float], Tuple[int, int], Union[Tuple[float, float], Tuple[int, int]]] and type(v) == str:
+    elif t in ['Tuple[float, float]', 'Tuple[int, int]', 'Union[Tuple[float, float], Tuple[int, int]]'] and type(v) == str:
         v = v.replace('{', '')
         v = v.replace('}', '')
         v = v.replace('[', '')
@@ -91,11 +92,11 @@ def retrieve_value(v, t):
         v = v.replace(')', '')
         v = v.replace("'", '')
         v = v.replace(",", ' ')
-        if t == Tuple[float, float]:
+        if t == 'Tuple[float, float]':
             vv = tuple([float(x) for x in v.split()])
-        elif t == Tuple[int, int]:
+        elif t == 'Tuple[int, int]':
             vv = tuple([int(x) for x in v.split()])
-        elif t == Union[Tuple[float, float], Tuple[int, int]]:
+        elif t ==' Union[Tuple[float, float], Tuple[int, int]]':
             vv = tuple([float(x) if '.' in x else int(x) for x in v.split()])
     elif t == Type and type(v) == str:
         if 'str' in v:
