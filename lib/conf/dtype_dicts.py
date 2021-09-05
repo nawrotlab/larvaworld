@@ -5,6 +5,8 @@ import numpy as np
 from lib.conf.init_dtypes import load_dtypes
 
 all_dtypes,all_null_dicts = load_dtypes()
+dtype_keys=list(all_dtypes.keys())
+dict_keys=list(all_null_dicts.keys())
 
 
 def get_pygame_key(key):
@@ -38,9 +40,8 @@ def get_pygame_key(key):
 
 
 def get_dict(name, class_name=None, basic=True, as_entry=False, **kwargs):
-    if name in list(all_null_dicts.keys()):
+    if name in dict_keys:
         d = all_null_dicts[name]
-
     elif name == 'distro':
         d = null_distro(class_name=class_name, basic=basic)
     elif name == 'agent':
@@ -92,13 +93,6 @@ def null_distro(class_name, basic=True):
                 pass
     return distro
 
-
-# Compound densities (g/cm**3)
-
-
-
-
-
 def base_enrich(**kwargs):
     d = {
         'types': {'angular': True, 'spatial': True, 'source': True, 'dispersion': True, 'tortuosity': True},
@@ -112,10 +106,7 @@ def base_enrich(**kwargs):
 
 
 def get_dict_dtypes(name, **kwargs):
-
-
-
-    if name in list(all_dtypes.keys()):
+    if name in dtype_keys:
         return all_dtypes[name]
     elif name == 'distro':
         return get_distro_dtypes(**kwargs)

@@ -6,7 +6,7 @@ from siunits import BaseUnit, Composite, DerivedUnit
 from lib.aux import functions as fun
 from lib.stor import paths
 
-
+# Compound densities (g/cm**3)
 substrate_dict = {
     'agar': {
         'glucose': 0,
@@ -784,15 +784,26 @@ def init_shortcuts():
     return default_shortcuts
 
 
-default_shortcuts = init_shortcuts()
-mouse_controls = {
-    'select item': 'left click',
-    'add item': 'left click',
-    'select item mode': 'right click',
-    'inspect item': 'right click',
-    'screen zoom in': 'scroll up',
-    'screen zoom out': 'scroll down',
-}
+def store_controls() :
+    d={
+        'keyboard' : init_shortcuts(),
+        'mouse' : {
+        'select item': 'left click',
+        'add item': 'left click',
+        'select item mode': 'right click',
+        'inspect item': 'right click',
+        'screen zoom in': 'scroll up',
+        'screen zoom out': 'scroll down',
+    }
+       }
+    fun.save_dict(d, paths.Controls_path, use_pickle=True)
+    # fun.save_dict(d2, paths.Dtypes_path, use_pickle=True)
+
+def load_controls():
+    d = fun.load_dict(paths.Controls_path, use_pickle=True)
+    # d2 = fun.load_dict(paths.NullDicts_path, use_pickle=True)
+    return d['keyboard'], d['mouse']
 
 if __name__ == '__main__':
     store_dtypes()
+    store_controls()

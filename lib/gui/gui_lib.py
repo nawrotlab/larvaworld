@@ -1298,7 +1298,7 @@ def load_shortcuts():
         conf = loadConfDict('Settings')
     except:
         conf = {'keys': {}, 'pygame_keys': {}}
-        for title, dic in lib.conf.init_dtypes.default_shortcuts.items():
+        for title, dic in lib.conf.init_dtypes.keyboard_controls.items():
             conf['keys'].update(dic)
         conf['pygame_keys'] = {k: dtypes.get_pygame_key(v) for k, v in conf['keys'].items()}
     return conf
