@@ -49,7 +49,7 @@ conf_paths = {
 
 Dtypes_path=f'{ConfFolder}/dtypes.txt'
 NullDicts_path=f'{ConfFolder}/null_dicts.txt'
-Controls_path=f'{ConfFolder}/controls.txt'
+# Controls_path=f'{ConfFolder}/controls.txt'
 
 MediaFolder = f'{get_parent_dir()}/lib/media'
 VideoSlideFolder = f'{MediaFolder}/video_slides'

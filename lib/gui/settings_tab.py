@@ -2,8 +2,8 @@ import time
 import PySimpleGUI as sg
 
 import lib.conf.conf
-import lib.conf.init_dtypes
-from lib.conf.conf import saveConfDict
+from lib.conf.init_dtypes import get_pygame_key
+from lib.conf.conf import saveConfDict, loadConfDict
 from lib.gui.gui_lib import CollapsibleDict, Collapsible, load_shortcuts
 from lib.gui.aux import t_kws, gui_col
 from lib.gui.buttons import graphic_button
@@ -14,14 +14,14 @@ from lib.gui.tab import GuiTab
 class SettingsTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.keyboard, self.mouse=lib.conf.init_dtypes.load_controls()
+        # self.keyboard, self.mouse=lib.conf.init_dtypes.load_controls()
 
 
     def build_shortcut_layout(self, c):
-        conf=load_shortcuts()
+        conf = loadConfDict('Settings')
 
         l = []
-        for title, dic in self.keyboard.items():
+        for title, dic in conf['keys'].items():
             ll = [
                 *[[sg.T("", **t_kws(2)), sg.T(k, **t_kws(16)),
                    sg.In(default_text=conf['keys'][k], key=f'SHORT {k}', disabled=True,
@@ -36,16 +36,18 @@ class SettingsTab(GuiTab):
 
         d = {'shortcuts': conf}
         d['shortcuts']['cur'] = None
-        return l, d
+
+        l_mouse = [*[[sg.T("", **t_kws(2)), sg.T(k, **t_kws(16)),
+                      sg.T(v, key=f'SHORT {k}', background_color='black',
+                           text_color='white', **t_kws(10), justification='center')] for k, v in conf['mouse'].items()],
+                   ]
+        return l, d, l_mouse
 
 
     def build(self):
         c = {}
-        l_short, d = self.build_shortcut_layout(c)
-        l_mouse=[*[[sg.T("", **t_kws(2)), sg.T(k, **t_kws(16)),
-                   sg.T(v, key=f'SHORT {k}', background_color='black',
-                         text_color='white', **t_kws(10), justification='center')] for k,v in self.mouse.items()],
-                 ]
+        l_short, d, l_mouse = self.build_shortcut_layout(c)
+
 
         s1 = CollapsibleDict('Visualization', True, dict=dtypes.get_dict('visualization', mode='video', video_speed=60),
                              type_dict=dtypes.get_dict_dtypes('visualization'), toggled_subsections=None)
@@ -76,7 +78,7 @@ class SettingsTab(GuiTab):
                 for k, v in dic.items():
                     w[f'SHORT {k}'].update(disabled=True, value=v)
                     d['shortcuts']['keys'][k] = v
-                    d['shortcuts']['pygame_keys'][k] = dtypes.get_pygame_key(v)
+                    d['shortcuts']['pygame_keys'][k] = get_pygame_key(v)
                     saveConfDict(d['shortcuts'], 'Settings')
 
         elif 'EDIT_SHORTCUT' in e and cur is None:
@@ -101,7 +103,7 @@ class SettingsTab(GuiTab):
             else:
                 w[cur_key].update(disabled=True, value=v)
                 d['shortcuts']['keys'][cur] = v
-                d['shortcuts']['pygame_keys'][cur] = dtypes.get_pygame_key(v)
+                d['shortcuts']['pygame_keys'][cur] = get_pygame_key(v)
                 d['shortcuts']['cur'] = None
                 saveConfDict(d['shortcuts'], 'Settings')
         return d, g

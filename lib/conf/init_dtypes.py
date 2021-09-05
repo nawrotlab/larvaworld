@@ -4,6 +4,7 @@ import numpy as np
 from siunits import BaseUnit, Composite, DerivedUnit
 
 from lib.aux import functions as fun
+from lib.gui import gui_lib
 from lib.stor import paths
 
 # Compound densities (g/cm**3)
@@ -716,6 +717,34 @@ def init_null_vis():
     }
     return null_vis
 
+def get_pygame_key(key):
+    pygame_keys = {
+        'BackSpace': 'BACKSPACE',
+        'tab': 'TAB',
+        'del': 'DELETE',
+        'clear': 'CLEAR',
+        'Return': 'RETURN',
+        'Escape': 'ESCAPE',
+        'space': 'SPACE',
+        'exclam': 'EXCLAIM',
+        'quotedbl': 'QUOTEDBL',
+        '+': 'PLUS',
+        'comma': 'COMMA',
+        '-': 'MINUS',
+        'period': 'PERIOD',
+        'slash': 'SLASH',
+        'numbersign': 'HASH',
+        'Down:': 'DOWN',
+        'Up:': 'UP',
+        'Right:': 'RIGHT',
+        'Left:': 'LEFT',
+        'dollar': 'DOLLAR',
+        'ampersand': 'AMPERSAND',
+        'parenleft': 'LEFTPAREN',
+        'parenright': 'RIGHTPAREN',
+        'asterisk': 'ASTERISK',
+    }
+    return f'K_{pygame_keys[key]}' if key in list(pygame_keys.keys()) else f'K_{key}'
 
 def init_shortcuts():
     shortcut_vis_draw = {
@@ -783,26 +812,32 @@ def init_shortcuts():
 
     return default_shortcuts
 
+def init_controls():
+
+    k=init_shortcuts()
+    d = {'keys': {}, 'pygame_keys': {}, 'mouse': {
+            'select item': 'left click',
+            'add item': 'left click',
+            'select item mode': 'right click',
+            'inspect item': 'right click',
+            'screen zoom in': 'scroll up',
+            'screen zoom out': 'scroll down',
+        }}
+    for title, dic in k.items():
+        d['keys'].update(dic)
+    d['pygame_keys'] = {k: get_pygame_key(v) for k, v in d['keys'].items()}
+    return d
+
 
 def store_controls() :
-    d={
-        'keyboard' : init_shortcuts(),
-        'mouse' : {
-        'select item': 'left click',
-        'add item': 'left click',
-        'select item mode': 'right click',
-        'inspect item': 'right click',
-        'screen zoom in': 'scroll up',
-        'screen zoom out': 'scroll down',
-    }
-       }
-    fun.save_dict(d, paths.Controls_path, use_pickle=True)
-    # fun.save_dict(d2, paths.Dtypes_path, use_pickle=True)
+    d=init_controls()
+    from lib.conf.conf import saveConfDict
+    saveConfDict(d, 'Settings')
 
-def load_controls():
-    d = fun.load_dict(paths.Controls_path, use_pickle=True)
-    # d2 = fun.load_dict(paths.NullDicts_path, use_pickle=True)
-    return d['keyboard'], d['mouse']
+# def load_controls():
+#     d = fun.load_dict(paths.Controls_path, use_pickle=True)
+#     # d2 = fun.load_dict(paths.NullDicts_path, use_pickle=True)
+#     return d['keyboard'], d['mouse']
 
 if __name__ == '__main__':
     store_dtypes()

@@ -9,34 +9,7 @@ dtype_keys=list(all_dtypes.keys())
 dict_keys=list(all_null_dicts.keys())
 
 
-def get_pygame_key(key):
-    pygame_keys = {
-        'BackSpace': 'BACKSPACE',
-        'tab': 'TAB',
-        'del': 'DELETE',
-        'clear': 'CLEAR',
-        'Return': 'RETURN',
-        'Escape': 'ESCAPE',
-        'space': 'SPACE',
-        'exclam': 'EXCLAIM',
-        'quotedbl': 'QUOTEDBL',
-        '+': 'PLUS',
-        'comma': 'COMMA',
-        '-': 'MINUS',
-        'period': 'PERIOD',
-        'slash': 'SLASH',
-        'numbersign': 'HASH',
-        'Down:': 'DOWN',
-        'Up:': 'UP',
-        'Right:': 'RIGHT',
-        'Left:': 'LEFT',
-        'dollar': 'DOLLAR',
-        'ampersand': 'AMPERSAND',
-        'parenleft': 'LEFTPAREN',
-        'parenright': 'RIGHTPAREN',
-        'asterisk': 'ASTERISK',
-    }
-    return f'K_{pygame_keys[key]}' if key in list(pygame_keys.keys()) else f'K_{key}'
+
 
 
 def get_dict(name, class_name=None, basic=True, as_entry=False, **kwargs):
