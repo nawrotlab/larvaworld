@@ -1,19 +1,8 @@
-import os
-import PySimpleGUI as sg
-import numpy as np
-from PySimpleGUI import LISTBOX_SELECT_MODE_SINGLE, LISTBOX_SELECT_MODE_MULTIPLE, LISTBOX_SELECT_MODE_BROWSE, \
-    LISTBOX_SELECT_MODE_EXTENDED
-
-from lib.gui.gui_lib import ButtonGraphList, graphic_button, col_size, col_kws, get_disp_name, \
-    change_dataset_id, named_list, import_window, CollapsibleDict, browse_button, remove_button, sel_all_button, \
-    changeID_button, replay_button, import_button, enrich_button, DataList
-from lib.gui.tab import GuiTab, SelectionList
-from lib.stor import paths
-import lib.conf.dtype_dicts as dtypes
+from lib.gui.gui_lib import ButtonGraphList, CollapsibleDict, DataList, SelectionList
+from lib.gui.aux import gui_col
+from lib.gui.tab import GuiTab
 from lib.stor.datagroup import LarvaDataGroup
-from lib.stor.larva_dataset import LarvaDataset
-from lib.stor.managing import detect_dataset, build_datasets, enrich_datasets
-import lib.aux.functions as fun
+
 
 
 class ImportTab(GuiTab):
@@ -38,47 +27,32 @@ class ImportTab(GuiTab):
 
     def build(self):
         kR, kP = self.raw_key, self.proc_key
-        dicts = {kR: {}, kP: {}}
+        d = {kR: {}, kP: {}}
 
-        lR = DataList(name=self.raw_key, tab=self, dict=dicts[kR], buttons=['import', 'select_all', 'remove', 'changeID', 'browse'],
-                            button_args={'browse' : {'target' : (0, -1)}}, raw=True)
-        lP = DataList(name=self.proc_key, tab=self, dict=dicts[kP],
-                       buttons=['replay', 'enrich', 'select_all', 'remove', 'changeID', 'browse'],
-                       button_args={'browse': {'target': (0, -1)}})
-        self.datalists = {dl.name: dl for dl in [lR, lP]}
+        lR = DataList(name=self.raw_key, tab=self, dict=d[kR], buttons=['import', 'select_all', 'remove', 'changeID', 'browse'],raw=True)
+        lP = DataList(name=self.proc_key, tab=self, dict=d[kP],
+                       buttons=['replay', 'enrich', 'select_all', 'remove', 'changeID', 'browse'])
         lG = SelectionList(tab=self, disp='Data group', actions=['load'])
-        self.selectionlists = {sl.conftype: sl for sl in [lG]}
 
 
 
-        g = ButtonGraphList(name=self.name, fig_dict={})
+        g1 = ButtonGraphList(name=self.name, fig_dict={})
         s1 = CollapsibleDict('enrichment', False, default=True, toggled_subsections=None)
 
-        l3=[sg.Col([
-            lG.get_layout(),
-            lR.get_layout(),
-            lP.get_layout()
-        ], size=col_size(0.25), **col_kws)]
-        l4=s1.get_layout(size=col_size(0.25), **col_kws)
+        l = [[
+            gui_col([lG, lR, lP], 0.25),
+            gui_col([s1], 0.25)
+        ]]
 
         c = {}
         for s in [s1]:
             c.update(**s.get_subdicts())
 
-        l = [l3 + l4]
-        graph_lists = {g.name: g}
-        return l, c, graph_lists, dicts
+        g = {g1.name: g1}
+        return l, c, g, d
 
     def eval(self, e, v, w, c, d, g):
 
-        # kR, kP = self.raw_key, self.proc_key
-        # fR = self.raw_folder
-        # if e == f'BUILD {kR}':
-        #     id0 = self.current_ID(v)
-        #     raw_dic = {id: dir for id, dir in d[kR].items() if id in v[f'{kR}_IDS']}
-        #     proc_dir = import_window(datagroup_id=id0, raw_folder=fR, raw_dic=raw_dic)
-        #     d[kP].update(proc_dir)
-        #     w.Element(self.proc_ids_key).Update(values=list(d[kP].keys()))
         return d, g
 
 

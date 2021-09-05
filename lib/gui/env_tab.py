@@ -5,9 +5,11 @@ import numpy as np
 import PySimpleGUI as sg
 import lib.conf.dtype_dicts as dtypes
 import lib.aux.functions as fun
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, CollapsibleTable, col_kws, col_size, color_pick_layout, graphic_button, GraphList, retrieve_dict, t_kws
+from lib.gui.gui_lib import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
+from lib.gui.aux import col_size, col_kws, t_kws, retrieve_dict, gui_col
+from lib.gui.buttons import graphic_button, color_pick_layout
 from lib.conf.conf import loadConf
-from lib.gui.tab import GuiTab, SelectionList
+from lib.gui.tab import GuiTab
 
 
 class EnvTab(GuiTab):
@@ -122,10 +124,10 @@ class EnvTab(GuiTab):
         l1 = [c[n].get_layout() for n in ['source_groups', 'source_units', 'food_grid']]
         c2 = Collapsible('Sources', True, l1)
         c.update(c2.get_subdicts())
-        l2 = [c[n].get_layout() for n in ['arena', 'larva_groups', 'Sources', 'border_list', 'odorscape']]
-        l1 = SelectionList(tab=self, actions=['load', 'save', 'delete'])
-        self.selectionlists = {sl.conftype : sl for sl in [l1]}
-        l = sg.Col([l1.l, *l2], **col_kws, size=col_size(0.25))
+        l2 = [c[n] for n in ['arena', 'larva_groups', 'Sources', 'border_list', 'odorscape']]
+        sl1 = SelectionList(tab=self, actions=['load', 'save', 'delete'])
+
+        l = gui_col([sl1,*l2], 0.25)
         return l, c, {}, {}
 
     def add_agent_layout(self, n0, color, collapsibles):
@@ -169,8 +171,6 @@ class EnvTab(GuiTab):
             'P1': None,
             'P2': None,
         }
-
-
         c = {}
         s2 = CollapsibleDict('food', False, default=True, toggle=False)
         c.update(s2.get_subdicts())
@@ -203,18 +203,14 @@ class EnvTab(GuiTab):
             'background_color': 'black',
         })
 
-
-
         col1 = [
-            # s1.get_layout(),
-            [g1.canvas],
+            g1.canvas.get_layout(),
             [sg.T('Hints : '), sg.T('', k='info', **t_kws(40))],
             [sg.T('Actions : '), sg.T('', k='out', **t_kws(40))],
         ]
         l = sg.Col([[sg.Col(col1, **col_kws), sg.Col(col2, **col_kws)]], **col_kws, size=col_size(0.75))
 
         g = {g1.name: g1}
-        # self.graph_list=g1
         self.graph = g1.canvas_element
 
         d = {self.name: dic}

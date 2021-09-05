@@ -1,6 +1,7 @@
 import PySimpleGUI as sg
 import matplotlib
 
+import lib.gui.aux
 from lib.gui.analysis_tab import AnalysisTab
 from lib.gui.batch_tab import BatchTab
 from lib.gui.env_tab import EnvTab
@@ -44,7 +45,7 @@ class LarvaworldGui:
         self.terminal = gui.gui_terminal()
         layout, self.collapsibles, self.graph_lists, self.dicts, self.tabs = self.build(tabs)
 
-        c = {'layout': layout, 'size': gui.window_size, 'location': (300, 100), **gui.w_kws}
+        c = {'layout': layout, 'size': lib.gui.aux.window_size, 'location': (300, 100), **lib.gui.aux.w_kws}
         self.window = sg.Window('Larvaworld gui', **c)
 
     def run(self):

@@ -6,8 +6,9 @@ import numpy as np
 
 import lib.conf.dtype_dicts as dtypes
 
-from lib.gui.gui_lib import CollapsibleDict, GraphList, graphic_button, col_kws, col_size, named_list, t_kws
-from lib.gui.tab import GuiTab, SelectionList
+from lib.gui.gui_lib import CollapsibleDict, GraphList, SelectionList, DataList
+from lib.gui.aux import t_kws, gui_col
+from lib.gui.tab import GuiTab
 from lib.sim.single_run import run_essay
 from lib.sim.analysis import essay_analysis
 from lib.conf.conf import loadConf, next_idx
@@ -17,30 +18,33 @@ from lib.stor import paths
 class EssayTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.essay_exps_key = 'Essay_exps'
+        self.essay_exps_key = 'Essay_experiments'
         self.exp_figures_key = 'Essay_exp_figures'
         self.canvas_size = (1000, 500)
 
     def build(self):
         s1 = CollapsibleDict('essay_params', True, default=True, disp_name='Configuration', text_kws=t_kws(8))
-        l_essay = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'])
-        next_to_header = [
-            graphic_button('play', f'RUN_{self.essay_exps_key}', tooltip='Run the selected essay experiment.')]
-        l_exps = named_list(text='Experiments', key=self.essay_exps_key, choices=[], drop_down=False,
-                            single_line=False, next_to_header=next_to_header)
-        self.selectionlists = {sl.conftype : sl for sl in [l_essay]}
+        sl1 = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'])
+
+        dl1 = DataList(name=self.essay_exps_key, tab=self, buttons=['run'], named_list_kws={})
+
         g1 = GraphList(self.name, list_header='Simulated', canvas_size=self.canvas_size)
         g2 = GraphList(self.exp_figures_key, list_header='Observed', canvas_size=self.canvas_size,fig_dict={})
-        l_conf = [[sg.Col([
-            *[i.get_layout() for i in [l_essay, s1]],
-            [l_exps]
-        ])]]
-        gg = sg.Col([
-            [g1.canvas, g1.get_layout()],
-            [g2.canvas, g2.get_layout()]
-        ],
-            size=col_size(0.8), **col_kws)
-        l = [[sg.Col(l_conf, **col_kws, size=col_size(0.2)),gg]]
+
+        # r1=gui_row([g1.canvas,g1], 0.8, 0.5)
+        # r2=gui_row([g2.canvas,g2], 0.8, 0.5)
+        # gg = sg.Col([[r1],[r2]])
+        # raise
+        #     [gui_col([g1.canvas,g1], 0.8, 0.5)],
+        #     [gui_col([g2.canvas, g2], 0.8, 0.5)]
+        # ],
+        #     size=col_size(0.8), **col_kws)
+        l = [[
+            gui_col([sl1, s1, dl1], 0.2),
+            gui_col([g1.canvas, g2.canvas], 0.6),
+            gui_col([g1, g2], 0.2),
+              # gg
+              ]]
 
         c = {}
         for i in [s1]:
@@ -56,8 +60,11 @@ class EssayTab(GuiTab):
         return d, g
 
     def update(self, w, c, conf, id):
-        exps = list(conf['experiments'].keys())
-        w.Element(self.essay_exps_key).Update(values=exps)
+        # exps = list(conf['experiments'].keys())
+        self.datalists[self.essay_exps_key].dict = conf['experiments']
+        self.datalists[self.essay_exps_key].update_window(w)
+        # w.Element(self.essay_exps_key).Update(values=exps)
+
         essay = dtypes.get_dict('essay_params', essay_ID=f'{id}_{next_idx(id)}', path=f'essays/{id}')
         c['essay_params'].update(w, essay)
 
@@ -78,8 +85,10 @@ class EssayTab(GuiTab):
         return conf
 
     def eval(self, e, v, w, c, d, g):
-        if e == f'RUN_{self.essay_exps_key}':
-            essay_exp = v[self.essay_exps_key][0]
+        k=self.essay_exps_key
+        k0=self.datalists[k].list_key
+        if e == f'RUN {k}':
+            essay_exp = v[k0][0]
             if essay_exp not in [None, '']:
                 d, g = self.run_essay_exp(v, w, c, d, g, essay_exp)
         return d, g

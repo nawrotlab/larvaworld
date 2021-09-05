@@ -1,17 +1,8 @@
-import os
-import PySimpleGUI as sg
-import numpy as np
-# from tkinter import *
-from PySimpleGUI import LISTBOX_SELECT_MODE_EXTENDED
-
-from lib.gui.gui_lib import ButtonGraphList, graphic_button, named_list, col_size, col_kws, change_dataset_id, \
-    browse_button, remove_button, sel_all_button, changeID_button, replay_button, add_ref_button, DataList
+from lib.gui.gui_lib import ButtonGraphList, DataList
+from lib.gui.aux import col_size, col_kws, gui_col
 from lib.gui.tab import GuiTab
-from lib.stor import paths
 from lib.anal.plotting import graph_dict
-from lib.stor.larva_dataset import LarvaDataset
-import lib.conf.dtype_dicts as dtypes
-from lib.stor.managing import detect_dataset
+
 
 
 class AnalysisTab(GuiTab):
@@ -45,36 +36,26 @@ class AnalysisTab(GuiTab):
 
     def build(self):
         # initial_folder=f'{paths.DataFolder}/SchleyerGroup/processed'
-        initial_folder = paths.SingleRunFolder
-        dicts = {self.name: {}}
+        # initial_folder = paths.SingleRunFolder
+        d = {self.name: {}}
 
-        lA = DataList(name=self.data_key, tab=self, dict=dicts[self.name],
+        dl1 = DataList(name=self.data_key, tab=self, dict=d[self.name],
                       buttons=['replay', 'add_ref', 'select_all', 'remove', 'changeID', 'browse'],
-                      button_args={'browse': {'initial_folder' : initial_folder, 'target': (0, -1)}})
-        self.datalists = {dl.name: dl for dl in [lA]}
+                      # button_args={'browse': {'initial_folder' : initial_folder}}
+                       )
 
-        # bs = [
-        #     sel_all_button(self.data_key),
-        #     remove_button(self.data_key),
-        #     replay_button(self.data_key),
-        #     add_ref_button(self.data_key),
-        #     changeID_button(self.data_key),
-        #     browse_button(self.data_key, initial_folder, target=(0, -1))
-        # ]
-        # data_list = named_list('Datasets', f'{self.data_key}_IDS', list(dicts[self.name].keys()),
-        #                        drop_down=False, list_width=25, list_height=10,
-        #                        single_line=False, next_to_header=bs, as_col=False,
-        #                        list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED})
-
-        g = ButtonGraphList(name=self.name, fig_dict=graph_dict, canvas_size=self.canvas_size,
+        g1 = ButtonGraphList(name=self.name, fig_dict=graph_dict, canvas_size=self.canvas_size,
                             canvas_col_kws={'size': self.canvas_col_size, 'scrollable': True, **col_kws})
 
-        l0=lA.get_layout(size=self.col_size, **col_kws)
-        lc=[g.canvas]
-        lg=[g.get_layout(size=self.col_size, **col_kws)]
-        l = [l0+lc+lg]
-        gs = {g.name: g}
-        return l, {}, gs, dicts
+
+        l = [[
+            gui_col([dl1], 0.25),
+            gui_col([g1.canvas], 0.5),
+            gui_col([g1], 0.25),
+
+        ]]
+        g = {g1.name: g1}
+        return l, {}, g, d
 
     def eval(self, e, v, w, c, d, g):
         if e == f'{self.name}_REFRESH_FIGS':

@@ -1,11 +1,10 @@
 import time
-
 import PySimpleGUI as sg
-import pygame
 
-from lib.conf.conf import loadConfDict, saveConfDict
-from lib.gui.gui_lib import graphic_button, default_run_window, CollapsibleDict, Collapsible, col_kws, col_size, \
-    w_kws, t_kws, load_shortcuts
+from lib.conf.conf import saveConfDict
+from lib.gui.gui_lib import CollapsibleDict, Collapsible, load_shortcuts
+from lib.gui.aux import t_kws, gui_col
+from lib.gui.buttons import graphic_button
 import lib.conf.dtype_dicts as dtypes
 from lib.gui.tab import GuiTab
 
@@ -39,12 +38,11 @@ class SettingsTab(GuiTab):
 
 
     def build(self):
-        collapsibles = {}
-        l_short, dicts = self.build_shortcut_layout(collapsibles)
+        c = {}
+        l_short, d = self.build_shortcut_layout(c)
         l_mouse=[*[[sg.T("", **t_kws(2)), sg.T(k, **t_kws(16)),
                    sg.T(v, key=f'SHORT {k}', background_color='black',
                          text_color='white', **t_kws(10), justification='center')] for k,v in dtypes.mouse_controls.items()],
-                # [sg.T("", **t8_kws)]
                  ]
 
         s1 = CollapsibleDict('Visualization', True, dict=dtypes.get_dict('visualization', mode='video', video_speed=60),
@@ -56,18 +54,15 @@ class SettingsTab(GuiTab):
                                                                            'Restart Larvaworld after changing shortcuts.')])
         s4 = Collapsible('Mouse', False, content=l_mouse)
 
-        l_controls = [[sg.Col([s3.get_layout(), s4.get_layout()])]]
-
-        s5 = Collapsible('Controls', True, content=l_controls)
+        s5 = Collapsible('Controls', True, content=[[gui_col([s3,s4], 0.33)]])
         for s in [s1, s2, s3, s4, s5]:
-            collapsibles.update(s.get_subdicts())
-        l_set = [[sg.Col(s1.get_layout(as_col=False), **col_kws, size=col_size(1/3)),
-                  sg.Col(s2.get_layout(as_col=False), **col_kws, size=col_size(1/3)),
-                  sg.Col(s5.get_layout(as_col=False), **col_kws, size=col_size(1/3),
-                         scrollable=False, vertical_scroll_only=True),
-                  ]
-                 ]
-        return l_set, collapsibles, {}, dicts
+            c.update(s.get_subdicts())
+        l = [[
+            gui_col([s1], 0.33),
+            gui_col([s2], 0.33),
+            gui_col([s5], 0.34, scrollable=False, vertical_scroll_only=True),
+                  ]]
+        return l, c, {}, d
 
 
     def eval(self,e, v, w, c, d, g):

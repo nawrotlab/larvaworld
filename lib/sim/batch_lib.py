@@ -554,6 +554,15 @@ def existing_trajs(batch_type):
     except :
         return []
 
+def existing_trajs_dict(batch_type):
+    import h5py
+    filename = f'{paths.BatchRunFolder}/{batch_type}/{batch_type}.hdf5'
+    try :
+        f = h5py.File(filename, 'r')
+        return f
+    except :
+        return {}
+
 def delete_traj(batch_type, traj_name):
     import h5py
     filename = f'{paths.BatchRunFolder}/{batch_type}/{batch_type}.hdf5'

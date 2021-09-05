@@ -31,7 +31,6 @@ ParShelve_path = f'{ConfFolder}/ParShelve'
 ParDict_path = f'{ConfFolder}/ParDict.csv'
 ParDf_path= f'{ConfFolder}/ParDf.csv'
 ParPdf_path= f'{ConfFolder}/ParPdf.pdf'
-# ParDict_path3 = f'{ConfFolder}/ParDict3.csv'
 UnitDict_path = f'{ConfFolder}/UnitDict.csv'
 LarvaShape_path = f'{ConfFolder}/larva_shape.csv'
 conf_paths = {
@@ -48,12 +47,13 @@ conf_paths = {
     'Life': f"{ConfFolder}/LifeConfs.txt",
 }
 
-VideoSlideFolder = f'{get_parent_dir()}/lib/gui/video_slides'
-IntroSlideFolder = f'{get_parent_dir()}/lib/gui/intro_slides'
-TutorialSlideFolder = f'{get_parent_dir()}/lib/gui/tutorial_slides'
+MediaFolder = f'{get_parent_dir()}/lib/media'
+VideoSlideFolder = f'{MediaFolder}/video_slides'
+IntroSlideFolder = f'{MediaFolder}/intro_slides'
+TutorialSlideFolder = f'{MediaFolder}/tutorial_slides'
 
-ModelFigFolder = f'{get_parent_dir()}/lib/gui/model_figures'
-ExpFigFolder = f'{get_parent_dir()}/lib/gui/exp_figures'
+ModelFigFolder = f'{MediaFolder}/model_figures'
+ExpFigFolder = f'{MediaFolder}/exp_figures'
 RoverSitterFigFolder = f'{ExpFigFolder}/roversVSsitters'
 OdorPrefFigFolder = f'{ExpFigFolder}/odor_preference'
 

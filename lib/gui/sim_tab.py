@@ -6,8 +6,9 @@ import numpy as np
 import lib.conf.dtype_dicts as dtypes
 
 from lib.aux.collecting import output_keys
-from lib.gui.gui_lib import CollapsibleDict, GraphList, col_kws, col_size, t_kws
-from lib.gui.tab import GuiTab, SelectionList
+from lib.gui.gui_lib import CollapsibleDict, GraphList, SelectionList
+from lib.gui.aux import t_kws, gui_col
+from lib.gui.tab import GuiTab
 from lib.sim.single_run import run_sim
 from lib.sim.analysis import sim_analysis
 from lib.conf.conf import next_idx
@@ -18,25 +19,25 @@ class SimTab(GuiTab):
         super().__init__(**kwargs)
 
     def build(self):
-        l_env = SelectionList(tab=self, conftype='Env', idx=1)
-        l_life = SelectionList(tab=self, conftype='Life', idx=1, with_dict=True, header_value='default',
+        sl1 = SelectionList(tab=self, conftype='Env', idx=1)
+        sl2 = SelectionList(tab=self, conftype='Life', idx=1, with_dict=True, header_value='default',
                            text_kws=t_kws(14), value_kws=t_kws(10), width=12, header_text_kws=t_kws(9))
-        l_sim = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'], progress=True,
-                              sublists={'env_params': l_env, 'life_params' : l_life})
-        s1 = CollapsibleDict('sim_params', True, default=True, disp_name='Configuration', text_kws=t_kws(8))
+        sl3 = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'], progress=True,
+                              sublists={'env_params': sl1, 'life_params' : sl2})
+        c1 = CollapsibleDict('sim_params', True, default=True, disp_name='Configuration', text_kws=t_kws(8))
         output_dict = dict(zip(output_keys, [False] * len(output_keys)))
-        s2 = CollapsibleDict('Output', False, dict=output_dict, auto_open=False)
+        c2 = CollapsibleDict('Output', False, dict=output_dict, auto_open=False)
 
-        self.selectionlists = {sl.conftype : sl for sl in [l_env, l_sim, l_life]}
         g1 = GraphList(self.name)
-        l_conf = [[sg.Col([
-            *[i.get_layout() for i in [l_sim, l_env,s1, s2, l_life]],
-        ])]]
-        l = [[sg.Col(l_conf, **col_kws, size=col_size(0.2)), g1.canvas, sg.Col(g1.get_layout(as_col=False), size=col_size(0.2))]]
-        # l = [[sg.Col(l_conf, **col_kws, size=col_size(0.2)), g1.canvas]]
+
+        l = [[
+            gui_col([sl3, sl1,c1, c2, sl2], 0.2),
+            gui_col([g1.canvas], 0.6),
+            gui_col([g1], 0.2)
+        ]]
 
         c = {}
-        for i in [s1, s2, l_life]:
+        for i in [c1, c2, sl2]:
             c.update(i.get_subdicts())
         g = {g1.name: g1}
         d={}
