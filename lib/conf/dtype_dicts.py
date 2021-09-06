@@ -1,8 +1,9 @@
 import copy
-from typing import List, Tuple, Union
+from typing import Tuple
+
 import numpy as np
 
-from lib.conf.init_dtypes import load_dtypes, processing_types
+from lib.conf.init_dtypes import load_dtypes, processing_types, annotation_bouts, init_agent_dtypes
 
 all_null_dicts, all_dtypes = load_dtypes()
 dtype_keys=list(all_dtypes.keys())
@@ -72,27 +73,7 @@ def get_dict_dtypes(name, **kwargs):
         return all_dtypes[name]
     elif name == 'distro':
         return get_distro_dtypes(**kwargs)
-    elif name == 'agent':
-        return get_agent_dtypes(**kwargs)
 
-
-
-
-
-def get_agent_dtypes(class_name):
-    dtypes = {
-        'unique_id': str,
-        'default_color': str,
-        # 'group': str,
-    }
-    if class_name in ['Larva', 'LarvaSim', 'LarvaReplay']:
-        dtypes = {**dtypes, 'group': str, **get_dict_dtypes('odor')}
-    elif class_name in ['Source', 'Food']:
-        dtypes = {**dtypes, 'group': str, **get_dict_dtypes('odor'), **get_dict_dtypes('food'), 'can_be_carried': bool,
-                  'pos': Tuple[float, float]}
-    elif class_name in ['Border']:
-        dtypes = {**dtypes, 'width': float, 'points': List[Tuple[float, float]]}
-    return dtypes
 
 
 def null_agent(class_name):
@@ -108,27 +89,6 @@ def null_agent(class_name):
     elif class_name in ['Border']:
         dic = {**dic, 'width': 0.001, 'points': None, 'default_color': 'grey'}
     return dic
-
-
-def get_distro_dtypes(class_name, basic=True):
-    from lib.conf.conf import loadConfDict
-    dtypes = {
-        'mode': ['normal', 'periphery', 'uniform'],
-        'shape': ['circle', 'rect', 'oval'],
-        'N': int,
-        'loc': Tuple[float, float],
-        'scale': Tuple[float, float],
-    }
-    if class_name == 'Larva':
-        dtypes = {**dtypes, 'orientation_range': Tuple[float, float], 'model': list(loadConfDict('Model').keys())}
-    if not basic:
-        dtypes = {**dtypes, **get_dict_dtypes('agent', class_name=class_name)}
-        for p in ['unique_id', 'pos']:
-            try:
-                dtypes.pop(p)
-            except:
-                pass
-    return dtypes
 
 
 def sim_dict(sim_ID=None, duration=3, dt=0.1, path=None, Box2D=False, exp_type=None):
@@ -186,13 +146,34 @@ def new_odor_dict(ids: list, means: list, stds=None) -> dict:
     return odor_dict
 
 
-def base_enrich(types=['angular', 'spatial','dispersion', 'tortuosity'], **kwargs):
+def base_enrich(types=['angular', 'spatial','dispersion', 'tortuosity'],bouts=['stride', 'pause', 'turn'],  **kwargs):
     d = {
         'types': processing_types(types),
         # 'types': ['angular', 'spatial', 'source', 'dispersion', 'tortuosity'],
         'dsp_starts': [0, 20], 'dsp_stops': [40, 80], 'tor_durs': [2, 5, 10, 20],
-        'min_ang': 5.0, 'bouts': {'stride': True, 'pause': True, 'turn': True}
+        'min_ang': 5.0, 'bouts': annotation_bouts(bouts)
     }
 
     d.update(**kwargs)
     return get_dict('enrichment', **d)
+
+
+def get_distro_dtypes(class_name, basic=True):
+    from lib.conf.conf import loadConfDict
+    dtypes = {
+        'mode': ['normal', 'periphery', 'uniform'],
+        'shape': ['circle', 'rect', 'oval'],
+        'N': int,
+        'loc': Tuple[float, float],
+        'scale': Tuple[float, float],
+    }
+    if class_name == 'Larva':
+        dtypes = {**dtypes, 'orientation_range': Tuple[float, float], 'model': list(loadConfDict('Model').keys())}
+    if not basic:
+        dtypes = {**dtypes, **get_dict_dtypes(class_name)}
+        for p in ['unique_id', 'pos']:
+            try:
+                dtypes.pop(p)
+            except:
+                pass
+    return dtypes

@@ -12,8 +12,9 @@ from lib.model.DEB.deb import Substrate
 
 
 class LarvaworldAgent:
-    def __init__(self,unique_id: str,model, pos=None, default_color=None, radius=None,
+    def __init__(self,unique_id: str,model, pos=None, default_color=None, radius=None,visible=True,
                  odor_id=None, odor_intensity=0.0, odor_spread=0.1, group='', can_be_carried=False):
+        self.visible = visible
         self.selected = False
         self.unique_id = unique_id
         self.model = model
@@ -108,6 +109,8 @@ class LarvaworldAgent:
         return self.odor_dist.pdf(pos) * self.odor_peak_value
 
     def draw(self, viewer, filled=True):
+        # if not self.visible :
+        #     return
         if self.get_shape() is None :
             return
         p, c, r = self.get_position(), self.color, self.radius
@@ -610,7 +613,8 @@ class Food(Source):
         return np.min([amount, prev_amount])
 
     def draw(self, viewer, filled=True):
-
+        # if not self.visible :
+        #     return
         # if self.get_shape() is None :
         #     return
         p, c, r = self.get_position(), self.color, self.radius

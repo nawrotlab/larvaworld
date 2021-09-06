@@ -232,7 +232,7 @@ def process(s,e,dt,Npoints,Ncontour, point, config=None,
                 xs = s[px].dropna().groupby('AgentID').last().values
             else :
                 raise ValueError ('No x coordinate found')
-            PI, N, N_l, N_r = compute_preference_index(xs=xs, arena_xdim=config['arena_xdim'], return_num=True, return_all=True)
+            PI, N, N_l, N_r = compute_preference_index(xs=xs, arena_xdim=config['arena_pars']['arena_dims'][0], return_num=True, return_all=True)
             config['PI']={'PI':PI, 'N':N, 'N_l':N_l, 'N_r':N_r}
         if traj_colors :
             try :

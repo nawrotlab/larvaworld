@@ -9,37 +9,35 @@ from lib.stor import paths as paths
 
 
 def graphic_button(name, key, **kwargs):
-    dic = {
-        'load': graphics.Button_Load,
-        'play': graphics.Button_Play,
-        'check': graphics.Button_Check,
-        'pick_color': graphics.Button_Color_Circle,
-        'edit': graphics.Document_2_Edit,
-        'data_add': graphics.Document_2_Add,
-        # 'data_add' : graphics.Database_Add,
-        'data_remove': graphics.Document_2_Remove,
-        # 'data_remove' : graphics.Database_Remove,
-        'add': graphics.Button_Add,
-        'remove': graphics.Button_Remove,
-        'search_add': graphics.Search_Add,
-        'box_add': graphics.Box_Add,
-        'file_add': graphics.File_Add,
-        'equalizer': graphics.System_Equalizer,
-        'preferences': graphics.System_Preferences,
-        'pictures': graphics.Pictures,
-        'chart': graphics.Chart,
-        'burn': graphics.Button_Burn,
-        'globe_active': graphics.Globe_Active,
-        'globe_inactive': graphics.Globe_Inactive,
-        'checkbox_full': graphics.Checkbox_Full,
-    }
+    # dic = {
+    #     'load': graphics.Button_Load,
+    #     'play': graphics.Button_Play,
+    #     'check': graphics.Button_Check,
+    #     'pick_color': graphics.Button_Color_Circle,
+    #     'edit': graphics.Document_2_Edit,
+    #     'data_add': graphics.Document_2_Add,
+    #     # 'data_add' : graphics.Database_Add,
+    #     'data_remove': graphics.Document_2_Remove,
+    #     # 'data_remove' : graphics.Database_Remove,
+    #     'add': graphics.Button_Add,
+    #     'remove': graphics.Button_Remove,
+    #     'search_add': graphics.Search_Add,
+    #     'box_add': graphics.Box_Add,
+    #     'file_add': graphics.File_Add,
+    #     'equalizer': graphics.System_Equalizer,
+    #     'preferences': graphics.System_Preferences,
+    #     'pictures': graphics.Pictures,
+    #     'chart': graphics.Chart,
+    #     'burn': graphics.Button_Burn,
+    #     'globe_active': graphics.Globe_Active,
+    #     'globe_inactive': graphics.Globe_Inactive,
+    #     'checkbox_full': graphics.Checkbox_Full,
+    # }
     c = {'button_color': (sg.theme_background_color(), sg.theme_background_color()),
          'border_width': 0,
          }
-    try :
-        bs64=dic[name]
-    except :
-        bs64=getattr(graphics, name)
+
+    bs64=getattr(graphics, name)
     b = sg.B(image_data=bs64, k=key, **c, **kwargs)
     return b
 
@@ -47,7 +45,7 @@ def graphic_button(name, key, **kwargs):
 def browse_button(name, initial_folder=paths.DataFolder, target=(0, -1), tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Browse to add items to the list.\n Either directly select a directory or a parent folder containing multiple subdirectories.'
-    b = graphic_button('search_add', key=f'BROWSE {name}', initial_folder=initial_folder, change_submits=True,
+    b = graphic_button('Search_Add', key=f'BROWSE {name}', initial_folder=initial_folder, change_submits=True,
                        enable_events=True, target=target, button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
                        tooltip=tooltip, **kwargs)
     return b
@@ -56,55 +54,55 @@ def browse_button(name, initial_folder=paths.DataFolder, target=(0, -1), tooltip
 def remove_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Remove an item from the list.'
-    b = graphic_button('remove', f'REMOVE {name}', tooltip=tooltip, **kwargs)
+    b = graphic_button('Button_Remove', f'REMOVE {name}', tooltip=tooltip, **kwargs)
     return b
 
 
 def sel_all_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Select all list elements.'
-    b = graphic_button('checkbox_full', f'SELECT_ALL {name}', tooltip=tooltip, **kwargs)
+    b = graphic_button('Checkbox_Full', f'SELECT_ALL {name}', tooltip=tooltip, **kwargs)
     return b
 
 
 def changeID_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Change the dataset ID transiently or permanently.'
-    b = graphic_button('edit', f'CHANGE_ID {name}', tooltip=tooltip, **kwargs)
+    b = graphic_button('Document_2_Edit', f'CHANGE_ID {name}', tooltip=tooltip, **kwargs)
     return b
 
 
 def replay_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Replay/Visualize the dataset.'
-    b = graphic_button('play', f'REPLAY {name}', tooltip=tooltip, **kwargs)
+    b = graphic_button('Button_Play', f'REPLAY {name}', tooltip=tooltip, **kwargs)
     return b
 
 
 def import_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Build a dataset from raw files.'
-    b = graphic_button('burn', f'BUILD {name}', tooltip=tooltip, **kwargs)
+    b = graphic_button('Button_Burn', f'BUILD {name}', tooltip=tooltip, **kwargs)
     return b
 
 
 def enrich_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Enrich the dataset.'
-    b = graphic_button('data_add', f'ENRICH {name}', tooltip=tooltip, **kwargs)
+    b = graphic_button('Document_2_Add', f'ENRICH {name}', tooltip=tooltip, **kwargs)
     return b
 
 
 def add_ref_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Add the reference experimental dataset to the list.'
-    b = graphic_button('box_add', f'ADD REF {name}', tooltip=tooltip, **kwargs)
+    b = graphic_button('Box_Add', f'ADD REF {name}', tooltip=tooltip, **kwargs)
     return b
 
 def run_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Run the selected simulation/essay/batch-run.'
-    b = graphic_button('play', f'RUN {name}', tooltip=tooltip, **kwargs)
+    b = graphic_button('Button_Play', f'RUN {name}', tooltip=tooltip, **kwargs)
     return b
 
 
@@ -183,11 +181,12 @@ class ClickableImage(Button):
         webbrowser.open(self.link)
 
 
-def color_pick_layout(name, color=None):
-    return [sg.T('', **t_kws(5)), sg.T('color', **t_kws(5)),
+def color_pick_layout(name, color=None, show_text=True):
+    t=[sg.T('', **t_kws(5)), sg.T('color', **t_kws(5))] if show_text else []
+    return [*t,
             sg.Combo(list(color_map.keys()), default_value=color, k=f'{name}_color', enable_events=True, readonly=False,
                      **t_kws(10)),
-            graphic_button('pick_color', f'PICK {name}_color', button_type=BUTTON_TYPE_COLOR_CHOOSER,
+            graphic_button('Button_Color_Circle', f'PICK {name}_color', button_type=BUTTON_TYPE_COLOR_CHOOSER,
                            target=f'{name}_color', enable_events=True)]
 
 

@@ -1,5 +1,3 @@
-import copy
-
 import numpy as np
 from typing import List, Tuple, Union
 
@@ -63,6 +61,16 @@ def processing_types(types=[], dtypes=False) :
             d[t] = True if t in types else False
         return d
 
+def annotation_bouts(types=[],  dtypes=False):
+    l = ['stride', 'pause', 'turn']
+    if dtypes :
+        return {t:bool for t in l}
+    else :
+        d={}
+        for t in l :
+            d[t] = True if t in types else False
+        return d
+
 def init_dicts():
     d = {
         'odor':
@@ -89,8 +97,9 @@ def init_dicts():
             },
         'arena':
             {
-                'arena_xdim': 0.1,
-                'arena_ydim': 0.1,
+                'arena_dims': (0.1, 0.1),
+                # 'arena_xdim': 0.1,
+                # 'arena_ydim': 0.1,
                 'arena_shape': 'circular'
             },
         'life':
@@ -112,24 +121,7 @@ def init_dicts():
             'mean': None,
             'std': None
         },
-        'replay':
-            {
-                'arena_pars': {
-                    'arena_xdim': 0.1,
-                    'arena_ydim': 0.1,
-                    'arena_shape': 'circular'
-                },
-                'env_params': None,
-                'track_point': -1,
-                'dynamic_color': None,
-                'agent_ids': None,
-                'time_range': None,
-                'transposition': None,
-                'fix_point': None,
-                'secondary_fix_point': None,
-                'use_background': False,
-                'draw_Nsegs': None
-            },
+
         'optimization': {
             'fit_par': None,
             'operations': {
@@ -198,9 +190,7 @@ def init_dicts():
             'attenuation': 1.0
         },
         'intermitter': {
-            # 'pause_dist': 'fit',
             'pause_dist': null_bout_dist,
-            # 'stridechain_dist': 'fit',
             'stridechain_dist': null_bout_dist,
             'crawl_bouts': True,
             'feed_bouts': False,
@@ -296,7 +286,7 @@ def init_dicts():
             'types': processing_types(['angular', 'spatial','dispersion', 'tortuosity']),
             'dsp_starts': None, 'dsp_stops': None,
             'tor_durs': None},
-        'annotation': {'bouts': {'stride': True, 'pause': True, 'turn': True}, 'track_point': None,
+        'annotation': {'bouts': annotation_bouts(types=['stride', 'pause', 'turn']), 'track_point': None,
                        'track_pars': None, 'chunk_pars': None,
                        'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 0.0,
                        'non_chunks': False},
@@ -319,6 +309,19 @@ def init_dicts():
         'substrate': substrate_dict['standard']
 
     }
+    d['replay'] =  {
+                'arena_pars': d['arena'],
+                'env_params': None,
+                'track_point': -1,
+                'dynamic_color': None,
+                'agent_ids': None,
+                'time_range': None,
+                'transposition': None,
+                'fix_point': None,
+                'secondary_fix_point': None,
+                'use_background': False,
+                'draw_Nsegs': None
+            }
     d['visualization'] = init_null_vis()
     d['enrichment'] = {k: d[k] for k in
                        ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
@@ -354,6 +357,23 @@ typing_to_str_dict={
 'Union[Tuple[float, float], Tuple[int, int]]' :Union[Tuple[float, float], Tuple[int, int]],
 'Union[BaseUnit, Composite, DerivedUnit]' :Union[BaseUnit, Composite, DerivedUnit],
 }
+
+def init_agent_dtypes(class_name, dtypes_dict):
+    dtypes = {
+        'unique_id': str,
+        'default_color': str,
+        # 'group': str,
+    }
+    if class_name in ['Larva', 'LarvaSim', 'LarvaReplay']:
+        dtypes = {**dtypes, 'group': str, **dtypes_dict['odor']}
+    elif class_name in ['Source', 'Food']:
+        dtypes = {**dtypes, 'group': str, **dtypes_dict['odor'], **dtypes_dict['food'], 'can_be_carried': bool,
+                  'pos': Tuple[float, float]}
+    elif class_name in ['Border']:
+        dtypes = {**dtypes,
+                  'width': fun.value_list(end=0.1, steps=1000, decimals=4),
+                  'points': List[tuple]}
+    return dtypes
 
 def init_dtypes():
     from lib.conf.conf import loadConfDict
@@ -393,8 +413,9 @@ def init_dtypes():
             },
         'arena':
             {
-                'arena_xdim': fun.value_list(end=10.0, steps=1000, decimals=3),
-                'arena_ydim': fun.value_list(end=10.0, steps=1000, decimals=3),
+                'arena_dims': (0.0, 10.0),
+                # 'arena_xdim': fun.value_list(end=10.0, steps=1000, decimals=3),
+                # 'arena_ydim': fun.value_list(end=10.0, steps=1000, decimals=3),
                 'arena_shape': ['circular', 'rectangular']
             },
         'life':
@@ -417,23 +438,7 @@ def init_dtypes():
             'mean': float,
             'std': float
         },
-        'replay': {
-            'arena_pars': {
-                'arena_xdim': float,
-                'arena_ydim': float,
-                'arena_shape': ['circular', 'rectangular']
-            },
-            'env_params': [''] + list(loadConfDict('Env').keys()),
-            'track_point': fun.value_list(1, 12, steps=12, integer=True),
-            'dynamic_color': [None, 'lin_color', 'ang_color'],
-            'agent_ids': list,
-            'time_range': (0.0, 3600.0),
-            'transposition': [None, 'origin', 'arena', 'center'],
-            'fix_point': fun.value_list(1, 12, steps=12, integer=True),
-            'secondary_fix_point': ['', 1, -1],
-            'use_background': bool,
-            'draw_Nsegs': fun.value_list(1, 12, steps=12, integer=True),
-        },
+
         'optimization': {
             'fit_par': str,
             'operations': {
@@ -590,7 +595,7 @@ def init_dtypes():
             'dsp_starts': {'type': list, 'value_list': fun.value_list(start=0, end=180, steps=181, integer=True)},
             'dsp_stops': {'type': list, 'value_list': fun.value_list(start=0, end=180, steps=181, integer=True)},
             'tor_durs': {'type': list, 'value_list': fun.value_list(start=0, end=180, steps=181, integer=True)}},
-        'annotation': {'bouts': {'stride': bool, 'pause': bool, 'turn': bool},
+        'annotation': {'bouts': annotation_bouts(dtypes=True),
                        'track_point': str,
                        'track_pars': List[str], 'chunk_pars': List[str],
                        'vel_par': str, 'ang_vel_par': str, 'bend_vel_par': str,
@@ -614,6 +619,19 @@ def init_dtypes():
         'substrate': {k: float for k in substrate_dict['standard'].keys()}
 
     }
+    d['replay'] = {
+            'arena_pars': d['arena'],
+            'env_params': [''] + list(loadConfDict('Env').keys()),
+            'track_point': fun.value_list(1, 12, steps=12, integer=True),
+            'dynamic_color': [None, 'lin_color', 'ang_color'],
+            'agent_ids': list,
+            'time_range': (0.0, 3600.0),
+            'transposition': [None, 'origin', 'arena', 'center'],
+            'fix_point': fun.value_list(1, 12, steps=12, integer=True),
+            'secondary_fix_point': ['', 1, -1],
+            'use_background': bool,
+            'draw_Nsegs': fun.value_list(1, 12, steps=12, integer=True),
+        }
     d['enrichment'] = {k: d[k] for k in
                        ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
     d['exp_conf'] = {'env_params': str,
@@ -632,6 +650,9 @@ def init_dtypes():
     d['food_params'] = {'source_groups': dict,
                         'food_grid': dict,
                         'source_units': dict}
+
+    for c in ['Larva', 'LarvaSim', 'LarvaReplay', 'Border', 'Source', 'Food'] :
+        d[c]=init_agent_dtypes(c, d)
 
     return d
 
@@ -821,10 +842,9 @@ def store_controls():
     from lib.conf.conf import saveConfDict
     saveConfDict(d, 'Settings')
 
+
 if __name__ == '__main__':
     store_dtypes()
     store_controls()
     # d1,d2=load_dtypes()
     # print(d2['life'])
-
-

@@ -45,7 +45,7 @@ class SettingsTab(GuiTab):
                      disabled_readonly_background_color='black', enable_events=True,
                      text_color='white', **t_kws(10), justification='center')]
         if editable :
-            l+=[graphic_button('edit', f'{self.k_edit} {k0}', tooltip=f'Edit shortcut for {k}')]
+            l+=[graphic_button('Document_2_Edit', f'{self.k_edit} {k0}', tooltip=f'Edit shortcut for {k}')]
         return l
 
     def single_control_collapsible(self, name, dic, editable=True) :
@@ -54,7 +54,7 @@ class SettingsTab(GuiTab):
         return c
 
     def build_controls_collapsible(self, c):
-        b_reset=graphic_button('burn', self.k_reset,tooltip='Reset all controls to the defaults. '
+        b_reset=graphic_button('Button_Burn', self.k_reset,tooltip='Reset all controls to the defaults. '
                                    'Restart Larvaworld after changing shortcuts.')
         conf = loadConfDict('Settings')
         l = []

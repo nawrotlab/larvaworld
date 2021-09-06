@@ -54,15 +54,12 @@ class EnvTab(GuiTab):
 
     def arena_pars(self, v, w, c):
         dic=c['arena'].get_dict(v, w)
-        shape = dic['arena_shape']
-        X, Y = dic['arena_xdim'], dic['arena_ydim']
-        return shape, (X,Y)
+        return dic['arena_shape'], dic['arena_dims']
 
     @property
     def s(self):
         return self.base_dict['s']
 
-    # @property
     def get_drag_ps(self, scaled=False):
         d=self.base_dict
         p1,p2= d['start_point'], d['end_point']
@@ -106,17 +103,17 @@ class EnvTab(GuiTab):
         s2 = CollapsibleTable('source_groups', False, headings=['group', 'N', 'color', 'amount', 'odor_id'],
                               type_dict=dtypes.get_dict_dtypes('distro', class_name='Source', basic=False))
         s3 = CollapsibleTable('source_units', False, headings=['id', 'color', 'amount', 'odor_id'],
-                              type_dict=dtypes.get_dict_dtypes('agent', class_name='Source'))
+                              type_dict=dtypes.get_dict_dtypes('Source'))
         s4 = CollapsibleTable('border_list', False, headings=['id', 'color', 'points'],
-                              type_dict=dtypes.get_dict_dtypes('agent', class_name='Border'))
+                              type_dict=dtypes.get_dict_dtypes('Border'))
         c = {}
         for s in [s1, s2, s3, s4]:
             c.update(**s.get_subdicts())
         c1 = [CollapsibleDict(n, False, default=True, **kw)
               for n, kw in zip(['arena', 'food_grid', 'odorscape'], [{'next_to_header':[
-                                 graphic_button('burn', 'RESET_ARENA',
+                                 graphic_button('Button_Burn', 'RESET_ARENA',
                                                 tooltip='Reset to the initial arena. All drawn items will be erased.'),
-                                 graphic_button('globe_active', 'NEW_ARENA',
+                                 graphic_button('Globe_Active', 'NEW_ARENA',
                                                 tooltip='Create a new arena.All drawn items will be erased.'),
                              ]}, {'toggle': True}, {}])]
         for s in c1:
@@ -146,10 +143,10 @@ class EnvTab(GuiTab):
         for ss in [s1,s2]:
             collapsibles.update(ss.get_subdicts())
 
-        l = [[sg.R(f'Add {n0}', 1, k=n, enable_events=True)],
+        l = [[sg.R(f'Add {n0}', 1, k=n, enable_events=True, **t_kws(10)),*color_pick_layout(n, color, show_text=False)],
              [sg.T('', **t_kws(2)),sg.R('single id', 2, disabled=True, k=s, enable_events=True, **t_kws(5)),sg.In(n, k=s0)],
              [sg.T('', **t_kws(2)), sg.R('group id', 2, disabled=True, k=g, enable_events=True, **t_kws(5)),sg.In(k=g0)],
-             color_pick_layout(n, color),
+
              [sg.T('', **t_kws(5)), *s1.get_layout()],
              [sg.T('', **t_kws(5)), *s2.get_layout()]]
         return l, collapsibles
@@ -177,24 +174,27 @@ class EnvTab(GuiTab):
         source_l, c = self.add_agent_layout('Source', 'green', c)
         larva_l, c = self.add_agent_layout('Larva', 'black', c)
 
+        lI=[[sg.R('Erase item', 1, k='-ERASE-', enable_events=True)],
+            [sg.R('Move item', 1, True, k='-MOVE-', enable_events=True)],
+            [sg.R('Inspect item', 1, True, k='-INSPECT-', enable_events=True)]]
+
+
         b='BORDER'
-        b0=f'{b}_id'
-        bw=f'{b}_width'
-        col2 = [
-            *larva_l, *source_l,
+
+        lB = [[sg.R('Add Border', 1, k=b, enable_events=True, **t_kws(10)), *color_pick_layout(b, 'black', show_text=False)],
+              [sg.T('', **t_kws(4)), sg.T('id', **t_kws(5)), sg.In(b, k=f'{b}_id')],
+              [sg.T('', **t_kws(4)), sg.T('width', **t_kws(5)), sg.Spin(values=fun.value_list(end=0.1, steps=1000, decimals=4), initial_value=0.001, k=f'{b}_width')],
+              ]
+
+        lS=[*source_l,
             [sg.T('', **t_kws(5)), *s2.get_layout()],
             [sg.T('', **t_kws(5)), sg.T('shape', **t_kws(5)),
-             sg.Combo(['rect', 'circle'], default_value='circle', k='SOURCE_shape', enable_events=True, readonly=True)],
+             sg.Combo(['rect', 'circle'], default_value='circle', k='SOURCE_shape', enable_events=True, readonly=True)]]
 
-            [sg.R('Add Border', 1, k=b, enable_events=True)],
-            [sg.T('', **t_kws(5)), sg.T('id', **t_kws(5)), sg.In(b, k=b0)],
-            [sg.T('', **t_kws(5)), sg.T('width', **t_kws(5)), sg.In(0.001, k=bw)],
-            color_pick_layout(b, 'black'),
+        lL=larva_l
 
-            [sg.R('Erase item', 1, k='-ERASE-', enable_events=True)],
-            [sg.R('Move item', 1, True, k='-MOVE-', enable_events=True)],
-            [sg.R('Inspect item', 1, True, k='-INSPECT-', enable_events=True)],
-        ]
+        col2 = sg.Col([[sg.Col(ll, pad=(10,10))] for ll in [lL,lS,lB,lI]], **col_kws)
+        # col2 = sg.Col(col2, **col_kws)
         g1 = GraphList(self.name, graph=True,canvas_size=self.canvas_size, canvas_kws={
             'graph_bottom_left': (0, 0),
             'graph_top_right': self.canvas_size,
@@ -208,7 +208,7 @@ class EnvTab(GuiTab):
             [sg.T('Hints : '), sg.T('', k='info', **t_kws(40))],
             [sg.T('Actions : '), sg.T('', k='out', **t_kws(40))],
         ]
-        l = sg.Col([[sg.Col(col1, **col_kws), sg.Col(col2, **col_kws)]], **col_kws, size=col_size(0.75))
+        l = sg.Col([[sg.Col(col1, **col_kws), col2]], **col_kws, size=col_size(0.75))
 
         g = {g1.name: g1}
         self.graph = g1.canvas_element
@@ -359,7 +359,7 @@ class EnvTab(GuiTab):
                                         'width': v['BORDER_width'],
                                         'points': [P1, P2]}
                                 dic['current'] = fun.agent_list2dict(
-                                    [retrieve_dict(dic0, dtypes.get_dict_dtypes('agent', class_name='Border'))])
+                                    [retrieve_dict(dic0, dtypes.get_dict_dtypes('Border'))])
 
                                 dic['prior_rect'] = self.graph.draw_line(p1, p2, color=v['BORDER_color'],
                                                                     width=int(float(v['BORDER_width']) * self.s))
@@ -476,7 +476,7 @@ class EnvTab(GuiTab):
         if shape == 'circular' and X is not None:
             arena = g.draw_circle((int(W / 2), int(H / 2)), int(W / 2),line_width=5, **kws)
             s = W / X
-        elif shape == 'rectangular' and not None in (X, Y):
+        elif shape == 'rectangular' and X is not None and Y is not None :
             if X >= Y:
                 dif = (X - Y) / X
                 arena = g.draw_rectangle((0, int(H * dif / 2)), (W, H - int(H * dif / 2)), line_width=5, **kws)

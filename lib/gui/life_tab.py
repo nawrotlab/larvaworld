@@ -104,8 +104,8 @@ class LifeTab(GuiTab):
 
         l_tab = sg.Col([[
             sg.T(f'{ep.capitalize()}s (h)', **t_kws(18)),
-            graphic_button('add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
-            graphic_button('remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.'),
+            graphic_button('Button_Add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
+            graphic_button('Button_Remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.'),
         ],
             [Table(values=[], headings=[self.s0, self.s1, 'quality'], def_col_width=7,
                       max_col_width=24, background_color='lightblue',

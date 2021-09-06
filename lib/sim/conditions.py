@@ -26,8 +26,20 @@ class PrefTrainCondition:
     def toggle_odors(self, env, CS_intensity=2.0, UCS_intensity=0.0):
         for f in env.CS_sources :
             f.set_odor_dist(intensity=CS_intensity)
+            f.visible=True if CS_intensity>0 else False
         for f in env.UCS_sources :
             f.set_odor_dist(intensity=UCS_intensity)
+            f.visible = True if UCS_intensity > 0 else False
+
+    def init_test(self,env):
+        for f in env.CS_sources:
+            if f.unique_id=='CS_r':
+                env.CS_sources.remove(f)
+                env.delete_agent(f)
+        for f in env.UCS_sources:
+            if f.unique_id=='UCS_l':
+                env.UCS_sources.remove(f)
+                env.delete_agent(f)
 
     def start_trial(self,env, on_food=True):
         m, s = env.sim_clock.minute, env.sim_clock.second
@@ -42,6 +54,7 @@ class PrefTrainCondition:
             elif env.CS_counter == 4:
                 print()
                 print(f'Test trial on food started at {m}:{s}')
+                self.init_test(env)
                 self.toggle_odors(env, c,c)
                 env.move_larvae_to_center()
             elif env.CS_counter == 5:

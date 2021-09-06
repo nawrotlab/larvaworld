@@ -36,15 +36,13 @@ class LarvaDataset:
                            'Ncontour': Ncontour,
                            'sample_dataset': sample_dataset,
                            **par_conf,
-                           **arena_pars,
+                           'arena_pars': arena_pars,
                            **life_params
                            }
 
             # print(f'Initialized dataset {id} with new configuration')
         self.__dict__.update(self.config)
-        self.arena_pars = {'arena_xdim': self.arena_xdim,
-                           'arena_ydim': self.arena_ydim,
-                           'arena_shape': self.arena_shape}
+
         self.dt = 1 / self.fr
         self.configure_body()
         self.define_linear_metrics(self.config)
@@ -337,10 +335,9 @@ class LarvaDataset:
             if arena_pars is None:
                 arena_pars = self.arena_pars
             env_params = {'arena': arena_pars}
-        # arena_dims = [env_params['arena'][k] * 1 for k in ['arena_xdim', 'arena_ydim']]
-        arena_dims = [env_params['arena'][k] * 1000 for k in ['arena_xdim', 'arena_ydim']]
-        env_params['arena']['arena_xdim'] = arena_dims[0]
-        env_params['arena']['arena_ydim'] = arena_dims[1]
+        arena_dims = [k * 1000 for k in env_params['arena']['arena_dims']]
+        env_params['arena']['arena_dims'] = arena_dims
+
 
 
         if transposition is not None:
@@ -404,11 +401,7 @@ class LarvaDataset:
         if not hasattr(self, 'endpoint_data'):
             self.load(step=False)
         e=self.endpoint_data
-        # print(e)
-        # print(self.arena_pars)
-        # if arena_diameter_in_mm is None:
-        #     arena_diameter_in_mm = self.arena_xdim * 1000
-        r = 0.2 * self.arena_xdim
+        r = 0.2 * self.arena_pars['arena_dims'][0]
         p='x' if 'x' in e.keys() else nam.final('x')
         d = e[p]
         N = d.count()

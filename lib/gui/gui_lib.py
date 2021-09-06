@@ -250,7 +250,7 @@ class SectionDict:
 
 
 class TupleSpin(Pane):
-    def __init__(self, initial_value,  key, range=None,value_list=None, steps=100, decimals=2, **value_kws):
+    def __init__(self, initial_value,  key, range=None,value_list=None, steps=1000, decimals=3, **value_kws):
         w, h = w_kws['default_button_element_size']
         # size=(int(w/2), h)
         value_kws.update({'size': (w - 3, h)})
@@ -312,8 +312,8 @@ class MultiSpin(Pane):
         self.spins = self.build_spins()
         self.layout=self.build_layout()
 
-        add_button = graphic_button('add', self.add_key, tooltip='Add another item in the list.')
-        remove_button = graphic_button('remove', self.remove_key, tooltip='Remove last item in the list.')
+        add_button = graphic_button('Button_Add', self.add_key, tooltip='Add another item in the list.')
+        remove_button = graphic_button('Button_Remove', self.remove_key, tooltip='Remove last item in the list.')
         self.buttons = sg.Col([[add_button], [remove_button]])
         pane_list = [sg.Col([self.layout])]
         super().__init__(pane_list=pane_list, key=self.key)
@@ -335,10 +335,13 @@ class MultiSpin(Pane):
     def update(self, window, value):
         if value in [None, '', (None, None), [None, None]]:
             self.N = 0
-            for i, k in enumerate(self.k_spins):
-                window.Element(k).Update(value='')
-                # if i>0 :
-                #     window.Element(k).Update(visible=False)
+            if not self.tuples:
+                for i, k in enumerate(self.k_spins):
+                    window.Element(k).Update(value='')
+            else :
+                for i, spin in enumerate(self.spins):
+                    spin.update(window, '')
+
         elif type(value) in [list, tuple]:
             self.N = len(value)
             if not self.tuples:
@@ -761,7 +764,7 @@ class CollapsibleTable(Collapsible):
         self.key = f'TABLE {name}'
         content = self.get_content()
         self.edit_key = f'EDIT_TABLE {name}'
-        b = [graphic_button('edit', self.edit_key, tooltip=f'Create new {name}')]
+        b = [graphic_button('Document_2_Edit', self.edit_key, tooltip=f'Create new {name}')]
         super().__init__(name, state, content=content, next_to_header=b, **kwargs)
 
     def set_data(self, dic):
@@ -941,7 +944,7 @@ def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
 
 def set_agent_kwargs(agent, **kwargs):
     class_name = type(agent).__name__
-    type_dict = dtypes.get_dict_dtypes('agent', class_name=class_name)
+    type_dict = dtypes.get_dict_dtypes(class_name)
     title = f'{class_name} args'
     dic = {}
     for p in list(type_dict.keys()):
@@ -1058,11 +1061,11 @@ class ButtonGraphList(GraphList):
     def __init__(self, name, **kwargs):
         self.draw_key = f'{name}_DRAW_FIG'
         l = [
-            graphic_button('load', f'{name}_REFRESH_FIGS', tooltip='Detect available graphs.'),
-            graphic_button('equalizer', f'{name}_FIG_ARGS', tooltip='Configure the graph arguments.'),
+            graphic_button('Button_Load', f'{name}_REFRESH_FIGS', tooltip='Detect available graphs.'),
+            graphic_button('System_Equalizer', f'{name}_FIG_ARGS', tooltip='Configure the graph arguments.'),
             # graphic_button('preferences', f'{self.name}_SAVEd_FIG'),
-            graphic_button('chart', self.draw_key, tooltip='Draw the graph.'),
-            graphic_button('file_add', f'{name}_SAVE_FIG', tooltip='Save the graph to a file.')
+            graphic_button('Chart', self.draw_key, tooltip='Draw the graph.'),
+            graphic_button('File_Add', f'{name}_SAVE_FIG', tooltip='Save the graph to a file.')
         ]
         super().__init__(name=name, next_to_header=l, **kwargs)
 
@@ -1407,18 +1410,18 @@ class SelectionList(GuiElement):
             append += self.progressbar.l
 
         if 'load' in acts:
-            bs.append(graphic_button('load', f'LOAD_{n}', tooltip=f'Load the configuration for a {n}.'))
+            bs.append(graphic_button('Button_Load', f'LOAD_{n}', tooltip=f'Load the configuration for a {n}.'))
         if 'edit' in acts:
-            bs.append(graphic_button('edit', f'EDIT_{n}', tooltip=f'Configure an existing or create a new {n}.')),
+            bs.append(graphic_button('Document_2_Edit', f'EDIT_{n}', tooltip=f'Configure an existing or create a new {n}.')),
         if 'save' in acts:
-            bs.append(graphic_button('data_add', f'SAVE_{n}', tooltip=f'Save a new {n} configuration.'))
+            bs.append(graphic_button('Document_2_Add', f'SAVE_{n}', tooltip=f'Save a new {n} configuration.'))
         if 'delete' in acts:
-            bs.append(graphic_button('data_remove', f'DELETE_{n}',
+            bs.append(graphic_button('Document_2_Remove', f'DELETE_{n}',
                                      tooltip=f'Delete an existing {n} configuration.'))
         if 'run' in acts:
-            bs.append(graphic_button('play', f'RUN_{n}', tooltip=f'Run the selected {n}.'))
+            bs.append(graphic_button('Button_Play', f'RUN_{n}', tooltip=f'Run the selected {n}.'))
         if 'search' in acts:
-            bs.append(graphic_button('search_add', f'SEARCH_{n}', initial_folder=paths.DataFolder, change_submits=True,
+            bs.append(graphic_button('Search_Add', f'SEARCH_{n}', initial_folder=paths.DataFolder, change_submits=True,
                                      enable_events=True, target=(0, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
                                      tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.'))
 
@@ -1529,7 +1532,7 @@ class ProgressBarLayout:
         self.l = [sg.Text('Progress :', **t_kws(8)),
                   sg.ProgressBar(100, orientation='h', size=(8.8, 20), key=self.k,
                                  bar_color=('green', 'lightgrey'), border_width=3),
-                  graphic_button('check', self.k_complete, visible=False,
+                  graphic_button('Button_Check', self.k_complete, visible=False,
                                  tooltip='Whether the current {n} was completed.')]
 
     def reset(self, w):
