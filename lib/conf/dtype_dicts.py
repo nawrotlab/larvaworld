@@ -1,10 +1,10 @@
 import copy
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import numpy as np
 
-from lib.conf.init_dtypes import load_dtypes
+from lib.conf.init_dtypes import load_dtypes, processing_types
 
-all_dtypes,all_null_dicts = load_dtypes()
+all_null_dicts, all_dtypes = load_dtypes()
 dtype_keys=list(all_dtypes.keys())
 dict_keys=list(all_null_dicts.keys())
 
@@ -65,17 +65,6 @@ def null_distro(class_name, basic=True):
             except:
                 pass
     return distro
-
-def base_enrich(**kwargs):
-    d = {
-        'types': {'angular': True, 'spatial': True, 'source': True, 'dispersion': True, 'tortuosity': True},
-        # 'types': ['angular', 'spatial', 'source', 'dispersion', 'tortuosity'],
-        'dsp_starts': [0, 20], 'dsp_stops': [40, 80], 'tor_durs': [2, 5, 10, 20],
-        'min_ang': 5.0, 'bouts': {'stride': True, 'pause': True, 'turn': True}
-    }
-
-    d.update(**kwargs)
-    return get_dict('enrichment', **d)
 
 
 def get_dict_dtypes(name, **kwargs):
@@ -195,3 +184,15 @@ def new_odor_dict(ids: list, means: list, stds=None) -> dict:
         odor_dict[id] = {'mean': m,
                          'std': s}
     return odor_dict
+
+
+def base_enrich(types=['angular', 'spatial','dispersion', 'tortuosity'], **kwargs):
+    d = {
+        'types': processing_types(types),
+        # 'types': ['angular', 'spatial', 'source', 'dispersion', 'tortuosity'],
+        'dsp_starts': [0, 20], 'dsp_stops': [40, 80], 'tor_durs': [2, 5, 10, 20],
+        'min_ang': 5.0, 'bouts': {'stride': True, 'pause': True, 'turn': True}
+    }
+
+    d.update(**kwargs)
+    return get_dict('enrichment', **d)

@@ -131,7 +131,9 @@ class LarvaWorld:
 
         self.end_condition_met = False
 
-    def toggle(self, name, value=None, show=False, minus=False, plus=False):
+    def toggle(self, name, value=None, show=False, minus=False, plus=False, disp=None):
+        if disp is None :
+            disp=name
 
         if name == 'snapshot #':
             import imageio
@@ -156,7 +158,7 @@ class LarvaWorld:
         if value is None:
             setattr(self, name, not getattr(self, name))
             value = 'ON' if getattr(self, name) else 'OFF'
-        self.screen_texts[name].text = f'{name} {value}'
+        self.screen_texts[name].text = f'{disp} {value}'
         self.screen_texts[name].end_time = pygame.time.get_ticks() + 2000
         self.screen_texts[name].start_time = pygame.time.get_ticks() + int(self.dt * 1000)
 
@@ -395,7 +397,7 @@ class LarvaWorld:
             g.id_box.draw(self._screen)
 
 
-        if self.trajectories:
+        if self.trails:
             ren.draw_trajectories(space_dims=self.space_dims, agents=self.get_flies(), screen=self._screen,
                                   decay_in_ticks=int(self.trajectory_dt / self.dt),
                                   traj_color=self.traj_color)
@@ -646,7 +648,7 @@ class LarvaWorld:
         texts = {}
         names = [
             'trajectory_dt',
-            'trajectories',
+            'trails',
             'focus_mode',
             'draw_centroid',
             'draw_head',

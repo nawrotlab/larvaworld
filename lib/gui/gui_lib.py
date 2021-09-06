@@ -2,7 +2,7 @@ import copy
 import inspect
 import os
 from tkinter import PhotoImage
-from typing import Tuple
+from typing import Tuple, List
 import numpy as np
 import PySimpleGUI as sg
 import operator
@@ -137,24 +137,24 @@ def gui_table(data, pars_dict, title='Agent list', sortable=False):
             Nrows, Npars, ps, w = table_window(data, pars_dict, title)
 
 
-def update_window_from_dict(window, dic, prefix=None):
+def update_window_from_dict(w, dic, prefix=None):
     if dic is not None:
         for k, v in dic.items():
             if prefix is not None:
                 k = f'{prefix}_{k}'
             if type(v) == bool:
-                b = window[f'TOGGLE_{k}']
+                b = w[f'TOGGLE_{k}']
                 if isinstance(b, BoolButton):
                     b.set_state(v)
             elif type(v) == dict:
                 new_prefix = k if prefix is not None else None
-                update_window_from_dict(window, v, prefix=new_prefix)
-            elif isinstance(window[k], TupleSpin) or isinstance(window[k], MultiSpin):
-                window[k].update(window, v)
+                update_window_from_dict(w, v, prefix=new_prefix)
+            elif isinstance(w[k], TupleSpin) or isinstance(w[k], MultiSpin):
+                w[k].update(w, v)
             elif v is None:
-                window.Element(k).Update(value='')
+                w.Element(k).Update(value='')
             else:
-                window.Element(k).Update(value=v)
+                w.Element(k).Update(value=v)
 
 
 def save_conf_window(conf, conftype, disp=None):
@@ -206,8 +206,12 @@ class SectionDict:
                                         readonly=True, **value_kws)
                 elif t in [tuple, Tuple[float, float], Tuple[int, int]]:
                     temp = TupleSpin(range=t0, initial_value=v, key=k0, **value_kws)
-                elif t == dict and list(t0.keys()) == ['type', 'value_list'] and t0['type'] == list:
-                    temp = MultiSpin(value_list=t0['value_list'], initial_value=v, key=k0, **value_kws)
+                elif t == dict and list(t0.keys()) == ['type', 'value_list'] :
+                    if t0['type'] == list:
+                        tuples=False
+                    elif t0['type'] == List[tuple]:
+                        tuples = True
+                    temp = MultiSpin(value_list=t0['value_list'], initial_value=v, key=k0,tuples=tuples, **value_kws)
                 else :
                     temp = sg.In(v, key=k0, **value_kws)
                 ii =[sg.Text(f'{k_disp}:', **text_kws), temp]
@@ -246,17 +250,20 @@ class SectionDict:
 
 
 class TupleSpin(Pane):
-    def __init__(self, initial_value, range, key, steps=100, decimals=2, **value_kws):
+    def __init__(self, initial_value,  key, range=None,value_list=None, steps=100, decimals=2, **value_kws):
         w, h = w_kws['default_button_element_size']
         # size=(int(w/2), h)
-        value_kws.update({'size': (w - 1, h)})
+        value_kws.update({'size': (w - 3, h)})
         self.steps = steps
         self.initial_value = initial_value
         v0, v1 = initial_value if type(initial_value) == tuple else ('', '')
         self.integer = True if all([type(v0) == int, type(v1) == int]) else False
-        r0, r1 = self.range = range
-        arange = fun.value_list(r0, r1, self.integer, steps, decimals)
-        arange = [''] + arange
+        if range is not None :
+            r0, r1 = range
+            arange = fun.value_list(r0, r1, self.integer, steps, decimals)
+            arange = [''] + arange
+        else :
+            arange=value_list
         self.key = key
         self.k0, self.k1 = [f'{key}_{i}' for i in [0, 1]]
         self.s0 = sg.Spin(values=arange, initial_value=v0, key=self.k0, **value_kws)
@@ -282,31 +289,43 @@ class TupleSpin(Pane):
 
 
 class MultiSpin(Pane):
-    def __init__(self, initial_value, value_list, key, steps=100, decimals=2, Nspins=3, **value_kws):
+    def __init__(self, initial_value, value_list, key, steps=100, decimals=2, Nspins=4,tuples=False, **value_kws):
         w, h = w_kws['default_button_element_size']
         value_kws.update({'size': (w - 3, h)})
+        self.value_kws=value_kws
         # b_kws={'size' : (1,1)}
         self.Nspins = Nspins
         self.steps = steps
         self.initial_value = initial_value
-        value_list = [''] + value_list
+        self.value_list = [''] + value_list
         if initial_value is None:
-            v_spins = [''] * Nspins
+            self.v_spins = [''] * Nspins
             self.N = 0
         elif type(initial_value) in [list, tuple]:
             self.N = len(initial_value)
-            v_spins = [vv for vv in initial_value] + [''] * (Nspins - self.N)
+            self.v_spins = [vv for vv in initial_value] + [''] * (Nspins - self.N)
         self.key = key
+        self.tuples = tuples
         self.add_key, self.remove_key = f'SPIN+ {key}', f'SPIN- {key}'
         self.k_spins = [f'{key}_{i}' for i in range(Nspins)]
-        visibles = [True] * (self.N + 1) + [True] * (Nspins - self.N - 1)
-        self.spins = [sg.Spin(values=value_list, initial_value=vv, key=kk, visible=vis,
-                              **value_kws) for vv, kk, vis in zip(v_spins, self.k_spins, visibles)]
+        self.visibles = [True] * (self.N + 1) + [True] * (Nspins - self.N - 1)
+        self.spins = self.build_spins()
+        self.layout=self.build_layout()
+
         add_button = graphic_button('add', self.add_key, tooltip='Add another item in the list.')
         remove_button = graphic_button('remove', self.remove_key, tooltip='Remove last item in the list.')
         self.buttons = sg.Col([[add_button], [remove_button]])
-        pane_list = [sg.Col([self.spins])]
+        pane_list = [sg.Col([self.layout])]
         super().__init__(pane_list=pane_list, key=self.key)
+
+    def build_spins(self):
+        if not self.tuples:
+            spins = [sg.Spin(values=self.value_list, initial_value=vv, key=kk, visible=vis,
+                              **self.value_kws) for vv, kk, vis in zip(self.v_spins, self.k_spins, self.visibles)]
+        else :
+            spins = [TupleSpin(value_list=self.value_list, initial_value=vv, key=kk,
+                             **self.value_kws) for vv, kk, vis in zip(self.v_spins, self.k_spins, self.visibles)]
+        return spins
 
     def get(self):
         vs = [s.get() for s in self.spins if s.get() not in [None, '']]
@@ -322,12 +341,15 @@ class MultiSpin(Pane):
                 #     window.Element(k).Update(visible=False)
         elif type(value) in [list, tuple]:
             self.N = len(value)
-            for i, k in enumerate(self.k_spins):
-                if i < self.N:
-                    window.Element(k).Update(value=value[i], visible=True)
-                else:
-                    window.Element(k).Update(value='', visible=True)
-                    # window.Element(k).Update(value='',visible=False)
+            if not self.tuples:
+                for i, k in enumerate(self.k_spins):
+                    vv=value[i] if i < self.N else ''
+                    window.Element(k).Update(value=vv, visible=True)
+            else:
+                for i, spin in enumerate(self.spins):
+                    vv = value[i] if i < self.N else ''
+                    spin.update(window, vv)
+
 
     def add_spin(self, window):
         # vs0=self.get()
@@ -355,6 +377,17 @@ class MultiSpin(Pane):
             window.Element(self.k_spins[self.N]).Update(value='', visible=False)
             # window.refresh()
             self.N -= 1
+
+    def build_layout(self):
+        if not self.tuples :
+            return self.spins
+        else :
+            if self.Nspins > 3:
+                spins = fun.group_list_by_n(self.spins, 2)
+                spins = [sg.Col(spins)]
+                return spins
+            else :
+                return self.spins
 
 
 def import_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
@@ -653,41 +686,41 @@ class Collapsible(GuiElement):
             update_window_from_dict(window, dict, prefix=prefix)
         return window
 
-    def update_header(self, window, id):
+    def update_header(self, w, id):
         self.header_value = id
-        window.Element(self.header_key).Update(value=id)
-        self.update(window, self.header_dict[id])
+        w.Element(self.header_key).Update(value=id)
+        self.update(w, self.header_dict[id])
 
-    def click(self, window):
+    def click(self, w):
         if self.state is not None:
             self.state = not self.state
             self.sec_symbol.update(SYMBOL_DOWN if self.state else SYMBOL_UP)
             # self.content.update(visible=self.state)
-            window[f'SEC {self.name}'].update(visible=self.state)
+            w[f'SEC {self.name}'].update(visible=self.state)
 
-    def disable(self, window):
+    def disable(self, w):
         if self.toggle is not None:
-            window[f'TOGGLE_{self.name}'].set_state(state=False, disabled=True)
-        self.close(window)
+            w[f'TOGGLE_{self.name}'].set_state(state=False, disabled=True)
+        self.close(w)
         self.state = None
 
-    def enable(self, window):
+    def enable(self, w):
         if self.toggle is not None:
-            window[f'TOGGLE_{self.name}'].set_state(state=True, disabled=False)
+            w[f'TOGGLE_{self.name}'].set_state(state=True, disabled=False)
         if self.auto_open:
-            self.open(window)
+            self.open(w)
         elif self.state is None:
             self.state = False
 
-    def open(self, window):
+    def open(self, w):
         self.state = True
         self.sec_symbol.update(SYMBOL_DOWN)
-        window[f'SEC {self.name}'].update(visible=self.state)
+        w[f'SEC {self.name}'].update(visible=self.state)
 
-    def close(self, window):
+    def close(self, w):
         self.state = False
         self.sec_symbol.update(SYMBOL_UP)
-        window[f'SEC {self.name}'].update(visible=False)
+        w[f'SEC {self.name}'].update(visible=False)
 
     def get_subdicts(self):
         subdicts = {}

@@ -16,55 +16,69 @@ def get_exp_condition(exp):
 
 class PrefTrainCondition:
     def __init__(self, env):
-        env.CS_counter = 1
+        self.peak_intensity=2.0
+        env.CS_counter = 0
         env.UCS_counter = 0
-        print()
-        print(f'Training trial {env.CS_counter} with CS started at {env.sim_clock.minute}:{env.sim_clock.second}')
-        for f in env.get_food():
-            if f.unique_id == 'CS':
-                env.CS = f
-            elif f.unique_id == 'UCS':
-                env.UCS = f
-        env.CS.set_odor_dist(intensity=2.0)
-        env.UCS.set_odor_dist(intensity=0.0)
-        # self.env=env
+        env.CS_sources = [f for f in env.get_food() if f.odor_id=='CS']
+        env.UCS_sources = [f for f in env.get_food() if f.odor_id=='UCS']
 
-    def check(self, env):
+
+    def toggle_odors(self, env, CS_intensity=2.0, UCS_intensity=0.0):
+        for f in env.CS_sources :
+            f.set_odor_dist(intensity=CS_intensity)
+        for f in env.UCS_sources :
+            f.set_odor_dist(intensity=UCS_intensity)
+
+    def start_trial(self,env, on_food=True):
         m, s = env.sim_clock.minute, env.sim_clock.second
-        if env.sim_clock.timer_opened:
-            env.UCS_counter += 1
-            if env.UCS_counter <= 3:
-                print()
-                print(f'Starvation trial {env.UCS_counter} with UCS started at {m}:{s}')
-                env.CS.set_odor_dist(intensity=0.0)
-                env.UCS.set_odor_dist(intensity=2.0)
-                env.move_larvae_to_center()
-            else:
-                PI = compute_preference_index(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
-                print()
-                print(f'Test trial on food ended at {m}:{s} with PI={PI}')
-                print()
-                print(f'Test trial without food started at {m}:{s}')
-                env.move_larvae_to_center()
-        if env.sim_clock.timer_closed:
+        c=self.peak_intensity
+        if on_food :
             env.CS_counter += 1
             if env.CS_counter <= 3:
                 print()
                 print(f'Training trial {env.CS_counter} with CS started at {m}:{s}')
-                env.CS.set_odor_dist(intensity=2.0)
-                env.UCS.set_odor_dist(intensity=0.0)
+                self.toggle_odors(env, c,0.0)
                 env.move_larvae_to_center()
-            else:
+            elif env.CS_counter == 4:
                 print()
                 print(f'Test trial on food started at {m}:{s}')
-                env.CS.set_odor_dist(intensity=2.0)
-                env.UCS.set_odor_dist(intensity=2.0)
+                self.toggle_odors(env, c,c)
                 env.move_larvae_to_center()
-        if env.sim_clock.minute >= 40:
-            PI = compute_preference_index(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
-            print()
-            print(f'Test trial without food ended at {m}:{s} with PI={PI}')
-            env.end_condition_met = True
+            elif env.CS_counter == 5:
+                PI = compute_preference_index(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
+                print()
+                print(f'Test trial off food ended at {m}:{s} with PI={PI}')
+                env.end_condition_met = True
+
+        else:
+            env.UCS_counter += 1
+            if env.UCS_counter <= 3:
+                print()
+                print(f'Starvation trial {env.UCS_counter} with UCS started at {m}:{s}')
+                self.toggle_odors(env, 0.0, c)
+                env.move_larvae_to_center()
+            elif env.UCS_counter == 4:
+                PI = compute_preference_index(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
+                print()
+                print(f'Test trial on food ended at {m}:{s} with PI={PI}')
+                print()
+                print(f'Test trial off food started at {m}:{s}')
+                self.toggle_odors(env, c, c)
+                env.move_larvae_to_center()
+
+
+
+
+    def check(self, env):
+        m, s = env.sim_clock.minute, env.sim_clock.second
+
+        if env.CS_counter == 0 or env.sim_clock.timer_closed:
+            self.start_trial(env, on_food=True)
+
+        if env.sim_clock.timer_opened or (m >= 39 and s>=50):
+            self.start_trial(env, on_food=False)
+
+
 
 class CatchMeCondition:
     def __init__(self, env):

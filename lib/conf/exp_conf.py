@@ -1,3 +1,5 @@
+import lib.conf.dtype_dicts
+import lib.conf.init_dtypes
 from lib.conf.larva_conf import *
 from lib.conf.env_conf import *
 from lib.conf import dtype_dicts as dtypes
@@ -17,7 +19,7 @@ def exp(env_params, en=False, sim={}, c=[], **kwargs):
         **kwargs
     }
     if en:
-        conf = dtypes.get_dict('exp_conf', enrichment=dtypes.base_enrich(), **kw)
+        conf = dtypes.get_dict('exp_conf', enrichment=lib.conf.dtype_dicts.base_enrich(), **kw)
     else:
         conf = dtypes.get_dict('exp_conf', **kw)
     return conf
@@ -28,13 +30,13 @@ exp_dict = {
     'dish': exp('dish', en=True),
     'dispersion': exp('dispersion', en=True),
     'chemotaxis_approach': exp('chemotaxis_approach', c=['olfactor'],
-                               enrichment=dtypes.base_enrich(source=(0.04, 0.0),
-                                                             types=['spatial', 'angular', 'source'])),
+                               enrichment=lib.conf.dtype_dicts.base_enrich(source=(0.04, 0.0),
+                                                                           types=['spatial', 'angular', 'source'])),
     'chemotaxis_local': exp('chemotaxis_local', sim={'duration': 1.0}, c=['olfactor'],
-                            enrichment=dtypes.base_enrich(source=(0.0, 0.0), types=['spatial', 'angular', 'source'])),
+                            enrichment=lib.conf.dtype_dicts.base_enrich(source=(0.0, 0.0), types=['spatial', 'angular', 'source'])),
     'chemotaxis_diffusion': exp('chemotaxis_diffusion', sim={'duration': 10.0}, c=['olfactor'],
-                                enrichment=dtypes.base_enrich(source=(0.0, 0.0),
-                                                              types=['spatial', 'angular', 'source'])),
+                                enrichment=lib.conf.dtype_dicts.base_enrich(source=(0.0, 0.0),
+                                                                            types=['spatial', 'angular', 'source'])),
     'odor_pref_test': exp('odor_pref_test', sim={'duration': 5.0}, c=['olfactor']),
     'odor_pref_test_on_food': exp('odor_pref_test_on_food', sim={'duration': 5.0}, c=['olfactor', 'feeder']),
     'odor_pref_train': exp('odor_pref_train', sim={'duration': 41.0}, c=['olfactor', 'memory'],life_params='odor_preference'),
@@ -52,7 +54,7 @@ exp_dict = {
     'capture_the_flag': exp('capture_the_flag', sim={'duration': 20.0}),
     'catch_me': exp('catch_me', sim={'duration': 20.0}),
     'chemotaxis_RL': exp('chemotaxis_RL', c=['olfactor', 'memory'],
-                         enrichment=dtypes.base_enrich(source=(0.04, 0.0), types=['spatial', 'angular', 'source'])),
+                         enrichment=lib.conf.dtype_dicts.base_enrich(source=(0.04, 0.0), types=['spatial', 'angular', 'source'])),
     'food_at_bottom': exp('food_at_bottom', sim={'duration': 20.0, 'timestep': 0.09, 'sample': 'Fed'}, en=True),
     '4corners': exp('4corners', c=['memory'])
 }

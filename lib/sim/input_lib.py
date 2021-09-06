@@ -77,11 +77,11 @@ def evaluate_input(model, screen):
 
 def eval_keypress(k, screen, model):
     if k == '▲ trail duration':
-        model.toggle('trajectory_dt', plus=True)
+        model.toggle('trajectory_dt', plus=True, disp='trail duration')
     elif k == '▼ trail duration':
-        model.toggle('trajectory_dt', minus=True)
+        model.toggle('trajectory_dt', minus=True, disp='trail duration')
     elif k == 'visible trail':
-        model.toggle('trajectories')
+        model.toggle('trails')
     elif k == 'pause':
         model.toggle('sim_paused')
     elif k == 'move left':

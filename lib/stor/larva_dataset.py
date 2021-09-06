@@ -201,11 +201,12 @@ class LarvaDataset:
             if 'unique_id' in df.columns:
                 df.rename(columns={'unique_id': 'AgentID'}, inplace=True)
                 Nagents = len(df['AgentID'].unique().tolist())
-                Nrows = int(len(df.index) / Nagents)
-                df['Step'] = np.array([[i] * Nagents for i in range(Nrows)]).flatten()
-                df.set_index(['Step', 'AgentID'], inplace=True)
-                df.sort_index(level=['Step', 'AgentID'], inplace=True)
-            df.to_csv(path, index=True, header=True)
+                if Nagents>0 :
+                    Nrows = int(len(df.index) / Nagents)
+                    df['Step'] = np.array([[i] * Nagents for i in range(Nrows)]).flatten()
+                    df.set_index(['Step', 'AgentID'], inplace=True)
+                    df.sort_index(level=['Step', 'AgentID'], inplace=True)
+                df.to_csv(path, index=True, header=True)
 
     def save_config(self):
         try:

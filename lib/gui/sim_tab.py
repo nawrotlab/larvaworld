@@ -31,8 +31,8 @@ class SimTab(GuiTab):
         g1 = GraphList(self.name)
 
         l = [[
-            gui_col([sl3, sl1,c1, c2, sl2], 0.2),
-            gui_col([g1.canvas], 0.6),
+            gui_col([sl3, sl1,c1, c2, sl2], 0.25),
+            gui_col([g1.canvas], 0.55),
             gui_col([g1], 0.2)
         ]]
 

@@ -1,10 +1,12 @@
-from typing import List, Tuple, Union
+import copy
 
 import numpy as np
+from typing import List, Tuple, Union
+
 from siunits import BaseUnit, Composite, DerivedUnit
 
 from lib.aux import functions as fun
-from lib.gui import gui_lib
+from lib.aux.functions import get_pygame_key
 from lib.stor import paths
 
 # Compound densities (g/cm**3)
@@ -51,6 +53,15 @@ null_bout_dist = {
     # 'c': None
 }
 
+def processing_types(types=[], dtypes=False) :
+    l=['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI']
+    if dtypes :
+        return {t:bool for t in l}
+    else :
+        d={}
+        for t in l :
+            d[t] = True if t in types else False
+        return d
 
 def init_dicts():
     d = {
@@ -282,8 +293,7 @@ def init_dicts():
             'filter_f': 2.0
         },
         'processing': {
-            'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': True, 'tortuosity': True,
-                      'PI': False},
+            'types': processing_types(['angular', 'spatial','dispersion', 'tortuosity']),
             'dsp_starts': None, 'dsp_stops': None,
             'tor_durs': None},
         'annotation': {'bouts': {'stride': True, 'pause': True, 'turn': True}, 'track_point': None,
@@ -311,45 +321,42 @@ def init_dicts():
     }
     d['visualization'] = init_null_vis()
     d['enrichment'] = {k: d[k] for k in
-                                    ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
+                       ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
 
     d['exp_conf'] = {'env_params': None,
-                                  'sim_params': d['sim_params'],
-                                  # 'sim_params': get_dict('sim_params'),
-                                  'life_params': 'default',
-                                  # 'life_params': get_dict('life'),
-                                  'collections': ['pose'],
-                                  'enrichment': d['enrichment']
-                                  # 'enrichment': get_dict('enrichment')
-                                  }
+                     'sim_params': d['sim_params'],
+                     'life_params': 'default',
+                     'collections': ['pose'],
+                     'enrichment': d['enrichment']
+                     }
 
     d['batch_conf'] = {'exp': None,
-                                    'space_search': d['space_search'],
-                                    # 'space_search': get_dict('space_search'),
-                                    'batch_methods': d['batch_methods'],
-                                    # 'batch_methods': get_dict('batch_methods'),
-                                    'optimization': None,
-                                    'exp_kws': {'save_data_flag': False},
-                                    'post_kws': {},
-                                    }
+                       'space_search': d['space_search'],
+                       'batch_methods': d['batch_methods'],
+                       'optimization': None,
+                       'exp_kws': {'save_data_flag': False},
+                       'post_kws': {},
+                       }
 
     d['food_params'] = {'source_groups': {},
-                                     'food_grid': None,
-                                     'source_units': {}}
+                        'food_grid': None,
+                        'source_units': {}}
 
     return d
 
+typing_to_str_dict={
+'Tuple[float, float]' :Tuple[float, float],
+'Tuple[int, int]' :Tuple[int, int],
+'List[float]' :List[float],
+'List[int]' :List[int],
+'List[str]' :List[str],
+'List[tuple]' :List[tuple],
+'Union[Tuple[float, float], Tuple[int, int]]' :Union[Tuple[float, float], Tuple[int, int]],
+'Union[BaseUnit, Composite, DerivedUnit]' :Union[BaseUnit, Composite, DerivedUnit],
+}
 
-def init_dtypes() :
+def init_dtypes():
     from lib.conf.conf import loadConfDict
-    tuple_floats='Tuple[float, float]'
-    tuple_ints='Tuple[int, int]'
-    list_floats='List[float]'
-    list_strings='List[str]'
-    list_ints='List[int]'
-    list_tuples='List[tuple]'
-    tuple_generic='Union[tuple_floats, tuple_ints]'
-    si_generic = 'Union[BaseUnit, Composite, DerivedUnit]'
 
     bout_dist_dtypes = {
         'fit': bool,
@@ -372,7 +379,7 @@ def init_dtypes() :
                 'radius': fun.value_list(end=10.0, steps=10000, decimals=4),
                 'amount': fun.value_list(end=100.0, steps=1000, decimals=2),
                 'quality': fun.value_list(),
-                'shape_vertices': list_tuples,
+                'shape_vertices': List[tuple],
                 'can_be_carried': bool,
                 'type': list(substrate_dict.keys())
             },
@@ -392,8 +399,10 @@ def init_dtypes() :
             },
         'life':
             {
-                'epochs': list_tuples,
-                'epoch_qs': list_floats,
+                'epochs': {'type': List[tuple], 'value_list': fun.value_list()},
+                # 'epochs': List[tuple],
+                'epoch_qs': {'type': list, 'value_list': fun.value_list()},
+                # 'epoch_qs': List[float],
                 'hours_as_larva': fun.value_list(end=250, steps=250, integer=True),
                 'substrate_quality': fun.value_list(),
                 'substrate_type': list(substrate_dict.keys()),
@@ -443,14 +452,14 @@ def init_dtypes() :
             'final': ['null', 'scatterplots', 'deb', 'odor_preference'],
         },
         'space_search': {'pars': str,
-                         'ranges': tuple_generic,
+                         'ranges': Union[Tuple[float, float], Tuple[int, int]],
                          'Ngrid': int},
 
         'visualization': init_vis_dtypes(),
         'body': {'initial_length': fun.value_list(0.0, 0.01, steps=100, decimals=4),
                  'length_std': fun.value_list(0.0, 0.01, steps=100, decimals=4),
                  'Nsegs': fun.value_list(1, 12, steps=12, integer=True),
-                 'seg_ratio': list_floats  # [5 / 11, 6 / 11]
+                 'seg_ratio': List[float]  # [5 / 11, 6 / 11]
                  },
         'physics': {
             'torque_coef': fun.value_list(),
@@ -512,8 +521,8 @@ def init_dtypes() :
                    'V_bite': fun.value_list(start=0.0001, end=0.01, steps=1000, decimals=4)},
         'memory': {'DeltadCon': float,
                    'state_spacePerOdorSide': int,
-                   'gain_space': list_floats,
-                   'decay_coef_space': list_floats,
+                   'gain_space': List[float],
+                   'decay_coef_space': List[float],
                    'update_dt': float,
                    'alpha': float,
                    'gamma': float,
@@ -542,18 +551,18 @@ def init_dtypes() :
             'N': fun.value_list(1, 100, steps=100, integer=True)
         },
         'logn_dist': {
-            'range': tuple_floats,
+            'range': Tuple[float, float],
             'name': 'lognormal',
             'mu': float,
             'sigma': float
         },
         'par': {
             'p': str,
-            'u': si_generic,
+            'u': Union[BaseUnit, Composite, DerivedUnit],
             'k': str,
             's': str,
             'o': type,
-            'lim': tuple_floats,
+            'lim': Tuple[float, float],
             'd': str,
             'l': str,
             'exists': bool,
@@ -565,8 +574,8 @@ def init_dtypes() :
             'k0': str,
             'k_num': str,
             'k_den': str,
-            'dst2source': tuple_floats,
-            'or2source': tuple_floats,
+            'dst2source': Tuple[float, float],
+            'or2source': Tuple[float, float],
             'dispersion': bool,
             'wrap_mode': [None, 'zero', 'positive']
         },
@@ -577,14 +586,13 @@ def init_dtypes() :
             'filter_f': fun.value_list(end=10.0, steps=10000, decimals=3)
         },
         'processing': {
-            'types': {'angular': bool, 'spatial': bool, 'source': bool, 'dispersion': bool, 'tortuosity': bool,
-                      'PI': bool},
+            'types': processing_types(),
             'dsp_starts': {'type': list, 'value_list': fun.value_list(start=0, end=180, steps=181, integer=True)},
             'dsp_stops': {'type': list, 'value_list': fun.value_list(start=0, end=180, steps=181, integer=True)},
             'tor_durs': {'type': list, 'value_list': fun.value_list(start=0, end=180, steps=181, integer=True)}},
         'annotation': {'bouts': {'stride': bool, 'pause': bool, 'turn': bool},
                        'track_point': str,
-                       'track_pars': list_strings, 'chunk_pars': list_strings,
+                       'track_pars': List[str], 'chunk_pars': List[str],
                        'vel_par': str, 'ang_vel_par': str, 'bend_vel_par': str,
                        'min_ang': fun.value_list(end=180.0, steps=1900, decimals=1),
                        'non_chunks': bool},
@@ -607,36 +615,42 @@ def init_dtypes() :
 
     }
     d['enrichment'] = {k: d[k] for k in
-                                ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
+                       ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
     d['exp_conf'] = {'env_params': str,
-                              'sim_params': dict,
-                              'life_params': str,
-                              'collections': list_strings,
-                              'enrichment': dict,
-                              }
+                     'sim_params': dict,
+                     'life_params': str,
+                     'collections': List[str],
+                     'enrichment': dict,
+                     }
     d['batch_conf'] = {'exp': str,
-                                'space_search': dict,
-                                'batch_methods': dict,
-                                'optimization': dict,
-                                'exp_kws': dict,
-                                'post_kws': dict,
-                                }
+                       'space_search': dict,
+                       'batch_methods': dict,
+                       'optimization': dict,
+                       'exp_kws': dict,
+                       'post_kws': dict,
+                       }
     d['food_params'] = {'source_groups': dict,
-                                 'food_grid': dict,
-                                 'source_units': dict}
+                        'food_grid': dict,
+                        'source_units': dict}
 
     return d
 
-def store_dtypes() :
-    d1=init_dicts()
-    d2=init_dtypes()
+
+def store_dtypes():
+    d1 = init_dicts()
+    d2 = init_dtypes()
+
+    d22=fun.replace_in_dict(d2, replace_d=typing_to_str_dict, inverse=True)
     fun.save_dict(d1, paths.NullDicts_path, use_pickle=True)
-    fun.save_dict(d2, paths.Dtypes_path, use_pickle=True)
+    fun.save_dict(d22, paths.Dtypes_path, use_pickle=True)
+
 
 def load_dtypes():
-    d1 = fun.load_dict(paths.Dtypes_path, use_pickle=True)
-    d2 = fun.load_dict(paths.NullDicts_path, use_pickle=True)
-    return d1,d2
+    d1 = fun.load_dict(paths.NullDicts_path, use_pickle=True)
+    d2 = fun.load_dict(paths.Dtypes_path, use_pickle=True)
+    d22 = fun.replace_in_dict(d2, replace_d=typing_to_str_dict, inverse=False)
+    return d1, d22
+
 
 def init_vis_dtypes():
     vis_render_dtypes = {
@@ -652,7 +666,7 @@ def init_vis_dtypes():
         'draw_centroid': bool,
         'draw_midline': bool,
         'draw_contour': bool,
-        'trajectories': bool,
+        'trails': bool,
         'trajectory_dt': fun.value_list(0.0, 100.0, steps=1000, decimals=1),
     }
 
@@ -692,7 +706,7 @@ def init_null_vis():
         'draw_centroid': False,
         'draw_midline': True,
         'draw_contour': True,
-        'trajectories': False,
+        'trails': False,
         'trajectory_dt': 0.0,
     }
 
@@ -717,38 +731,9 @@ def init_null_vis():
     }
     return null_vis
 
-def get_pygame_key(key):
-    pygame_keys = {
-        'BackSpace': 'BACKSPACE',
-        'tab': 'TAB',
-        'del': 'DELETE',
-        'clear': 'CLEAR',
-        'Return': 'RETURN',
-        'Escape': 'ESCAPE',
-        'space': 'SPACE',
-        'exclam': 'EXCLAIM',
-        'quotedbl': 'QUOTEDBL',
-        '+': 'PLUS',
-        'comma': 'COMMA',
-        '-': 'MINUS',
-        'period': 'PERIOD',
-        'slash': 'SLASH',
-        'numbersign': 'HASH',
-        'Down:': 'DOWN',
-        'Up:': 'UP',
-        'Right:': 'RIGHT',
-        'Left:': 'LEFT',
-        'dollar': 'DOLLAR',
-        'ampersand': 'AMPERSAND',
-        'parenleft': 'LEFTPAREN',
-        'parenright': 'RIGHTPAREN',
-        'asterisk': 'ASTERISK',
-    }
-    return f'K_{pygame_keys[key]}' if key in list(pygame_keys.keys()) else f'K_{key}'
 
 def init_shortcuts():
-    shortcut_vis_draw = {
-        # 'trajectory_dt' : ['MINUS', 'PLUS'],
+    draw = {
         'visible trail': 'p',
         '▲ trail duration': '+',
         '▼ trail duration': '-',
@@ -759,33 +744,33 @@ def init_shortcuts():
         'draw_contour': 'c'
     }
 
-    shortcut_inspect = {
+    inspect = {
         'focus_mode': 'f',
         'odor gains': 'w',
         'dynamic graph': 'q',
     }
 
-    shortcut_vis_color = {
+    color = {
         'black_background': 'g',
         'random_colors': 'r',
         'color_behavior': 'b',
     }
 
-    shortcut_vis_aux = {
+    aux = {
         'visible_clock': 't',
         'visible_scale': 'n',
-        'visible_state': 'sigma',
+        'visible_state': 's',
         'visible_ids': 'tab',
     }
 
-    shortcut_moving = {
+    screen = {
         'move up': 'UP',
         'move down': 'DOWN',
         'move left': 'LEFT',
         'move right': 'RIGHT',
     }
 
-    shortcut_sim = {
+    sim = {
         'larva_collisions': 'y',
         'pause': 'space',
         'snapshot': 'i',
@@ -793,52 +778,53 @@ def init_shortcuts():
 
     }
 
-    shortcut_odorscape = {
+    odorscape = {
 
         'plot odorscapes': 'o',
         **{f'odorscape {i}': i for i in range(10)},
         # 'move_right': 'RIGHT',
     }
 
-    default_shortcuts = {
-        'draw': shortcut_vis_draw,
-        'color': shortcut_vis_color,
-        'aux': shortcut_vis_aux,
-        'screen': shortcut_moving,
-        'simulation': shortcut_sim,
-        'inspect': shortcut_inspect,
-        'odorscape': shortcut_odorscape,
+    d = {
+        'draw': draw,
+        'color': color,
+        'aux': aux,
+        'screen': screen,
+        'simulation': sim,
+        'inspect': inspect,
+        'odorscape': odorscape,
     }
 
-    return default_shortcuts
-
-def init_controls():
-
-    k=init_shortcuts()
-    d = {'keys': {}, 'pygame_keys': {}, 'mouse': {
-            'select item': 'left click',
-            'add item': 'left click',
-            'select item mode': 'right click',
-            'inspect item': 'right click',
-            'screen zoom in': 'scroll up',
-            'screen zoom out': 'scroll down',
-        }}
-    for title, dic in k.items():
-        d['keys'].update(dic)
-    d['pygame_keys'] = {k: get_pygame_key(v) for k, v in d['keys'].items()}
     return d
 
 
-def store_controls() :
-    d=init_controls()
+def init_controls():
+    k = init_shortcuts()
+    d = {'keys': {}, 'pygame_keys': {}, 'mouse': {
+        'select item': 'left click',
+        'add item': 'left click',
+        'select item mode': 'right click',
+        'inspect item': 'right click',
+        'screen zoom in': 'scroll up',
+        'screen zoom out': 'scroll down',
+    }}
+    ds = {}
+    for title, dic in k.items():
+        ds.update(dic)
+        d['keys'][title] = dic
+    d['pygame_keys'] = {k: get_pygame_key(v) for k, v in ds.items()}
+    return d
+
+
+def store_controls():
+    d = init_controls()
     from lib.conf.conf import saveConfDict
     saveConfDict(d, 'Settings')
-
-# def load_controls():
-#     d = fun.load_dict(paths.Controls_path, use_pickle=True)
-#     # d2 = fun.load_dict(paths.NullDicts_path, use_pickle=True)
-#     return d['keyboard'], d['mouse']
 
 if __name__ == '__main__':
     store_dtypes()
     store_controls()
+    # d1,d2=load_dtypes()
+    # print(d2['life'])
+
+

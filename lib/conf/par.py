@@ -208,6 +208,7 @@ class Parameter:
                  d=None, l=None, exists=True, func=None, const=None, par_dict=None, fraction=False,
                  operator=None, k0=None, k_num=None, k_den=None, dst2source=None, or2source=None, dispersion=False,
                  wrap_mode=None):
+        # print(p,k)
         self.wrap_mode = wrap_mode
         self.fraction = fraction
         self.func = func
@@ -388,6 +389,7 @@ class Parameter:
 
 def add_par(dic, **kwargs):
     p = dtypes.get_dict('par', **kwargs)
+    # print(p)
     k = p['k']
     if k in dic.keys():
         raise ValueError(f'Key {k} already exists')

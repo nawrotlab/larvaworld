@@ -1378,3 +1378,44 @@ def boolean_indexing(v, fillval=np.nan):
     out = np.full(mask.shape,fillval)
     out[mask] = np.concatenate(v)
     return out
+
+
+def get_pygame_key(key):
+    pygame_keys = {
+        'BackSpace': 'BACKSPACE',
+        'tab': 'TAB',
+        'del': 'DELETE',
+        'clear': 'CLEAR',
+        'Return': 'RETURN',
+        'Escape': 'ESCAPE',
+        'space': 'SPACE',
+        'exclam': 'EXCLAIM',
+        'quotedbl': 'QUOTEDBL',
+        '+': 'PLUS',
+        'comma': 'COMMA',
+        '-': 'MINUS',
+        'period': 'PERIOD',
+        'slash': 'SLASH',
+        'numbersign': 'HASH',
+        'Down:': 'DOWN',
+        'Up:': 'UP',
+        'Right:': 'RIGHT',
+        'Left:': 'LEFT',
+        'dollar': 'DOLLAR',
+        'ampersand': 'AMPERSAND',
+        'parenleft': 'LEFTPAREN',
+        'parenright': 'RIGHTPAREN',
+        'asterisk': 'ASTERISK',
+    }
+    return f'K_{pygame_keys[key]}' if key in list(pygame_keys.keys()) else f'K_{key}'
+
+def replace_in_dict(d0, replace_d, inverse=False) :
+    d = copy.deepcopy(d0)
+    if inverse :
+        replace_d={v0:k0 for k0,v0 in replace_d.items()}
+    for k,v in d.items():  # for each elem in the list datastreams
+        if type(v)==dict :
+            d[k]=replace_in_dict(v, replace_d, inverse=False)
+        elif v in list(replace_d.keys()):
+            d[k] = replace_d[v]
+    return d
