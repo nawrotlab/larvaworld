@@ -181,7 +181,7 @@ class ClickableImage(Button):
         webbrowser.open(self.link)
 
 
-def color_pick_layout(name, color=None, show_text=True):
+def color_pick_layout(name, color=None, show_text=False):
     t=[sg.T('', **t_kws(5)), sg.T('color', **t_kws(5))] if show_text else []
     return [*t,
             sg.Combo(list(color_map.keys()), default_value=color, k=f'{name}_color', enable_events=True, readonly=False,

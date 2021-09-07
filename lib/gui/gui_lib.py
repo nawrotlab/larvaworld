@@ -810,7 +810,14 @@ class CollapsibleTable(Collapsible):
             row_cols = []
             for i in range(len(self.data)):
                 c0 = self.data[i][self.color_idx]
-                c2, c1 = fun.invert_color(c0, return_self=True) if c0 != '' else ['lightblue', 'black']
+                if c0 == '' :
+                     c2, c1 = ['lightblue', 'black']
+                else :
+                    try:
+                        c2, c1 = fun.invert_color(c0, return_self=True)
+                    except:
+                        c2, c1 = ['lightblue', 'black']
+                        # c2, c1 = [c0, 'black']
                 row_cols.append((i, c1, c2))
         else:
             row_cols = None
@@ -839,8 +846,8 @@ class CollapsibleDict(Collapsible):
             dict_name = name
         self.dict_name = dict_name
         if default and dict is None and type_dict is None:
-            dict = dtypes.get_dict(name)
-            type_dict = dtypes.get_dict_dtypes(name)
+            dict = dtypes.get_dict(self.dict_name)
+            type_dict = dtypes.get_dict_dtypes(self.dict_name)
         self.sectiondict = SectionDict(name=dict_name, dict=dict, type_dict=type_dict,
                                        toggled_subsections=toggled_subsections)
         content = self.sectiondict.init_section(text_kws=text_kws, value_kws=value_kws)
