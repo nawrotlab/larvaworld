@@ -367,6 +367,8 @@ class EnvTab(GuiTab):
                                                                     width=int(float(v[f'{B}_width']) * self.s))
 
         elif e.endswith('+UP'):  # The drawing has ended because mouse up
+            if dic['arena'] is None :
+                return d, g
             P1, P2 = self.get_drag_ps(scaled=True)
             current, prior_rect, sample_pars = dic['current'], dic['prior_rect'], dic['sample_pars']
             if v[B] and current != {}:
