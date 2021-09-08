@@ -381,7 +381,7 @@ if __name__ == '__main__':
         dat.SchleyerGroup,
         dat.JovanicGroup,
         dat.TestGroup,
-        dat.SimGroup,
+        # dat.SimGroup,
     ]
     for g in group_list:
         saveConf(g, 'Group')

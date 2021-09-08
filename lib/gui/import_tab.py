@@ -24,6 +24,7 @@ class ImportTab(GuiTab):
         # w[self.proc_key].InitialFolder = datagroup.proc_dir
         self.proc_folder = datagroup.proc_dir
         c['enrichment'].update(w, datagroup.get_conf()['enrich'])
+        # c['arena'].update(w, datagroup.get_conf()['arena_pars'])
 
     def build(self):
         kR, kP = self.raw_key, self.proc_key
@@ -34,6 +35,8 @@ class ImportTab(GuiTab):
                        buttons=['replay', 'enrich', 'select_all', 'remove', 'changeID', 'browse'])
         lG = SelectionList(tab=self, disp='Data group', actions=['load'])
 
+        # lGA = CollapsibleDict('arena', False, default=True)
+
 
 
         g1 = ButtonGraphList(name=self.name, fig_dict={})
@@ -41,11 +44,12 @@ class ImportTab(GuiTab):
 
         l = [[
             gui_col([lG, lR, lP], 0.25),
+            # gui_col([lG,lGA, lR, lP], 0.25),
             gui_col([s1], 0.25)
         ]]
 
         c = {}
-        for s in [s1]:
+        for s in [s1, lGA]:
             c.update(**s.get_subdicts())
 
         g = {g1.name: g1}
