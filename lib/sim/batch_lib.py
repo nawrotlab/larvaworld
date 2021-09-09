@@ -54,7 +54,7 @@ def prepare_batch(batch, batch_id, batch_type):
     space = grid_search_dict(**batch['space_search'])
     if batch['optimization'] is not None:
         batch['optimization']['ranges'] = np.array(batch['space_search']['ranges'])
-    print(list(batch.keys()))
+    # print(list(batch.keys()))
     # exp_conf['sim_params']['path'] = batch_type
     prepared_batch = {
         'batch_type': batch_type,
@@ -130,8 +130,8 @@ def load_default_configuration(traj, exp):
         dic = fun.flatten_dict(exp[k0], parent_key=k0, sep='.')
         for k, v in dic.items():
             # print(k,v,type(v))
-            if type(v)==list and type(v[0])==list:
-                v=np.array(v)
+            if type(v) == list and type(v[0]) == list:
+                v = np.array(v)
             traj.f_apar(k, v)
     return traj
 
@@ -313,7 +313,8 @@ def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}):
     sim = fun.reconstruct_dict(traj.f_get('sim_params'))
     sim['sim_ID'] = f'run_{traj.v_idx}'
     sim['path'] = traj.config.dataset_path
-    with fun.suppress_stdout(False):
+    # print(sim['sim_ID'])
+    with fun.suppress_stdout(True):
         d = run_sim(
             env_params=fun.reconstruct_dict(traj.f_get('env_params')),
             sim_params=sim,
@@ -476,8 +477,8 @@ def grid_search_dict(pars, ranges, Ngrid, values=None):
         values_dict = {}
         for par, (low, high), s in zip(pars, ranges, Ngrid):
             range = np.linspace(low, high, s)
-            if type(low)==int and type(high)==int :
-                range=range.astype(int)
+            if type(low) == int and type(high) == int:
+                range = range.astype(int)
             values_dict.update({par: range.tolist()})
     space = cartesian_product(values_dict)
     return space
@@ -548,25 +549,27 @@ def load_traj(batch_type, batch_id):
 def existing_trajs(batch_type):
     import h5py
     filename = f'{paths.BatchRunFolder}/{batch_type}/{batch_type}.hdf5'
-    try :
+    try:
         f = h5py.File(filename, 'r')
         return list(f.keys())
-    except :
+    except:
         return []
+
 
 def existing_trajs_dict(batch_type):
     import h5py
     filename = f'{paths.BatchRunFolder}/{batch_type}/{batch_type}.hdf5'
-    try :
+    try:
         f = h5py.File(filename, 'r')
         return f
-    except :
+    except:
         return {}
+
 
 def delete_traj(batch_type, traj_name):
     import h5py
     filename = f'{paths.BatchRunFolder}/{batch_type}/{batch_type}.hdf5'
-    with h5py.File(filename, 'r+') as f :
+    with h5py.File(filename, 'r+') as f:
         del f[traj_name]
 
 
@@ -594,3 +597,14 @@ def batch_methods(run='default', post='default', final='null'):
     return {'procfunc': procfunc_dict[run],
             'postfunc': postfunc_dict[post],
             'finfunc': finfunc_dict[final], }
+
+
+if __name__ == "__main__":
+    batch_type = 'odor-preference'
+    from lib.conf.conf import loadConf, expandConf
+
+    conf = expandConf(batch_type, 'Batch')
+
+    batch_kwargs = prepare_batch(conf, 'odor_preference_xxx', batch_type)
+
+    df, fig_dict = batch_run(**batch_kwargs)
