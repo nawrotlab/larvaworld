@@ -49,7 +49,7 @@ class ImportTab(GuiTab):
         ]]
 
         c = {}
-        for s in [s1, lGA]:
+        for s in [s1]:
             c.update(**s.get_subdicts())
 
         g = {g1.name: g1}
