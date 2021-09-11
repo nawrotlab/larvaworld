@@ -81,7 +81,9 @@ class BatchTab(GuiTab):
     def run(self, v, w, c, d, g, conf, id):
         batch_id=v[self.batch_id_key]
         batch_kwargs = prepare_batch(conf, batch_id, id)
-
+        # print(batch_kwargs['space'])
+        # print(batch_kwargs['optimization'])
+        # raise
         # thread = threading.Thread(target=batch_run, kwargs=batch_kwargs, daemon=True)
         # thread.start()
 

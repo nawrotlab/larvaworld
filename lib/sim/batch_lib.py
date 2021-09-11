@@ -379,7 +379,7 @@ def _batch_run(
         procfunc=None,
         postfunc=None,
         finfunc=None,
-        multiproc=True,
+        multiproc=False,
         resumable=True,
         exp=None,
         params=None,
@@ -605,6 +605,5 @@ if __name__ == "__main__":
 
     conf = expandConf(batch_type, 'Batch')
 
-    batch_kwargs = prepare_batch(conf, 'odor_preference_xxx', batch_type)
-
+    batch_kwargs = prepare_batch(conf, 'odor_preference_49', batch_type)
     df, fig_dict = batch_run(**batch_kwargs)
