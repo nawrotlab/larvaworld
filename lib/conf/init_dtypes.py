@@ -51,25 +51,28 @@ null_bout_dist = {
     # 'c': None
 }
 
-def processing_types(types=[], dtypes=False) :
-    l=['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI']
-    if dtypes :
-        return {t:bool for t in l}
-    else :
-        d={}
-        for t in l :
+
+def processing_types(types=[], dtypes=False):
+    l = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI']
+    if dtypes:
+        return {t: bool for t in l}
+    else:
+        d = {}
+        for t in l:
             d[t] = True if t in types else False
         return d
 
-def annotation_bouts(types=[],  dtypes=False):
+
+def annotation_bouts(types=[], dtypes=False):
     l = ['stride', 'pause', 'turn']
-    if dtypes :
-        return {t:bool for t in l}
-    else :
-        d={}
-        for t in l :
+    if dtypes:
+        return {t: bool for t in l}
+    else:
+        d = {}
+        for t in l:
             d[t] = True if t in types else False
         return d
+
 
 def init_dicts():
     d = {
@@ -283,7 +286,7 @@ def init_dicts():
             'filter_f': 2.0
         },
         'processing': {
-            'types': processing_types(['angular', 'spatial','dispersion', 'tortuosity']),
+            'types': processing_types(['angular', 'spatial', 'dispersion', 'tortuosity']),
             'dsp_starts': None, 'dsp_stops': None,
             'tor_durs': None},
         'annotation': {'bouts': annotation_bouts(types=['stride', 'pause', 'turn']), 'track_point': None,
@@ -309,19 +312,19 @@ def init_dicts():
         'substrate': substrate_dict['standard']
 
     }
-    d['replay'] =  {
-                'arena_pars': d['arena'],
-                'env_params': None,
-                'track_point': -1,
-                'dynamic_color': None,
-                'agent_ids': None,
-                'time_range': None,
-                'transposition': None,
-                'fix_point': None,
-                'secondary_fix_point': None,
-                'use_background': False,
-                'draw_Nsegs': None
-            }
+    d['replay'] = {
+        'arena_pars': d['arena'],
+        'env_params': None,
+        'track_point': -1,
+        'dynamic_color': None,
+        'agent_ids': None,
+        'time_range': None,
+        'transposition': None,
+        'fix_point': None,
+        'secondary_fix_point': None,
+        'use_background': False,
+        'draw_Nsegs': None
+    }
     d['visualization'] = init_null_vis()
     d['enrichment'] = {k: d[k] for k in
                        ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
@@ -345,18 +348,43 @@ def init_dicts():
                         'food_grid': None,
                         'source_units': {}}
 
+    d['tracker'] = {
+        'resolution': {'fr': 10.0,
+                       'Npoints': 1,
+                       'Ncontour': 0
+                       },
+        'filesystem': {
+            'read_sequence': None,
+            'read_metadata': False,
+            'detect': {
+                'folder': {'pref': None, 'suf': None},
+                'file': {'pref': None, 'suf': None, 'sep': None}
+            }
+        },
+        'arena': d['arena']
+    }
+    d['parameterization'] = {'bend': 'from_angles',
+                             'front_vector': (1, 2),
+                             'rear_vector': (-2, -1),
+                             'front_body_ratio': 0.5,
+                             'point_idx': 1,
+                             'use_component_vel': False,
+                             'scaled_vel_threshold': 0.2}
+
     return d
 
-typing_to_str_dict={
-'Tuple[float, float]' :Tuple[float, float],
-'Tuple[int, int]' :Tuple[int, int],
-'List[float]' :List[float],
-'List[int]' :List[int],
-'List[str]' :List[str],
-'List[tuple]' :List[tuple],
-'Union[Tuple[float, float], Tuple[int, int]]' :Union[Tuple[float, float], Tuple[int, int]],
-'Union[BaseUnit, Composite, DerivedUnit]' :Union[BaseUnit, Composite, DerivedUnit],
+
+typing_to_str_dict = {
+    'Tuple[float, float]': Tuple[float, float],
+    'Tuple[int, int]': Tuple[int, int],
+    'List[float]': List[float],
+    'List[int]': List[int],
+    'List[str]': List[str],
+    'List[tuple]': List[tuple],
+    'Union[Tuple[float, float], Tuple[int, int]]': Union[Tuple[float, float], Tuple[int, int]],
+    'Union[BaseUnit, Composite, DerivedUnit]': Union[BaseUnit, Composite, DerivedUnit],
 }
+
 
 def init_agent_dtypes(class_name, dtypes_dict):
     dtypes = {
@@ -374,6 +402,7 @@ def init_agent_dtypes(class_name, dtypes_dict):
                   'width': fun.value_list(end=0.1, steps=1000, decimals=4),
                   'points': List[tuple]}
     return dtypes
+
 
 def init_dtypes():
     from lib.conf.conf import loadConfDict
@@ -620,18 +649,18 @@ def init_dtypes():
 
     }
     d['replay'] = {
-            'arena_pars': d['arena'],
-            'env_params': [''] + list(loadConfDict('Env').keys()),
-            'track_point': fun.value_list(1, 12, steps=12, integer=True),
-            'dynamic_color': [None, 'lin_color', 'ang_color'],
-            'agent_ids': list,
-            'time_range': (0.0, 3600.0),
-            'transposition': [None, 'origin', 'arena', 'center'],
-            'fix_point': fun.value_list(1, 12, steps=12, integer=True),
-            'secondary_fix_point': ['', 1, -1],
-            'use_background': bool,
-            'draw_Nsegs': fun.value_list(1, 12, steps=12, integer=True),
-        }
+        'arena_pars': d['arena'],
+        'env_params': [''] + list(loadConfDict('Env').keys()),
+        'track_point': fun.value_list(1, 12, steps=12, integer=True),
+        'dynamic_color': [None, 'lin_color', 'ang_color'],
+        'agent_ids': list,
+        'time_range': (0.0, 3600.0),
+        'transposition': [None, 'origin', 'arena', 'center'],
+        'fix_point': fun.value_list(1, 12, steps=12, integer=True),
+        'secondary_fix_point': ['', 1, -1],
+        'use_background': bool,
+        'draw_Nsegs': fun.value_list(1, 12, steps=12, integer=True),
+    }
     d['enrichment'] = {k: d[k] for k in
                        ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
     d['exp_conf'] = {'env_params': str,
@@ -650,9 +679,33 @@ def init_dtypes():
     d['food_params'] = {'source_groups': dict,
                         'food_grid': dict,
                         'source_units': dict}
+    d['tracker'] = {
+        'resolution': {'fr': fun.value_list(0.0, 20.0, steps=2100, decimals=2),
+                       'Npoints': fun.value_list(1, 15, steps=15, integer=True),
+                       'Ncontour': fun.value_list(0, 30, steps=31, integer=True),
+                       },
+        'filesystem': {
+            'read_sequence': List[str],
+            'read_metadata': bool,
+            'detect': {
+                'folder': {'pref': str, 'suf': str},
+                'file': {'pref': str, 'suf': str, 'sep': str}
+            }
+        },
+        'arena': d['arena']
+    }
+    d['parameterization'] = {'bend': ['from_angles', 'from_vectors'],
+                             'front_vector': {'type': tuple, 'value_list': fun.value_list(start=-12, end=12, steps=25, integer=True)},
+                             # 'front_vector': (-12, 12),
+                             'rear_vector': {'type': tuple, 'value_list': fun.value_list(start=-12, end=12, steps=25, integer=True)},
+                             # 'rear_vector': (-12, 12),
+                             'front_body_ratio': fun.value_list(),
+                             'point_idx': fun.value_list(-1, 12, steps=14, integer=True),
+                             'use_component_vel': bool,
+                             'scaled_vel_threshold': fun.value_list()}
 
-    for c in ['Larva', 'LarvaSim', 'LarvaReplay', 'Border', 'Source', 'Food'] :
-        d[c]=init_agent_dtypes(c, d)
+    for c in ['Larva', 'LarvaSim', 'LarvaReplay', 'Border', 'Source', 'Food']:
+        d[c] = init_agent_dtypes(c, d)
 
     return d
 
@@ -661,7 +714,7 @@ def store_dtypes():
     d1 = init_dicts()
     d2 = init_dtypes()
 
-    d22=fun.replace_in_dict(d2, replace_d=typing_to_str_dict, inverse=True)
+    d22 = fun.replace_in_dict(d2, replace_d=typing_to_str_dict, inverse=True)
     fun.save_dict(d1, paths.NullDicts_path, use_pickle=True)
     fun.save_dict(d22, paths.Dtypes_path, use_pickle=True)
 

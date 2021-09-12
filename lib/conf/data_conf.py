@@ -29,11 +29,7 @@ SinglepointParConf = {'bend': None,
 
 SchleyerParConf = {'bend': 'from_angles',
                    'front_vector': (1, 2),
-                   # 'front_vector_start': 1,
-                   # 'front_vector_stop': 2,
                    'rear_vector': (7, 11),
-                   # 'rear_vector_start': 7,
-                   # 'rear_vector_stop': 11,
                    'front_body_ratio': 0.5,
                    'point_idx': np.nan,
                    'use_component_vel': False,
@@ -104,12 +100,13 @@ Sims_raw_cols = ['Step'] + nam.xy('centroid')
 
 SchleyerEnrichConf = {
     'preprocessing': {
-    'rescale_by': 1.0,
-    'drop_collisions': True,
-    'interpolate_nans': False,
-    'filter_f': 2.0
-},
-    'processing': {'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': True, 'tortuosity': True, 'PI':True},
+        'rescale_by': 1.0,
+        'drop_collisions': True,
+        'interpolate_nans': False,
+        'filter_f': 2.0
+    },
+    'processing': {'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': True, 'tortuosity': True,
+                             'PI': True},
                    'dsp_starts': [0, 20], 'dsp_stops': [40, 80, 120],
                    'tor_durs': [2, 5, 10, 20]},
     'annotation': {'bouts': {'stride': True, 'pause': True, 'turn': True}, 'track_point': None,
@@ -121,22 +118,25 @@ SchleyerEnrichConf = {
                    'source': None,
                    },
     'to_drop': dtypes.get_dict('to_drop', groups={**{n: True for n in
-                                                   ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
-                                                    'Rturn', 'turn', 'unused']}, **{'midline': False, 'contour': False}}),
+                                                     ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
+                                                      'Rturn', 'turn', 'unused']},
+                                                  **{'midline': False, 'contour': False}}),
 }
 
 SchleyerConf = {'id': 'SchleyerConf',
-                'data': SchleyerDataConf,
+                'resolution': SchleyerDataConf,
                 'par': 'SchleyerParConf',
                 'build': {'read_sequence': Schleyer_raw_cols,
                           'read_metadata': True},
-                'enrich': SchleyerEnrichConf}
+                'enrich': SchleyerEnrichConf,
+                'arena': env.dish(0.15)
+                }
 
 SchleyerGroup = {
     'id': 'SchleyerGroup',
     'conf': 'SchleyerConf',
     'path': 'SchleyerGroup',
-    'arena_pars': env.dish(0.15),
+    # 'arena': env.dish(0.15),
     'subgroups': ['no_odor', 'Ntrials', 'odor_conc', 'FRU_conc', 'new-reward-punishment'],
     'detect': {
         'folder': {'pref': 'box', 'suf': None},
@@ -155,7 +155,8 @@ JovanicEnrichConf = {
         'interpolate_nans': False,
         'filter_f': 2.0
     },
-    'processing': {'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': True, 'tortuosity': True, 'PI':False},
+    'processing': {'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': True, 'tortuosity': True,
+                             'PI': False},
                    'dsp_starts': [0, 20], 'dsp_stops': [40, 80, 120],
                    'tor_durs': [2, 5, 10, 20]},
     'annotation': {'bouts': {'stride': True, 'pause': True, 'turn': True}, 'track_point': None,
@@ -170,11 +171,12 @@ JovanicEnrichConf = {
 }
 
 JovanicConf = {'id': 'JovanicConf',
-               'data': JovanicDataConf,
+               'resolution': JovanicDataConf,
                'par': 'JovanicParConf',
                'build': {'read_sequence': None,
                          'read_metadata': False},
-               'enrich': JovanicEnrichConf}
+               'enrich': JovanicEnrichConf,
+               'arena': env.arena(0.193, 0.193)}
 
 JovanicGroup = {
     'id': 'JovanicGroup',
@@ -183,7 +185,7 @@ JovanicGroup = {
     'genotypes': ['AttP2@UAS_TNT', 'AttP240@UAS_TNT'],
     'subgroups': ['AttP2@UAS_TNT', 'AttP240@UAS_TNT', 'FoodPatches'],
     'conditions': ['Fed', 'ProteinDeprived', 'Starved'],
-    'arena_pars': env.arena(0.193, 0.193),
+
     'detect': {
         'folder': {'pref': None, 'suf': None},
         'file': {'pref': None, 'suf': 'larvaid.txt', 'sep': '_'}
@@ -204,4 +206,64 @@ SimGroup = {
     'path': 'SimGroup',
     'subgroups': ['single_runs', 'batch_runs'],
     'arena_pars': None
+}
+
+SchleyerFormat = {
+    'id': 'Schleyer lab',
+    'path': 'SchleyerGroup',
+    'tracker': {
+        'resolution': {'fr': 16.0,
+                       'Npoints': 12,
+                       'Ncontour': 22
+                       },
+
+        'filesystem': {
+            'read_sequence': Schleyer_raw_cols,
+            'read_metadata': True,
+            'detect': {
+                'folder': {'pref': 'box', 'suf': None},
+                'file': {'pref': None, 'suf': None, 'sep': None}
+            }
+        },
+        'arena': env.dish(0.15)
+    },
+    'parameterization': {'bend': 'from_angles',
+                         'front_vector': (1, 2),
+                         'rear_vector': (7, 11),
+                         'front_body_ratio': 0.5,
+                         'point_idx': None,
+                         'use_component_vel': False,
+                         'scaled_vel_threshold': 0.2},
+    'enrichment': SchleyerEnrichConf,
+
+}
+
+JovanicFormat = {
+    'id': 'Jovanic lab',
+    'path': 'JovanicGroup',
+    'tracker': {
+        'resolution': {'fr': 11.27,
+                   'Npoints': 11,
+                   'Ncontour': 0},
+
+        'filesystem': {
+            'read_sequence': None,
+            'read_metadata': False,
+            'detect': {
+        'folder': {'pref': None, 'suf': None},
+        'file': {'pref': None, 'suf': 'larvaid.txt', 'sep': '_'}
+        }
+
+    },
+'arena': env.arena(0.193, 0.193)
+    },
+    'parameterization':  {'bend': 'from_angles',
+                  'front_vector': (2, 3),
+                  'rear_vector': (7, 8),
+                  'front_body_ratio': 0.5,
+                  'point_idx': 8,
+                  'use_component_vel': False,
+                  'scaled_vel_threshold': 0.2},
+    'enrichment': JovanicEnrichConf
+
 }

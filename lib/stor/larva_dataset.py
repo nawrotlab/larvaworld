@@ -536,7 +536,7 @@ class LarvaDataset:
                 os.makedirs(v, exist_ok=True)
 
     def define_linear_metrics(self, config):
-        if not np.isnan(config['point_idx']):
+        if type(config['point_idx'])==int:
             self.point = self.points[config['point_idx'] - 1]
         else:
             self.point = 'centroid'

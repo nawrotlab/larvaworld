@@ -378,9 +378,11 @@ if __name__ == '__main__':
         saveConf(v, 'Par', k)
 
     group_list = [
-        dat.SchleyerGroup,
-        dat.JovanicGroup,
-        dat.TestGroup,
+        # dat.SchleyerGroup,
+        dat.SchleyerFormat,
+        dat.JovanicFormat,
+        # dat.JovanicGroup,
+        # dat.TestGroup,
         # dat.SimGroup,
     ]
     for g in group_list:

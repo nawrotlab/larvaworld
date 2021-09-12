@@ -17,8 +17,8 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
                    ids=None, arena_pars=None, names=['raw'], group_ids=None, **kwargs):
     warnings.filterwarnings('ignore')
     g = LarvaDataGroup(datagroup_id)
-    build_conf = g.get_conf()['build']
-    conf_id = g.get_conf()['id']
+    build_conf = g.tracker['filesystem']
+    # build_conf = g.get_conf()['build']
     if raw_folders == 'all':
         raw_folders = [np.sort(os.listdir(g.raw_dir))]
         names = ['merged']
@@ -38,16 +38,16 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
     elif len(group_ids)!=len(ds) :
         raise ValueError (f'Number of datasets ({len(ds)}) does not match number of provided group-IDs ({len(group_ids)})')
     for d, raw, group_id in zip(ds, raw_folders, group_ids):
-        if conf_id == 'JovanicConf':
+        if datagroup_id in ['JovanicGroup', 'JovanicFormat', 'Jovanic lab']:
             step, end = build_Jovanic(d, build_conf, source_dir=f'{g.raw_dir}/{raw}',**kwargs)
-        elif conf_id == 'SchleyerConf':
+        elif datagroup_id in ['SchleyerGroup', 'SchleyerFormat', 'Schleyer lab']:
             if type(raw) == str:
                 temp = [f'{g.raw_dir}/{raw}']
             elif type(raw) == list:
                 temp = [f'{g.raw_dir}/{r}' for r in raw]
             step, end = build_Schleyer(d, build_conf, raw_folders=temp,**kwargs)
         else:
-            raise ValueError(f'Configuration {conf_id} is not supported for building new datasets')
+            raise ValueError(f'Configuration for {datagroup_id} is not supported for building new datasets')
         if step is not None :
             step.sort_index(level=['Step', 'AgentID'], inplace=True)
             end.sort_index(inplace=True)
@@ -72,8 +72,10 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
 def get_datasets(datagroup_id, names, last_common='processed', folders=None, suffixes=None,
                  mode='load', load_data=True, ids=None, arena_pars=None, **kwargs):
     datagroup = LarvaDataGroup(datagroup_id)
-    data_conf = datagroup.get_conf()['data']
-    par_conf = datagroup.get_par_conf()
+    data_conf = datagroup.tracker['resolution']
+    # data_conf = datagroup.get_conf()['data']
+    par_conf = datagroup.parameterization
+    # par_conf = datagroup.get_par_conf()
     last_common = f'{datagroup.get_path()}/{last_common}'
     if folders is None:
         new_ids = ['']
@@ -100,7 +102,8 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
             except:
                 pass
             if arena_pars is None:
-                arena_pars = datagroup.arena_pars
+                arena_pars = datagroup.tracker['arena']
+                # arena_pars = datagroup.arena_pars
             d = LarvaDataset(dir=dir, id=id, par_conf=par_conf, arena_pars=arena_pars,
                              load_data=False, **data_conf)
         ds.append(d)
@@ -117,7 +120,9 @@ def enrich_datasets(datagroup_id, datasets=None, names=None, keep_raw=False, enr
         for raw, new in zip(raw_ds, datasets):
             copy_tree(new.dir, raw.dir)
     if enrich_conf is None:
-        enrich_conf = LarvaDataGroup(datagroup_id).get_conf()['enrich']
+        # print('ffffff')
+        enrich_conf = LarvaDataGroup(datagroup_id).enrichment
+        # enrich_conf = LarvaDataGroup(datagroup_id).get_conf()['enrich']
     print()
     print(f'------ Enriching {len(datasets)} datasets ------')
     print()
@@ -177,11 +182,12 @@ def compute_PIs(datagroup_id=None, save_to=None,ds=None,save_as='PIs.csv', **kwa
 
 
 def detect_dataset(datagroup_id=None, folder_path=None,raw=True, **kwargs):
+    # print(datagroup_id, folder_path, raw)
     dic={}
     if folder_path in ['', None]:
         return dic
     if raw :
-        conf = loadConf(datagroup_id, 'Group')
+        conf = loadConf(datagroup_id, 'Group')['tracker']['filesystem']
         if 'detect' in conf.keys():
             d = conf['detect']
             dF, df = d['folder'], d['file']

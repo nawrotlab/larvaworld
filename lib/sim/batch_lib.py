@@ -380,7 +380,7 @@ def _batch_run(
         postfunc=None,
         finfunc=None,
         multiproc=False,
-        resumable=True,
+        resumable=False,
         exp=None,
         params=None,
         optimization=None,
