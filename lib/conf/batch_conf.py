@@ -23,6 +23,8 @@ def batch(exp, en=None, o=None, o_kws={}, **kwargs):
     if en is None:
         # enrichment=dtypes.base_enrich()
         enrichment = dtypes.get_dict('enrichment')
+    elif en=='PI' :
+        enrichment=dtypes.base_enrich(types=['PI'], bouts=[])
     elif 'source' in en.keys():
         enrichment = dtypes.get_dict('enrichment', source=en['source'], types=['source'])
     else:
@@ -50,7 +52,7 @@ batch_dict = {
         'pars': ['odor_dict.CS.mean', 'odor_dict.UCS.mean'],
         'ranges': [(-100.0, 100.0), (-100.0, 100.0)],
         'Ngrid': [3, 3]
-    }, batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference')),
+    }, batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference'), en='PI'),
     'food_patchy': batch('patchy_food', space_search={
         'pars': ['EEB', 'feeder_initial_freq'],
         'ranges': [(0.0, 1.0), (1.5, 2.5)],
