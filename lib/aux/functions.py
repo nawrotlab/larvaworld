@@ -142,6 +142,7 @@ def angle(a, b, c, in_deg=True):
 
 def angle_to_x_axis(point_1, point_2, in_deg=True):
     # Point 1 is start, point 2 is end of vector
+    print(point_1,point_2)
     if np.isnan(point_1).any() or np.isnan(point_2).any():
         return np.nan
     dx, dy = np.array(point_2) - np.array(point_1)
@@ -759,11 +760,8 @@ def match_larva_ids2(s, dl=None, max_t=5 * 60, max_s=20, pars=None, e=None, min_
     return ss
 
 
-def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, max_counter=10, Nidx=100, **kwargs):
-    # wl, wt, ws = 100, 1, 0.5
-    # max_error = 600
-    # max_counter = 10
-    # Nidx=100
+def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, max_counter=10, Nidx=20, **kwargs):
+
 
     def prior(maxs, last_xy, ls, idx):
         pp = maxs.nsmallest(idx).iloc[[-1]]
@@ -773,14 +771,13 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, max_co
         return [id0, t0, xy0, l0]
 
     def next(id1, mins, first_xy, ls):
-        t1, xy1, l1 = mins[id1], first_xy[id1], ls[id1]
-        return [id1, t1, xy1, l1]
+        return [id1, mins[id1], first_xy[id1], ls[id1]]
 
     def eval_c(c0, c1):
         tt = c1[1] - c0[1]
-        ll = np.abs(c1[3] - c0[3])
         if tt <= 0:
             return max_error * 2
+        ll = np.abs(c1[3] - c0[3])
         dd = np.sqrt(np.sum((c1[2] - c0[2]) ** 2))
         return wt * tt + wl * ll + ws * dd
 
@@ -799,8 +796,9 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, max_co
 
     def step(ls, ss, ids, mins, maxs, first_xy, last_xy, idx):
         res = np.array([match(ids, mins, maxs, first_xy, last_xy, ls, idx + i) for i in range(Nidx)])
-        error = res[:, 1].min()
-        id0, id1 = res[np.argmin(res[:, 1]), 0]
+        errors =res[:, 1]
+        error = errors.min()
+        id0, id1 = res[np.argmin(errors), 0]
 
         if error < max_error:
             ss.rename(index={id0: id1}, inplace=True)
@@ -816,7 +814,6 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, max_co
     ss['Step'] = ss['Step'].values.astype(int)
     ids, mins, maxs, first_xy, last_xy = get_extrema(ss, pars)
     counter = 0
-    error = 0
     idx = 1
     while counter < max_counter:
         ls, ss, ids, mins, maxs, first_xy, last_xy, error = step(ls, ss, ids, mins, maxs, first_xy, last_xy, idx)

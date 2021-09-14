@@ -94,10 +94,11 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
     return step, end
 
 
-def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ticks=True, min_duration_in_sec=0,
-                  **kwargs):
-    temp_step_path = f'{source_dir}_step.csv'
-    temp_length_path = f'{source_dir}_length.csv'
+def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ticks=True, min_duration_in_sec=0.0,
+                  match_ids=True,**kwargs):
+    pref=f'{source_dir}/{dataset.id}'
+    temp_step_path = f'{pref}_step.csv'
+    temp_length_path = f'{pref}_length.csv'
 
     def temp_save(step, length):
         step.to_csv(temp_step_path, index=True, header=True)
@@ -119,17 +120,12 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
         print('Loaded temporary data successfully!')
     except:
 
-        t_file = f'{source_dir}_t.txt'
-        # t_file = os.path.join(source_dir, 't.txt')
-        id_file = f'{source_dir}_larvaid.txt'
-        # id_file = os.path.join(source_dir, 'larvaid.txt')
-        x_file = f'{source_dir}_x_spine.txt'
-        # x_file = os.path.join(source_dir, 'x_spine.txt')
-        y_file = f'{source_dir}_y_spine.txt'
-        # y_file = os.path.join(source_dir, 'y_spine.txt')
-        state_file = f'{source_dir}_global_state_large_state.txt'
-        # state_file = f'{source_dir}_state.txt'
-        # state_file = os.path.join(source_dir, 'state.txt')
+        t_file = f'{pref}_t.txt'
+        id_file = f'{pref}_larvaid.txt'
+        x_file = f'{pref}_x_spine.txt'
+        y_file = f'{pref}_y_spine.txt'
+        state_file = f'{pref}_global_state_large_state.txt'
+
 
         xs = pd.read_csv(x_file, header=None, sep='\t', names=x_pars)
         ys = pd.read_csv(y_file, header=None, sep='\t', names=y_pars)
@@ -189,10 +185,8 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
         temp.reset_index(drop=False, inplace=True)
         temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
         temp_save(temp, e)
-        # return None, None
-
-    temp = match_larva_ids(s=temp, e=e, pars=['head_x', 'head_y'], **kwargs)
-    # temp = match_larva_ids(sigma=temp, pars=['head_x', 'head_y'], e=e,min_Nids=min_Nids, dl=dl, **kwargs)
+    if match_ids :
+        temp = match_larva_ids(s=temp, e=e, pars=['head_x', 'head_y'], **kwargs)
     temp.reset_index(level='Step', drop=False, inplace=True)
     old_ids = temp.index.unique().tolist()
     new_ids = [f'Larva_{100 + i}' for i in range(len(old_ids))]
@@ -202,7 +196,6 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
     max_step = int(temp['Step'].max())
     temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
     temp.sort_index(level=['Step', 'AgentID'], inplace=True)
-    # print(temp[temp.index.duplicated()])
     temp.drop_duplicates(inplace=True)
     if complete_ticks:
         trange = np.arange(max_step).astype(int)

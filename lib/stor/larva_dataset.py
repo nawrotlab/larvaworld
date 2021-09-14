@@ -25,7 +25,7 @@ class LarvaDataset:
         self.save_data_flag = save_data_flag
         self.define_paths(dir)
         if os.path.exists(self.dir_dict['conf']):
-            fun.load_dict(self.dir_dict['conf'], use_pickle=False)
+            self.config = fun.load_dict(self.dir_dict['conf'], use_pickle=False)
         else:
             self.config = {'id': id,
                            'fr': fr,
@@ -38,6 +38,7 @@ class LarvaDataset:
                            'arena_pars': arena_pars,
                            **life_params
                            }
+
 
         self.__dict__.update(self.config)
 
@@ -205,7 +206,6 @@ class LarvaDataset:
                 df.to_csv(path, index=True, header=True)
 
     def save_config(self):
-
         try:
             self.config['Nagents'] = self.Nagents
         except:
@@ -322,8 +322,8 @@ class LarvaDataset:
                                              dynamic_color=dynamic_color)
         contour_xy = nam.xy(self.contour, flat=True)
         # print(contour_xy)
-        if (len(contour_xy) == 0 or not set(contour_xy).issubset(s.columns)) and draw_Nsegs is None:
-            draw_Nsegs = self.Nsegs
+        # if (len(contour_xy) == 0 or not set(contour_xy).issubset(s.columns)) and draw_Nsegs is None:
+        #     draw_Nsegs = self.Nsegs
         if len(ids) == 1:
             n0 = ids[0]
         elif len(ids) == len(self.agent_ids):
@@ -338,12 +338,13 @@ class LarvaDataset:
             env_params = {'arena': arena_pars}
         arena_dims = [k * 1000 for k in env_params['arena']['arena_dims']]
         env_params['arena']['arena_dims'] = arena_dims
+        # print(arena_dims)
 
 
 
         if transposition is not None:
             s = align_trajectories(s, self.Npoints, self.Ncontour, track_point=track_point, arena_dims=arena_dims,
-                                   mode=transposition)
+                                   mode=transposition, config=self.config)
             # s = self.align_trajectories(s=s, mode=transposition, arena_dims=arena_dims, track_point=track_point)
             bg = None
             n1 = 'transposed'
@@ -477,6 +478,7 @@ class LarvaDataset:
         N, Nc = self.Npoints, self.Ncontour
         # print(N,Nc)
         self.points = nam.midline(N, type='point')
+
         self.Nangles = np.clip(N - 2, a_min=0, a_max=None)
         self.angles = [f'angle{i}' for i in range(self.Nangles)]
         self.Nsegs = np.clip(N - 1, a_min=0, a_max=None)
@@ -504,6 +506,10 @@ class LarvaDataset:
         ang = ['front_orientation', 'rear_orientation', 'bend']
         self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang)
         self.xy_pars = nam.xy(self.points + self.contour + ['centroid'], flat=True) + nam.xy('')
+
+        self.config['point'] = self.points[self.config['point_idx'] - 1] if type(
+            self.config['point_idx']) == int else 'centroid'
+        self.point=self.config['point']
 
     def define_paths(self, dir):
         self.dir = dir
@@ -537,10 +543,6 @@ class LarvaDataset:
                 os.makedirs(v, exist_ok=True)
 
     def define_linear_metrics(self, config):
-        if type(config['point_idx'])==int:
-            self.point = self.points[config['point_idx'] - 1]
-        else:
-            self.point = 'centroid'
         self.distance = nam.dst(self.point)
         self.velocity = nam.vel(self.point)
         self.acceleration = nam.acc(self.point)
@@ -697,7 +699,4 @@ class LarvaDataset:
         ser1 = ser1.reset_index(drop=False).values.tolist()
         s = s.loc[s[id]]
 
-# if __name__ == '__main__':
-#     d=conf.loadConf('odor_preference', 'Life')
-#     for k,v in d.items() :
-#         print(k,v,type(v))
+

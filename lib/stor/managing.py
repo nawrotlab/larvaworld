@@ -217,9 +217,10 @@ def detect_dataset(datagroup_id=None, folder_path=None,raw=True, **kwargs):
                     dic[id] = dr
             elif dfs is not None:
                 fs = os.listdir(folder_path)
-                ids, dirs = [f.split(df_)[:-1][0] for f in fs if f.endswith(dfs)], [folder_path]
-                for id, dr in zip(ids, dirs):
-                    dic[id] = dr
+                ids = [f.split(df_)[:-1][0] for f in fs if f.endswith(dfs)]
+                for id in ids:
+                    dic[id] = folder_path
+                print(dic)
         return dic
     else :
         # ids, dds = [], []
@@ -290,82 +291,13 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
 
 # k=build_datasets('TestGroup', names=['raw_merged'], raw_folders=[['dish_0','dish_1','dish_2']],
 #                  folders=None, ids=None)
-
-if __name__ == "__main__":
-    # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw'
-    folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/odor_conc'
-    # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/Ntrials'
-    # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High'
-    # folder_path = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/High/AM+/High_AM_0'
-    # folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/test/high_AM_160sec'
-    dic=detect_dataset(folder_path = folder_path, raw=False)
-    ds = list(dic.values())
-    # d = LarvaDataset(dir=folder_path)
-    # ids=detect_dataset(datagroup_id='SchleyerGroup', folder_path='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/raw/FRUconc/High/box1-2016-05-23_12_41_17')
-    # ids, dirs = detect_dataset(datagroup_id='SchleyerGroup', folder_path=folder_path, full_ID=True)
-    # print(os.listdir(folder_path))
-    # print(list(dic.keys()))
-    # ds0=[]
-    # for ii in ['AM+', 'EM+'] :
-    #     folder_path = f'/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/Low/{ii}'
-    #     dic=detect_dataset(folder_path = folder_path, raw=False)
-    #     ds = list(dic.values())
-    #     ds0.append(ds)
-    # ds0=fun.flatten_list(ds0)
-    #
-    from lib.anal.plotting import boxplot_PI
-    boxplot_PI(datasets=ds, return_fig=True, show=True,
-               # coupled_labels=True
-               # coupled_labels=['Low', 'Medium', 'High']
-               # coupled_group_ids={
-               #     'Low' : ['Low_AM', 'Low_EM'],
-               #     'Medium' : ['Medium_AM', 'Medium_EM'],
-               #     'High' : ['High_AM', 'High_EM'],
-               #                    },
-               # common_ids=['AM', 'EM']
-               )
-
-    # from lib.anal.plotting import plot_endpoint_params
-    # plot_endpoint_params(datasets=ds, mode='basic', show=True)
-    # raise
-    # print()
-    # print(dirs)
-    # dr = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUconc/High/AM+/box1-2016-05-23_12_41_17'
-    # d = LarvaDataset(dir=dr)
-    # par_shorts =['l', 'fsv', 'sv_mu', 'sstr_d_mu',
-    #  'cum_t', 'str_tr', 'pau_tr', 'tor',
-    #  'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
-    #  'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr']
-    # from lib.conf.par import getPar
-    # pars, = getPar(par_shorts, to_return=['d'])
-    # print(pars)
-    # d = ds[0]
-    # pars = [p for p in pars if all([p in d.endpoint_data.columns for d in [d]])]
-    # print(pars)
-    # symbols, exp_symbols, xlabels, xlims, disps = getPar(par_shorts, to_return=['s', 's', 'l', 'lim', 'd'])
-    # print(pars)
-    # d=ds[0]
-    # s,e=d.step_data, d.endpoint_data
-    # print(e.columns)
-    # print(e['scaled_stride_dst_mean'])
-    # print(e['length_mean'].mean())
-    import matplotlib.pyplot as plt
-    # plt.hist(e['length'])
-    # plt.show()
-    # print(s.columns)
-    # f=d.config['filtered_at']
-    # print(f in [np.nan, None, 'None'])
-    # print(np.isnan(f))
-    # k=os.path.exists(d.dir_dict['conf'])
-    # print(k)
-    #
-    # with open(d.dir_dict['conf']) as tfp:
-    #     c = json.load(tfp)
-    # # print(os.listdir(d.data_dir))
-    # print(s['point5_x'].dropna().max())
-    # print(s['point5_x'].dropna().min())
-    # print(s['point5_y'].dropna().max())
-    # print(s['point5_y'].dropna().min())
-    # print(d.config)
-    # d.visualize()
-
+#
+# if __name__ == '__main__':
+#     vis_kwargs=dtypes.get_dict('visualization', mode='video', draw_head=True)
+#     d=LarvaDataset('/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved')
+#     d.visualize(vis_kwargs=vis_kwargs)
+#     # s,e=d.step_data,d.endpoint_data
+#     # print(s['head_x'].min(), s['head_x'].max())
+#     # print(s['head_y'].min(), s['head_y'].max())
+#     # print(d.config)
+#     # print(d.config['point'])

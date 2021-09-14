@@ -142,3 +142,4 @@ def gui_row(element_list, x_frac=1.0, y_frac=0.5, **kwargs):
     l = [e.get_layout(as_col=False) for e in element_list]
     r = sg.Col(*l, **col_kws, size=col_size(x_frac=x_frac, y_frac=y_frac), **kwargs)
     return r
+

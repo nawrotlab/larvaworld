@@ -424,7 +424,15 @@ def compute_bearingNdst2source(s, e, source=(0, 0),**kwargs):
     print('Bearing and distance to source computed')
 
 
-def align_trajectories(s, Npoints, Ncontour, track_point, arena_dims=None, mode='origin'):
+def align_trajectories(s, Npoints=None, Ncontour=None, track_point=None, arena_dims=None, mode='origin', config=None, pos_in_mm=True):
+    if Npoints is None :
+        Npoints=config['Npoints']
+    if Ncontour is None :
+        Ncontour=config['Ncontour']
+    if track_point is None :
+        track_point=config['point']
+    if arena_dims is None :
+        arena_dims=config['arena_pars']['arena_dims']
     ids = s.index.unique(level='AgentID').values
     xy_pars = nam.xy(track_point)
     if not set(xy_pars).issubset(s.columns):
@@ -442,13 +450,18 @@ def align_trajectories(s, Npoints, Ncontour, track_point, arena_dims=None, mode=
         print('Aligning trajectories to common origin')
         xy = [s[xy_pars].xs(id, level='AgentID').dropna().values[0] for id in ids]
     elif mode == 'arena':
+        print('Centralizing trajectories in arena center')
+        x0, y0 = arena_dims
+        if pos_in_mm :
+            x0*=1000
+            y0*=1000
+        X,Y=x0 / 2, y0 / 2
 
-        if arena_dims is not None:
-            print('Centralizing trajectories in arena center')
-            x0, y0 = arena_dims
-        else:
-            raise ValueError('Arena dimensions must be provided ')
-        xy = [[x0 / 2, y0 / 2] for agent_id in ids]
+        for x, y in all_xy_pars:
+            s[x]-=X
+            s[y]-=Y
+        return s
+        # xy = [[x0 / 2, y0 / 2] for agent_id in ids]
     elif mode == 'center':
         print('Centralizing trajectories in trajectory center using min-max positions')
         xy_max = [s[xy_pars].xs(id, level='AgentID').max().values for id in ids]

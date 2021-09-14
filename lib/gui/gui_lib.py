@@ -480,7 +480,10 @@ def import_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
                         fdir = fun.remove_prefix(dir, f'{raw_folder}/')
                         if dirs_as_ids:
                             temp = fun.remove_suffix(fdir, f'{id}')
-                            names = [f'{temp}{new_id}']
+                            if datagroup_id in ['JovanicGroup', 'JovanicFormat', 'Jovanic lab'] :
+                                names = [f'{temp}/{new_id}']
+                            elif datagroup_id in ['SchleyerGroup', 'SchleyerFormat', 'Schleyer lab']:
+                                names = [f'{temp}{new_id}']
                         else:
                             names = [fdir]
                         dd = build_datasets(ids=[new_id], names=names, raw_folders=[fdir], **kws)[0]
@@ -635,7 +638,8 @@ class DataList(GuiElement):
             d1 = dl1.dict
             k1 = dl1.list_key
             raw_dic = {id: dir for id, dir in d0.items() if id in v[k]}
-            proc_dir = import_window(datagroup_id=datagroup_id, raw_folder=self.tab.raw_folder, raw_dic=raw_dic)
+            proc_dir = import_window(datagroup_id=datagroup_id, raw_folder=w[f'BROWSE {self.tab.raw_key}'].InitialFolder, raw_dic=raw_dic)
+            # proc_dir = import_window(datagroup_id=datagroup_id, raw_folder=self.tab.raw_folder, raw_dic=raw_dic)
             d1.update(proc_dir)
             dl1.update_window(w)
         elif e == f'ENRICH {n}':

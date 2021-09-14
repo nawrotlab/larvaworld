@@ -919,7 +919,6 @@ class LarvaWorldReplay(LarvaWorld):
                  id='Unnamed_Replay', draw_Nsegs=None, experiment='replay', **kwargs):
 
         super().__init__(id=id, experiment=experiment, **kwargs)
-
         self.dataset = dataset
         self.pos_pars = pos_xy_pars
         self.draw_Nsegs = draw_Nsegs

@@ -29,7 +29,7 @@ class ImportTab(GuiTab):
         dl1 = DataList(name=self.raw_key, tab=self, dict=d[kR], buttons=['import', 'select_all', 'remove', 'changeID', 'browse'],raw=True)
         dl2 = DataList(name=self.proc_key, tab=self, dict=d[kP],
                        buttons=['replay', 'enrich', 'select_all', 'remove', 'changeID', 'browse'])
-        c1,c2,c3=[CollapsibleDict(n, True, default=True, toggled_subsections=None) for n in self.fields]
+        c1,c2,c3=[CollapsibleDict(n, False, default=True, toggled_subsections=None) for n in self.fields]
         g1 = ButtonGraphList(name=self.name, fig_dict={})
 
         l = [[
@@ -53,5 +53,6 @@ if __name__ == "__main__":
     from lib.gui.gui import LarvaworldGui
 
     # larvaworld_gui = LarvaworldGui(tabs=['import'])
-    larvaworld_gui = LarvaworldGui(tabs=['import', 'analysis'])
+    larvaworld_gui = LarvaworldGui(tabs=['import', 'analysis', 'settings'])
+
     larvaworld_gui.run()

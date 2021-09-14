@@ -7,7 +7,7 @@ import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.process.angular import angular_processing
 from lib.anal.process.spatial import spatial_processing, compute_bearingNdst2source, compute_dispersion, \
-    compute_tortuosity, compute_preference_index
+    compute_tortuosity, compute_preference_index, align_trajectories
 from lib.conf.par import getPar
 
 
@@ -156,7 +156,7 @@ def exclude_rows(s,e, dt,  flag, accepted=None, rejected=None):
 
         print(f'Rows excluded according to {flag}.')
 
-def preprocess(s,e,dt,Npoints, rescale_by=None,drop_collisions=False,interpolate_nans=False,filter_f=None,
+def preprocess(s,e,dt,Npoints, rescale_by=None,drop_collisions=False,interpolate_nans=False,filter_f=None,transposition=None,
                config=None,  recompute=False,show_output=True,**kwargs) :
     with fun.suppress_stdout(show_output):
         if rescale_by is not None :
@@ -167,6 +167,8 @@ def preprocess(s,e,dt,Npoints, rescale_by=None,drop_collisions=False,interpolate
             interpolate_nans(s, Npoints)
         if filter_f is not None :
             filter(s, dt, Npoints, config, recompute=recompute, freq=filter_f)
+        if transposition is not None :
+            align_trajectories(s, config=config,mode=transposition)
         return s,e
 
 def generate_traj_colors(s, sp_vel=None, ang_vel=None):
