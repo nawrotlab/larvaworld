@@ -8,16 +8,13 @@ import lib.conf.dtype_dicts as dtypes
 
 
 def create_par_distro_dataset(s, pars, dir):
-    # print(pars)
-    pars_to_store = [p for p in pars if p in s.columns]
-    # print(pars_to_store)
-    # raise
-    filenames = [f'{p}.csv' for p in pars_to_store]
-    for p, filename in zip(pars_to_store, filenames):
-        p_data = s[p].dropna().reset_index(level=0, drop=True)
-        p_data.sort_index(inplace=True)
-        p_data.to_csv(f'{dir}/{filename}', index=True, header=True)
-        print(f'Dataset saved as {filename}')
+    ps = [p for p in pars if p in s.columns]
+    fs = [f'{dir}/{p}.csv' for p in ps]
+    for p, f in zip(ps, fs):
+        d = s[p].dropna().reset_index(level=0, drop=True)
+        d.sort_index(inplace=True)
+        d.to_csv(f, index=True, header=True)
+    print(f'{len(ps)} parameters saved in distro-datasets ')
 
 
 def create_dispersion_dataset(s, par='dispersion', scaled=True, dir=None):
@@ -77,21 +74,4 @@ if __name__ == '__main__':
 
     d = get_datasets(datagroup_id='SimGroup', last_common='single_runs', names=['dish/ppp'], mode='load')[0]
     s = d.step_data
-    # e=d.end
-    # dt=d.dt
-    # Npoints=d.Npoints
-    # points=d.points
-    # angles=d.angles
-    # segs=d.segs
-    # point=d.point
-    # config=d.config
-    # par_distro_dir=d.par_distro_dir
-    print(s.columns)
     d.perform_angular_analysis(show_output=True)
-    # angular_processing(s,e,dt,Npoints,config, mode='full', dir=par_distro_dir)
-    # compute_spatial_metrics(s,e,dt, points=['centroid'])
-    # compute_extrema(s,dt, parameters=[nam.scal(nam.vel('centroid'))], interval_in_sec=0.3)
-    # compute_freq(s,e,dt, parameters=[nam.scal(nam.vel('centroid'))], freq_range=[0.7, 1.8])
-    # # s,e = compute_spatial_metrics(s,e,dt, points=['centroid'])
-    print(s.columns)
-    # d.save()

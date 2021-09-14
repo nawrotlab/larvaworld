@@ -17,6 +17,7 @@ import lib.conf.conf
 import lib.conf.init_dtypes
 from lib.conf.conf import loadConfDict, saveConf, deleteConf, loadConf, expandConf
 import lib.aux.functions as fun
+import lib.aux.naming as nam
 from lib.conf.par import runtime_pars, getPar
 from lib.gui.aux import SYMBOL_UP, SYMBOL_DOWN, col_size, w_kws, b6_kws, t_kws, get_disp_name, retrieve_value
 from lib.gui.buttons import graphic_button, button_dict, named_bool_button, BoolButton
@@ -505,43 +506,65 @@ def import_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
     return proc_dir
 
 
-def change_dataset_id(w, v, dic, k0):
-    v0 = v[k0]
+def change_dataset_id(dic, old_ids):
+    # v0 = v[k0]
     k = 'NEW_ID'
-    if len(v0) > 0:
-        for i in range(len(v0)):
-            old_id = v0[i]
-            l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(default_text=old_id, k=k, size=(10, 1))],
-                 [sg.Button('Store'), sg.Ok(), sg.Cancel()]]
-            e1, v1 = sg.Window('Change dataset ID', l).read(close=True)
-            new_id = v1[k]
-            if e1 == 'Ok':
-                dic[new_id] = dic.pop(old_id)
-                w.Element(k0).Update(values=list(dic.keys()))
-            elif e1 == 'Store':
-                d = dic[old_id]
-                d.set_id(new_id)
-                dic[new_id] = dic.pop(old_id)
-                w.Element(k0).Update(values=list(dic.keys()))
+    # if len(v0) > 0:
+    for old_id in old_ids:
+    # for i in range(len(v0)):
+    #     old_id = v0[i]
+        # old_id = v0[i]
+        l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(default_text=old_id, k=k, size=(10, 1))],
+             [sg.Button('Store'), sg.Ok(), sg.Cancel()]]
+        e1, v1 = sg.Window('Change dataset ID', l).read(close=True)
+        new_id = v1[k]
+        if e1 == 'Ok':
+            dic[new_id] = dic.pop(old_id)
+            # w.Element(k0).Update(values=list(dic.keys()))
+        elif e1 == 'Store':
+            d = dic[old_id]
+            d.set_id(new_id)
+            dic[new_id] = dic.pop(old_id)
+            # w.Element(k0).Update(values=list(dic.keys()))
     return dic
 
 
 def named_list(text, key, choices, default_value=None, drop_down=True, list_width=20,
                readonly=True, enable_events=True, single_line=True, next_to_header=None, as_col=True,
-               list_kws={}, list_height=None, header_text_kws=None):
-    if list_height is None:
-        list_height = len(choices)
+               list_kws={}, list_height=None, header_text_kws=None, aux_cols=None):
+    kws={'key':key,'enable_events':enable_events, **list_kws}
+    W,H=list_width,list_height
+    if H is None:
+        H = len(choices)
     if header_text_kws is None:
         header_text_kws = {'size': (len(text), 1)}
     t = [sg.Text(text, **header_text_kws)]
     if next_to_header is not None:
         t += next_to_header
     if drop_down:
-        l = [sg.Combo(choices, key=key, default_value=default_value,
-                      size=(list_width, 1), enable_events=enable_events, readonly=readonly, **list_kws)]
+        l = [sg.Combo(choices, default_value=default_value,size=(list_width, 1), readonly=readonly, **kws)]
     else:
-        l = [sg.Listbox(choices, key=key, default_values=[default_value],
-                        size=(list_width, list_height), enable_events=enable_events, **list_kws)]
+        if aux_cols is None:
+            l = [sg.Listbox(choices, default_values=[default_value],size=(W, H), **kws)]
+
+        else :
+            # temp=[sg.Listbox(choices, key=key, default_values=[default_value],visible=False,
+            #             size=(list_width, list_height), enable_events=enable_events, **list_kws)]
+            N=len(aux_cols)
+            vs=[['']*(N+1)]*H
+            w00=0.45
+            w0=int(W*w00)
+            col_widths = [w0]+[int(W*(1-w00)/N)]*N
+            # print(list_kws)
+            # print()
+            # print(list_width*2, list_height)
+            l=[Table(values=vs, headings=[text]+aux_cols, col_widths=col_widths,
+                     alternating_row_color=None, size=(W, H), auto_size_columns=False,
+                     background_color='white',justification='center',text_color='black',header_font=('Helvetica', 8, 'bold'), **kws)]
+            # l=sg.Col([l])
+            # lc=sg.Col([lc])
+            # l=[sg.Pane([l,lc], orientation='horizontal')]
+
     if single_line:
         return t + l
     else:
@@ -568,8 +591,9 @@ class GuiElement:
 
 class DataList(GuiElement):
     def __init__(self, name, tab, dict={}, buttons=['select_all', 'remove', 'changeID', 'browse'], button_args={},
-                 raw=False, named_list_kws={'list_kws': {'select_mode': LISTBOX_SELECT_MODE_EXTENDED}}, **kwargs):
+                 raw=False, named_list_kws={'list_kws': {'select_mode': LISTBOX_SELECT_MODE_EXTENDED}},aux_cols=None, **kwargs):
         super().__init__(name=name)
+        self.aux_cols = aux_cols
         self.tab = tab
         self.dict = dict
         self.buttons = buttons
@@ -578,7 +602,7 @@ class DataList(GuiElement):
         self.named_list_kws = named_list_kws
         self.list_key = f'{self.name}_IDS'
         self.browse_key = f'BROWSE {self.name}'
-        self.layout = self.build_layout(**kwargs)
+        self.layout = self.build_layout(aux_cols=aux_cols,**kwargs)
         self.tab.datalists[self.name] = self
 
     def build_buttons(self):
@@ -600,10 +624,38 @@ class DataList(GuiElement):
                        **self.named_list_kws,
                        # list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED},
                        **kwargs)
+
         return l
 
     def update_window(self, w):
-        w.Element(self.list_key).Update(values=list(self.dict.keys()))
+        ks=list(self.dict.keys())
+        if self.aux_cols is None :
+            w.Element(self.list_key).Update(values=ks)
+        else :
+            vs = self.get_aux_cols(ks)
+            # vs = [[k]+['']*len(self.aux_cols) for k in ks]
+            w.Element(self.list_key).Update(values=vs)
+
+    def get_aux_cols(self, ks):
+        vs=[ks]
+        ds=[self.dict[k] for k in ks]
+        for c in self.aux_cols :
+            if c=='N' :
+                vv=[d.Nagents for d in ds]
+            elif c=='time' :
+                vv=[d.endpoint_data['cum_dur'].max() for d in ds]
+            elif c=='fill' :
+                vv=[]
+                for d in ds :
+                    df=d.step_data[nam.xy(d.point)[0]].values.flatten()
+                    valid=np.count_nonzero(~np.isnan(df))
+                    vv.append(valid/df.shape[0])
+            else :
+                vv = ['' for d in ds]
+            vs.append(vv)
+        vs=np.array(vs).T.tolist()
+        return vs
+
 
     def eval(self, e, v, w, c, d, g):
         from lib.stor.managing import detect_dataset, enrich_datasets
@@ -611,21 +663,28 @@ class DataList(GuiElement):
         k = self.list_key
         d0 = self.dict
         v0 = v[k]
+        kks = [v0[i] if self.aux_cols is None else list(d0.keys())[v0[i]] for i in range(len(v0))]
+        # print(v0)
         datagroup_id = self.tab.current_ID(v) if self.raw else None
         if e == self.browse_key:
             d0.update(detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw))
             self.update_window(w)
         elif e == f'SELECT_ALL {n}':
-            w.Element(k).Update(set_to_index=np.arange(len(d0)).tolist())
+            ks=np.arange(len(d0)).tolist()
+            if self.aux_cols is None :
+                w.Element(k).Update(set_to_index=ks)
+            else :
+                w.Element(k).Update(select_rows=ks)
         elif e == f'REMOVE {n}':
-            for i in range(len(v0)):
-                d0.pop(v0[i], None)
+            for kk in kks:
+                d0.pop(kk, None)
             self.update_window(w)
         elif e == f'CHANGE_ID {n}':
-            d0 = change_dataset_id(w, v, d0, k0=k)
+            d0 = change_dataset_id(d0, old_ids=kks)
+            self.update_window(w)
         elif e == f'REPLAY {n}':
             if len(v0) > 0:
-                dd = d0[v0[0]]
+                dd = d0[kks[0]]
                 dd.visualize(vis_kwargs=self.tab.gui.get_vis_kwargs(v, mode='video'),
                              **self.tab.gui.get_replay_kwargs(v))
         elif e == f'ADD REF {n}':

@@ -46,10 +46,8 @@ class LarvaDataset:
         self.configure_body()
         self.define_linear_metrics(self.config)
         if load_data:
-            # self.load()
             try:
                 self.load()
-                # print('Data loaded successfully from stored csv files.')
             except:
                 print('Data not found. Load them manually.')
 
@@ -106,11 +104,9 @@ class LarvaDataset:
         fs = [f'{self.aux_dir}/{f}' for f in os.listdir(self.aux_dir)]
         ns = fun.flatten_list([[f'{f}/{n}' for n in os.listdir(f) if n.endswith('.csv')] for f in fs])
         for n in ns:
-            # print(n)
             try:
                 df = pd.read_csv(n, index_col=0)
                 df.loc[~df.index.isin(agents)].to_csv(n, index=True, header=True)
-                # print('ddd')
             except:
                 pass
         if is_last:
@@ -161,7 +157,6 @@ class LarvaDataset:
     def load(self, step=True, end=True, food=False):
         if step:
             self.step_data = pd.read_csv(self.dir_dict['step'], index_col=['Step', 'AgentID'])
-            # print(self.step_data)
             self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
             self.agent_ids = self.step_data.index.unique('AgentID').values
             self.num_ticks = self.step_data.index.unique('Step').size
@@ -238,8 +233,6 @@ class LarvaDataset:
                 raise ValueError('Neither filename nor parameter provided')
         dir = self.dir_dict[type]
         path = f'{dir}/{file}'
-        # print(path)
-        # raise
         u_path=f'{dir}/units.csv'
         index_col = 0 if type != 'table' else ['Step', 'AgentID']
 
@@ -320,10 +313,6 @@ class LarvaDataset:
         pars, pos_xy_pars, track_point = self.get_par_list(track_point)
         s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range=time_range,
                                              dynamic_color=dynamic_color)
-        contour_xy = nam.xy(self.contour, flat=True)
-        # print(contour_xy)
-        # if (len(contour_xy) == 0 or not set(contour_xy).issubset(s.columns)) and draw_Nsegs is None:
-        #     draw_Nsegs = self.Nsegs
         if len(ids) == 1:
             n0 = ids[0]
         elif len(ids) == len(self.agent_ids):
@@ -338,7 +327,6 @@ class LarvaDataset:
             env_params = {'arena': arena_pars}
         arena_dims = [k * 1000 for k in env_params['arena']['arena_dims']]
         env_params['arena']['arena_dims'] = arena_dims
-        # print(arena_dims)
 
 
 
@@ -476,7 +464,6 @@ class LarvaDataset:
 
     def configure_body(self):
         N, Nc = self.Npoints, self.Ncontour
-        # print(N,Nc)
         self.points = nam.midline(N, type='point')
 
         self.Nangles = np.clip(N - 2, a_min=0, a_max=None)
@@ -617,9 +604,6 @@ class LarvaDataset:
             d = D.xs(id, level='AgentIDs').dropna().values
             if len(d[d > vel_threshold]) == 0:
                 immobile_ids.append(id)
-        # e = self.end
-        # dsts = e[nam.cum(nam.dst(self.point))]
-        # immobile_ids = dsts[dsts < min_dst].index.values
         print(f'{len(immobile_ids)} immobile larvae will be dropped')
         if len(immobile_ids) > 0:
             self.drop_agents(agents=immobile_ids, is_last=is_last)
@@ -671,7 +655,6 @@ class LarvaDataset:
             if self.step_data is None:
                 self.load()
             new_ds = []
-            # print(self.agent_ids)
             for f, new_dir in zip(groups, new_dirs):
                 invalid_ids = [id for id in self.agent_ids if not str.startswith(id, f)]
                 copy_tree(self.dir, new_dir)

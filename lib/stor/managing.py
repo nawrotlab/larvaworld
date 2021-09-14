@@ -103,7 +103,6 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
                 pass
             if arena_pars is None:
                 arena_pars = datagroup.tracker['arena']
-                # arena_pars = datagroup.arena_pars
             d = LarvaDataset(dir=dir, id=id, par_conf=par_conf, arena_pars=arena_pars,
                              load_data=False, **data_conf)
         ds.append(d)
@@ -182,7 +181,6 @@ def compute_PIs(datagroup_id=None, save_to=None,ds=None,save_as='PIs.csv', **kwa
 
 
 def detect_dataset(datagroup_id=None, folder_path=None,raw=True, **kwargs):
-    # print(datagroup_id, folder_path, raw)
     dic={}
     if folder_path in ['', None]:
         return dic
@@ -198,7 +196,6 @@ def detect_dataset(datagroup_id=None, folder_path=None,raw=True, **kwargs):
             if dFp is not None:
                 if fn.startswith(dFp):
                     dic[fn] = folder_path
-                    # ids, dirs = [fn], [folder_path]
                 else:
                     ids, dirs = detect_dataset_in_subdirs(datagroup_id, folder_path, fn, **kwargs)
                     for id, dr in zip(ids,dirs) :
@@ -220,14 +217,11 @@ def detect_dataset(datagroup_id=None, folder_path=None,raw=True, **kwargs):
                 ids = [f.split(df_)[:-1][0] for f in fs if f.endswith(dfs)]
                 for id in ids:
                     dic[id] = folder_path
-                print(dic)
         return dic
     else :
-        # ids, dds = [], []
         if os.path.exists(f'{folder_path}/data'):
             dd = LarvaDataset(dir=folder_path)
             dic[dd.id]=dd
-            # ids, dds = [dd.id], [dd]
         else:
             for ddr in [x[0] for x in os.walk(folder_path)]:
                 if os.path.exists(f'{ddr}/data'):
@@ -251,52 +245,13 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
                 dirs.append(dr)
     return ids, dirs
 
-# def merge_datasets(datasets, id, dir) :
-#     d0=LarvaDataset(dir, id=id)
-#     N=sum([d.Nagents for d in datasets])
-#     s0,e0=[], []
-#     for i, d in enumerate(datasets) :
-#         sigma = copy.deepcopy(d.step)
-#         e = copy.deepcopy(d.end)
-#         sigma.index['AgentID']= f'D{i}_' + sigma.index['AgentID'].astype('str')
-#         e.index['AgentID']= f'D{i}_' + e.index['AgentID'].astype('str')
-#         # e = copy.deepcopy(d.end)
-#         s0.append(sigma)
-#         e0.append(e)
-#     s0=
-#
-#     dd.config=datasets[0].config
-# k=get_datasets(datagroup_id='JovanicGroup', last_common='processed/AttP2@UAS_TNT', names = ['enriched_dataset'],
-#                 folders=['Fed', 'ProteinDeprived', 'Starved'], suffixes=None, load_data=True)
-
-# ds = get_datasets(datagroup_id='SimGroup', last_common='single_runs', names=['dish', 'chemorbit'],
-#                   folders=['dish', 'chemorbit'], suffixes=[1, 2, 3, 4], load_data=True)
-
-# raw_ds = get_datasets(datagroup_id='TestGroup', last_common='processed', names=['raw_dish'],
-#                       folders=None, suffixes=[0, 1, 2], mode='initialize')
-
-# ds = get_datasets(datagroup_id='TestGroup', last_common='processed', names=['enriched_dish'],
-#                   folders=None, suffixes=[0,1,2], mode='create', load_data=True)
-#
-# for raw, new in zip(raw_ds, ds) :
-#     copy_tree(raw.dir, new.dir)
-# ds=[d.enrich() for d in ds]
-# cs=['Fed', 'Starved']
-# k=build_datasets('JovanicGroup', names=['raw' for c in cs], raw_folders=[f'raw/AttP240@UAS_TNT/{c}' for c in cs],
-#                  folders=[f'AttP240@UAS_TNT/{c}' for c in cs],
-#                suffixes=None, max_Nagents=None, min_Nids=200)
-
-# k=build_datasets('TestGroup', names=['raw_dish'], raw_folders=[['dish_0'],['dish_1'], ['dish_2']],
-#                  folders=None, suffixes=[0,1,2], ids=None)
-
-# k=build_datasets('TestGroup', names=['raw_merged'], raw_folders=[['dish_0','dish_1','dish_2']],
-#                  folders=None, ids=None)
-#
-# if __name__ == '__main__':
+if __name__ == '__main__':
 #     vis_kwargs=dtypes.get_dict('visualization', mode='video', draw_head=True)
-#     d=LarvaDataset('/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved')
+    d=LarvaDataset('/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Fed')
 #     d.visualize(vis_kwargs=vis_kwargs)
-#     # s,e=d.step_data,d.endpoint_data
+    s,e=d.step_data,d.endpoint_data
+    print(e.columns)
+    print(d.config)
 #     # print(s['head_x'].min(), s['head_x'].max())
 #     # print(s['head_y'].min(), s['head_y'].max())
 #     # print(d.config)

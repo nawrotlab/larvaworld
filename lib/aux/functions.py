@@ -142,7 +142,6 @@ def angle(a, b, c, in_deg=True):
 
 def angle_to_x_axis(point_1, point_2, in_deg=True):
     # Point 1 is start, point 2 is end of vector
-    print(point_1,point_2)
     if np.isnan(point_1).any() or np.isnan(point_2).any():
         return np.nan
     dx, dy = np.array(point_2) - np.array(point_1)
@@ -795,16 +794,14 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, max_co
         return np.array([(c0[0], id1), error])
 
     def step(ls, ss, ids, mins, maxs, first_xy, last_xy, idx):
-        res = np.array([match(ids, mins, maxs, first_xy, last_xy, ls, idx + i) for i in range(Nidx)])
-        errors =res[:, 1]
-        error = errors.min()
-        id0, id1 = res[np.argmin(errors), 0]
-
+        r = np.array([match(ids, mins, maxs, first_xy, last_xy, ls, idx + i) for i in range(Nidx)])
+        (id0, id1), error =r[r[:, 1] == r[:, 1].min()][0]
         if error < max_error:
             ss.rename(index={id0: id1}, inplace=True)
             ls[id1] = ss['spinelength'].loc[id1].dropna().mean()
             ls.drop([id0], inplace=True)
-            ids, mins, maxs, first_xy, last_xy = update_extrema({id0: id1}, ids, mins, maxs, first_xy, last_xy)
+            ids, mins, maxs, first_xy, last_xy = update_extrema(id0,id1, ids, mins, maxs, first_xy, last_xy)
+            # ids, mins, maxs, first_xy, last_xy = update_extrema2({id0: id1}, ids, mins, maxs, first_xy, last_xy)
         return ls, ss, ids, mins, maxs, first_xy, last_xy, error
 
     ls = e['length']
@@ -818,7 +815,7 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, max_co
     while counter < max_counter:
         ls, ss, ids, mins, maxs, first_xy, last_xy, error = step(ls, ss, ids, mins, maxs, first_xy, last_xy, idx)
 
-        print(counter, idx, len(ids), int(error))
+        print(len(ids), int(error))
         if error >= max_error:
             idx += Nidx
             if idx >= len(ids):
@@ -945,8 +942,16 @@ def get_extrema(ss, pars):
         last_xy[id] = ss[pars].xs(id).dropna().values[-1, :]
     return ids, mins, maxs, first_xy, last_xy
 
+def update_extrema(id1, id2, ids, mins, maxs, first_xy, last_xy):
+    mins[id2], first_xy[id2] = mins[id1], first_xy[id1]
+    del mins[id1]
+    del maxs[id1]
+    del first_xy[id1]
+    del last_xy[id1]
+    ids.remove(id1)
+    return ids, mins, maxs, first_xy, last_xy
 
-def update_extrema(pairs, ids, mins, maxs, first_xy, last_xy):
+def update_extrema2(pairs, ids, mins, maxs, first_xy, last_xy):
     for id2 in pairs.values():
         n_ids = [id for id in pairs.keys() if pairs[id] == id2] + [id2]
         n_mins = [mins[id] for id in n_ids]

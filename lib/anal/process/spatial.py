@@ -187,6 +187,7 @@ def compute_length(s, e, Npoints, mode='minimal', recompute=False):
         print('Length is already computed. If you want to recompute it, set recompute_length to True')
         return
     points = nam.midline(Npoints, type='point')
+    Npoints=len(points)
     xy_pars = nam.xy(points, flat=True)
     if not set(xy_pars).issubset(s.columns):
         print(f'XY coordinates not found for the {Npoints} midline points. Body length can not be computed.')
@@ -195,12 +196,13 @@ def compute_length(s, e, Npoints, mode='minimal', recompute=False):
     segs = nam.midline(Nsegs, type='seg')
     t = len(s)
     xy = s[xy_pars].values
+    Nids=xy.shape[0]
     L = np.zeros([1, t]) * np.nan
     S = np.zeros([Nsegs, t]) * np.nan
 
     if mode == 'full':
         print(f'Computing lengths for {Nsegs} segments and total body length')
-        for j in range(xy.shape[0]):
+        for j in range(Nids):
             for i, seg in enumerate(segs):
                 S[i, j] = np.sqrt(np.nansum((xy[j, 2 * i:2 * i + 2] - xy[j, 2 * i + 2:2 * i + 4]) ** 2))
             L[:, j] = np.nansum(S[:, j])
@@ -208,10 +210,15 @@ def compute_length(s, e, Npoints, mode='minimal', recompute=False):
             s[seg] = S[i, :].flatten()
     elif mode == 'minimal':
         print(f'Computing body length')
-        for j in range(xy.shape[0]):
-            k = np.sum(np.diff(np.array(fun.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
-            L[:, j] = np.sum([np.sqrt(kk) for kk in k]) if not np.isnan(np.sum(k)) else np.nan
-    s['length'] = L.flatten()
+        xy2=xy.reshape(xy.shape[0], Npoints, 2)
+        xy3=np.sum(np.diff(xy2, axis=1) ** 2, axis=2)
+        L = np.sum(np.sqrt(xy3), axis=1)
+        # for j in range(Nids):
+        #     k = np.sum(np.diff(xy2[j], axis=0) ** 2, axis=1).T
+        #     # k = np.sum(np.diff(np.array(fun.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
+        #     L[:, j] = np.sum([np.sqrt(kk) for kk in k]) if not np.isnan(np.sum(k)) else np.nan
+    s['length'] = L
+    # s['length'] = L.flatten()
     e['length'] = s['length'].groupby('AgentID').quantile(q=0.5)
     print('All lengths computed.')
 
@@ -419,8 +426,6 @@ def compute_bearingNdst2source(s, e, source=(0, 0),**kwargs):
         e[nam.scal(nam.max(d))] = e[nam.max(d)] / l
         e[nam.scal(nam.mean(d))] = e[nam.mean(d)] / l
         e[nam.scal(nam.final(d))] = e[nam.final(d)] / l
-    # s4 = time.time()
-    # print([s1 - s0, s2 - s1, s3 - s2, s4 - s3])
     print('Bearing and distance to source computed')
 
 
@@ -461,7 +466,6 @@ def align_trajectories(s, Npoints=None, Ncontour=None, track_point=None, arena_d
             s[x]-=X
             s[y]-=Y
         return s
-        # xy = [[x0 / 2, y0 / 2] for agent_id in ids]
     elif mode == 'center':
         print('Centralizing trajectories in trajectory center using min-max positions')
         xy_max = [s[xy_pars].xs(id, level='AgentID').max().values for id in ids]

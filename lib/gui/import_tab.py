@@ -27,15 +27,17 @@ class ImportTab(GuiTab):
 
         sl1 = SelectionList(tab=self, disp='Data format/lab', actions=['load'])
         dl1 = DataList(name=self.raw_key, tab=self, dict=d[kR], buttons=['import', 'select_all', 'remove', 'changeID', 'browse'],raw=True)
+        # dl2 = DataList(name=self.proc_key, tab=self, dict=d[kP],
+        #                buttons=['replay', 'enrich', 'select_all', 'remove', 'changeID', 'browse'])
         dl2 = DataList(name=self.proc_key, tab=self, dict=d[kP],
-                       buttons=['replay', 'enrich', 'select_all', 'remove', 'changeID', 'browse'])
+                       buttons=['replay', 'enrich', 'select_all', 'remove', 'changeID', 'browse'], aux_cols=['N', 'time', 'fill'])
         c1,c2,c3=[CollapsibleDict(n, False, default=True, toggled_subsections=None) for n in self.fields]
         g1 = ButtonGraphList(name=self.name, fig_dict={})
 
         l = [[
             gui_col([sl1, c1], 0.25),
             gui_col([dl1,c2], 0.25),
-            gui_col([dl2, c3], 0.25)
+            gui_col([dl2, c3], 0.5)
         ]]
 
         c = {}
@@ -52,7 +54,7 @@ class ImportTab(GuiTab):
 if __name__ == "__main__":
     from lib.gui.gui import LarvaworldGui
 
-    # larvaworld_gui = LarvaworldGui(tabs=['import'])
-    larvaworld_gui = LarvaworldGui(tabs=['import', 'analysis', 'settings'])
+    larvaworld_gui = LarvaworldGui(tabs=['import'])
+    # larvaworld_gui = LarvaworldGui(tabs=['import', 'analysis', 'settings'])
 
     larvaworld_gui.run()

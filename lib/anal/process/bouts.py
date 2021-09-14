@@ -99,14 +99,14 @@ def detect_turns(s, e, dt, track_pars, recompute=False, min_ang_vel=0.0, min_ang
         bend_vel_par = nam.vel('bend')
 
 
-    detect_chunks(s,e,dt,chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=ang_vel_par,
+    detect_chunks(ss,e,dt,chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=ang_vel_par,
                        ROU_ranges=[[min_ang, np.inf], [-np.inf, -min_ang]],
                        par_ranges=[[min_ang_vel, np.inf], [-np.inf, -min_ang_vel]], merged_chunk='turn',
                        store_max=[True, False], store_min=[False, True])
-    track_pars_in_chunks(s,e,chunks=['Lturn', 'Rturn'], pars=track_pars, merged_chunk='turn', distro_dir=distro_dir)
+    track_pars_in_chunks(ss,e,chunks=['Lturn', 'Rturn'], pars=track_pars, merged_chunk='turn', distro_dir=distro_dir)
     if constant_bend_chunks:
         print('Additionally detecting constant bend chunks.')
-        detect_chunks(s,e,dt,chunk_names=['constant_bend'], chunk_only=chunk_only, par=bend_vel_par,
+        detect_chunks(ss,e,dt,chunk_names=['constant_bend'], chunk_only=chunk_only, par=bend_vel_par,
                            par_ranges=[[-min_ang_vel, min_ang_vel]])
     print('All turns detected')
 
@@ -176,33 +176,21 @@ def detect_chunks(s, e, dt, chunk_names, par, chunk_only=None, par_ranges=[[-np.
     if min_dur == 0.0:
         min_dur = dt
     ss = s.loc[s[nam.id(chunk_only)].dropna().index] if chunk_only is not None else s
-    if non_overlap_chunk is not None:
-        non_ov_id = nam.id(non_overlap_chunk)
-        data = [ss.xs(id, level='AgentID', drop_level=True) for id in ids]
-        data = [d[d[non_ov_id].isna()] for d in data]
-        data = [d[par] for d in data]
-    else:
-        data = [ss[par].xs(id, level='AgentID', drop_level=True) for id in ids]
 
-    for c, (Vmin, Vmax), (Amin, Amax), storMin, storMax in zip(chunk_names, par_ranges, ROU_ranges, store_min,
-                                                               store_max):
-        S0 = np.zeros([N, Nids]) * np.nan
-        S1 = np.zeros([N, Nids]) * np.nan
-        Dur = np.zeros([N, Nids]) * np.nan
-        Id = np.zeros([N, Nids]) * np.nan
-        Max = np.zeros([N, Nids]) * np.nan
-        Min = np.zeros([N, Nids]) * np.nan
+    def agent_data(id):
+        if non_overlap_chunk is None:
+            return ss[par].xs(id, level='AgentID', drop_level=True)
+        else :
+            d=ss.xs(id, level='AgentID', drop_level=True)
+            return d[d[nam.id(non_overlap_chunk)].isna()][par]
 
-        p_s0 = nam.start(c)
-        p_s1 = nam.stop(c)
-        p_id = nam.id(c)
-        p_dur = nam.dur(c)
-        p_max = nam.max(nam.chunk_track(c, par))
-        p_min = nam.min(nam.chunk_track(c, par))
-        for i, (id, d) in enumerate(zip(ids, data)):
+    for c, (Vmin, Vmax), (Amin, Amax), storMin, storMax in zip(chunk_names, par_ranges, ROU_ranges, store_min, store_max):
+        c_ps=[S0, S1, Id, Dur, Max, Min]=[nam.start(c), nam.stop(c), nam.id(c), nam.dur(c), nam.max(nam.chunk_track(c, par)), nam.min(nam.chunk_track(c, par))]
+        dic={pp : np.zeros([N, Nids]) * np.nan for pp in c_ps}
 
+        for i, id in enumerate(ids):
+            d=agent_data(id)
             ii0 = d[(d < Vmax) & (d > Vmin)].index
-            # ii0=np.unique(np.hstack([ii00,ii00[np.where(np.diff(ii00, prepend=[-np.inf]) == 2)[0]]+1]))
             s0s = ii0[np.where(np.diff(ii0, prepend=[-np.inf]) != 1)[0]]
             s1s = ii0[np.where(np.diff(ii0, append=[np.inf]) != 1)[0]]
             ROUs = np.array([np.trapz(d.loc[slice(s0, s1)].values) * dt for s0, s1 in zip(s0s, s1s)])
@@ -225,10 +213,8 @@ def detect_chunks(s, e, dt, chunk_names, par, chunk_only=None, par_ranges=[[-np.
                 if storMin:
                     Min[s1 - t0, i] = s.loc[(slice(s0, s1), id), par].min()
 
-        for a, p in zip([S0, S1, Dur, Id, Max, Min], [p_s0, p_s1, p_dur, p_id, p_max, p_min]):
-            a = a.flatten()
-            # print(p,a)
-            s[p] = a
+        for p,a in dic.items():
+            s[p] = a.flatten()
     compute_chunk_metrics(s, e, chunk_names)
     if merged_chunk is not None:
         mc0, mc1, mcdur = nam.start(merged_chunk), nam.stop(merged_chunk), nam.dur(merged_chunk)
@@ -412,11 +398,6 @@ def detect_contacting_chunks(s, e, dt, chunk='stride', track_point=None, mid_fla
                         zip(chunks[:-1, :], chunks[1:, :])] + [0]
             s0s = chunks[:, 0] - t0
             s1s = chunks[:, 1] - t0
-            # s0s=[int(s0) for s0 in s0s]
-            # s1s=[int(s1) for s1 in s1s]
-            # start_array[s0s, i] = True
-            # stop_array[s1s, i] = True
-            # print(s1s, i, durs)
             dur_array[s1s, i] = durs
             chain_counter = 0
             chain_dur_counter = 0

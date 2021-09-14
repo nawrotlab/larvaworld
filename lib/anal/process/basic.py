@@ -63,8 +63,6 @@ def compute_freq(s, e, dt, parameters, freq_range=None, compare_params=False):
     V = np.zeros(Npars)
     F = np.ones((Npars, Nids)) * np.nan
     for i, p in enumerate(parameters):
-        # if show_output:
-        #     print(f'Calculating dominant frequency for paramater {p}')
         for j, id in enumerate(ids):
             d = s[p].xs(id, level='AgentID', drop_level=True)
             try:
@@ -78,14 +76,10 @@ def compute_freq(s, e, dt, parameters, freq_range=None, compare_params=False):
                 max_freq = f[np.argmax(np.nanmedian(Sxx, axis=1))]
             except:
                 max_freq = np.nan
-                # if show_output:
-                #     print(f'Dominant frequency of {p} for {id} not found')
             F[i, j] = max_freq
     if compare_params:
         ind = np.argmax(V)
         best_p = parameters[ind]
-        # if show_output:
-        #     print(f'Best parameter : {best_p}')
         existing = fun.common_member(nam.freq(parameters), e.columns.values)
         e.drop(columns=existing, inplace=True)
         e[nam.freq(best_p)] = F[ind]
@@ -139,7 +133,6 @@ def rescale(s,e, Npoints, config=None, recompute=False, scale=1.0):
         s[p] = s[p].apply(lambda x: x * scale)
     if 'length' in e.columns:
         e['length'] = e['length'].apply(lambda x: x * scale)
-    # self.rescaled_by = scale
     print(f'Dataset rescaled by {scale}.')
 
 def exclude_rows(s,e, dt,  flag, accepted=None, rejected=None):
@@ -150,9 +143,7 @@ def exclude_rows(s,e, dt,  flag, accepted=None, rejected=None):
 
         p=getPar('cum_t', to_return=['d'])[0]
         for id in s.index.unique('AgentID').values:
-            # e.loc[id, 'num_ticks'] = len(s.xs(id, level='AgentID', drop_level=True).dropna())
             e.loc[id, p] = len(s.xs(id, level='AgentID', drop_level=True).dropna()) * dt
-            # e.loc[id, 'cum_dur'] = e.loc[id, 'num_ticks'] * dt
 
         print(f'Rows excluded according to {flag}.')
 

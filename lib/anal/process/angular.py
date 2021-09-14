@@ -11,7 +11,6 @@ from lib.anal.process.store import create_par_distro_dataset
 def compute_spineangles(s, angles, points, config=None, chunk_only=None, mode='full'):
     r = config['front_body_ratio'] if config is not None else 0.5
     bend_angles = angles[:int(np.round(r * len(angles)))]
-    # print(bend_angles)
     if chunk_only is not None:
         print(f'Computation restricted to {chunk_only} chunks')
         s = s.loc[s[nam.id(chunk_only)].dropna().index.values].copy(deep=False)
@@ -182,21 +181,4 @@ if __name__ == '__main__':
 
     d = get_datasets(datagroup_id='SimGroup', last_common='single_runs', names=['dish/ppp'], mode='load')[0]
     s = d.step_data
-    # e=d.end
-    # dt=d.dt
-    # Npoints=d.Npoints
-    # points=d.points
-    # angles=d.angles
-    # segs=d.segs
-    # point=d.point
-    # config=d.config
-    # par_distro_dir=d.par_distro_dir
-    print(s.columns)
     d.angular_processing(show_output=True)
-    # angular_processing(s,e,dt,Npoints,config, mode='full', dir=par_distro_dir)
-    # compute_spatial_metrics(s,e,dt, points=['centroid'])
-    # compute_extrema(s,dt, parameters=[nam.scal(nam.vel('centroid'))], interval_in_sec=0.3)
-    # compute_freq(s,e,dt, parameters=[nam.scal(nam.vel('centroid'))], freq_range=[0.7, 1.8])
-    # # s,e = compute_spatial_metrics(s,e,dt, points=['centroid'])
-    print(s.columns)
-    # d.save()
