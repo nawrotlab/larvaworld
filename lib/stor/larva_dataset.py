@@ -25,8 +25,7 @@ class LarvaDataset:
         self.save_data_flag = save_data_flag
         self.define_paths(dir)
         if os.path.exists(self.dir_dict['conf']):
-            with open(self.dir_dict['conf']) as tfp:
-                self.config = json.load(tfp)
+            fun.load_dict(self.dir_dict['conf'], use_pickle=False)
         else:
             self.config = {'id': id,
                            'fr': fr,
@@ -40,7 +39,6 @@ class LarvaDataset:
                            **life_params
                            }
 
-            # print(f'Initialized dataset {id} with new configuration')
         self.__dict__.update(self.config)
 
         self.dt = 1 / self.fr
@@ -208,11 +206,14 @@ class LarvaDataset:
 
     def save_config(self):
         try:
+            self.config['epochs']=self.config['epochs'].tolist()
+        except:
+            pass
+        try:
             self.config['Nagents'] = self.Nagents
         except:
             pass
-        with open(self.dir_dict['conf'], "w") as fp:
-            json.dump(self.config, fp)
+        fun.save_dict(self.config, self.dir_dict['conf'], use_pickle=False)
 
     def save_agent(self, pars=None, header=True):
         if self.step_data is None:
@@ -695,3 +696,8 @@ class LarvaDataset:
         ser1.reset_index(level='Step', drop=True, inplace=True)
         ser1 = ser1.reset_index(drop=False).values.tolist()
         s = s.loc[s[id]]
+
+# if __name__ == '__main__':
+#     d=conf.loadConf('odor_preference', 'Life')
+#     for k,v in d.items() :
+#         print(k,v,type(v))

@@ -23,8 +23,8 @@ def batch(exp, en=None, o=None, o_kws={}, **kwargs):
     if en is None:
         # enrichment=dtypes.base_enrich()
         enrichment = dtypes.get_dict('enrichment')
-    elif en=='PI' :
-        enrichment=dtypes.base_enrich(types=['PI'], bouts=[])
+    elif en == 'PI':
+        enrichment = dtypes.base_enrich(types=['PI'], bouts=[])
     elif 'source' in en.keys():
         enrichment = dtypes.get_dict('enrichment', source=en['source'], types=['source'])
     else:
@@ -48,10 +48,15 @@ batch_dict = {
         'ranges': [(300.0, 1300.0), (0.1, 0.5)],
         'Ngrid': [3, 3]
     }, o='final_dst_to_center', en={'source': (0.0, 0.0)}),
-    'odor-preference': batch('odor_pref_test', space_search={
+    'odor-preference_test': batch('odor_pref_test', space_search={
         'pars': ['odor_dict.CS.mean', 'odor_dict.UCS.mean'],
         'ranges': [(-100.0, 100.0), (-100.0, 100.0)],
         'Ngrid': [3, 3]
+    }, batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference'), en='PI'),
+    'odor-preference_complete': batch('odor_pref_train_short', space_search={
+        'pars': ['olfactor_noise', 'decay_coef'],
+        'ranges': [(0.0, 0.4), (0.1, 0.5)],
+        'Ngrid': [2, 2]
     }, batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference'), en='PI'),
     'food_patchy': batch('patchy_food', space_search={
         'pars': ['EEB', 'feeder_initial_freq'],

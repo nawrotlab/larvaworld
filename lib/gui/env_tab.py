@@ -267,13 +267,13 @@ class EnvTab(GuiTab):
                                 w['out'].update(value=f"Item {id} moved by ({delta_X}, {delta_Y})")
                                 figs = [k for k, v in db[k]['figs'].items() if v == id]
                                 for f in figs:
-                                    if k == 's_u':
+                                    if k == self.Su:
                                         X0, Y0 = db[k]['items'][id]['pos']
                                         db[k]['items'][id]['pos'] = (X0 + delta_X, Y0 + delta_Y)
-                                    elif k in ['s_g', 'l_g']:
+                                    elif k in [self.Sg, self.Lg]:
                                         X0, Y0 = db[k]['items'][id]['loc']
                                         db[k]['items'][id]['loc'] = (X0 + delta_X, Y0 + delta_Y)
-                                    elif k == 'b':
+                                    elif k == self.Bg:
                                         db[k]['items'][id]['points'] = [(X0 + delta_X, Y0 + delta_Y) for X0, Y0 in
                                                                         db[k]['items'][id]['points']]
                                     gg.move_figure(f, delta_x, delta_y)
@@ -295,7 +295,7 @@ class EnvTab(GuiTab):
                             if fig in list(db[k]['figs'].keys()):
                                 id = db[k]['figs'][fig]
                                 w['out'].update(value=f"Inspecting item {id} ")
-                                if k in ['s_g', 'l_g']:
+                                if k in [self.Sg, self.Lg]:
                                     figs = self.inspect_distro(**db[k]['items'][id])
                                     for f in figs:
                                         db[k]['figs'][f] = id
@@ -305,7 +305,7 @@ class EnvTab(GuiTab):
                     if any([self.out_of_bounds(P, v, w, c) for P in [P1, P2]]):
                         dic['current'] = {}
                     else:
-                        if v[S] and not self.check_abort(S, w, v, db['s_u']['items'], db['s_g']['items']):
+                        if v[S] and not self.check_abort(S, w, v, db[self.Su]['items'], db[self.Sg]['items']):
                             o = S
                             color = v[f'{o}_color']
                             if v[f'{o}_single'] or (v[f'{o}_group'] and dic['sample_fig'] is None):
@@ -335,7 +335,7 @@ class EnvTab(GuiTab):
                                 }}
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{o}_DISTRO_shape'], p1=p1,
                                                                p2=p2, line_color=color)
-                        elif v[L] and not self.check_abort(L, w, v, db['l_u']['items'], db['l_g']['items']):
+                        elif v[L] and not self.check_abort(L, w, v, db[self.Lu]['items'], db[self.Lg]['items']):
                             o = L
                             color = v[f'{o}_color']
                             sample_larva_pars = {'default_color': color,
@@ -352,7 +352,7 @@ class EnvTab(GuiTab):
 
                         elif v[B]:
                             id = v[f'{B}_id']
-                            if id in list(db['b']['items'].keys()) or id == '':
+                            if id in list(db[self.Bg]['items'].keys()) or id == '':
                                 info.update(value=f"{B} id {id} already exists or is empty")
                             else:
                                 dic0 = {'unique_id': id,
@@ -372,7 +372,7 @@ class EnvTab(GuiTab):
             current, prior_rect, sample_pars = dic['current'], dic['prior_rect'], dic['sample_pars']
             if v[B] and current != {}:
                 o = B
-                units = db['b']
+                units = db[self.Bg]
                 id = v[f'{o}_id']
                 w['out'].update(value=f"{B} {id} placed from {P1} to {P2}")
                 units['figs'][prior_rect] = id
@@ -382,7 +382,7 @@ class EnvTab(GuiTab):
             elif v[S]:
                 o = S
                 oG = f'{o}_group'
-                units, groups = db['s_u'], db['s_g']
+                units, groups = db[self.Su], db[self.Sg]
                 if v[f'{o}_single'] and current != {}:
                     id = v[f'{o}_id']
                     w['out'].update(value=f'{S} {id} placed at {P1}')
@@ -412,7 +412,7 @@ class EnvTab(GuiTab):
             elif v[L] and current != {}:
                 o = L
                 oG = f'{o}_group'
-                units, groups = db['l_u'], db['l_g']
+                units, groups = db[self.Lu], db[self.Lg]
                 if v[f'{o}_single']:
                     pass
                 elif v[oG]:
@@ -495,22 +495,22 @@ class EnvTab(GuiTab):
         S=self.S
         db = copy.deepcopy(self.base_dict['env_db'])
         self.draw_arena(v, w, c)
-        for id, ps in db['s_u']['items'].items():
+        for id, ps in db[self.Su]['items'].items():
             f = self.draw_source(P0=self.scale_xy(ps['pos'], reverse=True), **ps)
-            db['s_u']['figs'][f] = id
-        for id, ps in db['s_g']['items'].items():
+            db[self.Su]['figs'][f] = id
+        for id, ps in db[self.Sg]['items'].items():
             figs = self.inspect_distro(item=S, **ps)
             for f in figs:
-                db['s_g']['figs'][f] = id
-        for id, ps in db['l_g']['items'].items():
+                db[self.Sg]['figs'][f] = id
+        for id, ps in db[self.Lg]['items'].items():
             figs = self.inspect_distro(item=self.L, **ps)
             for f in figs:
-                db['l_g']['figs'][f] = id
-        for id, ps in db['b']['items'].items():
+                db[self.Lg]['figs'][f] = id
+        for id, ps in db[self.Bg]['items'].items():
             points = [self.scale_xy(p) for p in ps['points']]
             f = self.graph.draw_lines(points=points, color=ps['default_color'],
                                     width=int(ps['width'] * self.s))
-            db['b']['figs'][f] = id
+            db[self.Bg]['figs'][f] = id
         w['out'].update(value='Arena has been reset.')
         self.base_dict['env_db']=db
 
@@ -640,7 +640,7 @@ class EnvTab(GuiTab):
         items = [env[self.Bg],
                  env['food_params'][self.Su], env['food_params'][self.Sg],
                  {}, env[self.Lg]]
-        env_db = {k: {'items': ii, 'figs': {}} for k, ii in zip(['b', 's_u', 's_g', 'l_u', 'l_g'], items)}
+        env_db = {k: {'items': ii, 'figs': {}} for k, ii in zip([self.Bg, self.Su, self.Sg, self.Lu, self.Lg], items)}
         return env_db
 
     def aux_reset(self):

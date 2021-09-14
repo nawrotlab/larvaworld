@@ -234,8 +234,7 @@ class SectionDict:
         d = copy.deepcopy(self.init_dict)
         if d is None:
             return d
-        for i, (k, v0) in enumerate(d.items()):
-
+        for k, v0 in d.items():
             k0 = f'{self.name}_{k}'
             t = self.get_type(k, v0)
             if t == bool or type(v0)==bool:
@@ -1487,6 +1486,8 @@ class SelectionList(GuiElement):
                     conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
                 else :
                     conf[kk] = vv.collapsible.get_dict(v,w)
+            # for k, v in conf['exp_kws'].items():
+            #     print(k, v, type(v))
             d, g = self.tab.run(v, w, c, d, g, conf, id)
             self.set_d(d)
             self.set_g(g)

@@ -29,6 +29,7 @@ def run_sim_basic(
         par_config=dat.SimParConf,
         seed=1,
         **kwargs):
+
     np.random.seed(seed)
     id = sim_params['sim_ID']
     dt = sim_params['timestep']
