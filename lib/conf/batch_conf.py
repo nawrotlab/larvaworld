@@ -53,7 +53,12 @@ batch_dict = {
         'ranges': [(-100.0, 100.0), (-100.0, 100.0)],
         'Ngrid': [3, 3]
     }, batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference'), en='PI'),
-    'odor-preference_complete': batch('odor_pref_train_short', space_search={
+    'odor-preference_complete_short': batch('odor_pref_train_short', space_search={
+        'pars': ['olfactor_noise', 'decay_coef'],
+        'ranges': [(0.0, 0.4), (0.1, 0.5)],
+        'Ngrid': [2, 2]
+    }, batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference'), en='PI'),
+'odor-preference_complete': batch('odor_pref_train', space_search={
         'pars': ['olfactor_noise', 'decay_coef'],
         'ranges': [(0.0, 0.4), (0.1, 0.5)],
         'Ngrid': [2, 2]
