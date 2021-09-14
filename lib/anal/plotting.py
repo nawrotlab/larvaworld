@@ -1292,7 +1292,7 @@ def plot_stride_Dbend(datasets, labels=None, show_text=False, subfolder='stride'
         if show_text:
             ax.text(0.3, 0.9 - i * 0.1, rf'${label} : \Delta\theta_{{b}}={m} \cdot \theta_{{b}}$', fontsize=12,
                     transform=ax.transAxes)
-        print(f'Bend correction during strides for {label} fitted as : db={m}*b + {k}')
+            print(f'Bend correction during strides for {label} fitted as : db={m}*b + {k}')
     plt.subplots_adjust(bottom=0.2, top=0.95, left=0.25, right=0.95, wspace=0.01)
     return process_plot(fig, save_to, filename, return_fig, show)
 

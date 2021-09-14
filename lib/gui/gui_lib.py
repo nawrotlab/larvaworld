@@ -529,7 +529,7 @@ def change_dataset_id(dic, old_ids):
     return dic
 
 
-def named_list(text, key, choices, default_value=None, drop_down=True, list_width=20,
+def named_list(text, key, choices, default_value=None, drop_down=True, list_width=25,
                readonly=True, enable_events=True, single_line=True, next_to_header=None, as_col=True,
                list_kws={}, list_height=None, header_text_kws=None, aux_cols=None):
     kws={'key':key,'enable_events':enable_events, **list_kws}
@@ -551,16 +551,17 @@ def named_list(text, key, choices, default_value=None, drop_down=True, list_widt
             # temp=[sg.Listbox(choices, key=key, default_values=[default_value],visible=False,
             #             size=(list_width, list_height), enable_events=enable_events, **list_kws)]
             N=len(aux_cols)
-            vs=[['']*(N+1)]*H
-            w00=0.45
+            vs=[['']*(N+1)]*len(choices)
+            w00=0.3
             w0=int(W*w00)
             col_widths = [w0]+[int(W*(1-w00)/N)]*N
             # print(list_kws)
             # print()
             # print(list_width*2, list_height)
-            l=[Table(values=vs, headings=[text]+aux_cols, col_widths=col_widths,
-                     alternating_row_color=None, size=(W, H), auto_size_columns=False,
-                     background_color='white',justification='center',text_color='black',header_font=('Helvetica', 8, 'bold'), **kws)]
+            l=[Table(values=vs, headings=['Dataset ID']+aux_cols, col_widths=col_widths,
+                     alternating_row_color='lightgrey', auto_size_columns=False,display_row_numbers=True,
+                     background_color='lightblue',header_background_color='lightgreen',bind_return_key=False,
+                     justification='right',text_color='black',header_font=('Helvetica', 8, 'bold'), **kws)]
             # l=sg.Col([l])
             # lc=sg.Col([lc])
             # l=[sg.Pane([l,lc], orientation='horizontal')]
@@ -619,7 +620,7 @@ class DataList(GuiElement):
     def build_layout(self, **kwargs):
         bl = self.build_buttons()
         l = named_list(get_disp_name(self.name), self.list_key, list(self.dict.keys()),
-                       drop_down=False, list_width=25, list_height=5,
+                       drop_down=False, list_height=5,
                        single_line=False, next_to_header=bl, as_col=False,
                        **self.named_list_kws,
                        # list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED},
@@ -640,18 +641,20 @@ class DataList(GuiElement):
         vs=[ks]
         ds=[self.dict[k] for k in ks]
         for c in self.aux_cols :
-            if c=='N' :
-                vv=[d.Nagents for d in ds]
-            elif c=='time' :
-                vv=[d.endpoint_data['cum_dur'].max() for d in ds]
-            elif c=='fill' :
-                vv=[]
-                for d in ds :
-                    df=d.step_data[nam.xy(d.point)[0]].values.flatten()
-                    valid=np.count_nonzero(~np.isnan(df))
-                    vv.append(valid/df.shape[0])
-            else :
-                vv = ['' for d in ds]
+            vv = ['' for d in ds]
+            try:
+                if c=='# larvae' :
+                    vv=[d.Nagents for d in ds]
+                elif c=='duration' :
+                    vv=[np.round(d.endpoint_data['cum_dur'].max(),2) for d in ds]
+                elif c=='quality' :
+                    vv=[]
+                    for d in ds :
+                        df=d.step_data[nam.xy(d.point)[0]].values.flatten()
+                        valid=np.count_nonzero(~np.isnan(df))
+                        vv.append(np.round(valid/df.shape[0],2))
+            except :
+                pass
             vs.append(vv)
         vs=np.array(vs).T.tolist()
         return vs

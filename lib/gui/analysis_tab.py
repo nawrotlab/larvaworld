@@ -41,7 +41,7 @@ class AnalysisTab(GuiTab):
 
         dl1 = DataList(name=self.data_key, tab=self, dict=d[self.name],
                       buttons=['replay', 'add_ref', 'select_all', 'remove', 'changeID', 'browse'],
-                      # button_args={'browse': {'initial_folder' : initial_folder}}
+                       aux_cols=['# larvae', 'duration', 'quality'], list_width=30
                        )
 
         g1 = ButtonGraphList(name=self.name, fig_dict=graph_dict, canvas_size=self.canvas_size,
@@ -50,8 +50,8 @@ class AnalysisTab(GuiTab):
 
         l = [[
             gui_col([dl1], 0.25),
-            gui_col([g1.canvas], 0.5),
-            gui_col([g1], 0.25),
+            gui_col([g1.canvas], 0.55),
+            gui_col([g1], 0.2),
 
         ]]
         g = {g1.name: g1}
