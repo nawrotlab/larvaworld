@@ -235,19 +235,15 @@ class SectionDict:
         if d is None:
             return d
         for i, (k, v0) in enumerate(d.items()):
+
             k0 = f'{self.name}_{k}'
             t = self.get_type(k, v0)
-            # print(self.name, k, v0, self.type_dict)
             if t == bool or type(v0)==bool:
                 d[k] = w[f'TOGGLE_{k0}'].get_state()
             elif type(t) == tuple or (type(t) == dict and list(t.keys()) == ['type', 'value_list']):
                 d[k] = w[k0].get()
             elif t == dict or type(t) == dict:
                 d[k] = self.subdicts[k0].get_dict(v, w)
-                # try:
-                #     d[k] = self.subdicts[k0].get_dict(v, w)
-                # except:
-                #     pass
             else:
                 d[k] = retrieve_value(v[k0], t)
         return d
@@ -287,7 +283,6 @@ class TupleSpin(Pane):
         return res
 
     def update(self, window, value):
-        print(value)
         if value not in [None, '', (None, None), [None, None]]:
             v0, v1 = value
         else:
@@ -609,7 +604,6 @@ class DataList(GuiElement):
         w.Element(self.list_key).Update(values=list(self.dict.keys()))
 
     def eval(self, e, v, w, c, d, g):
-        # print(e)
         from lib.stor.managing import detect_dataset, enrich_datasets
         n = self.name
         k = self.list_key
@@ -1402,12 +1396,6 @@ class SelectionList(GuiElement):
         self.sublists = sublists
         self.tab.selectionlists[self.conftype] = self
 
-    def w(self):
-        if not hasattr(self.tab.gui, 'window'):
-            return None
-        else:
-            return self.tab.gui.window
-
     def c(self):
         return self.tab.gui.collapsibles
 
@@ -1495,7 +1483,10 @@ class SelectionList(GuiElement):
         elif e == f'RUN_{n}' and id != '':
             conf = self.tab.get(w, v, c, as_entry=False)
             for kk, vv in self.sublists.items():
-                conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
+                if not vv.with_dict :
+                    conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
+                else :
+                    conf[kk] = vv.collapsible.get_dict(v,w)
             d, g = self.tab.run(v, w, c, d, g, conf, id)
             self.set_d(d)
             self.set_g(g)
@@ -1524,11 +1515,8 @@ class SelectionList(GuiElement):
         #     w.Element(k, silent_on_error=True).Update(values=list(loadConfDict(k).keys()),value=id)
 
     def get_next(self, k0):
-        w = self.w()
-        if w is None:
-            idx = 0
-        else:
-            idx = int(np.min([i for i in range(5) if f'{k0}{i}' not in w.AllKeysDict.keys()]))
+        w = self.tab.gui.window if hasattr(self.tab.gui, 'window') else None
+        idx = int(np.min([i for i in range(5) if f'{k0}{i}' not in w.AllKeysDict.keys()])) if w is not None else 0
         return f'{k0}{idx}'
 
     def get_subdicts(self):

@@ -19,6 +19,9 @@ class Effector:
         self.ticks += 1
         self.total_ticks += 1
 
+    def reset_ticks(self):
+        self.ticks = 0
+
 
     def start_effector(self):
         self.effector = True

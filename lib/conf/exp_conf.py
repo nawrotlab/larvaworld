@@ -66,7 +66,7 @@ exp_dict = {
     **food_exp('patchy_food'),
     **food_exp('uniform_food'),
     **food_exp('food_grid'),
-    'growth': exp('growth', sim={'duration': 24 * 60.0, 'timestep': 0.2}, c=['feeder', 'gut']),
+    'growth': exp('growth', sim={'duration': 24 * 60.0}, c=['feeder', 'gut']),
     'rovers_sitters': exp('rovers_sitters', sim={'duration': 180.0}, c=['feeder', 'gut'],enrichment=dtypes.base_enrich(types=['spatial'], bouts=[])),
     'reorientation': exp('reorientation', collections=['olfactor', 'pose']),
     'realistic_imitation': exp('realistic_imitation', sim={'Box2D': True}, c=['midline', 'contour']),

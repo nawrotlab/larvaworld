@@ -85,12 +85,9 @@ class Substrate:
     def get_X(self, quality=None, compounds = ['glucose', 'dextrose', 'yeast', 'cornmeal', 'saccharose'], return_sum=True):
         if quality is None :
             quality=self.quality
-        # print(type(quality))
         Xs=[self.d_dict[c]/self.w_dict[c]*quality for c in compounds]
-        if return_sum :
-            return sum(Xs)
-        else :
-            return Xs
+        return sum(Xs) if return_sum else Xs
+
         
     def get_mol(self, V, **kwargs):
         return self.get_X(**kwargs)*V
@@ -853,16 +850,12 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample='Fed', use_hun
     if deb_dt is None:
         deb_dt = dt
     steps_per_day=np.round(24 * 60 * 60 / deb_dt).astype(int)
-    deb = DEB(id=id, assimilation_mode='gut', print_output=True, save_dict=save_dict,**kwargs)
+    deb = DEB(id=id, assimilation_mode='gut', save_dict=save_dict,**kwargs)
     if EEB is None :
         EEB=get_best_EEB(deb, sample, dt)
     deb.set_steps_per_day(steps_per_day=steps_per_day)
     deb.base_hunger=EEB
     Nticks=np.round(deb_dt / dt).astype(int)
-    # print(deb.base_f *deb.J_X_Amm / deb.substrate.X/deb.V_bite/(24*60*60))
-    # print(EEB)
-    # raise
-
     kws2={
         'crawl_freq': sd['crawl_freq'],
         'feed_freq': sd['feed_freq'],
@@ -885,6 +878,7 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample='Fed', use_hun
             cum_feeds += 1
         if inter.total_ticks%Nticks==0 :
             feed_dict.append(feeds)
+            # print(feeds)
             # X_V = deb.V_bite * deb.V * deb.feed_freq_estimate*deb_dt
             X_V = deb.V_bite * deb.V * feeds
             deb.run(X_V=X_V)
@@ -894,13 +888,11 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample='Fed', use_hun
                 if inter.feeder_reocurrence_as_EEB :
                     inter.feeder_reoccurence_rate=inter.EEB
             if deb.age * 24>counter :
-                # print(counter, np.mean(feed_dict)/deb_dt-deb.feed_freq_estimate)
-                print(counter, int(deb.pupation_buffer*100))
+                # print(counter, int(deb.pupation_buffer*100))
                 counter+=24
     deb.finalize_dict()
-    # print(inter.get_mean_feed_freq(), deb.get_feed_freq_estimate())
-    # print([np.round(100*k/inter.total_ticks/inter.dt) for k in [inter.cum_stridechain_dur, inter.cum_feedchain_dur, inter.cum_pause_dur]])
     d_sim= deb.return_dict()
+    print(EEB, np.mean(feed_dict))
     if model_id is None :
         return d_sim
     else :
@@ -908,6 +900,13 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample='Fed', use_hun
         return d_sim, d_mod
 
 if __name__ == '__main__':
+    ddd=deb_default()
+    print(ddd['pupation'])
+    for EEB in [0.57,0.95] :
+        d=deb_sim(EEB=EEB, dt=0.1, deb_dt=60)
+        print(EEB, d['pupation'])
+    raise
+
     dt_bite=1/(24*60*60)*2
     # for s in ['standard'] :
     for s in ['standard', 'cornmeal', 'PED_tracker'] :

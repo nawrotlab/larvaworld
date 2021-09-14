@@ -535,7 +535,7 @@ def plot_pauses(dataset, Npauses=10, save_to=None, plot_simulated=False, return_
 
 def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSsitters=False,
               time_unit='hours', return_fig=False, sim_only=False, force_ymin=None, color_epoch_quality=True,
-              datasets=None, labels=None, show=False):
+              datasets=None, labels=None, show=False, label_epochs=True, label_lifestages=True):
     warnings.filterwarnings('ignore')
     if save_to is None:
         save_to = paths.DebFolder
@@ -721,41 +721,46 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                 ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
             if mode == 'assimilation':
                 ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
-            try:
-                y0, y1 = ax.get_ylim()
-                ytext = y0 + 0.5 * (y1 - y0)
-                xtext = t00 + 0.5 * (t0 - t00)
-                ax.annotate('$incubation$',rotation=90,fontsize=25,va='center',ha='center',
-                            xy=(xtext, ytext), xycoords='data',
-                            )
-            except:
-                pass
-            try:
-                y0, y1 = ax.get_ylim()
-                ytext = y0 + 0.8 * (y1 - y0)
-                xpre = t0 + 0.5 * (t0_sim-t0)
-                if t0_sim-t0>0.2*(np.max(age)-t00) :
-                    ax.annotate('$prediction$',rotation=0,fontsize=20,va='center',ha='center',
-                                xy=(xpre, ytext), xycoords='data',
+            if label_lifestages:
+                try:
+                    y0, y1 = ax.get_ylim()
+                    ytext = y0 + 0.5 * (y1 - y0)
+                    xtext = t00 + 0.5 * (t0 - t00)
+                    ax.annotate('$incubation$',rotation=90,fontsize=25,va='center',ha='center',
+                                xy=(xtext, ytext), xycoords='data',
                                 )
-                xsim = t0_sim + 0.5 * (np.max(age) - t0_sim)
-                if np.max(age) - t0_sim > 0.2 * (np.max(age) - t00):
-                    ax.annotate('$simulation$', rotation=0, fontsize=20, va='center', ha='center',
-                                xy=(xsim, ytext), xycoords='data',
+                except:
+                    pass
+                try:
+                    y0, y1 = ax.get_ylim()
+                    x0, x1 = ax.get_xlim()
+                    ytext = y0 + 0.5 * (y1 - y0)
+                    xtext = t3 + 0.5 * (x1 - t3)
+                    ax.axvspan(t3, x1, color='darkgrey', alpha=0.5)
+                    ax.annotate('$pupation$', rotation=90, fontsize=25, va='center', ha='center',
+                                xy=(xtext, ytext), xycoords='data',
                                 )
-            except:
-                pass
-            try:
-                y0, y1 = ax.get_ylim()
-                x0, x1 = ax.get_xlim()
-                ytext = y0 + 0.5 * (y1 - y0)
-                xtext = t3 + 0.5 * (x1 - t3)
-                ax.axvspan(t3, x1, color='darkgrey', alpha=0.5)
-                ax.annotate('$pupation$',rotation=90,fontsize=25,va='center',ha='center',
-                            xy=(xtext, ytext), xycoords='data',
-                            )
-            except:
-                pass
+                except:
+                    pass
+            if label_epochs:
+
+                try:
+                    y0, y1 = ax.get_ylim()
+                    ytext = y0 + 0.8 * (y1 - y0)
+                    xpre = t0 + 0.5 * (t0_sim-t0)
+                    if t0_sim-t0>0.2*(np.max(age)-t00) :
+                        ax.annotate('$prediction$',rotation=0,fontsize=20,va='center',ha='center',
+                                    xy=(xpre, ytext), xycoords='data',
+                                    )
+                    xsim = t0_sim + 0.5 * (np.max(age) - t0_sim)
+                    if np.max(age) - t0_sim > 0.2 * (np.max(age) - t00):
+                        ax.annotate('$simulation$', rotation=0, fontsize=20, va='center', ha='center',
+                                    xy=(xsim, ytext), xycoords='data',
+                                    )
+                except:
+                    pass
+
+
 
         for t in [0, t0, t1, t2]:
             if not np.isnan(t):

@@ -78,6 +78,7 @@ class SimTab(GuiTab):
     def get(self, w, v, c, as_entry=True):
         conf = {
                 'sim_params': c['sim_params'].get_dict(v, w),
+                # 'life_params': c['sim_params'].get_dict(v, w),
                 'collections': [k for k in output_keys if c['Output'].get_dict(v, w)[k]],
                 'enrichment': self.current_conf(v)['enrichment'],
                 }

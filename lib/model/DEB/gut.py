@@ -67,6 +67,7 @@ class Gut:
 
         self.resolve_occupancy()
         o = self.gut_occupancy = self.get_gut_occupancy()
+        # print(o)
         self.gut_capacity = self.get_capacity()
 
 
@@ -119,6 +120,7 @@ class Gut:
         # over = self.gut_X + self.gut_P + self.gut_f - self.max_capacity
         # over=self.gut_X + self.gut_P - self.max_capacity
         if over > 0:
+            print('xx')
             X=self.gut_X
             P=self.gut_P
             C=X+P

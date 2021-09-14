@@ -242,8 +242,13 @@ class Intermitter(Effector):
                 os.makedirs(path)
             fun.save_dict(dic, file)
 
+    @ property
+    def current_crawl_ticks(self):
+        return (self.current_numstrides + 1) * self.crawl_ticks
 
-
+    @property
+    def current_feed_ticks(self):
+        return self.current_feedchain_length * self.feed_ticks
 
 class NengoIntermitter(Intermitter):
     def __init__(self,nengo_manager, **kwargs):
@@ -278,46 +283,45 @@ class OfflineIntermitter(Intermitter):
 
     def step(self):
         super().count_ticks()
-        if self.current_stridechain_length is not None:
-            if self.ticks >= (self.current_numstrides + 1) * self.crawl_ticks:
-                self.current_numstrides += 1
-                self.stride_counter += 1
-                if self.current_numstrides >= self.current_stridechain_length:
-                    self.stridechain_counter += 1
-                    self.cum_stridechain_dur += self.ticks * self.dt
-                    self.stridechain_lengths.append(self.current_stridechain_length)
-                    self.ticks = 0
-                    self.current_numstrides = 0
-                    self.current_stridechain_length = None
-                    self.current_pause_ticks = np.round(self.pause_dist.sample()/self.dt).astype(int)
-        elif self.current_feedchain_length is not None:
-            if self.ticks >= self.current_feedchain_length * self.feed_ticks:
-                self.feed_counter += 1
-                if np.random.uniform(0, 1, 1) >= self.feeder_reoccurence_rate:
-                    self.feedchain_counter += 1
-                    self.cum_feedchain_dur += self.ticks * self.dt
-                    self.feedchain_lengths.append(self.current_feedchain_length)
-                    self.ticks = 0
-                    self.current_feedchain_length = None
-                    self.current_pause_ticks = np.round(self.pause_dist.sample()/self.dt).astype(int)
-                else:
-                    self.current_feedchain_length += 1
-        elif self.current_pause_ticks is not None:
-            if self.ticks > self.current_pause_ticks:
-                self.pause_counter += 1
-                dur=self.ticks*self.dt
-                self.pause_durs.append(dur)
-                self.cum_pause_dur += dur
-                self.current_pause_ticks = None
-                self.ticks = 0
-                if np.random.uniform(0, 1, 1) >= self.EEB:
-                    if self.crawl_bouts:
-                        self.current_stridechain_length = self.stridechain_dist.sample()
-                else:
-                    if self.feed_bouts:
-                        self.current_feedchain_length = 1
-        # print(t)
-        # print(self.current_stridechain_length, self.current_feedchain_length, self.current_pause_duration)
+        t=self.ticks
+        dur = t * self.dt
+        if self.current_stridechain_length is not None and t >= self.current_crawl_ticks:
+            self.current_numstrides += 1
+            self.stride_counter += 1
+            if self.current_numstrides >= self.current_stridechain_length:
+                self.stridechain_counter += 1
+                self.cum_stridechain_dur += dur
+                self.stridechain_lengths.append(self.current_stridechain_length)
+                self.reset_ticks()
+                self.current_numstrides = 0
+                self.current_stridechain_length = None
+                self.current_pause_ticks = int(self.pause_dist.sample()/self.dt)
+                # self.current_pause_ticks = np.round(self.pause_dist.sample()/self.dt).astype(int)
+        elif self.current_feedchain_length is not None and t >= self.current_feed_ticks:
+            self.feed_counter += 1
+            if np.random.uniform(0, 1, 1) >= self.feeder_reoccurence_rate:
+                self.feedchain_counter += 1
+                self.cum_feedchain_dur += dur
+                self.feedchain_lengths.append(self.current_feedchain_length)
+                self.reset_ticks()
+                self.current_feedchain_length = None
+                self.current_pause_ticks = int(self.pause_dist.sample()/self.dt)
+                # self.current_pause_ticks = np.round(self.pause_dist.sample()/self.dt).astype(int)
+            else:
+                self.current_feedchain_length += 1
+        elif self.current_pause_ticks is not None and t > self.current_pause_ticks:
+            self.pause_counter += 1
+
+            self.pause_durs.append(dur)
+            self.cum_pause_dur += dur
+            self.current_pause_ticks = None
+            self.reset_ticks()
+            if np.random.uniform(0, 1, 1) >= self.EEB:
+                if self.crawl_bouts:
+                    self.current_stridechain_length = self.stridechain_dist.sample()
+            else:
+                if self.feed_bouts:
+                    self.current_feedchain_length = 1
 
 
 class BranchIntermitter(Effector):

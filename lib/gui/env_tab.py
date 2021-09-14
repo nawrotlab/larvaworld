@@ -130,7 +130,7 @@ class EnvTab(GuiTab):
         l = gui_col([sl1,*l2], 0.25)
         return l, c, {}, {}
 
-    def add_agent_layout(self, n0, color, collapsibles):
+    def add_agent_layout(self, n0, color, c):
         g, g0, D, DN, Dm, Ds, s, s0 = self.group_ks(n0)
         o, o0, oM, oS = self.odor_ks(n0)
 
@@ -143,7 +143,7 @@ class EnvTab(GuiTab):
                                                        toggle=False, disp_name='odor')
 
         for ss in [s1,s2]:
-            collapsibles.update(ss.get_subdicts())
+            c.update(ss.get_subdicts())
 
         l = [[sg.R(f'Add {n0}', 1, k=n0, enable_events=True, **t_kws(10)),*color_pick_layout(n0, color)],
              [sg.T('', **t_kws(2)),sg.R('single id', 2, disabled=True, k=s, enable_events=True, **t_kws(5)),sg.In(n0, k=s0)],
@@ -151,7 +151,7 @@ class EnvTab(GuiTab):
 
              [sg.T('', **t_kws(5)), *s1.get_layout()],
              [sg.T('', **t_kws(5)), *s2.get_layout()]]
-        return l, collapsibles
+        return l, c
 
     def build_draw_env(self):
         S,L,B = self.S,self.L,self.B
@@ -196,7 +196,6 @@ class EnvTab(GuiTab):
 
 
         col2 = sg.Col([[sg.Col(ll, pad=(10,10))] for ll in [lL,lS,lB,lI]], **col_kws)
-        # col2 = sg.Col(col2, **col_kws)
         g1 = GraphList(self.name, graph=True,canvas_size=self.canvas_size, canvas_kws={
             'graph_bottom_left': (0, 0),
             'graph_top_right': self.canvas_size,
@@ -397,7 +396,6 @@ class EnvTab(GuiTab):
                     if current == {}:
                         info.update(value=f"Sample item for source group {id} detected." \
                                           "Now draw the distribution'sigma space")
-
                         dic['sample_fig'] = prior_rect
                     else:
                         w['out'].update(value=f'{o} group {id} placed at {P1}')
@@ -427,7 +425,7 @@ class EnvTab(GuiTab):
                     for f in figs:
                         groups['figs'][f] = id
                     self.delete_prior()
-                    c[self.Sg].update(w, groups['items'])
+                    c[self.Lg].update(w, groups['items'])
             else:
                 self.delete_prior()
             self.aux_reset()
@@ -573,7 +571,7 @@ class EnvTab(GuiTab):
         return temp
 
     def check_abort(self, name, w, v, units, groups):
-        S=self.S
+        S,L=self.S, self.L
         n=name
         n0=n.lower()
         g,g0,D,DN,Dm,Ds, s,s0=self.group_ks(n)
@@ -598,32 +596,38 @@ class EnvTab(GuiTab):
                 return True
             elif not F and float(v[fM]) != 0.0:
                 w[fM].update(value=0.0)
-                info.update(value=f"{S} food amount set to 0")
+                # t = f"{S} food amount set to 0"
+        elif n==L:
+            if v[f'{D}_model'] == '':
+                info.update(value="Assign a larva-model for the larva group")
+                return True
 
         if v[g0] == '' and v[s0] == '':
-            info.update(value=f"Both {n0} single id and group id are empty")
+            t=f"Both {n0} single id and group id are empty"
         elif not v[g] and not v[s]:
-            info.update(value=f"Select to add a single or a group of {n0}s")
+            t = f"Select to add a single or a group of {n0}s"
         elif v[s] and (v[s0] in list(units.keys()) or v[s0] == ''):
-            info.update(value=f"{n0} id {v[s0]} already exists or is empty")
+            t = f"{n0} id {v[s0]} already exists or is empty"
         elif O and v[o0] == '':
-            info.update(value=f"Default odor id automatically assigned to the odor")
+            t = "Default odor id automatically assigned to the odor"
             id = v[g0] if v[g0] != '' else v[s0]
             w[o0].update(value=f'{id}_odor')
         elif O and not float(v[oM]) > 0:
-            info.update(value=f"Assign positive odor intensity to the drawn odor source")
+            t = "Assign positive odor intensity to the drawn odor source"
         elif O and (v[oS] == '' or not float(v[oS]) > 0):
-            info.update(value=f"Assign positive spread to the odor")
+            t = "Assign positive spread to the odor"
         elif v[g] and (v[g0] in list(groups.keys()) or v[g0] == ''):
-            info.update(value=f"{n0} group id {v[g0]} already exists or is empty")
+            t = f"{n0} group id {v[g0]} already exists or is empty"
         elif v[g] and v[Dm] in ['', None]:
-            info.update(value=f"Define a distribution mode")
+            t = "Define a distribution mode"
         elif v[g] and v[Ds] in ['', None]:
-            info.update(value=f"Define a distribution shape")
+            t = "Define a distribution shape"
         elif v[g] and not int(v[DN]) > 0:
-            info.update(value=f"Assign a positive integer number of items for the distribution")
+            t = "Assign a positive integer number of items for the distribution"
         else:
+            t = "Valid item added!"
             abort = False
+        info.update(value=t)
         return abort
 
     def set_env_db(self, env=None):

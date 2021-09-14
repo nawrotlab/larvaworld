@@ -450,10 +450,8 @@ def init_dtypes():
         'life':
             {
                 'epochs': {'type': List[tuple], 'value_list': fun.value_list()},
-                # 'epochs': List[tuple],
                 'epoch_qs': {'type': list, 'value_list': fun.value_list()},
-                # 'epoch_qs': List[float],
-                'hours_as_larva': fun.value_list(end=250, steps=250, integer=True),
+                'hours_as_larva': fun.value_list(end=250, steps=25100, decimals=2),
                 'substrate_quality': fun.value_list(),
                 'substrate_type': list(substrate_dict.keys()),
             },
@@ -715,13 +713,15 @@ def store_dtypes():
     d2 = init_dtypes()
 
     d22 = fun.replace_in_dict(d2, replace_d=typing_to_str_dict, inverse=True)
-    fun.save_dict(d1, paths.NullDicts_path, use_pickle=True)
-    fun.save_dict(d22, paths.Dtypes_path, use_pickle=True)
+
+    d={'null_dicts':d1, 'dtypes':d22}
+    fun.save_dict(d, paths.Dtypes_path, use_pickle=True)
 
 
 def load_dtypes():
-    d1 = fun.load_dict(paths.NullDicts_path, use_pickle=True)
-    d2 = fun.load_dict(paths.Dtypes_path, use_pickle=True)
+    d = fun.load_dict(paths.Dtypes_path, use_pickle=True)
+    d1=d['null_dicts']
+    d2=d['dtypes']
     d22 = fun.replace_in_dict(d2, replace_d=typing_to_str_dict, inverse=False)
     return d1, d22
 
@@ -895,9 +895,3 @@ def store_controls():
     from lib.conf.conf import saveConfDict
     saveConfDict(d, 'Settings')
 
-
-if __name__ == '__main__':
-    store_dtypes()
-    store_controls()
-    # d1,d2=load_dtypes()
-    # print(d2['life'])
