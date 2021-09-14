@@ -546,25 +546,14 @@ def named_list(text, key, choices, default_value=None, drop_down=True, list_widt
     else:
         if aux_cols is None:
             l = [sg.Listbox(choices, default_values=[default_value],size=(W, H), **kws)]
-
         else :
-            # temp=[sg.Listbox(choices, key=key, default_values=[default_value],visible=False,
-            #             size=(list_width, list_height), enable_events=enable_events, **list_kws)]
             N=len(aux_cols)
             vs=[['']*(N+1)]*len(choices)
-            w00=0.3
+            w00=0.35
             w0=int(W*w00)
             col_widths = [w0]+[int(W*(1-w00)/N)]*N
-            # print(list_kws)
-            # print()
-            # print(list_width*2, list_height)
             l=[Table(values=vs, headings=['Dataset ID']+aux_cols, col_widths=col_widths,
-                     alternating_row_color='lightgrey', auto_size_columns=False,display_row_numbers=True,
-                     background_color='lightblue',header_background_color='lightgreen',bind_return_key=False,
-                     justification='right',text_color='black',header_font=('Helvetica', 8, 'bold'), **kws)]
-            # l=sg.Col([l])
-            # lc=sg.Col([lc])
-            # l=[sg.Pane([l,lc], orientation='horizontal')]
+                     display_row_numbers=True,**kws)]
 
     if single_line:
         return t + l
@@ -944,6 +933,12 @@ class CollapsibleDict(Collapsible):
 
 
 class Table(sg.Table):
+    def __init__(self, values, background_color='lightblue', header_background_color='orange',alternating_row_color='lightyellow',
+                 auto_size_columns=False, text_color='black',header_font=('Helvetica', 8, 'bold'), **kwargs):
+        super().__init__(values, auto_size_columns=auto_size_columns,
+                         background_color=background_color, header_background_color=header_background_color,
+                         alternating_row_color=alternating_row_color, text_color=text_color,header_font=header_font, **kwargs)
+
     def add_row(self, window, row, sort_idx=None):
         vs = self.get()
         vs.append(row)
