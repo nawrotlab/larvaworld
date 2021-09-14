@@ -205,14 +205,14 @@ class LarvaDataset:
                 df.to_csv(path, index=True, header=True)
 
     def save_config(self):
-        try:
-            self.config['epochs']=self.config['epochs'].tolist()
-        except:
-            pass
+
         try:
             self.config['Nagents'] = self.Nagents
         except:
             pass
+        for k,v in self.config.items() :
+            if type(v)==np.ndarray :
+                self.config[k]=v.tolist()
         fun.save_dict(self.config, self.dir_dict['conf'], use_pickle=False)
 
     def save_agent(self, pars=None, header=True):
