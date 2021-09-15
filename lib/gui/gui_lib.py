@@ -5,180 +5,29 @@ from tkinter import PhotoImage
 from typing import Tuple, List
 import numpy as np
 import PySimpleGUI as sg
-import operator
 
-from PySimpleGUI import Pane, \
-    LISTBOX_SELECT_MODE_EXTENDED
+from PySimpleGUI import Pane, LISTBOX_SELECT_MODE_EXTENDED
 from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
-import lib.conf.conf
-import lib.conf.init_dtypes
-from lib.conf.conf import loadConfDict, saveConf, deleteConf, loadConf, expandConf
+from lib.conf.conf import loadConfDict, deleteConf, loadConf, expandConf
 import lib.aux.functions as fun
 from lib.conf.par import runtime_pars, getPar
-from lib.gui.aux import SYMBOL_UP, SYMBOL_DOWN, col_size, w_kws, b6_kws, t_kws, get_disp_name, retrieve_value
+from lib.gui.aux import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse
 from lib.gui.buttons import graphic_button, button_dict, named_bool_button, BoolButton
+from lib.gui.windows import gui_table, set_kwargs, save_conf_window, import_window, change_dataset_id
 
 from lib.stor import paths as paths
 import lib.conf.dtype_dicts as dtypes
-
-
-def get_table(v, pars_dict, Nagents):
-    data = []
-    for i in range(Nagents):
-        dic = {}
-        for j, (p, t) in enumerate(pars_dict.items()):
-            dic[p] = retrieve_value(v[(i, p)], t)
-        data.append(dic)
-    return data
-
-
-def set_agent_dict(dic, type_dic, header='unique_id', title='Agent list'):
-    t0 = fun.agent_dict2list(dic, header=header)
-    t1 = gui_table(t0, type_dic, title=title)
-    dic = fun.agent_list2dict(t1, header=header)
-    return dic
-
-
-def table_window(data, pars_dict, title, return_layout=False):
-    d = pars_dict
-    t12_kws_c = {**t_kws(12),
-                 'justification': 'center'}
-
-    ps = list(d.keys())
-    Nagents, Npars = len(data), len(ps)
-
-    l0 = [sg.T(' ', **t_kws(2))] + [sg.T(p, k=p, enable_events=True, **t12_kws_c) for p in ps]
-    l1 = [[sg.T(i + 1, **t_kws(2))] + [sg.In(data[i][p], k=(i, p), **t12_kws_c) if type(d[p]) != list else sg.Combo(
-        d[p], default_value=data[i][p], k=(i, p), enable_events=True, readonly=True,
-        **t_kws(12)) for p in ps] for i in range(Nagents)]
-    l2 = [sg.B(ii, **b6_kws) for ii in ['Add', 'Remove', 'Ok', 'Cancel']]
-
-    l = [l0, *l1, l2]
-
-    if return_layout:
-        return l
-
-    w = sg.Window(title, l, default_element_size=(20, 1), element_padding=(1, 1),
-                  return_keyboard_events=True, finalize=True, force_toplevel=True)
-    w.close_destroys_window = True
-    return Nagents, Npars, ps, w
-
-
-def gui_table(data, pars_dict, title='Agent list', sortable=False):
-    data0 = copy.deepcopy(data)
-    """
-        Another simple table created from Input Text Elements.  This demo adds the ability to "navigate" around the drawing using
-        the arrow keys. The tab key works automatically, but the arrow keys are done in the code below.
-    """
-
-    sg.change_look_and_feel('Dark Brown 2')  # No excuse for gray windows
-    # Show a "splash" mode message so the user doesn't give up waiting
-    sg.popup_quick_message('Hang on for a moment, this will take a bit to create....', auto_close=True,
-                           non_blocking=True)
-
-    Nrows, Npars, ps, w = table_window(data, pars_dict, title)
-    # cell = (0, 0)
-    while True:
-        e, v = w.read()
-        if e in (None, 'Cancel'):
-            w.close()
-            return data0
-        if e == 'Ok':
-            data = get_table(v, pars_dict, Nrows)
-            w.close()
-            return data
-        elem = w.find_element_with_focus()
-        cell = elem.Key if elem and type(elem.Key) is tuple else (0, 0)
-        r, c = cell
-        try:
-            if e.startswith('Down'):
-                r = r + 1 * (r < Nrows - 1)
-            elif e.startswith('Left'):
-                c = c - 1 * (c > 0)
-            elif e.startswith('Right'):
-                c = c + 1 * (c < Npars - 1)
-            elif e.startswith('Up'):
-                r = r - 1 * (r > 0)
-        except:
-            pass
-        if sortable and e in ps:  # Perform a sort if a column heading was clicked
-            try:
-                table = [[int(v[(r, c)]) for c in range(Npars)] for r in range(Nrows)]
-                new_table = sorted(table, key=operator.itemgetter(ps.index(e)))
-            except:
-                sg.popup_error('Error in table', 'Your table must contain only ints if you wish to sort by column')
-            else:
-                for i in range(Nrows):
-                    for j in range(Npars):
-                        w[(i, j)].update(new_table[i][j])
-                [w[c].update(font='Any 14') for c in ps]  # make all column headings be normal fonts
-                w[e].update(font='Any 14 bold')  # bold the font that was clicked
-        # if the current cell changed, set focus on new cell
-        if cell != (r, c):
-            cell = r, c
-            w[cell].set_focus()  # set the focus on the element moved to
-            w[cell].update(
-                select=True)  # when setting focus, also highlight the data in the element so typing overwrites
-        if e == 'Add':
-            data = get_table(v, pars_dict, Nrows)
-            try:
-                new_row = data[r]
-            except:
-                new_row = {k: None for k in pars_dict.keys()}
-            data.append(new_row)
-            w.close()
-            Nrows, Npars, ps, w = table_window(data, pars_dict, title)
-        elif e == 'Remove':
-            data = get_table(v, pars_dict, Nrows)
-            data = [d for i, d in enumerate(data) if i != r]
-            w.close()
-            Nrows, Npars, ps, w = table_window(data, pars_dict, title)
-
-
-def update_window_from_dict(w, dic, prefix=None):
-    if dic is not None:
-        for k, v in dic.items():
-            if prefix is not None:
-                k = f'{prefix}_{k}'
-            if type(v) == bool:
-                b = w[f'TOGGLE_{k}']
-                if isinstance(b, BoolButton):
-                    b.set_state(v)
-            elif type(v) == dict:
-                new_prefix = k if prefix is not None else None
-                update_window_from_dict(w, v, prefix=new_prefix)
-            elif isinstance(w[k], TupleSpin) or isinstance(w[k], MultiSpin):
-                w[k].update(w, v)
-            elif v is None:
-                w.Element(k).Update(value='')
-            else:
-                w.Element(k).Update(value=v)
-
-
-def save_conf_window(conf, conftype, disp=None):
-    if disp is None:
-        disp = conftype
-    temp=NamedList('save_conf', text=f'Store new {disp}', key=f'{disp}_ID', choices=list(loadConfDict(conftype).keys()),
-                   readonly=False, enable_events=False)
-    l = [
-        temp.get_layout(),
-        [sg.Ok(), sg.Cancel()]]
-    e, v = sg.Window(f'{disp} configuration', l).read(close=True)
-    if e == 'Ok':
-        id = v[f'{disp}_ID']
-        saveConf(conf, conftype, id)
-        return id
-    elif e == 'Cancel':
-        return None
 
 
 class SectionDict:
     def __init__(self, name, dict, type_dict=None, toggled_subsections=True):
         self.init_dict = dict
         self.type_dict = type_dict
+        if type_dict is None :
+            print(name)
         self.toggled_subsections = toggled_subsections
         self.name = name
         self.subdicts = {}
@@ -197,30 +46,32 @@ class SectionDict:
                                                     toggle=self.toggled_subsections,
                                                     toggled_subsections=self.toggled_subsections)
                 ii = self.subdicts[k0].get_layout()
-            else:
-                t0 = d[k]
-                t = type(t0)
-                if t == list:
-                    if all([type(i) in [int, float] for i in t0 if i not in ['', None]]):
-                        temp = sg.Spin(values=t0, initial_value=v, key=k0, **value_kws)
-                    else:
-                        temp = sg.Combo(t0, default_value=v, key=k0, enable_events=True,
-                                        readonly=True, **value_kws)
-                elif t in [tuple, Tuple[float, float], Tuple[int, int]]:
-                    temp = TupleSpin(range=t0, initial_value=v, key=k0, **value_kws)
-                elif t == dict and list(t0.keys()) == ['type', 'value_list']:
-                    if t0['type'] == list:
-                        tuples = False
-                        temp = MultiSpin(value_list=t0['value_list'], initial_value=v, key=k0, tuples=tuples,
-                                         **value_kws)
-                    elif t0['type'] == List[tuple]:
-                        tuples = True
-                        temp = MultiSpin(value_list=t0['value_list'], initial_value=v, key=k0, tuples=tuples,
-                                         **value_kws)
-                    elif t0['type'] == tuple:
-                        temp = TupleSpin(value_list=t0['value_list'], initial_value=v, key=k0, **value_kws)
-                else:
-                    temp = sg.In(v, key=k0, **value_kws)
+            else :
+                temp = sg.In(v, key=k0, **value_kws)
+                if d is not None:
+                    t0 = d[k]
+                    t = type(t0)
+                    if t == list:
+                        if all([type(i) in [int, float] for i in t0 if i not in ['', None]]):
+                            temp = sg.Spin(values=t0, initial_value=v, key=k0, **value_kws)
+                        else:
+                            temp = sg.Combo(t0, default_value=v, key=k0, enable_events=True,
+                                            readonly=True, **value_kws)
+                    elif t in [tuple, Tuple[float, float], Tuple[int, int]]:
+                        temp = TupleSpin(range=t0, initial_value=v, key=k0, **value_kws)
+                    elif t == dict and list(t0.keys()) == ['type', 'value_list']:
+                        if t0['type'] == list:
+                            tuples = False
+                            temp = MultiSpin(value_list=t0['value_list'], initial_value=v, key=k0, tuples=tuples,
+                                             **value_kws)
+                        elif t0['type'] == List[tuple]:
+                            tuples = True
+                            temp = MultiSpin(value_list=t0['value_list'], initial_value=v, key=k0, tuples=tuples,
+                                             **value_kws)
+                        elif t0['type'] == tuple:
+                            temp = TupleSpin(value_list=t0['value_list'], initial_value=v, key=k0, **value_kws)
+                    # else:
+
                 ii = [sg.Text(f'{k_disp}:', **text_kws), temp]
             l.append(ii)
         return l
@@ -239,7 +90,7 @@ class SectionDict:
         for k, v0 in d.items():
             k0 = f'{self.name}_{k}'
             t = self.get_type(k, v0)
-            if t == bool or type(v0)==bool:
+            if t == bool or type(v0) == bool:
                 d[k] = w[f'TOGGLE_{k0}'].get_state()
             elif type(t) == tuple or (type(t) == dict and list(t.keys()) == ['type', 'value_list']):
                 d[k] = w[k0].get()
@@ -398,137 +249,6 @@ class MultiSpin(Pane):
                 return self.spins
 
 
-def import_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
-    from lib.gui.gui import check_togglesNcollapsibles
-    M, E = 'Merge', 'Enumerate'
-    E0 = f'{E}_id'
-    proc_dir = {}
-    N = len(raw_dic)
-    raw_ids = list(raw_dic.keys())
-    raw_dirs = list(raw_dic.values())
-    raw_dirs = [fun.remove_prefix(dr, f'{raw_folder}/') for dr in raw_dirs]
-    raw_dirs = [fun.remove_suffix(dr, f'/{id}') for dr, id in zip(raw_dirs, raw_ids)]
-    raw_dirs = fun.unique_list(raw_dirs)
-    groupID0 = raw_dirs[0] if len(raw_dirs) == 1 else ''
-    # groupID0= else ''
-    if N == 0:
-        return proc_dir
-    w_size = (1200, 800)
-    h_kws = {
-        'font': ('Helvetica', 8, 'bold'),
-        'justification': 'center',
-    }
-    b_merged = named_bool_button(name=M, state=False, toggle_name=None)
-    b_num = named_bool_button(name=E, state=False, toggle_name=None, disabled=False)
-    # b_num = named_bool_button(name=E, state=False, toggle_name=None, input_key=E0, input_text='dish')
-    group_id = [sg.T('Group ID :', **t_kws(8)), sg.In(default_text=groupID0, k='import_group_id', **t_kws(14))]
-    l00 = sg.Col([[*group_id, *b_num, *b_merged],
-                  [sg.T('RAW DATASETS', **h_kws, **t_kws(30)), sg.T('NEW DATASETS', **h_kws, **t_kws(30))]])
-    l01 = sg.Col([
-        [sg.T(id, **t_kws(30)), sg.T('  -->  ', **t_kws(8)), sg.In(default_text=id, k=f'new_{id}', **t_kws(30))] for id
-        in
-        list(raw_dic.keys())],
-        vertical_scroll_only=True, scrollable=True, expand_y=True, vertical_alignment='top',
-        size=col_size(y_frac=0.4, win_size=w_size))
-
-    s1 = CollapsibleDict('build_conf', True, default=True, disp_name='Configuration', text_kws=t_kws(24),
-                         value_kws=t_kws(8))
-    c = {}
-    for s in [s1]:
-        c.update(**s.get_subdicts())
-    l = [[sg.Col([
-        [l00],
-        [l01],
-        s1.get_layout(),
-        [sg.Col([[sg.Ok(), sg.Cancel()]], size=col_size(y_frac=0.2, win_size=w_size))],
-    ])]]
-    w = sg.Window('Build new datasets from raw files', l, size=w_size)
-    while True:
-        e, v = w.read()
-        gID = v['import_group_id']
-
-        if e in (None, 'Exit', 'Cancel'):
-            w.close()
-            break
-        else:
-            toggled = check_togglesNcollapsibles(w, e, v, c)
-            merge = w[f'TOGGLE_{M}'].get_state()
-            for i, (id, dir) in enumerate(raw_dic.items()):
-                if i != 0:
-                    w.Element(f'new_{id}').Update(visible=not merge)
-            enum = w[f'TOGGLE_{E}'].get_state()
-            if E in toggled:
-                if not enum:
-                    for i, (id, dir) in enumerate(raw_dic.items()):
-                        w.Element(f'new_{id}').Update(value=id)
-                else:
-                    # v_enum = v['import_group_id']
-                    # v_enum = v[E0]
-                    for i, (id, dir) in enumerate(raw_dic.items()):
-                        w.Element(f'new_{id}').Update(value=f'{gID}_{i}')
-                        # w.Element(f'new_{id}').Update(value=f'{v_enum}_{i}')
-            if e == 'Ok':
-                conf = s1.get_dict(values=v, window=w)
-                kws = {
-                    'datagroup_id': datagroup_id,
-                    'folders': None,
-                    'group_ids': gID,
-                    **conf}
-                w.close()
-                from lib.stor.managing import build_datasets
-                if not merge:
-                    print(f'------ Building {N} discrete datasets ------')
-                    for id, dir in raw_dic.items():
-                        new_id = v[f'new_{id}']
-                        fdir = fun.remove_prefix(dir, f'{raw_folder}/')
-                        if dirs_as_ids:
-                            temp = fun.remove_suffix(fdir, f'{id}')
-                            if datagroup_id in ['JovanicGroup', 'JovanicFormat', 'Jovanic lab'] :
-                                names = [f'{temp}/{new_id}']
-                            elif datagroup_id in ['SchleyerGroup', 'SchleyerFormat', 'Schleyer lab']:
-                                names = [f'{temp}{new_id}']
-                        else:
-                            names = [fdir]
-                        dd = build_datasets(ids=[new_id], names=names, raw_folders=[fdir], **kws)[0]
-                        if dd is not None:
-                            proc_dir[new_id] = dd
-                        else:
-                            del proc_dir[new_id]
-
-                else:
-                    print(f'------ Building a single merged dataset ------')
-                    id0 = f'{list(raw_dic.keys())[0]}'
-                    fdir = [fun.remove_prefix(dir, f'{raw_folder}/') for dir in raw_dic.values()]
-                    new_id = v[f'new_{id0}']
-                    temp = fun.remove_suffix(fdir[0], id0)
-                    names = [f'{temp}{new_id}']
-                    dd = build_datasets(ids=[new_id], names=names, raw_folders=[fdir], **kws)[0]
-                    proc_dir[dd.id] = dd
-                break
-    return proc_dir
-
-
-def change_dataset_id(dic, old_ids):
-    # v0 = v[k0]
-    k = 'NEW_ID'
-    # if len(v0) > 0:
-    for old_id in old_ids:
-    # for i in range(len(v0)):
-    #     old_id = v0[i]
-        # old_id = v0[i]
-        l = [[sg.Text('Enter new dataset ID', size=(20, 1)), sg.In(default_text=old_id, k=k, size=(10, 1))],
-             [sg.Button('Store'), sg.Ok(), sg.Cancel()]]
-        e1, v1 = sg.Window('Change dataset ID', l).read(close=True)
-        new_id = v1[k]
-        if e1 == 'Ok':
-            dic[new_id] = dic.pop(old_id)
-            # w.Element(k0).Update(values=list(dic.keys()))
-        elif e1 == 'Store':
-            d = dic[old_id]
-            d.set_id(new_id)
-            dic[new_id] = dic.pop(old_id)
-    return dic
-
 class GuiElement:
     def __init__(self, name, layout=None, layout_col_kwargs={}):
         self.name = name
@@ -539,39 +259,51 @@ class GuiElement:
         self.layout_col_kwargs.update(kwargs)
         return [sg.Col(self.layout, **self.layout_col_kwargs)] if as_col else self.layout
 
-class NamedList(GuiElement):
-    def __init__(self, name, key, choices, text=None,default_value=None, drop_down=True, size=(25,None),
-               readonly=True, enable_events=True, single_line=True, next_to_header=None,
-               list_kws={}, header_text_kws=None, aux_cols=None, **kwargs):
-        super().__init__(name=name)
-        self.aux_cols=aux_cols
-        self.key=key
-        self.W, self.H = size
-        if self.H is None:
-            self.H = len(choices)
-        header=self.build_header(text, header_text_kws, next_to_header)
-        list=self.build_list(choices, default_value, drop_down, readonly, enable_events, list_kws, **kwargs)
-        self.layout=[header + list] if single_line else [header, list]
+class HeadedElement(GuiElement):
+    def __init__(self, name, header, content=[], single_line=True):
+        layout = [header + content] if single_line else [header, content]
+        super().__init__(name=name, layout=layout)
 
 
-    def build_header(self, text, header_text_kws, next_to_header):
-        if text is None :
-            text=self.name
-        # self.text=text
+class Header(HeadedElement):
+    def __init__(self, name, content=[], text=None, before_header=None, after_header=None, header_text_kws=None,
+                 single_line=True):
+        if text is None:
+            text = name
+        header = self.build_header(text, before_header, after_header, header_text_kws)
+        super().__init__(name=name, header=header, content=content, single_line=single_line)
+
+    def build_header(self, text, before_header, after_header, header_text_kws):
         if header_text_kws is None:
             header_text_kws = {'size': (len(text), 1)}
         header = [sg.Text(text, **header_text_kws)]
-        if next_to_header is not None:
-            header += next_to_header
+        if after_header is not None:
+            header += after_header
+        if before_header is not None:
+            header = before_header + header
         return header
 
-    def build_list(self, choices, default_value, drop_down, readonly, enable_events, list_kws, **kwargs):
+
+class NamedList(Header):
+    def __init__(self, name, key, choices, default_value=None, drop_down=True, size=(25, None),
+                 readonly=True, enable_events=True, list_kws={}, aux_cols=None, select_mode=None, header_kws={}, **kwargs):
+
+        self.aux_cols = aux_cols
+        self.key = key
+        self.W, self.H = size
+        if self.H is None:
+            self.H = len(choices)
+        content = self.build_list(choices, default_value, drop_down, readonly, enable_events, select_mode, list_kws, **kwargs)
+        super().__init__(name=name, content=content, **header_kws)
+
+
+    def build_list(self, choices, default_value, drop_down, readonly, enable_events, select_mode, list_kws, **kwargs):
         kws = {'key': self.key, 'enable_events': enable_events, **list_kws, **kwargs}
         if drop_down:
             l = [sg.Combo(choices, default_value=default_value, size=(self.W, 1), readonly=readonly, **kws)]
         else:
             if self.aux_cols is None:
-                l = [sg.Listbox(choices, default_values=[default_value], size=(self.W, self.H), **kws)]
+                l = [sg.Listbox(choices, default_values=[default_value], size=(self.W, self.H),select_mode= select_mode, **kws)]
             else:
                 N = len(self.aux_cols)
                 vs = [[''] * (N + 1)] * len(choices)
@@ -579,69 +311,63 @@ class NamedList(GuiElement):
                 w0 = int(self.W * w00)
                 col_widths = [w0] + [int(self.W * (1 - w00) / N)] * N
                 l = [Table(values=vs, headings=['Dataset ID'] + self.aux_cols, col_widths=col_widths,
-                           display_row_numbers=True, **kws)]
+                           display_row_numbers=True,select_mode= select_mode, **kws)]
         return l
 
 
-class DataList(GuiElement):
+class DataList(NamedList):
     def __init__(self, name, tab, dict={}, buttons=['select_all', 'remove', 'changeID', 'browse'], button_args={},
-                 raw=False, named_list_kws={'list_kws': {'select_mode': LISTBOX_SELECT_MODE_EXTENDED}},aux_cols=None, **kwargs):
-        super().__init__(name=name)
-        self.aux_cols = aux_cols
+                 raw=False, select_mode= LISTBOX_SELECT_MODE_EXTENDED, **kwargs):
+
         self.tab = tab
         self.dict = dict
         self.buttons = buttons
         self.button_args = button_args
         self.raw = raw
-        self.named_list_kws = named_list_kws
-        self.list_key = f'{self.name}_IDS'
-        self.browse_key = f'BROWSE {self.name}'
-        self.layout = self.build_layout(aux_cols=aux_cols,**kwargs)
-        self.tab.datalists[self.name] = self
+        self.list_key = f'{name}_IDS'
+        self.browse_key = f'BROWSE {name}'
+        self.tab.datalists[name] = self
+        header_kws = {'text': get_disp_name(name), 'single_line': False, 'after_header': self.build_buttons(name)}
+        super().__init__(name=name, header_kws=header_kws, key=self.list_key, choices=list(self.dict.keys()),
+                      drop_down=False, select_mode=select_mode, **kwargs)
 
-    def build_buttons(self):
+
+    def build_buttons(self, name):
         bl = []
         for n in self.buttons:
             if n in list(self.button_args.keys()):
                 kws = self.button_args[n]
             else:
                 kws = {}
-            l = button_dict[n](self.name, **kws)
+            l = button_dict[n](name, **kws)
             bl.append(l)
         return bl
 
-    def build_layout(self, **kwargs):
-        bl = self.build_buttons()
-        l = NamedList(self.name, text=get_disp_name(self.name), key=self.list_key, choices=list(self.dict.keys()),
-                       drop_down=False,single_line=False, next_to_header=bl, **self.named_list_kws,**kwargs)
-
-        return l.layout
 
     def update_window(self, w):
-        ks=list(self.dict.keys())
-        if self.aux_cols is None :
+        ks = list(self.dict.keys())
+        if self.aux_cols is None:
             w.Element(self.list_key).Update(values=ks)
-        else :
+        else:
             vs = self.get_aux_cols(ks)
             w.Element(self.list_key).Update(values=vs)
 
     def get_aux_cols(self, ks):
         # df=np.zeros((len(ks), len(self.aux_cols)+1))
-        ls=[]
+        ls = []
         for k in ks:
-        # for i,k in enumerate(ks):
-            l=[k]
-            d=self.dict[k]
+            # for i,k in enumerate(ks):
+            l = [k]
+            d = self.dict[k]
             for c in self.aux_cols:
-            # for j,c in enumerate(self.aux_cols):
+                # for j,c in enumerate(self.aux_cols):
                 try:
-                    a= getattr(d,c)
+                    a = getattr(d, c)
                 except:
-                    a =''
+                    a = ''
                 l.append(a)
             ls.append(l)
         return ls
-
 
     def eval(self, e, v, w, c, d, g):
         from lib.stor.managing import detect_dataset, enrich_datasets
@@ -656,10 +382,10 @@ class DataList(GuiElement):
             d0.update(detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw))
             self.update_window(w)
         elif e == f'SELECT_ALL {n}':
-            ks=np.arange(len(d0)).tolist()
-            if self.aux_cols is None :
+            ks = np.arange(len(d0)).tolist()
+            if self.aux_cols is None:
                 w.Element(k).Update(set_to_index=ks)
-            else :
+            else:
                 w.Element(k).Update(select_rows=ks)
         elif e == f'REMOVE {n}':
             for kk in kks:
@@ -683,7 +409,8 @@ class DataList(GuiElement):
             d1 = dl1.dict
             k1 = dl1.list_key
             raw_dic = {id: dir for id, dir in d0.items() if id in v[k]}
-            proc_dir = import_window(datagroup_id=datagroup_id, raw_folder=w[f'BROWSE {self.tab.raw_key}'].InitialFolder, raw_dic=raw_dic)
+            proc_dir = import_window(datagroup_id=datagroup_id,
+                                     raw_folder=w[f'BROWSE {self.tab.raw_key}'].InitialFolder, raw_dic=raw_dic)
             # proc_dir = import_window(datagroup_id=datagroup_id, raw_folder=self.tab.raw_folder, raw_dic=raw_dic)
             d1.update(proc_dir)
             dl1.update_window(w)
@@ -695,57 +422,73 @@ class DataList(GuiElement):
         self.dict = d0
 
 
-class Collapsible(GuiElement):
+class Collapsible(HeadedElement):
     def __init__(self, name, state, content, disp_name=None, toggle=None, disabled=False, next_to_header=None,
                  auto_open=False, header_dict=None, header_value=None, header_list_width=10, header_list_kws={},
                  header_text_kws=t_kws(12), header_key=None, **kwargs):
-        super().__init__(name=name)
-        # self.name = name
         if disp_name is None:
             disp_name = get_disp_name(name)
         self.disp_name = disp_name
         self.state = state
         self.toggle = toggle
         self.auto_open = auto_open
-        self.sec_key = f'SEC {self.name}'
-        self.toggle_key = f'TOGGLE_{self.name}'
+        self.sec_key = f'SEC {name}'
+
+        self.toggle_key = f'TOGGLE_{name}'
         self.sec_symbol = self.get_symbol()
         self.header_dict = header_dict
         self.header_value = header_value
         if header_key is None:
             header_key = f'SELECT LIST {name}'
         self.header_key = header_key
-        if header_dict is None:
-            header_disp = [sg.T(disp_name, enable_events=True, text_color='black', **header_text_kws)]
-        else:
-            header_l = NamedList(self.name, text=f'{disp_name}:', choices=list(header_dict.keys()),
-                                     default_value=header_value, key=self.header_key,
-                                     size=(header_list_width, None), list_kws=header_list_kws,
-                                     header_text_kws=header_text_kws)
-            header_disp=header_l.get_layout()
-
-        header = [self.sec_symbol] + header_disp
-        if toggle is not None:
-            header.append(BoolButton(name, toggle, disabled))
+        after_header=[BoolButton(name, toggle, disabled)] if toggle is not None else []
         if next_to_header is not None:
-            header += next_to_header
-        temp = collapse(content, self.sec_key, self.state)
-        self.layout = [header, [temp]]
+            after_header += next_to_header
+        header_kws = {'text': disp_name, 'header_text_kws': header_text_kws,
+                      'before_header' : [self.sec_symbol], 'after_header' : after_header}
+        if header_dict is None:
+            header_l = Header(name, **header_kws)
+        else:
+            header_l = NamedList(name, choices=list(header_dict.keys()),
+                                 default_value=header_value, key=self.header_key,
+                                 size=(header_list_width, None), list_kws=header_list_kws,
+                                 header_kws=header_kws)
+        header = header_l.get_layout()
+        super().__init__(name=name, header=header, content = [collapse(content, self.sec_key, self.state)], single_line=False)
 
     def get_symbol(self):
         return sg.T(SYMBOL_DOWN if self.state else SYMBOL_UP, k=f'OPEN {self.sec_key}',
                     enable_events=True, text_color='black', **t_kws(2))
 
-    def update(self, window, dict, use_prefix=True):
+    def update(self, w, dict, use_prefix=True):
         if dict is None:
-            self.disable(window)
+            self.disable(w)
         elif self.toggle == False:
-            self.disable(window)
+            self.disable(w)
         else:
-            self.enable(window)
+            self.enable(w)
             prefix = self.name if use_prefix else None
-            update_window_from_dict(window, dict, prefix=prefix)
-        return window
+            self.update_window(w, dict, prefix=prefix)
+        return w
+
+    def update_window(self, w, dic, prefix=None):
+        if dic is not None:
+            for k, v in dic.items():
+                if prefix is not None:
+                    k = f'{prefix}_{k}'
+                if type(v) == bool:
+                    b = w[f'TOGGLE_{k}']
+                    if isinstance(b, BoolButton):
+                        b.set_state(v)
+                elif type(v) == dict:
+                    new_prefix = k if prefix is not None else None
+                    self.update_window(w, v, prefix=new_prefix)
+                elif isinstance(w[k], TupleSpin) or isinstance(w[k], MultiSpin):
+                    w[k].update(w, v)
+                elif v is None:
+                    w.Element(k).Update(value='')
+                else:
+                    w.Element(k).Update(value=v)
 
     def update_header(self, w, id):
         self.header_value = id
@@ -884,7 +627,7 @@ class CollapsibleTable(Collapsible):
 
     def edit_table(self, window):
         if self.header is not None:
-            dic = set_agent_dict(self.dict, self.type_dict, header=self.header, title=self.disp_name)
+            dic = self.set_agent_dict()
             self.update(window, dic)
         else:
             t0 = [dict(zip(self.headings, l)) for l in self.data] if self.data != [[''] * self.Ncols] else []
@@ -892,6 +635,11 @@ class CollapsibleTable(Collapsible):
             if t1 != t0:
                 dic = {k: [l[k] for l in t1] for k in self.headings}
                 self.update(window, dic)
+
+    def set_agent_dict(self):
+        t0 = fun.agent_dict2list(self.dict, header=self.header)
+        t1 = gui_table(t0, self.type_dict, title=self.disp_name)
+        return fun.agent_list2dict(t1, header=self.header)
 
     def get_dict(self, *args, **kwargs):
         return self.dict
@@ -928,11 +676,14 @@ class CollapsibleDict(Collapsible):
 
 
 class Table(sg.Table):
-    def __init__(self, values, background_color='lightblue', header_background_color='lightgrey',alternating_row_color='lightyellow',
-                 auto_size_columns=False, text_color='black',header_font=('Helvetica', 8, 'bold'),justification='center', **kwargs):
-        super().__init__(values, auto_size_columns=auto_size_columns,justification=justification,
+    def __init__(self, values, background_color='lightblue', header_background_color='lightgrey',
+                 alternating_row_color='lightyellow',
+                 auto_size_columns=False, text_color='black', header_font=('Helvetica', 8, 'bold'),
+                 justification='center', **kwargs):
+        super().__init__(values, auto_size_columns=auto_size_columns, justification=justification,
                          background_color=background_color, header_background_color=header_background_color,
-                         alternating_row_color=alternating_row_color, text_color=text_color,header_font=header_font, **kwargs)
+                         alternating_row_color=alternating_row_color, text_color=text_color, header_font=header_font,
+                         **kwargs)
 
     def add_row(self, window, row, sort_idx=None):
         vs = self.get()
@@ -949,143 +700,32 @@ class Table(sg.Table):
         window.Element(self.Key).Update(values=vs, num_rows=len(vs))
 
 
-def collapse(layout, key, visible=True):
-    """
-    Helper function that creates a Column that can be later made hidden, thus appearing "collapsed"
-    :param layout: The layout for the section
-    :param key: Key used to make this seciton visible / invisible
-    :return: A pinned column that can be placed directly into your layout
-    :rtype: sg.pin
-    """
-    return sg.pin(sg.Col(layout, key=key, visible=visible))
-
-
-def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
-    from lib.gui.gui import check_toggles
-    sec_dict = SectionDict(name=title, dict=dic, type_dict=type_dict)
-    l = sec_dict.init_section()
-    l.append([sg.Ok(), sg.Cancel()])
-    w = sg.Window(title, l, **w_kws, **kwargs)
-    while True:
-        e, v = w.read()
-        if e == 'Ok':
-            new_dic = sec_dict.get_dict(v, w)
-            break
-        elif e in ['Cancel', None]:
-            new_dic = dic
-            break
-        check_toggles(w, e)
-    w.close()
-    del sec_dict
-    return new_dic
-
-    # if kwargs != {}:
-    #     layout = []
-    #     for i, (k, v) in enumerate(kwargs.items()):
-    #         if not mode(v) == dict and not mode(v) == np.ndarray:
-    #             layout.append([sg.Text(k, size=(20, 1)), sg.Input(default_text=str(v), k=f'KW_{i}', size=(20, 1))])
-    #     layout.append([sg.Ok(), sg.Cancel()])
-    #     event, values = sg.Window(title, layout).read(close=True)
-    #     if event == 'Ok':
-    #         for i, (k, v) in enumerate(kwargs.items()):
-    #             if mode(v) == np.ndarray:
-    #                 continue
-    #             if not mode(v) == dict:
-    #                 vv = values[f'KW_{i}']
-    #                 if mode(v) == bool:
-    #                     if vv == 'False':
-    #                         vv = False
-    #                     elif vv == 'True':
-    #                         vv = True
-    #                 elif mode(v) == list or mode(v) == tuple:
-    #                     vv = literal_eval(vv)
-    #
-    #                 elif v is None:
-    #                     if vv == 'None':
-    #                         vv = None
-    #                     else:
-    #                         vv = vv
-    #                 else:
-    #                     vv = mode(v)(vv)
-    #                 kwargs[k] = vv
-    #             else:
-    #                 kwargs[k] = set_kwargs(v, title=k)
-    #
-    # return kwargs
-
-
-def set_agent_kwargs(agent, **kwargs):
-    class_name = type(agent).__name__
-    type_dict = dtypes.get_dict_dtypes(class_name)
-    title = f'{class_name} args'
-    dic = {}
-    for p in list(type_dict.keys()):
-        dic[p] = getattr(agent, p)
-    new_dic = set_kwargs(dic, title, type_dict=type_dict, **kwargs)
-    for p, v in new_dic.items():
-        if p == 'unique_id':
-            agent.set_id(v)
-        else:
-            setattr(agent, p, v)
-    return agent
-
-
-def object_menu(selected, **kwargs):
-    object_list = ['', 'Larva', 'Food', 'Border']
-    title = 'Select object_class mode'
-    layout = [
-        [sg.Text(title)],
-        [sg.Listbox(default_values=[selected], values=object_list, change_submits=False, size=(20, len(object_list)),
-                    key='SELECTED_OBJECT',
-                    enable_events=True)],
-        [sg.Ok(), sg.Cancel()]]
-    window = sg.Window(title, layout, **kwargs)
-    while True:
-        event, values = window.read()
-        if event == 'Ok':
-            sel = values['SELECTED_OBJECT'][0]
-            break
-        elif event in (None, 'Cancel'):
-            sel = selected
-            break
-    window.close()
-    return sel
-
-
-class GraphList(GuiElement):
+class GraphList(NamedList):
     def __init__(self, name, fig_dict={}, next_to_header=None, default_values=None, canvas_size=(1000, 800),
                  list_size=None, list_header='Graphs', auto_eval=True, canvas_kws={'background_color': 'Lightblue'},
                  graph=False, subsample=1,
                  canvas_col_kws={'scrollable': False, 'vertical_scroll_only': False, 'expand_y': True,
                                  'expand_x': True}):
-        super().__init__(name=name)
+
+        self.fig_dict = fig_dict
         self.subsample = subsample
         self.auto_eval = auto_eval
-        self.list_size = list_size
-        self.list_header = list_header
+        self.list_key = f'{name}_GRAPH_LIST'
+
+        values = list(fig_dict.keys())
+        if list_size is None:
+            h = int(np.max([len(values), 10]))
+            list_size = (25, h)
+
+        header_kws = {'text': list_header, 'after_header': next_to_header,
+                      'header_text_kws': t_kws(10), 'single_line': False}
+        super().__init__(name=name, key=self.list_key, choices=values, default_value=default_values, drop_down=False,
+                         size=list_size, header_kws=header_kws, auto_size_text=True)
+
         self.canvas_size = canvas_size
-        # self.name = name
-        self.next_to_header = next_to_header
-        self.fig_dict = fig_dict
-        self.layout, self.list_key = self.init_layout(name, fig_dict, default_values)
         self.canvas, self.canvas_key, self.canvas_element = self.init_canvas(name, canvas_kws, canvas_col_kws, graph)
         self.fig_agg = None
         self.draw_key = 'unreachable'
-
-    def init_layout(self, name, fig_dict, default_values):
-        list_key = f'{name}_GRAPH_LIST'
-        values = list(fig_dict.keys())
-        h = int(np.max([len(values), 10]))
-
-        header = [sg.T(self.list_header, **t_kws(10))]
-        if self.next_to_header is not None:
-            header += self.next_to_header
-        if self.list_size is None:
-            h = int(np.max([len(values), 10]))
-            self.list_size = (25, h)
-        l = [header, [sg.Listbox(values=values, default_values=default_values, change_submits=True, size=self.list_size,
-                                 key=list_key, auto_size_text=True)]]
-        return l, list_key
 
     def init_canvas(self, name, canvas_kws, canvas_col_kws, graph=False):
         canvas_key = f'{name}_CANVAS'
@@ -1203,27 +843,8 @@ class ButtonGraphList(GraphList):
                 print(f'Plot saved as {v[kDir]}')
 
     def set_fig_args(self):
-        self.func_kws = set_kwargs(self.func_kws, title='Graph arguments')
-
-
-def delete_objects_window(selected):
-    ids = [sel.unique_id for sel in selected]
-    title = 'Delete objects?'
-    l = [
-        [sg.T(title)],
-        [sg.Listbox(default_values=ids, values=ids, size=(20, len(ids)), k='DELETE_OBJECTS', enable_events=True)],
-        [sg.Ok(), sg.Cancel()]]
-    w = sg.Window(title, l)
-    while True:
-        e, v = w.read()
-        if e == 'Ok':
-            res = True
-            break
-        elif e == 'Cancel':
-            res = False
-            break
-    w.close()
-    return res
+        if self.func_kws!={} :
+            self.func_kws = set_kwargs(self.func_kws, title='Graph arguments')
 
 
 def draw_canvas(canvas, figure, side='top', fill='both', expand=True):
@@ -1352,18 +973,6 @@ class DynamicGraph:
             delete_figure_agg(self.fig_agg)
         self.fig_agg = draw_canvas(self.canvas, self.fig)
 
-
-def load_shortcuts():
-    try:
-        conf = loadConfDict('Settings')
-    except:
-        conf = {'keys': {}, 'pygame_keys': {}}
-        for title, dic in lib.conf.init_dtypes.keyboard_controls.items():
-            conf['keys'].update(dic)
-        conf['pygame_keys'] = {k: dtypes.get_pygame_key(v) for k, v in conf['keys'].items()}
-    return conf
-
-
 class SelectionList(GuiElement):
     def __init__(self, tab, conftype=None, disp=None, actions=[], sublists={}, idx=None, progress=False, width=24,
                  with_dict=False, name=None, **kwargs):
@@ -1449,10 +1058,10 @@ class SelectionList(GuiElement):
 
         else:
             self.collapsible = None
-            temp = NamedList(self.name, text=n.capitalize(), key=self.k, choices=self.confs, default_value=None,
-                              drop_down=True, size=(self.width, None), single_line=False, next_to_header=bs,
-                              list_kws={'tooltip': f'The currently loaded {n}.'})
-            l=temp.layout
+            temp = NamedList(self.name, key=self.k, choices=self.confs, default_value=None,
+                             drop_down=True, size=(self.width, None),list_kws={'tooltip': f'The currently loaded {n}.'},
+                             header_kws={'text' : n.capitalize(), 'after_header' : bs, 'single_line' : False})
+            l = temp.layout
         if self.progressbar is not None:
             l.append(self.progressbar.l)
         return l
@@ -1485,10 +1094,10 @@ class SelectionList(GuiElement):
         elif e == f'RUN_{n}' and id != '':
             conf = self.tab.get(w, v, c, as_entry=False)
             for kk, vv in self.sublists.items():
-                if not vv.with_dict :
+                if not vv.with_dict:
                     conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
-                else :
-                    conf[kk] = vv.collapsible.get_dict(v,w)
+                else:
+                    conf[kk] = vv.collapsible.get_dict(v, w)
             # for k, v in conf['exp_kws'].items():
             #     print(k, v, type(v))
             d, g = self.tab.run(v, w, c, d, g, conf, id)

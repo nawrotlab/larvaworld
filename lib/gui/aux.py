@@ -143,3 +143,13 @@ def gui_row(element_list, x_frac=1.0, y_frac=0.5, **kwargs):
     r = sg.Col(*l, **col_kws, size=col_size(x_frac=x_frac, y_frac=y_frac), **kwargs)
     return r
 
+
+def collapse(layout, key, visible=True):
+    """
+    Helper function that creates a Column that can be later made hidden, thus appearing "collapsed"
+    :param layout: The layout for the section
+    :param key: Key used to make this seciton visible / invisible
+    :return: A pinned column that can be placed directly into your layout
+    :rtype: sg.pin
+    """
+    return sg.pin(sg.Col(layout, key=key, visible=visible))

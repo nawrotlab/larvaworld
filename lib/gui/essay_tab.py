@@ -26,7 +26,7 @@ class EssayTab(GuiTab):
         s1 = CollapsibleDict('essay_params', True, default=True, disp_name='Configuration', text_kws=t_kws(8))
         sl1 = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'])
 
-        dl1 = DataList(name=self.essay_exps_key, tab=self, buttons=['run'], named_list_kws={})
+        dl1 = DataList(name=self.essay_exps_key, tab=self, buttons=['run'], select_mode=None)
 
         g1 = GraphList(self.name, list_header='Simulated', canvas_size=self.canvas_size)
         g2 = GraphList(self.exp_figures_key, list_header='Observed', canvas_size=self.canvas_size,fig_dict={})
