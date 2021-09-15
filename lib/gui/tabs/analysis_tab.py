@@ -37,7 +37,7 @@ class AnalysisTab(GuiTab):
     def build(self):
         d = {self.name: {}}
         dl1 = DataList(name=self.data_key, tab=self, dict=d[self.name],
-                      buttons=['replay', 'add_ref', 'select_all', 'remove', 'changeID', 'browse'],
+                      buttons=['replay', 'add_ref', 'select_all', 'remove', 'change_ID', 'browse'],
                        aux_cols=['N', 'duration', 'quality'], size=(30,5)
                        )
         g1 = ButtonGraphList(name=self.name, fig_dict=graph_dict, canvas_size=self.canvas_size)

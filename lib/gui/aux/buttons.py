@@ -1,3 +1,4 @@
+import copy
 import webbrowser
 
 import PySimpleGUI as sg
@@ -9,108 +10,34 @@ from lib.stor import paths as paths
 
 
 
-
-
-def browse_button(name, initial_folder=paths.DataFolder, target=(0, -1), tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = 'Browse to add items to the list.\n Either directly select a directory or a parent folder containing multiple subdirectories.'
-    return GraphButton('Search_Add', key=f'BROWSE {name}', initial_folder=initial_folder, change_submits=True,
-                       enable_events=True, target=target, button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
-                       tooltip=tooltip, **kwargs)
-
-
-def remove_button(name, tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = 'Remove an item from the list.'
-    return GraphButton('Button_Remove', f'REMOVE {name}', tooltip=tooltip, **kwargs)
-
-def load_button(name, tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = f'Load the configuration for a {name}.'
-    return GraphButton('Button_Load', f'LOAD {name}', tooltip=tooltip, **kwargs)
-
-def save_button(name, tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = f'Save a new {name} configuration.'
-    return GraphButton('Document_2_Add', f'SAVE {name}', tooltip=tooltip, **kwargs)
-
-def delete_button(name, tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = f'Delete an existing {name} configuration.'
-    return GraphButton('Document_2_Remove', f'DELETE {name}', tooltip=tooltip, **kwargs)
-
-def edit_button(name, tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = f'Configure an existing or create a new {name}.'
-    return GraphButton('Document_2_Edit', f'EDIT {name}', tooltip=tooltip, **kwargs)
-
-
-def sel_all_button(name, tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = 'Select all list elements.'
-    return GraphButton('Checkbox_Full', f'SELECT_ALL {name}', tooltip=tooltip, **kwargs)
-
-
-def changeID_button(name, tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = 'Change the dataset ID transiently or permanently.'
-    return GraphButton('Document_2_Edit', f'CHANGE_ID {name}', tooltip=tooltip, **kwargs)
-
-
-def replay_button(name, tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = 'Replay/Visualize the dataset.'
-    return GraphButton('Button_Play', f'REPLAY {name}', tooltip=tooltip, **kwargs)
-
-
-def import_button(name, tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = 'Build a dataset from raw files.'
-    return GraphButton('Button_Burn', f'BUILD {name}', tooltip=tooltip, **kwargs)
-
-
-def enrich_button(name, tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = 'Enrich the dataset.'
-    return GraphButton('Document_2_Add', f'ENRICH {name}', tooltip=tooltip, **kwargs)
-
-
-def add_ref_button(name, tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = 'Add the reference experimental dataset to the list.'
-    return GraphButton('Box_Add', f'ADD REF {name}', tooltip=tooltip, **kwargs)
-
-def run_button(name, tooltip=None, **kwargs):
-    if tooltip is None:
-        tooltip = 'Run the selected simulation/essay/batch-run.'
-    return GraphButton('Button_Play', f'RUN {name}', tooltip=tooltip, **kwargs)
-
-
-button_dict = {
-    'import': import_button,
-    'enrich': enrich_button,
-    'add_ref': add_ref_button,
-    'select_all': sel_all_button,
-    'remove': remove_button,
-    'changeID': changeID_button,
-    'browse': browse_button,
-    'replay': replay_button,
-    'load': load_button,
-    'edit': edit_button,
-    'save': save_button,
-    'delete': delete_button,
-    'run': run_button,
-}
-
-def button_row(name, buttons, button_args={}) :
+def button_row(name, buttons, button_args={}):
+    but_tips = {
+        'import': 'Build a dataset from raw files.',
+        'enrich': 'Enrich the dataset.',
+        'add_ref': 'Add a reference experimental dataset to the list.',
+        'select_all': 'Select all list elements.',
+        'remove': 'Remove an item from the list.',
+        'change_ID': 'Change the dataset ID transiently or permanently.',
+        'browse': 'Browse to add items to the list.\n Either directly select a directory or a parent folder containing multiple subdirectories.',
+        'replay': 'Replay/Visualize the dataset.',
+        'load': f'Load the configuration for a {name}.',
+        'edit': f'Configure an existing or create a new {name}.',
+        'save': f'Save a new {name} configuration.',
+        'delete': f'Delete an existing {name} configuration.',
+        'run': 'Run the selected simulation/essay/batch-run.',
+    }
+    but_kws={'browse' : {'initial_folder' : paths.DataFolder, 'enable_events' : True, 'target': (0,-1), 'button_type' : sg.BUTTON_TYPE_BROWSE_FOLDER}}
     bl = []
-    for n in buttons:
-        if n in list(button_args.keys()):
-            kws = button_args[n]
-        else:
-            kws = {}
-        l = button_dict[n](name, **kws)
-        bl.append(l)
+    for b in buttons:
+        tooltip = but_tips[b]
+        k = f'{b.upper()} {name}'
+        kws = button_args[b] if b in list(button_args.keys()) else {}
+        if b in but_kws.keys():
+            cur=copy.deepcopy(but_kws[b])
+            cur.update(kws)
+        else :
+            cur=kws
+        bl.append(GraphButton(f'Button_{b}', k, tooltip=tooltip, **cur))
     return bl
 
 
@@ -121,6 +48,7 @@ def named_bool_button(name, state, toggle_name=None, tt_kws={}, **kwargs):
 
     return l
 
+
 class GraphButton(Button):
     def __init__(self, name, key, **kwargs):
         c = {'button_color': (sg.theme_background_color(), sg.theme_background_color()),
@@ -128,6 +56,7 @@ class GraphButton(Button):
              }
         bs64 = getattr(graphics, name)
         super().__init__(image_data=bs64, k=key, **c, **kwargs)
+
 
 class BoolButton(Button):
     def __init__(self, name, state, disabled=False, **kwargs):
@@ -184,12 +113,12 @@ class ClickableImage(Button):
 
 
 def color_pick_layout(name, color=None, show_text=False):
-    t=[sg.T('', **t_kws(5)), sg.T('color', **t_kws(5))] if show_text else []
+    t = [sg.T('', **t_kws(5)), sg.T('color', **t_kws(5))] if show_text else []
     return [*t,
             sg.Combo(list(color_map.keys()), default_value=color, k=f'{name}_color', enable_events=True, readonly=False,
                      **t_kws(10)),
             GraphButton('Button_Color_Circle', f'PICK {name}_color', button_type=BUTTON_TYPE_COLOR_CHOOSER,
-                           target=f'{name}_color', enable_events=True)]
+                        target=f'{name}_color', enable_events=True)]
 
 
 color_map = {

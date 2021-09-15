@@ -15,7 +15,7 @@ from lib.conf.conf import loadConfDict, deleteConf, loadConf, expandConf
 import lib.aux.functions as fun
 from lib.conf.par import runtime_pars, getPar
 from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse
-from lib.gui.aux.buttons import button_dict, named_bool_button, BoolButton, GraphButton, button_row
+from lib.gui.aux.buttons import named_bool_button, BoolButton, GraphButton, button_row
 from lib.gui.aux.windows import gui_table, set_kwargs, save_conf_window, import_window, change_dataset_id
 
 from lib.stor import paths as paths
@@ -551,12 +551,12 @@ class DataList(NamedList):
                 dd = d0[kks[0]]
                 dd.visualize(vis_kwargs=self.tab.gui.get_vis_kwargs(v, mode='video'),
                              **self.tab.gui.get_replay_kwargs(v))
-        elif e == f'ADD REF {n}':
+        elif e == f'ADD_REF {n}':
             from lib.stor.larva_dataset import LarvaDataset
             dd = LarvaDataset(dir=f'{paths.RefFolder}/reference')
             d0[dd.id] = dd
             self.update_window(w)
-        elif e == f'BUILD {n}':
+        elif e == f'IMPORT {n}':
             dl1 = self.tab.datalists[self.tab.proc_key]
             d1 = dl1.dict
             k1 = dl1.list_key
