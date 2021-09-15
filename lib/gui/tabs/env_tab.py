@@ -7,7 +7,7 @@ import lib.conf.dtype_dicts as dtypes
 import lib.aux.functions as fun
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
 from lib.gui.aux.functions import col_size, col_kws, t_kws, retrieve_dict, gui_col
-from lib.gui.aux.buttons import graphic_button, color_pick_layout, GraphButton
+from lib.gui.aux.buttons import color_pick_layout, GraphButton
 from lib.conf.conf import loadConf
 from lib.gui.tabs.tab import GuiTab
 

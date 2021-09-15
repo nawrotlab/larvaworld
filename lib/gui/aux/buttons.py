@@ -14,65 +14,76 @@ from lib.stor import paths as paths
 def browse_button(name, initial_folder=paths.DataFolder, target=(0, -1), tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Browse to add items to the list.\n Either directly select a directory or a parent folder containing multiple subdirectories.'
-    b = graphic_button('Search_Add', key=f'BROWSE {name}', initial_folder=initial_folder, change_submits=True,
+    return GraphButton('Search_Add', key=f'BROWSE {name}', initial_folder=initial_folder, change_submits=True,
                        enable_events=True, target=target, button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
                        tooltip=tooltip, **kwargs)
-    return b
 
 
 def remove_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Remove an item from the list.'
-    b = graphic_button('Button_Remove', f'REMOVE {name}', tooltip=tooltip, **kwargs)
-    return b
+    return GraphButton('Button_Remove', f'REMOVE {name}', tooltip=tooltip, **kwargs)
+
+def load_button(name, tooltip=None, **kwargs):
+    if tooltip is None:
+        tooltip = f'Load the configuration for a {name}.'
+    return GraphButton('Button_Load', f'LOAD {name}', tooltip=tooltip, **kwargs)
+
+def save_button(name, tooltip=None, **kwargs):
+    if tooltip is None:
+        tooltip = f'Save a new {name} configuration.'
+    return GraphButton('Document_2_Add', f'SAVE {name}', tooltip=tooltip, **kwargs)
+
+def delete_button(name, tooltip=None, **kwargs):
+    if tooltip is None:
+        tooltip = f'Delete an existing {name} configuration.'
+    return GraphButton('Document_2_Remove', f'DELETE {name}', tooltip=tooltip, **kwargs)
+
+def edit_button(name, tooltip=None, **kwargs):
+    if tooltip is None:
+        tooltip = f'Configure an existing or create a new {name}.'
+    return GraphButton('Document_2_Edit', f'EDIT {name}', tooltip=tooltip, **kwargs)
 
 
 def sel_all_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Select all list elements.'
-    b = graphic_button('Checkbox_Full', f'SELECT_ALL {name}', tooltip=tooltip, **kwargs)
-    return b
+    return GraphButton('Checkbox_Full', f'SELECT_ALL {name}', tooltip=tooltip, **kwargs)
 
 
 def changeID_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Change the dataset ID transiently or permanently.'
-    b = graphic_button('Document_2_Edit', f'CHANGE_ID {name}', tooltip=tooltip, **kwargs)
-    return b
+    return GraphButton('Document_2_Edit', f'CHANGE_ID {name}', tooltip=tooltip, **kwargs)
 
 
 def replay_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Replay/Visualize the dataset.'
-    b = graphic_button('Button_Play', f'REPLAY {name}', tooltip=tooltip, **kwargs)
-    return b
+    return GraphButton('Button_Play', f'REPLAY {name}', tooltip=tooltip, **kwargs)
 
 
 def import_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Build a dataset from raw files.'
-    b = graphic_button('Button_Burn', f'BUILD {name}', tooltip=tooltip, **kwargs)
-    return b
+    return GraphButton('Button_Burn', f'BUILD {name}', tooltip=tooltip, **kwargs)
 
 
 def enrich_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Enrich the dataset.'
-    b = graphic_button('Document_2_Add', f'ENRICH {name}', tooltip=tooltip, **kwargs)
-    return b
+    return GraphButton('Document_2_Add', f'ENRICH {name}', tooltip=tooltip, **kwargs)
 
 
 def add_ref_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Add the reference experimental dataset to the list.'
-    b = graphic_button('Box_Add', f'ADD REF {name}', tooltip=tooltip, **kwargs)
-    return b
+    return GraphButton('Box_Add', f'ADD REF {name}', tooltip=tooltip, **kwargs)
 
 def run_button(name, tooltip=None, **kwargs):
     if tooltip is None:
         tooltip = 'Run the selected simulation/essay/batch-run.'
-    b = graphic_button('Button_Play', f'RUN {name}', tooltip=tooltip, **kwargs)
-    return b
+    return GraphButton('Button_Play', f'RUN {name}', tooltip=tooltip, **kwargs)
 
 
 button_dict = {
@@ -84,25 +95,31 @@ button_dict = {
     'changeID': changeID_button,
     'browse': browse_button,
     'replay': replay_button,
-    'run': run_button
+    'load': load_button,
+    'edit': edit_button,
+    'save': save_button,
+    'delete': delete_button,
+    'run': run_button,
 }
 
+def button_row(name, buttons, button_args={}) :
+    bl = []
+    for n in buttons:
+        if n in list(button_args.keys()):
+            kws = button_args[n]
+        else:
+            kws = {}
+        l = button_dict[n](name, **kws)
+        bl.append(l)
+    return bl
 
-def named_bool_button(name, state, toggle_name=None, tt_kws={}, input_key=None, input_text='', **kwargs):
+
+def named_bool_button(name, state, toggle_name=None, tt_kws={}, **kwargs):
     if toggle_name is None:
         toggle_name = name
-    l = [sg.Text(f'{name} :', **tt_kws), BoolButton(toggle_name, state, **kwargs)]
-    if input_key is not None:
-        l.append(sg.In(input_text, k=input_key, visible=True, **t_kws(14)))
-    return l
+    l = [sg.T(f'{name} :', **tt_kws), BoolButton(toggle_name, state, **kwargs)]
 
-def graphic_button(name, key, **kwargs):
-    c = {'button_color': (sg.theme_background_color(), sg.theme_background_color()),
-         'border_width': 0,
-         }
-    bs64=getattr(graphics, name)
-    b = sg.B(image_data=bs64, k=key, **c, **kwargs)
-    return b
+    return l
 
 class GraphButton(Button):
     def __init__(self, name, key, **kwargs):
@@ -171,7 +188,7 @@ def color_pick_layout(name, color=None, show_text=False):
     return [*t,
             sg.Combo(list(color_map.keys()), default_value=color, k=f'{name}_color', enable_events=True, readonly=False,
                      **t_kws(10)),
-            graphic_button('Button_Color_Circle', f'PICK {name}_color', button_type=BUTTON_TYPE_COLOR_CHOOSER,
+            GraphButton('Button_Color_Circle', f'PICK {name}_color', button_type=BUTTON_TYPE_COLOR_CHOOSER,
                            target=f'{name}_color', enable_events=True)]
 
 

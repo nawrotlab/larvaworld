@@ -4,8 +4,8 @@ import lib.conf.conf
 from lib.anal.plotting import plot_debs
 from lib.conf.init_dtypes import substrate_dict
 from lib.gui.aux.elements import CollapsibleDict, Table, GraphList, SelectionList, Header
-from lib.gui.aux.functions import col_size, col_kws, t_kws, gui_col
-from lib.gui.aux.buttons import graphic_button, GraphButton
+from lib.gui.aux.functions import col_size, t_kws, gui_col, gui_row
+from lib.gui.aux.buttons import GraphButton
 from lib.gui.tabs.tab import GuiTab
 from lib.model.DEB.deb import deb_default
 
@@ -45,37 +45,30 @@ class LifeTab(GuiTab):
 
         y = 0.5
         x1 = 0.2
-        x2 = 0.2
-        l2_size = col_size(x_frac=x2, y_frac=1 - y)
+        x2 = 0.8
         r1_size = col_size(x_frac=1 - x1, y_frac=y)
-        r2_size = col_size(x_frac=(1 - x2) / 2, y_frac=1 - y)
 
         sl0 = SelectionList(tab=self, actions=['load', 'save', 'delete'])
 
-        sub = CollapsibleDict('substrate', default=True, header_dict=substrate_dict,header_value='standard')
-
-        l1 = sg.Col([[sg.T('Epoch start (hours) : ', **t_kws(24))],
-                     [sg.Slider(range=(0, 150), default_value=0, k=self.S0,
-                                tick_interval=24, resolution=1, trough_color='green', **sl1_kws)],
-                     [sg.T('Epoch stop (hours) : ', **t_kws(24))],
-                     [sg.Slider(range=(0, 150), default_value=0, k=self.S1,
-                                tick_interval=24, resolution=1, trough_color='red', **sl1_kws)],
-                     ], size=r2_size, **col_kws)
-
-        l2 = sg.Col([[sg.T('Food quality : ', **t_kws(24))],
-                     [sg.Slider(range=(0.0, 1.0), default_value=1.0, k=self.Sq,
-                                tick_interval=0.25, resolution=0.01, **sl1_kws)],
-                     [sg.T('Starting age (hours post-hatch): ', **t_kws(24))],
-                     [sg.Slider(range=(0, 150), default_value=0, k=self.Sa,
-                                tick_interval=24, resolution=1, **sl1_kws)],
-                     ], size=r2_size, **col_kws)
+        sub = CollapsibleDict('substrate', default=True, header_dict=substrate_dict, header_value='standard')
+        l1 = [[sg.T('Epoch start (hours) : ', **t_kws(24))],
+              [sg.Slider(range=(0, 150), default_value=0, k=self.S0,
+                         tick_interval=24, resolution=1, trough_color='green', **sl1_kws)],
+              [sg.T('Epoch stop (hours) : ', **t_kws(24))],
+              [sg.Slider(range=(0, 150), default_value=0, k=self.S1,
+                         tick_interval=24, resolution=1, trough_color='red', **sl1_kws)]]
+        l2 = [[sg.T('Food quality : ', **t_kws(24))],
+              [sg.Slider(range=(0.0, 1.0), default_value=1.0, k=self.Sq,
+                         tick_interval=0.25, resolution=0.01, **sl1_kws)],
+              [sg.T('Starting age (hours post-hatch): ', **t_kws(24))],
+              [sg.Slider(range=(0, 150), default_value=0, k=self.Sa,
+                         tick_interval=24, resolution=1, **sl1_kws)]]
 
         after_header = [GraphButton('Button_Add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
                         GraphButton('Button_Remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.')]
-        content = [Table(headings=[self.s0, self.s1, 'quality'], def_col_width=7, key=self.K)]
-        h0 = Header('Epochs', text=f'{ep.capitalize()}s (h)',header_text_kws =t_kws(18),
-                       after_header = after_header, single_line = False, content=content)
-        l_tab = sg.Col(h0.layout,size=l2_size, **col_kws)
+        content = [Table(headings=[self.s0, self.s1, 'quality'], def_col_width=7, key=self.K, num_rows=0)]
+        l_tab = Header('Epochs', text=f'{ep.capitalize()}s (h)', header_text_kws=t_kws(18),
+                       after_header=after_header, single_line=False, content=content).layout
 
         g1 = GraphList(self.name, fig_dict={m: plot_debs for m in deb_modes}, default_values=['reserve'],
                        canvas_size=r1_size, list_header='DEB parameters', auto_eval=False)
@@ -85,8 +78,7 @@ class LifeTab(GuiTab):
 
         l = [
             [l0, l3],
-            # [sg.Pane([l_tab,l1, l2], orientation='horizontal')],
-            [l_tab,l1, l2],
+            gui_row([l_tab, l1, l2], y_frac=1 - y, x_fracs=[1 - x2, x2 / 2, x2 / 2]),
         ]
 
         c = {sub.name: sub}

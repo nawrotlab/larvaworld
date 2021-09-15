@@ -6,7 +6,7 @@ from lib.conf.conf import saveConfDict, loadConfDict
 from lib.conf.init_dtypes import store_controls
 from lib.gui.aux.elements import CollapsibleDict, Collapsible
 from lib.gui.aux.functions import t_kws, gui_col
-from lib.gui.aux.buttons import graphic_button, GraphButton
+from lib.gui.aux.buttons import GraphButton
 import lib.conf.dtype_dicts as dtypes
 from lib.gui.tabs.tab import GuiTab
 from lib.aux import functions as fun

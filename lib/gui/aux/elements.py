@@ -15,7 +15,7 @@ from lib.conf.conf import loadConfDict, deleteConf, loadConf, expandConf
 import lib.aux.functions as fun
 from lib.conf.par import runtime_pars, getPar
 from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse
-from lib.gui.aux.buttons import graphic_button, button_dict, named_bool_button, BoolButton, GraphButton
+from lib.gui.aux.buttons import button_dict, named_bool_button, BoolButton, GraphButton, button_row
 from lib.gui.aux.windows import gui_table, set_kwargs, save_conf_window, import_window, change_dataset_id
 
 from lib.stor import paths as paths
@@ -167,8 +167,8 @@ class MultiSpin(Pane):
         self.spins = self.build_spins()
         self.layout = self.build_layout()
 
-        add_button = graphic_button('Button_Add', self.add_key, tooltip='Add another item in the list.')
-        remove_button = graphic_button('Button_Remove', self.remove_key, tooltip='Remove last item in the list.')
+        add_button = GraphButton('Button_Add', self.add_key, tooltip='Add another item in the list.')
+        remove_button = GraphButton('Button_Remove', self.remove_key, tooltip='Remove last item in the list.')
         self.buttons = sg.Col([[add_button], [remove_button]])
         pane_list = [sg.Col([self.layout])]
         super().__init__(pane_list=pane_list, key=self.key)
@@ -269,7 +269,7 @@ class ProgressBarLayout:
         self.l = [sg.Text('Progress :', **t_kws(8)),
                   sg.ProgressBar(100, orientation='h', size=(8.8, 20), key=self.k,
                                  bar_color=('green', 'lightgrey'), border_width=3),
-                  graphic_button('Button_Check', self.k_complete, visible=False,
+                  GraphButton('Button_Check', self.k_complete, visible=False,
                                  tooltip='Whether the current {n} was completed.')]
 
     def reset(self, w):
@@ -296,7 +296,6 @@ class SelectionList(GuiElement):
         self.with_dict = with_dict
         self.width = width
         self.tab = tab
-        self.actions = actions
 
         if disp is None:
             disps = [k for k, v in self.tab.gui.tab_dict.items() if v[1] == self.conftype]
@@ -315,31 +314,9 @@ class SelectionList(GuiElement):
         self.sublists = sublists
         self.tab.selectionlists[self.conftype] = self
 
-        bs = self.build_buttons()
+        bs = button_row(self.disp, actions)
 
         self.layout = self.build(bs=bs, **kwargs)
-
-    def build_buttons(self):
-        acts = self.actions
-        n = self.disp
-        bs = []
-        for a in acts:
-            if a=='load':
-                b=GraphButton('Button_Load', f'LOAD_{n}', tooltip=f'Load the configuration for a {n}.')
-            elif a=='edit':
-                b=GraphButton('Document_2_Edit', f'EDIT_{n}', tooltip=f'Configure an existing or create a new {n}.')
-            elif a=='save':
-                b=GraphButton('Document_2_Add', f'SAVE_{n}', tooltip=f'Save a new {n} configuration.')
-            elif a=='delete':
-                b=GraphButton('Document_2_Remove', f'DELETE_{n}',tooltip=f'Delete an existing {n} configuration.')
-            elif a=='run':
-                b=GraphButton('Button_Play', f'RUN_{n}', tooltip=f'Run the selected {n}.')
-            elif a=='search':
-                b=GraphButton('Search_Add', f'SEARCH_{n}', initial_folder=paths.DataFolder, change_submits=True,
-                                     enable_events=True, target=(0, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
-                                     tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
-            bs.append(b)
-        return bs
 
     def build(self, bs, **kwargs):
         n = self.disp
@@ -354,11 +331,10 @@ class SelectionList(GuiElement):
 
         else:
             self.collapsible = None
-            temp = NamedList(self.name, key=self.k, choices=self.confs, default_value=None,
+            l = NamedList(self.name, key=self.k, choices=self.confs, default_value=None,
                              drop_down=True, size=(self.width, None),
                              list_kws={'tooltip': f'The currently loaded {n}.'},
-                             header_kws={'text': n.capitalize(), 'after_header': bs, 'single_line': False})
-            l = temp.layout
+                             header_kws={'text': n.capitalize(), 'after_header': bs, 'single_line': False}).layout
         if self.progressbar is not None:
             l.append(self.progressbar.l)
         return l
@@ -368,7 +344,7 @@ class SelectionList(GuiElement):
         id = v[self.k]
         k0 = self.conftype
 
-        if e == f'LOAD_{n}' and id != '':
+        if e == f'LOAD {n}' and id != '':
             conf = loadConf(id, k0)
             self.tab.update(w, c, conf, id)
             if self.progressbar is not None:
@@ -376,17 +352,17 @@ class SelectionList(GuiElement):
             for kk, vv in self.sublists.items():
                 vv.update(w, conf[kk])
 
-        elif e == f'SAVE_{n}':
+        elif e == f'SAVE {n}':
             conf = self.tab.get(w, v, c, as_entry=True)
             for kk, vv in self.sublists.items():
                 conf[kk] = v[vv.k]
             id = self.save(conf)
             if id is not None:
                 self.update(w, id)
-        elif e == f'DELETE_{n}' and id != '':
+        elif e == f'DELETE {n}' and id != '':
             deleteConf(id, k0)
             self.update(w)
-        elif e == f'RUN_{n}' and id != '':
+        elif e == f'RUN {n}' and id != '':
             conf = self.tab.get(w, v, c, as_entry=False)
             for kk, vv in self.sublists.items():
                 if not vv.with_dict:
@@ -396,7 +372,7 @@ class SelectionList(GuiElement):
             d, g = self.tab.run(v, w, c, d, g, conf, id)
             self.tab.gui.dicts = d
             self.tab.gui.graph_lists = g
-        elif e == f'EDIT_{n}':
+        elif e == f'EDIT {n}':
             conf = self.tab.get(w, v, c, as_entry=False)
             new_conf = self.tab.edit(conf)
             self.tab.update(w, c, new_conf, id=None)
@@ -496,27 +472,28 @@ class DataList(NamedList):
 
         self.tab = tab
         self.dict = dict
-        self.buttons = buttons
-        self.button_args = button_args
+        # self.buttons = buttons
+        # self.button_args = button_args
         self.raw = raw
         self.list_key = f'{name}_IDS'
         self.browse_key = f'BROWSE {name}'
         self.tab.datalists[name] = self
-        header_kws = {'text': get_disp_name(name), 'single_line': False, 'after_header': self.build_buttons(name)}
+        after_header=button_row(name, buttons, button_args)
+        header_kws = {'text': get_disp_name(name), 'single_line': False, 'after_header': after_header}
         super().__init__(name=name, header_kws=header_kws, key=self.list_key, choices=list(self.dict.keys()),
                       drop_down=False, select_mode=select_mode, **kwargs)
 
 
-    def build_buttons(self, name):
-        bl = []
-        for n in self.buttons:
-            if n in list(self.button_args.keys()):
-                kws = self.button_args[n]
-            else:
-                kws = {}
-            l = button_dict[n](name, **kws)
-            bl.append(l)
-        return bl
+    # def build_buttons(self, name):
+    #     bl = []
+    #     for n in self.buttons:
+    #         if n in list(self.button_args.keys()):
+    #             kws = self.button_args[n]
+    #         else:
+    #             kws = {}
+    #         l = button_dict[n](name, **kws)
+    #         bl.append(l)
+    #     return bl
 
 
     def update_window(self, w):
