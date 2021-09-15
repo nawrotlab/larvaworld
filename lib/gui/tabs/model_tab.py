@@ -52,13 +52,13 @@ class ModelTab(GuiTab):
 
     def build(self):
         l0 = SelectionList(tab=self,actions=['load', 'save', 'delete'])
-        c1 = [CollapsibleDict(n, False, default=True, **kwargs)
+        c1 = [CollapsibleDict(n, default=True, **kwargs)
               for n, kwargs in zip(self.fields, [{}, {'toggle': True}, {}, {}])]
-        s1 = CollapsibleTable('odor_gains', False, headings=['id', 'mean', 'std'], dict={}, type_dict=dtypes.get_dict_dtypes('odor_gain'))
-        c2 = [CollapsibleDict(k.upper(), False, dict=dtypes.get_dict(k), type_dict=dtypes.get_dict_dtypes(k),
+        s1 = CollapsibleTable('odor_gains', headings=['id', 'mean', 'std'], dict={}, type_dict=dtypes.get_dict_dtypes('odor_gain'))
+        c2 = [CollapsibleDict(k.upper(), dict=dtypes.get_dict(k), type_dict=dtypes.get_dict_dtypes(k),
                               toggle=True, disp_name=k.capitalize()) for k in self.module_keys]
         l2 = [i.get_layout() for i in c2]
-        b = Collapsible('Brain', False, l2)
+        b = Collapsible('Brain', content=l2)
 
         fdir=paths.ModelFigFolder
         fig_dict= {f: f'{fdir}/{f}' for f in os.listdir(fdir)}

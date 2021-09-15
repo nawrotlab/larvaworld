@@ -246,7 +246,7 @@ def import_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
         vertical_scroll_only=True, scrollable=True, expand_y=True, vertical_alignment='top',
         size=col_size(y_frac=0.4, win_size=w_size))
 
-    s1 = CollapsibleDict('build_conf', True, default=True, disp_name='Configuration', text_kws=t_kws(24),
+    s1 = CollapsibleDict('build_conf', default=True, disp_name='Configuration', text_kws=t_kws(24),
                          value_kws=t_kws(8))
     c = {}
     for s in [s1]:

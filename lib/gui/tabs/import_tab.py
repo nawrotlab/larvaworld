@@ -30,7 +30,7 @@ class ImportTab(GuiTab):
         dl2 = DataList(name=self.proc_key, tab=self, dict=d[kP],
                        buttons=['replay', 'enrich', 'select_all', 'remove', 'changeID', 'browse'],
                        aux_cols=['N', 'duration', 'quality'], size=(40,5))
-        c1,c2,c3=[CollapsibleDict(n, False, default=True, toggled_subsections=None) for n in self.fields]
+        c1,c2,c3=[CollapsibleDict(n, default=True, toggled_subsections=None) for n in self.fields]
         g1 = ButtonGraphList(name=self.name, fig_dict={})
 
         l = [[

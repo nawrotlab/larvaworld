@@ -248,6 +248,6 @@ if __name__ == "__main__":
     #     e, v = w.read()
     #     if e in (None, 'Exit'):
     #         break
-    #     default_run_window(w, e, v, c, g)
+    #     run0(w, e, v, c, g)
     #     d, g = eval_intro_tab(e, v, w, collapsibles=c, dicts=d, graph_lists=g)
     # w.close()

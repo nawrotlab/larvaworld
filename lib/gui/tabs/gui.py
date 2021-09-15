@@ -1,9 +1,13 @@
 import PySimpleGUI as sg
 import matplotlib
+import time
+
+import pandas as pd
 
 import lib.gui.aux.functions
+from lib.stor import paths
 from lib.gui.tabs.analysis_tab import AnalysisTab
-from lib.gui.aux.functions import col_size
+from lib.gui.aux.functions import col_size, window_size, w_kws
 from lib.gui.tabs.batch_tab import BatchTab
 from lib.gui.tabs.env_tab import EnvTab
 from lib.gui.tabs.essay_tab import EssayTab
@@ -21,6 +25,7 @@ matplotlib.use('TkAgg')
 class LarvaworldGui:
 
     def __init__(self, tabs=None):
+        # s0 = time.time()
         self.tab_dict = {
             'introduction': (IntroTab, None),
             'tutorials': (TutorialTab, None),
@@ -42,10 +47,16 @@ class LarvaworldGui:
         sg.theme('LightGreen')
         self.background_color = None
         self.terminal = gui_terminal()
+        # s1 = time.time()
         layout, self.collapsibles, self.graph_lists, self.dicts, self.tabs = self.build(tabs)
-
-        c = {'layout': layout, 'size': lib.gui.aux.functions.window_size, 'location': (300, 100), **lib.gui.aux.functions.w_kws}
+        # s2 = time.time()
+        c = {'layout': layout, 'size': window_size, **w_kws}
+        # c = {'layout': layout, 'size': window_size, 'location': (300, 100), **w_kws}
         self.window = sg.Window('Larvaworld gui', **c)
+        # s3 = time.time()
+        # print(s3-s2)
+        # print(s2-s1)
+        # print(s1-s0)
 
     def run(self):
 
@@ -56,7 +67,7 @@ class LarvaworldGui:
                 self.window.close()
                 break
             else:
-                self.default_run_window(e, v)
+                self.run0(e, v)
 
                 n = v['ACTIVE_TAB'].split()[0]
                 self.tabs[n].eval0(e=e, v=v)
@@ -112,7 +123,7 @@ class LarvaworldGui:
             c.keys()) else dtypes.get_dict('replay', arena_pars=None)
         return replay_kwargs
 
-    def default_run_window(self,e, v):
+    def run0(self, e, v):
         w=self.window
         check_togglesNcollapsibles(w, e, v, self.collapsibles)
         check_multispins(w, e)
@@ -166,3 +177,23 @@ def gui_terminal(size=col_size(y_frac=0.3)):
     return sg.Output(size=size, key='Terminal', background_color='black', text_color='white',
                      echo_stdout_stderr=True, font=('Helvetica', 8, 'normal'),
                      tooltip='Terminal output')
+
+def speed_test() :
+    import numpy as np
+
+    # ns0=['introduction']
+    ns0=['introduction', 'tutorials', 'larva-model', 'environment', 'life-history', 'simulation', 'essay', 'batch-run', 'analysis', 'import', 'videos', 'settings']
+    ns=[[n] for n in ns0]
+    ns=[None]+ns+[None]
+    ns0=['Total_1']+ns0+['Total_2']
+    res=[]
+    for n, n0 in zip(ns, ns0) :
+        s0=time.time()
+        larvaworld_gui = LarvaworldGui(tabs=n)
+        s1 = time.time()
+        larvaworld_gui.window.close()
+        s2 = time.time()
+        r=[n0, np.round(s1 - s0,1), np.round(s2 - s1,1)]
+        res.append(r)
+    df=pd.DataFrame(res)
+    df.to_csv(paths.GuiTest, index=0, header=['Tabs', 'Open', 'Close'])

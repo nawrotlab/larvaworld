@@ -49,16 +49,16 @@ class BatchTab(GuiTab):
         sl1 = SelectionList(tab=self, conftype='Exp', idx=1)
         sl2 = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'],
                                 sublists={'exp': sl1})
-        batch_conf = [[sg.Text('Batch id:', **t_kws(8)), sg.In('unnamed_batch_0', key=self.batch_id_key, **t_kws(16))],
-                      [sg.Text('Path:', **t_kws(8)), sg.In('unnamed_batch', key=self.batch_path_key, **t_kws(16))],
+        batch_conf = [[sg.T('Batch id:', **t_kws(8)), sg.In('unnamed_batch_0', k=self.batch_id_key, **t_kws(16))],
+                      [sg.T('Path:', **t_kws(8)), sg.In('unnamed_batch', k=self.batch_path_key, **t_kws(16))],
                       named_bool_button('Save data', False, toggle_name='save_data_flag'),
                       ]
-        s0 = Collapsible(f'{self.name}_CONFIGURATION', True, batch_conf, disp_name='Configuration')
-        s1 = CollapsibleDict('batch_methods', False, default=True)
+        s0 = Collapsible(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration')
+        s1 = CollapsibleDict('batch_methods', default=True)
 
-        s2 = CollapsibleDict('optimization', False, default=True,
+        s2 = CollapsibleDict('optimization', default=True,
                              toggle=True, disabled=True, toggled_subsections=None)
-        s3 = CollapsibleTable('space_search', False, headings=['pars', 'ranges', 'Ngrid'], dict={},
+        s3 = CollapsibleTable('space_search', headings=['pars', 'ranges', 'Ngrid'], dict={},
                               type_dict=dtypes.get_dict_dtypes('space_search'))
         g1 = GraphList(self.name)
 

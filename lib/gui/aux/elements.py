@@ -15,7 +15,7 @@ from lib.conf.conf import loadConfDict, deleteConf, loadConf, expandConf
 import lib.aux.functions as fun
 from lib.conf.par import runtime_pars, getPar
 from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse
-from lib.gui.aux.buttons import graphic_button, button_dict, named_bool_button, BoolButton
+from lib.gui.aux.buttons import graphic_button, button_dict, named_bool_button, BoolButton, GraphButton
 from lib.gui.aux.windows import gui_table, set_kwargs, save_conf_window, import_window, change_dataset_id
 
 from lib.stor import paths as paths
@@ -30,7 +30,7 @@ class SectionDict:
         self.name = name
         self.subdicts = {}
 
-    def init_section(self, text_kws={}, value_kws={}):
+    def init_section(self, value_kws={}):
         d = self.type_dict
         l = []
         for k, v in self.init_dict.items():
@@ -40,7 +40,7 @@ class SectionDict:
                 ii = named_bool_button(k_disp, v, k0)
             elif type(v) == dict:
                 type_dict = d[k] if d is not None else None
-                self.subdicts[k0] = CollapsibleDict(k0, True, disp_name=k, dict=v, type_dict=type_dict,
+                self.subdicts[k0] = CollapsibleDict(k0, disp_name=k, dict=v, type_dict=type_dict,
                                                     toggle=self.toggled_subsections,
                                                     toggled_subsections=self.toggled_subsections)
                 ii = self.subdicts[k0].get_layout()
@@ -70,7 +70,7 @@ class SectionDict:
                             temp = TupleSpin(value_list=t0['value_list'], initial_value=v, key=k0, **value_kws)
                     # else:
 
-                ii = [sg.Text(f'{k_disp}:', **text_kws), temp]
+                ii = [sg.Text(f'{k_disp}:'), temp]
             l.append(ii)
         return l
 
@@ -257,159 +257,7 @@ class GuiElement:
         self.layout_col_kwargs.update(kwargs)
         return [sg.Col(self.layout, **self.layout_col_kwargs)] if as_col else self.layout
 
-class SelectionList(GuiElement):
-    def __init__(self, tab, conftype=None, disp=None, actions=[], sublists={}, idx=None, progress=False, width=24,
-                 with_dict=False, name=None, **kwargs):
-        self.conftype = conftype if conftype is not None else tab.conftype
-        if name is None:
-            name = self.conftype
-        super().__init__(name=name)
-        self.with_dict = with_dict
-        self.width = width
-        self.tab = tab
-        self.actions = actions
 
-        if disp is None:
-            disps = [k for k, v in self.tab.gui.tab_dict.items() if v[1] == self.conftype]
-            if len(disps) == 1:
-                disp = disps[0]
-            elif len(disps) > 1:
-                raise ValueError('Each selectionList is associated with a single configuration type')
-        self.disp = disp
-
-        self.progressbar = ProgressBarLayout(self) if progress else None
-        self.k0 = f'{self.conftype}_CONF'
-        if idx is not None:
-            self.k = f'{self.k0}{idx}'
-        else:
-            self.k = self.get_next(self.k0)
-        self.sublists = sublists
-        self.tab.selectionlists[self.conftype] = self
-
-        bs=self.build_buttons()
-
-        self.layout = self.build(bs=bs, **kwargs)
-
-
-    def build_buttons(self):
-        acts = self.actions
-        n = self.disp
-        bs = []
-        if 'load' in acts:
-            bs.append(graphic_button('Button_Load', f'LOAD_{n}', tooltip=f'Load the configuration for a {n}.'))
-        if 'edit' in acts:
-            bs.append(
-                graphic_button('Document_2_Edit', f'EDIT_{n}', tooltip=f'Configure an existing or create a new {n}.')),
-        if 'save' in acts:
-            bs.append(graphic_button('Document_2_Add', f'SAVE_{n}', tooltip=f'Save a new {n} configuration.'))
-        if 'delete' in acts:
-            bs.append(graphic_button('Document_2_Remove', f'DELETE_{n}',
-                                     tooltip=f'Delete an existing {n} configuration.'))
-        if 'run' in acts:
-            bs.append(graphic_button('Button_Play', f'RUN_{n}', tooltip=f'Run the selected {n}.'))
-        if 'search' in acts:
-            bs.append(graphic_button('Search_Add', f'SEARCH_{n}', initial_folder=paths.DataFolder, change_submits=True,
-                                     enable_events=True, target=(0, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
-                                     tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.'))
-        return bs
-
-
-    def build(self,bs, **kwargs):
-        n = self.disp
-        if self.with_dict:
-            nn = self.tab.gui.tab_dict[n][2]
-            self.collapsible = CollapsibleDict(n, True, dict=dtypes.get_dict(nn), type_dict=dtypes.get_dict_dtypes(nn),
-                                               header_list_width=self.width, header_dict=loadConfDict(self.conftype),
-                                               next_to_header=bs, header_key=self.k,
-                                               header_list_kws={'tooltip': f'The currently loaded {n}.'}, **kwargs)
-
-            l = self.collapsible.get_layout(as_col=False)
-
-        else:
-            self.collapsible = None
-            temp = NamedList(self.name, key=self.k, choices=self.confs, default_value=None,
-                             drop_down=True, size=(self.width, None),list_kws={'tooltip': f'The currently loaded {n}.'},
-                             header_kws={'text' : n.capitalize(), 'after_header' : bs, 'single_line' : False})
-            l = temp.layout
-        if self.progressbar is not None:
-            l.append(self.progressbar.l)
-        return l
-
-    def eval(self, e, v, w, c, d, g):
-        n = self.disp
-        id = v[self.k]
-        k0 = self.conftype
-
-        if e == f'LOAD_{n}' and id != '':
-            conf = loadConf(id, k0)
-            self.tab.update(w, c, conf, id)
-            if self.progressbar is not None:
-                self.progressbar.reset(w)
-            for kk, vv in self.sublists.items():
-                vv.update(w, conf[kk])
-
-        elif e == f'SAVE_{n}':
-            conf = self.tab.get(w, v, c, as_entry=True)
-            for kk, vv in self.sublists.items():
-                conf[kk] = v[vv.k]
-            id = self.save(conf)
-            if id is not None:
-                self.update(w, id)
-        elif e == f'DELETE_{n}' and id != '':
-            deleteConf(id, k0)
-            self.update(w)
-        elif e == f'RUN_{n}' and id != '':
-            conf = self.tab.get(w, v, c, as_entry=False)
-            for kk, vv in self.sublists.items():
-                if not vv.with_dict:
-                    conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
-                else:
-                    conf[kk] = vv.collapsible.get_dict(v, w)
-            d, g = self.tab.run(v, w, c, d, g, conf, id)
-            self.tab.gui.dicts = d
-            self.tab.gui.graph_lists = g
-        elif e == f'EDIT_{n}':
-            conf = self.tab.get(w, v, c, as_entry=False)
-            new_conf = self.tab.edit(conf)
-            self.tab.update(w, c, new_conf, id=None)
-        elif self.collapsible is not None and e == self.collapsible.header_key:
-            self.collapsible.update_header(w, id)
-
-    def update(self, w, id='', all=False):
-        w.Element(self.k).Update(values=self.confs, value=id, size=(self.width, self.Nconfs))
-        if self.collapsible is not None:
-            self.collapsible.update_header(w, id)
-        if all:
-            for i in range(5):
-                k = f'{self.k0}{i}'
-                if k in w.AllKeysDict.keys():
-                    w[k].update(values=self.confs, value=id)
-
-    def save(self, conf):
-        return save_conf_window(conf, self.conftype, disp=self.disp)
-
-        # for i in range(3):
-        #     k = f'{self.conf_k}{i}'
-        #     w.Element(k, silent_on_error=True).Update(values=list(loadConfDict(k).keys()),value=id)
-
-    def get_next(self, k0):
-        w = self.tab.gui.window if hasattr(self.tab.gui, 'window') else None
-        idx = int(np.min([i for i in range(5) if f'{k0}{i}' not in w.AllKeysDict.keys()])) if w is not None else 0
-        return f'{k0}{idx}'
-
-    def get_subdicts(self):
-        if self.collapsible is not None:
-            return self.collapsible.get_subdicts()
-        else:
-            return {}
-
-    @property
-    def confs(self):
-        return list(loadConfDict(self.conftype).keys())
-
-    @property
-    def Nconfs(self):
-        return len(self.confs)
 
 
 class ProgressBarLayout:
@@ -475,29 +323,29 @@ class SelectionList(GuiElement):
         acts = self.actions
         n = self.disp
         bs = []
-        if 'load' in acts:
-            bs.append(graphic_button('Button_Load', f'LOAD_{n}', tooltip=f'Load the configuration for a {n}.'))
-        if 'edit' in acts:
-            bs.append(
-                graphic_button('Document_2_Edit', f'EDIT_{n}', tooltip=f'Configure an existing or create a new {n}.')),
-        if 'save' in acts:
-            bs.append(graphic_button('Document_2_Add', f'SAVE_{n}', tooltip=f'Save a new {n} configuration.'))
-        if 'delete' in acts:
-            bs.append(graphic_button('Document_2_Remove', f'DELETE_{n}',
-                                     tooltip=f'Delete an existing {n} configuration.'))
-        if 'run' in acts:
-            bs.append(graphic_button('Button_Play', f'RUN_{n}', tooltip=f'Run the selected {n}.'))
-        if 'search' in acts:
-            bs.append(graphic_button('Search_Add', f'SEARCH_{n}', initial_folder=paths.DataFolder, change_submits=True,
+        for a in acts:
+            if a=='load':
+                b=GraphButton('Button_Load', f'LOAD_{n}', tooltip=f'Load the configuration for a {n}.')
+            elif a=='edit':
+                b=GraphButton('Document_2_Edit', f'EDIT_{n}', tooltip=f'Configure an existing or create a new {n}.')
+            elif a=='save':
+                b=GraphButton('Document_2_Add', f'SAVE_{n}', tooltip=f'Save a new {n} configuration.')
+            elif a=='delete':
+                b=GraphButton('Document_2_Remove', f'DELETE_{n}',tooltip=f'Delete an existing {n} configuration.')
+            elif a=='run':
+                b=GraphButton('Button_Play', f'RUN_{n}', tooltip=f'Run the selected {n}.')
+            elif a=='search':
+                b=GraphButton('Search_Add', f'SEARCH_{n}', initial_folder=paths.DataFolder, change_submits=True,
                                      enable_events=True, target=(0, -1), button_type=sg.BUTTON_TYPE_BROWSE_FOLDER,
-                                     tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.'))
+                                     tooltip='Browse to add datasets to the list.\n Either directly select a dataset directory or a parent directory containing multiple datasets.')
+            bs.append(b)
         return bs
 
     def build(self, bs, **kwargs):
         n = self.disp
         if self.with_dict:
             nn = self.tab.gui.tab_dict[n][2]
-            self.collapsible = CollapsibleDict(n, True, dict=dtypes.get_dict(nn), type_dict=dtypes.get_dict_dtypes(nn),
+            self.collapsible = CollapsibleDict(n, dict=dtypes.get_dict(nn), type_dict=dtypes.get_dict_dtypes(nn),
                                                header_list_width=self.width, header_dict=loadConfDict(self.conftype),
                                                next_to_header=bs, header_key=self.k,
                                                header_list_kws={'tooltip': f'The currently loaded {n}.'}, **kwargs)
@@ -750,7 +598,7 @@ class DataList(NamedList):
 
 
 class Collapsible(HeadedElement):
-    def __init__(self, name, state, content, disp_name=None, toggle=None, disabled=False, next_to_header=None,
+    def __init__(self, name, state=False, content=[], disp_name=None, toggle=None, disabled=False, next_to_header=None,
                  auto_open=False, header_dict=None, header_value=None, header_list_width=10, header_list_kws={},
                  header_text_kws=t_kws(12), header_key=None, **kwargs):
         if disp_name is None:
@@ -860,7 +708,7 @@ class Collapsible(HeadedElement):
 
 
 class CollapsibleTable(Collapsible):
-    def __init__(self, name, state, type_dict, headings, dict={}, **kwargs):
+    def __init__(self, name, type_dict={}, headings=[], dict={}, **kwargs):
         self.dict = dict
         self.type_dict = type_dict
         if 'unique_id' in list(type_dict.keys()):
@@ -892,8 +740,8 @@ class CollapsibleTable(Collapsible):
         self.key = f'TABLE {name}'
         content = self.get_content()
         self.edit_key = f'EDIT_TABLE {name}'
-        b = [graphic_button('Document_2_Edit', self.edit_key, tooltip=f'Create new {name}')]
-        super().__init__(name, state, content=content, next_to_header=b, **kwargs)
+        b = [GraphButton('Document_2_Edit', self.edit_key, tooltip=f'Create new {name}')]
+        super().__init__(name, content=content, next_to_header=b, **kwargs)
 
     def set_data(self, dic):
         if dic is not None and len(dic) != 0:
@@ -973,7 +821,7 @@ class CollapsibleTable(Collapsible):
 
 
 class CollapsibleDict(Collapsible):
-    def __init__(self, name, state, dict=None, dict_name=None, type_dict=None, toggled_subsections=True, default=False,
+    def __init__(self, name, dict=None, dict_name=None, type_dict=None, toggled_subsections=True, default=False,
                  text_kws={}, value_kws={}, **kwargs):
         if dict_name is None:
             dict_name = name
@@ -983,8 +831,8 @@ class CollapsibleDict(Collapsible):
             type_dict = dtypes.get_dict_dtypes(self.dict_name)
         self.sectiondict = SectionDict(name=name, dict=dict, type_dict=type_dict,
                                        toggled_subsections=toggled_subsections)
-        content = self.sectiondict.init_section(text_kws=text_kws, value_kws=value_kws)
-        super().__init__(name, state, content, **kwargs)
+        content = self.sectiondict.init_section(value_kws=value_kws)
+        super().__init__(name, content=content, **kwargs)
 
     def get_dict(self, values, window, check_toggle=True):
         if self.state is None:
@@ -1095,11 +943,10 @@ class ButtonGraphList(GraphList):
     def __init__(self, name, **kwargs):
         self.draw_key = f'{name}_DRAW_FIG'
         l = [
-            graphic_button('Button_Load', f'{name}_REFRESH_FIGS', tooltip='Detect available graphs.'),
-            graphic_button('System_Equalizer', f'{name}_FIG_ARGS', tooltip='Configure the graph arguments.'),
-            # graphic_button('preferences', f'{self.name}_SAVEd_FIG'),
-            graphic_button('Chart', self.draw_key, tooltip='Draw the graph.'),
-            graphic_button('File_Add', f'{name}_SAVE_FIG', tooltip='Save the graph to a file.')
+            GraphButton('Button_Load', f'{name}_REFRESH_FIGS', tooltip='Detect available graphs.'),
+            GraphButton('System_Equalizer', f'{name}_FIG_ARGS', tooltip='Configure the graph arguments.'),
+            GraphButton('Chart', self.draw_key, tooltip='Draw the graph.'),
+            GraphButton('File_Add', f'{name}_SAVE_FIG', tooltip='Save the graph to a file.')
         ]
         super().__init__(name=name, next_to_header=l, **kwargs)
 

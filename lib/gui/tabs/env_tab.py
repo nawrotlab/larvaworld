@@ -7,7 +7,7 @@ import lib.conf.dtype_dicts as dtypes
 import lib.aux.functions as fun
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
 from lib.gui.aux.functions import col_size, col_kws, t_kws, retrieve_dict, gui_col
-from lib.gui.aux.buttons import graphic_button, color_pick_layout
+from lib.gui.aux.buttons import graphic_button, color_pick_layout, GraphButton
 from lib.conf.conf import loadConf
 from lib.gui.tabs.tab import GuiTab
 
@@ -101,28 +101,28 @@ class EnvTab(GuiTab):
         return env0
 
     def build_conf_env(self):
-        s1 = CollapsibleTable(self.Lg, False, headings=['group', 'N', 'color', 'model'],
+        s1 = CollapsibleTable(self.Lg, headings=['group', 'N', 'color', 'model'],
                               type_dict=dtypes.get_dict_dtypes('distro', class_name=self.L, basic=False))
-        s2 = CollapsibleTable(self.Sg, False, headings=['group', 'N', 'color', 'amount', 'odor_id'],
+        s2 = CollapsibleTable(self.Sg, headings=['group', 'N', 'color', 'amount', 'odor_id'],
                               type_dict=dtypes.get_dict_dtypes('distro', class_name=self.S, basic=False))
-        s3 = CollapsibleTable(self.Su, False, headings=['id', 'color', 'amount', 'odor_id'],
+        s3 = CollapsibleTable(self.Su, headings=['id', 'color', 'amount', 'odor_id'],
                               type_dict=dtypes.get_dict_dtypes(self.S))
-        s4 = CollapsibleTable(self.Bg, False, headings=['id', 'color', 'points'],
+        s4 = CollapsibleTable(self.Bg, headings=['id', 'color', 'points'],
                               type_dict=dtypes.get_dict_dtypes(self.B))
         c = {}
         for s in [s1, s2, s3, s4]:
             c.update(**s.get_subdicts())
-        c1 = [CollapsibleDict(n, False, default=True, **kw)
+        c1 = [CollapsibleDict(n, default=True, **kw)
               for n, kw in zip(['arena', 'food_grid', 'odorscape'], [{'next_to_header':[
-                                 graphic_button('Button_Burn', 'RESET_ARENA',
+                                 GraphButton('Button_Burn', 'RESET_ARENA',
                                                 tooltip='Reset to the initial arena. All drawn items will be erased.'),
-                                 graphic_button('Globe_Active', 'NEW_ARENA',
+                                 GraphButton('Globe_Active', 'NEW_ARENA',
                                                 tooltip='Create a new arena.All drawn items will be erased.'),
                              ]}, {'toggle': True}, {}])]
         for s in c1:
             c.update(s.get_subdicts())
         l1 = [c[n].get_layout() for n in [self.Sg, self.Su, 'food_grid']]
-        c2 = Collapsible(self.S, True, l1)
+        c2 = Collapsible(self.S, content=l1)
         c.update(c2.get_subdicts())
         l2 = [c[n] for n in ['arena', self.Lg, self.S, self.Bg, 'odorscape']]
         sl1 = SelectionList(tab=self, actions=['load', 'save', 'delete'])
@@ -134,11 +134,11 @@ class EnvTab(GuiTab):
         g, g0, D, DN, Dm, Ds, s, s0 = self.group_ks(n0)
         o, o0, oM, oS = self.odor_ks(n0)
 
-        s1 = CollapsibleDict(D, False, dict=dtypes.get_dict('distro', class_name=n0),
+        s1 = CollapsibleDict(D, dict=dtypes.get_dict('distro', class_name=n0),
                              type_dict=dtypes.get_dict_dtypes('distro', class_name=n0),
                              toggle=False, disabled=True, disp_name='distribution')
 
-        s2 = CollapsibleDict(o, False, dict=dtypes.get_dict('odor'),
+        s2 = CollapsibleDict(o, dict=dtypes.get_dict('odor'),
                                                        type_dict=dtypes.get_dict_dtypes('odor'),
                                                        toggle=False, disp_name='odor')
 
@@ -172,7 +172,7 @@ class EnvTab(GuiTab):
             'P2': None,
         }
         c = {}
-        s2 = CollapsibleDict('food', False, default=True, toggle=False)
+        s2 = CollapsibleDict('food', default=True, toggle=False)
         c.update(s2.get_subdicts())
         source_l, c = self.add_agent_layout(S, 'green', c)
         lL, c = self.add_agent_layout(L, 'black', c)

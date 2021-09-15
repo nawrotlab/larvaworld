@@ -8,13 +8,7 @@ from lib.gui.aux.functions import b6_kws, t_kws
 from lib.stor import paths as paths
 
 
-def graphic_button(name, key, **kwargs):
-    c = {'button_color': (sg.theme_background_color(), sg.theme_background_color()),
-         'border_width': 0,
-         }
-    bs64=getattr(graphics, name)
-    b = sg.B(image_data=bs64, k=key, **c, **kwargs)
-    return b
+
 
 
 def browse_button(name, initial_folder=paths.DataFolder, target=(0, -1), tooltip=None, **kwargs):
@@ -102,6 +96,21 @@ def named_bool_button(name, state, toggle_name=None, tt_kws={}, input_key=None, 
         l.append(sg.In(input_text, k=input_key, visible=True, **t_kws(14)))
     return l
 
+def graphic_button(name, key, **kwargs):
+    c = {'button_color': (sg.theme_background_color(), sg.theme_background_color()),
+         'border_width': 0,
+         }
+    bs64=getattr(graphics, name)
+    b = sg.B(image_data=bs64, k=key, **c, **kwargs)
+    return b
+
+class GraphButton(Button):
+    def __init__(self, name, key, **kwargs):
+        c = {'button_color': (sg.theme_background_color(), sg.theme_background_color()),
+             'border_width': 0,
+             }
+        bs64 = getattr(graphics, name)
+        super().__init__(image_data=bs64, k=key, **c, **kwargs)
 
 class BoolButton(Button):
     def __init__(self, name, state, disabled=False, **kwargs):
@@ -110,7 +119,8 @@ class BoolButton(Button):
         self.disabled = disabled
         c = sg.theme_background_color()
         super().__init__(image_data=self.get_image(self.state, self.disabled), k=f'TOGGLE_{self.name}', border_width=0,
-                         button_color=(c, c), disabled_button_color=(c, c),
+                         button_color=(c, c),
+                         disabled_button_color=(c, c),
                          metadata=BtnInfo(state=self.state), **b6_kws, **kwargs)
 
     def toggle(self):
