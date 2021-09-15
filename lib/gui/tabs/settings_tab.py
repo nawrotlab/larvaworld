@@ -4,11 +4,11 @@ import PySimpleGUI as sg
 from lib.aux.functions import get_pygame_key
 from lib.conf.conf import saveConfDict, loadConfDict
 from lib.conf.init_dtypes import store_controls
-from lib.gui.gui_lib import CollapsibleDict, Collapsible
-from lib.gui.aux import t_kws, gui_col
-from lib.gui.buttons import graphic_button
+from lib.gui.aux.elements import CollapsibleDict, Collapsible
+from lib.gui.aux.functions import t_kws, gui_col
+from lib.gui.aux.buttons import graphic_button
 import lib.conf.dtype_dicts as dtypes
-from lib.gui.tab import GuiTab
+from lib.gui.tabs.tab import GuiTab
 from lib.aux import functions as fun
 
 class SettingsTab(GuiTab):
@@ -154,7 +154,7 @@ class SettingsTab(GuiTab):
 
 
 if __name__ == "__main__":
-    from lib.gui.gui import LarvaworldGui
+    from lib.gui.tabs.gui import LarvaworldGui
 
     larvaworld_gui = LarvaworldGui(tabs=['settings'])
     larvaworld_gui.run()

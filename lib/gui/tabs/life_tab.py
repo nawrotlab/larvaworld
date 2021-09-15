@@ -1,14 +1,13 @@
 import PySimpleGUI as sg
 
 import lib.conf.conf
-import lib.conf.dtype_dicts as dtypes
 import lib.conf.init_dtypes
 from lib.anal.plotting import plot_debs
 
-from lib.gui.gui_lib import CollapsibleDict, Table, GraphList, SelectionList
-from lib.gui.aux import col_size, col_kws, t_kws, gui_col
-from lib.gui.buttons import graphic_button
-from lib.gui.tab import GuiTab
+from lib.gui.aux.elements import CollapsibleDict, Table, GraphList, SelectionList
+from lib.gui.aux.functions import col_size, col_kws, t_kws, gui_col
+from lib.gui.aux.buttons import graphic_button
+from lib.gui.tabs.tab import GuiTab
 from lib.model.DEB.deb import deb_default
 
 
@@ -76,7 +75,6 @@ class LifeTab(GuiTab):
         y = 0.5
         x1 = 0.2
         x2 = 0.2
-        # l1_size = col_size(x_frac=x1, y_frac=y)
         l2_size = col_size(x_frac=x2, y_frac=1 - y)
         r1_size = col_size(x_frac=1 - x1, y_frac=y)
         r2_size = col_size(x_frac=(1 - x2)/2, y_frac=1 - y)
@@ -107,12 +105,7 @@ class LifeTab(GuiTab):
             graphic_button('Button_Add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
             graphic_button('Button_Remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.'),
         ],
-            [Table(values=[], headings=[self.s0, self.s1, 'quality'], def_col_width=7,
-                      max_col_width=24,
-                      justification='center',
-                      num_rows=0,
-                      key=self.K
-                      )],
+            [Table(headings=[self.s0, self.s1, 'quality'], def_col_width=7,key=self.K)],
         ], size=l2_size, **col_kws)
 
         g1=GraphList(self.name, fig_dict={m : plot_debs for m in deb_modes}, default_values=['reserve'],
@@ -181,7 +174,7 @@ class LifeTab(GuiTab):
 
 
 if __name__ == "__main__":
-    from lib.gui.gui import LarvaworldGui
+    from lib.gui.tabs.gui import LarvaworldGui
     larvaworld_gui = LarvaworldGui(tabs=['life-history'])
     larvaworld_gui.run()
 

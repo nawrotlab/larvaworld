@@ -5,11 +5,11 @@ import numpy as np
 import PySimpleGUI as sg
 import lib.conf.dtype_dicts as dtypes
 import lib.aux.functions as fun
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
-from lib.gui.aux import col_size, col_kws, t_kws, retrieve_dict, gui_col
-from lib.gui.buttons import graphic_button, color_pick_layout
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
+from lib.gui.aux.functions import col_size, col_kws, t_kws, retrieve_dict, gui_col
+from lib.gui.aux.buttons import graphic_button, color_pick_layout
 from lib.conf.conf import loadConf
-from lib.gui.tab import GuiTab
+from lib.gui.tabs.tab import GuiTab
 
 
 class EnvTab(GuiTab):
@@ -650,6 +650,6 @@ class EnvTab(GuiTab):
 
 
 if __name__ == "__main__":
-    from lib.gui.gui import LarvaworldGui
+    from lib.gui.tabs.gui import LarvaworldGui
     larvaworld_gui = LarvaworldGui(tabs=['environment'])
     larvaworld_gui.run()

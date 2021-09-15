@@ -3,8 +3,8 @@ import webbrowser
 import PySimpleGUI as sg
 from PySimpleGUI import Button, BUTTON_TYPE_COLOR_CHOOSER
 
-from lib.gui import graphics as graphics
-from lib.gui.aux import b6_kws, t_kws
+from lib.gui.aux import graphics
+from lib.gui.aux.functions import b6_kws, t_kws
 from lib.stor import paths as paths
 
 

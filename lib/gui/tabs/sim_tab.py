@@ -1,14 +1,9 @@
 import copy
 
-import PySimpleGUI as sg
-import numpy as np
-
-import lib.conf.dtype_dicts as dtypes
-
 from lib.aux.collecting import output_keys
-from lib.gui.gui_lib import CollapsibleDict, GraphList, SelectionList
-from lib.gui.aux import t_kws, gui_col
-from lib.gui.tab import GuiTab
+from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList
+from lib.gui.aux.functions import t_kws, gui_col
+from lib.gui.tabs.tab import GuiTab
 from lib.sim.single_run import run_sim
 from lib.sim.analysis import sim_analysis
 from lib.conf.conf import next_idx
@@ -86,6 +81,6 @@ class SimTab(GuiTab):
 
 
 if __name__ == "__main__":
-    from lib.gui.gui import LarvaworldGui
+    from lib.gui.tabs.gui import LarvaworldGui
     larvaworld_gui = LarvaworldGui(tabs=['simulation'])
     larvaworld_gui.run()

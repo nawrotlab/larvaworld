@@ -1,20 +1,18 @@
 import PySimpleGUI as sg
 import matplotlib
 
-import lib.gui.aux
-from lib.gui.analysis_tab import AnalysisTab
-from lib.gui.aux import col_size
-from lib.gui.batch_tab import BatchTab
-from lib.gui.env_tab import EnvTab
-from lib.gui.essay_tab import EssayTab
-from lib.gui.life_tab import LifeTab
-from lib.gui.import_tab import ImportTab
-from lib.gui.sim_tab import SimTab
-from lib.gui.tab import IntroTab, VideoTab, TutorialTab
-from lib.gui.model_tab import ModelTab
-from lib.gui.settings_tab import SettingsTab
-import lib.gui.gui_lib as gui
-import lib.aux.functions as fun
+import lib.gui.aux.functions
+from lib.gui.tabs.analysis_tab import AnalysisTab
+from lib.gui.aux.functions import col_size
+from lib.gui.tabs.batch_tab import BatchTab
+from lib.gui.tabs.env_tab import EnvTab
+from lib.gui.tabs.essay_tab import EssayTab
+from lib.gui.tabs.life_tab import LifeTab
+from lib.gui.tabs.import_tab import ImportTab
+from lib.gui.tabs.sim_tab import SimTab
+from lib.gui.tabs.tab import IntroTab, VideoTab, TutorialTab
+from lib.gui.tabs.model_tab import ModelTab
+from lib.gui.tabs.settings_tab import SettingsTab
 import lib.conf.dtype_dicts as dtypes
 
 matplotlib.use('TkAgg')
@@ -46,7 +44,7 @@ class LarvaworldGui:
         self.terminal = gui_terminal()
         layout, self.collapsibles, self.graph_lists, self.dicts, self.tabs = self.build(tabs)
 
-        c = {'layout': layout, 'size': lib.gui.aux.window_size, 'location': (300, 100), **lib.gui.aux.w_kws}
+        c = {'layout': layout, 'size': lib.gui.aux.functions.window_size, 'location': (300, 100), **lib.gui.aux.functions.w_kws}
         self.window = sg.Window('Larvaworld gui', **c)
 
     def run(self):

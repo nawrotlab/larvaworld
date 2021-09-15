@@ -1,18 +1,13 @@
-import copy
 import os
-
-import PySimpleGUI as sg
-import numpy as np
 
 import lib.conf.dtype_dicts as dtypes
 
-from lib.gui.gui_lib import CollapsibleDict, GraphList, SelectionList, DataList
-from lib.gui.aux import t_kws, gui_col
-from lib.gui.tab import GuiTab
+from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList
+from lib.gui.aux.functions import t_kws, gui_col
+from lib.gui.tabs.tab import GuiTab
 from lib.sim.single_run import run_essay
 from lib.sim.analysis import essay_analysis
 from lib.conf.conf import loadConf, next_idx
-from lib.stor import paths
 
 
 class EssayTab(GuiTab):
@@ -108,7 +103,7 @@ class EssayTab(GuiTab):
 
 
 if __name__ == "__main__":
-    from lib.gui.gui import LarvaworldGui
+    from lib.gui.tabs.gui import LarvaworldGui
 
     larvaworld_gui = LarvaworldGui(tabs=['essay'])
     larvaworld_gui.run()

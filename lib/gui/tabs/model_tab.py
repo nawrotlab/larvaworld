@@ -1,10 +1,10 @@
 import copy
 import os
 
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
-from lib.gui.aux import col_size, col_kws, gui_col
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
+from lib.gui.aux.functions import col_size, col_kws, gui_col
 import lib.conf.dtype_dicts as dtypes
-from lib.gui.tab import GuiTab
+from lib.gui.tabs.tab import GuiTab
 from lib.stor import paths
 
 class ModelTab(GuiTab):
@@ -80,6 +80,6 @@ class ModelTab(GuiTab):
 
 
 if __name__ == "__main__":
-    from lib.gui.gui import LarvaworldGui
+    from lib.gui.tabs.gui import LarvaworldGui
     larvaworld_gui = LarvaworldGui(tabs=['larva-model'])
     larvaworld_gui.run()

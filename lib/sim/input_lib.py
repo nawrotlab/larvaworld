@@ -1,9 +1,7 @@
-import os
-
 import pygame
 import numpy as np
-import lib.gui.gui_lib as gui
-import lib.gui.windows
+import lib.gui.aux.elements as gui
+import lib.gui.aux.windows
 from lib.conf.conf import loadConfDict
 from lib.model.agents._larva import Larva, LarvaSim
 
@@ -61,9 +59,9 @@ def evaluate_input(model, screen):
                     if len(model.selected_agents) > 0:
                         for sel in model.selected_agents:
                             # sel = model.selected_agents[0]
-                            sel = lib.gui.windows.set_agent_kwargs(sel, location=loc)
+                            sel = lib.gui.aux.windows.set_agent_kwargs(sel, location=loc)
                     else:
-                        model.selected_type = lib.gui.windows.object_menu(model.selected_type, location=loc)
+                        model.selected_type = lib.gui.aux.windows.object_menu(model.selected_type, location=loc)
                 elif event.button in [4, 5]:
                     screen.zoom_screen(d_zoom=-d_zoom if event.button == 4 else d_zoom)
                     model.toggle(name='zoom', value=screen.zoom)
@@ -107,7 +105,7 @@ def eval_keypress(k, screen, model):
     elif k == 'snapshot':
         model.toggle('snapshot #')
     elif k == 'delete item':
-        if lib.gui.windows.delete_objects_window(model.selected_agents):
+        if lib.gui.aux.windows.delete_objects_window(model.selected_agents):
             for f in model.selected_agents:
                 model.selected_agents.remove(f)
                 model.delete_agent(f)
@@ -122,7 +120,7 @@ def eval_keypress(k, screen, model):
             if isinstance(sel, LarvaSim):
                 if sel.brain.olfactor is not None:
                     odor_gains = sel.brain.olfactor.gain
-                    odor_gains = lib.gui.windows.set_kwargs(odor_gains, title='Odor gains')
+                    odor_gains = lib.gui.aux.windows.set_kwargs(odor_gains, title='Odor gains')
                     sel.brain.olfactor.gain = odor_gains
     else:
         model.toggle(k)

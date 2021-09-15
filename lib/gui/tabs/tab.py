@@ -3,8 +3,8 @@ import webbrowser
 
 import PySimpleGUI as sg
 from lib.conf.conf import loadConf
-from lib.gui.aux import window_size
-from lib.gui.buttons import ClickableImage
+from lib.gui.aux.functions import window_size
+from lib.gui.aux.buttons import ClickableImage
 import lib.stor.paths as paths
 
 

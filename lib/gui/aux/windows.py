@@ -6,8 +6,8 @@ import PySimpleGUI as sg
 from lib.aux import functions as fun
 from lib.conf import dtype_dicts as dtypes
 from lib.conf.conf import loadConfDict, saveConf
-from lib.gui.aux import retrieve_value, t_kws, b6_kws, w_kws, col_size
-from lib.gui.buttons import named_bool_button
+from lib.gui.aux.functions import retrieve_value, t_kws, b6_kws, w_kws, col_size
+from lib.gui.aux.buttons import named_bool_button
 
 
 
@@ -159,8 +159,8 @@ def object_menu(selected, **kwargs):
 
 
 def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
-    from lib.gui.gui import check_toggles
-    from lib.gui.gui_lib import SectionDict
+    from lib.gui.tabs.gui import check_toggles
+    from lib.gui.aux.elements import SectionDict
     sec_dict = SectionDict(name=title, dict=dic, type_dict=type_dict)
     l = sec_dict.init_section()
     l.append([sg.Ok(), sg.Cancel()])
@@ -196,7 +196,7 @@ def set_agent_kwargs(agent, **kwargs):
 
 
 def save_conf_window(conf, conftype, disp=None):
-    from lib.gui.gui_lib import NamedList
+    from lib.gui.aux.elements import NamedList
     if disp is None:
         disp = conftype
     temp = NamedList('save_conf', key=f'{disp}_ID',
@@ -215,8 +215,8 @@ def save_conf_window(conf, conftype, disp=None):
 
 
 def import_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
-    from lib.gui.gui import check_togglesNcollapsibles
-    from lib.gui.gui_lib import CollapsibleDict
+    from lib.gui.tabs.gui import check_togglesNcollapsibles
+    from lib.gui.aux.elements import CollapsibleDict
     M, E = 'Merge', 'Enumerate'
     E0 = f'{E}_id'
     proc_dir = {}

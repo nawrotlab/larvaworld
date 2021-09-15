@@ -3,8 +3,9 @@
 import sys
 import time
 
+from lib.gui.tabs.gui import LarvaworldGui
+
 sys.path.insert(0, '..')
-from lib.gui.gui import LarvaworldGui
 
 if __name__ == "__main__":
     s0=time.time()

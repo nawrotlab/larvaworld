@@ -1,7 +1,6 @@
-from lib.gui.gui_lib import ButtonGraphList, CollapsibleDict, DataList, SelectionList
-from lib.gui.aux import gui_col
-from lib.gui.tab import GuiTab
-from lib.stor.datagroup import LarvaDataGroup
+from lib.gui.aux.elements import ButtonGraphList, CollapsibleDict, DataList, SelectionList
+from lib.gui.aux.functions import gui_col
+from lib.gui.tabs.tab import GuiTab
 from lib.stor import paths
 
 
@@ -53,7 +52,7 @@ class ImportTab(GuiTab):
 
 
 if __name__ == "__main__":
-    from lib.gui.gui import LarvaworldGui
+    from lib.gui.tabs.gui import LarvaworldGui
 
     # larvaworld_gui = LarvaworldGui(tabs=['import'])
     larvaworld_gui = LarvaworldGui(tabs=['import', 'analysis', 'settings'])

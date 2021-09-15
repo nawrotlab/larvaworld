@@ -7,7 +7,7 @@ import pandas as pd
 import shelve
 
 import lib.aux.functions as fun
-import lib.gui.aux
+import lib.gui.aux.functions
 from lib.aux.collecting import step_database
 import lib.stor.paths as paths
 
@@ -723,10 +723,10 @@ def set_collect_from(par_db):
 
 
 def load_ParDb():
-    import lib.gui.gui_lib as gui
+    import lib.gui.aux.elements as gui
     df = pd.read_csv(paths.ParDb_path, index_col=0)
-    df['lim'] = [lib.gui.aux.retrieve_value(v, Tuple[float, float]) for v in df['lim'].values]
-    df['dtype'] = [lib.gui.aux.retrieve_value(v, Type) for v in df['dtype'].values]
+    df['lim'] = [lib.gui.aux.functions.retrieve_value(v, Tuple[float, float]) for v in df['lim'].values]
+    df['dtype'] = [lib.gui.aux.functions.retrieve_value(v, Type) for v in df['dtype'].values]
     return df
 
 

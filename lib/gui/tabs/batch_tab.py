@@ -1,14 +1,13 @@
 import copy
-import threading
 import PySimpleGUI as sg
 
 from lib.anal.combining import render_mpl_table
-from lib.gui.gui_lib import CollapsibleDict, Collapsible, GraphList, CollapsibleTable, SelectionList, DataList
-from lib.gui.aux import t_kws, gui_col
-from lib.gui.buttons import named_bool_button
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, GraphList, CollapsibleTable, SelectionList, DataList
+from lib.gui.aux.functions import t_kws, gui_col
+from lib.gui.aux.buttons import named_bool_button
 from lib.conf.conf import loadConf, next_idx
 import lib.conf.dtype_dicts as dtypes
-from lib.gui.tab import GuiTab
+from lib.gui.tabs.tab import GuiTab
 from lib.sim.batch_lib import existing_trajs, finfunc_dict, load_traj, prepare_batch, batch_run, delete_traj, \
     existing_trajs_dict
 
@@ -125,6 +124,6 @@ class BatchTab(GuiTab):
 
 
 if __name__ == "__main__":
-    from lib.gui.gui import LarvaworldGui
+    from lib.gui.tabs.gui import LarvaworldGui
     larvaworld_gui = LarvaworldGui(tabs=['batch-run'])
     larvaworld_gui.run()

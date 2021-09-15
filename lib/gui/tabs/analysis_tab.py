@@ -1,6 +1,6 @@
-from lib.gui.gui_lib import ButtonGraphList, DataList
-from lib.gui.aux import col_size, col_kws, gui_col
-from lib.gui.tab import GuiTab
+from lib.gui.aux.elements import ButtonGraphList, DataList
+from lib.gui.aux.functions import col_size, col_kws, gui_col
+from lib.gui.tabs.tab import GuiTab
 from lib.anal.plotting import graph_dict
 
 
@@ -70,7 +70,7 @@ class AnalysisTab(GuiTab):
 
 
 if __name__ == "__main__":
-    from lib.gui.gui import LarvaworldGui
+    from lib.gui.tabs.gui import LarvaworldGui
 
     larvaworld_gui = LarvaworldGui(tabs=['analysis'])
     larvaworld_gui.run()
