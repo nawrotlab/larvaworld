@@ -109,14 +109,8 @@ class LifeTab(GuiTab):
         ],
             [Table(values=[], headings=[self.s0, self.s1, 'quality'], def_col_width=7,
                       max_col_width=24,
-                   # background_color='lightblue',
-                   #    header_background_color='lightorange',
-                   #    auto_size_columns=False,
-                      # display_row_numbers=True,
                       justification='center',
-                      # font=w_kws['font'],
                       num_rows=0,
-                      # alternating_row_color='lightyellow',
                       key=self.K
                       )],
         ], size=l2_size, **col_kws)

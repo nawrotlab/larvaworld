@@ -36,10 +36,6 @@ def compute_linear_metrics(s, e, dt, Npoints, point, mode='minimal'):
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     Nticks = len(s.index.unique('Step'))
-    # if 'length' in e.columns.values:
-    #     lengths = e['length'].values
-    # else:
-    #     lengths = None
 
     if mode == 'full':
         print(f'Computing linear distances, velocities and accelerations for {len(points) - 1} points')
@@ -68,14 +64,11 @@ def compute_linear_metrics(s, e, dt, Npoints, point, mode='minimal'):
     accs = nam.lin(nam.acc(points))
 
     for p, xy, dst, cum_dst, vel, acc, orient in zip(points, xy_params, dsts, cum_dsts, vels, accs, orientations):
+        # dic={a : np.zeros([Nticks, Nids]) * np.nan for a in [dst, cum_dst, vel, acc]}
         D = np.zeros([Nticks, Nids]) * np.nan
         Dcum = np.zeros([Nticks, Nids]) * np.nan
         V = np.zeros([Nticks, Nids]) * np.nan
         A = np.zeros([Nticks, Nids]) * np.nan
-        sD = np.zeros([Nticks, Nids]) * np.nan
-        sDcum = np.zeros([Nticks, Nids]) * np.nan
-        sV = np.zeros([Nticks, Nids]) * np.nan
-        sA = np.zeros([Nticks, Nids]) * np.nan
 
         for i, data in enumerate(all_d):
             v, d = fun.compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=dt,
@@ -86,12 +79,6 @@ def compute_linear_metrics(s, e, dt, Npoints, point, mode='minimal'):
             Dcum[1:, i] = cum_d
             V[1:, i] = v
             A[2:, i] = a
-            # if lengths is not None:
-            #     l = lengths[i]
-            #     sD[1:, i] = d / l
-            #     sDcum[1:, i] = cum_d / l
-            #     sV[1:, i] = v / l
-            #     sA[2:, i] = a / l
 
         s[dst] = D.flatten()
         s[cum_dst] = Dcum.flatten()
@@ -213,12 +200,7 @@ def compute_length(s, e, Npoints, mode='minimal', recompute=False):
         xy2=xy.reshape(xy.shape[0], Npoints, 2)
         xy3=np.sum(np.diff(xy2, axis=1) ** 2, axis=2)
         L = np.sum(np.sqrt(xy3), axis=1)
-        # for j in range(Nids):
-        #     k = np.sum(np.diff(xy2[j], axis=0) ** 2, axis=1).T
-        #     # k = np.sum(np.diff(np.array(fun.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
-        #     L[:, j] = np.sum([np.sqrt(kk) for kk in k]) if not np.isnan(np.sum(k)) else np.nan
     s['length'] = L
-    # s['length'] = L.flatten()
     e['length'] = s['length'].groupby('AgentID').quantile(q=0.5)
     print('All lengths computed.')
 

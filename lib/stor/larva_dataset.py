@@ -1,19 +1,19 @@
-import json
 import os.path
 import shutil
 from distutils.dir_util import copy_tree
-
+import numpy as np
 import pandas as pd
+import warnings
+import copy
 
+import lib.aux.functions as fun
+import lib.aux.naming as nam
 from lib.anal.process.basic import preprocess, process
 from lib.anal.process.bouts import annotate
 from lib.anal.process.spatial import align_trajectories, fixate_larva
-from lib.anal.plotting import *
 import lib.conf.env_conf as env
 from lib.conf.data_conf import SimParConf
-from lib.model.modules.intermitter import get_EEB_poly1d
 import lib.conf.dtype_dicts as dtypes
-from lib.stor.paths import RefFolder
 from lib.envs._larvaworld import LarvaWorldReplay
 
 
@@ -28,6 +28,7 @@ class LarvaDataset:
             self.config = fun.load_dict(self.dir_dict['conf'], use_pickle=False)
         else:
             self.config = {'id': id,
+                           'dir': dir,
                            'fr': fr,
                            'filtered_at': filtered_at,
                            'rescaled_by': rescaled_by,
@@ -56,7 +57,6 @@ class LarvaDataset:
             self.step_data = step
             self.agent_ids = step.index.unique('AgentID').values
             self.num_ticks = step.index.unique('Step').size
-            self.starting_tick = step.index.unique('Step')[0] if self.num_ticks>0 else 0
         if end is not None:
             self.endpoint_data = end
         if food is not None:
@@ -99,8 +99,7 @@ class LarvaDataset:
         self.endpoint_data.drop(agents, inplace=True)
         self.agent_ids = self.step_data.index.unique('AgentID').values
         self.num_ticks = self.step_data.index.unique('Step').size
-        self.starting_tick = int(self.step_data.index.unique('Step')[0])
-        self.Nagents = len(self.agent_ids)
+
         fs = [f'{self.aux_dir}/{f}' for f in os.listdir(self.aux_dir)]
         ns = fun.flatten_list([[f'{f}/{n}' for n in os.listdir(f) if n.endswith('.csv')] for f in fs])
         for n in ns:
@@ -160,16 +159,27 @@ class LarvaDataset:
             self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
             self.agent_ids = self.step_data.index.unique('AgentID').values
             self.num_ticks = self.step_data.index.unique('Step').size
-            self.starting_tick = int(self.step_data.index.unique('Step')[0])
-            self.Nagents = len(self.agent_ids)
         if end:
             self.endpoint_data = pd.read_csv(self.dir_dict['end'], index_col=0)
-
             self.endpoint_data.sort_index(inplace=True)
-            self.Nagents = len(self.endpoint_data.index.values)
         if food:
             self.food_endpoint_data = pd.read_csv(self.dir_dict['food'], index_col=0)
             self.food_endpoint_data.sort_index(inplace=True)
+
+    @property
+    def N(self):
+        try:
+            return len(self.agent_ids)
+        except :
+            return len(self.endpoint_data.index.values)
+
+    @property
+    def t0(self):
+        try:
+            return int(self.step_data.index.unique('Step')[0])
+        except :
+            return 0
+
 
     def save(self, step=True, end=True, food=False, table_entries=None):
         if self.save_data_flag == True:
@@ -192,19 +202,20 @@ class LarvaDataset:
             df = pd.DataFrame(table)
             if 'unique_id' in df.columns:
                 df.rename(columns={'unique_id': 'AgentID'}, inplace=True)
-                Nagents = len(df['AgentID'].unique().tolist())
-                if Nagents>0 :
-                    Nrows = int(len(df.index) / Nagents)
-                    df['Step'] = np.array([[i] * Nagents for i in range(Nrows)]).flatten()
+                N = len(df['AgentID'].unique().tolist())
+                if N>0 :
+                    Nrows = int(len(df.index) / N)
+                    df['Step'] = np.array([[i] * N for i in range(Nrows)]).flatten()
                     df.set_index(['Step', 'AgentID'], inplace=True)
                     df.sort_index(level=['Step', 'AgentID'], inplace=True)
                 df.to_csv(path, index=True, header=True)
 
     def save_config(self):
-        try:
-            self.config['Nagents'] = self.Nagents
-        except:
-            pass
+        for a in ['N', 't0', 'duration', 'quality', 'dt'] :
+            try:
+                self.config[a] = getattr(self,a)
+            except:
+                pass
         for k,v in self.config.items() :
             if type(v)==np.ndarray :
                 self.config[k]=v.tolist()
@@ -254,6 +265,16 @@ class LarvaDataset:
         else :
             u_dic = fun.load_dicts([u_path])[0]
             return df, u_dic
+
+    @property
+    def quality(self):
+        df = self.step_data[nam.xy(self.point)[0]].values.flatten()
+        valid = np.count_nonzero(~np.isnan(df))
+        return np.round(valid / df.shape[0], 2)
+
+    @property
+    def duration(self):
+        return int(self.endpoint_data['cum_dur'].max())
 
 
     def load_deb_dicts(self, ids=None, **kwargs):
@@ -554,47 +575,6 @@ class LarvaDataset:
         if is_last:
             self.save()
         return self
-
-    def create_reference_dataset(self, dataset_id='reference', Nstd=3, overwrite=False):
-        if self.endpoint_data is None:
-            self.load()
-        # if not os.path.exists(RefFolder):
-        #     os.makedirs(RefFolder)
-        path_dir = f'{RefFolder}/{dataset_id}'
-        path_data = f'{path_dir}/data/reference.csv'
-        path_fits = f'{path_dir}/data/bout_fits.csv'
-        if not os.path.exists(path_dir) or overwrite:
-            copy_tree(self.dir, path_dir)
-        new_d = LarvaDataset(path_dir)
-        new_d.set_id(dataset_id)
-        pars = ['length', nam.freq(nam.scal(nam.vel(''))),
-                'stride_reoccurence_rate',
-                nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))),
-                nam.std(nam.scal(nam.chunk_track('stride', nam.dst(''))))]
-        sample_pars = ['body.initial_length', 'brain.crawler_params.initial_freq',
-                       'brain.intermitter_params.crawler_reoccurence_rate',
-                       'brain.crawler_params.step_to_length_mu',
-                       'brain.crawler_params.step_to_length_std'
-                       ]
-
-        v = new_d.endpoint_data[pars]
-        v['length'] = v['length'] / 1000
-        df = pd.DataFrame(v.values, columns=sample_pars)
-        df.to_csv(path_data)
-
-        fit_bouts(new_d, store=True, bouts=['stride', 'pause'])
-
-        dic = {
-            nam.freq('crawl'): v[nam.freq(nam.scal(nam.vel('')))].mean(),
-            nam.freq('feed'): v[nam.freq('feed')].mean() if nam.freq('feed') in v.columns else 2.0,
-            'feeder_reoccurence_rate': None,
-            'dt': self.dt,
-        }
-        saveConf(dic, conf_type='Ref', id=dataset_id, mode='update')
-        z = get_EEB_poly1d(dataset_id)
-        saveConf({'EEB_poly1d': z.c.tolist()}, conf_type='Ref', id=dataset_id, mode='update')
-
-        print(f'Reference dataset {dataset_id} saved.')
 
     def drop_immobile_larvae(self, vel_threshold=0.1, is_last=True):
         # self.compute_spatial_metrics(mode='minimal')

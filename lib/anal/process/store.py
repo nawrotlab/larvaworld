@@ -1,10 +1,16 @@
+from distutils.dir_util import copy_tree
+
 import numpy as np
 import pandas as pd
+import os
 from scipy.signal import argrelextrema, spectrogram
 
 import lib.aux.functions as fun
 import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
+
+from lib.stor import paths
+
 
 
 def create_par_distro_dataset(s, pars, dir):
@@ -67,6 +73,48 @@ def create_chunk_dataset(s, chunk, pars, Npoints=32, dir=None):
         chunk_dfs.append(chunk_df)
         print(f'Dataset saved as {f}')
     return chunk_dfs
+
+def create_reference_dataset(config, dataset_id='reference', Nstd=3, overwrite=False):
+    from lib.stor.larva_dataset import LarvaDataset
+    from lib.anal.fitting import fit_bouts
+    from lib.conf.conf import saveConf
+    from lib.model.modules.intermitter import get_EEB_poly1d
+
+    path_dir = f'{paths.RefFolder}/{dataset_id}'
+    path_data = f'{path_dir}/data/reference.csv'
+    path_fits = f'{path_dir}/data/bout_fits.csv'
+    if not os.path.exists(path_dir) or overwrite:
+        copy_tree(config['dir'], path_dir)
+    new_d = LarvaDataset(path_dir)
+    new_d.set_id(dataset_id)
+    pars = ['length', nam.freq(nam.scal(nam.vel(''))),
+            'stride_reoccurence_rate',
+            nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))),
+            nam.std(nam.scal(nam.chunk_track('stride', nam.dst(''))))]
+    sample_pars = ['body.initial_length', 'brain.crawler_params.initial_freq',
+                   'brain.intermitter_params.crawler_reoccurence_rate',
+                   'brain.crawler_params.step_to_length_mu',
+                   'brain.crawler_params.step_to_length_std'
+                   ]
+
+    v = new_d.endpoint_data[pars]
+    v['length'] = v['length'] / 1000
+    df = pd.DataFrame(v.values, columns=sample_pars)
+    df.to_csv(path_data)
+
+    fit_bouts(new_d, store=True, bouts=['stride', 'pause'])
+
+    dic = {
+        nam.freq('crawl'): v[nam.freq(nam.scal(nam.vel('')))].mean(),
+        nam.freq('feed'): v[nam.freq('feed')].mean() if nam.freq('feed') in v.columns else 2.0,
+        'feeder_reoccurence_rate': None,
+        'dt': 1/config['fr'],
+    }
+    saveConf(dic, conf_type='Ref', id=dataset_id, mode='update')
+    z = get_EEB_poly1d(dataset_id)
+    saveConf({'EEB_poly1d': z.c.tolist()}, conf_type='Ref', id=dataset_id, mode='update')
+
+    print(f'Reference dataset {dataset_id} saved.')
 
 
 if __name__ == '__main__':

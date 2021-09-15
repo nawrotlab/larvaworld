@@ -17,10 +17,10 @@ import lib.conf.conf
 import lib.conf.init_dtypes
 from lib.conf.conf import loadConfDict, saveConf, deleteConf, loadConf, expandConf
 import lib.aux.functions as fun
-import lib.aux.naming as nam
 from lib.conf.par import runtime_pars, getPar
 from lib.gui.aux import SYMBOL_UP, SYMBOL_DOWN, col_size, w_kws, b6_kws, t_kws, get_disp_name, retrieve_value
 from lib.gui.buttons import graphic_button, button_dict, named_bool_button, BoolButton
+
 from lib.stor import paths as paths
 import lib.conf.dtype_dicts as dtypes
 
@@ -161,9 +161,10 @@ def update_window_from_dict(w, dic, prefix=None):
 def save_conf_window(conf, conftype, disp=None):
     if disp is None:
         disp = conftype
+    temp=NamedList('save_conf', text=f'Store new {disp}', key=f'{disp}_ID', choices=list(loadConfDict(conftype).keys()),
+                   readonly=False, enable_events=False)
     l = [
-        named_list(f'Store new {disp}', f'{disp}_ID', list(loadConfDict(conftype).keys()),
-                   readonly=False, enable_events=False),
+        temp.get_layout(),
         [sg.Ok(), sg.Cancel()]]
     e, v = sg.Window(f'{disp} configuration', l).read(close=True)
     if e == 'Ok':
@@ -398,6 +399,7 @@ class MultiSpin(Pane):
 
 
 def import_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
+    from lib.gui.gui import check_togglesNcollapsibles
     M, E = 'Merge', 'Enumerate'
     E0 = f'{E}_id'
     proc_dir = {}
@@ -525,44 +527,7 @@ def change_dataset_id(dic, old_ids):
             d = dic[old_id]
             d.set_id(new_id)
             dic[new_id] = dic.pop(old_id)
-            # w.Element(k0).Update(values=list(dic.keys()))
     return dic
-
-
-def named_list(text, key, choices, default_value=None, drop_down=True, list_width=25,
-               readonly=True, enable_events=True, single_line=True, next_to_header=None, as_col=True,
-               list_kws={}, list_height=None, header_text_kws=None, aux_cols=None):
-    kws={'key':key,'enable_events':enable_events, **list_kws}
-    W,H=list_width,list_height
-    if H is None:
-        H = len(choices)
-    if header_text_kws is None:
-        header_text_kws = {'size': (len(text), 1)}
-    t = [sg.Text(text, **header_text_kws)]
-    if next_to_header is not None:
-        t += next_to_header
-    if drop_down:
-        l = [sg.Combo(choices, default_value=default_value,size=(list_width, 1), readonly=readonly, **kws)]
-    else:
-        if aux_cols is None:
-            l = [sg.Listbox(choices, default_values=[default_value],size=(W, H), **kws)]
-        else :
-            N=len(aux_cols)
-            vs=[['']*(N+1)]*len(choices)
-            w00=0.35
-            w0=int(W*w00)
-            col_widths = [w0]+[int(W*(1-w00)/N)]*N
-            l=[Table(values=vs, headings=['Dataset ID']+aux_cols, col_widths=col_widths,
-                     display_row_numbers=True,**kws)]
-
-    if single_line:
-        return t + l
-    else:
-        if as_col:
-            return sg.Col([t, l])
-        else:
-            return [t, l]
-
 
 class GuiElement:
     def __init__(self, name, layout=None, layout_col_kwargs={}):
@@ -570,13 +535,52 @@ class GuiElement:
         self.layout = layout
         self.layout_col_kwargs = layout_col_kwargs
 
-    # def build_layout(self, **kwargs):
-    #     self.layout=None
-    # return l
-
     def get_layout(self, as_col=True, **kwargs):
         self.layout_col_kwargs.update(kwargs)
         return [sg.Col(self.layout, **self.layout_col_kwargs)] if as_col else self.layout
+
+class NamedList(GuiElement):
+    def __init__(self, name, key, choices, text=None,default_value=None, drop_down=True, size=(25,None),
+               readonly=True, enable_events=True, single_line=True, next_to_header=None,
+               list_kws={}, header_text_kws=None, aux_cols=None, **kwargs):
+        super().__init__(name=name)
+        self.aux_cols=aux_cols
+        self.key=key
+        self.W, self.H = size
+        if self.H is None:
+            self.H = len(choices)
+        header=self.build_header(text, header_text_kws, next_to_header)
+        list=self.build_list(choices, default_value, drop_down, readonly, enable_events, list_kws, **kwargs)
+        self.layout=[header + list] if single_line else [header, list]
+
+
+    def build_header(self, text, header_text_kws, next_to_header):
+        if text is None :
+            text=self.name
+        # self.text=text
+        if header_text_kws is None:
+            header_text_kws = {'size': (len(text), 1)}
+        header = [sg.Text(text, **header_text_kws)]
+        if next_to_header is not None:
+            header += next_to_header
+        return header
+
+    def build_list(self, choices, default_value, drop_down, readonly, enable_events, list_kws, **kwargs):
+        kws = {'key': self.key, 'enable_events': enable_events, **list_kws, **kwargs}
+        if drop_down:
+            l = [sg.Combo(choices, default_value=default_value, size=(self.W, 1), readonly=readonly, **kws)]
+        else:
+            if self.aux_cols is None:
+                l = [sg.Listbox(choices, default_values=[default_value], size=(self.W, self.H), **kws)]
+            else:
+                N = len(self.aux_cols)
+                vs = [[''] * (N + 1)] * len(choices)
+                w00 = 0.35
+                w0 = int(self.W * w00)
+                col_widths = [w0] + [int(self.W * (1 - w00) / N)] * N
+                l = [Table(values=vs, headings=['Dataset ID'] + self.aux_cols, col_widths=col_widths,
+                           display_row_numbers=True, **kws)]
+        return l
 
 
 class DataList(GuiElement):
@@ -608,14 +612,10 @@ class DataList(GuiElement):
 
     def build_layout(self, **kwargs):
         bl = self.build_buttons()
-        l = named_list(get_disp_name(self.name), self.list_key, list(self.dict.keys()),
-                       drop_down=False, list_height=5,
-                       single_line=False, next_to_header=bl, as_col=False,
-                       **self.named_list_kws,
-                       # list_kws={'select_mode': LISTBOX_SELECT_MODE_EXTENDED},
-                       **kwargs)
+        l = NamedList(self.name, text=get_disp_name(self.name), key=self.list_key, choices=list(self.dict.keys()),
+                       drop_down=False,single_line=False, next_to_header=bl, **self.named_list_kws,**kwargs)
 
-        return l
+        return l.layout
 
     def update_window(self, w):
         ks=list(self.dict.keys())
@@ -623,30 +623,24 @@ class DataList(GuiElement):
             w.Element(self.list_key).Update(values=ks)
         else :
             vs = self.get_aux_cols(ks)
-            # vs = [[k]+['']*len(self.aux_cols) for k in ks]
             w.Element(self.list_key).Update(values=vs)
 
     def get_aux_cols(self, ks):
-        vs=[ks]
-        ds=[self.dict[k] for k in ks]
-        for c in self.aux_cols :
-            vv = ['' for d in ds]
-            try:
-                if c=='# larvae' :
-                    vv=[d.Nagents for d in ds]
-                elif c=='duration' :
-                    vv=[np.round(d.endpoint_data['cum_dur'].max(),2) for d in ds]
-                elif c=='quality' :
-                    vv=[]
-                    for d in ds :
-                        df=d.step_data[nam.xy(d.point)[0]].values.flatten()
-                        valid=np.count_nonzero(~np.isnan(df))
-                        vv.append(np.round(valid/df.shape[0],2))
-            except :
-                pass
-            vs.append(vv)
-        vs=np.array(vs).T.tolist()
-        return vs
+        # df=np.zeros((len(ks), len(self.aux_cols)+1))
+        ls=[]
+        for k in ks:
+        # for i,k in enumerate(ks):
+            l=[k]
+            d=self.dict[k]
+            for c in self.aux_cols:
+            # for j,c in enumerate(self.aux_cols):
+                try:
+                    a= getattr(d,c)
+                except:
+                    a =''
+                l.append(a)
+            ls.append(l)
+        return ls
 
 
     def eval(self, e, v, w, c, d, g):
@@ -724,10 +718,11 @@ class Collapsible(GuiElement):
         if header_dict is None:
             header_disp = [sg.T(disp_name, enable_events=True, text_color='black', **header_text_kws)]
         else:
-            header_disp = named_list(text=f'{disp_name}:', choices=list(header_dict.keys()),
+            header_l = NamedList(self.name, text=f'{disp_name}:', choices=list(header_dict.keys()),
                                      default_value=header_value, key=self.header_key,
-                                     list_width=header_list_width, list_kws=header_list_kws,
+                                     size=(header_list_width, None), list_kws=header_list_kws,
                                      header_text_kws=header_text_kws)
+            header_disp=header_l.get_layout()
 
         header = [self.sec_symbol] + header_disp
         if toggle is not None:
@@ -933,9 +928,9 @@ class CollapsibleDict(Collapsible):
 
 
 class Table(sg.Table):
-    def __init__(self, values, background_color='lightblue', header_background_color='orange',alternating_row_color='lightyellow',
-                 auto_size_columns=False, text_color='black',header_font=('Helvetica', 8, 'bold'), **kwargs):
-        super().__init__(values, auto_size_columns=auto_size_columns,
+    def __init__(self, values, background_color='lightblue', header_background_color='lightgrey',alternating_row_color='lightyellow',
+                 auto_size_columns=False, text_color='black',header_font=('Helvetica', 8, 'bold'),justification='center', **kwargs):
+        super().__init__(values, auto_size_columns=auto_size_columns,justification=justification,
                          background_color=background_color, header_background_color=header_background_color,
                          alternating_row_color=alternating_row_color, text_color=text_color,header_font=header_font, **kwargs)
 
@@ -966,6 +961,7 @@ def collapse(layout, key, visible=True):
 
 
 def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
+    from lib.gui.gui import check_toggles
     sec_dict = SectionDict(name=title, dict=dic, type_dict=type_dict)
     l = sec_dict.init_section()
     l.append([sg.Ok(), sg.Cancel()])
@@ -1357,54 +1353,6 @@ class DynamicGraph:
         self.fig_agg = draw_canvas(self.canvas, self.fig)
 
 
-def check_multispins(w, e):
-    if e.startswith('SPIN+'):
-        k = e.split()[-1]
-        # w[k].add_spin(w)
-        w.Element(k).add_spin(w)
-    elif e.startswith('SPIN-'):
-        k = e.split()[-1]
-        # w[k].remove_spin(w)
-        w.Element(k).remove_spin(w)
-
-
-def check_collapsibles(w, e, v, c):
-    if e.startswith('OPEN SEC'):
-        sec = e.split()[-1]
-        c[sec].click(w)
-    elif e.startswith('SELECT LIST'):
-        sec = e.split()[-1]
-        c[sec].update_header(w, v[e])
-
-
-def check_toggles(w, e):
-    if 'TOGGLE' in e:
-        w[e].toggle()
-
-
-def check_togglesNcollapsibles(w, e, v, c):
-    toggled = []
-    check_collapsibles(w, e, v, c)
-    if 'TOGGLE' in e:
-        w[e].toggle()
-        name = e[7:]
-        if name in list(c.keys()):
-            c[name].toggle = not c[name].toggle
-        toggled.append(name)
-    return toggled
-
-
-def default_run_window(w, e, v, c={}, g={}):
-    check_togglesNcollapsibles(w, e, v, c)
-    check_multispins(w, e)
-    for name, graph_list in g.items():
-        if e == graph_list.list_key:
-            graph_list.evaluate(w, v[graph_list.list_key])
-
-    if e.startswith('EDIT_TABLE'):
-        c[e.split()[-1]].edit_table(w)
-
-
 def load_shortcuts():
     try:
         conf = loadConfDict('Settings')
@@ -1414,12 +1362,6 @@ def load_shortcuts():
             conf['keys'].update(dic)
         conf['pygame_keys'] = {k: dtypes.get_pygame_key(v) for k, v in conf['keys'].items()}
     return conf
-
-
-def gui_terminal(size=col_size(y_frac=0.3)):
-    return sg.Output(size=size, key='Terminal', background_color='black', text_color='white',
-                     echo_stdout_stderr=True, font=('Helvetica', 8, 'normal'),
-                     tooltip='Terminal output')
 
 
 class SelectionList(GuiElement):
@@ -1503,17 +1445,17 @@ class SelectionList(GuiElement):
                                                next_to_header=bs, header_key=self.k,
                                                header_list_kws={'tooltip': f'The currently loaded {n}.'}, **kwargs)
 
-            temp = self.collapsible.get_layout(as_col=False)
+            l = self.collapsible.get_layout(as_col=False)
 
         else:
             self.collapsible = None
-            temp = named_list(text=n.capitalize(), key=self.k, choices=self.confs, default_value=None,
-                              drop_down=True, list_width=self.width, single_line=False, next_to_header=bs, as_col=False,
+            temp = NamedList(self.name, text=n.capitalize(), key=self.k, choices=self.confs, default_value=None,
+                              drop_down=True, size=(self.width, None), single_line=False, next_to_header=bs,
                               list_kws={'tooltip': f'The currently loaded {n}.'})
-
+            l=temp.layout
         if self.progressbar is not None:
-            temp.append(self.progressbar.l)
-        return temp
+            l.append(self.progressbar.l)
+        return l
         # l = [sg.Col(temp)]
         # return l
 

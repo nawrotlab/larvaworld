@@ -26,12 +26,11 @@ class ImportTab(GuiTab):
         d = {kR: {}, kP: {}}
 
         sl1 = SelectionList(tab=self, disp='Data format/lab', actions=['load'])
-        dl1 = DataList(name=self.raw_key, tab=self, dict=d[kR], buttons=['import', 'select_all', 'remove', 'changeID', 'browse'],raw=True)
-        # dl2 = DataList(name=self.proc_key, tab=self, dict=d[kP],
-        #                buttons=['replay', 'enrich', 'select_all', 'remove', 'changeID', 'browse'])
+        dl1 = DataList(name=self.raw_key, tab=self, dict=d[kR], buttons=['import', 'select_all', 'remove', 'changeID', 'browse'],
+                       raw=True, size=(25,5))
         dl2 = DataList(name=self.proc_key, tab=self, dict=d[kP],
                        buttons=['replay', 'enrich', 'select_all', 'remove', 'changeID', 'browse'],
-                       aux_cols=['# larvae', 'duration', 'quality'], list_width=40)
+                       aux_cols=['N', 'duration', 'quality'], size=(40,5))
         c1,c2,c3=[CollapsibleDict(n, False, default=True, toggled_subsections=None) for n in self.fields]
         g1 = ButtonGraphList(name=self.name, fig_dict={})
 
