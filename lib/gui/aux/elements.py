@@ -1030,9 +1030,7 @@ class Table(sg.Table):
 class GraphList(NamedList):
     def __init__(self, name, fig_dict={}, next_to_header=None, default_values=None, canvas_size=(1000, 800),
                  list_size=None, list_header='Graphs', auto_eval=True, canvas_kws={'background_color': 'Lightblue'},
-                 graph=False, subsample=1,
-                 canvas_col_kws={'scrollable': False, 'vertical_scroll_only': False, 'expand_y': True,
-                                 'expand_x': True}):
+                 graph=False, subsample=1):
 
         self.fig_dict = fig_dict
         self.subsample = subsample
@@ -1051,22 +1049,18 @@ class GraphList(NamedList):
                          size=list_size, header_kws=header_kws, auto_size_text=True)
 
         self.canvas_size = canvas_size
-        self.canvas, self.canvas_key, self.canvas_element = self.init_canvas(name, canvas_kws, canvas_col_kws, graph)
+        self.canvas_key = f'{name}_CANVAS'
+        self.canvas, self.canvas_element = self.init_canvas(canvas_size, canvas_kws, graph)
         self.fig_agg = None
-        self.draw_key = 'unreachable'
 
-    def init_canvas(self, name, canvas_kws, canvas_col_kws, graph=False):
-        canvas_key = f'{name}_CANVAS'
-        kws = {
-            # 'size': self.canvas_size,
-            'key': canvas_key,
-            **canvas_kws}
+    def init_canvas(self, size, canvas_kws, graph=False):
+        k=self.canvas_key
         if graph:
-            g = sg.Graph(canvas_size=self.canvas_size, **kws)
+            g = sg.Graph(canvas_size=size,k=k, **canvas_kws)
         else:
-            g = sg.Canvas(size=self.canvas_size, **kws)
-        canvas = GuiElement(name=canvas_key, layout=[[g]], layout_col_kwargs=canvas_col_kws)
-        return canvas, canvas_key, g
+            g = sg.Canvas(size=size,k=k, **canvas_kws)
+        canvas = GuiElement(name=k, layout=[[g]])
+        return canvas, g
 
     def draw_fig(self, w, fig):
         if self.fig_agg:

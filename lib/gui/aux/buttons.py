@@ -9,34 +9,9 @@ from lib.stor import paths as paths
 
 
 def graphic_button(name, key, **kwargs):
-    # dic = {
-    #     'load': graphics.Button_Load,
-    #     'play': graphics.Button_Play,
-    #     'check': graphics.Button_Check,
-    #     'pick_color': graphics.Button_Color_Circle,
-    #     'edit': graphics.Document_2_Edit,
-    #     'data_add': graphics.Document_2_Add,
-    #     # 'data_add' : graphics.Database_Add,
-    #     'data_remove': graphics.Document_2_Remove,
-    #     # 'data_remove' : graphics.Database_Remove,
-    #     'add': graphics.Button_Add,
-    #     'remove': graphics.Button_Remove,
-    #     'search_add': graphics.Search_Add,
-    #     'box_add': graphics.Box_Add,
-    #     'file_add': graphics.File_Add,
-    #     'equalizer': graphics.System_Equalizer,
-    #     'preferences': graphics.System_Preferences,
-    #     'pictures': graphics.Pictures,
-    #     'chart': graphics.Chart,
-    #     'burn': graphics.Button_Burn,
-    #     'globe_active': graphics.Globe_Active,
-    #     'globe_inactive': graphics.Globe_Inactive,
-    #     'checkbox_full': graphics.Checkbox_Full,
-    # }
     c = {'button_color': (sg.theme_background_color(), sg.theme_background_color()),
          'border_width': 0,
          }
-
     bs64=getattr(graphics, name)
     b = sg.B(image_data=bs64, k=key, **c, **kwargs)
     return b

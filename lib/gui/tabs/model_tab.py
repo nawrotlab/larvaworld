@@ -62,8 +62,7 @@ class ModelTab(GuiTab):
 
         fdir=paths.ModelFigFolder
         fig_dict= {f: f'{fdir}/{f}' for f in os.listdir(fdir)}
-        g1 = GraphList(self.name,list_header='Model', fig_dict=fig_dict, subsample=3, canvas_size=col_size(x_frac=0.6*0.9, y_frac=0.9),
-                       canvas_col_kws={**col_kws, 'size':col_size(0.6)})
+        g1 = GraphList(self.name,list_header='Model', fig_dict=fig_dict, subsample=3, canvas_size=col_size(x_frac=0.6*0.9, y_frac=0.9))
         g = {g1.name: g1}
 
         l = [[

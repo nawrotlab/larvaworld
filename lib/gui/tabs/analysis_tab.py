@@ -35,17 +35,12 @@ class AnalysisTab(GuiTab):
     # return data
 
     def build(self):
-        # initial_folder=f'{paths.DataFolder}/SchleyerGroup/processed'
-        # initial_folder = paths.SingleRunFolder
         d = {self.name: {}}
-
         dl1 = DataList(name=self.data_key, tab=self, dict=d[self.name],
                       buttons=['replay', 'add_ref', 'select_all', 'remove', 'changeID', 'browse'],
                        aux_cols=['N', 'duration', 'quality'], size=(30,5)
                        )
-
-        g1 = ButtonGraphList(name=self.name, fig_dict=graph_dict, canvas_size=self.canvas_size,
-                            canvas_col_kws={'size': self.canvas_col_size, 'scrollable': True, **col_kws})
+        g1 = ButtonGraphList(name=self.name, fig_dict=graph_dict, canvas_size=self.canvas_size)
 
 
         l = [[
