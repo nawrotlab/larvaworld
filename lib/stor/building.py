@@ -115,6 +115,11 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
     x_pars = [x for x, y in d.points_xy]
     y_pars = [y for x, y in d.points_xy]
 
+    # Nc=10
+    # contour_xy = nam.xy(nam.contour(Nc))
+    xc_pars = [x for x, y in d.contour_xy]
+    yc_pars = [y for x, y in d.contour_xy]
+
     try:
         temp, e = temp_load()
         print('Loaded temporary data successfully!')
@@ -126,10 +131,19 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
         y_file = f'{pref}_y_spine.txt'
         state_file = f'{pref}_global_state_large_state.txt'
 
+        x_contour_file = f'{pref}_x_contour.txt'
+        y_contour_file = f'{pref}_y_contour.txt'
+
+        xcs = pd.read_csv(x_contour_file, header=None, sep='\t').iloc[: , :d.Ncontour]
+        ycs = pd.read_csv(y_contour_file, header=None, sep='\t').iloc[: , :d.Ncontour]
+        xcs.set_axis(xc_pars, axis=1, inplace=True)
+        ycs.set_axis(yc_pars, axis=1, inplace=True)
+
 
         xs = pd.read_csv(x_file, header=None, sep='\t', names=x_pars)
         ys = pd.read_csv(y_file, header=None, sep='\t', names=y_pars)
         ts = pd.read_csv(t_file, header=None, sep='\t', names=['Step'])
+
         try:
             states = pd.read_csv(state_file, header=None, sep='\t', names=['state'])
         except:
@@ -140,7 +154,9 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
 
         min_t, max_t = float(ts.min()), float(ts.max())
 
-        par_list = [ids, ts, xs, ys]
+        # par_list = [ids, ts, xs, ys]
+        par_list = [ids, ts, xs, ys, xcs,ycs]
+
         if states is not None:
             par_list.append(states)
 
@@ -200,7 +216,8 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
     if complete_ticks:
         trange = np.arange(max_step).astype(int)
         my_index = pd.MultiIndex.from_product([trange, new_ids], names=['Step', 'AgentID'])
-        columns = x_pars + y_pars
+        # columns = x_pars + y_pars
+        columns = x_pars + y_pars + xc_pars + yc_pars
         if 'state' in temp.columns:
             columns.append('state')
 

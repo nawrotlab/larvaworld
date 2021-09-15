@@ -3,6 +3,7 @@ from random import sample, seed
 import numpy as np
 import Box2D
 from Box2D import b2Vec2
+from scipy.spatial import ConvexHull
 from shapely import affinity
 from shapely.geometry import Polygon, Point
 from shapely.ops import cascaded_union
@@ -344,6 +345,8 @@ class LarvaBody:
 
     def adjust_body_vertices(self):
         self.radius = self.sim_length / 2
+        # if not self.model.space_in_mm :
+        #     self.radius*=1000
         self.seg_lengths = [self.sim_length * r for r in self.seg_ratio]
         self.seg_vertices = [v * self.sim_length for v in self.base_seg_vertices]
         for vec, seg in zip(self.seg_vertices, self.segs):
@@ -714,7 +717,7 @@ class LarvaBody:
             contour = [total_contour[i] for i in sorted(sample(range(len(total_contour)), Ncontour))]
         else:
             contour = total_contour
-        # self.contour = contour[ConvexHull(contour).vertices].tolist()
+        # contour = contour[ConvexHull(contour).vertices].tolist()
         return contour
 
     def add_touch_sensors(self):

@@ -246,12 +246,17 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
     return ids, dirs
 
 if __name__ == '__main__':
-#     vis_kwargs=dtypes.get_dict('visualization', mode='video', draw_head=True)
-    d=LarvaDataset('/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Fed')
-#     d.visualize(vis_kwargs=vis_kwargs)
-    s,e=d.step_data,d.endpoint_data
-    print(e.columns)
-    print(d.config)
+    import lib.conf.dtype_dicts as dtypes
+    vis_kwargs=dtypes.get_dict('visualization', mode='video', draw_head=True, video_speed=100)
+    d=LarvaDataset('/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/food_line/SHAM/Starved')
+    d.visualize(vis_kwargs=vis_kwargs)
+    # s,e=d.step_data,d.endpoint_data
+    # a=s.xs(d.agent_ids[0], level='AgentID', drop_level=True)
+    # print(a[list(d.contour_xy[0])])
+    # print(a[list(d.contour_xy[1])])
+    # print(s['point3_x'].min(), s['point3_x'].max())
+    # print(s.columns.values[20:100])
+    # print(d.config)
 #     # print(s['head_x'].min(), s['head_x'].max())
 #     # print(s['head_y'].min(), s['head_y'].max())
 #     # print(d.config)

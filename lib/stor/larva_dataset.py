@@ -348,6 +348,7 @@ class LarvaDataset:
             env_params = {'arena': arena_pars}
         arena_dims = [k * 1000 for k in env_params['arena']['arena_dims']]
         env_params['arena']['arena_dims'] = arena_dims
+        # print(arena_dims)
 
 
 

@@ -563,11 +563,10 @@ class DataList(NamedList):
             raw_dic = {id: dir for id, dir in d0.items() if id in v[k]}
             proc_dir = import_window(datagroup_id=datagroup_id,
                                      raw_folder=w[f'BROWSE {self.tab.raw_key}'].InitialFolder, raw_dic=raw_dic)
-            # proc_dir = import_window(datagroup_id=datagroup_id, raw_folder=self.tab.raw_folder, raw_dic=raw_dic)
             d1.update(proc_dir)
             dl1.update_window(w)
         elif e == f'ENRICH {n}':
-            dds = [dd for id, dd in d0.items() if id in v[k]]
+            dds = [dd for i,(id, dd) in enumerate(d0.items()) if i in v[k]]
             if len(dds) > 0:
                 enrich_conf = c['enrichment'].get_dict(v, w)
                 enrich_datasets(datagroup_id=datagroup_id, datasets=dds, enrich_conf=enrich_conf)

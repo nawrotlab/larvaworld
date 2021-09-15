@@ -8,7 +8,12 @@ from lib.gui.aux import graphics
 from lib.gui.aux.functions import b6_kws, t_kws
 from lib.stor import paths as paths
 
-
+sg.theme('LightGreen')
+b_kws = {
+            'button_color': (sg.theme_background_color(), sg.theme_background_color()),
+            'disabled_button_color': (sg.theme_background_color(), sg.theme_background_color()),
+             'border_width': 0,
+             }
 
 def button_row(name, buttons, button_args={}):
     but_tips = {
@@ -29,15 +34,13 @@ def button_row(name, buttons, button_args={}):
     but_kws={'browse' : {'initial_folder' : paths.DataFolder, 'enable_events' : True, 'target': (0,-1), 'button_type' : sg.BUTTON_TYPE_BROWSE_FOLDER}}
     bl = []
     for b in buttons:
-        tooltip = but_tips[b]
-        k = f'{b.upper()} {name}'
         kws = button_args[b] if b in list(button_args.keys()) else {}
         if b in but_kws.keys():
             cur=copy.deepcopy(but_kws[b])
             cur.update(kws)
         else :
             cur=kws
-        bl.append(GraphButton(f'Button_{b}', k, tooltip=tooltip, **cur))
+        bl.append(GraphButton(f'Button_{b}', f'{b.upper()} {name}', tooltip=but_tips[b], **cur))
     return bl
 
 
@@ -51,11 +54,8 @@ def named_bool_button(name, state, toggle_name=None, tt_kws={}, **kwargs):
 
 class GraphButton(Button):
     def __init__(self, name, key, **kwargs):
-        c = {'button_color': (sg.theme_background_color(), sg.theme_background_color()),
-             'border_width': 0,
-             }
         bs64 = getattr(graphics, name)
-        super().__init__(image_data=bs64, k=key, **c, **kwargs)
+        super().__init__(image_data=bs64, k=key, **b_kws, **kwargs)
 
 
 class BoolButton(Button):
@@ -63,11 +63,8 @@ class BoolButton(Button):
         self.name = name
         self.state = state
         self.disabled = disabled
-        c = sg.theme_background_color()
-        super().__init__(image_data=self.get_image(self.state, self.disabled), k=f'TOGGLE_{self.name}', border_width=0,
-                         button_color=(c, c),
-                         disabled_button_color=(c, c),
-                         metadata=BtnInfo(state=self.state), **b6_kws, **kwargs)
+        super().__init__(image_data=self.get_image(self.state, self.disabled), k=f'TOGGLE_{self.name}',
+                         metadata=BtnInfo(state=self.state), **b6_kws,**b_kws, **kwargs)
 
     def toggle(self):
         if not self.disabled:

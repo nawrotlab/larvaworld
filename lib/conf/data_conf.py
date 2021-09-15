@@ -141,15 +141,15 @@ SchleyerGroup = {
 
 JovanicDataConf = {'fr': 11.27,
                    'Npoints': 11,
-                   'Ncontour': 0}
+                   'Ncontour': 10}
 
 JovanicEnrichConf = {
     'preprocessing': dtypes.get_dict('preprocessing', filter_f=2.0, transposition='arena'),
-    'processing': {'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': True, 'tortuosity': True,
+    'processing': {'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': False, 'tortuosity': False,
                              'PI': False},
                    'dsp_starts': [0, 20], 'dsp_stops': [40, 120],
                    'tor_durs': [2, 5, 10, 20]},
-    'annotation': {'bouts': {'stride': True, 'pause': True, 'turn': True}, 'track_point': None,
+    'annotation': {'bouts': {'stride': False, 'pause': False, 'turn': False}, 'track_point': None,
                    'track_pars': None, 'chunk_pars': None,
                    'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 30.0,
                    'non_chunks': False},
@@ -158,9 +158,9 @@ JovanicEnrichConf = {
                    'source': None,
                    },
     'to_drop': dtypes.get_dict('to_drop', groups={**{n: True for n in
-                                                     ['contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
+                                                     ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
                                                       'Rturn', 'turn', 'unused']},
-                                                  **{'midline': False}})
+                                                  **{'midline': False, 'contour':False}})
 }
 
 JovanicConf = {'id': 'JovanicConf',
@@ -237,7 +237,7 @@ JovanicFormat = {
     'tracker': {
         'resolution': {'fr': 11.27,
                    'Npoints': 11,
-                   'Ncontour': 0},
+                   'Ncontour': 80},
 
         'filesystem': {
             'read_sequence': None,

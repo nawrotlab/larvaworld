@@ -4,6 +4,7 @@ import time
 import numpy as np
 from copy import deepcopy
 from nengo import Simulator
+from scipy.spatial import ConvexHull
 
 from lib.aux import functions as fun
 from lib.model.agents._agent import Larva
@@ -121,7 +122,9 @@ class LarvaReplay(Larva, BodyReplay):
                     seg.set_color(self.color)
                     seg.draw(viewer)
             elif len(self.vertices) > 0:
-                viewer.draw_polygon(self.vertices, filled=True, color=self.color)
+                if not np.isnan(self.vertices).any():
+                    # self.vertices = ConvexHull(self.vertices).points.tolist()
+                    viewer.draw_polygon(self.vertices, filled=True, color=self.color)
 
         if self.model.draw_centroid:
             if not np.isnan(self.cen_pos).any():
@@ -140,6 +143,9 @@ class LarvaReplay(Larva, BodyReplay):
                     c = 255 * i / (len(self.midline) - 1)
                     color = (c, 255 - c, 0)
                     viewer.draw_circle(radius=.07, position=seg_pos, filled=True, color=color, width=.01)
+        if self.model.draw_head:
+            if not np.isnan(self.midline[0]).any():
+                viewer.draw_circle(self.midline[0], self.radius / 2, (255, 0, 0), True, self.radius / 6)
         if self.selected:
             if len(self.vertices) > 0 and not np.isnan(self.vertices).any():
                 viewer.draw_polygon(self.vertices, filled=False, color=self.model.selection_color,
