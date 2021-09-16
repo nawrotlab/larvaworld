@@ -11,6 +11,7 @@ from lib.conf.conf import *
 from lib.stor.datagroup import LarvaDataGroup
 from lib.stor.larva_dataset import LarvaDataset
 import lib.aux.functions as fun
+import lib.aux.naming as nam
 
 
 def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None,
@@ -246,9 +247,27 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
     return ids, dirs
 
 if __name__ == '__main__':
+
+    # pref = '/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/raw/3_conditions/AttP240@UAS_TNT/Starved'
+    # x_contour_file = f'{pref}_x_contour.txt'
+    # y_contour_file = f'{pref}_y_contour.txt'
+    # xcs = pd.read_csv(x_contour_file, header=None, sep='\t')
+    # ycs = pd.read_csv(y_contour_file, header=None, sep='\t')
+    # xcs, ycs = fun.convex_hull(xs=xcs.values, ys=ycs.values, N=30)
+    #
+    # contour_xy = nam.xy(nam.contour(30))
+    # xc_pars = [x for x, y in contour_xy]
+    # yc_pars = [y for x, y in contour_xy]
+    # xcs = pd.DataFrame(xcs, columns=xc_pars, index=None)
+    # ycs = pd.DataFrame(ycs, columns=yc_pars, index=None)
+
+    # yys=vertices[:,:][1]
+
+
+
     import lib.conf.dtype_dicts as dtypes
     vis_kwargs=dtypes.get_dict('visualization', mode='video', draw_head=True, video_speed=100)
-    d=LarvaDataset('/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/food_line/SHAM/Starved')
+    d=LarvaDataset('/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved')
     d.visualize(vis_kwargs=vis_kwargs)
     # s,e=d.step_data,d.endpoint_data
     # a=s.xs(d.agent_ids[0], level='AgentID', drop_level=True)

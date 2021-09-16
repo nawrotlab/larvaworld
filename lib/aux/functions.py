@@ -21,6 +21,7 @@ from matplotlib import cm, colors
 from pypet import ParameterGroup, Parameter
 from scipy.signal import butter, sosfiltfilt, spectrogram
 import scipy.stats as st
+from scipy.spatial import ConvexHull
 from shapely.geometry import Point
 import scipy as sp
 import matplotlib.pyplot as plt
@@ -807,7 +808,8 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, max_co
     ls = e['length']
     if pars is None:
         pars = s.columns.values.tolist()
-    ss = s.dropna().reset_index(level='Step', drop=False)
+    ss = s.reset_index(level='Step', drop=False)
+    # ss = s.dropna().reset_index(level='Step', drop=False)
     ss['Step'] = ss['Step'].values.astype(int)
     ids, mins, maxs, first_xy, last_xy = get_extrema(ss, pars)
     counter = 0
@@ -1421,3 +1423,53 @@ def replace_in_dict(d0, replace_d, inverse=False) :
         elif v in list(replace_d.keys()):
             d[k] = replace_d[v]
     return d
+
+def convex_hull(xs=None, ys=None, N=None):
+    Nrows, Ncols = xs.shape
+    xs = [xs[i][~np.isnan(xs[i])] for i in range(Nrows)]
+    ys = [ys[i][~np.isnan(ys[i])] for i in range(Nrows)]
+    ps = [np.vstack((xs[i], ys[i])).T for i in range(Nrows)]
+    xxs = np.zeros((Nrows, N))
+    xxs[:] = np.nan
+    yys = np.zeros((Nrows, N))
+    yys[:] = np.nan
+
+    for i, p in enumerate(ps) :
+        if len(p) > 0:
+            b = p[ConvexHull(p).vertices]
+            s = np.min([b.shape[0],N])
+            xxs[i,:s]=b[:s,0]
+            yys[i,:s]=b[:s,1]
+    return xxs, yys
+
+def convex_hull2(xs=None, ys=None, N=None):
+    Nrows, Ncols = xs.shape
+
+    xs=[xs[i][~np.isnan(xs[i])] for i in range(Nrows)]
+    ys=[ys[i][~np.isnan(ys[i])] for i in range(Nrows)]
+    points = [np.vstack((xs[i], ys[i])).T for i in range(Nrows)]
+    vertices=[]
+    for i in range(Nrows) :
+        print(i)
+        a=points[i]
+        b = np.zeros((N, 2))
+        b[:]=np.nan
+        if len(a)>0:
+            bb=a[ConvexHull(a).vertices]
+            s=bb.shape[0]
+            if s>=N :
+                b=bb[:N,:]
+            else:
+                b[:s,:]=bb
+        vertices.append(b)
+    vertices =np.array(vertices)
+
+
+    # vertices = np.array([points[i][ConvexHull(points[i]).vertices] for i in range(Nrows)])
+    xxs = np.array([vertices[i][:, 0] for i in range(Nrows)])
+    yys = np.array([vertices[i][:, 1] for i in range(Nrows)])
+    # Nmin = np.min([vertices[i].shape[0] for i in range(Nrows)])
+    # xxs = np.array([xxs[i][:Nmin] for i in range(Nrows)])
+    # yys = np.array([yys[i][:Nmin] for i in range(Nrows)])
+    # print(Nmin)
+    return xxs, yys

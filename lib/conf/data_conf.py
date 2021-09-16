@@ -145,10 +145,11 @@ JovanicDataConf = {'fr': 11.27,
 
 JovanicEnrichConf = {
     'preprocessing': dtypes.get_dict('preprocessing', filter_f=2.0, transposition='arena'),
-    'processing': {'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': False, 'tortuosity': False,
-                             'PI': False},
-                   'dsp_starts': [0, 20], 'dsp_stops': [40, 120],
-                   'tor_durs': [2, 5, 10, 20]},
+    'processing': {
+        'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': False, 'tortuosity': False,
+                  'PI': False},
+        'dsp_starts': [0, 20], 'dsp_stops': [40, 120],
+        'tor_durs': [2, 5, 10, 20]},
     'annotation': {'bouts': {'stride': False, 'pause': False, 'turn': False}, 'track_point': None,
                    'track_pars': None, 'chunk_pars': None,
                    'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 30.0,
@@ -160,7 +161,7 @@ JovanicEnrichConf = {
     'to_drop': dtypes.get_dict('to_drop', groups={**{n: True for n in
                                                      ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
                                                       'Rturn', 'turn', 'unused']},
-                                                  **{'midline': False, 'contour':False}})
+                                                  **{'midline': False, 'contour': False}})
 }
 
 JovanicConf = {'id': 'JovanicConf',
@@ -236,27 +237,27 @@ JovanicFormat = {
     'path': 'JovanicGroup',
     'tracker': {
         'resolution': {'fr': 11.27,
-                   'Npoints': 11,
-                   'Ncontour': 80},
+                       'Npoints': 11,
+                       'Ncontour': 30},
 
         'filesystem': {
             'read_sequence': None,
             'read_metadata': False,
             'detect': {
-        'folder': {'pref': None, 'suf': None},
-        'file': {'pref': None, 'suf': 'larvaid.txt', 'sep': '_'}
-        }
+                'folder': {'pref': None, 'suf': None},
+                'file': {'pref': None, 'suf': 'larvaid.txt', 'sep': '_'}
+            }
 
+        },
+        'arena': env.arena(0.193, 0.193)
     },
-'arena': env.arena(0.193, 0.193)
-    },
-    'parameterization':  {'bend': 'from_angles',
-                  'front_vector': (2, 3),
-                  'rear_vector': (7, 8),
-                  'front_body_ratio': 0.5,
-                  'point_idx': 8,
-                  'use_component_vel': False,
-                  'scaled_vel_threshold': 0.2},
+    'parameterization': {'bend': 'from_angles',
+                         'front_vector': (2, 3),
+                         'rear_vector': (7, 8),
+                         'front_body_ratio': 0.5,
+                         'point_idx': 8,
+                         'use_component_vel': False,
+                         'scaled_vel_threshold': 0.2},
     'enrichment': JovanicEnrichConf
 
 }

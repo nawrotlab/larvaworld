@@ -3,7 +3,7 @@ import os.path
 import pandas as pd
 
 from lib.conf.conf import *
-from lib.aux.functions import match_larva_ids
+from lib.aux.functions import match_larva_ids, convex_hull
 from lib.aux import functions as fun
 from lib.aux import naming as nam
 
@@ -114,9 +114,6 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
     fr = d.fr
     x_pars = [x for x, y in d.points_xy]
     y_pars = [y for x, y in d.points_xy]
-
-    # Nc=10
-    # contour_xy = nam.xy(nam.contour(Nc))
     xc_pars = [x for x, y in d.contour_xy]
     yc_pars = [y for x, y in d.contour_xy]
 
@@ -134,15 +131,23 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
         x_contour_file = f'{pref}_x_contour.txt'
         y_contour_file = f'{pref}_y_contour.txt'
 
-        xcs = pd.read_csv(x_contour_file, header=None, sep='\t').iloc[: , :d.Ncontour]
-        ycs = pd.read_csv(y_contour_file, header=None, sep='\t').iloc[: , :d.Ncontour]
-        xcs.set_axis(xc_pars, axis=1, inplace=True)
-        ycs.set_axis(yc_pars, axis=1, inplace=True)
+
 
 
         xs = pd.read_csv(x_file, header=None, sep='\t', names=x_pars)
         ys = pd.read_csv(y_file, header=None, sep='\t', names=y_pars)
         ts = pd.read_csv(t_file, header=None, sep='\t', names=['Step'])
+
+        xcs = pd.read_csv(x_contour_file, header=None, sep='\t')
+        ycs = pd.read_csv(y_contour_file, header=None, sep='\t')
+        xcs,ycs=fun.convex_hull(xs=xcs.values,ys=ycs.values, N=d.Ncontour)
+        xcs=pd.DataFrame(xcs, columns=xc_pars, index=None)
+        ycs=pd.DataFrame(ycs, columns=yc_pars, index=None)
+        # print(xs.values.shape, ys.values.shape, xcs.values.shape, ycs.values.shape)
+        # xcs = xcs.iloc[:, :d.Ncontour]
+        # ycs = ycs.iloc[:, :d.Ncontour]
+        # xcs.set_axis(xc_pars, axis=1, inplace=True)
+        # ycs.set_axis(yc_pars, axis=1, inplace=True)
 
         try:
             states = pd.read_csv(state_file, header=None, sep='\t', names=['state'])

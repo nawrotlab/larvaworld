@@ -63,10 +63,9 @@ class LarvaReplay(Larva, BodyReplay):
 
     def read_step(self, i):
         self.midline = self.mid_ar[i].tolist()
-        self.vertices = self.con_ar[i]
+        self.vertices = self.con_ar[i][~np.isnan(self.con_ar[i])].reshape(-1,2)
         self.cen_pos = self.cen_ar[i]
         self.pos = self.pos_ar[i]
-        # print(self.pos)
         self.trajectory = self.pos_ar[:i, :].tolist()
         self.angles = self.ang_ar[i]
         self.orients = self.or_ar[i]
@@ -77,7 +76,6 @@ class LarvaReplay(Larva, BodyReplay):
 
         for p in ['front_orientation_vel']:
             setattr(self, p, self.data[p].values[i] if p in self.data.columns else np.nan)
-        # self.front_orientation_vel = self.front_or_vel_ar[i]
 
     def step(self):
         step = self.model.active_larva_schedule.steps
@@ -97,7 +95,6 @@ class LarvaReplay(Larva, BodyReplay):
                     seg.set_position(pos)
                     seg.set_orientation(o)
                     seg.update_vertices(pos, o)
-            # elif len(segs) == 2 and len(self.orients) == 1 and len(self.angles) == 1:
             elif len(segs) == 2:
                 l1, l2 = [self.sim_length * r for r in self.seg_ratio]
                 x, y = self.pos
@@ -116,17 +113,16 @@ class LarvaReplay(Larva, BodyReplay):
                 self.midline = np.array([p_head, self.pos, p_tail])
 
     def draw(self, viewer):
-        if self.model.draw_contour:
-            if self.model.draw_Nsegs is not None:
+        r,c,m, v=self.radius,self.color,self.model, self.vertices
+        if m.draw_contour:
+            if m.draw_Nsegs is not None:
                 for seg in self.segs:
-                    seg.set_color(self.color)
+                    seg.set_color(c)
                     seg.draw(viewer)
-            elif len(self.vertices) > 0:
-                if not np.isnan(self.vertices).any():
-                    # self.vertices = ConvexHull(self.vertices).points.tolist()
-                    viewer.draw_polygon(self.vertices, filled=True, color=self.color)
+            elif len(v) > 0:
+                viewer.draw_polygon(v, color=c)
 
-        if self.model.draw_centroid:
+        if m.draw_centroid:
             if not np.isnan(self.cen_pos).any():
                 pos = self.cen_pos
             elif not np.isnan(self.pos).any():
@@ -134,25 +130,23 @@ class LarvaReplay(Larva, BodyReplay):
             else:
                 pos = None
             if pos is not None:
-                viewer.draw_circle(radius=self.radius / 2, position=pos, filled=True, color=self.color,
-                                   width=self.radius / 3)
-        if self.model.draw_midline and self.model.Npoints > 1:
+                viewer.draw_circle(radius=r / 2, position=pos, color=c,width=r / 3)
+        if m.draw_midline and m.Npoints > 1:
             if not np.isnan(self.midline[0]).any():
                 viewer.draw_polyline(self.midline, color=(0, 0, 255), closed=False, width=.07)
                 for i, seg_pos in enumerate(self.midline):
-                    c = 255 * i / (len(self.midline) - 1)
-                    color = (c, 255 - c, 0)
-                    viewer.draw_circle(radius=.07, position=seg_pos, filled=True, color=color, width=.01)
-        if self.model.draw_head:
+                    cc = 255 * i / (len(self.midline) - 1)
+                    color = (cc, 255 - cc, 0)
+                    viewer.draw_circle(radius=.07, position=seg_pos, color=color)
+        if m.draw_head:
             if not np.isnan(self.midline[0]).any():
-                viewer.draw_circle(self.midline[0], self.radius / 2, (255, 0, 0), True, self.radius / 6)
+                viewer.draw_circle(self.midline[0], r / 2, color=(255, 0, 0), width= r / 6)
         if self.selected:
-            if len(self.vertices) > 0 and not np.isnan(self.vertices).any():
-                viewer.draw_polygon(self.vertices, filled=False, color=self.model.selection_color,
-                                    width=self.radius / 5)
+            if len(v) > 0 and not np.isnan(v).any():
+                viewer.draw_polygon(v, filled=False, color=m.selection_color, width=r / 5)
             elif not np.isnan(self.pos).any():
-                viewer.draw_circle(radius=self.radius, position=self.pos,
-                                   filled=False, color=self.model.selection_color, width=self.radius / 3)
+                viewer.draw_circle(radius=r, position=self.pos,
+                                   filled=False, color=m.selection_color, width=r / 3)
 
     def set_color(self, color):
         self.color = color

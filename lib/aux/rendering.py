@@ -4,6 +4,7 @@ import time
 
 import numpy as np
 import pygame
+from scipy.spatial import ConvexHull
 
 from lib.aux import functions as fun
 
@@ -114,6 +115,10 @@ class GuppiesViewer(object):
         vertices = [self._transform(v) for v in vertices]
         width = 0 if filled else int(self._scale[0, 0] * width)
         pygame.draw.polygon(self._window, color, vertices, 0 if filled else width)
+
+    def draw_convex(self, vertices, **kwargs):
+        vertices2 = vertices[ConvexHull(vertices).vertices].tolist()
+        self.draw_polygon(vertices2, **kwargs)
 
     def draw_grid(self, all_vertices, colors, filled=True, width=.01):
         all_vertices = [[self._transform(v) for v in vertices] for vertices in all_vertices]
