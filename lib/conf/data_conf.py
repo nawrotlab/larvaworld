@@ -164,6 +164,27 @@ JovanicEnrichConf = {
                                                   **{'midline': False, 'contour': False}})
 }
 
+BerniEnrichConf = {
+    'preprocessing': dtypes.get_dict('preprocessing', filter_f=0.1, transposition='arena'),
+    'processing': {
+        'types': {'angular': False, 'spatial': False, 'source': False, 'dispersion': False, 'tortuosity': False,
+                  'PI': False},
+        'dsp_starts': [0, 20], 'dsp_stops': [40, 120],
+        'tor_durs': [2, 5, 10, 20]},
+    'annotation': {'bouts': {'stride': False, 'pause': False, 'turn': False}, 'track_point': None,
+                   'track_pars': None, 'chunk_pars': None,
+                   'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': None,
+                   'non_chunks': False},
+    'enrich_aux': {'recompute': False,
+                   'mode': 'minimal',
+                   'source': None,
+                   },
+    'to_drop': dtypes.get_dict('to_drop', groups={**{n: True for n in
+                                                     ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
+                                                      'Rturn', 'turn', 'unused']},
+                                                  **{'midline': False, 'contour': False}})
+}
+
 JovanicConf = {'id': 'JovanicConf',
                'resolution': JovanicDataConf,
                'par': 'JovanicParConf',
@@ -259,5 +280,35 @@ JovanicFormat = {
                          'use_component_vel': False,
                          'scaled_vel_threshold': 0.2},
     'enrichment': JovanicEnrichConf
+
+}
+
+BerniFormat = {
+    'id': 'Berni lab',
+    'path': 'BerniGroup',
+    'tracker': {
+        'resolution': {'fr': 2,
+                       'Npoints': 1,
+                       'Ncontour': 0},
+
+        'filesystem': {
+            'read_sequence': ['Date', 'x','y'],
+            'read_metadata': False,
+            'detect': {
+                'folder': {'pref': None, 'suf': None},
+                'file': {'pref': None, 'suf': None, 'sep': '_-_'}
+            }
+
+        },
+        'arena': env.arena(0.24, 0.24)
+    },
+    'parameterization': {'bend': None,
+                         'front_vector': None,
+                         'rear_vector': None,
+                         'front_body_ratio': None,
+                         'point_idx': -1,
+                         'use_component_vel': False,
+                         'scaled_vel_threshold': 0.2},
+    'enrichment': BerniEnrichConf
 
 }

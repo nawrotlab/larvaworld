@@ -6,7 +6,7 @@ import pandas as pd
 from distutils.dir_util import copy_tree
 
 from lib.anal.plotting import comparative_analysis, plot_marked_turns, plot_marked_strides
-from lib.stor.building import build_Jovanic, build_Schleyer
+from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni
 from lib.conf.conf import *
 from lib.stor.datagroup import LarvaDataGroup
 from lib.stor.larva_dataset import LarvaDataset
@@ -33,37 +33,41 @@ def build_datasets(datagroup_id, raw_folders='each', folders=None, suffixes=None
     # print(f'------ Building {len(ds)} datasets ------')
     # print()
     if group_ids in [None, '']:
-        group_ids =[d.id for d in ds]
-    elif type(group_ids)==str:
-        group_ids=[group_ids]*len(ds)
-    elif len(group_ids)!=len(ds) :
-        raise ValueError (f'Number of datasets ({len(ds)}) does not match number of provided group-IDs ({len(group_ids)})')
+        group_ids = [d.id for d in ds]
+    elif type(group_ids) == str:
+        group_ids = [group_ids] * len(ds)
+    elif len(group_ids) != len(ds):
+        raise ValueError(
+            f'Number of datasets ({len(ds)}) does not match number of provided group-IDs ({len(group_ids)})')
     for d, raw, group_id in zip(ds, raw_folders, group_ids):
         if datagroup_id in ['JovanicGroup', 'JovanicFormat', 'Jovanic lab']:
-            step, end = build_Jovanic(d, build_conf, source_dir=f'{g.raw_dir}/{raw}',**kwargs)
+            step, end = build_Jovanic(d, build_conf, source_dir=f'{g.raw_dir}/{raw}', **kwargs)
         elif datagroup_id in ['SchleyerGroup', 'SchleyerFormat', 'Schleyer lab']:
+
             if type(raw) == str:
                 temp = [f'{g.raw_dir}/{raw}']
             elif type(raw) == list:
                 temp = [f'{g.raw_dir}/{r}' for r in raw]
-            step, end = build_Schleyer(d, build_conf, raw_folders=temp,**kwargs)
+            step, end = build_Schleyer(d, build_conf, raw_folders=temp, **kwargs)
+        elif datagroup_id in ['BerniGroup', 'BerniFormat', 'Berni lab']:
+            step, end = build_Berni(d, build_conf, source_dir=f'{g.raw_dir}/{raw}', **kwargs)
         else:
             raise ValueError(f'Configuration for {datagroup_id} is not supported for building new datasets')
-        if step is not None :
+        if step is not None:
             step.sort_index(level=['Step', 'AgentID'], inplace=True)
             end.sort_index(inplace=True)
             d.set_data(step=step, end=end)
-            d.config['group_id']=group_id
+            d.config['group_id'] = group_id
             d.save(food=False)
             d.agent_ids = d.step_data.index.unique('AgentID').values
             d.num_ticks = d.step_data.index.unique('Step').size
             d.starting_tick = d.step_data.index.unique('Step')[0]
             print(f'--- Dataset {d.id} created with {len(d.agent_ids)} larvae! ---')
-        else :
+        else:
             print(f'--- Failed to create dataset {d.id}! ---')
             # ds.remove(d)
             d.delete()
-            d=None
+            d = None
     # print()
     # print(f'------ {len(ds)} datasets built------')
     # print()
@@ -112,7 +116,7 @@ def get_datasets(datagroup_id, names, last_common='processed', folders=None, suf
 
 def enrich_datasets(datagroup_id, datasets=None, names=None, keep_raw=False, enrich_conf=None, **kwargs):
     warnings.filterwarnings('ignore')
-    if datasets is None and names is not None :
+    if datasets is None and names is not None:
         datasets = get_datasets(datagroup_id, last_common='processed', names=names, mode='load', **kwargs)
     if keep_raw:
         raw_names = [f'raw_{n}' for n in names]
@@ -160,9 +164,9 @@ def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={}, 
         d.visualize(save_to=save_to, vis_kwargs=vis_kwargs, **replay_kwargs)
 
 
-def compute_PIs(datagroup_id=None, save_to=None,ds=None,save_as='PIs.csv', **kwargs):
+def compute_PIs(datagroup_id=None, save_to=None, ds=None, save_as='PIs.csv', **kwargs):
     # filename = 'PIs.csv'
-    if ds is None :
+    if ds is None:
         ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
     ids = [d.id for d in ds]
     if save_to is None and len(ds) > 1 and datagroup_id is not None:
@@ -181,11 +185,11 @@ def compute_PIs(datagroup_id=None, save_to=None,ds=None,save_as='PIs.csv', **kwa
     print(df)
 
 
-def detect_dataset(datagroup_id=None, folder_path=None,raw=True, **kwargs):
-    dic={}
+def detect_dataset(datagroup_id=None, folder_path=None, raw=True, **kwargs):
+    dic = {}
     if folder_path in ['', None]:
         return dic
-    if raw :
+    if raw:
         conf = loadConf(datagroup_id, 'Group')['tracker']['filesystem']
         if 'detect' in conf.keys():
             d = conf['detect']
@@ -199,15 +203,15 @@ def detect_dataset(datagroup_id=None, folder_path=None,raw=True, **kwargs):
                     dic[fn] = folder_path
                 else:
                     ids, dirs = detect_dataset_in_subdirs(datagroup_id, folder_path, fn, **kwargs)
-                    for id, dr in zip(ids,dirs) :
-                        dic[id]=dr
+                    for id, dr in zip(ids, dirs):
+                        dic[id] = dr
             elif dFs is not None:
                 if fn.startswith(dFs):
                     dic[fn] = folder_path
                 else:
                     ids, dirs = detect_dataset_in_subdirs(datagroup_id, folder_path, fn, **kwargs)
-                    for id, dr in zip(ids,dirs) :
-                        dic[id]=dr
+                    for id, dr in zip(ids, dirs):
+                        dic[id] = dr
             elif dfp is not None:
                 fs = os.listdir(folder_path)
                 ids, dirs = [f.split(df_)[1:][0] for f in fs if f.startswith(dfp)], [folder_path]
@@ -218,36 +222,42 @@ def detect_dataset(datagroup_id=None, folder_path=None,raw=True, **kwargs):
                 ids = [f.split(df_)[:-1][0] for f in fs if f.endswith(dfs)]
                 for id in ids:
                     dic[id] = folder_path
+            elif df_ is not None:
+                fs = os.listdir(folder_path)
+                ids = fun.unique_list([f.split(df_)[0] for f in fs if df_ in f])
+                for id in ids:
+                    dic[id] = folder_path
         return dic
-    else :
+    else:
         if os.path.exists(f'{folder_path}/data'):
             dd = LarvaDataset(dir=folder_path)
-            dic[dd.id]=dd
+            dic[dd.id] = dd
         else:
             for ddr in [x[0] for x in os.walk(folder_path)]:
                 if os.path.exists(f'{ddr}/data'):
                     dd = LarvaDataset(dir=ddr)
-                    dic[dd.id]=dd
+                    dic[dd.id] = dd
         return dic
 
-def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False) :
-    fn=last_dir
+
+def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False):
+    fn = last_dir
     ids, dirs = [], []
-    if os.path.isdir(folder_path) :
+    if os.path.isdir(folder_path):
         fs = os.listdir(folder_path)
         for f in fs:
             dic = detect_dataset(datagroup_id, f'{folder_path}/{f}', full_ID=full_ID, raw=True)
             # id, dir = detect_dataset(datagroup_id, f'{folder_path}/{f}', full_ID=full_ID)
             for id, dr in dic.items():
-                if full_ID :
+                if full_ID:
                     ids += [f'{fn}/{id0}' for id0 in id]
-                else :
+                else:
                     ids.append(id)
                 dirs.append(dr)
     return ids, dirs
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     # pref = '/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/raw/3_conditions/AttP240@UAS_TNT/Starved'
     # x_contour_file = f'{pref}_x_contour.txt'
     # y_contour_file = f'{pref}_y_contour.txt'
@@ -263,11 +273,11 @@ if __name__ == '__main__':
 
     # yys=vertices[:,:][1]
 
-
-
     import lib.conf.dtype_dicts as dtypes
-    vis_kwargs=dtypes.get_dict('visualization', mode='video', draw_head=True, video_speed=100)
-    d=LarvaDataset('/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved')
+
+    vis_kwargs = dtypes.get_dict('visualization', mode='video', draw_head=True, video_speed=100)
+    d = LarvaDataset(
+        '/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved')
     d.visualize(vis_kwargs=vis_kwargs)
     # s,e=d.step_data,d.endpoint_data
     # a=s.xs(d.agent_ids[0], level='AgentID', drop_level=True)

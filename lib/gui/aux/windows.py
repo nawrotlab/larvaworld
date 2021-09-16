@@ -298,6 +298,8 @@ def import_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
                             temp = fun.remove_suffix(fdir, f'{id}')
                             if datagroup_id in ['JovanicGroup', 'JovanicFormat', 'Jovanic lab']:
                                 names = [f'{temp}/{new_id}']
+                            elif datagroup_id in ['BerniGroup', 'BerniFormat', 'Berni lab']:
+                                names = [f'{temp}/{new_id}']
                             elif datagroup_id in ['SchleyerGroup', 'SchleyerFormat', 'Schleyer lab']:
                                 names = [f'{temp}{new_id}']
                         else:

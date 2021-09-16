@@ -421,7 +421,7 @@ def align_trajectories(s, Npoints=None, Ncontour=None, track_point=None, arena_d
     if arena_dims is None :
         arena_dims=config['arena_pars']['arena_dims']
     ids = s.index.unique(level='AgentID').values
-    xy_pars = nam.xy(track_point)
+    xy_pars = nam.xy(track_point) if  set(nam.xy(track_point)).issubset(s.columns) else ['x','y']
     if not set(xy_pars).issubset(s.columns):
         raise ValueError('Defined point xy coordinates do not exist. Can not align trajectories! ')
 

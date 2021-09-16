@@ -381,6 +381,7 @@ def store_confs() :
     group_list = [
         dat.SchleyerFormat,
         dat.JovanicFormat,
+        dat.BerniFormat,
     ]
     for g in group_list:
         saveConf(g, 'Group')
