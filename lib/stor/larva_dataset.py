@@ -40,7 +40,6 @@ class LarvaDataset:
                            **life_params
                            }
 
-
         self.__dict__.update(self.config)
 
         self.dt = 1 / self.fr
@@ -170,16 +169,15 @@ class LarvaDataset:
     def N(self):
         try:
             return len(self.agent_ids)
-        except :
+        except:
             return len(self.endpoint_data.index.values)
 
     @property
     def t0(self):
         try:
             return int(self.step_data.index.unique('Step')[0])
-        except :
+        except:
             return 0
-
 
     def save(self, step=True, end=True, food=False, table_entries=None):
         if self.save_data_flag == True:
@@ -203,7 +201,7 @@ class LarvaDataset:
             if 'unique_id' in df.columns:
                 df.rename(columns={'unique_id': 'AgentID'}, inplace=True)
                 N = len(df['AgentID'].unique().tolist())
-                if N>0 :
+                if N > 0:
                     Nrows = int(len(df.index) / N)
                     df['Step'] = np.array([[i] * N for i in range(Nrows)]).flatten()
                     df.set_index(['Step', 'AgentID'], inplace=True)
@@ -211,14 +209,14 @@ class LarvaDataset:
                 df.to_csv(path, index=True, header=True)
 
     def save_config(self):
-        for a in ['N', 't0', 'duration', 'quality', 'dt'] :
+        for a in ['N', 't0', 'duration', 'quality', 'dt']:
             try:
-                self.config[a] = getattr(self,a)
+                self.config[a] = getattr(self, a)
             except:
                 pass
-        for k,v in self.config.items() :
-            if type(v)==np.ndarray :
-                self.config[k]=v.tolist()
+        for k, v in self.config.items():
+            if type(v) == np.ndarray:
+                self.config[k] = v.tolist()
         fun.save_dict(self.config, self.dir_dict['conf'], use_pickle=False)
 
     def save_agent(self, pars=None, header=True):
@@ -244,25 +242,24 @@ class LarvaDataset:
                 raise ValueError('Neither filename nor parameter provided')
         dir = self.dir_dict[type]
         path = f'{dir}/{file}'
-        u_path=f'{dir}/units.csv'
+        u_path = f'{dir}/units.csv'
         index_col = 0 if type != 'table' else ['Step', 'AgentID']
 
-
         try:
-            df= pd.read_csv(path, index_col=index_col)
+            df = pd.read_csv(path, index_col=index_col)
         except:
-            try :
-                df= fun.load_dicts([path])[0]
-                if as_df :
-                    df=pd.DataFrame.from_dict(df)
+            try:
+                df = fun.load_dicts([path])[0]
+                if as_df:
+                    df = pd.DataFrame.from_dict(df)
                     df.index.set_names(index_col, inplace=True)
                 # return df
-            except :
+            except:
                 raise ValueError(f'No data found at {path}')
 
-        if type != 'table' :
+        if type != 'table':
             return df
-        else :
+        else:
             u_dic = fun.load_dicts([u_path])[0]
             return df, u_dic
 
@@ -275,7 +272,6 @@ class LarvaDataset:
     @property
     def duration(self):
         return int(self.endpoint_data['cum_dur'].max())
-
 
     def load_deb_dicts(self, ids=None, **kwargs):
         if ids is None:
@@ -328,8 +324,8 @@ class LarvaDataset:
     def visualize(self, vis_kwargs=None, agent_ids=None, save_to=None, time_range=None, draw_Nsegs=None,
                   arena_pars=None, env_params=None, space_in_mm=True, track_point=None, dynamic_color=None,
                   transposition=None, fix_point=None, secondary_fix_point=None, **kwargs):
-        if vis_kwargs is None :
-            vis_kwargs=dtypes.get_dict('visualization', mode='video')
+        if vis_kwargs is None:
+            vis_kwargs = dtypes.get_dict('visualization', mode='video')
 
         pars, pos_xy_pars, track_point = self.get_par_list(track_point)
         s, e, ids = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range=time_range,
@@ -348,9 +344,6 @@ class LarvaDataset:
             env_params = {'arena': arena_pars}
         arena_dims = [k * 1000 for k in env_params['arena']['arena_dims']]
         env_params['arena']['arena_dims'] = arena_dims
-        # print(arena_dims)
-
-
 
         if transposition is not None:
             s = align_trajectories(s, self.Npoints, self.Ncontour, track_point=track_point, arena_dims=arena_dims,
@@ -412,9 +405,9 @@ class LarvaDataset:
     def compute_preference_index(self, arena_diameter_in_mm=None, return_num=False, return_all=False, show_output=True):
         if not hasattr(self, 'endpoint_data'):
             self.load(step=False)
-        e=self.endpoint_data
+        e = self.endpoint_data
         r = 0.2 * self.arena_pars['arena_dims'][0]
-        p='x' if 'x' in e.keys() else nam.final('x')
+        p = 'x' if 'x' in e.keys() else nam.final('x')
         d = e[p]
         N = d.count()
         N_l = d[d <= -r / 2].count()
@@ -483,7 +476,6 @@ class LarvaDataset:
         stats = target['statistic'].values.tolist()
         return pars, dists, stats
 
-
     def configure_body(self):
         N, Nc = self.Npoints, self.Ncontour
         self.points = nam.midline(N, type='point')
@@ -516,9 +508,10 @@ class LarvaDataset:
         self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang)
         self.xy_pars = nam.xy(self.points + self.contour + ['centroid'], flat=True) + nam.xy('')
 
-        self.config['point'] = self.points[self.config['point_idx'] - 1] if type(
-            self.config['point_idx']) == int else 'centroid'
-        self.point=self.config['point']
+
+        self.config['point'] = 'centroid' if self.config['point_idx'] == -1 else self.points[
+            self.config['point_idx'] - 1]
+        self.point = self.config['point']
 
     def define_paths(self, dir):
         self.dir = dir
@@ -560,8 +553,8 @@ class LarvaDataset:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
-    def enrich(self,preprocessing={},processing={},annotation={},enrich_aux={},
-               to_drop={}, show_output=False,is_last=True, **kwargs):
+    def enrich(self, preprocessing={}, processing={}, annotation={}, enrich_aux={},
+               to_drop={}, show_output=False, is_last=True, **kwargs):
         print()
         print(f'--- Enriching dataset {self.id} with derived parameters ---')
         self.config['front_body_ratio'] = 0.5
@@ -569,7 +562,7 @@ class LarvaDataset:
         warnings.filterwarnings('ignore')
         c = {'show_output': show_output,
              'is_last': False}
-        self.preprocess( **preprocessing,**c, **enrich_aux, **kwargs)
+        self.preprocess(**preprocessing, **c, **enrich_aux, **kwargs)
         self.process(**processing, **enrich_aux, **c, **kwargs)
         self.annotate(**annotation, **enrich_aux, **c, **kwargs)
         self.drop_pars(**to_drop, **c)
@@ -662,5 +655,3 @@ class LarvaDataset:
         ser1.reset_index(level='Step', drop=True, inplace=True)
         ser1 = ser1.reset_index(drop=False).values.tolist()
         s = s.loc[s[id]]
-
-

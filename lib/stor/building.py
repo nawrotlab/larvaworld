@@ -54,11 +54,6 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
             if inv_x:
                 for x_par in [p for p in cols1 if p.endswith('x')]:
                     df[x_par] *= -1
-            # # This scales mm to meters
-            # for p in cols1 :
-            #     if p.endswith('x') or p.endswith('y') :
-            #         df[p] *= 0.001
-
             Nvalid += 1
             dfs.append(df)
             ids.append(f'Larva_{Nvalid}')
@@ -143,11 +138,6 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
         xcs,ycs=fun.convex_hull(xs=xcs.values,ys=ycs.values, N=d.Ncontour)
         xcs=pd.DataFrame(xcs, columns=xc_pars, index=None)
         ycs=pd.DataFrame(ycs, columns=yc_pars, index=None)
-        # print(xs.values.shape, ys.values.shape, xcs.values.shape, ycs.values.shape)
-        # xcs = xcs.iloc[:, :d.Ncontour]
-        # ycs = ycs.iloc[:, :d.Ncontour]
-        # xcs.set_axis(xc_pars, axis=1, inplace=True)
-        # ycs.set_axis(yc_pars, axis=1, inplace=True)
 
         try:
             states = pd.read_csv(state_file, header=None, sep='\t', names=['state'])
@@ -159,7 +149,6 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
 
         min_t, max_t = float(ts.min()), float(ts.max())
 
-        # par_list = [ids, ts, xs, ys]
         par_list = [ids, ts, xs, ys, xcs,ycs]
 
         if states is not None:
@@ -221,7 +210,6 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, complete_ti
     if complete_ticks:
         trange = np.arange(max_step).astype(int)
         my_index = pd.MultiIndex.from_product([trange, new_ids], names=['Step', 'AgentID'])
-        # columns = x_pars + y_pars
         columns = x_pars + y_pars + xc_pars + yc_pars
         if 'state' in temp.columns:
             columns.append('state')
@@ -254,16 +242,17 @@ def build_Berni(dataset, build_conf, source_dir, max_Nagents=None, complete_tick
     Nvalid = 0
     dfs = []
     ids = []
-    # pref = f'{source_dir}/{dataset.id}'
     cols0 = build_conf['read_sequence']
     cols1=cols0[1:]
     fs = [os.path.join(source_dir, n) for n in os.listdir(source_dir) if n.startswith(dataset.id)]
     for f in fs:
         df = pd.read_csv(f, header=0, index_col=0, names=cols0)
+        df.reset_index(drop=True,inplace=True)
         # print(df)
         if len(df) >= int(min_duration_in_sec / dt) and len(df) >= int(min_end_time_in_sec / dt):
             # df = df[df.index >= int(start_time_in_sec / dt)]
             df = df[cols1]
+            df = df.apply(pd.to_numeric, errors='coerce')
             Nvalid += 1
             dfs.append(df)
             ids.append(f'Larva_{Nvalid}')
@@ -287,9 +276,6 @@ def build_Berni(dataset, build_conf, source_dir, max_Nagents=None, complete_tick
             ddf = ddf.assign(AgentID=id).set_index('AgentID', append=True)
             step = ddf if i == 0 else step.append(ddf)
     end.set_index('AgentID', inplace=True)
-    # print(step)
-    # # I add this because some 'na' values were found
-    # step = step.mask(step == 'na', np.nan)
     return step, end
 
 

@@ -277,14 +277,15 @@ if __name__ == '__main__':
 
     vis_kwargs = dtypes.get_dict('visualization', mode='video', draw_head=True, video_speed=100)
     d = LarvaDataset(
-        '/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved')
-    d.visualize(vis_kwargs=vis_kwargs)
-    # s,e=d.step_data,d.endpoint_data
+        '/home/panos/nawrot_larvaworld/larvaworld/data/BerniGroup/processed/exploration/BL_33_control')
+        # '/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved')
+    # d.visualize(vis_kwargs=vis_kwargs)
+    s,e=d.step_data,d.endpoint_data
     # a=s.xs(d.agent_ids[0], level='AgentID', drop_level=True)
     # print(a[list(d.contour_xy[0])])
     # print(a[list(d.contour_xy[1])])
     # print(s['point3_x'].min(), s['point3_x'].max())
-    # print(s.columns.values[20:100])
+    print(s)
     # print(d.config)
 #     # print(s['head_x'].min(), s['head_x'].max())
 #     # print(s['head_y'].min(), s['head_y'].max())
