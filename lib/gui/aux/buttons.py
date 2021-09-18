@@ -24,22 +24,34 @@ def button_row(name, buttons, button_args={}):
         'remove': 'Remove an item from the list.',
         'change_ID': 'Change the dataset ID transiently or permanently.',
         'browse': 'Browse to add items to the list.\n Either directly select a directory or a parent folder containing multiple subdirectories.',
+        'browse_figs': 'Browse to add figures to the list.',
         'replay': 'Replay/Visualize the dataset.',
         'load': f'Load the configuration for a {name}.',
         'edit': f'Configure an existing or create a new {name}.',
         'save': f'Save a new {name} configuration.',
         'delete': f'Delete an existing {name} configuration.',
         'run': 'Run the selected simulation/essay/batch-run.',
+        'save_fig': 'Save the graph to a file.',
+        'refresh_figs': 'Detect available graphs and refresh graph list.',
+        'draw_fig': 'Draw the selected graph.',
+        'conf_fig': "Configure the selected graph's arguments.",
     }
-    but_kws={'browse' : {'initial_folder' : paths.DataFolder, 'enable_events' : True, 'target': (0,-1), 'button_type' : sg.BUTTON_TYPE_BROWSE_FOLDER}}
+    but_kws={
+        'browse' : {'initial_folder' : paths.DataFolder, 'enable_events' : True,
+                    'target': (0,-1), 'button_type' : sg.BUTTON_TYPE_BROWSE_FOLDER},
+        'browse_figs' : {'initial_folder' : paths.ExpFigFolder, 'enable_events' : True,
+                         'target': (0,-1), 'button_type' : sg.BUTTON_TYPE_BROWSE_FILES, 'file_types':(("png Files", "*.png"),)},
+    }
     bl = []
     for b in buttons:
         kws = button_args[b] if b in list(button_args.keys()) else {}
+
         if b in but_kws.keys():
             cur=copy.deepcopy(but_kws[b])
             cur.update(kws)
         else :
             cur=kws
+        # print(cur)
         bl.append(GraphButton(f'Button_{b}', f'{b.upper()} {name}', tooltip=but_tips[b], **cur))
     return bl
 

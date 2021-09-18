@@ -1,14 +1,15 @@
 import copy
 import operator
+import os
 
 import PySimpleGUI as sg
 
 from lib.aux import functions as fun
 from lib.conf import dtype_dicts as dtypes
-from lib.conf.conf import loadConfDict, saveConf
+from lib.conf.conf import loadConfDict, saveConf, loadConf
 from lib.gui.aux.functions import retrieve_value, t_kws, b6_kws, w_kws, col_size
 from lib.gui.aux.buttons import named_bool_button
-
+from lib.stor import paths
 
 
 def get_table(v, pars_dict, Nagents):
@@ -214,9 +215,14 @@ def save_conf_window(conf, conftype, disp=None):
         return None
 
 
-def import_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
+def import_window(datagroup_id,raw_dic):
     from lib.gui.tabs.gui import check_togglesNcollapsibles
     from lib.gui.aux.elements import CollapsibleDict
+    g = loadConf(datagroup_id, 'Group')
+    group_dir = f'{paths.DataFolder}/{g["path"]}'
+    raw_folder = f'{group_dir}/raw'
+    proc_folder = f'{group_dir}/processed'
+
     M, E = 'Merge', 'Enumerate'
     E0 = f'{E}_id'
     proc_dir = {}
@@ -284,40 +290,48 @@ def import_window(datagroup_id, raw_folder, raw_dic, dirs_as_ids=True):
                 conf = s1.get_dict(values=v, window=w)
                 kws = {
                     'datagroup_id': datagroup_id,
-                    'folders': None,
-                    'group_ids': gID,
+                    'group_id': gID,
                     **conf}
                 w.close()
-                from lib.stor.managing import build_datasets
+                from lib.stor.managing import build_dataset
+                source_ids=list(raw_dic.keys())
+                sources=list(raw_dic.values())
+                targets = [f.replace(raw_folder, proc_folder) for f in sources]
+                # targets = [fun.remove_suffix(f, f'{id}') for f, id in zip(targets, source_ids)]
                 if not merge:
                     print(f'------ Building {N} discrete datasets ------')
-                    for id, dir in raw_dic.items():
-                        new_id = v[f'new_{id}']
-                        fdir = fun.remove_prefix(dir, f'{raw_folder}/')
-                        if dirs_as_ids:
-                            temp = fun.remove_suffix(fdir, f'{id}')
-                            if datagroup_id in ['JovanicGroup', 'JovanicFormat', 'Jovanic lab']:
-                                names = [f'{temp}/{new_id}']
-                            elif datagroup_id in ['BerniGroup', 'BerniFormat', 'Berni lab']:
-                                names = [f'{temp}/{new_id}']
-                            elif datagroup_id in ['SchleyerGroup', 'SchleyerFormat', 'Schleyer lab']:
-                                names = [f'{temp}{new_id}']
-                        else:
-                            names = [fdir]
-                        dd = build_datasets(ids=[new_id], names=names, raw_folders=[fdir], **kws)[0]
+                    for target, source_id, source in zip(targets, source_ids, sources):
+                        target_id = v[f'new_{source_id}']
+                        if datagroup_id in ['Berni lab']:
+                            target = f'{target}/{target_id}'
+                            source_files=[os.path.join(source, n) for n in os.listdir(source) if
+                                  n.startswith(source_id)]
+                            dd = build_dataset(id=target_id, target_dir=target, source_files=source_files, **kws)
+                        elif datagroup_id in ['Jovanic lab']:
+                            target = f'{target}/{target_id}'
+                            dd = build_dataset(id=target_id, target_dir=target, source_dir=source, **kws)
+                        elif datagroup_id in ['Schleyer lab']:
+                            target = target.replace(source_id, target_id)
+                            dd = build_dataset(id=target_id, target_dir=target, source_dir=[source], **kws)
                         if dd is not None:
-                            proc_dir[new_id] = dd
+                            proc_dir[target_id] = dd
                         else:
-                            del proc_dir[new_id]
+                            del proc_dir[target_id]
 
                 else:
                     print(f'------ Building a single merged dataset ------')
-                    id0 = f'{list(raw_dic.keys())[0]}'
-                    fdir = [fun.remove_prefix(dir, f'{raw_folder}/') for dir in raw_dic.values()]
-                    new_id = v[f'new_{id0}']
-                    temp = fun.remove_suffix(fdir[0], id0)
-                    names = [f'{temp}{new_id}']
-                    dd = build_datasets(ids=[new_id], names=names, raw_folders=[fdir], **kws)[0]
+                    target_id0 = v[f'new_{source_ids[0]}']
+
+                    if datagroup_id in ['Berni lab']:
+                        target0 = f'{targets[0]}/{target_id0}'
+                        source_files = fun.flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
+                                        n.startswith(source_id)] for source_id, source in raw_dic.items()])
+                        dd = build_dataset(id=target_id0, target_dir=target0, source_files=source_files, **kws)
+                    elif datagroup_id in ['Schleyer lab']:
+                        target0 = targets[0].replace(source_ids[0], target_id0)
+                        dd = build_dataset(id=target_id0, target_dir=target0, source_dir=sources, **kws)
+                    elif datagroup_id in ['Jovanic lab']:
+                        raise NotImplemented
                     proc_dir[dd.id] = dd
                 break
     return proc_dir

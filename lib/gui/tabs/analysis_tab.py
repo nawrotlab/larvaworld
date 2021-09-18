@@ -40,7 +40,7 @@ class AnalysisTab(GuiTab):
                       buttons=['replay', 'add_ref', 'select_all', 'remove', 'change_ID', 'browse'],
                        aux_cols=['N', 'duration', 'quality'], size=(30,5)
                        )
-        g1 = ButtonGraphList(name=self.name, fig_dict=graph_dict, canvas_size=self.canvas_size)
+        g1 = ButtonGraphList(name=self.name, tab=self, fig_dict=graph_dict, canvas_size=self.canvas_size)
 
 
         l = [[
@@ -53,19 +53,11 @@ class AnalysisTab(GuiTab):
         return l, {}, g, d
 
     def eval(self, e, v, w, c, d, g):
-        if e == f'{self.name}_REFRESH_FIGS':
-            self.graph_list.refresh_figs(w, self.base_dict)
-        elif e == f'{self.name}_SAVE_FIG':
-            self.graph_list.save_fig()
-        elif e == f'{self.name}_FIG_ARGS':
-            self.graph_list.set_fig_args()
-        elif e == f'{self.name}_DRAW_FIG':
-            self.graph_list.generate(w, self.base_dict)
         return d, g
 
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
 
-    larvaworld_gui = LarvaworldGui(tabs=['analysis'])
+    larvaworld_gui = LarvaworldGui(tabs=['simulation', 'analysis'])
     larvaworld_gui.run()

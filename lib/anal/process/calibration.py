@@ -15,7 +15,7 @@ from lib.anal.process.bouts import detect_contacting_chunks
 from lib.aux.parsing import multiparse_dataset_by_sliding_window
 
 
-def choose_velocity_flag(s=None, e=None, dt=None, Npoints=None, from_file=True, save_to=None, dataset=None):
+def choose_velocity_flag(s=None, e=None, dt=None, Npoints=None, from_file=True, save_to=None, dataset=None, **kwargs):
     if all([k is None for k in [s, e, dt, Npoints]]):
         if dataset is not None:
             d = dataset
@@ -51,7 +51,7 @@ def choose_velocity_flag(s=None, e=None, dt=None, Npoints=None, from_file=True, 
         for sv, p, sv_min, sv_max in zip(svels, points, svels_minima, svels_maxima):
             detect_contacting_chunks(s=s, e=e, dt=dt, chunk='stride',
                                      track_point=p, mid_flag=sv_max, edge_flag=sv_min,
-                                     vel_par=sv, chunk_dur_in_sec=None, distro_dir=None)
+                                     vel_par=sv, chunk_dur_in_sec=None,  **kwargs)
             t_cvs = []
             s_cvs = []
             for id in ids:

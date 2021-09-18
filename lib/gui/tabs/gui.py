@@ -127,9 +127,9 @@ class LarvaworldGui:
         w=self.window
         check_togglesNcollapsibles(w, e, v, self.collapsibles)
         check_multispins(w, e)
-        for g in self.graph_lists.values():
-            if e == g.list_key:
-                g.evaluate(w, v[g.list_key])
+        # for g in self.graph_lists.values():
+        #     if e == g.list_key:
+        #         g.evaluate(w, v[g.list_key])
 
         if e.startswith('EDIT_TABLE'):
             self.collapsibles[e.split()[-1]].edit_table(w)

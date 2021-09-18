@@ -219,7 +219,7 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, min_duratio
 
     return step, end
 
-def build_Berni(dataset, build_conf, source_dir, max_Nagents=None, min_duration_in_sec=0.0,
+def build_Berni(dataset, build_conf, source_files, max_Nagents=None, min_duration_in_sec=0.0,
                   match_ids=True,min_end_time_in_sec=0, start_time_in_sec=0,**kwargs):
     d = dataset
     dt = d.dt
@@ -229,7 +229,8 @@ def build_Berni(dataset, build_conf, source_dir, max_Nagents=None, min_duration_
     ids = []
     cols0 = build_conf['read_sequence']
     cols1=cols0[1:]
-    fs = [os.path.join(source_dir, n) for n in os.listdir(source_dir) if n.startswith(dataset.id)]
+    fs = source_files
+    # fs = [os.path.join(source_dir, n) for n in os.listdir(source_dir) if n.startswith(dataset.id)]
     for f in fs:
         df = pd.read_csv(f, header=0, index_col=0, names=cols0)
         df.reset_index(drop=True,inplace=True)

@@ -5,7 +5,7 @@ from scipy.signal import argrelextrema, spectrogram
 import lib.aux.functions as fun
 import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
-from lib.anal.process.store import create_par_distro_dataset
+from lib.anal.process.store import store_aux_dataset
 
 
 def compute_spineangles(s, angles, points, config=None, chunk_only=None, mode='full'):
@@ -154,7 +154,7 @@ def compute_angular_metrics(s, dt, segs, angles, mode='minimal'):
     print('All angular parameters computed')
 
 
-def angular_processing(s, e, dt, Npoints, config=None, recompute=False, mode='minimal', distro_dir=None, **kwargs):
+def angular_processing(s, e, dt, Npoints, aux_dir, recompute=False, mode='minimal', **kwargs):
     N = Npoints
     points = nam.midline(N, type='point')
     Nangles = np.clip(N - 2, a_min=0, a_max=None)
@@ -170,15 +170,11 @@ def angular_processing(s, e, dt, Npoints, config=None, recompute=False, mode='mi
         compute_bend(s, points, angles, config, mode=mode)
     compute_angular_metrics(s, dt, segs, angles, mode=mode)
     compute_LR_bias(s, e)
-    if distro_dir is not None:
-        create_par_distro_dataset(s, ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), dir=distro_dir)
+    # if distro_dir is not None:
+    #     create_par_distro_dataset(s, ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), dir=distro_dir)
+    store_aux_dataset(s, pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), type='distro', file=aux_dir)
     print(f'Completed {mode} angular processing.')
     return s,e
 
 
-if __name__ == '__main__':
-    from lib.stor.managing import get_datasets
 
-    d = get_datasets(datagroup_id='SimGroup', last_common='single_runs', names=['dish/ppp'], mode='load')[0]
-    s = d.step_data
-    d.angular_processing(show_output=True)

@@ -51,7 +51,7 @@ class ModelTab(GuiTab):
         return copy.deepcopy(m)
 
     def build(self):
-        l0 = SelectionList(tab=self,actions=['load', 'save', 'delete'])
+        l0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
         c1 = [CollapsibleDict(n, default=True, **kwargs)
               for n, kwargs in zip(self.fields, [{}, {'toggle': True}, {}, {}])]
         s1 = CollapsibleTable('odor_gains', headings=['id', 'mean', 'std'], dict={}, type_dict=dtypes.get_dict_dtypes('odor_gain'))
@@ -62,7 +62,7 @@ class ModelTab(GuiTab):
 
         fdir=paths.ModelFigFolder
         fig_dict= {f: f'{fdir}/{f}' for f in os.listdir(fdir)}
-        g1 = GraphList(self.name,list_header='Model', fig_dict=fig_dict, subsample=3, canvas_size=col_size(x_frac=0.6*0.9, y_frac=0.9))
+        g1 = GraphList(self.name, tab=self,list_header='Model', fig_dict=fig_dict, subsample=3, canvas_size=col_size(x_frac=0.6*0.9, y_frac=0.9))
         g = {g1.name: g1}
 
         l = [[

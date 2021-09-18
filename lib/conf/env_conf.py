@@ -200,7 +200,7 @@ chemotax_env = {'arena': arena(0.1, 0.06),
                 'food_params': food_param_conf(list={**odor_source(id='Odor_source', pos=(0.04, 0.0),
                                                                    odor_id='Odor', odor_intensity=8,
                                                                    odor_spread=0.0004, default_color='blue')}),
-                'larva_groups': larva_distro(N=30, loc=(-0.04, 0.0), scale=(0.005, 0.02),
+                'larva_groups': larva_distro(N=5, loc=(-0.04, 0.0), scale=(0.005, 0.02),
                                              orientation_range=(-30.0, 30.0),
                                              model='navigator'),
                 'odorscape': gaussian_odor()}

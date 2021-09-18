@@ -287,7 +287,7 @@ class HeadedElement(GuiElement):
 
 
 class SelectionList(GuiElement):
-    def __init__(self, tab, conftype=None, disp=None, actions=[], sublists={}, idx=None, progress=False, width=24,
+    def __init__(self, tab, conftype=None, disp=None, buttons=[], sublists={}, idx=None, progress=False, width=24,
                  with_dict=False, name=None, **kwargs):
         self.conftype = conftype if conftype is not None else tab.conftype
         if name is None:
@@ -314,7 +314,7 @@ class SelectionList(GuiElement):
         self.sublists = sublists
         self.tab.selectionlists[self.conftype] = self
 
-        bs = button_row(self.disp, actions)
+        bs = button_row(self.disp, buttons)
 
         self.layout = self.build(bs=bs, **kwargs)
 
@@ -322,9 +322,9 @@ class SelectionList(GuiElement):
         n = self.disp
         if self.with_dict:
             nn = self.tab.gui.tab_dict[n][2]
-            self.collapsible = CollapsibleDict(n, dict=dtypes.get_dict(nn), type_dict=dtypes.get_dict_dtypes(nn),
+            self.collapsible = CollapsibleDict(nn, default=True,
                                                header_list_width=self.width, header_dict=loadConfDict(self.conftype),
-                                               next_to_header=bs, header_key=self.k,
+                                               next_to_header=bs, header_key=self.k,disp_name=get_disp_name(n),
                                                header_list_kws={'tooltip': f'The currently loaded {n}.'}, **kwargs)
 
             l = self.collapsible.get_layout(as_col=False)
@@ -446,8 +446,6 @@ class NamedList(Header):
             self.H = len(choices)
         content = self.build_list(choices, default_value, drop_down, readonly, enable_events, select_mode, list_kws, **kwargs)
         super().__init__(name=name, content=content, **header_kws)
-
-
     def build_list(self, choices, default_value, drop_down, readonly, enable_events, select_mode, list_kws, **kwargs):
         kws = {'key': self.key, 'enable_events': enable_events, **list_kws, **kwargs}
         if drop_down:
@@ -522,13 +520,12 @@ class DataList(NamedList):
         return ls
 
     def eval(self, e, v, w, c, d, g):
-        from lib.stor.managing import detect_dataset, enrich_datasets
+        from lib.stor.managing import detect_dataset
         n = self.name
         k = self.list_key
         d0 = self.dict
         v0 = v[k]
         kks = [v0[i] if self.aux_cols is None else list(d0.keys())[v0[i]] for i in range(len(v0))]
-        # print(v0)
         datagroup_id = self.tab.current_ID(v) if self.raw else None
         if e == self.browse_key:
             d0.update(detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw))
@@ -561,15 +558,15 @@ class DataList(NamedList):
             d1 = dl1.dict
             k1 = dl1.list_key
             raw_dic = {id: dir for id, dir in d0.items() if id in v[k]}
-            proc_dir = import_window(datagroup_id=datagroup_id,
-                                     raw_folder=w[f'BROWSE {self.tab.raw_key}'].InitialFolder, raw_dic=raw_dic)
-            d1.update(proc_dir)
+            proc_dic = import_window(datagroup_id=datagroup_id, raw_dic=raw_dic)
+            d1.update(proc_dic)
             dl1.update_window(w)
         elif e == f'ENRICH {n}':
             dds = [dd for i,(id, dd) in enumerate(d0.items()) if i in v[k]]
             if len(dds) > 0:
                 enrich_conf = c['enrichment'].get_dict(v, w)
-                enrich_datasets(datagroup_id=datagroup_id, datasets=dds, enrich_conf=enrich_conf)
+                for dd in dds :
+                    dd.enrich(**enrich_conf)
         self.dict = d0
 
 
@@ -742,15 +739,21 @@ class CollapsibleTable(Collapsible):
         return data
 
     def get_content(self):
-        content = [[sg.Table(values=self.data[:][:], headings=self.headings, col_widths=self.col_widths,
-                             max_col_width=30, background_color='lightblue', header_font=('Helvetica', 8, 'bold'),
-                             auto_size_columns=False,
+        # content = [[sg.Table(values=self.data[:][:], headings=self.headings, col_widths=self.col_widths,
+        #                      max_col_width=30, background_color='lightblue', header_font=('Helvetica', 8, 'bold'),
+        #                      auto_size_columns=False,
+        #                      visible_column_map=self.col_visible,
+        #                      # display_row_numbers=True,
+        #                      justification='center',
+        #                      font=w_kws['font'],
+        #                      num_rows=len(self.data),
+        #                      alternating_row_color='lightyellow',
+        #                      key=self.key
+        #                      )]]
+        content = [[Table(values=self.data[:][:], headings=self.headings, col_widths=self.col_widths,
                              visible_column_map=self.col_visible,
                              # display_row_numbers=True,
-                             justification='center',
-                             font=w_kws['font'],
                              num_rows=len(self.data),
-                             alternating_row_color='lightyellow',
                              key=self.key
                              )]]
         return content
@@ -852,10 +855,12 @@ class Table(sg.Table):
 
 
 class GraphList(NamedList):
-    def __init__(self, name, fig_dict={}, next_to_header=None, default_values=None, canvas_size=(1000, 800),
+    def __init__(self, name, tab,fig_dict={}, next_to_header=None, default_values=None, canvas_size=(1000, 800),
                  list_size=None, list_header='Graphs', auto_eval=True, canvas_kws={'background_color': 'Lightblue'},
                  graph=False, subsample=1):
 
+        self.tab = tab
+        self.tab.graphlists[name] = self
         self.fig_dict = fig_dict
         self.subsample = subsample
         self.auto_eval = auto_eval
@@ -891,18 +896,23 @@ class GraphList(NamedList):
             delete_figure_agg(self.fig_agg)
         self.fig_agg = draw_canvas(w[self.canvas_key].TKCanvas, fig)
 
-    def update(self, w, fig_dict):
-        self.fig_dict = fig_dict
+    def update(self, w, fig_dict=None):
+        if fig_dict is None :
+            fig_dict=self.fig_dict
+        else :
+            self.fig_dict = fig_dict
         w.Element(self.list_key).Update(values=list(fig_dict.keys()))
 
-    def evaluate(self, w, list_values):
-        if len(list_values) > 0 and self.auto_eval:
-            choice = list_values[0]
-            fig = self.fig_dict[choice]
-            if type(fig) == str and os.path.isfile(fig):
-                self.show_fig(w, fig)
-            else:
-                self.draw_fig(w, fig)
+    def eval(self, e, v, w, c, d, g):
+        if e == self.list_key and self.auto_eval:
+            v0=v[self.list_key]
+            if len(v0) > 0:
+                choice = v0[0]
+                fig = self.fig_dict[choice]
+                if type(fig) == str and os.path.isfile(fig):
+                    self.show_fig(w, fig)
+                else:
+                    self.draw_fig(w, fig)
 
     def show_fig(self, w, fig):
         c = w[self.canvas_key].TKCanvas
@@ -916,25 +926,15 @@ class GraphList(NamedList):
 
 
 class ButtonGraphList(GraphList):
-    def __init__(self, name, **kwargs):
-        self.draw_key = f'{name}_DRAW_FIG'
-        l = [
-            GraphButton('Button_Load', f'{name}_REFRESH_FIGS', tooltip='Detect available graphs.'),
-            GraphButton('System_Equalizer', f'{name}_FIG_ARGS', tooltip='Configure the graph arguments.'),
-            GraphButton('Chart', self.draw_key, tooltip='Draw the graph.'),
-            GraphButton('File_Add', f'{name}_SAVE_FIG', tooltip='Save the graph to a file.')
-        ]
-        super().__init__(name=name, next_to_header=l, **kwargs)
+    def __init__(self, name, buttons=['refresh_figs', 'conf_fig', 'draw_fig', 'save_fig'],
+                 button_args={},**kwargs):
+
+        after_header = button_row(name, buttons, button_args)
+        super().__init__(name=name, next_to_header=after_header, **kwargs)
 
         self.fig, self.save_to, self.save_as = None, '', ''
         self.func, self.func_kws = None, {}
 
-    def evaluate(self, w, list_values):
-        if len(list_values) > 0:
-            choice = list_values[0]
-            if self.fig_dict[choice] != self.func:
-                self.func = self.fig_dict[choice]
-                self.func_kws = self.get_graph_kws(self.func)
 
     def get_graph_kws(self, func):
         signature = inspect.getfullargspec(func)
@@ -958,7 +958,7 @@ class ButtonGraphList(GraphList):
 
     def refresh_figs(self, w, data):
         k = self.list_key
-        w.Element(k).Update(values=list(self.fig_dict.keys()))
+        self.update(w)
         if len(data) > 0:
             valid = []
             for i, (name, func) in enumerate(self.fig_dict.items()):
@@ -987,9 +987,43 @@ class ButtonGraphList(GraphList):
                 self.fig.savefig(path, dpi=300)
                 print(f'Plot saved as {v[kDir]}')
 
-    def set_fig_args(self):
-        if self.func_kws!={} :
-            self.func_kws = set_kwargs(self.func_kws, title='Graph arguments')
+    def eval(self, e, v, w, c, d, g):
+        n = self.name
+        k = self.list_key
+        d0 = self.fig_dict
+        v0 = v[k]
+        if e == f'BROWSE_FIGS {n}':
+            v1=v[f'BROWSE_FIGS {n}']
+            id=v0.split('/')[-1].split('.')[-2]
+            d0[id]=v1
+            self.update(w,d0)
+        elif e == f'REMOVE_FIGS {n}':
+            for kk in v0:
+                d0.pop(kk, None)
+            self.update(w,d0)
+        elif e == k:
+            if len(v0) > 0:
+                fig = d0[v0[0]]
+                try:
+                    if fig != self.func:
+                        self.func = fig
+                        self.func_kws = self.get_graph_kws(self.func)
+                except :
+                    if type(fig) == str and os.path.isfile(fig):
+                        self.show_fig(w, fig)
+                    else:
+                        self.draw_fig(w, fig)
+        if e == f'REFRESH_FIGS {n}':
+            self.refresh_figs(w, self.tab.base_dict)
+        elif e == f'SAVE_FIG {n}':
+            self.save_fig()
+        elif e == f'CONF_FIG {n}':
+            if self.func_kws != {}:
+                self.func_kws = set_kwargs(self.func_kws, title='Graph arguments')
+        elif e == f'DRAW_FIG {n}':
+            self.generate(w, self.tab.base_dict)
+
+
 
 
 def draw_canvas(canvas, figure, side='top', fill='both', expand=True):
@@ -1045,23 +1079,24 @@ class DynamicGraph:
         return l
 
     def evaluate(self):
-        e, v = self.window.read(timeout=0)
+        w=self.window
+        e, v = w.read(timeout=0)
         if e is None:
-            self.window.close()
+            w.close()
             return False
         elif e == 'Choose':
-            self.window[f'-COL2-'].update(visible=False)
-            self.window[f'-COL1-'].update(visible=True)
+            w[f'-COL2-'].update(visible=False)
+            w[f'-COL1-'].update(visible=True)
             self.cur_layout = 1
         elif e == 'Ok':
-            self.window[f'-COL1-'].update(visible=False)
-            self.window[f'-COL2-'].update(visible=True)
+            w[f'-COL1-'].update(visible=False)
+            w[f'-COL2-'].update(visible=True)
             self.pars = [p for p in self.available_pars if v[f'k_{p}']]
             self.update_pars()
             self.cur_layout = 2
         elif e == 'Cancel':
-            self.window[f'-COL1-'].update(visible=False)
-            self.window[f'-COL2-'].update(visible=True)
+            w[f'-COL1-'].update(visible=False)
+            w[f'-COL2-'].update(visible=True)
             self.cur_layout = 2
 
         if self.cur_layout == 2 and self.Npars > 0:

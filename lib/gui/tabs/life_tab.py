@@ -48,7 +48,7 @@ class LifeTab(GuiTab):
         x2 = 0.8
         r1_size = col_size(x_frac=1 - x1, y_frac=y)
 
-        sl0 = SelectionList(tab=self, actions=['load', 'save', 'delete'])
+        sl0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
 
         sub = CollapsibleDict('substrate', default=True, header_dict=substrate_dict, header_value='standard')
         l1 = [[sg.T('Epoch start (hours) : ', **t_kws(24))],
@@ -70,7 +70,7 @@ class LifeTab(GuiTab):
         l_tab = Header('Epochs', text=f'{ep.capitalize()}s (h)', header_text_kws=t_kws(18),
                        after_header=after_header, single_line=False, content=content).layout
 
-        g1 = GraphList(self.name, fig_dict={m: plot_debs for m in deb_modes}, default_values=['reserve'],
+        g1 = GraphList(self.name, tab=self, fig_dict={m: plot_debs for m in deb_modes}, default_values=['reserve'],
                        canvas_size=r1_size, list_header='DEB parameters', auto_eval=False)
 
         l0 = gui_col([sl0, sub, g1], x1, y)

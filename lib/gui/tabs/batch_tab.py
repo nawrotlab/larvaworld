@@ -47,8 +47,7 @@ class BatchTab(GuiTab):
 
     def build(self):
         sl1 = SelectionList(tab=self, conftype='Exp', idx=1)
-        sl2 = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'],
-                                sublists={'exp': sl1})
+        sl2 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'],sublists={'exp': sl1})
         batch_conf = [[sg.T('Batch id:', **t_kws(8)), sg.In('unnamed_batch_0', k=self.batch_id_key, **t_kws(16))],
                       [sg.T('Path:', **t_kws(8)), sg.In('unnamed_batch', k=self.batch_path_key, **t_kws(16))],
                       named_bool_button('Save data', False, toggle_name='save_data_flag'),
@@ -60,7 +59,7 @@ class BatchTab(GuiTab):
                              toggle=True, disabled=True, toggled_subsections=None)
         s3 = CollapsibleTable('space_search', headings=['pars', 'ranges', 'Ngrid'], dict={},
                               type_dict=dtypes.get_dict_dtypes('space_search'))
-        g1 = GraphList(self.name)
+        g1 = GraphList(self.name, tab=self)
 
         dl1 = DataList(name=self.name, tab=self, buttons=['select_all', 'remove'])
 

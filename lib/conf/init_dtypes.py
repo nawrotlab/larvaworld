@@ -15,7 +15,7 @@ substrate_dict = {
         'saccharose': 0,
         'yeast': 0,
         'agar': 16 / 1000,
-        'cornmeal': 0,
+        'cornmeal': 0
     },
     'standard': {
         'glucose': 100 / 1000,
@@ -23,7 +23,12 @@ substrate_dict = {
         'saccharose': 0,
         'yeast': 50 / 1000,
         'agar': 16 / 1000,
-        'cornmeal': 0,
+        'cornmeal': 0
+        # 'KPO4': 0.1/1000,
+        # 'Na_K_tartrate': 8/1000,
+        # 'NaCl': 0.5/1000,
+        # 'MgCl2': 0.5/1000,
+        # 'Fe2(SO4)3': 0.5/1000,
     },
     'cornmeal': {
         'glucose': 517 / 17000,
@@ -31,7 +36,7 @@ substrate_dict = {
         'saccharose': 0,
         'yeast': 0,
         'agar': 93 / 17000,
-        'cornmeal': 1716 / 17000,
+        'cornmeal': 1716 / 17000
     },
     'PED_tracker': {
         'glucose': 0,
@@ -39,8 +44,35 @@ substrate_dict = {
         'saccharose': 2 / 200,
         'yeast': 3 * 0.05 * 0.125 / 0.1,
         'agar': 500 * 2 / 200,
-        'cornmeal': 0,
+        'cornmeal': 0
+    },
+#     [1] M. E. Wosniack, N. Hu, J. Gjorgjieva, and J. Berni, “Adaptation of Drosophila larva foraging in response to changes in food distribution,” bioRxiv, p. 2021.06.21.449222, 2021.
+'cornmeal2': {
+        'glucose': 0,
+        'dextrose': 450 / 6400,
+        'saccharose': 0,
+        'yeast': 90/ 6400,
+        'agar': 42 / 6400,
+        'cornmeal': 420 / 6400
+    },
+'sucrose': {
+        'glucose': 3.42/200,
+        'dextrose': 0,
+        'saccharose': 0,
+        'yeast': 0,
+        'agar': 0.8 / 200,
+        'cornmeal': 0
     }
+# 'apple_juice': {
+#         'glucose': 0.342/200,
+#         'dextrose': 0,
+#         'saccharose': 0,
+#         'yeast': 0,
+#         'agar': 0.8 / 200,
+#         'cornmeal': 0,
+#         'apple_juice': 1.05*5/200,
+#     },
+
 }
 null_bout_dist = {
     'fit': True,
@@ -292,7 +324,7 @@ def init_dicts():
             'tor_durs': None},
         'annotation': {'bouts': annotation_bouts(types=['stride', 'pause', 'turn']), 'track_point': None,
                        'track_pars': None, 'chunk_pars': None,
-                       'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 0.0,
+                       'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 0.0,'min_ang_vel': 0.0,
                        'non_chunks': False},
         'enrich_aux': {'recompute': False,
                        'mode': 'minimal',
@@ -629,6 +661,7 @@ def init_dtypes():
                        'track_pars': List[str], 'chunk_pars': List[str],
                        'vel_par': str, 'ang_vel_par': str, 'bend_vel_par': str,
                        'min_ang': fun.value_list(end=180.0, steps=1900, decimals=1),
+                       'min_ang_vel': fun.value_list(end=1000.0, steps=10001, decimals=1),
                        'non_chunks': bool},
         'enrich_aux': {'recompute': bool,
                        'mode': ['minimal', 'full'],

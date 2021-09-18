@@ -15,6 +15,7 @@ class GuiTab:
         self.conftype = conftype
         self.selectionlists = {}
         self.datalists = {}
+        self.graphlists = {}
         # self.graph_list=None
 
     @property
@@ -73,6 +74,8 @@ class GuiTab:
         for sl_name,sl in self.selectionlists.items():
             sl.eval(e, v, w, c, d, g)
         for dl_name,dl in self.datalists.items():
+            dl.eval(e, v, w, c, d, g)
+        for dl_name,dl in self.graphlists.items():
             dl.eval(e, v, w, c, d, g)
         self.eval(e, v, w, c, d, g)
 

@@ -90,48 +90,33 @@ run_sim = pickle.loads(ser)
 
 def store_sim_data(env, d, save_data_flag, enrichment, param_dict):
     # Read the data collected during the simulation
-    if not paths.new_format:
-        # old format
-        if env.larva_step_col is not None:
-            step = env.larva_step_col.get_agent_vars_dataframe()
-        else:
-            step = None
-        if env.larva_end_col is not None:
-            env.larva_end_col.collect(env)
-            end = env.larva_end_col.get_agent_vars_dataframe().droplevel('Step')
-        else:
-            end = None
-        if env.food_end_col is not None:
-            env.food_end_col.collect(env)
-            food = env.food_end_col.get_agent_vars_dataframe().droplevel('Step')
-        else:
-            food = None
-        if env.table_collector is not None:
-            d.save_tables(env.table_collector.tables)
-        d.set_data(step=step,
-                   end=end,
-                   food=food)
-
+    if env.larva_step_col is not None:
+        step = env.larva_step_col.get_agent_vars_dataframe()
     else:
-        # new format
-        save_to = d.dir_dict['table'] if save_data_flag else None
-        df = env.step_group_collector.save(save_to=save_to)
-        env.end_group_collector.collect(df=df)
-        df0 = env.end_group_collector.save(save_to=save_to)
-        if df0 is not None:
-            df0 = df0.droplevel('Step')
-        d.set_data(step=df, end=df0)
+        step = None
+    if env.larva_end_col is not None:
+        env.larva_end_col.collect(env)
+        end = env.larva_end_col.get_agent_vars_dataframe().droplevel('Step')
+    else:
+        end = None
+    if env.food_end_col is not None:
+        env.food_end_col.collect(env)
+        food = env.food_end_col.get_agent_vars_dataframe().droplevel('Step')
+    else:
+        food = None
+
+    d.set_data(step=step,
+               end=end,
+               food=food)
 
     d.enrich(**enrichment)
     # Save simulation data and parameters
     if save_data_flag:
         d.save()
+        d.save_dicts(env)
         fun.dict_to_file(param_dict, d.dir_dict['sim'])
-        for l in env.get_flies():
-            if hasattr(l, 'deb') and l.deb is not None:
-                l.deb.finalize_dict(d.dir_dict['deb'])
-            if l.brain.intermitter is not None:
-                l.brain.intermitter.save_dict(d.dir_dict['bouts'])
+        if env.table_collector is not None:
+            d.save_tables(env.table_collector.tables)
 
             # except:
             #     pass

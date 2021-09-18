@@ -196,20 +196,21 @@ def process(s,e,dt,Npoints,Ncontour, point, config=None,
         'point': point,
         'config': config,
         'mode': mode,
+        'aux_dir': f'{config["dir"]}/data/aux.h5',
     }
 
     with fun.suppress_stdout(show_output):
         if types['angular']:
-            angular_processing(**c, distro_dir=distro_dir, **kwargs)
+            angular_processing(**c, **kwargs)
         if types['spatial']:
-            spatial_processing(**c, dsp_dir=dsp_dir, **kwargs)
+            spatial_processing(**c, **kwargs)
         if types['source']:
             if source is not None:
                 compute_bearingNdst2source(s, e, source=source, **kwargs)
         if types['dispersion'] and type(dsp_starts)==list and type(dsp_stops)==list:
-            compute_dispersion(s, e, dt, point, starts=dsp_starts, stops=dsp_stops, dir=dsp_dir, **kwargs)
+            compute_dispersion(**c, starts=dsp_starts, stops=dsp_stops, **kwargs)
         if types['tortuosity'] and type(tor_durs)==list:
-            compute_tortuosity(s, e, dt, durs_in_sec=tor_durs, **kwargs)
+            compute_tortuosity(**c, durs_in_sec=tor_durs, **kwargs)
         if types['PI']:
             if 'x' in e.keys() :
                 px = 'x'
@@ -234,8 +235,4 @@ def process(s,e,dt,Npoints,Ncontour, point, config=None,
                 pass
         return s,e
 
-if __name__ == '__main__':
-    from lib.stor.managing import get_datasets
-    d = get_datasets(datagroup_id='SimGroup', last_common='single_runs', names=['dish/ppp'], mode='load')[0]
-    s=d.step_data
-    d.perform_angular_analysis(show_output=True)
+

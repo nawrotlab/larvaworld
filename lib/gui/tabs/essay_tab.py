@@ -2,7 +2,7 @@ import os
 
 import lib.conf.dtype_dicts as dtypes
 
-from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList
+from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, ButtonGraphList
 from lib.gui.aux.functions import t_kws, gui_col
 from lib.gui.tabs.tab import GuiTab
 from lib.sim.single_run import run_essay
@@ -19,12 +19,16 @@ class EssayTab(GuiTab):
 
     def build(self):
         s1 = CollapsibleDict('essay_params', default=True, disp_name='Configuration', text_kws=t_kws(8))
-        sl1 = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'])
+        sl1 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'])
 
         dl1 = DataList(name=self.essay_exps_key, tab=self, buttons=['run'], select_mode=None)
 
-        g1 = GraphList(self.name, list_header='Simulated', canvas_size=self.canvas_size)
-        g2 = GraphList(self.exp_figures_key, list_header='Observed', canvas_size=self.canvas_size,fig_dict={})
+        g1 = GraphList(self.name, tab=self, list_header='Simulated', canvas_size=self.canvas_size)
+        g2 = ButtonGraphList(self.exp_figures_key, tab=self, list_header='Observed',
+                             canvas_size=self.canvas_size,fig_dict={},
+                             buttons=['browse_figs'],
+                             button_args={'browse_figs' : {'target' : (2,-1)}}
+                             )
 
         l = [[
             gui_col([sl1, s1, dl1], 0.2),

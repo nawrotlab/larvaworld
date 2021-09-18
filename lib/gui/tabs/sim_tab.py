@@ -17,13 +17,13 @@ class SimTab(GuiTab):
         sl1 = SelectionList(tab=self, conftype='Env', idx=1)
         sl2 = SelectionList(tab=self, conftype='Life', idx=1, with_dict=True, header_value='default',
                            text_kws=t_kws(14), value_kws=t_kws(10), width=12, header_text_kws=t_kws(9))
-        sl3 = SelectionList(tab=self, actions=['load', 'save', 'delete', 'run'], progress=True,
-                              sublists={'env_params': sl1, 'life_params' : sl2})
+        sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], progress=True,
+                            sublists={'env_params': sl1, 'life_params' : sl2})
         c1 = CollapsibleDict('sim_params', default=True, disp_name='Configuration', text_kws=t_kws(8))
         output_dict = dict(zip(output_keys, [False] * len(output_keys)))
         c2 = CollapsibleDict('Output', dict=output_dict, auto_open=False)
 
-        g1 = GraphList(self.name)
+        g1 = GraphList(self.name, tab=self)
 
         l = [[
             gui_col([sl3, sl1,c1, c2, sl2], 0.25),

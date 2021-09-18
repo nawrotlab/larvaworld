@@ -2,7 +2,7 @@ import sys
 import argparse
 
 sys.path.insert(0, '..')
-from lib.stor.managing import build_datasets, analyse_datasets, visualize_datasets, enrich_datasets
+from lib.stor.managing import build_datasets_old, analyse_datasets, visualize_datasets, enrich_datasets
 import lib.aux.argparsers as prs
 from lib.conf.conf import *
 
@@ -33,7 +33,7 @@ if 'reg' in actions :
 if 'init' in actions :
     initializeDataGroup(DataGroup_id)
 if 'build' in actions :
-    build_datasets(DataGroup_id, **build_kwargs)
+    build_datasets_old(DataGroup_id, **build_kwargs)
 if 'enrich' in actions :
     enrich_datasets(DataGroup_id, **data_kwargs)
 if 'anal' in actions :

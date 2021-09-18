@@ -20,7 +20,7 @@ from lib.envs._larvaworld import LarvaWorldReplay
 class LarvaDataset:
     def __init__(self, dir, id='unnamed', fr=16, Npoints=3, Ncontour=0, life_params={}, arena_pars=env.dish(0.1),
                  par_conf=SimParConf, filtered_at=np.nan, rescaled_by=np.nan, save_data_flag=True, load_data=True,
-                 sample_dataset='reference'):
+                 sample_dataset='reference', group_id='SimGroup'):
         self.par_config = par_conf
         self.save_data_flag = save_data_flag
         self.define_paths(dir)
@@ -28,6 +28,7 @@ class LarvaDataset:
             self.config = fun.load_dict(self.dir_dict['conf'], use_pickle=False)
         else:
             self.config = {'id': id,
+                           'group_id': group_id,
                            'dir': dir,
                            'fr': fr,
                            'filtered_at': filtered_at,
@@ -152,18 +153,35 @@ class LarvaDataset:
         pars = [p for p in self.step_data.columns.values if p not in vpars]
         return pars
 
+    # def load(self, step=True, end=True, food=False):
+    #     if step:
+    #         self.step_data = pd.read_csv(self.dir_dict['step'], index_col=['Step', 'AgentID'])
+    #         self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
+    #         self.agent_ids = self.step_data.index.unique('AgentID').values
+    #         self.num_ticks = self.step_data.index.unique('Step').size
+    #     if end:
+    #         self.endpoint_data = pd.read_csv(self.dir_dict['end'], index_col=0)
+    #         self.endpoint_data.sort_index(inplace=True)
+    #     if food:
+    #         self.food_endpoint_data = pd.read_csv(self.dir_dict['food'], index_col=0)
+    #         self.food_endpoint_data.sort_index(inplace=True)
+
     def load(self, step=True, end=True, food=False):
+        store = pd.HDFStore(self.dir_dict['data_h5'])
         if step:
-            self.step_data = pd.read_csv(self.dir_dict['step'], index_col=['Step', 'AgentID'])
+            self.step_data = store['step']
             self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
             self.agent_ids = self.step_data.index.unique('AgentID').values
             self.num_ticks = self.step_data.index.unique('Step').size
         if end:
-            self.endpoint_data = pd.read_csv(self.dir_dict['end'], index_col=0)
+            self.endpoint_data = store['end']
             self.endpoint_data.sort_index(inplace=True)
         if food:
-            self.food_endpoint_data = pd.read_csv(self.dir_dict['food'], index_col=0)
+            self.food_endpoint_data = store['food']
             self.food_endpoint_data.sort_index(inplace=True)
+        store.close()
+
+
 
     @property
     def N(self):
@@ -179,24 +197,29 @@ class LarvaDataset:
         except:
             return 0
 
-    def save(self, step=True, end=True, food=False, table_entries=None):
+    def save(self, step=True, end=True, food=False):
         if self.save_data_flag == True:
+            store = pd.HDFStore(self.dir_dict['data_h5'])
             if step:
-                self.step_data.to_csv(self.dir_dict['step'], index=True, header=True)
+                store['step'] = self.step_data
             if end:
-                self.endpoint_data.to_csv(self.dir_dict['end'], index=True, header=True)
+                store['end'] = self.endpoint_data
             if food:
-                self.food_endpoint_data.to_csv(self.dir_dict['food'], index=True, header=True)
-            if table_entries is not None:
-                dir = self.dir_dict['table']
-                for name, table in table_entries.items():
-                    table.to_csv(f'{dir}/{name}.csv', index=True, header=True)
+                store['food'] = self.food_endpoint_data
             self.save_config()
+            store.close()
             print(f'Dataset {self.id} stored.')
 
+    def save_dicts(self, env):
+        for l in env.get_flies():
+            if hasattr(l, 'deb') and l.deb is not None:
+                l.deb.finalize_dict(self.dir_dict['deb'])
+            if l.brain.intermitter is not None:
+                l.brain.intermitter.save_dict(self.dir_dict['bout_dicts'])
+
     def save_tables(self, tables):
+        store = pd.HDFStore(self.dir_dict['tables_h5'])
         for name, table in tables.items():
-            path = os.path.join(self.dir_dict['table'], f'{name}.csv')
             df = pd.DataFrame(table)
             if 'unique_id' in df.columns:
                 df.rename(columns={'unique_id': 'AgentID'}, inplace=True)
@@ -206,7 +229,8 @@ class LarvaDataset:
                     df['Step'] = np.array([[i] * N for i in range(Nrows)]).flatten()
                     df.set_index(['Step', 'AgentID'], inplace=True)
                     df.sort_index(level=['Step', 'AgentID'], inplace=True)
-                df.to_csv(path, index=True, header=True)
+                store[name] = df
+        store.close()
 
     def save_config(self):
         for a in ['N', 't0', 'duration', 'quality', 'dt']:
@@ -234,34 +258,33 @@ class LarvaDataset:
             agent_data.to_csv(file_path, index=True, header=header)
         print('All agent data saved.')
 
-    def load_aux(self, type, name=None, file=None, as_df=True):
-        if file is None:
-            if name is not None:
-                file = f'{name}.csv'
-            else:
-                raise ValueError('Neither filename nor parameter provided')
-        dir = self.dir_dict[type]
-        path = f'{dir}/{file}'
-        u_path = f'{dir}/units.csv'
-        index_col = 0 if type != 'table' else ['Step', 'AgentID']
+    def load_bout_dicts(self, ids=None):
+        if ids is None :
+            ids=self.agent_ids
+        dir=self.dir_dict['bout_dicts']
+        d = {}
+        for id in ids :
+            file = f'{dir}/{id}.txt'
+            dic = fun.load_dicts([file])[0]
+            df = pd.DataFrame.from_dict(dic)
+            df.index.set_names(0, inplace=True)
+            d[id]=df
 
-        try:
-            df = pd.read_csv(path, index_col=index_col)
-        except:
-            try:
-                df = fun.load_dicts([path])[0]
-                if as_df:
-                    df = pd.DataFrame.from_dict(df)
-                    df.index.set_names(index_col, inplace=True)
-                # return df
-            except:
-                raise ValueError(f'No data found at {path}')
+        return d
 
-        if type != 'table':
-            return df
-        else:
-            u_dic = fun.load_dicts([u_path])[0]
-            return df, u_dic
+    def load_table(self, name):
+        store = pd.HDFStore(self.dir_dict['tables_h5'])
+        df = store[name]
+        store.close()
+        return df
+
+    def load_aux(self, type, pars=None):
+        # if type in ['distro', 'dispersion', 'stride'] :
+        store = pd.HDFStore(self.dir_dict['aux_h5'])
+        df=store[f'{type}.{pars}']
+        store.close()
+        return df
+
 
     @property
     def quality(self):
@@ -383,8 +406,8 @@ class LarvaDataset:
             'Ncontour': self.Ncontour,
             'point': self.point,
             'config': self.config,
-            'distro_dir': self.dir_dict['distro'],
-            'dsp_dir': self.dir_dict['dispersion'],
+            # 'distro_dir': self.dir_dict['distro'],
+            # 'dsp_dir': self.dir_dict['dispersion'],
         }
         process(**c, **kwargs)
         if is_last:
@@ -452,8 +475,8 @@ class LarvaDataset:
             'Npoints': self.Npoints,
             'point': self.point,
             'config': self.config,
-            'distro_dir': self.dir_dict['distro'],
-            'stride_p_dir': self.dir_dict['stride'],
+            # 'distro_dir': self.dir_dict['distro'],
+            # 'stride_p_dir': self.dir_dict['stride'],
         }
 
         annotate(**c, **kwargs)
@@ -508,9 +531,10 @@ class LarvaDataset:
         self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang)
         self.xy_pars = nam.xy(self.points + self.contour + ['centroid'], flat=True) + nam.xy('')
 
-
-        self.config['point'] = 'centroid' if self.config['point_idx'] == -1 else self.points[
-            self.config['point_idx'] - 1]
+        try :
+            self.config['point'] = self.points[self.config['point_idx'] - 1]
+        except :
+            self.config['point'] = 'centroid'
         self.point = self.config['point']
 
     def define_paths(self, dir):
@@ -526,22 +550,16 @@ class LarvaDataset:
             'vis': self.vis_dir,
             'comp_plot': os.path.join(self.plot_dir, 'comparative'),
             'deb': os.path.join(self.data_dir, 'deb_dicts'),
-            'aux': self.aux_dir,
-            'distro': os.path.join(self.aux_dir, 'par_distros'),
-            'stride': os.path.join(self.aux_dir, 'par_during_stride'),
-            'dispersion': os.path.join(self.aux_dir, 'dispersion'),
-            'bouts': os.path.join(self.aux_dir, 'bouts'),
-            'table': os.path.join(self.aux_dir, 'tables'),
-            'step': os.path.join(self.data_dir, 'step.csv'),
-            'end': os.path.join(self.data_dir, 'end.csv'),
-            'food': os.path.join(self.data_dir, 'food.csv'),
+            'bout_dicts': os.path.join(self.data_dir, 'bout_dicts'),
+            'tables_h5': os.path.join(self.data_dir, 'tables.h5'),
             'sim': os.path.join(self.data_dir, 'sim_conf.txt'),
             'fit': os.path.join(self.data_dir, 'dataset_fit.csv'),
             'conf': os.path.join(self.data_dir, 'dataset_conf.csv'),
+            'data_h5': os.path.join(self.data_dir, 'data.h5'),
+            'aux_h5': os.path.join(self.data_dir, 'aux.h5'),
         }
-        # self.build_dirs()
         for k, v in self.dir_dict.items():
-            if not str.endswith(v, 'csv') and not str.endswith(v, 'txt'):
+            if not str.endswith(v, 'csv') and not str.endswith(v, 'txt') and not str.endswith(v, 'h5'):
                 os.makedirs(v, exist_ok=True)
 
     def define_linear_metrics(self, config):
@@ -584,7 +602,7 @@ class LarvaDataset:
 
     def get_par(self, par, endpoint_par=True):
         try:
-            p_df = self.load_aux(type='distro', name=par)
+            p_df = self.load_aux(type='distro', pars=par)
         except:
             if endpoint_par:
                 if not hasattr(self, 'end'):
@@ -611,11 +629,6 @@ class LarvaDataset:
         self.config['id'] = id
         if save:
             self.save_config()
-
-    # def build_dirs(self):
-    #     for k, v in self.dir_dict.items():
-    #         if not str.endswith(v, 'csv') and not str.endswith(v, 'txt'):
-    #             os.makedirs(v, exist_ok=True)
 
     def split_dataset(self, groups=None, is_last=True, show_output=True):
         if groups is None:

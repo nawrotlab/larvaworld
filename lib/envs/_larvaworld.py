@@ -701,7 +701,7 @@ class LarvaWorldSim(LarvaWorld):
             self.epochs = []
         self.hours_as_larva = life_params['hours_as_larva']
         self.substrate_quality = life_params['substrate_quality']
-
+        # print(life_params)
         self.sim_epochs = [
             [np.clip(s0 - self.hours_as_larva, a_min=0, a_max=+np.inf), s1 - self.hours_as_larva] for
             [s0, s1] in self.epochs if s1 > self.hours_as_larva]

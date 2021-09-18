@@ -1401,10 +1401,10 @@ def plot_interference(datasets, labels=None, mode='orientation', agent_idx=None,
     ang_ylim = [0, 60] if mode in ['bend', 'orientation', 'orientation_x2'] else None
 
     if agent_idx is not None:
-        data = [[d.load_aux(type='stride', name=p).loc[d.agent_ids[agent_idx]].values for p in pars] for
+        data = [[d.load_aux(type='stride', pars=p).loc[d.agent_ids[agent_idx]].values for p in pars] for
                 d in datasets]
     else:
-        data = [[d.load_aux(type='stride', name=p).values for p in pars] for d in datasets]
+        data = [[d.load_aux(type='stride', pars=p).values for p in pars] for d in datasets]
     Npoints = data[0][0].shape[1]
     for d0, c, color, label in zip(data, colors, colors, labels):
         if mode in ['bend', 'orientation']:
@@ -1455,7 +1455,7 @@ def plot_dispersion(datasets, labels=None, ranges=None, scaled=False, subfolder=
         fig, axs = plt.subplots(1, 1, figsize=(5 * fig_cols, 5))
 
         for d, lab, c in zip(datasets, labels, colors):
-            dsp = d.load_aux(type='dispersion', name=par if not scaled else nam.scal(par))
+            dsp = d.load_aux(type='dispersion', pars=par if not scaled else nam.scal(par))
             plot_mean_and_range(x=trange,
                                 mean=dsp['median'].values[t0:t1],
                                 lb=dsp['upper'].values[t0:t1],
@@ -1757,7 +1757,7 @@ def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals
         for d, d_col, d_lab in zip(datasets, colors, labels):
             if Ndatasets > 1:
                 c = d_col
-            s = d.load_aux(type='table', name=table) if table is not None else d.step_data
+            s = d.load_table(table) if table is not None else d.step_data
             if p not in list(s.keys()):
                 print(f'Parameter {p} does not exist in dataset')
                 continue
@@ -1924,7 +1924,7 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
 
     if test_detection:
         for l, d, col in zip(labels, datasets, colors):
-            dic = {id: d.load_aux('bouts', file=f'{id}.txt', as_df=False) for id in d.agent_ids}
+            dic = d.load_bout_dicts()
             pau_dur = np.array(fun.flatten_list([ddic[pause_par] for ddic in dic.values()]))
             chn_dur = np.array(fun.flatten_list([ddic[chain_par] for ddic in dic.values()]))
             pau_durs.append(pau_dur)

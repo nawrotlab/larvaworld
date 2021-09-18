@@ -125,7 +125,7 @@ class EnvTab(GuiTab):
         c2 = Collapsible(self.S, content=l1)
         c.update(c2.get_subdicts())
         l2 = [c[n] for n in ['arena', self.Lg, self.S, self.Bg, 'odorscape']]
-        sl1 = SelectionList(tab=self, actions=['load', 'save', 'delete'])
+        sl1 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
 
         l = gui_col([sl1,*l2], 0.25)
         return l, c, {}, {}
@@ -196,7 +196,7 @@ class EnvTab(GuiTab):
 
 
         col2 = sg.Col([[sg.Col(ll, pad=(10,10))] for ll in [lL,lS,lB,lI]], **col_kws)
-        g1 = GraphList(self.name, graph=True,canvas_size=self.canvas_size, canvas_kws={
+        g1 = GraphList(self.name, tab=self, graph=True,canvas_size=self.canvas_size, canvas_kws={
             'graph_bottom_left': (0, 0),
             'graph_top_right': self.canvas_size,
             'change_submits': True,

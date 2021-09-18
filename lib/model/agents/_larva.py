@@ -123,7 +123,6 @@ class LarvaReplay(Larva, BodyReplay):
                 viewer.draw_polygon(v, color=c)
 
         if m.draw_centroid:
-            print(self.cen_pos, self.pos)
             if not np.isnan(self.cen_pos).any():
                 pos = self.cen_pos
             elif not np.isnan(self.pos).any():
@@ -133,12 +132,14 @@ class LarvaReplay(Larva, BodyReplay):
             if pos is not None:
                 viewer.draw_circle(radius=r / 2, position=pos, color=c,width=r / 3)
         if m.draw_midline and m.Npoints > 1:
-            if not np.isnan(self.midline[0]).any():
+            try:
                 viewer.draw_polyline(self.midline, color=(0, 0, 255), closed=False, width=.07)
                 for i, seg_pos in enumerate(self.midline):
                     cc = 255 * i / (len(self.midline) - 1)
                     color = (cc, 255 - cc, 0)
                     viewer.draw_circle(radius=.07, position=seg_pos, color=color)
+            except :
+                pass
         if m.draw_head:
             try:
                 viewer.draw_circle(self.midline[0], r / 2, color=(255, 0, 0), width= r / 6)

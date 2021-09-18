@@ -10,7 +10,7 @@ from scipy.signal import argrelextrema, spectrogram
 import lib.aux.functions as fun
 import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
-from lib.anal.process.store import create_dispersion_dataset
+from lib.anal.process.store import store_aux_dataset
 from lib.conf.par import getPar
 
 
@@ -277,7 +277,7 @@ def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recom
     return s, e
 
 
-def compute_dispersion(s, e, dt, point, recompute=False, starts=[0], stops=[40], dir=None,**kwargs):
+def compute_dispersion(s, e, aux_dir, dt, point, recompute=False, starts=[0], stops=[40], **kwargs):
     ids = s.index.unique('AgentID').values
     ps=[]
     pps=[]
@@ -328,9 +328,11 @@ def compute_dispersion(s, e, dt, point, recompute=False, starts=[0], stops=[40],
             # except:
             #     pass
     scale_to_length(s,e, pars=ps+pps)
-    for p in ps :
-        create_dispersion_dataset(s, par=p, scaled=True, dir=dir)
-        create_dispersion_dataset(s, par=p, scaled=False, dir=dir)
+    # for p in ps :
+    #     create_dispersion_dataset(s, par=p, scaled=True, dir=dir)
+    #     create_dispersion_dataset(s, par=p, scaled=False, dir=dir)
+    # print(ps+nam.scal(ps))
+    store_aux_dataset(s, pars=ps+nam.scal(ps), type='dispersion', file=aux_dir)
     print('Dispersions computed')
 
 
@@ -557,11 +559,4 @@ def scale_to_length(s,e,pars=None, keys=None):
 
 
 
-if __name__ == '__main__':
-    from lib.stor.managing import get_datasets
 
-    d = get_datasets(datagroup_id='SimGroup', last_common='single_runs', names=['dish/a'], mode='load')[0]
-    s = d.step_data
-    e = d.endpoint_data
-    scale_to_length(s, e,keys=['x', 'y','v','a', 'd', 'cum_d'])
-    # d.spatial_processing(show_output=True)
