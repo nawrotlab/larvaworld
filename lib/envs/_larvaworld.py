@@ -1,37 +1,29 @@
 import copy
 import random
-import time
 import warnings
 import numpy as np
 import progressbar
 import os
 from typing import List, Any
 import webcolors
-from mesa.datacollection import DataCollector
 
-from lib.anal.process.spatial import compute_preference_index
-from lib.conf.conf import loadConfDict, loadConf
-from lib.conf.par import GroupCollector, CompGroupCollector
-from lib.model.agents._larva import LarvaSim, LarvaReplay
-from lib.sim.conditions import PrefTrainCondition, get_exp_condition
+from lib.model.agents._larva_sim import LarvaSim
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from shapely.affinity import affine_transform
-from unflatten import unflatten
 from Box2D import b2World, b2ChainShape, b2EdgeShape
 from mesa.space import ContinuousSpace
-from mesa.time import RandomActivation
 
-from lib.aux.collecting import TargetedDataCollector, NamedRandomActivation
-from lib.envs._space import FoodGrid, DiffusionValueLayer, GaussianValueLayer
+from lib.aux.collecting import NamedRandomActivation
+from lib.envs._space import FoodGrid
 import lib.aux.rendering as ren
-from lib.aux.sampling import sample_agents, get_sample_bout_distro
 import lib.aux.functions as fun
-from lib.aux import naming as nam
 from lib.envs._maze import Border
 import lib.conf.dtype_dicts as dtypes
-from lib.model.agents._agent import LarvaworldAgent, Food, Larva
+from lib.model.agents._agent import LarvaworldAgent
+from lib.model.agents._larva import Larva
+from lib.model.agents._source import Food
 from lib.sim.input_lib import evaluate_input, evaluate_graphs
 
 
@@ -132,8 +124,8 @@ class LarvaWorld:
         self.end_condition_met = False
 
     def toggle(self, name, value=None, show=False, minus=False, plus=False, disp=None):
-        if disp is None :
-            disp=name
+        if disp is None:
+            disp = name
 
         if name == 'snapshot #':
             import imageio
@@ -152,8 +144,6 @@ class LarvaWorld:
                 dt = +1
             self.trajectory_dt = np.clip(self.trajectory_dt + 5 * dt, a_min=0, a_max=np.inf)
             value = self.trajectory_dt
-        # elif name=='black_background' :
-        # elif name=='black_background' :
 
         if value is None:
             setattr(self, name, not getattr(self, name))
@@ -165,6 +155,10 @@ class LarvaWorld:
         if name == 'visible_ids':
             for a in self.get_flies() + self.get_food():
                 a.id_box.visible = not a.id_box.visible
+        elif name == 'color_behavior':
+            if not self.color_behavior:
+                for f in self.get_flies():
+                    f.set_color(f.default_color)
         elif name == 'random_colors':
             for f in self.get_flies():
                 f.set_default_color(self.generate_larva_color())
@@ -253,10 +247,10 @@ class LarvaWorld:
             self.food_grid = FoodGrid(**grid_pars, space_range=space_range)
 
     def create_schedules(self):
-        self.active_larva_schedule = NamedRandomActivation('active_larva_schedule',self)
-        self.all_larva_schedule = NamedRandomActivation('all_larva_schedule',self)
-        self.active_food_schedule = NamedRandomActivation('active_food_schedule',self)
-        self.all_food_schedule = NamedRandomActivation('all_food_schedule',self)
+        self.active_larva_schedule = NamedRandomActivation('active_larva_schedule', self)
+        self.all_larva_schedule = NamedRandomActivation('all_larva_schedule', self)
+        self.active_food_schedule = NamedRandomActivation('active_food_schedule', self)
+        self.all_food_schedule = NamedRandomActivation('all_food_schedule', self)
 
     def delete_agent(self, agent):
         if type(agent) is LarvaSim:
@@ -277,10 +271,10 @@ class LarvaWorld:
     #     pygame.quit()
     #     del self
 
-    def get_flies(self) -> List[Larva]:
+    def get_flies(self) -> List[LarvaworldAgent]:
         return self.active_larva_schedule.agents
 
-    def get_food(self) -> List[Food]:
+    def get_food(self) -> List[LarvaworldAgent]:
         return self.active_food_schedule.agents
 
     def get_agents(self, agent_class) -> List[LarvaworldAgent]:
@@ -363,19 +357,20 @@ class LarvaWorld:
         for name, text in self.screen_texts.items():
             text.render(width, height)
 
-    def render(self, tick=None, background_motion=[0, 0, 0]):
+    def render(self, tick=None, background_motion=None):
+        if background_motion is None:
+            background_motion = [0, 0, 0]
         if self.background_motion is not None and tick is not None:
             background_motion = self.background_motion[:, tick]
         if self._screen is None:
-            m=self.vis_kwargs['render']['mode']
+            m = self.vis_kwargs['render']['mode']
             vid = f'{self.media_name}.mp4' if m == 'video' else None
             im = f'{self.media_name}_{self.snapshot_counter}.png' if m == 'image' else None
-
 
             self._screen = ren.GuppiesViewer(self.screen_width, self.screen_height, caption=self.id,
                                              fps=self.video_fps, dt=self.dt,
                                              show_display=self.vis_kwargs['render']['show_display'],
-                                             record_video_to=vid,record_image_to=im)
+                                             record_video_to=vid, record_image_to=im)
             self.render_aux(self.screen_width, self.screen_height)
             self.set_background(self._screen._window.get_width(), self._screen._window.get_height())
             self.draw_arena(self._screen, background_motion)
@@ -389,7 +384,7 @@ class LarvaWorld:
             self.draw_arena(self._screen, background_motion)
 
         for o in self.get_food():
-            if o.visible :
+            if o.visible:
                 o.draw(self._screen, filled=True if o.amount > 0 else False)
                 o.id_box.draw(self._screen)
 
@@ -397,7 +392,6 @@ class LarvaWorld:
             if g.visible:
                 g.draw(self._screen)
                 g.id_box.draw(self._screen)
-
 
         if self.trails:
             ren.draw_trajectories(space_dims=self.space_dims, agents=self.get_flies(), screen=self._screen,
@@ -502,6 +496,10 @@ class LarvaWorld:
             N = self.all_larva_schedule.get_agent_count()
             return f'Larva_{N}'
 
+    def step(self):
+        # Overriden by subclasses
+        pass
+
     def run(self, Nsteps=None):
         mode = self.vis_kwargs['render']['mode']
         img_mode = self.vis_kwargs['render']['image_mode']
@@ -516,6 +514,7 @@ class LarvaWorld:
         self.sim_paused = False
         if Nsteps is None:
             Nsteps = self.Nsteps
+        # print(Nsteps)
         warnings.filterwarnings('ignore')
         # import time
         if self.progress_bar is None:
@@ -548,14 +547,6 @@ class LarvaWorld:
         if self._screen:
             self._screen.close()
         return self.is_running
-
-    def set_end_condition(self):
-        k = get_exp_condition(self.experiment)
-        self.exp_condition = k(self) if k is not None else None
-
-    def check_end_condition(self):
-        if self.exp_condition is not None:
-            self.exp_condition.check(self)
 
     def move_larvae_to_center(self):
         N = len(self.get_flies())
@@ -688,305 +679,6 @@ class LarvaWorld:
             i.set_color(self.scale_clock_color)
 
 
-class LarvaWorldSim(LarvaWorld):
-    def __init__(self, output=None,
-                 id='Unnamed_Simulation', larva_collisions=True, count_bend_errors=False,
-                 life_params=None, sample_dataset='reference',
-                 parameter_dict={}, **kwargs):
-        super().__init__(id=id, **kwargs)
-
-        self.sample_dataset = sample_dataset
-        self.epochs = life_params['epochs']
-        if self.epochs is None:
-            self.epochs = []
-        self.hours_as_larva = life_params['hours_as_larva']
-        self.substrate_quality = life_params['substrate_quality']
-        # print(life_params)
-        self.sim_epochs = [
-            [np.clip(s0 - self.hours_as_larva, a_min=0, a_max=+np.inf), s1 - self.hours_as_larva] for
-            [s0, s1] in self.epochs if s1 > self.hours_as_larva]
-        if len(self.sim_epochs) > 0:
-            on_ticks = [int(s0 * 60 * 60 / self.dt) for [s0, s1] in self.sim_epochs]
-            off_ticks = [int(s1 * 60 * 60 / self.dt) for [s0, s1] in self.sim_epochs]
-            self.sim_clock.set_timer(on_ticks, off_ticks)
-        self.starvation = self.sim_clock.timer_on
-        self.count_bend_errors = count_bend_errors
-
-        self.larva_collisions = larva_collisions
-
-        self._place_food(self.env_pars['food_params'])
-        self.create_larvae(larva_pars=self.env_pars['larva_groups'], parameter_dict=parameter_dict)
-        if self.env_pars['odorscape'] is not None:
-            self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars['odorscape'])
-        self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
-
-        self.create_collectors(output)
-
-        if not self.larva_collisions:
-            self.eliminate_overlap()
-
-        self.set_end_condition()
-
-    def prepare_odor_layer(self, timesteps):
-        for i in range(timesteps):
-            for id, layer in self.odor_layers.items():
-                layer.update_values()  # Currently doing something only for the DiffusionValueLayer
-
-    def _create_odor_layers(self, pars):
-        sources = self.get_food() + self.get_flies()
-        odor_ids = fun.unique_list([s.get_odor_id() for s in sources if s.get_odor_id() is not None])
-        Nodors = len(odor_ids)
-        odor_colors = fun.N_colors(Nodors, as_rgb=True)
-        layers = {}
-        odorscape = pars['odorscape']
-        for i, (id, color) in enumerate(zip(odor_ids, odor_colors)):
-            od_sources = [f for f in sources if f.get_odor_id() == id]
-            temp = list(set([s.default_color for s in od_sources]))
-            default_color = temp[0] if len(temp) == 1 else color
-            kwargs = {
-                'unique_id': id,
-                'sources': od_sources,
-                'default_color': default_color,
-                'space_range': self.space_edges_for_screen,
-            }
-            if odorscape == 'Diffusion':
-                layers[id] = DiffusionValueLayer(dt=self.dt, scaling_factor=self.scaling_factor,
-                                                 grid_dims=pars['grid_dims'],
-                                                 evap_const=pars['evap_const'],
-                                                 gaussian_sigma=pars['gaussian_sigma'],
-                                                 **kwargs)
-            elif odorscape == 'Gaussian':
-                layers[id] = GaussianValueLayer(**kwargs)
-        return Nodors, layers
-
-    def _generate_larva_pars(self, N, larva_pars, parameter_dict={}, sample_dataset='reference'):
-        if larva_pars['brain']['intermitter_params']:
-            for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
-                if larva_pars['brain']['intermitter_params'][dist]['fit']:
-                # if larva_pars['brain']['intermitter_params'][dist] == 'fit':
-                    larva_pars['brain']['intermitter_params'][dist] = loadConf(sample_dataset, 'Ref')[bout]['best']
-                    # larva_pars['brain']['intermitter_params'][dist] = get_sample_bout_distro(bout=bout, sample_dataset=sample_dataset)
-        flat_larva_pars = fun.flatten_dict(larva_pars)
-        sample_pars = [p for p in flat_larva_pars if flat_larva_pars[p] == 'sample']
-        if len(sample_pars) >= 1:
-            pars, samples = sample_agents(pars=sample_pars, N=N, sample_dataset=sample_dataset)
-
-            all_larva_pars = []
-            for i in range(N):
-                l = copy.deepcopy(larva_pars)
-                flat_l = fun.flatten_dict(l)
-                for p, s in zip(pars, samples):
-                    flat_l.update({p: s[i]})
-                all_larva_pars.append(unflatten(flat_l))
-        else:
-            all_larva_pars = [larva_pars] * N
-
-        for k, vs in parameter_dict.items():
-            for l, v in zip(all_larva_pars, vs):
-                l[k].update(v)
-        return all_larva_pars
-
-    def create_larvae(self, larva_pars, parameter_dict={}):
-        for group_id, group_pars in larva_pars.items():
-            N = group_pars['N']
-            a1, a2 = np.deg2rad(group_pars['orientation_range'])
-            orientations = np.random.uniform(low=a1, high=a2, size=N).tolist()
-            positions = fun.generate_xy_distro(N=N, **{k: group_pars[k] for k in ['mode', 'shape', 'loc', 'scale']})
-            sample_dataset = group_pars['sample_dataset'] if 'sample_dataset' in list(
-                group_pars.keys()) else self.sample_dataset
-            all_pars = self._generate_larva_pars(N, group_pars['model'], parameter_dict=parameter_dict,
-                                                 sample_dataset=sample_dataset)
-
-            for i, (p, o, pars) in enumerate(zip(positions, orientations, all_pars)):
-                l = self.add_larva(position=p, orientation=o, id=f'{group_id}_{i}', pars=pars, group=group_id,
-                                   default_color=group_pars['default_color'])
-
-    def step(self):
-
-        # Tick sim_clock
-        self.sim_clock.tick_clock()
-        self.Nticks += 1
-
-        self.resolve_epochs()
-
-        if not self.larva_collisions:
-            self.larva_bodies = self.get_larva_bodies()
-        # Update value_layers
-        for id, layer in self.odor_layers.items():
-            layer.update_values()  # Currently doing something only for the DiffusionValueLayer
-
-        for l in self.get_flies():
-            # print(l.unique_id)
-            l.compute_next_action()
-        self.active_larva_schedule.step()
-        self.active_food_schedule.step()
-        if self.physics_engine:
-            self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
-            self.update_trajectories(self.get_flies())
-        if self.larva_step_col is not None:
-            self.larva_step_col.collect(self)
-        self.step_group_collector.collect()
-
-        self.check_end_condition()
-
-    def update_trajectories(self, flies):
-        for fly in flies:
-            fly.update_trajectory()
-
-    def space_to_mm(self, array):
-        return array * 1000 / self.scaling_factor
-
-    def plot_odorscape(self, save_to=None, show=False):
-        from lib.anal.plotting import plot_surface
-        for id, layer in self.odor_layers.items():
-            title = f'{id} odorscape'
-            X, Y = layer.meshgrid
-            V = layer.get_grid()
-            x = self.space_to_mm(X)
-            y = self.space_to_mm(Y)
-            plot_surface(x=x, y=y, z=V,
-                         labels=[r'x $(mm)$', r'y $(mm)$', r'concentration $(μM)$'], title=title,
-                         save_to=save_to, save_as=f'{id}_odorscape_{self.odorscape_counter}', show=show)
-
-    def get_larva_bodies(self, scale=1.0):
-        larva_bodies = {}
-        for l in self.get_flies():
-            larva_bodies[l.unique_id] = l.get_polygon(scale=scale)
-        return larva_bodies
-
-    def larva_bodies_except(self, id):
-        return {k: v for k, v in self.larva_bodies.items() if k != id}
-
-    def detect_collisions(self, id):
-        body = self.larva_bodies[id]
-        ids = []
-        for id0, body0 in self.larva_bodies_except(id).items():
-            if body.intersects(body0):
-                ids.append(id0)
-        return ids
-
-    def collisions_exist(self, scale=1.0):
-        self.larva_bodies = self.get_larva_bodies(scale=scale)
-        for l in self.get_flies():
-            ids = self.detect_collisions(l.unique_id)
-            if len(ids) > 0:
-                return True
-        return False
-
-    def create_collectors(self, output):
-        if output is None:
-            output = {'step': [], 'end': [], 'tables': {}}
-        s,e,t=output['step'],output['end'],output['tables']
-        sg,eg=output['step_groups'],output['end_groups']
-        self.larva_step_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s) if len(s) > 0 else None
-        self.larva_end_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e) if len(e) > 0 else None
-        self.food_end_col = TargetedDataCollector(schedule=self.all_food_schedule, pars=['initial_amount', 'final_amount'])
-        self.table_collector = DataCollector(tables=t) if len(t) > 0 else None
-        self.step_group_collector = CompGroupCollector(objects=self.get_flies(), names=sg,
-                                                       save_units=True, common=True, save_as='step.csv')
-        self.end_group_collector = CompGroupCollector(objects=self.get_flies(), names=eg,
-                                                      save_units=True, common=True, save_as='end.csv')
-
-    def eliminate_overlap(self):
-        scale = 3.0
-        while self.collisions_exist(scale=scale):
-            self.larva_bodies = self.get_larva_bodies(scale=scale)
-            for l in self.get_flies():
-                dx, dy = np.random.randn(2) * l.sim_length / 10
-                overlap = True
-                while overlap:
-                    ids = self.detect_collisions(l.unique_id)
-                    if len(ids) > 0:
-                        l.move_body(dx, dy)
-                        self.larva_bodies[l.unique_id] = l.get_polygon(scale=scale)
-                    else:
-                        # overlap=False
-                        break
-
-    def resolve_epochs(self):
-        if len(self.sim_epochs) > 0:
-            self.starvation = self.sim_clock.timer_on
-            if self.sim_clock.timer_opened:
-                if self.food_grid is not None:
-                    self.food_grid.empty_grid()
-            if self.sim_clock.timer_closed:
-                if self.food_grid is not None:
-                    self.food_grid.reset()
 
 
-class LarvaWorldReplay(LarvaWorld):
-    def __init__(self, step_data, endpoint_data, dataset=None, pos_xy_pars=[],
-                 id='Unnamed_Replay', draw_Nsegs=None, experiment='replay', **kwargs):
 
-        super().__init__(id=id, experiment=experiment, **kwargs)
-        self.dataset = dataset
-        self.pos_pars = pos_xy_pars
-        self.draw_Nsegs = draw_Nsegs
-
-        self.step_data = step_data
-        self.endpoint_data = endpoint_data
-        self.agent_ids = self.step_data.index.unique('AgentID').values
-        self.num_agents = len(self.agent_ids)
-
-        self.available_pars = [p for p in self.step_data.columns.values if
-                               p not in fun.flatten_list(self.dataset.contour_xy) + fun.flatten_list(
-                                   self.dataset.points_xy)]
-
-        # self.starting_tick = self.step.index.unique('Step')[0]
-        try:
-            self.lengths = self.endpoint_data['length'].values
-        except:
-            self.lengths = np.ones(self.num_agents) * 5
-        self.pars = self.step_data.columns.values
-        self.mid_pars = [p for p in fun.flatten_list(dataset.points_xy) if p in self.pars]
-        self.Npoints = int(len(self.mid_pars) / 2)
-
-        self.con_pars = [p for p in fun.flatten_list(dataset.contour_xy) if p in self.pars]
-        self.Ncontour = int(len(self.con_pars) / 2)
-
-        self.cen_pars = [p for p in dataset.cent_xy if p in self.pars]
-        Nsegs = self.draw_Nsegs
-        if Nsegs is not None:
-            if Nsegs == self.Npoints - 1:
-                self.or_pars = [p for p in nam.orient(dataset.segs) if p in self.pars]
-                self.Nors = len(self.or_pars)
-                self.angle_pars = []
-                self.Nangles = 0
-                if self.Nors != Nsegs:
-                    raise ValueError(
-                        f'Orientation values are not present for all body segments : {self.Nors} of {Nsegs}')
-            elif Nsegs == 2:
-
-                self.or_pars = [p for p in ['front_orientation'] if p in self.pars]
-                self.Nors = len(self.or_pars)
-                self.angle_pars = [p for p in ['bend'] if p in self.pars]
-                self.Nangles = len(self.angle_pars)
-                if self.Nors != 1 or self.Nangles != 1:
-                    raise ValueError(
-                        f'{self.Nors} orientation and {Nsegs} angle values are present and 1,1 are needed.')
-            else:
-                raise ValueError(f'Defined number of segments {Nsegs} must be either 2 or {self.Npoints - 1}')
-        else:
-            self.Nors, self.Nangles = 0, 0
-            self.angle_pars, self.or_pars = [], []
-
-        self.create_flies()
-
-        if 'food_params' in self.env_pars.keys():
-            self._place_food(self.env_pars['place_params']['initial_num_food'],
-                             self.env_pars['place_params']['initial_food_positions'],
-                             food_pars=self.env_pars['food_params'])
-
-    def create_flies(self):
-        for i, id in enumerate(self.agent_ids):
-            data = self.step_data.xs(id, level='AgentID', drop_level=True)
-            f = LarvaReplay(model=self, unique_id=id, length=self.lengths[i], data=data)
-            self.active_larva_schedule.add(f)
-            self.space.place_agent(f, (0, 0))
-
-    def step(self):
-        self.Nticks += 1
-        # Tick sim_clock
-        self.sim_clock.tick_clock()
-        self.active_larva_schedule.step()
-        self.active_food_schedule.step()

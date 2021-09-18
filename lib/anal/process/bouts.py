@@ -20,7 +20,7 @@ def annotate(s, e, dt, Npoints, point, config=None,
              bouts={'stride': True, 'pause': True, 'turn': True},
              # bouts=['stride', 'pause', 'turn'],
              recompute=False, track_point=None, track_pars=None, chunk_pars=None,
-             vel_par=None, ang_vel_par=None, bend_vel_par=None, min_ang=5.0,min_ang_vel=0.0,
+             vel_par=None, ang_vel_par=None, bend_vel_par=None, min_ang=5.0, min_ang_vel=100.0,
              non_chunks=False, distro_dir=None, stride_p_dir=None, source=None, show_output=True, **kwargs):
     dic = load_ParDict()
     if vel_par is None:
@@ -53,15 +53,16 @@ def annotate(s, e, dt, Npoints, point, config=None,
         if bouts['pause']:
             detect_pauses(**c, vel_par=vel_par, **kwargs)
         if bouts['turn']:
-            detect_turns(**c, ang_vel_par=ang_vel_par, bend_vel_par=bend_vel_par, min_ang=min_ang, **kwargs)
+            detect_turns(**c, ang_vel_par=ang_vel_par, bend_vel_par=bend_vel_par, min_ang=min_ang,
+                         min_ang_vel=min_ang_vel, **kwargs)
         if source is not None:
             for b in bouts:
                 compute_chunk_bearing2source(**c, chunk=b, source=source, **kwargs)
     return s, e
 
 
-def detect_turns(s, e, aux_dir, dt, track_pars,  min_ang_vel=0.0, min_ang=5.0,
-                 ang_vel_par=None, bend_vel_par=None, chunk_only=None,recompute=False,
+def detect_turns(s, e, aux_dir, dt, track_pars, min_ang_vel, min_ang,
+                 ang_vel_par=None, bend_vel_par=None, chunk_only=None, recompute=False,
                  constant_bend_chunks=False, **kwargs):
     if set(nam.num(['Lturn', 'Rturn'])).issubset(e.columns.values) and not recompute:
         print('Turns are already detected. If you want to recompute it, set recompute_turns to True')
@@ -72,6 +73,9 @@ def detect_turns(s, e, aux_dir, dt, track_pars,  min_ang_vel=0.0, min_ang=5.0,
         ang_vel_par = nam.vel(nam.orient('front'))
     if bend_vel_par is None:
         bend_vel_par = nam.vel('bend')
+
+    compute_extrema(ss, dt, parameters=[ang_vel_par], interval_in_sec=0.3, abs_threshold=[-min_ang_vel, min_ang_vel])
+    # detect_turn_bouts(ss, e, dt, par=ang_vel_par)
 
     detect_chunks(ss, e, dt, chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=ang_vel_par,
                   ROU_ranges=[[min_ang, np.inf], [-np.inf, -min_ang]],
@@ -131,6 +135,56 @@ def detect_strides(s, e, aux_dir, config, dt, recompute=False, vel_par=None, tra
 
     store_aux_dataset(s, pars=chunk_pars, type='stride', file=aux_dir)
     print('All strides detected')
+
+
+def detect_turn_bouts(s, e, dt, par):
+    ids = s.index.unique('AgentID').values
+    Nids = len(ids)
+    output = f'Detecting chunks-on-condition for {Nids} agents'
+    N = len(s.index.unique('Step'))
+    t0 = int(s.index.unique('Step').min())
+    pos_flag = nam.max(par)
+    neg_flag = nam.min(par)
+    cs, c0=['Lturn', 'Rturn'], 'turn'
+    dic={}
+    for c in cs :
+        c_ps = [nam.start(c), nam.stop(c), nam.id(c), nam.dur(c)]
+        dic[c] = {pp: np.zeros([N, Nids]) * np.nan for pp in c_ps}
+
+    for i, id in enumerate(ids):
+        sss = s.xs(id, level='AgentID', drop_level=True)
+        idx0 = np.unique(fun.sign_changes(sss, par).index.values.astype(int))
+        for c, flag in zip(cs, [pos_flag, neg_flag]) :
+            idxM = np.unique(sss[sss[flag] == True].index.values.astype(int))
+            s0s,s1s=[],[]
+            for jj, ii in enumerate(idxM) :
+                try:
+                    s0,s1=idx0[idx0 < ii][-1], idx0[idx0>ii][0]
+                    if s0 not in s0s and s1 not in s1s :
+                        s0s.append(s0)
+                        s1s.append(s1)
+                except :
+                    pass
+
+            s0s =np.array(s0s)
+            s1s =np.array(s1s)
+            ds=(s1s - s0s) * dt
+            dic[c][nam.start(c)][s0s - t0, i] = True
+            dic[c][nam.stop(c)][s1s - t0, i] = True
+            dic[c][nam.dur(c)][s1s - t0, i] = ds
+            for j, (s0, s1) in enumerate(zip(s0s, s1s)):
+                dic[c][nam.id(c)][s0 - t0:s1 + 1 - t0, i] = j
+    for c in cs:
+        for p, a in dic[c].items():
+            s[p] = a.flatten()
+    mc0, mc1, mcdur = nam.start(c0), nam.stop(c0), nam.dur(c0)
+    s[mcdur] = s[[nam.dur(c) for c in cs]].sum(axis=1, min_count=1)
+    s[mc0] = s[[nam.start(c) for c in cs]].sum(axis=1, min_count=1)
+    s[mc1] = s[[nam.stop(c) for c in cs]].sum(axis=1, min_count=1)
+    compute_chunk_metrics(s, e, cs+[c0])
+
+    print(output)
+    print('All chunks-on-condition detected')
 
 
 def detect_chunks(s, e, dt, chunk_names, par, chunk_only=None, par_ranges=[[-np.inf, np.inf]],
@@ -278,7 +332,7 @@ def compute_chunk_metrics(s, e, chunks):
 
 
 def detect_contacting_chunks(s, e, aux_dir, dt, chunk='stride', track_point=None, mid_flag=None, edge_flag=None,
-                             control_pars=[],vel_par=None, chunk_dur_in_sec=None):
+                             control_pars=[], vel_par=None, chunk_dur_in_sec=None):
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     t0 = int(s.index.unique('Step').min())
@@ -465,6 +519,7 @@ def track_pars_in_chunks(s, e, aux_dir, chunks, pars, mode='dif', merged_chunk=N
             p_array = np.zeros([Nticks, Nids, len(p_pars)]) * np.nan
             ds = [d[p] for d in all_d]
             for k, (id, d, s0s, s1s) in enumerate(zip(ids, ds, all_0s, all_1s)):
+                # print(k, id,c, len(s0s), len(s1s))
                 a0s = d[s0s].values
                 a1s = d[s1s].values
                 if mode == 'dif':
@@ -520,6 +575,8 @@ def compute_chunk_bearing2source(s, aux_dir, chunk, source=(-50.0, 0.0), **kwarg
                                     s[ho0_par].dropna().values, loc=source, in_deg=True)
     b1 = fun.compute_bearing2source(s[x1_par].dropna().values, s[y1_par].dropna().values,
                                     s[ho1_par].dropna().values, loc=source, in_deg=True)
+
+
     s[b0_par] = np.nan
     s.loc[s[c0] == True, b0_par] = b0
     s[b1_par] = np.nan

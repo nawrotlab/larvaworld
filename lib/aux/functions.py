@@ -1473,3 +1473,14 @@ def convex_hull2(xs=None, ys=None, N=None):
     # yys = np.array([yys[i][:Nmin] for i in range(Nrows)])
     # print(Nmin)
     return xxs, yys
+
+def sign_changes(df, col) :
+    a = df[col].values
+    u = np.sign(df[col])
+    m = np.flatnonzero(u.diff().abs().eq(2))
+
+    g = np.stack([m - 1, m], axis=1)
+    v = np.abs(a[g]).argmin(1)
+
+    res=df.iloc[g[np.arange(g.shape[0]), v]]
+    return res

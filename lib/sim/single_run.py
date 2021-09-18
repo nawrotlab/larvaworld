@@ -10,7 +10,7 @@ from lib.anal.plotting import *
 
 from lib.aux.collecting import output_dict, midline_xy_pars
 from lib.conf.par import combo_collection_dict
-from lib.envs._larvaworld import LarvaWorldSim
+from lib.envs._larvaworld_sim import LarvaWorldSim
 from lib.conf.conf import loadConf, next_idx, expandConf
 from lib.stor.larva_dataset import LarvaDataset
 import lib.conf.dtype_dicts as dtypes
@@ -105,9 +105,7 @@ def store_sim_data(env, d, save_data_flag, enrichment, param_dict):
     else:
         food = None
 
-    d.set_data(step=step,
-               end=end,
-               food=food)
+    d.set_data(step=step,end=end,food=food)
 
     d.enrich(**enrichment)
     # Save simulation data and parameters
@@ -140,8 +138,8 @@ def collection_conf(dataset, collections):
             else:
                 step_pars += cd[c]['step']
                 end_pars += cd[c]['endpoint']
-            if 'tables' in list(cd[c].keys()):
-                tables.update(cd[c]['tables'])
+                if 'tables' in list(cd[c].keys()):
+                    tables.update(cd[c]['tables'])
         step = fun.unique_list(step_pars)
         end = fun.unique_list(end_pars)
         output = {'step': step,

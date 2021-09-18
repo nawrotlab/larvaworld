@@ -115,7 +115,7 @@ def compute_spatial_metrics(s, e, dt, Npoints, point, mode='minimal'):
     elif mode == 'minimal':
         print(f'Computing distances, velocities and accelerations for a single spinepoint')
         points = [point]
-    points+=['']
+    points += ['']
 
     points = np.unique(points).tolist()
     points = [p for p in points if set(nam.xy(p)).issubset(s.columns.values)]
@@ -163,9 +163,9 @@ def compute_spatial_metrics(s, e, dt, Npoints, point, mode='minimal'):
         #     s[nam.scal(vel)] = sV.flatten()
         #     s[nam.scal(acc)] = sA.flatten()
         #     e[nam.cum(nam.scal(dst))] = sDcum[-1, :]
-    pars=fun.flatten_list(xy_params)+dsts+cum_dsts+vels+accs
+    pars = fun.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
 
-    scale_to_length(s,e,pars=pars)
+    scale_to_length(s, e, pars=pars)
     print('All spatial parameters computed')
 
 
@@ -174,7 +174,7 @@ def compute_length(s, e, Npoints, mode='minimal', recompute=False):
         print('Length is already computed. If you want to recompute it, set recompute_length to True')
         return
     points = nam.midline(Npoints, type='point')
-    Npoints=len(points)
+    Npoints = len(points)
     xy_pars = nam.xy(points, flat=True)
     if not set(xy_pars).issubset(s.columns):
         print(f'XY coordinates not found for the {Npoints} midline points. Body length can not be computed.')
@@ -183,7 +183,7 @@ def compute_length(s, e, Npoints, mode='minimal', recompute=False):
     segs = nam.midline(Nsegs, type='seg')
     t = len(s)
     xy = s[xy_pars].values
-    Nids=xy.shape[0]
+    Nids = xy.shape[0]
     L = np.zeros([1, t]) * np.nan
     S = np.zeros([Nsegs, t]) * np.nan
 
@@ -197,8 +197,8 @@ def compute_length(s, e, Npoints, mode='minimal', recompute=False):
             s[seg] = S[i, :].flatten()
     elif mode == 'minimal':
         print(f'Computing body length')
-        xy2=xy.reshape(xy.shape[0], Npoints, 2)
-        xy3=np.sum(np.diff(xy2, axis=1) ** 2, axis=2)
+        xy2 = xy.reshape(xy.shape[0], Npoints, 2)
+        xy3 = np.sum(np.diff(xy2, axis=1) ** 2, axis=2)
         L = np.sum(np.sqrt(xy3), axis=1)
     s['length'] = L
     e['length'] = s['length'].groupby('AgentID').quantile(q=0.5)
@@ -256,7 +256,7 @@ def store_global_linear_metrics(s, e, point):
     e[nam.initial('y')] = s['y'].dropna().groupby('AgentID').first()
     e[nam.mean(nam.vel(''))] = e[nam.cum(nam.dst(''))] / e[nam.cum('dur')]
 
-    scale_to_length(s,e,pars=[nam.dst(''), nam.vel(''), nam.acc('')])
+    scale_to_length(s, e, pars=[nam.dst(''), nam.vel(''), nam.acc('')])
 
     e[nam.cum(nam.scal(nam.dst('')))] = s[nam.scal(nam.dst(''))].groupby('AgentID').sum()
     e[nam.mean(nam.scal(nam.vel('')))] = e[nam.cum(nam.scal(nam.dst('')))] / e[nam.cum('dur')]
@@ -279,8 +279,8 @@ def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recom
 
 def compute_dispersion(s, e, aux_dir, dt, point, recompute=False, starts=[0], stops=[40], **kwargs):
     ids = s.index.unique('AgentID').values
-    ps=[]
-    pps=[]
+    ps = []
+    pps = []
     for s0, s1 in itertools.product(starts, stops):
         if s0 == 0 and s1 == 40:
             p = f'dispersion'
@@ -295,7 +295,7 @@ def compute_dispersion(s, e, aux_dir, dt, point, recompute=False, starts=[0], st
         mp = nam.max(p)
         # mp, mp40 = nam.max([p, p40])
         mup = nam.mean(p)
-        pps+=[fp,mp,mup]
+        pps += [fp, mp, mup]
 
         if set([mp]).issubset(e.columns.values) and not recompute:
             print(
@@ -327,16 +327,16 @@ def compute_dispersion(s, e, aux_dir, dt, point, recompute=False, starts=[0], st
             #     e.loc[id, nam.scal(fp)] = e.loc[id, fp] / l
             # except:
             #     pass
-    scale_to_length(s,e, pars=ps+pps)
+    scale_to_length(s, e, pars=ps + pps)
     # for p in ps :
     #     create_dispersion_dataset(s, par=p, scaled=True, dir=dir)
     #     create_dispersion_dataset(s, par=p, scaled=False, dir=dir)
     # print(ps+nam.scal(ps))
-    store_aux_dataset(s, pars=ps+nam.scal(ps), type='dispersion', file=aux_dir)
+    store_aux_dataset(s, pars=ps + nam.scal(ps), type='dispersion', file=aux_dir)
     print('Dispersions computed')
 
 
-def compute_tortuosity(s, e, dt, durs_in_sec=[2, 5, 10, 20],**kwargs):
+def compute_tortuosity(s, e, dt, durs_in_sec=[2, 5, 10, 20], **kwargs):
     dsp_par = nam.final('dispersion') if nam.final('dispersion') in e.columns else 'dispersion'
     e['tortuosity'] = 1 - e[dsp_par] / e[nam.cum(nam.dst(''))]
     durs = [int(1 / dt * d) for d in durs_in_sec]
@@ -377,14 +377,14 @@ def compute_tortuosity(s, e, dt, durs_in_sec=[2, 5, 10, 20],**kwargs):
     print('Tortuosities computed')
 
 
-def compute_bearingNdst2source(s, e, source=(0, 0),**kwargs):
+def compute_bearingNdst2source(s, e, source=(0, 0), **kwargs):
     # ids = s.index.unique('AgentID').values
-    ii = 'cent' if source[0]==source[1]==0 else 'chem'
+    ii = 'cent' if source[0] == source[1] == 0 else 'chem'
     o, fo, d = getPar([f'o_{ii}', 'fo', f'd_{ii}'], to_return=['d'])[0]
     xy = nam.xy('')
     print(f'Computing bearing and distance to source based on xy position')
-    temp=np.array(source) - s[xy].values
-    s[o] = (s[fo] + 180 - np.rad2deg(np.arctan2(temp[:,1], temp[:,0]))) % 360 - 180
+    temp = np.array(source) - s[xy].values
+    s[o] = (s[fo] + 180 - np.rad2deg(np.arctan2(temp[:, 1], temp[:, 0]))) % 360 - 180
     s[nam.abs(o)] = s[o].abs()
     # s1 = time.time()
     s[d] = nan_euclidean_distances(s[xy].values.tolist(), [source])[:, 0]
@@ -413,23 +413,20 @@ def compute_bearingNdst2source(s, e, source=(0, 0),**kwargs):
     print('Bearing and distance to source computed')
 
 
-def align_trajectories(s, Npoints=None, Ncontour=None, track_point=None, arena_dims=None, mode='origin', config=None, pos_in_mm=True):
-    if Npoints is None :
-        Npoints=config['Npoints']
-    if Ncontour is None :
-        Ncontour=config['Ncontour']
-    if track_point is None :
-        track_point=config['point']
-    if arena_dims is None :
-        arena_dims=config['arena_pars']['arena_dims']
+def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', config=None, pos_in_mm=True):
     ids = s.index.unique(level='AgentID').values
-    xy_pars = nam.xy(track_point) if  set(nam.xy(track_point)).issubset(s.columns) else ['x','y']
+    if arena_dims is None:
+        arena_dims = config['arena_pars']['arena_dims']
+    if track_point is None:
+        track_point = config['point']
+
+    xy_pars = nam.xy(track_point) if set(nam.xy(track_point)).issubset(s.columns) else ['x', 'y']
     if not set(xy_pars).issubset(s.columns):
         raise ValueError('Defined point xy coordinates do not exist. Can not align trajectories! ')
 
-    points = nam.midline(Npoints, type='point') + ['centroid']
-    points_xy = nam.xy(points)
-    contour = nam.contour(Ncontour)
+    points = nam.midline(config['Npoints'], type='point') + ['centroid']
+    points_xy = nam.xy(points)+[['x', 'y']]
+    contour = nam.contour(config['Ncontour'])
     contour_xy = nam.xy(contour)
 
     all_xy_pars = points_xy + contour_xy + xy_pars
@@ -441,14 +438,14 @@ def align_trajectories(s, Npoints=None, Ncontour=None, track_point=None, arena_d
     elif mode == 'arena':
         print('Centralizing trajectories in arena center')
         x0, y0 = arena_dims
-        if pos_in_mm :
-            x0*=1000
-            y0*=1000
-        X,Y=x0 / 2, y0 / 2
+        if pos_in_mm:
+            x0 *= 1000
+            y0 *= 1000
+        X, Y = x0 / 2, y0 / 2
 
         for x, y in all_xy_pars:
-            s[x]-=X
-            s[y]-=Y
+            s[x] -= X
+            s[y] -= Y
         return s
     elif mode == 'center':
         print('Centralizing trajectories in trajectory center using min-max positions')
@@ -463,13 +460,13 @@ def align_trajectories(s, Npoints=None, Ncontour=None, track_point=None, arena_d
     return s
 
 
-def fixate_larva(s, Npoints, Ncontour, point, secondary_point=None, arena_dims=None):
+def fixate_larva(s, config, point, secondary_point=None, arena_dims=None):
     if arena_dims is None:
         raise ValueError('Arena dimensions must be provided ')
     ids = s.index.unique(level='AgentID').values
-    points = nam.midline(Npoints, type='point') + ['centroid']
+    points = nam.midline(config['Npoints'], type='point') + ['centroid']
     points_xy = nam.xy(points, flat=True)
-    contour = nam.contour(Ncontour)
+    contour = nam.contour(config['Ncontour'])
     contour_xy = nam.xy(contour, flat=True)
 
     all_xy_pars = points_xy + contour_xy
@@ -521,10 +518,10 @@ def fixate_larva(s, Npoints, Ncontour, point, secondary_point=None, arena_dims=N
     return s, bg
 
 
-def compute_preference_index(arena_xdim,xs,  return_num=False, return_all=False):
+def compute_preference_index(arena_xdim, xs, return_num=False, return_all=False):
     N = len(xs)
     r = 0.2 * arena_xdim
-    xs=np.array(xs)
+    xs = np.array(xs)
     N_l = len(xs[xs <= -r / 2])
     N_r = len(xs[xs >= +r / 2])
     N_m = len(xs[(xs <= +r / 2) & (xs >= -r / 2)])
@@ -537,26 +534,22 @@ def compute_preference_index(arena_xdim,xs,  return_num=False, return_all=False)
     else:
         return pI
 
-def scale_to_length(s,e,pars=None, keys=None):
-    l_par='length'
-    if l_par not in e.keys() :
+
+def scale_to_length(s, e, pars=None, keys=None):
+    l_par = 'length'
+    if l_par not in e.keys():
         return
-    l=e[l_par]
-    if pars is None :
-        if keys is not None :
-            pars=getPar(keys, to_return=['d'])[0]
-        else :
-            raise ValueError ('No parameter names or keys provided.')
-    s_pars=[p for p in pars if p in s.columns]
-    ids=s.index.get_level_values('AgentID').values
-    ls=l.loc[ids].values
-    if len(s_pars)>0 :
+    l = e[l_par]
+    if pars is None:
+        if keys is not None:
+            pars = getPar(keys, to_return=['d'])[0]
+        else:
+            raise ValueError('No parameter names or keys provided.')
+    s_pars = [p for p in pars if p in s.columns]
+    ids = s.index.get_level_values('AgentID').values
+    ls = l.loc[ids].values
+    if len(s_pars) > 0:
         s[nam.scal(s_pars)] = (s[s_pars].values.T / ls).T
     e_pars = [p for p in pars if p in e.columns]
     if len(e_pars) > 0:
-        e[nam.scal(e_pars)]=(e[e_pars].values.T/l.values).T
-
-
-
-
-
+        e[nam.scal(e_pars)] = (e[e_pars].values.T / l.values).T

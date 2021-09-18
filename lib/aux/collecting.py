@@ -1,4 +1,7 @@
 """Here we state all possible collected parameters for the simulations"""
+from collections import OrderedDict
+from typing import Dict, Iterator, List, Optional, Union
+
 import numpy as np
 from operator import attrgetter
 
@@ -8,6 +11,7 @@ from mesa.time import RandomActivation
 
 import lib.aux.functions as fun
 import lib.aux.naming as nam
+from lib.model.agents._agent import LarvaworldAgent
 
 body_pars = {
     "length": 'length_in_mm',
@@ -185,6 +189,11 @@ class NamedRandomActivation(RandomActivation):
     def __init__(self, id, model, **kwargs):
         super().__init__(model)
         self.id = id
+        self._agents = OrderedDict()  # type: Dict[int, LarvaworldAgent]
+
+    @property
+    def agents(self) -> List[LarvaworldAgent]:
+        return list(self._agents.values())
 
 
 # Extension of DataCollector class so that it only collects from a given schedule
@@ -297,6 +306,3 @@ output_dict = {
 
 output_keys = list(output_dict.keys())
 
-# output2={
-#
-# }

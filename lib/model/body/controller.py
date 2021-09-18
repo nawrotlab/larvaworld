@@ -227,34 +227,21 @@ class BodySim(BodyManager):
 
     def restore_body_bend(self):
         self.compute_spineangles()
-        # More formal mathematical solution based on the restoration of the bending angle_to_x_axis of two segments attached to a point
-        # See functions.py
         d, l = self.dst, self.sim_length
-        # First attempt. Complex. Does not solve problems
-        # self.set_body_bend(restored_angle(self.body_bend, d, self.get_sim_length()))
-        # Second attempt. Multiple angles (Npoints-2). Critical spinepoint carries the bend resistance
-        # state = np.zeros(self.Nsegs)
-        # critical_point = int(self.Npoints / 2)
-        # critical_point = 0
-        # state[critical_point] = b
-        # a = self.angles[0]
         if not self.model.physics_engine:
             if self.Nsegs == 2:
-                # kkk=self.spineangles[0]
                 self.spineangles[0] = fun.restore_bend_2seg(self.spineangles[0], d, l,
                                                             correction_coef=self.bend_correction_coef)
-                # print((np.rad2deg([kkk,self.spineangles[0]-kkk])*1).astype(int))
             else:
                 self.spineangles = fun.restore_bend(self.spineangles, d, l, self.Nsegs,
                                                     correction_coef=self.bend_correction_coef)
         self.compute_body_bend()
 
-    def set_lin_activity(self, value):
-        self.lin_activity = value
+    # def set_lin_activity(self, value):
+    #     self.lin_activity = value
 
-    def set_ang_activity(self, value):
-        self.ang_activity = value
-        # print(value, self.ang_activity)
+    # def set_ang_activity(self, value):
+    #     self.ang_activity = value
 
 
     def update_trajectory(self):

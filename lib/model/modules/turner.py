@@ -56,8 +56,6 @@ class Turner(Oscillator, Effector):
 
     def step(self, inhibited=False, attenuation=1.0, A_olf=0.0):
         self.activation = self.update_activation(A_olf)
-        # self.activation = 20
-        # inhibited=False
         if not inhibited:
             A = self.compute_angular_activity() + self.buildup
             self.buildup = 0
@@ -71,9 +69,6 @@ class Turner(Oscillator, Effector):
                 A = 0.0
         n = np.random.normal(scale=self.noise)
         A += n
-        # print(int(self.activation))
-        # if A>=20 :
-        #     print('xx')
         return A
 
     def init_neural(self, dt, base_activation=20, activation_range=None, **kwargs):

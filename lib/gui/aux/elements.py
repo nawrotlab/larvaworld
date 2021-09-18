@@ -991,17 +991,20 @@ class ButtonGraphList(GraphList):
         n = self.name
         k = self.list_key
         d0 = self.fig_dict
-        v0 = v[k]
+
         if e == f'BROWSE_FIGS {n}':
+            v0 = v[k]
             v1=v[f'BROWSE_FIGS {n}']
             id=v0.split('/')[-1].split('.')[-2]
             d0[id]=v1
             self.update(w,d0)
         elif e == f'REMOVE_FIGS {n}':
+            v0 = v[k]
             for kk in v0:
                 d0.pop(kk, None)
             self.update(w,d0)
         elif e == k:
+            v0 = v[k]
             if len(v0) > 0:
                 fig = d0[v0[0]]
                 try:
@@ -1013,7 +1016,7 @@ class ButtonGraphList(GraphList):
                         self.show_fig(w, fig)
                     else:
                         self.draw_fig(w, fig)
-        if e == f'REFRESH_FIGS {n}':
+        elif e == f'REFRESH_FIGS {n}':
             self.refresh_figs(w, self.tab.base_dict)
         elif e == f'SAVE_FIG {n}':
             self.save_fig()

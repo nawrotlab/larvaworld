@@ -15,7 +15,8 @@ from lib.stor import paths
 from lib.conf.par_conf import sup, sub, th, dot, ddot, subsup, Delta, delta, ast, bar, wave, par_dict_lists, paren, \
     brack, odot, circledcirc, circledast, ddot_th, dot_th, get_par_dict
 from lib.model.DEB.deb import DEB
-from lib.model.agents._agent import LarvaworldAgent, Larva
+from lib.model.agents._agent import LarvaworldAgent
+from lib.model.agents._larva import Larva
 import siunits as siu
 
 import lib.conf.dtype_dicts as dtypes

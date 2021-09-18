@@ -336,12 +336,12 @@ class SimulationClock(ScreenItem):
         if self.dmsecond >= 100:
             self.second += 1
             self.dmsecond -= 100
-        if self.second >= 60:
-            self.minute += 1
-            self.second -= 60
-        if self.minute >= 60:
-            self.hour += 1
-            self.minute -= 60
+            if self.second >= 60:
+                self.minute += 1
+                self.second -= 60
+                if self.minute >= 60:
+                    self.hour += 1
+                    self.minute -= 60
         self.check_timer()
 
     def render_clock(self, width, height):

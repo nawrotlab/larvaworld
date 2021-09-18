@@ -445,9 +445,11 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
             plt.legend(epoch_handles, turn_epochs, loc=1)
             plt.gca().add_artist(par_legend)
             plt.subplots_adjust(hspace=0.05, top=0.95, bottom=0.2, left=0.08, right=0.92)
-            fig.savefig(f'{save_to}/{filepath}', dpi=300)
-            print(f'Image saved as {filepath}')
+            filename=f'{save_to}/{filepath}'
+            fig.savefig(filename, dpi=300)
+            print(f'Image saved as {filename}')
             fig_dict[f'turns_{agent_id}_{i}'] = fig
+    # return process_plot(fig, save_to, filename, return_fig, show)
     return fig_dict
 
 

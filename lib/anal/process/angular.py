@@ -154,7 +154,7 @@ def compute_angular_metrics(s, dt, segs, angles, mode='minimal'):
     print('All angular parameters computed')
 
 
-def angular_processing(s, e, dt, Npoints, aux_dir, recompute=False, mode='minimal', **kwargs):
+def angular_processing(s, e, config, dt, Npoints, aux_dir, recompute=False, mode='minimal', **kwargs):
     N = Npoints
     points = nam.midline(N, type='point')
     Nangles = np.clip(N - 2, a_min=0, a_max=None)
