@@ -63,6 +63,7 @@ class LarvaworldGui:
         while True:
 
             e, v = self.window.read()
+            # print(e)
             if e in (None, 'Exit'):
                 self.window.close()
                 break

@@ -477,10 +477,10 @@ def init_dtypes():
         'arena':{'arena_dims': (0.0, 10.0),'arena_shape': ['circular', 'rectangular']},
         'life':
             {
-                'epochs': {'type': List[tuple], 'value_list': fun.value_list()},
-                'epoch_qs': {'type': list, 'value_list': fun.value_list()},
-                'hours_as_larva': fun.value_list(end=250, steps=25100, decimals=2),
-                'substrate_quality': fun.value_list(),
+                'epochs': {'type': List[tuple], 'values': fun.value_list()},
+                'epoch_qs': {'type': list, 'values': fun.value_list()},
+                'hours_as_larva': {'type': float, 'values': fun.value_list(end=250, steps=25100, decimals=2)},
+                'substrate_quality': {'type': float, 'values': fun.value_list()},
                 'substrate_type': list(substrate_dict.keys()),
             },
         'odorscape': {'odorscape': ['Gaussian', 'Diffusion'],
@@ -601,8 +601,8 @@ def init_dtypes():
         'sim_params': {
             'sim_ID': str,
             'path': str,
-            'duration': np.round(np.arange(0.0, 2000.1, 0.1), 1).tolist(),
-            'timestep': np.round(np.arange(0.01, 1.01, 0.01), 2).tolist(),
+            'duration': {'type': float, 'values': fun.value_list(end=2000.0, steps=20001, decimals=1)},
+            'timestep': {'type': float, 'values': fun.value_list()},
             'Box2D': bool,
             'sample': list(loadConfDict('Ref').keys())
         },
@@ -649,9 +649,9 @@ def init_dtypes():
         },
         'processing': {
             'types': processing_types(),
-            'dsp_starts': {'type': list, 'value_list': fun.value_list(start=0, end=180, steps=181, integer=True)},
-            'dsp_stops': {'type': list, 'value_list': fun.value_list(start=0, end=180, steps=181, integer=True)},
-            'tor_durs': {'type': list, 'value_list': fun.value_list(start=0, end=180, steps=181, integer=True)}},
+            'dsp_starts': {'type': list, 'values': fun.value_list(start=0, end=180, steps=181, integer=True)},
+            'dsp_stops': {'type': list, 'values': fun.value_list(start=0, end=180, steps=181, integer=True)},
+            'tor_durs': {'type': list, 'values': fun.value_list(start=0, end=180, steps=181, integer=True)}},
         'annotation': {'bouts': annotation_bouts(dtypes=True),
                        'track_point': str,
                        'track_pars': List[str], 'chunk_pars': List[str],
@@ -680,15 +680,15 @@ def init_dtypes():
     d['replay'] = {
         'arena_pars': d['arena'],
         'env_params': [''] + list(loadConfDict('Env').keys()),
-        'track_point': fun.value_list(1, 12, steps=12, integer=True),
+        'track_point': {'type': int, 'values': np.arange(1,13).tolist()},
         'dynamic_color': [None, 'lin_color', 'ang_color'],
         'agent_ids': list,
         'time_range': (0.0, 3600.0),
         'transposition': [None, 'origin', 'arena', 'center'],
-        'fix_point': fun.value_list(1, 12, steps=12, integer=True),
+        'fix_point': {'type': int, 'values': np.arange(1,13).tolist()},
         'secondary_fix_point': ['', 1, -1],
         'use_background': bool,
-        'draw_Nsegs': fun.value_list(1, 12, steps=12, integer=True),
+        'draw_Nsegs': {'type': int, 'values': np.arange(1,13).tolist()},
     }
     d['enrichment'] = {k: d[k] for k in
                        ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
@@ -724,9 +724,9 @@ def init_dtypes():
         'arena': d['arena']
     }
     d['parameterization'] = {'bend': ['from_angles', 'from_vectors'],
-                             'front_vector': {'type': tuple, 'value_list': fun.value_list(start=-12, end=12, steps=25, integer=True)},
+                             'front_vector': {'type': tuple, 'values': fun.value_list(start=-12, end=12, steps=25, integer=True)},
                              # 'front_vector': (-12, 12),
-                             'rear_vector': {'type': tuple, 'value_list': fun.value_list(start=-12, end=12, steps=25, integer=True)},
+                             'rear_vector': {'type': tuple, 'values': fun.value_list(start=-12, end=12, steps=25, integer=True)},
                              # 'rear_vector': (-12, 12),
                              'front_body_ratio': fun.value_list(),
                              'point_idx': fun.value_list(-1, 12, steps=14, integer=True),

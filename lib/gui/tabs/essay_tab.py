@@ -18,7 +18,7 @@ class EssayTab(GuiTab):
         self.canvas_size = (1000, 500)
 
     def build(self):
-        s1 = CollapsibleDict('essay_params', default=True, disp_name='Configuration', text_kws=t_kws(8))
+        s1 = CollapsibleDict('essay_params', default=True, disp_name='Configuration')
         sl1 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'])
 
         dl1 = DataList(name=self.essay_exps_key, tab=self, buttons=['run'], select_mode=None)

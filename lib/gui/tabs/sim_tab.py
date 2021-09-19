@@ -23,7 +23,7 @@ class SimTab(GuiTab):
                             sublists={'simulations': sl3})
         # sl4 = SelectionList(tab=self, conftype='ExpGroup', header_kws={'name':'Simulation types'}, buttons=['load'])
         # sl4 = DataList(name='Simulation types', tab=self, buttons=[], dict=loadConfDict('ExpGroup'), drop_down=True)
-        c1 = CollapsibleDict('sim_params', default=True, disp_name='Configuration', text_kws=t_kws(8))
+        c1 = CollapsibleDict('sim_params', default=True, disp_name='Configuration')
         output_dict = dict(zip(output_keys, [False] * len(output_keys)))
         c2 = CollapsibleDict('Output', dict=output_dict, auto_open=False)
 
