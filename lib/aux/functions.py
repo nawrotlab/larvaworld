@@ -1257,6 +1257,16 @@ def weighted_mean(array, Nmax):
     # print(m)
     return m
 
+def merge_dicts(dict_list) :
+    # import collections
+    super_dict = {}
+    # super_dict = collections.defaultdict(set)
+    for d in dict_list:
+        for k, v in d.items():  # d.items() in Python 3+
+            super_dict[k]=v
+            # super_dict[k].add(v)
+    return super_dict
+
 
 def load_dicts(files=None, pref=None, suf=None, folder=None, extension='txt', use_pickle=True):
     if files is None:

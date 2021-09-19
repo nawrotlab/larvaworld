@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 from lib.stor import paths
-
+import lib.aux.functions as fun
 sys.path.insert(0, paths.get_parent_dir())
 
 
@@ -396,7 +396,7 @@ def store_confs() :
         'odor_pref_test': env.pref_test_env,
         'odor_pref_test_on_food': env.pref_test_env_on_food,
         'odor_pref_train': env.pref_train_env,
-        'odor_preference_RL': env.pref_env_RL,
+        'odor_pref_RL': env.pref_env_RL,
         'patchy_food': env.patchy_food_env,
         'uniform_food': env.uniform_food_env,
         'food_grid': env.food_grid_env,
@@ -446,8 +446,14 @@ def store_confs() :
 
     for k, v in bat.batch_dict.items():
         saveConf(v, 'Batch', k)
-    for k, v in exp.exp_dict.items():
+
+    d=exp.grouped_exp_dict
+    exp_dict=fun.merge_dicts(list(d.values()))
+    exp_group_dict={k:{'simulations': list(v.keys())} for k,v in d.items()}
+    for k, v in exp_dict.items():
         saveConf(v, 'Exp', k)
+    for k, v in exp_group_dict.items():
+        saveConf(v, 'ExpGroup', k)
 
     for k, v in essay.essay_dict.items():
         saveConf(v, 'Essay', k)

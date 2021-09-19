@@ -41,6 +41,7 @@ conf_paths = {
     'Env': f'{ConfFolder}/EnvConfs.txt',
     'Par': f'{ConfFolder}/ParConfs.txt',
     'Exp': f'{ConfFolder}/ExpConfs.txt',
+    'ExpGroup': f'{ConfFolder}/ExpGroupConfs.txt',
     'Essay': f'{ConfFolder}/EssayConfs.txt',
     'Model': f'{ConfFolder}/ModelConfs.txt',
     'Batch': f'{ConfFolder}/BatchConfs.txt',

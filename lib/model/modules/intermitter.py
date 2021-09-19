@@ -1,4 +1,5 @@
 import os
+from collections import OrderedDict
 
 import numpy as np
 from lib.aux import naming as nam
@@ -13,7 +14,7 @@ class Intermitter(Effector):
     def __init__(self, brain=None, crawler=None, crawl_bouts=False,
                  feeder=None, feed_bouts=False,
                  pause_dist=None, stridechain_dist=None, crawl_freq=10 / 7, feed_freq=2.0,
-                 EEB_decay=1,save_to=None,
+                 EEB_decay=1, save_to=None,
                  EEB=0.5, feeder_reoccurence_rate=None, feeder_reocurrence_as_EEB=True,
                  **kwargs):
         super().__init__(**kwargs)
@@ -201,49 +202,53 @@ class Intermitter(Effector):
         self.pause_stop = True
 
     def get_mean_feed_freq(self):
-        try :
-            f= self.feed_counter / (self.total_ticks*self.dt)
-        except :
-            f= self.feed_counter / self.total_t
+        try:
+            f = self.feed_counter / (self.total_ticks * self.dt)
+        except:
+            f = self.feed_counter / self.total_t
         return f
 
     def build_dict(self):
-        d={}
+        d = {}
         d[nam.cum('t')] = self.total_t
         d[nam.num('tick')] = self.total_ticks
-        for c in ['feedchain', 'stridechain', 'pause'] :
-            t=nam.dur(c)
-            l=nam.length(c)
-            N=nam.num(c)
-            cum_t=nam.cum(t)
-            rt=nam.dur_ratio(c)
-            d[t]=getattr(self, f'{t}s')
-            d[N]=getattr(self, f'{c}_counter')
-            d[cum_t]=getattr(self, cum_t)
-            d[rt]=d[cum_t]/d[nam.cum('t')]
-            if c in ['feedchain', 'stridechain'] :
-                d[l]=getattr(self, f'{l}s')
-        d[nam.num('feed')]=sum(d[nam.length('feedchain')])
-        d[nam.num('stride')]=sum(d[nam.length('stridechain')])
-        d[nam.mean(nam.freq('feed'))]=d[nam.num('feed')]/d[nam.cum('t')]
-        d[nam.mean(nam.freq('stride'))]=d[nam.num('stride')]/d[nam.cum('t')]
+        for c in ['feedchain', 'stridechain', 'pause']:
+            t = nam.dur(c)
+            l = nam.length(c)
+            N = nam.num(c)
+            cum_t = nam.cum(t)
+            rt = nam.dur_ratio(c)
+            d[t] = getattr(self, f'{t}s')
+            d[N] = getattr(self, f'{c}_counter')
+            d[cum_t] = getattr(self, cum_t)
+            d[rt] = d[cum_t] / d[nam.cum('t')]
+            if c in ['feedchain', 'stridechain']:
+                d[l] = getattr(self, f'{l}s')
+        d[nam.num('feed')] = sum(d[nam.length('feedchain')])
+        d[nam.num('stride')] = sum(d[nam.length('stridechain')])
+        d[nam.mean(nam.freq('feed'))] = d[nam.num('feed')] / d[nam.cum('t')]
+        d[nam.mean(nam.freq('stride'))] = d[nam.num('stride')] / d[nam.cum('t')]
 
         return d
 
     def save_dict(self, path=None):
-        dic=self.build_dict()
-        if path is None :
-            if self.save_to is not None :
-                path=self.save_to
-            else :
-                raise ValueError ('No path to save intermittency dict')
+        dic = self.build_dict()
+        if path is None:
+            if self.save_to is not None:
+                path = self.save_to
+            else:
+                raise ValueError('No path to save intermittency dict')
         if dic is not None:
             file = f'{path}/{self.brain.agent.unique_id}.txt'
             if not os.path.exists(path):
                 os.makedirs(path)
             fun.save_dict(dic, file)
 
-    @ property
+    def update(self, **kwargs):
+        self.EEB, self.feeder_reoccurence_rate = update_EEB(EEB=self.EEB, EEB_coef=self.EEB_exp_coef,
+                                                            refeed_rate=self.feeder_reoccurence_rate, **kwargs)
+
+    @property
     def current_crawl_ticks(self):
         return (self.current_numstrides + 1) * self.crawl_ticks
 
@@ -255,16 +260,14 @@ class Intermitter(Effector):
         return self.current_stridechain_length, self.current_feedchain_length, self.current_pause_ticks
 
 
-
-
 class OfflineIntermitter(Intermitter):
     def __init__(self, **kwargs):
+        # print(OrderedDict(sorted(kwargs.items())))
         super().__init__(**kwargs)
-
 
     def step(self):
         super().count_ticks()
-        t=self.ticks
+        t = self.ticks
 
         dur = t * self.dt
         if self.current_stridechain_length is not None and t >= self.current_crawl_ticks:
@@ -277,7 +280,7 @@ class OfflineIntermitter(Intermitter):
                 self.reset_ticks()
                 self.current_numstrides = 0
                 self.current_stridechain_length = None
-                self.current_pause_ticks = int(self.pause_dist.sample()/self.dt)
+                self.current_pause_ticks = int(self.pause_dist.sample() / self.dt)
                 self.inhibit_locomotion()
                 # self.current_pause_ticks = np.round(self.pause_dist.sample()/self.dt).astype(int)
         elif self.current_feedchain_length is not None and t >= self.current_feed_ticks:
@@ -288,7 +291,7 @@ class OfflineIntermitter(Intermitter):
                 self.feedchain_lengths.append(self.current_feedchain_length)
                 self.reset_ticks()
                 self.current_feedchain_length = None
-                self.current_pause_ticks = int(self.pause_dist.sample()/self.dt)
+                self.current_pause_ticks = int(self.pause_dist.sample() / self.dt)
                 self.inhibit_locomotion()
                 # self.current_pause_ticks = np.round(self.pause_dist.sample()/self.dt).astype(int)
             else:
@@ -302,7 +305,6 @@ class OfflineIntermitter(Intermitter):
             self.reset_ticks()
             self.disinhibit_locomotion()
 
-
     def disinhibit_locomotion(self):
         if np.random.uniform(0, 1, 1) >= self.EEB:
             if self.crawl_bouts:
@@ -314,12 +316,12 @@ class OfflineIntermitter(Intermitter):
     def inhibit_locomotion(self):
         pass
 
+
 class NengoIntermitter(OfflineIntermitter):
-    def __init__(self,nengo_manager, **kwargs):
+    def __init__(self, nengo_manager, **kwargs):
         super().__init__(**kwargs)
         self.nengo_manager = nengo_manager
         self.current_stridechain_length = self.stridechain_dist.sample()
-
 
     def disinhibit_locomotion(self):
         if np.random.uniform(0, 1, 1) >= self.EEB:
@@ -412,6 +414,24 @@ class BranchIntermitter(Effector):
                     return
 
 
+class FittedIntermitter(OfflineIntermitter):
+    def __init__(self, sample_dataset, **kwargs):
+        sample = loadConf(sample_dataset, 'Ref')
+        stored_conf = {
+            'crawl_freq': sample['crawl_freq'],
+            'feed_freq': sample['feed_freq'],
+            'dt': sample['dt'],
+            'stridechain_dist': sample['stride']['best'],
+            'pause_dist': sample['pause']['best'],
+            'feeder_reoccurence_rate': sample['feeder_reoccurence_rate'],
+        }
+        stored_conf.update(kwargs)
+        stored_conf['crawl_bouts'] = True if stored_conf['crawl_freq'] is not None else False
+        stored_conf['feed_bouts'] = True if stored_conf['feed_freq'] is not None else False
+        # print(kwargs)
+        super().__init__(**stored_conf)
+
+
 def get_EEB_poly1d(sample_dataset=None, dt=None, **kwargs):
     if sample_dataset is not None:
         sample = loadConf(sample_dataset, 'Ref')
@@ -432,7 +452,7 @@ def get_EEB_poly1d(sample_dataset=None, dt=None, **kwargs):
     ms = []
     for EEB in EEBs:
         inter = OfflineIntermitter(**dtypes.get_dict('intermitter', EEB=EEB, **kws))
-        max_ticks=int(60 * 60/inter.dt)
+        max_ticks = int(60 * 60 / inter.dt)
         while inter.total_ticks < max_ticks:
             inter.step()
         ms.append(inter.get_mean_feed_freq())
@@ -455,3 +475,28 @@ def get_best_EEB(deb, sample_dataset=None, dt=None, **kwargs):
         s = deb.fr_feed
 
     return np.clip(z(s), a_min=0, a_max=1)
+
+
+def update_EEB(EEB, base_EEB, EEB_coef, refeed_rate=None, max_refeed_rate=0.9, refeed_rate_coef=0,
+               food_present=None, feed_success=None):
+    EEB = EEB * EEB_coef if food_present is None else base_EEB
+    if refeed_rate is not None and feed_success is not None:
+        refeed_rate = max_refeed_rate if feed_success else refeed_rate * refeed_rate_coef
+    return EEB, refeed_rate
+
+
+if __name__ == "__main__":
+    inter = FittedIntermitter(sample_dataset='reference', dt=0.001, EEB=0.8, EEB_decay=1.0)
+    # print(inter.EEB_decay)
+    sample = loadConf('reference', 'Ref')
+    kws = {
+        'crawl_freq': sample['crawl_freq'],
+        'feed_freq': sample['feed_freq'],
+        'dt': 0.001,
+        'crawl_bouts': True,
+        'feed_bouts': True,
+        'stridechain_dist': sample['stride']['best'],
+        'pause_dist': sample['pause']['best'],
+        'feeder_reoccurence_rate': sample['feeder_reoccurence_rate'],
+    }
+    inter2 = OfflineIntermitter(**dtypes.get_dict('intermitter', EEB=0.8, **kws))

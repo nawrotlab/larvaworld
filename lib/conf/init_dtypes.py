@@ -474,13 +474,7 @@ def init_dtypes():
                 'distribution': ['uniform'],
                 'type': list(substrate_dict.keys())
             },
-        'arena':
-            {
-                'arena_dims': (0.0, 10.0),
-                # 'arena_xdim': fun.value_list(end=10.0, steps=1000, decimals=3),
-                # 'arena_ydim': fun.value_list(end=10.0, steps=1000, decimals=3),
-                'arena_shape': ['circular', 'rectangular']
-            },
+        'arena':{'arena_dims': (0.0, 10.0),'arena_shape': ['circular', 'rectangular']},
         'life':
             {
                 'epochs': {'type': List[tuple], 'value_list': fun.value_list()},

@@ -344,6 +344,14 @@ class SelectionList(GuiElement):
         id = v[self.k]
         k0 = self.conftype
 
+        if e==self.k :
+            conf = loadConf(id, k0)
+            for kk, vv in self.sublists.items():
+                if type(conf[kk])==str :
+                    vv.update(w, conf[kk])
+                if type(conf[kk])==list :
+                    vv.update(w, values=conf[kk])
+
         if e == f'LOAD {n}' and id != '':
             conf = loadConf(id, k0)
             self.tab.update(w, c, conf, id)
@@ -383,15 +391,17 @@ class SelectionList(GuiElement):
         elif self.collapsible is not None and e == self.collapsible.header_key:
             self.collapsible.update_header(w, id)
 
-    def update(self, w, id='', all=False):
-        w.Element(self.k).Update(values=self.confs, value=id, size=(self.width, self.Nconfs))
+    def update(self, w, id='', all=False, values=None):
+        if values is None :
+            values=self.confs
+        w.Element(self.k).Update(values=values, value=id, size=(self.width, self.Nconfs))
         if self.collapsible is not None:
             self.collapsible.update_header(w, id)
         if all:
             for i in range(5):
                 k = f'{self.k0}{i}'
                 if k in w.AllKeysDict.keys():
-                    w[k].update(values=self.confs, value=id)
+                    w[k].update(values=values, value=id)
 
     def save(self, conf):
         return save_conf_window(conf, self.conftype, disp=self.disp)
@@ -470,7 +480,7 @@ class NamedList(Header):
 
 class DataList(NamedList):
     def __init__(self, name, tab, dict={}, buttons=['select_all', 'remove', 'changeID', 'browse'], button_args={},
-                 raw=False, select_mode= LISTBOX_SELECT_MODE_EXTENDED, **kwargs):
+                 raw=False, select_mode= LISTBOX_SELECT_MODE_EXTENDED,drop_down=False, **kwargs):
 
         self.tab = tab
         self.dict = dict
@@ -483,7 +493,7 @@ class DataList(NamedList):
         after_header=button_row(name, buttons, button_args)
         header_kws = {'text': get_disp_name(name), 'single_line': False, 'after_header': after_header}
         super().__init__(name=name, header_kws=header_kws, key=self.list_key, choices=list(self.dict.keys()),
-                      drop_down=False, select_mode=select_mode, **kwargs)
+                      drop_down=drop_down, select_mode=select_mode, **kwargs)
 
 
     # def build_buttons(self, name):

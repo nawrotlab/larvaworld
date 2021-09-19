@@ -1,12 +1,12 @@
 import copy
 
 from lib.aux.collecting import output_keys
-from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList
+from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, NamedList, DataList
 from lib.gui.aux.functions import t_kws, gui_col
 from lib.gui.tabs.tab import GuiTab
 from lib.sim.single_run import run_sim
 from lib.sim.analysis import sim_analysis
-from lib.conf.conf import next_idx
+from lib.conf.conf import next_idx, loadConfDict
 
 
 class SimTab(GuiTab):
@@ -19,6 +19,10 @@ class SimTab(GuiTab):
                            text_kws=t_kws(14), value_kws=t_kws(10), width=12, header_text_kws=t_kws(9))
         sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], progress=True,
                             sublists={'env_params': sl1, 'life_params' : sl2})
+        sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Simulation types', buttons=[],
+                            sublists={'simulations': sl3})
+        # sl4 = SelectionList(tab=self, conftype='ExpGroup', header_kws={'name':'Simulation types'}, buttons=['load'])
+        # sl4 = DataList(name='Simulation types', tab=self, buttons=[], dict=loadConfDict('ExpGroup'), drop_down=True)
         c1 = CollapsibleDict('sim_params', default=True, disp_name='Configuration', text_kws=t_kws(8))
         output_dict = dict(zip(output_keys, [False] * len(output_keys)))
         c2 = CollapsibleDict('Output', dict=output_dict, auto_open=False)
@@ -26,7 +30,7 @@ class SimTab(GuiTab):
         g1 = GraphList(self.name, tab=self)
 
         l = [[
-            gui_col([sl3, sl1,c1, c2, sl2], 0.25),
+            gui_col([sl4, sl3, sl1,c1, c2, sl2], 0.25),
             gui_col([g1.canvas], 0.55),
             gui_col([g1], 0.2)
         ]]
@@ -78,6 +82,11 @@ class SimTab(GuiTab):
                 'enrichment': self.current_conf(v)['enrichment'],
                 }
         return conf
+
+    def eval(self, e, v, w, c, d, g):
+        # if e==self.selectionlists['ExpGroup'].k :
+        #     self.selectionlists['Exp'].update(w, values=)
+        return d, g
 
 
 if __name__ == "__main__":
