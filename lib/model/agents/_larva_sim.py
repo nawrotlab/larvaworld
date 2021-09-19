@@ -27,7 +27,8 @@ class LarvaSim(BodySim, Larva):
         self.reset_feeder()
         self.radius = self.sim_length / 2
 
-        self.food_detected, self.feeder_motion, self.current_V_eaten, self.feed_success = None, False,0, False
+        self.food_detected, self.feeder_motion, self.current_V_eaten, self.feed_success = None, False,0, None
+        self.food_missed, self.food_found=False, False
 
     def update_odor_dicts(self, odor_dict):  #
 
@@ -45,9 +46,17 @@ class LarvaSim(BodySim, Larva):
     def compute_next_action(self):
         self.cum_dur += self.model.dt
         pos = self.get_olfactor_position()
-        self.food_detected, food_quality = self.detect_food(pos)
+        self.food_detected, food_quality = self.detect_food(pos, self.food_detected)
         self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.run(pos)
         self.current_V_eaten, self.feed_success = self.feed(self.food_detected, self.feeder_motion)
+        # if self.food_detected :
+        #     print('------------------')
+        # if self.feeder_motion :
+        #     print(self.model.Nticks)
+        # if self.food_missed :
+        #     print('-------------------')
+        # if self.food_found :
+        #     print('////////////////////')
         if self.energetics:
             self.run_energetics(self.food_detected, self.feed_success, self.current_V_eaten, food_quality)
         # Paint the body to visualize effector state
@@ -56,36 +65,44 @@ class LarvaSim(BodySim, Larva):
         # else:
         #     self.set_color([self.default_color] * self.Nsegs)
 
-    def detect_food(self, pos):
-
+    def detect_food(self, pos, prev_item):
+        item,q=None, None
         if self.brain.feeder is not None:
             grid = self.model.food_grid
             if grid:
                 cell = grid.get_grid_cell(pos)
                 if grid.get_cell_value(cell) > 0:
-                    return cell, grid.quality
+                    item,q= cell, grid.quality
             else:
                 valid = [a for a in self.model.get_food() if a.amount > 0]
                 accessible_food = [a for a in valid if a.contained(pos)]
                 if accessible_food:
                     food = random.choice(accessible_food)
                     self.resolve_carrying(food)
-                    return food, food.quality
-        return None, None
+                    item,q= food, food.quality
+        self.food_found, self.food_missed = False, False
+        if prev_item is None and item is not None :
+            self.food_found=True
+        elif prev_item is not None and item is None :
+            self.food_missed=True
+        return item,q
 
     def feed(self, source, motion):
         a_max = self.max_V_bite
-        if motion and source is not None:
-            grid = self.model.food_grid
-            if grid :
-                V=-grid.add_cell_value(source, -a_max)
-            else :
-                V = source.subtract_amount(a_max)
-            self.feed_success_counter += 1
-            self.amount_eaten += V*1000
-            return V, True
-        else:
-            return 0, False
+        if motion :
+            if source is not None:
+                grid = self.model.food_grid
+                if grid :
+                    V=-grid.add_cell_value(source, -a_max)
+                else :
+                    V = source.subtract_amount(a_max)
+                self.feed_success_counter += 1
+                self.amount_eaten += V*1000
+                return V, True
+            else:
+                return 0, False
+        else :
+            return 0, None
 
     def reset_feeder(self):
         self.feed_success_counter = 0
@@ -148,16 +165,17 @@ class LarvaSim(BodySim, Larva):
         else:
             self.energetics = False
 
-    def build_brain(self, brain):
-        modules = brain['modules']
-        if brain['nengo']:
-            brain = NengoBrain()
-            brain.setup(agent=self, modules=modules, conf=brain)
-            brain.build(brain.nengo_manager, olfactor=brain.olfactor)
-            brain.sim = Simulator(brain, dt=0.01)
-            brain.Nsteps = int(self.model.dt / brain.sim.dt)
+    def build_brain(self, conf):
+        modules = conf['modules']
+        if conf['nengo']:
+            brain = NengoBrain(agent=self, modules=modules, conf=conf)
+            # brain.setup()
+
+
+
+
         else:
-            brain = DefaultBrain(agent=self, modules=modules, conf=brain)
+            brain = DefaultBrain(agent=self, modules=modules, conf=conf)
         return brain
 
     def run_energetics(self, food_detected, feed_success, V_eaten, food_quality):

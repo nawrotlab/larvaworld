@@ -82,5 +82,5 @@ class SimTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-    larvaworld_gui = LarvaworldGui(tabs=['simulation'])
+    larvaworld_gui = LarvaworldGui(tabs=['simulation', 'settings'])
     larvaworld_gui.run()

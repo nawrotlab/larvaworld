@@ -19,10 +19,10 @@ import lib.conf.dtype_dicts as dtypes
 def run_sim_basic(
         sim_params,
         env_params,
-        vis_kwargs,
         life_params,
         enrichment,
         collections,
+        vis_kwargs=None,
         save_to=None,
         save_data_flag=True,
         experiment=None,

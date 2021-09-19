@@ -38,18 +38,19 @@ class LarvaWorld:
         cls.random = random.Random(cls._seed)
         return object.__new__(cls)
 
-    def __init__(self, vis_kwargs, env_params,
+    def __init__(self, env_params, vis_kwargs=None,
                  id='unnamed', dt=0.1, Nsteps=None, save_to='.',
                  background_motion=None, Box2D=False,
                  use_background=False,
-                 traj_color=None,
-                 touch_sensors=False, allow_clicks=True,
+                 traj_color=None,allow_clicks=True,
                  experiment=None,
                  progress_bar=None,
                  space_in_mm=False
                  ):
         self.space_in_mm = space_in_mm
         self.progress_bar = progress_bar
+        if vis_kwargs is None :
+            vis_kwargs=dtypes.get_dict('visualization')
         self.vis_kwargs = vis_kwargs
         self.__dict__.update(self.vis_kwargs['draw'])
         self.__dict__.update(self.vis_kwargs['color'])
@@ -74,7 +75,7 @@ class LarvaWorld:
         self.video_fps = int(self.vis_kwargs['render']['video_speed'] / dt)
         # self.video_fps = int(self.video_speed / dt)
         self.allow_clicks = allow_clicks
-        self.touch_sensors = touch_sensors
+        # self.touch_sensors = touch_sensors
         self.Nticks = 0
         self.Nsteps = Nsteps
         snapshot_interval_in_sec = 60
@@ -643,6 +644,7 @@ class LarvaWorld:
             'draw_head',
             'draw_midline',
             'draw_contour',
+            'draw_sensors',
             'visible_clock',
             'visible_ids',
             'visible_state',

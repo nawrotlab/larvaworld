@@ -64,7 +64,7 @@ batch_dict = {
         'Ngrid': [2, 2]
     }, batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference'), en='PI'),
     'food_patchy': batch('patchy_food', space_search={
-        'pars': ['EEB', 'feeder_initial_freq'],
+        'pars': ['EEB', 'initial_freq'],
         'ranges': [(0.0, 1.0), (1.5, 2.5)],
         'Ngrid': [3, 3]
     }, o='ingested_food_volume'),
@@ -179,7 +179,7 @@ batch_dict = {
 #
 # patchy_food_batch = batch('patchy_food',
 #                           space_search={
-#                               'pars': ['EEB', 'feeder_initial_freq'],
+#                               'pars': ['EEB', 'initial_freq'],
 #                               'ranges': [(0.0, 1.0), (1.5, 2.5)],
 #                               'Ngrid': [3, 3]
 #                           }, optimization=optimization('ingested food volume'))
@@ -187,7 +187,7 @@ batch_dict = {
 # # patchy_food_batch = {
 # #     'exp': 'patchy_food',
 # #     'space_search': {
-# #         'pars': ['EEB', 'feeder_initial_freq'],
+# #         'pars': ['EEB', 'initial_freq'],
 # #         'ranges': [(0.0, 1.0), (1.5, 2.5)],
 # #         'Ngrid': [3, 3]
 # #     },

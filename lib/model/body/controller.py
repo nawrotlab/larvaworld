@@ -292,6 +292,21 @@ class BodySim(BodyManager):
         d = lin_vel * dt
         ang_vel0=np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
 
+        def avoid_border(ang_vel, counter, dd=0.001):
+            if not self.touch_sensors :
+                counter += 1
+                ang_vel *= -(1 + dd * counter)
+                return ang_vel, counter
+            else :
+                s=self.sim_length/1000
+                L,R=self.get_sensor_position('L_front'), self.get_sensor_position('R_front')
+                Ld, Rd=self.tank_polygon.exterior.distance(Point(L)), self.tank_polygon.exterior.distance(Point(R))
+                Ld, Rd=Ld/s,Rd/s
+                LRd=Ld-Rd
+                ang_vel += dd * LRd
+                return ang_vel, counter
+
+
         def check_in_tank(ang_vel, o0, d, hr0) :
             o1 = o0 + ang_vel * dt
             # print(o1,o0,ang_vel,dt)
@@ -305,20 +320,21 @@ class BodySim(BodyManager):
                 hr1 = None
                 hp1 = hp0 + dxy
                 hf1 = hp1 + k * (self.sim_length / 2)
-
-            in_tank = fun.inside_polygon(points=[hf1, hp1], tank_polygon=self.tank_polygon)
+            hf1_ok, hp1_ok = fun.inside_polygon(points=[hf1, hp1], tank_polygon=self.tank_polygon)
+            in_tank = all([hf1_ok, hp1_ok])
             return in_tank, o1, hr1, hp1
 
         in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
         # in_tank=False
-        dd=0.01
         counter = -1
         # ang_vel*=-1
         while not in_tank :
+            ang_vel, counter=avoid_border(ang_vel, counter)
+
             # print(counter, ang_vel)
-            # print('xx')
-            counter+=1
-            ang_vel*=-(1+dd*counter)
+            # print(counter, Ld-Rd, ang_vel)
+            # counter+=1
+            # ang_vel*=-(1+dd*counter)
             in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
         if counter>=0:
             ang_vel = np.abs(ang_vel)*np.sign(ang_vel0)

@@ -63,6 +63,7 @@ exp_dict = {
     **food_exp('patchy_food'),
     **food_exp('uniform_food'),
     **food_exp('food_grid'),
+    **food_exp('single_patch'),
     'growth': exp('growth', sim={'duration': 24 * 60.0}, c=['feeder', 'gut']),
     'rovers_sitters': exp('rovers_sitters', sim={'duration': 180.0}, c=['feeder', 'gut'],
                           enrichment=dtypes.base_enrich(types=['spatial'], bouts=[])),

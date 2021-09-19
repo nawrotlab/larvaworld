@@ -13,12 +13,13 @@ from lib.model.body.segment import Box2DPolygon, DefaultSegment
 class LarvaBody:
     def __init__(self, model, pos=None, orientation=None, density=300.0,
                  initial_length=None, length_std=0, Nsegs=1, interval=0, joint_type=None,
-                 seg_ratio=None, friction_pars=None, **kwargs):
+                 seg_ratio=None, friction_pars=None,touch_sensors=False,  **kwargs):
 
         if joint_type is None:
             joint_type = {'distance': 2, 'revolute': 1}
         if friction_pars is None:
             friction_pars = {'maxForce': 10 ** 0, 'maxTorque': 10 ** -1}
+        self.touch_sensors = touch_sensors
         self.model = model
         self.density = density
         self.friction_pars = friction_pars
@@ -67,8 +68,9 @@ class LarvaBody:
 
         self.sensors = []
         self.define_sensor('olfactor', (1, 0))
-        if self.model.touch_sensors:
+        if self.touch_sensors:
             self.add_touch_sensors()
+        # print(self.sensors)
 
     @ property
     def sim_length(self):
@@ -328,10 +330,12 @@ class LarvaBody:
             except:
                 pass
 
-    def draw_sensor(self, viewer, sensor):
-        viewer.draw_circle(radius=self.sim_length / 20,
-                           # pos=self.get_olfactor_position(),
-                           position=self.get_sensor_position(sensor),
+    def draw_sensors(self, viewer, sensors=None):
+        if sensors is None :
+            sensors=[d['sensor'] for d in self.sensors]
+        for s in sensors :
+            viewer.draw_circle(radius=self.sim_length / 20,
+                           position=self.get_sensor_position(s),
                            filled=True, color=(255, 0, 0), width=.1)
 
     def draw(self, viewer):
@@ -357,6 +361,10 @@ class LarvaBody:
 
         if self.model.draw_centroid:
             viewer.draw_circle(self.get_position(), r / 2, self.default_color, True, r / 3)
+
+        # if True:
+        if self.model.draw_sensors:
+            self.draw_sensors(viewer)
 
         if self.selected:
             cc = self.model.selection_color

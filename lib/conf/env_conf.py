@@ -274,6 +274,12 @@ focus_env = {'arena': arena(0.01, 0.01),
              'larva_groups': larva_distro(N=1, orientation_range=[90.0, 90.0], model='explorer'),
              'odorscape': None}
 
+single_patch_env = {'arena': arena(0.04, 0.04),
+                   'border_list': {},
+                   'food_params': food_param_conf(list={**dtypes.get_dict('agent', class_name='Source', unique_id='Food', as_entry=True, amount=0.1,radius=0.005)}),
+                   'larva_groups': larva_distro(N=1, model='nengo-larva'),
+                   'odorscape': None}
+
 uniform_food_env = {'arena': dish(0.05),
                     'border_list': {},
                     'food_params': food_param_conf(

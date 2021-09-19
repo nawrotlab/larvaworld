@@ -42,8 +42,7 @@ class LarvaReplay(Larva, BodyReplay):
             self.or_ar = np.deg2rad(data[m.or_pars].values) if m.Nors > 0 else np.ones([N, m.Nors]) * np.nan
             self.bend_ar = np.deg2rad(data['bend'].values) if 'bend' in data.columns else np.ones(N) * np.nan
             self.front_or_ar = np.deg2rad(
-                data['front_orientation'].values) if 'front_orientation' in data.columns else np.ones(
-                N) * np.nan
+                data['front_orientation'].values) if 'front_orientation' in data.columns else np.ones(N) * np.nan
             # FIXME Here the sim_length is not divided by 1000 because all xy coords are in mm
             BodyReplay.__init__(self, model, pos=self.pos, orientation=self.or_ar[0][0],
                                 initial_length=self.sim_length, length_std=0, Nsegs=self.Nsegs, interval=0)
@@ -60,17 +59,13 @@ class LarvaReplay(Larva, BodyReplay):
         if self.Nsegs is not None :
             self.angles = self.ang_ar[i]
             self.orients = self.or_ar[i]
-
-
             self.front_orientation = self.front_or_ar[i]
             self.bend = self.bend_ar[i]
-
             for p in ['front_orientation_vel']:
                 setattr(self, p, self.data[p].values[i] if p in self.data.columns else np.nan)
 
     def step(self):
         m=self.model
-
         step = m.active_larva_schedule.steps
         self.read_step(step)
         mid = self.midline

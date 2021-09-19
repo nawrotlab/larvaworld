@@ -400,6 +400,7 @@ def store_confs() :
         'patchy_food': env.patchy_food_env,
         'uniform_food': env.uniform_food_env,
         'food_grid': env.food_grid_env,
+        'single_patch': env.single_patch_env,
         'growth': env.growth_env,
         'rovers_sitters': env.rovers_sitters_env,
         'reorientation': env.reorientation_env,
@@ -438,6 +439,7 @@ def store_confs() :
         'RL-feeder': mod.RL_feed_odor_larva,
         'basic_navigator': mod.basic_larva,
         'explorer_3con': mod.exploring_3c_larva,
+        'nengo-larva': mod.nengo_larva,
     }
     for k, v in mod_dict.items():
         saveConf(v, 'Model', k)

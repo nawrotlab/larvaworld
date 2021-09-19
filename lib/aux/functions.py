@@ -411,7 +411,7 @@ def compute_centroid(points):
 
 
 def inside_polygon(points, tank_polygon):
-    return all([tank_polygon.contains(Point(x, y)) for x, y in points])
+    return [tank_polygon.contains(Point(x, y)) for x, y in points]
     # # // p is your point, p.x is the x coord, p.y is the y coord
     # Xmin, Xmax, Ymin, Ymax = space_edges_for_screen
     # # x, y = point

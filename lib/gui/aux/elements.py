@@ -363,15 +363,19 @@ class SelectionList(GuiElement):
             deleteConf(id, k0)
             self.update(w)
         elif e == f'RUN {n}' and id != '':
-            conf = self.tab.get(w, v, c, as_entry=False)
-            for kk, vv in self.sublists.items():
-                if not vv.with_dict:
-                    conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
-                else:
-                    conf[kk] = vv.collapsible.get_dict(v, w)
+            try:
+                conf = self.tab.get(w, v, c, as_entry=False)
+                for kk, vv in self.sublists.items():
+                    if not vv.with_dict:
+                        conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
+                    else:
+                        conf[kk] = vv.collapsible.get_dict(v, w)
+            except:
+                return
             d, g = self.tab.run(v, w, c, d, g, conf, id)
             self.tab.gui.dicts = d
             self.tab.gui.graph_lists = g
+
         elif e == f'EDIT {n}':
             conf = self.tab.get(w, v, c, as_entry=False)
             new_conf = self.tab.edit(conf)

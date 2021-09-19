@@ -181,7 +181,8 @@ def init_dicts():
         'body': {'initial_length': 0.0045,
                  'length_std': 0.0001,
                  'Nsegs': 2,
-                 'seg_ratio': None
+                 'seg_ratio': None,
+                 'touch_sensors': False,
                  },
         'physics': {
             'torque_coef': 0.41,
@@ -206,7 +207,7 @@ def init_dicts():
                     'step_to_length_mu': 'sample',  # From D1 fit
                     'step_to_length_std': 'sample',  # From D1 fit
                     'initial_amp': None,
-                    'crawler_noise': 0.01,
+                    'noise': 0.01,
                     'max_vel_phase': 1.0
                     },
         'turner': {'mode': None,
@@ -238,8 +239,8 @@ def init_dicts():
             'perception': 'log',
             'olfactor_noise': 0.0,
             'decay_coef': 0.5},
-        'feeder': {'feeder_freq_range': [1.0, 3.0],
-                   'feeder_initial_freq': 2.0,
+        'feeder': {'freq_range': [1.0, 3.0],
+                   'initial_freq': 2.0,
                    'feed_radius': 0.1,
                    'V_bite': 0.0002},
         'memory': {'DeltadCon': 0.1,
@@ -524,7 +525,8 @@ def init_dtypes():
         'body': {'initial_length': fun.value_list(0.0, 0.01, steps=100, decimals=4),
                  'length_std': fun.value_list(0.0, 0.01, steps=100, decimals=4),
                  'Nsegs': fun.value_list(1, 12, steps=12, integer=True),
-                 'seg_ratio': List[float]  # [5 / 11, 6 / 11]
+                 'seg_ratio': List[float],  # [5 / 11, 6 / 11]
+                 'touch_sensors': bool,
                  },
         'physics': {
             'torque_coef': fun.value_list(),
@@ -546,7 +548,7 @@ def init_dtypes():
                     'step_to_length_mu': fun.value_list(),  # From D1 fit
                     'step_to_length_std': fun.value_list(),  # From D1 fit
                     'initial_amp': fun.value_list(end=2.0, steps=200),
-                    'crawler_noise': fun.value_list(),
+                    'noise': fun.value_list(),
                     'max_vel_phase': fun.value_list(end=2.0, steps=200)
                     },
         'turner': {'mode': ['', 'neural', 'sinusoidal'],
@@ -580,8 +582,8 @@ def init_dtypes():
             'perception': ['log', 'linear'],
             'olfactor_noise': fun.value_list(),
             'decay_coef': fun.value_list(end=2.0, steps=200)},
-        'feeder': {'feeder_freq_range': (0.0, 4.0),
-                   'feeder_initial_freq': fun.value_list(end=4.0, steps=400),
+        'feeder': {'freq_range': (0.0, 4.0),
+                   'initial_freq': fun.value_list(end=4.0, steps=400),
                    'feed_radius': fun.value_list(start=0.01, end=1.0, steps=1000, decimals=2),
                    'V_bite': fun.value_list(start=0.0001, end=0.01, steps=1000, decimals=4)},
         'memory': {'DeltadCon': float,
@@ -775,6 +777,7 @@ def init_vis_dtypes():
         'draw_centroid': bool,
         'draw_midline': bool,
         'draw_contour': bool,
+        'draw_sensors': bool,
         'trails': bool,
         'trajectory_dt': fun.value_list(0.0, 100.0, steps=1000, decimals=1),
     }
@@ -815,6 +818,7 @@ def init_null_vis():
         'draw_centroid': False,
         'draw_midline': True,
         'draw_contour': True,
+        'draw_sensors': True,
         'trails': False,
         'trajectory_dt': 0.0,
     }
@@ -850,7 +854,8 @@ def init_shortcuts():
         'draw_head': 'h',
         'draw_centroid': 'e',
         'draw_midline': 'm',
-        'draw_contour': 'c'
+        'draw_contour': 'c',
+        'draw_sensors': 'j',
     }
 
     inspect = {

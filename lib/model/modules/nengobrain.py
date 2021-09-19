@@ -8,13 +8,14 @@ from lib.model.modules.intermitter import NengoIntermitter
 
 
 class NengoBrain(Network, Brain):
-    def setup(self, **kwargs):
-        Brain.__init__(self, **kwargs)
-        dt=self.agent.model.dt
-        self.crawler = NengoEffector(**self.conf['crawler_params'])
-        self.turner = NengoEffector(**self.conf['turner_params'])
-        self.feeder = NengoEffector(**self.conf['feeder_params'])
+
+    def __init__(self, agent, modules, conf, **kwargs):
+        super().__init__(**kwargs)
+        Brain.__init__(self, agent, modules, conf)
         self.osc_coupling = Oscillator_coupling(**self.conf['interference_params'])
+        self.feeder = NengoEffector(**self.conf['feeder_params'])
+        self.turner = NengoEffector(**self.conf['turner_params'])
+        self.crawler = NengoEffector(**self.conf['crawler_params'])
         if self.modules['olfactor'] :
             self.olfactor = NengoEffector(**self.conf['olfactor_params'])
         else :
@@ -25,26 +26,32 @@ class NengoBrain(Network, Brain):
                                           osc_coupling=self.osc_coupling,
                                           Nodors=self.agent.model.Nodors)
         if self.modules['intermitter']:
-            self.intermitter = NengoIntermitter(dt=dt,
+            self.intermitter = NengoIntermitter(dt=self.agent.model.dt,
                                            crawler=self.crawler, turner=self.turner, feeder=self.feeder,
                                            nengo_manager=self.nengo_manager,
                                            **self.conf['intermitter_params'])
             self.intermitter.start_effector()
         else :
             self.intermitter=None
+        self.build()
+        self.sim = Simulator(self, dt=0.01)
+        self.Nsteps = int(self.agent.model.dt / self.sim.dt)
 
-    def build(self, input_manager, olfactor=False):
+    # def setup(self, **kwargs):
+    #     Brain.__init__(self, **kwargs)
+    #     dt=
 
+
+    def build(self):
+        m=self.nengo_manager
         with self:
-            if olfactor:
-                N=input_manager.Nodors
-                odors = Node(input_manager.get_odor_concentrations, size_in=N)
+            if self.olfactor:
+                N=m.Nodors
+                odors = Node(m.get_odor_concentrations, size_in=N)
 
                 odor_memory = EnsembleArray(n_neurons=100, n_ensembles=N, ens_dimensions=2)
                 odor_change = EnsembleArray(n_neurons=200, n_ensembles=N, ens_dimensions=1, radius=0.01,
                                             intercepts=dists.Uniform(0, 0.1))
-                # odor_change_Node = Node(size_in=N)
-                # print(odor_change.neuron_output[0])
                 for i in range(N):
                     Connection(odors[i], odor_memory.ensembles[i][0], transform=[[1]], synapse=0.01)
                     Connection(odor_memory.ensembles[i][0], odor_memory.ensembles[i][1], transform=1, synapse=1.0)
@@ -57,11 +64,11 @@ class NengoBrain(Network, Brain):
                 self.p_change = Probe(odor_change.output)
                 # self.p_change = odor_change.probes
 
-
             x = Ensemble(n_neurons=200, dimensions=3, neuron_type=Direct())
             y = Ensemble(n_neurons=200, dimensions=3, neuron_type=Direct())
             z = Ensemble(n_neurons=200, dimensions=3, neuron_type=Direct())
             synapse = 1.0
+
             # synapse=0.1
 
             def linear_oscillator(x):
@@ -93,26 +100,38 @@ class NengoBrain(Network, Brain):
                     return [0, 1]
 
             def oscillator_interference(x):
-                coup = input_manager.coupling
-                c0 = coup.crawler_interference_start
-                cr = 1 - coup.feeder_interference_free_window / np.pi
-                f0 = coup.crawler_interference_start
-                fr = 1 - coup.feeder_interference_free_window / np.pi
-                r = coup.interference_ratio
+                coup = m.osc_coupling
+                c0, c1 = coup.crawler_phi_range
+                # cr = 1 - coup.feeder_interference_free_window / np.pi
+                f0, f1 = coup.feeder_phi_range
+                # fr = 1 - coup.feeder_interference_free_window / np.pi
+                r = coup.attenuation
                 if x[0] > 0 or x[2] > 0:
                     v = [x[0], 0, x[2]]
                 else:
                     v = x
                 return v
 
+            def intermittency(x):
+                s, f, p = self.intermitter.get_active_bouts()
+                if s is None:
+                    x[0] = 0
+                elif s > 0:
+                    x[1] *= 0.1
+                if f is None:
+                    x[2] = 0
+                elif f > 0:
+                    x[1] *= 0.1
+                return x
+
             def crawler(x):
-                return np.abs(x)*2 * input_manager.scaled_stride_step
+                return np.abs(x) * 2 * m.scaled_stride_step
 
             def turner(x):
-                return x * input_manager.turner.get_amp(0)
+                return x * m.turner.get_amp(0)
 
             def feeder(x):
-                if x > 0.999:
+                if x > 0.99:
                     return 1
                 else:
                     return 0
@@ -120,13 +139,22 @@ class NengoBrain(Network, Brain):
             Connection(x, x[:2], synapse=synapse, function=linear_oscillator)
             Connection(y, y[:2], synapse=synapse, function=angular_oscillator)
             Connection(z, z[:2], synapse=synapse, function=feeding_oscillator)
-            linear_freq_node = Node(input_manager.crawler.get_freq, size_out=1)
-            angular_freq_node = Node(input_manager.turner.get_freq, size_out=1)
-            feeding_freq_node = Node(input_manager.feeder.get_freq, size_out=1)
+            linear_freq_node = Node(m.crawler.get_freq, size_out=1)
+            angular_freq_node = Node(m.turner.get_freq, size_out=1)
+            feeding_freq_node = Node(m.feeder.get_freq, size_out=1)
 
             linear_freq = Ensemble(n_neurons=50, dimensions=1, neuron_type=Direct())
             angular_freq = Ensemble(n_neurons=50, dimensions=1, neuron_type=Direct())
             feeding_freq = Ensemble(n_neurons=50, dimensions=1, neuron_type=Direct())
+
+            f_cur = Node(m.get_food_detected, size_out=1)
+            f_suc = Node(m.get_feed_success, size_out=1)
+            Connection(f_cur, linear_freq)
+            Connection(f_suc, feeding_freq)
+            Connection(f_cur, linear_freq, synapse=1, transform=-1)
+            Connection(f_cur, feeding_freq, synapse=1, transform=1)
+            Connection(f_suc, feeding_freq, synapse=0.01, transform=1)
+            Connection(f_suc, linear_freq, synapse=0.01, transform=-1)
 
             Connection(linear_freq_node, linear_freq)
             Connection(angular_freq_node, angular_freq)
@@ -142,7 +170,7 @@ class NengoBrain(Network, Brain):
             Connection(z[0], interference[2], synapse=0)
 
             speeds = Ensemble(n_neurons=200, dimensions=3, neuron_type=Direct())
-            Connection(interference, speeds, synapse=0.01, function=oscillator_interference)
+            Connection(interference, speeds, synapse=0.01, function=intermittency)
 
             linear_s = Node(size_in=1)
             angular_s = Node(size_in=1)
@@ -175,23 +203,23 @@ class NengoBrain(Network, Brain):
 
     def feed_event(self, data, Nticks):
         s = data[self.p_feeding_s]
-        event = np.any(s[-Nticks:] == 1)
+        event = np.any(s[-Nticks:] >= 1)
         return event
 
-    def run(self,pos):
-        l=self.agent.sim_length
+    def run(self, pos):
+        l = self.agent.sim_length
         N = self.Nsteps
-        man = self.nengo_manager
-        man.set_odor_concentrations(self.sense_odors(pos) if self.olfactor else {})
+        m = self.nengo_manager
+        m.set_odor_concentrations(self.sense_odors(pos) if self.olfactor else {})
+        m.set_food_detected(self.agent.food_detected)
+        m.set_feed_success(self.agent.feed_success)
         self.intermitter.step()
         self.sim.run_steps(N, progress_bar=False)
         d = self.sim.data
-        # TODO Right now the nengo turner is not modulated by olfaction
-        # TODO Right now the feeder deoes not work
-        lin = self.mean_lin_s(d, N) * l + np.random.normal(scale=self.crawler.noise * l)
+
         ang = self.mean_ang_s(d, N) + np.random.normal(scale=self.turner.noise)
+        lin = self.mean_lin_s(d, N) * l + np.random.normal(scale=self.crawler.noise * l)
         feed = self.feed_event(d, N)
-        # feed_success = feed and food_detected
         self.olfactory_activation = 100 * self.mean_odor_change(d, N) if self.olfactor else 0
         return lin, ang, feed
 
@@ -206,8 +234,9 @@ class NengoManager:
 
         self.state = 'wait'
         self.activation = 0
-        self.Nodors=Nodors
+        self.Nodors = Nodors
         self.odor_concentrations = np.zeros(Nodors)
+        self.food_detected, self.feed_success = False, None
 
         self.scaled_stride_step = self.crawler.step_to_length_mu
 
@@ -223,25 +252,45 @@ class NengoManager:
     def set_odor_concentrations(self, value):
         self.odor_concentrations = value
 
+    def set_food_detected(self, value):
+        prev = self.food_detected
+        cur = 1 if value is not None else 0
+        return cur - prev
+
+    def get_food_detected(self, t):
+        return self.food_detected
+
+    def set_feed_success(self, value):
+        if value == True:
+            self.feed_success = 1
+        elif value == False:
+            self.feed_success = -1
+        elif value is None:
+            self.feed_success = 0
+
+    def get_feed_success(self, t):
+        return self.feed_success
+
     def get_odor_concentrations(self, t, N):
         return self.odor_concentrations
 
 
 class NengoEffector:
-    def __init__(self, initial_freq=None, default_freq=None, freq_range=None, initial_amp=None, amp_range=None, noise=0.0, **kwargs):
+    def __init__(self, initial_freq=None, default_freq=None, freq_range=None, initial_amp=None, amp_range=None,
+                 noise=0.0, **kwargs):
         self.initial_freq = initial_freq
         self.freq = initial_freq
-        if default_freq is None :
+        if default_freq is None:
             default_freq = initial_freq
-        self.default_freq=default_freq
+        self.default_freq = default_freq
         self.freq_range = freq_range
         self.initial_amp = initial_amp
         self.amp = initial_amp
         self.amp_range = amp_range
         self.noise = noise
 
-    #     Todo get rid of this
-        self.complete_iteration=False
+        #     Todo get rid of this
+        self.complete_iteration = False
         self.__dict__.update(kwargs)
 
     def get_freq(self, t):
@@ -261,7 +310,7 @@ class NengoEffector:
         self.default_freq = value
 
     def active(self):
-        if self.freq!=0 :
+        if self.freq != 0:
             return True
-        else :
+        else:
             return False

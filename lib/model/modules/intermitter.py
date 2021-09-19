@@ -104,6 +104,7 @@ class Intermitter(Effector):
         super().count_time()
         # super().count_ticks()
         self.update_state()
+        # print(self.current_stridechain_length, self.current_feedchain_length, self.current_pause_duration)
 
     def disinhibit_locomotion(self):
         if np.random.uniform(0, 1, 1) >= self.EEB:
@@ -250,30 +251,10 @@ class Intermitter(Effector):
     def current_feed_ticks(self):
         return self.current_feedchain_length * self.feed_ticks
 
-class NengoIntermitter(Intermitter):
-    def __init__(self,nengo_manager, **kwargs):
-        super().__init__(**kwargs)
-        self.nengo_manager = nengo_manager
-        self.stridechain_lengths = []
-        self.feedchain_lengths = []
-        self.pause_durs = []
+    def get_active_bouts(self):
+        return self.current_stridechain_length, self.current_feedchain_length, self.current_pause_ticks
 
-    def disinhibit_locomotion(self):
-        if np.random.uniform(0, 1, 1) >= self.EEB:
-            self.crawler.set_freq(self.crawler.default_freq)
-        else:
-            self.feeder.set_freq(self.feeder.default_freq)
 
-    def inhibit_locomotion(self):
-        self.current_pause_duration = self.pause_dist.sample()
-        self.pause_start = True
-        self.crawler.set_freq(0)
-        self.feeder.set_freq(0)
-
-    def update_state(self):
-        if not self.effector:
-            if np.random.uniform(0, 1, 1) > 0.97:
-                self.start_effector()
 
 
 class OfflineIntermitter(Intermitter):
@@ -284,6 +265,7 @@ class OfflineIntermitter(Intermitter):
     def step(self):
         super().count_ticks()
         t=self.ticks
+
         dur = t * self.dt
         if self.current_stridechain_length is not None and t >= self.current_crawl_ticks:
             self.current_numstrides += 1
@@ -296,6 +278,7 @@ class OfflineIntermitter(Intermitter):
                 self.current_numstrides = 0
                 self.current_stridechain_length = None
                 self.current_pause_ticks = int(self.pause_dist.sample()/self.dt)
+                self.inhibit_locomotion()
                 # self.current_pause_ticks = np.round(self.pause_dist.sample()/self.dt).astype(int)
         elif self.current_feedchain_length is not None and t >= self.current_feed_ticks:
             self.feed_counter += 1
@@ -306,6 +289,7 @@ class OfflineIntermitter(Intermitter):
                 self.reset_ticks()
                 self.current_feedchain_length = None
                 self.current_pause_ticks = int(self.pause_dist.sample()/self.dt)
+                self.inhibit_locomotion()
                 # self.current_pause_ticks = np.round(self.pause_dist.sample()/self.dt).astype(int)
             else:
                 self.current_feedchain_length += 1
@@ -316,12 +300,45 @@ class OfflineIntermitter(Intermitter):
             self.cum_pause_dur += dur
             self.current_pause_ticks = None
             self.reset_ticks()
-            if np.random.uniform(0, 1, 1) >= self.EEB:
-                if self.crawl_bouts:
-                    self.current_stridechain_length = self.stridechain_dist.sample()
-            else:
-                if self.feed_bouts:
-                    self.current_feedchain_length = 1
+            self.disinhibit_locomotion()
+
+
+    def disinhibit_locomotion(self):
+        if np.random.uniform(0, 1, 1) >= self.EEB:
+            if self.crawl_bouts:
+                self.current_stridechain_length = self.stridechain_dist.sample()
+        else:
+            if self.feed_bouts:
+                self.current_feedchain_length = 1
+
+    def inhibit_locomotion(self):
+        pass
+
+class NengoIntermitter(OfflineIntermitter):
+    def __init__(self,nengo_manager, **kwargs):
+        super().__init__(**kwargs)
+        self.nengo_manager = nengo_manager
+        self.current_stridechain_length = self.stridechain_dist.sample()
+
+
+    def disinhibit_locomotion(self):
+        if np.random.uniform(0, 1, 1) >= self.EEB:
+            self.crawler.set_freq(self.crawler.default_freq)
+            self.feeder.set_freq(0)
+            self.current_stridechain_length = self.stridechain_dist.sample()
+        else:
+            self.feeder.set_freq(self.feeder.default_freq)
+            self.crawler.set_freq(0)
+            self.current_feedchain_length = 1
+
+    def inhibit_locomotion(self):
+        self.crawler.set_freq(0)
+        self.feeder.set_freq(0)
+
+    # def update_state(self):
+    #     if not self.effector:
+    #         if np.random.uniform(0, 1, 1) > 0.97:
+    #             self.start_effector()
 
 
 class BranchIntermitter(Effector):

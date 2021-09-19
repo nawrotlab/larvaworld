@@ -12,6 +12,7 @@ from lib.conf.par import CompGroupCollector
 from lib.envs._larvaworld import LarvaWorld
 from lib.envs._space import DiffusionValueLayer, GaussianValueLayer
 from lib.sim.conditions import get_exp_condition
+import lib.conf.dtype_dicts as dtypes
 
 
 class LarvaWorldSim(LarvaWorld):
@@ -21,7 +22,9 @@ class LarvaWorldSim(LarvaWorld):
 
         if parameter_dict is None:
             parameter_dict = {}
-        self.sample_dataset = sample_dataset
+
+        if life_params is None :
+            life_params=dtypes.get_dict('life')
         self.epochs = life_params['epochs']
         if self.epochs is None:
             self.epochs = []
@@ -36,6 +39,7 @@ class LarvaWorldSim(LarvaWorld):
             self.sim_clock.set_timer(on_ticks, off_ticks)
         self.starvation = self.sim_clock.timer_on
         self.count_bend_errors = count_bend_errors
+        self.sample_dataset = sample_dataset
 
         self.larva_collisions = larva_collisions
 
