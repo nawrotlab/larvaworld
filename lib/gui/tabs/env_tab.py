@@ -134,13 +134,13 @@ class EnvTab(GuiTab):
         g, g0, D, DN, Dm, Ds, s, s0 = self.group_ks(n0)
         o, o0, oM, oS = self.odor_ks(n0)
 
-        s1 = CollapsibleDict(D, dict=dtypes.get_dict('distro', class_name=n0),
-                             type_dict=dtypes.get_dict_dtypes('distro', class_name=n0),
-                             toggle=False, disabled=True, disp_name='distribution')
+        # s1 = CollapsibleDict(D, dict=dtypes.get_dict('distro', class_name=n0),
+        #                      type_dict=dtypes.get_dict_dtypes('distro', class_name=n0),
+        #                      toggle=False, disabled=True, disp_name='distribution')
 
-        s2 = CollapsibleDict(o, dict=dtypes.get_dict('odor'),
-                                                       type_dict=dtypes.get_dict_dtypes('odor'),
-                                                       toggle=False, disp_name='odor')
+        s1 = CollapsibleDict(D, default=True, toggle=False, disabled=True, disp_name='Distribution')
+
+        s2 = CollapsibleDict(o, default=True,toggle=False, disp_name='Odor', dict_name='odor')
 
         for ss in [s1,s2]:
             c.update(ss.get_subdicts())
@@ -173,6 +173,7 @@ class EnvTab(GuiTab):
         }
         c = {}
         s2 = CollapsibleDict('food', default=True, toggle=False)
+
         c.update(s2.get_subdicts())
         source_l, c = self.add_agent_layout(S, 'green', c)
         lL, c = self.add_agent_layout(L, 'black', c)
@@ -446,8 +447,10 @@ class EnvTab(GuiTab):
             s = tuple([np.max(s), np.max(s)])
         else:
             s = tuple(s / 2)
-        w[f'{name}_DISTRO_scale'].update(value=s)
-        w[f'{name}_DISTRO_loc'].update(value=P1)
+        w[f'{name}_DISTRO_scale'].update(w,value=s)
+        # w[f'{name}_DISTRO_scale'].update(value=s)
+        w[f'{name}_DISTRO_loc'].update(w, value=P1)
+        # w[f'{name}_DISTRO_loc'].update(value=P1)
 
     def draw_shape(self, p1, p2, shape, **kwargs):
         g=self.graph

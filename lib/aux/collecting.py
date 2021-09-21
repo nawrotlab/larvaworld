@@ -11,7 +11,7 @@ from mesa.time import RandomActivation
 
 import lib.aux.functions as fun
 import lib.aux.naming as nam
-from lib.model.agents._agent import LarvaworldAgent
+
 
 body_pars = {
     "length": 'length_in_mm',
@@ -186,6 +186,7 @@ endpoint_database = {
 
 
 class NamedRandomActivation(RandomActivation):
+    from lib.model.agents._agent import LarvaworldAgent
     def __init__(self, id, model, **kwargs):
         super().__init__(model)
         self.id = id

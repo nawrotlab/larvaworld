@@ -1,11 +1,458 @@
 import numpy as np
 from typing import List, Tuple, Union
-
+import pandas as pd
 from siunits import BaseUnit, Composite, DerivedUnit
 
 from lib.aux import functions as fun
+from lib.aux.collecting import output_keys
 from lib.aux.functions import get_pygame_key
 from lib.stor import paths
+
+def base_dtype(t):
+    if t in [float, Tuple[float], List[float], List[Tuple[float]]]:
+        base_t = float
+    elif t in [int, Tuple[int], List[int], List[Tuple[int]]]:
+        base_t = int
+    else:
+        base_t = t
+    return base_t
+
+def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_values=None,
+        return_dtype=True):
+    cur_dtype = base_dtype(t)
+    if vs is None:
+        if any([arg is not None for arg in [min, max, dv]]):
+            if cur_dtype in [float, int]:
+                if min is None:
+                    min = 0
+                if max is None:
+                    max = 1
+                if dv is None:
+                    if cur_dtype == int:
+                        dv = 1
+                    elif cur_dtype == float:
+                        dv = 0.1
+
+                array = np.arange(min, max + dv, dv)
+                if cur_dtype == float:
+                    Ndecimals = len(str(format(dv, 'f')).split('.')[1])
+                    # print(name, interval, Ndecimals)
+                    array = np.round(array, Ndecimals)
+                vs = array.astype(cur_dtype).tolist()
+
+    if aux_values is not None and vs is not None:
+        vs += aux_values
+    d = {'initial_value': v, 'values': vs}
+    if return_dtype:
+        d['dtype'] = t
+    # print({name: d})
+    return {name: d}
+
+
+def par_dict(name, d0=None, **kwargs):
+    if d0 is None:
+        d0 = init_pars()[name]
+    # print(d0)
+    d = {}
+    for n, v in d0.items():
+        try:
+            entry = par(n, **v, **kwargs)
+        except:
+            # print(n, d0[n])
+            entry = {n: {'dtype': dict, 'content': par_dict(n, d0=d0[n])}}
+        # print(entry)
+        d.update(entry)
+    # return {name : d}
+    return d
+
+
+def par_dict_from_df(name, df):
+    df = df.where(pd.notnull(df), None)
+    d = {}
+    for n in df.index:
+        # print(df.loc[n])
+        entry = par(n, **df.loc[n])
+        d.update(entry)
+    return {name: d}
+
+
+def pars_to_df(d):
+    df = pd.DataFrame.from_dict(d, orient='index',
+                                columns=['dtype', 'initial_value', 'value_list', 'min', 'max', 'interval'])
+    df.index.name = 'name'
+    df = df.where(pd.notnull(df), None)
+
+
+def init_vis_dtypes2():
+
+    d={}
+    d['render'] = {
+        'mode': {'t': str, 'v': 'video','vs': [None, 'video', 'image']},
+        'image_mode': {'t': str, 'vs': [None, 'final', 'snapshots', 'overlap']},
+        'video_speed': {'t': int, 'v': 60, 'min': 1, 'max': 100},
+        'media_name': {'t': str},
+        'show_display': {'t': bool, 'v': True},
+    }
+
+    d['draw'] = {
+        'draw_head': {'t': bool, 'v': False},
+        'draw_centroid': {'t': bool, 'v': False},
+        'draw_midline': {'t': bool, 'v': True},
+        'draw_contour': {'t': bool, 'v': True},
+        'draw_sensors': {'t': bool, 'v': False},
+        'trails': {'t': bool, 'v': False},
+        'trajectory_dt': {'max': 100.0},
+    }
+
+    d['color'] = {
+        'black_background': {'t': bool, 'v': False},
+        'random_colors': {'t': bool, 'v': False},
+        'color_behavior': {'t': bool, 'v': False},
+    }
+
+    d['aux'] = {
+        'visible_clock': {'t': bool, 'v': True},
+        'visible_scale': {'t': bool, 'v': True},
+        'visible_state': {'t': bool, 'v': False},
+        'visible_ids': {'t': bool, 'v': False},
+    }
+    d['visualization']={
+        'render' :d['render'],
+        'draw' :d['draw'],
+        'color' :d['color'],
+        'aux' :d['aux'],
+    }
+    # d['visualization'] = {'dtype': dict, 'content': {
+    #     'render': {'dtype': dict, 'content':vis_render_dtypes},
+    #     'draw': {'dtype': dict, 'content':vis_draw_dtypes},
+    #     'color': {'dtype': dict, 'content':vis_color_dtypes},
+    #     'aux': {'dtype': dict, 'content':vis_aux_dtypes},
+    # }}
+    return d
+
+
+def init_pars():
+    from lib.conf.conf import loadConfDict
+
+    bout_dist_dtypes = {
+        'fit': {'t': bool, 'v': True},
+        'range': {'t': Tuple[float], 'max': 100.0},
+        'name': {'t': str,
+                 'vs': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy', 'normal', 'uniform']},
+        'mu': {'max': 10.0},
+        'sigma': {'max': 10.0},
+    }
+
+    d = {
+        'odor': {
+            'odor_id': {'t': str},
+            'odor_intensity': {'max': 100.0},
+            'odor_spread': {'max': 10.0}
+        },
+        'food': {
+            'radius': {'v': 0.003, 'max': 10.0, 'dv': 0.01},
+            'amount': {'v': 0.0, 'max': 10.0},
+            'quality': {'v': 1.0, 'max': 1.0},
+            'can_be_carried': {'t': bool, 'v': False},
+            'type': {'t': str, 'v': 'standard', 'vs': list(substrate_dict.keys())}
+        },
+        'food_grid':
+            {'unique_id': {'t': str, 'v': 'Food_grid', },
+             'grid_dims': {'t': Tuple[int], 'v': (20, 20), 'min': 10, 'max': 1000},
+             'initial_value': {'v': 0.001, 'max': 1000.0},
+             'distribution': {'t': str, 'v': 'uniform', 'vs': ['uniform']},
+             'type': {'t': str, 'v': 'standard', 'vs': list(substrate_dict.keys())}
+             },
+        'life':
+            {
+                'epochs': {'t': List[Tuple[float]], 'max': 250.0, 'dv': 0.1},
+                'epoch_qs': {'t': List[float], 'max': 1.0},
+                'hours_as_larva': {'v': 0.0, 'max': 250.0, 'dv': 0.1},
+                'substrate_quality': {'v': 1.0, 'max': 1.0},
+                'substrate_type': {'t': str, 'v': 'standard', 'vs': list(substrate_dict.keys())}
+            },
+        'odorscape': {'odorscape': {'t': str, 'v': 'Gaussian', 'vs': ['Gaussian', 'Diffusion']},
+                      'grid_dims': {'t': Tuple[float], 'min': 10, 'max': 100},
+                      'evap_const': {'max': 1.0},
+                      'gaussian_sigma': {'t': Tuple[float], 'max': 10}
+                      },
+        'odor_gain': {
+            'unique_id': {'t': str},
+            'mean': {'max': 1000},
+            'std': {'max': 100}
+        },
+        'optimization': {
+            'fit_par': {'t': str},
+            'operations': {
+                'mean': {'t': bool, 'v': True},
+                'std': {'t': bool, 'v': False},
+                'abs': {'t': bool, 'v': False}
+            },
+            'minimize': {'t': bool, 'v': True},
+            'threshold': {'v': 0.001, 'max': 1.0, 'dv': 0.00001},
+            'max_Nsims': {'t': int, 'v': 40, 'max': 100},
+            'Nbest': {'t': int, 'v': 4, 'max': 10}
+        },
+        'batch_methods': {
+            'run': {'t': str, 'v': 'default', 'vs': ['null', 'default', 'deb', 'odor_preference']},
+            'post': {'t': str, 'v': 'default', 'vs': ['null', 'default']},
+            'final': {'t': str, 'v': 'null', 'vs': ['null', 'scatterplots', 'deb', 'odor_preference']}
+        },
+        'space_search': {'pars': {'t': List[str]},
+                         'ranges': {'t': List[Tuple[float]], 'max': 100.0, 'min': -100.0},
+                         'Ngrid': {'t': int, 'max': 100}},
+        'body': {'initial_length': {'v': 0.0045, 'max': 0.01, 'dv': 0.0001, 'aux_values': ['sample']},
+                 'length_std': {'v': 0.0001, 'max': 0.001, 'dv': 0.00001, 'aux_values': ['sample']},
+                 'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12},
+                 'seg_ratio': {'max': 1.0},  # [5 / 11, 6 / 11]
+                 'touch_sensors': {'t': bool, 'v': False},
+                 },
+        'arena': {'arena_dims': {'t': Tuple[float], 'v': (0.1, 0.1), 'max': 10.0, 'dv': 0.01},
+                  'arena_shape': {'t': str, 'v': 'circular', 'vs': ['circular', 'rectangular']}
+                  },
+        'physics': {
+            'torque_coef': {'v': 0.41, 'max': 10.0},
+            'ang_damping': {'v': 2.5, 'max': 10.0},
+            'body_spring_k': {'v': 0.02, 'max': 10.0},
+            'bend_correction_coef': {'v': 1.4, 'max': 10.0},
+        },
+        'energetics': {'f_decay': {'v': 0.1, 'max': 10.0},
+                       'absorption': {'max': 1.0},
+                       'hunger_as_EEB': {'t': bool, 'v': True},
+                       'hunger_gain': {'v': 0.0, 'max': 1.0},
+                       'deb_on': {'t': bool, 'v': True},
+                       'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb']},
+                       'DEB_dt': {'max': 1.0}},
+        'crawler': {'waveform': {'t': str, 'v': 'realistic', 'vs': ['realistic', 'square', 'gaussian', 'constant']},
+                    'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5), 'max': 2.0},
+                    'initial_freq': {'v': 'sample', 'max': 10.0, 'aux_values': ['sample']},  # From D1 fit
+                    'freq_std': {'v': 0.0, 'max': 10.0},  # From D1 fit
+                    'step_to_length_mu': {'v': 'sample', 'max': 1.0, 'aux_values': ['sample']},  # From D1 fit
+                    'step_to_length_std': {'v': 'sample', 'max': 1.0, 'aux_values': ['sample']},  # From D1 fit
+                    'initial_amp': {'max': 2.0},
+                    'noise': {'v': 00.1, 'max': 1.0},
+                    'max_vel_phase': {'v': 1.0, 'max': 2.0}
+                    },
+        'turner': {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal']},
+                   'base_activation': {'max': 100.0},
+                   'activation_range': {'t': Tuple[float], 'max': 100.0},
+                   'noise': {'v': 0.0, 'max': 10.0},
+                   'activation_noise': {'v': 0.0, 'max': 10.0},
+                   'initial_amp': {'max': 20.0},
+                   'amp_range': {'t': Tuple[float], 'max': 20.0},
+                   'initial_freq': {'max': 2.0},
+                   'freq_range': {'t': Tuple[float], 'max': 2.0},
+                   },
+        'interference': {
+            'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0},  # np.pi * 0.55,  # 0.9, #,
+            'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0},
+            'attenuation': {'v': 1.0, 'max': 1.0}
+        },
+        'intermitter': {
+            'pause_dist': bout_dist_dtypes,
+            # 'pause_dist': dict,
+            'stridechain_dist': bout_dist_dtypes,
+            # 'stridechain_dist': dict,
+            'crawl_bouts': {'t': bool, 'v': True},
+            'feed_bouts': {'t': bool, 'v': False},
+            'crawl_freq': {'v': 10 / 7, 'max': 2.0},
+            'feed_freq': {'v': 2.0, 'max': 4.0},
+            'feeder_reoccurence_rate': {'max': 1.0},
+            'EEB_decay': {'v': 1.0, 'max': 2.0},
+            'EEB': {'v': 0.0, 'max': 1.0}},
+        'olfactor': {
+            'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear']},
+            'olfactor_noise': {'v': 0.0, 'max': 1.0},
+            'decay_coef': {'v': 0.0, 'max': 2.0}},
+        'feeder': {'freq_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 4.0},
+                   'initial_freq': {'v': 2.0, 'max': 10.0},
+                   'feed_radius': {'v': 0.1, 'max': 10.0},
+                   'V_bite': {'v': 0.0002, 'max': 0.01, 'dv': 0.0001}},
+        'memory': {'DeltadCon': {'v': 2.0, 'max': 10.0},
+                   'state_spacePerOdorSide': {'t': int, 'v': 0, 'max': 20},
+                   'gain_space': {'t': List[float], 'v': [-300.0, -50.0, 50.0, 300.0], 'min': 1000.0, 'max': 1000.0,
+                                  'dv': 0.1},
+                   'decay_coef_space': {'t': List[float], 'max': 100.0},
+                   'update_dt': {'v': 1.0, 'max': 10.0},
+                   'alpha': {'v': 0.05, 'max': 10.0},
+                   'gamma': {'v': 0.6, 'max': 10.0},
+                   'epsilon': {'v': 0.3, 'max': 10.0},
+                   'train_dur': {'v': 20.0, 'max': 1000.0},
+                   },
+        'modules': {'turner': {'t': bool, 'v': False},
+                    'crawler': {'t': bool, 'v': False},
+                    'interference': {'t': bool, 'v': False},
+                    'intermitter': {'t': bool, 'v': False},
+                    'olfactor': {'t': bool, 'v': False},
+                    'feeder': {'t': bool, 'v': False},
+                    'memory': {'t': bool, 'v': False}},
+
+        'sim_params': {
+            'sim_ID': {'t': str},
+            'path': {'t': str},
+            'duration': {'v': 1.0, 'max': 100.0},
+            'timestep': {'v': 0.1, 'max': 1.0, 'dv': 0.01},
+            'Box2D': {'t': bool, 'v': False},
+            'sample': {'t': str, 'v': 'reference', 'vs': list(loadConfDict('Ref').keys())}
+        },
+        'essay_params': {
+            'essay_ID': {'t': str},
+            'path': {'t': str},
+            'N': {'t': int, 'min': 1, 'max': 100}
+        },
+        'logn_dist': {
+            'range': {'t': Tuple[float], 'v': (0.0, 2.0), 'max': 10.0},
+            'name': {'t': str, 'v': 'lognormal', 'vs': ['lognormal']},
+            'mu': {'v': 1.0, 'max': 100.0},
+            'sigma': {'v': 0.0, 'max': 100.0}
+        },
+        'par': {
+            'p': {'t': str},
+            'u': {'t': Union[BaseUnit, Composite, DerivedUnit]},
+            'k': {'t': str},
+            's': {'t': str},
+            'o': {'t': type},
+            'lim': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 4.0},
+            'd': {'t': str},
+            'l': {'t': str},
+            'exists': {'t': bool, 'v': False},
+            'func': {'t': str},
+            'const': {'t': str},
+            'operator': {'t': str, 'vs': [None, 'diff', 'cum', 'max', 'min', 'mean', 'std', 'final']},
+            # 'diff': bool,
+            # 'cum': bool,
+            'k0': {'t': str},
+            'k_num': {'t': str},
+            'k_den': {'t': str},
+            'dst2source': {'t': Tuple[float], 'min': -100.0, 'max': 100.0},
+            'or2source': {'t': Tuple[float], 'min': -180.0, 'max': 180.0},
+            'dispersion': {'t': bool, 'v': False},
+            'wrap_mode': {'t': str, 'vs': [None, 'zero', 'positive']}
+        },
+        'preprocessing': {
+            'rescale_by': {'max': 100.0},
+            'drop_collisions': {'t': bool, 'v': False},
+            'interpolate_nans': {'t': bool, 'v': False},
+            'filter_f': {'max': 10.0},
+            'transposition': {'t': str, 'vs': ['', 'origin', 'arena', 'center']},
+        },
+        'processing': {
+            'types': {t: {'t': bool, 'v': True} for t in
+                      ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI']},
+            'dsp_starts': {'t': List[float], 'max': 1000.0},
+            'dsp_stops': {'t': List[float], 'max': 1000.0},
+            'tor_durs': {'t': List[float], 'max': 1000.0}},
+        'annotation': {'bouts': {t: {'t': bool, 'v': True} for t in ['stride', 'pause', 'turn']},
+                       'track_point': {'t': str},
+                       'track_pars': {'t': List[str]},
+                       'chunk_pars': {'t': List[str]},
+                       'vel_par': {'t': str},
+                       'ang_vel_par': {'t': str},
+                       'bend_vel_par': {'t': str},
+                       'min_ang': {'max': 180.0},
+                       'min_ang_vel': {'max': 1000.0},
+                       'non_chunks': {'t': bool, 'v': False}},
+        'enrich_aux': {'recompute': {'t': bool, 'v': False},
+                       'mode': {'t': str, 'v': 'minimal', 'vs': ['minimal', 'full']},
+                       'source': {'t': Tuple[float], 'min': -100.0, 'max': 100.0},
+                       },
+        'to_drop': {'groups': {n: {'t': bool, 'v': False} for n in
+                               ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn',
+                                'turn',
+                                'unused']}},
+        'build_conf': {
+            'min_duration_in_sec': {'max': 3600.0, 'dv': 0.1},
+            'min_end_time_in_sec': {'max': 3600.0, 'dv': 0.1},
+            'start_time_in_sec': {'max': 3600.0, 'dv': 0.1},
+            'max_Nagents': {'t': int, 'v': 1000, 'max': 1000},
+            'save_mode': {'t': str, 'v': 'minimal', 'vs': ['minimal', 'semifull', 'full', 'points']},
+        },
+        'substrate': {k: {'v': v, 'max': 1000.0} for k, v in substrate_dict['standard'].items()},
+        'output': {n: {'t': bool, 'v': False} for n in output_keys}
+    }
+
+    d['replay'] = {
+        'arena_pars': d['arena'],
+        'env_params': {'t': str, 'vs': list(loadConfDict('Env').keys()), 'aux_values': ['']},
+        'track_point': {'t': int, 'v': -1, 'min': -1, 'max': 12},
+        'dynamic_color': {'t': str, 'vs': [None, 'lin_color', 'ang_color']},
+        'agent_ids': {'t': List[str]},
+        'time_range': {'t': Tuple[float], 'max': 10000.0},
+        'transposition': {'t': str, 'vs': [None, 'origin', 'arena', 'center']},
+        'fix_point': {'t': int, 'min': 1, 'max': 12},
+        'secondary_fix_point': {'t': int, 'vs': [-1, 1]},
+        'use_background': {'t': bool, 'v': False},
+        'draw_Nsegs': {'t': int, 'min': 1, 'max': 12}
+    }
+
+
+    d.update(init_vis_dtypes2())
+
+    # d['visualization'] = init_vis_dtypes2()
+    d['enrichment'] = {k: d[k] for k in
+                       ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
+
+    d['exp_conf'] = {'env_params': {'t': str, 'vs': list(loadConfDict('Env').keys())},
+                     'sim_params': d['sim_params'],
+                     'life_params': {'t': str, 'v': 'default', 'vs': list(loadConfDict('Life').keys())},
+                     'collections': {'t': List[str], 'v': ['pose']},
+                     'enrichment': d['enrichment']
+                     }
+
+    d['batch_conf'] = {'exp': {'t': str},
+                       'space_search': d['space_search'],
+                       'batch_methods': d['batch_methods'],
+                       'optimization': {'t': dict},
+                       'exp_kws': {'t': dict, 'v': {'save_data_flag': False}},
+                       'post_kws': {'t': dict, 'v': {}},
+                       }
+
+    d['food_params'] = {'source_groups': {'t': dict, 'v': {}},
+                        'food_grid': {'t': dict},
+                        'source_units': {'t': dict, 'v': {}}
+                        }
+
+    d['tracker'] = {
+        'resolution': {'fr': {'v': 10.0, 'max': 100.0},
+                       'Npoints': {'t': int, 'v': 1, 'max': 20},
+                       'Ncontour': {'t': int, 'v': 0, 'max': 100}
+                       },
+        'filesystem': {
+            'read_sequence': {'t': List[str]},
+            'read_metadata': {'t': bool, 'v': False},
+            'detect': {
+                'folder': {'pref': {'t': str}, 'suf': {'t': str}},
+                'file': {'pref': {'t': str}, 'suf': {'t': str}, 'sep': {'t': str}}
+            }
+        },
+        'arena': d['arena']
+    }
+    d['parameterization'] = {'bend': {'t': str, 'v': 'from_angles', 'vs': ['from_angles', 'from_vectors']},
+                             'front_vector': {'t': Tuple[int], 'v': (1, 2), 'min': -12, 'max': 12},
+                             'rear_vector': {'t': Tuple[int], 'v': (-2, -1), 'min': -12, 'max': 12},
+                             'front_body_ratio': {'v': 0.5, 'max': 1.0},
+                             'point_idx': {'t': int, 'v': 1, 'min': -1, 'max': 12},
+                             'use_component_vel': {'t': bool, 'v': False},
+                             'scaled_vel_threshold': {'v': 0.2, 'max': 1.0}}
+
+    d['placement']={
+        'mode': {'t': str, 'v': 'normal', 'vs': ['normal', 'periphery', 'uniform']},
+        'shape': {'t': str, 'v': 'circle', 'vs': ['circle', 'rect', 'oval']},
+        'N': {'t': int, 'v': 10, 'max': 1000},
+        'loc': {'t': Tuple[float], 'v': (0.0,0.0), 'min': -1000.0, 'max': 1000.0},
+        'scale': {'t': Tuple[float], 'v': (0.0,0.0), 'min': -1000.0, 'max': 1000.0},
+    }
+
+    d['Larva_DISTRO']={
+        'model': {'t': str, 'v': 'explorer', 'vs': list(loadConfDict('Model').keys())},
+        **d['placement'],
+        'orientation_range': {'t': Tuple[float], 'v': (0.0,360.0), 'min': 0.0, 'max': 360.0}
+        }
+
+    d['Source_DISTRO'] = {** d['placement']}
+
+    return d
+
 
 # Compound densities (g/cm**3)
 substrate_dict = {
@@ -46,32 +493,32 @@ substrate_dict = {
         'agar': 500 * 2 / 200,
         'cornmeal': 0
     },
-#     [1] M. E. Wosniack, N. Hu, J. Gjorgjieva, and J. Berni, “Adaptation of Drosophila larva foraging in response to changes in food distribution,” bioRxiv, p. 2021.06.21.449222, 2021.
-'cornmeal2': {
+    #     [1] M. E. Wosniack, N. Hu, J. Gjorgjieva, and J. Berni, “Adaptation of Drosophila larva foraging in response to changes in food distribution,” bioRxiv, p. 2021.06.21.449222, 2021.
+    'cornmeal2': {
         'glucose': 0,
         'dextrose': 450 / 6400,
         'saccharose': 0,
-        'yeast': 90/ 6400,
+        'yeast': 90 / 6400,
         'agar': 42 / 6400,
         'cornmeal': 420 / 6400
     },
-'sucrose': {
-        'glucose': 3.42/200,
+    'sucrose': {
+        'glucose': 3.42 / 200,
         'dextrose': 0,
         'saccharose': 0,
         'yeast': 0,
         'agar': 0.8 / 200,
         'cornmeal': 0
     }
-# 'apple_juice': {
-#         'glucose': 0.342/200,
-#         'dextrose': 0,
-#         'saccharose': 0,
-#         'yeast': 0,
-#         'agar': 0.8 / 200,
-#         'cornmeal': 0,
-#         'apple_juice': 1.05*5/200,
-#     },
+    # 'apple_juice': {
+    #         'glucose': 0.342/200,
+    #         'dextrose': 0,
+    #         'saccharose': 0,
+    #         'yeast': 0,
+    #         'agar': 0.8 / 200,
+    #         'cornmeal': 0,
+    #         'apple_juice': 1.05*5/200,
+    #     },
 
 }
 null_bout_dist = {
@@ -118,7 +565,7 @@ def init_dicts():
                 'radius': 0.003,
                 'amount': 0.0,
                 'quality': 1.0,
-                'shape_vertices': None,
+                # 'shape_vertices': None,
                 'can_be_carried': False,
                 'type': 'standard',
             },
@@ -317,7 +764,7 @@ def init_dicts():
             'drop_collisions': False,
             'interpolate_nans': False,
             'filter_f': None,
-            'transposition':None,
+            'transposition': None,
         },
         'processing': {
             'types': processing_types(['angular', 'spatial', 'dispersion', 'tortuosity']),
@@ -325,7 +772,7 @@ def init_dicts():
             'tor_durs': None},
         'annotation': {'bouts': annotation_bouts(types=['stride', 'pause', 'turn']), 'track_point': None,
                        'track_pars': None, 'chunk_pars': None,
-                       'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 0.0,'min_ang_vel': 0.0,
+                       'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 0.0, 'min_ang_vel': 0.0,
                        'non_chunks': False},
         'enrich_aux': {'recompute': False,
                        'mode': 'minimal',
@@ -462,7 +909,7 @@ def init_dtypes():
                 'radius': fun.value_list(end=10.0, steps=10000, decimals=4),
                 'amount': fun.value_list(end=100.0, steps=1000, decimals=2),
                 'quality': fun.value_list(),
-                'shape_vertices': List[tuple],
+                # 'shape_vertices': List[tuple],
                 'can_be_carried': bool,
                 'type': list(substrate_dict.keys())
             },
@@ -474,7 +921,7 @@ def init_dtypes():
                 'distribution': ['uniform'],
                 'type': list(substrate_dict.keys())
             },
-        'arena':{'arena_dims': (0.0, 10.0),'arena_shape': ['circular', 'rectangular']},
+        'arena': {'arena_dims': (0.0, 10.0), 'arena_shape': ['circular', 'rectangular']},
         'life':
             {
                 'epochs': {'type': List[tuple], 'values': fun.value_list()},
@@ -645,7 +1092,7 @@ def init_dtypes():
             'drop_collisions': bool,
             'interpolate_nans': bool,
             'filter_f': fun.value_list(end=10.0, steps=10000, decimals=3),
-            'transposition':['', 'origin', 'arena', 'center'],
+            'transposition': ['', 'origin', 'arena', 'center'],
         },
         'processing': {
             'types': processing_types(),
@@ -680,15 +1127,15 @@ def init_dtypes():
     d['replay'] = {
         'arena_pars': d['arena'],
         'env_params': [''] + list(loadConfDict('Env').keys()),
-        'track_point': {'type': int, 'values': np.arange(1,13).tolist()},
+        'track_point': {'type': int, 'values': np.arange(1, 13).tolist()},
         'dynamic_color': [None, 'lin_color', 'ang_color'],
         'agent_ids': list,
         'time_range': (0.0, 3600.0),
         'transposition': [None, 'origin', 'arena', 'center'],
-        'fix_point': {'type': int, 'values': np.arange(1,13).tolist()},
+        'fix_point': {'type': int, 'values': np.arange(1, 13).tolist()},
         'secondary_fix_point': ['', 1, -1],
         'use_background': bool,
-        'draw_Nsegs': {'type': int, 'values': np.arange(1,13).tolist()},
+        'draw_Nsegs': {'type': int, 'values': np.arange(1, 13).tolist()},
     }
     d['enrichment'] = {k: d[k] for k in
                        ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
@@ -724,9 +1171,11 @@ def init_dtypes():
         'arena': d['arena']
     }
     d['parameterization'] = {'bend': ['from_angles', 'from_vectors'],
-                             'front_vector': {'type': tuple, 'values': fun.value_list(start=-12, end=12, steps=25, integer=True)},
+                             'front_vector': {'type': tuple,
+                                              'values': fun.value_list(start=-12, end=12, steps=25, integer=True)},
                              # 'front_vector': (-12, 12),
-                             'rear_vector': {'type': tuple, 'values': fun.value_list(start=-12, end=12, steps=25, integer=True)},
+                             'rear_vector': {'type': tuple,
+                                             'values': fun.value_list(start=-12, end=12, steps=25, integer=True)},
                              # 'rear_vector': (-12, 12),
                              'front_body_ratio': fun.value_list(),
                              'point_idx': fun.value_list(-1, 12, steps=14, integer=True),
@@ -745,14 +1194,14 @@ def store_dtypes():
 
     d22 = fun.replace_in_dict(d2, replace_d=typing_to_str_dict, inverse=True)
 
-    d={'null_dicts':d1, 'dtypes':d22}
+    d = {'null_dicts': d1, 'dtypes': d22}
     fun.save_dict(d, paths.Dtypes_path, use_pickle=True)
 
 
 def load_dtypes():
     d = fun.load_dict(paths.Dtypes_path, use_pickle=True)
-    d1=d['null_dicts']
-    d2=d['dtypes']
+    d1 = d['null_dicts']
+    d2 = d['dtypes']
     d22 = fun.replace_in_dict(d2, replace_d=typing_to_str_dict, inverse=False)
     return d1, d22
 
@@ -929,3 +1378,7 @@ def store_controls():
     from lib.conf.conf import saveConfDict
     saveConfDict(d, 'Settings')
 
+
+if __name__ == '__main__':
+    ps = par_dict('odor')
+    print(ps)

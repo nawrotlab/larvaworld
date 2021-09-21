@@ -49,6 +49,7 @@ class LarvaWorld:
                  ):
         self.space_in_mm = space_in_mm
         self.progress_bar = progress_bar
+        # print(vis_kwargs)
         if vis_kwargs is None :
             vis_kwargs=dtypes.get_dict('visualization')
         self.vis_kwargs = vis_kwargs

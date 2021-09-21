@@ -113,7 +113,7 @@ class LarvaworldGui:
     def get_vis_kwargs(self, v, **kwargs):
         c=self.collapsibles
         w=self.window
-        vis_kwargs=c['Visualization'].get_dict(v, w) if 'Visualization' in list(
+        vis_kwargs=c['visualization'].get_dict(v, w) if 'visualization' in list(
             c.keys()) else dtypes.get_dict('visualization', **kwargs)
         return vis_kwargs
 

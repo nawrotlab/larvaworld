@@ -24,9 +24,10 @@ class SimTab(GuiTab):
         # sl4 = SelectionList(tab=self, conftype='ExpGroup', header_kws={'name':'Simulation types'}, buttons=['load'])
         # sl4 = DataList(name='Simulation types', tab=self, buttons=[], dict=loadConfDict('ExpGroup'), drop_down=True)
         c1 = CollapsibleDict('sim_params', default=True, disp_name='Configuration')
-        output_dict = dict(zip(output_keys, [False] * len(output_keys)))
-        c2 = CollapsibleDict('Output', dict=output_dict, auto_open=False)
-
+        c2 = CollapsibleDict('output', default=True)
+        # output_dict = dict(zip(output_keys, [False] * len(output_keys)))
+        # c2 = CollapsibleDict('Output', dict=output_dict, auto_open=False)
+        #
         g1 = GraphList(self.name, tab=self)
 
         l = [[
@@ -69,7 +70,7 @@ class SimTab(GuiTab):
 
     def update(self, w,  c, conf, id):
         output_dict = dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys]))
-        c['Output'].update(w, output_dict)
+        c['output'].update(w, output_dict)
         sim=copy.deepcopy(conf['sim_params'])
         sim.update({'sim_ID' : f'{id}_{next_idx(id)}', 'path' : f'single_runs/{id}'})
         c['sim_params'].update(w, sim)
@@ -78,7 +79,7 @@ class SimTab(GuiTab):
         conf = {
                 'sim_params': c['sim_params'].get_dict(v, w),
                 # 'life_params': c['sim_params'].get_dict(v, w),
-                'collections': [k for k in output_keys if c['Output'].get_dict(v, w)[k]],
+                'collections': [k for k in output_keys if c['output'].get_dict(v, w)[k]],
                 'enrichment': self.current_conf(v)['enrichment'],
                 }
         return conf

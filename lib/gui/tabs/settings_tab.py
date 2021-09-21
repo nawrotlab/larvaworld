@@ -81,8 +81,9 @@ class SettingsTab(GuiTab):
     def build(self):
         c = {}
 
-        c1 = CollapsibleDict('Visualization', dict=dtypes.get_dict('visualization', mode='video', video_speed=60),
-                             type_dict=dtypes.get_dict_dtypes('visualization'), toggled_subsections=None)
+        # c1 = CollapsibleDict('Visualization', dict=dtypes.get_dict('visualization', mode='video', video_speed=60),
+        #                      type_dict=dtypes.get_dict_dtypes('visualization'), toggled_subsections=None)
+        c1 = CollapsibleDict('visualization', default=True, toggled_subsections=False)
         c2 = CollapsibleDict('replay', default=True, toggled_subsections=False)
 
         c3, d = self.build_controls_collapsible(c)

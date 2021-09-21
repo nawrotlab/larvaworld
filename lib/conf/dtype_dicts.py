@@ -177,3 +177,6 @@ def get_distro_dtypes(class_name, basic=True):
             except:
                 pass
     return dtypes
+
+if __name__ == '__main__':
+    pass
