@@ -4,10 +4,38 @@ Drosophila larva behavioral analysis and simulation platform
 
 ================================================
 
+GUI
+===================
+A user-friendly GUI allows easy importation, inspection and analysis of data, model, life-history and environment configuration, visualization and data-acquisition setup and control over simulations, essays and batch-runs. Videos and tutorials are also available. In principal the user shouldn't have to mess with the code at all.
+
+Visualization
+===================
+Both imported experiments and simulations can be visualized real-time at realistic scale. The pop-up screen allows zooming in and out, locking on specific individuals, bringing up dynamic graphs of selected parameters, coloring of the midline, contour, head and centroid, linear and angular velocity dependent coloring of the larva trajectories and much more. Keyboard and mouse shortcuts enable changing parameters online, adding or deleting agents, food and odor sources and impassable borders.
+
+Arena drawing
+===================
+The GUI features an arena editor where larva groups and items can be placed at prefered locations in predefined spatial distributions and orientations. Odor sources can be specified and arbitrary odor landscapes (odorscapes) can be constructed. The constructed arenas are directly available for modeling simulations.
+
 Behavioral analysis
 ===================
-Data from any tracker software can be analysed. Compatible file formats are csv and dat. 
-The only required parameters are x,y coordinates of midline points and optionally contourpoints.
+Experimental datasets from a variety of tracker software can be imported and transformed to a common hdf5 format so that they can be analysed and directly compared to the simulated data. To make datasets compatible and facilitate reproducibility, only the primary tracked x,y coordinates are used, both of the midline points and optionally points around the body contour.Compatible formats are text files, either per individual or per group. All secondary parameters are derived via an identical pipeline that allows parameterization and definition of novel metrics. 
+
+Larva models
+=====================
+Multiple aspects of real larvae are captured in various models. These can be configured through the GUI at maximum detail and directly tested in simulations.  Specifically the components are:
+
+            1. Virtual body
+                The 2D body consists of 1, 2(default) or more segments, featuring viscoelastic forces (torsional spring model), olfactory and touch sensors at                     desired locations and a mouth for feeding. Exemplary models with angular and linear motion optimized to fit empirical data are available                           featuring differential motion of the front and rear segments and realistic velocities and accelerations at both plains. Furthermore optional use                   of the Box2D physics engine is available as illustrated in an example of realistic imitation of real larvae with a multi-segment body model.
+            2. Sensorimotor effectors
+                Crawling, lateral bending and feeding are modeled as oscillatory processes, either independent, coupled or mutually exclusive. The individual                     modules and their interaction are easily configurable through the GUI. Body-dependent phasic interference can be defined as well. An olfactory                     sensor dynamically tracks odor gradients enabling chemotactic navigation. Feedback from the environment is only partially supported as in the case                 of reoccurent feeding motion at succesfull food encounter.
+            3. Intermittent behavior
+                Intermittent function of the oscillator modules is available through definition of specific spatial or temporal distributions. Models featuring                   empirically-fitted intermittent crawling interspersed by brief pauses can be readily tested. Time has been quantized at the scale of single                       crawling or feeding motions.
+            4. Olfactory learning
+                A neuron-level detailed mushroom-body model has been integrated to the locomotory model, enabling olfactory learning after associative                             conditioning of novel odorants to food. 
+            5. Energetics and homeostatic drive
+            
+            
+
 
 Behavioral simulation
 =====================
