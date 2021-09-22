@@ -14,54 +14,65 @@ Both imported experiments and simulations can be visualized real-time at realist
 
 Arena drawing
 ===================
-The GUI features an arena editor where larva groups and items can be placed at prefered locations in predefined spatial distributions and orientations. Odor sources can be specified and arbitrary odor landscapes (odorscapes) can be constructed. The constructed arenas are directly available for modeling simulations.
+The GUI features an arena editor that supports :
 
-Behavioral analysis
-===================
-Experimental datasets from a variety of tracker software can be imported and transformed to a common hdf5 format so that they can be analysed and directly compared to the simulated data. To make datasets compatible and facilitate reproducibility, only the primary tracked x,y coordinates are used, both of the midline points and optionally points around the body contour.Compatible formats are text files, either per individual or per group. All secondary parameters are derived via an identical pipeline that allows parameterization and definition of novel metrics. 
+   1. Arenas and dishes
+      The arena editor allows defining arena shape and dimensions in detail and placement of larva groups and items at prefered locations in predefined spatial         distributions and orientations.
+   2.Odorcapes
+      Odor sources can be specified and arbitrary odor landscapes can be constructed. The constructed arenas are directly available for modeling simulations. The       virtual larvae themselves can bear an odor creating dynamic odorscapes while moving.
+   3. Food items
+      Food sources are availble either as single items, distributions of defined parameters or food grids of defined dimensions. 
+   4. Impassable borders.
+
+
 
 Larva models
 =====================
 Multiple aspects of real larvae are captured in various models. These can be configured through the GUI at maximum detail and directly tested in simulations.  Specifically the components are:
 
-            1. Virtual body
-                The 2D body consists of 1, 2(default) or more segments, featuring viscoelastic forces (torsional spring model), olfactory and touch sensors at                     desired locations and a mouth for feeding. Exemplary models with angular and linear motion optimized to fit empirical data are available                           featuring differential motion of the front and rear segments and realistic velocities and accelerations at both plains. Furthermore optional use                   of the Box2D physics engine is available as illustrated in an example of realistic imitation of real larvae with a multi-segment body model.
-            2. Sensorimotor effectors
-                Crawling, lateral bending and feeding are modeled as oscillatory processes, either independent, coupled or mutually exclusive. The individual                     modules and their interaction are easily configurable through the GUI. Body-dependent phasic interference can be defined as well. An olfactory                     sensor dynamically tracks odor gradients enabling chemotactic navigation. Feedback from the environment is only partially supported as in the case                 of reoccurent feeding motion at succesfull food encounter.
-            3. Intermittent behavior
-                Intermittent function of the oscillator modules is available through definition of specific spatial or temporal distributions. Models featuring                   empirically-fitted intermittent crawling interspersed by brief pauses can be readily tested. Time has been quantized at the scale of single                       crawling or feeding motions.
-            4. Olfactory learning
-                A neuron-level detailed mushroom-body model has been integrated to the locomotory model, enabling olfactory learning after associative                             conditioning of novel odorants to food. 
-            5. Energetics and homeostatic drive
+
+   1. Virtual body
+            The 2D body consists of 1, 2(default) or more segments, featuring viscoelastic forces (torsional spring model), olfactory and touch sensors at                     desired locations and a mouth for feeding. Exemplary models with angular and linear motion optimized to fit empirical data are available                           featuring differential motion of the front and rear segments and realistic velocities and accelerations at both plains. Furthermore optional use                   of the Box2D physics engine is available as illustrated in an example of realistic imitation of real larvae with a multi-segment body model.
+   2. Sensorimotor effectors
+            Crawling, lateral bending and feeding are modeled as oscillatory processes, either independent, coupled or mutually exclusive. The individual                     modules and their interaction are easily configurable through the GUI. Body-dependent phasic interference can be defined as well. An olfactory                     sensor dynamically tracks odor gradients enabling chemotactic navigation. Feedback from the environment is only partially supported as in the case                 of reoccurent feeding motion at succesfull food encounter.
+   3. Intermittent behavior
+            Intermittent function of the oscillator modules is available through definition of specific spatial or temporal distributions. Models featuring                   empirically-fitted intermittent crawling interspersed by brief pauses can be readily tested. Time has been quantized at the scale of single                       crawling or feeding motions.
+   4. Olfactory learning
+            A neuron-level detailed mushroom-body model has been integrated to the locomotory model, enabling olfactory learning after associative                             conditioning of novel odorants to food. The short neuron-level temporal scale (0.1 ms) has been coupled to the 0.1 s behavioral timestep in parallel               simulation. Detailed implementations of an established olfactory learning behavioral paradigm are supported.
+   5. Energetics and life-history
+            A widely-accepted dynamic energy budget (DEB) model runs in the background and controls energy allocation to growth and biomass maintenance. The model             has been fitted to Drosophila and accurately reproduces the larva life stage in terms of body-length, wet-weight, instar duration and time to                     pupation. The long timescale model (in days) has been coupled to the behavioral timescale as well. Therefore virtual larvae can be realistically                   reared in substrates of specified quality before entering the behavioral simulation or can be starved for defined periods during or before being                   tested.
+   6. Hunger drive and foraging phenotypes
+            The DEB energetics module has been coupled to behavior via a variety of model configurations, each based on different assumptions. For example in one             implementation a hunger/satiety homeostatic drive that tracks the enrgy reserve density deriving from metabolism controls the exploration VS                       exploitation behavioral balance, boosting consumption after food deprivation and vice versa. The rover and sitter foraging phenotypes have been                   modeled, integrating differential glucose absorption to differential exploration pathlength and food consumption. 
+
             
+         
+Data importation & Behavioral analysis
+========================================
+Experimental datasets from a variety of tracker software can be imported and transformed to a common hdf5 format so that they can be analysed and directly compared to the simulated data. To make datasets compatible and facilitate reproducibility, only the primary tracked x,y coordinates are used, both of the midline points and optionally points around the body contour.Compatible formats are text files, either per individual or per group. All secondary parameters are derived via an identical pipeline that allows parameterization and definition of novel metrics. 
             
 
 
 Behavioral simulation
 =====================
-The simulation platform implements virtual larvae for use in behavioral experiments. 
-Specifically the components are :
-1. Environment
-    1. Spatial arena
-    2. Odorscape (Olfactory landscape)
-    3. Food sources
+The simulation platform supports simulations of experiments that implement established behavioral paradigms reported in literature. These can be run as single simulations, grouped in essays for globally testing models over multiple conditions and arenas or as batch-runs that allow parameter search and optimization of defined utility metrics. Specifically the behaviors covered are :
 
-2. Larva model
-    1. Body
-        1. Two-segment
-        2. Multi-segment
-    2. Sensorimotor effectors
-        1. Crawler
-        2. Turner
-        3. Feeder
-    3. Nervous system
-        1. Olfaction
-        2. Olfactory learning
-        3. Intermittent behavior
-    4. Energetics
-    5. Homeostatic Drive
+   1. Free exploration
+   2. Chemotaxis
+   3. Olfactory learning an odor preference
+   4. Feeding
+   5. Foraging in patch environments
+   6. Growth over the whole larva stage
 
-Scheduling is managed by the [mesa](https://mesa.readthedocs.io/en/master/) agent-based modeling library
+Finally some games are availble for fun where opposite larva groups try to capture the flag or stay at the top of the odorscape hill!!!
+
+
+
+
+
+
+
+
+Scheduling of the agents is based on the [mesa](https://mesa.readthedocs.io/en/master/) agent-based modeling library
 
 For multi-segment larvae the spatial environment and bodies are simulated through Box2D physics engine, 
 based on the [kilobots gym](https://github.com/gregorgebhardt/gym-kilobots).
