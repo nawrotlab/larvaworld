@@ -24,8 +24,9 @@ matplotlib.use('TkAgg')
 
 class LarvaworldGui:
 
-    def __init__(self, tabs=None):
+    def __init__(self, tabs=None, batch_thread=None):
         # s0 = time.time()
+        self.run_externally = {'sim':False, 'batch':True}
         self.tab_dict = {
             'introduction': (IntroTab, None),
             'tutorials': (TutorialTab, None),
@@ -46,6 +47,7 @@ class LarvaworldGui:
         # sg.change_look_and_feel('Dark Blue 3')
         sg.theme('LightGreen')
         self.background_color = None
+        self.batch_thread = batch_thread
         self.terminal = gui_terminal()
         # s1 = time.time()
         layout, self.collapsibles, self.graph_lists, self.dicts, self.tabs = self.build(tabs)

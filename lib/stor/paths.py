@@ -11,6 +11,7 @@ def get_parent_dir():
 
 
 DataFolder = f'{get_parent_dir()}/data'
+RunFolder = f'{get_parent_dir()}/run'
 GuiFolder = f'{get_parent_dir()}/lib/gui'
 GuiTest = f'{GuiFolder}/gui_speed_test.csv'
 
@@ -18,6 +19,8 @@ GuiTest = f'{GuiFolder}/gui_speed_test.csv'
 SimFolder = f'{DataFolder}/SimGroup'
 SingleRunFolder = f'{SimFolder}/single_runs'
 BatchRunFolder = f'{SimFolder}/batch_runs'
+ExecConfFile = f'{RunFolder}/exec_conf.txt'
+ExecFile = f'{RunFolder}/exec_run.py'
 
 DebFolder = f'{SimFolder}/deb_runs'
 Deb_paths={n : f'{get_parent_dir()}/lib/model/DEB/models/deb_{n}.csv' for n in ['rover', 'sitter', 'default']}

@@ -24,17 +24,18 @@ import lib.conf.dtype_dicts as dtypes
 
 
 class ParLayout:
-    def __init__(self, name, type_dict=None, toggled_subsections=True, dict_name=None, value_kws={}, Ncols=1):
+    def __init__(self, name, type_dict=None, toggled_subsections=True, dict_name=None, value_kws={},text_kws={}, Ncols=1):
         self.toggled_subsections = toggled_subsections
         self.name = name
         self.subdicts = {}
         if type_dict is None:
             type_dict = par_dict(self.name if dict_name is None else dict_name)
-        self.layout = self.init_section(type_dict, value_kws, Ncols)
+        self.layout = self.init_section(type_dict, value_kws, text_kws, Ncols)
         self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()}
         del type_dict
 
-    def init_section(self, type_dict, value_kws={}, Ncols=1):
+    def init_section(self, type_dict, value_kws={}, text_kws={}, Ncols=1):
+        text_kws=self.set_element_size(text_kws, Ncols=Ncols)
         items = []
         for k, args in type_dict.items():
             k_disp = get_disp_name(k)
@@ -48,17 +49,16 @@ class ParLayout:
                 v = args['initial_value']
                 vs = args['values']
                 if t == bool:
-                    ii = named_bool_button(k_disp, v, k0)
+                    ii = named_bool_button(k_disp, v, k0, text_kws=text_kws)
 
                 else:
                     if t == str:
                         if vs is None:
-                            temp = sg.In(v, key=k0, **value_kws)
+                            temp = sg.In(v, key=k0, **text_kws)
                         else:
-                            temp = sg.Combo(vs, default_value=v, key=k0, enable_events=True,
-                                            readonly=True, **value_kws)
+                            temp = sg.Combo(vs, default_value=v, key=k0, enable_events=True,readonly=True, **text_kws)
                     elif t == List[str]:
-                        temp = sg.In(v, key=k0, **value_kws)
+                        temp = sg.In(v, key=k0, **text_kws)
                     else:
 
                         spin_kws = {
@@ -66,7 +66,7 @@ class ParLayout:
                             'initial_value': v,
                             'key': k0,
                             'dtype': base_dtype(t),
-                            **value_kws
+                            **text_kws
                         }
                         if t in [List[float], List[int]]:
                             temp = MultiSpin(tuples=False,**spin_kws)
@@ -76,10 +76,11 @@ class ParLayout:
                             temp = MultiSpin(**spin_kws, Nspins=2)
                         elif t in [float, int]:
                             temp = SingleSpin(**spin_kws)
-
                     ii = [sg.Text(f'{k_disp}:'), temp]
             items.append(ii)
-
+        if Ncols>1:
+            items=fun.group_list_by_n([*items], int(np.ceil(len(items)/Ncols)))
+            items=[[sg.Col(ii) for ii in items]]
         return items
 
 
@@ -89,12 +90,13 @@ class ParLayout:
             k0 = f'{self.name}_{k}'
             if t == bool:
                 d[k] = w[f'TOGGLE_{k0}'].get_state()
-            elif t in fun.flatten_list([[tt, Tuple[tt], List[tt], List[Tuple[tt]]] for tt in [int, float]]):
+            elif base_dtype(t) in  [int, float]:
                 d[k] = w[k0].get()
             elif t == dict or type(t) == dict:
                 d[k] = self.subdicts[k0].get_dict(v, w)
             else:
                 d[k] = retrieve_value(v[k0], t)
+            # print(k, d[k])
         return d
 
     def get_subdicts(self):
@@ -102,6 +104,13 @@ class ParLayout:
         for s in list(self.subdicts.values()):
             subdicts.update(s.get_subdicts())
         return subdicts
+
+    def set_element_size(self, value_kws, Ncols):
+        if 'size' not in value_kws.keys():
+            value_kws['size'] = w_kws['default_element_size']
+        value_kws['size']=int(value_kws['size'][0]/Ncols), value_kws['size'][1]
+        return value_kws
+
 
 
 class SectionDict:
@@ -200,8 +209,16 @@ class SingleSpin(sg.Spin):
         self.dtype=dtype
 
     def get(self):
-        v=self.dtype(super().get())
-        return v
+        v=super().get()
+        if v in ['', None] :
+            return None
+        if self.dtype==int:
+            return int(v)
+        elif self.dtype==float:
+            return float(v)
+
+    # def update(self, w, value):
+    #     super().update(value=value)
 
 class TupleSpin(Pane):
     def __init__(self, initial_value, key, range=None, values=None, steps=1000, decimals=3,dtype=float,  **value_kws):
@@ -228,13 +245,13 @@ class TupleSpin(Pane):
         res = (t0, t1) if all([t not in ['', None, np.nan] for t in [t0, t1]]) else None
         return res
 
-    def update(self, window, value):
+    def update(self, value):
         if value not in [None, '', (None, None), [None, None]]:
             v0, v1 = value
         else:
             v0, v1 = ['', '']
-        window.Element(self.k0).Update(value=v0)
-        window.Element(self.k1).Update(value=v1)
+        self.s0.update(value=v0)
+        self.s1.update(value=v1)
 
 class MultiSpin(Pane):
     def __init__(self, initial_value, values, key, steps=100, decimals=2, Nspins=4, tuples=False, dtype=float, **value_kws):
@@ -249,12 +266,12 @@ class MultiSpin(Pane):
         if initial_value is None:
             self.v_spins = [''] * Nspins
             self.N = 0
-        elif type(initial_value) in [list, tuple]:
-            self.N = len(initial_value)
-            self.v_spins = [vv for vv in initial_value] + [''] * (Nspins - self.N)
         elif self.Nspins == 1:
             self.N = 1
             self.v_spins = [initial_value]
+        else :
+            self.N = len(initial_value)
+            self.v_spins = [vv for vv in initial_value] + [''] * (Nspins - self.N)
         self.key = key
         self.tuples = tuples
         self.add_key, self.remove_key = f'SPIN+ {key}', f'SPIN- {key}'
@@ -278,35 +295,25 @@ class MultiSpin(Pane):
         if not self.tuples:
             spins = [SingleSpin(initial_value=vv, key=kk, visible=vis,**spin_kws) for vv, kk, vis in zip(self.v_spins, self.k_spins, self.visibles)]
         else:
-            spins = [TupleSpin(initial_value=vv, key=kk,**spin_kws) for vv, kk, vis in zip(self.v_spins, self.k_spins, self.visibles)]
+            spins = [MultiSpin(initial_value=vv, key=kk,Nspins=2, **spin_kws) for vv, kk, vis in zip(self.v_spins, self.k_spins, self.visibles)]
         return spins
 
     def get(self):
         vs = [s.get() for s in self.spins if s.get() not in [None, '']]
-        # vs =[v for v in vs]
-        vs = vs if len(vs) > 0 else None
-        return vs
+        return vs if len(vs) > 0 else None
 
-    def update(self, window, value):
+    def update(self, value):
         if value in [None, '', (None, None), [None, None]]:
             self.N = 0
-            if not self.tuples:
-                for i, k in enumerate(self.k_spins):
-                    window.Element(k).Update(value='')
-            else:
-                for i, spin in enumerate(self.spins):
-                    spin.update(window, '')
+            for spin in self.spins:
+                spin.update('')
 
-        elif type(value) in [list, tuple]:
+        else:
             self.N = len(value)
-            if not self.tuples:
-                for i, k in enumerate(self.k_spins):
-                    vv = value[i] if i < self.N else ''
-                    window.Element(k).Update(value=vv, visible=True)
-            else:
-                for i, spin in enumerate(self.spins):
-                    vv = value[i] if i < self.N else ''
-                    spin.update(window, vv)
+            for i, spin in enumerate(self.spins):
+                vv = value[i] if i < self.N else ''
+                spin.update(vv)
+
 
     def add_spin(self, window):
         # vs0=self.get()
@@ -610,12 +617,15 @@ class DataList(NamedList):
     #     return bl
 
     def update_window(self, w):
+
         ks = list(self.dict.keys())
+        # print(self.name, ks, 0)
         if self.aux_cols is None:
             w.Element(self.list_key).Update(values=ks)
         else:
             vs = self.get_aux_cols(ks)
             w.Element(self.list_key).Update(values=vs)
+        # print(self.name, ks, 1)
 
     def get_aux_cols(self, ks):
         # df=np.zeros((len(ks), len(self.aux_cols)+1))
@@ -634,6 +644,22 @@ class DataList(NamedList):
             ls.append(l)
         return ls
 
+    def add(self, w, entries, replace=False):
+        if replace :
+            self.dict=entries
+        else :
+            self.dict.update(entries)
+        self.update_window(w)
+
+    def remove(self,w, ids):
+        # print(self.dict.keys())
+        for kk in ids:
+            self.dict.pop(kk, None)
+        # print(self.dict.keys())
+        # print()
+        self.update_window(w)
+
+
     def eval(self, e, v, w, c, d, g):
         from lib.stor.managing import detect_dataset
         n = self.name
@@ -643,8 +669,8 @@ class DataList(NamedList):
         kks = [v0[i] if self.aux_cols is None else list(d0.keys())[v0[i]] for i in range(len(v0))]
         datagroup_id = self.tab.current_ID(v) if self.raw else None
         if e == self.browse_key:
-            d0.update(detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw))
-            self.update_window(w)
+            new=detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw)
+            self.add(w, new)
         elif e == f'SELECT_ALL {n}':
             ks = np.arange(len(d0)).tolist()
             if self.aux_cols is None:
@@ -652,11 +678,9 @@ class DataList(NamedList):
             else:
                 w.Element(k).Update(select_rows=ks)
         elif e == f'REMOVE {n}':
-            for kk in kks:
-                d0.pop(kk, None)
-            self.update_window(w)
+            self.remove(w, kks)
         elif e == f'CHANGE_ID {n}':
-            d0 = change_dataset_id(d0, old_ids=kks)
+            self.dict = change_dataset_id(d0, old_ids=kks)
             self.update_window(w)
         elif e == f'REPLAY {n}':
             if len(v0) > 0:
@@ -666,8 +690,7 @@ class DataList(NamedList):
         elif e == f'ADD_REF {n}':
             from lib.stor.larva_dataset import LarvaDataset
             dd = LarvaDataset(dir=f'{paths.RefFolder}/reference')
-            d0[dd.id] = dd
-            self.update_window(w)
+            self.add(w, {dd.id : dd})
         elif e == f'IMPORT {n}':
             dl1 = self.tab.datalists[self.tab.proc_key]
             d1 = dl1.dict
@@ -682,7 +705,9 @@ class DataList(NamedList):
                 enrich_conf = c['enrichment'].get_dict(v, w)
                 for dd in dds:
                     dd.enrich(**enrich_conf)
-        self.dict = d0
+
+
+        # self.dict = d0
 
 
 class Collapsible(HeadedElement):
@@ -749,8 +774,8 @@ class Collapsible(HeadedElement):
                 elif type(v) == dict:
                     new_prefix = k if prefix is not None else None
                     self.update_window(w, v, prefix=new_prefix)
-                elif isinstance(w[k], TupleSpin) or isinstance(w[k], MultiSpin):
-                    w[k].update(w, v)
+                elif isinstance(w[k], TupleSpin) or isinstance(w[k], MultiSpin) or isinstance(w[k], SingleSpin):
+                    w[k].update(v)
                 elif v is None:
                     w.Element(k).Update(value='')
                 else:
@@ -799,8 +824,10 @@ class Collapsible(HeadedElement):
 
 
 class CollapsibleTable(Collapsible):
-    def __init__(self, name, type_dict={}, headings=[], dict={}, **kwargs):
+    def __init__(self, name, type_dict=None, headings=[], dict={}, **kwargs):
         self.dict = dict
+        if type_dict is None :
+            type_dict=dtypes.get_dict_dtypes(name)
         self.type_dict = type_dict
         if 'unique_id' in list(type_dict.keys()):
             self.header = 'unique_id'
@@ -919,19 +946,20 @@ class CollapsibleTable(Collapsible):
 
 class CollapsibleDict(Collapsible):
     def __init__(self, name, dict=None, dict_name=None, type_dict=None, toggled_subsections=True, default=False,
-                 Ncols=1, value_kws={}, **kwargs):
+                 Ncols=1, value_kws={}, text_kws={},**kwargs):
         if dict_name is None:
             dict_name = name
         self.dict_name = dict_name
         l_kws = {
             'name': name,
-            # 'dict_name':dict_name,
-            # 'type_dict':type_dict,
+            'dict_name':dict_name,
+            'type_dict':type_dict,
             'toggled_subsections': toggled_subsections,
             'value_kws': value_kws,
+            'text_kws': text_kws,
             'Ncols': Ncols,
         }
-        self.sectiondict = ParLayout(dict_name=dict_name, type_dict=type_dict, **l_kws)
+        self.sectiondict = ParLayout(**l_kws)
         super().__init__(name, content=self.sectiondict.layout, **kwargs)
 
     def get_dict(self, values, window, check_toggle=True):

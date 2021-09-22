@@ -170,6 +170,7 @@ class LarvaDataset:
         store = pd.HDFStore(self.dir_dict['data_h5'])
         if step:
             self.step_data = store['step']
+            # print(self.step_data)
             self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
             self.agent_ids = self.step_data.index.unique('AgentID').values
             self.num_ticks = self.step_data.index.unique('Step').size

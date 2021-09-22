@@ -1,3 +1,4 @@
+import subprocess
 from ast import literal_eval
 from pydoc import locate
 from typing import List, Tuple, Union, Type
@@ -156,3 +157,4 @@ def collapse(layout, key, visible=True):
     :rtype: sg.pin
     """
     return sg.pin(sg.Col(layout, key=key, visible=visible))
+

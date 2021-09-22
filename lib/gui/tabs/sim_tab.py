@@ -1,72 +1,57 @@
 import copy
 
 from lib.aux.collecting import output_keys
-from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, NamedList, DataList
+from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList
 from lib.gui.aux.functions import t_kws, gui_col
 from lib.gui.tabs.tab import GuiTab
-from lib.sim.single_run import run_sim
-from lib.sim.analysis import sim_analysis
-from lib.conf.conf import next_idx, loadConfDict
+from lib.conf.conf import next_idx
+from run.exec_run import Exec
+from lib.stor import paths
 
 
 class SimTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.k_stored = f'{self.name}_stored'
+        self.k_active = f'{self.name}_active'
+        self.k_stored_ids = f'{self.k_stored}_IDS'
+        self.k_active_ids = f'{self.k_active}_IDS'
+
+    @property
+    def DL0(self):
+        return self.datalists[self.k_active]
+
+    @ property
+    def DL1(self):
+        return self.datalists[self.k_stored]
 
     def build(self):
+        kA,kS=self.k_active, self.k_stored
+        d = {kA: {}, kS: {}}
+
         sl1 = SelectionList(tab=self, conftype='Env', idx=1)
         sl2 = SelectionList(tab=self, conftype='Life', idx=1, with_dict=True, header_value='default',
                            text_kws=t_kws(14), value_kws=t_kws(10), width=12, header_text_kws=t_kws(9))
         sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], progress=True,
                             sublists={'env_params': sl1, 'life_params' : sl2})
-        sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Simulation types', buttons=[],
-                            sublists={'simulations': sl3})
-        # sl4 = SelectionList(tab=self, conftype='ExpGroup', header_kws={'name':'Simulation types'}, buttons=['load'])
-        # sl4 = DataList(name='Simulation types', tab=self, buttons=[], dict=loadConfDict('ExpGroup'), drop_down=True)
+        sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Simulation types', buttons=[], sublists={'simulations': sl3})
         c1 = CollapsibleDict('sim_params', default=True, disp_name='Configuration')
-        c2 = CollapsibleDict('output', default=True)
-        # output_dict = dict(zip(output_keys, [False] * len(output_keys)))
-        # c2 = CollapsibleDict('Output', dict=output_dict, auto_open=False)
-        #
+        c2 = CollapsibleDict('output', default=True, Ncols=1)
         g1 = GraphList(self.name, tab=self)
+        dl1 = DataList(name=kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'])
+        dl2 = DataList(name=kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'])
+
 
         l = [[
-            gui_col([sl4, sl3, sl1,c1, c2, sl2], 0.25),
+            gui_col([sl4, sl3, sl1,c1, c2, sl2, dl1, dl2], 0.25),
             gui_col([g1.canvas], 0.55),
             gui_col([g1], 0.2)
         ]]
-
         c = {}
         for i in [c1, c2, sl2]:
             c.update(i.get_subdicts())
         g = {g1.name: g1}
-        d={}
-        d[self.name]={'datasets' : [], 'fig_dict' : None}
         return l, c, g, d
-
-    def run(self, v, w,c,d,g, conf,id):
-        N=conf['sim_params']['duration'] * 60 / conf['sim_params']['timestep']
-        p=self.base_list.progressbar
-        p.run(w, max=N)
-        conf['experiment'] = id
-        kws={**conf,
-             'vis_kwargs' : self.gui.get_vis_kwargs(v),
-             'progress_bar' : w[p.k]
-             }
-        dd = run_sim(**kws)
-        if dd is not None:
-            w[p.k_complete].update(visible=True)
-            if 'analysis' in d.keys() :
-                d['analysis'][dd.id] = dd
-            if 'DATASET_IDS' in w.AllKeysDict.keys():
-                w.Element('DATASET_IDS').Update(values=list(d['analysis'].keys()))
-            self.base_dict['datasets'].append(dd)
-            fig_dict, results = sim_analysis(dd, conf['experiment'])
-            self.base_dict['fig_dict'] = fig_dict
-            self.graph_list.update(w, fig_dict)
-        else:
-            p.reset(w)
-        return d,g
 
     def update(self, w,  c, conf, id):
         output_dict = dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys]))
@@ -84,10 +69,36 @@ class SimTab(GuiTab):
                 }
         return conf
 
+    def run(self, v, w,c,d,g, conf,id):
+        N=conf['sim_params']['duration'] * 60 / conf['sim_params']['timestep']
+        p=self.base_list.progressbar
+        p.run(w, max=N)
+        conf['experiment'] = id
+        conf['vis_kwargs'] = self.gui.get_vis_kwargs(v)
+        sim_id=conf['sim_params']['sim_ID']
+        exec = Exec(mode='sim', conf=conf, progressbar = p,w_progressbar = w[p.k], run_externally=self.gui.run_externally['sim'])
+        self.DL0.add(w, {sim_id: exec})
+        exec.run()
+
+        return d,g
+
+
     def eval(self, e, v, w, c, d, g):
-        # if e==self.selectionlists['ExpGroup'].k :
-        #     self.selectionlists['Exp'].update(w, values=)
-        return d, g
+        self.check_subprocesses(w)
+
+    def check_subprocesses(self, w):
+        complete = []
+        for sim_id, ex in self.DL0.dict.items():
+            if ex.check():
+                entry, fig_dict = ex.results
+                if entry is not None:
+                    w[ex.progressbar.k_complete].update(visible=True)
+                    self.graph_list.update(w, fig_dict)
+                    self.DL1.add(w, entry)
+                else:
+                    ex.progressbar.reset(w)
+                complete.append(sim_id)
+        self.DL0.remove(w, complete)
 
 
 if __name__ == "__main__":

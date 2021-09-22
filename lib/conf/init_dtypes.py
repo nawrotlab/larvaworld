@@ -176,22 +176,22 @@ def init_pars():
                       'evap_const': {'max': 1.0},
                       'gaussian_sigma': {'t': Tuple[float], 'max': 10}
                       },
-        'odor_gain': {
+        'odor_gains': {
             'unique_id': {'t': str},
             'mean': {'max': 1000},
             'std': {'max': 100}
         },
         'optimization': {
             'fit_par': {'t': str},
+            'minimize': {'t': bool, 'v': True},
+            'threshold': {'v': 0.001, 'max': 1.0, 'dv': 0.00001},
+            'max_Nsims': {'t': int, 'v': 7, 'max': 100},
+            'Nbest': {'t': int, 'v': 3, 'max': 10},
             'operations': {
                 'mean': {'t': bool, 'v': True},
                 'std': {'t': bool, 'v': False},
                 'abs': {'t': bool, 'v': False}
             },
-            'minimize': {'t': bool, 'v': True},
-            'threshold': {'v': 0.001, 'max': 1.0, 'dv': 0.00001},
-            'max_Nsims': {'t': int, 'v': 40, 'max': 100},
-            'Nbest': {'t': int, 'v': 4, 'max': 10}
         },
         'batch_methods': {
             'run': {'t': str, 'v': 'default', 'vs': ['null', 'default', 'deb', 'odor_preference']},
@@ -399,6 +399,11 @@ def init_pars():
                      'enrichment': d['enrichment']
                      }
 
+    d['batch_setup']={
+        'batch_id': {'t': str},
+        # 'batch_path': {'t': str},
+        'save_hdf5': {'t': bool, 'v' : False},
+                       }
     d['batch_conf'] = {'exp': {'t': str},
                        'space_search': d['space_search'],
                        'batch_methods': d['batch_methods'],
@@ -598,7 +603,7 @@ def init_dicts():
                       'evap_const': None,
                       'gaussian_sigma': None,
                       },
-        'odor_gain': {
+        'odor_gains': {
             'unique_id': None,
             'mean': None,
             'std': None
@@ -935,7 +940,7 @@ def init_dtypes():
                       'evap_const': fun.value_list(),
                       'gaussian_sigma': (0.0, 10.0),
                       },
-        'odor_gain': {
+        'odor_gains': {
             'unique_id': str,
             'mean': float,
             'std': float

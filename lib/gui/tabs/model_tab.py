@@ -27,18 +27,11 @@ class ModelTab(GuiTab):
                     odor_gains = {}
                 c['odor_gains'].update(w, odor_gains)
             c[k].update(w, dic)
-            # c[k.upper()].update(w, dic)
         c['Brain'].update(w, module_dict, use_prefix=False)
-        # temp = copy.deepcopy(module_dict)
-        # for k in list(temp.keys()):
-        #     temp[k.upper()] = temp.pop(k)
-        # c['Brain'].update(w, temp, use_prefix=False)
 
     def get(self, w, v, c, as_entry=True):
         module_dict = dict(zip(self.module_keys, [w[f'TOGGLE_{k}'].get_state() for k in self.module_keys]))
-        # module_dict = dict(zip(self.module_keys, [w[f'TOGGLE_{k.upper()}'].get_state() for k in self.module_keys]))
         m = {}
-
         for n in self.fields:
             m[n] = None if c[n].state is None else c[n].get_dict(v, w)
 
@@ -46,21 +39,16 @@ class ModelTab(GuiTab):
         b['modules'] = module_dict
         for k in module_dict.keys():
             b[f'{k}_params'] = c[k].get_dict(v, w)
-            # b[f'{k}_params'] = c[k.upper()].get_dict(v, w)
         if b['olfactor_params'] is not None:
             b['olfactor_params']['odor_dict'] = c['odor_gains'].dict
         b['nengo'] = False
         m['brain'] = b
-
         return copy.deepcopy(m)
 
     def build(self):
         l0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
-        c1 = [CollapsibleDict(n, default=True, **kwargs)
-              for n, kwargs in zip(self.fields, [{}, {'toggle': True}, {}, {}])]
-        s1 = CollapsibleTable('odor_gains', headings=['id', 'mean', 'std'], dict={}, type_dict=dtypes.get_dict_dtypes('odor_gain'))
-        # c2 = [CollapsibleDict(k.upper(), dict=dtypes.get_dict(k), type_dict=dtypes.get_dict_dtypes(k),
-        #                       toggle=True, disp_name=k.capitalize()) for k in self.module_keys]
+        c1 = [CollapsibleDict(n, default=True, **kwargs) for n, kwargs in zip(self.fields, [{}, {'toggle': True}, {}, {}])]
+        s1 = CollapsibleTable('odor_gains', headings=['id', 'mean', 'std'])
         c2 = [CollapsibleDict(k, default=True, toggle=True) for k in self.module_keys]
         l2 = [i.get_layout() for i in c2]
         b = Collapsible('Brain', content=l2)

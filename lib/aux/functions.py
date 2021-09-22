@@ -292,9 +292,14 @@ def reconstruct_dict(param_group):
 
 
 def group_list_by_n(l, n):
-    if not len(l) % n == 0.0:
-        raise ValueError('List length must be multiple of n')
-    return [l[i * n:(i + 1) * n] for i in range(int(len(l) / n))]
+    Nmore=int(len(l) % n)
+    N=int((len(l)-Nmore) / n)
+    # if not len(l) % n == 0.0:
+    #     raise ValueError('List length must be multiple of n')
+    g= [l[i * n:(i + 1) * n] for i in range(N)]
+    if Nmore!=0 :
+        g.append(l[-Nmore:])
+    return g
 
 
 def weib(x, n, a):

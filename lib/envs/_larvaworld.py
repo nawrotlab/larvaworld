@@ -51,7 +51,7 @@ class LarvaWorld:
         self.progress_bar = progress_bar
         # print(vis_kwargs)
         if vis_kwargs is None :
-            vis_kwargs=dtypes.get_dict('visualization')
+            vis_kwargs=dtypes.get_dict('visualization', mode=None)
         self.vis_kwargs = vis_kwargs
         self.__dict__.update(self.vis_kwargs['draw'])
         self.__dict__.update(self.vis_kwargs['color'])

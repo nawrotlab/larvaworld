@@ -3,11 +3,12 @@ import sys
 import time
 import numpy as np
 
-sys.path.insert(0, '..')
 
+
+sys.path.insert(0, '..')
 from lib.sim.single_run import run_sim, get_exp_conf
 from lib.sim.analysis import sim_analysis
-from lib.conf.conf import next_idx, loadConfDict
+from lib.conf.conf import loadConfDict
 from lib.aux import argparsers as prs
 
 s = time.time()
@@ -34,7 +35,9 @@ place_kwargs = prs.get_place_kwargs(args)
 
 
 exp_conf = get_exp_conf(exp_type,  sim_kwargs, life_kwargs, **place_kwargs)
-d = run_sim(**exp_conf, vis_kwargs=vis_kwargs, save_data_flag=not args.no_save)
+kws={'vis_kwargs':vis_kwargs, 'save_data_flag' : not args.no_save, **exp_conf}
+
+d = run_sim(**kws)
 
 if analysis:
     fig_dict, results=sim_analysis(d, exp_type)

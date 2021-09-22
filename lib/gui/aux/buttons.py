@@ -35,6 +35,7 @@ def button_row(name, buttons, button_args={}):
         'refresh_figs': 'Detect available graphs and refresh graph list.',
         'draw_fig': 'Draw the selected graph.',
         'conf_fig': "Configure the selected graph's arguments.",
+        'stop': "Stop the selected simulation.",
     }
     but_kws={
         'browse' : {'initial_folder' : paths.DataFolder, 'enable_events' : True,
@@ -56,10 +57,10 @@ def button_row(name, buttons, button_args={}):
     return bl
 
 
-def named_bool_button(name, state, toggle_name=None, tt_kws={}, **kwargs):
+def named_bool_button(name, state, toggle_name=None, text_kws={}, **kwargs):
     if toggle_name is None:
         toggle_name = name
-    l = [sg.T(f'{name} :', **tt_kws), BoolButton(toggle_name, state, **kwargs)]
+    l = [sg.T(f'{name} :', **text_kws), BoolButton(toggle_name, state, **kwargs)]
 
     return l
 
