@@ -210,7 +210,7 @@ class SingleSpin(sg.Spin):
     def __init__(self,values,initial_value, dtype=float, value_kws={},**kwargs):
         spin_kws = {
             'values': values,
-            'initial_value': initial_value,
+            'initial_value': initial_value if initial_value is not None else '',
             **value_kws,
             **kwargs,
         }
@@ -704,6 +704,13 @@ class DataList(NamedList):
                 dd = d0[kks[0]]
                 dd.visualize(vis_kwargs=self.tab.gui.get_vis_kwargs(v, mode='video'),
                              **self.tab.gui.get_replay_kwargs(v))
+        elif e == f'IMITATE {n}':
+            if len(v0) > 0:
+                from lib.conf.conf import imitation_exp
+                dd = d0[kks[0]]
+                exp_conf=imitation_exp(dd.config)
+                exp_conf['vis_kwargs']=self.tab.gui.get_vis_kwargs(v)
+                self.tab.imitate(exp_conf)
         elif e == f'ADD_REF {n}':
             from lib.stor.larva_dataset import LarvaDataset
             dd = LarvaDataset(dir=f'{paths.RefFolder}/reference')

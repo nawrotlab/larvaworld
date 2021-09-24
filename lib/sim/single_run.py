@@ -5,7 +5,6 @@ import time
 import pickle
 import os
 import numpy as np
-from operator import attrgetter
 
 import lib.conf.data_conf as dat
 
@@ -288,3 +287,5 @@ combo_collection_dict = {
     'source_approach': {'step': ['chemotax'], 'end': ['e_chemotax']},
     'olfactor': {'step': ['odors', 'olfactor'], 'end': []},
 }
+
+

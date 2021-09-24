@@ -376,7 +376,7 @@ def init_pars():
     }
 
     d['replay'] = {
-        'arena_pars': d['arena'],
+        # 'arena_pars': d['arena'],
         'env_params': {'t': str, 'vs': list(loadConfDict('Env').keys()), 'aux_values': ['']},
         'track_point': {'t': int, 'v': -1, 'min': -1, 'max': 12},
         'dynamic_color': {'t': str, 'vs': [None, 'lin_color', 'ang_color']},
@@ -849,7 +849,7 @@ def init_dicts():
 
     }
     d['replay'] = {
-        'arena_pars': d['arena'],
+        # 'arena_pars': d['arena'],
         'env_params': None,
         'track_point': -1,
         'dynamic_color': None,
@@ -1180,7 +1180,7 @@ def init_dtypes():
 
     }
     d['replay'] = {
-        'arena_pars': d['arena'],
+        # 'arena_pars': d['arena'],
         'env_params': [''] + list(loadConfDict('Env').keys()),
         'track_point': {'type': int, 'values': np.arange(1, 13).tolist()},
         'dynamic_color': [None, 'lin_color', 'ang_color'],

@@ -138,8 +138,8 @@ class LarvaworldGui:
     def get_replay_kwargs(self, v):
         c=self.collapsibles
         w=self.window
-        replay_kwargs=c['Replay'].get_dict(v, w) if 'Replay' in list(
-            c.keys()) else dtypes.get_dict('replay', arena_pars=None)
+        replay_kwargs=c['replay'].get_dict(v, w) if 'replay' in list(
+            c.keys()) else dtypes.get_dict('replay')
         return replay_kwargs
 
     def run0(self, e, v):

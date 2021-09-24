@@ -36,6 +36,7 @@ def button_row(name, buttons, button_args={}):
         'draw_fig': 'Draw the selected graph.',
         'conf_fig': "Configure the selected graph's arguments.",
         'stop': "Stop the selected simulation.",
+        'imitate': "Imitate the selected dataset in a simulation.",
     }
     but_kws={
         'browse' : {'initial_folder' : paths.DataFolder, 'enable_events' : True,

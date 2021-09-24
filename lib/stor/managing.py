@@ -21,6 +21,7 @@ def build_dataset(datagroup_id,id,group_id, target_dir, source_dir=None,source_f
     data_conf = g['tracker']['resolution']
     par_conf = g['parameterization']
     arena_pars = g['tracker']['arena']
+    env_params={'arena' : arena_pars}
 
 
     try:
@@ -28,7 +29,7 @@ def build_dataset(datagroup_id,id,group_id, target_dir, source_dir=None,source_f
     except:
         pass
 
-    d = LarvaDataset(dir=target_dir, id=id, group_id=group_id, par_conf=par_conf, arena_pars=arena_pars,
+    d = LarvaDataset(dir=target_dir, id=id, group_id=group_id, par_conf=par_conf, env_params=env_params,
                      load_data=False, **data_conf)
 
 
@@ -297,9 +298,9 @@ if __name__ == '__main__':
     # ycs = pd.DataFrame(ycs, columns=yc_pars, index=None)
 
     # yys=vertices[:,:][1]
-    from lib.conf.batch_conf import imitation_exp
     import lib.conf.dtype_dicts as dtypes
     from lib.sim.single_run import run_sim
+    from lib.conf.conf import imitation_exp
 
     vis_kwargs = dtypes.get_dict('visualization', mode='video', video_speed=60)
     # dr='/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved'

@@ -1,13 +1,7 @@
-import copy
-import subprocess
-
 from lib.conf import dtype_dicts as dtypes
-from lib.conf.conf import loadConf
 from lib.conf.init_dtypes import processing_types
-import lib.aux.functions as fun
-import lib.aux.naming as nam
 
-import numpy as np
+from lib.conf.conf import imitation_exp
 
 
 def optimization(fit_par, minimize=True, threshold=0.0001, max_Nsims=10, Nbest=4,
@@ -98,27 +92,6 @@ batch_dict = {
     }, batch_methods=batch_methods(run='deb', post='null', final='deb')),
 
 }
-
-
-def imitation_exp(config, model='imitation', exp='dish', idx=0):
-    from lib.conf.conf import expandConf
-    id = config['id']
-    base_larva = expandConf(model, 'Model')
-
-    sim_params = {
-        'timestep': 1/config['fr'],
-        'duration': config['duration'] / 60,
-        'path': 'single_runs/imitation',
-        'sim_ID': f'{id}_imitation_{idx}',
-        'sample': id,
-        'Box2D': False
-    }
-    exp_conf = expandConf(exp, 'Exp')
-    exp_conf['env_params']['larva_groups'] = {'Imitation': {'config': config, 'model': base_larva, 'default_color' : 'blue'}}
-    exp_conf['env_params']['arena'] = config['arena_pars']
-    exp_conf['sim_params'] = sim_params
-    exp_conf['experiment'] = exp
-    return exp_conf
 
 
 def fit_tortuosity_batch(d, model='imitation', exp='dish', idx=0):

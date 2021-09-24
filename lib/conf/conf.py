@@ -5,6 +5,7 @@ import os
 
 import numpy as np
 
+from lib.conf.init_dtypes import null_dict
 from lib.stor import paths
 import lib.aux.functions as fun
 sys.path.insert(0, paths.get_parent_dir())
@@ -464,3 +465,21 @@ def store_confs() :
 # if __name__ == '__main__':
 #     init_confs()
 
+def imitation_exp(config, model='explorer', exp='dish', idx=0):
+    id = config['id']
+    base_larva = expandConf(model, 'Model')
+
+    sim_params = {
+        'timestep': 1/config['fr'],
+        'duration': config['duration'] / 60,
+        'path': 'single_runs/imitation',
+        'sim_ID': f'{id}_imitation_{idx}',
+        'sample': id,
+        'Box2D': False
+    }
+    exp_conf = expandConf(exp, 'Exp')
+    exp_conf['env_params']['larva_groups'] = {'ImitationGroup': null_dict('LarvaGroup', sample= config, model= base_larva, default_color = 'blue', imitation=True, distribution=None)}
+    exp_conf['env_params']['arena'] = config['env_params']['arena']
+    exp_conf['sim_params'] = sim_params
+    exp_conf['experiment'] = exp
+    return exp_conf
