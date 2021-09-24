@@ -151,7 +151,7 @@ def base_enrich(types=['angular', 'spatial','dispersion', 'tortuosity'],bouts=['
         'types': processing_types(types),
         # 'types': ['angular', 'spatial', 'source', 'dispersion', 'tortuosity'],
         'dsp_starts': [0, 20], 'dsp_stops': [40, 80], 'tor_durs': [2, 5, 10, 20],
-        'min_ang': 5.0, 'bouts': annotation_bouts(bouts)
+        'min_ang': 30.0, 'bouts': annotation_bouts(bouts)
     }
 
     d.update(**kwargs)

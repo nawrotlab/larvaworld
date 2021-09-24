@@ -1,5 +1,11 @@
+import copy
+
 from lib.conf import dtype_dicts as dtypes
 import lib.aux.functions as fun
+import lib.aux.naming as nam
+
+import numpy as np
+
 
 
 def exp(env_name, exp_name=None, en=False, sim={}, c=[], as_entry=True, **kwargs):
@@ -7,8 +13,9 @@ def exp(env_name, exp_name=None, en=False, sim={}, c=[], as_entry=True, **kwargs
         'sim_params': dtypes.get_dict('sim_params', **sim),
         'env_params': env_name,
         'collections': ['pose'] + c,
-        **kwargs
+        # **kwargs
     }
+    kw.update(kwargs)
     if en:
         exp_conf = dtypes.get_dict('exp_conf', enrichment=dtypes.base_enrich(), **kw)
     else:
@@ -52,10 +59,13 @@ def pref_exp(name, dur=5.0, c=['olfactor'], enrichment=dtypes.base_enrich(types=
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
+
 grouped_exp_dict = {
     'exploration': {
         **simple_exp('focus'),
         **simple_exp('dish'),
+        **simple_exp('nengo_dish', dur=3.0),
+        # **simple_exp('nengo_dish', dur=2.0, enrichment=dtypes.base_enrich(preprocessing={'rescale_by' : 1000}), en=False),
         **simple_exp('dispersion')},
 
     'chemotaxis': {**chemotaxis_exp('chemotaxis_approach', source=(0.04, 0.0)),
@@ -63,7 +73,7 @@ grouped_exp_dict = {
                    **chemotaxis_exp('chemotaxis_diffusion', dur=10.0),
                    **chemotaxis_exp('chemotaxis_RL', source=(0.04, 0.0), dur=10.0, c=['olfactor', 'memory']),
                    **chemotaxis_exp('reorientation'),
-                   **exp('food_at_bottom', sim={'duration': 20.0, 'timestep': 0.09, 'sample': 'Fed'}, en=True)},
+                   **exp('food_at_bottom', sim={'duration': 20.0, 'timestep': 0.09}, en=True)},
 
     'odor_preference': {**pref_exp('odor_pref_test'),
                         **pref_exp('odor_pref_test_on_food'),
@@ -88,7 +98,10 @@ grouped_exp_dict = {
               **game_exp('capture_the_flag'),
               **game_exp('catch_me')},
 
-    'other': {**exp('realistic_imitation', sim={'Box2D': True}, c=['midline', 'contour'])}
+    'other': {
+        **exp('realistic_imitation', sim={'Box2D': True}, c=['midline', 'contour']),
+        # **exp('dish', exp_name='imitation', sim={'sample' : None}),
+              }
 
 }
 

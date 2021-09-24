@@ -163,7 +163,7 @@ def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
     from lib.gui.tabs.gui import check_toggles
     from lib.gui.aux.elements import SectionDict
     sec_dict = SectionDict(name=title, dict=dic, type_dict=type_dict)
-    l = sec_dict.init_section()
+    l = sec_dict.layout
     l.append([sg.Ok(), sg.Cancel()])
     w = sg.Window(title, l, **w_kws, **kwargs)
     while True:
@@ -292,6 +292,7 @@ def import_window(datagroup_id,raw_dic):
                     'group_id': gID,
                     **conf}
                 w.close()
+                # print(conf)
                 from lib.stor.managing import build_dataset
                 source_ids=list(raw_dic.keys())
                 sources=list(raw_dic.values())

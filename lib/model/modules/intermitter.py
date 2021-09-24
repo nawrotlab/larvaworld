@@ -210,7 +210,10 @@ class Intermitter(Effector):
 
     def build_dict(self):
         d = {}
-        d[nam.cum('t')] = self.total_t
+        if self.total_t!=0 :
+            d[nam.cum('t')] = self.total_t
+        else :
+            d[nam.cum('t')] = self.total_ticks*self.dt
         d[nam.num('tick')] = self.total_ticks
         for c in ['feedchain', 'stridechain', 'pause']:
             t = nam.dur(c)
@@ -438,7 +441,7 @@ def get_EEB_poly1d(sample_dataset=None, dt=None, **kwargs):
         kws = {
             'crawl_freq': sample['crawl_freq'],
             'feed_freq': sample['feed_freq'],
-            'dt': dt if dt is not None else sample['dt'],
+            'dt': sample['dt'],
             'crawl_bouts': True,
             'feed_bouts': True,
             'stridechain_dist': sample['stride']['best'],
@@ -446,7 +449,9 @@ def get_EEB_poly1d(sample_dataset=None, dt=None, **kwargs):
             'feeder_reoccurence_rate': sample['feeder_reoccurence_rate'],
         }
     else:
-        kws = {**kwargs, 'dt': dt}
+        kws = kwargs
+    if dt is not None :
+        kws['dt'] = dt
 
     EEBs = np.arange(0, 1, 0.05)
     ms = []

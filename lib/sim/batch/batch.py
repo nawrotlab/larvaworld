@@ -7,6 +7,7 @@ Created by bagjohn on April 5th 2020
 '''
 
 # !/usr/bin/python
+import logging
 import os
 import time
 import numpy as np
@@ -51,7 +52,12 @@ def batch_run(**kwargs):
 def get_batch_env(batch_id, batch_type, dir_path, parent_dir_path, exp, params, optimization, space,batch_methods, **env_kws):
     traj_name = batch_id
     filename = f'{parent_dir_path}/{batch_type}.hdf5'
-
+    env_kws['overwrite_file'] = True
+    env = Environment(trajectory=traj_name, filename=filename, **env_kws)
+    print('Created novel environment')
+    traj = prepare_traj(env.traj, exp, params, batch_id, dir_path)
+    traj = config_traj(traj, optimization, batch_methods)
+    traj.f_explore(space)
     if os.path.exists(dir_path) :
         if env_kws['resumable']:
             try:
@@ -115,6 +121,7 @@ def _batch_run(batch_type='unnamed', batch_id='template', space=None, exp=None, 
         'resume_folder': dir_path,
         'ncores': ncores,
         'wrap_mode': pypetconstants.WRAP_MODE_QUEUE,
+        'report_progress' : (20, 'pypet', logging.CRITICAL),
         # 'ncores': os.cpu_count(),
         'use_pool': True,  # Our runs are inexpensive we can get rid of overhead by using a pool
         'freeze_input': True,  # We can avoid some overhead by freezing the input to the pool

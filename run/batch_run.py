@@ -54,8 +54,13 @@ batch_conf['batch_type'] = batch_type
 
 batch_conf['optimization']['operations']={'mean':True, 'abs':False, 'std':False}
 
-exec = Exec(mode='batch', conf=batch_conf, run_externally=True)
+from lib.stor.larva_dataset import LarvaDataset
+from lib.conf.batch_conf import fit_tortuosity_batch
+batch_conf=fit_tortuosity_batch(d=LarvaDataset('/home/panos/nawrot_larvaworld/larvaworld/data/pairs/controls_20l'),
+                                model='imitation', exp='dish', idx=0)
+exec = Exec(mode='batch', conf=batch_conf, run_externally=False)
 exec.run()
+
 
 # batch_kwargs = prepare_batch(batch_conf)
 #

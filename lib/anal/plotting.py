@@ -1,7 +1,9 @@
 import copy
 import heapq
 import itertools
+import warnings
 
+from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -14,14 +16,15 @@ from scipy import stats, signal, interpolate
 from scipy.stats import ttest_ind
 from sklearn.linear_model import LinearRegression
 from PIL import Image
+import os
 
-from lib.anal.fitting import *
 from lib.anal.combining import combine_images, combine_pdfs
 from lib.conf import conf
+from lib.aux import naming as nam
 from lib.aux import functions as fun
 from lib.conf.par import getPar, chunk_dict
 from lib.model.DEB.deb import DEB
-from lib.model.modules.intermitter import get_EEB_poly1d
+
 from lib.stor import paths
 
 '''
@@ -119,6 +122,7 @@ def plot_stride_distribution(dataset, agent_id=None, save_to=None):
 
 
 def plot_stridechains(dataset, save_to=None):
+    from lib.anal.fitting import powerlaw_cdf, exponential_cdf, lognorm_cdf
     d = dataset
 
     if save_to is None:
@@ -185,6 +189,7 @@ def plot_stridechains(dataset, save_to=None):
 
 
 def plot_bend_pauses(dataset, save_to=None):
+    from lib.anal.fitting import compute_density, powerlaw_cdf, exponential_cdf, lognorm_cdf
     d = dataset
     if save_to is None:
         save_to = os.path.join(d.plot_dir, 'plot_bend_pauses')
@@ -221,9 +226,6 @@ def plot_bend_pauses(dataset, save_to=None):
 def plot_marked_strides(datasets, labels=None, agent_idx=0, agent_id=None, slice=[20, 40],
                         subfolder='individuals', save_as=None, save_to=None, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder)
-    for d in datasets:
-        if not hasattr(d, 'step'):
-            d.load()
     if save_as is None:
         temp = f'marked_strides_{slice[0]}-{slice[1]}' if slice is not None else f'marked_strides'
         filename = f'{temp}_{agent_id}.pdf' if agent_id is not None else f'{temp}_{agent_idx}.pdf'
@@ -252,8 +254,9 @@ def plot_marked_strides(datasets, labels=None, agent_idx=0, agent_id=None, slice
         ax.set_xlim(slice)
         ax.legend(handles=handles, loc='upper right')
 
+        step_data=d.read('step')
         temp_id = d.agent_ids[agent_idx] if agent_id is None else agent_id
-        s = copy.deepcopy(d.step_data.xs(temp_id, level='AgentID', drop_level=True))
+        s = copy.deepcopy(step_data.xs(temp_id, level='AgentID', drop_level=True))
         s.set_index(s.index * d.dt, inplace=True)
         ax.plot(s[p], color='blue')
         for i, (c, col) in enumerate(zip(chunks, chunk_cols)):
@@ -288,9 +291,9 @@ def plot_marked_strides(datasets, labels=None, agent_idx=0, agent_id=None, slice
 def plot_sample_tracks(datasets, labels=None, mode='strides', agent_idx=0, agent_id=None, slice=[20, 40],
                        subfolder='individuals', save_as=None, save_to=None, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder)
-    for d in datasets:
-        if not hasattr(d, 'step'):
-            d.load()
+    # for d in datasets:
+    #     if not hasattr(d, 'step'):
+    #         d.load()
     if save_as is None:
         temp = f'sample_marked_{mode}_{slice[0]}-{slice[1]}'
         filename = f'{temp}_{agent_id}.pdf' if agent_id is not None else f'{temp}_{agent_idx}.pdf'
@@ -328,8 +331,9 @@ def plot_sample_tracks(datasets, labels=None, mode='strides', agent_idx=0, agent
         ax.set_xlim(slice)
         ax.legend(handles=handles, loc='upper right')
 
+        step_data = d.read('step')
         temp_id = d.agent_ids[agent_idx] if agent_id is None else agent_id
-        s = copy.deepcopy(d.step_data.xs(temp_id, level='AgentID', drop_level=True))
+        s = copy.deepcopy(step_data.xs(temp_id, level='AgentID', drop_level=True))
         s.set_index(s.index * d.dt, inplace=True)
         ax.plot(s[p], color='blue')
         for i, (c, col) in enumerate(zip(chunks, chunk_cols)):
@@ -1302,6 +1306,7 @@ def plot_stride_Dbend(datasets, labels=None, show_text=False, subfolder='stride'
 def plot_EEB_vs_food_quality(samples=['Fed', 'Deprived', 'Starved'], dt=None,
                              species_list=['rover', 'sitter', 'default'], save_to=None, return_fig=False,
                              show=False, **kwargs):
+    from lib.model.modules.intermitter import get_EEB_poly1d
     filename = f'EEB_vs_food_quality.{suf}'
     qs = np.arange(0.01, 1, 0.01)
     # qs=[1.0,0.75,0.5,0.25,0.15]
@@ -1862,6 +1867,7 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
                         plot_fits='all', range='default', print_fits=False, only_fit_one=True, mode='cdf',
                         subfolder='bouts', refit_distros=False, test_detection=False,
                         save_to=None, save_as=None, save_fits_to=None, save_fits_as=None, return_fig=False, show=False):
+    from lib.anal.fitting import compute_density,  get_distro, fit_bout_distros
     warnings.filterwarnings('ignore')
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
 
@@ -1976,14 +1982,14 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
                 idx_Kmax = 0
 
             else:
-                values, pdfs, cdfs, Ks, idx_Kmax, res, res_dict, best = fit_bout_distros(x0, xmin, xmax, fr, discr,
-                                                                                         dataset_id=label, bout=bout,
-                                                                                         print_fits=print_fits,
-                                                                                         combine=combine)
-
-                u2, du2, c2, c2cum = values
+                fit_dic=fit_bout_distros(x0, xmin, xmax, fr, discr,dataset_id=label, bout=bout,
+                                         print_fits=print_fits,combine=combine)
+                idx_Kmax=fit_dic['idx_Kmax']
+                cdfs=fit_dic['cdfs']
+                pdfs=fit_dic['pdfs']
+                u2, du2, c2, c2cum = fit_dic['values']
                 lws[idx_Kmax] = 4
-                fits[label].update(res_dict)
+                fits[label].update(fit_dic['res_dict'])
             if mode == 'cdf':
                 ylabel = 'cumulative probability'
                 xrange = u2
@@ -2512,8 +2518,6 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
                          save_to=None, save_as=None, save_fits_as=None, return_fig=False, show=False):
     warnings.filterwarnings('ignore')
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
-    for d in datasets:
-        d.load(step=False)
     filename = f'endpoint_params_{mode}.{suf}' if save_as is None else save_as
     fit_filename = 'endpoint_ttest.csv' if save_fits_as is None else save_fits_as
     fit_filepath = os.path.join(save_to, fit_filename)
@@ -2576,9 +2580,15 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
             ]
         else:
             raise ValueError('Provide parameter shortcuts or define a mode')
-
+    ends=[]
+    for d in datasets :
+        try :
+            e=d.endpoint_data
+        except :
+            e=d.read('end')
+        ends.append(e)
     pars, = getPar(par_shorts, to_return=['d'])
-    pars = [p for p in pars if all([p in d.endpoint_data.columns for d in datasets])]
+    pars = [p for p in pars if all([p in e.columns for e in ends])]
     symbols, exp_symbols, xlabels, xlims, disps = getPar(par_shorts, to_return=['s', 's', 'l', 'lim', 'd'])
 
     if mode == 'stride_def':
@@ -2590,8 +2600,12 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
 
     lw = 3
     Npars = len(pars)
-    Ncols = int(np.min([Npars, 4]))
-    Nrows = int(np.ceil(Npars / Ncols))
+    if Npars==4:
+        Ncols=2
+        Nrows=2
+    else:
+        Ncols = int(np.min([Npars, 4]))
+        Nrows = int(np.ceil(Npars / Ncols))
     fig_s = 5
 
     fig, axs = plt.subplots(Nrows, Ncols, figsize=(fig_s * Ncols, fig_s * Nrows), sharey=True)
@@ -2599,7 +2613,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
     for i, (p, symbol, xlabel, xlim, disp) in enumerate(zip(pars, symbols, xlabels, xlims, disps)):
         # if xlim is not None :
         #     print(p, xlabel,xlim, mode(xlim), xlim[0])
-        values = [d.endpoint_data[p].values for d in datasets]
+        values = [e[p].values for e in ends]
         # print(p)
         if Ndatasets > 1:
             for ind, (v1, v2) in zip(fit_ind, itertools.combinations(values, 2)):

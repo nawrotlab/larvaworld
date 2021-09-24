@@ -175,7 +175,7 @@ def set_ParDb():
             'std': [nam.std, {}, '_std', 'suf', wave, {}],
             'max': [nam.max, {}, '_max', 'suf', sub, {'q': 'max'}],
             'fin': [nam.final, {}, '_fin', 'suf', sub, {'q': 'fin'}],
-            'scal': [nam.scal, {}, 'sigma', 'pre', ast, {}]}
+            'scal': [nam.scal, {}, 's', 'pre', ast, {}]}
         entries = []
         for base in bases:
             for type in types:
@@ -294,7 +294,7 @@ def set_ParDb():
         chunk_ar.append(
             [nam.id(cn), f'{suf}_id', sub(cn, 'id'), sub(hat(cn), 'id'), l_num])
         chunk_ar.append([nam.dur_ratio(cn), f'{suf}_tr', sub('r', cn), sub(hat('r'), cn), l_time_ratio])
-        chunk_ar.append([nam.num(cn), f'{suf}_N', sub('N', f'{cn}sigma'), sub(hat('N'), f'{cn}sigma'), f'# {cn}sigma'])
+        chunk_ar.append([nam.num(cn), f'{suf}_N', sub('N', f'{cn}s'), sub(hat('N'), f'{cn}s'), f'# {cn}s'])
     chunk_ar = np.array(chunk_ar)
 
     temp_dsp = [[dsp, 'dsp', 'dsp', hat('dsp')],
@@ -303,14 +303,14 @@ def set_ParDb():
     dsp_ar = []
     for (fn, sn, sym, esym) in temp_dsp:
         dsp_ar.append([fn, sn, sym, esym, l_dst])
-        dsp_ar.append([nam.scal(fn), f'sigma{sn}', sup(sym, '*'), sup(esym, '*'), l_sc_dst])
+        dsp_ar.append([nam.scal(fn), f's{sn}', sup(sym, '*'), sup(esym, '*'), l_sc_dst])
         dsp_ar.append([nam.mean(fn), f'{sn}_mu', bar(sym), bar(esym), l_dst])
-        dsp_ar.append([nam.scal(nam.mean(fn)), f'sigma{sn}_mu', sup(bar(sym), '*'), sup(bar(esym), '*'), l_sc_dst])
+        dsp_ar.append([nam.scal(nam.mean(fn)), f's{sn}_mu', sup(bar(sym), '*'), sup(bar(esym), '*'), l_sc_dst])
         dsp_ar.append([nam.max(fn), f'{sn}_max', sub(sym, 'max'), sub(esym, 'max'), l_dst])
         dsp_ar.append(
-            [nam.scal(nam.max(fn)), f'sigma{sn}_max', subsup(sym, 'max', '*'), subsup(esym, 'max', '*'), l_sc_dst])
+            [nam.scal(nam.max(fn)), f's{sn}_max', subsup(sym, 'max', '*'), subsup(esym, 'max', '*'), l_sc_dst])
         dsp_ar.append([nam.final(fn), f'{sn}_fin', sub(sym, 'fin'), sub(esym, 'fin'), l_dst])
-        dsp_ar.append([nam.scal(nam.final(fn)), f'sigma{sn}_fin', subsup(sym, 'fin', '*'), subsup(esym, 'fin', '*'),
+        dsp_ar.append([nam.scal(nam.final(fn)), f's{sn}_fin', subsup(sym, 'fin', '*'), subsup(esym, 'fin', '*'),
                        l_sc_dst])
 
     dsp_ar = np.array(dsp_ar)
@@ -816,4 +816,5 @@ if __name__ == '__main__':
     # print(par_in_db(par='stride_start'))
     # print(get_par_dict(par='stride_start', retrieve_from='par_db'))
     # print([k for k in par_db.index if k.startswith('dsp')])
-    print(par_db.loc['dsp40'])
+    print(par_db.loc['sdsp'])
+

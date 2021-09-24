@@ -89,14 +89,13 @@ def compute_freq(s, e, dt, parameters, freq_range=None, compare_params=False):
     # if is_last:
     #     self.save()
 
-def filter(s, dt, Npoints, config=None, freq=2, N=1, inplace=True, recompute=False):
-    if not recompute and config is not None :
-        prev = config['filtered_at']
-        if prev not in [None, np.nan, 'nan'] and not np.isnan(prev):
-            print(f'Dataset already filtered at {prev}. If you want to apply additional filter set recompute to True')
-            return
-    if config is not None :
-        config['filtered_at'] = freq
+def filter(s, dt, Npoints, config, freq=2, N=1, inplace=True, recompute=False,**kwargs):
+    if freq in ['', None, np.nan]:
+        return
+    if 'filtered_at' in config and not recompute :
+        print(f'Dataset already filtered at {config["filtered_at"]}. If you want to apply additional filter set recompute to True')
+        return
+    config['filtered_at'] = freq
 
     points = nam.midline(Npoints, type='point') + ['centroid', '']
     pars = nam.xy(points, flat=True)
@@ -108,7 +107,7 @@ def filter(s, dt, Npoints, config=None, freq=2, N=1, inplace=True, recompute=Fal
         s[p] = f_array[:, j, :].flatten()
     print(f'All spatial parameters filtered at {freq} Hz')
 
-def interpolate_nans(s, Npoints, pars=None):
+def interpolate_nan_values(s, Npoints, pars=None,**kwargs):
     if pars is None :
         points = nam.midline(Npoints, type='point') + ['centroid', '']
         pars = nam.xy(points, flat=True)
@@ -118,16 +117,16 @@ def interpolate_nans(s, Npoints, pars=None):
             s.loc[(slice(None), id), p] = fun.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
     print('All parameters interpolated')
 
-def rescale(s,e, Npoints, config=None, recompute=False, scale=1.0):
-    if not recompute and config is not None :
-        prev = config['rescaled_by']
-        if prev not in [None, np.nan] and not np.isnan(prev):
-            print(f'Dataset already rescaled by {prev}. If you want to rescale again set recompute to True')
-            return
-    if config is not None :
-        config['rescaled_by'] = scale
+def rescale(s,e, Npoints,Ncontour, config, recompute=False, scale=1.0,**kwargs):
+    if scale in ['', None, np.nan]:
+        return
+    if 'rescaled_by' in config and not recompute :
+        print(f'Dataset already rescaled by {config["rescaled_by"]}. If you want to rescale again set recompute to True')
+        return
+    config['rescaled_by'] = scale
     points = nam.midline(Npoints, type='point') + ['centroid','']
-    pars=nam.xy(points, flat=True) + nam.dst(points) + nam.vel(points) + nam.acc(points) + ['spinelength']
+    contour_pars=nam.xy(nam.contour(Ncontour), flat=True)
+    pars=nam.xy(points, flat=True) + nam.dst(points) + nam.vel(points) + nam.acc(points) + ['spinelength']+contour_pars
     lin_pars = [p for p in pars if p in s.columns]
     for p in lin_pars:
         s[p] = s[p].apply(lambda x: x * scale)
@@ -135,7 +134,7 @@ def rescale(s,e, Npoints, config=None, recompute=False, scale=1.0):
         e['length'] = e['length'].apply(lambda x: x * scale)
     print(f'Dataset rescaled by {scale}.')
 
-def exclude_rows(s,e, dt,  flag, accepted=None, rejected=None):
+def exclude_rows(s,e, dt,  flag, accepted=None, rejected=None,**kwargs):
         if accepted is not None:
             s.loc[s[flag] != accepted[0]] = np.nan
         if rejected is not None:
@@ -147,19 +146,29 @@ def exclude_rows(s,e, dt,  flag, accepted=None, rejected=None):
 
         print(f'Rows excluded according to {flag}.')
 
-def preprocess(s,e,dt,Npoints, rescale_by=None,drop_collisions=False,interpolate_nans=False,filter_f=None,transposition=None,
-               config=None,  recompute=False,show_output=True,**kwargs) :
+def preprocess(s,e,config, rescale_by=None,drop_collisions=False,interpolate_nans=False,filter_f=None,transposition=None,
+               recompute=False,show_output=True,**kwargs) :
+    c = {
+        's': s,
+        'e': e,
+        'dt': config['dt'],
+        'Npoints': config['Npoints'],
+        'Ncontour': config['Ncontour'],
+        'point': config['point'],
+        'recompute': recompute,
+        'config': config,
+    }
     with fun.suppress_stdout(show_output):
         if rescale_by is not None :
-            rescale(s,e,Npoints, config, recompute=recompute, scale=rescale_by)
+            rescale(scale=rescale_by, **c)
         if drop_collisions :
-            exclude_rows(s,e,dt, flag='collision_flag', accepted=[0])
+            exclude_rows(flag='collision_flag', accepted=[0], **c)
         if interpolate_nans :
-            interpolate_nans(s, Npoints)
+            interpolate_nan_values(**c)
         if filter_f is not None :
-            filter(s, dt, Npoints, config, recompute=recompute, freq=filter_f)
+            filter(req=filter_f, **c)
         if transposition is not None :
-            align_trajectories(s, config=config,mode=transposition)
+            align_trajectories(mode=transposition, **c)
         return s,e
 
 def generate_traj_colors(s, sp_vel=None, ang_vel=None):
@@ -182,18 +191,16 @@ def generate_traj_colors(s, sp_vel=None, ang_vel=None):
             s[l] = [(np.nan, np.nan, np.nan)] * N
     return s
 
-def process(s,e,dt,Npoints,Ncontour, point, config=None,
+def process(s,e,config,mode='minimal',traj_colors=True,show_output=True,
             types={'angular':True, 'spatial':True, 'source':True, 'dispersion':True, 'tortuosity':True, 'PI':True},
-            mode='minimal',traj_colors=True,
-            distro_dir=None, dsp_dir=None, show_output=True,
             source=None,dsp_starts=[0], dsp_stops=[40], tor_durs=[2, 5, 10, 20],  **kwargs):
     c = {
         's': s,
         'e': e,
-        'dt': dt,
-        'Npoints': Npoints,
-        'Ncontour': Ncontour,
-        'point': point,
+        'dt': config['dt'],
+        'Npoints': config['Npoints'],
+        'Ncontour': config['Ncontour'],
+        'point': config['point'],
         'config': config,
         'mode': mode,
         'aux_dir': f'{config["dir"]}/data/aux.h5',
@@ -226,7 +233,7 @@ def process(s,e,dt,Npoints,Ncontour, point, config=None,
                 xs = s[px].dropna().groupby('AgentID').last().values
             else :
                 raise ValueError ('No x coordinate found')
-            PI, N, N_l, N_r = compute_preference_index(xs=xs, arena_xdim=config['arena_pars']['arena_dims'][0], return_num=True, return_all=True)
+            PI, N, N_l, N_r = compute_preference_index(xs=xs, arena_xdim=config['env_params']['arena']['arena_dims'][0], return_num=True, return_all=True)
             config['PI']={'PI':PI, 'N':N, 'N_l':N_l, 'N_r':N_r}
         if traj_colors :
             try :

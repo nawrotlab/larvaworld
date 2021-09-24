@@ -6,12 +6,12 @@ import scipy as sp
 from fitter import Fitter
 from matplotlib import pyplot as plt
 import scipy.stats as st
-from scipy.stats import ks_2samp, stats, levy, norm,uniform
+from scipy.stats import ks_2samp, stats, levy, norm, uniform
 
 from lib.aux import naming as nam
 from lib.aux import functions as fun
 from lib.conf.conf import saveConf
-
+from lib.model.modules.intermitter import get_EEB_poly1d
 
 
 def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
@@ -360,7 +360,7 @@ def fit_crawl_params(d, target_point=None, fit_filepath=None, save_to=None, save
 
 
 def powerlaw_cdf(x, xmin, alpha):
-    cum=(x / xmin) ** (1 - alpha)
+    cum = (x / xmin) ** (1 - alpha)
     # print(cum)
     return 1 - cum
 
@@ -370,32 +370,39 @@ def powerlaw_pdf(x, xmin, alpha):
     # res/=sum(res)
     return res
 
+
 def levy_pdf(x, mu, sigma):
-    res=np.sqrt(sigma/(2*np.pi))*np.exp(-sigma/(2*(x-mu)))/(x-mu)**1.5
+    res = np.sqrt(sigma / (2 * np.pi)) * np.exp(-sigma / (2 * (x - mu))) / (x - mu) ** 1.5
     # print(x,res)
     return res
 
+
 def levy_cdf(x, mu, sigma):
-    res=1-sp.special.erf(np.sqrt(sigma/(2*(x-mu))))
-    if np.isnan(res[0]) :
-        res[0]=0
+    res = 1 - sp.special.erf(np.sqrt(sigma / (2 * (x - mu))))
+    if np.isnan(res[0]):
+        res[0] = 0
     return res
+
 
 def norm_pdf(x, mu, sigma):
-    res=1/(sigma*np.sqrt(2*np.pi))*np.exp(-0.5*((x-mu)/sigma)**2)
+    res = 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
     return res
+
 
 def norm_cdf(x, mu, sigma):
-    res=0.5*(1+sp.special.erf((x-mu)/(sigma*np.sqrt(2))))
-    if np.isnan(res[0]) :
-        res[0]=0
+    res = 0.5 * (1 + sp.special.erf((x - mu) / (sigma * np.sqrt(2))))
+    if np.isnan(res[0]):
+        res[0] = 0
     return res
 
+
 def uniform_pdf(x, xmin, xmax):
-    return uniform.pdf(x, xmin, xmin+xmax)
+    return uniform.pdf(x, xmin, xmin + xmax)
+
 
 def uniform_cdf(x, xmin, xmax):
-    return uniform.cdf(x, xmin, xmin+xmax)
+    return uniform.cdf(x, xmin, xmin + xmax)
+
 
 def exponential_cdf(x, xmin, beta):
     return 1 - np.exp(-beta * (x - xmin))
@@ -406,9 +413,10 @@ def exponential_pdf(x, xmin, beta):
 
 
 def lognorm_cdf(x, mu, sigma, xmin=0):
-    cdf= 0.5 + 0.5 * sp.special.erf((np.log(x) - mu) / np.sqrt(2) / sigma)
+    cdf = 0.5 + 0.5 * sp.special.erf((np.log(x) - mu) / np.sqrt(2) / sigma)
     # print(cdf)
     return cdf
+
 
 def lognormal_pdf(x, mu, sigma, xmin=0):
     pdf = 1 / (x * sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((np.log(x) - mu) / sigma) ** 2)
@@ -419,20 +427,22 @@ def lognormal_pdf(x, mu, sigma, xmin=0):
 def logNpow_pdf(x, mu, sigma, alpha, xmin, switch, ratio, overlap=0):
     x0 = x[x < switch]
     x1 = x[x >= switch]
-    log_pdf = lognormal_pdf(x0, mu, sigma, xmin)*ratio
+    log_pdf = lognormal_pdf(x0, mu, sigma, xmin) * ratio
     # log_pdf = log_pdf/np.sum(log_pdf)*ratio
-    pow_pdf = powerlaw_pdf(x1, switch, alpha)* (1 - ratio)
+    pow_pdf = powerlaw_pdf(x1, switch, alpha) * (1 - ratio)
     # pow_pdf = pow_pdf/np.sum(pow_pdf) * (1 - ratio)
     pdf = np.hstack([log_pdf, pow_pdf])
     # pdf/=sum(pdf)
     return pdf
 
+
 def logNpow_cdf2(x, mu, sigma, alpha, xmin, switch, ratio, overlap=0):
-    pdf=logNpow_pdf(x, mu, sigma, alpha, xmin, switch, ratio, overlap)
-    cdf=np.cumsum(pdf)
+    pdf = logNpow_pdf(x, mu, sigma, alpha, xmin, switch, ratio, overlap)
+    cdf = np.cumsum(pdf)
     # print(cdf)
 
     return cdf
+
 
 def logNpow_cdf(x, mu, sigma, alpha, xmin, switch, ratio, overlap=0):
     x0 = x[x < switch]
@@ -446,19 +456,21 @@ def logNpow_cdf(x, mu, sigma, alpha, xmin, switch, ratio, overlap=0):
     cdf = 1 - cdf0
     return cdf
 
-def get_distro(name, x, range, mode='cdf', **kwargs) :
-    ddfs={
-             'powerlaw' : {'cdf' : powerlaw_cdf, 'pdf': powerlaw_pdf, 'args' : ['alpha'], 'rvs' : 'trunc_powerlaw'},
-             'exponential' : {'cdf' : exponential_cdf, 'pdf': exponential_pdf, 'args' : ['beta'],'rvs' :''},
-             'lognormal' : {'cdf' : lognorm_cdf, 'pdf': lognormal_pdf, 'args' : ['mu', 'sigma'], 'rvs' :''},
-             'logNpow' : {'cdf' : logNpow_cdf, 'pdf': logNpow_pdf, 'args' : ['alpha', 'mu', 'sigma', 'switch', 'ratio', 'overlap'], 'rvs' : 'logNpow_distro'},
-             'levy' : {'cdf' : levy_cdf, 'pdf': levy_pdf, 'args' : ['mu', 'sigma'], 'rvs' : ''},
-             'norm' : {'cdf' : norm_cdf, 'pdf': norm_pdf, 'args' : ['mu', 'sigma'], 'rvs' : ''}
+
+def get_distro(name, x, range, mode='cdf', **kwargs):
+    ddfs = {
+        'powerlaw': {'cdf': powerlaw_cdf, 'pdf': powerlaw_pdf, 'args': ['alpha'], 'rvs': 'trunc_powerlaw'},
+        'exponential': {'cdf': exponential_cdf, 'pdf': exponential_pdf, 'args': ['beta'], 'rvs': ''},
+        'lognormal': {'cdf': lognorm_cdf, 'pdf': lognormal_pdf, 'args': ['mu', 'sigma'], 'rvs': ''},
+        'logNpow': {'cdf': logNpow_cdf, 'pdf': logNpow_pdf,
+                    'args': ['alpha', 'mu', 'sigma', 'switch', 'ratio', 'overlap'], 'rvs': 'logNpow_distro'},
+        'levy': {'cdf': levy_cdf, 'pdf': levy_pdf, 'args': ['mu', 'sigma'], 'rvs': ''},
+        'norm': {'cdf': norm_cdf, 'pdf': norm_pdf, 'args': ['mu', 'sigma'], 'rvs': ''}
     }
-    xmin, xmax=range
-    func=ddfs[name][mode]
-    args=ddfs[name]['args']
-    return func(x=x,xmin=xmin, **{a : kwargs[a] for a in args})
+    xmin, xmax = range
+    func = ddfs[name][mode]
+    args = ddfs[name]['args']
+    return func(x=x, xmin=xmin, **{a: kwargs[a] for a in args})
 
 
 def get_logNpow(dur, dur0, dur1, durmid, fr, overlap=0, discrete=False):
@@ -467,20 +479,16 @@ def get_logNpow(dur, dur0, dur1, durmid, fr, overlap=0, discrete=False):
     r = len(d0) / len(dur)
     d00 = dur[dur < durmid + overlap * (dur1 - durmid)]
     m, s = get_lognormal(d00, dur0)
-    a = get_powerlaw_alpha(d1, durmid, dur1, fr, discrete=discrete)
+    a = get_powerlaw_alpha(d1, durmid, dur1, discrete=discrete)
     return m, s, a, r
 
 
-def get_powerlaw_alpha(dur, dur0, dur1, fr, discrete=False):
-
-    from powerlaw import Fit
-    if discrete:
-        results = Fit(dur, xmin=dur0, xmax=dur1, discrete=True)
-    else:
-        results = Fit(np.array(dur * fr).astype(int), xmin=int(dur0 * fr), xmax=int(dur1 * fr), discrete=True)
-    results = Fit(dur, xmin=dur0, xmax=dur1, discrete=discrete)
-    alpha = results.power_law.alpha
-    return alpha
+def get_powerlaw_alpha(dur, dur0, dur1, discrete=False):
+    with fun.suppress_stdout_stderr():
+        from powerlaw import Fit
+        results = Fit(dur, xmin=dur0, xmax=dur1, discrete=discrete)
+        alpha = results.power_law.alpha
+        return alpha
 
 
 def get_lognormal(dur, xmin):
@@ -511,15 +519,15 @@ def KS(a1, a2):
 def MSE(a1, a2, scaled=False):
     # e=10**-5
     # s=a1+1 if scaled else 1
-    if scaled :
-        s1=sum(a1)
-        s2=sum(a2)
-    else :
-        s1,s2=1,1
-    return np.sum((a1/s1 - a2/s2) ** 2) / a1.shape[0]
+    if scaled:
+        s1 = sum(a1)
+        s2 = sum(a2)
+    else:
+        s1, s2 = 1, 1
+    return np.sum((a1 / s1 - a2 / s2) ** 2) / a1.shape[0]
 
 
-def logNpow_switch(x, xmin, xmax, u2,du2, c2cum,c2, fr, discrete=False, fit_by='cdf'):
+def logNpow_switch(x, xmin, xmax, u2, du2, c2cum, c2, fr, discrete=False, fit_by='cdf'):
     xmids = u2[1:-int(len(u2) / 3)][::2]
     overlaps = np.linspace(0, 1, 6)
     # overlaps = [0]
@@ -533,6 +541,7 @@ def logNpow_switch(x, xmin, xmax, u2,du2, c2cum,c2, fr, discrete=False, fit_by='
                 temp[i, j] = MSE(c2cum, lp_cdf)
             elif fit_by == 'pdf':
                 temp[i, j] = MSE(c2, lp_pdf)
+
     if all(np.isnan(temp.flatten())):
         return np.nan
     else:
@@ -541,23 +550,43 @@ def logNpow_switch(x, xmin, xmax, u2,du2, c2cum,c2, fr, discrete=False, fit_by='
         ov = overlaps[jj]
         return xmid, ov
 
-def fit_bouts(dataset, id=None, store=False, bouts=['stride', 'pause']) :
-    if id is None :
-        id=dataset.id
-    dic={}
-    for bout, p, disc,comb, (xmin, xmax) in zip(bouts,
-                                           ['stridechain_length', 'pause_dur'],
-                                           [True, False],
-                                           [False, True],
-                                           [(1, 100), (0.4, 20.0)]):
-        x0 = dataset.get_par(p).values
-        dic[bout]=fit_bout_distros(x0, xmin, xmax, fr=dataset.fr, discrete=disc, print_fits=True,
-                     dataset_id=id, bout=bout, combine=comb, store=store)
+
+def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=['stride', 'pause'], **kwargs):
+    if id is None:
+        id = config['id']
+    config['bout_distros'] = {}
+    dic = {}
+    for bout, p, disc, comb, (xmin, xmax) in zip(bouts,
+                                                 ['stridechain_length', 'pause_dur'],
+                                                 [True, False],
+                                                 [False, True],
+                                                 [(1, 100), (0.4, 20.0)]):
+        if dataset is not None:
+            x0 = dataset.get_par(p).values
+        elif s is not None:
+            x0 = s[p].dropna().values
+        dic = fit_bout_distros(x0, xmin, xmax, fr=config['fr'], discrete=disc, print_fits=True,
+                               dataset_id=id, bout=bout, combine=comb, store=store)
+        config['bout_distros'][bout] = dic['best'][bout]
+
+    config['intermitter'] = {
+        nam.freq('crawl'): e[nam.freq(nam.scal(nam.vel('')))].mean(),
+        nam.freq('feed'): e[nam.freq('feed')].mean() if nam.freq('feed') in e.columns else 2.0,
+        'dt': config['dt'],
+        'crawl_bouts': True,
+        'feed_bouts': True,
+        'stridechain_dist': config['bout_distros']['stride']['best'],
+        'pause_dist': config['bout_distros']['pause']['best'],
+        'feeder_reoccurence_rate': None,
+    }
+    config['EEB_poly1d'] = get_EEB_poly1d(**config['intermitter']).c.tolist()
+
     return dic
+
 
 def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=True,
                      dataset_id='dataset', bout='pause', combine=True, store=False, fit_by='cdf'):
-    with fun.suppress_stdout(False):
+    with fun.suppress_stdout(True):
         warnings.filterwarnings('ignore')
         x = x0[x0 >= xmin]
         x = x[x <= xmax]
@@ -565,9 +594,8 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
         u2, du2, c2, c2cum = compute_density(x, xmin, xmax, Nbins=Nbins)
         values = [u2, du2, c2, c2cum]
 
-
         a2 = 1 + len(x) / np.sum(np.log(x / xmin))
-        a = get_powerlaw_alpha(x, xmin, xmax, fr, discrete=discrete)
+        a = get_powerlaw_alpha(x, xmin, xmax, discrete=discrete)
         p_cdf = 1 - powerlaw_cdf(u2, xmin, a)
         p_pdf = powerlaw_pdf(du2, xmin, a)
 
@@ -588,13 +616,12 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
         nor_pdf = norm_pdf(du2, m_nor, s_nor)
 
         # m_nor, s_nor = norm.fit(x)
-        uni_cdf = 1-uniform_cdf(u2, xmin, xmin+xmax)
-        uni_pdf = uniform_pdf(du2, xmin, xmin+xmax)
-
-
+        uni_cdf = 1 - uniform_cdf(u2, xmin, xmin + xmax)
+        uni_pdf = uniform_pdf(du2, xmin, xmin + xmax)
 
         if np.isnan(xmid) and combine:
-            xmid, overlap = logNpow_switch(x, xmin, xmax, u2,du2, c2cum,c2, fr, discrete, fit_by)
+            xmid, overlap = logNpow_switch(x, xmin, xmax, u2, du2, c2cum, c2, fr, discrete, fit_by)
+
         if not np.isnan(xmid):
             mm, ss, aa, r = get_logNpow(x, xmin, xmax, xmid, fr, discrete=discrete, overlap=overlap)
             lp_cdf = 1 - logNpow_cdf(u2, mm, ss, aa, xmin, xmid, r)
@@ -605,7 +632,7 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
             lp_cdf, lp_pdf = None, None
             # lp_st, lp_pv = np.nan, np.nan
 
-        if fit_by=='cdf' :
+        if fit_by == 'cdf':
             KS_pow = MSE(c2cum, p_cdf)
             KS_exp = MSE(c2cum, e_cdf)
             KS_logn = MSE(c2cum, l_cdf)
@@ -613,7 +640,7 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
             KS_lev = MSE(c2cum, lev_cdf)
             KS_norm = MSE(c2cum, nor_cdf)
             KS_uni = MSE(c2cum, uni_cdf)
-        elif fit_by=='pdf' :
+        elif fit_by == 'pdf':
             KS_pow = MSE(c2, p_pdf)
             KS_exp = MSE(c2, e_pdf)
             KS_logn = MSE(c2, l_pdf)
@@ -633,7 +660,9 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
         # idx_Kmax = 3
         idx_Kmax = np.nanargmin(Ks)
 
-        res = np.round([a, KS_pow, b, KS_exp, m, s, KS_logn, mm, ss, aa, xmid, r, overlap, KS_lognNpow,m_lev, s_lev, KS_lev,m_nor, s_nor, KS_norm, KS_uni,xmin, xmax], 5)
+        res = np.round(
+            [a, KS_pow, b, KS_exp, m, s, KS_logn, mm, ss, aa, xmid, r, overlap, KS_lognNpow, m_lev, s_lev, KS_lev,
+             m_nor, s_nor, KS_norm, KS_uni, xmin, xmax], 5)
         pdfs = [p_pdf, e_pdf, l_pdf, lp_pdf, lev_pdf, nor_pdf, uni_pdf]
         cdfs = [p_cdf, e_cdf, l_cdf, lp_cdf, lev_cdf, nor_cdf, uni_cdf]
     p = bout
@@ -650,18 +679,18 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
     res_dict = dict(zip(names, res))
 
     names2 = ['alpha', 'KS_pow',
-             'beta', 'KS_exp',
-             'mu_log', 'sigma_log', 'KS_log',
-             'mu_logNpow', 'sigma_logNpow', 'alpha_logNpow', 'switch_logNpow', 'ratio_logNpow',
-             'overlap_logNpow', 'KS_logNpow',
+              'beta', 'KS_exp',
+              'mu_log', 'sigma_log', 'KS_log',
+              'mu_logNpow', 'sigma_logNpow', 'alpha_logNpow', 'switch_logNpow', 'ratio_logNpow',
+              'overlap_logNpow', 'KS_logNpow',
               f'mu_levy', f'sigma_levy', f'KS_levy',
               f'mu_norm', f'sigma_norm', f'KS_norm',
               f'KS_uni',
-             'xmin', 'xmax']
+              'xmin', 'xmax']
     res_dict2 = dict(zip(names2, res))
-    best = {bout: {'best' : get_best_distro(p, res_dict, idx_Kmax=idx_Kmax),
-                   'fits' : res_dict2}}
-    if store :
+    best = {bout: {'best': get_best_distro(p, res_dict, idx_Kmax=idx_Kmax),
+                   'fits': res_dict2}}
+    if store:
         saveConf(best, conf_type='Ref', id=dataset_id, mode='update')
 
     if print_fits:
@@ -693,7 +722,11 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
         print(best)
         print()
 
-    return values, pdfs, cdfs, Ks, idx_Kmax, res, res_dict, best
+    dic = {
+        'values': values, 'pdfs': pdfs, 'cdfs': cdfs, 'Ks': Ks, 'idx_Kmax': idx_Kmax, 'res': res, 'res_dict': res_dict,
+        'best': best
+    }
+    return dic
 
 
 def get_best_distro(bout, f, idx_Kmax=None):
@@ -824,10 +857,11 @@ def analyse_bouts(dataset, parameter, scale_coef=1, label=None, xlabel=r'time$(s
     fig.savefig(filepath, dpi=300)
     print(f'Plot saved as {filepath}.')
 
+
 def fit_distribution(dataset, parameters, num_sample=None, num_candidate_dist=10, time_to_fit=120,
                      candidate_distributions=None, distributions=None, save_fits=False,
                      chunk_only=None, absolute=False):
-    d=dataset
+    d = dataset
     if d.step_data is None or d.endpoint_data:
         d.load()
     if chunk_only is not None:
@@ -898,9 +932,10 @@ def fit_distribution(dataset, parameters, num_sample=None, num_candidate_dist=10
         d.fit_data.to_csv(d.dir_dict['conf'], index=True, header=True)
     return results
 
+
 def fit_dataset(dataset, target_dir, target_point=None, fit_filename=None,
                 angular_fit=True, endpoint_fit=True, bout_fit=True, crawl_fit=True,
-                absolute=False,save_to=None):
+                absolute=False, save_to=None):
     d = dataset
     if save_to is None:
         save_to = d.dir_dict['comp_plot']
@@ -924,14 +959,16 @@ def fit_dataset(dataset, target_dir, target_point=None, fit_filename=None,
         bout_fits = fit_bout_params(d=d, fit_filepath=file, save_to=save_to,
                                     save_as='bout_fit.pdf')
 
+
 def fit_distributions_from_file(dataset, filepath, selected_pars=None, save_fits=True):
-    d=dataset
+    d = dataset
     pars, dists, stats = d.load_fits(filepath=filepath, selected_pars=selected_pars)
-    results = fit_distribution(dataset=d,parameters=pars, distributions=dists, save_fits=save_fits)
+    results = fit_distribution(dataset=d, parameters=pars, distributions=dists, save_fits=save_fits)
     global_fit = 0
     for s, (dist_name, dist_args, statistic, p_value) in zip(stats, results):
         global_fit += np.clip(statistic - s, a_min=0, a_max=np.inf)
     return global_fit
+
 
 def fit_geom_to_stridechains(dataset, is_last=True):
     d = dataset

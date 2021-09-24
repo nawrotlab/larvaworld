@@ -13,7 +13,7 @@ from scipy.optimize import minimize
 from collections import deque
 from numpy.lib import scimath
 import pandas as pd
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 import sys, os
 import numpy as np
 from fitter import Fitter
@@ -28,6 +28,11 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Polygon, LineString
 from shapely.ops import split
 
+def maxNdigits(array, Min=None) :
+    N= len(max(array.astype(str), key=len))
+    if Min is not None :
+        N=max([N,Min])
+    return N
 
 def simplex(func, x0, args=()):
     res = minimize(func, x0, args=args, method='nelder-mead', options={'xatol': 1e-8, 'disp': False}).x[0]
@@ -1170,15 +1175,24 @@ def segment_body(N, xy0, seg_ratio=None, centered=True):
 
 
 @contextmanager
+def suppress_stdout_stderr():
+    """A context manager that redirects stdout and stderr to devnull"""
+    with open(os.devnull, 'w') as fnull:
+        with redirect_stderr(fnull) as err, redirect_stdout(fnull) as out:
+            yield (err, out)
+
+@contextmanager
 def suppress_stdout(show_output):
     with open(os.devnull, "w") as devnull:
         old_stdout = sys.stdout
+        old_stderr = sys.stderr
         if not show_output:
             sys.stdout = devnull
         try:
             yield
         finally:
             sys.stdout = old_stdout
+            sys.stderr = old_stderr
         # else :
         #     pass
 

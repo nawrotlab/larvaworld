@@ -1,7 +1,8 @@
 import copy
 import os
 
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList, \
+    CollapsibleTable2
 from lib.gui.aux.functions import col_size, col_kws, gui_col
 import lib.conf.dtype_dicts as dtypes
 from lib.gui.tabs.tab import GuiTab
@@ -48,10 +49,10 @@ class ModelTab(GuiTab):
     def build(self):
         l0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
         c1 = [CollapsibleDict(n, default=True, **kwargs) for n, kwargs in zip(self.fields, [{}, {'toggle': True}, {}, {}])]
-        s1 = CollapsibleTable('odor_gains', headings=['id', 'mean', 'std'])
+        s1 = CollapsibleTable2('odor_gains', headings=['id', 'mean', 'std'])
         c2 = [CollapsibleDict(k, default=True, toggle=True) for k in self.module_keys]
         l2 = [i.get_layout() for i in c2]
-        b = Collapsible('Brain', content=l2)
+        b = Collapsible('Brain', content=l2, state=True)
 
         fdir=paths.ModelFigFolder
         fig_dict= {f: f'{fdir}/{f}' for f in os.listdir(fdir)}
@@ -59,9 +60,10 @@ class ModelTab(GuiTab):
         g = {g1.name: g1}
 
         l = [[
-            gui_col([l0, b, *c1, s1], 0.2),
-            gui_col([g1.canvas], 0.6),
-            gui_col([g1], 0.2)
+            gui_col([l0, b, s1], 0.25),
+            gui_col([*c1, g1], 0.25),
+            gui_col([g1.canvas], 0.5),
+            # gui_col([g1], 0.2)
         ]]
 
         c = {}

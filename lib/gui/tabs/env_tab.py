@@ -5,11 +5,14 @@ import numpy as np
 import PySimpleGUI as sg
 import lib.conf.dtype_dicts as dtypes
 import lib.aux.functions as fun
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
+from lib.conf.init_dtypes import null_dict
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList, Table, \
+    Header, CollapsibleTable2
 from lib.gui.aux.functions import col_size, col_kws, t_kws, retrieve_dict, gui_col
 from lib.gui.aux.buttons import color_pick_layout, GraphButton
 from lib.conf.conf import loadConf
 from lib.gui.tabs.tab import GuiTab
+from lib.sim.single_run import run_sim
 
 
 class EnvTab(GuiTab):
@@ -101,13 +104,21 @@ class EnvTab(GuiTab):
         return env0
 
     def build_conf_env(self):
-        s1 = CollapsibleTable(self.Lg, headings=['group', 'N', 'color', 'model'],
-                              type_dict=dtypes.get_dict_dtypes('distro', class_name=self.L, basic=False))
-        s2 = CollapsibleTable(self.Sg, headings=['group', 'N', 'color', 'amount', 'odor_id'],
+
+
+        # after_header = [GraphButton('Button_Add', f'ADD {self.Lg}', tooltip=f'Add a new {self.Lg}.'),
+        #                 GraphButton('Button_Remove', f'REMOVE {self.Lg}', tooltip=f'Remove an existing {self.Lg}.')]
+
+        # s1 = Collapsible(self.Lg, next_to_header=after_header, content=[content])
+
+
+        s1 = CollapsibleTable(self.Lg, index='ID', heading_dict={'N':'distribution.N', 'color':'default_color', 'model':'model'},dict_name='LarvaGroup')
+
+        s2 = CollapsibleTable2(self.Sg, headings=['group', 'color', 'amount', 'odor_id'],
                               type_dict=dtypes.get_dict_dtypes('distro', class_name=self.S, basic=False))
-        s3 = CollapsibleTable(self.Su, headings=['id', 'color', 'amount', 'odor_id'],
+        s3 = CollapsibleTable2(self.Su, headings=['id', 'color', 'amount', 'odor_id'],
                               type_dict=dtypes.get_dict_dtypes(self.S))
-        s4 = CollapsibleTable(self.Bg, headings=['id', 'color', 'points'],
+        s4 = CollapsibleTable2(self.Bg, headings=['id', 'color', 'points'],
                               type_dict=dtypes.get_dict_dtypes(self.B))
         c = {}
         for s in [s1, s2, s3, s4]:
@@ -125,7 +136,7 @@ class EnvTab(GuiTab):
         c2 = Collapsible(self.S, content=l1)
         c.update(c2.get_subdicts())
         l2 = [c[n] for n in ['arena', self.Lg, self.S, self.Bg, 'odorscape']]
-        sl1 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
+        sl1 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'])
 
         l = gui_col([sl1,*l2], 0.25)
         return l, c, {}, {}
@@ -133,10 +144,6 @@ class EnvTab(GuiTab):
     def add_agent_layout(self, n0, color, c):
         g, g0, D, DN, Dm, Ds, s, s0 = self.group_ks(n0)
         o, o0, oM, oS = self.odor_ks(n0)
-
-        # s1 = CollapsibleDict(D, dict=dtypes.get_dict('distro', class_name=n0),
-        #                      type_dict=dtypes.get_dict_dtypes('distro', class_name=n0),
-        #                      toggle=False, disabled=True, disp_name='distribution')
 
         s1 = CollapsibleDict(D, default=True, toggle=False, disabled=True, disp_name='Distribution')
 
@@ -146,8 +153,8 @@ class EnvTab(GuiTab):
             c.update(ss.get_subdicts())
 
         l = [[sg.R(f'Add {n0}', 1, k=n0, enable_events=True, **t_kws(10)),*color_pick_layout(n0, color)],
-             [sg.T('', **t_kws(2)),sg.R('single id', 2, disabled=True, k=s, enable_events=True, **t_kws(5)),sg.In(n0, k=s0)],
-             [sg.T('', **t_kws(2)), sg.R('group id', 2, disabled=True, k=g, enable_events=True, **t_kws(5)),sg.In(k=g0)],
+             [sg.T('', **t_kws(2)),sg.R('single ID', 2, disabled=True, k=s, enable_events=True, **t_kws(5)),sg.In(n0, k=s0)],
+             [sg.T('', **t_kws(2)), sg.R('group ID', 2, disabled=True, k=g, enable_events=True, **t_kws(5)),sg.In(k=g0)],
 
              [sg.T('', **t_kws(5)), *s1.get_layout()],
              [sg.T('', **t_kws(5)), *s2.get_layout()]]
@@ -317,7 +324,7 @@ class EnvTab(GuiTab):
                                 w['food_radius'].update(value=temp / self.s)
                                 dic['sample_pars'] = {'default_color': color,
                                                       **c['food'].get_dict(v, w, check_toggle=False),
-                                                      **c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False),
+                                                      'odor' : c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False),
                                                       }
                                 if v[f'{o}_single']:
                                     dic['current'] = {v[f'{o}_id']: {
@@ -340,14 +347,19 @@ class EnvTab(GuiTab):
                             o = L
                             color = v[f'{o}_color']
                             sample_larva_pars = {'default_color': color,
-                                                 **c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False),
+                                                 'odor' :c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False),
                                                  }
                             if v[f'{o}_group']:
                                 self.update_window_distro(v, w, o)
-                                dic['current'] = {v[f'{o}_group_id']: {
-                                    **c[f'{o}_DISTRO'].get_dict(v, w, check_toggle=False),
+                                temp = c[f'{o}_DISTRO'].get_dict(v, w, check_toggle=False)
+                                model = temp['model']
+                                temp.pop('model')
+                                temp_dic= {
+                                    'model': model,
+                                    'distribution': temp,
                                     **sample_larva_pars
-                                }}
+                                }
+                                dic['current'] = {v[f'{o}_group_id']:null_dict('LarvaGroup', **temp_dic)}
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{o}_DISTRO_shape'], p1=p1,
                                                                p2=p2, line_color=color)
 
@@ -441,16 +453,15 @@ class EnvTab(GuiTab):
         return d, g
 
     def update_window_distro(self, v, w, name):
+        D=f'{name}_DISTRO'
         P1, P2 = self.get_drag_ps(scaled=True)
         s = np.abs(np.array(P2) - np.array(P1))
-        if v[f'{name}_DISTRO_shape'] == 'circle':
+        if v[f'{D}_shape'] == 'circle':
             s = tuple([np.max(s), np.max(s)])
         else:
             s = tuple(s / 2)
-        w[f'{name}_DISTRO_scale'].update(w,value=s)
-        # w[f'{name}_DISTRO_scale'].update(value=s)
-        w[f'{name}_DISTRO_loc'].update(w, value=P1)
-        # w[f'{name}_DISTRO_loc'].update(value=P1)
+        w[f'{D}_scale'].update(value=s)
+        w[f'{D}_loc'].update(value=P1)
 
     def draw_shape(self, p1, p2, shape, **kwargs):
         g=self.graph
@@ -549,14 +560,21 @@ class EnvTab(GuiTab):
         else:
             g.delete_figure(fig)
 
-    def inspect_distro(self, default_color, mode, shape, N, loc, scale, item, **kwargs):
+    def inspect_distro(self, item, default_color, mode=None, shape=None, N=None, loc=None, scale=None,orientation_range=None,distribution=None, **kwargs):
+        if distribution is not None :
+            mode=distribution['mode']
+            shape=distribution['shape']
+            N=distribution['N']
+            loc=distribution['loc']
+            scale=distribution['scale']
+            orientation_range=distribution['orientation_range']
         Ps = fun.generate_xy_distro(mode, shape, N, loc=self.scale_xy(loc, reverse=True), scale=np.array(scale) * self.s)
         group_figs = []
         for i, P0 in enumerate(Ps):
             if item == self.S:
                 temp = self.draw_source(P0, default_color, **kwargs)
             elif item == self.L:
-                temp = self.draw_larva(P0, default_color, **kwargs)
+                temp = self.draw_larva(P0, default_color,orientation_range, **kwargs)
             group_figs.append(temp)
         return group_figs
 
@@ -651,6 +669,17 @@ class EnvTab(GuiTab):
         dic['dragging'], dic['current'] = False, {}
         dic['start_point'], dic['end_point'], dic['prior_rect'] = None, None, None
 
+    def run(self, v, w,c,d,g, conf,id):
+        sim=null_dict('sim_params', sim_ID='env_test', duration=0.5)
+        exp_conf=null_dict('exp_conf', env_params=conf, sim_params=sim)
+        exp_conf['life_params']=loadConf(exp_conf['life_params'], 'Life')
+        # p = self.base_list.progressbar
+        # p.run(w, max=N)
+        exp_conf['experiment'] = 'test'
+        exp_conf['save_data_flag'] = False
+        exp_conf['vis_kwargs'] = dtypes.get_dict('visualization', mode='video', video_speed=60)
+        res = run_sim(**exp_conf)
+        return d, g
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui

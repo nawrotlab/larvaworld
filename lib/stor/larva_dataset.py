@@ -18,8 +18,8 @@ from lib.envs._larvaworld_replay import LarvaWorldReplay
 
 
 class LarvaDataset:
-    def __init__(self, dir, id='unnamed', fr=16, Npoints=3, Ncontour=0, life_params={}, arena_pars=env.dish(0.1),
-                 par_conf=SimParConf, filtered_at=np.nan, rescaled_by=np.nan, save_data_flag=True, load_data=True,
+    def __init__(self, dir, id='unnamed', fr=16, Npoints=3, Ncontour=0, life_params={},
+                 par_conf=SimParConf, save_data_flag=True, load_data=True,env_params={},
                  sample_dataset='reference', group_id='SimGroup'):
         self.par_config = par_conf
         self.save_data_flag = save_data_flag
@@ -31,13 +31,12 @@ class LarvaDataset:
                            'group_id': group_id,
                            'dir': dir,
                            'fr': fr,
-                           'filtered_at': filtered_at,
-                           'rescaled_by': rescaled_by,
                            'Npoints': Npoints,
                            'Ncontour': Ncontour,
                            'sample_dataset': sample_dataset,
                            **par_conf,
-                           'arena_pars': arena_pars,
+                           # 'arena_pars': arena_pars,
+                           'env_params': env_params,
                            **life_params
                            }
 
@@ -45,7 +44,7 @@ class LarvaDataset:
 
         self.dt = 1 / self.fr
         self.configure_body()
-        self.define_linear_metrics(self.config)
+        self.define_linear_metrics()
         if load_data:
             try:
                 self.load()
@@ -113,7 +112,7 @@ class LarvaDataset:
         if show_output:
             print(f'{len(agents)} agents dropped and {len(self.endpoint_data.index)} remaining.')
 
-    def drop_pars(self, pars=[], groups=None, is_last=True, show_output=True):
+    def drop_pars(self, pars=[], groups=None, is_last=True, show_output=True, **kwargs):
         if groups is None:
             groups = {n: False for n in
                       ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn',
@@ -153,18 +152,8 @@ class LarvaDataset:
         pars = [p for p in self.step_data.columns.values if p not in vpars]
         return pars
 
-    # def load(self, step=True, end=True, food=False):
-    #     if step:
-    #         self.step_data = pd.read_csv(self.dir_dict['step'], index_col=['Step', 'AgentID'])
-    #         self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
-    #         self.agent_ids = self.step_data.index.unique('AgentID').values
-    #         self.num_ticks = self.step_data.index.unique('Step').size
-    #     if end:
-    #         self.endpoint_data = pd.read_csv(self.dir_dict['end'], index_col=0)
-    #         self.endpoint_data.sort_index(inplace=True)
-    #     if food:
-    #         self.food_endpoint_data = pd.read_csv(self.dir_dict['food'], index_col=0)
-    #         self.food_endpoint_data.sort_index(inplace=True)
+    def read(self, key='end'):
+        return pd.read_hdf(self.dir_dict['data_h5'], key)
 
     def load(self, step=True, end=True, food=False):
         store = pd.HDFStore(self.dir_dict['data_h5'])
@@ -232,7 +221,7 @@ class LarvaDataset:
         store.close()
 
     def save_config(self):
-        for a in ['N', 't0', 'duration', 'quality', 'dt']:
+        for a in ['N', 't0', 'duration', 'quality', 'dt', 'agent_ids']:
             try:
                 self.config[a] = getattr(self, a)
             except:
@@ -351,8 +340,8 @@ class LarvaDataset:
         traj_color = s[dynamic_color] if dynamic_color is not None else None
         return s, e, ids, traj_color
 
-    def visualize(self, vis_kwargs=None, agent_ids=None, save_to=None, time_range=None,draw_Nsegs=None,
-                  arena_pars=None, env_params=None, space_in_mm=True, track_point=None, dynamic_color=None,
+    def visualize(self, vis_kwargs=None, agent_ids=None, save_to=None, time_range=None,draw_Nsegs=None,env_params=None,
+                  space_in_mm=True, track_point=None, dynamic_color=None,
                   transposition=None, fix_point=None, secondary_fix_point=None, **kwargs):
         if vis_kwargs is None:
             vis_kwargs = dtypes.get_dict('visualization', mode='video')
@@ -370,11 +359,8 @@ class LarvaDataset:
             n0 = f'{len(ids)}l'
 
         if env_params is None:
-            if arena_pars is None:
-                arena_pars = self.arena_pars
-            env_params = {'arena': arena_pars}
-        arena_dims = [k * 1000 for k in env_params['arena']['arena_dims']]
-        env_params['arena']['arena_dims'] = arena_dims
+            env_params = self.env_params
+        arena_dims = env_params['arena']['arena_dims']
 
         if transposition is not None:
             s = align_trajectories(s, track_point=track_point, arena_dims=arena_dims, mode=transposition,
@@ -414,35 +400,9 @@ class LarvaDataset:
         replay_env.run()
         print('Visualization complete')
 
-    def process(self, is_last=True, **kwargs):
-        c = {
-            's': self.step_data,
-            'e': self.endpoint_data,
-            'dt': self.dt,
-            'Npoints': self.Npoints,
-            'Ncontour': self.Ncontour,
-            'point': self.point,
-            'config': self.config,
-            # 'distro_dir': self.dir_dict['distro'],
-            # 'dsp_dir': self.dir_dict['dispersion'],
-        }
-        process(**c, **kwargs)
-        if is_last:
-            self.save()
 
-    def preprocess(self, is_last=True, **kwargs):
-        c = {
-            's': self.step_data,
-            'e': self.endpoint_data,
-            'dt': self.dt,
-            'Npoints': self.Npoints,
-            'config': self.config,
-        }
-        preprocess(**c, **kwargs)
-        if is_last:
-            self.save()
 
-    def compute_preference_index(self, arena_diameter_in_mm=None, return_num=False, return_all=False, show_output=True):
+    def compute_preference_index(self, return_num=False, return_all=False):
         if not hasattr(self, 'endpoint_data'):
             self.load(step=False)
         e = self.endpoint_data
@@ -484,22 +444,6 @@ class LarvaDataset:
         else:
             return exp_bends, exp_bendvels
 
-    def annotate(self, is_last=True, **kwargs):
-        c = {
-            's': self.step_data,
-            'e': self.endpoint_data,
-            'dt': self.dt,
-            'Npoints': self.Npoints,
-            'point': self.point,
-            'config': self.config,
-            # 'distro_dir': self.dir_dict['distro'],
-            # 'stride_p_dir': self.dir_dict['stride'],
-        }
-
-        annotate(**c, **kwargs)
-
-        if is_last:
-            self.save()
 
     def load_fits(self, filepath=None, selected_pars=None):
         if filepath is None:
@@ -579,12 +523,11 @@ class LarvaDataset:
             if not str.endswith(v, 'csv') and not str.endswith(v, 'txt') and not str.endswith(v, 'h5'):
                 os.makedirs(v, exist_ok=True)
 
-    def define_linear_metrics(self, config):
+    def define_linear_metrics(self):
         self.distance = nam.dst(self.point)
         self.velocity = nam.vel(self.point)
         self.acceleration = nam.acc(self.point)
-        if config['use_component_vel']:
-            # self.distance = nam.lin(self.distance)
+        if self.config['use_component_vel']:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
@@ -595,11 +538,16 @@ class LarvaDataset:
         self.config['front_body_ratio'] = 0.5
         self.save_config()
         warnings.filterwarnings('ignore')
-        c = {'show_output': show_output,
-             'is_last': False}
-        self.preprocess(**preprocessing, **c, **enrich_aux, **kwargs)
-        self.process(**processing, **enrich_aux, **c, **kwargs)
-        self.annotate(**annotation, **enrich_aux, **c, **kwargs)
+        c = {
+            's': self.step_data,
+            'e': self.endpoint_data,
+            'config': self.config,
+            'show_output': show_output,
+             'is_last': False
+        }
+        preprocess(**preprocessing, **c, **enrich_aux, **kwargs)
+        process(**processing, **enrich_aux, **c, **kwargs)
+        annotate(**annotation, **enrich_aux, **c, **kwargs)
         self.drop_pars(**to_drop, **c)
         if is_last:
             self.save()
@@ -630,11 +578,6 @@ class LarvaDataset:
                     self.load(end=False)
                 p_df = self.step_data[par]
         return p_df
-
-    def get_xy(self):
-        if self.step_data is None:
-            self.load()
-        return self.step_data[['x', 'y']]
 
     def delete(self, show_output=True):
         shutil.rmtree(self.dir)
@@ -671,17 +614,3 @@ class LarvaDataset:
             if show_output:
                 print(f'Dataset {self.id} splitted in {[d.id for d in new_ds]}')
         return new_ds
-
-    def get_chunks(self, chunk, min_dur=0.0, max_dur=np.inf):
-        # t=nam.dur(chunk)
-        t, id = nam.dur(chunk), nam.id(chunk)
-        s0, s1 = nam.start(chunk), nam.stop(chunk)
-        if self.step_data is None:
-            self.load()
-        s = copy.deepcopy(self.step_data)
-        e = self.endpoint_data
-        counts = s[t].dropna().groupby('AgentID').count()
-        ser1 = s[id].loc[s[t] >= min_dur]
-        ser1.reset_index(level='Step', drop=True, inplace=True)
-        ser1 = ser1.reset_index(drop=False).values.tolist()
-        s = s.loc[s[id]]

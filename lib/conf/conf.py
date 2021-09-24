@@ -389,6 +389,7 @@ def store_confs() :
     env_dict = {
         'focus': env.focus_env,
         'dish': env.dish_env,
+        'nengo_dish': env.nengo_dish_env,
         'dispersion': env.dispersion_env,
         'chemotaxis_approach': env.chemotax_env,
         'chemotaxis_local': env.chemorbit_env,
@@ -440,6 +441,7 @@ def store_confs() :
         'basic_navigator': mod.basic_larva,
         'explorer_3con': mod.exploring_3c_larva,
         'nengo-larva': mod.nengo_larva,
+        'nengo_explorer': mod.nengo_explorer,
     }
     for k, v in mod_dict.items():
         saveConf(v, 'Model', k)

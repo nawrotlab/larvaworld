@@ -4,6 +4,7 @@ import numpy as np
 
 import lib.aux.functions as fun
 import lib.conf.dtype_dicts as dtypes
+from lib.conf.init_dtypes import par_dict, null_dict
 
 
 def food_distro(N, mode='uniform', shape='circle', group='Food', **kwargs):
@@ -20,13 +21,24 @@ def food_param_conf(distro={}, list={}, grid=None):
             'source_units': list}
 
 
-def larva_distro(N=1, mode='uniform', shape='circle', group='Larva', **kwargs):
-    if N > 0:
-        return dtypes.get_dict('distro', class_name='Larva', basic=False, group=group, as_entry=True,
-                               N=N, mode=mode, shape=shape, **kwargs)
-    else:
-        return {}
+# def larva_distro(N=1, mode='uniform', shape='circle', group='Larva', **kwargs):
+#     if N > 0:
+#         return dtypes.get_dict('distro', class_name='Larva', basic=False, group=group, as_entry=True,
+#                                N=N, mode=mode, shape=shape, **kwargs)
+#     else:
+#         return {}
 
+def larva_distro(N=1, mode='uniform', shape='circle', loc=(0.0,0.0), orientation_range=(0.0,360.0),group='Larva', **kwargs):
+    dist=null_dict('larva_distro', N=N, mode=mode,shape=shape, loc=loc, orientation_range=orientation_range)
+    g=null_dict('LarvaGroup', distribution=dist, **kwargs)
+    return {group : g}
+
+# def larva_group(id='LarvaGroup', **kwargs):
+#     dic=par_dict('LarvaGroup')
+#     dic.update(kwargs)
+#     return dic
+
+# print(null_dict('LarvaGroup')['distribution'])
 
 # set_on_xaxis_one_food = {'initial_num_flies': 1 * 8 * 20,
 #                          'initial_fly_positions': {'mode': 'defined',
@@ -88,15 +100,19 @@ def maze(nx=15, ny=15, ix=0, iy=0, h=0.1, return_points=False):
 def odor_source(id, pos=(0.0, 0.0), odor_id=None, odor_intensity=2.0, odor_spread=0.0002, **kwargs):
     if odor_id is None:
         odor_id = f'{id}_odor'
-    return dtypes.get_dict('agent', class_name='Source', unique_id=id, as_entry=True, pos=pos,
-                           odor_id=odor_id, odor_intensity=odor_intensity, odor_spread=odor_spread, **kwargs)
-
+    # return dtypes.get_dict('agent', class_name='Source', unique_id=id, as_entry=True, pos=pos,
+    #                        odor_id=odor_id, odor_intensity=odor_intensity, odor_spread=odor_spread, **kwargs)
+    dic= null_dict('source', pos=pos, odor=null_dict('odor', odor_id=odor_id, odor_intensity=odor_intensity, odor_spread=odor_spread), **kwargs)
+    return {id : dic}
 
 def foodNodor_source(id, pos=(0.0, 0.0), odor_id=None, odor_intensity=2.0, odor_spread=0.0002, amount=0.01, **kwargs):
     if odor_id is None:
         odor_id = f'{id}_odor'
-    return dtypes.get_dict('agent', class_name='Source', unique_id=id, as_entry=True, pos=pos, amount=amount,
-                           odor_id=odor_id, odor_intensity=odor_intensity, odor_spread=odor_spread, **kwargs)
+    # return dtypes.get_dict('agent', class_name='Source', unique_id=id, as_entry=True, pos=pos, amount=amount,
+    #                        odor_id=odor_id, odor_intensity=odor_intensity, odor_spread=odor_spread, **kwargs)
+    dic= null_dict('source', pos=pos, amount=amount,
+                   odor=null_dict('odor', odor_id=odor_id, odor_intensity=odor_intensity, odor_spread=odor_spread), **kwargs)
+    return {id : dic}
 
 
 def foodNodor_4corners(d=0.05):
@@ -146,7 +162,7 @@ def game_env_conf(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
     env = {'arena': arena(dim, dim),
            'border_list': {},
            'food_params': food_param_conf(list={
-               **foodNodor_source('Flag', odor_intensity=8, odor_spread=0.0004, default_color='green',
+               **foodNodor_source(id='Flag', odor_intensity=8, odor_spread=0.0004, default_color='green',
                                   can_be_carried=True),
                **odor_source(id='Left_base', pos=(-x, y), default_color='blue'),
                **odor_source(id='Right_base', pos=(+x, y), default_color='red')}),
@@ -253,6 +269,15 @@ dish_env = {'arena': dish(0.1),
             'border_list': {},
             'food_params': food_param_conf(),
             'larva_groups': larva_distro(N=25, scale=(0.02, 0.02), model='explorer'),
+            'odorscape': None}
+
+
+
+
+nengo_dish_env = {'arena': dish(0.15),
+            'border_list': {},
+            'food_params': food_param_conf(),
+            'larva_groups': larva_distro(N=10, scale=(0.02, 0.03), model='nengo_explorer'),
             'odorscape': None}
 
 reorientation_env = {'arena': dish(0.1),
@@ -368,7 +393,7 @@ def larva_multi_distros(models, groups=None, colors=None, sample_datasets=None, 
         if temp is None:
             d.update(larva_distro(group=groups[i], model=models[i], default_color=colors[i], **kwargs))
         else:
-            d.update(larva_distro(group=groups[i], model=temp[i][0], sample_dataset=temp[i][1], default_color=colors[i],
+            d.update(larva_distro(group=groups[i], model=temp[i][0], sample=temp[i][1], default_color=colors[i],
                                   **kwargs))
     return d
 

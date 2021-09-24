@@ -9,6 +9,7 @@ from scipy.signal import argrelextrema, spectrogram
 import lib.aux.functions as fun
 import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
+from lib.anal.fitting import fit_bouts
 from lib.anal.process.basic import compute_extrema, compute_freq
 from lib.anal.process.spatial import scale_to_length
 from lib.anal.process.store import store_aux_dataset
@@ -16,12 +17,10 @@ from lib.conf.par import load_ParDict
 from lib.stor import paths
 
 
-def annotate(s, e, dt, Npoints, point, config=None,
-             bouts={'stride': True, 'pause': True, 'turn': True},
-             # bouts=['stride', 'pause', 'turn'],
+def annotate(s, e, config=None,bouts={'stride': True, 'pause': True, 'turn': True},
              recompute=False, track_point=None, track_pars=None, chunk_pars=None,
              vel_par=None, ang_vel_par=None, bend_vel_par=None, min_ang=5.0, min_ang_vel=100.0,
-             non_chunks=False, distro_dir=None, stride_p_dir=None, source=None, show_output=True, **kwargs):
+             non_chunks=False, source=None, show_output=True, **kwargs):
     dic = load_ParDict()
     if vel_par is None:
         vel_par = dic['sv']['d']
@@ -35,12 +34,14 @@ def annotate(s, e, dt, Npoints, point, config=None,
         chunk_pars = [dic[k]['d'] for k in ['sv', 'fov', 'rov', 'bv', 'l']]
     track_pars = [p for p in track_pars if p in s.columns]
     if track_point is None:
-        track_point = point
+        track_point = config['point']
     c = {
         's': s,
         'e': e,
-        'dt': dt,
-        'Npoints': Npoints,
+        'dt': config['dt'],
+        'Npoints': config['Npoints'],
+        # 'Ncontour': config['Ncontour'],
+        # 'point': config['point'],
         'track_point': track_point,
         'track_pars': track_pars,
         'config': config,
@@ -55,6 +56,9 @@ def annotate(s, e, dt, Npoints, point, config=None,
         if bouts['turn']:
             detect_turns(**c, ang_vel_par=ang_vel_par, bend_vel_par=bend_vel_par, min_ang=min_ang,
                          min_ang_vel=min_ang_vel, **kwargs)
+
+        if bouts['stride'] and bouts['pause'] :
+            fit_bouts(**c, **kwargs)
         if source is not None:
             for b in bouts:
                 compute_chunk_bearing2source(**c, chunk=b, source=source, **kwargs)

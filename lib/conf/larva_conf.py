@@ -5,6 +5,7 @@ import copy
 
 import numpy as np
 import lib.conf.dtype_dicts as dtypes
+from lib.conf.init_dtypes import null_dict
 
 ''' Default exploration model'''
 
@@ -123,6 +124,18 @@ brain_nengo = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitt
                                 nengo=True
                                 )
 
+brain_nengo_explorer = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'feeder'],
+                                # odor_dict={'Odor': {'mean': 150.0, 'std': 0.0}},
+                                turner={'initial_freq': 0.3, 'initial_amp': 10.0, 'noise': 0.0, 'freq_range':(0.2, 0.4)},
+                                crawler={'initial_freq': 1.5, 'initial_amp': 0.6, 'freq_range':(1.2, 1.8),
+                                         'waveform' : None, 'step_to_length_mu': 0.25,   'step_to_length_std': 0.01},
+feeder={'initial_freq': 0.0, 'freq_range':(0.0, 0.0)},
+                                interference=default_coupling,
+                                intermitter=dtypes.get_dict('intermitter', feed_bouts=False, EEB=0.0),
+                                # olfactor={'noise': 0.0},
+                                nengo=True
+                                )
+
 # -------------------------------------------WHOLE LARVA MODES---------------------------------------------------------
 
 growing_rover = dtypes.larva_dict(brain_rover, body=dtypes.get_dict('body', initial_length=0.001),
@@ -137,7 +150,8 @@ mock_growing_sitter = dtypes.larva_dict(mock_brain_sitter, body=dtypes.get_dict(
 
 mock_growing_rover = mock_growing_sitter
 
-nengo_larva = dtypes.larva_dict(brain_nengo, initial_length='sample', touch_sensors=True)
+nengo_explorer = dtypes.larva_dict(brain_nengo_explorer, initial_length='sample', touch_sensors=False)
+nengo_larva = dtypes.larva_dict(brain_nengo, initial_length='sample', touch_sensors=False)
 RL_odor_larva = dtypes.larva_dict(brain_RLolfactor, body=dtypes.get_dict('body', initial_length='sample'))
 RL_feed_odor_larva = dtypes.larva_dict(brain_RLolfactor_feeder, body=dtypes.get_dict('body', initial_length='sample'))
 imitation_larva = dtypes.larva_dict(brain_locomotion, body=dtypes.get_dict('body', Nsegs=11),
@@ -170,22 +184,22 @@ flag_larva = dtypes.larva_dict(brain_olfactor_conf(ids=odors3, means=[150.0, 0.0
 
 follower_R = dtypes.larva_dict(brain_olfactor_conf(ids=odors2, means=[150.0, 0.0]),
                                body=dtypes.get_dict('body', initial_length='sample'),
-                               odor=dtypes.get_dict('odor', odor_id='Right_odor', odor_intensity=300.0,
+                               odor=null_dict('odor', odor_id='Right_odor', odor_intensity=300.0,
                                                     odor_spread=0.02))
 
 follower_L = dtypes.larva_dict(brain_olfactor_conf(ids=odors2, means=[0.0, 150.0]),
                                body=dtypes.get_dict('body', initial_length='sample'),
-                               odor=dtypes.get_dict('odor', odor_id='Left_odor', odor_intensity=300.0,
+                               odor=null_dict('odor', odor_id='Left_odor', odor_intensity=300.0,
                                                     odor_spread=0.02))
 
 king_larva_R = dtypes.larva_dict(brain_olfactor_conf(ids=odors5, means=[150.0, 0.0, 0.0, 0.0, 0.0]),
                                  body=dtypes.get_dict('body', initial_length='sample'),
-                                 odor=dtypes.get_dict('odor', odor_id='Right_odor', odor_intensity=2.0,
+                                 odor=null_dict('odor', odor_id='Right_odor', odor_intensity=2.0,
                                                       odor_spread=0.00005))
 
 king_larva_L = dtypes.larva_dict(brain_olfactor_conf(ids=odors5, means=[150.0, 0.0, 0.0, 0.0, 0.0]),
                                  body=dtypes.get_dict('body', initial_length='sample'),
-                                 odor=dtypes.get_dict('odor', odor_id='Left_odor', odor_intensity=2.0,
+                                 odor=null_dict('odor', odor_id='Left_odor', odor_intensity=2.0,
                                                       odor_spread=0.00005))
 
 body_3c = dtypes.get_dict('body', initial_length=3.85 / 1000, length_std=0.35 / 1000)

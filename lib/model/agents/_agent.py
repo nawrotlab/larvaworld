@@ -8,7 +8,9 @@ import lib.aux.rendering as ren
 
 class LarvaworldAgent:
     def __init__(self,unique_id: str,model, pos=None, default_color=None, radius=None,visible=True,
-                 odor_id=None, odor_intensity=0.0, odor_spread=0.1, group='', can_be_carried=False):
+                 # odor_id=None, odor_intensity=0.0, odor_spread=0.1,
+                 odor={'odor_id':None, 'odor_intensity':0.0, 'odor_spread':0.1},
+                 group='', can_be_carried=False):
         self.visible = visible
         self.selected = False
         self.unique_id = unique_id
@@ -25,11 +27,11 @@ class LarvaworldAgent:
         self.color = self.default_color
         self.radius = radius
         self.id_box = self.init_id_box()
-        self.odor_id = odor_id
-        self.odor_intensity = odor_intensity
-        if odor_spread is None:
-            odor_spread = 0.1
-        self.odor_spread = odor_spread
+        self.odor_id = odor['odor_id']
+        self.odor_intensity = odor['odor_intensity']
+        self.odor_spread = odor['odor_spread']
+        if self.odor_spread is None:
+            self.odor_spread = 0.1
         self.set_odor_dist()
 
         self.carried_objects = []

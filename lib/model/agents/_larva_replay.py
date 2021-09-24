@@ -114,6 +114,8 @@ class LarvaReplay(Larva, BodyReplay):
         if m.draw_centroid:
             if not np.isnan(self.cen_pos).any():
                 viewer.draw_circle(radius=r / 2, position=self.cen_pos, color=c,width=r / 3)
+            elif not np.isnan(self.pos).any():
+                viewer.draw_circle(radius=r / 2, position=self.pos, color=c,width=r / 3)
         if m.draw_midline and m.Npoints > 1:
             try:
                 viewer.draw_polyline(self.midline, color=(0, 0, 255), closed=False, width=.15)

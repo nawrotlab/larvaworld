@@ -6,7 +6,7 @@ import scipy.stats as stats
 from scipy.stats import truncnorm, lognorm, rv_discrete, uniform
 
 from lib.anal.fitting import compute_density, powerlaw_cdf, exponential_cdf, lognorm_cdf, powerlaw_pdf, logNpow_pdf, \
-    fit_bout_distros, logNpow_cdf, get_best_distro, get_distro, lognormal_pdf, exponential_pdf, levy_cdf, levy_pdf, \
+    fit_bout_distros, logNpow_cdf, get_distro, lognormal_pdf, exponential_pdf, levy_cdf, levy_pdf, \
     norm_cdf, norm_pdf, uniform_pdf, uniform_cdf
 from lib.conf.conf import loadConf
 from lib.stor.paths import RefFolder
@@ -68,13 +68,14 @@ class GeometricDist(st.rv_continuous):
         return [int(x) for x in sample]
 
 
-def sample_agents(filepath=None, pars=None, N=1, sample_dataset='reference'):
-    path_dir = f'{RefFolder}/{sample_dataset}'
-    path_data = f'{path_dir}/data/reference.csv'
+def sample_agents(pars, filepath=None, N=1, sample_dataset='reference'):
+
     if filepath is None:
+        path_dir = f'{RefFolder}/{sample_dataset}'
+        path_data = f'{path_dir}/data/reference.csv'
         filepath = path_data
     data = pd.read_csv(filepath, index_col=0)
-    pars = data.columns if pars is None else [p for p in data.columns if p in pars]
+    pars = [p for p in pars if p in data.columns]
     means = [data[p].mean() for p in pars]
 
     if len(pars)>=2:

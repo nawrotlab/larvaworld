@@ -9,7 +9,8 @@ import PySimpleGUI as sg
 
 # sys.path.insert(0, '..')
 from lib.anal.combining import render_mpl_table
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, GraphList, CollapsibleTable, SelectionList, DataList
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, GraphList, CollapsibleTable, SelectionList, DataList, \
+    CollapsibleTable2
 from lib.gui.aux.functions import t_kws, gui_col
 from lib.gui.aux.buttons import named_bool_button
 
@@ -78,11 +79,11 @@ class BatchTab(GuiTab):
         s1 = CollapsibleDict('batch_methods', default=True)
 
         s2 = CollapsibleDict('optimization', default=True,toggle=True, disabled=True)
-        s3 = CollapsibleTable('space_search', headings=['pars', 'ranges', 'Ngrid'])
+        s3 = CollapsibleTable2('space_search', headings=['pars', 'ranges', 'Ngrid'])
         g1 = GraphList(self.name, tab=self)
 
-        dl1 = DataList(name=kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'])
-        dl2 = DataList(name=kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'])
+        dl1 = DataList(name=kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp= 'Stored batch-runs')
+        dl2 = DataList(name=kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp= 'Active batch-runs')
 
         l = [[
             gui_col([sl2, sl1, s0, s1, s2, s3, dl2, dl1], 0.2),

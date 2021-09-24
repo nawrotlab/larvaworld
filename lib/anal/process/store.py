@@ -11,17 +11,15 @@ import lib.conf.dtype_dicts as dtypes
 from lib.stor import paths
 
 
-
-
-def store_aux_dataset(s, pars,type, file):
+def store_aux_dataset(s, pars, type, file):
     store = pd.HDFStore(file)
     ps = [p for p in pars if p in s.columns]
-    if type=='distro' :
+    if type == 'distro':
         for p in ps:
             d = s[p].dropna().reset_index(level=0, drop=True)
             d.sort_index(inplace=True)
             store[f'{type}.{p}'] = d
-    elif type=='dispersion' :
+    elif type == 'dispersion':
         for p in ps:
             dsp = s[p]
             steps = s.index.unique('Step')
@@ -35,7 +33,7 @@ def store_aux_dataset(s, pars,type, file):
             dsp_ar[:, 2] = dsp_b
             d = pd.DataFrame(dsp_ar, index=steps, columns=['median', 'upper', 'lower'])
             store[f'{type}.{p}'] = d
-    elif type=='stride' :
+    elif type == 'stride':
         Npoints = 32
         ids = s.index.unique('AgentID').values
         all_data = [s.xs(id, level='AgentID', drop_level=True) for id in ids]
@@ -76,34 +74,24 @@ def create_reference_dataset(config, dataset_id='reference', Nstd=3, overwrite=F
         copy_tree(config['dir'], path_dir)
     new_d = LarvaDataset(path_dir)
     new_d.set_id(dataset_id)
-    pars = ['length', nam.freq(nam.scal(nam.vel(''))),
-            'stride_reoccurence_rate',
-            nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))),
-            nam.std(nam.scal(nam.chunk_track('stride', nam.dst(''))))]
-    sample_pars = ['body.initial_length', 'brain.crawler_params.initial_freq',
-                   'brain.intermitter_params.crawler_reoccurence_rate',
-                   'brain.crawler_params.step_to_length_mu',
-                   'brain.crawler_params.step_to_length_std'
-                   ]
 
-    v = new_d.endpoint_data[pars]
-    v['length'] = v['length'] / 1000
-    df = pd.DataFrame(v.values, columns=sample_pars)
+    pars = fun.load_dict(paths.RefParsFile, use_pickle=False)
+
+    pars= {p:pp for p,pp in pars.items() if p in new_d.endpoint_data.columns}
+
+    df = new_d.endpoint_data[list(pars.keys())].rename(columns=pars, inplace=True)
     df.to_csv(path_data)
 
-    fit_bouts(new_d, store=True, bouts=['stride', 'pause'])
+    fit_bouts(dataset=new_d,config=new_d.config,e=new_d.endpoint_data, store=True, bouts=['stride', 'pause'])
 
     dic = {
-        nam.freq('crawl'): v[nam.freq(nam.scal(nam.vel('')))].mean(),
-        nam.freq('feed'): v[nam.freq('feed')].mean() if nam.freq('feed') in v.columns else 2.0,
+        nam.freq('crawl'): df['brain.crawler_params.initial_freq'].mean(),
+        nam.freq('feed'): df['brain.feeder_params.initial_freq'].mean() if 'brain.feeder_params.initial_freq' in df.columns else 2.0,
         'feeder_reoccurence_rate': None,
-        'dt': 1/config['fr'],
+        'dt': 1 / config['fr'],
     }
     saveConf(dic, conf_type='Ref', id=dataset_id, mode='update')
     z = get_EEB_poly1d(dataset_id)
     saveConf({'EEB_poly1d': z.c.tolist()}, conf_type='Ref', id=dataset_id, mode='update')
 
     print(f'Reference dataset {dataset_id} saved.')
-
-
-

@@ -99,7 +99,7 @@ Schleyer_raw_cols = ['Step'] + \
 Sims_raw_cols = ['Step'] + nam.xy('centroid')
 
 SchleyerEnrichConf = {
-    'preprocessing': dtypes.get_dict('preprocessing', filter_f=2.0, drop_collisions=True),
+    'preprocessing': dtypes.get_dict('preprocessing', filter_f=2.0, drop_collisions=True, rescale_by=0.001),
     'processing': {'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': True, 'tortuosity': True,
                              'PI': False},
                    'dsp_starts': [0, 20], 'dsp_stops': [40, 120],
@@ -246,7 +246,7 @@ SchleyerFormat = {
                          'front_vector': (1, 2),
                          'rear_vector': (7, 11),
                          'front_body_ratio': 0.5,
-                         'point_idx': -1,
+                         'point_idx': None,
                          'use_component_vel': False,
                          'scaled_vel_threshold': 0.2},
     'enrichment': SchleyerEnrichConf,

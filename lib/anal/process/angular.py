@@ -62,7 +62,7 @@ def compute_LR_bias(s, e):
     print('LR biases computed')
 
 
-def compute_orientations(s, points, segs, config=None, mode='full'):
+def compute_orientations(s,e, points, segs, config=None, mode='full'):
     if config is None:
         f1, f2 = 1, 2
         r1, r2 = -2, -1
@@ -88,6 +88,7 @@ def compute_orientations(s, points, segs, config=None, mode='full'):
         c[:, i] = np.array([fun.angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :]) for j in range(2)])
     for z, a in enumerate([nam.orient('front'), nam.orient('rear')]):
         s[a] = c[z].T
+        e[nam.initial(a)] = s[a].dropna().groupby('AgentID').first()
     if mode == 'full':
         N = len(segs)
         print(f'Computing additional orients for {N} spinesegments')
@@ -166,7 +167,7 @@ def angular_processing(s, e, config, dt, Npoints, aux_dir, recompute=False, mode
     if set(ang_pars).issubset(s.columns.values) and not recompute:
         print('Orientation and bend are already computed. If you want to recompute them, set recompute to True')
     else:
-        compute_orientations(s, points, segs, config, mode=mode)
+        compute_orientations(s,e, points, segs, config, mode=mode)
         compute_bend(s, points, angles, config, mode=mode)
     compute_angular_metrics(s, dt, segs, angles, mode=mode)
     compute_LR_bias(s, e)

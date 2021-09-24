@@ -1,21 +1,16 @@
-import copy
-import inspect
 import os
-from typing import Tuple, Type, Union
 
 import pandas as pd
 import numpy as np
 from scipy.spatial.distance import euclidean
-from siunits import Composite, DerivedUnit, BaseUnit
 
 from lib.aux import functions as fun
 from lib.aux import naming as nam
 from lib.model.DEB.gut import Gut
 from lib.stor import paths
-from lib.conf.par_conf import sup, sub, th, dot, ddot, subsup, Delta, delta, ast, bar, wave, par_dict_lists, paren, \
-    brack, odot, circledcirc, circledast, ddot_th, dot_th, get_par_dict
-from lib.model.DEB.deb import DEB
-from lib.model.agents._agent import LarvaworldAgent
+from lib.conf.par_conf import sub, th, dot, subsup, Delta, bar, wave, par_dict_lists, paren, \
+    brack, odot, circledcirc, circledast, ddot_th, dot_th
+
 from lib.model.agents._larva import Larva
 import siunits as siu
 
@@ -609,6 +604,7 @@ def build_constants():
 
 
 def build_DEB_par_dict(df=None):
+    from lib.model.DEB.deb import DEB
     if df is None:
         df = {}
     df = add_par(df, p='L', k='L', u=1 * siu.cm, o=DEB, d='structural length', s='L')
@@ -893,13 +889,6 @@ collection_dict = {
     'olfactor': ['Act_tur', 'A_tur', 'A_olf'],
     'odors': ['c_odor1', 'c_odor2', 'c_odor3', 'dc_odor1', 'dc_odor2', 'dc_odor3'],
     # 'constants': ['dt', 'x0', 'y0'],
-}
-
-combo_collection_dict = {
-    'pose': {'step': ['basic', 'bouts', 'spatial', 'angular'], 'end': ['e_basic', 'e_dispersion']},
-    'source_vincinity': {'step': ['chemorbit'], 'end': ['e_chemorbit']},
-    'source_approach': {'step': ['chemotax'], 'end': ['e_chemotax']},
-    'olfactor': {'step': ['odors', 'olfactor'], 'end': []},
 }
 
 

@@ -257,6 +257,7 @@ class BodySim(BodyManager):
         self.head_contacts_ground = value
 
     def step_no_physics(self, lin_vel, ang_vel):
+
         # print()
         # print(np.round(fun.compute_bearing2source([self.pos[0]], [self.pos[1]],  np.rad2deg(self.get_head().get_orientation()), loc=(0.2,0.2), in_deg=True))[0])
         # self.body_bend += self.dt * ang_velocity
@@ -289,6 +290,7 @@ class BodySim(BodyManager):
             ang_vel += np.sign(ang_vel)*np.pi/10
 
 
+
         d = lin_vel * dt
         ang_vel0=np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
 
@@ -308,6 +310,7 @@ class BodySim(BodyManager):
 
 
         def check_in_tank(ang_vel, o0, d, hr0) :
+
             o1 = o0 + ang_vel * dt
             # print(o1,o0,ang_vel,dt)
             k = np.array([math.cos(o1), math.sin(o1)])
@@ -330,11 +333,11 @@ class BodySim(BodyManager):
         # ang_vel*=-1
         while not in_tank :
             ang_vel, counter=avoid_border(ang_vel, counter)
-
+            # print(self.pos)
             # print(counter, ang_vel)
             # print(counter, Ld-Rd, ang_vel)
             # counter+=1
-            # ang_vel*=-(1+dd*counter)
+            # ang_vel*=-(1+0.001*counter)
             in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
         if counter>=0:
             ang_vel = np.abs(ang_vel)*np.sign(ang_vel0)

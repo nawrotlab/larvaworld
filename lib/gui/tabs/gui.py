@@ -29,17 +29,26 @@ class LarvaworldGui:
         self.run_externally = {'sim':False, 'batch':True}
         self.tab_dict = {
             'introduction': (IntroTab, None),
-            'tutorials': (TutorialTab, None),
             'larva-model': (ModelTab, 'Model', 'model_conf'),
-            'environment': (EnvTab, 'Env', 'env_conf'),
             'life-history': (LifeTab, 'Life', 'life'),
+            'environment': (EnvTab, 'Env', 'env_conf'),
             'simulation': (SimTab, 'Exp', 'exp_conf'),
-            'essay': (EssayTab, 'Essay', 'essay_conf'),
             'batch-run': (BatchTab, 'Batch', 'batch_conf'),
-            'analysis': (AnalysisTab, None, None),
+            'essay': (EssayTab, 'Essay', 'essay_conf'),
             'import': (ImportTab, 'Group', None),
+            'analysis': (AnalysisTab, None, None),
             'videos': (VideoTab, None, None),
+            'tutorials': (TutorialTab, None),
             'settings': (SettingsTab, None, None)
+        }
+        self.tabgroups={
+            'introduction':['introduction'],
+            'models':['larva-model', 'life-history'],
+            'environment':['environment'],
+            'data':['import', 'analysis'],
+            'simulations':['simulation', 'batch-run', 'essay'],
+            'resources':['tutorials', 'videos'],
+            'settings':['settings'],
         }
 
         if tabs is None:
@@ -94,6 +103,7 @@ class LarvaworldGui:
 
     def build(self, tabs):
         ls, cs, ds, gs, ts = [], {}, {}, {}, {}
+        dic={}
         for n in tabs:
             ii=self.tab_dict[n]
             ts[n] = ii[0](name=n, gui=self, conftype=ii[1])
@@ -101,13 +111,19 @@ class LarvaworldGui:
             cs.update(c)
             ds.update(d)
             gs.update(g)
-            ls.append(sg.Tab(n, l, background_color=self.background_color, key=f'{n} TAB', ))
+            dic[n]=sg.Tab(n, l, background_color=self.background_color, key=f'{n} TAB')
+            ls.append(dic[n])
 
-        l_tabs = sg.TabGroup([ls], key='ACTIVE_TAB', tab_location='topleft', selected_title_color='darkblue',
-                             font=("Helvetica", 13, "normal"),
-                             # size=gui.col_size(y_frac=0.7),
-                             title_color='grey', selected_background_color=None,
-                             tab_background_color='lightgrey', background_color=None)
+        tab_kws={'font' : ("Helvetica", 13, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey', 'tab_background_color' :'lightgrey' }
+        # for nn, ks in self.tabgroups.items():
+        #     if len(ks)>4:
+        #         ll=sg.TabGroup([[dic[k]] for k in ks], key=f'{nn} GROUPTAB', tab_location='topleft', **tab_kws)
+        #         ls.append(ll)
+        #     else :
+        #         ls.append(dic[nn])
+
+
+        l_tabs = sg.TabGroup([ls], key='ACTIVE_TAB', tab_location='topleft',**tab_kws)
 
         l0 = [[sg.Pane([sg.vtop(l_tabs), sg.vbottom(self.terminal)], handle_size=30)]]
         return l0, cs, ds, gs, ts

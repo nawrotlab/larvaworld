@@ -13,7 +13,7 @@ from lib.model.DEB.deb import DEB
 class LarvaSim(BodySim, Larva):
     def __init__(self, unique_id, model, pos, orientation, larva_pars, group='', default_color=None, **kwargs):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
-                       **larva_pars['odor'], group=group, default_color=default_color)
+                       odor=larva_pars['odor'], group=group, default_color=default_color)
         # try:
         #     larva_pars['brain']['olfactor_params']['odor_dict'] = self.update_odor_dicts(
         #         larva_pars['brain']['olfactor_params']['odor_dict'])
@@ -23,6 +23,7 @@ class LarvaSim(BodySim, Larva):
         self.build_energetics(larva_pars['energetics'])
         BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['physics'],
                          **larva_pars['body'], **kwargs)
+        # print(larva_pars['body'])
         self.reset_feeder()
         self.radius = self.sim_length / 2
 

@@ -461,7 +461,7 @@ class LarvaWorld:
         self.all_food_schedule.add(f)
         return f
 
-    def add_larva(self, position, orientation=None, id=None, pars=None, group=None, default_color=None):
+    def add_larva(self, pos, orientation=None, id=None, pars=None, group=None, default_color=None):
         if group is None and pars is None:
             group, distro = list(self.env_pars['larva_groups'].items())[0]
             pars = self._generate_larva_pars(1, distro['model'])[0]
@@ -471,7 +471,7 @@ class LarvaWorld:
             id = self.next_id(type='Larva')
         if orientation is None:
             orientation = np.random.uniform(0, 2 * np.pi, 1)[0]
-        l = LarvaSim(model=self, pos=position, orientation=orientation, unique_id=id,
+        l = LarvaSim(model=self, pos=pos, orientation=orientation, unique_id=id,
                      larva_pars=pars, group=group, default_color=default_color)
         self.active_larva_schedule.add(l)
         self.all_larva_schedule.add(l)
@@ -528,6 +528,7 @@ class LarvaWorld:
                 bar.update(self.Nticks)
             if mode == 'video':
                 if img_mode != 'snapshots':
+
                     self.render(tick=self.Nticks)
                 elif (self.Nticks - 1) % self.snapshot_interval == 0:
                     self.render(tick=self.Nticks)
@@ -680,8 +681,6 @@ class LarvaWorld:
             f.set_default_color(self.generate_larva_color())
         for i in [self.sim_clock, self.sim_scale, self.sim_state] + list(self.screen_texts.values()):
             i.set_color(self.scale_clock_color)
-
-
 
 
 

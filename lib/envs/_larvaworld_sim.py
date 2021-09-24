@@ -3,16 +3,22 @@ import copy
 import numpy as np
 from mesa.datacollection import DataCollector
 from unflatten import unflatten
-
+import lib.aux.naming as nam
+from lib.anal.process.store import create_reference_dataset
 from lib.aux import functions as fun
 from lib.aux.collecting import TargetedDataCollector
 from lib.aux.sampling import sample_agents
-from lib.conf.conf import loadConf
+from lib.conf.conf import loadConf, expandConf
 from lib.conf.par import CompGroupCollector
 from lib.envs._larvaworld import LarvaWorld
 from lib.envs._space import DiffusionValueLayer, GaussianValueLayer
 from lib.sim.conditions import get_exp_condition
 import lib.conf.dtype_dicts as dtypes
+from lib.stor.larva_dataset import LarvaDataset
+from lib.stor import paths
+
+
+
 
 
 class LarvaWorldSim(LarvaWorld):
@@ -23,8 +29,8 @@ class LarvaWorldSim(LarvaWorld):
         if parameter_dict is None:
             parameter_dict = {}
 
-        if life_params is None :
-            life_params=dtypes.get_dict('life')
+        if life_params is None:
+            life_params = dtypes.get_dict('life')
         self.epochs = life_params['epochs']
         if self.epochs is None:
             self.epochs = []
@@ -89,45 +95,91 @@ class LarvaWorldSim(LarvaWorld):
                 layers[id] = GaussianValueLayer(**kwargs)
         return Nodors, layers
 
-    def generate_larva_pars(self,N, larva_pars, parameter_dict={}, sample_dataset='reference'):
-        if larva_pars['brain']['intermitter_params']:
-            for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
-                if larva_pars['brain']['intermitter_params'][dist]['fit']:
-                    larva_pars['brain']['intermitter_params'][dist] = loadConf(sample_dataset, 'Ref')[bout]['best']
-        flat_larva_pars = fun.flatten_dict(larva_pars)
-        sample_pars = [p for p in flat_larva_pars if flat_larva_pars[p] == 'sample']
-        if len(sample_pars) >= 1:
-            pars, samples = sample_agents(pars=sample_pars, N=N, sample_dataset=sample_dataset)
+    # def generate_larva_pars(self, N, base_larva, parameter_dict={}, sample_dataset='reference'):
+    #     if base_larva['brain']['intermitter_params']:
+    #         for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
+    #             if base_larva['brain']['intermitter_params'][dist]['fit']:
+    #                 base_larva['brain']['intermitter_params'][dist] = loadConf(sample_dataset, 'Ref')[bout]['best']
+    #     flat_larva_pars = fun.flatten_dict(base_larva)
+    #     sample_pars = [p for p in flat_larva_pars if flat_larva_pars[p] == 'sample']
+    #     if len(sample_pars) >= 1:
+    #         pars, samples = sample_agents(pars=sample_pars, N=N, sample_dataset=sample_dataset)
+    #
+    #         all_larva_pars = []
+    #         for i in range(N):
+    #             l = copy.deepcopy(base_larva)
+    #             flat_l = fun.flatten_dict(l)
+    #             for p, s in zip(pars, samples):
+    #                 flat_l.update({p: s[i]})
+    #             all_larva_pars.append(unflatten(flat_l))
+    #     else:
+    #         all_larva_pars = [base_larva] * N
+    #
+    #     for k, vs in parameter_dict.items():
+    #         for l, v in zip(all_larva_pars, vs):
+    #             l[k].update(v)
+    #     return all_larva_pars
 
-            all_larva_pars = []
-            for i in range(N):
-                l = copy.deepcopy(larva_pars)
-                flat_l = fun.flatten_dict(l)
-                for p, s in zip(pars, samples):
-                    flat_l.update({p: s[i]})
-                all_larva_pars.append(unflatten(flat_l))
-        else:
-            all_larva_pars = [larva_pars] * N
-
-        for k, vs in parameter_dict.items():
-            for l, v in zip(all_larva_pars, vs):
-                l[k].update(v)
-        return all_larva_pars
 
     def create_larvae(self, larva_pars, parameter_dict={}):
-        for group_id, group_pars in larva_pars.items():
-            N = group_pars['N']
-            a1, a2 = np.deg2rad(group_pars['orientation_range'])
-            orientations = np.random.uniform(low=a1, high=a2, size=N).tolist()
-            positions = fun.generate_xy_distro(N=N, **{k: group_pars[k] for k in ['mode', 'shape', 'loc', 'scale']})
-            sample_dataset = group_pars['sample_dataset'] if 'sample_dataset' in list(
-                group_pars.keys()) else self.sample_dataset
-            all_pars = self.generate_larva_pars(N, group_pars['model'], parameter_dict=parameter_dict,
-                                                sample_dataset=sample_dataset)
+        for gID, gConf in larva_pars.items():
 
-            for i, (p, o, pars) in enumerate(zip(positions, orientations, all_pars)):
-                l = self.add_larva(position=p, orientation=o, id=f'{group_id}_{i}', pars=pars, group=group_id,
-                                   default_color=group_pars['default_color'])
+            mod, sample=gConf['model'], gConf['sample']
+            if mod['brain']['intermitter_params'] and sample!={}:
+                for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
+                    if mod['brain']['intermitter_params'][dist]['fit']:
+                        mod['brain']['intermitter_params'][dist] = sample['bout_distros'][bout]['best']
+
+            modF = fun.flatten_dict(mod)
+            sample_ks = [p for p in modF if modF[p] == 'sample']
+            RefPars = fun.load_dict(paths.RefParsFile, use_pickle=False)
+            invRefPars = {v: k for k, v in RefPars.items()}
+            sample_ps=[invRefPars[p] for p in sample_ks]
+            if gConf['imitation'] and sample!={}:
+                ids, ps, ors, sample_dict = imitate_group(sample, sample_ps)
+                N=len(ids)
+            else:
+                d=gConf['distribution']
+                N = d['N']
+                ids = [f'{gID}_{i}' for i in range(N)]
+                a1, a2 = np.deg2rad(d['orientation_range'])
+                ors = np.random.uniform(low=a1, high=a2, size=N).tolist()
+                ps = fun.generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
+
+                sample_dict = sample_group(sample, N, sample_ps)
+            sample_dict.update(parameter_dict)
+            if len(sample_dict)>0 :
+                all_pars = []
+                for i in range(N):
+                    lF = copy.deepcopy(modF)
+                    for p, vs in sample_dict.items():
+                        lF.update({RefPars[p]: vs[i]})
+                    all_pars.append(unflatten(lF))
+            else:
+                all_pars = [mod] * N
+
+
+            for id, p, o, pars in zip(ids, ps, ors, all_pars):
+                l = self.add_larva(pos=p, orientation=o, id=id, pars=pars, group=gID,
+                                   default_color=gConf['default_color'])
+
+    # def create_larvae2(self, larva_pars, parameter_dict={}):
+    #     for gID, gConf in larva_pars.items():
+    #         if gID != 'Imitation':
+    #             N = gConf['N']
+    #             ids = [f'{gID}_{i}' for i in range(N)]
+    #             a1, a2 = np.deg2rad(gConf['orientation_range'])
+    #             ors = np.random.uniform(low=a1, high=a2, size=N).tolist()
+    #             ps = fun.generate_xy_distro(N=N, **{k: gConf[k] for k in ['mode', 'shape', 'loc', 'scale']})
+    #             sample_dataset = gConf['sample_dataset'] if 'sample_dataset' in list(
+    #                 gConf.keys()) else self.sample_dataset
+    #             all_pars = self.generate_larva_pars(N, gConf['model'], parameter_dict=parameter_dict,
+    #                                                 sample_dataset=sample_dataset)
+    #         else:
+    #             ids, ps, ors, all_pars = imitate_group(gConf['config'], gConf['model'])
+    #         for id, p, o, pars in zip(ids, ps, ors, all_pars):
+    #             l = self.add_larva(pos=p, orientation=o, id=id, pars=pars, group=gID,
+    #                                default_color=gConf['default_color'])
 
     def step(self):
 
@@ -148,6 +200,7 @@ class LarvaWorldSim(LarvaWorld):
             l.compute_next_action()
         self.active_larva_schedule.step()
         self.active_food_schedule.step()
+        # print('ss')
         if self.physics_engine:
             self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
             for fly in self.get_flies():
@@ -239,3 +292,34 @@ class LarvaWorldSim(LarvaWorld):
             if self.sim_clock.timer_closed:
                 if self.food_grid is not None:
                     self.food_grid.reset()
+
+
+def imitate_group(config, sample_pars=[]):
+    d = LarvaDataset(config['dir'], load_data=False)
+    e = d.read('end')
+    ids = e.index.values.tolist()
+    ps = [tuple(e[['initial_x', 'initial_y']].loc[id].values) for id in ids]
+    try:
+        ors = [e['initial_front_orientation'].loc[id] for id in ids]
+    except:
+        ors = np.random.uniform(low=0, high=2 * np.pi, size=len(ids)).tolist()
+    dic={p : [e[p].loc[id] for id in ids] for p in sample_pars}
+    return ids, ps, ors, dic
+
+def sample_group(sample, N, sample_ps):
+    d = LarvaDataset(sample['dir'], load_data=False)
+    e = d.read('end')
+    ps = [p for p in sample_ps if p in e.columns]
+    means = [e[p].mean() for p in ps]
+
+    if len(ps) >= 2:
+        base = e[ps].values.T
+        cov = np.cov(base)
+        vs = np.random.multivariate_normal(means, cov, N).T
+    elif len(ps) == 1:
+        std = np.std(e[ps].values)
+        vs = np.atleast_2d(np.random.normal(means[0], std, N))
+    else :
+        return {}
+    dic={p:v for p,v in zip(ps,vs)}
+    return dic

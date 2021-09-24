@@ -10,7 +10,7 @@ from scipy.integrate import quad, solve_ivp
 import lib.conf.conf
 import lib.conf.init_dtypes
 from lib.conf.conf import loadConf
-from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB
+
 from lib.model.DEB.gut import Gut
 from lib.stor import paths
 from lib.aux import functions as fun
@@ -844,6 +844,7 @@ def deb_default(id='DEB model', epochs=None, epoch_qs=None, substrate_quality=1.
     return d
 
 def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample='Fed', use_hunger=False,model_id=None,save_dict=True, **kwargs) :
+    from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB
     sd = loadConf(sample, 'Ref')
     if dt is None:
         dt = sd['dt']

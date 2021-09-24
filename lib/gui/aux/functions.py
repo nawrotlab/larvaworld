@@ -33,6 +33,7 @@ b6_kws = {'font': ('size', 6),
           'size': (6, 1)}
 b12_kws = {'font': ('size', 6),
            'size': (12, 1)}
+spin_size={'size' :  (4, 1)}
 
 
 def t_kws(w, h=1):

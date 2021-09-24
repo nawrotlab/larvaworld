@@ -38,14 +38,14 @@ class SimTab(GuiTab):
         c1 = CollapsibleDict('sim_params', default=True, disp_name='Configuration')
         c2 = CollapsibleDict('output', default=True, Ncols=1)
         g1 = GraphList(self.name, tab=self)
-        dl1 = DataList(name=kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'])
-        dl2 = DataList(name=kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'])
+        dl1 = DataList(name=kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp= 'Active simulations')
+        dl2 = DataList(name=kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp= 'Completed simulations')
 
 
         l = [[
-            gui_col([sl4, sl3, sl1,c1, c2, sl2, dl1, dl2], 0.25),
+            gui_col([sl4, sl3, sl1,c1, c2, sl2], 0.25),
             gui_col([g1.canvas], 0.55),
-            gui_col([g1], 0.2)
+            gui_col([dl1, dl2, g1], 0.2)
         ]]
         c = {}
         for i in [c1, c2, sl2]:
@@ -103,5 +103,5 @@ class SimTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-    larvaworld_gui = LarvaworldGui(tabs=['simulation', 'settings'])
+    larvaworld_gui = LarvaworldGui(tabs=['simulation', 'analysis','settings'])
     larvaworld_gui.run()

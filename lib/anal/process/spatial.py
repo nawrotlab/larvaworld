@@ -337,8 +337,11 @@ def compute_dispersion(s, e, aux_dir, dt, point, recompute=False, starts=[0], st
 
 
 def compute_tortuosity(s, e, dt, durs_in_sec=[2, 5, 10, 20], **kwargs):
-    dsp_par = nam.final('dispersion') if nam.final('dispersion') in e.columns else 'dispersion'
-    e['tortuosity'] = 1 - e[dsp_par] / e[nam.cum(nam.dst(''))]
+    try:
+        dsp_par = nam.final('dispersion') if nam.final('dispersion') in e.columns else 'dispersion'
+        e['tortuosity'] = 1 - e[dsp_par] / e[nam.cum(nam.dst(''))]
+    except:
+        pass
     durs = [int(1 / dt * d) for d in durs_in_sec]
     Ndurs = len(durs)
     if Ndurs > 0:
@@ -413,10 +416,10 @@ def compute_bearingNdst2source(s, e, source=(0, 0), **kwargs):
     print('Bearing and distance to source computed')
 
 
-def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', config=None, pos_in_mm=True):
+def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', config=None, pos_in_mm=True, **kwargs):
     ids = s.index.unique(level='AgentID').values
     if arena_dims is None:
-        arena_dims = config['arena_pars']['arena_dims']
+        arena_dims = config['env_params']['arena']['arena_dims']
     if track_point is None:
         track_point = config['point']
 
@@ -460,9 +463,7 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', conf
     return s
 
 
-def fixate_larva(s, config, point, secondary_point=None, arena_dims=None):
-    if arena_dims is None:
-        raise ValueError('Arena dimensions must be provided ')
+def fixate_larva(s, config, point, arena_dims, secondary_point=None):
     ids = s.index.unique(level='AgentID').values
     points = nam.midline(config['Npoints'], type='point') + ['centroid']
     points_xy = nam.xy(points, flat=True)
