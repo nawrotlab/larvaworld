@@ -3,7 +3,8 @@ import copy
 from lib.conf import dtype_dicts as dtypes
 import lib.aux.functions as fun
 import lib.aux.naming as nam
-
+from lib.conf.conf import imitation_exp
+from lib.stor import paths
 import numpy as np
 
 
@@ -100,7 +101,8 @@ grouped_exp_dict = {
 
     'other': {
         **exp('realistic_imitation', sim={'Box2D': True}, c=['midline', 'contour']),
-        # **exp('dish', exp_name='imitation', sim={'sample' : None}),
+        'imitation' : imitation_exp(paths.RefConf, model='explorer'),
+        # **exp('imitation', exp_name='imitation', sample=paths.RefConf),
               }
 
 }

@@ -6,7 +6,7 @@ from typing import Tuple, List
 import numpy as np
 import PySimpleGUI as sg
 
-from PySimpleGUI import Pane, LISTBOX_SELECT_MODE_EXTENDED
+from PySimpleGUI import Pane, LISTBOX_SELECT_MODE_EXTENDED, PopupGetFile
 from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
@@ -686,6 +686,7 @@ class DataList(NamedList):
         kks = [v0[i] if self.aux_cols is None else list(d0.keys())[v0[i]] for i in range(len(v0))]
         datagroup_id = self.tab.current_ID(v) if self.raw else None
         if e == self.browse_key:
+            # new=PopupGetFile(datagroup_id, v[self.browse_key])
             new=detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw)
             self.add(w, new)
         elif e == f'SELECT_ALL {n}':
@@ -880,60 +881,11 @@ class CollapsibleTable(Collapsible):
                 col_widths.append(10)
         after_header = button_row(name, buttons, button_args)
         content = [[Table(values=self.data, headings=[index]+self.headings,
-                          def_col_width=7, key=self.key, num_rows=len(self.data),
+                          def_col_width=7, key=self.key, num_rows=max([1,len(self.data)]),
                           col_widths=col_widths, visible_column_map=col_visible)]]
         # self.edit_key = f'EDIT_TABLE {name}'
         # b = [GraphButton('Document_2_Edit', self.edit_key, tooltip=f'Create new {name}')]
         super().__init__(name, content=content, next_to_header = after_header, **kwargs)
-
-    # def set_data(self, dic):
-    #     if dic is not None and len(dic) != 0:
-    #         if self.header is not None:
-    #             data = []
-    #             for id, pars in dic.items():
-    #                 row = [id]
-    #                 for j, p in enumerate(self.headings[1:]):
-    #                     for k, v in pars.items():
-    #                         if k == 'default_color' and p == 'color':
-    #                             row.append(v)
-    #                         elif k == p:
-    #                             row.append(v)
-    #                 data.append(row)
-    #         else:
-    #             dic2 = {k: dic[k] for k in self.headings}
-    #             l = list(dic2.values())
-    #             N = len(l[0])
-    #             data = [[j[i] for j in l] for i in range(N)]
-    #     else:
-    #         data = [[''] * self.Ncols]
-    #     return data
-    # def remove(self,w, ids):
-    #     # print(self.dict.keys())
-    #     for kk in ids:
-    #         self.dict.pop(kk, None)
-    #     # print(self.dict.keys())
-    #     # print()
-    #     self.update(w)
-
-    # def eval(self, e, v, w, c, d, g):
-    #     from lib.stor.managing import detect_dataset
-    #     n = self.name
-    #     k = self.key
-    #     d0 = self.dict
-    #     v0 = v[k]
-    #     kks = [list(d0.keys())[v0[i]] for i in range(len(v0))]
-    #     # datagroup_id = self.tab.current_ID(v) if self.raw else None
-    #     # if e == self.browse_key:
-    #     #     new=detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw)
-    #     #     self.add(w, new)
-    #     # elif e == f'SELECT_ALL {n}':
-    #     #     ks = np.arange(len(d0)).tolist()
-    #     #     if self.aux_cols is None:
-    #     #         w.Element(k).Update(set_to_index=ks)
-    #     #     else:
-    #     #         w.Element(k).Update(select_rows=ks)
-    #     if e == f'REMOVE {n}':
-    #         self.remove(w, kks)
 
     def update(self, w, dic=None, use_prefix=True):
         if dic is not None :
@@ -955,18 +907,9 @@ class CollapsibleTable(Collapsible):
         else:
             row_cols = None
         w[self.key].update(values=self.data, num_rows=len(self.data), row_colors=row_cols)
-        self.open(w) if self.data[0][0] != '' else self.close(w)
+        self.open(w) if len(self.dict) > 0 else self.close(w)
 
-    # def edit_table(self, window):
-    #     if self.header is not None:
-    #         dic = self.set_agent_dict()
-    #         self.update(window, dic)
-    #     else:
-    #         t0 = [dict(zip(self.headings, l)) for l in self.data] if self.data != [[''] * self.Ncols] else []
-    #         t1 = gui_table(t0, self.type_dict, title='Parameter space')
-    #         if t1 != t0:
-    #             dic = {k: [l[k] for l in t1] for k in self.headings}
-    #             self.update(window, dic)
+
 
 
     def get_dict(self, *args, **kwargs):
@@ -1361,7 +1304,7 @@ class DynamicGraph:
         sg.theme('DarkBlue15')
         self.agent = agent
         if available_pars is None:
-            available_pars = runtime_pars
+            available_pars = runtime_pars()
         self.available_pars = available_pars
         self.pars = pars
         self.dt = self.agent.model.dt

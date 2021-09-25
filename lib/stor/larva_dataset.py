@@ -41,7 +41,7 @@ class LarvaDataset:
                            }
 
         self.__dict__.update(self.config)
-
+        # print(self.config.keys())
         self.dt = 1 / self.fr
         self.configure_body()
         self.define_linear_metrics()
@@ -220,7 +220,18 @@ class LarvaDataset:
                 store[name] = df
         store.close()
 
+    def save_ExpFitter(self, dic=None):
+        fun.save_dict(dic, self.dir_dict['ExpFitter'], use_pickle=False)
+
+    def load_ExpFitter(self):
+        try:
+            dic=fun.load_dict(self.dir_dict['ExpFitter'], use_pickle=False)
+            return dic
+        except:
+            return None
+
     def save_config(self):
+        # print(self.config['ExpFitter'])
         for a in ['N', 't0', 'duration', 'quality', 'dt', 'agent_ids']:
             try:
                 self.config[a] = getattr(self, a)
@@ -514,6 +525,7 @@ class LarvaDataset:
             'bout_dicts': os.path.join(self.data_dir, 'bout_dicts'),
             'tables_h5': os.path.join(self.data_dir, 'tables.h5'),
             'sim': os.path.join(self.data_dir, 'sim_conf.txt'),
+            'ExpFitter': os.path.join(self.data_dir, 'ExpFitter.txt'),
             'fit': os.path.join(self.data_dir, 'dataset_fit.csv'),
             'conf': os.path.join(self.data_dir, 'dataset_conf.csv'),
             'data_h5': os.path.join(self.data_dir, 'data.h5'),

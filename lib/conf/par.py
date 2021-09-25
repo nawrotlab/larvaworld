@@ -19,6 +19,30 @@ import lib.conf.dtype_dicts as dtypes
 
 class Collection:
     def __init__(self, name, par_dict, keys=None, object_class=None):
+        collection_dict = {
+            'bouts': ['x', 'y', 'b', 'fou', 'rou', 'v', 'sv', 'd', 'fov', 'bv', 'sd', 'o_cent'],
+            # 'bouts': ['str_d_mu', 'str_sd_mu'],
+            'basic': ['x', 'y', 'b', 'fo'],
+            'e_basic': ['l_mu', nam.cum('d'), f'{nam.cum("sd")}', nam.cum('t'), 'x', 'y', 'sv_mu'],
+            'e_dispersion': ['dsp', 'sdsp', 'dsp_max', 'sdsp_max', 'dsp_0_40', 'dsp_0_80', 'dsp_20_80', 'sdsp_0_40',
+                             'sdsp_0_80', 'sdsp_20_80'],
+            'spatial': fun.flatten_list([[k, f's{k}'] for k in
+                                         ['dsp', 'd', 'v', 'a', 'D_x', 'xv', 'xa', 'D_y', 'yv', 'ya', nam.cum('d'),
+                                          nam.cum('D_x'), nam.cum('D_y'), ]]),
+            'e_spatial': [f'tor{i}_mu' for i in ['', 2, 5, 10, 20]],
+            'angular': ['b', 'bv', 'ba', 'fo', 'fov', 'foa', 'ro', 'rov', 'roa'],
+
+            'chemorbit': ['d_cent', 'sd_cent', 'o_cent'],
+            'e_chemorbit': fun.flatten_list(
+                [[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_cent', 'sd_cent']]),
+            'chemotax': ['d_chem', 'sd_chem', 'o_chem'],
+            'e_chemotax': fun.flatten_list(
+                [[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_chem', 'sd_chem']]),
+
+            'olfactor': ['Act_tur', 'A_tur', 'A_olf'],
+            'odors': ['c_odor1', 'c_odor2', 'c_odor3', 'dc_odor1', 'dc_odor2', 'dc_odor3'],
+            # 'constants': ['dt', 'x0', 'y0'],
+        }
         if keys is None:
             keys = collection_dict[name]
         self.name = name
@@ -847,13 +871,13 @@ def build_par_dict(save=True, df=None):
     return df
 
 
-def post_get_par(dataset, par):
-    # print(dataset.step_data)
-    k = getPar(d=par, to_return=['k'])[0]
-    p = ParDict[k]
-    vs = [p.get_from(o, u=False, tick=None, df=dataset.step_data) for o in dataset.agent_ids]
-    # print(vs)
-    return vs
+# def post_get_par(dataset, par):
+#     # print(dataset.step_data)
+#     k = getPar(d=par, to_return=['k'])[0]
+#     p = ParDict[k]
+#     vs = [p.get_from(o, u=False, tick=None, df=dataset.step_data) for o in dataset.agent_ids]
+#     # print(vs)
+#     return vs
 
 
 chunk_dict = {
@@ -867,29 +891,7 @@ chunk_dict = {
     'fee_c': nam.chain('feed')
 }
 
-collection_dict = {
-    'bouts': ['x', 'y', 'b', 'fou', 'rou', 'v', 'sv', 'd', 'fov', 'bv', 'sd', 'o_cent'],
-    # 'bouts': ['str_d_mu', 'str_sd_mu'],
-    'basic': ['x', 'y', 'b', 'fo'],
-    'e_basic': ['l_mu', nam.cum('d'), f'{nam.cum("sd")}', nam.cum('t'), 'x', 'y', 'sv_mu'],
-    'e_dispersion': ['dsp', 'sdsp', 'dsp_max', 'sdsp_max', 'dsp_0_40', 'dsp_0_80', 'dsp_20_80', 'sdsp_0_40',
-                     'sdsp_0_80', 'sdsp_20_80'],
-    'spatial': fun.flatten_list([[k, f's{k}'] for k in
-                                 ['dsp', 'd', 'v', 'a', 'D_x', 'xv', 'xa', 'D_y', 'yv', 'ya', nam.cum('d'),
-                                  nam.cum('D_x'), nam.cum('D_y'), ]]),
-    'e_spatial': [f'tor{i}_mu' for i in ['', 2, 5, 10, 20]],
-    'angular': ['b', 'bv', 'ba', 'fo', 'fov', 'foa', 'ro', 'rov', 'roa'],
 
-    'chemorbit': ['d_cent', 'sd_cent', 'o_cent'],
-    'e_chemorbit': fun.flatten_list(
-        [[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_cent', 'sd_cent']]),
-    'chemotax': ['d_chem', 'sd_chem', 'o_chem'],
-    'e_chemotax': fun.flatten_list([[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_chem', 'sd_chem']]),
-
-    'olfactor': ['Act_tur', 'A_tur', 'A_olf'],
-    'odors': ['c_odor1', 'c_odor2', 'c_odor3', 'dc_odor1', 'dc_odor2', 'dc_odor3'],
-    # 'constants': ['dt', 'x0', 'y0'],
-}
 
 
 def load_ParDict():
@@ -932,10 +934,11 @@ def reconstruct_ParDict(test=False):
     return dic
 
 
-ParDict = build_par_dict()
+
 ParFrame = load_ParDict()
 
-runtime_pars = [v['d'] for k, v in ParFrame.items() if v['o'] == Larva and not k in build_constants().keys()]
+def runtime_pars() :
+    return [v['d'] for k, v in ParFrame.items() if v['o'] == Larva and not k in build_constants().keys()]
 
 
 def getPar(k=None, p=None, d=None, to_return=['d', 'l'], new_format=True):
@@ -973,6 +976,7 @@ def getPar(k=None, p=None, d=None, to_return=['d', 'l'], new_format=True):
 
 
 if __name__ == '__main__':
+    ParDict = build_par_dict()
     # for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
     #     p = getPar(short, to_return=['d'])[0]
     #     print(p)

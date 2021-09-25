@@ -34,28 +34,28 @@ shortcuts = loadConfDict('Settings')
 def evaluate_input(model, screen):
     d_zoom = 0.01
     ev = pygame.event.get()
-    for event in ev:
-        if event.type == pygame.QUIT:
+    for e in ev:
+        if e.type == pygame.QUIT:
             screen.close_requested()
-        if event.type == pygame.KEYDOWN:
+        if e.type == pygame.KEYDOWN:
             for k, v in shortcuts['pygame_keys'].items():
-                if event.key == getattr(pygame, v):
+                if e.key == getattr(pygame, v):
                     eval_keypress(k, screen, model)
 
         if model.allow_clicks:
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if e.type == pygame.MOUSEBUTTONDOWN:
                 model.mousebuttondown_pos = screen.get_mouse_position()
                 # model.mousebuttondown_time = time.time()
-            elif event.type == pygame.MOUSEBUTTONUP:
+            elif e.type == pygame.MOUSEBUTTONUP:
                 # model.mousebuttonup_time = time.time()
                 # dt = model.mousebuttonup_time - model.mousebuttondown_time
                 p = screen.get_mouse_position()
-                if event.button == 1:
+                if e.button == 1:
                     if not eval_selection(model, p, ctrl=pygame.key.get_mods() & pygame.KMOD_CTRL):
                         model.add_agent(agent_class=model.selected_type, p0=tuple(p),
                                         p1=tuple(model.mousebuttondown_pos))
 
-                elif event.button == 3:
+                elif e.button == 3:
                     loc = tuple(np.array(screen.w_loc) + np.array(pygame.mouse.get_pos()))
                     if len(model.selected_agents) > 0:
                         for sel in model.selected_agents:
@@ -63,10 +63,10 @@ def evaluate_input(model, screen):
                             sel = lib.gui.aux.windows.set_agent_kwargs(sel, location=loc)
                     else:
                         model.selected_type = lib.gui.aux.windows.object_menu(model.selected_type, location=loc)
-                elif event.button in [4, 5]:
-                    screen.zoom_screen(d_zoom=-d_zoom if event.button == 4 else d_zoom)
+                elif e.button in [4, 5]:
+                    screen.zoom_screen(d_zoom=-d_zoom if e.button == 4 else d_zoom)
                     model.toggle(name='zoom', value=screen.zoom)
-            model.input_box.get_input(event)
+            model.input_box.get_input(e)
     if model.focus_mode and len(model.selected_agents) > 0:
         try:
             sel = model.selected_agents[0]

@@ -52,8 +52,12 @@ class ImportTab(GuiTab):
         return d, g
 
     def imitate(self, conf):
-        dd = run_sim(**conf)
+        from lib.anal.comparing import ExpFitter
 
+        dd = run_sim(**conf)
+        f = ExpFitter(dd.config['env_params']['larva_groups']['ImitationGroup']['sample'])
+        fit = f.compare(dd, save_to_config=True)
+        print(fit)
 
 
 if __name__ == "__main__":

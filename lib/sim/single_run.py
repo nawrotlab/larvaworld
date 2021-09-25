@@ -1,5 +1,4 @@
 """ Run a simulation and save the parameters and data to files."""
-import copy
 import datetime
 import time
 import pickle
@@ -10,7 +9,7 @@ import lib.conf.data_conf as dat
 
 from lib.aux.collecting import output_dict, midline_xy_pars
 from lib.envs._larvaworld_sim import LarvaWorldSim
-from lib.conf.conf import loadConf, next_idx, expandConf
+from lib.conf.conf import get_exp_conf
 import lib.aux.functions as fun
 from lib.stor.larva_dataset import LarvaDataset
 from lib.stor import paths
@@ -37,7 +36,7 @@ def _run_sim(
     Nsec = sim_params['duration'] * 60
     path = sim_params['path']
     Box2D = sim_params['Box2D']
-    sample = sim_params['sample']
+    # sample = sim_params['sample']
 
     if save_to is None:
         save_to = paths.SimFolder
@@ -57,13 +56,13 @@ def _run_sim(
     except :
         Npoints=3
     d = LarvaDataset(dir=dir_path, id=id, fr=1 / dt,
-                     Npoints=Npoints, Ncontour=0, sample_dataset=sample,env_params=env_params,
+                     Npoints=Npoints, Ncontour=0, env_params=env_params,
                      par_conf=par_config, save_data_flag=save_data_flag, load_data=False,
                      life_params=life_params
                      )
 
     output = collection_conf(dataset=d, collections=collections)
-    env = LarvaWorldSim(id=id, dt=dt, Box2D=Box2D, sample_dataset=sample,
+    env = LarvaWorldSim(id=id, dt=dt, Box2D=Box2D,
                         env_params=env_params, output=output,
                         life_params=life_params, Nsteps=Nsteps,
                         save_to=d.vis_dir, **kwargs)
@@ -167,29 +166,6 @@ def load_reference_dataset(dataset_id='reference', load=False):
     if not load:
         d.load(step=False)
     return d
-
-
-def get_exp_conf(exp_type, sim_params, life_params=None, N=None, larva_model=None):
-    conf = copy.deepcopy(expandConf(exp_type, 'Exp'))
-
-    for k in list(conf['env_params']['larva_groups'].keys()):
-        if N is not None:
-            conf['env_params']['larva_groups'][k]['N'] = N
-        if larva_model is not None:
-            conf['env_params']['larva_groups'][k]['model'] = loadConf(larva_model, 'Model')
-    if life_params is not None:
-        conf['life_params'] = life_params
-
-    if sim_params['sim_ID'] is None:
-        idx = next_idx(exp_type)
-        sim_params['sim_ID'] = f'{exp_type}_{idx}'
-    if sim_params['path'] is None:
-        sim_params['path'] = f'single_runs/{exp_type}'
-    if sim_params['duration'] is None:
-        sim_params['duration'] = conf['sim_params']['duration']
-    conf['sim_params'] = sim_params
-    conf['experiment'] = exp_type
-    return conf
 
 
 def run_essay(id,path, exp_types,durations, vis_kwargs, **kwargs):

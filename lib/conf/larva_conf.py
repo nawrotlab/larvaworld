@@ -165,7 +165,7 @@ feeding_larva = dtypes.larva_dict(brain_rover, body=dtypes.get_dict('body', init
 immobile_odor_larva = dtypes.larva_dict(brain_immobile_olfactor, body=dtypes.get_dict('body', initial_length='sample'))
 odor_larva = dtypes.larva_dict(brain_olfactor, body=dtypes.get_dict('body', initial_length='sample'))
 odor_larva_x2 = dtypes.larva_dict(brain_olfactor_x2, body=dtypes.get_dict('body', initial_length='sample'))
-exploring_larva = dtypes.larva_dict(brain_locomotion, body=dtypes.get_dict('body', initial_length='sample', touch_sensors=True))
+exploring_larva = dtypes.larva_dict(brain_locomotion, body=dtypes.get_dict('body', initial_length='sample', touch_sensors=False))
 
 
 def brain_olfactor_conf(ids, means, stds=None):

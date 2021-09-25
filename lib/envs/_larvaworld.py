@@ -6,8 +6,12 @@ import progressbar
 import os
 from typing import List, Any
 import webcolors
+from unflatten import unflatten
 
+from lib.aux import functions as fun
 from lib.model.agents._larva_sim import LarvaSim
+from lib.stor import paths
+
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -22,7 +26,6 @@ import lib.aux.functions as fun
 from lib.envs._maze import Border
 import lib.conf.dtype_dicts as dtypes
 from lib.model.agents._agent import LarvaworldAgent
-from lib.model.agents._larva import Larva
 from lib.model.agents._source import Food
 from lib.sim.input_lib import evaluate_input, evaluate_graphs
 
@@ -42,16 +45,17 @@ class LarvaWorld:
                  id='unnamed', dt=0.1, Nsteps=None, save_to='.',
                  background_motion=None, Box2D=False,
                  use_background=False,
-                 traj_color=None,allow_clicks=True,
+                 traj_color=None, allow_clicks=True,
                  experiment=None,
                  progress_bar=None,
                  space_in_mm=False
                  ):
         self.space_in_mm = space_in_mm
         self.progress_bar = progress_bar
+        self.Box2D = Box2D
         # print(vis_kwargs)
-        if vis_kwargs is None :
-            vis_kwargs=dtypes.get_dict('visualization', mode=None)
+        if vis_kwargs is None:
+            vis_kwargs = dtypes.get_dict('visualization', mode=None)
         self.vis_kwargs = vis_kwargs
         self.__dict__.update(self.vis_kwargs['draw'])
         self.__dict__.update(self.vis_kwargs['color'])
@@ -110,7 +114,7 @@ class LarvaWorld:
         # Add mesa schecule to use datacollector class
         self.create_schedules()
         self.create_arena(**self.env_pars['arena'])
-        self.space = self.create_space(Box2D)
+        self.space = self.create_space()
         if 'border_list' in list(self.env_pars.keys()):
             for id, pars in self.env_pars['border_list'].items():
                 b = Border(model=self, unique_id=id, **pars)
@@ -184,43 +188,29 @@ class LarvaWorld:
 
     def create_arena(self, arena_dims, arena_shape):
         X, Y = arena_dims
+        D = self.sim_screen_dim
         self.arena_dims = np.array([X, Y])
-        if X <= Y:
-            self.screen_width = self.sim_screen_dim
-            self.screen_height = int(self.sim_screen_dim * Y / X)
-        else:
-            self.screen_height = self.sim_screen_dim
-            self.screen_width = int(self.sim_screen_dim * X / Y)
-
-        self.unscaled_space_edges_for_screen = np.array([-X / 2, X / 2,
-                                                         -Y / 2, Y / 2])
+        self.screen_width, self.screen_height = (D, int(D * X / Y)) if X <= Y else (int(D * X / Y), D)
         self.unscaled_space_edges = np.array([(-X / 2, -Y / 2),
                                               (-X / 2, Y / 2),
                                               (X / 2, Y / 2),
                                               (X / 2, -Y / 2)])
 
         if arena_shape == 'circular':
-            tank_radius = X / 2
             # This is a circle_to_polygon shape from the function
-            self.unscaled_tank_shape = fun.circle_to_polygon(60, tank_radius)
+            self.unscaled_tank_shape = fun.circle_to_polygon(60, X / 2)
         elif arena_shape == 'rectangular':
             # This is a rectangular shape
             self.unscaled_tank_shape = self.unscaled_space_edges
 
-    def create_space(self, Box2D):
-        if Box2D:
-            self.physics_engine = True
-            self.scaling_factor = 1000.0
-        else:
-            self.physics_engine = False
-            self.scaling_factor = 1.0
-        s = self.scaling_factor
-        self.space_dims = self.arena_dims * s
+    def create_space(self):
+        s=self.scaling_factor = 1000.0 if self.Box2D else 1.0
+        X, Y = self.space_dims = self.arena_dims * s
         self.space_edges = [(x * s, y * s) for (x, y) in self.unscaled_space_edges]
-        self.space_edges_for_screen = self.unscaled_space_edges_for_screen * s
+        self.space_edges_for_screen = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
         self.tank_shape = self.unscaled_tank_shape * s
 
-        if self.physics_engine:
+        if self.Box2D:
             self._sim_velocity_iterations = 6
             self._sim_position_iterations = 2
 
@@ -239,9 +229,7 @@ class LarvaWorld:
 
 
         else:
-            x_min, x_max, y_min, y_max = self.space_edges_for_screen
-            space = ContinuousSpace(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
-                                    torus=False)
+            space = ContinuousSpace(x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2, torus=False)
         return space
 
     def _create_food_grid(self, space_range, grid_pars):
@@ -267,11 +255,6 @@ class LarvaWorld:
         self.is_running = False
         if self._screen is not None:
             self._screen.close_requested()
-
-    # def delete(self):
-    #     self.close()
-    #     pygame.quit()
-    #     del self
 
     def get_flies(self) -> List[LarvaworldAgent]:
         return self.active_larva_schedule.agents
@@ -424,10 +407,6 @@ class LarvaWorld:
             pp = ((p[0] + 1) * self.screen_width / 2, (-p[1] + 1) * self.screen_height / 2)
             return pp
 
-    # def relative2space_pos(self, pos):
-    #     x, y = pos
-    #     return x * self.space_dims[0] / 2, y * self.space_dims[1] / 2
-
     def _place_food(self, food_pars):
         pars0 = copy.deepcopy(food_pars)
         if pars0['food_grid'] is not None:
@@ -449,11 +428,6 @@ class LarvaWorld:
             self.add_food(id=id, position=position, food_pars=f_pars)
 
     def add_food(self, position, id=None, food_pars={}):
-        # if food_pars is None:
-        #     food_pars = food()
-        # food_pars = copy.deepcopy(self.env_pars['food_params'])
-        # if 'source_units' in list(food_pars.keys()):
-        #     food_pars.pop('source_units')
         if id is None:
             id = self.next_id(type='Food')
         f = Food(unique_id=id, pos=position, model=self, **food_pars)
@@ -463,10 +437,12 @@ class LarvaWorld:
 
     def add_larva(self, pos, orientation=None, id=None, pars=None, group=None, default_color=None):
         if group is None and pars is None:
-            group, distro = list(self.env_pars['larva_groups'].items())[0]
-            pars = self._generate_larva_pars(1, distro['model'])[0]
+            group, conf = list(self.env_pars['larva_groups'].items())[0]
+            sample_dict = sample_group(conf['sample'], 1, self.sample_ps)
+            mod = get_sample_bout_distros(conf['model'], conf['sample'])
+            pars = self._generate_larvae(1, sample_dict, mod)
             if default_color is None:
-                default_color = distro['default_color']
+                default_color = conf['default_color']
         if id is None:
             id = self.next_id(type='Larva')
         if orientation is None:
@@ -580,7 +556,7 @@ class LarvaWorld:
         return border_xy, lines
 
     def create_border_bodies(self, border_xy):
-        if self.physics_engine:
+        if self.Box2D:
             border_bodies = []
             for xy in border_xy:
                 b = self.space.CreateStaticBody(position=(.0, .0))
@@ -683,4 +659,44 @@ class LarvaWorld:
             i.set_color(self.scale_clock_color)
 
 
+def generate_larvae(N, sample_dict, base_model, RefPars=None):
+    if RefPars is None :
+        RefPars = fun.load_dict(paths.RefParsFile, use_pickle=False)
+    if len(sample_dict) > 0:
+        all_pars = []
+        modF = fun.flatten_dict(base_model)
+        for i in range(N):
+            lF = copy.deepcopy(modF)
+            for p, vs in sample_dict.items():
+                lF.update({RefPars[p]: vs[i]})
+            all_pars.append(unflatten(lF))
+    else:
+        all_pars = [base_model] * N
+    return all_pars
 
+def get_sample_bout_distros(model, sample) :
+    if model['brain']['intermitter_params'] and sample != {}:
+        for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
+            if model['brain']['intermitter_params'][dist]['fit']:
+                model['brain']['intermitter_params'][dist] = sample['bout_distros'][bout]['best']
+    return model
+
+
+def sample_group(sample, N, sample_ps):
+    from lib.stor.larva_dataset import LarvaDataset
+    d = LarvaDataset(sample['dir'], load_data=False)
+    e = d.read('end')
+    ps = [p for p in sample_ps if p in e.columns]
+    means = [e[p].mean() for p in ps]
+
+    if len(ps) >= 2:
+        base = e[ps].values.T
+        cov = np.cov(base)
+        vs = np.random.multivariate_normal(means, cov, N).T
+    elif len(ps) == 1:
+        std = np.std(e[ps].values)
+        vs = np.atleast_2d(np.random.normal(means[0], std, N))
+    else :
+        return {}
+    dic={p:v for p,v in zip(ps,vs)}
+    return dic

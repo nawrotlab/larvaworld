@@ -1,24 +1,14 @@
-import copy
-
 import numpy as np
 from mesa.datacollection import DataCollector
-from unflatten import unflatten
-import lib.aux.naming as nam
-from lib.anal.process.store import create_reference_dataset
 from lib.aux import functions as fun
 from lib.aux.collecting import TargetedDataCollector
-from lib.aux.sampling import sample_agents
-from lib.conf.conf import loadConf, expandConf
 from lib.conf.par import CompGroupCollector
-from lib.envs._larvaworld import LarvaWorld
+from lib.envs._larvaworld import LarvaWorld, generate_larvae, get_sample_bout_distros, sample_group
 from lib.envs._space import DiffusionValueLayer, GaussianValueLayer
 from lib.sim.conditions import get_exp_condition
 import lib.conf.dtype_dicts as dtypes
 from lib.stor.larva_dataset import LarvaDataset
 from lib.stor import paths
-
-
-
 
 
 class LarvaWorldSim(LarvaWorld):
@@ -125,18 +115,15 @@ class LarvaWorldSim(LarvaWorld):
         for gID, gConf in larva_pars.items():
 
             mod, sample=gConf['model'], gConf['sample']
-            if mod['brain']['intermitter_params'] and sample!={}:
-                for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
-                    if mod['brain']['intermitter_params'][dist]['fit']:
-                        mod['brain']['intermitter_params'][dist] = sample['bout_distros'][bout]['best']
+            mod=get_sample_bout_distros(mod, sample)
 
             modF = fun.flatten_dict(mod)
             sample_ks = [p for p in modF if modF[p] == 'sample']
             RefPars = fun.load_dict(paths.RefParsFile, use_pickle=False)
             invRefPars = {v: k for k, v in RefPars.items()}
-            sample_ps=[invRefPars[p] for p in sample_ks]
+            self.sample_ps=[invRefPars[p] for p in sample_ks]
             if gConf['imitation'] and sample!={}:
-                ids, ps, ors, sample_dict = imitate_group(sample, sample_ps)
+                ids, ps, ors, sample_dict = imitate_group(sample, self.sample_ps)
                 N=len(ids)
             else:
                 d=gConf['distribution']
@@ -146,17 +133,10 @@ class LarvaWorldSim(LarvaWorld):
                 ors = np.random.uniform(low=a1, high=a2, size=N).tolist()
                 ps = fun.generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
 
-                sample_dict = sample_group(sample, N, sample_ps)
+                sample_dict = sample_group(sample, N, self.sample_ps)
             sample_dict.update(parameter_dict)
-            if len(sample_dict)>0 :
-                all_pars = []
-                for i in range(N):
-                    lF = copy.deepcopy(modF)
-                    for p, vs in sample_dict.items():
-                        lF.update({RefPars[p]: vs[i]})
-                    all_pars.append(unflatten(lF))
-            else:
-                all_pars = [mod] * N
+            all_pars= generate_larvae(N, sample_dict, mod, RefPars)
+
 
 
             for id, p, o, pars in zip(ids, ps, ors, all_pars):
@@ -182,11 +162,9 @@ class LarvaWorldSim(LarvaWorld):
     #                                default_color=gConf['default_color'])
 
     def step(self):
-
         # Tick sim_clock
         self.sim_clock.tick_clock()
         self.Nticks += 1
-
         self.resolve_epochs()
 
         if not self.larva_collisions:
@@ -201,7 +179,7 @@ class LarvaWorldSim(LarvaWorld):
         self.active_larva_schedule.step()
         self.active_food_schedule.step()
         # print('ss')
-        if self.physics_engine:
+        if self.Box2D:
             self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
             for fly in self.get_flies():
                 fly.update_trajectory()
@@ -306,20 +284,3 @@ def imitate_group(config, sample_pars=[]):
     dic={p : [e[p].loc[id] for id in ids] for p in sample_pars}
     return ids, ps, ors, dic
 
-def sample_group(sample, N, sample_ps):
-    d = LarvaDataset(sample['dir'], load_data=False)
-    e = d.read('end')
-    ps = [p for p in sample_ps if p in e.columns]
-    means = [e[p].mean() for p in ps]
-
-    if len(ps) >= 2:
-        base = e[ps].values.T
-        cov = np.cov(base)
-        vs = np.random.multivariate_normal(means, cov, N).T
-    elif len(ps) == 1:
-        std = np.std(e[ps].values)
-        vs = np.atleast_2d(np.random.normal(means[0], std, N))
-    else :
-        return {}
-    dic={p:v for p,v in zip(ps,vs)}
-    return dic

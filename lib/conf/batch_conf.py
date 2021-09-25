@@ -90,6 +90,12 @@ batch_dict = {
         'ranges': [(0.5, 0.8), (0, 100)],
         'Ngrid': [2, 2]
     }, batch_methods=batch_methods(run='deb', post='null', final='deb')),
+    **batch('imitation', space_search={
+        'pars': ['activation_noise', 'base_activation'],
+        'ranges': [(0.0, 0.8), (15.0, 25.0)],
+        'Ngrid': [3, 3]
+    }, o='sample_fit', o_kws={'threshold' : 1.0, 'max_Nsims': 20, 'operations': {'mean': False, 'abs': False}},
+            batch_methods=batch_methods(run='exp_fit', post='default', final='null'), )
 
 }
 

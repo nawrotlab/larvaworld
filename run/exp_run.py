@@ -6,9 +6,9 @@ import numpy as np
 
 if __name__ == '__main__':
     sys.path.insert(0, '..')
-    from lib.sim.single_run import run_sim, get_exp_conf
+    from lib.sim.single_run import run_sim
     from lib.sim.analysis import sim_analysis
-    from lib.conf.conf import loadConfDict
+    from lib.conf.conf import loadConfDict, get_exp_conf
     from lib.aux import argparsers as prs
 
     s = time.time()

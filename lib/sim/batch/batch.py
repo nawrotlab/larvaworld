@@ -101,7 +101,7 @@ def get_batch_env(batch_id, batch_type, dir_path, parent_dir_path, exp, params, 
 
 
 def _batch_run(batch_type='unnamed', batch_id='template', space=None, exp=None, params=None, post_kws={}, exp_kws={},
-               runfunc=single_run, procfunc=None, postfunc=None, finfunc=None, optimization=None,ncores=8,
+               runfunc=single_run, procfunc=None, postfunc=None, finfunc=None, optimization=None,ncores=8,proc_kws={},
                multiproc=True, resumable=False, overwrite_file=False, save_hdf5=False, batch_methods=None):
 
     s0 = time.time()
@@ -137,7 +137,8 @@ def _batch_run(batch_type='unnamed', batch_id='template', space=None, exp=None, 
                     'save_to': dir_path,
                     'vis_kwargs': dtypes.get_dict('visualization'),
                     'collections': exp['collections']
-                    }
+                    },
+        'proc_kws':proc_kws
     }
 
     def test_batch():

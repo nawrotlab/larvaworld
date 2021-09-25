@@ -3,7 +3,7 @@ from typing import List, Tuple, Union
 import pandas as pd
 from siunits import BaseUnit, Composite, DerivedUnit
 
-from lib.aux import functions as fun
+from lib.aux import functions as fun, naming as nam
 from lib.aux.collecting import output_keys
 from lib.aux.functions import get_pygame_key
 from lib.stor import paths
@@ -197,7 +197,7 @@ def init_pars():
             },
         },
         'batch_methods': {
-            'run': {'t': str, 'v': 'default', 'vs': ['null', 'default', 'deb', 'odor_preference']},
+            'run': {'t': str, 'v': 'default', 'vs': ['null', 'default', 'deb', 'odor_preference', 'exp_fit']},
             'post': {'t': str, 'v': 'default', 'vs': ['null', 'default']},
             'final': {'t': str, 'v': 'null', 'vs': ['null', 'scatterplots', 'deb', 'odor_preference']}
         },
@@ -341,20 +341,20 @@ def init_pars():
             'transposition': {'t': str, 'vs': ['', 'origin', 'arena', 'center']},
         },
         'processing': {
-            'types': {t: {'t': bool, 'v': True} for t in
+            'types': {t: {'t': bool, 'v': False} for t in
                       ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI']},
             'dsp_starts': {'t': List[float], 'max': 200.0, 'dv': 1.0},
             'dsp_stops': {'t': List[float], 'max': 200.0, 'dv': 1.0},
             'tor_durs': {'t': List[int], 'max': 100, 'dv': 1}},
-        'annotation': {'bouts': {t: {'t': bool, 'v': True} for t in ['stride', 'pause', 'turn']},
+        'annotation': {'bouts': {t: {'t': bool, 'v': False} for t in ['stride', 'pause', 'turn']},
                        'track_point': {'t': str},
                        'track_pars': {'t': List[str]},
                        'chunk_pars': {'t': List[str]},
                        'vel_par': {'t': str},
                        'ang_vel_par': {'t': str},
                        'bend_vel_par': {'t': str},
-                       'min_ang': {'max': 180.0, 'dv': 1.0},
-                       'min_ang_vel': {'max': 1000.0, 'dv': 1.0},
+                       'min_ang': {'v': 0.0, 'max': 180.0, 'dv': 1.0},
+                       'min_ang_vel': {'v': 0.0,'max': 1000.0, 'dv': 1.0},
                        'non_chunks': {'t': bool, 'v': False}},
         'enrich_aux': {'recompute': {'t': bool, 'v': False},
                        'mode': {'t': str, 'v': 'minimal', 'vs': ['minimal', 'full']},
@@ -365,11 +365,11 @@ def init_pars():
                                 'turn',
                                 'unused']}},
         'build_conf': {
-            'min_duration_in_sec': {'max': 3600.0, 'dv': 0.1},
-            'min_end_time_in_sec': {'max': 3600.0, 'dv': 0.1},
-            'start_time_in_sec': {'max': 3600.0, 'dv': 0.1},
-            'max_Nagents': {'t': int, 'v': 1000, 'max': 1000},
-            'save_mode': {'t': str, 'v': 'minimal', 'vs': ['minimal', 'semifull', 'full', 'points']},
+            'min_duration_in_sec': {'v' : 170.0, 'max': 3600.0, 'dv': 0.1},
+            'min_end_time_in_sec': {'v' : 0.0, 'max': 3600.0, 'dv': 0.1},
+            'start_time_in_sec': {'v' : 0.0, 'max': 3600.0, 'dv': 0.1},
+            'max_Nagents': {'t': int, 'v': 12, 'max': 1000},
+            'save_mode': {'t': str, 'v': 'semifull', 'vs': ['minimal', 'semifull', 'full', 'points']},
         },
         'substrate': {k: {'v': v, 'max': 1000.0} for k, v in substrate_dict['standard'].items()},
         'output': {n: {'t': bool, 'v': False} for n in output_keys}
@@ -395,12 +395,24 @@ def init_pars():
     d['enrichment'] = {k: d[k] for k in
                        ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
 
+    d['food_params'] = {'source_groups': {'t': dict, 'v': {}},
+                        'food_grid': {'t': dict},
+                        'source_units': {'t': dict, 'v': {}}
+                        }
+
+    d['env_conf'] = {'arena': d['arena'],
+            'border_list': {'t': dict, 'v': {}},
+            'food_params': d['food_params'],
+            'larva_groups': {'t': dict, 'v': {}},
+            'odorscape': d['odorscape']}
+
     d['exp_conf'] = {'env_params': {'t': str, 'vs': list(loadConfDict('Env').keys())},
                      'sim_params': d['sim_params'],
                      'life_params': {'t': str, 'v': 'default', 'vs': list(loadConfDict('Life').keys())},
                      'collections': {'t': List[str], 'v': ['pose']},
                      'enrichment': d['enrichment']
                      }
+
 
     d['batch_setup'] = {
         'batch_id': {'t': str},
@@ -410,15 +422,14 @@ def init_pars():
     d['batch_conf'] = {'exp': {'t': str},
                        'space_search': d['space_search'],
                        'batch_methods': d['batch_methods'],
-                       'optimization': {'t': dict},
-                       'exp_kws': {'t': dict, 'v': {'save_data_flag': False}},
+                       'optimization': d['optimization'],
+                       'exp_kws': {'t': dict, 'v': {'enrichment' : d['enrichment']}},
                        'post_kws': {'t': dict, 'v': {}},
+                       'proc_kws': {'t': dict, 'v': {}},
                        }
 
-    d['food_params'] = {'source_groups': {'t': dict, 'v': {}},
-                        'food_grid': {'t': dict},
-                        'source_units': {'t': dict, 'v': {}}
-                        }
+
+
 
     d['tracker'] = {
         'resolution': {'fr': {'v': 10.0, 'max': 100.0},
@@ -490,6 +501,17 @@ def init_pars():
         'odor': d['odor']
     }
 
+    d['SourceGroup']={
+        'distribution': d['spatial_distro'],
+        'default_color': {'t': str, 'v': 'green'},
+        **d['food'],
+        'odor': d['odor']
+    }
+
+    d['border_list'] = {
+        'default_color': {'t': str, 'v': 'green'},
+        'points' : {'t': List[Tuple[float]], 'min' : -1.0, 'max' :1.0},
+    }
     d['Source_DISTRO'] = {**d['spatial_distro']}
 
     return d
@@ -1433,7 +1455,23 @@ def store_controls():
     from lib.conf.conf import saveConfDict
     saveConfDict(d, 'Settings')
 
+def store_RefPars() :
+    d = {
+        'length': 'body.initial_length',
+        nam.freq(nam.scal(nam.vel(''))): 'brain.crawler_params.initial_freq',
+        'stride_reoccurence_rate': 'brain.intermitter_params.crawler_reoccurence_rate',
+        nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.step_to_length_mu',
+        nam.std(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.step_to_length_std',
+        nam.freq('feed'): 'brain.feeder_params.initial_freq',
+        # **{p: p for p in ['initial_x', 'initial_y', 'initial_front_orientation']}
+    }
+    fun.save_dict(d, paths.RefParsFile, use_pickle=False)
+
 
 if __name__ == '__main__':
-    ps = par_dict('odor')
-    print(ps)
+    store_dtypes()
+    store_controls()
+    store_RefPars()
+    # print(null_dict('enrichment'))
+
+

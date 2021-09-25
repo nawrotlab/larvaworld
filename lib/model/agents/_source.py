@@ -15,7 +15,7 @@ class Source(LarvaworldAgent):
         self.shape_vertices = shape_vertices
         shape = fun.circle_to_polygon(60, self.radius)
 
-        if self.model.physics_engine:
+        if self.model.Box2D:
             self._body: Box2D.b2Body = self.model.space.CreateStaticBody(position=self.pos)
             self.Box2D_shape = b2ChainShape(vertices=shape.tolist())
             self._body.CreateFixture(shape=self.Box2D_shape)

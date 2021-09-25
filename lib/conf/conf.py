@@ -1,3 +1,4 @@
+import copy
 import json
 import sys
 import shutil
@@ -5,12 +6,13 @@ import os
 
 import numpy as np
 
-from lib.conf.init_dtypes import null_dict
+
+
 from lib.stor import paths
 import lib.aux.functions as fun
 sys.path.insert(0, paths.get_parent_dir())
-
-
+import lib.conf.dtype_dicts as dtypes
+from lib.conf.init_dtypes import null_dict
 
 
 
@@ -256,15 +258,19 @@ def loadConf(id, conf_type):
 
 def expandConf(id, conf_type):
     conf = loadConf(id, conf_type)
-    if conf_type=='Batch' :
-        conf['exp'] = expandConf(conf['exp'], 'Exp')
-    elif conf_type=='Exp' :
-        conf['env_params']=expandConf(conf['env_params'], 'Env')
-        conf['life_params'] = loadConf(conf['life_params'], 'Life')
-    elif conf_type=='Env' :
-        for k, v in conf['larva_groups'].items():
-            if type(v['model']) == str:
-                v['model'] = loadConf(v['model'], 'Model')
+    # print(conf.keys(), id)
+    try:
+        if conf_type=='Batch' :
+            conf['exp'] = expandConf(conf['exp'], 'Exp')
+        elif conf_type=='Exp' :
+            conf['env_params']=expandConf(conf['env_params'], 'Env')
+            conf['life_params'] = loadConf(conf['life_params'], 'Life')
+        elif conf_type=='Env' :
+            for k, v in conf['larva_groups'].items():
+                if type(v['model']) == str:
+                    v['model'] = loadConf(v['model'], 'Model')
+    except :
+        pass
     return conf
 
 
@@ -465,7 +471,11 @@ def store_confs() :
 # if __name__ == '__main__':
 #     init_confs()
 
-def imitation_exp(config, model='explorer', exp='dish', idx=0):
+def imitation_exp(config, model='explorer', idx=0, **kwargs):
+
+    from lib.anal.comparing import ExpFitter
+    # f = ExpFitter(config)
+
     id = config['id']
     base_larva = expandConf(model, 'Model')
 
@@ -474,12 +484,42 @@ def imitation_exp(config, model='explorer', exp='dish', idx=0):
         'duration': config['duration'] / 60,
         'path': 'single_runs/imitation',
         'sim_ID': f'{id}_imitation_{idx}',
-        'sample': id,
+        # 'sample': id,
         'Box2D': False
     }
-    exp_conf = expandConf(exp, 'Exp')
-    exp_conf['env_params']['larva_groups'] = {'ImitationGroup': null_dict('LarvaGroup', sample= config, model= base_larva, default_color = 'blue', imitation=True, distribution=None)}
-    exp_conf['env_params']['arena'] = config['env_params']['arena']
-    exp_conf['sim_params'] = sim_params
-    exp_conf['experiment'] = exp
+    env_params =null_dict('env_conf', arena=config['env_params']['arena'], larva_groups={'ImitationGroup': null_dict('LarvaGroup', sample= config, model= base_larva, default_color = 'blue', imitation=True, distribution=None)})
+
+    exp_conf=null_dict('exp_conf', sim_params=sim_params, env_params=env_params, life_params=null_dict('life'), enrichment=dtypes.base_enrich())
+    # print(config)
+    # exp_conf = expandConf(exp, 'Exp')
+    # exp_conf['env_params']['larva_groups'] = {'ImitationGroup': null_dict('LarvaGroup', sample= config, model= base_larva, default_color = 'blue', imitation=True, distribution=None)}
+    # exp_conf['env_params']['arena'] = config['env_params']['arena']
+    # exp_conf['sim_params'] = sim_params
+    exp_conf['experiment'] = 'imitation'
+    exp_conf.update(**kwargs)
+    # print(exp_conf.keys())
     return exp_conf
+
+
+def get_exp_conf(exp_type, sim_params, life_params=None, N=None, larva_model=None):
+    conf = copy.deepcopy(expandConf(exp_type, 'Exp'))
+    # print(conf['sample'])
+    for k in list(conf['env_params']['larva_groups'].keys()):
+        if N is not None:
+            conf['env_params']['larva_groups'][k]['N'] = N
+        if larva_model is not None:
+            conf['env_params']['larva_groups'][k]['model'] = loadConf(larva_model, 'Model')
+    if life_params is not None:
+        conf['life_params'] = life_params
+
+    if sim_params['sim_ID'] is None:
+        idx = next_idx(exp_type)
+        sim_params['sim_ID'] = f'{exp_type}_{idx}'
+    if sim_params['path'] is None:
+        sim_params['path'] = f'single_runs/{exp_type}'
+    if sim_params['duration'] is None:
+        sim_params['duration'] = conf['sim_params']['duration']
+    conf['sim_params'] = sim_params
+    conf['experiment'] = exp_type
+
+    return conf

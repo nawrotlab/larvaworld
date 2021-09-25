@@ -4,12 +4,8 @@ import argparse
 
 
 sys.path.insert(0, '..')
-from lib.sim.single_run import get_exp_conf
-from lib.conf.conf import next_idx, loadConfDict, loadConf
+from lib.conf.conf import next_idx, loadConfDict, loadConf, get_exp_conf
 import lib.aux.argparsers as prs
-from lib.sim.batch.batch import batch_run
-from lib.sim.batch.functions import prepare_batch, retrieve_results
-from lib.sim.batch.aux import stored_trajs, load_traj
 from run.exec_run import Exec
 
 parser = argparse.ArgumentParser(description="Run given batch-run")
@@ -54,15 +50,17 @@ batch_conf['batch_type'] = batch_type
 
 batch_conf['optimization']['operations']={'mean':True, 'abs':False, 'std':False}
 
-from lib.stor.larva_dataset import LarvaDataset
-from lib.conf.batch_conf import fit_tortuosity_batch
-batch_conf=fit_tortuosity_batch(d=LarvaDataset('/home/panos/nawrot_larvaworld/larvaworld/data/pairs/controls_20l'),
-                                model='imitation', exp='dish', idx=0)
-exec = Exec(mode='batch', conf=batch_conf, run_externally=False)
-exec.run()
+# from lib.stor.larva_dataset import LarvaDataset
+# from lib.conf.batch_conf import fit_tortuosity_batch
+# batch_conf=fit_tortuosity_batch(d=LarvaDataset('/home/panos/nawrot_larvaworld/larvaworld/data/pairs/controls_20l'),
+#                                 model='imitation', exp='dish', idx=0)
+# exec = Exec(mode='batch', conf=batch_conf, run_externally=False)
+# exec.run()
 
 
 # batch_kwargs = prepare_batch(batch_conf)
+exec = Exec(mode='batch', conf=batch_conf, run_externally=False)
+exec.run()
 #
 #
 # df, fig_dict =batch_run(**batch_kwargs)

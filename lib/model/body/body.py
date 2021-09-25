@@ -183,7 +183,7 @@ class LarvaBody:
                           position[1] + (-i + (N - 1) / 2) * ls_y] for i in range(N)]
 
         segs = []
-        if self.model.physics_engine:
+        if self.model.Box2D:
             physics_pars = {'density': self.density,
                             'friction': 0.01,
                             'restitution': 0.0,

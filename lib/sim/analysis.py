@@ -1,5 +1,6 @@
 import numpy as np
 
+from lib.anal.comparing import ExpFitter
 from lib.anal.plotting import plot_endpoint_scatter, plot_turn_Dbearing, plot_turn_amp, plot_turns, plot_timeplot, \
     plot_navigation_index, plot_debs, plot_food_amount, plot_gut, plot_pathlength, plot_endpoint_params, barplot, \
     comparative_analysis, plot_marked_turns, plot_chunk_Dorient2source, plot_marked_strides, targeted_analysis, \
@@ -179,7 +180,11 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
         fig_dict = {f'stride_track_idx_0_in_{s0}-{s1}': plot_marked_strides(datasets=[d], agent_idx=0,
                                                                             slice=[s0, s1], **ccc) for (s0, s1) in
                     [(0, 60)]}
-
+    if exp_type == 'imitation' :
+        print('ddddddddddddd')
+        f = ExpFitter(d.config['env_params']['larva_groups']['ImitationGroup']['sample'])
+        results['sample_fit'] = f.compare(d, save_to_config=True)
+        print(results['sample_fit'])
     print(f'    Analysis complete!')
     return fig_dict, results
 

@@ -3,7 +3,7 @@ from typing import Tuple
 
 import numpy as np
 
-from lib.conf.init_dtypes import load_dtypes, processing_types, annotation_bouts, init_agent_dtypes
+from lib.conf.init_dtypes import load_dtypes, processing_types, annotation_bouts
 
 all_null_dicts, all_dtypes = load_dtypes()
 dtype_keys=list(all_dtypes.keys())
@@ -71,8 +71,8 @@ def null_distro(class_name, basic=True):
 def get_dict_dtypes(name, **kwargs):
     if name in dtype_keys:
         return all_dtypes[name]
-    elif name == 'distro':
-        return get_distro_dtypes(**kwargs)
+    # elif name == 'distro':
+    #     return get_distro_dtypes(**kwargs)
 
 
 
@@ -158,25 +158,25 @@ def base_enrich(types=['angular', 'spatial','dispersion', 'tortuosity'],bouts=['
     return get_dict('enrichment', **d)
 
 
-def get_distro_dtypes(class_name, basic=True):
-    from lib.conf.conf import loadConfDict
-    dtypes = {
-        'mode': ['normal', 'periphery', 'uniform'],
-        'shape': ['circle', 'rect', 'oval'],
-        'N': int,
-        'loc': Tuple[float, float],
-        'scale': Tuple[float, float],
-    }
-    if class_name == 'Larva':
-        dtypes = {**dtypes, 'orientation_range': Tuple[float, float], 'model': list(loadConfDict('Model').keys())}
-    if not basic:
-        dtypes = {**dtypes, **get_dict_dtypes(class_name)}
-        for p in ['unique_id', 'pos']:
-            try:
-                dtypes.pop(p)
-            except:
-                pass
-    return dtypes
+# def get_distro_dtypes(class_name, basic=True):
+#     from lib.conf.conf import loadConfDict
+#     dtypes = {
+#         'mode': ['normal', 'periphery', 'uniform'],
+#         'shape': ['circle', 'rect', 'oval'],
+#         'N': int,
+#         'loc': Tuple[float, float],
+#         'scale': Tuple[float, float],
+#     }
+#     if class_name == 'Larva':
+#         dtypes = {**dtypes, 'orientation_range': Tuple[float, float], 'model': list(loadConfDict('Model').keys())}
+#     if not basic:
+#         dtypes = {**dtypes, **get_dict_dtypes(class_name)}
+#         for p in ['unique_id', 'pos']:
+#             try:
+#                 dtypes.pop(p)
+#             except:
+#                 pass
+#     return dtypes
 
 if __name__ == '__main__':
     pass

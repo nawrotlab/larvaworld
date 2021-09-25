@@ -91,7 +91,7 @@ class BodySim(BodyManager):
         #     # Default mode : apply torque
         #     # self.get_head()._body.ApplyTorque(self.torque, wake=True)
         #     pass
-        if self.model.physics_engine:
+        if self.model.Box2D:
             if self.ang_mode == 'velocity':
                 ang_vel = self.ang_activity * self.ang_vel_coef
                 ang_vel = self.compute_ang_vel(v=ang_vel, z=0)
@@ -228,7 +228,7 @@ class BodySim(BodyManager):
     def restore_body_bend(self):
         self.compute_spineangles()
         d, l = self.dst, self.sim_length
-        if not self.model.physics_engine:
+        if not self.model.Box2D:
             if self.Nsegs == 2:
                 self.spineangles[0] = fun.restore_bend_2seg(self.spineangles[0], d, l,
                                                             correction_coef=self.bend_correction_coef)
@@ -246,7 +246,7 @@ class BodySim(BodyManager):
 
     def update_trajectory(self):
         last_pos = self.trajectory[-1]
-        if self.model.physics_engine:
+        if self.model.Box2D:
             self.pos = self.get_global_midspine_of_body()
         self.dst = np.sqrt(np.sum(np.array(self.pos - last_pos) ** 2))
         self.cum_dst += self.dst

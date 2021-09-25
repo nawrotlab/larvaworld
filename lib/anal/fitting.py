@@ -11,7 +11,7 @@ from scipy.stats import ks_2samp, stats, levy, norm, uniform
 from lib.aux import naming as nam
 from lib.aux import functions as fun
 from lib.conf.conf import saveConf
-from lib.model.modules.intermitter import get_EEB_poly1d
+
 
 
 def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
@@ -552,6 +552,7 @@ def logNpow_switch(x, xmin, xmax, u2, du2, c2cum, c2, fr, discrete=False, fit_by
 
 
 def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=['stride', 'pause'], **kwargs):
+    from lib.model.modules.intermitter import get_EEB_poly1d
     if id is None:
         id = config['id']
     config['bout_distros'] = {}

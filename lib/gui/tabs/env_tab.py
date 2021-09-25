@@ -112,14 +112,16 @@ class EnvTab(GuiTab):
         # s1 = Collapsible(self.Lg, next_to_header=after_header, content=[content])
 
 
-        s1 = CollapsibleTable(self.Lg, index='ID', heading_dict={'N':'distribution.N', 'color':'default_color', 'model':'model'},dict_name='LarvaGroup')
-
-        s2 = CollapsibleTable2(self.Sg, headings=['group', 'color', 'amount', 'odor_id'],
-                              type_dict=dtypes.get_dict_dtypes('distro', class_name=self.S, basic=False))
-        s3 = CollapsibleTable2(self.Su, headings=['id', 'color', 'amount', 'odor_id'],
-                              type_dict=dtypes.get_dict_dtypes(self.S))
-        s4 = CollapsibleTable2(self.Bg, headings=['id', 'color', 'points'],
-                              type_dict=dtypes.get_dict_dtypes(self.B))
+        s1 = CollapsibleTable(self.Lg, index='Group ID', heading_dict={'N':'distribution.N', 'color':'default_color', 'model':'model'},dict_name='LarvaGroup')
+        s2 = CollapsibleTable(self.Sg, index='Group ID',heading_dict={'N':'distribution.N', 'color': 'default_color', 'odor_id' : 'odor.odor_id', 'amount' : 'amount'},dict_name='SourceGroup')
+        # s2 = CollapsibleTable2(self.Sg, headings=['group', 'color', 'amount', 'odor_id'],
+        #                       type_dict=dtypes.get_dict_dtypes('distro', class_name=self.S, basic=False))
+        s3 = CollapsibleTable(self.Su, index='ID', heading_dict={'color': 'default_color', 'odor_id' : 'odor.odor_id', 'amount' : 'amount'},dict_name='source')
+        # s3 = CollapsibleTable2(self.Su, headings=['id', 'color', 'amount', 'odor_id'],
+        #                       type_dict=dtypes.get_dict_dtypes(self.S))
+        s4 = CollapsibleTable(self.Bg, index='ID', heading_dict={'color': 'default_color', 'points' : 'points' },dict_name='border_list')
+        # s4 = CollapsibleTable2(self.Bg, headings=['id', 'color', 'points'],
+        #                       type_dict=dtypes.get_dict_dtypes(self.B))
         c = {}
         for s in [s1, s2, s3, s4]:
             c.update(**s.get_subdicts())

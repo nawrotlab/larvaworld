@@ -30,9 +30,10 @@ RefFolder = f'{DataFolder}/SampleGroup'
 
 ConfFolder = f'{get_parent_dir()}/lib/conf/stored_confs'
 RefParsFile =f'{ConfFolder}/RefPars.txt'
-RefConfFile =f'{ConfFolder}/RefConf.txt'
-RefConf = fun.load_dict(f'{DataFolder}/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/control_15l/data/dataset_conf.csv',
-    use_pickle=False)
+# RefConfFile =f'{ConfFolder}/RefConf.txt'
+RefDatasetPath=f'{DataFolder}/SchleyerGroup/processed/FRUvsQUI/QUI->QUI/AM/exp_13l'
+RefConf = fun.load_dict(f'{RefDatasetPath}/data/dataset_conf.csv',use_pickle=False)
+
 
 SimIdx_path = f'{ConfFolder}/SimIdx.txt'
 ParDb_path = f'{ConfFolder}/ParDatabase.csv'

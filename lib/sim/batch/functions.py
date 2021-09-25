@@ -30,6 +30,7 @@ def prepare_batch(batch, **kwargs):
         'optimization': batch['optimization'],
         'exp_kws': batch['exp_kws'],
         'post_kws': {},
+        'proc_kws': batch['proc_kws'],
         **kwargs
     }
     return prepared_batch
@@ -88,6 +89,12 @@ def save_results_df(traj):
     df.to_csv(os.path.join(traj.config.dir_path, 'results.csv'), index=True, header=True)
     return df
 
+def exp_fit_processing(traj, d, exp_fitter) :
+    from lib.anal.comparing import ExpFitter
+    p = traj.config.fit_par
+    fit=exp_fitter.compare(d)
+    traj.f_add_result(p, fit, comment='The fit')
+    return d, fit
 
 def default_processing(traj, d=None):
     p = traj.config.fit_par
@@ -262,7 +269,7 @@ def post_processing(traj, result_tuple):
     traj.f_store()
 
 
-def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}):
+def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
     sim = fun.reconstruct_dict(traj.f_get('sim_params'))
     sim['sim_ID'] = f'run_{traj.v_idx}'
     sim['path'] = traj.config.dataset_path
@@ -278,7 +285,7 @@ def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}):
         if procfunc is None:
             results = np.nan
         else:
-            d, results = procfunc(traj, d)
+            d, results = procfunc(traj, d, **proc_kws)
 
     if save_hdf5:
         s, e = [ObjectTable(data=k, index=k.index, columns=k.columns.values, copy=True) for k in
@@ -316,6 +323,7 @@ procfunc_dict = {
     'default': default_processing,
     'deb': deb_processing,
     'odor_preference': PI_computation,
+    'exp_fit' : exp_fit_processing
 }
 postfunc_dict = {
     'null': null_post_processing,

@@ -5,9 +5,6 @@ from itertools import product
 import pandas as pd
 
 
-from lib.anal.plotting import comparative_analysis
-
-
 from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni
 from lib.conf.conf import *
 from lib.stor.larva_dataset import LarvaDataset
@@ -162,6 +159,7 @@ def enrich_datasets(datagroup_id, datasets=None, names=None, enrich_conf=None, *
 
 
 def analyse_datasets(datagroup_id, save_to=None, **kwargs):
+    from lib.anal.plotting import comparative_analysis
     ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
     if save_to is None and len(ds) > 1:
         g = loadConf(datagroup_id, 'Group')
@@ -278,12 +276,13 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
 
 if __name__ == '__main__':
     # dr = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/FRUvsQUI/Naive->PUR/EM/control'
-    dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/nengo_dish/nengo_dish_9'
-    dr2='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/imitation/control_20l_to_meters_imitation_0'
-    ddr='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/controls_20l'
-    c1='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/control_15l'
-    c2='/home/panos/nawrot_larvaworld/larvaworld/data/pairs/controls_20l_imitation_0'
-    c3='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/chemotaxis_local/test2'
+    # dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/nengo_dish/nengo_dish_9'
+    dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/imitation/exp_13l_imitation_0'
+    # ddr='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/controls_20l'
+    # c1='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/FRU->FRU/AM/test_10l'
+    # c2='/home/panos/nawrot_larvaworld/larvaworld/data/pairs/controls_20l_imitation_0'
+    # c3='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/chemotaxis_local/test2'
+    # c3='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/chemotaxis_local/test2'
     # pref = '/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/raw/3_conditions/AttP240@UAS_TNT/Starved'
     # x_contour_file = f'{pref}_x_contour.txt'
     # y_contour_file = f'{pref}_y_contour.txt'
@@ -301,26 +300,52 @@ if __name__ == '__main__':
     import lib.conf.dtype_dicts as dtypes
     from lib.sim.single_run import run_sim
     from lib.conf.conf import imitation_exp
-
+    from lib.anal.comparing import ExpFitter
     vis_kwargs = dtypes.get_dict('visualization', mode='video', video_speed=60)
+    dr2=paths.RefDatasetPath
+    # print(paths.RefConf)
+    # raise
     # dr='/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved'
-    for dddr in [c1] :
+    for dddr in [dr2,dr1] :
         d = LarvaDataset(dddr)
-        exp_conf=imitation_exp(d.config, model='explorer', exp='dish', idx=0)
-        exp_conf['experiment'] = 'dish'
-        exp_conf['save_data_flag'] = True
-        dd= run_sim(**exp_conf)
-        # dd= run_sim(**exp_conf, vis_kwargs=vis_kwargs)
-        from lib.sim.analysis import sim_analysis
+        print(d.step_data['bend'].dropna().abs().groupby('AgentID').mean().mean())
+        # print(d.step_data['velocity'].dropna().abs().groupby('AgentID').mean().mean())
+        # print(d.endpoint_data['tortuosity_2_mean'].mean())
+        # print(d.endpoint_data['tortuosity_5_mean'].mean())
+        # print(d.endpoint_data['tortuosity_10_mean'].mean())
+        # print(d.endpoint_data['dispersion'].mean())
+        # print(d.endpoint_data['cum_dst'].mean())
+        print(d.endpoint_data['dispersion_max'].mean())
+        print(d.endpoint_data['final_dispersion'].mean())
+        print(d.endpoint_data['dispersion_mean'].mean())
+        # print(d.endpoint_data.columns[10:20])
+    # # f = ExpFitter(paths.RefConf)
+    # # print(f.df_st)
+    raise
 
-        fig_dict, results = sim_analysis(dd, 'dish')
-        # print(results)
-        # # res=mimic_dataset(d)
-        # # d.visualize(vis_kwargs=vis_kwargs, space_in_mm=False, draw_Nsegs=2)
-        # # s,e=d.step_data,d.endpoint_data
-        c=d.config
-        print(c['bout_distros'])
-        print(c.keys())
+    exp_conf=imitation_exp(paths.RefConf, model='explorer', idx=0, save_data_flag=True)
+    # exp_conf['experiment'] = 'dish'
+    # exp_conf['save_data_flag'] = True
+    f = ExpFitter(paths.RefConf)
+    print(exp_conf['save_data_flag'])
+    dd= run_sim(**exp_conf)
+    print(dd.step_data['front_orientation_velocity'].dropna().abs().groupby('AgentID').mean())
+    # dd= run_sim(**exp_conf, vis_kwargs=vis_kwargs)
+    print(dd.endpoint_data['tortuosity_10_mean'].mean())
+    fit=f.compare(dd)
+    print(fit)
+    # dd= run_sim(**exp_conf, vis_kwargs=vis_kwargs)
+    # from lib.sim.analysis import sim_analysis
+    #
+    # fig_dict, results = sim_analysis(dd, 'imitation')
+    # # print(results)
+    # # # res=mimic_dataset(d)
+    # # # d.visualize(vis_kwargs=vis_kwargs, space_in_mm=False, draw_Nsegs=2)
+    # # # s,e=d.step_data,d.endpoint_data
+    #
+    # c=dd.config
+    # print(c['sample_fit'])
+        # print(c.keys())
         # print(e.columns.values[0:20])
         # print(e['tortuosity_2_mean'].mean())
         # print(e['tortuosity_5_mean'].mean())
@@ -340,79 +365,4 @@ if __name__ == '__main__':
     # store['foo'] = s  # write to HDF5
     # bar = store['foo']  # retrieve
     # store.close()
-#     s1=time.time()
-#
-#     store = pd.HDFStore('test.h5')
-#     bar = store['foo']
-#     b1=bar['head_x'].xs('Larva_137', level='AgentID', drop_level=True).values[3390]
-#     print()
-#     store.close()
-#     s2 = time.time()
-#
-#     s.to_csv('test.csv', index=True, header=True)
-#     s3 = time.time()
-#     bar2 = pd.read_csv('test.csv', index_col=['Step', 'AgentID'])
-#     b2=bar2['head_x'].xs('Larva_137', level='AgentID', drop_level=True).values[3390]
-#     print()
-#     s4 = time.time()
-#     # a=s.xs(d.agent_ids[0], level='AgentID', drop_level=True)
-#     # print(a[list(d.contour_xy[0])])
-#     # print(a[list(d.contour_xy[1])])
-#     # print(s['point3_x'].min(), s['point3_x'].max())
-#     print(s1-s0, s2-s1)
-#     print(s3-s2, s4-s3)
-#     print(s2-s0, s4-s2)
-#     print(np.isnan(b1))
-#     print(np.isnan(b2))
-#     print(type(b1), type(b2))
-#     # print(d.config)
-# #     # print(s['head_x'].min(), s['head_x'].max())
-# #     # print(s['head_y'].min(), s['head_y'].max())
-# #     # print(d.config)
-# #     # print(d.config['point'])
 
-        # print(e.columns.values[40:60])
-        # print(e['tortuosity_5_mean'].mean())
-        # print(e['cum_dst'])
-        # print(s['x'].max(), s['x'].min())
-        # print(s['y'].max(), s['y'].min())
-        # print(e['cum_dur'].mean())
-        # print(e['cum_dur'].std())
-    # ss={'a' :[2], 'b':[3]}
-    # s=pd.DataFrame.from_dict(ss)
-    # bar = pd.DataFrame(np.random.randn(10, 4))
-    # s0=time.time()
-    # store = pd.HDFStore('test.h5')
-    # store['foo'] = s  # write to HDF5
-    # bar = store['foo']  # retrieve
-    # store.close()
-#     s1=time.time()
-#
-#     store = pd.HDFStore('test.h5')
-#     bar = store['foo']
-#     b1=bar['head_x'].xs('Larva_137', level='AgentID', drop_level=True).values[3390]
-#     print()
-#     store.close()
-#     s2 = time.time()
-#
-#     s.to_csv('test.csv', index=True, header=True)
-#     s3 = time.time()
-#     bar2 = pd.read_csv('test.csv', index_col=['Step', 'AgentID'])
-#     b2=bar2['head_x'].xs('Larva_137', level='AgentID', drop_level=True).values[3390]
-#     print()
-#     s4 = time.time()
-#     # a=s.xs(d.agent_ids[0], level='AgentID', drop_level=True)
-#     # print(a[list(d.contour_xy[0])])
-#     # print(a[list(d.contour_xy[1])])
-#     # print(s['point3_x'].min(), s['point3_x'].max())
-#     print(s1-s0, s2-s1)
-#     print(s3-s2, s4-s3)
-#     print(s2-s0, s4-s2)
-#     print(np.isnan(b1))
-#     print(np.isnan(b2))
-#     print(type(b1), type(b2))
-#     # print(d.config)
-# #     # print(s['head_x'].min(), s['head_x'].max())
-# #     # print(s['head_y'].min(), s['head_y'].max())
-# #     # print(d.config)
-# #     # print(d.config['point'])

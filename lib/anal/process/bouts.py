@@ -35,6 +35,10 @@ def annotate(s, e, config=None,bouts={'stride': True, 'pause': True, 'turn': Tru
     track_pars = [p for p in track_pars if p in s.columns]
     if track_point is None:
         track_point = config['point']
+    if min_ang is None:
+        min_ang = 0.0
+    if min_ang_vel is None:
+        min_ang_vel = 0.0
     c = {
         's': s,
         'e': e,
@@ -65,7 +69,7 @@ def annotate(s, e, config=None,bouts={'stride': True, 'pause': True, 'turn': Tru
     return s, e
 
 
-def detect_turns(s, e, aux_dir, dt, track_pars, min_ang_vel, min_ang,
+def detect_turns(s, e, aux_dir, dt, track_pars, min_ang_vel, min_ang=30.0,
                  ang_vel_par=None, bend_vel_par=None, chunk_only=None, recompute=False,
                  constant_bend_chunks=False, **kwargs):
     if set(nam.num(['Lturn', 'Rturn'])).issubset(e.columns.values) and not recompute:
@@ -78,9 +82,9 @@ def detect_turns(s, e, aux_dir, dt, track_pars, min_ang_vel, min_ang,
     if bend_vel_par is None:
         bend_vel_par = nam.vel('bend')
 
-    compute_extrema(ss, dt, parameters=[ang_vel_par], interval_in_sec=0.3, abs_threshold=[-min_ang_vel, min_ang_vel])
+    # compute_extrema(ss, dt, parameters=[ang_vel_par], interval_in_sec=0.3, abs_threshold=[-min_ang_vel, min_ang_vel])
     # detect_turn_bouts(ss, e, dt, par=ang_vel_par)
-
+    print(min_ang)
     detect_chunks(ss, e, dt, chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=ang_vel_par,
                   ROU_ranges=[[min_ang, np.inf], [-np.inf, -min_ang]],
                   par_ranges=[[min_ang_vel, np.inf], [-np.inf, -min_ang_vel]], merged_chunk='turn',
