@@ -5,18 +5,15 @@ from tkinter import PhotoImage
 from typing import Tuple, List
 import numpy as np
 import PySimpleGUI as sg
-
-from PySimpleGUI import Pane, LISTBOX_SELECT_MODE_EXTENDED, PopupGetFile
 from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 from lib.conf.conf import loadConfDict, deleteConf, loadConf, expandConf
 import lib.aux.functions as fun
-from lib.conf.init_dtypes import par_dict, init_pars, base_dtype, null_dict
+from lib.conf.init_dtypes import par_dict, base_dtype, null_dict
 from lib.conf.par import runtime_pars, getPar
-from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse, \
-    spin_size
+from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse
 from lib.gui.aux.buttons import named_bool_button, BoolButton, GraphButton, button_row
 from lib.gui.aux.windows import gui_table, set_kwargs, save_conf_window, import_window, change_dataset_id
 
@@ -44,25 +41,23 @@ class ParLayout:
             t = args['dtype']
             if t == dict:
                 type_dict0 = args['content']
-                self.subdicts[k0] = CollapsibleDict(k0, disp_name=k, type_dict=type_dict0, toggled_subsections=self.toggled_subsections)
+                self.subdicts[k0] = CollapsibleDict(k0, disp_name=k, type_dict=type_dict0, toggled_subsections=self.toggled_subsections,
+                                                    text_kws=text_kws)
                 ii = self.subdicts[k0].get_layout()
             else:
                 v = args['initial_value']
                 vs = args['values']
-
                 if t == bool:
                     ii = named_bool_button(k_disp, v, k0, text_kws=text_kws)
-
                 else:
                     if t == str:
                         if vs is None:
-                            temp = sg.In(v, key=k0, **text_kws)
+                            temp = sg.In(v, key=k0, **value_kws)
                         else:
-                            temp = sg.Combo(vs, default_value=v, key=k0, enable_events=True,readonly=True, **text_kws)
+                            temp = sg.Combo(vs, default_value=v, key=k0, enable_events=True,readonly=True, **value_kws)
                     elif t == List[str]:
-                        temp = sg.In(v, key=k0, **text_kws)
+                        temp = sg.In(v, key=k0, **value_kws)
                     else:
-
                         spin_kws = {
                             'values': vs,
                             'initial_value': v,
@@ -79,7 +74,7 @@ class ParLayout:
                             temp = MultiSpin(**spin_kws, Nspins=2)
                         elif t in [float, int]:
                             temp = SingleSpin(**spin_kws)
-                    ii = [sg.Text(f'{k_disp}:'), temp]
+                    ii = [sg.Text(f'{k_disp}:', **text_kws), temp]
             items.append(ii)
         if Ncols>1:
             items=fun.group_list_by_n([*items], int(np.ceil(len(items)/Ncols)))
@@ -108,11 +103,11 @@ class ParLayout:
             subdicts.update(s.get_subdicts())
         return subdicts
 
-    def set_element_size(self, value_kws, Ncols):
-        if 'size' not in value_kws.keys():
-            value_kws['size'] = w_kws['default_element_size']
-        value_kws['size']=int(value_kws['size'][0]/Ncols), value_kws['size'][1]
-        return value_kws
+    def set_element_size(self, text_kws, Ncols):
+        if 'size' not in text_kws.keys():
+            text_kws['size'] = w_kws['default_element_size']
+        text_kws['size']=int(text_kws['size'][0]/Ncols), text_kws['size'][1]
+        return text_kws
 
 
 
@@ -229,7 +224,7 @@ class SingleSpin(sg.Spin):
     # def update(self, w, value):
     #     super().update(value=value)
 
-class TupleSpin(Pane):
+class TupleSpin(sg.Pane):
     def __init__(self, initial_value, key, range=None, values=None, steps=1000, decimals=3,dtype=float,  **value_kws):
         # w, h = w_kws['default_button_element_size']
         # value_kws.update({'size': (w - 3, h)})
@@ -248,7 +243,6 @@ class TupleSpin(Pane):
             'values': self.values,
             'dtype': self.dtype,
             **value_kws,
-            **spin_size
         }
         self.s0 = SingleSpin(initial_value=v0, key=self.k0, **spin_kws)
         self.s1 = SingleSpin(initial_value=v1, key=self.k1, **spin_kws)
@@ -268,7 +262,7 @@ class TupleSpin(Pane):
         self.s0.update(value=v0)
         self.s1.update(value=v1)
 
-class MultiSpin(Pane):
+class MultiSpin(sg.Pane):
     def __init__(self, initial_value, values, key, steps=100, decimals=2, Nspins=4, tuples=False, dtype=float, value_kws={}):
         # w, h = w_kws['default_button_element_size']
         # value_kws.update({'size': (w - 2, h)})
@@ -606,7 +600,7 @@ class NamedList(Header):
 
 class DataList(NamedList):
     def __init__(self, name, tab, dict={}, buttons=['select_all', 'remove', 'changeID', 'browse'], button_args={},
-                 raw=False, select_mode=LISTBOX_SELECT_MODE_EXTENDED, drop_down=False,disp=None, **kwargs):
+                 raw=False, select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED, drop_down=False,disp=None, **kwargs):
         if disp is None :
             disp=get_disp_name(name)
         self.tab = tab
@@ -1062,6 +1056,8 @@ class CollapsibleDict(Collapsible):
         if dict_name is None:
             dict_name = name
         self.dict_name = dict_name
+        # if type_dict is not None :
+        #     print(name, dict_name,type_dict.keys())
         l_kws = {
             'name': name,
             'dict_name':dict_name,
