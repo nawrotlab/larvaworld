@@ -158,6 +158,7 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, min_duratio
             durs.append(len(t))
             starts.append(start_t)
             stops.append(stop_t)
+        temp['Step'] = temp['Step'].values.astype(int)
         temp.reset_index(drop=False, inplace=True)
         temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
 
@@ -189,34 +190,38 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, min_duratio
     new_ids = [f'Larva_{100 + i}' for i in range(len(old_ids))]
     new_pairs = dict(zip(old_ids, new_ids))
     temp.rename(index=new_pairs, inplace=True)
+
+    end = temp['head_x'].groupby('AgentID').count().to_frame()
+    print(end)
+    end.columns = ['num_ticks']
+    end['cum_dur'] = end['num_ticks'] / fr
+    print(end)
+
     temp.reset_index(drop=False, inplace=True)
     max_step = int(temp['Step'].max())
     temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
     temp.sort_index(level=['Step', 'AgentID'], inplace=True)
     temp.drop_duplicates(inplace=True)
-
     trange = np.arange(max_step).astype(int)
     my_index = pd.MultiIndex.from_product([trange, new_ids], names=['Step', 'AgentID'])
     columns = x_pars + y_pars + xc_pars + yc_pars
     if 'state' in temp.columns:
         columns.append('state')
+    step = pd.DataFrame(temp, index=my_index, columns=columns)
+    # step.update(temp)
 
-    step = pd.DataFrame(index=my_index, columns=columns)
-    step.update(temp)
-    end = temp['head_x'].dropna().groupby('AgentID').count().to_frame()
-    end.columns = ['num_ticks']
-    end['cum_dur'] = end['num_ticks'] / fr
-
+    # print(end)
     if max_Nagents is not None:
-        selected = end.nlargest(max_Nagents, columns='num_ticks').index.values
+        selected = end.nlargest(max_Nagents, 'num_ticks').index.values
         step = step.loc[(slice(None), selected), :]
         end = end.loc[selected]
-
     if min_duration_in_sec > 0:
         selected = end[end['cum_dur'] >= min_duration_in_sec].index.values
+        print(selected)
         step = step.loc[(slice(None), selected), :]
         end = end.loc[selected]
-
+        print(end)
+    print(step.head())
     return step, end
 
 def build_Berni(dataset, build_conf, source_files, max_Nagents=None, min_duration_in_sec=0.0,

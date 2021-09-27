@@ -2,6 +2,7 @@ import numpy as np
 from lib.aux import naming as nam
 import lib.conf.env_conf as env
 import lib.conf.dtype_dicts as dtypes
+from lib.conf.init_dtypes import null_dict
 
 PaisiosParConf = {'bend': 'from_vectors',
                   'front_vector': (2, 4),
@@ -99,20 +100,14 @@ Schleyer_raw_cols = ['Step'] + \
 Sims_raw_cols = ['Step'] + nam.xy('centroid')
 
 SchleyerEnrichConf = {
-    'preprocessing': dtypes.get_dict('preprocessing', filter_f=2.0, drop_collisions=True, rescale_by=0.001),
+    'preprocessing': null_dict('preprocessing', filter_f=2.0, drop_collisions=True, rescale_by=0.001),
     'processing': {'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': True, 'tortuosity': True,
                              'PI': False},
-                   'dsp_starts': [0, 20], 'dsp_stops': [40, 120],
+                   'dsp_starts': [0], 'dsp_stops': [40],
                    'tor_durs': [2, 5, 10, 20]},
-    'annotation': {'bouts': {'stride': True, 'pause': True, 'turn': True}, 'track_point': None,
-                   'track_pars': None, 'chunk_pars': None,
-                   'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 30.0,'min_ang_vel': 0.0,
-                   'non_chunks': False},
-    'enrich_aux': {'recompute': False,
-                   'mode': 'minimal',
-                   'source': None,
-                   },
-    'to_drop': dtypes.get_dict('to_drop', groups={**{n: True for n in
+    'annotation': null_dict('annotation', bouts= {'stride': True, 'pause': True, 'turn': True}, min_ang = 30.0),
+    'enrich_aux': null_dict('enrich_aux'),
+    'to_drop': null_dict('to_drop', groups={**{n: True for n in
                                                      ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
                                                       'Rturn', 'turn', 'unused']},
                                                   **{'midline': False, 'contour': False}}),
@@ -144,21 +139,15 @@ JovanicDataConf = {'fr': 11.27,
                    'Ncontour': 10}
 
 JovanicEnrichConf = {
-    'preprocessing': dtypes.get_dict('preprocessing', filter_f=2.0, transposition='arena'),
+    'preprocessing': null_dict('preprocessing', filter_f=2.0, rescale_by=0.001, transposition='arena'),
     'processing': {
-        'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': False, 'tortuosity': False,
+        'types': {'angular': True, 'spatial': True, 'source': False, 'dispersion': True, 'tortuosity': True,
                   'PI': False},
         'dsp_starts': [0, 20], 'dsp_stops': [40, 120],
         'tor_durs': [2, 5, 10, 20]},
-    'annotation': {'bouts': {'stride': False, 'pause': False, 'turn': False}, 'track_point': None,
-                   'track_pars': None, 'chunk_pars': None,
-                   'vel_par': None, 'ang_vel_par': None, 'bend_vel_par': None, 'min_ang': 30.0,'min_ang_vel': 0.0,
-                   'non_chunks': False},
-    'enrich_aux': {'recompute': False,
-                   'mode': 'minimal',
-                   'source': None,
-                   },
-    'to_drop': dtypes.get_dict('to_drop', groups={**{n: True for n in
+    'annotation': null_dict('annotation', bouts= {'stride': True, 'pause': True, 'turn': True}, min_ang = 30.0),
+    'enrich_aux': null_dict('enrich_aux'),
+    'to_drop': null_dict('to_drop', groups={**{n: True for n in
                                                      ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
                                                       'Rturn', 'turn', 'unused']},
                                                   **{'midline': False, 'contour': False}})

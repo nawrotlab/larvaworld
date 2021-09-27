@@ -167,7 +167,8 @@ class LarvaWorld:
                     f.set_color(f.default_color)
         elif name == 'random_colors':
             for f in self.get_flies():
-                f.set_default_color(self.generate_larva_color())
+                color = fun.random_colors(1)[0] if self.random_colors else f.default_color
+                f.set_color(color)
         elif name == 'black_background':
             self.update_default_colors()
         elif name == 'larva_collisions':
@@ -408,24 +409,23 @@ class LarvaWorld:
             return pp
 
     def _place_food(self, food_pars):
-        pars0 = copy.deepcopy(food_pars)
-        if pars0['food_grid'] is not None:
-            self._create_food_grid(space_range=self.space_edges_for_screen,
-                                   grid_pars=pars0['food_grid'])
-        if pars0['source_groups'] is not None:
-            distro_pars = ['N', 'mode', 'shape', 'loc', 'scale']
-            for group_id, group_pars in pars0['source_groups'].items():
-                N, mode, shape, loc, scale = [group_pars[p] for p in distro_pars]
-                pars = {p: group_pars[p] for p in group_pars if p not in distro_pars}
-                food_positions = fun.generate_xy_distro(mode, shape, N, loc, scale)
-                ids = [f'{group_id}_{i}' for i in range(N)]
-                for id, p in zip(ids, food_positions):
-                    self.add_food(id=id, position=p, food_pars=pars)
+        if food_pars is not None :
+            pars0 = copy.deepcopy(food_pars)
+            if pars0['food_grid'] is not None:
+                self._create_food_grid(space_range=self.space_edges_for_screen,
+                                       grid_pars=pars0['food_grid'])
+            if pars0['source_groups'] is not None:
+                for gID, gConf in pars0['source_groups'].items():
+                    ps = fun.generate_xy_distro(**gConf['distribution'])
+                    for i, p in enumerate(ps) :
+                        id =f'{gID}_{i}'
+                        self.add_food(id=id, position=p, food_pars=gConf)
 
-        for id, f_pars in pars0['source_units'].items():
-            position = f_pars['pos']
-            f_pars.pop('pos')
-            self.add_food(id=id, position=position, food_pars=f_pars)
+
+            for id, f_pars in pars0['source_units'].items():
+                position = f_pars['pos']
+                f_pars.pop('pos')
+                self.add_food(id=id, position=position, food_pars=f_pars)
 
     def add_food(self, position, id=None, food_pars={}):
         if id is None:
@@ -436,6 +436,7 @@ class LarvaWorld:
         return f
 
     def add_larva(self, pos, orientation=None, id=None, pars=None, group=None, default_color=None):
+        # print(pos, group)
         if group is None and pars is None:
             group, conf = list(self.env_pars['larva_groups'].items())[0]
             sample_dict = sample_group(conf['sample'], 1, self.sample_ps)
@@ -447,6 +448,7 @@ class LarvaWorld:
             id = self.next_id(type='Larva')
         if orientation is None:
             orientation = np.random.uniform(0, 2 * np.pi, 1)[0]
+        # print(pos)
         l = LarvaSim(model=self, pos=pos, orientation=orientation, unique_id=id,
                      larva_pars=pars, group=group, default_color=default_color)
         self.active_larva_schedule.add(l)
@@ -651,12 +653,30 @@ class LarvaWorld:
             self.screen_texts[name] = text
 
     def update_default_colors(self):
-        self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
-            self.black_background)
-        for f in self.get_flies():
-            f.set_default_color(self.generate_larva_color())
+        if self.black_background:
+            self.tank_color = (0, 0, 0)
+            self.screen_color = (50, 50, 50)
+            self.scale_clock_color = (255, 255, 255)
+            # self.default_larva_color = np.array([255, 255, 255])
+            # for f in self.get_flies():
+            #     f.color = fun.invert_color(f.default_color)
+
+        else:
+            self.tank_color = (255, 255, 255)
+            self.screen_color = (200, 200, 200)
+            self.scale_clock_color = (0, 0, 0)
+            # self.default_larva_color = np.array([0, 0, 0])
+            # for f in self.get_flies():
+            #     f.color = f.default_color
         for i in [self.sim_clock, self.sim_scale, self.sim_state] + list(self.screen_texts.values()):
             i.set_color(self.scale_clock_color)
+
+        # for f in self.get_flies():
+        #     # fun.invert_color()
+        #     color=[abs(c1-c0) for c0,c1 in zip(self.default_larva_color, f.default_color)]
+        #     print(f.default_color, color)
+        #     f.set_default_color(color)
+
 
 
 def generate_larvae(N, sample_dict, base_model, RefPars=None):

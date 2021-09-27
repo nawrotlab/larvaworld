@@ -43,44 +43,10 @@ class Substrate:
             'water' : 18.01528,
         }
         self.d_dict= lib.conf.init_dtypes.substrate_dict[type]
-        # Compound densities (g/cm**3)
-        # if type=='standard' :
-        #     self.d_dict = {
-        #         'glucose': 100 / 1000,
-        #         'dextrose': 0,
-        #         'saccharose': 0,
-        #         'yeast': 50 / 1000,
-        #         'agar': 16 / 1000,
-        #         'cornmeal': 0,
-        #     }
-        # elif type=='cornmeal' :
-        #     self.d_dict = {
-        #         'glucose':  517 / 17000,
-        #         'dextrose': 1033 / 17000,
-        #         'saccharose': 0,
-        #         'yeast': 0,
-        #         'agar': 93 / 17000,
-        #         'cornmeal': 1716 / 17000,
-        #     }
-        #
-        # elif type=='PED_tracker' :
-        #     self.d_dict = {
-        #         'glucose':  0,
-        #         'dextrose': 0,
-        #         'saccharose': 2/200,
-        #         'yeast': 3*self.V_drop*self.d_yeast_drop/0.1,
-        #         'agar': 500*2 / 200,
-        #         'cornmeal': 0,
-        #     }
-        
         self.d = self.d_water + sum(list(self.d_dict.values()))
         self.C=self.get_C()
         self.X=self.get_X()
         self.X_ratio=self.get_X_ratio()
-
-
-
-        # self.K=K
 
     def get_X(self, quality=None, compounds = ['glucose', 'dextrose', 'yeast', 'cornmeal', 'saccharose'], return_sum=True):
         if quality is None :
@@ -106,30 +72,8 @@ class Substrate:
         return X/C
 
 
-
-    
-    # def get_M(self,V, quality=1.0, compounds = ['glu', 'dex', 'yeast', 'cornmeal'], return_sum=True):
-    #     Xs = [self.d[c] / self.w[c] * quality for c in compounds]
-    #     if return_sum:
-    #         return sum(Xs)
-    #     else:
-    #         return Xs
-
-    # def get_X2(self, quality=1.0, compound = 'nutrients'):
-    #     X_dict={
-    #         'glu' : self.X_glu,
-    #         'dextr' : self.X_dextr,
-    #         'yeast' : self.X_yeast,
-    #         'agar' : self.X_agar,
-    #         'cornmeal' : self.X_cornmeal,
-    #         'nutrients' : self.X_glu + self.X_yeast + self.X_dextr + self.X_cornmeal,
-    #     }
-    #     X=X_dict[compound]*quality
-    #     return X
-
-
 class DEB:
-    def __init__(self, id='DEB model', species='default', steps_per_day=24, cv=0, T=298.15, eb=1.0, substrate_quality=1.0, substrate_type='standard',
+    def __init__(self, id='DEB model', species='default', steps_per_day=24*60, cv=0, T=298.15, eb=1.0, substrate_quality=1.0, substrate_type='standard',
                  aging=False, print_output=False, starvation_strategy=False, assimilation_mode='deb', save_dict=True,y_E_X=None, save_to=None,
                  V_bite=0.0005, absorption=None, base_hunger=0.5, hunger_gain=0, hours_as_larva=0, simulation=True, use_gut=True):
 
@@ -149,14 +93,6 @@ class DEB:
         # Hunger drive parameters
         self.hunger_gain = hunger_gain
         self.base_hunger = base_hunger
-
-
-
-        # for c in ['GLU', 'yeast', 'agar', 'nutrients']:
-        # for q in [1.0,0.75,0.5,0.25,0.15,0.05] :
-        #     print(f'-----------{q}-------------')
-        #     print([self.substrate_type.get_f(q,c) for c in ['glu', 'yeast', 'agar', 'nutrients']])
-
 
         self.T = T
         self.L0 = 10 ** -10
@@ -213,25 +149,20 @@ class DEB:
 
         self.gut=Gut(deb=self, V_bite=self.V_bite, save_dict=save_dict) if use_gut else None
         self.set_steps_per_day(steps_per_day)
-        # print(self.gut)
-        # self.J_X_A = 0
-
-
-
-
-        self.update()
         self.run_embryo_stage()
         self.predict_larva_stage(f=self.base_f)
 
         self.dict = self.init_dict() if save_dict else None
 
-    def update(self):
-        self.L = self.V ** (1 / 3)
-        self.Lw = self.L / self.del_M
-        # self.Vw = self.Lw **3
-        self.Ww = self.compute_Ww()
-        self.e = self.compute_e()
-        self.hunger = self.compute_hunger()
+    @ property
+    def Lw(self):
+        return self.L / self.del_M
+
+    @property
+    def L(self):
+        return self.V ** (1 / 3)
+
+
 
     def scale_time(self):
         dt = self.dt * self.T_factor
@@ -250,7 +181,7 @@ class DEB:
 
         if self.gut is not None :
             self.gut.get_Nticks(dt)
-            self.J_X_A_array = np.ones(self.gut.gut_Nticks)*self.get_J_X_A()
+            self.J_X_A_array = np.ones(self.gut.gut_Nticks)*self.J_X_A
 
 
 
@@ -308,6 +239,7 @@ class DEB:
         self.J_X_Amm = self.J_X_Am / Lb
         self.J_E_Amm = self.J_E_Am / Lb
         self.F_mm = self.F_m / Lb
+
 
 
         # DEB textbook p.91
@@ -451,8 +383,8 @@ class DEB:
         # if np.abs(self.sG) < 1e-10:
         #     self.sG = 1e-10
         # self.uh_a =self.h_a/ self.k_M ** 2 # scaled Weibull aging coefficient
-        # self.lT = self.p_T/(self.p_M*self.Lm)# scaled heating length {p_T}/[p_M]Lm
-        # self.li = f - self.lT;
+        self.lT = self.p_T/(self.p_M*self.Lm)# scaled heating length {p_T}/[p_M]Lm
+        self.li = f - self.lT;
         # self.hW3 = self.ha * f * self.g/ 6/ self.li
         # self.hW = self.hW3**(1/3) # scaled Weibull aging rate
         # self.hG = self.sG * f * self.g * self.li**2
@@ -461,17 +393,16 @@ class DEB:
         # self.tG3 = self.hG3/ self.hW3 # scaled Gompertz aging rate
         # # self.tau_m = sol.t_events[0][0]
         # # self.lm, self.uEm=sol.y_events[0][0][:2]
-        self.t_m = self.tau_m / self.k_M / self.T_factor
+        # self.t_m = self.tau_m / self.k_M / self.T_factor
         self.Li = self.li * self.Lm
         self.Lwi = self.Li / self.del_M
         self.Ui = self.uEi * self.v ** 2 / self.g ** 2 / self.k_M ** 3
         self.Ei = self.Ui * self.p_Am
         self.Wwi = self.compute_Ww(V=self.Li ** 3, E=self.Ei + self.E_Rj)  # g, imago wet weight
-        self.age = self.t_m
+        # self.age = self.t_m
 
         self.V = self.Li ** 3
         self.E = self.Ei
-        self.update()
 
         if self.print_output:
             print('-------------Imago stage-------------')
@@ -500,8 +431,6 @@ class DEB:
             self.E -= p_C
             self.V += p_G / E_G
             self.E_H += p_R
-            self.update()
-
             t += dt
         self.Eb = self.E
         L_b = self.V ** (1 / 3)
@@ -541,14 +470,11 @@ class DEB:
             self.E += (p_A - p_C)
             self.V += p_G / E_G
             self.E_R += p_R
-            self.update()
-
             t += dt
         Lw_j = self.V ** (1 / 3) / del_M
         Ej = self.Ej = self.E
         self.Uj = Ej / self.p_Am
         self.uEj = self.lj ** 3 * (self.kap * self.kap_V + f / g)
-        # self.uEj = self.Uj / self.v ** 2 * self.g ** 2 * self.k_M ** 3
         self.Wwj = self.compute_Ww(V=self.Lj ** 3,
                                    E=Ej + self.E_Rj)  # g, wet weight at pupation, including reprod buffer
         # self.Wwj = self.Lj**3 * (1 + f * self.w_V) # g, wet weight at pupation, excluding reprod buffer at pupation
@@ -569,7 +495,7 @@ class DEB:
         return h
 
     def run(self, f=None, X_V=0, assimilation_mode=None):
-
+        # print(int(self.V*1000),int(self.V*self.del_M**3*1000), int(self.Ww*1000), self.age)
         if f is None:
             f = self.base_f
         if assimilation_mode is None:
@@ -594,14 +520,17 @@ class DEB:
             self.V += p_G / E_G
             self.E_R += p_R
 
-            self.update()
+            # self.Vw = self.Lw **3
+            self.Ww = self.compute_Ww()
+            # self.e = self.compute_e()
+            self.hunger = self.compute_hunger()
 
         elif self.stage == 'larva':
             self.pupation_time_in_hours = np.round(self.age * 24, 1)
             self.stage = 'pupa'
         if self.dict is not None:
             self.update_dict()
-
+        # print(self.J_X_Am*self.L**2*self.w_X/self.d_X/24/3/self.Vw)
 
     def die(self):
         self.alive = False
@@ -609,11 +538,9 @@ class DEB:
         if self.print_output:
             print(f'Dead after {self.age} days')
 
-    def get_J_X_A(self, f=None):
-        if f is None :
-            f=self.base_f
-        J_X_A=self.J_X_Amm*self.V*f
-        return J_X_A
+    @ property
+    def J_X_A(self):
+        return self.J_X_Amm*self.V*self.base_f
 
     @property
     def F(self): # Vol specific filtering rate (cm**3/(d*cm**3) -> vol of environment/vol of individual*day
@@ -634,18 +561,21 @@ class DEB:
             E = self.E + self.E_R
         return V * self.d_V + E * self.w_E / self.mu_E
 
-    def compute_e(self, V=None, E=None, E_M=None):
-        if V is None:
-            V = self.V
-        if E is None:
-            E = self.E
-        if E_M is None:
-            E_M = self.E_M
-        return E / V / E_M
+    @ property
+    def e(self):
+        return self.E / self.V / self.E_M
 
-    def get_Lw(self):
-        # Structural L is in cm. We turn it to m
-        return self.Lw * 10 / 1000
+    @ property
+    def Vw(self):
+        Em=self.p_Am/self.v
+        omegaV=Em*self.w_E/self.d_E/self.mu_E
+        return self.V*(1+omegaV*self.e)
+
+    # @property
+    # def Ww(self):
+    #     Em = self.p_Am / self.v
+    #     omegaW = Em * self.w_E / self.d_V / self.mu_E
+    #     return self.d_V*self.V * (1 + omegaW * self.e)
 
 
     def grow_larva(self, hours_as_larva=None, epochs=None, epoch_qs=None):
@@ -667,10 +597,8 @@ class DEB:
                                          epochs if s0 < hours_as_larva]
             else :
                 growth_epochs = epochs
-            # print(growth_epochs)
             t = 0
             Nepochs = len(epochs)
-            # print(fs, growth_epochs, epochs)
             if epoch_qs is None:
                 epoch_qs = [0] * Nepochs
             elif type(epoch_qs) == float:
@@ -678,7 +606,6 @@ class DEB:
             elif len(epoch_qs) != Nepochs:
                 raise ValueError(
                     f'Number of functional response values : {len(epoch_qs)} does not much number of epochs : {Nepochs}')
-            # print(fs, growth_epochs)
             epoch_fs=[self.substrate.get_f(K=self.K, quality=q) for q in epoch_qs]
             max_age = (self.birth_time_in_hours + hours_as_larva) / 24 if hours_as_larva is not None else np.inf
             for (s0, s1), f in zip(growth_epochs, epoch_fs[:len(growth_epochs)]):
@@ -689,7 +616,6 @@ class DEB:
                 N1 = int(self.steps_per_day / 24 * (s1 - s0))
                 for i in range(N1):
                     if self.stage == 'larva' and self.age <= max_age:
-                        # print(f)
                         self.run(f=f, **c)
                 t = s1
             if hours_as_larva is not None:
@@ -704,7 +630,6 @@ class DEB:
                 self.hours_as_larva = self.pupation_time_in_hours - self.birth_time_in_hours
             self.epochs, self.epoch_qs = self.store_epochs(epochs, epoch_qs)
             self.epoch_fs = [self.substrate.get_f(K=self.K, quality=q) for q in self.epoch_qs]
-            # print(fs, epochs, self.epochs)
 
     @ property
     def pupation_buffer(self):
@@ -816,12 +741,12 @@ class DEB:
                 with open(f, "w") as fp:
                     json.dump(d, fp)
 
-    def load_dict(self):
-        f=self.dict_file
-        if f is not None:
-            with open(f) as tfp:
-                d = json.load(tfp)
-            return d
+    # def load_dict(self):
+    #     f=self.dict_file
+    #     if f is not None:
+    #         with open(f) as tfp:
+    #             d = json.load(tfp)
+    #         return d
 
     def get_p_A(self, f, assimilation_mode):
         self.deb_p_A = self.p_Amm_dt * self.base_f * self.V
@@ -835,19 +760,34 @@ class DEB:
         elif assimilation_mode == 'deb':
             return self.deb_p_A
 
-def deb_default(id='DEB model', epochs=None, epoch_qs=None, substrate_quality=1.0, steps_per_day=24 * 60, **kwargs):
-    deb = DEB(id=id, steps_per_day=steps_per_day, substrate_quality=substrate_quality, simulation=False, use_gut=False, **kwargs)
-    # print(id, deb.base_f)
+def deb_default(id='DEB model', epochs=None, epoch_qs=None, **kwargs):
+    deb = DEB(id=id, simulation=False, use_gut=False, **kwargs)
     deb.grow_larva(epochs=epochs, epoch_qs=epoch_qs, hours_as_larva=None)
     deb.finalize_dict()
     d = deb.return_dict()
     return d
 
-def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample='Fed', use_hunger=False,model_id=None,save_dict=True, **kwargs) :
+def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hunger=False,model_id=None,save_dict=True, **kwargs) :
     from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB
-    sd = loadConf(sample, 'Ref')
-    if dt is None:
-        dt = sd['dt']
+    try :
+        sd = loadConf(sample, 'Ref')
+        if dt is None:
+            dt = sd['dt']
+        kws2={
+            'crawl_freq': sd['crawl_freq'],
+            'feed_freq': sd['feed_freq'],
+            'crawl_bouts' : True,
+            'feed_bouts' : True,
+            'pause_dist' : sd['pause']['best'],
+            'stridechain_dist' : sd['stride']['best'],
+            'feeder_reoccurence_rate' : sd['feeder_reoccurence_rate'] ,
+        }
+    except :
+        kws=sample['intermitter']
+        if dt is None:
+            dt=sample['dt']
+
+
     if deb_dt is None:
         deb_dt = dt
     steps_per_day=np.round(24 * 60 * 60 / deb_dt).astype(int)
@@ -857,17 +797,8 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample='Fed', use_hun
     deb.set_steps_per_day(steps_per_day=steps_per_day)
     deb.base_hunger=EEB
     Nticks=np.round(deb_dt / dt).astype(int)
-    kws2={
-        'crawl_freq': sd['crawl_freq'],
-        'feed_freq': sd['feed_freq'],
-        'crawl_bouts' : True,
-        'feed_bouts' : True,
-        'pause_dist' : sd['pause']['best'],
-        'stridechain_dist' : sd['stride']['best'],
-        'feeder_reoccurence_rate' : sd['feeder_reoccurence_rate'] ,
-        'EEB' : EEB,
-    }
-    inter=OfflineIntermitter(**dtypes.get_dict('intermitter', **kws2),dt=dt)
+
+    inter=OfflineIntermitter(**kws2, EEB=EEB,dt=dt)
     counter=0
     feeds=0
     cum_feeds=0
@@ -901,11 +832,15 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample='Fed', use_hun
         return d_sim, d_mod
 
 if __name__ == '__main__':
-    ddd=deb_default()
-    print(ddd['pupation'])
-    for EEB in [0.57,0.95] :
-        d=deb_sim(EEB=EEB, dt=0.1, deb_dt=60)
-        print(EEB, d['pupation'])
+    # ddd=deb_default(print_output=True)
+    deb=DEB(print_output=True)
+    # deb.grow_larva()
+    # deb.run_larva_stage()
+    # print(deb.Lw)
+    # print(ddd['pupation'])
+    # for EEB in [0.57,0.95] :
+    #     d=deb_sim(EEB=EEB, dt=0.1, deb_dt=60)
+        # print(EEB, d['pupation'])
     raise
 
     dt_bite=1/(24*60*60)*2

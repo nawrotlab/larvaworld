@@ -45,7 +45,7 @@ def build_dataset(datagroup_id,id,group_id, target_dir, source_dir=None,source_f
         d.save(food=False)
         d.agent_ids = d.step_data.index.unique('AgentID').values
         d.num_ticks = d.step_data.index.unique('Step').size
-        d.starting_tick = d.step_data.index.unique('Step')[0]
+        # d.starting_tick = d.step_data.index.unique('Step')[0]
         print(f'--- Dataset {d.id} created with {len(d.agent_ids)} larvae! ---')
     else:
         print(f'--- Failed to create dataset {d.id}! ---')
@@ -277,7 +277,8 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
 if __name__ == '__main__':
     # dr = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/FRUvsQUI/Naive->PUR/EM/control'
     # dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/nengo_dish/nengo_dish_9'
-    dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/imitation/exp_13l_imitation_0'
+    # dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/imitation/exp_13l_imitation_0'
+    dr1='/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP2@UAS_TNT/Starved'
     # ddr='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/controls_20l'
     # c1='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/FRU->FRU/AM/test_10l'
     # c2='/home/panos/nawrot_larvaworld/larvaworld/data/pairs/controls_20l_imitation_0'
@@ -301,14 +302,30 @@ if __name__ == '__main__':
     from lib.sim.single_run import run_sim
     from lib.conf.conf import imitation_exp
     from lib.anal.comparing import ExpFitter
-    vis_kwargs = dtypes.get_dict('visualization', mode='video', video_speed=60)
-    dr2=paths.RefDatasetPath
+    # vis_kwargs = dtypes.get_dict('visualization', mode='video', video_speed=60)
+    # dr2=paths.RefDatasetPath
     # print(paths.RefConf)
     # raise
+    # a = np.array([2.4, 3.4])
+    # ab = np.array([23.4, 31.4])
     # dr='/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved'
-    for dddr in [dr2,dr1] :
+    for dddr in [dr1] :
+        # aa=fun.angle_to_x_axis(a,ab)
+        # print(aa)
+        # raise
         d = LarvaDataset(dddr)
-        print(d.step_data['bend'].dropna().abs().groupby('AgentID').mean().mean())
+        s, e = d.step_data, d.endpoint_data
+        c=d.config
+        from lib.anal.process.angular import compute_orientations
+        print(s.head())
+        print(s['head_x'].dropna().min())
+        print(s['head_y'].dropna().min())
+        print(s['head_x'].dropna().max())
+        print(s['head_y'].dropna().max())
+        raise
+
+        compute_orientations(s,e,config=c)
+        # print(d.step_data['bend'].dropna().abs().groupby('AgentID').mean().mean())
         # print(d.step_data['velocity'].dropna().abs().groupby('AgentID').mean().mean())
         # print(d.endpoint_data['tortuosity_2_mean'].mean())
         # print(d.endpoint_data['tortuosity_5_mean'].mean())

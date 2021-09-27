@@ -77,32 +77,6 @@ class Gut:
 
 
 
-        # self.J_X_A = self.deb.J_X_Amm*self.deb.dt*V*self.f
-
-        # dV=
-        # N=self.gut_Nticks
-        # Vmin=self.V
-        # # k0=o/(0.00000001+o)
-        # # print(self.tau_gut)
-        # # k=self.V/self.gut_Nticks
-        # # self.dV = self.V/(k0*N)
-        # self.dV = np.min([Vmin, self.V])
-        # self.dX = self.dV * self.gut_X / self.V
-        # print(self.dV/self.V)
-        # self.V -= self.dV
-        # self.p_A = self.run(dX)
-
-
-        # self.dV = self.V/self.gut_Nticks/self.gut_occupancy
-        # self.J_X_A = self.max_capacity/self.gut_Nticks
-        # self.J_X_A = self.deb.J_X_Amm_dt * V
-        # self.p_A =self.deb.J_X_Amm_dt*V*self.f* self.deb.mu_E*self.deb.y_E_X
-        # self.J_X_A = self.deb.J_X_Amm_dt*V*self.f
-        # print(X_mol/self.J_X_A)
-        # self.J_X_A = self.max_capacity / self.gut_Nticks
-        # self.J_X_A = self.max_capacity / (self.gut_Nticks / self.f) if self.f != 0 else 0
-
-
     def run(self, dX):
         self.gut_X -= dX
         self.gut_f += dX * self.deb.y_P_X/self.deb.y_E_X
@@ -167,10 +141,8 @@ class Gut:
     # def compute_occupancy(self):
     #     self.gut_V = self.
     def get_dMg(self):
-        J_X_A=self.deb.get_J_X_A(f=self.f)
-        self.deb.J_X_A_array = np.insert(self.deb.J_X_A_array[0:-1], 0, J_X_A)
+        self.deb.J_X_A_array = np.insert(self.deb.J_X_A_array[0:-1], 0, self.deb.J_X_A)
         dMg=self.deb.J_X_A_array[0]-self.deb.J_X_A_array[1]
-        # dMg=(self.deb.J_X_A_array[0]-self.deb.J_X_A_array[-1])*self.deb.dt*self.deb.T_factor
         if dMg<=0:
             dMg=0
         return dMg

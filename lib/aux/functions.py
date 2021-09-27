@@ -1,5 +1,6 @@
 import collections
 import copy
+import itertools
 import json
 import math
 import pickle
@@ -148,8 +149,11 @@ def angle(a, b, c, in_deg=True):
 
 def angle_to_x_axis(point_1, point_2, in_deg=True):
     # Point 1 is start, point 2 is end of vector
-    if np.isnan(point_1).any() or np.isnan(point_2).any():
-        return np.nan
+    # print(point_2, point_1)
+    # print(type(point_2), type(point_1), type(point_1[0]),type(point_1[1]))
+    # if np.isnan(point_1).any() or np.isnan(point_2).any():
+    #
+    #     return np.nan
     dx, dy = np.array(point_2) - np.array(point_1)
     rads = math.atan2(dy, dx)
     rads %= 2 * np.pi
@@ -770,158 +774,89 @@ def match_larva_ids2(s, dl=None, max_t=5 * 60, max_s=20, pars=None, e=None, min_
     return ss
 
 
-def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, max_counter=10, Nidx=20, **kwargs):
+def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, Nidx=20, **kwargs):
+    pairs= {}
 
-
-    def prior(maxs, last_xy, ls, idx):
-        pp = maxs.nsmallest(idx).iloc[[-1]]
-
-        id0, t0 = pp.index[0], pp.values[0]
-        xy0, l0 = last_xy[id0], ls[id0]
-        return [id0, t0, xy0, l0]
-
-    def next(id1, mins, first_xy, ls):
-        return [id1, mins[id1], first_xy[id1], ls[id1]]
-
-    def eval_c(c0, c1):
-        tt = c1[1] - c0[1]
+    def eval(t0, xy0, l0, t1, xy1, l1):
+        tt = t1 - t0
         if tt <= 0:
             return max_error * 2
-        ll = np.abs(c1[3] - c0[3])
-        dd = np.sqrt(np.sum((c1[2] - c0[2]) ** 2))
+        ll = np.abs(l1 - l0)
+        dd = np.sqrt(np.sum((xy1 - xy0) ** 2))
         return wt * tt + wl * ll + ws * dd
 
-    def eval(c0, id1, mins, first_xy, ls):
-        c1 = next(id1, mins, first_xy, ls)
-        return eval_c(c0, c1)
+    # def update_pairs(errs, pairs, id0,id1) :
 
-    def match_c(c0, ids, mins, first_xy, ls):
-        ee = [eval(c0, id1, mins, first_xy, ls) for id1 in ids]
-        return ids[np.argmin(ee)], np.min(ee)
-
-    def match(ids, mins, maxs, first_xy, last_xy, ls, idx):
-        c0 = prior(maxs, last_xy, ls, idx)
-        id1, error = match_c(c0, ids, mins, first_xy, ls)
-        return np.array([(c0[0], id1), error])
-
-    def step(ls, ss, ids, mins, maxs, first_xy, last_xy, idx):
-        r = np.array([match(ids, mins, maxs, first_xy, last_xy, ls, idx + i) for i in range(Nidx)])
-        (id0, id1), error =r[r[:, 1] == r[:, 1].min()][0]
-        if error < max_error:
-            ss.rename(index={id0: id1}, inplace=True)
-            ls[id1] = ss['spinelength'].loc[id1].dropna().mean()
-            ls.drop([id0], inplace=True)
-            ids, mins, maxs, first_xy, last_xy = update_extrema(id0,id1, ids, mins, maxs, first_xy, last_xy)
-            # ids, mins, maxs, first_xy, last_xy = update_extrema2({id0: id1}, ids, mins, maxs, first_xy, last_xy)
-        return ls, ss, ids, mins, maxs, first_xy, last_xy, error
 
     ls = e['length']
     if pars is None:
         pars = s.columns.values.tolist()
-    ss = s.reset_index(level='Step', drop=False)
-    # ss = s.dropna().reset_index(level='Step', drop=False)
-    ss['Step'] = ss['Step'].values.astype(int)
-    ids, mins, maxs, first_xy, last_xy = get_extrema(ss, pars)
-    counter = 0
-    idx = 1
-    while counter < max_counter:
-        ls, ss, ids, mins, maxs, first_xy, last_xy, error = step(ls, ss, ids, mins, maxs, first_xy, last_xy, idx)
+    s.reset_index(level='Step', drop=False, inplace=True)
+    s['Step'] = s['Step'].values.astype(int)
+    ids, mins, maxs, first_xy, last_xy, durs = get_extrema(s, pars)
+    # temp_pairs, temp_errs=[]
+    # for id0,id1 in itertools.combinations(ids) :
+    #     if maxs[id0]<mins[id1] :
+    #         er=eval(maxs[id0], last_xy[id0], ls[id0], mins[id1], first_xy[id1], ls[id1])
+    #         if er < max_error :
+    #             temp_errs.append(er)
+    #             temp_pairs.append((id0, id1))
+    # temp_errs=np.array(temp_errs)
+    # temp_pairs=np.array(temp_pairs)
+    # idx, cur_er=np.argmin(temp_errs), np.min(temp_errs)
+    # id0, id1=temp_pairs[idx]
+    # pairs.append({id0: id1})
+    # temp_errs = np.delete(temp_errs, idx, axis=0)
+    # temp_pairs = np.delete(temp_pairs, idx, axis=0)
+    # temp_errs, temp_pairs = update_pairs(temp_errs, temp_pairs, id0, id1)
 
-        print(len(ids), int(error))
-        if error >= max_error:
-            idx += Nidx
-            if idx >= len(ids):
-                counter += 1
-                idx = 1
-
-    # inds, dt, ds = 0, 0, 0
-    # while len(ids) > min_Nids and (dt<max_t or ds<max_s) :
-    #     inds+=1
-    #     print(inds, len(ids), dt, ds)
-    #     # Compute extrema
-    #     # mins = ss['Step'].groupby('AgentID').min()
-    #     # maxs = ss['Step'].groupby('AgentID').max()
-    #
-    #     # first_xy, last_xy= {},{}
-    #     # for id in ids :
-    #     #     first_xy[id] = ss[pars].xs(id).dropna().values[0,:]
-    #     #     last_xy[id] = ss[pars].xs(id).dropna().values[-1,:]
-    #
-    #     # pairs_found=False
-    #     for i in range(max_Niters):
-    #     # for s_i in range(max_Niters):
-    #         ds, dt =s_r[i], t_r[i]
-    #         nexts_sp=get_spatial_nexts(ids, ds,first_xy, last_xy, dl0, ls)
-    #         N_s=np.sum([len(next) for next in nexts_sp])
-    #         # if N_s==0 :
-    #         #     ddst += dst
-    #         if N_s > 0 :
-    #             nexts = get_temporal_nexts(ids, nexts_sp, mins, maxs, dt)
-    #             N_t = np.sum([len(next) for next in nexts])
-    #             if N_t > 0:
-    #         # else :
-    #         #     for t_i in range(max_Niters):
-    #         #         dt=t_r[t_i]
-    #         #         nexts = get_temporal_nexts(ids, nexts_sp, mins, maxs, dt)
-    #         #         N_t = np.sum([len(next) for next in nexts])
-    #                 # if N_t == 0:
-    #                 #     ddur += dur
-    #                 # if N_t > 0 :
-    #                 # else :
-    #                 # pairs_found = True
-    #                 taken = []
-    #                 pairs = dict()
-    #                 for id, next in zip(ids, nexts):
-    #                     next = [idx for idx in next if idx not in taken]
-    #                     if len(next) == 0:
-    #                         continue
-    #                     elif len(next) == 1:
-    #                         best_next = next[0]
-    #                         taken.append(best_next)
-    #                     elif len(next) > 1:
-    #                         errors = []
-    #                         for idx in next:
-    #                             if dl0 is None:
-    #                                 error = np.sum(np.abs(last_xy[id] - first_xy[idx]))
-    #                             else:
-    #                                 error = np.abs(ls[id] - ls[idx])
-    #                             errors.append(error)
-    #                         indmin = np.argmin(errors)
-    #                         best_next = next[indmin]
-    #                     pairs[best_next] = id
-    #                 while len(common_member(list(pairs.keys()), list(pairs.values()))) > 0:
-    #                     for id1, id2 in pairs.items():
-    #                         if id2 in list(pairs.keys()):
-    #                             pairs.update({id1: pairs[id2]})
-    #
-    #                 ss.rename(index=pairs, inplace=True)
-    #                 ids = ss.index.unique().tolist()
-    #                 print(pairs)
-    #                 break
-    #             if pairs_found:
-    #                 break
-    # else :
-    #     ddst += dst
-
-    # break
-    # break
-
-    # break
-    # break
-    # sss= ss.reset_index(drop=False).set_index(keys=['Step', 'AgentID'], drop=True)
-    # print(any(sss.index.duplicated()))
-    # print(sss[sss.index.duplicated()].index)
-    # print(sss.loc[(1324, 'Larva_10092'), 'head_x'])
-    # print(sss.loc[(1324, 'Larva_10110'), 'head_x'])
-
-    # print(pairs)
-    # print(nexts)
-    # print(best_nexts)
-    # break
+    while Nidx <= len(ids):
+        cur_er, id0, id1 = max_error, None, None
+        t0s = maxs.nsmallest(Nidx)
+        t1s=mins.loc[mins>t0s.min()].nsmallest(Nidx)
+        if len(t1s)>0 :
+            for i in range(Nidx):
+                # print(i)
+                cur_id0, t0 = t0s.index[i], t0s.values[i]
+                xy0, l0 = last_xy[cur_id0], ls[cur_id0]
+                ee = [eval(t0, xy0, l0, mins[id], first_xy[id], ls[id]) for id in t1s.index]
+                temp_err=np.min(ee)
+                if temp_err < cur_er:
+                    cur_er, id0, id1 = temp_err, cur_id0, t1s.index[np.argmin(ee)]
+        if id0 is not None:
+            pairs[id0]=id1
+            # qq0=time.time()
+            # s.rename(index={id0: id1}, inplace=True)
+            # qq1 = time.time()
+            ls[id1] = (ls[id0]*durs[id0]+ls[id1]*durs[id1])/(durs[id0]+durs[id1])
+            durs[id1]+=durs[id0]
+            del durs[id0]
+            # ls[id1] = s['spinelength'].loc[id1].dropna().mean()
+            # qq2 = time.time()
+            ls.drop([id0], inplace=True)
+            # qq3 = time.time()
+            # print(qq1-qq0,qq2-qq1,qq3-qq2)
+            ids, mins, maxs, first_xy, last_xy = update_extrema(id0, id1, ids, mins, maxs, first_xy, last_xy)
+            print(len(ids), int(cur_er))
+        else :
+            Nidx += 1
     print('Finalizing dataset')
-    ss.reset_index(drop=False, inplace=True)
-    ss.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-    return ss
+    while len(common_member(list(pairs.keys()), list(pairs.values()))) > 0:
+        # print(len((unique_list(pairs.keys()))), len((unique_list(pairs.values()))))
+        for id0,id1 in pairs.items() :
+            if id1 in pairs.keys() :
+                pairs[id0]=pairs[id1]
+                break
+            # if id1 in pairs.keys() :
+            #     pairs[]
+        # done=True
+    # s.reset_index(level='Step', drop=False, inplace=True)
+    # s['Step'] = s['Step'].values.astype(int)
+    print(durs)
+    s.rename(index=pairs, inplace=True)
+    s.reset_index(drop=False, inplace=True)
+    s.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
+    return s
 
 
 def get_spatial_nexts0(ids, ddst, first_xy, last_xy):
@@ -946,21 +881,23 @@ def get_temporal_nexts0(ids, mins, maxs, ddur):
 
 def get_extrema(ss, pars):
     ids = ss.index.unique().tolist()
+
     mins = ss['Step'].groupby('AgentID').min()
     maxs = ss['Step'].groupby('AgentID').max()
+    durs = ss['Step'].groupby('AgentID').count()
     first_xy, last_xy = {}, {}
     for id in ids:
         first_xy[id] = ss[pars].xs(id).dropna().values[0, :]
         last_xy[id] = ss[pars].xs(id).dropna().values[-1, :]
-    return ids, mins, maxs, first_xy, last_xy
+    return ids, mins, maxs, first_xy, last_xy, durs
 
-def update_extrema(id1, id2, ids, mins, maxs, first_xy, last_xy):
-    mins[id2], first_xy[id2] = mins[id1], first_xy[id1]
-    del mins[id1]
-    del maxs[id1]
-    del first_xy[id1]
-    del last_xy[id1]
-    ids.remove(id1)
+def update_extrema(id0, id1, ids, mins, maxs, first_xy, last_xy):
+    mins[id1], first_xy[id1] = mins[id0], first_xy[id0]
+    del mins[id0]
+    del maxs[id0]
+    del first_xy[id0]
+    del last_xy[id0]
+    ids.remove(id0)
     return ids, mins, maxs, first_xy, last_xy
 
 def update_extrema2(pairs, ids, mins, maxs, first_xy, last_xy):
@@ -1379,14 +1316,10 @@ def remove_suffix(text, suffix):
 
 # function takes in a hex color and outputs it inverted
 def invert_color(col, return_self=False):
-    # print(col)
-    if type(col)==list and len(col)==3:
+    if type(col)in [list, tuple] and len(col)==3:
         if not all([0<=i<=1 for i in col]) :
             col=list(np.array(col)/255)
-        # print(col)
         col = colors.rgb2hex(col)
-        # print(col)
-        # print(col)
     elif col[0]!='#' :
         col=colors.cnames[col]
     table = str.maketrans('0123456789abcdef', 'fedcba9876543210')

@@ -6,28 +6,6 @@ from lib.conf.conf import loadConfDict
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.agents._larva import Larva
 
-# shortcuts = {
-#     # 'trajectory_dt' : ['MINUS', 'PLUS'],
-#     'trajectories': 'p',
-#     'focus_mode': 'f',
-#     'draw_centroid': 'e',
-#     'draw_head': 'h',
-#     'draw_midline': 'm',
-#     'draw_contour': 'c',
-#     'visible_clock': 't',
-#     'visible_ids': 'TAB',
-#     'visible_state': 'sigma',
-#     'color_behavior': 'b',
-#     'random_colors': 'r',
-#     'black_background': 'g',
-#     'larva_collisions': 'y',
-#     # 'zoom' : ,
-#     'snapshot #': 'i',
-#     'sim_paused': 'SPACE',
-#     # 'odorscape #' : 'o'
-# }
-
-# shortcuts = gui.load_shortcuts()
 shortcuts = loadConfDict('Settings')
 
 

@@ -437,7 +437,10 @@ class FittedIntermitter(OfflineIntermitter):
 
 def get_EEB_poly1d(sample_dataset=None, dt=None, **kwargs):
     if sample_dataset is not None:
-        sample = loadConf(sample_dataset, 'Ref')
+        try:
+            sample = loadConf(sample_dataset, 'Ref')
+        except :
+            sample=sample_dataset
         kws = {
             'crawl_freq': sample['crawl_freq'],
             'feed_freq': sample['feed_freq'],
@@ -456,7 +459,7 @@ def get_EEB_poly1d(sample_dataset=None, dt=None, **kwargs):
     EEBs = np.arange(0, 1, 0.05)
     ms = []
     for EEB in EEBs:
-        inter = OfflineIntermitter(**dtypes.get_dict('intermitter', EEB=EEB, **kws))
+        inter = OfflineIntermitter(EEB=EEB, **kws)
         max_ticks = int(60 * 60 / inter.dt)
         while inter.total_ticks < max_ticks:
             inter.step()
@@ -468,7 +471,10 @@ def get_EEB_poly1d(sample_dataset=None, dt=None, **kwargs):
 
 def get_best_EEB(deb, sample_dataset=None, dt=None, **kwargs):
     if sample_dataset is not None:
-        sample = loadConf(sample_dataset, 'Ref')
+        try:
+            sample = loadConf(sample_dataset, 'Ref')
+        except :
+            sample=sample_dataset
         z = np.poly1d(sample['EEB_poly1d']) if dt in [None, sample['dt']] else get_EEB_poly1d(sample_dataset, dt,
                                                                                               **kwargs)
     else:

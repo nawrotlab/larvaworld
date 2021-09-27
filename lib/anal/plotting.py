@@ -1303,9 +1303,10 @@ def plot_stride_Dbend(datasets, labels=None, show_text=False, subfolder='stride'
     return process_plot(fig, save_to, filename, return_fig, show)
 
 
-def plot_EEB_vs_food_quality(samples=['Fed', 'Deprived', 'Starved'], dt=None,
-                             species_list=['rover', 'sitter', 'default'], save_to=None, return_fig=False,
-                             show=False, **kwargs):
+def plot_EEB_vs_food_quality(samples=None, dt=None,species_list=['rover', 'sitter', 'default'],
+                             save_to=None, return_fig=False,show=False, **kwargs):
+    if samples is None :
+        raise ('No sample configurations provided')
     from lib.model.modules.intermitter import get_EEB_poly1d
     filename = f'EEB_vs_food_quality.{suf}'
     qs = np.arange(0.01, 1, 0.01)

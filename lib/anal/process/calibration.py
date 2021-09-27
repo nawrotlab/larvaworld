@@ -163,12 +163,12 @@ def choose_rotation_point(s=None, e=None, dt=None, Npoints=None, config=None, da
             raise ValueError('No dataset provided')
     points = nam.midline(Npoints, type='point')
     Nangles = np.clip(Npoints - 2, a_min=0, a_max=None)
-    angles = [f'angle{i}' for i in range(Nangles)]
-    Nsegs = np.clip(Npoints - 1, a_min=0, a_max=None)
-    segs = nam.midline(Nsegs, type='seg')
-    compute_orientations(s=s, points=points, segs=segs, config=config, mode='minimal')
-    compute_spineangles(s=s, points=points, angles=angles, config=config, mode='full')
-    compute_angular_metrics(s=s, dt=dt, segs=segs, angles=angles, mode='full')
+    # angles = [f'angle{i}' for i in range(Nangles)]
+    # Nsegs = np.clip(Npoints - 1, a_min=0, a_max=None)
+    # segs = nam.midline(Nsegs, type='seg')
+    compute_orientations(s,e, config)
+    compute_spineangles(s, config, mode='full')
+    compute_angular_metrics(s, config, mode='full')
 
     if dataset is not None:
         dataset.save()
