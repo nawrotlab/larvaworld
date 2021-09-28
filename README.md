@@ -65,17 +65,15 @@ The simulation platform supports simulations of experiments that implement estab
 
 Finally some games are availble for fun where opposite larva groups try to capture the flag or stay at the top of the odorscape hill!!!
 
+-----------------------------------------------------------------------------------------------------------------
 
-
-
-
-
+Supporting resources
+=====================
 
 
 Scheduling of the agents is based on the [mesa](https://mesa.readthedocs.io/en/master/) agent-based modeling library
 
-For multi-segment larvae the spatial environment and bodies are simulated through Box2D physics engine, 
-based on the [kilobots gym](https://github.com/gregorgebhardt/gym-kilobots).
+For multi-segment larvae the spatial environment and bodies are simulated through [Box2D](https://box2d.org/) physics engine.
 
 Optionally neural modules can be implemented using the [Nengo](https://www.nengo.ai/) neural simulator
 
@@ -112,59 +110,70 @@ Add the virtual environment to jupyter so that you can run the notebooks
     python -m ipykernel install --user --name=larvaworld_venv
     
 
-**Walkthrough**
-
-Visit the [tutorial notebook](tutorial/walkthrough.ipynb) for a complete walkthrough to Larvaworld.
-
 **Run Larvaworld**
 
-Larvaworld can be run directly from linux terminal.
-The executable files are in `larvaworld/run` directory. Navigate there.
+Larvaworld-GUI can be run directly from linux terminal.
+The executable files are in `larvaworld/run` directory.
 
     cd run
-
-
-Three modes are available :
-
-1. Analysis 
-
-    Run analysis on the existing sample empirical data (3 dishes of freely exploring larvae).
-    First build a larvaworld dataset for each of the raw dishes, selecting tracks longer than 160''.
-    Then enrich the datasets computing derived parameters and annotating epochs and analyse them creating comparative plots.
     
-        python process.py TestGroup build -each -t 160
-        python process.py TestGroup enrich anal -nam dish_0 dish_1 dish_2
-        
-    Check the comparative plots in `larvaworld/data/TestGroup/plots`.
+    
+   Larvaworld-GUI
+   =====================
+   All functionalities are availbale via the respective tabs of the larvaworld GUI.
+   Launch the GUI :
 
-    Visualize one of the dishes (dish 1) you have created by generating a video.
+      python larvaworld-gui
 
-        python process.py TestGroup vis -nam dish_1 -vid
-    
-    Check the generated video in `larvaworld/data/TestGroup/processed/dish_1/visuals`.
 
-2. Simulation
+   Larvaworld via Linux terminal
+   =========================================
+   Optionally Larvaworld can be launched through Linux terminal via the remaining three executable python files.
+   Help on how to use these can be found in the [tutorial notebook](tutorial/walkthrough.ipynb).
+   Three modes are available :
 
-    Run a single simulation of one of multiple available experiments. 
-    Optionally run the respetive analysis.
-   
-    This line runs a dish simulation (30 larvae, 3 minutes) without analysis. 
-    We choose to also see the simulation at a speed x6 as it unfolds.
-    
-        python exp_run.py dish -N 30 -t 3.0 -vid 6
-    
-    This line runs a dispersion simulation and compares the results to the existing reference dataset (`larvaworld/data/reference`)
-    We choose to only produce a final image of the simulation.
-    
-        python exp_run.py dispersion -N 30 -t 3.0 -img -a
-        
-    Check the plots comparing simulated to empirical data in `larvaworld/data/SimGroup/single_runs/dispersion`.
-    
-3. Batch run
+   1. Analysis 
 
-    Run multiple trials of a given experiment with different parameters.
-    This line runs a batch run of odor preference experiments for different valences of the two odor sources.
+       Run analysis on the existing sample empirical data (3 dishes of freely exploring larvae).
+       First build a larvaworld dataset for each of the raw dishes, selecting tracks longer than 160''.
+       Then enrich the datasets computing derived parameters and annotating epochs and analyse them creating comparative plots.
+
+           python process.py TestGroup build -each -t 160
+           python process.py TestGroup enrich anal -nam dish_0 dish_1 dish_2
+
+       Check the comparative plots in `larvaworld/data/TestGroup/plots`.
+
+       Visualize one of the dishes (dish 1) you have created by generating a video.
+
+           python process.py TestGroup vis -nam dish_1 -vid
+
+       Check the generated video in `larvaworld/data/TestGroup/processed/dish_1/visuals`.
+
+   2. Simulation
+
+       Run a single simulation of one of multiple available experiments. 
+       Optionally run the respetive analysis.
+
+       This line runs a dish simulation (30 larvae, 3 minutes) without analysis. 
+       We choose to also see the simulation at a speed x6 as it unfolds.
+
+           python exp_run.py dish -N 30 -t 3.0 -vid 6
+
+       This line runs a dispersion simulation and compares the results to the existing reference dataset (`larvaworld/data/reference`)
+       We choose to only produce a final image of the simulation.
+
+           python exp_run.py dispersion -N 30 -t 3.0 -img -a
+
+       Check the plots comparing simulated to empirical data in `larvaworld/data/SimGroup/single_runs/dispersion`.
+
+   3. Batch run
+
+       Run multiple trials of a given experiment with different parameters.
+       This line runs a batch run of odor preference experiments for different valences of the two odor sources.
+
+           python batch_run.py odor_pref -N 25 -t 3.0 -rng -200.0 200.0 -Ngrd 5
+
+       Check the heatmap of preference indexes in `larvaworld/data/SimGroup/batch_runs`.
     
-        python batch_run.py odor_pref -N 25 -t 3.0 -rng -200.0 200.0 -Ngrd 5
-        
-    Check the heatmap of preference indexes in `larvaworld/data/SimGroup/batch_runs`.
+    
+    
