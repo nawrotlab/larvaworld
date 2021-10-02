@@ -5,7 +5,7 @@ from lib.aux.functions import get_pygame_key
 from lib.conf.conf import saveConfDict, loadConfDict
 from lib.conf.init_dtypes import store_controls
 from lib.gui.aux.elements import CollapsibleDict, Collapsible
-from lib.gui.aux.functions import t_kws, gui_col
+from lib.gui.aux.functions import t_kws, gui_col, gui_cols
 from lib.gui.aux.buttons import GraphButton
 import lib.conf.dtype_dicts as dtypes
 from lib.gui.tabs.tab import GuiTab
@@ -80,21 +80,16 @@ class SettingsTab(GuiTab):
 
     def build(self):
         c = {}
-
-        # c1 = CollapsibleDict('Visualization', dict=dtypes.get_dict('visualization', mode='video', video_speed=60),
-        #                      type_dict=dtypes.get_dict_dtypes('visualization'), toggled_subsections=None)
-        c1 = CollapsibleDict('visualization', default=True, toggled_subsections=False, state=True)
-        c2 = CollapsibleDict('replay', default=True, toggled_subsections=False, state=True)
+        c1 = CollapsibleDict('visualization', state=True)
+        c2 = CollapsibleDict('replay', state=True)
 
         c3, d = self.build_controls_collapsible(c)
 
         for s in [c1, c2, c3]:
             c.update(s.get_subdicts())
-        l = [[
-            gui_col([c1], 0.33),
-            gui_col([c2], 0.33),
-            gui_col([c3], 0.34),
-        ]]
+
+        l = gui_cols(cols=[[c1], [c2], [c3]])
+
         return l, c, {}, d
 
     def update_controls(self, v, w):

@@ -8,8 +8,9 @@ import numpy as np
 import lib.conf.data_conf as dat
 
 from lib.aux.collecting import output_dict, midline_xy_pars
+from lib.conf.init_dtypes import null_dict
 from lib.envs._larvaworld_sim import LarvaWorldSim
-from lib.conf.conf import get_exp_conf
+
 import lib.aux.functions as fun
 from lib.stor.larva_dataset import LarvaDataset
 from lib.stor import paths
@@ -22,10 +23,8 @@ def _run_sim(
         life_params,
         enrichment,
         collections,
-        # vis_kwargs=None,
         save_to=None,
         save_data_flag=True,
-        # experiment=None,
         par_config=dat.SimParConf,
         seed=None,
         **kwargs):
@@ -58,13 +57,14 @@ def _run_sim(
     d = LarvaDataset(dir=dir_path, id=id, fr=1 / dt,
                      Npoints=Npoints, Ncontour=0, env_params=env_params,
                      par_conf=par_config, save_data_flag=save_data_flag, load_data=False,
-                     life_params=life_params
+                     # life_params=life_params
                      )
 
     output = collection_conf(dataset=d, collections=collections)
     env = LarvaWorldSim(id=id, dt=dt, Box2D=Box2D,
                         env_params=env_params, output=output,
-                        life_params=life_params, Nsteps=Nsteps,
+                        life_params=life_params,
+                        Nsteps=Nsteps,
                         save_to=d.vis_dir, **kwargs)
     print()
     print(f'---- Simulation {id} ----')
@@ -91,10 +91,7 @@ run_sim = pickle.loads(ser)
 
 def store_sim_data(env, d, save_data_flag, enrichment, param_dict):
     # Read the data collected during the simulation
-    if env.larva_step_col is not None:
-        step = env.larva_step_col.get_agent_vars_dataframe()
-    else:
-        step = None
+    step = env.larva_step_col.get_agent_vars_dataframe() if env.larva_step_col else None
     if env.larva_end_col is not None:
         env.larva_end_col.collect(env)
         end = env.larva_end_col.get_agent_vars_dataframe().droplevel('Step')
@@ -116,9 +113,6 @@ def store_sim_data(env, d, save_data_flag, enrichment, param_dict):
         fun.dict_to_file(param_dict, d.dir_dict['sim'])
         if env.table_collector is not None:
             d.save_tables(env.table_collector.tables)
-
-            # except:
-            #     pass
     return d
 
 
@@ -169,10 +163,15 @@ def load_reference_dataset(dataset_id='reference', load=False):
 
 
 def run_essay(id,path, exp_types,durations, vis_kwargs, **kwargs):
+    from lib.conf.conf import expandConf
     ds = []
-    for i, (exp_type, dur) in enumerate(zip(exp_types, durations)):
-        sim=dtypes.get_dict('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
-        conf = get_exp_conf(exp_type = exp_type, sim_params=sim, **kwargs)
+    for i, (exp, dur) in enumerate(zip(exp_types, durations)):
+        sim=null_dict('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
+        conf = expandConf(exp, 'Exp')
+        conf['sim_params']=sim
+        conf['experiment']=exp
+        conf.update(**kwargs)
+        # conf = null_dict('exp_conf', sim_params=sim, **kwargs)
         d = run_sim(**conf, vis_kwargs=vis_kwargs)
         ds.append(d)
     return ds

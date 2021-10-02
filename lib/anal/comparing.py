@@ -13,6 +13,7 @@ import os
 
 
 import lib.aux.naming as nam
+
 from lib.conf.par import getPar
 # from lib.stor.larva_dataset import LarvaDataset
 import lib.aux.functions as fun
@@ -24,15 +25,19 @@ class ExpFitter :
     from lib.stor.larva_dataset import LarvaDataset
     def __init__(self, sample:Union[dict, str, LarvaDataset], stat_coefs=None, use_symbols=False, overwrite=False):
         from lib.stor.larva_dataset import LarvaDataset
-        if type(sample)==dict :
-            self.sample_conf=sample
-            self.sample=LarvaDataset(self.sample_conf['dir'], load_data=True)
-        elif type(sample)==str :
-            self.sample = LarvaDataset(sample, load_data=True)
-            self.sample_conf = self.sample.config
-        elif isinstance(sample, LarvaDataset) :
+        if isinstance(sample, LarvaDataset) :
             self.sample = sample
             self.sample_conf = self.sample.config
+        else :
+            if type(sample)==dict :
+                self.sample_conf=sample
+            elif type(sample) == str:
+                from lib.conf.conf import loadConf
+                self.sample_conf = loadConf(sample, 'Ref')
+            self.sample=LarvaDataset(self.sample_conf['dir'], load_data=True)
+
+
+
 
         key = 's' if use_symbols else 'd'
         self.df = self.multicol_df(key)

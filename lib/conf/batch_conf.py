@@ -1,5 +1,5 @@
 from lib.conf import dtype_dicts as dtypes
-from lib.conf.init_dtypes import processing_types
+from lib.conf.init_dtypes import processing_types, null_dict, enrichment_dict
 
 from lib.conf.conf import imitation_exp
 
@@ -22,15 +22,13 @@ def batch_methods(run='default', post='default', final='null'):
             'final': final}
 
 
-def batch(exp, en=None, o=None, o_kws={}, **kwargs):
+def batch(exp, en=None, ss=None, o=None, o_kws={}, **kwargs):
     if en is None:
-        # enrichment=dtypes.base_enrich()
-        enrichment = dtypes.get_dict('enrichment')
+        enrichment = null_dict('enrichment')
     elif en == 'PI':
-        enrichment = dtypes.base_enrich(types=['PI'], bouts=[])
+        enrichment = enrichment_dict(types=['PI'], bouts=[])
     elif 'source' in en.keys():
-        enrichment = dtypes.get_dict('enrichment', source=en['source'],
-                                     types=processing_types(['angular', 'spatial', 'source']))
+        enrichment = enrichment_dict(source=en['source'],types=['angular', 'spatial', 'source'])
     else:
         raise NotImplementedError
     exp_kws = {'enrichment': enrichment}
@@ -38,63 +36,43 @@ def batch(exp, en=None, o=None, o_kws={}, **kwargs):
         opt = optimization(o, **o_kws)
     else:
         opt = None
-    conf = dtypes.get_dict('batch_conf', exp=exp, exp_kws=exp_kws, optimization=opt, **kwargs)
+    if ss is not None:
+        ss = {p: null_dict('space_search_par', range=r, Ngrid=N) for p, (r, N) in ss.items()}
+    conf = null_dict('batch_conf', exp=exp, exp_kws=exp_kws, optimization=opt, space_search=ss, **kwargs)
     return {exp: conf}
 
 
 batch_dict = {
-    **batch('chemotaxis_approach', space_search={
-        'pars': ['Odor.mean', 'decay_coef'],
-        # 'pars': ['Odor.mean', 'decay_coef'],
-        'ranges': [(300.0, 1300.0), (0.1, 0.5)],
-        # 'ranges': [(300.0, 1300.0), (0.1, 0.5)],
-        'Ngrid': [3, 3]
-    }, o='final_dst_to_source', en={'source': (0.04, 0.0)}),
-    **batch('chemotaxis_local', space_search={
-        'pars': ['Odor.mean', 'decay_coef'],
-        'ranges': [(300.0, 1300.0), (0.1, 0.5)],
-        'Ngrid': [3, 3]
-    }, o='final_dst_to_center', en={'source': (0.0, 0.0)}),
-    **batch('odor_pref_test', space_search={
-        'pars': ['odor_dict.CS.mean', 'odor_dict.UCS.mean'],
-        'ranges': [(-100.0, 100.0), (-100.0, 100.0)],
-        'Ngrid': [3, 3]
-    }, batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference'), en='PI'),
-    **batch('odor_pref_train_short', space_search={
-        'pars': ['olfactor_noise', 'decay_coef'],
-        'ranges': [(0.0, 0.4), (0.1, 0.5)],
-        'Ngrid': [2, 2]
-    }, batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference'), en='PI'),
-    **batch('odor_pref_train', space_search={
-        'pars': ['olfactor_noise', 'decay_coef'],
-        'ranges': [(0.0, 0.4), (0.1, 0.5)],
-        'Ngrid': [2, 2]
-    }, batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference'), en='PI'),
-    **batch('patchy_food', space_search={
-        'pars': ['EEB', 'initial_freq'],
-        'ranges': [(0.0, 1.0), (1.5, 2.5)],
-        'Ngrid': [3, 3]
-    }, o='ingested_food_volume'),
-    **batch('food_grid', space_search={
-        'pars': ['EEB', 'EEB_decay'],
-        'ranges': [(0.0, 1.0), (0.1, 2.0)],
-        'Ngrid': [6, 6]
-    }, o='ingested_food_volume'),
-    **batch('growth', space_search={
-        'pars': ['EEB', 'hunger_gain'],
-        'ranges': [(0.5, 0.8), (0.0, 0.0)],
-        'Ngrid': [8, 1]
-    }, o='deb_f_deviation', o_kws={'max_Nsims': 20, 'operations': {'mean': True, 'abs': True}}),
-    **batch('rovers_sitters', space_search={
-        'pars': ['substrate_quality', 'hours_as_larva'],
-        'ranges': [(0.5, 0.8), (0, 100)],
-        'Ngrid': [2, 2]
-    }, batch_methods=batch_methods(run='deb', post='null', final='deb')),
-    **batch('imitation', space_search={
-        'pars': ['activation_noise', 'base_activation'],
-        'ranges': [(0.0, 0.8), (15.0, 25.0)],
-        'Ngrid': [3, 3]
-    }, o='sample_fit', o_kws={'threshold' : 1.0, 'max_Nsims': 20, 'operations': {'mean': False, 'abs': False}},
+    **batch('chemotaxis_approach',
+            ss={'Odor.mean': [(300.0, 1300.0), 3],'decay_coef': [(0.1, 0.5), 3]},
+            o='final_dst_to_source', en={'source': (0.04, 0.0)}),
+    **batch('chemotaxis_local',
+            ss={'Odor.mean': [(300.0, 1300.0), 3],'decay_coef': [(0.1, 0.5), 3]},
+            o='final_dst_to_center', en={'source': (0.0, 0.0)}),
+    **batch('odor_pref_test',
+ss={'odor_dict.CS.mean': [(-100.0, 100.0), 3],'odor_dict.UCS.mean': [(-100.0, 100.0), 3]},
+            batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference'), en='PI'),
+    **batch('odor_pref_train_short',
+            ss={'olfactor_noise': [(0.0, 0.4), 2],'decay_coef': [(0.1, 0.5), 2]},
+             batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference'), en='PI'),
+    **batch('odor_pref_train', ss={'olfactor_noise': [(0.0, 0.4), 2],'decay_coef': [(0.1, 0.5), 2]},
+            batch_methods=batch_methods(run='odor_preference', post='null', final='odor_preference'), en='PI'),
+    **batch('patchy_food',
+            ss={'EEB': [(0.0, 1.0), 3],'initial_freq': [(1.5, 2.5), 3]},
+            o='ingested_food_volume'),
+    **batch('food_grid',
+            ss={'EEB': [(0.0, 1.0), 6],'EEB_decay': [(0.1, 2.0), 6]},
+            o='ingested_food_volume'),
+    **batch('growth',
+            ss={'EEB': [(0.5, 0.8), 8],'hunger_gain': [(0.0, 0.0), 1]},
+            o='deb_f_deviation', o_kws={'max_Nsims': 20, 'operations': {'mean': True, 'abs': True}}),
+    **batch('rovers_sitters',
+            ss={'substrate_quality': [(0.5, 0.8), 2], 'hours_as_larva': [(0, 100), 2]},
+
+             batch_methods=batch_methods(run='deb', post='null', final='deb')),
+    **batch('imitation',
+            ss={'activation_noise': [(0.0, 0.8), 3], 'base_activation': [(15.0, 25.0), 3]},
+            o='sample_fit', o_kws={'threshold': 1.0, 'max_Nsims': 20, 'operations': {'mean': False, 'abs': False}},
             batch_methods=batch_methods(run='exp_fit', post='default', final='null'), )
 
 }

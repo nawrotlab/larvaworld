@@ -9,7 +9,6 @@ from scipy.signal import argrelextrema, spectrogram
 
 import lib.aux.functions as fun
 import lib.aux.naming as nam
-import lib.conf.dtype_dicts as dtypes
 from lib.anal.process.store import store_aux_dataset
 from lib.conf.par import getPar
 
@@ -18,10 +17,10 @@ def raw_or_filtered_xy(s, points):
     r = nam.xy(points, flat=True)
     f = nam.filt(r)
     if all(i in s.columns for i in f):
-        print('Using filtered xy coordinates')
+        # print('Using filtered xy coordinates')
         return f
     elif all(i in s.columns for i in r):
-        print('Using raw xy coordinates')
+        # print('Using raw xy coordinates')
         return r
     else:
         print('No xy coordinates exist. Not computing spatial metrics')
@@ -416,51 +415,44 @@ def compute_bearingNdst2source(s, e, source=(0, 0), **kwargs):
     print('Bearing and distance to source computed')
 
 
-def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', config=None, pos_in_mm=True, **kwargs):
+def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', config=None, **kwargs):
     ids = s.index.unique(level='AgentID').values
-    if arena_dims is None:
-        arena_dims = config['env_params']['arena']['arena_dims']
-    if track_point is None:
-        track_point = config['point']
 
-    xy_pars = nam.xy(track_point) if set(nam.xy(track_point)).issubset(s.columns) else ['x', 'y']
-    if not set(xy_pars).issubset(s.columns):
-        raise ValueError('Defined point xy coordinates do not exist. Can not align trajectories! ')
-
-    points = nam.midline(config['Npoints'], type='point') + ['centroid']
-    points_xy = nam.xy(points)+[['x', 'y']]
-    contour = nam.contour(config['Ncontour'])
-    contour_xy = nam.xy(contour)
-
-    all_xy_pars = points_xy + contour_xy + xy_pars
-    all_xy_pars = [xy_pair for xy_pair in all_xy_pars if set(xy_pair).issubset(s.columns)]
-    all_xy_pars = fun.group_list_by_n(np.unique(fun.flatten_list(all_xy_pars)), 2)
-    if mode == 'origin':
-        print('Aligning trajectories to common origin')
-        xy = [s[xy_pars].xs(id, level='AgentID').dropna().values[0] for id in ids]
-    elif mode == 'arena':
+    xy_pairs = nam.xy(nam.midline(config['Npoints'], type='point') + ['centroid', ''] + nam.contour(config['Ncontour']))
+    xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
+    xy_pairs = fun.group_list_by_n(np.unique(fun.flatten_list(xy_pairs)), 2)
+    if mode == 'arena':
         print('Centralizing trajectories in arena center')
+        if arena_dims is None:
+            arena_dims = config['env_params']['arena']['arena_dims']
         x0, y0 = arena_dims
-        if pos_in_mm:
-            x0 *= 1000
-            y0 *= 1000
         X, Y = x0 / 2, y0 / 2
-
-        for x, y in all_xy_pars:
+        for x, y in xy_pairs:
             s[x] -= X
             s[y] -= Y
         return s
-    elif mode == 'center':
-        print('Centralizing trajectories in trajectory center using min-max positions')
-        xy_max = [s[xy_pars].xs(id, level='AgentID').max().values for id in ids]
-        xy_min = [s[xy_pars].xs(id, level='AgentID').min().values for id in ids]
-        xy = [(max + min) / 2 for max, min in zip(xy_max, xy_min)]
+    else :
+        if track_point is None:
+            track_point = config['point']
 
-    for id, p in zip(ids, xy):
-        for x, y in all_xy_pars:
-            s.loc[(slice(None), id), x] -= p[0]
-            s.loc[(slice(None), id), y] -= p[1]
-    return s
+        XY = nam.xy(track_point) if set(nam.xy(track_point)).issubset(s.columns) else ['x', 'y']
+        if not set(XY).issubset(s.columns):
+            raise ValueError('Defined point xy coordinates do not exist. Can not align trajectories! ')
+
+        if mode == 'origin':
+            print('Aligning trajectories to common origin')
+            xy = [s[XY].xs(id, level='AgentID').dropna().values[0] for id in ids]
+        elif mode == 'center':
+            print('Centralizing trajectories in trajectory center using min-max positions')
+            xy_max = [s[XY].xs(id, level='AgentID').max().values for id in ids]
+            xy_min = [s[XY].xs(id, level='AgentID').min().values for id in ids]
+            xy = [(max + min) / 2 for max, min in zip(xy_max, xy_min)]
+
+        for id, p in zip(ids, xy):
+            for x, y in xy_pairs :
+                s.loc[(slice(None), id), x] -= p[0]
+                s.loc[(slice(None), id), y] -= p[1]
+        return s
 
 
 def fixate_larva(s, config, point, arena_dims, secondary_point=None):

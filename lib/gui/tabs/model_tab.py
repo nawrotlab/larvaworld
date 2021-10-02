@@ -1,17 +1,17 @@
 import copy
 import os
 
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList, \
-    CollapsibleTable2
-from lib.gui.aux.functions import col_size, col_kws, gui_col
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
+from lib.gui.aux.functions import col_size, gui_col, gui_cols
 import lib.conf.dtype_dicts as dtypes
 from lib.gui.tabs.tab import GuiTab
 from lib.stor import paths
 
+
 class ModelTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.fields=['physics', 'energetics', 'body', 'odor']
+        self.fields = ['physics', 'energetics', 'body', 'odor']
         self.module_keys = list(dtypes.get_dict('modules').keys())
 
     def update(self, w, c, conf, id=None):
@@ -48,32 +48,28 @@ class ModelTab(GuiTab):
 
     def build(self):
         l0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
-        c1 = [CollapsibleDict(n, default=True, **kwargs) for n, kwargs in zip(self.fields, [{}, {'toggle': True}, {}, {}])]
-        s1 = CollapsibleTable2('odor_gains', headings=['id', 'mean', 'std'])
-        c2 = [CollapsibleDict(k, default=True, toggle=True) for k in self.module_keys]
+        c1 = [CollapsibleDict(n, **kws) for n, kws in zip(self.fields, [{}, {'toggle': True}, {}, {}])]
+        s1 = CollapsibleTable('odor_gains', index='ID', heading_dict={'mean': 'mean', 'std': 'std'})
+        c2 = [CollapsibleDict(k, toggle=True) for k in self.module_keys]
         l2 = [i.get_layout() for i in c2]
         b = Collapsible('Brain', content=l2, state=True)
 
-        fdir=paths.ModelFigFolder
-        fig_dict= {f: f'{fdir}/{f}' for f in os.listdir(fdir)}
-        g1 = GraphList(self.name, tab=self,list_header='Model', fig_dict=fig_dict, subsample=3, canvas_size=col_size(x_frac=0.6*0.9, y_frac=0.9))
-        g = {g1.name: g1}
+        fdir = paths.ModelFigFolder
+        fig_dict = {f: f'{fdir}/{f}' for f in os.listdir(fdir)}
+        g1 = GraphList(self.name, tab=self, list_header='Model', fig_dict=fig_dict, subsample=3,
+                       canvas_size=col_size(x_frac=0.6 * 0.9, y_frac=0.9))
 
-        l = [[
-            gui_col([l0, b, s1], 0.25),
-            gui_col([*c1, g1], 0.25),
-            gui_col([g1.canvas], 0.5),
-            # gui_col([g1], 0.2)
-        ]]
+        l = gui_cols(cols=[[l0, b, s1], [*c1, g1], [g1.canvas]], x_fracs=[0.25,0.25,0.5])
 
         c = {}
         for s in c2 + c1 + [s1, b]:
             c.update(s.get_subdicts())
 
-        return l, c, g, {}
+        return l, c, {g1.name: g1}, {}
 
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
+
     larvaworld_gui = LarvaworldGui(tabs=['larva-model'])
     larvaworld_gui.run()

@@ -4,9 +4,9 @@ from lib.conf import dtype_dicts as dtypes
 import lib.aux.functions as fun
 import lib.aux.naming as nam
 from lib.conf.conf import imitation_exp
+from lib.conf.init_dtypes import enrichment_dict
 from lib.stor import paths
 import numpy as np
-
 
 
 def exp(env_name, exp_name=None, en=False, sim={}, c=[], as_entry=True, **kwargs):
@@ -48,8 +48,8 @@ def game_exp(name, c=[], dur=20.0, **kwargs):
     return exp(name, sim={'duration': dur}, c=c, **kwargs)
 
 
-def deb_exp(name, c=['feeder', 'gut'], dur=60.0, **kwargs):
-    return exp(name, sim={'duration': dur}, c=c, **kwargs)
+def deb_exp(name, c=['feeder', 'gut'], dur=5.0, enrichment=enrichment_dict(types=['spatial']), **kwargs):
+    return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
 def simple_exp(name, dur=10.0, en=True, **kwargs):
@@ -58,7 +58,6 @@ def simple_exp(name, dur=10.0, en=True, **kwargs):
 
 def pref_exp(name, dur=5.0, c=['olfactor'], enrichment=dtypes.base_enrich(types=['PI'], bouts=[]), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
-
 
 
 grouped_exp_dict = {
@@ -92,7 +91,21 @@ grouped_exp_dict = {
                  **exp('4corners', c=['memory'])},
 
     'growth': {**deb_exp('growth', dur=24 * 60.0),
-               **deb_exp('rovers_sitters', dur=180.0, enrichment=dtypes.base_enrich(types=['spatial'], bouts=[]))},
+               **deb_exp('rovers_sitters', dur=180.0),
+               **deb_exp('rovers_sitters_on_food', dur=20.0),
+               **deb_exp('rovers_sitters_on_agar', dur=20.0),
+               # **{deb_exp(f'rovers_sitters_on_food_q{i}') for i in [75, 50, 25, 15]},
+               # **{deb_exp(f'rovers_sitters_on_food_{i}h_prestarved') for i in [1, 2, 3, 4]},
+               **deb_exp('rovers_sitters_on_food_q75'),
+               **deb_exp('rovers_sitters_on_food_q50'),
+               **deb_exp('rovers_sitters_on_food_q25'),
+               **deb_exp('rovers_sitters_on_food_q15'),
+               **deb_exp('rovers_sitters_on_food_1h_prestarved'),
+               **deb_exp('rovers_sitters_on_food_2h_prestarved'),
+               **deb_exp('rovers_sitters_on_food_3h_prestarved'),
+               **deb_exp('rovers_sitters_on_food_4h_prestarved'),
+
+               },
 
     'games': {**game_exp('maze', c=['olfactor']),
               **game_exp('keep_the_flag'),
@@ -101,9 +114,9 @@ grouped_exp_dict = {
 
     'other': {
         **exp('realistic_imitation', sim={'Box2D': True}, c=['midline', 'contour']),
-        'imitation' : imitation_exp(paths.RefConf, model='explorer'),
+        'imitation': imitation_exp(paths.RefConf, model='explorer'),
         # **exp('imitation', exp_name='imitation', sample=paths.RefConf),
-              }
+    }
 
 }
 

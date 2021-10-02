@@ -64,8 +64,9 @@ def annotate(s, e, config=None,bouts={'stride': True, 'pause': True, 'turn': Tru
         if bouts['stride'] and bouts['pause'] :
             fit_bouts(**c, **kwargs)
         if source is not None:
-            for b in bouts:
-                compute_chunk_bearing2source(**c, chunk=b, source=source, **kwargs)
+            for b in bouts.keys():
+                if bouts[b] :
+                    compute_chunk_bearing2source(**c, chunk=b, source=source, **kwargs)
     return s, e
 
 

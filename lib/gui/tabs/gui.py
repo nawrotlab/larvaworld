@@ -1,73 +1,59 @@
+from typing import Any
+
 import PySimpleGUI as sg
 import matplotlib
 import time
 
 import pandas as pd
 
-import lib.gui.aux.functions
+from lib.conf.init_dtypes import null_dict
+from lib.gui.tabs import intro_tab, model_tab, life_tab, env_tab, sim_tab, batch_tab, essay_tab, import_tab, \
+    analysis_tab, video_tab, tutorial_tab, settings_tab
 from lib.stor import paths
-from lib.gui.tabs.analysis_tab import AnalysisTab
 from lib.gui.aux.functions import col_size, window_size, w_kws
-from lib.gui.tabs.batch_tab import BatchTab
-from lib.gui.tabs.env_tab import EnvTab
-from lib.gui.tabs.essay_tab import EssayTab
-from lib.gui.tabs.life_tab import LifeTab
-from lib.gui.tabs.import_tab import ImportTab
-from lib.gui.tabs.sim_tab import SimTab
-from lib.gui.tabs.tab import IntroTab, VideoTab, TutorialTab
-from lib.gui.tabs.model_tab import ModelTab
-from lib.gui.tabs.settings_tab import SettingsTab
 import lib.conf.dtype_dicts as dtypes
 
 matplotlib.use('TkAgg')
 
 
 class LarvaworldGui:
+    def __new__(cls, *args: Any, **kwargs: Any) -> Any:
+        cls.tab_dict = {
+            'introduction': (intro_tab.IntroTab, None, None),
+            'larva-model': (model_tab.ModelTab, 'Model', 'model_conf'),
+            'life-history': (life_tab.LifeTab, 'Life', 'life'),
+            'environment': (env_tab.EnvTab, 'Env', 'env_conf'),
+            'simulation': (sim_tab.SimTab, 'Exp', 'exp_conf'),
+            'batch-run': (batch_tab.BatchTab, 'Batch', 'batch_conf'),
+            'essay': (essay_tab.EssayTab, 'Essay', 'essay_conf'),
+            'import': (import_tab.ImportTab, 'Group', None),
+            'analysis': (analysis_tab.AnalysisTab, None, None),
+            'videos': (video_tab.VideoTab, None, None),
+            'tutorials': (tutorial_tab.TutorialTab, None, None),
+            'settings': (settings_tab.SettingsTab, None, None)
+        }
+        cls.tabgroups = {
+            'introduction': ['introduction'],
+            'models': ['larva-model', 'life-history'],
+            'environment': ['environment'],
+            'data': ['import', 'analysis'],
+            'simulations': ['simulation', 'batch-run', 'essay'],
+            'resources': ['tutorials', 'videos'],
+            'settings': ['settings'],
+        }
+        return object.__new__(cls)
 
     def __init__(self, tabs=None, batch_thread=None):
-        # s0 = time.time()
-        self.run_externally = {'sim':False, 'batch':True}
-        self.tab_dict = {
-            'introduction': (IntroTab, None),
-            'larva-model': (ModelTab, 'Model', 'model_conf'),
-            'life-history': (LifeTab, 'Life', 'life'),
-            'environment': (EnvTab, 'Env', 'env_conf'),
-            'simulation': (SimTab, 'Exp', 'exp_conf'),
-            'batch-run': (BatchTab, 'Batch', 'batch_conf'),
-            'essay': (EssayTab, 'Essay', 'essay_conf'),
-            'import': (ImportTab, 'Group', None),
-            'analysis': (AnalysisTab, None, None),
-            'videos': (VideoTab, None, None),
-            'tutorials': (TutorialTab, None),
-            'settings': (SettingsTab, None, None)
-        }
-        self.tabgroups={
-            'introduction':['introduction'],
-            'models':['larva-model', 'life-history'],
-            'environment':['environment'],
-            'data':['import', 'analysis'],
-            'simulations':['simulation', 'batch-run', 'essay'],
-            'resources':['tutorials', 'videos'],
-            'settings':['settings'],
-        }
-
+        self.run_externally = {'sim': False, 'batch': True}
         if tabs is None:
             tabs = list(self.tab_dict.keys())
-        # sg.change_look_and_feel('Dark Blue 3')
         sg.theme('LightGreen')
         self.background_color = None
         self.batch_thread = batch_thread
         self.terminal = gui_terminal()
-        # s1 = time.time()
         layout, self.collapsibles, self.graph_lists, self.dicts, self.tabs = self.build(tabs)
-        # s2 = time.time()
         c = {'layout': layout, 'size': window_size, **w_kws}
-        # c = {'layout': layout, 'size': window_size, 'location': (300, 100), **w_kws}
         self.window = sg.Window('Larvaworld gui', **c)
-        # s3 = time.time()
-        # print(s3-s2)
-        # print(s2-s1)
-        # print(s1-s0)
 
     def run(self):
 
@@ -103,18 +89,19 @@ class LarvaworldGui:
 
     def build(self, tabs):
         ls, cs, ds, gs, ts = [], {}, {}, {}, {}
-        dic={}
+        dic = {}
         for n in tabs:
-            ii=self.tab_dict[n]
-            ts[n] = ii[0](name=n, gui=self, conftype=ii[1])
+            func, conftype, dtype = self.tab_dict[n]
+            ts[n] = func(name=n, gui=self, conftype=conftype, dtype=dtype)
             l, c, d, g = ts[n].build()
             cs.update(c)
             ds.update(d)
             gs.update(g)
-            dic[n]=sg.Tab(n, l, background_color=self.background_color, key=f'{n} TAB')
+            dic[n] = sg.Tab(n, l, background_color=self.background_color, key=f'{n} TAB')
             ls.append(dic[n])
 
-        tab_kws={'font' : ("Helvetica", 13, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey', 'tab_background_color' :'lightgrey' }
+        tab_kws = {'font': ("Helvetica", 13, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
+                   'tab_background_color': 'lightgrey'}
         # for nn, ks in self.tabgroups.items():
         #     if len(ks)>4:
         #         ll=sg.TabGroup([[dic[k]] for k in ks], key=f'{nn} GROUPTAB', tab_location='topleft', **tab_kws)
@@ -122,33 +109,26 @@ class LarvaworldGui:
         #     else :
         #         ls.append(dic[nn])
 
-
-        l_tabs = sg.TabGroup([ls], key='ACTIVE_TAB', tab_location='topleft',**tab_kws)
+        l_tabs = sg.TabGroup([ls], key='ACTIVE_TAB', tab_location='topleft', **tab_kws)
 
         l0 = [[sg.Pane([sg.vtop(l_tabs), sg.vbottom(self.terminal)], handle_size=30)]]
         return l0, cs, ds, gs, ts
 
     def get_vis_kwargs(self, v, **kwargs):
-        c=self.collapsibles
-        w=self.window
-        vis_kwargs=c['visualization'].get_dict(v, w) if 'visualization' in list(
-            c.keys()) else dtypes.get_dict('visualization', **kwargs)
-        return vis_kwargs
+        c = self.collapsibles
+        w = self.window
+        return c['visualization'].get_dict(v, w) if 'visualization' in c.keys() else dtypes.get_dict('visualization',
+                                                                                                     **kwargs)
 
     def get_replay_kwargs(self, v):
-        c=self.collapsibles
-        w=self.window
-        replay_kwargs=c['replay'].get_dict(v, w) if 'replay' in list(
-            c.keys()) else dtypes.get_dict('replay')
-        return replay_kwargs
+        c = self.collapsibles
+        w = self.window
+        return c['replay'].get_dict(v, w) if 'replay' in c.keys() else null_dict('replay')
 
     def run0(self, e, v):
-        w=self.window
+        w = self.window
         check_togglesNcollapsibles(w, e, v, self.collapsibles)
         check_multispins(w, e)
-        # for g in self.graph_lists.values():
-        #     if e == g.list_key:
-        #         g.evaluate(w, v[g.list_key])
 
         if e.startswith('EDIT_TABLE'):
             self.collapsibles[e.split()[-1]].edit_table(w)
@@ -189,30 +169,29 @@ def check_togglesNcollapsibles(w, e, v, c):
     return toggled
 
 
-
-
-
 def gui_terminal(size=col_size(y_frac=0.3)):
     return sg.Output(size=size, key='Terminal', background_color='black', text_color='white',
                      echo_stdout_stderr=True, font=('Helvetica', 8, 'normal'),
                      tooltip='Terminal output')
 
-def speed_test() :
+
+def speed_test():
     import numpy as np
 
     # ns0=['introduction']
-    ns0=['introduction', 'tutorials', 'larva-model', 'environment', 'life-history', 'simulation', 'essay', 'batch-run', 'analysis', 'import', 'videos', 'settings']
-    ns=[[n] for n in ns0]
-    ns=[None]+ns+[None]
-    ns0=['Total_1']+ns0+['Total_2']
-    res=[]
-    for n, n0 in zip(ns, ns0) :
-        s0=time.time()
+    ns0 = ['introduction', 'tutorials', 'larva-model', 'environment', 'life-history', 'simulation', 'essay',
+           'batch-run', 'analysis', 'import', 'videos', 'settings']
+    ns = [[n] for n in ns0]
+    ns = [None] + ns + [None]
+    ns0 = ['Total_1'] + ns0 + ['Total_2']
+    res = []
+    for n, n0 in zip(ns, ns0):
+        s0 = time.time()
         larvaworld_gui = LarvaworldGui(tabs=n)
         s1 = time.time()
         larvaworld_gui.window.close()
         s2 = time.time()
-        r=[n0, np.round(s1 - s0,1), np.round(s2 - s1,1)]
+        r = [n0, np.round(s1 - s0, 1), np.round(s2 - s1, 1)]
         res.append(r)
-    df=pd.DataFrame(res)
+    df = pd.DataFrame(res)
     df.to_csv(paths.GuiTest, index=0, header=['Tabs', 'Open', 'Close'])

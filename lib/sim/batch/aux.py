@@ -41,30 +41,41 @@ def prepare_traj(traj, exp, params, batch_id, dir_path):
     traj.f_aconf('dataset_path', f'{dir_path}/datasets', comment='Directory for saving datasets')
     return traj
 
+def grid_search_dict(space_dict):
+    dic={}
+    for p, args in space_dict.items() :
+        if args['values'] is not None :
+            dic[p]=args['values']
+        else :
+            r0,r1=args['range']
+            vs = np.linspace(r0, r1, args['Ngrid'])
+            if type(r0) == int and type(r1) == int:
+                vs = vs.astype(int)
+            dic[p] = vs.tolist()
+    return cartesian_product(dic)
 
-def grid_search_dict(pars, ranges, Ngrid, values=None):
-    if values is not None:
-        values_dict = dict(zip(pars, values))
-    else:
-        Npars, Nsteps = len(pars), len(Ngrid)
-        if any([type(s) != int for s in Ngrid]):
-            raise ValueError('Parameter space steps are not integers')
-        if Npars != Nsteps:
-            if Nsteps == 1:
-                Ngrid = [Ngrid[0]] * Npars
-                print('Using the same step for all parameters')
-            else:
-                raise ValueError('Number of parameter space steps does not match number of parameters and is not one')
-        if np.isnan(ranges).any():
-            raise ValueError('Ranges of parameters not provided')
-        values_dict = {}
-        for par, (low, high), s in zip(pars, ranges, Ngrid):
-            range = np.linspace(low, high, s)
-            if type(low) == int and type(high) == int:
-                range = range.astype(int)
-            values_dict.update({par: range.tolist()})
-    space = cartesian_product(values_dict)
-    return space
+# def grid_search_dict2(pars, ranges, Ngrid, values=None):
+#     if values is not None:
+#         dic = dict(zip(pars, values))
+#     else:
+#         Npars, Nsteps = len(pars), len(Ngrid)
+#         if any([type(s) != int for s in Ngrid]):
+#             raise ValueError('Parameter space steps are not integers')
+#         if Npars != Nsteps:
+#             if Nsteps == 1:
+#                 Ngrid = [Ngrid[0]] * Npars
+#                 print('Using the same step for all parameters')
+#             else:
+#                 raise ValueError('Number of parameter space steps does not match number of parameters and is not one')
+#         if np.isnan(ranges).any():
+#             raise ValueError('Ranges of parameters not provided')
+#         dic = {}
+#         for p, (r0, r1), s in zip(pars, ranges, Ngrid):
+#             vs = np.linspace(r0, r1, s)
+#             if type(r0) == int and type(r1) == int:
+#                 vs = vs.astype(int)
+#             dic[p]=vs.tolist()
+#     return cartesian_product(dic)
 
 
 def get_space_from_file(space_filepath=None, params=None, space_pd=None, returned_params=None, flag=None,

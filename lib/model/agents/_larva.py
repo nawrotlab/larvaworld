@@ -316,7 +316,7 @@ class Larva(LarvaworldAgent):
 
     @property
     def gut_occupancy(self):
-        return self.deb.gut.get_gut_occupancy()
+        return self.deb.gut.occupancy
 
     @property
     def ingested_body_mass_ratio(self):

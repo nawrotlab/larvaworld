@@ -568,7 +568,7 @@ def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=
             x0 = s[p].dropna().values
         dic = fit_bout_distros(x0, xmin, xmax, fr=config['fr'], discrete=disc, print_fits=True,
                                dataset_id=id, bout=bout, combine=comb, store=store)
-        config['bout_distros'][bout] = dic['best'][bout]
+        config['bout_distros'][bout] = dic['best'][bout]['best']
 
     config['intermitter'] = {
         nam.freq('crawl'): e[nam.freq(nam.scal(nam.vel('')))].mean(),
@@ -576,8 +576,8 @@ def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=
         'dt': config['dt'],
         'crawl_bouts': True,
         'feed_bouts': True,
-        'stridechain_dist': config['bout_distros']['stride']['best'],
-        'pause_dist': config['bout_distros']['pause']['best'],
+        'stridechain_dist': config['bout_distros']['stride'],
+        'pause_dist': config['bout_distros']['pause'],
         'feeder_reoccurence_rate': None,
     }
     config['EEB_poly1d'] = get_EEB_poly1d(**config['intermitter']).c.tolist()

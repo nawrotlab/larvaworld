@@ -19,6 +19,7 @@ GuiTest = f'{GuiFolder}/gui_speed_test.csv'
 SimFolder = f'{DataFolder}/SimGroup'
 SingleRunFolder = f'{SimFolder}/single_runs'
 BatchRunFolder = f'{SimFolder}/batch_runs'
+EssayFolder = f'{SimFolder}/essays'
 ExecConfFile = f'{RunFolder}/exec_conf.txt'
 ExecFile = f'{RunFolder}/exec_run.py'
 

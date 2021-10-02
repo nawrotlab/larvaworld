@@ -15,11 +15,10 @@ from lib.stor.larva_dataset import LarvaDataset
 
 
 def prepare_batch(batch, **kwargs):
-    space = grid_search_dict(**batch['space_search'])
+    # print(batch.keys())
+    space = grid_search_dict(batch['space_search'])
     if batch['optimization'] is not None:
-        batch['optimization']['ranges'] = np.array(batch['space_search']['ranges'])
-    # print(list(batch.keys()))
-    # exp_conf['sim_params']['path'] = batch_type
+        batch['optimization']['ranges'] = np.array([batch['space_search'][k]['range'] for k in batch['space_search'].keys()])
     prepared_batch = {
         'batch_type': batch['batch_type'],
         'batch_id': batch['batch_id'],
@@ -270,14 +269,14 @@ def post_processing(traj, result_tuple):
 
 
 def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
-    sim = fun.reconstruct_dict(traj.f_get('sim_params'))
-    sim['sim_ID'] = f'run_{traj.v_idx}'
-    sim['path'] = traj.config.dataset_path
-    # print(sim['sim_ID'])
+    # sim = fun.reconstruct_dict(traj.f_get('sim_params'))
+    # sim['sim_ID'] = f'run_{traj.v_idx}'
+    # sim['path'] = traj.config.dataset_path
     with fun.suppress_stdout(True):
         d = run_sim(
             env_params=fun.reconstruct_dict(traj.f_get('env_params')),
-            sim_params=sim,
+            sim_params=fun.reconstruct_dict(traj.f_get('sim_params'), sim_ID=f'run_{traj.v_idx}', path=traj.config.dataset_path),
+            # sim_params=sim,
             life_params=fun.reconstruct_dict(traj.f_get('life_params')),
             save_data_flag=False,
             **exp_kws)

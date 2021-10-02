@@ -105,6 +105,7 @@ class Intermitter(Effector):
         super().count_time()
         # super().count_ticks()
         self.update_state()
+        # print(self.brain.agent.unique_id, self.EEB, self.feeder_reoccurence_rate)
         # print(self.current_stridechain_length, self.current_feedchain_length, self.current_pause_duration)
 
     def disinhibit_locomotion(self):
@@ -210,10 +211,10 @@ class Intermitter(Effector):
 
     def build_dict(self):
         d = {}
-        if self.total_t!=0 :
+        if self.total_t != 0:
             d[nam.cum('t')] = self.total_t
-        else :
-            d[nam.cum('t')] = self.total_ticks*self.dt
+        else:
+            d[nam.cum('t')] = self.total_ticks * self.dt
         d[nam.num('tick')] = self.total_ticks
         for c in ['feedchain', 'stridechain', 'pause']:
             t = nam.dur(c)
@@ -247,9 +248,18 @@ class Intermitter(Effector):
                 os.makedirs(path)
             fun.save_dict(dic, file)
 
-    def update(self, **kwargs):
-        self.EEB, self.feeder_reoccurence_rate = update_EEB(EEB=self.EEB, EEB_coef=self.EEB_exp_coef,
-                                                            refeed_rate=self.feeder_reoccurence_rate, **kwargs)
+    def update(self, max_refeed_rate=0.9, refeed_rate_coef=0, food_present=None, feed_success=None):
+        if food_present is None:
+            self.EEB *= self.EEB_exp_coef
+        else:
+            self.EEB = self.base_EEB
+        if feed_success == True:
+            if self.feeder_reocurrence_as_EEB:
+                self.feeder_reoccurence_rate = self.EEB
+            else:
+                self.feeder_reoccurence_rate = max_refeed_rate
+        elif feed_success == False:
+            self.feeder_reoccurence_rate *= refeed_rate_coef
 
     @property
     def current_crawl_ticks(self):
@@ -259,7 +269,8 @@ class Intermitter(Effector):
     def current_feed_ticks(self):
         return self.current_feedchain_length * self.feed_ticks
 
-    def get_active_bouts(self):
+    @property
+    def active_bouts(self):
         return self.current_stridechain_length, self.current_feedchain_length, self.current_pause_ticks
 
 
@@ -273,9 +284,11 @@ class OfflineIntermitter(Intermitter):
         t = self.ticks
 
         dur = t * self.dt
+        self.stride_stop = False
         if self.current_stridechain_length is not None and t >= self.current_crawl_ticks:
             self.current_numstrides += 1
             self.stride_counter += 1
+            self.stride_stop=True
             if self.current_numstrides >= self.current_stridechain_length:
                 self.stridechain_counter += 1
                 self.cum_stridechain_dur += dur
@@ -435,25 +448,15 @@ class FittedIntermitter(OfflineIntermitter):
         super().__init__(**stored_conf)
 
 
-def get_EEB_poly1d(sample_dataset=None, dt=None, **kwargs):
-    if sample_dataset is not None:
-        try:
-            sample = loadConf(sample_dataset, 'Ref')
-        except :
-            sample=sample_dataset
-        kws = {
-            'crawl_freq': sample['crawl_freq'],
-            'feed_freq': sample['feed_freq'],
-            'dt': sample['dt'],
-            'crawl_bouts': True,
-            'feed_bouts': True,
-            'stridechain_dist': sample['stride']['best'],
-            'pause_dist': sample['pause']['best'],
-            'feeder_reoccurence_rate': sample['feeder_reoccurence_rate'],
-        }
+def get_EEB_poly1d(sample=None, dt=None, **kwargs):
+    if sample is not None:
+        if type(sample) == str:
+            sample = loadConf(sample, 'Ref')
+        kws=sample['intermitter']
+
     else:
         kws = kwargs
-    if dt is not None :
+    if dt is not None:
         kws['dt'] = dt
 
     EEBs = np.arange(0, 1, 0.05)
@@ -469,16 +472,13 @@ def get_EEB_poly1d(sample_dataset=None, dt=None, **kwargs):
     return z
 
 
-def get_best_EEB(deb, sample_dataset=None, dt=None, **kwargs):
-    if sample_dataset is not None:
-        try:
-            sample = loadConf(sample_dataset, 'Ref')
-        except :
-            sample=sample_dataset
-        z = np.poly1d(sample['EEB_poly1d']) if dt in [None, sample['dt']] else get_EEB_poly1d(sample_dataset, dt,
+def get_best_EEB(deb, sample, dt=None, **kwargs):
+    if type(sample)==str:
+        sample = loadConf(sample, 'Ref')
+    z = np.poly1d(sample['EEB_poly1d']) if dt in [None, sample['dt']] else get_EEB_poly1d(sample, dt,
                                                                                               **kwargs)
-    else:
-        z = get_EEB_poly1d(sample_dataset, dt, **kwargs)
+    # else:
+    #     z = get_EEB_poly1d(sample_dataset, dt, **kwargs)
 
     if type(deb) == dict:
         s = deb['feed_freq_estimate']
@@ -487,13 +487,6 @@ def get_best_EEB(deb, sample_dataset=None, dt=None, **kwargs):
 
     return np.clip(z(s), a_min=0, a_max=1)
 
-
-def update_EEB(EEB, base_EEB, EEB_coef, refeed_rate=None, max_refeed_rate=0.9, refeed_rate_coef=0,
-               food_present=None, feed_success=None):
-    EEB = EEB * EEB_coef if food_present is None else base_EEB
-    if refeed_rate is not None and feed_success is not None:
-        refeed_rate = max_refeed_rate if feed_success else refeed_rate * refeed_rate_coef
-    return EEB, refeed_rate
 
 
 if __name__ == "__main__":

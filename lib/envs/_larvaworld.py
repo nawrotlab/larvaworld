@@ -6,6 +6,7 @@ import progressbar
 import os
 from typing import List, Any
 import webcolors
+from shapely.geometry import Polygon
 from unflatten import unflatten
 
 from lib.aux import functions as fun
@@ -32,7 +33,6 @@ from lib.sim.input_lib import evaluate_input, evaluate_graphs
 
 class LarvaWorld:
     def __new__(cls, *args: Any, **kwargs: Any) -> Any:
-
         pygame.init()
         max_screen_height = pygame.display.Info().current_h
         cls.sim_screen_dim = int(max_screen_height * 2 / 3)
@@ -48,9 +48,9 @@ class LarvaWorld:
                  traj_color=None, allow_clicks=True,
                  experiment=None,
                  progress_bar=None,
-                 space_in_mm=False
+                 # space_in_mm=False
                  ):
-        self.space_in_mm = space_in_mm
+        # self.space_in_mm = space_in_mm
         self.progress_bar = progress_bar
         self.Box2D = Box2D
         # print(vis_kwargs)
@@ -76,6 +76,7 @@ class LarvaWorld:
         self.input_box = ren.InputBox()
         self.selected_agents = []
         self.is_running = False
+        self.is_paused = False
         self.dt = dt
         self.video_fps = int(self.vis_kwargs['render']['video_speed'] / dt)
         # self.video_fps = int(self.video_speed / dt)
@@ -121,8 +122,7 @@ class LarvaWorld:
                 self.add_border(b)
 
         self.sim_clock = ren.SimulationClock(self.dt, color=self.scale_clock_color)
-        self.sim_scale = ren.SimulationScale(self.arena_dims[0], self.scaling_factor,
-                                             color=self.scale_clock_color, space_in_mm=self.space_in_mm)
+        self.sim_scale = ren.SimulationScale(self.arena_dims[0], color=self.scale_clock_color)
         self.sim_state = ren.SimulationState(model=self, color=self.scale_clock_color)
 
         self.screen_texts = self.create_screen_texts(color=self.scale_clock_color)
@@ -210,6 +210,8 @@ class LarvaWorld:
         self.space_edges = [(x * s, y * s) for (x, y) in self.unscaled_space_edges]
         self.space_edges_for_screen = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
         self.tank_shape = self.unscaled_tank_shape * s
+        k = 0.97
+        self.tank_polygon = Polygon(self.tank_shape * k)
 
         if self.Box2D:
             self._sim_velocity_iterations = 6
@@ -380,6 +382,8 @@ class LarvaWorld:
                 g.id_box.draw(self._screen)
 
         if self.trails:
+            if self.trajectory_dt is None :
+                self.trajectory_dt=0.0
             ren.draw_trajectories(space_dims=self.space_dims, agents=self.get_flies(), screen=self._screen,
                                   decay_in_ticks=int(self.trajectory_dt / self.dt),
                                   traj_color=self.traj_color)
@@ -435,22 +439,24 @@ class LarvaWorld:
         self.all_food_schedule.add(f)
         return f
 
-    def add_larva(self, pos, orientation=None, id=None, pars=None, group=None, default_color=None):
+    def add_larva(self, pos, orientation=None, id=None, pars=None, group=None, default_color=None, life=None):
         # print(pos, group)
         if group is None and pars is None:
             group, conf = list(self.env_pars['larva_groups'].items())[0]
             sample_dict = sample_group(conf['sample'], 1, self.sample_ps)
             mod = get_sample_bout_distros(conf['model'], conf['sample'])
             pars = self._generate_larvae(1, sample_dict, mod)
+            life=conf['life']
             if default_color is None:
                 default_color = conf['default_color']
         if id is None:
             id = self.next_id(type='Larva')
         if orientation is None:
             orientation = np.random.uniform(0, 2 * np.pi, 1)[0]
-        # print(pos)
+        while not fun.inside_polygon([pos], self.tank_polygon)[0] :
+            pos=tuple(np.array(pos)*0.999)
         l = LarvaSim(model=self, pos=pos, orientation=orientation, unique_id=id,
-                     larva_pars=pars, group=group, default_color=default_color)
+                     larva_pars=pars, group=group, default_color=default_color, life=life)
         self.active_larva_schedule.add(l)
         self.all_larva_schedule.add(l)
 
@@ -480,54 +486,45 @@ class LarvaWorld:
         # Overriden by subclasses
         pass
 
-    def run(self, Nsteps=None):
+    def run(self):
         mode = self.vis_kwargs['render']['mode']
         img_mode = self.vis_kwargs['render']['image_mode']
-        # pygame.init()
-        # import pygame_gui
-        # manager = pygame_gui.UIManager((800, 600))
-        # hello_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((350, 275), (100, 50)),
-        #                                             text='Say Hello',
-        #                                             manager=manager)
-        # clock = pygame.time.Clock()
         self.is_running = True
-        self.sim_paused = False
-        if Nsteps is None:
-            Nsteps = self.Nsteps
-        # print(Nsteps)
         warnings.filterwarnings('ignore')
-        # import time
-        if self.progress_bar is None:
-            self.progress_bar = progressbar.ProgressBar(max_value=Nsteps)
-        bar = self.progress_bar
-        while self.is_running and self.Nticks < Nsteps and not self.end_condition_met:
-            if not self.sim_paused:
+        bar = self.progress_bar if self.progress_bar is not None else progressbar.ProgressBar(max_value=self.Nsteps)
+        while self.is_running and self.Nticks < self.Nsteps and not self.end_condition_met:
+            if not self.is_paused:
                 self.step()
                 bar.update(self.Nticks)
             if mode == 'video':
-                if img_mode != 'snapshots':
-
-                    self.render(tick=self.Nticks)
-                elif (self.Nticks - 1) % self.snapshot_interval == 0:
-                    self.render(tick=self.Nticks)
+                if img_mode != 'snapshots' or self.snapshot_tick:
+                    self.render(self.Nticks)
             elif mode == 'image':
                 if img_mode == 'overlap':
-                    self.render(tick=self.Nticks)
-                elif img_mode == 'snapshots':
-                    if (self.Nticks - 1) % self.snapshot_interval == 0:
-                        self.render(tick=self.Nticks)
-                        self.toggle(name='snapshot #')
-                        self._screen.render()
+                    self.render(self.Nticks)
+                elif img_mode == 'snapshots' and self.snapshot_tick:
+                    self.capture_snapshot()
 
         if img_mode == 'overlap':
             self._screen.render()
         elif img_mode == 'final':
-            self.render(tick=self.Nticks)
-            self.toggle(name='snapshot #')
-            self._screen.render()
+            self.capture_snapshot()
         if self._screen:
             self._screen.close()
         return self.is_running
+
+    @ property
+    def snapshot_tick(self):
+        return (self.Nticks - 1) % self.snapshot_interval == 0
+
+    def capture_snapshot(self, tick=None, screen=None):
+        if tick is None :
+            tick=self.Nticks
+        if screen is None :
+            screen=self._screen
+        self.render(tick)
+        self.toggle('snapshot #')
+        screen.render()
 
     def move_larvae_to_center(self):
         N = len(self.get_flies())
@@ -635,7 +632,7 @@ class LarvaWorld:
             'zoom',
             'snapshot #',
             'odorscape #',
-            'sim_paused',
+            'is_paused',
         ]
 
         for name in names:
@@ -698,7 +695,7 @@ def get_sample_bout_distros(model, sample) :
     if model['brain']['intermitter_params'] and sample != {}:
         for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
             if model['brain']['intermitter_params'][dist]['fit']:
-                model['brain']['intermitter_params'][dist] = sample['bout_distros'][bout]['best']
+                model['brain']['intermitter_params'][dist] = sample['bout_distros'][bout]
     return model
 
 

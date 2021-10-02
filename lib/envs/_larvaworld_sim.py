@@ -2,6 +2,9 @@ import numpy as np
 from mesa.datacollection import DataCollector
 from lib.aux import functions as fun
 from lib.aux.collecting import TargetedDataCollector
+
+from lib.conf.init_dtypes import null_dict
+
 from lib.conf.par import CompGroupCollector
 from lib.envs._larvaworld import LarvaWorld, generate_larvae, get_sample_bout_distros, sample_group
 from lib.envs._space import DiffusionValueLayer, GaussianValueLayer
@@ -20,7 +23,10 @@ class LarvaWorldSim(LarvaWorld):
             parameter_dict = {}
 
         if life_params is None:
-            life_params = dtypes.get_dict('life')
+            life_params = null_dict('life')
+        elif type(life_params)==str :
+            from lib.conf.conf import loadConf
+            life_params=loadConf(life_params, 'Life')
         self.epochs = life_params['epochs']
         if self.epochs is None:
             self.epochs = []
@@ -115,6 +121,9 @@ class LarvaWorldSim(LarvaWorld):
         for gID, gConf in larva_pars.items():
 
             mod, sample=gConf['model'], gConf['sample']
+            if type(sample) == str:
+                from lib.conf.conf import loadConf
+                sample = loadConf(sample, 'Ref')
             mod=get_sample_bout_distros(mod, sample)
 
             modF = fun.flatten_dict(mod)
@@ -142,7 +151,7 @@ class LarvaWorldSim(LarvaWorld):
 
             for id, p, o, pars in zip(ids, ps, ors, all_pars):
                 l = self.add_larva(pos=p, orientation=o, id=id, pars=pars, group=gID,
-                                   default_color=gConf['default_color'])
+                                   default_color=gConf['default_color'], life=gConf['life'])
 
     # def create_larvae2(self, larva_pars, parameter_dict={}):
     #     for gID, gConf in larva_pars.items():

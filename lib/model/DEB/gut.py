@@ -17,17 +17,11 @@ class Gut:
         self.mol_absorbed = 0
         self.p_A = 0
         self.mol_ingested = 0
-        self.gut_capacity = 0
-        self.max_capacity = self.gut_max_capacity(self.deb.V)
-        self.Vmax=self.get_Vmax(self.deb.V)
         self.V=0
-        self.gut_occupancy=self.get_gut_occupancy()
         self.gut_X = 0
-        self.gut_P = 0
         self.gut_f = 0
-        self.X=0
-        self.f = self.deb.base_f
         self.Nfeeds = 0
+        self.SU = SynthesizingUnit(dt=self.deb.dt, K=self.deb.K)
         if save_dict:
             self.dict = self.init_dict()
         else:
@@ -40,18 +34,27 @@ class Gut:
         self.gut_Nticks = int(self.tau_gut / dt)
         # print(self.M_gm, self.V_gm, self.tau_gut * 24, self.gut_Nticks)
 
-    def update(self, V, X_V=0):
-        self.Vmax = self.get_Vmax(V)
-        self.max_capacity = self.gut_max_capacity(V)
+    def update(self, X_V=0):
         if X_V>0 :
             self.Nfeeds += 1
             self.V += X_V
             self.mol_ingested += self.deb.substrate.C * X_V
             self.gut_X += self.deb.substrate.X *X_V
-            self.X = self.compute_X()
-            self.f = self.compute_f()
+        self.digest()
+        self.resolve_occupancy()
 
-        dX0 = self.deb.J_X_Amm_dt * V
+    def digest2(self):
+        dX, dP=self.SU.step(self.X)
+        dV = dP / self.deb.substrate.C
+        self.V -= dV
+        if self.V<0 :
+            self.V=0
+        self.gut_X -= dX
+        self.mol_absorbed += dP
+        self.p_A = dP * self.deb.mu_E * self.deb.y_E_X
+
+    def digest(self):
+        dX0 = self.deb.J_X_Amm_dt * self.deb.V
         dX = np.min([dX0, self.gut_X])
         # print(dX0*self.f/self.gut_X)
         # print(1/self.deb.T_factor)
@@ -62,99 +65,93 @@ class Gut:
         self.mol_absorbed += dX
         # print(np.mean(self.dict['gut_p_A_deviation'][-500:]))
         # print(np.round(self.p_A/self.deb.deb_p_A,2))
-        self.p_A = dX * self.deb.mu_E*self.deb.y_E_X
+        self.p_A = dX * self.deb.mu_E * self.deb.y_E_X
         # self.p_A = self.deb.J_X_Amm_dt * V * self.deb.mu_E * self.deb.y_E_X * self.f
 
-        self.resolve_occupancy()
-        o = self.gut_occupancy = self.get_gut_occupancy()
-        # print(o)
-        self.gut_capacity = self.get_capacity()
 
 
 
 
-
-
-
-
-    def run(self, dX):
-        self.gut_X -= dX
-        self.gut_f += dX * self.deb.y_P_X/self.deb.y_E_X
-        dPu = dX
-        self.mol_absorbed += dPu
-        return dPu * self.deb.mu_E
-
-
-    def get_capacity(self):
-        return self.gut_X + self.gut_P
+    # def resolve_occupancy(self):
+    #     over = self.V - self.Vmax
+    #     # over = self.gut_X + self.gut_P - self.max_capacity
+    #     # over = self.gut_X + self.gut_P + self.gut_f - self.max_capacity
+    #     # over=self.gut_X + self.gut_P - self.max_capacity
+    #     # print(over)
+    #     if over > 0:
+    #
+    #         X=self.gut_X
+    #         P=self.gut_P
+    #         C=X+P
+    #         rX=X/C
+    #         dC=over*C/self.V
+    #         # df = over * (1 - self.deb.y_E_X)
+    #         dX = rX * dC
+    #         # dX = (self.gut_X / self.gut_X + self.gut_P) * (over - df)
+    #         dP = (1-rX)*dC
+    #         # dP = over - dX - df
+    #         self.gut_X -= dX
+    #         self.gut_P -= dP
+    #         # self.gut_f -= df
+    #         self.mol_not_digested += dX
+    #         self.mol_not_absorbed += dP
+    #         # self.mol_faeces += df
+    #         self.V=self.Vmax
 
     def resolve_occupancy(self):
-        over = self.V - self.Vmax
-        # over = self.gut_X + self.gut_P - self.max_capacity
-        # over = self.gut_X + self.gut_P + self.gut_f - self.max_capacity
-        # over=self.gut_X + self.gut_P - self.max_capacity
-        if over > 0:
-            print('xx')
-            X=self.gut_X
-            P=self.gut_P
-            C=X+P
-            rX=X/C
-            dC=over*C/self.V
-            # df = over * (1 - self.deb.y_E_X)
-            dX = rX * dC
-            # dX = (self.gut_X / self.gut_X + self.gut_P) * (over - df)
-            dP = (1-rX)*dC
-            # dP = over - dX - df
+        dV = self.V - self.Vmax
+        if dV > 0:
+            # print(dV)
+            dX = dV*self.X
+            dX=np.min([self.gut_X, dX])
             self.gut_X -= dX
-            self.gut_P -= dP
-            # self.gut_f -= df
             self.mol_not_digested += dX
-            self.mol_not_absorbed += dP
-            # self.mol_faeces += df
             self.V=self.Vmax
 
-    def get_M_ingested(self):
+    @property
+    def M_ingested(self):
         return self.mol_ingested * self.deb.w_X * 1000
 
-    def get_M_faeces(self):
+    @property
+    def M_faeces(self):
         return self.mol_faeces * self.deb.w_P * 1000
 
-    def get_M_not_digested(self):
+    @property
+    def M_not_digested(self):
         return self.mol_not_digested * self.deb.w_X * 1000
 
-    def get_M_not_absorbed(self):
+    @property
+    def M_not_absorbed(self):
         return self.mol_not_absorbed * self.deb.w_P * 1000
 
-    def get_R_absorbed(self):
+    @property
+    def R_absorbed(self):
         return self.mol_absorbed / self.mol_ingested if self.mol_ingested != 0 else 0
 
-    def get_R_faeces(self):
+    @property
+    def R_faeces(self):
         return self.mol_faeces / self.mol_ingested if self.mol_ingested != 0 else 0
 
-    def get_R_not_digested(self):
+    @property
+    def R_not_digested(self):
         return self.mol_not_digested / self.mol_ingested if self.mol_ingested != 0 else 0
 
-    def get_gut_occupancy(self):
+    @ property
+    def occupancy(self):
         return self.V / self.Vmax
-        # return self.gut_capacity / self.max_capacity
 
-    # def compute_occupancy(self):
-    #     self.gut_V = self.
-    def get_dMg(self):
-        self.deb.J_X_A_array = np.insert(self.deb.J_X_A_array[0:-1], 0, self.deb.J_X_A)
-        dMg=self.deb.J_X_A_array[0]-self.deb.J_X_A_array[1]
-        if dMg<=0:
-            dMg=0
-        return dMg
+    @ property
+    def M(self):
+        return self.V * self.deb.d_V * 1000
 
-    def get_M_gut(self):
-        return self.gut_capacity * self.deb.w_V * 1000
+    @ property
+    def Vmax(self):
+        # print(self.deb.V)
+        return self.V_gm * self.deb.V
 
-    def get_Vmax(self, V):
-        return self.V_gm * V
-
-    def gut_max_capacity(self, V):  # in mol
-        return self.M_gm * V
+    @property
+    def Cmax(self):  # in mol
+        return self.M_gm * self.deb.V
 
     def init_dict(self):
         self.dict_keys = [
@@ -176,18 +173,17 @@ class Gut:
 
     def update_dict(self):
         gut_dict_values = [
-            self.get_M_gut(),
+            self.M,
             self.ingested_mass('mg'),
             self.absorbed_mass('mg'),
-            self.get_M_faeces(),
-            self.get_M_not_digested(),
-            self.get_M_not_absorbed(),
-            self.get_R_faeces(),
-            self.get_R_absorbed(),
-            self.get_R_not_digested(),
-            self.get_gut_occupancy(),
+            self.M_faeces,
+            self.M_not_digested,
+            self.M_not_absorbed,
+            self.R_faeces,
+            self.R_absorbed,
+            self.R_not_digested,
+            self.occupancy,
             self.p_A / self.deb.V,
-            # self.p_A * 10 ** 6,
             self.f,
             self.p_A/self.deb.deb_p_A,
         ]
@@ -205,12 +201,13 @@ class Gut:
     #     d['sim_start'] = self.hours_as_larva
     #     d['epochs'] = self.epochs
     #     d['fr'] = 1 / (self.dt * 24 * 60 * 60)
-
-    def compute_X(self):
+    @property
+    def X(self):
         X=self.gut_X/self.V if self.V>0 else 0
         return X
 
-    def compute_f(self):
+    @ property
+    def f(self):
         return self.X/(self.deb.K+self.X)
 
     # def intake_as_body_volume_ratio(self, V, percent=True):
@@ -242,3 +239,171 @@ class Gut:
     @property
     def ingested_volume(self):
         return self.mol_ingested * self.deb.w_X / self.deb.d_X
+
+# class SynthesizingUnit3:
+#     def __init__(self,gut, k_E, b_X=5):
+#         self.gut=gut
+#         self.q0=1
+#
+#         self.qE=0
+#         self.qX = 1-self.q0-self.qE
+#         self.k_X=self.deb.K*b_X
+#         self.k_E=k_E
+#         self.b_X=b_X
+#         self.dt=self.deb.dt
+#         self.Pcum=0
+#         self.Xicum=0
+#         self.Xdcum=0
+#
+#     def step(self,X):
+#         # print(X)
+#         # if X in [None, np.nan]:
+#         #     X=0
+#         P=self.k_E*self.qE*self.dt
+#         Xi=X*self.b_X*self.q0*self.dt
+#         Xd=self.k_X*self.qX*self.dt
+#         self.q0+=P - Xi
+#         self.qE+=Xd - P
+#         self.qX = 1 - self.q0 - self.qE
+#         # print(self.k_E)
+#
+#         self.Pcum+=P
+#         self.Xicum+=Xi
+#         self.Xdcum+=Xd
+#         # print(self.J_E_A_ratio)
+#         print(self.ths)
+#         # print(self.Xicum, self.Xdcum, self.Pcum)
+#         return P
+#
+#     @ property
+#     def J_E_A(self):
+#         X=self.deb.substrate.X
+#         o=self.k_X**-1+self.k_E**-1
+#         return self.deb.y_E_X*self.b_X*X/(1+self.b_X*X*o)
+#
+#     @property
+#     def J_E_A_ratio(self):
+#         # return self.J_E_A/(self.deb.J_E_Amm)
+#         return self.J_E_A/(self.deb.V*self.deb.J_E_Amm)
+#
+#
+#
+#     @ property
+#     def ths(self) :
+#         return [int(10**6*qq) for qq in [self.q0, self.qX,self.qE]]
+#         # return self.q0, self.qX, self.qE
+#
+# class SynthesizingUnit2:
+#     def __init__(self,deb, b_X=0.000001):
+#         self.deb=deb
+#         self.q0=1
+#
+#         # self.qE=0
+#         self.qX = 1-self.q0
+#         self.k_X=self.deb.K*b_X
+#         # self.k_E=k_E
+#         self.b_X=b_X
+#         self.dt=self.deb.dt
+#         self.Pcum=0
+#         self.Picum=0
+#         self.Xicum=0
+#         self.Xcum=0
+#
+#     def step(self,X):
+#         self.Xcum+=X
+#         self.Xicum+=X
+#         # print(X)
+#         # if X in [None, np.nan]:
+#         #     X=0
+#
+#         Xi=self.Xicum/self.deb.gut.Vmax*self.b_X*self.q0*self.dt
+#         self.Xicum -= Xi
+#         self.Picum += Xi
+#         P = self.Picum/self.deb.gut.Vmax*self.k_X * self.qX * self.dt
+#
+#         self.Pcum += P
+#         self.Picum -= P
+#         # Xd=self.k_X*self.qX*self.dt
+#         self.q0+=P - Xi
+#         self.qX+=Xi - P
+#         # self.qX = 1 - self.q0 - self.qE
+#         # print(self.k_E)
+#
+#
+#         # self.Xicum+=Xi
+#
+#         # print(self.J_E_A, self.J_E_A_ratio)
+#         print(self.ths)
+#         # try:
+#         #     print(int(100*self.Xicum/self.Xcum), int(100*self.Picum/self.Xcum), int(100*self.Pcum/self.Xcum))
+#         # except :
+#         #     pass
+#         return P
+#
+#     @ property
+#     def J_E_A(self):
+#         X=self.deb.substrate.X
+#         # o=self.k_X**-1+self.k_E**-1
+#         return self.deb.y_E_X*self.k_X*self.b_X*X/(self.k_X+self.b_X*X)
+#     #
+#     @property
+#     def J_E_A_ratio(self):
+#         return self.J_E_A/(self.deb.J_E_Am)
+#         # return self.J_E_A/(self.deb.V*self.deb.J_E_Amm)
+#
+#
+#
+#     @ property
+#     def ths(self) :
+#         return [int(10**2*qq) for qq in [self.q0, self.qX]]
+#         # return self.q0, self.qX, self.qE
+
+class SynthesizingUnit:
+    def __init__(self,dt, K=5*10**-5, k_X=0.5, b_X=0.2, X=None):
+        self.dt=dt
+        self.q0=1
+        self.K=K
+        self.qX = 1-self.q0
+        self.k_X=K*b_X
+        # self.k_X=k_X
+        self.b_X=b_X
+        self.X=X
+
+    def step(self,X=None):
+        if X is None :
+            X=self.X
+        dP=self.k_X*self.qX*self.dt
+        dX=X*self.b_X*self.q0*self.dt
+        self.q0+=dP - dX
+        self.qX+=dX - dP
+        # print(dP, dX)
+        print(self.ths)
+        # print(self.gut.get_R_absorbed())
+        return dX, dP
+
+    # @ property
+    def J_E_A(self, deb):
+        X=deb.substrate.X
+        o=self.k_X**-1+deb.k_E**-1
+        return deb.y_E_X*self.b_X*X/(1+self.b_X*X*o)
+
+    # @property
+    # def J_E_A_ratio(self):
+    #     # return self.J_E_A/(self.deb.J_E_Amm)
+    #     return self.J_E_A/(self.gut.deb.V*self.gut.deb.J_E_Amm)
+
+
+
+    @ property
+    def ths(self) :
+        return [int(10**2*qq) for qq in [self.q0, self.qX]]
+        # return self.q0, self.qX, self.qE
+
+if __name__ == '__main__':
+    su=SynthesizingUnit(dt=1/(24*60*60*10), X=0.93)
+    Ndays=5
+    Nticks=int(Ndays/su.dt)
+    for i in range(Nticks) :
+        su.step()
+    # print(su.X/(su.K+su.X))
+    # print(su.k_X/su.b_X)

@@ -10,6 +10,8 @@ class LarvaWorldReplay(LarvaWorld):
                  pos_p, mid_p, cen_p, con_p, ang_p, ors_p, chunk_p, draw_Nsegs=None, experiment='replay', **kwargs):
         super().__init__(experiment=experiment, **kwargs)
         self.draw_Nsegs = draw_Nsegs
+        # print(self.env_pars['arena'])
+        # print(step_data)
 
         self.step_data = step_data
         self.endpoint_data = endpoint_data

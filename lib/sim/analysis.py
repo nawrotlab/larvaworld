@@ -174,13 +174,13 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
                                                               individuals=True, **c)
         fig_dict['reward_table'] = plot_timeplot(['cum_reward'], save_as='reward.pdf', **c)
     elif exp_type == 'realistic_imitation':
-        d.save_agent(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
+        d.save_agents(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
     if exp_type == 'dish':
         targeted_analysis([d])
         fig_dict = {f'stride_track_idx_0_in_{s0}-{s1}': plot_marked_strides(datasets=[d], agent_idx=0,
                                                                             slice=[s0, s1], **ccc) for (s0, s1) in
                     [(0, 60)]}
-    if exp_type == 'imitation' :
+    if exp_type == 'imitation':
         print('ddddddddddddd')
         f = ExpFitter(d.config['env_params']['larva_groups']['ImitationGroup']['sample'])
         results['sample_fit'] = f.compare(d, save_to_config=True)
@@ -189,95 +189,112 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
     return fig_dict, results
 
 
-def essay_analysis(essay_type, exp, ds0, show_output=False):
-    parent_dir = f'essays/{essay_type}/global_test'
-    plot_dir = f'{paths.SimFolder}/{parent_dir}/plots'
+def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
+    if path is None :
+        parent_dir = f'essays/{essay_type}/global_test'
+        plot_dir = f'{paths.SimFolder}/{parent_dir}/plots'
+    else :
+        plot_dir=f'{path}/plots'
     ccc = {'show': False}
     if len(ds0) == 0 or any([d0 is None for d0 in ds0]):
         return {}, {}
     figs = {}
     results = {}
 
-    if essay_type=='roversVSsitters' :
+    if essay_type in ['roversVSsitters', 'RvsS']:
         RS_leg_cols = ['black', 'white']
         markers = ['D', 's']
         ls = [r'$for^{R}$', r'$for^{S}$']
         shorts = ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']
-        def dsNls(ds0, all_ls) :
-            all_ds = []
+
+        def dsNls(ds0, lls=None):
+            if lls is None:
+                lls = fun.flatten_list([ls] * len(ds0))
+            dds = []
+            deb_dicts = []
             for d in ds0:
                 ds, debs = split_rovers_sitters(d)
-                all_ds.append(ds)
-            dds = fun.flatten_list(all_ds)
-            lls = fun.flatten_list(all_ls)
+                dds += ds
+                deb_dicts += debs
+
             return {'datasets': dds,
-                      'labels': lls,
+                    'labels': lls,
+                    'deb_dicts': deb_dicts,
                     'save_to': plot_dir,
-                      'leg_cols': RS_leg_cols,
-                      'markers' : markers,
+                    'leg_cols': RS_leg_cols,
+                    'markers': markers,
                     **ccc
                     }
 
-
         if exp == 'pathlength':
-            all_ls = [[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in ['Agar', 'Yeast']]
-            dNl_kws=dsNls(ds0, all_ls)
+            lls = fun.flatten_list([[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in ['Agar', 'Yeast']])
             kwargs = {
-                **dNl_kws,
-                      'xlabel': r'time on substrate_type $(min)$',
-                      }
-            figs['pathlength'] = plot_pathlength(scaled=False, save_as=f'00_PATHLENGTH.pdf', unit='cm', **kwargs)
+                ** dsNls(ds0, lls),
+                'xlabel': r'time on substrate_type $(min)$',
+            }
+            figs['1_pathlength'] = plot_pathlength(scaled=False, save_as=f'1_PATHLENGTH.pdf', unit='cm', **kwargs)
 
         elif exp == 'intake':
-            sim_times = [10, 15, 20]
-            all_ls = [ls for d in ds0]
-            dNl_kws = dsNls(ds0, all_ls)
-            kwargs = {**dNl_kws,
-                      'coupled_labels': sim_times,
+            kwargs = {**dsNls(ds0),
+                      'coupled_labels': [10, 15, 20],
                       'xlabel': r'Time spent on food $(min)$'}
-            for s in shorts:
-                p = getPar(s, to_return=['d'])[0]
-                figs[f'intake {p}'] = barplot(par_shorts=[s], save_as=f'01_AD_LIBITUM_{p}.pdf', **kwargs)
+            figs['2_intake'] = barplot(par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
+            if all_figs:
+                for s in shorts:
+                    p = getPar(s, to_return=['d'])[0]
+                    figs[f'intake {p}'] = barplot(par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
 
-        elif exp== 'starvation':
+        elif exp == 'starvation':
             hs = [0, 1, 2, 3, 4]
-            all_ls = [ls for d in ds0]
-            dNl_kws = dsNls(ds0, all_ls)
-            kwargs = {**dNl_kws,
+            kwargs = {**dsNls(ds0),
                       'coupled_labels': hs,
                       'xlabel': r'Food deprivation $(h)$'}
-            for s in shorts:
-                p = getPar(s, to_return=['d'])[0]
-                figs[f'post-starvation {p}'] = lineplot(par_shorts=[s],save_as=f'03_POST-STARVATION_{p}.pdf', **kwargs)
+            figs['3_starvation'] = lineplot(par_shorts=['f_am_V'], save_as='3_POST-STARVATION_INTAKE.pdf',
+                                            ylabel='Food intake', scale=1000, **kwargs)
+            if all_figs:
+                for ii in ['feeding']:
+                    figs[ii] = plot_debs(mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf', include_egg=False,
+                                         label_epochs=False, **kwargs)
+                for s in shorts:
+                    p = getPar(s, to_return=['d'])[0]
+                    figs[f'post-starvation {p}'] = lineplot(par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
+                                                            **kwargs)
 
-        elif exp== 'quality':
-            deb_base_fs = [1.0, 0.75, 0.5, 0.25, 0.15]
-            deb_base_fs_labels = [int(f * 100) for f in deb_base_fs]
-            all_ls = [ls for d in ds0]
-            dNl_kws = dsNls(ds0, all_ls)
-            kwargs = {**dNl_kws,
-                      'coupled_labels': deb_base_fs_labels,
+        elif exp == 'quality':
+            qs = [1.0, 0.75, 0.5, 0.25, 0.15]
+            qs_labels = [int(q * 100) for q in qs]
+            kwargs = {**dsNls(ds0),
+                      'coupled_labels': qs_labels,
                       'xlabel': 'Food quality (%)'
                       }
-            for s in shorts:
-                p = getPar(s, to_return=['d'])[0]
-                figs[f'rearing-quality {p}'] = barplot(par_shorts=[s],save_as=f'02_REARING_{p}.pdf', **kwargs)
+            figs['4_quality'] = barplot(par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
+            if all_figs:
+                for s in shorts:
+                    p = getPar(s, to_return=['d'])[0]
+                    figs[f'rearing-quality {p}'] = barplot(par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
 
-        elif exp== 'refeeding':
+        elif exp == 'refeeding':
             h = 3
-            n = f'04_REFEEDING_after_{h}h_starvation_'
-            all_ls = [ls for d in ds0]
-            kwargs = dsNls(ds0, all_ls)
-            figs[f'refeeding food-intake'] =plot_food_amount(scaled=True, save_as=f'{n}scaled_intake.pdf', **kwargs)
-            figs[f'refeeding food-intake(filt)'] =plot_food_amount(scaled=True, filt_amount=True, save_as=f'{n}scaled_intake_filt.pdf', **kwargs)
-            for s in shorts:
-                p = getPar(s, to_return=['d'])[0]
-                figs[f'refeeding {p}'] = plot_timeplot(par_shorts=[s], show_first=False, subfolder=None, save_as=f'{n}{p}.pdf', **kwargs)
+            n = f'5_REFEEDING_after_{h}h_starvation_'
+            kwargs = dsNls(ds0)
+            figs['5_refeeding'] = plot_food_amount(scaled=True, filt_amount=True, save_as='5_REFEEDING_INTAKE.pdf',
+                                                   **kwargs)
 
+            if all_figs:
+                figs[f'refeeding food-intake'] = plot_food_amount(scaled=True, save_as=f'{n}scaled_intake.pdf',**kwargs)
+                figs[f'refeeding food-intake(filt)'] = plot_food_amount(scaled=True, filt_amount=True,
+                                                                        save_as=f'{n}scaled_intake_filt.pdf', **kwargs)
+                for s in shorts:
+                    p = getPar(s, to_return=['d'])[0]
+                    figs[f'refeeding {p}'] = plot_timeplot(par_shorts=[s], show_first=False, subfolder=None,
+                                                           save_as=f'{n}{p}.pdf', **kwargs)
+        # for d in kwargs['datasets'] :
+        #     d.delete()
     print(f'    Analysis complete!')
     return figs, results
 
-def split_rovers_sitters(d) :
+
+def split_rovers_sitters(d):
     ds = d.split_dataset(groups=['Rover', 'Sitter'], show_output=False)
     debs = d.load_deb_dicts(use_pickle=False)
     d.delete(show_output=False)

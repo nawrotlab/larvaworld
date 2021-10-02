@@ -107,9 +107,11 @@ def filter(s, dt, Npoints, config, freq=2, N=1, inplace=True, recompute=False,**
         s[p] = f_array[:, j, :].flatten()
     print(f'All spatial parameters filtered at {freq} Hz')
 
-def interpolate_nan_values(s, Npoints, pars=None,**kwargs):
+def interpolate_nan_values(s, config, pars=None,**kwargs):
     if pars is None :
-        points = nam.midline(Npoints, type='point') + ['centroid', '']
+        N= config['Npoints'],
+        Nc= config['Ncontour'],
+        points = nam.midline(N, type='point') + ['centroid', ''] + nam.contour(Nc)
         pars = nam.xy(points, flat=True)
     pars = [p for p in pars if p in s.columns]
     for p in pars:
@@ -117,7 +119,11 @@ def interpolate_nan_values(s, Npoints, pars=None,**kwargs):
             s.loc[(slice(None), id), p] = fun.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
     print('All parameters interpolated')
 
-def rescale(s,e, Npoints,Ncontour, config, recompute=False, scale=1.0,**kwargs):
+def rescale(s,e, config,Npoints=None,Ncontour=None, recompute=False, scale=1.0,**kwargs):
+    if Npoints is None :
+        Npoints=config['Npoints']
+    if Ncontour is None :
+        Ncontour=config['Ncontour']
     if scale in ['', None, np.nan]:
         return
     if 'rescaled_by' in config and not recompute :

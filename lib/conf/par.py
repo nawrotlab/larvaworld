@@ -225,9 +225,9 @@ class CompGroupCollector(GroupCollector):
 
 class Parameter:
     def __init__(self, p, u, k=None, s=None, o=None, lim=None,
-                 d=None, l=None, exists=True, func=None, const=None, par_dict=None, fraction=False,
+                 d=None, lab=None, exists=True, func=None, const=None, par_dict=None, fraction=False,
                  operator=None, k0=None, k_num=None, k_den=None, dst2source=None, or2source=None, dispersion=False,
-                 wrap_mode=None):
+                 wrap_mode=None,l=None):
         # print(p,k)
         self.wrap_mode = wrap_mode
         self.fraction = fraction
@@ -241,6 +241,7 @@ class Parameter:
             s = self.k
         self.s = s
         self.o = o
+        self.lab = lab
 
         if d is None:
             d = p
@@ -294,7 +295,7 @@ class Parameter:
 
     @property
     def l(self):
-        return f'{self.d},  {self.s}$({self.u.unit.abbrev})$'
+        return f'{self.d},  {self.s}$({self.u.unit.abbrev})$' if self.lab is None else self.lab
 
     def get_from(self, o, u=True, tick=None, df=None):
         # print(o,u,tick,df)
@@ -407,13 +408,13 @@ class Parameter:
         return vv
 
 
-def add_par(dic, **kwargs):
+def add_par(dic, lab=None, **kwargs):
     p = dtypes.get_dict('par', **kwargs)
     # print(p)
     k = p['k']
     if k in dic.keys():
         raise ValueError(f'Key {k} already exists')
-    dic[k] = Parameter(**p, par_dict=dic)
+    dic[k] = Parameter(**p, par_dict=dic, lab=lab)
     return dic
 
 
@@ -670,15 +671,15 @@ def build_gut_par_dict(df=None):
     if df is None:
         df = {}
     df = add_par(df, p='ingested_volume', k='f_am_V', u=1 * siu.m ** 3, o=Gut, d='ingested_food_volume',
-                 s=sub('V', 'in'))
+                 s=sub('V', 'in'), lab='ingested food volume')
     df = add_par(df, p='ingested_gut_volume_ratio', k='sf_am_Vg', o=Larva, d='ingested_gut_volume_ratio',
-                 s=subsup('[V]', 'in', 'gut'))
+                 s=subsup('[V]', 'in', 'gut'), lab='intake as % larva gut volume')
     df = add_par(df, p='ingested_body_volume_ratio', k='sf_am_V', o=Larva, d='ingested_body_volume_ratio',
-                 s=sub('[V]', 'in'))
+                 s=sub('[V]', 'in'), lab='intake as % larva volume')
     df = add_par(df, p='ingested_body_area_ratio', k='sf_am_A', o=Larva, d='ingested_body_area_ratio',
-                 s=sub('{V}', 'in'))
+                 s=sub('{V}', 'in'), lab='intake as % larva area')
     df = add_par(df, p='ingested_body_mass_ratio', k='sf_am_M', o=Larva, d='ingested_body_mass_ratio',
-                 s=sub('[M]', 'in'))
+                 s=sub('[M]', 'in'), lab='intake as % larva mass')
 
     return df
 
@@ -836,7 +837,7 @@ def build_par_dict(save=True, df=None):
     df = build_chunk_par_dict(df)
 
     df = add_par(df, p='amount_eaten', k='f_am', u=1 * siu.m ** 3, o=Larva, d='ingested_food_volume',
-                 s=sub('V', 'in'))
+                 s=sub('V', 'in'), lab='food intake')
     df = add_par(df, p='scaled_amount_eaten', k='sf_am', o=Larva, d='ingested_food_volume_ratio',
                  s=sub('[V]', 'in'))
     df = add_par(df, p='lin_activity', k='Act_cr', o=Larva, d='crawler output', s=sub('A', 'crawl'))

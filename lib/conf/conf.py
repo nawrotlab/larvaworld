@@ -10,6 +10,8 @@ import numpy as np
 
 from lib.stor import paths
 import lib.aux.functions as fun
+
+
 sys.path.insert(0, paths.get_parent_dir())
 import lib.conf.dtype_dicts as dtypes
 from lib.conf.init_dtypes import null_dict
@@ -346,11 +348,14 @@ def next_idx(exp, type='single'):
     except:
         exp_names = list(loadConfDict('Exp').keys())
         batch_names = list(loadConfDict('Batch').keys())
+        essay_names = list(loadConfDict('Essay').keys())
         exp_idx_dict = dict(zip(exp_names, [0] * len(exp_names)))
         batch_idx_dict = dict(zip(batch_names, [0] * len(batch_names)))
+        essay_idx_dict = dict(zip(essay_names, [0] * len(essay_names)))
         # batch_idx_dict.update(loadConfDict('Batch'))
         idx_dict = {'single': exp_idx_dict,
-                    'batch': batch_idx_dict}
+                    'batch': batch_idx_dict,
+                    'essay' : essay_idx_dict}
     if not exp in idx_dict[type].keys():
         idx_dict[type][exp] = 0
     idx_dict[type][exp] += 1
@@ -359,120 +364,179 @@ def next_idx(exp, type='single'):
     return idx_dict[type][exp]
 
 
-def store_confs() :
-    import lib.conf.env_conf as env
-    import lib.conf.essay_conf as essay
-    import lib.conf.larva_conf as mod
-    import lib.conf.data_conf as dat
-    import lib.conf.batch_conf as bat
-    import lib.conf.exp_conf as exp
+def store_reference_data_confs() :
+    from lib.stor.larva_dataset import LarvaDataset
+    dds = [
+        [f'{paths.DataFolder}/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g
+         in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
+    dds = fun.flatten_list(dds)
+    dds.append(f'{paths.DataFolder}/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/exploration')
+    for dr in dds:
+        d = LarvaDataset(dr, load_data=False)
+        # # c = d.config
+        # del d.config['agent_ids']
+        # d.config['bout_distros']['stride']=d.config['bout_distros']['stride']['best']
+        # d.config['bout_distros']['pause']=d.config['bout_distros']['pause']['best']
+        d.save_config(add_reference=True)
 
-    dat_list = [
-        dat.SchleyerConf,
-        dat.JovanicConf,
-        dat.SimConf,
-    ]
-    for d in dat_list:
-        saveConf(d, 'Data')
+def store_confs(keys=None) :
+    if keys is None :
+        keys=['Ref','Data', 'Model', 'Env', 'Exp']
 
-    par_conf_dict = {
-        'SchleyerParConf': dat.SchleyerParConf,
-        'JovanicParConf': dat.JovanicParConf,
-        'PaisiosParConf': dat.PaisiosParConf,
-        'SinglepointParConf': dat.SinglepointParConf,
-        'SimParConf': dat.SimParConf,
-    }
-    for k, v in par_conf_dict.items():
-        saveConf(v, 'Par', k)
+    if 'Ref' in keys :
+        store_reference_data_confs()
+    if 'Data' in keys :
+        import lib.conf.data_conf as dat
+        dat_list = [
+            dat.SchleyerConf,
+            dat.JovanicConf,
+            dat.SimConf,
+        ]
+        for d in dat_list:
+            saveConf(d, 'Data')
 
-    group_list = [
-        dat.SchleyerFormat,
-        dat.JovanicFormat,
-        dat.BerniFormat,
-    ]
-    for g in group_list:
-        saveConf(g, 'Group')
+        par_conf_dict = {
+            'SchleyerParConf': dat.SchleyerParConf,
+            'JovanicParConf': dat.JovanicParConf,
+            'PaisiosParConf': dat.PaisiosParConf,
+            'SinglepointParConf': dat.SinglepointParConf,
+            'SimParConf': dat.SimParConf,
+        }
+        for k, v in par_conf_dict.items():
+            saveConf(v, 'Par', k)
 
-    env_dict = {
-        'focus': env.focus_env,
-        'dish': env.dish_env,
-        'nengo_dish': env.nengo_dish_env,
-        'dispersion': env.dispersion_env,
-        'chemotaxis_approach': env.chemotax_env,
-        'chemotaxis_local': env.chemorbit_env,
-        'chemotaxis_diffusion': env.chemorbit_diffusion_env,
-        'odor_pref_test': env.pref_test_env,
-        'odor_pref_test_on_food': env.pref_test_env_on_food,
-        'odor_pref_train': env.pref_train_env,
-        'odor_pref_RL': env.pref_env_RL,
-        'patchy_food': env.patchy_food_env,
-        'uniform_food': env.uniform_food_env,
-        'food_grid': env.food_grid_env,
-        'single_patch': env.single_patch_env,
-        'growth': env.growth_env,
-        'rovers_sitters': env.rovers_sitters_env,
-        'reorientation': env.reorientation_env,
-        'realistic_imitation': env.imitation_env_p,
-        'maze': env.maze_env,
-        'keep_the_flag': env.king_env,
-        'capture_the_flag': env.flag_env,
-        'catch_me': env.catch_me_env,
-        'chemotaxis_RL': env.RL_chemorbit_env,
-        'food_at_bottom': env.food_at_bottom_env,
-        '4corners': env.RL_4corners_env,
-    }
-    for k, v in env_dict.items():
-        saveConf(v, 'Env', k)
+        group_list = [
+            dat.SchleyerFormat,
+            dat.JovanicFormat,
+            dat.BerniFormat,
+        ]
+        for g in group_list:
+            saveConf(g, 'Group')
+    if 'Model' in keys:
+        import lib.conf.larva_conf as mod
+        mod_dict = {
+            'explorer': mod.exploring_larva,
+            'Levy-walker': mod.Levy_walker,
+            'navigator': mod.odor_larva,
+            'navigator-x2': mod.odor_larva_x2,
+            'immobile': mod.immobile_odor_larva,
+            'feeder-explorer': mod.feeding_larva,
+            'feeder-navigator': mod.feeding_odor_larva,
+            'feeder-navigator-x2': mod.feeding_odor_larva_x2,
+            'rover': mod.growing_rover,
+            'mock_rover': mod.mock_growing_rover,
+            'sitter': mod.growing_sitter,
+            'mock_sitter': mod.mock_growing_sitter,
+            'imitation': mod.imitation_larva,
+            'gamer': mod.flag_larva,
+            'gamer-L': mod.king_larva_L,
+            'gamer-R': mod.king_larva_R,
+            'follower-R': mod.follower_R,
+            'follower-L': mod.follower_L,
+            'RL-learner': mod.RL_odor_larva,
+            'RL-feeder': mod.RL_feed_odor_larva,
+            'basic_navigator': mod.basic_larva,
+            'explorer_3con': mod.exploring_3c_larva,
+            'nengo-larva': mod.nengo_larva,
+            'nengo_explorer': mod.nengo_explorer,
+        }
+        for k, v in mod_dict.items():
+            saveConf(v, 'Model', k)
+    if 'Env' in keys :
+        import lib.conf.env_conf as env
+        env_dict = {
+            'focus': env.focus_env,
+            'dish': env.dish_env,
+            'nengo_dish': env.nengo_dish_env,
+            'dispersion': env.dispersion_env,
+            'chemotaxis_approach': env.chemotax_env,
+            'chemotaxis_local': env.chemorbit_env,
+            'chemotaxis_diffusion': env.chemorbit_diffusion_env,
+            'odor_pref_test': env.pref_test_env,
+            'odor_pref_test_on_food': env.pref_test_env_on_food,
+            'odor_pref_train': env.pref_train_env,
+            'odor_pref_RL': env.pref_env_RL,
+            'patchy_food': env.patchy_food_env,
+            'uniform_food': env.uniform_food_env,
+            'food_grid': env.food_grid_env,
+            'single_patch': env.single_patch_env,
+            'growth': env.growth_env,
+            'rovers_sitters_on_food': env.RvsS_food,
+            'rovers_sitters_on_food_q75': env.RvsS_food_q75,
+            'rovers_sitters_on_food_q50': env.RvsS_food_q50,
+            'rovers_sitters_on_food_q25': env.RvsS_food_q25,
+            'rovers_sitters_on_food_q15': env.RvsS_food_q15,
+            'rovers_sitters_on_food_1h_prestarved': env.RvsS_food_1h_prestarved,
+            'rovers_sitters_on_food_2h_prestarved': env.RvsS_food_2h_prestarved,
+            'rovers_sitters_on_food_3h_prestarved': env.RvsS_food_3h_prestarved,
+            'rovers_sitters_on_food_4h_prestarved': env.RvsS_food_4h_prestarved,
+            'rovers_sitters_on_agar': env.RvsS_agar,
+            'reorientation': env.reorientation_env,
+            'realistic_imitation': env.imitation_env_p,
+            'maze': env.maze_env,
+            'keep_the_flag': env.king_env,
+            'capture_the_flag': env.flag_env,
+            'catch_me': env.catch_me_env,
+            'chemotaxis_RL': env.RL_chemorbit_env,
+            'food_at_bottom': env.food_at_bottom_env,
+            '4corners': env.RL_4corners_env,
+        }
+        for k, v in env_dict.items():
+            saveConf(v, 'Env', k)
+    if 'Exp' in keys :
+        import lib.conf.exp_conf as exp
+        import lib.conf.essay_conf as essay
+        import lib.conf.batch_conf as bat
 
-    mod_dict = {
-        'explorer': mod.exploring_larva,
-        'Levy-walker': mod.Levy_walker,
-        'navigator': mod.odor_larva,
-        'navigator-x2': mod.odor_larva_x2,
-        'immobile': mod.immobile_odor_larva,
-        'feeder-explorer': mod.feeding_larva,
-        'feeder-navigator': mod.feeding_odor_larva,
-        'feeder-navigator-x2': mod.feeding_odor_larva_x2,
-        'rover': mod.growing_rover,
-        'mock_rover': mod.mock_growing_rover,
-        'sitter': mod.growing_sitter,
-        'mock_sitter': mod.mock_growing_sitter,
-        'imitation': mod.imitation_larva,
-        'gamer': mod.flag_larva,
-        'gamer-L': mod.king_larva_L,
-        'gamer-R': mod.king_larva_R,
-        'follower-R': mod.follower_R,
-        'follower-L': mod.follower_L,
-        'RL-learner': mod.RL_odor_larva,
-        'RL-feeder': mod.RL_feed_odor_larva,
-        'basic_navigator': mod.basic_larva,
-        'explorer_3con': mod.exploring_3c_larva,
-        'nengo-larva': mod.nengo_larva,
-        'nengo_explorer': mod.nengo_explorer,
-    }
-    for k, v in mod_dict.items():
-        saveConf(v, 'Model', k)
+        d = exp.grouped_exp_dict
+        exp_dict = fun.merge_dicts(list(d.values()))
+        exp_group_dict = {k: {'simulations': list(v.keys())} for k, v in d.items()}
+        for k, v in exp_dict.items():
+            saveConf(v, 'Exp', k)
+        for k, v in exp_group_dict.items():
+            saveConf(v, 'ExpGroup', k)
 
-    for k, v in bat.batch_dict.items():
-        saveConf(v, 'Batch', k)
+        for k, v in essay.essay_dict.items():
+            saveConf(v, 'Essay', k)
 
-    d=exp.grouped_exp_dict
-    exp_dict=fun.merge_dicts(list(d.values()))
-    exp_group_dict={k:{'simulations': list(v.keys())} for k,v in d.items()}
-    for k, v in exp_dict.items():
-        saveConf(v, 'Exp', k)
-    for k, v in exp_group_dict.items():
-        saveConf(v, 'ExpGroup', k)
+        for k, v in bat.batch_dict.items():
+            saveConf(v, 'Batch', k)
 
-    for k, v in essay.essay_dict.items():
-        saveConf(v, 'Essay', k)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # if __name__ == '__main__':
 #     init_confs()
 
 def imitation_exp(config, model='explorer', idx=0, **kwargs):
-
+    if type(config)==str :
+        config=loadConf(config, 'Ref')
     from lib.anal.comparing import ExpFitter
     # f = ExpFitter(config)
 

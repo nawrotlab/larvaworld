@@ -539,9 +539,9 @@ def plot_pauses(dataset, Npauses=10, save_to=None, plot_simulated=False, return_
     save_plot(fig, filepath2, filename2)
 
 
-def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSsitters=False,
+def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSsitters=False,include_egg=True,
               time_unit='hours', return_fig=False, sim_only=False, force_ymin=None, color_epoch_quality=True,
-              datasets=None, labels=None, show=False, label_epochs=True, label_lifestages=True):
+              datasets=None, labels=None, show=False, label_epochs=True, label_lifestages=True,**kwargs):
     warnings.filterwarnings('ignore')
     if save_to is None:
         save_to = paths.DebFolder
@@ -586,7 +586,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                'reserve', 'reserve_density', 'hunger',
                'pupation_buffer',
                'f', 'f_filt',
-               'explore2exploit_balance',
+               'EEB',
                'M_gut', 'M_ingested', 'M_absorbed', 'M_faeces', 'M_not_digested', 'M_not_absorbed',
                'R_faeces', 'R_absorbed', 'R_not_digested', 'gut_occupancy',
                'deb_p_A', 'sim_p_A', 'gut_p_A', 'gut_f', 'gut_p_A_deviation'
@@ -611,7 +611,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     elif mode == 'full':
         idx = [0, 1, 2, 3, 4, 5]
     elif mode == 'feeding':
-        idx = [3, 4]
+        idx = [3, 4, 8]
     elif mode in labels0:
         idx = [labels0.index(mode)]
     elif mode == 'food_mass':
@@ -670,6 +670,15 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             age -= t3
             epochs -= t3
             t3 = 0
+        elif not include_egg :
+            t0_sim -= t0
+            t00 -= t0
+            t1 -= t0
+            t2 -= t0
+            t3 -= t0
+            age -= t0
+            epochs -= t0
+            t0 = 0
 
         t0_sim *= t_coef
         t00 *= t_coef
@@ -716,7 +725,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             ax.tick_params(axis='y', labelsize=15)
             ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 
-            if l in ['pupation_buffer', 'explore2exploit_balance', 'R_faeces', 'R_absorbed', 'R_not_digested',
+            if l in ['pupation_buffer', 'EEB', 'R_faeces', 'R_absorbed', 'R_not_digested',
                      'gut_occupancy']:
                 ax.set_ylim([0, 1])
             if force_ymin is not None:
@@ -1317,7 +1326,7 @@ def plot_EEB_vs_food_quality(samples=None, dt=None,species_list=['rover', 'sitte
     cols = fun.N_colors(len(species_list))
 
     for i, sample in enumerate(samples):
-        z = get_EEB_poly1d(sample_dataset=sample, dt=dt)
+        z = get_EEB_poly1d(sample=sample, dt=dt)
         for col, species in zip(cols, species_list):
             ss = []
             EEBs = []
@@ -3476,7 +3485,7 @@ def barplot(datasets, labels=None, par_shorts=['f_am'], coupled_labels=None, xla
 
 
 def lineplot(datasets, markers, labels=None, par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None,
-             save_to=None, save_as=None, return_fig=False, show=False, leg_cols=None, **kwargs):
+             save_to=None, save_as=None, return_fig=False, show=False, leg_cols=None,scale=1.0, **kwargs):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to)
     # w = 0.15
 
@@ -3505,7 +3514,8 @@ def lineplot(datasets, markers, labels=None, par_shorts=['f_am'], coupled_labels
     for p, u in zip(pars, units):
         filename = f'{p}.{suf}' if save_as is None else save_as
 
-        values = [e[p] for e in es]
+        values = [e[p]*scale for e in es]
+
         # print(p, values)
         # values = [e[p] * 1000 for e in es]
         means = [v.mean() for v in values]

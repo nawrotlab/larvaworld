@@ -115,7 +115,7 @@ class NengoBrain(Network, Brain):
                 return v
 
             def intermittency(x):
-                s, f, p = self.intermitter.get_active_bouts()
+                s, f, p = self.intermitter.active_bouts
                 if s is None:
                     x[0] = 0
                 elif s > 0:

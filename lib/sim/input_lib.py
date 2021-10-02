@@ -61,7 +61,7 @@ def eval_keypress(k, screen, model):
     elif k == 'visible trail':
         model.toggle('trails')
     elif k == 'pause':
-        model.toggle('sim_paused')
+        model.toggle('is_paused')
     elif k == 'move left':
         screen.move_center(-0.05, 0)
     elif k == 'move right':

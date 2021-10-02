@@ -15,9 +15,11 @@ class BodySegment:
         self.seg_vertices = seg_vertices
         # self.vertices = None
 
-    def draw(self, viewer, filled=True):
+    def draw(self, viewer, color=None, filled=True):
+        if color is None :
+            color=self.color
         for vertices in self.vertices:
-            viewer.draw_polygon(vertices, filled=filled, color=self.color)
+            viewer.draw_polygon(vertices, filled=filled, color=color)
 
     # @property
     def get_color(self):

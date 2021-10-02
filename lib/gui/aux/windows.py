@@ -249,7 +249,7 @@ def import_window(datagroup_id,raw_dic):
         vertical_scroll_only=True, scrollable=True, expand_y=True, vertical_alignment='top',
         size=col_size(y_frac=0.4, win_size=w_size))]
 
-    s1 = CollapsibleDict('build_conf', default=True, disp_name='Configuration',text_kws=t_kws(20), state=True)
+    s1 = CollapsibleDict('build_conf', disp_name='Configuration',text_kws=t_kws(20), state=True)
     c = {}
     for s in [s1]:
         c.update(**s.get_subdicts())

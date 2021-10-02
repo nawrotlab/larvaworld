@@ -1,5 +1,5 @@
 from lib.gui.aux.elements import ButtonGraphList, CollapsibleDict, DataList, SelectionList
-from lib.gui.aux.functions import gui_col
+from lib.gui.aux.functions import gui_col, gui_cols
 from lib.gui.tabs.tab import GuiTab
 from lib.sim.single_run import run_sim
 from lib.stor import paths
@@ -26,26 +26,19 @@ class ImportTab(GuiTab):
         d = {kR: {}, kP: {}}
 
         sl1 = SelectionList(tab=self, disp='Data format/lab', buttons=['load'])
-        dl1 = DataList(name=self.raw_key, tab=self, dict=d[kR], buttons=['import', 'select_all', 'remove', 'change_ID', 'browse'],
+        dl1 = DataList(kR, tab=self, dict=d[kR], buttons=['import', 'select_all', 'remove', 'change_ID', 'browse'],
                        raw=True, size=(25,5))
-        dl2 = DataList(name=self.proc_key, tab=self, dict=d[kP],
-                       buttons=['replay', 'imitate', 'enrich', 'select_all', 'remove', 'change_ID', 'browse'],
+        dl2 = DataList(kP, tab=self, dict=d[kP],buttons=['replay', 'imitate', 'enrich', 'select_all', 'remove', 'change_ID', 'browse'],
                        aux_cols=['N', 'duration', 'quality'], size=(40,5))
-        c1,c2,c3=[CollapsibleDict(n, default=True, toggled_subsections=None) for n in self.fields]
-        g1 = ButtonGraphList(name=self.name, tab=self, fig_dict={})
-
-        l = [[
-            gui_col([sl1, c1], 0.25),
-            gui_col([dl1,c2], 0.25),
-            gui_col([dl2, c3], 0.5)
-        ]]
+        c1,c2,c3=[CollapsibleDict(n) for n in self.fields]
+        g1 = ButtonGraphList(self.name, tab=self, fig_dict={})
+        l = gui_cols(cols=[[sl1, c1], [dl1,c2], [dl2, c3]], x_fracs=[0.25, 0.25, 0.5])
 
         c = {}
         for s in [c1, c2, c3]:
             c.update(**s.get_subdicts())
 
-        g = {g1.name: g1}
-        return l, c, g, d
+        return l, c, {g1.name: g1}, d
 
     def eval(self, e, v, w, c, d, g):
         # print(e)

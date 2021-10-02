@@ -282,7 +282,7 @@ def flatten_dict(d, parent_key='', sep='.'):
     return dict(items)
 
 
-def reconstruct_dict(param_group):
+def reconstruct_dict(param_group, **kwargs):
     dict = {}
     for p in param_group:
         if type(p) == ParameterGroup:
@@ -296,7 +296,7 @@ def reconstruct_dict(param_group):
                 if v == 'empty_dict':
                     v = {}
                 dict.update({p.v_name: v})
-
+    dict.update(**kwargs)
     return dict
 
 
@@ -785,38 +785,18 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, Nidx=2
         dd = np.sqrt(np.sum((xy1 - xy0) ** 2))
         return wt * tt + wl * ll + ws * dd
 
-    # def update_pairs(errs, pairs, id0,id1) :
-
-
     ls = e['length']
     if pars is None:
         pars = s.columns.values.tolist()
     s.reset_index(level='Step', drop=False, inplace=True)
     s['Step'] = s['Step'].values.astype(int)
     ids, mins, maxs, first_xy, last_xy, durs = get_extrema(s, pars)
-    # temp_pairs, temp_errs=[]
-    # for id0,id1 in itertools.combinations(ids) :
-    #     if maxs[id0]<mins[id1] :
-    #         er=eval(maxs[id0], last_xy[id0], ls[id0], mins[id1], first_xy[id1], ls[id1])
-    #         if er < max_error :
-    #             temp_errs.append(er)
-    #             temp_pairs.append((id0, id1))
-    # temp_errs=np.array(temp_errs)
-    # temp_pairs=np.array(temp_pairs)
-    # idx, cur_er=np.argmin(temp_errs), np.min(temp_errs)
-    # id0, id1=temp_pairs[idx]
-    # pairs.append({id0: id1})
-    # temp_errs = np.delete(temp_errs, idx, axis=0)
-    # temp_pairs = np.delete(temp_pairs, idx, axis=0)
-    # temp_errs, temp_pairs = update_pairs(temp_errs, temp_pairs, id0, id1)
-
     while Nidx <= len(ids):
         cur_er, id0, id1 = max_error, None, None
         t0s = maxs.nsmallest(Nidx)
         t1s=mins.loc[mins>t0s.min()].nsmallest(Nidx)
         if len(t1s)>0 :
             for i in range(Nidx):
-                # print(i)
                 cur_id0, t0 = t0s.index[i], t0s.values[i]
                 xy0, l0 = last_xy[cur_id0], ls[cur_id0]
                 ee = [eval(t0, xy0, l0, mins[id], first_xy[id], ls[id]) for id in t1s.index]
@@ -825,34 +805,20 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, Nidx=2
                     cur_er, id0, id1 = temp_err, cur_id0, t1s.index[np.argmin(ee)]
         if id0 is not None:
             pairs[id0]=id1
-            # qq0=time.time()
-            # s.rename(index={id0: id1}, inplace=True)
-            # qq1 = time.time()
             ls[id1] = (ls[id0]*durs[id0]+ls[id1]*durs[id1])/(durs[id0]+durs[id1])
             durs[id1]+=durs[id0]
             del durs[id0]
-            # ls[id1] = s['spinelength'].loc[id1].dropna().mean()
-            # qq2 = time.time()
             ls.drop([id0], inplace=True)
-            # qq3 = time.time()
-            # print(qq1-qq0,qq2-qq1,qq3-qq2)
             ids, mins, maxs, first_xy, last_xy = update_extrema(id0, id1, ids, mins, maxs, first_xy, last_xy)
             print(len(ids), int(cur_er))
         else :
             Nidx += 1
     print('Finalizing dataset')
     while len(common_member(list(pairs.keys()), list(pairs.values()))) > 0:
-        # print(len((unique_list(pairs.keys()))), len((unique_list(pairs.values()))))
         for id0,id1 in pairs.items() :
             if id1 in pairs.keys() :
                 pairs[id0]=pairs[id1]
                 break
-            # if id1 in pairs.keys() :
-            #     pairs[]
-        # done=True
-    # s.reset_index(level='Step', drop=False, inplace=True)
-    # s['Step'] = s['Step'].values.astype(int)
-    print(durs)
     s.rename(index=pairs, inplace=True)
     s.reset_index(drop=False, inplace=True)
     s.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
@@ -1386,7 +1352,7 @@ def replace_in_dict(d0, replace_d, inverse=False) :
             d[k] = replace_d[v]
     return d
 
-def convex_hull(xs=None, ys=None, N=None):
+def convex_hull(xs=None, ys=None, N=None, interp_nans=True):
     Nrows, Ncols = xs.shape
     xs = [xs[i][~np.isnan(xs[i])] for i in range(Nrows)]
     ys = [ys[i][~np.isnan(ys[i])] for i in range(Nrows)]
@@ -1402,6 +1368,9 @@ def convex_hull(xs=None, ys=None, N=None):
             s = np.min([b.shape[0],N])
             xxs[i,:s]=b[:s,0]
             yys[i,:s]=b[:s,1]
+            if interp_nans :
+                xxs[i] = interpolate_nans(xxs[i])
+                yys[i] = interpolate_nans(yys[i])
     return xxs, yys
 
 def convex_hull2(xs=None, ys=None, N=None):

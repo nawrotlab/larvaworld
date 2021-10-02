@@ -15,126 +15,28 @@ from lib.conf.init_dtypes import par_dict, base_dtype, null_dict
 from lib.conf.par import runtime_pars, getPar
 from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse
 from lib.gui.aux.buttons import named_bool_button, BoolButton, GraphButton, button_row
-from lib.gui.aux.windows import gui_table, set_kwargs, save_conf_window, import_window, change_dataset_id
+from lib.gui.aux.windows import set_kwargs, save_conf_window, import_window, change_dataset_id
 
 from lib.stor import paths as paths
-import lib.conf.dtype_dicts as dtypes
-
-
-class ParLayout:
-    def __init__(self, name, type_dict=None, toggled_subsections=True, dict_name=None, value_kws={},text_kws={}, Ncols=1):
-        self.toggled_subsections = toggled_subsections
-        self.name = name
-        self.subdicts = {}
-        if type_dict is None:
-            type_dict = par_dict(self.name if dict_name is None else dict_name)
-        self.layout = self.init_section(type_dict, value_kws, text_kws, Ncols)
-        self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()}
-        del type_dict
-
-    def init_section(self, type_dict, value_kws={}, text_kws={}, Ncols=1):
-        text_kws=self.set_element_size(text_kws, Ncols=Ncols)
-        items = []
-        for k, args in type_dict.items():
-            k_disp = get_disp_name(k)
-            k0 = f'{self.name}_{k}'
-            t = args['dtype']
-            if t == dict:
-                type_dict0 = args['content']
-                self.subdicts[k0] = CollapsibleDict(k0, disp_name=k, type_dict=type_dict0, toggled_subsections=self.toggled_subsections,
-                                                    text_kws=text_kws)
-                ii = self.subdicts[k0].get_layout()
-            else:
-                v = args['initial_value']
-                vs = args['values']
-                if t == bool:
-                    ii = named_bool_button(k_disp, v, k0, text_kws=text_kws)
-                else:
-                    if t == str:
-                        if vs is None:
-                            temp = sg.In(v, key=k0, **value_kws)
-                        else:
-                            temp = sg.Combo(vs, default_value=v, key=k0, enable_events=True,readonly=True, **value_kws)
-                    elif t == List[str]:
-                        temp = sg.In(v, key=k0, **value_kws)
-                    else:
-                        spin_kws = {
-                            'values': vs,
-                            'initial_value': v,
-                            'key': k0,
-                            'dtype': base_dtype(t),
-                            # 'text_kws':text_kws,
-                            'value_kws':{'size':(args['Ndigits'],1)}
-                        }
-                        if t in [List[float], List[int]]:
-                            temp = MultiSpin(tuples=False,**spin_kws)
-                        elif t in [List[Tuple[float]], List[Tuple[int]]]:
-                            temp = MultiSpin(tuples=True, **spin_kws)
-                        elif t in [Tuple[float], Tuple[int]]:
-                            temp = MultiSpin(**spin_kws, Nspins=2)
-                        elif t in [float, int]:
-                            temp = SingleSpin(**spin_kws)
-                    ii = [sg.Text(f'{k_disp}:', **text_kws), temp]
-            items.append(ii)
-        if Ncols>1:
-            items=fun.group_list_by_n([*items], int(np.ceil(len(items)/Ncols)))
-            items=[[sg.Col(ii) for ii in items]]
-        return items
-
-
-    def get_dict(self, v, w):
-        d = {}
-        for k, t in self.dtypes.items():
-            k0 = f'{self.name}_{k}'
-            if t == bool:
-                d[k] = w[f'TOGGLE_{k0}'].get_state()
-            elif base_dtype(t) in  [int, float]:
-                d[k] = w[k0].get()
-            elif t == dict or type(t) == dict:
-                d[k] = self.subdicts[k0].get_dict(v, w)
-            else:
-                d[k] = retrieve_value(v[k0], t)
-            # print(k, d[k])
-        return d
-
-    def get_subdicts(self):
-        subdicts = {}
-        for s in list(self.subdicts.values()):
-            subdicts.update(s.get_subdicts())
-        return subdicts
-
-    def set_element_size(self, text_kws, Ncols):
-        if 'size' not in text_kws.keys():
-            text_kws['size'] = w_kws['default_element_size']
-        text_kws['size']=int(text_kws['size'][0]/Ncols), text_kws['size'][1]
-        return text_kws
-
 
 
 class SectionDict:
-    def __init__(self, name, dict, type_dict=None, toggled_subsections=True, value_kws={}, Ncols=1):
+    def __init__(self, name, dict, type_dict=None, toggled_subsections=True, value_kws={}):
         self.init_dict = dict
         self.type_dict = type_dict
         self.toggled_subsections = toggled_subsections
         self.name = name
         self.subdicts = {}
-        self.layout = self.init_section(type_dict, value_kws, Ncols)
+        self.layout = self.init_section(type_dict, value_kws)
 
-    def init_section(self, type_dict, value_kws={}, Ncols=1):
+    def init_section(self, type_dict, value_kws={}):
         d = type_dict
         items = []
-        # items, dict_items = []
         for k, v in self.init_dict.items():
             k_disp = get_disp_name(k)
             k0 = f'{self.name}_{k}'
             if type(v) == bool:
                 ii = named_bool_button(k_disp, v, k0)
-            elif type(v) == dict:
-                type_dict = d[k] if d is not None else None
-                self.subdicts[k0] = CollapsibleDict(k0, disp_name=k, dict=v, type_dict=type_dict,
-                                                    toggle=self.toggled_subsections,
-                                                    toggled_subsections=self.toggled_subsections)
-                ii = self.subdicts[k0].get_layout()
             else:
                 temp = sg.In(v, key=k0, **value_kws)
                 if d is not None:
@@ -142,13 +44,11 @@ class SectionDict:
                     t = type(t0)
                     if t == list:
                         if all([type(i) in [int, float] for i in t0 if i not in ['', None]]):
-                            # print(k, k0, v)
                             temp = sg.Spin(values=t0, initial_value=v, key=k0, **value_kws)
                         else:
                             temp = sg.Combo(t0, default_value=v, key=k0, enable_events=True,
                                             readonly=True, **value_kws)
-                    elif t in [tuple, Tuple[float, float], Tuple[int, int]]:
-                        temp = TupleSpin(range=t0, initial_value=v, key=k0, **value_kws)
+
                     elif t == dict and list(t0.keys()) == ['type', 'values']:
                         spin_kws = {
                             'values': t0['values'],
@@ -161,11 +61,9 @@ class SectionDict:
                         elif t0['type'] == List[tuple]:
                             temp = MultiSpin(tuples=True, **spin_kws)
                         elif t0['type'] == tuple:
-                            # print(k)
                             temp = MultiSpin(**spin_kws)
                         elif t0['type'] in [float, int]:
                             temp = sg.Spin(**spin_kws)
-                    # else:
 
                 ii = [sg.Text(f'{k_disp}:'), temp]
             items.append(ii)
@@ -204,7 +102,7 @@ class SectionDict:
 class SingleSpin(sg.Spin):
     def __init__(self,values,initial_value, dtype=float, value_kws={},**kwargs):
         spin_kws = {
-            'values': values,
+            'values': [''] + values,
             'initial_value': initial_value if initial_value is not None else '',
             **value_kws,
             **kwargs,
@@ -221,49 +119,9 @@ class SingleSpin(sg.Spin):
         elif self.dtype==float:
             return float(v)
 
-    # def update(self, w, value):
-    #     super().update(value=value)
-
-class TupleSpin(sg.Pane):
-    def __init__(self, initial_value, key, range=None, values=None, steps=1000, decimals=3,dtype=float,  **value_kws):
-        # w, h = w_kws['default_button_element_size']
-        # value_kws.update({'size': (w - 3, h)})
-        self.steps = steps
-        self.dtype = dtype
-        self.initial_value = initial_value
-        v0, v1 = initial_value if type(initial_value) == tuple else ('', '')
-        self.integer = True if all([type(v0) == int, type(v1) == int]) else False
-        if values is None:
-            r0, r1 = range
-            arange = fun.value_list(r0, r1, self.integer, steps, decimals)
-            values = [''] + arange
-        self.key = key
-        self.k0, self.k1 = [f'{key}_{i}' for i in [0, 1]]
-        spin_kws = {
-            'values': self.values,
-            'dtype': self.dtype,
-            **value_kws,
-        }
-        self.s0 = SingleSpin(initial_value=v0, key=self.k0, **spin_kws)
-        self.s1 = SingleSpin(initial_value=v1, key=self.k1, **spin_kws)
-        pane_list = [sg.Col([[self.s0, self.s1]])]
-        super().__init__(pane_list=pane_list, key=self.key)
-
-    def get(self):
-        t0, t1 = self.s0.get(), self.s1.get()
-        res = (t0, t1) if all([t not in ['', None, np.nan] for t in [t0, t1]]) else None
-        return res
-
-    def update(self, value):
-        if value not in [None, '', (None, None), [None, None]]:
-            v0, v1 = value
-        else:
-            v0, v1 = ['', '']
-        self.s0.update(value=v0)
-        self.s1.update(value=v1)
 
 class MultiSpin(sg.Pane):
-    def __init__(self, initial_value, values, key, steps=100, decimals=2, Nspins=4, tuples=False, dtype=float, value_kws={}):
+    def __init__(self, initial_value, values, key, steps=100, Nspins=4, tuples=False, dtype=float, value_kws={}):
         # w, h = w_kws['default_button_element_size']
         # value_kws.update({'size': (w - 2, h)})
         # self.text_kws = text_kws
@@ -272,7 +130,7 @@ class MultiSpin(sg.Pane):
         self.steps = steps
         self.dtype = dtype
         self.initial_value = initial_value
-        self.values = [''] + values
+        self.values = values
         if initial_value is None:
             self.v_spins = [''] * Nspins
             self.N = 0
@@ -756,7 +614,6 @@ class Collapsible(HeadedElement):
 
         if header_dict is None:
             header_l = Header(name, **header_kws)
-
         else:
             header_l = NamedList(name, choices=list(header_dict.keys()),
                                  default_value=header_value, key=self.header_key,
@@ -793,7 +650,7 @@ class Collapsible(HeadedElement):
                 elif type(v) == dict:
                     new_prefix = k if prefix is not None else None
                     self.update_window(w, v, prefix=new_prefix)
-                elif isinstance(w[k], TupleSpin) or isinstance(w[k], MultiSpin) or isinstance(w[k], SingleSpin):
+                elif isinstance(w[k], MultiSpin) or isinstance(w[k], SingleSpin):
                     w[k].update(v)
                 elif v is None:
                     w.Element(k).Update(value='')
@@ -877,8 +734,6 @@ class CollapsibleTable(Collapsible):
         content = [[Table(values=self.data, headings=[index]+self.headings,
                           def_col_width=7, key=self.key, num_rows=max([1,len(self.data)]),
                           col_widths=col_widths, visible_column_map=col_visible)]]
-        # self.edit_key = f'EDIT_TABLE {name}'
-        # b = [GraphButton('Document_2_Edit', self.edit_key, tooltip=f'Create new {name}')]
         super().__init__(name, content=content, next_to_header = after_header, **kwargs)
 
     def update(self, w, dic=None, use_prefix=True):
@@ -903,187 +758,103 @@ class CollapsibleTable(Collapsible):
         w[self.key].update(values=self.data, num_rows=len(self.data), row_colors=row_cols)
         self.open(w) if len(self.dict) > 0 else self.close(w)
 
-
-
-
     def get_dict(self, *args, **kwargs):
         return self.dict
 
     def dict2data(self):
         dH=self.heading_dict
-        # print(dI)
         d=self.dict
-        # print(d)
         data=[]
         for id in d.keys() :
             dF=fun.flatten_dict(d[id])
-            # print(dF)
             row=[id] + [dF[dH[h]] for h in self.headings]
             data.append(row)
         return data
 
 
-
-class CollapsibleTable2(Collapsible):
-    def __init__(self, name, type_dict=None, headings=[], dict={}, **kwargs):
-        self.dict = dict
-        if type_dict is None :
-            type_dict=dtypes.get_dict_dtypes(name)
-        self.type_dict = type_dict
-        if 'unique_id' in list(type_dict.keys()):
-            self.header = 'unique_id'
-        elif 'group' in list(type_dict.keys()):
-            self.header = 'group'
-        else:
-            self.header = None
-        self.headings = headings
-        self.Ncols = len(headings)
-        self.col_widths = []
-        self.col_visible = [True] * self.Ncols
-        self.color_idx = None
-        for i, p in enumerate(self.headings):
-            if p in ['id', 'group']:
-                self.col_widths.append(10)
-            elif p in ['color']:
-                self.col_widths.append(8)
-                self.color_idx = i
-                self.col_visible[i] = False
-            elif p in ['model']:
-                self.col_widths.append(14)
-            elif type_dict[p] in [int, float]:
-                self.col_widths.append(np.max([len(p), 6]))
-            else:
-                self.col_widths.append(10)
-
-        self.data = self.set_data(dict)
-        self.key = f'TABLE {name}'
-        content = self.get_content()
-        self.edit_key = f'EDIT_TABLE {name}'
-        b = [GraphButton('Document_2_Edit', self.edit_key, tooltip=f'Create new {name}')]
-        super().__init__(name, content=content, next_to_header=b, **kwargs)
-
-    def set_data(self, dic):
-        if dic is not None and len(dic) != 0:
-            if self.header is not None:
-                data = []
-                for id, pars in dic.items():
-                    row = [id]
-                    for j, p in enumerate(self.headings[1:]):
-                        for k, v in pars.items():
-                            if k == 'default_color' and p == 'color':
-                                row.append(v)
-                            elif k == p:
-                                row.append(v)
-                    data.append(row)
-            else:
-                dic2 = {k: dic[k] for k in self.headings}
-                l = list(dic2.values())
-                N = len(l[0])
-                data = [[j[i] for j in l] for i in range(N)]
-        else:
-            data = [[''] * self.Ncols]
-        return data
-
-    def get_content(self):
-        # content = [[sg.Table(values=self.data[:][:], headings=self.headings, col_widths=self.col_widths,
-        #                      max_col_width=30, background_color='lightblue', header_font=('Helvetica', 8, 'bold'),
-        #                      auto_size_columns=False,
-        #                      visible_column_map=self.col_visible,
-        #                      # display_row_numbers=True,
-        #                      justification='center',
-        #                      font=w_kws['font'],
-        #                      num_rows=len(self.data),
-        #                      alternating_row_color='lightyellow',
-        #                      key=self.key
-        #                      )]]
-        content = [[Table(values=self.data[:][:], headings=self.headings, col_widths=self.col_widths,
-                          visible_column_map=self.col_visible,
-                          # display_row_numbers=True,
-                          num_rows=len(self.data),
-                          key=self.key
-                          )]]
-        return content
-
-    def update(self, w, dic, use_prefix=True):
-        # print(self.dict)
-        self.dict = dic
-        # print(self.dict)
-        # print('dddddddddddddddd')
-        self.data = self.set_data(dic)
-        if self.color_idx is not None:
-            row_cols = []
-            for i in range(len(self.data)):
-                c0 = self.data[i][self.color_idx]
-                if c0 == '':
-                    c2, c1 = ['lightblue', 'black']
-                else:
-                    try:
-                        c2, c1 = fun.invert_color(c0, return_self=True)
-                    except:
-                        c2, c1 = ['lightblue', 'black']
-                        # c2, c1 = [c0, 'black']
-                row_cols.append((i, c1, c2))
-        else:
-            row_cols = None
-        w[self.key].update(values=self.data, num_rows=len(self.data), row_colors=row_cols)
-        self.open(w) if self.data[0][0] != '' else self.close(w)
-
-    def edit_table(self, window):
-        if self.header is not None:
-            dic = self.set_agent_dict()
-            self.update(window, dic)
-        else:
-            t0 = [dict(zip(self.headings, l)) for l in self.data] if self.data != [[''] * self.Ncols] else []
-            t1 = gui_table(t0, self.type_dict, title='Parameter space')
-            if t1 != t0:
-                dic = {k: [l[k] for l in t1] for k in self.headings}
-                self.update(window, dic)
-
-    def set_agent_dict(self):
-        t0 = fun.agent_dict2list(self.dict, header=self.header)
-        t1 = gui_table(t0, self.type_dict, title=self.disp_name)
-        return fun.agent_list2dict(t1, header=self.header)
-
-    def get_dict(self, *args, **kwargs):
-        return self.dict
-
-
-
-
 class CollapsibleDict(Collapsible):
-    def __init__(self, name, dict=None, dict_name=None, type_dict=None, toggled_subsections=True, default=False,
-                 Ncols=1, value_kws={}, text_kws={},**kwargs):
-        if dict_name is None:
-            dict_name = name
-        self.dict_name = dict_name
-        # if type_dict is not None :
-        #     print(name, dict_name,type_dict.keys())
-        l_kws = {
-            'name': name,
-            'dict_name':dict_name,
-            'type_dict':type_dict,
-            'toggled_subsections': toggled_subsections,
-            'value_kws': value_kws,
-            'text_kws': text_kws,
-            'Ncols': Ncols,
-        }
-        self.sectiondict = ParLayout(**l_kws)
-        super().__init__(name, content=self.sectiondict.layout, **kwargs)
+    def __init__(self, name, dict_name=None, type_dict=None,Ncols=1, value_kws={}, text_kws={},**kwargs):
+        self.subdicts = {}
+        if type_dict is None:
+            type_dict = par_dict(name if dict_name is None else dict_name)
+        content = self.build(name, type_dict, value_kws, text_kws, Ncols)
+        self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()}
+        del type_dict
+        super().__init__(name, content=content, **kwargs)
 
-    def get_dict(self, values, window, check_toggle=True):
-        if self.state is None:
-            return None
-        elif check_toggle and self.toggle == False:
-            return None
-        else:
-            return self.sectiondict.get_dict(values, window)
+    def build(self, name, type_dict, value_kws={}, text_kws={}, Ncols=1):
+        text_kws=self.set_element_size(text_kws, Ncols=Ncols)
+        content = []
+        for k, args in type_dict.items():
+            k0 = f'{name}_{k}'
+            t = args['dtype']
+            if t == dict:
+                self.subdicts[k0] = CollapsibleDict(k0, disp_name=k, type_dict=args['content'],
+                                                    text_kws=text_kws)
+                ii = self.subdicts[k0].get_layout()
+            else:
+                v = args['initial_value']
+                vs = args['values']
+                if t == bool:
+                    temp = BoolButton(k0, v)
+                elif t == str:
+                    if vs is None:
+                        temp = sg.In(v, key=k0, **value_kws)
+                    else:
+                        temp = sg.Combo(vs, default_value=v, key=k0, enable_events=True,readonly=True, **value_kws)
+                elif t == List[str]:
+                    temp = sg.In(v, key=k0, **value_kws)
+                else:
+                    spin_kws = {
+                        'values': vs,
+                        'initial_value': v,
+                        'key': k0,
+                        'dtype': base_dtype(t),
+                        'value_kws':{'size':(args['Ndigits'],1)}
+                    }
+                    if t in [List[float], List[int]]:
+                        temp = MultiSpin(tuples=False,**spin_kws)
+                    elif t in [List[Tuple[float]], List[Tuple[int]]]:
+                        temp = MultiSpin(tuples=True, **spin_kws)
+                    elif t in [Tuple[float], Tuple[int]]:
+                        temp = MultiSpin(**spin_kws, Nspins=2)
+                    elif t in [float, int]:
+                        temp = SingleSpin(**spin_kws)
+                ii = [sg.T(f'{get_disp_name(k)}:', **text_kws), temp]
+            content.append(ii)
+        if Ncols>1:
+            content=fun.group_list_by_n([*content], int(np.ceil(len(content)/Ncols)))
+            content=[[sg.Col(ii) for ii in content]]
+        return content
 
     def get_subdicts(self):
         subdicts = {}
-        # subdicts[self.dict_name] = self
-        subdicts[self.name] = self
-        all_subdicts = {**subdicts, **self.sectiondict.get_subdicts()}
-        return all_subdicts
+        for s in list(self.subdicts.values()):
+            subdicts.update(s.get_subdicts())
+        return {self.name:self, **subdicts}
+
+    def set_element_size(self, text_kws, Ncols):
+        if 'size' not in text_kws.keys():
+            text_kws['size'] = w_kws['default_element_size']
+        text_kws['size']=int(text_kws['size'][0]/Ncols), text_kws['size'][1]
+        return text_kws
+
+    def get_dict(self, v, w, check_toggle=True):
+        if self.state is None or (check_toggle and self.toggle == False):
+            return None
+        else:
+            d = {}
+            for k, t in self.dtypes.items():
+                k0 = f'{self.name}_{k}'
+                if t == bool:
+                    d[k] = w[f'TOGGLE_{k0}'].get_state()
+                elif base_dtype(t) in [int, float]:
+                    d[k] = w[k0].get()
+                elif t == dict or type(t) == dict:
+                    d[k] = self.subdicts[k0].get_dict(v, w)
+                else:
+                    d[k] = retrieve_value(v[k0], t)
+            return d
 
 
 class Table(sg.Table):
@@ -1183,8 +954,7 @@ class GraphList(NamedList):
 
 
 class ButtonGraphList(GraphList):
-    def __init__(self, name, buttons=['refresh_figs', 'conf_fig', 'draw_fig', 'save_fig'],
-                 button_args={}, **kwargs):
+    def __init__(self, name, buttons=['refresh_figs', 'conf_fig', 'draw_fig', 'save_fig'],button_args={}, **kwargs):
 
         after_header = button_row(name, buttons, button_args)
         super().__init__(name=name, next_to_header=after_header, **kwargs)

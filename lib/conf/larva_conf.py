@@ -9,6 +9,8 @@ from lib.conf.init_dtypes import null_dict
 
 ''' Default exploration model'''
 
+base_crawler=null_dict('crawler', initial_freq=1.5, step_to_length_mu=0.25, step_to_length_std=0.0)
+
 default_coupling = {
     'crawler_phi_range': (0.45, 1.0),  # np.pi * 0.55,  # 0.9, #,
     'feeder_phi_range': (0.0, 0.0),  # np.pi * 0.3, #np.pi * 4 / 8,
@@ -103,15 +105,24 @@ brain_feeder_olfactor_x2 = dtypes.brain_dict(['turner', 'crawler', 'interference
                                              intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.5),
                                              )
 
-brain_rover = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'feeder'],
+def RvsS_brain(EEB) :
+    return dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'feeder'],
+                                crawler=base_crawler,
                                 turner=neural_turner,
                                 interference=default_coupling,
-                                intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.37))
+                                intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=EEB))
 
-brain_sitter = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'feeder'],
-                                 turner=neural_turner,
-                                 interference=default_coupling,
-                                 intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.67))
+brain_rover = RvsS_brain(EEB=0.37)
+brain_sitter = RvsS_brain(EEB=0.67)
+
+def RvsS_larva(EEB, **deb_kws) :
+    return dtypes.larva_dict(RvsS_brain(EEB), body=null_dict('body', initial_length=0.001),
+                             energetics=null_dict('energetics', hunger_as_EEB=True, **deb_kws))
+
+growing_rover=RvsS_larva(EEB=0.37, absorption=0.5)
+growing_sitter=RvsS_larva(EEB=0.67, absorption=0.15)
+
+
 
 brain_nengo = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'feeder'],
                                 # odor_dict={'Odor': {'mean': 150.0, 'std': 0.0}},
@@ -138,10 +149,7 @@ feeder={'initial_freq': 0.0, 'freq_range':(0.0, 0.0)},
 
 # -------------------------------------------WHOLE LARVA MODES---------------------------------------------------------
 
-growing_rover = dtypes.larva_dict(brain_rover, body=dtypes.get_dict('body', initial_length=0.001),
-                                  energetics=dtypes.get_dict('energetics', absorption=0.5))
-growing_sitter = dtypes.larva_dict(brain_sitter, body=dtypes.get_dict('body', initial_length=0.001),
-                                   energetics=dtypes.get_dict('energetics', absorption=0.15))
+
 
 mock_brain_sitter = dtypes.brain_dict(['intermitter', 'feeder'],
                                       intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.67))

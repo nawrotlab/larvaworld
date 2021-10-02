@@ -23,6 +23,7 @@ class BodySim(BodyManager):
                  lin_damping=1.0, ang_damping=1.0, **kwargs):
         self.lin_damping = lin_damping
         self.ang_damping = ang_damping
+
         super().__init__(model=model, pos=self.pos, orientation=orientation, density=density, **kwargs)
 
         self.body_spring_k = body_spring_k
@@ -69,8 +70,7 @@ class BodySim(BodyManager):
         self.torque_coef = torque_coef
         self.backward_motion = True
 
-        k = 0.95
-        self.tank_polygon = Polygon(self.model.tank_shape * k)
+
 
         # from lib.conf.par import pargroups
         # from lib.conf.par import AgentCollector
@@ -166,6 +166,8 @@ class BodySim(BodyManager):
 
         for o in self.carried_objects:
             o.pos = self.pos
+
+        # print(self.unique_id, self.cum_dst)
 
     def compute_new_lin_vel_vector(self, target_segment):
         # Option 1 : Create the linear velocity from orientation.
@@ -277,6 +279,7 @@ class BodySim(BodyManager):
         head = self.get_head()
         hp0, o0 = head.get_pose()
         hr0 = self.get_global_rear_end_of_head()
+        # print(self.unique_id)
 
 
         border_collision = any([l.intersects(self.segs[0].get_shape()) for l in self.model.border_lines]) if len(self.model.border_lines) > 0 else False
@@ -294,7 +297,7 @@ class BodySim(BodyManager):
         d = lin_vel * dt
         ang_vel0=np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
 
-        def avoid_border(ang_vel, counter, dd=0.001):
+        def avoid_border(ang_vel, counter, dd=0.0001):
             if not self.touch_sensors :
                 counter += 1
                 ang_vel *= -(1 + dd * counter)
@@ -302,7 +305,7 @@ class BodySim(BodyManager):
             else :
                 s=self.sim_length/1000
                 L,R=self.get_sensor_position('L_front'), self.get_sensor_position('R_front')
-                Ld, Rd=self.tank_polygon.exterior.distance(Point(L)), self.tank_polygon.exterior.distance(Point(R))
+                Ld, Rd=self.model.tank_polygon.exterior.distance(Point(L)), self.model.tank_polygon.exterior.distance(Point(R))
                 Ld, Rd=Ld/s,Rd/s
                 LRd=Ld-Rd
                 ang_vel += dd * LRd
@@ -323,7 +326,7 @@ class BodySim(BodyManager):
                 hr1 = None
                 hp1 = hp0 + dxy
                 hf1 = hp1 + k * (self.sim_length / 2)
-            hf1_ok, hp1_ok = fun.inside_polygon(points=[hf1, hp1], tank_polygon=self.tank_polygon)
+            hf1_ok, hp1_ok = fun.inside_polygon(points=[hf1, hp1], tank_polygon=self.model.tank_polygon)
             in_tank = all([hf1_ok, hp1_ok])
             return in_tank, o1, hr1, hp1
 

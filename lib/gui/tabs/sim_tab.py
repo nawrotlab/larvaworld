@@ -2,7 +2,7 @@ import copy
 
 from lib.aux.collecting import output_keys
 from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList
-from lib.gui.aux.functions import t_kws, gui_col
+from lib.gui.aux.functions import t_kws, gui_col, gui_cols
 from lib.gui.tabs.tab import GuiTab
 from lib.conf.conf import next_idx
 from run.exec_run import Exec
@@ -35,23 +35,18 @@ class SimTab(GuiTab):
         sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], progress=True,
                             sublists={'env_params': sl1, 'life_params' : sl2})
         sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Simulation types', buttons=[], sublists={'simulations': sl3})
-        c1 = CollapsibleDict('sim_params', default=True, disp_name='Configuration')
-        c2 = CollapsibleDict('output', default=True, Ncols=1)
+        c1 = CollapsibleDict('sim_params', disp_name='Configuration')
+        c2 = CollapsibleDict('output')
         g1 = GraphList(self.name, tab=self)
-        dl1 = DataList(name=kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp= 'Active simulations')
-        dl2 = DataList(name=kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp= 'Completed simulations')
+        dl1 = DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp= 'Active simulations')
+        dl2 = DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp= 'Completed simulations')
 
+        l = gui_cols(cols=[[sl4, sl3, sl1,c1, c2, sl2], [g1.canvas], [dl1, dl2, g1]], x_fracs=[0.25, 0.55, 0.2])
 
-        l = [[
-            gui_col([sl4, sl3, sl1,c1, c2, sl2], 0.25),
-            gui_col([g1.canvas], 0.55),
-            gui_col([dl1, dl2, g1], 0.2)
-        ]]
         c = {}
         for i in [c1, c2, sl2]:
             c.update(i.get_subdicts())
-        g = {g1.name: g1}
-        return l, c, g, d
+        return l, c, {g1.name: g1}, d
 
     def update(self, w,  c, conf, id):
         output_dict = dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys]))

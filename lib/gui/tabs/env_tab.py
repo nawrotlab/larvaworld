@@ -6,8 +6,7 @@ import PySimpleGUI as sg
 import lib.conf.dtype_dicts as dtypes
 import lib.aux.functions as fun
 from lib.conf.init_dtypes import null_dict
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList, Table, \
-    Header, CollapsibleTable2
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
 from lib.gui.aux.functions import col_size, col_kws, t_kws, retrieve_dict, gui_col
 from lib.gui.aux.buttons import color_pick_layout, GraphButton
 from lib.conf.conf import loadConf
@@ -78,9 +77,6 @@ class EnvTab(GuiTab):
             d['start_point']=p1
         if p2 is not None :
             d['end_point']=p2
-        # return self.scale_xy(p1), self.scale_xy(p2) if scaled else p1,p2
-
-
 
     def update(self, w, c, conf, id=None):
         for n in [self.Bg, self.Lg, 'arena', 'odorscape']:
@@ -104,35 +100,20 @@ class EnvTab(GuiTab):
         return env0
 
     def build_conf_env(self):
-
-
-        # after_header = [GraphButton('Button_Add', f'ADD {self.Lg}', tooltip=f'Add a new {self.Lg}.'),
-        #                 GraphButton('Button_Remove', f'REMOVE {self.Lg}', tooltip=f'Remove an existing {self.Lg}.')]
-
-        # s1 = Collapsible(self.Lg, next_to_header=after_header, content=[content])
-
-
         s1 = CollapsibleTable(self.Lg, index='Group ID', heading_dict={'N':'distribution.N', 'color':'default_color', 'model':'model'},dict_name='LarvaGroup')
         s2 = CollapsibleTable(self.Sg, index='Group ID',heading_dict={'N':'distribution.N', 'color': 'default_color', 'odor_id' : 'odor.odor_id', 'amount' : 'amount'},dict_name='SourceGroup')
-        # s2 = CollapsibleTable2(self.Sg, headings=['group', 'color', 'amount', 'odor_id'],
-        #                       type_dict=dtypes.get_dict_dtypes('distro', class_name=self.S, basic=False))
         s3 = CollapsibleTable(self.Su, index='ID', heading_dict={'color': 'default_color', 'odor_id' : 'odor.odor_id', 'amount' : 'amount'},dict_name='source')
-        # s3 = CollapsibleTable2(self.Su, headings=['id', 'color', 'amount', 'odor_id'],
-        #                       type_dict=dtypes.get_dict_dtypes(self.S))
         s4 = CollapsibleTable(self.Bg, index='ID', heading_dict={'color': 'default_color', 'points' : 'points' },dict_name='border_list')
-        # s4 = CollapsibleTable2(self.Bg, headings=['id', 'color', 'points'],
-        #                       type_dict=dtypes.get_dict_dtypes(self.B))
-        c = {}
-        for s in [s1, s2, s3, s4]:
-            c.update(**s.get_subdicts())
-        c1 = [CollapsibleDict(n, default=True, **kw)
+
+        c1 = [CollapsibleDict(n, **kw)
               for n, kw in zip(['arena', 'food_grid', 'odorscape'], [{'next_to_header':[
                                  GraphButton('Button_Burn', 'RESET_ARENA',
                                                 tooltip='Reset to the initial arena. All drawn items will be erased.'),
                                  GraphButton('Globe_Active', 'NEW_ARENA',
                                                 tooltip='Create a new arena.All drawn items will be erased.'),
                              ]}, {'toggle': True}, {}])]
-        for s in c1:
+        c = {}
+        for s in c1 + [s1, s2, s3, s4]:
             c.update(s.get_subdicts())
         l1 = [c[n].get_layout() for n in [self.Sg, self.Su, 'food_grid']]
         c2 = Collapsible(self.S, content=l1)
@@ -181,7 +162,7 @@ class EnvTab(GuiTab):
             'P2': None,
         }
         c = {}
-        s2 = CollapsibleDict('food', default=True, toggle=False)
+        s2 = CollapsibleDict('food', toggle=False)
 
         c.update(s2.get_subdicts())
         source_l, c = self.add_agent_layout(S, 'green', c)
@@ -190,20 +171,14 @@ class EnvTab(GuiTab):
         lI=[[sg.R('Erase item', 1, k='-ERASE-', enable_events=True)],
             [sg.R('Move item', 1, True, k='-MOVE-', enable_events=True)],
             [sg.R('Inspect item', 1, True, k='-INSPECT-', enable_events=True)]]
-
-
-
-
         lB = [[sg.R(f'Add {B}', 1, k=B, enable_events=True, **t_kws(10)), *color_pick_layout(B, 'black')],
               [sg.T('', **t_kws(4)), sg.T('id', **t_kws(5)), sg.In(B, k=f'{B}_id')],
               [sg.T('', **t_kws(4)), sg.T('width', **t_kws(5)), sg.Spin(values=fun.value_list(end=0.1, steps=1000, decimals=4), initial_value=0.001, k=f'{B}_width')],
               ]
-
         lS=[*source_l,
             [sg.T('', **t_kws(5)), *s2.get_layout()],
             [sg.T('', **t_kws(5)), sg.T('shape', **t_kws(5)),
              sg.Combo(['rect', 'circle'], default_value='circle', k=f'{S}_shape', enable_events=True, readonly=True)]]
-
 
         col2 = sg.Col([[sg.Col(ll, pad=(10,10))] for ll in [lL,lS,lB,lI]], **col_kws)
         g1 = GraphList(self.name, tab=self, graph=True,canvas_size=self.canvas_size, canvas_kws={
@@ -221,20 +196,15 @@ class EnvTab(GuiTab):
         ]
         l = sg.Col([[sg.Col(col1, **col_kws), col2]], **col_kws, size=col_size(0.75))
 
-        g = {g1.name: g1}
         self.graph = g1.canvas_element
 
-        d = {self.name: dic}
-        return l, c, g, d
+        return l, c, {g1.name: g1}, {self.name: dic}
 
     def build(self):
         l1, c1, g1, d1 = self.build_conf_env()
         l2, c2, g2, d2 = self.build_draw_env()
-        c = {**c1, **c2}
-        g = {**g1, **g2}
-        d = {**d1, **d2}
         l = [[l1, l2]]
-        return l, c, g, d
+        return l, {**c1, **c2}, {**g1, **g2}, {**d1, **d2}
 
 
     def eval(self,e, v, w, c, d, g):
@@ -656,7 +626,7 @@ class EnvTab(GuiTab):
     def set_env_db(self, env=None):
         if env is None:
             env = {self.Bg: {},
-                   'arena': dtypes.get_dict('arena'),
+                   'arena': null_dict('arena'),
                    'food_params': {self.Su: {}, self.Sg: {}, 'food_grid': None},
                    self.Lg: {}
                    }

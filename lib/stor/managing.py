@@ -275,10 +275,12 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
 
 
 if __name__ == '__main__':
+    dds=[[f'/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
+    dds=fun.flatten_list(dds)
     # dr = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/FRUvsQUI/Naive->PUR/EM/control'
     # dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/nengo_dish/nengo_dish_9'
     # dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/imitation/exp_13l_imitation_0'
-    dr1='/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP2@UAS_TNT/Starved'
+    # dr1='/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Satrved'
     # ddr='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/controls_20l'
     # c1='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/FRU->FRU/AM/test_10l'
     # c2='/home/panos/nawrot_larvaworld/larvaworld/data/pairs/controls_20l_imitation_0'
@@ -302,29 +304,64 @@ if __name__ == '__main__':
     from lib.sim.single_run import run_sim
     from lib.conf.conf import imitation_exp
     from lib.anal.comparing import ExpFitter
+
     # vis_kwargs = dtypes.get_dict('visualization', mode='video', video_speed=60)
+    # exp_conf = imitation_exp('AttP240.Starved', model='explorer', idx=0, save_data_flag=True)
+    # f = ExpFitter('AttP240.Starved')
+    # dd = run_sim(**exp_conf)
+    # # dd= run_sim(**exp_conf, vis_kwargs=vis_kwargs)
+    # fit = f.compare(dd)
+    # print(fit)
+    # raise
+
     # dr2=paths.RefDatasetPath
     # print(paths.RefConf)
     # raise
     # a = np.array([2.4, 3.4])
     # ab = np.array([23.4, 31.4])
     # dr='/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved'
-    for dddr in [dr1] :
+    for dddr in dds :
         # aa=fun.angle_to_x_axis(a,ab)
         # print(aa)
         # raise
-        d = LarvaDataset(dddr)
-        s, e = d.step_data, d.endpoint_data
-        c=d.config
-        from lib.anal.process.angular import compute_orientations
-        print(s.head())
-        print(s['head_x'].dropna().min())
-        print(s['head_y'].dropna().min())
-        print(s['head_x'].dropna().max())
-        print(s['head_y'].dropna().max())
-        raise
+        d = LarvaDataset(dddr, load_data=False)
+        # # c = d.config
+        # del d.config['agent_ids']
+        # d.config['bout_distros']['stride']=d.config['bout_distros']['stride']['best']
+        # d.config['bout_distros']['pause']=d.config['bout_distros']['pause']['best']
+        d.save_config()
+        # d.save_agents(ids=['Larva_105'])
+        # s0,e0=d.load_agent('Larva_105')
+        # d.visualize(vis_kwargs=vis_kwargs, s0=s0, e0=e0, fix_point=5,
+        #             env_params={'arena' : null_dict('arena', arena_dims=(0.01,0.01))})
+        # d.visualize_single('Larva_105', fix_point=5, secondary_fix_point=None)
+        # d.visualize(vis_kwargs=vis_kwargs, s0=s0, e0=e0)
+        # d.enrich(preprocessing={'rescale_by':0.001}, enrich_aux={'recompute': True})
+        # d.drop_pars(groups={**{n: True for n in
+        #                                              ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
+        #                                               'Rturn', 'turn', 'unused']},
+        #                                           **{'midline': False, 'contour': False}}, is_last=True)
+        # s, e = d.step_data, d.endpoint_data
+        # c=d.config
+        # ss=s.xs('Larva_105', level='AgentID', drop_level=True)
+        # print(ss.head())
+        # print(c)
+        # print(s.columns.values)
+        # print(len(s.columns))
+        from lib.anal.process.basic import rescale
+        # print(ss[fun.flatten_list(d.contour_xy)])
+        # print(ss[fun.flatten_list(d.points_xy)])
+        # print(s['head_x'].dropna().min())
+        # print(s['head_y'].dropna().min())
+        # print(s['head_x'].dropna().max())
+        # print(s['head_y'].dropna().max())
+        # raise
 
-        compute_orientations(s,e,config=c)
+        # rescale(s,e,config=c, scale=0.001, recompute=True)
+        # print(s['head_x'].dropna().min())
+        # print(s['head_y'].dropna().min())
+        # print(s['head_x'].dropna().max())
+        # print(s['head_y'].dropna().max())
         # print(d.step_data['bend'].dropna().abs().groupby('AgentID').mean().mean())
         # print(d.step_data['velocity'].dropna().abs().groupby('AgentID').mean().mean())
         # print(d.endpoint_data['tortuosity_2_mean'].mean())
@@ -332,25 +369,15 @@ if __name__ == '__main__':
         # print(d.endpoint_data['tortuosity_10_mean'].mean())
         # print(d.endpoint_data['dispersion'].mean())
         # print(d.endpoint_data['cum_dst'].mean())
-        print(d.endpoint_data['dispersion_max'].mean())
-        print(d.endpoint_data['final_dispersion'].mean())
-        print(d.endpoint_data['dispersion_mean'].mean())
+        # print(d.endpoint_data['dispersion_max'].mean())
+        # print(d.endpoint_data['final_dispersion'].mean())
+        # print(d.endpoint_data['dispersion_mean'].mean())
         # print(d.endpoint_data.columns[10:20])
-    # # f = ExpFitter(paths.RefConf)
-    # # print(f.df_st)
-    raise
+    # f = ExpFitter(paths.RefConf)
+    # print(f.df_st)
+    # raise
 
-    exp_conf=imitation_exp(paths.RefConf, model='explorer', idx=0, save_data_flag=True)
-    # exp_conf['experiment'] = 'dish'
-    # exp_conf['save_data_flag'] = True
-    f = ExpFitter(paths.RefConf)
-    print(exp_conf['save_data_flag'])
-    dd= run_sim(**exp_conf)
-    print(dd.step_data['front_orientation_velocity'].dropna().abs().groupby('AgentID').mean())
-    # dd= run_sim(**exp_conf, vis_kwargs=vis_kwargs)
-    print(dd.endpoint_data['tortuosity_10_mean'].mean())
-    fit=f.compare(dd)
-    print(fit)
+
     # dd= run_sim(**exp_conf, vis_kwargs=vis_kwargs)
     # from lib.sim.analysis import sim_analysis
     #

@@ -9,15 +9,14 @@ import PySimpleGUI as sg
 
 # sys.path.insert(0, '..')
 from lib.anal.combining import render_mpl_table
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, GraphList, CollapsibleTable, SelectionList, DataList, \
-    CollapsibleTable2
-from lib.gui.aux.functions import t_kws, gui_col
+from lib.conf.init_dtypes import null_dict
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, GraphList, CollapsibleTable, SelectionList, DataList
+from lib.gui.aux.functions import t_kws, gui_col, gui_cols
 from lib.gui.aux.buttons import named_bool_button
 
 from lib.conf.conf import loadConf, next_idx
-import lib.conf.dtype_dicts as dtypes
 from lib.gui.tabs.tab import GuiTab
-from lib.sim.batch.aux import  stored_trajs, delete_traj
+from lib.sim.batch.aux import stored_trajs, delete_traj
 from lib.sim.batch.functions import retrieve_results
 from run.exec_run import Exec
 
@@ -38,7 +37,7 @@ class BatchTab(GuiTab):
     def DL0(self):
         return self.datalists[self.k_active]
 
-    @ property
+    @property
     def DL1(self):
         return self.datalists[self.k_stored]
 
@@ -55,15 +54,22 @@ class BatchTab(GuiTab):
             enrichment = self.current_conf(v)['exp_kws']['enrichment']
         except:
             enrichment = loadConf(v[self.selectionlists['Exp'].k], 'Exp')['enrichment']
-        conf = {
-            'save_hdf5': w['TOGGLE_save_hdf5'].metadata.state,
-            **{n: c[n].get_dict(v, w) for n in ['batch_methods', 'optimization', 'space_search']},
-            'exp_kws': {
-                #
-                'enrichment': enrichment,
-                # 'enrichment': self.current_conf(v)['exp_kws']['enrichment'],
-            }
-        }
+        conf = null_dict('batch_conf',
+                         save_hdf5=w['TOGGLE_save_hdf5'].metadata.state,
+                         exp_kws={'enrichment': enrichment},
+                         batch_methods=c['batch_methods'].get_dict(v, w),
+                         optimization=c['optimization'].get_dict(v, w),
+                         space_search=c['space_search'].get_dict(v, w),
+                         )
+        # conf = {
+        #     'save_hdf5': w['TOGGLE_save_hdf5'].metadata.state,
+        #     **{n: c[n].get_dict(v, w) for n in ['batch_methods', 'optimization', 'space_search']},
+        #     'exp_kws': {
+        #         #
+        #         'enrichment': enrichment,
+        #         # 'enrichment': self.current_conf(v)['exp_kws']['enrichment'],
+        #     }
+        # }
         return copy.deepcopy(conf)
 
     def build(self):
@@ -76,27 +82,22 @@ class BatchTab(GuiTab):
                       named_bool_button('Save data', False, toggle_name='save_hdf5'),
                       ]
         s0 = Collapsible(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration')
-        s1 = CollapsibleDict('batch_methods', default=True)
+        s1 = CollapsibleDict('batch_methods')
 
-        s2 = CollapsibleDict('optimization', default=True,toggle=True, disabled=True)
-        s3 = CollapsibleTable2('space_search', headings=['pars', 'ranges', 'Ngrid'])
+        s2 = CollapsibleDict('optimization', toggle=True, disabled=True)
+        s3 = CollapsibleTable('space_search', index='Parameter', heading_dict={'Range': 'range', 'N': 'Ngrid'},
+                              dict_name='space_search_par', state=True)
         g1 = GraphList(self.name, tab=self)
 
-        dl1 = DataList(name=kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp= 'Stored batch-runs')
-        dl2 = DataList(name=kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp= 'Active batch-runs')
+        dl1 = DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Stored batch-runs')
+        dl2 = DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active batch-runs')
 
-        l = [[
-            gui_col([sl2, sl1, s0, s1, s2, s3, dl2, dl1], 0.2),
-            gui_col([g1.canvas], 0.6),
-            gui_col([g1], 0.2)
-        ]]
+        l = gui_cols(cols=[[sl2, sl1, s0, s1, s2, s3, dl2, dl1], [g1.canvas], [g1]], x_fracs=[0.2, 0.6, 0.2])
 
         c = {}
         for s in [s0, s1, s2, s3]:
             c.update(s.get_subdicts())
-        g = {g1.name: g1}
-        d = {self.name: {'df': None, 'fig_dict': None}}
-        return l, c, g, d
+        return l, c, {g1.name: g1}, {self.name: {'df': None, 'fig_dict': None}}
 
     def run(self, v, w, c, d, g, conf, id):
         batch_id = v[self.batch_id_key]
@@ -125,16 +126,15 @@ class BatchTab(GuiTab):
             self.DL1.add(w, stored_trajs(id0), replace=True)
 
         if e == f'STOP {self.k_active}':
-            for act_id in active_ids :
+            for act_id in active_ids:
                 # self.DL0.dict[act_id]['process'].kill()
                 self.DL0.dict[act_id].terminate()
             self.DL0.remove(w, active_ids)
 
-
     def check_subprocesses(self, w):
-        complete=[]
+        complete = []
         for batch_id, ex in self.DL0.dict.items():
-            if ex.check() :
+            if ex.check():
                 df, fig_dict = ex.results
                 self.draw(df, fig_dict, w)
                 self.DL1.add(w, stored_trajs(ex.type), replace=True)

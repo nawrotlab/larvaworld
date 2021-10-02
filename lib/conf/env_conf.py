@@ -2,42 +2,132 @@ import itertools
 
 import numpy as np
 
-import lib.aux.functions as fun
 import lib.conf.dtype_dicts as dtypes
-from lib.conf.init_dtypes import par_dict, null_dict
+from lib.conf.init_dtypes import null_dict
 
 
-# class EnvConf :
-#
-
-def food_distro(N, mode='uniform', shape='circle', group='Food', **kwargs):
-    if N > 0:
-        return dtypes.get_dict('distro', class_name='Source', basic=False, group=group, as_entry=True,
-                               N=N, mode=mode, shape=shape, **kwargs)
-    else:
-        return {}
+def odor(i, s, id='Odor'):
+    return null_dict('odor', odor_id=id, odor_intensity=i, odor_spread=s)
 
 
-def food_param_conf(distro={}, list={}, grid=None):
-    return {'source_groups': distro,
+def odorG(c=1, id='Odor'):
+    return odor(i=2.0 * c, s=0.0002 * np.sqrt(c), id=id)
+
+
+def odorD(c=1, id='Odor'):
+    return odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)
+
+
+def source(id='Source', group='Source', c='green', **kwargs):
+    return {id: null_dict('source', default_color=c, group=group, **kwargs)}
+
+
+def sg(id='Source', c='green', d={}, **kwargs):
+    return {id: null_dict('SourceGroup', default_color=c, distribution=null_dict('spatial_distro', **d), **kwargs)}
+
+
+def dish(r):
+    return {'arena_dims': (r, r),
+            'arena_shape': 'circular'}
+
+
+def arena(x, y):
+    return {'arena_dims': (x, y),
+            'arena_shape': 'rectangular'}
+
+
+def gaussian_odor():
+    return {'odorscape': 'Gaussian',
+            'grid_dims': None,
+            'evap_const': None,
+            'gaussian_sigma': None
+            }
+
+
+def diffusion_odor():
+    return {'odorscape': 'Diffusion',
+            'grid_dims': [100, 100],
+            'evap_const': 0.9,
+            'gaussian_sigma': (7, 7)
+            }
+
+
+def f_pars(sg={}, su={}, grid=None):
+    return {'source_groups': sg,
             'food_grid': grid,
-            'source_units': list}
+            'source_units': su}
 
 
-# def larva_distro(N=1, mode='uniform', shape='circle', group='Larva', **kwargs):
-#     if N > 0:
-#         return dtypes.get_dict('distro', class_name='Larva', basic=False, group=group, as_entry=True,
-#                                N=N, mode=mode, shape=shape, **kwargs)
-#     else:
-#         return {}
-
-def larva_distro(N=1, mode='uniform', shape='circle', loc=(0.0, 0.0), orientation_range=(0.0, 360.0), group='Larva',
-                 **kwargs):
-    dist = null_dict('larva_distro', N=N, mode=mode, shape=shape, loc=loc, orientation_range=orientation_range)
-    g = null_dict('LarvaGroup', distribution=dist, **kwargs)
+def lg(group='Larva', c='black', N=1, mode='uniform', shape='circle', loc=(0.0, 0.0), ors=(0.0, 360.0),
+       s=(0.0, 0.0),m='explorer', **kwargs):
+    if type(s)==float :
+        s=(s,s)
+    dist = null_dict('larva_distro', N=N, mode=mode, shape=shape, loc=loc, orientation_range=ors,scale=s)
+    g = null_dict('LarvaGroup', distribution=dist, default_color=c,model=m, **kwargs)
     return {group: g}
 
 
+
+def foodNodor_4corners(d=0.05):
+    l = [source(f'Source_{i}', pos=p,amount=0.01, odor=odorD(id=f'Odor_{i}'),c=c, radius=0.01) for i, (c, p) in
+         enumerate(zip(['blue', 'red', 'green', 'magenta'],[(-d, -d), (-d, d), (d, -d), (d, d)]))]
+    dic = {**l[0], **l[1], **l[2], **l[3]}
+    return dic
+
+
+def env(a, l={}, f=None, o=None):
+    return null_dict('env_conf', arena=a, larva_groups=l, food_params=f, odorscape=o)
+
+
+dish_env = env(dish(0.1), l=lg(m='explorer', N=25, s=0.02))
+nengo_dish_env = env(dish(0.1), l=lg(m='nengo_explorer', N=25, s=0.02))
+dispersion_env = env(dish(0.2), l=lg(m='explorer', N=25))
+focus_env = env(arena(0.01, 0.01), l=lg(m='explorer', N=1, ors=[90.0, 90.0]))
+imitation_env_p = env(dish(0.15), l=lg(m='imitation', N=25))
+
+chemotax_env = env(arena(0.1, 0.06),l=lg(m='navigator', N=8, loc=(-0.04, 0.0), s=(0.005, 0.02), ors=(-30.0, 30.0)),
+                   f=f_pars(su=source(pos=(0.04, 0.0), odor=odorG(2))),o=gaussian_odor())
+
+chemorbit_env = env(arena(0.1, 0.06), l=lg(m='navigator', N=3),f=f_pars(su=source(odor=odorG())), o=gaussian_odor())
+
+chemorbit_diffusion_env = env(arena(0.3, 0.3), l=lg(m='navigator', N=30),
+                              f=f_pars(su=source(radius=0.03, odor=odorD())), o=diffusion_odor())
+
+RL_chemorbit_env = env(dish(0.1), l=lg(m='RL-learner', N=10, mode='periphery', s=0.04),
+                       f=f_pars(su=source(radius=0.01, odor=odorD())), o=diffusion_odor())
+
+reorientation_env = env(dish(0.1), l=lg(m='immobile', N=200, s=0.05),
+                        f=f_pars(su=source(odor=odorG())), o=gaussian_odor())
+
+RL_4corners_env = env(arena(0.2, 0.2), l=lg(m='RL-learner', N=10, s=0.04),
+                      f=f_pars(su=foodNodor_4corners()), o=diffusion_odor())
+
+uniform_food_env = env(dish(0.05), l=lg(m='feeder-explorer', N=5, s=0.005),
+                       f=f_pars(sg=sg(d={'N': 2000, 'scale': (0.025, 0.025)}, amount=0.01, radius=0.0001)))
+
+patchy_food_env = env(arena(0.2, 0.2), l=lg(m='feeder-navigator', N=25),
+                      f=f_pars(sg=sg(d={'N': 8, 'scale': (0.07, 0.07), 'mode': 'periphery'},amount=0.001, odor=odorG(2))),
+                      o=gaussian_odor())
+food_grid_env = env(arena(0.2, 0.2), l=lg(m='feeder-explorer', N=25),
+                    f=null_dict('food_params', food_grid=null_dict('food_grid')))
+
+growth_env = env(arena(0.2, 0.2), l=lg(m='sitter', N=1),f=f_pars(grid=null_dict('food_grid')))
+
+single_patch_env = env(arena(0.1, 0.1),
+                       l={**lg('Orco', m='feeder-explorer', c='red', N=20, mode='periphery', s=0.03),
+                          **lg('control', m='feeder-navigator', c='blue', N=20, mode='periphery',s=0.03)},
+                       f=f_pars(su=source('Patch', amount=0.1, radius=0.02)))
+
+food_at_bottom_env = env(arena(0.2, 0.2),
+                         l={**lg('Orco', m='feeder-explorer', c='red', N=20, shape='oval', loc=(0.0, 0.04),s=(0.04, 0.01)),
+                            **lg('control', m='feeder-navigator', c='blue', N=20, shape='oval', loc=(0.0, 0.04),s=(0.04, 0.01))},
+                         f=f_pars(sg=sg('FoodLine', odor=odorG(), amount=0.002, radius=0.001,
+                                        d={'N': 20, 'shape': 'oval', 'scale': (0.01, 0.0), 'mode': 'periphery'})),
+                         o=gaussian_odor())
+
+catch_me_env = env(dish(0.05), l={**lg('Left', N=1, loc=(-0.01, 0.0), m='follower-L', c='darkblue', odor=odorD(id='Left_Odor')),
+                                  **lg('Right', N=1, loc=(+0.01, 0.0), m='follower-R', c='darkred', odor=odorD(id='Right_Odor'))},
+                   o=diffusion_odor())
 
 food_patches = np.array([
     (0.70, 0.07), (0.50, -0.43),
@@ -58,16 +148,6 @@ one_diffusion_odor = {'odor_landscape': 'Diffusion',
                       }
 
 
-def dish(r):
-    return {'arena_dims': (r, r),
-            'arena_shape': 'circular'}
-
-
-def arena(x, y):
-    return {'arena_dims': (x, y),
-            'arena_shape': 'rectangular'}
-
-
 def maze(nx=15, ny=15, ix=0, iy=0, h=0.1, return_points=False):
     from lib.envs._maze import Maze
     m = Maze(nx, ny, ix, iy, height=h)
@@ -84,64 +164,17 @@ def maze(nx=15, ny=15, ix=0, iy=0, h=0.1, return_points=False):
         return lines
 
 
-def odor_source(id, pos=(0.0, 0.0), odor_id=None, odor_intensity=2.0, odor_spread=0.0002, **kwargs):
-    if odor_id is None:
-        odor_id = f'{id}_odor'
-    # return dtypes.get_dict('agent', class_name='Source', unique_id=id, as_entry=True, pos=pos,
-    #                        odor_id=odor_id, odor_intensity=odor_intensity, odor_spread=odor_spread, **kwargs)
-    dic = null_dict('source', pos=pos,
-                    odor=null_dict('odor', odor_id=odor_id, odor_intensity=odor_intensity, odor_spread=odor_spread),
-                    **kwargs)
-    return {id: dic}
-
-
-def foodNodor_source(id, pos=(0.0, 0.0), odor_id=None, odor_intensity=2.0, odor_spread=0.0002, amount=0.01, **kwargs):
-    if odor_id is None:
-        odor_id = f'{id}_odor'
-    # return dtypes.get_dict('agent', class_name='Source', unique_id=id, as_entry=True, pos=pos, amount=amount,
-    #                        odor_id=odor_id, odor_intensity=odor_intensity, odor_spread=odor_spread, **kwargs)
-    dic = null_dict('source', pos=pos, amount=amount,
-                    odor=null_dict('odor', odor_id=odor_id, odor_intensity=odor_intensity, odor_spread=odor_spread),
-                    **kwargs)
-    return {id: dic}
-
-
-def foodNodor_4corners(d=0.05):
-    l = [foodNodor_source(id=f'Source_{i}', odor_id=f'Odor_{i}', pos=p,
-                          odor_intensity=300.0, default_color=c, radius=0.01) for i, (c, p) in
-         enumerate(zip(['blue', 'red', 'green', 'magenta'],
-                       [(-d, -d), (-d, d), (d, -d), (d, d)]))]
-    dic = {**l[0], **l[1], **l[2], **l[3]}
-    return dic
-
-
-def CS_UCS(N=2, x=0.04, **kwargs):
+def CS_UCS(N=2, x=0.04):
     if N == 1:
-        return {**odor_source(id='CS', pos=(-x, 0.0), odor_id='CS', default_color='red', **kwargs),
-                **odor_source(id='UCS', pos=(x, 0.0), odor_id='UCS', default_color='blue', **kwargs)}
+        return {**source('CS', pos=(-x, 0.0), odor=odorG(id='CS'), c='red'),
+                **source('UCS', pos=(x, 0.0), odor=odorG(id='UCS'), c='blue')}
     elif N == 2:
         return {
-            **odor_source(id='CS_l', pos=(-x, 0.0), odor_id='CS', default_color='red', **kwargs),
-            **odor_source(id='CS_r', pos=(x, 0.0), odor_id='CS', default_color='red', **kwargs),
-            **odor_source(id='UCS_l', pos=(-x, 0.0), odor_id='UCS', default_color='blue', **kwargs),
-            **odor_source(id='UCS_r', pos=(x, 0.0), odor_id='UCS', default_color='blue', **kwargs)
+            **source('CS_l', pos=(-x, 0.0), odor=odorG(id='CS'), c='red'),
+            **source('CS_r', pos=(x, 0.0), odor=odorG(id='CS'), c='red'),
+            **source('UCS_l', pos=(-x, 0.0), odor=odorG(id='UCS'), c='blue'),
+            **source('UCS_r', pos=(x, 0.0), odor=odorG(id='UCS'), c='blue')
         }
-
-
-def gaussian_odor():
-    return {'odorscape': 'Gaussian',
-            'grid_dims': None,
-            'evap_const': None,
-            'gaussian_sigma': None
-            }
-
-
-def diffusion_odor():
-    return {'odorscape': 'Diffusion',
-            'grid_dims': [100, 100],
-            'evap_const': 0.9,
-            'gaussian_sigma': (7, 7)
-            }
 
 
 def game_env_conf(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
@@ -151,17 +184,18 @@ def game_env_conf(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
         modL, modR = 'gamer-L', 'gamer-R'
     elif mode == 'flag':
         modL, modR = 'gamer', 'gamer'
+
+    lgs = {**lg('Left', N=N, loc=(-x, y), m=modL, c='darkblue'),
+           **lg('Right', N=N, loc=(+x, y), m=modR, c='darkred')
+           }
+    # env=env(arena(dim, dim))
     env = {'arena': arena(dim, dim),
            'border_list': {},
-           'food_params': food_param_conf(list={
-               **foodNodor_source(id='Flag', odor_intensity=8, odor_spread=0.0004, default_color='green',
-                                  can_be_carried=True),
-               **odor_source(id='Left_base', pos=(-x, y), default_color='blue'),
-               **odor_source(id='Right_base', pos=(+x, y), default_color='red')}),
-           'larva_groups': {
-               **larva_distro(N=N, loc=(-x, y), group='Left', model=modL, default_color='darkblue'),
-               **larva_distro(N=N, loc=(+x, y), group='Right', model=modR, default_color='darkred')
-           },
+           'food_params': f_pars(su={
+               **source('Flag', c='green',can_be_carried=True, amount=0.01, odor=odorG(2, id='Flag_odor')),
+               **source('Left_base', pos=(-x, y), c='blue', odor=odorG(id='Left_base_odor')),
+               **source('Right_base', pos=(+x, y), c='red', odor=odorG(id='Right_base_odor'))}),
+           'larva_groups': lgs,
            'odorscape': gaussian_odor()
            }
     return env
@@ -179,196 +213,63 @@ def maze_conf(n, h):
                     'default_color': 'black',
                     'width': 0.001}
             },
-            'food_params': food_param_conf(list={**odor_source('Target', odor_id='Odor', default_color='blue')}),
-            'larva_groups': larva_distro(N=5, loc=(-0.4 * h, 0.0), orientation_range=(-60.0, 60.0), model='navigator'),
+            'food_params': f_pars(su=source('Target', odor=odorG(), c='blue')),
+            'larva_groups': lg(N=5, loc=(-0.4 * h, 0.0), ors=(-60.0, 60.0), m='navigator'),
             'odorscape': gaussian_odor()}
     return conf
 
 
-def odor_pref_env(N=25, model='RL-feeder', arena=None, diffusion=False, Nsources=2, grid=dtypes.get_dict('food_grid')):
-    if arena is None:
-        arena = dish(0.1)
-    odorscape = gaussian_odor() if not diffusion else gaussian_odor()
-    cc = {'odor_intensity': 2.0 if not diffusion else 300.0}
-    c = {'arena': arena,
-         'border_list': {},
-         'food_params': food_param_conf(list=CS_UCS(Nsources, **cc), grid=grid),
-         'larva_groups': larva_distro(N=N, scale=(0.005, 0.02), model=model),
-         'odorscape': odorscape}
-    return c
+def odor_pref_env(N, m, arena=dish(0.1), Nsources=2, grid=null_dict('food_grid')):
+    return null_dict('env_conf', arena=arena,
+                     food_params=f_pars(grid=grid, su=CS_UCS(Nsources)),
+                     larva_groups=lg(N=N, scale=(0.005, 0.02), m=m),
+                     odorscape=gaussian_odor())
 
 
-pref_test_env = odor_pref_env(N=25, model='navigator-x2', Nsources=1, grid=None)
-pref_test_env_on_food = odor_pref_env(N=25, model='feeder-navigator-x2', Nsources=1)
-pref_train_env = odor_pref_env(N=25, model='RL-feeder')
-pref_env_RL = odor_pref_env(N=25, model='RL-learner', Nsources=1, grid=None, arena=arena(0.2, 0.1))
-
-chemotax_env = {'arena': arena(0.1, 0.06),
-                'border_list': {},
-                'food_params': food_param_conf(list={**odor_source(id='Odor_source', pos=(0.04, 0.0),
-                                                                   odor_id='Odor', odor_intensity=8,
-                                                                   odor_spread=0.0004, default_color='blue')}),
-                'larva_groups': larva_distro(N=8, loc=(-0.04, 0.0), scale=(0.005, 0.02),
-                                             orientation_range=(-30.0, 30.0),
-                                             model='navigator'),
-                'odorscape': gaussian_odor()}
-
-chemorbit_env = {'arena': arena(0.1, 0.06),
-                 'border_list': {},
-                 'food_params': food_param_conf(list={**odor_source(id='Odor_source', odor_id='Odor',
-                                                                    default_color='blue')}),
-                 'larva_groups': larva_distro(N=3, model='navigator'),
-                 'odorscape': gaussian_odor()
-                 }
-
-chemorbit_diffusion_env = {'arena': arena(0.3, 0.3),
-                           'border_list': {},
-                           'food_params': food_param_conf(
-                               list={**odor_source(id='Odor_source', odor_id='Odor',
-                                                   odor_intensity=300.0, default_color='blue', radius=0.03)}),
-                           'larva_groups': larva_distro(N=30, model='navigator'),
-                           'odorscape': diffusion_odor()
-                           }
-
-RL_chemorbit_env = {'arena': dish(0.1),
-                    'border_list': {},
-                    'food_params': food_param_conf(
-                        list={**foodNodor_source(id='Odor_source', odor_id='Odor',
-                                                 odor_intensity=300.0, default_color='blue', radius=0.01)}),
-                    'larva_groups': larva_distro(N=10, mode='periphery', shape='circle', loc=(0.0, 0.0),
-                                                 scale=(0.04, 0.04), model='RL-learner'),
-                    'odorscape': diffusion_odor()
-                    }
-
-RL_4corners_env = {'arena': arena(0.2, 0.2),
-                   'border_list': {},
-                   'food_params': food_param_conf(list=foodNodor_4corners()),
-                   'larva_groups': larva_distro(N=10, mode='uniform', shape='circle', loc=(0.0, 0.0),
-                                                scale=(0.04, 0.04), model='RL-learner'),
-                   'odorscape': diffusion_odor()
-                   }
+pref_test_env = odor_pref_env(N=25, m='navigator-x2', Nsources=1, grid=None)
+pref_test_env_on_food = odor_pref_env(N=25, m='feeder-navigator-x2', Nsources=1)
+pref_train_env = odor_pref_env(N=25, m='RL-feeder')
+pref_env_RL = odor_pref_env(N=25, m='RL-learner', Nsources=1, grid=None, arena=arena(0.2, 0.1))
 
 maze_env = maze_conf(15, 0.1)
 
-dispersion_env = null_dict('env_conf', arena=dish(0.2),
-                           larva_groups={'Larva': null_dict('LarvaGroup', model='explorer',
-                                                            distribution=null_dict('larva_distro', N=25))},
-                           food_params=None, odorscape=None)
 
-dish_env = null_dict('env_conf', arena=dish(0.1),
-                     larva_groups={'Larva': null_dict('LarvaGroup', model='explorer',
-                                                      distribution=null_dict('larva_distro', N=25,
-                                                                             scale=(0.02, 0.02)))},
-                     food_params=None, odorscape=None)
+def RvsS_groups(N=1, age=72.0, q=1.0, sub='standard', h_starved=0.0,
+                R_kws={'EEB': 0.37, 'absorption': 0.5},
+                S_kws={'EEB': 0.67, 'absorption': 0.15},
+                RS_kws={'hunger_gain': 2.0, 'DEB_dt': 1.0},
+                **kwargs):
+    from lib.conf.larva_conf import RvsS_larva
+    group_kws = {
+        'sample': 'AttP2.Fed',
+        'life': null_dict('life', hours_as_larva=age, substrate_quality=q, substrate_type=sub,
+                          epochs=[(age - h_starved, age)], epoch_qs=[0.0]),
+        'distribution': null_dict('larva_distro', N=N),
+        **kwargs
+    }
 
-nengo_dish_env = null_dict('env_conf', arena=dish(0.1),
-                           larva_groups={'Larva': null_dict('LarvaGroup', model='nengo_explorer',
-                                                            distribution=null_dict('larva_distro', N=25,
-                                                                                   scale=(0.02, 0.02)))},
-                           food_params=None, odorscape=None)
+    mod_r = RvsS_larva(**R_kws, **RS_kws)
+    mod_s = RvsS_larva(**S_kws, **RS_kws)
 
-reorientation_env = {'arena': dish(0.1),
-                     'border_list': {},
-                     'food_params': food_param_conf(
-                         list={**odor_source(id='Odor_source', odor_id='Odor', default_color='blue')}),
-                     'larva_groups': larva_distro(N=200, scale=(0.05, 0.05), model='immobile'),
-                     'odorscape': gaussian_odor()}
-
-imitation_env_p = {'arena': dish(0.15),
-                   'border_list': {},
-                   'food_params': food_param_conf(),
-                   'larva_groups': larva_distro(N=25, model='imitation'),
-                   'odorscape': None}
-
-focus_env = {'arena': arena(0.01, 0.01),
-             'border_list': {},
-             'food_params': food_param_conf(),
-             'larva_groups': larva_distro(N=1, orientation_range=[90.0, 90.0], model='explorer'),
-             'odorscape': None}
+    return {'Rover': null_dict('LarvaGroup', model=mod_r, default_color='blue', **group_kws),
+            'Sitter': null_dict('LarvaGroup', model=mod_s, default_color='red', **group_kws)}
 
 
-
-uniform_food_env = {'arena': dish(0.05),
-                    'border_list': {},
-                    'food_params': food_param_conf(
-                        distro=food_distro(N=2000, scale=(0.025, 0.025), amount=0.01, radius=0.0001)),
-                    'larva_groups': larva_distro(N=5, scale=(0.005, 0.005), model='feeder-explorer'),
-                    'odorscape': None}
-
-patchy_food_env = {'arena': arena(0.2, 0.2),
-                   'border_list': {},
-                   'food_params': food_param_conf(
-                       distro=food_distro(N=8, mode='periphery', scale=(0.07, 0.07), amount=0.001,
-                                          odor_id='Odor', odor_intensity=8, odor_spread=0.0004)),
-                   'larva_groups': larva_distro(N=25, model='feeder-navigator'),
-                   'odorscape': gaussian_odor()}
-
-food_grid_env = {'arena': arena(0.2, 0.2),  # dish(0.006),
-                 'border_list': {},
-                 'food_params': food_param_conf(grid=dtypes.get_dict('food_grid')),
-                 'larva_groups': larva_distro(N=25, model='feeder-explorer'),
-                 'odorscape': None}
-
-growth_env = {'arena': arena(0.02, 0.02),  # dish(0.006),
-              'border_list': {},
-              'food_params': food_param_conf(grid=dtypes.get_dict('food_grid')),
-              'larva_groups': larva_distro(N=1, model='sitter'),
-              'odorscape': None}
-
-mock_growth_env = {'arena': arena(0.02, 0.02),  # dish(0.006),
-                   'border_list': {},
-                   'food_params': food_param_conf(
-                       grid=dtypes.get_dict('food_grid', grid_dims=(2, 2), initial_value=1000)),
-                   'larva_groups': larva_distro(N=1, model='mock_sitter'),
-                   'odorscape': None}
-
-# growth_env = {'arena': dish(0.01),  # dish(0.006),
-#               'food_params': food_param_conf(list={**dtypes.get_dict('agent', class_name='Source', unique_id='Food',
-#                                                                    as_entry=True, amount=1.0, radius=0.01)}),
-#               'larva_groups': larva_distro(N=5, model='sitter'),
-#               'odorscape': None}
-
-rovers_sitters_env = {'arena': arena(0.02, 0.02),  # dish(0.006),
-                      'border_list': {},
-                      'food_params': food_param_conf(grid=dtypes.get_dict('food_grid')),
-                      'larva_groups': {
-                          **larva_distro(N=1, group='Rover', model='rover', default_color='blue'),
-                          **larva_distro(N=1, group='Sitter', model='sitter', default_color='red')
-                      },
-                      'odorscape': None}
-
-catch_me_env = {'arena': dish(0.05),
-                'border_list': {},
-                'food_params': food_param_conf(),
-                'larva_groups': {
-                    **larva_distro(N=1, loc=(-0.01, 0.0), group='Left', model='follower-L', default_color='darkblue'),
-                    **larva_distro(N=1, loc=(+0.01, 0.0), group='Right', model='follower-R', default_color='darkred')
-                },
-                'odorscape': diffusion_odor()
-                }
-
-single_patch_env = null_dict('env_conf', arena=arena(0.1, 0.1),
-                               larva_groups={
-                                   'Orco': null_dict('LarvaGroup', model='feeder-explorer',default_color='red',
-                                                     distribution=null_dict('larva_distro', N=20, mode='periphery', scale=(0.03, 0.03))),
-                                   'control': null_dict('LarvaGroup', model='feeder-navigator',default_color='blue',
-                                                        distribution=null_dict('larva_distro', N=20, mode='periphery', scale=(0.03, 0.03)))
-                               },
-                               food_params=null_dict('food_params',
-                                                     source_units={'Patch': null_dict('source', amount=0.1, radius=0.02)}),
-                             odorscape=None)
+def RvsS_env(on_food=True, **kwargs):
+    grid = null_dict('food_grid') if on_food else None
+    return null_dict('env_conf', arena=arena(0.02, 0.02),  # dish(0.006),
+                     food_params=null_dict('food_params', food_grid=grid),
+                     larva_groups=RvsS_groups(**kwargs)
+                     )
 
 
-
-food_at_bottom_env = null_dict('env_conf', arena=arena(0.2, 0.2),
-                               larva_groups={
-                                   'Orco': null_dict('LarvaGroup', model='feeder-explorer',default_color='red',
-                                                     distribution=null_dict('larva_distro', N=20, shape='oval',loc=(0.0, 0.04), scale=(0.04, 0.01))),
-                                   'control': null_dict('LarvaGroup', model='feeder-navigator',default_color='blue',
-                                                        distribution=null_dict('larva_distro', N=20, shape='oval',loc=(0.0, 0.04), scale=(0.04, 0.01)))
-                               },
-                               food_params=null_dict('food_params',
-                                                     source_groups={'FoodLine': null_dict('SourceGroup', distribution=null_dict(
-                                                                                                             'spatial_distro',N=20,shape='rect',mode='periphery',
-                                                                                                             scale=(0.01,0.0)),amount=0.002, radius=0.001,odor=null_dict('odor',odor_id='Odor',odor_intensity=2,odor_spread=0.0002))}))
-
+RvsS_agar = RvsS_env(on_food=False)
+RvsS_food = RvsS_env()
+RvsS_food_q75 = RvsS_env(q=0.75)
+RvsS_food_q50 = RvsS_env(q=0.50)
+RvsS_food_q25 = RvsS_env(q=0.25)
+RvsS_food_q15 = RvsS_env(q=0.15)
+RvsS_food_1h_prestarved = RvsS_env(h_starved=1.0)
+RvsS_food_2h_prestarved = RvsS_env(h_starved=2.0)
+RvsS_food_3h_prestarved = RvsS_env(h_starved=3.0)
+RvsS_food_4h_prestarved = RvsS_env(h_starved=4.0)

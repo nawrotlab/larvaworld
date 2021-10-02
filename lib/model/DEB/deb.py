@@ -75,7 +75,8 @@ class Substrate:
 class DEB:
     def __init__(self, id='DEB model', species='default', steps_per_day=24*60, cv=0, T=298.15, eb=1.0, substrate_quality=1.0, substrate_type='standard',
                  aging=False, print_output=False, starvation_strategy=False, assimilation_mode='deb', save_dict=True,y_E_X=None, save_to=None,
-                 V_bite=0.0005, absorption=None, base_hunger=0.5, hunger_gain=0, hours_as_larva=0, simulation=True, use_gut=True):
+                 V_bite=0.0005, absorption=None, base_hunger=0.5, hunger_gain=0,hunger_as_EEB=False, hours_as_larva=0, simulation=True, use_gut=True,
+                 intermitter=None):
 
         # Drosophila model by default
         if type(species) == str:
@@ -92,6 +93,11 @@ class DEB:
 
         # Hunger drive parameters
         self.hunger_gain = hunger_gain
+        self.hunger_as_EEB = hunger_as_EEB
+        self.intermitter = intermitter
+
+        if self.hunger_as_EEB and self.intermitter is not None:
+            base_hunger=self.intermitter.base_EEB
         self.base_hunger = base_hunger
 
         self.T = T
@@ -107,6 +113,7 @@ class DEB:
         self.simulation = simulation
         self.assimilation_mode = assimilation_mode
         self.absorption = absorption
+
         if y_E_X is not None :
             self.y_E_X = y_E_X
         self.epochs = []
@@ -128,6 +135,7 @@ class DEB:
 
 
         self.derived_pars()
+
         self.E = self.E0
         self.E_H = 0
         self.E_R = 0
@@ -139,15 +147,14 @@ class DEB:
         self.substrate = Substrate(type=substrate_type, quality=substrate_quality)
         self.substrate_quality = substrate_quality
         self.base_f = self.substrate.get_f(K=self.K, quality=substrate_quality)
-
-        # self.substrate_C=self.substrate.get_C(quality=substrate_quality)
-        # self.substrate_X_ratio=self.substrate.get_X_ratio(quality=substrate_quality)
         self.f = self.base_f
         self.V_bite = V_bite
-        # self.F = self.get_F()
-        # self.feed_freq_estimate = self.get_feed_freq_estimate()
+        # print(self.substrate.X)
 
-        self.gut=Gut(deb=self, V_bite=self.V_bite, save_dict=save_dict) if use_gut else None
+        self.steps_per_day = steps_per_day
+        self.dt = 1 / steps_per_day
+
+        self.gut = Gut(deb=self, V_bite=self.V_bite, save_dict=save_dict) if use_gut else None
         self.set_steps_per_day(steps_per_day)
         self.run_embryo_stage()
         self.predict_larva_stage(f=self.base_f)
@@ -185,9 +192,12 @@ class DEB:
 
 
 
+
     def set_steps_per_day(self, steps_per_day):
         self.steps_per_day = steps_per_day
         self.dt = 1 / steps_per_day
+        # print(steps_per_day/24/60)
+        # raise
         self.scale_time()
 
     def set_substrate_quality(self, quality):
@@ -495,7 +505,6 @@ class DEB:
         return h
 
     def run(self, f=None, X_V=0, assimilation_mode=None):
-        # print(int(self.V*1000),int(self.V*self.del_M**3*1000), int(self.Ww*1000), self.age)
         if f is None:
             f = self.base_f
         if assimilation_mode is None:
@@ -509,7 +518,9 @@ class DEB:
 
         if self.E_R < self.E_Rj:
             if self.gut is not None:
-                self.gut.update(V=self.V, X_V=X_V)
+                self.gut.update(X_V)
+            # self.SU.step(X_V)
+            # self.SU.step(self.substrate.X)
             p_A = self.get_p_A(f=f, assimilation_mode=assimilation_mode)
             p_S = self.p_M_dt * self.V
             p_C = self.E * (E_G * self.k_E_dt + p_S / self.V) / (kap * self.E / self.V + E_G)
@@ -519,18 +530,18 @@ class DEB:
             self.E += (p_A - p_C)
             self.V += p_G / E_G
             self.E_R += p_R
-
-            # self.Vw = self.Lw **3
-            self.Ww = self.compute_Ww()
-            # self.e = self.compute_e()
-            self.hunger = self.compute_hunger()
+            self.update_hunger()
 
         elif self.stage == 'larva':
             self.pupation_time_in_hours = np.round(self.age * 24, 1)
             self.stage = 'pupa'
         if self.dict is not None:
             self.update_dict()
-        # print(self.J_X_Am*self.L**2*self.w_X/self.d_X/24/3/self.Vw)
+
+    def update_hunger(self):
+        self.hunger = self.compute_hunger()
+        if self.hunger_as_EEB and self.intermitter is not None:
+            self.intermitter.base_EEB = self.hunger
 
     def die(self):
         self.alive = False
@@ -545,7 +556,6 @@ class DEB:
     @property
     def F(self): # Vol specific filtering rate (cm**3/(d*cm**3) -> vol of environment/vol of individual*day
         F = (self.F_mm ** -1 + self.substrate.X * self.J_X_Amm ** -1) ** -1
-        # Simpler : F=f*J_X_Amm/X
         return F
 
     @property
@@ -560,6 +570,10 @@ class DEB:
         if E is None:
             E = self.E + self.E_R
         return V * self.d_V + E * self.w_E / self.mu_E
+
+    @property
+    def Ww(self):
+        return self.V * self.d_V + (self.E + self.E_R) * self.w_E / self.mu_E
 
     @ property
     def e(self):
@@ -578,7 +592,7 @@ class DEB:
     #     return self.d_V*self.V * (1 + omegaW * self.e)
 
 
-    def grow_larva(self, hours_as_larva=None, epochs=None, epoch_qs=None):
+    def grow_larva(self, hours_as_larva=None, epochs=None, epoch_qs=None,**kwargs):
         c= {'assimilation_mode' : 'sim'}
         if epochs is None or epochs==[]:
             if hours_as_larva is not None:
@@ -590,6 +604,7 @@ class DEB:
             else:
                 while self.stage == 'larva':
                     self.run(**c)
+                    # print(self.V * self.J_E_Amm / self.y_E_X / self.k_E)
                 self.hours_as_larva = self.pupation_time_in_hours - self.birth_time_in_hours
         else:
             if hours_as_larva is not None :
@@ -635,6 +650,13 @@ class DEB:
     def pupation_buffer(self):
         return self.E_R / self.E_Rj
 
+    @property
+    def EEB(self):
+        if self.intermitter is None :
+            return None
+        else :
+            return self.intermitter.EEB
+
     def init_dict(self):
         self.dict_keys = [
             'age',
@@ -647,6 +669,7 @@ class DEB:
             'f',
             'deb_p_A',
             'sim_p_A',
+            'EEB'
         ]
         d = {k: [] for k in self.dict_keys}
         return d
@@ -663,6 +686,7 @@ class DEB:
             self.f,
             self.deb_p_A / self.V,
             self.sim_p_A / self.V,
+            self.EEB
         ]
         for k, v in zip(self.dict_keys, dict_values):
             self.dict[k].append(v)
@@ -756,9 +780,14 @@ class DEB:
             return self.sim_p_A
         elif assimilation_mode == 'gut':
             self.gut_p_A = self.gut.p_A
+            # print(int(100*self.gut_p_A/ self.deb_p_A))
             return self.gut.p_A
         elif assimilation_mode == 'deb':
             return self.deb_p_A
+
+
+# p.257 in S. a. L. M. Kooijman, “Dynamic Energy Budget theory for metabolic organisation : Summary of concepts of the third edition,” Water, vol. 365, p. 68, 2010.
+
 
 def deb_default(id='DEB model', epochs=None, epoch_qs=None, **kwargs):
     deb = DEB(id=id, simulation=False, use_gut=False, **kwargs)
@@ -769,24 +798,12 @@ def deb_default(id='DEB model', epochs=None, epoch_qs=None, **kwargs):
 
 def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hunger=False,model_id=None,save_dict=True, **kwargs) :
     from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB
-    try :
-        sd = loadConf(sample, 'Ref')
-        if dt is None:
-            dt = sd['dt']
-        kws2={
-            'crawl_freq': sd['crawl_freq'],
-            'feed_freq': sd['feed_freq'],
-            'crawl_bouts' : True,
-            'feed_bouts' : True,
-            'pause_dist' : sd['pause']['best'],
-            'stridechain_dist' : sd['stride']['best'],
-            'feeder_reoccurence_rate' : sd['feeder_reoccurence_rate'] ,
-        }
-    except :
-        kws=sample['intermitter']
-        if dt is None:
-            dt=sample['dt']
-
+    sample=loadConf(sample, 'Ref')
+    kws2=sample['intermitter']
+    if dt is None:
+        dt=kws2['dt']
+    else :
+        kws2.update({'dt': dt})
 
     if deb_dt is None:
         deb_dt = dt
@@ -797,8 +814,8 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hung
     deb.set_steps_per_day(steps_per_day=steps_per_day)
     deb.base_hunger=EEB
     Nticks=np.round(deb_dt / dt).astype(int)
-
-    inter=OfflineIntermitter(**kws2, EEB=EEB,dt=dt)
+    # print(EEB)
+    inter=OfflineIntermitter(**kws2, EEB=EEB)
     counter=0
     feeds=0
     cum_feeds=0
@@ -810,8 +827,6 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hung
             cum_feeds += 1
         if inter.total_ticks%Nticks==0 :
             feed_dict.append(feeds)
-            # print(feeds)
-            # X_V = deb.V_bite * deb.V * deb.feed_freq_estimate*deb_dt
             X_V = deb.V_bite * deb.V * feeds
             deb.run(X_V=X_V)
             feeds = 0
@@ -820,7 +835,7 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hung
                 if inter.feeder_reocurrence_as_EEB :
                     inter.feeder_reoccurence_rate=inter.EEB
             if deb.age * 24>counter :
-                # print(counter, int(deb.pupation_buffer*100))
+                print(counter, int(deb.pupation_buffer*100))
                 counter+=24
     deb.finalize_dict()
     d_sim= deb.return_dict()
@@ -831,13 +846,20 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hung
         d_mod = deb_default(id=model_id,save_dict=save_dict,**kwargs)
         return d_sim, d_mod
 
+
+
 if __name__ == '__main__':
     # ddd=deb_default(print_output=True)
-    deb=DEB(print_output=True)
+    deb=DEB(print_output=False, steps_per_day=24*60)
     # deb.grow_larva()
+    # deb_sim(sample='AttP2.Fed', dt=0.1, deb_dt=1.0)
     # deb.run_larva_stage()
-    # print(deb.Lw)
-    # print(ddd['pupation'])
+
+    print(deb.K)
+    # print(deb.V*deb.J_E_Amm)
+    # print(deb.substrate.X/(deb.substrate.X+ deb.K))
+    # print(deb.substrate.X_ratio)
+    # print(10**6*deb.V*deb.J_E_Amm/deb.k_E/deb.y_E_X)
     # for EEB in [0.57,0.95] :
     #     d=deb_sim(EEB=EEB, dt=0.1, deb_dt=60)
         # print(EEB, d['pupation'])
@@ -849,10 +871,7 @@ if __name__ == '__main__':
         q=1
         V_bite=0.0005
         deb=DEB(substrate_quality=q, assimilation_mode='sim', steps_per_day=24*60, V_bite=V_bite, substrate_type=s)
-        # dt_bite=1/deb.get_feed_freq_estimate(unit='day')
-        # print(deb.J_X_Amm*deb.base_f*dt_bite)
-        # print(1/deb.get_feed_freq_estimate())
-        print(s)
+
         print([[q, deb.substrate.get_f(K=deb.K, quality=q)] for q in np.arange(0,1.01,0.5)])
         continue
         th_F=0.01

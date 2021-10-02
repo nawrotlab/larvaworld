@@ -3,7 +3,7 @@ import os
 import lib.conf.dtype_dicts as dtypes
 
 from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, ButtonGraphList
-from lib.gui.aux.functions import t_kws, gui_col
+from lib.gui.aux.functions import t_kws, gui_col, gui_cols
 from lib.gui.tabs.tab import GuiTab
 from lib.sim.single_run import run_essay
 from lib.sim.analysis import essay_analysis
@@ -18,31 +18,18 @@ class EssayTab(GuiTab):
         self.canvas_size = (1000, 500)
 
     def build(self):
-        s1 = CollapsibleDict('essay_params', default=True, disp_name='Configuration')
+        s1 = CollapsibleDict('essay_params', disp_name='Configuration')
         sl1 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'])
-
-        dl1 = DataList(name=self.essay_exps_key, tab=self, buttons=['run'], select_mode=None)
-
+        dl1 = DataList(self.essay_exps_key, tab=self, buttons=['run'], select_mode=None)
         g1 = GraphList(self.name, tab=self, list_header='Simulated', canvas_size=self.canvas_size)
         g2 = ButtonGraphList(self.exp_figures_key, tab=self, list_header='Observed',
-                             canvas_size=self.canvas_size,fig_dict={},
-                             buttons=['browse_figs'],
-                             button_args={'browse_figs' : {'target' : (2,-1)}}
+                             canvas_size=self.canvas_size, fig_dict={},
+                             buttons=['browse_figs'],button_args={'browse_figs': {'target': (2, -1)}}
                              )
 
-        l = [[
-            gui_col([sl1, s1, dl1], 0.2),
-            gui_col([g1.canvas, g2.canvas], 0.6),
-            gui_col([g1, g2], 0.2),
-              # gg
-              ]]
+        l = gui_cols(cols=[[sl1, s1, dl1], [g1.canvas, g2.canvas], [g1, g2]], x_fracs=[0.2, 0.6, 0.2])
 
-        c = {}
-        for i in [s1]:
-            c.update(i.get_subdicts())
-        g = {g1.name: g1, g2.name: g2}
-        d = {self.name: {'fig_dict': {}}}
-        return l, c, g, d
+        return l, s1.get_subdicts(), {g1.name: g1, g2.name: g2}, {self.name: {'fig_dict': {}}}
 
     def run(self, v, w, c, d, g, conf, id):
         conf = loadConf(id, self.conftype)
@@ -59,9 +46,10 @@ class EssayTab(GuiTab):
         essay = dtypes.get_dict('essay_params', essay_ID=f'{id}_{next_idx(id)}', path=f'essays/{id}')
         c['essay_params'].update(w, essay)
 
-        fdir=conf['exp_fig_folder']
+        fdir = conf['exp_fig_folder']
 
         temp = {f.split('.')[0]: f'{fdir}/{f}' for f in os.listdir(fdir)}
+        temp = dict(sorted(temp.items()))
         self.gui.graph_lists[self.exp_figures_key].update(w, temp)
 
     def get(self, w, v, c, as_entry=True):
@@ -76,8 +64,8 @@ class EssayTab(GuiTab):
         return conf
 
     def eval(self, e, v, w, c, d, g):
-        k=self.essay_exps_key
-        k0=self.datalists[k].list_key
+        k = self.essay_exps_key
+        k0 = self.datalists[k].list_key
         if e == f'RUN {k}':
             essay_exp = v[k0][0]
             if essay_exp not in [None, '']:
@@ -86,16 +74,15 @@ class EssayTab(GuiTab):
 
     def run_essay_exp(self, v, w, c, d, g, essay_exp):
         pars = c['essay_params'].get_dict(v, w)
-        id = pars['essay_ID']
         essay_type = self.current_ID(v)
-        essay = loadConf(essay_type, self.conftype)[essay_exp]
+        essay = loadConf(essay_type, self.conftype)['experiments'][essay_exp]
         kws = {
-            'id': f'{id}_{essay_exp}',
-            'path': pars['path'],
+            'id': essay_exp,
+            'path': f"{pars['path']}/{pars['essay_ID']}",
             'vis_kwargs': self.gui.get_vis_kwargs(v),
             'exp_types': essay['exp_types'],
             'durations': essay['durations'],
-            'N': pars['N'],
+            # 'N': pars['N'],
         }
         ds0 = run_essay(**kws)
         if ds0 is not None:
