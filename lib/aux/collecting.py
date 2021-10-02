@@ -9,7 +9,7 @@ from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.time import RandomActivation
 
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
 
 
@@ -202,11 +202,11 @@ class TargetedDataCollector(DataCollector):
     def __init__(self, schedule, pars):
         self.schedule = schedule
         super().__init__(agent_reporters=self.valid_reporters(pars))
-        self.prefix = [f'model.{self.schedule.id}.steps', 'unique_id']
+        pref = [f'model.{self.schedule.id}.steps', 'unique_id']
         self.rep_funcs = self.agent_reporters.values()
-        if all([hasattr(rep, 'attribute_name') for rep in self.rep_funcs]):
-            attributes = [func.attribute_name for func in self.rep_funcs]
-            self.reports = attrgetter(*self.prefix + attributes)
+        if all([hasattr(r, 'attribute_name') for r in self.rep_funcs]):
+            # attributes = [f.attribute_name for f in self.rep_funcs]
+            self.reports = attrgetter(*pref + [r.attribute_name for r in self.rep_funcs])
         else:
             self.reports = None
 

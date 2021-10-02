@@ -6,10 +6,12 @@ import scipy as sp
 from fitter import Fitter
 from matplotlib import pyplot as plt
 import scipy.stats as st
+from scipy import stats as st
 from scipy.stats import ks_2samp, stats, levy, norm, uniform
 
+import lib.anal.process.aux
 from lib.aux import naming as nam
-from lib.aux import functions as fun
+from lib.aux import colsNstr as fun
 from lib.conf.conf import saveConf
 
 
@@ -484,7 +486,7 @@ def get_logNpow(dur, dur0, dur1, durmid, fr, overlap=0, discrete=False):
 
 
 def get_powerlaw_alpha(dur, dur0, dur1, discrete=False):
-    with fun.suppress_stdout_stderr():
+    with lib.anal.process.aux.suppress_stdout_stderr():
         from powerlaw import Fit
         results = Fit(dur, xmin=dur0, xmax=dur1, discrete=discrete)
         alpha = results.power_law.alpha
@@ -587,7 +589,7 @@ def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=
 
 def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=True,
                      dataset_id='dataset', bout='pause', combine=True, store=False, fit_by='cdf'):
-    with fun.suppress_stdout(True):
+    with lib.anal.process.aux.suppress_stdout(True):
         warnings.filterwarnings('ignore')
         x = x0[x0 >= xmin]
         x = x[x <= xmax]
@@ -979,7 +981,7 @@ def fit_geom_to_stridechains(dataset, is_last=True):
     # self.end['stride_reoccurence_rate'] = 1 - 1 / stridechains.mean()
     mean, std = stridechains.mean(), stridechains.std()
     print(f'Mean and std of stride reoccurence rate among larvae : {mean}, {std}')
-    p, sse = fun.fit_geom_distribution(stridechains.dropna().values)
+    p, sse = fit_geom_distribution(stridechains.dropna().values)
     print(f'Stride reoccurence rate is {1 - p}')
     d.stride_reoccurence_rate = 1 - p
     d.stride_reoccurence_rate_sse = sse
@@ -989,3 +991,35 @@ def fit_geom_to_stridechains(dataset, is_last=True):
     if is_last:
         d.save()
     print('Geometric distribution fitted to stridechains')
+
+
+def fit_geom_distribution(data):
+    data = pd.Series(data)
+    """Model data by finding best fit distribution to data"""
+    x = np.arange(np.min(data), np.max(data) + 1, 1).astype(int)
+    y = np.zeros(len(x)).astype(int)
+
+    counts = data.value_counts()
+    for i, k in enumerate(x):
+        if k in counts.index.values.astype(int):
+            y[i] = int(counts.loc[k])
+    y = y / len(data)
+    # print(y)
+
+    mean = data.mean()
+    p = 1 / mean
+
+    # Calculate fitted PDF and error with fit in distribution
+    pdf = st.geom.pmf(x, p=p)
+    sse = np.sum(np.power(y - pdf, 2.0)) / len(y)
+    print(f'geom distribution fitted with SSE :{sse}')
+    return p, sse
+
+
+def fit_powerlaw_distribution(data):
+    f = Fitter(data)
+    f.distributions = ['powerlaw']
+    f.fit()
+    k = f.get_best()
+    alpha = list(k.values())[0][0]
+    return alpha

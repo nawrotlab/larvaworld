@@ -1,6 +1,6 @@
 import numpy as np
 from lib.conf.init_dtypes import null_dict
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 
 def odor(i, s, id='Odor'):
     return null_dict('odor', odor_id=id, odor_intensity=i, odor_spread=s)
@@ -112,7 +112,9 @@ chemo_envs = {
                                f_pars(su=su(pos=(0.04, 0.0), o=oG(2))),
                                'G'),
     'chemotaxis_local': env(arena(0.1, 0.06),
-                            lg(m='navigator', N=3),
+                            lgs(models=['navigator', 'RL_navigator', 'basic_navigator'],
+                                ids=['CoupledOsc', 'RL', 'basic'], N=10),
+                            # lg(m='navigator', N=3),
                             f_pars(su=su(o=oG())),
                             'G'),
     'chemotaxis_diffusion': env(arena(0.3, 0.3),

@@ -4,17 +4,12 @@ import time
 import pickle
 import os
 import numpy as np
-
-import lib.conf.data_conf as dat
-
-from lib.aux.collecting import output_dict, midline_xy_pars
-from lib.conf.init_dtypes import null_dict
+from lib.conf.conf import loadConf
 from lib.envs._larvaworld_sim import LarvaWorldSim
 
-import lib.aux.functions as fun
 from lib.stor.larva_dataset import LarvaDataset
 from lib.stor import paths
-import lib.conf.dtype_dicts as dtypes
+
 
 
 def _run_sim(
@@ -25,7 +20,7 @@ def _run_sim(
         collections,
         save_to=None,
         save_data_flag=True,
-        par_config=dat.SimParConf,
+        par_config=loadConf('SimParConf', 'Par'),
         seed=None,
         **kwargs):
     # print(vis_kwargs)
@@ -114,16 +109,21 @@ def store_sim_data(env, d, save_data_flag, enrichment, param_dict, split_groups=
         dd.enrich(**enrichment, is_last=False)
         # Save simulation data and parameters
         if save_data_flag:
+            from lib.aux.dictsNlists import dict_to_file
             dd.save()
             dd.save_dicts(env)
-            fun.dict_to_file(param_dict, dd.dir_dict['sim'])
+            dict_to_file(param_dict, dd.dir_dict['sim'])
             if env.table_collector is not None:
                 dd.save_tables(env.table_collector.tables)
     return ds
 
 
 def collection_conf(dataset, collections):
+    from lib.aux.dictsNlists import unique_list
+    from lib.aux.dictsNlists import flatten_list
     if not paths.new_format:
+        from lib.aux.collecting import output_dict
+
         if collections is None:
             collections = ['pose']
         cd = output_dict
@@ -133,16 +133,17 @@ def collection_conf(dataset, collections):
         tables = {}
         for c in collections:
             if c == 'midline':
+                from lib.aux.collecting import midline_xy_pars
                 step_pars += list(midline_xy_pars(N=d.Nsegs).keys())
             elif c == 'contour':
-                step_pars += fun.flatten_list(d.contour_xy)
+                step_pars += flatten_list(d.contour_xy)
             else:
                 step_pars += cd[c]['step']
                 end_pars += cd[c]['endpoint']
                 if 'tables' in list(cd[c].keys()):
                     tables.update(cd[c]['tables'])
-        step = fun.unique_list(step_pars)
-        end = fun.unique_list(end_pars)
+        step = unique_list(step_pars)
+        end = unique_list(end_pars)
         output = {'step': step,
                   'end': end,
                   'tables': tables,
@@ -156,8 +157,10 @@ def collection_conf(dataset, collections):
         output = {'step': [],
                   'end': [],
                   'tables': {},
-                  'step_groups': fun.flatten_list([c['step'] for c in cs]),
-                  'end_groups': fun.flatten_list([c['end'] for c in cs])}
+                  'step_groups': flatten_list([c['step'] for c in cs]),
+                  'end_groups': flatten_list([c['end'] for c in cs])}
+    # print(output)
+    # raise
     return output
 
 
@@ -170,6 +173,7 @@ def load_reference_dataset(dataset_id='reference', load=False):
 
 def run_essay(id,path, exp_types,durations, vis_kwargs, **kwargs):
     from lib.conf.conf import expandConf
+    from lib.conf.init_dtypes import null_dict
     ds = []
     for i, (exp, dur) in enumerate(zip(exp_types, durations)):
         sim=null_dict('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
@@ -177,7 +181,6 @@ def run_essay(id,path, exp_types,durations, vis_kwargs, **kwargs):
         conf['sim_params']=sim
         conf['experiment']=exp
         conf.update(**kwargs)
-        # conf = null_dict('exp_conf', sim_params=sim, **kwargs)
         d = run_sim(**conf, vis_kwargs=vis_kwargs)
         ds.append(d)
     return ds

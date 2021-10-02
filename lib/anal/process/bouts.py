@@ -6,7 +6,9 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema, spectrogram
 
-import lib.aux.functions as fun
+import lib.anal.process.aux
+import lib.aux.ang_aux
+import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.fitting import fit_bouts
@@ -52,7 +54,7 @@ def annotate(s, e, config=None,bouts={'stride': True, 'pause': True, 'turn': Tru
         'aux_dir': f'{config["dir"]}/data/aux.h5',
         'recompute': recompute,
     }
-    with fun.suppress_stdout(show_output):
+    with lib.anal.process.aux.suppress_stdout(show_output):
         if bouts['stride']:
             detect_strides(**c, non_chunks=non_chunks, vel_par=vel_par, chunk_pars=chunk_pars, **kwargs)
         if bouts['pause']:
@@ -162,7 +164,7 @@ def detect_turn_bouts(s, e, dt, par):
 
     for i, id in enumerate(ids):
         sss = s.xs(id, level='AgentID', drop_level=True)
-        idx0 = np.unique(fun.sign_changes(sss, par).index.values.astype(int))
+        idx0 = np.unique(lib.anal.process.aux.sign_changes(sss, par).index.values.astype(int))
         for c, flag in zip(cs, [pos_flag, neg_flag]) :
             idxM = np.unique(sss[sss[flag] == True].index.values.astype(int))
             s0s,s1s=[],[]
@@ -450,7 +452,7 @@ def detect_contacting_chunks(s, e, aux_dir, dt, chunk='stride', track_point=None
 
                 dst_array[s1, i] = np.sum(d_dst[s0 + 1: s1])
                 straight_dst_array[s1, i] = euclidean(tuple(d_xy[s1, :]), tuple(d_xy[s0, :]))
-                orientation_array[s1, i] = fun.angle_to_x_axis(d_xy[s0], d_xy[s1])
+                orientation_array[s1, i] = lib.aux.ang_aux.angle_to_x_axis(d_xy[s0], d_xy[s1])
 
             # if lengths is not None:
             #     l = lengths[i]
@@ -580,10 +582,10 @@ def compute_chunk_bearing2source(s, aux_dir, chunk, source=(-50.0, 0.0), **kwarg
     b1_par = f'{nam.bearing2(source)}_at_{c1}'
     db_par = f'{chunk}_{nam.bearing2(source)}_correction'
 
-    b0 = fun.compute_bearing2source(s[x0_par].dropna().values, s[y0_par].dropna().values,
-                                    s[ho0_par].dropna().values, loc=source, in_deg=True)
-    b1 = fun.compute_bearing2source(s[x1_par].dropna().values, s[y1_par].dropna().values,
-                                    s[ho1_par].dropna().values, loc=source, in_deg=True)
+    b0 = lib.anal.process.aux.compute_bearing2source(s[x0_par].dropna().values, s[y0_par].dropna().values,
+                                                     s[ho0_par].dropna().values, loc=source, in_deg=True)
+    b1 = lib.anal.process.aux.compute_bearing2source(s[x1_par].dropna().values, s[y1_par].dropna().values,
+                                                     s[ho1_par].dropna().values, loc=source, in_deg=True)
 
 
     s[b0_par] = np.nan

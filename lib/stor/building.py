@@ -2,9 +2,12 @@ import os.path
 
 import pandas as pd
 
+import lib.anal.process.aux
+import lib.aux.dictsNlists
 from lib.conf.conf import *
-from lib.aux.functions import match_larva_ids, convex_hull
-from lib.aux import functions as fun
+from lib.anal.process.aux import convex_hull
+from lib.stor.match_ids import match_larva_ids
+from lib.aux import colsNstr as fun
 from lib.aux import naming as nam
 
 
@@ -111,7 +114,7 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, min_duratio
 
         xcs = pd.read_csv(f'{pref}_x_contour.txt', header=None, sep='\t')
         ycs = pd.read_csv(f'{pref}_y_contour.txt', header=None, sep='\t')
-        xcs,ycs=fun.convex_hull(xs=xcs.values,ys=ycs.values, N=d.Ncontour)
+        xcs,ycs= lib.anal.process.aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
         xcs=pd.DataFrame(xcs, columns=xc_pars, index=None)
         ycs=pd.DataFrame(ycs, columns=yc_pars, index=None)
 
@@ -158,7 +161,7 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, min_duratio
             xy = data[nam.xy(d.points, flat=True)].values
             spinelength = np.zeros(len(data)) * np.nan
             for j in range(xy.shape[0]):
-                k = np.sum(np.diff(np.array(fun.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
+                k = np.sum(np.diff(np.array(lib.aux.dictsNlists.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
                 if not np.isnan(np.sum(k)):
                     sp_l = np.sum([np.sqrt(kk) for kk in k])
                 else:

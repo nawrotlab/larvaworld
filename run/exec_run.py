@@ -2,12 +2,14 @@ import subprocess
 import sys
 import argparse
 
+import lib.aux.dictsNlists
+
 sys.path.insert(0, '..')
 from lib.sim.analysis import sim_analysis
 from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results
 
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 from lib.stor import paths
 
 
@@ -27,7 +29,7 @@ class Exec:
 
     def run(self, **kwargs):
         if self.run_externally:
-            fun.save_dict(self.conf, paths.ExecConfFile)
+            lib.aux.dictsNlists.save_dict(self.conf, paths.ExecConfFile)
             self.process = subprocess.Popen(['python', paths.ExecFile, self.mode, paths.ExecConfFile], **kwargs)
         else:
             self.process = None
@@ -88,7 +90,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    conf = fun.load_dict(args.conf_file)
+    conf = lib.aux.dictsNlists.load_dict(args.conf_file)
 
     exec_run(args.mode, conf)
     # if args.sim_type=='sim' :

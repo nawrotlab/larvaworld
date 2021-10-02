@@ -1,15 +1,15 @@
 import time
 import PySimpleGUI as sg
 
-from lib.aux.functions import get_pygame_key
+import lib.aux.dictsNlists
 from lib.conf.conf import saveConfDict, loadConfDict
 from lib.conf.init_dtypes import store_controls
 from lib.gui.aux.elements import CollapsibleDict, Collapsible
-from lib.gui.aux.functions import t_kws, gui_col, gui_cols
+from lib.gui.aux.functions import t_kws, gui_col, gui_cols, get_pygame_key
 from lib.gui.aux.buttons import GraphButton
 import lib.conf.dtype_dicts as dtypes
 from lib.gui.tabs.tab import GuiTab
-from lib.aux import functions as fun
+from lib.aux import colsNstr as fun
 
 class SettingsTab(GuiTab):
     def __init__(self, **kwargs):
@@ -36,7 +36,7 @@ class SettingsTab(GuiTab):
     @property
     def used_keys(self):
         d=self.controls_dict['keys']
-        return fun.flatten_list([list(k.values()) for k in list(d.values())])
+        return lib.aux.dictsNlists.flatten_list([list(k.values()) for k in list(d.values())])
 
     def single_control_layout(self, k, v, prefix=None, editable=True):
         k0=f'{prefix} {k}' if prefix is not None else k

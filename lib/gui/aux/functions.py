@@ -174,3 +174,41 @@ def collapse(layout, key, visible=True):
     """
     return sg.pin(sg.Col(layout, key=key, visible=visible))
 
+
+def agent_list2dict(l, header='unique_id'):
+    d = {}
+    for a in l:
+        id = a[header]
+        a.pop(header)
+        d[id] = a
+    return d
+
+
+def get_pygame_key(key):
+    pygame_keys = {
+        'BackSpace': 'BACKSPACE',
+        'tab': 'TAB',
+        'del': 'DELETE',
+        'clear': 'CLEAR',
+        'Return': 'RETURN',
+        'Escape': 'ESCAPE',
+        'space': 'SPACE',
+        'exclam': 'EXCLAIM',
+        'quotedbl': 'QUOTEDBL',
+        '+': 'PLUS',
+        'comma': 'COMMA',
+        '-': 'MINUS',
+        'period': 'PERIOD',
+        'slash': 'SLASH',
+        'numbersign': 'HASH',
+        'Down:': 'DOWN',
+        'Up:': 'UP',
+        'Right:': 'RIGHT',
+        'Left:': 'LEFT',
+        'dollar': 'DOLLAR',
+        'ampersand': 'AMPERSAND',
+        'parenleft': 'LEFTPAREN',
+        'parenright': 'RIGHTPAREN',
+        'asterisk': 'ASTERISK',
+    }
+    return f'K_{pygame_keys[key]}' if key in list(pygame_keys.keys()) else f'K_{key}'

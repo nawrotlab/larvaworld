@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema, spectrogram
 
-import lib.aux.functions as fun
+import lib.anal.process.aux
+import lib.aux.dictsNlists
+import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.process.angular import angular_processing
@@ -80,7 +82,7 @@ def compute_freq(s, e, dt, parameters, freq_range=None, compare_params=False):
     if compare_params:
         ind = np.argmax(V)
         best_p = parameters[ind]
-        existing = fun.common_member(nam.freq(parameters), e.columns.values)
+        existing = lib.aux.dictsNlists.common_member(nam.freq(parameters), e.columns.values)
         e.drop(columns=existing, inplace=True)
         e[nam.freq(best_p)] = F[ind]
     else:
@@ -101,7 +103,7 @@ def filter(s, dt, Npoints, config, freq=2, N=1, inplace=True, recompute=False,**
     pars = nam.xy(points, flat=True)
     pars = [p for p in pars if p in s.columns]
     data = np.dstack(list(s[pars].groupby('AgentID').apply(pd.DataFrame.to_numpy)))
-    f_array = fun.apply_filter_to_array_with_nans_multidim(data, freq=freq, fr=1/dt, N=N)
+    f_array = lib.anal.process.aux.apply_filter_to_array_with_nans_multidim(data, freq=freq, fr=1 / dt, N=N)
     fpars = nam.filt(pars) if not inplace else pars
     for j, p in enumerate(fpars):
         s[p] = f_array[:, j, :].flatten()
@@ -116,7 +118,7 @@ def interpolate_nan_values(s, config, pars=None,**kwargs):
     pars = [p for p in pars if p in s.columns]
     for p in pars:
         for id in s.index.unique('AgentID').values:
-            s.loc[(slice(None), id), p] = fun.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
+            s.loc[(slice(None), id), p] = lib.anal.process.aux.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
     print('All parameters interpolated')
 
 def rescale(s,e, config,Npoints=None,Ncontour=None, recompute=False, scale=1.0,**kwargs):
@@ -164,7 +166,7 @@ def preprocess(s,e,config, rescale_by=None,drop_collisions=False,interpolate_nan
         'recompute': recompute,
         'config': config,
     }
-    with fun.suppress_stdout(show_output):
+    with lib.anal.process.aux.suppress_stdout(show_output):
         if rescale_by is not None :
             rescale(scale=rescale_by, **c)
         if drop_collisions :
@@ -212,7 +214,7 @@ def process(s,e,config,mode='minimal',traj_colors=True,show_output=True,
         'aux_dir': f'{config["dir"]}/data/aux.h5',
     }
 
-    with fun.suppress_stdout(show_output):
+    with lib.anal.process.aux.suppress_stdout(show_output):
         if types['angular']:
             angular_processing(**c, **kwargs)
         if types['spatial']:

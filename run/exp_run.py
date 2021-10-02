@@ -2,11 +2,10 @@ import argparse
 import sys
 import time
 import numpy as np
-
+sys.path.insert(0, '..')
+from lib.sim.single_run import run_sim
 
 if __name__ == '__main__':
-    sys.path.insert(0, '..')
-    from lib.sim.single_run import run_sim
     from lib.sim.analysis import sim_analysis
     from lib.conf.conf import loadConfDict, get_exp_conf
     from lib.aux import argparsers as prs

@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 from lib.model.DEB.deb import Substrate
 
 

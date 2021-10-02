@@ -2,13 +2,14 @@ import numpy as np
 import pandas as pd
 from pypet import cartesian_product, load_trajectory
 
-from lib.aux import functions as fun
+import lib.aux.dictsNlists
+from lib.aux import colsNstr as fun
 from lib.stor import paths as paths
 
 
 def load_default_configuration(traj, exp):
     for k0 in ['env_params', 'sim_params', 'life_params', 'enrichment']:
-        dic = fun.flatten_dict(exp[k0], parent_key=k0, sep='.')
+        dic = lib.aux.dictsNlists.flatten_dict(exp[k0], parent_key=k0, sep='.')
         for k, v in dic.items():
             if type(v) == list and type(v[0]) == list:
                 v = np.array(v)
@@ -18,11 +19,11 @@ def load_default_configuration(traj, exp):
 
 def config_traj(traj, optimization, batch_methods):
     if optimization is not None:
-        opt_dict = fun.flatten_dict(optimization, parent_key='optimization', sep='.')
+        opt_dict = lib.aux.dictsNlists.flatten_dict(optimization, parent_key='optimization', sep='.')
         for k, v in opt_dict.items():
             traj.f_aconf(k, v)
     if batch_methods is not None:
-        opt_dict = fun.flatten_dict(batch_methods, parent_key='batch_methods', sep='.')
+        opt_dict = lib.aux.dictsNlists.flatten_dict(batch_methods, parent_key='batch_methods', sep='.')
         for k, v in opt_dict.items():
             traj.f_aconf(k, v)
     return traj
@@ -103,7 +104,7 @@ def get_space_from_file(space_filepath=None, params=None, space_pd=None, returne
         for p, vs in zip(additional_params, additional_values):
             Nspace = len(values[0])
             Nv = len(vs)
-            values = [a * Nv for a in values] + fun.flatten_list([[v] * Nspace for v in vs])
+            values = [a * Nv for a in values] + lib.aux.dictsNlists.flatten_list([[v] * Nspace for v in vs])
             returned_params += [p]
 
     space = dict(zip(returned_params, values))

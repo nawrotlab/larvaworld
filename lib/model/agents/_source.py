@@ -4,7 +4,8 @@ from scipy.spatial.distance import euclidean
 from shapely import affinity
 from shapely.geometry import Point, Polygon
 
-from lib.aux import functions as fun
+import lib.aux.sim_aux
+from lib.aux import colsNstr as fun
 from lib.model.DEB.deb import Substrate
 from lib.model.agents._agent import LarvaworldAgent
 
@@ -13,7 +14,7 @@ class Source(LarvaworldAgent):
     def __init__(self, shape_vertices=None, shape='circle', **kwargs):
         super().__init__(**kwargs)
         self.shape_vertices = shape_vertices
-        shape = fun.circle_to_polygon(60, self.radius)
+        shape = lib.aux.sim_aux.circle_to_polygon(60, self.radius)
 
         if self.model.Box2D:
             self._body: Box2D.b2Body = self.model.space.CreateStaticBody(position=self.pos)

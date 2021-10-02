@@ -6,9 +6,12 @@ import numpy as np
 import pandas as pd
 from pypet import ObjectTable
 
+import lib.anal.process.aux
+import lib.aux.dictsNlists
+import lib.aux.sim_aux
 from lib.anal.plotting import plot_2d, plot_3pars, plot_endpoint_scatter, plot_endpoint_params, plot_debs, \
     plot_heatmap_PI
-from lib.aux import functions as fun
+from lib.aux import colsNstr as fun
 from lib.sim.batch.aux import grid_search_dict, load_traj
 from lib.sim.single_run import run_sim
 from lib.stor.larva_dataset import LarvaDataset
@@ -46,7 +49,7 @@ def get_Nbest(traj, fit_par, ranges, Nbest=20, minimize=True, mutate=True, recom
     if mutate:
         space = []
         for v0s, r in zip(V0s, ranges):
-            vs = [fun.mutate_value(v0, r, scale=0.1) for v0 in v0s]
+            vs = [lib.aux.sim_aux.mutate_value(v0, r, scale=0.1) for v0 in v0s]
             if recombine:
                 random.shuffle(vs)
             space.append(vs)
@@ -220,7 +223,7 @@ def deb_analysis(traj):
         plot_endpoint_params(ds, new_ids, mode='deb', save_to=save_to)
     # deb_dicts = fun.flatten_list(
     #     [[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
-    deb_dicts = fun.flatten_list([d.load_deb_dicts() for d in ds])
+    deb_dicts = lib.aux.dictsNlists.flatten_list([d.load_deb_dicts() for d in ds])
     fig_dict = {}
     for m in ['energy', 'growth', 'full']:
         f = plot_debs(deb_dicts=deb_dicts, save_to=save_to, save_as=f'deb_{m}.pdf', mode=m)
@@ -272,12 +275,12 @@ def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
     # sim = fun.reconstruct_dict(traj.f_get('sim_params'))
     # sim['sim_ID'] = f'run_{traj.v_idx}'
     # sim['path'] = traj.config.dataset_path
-    with fun.suppress_stdout(True):
+    with lib.anal.process.aux.suppress_stdout(True):
         d = run_sim(
-            env_params=fun.reconstruct_dict(traj.f_get('env_params')),
-            sim_params=fun.reconstruct_dict(traj.f_get('sim_params'), sim_ID=f'run_{traj.v_idx}', path=traj.config.dataset_path),
+            env_params=lib.aux.dictsNlists.reconstruct_dict(traj.f_get('env_params')),
+            sim_params=lib.aux.dictsNlists.reconstruct_dict(traj.f_get('sim_params'), sim_ID=f'run_{traj.v_idx}', path=traj.config.dataset_path),
             # sim_params=sim,
-            life_params=fun.reconstruct_dict(traj.f_get('life_params')),
+            life_params=lib.aux.dictsNlists.reconstruct_dict(traj.f_get('life_params')),
             save_data_flag=False,
             **exp_kws)
 

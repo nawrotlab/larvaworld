@@ -4,7 +4,8 @@ import os
 
 import PySimpleGUI as sg
 
-from lib.aux import functions as fun
+import lib.aux.dictsNlists
+from lib.aux import colsNstr as fun
 from lib.conf import dtype_dicts as dtypes
 from lib.conf.conf import loadConfDict, saveConf, loadConf
 from lib.gui.aux.functions import retrieve_value, t_kws, b6_kws, w_kws, col_size
@@ -311,8 +312,8 @@ def import_window(datagroup_id,raw_dic):
 
                     if datagroup_id in ['Berni lab']:
                         target0 = f'{targets[0]}/{target_id0}'
-                        source_files = fun.flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
-                                        n.startswith(source_id)] for source_id, source in raw_dic.items()])
+                        source_files = lib.aux.dictsNlists.flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
+                                                                          n.startswith(source_id)] for source_id, source in raw_dic.items()])
                         dd = build_dataset(id=target_id0, target_dir=target0, source_files=source_files, **kws)
                     elif datagroup_id in ['Schleyer lab']:
                         target0 = targets[0].replace(raw_ids[0], target_id0)

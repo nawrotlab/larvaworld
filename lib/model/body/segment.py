@@ -3,7 +3,8 @@ import numpy as np
 from shapely import affinity
 from shapely.geometry import Polygon
 
-from lib.aux import functions as fun
+import lib.aux.ang_aux
+from lib.aux import colsNstr as fun
 
 
 class BodySegment:
@@ -216,13 +217,13 @@ class DefaultSegment(BodySegment):
         self.ang_acc = 0.0
 
     def update_vertices(self, pos, orient):
-        self.vertices = [pos + fun.rotate_around_center_multi(self.seg_vertices[0], -orient)]
+        self.vertices = [pos + lib.aux.ang_aux.rotate_around_center_multi(self.seg_vertices[0], -orient)]
 
     def get_pose(self):
         return np.array(self.pos), self.orientation
 
     def get_world_point(self, local_point):
-        return self.get_position() + fun.rotate_around_center(point=local_point, radians=-self.get_orientation())
+        return self.get_position() + lib.aux.ang_aux.rotate_around_center(point=local_point, radians=-self.get_orientation())
 
     def get_angularvelocity(self):
         return self.ang_vel

@@ -1,7 +1,7 @@
 import copy
 
 from lib.conf import dtype_dicts as dtypes
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
 from lib.conf.conf import imitation_exp
 from lib.conf.init_dtypes import enrichment_dict
@@ -71,7 +71,7 @@ grouped_exp_dict = {
     },
 
     'chemotaxis': {**chemotaxis_exp('chemotaxis_approach', source=(0.04, 0.0)),
-                   **chemotaxis_exp('chemotaxis_local'),
+                   **chemotaxis_exp('chemotaxis_local', dur=3.0),
                    **chemotaxis_exp('chemotaxis_diffusion', dur=10.0),
                    **chemotaxis_exp('chemotaxis_RL', source=(0.04, 0.0), dur=10.0, c=['olfactor', 'memory']),
                    **chemotaxis_exp('reorientation'),

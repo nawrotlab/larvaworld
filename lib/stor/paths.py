@@ -1,5 +1,7 @@
 import os
-from lib.aux import functions as fun
+
+import lib.aux.dictsNlists
+from lib.aux import colsNstr as fun
 
 def get_parent_dir():
     p=os.path.abspath(__file__)
@@ -33,7 +35,7 @@ ConfFolder = f'{get_parent_dir()}/lib/conf/stored_confs'
 RefParsFile =f'{ConfFolder}/RefPars.txt'
 # RefConfFile =f'{ConfFolder}/RefConf.txt'
 RefDatasetPath=f'{DataFolder}/SchleyerGroup/processed/FRUvsQUI/QUI->QUI/AM/exp_13l'
-RefConf = fun.load_dict(f'{RefDatasetPath}/data/dataset_conf.csv',use_pickle=False)
+RefConf = lib.aux.dictsNlists.load_dict(f'{RefDatasetPath}/data/dataset_conf.csv', use_pickle=False)
 
 
 SimIdx_path = f'{ConfFolder}/SimIdx.txt'

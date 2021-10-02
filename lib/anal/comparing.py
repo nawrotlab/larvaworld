@@ -11,12 +11,12 @@ import seaborn as sns
 import pandas as pd
 import os
 
-
+import lib.aux.dictsNlists
 import lib.aux.naming as nam
 
 from lib.conf.par import getPar
 # from lib.stor.larva_dataset import LarvaDataset
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 import lib.conf.dtype_dicts as dtypes
 # from lib.conf import par_conf
 from lib.stor import paths as paths
@@ -41,7 +41,7 @@ class ExpFitter :
 
         key = 's' if use_symbols else 'd'
         self.df = self.multicol_df(key)
-        columns = fun.flatten_list(self.df['cols'].values.tolist())
+        columns = lib.aux.dictsNlists.flatten_list(self.df['cols'].values.tolist())
         self.m_col = pd.MultiIndex.from_tuples(columns, names=['Field', 'Pars'])
 
 

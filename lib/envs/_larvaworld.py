@@ -9,7 +9,10 @@ import webcolors
 from shapely.geometry import Polygon
 from unflatten import unflatten
 
-from lib.aux import functions as fun
+import lib.aux.dictsNlists
+import lib.aux.sim_aux
+import lib.aux.xy_aux
+from lib.aux import colsNstr as fun
 from lib.model.agents._larva_sim import LarvaSim
 from lib.stor import paths
 
@@ -23,7 +26,7 @@ from mesa.space import ContinuousSpace
 from lib.aux.collecting import NamedRandomActivation
 from lib.envs._space import FoodGrid
 import lib.aux.rendering as ren
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 from lib.envs._maze import Border
 import lib.conf.dtype_dicts as dtypes
 from lib.model.agents._agent import LarvaworldAgent
@@ -199,7 +202,7 @@ class LarvaWorld:
 
         if arena_shape == 'circular':
             # This is a circle_to_polygon shape from the function
-            self.unscaled_tank_shape = fun.circle_to_polygon(60, X / 2)
+            self.unscaled_tank_shape = lib.aux.sim_aux.circle_to_polygon(60, X / 2)
         elif arena_shape == 'rectangular':
             # This is a rectangular shape
             self.unscaled_tank_shape = self.unscaled_space_edges
@@ -420,7 +423,7 @@ class LarvaWorld:
                                        grid_pars=pars0['food_grid'])
             if pars0['source_groups'] is not None:
                 for gID, gConf in pars0['source_groups'].items():
-                    ps = fun.generate_xy_distro(**gConf['distribution'])
+                    ps = lib.aux.xy_aux.generate_xy_distro(**gConf['distribution'])
                     for i, p in enumerate(ps) :
                         id =f'{gID}_{i}'
                         self.add_food(id=id, position=p, food_pars=gConf)
@@ -454,7 +457,7 @@ class LarvaWorld:
             id = self.next_id(type='Larva')
         if orientation is None:
             orientation = np.random.uniform(0, 2 * np.pi, 1)[0]
-        while not fun.inside_polygon([pos], self.tank_polygon)[0] :
+        while not lib.aux.sim_aux.inside_polygon([pos], self.tank_polygon)[0] :
             pos=tuple(np.array(pos)*0.999)
         l = LarvaSim(model=self, pos=pos, orientation=orientation, unique_id=id,odor=odor,
                      larva_pars=pars, group=group, default_color=default_color, life=life)
@@ -530,7 +533,7 @@ class LarvaWorld:
     def move_larvae_to_center(self):
         N = len(self.get_flies())
         orientations = np.random.uniform(low=0.0, high=np.pi * 2, size=N).tolist()
-        positions = fun.generate_xy_distro(N=N, mode='uniform', scale=(0.005, 0.015), loc=(0.0, 0.0), shape='oval')
+        positions = lib.aux.xy_aux.generate_xy_distro(N=N, mode='uniform', scale=(0.005, 0.015), loc=(0.0, 0.0), shape='oval')
 
         for l, p, o in zip(self.get_flies(), positions, orientations):
             temp = np.array([-np.cos(o), -np.sin(o)])
@@ -679,10 +682,10 @@ class LarvaWorld:
 
 def generate_larvae(N, sample_dict, base_model, RefPars=None):
     if RefPars is None :
-        RefPars = fun.load_dict(paths.RefParsFile, use_pickle=False)
+        RefPars = lib.aux.dictsNlists.load_dict(paths.RefParsFile, use_pickle=False)
     if len(sample_dict) > 0:
         all_pars = []
-        modF = fun.flatten_dict(base_model)
+        modF = lib.aux.dictsNlists.flatten_dict(base_model)
         for i in range(N):
             lF = copy.deepcopy(modF)
             for p, vs in sample_dict.items():

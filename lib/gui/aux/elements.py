@@ -9,8 +9,9 @@ from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
+import lib.aux.dictsNlists
 from lib.conf.conf import loadConfDict, deleteConf, loadConf, expandConf
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 from lib.conf.init_dtypes import par_dict, base_dtype, null_dict
 from lib.conf.par import runtime_pars, getPar
 from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse
@@ -215,7 +216,7 @@ class MultiSpin(sg.Pane):
             return self.spins
         else:
             if self.Nspins > 3:
-                spins = fun.group_list_by_n(self.spins, 2)
+                spins = lib.aux.dictsNlists.group_list_by_n(self.spins, 2)
                 spins = [sg.Col(spins)]
                 return spins
             else:
@@ -766,7 +767,7 @@ class CollapsibleTable(Collapsible):
         d=self.dict
         data=[]
         for id in d.keys() :
-            dF=fun.flatten_dict(d[id])
+            dF= lib.aux.dictsNlists.flatten_dict(d[id])
             row=[id] + [dF[dH[h]] for h in self.headings]
             data.append(row)
         return data
@@ -823,7 +824,7 @@ class CollapsibleDict(Collapsible):
                 ii = [sg.T(f'{get_disp_name(k)}:', **text_kws), temp]
             content.append(ii)
         if Ncols>1:
-            content=fun.group_list_by_n([*content], int(np.ceil(len(content)/Ncols)))
+            content= lib.aux.dictsNlists.group_list_by_n([*content], int(np.ceil(len(content) / Ncols)))
             content=[[sg.Col(ii) for ii in content]]
         return content
 

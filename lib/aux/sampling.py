@@ -188,6 +188,7 @@ def levy_discrete(mu, sigma, range, dt=1, **kwargs):
     xx = np.arange(x0, x1+1)
     x = xx * dt
     pmf = levy_pdf(x, mu, sigma)
+    # print(pmf)
     pmf /= pmf.sum()
     return stats.rv_discrete(values=(xx, pmf))
 

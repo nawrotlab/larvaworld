@@ -5,11 +5,11 @@ import warnings
 from itertools import product
 import pandas as pd
 
-
+import lib.aux.dictsNlists
 from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni
 from lib.conf.conf import *
 from lib.stor.larva_dataset import LarvaDataset
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
 
 def build_dataset(datagroup_id,id,group_id, target_dir, source_dir=None,source_files=None, **kwargs):
@@ -242,7 +242,7 @@ def detect_dataset(datagroup_id=None, folder_path=None, raw=True, **kwargs):
                     dic[id] = folder_path
             elif df_ is not None:
                 fs = os.listdir(folder_path)
-                ids = fun.unique_list([f.split(df_)[0] for f in fs if df_ in f])
+                ids = lib.aux.dictsNlists.unique_list([f.split(df_)[0] for f in fs if df_ in f])
                 for id in ids:
                     dic[id] = folder_path
         return dic

@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema, spectrogram
 
-import lib.aux.functions as fun
+import lib.aux.ang_aux
+import lib.aux.dictsNlists
+import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
 from lib.anal.process.store import store_aux_dataset
@@ -24,14 +26,14 @@ def compute_spineangles(s, config, chunk_only=None, mode='full'):
         angles = bend_angles
     N = len(angles)
     print(f'Computing {N} angles')
-    xy_pars = fun.flatten_list([xy[i] for i in range(N + 2)])
+    xy_pars = lib.aux.dictsNlists.flatten_list([xy[i] for i in range(N + 2)])
     xy_ar = s[xy_pars].values
     Npoints = int(xy_ar.shape[1] / 2)
     Nticks = xy_ar.shape[0]
     xy_ar = np.reshape(xy_ar, (Nticks, Npoints, 2))
     c = np.zeros([N, Nticks]) * np.nan
     for i in range(Nticks):
-        c[:, i] = np.array([fun.angle(xy_ar[i, j + 2, :], xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
+        c[:, i] = np.array([lib.aux.ang_aux.angle(xy_ar[i, j + 2, :], xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
     for z, a in enumerate(angles):
         s[a] = c[z].T
     print('All angles computed')
@@ -47,7 +49,7 @@ def compute_bend(s, config, mode='minimal'):
         return
     elif b_conf == 'from_vectors':
         print(f'Computing bending angle as the difference between front and rear orients')
-        s['bend'] = s.apply(lambda r: fun.angle_dif(r[nam.orient('front')], r[nam.orient('rear')]), axis=1)
+        s['bend'] = s.apply(lambda r: lib.aux.ang_aux.angle_dif(r[nam.orient('front')], r[nam.orient('rear')]), axis=1)
     elif b_conf == 'from_angles':
         bend_angles = compute_spineangles(s, config, mode=mode)
         print(f'Computing bending angle as the sum of the first {len(bend_angles)} front angles')
@@ -84,7 +86,7 @@ def compute_orientations(s,e, config, mode='minimal'):
 
     xy = [nam.xy(points[i]) for i in range(len(points))]
     print(f'Computing front and rear orients')
-    xy_pars = fun.flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1]])
+    xy_pars = lib.aux.dictsNlists.flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1]])
     xy_ar = s[xy_pars].values
     Npoints = int(xy_ar.shape[1] / 2)
     Nticks = xy_ar.shape[0]
@@ -93,7 +95,7 @@ def compute_orientations(s,e, config, mode='minimal'):
     c = np.zeros([2, Nticks]) * np.nan
     for i in range(Nticks):
         for j in range(2) :
-            c[j, i] = fun.angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :])
+            c[j, i] = lib.aux.ang_aux.angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :])
     for z, a in enumerate([nam.orient('front'), nam.orient('rear')]):
         s[a] = c[z].T
         e[nam.initial(a)] = s[a].dropna().groupby('AgentID').first()
@@ -101,14 +103,14 @@ def compute_orientations(s,e, config, mode='minimal'):
         N = len(segs)
         print(f'Computing additional orients for {N} spinesegments')
         ors = nam.orient(segs)
-        xy_pars = fun.flatten_list([xy[i] for i in range(N + 1)])
+        xy_pars = lib.aux.dictsNlists.flatten_list([xy[i] for i in range(N + 1)])
         xy_ar = s[xy_pars].values
         Npoints = int(xy_ar.shape[1] / 2)
         Nticks = xy_ar.shape[0]
         xy_ar = np.reshape(xy_ar, (Nticks, Npoints, 2))
         c = np.zeros([N, Nticks]) * np.nan
         for i in range(Nticks):
-            c[:, i] = np.array([fun.angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
+            c[:, i] = np.array([lib.aux.ang_aux.angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
         for z, a in enumerate(ors):
             s[a] = c[z].T
     print('All orientations computed')
@@ -120,7 +122,7 @@ def unwrap_orientations(s, segs):
     for p in pars:
         for id in s.index.unique('AgentID').values:
             ts = s.loc[(slice(None), id), p].values
-            s.loc[(slice(None), id), nam.unwrap(p)] = fun.unwrap_deg(ts)
+            s.loc[(slice(None), id), nam.unwrap(p)] = lib.aux.ang_aux.unwrap_deg(ts)
     print('All orients unwrapped')
 
 

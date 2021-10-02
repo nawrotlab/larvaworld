@@ -6,7 +6,8 @@ import numpy as np
 import pygame
 from scipy.spatial import ConvexHull
 
-from lib.aux import functions as fun
+import lib.anal.process.aux
+from lib.aux import colsNstr as fun
 
 
 class GuppiesViewer(object):
@@ -511,7 +512,7 @@ def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, traj_colo
         # This is the case for larva trajectories derived from experiments where some values are np.nan
         else:
             traj_x = np.array([x for x, y in traj])
-            ds, de = fun.parse_array_at_nans(traj_x)
+            ds, de = lib.anal.process.aux.parse_array_at_nans(traj_x)
             parsed_traj = [traj[s:e] for s, e in zip(ds, de)]
             parsed_traj_col = [traj_col[s:e] for s, e in zip(ds, de)]
 

@@ -11,7 +11,7 @@ from lib.stor import paths as paths
 sys.path.insert(0, paths.get_parent_dir())
 
 from lib.conf.conf import loadConf, setDataGroup, deleteConf, saveConf
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 
 
 class LarvaDataGroup:

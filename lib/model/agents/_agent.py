@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 from shapely.geometry import Point
 
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 import lib.aux.rendering as ren
 
 

@@ -1,10 +1,17 @@
+import copy
 import os
+from operator import attrgetter
 
 import pandas as pd
 import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 from scipy.spatial.distance import euclidean
 
-from lib.aux import functions as fun
+import lib.aux.ang_aux
+import lib.aux.dictsNlists
+import lib.aux.sim_aux
+from lib.aux import colsNstr as fun
 from lib.aux import naming as nam
 from lib.model.DEB.gut import Gut
 from lib.stor import paths
@@ -16,6 +23,16 @@ import siunits as siu
 
 import lib.conf.dtype_dicts as dtypes
 
+def split_si_composite(df) :
+    ddf=copy.deepcopy(df)
+    unit_dict={}
+    for c in df.columns :
+        # print(c)
+        # print(c, df[c].apply(attrgetter('coef')))
+        ddf[c] = df[c].apply(attrgetter('coef'))
+        unit_dict[c] = df[c].iloc[0].unit
+        # us=df[c].apply(attrgetter('unit')).values.tolist()
+    return ddf, unit_dict
 
 class Collection:
     def __init__(self, name, par_dict, keys=None, object_class=None):
@@ -26,17 +43,17 @@ class Collection:
             'e_basic': ['l_mu', nam.cum('d'), f'{nam.cum("sd")}', nam.cum('t'), 'x', 'y', 'sv_mu'],
             'e_dispersion': ['dsp', 'sdsp', 'dsp_max', 'sdsp_max', 'dsp_0_40', 'dsp_0_80', 'dsp_20_80', 'sdsp_0_40',
                              'sdsp_0_80', 'sdsp_20_80'],
-            'spatial': fun.flatten_list([[k, f's{k}'] for k in
-                                         ['dsp', 'd', 'v', 'a', 'D_x', 'xv', 'xa', 'D_y', 'yv', 'ya', nam.cum('d'),
+            'spatial': lib.aux.dictsNlists.flatten_list([[k, f's{k}'] for k in
+                                                         ['dsp', 'd', 'v', 'a', 'D_x', 'xv', 'xa', 'D_y', 'yv', 'ya', nam.cum('d'),
                                           nam.cum('D_x'), nam.cum('D_y'), ]]),
             'e_spatial': [f'tor{i}_mu' for i in ['', 2, 5, 10, 20]],
             'angular': ['b', 'bv', 'ba', 'fo', 'fov', 'foa', 'ro', 'rov', 'roa'],
 
             'chemorbit': ['d_cent', 'sd_cent', 'o_cent'],
-            'e_chemorbit': fun.flatten_list(
+            'e_chemorbit': lib.aux.dictsNlists.flatten_list(
                 [[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_cent', 'sd_cent']]),
             'chemotax': ['d_chem', 'sd_chem', 'o_chem'],
-            'e_chemotax': fun.flatten_list(
+            'e_chemotax': lib.aux.dictsNlists.flatten_list(
                 [[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_chem', 'sd_chem']]),
 
             'olfactor': ['Act_tur', 'A_tur', 'A_olf'],
@@ -53,7 +70,7 @@ class Collection:
             self.object_class = object_class
         else:
             os = [p.o for p in pars if p.o is not None]
-            os = fun.unique_list(os)
+            os = lib.aux.dictsNlists.unique_list(os)
 
             if len(os) == 0:
                 self.object_class = None
@@ -111,7 +128,7 @@ class AgentCollector:
                 df = pd.DataFrame(self.table)
                 df.to_csv(f, index=True, header=True)
             else:
-                fun.save_dict(self.table, f)
+                lib.aux.dictsNlists.save_dict(self.table, f)
 
     def get_constants(self, object):
         dic = build_constants()
@@ -158,7 +175,7 @@ class GroupCollector:
                 dfs.append(df)
             ddf = pd.concat(dfs)
             ddf.sort_index(level=['Step', 'AgentID'], inplace=True)
-            dddf, u_dict = fun.split_si_composite(ddf)
+            dddf, u_dict = split_si_composite(ddf)
             if save_to is None:
                 save_to = self.save_to
             if save_to is not None:
@@ -167,12 +184,12 @@ class GroupCollector:
 
                 if save_units_dict:
                     ff = f'{save_to}/units.csv'
-                    fun.save_dict(u_dict, ff)
+                    lib.aux.dictsNlists.save_dict(u_dict, ff)
 
                 if as_df:
                     dddf.to_csv(f, index=True, header=True)
                 else:
-                    fun.save_dict(dddf.to_dict(), f)
+                    lib.aux.dictsNlists.save_dict(dddf.to_dict(), f)
             return dddf, u_dict
 
 
@@ -210,16 +227,16 @@ class CompGroupCollector(GroupCollector):
             if as_df:
                 df0.to_csv(f, index=True, header=True)
             else:
-                fun.save_dict(df0.to_dict(), f)
+                lib.aux.dictsNlists.save_dict(df0.to_dict(), f)
             if save_units_dict:
                 # ff = f'{save_to}/units.csv'
                 # fun.save_dict(u0_dict, ff)
                 try:
-                    uu_dict = fun.load_dicts([paths.UnitDict_path])[0]
+                    uu_dict = lib.aux.dictsNlists.load_dicts([paths.UnitDict_path])[0]
                     u0_dict.update(uu_dict)
                 except:
                     pass
-                fun.save_dict(u0_dict, paths.UnitDict_path)
+                lib.aux.dictsNlists.save_dict(u0_dict, paths.UnitDict_path)
         return df0
 
 
@@ -321,7 +338,7 @@ class Parameter:
                     if df is not None:
                         vs = df[self.p0.d].xs(o.unique_id, level='AgentID').dropna()
                         dt = self.par_dict['dt'].get_from(o, u=False)
-                        v = fun.freq(vs, dt)
+                        v = lib.aux.sim_aux.freq(vs, dt)
                     else:
                         v = np.nan
                 elif self.operator == 'final':
@@ -340,8 +357,8 @@ class Parameter:
             elif self.dispersion:
                 v = euclidean(self.xy(o=o, tick=tick, df=df), self.xy0(o=o, df=df))
             elif self.or2source is not None:
-                v = fun.angle_dif(getattr(o, 'front_orientation'),
-                                  fun.angle_to_x_axis(self.xy(o=o, tick=tick, df=df), self.or2source))
+                v = lib.aux.ang_aux.angle_dif(getattr(o, 'front_orientation'),
+                                              lib.aux.ang_aux.angle_to_x_axis(self.xy(o=o, tick=tick, df=df), self.or2source))
             v = self.postprocess(v)
             self.tick = tick
         else:
@@ -897,16 +914,34 @@ chunk_dict = {
 
 def load_ParDict():
     # import lib.aux.functions as fun
-    dic = fun.load_dicts([paths.ParDict_path])[0]
+    dic = lib.aux.dictsNlists.load_dicts([paths.ParDict_path])[0]
     return dic
 
+def df2pdf(df, path, **kwargs) :
+    # https://stackoverflow.com/questions/32137396/how-do-i-plot-only-a-table-in-matplotlib
+    fig, ax = plt.subplots(figsize=(12, 4))
+    ax.axis('tight')
+    ax.axis('off')
+    the_table = ax.table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center', **kwargs)
+    # the_table.set_fontsize(20)
+    the_table.scale(1, 2)
+    from matplotlib.font_manager import FontProperties
+
+    for (row, col), cell in the_table.get_celld().items():
+        if (row == 0) or (col == -1):
+            cell.set_text_props(fontproperties=FontProperties(weight='bold'))
+
+    # https://stackoverflow.com/questions/4042192/reduce-left-and-right-margins-in-matplotlib-plot
+    pp = PdfPages(path)
+    pp.savefig(fig, bbox_inches='tight')
+    pp.close()
 
 def save_ParDict_frame(df, save_pdf=False):
     import inspect
     args = list(inspect.signature(Parameter.__init__).parameters.keys())
     args = [a for a in args if a not in ['self', 'par_dict']]
     d = {k: {a: getattr(p, a) for a in args} for k, p in df.items()}
-    fun.save_dict(d, paths.ParDict_path)
+    lib.aux.dictsNlists.save_dict(d, paths.ParDict_path)
     if save_pdf:
         dd = [{'symbol': p.s, 'unit': p.u.unit.abbrev, 'codename': k, 'interpretation': p.d} for i, (k, p) in
               enumerate(df.items()) if 240 < i < 280]
@@ -914,12 +949,12 @@ def save_ParDict_frame(df, save_pdf=False):
         ws = np.array([1, 1, 1, 5])
         ws = (ws / sum(ws))
         ddf.to_csv(paths.ParDf_path)
-        fun.df2pdf(ddf, paths.ParPdf_path, colWidths=ws, edges='horizontal')
+        df2pdf(ddf, paths.ParPdf_path, colWidths=ws, edges='horizontal')
     return d
 
 
 def reconstruct_ParDict(test=False):
-    frame = fun.load_dicts([paths.ParDict_path])[0]
+    frame = lib.aux.dictsNlists.load_dicts([paths.ParDict_path])[0]
     dic = {}
     for k, args in frame.items():
         dic[k] = Parameter(**args, par_dict=dic)
@@ -957,12 +992,12 @@ def getPar(k=None, p=None, d=None, to_return=['d', 'l'], new_format=True):
                 if type(p) == str:
                     k = [k for k in ParFrame.keys() if ParFrame[k]['p'] == p][0]
                 elif type(p) == list:
-                    k = fun.flatten_list([[k for k in ParFrame.keys() if ParFrame[k]['p'] == p0][0] for p0 in p])
+                    k = lib.aux.dictsNlists.flatten_list([[k for k in ParFrame.keys() if ParFrame[k]['p'] == p0][0] for p0 in p])
             elif d is not None:
                 if type(d) == str:
                     k = [k for k in ParFrame.keys() if ParFrame[k]['d'] == d][0]
                 elif type(d) == list:
-                    k = fun.flatten_list([[k for k in ParFrame.keys() if ParFrame[k]['d'] == d0][0] for d0 in d])
+                    k = lib.aux.dictsNlists.flatten_list([[k for k in ParFrame.keys() if ParFrame[k]['d'] == d0][0] for d0 in d])
         if type(k) == str:
             return [ParFrame[k][i] for i in to_return]
         elif type(k) == list:
@@ -1052,6 +1087,6 @@ if __name__ == '__main__':
     # # plt.xlabel(df['unit'].iloc[1]/1973*u.day)
     # # # plt.xlabel([d[k].symbol for k in list(d.keys())])
     # # plt.show()
-    par_shorts = ['str_N', 'str_tr', 'cum_d']
+    par_shorts = ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']
     pars, sim_labels, exp_labels, xlabels, xlims = getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim'])
     print(pars)

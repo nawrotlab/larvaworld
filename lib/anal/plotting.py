@@ -18,10 +18,12 @@ from sklearn.linear_model import LinearRegression
 from PIL import Image
 import os
 
+import lib.anal.process.aux
+import lib.aux.dictsNlists
 from lib.anal.combining import combine_images, combine_pdfs
 from lib.conf import conf
 from lib.aux import naming as nam
-from lib.aux import functions as fun
+from lib.aux import colsNstr as fun
 from lib.conf.par import getPar, chunk_dict
 from lib.model.DEB.deb import DEB
 
@@ -553,7 +555,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         for d, l in zip(datasets, labels):
             dataset_deb_dicts = d.load_deb_dicts()
             deb_dicts.append(dataset_deb_dicts)
-        deb_dicts = fun.flatten_list(deb_dicts)
+        deb_dicts = lib.aux.dictsNlists.flatten_list(deb_dicts)
     Ndebs = len(deb_dicts)
     ids = [d['id'] for d in deb_dicts]
     if Ndebs == 1:
@@ -1632,12 +1634,12 @@ def boxplot_PI(datasets, labels=None, subfolder=None, save_as=None,sort_labels=F
         os.makedirs(save_to)
     filename = f'PI_boxplot.{suf}' if save_as is None else save_as
 
-    group_ids=fun.unique_list([d.config['group_id'] for d in datasets])
+    group_ids= lib.aux.dictsNlists.unique_list([d.config['group_id'] for d in datasets])
     Ngroups=len(group_ids)
-    common_ids = fun.unique_list([l.split('_')[-1] for l in group_ids])
+    common_ids = lib.aux.dictsNlists.unique_list([l.split('_')[-1] for l in group_ids])
 
     Ncommon = len(common_ids)
-    pair_ids = fun.unique_list([l.split('_')[0] for l in group_ids])
+    pair_ids = lib.aux.dictsNlists.unique_list([l.split('_')[0] for l in group_ids])
 
     Npairs = len(pair_ids)
     coupled_labels=True if Ngroups==Npairs*Ncommon else False
@@ -1672,7 +1674,7 @@ def boxplot_PI(datasets, labels=None, subfolder=None, save_as=None,sort_labels=F
         for pair_id in pair_ids :
             paired_group_ids=[f'{pair_id}_{common_id}' for common_id in common_ids]
             pair_PIs=[all_PIs_dict[id] for id in paired_group_ids]
-            pair_PI_array = fun.boolean_indexing(pair_PIs).T
+            pair_PI_array = boolean_indexing(pair_PIs).T
             pair_df = pd.DataFrame(pair_PI_array, columns=common_ids).assign(Trial=pair_id)
             pair_dfs.append(pair_df)
             cdf = pd.concat(pair_dfs)  # CONCATENATE
@@ -1680,7 +1682,7 @@ def boxplot_PI(datasets, labels=None, subfolder=None, save_as=None,sort_labels=F
     else :
         colors = fun.N_colors(Ngroups)
         palette = {id: c for id, c in zip(group_ids, colors)}
-        PI_array = fun.boolean_indexing(all_PIs).T
+        PI_array = boolean_indexing(all_PIs).T
         df = pd.DataFrame(PI_array, columns=group_ids).assign(Trial=1)
         cdf = pd.concat([df])  # CONCATENATE
     mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Group'])  # MELT
@@ -1770,46 +1772,55 @@ def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals
     fig, ax = plt.subplots(1, 1, figsize=(7.5, 5))
     for short, c in zip(par_shorts, cols):
         p, symbol, ylab, ylim = getPar(short, to_return=['d', 's', 'l', 'lim'])
-
+        xlab = 'time, $sec$' if table is None else 'timesteps'
+        ax.set_ylabel(ylab)
+        ax.set_xlabel(xlab)
+        if ylim is not None:
+            ax.set_ylim(ylim)
         for d, d_col, d_lab in zip(datasets, colors, labels):
             if Ndatasets > 1:
                 c = d_col
-            s = d.load_table(table) if table is not None else d.step_data
-            if p not in list(s.keys()):
-                print(f'Parameter {p} does not exist in dataset')
-                continue
-            # print(s[p])
-            dc = s[p]
-            dc_m = dc.groupby(level='Step').quantile(q=0.5)
-            Nticks = len(dc_m)
-            if table is None:
-                x = np.linspace(0, int(Nticks / d.fr), Nticks)
-                xlab = 'time, $sec$'
-            else:
-                x = np.arange(Nticks)
-                xlab = 'timesteps'
+            print()
+            print(d.id)
+            print(d.step_data.columns[:20])
+            print(d.step_data.columns[20:40])
+            print(d.step_data.columns[40:60])
+            print(d.step_data.columns[60:80])
+            print(d.step_data.columns[80:])
+            try :
+                if table is not None :
+                    dc = d.load_table(table)[p]
+                # if p not in list(s.keys()):
+                #     print(f'Parameter {p} does not exist in dataset')
+                #     continue
+                # print(s[p])
+                else :
+                    dc = d.read('step')[p]
+                dc_m = dc.groupby(level='Step').quantile(q=0.5)
+                Nticks = len(dc_m)
+                x = np.linspace(0, int(Nticks / d.fr), Nticks) if table is None else np.arange(Nticks)
+                ax.set_xlim([x[0], x[-1]])
 
-            if individuals:
-                for id in dc.index.get_level_values('AgentID'):
-                    dc_single = dc.xs(id, level='AgentID')
-                    ax.plot(x, dc_single, color=c, linewidth=1)
-                ax.plot(x, dc_m, 'r', linewidth=2)
-            else:
+                if individuals:
+                    for id in dc.index.get_level_values('AgentID'):
+                        dc_single = dc.xs(id, level='AgentID')
+                        ax.plot(x, dc_single, color=c, linewidth=1)
+                    ax.plot(x, dc_m, 'r', linewidth=2)
+                else:
 
-                dc_u = dc.groupby(level='Step').quantile(q=0.75)
-                dc_b = dc.groupby(level='Step').quantile(q=0.25)
+                    dc_u = dc.groupby(level='Step').quantile(q=0.75)
+                    dc_b = dc.groupby(level='Step').quantile(q=0.25)
 
-                plot_mean_and_range(x=x, mean=dc_m, lb=dc_u, ub=dc_b, axis=ax, color_mean=c, color_shading=c,
-                                    label=symbol)
-                if show_first:
-                    dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
-                    ax.plot(x, dc0, 'r')
+                    plot_mean_and_range(x=x, mean=dc_m, lb=dc_u, ub=dc_b, axis=ax, color_mean=c, color_shading=c,
+                                        label=symbol)
+                    if show_first:
+                        dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
+                        ax.plot(x, dc0, 'r')
+            except :
+                pass
 
-    ax.set_ylabel(ylab)
-    ax.set_xlabel(xlab)
-    ax.set_xlim([x[0], x[-1]])
-    if ylim is not None:
-        ax.set_ylim(ylim)
+
+
     if N > 1:
         ax.legend()
     ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
@@ -1838,11 +1849,11 @@ def plot_navigation_index(datasets, labels=None, subfolder='source', save_as=Non
         for id in d.agent_ids:
             s0 = s.xs(id, level='AgentID')
             s0 = s0[['x', 'y']].values
-            v0 = fun.compute_velocity(s0, dt=dt)
-            vx = fun.compute_component_velocity(s0, angles=np.zeros(Nticks), dt=dt)
+            v0 = lib.anal.process.aux.compute_velocity(s0, dt=dt)
+            vx = lib.anal.process.aux.compute_component_velocity(s0, angles=np.zeros(Nticks), dt=dt)
             # vx = fun.compute_velocity(s0 * np.array([1, 0]), dt=dt)
             # vy = fun.compute_component_velocity(s0, dt=dt)
-            vy = fun.compute_component_velocity(s0, angles=np.ones(Nticks) * -np.pi / 2, dt=dt)
+            vy = lib.anal.process.aux.compute_component_velocity(s0, angles=np.ones(Nticks) * -np.pi / 2, dt=dt)
             # vy = fun.compute_component_velocity(s0, angles=np.zeros(Nticks)*12, dt=dt)
             # vy = fun.compute_velocity(s0 * np.array([0, 1]), dt=dt)
             # print(s0* np.array([1, 0]))
@@ -1943,8 +1954,8 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
     if test_detection:
         for l, d, col in zip(labels, datasets, colors):
             dic = d.load_bout_dicts()
-            pau_dur = np.array(fun.flatten_list([ddic[pause_par] for ddic in dic.values()]))
-            chn_dur = np.array(fun.flatten_list([ddic[chain_par] for ddic in dic.values()]))
+            pau_dur = np.array(lib.aux.dictsNlists.flatten_list([ddic[pause_par] for ddic in dic.values()]))
+            chn_dur = np.array(lib.aux.dictsNlists.flatten_list([ddic[chain_par] for ddic in dic.values()]))
             pau_durs.append(pau_dur)
             chn_durs.append(chn_dur)
             labels.append(f'{l} truth')
@@ -3053,11 +3064,11 @@ def plot_chunk_Dorient2source(datasets, labels=None, chunk='stride', source=(0.0
         y0_par = f'y_at_{chunk}_start'
         y1_par = f'y_at_{chunk}_stop'
 
-        b0s = [fun.compute_bearing2source(d.get_par(x0_par).dropna().values, d.get_par(y0_par).dropna().values,
-                                          d.get_par(ho0_par).dropna().values, loc=source, in_deg=True) for d in
+        b0s = [lib.anal.process.aux.compute_bearing2source(d.get_par(x0_par).dropna().values, d.get_par(y0_par).dropna().values,
+                                                           d.get_par(ho0_par).dropna().values, loc=source, in_deg=True) for d in
                datasets]
-        b1s = [fun.compute_bearing2source(d.get_par(x1_par).dropna().values, d.get_par(y1_par).dropna().values,
-                                          d.get_par(ho1_par).dropna().values, loc=source, in_deg=True) for d in
+        b1s = [lib.anal.process.aux.compute_bearing2source(d.get_par(x1_par).dropna().values, d.get_par(y1_par).dropna().values,
+                                                           d.get_par(ho1_par).dropna().values, loc=source, in_deg=True) for d in
                datasets]
         dbs = [np.abs(b0) - np.abs(b1) for b0, b1 in zip(b0s, b1s)]
 
@@ -3305,7 +3316,7 @@ def plot_config(datasets, labels, save_to, subfolder=None):
         raise ValueError(f'Number of labels {len(labels)} does not much number of datasets {Ndatasets}')
     try :
         cs=[d.config['color'] for d in datasets]
-        u_cs=fun.unique_list(cs)
+        u_cs= lib.aux.dictsNlists.unique_list(cs)
         if len(u_cs)==len(cs) :
             colors=cs
         elif len(u_cs)==len(cs)-1 and cs[-1] in cs[:-1] :
@@ -3656,3 +3667,11 @@ graph_dict = {
     'food intake (barplot)': barplot,
     'deb': plot_debs,
 }
+
+
+def boolean_indexing(v, fillval=np.nan):
+    lens = np.array([len(item) for item in v])
+    mask = lens[:, None] > np.arange(lens.max())
+    out = np.full(mask.shape, fillval)
+    out[mask] = np.concatenate(v)
+    return out

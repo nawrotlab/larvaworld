@@ -3,9 +3,10 @@ import math
 import numpy as np
 from shapely.geometry import LineString, Polygon, Point
 
-
+import lib.aux.ang_aux
+import lib.aux.sim_aux
 from lib.model.body.body import LarvaBody
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 
 
 class BodyManager(LarvaBody):
@@ -232,11 +233,11 @@ class BodySim(BodyManager):
         d, l = self.dst, self.sim_length
         if not self.model.Box2D:
             if self.Nsegs == 2:
-                self.spineangles[0] = fun.restore_bend_2seg(self.spineangles[0], d, l,
-                                                            correction_coef=self.bend_correction_coef)
+                self.spineangles[0] = lib.aux.ang_aux.restore_bend_2seg(self.spineangles[0], d, l,
+                                                                        correction_coef=self.bend_correction_coef)
             else:
-                self.spineangles = fun.restore_bend(self.spineangles, d, l, self.Nsegs,
-                                                    correction_coef=self.bend_correction_coef)
+                self.spineangles = lib.aux.ang_aux.restore_bend(self.spineangles, d, l, self.Nsegs,
+                                                                correction_coef=self.bend_correction_coef)
         self.compute_body_bend()
 
     # def set_lin_activity(self, value):
@@ -326,7 +327,7 @@ class BodySim(BodyManager):
                 hr1 = None
                 hp1 = hp0 + dxy
                 hf1 = hp1 + k * (self.sim_length / 2)
-            hf1_ok, hp1_ok = fun.inside_polygon(points=[hf1, hp1], tank_polygon=self.model.tank_polygon)
+            hf1_ok, hp1_ok = lib.aux.sim_aux.inside_polygon(points=[hf1, hp1], tank_polygon=self.model.tank_polygon)
             in_tank = all([hf1_ok, hp1_ok])
             return in_tank, o1, hr1, hp1
 
@@ -389,7 +390,7 @@ class BodySim(BodyManager):
 
     def compute_spineangles(self):
         seg_ors = [seg.get_orientation() for seg in self.segs]
-        self.spineangles = [fun.angle_dif(seg_ors[i], seg_ors[i + 1], in_deg=False) for i in range(self.Nangles)]
+        self.spineangles = [lib.aux.ang_aux.angle_dif(seg_ors[i], seg_ors[i + 1], in_deg=False) for i in range(self.Nangles)]
 
     def compute_body_bend(self):
         self.body_bend = sum(self.spineangles[:self.Nangles_b])

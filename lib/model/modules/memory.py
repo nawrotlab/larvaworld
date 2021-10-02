@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 
-from lib.aux.functions import flatten_tuple
+from lib.aux.dictsNlists import flatten_tuple
 from lib.model.modules.basic import Effector
 
 

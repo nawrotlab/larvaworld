@@ -2,7 +2,8 @@ import random
 
 import numpy as np
 
-from lib.aux import functions as fun
+import lib.aux.sim_aux
+from lib.aux import colsNstr as fun
 from lib.model.agents._larva import Larva
 from lib.model.body.controller import BodySim
 from lib.model.modules.brain import DefaultBrain
@@ -257,7 +258,7 @@ class LarvaSim(BodySim, Larva):
             elif self.model.experiment == 'keep_the_flag':
                 carrier_group = self.group
                 carrier_group_odor_id = self.odor_id
-                opponent_group = fun.LvsRtoggle(carrier_group)
+                opponent_group = lib.aux.sim_aux.LvsRtoggle(carrier_group)
                 opponent_group_odor_id = f'{opponent_group}_odor'
                 for f in self.model.get_flies():
                     if f.group == carrier_group:

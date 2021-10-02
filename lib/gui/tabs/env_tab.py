@@ -3,8 +3,14 @@ import random
 
 import numpy as np
 import PySimpleGUI as sg
+
+import lib.aux.ang_aux
+import lib.aux.sim_aux
+import lib.aux.xy_aux
 import lib.conf.dtype_dicts as dtypes
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
+import lib.conf.init_dtypes
+import lib.gui.aux.functions
 from lib.conf.init_dtypes import null_dict
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
 from lib.gui.aux.functions import col_size, col_kws, t_kws, retrieve_dict, gui_col
@@ -173,7 +179,7 @@ class EnvTab(GuiTab):
             [sg.R('Inspect item', 1, True, k='-INSPECT-', enable_events=True)]]
         lB = [[sg.R(f'Add {B}', 1, k=B, enable_events=True, **t_kws(10)), *color_pick_layout(B, 'black')],
               [sg.T('', **t_kws(4)), sg.T('id', **t_kws(5)), sg.In(B, k=f'{B}_id')],
-              [sg.T('', **t_kws(4)), sg.T('width', **t_kws(5)), sg.Spin(values=fun.value_list(end=0.1, steps=1000, decimals=4), initial_value=0.001, k=f'{B}_width')],
+              [sg.T('', **t_kws(4)), sg.T('width', **t_kws(5)), sg.Spin(values=lib.conf.init_dtypes.value_list(end=0.1, steps=1000, decimals=4), initial_value=0.001, k=f'{B}_width')],
               ]
         lS=[*source_l,
             [sg.T('', **t_kws(5)), *s2.get_layout()],
@@ -344,7 +350,7 @@ class EnvTab(GuiTab):
                                         'default_color': v[f'{B}_color'],
                                         'width': v[f'{B}_width'],
                                         'points': [P1, P2]}
-                                dic['current'] = fun.agent_list2dict(
+                                dic['current'] = lib.gui.aux.functions.agent_list2dict(
                                     [retrieve_dict(dic0, dtypes.get_dict_dtypes(B))])
 
                                 dic['prior_rect'] = self.graph.draw_line(p1, p2, color=v[f'{B}_color'],
@@ -540,7 +546,7 @@ class EnvTab(GuiTab):
             loc=distribution['loc']
             scale=distribution['scale']
             orientation_range=distribution['orientation_range']
-        Ps = fun.generate_xy_distro(mode, shape, N, loc=self.scale_xy(loc, reverse=True), scale=np.array(scale) * self.s)
+        Ps = lib.aux.xy_aux.generate_xy_distro(mode, shape, N, loc=self.scale_xy(loc, reverse=True), scale=np.array(scale) * self.s)
         group_figs = []
         for i, P0 in enumerate(Ps):
             if item == self.S:
@@ -557,8 +563,8 @@ class EnvTab(GuiTab):
 
     def draw_larva(self, P0, color, orientation_range, **kwargs):
         points = np.array([[0.9, 0.1], [0.05, 0.1]])
-        xy0 = fun.body(points) - np.array([0.5, 0.0])
-        xy0 = fun.rotate_multiple_points(xy0, random.uniform(*np.deg2rad(orientation_range)), origin=[0, 0])
+        xy0 = lib.aux.sim_aux.body(points) - np.array([0.5, 0.0])
+        xy0 = lib.aux.ang_aux.rotate_multiple_points(xy0, random.uniform(*np.deg2rad(orientation_range)), origin=[0, 0])
         xy0 = xy0 * self.s / 250 + np.array(P0)
         temp = self.graph.draw_polygon(xy0, line_width=3, line_color=color, fill_color=color)
         return temp

@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import os
 
-import lib.aux.functions as fun
+import lib.aux.dictsNlists
+import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
 import lib.conf.dtype_dicts as dtypes
 
@@ -80,7 +81,7 @@ def create_reference_dataset(config, dataset_id='reference', Nstd=3, overwrite=F
     new_d = LarvaDataset(path_dir)
     new_d.set_id(dataset_id)
 
-    pars = fun.load_dict(paths.RefParsFile, use_pickle=False)
+    pars = lib.aux.dictsNlists.load_dict(paths.RefParsFile, use_pickle=False)
 
     pars= {p:pp for p,pp in pars.items() if p in new_d.endpoint_data.columns}
 

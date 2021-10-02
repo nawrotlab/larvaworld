@@ -50,11 +50,7 @@ JovanicParConf = {'bend': 'from_angles',
 
 SimParConf = {'bend': 'from_angles',
               'front_vector': (1, 2),
-              # 'front_vector_start': 1,
-              # 'front_vector_stop': 2,
               'rear_vector': (-2, -1),
-              # 'rear_vector_start': -2,
-              # 'rear_vector_stop': -1,
               'point_idx': np.nan,
               'use_component_vel': False,
               'scaled_vel_threshold': 0.2}

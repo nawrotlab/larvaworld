@@ -2,8 +2,10 @@ import os
 from collections import OrderedDict
 
 import numpy as np
+
+import lib.aux.dictsNlists
 from lib.aux import naming as nam
-from lib.aux import functions as fun
+from lib.aux import colsNstr as fun
 from lib.aux import sampling as sampling
 from lib.conf import dtype_dicts as dtypes
 from lib.conf.conf import loadConf
@@ -246,7 +248,7 @@ class Intermitter(Effector):
             file = f'{path}/{self.brain.agent.unique_id}.txt'
             if not os.path.exists(path):
                 os.makedirs(path)
-            fun.save_dict(dic, file)
+            lib.aux.dictsNlists.save_dict(dic, file)
 
     def update(self, max_refeed_rate=0.9, refeed_rate_coef=0, food_present=None, feed_success=None):
         if food_present is None:

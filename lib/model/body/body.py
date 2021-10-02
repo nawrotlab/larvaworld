@@ -5,8 +5,9 @@ from shapely.ops import cascaded_union
 # TODO Find a way to use this. Now if changed everything is scal except locomotion. It seems that
 #  ApplyForceToCenter function does not scale
 # _world_scale = np.int(100)
-
-import lib.aux.functions as fun
+import lib.aux.dictsNlists
+import lib.aux.colsNstr as fun
+import lib.aux.sim_aux
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
 
 
@@ -164,8 +165,8 @@ class LarvaBody:
         self.density = density / (1 - 2 * (Nsegs - 1) * interval)
         w = width_to_length_proportion / 2
         points = np.array([[0.9, w], [0.05, w]])
-        xy0 = fun.body(points)
-        ps = fun.segment_body(Nsegs, xy0, seg_ratio=seg_ratio, centered=True)
+        xy0 = lib.aux.sim_aux.body(points)
+        ps = lib.aux.sim_aux.segment_body(Nsegs, xy0, seg_ratio=seg_ratio, centered=True)
         seg_vertices = [np.array([p]) * 1 for p in ps]
         return seg_vertices
 
@@ -470,8 +471,8 @@ class LarvaBody:
 
     def set_contour(self, Ncontour=22):
         vertices = [np.array(seg.vertices[0]) for seg in self.segs]
-        l_side = fun.flatten_list([v[:int(len(v) / 2)] for v in vertices])
-        r_side = fun.flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
+        l_side = lib.aux.dictsNlists.flatten_list([v[:int(len(v) / 2)] for v in vertices])
+        r_side = lib.aux.dictsNlists.flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
         r_side.reverse()
         total_contour = l_side + r_side
         if len(total_contour) > Ncontour:

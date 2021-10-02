@@ -1,12 +1,13 @@
 import copy
 from typing import Tuple, Type
 
+import lib.aux.dictsNlists
 import lib.aux.naming as nam
 import numpy as np
 import pandas as pd
 import shelve
 
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 import lib.gui.aux.functions
 from lib.aux.collecting import step_database
 import lib.stor.paths as paths
@@ -621,7 +622,7 @@ def set_ParDb():
     par_db['lim'].loc['pau_t_mu'] = [0.0, 2.0]
 
     to_drop1 = [f'{c}_l' for c in ['non_str', 'pau', 'str', 'tur', 'Ltur', 'Rtur', 'fee']]
-    to_drop2 = fun.flatten_list([[f'{c}_{d}' for d in ['sstd', 'std', 'sd', 'd']] for c in ['non_str', 'fee']])
+    to_drop2 = lib.aux.dictsNlists.flatten_list([[f'{c}_{d}' for d in ['sstd', 'std', 'sd', 'd']] for c in ['non_str', 'fee']])
     to_drop = to_drop1 + to_drop2
     par_db.drop(labels=to_drop, inplace=True)
 
@@ -792,7 +793,7 @@ def par_in_db(short=None, par=None):
 
 
 def get_runtime_pars():
-    return fun.unique_list([p for p in list(step_database.keys()) if par_in_db(par=p)])
+    return lib.aux.dictsNlists.unique_list([p for p in list(step_database.keys()) if par_in_db(par=p)])
 
 
 # print(get_par_dict(par='orientation_to_center'))

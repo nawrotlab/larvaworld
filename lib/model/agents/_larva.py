@@ -3,6 +3,7 @@ from copy import deepcopy
 import numpy as np
 from scipy.spatial.distance import euclidean
 
+import lib.aux.sim_aux
 from lib.model.agents._agent import LarvaworldAgent
 
 
@@ -219,7 +220,7 @@ class Larva(LarvaworldAgent):
 
     @property
     def crawler_freq(self):
-        return self.brain.crawler.freq
+        return lib.aux.sim_aux.freq
 
     @property
     def num_strides(self):

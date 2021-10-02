@@ -3,11 +3,17 @@ from typing import List, Tuple, Union
 import pandas as pd
 from siunits import BaseUnit, Composite, DerivedUnit
 
-from lib.aux import functions as fun, naming as nam
+import lib.aux.dictsNlists
+from lib.aux import colsNstr as fun, naming as nam
 from lib.aux.collecting import output_keys
-from lib.aux.functions import get_pygame_key
+from lib.gui.aux.functions import get_pygame_key
 from lib.stor import paths
 
+def maxNdigits(array, Min=None) :
+    N= len(max(array.astype(str), key=len))
+    if Min is not None :
+        N=max([N,Min])
+    return N
 
 def base_dtype(t):
     if t in [float, Tuple[float], List[float], List[Tuple[float]]]:
@@ -40,7 +46,7 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_values=
                     Ndecimals = len(str(format(dv, 'f')).split('.')[1])
                     array = np.round(array, Ndecimals)
                 vs = array.astype(cur_dtype)
-                Ndigits = fun.maxNdigits(vs, 4)
+                Ndigits = maxNdigits(vs, 4)
                 vs = vs.tolist()
 
     if aux_values is not None and vs is not None:
@@ -988,7 +994,7 @@ def init_agent_dtypes(class_name, dtypes_dict):
                   'pos': Tuple[float, float]}
     elif class_name in ['Border']:
         dtypes = {**dtypes,
-                  'width': fun.value_list(end=0.1, steps=1000, decimals=4),
+                  'width': value_list(end=0.1, steps=1000, decimals=4),
                   'points': List[tuple]}
     return dtypes
 
@@ -1009,14 +1015,14 @@ def init_dtypes():
     d = {
         'odor':
             {'odor_id': str,
-             'odor_intensity': fun.value_list(end=1000.0, steps=10000, decimals=2),
-             'odor_spread': fun.value_list(end=10.0, steps=100000, decimals=5)
+             'odor_intensity': value_list(end=1000.0, steps=10000, decimals=2),
+             'odor_spread': value_list(end=10.0, steps=100000, decimals=5)
              },
         'food':
             {
-                'radius': fun.value_list(end=10.0, steps=10000, decimals=4),
-                'amount': fun.value_list(end=100.0, steps=1000, decimals=2),
-                'quality': fun.value_list(),
+                'radius': value_list(end=10.0, steps=10000, decimals=4),
+                'amount': value_list(end=100.0, steps=1000, decimals=2),
+                'quality': value_list(),
                 # 'shape_vertices': List[tuple],
                 'can_be_carried': bool,
                 'type': list(substrate_dict.keys())
@@ -1025,22 +1031,22 @@ def init_dtypes():
             {
                 'unique_id': str,
                 'grid_dims': (10, 1000),
-                'initial_value': fun.value_list(start=0.0, end=1.0, steps=10000, decimals=4),
+                'initial_value': value_list(start=0.0, end=1.0, steps=10000, decimals=4),
                 'distribution': ['uniform'],
                 'type': list(substrate_dict.keys())
             },
         'arena': {'arena_dims': (0.0, 10.0), 'arena_shape': ['circular', 'rectangular']},
         'life':
             {
-                'epochs': {'type': List[tuple], 'values': fun.value_list()},
-                'epoch_qs': {'type': list, 'values': fun.value_list()},
-                'hours_as_larva': {'type': float, 'values': fun.value_list(end=250, steps=25100, decimals=2)},
-                'substrate_quality': {'type': float, 'values': fun.value_list()},
+                'epochs': {'type': List[tuple], 'values': value_list()},
+                'epoch_qs': {'type': list, 'values': value_list()},
+                'hours_as_larva': {'type': float, 'values': value_list(end=250, steps=25100, decimals=2)},
+                'substrate_quality': {'type': float, 'values': value_list()},
                 'substrate_type': list(substrate_dict.keys()),
             },
         'odorscape': {'odorscape': ['Gaussian', 'Diffusion'],
                       'grid_dims': (10, 1000),
-                      'evap_const': fun.value_list(),
+                      'evap_const': value_list(),
                       'gaussian_sigma': (0.0, 10.0),
                       },
         'odor_gains': {
@@ -1057,9 +1063,9 @@ def init_dtypes():
                 'abs': bool,
             },
             'minimize': bool,
-            'threshold': fun.value_list(0.000001, 1.0, steps=1000000, decimals=6),
-            'max_Nsims': fun.value_list(2, 1002, steps=1000, integer=True),
-            'Nbest': fun.value_list(2, 42, steps=40, integer=True)
+            'threshold': value_list(0.000001, 1.0, steps=1000000, decimals=6),
+            'max_Nsims': value_list(2, 1002, steps=1000, integer=True),
+            'Nbest': value_list(2, 42, steps=40, integer=True)
         },
         'batch_methods': {
             'run': ['null', 'default', 'deb', 'odor_preference'],
@@ -1071,49 +1077,49 @@ def init_dtypes():
                          'Ngrid': int},
 
         'visualization': init_vis_dtypes(),
-        'body': {'initial_length': fun.value_list(0.0, 0.01, steps=100, decimals=4),
-                 'length_std': fun.value_list(0.0, 0.01, steps=100, decimals=4),
-                 'Nsegs': fun.value_list(1, 12, steps=12, integer=True),
+        'body': {'initial_length': value_list(0.0, 0.01, steps=100, decimals=4),
+                 'length_std': value_list(0.0, 0.01, steps=100, decimals=4),
+                 'Nsegs': value_list(1, 12, steps=12, integer=True),
                  'seg_ratio': List[float],  # [5 / 11, 6 / 11]
                  'touch_sensors': bool,
                  },
         'physics': {
-            'torque_coef': fun.value_list(),
-            'ang_damping': fun.value_list(),
-            'body_spring_k': fun.value_list(),
-            'bend_correction_coef': fun.value_list(),
+            'torque_coef': value_list(),
+            'ang_damping': value_list(),
+            'body_spring_k': value_list(),
+            'bend_correction_coef': value_list(),
         },
-        'energetics': {'f_decay': fun.value_list(),
-                       'absorption': fun.value_list(),
+        'energetics': {'f_decay': value_list(),
+                       'absorption': value_list(),
                        'hunger_as_EEB': bool,
-                       'hunger_gain': fun.value_list(),
+                       'hunger_gain': value_list(),
                        'deb_on': bool,
                        'assimilation_mode': ['sim', 'gut', 'deb'],
-                       'DEB_dt': fun.value_list()},
+                       'DEB_dt': value_list()},
         'crawler': {'waveform': ['realistic', 'square', 'gaussian', 'constant'],
                     'freq_range': (0.0, 2.0),
-                    'initial_freq': fun.value_list(end=2.0, steps=200),  # From D1 fit
-                    'freq_std': fun.value_list(end=2.0, steps=200),  # From D1 fit
-                    'step_to_length_mu': fun.value_list(),  # From D1 fit
-                    'step_to_length_std': fun.value_list(),  # From D1 fit
-                    'initial_amp': fun.value_list(end=2.0, steps=200),
-                    'noise': fun.value_list(),
-                    'max_vel_phase': fun.value_list(end=2.0, steps=200)
+                    'initial_freq': value_list(end=2.0, steps=200),  # From D1 fit
+                    'freq_std': value_list(end=2.0, steps=200),  # From D1 fit
+                    'step_to_length_mu': value_list(),  # From D1 fit
+                    'step_to_length_std': value_list(),  # From D1 fit
+                    'initial_amp': value_list(end=2.0, steps=200),
+                    'noise': value_list(),
+                    'max_vel_phase': value_list(end=2.0, steps=200)
                     },
         'turner': {'mode': ['', 'neural', 'sinusoidal'],
-                   'base_activation': fun.value_list(end=100.0, steps=1000, decimals=1),
+                   'base_activation': value_list(end=100.0, steps=1000, decimals=1),
                    'activation_range': (0.0, 100.0),
-                   'noise': fun.value_list(),
-                   'activation_noise': fun.value_list(),
-                   'initial_amp': fun.value_list(end=2.0, steps=200),
+                   'noise': value_list(),
+                   'activation_noise': value_list(),
+                   'initial_amp': value_list(end=2.0, steps=200),
                    'amp_range': (0.0, 2.0),
-                   'initial_freq': fun.value_list(end=2.0, steps=200),
+                   'initial_freq': value_list(end=2.0, steps=200),
                    'freq_range': (0.0, 2.0),
                    },
         'interference': {
             'crawler_phi_range': (0.0, 2.0),  # np.pi * 0.55,  # 0.9, #,
             'feeder_phi_range': (0.0, 2.0),
-            'attenuation': fun.value_list()
+            'attenuation': value_list()
         },
         'intermitter': {
             'pause_dist': bout_dist_dtypes,
@@ -1122,19 +1128,19 @@ def init_dtypes():
             # 'stridechain_dist': dict,
             'crawl_bouts': bool,
             'feed_bouts': bool,
-            'crawl_freq': fun.value_list(end=2.0, steps=200),
-            'feed_freq': fun.value_list(end=4.0, steps=400),
-            'feeder_reoccurence_rate': fun.value_list(),
-            'EEB_decay': fun.value_list(end=2.0, steps=200),
-            'EEB': fun.value_list()},
+            'crawl_freq': value_list(end=2.0, steps=200),
+            'feed_freq': value_list(end=4.0, steps=400),
+            'feeder_reoccurence_rate': value_list(),
+            'EEB_decay': value_list(end=2.0, steps=200),
+            'EEB': value_list()},
         'olfactor': {
             'perception': ['log', 'linear'],
-            'olfactor_noise': fun.value_list(),
-            'decay_coef': fun.value_list(end=2.0, steps=200)},
+            'olfactor_noise': value_list(),
+            'decay_coef': value_list(end=2.0, steps=200)},
         'feeder': {'freq_range': (0.0, 4.0),
-                   'initial_freq': fun.value_list(end=4.0, steps=400),
-                   'feed_radius': fun.value_list(start=0.01, end=1.0, steps=1000, decimals=2),
-                   'V_bite': fun.value_list(start=0.0001, end=0.01, steps=1000, decimals=4)},
+                   'initial_freq': value_list(end=4.0, steps=400),
+                   'feed_radius': value_list(start=0.01, end=1.0, steps=1000, decimals=2),
+                   'V_bite': value_list(start=0.0001, end=0.01, steps=1000, decimals=4)},
         'memory': {'DeltadCon': float,
                    'state_spacePerOdorSide': int,
                    'gain_space': List[float],
@@ -1156,15 +1162,15 @@ def init_dtypes():
         'sim_params': {
             'sim_ID': str,
             'path': str,
-            'duration': {'type': float, 'values': fun.value_list(end=2000.0, steps=20001, decimals=1)},
-            'timestep': {'type': float, 'values': fun.value_list()},
+            'duration': {'type': float, 'values': value_list(end=2000.0, steps=20001, decimals=1)},
+            'timestep': {'type': float, 'values': value_list()},
             'Box2D': bool,
             'sample': list(loadConfDict('Ref').keys())
         },
         'essay_params': {
             'essay_ID': str,
             'path': str,
-            'N': fun.value_list(1, 100, steps=100, integer=True)
+            'N': value_list(1, 100, steps=100, integer=True)
         },
         'logn_dist': {
             'range': Tuple[float, float],
@@ -1196,23 +1202,23 @@ def init_dtypes():
             'wrap_mode': [None, 'zero', 'positive']
         },
         'preprocessing': {
-            'rescale_by': fun.value_list(end=100.0, steps=100000, decimals=3),
+            'rescale_by': value_list(end=100.0, steps=100000, decimals=3),
             'drop_collisions': bool,
             'interpolate_nans': bool,
-            'filter_f': fun.value_list(end=10.0, steps=10000, decimals=3),
+            'filter_f': value_list(end=10.0, steps=10000, decimals=3),
             'transposition': ['', 'origin', 'arena', 'center'],
         },
         'processing': {
             'types': processing_types(),
-            'dsp_starts': {'type': list, 'values': fun.value_list(start=0, end=180, steps=181, integer=True)},
-            'dsp_stops': {'type': list, 'values': fun.value_list(start=0, end=180, steps=181, integer=True)},
-            'tor_durs': {'type': list, 'values': fun.value_list(start=0, end=180, steps=181, integer=True)}},
+            'dsp_starts': {'type': list, 'values': value_list(start=0, end=180, steps=181, integer=True)},
+            'dsp_stops': {'type': list, 'values': value_list(start=0, end=180, steps=181, integer=True)},
+            'tor_durs': {'type': list, 'values': value_list(start=0, end=180, steps=181, integer=True)}},
         'annotation': {'bouts': annotation_bouts(dtypes=True),
                        'track_point': str,
                        'track_pars': List[str], 'chunk_pars': List[str],
                        'vel_par': str, 'ang_vel_par': str, 'bend_vel_par': str,
-                       'min_ang': fun.value_list(end=180.0, steps=1900, decimals=1),
-                       'min_ang_vel': fun.value_list(end=1000.0, steps=10001, decimals=1),
+                       'min_ang': value_list(end=180.0, steps=1900, decimals=1),
+                       'min_ang_vel': value_list(end=1000.0, steps=10001, decimals=1),
                        'non_chunks': bool},
         'enrich_aux': {'recompute': bool,
                        'mode': ['minimal', 'full'],
@@ -1223,10 +1229,10 @@ def init_dtypes():
                                 'turn',
                                 'unused']}},
         'build_conf': {
-            'min_duration_in_sec': fun.value_list(start=0.0, end=3600.0, steps=36000, decimals=1),
-            'min_end_time_in_sec': fun.value_list(start=0.0, end=3600.0, steps=36000, decimals=1),
-            'start_time_in_sec': fun.value_list(start=0.0, end=3600.0, steps=36000, decimals=1),
-            'max_Nagents': fun.value_list(start=1, end=1000, steps=1000, integer=True),
+            'min_duration_in_sec': value_list(start=0.0, end=3600.0, steps=36000, decimals=1),
+            'min_end_time_in_sec': value_list(start=0.0, end=3600.0, steps=36000, decimals=1),
+            'start_time_in_sec': value_list(start=0.0, end=3600.0, steps=36000, decimals=1),
+            'max_Nagents': value_list(start=1, end=1000, steps=1000, integer=True),
             'save_mode': ['minimal', 'semifull', 'full', 'points'],
         },
         'substrate': {k: float for k in substrate_dict['standard'].keys()}
@@ -1264,9 +1270,9 @@ def init_dtypes():
                         'food_grid': dict,
                         'source_units': dict}
     d['tracker'] = {
-        'resolution': {'fr': fun.value_list(0.0, 20.0, steps=2100, decimals=2),
-                       'Npoints': fun.value_list(1, 15, steps=15, integer=True),
-                       'Ncontour': fun.value_list(0, 30, steps=31, integer=True),
+        'resolution': {'fr': value_list(0.0, 20.0, steps=2100, decimals=2),
+                       'Npoints': value_list(1, 15, steps=15, integer=True),
+                       'Ncontour': value_list(0, 30, steps=31, integer=True),
                        },
         'filesystem': {
             'read_sequence': List[str],
@@ -1280,15 +1286,15 @@ def init_dtypes():
     }
     d['parameterization'] = {'bend': ['from_angles', 'from_vectors'],
                              'front_vector': {'type': tuple,
-                                              'values': fun.value_list(start=-12, end=12, steps=25, integer=True)},
+                                              'values': value_list(start=-12, end=12, steps=25, integer=True)},
                              # 'front_vector': (-12, 12),
                              'rear_vector': {'type': tuple,
-                                             'values': fun.value_list(start=-12, end=12, steps=25, integer=True)},
+                                             'values': value_list(start=-12, end=12, steps=25, integer=True)},
                              # 'rear_vector': (-12, 12),
-                             'front_body_ratio': fun.value_list(),
-                             'point_idx': fun.value_list(-1, 12, steps=14, integer=True),
+                             'front_body_ratio': value_list(),
+                             'point_idx': value_list(-1, 12, steps=14, integer=True),
                              'use_component_vel': bool,
-                             'scaled_vel_threshold': fun.value_list()}
+                             'scaled_vel_threshold': value_list()}
 
     for c in ['Larva', 'LarvaSim', 'LarvaReplay', 'Border', 'Source', 'Food']:
         d[c] = init_agent_dtypes(c, d)
@@ -1300,17 +1306,17 @@ def store_dtypes():
     d1 = init_dicts()
     d2 = init_dtypes()
 
-    d22 = fun.replace_in_dict(d2, replace_d=typing_to_str_dict, inverse=True)
+    d22 = lib.aux.dictsNlists.replace_in_dict(d2, replace_d=typing_to_str_dict, inverse=True)
 
     d = {'null_dicts': d1, 'dtypes': d22}
-    fun.save_dict(d, paths.Dtypes_path, use_pickle=True)
+    lib.aux.dictsNlists.save_dict(d, paths.Dtypes_path, use_pickle=True)
 
 
 def load_dtypes():
-    d = fun.load_dict(paths.Dtypes_path, use_pickle=True)
+    d = lib.aux.dictsNlists.load_dict(paths.Dtypes_path, use_pickle=True)
     d1 = d['null_dicts']
     d2 = d['dtypes']
-    d22 = fun.replace_in_dict(d2, replace_d=typing_to_str_dict, inverse=False)
+    d22 = lib.aux.dictsNlists.replace_in_dict(d2, replace_d=typing_to_str_dict, inverse=False)
     return d1, d22
 
 
@@ -1318,7 +1324,7 @@ def init_vis_dtypes():
     vis_render_dtypes = {
         'mode': [None, 'video', 'image'],
         'image_mode': [None, 'final', 'snapshots', 'overlap'],
-        'video_speed': fun.value_list(1, 60, steps=60, integer=True),
+        'video_speed': value_list(1, 60, steps=60, integer=True),
         'media_name': str,
         'show_display': bool,
     }
@@ -1330,7 +1336,7 @@ def init_vis_dtypes():
         'draw_contour': bool,
         'draw_sensors': bool,
         'trails': bool,
-        'trajectory_dt': fun.value_list(0.0, 100.0, steps=1000, decimals=1),
+        'trajectory_dt': value_list(0.0, 100.0, steps=1000, decimals=1),
     }
 
     vis_color_dtypes = {
@@ -1497,7 +1503,7 @@ def store_RefPars():
         nam.freq('feed'): 'brain.feeder_params.initial_freq',
         # **{p: p for p in ['initial_x', 'initial_y', 'initial_front_orientation']}
     }
-    fun.save_dict(d, paths.RefParsFile, use_pickle=False)
+    lib.aux.dictsNlists.save_dict(d, paths.RefParsFile, use_pickle=False)
 
 
 if __name__ == '__main__':
@@ -1505,3 +1511,13 @@ if __name__ == '__main__':
     store_controls()
     store_RefPars()
     # print(null_dict('enrichment'))
+
+
+def value_list(start=0.0,end=1.0, integer=False, steps=1001, decimals=3, allow_None=False):
+    a= np.round(np.linspace(start, end, steps), decimals)
+    if integer :
+        a=a.astype(int)
+    if allow_None :
+        return [''] + a.tolist()
+    else :
+        return a.tolist()

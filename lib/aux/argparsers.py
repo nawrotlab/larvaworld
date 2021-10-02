@@ -1,11 +1,11 @@
 import sys
 import numpy as np
 
-
+import lib.aux.dictsNlists
 
 sys.path.insert(0, '../../..')
 import lib.conf.env_conf as env
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 import lib.conf.dtype_dicts as dtypes
 from lib.conf.conf import loadConfDict
 
@@ -222,7 +222,7 @@ def get_life_kwargs(args):
         if len(args.epochs) % 2 != 0:
             raise ValueError('Starvation intervals must be provided in pairs of start-stop time')
         else:
-            starvation_hours = fun.group_list_by_n(args.epochs, 2)
+            starvation_hours = lib.aux.dictsNlists.group_list_by_n(args.epochs, 2)
 
     # if args.hours_as_larva is None :
     #     hours_as_larva=[0.0]

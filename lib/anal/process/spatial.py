@@ -7,7 +7,10 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema, spectrogram
 
-import lib.aux.functions as fun
+import lib.anal.process.aux
+import lib.aux.ang_aux
+import lib.aux.dictsNlists
+import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
 from lib.anal.process.store import store_aux_dataset
 from lib.conf.par import getPar
@@ -54,7 +57,7 @@ def compute_linear_metrics(s, e, dt, Npoints, point, mode='minimal'):
         return
 
     xy_params = raw_or_filtered_xy(s, points)
-    xy_params = fun.group_list_by_n(xy_params, 2)
+    xy_params = lib.aux.dictsNlists.group_list_by_n(xy_params, 2)
 
     all_d = [s.xs(id, level='AgentID', drop_level=True) for id in ids]
     dsts = nam.lin(nam.dst(points))
@@ -70,8 +73,8 @@ def compute_linear_metrics(s, e, dt, Npoints, point, mode='minimal'):
         A = np.zeros([Nticks, Nids]) * np.nan
 
         for i, data in enumerate(all_d):
-            v, d = fun.compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=dt,
-                                                  return_dst=True)
+            v, d = lib.anal.process.aux.compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=dt,
+                                                                   return_dst=True)
             a = np.diff(v) / dt
             cum_d = np.nancumsum(d)
             D[1:, i] = d
@@ -92,7 +95,7 @@ def compute_linear_metrics(s, e, dt, Npoints, point, mode='minimal'):
         #     s[nam.scal(acc)] = sA.flatten()
         #     e[nam.cum(nam.scal(dst))] = sDcum[-1, :]
 
-    pars = fun.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
+    pars = lib.aux.dictsNlists.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
 
     scale_to_length(s, e, pars=pars)
     print('All linear parameters computed')
@@ -120,7 +123,7 @@ def compute_spatial_metrics(s, e, dt, Npoints, point, mode='minimal'):
     points = [p for p in points if set(nam.xy(p)).issubset(s.columns.values)]
 
     xy_params = raw_or_filtered_xy(s, points)
-    xy_params = fun.group_list_by_n(xy_params, 2)
+    xy_params = lib.aux.dictsNlists.group_list_by_n(xy_params, 2)
 
     all_d = [s.xs(id, level='AgentID', drop_level=True) for id in ids]
     dsts = nam.dst(points)
@@ -135,7 +138,7 @@ def compute_spatial_metrics(s, e, dt, Npoints, point, mode='minimal'):
         A = np.zeros([Nticks, Nids]) * np.nan
 
         for i, data in enumerate(all_d):
-            v, d = fun.compute_velocity(xy=data[xy].values, dt=dt, return_dst=True)
+            v, d = lib.anal.process.aux.compute_velocity(xy=data[xy].values, dt=dt, return_dst=True)
             a = np.diff(v) / dt
             cum_d = np.nancumsum(d)
 
@@ -162,7 +165,7 @@ def compute_spatial_metrics(s, e, dt, Npoints, point, mode='minimal'):
         #     s[nam.scal(vel)] = sV.flatten()
         #     s[nam.scal(acc)] = sA.flatten()
         #     e[nam.cum(nam.scal(dst))] = sDcum[-1, :]
-    pars = fun.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
+    pars = lib.aux.dictsNlists.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
 
     scale_to_length(s, e, pars=pars)
     print('All spatial parameters computed')
@@ -218,7 +221,7 @@ def compute_centroid_from_contour(s, Ncontour, recompute=False):
         contour = np.reshape(contour, (N, Ncontour, 2))
         c = np.zeros([N, 2]) * np.nan
         for i in range(N):
-            c[i, :] = np.array(fun.compute_centroid(contour[i, :, :]))
+            c[i, :] = np.array(lib.anal.process.aux.compute_centroid(contour[i, :, :]))
         s[nam.xy('centroid')[0]] = c[:, 0]
         s[nam.xy('centroid')[1]] = c[:, 1]
     print('Centroid coordinates computed.')
@@ -420,7 +423,7 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', conf
 
     xy_pairs = nam.xy(nam.midline(config['Npoints'], type='point') + ['centroid', ''] + nam.contour(config['Ncontour']))
     xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
-    xy_pairs = fun.group_list_by_n(np.unique(fun.flatten_list(xy_pairs)), 2)
+    xy_pairs = lib.aux.dictsNlists.group_list_by_n(np.unique(lib.aux.dictsNlists.flatten_list(xy_pairs)), 2)
     if mode == 'arena':
         print('Centralizing trajectories in arena center')
         if arena_dims is None:
@@ -485,7 +488,7 @@ def fixate_larva(s, config, point, arena_dims, secondary_point=None):
     else:
         raise ValueError(f" The requested {point} is not part of the dataset")
     for id, p in zip(ids, xy):
-        for x, y in fun.group_list_by_n(pars, 2):
+        for x, y in lib.aux.dictsNlists.group_list_by_n(pars, 2):
             s.loc[(slice(None), id), [x, y]] -= p
 
     if secondary_point is not None:
@@ -498,9 +501,9 @@ def fixate_larva(s, config, point, arena_dims, secondary_point=None):
 
         for id, angle in zip(ids, bg_a):
             d = s[pars].xs(id, level='AgentID', drop_level=True).copy(deep=True).values
-            s.loc[(slice(None), id), pars] = [fun.flatten_list(
-                fun.rotate_multiple_points(points=np.array(fun.group_list_by_n(d[i].tolist(), 2)),
-                                           radians=a)) for i, a in enumerate(angle)]
+            s.loc[(slice(None), id), pars] = [lib.aux.dictsNlists.flatten_list(
+                lib.aux.ang_aux.rotate_multiple_points(points=np.array(lib.aux.dictsNlists.group_list_by_n(d[i].tolist(), 2)),
+                                                       radians=a)) for i, a in enumerate(angle)]
     else:
         bg_a = np.array([np.zeros(len(bg_x[0])) for i in range(len(ids))])
     bg = [np.vstack((bg_x[i, :], bg_y[i, :], bg_a[i, :])) for i in range(len(ids))]

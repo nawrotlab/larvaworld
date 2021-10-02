@@ -1,17 +1,24 @@
 import numpy as np
+# print('0')
 from mesa.datacollection import DataCollector
-from lib.aux import functions as fun
+
+import lib.aux.dictsNlists
+import lib.aux.xy_aux
+from lib.aux import colsNstr as fun
 from lib.aux.collecting import TargetedDataCollector
-
+# print('1')
 from lib.conf.init_dtypes import null_dict
-
+# print('2')
 from lib.conf.par import CompGroupCollector
 from lib.envs._larvaworld import LarvaWorld, generate_larvae, get_sample_bout_distros, sample_group
+# print('3')
 from lib.envs._space import DiffusionValueLayer, GaussianValueLayer
 from lib.sim.conditions import get_exp_condition
-import lib.conf.dtype_dicts as dtypes
-from lib.stor.larva_dataset import LarvaDataset
+# print('4')
+
+# print('5')
 from lib.stor import paths
+# print('6')
 
 
 class LarvaWorldSim(LarvaWorld):
@@ -66,7 +73,7 @@ class LarvaWorldSim(LarvaWorld):
 
     def _create_odor_layers(self, pars):
         sources = self.get_food() + self.get_flies()
-        odor_ids = fun.unique_list([s.odor_id for s in sources if s.odor_id is not None])
+        odor_ids = lib.aux.dictsNlists.unique_list([s.odor_id for s in sources if s.odor_id is not None])
         Nodors = len(odor_ids)
         odor_colors = fun.N_colors(Nodors, as_rgb=True)
         layers = {}
@@ -89,33 +96,8 @@ class LarvaWorldSim(LarvaWorld):
                                                  **kwargs)
             elif odorscape == 'Gaussian':
                 layers[id] = GaussianValueLayer(**kwargs)
+        self.refresh_odor_dicts(odor_ids)
         return Nodors, layers
-
-    # def generate_larva_pars(self, N, base_larva, parameter_dict={}, sample_dataset='reference'):
-    #     if base_larva['brain']['intermitter_params']:
-    #         for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
-    #             if base_larva['brain']['intermitter_params'][dist]['fit']:
-    #                 base_larva['brain']['intermitter_params'][dist] = loadConf(sample_dataset, 'Ref')[bout]['best']
-    #     flat_larva_pars = fun.flatten_dict(base_larva)
-    #     sample_pars = [p for p in flat_larva_pars if flat_larva_pars[p] == 'sample']
-    #     if len(sample_pars) >= 1:
-    #         pars, samples = sample_agents(pars=sample_pars, N=N, sample_dataset=sample_dataset)
-    #
-    #         all_larva_pars = []
-    #         for i in range(N):
-    #             l = copy.deepcopy(base_larva)
-    #             flat_l = fun.flatten_dict(l)
-    #             for p, s in zip(pars, samples):
-    #                 flat_l.update({p: s[i]})
-    #             all_larva_pars.append(unflatten(flat_l))
-    #     else:
-    #         all_larva_pars = [base_larva] * N
-    #
-    #     for k, vs in parameter_dict.items():
-    #         for l, v in zip(all_larva_pars, vs):
-    #             l[k].update(v)
-    #     return all_larva_pars
-
 
     def create_larvae(self, larva_pars, parameter_dict={}):
         for gID, gConf in larva_pars.items():
@@ -126,9 +108,9 @@ class LarvaWorldSim(LarvaWorld):
                 sample = loadConf(sample, 'Ref')
             mod=get_sample_bout_distros(mod, sample)
 
-            modF = fun.flatten_dict(mod)
+            modF = lib.aux.dictsNlists.flatten_dict(mod)
             sample_ks = [p for p in modF if modF[p] == 'sample']
-            RefPars = fun.load_dict(paths.RefParsFile, use_pickle=False)
+            RefPars = lib.aux.dictsNlists.load_dict(paths.RefParsFile, use_pickle=False)
             invRefPars = {v: k for k, v in RefPars.items()}
             self.sample_ps=[invRefPars[p] for p in sample_ks]
             if gConf['imitation'] and sample!={}:
@@ -140,9 +122,7 @@ class LarvaWorldSim(LarvaWorld):
                 ids = [f'{gID}_{i}' for i in range(N)]
                 a1, a2 = np.deg2rad(d['orientation_range'])
                 ors = np.random.uniform(low=a1, high=a2, size=N).tolist()
-                # print(d)
-                ps = fun.generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
-                # print(ps)
+                ps = lib.aux.xy_aux.generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
                 sample_dict = sample_group(sample, N, self.sample_ps)
             sample_dict.update(parameter_dict)
             all_pars= generate_larvae(N, sample_dict, mod, RefPars)
@@ -152,24 +132,6 @@ class LarvaWorldSim(LarvaWorld):
             for id, p, o, pars in zip(ids, ps, ors, all_pars):
                 l = self.add_larva(pos=p, orientation=o, id=id, pars=pars, group=gID,odor=gConf['odor'],
                                    default_color=gConf['default_color'], life=gConf['life'])
-
-    # def create_larvae2(self, larva_pars, parameter_dict={}):
-    #     for gID, gConf in larva_pars.items():
-    #         if gID != 'Imitation':
-    #             N = gConf['N']
-    #             ids = [f'{gID}_{i}' for i in range(N)]
-    #             a1, a2 = np.deg2rad(gConf['orientation_range'])
-    #             ors = np.random.uniform(low=a1, high=a2, size=N).tolist()
-    #             ps = fun.generate_xy_distro(N=N, **{k: gConf[k] for k in ['mode', 'shape', 'loc', 'scale']})
-    #             sample_dataset = gConf['sample_dataset'] if 'sample_dataset' in list(
-    #                 gConf.keys()) else self.sample_dataset
-    #             all_pars = self.generate_larva_pars(N, gConf['model'], parameter_dict=parameter_dict,
-    #                                                 sample_dataset=sample_dataset)
-    #         else:
-    #             ids, ps, ors, all_pars = imitate_group(gConf['config'], gConf['model'])
-    #         for id, p, o, pars in zip(ids, ps, ors, all_pars):
-    #             l = self.add_larva(pos=p, orientation=o, id=id, pars=pars, group=gID,
-    #                                default_color=gConf['default_color'])
 
     def step(self):
         # Tick sim_clock
@@ -281,8 +243,18 @@ class LarvaWorldSim(LarvaWorld):
                 if self.food_grid is not None:
                     self.food_grid.reset()
 
+    def refresh_odor_dicts(self, odor_ids):
+        for l in self.get_flies() :
+            for id in odor_ids :
+                try :
+                    if id not in l.brain.olfactor.odor_ids :
+                        l.brain.olfactor.add_novel_odor(id)
+                except :
+                    pass
+
 
 def imitate_group(config, sample_pars=[]):
+    from lib.stor.larva_dataset import LarvaDataset
     d = LarvaDataset(config['dir'], load_data=False)
     e = d.read('end')
     ids = e.index.values.tolist()

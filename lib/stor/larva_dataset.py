@@ -6,7 +6,8 @@ import pandas as pd
 import warnings
 import copy
 
-import lib.aux.functions as fun
+import lib.aux.dictsNlists
+import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
 from lib.anal.process.basic import preprocess, process
 from lib.anal.process.bouts import annotate
@@ -25,11 +26,11 @@ class LarvaDataset:
         self.save_data_flag = save_data_flag
         self.define_paths(dir)
         if os.path.exists(self.dir_dict['conf']):
-            self.config = fun.load_dict(self.dir_dict['conf'], use_pickle=False)
+            self.config = lib.aux.dictsNlists.load_dict(self.dir_dict['conf'], use_pickle=False)
         else:
             groups=env_params['larva_groups']
             group_ids=list(groups.keys())
-            samples=fun.unique_list(groups[k]['sample'] for k in group_ids)
+            samples= lib.aux.dictsNlists.unique_list(groups[k]['sample'] for k in group_ids)
             if len(group_ids)==1 :
                 group_id=group_ids[0]
                 color=groups[group_id]['default_color']
@@ -152,15 +153,15 @@ class LarvaDataset:
         s = self.step_data
 
         if groups['midline']:
-            pars += fun.flatten_list(self.points_xy)
+            pars += lib.aux.dictsNlists.flatten_list(self.points_xy)
         if groups['contour']:
-            pars += fun.flatten_list(self.contour_xy)
+            pars += lib.aux.dictsNlists.flatten_list(self.contour_xy)
         for c in ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn']:
             if groups[c]:
                 pars += [nam.start(c), nam.stop(c), nam.id(c), nam.dur(c), nam.length(c), nam.dst(c), nam.straight_dst(c), nam.scal(nam.dst(c)), nam.scal(nam.straight_dst(c)), nam.orient(c)]
         if groups['unused']:
             pars += self.get_unused_pars()
-        pars = fun.unique_list(pars)
+        pars = lib.aux.dictsNlists.unique_list(pars)
         s.drop(columns=[p for p in pars if p in s.columns], inplace=True)
         self.set_data(step=s)
         if is_last:
@@ -233,7 +234,7 @@ class LarvaDataset:
             if hasattr(l, 'deb') and l.deb is not None:
                 l.deb.finalize_dict(self.dir_dict['deb'])
             if l.brain.intermitter is not None:
-                l.brain.intermitter.save_dict(self.dir_dict['bout_dicts'])
+                lib.aux.dictsNlists.save_dict(self.dir_dict['bout_dicts'])
 
     def save_tables(self, tables):
         store = pd.HDFStore(self.dir_dict['tables_h5'])
@@ -251,11 +252,11 @@ class LarvaDataset:
         store.close()
 
     def save_ExpFitter(self, dic=None):
-        fun.save_dict(dic, self.dir_dict['ExpFitter'], use_pickle=False)
+        lib.aux.dictsNlists.save_dict(dic, self.dir_dict['ExpFitter'], use_pickle=False)
 
     def load_ExpFitter(self):
         try:
-            dic=fun.load_dict(self.dir_dict['ExpFitter'], use_pickle=False)
+            dic= lib.aux.dictsNlists.load_dict(self.dir_dict['ExpFitter'], use_pickle=False)
             return dic
         except:
             return None
@@ -272,7 +273,7 @@ class LarvaDataset:
         for k, v in self.config.items():
             if type(v) == np.ndarray:
                 self.config[k] = v.tolist()
-        fun.save_dict(self.config, self.dir_dict['conf'], use_pickle=False)
+        lib.aux.dictsNlists.save_dict(self.config, self.dir_dict['conf'], use_pickle=False)
         if add_reference :
             from lib.conf.conf import saveConf
             saveConf(self.config, 'Ref', f'{self.group_id}.{self.id}')
@@ -311,7 +312,7 @@ class LarvaDataset:
         d = {}
         for id in ids:
             file = f'{dir}/{id}.txt'
-            dic = fun.load_dicts([file])[0]
+            dic = lib.aux.dictsNlists.load_dicts([file])[0]
             df = pd.DataFrame.from_dict(dic)
             df.index.set_names(0, inplace=True)
             d[id] = df
@@ -342,7 +343,7 @@ class LarvaDataset:
         if ids is None:
             ids = self.agent_ids
         files = [f'{id}.txt' for id in ids]
-        ds = fun.load_dicts(files=files, folder=self.dir_dict['deb'], **kwargs)
+        ds = lib.aux.dictsNlists.load_dicts(files=files, folder=self.dir_dict['deb'], **kwargs)
         return ds
 
     def get_pars_list(self, p0, s0, draw_Nsegs):
@@ -368,7 +369,7 @@ class LarvaDataset:
         else :
             raise ValueError (f'The required angular parameters for reconstructing a {draw_Nsegs}-segment body do not exist')
 
-        pars = fun.unique_list(cen_p + pos_p+ ang_p + ors_p + chunk_p + fun.flatten_list(mid_p  + con_p))
+        pars = lib.aux.dictsNlists.unique_list(cen_p + pos_p + ang_p + ors_p + chunk_p + lib.aux.dictsNlists.flatten_list(mid_p + con_p))
 
         return dic, pars, p0
 

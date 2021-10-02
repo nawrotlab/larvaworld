@@ -9,11 +9,12 @@ from scipy.integrate import quad, solve_ivp
 
 import lib.conf.conf
 import lib.conf.init_dtypes
+import lib.model.DEB.deb_aux
 from lib.conf.conf import loadConf
 
 from lib.model.DEB.gut import Gut
 from lib.stor import paths
-from lib.aux import functions as fun
+from lib.aux import colsNstr as fun
 import lib.conf.dtype_dicts as dtypes
 
 '''
@@ -278,7 +279,7 @@ class DEB:
 
     def get_tau_b(self, eb=1.0):
         def get_tb(x, ab, xb):
-            return x ** (-2 / 3) / (1 - x) / (ab - fun.beta0(x, xb))
+            return x ** (-2 / 3) / (1 - x) / (ab - lib.model.DEB.deb_aux.beta0(x, xb))
 
         g = self.g
         xb = g / (eb + g)
@@ -297,7 +298,7 @@ class DEB:
         dx = xb / n
         x3 = x ** (1 / 3)
 
-        b = fun.beta0(x, xb) / (3 * g)
+        b = lib.model.DEB.deb_aux.beta0(x, xb) / (3 * g)
 
         t0 = xb * g * vHb
         i = 0
@@ -326,7 +327,7 @@ class DEB:
     def get_initial_reserve(self, eb=1.0):
         g = self.g
         xb = g / (g + eb)
-        return np.real((3 * g / (3 * g * xb ** (1 / 3) / self.lb - fun.beta0(0, xb))) ** 3)
+        return np.real((3 * g / (3 * g * xb ** (1 / 3) / self.lb - lib.model.DEB.deb_aux.beta0(0, xb))) ** 3)
 
     def predict_larva_stage(self, f=1.0):
         g = self.g
@@ -339,7 +340,7 @@ class DEB:
             ert = np.exp(- tau_j * self.rho_j)
             return np.abs(self.v_Rj - c1 * (1 - ert) + c2 * tau_j * ert)
 
-        self.tau_j = fun.simplex(get_tj, 1)
+        self.tau_j = lib.model.DEB.deb_aux.simplex(get_tj, 1)
         self.lj = lb * np.exp(self.tau_j * self.rho_j / 3)
         self.t_j = self.tau_j / self.k_M / self.T_factor
         self.Lj = self.lj * self.Lm

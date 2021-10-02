@@ -1,7 +1,9 @@
 import random
 import numpy as np
+
+import lib.aux.sim_aux
 from lib.anal.process.spatial import compute_preference_index
-import lib.aux.functions as fun
+import lib.aux.colsNstr as fun
 
 def get_exp_condition(exp):
     exp_condition_dict = {
@@ -167,8 +169,8 @@ class CaptureFlagCondition:
 
     def check(self, env):
         flag_p = env.flag.get_position()
-        l_dst = -env.l_dst0 + fun.compute_dst(flag_p, env.l_base_p)
-        r_dst = -env.r_dst0 + fun.compute_dst(flag_p, env.r_base_p)
+        l_dst = -env.l_dst0 + lib.aux.sim_aux.compute_dst(flag_p, env.l_base_p)
+        r_dst = -env.r_dst0 + lib.aux.sim_aux.compute_dst(flag_p, env.r_base_p)
         l_dst = np.round(l_dst * 1000, 2)
         r_dst = np.round(r_dst * 1000, 2)
         if l_dst < 0:

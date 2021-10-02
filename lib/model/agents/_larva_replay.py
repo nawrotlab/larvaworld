@@ -2,7 +2,9 @@ from copy import deepcopy
 
 import numpy as np
 
-from lib.aux import functions as fun
+import lib.aux.ang_aux
+import lib.aux.dictsNlists
+from lib.aux import colsNstr as fun
 from lib.model.agents._larva import Larva
 from lib.model.body.body import draw_body_midline, draw_body_head, draw_body_centroid, draw_selected_body
 from lib.model.body.controller import BodyReplay
@@ -27,8 +29,8 @@ class LarvaReplay(Larva, BodyReplay):
             self.cen_pos=(np.nan, np.nan)
 
         self.Nsegs = m.draw_Nsegs
-        self.mid_ar = data[fun.flatten_list(m.mid_pars)].values.reshape([N, m.Npoints, 2])
-        self.con_ar = data[fun.flatten_list(m.con_pars)].values.reshape([N, m.Ncontour, 2])
+        self.mid_ar = data[lib.aux.dictsNlists.flatten_list(m.mid_pars)].values.reshape([N, m.Npoints, 2])
+        self.con_ar = data[lib.aux.dictsNlists.flatten_list(m.con_pars)].values.reshape([N, m.Ncontour, 2])
 
 
 
@@ -90,8 +92,9 @@ class LarvaReplay(Larva, BodyReplay):
                 x, y = self.pos
                 h_or = self.front_orientation
                 b_or = self.front_orientation - self.bend
-                p_head = np.array(fun.rotate_around_point(origin=[x, y], point=[l1 + x, y], radians=-h_or))
-                p_tail = np.array(fun.rotate_around_point(origin=[x, y], point=[l2 + x, y], radians=np.pi - b_or))
+                p_head = np.array(lib.aux.ang_aux.rotate_around_point(origin=[x, y], point=[l1 + x, y], radians=-h_or))
+                p_tail = np.array(
+                    lib.aux.ang_aux.rotate_around_point(origin=[x, y], point=[l2 + x, y], radians=np.pi - b_or))
                 pos1 = [np.nanmean([p_head[j], [x, y][j]]) for j in [0, 1]]
                 pos2 = [np.nanmean([p_tail[j], [x, y][j]]) for j in [0, 1]]
                 segs[0].set_position(pos1)
