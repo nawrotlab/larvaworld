@@ -404,7 +404,6 @@ def store_confs(keys=None) :
         }
         for k, v in par_conf_dict.items():
             saveConf(v, 'Par', k)
-
         group_list = [
             dat.SchleyerFormat,
             dat.JovanicFormat,
@@ -413,74 +412,11 @@ def store_confs(keys=None) :
         for g in group_list:
             saveConf(g, 'Group')
     if 'Model' in keys:
-        import lib.conf.larva_conf as mod
-        mod_dict = {
-            'explorer': mod.exploring_larva,
-            'Levy-walker': mod.Levy_walker,
-            'navigator': mod.odor_larva,
-            'navigator-x2': mod.odor_larva_x2,
-            'immobile': mod.immobile_odor_larva,
-            'feeder-explorer': mod.feeding_larva,
-            'feeder-navigator': mod.feeding_odor_larva,
-            'feeder-navigator-x2': mod.feeding_odor_larva_x2,
-            'rover': mod.growing_rover,
-            'mock_rover': mod.mock_growing_rover,
-            'sitter': mod.growing_sitter,
-            'mock_sitter': mod.mock_growing_sitter,
-            'imitation': mod.imitation_larva,
-            'gamer': mod.flag_larva,
-            'gamer-L': mod.king_larva_L,
-            'gamer-R': mod.king_larva_R,
-            'follower-R': mod.follower_R,
-            'follower-L': mod.follower_L,
-            'RL-learner': mod.RL_odor_larva,
-            'RL-feeder': mod.RL_feed_odor_larva,
-            'basic_navigator': mod.basic_larva,
-            'explorer_3con': mod.exploring_3c_larva,
-            'nengo-larva': mod.nengo_larva,
-            'nengo_explorer': mod.nengo_explorer,
-        }
+        from lib.conf.larva_conf import mod_dict
         for k, v in mod_dict.items():
             saveConf(v, 'Model', k)
     if 'Env' in keys :
-        import lib.conf.env_conf as env
-        env_dict = {
-            'focus': env.focus_env,
-            'dish': env.dish_env,
-            'nengo_dish': env.nengo_dish_env,
-            'dispersion': env.dispersion_env,
-            'chemotaxis_approach': env.chemotax_env,
-            'chemotaxis_local': env.chemorbit_env,
-            'chemotaxis_diffusion': env.chemorbit_diffusion_env,
-            'odor_pref_test': env.pref_test_env,
-            'odor_pref_test_on_food': env.pref_test_env_on_food,
-            'odor_pref_train': env.pref_train_env,
-            'odor_pref_RL': env.pref_env_RL,
-            'patchy_food': env.patchy_food_env,
-            'uniform_food': env.uniform_food_env,
-            'food_grid': env.food_grid_env,
-            'single_patch': env.single_patch_env,
-            'growth': env.growth_env,
-            'rovers_sitters_on_food': env.RvsS_food,
-            'rovers_sitters_on_food_q75': env.RvsS_food_q75,
-            'rovers_sitters_on_food_q50': env.RvsS_food_q50,
-            'rovers_sitters_on_food_q25': env.RvsS_food_q25,
-            'rovers_sitters_on_food_q15': env.RvsS_food_q15,
-            'rovers_sitters_on_food_1h_prestarved': env.RvsS_food_1h_prestarved,
-            'rovers_sitters_on_food_2h_prestarved': env.RvsS_food_2h_prestarved,
-            'rovers_sitters_on_food_3h_prestarved': env.RvsS_food_3h_prestarved,
-            'rovers_sitters_on_food_4h_prestarved': env.RvsS_food_4h_prestarved,
-            'rovers_sitters_on_agar': env.RvsS_agar,
-            'reorientation': env.reorientation_env,
-            'realistic_imitation': env.imitation_env_p,
-            'maze': env.maze_env,
-            'keep_the_flag': env.king_env,
-            'capture_the_flag': env.flag_env,
-            'catch_me': env.catch_me_env,
-            'chemotaxis_RL': env.RL_chemorbit_env,
-            'food_at_bottom': env.food_at_bottom_env,
-            '4corners': env.RL_4corners_env,
-        }
+        from lib.conf.env_conf import env_dict
         for k, v in env_dict.items():
             saveConf(v, 'Env', k)
     if 'Exp' in keys :

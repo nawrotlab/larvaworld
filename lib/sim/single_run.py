@@ -57,7 +57,6 @@ def _run_sim(
     d = LarvaDataset(dir=dir_path, id=id, fr=1 / dt,
                      Npoints=Npoints, Ncontour=0, env_params=env_params,
                      par_conf=par_config, save_data_flag=save_data_flag, load_data=False,
-                     # life_params=life_params
                      )
 
     output = collection_conf(dataset=d, collections=collections)
@@ -89,7 +88,7 @@ ser = pickle.dumps(_run_sim)
 run_sim = pickle.loads(ser)
 
 
-def store_sim_data(env, d, save_data_flag, enrichment, param_dict):
+def store_sim_data(env, d, save_data_flag, enrichment, param_dict, split_groups=True):
     # Read the data collected during the simulation
     step = env.larva_step_col.get_agent_vars_dataframe() if env.larva_step_col else None
     if env.larva_end_col is not None:
@@ -103,17 +102,24 @@ def store_sim_data(env, d, save_data_flag, enrichment, param_dict):
     else:
         food = None
 
+
+
     d.set_data(step=step,end=end,food=food)
 
-    d.enrich(**enrichment, is_last=False)
-    # Save simulation data and parameters
-    if save_data_flag:
-        d.save()
-        d.save_dicts(env)
-        fun.dict_to_file(param_dict, d.dir_dict['sim'])
-        if env.table_collector is not None:
-            d.save_tables(env.table_collector.tables)
-    return d
+    if split_groups:
+        ds=d.split_dataset()
+    else :
+        ds=[d]
+    for dd in ds :
+        dd.enrich(**enrichment, is_last=False)
+        # Save simulation data and parameters
+        if save_data_flag:
+            dd.save()
+            dd.save_dicts(env)
+            fun.dict_to_file(param_dict, dd.dir_dict['sim'])
+            if env.table_collector is not None:
+                dd.save_tables(env.table_collector.tables)
+    return ds
 
 
 def collection_conf(dataset, collections):

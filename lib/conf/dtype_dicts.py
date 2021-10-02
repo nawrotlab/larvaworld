@@ -1,7 +1,4 @@
 import copy
-from typing import Tuple
-
-import numpy as np
 
 from lib.conf.init_dtypes import load_dtypes, processing_types, annotation_bouts
 
@@ -16,8 +13,6 @@ dict_keys=list(all_null_dicts.keys())
 def get_dict(name, class_name=None, basic=True, as_entry=False, **kwargs):
     if name in dict_keys:
         d = all_null_dicts[name]
-    elif name == 'distro':
-        d = null_distro(class_name=class_name, basic=basic)
     elif name == 'agent':
         d = null_agent(class_name=class_name)
 
@@ -42,30 +37,24 @@ def get_dict(name, class_name=None, basic=True, as_entry=False, **kwargs):
     return dic
 
 
-def get_distro(class_name, **kwargs):
-    distro = null_distro(class_name)
-    distro.update(**kwargs)
-    return distro
-
-
-def null_distro(class_name, basic=True):
-    distro = {
-        'mode': None,
-        'shape': None,
-        'N': 0,
-        'loc': (0.0, 0.0),
-        'scale': (0.0, 0.0),
-    }
-    if class_name == 'Larva':
-        distro = {**distro, 'orientation_range': (0.0, 360.0), 'model': None}
-    if not basic:
-        distro = {**distro, **get_dict('agent', class_name=class_name)}
-        for p in ['unique_id', 'pos']:
-            try:
-                distro.pop(p)
-            except:
-                pass
-    return distro
+# def null_distro(class_name, basic=True):
+#     distro = {
+#         'mode': None,
+#         'shape': None,
+#         'N': 0,
+#         'loc': (0.0, 0.0),
+#         'scale': (0.0, 0.0),
+#     }
+#     if class_name == 'Larva':
+#         distro = {**distro, 'orientation_range': (0.0, 360.0), 'model': None}
+#     if not basic:
+#         distro = {**distro, **get_dict('agent', class_name=class_name)}
+#         for p in ['unique_id', 'pos']:
+#             try:
+#                 distro.pop(p)
+#             except:
+#                 pass
+#     return distro
 
 
 def get_dict_dtypes(name, **kwargs):
@@ -107,45 +96,6 @@ def sim_dict(sim_ID=None, duration=3, dt=0.1, path=None, Box2D=False, exp_type=N
     }
 
 
-def brain_dict(modules, nengo=False, odor_dict=None, **kwargs):
-    modules = get_dict('modules', **{m: True for m in modules})
-    d = {'modules': modules}
-    for k, v in modules.items():
-        p = f'{k}_params'
-        if not v:
-            d[p] = None
-        elif k in list(kwargs.keys()):
-            d[p] = kwargs[k]
-        else:
-            d[p] = get_dict(k)
-        if k == 'olfactor' and d[p] is not None:
-            d[p]['odor_dict'] = odor_dict
-    d['nengo'] = nengo
-    return d
-
-
-def larva_dict(brain, **kwargs):
-    d = {'brain': brain}
-    for k in ['energetics', 'physics', 'body', 'odor']:
-        if k in list(kwargs.keys()):
-            d[k] = kwargs[k]
-        elif k == 'energetics':
-            d[k] = None
-        else:
-            d[k] = get_dict(k)
-    return d
-
-
-def new_odor_dict(ids: list, means: list, stds=None) -> dict:
-    if stds is None:
-        stds = np.array([0.0] * len(means))
-    odor_dict = {}
-    for id, m, s in zip(ids, means, stds):
-        odor_dict[id] = {'mean': m,
-                         'std': s}
-    return odor_dict
-
-
 def base_enrich(types=['angular', 'spatial','dispersion', 'tortuosity'],bouts=['stride', 'pause', 'turn'],  **kwargs):
     d = {
         'types': processing_types(types),
@@ -158,25 +108,6 @@ def base_enrich(types=['angular', 'spatial','dispersion', 'tortuosity'],bouts=['
     return get_dict('enrichment', **d)
 
 
-# def get_distro_dtypes(class_name, basic=True):
-#     from lib.conf.conf import loadConfDict
-#     dtypes = {
-#         'mode': ['normal', 'periphery', 'uniform'],
-#         'shape': ['circle', 'rect', 'oval'],
-#         'N': int,
-#         'loc': Tuple[float, float],
-#         'scale': Tuple[float, float],
-#     }
-#     if class_name == 'Larva':
-#         dtypes = {**dtypes, 'orientation_range': Tuple[float, float], 'model': list(loadConfDict('Model').keys())}
-#     if not basic:
-#         dtypes = {**dtypes, **get_dict_dtypes(class_name)}
-#         for p in ['unique_id', 'pos']:
-#             try:
-#                 dtypes.pop(p)
-#             except:
-#                 pass
-#     return dtypes
 
 if __name__ == '__main__':
     pass

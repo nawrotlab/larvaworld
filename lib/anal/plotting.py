@@ -1418,10 +1418,10 @@ def plot_interference(datasets, labels=None, mode='orientation', agent_idx=None,
     ang_ylim = [0, 60] if mode in ['bend', 'orientation', 'orientation_x2'] else None
 
     if agent_idx is not None:
-        data = [[d.load_aux(type='stride', pars=p).loc[d.agent_ids[agent_idx]].values for p in pars] for
+        data = [[d.load_aux(type='stride', par=p).loc[d.agent_ids[agent_idx]].values for p in pars] for
                 d in datasets]
     else:
-        data = [[d.load_aux(type='stride', pars=p).values for p in pars] for d in datasets]
+        data = [[d.load_aux(type='stride', par=p).values for p in pars] for d in datasets]
     Npoints = data[0][0].shape[1]
     for d0, c, color, label in zip(data, colors, colors, labels):
         if mode in ['bend', 'orientation']:
@@ -1472,7 +1472,7 @@ def plot_dispersion(datasets, labels=None, ranges=None, scaled=False, subfolder=
         fig, axs = plt.subplots(1, 1, figsize=(5 * fig_cols, 5))
 
         for d, lab, c in zip(datasets, labels, colors):
-            dsp = d.load_aux(type='dispersion', pars=par if not scaled else nam.scal(par))
+            dsp = d.load_aux(type='dispersion', par=par if not scaled else nam.scal(par))
             plot_mean_and_range(x=trange,
                                 mean=dsp['median'].values[t0:t1],
                                 lb=dsp['upper'].values[t0:t1],
@@ -3303,7 +3303,19 @@ def plot_config(datasets, labels, save_to, subfolder=None):
     Ndatasets = len(datasets)
     if Ndatasets != len(labels):
         raise ValueError(f'Number of labels {len(labels)} does not much number of datasets {Ndatasets}')
-    colors = fun.N_colors(Ndatasets)
+    try :
+        cs=[d.config['color'] for d in datasets]
+        u_cs=fun.unique_list(cs)
+        if len(u_cs)==len(cs) :
+            colors=cs
+        elif len(u_cs)==len(cs)-1 and cs[-1] in cs[:-1] :
+            if 'black' not in cs :
+                cs[-1]='black'
+                colors = cs
+        else :
+            colors = fun.N_colors(Ndatasets)
+    except :
+        colors = fun.N_colors(Ndatasets)
     if save_to is None:
         save_to = datasets[0].dir_dict['comp_plot']
     if subfolder is not None:

@@ -16,9 +16,14 @@ def store_aux_dataset(s, pars, type, file):
     ps = [p for p in pars if p in s.columns]
     if type == 'distro':
         for p in ps:
+            # print(p)
             d = s[p].dropna().reset_index(level=0, drop=True)
             d.sort_index(inplace=True)
             store[f'{type}.{p}'] = d
+            # if p=='turn_front_orientation_unwrapped' :
+            #     print(d)
+            #     print(store[f'{type}.{p}'])
+                # raise
     elif type == 'dispersion':
         for p in ps:
             dsp = s[p]

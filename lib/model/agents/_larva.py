@@ -8,14 +8,13 @@ from lib.model.agents._agent import LarvaworldAgent
 
 class Larva(LarvaworldAgent):
     def __init__(self, unique_id, model, pos=None, radius=None, default_color=None, **kwargs):
-        # print(unique_id, pos)
+        # print(unique_id)
         if default_color is None:
             default_color = model.generate_larva_color()
         super().__init__(unique_id=unique_id, model=model, default_color=default_color, pos=pos, radius=radius,
                          **kwargs)
         self.behavior_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id', 'Lturn_id', 'Rturn_id']
         self.null_behavior_dict = dict(zip(self.behavior_pars, [False] * len(self.behavior_pars)))
-
     def update_color(self, default_color, behavior_dict, mode='lin'):
         color = deepcopy(default_color)
         if mode == 'lin':

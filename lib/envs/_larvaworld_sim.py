@@ -150,7 +150,7 @@ class LarvaWorldSim(LarvaWorld):
 
 
             for id, p, o, pars in zip(ids, ps, ors, all_pars):
-                l = self.add_larva(pos=p, orientation=o, id=id, pars=pars, group=gID,
+                l = self.add_larva(pos=p, orientation=o, id=id, pars=pars, group=gID,odor=gConf['odor'],
                                    default_color=gConf['default_color'], life=gConf['life'])
 
     # def create_larvae2(self, larva_pars, parameter_dict={}):

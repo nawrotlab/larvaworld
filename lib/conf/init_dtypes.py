@@ -290,8 +290,9 @@ def init_pars():
         'space_search': {'pars': {'t': List[str]},
                          'ranges': {'t': List[Tuple[float]], 'max': 100.0, 'min': -100.0, 'dv': 1.0},
                          'Ngrid': {'t': int, 'max': 100}},
-        'body': {'initial_length': {'v': 0.0045, 'max': 0.01, 'dv': 0.0001, 'aux_values': ['sample']},
-                 'length_std': {'v': 0.0001, 'max': 0.001, 'dv': 0.0001, 'aux_values': ['sample']},
+        # 'body': {'initial_length': {'v': 'sample', 'max': 0.01, 'dv': 0.0001, 'aux_values': ['sample']},
+        'body': {'initial_length': {'v': 'sample', 'max': 0.01, 'dv': 0.0001, 'aux_values': ['sample']},
+                 'length_std': {'v': 0.0, 'max': 0.001, 'dv': 0.0001, 'aux_values': ['sample']},
                  'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12},
                  'seg_ratio': {'max': 1.0},  # [5 / 11, 6 / 11]
                  'touch_sensors': {'t': bool, 'v': False},
@@ -324,10 +325,10 @@ def init_pars():
                     'max_vel_phase': {'v': 1.0, 'max': 2.0}
                     },
         'turner': {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal']},
-                   'base_activation': {'max': 100.0, 'dv': 1.0},
-                   'activation_range': {'t': Tuple[float], 'max': 100.0, 'dv': 1.0},
-                   'noise': {'v': 0.0, 'max': 10.0},
-                   'activation_noise': {'v': 0.0, 'max': 10.0},
+                   'base_activation': {'v': 20.0, 'max': 100.0, 'dv': 1.0},
+                   'activation_range': {'t': Tuple[float],'v': (10.0,40.0), 'max': 100.0, 'dv': 1.0},
+                   'noise': {'v': 0.15, 'max': 10.0},
+                   'activation_noise': {'v': 0.5, 'max': 10.0},
                    'initial_amp': {'max': 20.0},
                    'amp_range': {'t': Tuple[float], 'max': 20.0},
                    'initial_freq': {'max': 2.0},
@@ -354,7 +355,7 @@ def init_pars():
             'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear']},
             'olfactor_noise': {'v': 0.0, 'max': 1.0},
             'decay_coef': {'v': 0.0, 'max': 2.0}},
-        'feeder': {'freq_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 4.0},
+        'feeder': {'freq_range': {'t': Tuple[float], 'v': (1.0, 3.0), 'max': 4.0},
                    'initial_freq': {'v': 2.0, 'max': 4.0},
                    'feed_radius': {'v': 0.1, 'max': 10.0},
                    'V_bite': {'v': 0.0002, 'max': 0.001, 'dv': 0.0001}},
@@ -394,7 +395,8 @@ def init_pars():
             'range': {'t': Tuple[float], 'v': (0.0, 2.0), 'max': 10.0, 'dv': 1.0},
             'name': {'t': str, 'v': 'lognormal', 'vs': ['lognormal']},
             'mu': {'v': 1.0, 'max': 10.0},
-            'sigma': {'v': 0.0, 'max': 10.0}
+            'sigma': {'v': 0.0, 'max': 10.0},
+            'fit' : {'t' : bool, 'v' : False}
         },
         'par': {
             'p': {'t': str},
@@ -429,6 +431,19 @@ def init_pars():
         },
         'substrate': {k: {'v': v, 'max': 1000.0, 'dv': 5.0} for k, v in substrate_dict['standard'].items()},
         'output': {n: {'t': bool, 'v': False} for n in output_keys}
+    }
+
+    d['brain'] = {
+        'modules' : d['modules'],
+        **{f'{m}_params': d[m] for m in d['modules'].keys()},
+        'nengo' : {'t': bool, 'v': False}
+    }
+
+    d['larva_conf'] ={
+        'brain' : d['brain'],
+        'body' : d['body'],
+        'energetics' : d['energetics'],
+        'physics' : d['physics'],
     }
 
     d['preprocessing'] = {
@@ -544,9 +559,7 @@ def init_pars():
         'sample': {'t': str, 'v': 'controls.exploration'},
         'default_color': {'t': str, 'v': 'black'},
         'imitation': {'t': bool, 'v': False},
-        # 'placement' : {'t': str, 'v': 'distribution', 'vs': ['distribution', 'imitation']},
         'distribution': d['larva_distro'],
-        # **d['odor']
         'odor': d['odor']
     }
 

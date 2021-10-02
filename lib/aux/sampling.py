@@ -98,7 +98,7 @@ class BoutGenerator :
             'logNpow': {'cdf': logNpow_cdf, 'pdf': logNpow_pdf,
                         'args': ['alpha', 'mu', 'sigma', 'switch', 'ratio', 'overlap'], 'rvs': logNpow_distro},
             'levy': {'cdf': levy_cdf, 'pdf': levy_pdf, 'args': ['mu', 'sigma'], 'rvs': levy_discrete},
-            'norm': {'cdf': norm_cdf, 'pdf': norm_pdf, 'args': ['mu', 'sigma'], 'rvs': norm_discrete},
+            'normal': {'cdf': norm_cdf, 'pdf': norm_pdf, 'args': ['mu', 'sigma'], 'rvs': norm_discrete},
             'uniform': {'cdf': uniform_cdf, 'pdf': uniform_pdf, 'args': [], 'rvs': uniform_discrete},
         }
         self.xmin, self.xmax = range

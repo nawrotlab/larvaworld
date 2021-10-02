@@ -9,31 +9,20 @@ from lib.conf.init_dtypes import null_dict
 
 ''' Default exploration model'''
 
-base_crawler=null_dict('crawler', initial_freq=1.5, step_to_length_mu=0.25, step_to_length_std=0.0)
+Cbas = null_dict('crawler', initial_freq=1.5, step_to_length_mu=0.25, step_to_length_std=0.0)
+base_coupling = null_dict('interference', crawler_phi_range=(0.45, 1.0), feeder_phi_range=(0.0, 0.0), attenuation=0.1)
 
-default_coupling = {
-    'crawler_phi_range': (0.45, 1.0),  # np.pi * 0.55,  # 0.9, #,
-    'feeder_phi_range': (0.0, 0.0),  # np.pi * 0.3, #np.pi * 4 / 8,
-    'attenuation': 0.1
-}
+Tsin = null_dict('turner',
+                 mode='sinusoidal',
+                 initial_amp=15.0,
+                 amp_range=[0.0, 50.0],
+                 initial_freq=0.3,
+                 freq_range=[0.1, 1.0],
+                 noise=0.15,
+                 activation_noise=0.5,
+                 )
 
-neural_turner = dtypes.get_dict('turner',
-                                mode='neural',
-                                base_activation=20.0,
-                                activation_range=[10.0, 40.0],
-                                noise=0.15,
-                                activation_noise=0.5,
-                                )
-
-sinusoidal_turner = dtypes.get_dict('turner',
-                                    mode='sinusoidal',
-                                    initial_amp=15.0,
-                                    amp_range=[0.0, 50.0],
-                                    initial_freq=0.3,
-                                    freq_range=[0.1, 1.0],
-                                    noise=0.15,
-                                    activation_noise=0.5,
-                                    )
+Ccon = null_dict('crawler', waveform='constant', initial_amp=0.0012)
 
 RL_memory = {'DeltadCon': 0.1,
              'state_spacePerOdorSide': 0,
@@ -48,175 +37,95 @@ RL_memory = {'DeltadCon': 0.1,
              'train_dur': 30.0,
              }
 
+OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}
+OD2 = {'CS': {'mean': 150.0, 'std': 0.0}, 'UCS': {'mean': 0.0, 'std': 0.0}}
+
+
+def Im(EEB):
+    if EEB > 0:
+        return null_dict('intermitter', feed_bouts=True, EEB=EEB)
+    else:
+        return null_dict('intermitter', feed_bouts=False, EEB=0.0)
+
+
+def ImD(pau, str):
+    return null_dict('intermitter', pause_dist=pau, stridechain_dist=str)
+
+
 # -------------------------------------------WHOLE NEURAL MODES---------------------------------------------------------
 
 
-brain_locomotion = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter'],
-                                     turner=neural_turner,
-                                     interference=default_coupling)
+def brain(module_shorts, nengo=False, OD=None, **kwargs):
+    module_dict = {
+        'T': 'turner',
+        'C': 'crawler',
+        'If': 'interference',
+        'Im': 'intermitter',
+        'O': 'olfactor',
+        'F': 'feeder',
+        'M': 'memory',
+    }
+    if 'L' in module_shorts:
+        module_shorts.remove('L')
+        module_shorts += ['T', 'C', 'If', 'Im']
+    elif 'LOF' in module_shorts:
+        module_shorts.remove('LOF')
+        module_shorts += ['T', 'C', 'If', 'Im', 'O', 'F']
+    modules = [module_dict[k] for k in module_shorts]
 
-brain_RLolfactor = dtypes.brain_dict(
-    ['turner', 'crawler', 'interference', 'intermitter', 'olfactor', 'feeder', 'memory'],
-    turner=neural_turner,
-    interference=default_coupling,
-    memory=RL_memory)
-
-brain_RLolfactor_feeder = dtypes.brain_dict(
-    ['turner', 'crawler', 'interference', 'intermitter', 'olfactor', 'feeder', 'memory'],
-    turner=neural_turner,
-    interference=default_coupling,
-    memory=RL_memory,
-    intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.5))
-
-brain_immobile_olfactor = dtypes.brain_dict(['turner', 'olfactor'],
-                                            odor_dict={'Odor': {'mean': 150.0, 'std': 0.0}},
-                                            turner=neural_turner)
-
-basic_brain = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'olfactor'],
-                                odor_dict={'Odor': {'mean': 150.0, 'std': 0.0}},
-                                turner=sinusoidal_turner,
-                                crawler=dtypes.get_dict('crawler', waveform='constant', initial_amp=0.0012),
-                                interference=default_coupling)
-
-brain_olfactor = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'olfactor'],
-                                   odor_dict={'Odor': {'mean': 150.0, 'std': 0.0}},
-                                   turner=neural_turner,
-                                   interference=default_coupling)
-
-brain_olfactor_x2 = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'olfactor'],
-                                      odor_dict={'CS': {'mean': 150.0, 'std': 0.0},
-                                                 'UCS': {'mean': 0.0, 'std': 0.0}},
-                                      turner=neural_turner,
-                                      interference=default_coupling,
-                                      )
-
-brain_feeder_olfactor = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'olfactor', 'feeder'],
-                                          odor_dict={'Odor': {'mean': 150.0, 'std': 0.0}},
-                                          turner=neural_turner,
-                                          interference=default_coupling,
-                                          intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.5),
-                                          )
-
-brain_feeder_olfactor_x2 = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'olfactor', 'feeder'],
-                                             odor_dict={'CS': {'mean': 150.0, 'std': 0.0},
-                                                        'UCS': {'mean': 0.0, 'std': 0.0}},
-                                             turner=neural_turner,
-                                             interference=default_coupling,
-                                             intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.5),
-                                             )
-
-def RvsS_brain(EEB) :
-    return dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'feeder'],
-                                crawler=base_crawler,
-                                turner=neural_turner,
-                                interference=default_coupling,
-                                intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=EEB))
-
-brain_rover = RvsS_brain(EEB=0.37)
-brain_sitter = RvsS_brain(EEB=0.67)
-
-def RvsS_larva(EEB, **deb_kws) :
-    return dtypes.larva_dict(RvsS_brain(EEB), body=null_dict('body', initial_length=0.001),
-                             energetics=null_dict('energetics', hunger_as_EEB=True, **deb_kws))
-
-growing_rover=RvsS_larva(EEB=0.37, absorption=0.5)
-growing_sitter=RvsS_larva(EEB=0.67, absorption=0.15)
+    modules = null_dict('modules', **{m: True for m in modules})
+    d = {'modules': modules}
+    for k, v in modules.items():
+        p = f'{k}_params'
+        if not v:
+            d[p] = None
+        elif k in list(kwargs.keys()):
+            d[p] = kwargs[k]
+        elif k == 'interference':
+            d[p] = base_coupling
+        elif k == 'memory':
+            d[p] = RL_memory
+        else:
+            d[p] = null_dict(k)
+        if k == 'olfactor' and d[p] is not None:
+            d[p]['odor_dict'] = OD
+    d['nengo'] = nengo
+    return d
 
 
+def RvsS_larva(EEB, Nsegs=2, mock=False, **deb_kws):
+    b = brain(['L', 'F'], crawler=Cbas, intermitter=Im(EEB)) if not mock else brain(['Im', 'F'],
+                                                                                    intermitter=Im(EEB))
+    return null_dict('larva_conf', brain=b, body=null_dict('body', initial_length=0.001, Nsegs=Nsegs),
+                     energetics=null_dict('energetics', hunger_as_EEB=True, **deb_kws))
 
-brain_nengo = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'feeder'],
-                                # odor_dict={'Odor': {'mean': 150.0, 'std': 0.0}},
-                                turner={'initial_freq': 0.3, 'initial_amp': 10.0, 'noise': 0.0, 'freq_range':(0.2, 0.4)},
-                                crawler={'initial_freq': 1.5, 'initial_amp': 0.6, 'freq_range':(1.2, 1.8),
-                                         'waveform' : None, 'step_to_length_mu': 0.25,   'step_to_length_std': 0.01},
-                                interference=default_coupling,
-                                intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.75),
-                                # olfactor={'noise': 0.0},
-                                nengo=True
-                                )
 
-brain_nengo_explorer = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'feeder'],
-                                # odor_dict={'Odor': {'mean': 150.0, 'std': 0.0}},
-                                turner={'initial_freq': 0.3, 'initial_amp': 10.0, 'noise': 0.0, 'freq_range':(0.2, 0.4)},
-                                crawler={'initial_freq': 1.5, 'initial_amp': 0.6, 'freq_range':(1.2, 1.8),
-                                         'waveform' : None, 'step_to_length_mu': 0.25,   'step_to_length_std': 0.01},
-feeder={'initial_freq': 0.0, 'freq_range':(0.0, 0.0)},
-                                interference=default_coupling,
-                                intermitter=dtypes.get_dict('intermitter', feed_bouts=False, EEB=0.0),
-                                # olfactor={'noise': 0.0},
-                                nengo=True
-                                )
+def nengo_brain(EEB):
+    if EEB > 0:
+        f_fr0, f_fr_r = 2.0, (1.0, 3.0)
+    else:
+        f_fr0, f_fr_r = 0.0, (0.0, 0.0)
+    return brain(['L', 'F'],
+                 turner=null_dict('turner', initial_freq=0.3, initial_amp=10.0, noise=0.0, freq_range=(0.2, 0.4)),
+                 crawler=null_dict('crawler', initial_freq=1.5, initial_amp=0.6, freq_range=(1.2, 1.8),
+                                   waveform=None, step_to_length_mu=0.25, step_to_length_std=0.01),
+                 feeder=null_dict('feeder', initial_freq=f_fr0, freq_range=f_fr_r),
+                 intermitter=Im(EEB),
+                 nengo=True
+                 )
+
 
 # -------------------------------------------WHOLE LARVA MODES---------------------------------------------------------
 
 
+odors3 = [f'{i}_odor' for i in ['Flag', 'Left_base', 'Right_base']]
+odors5 = [f'{i}_odor' for i in ['Flag', 'Left_base', 'Right_base', 'Left', 'Right']]
+odors2 = [f'{i}_odor' for i in ['Left', 'Right']]
 
-mock_brain_sitter = dtypes.brain_dict(['intermitter', 'feeder'],
-                                      intermitter=dtypes.get_dict('intermitter', feed_bouts=True, EEB=0.67))
-mock_growing_sitter = dtypes.larva_dict(mock_brain_sitter, body=dtypes.get_dict('body', initial_length=0.001, Nsegs=1),
-                                        energetics=dtypes.get_dict('energetics', absorption=0.15))
-
-mock_growing_rover = mock_growing_sitter
-
-nengo_explorer = dtypes.larva_dict(brain_nengo_explorer, initial_length='sample', touch_sensors=False)
-nengo_larva = dtypes.larva_dict(brain_nengo, initial_length='sample', touch_sensors=False)
-RL_odor_larva = dtypes.larva_dict(brain_RLolfactor, body=dtypes.get_dict('body', initial_length='sample'))
-RL_feed_odor_larva = dtypes.larva_dict(brain_RLolfactor_feeder, body=dtypes.get_dict('body', initial_length='sample'))
-imitation_larva = dtypes.larva_dict(brain_locomotion, body=dtypes.get_dict('body', Nsegs=11),
-                                    physics=dtypes.get_dict('physics', ang_damping=1.0, body_spring_k=1.0))
-
-basic_larva = dtypes.larva_dict(basic_brain, body=dtypes.get_dict('body', initial_length='sample', Nsegs=1))
-feeding_odor_larva = dtypes.larva_dict(brain_feeder_olfactor, body=dtypes.get_dict('body', initial_length='sample'))
-feeding_odor_larva_x2 = dtypes.larva_dict(brain_feeder_olfactor_x2,
-                                          body=dtypes.get_dict('body', initial_length='sample'))
-feeding_larva = dtypes.larva_dict(brain_rover, body=dtypes.get_dict('body', initial_length='sample'))
-immobile_odor_larva = dtypes.larva_dict(brain_immobile_olfactor, body=dtypes.get_dict('body', initial_length='sample'))
-odor_larva = dtypes.larva_dict(brain_olfactor, body=dtypes.get_dict('body', initial_length='sample'))
-odor_larva_x2 = dtypes.larva_dict(brain_olfactor_x2, body=dtypes.get_dict('body', initial_length='sample'))
-exploring_larva = dtypes.larva_dict(brain_locomotion, body=dtypes.get_dict('body', initial_length='sample', touch_sensors=False))
-
-
-def brain_olfactor_conf(ids, means, stds=None):
-    return dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter', 'olfactor', 'feeder'],
-                             odor_dict=dtypes.new_odor_dict(ids, means, stds),
-                             turner=neural_turner,
-                             interference=default_coupling)
-
-
-odors3 = [f'{source}_odor' for source in ['Flag', 'Left_base', 'Right_base']]
-odors5 = [f'{source}_odor' for source in ['Flag', 'Left_base', 'Right_base', 'Left', 'Right']]
-odors2 = [f'{source}_odor' for source in ['Left', 'Right']]
-
-flag_larva = dtypes.larva_dict(brain_olfactor_conf(ids=odors3, means=[150.0, 0.0, 0.0]),
-                               body=dtypes.get_dict('body', initial_length='sample'))
-
-follower_R = dtypes.larva_dict(brain_olfactor_conf(ids=odors2, means=[150.0, 0.0]),
-                               body=dtypes.get_dict('body', initial_length='sample'),
-                               odor=null_dict('odor', odor_id='Right_odor', odor_intensity=300.0,
-                                                    odor_spread=0.02))
-
-follower_L = dtypes.larva_dict(brain_olfactor_conf(ids=odors2, means=[0.0, 150.0]),
-                               body=dtypes.get_dict('body', initial_length='sample'),
-                               odor=null_dict('odor', odor_id='Left_odor', odor_intensity=300.0,
-                                                    odor_spread=0.02))
-
-king_larva_R = dtypes.larva_dict(brain_olfactor_conf(ids=odors5, means=[150.0, 0.0, 0.0, 0.0, 0.0]),
-                                 body=dtypes.get_dict('body', initial_length='sample'),
-                                 odor=null_dict('odor', odor_id='Right_odor', odor_intensity=2.0,
-                                                      odor_spread=0.00005))
-
-king_larva_L = dtypes.larva_dict(brain_olfactor_conf(ids=odors5, means=[150.0, 0.0, 0.0, 0.0, 0.0]),
-                                 body=dtypes.get_dict('body', initial_length='sample'),
-                                 odor=null_dict('odor', odor_id='Left_odor', odor_intensity=2.0,
-                                                      odor_spread=0.00005))
-
-body_3c = dtypes.get_dict('body', initial_length=3.85 / 1000, length_std=0.35 / 1000)
 freq_Fed = np.random.normal(1.244, 0.13)
 freq_Deprived = np.random.normal(1.4, 0.14)
 freq_Starved = np.random.normal(1.35, 0.15)
 
-crawler_3c = dtypes.get_dict('crawler', step_to_length_mu=0.18, step_to_length_std=0.055, initial_freq=1.35,
-                             freq_std=0.14)
 pause_dist_Fed = {'range': (0.22, 69.0),
                   'name': 'lognormal',
                   'mu': -0.488,
@@ -243,42 +152,72 @@ stridechain_dist_Starved = {'range': (1, 191),
                             'mu': 1.227,
                             'sigma': 1.052}
 
-stridechain_dist_levy = {
-    'fit': False,
-    'range': (1, 120),
-    'name': 'levy',
-    'mu': 0,
-    'sigma': 1
+Levy_brain = brain(['L'],turner=Tsin,crawler=Ccon,
+                   interference=null_dict('interference', attenuation=0.0),
+                   intermitter=ImD({'fit': False, 'range': (0.01, 3.0), 'name': 'uniform'},
+                                   {'fit': False, 'range': (1, 120), 'name': 'levy', 'mu': 0, 'sigma': 1})
+                   )
+
+brain_3c = brain(['L'],
+                 crawler=null_dict('crawler', step_to_length_mu=0.18, step_to_length_std=0.055, initial_freq=1.35,
+                                   freq_std=0.14),
+                 intermitter=ImD(null_dict('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74),
+                                 null_dict('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)))
+
+
+def mod(brain, bod={}, energetics=None, phys={}):
+    return null_dict('larva_conf', brain=brain,
+                     energetics=energetics,
+                     body=null_dict('body', **bod),
+                     physics=null_dict('physics', **phys),
+                     )
+
+
+larvae = {
+    'explorer': mod(brain(['L'])),
+    'Levy-walker': mod(Levy_brain),
+    'navigator': mod(brain(['L', 'O'], OD=OD1)),
+    'navigator_x2': mod(brain(['L', 'O'], OD=OD2)),
+    'immobile': mod(brain(['T', 'O'], OD=OD1)),
+    'Orco_forager': mod(brain(['L', 'F'], intermitter=Im(0.5))),
+    'forager': mod(brain(['LOF'], OD=OD1, intermitter=Im(0.5))),
+    'forager_x2': mod(brain(['LOF'], OD=OD2, intermitter=Im(0.5))),
+    'RL_navigator': mod(brain(['LOF', 'M'])),
+    'RL_forager': mod(brain(['LOF', 'M'], intermitter=Im(0.5))),
+    'basic_navigator': mod(brain(['L', 'O'], OD=OD1, turner=Tsin, crawler=Ccon), bod={'Nsegs': 1}),
+    'explorer_3con': mod(brain_3c, bod={'initial_length': 3.85 / 1000, 'length_std': 0.35 / 1000}),
+    'nengo_feeder': mod(nengo_brain(0.75)),
+    'nengo_explorer': mod(nengo_brain(0.0)),
+    'imitator': mod(brain(['L']), bod={'initial_length': 0.0045, 'length_std': 0.0001, 'Nsegs': 11},
+                     phys={'ang_damping': 1.0, 'body_spring_k': 1.0}),
 }
-pause_dist_levy = {
-                      'fit': False,
-                      'range': (0.01, 3.0),
-                      'name': 'uniform',
-                      # 'mu': 0.8,
-                      # 'sigma': 0.7
-                  }
+RvsS = {
+    'rover': RvsS_larva(EEB=0.37, absorption=0.5),
+    'mock_rover': RvsS_larva(EEB=0.37, absorption=0.5, Nsegs=1, mock=True),
+    'sitter': RvsS_larva(EEB=0.67, absorption=0.15),
+    'mock_sitter': RvsS_larva(EEB=0.67, absorption=0.15, Nsegs=1, mock=True),
+}
 
-Levy_brain = dtypes.brain_dict(['turner', 'crawler','interference', 'intermitter'],
-                               turner=sinusoidal_turner,
-                               crawler=dtypes.get_dict('crawler', waveform='constant', initial_amp=0.0012),
-                               interference=dtypes.get_dict('interference', attenuation=0.0),
-                               intermitter=dtypes.get_dict('intermitter',
-                                                           pause_dist=pause_dist_levy,
-                                                           stridechain_dist=stridechain_dist_levy
-                                                           )
-                               )
 
-Levy_walker = dtypes.larva_dict(Levy_brain, body=dtypes.get_dict('body', initial_length='sample'))
+def OD(ids: list, means: list, stds=None) -> dict:
+    if stds is None:
+        stds = np.array([0.0] * len(means))
+    odor_dict = {}
+    for id, m, s in zip(ids, means, stds):
+        odor_dict[id] = {'mean': m,
+                         'std': s}
+    return odor_dict
 
-stridechain_dist_3c = dtypes.get_dict('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)
-pause_dist_3c = dtypes.get_dict('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74)
 
-intermitter_3c = dtypes.get_dict('intermitter', pause_dist=pause_dist_3c, stridechain_dist=stridechain_dist_3c)
+gamers = {
+    'gamer': mod(brain(['LOF'], OD=OD(odors3, [150.0, 0.0, 0.0]))),
+    'gamer-5x': mod(brain(['LOF'], OD=OD(odors5, [150.0, 0.0, 0.0, 0.0, 0.0]))),
+    'follower-R': mod(brain(['LOF'], OD=OD(odors2, [150.0, 0.0]))),
+    'follower-L': mod(brain(['LOF'], OD=OD(odors2, [0.0, 150.0]))),
+}
 
-brain_3c = dtypes.brain_dict(['turner', 'crawler', 'interference', 'intermitter'],
-                             crawler=crawler_3c,
-                             intermitter=intermitter_3c,
-                             turner=neural_turner,
-                             interference=default_coupling)
-
-exploring_3c_larva = dtypes.larva_dict(brain_3c, body=body_3c)
+mod_dict = {
+    **larvae,
+    **RvsS,
+    **gamers,
+}

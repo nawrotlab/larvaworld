@@ -142,16 +142,16 @@ class ExpFitter :
     def get_data(self, d, df):
         s,e=d.step_data, d.endpoint_data
         d_d = {}
-        d_d.update({p: np.abs(d.get_par(p).dropna().values.flatten()) for p in df['pars'].loc['angular motion']})
+        d_d.update({p: np.abs(d.get_par(p).dropna().values.flatten()) for p in df['par'].loc['angular motion']})
         d_d.update({p: e[p].values for p in df['pars'].loc['spatial motion']})
         d_d.update({p: d.get_par(p).dropna().values.flatten() for p in df['pars'].loc['reorientation']})
 
         t0, t1 = int(0 * d.fr), int(40 * d.fr)
-        d_d['dispersion'] = d.load_aux(type='dispersion', pars='dispersion')['median'][t0:t1]
-        d_d['scaled_dispersion'] = d.load_aux(type='dispersion', pars=nam.scal('dispersion'))['median'][t0:t1]
+        d_d['dispersion'] = d.load_aux('dispersion', 'dispersion')['median'][t0:t1]
+        d_d['scaled_dispersion'] = d.load_aux('dispersion', nam.scal('dispersion'))['median'][t0:t1]
 
         for p in df['pars'].loc['stride cycle curve'] :
-            chunk_d =d.load_aux(type='stride', pars=p).values
+            chunk_d =d.load_aux('stride', p).values
             if any([x in p for x in ['bend', 'orientation']]):
                 chunk_d = np.abs(chunk_d)
             d_d[f'str_{p}'] = np.nanquantile(chunk_d, q=0.5, axis=0)

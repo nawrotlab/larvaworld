@@ -977,15 +977,15 @@ def getPar(k=None, p=None, d=None, to_return=['d', 'l'], new_format=True):
 
 
 if __name__ == '__main__':
-    ParDict = build_par_dict()
+    # ParDict = build_par_dict()
     # for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
     #     p = getPar(short, to_return=['d'])[0]
     #     print(p)
-    dic = build_par_dict()
+    # dic = build_par_dict()
     # print(dic.keys())
     # print(runtime_pars)
     # dic=load_ParDict()
-    print(getPar(k='sstr_d_mu'))
+    # print(getPar(k='sstr_d_mu'))
     # print(getPar(k='str_sd_mu'))
     # print(dic['b'])
     # print(dic['D_olf'])
@@ -1052,3 +1052,6 @@ if __name__ == '__main__':
     # # plt.xlabel(df['unit'].iloc[1]/1973*u.day)
     # # # plt.xlabel([d[k].symbol for k in list(d.keys())])
     # # plt.show()
+    par_shorts = ['str_N', 'str_tr', 'cum_d']
+    pars, sim_labels, exp_labels, xlabels, xlims = getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim'])
+    print(pars)

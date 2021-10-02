@@ -20,22 +20,38 @@ from lib.envs._larvaworld_replay import LarvaWorldReplay
 
 class LarvaDataset:
     def __init__(self, dir, id='unnamed', fr=16, Npoints=3, Ncontour=0,
-                 par_conf=SimParConf, save_data_flag=True, load_data=True,env_params={},
-                 sample_dataset='reference', group_id='SimGroup'):
+                 par_conf=SimParConf, save_data_flag=True, load_data=True,env_params={}):
         self.par_config = par_conf
         self.save_data_flag = save_data_flag
         self.define_paths(dir)
         if os.path.exists(self.dir_dict['conf']):
             self.config = fun.load_dict(self.dir_dict['conf'], use_pickle=False)
         else:
+            groups=env_params['larva_groups']
+            group_ids=list(groups.keys())
+            samples=fun.unique_list(groups[k]['sample'] for k in group_ids)
+            if len(group_ids)==1 :
+                group_id=group_ids[0]
+                color=groups[group_id]['default_color']
+                sample=groups[group_id]['sample']
+            else :
+                group_id=None
+                color=None
+                if len(samples)==1 :
+                    sample=samples[0]
+                else :
+                    sample=None
             self.config = {'id': id,
                            'group_id': group_id,
+                           'group_ids': group_ids,
                            'dir': dir,
+                           'parent_plot_dir': f'{dir}/plots',
                            'fr': fr,
                            'dt': 1/fr,
                            'Npoints': Npoints,
                            'Ncontour': Ncontour,
-                           'sample_dataset': sample_dataset,
+                           'sample': sample,
+                           'color': color,
                            **par_conf,
                            # 'arena_pars': arena_pars,
                            'env_params': env_params,
@@ -100,17 +116,27 @@ class LarvaDataset:
         self.endpoint_data.drop(agents, inplace=True)
         self.agent_ids = self.step_data.index.unique('AgentID').values
         self.num_ticks = self.step_data.index.unique('Step').size
-        try:
-            fs = [f'{self.aux_dir}/{f}' for f in os.listdir(self.aux_dir)]
-            ns = fun.flatten_list([[f'{f}/{n}' for n in os.listdir(f) if n.endswith('.csv')] for f in fs])
-            for n in ns:
-                try:
-                    df = pd.read_csv(n, index_col=0)
-                    df.loc[~df.index.isin(agents)].to_csv(n, index=True, header=True)
-                except:
-                    pass
-        except:
-            pass
+
+        aux = pd.HDFStore(self.dir_dict['aux_h5'])
+        for k in aux.keys() :
+            # print(k)
+            df=aux[k]
+            # print(df.index)
+            df.drop(agents, inplace=True)
+            aux[k]=df
+        aux.close()
+
+        # try:
+        #     fs = [f'{self.aux_dir}/{f}' for f in os.listdir(self.aux_dir)]
+        #     ns = fun.flatten_list([[f'{f}/{n}' for n in os.listdir(f) if n.endswith('.csv')] for f in fs])
+        #     for n in ns:
+        #         try:
+        #             df = pd.read_csv(n, index_col=0)
+        #             df.loc[~df.index.isin(agents)].to_csv(n, index=True, header=True)
+        #         except:
+        #             pass
+        # except:
+        #     pass
         if is_last:
             self.save()
         if show_output:
@@ -156,8 +182,8 @@ class LarvaDataset:
         pars = [p for p in self.step_data.columns.values if p not in vpars]
         return pars
 
-    def read(self, key='end'):
-        return pd.read_hdf(self.dir_dict['data_h5'], key)
+    def read(self, key='end', file='data_h5'):
+        return pd.read_hdf(self.dir_dict[file], key)
 
     def load(self, step=True, end=True, food=False):
         store = pd.HDFStore(self.dir_dict['data_h5'])
@@ -298,11 +324,8 @@ class LarvaDataset:
         store.close()
         return df
 
-    def load_aux(self, type, pars=None):
-        # if type in ['distro', 'dispersion', 'stride'] :
-        store = pd.HDFStore(self.dir_dict['aux_h5'])
-        df = store[f'{type}.{pars}']
-        store.close()
+    def load_aux(self, type, par=None):
+        df = self.read(key=f'{type}.{par}', file='aux_h5')
         return df
 
     @property
@@ -644,19 +667,18 @@ class LarvaDataset:
         if len(immobile_ids) > 0:
             self.drop_agents(agents=immobile_ids, is_last=is_last)
 
-    def get_par(self, par, endpoint_par=True):
+    def get_par(self, par):
         try:
-            p_df = self.load_aux(type='distro', pars=par)
+            return self.read(key='end')[par]
         except:
-            if endpoint_par:
-                if not hasattr(self, 'end'):
-                    self.load(step=False)
-                p_df = self.endpoint_data[par]
-            else:
-                if not hasattr(self, 'step'):
-                    self.load(end=False)
-                p_df = self.step_data[par]
-        return p_df
+            try:
+                return self.read(key='step')[par]
+            except:
+                try :
+                    return self.read(key=f'distro.{par}', file='aux_h5')
+                except :
+                    print(f'Parameter {par} not found.')
+                    return None
 
     def delete(self, show_output=True):
         shutil.rmtree(self.dir)
@@ -669,31 +691,36 @@ class LarvaDataset:
         if save:
             self.save_config()
 
-    def split_dataset(self, groups=None, is_last=True, show_output=True):
-        if groups is None:
-            groups = fun.unique_list([id.split('_')[0] for id in self.agent_ids])
-        if len(groups) == 1:
+    def split_dataset(self, is_last=False, show_output=False, delete_parent=False):
+        c=self.config
+        gIDs = c['group_ids']
+        if len(gIDs) == 1:
             return [self]
-        new_dirs = [f'{self.dir}/../{self.id}.{f}' for f in groups]
-        if all([os.path.exists(new_dir) for new_dir in new_dirs]):
-            new_ds = [LarvaDataset(new_dir) for new_dir in new_dirs]
+        fs = [f'{self.dir}/../{self.id}.{gID}' for gID in gIDs]
+        if all([os.path.exists(f) for f in fs]):
+            ds = [LarvaDataset(f) for f in fs]
         else:
             if self.step_data is None:
                 self.load()
             s,e=self.step_data, self.endpoint_data
-            new_ds = []
-            for f, new_dir in zip(groups, new_dirs):
-
-                valid_ids = [id for id in self.agent_ids if str.startswith(id, f)]
-                # copy_tree(self.dir, new_dir)
-                new_d = LarvaDataset(new_dir, id=f, load_data=False)
-                new_d.set_data(step=s.loc[(slice(None), valid_ids),:], end=e.loc[valid_ids])
-                # new_d.drop_agents(invalid_ids, is_last=is_last, show_output=show_output)
-                # new_d.set_id(f)
-                new_ds.append(new_d)
+            ds = []
+            for gID, f in zip(gIDs, fs):
+                gConf=c['env_params']['larva_groups'][gID]
+                valid_ids = [id for id in self.agent_ids if str.startswith(id, gID)]
+                copy_tree(self.dir, f)
+                env=copy.deepcopy(c['env_params'])
+                env['larva_groups']={gID : gConf}
+                d = LarvaDataset(f, id=gID, env_params=env, load_data=False)
+                d.set_data(step=s.loc[(slice(None), valid_ids),:], end=e.loc[valid_ids])
+                d.config['parent_plot_dir']=self.plot_dir
+                if is_last :
+                    d.save()
+                ds.append(d)
             if show_output:
-                print(f'Dataset {self.id} splitted in {[d.id for d in new_ds]}')
-        return new_ds
+                print(f'Dataset {self.id} splitted in {[d.id for d in ds]}')
+        if delete_parent :
+            self.delete(show_output=show_output)
+        return ds
 
     # def split_dataset(self, groups=None, is_last=True, show_output=True):
     #     if groups is None:

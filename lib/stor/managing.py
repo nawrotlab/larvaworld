@@ -1,4 +1,5 @@
 import copy
+import os
 import time
 import warnings
 from itertools import product
@@ -275,10 +276,11 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
 
 
 if __name__ == '__main__':
-    dds=[[f'/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
-    dds=fun.flatten_list(dds)
+    # dds=[[f'/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
+    # dds=fun.flatten_list(dds)
     # dr = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/FRUvsQUI/Naive->PUR/EM/control'
-    # dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/nengo_dish/nengo_dish_9'
+    dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/dispersion_x2/dispersion_x2_3.Levy'
+    dr2='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/dispersion_x2/dispersion_x2_3.Oscillatory'
     # dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/imitation/exp_13l_imitation_0'
     # dr1='/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Satrved'
     # ddr='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/controls_20l'
@@ -320,16 +322,16 @@ if __name__ == '__main__':
     # a = np.array([2.4, 3.4])
     # ab = np.array([23.4, 31.4])
     # dr='/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved'
-    for dddr in dds :
-        # aa=fun.angle_to_x_axis(a,ab)
-        # print(aa)
-        # raise
-        d = LarvaDataset(dddr, load_data=False)
+    for dddr in [dr1, dr2] :
+        store = pd.HDFStore(f'{dddr}/data/data.h5')
+        print(store.keys())
+        raise
+        d = LarvaDataset(dddr)
         # # c = d.config
         # del d.config['agent_ids']
         # d.config['bout_distros']['stride']=d.config['bout_distros']['stride']['best']
         # d.config['bout_distros']['pause']=d.config['bout_distros']['pause']['best']
-        d.save_config()
+        # d.save_config()
         # d.save_agents(ids=['Larva_105'])
         # s0,e0=d.load_agent('Larva_105')
         # d.visualize(vis_kwargs=vis_kwargs, s0=s0, e0=e0, fix_point=5,
@@ -341,12 +343,13 @@ if __name__ == '__main__':
         #                                              ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
         #                                               'Rturn', 'turn', 'unused']},
         #                                           **{'midline': False, 'contour': False}}, is_last=True)
-        # s, e = d.step_data, d.endpoint_data
+        s, e = d.step_data, d.endpoint_data
         # c=d.config
         # ss=s.xs('Larva_105', level='AgentID', drop_level=True)
         # print(ss.head())
         # print(c)
         # print(s.columns.values)
+        print(e.columns)
         # print(len(s.columns))
         from lib.anal.process.basic import rescale
         # print(ss[fun.flatten_list(d.contour_xy)])

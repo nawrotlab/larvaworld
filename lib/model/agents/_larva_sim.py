@@ -11,9 +11,9 @@ from lib.model.DEB.deb import DEB
 
 
 class LarvaSim(BodySim, Larva):
-    def __init__(self, unique_id, model, pos, orientation, larva_pars, group='', default_color=None,life=None, **kwargs):
+    def __init__(self, unique_id, model, pos, orientation, larva_pars,odor, group='', default_color=None,life=None, **kwargs):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
-                       odor=larva_pars['odor'], group=group, default_color=default_color)
+                       odor=odor, group=group, default_color=default_color)
         # try:
         #     larva_pars['brain']['olfactor_params']['odor_dict'] = self.update_odor_dicts(
         #         larva_pars['brain']['olfactor_params']['odor_dict'])

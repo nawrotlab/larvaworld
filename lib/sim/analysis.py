@@ -7,6 +7,7 @@ from lib.anal.plotting import plot_endpoint_scatter, plot_turn_Dbearing, plot_tu
     plot_stridesNpauses, plot_ang_pars, plot_interference, lineplot
 from lib.aux import functions as fun
 from lib.conf import dtype_dicts as dtypes
+from lib.conf.conf import loadConf
 from lib.conf.par import getPar
 from lib.model.DEB.deb import deb_default
 from lib.sim.single_run import load_reference_dataset
@@ -15,9 +16,16 @@ from lib.stor.larva_dataset import LarvaDataset
 
 
 def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
-    ccc = {'show': False}
+
     if d is None:
         return
+    if not type(d)==list :
+        d=[d]
+    ccc = {'show': False,
+           'save_to': d[0].config['parent_plot_dir']}
+    cc = {'datasets': d,
+          'subfolder': None,
+          **ccc}
     fig_dict = {}
     results = {}
     if exp_type in ['patchy_food', 'uniform_food', 'food_grid']:
@@ -34,15 +42,12 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
         # fig_dict['bouts'] = plot_stridesNpauses(datasets=[d], plot_fits=None, only_fit_one=False, test_detection=True,
         #                                         **ccc)
 
-        fig_dict['scatter_x4'] = plot_endpoint_scatter(datasets=[d], keys=['cum_sd', 'f_am', 'str_tr', 'pau_tr'], **ccc)
-        fig_dict['scatter_x2'] = plot_endpoint_scatter(datasets=[d], keys=['cum_sd', 'f_am'], **ccc)
+        fig_dict['scatter_x4'] = plot_endpoint_scatter(keys=['cum_sd', 'f_am', 'str_tr', 'pau_tr'], **cc)
+        fig_dict['scatter_x2'] = plot_endpoint_scatter(keys=['cum_sd', 'f_am'], **cc)
 
     elif exp_type in ['food_at_bottom']:
-        ds = d.split_dataset(is_last=False, show_output=show_output)
-        cc = {'datasets': ds,
-              'save_to': d.plot_dir,
-              'subfolder': None,
-              **ccc}
+        # ds = d.split_dataset(is_last=False, show_output=show_output)
+
 
         fig_dict['bearing correction VS Y pos'] = plot_turn_amp(par_short='tur_y0', mode='hist', ref_angle=270, **cc)
         fig_dict['turn angle VS Y pos (hist)'] = plot_turn_amp(par_short='tur_y0', mode='hist', **cc)
@@ -56,27 +61,26 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
 
     elif exp_type in ['rovers_sitters_on_standard', 'rovers_sitters_on_agar']:
         s = exp_type.split('_')[-1]
-        ds = d.split_dataset(groups=['Rover', 'Sitter'], show_output=show_output)
-        debs = d.load_deb_dicts(use_pickle=False)
-        d.delete(show_output=show_output)
+        # ds = d.split_dataset(groups=['Rover', 'Sitter'], show_output=show_output)
+        debs = fun.flatten_list([dd.load_deb_dicts(use_pickle=False) for dd in d])
+        # d.delete(show_output=show_output)
         fig_dict[f'RS hunger on {s} '] = plot_debs(deb_dicts=debs, save_as=f'deb_on_{s}.pdf',
-                                                   mode='hunger', sim_only=True, roversVSsitters=True,
-                                                   save_to=d.plot_dir, show=False)
+                                                   mode='hunger', sim_only=True, roversVSsitters=True, **cc)
 
     elif exp_type in ['growth', 'rovers_sitters']:
-        deb_model = deb_default(epochs=d.config['epochs'], substrate_quality=d.config['substrate_quality'])
+        deb_model = deb_default(epochs=d[0].config['epochs'], substrate_quality=d[0].config['substrate_quality'])
         if exp_type == 'rovers_sitters':
             roversVSsitters = True
-            ds = d.split_dataset(groups=['Sitter', 'Rover'], show_output=show_output)
+            # ds = d.split_dataset(groups=['Sitter', 'Rover'], show_output=show_output)
             labels = ['Sitters', 'Rovers']
         else:
             roversVSsitters = False
-            ds = [d]
-            labels = [d.id]
+            # ds = [d]
+            labels = [dd.id for dd in d]
 
-        deb_dicts = d.load_deb_dicts() + [deb_model]
-        c = {'save_to': d.plot_dir,
-             'roversVSsitters': roversVSsitters}
+        deb_dicts = fun.flatten_list([dd.load_deb_dicts(use_pickle=False) for dd in d]) + [deb_model]
+        # deb_dicts = d.load_deb_dicts() + [deb_model]
+        c = {'roversVSsitters': roversVSsitters}
         c1 = {'deb_dicts': deb_dicts[:-1],
               'sim_only': True}
 
@@ -84,17 +88,17 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
                   'food_mass_2']:
             for t in ['hours']:
                 save_as = f'{m}_in_{t}.pdf'
-                fig_dict[f'{m} ({t})'] = plot_debs(save_as=save_as, mode=m, time_unit=t, **c, **c1, **ccc)
+                fig_dict[f'{m} ({t})'] = plot_debs(save_as=save_as, mode=m, time_unit=t, **c, **c1, **cc)
 
         for m in ['energy', 'growth', 'full']:
             save_as = f'{m}_vs_model.pdf'
-            fig_dict[f'{m} vs model'] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c, **ccc)
+            fig_dict[f'{m} vs model'] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c, **cc)
 
         if exp_type == 'rovers_sitters':
-            cc = {'datasets': ds,
-                  'labels': labels,
-                  'save_to': d.plot_dir,
-                  **ccc}
+            # cc = {'datasets': ds,
+            #       'labels': labels,
+            #       'save_to': d.plot_dir,
+            #       **ccc}
             cc1 = {'show_first': False, 'legend_loc': 'upper_left', **cc}
 
             fig_dict['faeces ratio'] = plot_timeplot(['f_out_r'], **cc1)
@@ -113,21 +117,28 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
             except:
                 pass
 
-
-    elif exp_type == 'dispersion':
-        target_dataset = load_reference_dataset(dataset_id=d.config['sample_dataset'])
-        ds = [d, target_dataset]
-        labels = ['simulated', 'empirical']
-        # targeted_analysis(ds)
-        dic0 = comparative_analysis(datasets=ds, labels=labels, simVSexp=True, save_to=None, **ccc)
+    elif exp_type == 'dispersion_x2':
+        samples=fun.unique_list([dd.config['sample'] for dd in d])
+        targets=[LarvaDataset(loadConf(sd, 'Ref')['dir'])for sd in samples]
+        dic0 = comparative_analysis(datasets=d+targets,**ccc)
         fig_dict.update(dic0)
-        dic1 = {f'marked_strides_idx_0_slice_{s0}-{s1}': plot_marked_strides(datasets=[d], agent_idx=0,
-                                                                             slice=[s0, s1], **ccc) for (s0, s1) in
-                [(10, 50), (60, 100)]}
-        # dic1 = plot_marked_strides(dataset=d, agent_ids=d.agent_ids[:3], title=' ', slices=[[10, 50], [60, 100]])
-        fig_dict.update(dic1)
-        dic2 = plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:3], min_turn_angle=20, **ccc)
-        fig_dict.update(dic2)
+        for dd in d :
+            dd.delete()
+
+    # elif exp_type == 'dispersion':
+    #     target_dataset = load_reference_dataset(dataset_id=d.config['sample_dataset'])
+    #     ds = [d, target_dataset]
+    #     labels = ['simulated', 'empirical']
+    #     # targeted_analysis(ds)
+    #     dic0 = comparative_analysis(datasets=ds, labels=labels, simVSexp=True, save_to=None, **ccc)
+    #     fig_dict.update(dic0)
+    #     dic1 = {f'marked_strides_idx_0_slice_{s0}-{s1}': plot_marked_strides(datasets=[d], agent_idx=0,
+    #                                                                          slice=[s0, s1], **ccc) for (s0, s1) in
+    #             [(10, 50), (60, 100)]}
+    #     # dic1 = plot_marked_strides(dataset=d, agent_ids=d.agent_ids[:3], title=' ', slices=[[10, 50], [60, 100]])
+    #     fig_dict.update(dic1)
+    #     dic2 = plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:3], min_turn_angle=20, **ccc)
+    #     fig_dict.update(dic2)
 
     elif exp_type in ['chemotaxis_approach', 'chemotaxis_local', 'chemotaxis_diffusion']:
         if exp_type in ['chemotaxis_local', 'chemotaxis_diffusion']:
@@ -137,34 +148,32 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
             ps = ['o_chem', 'sd_chem', 'd_chem']
             source = (0.04, 0.0)
         for p in ps:
-            fig_dict[p] = plot_timeplot([p], datasets=[d], show_first=True, **ccc)
+            fig_dict[p] = plot_timeplot([p], show_first=True, **cc)
         for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
-            fig_dict[p] = plot_timeplot([p], datasets=[d], **ccc)
+            fig_dict[p] = plot_timeplot([p], **cc)
         for chunk in ['turn', 'stride', 'pause']:
             for dur in [0.0, 0.5, 1.0]:
                 try:
-                    fig_dict[f'{chunk}_bearing2source_min_{dur}_sec'] = plot_chunk_Dorient2source(datasets=[d],
-                                                                                                  chunk=chunk,
+                    fig_dict[f'{chunk}_bearing2source_min_{dur}_sec'] = plot_chunk_Dorient2source(chunk=chunk,
                                                                                                   source=source,
-                                                                                                  min_dur=dur, **ccc)
+                                                                                                  min_dur=dur, **cc)
                 except:
                     pass
         vis_kwargs = dtypes.get_dict('visualization', mode='image', image_mode='final', show_display=False,
                                      random_colors=True, trajectories=True,
                                      visible_clock=False, visible_scale=False, media_name='single_trajectory')
-        d.visualize(agent_ids=[d.agent_ids[0]], vis_kwargs=vis_kwargs)
+        d[0].visualize(agent_ids=[d[0].agent_ids[0]], vis_kwargs=vis_kwargs)
 
     if 'odor_pref' in exp_type:
-        ind = d.compute_preference_index()
+        ind = d[0].compute_preference_index()
         print(f'Preference for left odor : {np.round(ind, 3)}')
         results['PI'] = ind
 
     if exp_type in ['odor_pref_RL', 'chemotaxis_RL']:
         c = {
-            'datasets': [d],
             'show_first': False,
             'table': 'best_gains',
-            **ccc
+            **cc
         }
 
         g_keys = ['g_odor1'] if exp_type == 'chemotaxis_RL' else ['g_odor1', 'g_odor2']
@@ -174,16 +183,15 @@ def sim_analysis(d: LarvaDataset, exp_type, show_output=False):
                                                               individuals=True, **c)
         fig_dict['reward_table'] = plot_timeplot(['cum_reward'], save_as='reward.pdf', **c)
     elif exp_type == 'realistic_imitation':
-        d.save_agents(pars=fun.flatten_list(d.points_xy) + fun.flatten_list(d.contour_xy), header=True)
+        d[0].save_agents(pars=fun.flatten_list(d[0].points_xy) + fun.flatten_list(d[0].contour_xy), header=True)
     if exp_type == 'dish':
-        targeted_analysis([d])
-        fig_dict = {f'stride_track_idx_0_in_{s0}-{s1}': plot_marked_strides(datasets=[d], agent_idx=0,
-                                                                            slice=[s0, s1], **ccc) for (s0, s1) in
+        targeted_analysis(d)
+        fig_dict = {f'stride_track_idx_0_in_{s0}-{s1}': plot_marked_strides(agent_idx=0,
+                                                                            slice=[s0, s1], **cc) for (s0, s1) in
                     [(0, 60)]}
     if exp_type == 'imitation':
-        print('ddddddddddddd')
-        f = ExpFitter(d.config['env_params']['larva_groups']['ImitationGroup']['sample'])
-        results['sample_fit'] = f.compare(d, save_to_config=True)
+        f = ExpFitter(d[0].config['env_params']['larva_groups']['ImitationGroup']['sample'])
+        results['sample_fit'] = f.compare(d[0], save_to_config=True)
         print(results['sample_fit'])
     print(f'    Analysis complete!')
     return fig_dict, results
@@ -295,7 +303,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
 
 
 def split_rovers_sitters(d):
-    ds = d.split_dataset(groups=['Rover', 'Sitter'], show_output=False)
+    ds = d.split_dataset()
     debs = d.load_deb_dicts(use_pickle=False)
     d.delete(show_output=False)
     return ds, debs

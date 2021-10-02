@@ -439,7 +439,7 @@ class LarvaWorld:
         self.all_food_schedule.add(f)
         return f
 
-    def add_larva(self, pos, orientation=None, id=None, pars=None, group=None, default_color=None, life=None):
+    def add_larva(self, pos, orientation=None, id=None, pars=None, group=None, default_color=None, life=None, odor=None):
         # print(pos, group)
         if group is None and pars is None:
             group, conf = list(self.env_pars['larva_groups'].items())[0]
@@ -447,6 +447,7 @@ class LarvaWorld:
             mod = get_sample_bout_distros(conf['model'], conf['sample'])
             pars = self._generate_larvae(1, sample_dict, mod)
             life=conf['life']
+            odor=conf['odor']
             if default_color is None:
                 default_color = conf['default_color']
         if id is None:
@@ -455,7 +456,7 @@ class LarvaWorld:
             orientation = np.random.uniform(0, 2 * np.pi, 1)[0]
         while not fun.inside_polygon([pos], self.tank_polygon)[0] :
             pos=tuple(np.array(pos)*0.999)
-        l = LarvaSim(model=self, pos=pos, orientation=orientation, unique_id=id,
+        l = LarvaSim(model=self, pos=pos, orientation=orientation, unique_id=id,odor=odor,
                      larva_pars=pars, group=group, default_color=default_color, life=life)
         self.active_larva_schedule.add(l)
         self.all_larva_schedule.add(l)

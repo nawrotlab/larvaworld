@@ -66,7 +66,9 @@ grouped_exp_dict = {
         **simple_exp('dish'),
         **simple_exp('nengo_dish', dur=3.0),
         # **simple_exp('nengo_dish', dur=2.0, enrichment=dtypes.base_enrich(preprocessing={'rescale_by' : 1000}), en=False),
-        **simple_exp('dispersion')},
+        **simple_exp('dispersion'),
+        **simple_exp('dispersion_x2', dur=3.0),
+    },
 
     'chemotaxis': {**chemotaxis_exp('chemotaxis_approach', source=(0.04, 0.0)),
                    **chemotaxis_exp('chemotaxis_local'),
