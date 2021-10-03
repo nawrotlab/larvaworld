@@ -8,7 +8,7 @@ import lib.aux.ang_aux
 import lib.aux.sim_aux
 import lib.aux.xy_aux
 import lib.conf.dtype_dicts as dtypes
-import lib.aux.colsNstr as fun
+from lib.conf.init_dtypes import get_dict
 import lib.conf.init_dtypes
 import lib.gui.aux.functions
 from lib.conf.init_dtypes import null_dict
@@ -179,7 +179,7 @@ class EnvTab(GuiTab):
             [sg.R('Inspect item', 1, True, k='-INSPECT-', enable_events=True)]]
         lB = [[sg.R(f'Add {B}', 1, k=B, enable_events=True, **t_kws(10)), *color_pick_layout(B, 'black')],
               [sg.T('', **t_kws(4)), sg.T('id', **t_kws(5)), sg.In(B, k=f'{B}_id')],
-              [sg.T('', **t_kws(4)), sg.T('width', **t_kws(5)), sg.Spin(values=lib.conf.init_dtypes.value_list(end=0.1, steps=1000, decimals=4), initial_value=0.001, k=f'{B}_width')],
+              [sg.T('', **t_kws(4)), sg.T('width', **t_kws(5)), sg.Spin(values=np.arange(0.1,1000,0.1).tolist(), initial_value=0.001, k=f'{B}_width')],
               ]
         lS=[*source_l,
             [sg.T('', **t_kws(5)), *s2.get_layout()],
@@ -655,7 +655,7 @@ class EnvTab(GuiTab):
         # p.run(w, max=N)
         exp_conf['experiment'] = 'test'
         exp_conf['save_data_flag'] = False
-        exp_conf['vis_kwargs'] = dtypes.get_dict('visualization', mode='video', video_speed=60)
+        exp_conf['vis_kwargs'] = get_dict('visualization', mode='video', video_speed=60)
         res = run_sim(**exp_conf)
         return d, g
 

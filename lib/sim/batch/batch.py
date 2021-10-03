@@ -17,7 +17,7 @@ from lib.sim.batch.aux import config_traj, prepare_traj
 from lib.sim.batch.functions import single_run, prepare_batch
 
 import lib.stor.paths as paths
-import lib.conf.dtype_dicts as dtypes
+from lib.conf.init_dtypes import get_dict
 
 ''' Default batch run.
 Arguments :
@@ -135,7 +135,7 @@ def _batch_run(batch_type='unnamed', batch_id='template', space=None, exp=None, 
         'save_hdf5': save_hdf5,
         'exp_kws': {**exp_kws,
                     'save_to': dir_path,
-                    'vis_kwargs': dtypes.get_dict('visualization'),
+                    'vis_kwargs': get_dict('visualization'),
                     'collections': exp['collections']
                     },
         'proc_kws':proc_kws

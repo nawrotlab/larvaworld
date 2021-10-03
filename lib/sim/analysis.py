@@ -4,14 +4,11 @@ import lib.aux.dictsNlists
 from lib.anal.comparing import ExpFitter
 from lib.anal.plotting import plot_endpoint_scatter, plot_turn_Dbearing, plot_turn_amp, plot_turns, plot_timeplot, \
     plot_navigation_index, plot_debs, plot_food_amount, plot_gut, plot_pathlength, plot_endpoint_params, barplot, \
-    comparative_analysis, plot_marked_turns, plot_chunk_Dorient2source, plot_marked_strides, targeted_analysis, \
-    plot_stridesNpauses, plot_ang_pars, plot_interference, lineplot
-from lib.aux import colsNstr as fun
-from lib.conf import dtype_dicts as dtypes
+    comparative_analysis, plot_marked_turns, plot_chunk_Dorient2source, plot_marked_strides, targeted_analysis, lineplot
+from lib.conf.init_dtypes import get_dict
 from lib.conf.conf import loadConf
 from lib.conf.par import getPar
 from lib.model.DEB.deb import deb_default
-from lib.sim.single_run import load_reference_dataset
 from lib.stor import paths
 from lib.stor.larva_dataset import LarvaDataset
 
@@ -150,7 +147,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show_output=False):
                                                                                                   min_dur=dur, **cc)
                 except:
                     pass
-        vis_kwargs = dtypes.get_dict('visualization', mode='image', image_mode='final', show_display=False,
+        vis_kwargs = get_dict('visualization', mode='image', image_mode='final', show_display=False,
                                      random_colors=True, trajectories=True,
                                      visible_clock=False, visible_scale=False, media_name='single_trajectory')
         d.visualize(agent_ids=[d.agent_ids[0]], vis_kwargs=vis_kwargs)

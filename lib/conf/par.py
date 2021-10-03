@@ -13,6 +13,7 @@ import lib.aux.dictsNlists
 import lib.aux.sim_aux
 from lib.aux import colsNstr as fun
 from lib.aux import naming as nam
+from lib.conf.init_dtypes import null_dict
 from lib.model.DEB.gut import Gut
 from lib.stor import paths
 from lib.conf.par_conf import sub, th, dot, subsup, Delta, bar, wave, par_dict_lists, paren, \
@@ -426,7 +427,7 @@ class Parameter:
 
 
 def add_par(dic, lab=None, **kwargs):
-    p = dtypes.get_dict('par', **kwargs)
+    p = null_dict('par', **kwargs)
     # print(p)
     k = p['k']
     if k in dic.keys():
@@ -971,44 +972,30 @@ def reconstruct_ParDict(test=False):
 
 
 
-ParFrame = load_ParDict()
+PF = load_ParDict()
 
 def runtime_pars() :
-    return [v['d'] for k, v in ParFrame.items() if v['o'] == Larva and not k in build_constants().keys()]
+    return [v['d'] for k, v in PF.items() if v['o'] == Larva and not k in build_constants().keys()]
 
 
-def getPar(k=None, p=None, d=None, to_return=['d', 'l'], new_format=True):
-    if new_format is None:
-        new_format = paths.new_format
-    dic = {
-        'd': 'par',
-        'l': 'unit',
-        's': 'symbol',
-        'lim': 'lim',
-    }
-    if new_format:
-        if k is None:
-            if p is not None:
-                if type(p) == str:
-                    k = [k for k in ParFrame.keys() if ParFrame[k]['p'] == p][0]
-                elif type(p) == list:
-                    k = lib.aux.dictsNlists.flatten_list([[k for k in ParFrame.keys() if ParFrame[k]['p'] == p0][0] for p0 in p])
-            elif d is not None:
-                if type(d) == str:
-                    k = [k for k in ParFrame.keys() if ParFrame[k]['d'] == d][0]
-                elif type(d) == list:
-                    k = lib.aux.dictsNlists.flatten_list([[k for k in ParFrame.keys() if ParFrame[k]['d'] == d0][0] for d0 in d])
-        if type(k) == str:
-            return [ParFrame[k][i] for i in to_return]
-        elif type(k) == list:
-            return [[ParFrame[kk][i] for kk in k] for i in to_return]
-    else:
-        if type(k) == str:
-            res = par_dict_lists(shorts=[k], to_return=[dic[i] for i in to_return])
-            return [r[0] for r in res]
-        elif type(k) == list:
-            res = par_dict_lists(shorts=k, to_return=[dic[i] for i in to_return])
-            return res
+def getPar(k=None, p=None, d=None, to_return=['d', 'l']):
+    from lib.aux.dictsNlists import flatten_list
+    if k is None:
+        if p is not None:
+            if type(p) == str:
+                k = [k for k in PF.keys() if PF[k]['p'] == p][0]
+            elif type(p) == list:
+                k = flatten_list([[k for k in PF.keys() if PF[k]['p'] == p0][0] for p0 in p])
+        elif d is not None:
+            if type(d) == str:
+                k = [k for k in PF.keys() if PF[k]['d'] == d][0]
+            elif type(d) == list:
+                k = flatten_list([[k for k in PF.keys() if PF[k]['d'] == d0][0] for d0 in d])
+    if type(k) == str:
+        return [PF[k][i] for i in to_return]
+    elif type(k) == list:
+        return [[PF[kk][i] for kk in k] for i in to_return]
+
 
 
 if __name__ == '__main__':
@@ -1028,7 +1015,7 @@ if __name__ == '__main__':
     # print(u.unit==siu.m)
 
     # raise
-    # for k in ParFrame.keys() :
+    # for k in PF.keys() :
     #     try :
     #         a=getPar(k, ['u'])[0].unit
     #         b=get_unit(getPar(k, ['d'])[0])
@@ -1041,8 +1028,8 @@ if __name__ == '__main__':
     # # print(getPar('tur_fo0'))
     # # print(getPar('tur_fo1'))
     # pass
-    # # print(ParFrame['sv']['d'])
-    # # print(ParFrame['sv']['l'])
+    # # print(PF['sv']['d'])
+    # # print(PF['sv']['l'])
     # # dic=build_par_dict()
     # # print(dic['sv'].d)
     # # print(dic['v'].d)

@@ -11,7 +11,6 @@ import lib.aux.dictsNlists
 import lib.aux.sim_aux
 from lib.anal.plotting import plot_2d, plot_3pars, plot_endpoint_scatter, plot_endpoint_params, plot_debs, \
     plot_heatmap_PI
-from lib.aux import colsNstr as fun
 from lib.sim.batch.aux import grid_search_dict, load_traj
 from lib.sim.single_run import run_sim
 from lib.stor.larva_dataset import LarvaDataset

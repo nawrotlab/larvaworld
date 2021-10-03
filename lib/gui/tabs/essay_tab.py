@@ -1,6 +1,7 @@
 import os
 
 import lib.conf.dtype_dicts as dtypes
+from lib.conf.init_dtypes import null_dict
 
 from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, ButtonGraphList
 from lib.gui.aux.functions import t_kws, gui_col, gui_cols
@@ -43,7 +44,7 @@ class EssayTab(GuiTab):
         self.datalists[self.essay_exps_key].update_window(w)
         # w.Element(self.essay_exps_key).Update(values=exps)
 
-        essay = dtypes.get_dict('essay_params', essay_ID=f'{id}_{next_idx(id)}', path=f'essays/{id}')
+        essay = null_dict('essay_params', essay_ID=f'{id}_{next_idx(id)}', path=f'essays/{id}')
         c['essay_params'].update(w, essay)
 
         fdir = conf['exp_fig_folder']

@@ -9,7 +9,6 @@ from lib.sim.analysis import sim_analysis
 from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results
 
-import lib.aux.colsNstr as fun
 from lib.stor import paths
 
 

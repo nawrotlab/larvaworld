@@ -4,10 +4,7 @@ import pandas as pd
 
 import lib.anal.process.aux
 import lib.aux.dictsNlists
-from lib.conf.conf import *
-from lib.anal.process.aux import convex_hull
 from lib.stor.match_ids import match_larva_ids
-from lib.aux import colsNstr as fun
 from lib.aux import naming as nam
 
 

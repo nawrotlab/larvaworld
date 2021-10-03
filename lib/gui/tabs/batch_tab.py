@@ -8,7 +8,7 @@ import subprocess
 import PySimpleGUI as sg
 
 # sys.path.insert(0, '..')
-from lib.anal.combining import render_mpl_table
+from lib.aux.combining import render_mpl_table
 from lib.conf.init_dtypes import null_dict
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, GraphList, CollapsibleTable, SelectionList, DataList
 from lib.gui.aux.functions import t_kws, gui_col, gui_cols

@@ -3,7 +3,7 @@ from scipy.stats import multivariate_normal
 from shapely.geometry import Point
 
 import lib.aux.colsNstr as fun
-import lib.aux.rendering as ren
+from lib.anal.rendering import InputBox
 
 
 class LarvaworldAgent:
@@ -41,7 +41,7 @@ class LarvaworldAgent:
         return self.radius
 
     def init_id_box(self):
-        id_box = ren.InputBox(visible=False, text=self.unique_id,
+        id_box = InputBox(visible=False, text=self.unique_id,
                               color_inactive=self.default_color, color_active=self.default_color,
                               screen_pos=None, agent=self)
         return id_box

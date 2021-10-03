@@ -56,10 +56,11 @@ def build_dataset(datagroup_id,id,group_id, target_dir, source_dir=None,source_f
 
 def build_datasets_old(datagroup_id, raw_folders, folders=None, suffixes=None,
                        ids=None, names=['raw'], group_ids=None, **kwargs):
+    from lib.stor.paths import DataFolder
     warnings.filterwarnings('ignore')
     g = loadConf(datagroup_id, 'Group')
     build_conf = g['tracker']['filesystem']
-    group_dir=f'{paths.DataFolder}/{g["path"]}'
+    group_dir=f'{DataFolder}/{g["path"]}'
     raw_dir=f'{group_dir}/raw'
 
     ds = get_datasets(datagroup_id=datagroup_id, last_common='processed', names=names,
@@ -103,11 +104,12 @@ def build_datasets_old(datagroup_id, raw_folders, folders=None, suffixes=None,
 
 def get_datasets(datagroup_id, names, last_common='processed', folders=None, suffixes=None,
                  mode='load', load_data=True, ids=None, **kwargs):
+    from lib.stor.paths import DataFolder
     g = loadConf(datagroup_id, 'Group')
     data_conf = g['tracker']['resolution']
     par_conf = g['parameterization']
     arena_pars = g['tracker']['arena']
-    group_dir = f'{paths.DataFolder}/{g["path"]}'
+    group_dir = f'{DataFolder}/{g["path"]}'
 
     last_common = f'{group_dir}/{last_common}'
     if folders is None:
@@ -163,8 +165,9 @@ def analyse_datasets(datagroup_id, save_to=None, **kwargs):
     from lib.anal.plotting import comparative_analysis
     ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
     if save_to is None and len(ds) > 1:
+        from lib.stor.paths import DataFolder
         g = loadConf(datagroup_id, 'Group')
-        save_to = f'{paths.DataFolder}/{g["path"]}/plots'
+        save_to = f'{DataFolder}/{g["path"]}/plots'
     fig_dict = comparative_analysis(datasets=ds, labels=[d.id for d in ds], save_to=save_to)
     return fig_dict
 
@@ -173,8 +176,9 @@ def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={}, 
     warnings.filterwarnings('ignore')
     ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
     if save_to is None and len(ds) > 1:
+        from lib.stor.paths import DataFolder
         g = loadConf(datagroup_id, 'Group')
-        save_to = f'{paths.DataFolder}/{g["path"]}/visuals'
+        save_to = f'{DataFolder}/{g["path"]}/visuals'
     if save_as is None:
         save_as = [d.id for d in ds]
     for d, n in zip(ds, save_as):

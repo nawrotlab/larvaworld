@@ -3,7 +3,6 @@ import pandas as pd
 from pypet import cartesian_product, load_trajectory
 
 import lib.aux.dictsNlists
-from lib.aux import colsNstr as fun
 from lib.stor import paths as paths
 
 

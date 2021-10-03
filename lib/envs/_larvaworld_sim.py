@@ -1,54 +1,39 @@
 import numpy as np
-# print('0')
 from mesa.datacollection import DataCollector
 
-import lib.aux.dictsNlists
-import lib.aux.xy_aux
-from lib.aux import colsNstr as fun
+import lib.aux.dictsNlists as dNl
+from lib.aux.xy_aux import generate_xy_distro
+from lib.aux.colsNstr import N_colors
 from lib.aux.collecting import TargetedDataCollector
-# print('1')
-from lib.conf.init_dtypes import null_dict
-# print('2')
 from lib.conf.par import CompGroupCollector
 from lib.envs._larvaworld import LarvaWorld, generate_larvae, get_sample_bout_distros, sample_group
-# print('3')
-from lib.envs._space import DiffusionValueLayer, GaussianValueLayer
 from lib.sim.conditions import get_exp_condition
-# print('4')
-
-# print('5')
-from lib.stor import paths
-# print('6')
+from lib.stor.paths import RefParsFile
 
 
 class LarvaWorldSim(LarvaWorld):
-    def __init__(self, output=None, id='Unnamed_Simulation', larva_collisions=True, count_bend_errors=False,
-                 life_params=None, sample_dataset='reference', parameter_dict=None, **kwargs):
+    def __init__(self,life_params,  output, id='Unnamed_Simulation', larva_collisions=True, parameter_dict= {}, **kwargs):
         super().__init__(id=id, **kwargs)
 
-        if parameter_dict is None:
-            parameter_dict = {}
+        # if parameter_dict is None:
+        #     parameter_dict = {}
 
-        if life_params is None:
-            life_params = null_dict('life')
-        elif type(life_params)==str :
-            from lib.conf.conf import loadConf
-            life_params=loadConf(life_params, 'Life')
-        self.epochs = life_params['epochs']
-        if self.epochs is None:
-            self.epochs = []
-        self.hours_as_larva = life_params['hours_as_larva']
-        self.substrate_quality = life_params['substrate_quality']
-        self.sim_epochs = [
-            [np.clip(s0 - self.hours_as_larva, a_min=0, a_max=+np.inf), s1 - self.hours_as_larva] for
-            [s0, s1] in self.epochs if s1 > self.hours_as_larva]
+        # if life_params is None:
+        #     life_params = null_dict('life')
+        # elif type(life_params)==str :
+        #     from lib.conf.conf import loadConf
+        #     life_params=loadConf(life_params, 'Life')
+        epochs = life_params['epochs']
+        if epochs in [None, []]:
+            self.sim_epochs = []
+        else :
+            age = life_params['hours_as_larva']
+            self.sim_epochs = [[np.clip(s0 - age, a_min=0, a_max=+np.inf), s1 - age] for [s0, s1] in epochs if s1 > age]
         if len(self.sim_epochs) > 0:
             on_ticks = [int(s0 * 60 * 60 / self.dt) for [s0, s1] in self.sim_epochs]
             off_ticks = [int(s1 * 60 * 60 / self.dt) for [s0, s1] in self.sim_epochs]
             self.sim_clock.set_timer(on_ticks, off_ticks)
         self.starvation = self.sim_clock.timer_on
-        self.count_bend_errors = count_bend_errors
-        self.sample_dataset = sample_dataset
 
         self.larva_collisions = larva_collisions
 
@@ -72,32 +57,32 @@ class LarvaWorldSim(LarvaWorld):
                 layer.update_values()  # Currently doing something only for the DiffusionValueLayer
 
     def _create_odor_layers(self, pars):
+        from lib.envs._space import DiffusionValueLayer, GaussianValueLayer
         sources = self.get_food() + self.get_flies()
-        odor_ids = lib.aux.dictsNlists.unique_list([s.odor_id for s in sources if s.odor_id is not None])
-        Nodors = len(odor_ids)
-        odor_colors = fun.N_colors(Nodors, as_rgb=True)
+        ids = dNl.unique_list([s.odor_id for s in sources if s.odor_id is not None])
+        N = len(ids)
+        cols = N_colors(N, as_rgb=True)
         layers = {}
-        odorscape = pars['odorscape']
-        for i, (id, color) in enumerate(zip(odor_ids, odor_colors)):
+        for i, (id, c) in enumerate(zip(ids, cols)):
             od_sources = [f for f in sources if f.odor_id == id]
             temp = list(set([s.default_color for s in od_sources]))
-            default_color = temp[0] if len(temp) == 1 else color
+            default_color = temp[0] if len(temp) == 1 else c
             kwargs = {
                 'unique_id': id,
                 'sources': od_sources,
                 'default_color': default_color,
                 'space_range': self.space_edges_for_screen,
             }
-            if odorscape == 'Diffusion':
+            if pars['odorscape'] == 'Diffusion':
                 layers[id] = DiffusionValueLayer(dt=self.dt, scaling_factor=self.scaling_factor,
                                                  grid_dims=pars['grid_dims'],
                                                  evap_const=pars['evap_const'],
                                                  gaussian_sigma=pars['gaussian_sigma'],
                                                  **kwargs)
-            elif odorscape == 'Gaussian':
+            elif pars['odorscape'] == 'Gaussian':
                 layers[id] = GaussianValueLayer(**kwargs)
-        self.refresh_odor_dicts(odor_ids)
-        return Nodors, layers
+        self.refresh_odor_dicts(ids)
+        return N, layers
 
     def create_larvae(self, larva_pars, parameter_dict={}):
         for gID, gConf in larva_pars.items():
@@ -108,9 +93,9 @@ class LarvaWorldSim(LarvaWorld):
                 sample = loadConf(sample, 'Ref')
             mod=get_sample_bout_distros(mod, sample)
 
-            modF = lib.aux.dictsNlists.flatten_dict(mod)
+            modF = dNl.flatten_dict(mod)
             sample_ks = [p for p in modF if modF[p] == 'sample']
-            RefPars = lib.aux.dictsNlists.load_dict(paths.RefParsFile, use_pickle=False)
+            RefPars = dNl.load_dict(RefParsFile, use_pickle=False)
             invRefPars = {v: k for k, v in RefPars.items()}
             self.sample_ps=[invRefPars[p] for p in sample_ks]
             if gConf['imitation'] and sample!={}:
@@ -122,13 +107,10 @@ class LarvaWorldSim(LarvaWorld):
                 ids = [f'{gID}_{i}' for i in range(N)]
                 a1, a2 = np.deg2rad(d['orientation_range'])
                 ors = np.random.uniform(low=a1, high=a2, size=N).tolist()
-                ps = lib.aux.xy_aux.generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
+                ps = generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
                 sample_dict = sample_group(sample, N, self.sample_ps)
             sample_dict.update(parameter_dict)
             all_pars= generate_larvae(N, sample_dict, mod, RefPars)
-
-
-
             for id, p, o, pars in zip(ids, ps, ors, all_pars):
                 l = self.add_larva(pos=p, orientation=o, id=id, pars=pars, group=gID,odor=gConf['odor'],
                                    default_color=gConf['default_color'], life=gConf['life'])

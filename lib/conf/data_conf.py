@@ -150,7 +150,7 @@ JovanicEnrichConf = {
 }
 
 BerniEnrichConf = {
-    'preprocessing': dtypes.get_dict('preprocessing', filter_f=0.1, transposition='arena'),
+    'preprocessing': null_dict('preprocessing', filter_f=0.1, transposition='arena'),
     'processing': {
         'types': {'angular': False, 'spatial': False, 'source': False, 'dispersion': False, 'tortuosity': False,
                   'PI': False},
@@ -164,7 +164,7 @@ BerniEnrichConf = {
                    'mode': 'minimal',
                    'source': None,
                    },
-    'to_drop': dtypes.get_dict('to_drop', groups={**{n: True for n in
+    'to_drop': null_dict('to_drop', groups={**{n: True for n in
                                                      ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
                                                       'Rturn', 'turn', 'unused']},
                                                   **{'midline': False, 'contour': False}})

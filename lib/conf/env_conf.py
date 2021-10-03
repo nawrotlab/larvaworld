@@ -74,7 +74,7 @@ def foodNodor_4corners(d=0.05):
     return dic
 
 
-def env(a, l={}, f=None, o=None, bl={}):
+def env(a, l={}, f=f_pars(), o=None, bl={}):
     if o == 'D':
         o = diffusion_odor()
     elif o == 'G':

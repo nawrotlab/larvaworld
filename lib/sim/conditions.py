@@ -3,7 +3,6 @@ import numpy as np
 
 import lib.aux.sim_aux
 from lib.anal.process.spatial import compute_preference_index
-import lib.aux.colsNstr as fun
 
 def get_exp_condition(exp):
     exp_condition_dict = {

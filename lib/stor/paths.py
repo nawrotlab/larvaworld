@@ -1,7 +1,6 @@
 import os
 
-import lib.aux.dictsNlists
-from lib.aux import colsNstr as fun
+from lib.aux.dictsNlists import load_dict
 
 def get_parent_dir():
     p=os.path.abspath(__file__)
@@ -11,13 +10,14 @@ def get_parent_dir():
     # p = os.path.join(p, '../..')
     return p
 
+F0=get_parent_dir()
 
-DataFolder = f'{get_parent_dir()}/data'
-RunFolder = f'{get_parent_dir()}/run'
-GuiFolder = f'{get_parent_dir()}/lib/gui'
+
+DataFolder = f'{F0}/data'
+RunFolder = f'{F0}/run'
+GuiFolder = f'{F0}/lib/gui'
 GuiTest = f'{GuiFolder}/gui_speed_test.csv'
 
-# ConfFolder = f'{DataFolder}/configurations'
 SimFolder = f'{DataFolder}/SimGroup'
 SingleRunFolder = f'{SimFolder}/single_runs'
 BatchRunFolder = f'{SimFolder}/batch_runs'
@@ -26,16 +26,13 @@ ExecConfFile = f'{RunFolder}/exec_conf.txt'
 ExecFile = f'{RunFolder}/exec_run.py'
 
 DebFolder = f'{SimFolder}/deb_runs'
-Deb_paths={n : f'{get_parent_dir()}/lib/model/DEB/models/deb_{n}.csv' for n in ['rover', 'sitter', 'default']}
+Deb_paths={n : f'{F0}/lib/model/DEB/models/deb_{n}.csv' for n in ['rover', 'sitter', 'default']}
 
 
 RefFolder = f'{DataFolder}/SampleGroup'
 
-ConfFolder = f'{get_parent_dir()}/lib/conf/stored_confs'
+ConfFolder = f'{F0}/lib/conf/stored_confs'
 RefParsFile =f'{ConfFolder}/RefPars.txt'
-# RefConfFile =f'{ConfFolder}/RefConf.txt'
-RefDatasetPath=f'{DataFolder}/SchleyerGroup/processed/FRUvsQUI/QUI->QUI/AM/exp_13l'
-RefConf = lib.aux.dictsNlists.load_dict(f'{RefDatasetPath}/data/dataset_conf.csv', use_pickle=False)
 
 
 SimIdx_path = f'{ConfFolder}/SimIdx.txt'
@@ -45,7 +42,6 @@ ParDict_path = f'{ConfFolder}/ParDict.csv'
 ParDf_path= f'{ConfFolder}/ParDf.csv'
 ParPdf_path= f'{ConfFolder}/ParPdf.pdf'
 UnitDict_path = f'{ConfFolder}/UnitDict.csv'
-LarvaShape_path = f'{ConfFolder}/larva_shape.csv'
 conf_paths = {
     'Data': f'{ConfFolder}/DataConfs.txt',
     'Group': f'{ConfFolder}/DataGroups.txt',
@@ -61,9 +57,9 @@ conf_paths = {
     'Life': f"{ConfFolder}/LifeConfs.txt",
 }
 
-Dtypes_path=f'{ConfFolder}/DataTypes.txt'
+# Dtypes_path=f'{ConfFolder}/DataTypes.txt'
 
-MediaFolder = f'{get_parent_dir()}/lib/media'
+MediaFolder = f'{F0}/lib/media'
 VideoSlideFolder = f'{MediaFolder}/video_slides'
 IntroSlideFolder = f'{MediaFolder}/intro_slides'
 TutorialSlideFolder = f'{MediaFolder}/tutorial_slides'

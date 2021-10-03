@@ -13,6 +13,7 @@ import lib.aux.dictsNlists
 import lib.aux.sim_aux
 import lib.aux.xy_aux
 from lib.aux import colsNstr as fun
+from lib.conf.init_dtypes import get_dict
 from lib.model.agents._larva_sim import LarvaSim
 from lib.stor import paths
 
@@ -25,7 +26,7 @@ from mesa.space import ContinuousSpace
 
 from lib.aux.collecting import NamedRandomActivation
 from lib.envs._space import FoodGrid
-import lib.aux.rendering as ren
+import lib.anal.rendering as ren
 import lib.aux.colsNstr as fun
 from lib.envs._maze import Border
 import lib.conf.dtype_dicts as dtypes
@@ -58,7 +59,7 @@ class LarvaWorld:
         self.Box2D = Box2D
         # print(vis_kwargs)
         if vis_kwargs is None:
-            vis_kwargs = dtypes.get_dict('visualization', mode=None)
+            vis_kwargs = get_dict('visualization', mode=None)
         self.vis_kwargs = vis_kwargs
         self.__dict__.update(self.vis_kwargs['draw'])
         self.__dict__.update(self.vis_kwargs['color'])

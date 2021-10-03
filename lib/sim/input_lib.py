@@ -2,6 +2,7 @@ import pygame
 import numpy as np
 import lib.gui.aux.elements as gui
 import lib.gui.aux.windows
+import lib.stor.datagroup
 from lib.conf.conf import loadConfDict
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.agents._larva import Larva
@@ -44,7 +45,7 @@ def evaluate_input(model, screen):
                 elif e.button in [4, 5]:
                     screen.zoom_screen(d_zoom=-d_zoom if e.button == 4 else d_zoom)
                     model.toggle(name='zoom', value=screen.zoom)
-            model.input_box.get_input(e)
+            # lib.stor.datagroup.get_input(e)
     if model.focus_mode and len(model.selected_agents) > 0:
         try:
             sel = model.selected_agents[0]

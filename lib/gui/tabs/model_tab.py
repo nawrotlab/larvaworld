@@ -1,6 +1,7 @@
 import copy
 import os
 
+from lib.conf.init_dtypes import null_dict
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
 from lib.gui.aux.functions import col_size, gui_col, gui_cols
 import lib.conf.dtype_dicts as dtypes
@@ -11,8 +12,8 @@ from lib.stor import paths
 class ModelTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.fields = ['physics', 'energetics', 'body', 'odor']
-        self.module_keys = list(dtypes.get_dict('modules').keys())
+        self.fields = ['physics', 'energetics', 'body']
+        self.module_keys = list(null_dict('modules').keys())
 
     def update(self, w, c, conf, id=None):
         for n in self.fields:

@@ -5,7 +5,7 @@ import argparse
 
 sys.path.insert(0, '..')
 from lib.conf.conf import next_idx, loadConfDict, loadConf, get_exp_conf
-import lib.aux.argparsers as prs
+import lib.anal.argparsers as prs
 from run.exec_run import Exec
 
 parser = argparse.ArgumentParser(description="Run given batch-run")

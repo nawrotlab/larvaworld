@@ -1,6 +1,5 @@
 import numpy as np
 
-from lib.aux import colsNstr as fun, naming as nam
 from lib.envs._larvaworld import LarvaWorld
 from lib.model.agents._larva_replay import LarvaReplay
 

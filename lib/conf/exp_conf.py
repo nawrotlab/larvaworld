@@ -4,23 +4,23 @@ from lib.conf import dtype_dicts as dtypes
 import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
 from lib.conf.conf import imitation_exp
-from lib.conf.init_dtypes import enrichment_dict
+from lib.conf.init_dtypes import enrichment_dict, null_dict
 from lib.stor import paths
 import numpy as np
 
 
 def exp(env_name, exp_name=None, en=False, sim={}, c=[], as_entry=True, **kwargs):
     kw = {
-        'sim_params': dtypes.get_dict('sim_params', **sim),
+        'sim_params': null_dict('sim_params', **sim),
         'env_params': env_name,
         'collections': ['pose'] + c,
         # **kwargs
     }
     kw.update(kwargs)
     if en:
-        exp_conf = dtypes.get_dict('exp_conf', enrichment=dtypes.base_enrich(), **kw)
+        exp_conf = null_dict('exp_conf', enrichment=dtypes.base_enrich(), **kw)
     else:
-        exp_conf = dtypes.get_dict('exp_conf', **kw)
+        exp_conf = null_dict('exp_conf', **kw)
     if not as_entry:
         return exp_conf
     else:
@@ -116,7 +116,7 @@ grouped_exp_dict = {
 
     'other': {
         **exp('realistic_imitation', sim={'Box2D': True}, c=['midline', 'contour']),
-        'imitation': imitation_exp(paths.RefConf, model='explorer'),
+        'imitation': imitation_exp('controls.exploration', model='explorer'),
         # **exp('imitation', exp_name='imitation', sample=paths.RefConf),
     }
 

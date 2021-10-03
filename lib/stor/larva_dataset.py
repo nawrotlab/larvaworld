@@ -6,31 +6,31 @@ import pandas as pd
 import warnings
 import copy
 
-import lib.aux.dictsNlists
-import lib.aux.colsNstr as fun
+import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
-from lib.anal.process.basic import preprocess, process
-from lib.anal.process.bouts import annotate
-from lib.anal.process.spatial import align_trajectories, fixate_larva
-import lib.conf.env_conf as env
 
-from lib.conf.data_conf import SimParConf
-import lib.conf.dtype_dicts as dtypes
-from lib.envs._larvaworld_replay import LarvaWorldReplay
+
+
+
+
+
 
 
 class LarvaDataset:
     def __init__(self, dir, id='unnamed', fr=16, Npoints=3, Ncontour=0,
-                 par_conf=SimParConf, save_data_flag=True, load_data=True,env_params={}):
+                 par_conf=None, save_data_flag=True, load_data=True,env_params={}):
+        if par_conf is None :
+            from lib.conf.conf import loadConf
+            par_conf=loadConf('SimParConf', 'Par')
         self.par_config = par_conf
         self.save_data_flag = save_data_flag
         self.define_paths(dir)
         if os.path.exists(self.dir_dict['conf']):
-            self.config = lib.aux.dictsNlists.load_dict(self.dir_dict['conf'], use_pickle=False)
+            self.config = dNl.load_dict(self.dir_dict['conf'], use_pickle=False)
         else:
             groups=env_params['larva_groups']
             group_ids=list(groups.keys())
-            samples= lib.aux.dictsNlists.unique_list(groups[k]['sample'] for k in group_ids)
+            samples= dNl.unique_list(groups[k]['sample'] for k in group_ids)
             if len(group_ids)==1 :
                 group_id=group_ids[0]
                 color=groups[group_id]['default_color']
@@ -153,15 +153,15 @@ class LarvaDataset:
         s = self.step_data
 
         if groups['midline']:
-            pars += lib.aux.dictsNlists.flatten_list(self.points_xy)
+            pars += dNl.flatten_list(self.points_xy)
         if groups['contour']:
-            pars += lib.aux.dictsNlists.flatten_list(self.contour_xy)
+            pars += dNl.flatten_list(self.contour_xy)
         for c in ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn']:
             if groups[c]:
                 pars += [nam.start(c), nam.stop(c), nam.id(c), nam.dur(c), nam.length(c), nam.dst(c), nam.straight_dst(c), nam.scal(nam.dst(c)), nam.scal(nam.straight_dst(c)), nam.orient(c)]
         if groups['unused']:
             pars += self.get_unused_pars()
-        pars = lib.aux.dictsNlists.unique_list(pars)
+        pars = dNl.unique_list(pars)
         s.drop(columns=[p for p in pars if p in s.columns], inplace=True)
         self.set_data(step=s)
         if is_last:
@@ -234,7 +234,7 @@ class LarvaDataset:
             if hasattr(l, 'deb') and l.deb is not None:
                 l.deb.finalize_dict(self.dir_dict['deb'])
             if l.brain.intermitter is not None:
-                lib.aux.dictsNlists.save_dict(self.dir_dict['bout_dicts'])
+                l.brain.intermitter.save_dict(self.dir_dict['bout_dicts'])
 
     def save_tables(self, tables):
         store = pd.HDFStore(self.dir_dict['tables_h5'])
@@ -252,11 +252,11 @@ class LarvaDataset:
         store.close()
 
     def save_ExpFitter(self, dic=None):
-        lib.aux.dictsNlists.save_dict(dic, self.dir_dict['ExpFitter'], use_pickle=False)
+        dNl.save_dict(dic, self.dir_dict['ExpFitter'], use_pickle=False)
 
     def load_ExpFitter(self):
         try:
-            dic= lib.aux.dictsNlists.load_dict(self.dir_dict['ExpFitter'], use_pickle=False)
+            dic= dNl.load_dict(self.dir_dict['ExpFitter'], use_pickle=False)
             return dic
         except:
             return None
@@ -273,7 +273,7 @@ class LarvaDataset:
         for k, v in self.config.items():
             if type(v) == np.ndarray:
                 self.config[k] = v.tolist()
-        lib.aux.dictsNlists.save_dict(self.config, self.dir_dict['conf'], use_pickle=False)
+        dNl.save_dict(self.config, self.dir_dict['conf'], use_pickle=False)
         if add_reference :
             from lib.conf.conf import saveConf
             saveConf(self.config, 'Ref', f'{self.group_id}.{self.id}')
@@ -312,7 +312,7 @@ class LarvaDataset:
         d = {}
         for id in ids:
             file = f'{dir}/{id}.txt'
-            dic = lib.aux.dictsNlists.load_dicts([file])[0]
+            dic = dNl.load_dicts([file])[0]
             df = pd.DataFrame.from_dict(dic)
             df.index.set_names(0, inplace=True)
             d[id] = df
@@ -343,7 +343,7 @@ class LarvaDataset:
         if ids is None:
             ids = self.agent_ids
         files = [f'{id}.txt' for id in ids]
-        ds = lib.aux.dictsNlists.load_dicts(files=files, folder=self.dir_dict['deb'], **kwargs)
+        ds = dNl.load_dicts(files=files, folder=self.dir_dict['deb'], **kwargs)
         return ds
 
     def get_pars_list(self, p0, s0, draw_Nsegs):
@@ -369,7 +369,7 @@ class LarvaDataset:
         else :
             raise ValueError (f'The required angular parameters for reconstructing a {draw_Nsegs}-segment body do not exist')
 
-        pars = lib.aux.dictsNlists.unique_list(cen_p + pos_p + ang_p + ors_p + chunk_p + lib.aux.dictsNlists.flatten_list(mid_p + con_p))
+        pars = dNl.unique_list(cen_p + pos_p + ang_p + ors_p + chunk_p + dNl.flatten_list(mid_p + con_p))
 
         return dic, pars, p0
 
@@ -400,8 +400,10 @@ class LarvaDataset:
     def visualize(self, s0=None, e0=None, vis_kwargs=None, agent_ids=None, save_to=None, time_range=None,draw_Nsegs=None,env_params=None,
                   track_point=None, dynamic_color=None,use_background=False,
                   transposition=None, fix_point=None, secondary_fix_point=None, **kwargs):
+        from lib.envs._larvaworld_replay import LarvaWorldReplay
         if vis_kwargs is None:
-            vis_kwargs = dtypes.get_dict('visualization', mode='video')
+            from lib.conf.init_dtypes import get_dict
+            vis_kwargs = get_dict('visualization', mode='video')
         if s0 is None and e0 is None :
             if self.step_data is None:
                 self.load()
@@ -421,11 +423,13 @@ class LarvaDataset:
         arena_dims = env_params['arena']['arena_dims']
 
         if transposition is not None:
+            from lib.anal.process.spatial import align_trajectories
             s = align_trajectories(s, track_point=track_point, arena_dims=arena_dims, mode=transposition,
                                    config=self.config)
             bg = None
             n1 = 'transposed'
         elif fix_point is not None:
+            from lib.anal.process.spatial import fixate_larva
             s, bg = fixate_larva(s, point=fix_point, secondary_point=secondary_fix_point,
                                  arena_dims=arena_dims, config=self.config)
             n1 = 'fixed'
@@ -462,6 +466,8 @@ class LarvaDataset:
 
     def visualize_single(self, id, close_view=True, fix_point=-1, secondary_fix_point=None, save_to=None,
                          draw_Nsegs=None, vis_kwargs=None, **kwargs):
+        from lib.envs._larvaworld_replay import LarvaWorldReplay
+        from lib.anal.process.spatial import fixate_larva
         try:
             s0, e0 = self.load_agent(id)
         except :
@@ -479,7 +485,8 @@ class LarvaDataset:
             save_to = self.vis_dir
         replay_id=f'{id}_fixed_at_{fix_point}'
         if vis_kwargs is None:
-            vis_kwargs = dtypes.get_dict('visualization', mode='video', video_speed=60, media_name=replay_id)
+            from lib.conf.init_dtypes import get_dict
+            vis_kwargs = get_dict('visualization', mode='video', video_speed=60, media_name=replay_id)
         base_kws = {
             'vis_kwargs': vis_kwargs,
             'env_params': env_params,
@@ -636,6 +643,8 @@ class LarvaDataset:
 
     def enrich(self, preprocessing={}, processing={}, annotation={}, enrich_aux={},
                to_drop={}, show_output=False, is_last=True, **kwargs):
+        from lib.anal.process.basic import preprocess, process
+        from lib.anal.process.bouts import annotate
         print()
         print(f'--- Enriching dataset {self.id} with derived parameters ---')
         # self.config['front_body_ratio'] = 0.5

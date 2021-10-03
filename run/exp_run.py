@@ -6,9 +6,9 @@ sys.path.insert(0, '..')
 from lib.sim.single_run import run_sim
 
 if __name__ == '__main__':
-    from lib.sim.analysis import sim_analysis
+
     from lib.conf.conf import loadConfDict, get_exp_conf
-    from lib.aux import argparsers as prs
+    from lib.anal import argparsers as prs
 
     s = time.time()
 
@@ -42,6 +42,7 @@ if __name__ == '__main__':
     d = run_sim(**kws)
 
     if analysis:
+        from lib.sim.analysis import sim_analysis
         fig_dict, results=sim_analysis(d, exp_type)
 
     e = time.time()

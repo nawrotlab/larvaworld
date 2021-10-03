@@ -4,11 +4,12 @@ from collections import OrderedDict
 import numpy as np
 
 import lib.aux.dictsNlists
+from lib.anal.sampling import BoutGenerator
 from lib.aux import naming as nam
 from lib.aux import colsNstr as fun
-from lib.aux import sampling as sampling
 from lib.conf import dtype_dicts as dtypes
 from lib.conf.conf import loadConf
+from lib.conf.init_dtypes import null_dict
 from lib.model.modules.basic import Effector
 
 
@@ -41,8 +42,8 @@ class Intermitter(Effector):
 
         self.reset()
 
-        self.stridechain_dist = sampling.BoutGenerator(**stridechain_dist, dt=1)
-        self.pause_dist = sampling.BoutGenerator(**pause_dist, dt=self.dt)
+        self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
+        self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
 
         self.disinhibit_locomotion()
 
@@ -505,4 +506,4 @@ if __name__ == "__main__":
         'pause_dist': sample['pause']['best'],
         'feeder_reoccurence_rate': sample['feeder_reoccurence_rate'],
     }
-    inter2 = OfflineIntermitter(**dtypes.get_dict('intermitter', EEB=0.8, **kws))
+    inter2 = OfflineIntermitter(**null_dict('intermitter', EEB=0.8, **kws))

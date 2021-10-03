@@ -20,7 +20,7 @@ import os
 
 import lib.anal.process.aux
 import lib.aux.dictsNlists
-from lib.anal.combining import combine_images, combine_pdfs
+from lib.aux.combining import combine_images, combine_pdfs
 from lib.conf import conf
 from lib.aux import naming as nam
 from lib.aux import colsNstr as fun
@@ -1780,20 +1780,9 @@ def plot_timeplot(par_shorts, datasets, labels=None, same_plot=True, individuals
         for d, d_col, d_lab in zip(datasets, colors, labels):
             if Ndatasets > 1:
                 c = d_col
-            print()
-            print(d.id)
-            print(d.step_data.columns[:20])
-            print(d.step_data.columns[20:40])
-            print(d.step_data.columns[40:60])
-            print(d.step_data.columns[60:80])
-            print(d.step_data.columns[80:])
             try :
                 if table is not None :
                     dc = d.load_table(table)[p]
-                # if p not in list(s.keys()):
-                #     print(f'Parameter {p} does not exist in dataset')
-                #     continue
-                # print(s[p])
                 else :
                     dc = d.read('step')[p]
                 dc_m = dc.groupby(level='Step').quantile(q=0.5)

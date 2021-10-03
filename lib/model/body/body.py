@@ -6,7 +6,6 @@ from shapely.ops import cascaded_union
 #  ApplyForceToCenter function does not scale
 # _world_scale = np.int(100)
 import lib.aux.dictsNlists
-import lib.aux.colsNstr as fun
 import lib.aux.sim_aux
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
 
