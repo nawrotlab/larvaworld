@@ -6,7 +6,6 @@ from shapely.geometry import LineString, Polygon, Point
 import lib.aux.ang_aux
 import lib.aux.sim_aux
 from lib.model.body.body import LarvaBody
-import lib.aux.colsNstr as fun
 
 
 class BodyManager(LarvaBody):

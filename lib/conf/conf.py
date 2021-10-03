@@ -219,7 +219,7 @@ def store_confs(keys=None) :
 #     init_confs()
 
 def imitation_exp(config, model='explorer', idx=0, **kwargs):
-    from lib.conf.dtype_dicts import base_enrich
+    from tests.various.gui.dtype_dicts import base_enrich
     from lib.conf.init_dtypes import null_dict
     if type(config)==str :
         config=loadConf(config, 'Ref')

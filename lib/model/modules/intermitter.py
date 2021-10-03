@@ -1,13 +1,10 @@
 import os
-from collections import OrderedDict
 
 import numpy as np
 
 import lib.aux.dictsNlists
 from lib.anal.sampling import BoutGenerator
 from lib.aux import naming as nam
-from lib.aux import colsNstr as fun
-from lib.conf import dtype_dicts as dtypes
 from lib.conf.conf import loadConf
 from lib.conf.init_dtypes import null_dict
 from lib.model.modules.basic import Effector

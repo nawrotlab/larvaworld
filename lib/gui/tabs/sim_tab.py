@@ -6,7 +6,6 @@ from lib.gui.aux.functions import t_kws, gui_col, gui_cols
 from lib.gui.tabs.tab import GuiTab
 from lib.conf.conf import next_idx
 from run.exec_run import Exec
-from lib.stor import paths
 
 
 class SimTab(GuiTab):

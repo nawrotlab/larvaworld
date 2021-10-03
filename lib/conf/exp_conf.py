@@ -1,12 +1,5 @@
-import copy
-
-from lib.conf import dtype_dicts as dtypes
-import lib.aux.colsNstr as fun
-import lib.aux.naming as nam
 from lib.conf.conf import imitation_exp
 from lib.conf.init_dtypes import enrichment_dict, null_dict
-from lib.stor import paths
-import numpy as np
 
 
 def exp(env_name, exp_name=None, en=False, sim={}, c=[], as_entry=True, **kwargs):
@@ -18,7 +11,8 @@ def exp(env_name, exp_name=None, en=False, sim={}, c=[], as_entry=True, **kwargs
     }
     kw.update(kwargs)
     if en:
-        exp_conf = null_dict('exp_conf', enrichment=dtypes.base_enrich(), **kw)
+        exp_conf = null_dict('exp_conf', enrichment=enrichment_dict(types=['angular', 'spatial','dispersion', 'tortuosity'],
+                                                                    bouts=['stride', 'pause', 'turn']), **kw)
     else:
         exp_conf = null_dict('exp_conf', **kw)
     if not as_entry:
@@ -29,11 +23,11 @@ def exp(env_name, exp_name=None, en=False, sim={}, c=[], as_entry=True, **kwargs
         return {exp_name: exp_conf}
 
 
-PI = dtypes.base_enrich(types=['PI'], bouts=[])
+PI = enrichment_dict(types=['PI'], bouts=[])
 
 
 def source_enrich(source=(0.0, 0.0)):
-    return dtypes.base_enrich(source=source, types=['spatial', 'angular', 'source'])
+    return enrichment_dict(source=source, types=['spatial', 'angular', 'source'])
 
 
 def chemotaxis_exp(name, source=(0.0, 0.0), c=['olfactor'], dur=5.0, **kwargs):
@@ -56,7 +50,7 @@ def simple_exp(name, dur=10.0, en=True, **kwargs):
     return exp(name, sim={'duration': dur}, en=en, **kwargs)
 
 
-def pref_exp(name, dur=5.0, c=['olfactor'], enrichment=dtypes.base_enrich(types=['PI'], bouts=[]), **kwargs):
+def pref_exp(name, dur=5.0, c=['olfactor'], enrichment=enrichment_dict(types=['PI'], bouts=[]), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
@@ -65,7 +59,6 @@ grouped_exp_dict = {
         **simple_exp('focus'),
         **simple_exp('dish'),
         **simple_exp('nengo_dish', dur=3.0),
-        # **simple_exp('nengo_dish', dur=2.0, enrichment=dtypes.base_enrich(preprocessing={'rescale_by' : 1000}), en=False),
         **simple_exp('dispersion'),
         **simple_exp('dispersion_x2', dur=3.0),
     },

@@ -4,9 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import stats
 
-import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
-import lib.conf.dtype_dicts as dtypes
 from lib.anal.plotting import plot_spatiotemporal_variation, plot_bend2orientation_analysis, \
     plot_sliding_window_analysis, plot_marked_strides, plot_stride_distribution
 from lib.anal.process.angular import compute_orientations, compute_spineangles, compute_angular_metrics

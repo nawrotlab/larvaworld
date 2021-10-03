@@ -2,7 +2,7 @@ import pygame
 import numpy as np
 import lib.gui.aux.elements as gui
 import lib.gui.aux.windows
-import lib.stor.datagroup
+# import lib.stor.datagroup
 from lib.conf.conf import loadConfDict
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.agents._larva import Larva

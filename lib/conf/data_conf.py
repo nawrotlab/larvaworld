@@ -1,7 +1,6 @@
 import numpy as np
 from lib.aux import naming as nam
 import lib.conf.env_conf as env
-import lib.conf.dtype_dicts as dtypes
 from lib.conf.init_dtypes import null_dict
 
 PaisiosParConf = {'bend': 'from_vectors',

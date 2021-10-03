@@ -1,5 +1,5 @@
 from lib.gui.aux.elements import ButtonGraphList, CollapsibleDict, DataList, SelectionList
-from lib.gui.aux.functions import gui_col, gui_cols
+from lib.gui.aux.functions import gui_cols
 from lib.gui.tabs.tab import GuiTab
 from lib.sim.single_run import run_sim
 from lib.stor import paths

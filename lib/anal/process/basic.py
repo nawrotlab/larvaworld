@@ -4,9 +4,7 @@ from scipy.signal import argrelextrema, spectrogram
 
 import lib.anal.process.aux
 import lib.aux.dictsNlists
-import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
-import lib.conf.dtype_dicts as dtypes
 from lib.anal.process.angular import angular_processing
 from lib.anal.process.spatial import spatial_processing, compute_bearingNdst2source, compute_dispersion, \
     compute_tortuosity, compute_preference_index, align_trajectories

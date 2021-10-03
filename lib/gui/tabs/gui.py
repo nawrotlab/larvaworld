@@ -11,7 +11,6 @@ from lib.gui.tabs import intro_tab, model_tab, life_tab, env_tab, sim_tab, batch
     analysis_tab, video_tab, tutorial_tab, settings_tab
 from lib.stor import paths
 from lib.gui.aux.functions import col_size, window_size, w_kws
-import lib.conf.dtype_dicts as dtypes
 
 matplotlib.use('TkAgg')
 
@@ -117,7 +116,7 @@ class LarvaworldGui:
     def get_vis_kwargs(self, v, **kwargs):
         c = self.collapsibles
         w = self.window
-        return c['visualization'].get_dict(v, w) if 'visualization' in c.keys() else dtypes.get_dict('visualization',
+        return c['visualization'].get_dict(v, w) if 'visualization' in c.keys() else null_dict('visualization',
                                                                                                      **kwargs)
 
     def get_replay_kwargs(self, v):

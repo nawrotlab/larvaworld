@@ -633,20 +633,30 @@ def null_dict(n, key='initial_value', **kwargs):
 
     dic = par_dict(n)
     dic2 = v0(dic)
-    dic2.update(kwargs)
-    return dic2
-
-def get_dict(n, **kwargs) :
-    dic = null_dict(n)
-    if n in ['visualization', 'enrichment']:
-        for k, v in dic.items():
+    if n not in ['visualization', 'enrichment'] :
+        dic2.update(kwargs)
+        return dic2
+    else :
+        for k, v in dic2.items():
             if k in list(kwargs.keys()):
-                dic[k] = kwargs[k]
+                dic2[k] = kwargs[k]
             elif type(v) == dict:
                 for k0, v0 in v.items():
                     if k0 in list(kwargs.keys()):
-                        dic[k][k0] = kwargs[k0]
-    return dic
+                        dic2[k][k0] = kwargs[k0]
+        return dic2
+
+# def get_dict(n, **kwargs) :
+#     dic = null_dict(n)
+#     if n in ['visualization', 'enrichment']:
+#         for k, v in dic.items():
+#             if k in list(kwargs.keys()):
+#                 dic[k] = kwargs[k]
+#             elif type(v) == dict:
+#                 for k0, v0 in v.items():
+#                     if k0 in list(kwargs.keys()):
+#                         dic[k][k0] = kwargs[k0]
+#     return dic
 
 
 def enrichment_dict(source=None, types=[], bouts=[]):
@@ -764,5 +774,6 @@ def store_RefPars():
 if __name__ == '__main__':
     store_controls()
     store_RefPars()
-    # print(null_dict('enrichment'))
+    # print(null_dict('visualization', mode='image'))
+    # print(get_dict('visualization', mode='image'))
 

@@ -7,9 +7,8 @@ from lib.conf.init_dtypes import store_controls
 from lib.gui.aux.elements import CollapsibleDict, Collapsible
 from lib.gui.aux.functions import t_kws, gui_col, gui_cols, get_pygame_key
 from lib.gui.aux.buttons import GraphButton
-import lib.conf.dtype_dicts as dtypes
 from lib.gui.tabs.tab import GuiTab
-from lib.aux import colsNstr as fun
+
 
 class SettingsTab(GuiTab):
     def __init__(self, **kwargs):

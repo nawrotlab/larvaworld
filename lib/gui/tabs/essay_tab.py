@@ -1,10 +1,9 @@
 import os
 
-import lib.conf.dtype_dicts as dtypes
 from lib.conf.init_dtypes import null_dict
 
 from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, ButtonGraphList
-from lib.gui.aux.functions import t_kws, gui_col, gui_cols
+from lib.gui.aux.functions import gui_cols
 from lib.gui.tabs.tab import GuiTab
 from lib.sim.single_run import run_essay
 from lib.sim.analysis import essay_analysis

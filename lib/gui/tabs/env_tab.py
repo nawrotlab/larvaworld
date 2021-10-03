@@ -7,8 +7,6 @@ import PySimpleGUI as sg
 import lib.aux.ang_aux
 import lib.aux.sim_aux
 import lib.aux.xy_aux
-import lib.conf.dtype_dicts as dtypes
-from lib.conf.init_dtypes import get_dict
 import lib.conf.init_dtypes
 import lib.gui.aux.functions
 from lib.conf.init_dtypes import null_dict
@@ -351,7 +349,7 @@ class EnvTab(GuiTab):
                                         'width': v[f'{B}_width'],
                                         'points': [P1, P2]}
                                 dic['current'] = lib.gui.aux.functions.agent_list2dict(
-                                    [retrieve_dict(dic0, dtypes.get_dict_dtypes(B))])
+                                    [retrieve_dict(dic0, null_dict(B,'dtype'))])
 
                                 dic['prior_rect'] = self.graph.draw_line(p1, p2, color=v[f'{B}_color'],
                                                                     width=int(float(v[f'{B}_width']) * self.s))
@@ -655,7 +653,7 @@ class EnvTab(GuiTab):
         # p.run(w, max=N)
         exp_conf['experiment'] = 'test'
         exp_conf['save_data_flag'] = False
-        exp_conf['vis_kwargs'] = get_dict('visualization', mode='video', video_speed=60)
+        exp_conf['vis_kwargs'] = null_dict('visualization', mode='video', video_speed=60)
         res = run_sim(**exp_conf)
         return d, g
 

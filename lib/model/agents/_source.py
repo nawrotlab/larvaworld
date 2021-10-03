@@ -5,7 +5,6 @@ from shapely import affinity
 from shapely.geometry import Point, Polygon
 
 import lib.aux.sim_aux
-from lib.aux import colsNstr as fun
 from lib.model.DEB.deb import Substrate
 from lib.model.agents._agent import LarvaworldAgent
 

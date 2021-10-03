@@ -11,18 +11,16 @@ from scipy.spatial.distance import euclidean
 import lib.aux.ang_aux
 import lib.aux.dictsNlists
 import lib.aux.sim_aux
-from lib.aux import colsNstr as fun
 from lib.aux import naming as nam
 from lib.conf.init_dtypes import null_dict
 from lib.model.DEB.gut import Gut
 from lib.stor import paths
-from lib.conf.par_conf import sub, th, dot, subsup, Delta, bar, wave, par_dict_lists, paren, \
+from lib.conf.par_conf import sub, th, dot, subsup, Delta, bar, wave, paren, \
     brack, odot, circledcirc, circledast, ddot_th, dot_th
 
 from lib.model.agents._larva import Larva
 import siunits as siu
 
-import lib.conf.dtype_dicts as dtypes
 
 def split_si_composite(df) :
     ddf=copy.deepcopy(df)

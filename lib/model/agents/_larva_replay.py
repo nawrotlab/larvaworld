@@ -4,7 +4,6 @@ import numpy as np
 
 import lib.aux.ang_aux
 import lib.aux.dictsNlists
-from lib.aux import colsNstr as fun
 from lib.model.agents._larva import Larva
 from lib.model.body.body import draw_body_midline, draw_body_head, draw_body_centroid, draw_selected_body
 from lib.model.body.controller import BodyReplay

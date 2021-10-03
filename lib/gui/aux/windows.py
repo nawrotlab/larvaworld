@@ -6,8 +6,8 @@ import PySimpleGUI as sg
 
 import lib.aux.dictsNlists
 from lib.aux import colsNstr as fun
-from lib.conf import dtype_dicts as dtypes
 from lib.conf.conf import loadConfDict, saveConf, loadConf
+from lib.conf.init_dtypes import null_dict
 from lib.gui.aux.functions import retrieve_value, t_kws, b6_kws, w_kws, col_size
 from lib.gui.aux.buttons import named_bool_button
 from lib.stor import paths
@@ -183,7 +183,7 @@ def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
 
 def set_agent_kwargs(agent, **kwargs):
     class_name = type(agent).__name__
-    type_dict = dtypes.get_dict_dtypes(class_name)
+    type_dict = null_dict('agent', 'dtype')
     title = f'{class_name} args'
     dic = {}
     for p in list(type_dict.keys()):

@@ -5,9 +5,7 @@ import pandas as pd
 import os
 
 import lib.aux.dictsNlists
-import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
-import lib.conf.dtype_dicts as dtypes
 
 from lib.stor import paths
 

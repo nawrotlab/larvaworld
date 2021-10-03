@@ -3,7 +3,6 @@ import random
 import numpy as np
 
 import lib.aux.sim_aux
-from lib.aux import colsNstr as fun
 from lib.model.agents._larva import Larva
 from lib.model.body.controller import BodySim
 from lib.model.modules.brain import DefaultBrain

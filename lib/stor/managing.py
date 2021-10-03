@@ -1,6 +1,4 @@
-import copy
 import os
-import time
 import warnings
 from itertools import product
 import pandas as pd
@@ -9,8 +7,7 @@ import lib.aux.dictsNlists
 from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni
 from lib.conf.conf import *
 from lib.stor.larva_dataset import LarvaDataset
-import lib.aux.colsNstr as fun
-import lib.aux.naming as nam
+
 
 def build_dataset(datagroup_id,id,group_id, target_dir, source_dir=None,source_files=None, **kwargs):
     warnings.filterwarnings('ignore')
@@ -306,10 +303,7 @@ if __name__ == '__main__':
     # ycs = pd.DataFrame(ycs, columns=yc_pars, index=None)
 
     # yys=vertices[:,:][1]
-    import lib.conf.dtype_dicts as dtypes
-    from lib.sim.single_run import run_sim
     from lib.conf.conf import imitation_exp
-    from lib.anal.comparing import ExpFitter
 
     # vis_kwargs = dtypes.get_dict('visualization', mode='video', video_speed=60)
     # exp_conf = imitation_exp('AttP240.Starved', model='explorer', idx=0, save_data_flag=True)
@@ -355,7 +349,6 @@ if __name__ == '__main__':
         # print(s.columns.values)
         print(e.columns)
         # print(len(s.columns))
-        from lib.anal.process.basic import rescale
         # print(ss[fun.flatten_list(d.contour_xy)])
         # print(ss[fun.flatten_list(d.points_xy)])
         # print(s['head_x'].dropna().min())

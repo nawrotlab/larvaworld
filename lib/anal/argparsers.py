@@ -1,15 +1,14 @@
 import sys
 import numpy as np
 
-import lib.aux.dictsNlists
+
 
 
 sys.path.insert(0, '../../..')
 import lib.conf.env_conf as env
-import lib.aux.colsNstr as fun
-import lib.conf.dtype_dicts as dtypes
 from lib.conf.conf import loadConfDict
-from lib.conf.init_dtypes import get_dict
+from lib.conf.init_dtypes import null_dict
+import lib.aux.dictsNlists
 
 def add_vis_kwargs(parser):
     parser.add_argument('-hide', '--show_display', action="store_false", help='Hide display')
@@ -52,7 +51,7 @@ def get_vis_kwargs(args):
         trajectories = True
         trajectory_dt = args.trajectories
 
-    vis_kwargs = get_dict('visualization', mode=mode, image_mode=args.image_mode, video_speed=video_speed,
+    vis_kwargs = null_dict('visualization', mode=mode, image_mode=args.image_mode, video_speed=video_speed,
                                      show_display=args.show_display, media_name=args.media_name,
                                      draw_head=args.draw_head, draw_centroid=args.draw_centroid,
                                      draw_midline=args.draw_midline, draw_contour=args.draw_contour,

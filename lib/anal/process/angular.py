@@ -1,12 +1,8 @@
 import numpy as np
-import pandas as pd
-from scipy.signal import argrelextrema, spectrogram
 
 import lib.aux.ang_aux
 import lib.aux.dictsNlists
-import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
-import lib.conf.dtype_dicts as dtypes
 from lib.anal.process.store import store_aux_dataset
 
 

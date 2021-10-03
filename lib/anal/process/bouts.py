@@ -1,22 +1,16 @@
 import itertools
 
 from scipy.spatial.distance import euclidean
-from sklearn.metrics.pairwise import nan_euclidean_distances
 import numpy as np
-import pandas as pd
-from scipy.signal import argrelextrema, spectrogram
 
 import lib.anal.process.aux
 import lib.aux.ang_aux
-import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
-import lib.conf.dtype_dicts as dtypes
 from lib.anal.fitting import fit_bouts
 from lib.anal.process.basic import compute_extrema, compute_freq
 from lib.anal.process.spatial import scale_to_length
 from lib.anal.process.store import store_aux_dataset
 from lib.conf.par import load_ParDict
-from lib.stor import paths
 
 
 def annotate(s, e, config=None,bouts={'stride': True, 'pause': True, 'turn': True},

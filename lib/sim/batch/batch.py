@@ -13,11 +13,11 @@ import time
 import numpy as np
 from pypet import Environment, load_trajectory, pypetconstants
 
+from lib.conf.init_dtypes import null_dict
 from lib.sim.batch.aux import config_traj, prepare_traj
-from lib.sim.batch.functions import single_run, prepare_batch
+from lib.sim.batch.functions import single_run
 
 import lib.stor.paths as paths
-from lib.conf.init_dtypes import get_dict
 
 ''' Default batch run.
 Arguments :
@@ -135,7 +135,7 @@ def _batch_run(batch_type='unnamed', batch_id='template', space=None, exp=None, 
         'save_hdf5': save_hdf5,
         'exp_kws': {**exp_kws,
                     'save_to': dir_path,
-                    'vis_kwargs': get_dict('visualization'),
+                    'vis_kwargs': null_dict('visualization', mode=None),
                     'collections': exp['collections']
                     },
         'proc_kws':proc_kws

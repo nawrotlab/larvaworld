@@ -1,10 +1,8 @@
 '''
 The larva model parameters
 '''
-import copy
 
 import numpy as np
-import lib.conf.dtype_dicts as dtypes
 from lib.conf.init_dtypes import null_dict
 
 ''' Default exploration model'''

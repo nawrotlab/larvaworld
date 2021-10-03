@@ -1,5 +1,4 @@
-from lib.conf import dtype_dicts as dtypes
-from lib.conf.init_dtypes import processing_types, null_dict, enrichment_dict
+from lib.conf.init_dtypes import null_dict, enrichment_dict
 
 from lib.conf.conf import imitation_exp
 
@@ -80,7 +79,7 @@ ss={'odor_dict.CS.mean': [(-100.0, 100.0), 3],'odor_dict.UCS.mean': [(-100.0, 10
 
 def fit_tortuosity_batch(d, model='imitation', exp='dish', idx=0):
     conf = null_dict('batch_conf', exp=None,
-                           exp_kws={'enrichment': dtypes.base_enrich(types=['tortuosity'], bouts=[])},
+                           exp_kws={'enrichment': enrichment_dict(types=['tortuosity'], bouts=[])},
                            space_search={
                                'pars': ['activation_noise', 'base_activation'],
                                'ranges': [(0.0, 2.0), (15.0, 25.0)],

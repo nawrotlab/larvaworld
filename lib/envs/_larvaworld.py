@@ -12,8 +12,7 @@ from unflatten import unflatten
 import lib.aux.dictsNlists
 import lib.aux.sim_aux
 import lib.aux.xy_aux
-from lib.aux import colsNstr as fun
-from lib.conf.init_dtypes import get_dict
+from lib.conf.init_dtypes import null_dict
 from lib.model.agents._larva_sim import LarvaSim
 from lib.stor import paths
 
@@ -29,7 +28,7 @@ from lib.envs._space import FoodGrid
 import lib.anal.rendering as ren
 import lib.aux.colsNstr as fun
 from lib.envs._maze import Border
-import lib.conf.dtype_dicts as dtypes
+import tests.various.gui.dtype_dicts as dtypes
 from lib.model.agents._agent import LarvaworldAgent
 from lib.model.agents._source import Food
 from lib.sim.input_lib import evaluate_input, evaluate_graphs
@@ -59,7 +58,7 @@ class LarvaWorld:
         self.Box2D = Box2D
         # print(vis_kwargs)
         if vis_kwargs is None:
-            vis_kwargs = get_dict('visualization', mode=None)
+            vis_kwargs = null_dict('visualization', mode=None)
         self.vis_kwargs = vis_kwargs
         self.__dict__.update(self.vis_kwargs['draw'])
         self.__dict__.update(self.vis_kwargs['color'])

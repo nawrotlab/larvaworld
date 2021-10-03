@@ -2,9 +2,7 @@ import shutil
 
 from lib.conf.conf import next_idx
 from lib.conf.init_dtypes import enrichment_dict
-from lib.conf.larva_conf import *
 from lib.conf.env_conf import *
-from lib.conf import dtype_dicts as dtypes
 from lib.sim.analysis import essay_analysis
 from lib.sim.single_run import run_sim
 from lib.stor import paths

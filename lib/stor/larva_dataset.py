@@ -8,12 +8,7 @@ import copy
 
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
-
-
-
-
-
-
+from lib.conf.init_dtypes import null_dict
 
 
 class LarvaDataset:
@@ -402,8 +397,7 @@ class LarvaDataset:
                   transposition=None, fix_point=None, secondary_fix_point=None, **kwargs):
         from lib.envs._larvaworld_replay import LarvaWorldReplay
         if vis_kwargs is None:
-            from lib.conf.init_dtypes import get_dict
-            vis_kwargs = get_dict('visualization', mode='video')
+            vis_kwargs = null_dict('visualization', mode='video')
         if s0 is None and e0 is None :
             if self.step_data is None:
                 self.load()
@@ -485,8 +479,8 @@ class LarvaDataset:
             save_to = self.vis_dir
         replay_id=f'{id}_fixed_at_{fix_point}'
         if vis_kwargs is None:
-            from lib.conf.init_dtypes import get_dict
-            vis_kwargs = get_dict('visualization', mode='video', video_speed=60, media_name=replay_id)
+            from lib.conf.init_dtypes import null_dict
+            vis_kwargs = null_dict('visualization', mode='video', video_speed=60, media_name=replay_id)
         base_kws = {
             'vis_kwargs': vis_kwargs,
             'env_params': env_params,

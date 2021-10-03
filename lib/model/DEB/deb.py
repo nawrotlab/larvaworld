@@ -14,8 +14,6 @@ from lib.conf.conf import loadConf
 
 from lib.model.DEB.gut import Gut
 from lib.stor import paths
-from lib.aux import colsNstr as fun
-import lib.conf.dtype_dicts as dtypes
 
 '''
 Standard culture medium

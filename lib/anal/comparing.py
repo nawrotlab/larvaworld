@@ -1,25 +1,16 @@
-import copy
 from typing import Union
 
-import matplotlib
 import numpy as np
-from matplotlib import gridspec, cm
-import matplotlib.patches as mpatches
+from matplotlib import cm
 from scipy.stats import ks_2samp
-import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
-import os
 
 import lib.aux.dictsNlists
 import lib.aux.naming as nam
 
 from lib.conf.par import getPar
 # from lib.stor.larva_dataset import LarvaDataset
-import lib.aux.colsNstr as fun
-import lib.conf.dtype_dicts as dtypes
 # from lib.conf import par_conf
-from lib.stor import paths as paths
 
 class ExpFitter :
     from lib.stor.larva_dataset import LarvaDataset

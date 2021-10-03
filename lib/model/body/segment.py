@@ -4,7 +4,6 @@ from shapely import affinity
 from shapely.geometry import Polygon
 
 import lib.aux.ang_aux
-from lib.aux import colsNstr as fun
 
 
 class BodySegment:
