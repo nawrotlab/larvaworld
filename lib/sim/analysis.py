@@ -188,7 +188,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show_output=False):
 def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
     if path is None :
         parent_dir = f'essays/{essay_type}/global_test'
-        plot_dir = f'{paths.SimFolder}/{parent_dir}/plots'
+        plot_dir = f'{paths.path("SIM")}/{parent_dir}/plots'
     else :
         plot_dir=f'{path}/plots'
     ccc = {'show': False}

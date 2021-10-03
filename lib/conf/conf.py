@@ -2,6 +2,10 @@ import copy
 import json
 import shutil
 
+from lib.conf.init_dtypes import enrichment_dict
+from lib.stor import paths
+
+
 
 def loadConf(id, conf_type):
     try:
@@ -30,9 +34,9 @@ def expandConf(id, conf_type):
 
 
 def loadConfDict(conf_type):
-    from lib.stor.paths import conf_paths
+    # from lib.stor.paths import conf_paths
     try :
-        with open(conf_paths[conf_type]) as tfp:
+        with open(paths.path(conf_type)) as tfp:
             Conf_dict = json.load(tfp)
         return Conf_dict
     except :
@@ -60,8 +64,7 @@ def saveConf(conf, conf_type, id=None, mode='overwrite'):
 
 
 def saveConfDict(ConfDict, conf_type):
-    from lib.stor.paths import conf_paths
-    with open(conf_paths[conf_type], "w") as fp:
+    with open(paths.path(conf_type), "w") as fp:
         json.dump(ConfDict, fp)
 
 
@@ -86,9 +89,9 @@ def deleteConf(id, conf_type):
 
 
 def next_idx(exp, type='single'):
-    from lib.stor.paths import SimIdx_path
+    f0=paths.path('SimIdx')
     try:
-        with open(SimIdx_path) as tfp:
+        with open(f0) as tfp:
             idx_dict = json.load(tfp)
     except:
         exp_names = list(loadConfDict('Exp').keys())
@@ -104,20 +107,22 @@ def next_idx(exp, type='single'):
     if not exp in idx_dict[type].keys():
         idx_dict[type][exp] = 0
     idx_dict[type][exp] += 1
-    with open(SimIdx_path, "w") as fp:
+    with open(f0, "w") as fp:
         json.dump(idx_dict, fp)
     return idx_dict[type][exp]
 
 
 def store_reference_data_confs() :
     from lib.stor.larva_dataset import LarvaDataset
-    from lib.stor.paths import DataFolder
     from lib.aux.dictsNlists import flatten_list
+
+    DATA=paths.path('DATA')
+
     dds = [
-        [f'{DataFolder}/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g
+        [f'{DATA}/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g
          in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
     dds = flatten_list(dds)
-    dds.append(f'{DataFolder}/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/exploration')
+    dds.append(f'{DATA}/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/exploration')
     for dr in dds:
         d = LarvaDataset(dr, load_data=False)
         # # c = d.config
@@ -219,7 +224,6 @@ def store_confs(keys=None) :
 #     init_confs()
 
 def imitation_exp(config, model='explorer', idx=0, **kwargs):
-    from tests.various.gui.dtype_dicts import base_enrich
     from lib.conf.init_dtypes import null_dict
     if type(config)==str :
         config=loadConf(config, 'Ref')
@@ -238,7 +242,9 @@ def imitation_exp(config, model='explorer', idx=0, **kwargs):
     }
     env_params =null_dict('env_conf', arena=config['env_params']['arena'], larva_groups={'ImitationGroup': null_dict('LarvaGroup', sample= config, model= base_larva, default_color = 'blue', imitation=True, distribution=None)})
 
-    exp_conf=null_dict('exp_conf', sim_params=sim_params, env_params=env_params, life_params=null_dict('life'), enrichment=base_enrich())
+    exp_conf=null_dict('exp_conf', sim_params=sim_params, env_params=env_params, life_params=null_dict('life'),
+                       enrichment=enrichment_dict(types=['angular', 'spatial','dispersion', 'tortuosity'],
+                                                                    bouts=['stride', 'pause', 'turn']))
     # print(config)
     # exp_conf = expandConf(exp, 'Exp')
     # exp_conf['env_params']['larva_groups'] = {'ImitationGroup': null_dict('LarvaGroup', sample= config, model= base_larva, default_color = 'blue', imitation=True, distribution=None)}

@@ -5,6 +5,7 @@ import pickle
 import os
 import numpy as np
 from lib.envs._larvaworld_sim import LarvaWorldSim
+from lib.stor import paths
 
 from lib.stor.larva_dataset import LarvaDataset
 
@@ -29,8 +30,7 @@ def _run_sim(
     Box2D = sim_params['Box2D']
 
     if save_to is None:
-        from lib.stor.paths import SimFolder
-        save_to = SimFolder
+        save_to = paths.path("SIM")
     if path is not None:
         save_to = os.path.join(save_to, path)
     dir_path = os.path.join(save_to, id)
@@ -158,8 +158,7 @@ def set_output(dataset, collections):
 
 
 def load_reference_dataset(dataset_id='reference', load=False):
-    from lib.stor.paths import RefFolder
-    d = LarvaDataset(dir=f'{RefFolder}/{dataset_id}', load_data=load)
+    d = LarvaDataset(dir=f'{paths.path("REF")}/{dataset_id}', load_data=load)
     if not load:
         d.load(step=False)
     return d

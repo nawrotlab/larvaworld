@@ -4,13 +4,10 @@ import time
 
 from sklearn.metrics.pairwise import nan_euclidean_distances
 import numpy as np
-import pandas as pd
-from scipy.signal import argrelextrema, spectrogram
 
 import lib.anal.process.aux
 import lib.aux.ang_aux
 import lib.aux.dictsNlists
-import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
 from lib.anal.process.store import store_aux_dataset
 from lib.conf.par import getPar

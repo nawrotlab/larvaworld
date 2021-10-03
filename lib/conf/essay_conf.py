@@ -7,6 +7,8 @@ from lib.sim.analysis import essay_analysis
 from lib.sim.single_run import run_sim
 from lib.stor import paths
 
+
+
 def RvsS_essay(**kwargs) :
     essay_id='RvsS'
     kws={
@@ -14,7 +16,7 @@ def RvsS_essay(**kwargs) :
         'collections' : ['pose', 'feeder', 'gut'],
         # 'experiment' : 'RvsS'
     }
-    path0=f'{paths.EssayFolder}/{essay_id}/{essay_id}_{next_idx(essay_id, type="essay")}'
+    path0=f'{paths.path("ESSAY")}/{essay_id}/{essay_id}_{next_idx(essay_id, type="essay")}'
     path=f'{path0}/data'
     dur1, dur2, dur3=20,5,120
     # dur1, dur2, dur3=10,2,20
@@ -95,7 +97,7 @@ rover_sitter_essay = {
         'durations': [120]
     }
 },
-'exp_fig_folder' : paths.RoverSitterFigFolder}
+'exp_fig_folder' : paths.path('RvsS')}
 
 essay_dict = {
     'roversVSsitters': rover_sitter_essay,

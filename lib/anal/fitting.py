@@ -11,7 +11,6 @@ from scipy.stats import ks_2samp, stats, levy, norm, uniform
 
 import lib.anal.process.aux
 from lib.aux import naming as nam
-from lib.aux import colsNstr as fun
 from lib.conf.conf import saveConf
 
 

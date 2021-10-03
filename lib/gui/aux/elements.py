@@ -18,7 +18,7 @@ from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp
 from lib.gui.aux.buttons import named_bool_button, BoolButton, GraphButton, button_row
 from lib.gui.aux.windows import set_kwargs, save_conf_window, import_window, change_dataset_id
 
-from lib.stor import paths as paths
+from lib.stor import paths
 
 
 class SectionDict:
@@ -567,7 +567,7 @@ class DataList(NamedList):
                 self.tab.imitate(exp_conf)
         elif e == f'ADD_REF {n}':
             from lib.stor.larva_dataset import LarvaDataset
-            dd = LarvaDataset(dir=f'{paths.RefFolder}/reference')
+            dd = LarvaDataset(dir=f'{paths.path("REF")}/reference')
             self.add(w, {dd.id : dd})
         elif e == f'IMPORT {n}':
             dl1 = self.tab.datalists[self.tab.proc_key]

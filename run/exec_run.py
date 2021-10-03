@@ -27,9 +27,10 @@ class Exec:
             self.process.terminate()
 
     def run(self, **kwargs):
+        f0, f1=paths.path('EXECONF'), paths.path('EXEC')
         if self.run_externally:
-            lib.aux.dictsNlists.save_dict(self.conf, paths.ExecConfFile)
-            self.process = subprocess.Popen(['python', paths.ExecFile, self.mode, paths.ExecConfFile], **kwargs)
+            lib.aux.dictsNlists.save_dict(self.conf, f0)
+            self.process = subprocess.Popen(['python', f1, self.mode, f0], **kwargs)
         else:
             self.process = None
             res = exec_run(self.mode, self.conf, self.w_progressbar)
@@ -56,7 +57,7 @@ class Exec:
         elif self.mode == 'sim':
             if res is None and self.run_externally:
                 sim_id = self.conf['sim_params']['sim_ID']
-                dir = f"{paths.SimFolder}/{self.conf['sim_params']['path']}/{sim_id}"
+                dir = f"{paths.path('SIM')}/{self.conf['sim_params']['path']}/{sim_id}"
                 res = LarvaDataset(dir)
             if res is not None:
                 fig_dict, results = sim_analysis(res, self.type)

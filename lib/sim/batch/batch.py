@@ -105,7 +105,7 @@ def _batch_run(batch_type='unnamed', batch_id='template', space=None, exp=None, 
                multiproc=True, resumable=False, overwrite_file=False, save_hdf5=False, batch_methods=None):
 
     s0 = time.time()
-    parent_dir_path = f'{paths.BatchRunFolder}/{batch_type}'
+    parent_dir_path = f'{paths.path("BATCH")}/{batch_type}'
     dir_path = f'{parent_dir_path}/{batch_id}'
     env_kws = {
         'file_title': batch_type,

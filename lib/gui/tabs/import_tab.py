@@ -16,8 +16,8 @@ class ImportTab(GuiTab):
 
     def update(self, w, c, conf, id=None):
         path=conf['path']
-        w[f'BROWSE {self.raw_key}'].InitialFolder = f'{paths.DataFolder}/{path}/raw'
-        w[f'BROWSE {self.proc_key}'].InitialFolder = f'{paths.DataFolder}/{path}/processed'
+        w[f'BROWSE {self.raw_key}'].InitialFolder = f'{paths.path("DATA")}/{path}/raw'
+        w[f'BROWSE {self.proc_key}'].InitialFolder = f'{paths.path("DATA")}/{path}/processed'
         for n in self.fields:
             c[n].update(w, conf[n])
 

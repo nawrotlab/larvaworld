@@ -1,7 +1,5 @@
 import os
 
-from lib.aux.dictsNlists import load_dict
-
 def get_parent_dir():
     p=os.path.abspath(__file__)
     p = os.path.dirname(p)
@@ -10,65 +8,66 @@ def get_parent_dir():
     # p = os.path.join(p, '../..')
     return p
 
-F0=get_parent_dir()
 
+def path(n) :
+    F0 = get_parent_dir()
+    RF = f'{F0}/run'
+    GF = f'{F0}/lib/gui'
+    CF = f'{F0}/lib/conf/stored_confs'
+    MF = f'{F0}/lib/media'
 
-DataFolder = f'{F0}/data'
-RunFolder = f'{F0}/run'
-GuiFolder = f'{F0}/lib/gui'
-GuiTest = f'{GuiFolder}/gui_speed_test.csv'
+    exp_paths = {
+        'RvsS': f'{MF}/exp_figures/roversVSsitters',
+        'odor_pref': f'{MF}/exp_figures/odor_preference',
+    }
 
-SimFolder = f'{DataFolder}/SimGroup'
-SingleRunFolder = f'{SimFolder}/single_runs'
-BatchRunFolder = f'{SimFolder}/batch_runs'
-EssayFolder = f'{SimFolder}/essays'
-ExecConfFile = f'{RunFolder}/exec_conf.txt'
-ExecFile = f'{RunFolder}/exec_run.py'
+    media_paths = {
+        'videos': f'{MF}/video_slides',
+        'intro': f'{MF}/intro_slides',
+        'tutorials': f'{MF}/tutorial_slides',
+        'model': f'{MF}/model_figures',
+        'exp_figs': f'{MF}/exp_figures',
+    }
 
-DebFolder = f'{SimFolder}/deb_runs'
-Deb_paths={n : f'{F0}/lib/model/DEB/models/deb_{n}.csv' for n in ['rover', 'sitter', 'default']}
+    par_paths = {
+        'ParDb': f'{CF}/ParDatabase.csv',
+        'ParShelve': f'{CF}/ParShelve',
+        'ParDict': f'{CF}/ParDict.csv',
+        'ParDf': f'{CF}/ParDf.csv',
+        'ParPdf': f'{CF}/ParPdf.pdf',
+        'Unit': f'{CF}/UnitDict.csv',
+        'ParRef': f'{CF}/RefPars.txt',
+    }
 
+    conf_paths = {
+        'Data': f'{CF}/DataConfs.txt',
+        'Group': f'{CF}/DataGroups.txt',
+        'Env': f'{CF}/EnvConfs.txt',
+        'Par': f'{CF}/ParConfs.txt',
+        'Exp': f'{CF}/ExpConfs.txt',
+        'ExpGroup': f'{CF}/ExpGroupConfs.txt',
+        'Essay': f'{CF}/EssayConfs.txt',
+        'Model': f'{CF}/ModelConfs.txt',
+        'Batch': f'{CF}/BatchConfs.txt',
+        'Settings': f'{CF}/SetConfs.txt',
+        'Ref': f"{CF}/ReferenceDatasets.txt",
+        'Life': f"{CF}/LifeConfs.txt",
+        'SimIdx': f'{CF}/SimIdx.txt',
+    }
 
-RefFolder = f'{DataFolder}/SampleGroup'
+    data_paths = {
+        'DEB': f'{F0}/data/SimGroup/deb_runs',
+        'DEB_MODS': {n: f'{F0}/lib/model/DEB/models/deb_{n}.csv' for n in ['rover', 'sitter', 'default']},
+        'REF': f'{F0}/data/SampleGroup',
+        'EXEC': f'{RF}/exec_run.py',
+        'EXECONF': f'{RF}/exec_conf.txt',
+        'BATCH': f'{F0}/data/SimGroup/batch_runs',
+        'ESSAY': f'{F0}/data/SimGroup/essays',
+        'RUN': f'{F0}/data/SimGroup/single_runs',
+        'SIM': f'{F0}/data/SimGroup',
+        'DATA': f'{F0}/data',
+        'GUITEST': f'{GF}/gui_speed_test.csv',
+    }
 
-ConfFolder = f'{F0}/lib/conf/stored_confs'
-RefParsFile =f'{ConfFolder}/RefPars.txt'
-
-
-SimIdx_path = f'{ConfFolder}/SimIdx.txt'
-ParDb_path = f'{ConfFolder}/ParDatabase.csv'
-ParShelve_path = f'{ConfFolder}/ParShelve'
-ParDict_path = f'{ConfFolder}/ParDict.csv'
-ParDf_path= f'{ConfFolder}/ParDf.csv'
-ParPdf_path= f'{ConfFolder}/ParPdf.pdf'
-UnitDict_path = f'{ConfFolder}/UnitDict.csv'
-conf_paths = {
-    'Data': f'{ConfFolder}/DataConfs.txt',
-    'Group': f'{ConfFolder}/DataGroups.txt',
-    'Env': f'{ConfFolder}/EnvConfs.txt',
-    'Par': f'{ConfFolder}/ParConfs.txt',
-    'Exp': f'{ConfFolder}/ExpConfs.txt',
-    'ExpGroup': f'{ConfFolder}/ExpGroupConfs.txt',
-    'Essay': f'{ConfFolder}/EssayConfs.txt',
-    'Model': f'{ConfFolder}/ModelConfs.txt',
-    'Batch': f'{ConfFolder}/BatchConfs.txt',
-    'Settings': f'{ConfFolder}/SetConfs.txt',
-    'Ref': f"{ConfFolder}/ReferenceDatasets.txt",
-    'Life': f"{ConfFolder}/LifeConfs.txt",
-}
-
-# Dtypes_path=f'{ConfFolder}/DataTypes.txt'
-
-MediaFolder = f'{F0}/lib/media'
-VideoSlideFolder = f'{MediaFolder}/video_slides'
-IntroSlideFolder = f'{MediaFolder}/intro_slides'
-TutorialSlideFolder = f'{MediaFolder}/tutorial_slides'
-
-ModelFigFolder = f'{MediaFolder}/model_figures'
-ExpFigFolder = f'{MediaFolder}/exp_figures'
-RoverSitterFigFolder = f'{ExpFigFolder}/roversVSsitters'
-OdorPrefFigFolder = f'{ExpFigFolder}/odor_preference'
-
-new_format = False
-# new_format = True
-
+    paths={**par_paths, **conf_paths, **exp_paths, **media_paths, **data_paths}
+    return paths[n]

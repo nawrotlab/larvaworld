@@ -80,7 +80,7 @@ class DEB:
         # Drosophila model by default
         if type(species) == str:
         # if species == 'default':
-            with open(paths.Deb_paths[species]) as tfp:
+            with open(paths.path('DEB_MODS')[species]) as tfp:
                 self.species = json.load(tfp)
         else:
             self.species = species

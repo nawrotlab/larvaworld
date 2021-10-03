@@ -9,7 +9,6 @@ from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.time import RandomActivation
 
-import lib.aux.colsNstr as fun
 import lib.aux.naming as nam
 
 

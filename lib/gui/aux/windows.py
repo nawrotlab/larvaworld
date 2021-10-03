@@ -220,7 +220,7 @@ def import_window(datagroup_id,raw_dic):
     from lib.gui.tabs.gui import check_togglesNcollapsibles
     from lib.gui.aux.elements import CollapsibleDict
     g = loadConf(datagroup_id, 'Group')
-    group_dir = f'{paths.DataFolder}/{g["path"]}'
+    group_dir = f'{paths.path("DATA")}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
 

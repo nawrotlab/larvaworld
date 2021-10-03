@@ -111,7 +111,7 @@ def get_space_from_file(space_filepath=None, params=None, space_pd=None, returne
 
 
 def load_traj(batch_type, batch_id):
-    parent_dir_path = f'{paths.BatchRunFolder}/{batch_type}'
+    parent_dir_path = f'{paths.path("BATCH")}/{batch_type}'
     filename = f'{parent_dir_path}/{batch_type}.hdf5'
     traj = load_trajectory(filename=filename, name=batch_id, load_all=2)
     return traj
@@ -120,7 +120,7 @@ def load_traj(batch_type, batch_id):
 
 def stored_trajs(batch_type):
     import h5py
-    filename = f'{paths.BatchRunFolder}/{batch_type}/{batch_type}.hdf5'
+    filename = f'{paths.path("BATCH")}/{batch_type}/{batch_type}.hdf5'
     try:
         f = h5py.File(filename, 'r')
         return {k:f for k in f.keys()}
@@ -130,7 +130,7 @@ def stored_trajs(batch_type):
 
 def delete_traj(batch_type, traj_name):
     import h5py
-    filename = f'{paths.BatchRunFolder}/{batch_type}/{batch_type}.hdf5'
+    filename = f'{paths.path("BATCH")}/{batch_type}/{batch_type}.hdf5'
     with h5py.File(filename, 'r+') as f:
         del f[traj_name]
 

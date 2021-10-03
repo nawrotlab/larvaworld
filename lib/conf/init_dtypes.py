@@ -8,6 +8,8 @@ from lib.aux import colsNstr as fun, naming as nam
 from lib.aux.collecting import output_keys
 from lib.gui.aux.functions import get_pygame_key
 from lib.stor import paths
+from lib.stor.paths import path
+
 
 def maxNdigits(array, Min=None) :
     N= len(max(array.astype(str), key=len))
@@ -759,6 +761,7 @@ def store_controls():
 
 
 def store_RefPars():
+    from lib.stor import paths
     d = {
         'length': 'body.initial_length',
         nam.freq(nam.scal(nam.vel(''))): 'brain.crawler_params.initial_freq',
@@ -768,12 +771,11 @@ def store_RefPars():
         nam.freq('feed'): 'brain.feeder_params.initial_freq',
         # **{p: p for p in ['initial_x', 'initial_y', 'initial_front_orientation']}
     }
-    lib.aux.dictsNlists.save_dict(d, paths.RefParsFile, use_pickle=False)
+    lib.aux.dictsNlists.save_dict(d, paths.path('ParRef'), use_pickle=False)
 
 
 if __name__ == '__main__':
     store_controls()
     store_RefPars()
-    # print(null_dict('visualization', mode='image'))
-    # print(get_dict('visualization', mode='image'))
+
 

@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import shelve
 
-import lib.aux.colsNstr as fun
 import lib.gui.aux.functions
 from lib.aux.collecting import step_database
 import lib.stor.paths as paths
@@ -674,7 +673,7 @@ def set_ParDb():
     par_db = set_dtype(par_db)
     par_db = set_collect_from(par_db)
 
-    par_db.to_csv(paths.ParDb_path, index=True, header=True)
+    par_db.to_csv(paths.path('ParDb'), index=True, header=True)
 
     return par_db
 
@@ -725,7 +724,7 @@ def set_collect_from(par_db):
 
 def load_ParDb():
     import lib.gui.aux.elements as gui
-    df = pd.read_csv(paths.ParDb_path, index_col=0)
+    df = pd.read_csv(paths.path('ParDb'), index_col=0)
     df['lim'] = [lib.gui.aux.functions.retrieve_value(v, Tuple[float, float]) for v in df['lim'].values]
     df['dtype'] = [lib.gui.aux.functions.retrieve_value(v, Type) for v in df['dtype'].values]
     return df
@@ -734,7 +733,7 @@ def load_ParDb():
 def set_ParShelve(par_db):
     # ATTENTION : This must NOT be the laded par_db but the one just created. Othrwise everything is float!
     temp = copy.deepcopy(par_db)
-    with shelve.open(paths.ParShelve_path) as db0:
+    with shelve.open(paths.path('ParShelve')) as db0:
         for k, v in temp.to_dict('index').items():
             #     if 'LarvaworldAgent' in v['collect_from'] :
             #         v['collect_from']=LarvaworldAgent
@@ -747,7 +746,7 @@ def set_ParShelve(par_db):
 def get_par_dict(short=None, par=None, retrieve_from='shelve'):
     dic = None
     if retrieve_from == 'shelve':
-        db = shelve.open(paths.ParShelve_path)
+        db = shelve.open(paths.path('ParShelve'))
     elif retrieve_from == 'par_db':
         db = load_ParDb().to_dict('index')
     if short is not None:
@@ -780,7 +779,7 @@ def par_dict_lists(shorts=None, pars=None, retrieve_from='shelve', to_return=['p
 
 def par_in_db(short=None, par=None):
     res = False
-    db = shelve.open(paths.ParShelve_path)
+    db = shelve.open(paths.path('ParShelve'))
     if short is not None:
         if short in list(db.keys()):
             res = True

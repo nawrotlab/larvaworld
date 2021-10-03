@@ -5,13 +5,14 @@ from lib.gui.aux.buttons import ClickableImage
 from lib.gui.aux.functions import window_size
 from lib.gui.tabs.tab import GuiTab
 from lib.stor import paths as paths
+from lib.stor.paths import path
 
 
 class VideoTab(GuiTab):
 
     def build(self):
         link0 = "http://computational-systems-neuroscience.de/wp-content/uploads/2021/04/"
-        f0 = paths.VideoSlideFolder
+        f0 = path('videos')
         fs = [f for f in os.listdir(f0) if f.endswith('png')]
         ns=[f.split(".")[0] for f in fs]
         ffs=[os.path.join(f0, f) for f in fs]

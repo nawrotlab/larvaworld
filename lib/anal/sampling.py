@@ -9,7 +9,7 @@ from lib.anal.fitting import compute_density, powerlaw_cdf, exponential_cdf, log
     fit_bout_distros, logNpow_cdf, get_distro, lognormal_pdf, exponential_pdf, levy_cdf, levy_pdf, \
     norm_cdf, norm_pdf, uniform_pdf, uniform_cdf
 from lib.conf.conf import loadConf
-from lib.stor.paths import RefFolder
+
 
 
 class PowerLawDist(st.rv_continuous):
@@ -71,7 +71,8 @@ class GeometricDist(st.rv_continuous):
 def sample_agents(pars, filepath=None, N=1, sample_dataset='reference'):
 
     if filepath is None:
-        path_dir = f'{RefFolder}/{sample_dataset}'
+        from lib.stor import paths
+        path_dir = f'{paths.path("REF")}/{sample_dataset}'
         path_data = f'{path_dir}/data/reference.csv'
         filepath = path_data
     data = pd.read_csv(filepath, index_col=0)
@@ -249,6 +250,7 @@ def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
         (low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 
 if __name__ == '__main__':
+    from lib.stor import paths
     import matplotlib.pyplot as plt
     d_id='Fed'
     bouts=['stride', 'pause']
@@ -269,7 +271,7 @@ if __name__ == '__main__':
         # if j==1 :
         #     continue
         print(f'------{bout}--------')
-        pp = pd.read_csv(f'{RefFolder}/{d_id}/aux/par_distros/{par}.csv', index_col=0).values.flatten()
+        pp = pd.read_csv(f'{paths.path("REF")}/{d_id}/aux/par_distros/{par}.csv', index_col=0).values.flatten()
         # dist0 = get_sample_bout_distro(bout=bout, sample_dataset='Starved')
         # a, m, s, xmid, r = [dist0[k] for k in ['alpha', 'mu', 'sigma', 'switch', 'ratio']]
         dist0 =loadConf(d_id,'Ref')[bout]['best']

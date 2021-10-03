@@ -7,7 +7,6 @@ import pygame
 from scipy.spatial import ConvexHull
 
 import lib.anal.process.aux
-from lib.aux import colsNstr as fun
 
 
 class GuppiesViewer(object):

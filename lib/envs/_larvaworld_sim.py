@@ -8,7 +8,7 @@ from lib.aux.collecting import TargetedDataCollector
 from lib.conf.par import CompGroupCollector
 from lib.envs._larvaworld import LarvaWorld, generate_larvae, get_sample_bout_distros, sample_group
 from lib.sim.conditions import get_exp_condition
-from lib.stor.paths import RefParsFile
+from lib.stor import paths
 
 
 class LarvaWorldSim(LarvaWorld):
@@ -95,7 +95,7 @@ class LarvaWorldSim(LarvaWorld):
 
             modF = dNl.flatten_dict(mod)
             sample_ks = [p for p in modF if modF[p] == 'sample']
-            RefPars = dNl.load_dict(RefParsFile, use_pickle=False)
+            RefPars = dNl.load_dict(paths.path('ParRef'), use_pickle=False)
             invRefPars = {v: k for k, v in RefPars.items()}
             self.sample_ps=[invRefPars[p] for p in sample_ks]
             if gConf['imitation'] and sample!={}:

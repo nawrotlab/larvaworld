@@ -70,7 +70,7 @@ class LarvaDataGroup:
         return loadConf(loadConf(self.conf, 'Data')['par'], 'Par')
 
     def get_path(self):
-        return f'{paths.DataFolder}/{self.path}'
+        return f'{paths.path("DATA")}/{self.path}'
 
     # def get_last_common(self, dirs, raw=True):
     #     dirs = [fun.remove_prefix(dr, f'{self.raw_dir}/') for dr in dirs]
@@ -80,9 +80,9 @@ if __name__ == "__main__":
     datagroup_id = 'SchleyerGroup'
     datagroup = LarvaDataGroup(datagroup_id)
     p=datagroup.path
-    pp = os.path.normpath(f'{paths.DataFolder}/{p}')
+    pp = os.path.normpath(f'{paths.path("DATA")}/{p}')
     print(pp)
-    print(f'{paths.DataFolder}/{p}')
+    print(f'{paths.path("DATA")}/{p}')
     print(datagroup.get_path())
 
 

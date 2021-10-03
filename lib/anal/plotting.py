@@ -27,7 +27,8 @@ from lib.aux import colsNstr as fun
 from lib.conf.par import getPar, chunk_dict
 from lib.model.DEB.deb import DEB
 
-from lib.stor import paths
+
+
 
 '''
 Generic plot function. Uses the next two functions internally'''
@@ -545,8 +546,9 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
               time_unit='hours', return_fig=False, sim_only=False, force_ymin=None, color_epoch_quality=True,
               datasets=None, labels=None, show=False, label_epochs=True, label_lifestages=True,**kwargs):
     warnings.filterwarnings('ignore')
+    from lib.stor import paths
     if save_to is None:
-        save_to = paths.DebFolder
+        save_to = paths.path('DEB')
     os.makedirs(save_to, exist_ok=True)
     if save_as is None:
         save_as = f'debs.{suf}'
@@ -1627,7 +1629,8 @@ def boxplot_PI(datasets, labels=None, subfolder=None, save_as=None,sort_labels=F
                save_to=None, return_fig=False, show=False, xlabel='Trials') :
 
     if save_to is None:
-        save_to = paths.OdorPrefFigFolder
+        from lib.stor import paths
+        save_to = paths.path('odor_pref')
     if subfolder is not None:
         save_to = f'{save_to}/{subfolder}'
     if not os.path.exists(save_to):

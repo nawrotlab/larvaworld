@@ -22,6 +22,8 @@ from lib.model.agents._larva import Larva
 import siunits as siu
 
 
+
+
 def split_si_composite(df) :
     ddf=copy.deepcopy(df)
     unit_dict={}
@@ -228,14 +230,15 @@ class CompGroupCollector(GroupCollector):
             else:
                 lib.aux.dictsNlists.save_dict(df0.to_dict(), f)
             if save_units_dict:
+                f0=paths.path('Unit')
                 # ff = f'{save_to}/units.csv'
                 # fun.save_dict(u0_dict, ff)
                 try:
-                    uu_dict = lib.aux.dictsNlists.load_dicts([paths.UnitDict_path])[0]
+                    uu_dict = lib.aux.dictsNlists.load_dicts([f0])[0]
                     u0_dict.update(uu_dict)
                 except:
                     pass
-                lib.aux.dictsNlists.save_dict(u0_dict, paths.UnitDict_path)
+                lib.aux.dictsNlists.save_dict(u0_dict, f0)
         return df0
 
 
@@ -913,7 +916,7 @@ chunk_dict = {
 
 def load_ParDict():
     # import lib.aux.functions as fun
-    dic = lib.aux.dictsNlists.load_dicts([paths.ParDict_path])[0]
+    dic = lib.aux.dictsNlists.load_dicts([paths.path('ParDict')])[0]
     return dic
 
 def df2pdf(df, path, **kwargs) :
@@ -940,20 +943,20 @@ def save_ParDict_frame(df, save_pdf=False):
     args = list(inspect.signature(Parameter.__init__).parameters.keys())
     args = [a for a in args if a not in ['self', 'par_dict']]
     d = {k: {a: getattr(p, a) for a in args} for k, p in df.items()}
-    lib.aux.dictsNlists.save_dict(d, paths.ParDict_path)
+    lib.aux.dictsNlists.save_dict(d, paths.path('ParDict'))
     if save_pdf:
         dd = [{'symbol': p.s, 'unit': p.u.unit.abbrev, 'codename': k, 'interpretation': p.d} for i, (k, p) in
               enumerate(df.items()) if 240 < i < 280]
         ddf = pd.DataFrame.from_records(dd)
         ws = np.array([1, 1, 1, 5])
         ws = (ws / sum(ws))
-        ddf.to_csv(paths.ParDf_path)
-        df2pdf(ddf, paths.ParPdf_path, colWidths=ws, edges='horizontal')
+        ddf.to_csv(paths.path('ParDf'))
+        df2pdf(ddf, paths.path('ParPdf'), colWidths=ws, edges='horizontal')
     return d
 
 
 def reconstruct_ParDict(test=False):
-    frame = lib.aux.dictsNlists.load_dicts([paths.ParDict_path])[0]
+    frame = lib.aux.dictsNlists.load_dicts([paths.path('ParDict')])[0]
     dic = {}
     for k, args in frame.items():
         dic[k] = Parameter(**args, par_dict=dic)

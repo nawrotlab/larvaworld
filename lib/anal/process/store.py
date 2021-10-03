@@ -7,7 +7,8 @@ import os
 import lib.aux.dictsNlists
 import lib.aux.naming as nam
 
-from lib.stor import paths
+
+
 
 
 def store_aux_dataset(s, pars, type, file):
@@ -70,8 +71,9 @@ def create_reference_dataset(config, dataset_id='reference', Nstd=3, overwrite=F
     from lib.anal.fitting import fit_bouts
     from lib.conf.conf import saveConf
     from lib.model.modules.intermitter import get_EEB_poly1d
+    from lib.stor import paths
 
-    path_dir = f'{paths.RefFolder}/{dataset_id}'
+    path_dir = f'{paths.path("REF")}/{dataset_id}'
     path_data = f'{path_dir}/data/reference.csv'
     path_fits = f'{path_dir}/data/bout_fits.csv'
     if not os.path.exists(path_dir) or overwrite:
@@ -79,7 +81,7 @@ def create_reference_dataset(config, dataset_id='reference', Nstd=3, overwrite=F
     new_d = LarvaDataset(path_dir)
     new_d.set_id(dataset_id)
 
-    pars = lib.aux.dictsNlists.load_dict(paths.RefParsFile, use_pickle=False)
+    pars = lib.aux.dictsNlists.load_dict(paths.path('ParRef'), use_pickle=False)
 
     pars= {p:pp for p,pp in pars.items() if p in new_d.endpoint_data.columns}
 

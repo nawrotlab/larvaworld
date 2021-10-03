@@ -35,7 +35,6 @@ if __name__ == '__main__':
     # raise
 
     def initializeDataGroup(id):
-        from lib.stor.paths import DataFolder
         DataGroup = loadConf(id, 'Group')
         path = DataGroup['path']
         raw_path = f'{path}/raw'
@@ -43,7 +42,7 @@ if __name__ == '__main__':
         plot_path = f'{path}/plots'
         visuals_path = f'{path}/visuals'
         subgroups = DataGroup['subgroups']
-        dirs = [f'{DataFolder}/{i}' for i in [path, raw_path, processed_path, plot_path, visuals_path]]
+        dirs = [f'{paths.path("DATA")}/{i}' for i in [path, raw_path, processed_path, plot_path, visuals_path]]
         for i in dirs:
             if not os.path.exists(i):
                 os.makedirs(i)

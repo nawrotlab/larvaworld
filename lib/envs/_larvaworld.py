@@ -682,7 +682,7 @@ class LarvaWorld:
 
 def generate_larvae(N, sample_dict, base_model, RefPars=None):
     if RefPars is None :
-        RefPars = lib.aux.dictsNlists.load_dict(paths.RefParsFile, use_pickle=False)
+        RefPars = lib.aux.dictsNlists.load_dict(paths.path('ParRef'), use_pickle=False)
     if len(sample_dict) > 0:
         all_pars = []
         modF = lib.aux.dictsNlists.flatten_dict(base_model)

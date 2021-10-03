@@ -193,4 +193,4 @@ def speed_test():
         r = [n0, np.round(s1 - s0, 1), np.round(s2 - s1, 1)]
         res.append(r)
     df = pd.DataFrame(res)
-    df.to_csv(paths.GuiTest, index=0, header=['Tabs', 'Open', 'Close'])
+    df.to_csv(paths.path('GUITEST'), index=0, header=['Tabs', 'Open', 'Close'])
