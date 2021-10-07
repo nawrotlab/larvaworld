@@ -1,6 +1,6 @@
 import os
 
-from lib.conf.init_dtypes import null_dict
+from lib.conf.dtypes import null_dict
 
 from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, ButtonGraphList
 from lib.gui.aux.functions import gui_cols

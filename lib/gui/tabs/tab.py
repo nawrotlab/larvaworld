@@ -1,15 +1,18 @@
 from lib.conf.conf import loadConf
+from lib.gui.aux.elements import GuiElement
 
 
-class GuiTab:
+class GuiTab(GuiElement):
     def __init__(self, name, gui, conftype=None, dtype=None):
-        self.name = name
+        super().__init__(name)
+        # self.name = name
         self.gui = gui
         self.conftype = conftype
         self.dtype = dtype
         self.selectionlists = {}
         self.datalists = {}
         self.graphlists = {}
+        # super().__init__(name)
         # self.graph_list=None
 
     @property
@@ -71,6 +74,11 @@ class GuiTab:
             dl.eval(e, v, w, c, d, g)
         for dl_name,dl in self.graphlists.items():
             dl.eval(e, v, w, c, d, g)
+        for dl_name,dl in c.items():
+            try :
+                dl.eval(e, v, w, c, d, g)
+            except :
+                pass
         self.eval(e, v, w, c, d, g)
 
     def run(self, v, w,c, d, g, conf, id):
@@ -120,6 +128,7 @@ class GuiTab:
             res=func(**kwargs)
             # return res
             # sys.exit(0)
+
 
 
 if __name__ == "__main__":

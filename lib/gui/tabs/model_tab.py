@@ -1,7 +1,7 @@
 import copy
 import os
 
-from lib.conf.init_dtypes import null_dict
+from lib.conf.dtypes import null_dict
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
 from lib.gui.aux.functions import col_size, gui_cols
 from lib.gui.tabs.tab import GuiTab

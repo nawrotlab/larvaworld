@@ -13,7 +13,7 @@ import time
 import numpy as np
 from pypet import Environment, load_trajectory, pypetconstants
 
-from lib.conf.init_dtypes import null_dict
+from lib.conf.dtypes import null_dict
 from lib.sim.batch.aux import config_traj, prepare_traj
 from lib.sim.batch.functions import single_run
 

@@ -22,6 +22,7 @@ def button_row(name, buttons, button_args={}):
         'enrich': 'Enrich the dataset.',
         'add_ref': 'Add a reference experimental dataset to the list.',
         'select_all': 'Select all list elements.',
+        'add': 'Add an item to the list.',
         'remove': 'Remove an item from the list.',
         'change_ID': 'Change the dataset ID transiently or permanently.',
         'browse': 'Browse to add items to the list.\n Either directly select a directory or a parent folder containing multiple subdirectories.',

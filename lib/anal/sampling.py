@@ -5,6 +5,7 @@ import pandas as pd
 import scipy.stats as stats
 from scipy.stats import truncnorm, lognorm, rv_discrete, uniform
 
+import lib.aux.par_aux
 from lib.anal.fitting import compute_density, powerlaw_cdf, exponential_cdf, lognorm_cdf, powerlaw_pdf, logNpow_pdf, \
     fit_bout_distros, logNpow_cdf, get_distro, lognormal_pdf, exponential_pdf, levy_cdf, levy_pdf, \
     norm_cdf, norm_pdf, uniform_pdf, uniform_cdf
@@ -163,17 +164,6 @@ def exponential_discrete(beta, range, dt=1, **kwargs) :
     return stats.rv_discrete(values=(xx, pmf))
 
 
-def lognormal_discrete2(mu, sigma, range, dt=1, **kwargs):
-    xmin,xmax=range
-    x0, x1 = np.round(xmin / dt).astype(int), np.ceil(xmax / dt).astype(int)
-    N=x1-x0
-    Dd = lognorm(s=sigma, loc=0.0, scale=np.exp(mu))
-    pk2 = Dd.cdf(np.linspace(xmin + 1*dt, xmax + 2*dt, N+1)) - Dd.cdf(np.linspace(xmin, xmax + 1*dt, N+1))
-    pk2 = pk2 / np.sum(pk2)
-    xrng = np.arange(x0, x1 + 1, 1)
-    # print(dt)
-    return stats.rv_discrete(values=(xrng, pk2))
-
 def lognormal_discrete(mu, sigma, range, dt=1, **kwargs):
     xmin, xmax = range
     x0, x1 = int(xmin / dt), int(xmax / dt)
@@ -246,8 +236,7 @@ def lognorm_params(mode, stddev):
 
 
 def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
-    return truncnorm(
-        (low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
+    return truncnorm((low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 
 if __name__ == '__main__':
     from lib.stor import paths

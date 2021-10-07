@@ -3,19 +3,17 @@ from typing import List, Tuple, Union
 import pandas as pd
 from siunits import BaseUnit, Composite, DerivedUnit
 
-import lib.aux.dictsNlists
-from lib.aux import colsNstr as fun, naming as nam
 from lib.aux.collecting import output_keys
+
 from lib.gui.aux.functions import get_pygame_key
-from lib.stor import paths
-from lib.stor.paths import path
 
 
-def maxNdigits(array, Min=None) :
-    N= len(max(array.astype(str), key=len))
-    if Min is not None :
-        N=max([N,Min])
+def maxNdigits(array, Min=None):
+    N = len(max(array.astype(str), key=len))
+    if Min is not None:
+        N = max([N, Min])
     return N
+
 
 def base_dtype(t):
     if t in [float, Tuple[float], List[float], List[Tuple[float]]]:
@@ -28,53 +26,65 @@ def base_dtype(t):
 
 
 def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_values=None,
-        return_dtype=True, Ndigits=None):
-    cur_dtype = base_dtype(t)
-    if vs is None:
-        if any([arg is not None for arg in [min, max, dv]]):
-            if cur_dtype in [float, int]:
-                if min is None:
-                    min = 0
-                if max is None:
-                    max = 1
-                if dv is None:
-                    if cur_dtype == int:
-                        dv = 1
-                    elif cur_dtype == float:
-                        dv = 0.1
+        return_dtype=True, Ndigits=None, h='',s='', argparser=False):
+    if not argparser:
+        cur_dtype = base_dtype(t)
+        if vs is None:
+            if any([arg is not None for arg in [min, max, dv]]):
+                if cur_dtype in [float, int]:
+                    if min is None:
+                        min = 0
+                    if max is None:
+                        max = 1
+                    if dv is None:
+                        if cur_dtype == int:
+                            dv = 1
+                        elif cur_dtype == float:
+                            dv = 0.1
 
-                array = np.arange(min, max + dv, dv)
-                if cur_dtype == float:
-                    Ndecimals = len(str(format(dv, 'f')).split('.')[1])
-                    array = np.round(array, Ndecimals)
-                vs = array.astype(cur_dtype)
-                Ndigits = maxNdigits(vs, 4)
-                vs = vs.tolist()
+                    array = np.arange(min, max + dv, dv)
+                    if cur_dtype == float:
+                        Ndecimals = len(str(format(dv, 'f')).split('.')[1])
+                        array = np.round(array, Ndecimals)
+                    vs = array.astype(cur_dtype)
+                    Ndigits = maxNdigits(vs, 4)
+                    vs = vs.tolist()
 
-    if aux_values is not None and vs is not None:
-        vs += aux_values
-    d = {'initial_value': v, 'values': vs}
-    if return_dtype:
-        d['dtype'] = t
-    d['Ndigits'] = Ndigits
-    # print({name: d})
-    return {name: d}
+        if aux_values is not None and vs is not None:
+            vs += aux_values
+        d = {'initial_value': v, 'values': vs}
+        if return_dtype:
+            d['dtype'] = t
+        d['Ndigits'] = Ndigits
+        return {name: d}
+    else:
+        d = {
+            'key': name,
+            'short': s if s!='' else name,
+            'help': h,
+        }
+        if t == bool:
+            d['action'] = 'store_true' if not v else 'store_false'
+        else:
+            d['type'] = t
+            if vs is not None :
+                d['choices']=vs
+            if v is not None :
+                d['default']=v
+                d['nargs']='?'
+        return {name: d}
 
 
 def par_dict(name, d0=None, **kwargs):
     if d0 is None:
         d0 = init_pars()[name]
-    # print(d0)
     d = {}
     for n, v in d0.items():
         try:
             entry = par(n, **v, **kwargs)
         except:
-            # print(n, d0[n])
-            entry = {n: {'dtype': dict, 'content': par_dict(n, d0=d0[n])}}
-        # print(entry)
+            entry = {n: {'dtype': dict, 'content': par_dict(n, d0=d0[n], **kwargs)}}
         d.update(entry)
-    # return {name : d}
     return d
 
 
@@ -82,7 +92,6 @@ def par_dict_from_df(name, df):
     df = df.where(pd.notnull(df), None)
     d = {}
     for n in df.index:
-        # print(df.loc[n])
         entry = par(n, **df.loc[n])
         d.update(entry)
     return {name: d}
@@ -95,37 +104,34 @@ def pars_to_df(d):
     df = df.where(pd.notnull(df), None)
 
 
-def init_vis_dtypes2():
+def init_vis():
     d = {}
     d['render'] = {
-        'mode': {'t': str, 'v': 'video', 'vs': [None, 'video', 'image']},
-        'image_mode': {'t': str, 'vs': [None, 'final', 'snapshots', 'overlap']},
-        'video_speed': {'t': int, 'v': 60, 'min': 1, 'max': 100},
-        'media_name': {'t': str},
-        'show_display': {'t': bool, 'v': True},
+        'mode': {'t': str, 'v':None, 'vs': [None, 'video', 'image'], 'h' : 'The visualization mode', 's' : 'm'},
+        'image_mode': {'t': str, 'vs': [None, 'final', 'snapshots', 'overlap'], 'h' : 'The image-render mode', 's' : 'im'},
+        'video_speed': {'t': int, 'v': 60, 'min': 1, 'max': 100, 'h' : 'The video speed', 's' : 'vid'},
+        'media_name': {'t': str, 'h' : 'Filename for the saved video/image', 's' : 'media'},
+        'show_display': {'t': bool, 'v': True, 'h' : 'Hide display', 's' : 'hide'},
     }
-
     d['draw'] = {
-        'draw_head': {'t': bool, 'v': False},
-        'draw_centroid': {'t': bool, 'v': False},
-        'draw_midline': {'t': bool, 'v': True},
-        'draw_contour': {'t': bool, 'v': True},
-        'draw_sensors': {'t': bool, 'v': False},
-        'trails': {'t': bool, 'v': False},
-        'trajectory_dt': {'max': 100.0},
+        'draw_head': {'t': bool, 'v': False, 'h' : 'Draw the larva head'},
+        'draw_centroid': {'t': bool, 'v': False, 'h' : 'Draw the larva centroid'},
+        'draw_midline': {'t': bool, 'v': True, 'h' : 'Draw the larva midline'},
+        'draw_contour': {'t': bool, 'v': True, 'h' : 'Draw the larva contour'},
+        'draw_sensors': {'t': bool, 'v': False, 'h' : 'Draw the larva sensors'},
+        'trails': {'t': bool, 'v': False, 'h' : 'Draw the larva trajectories'},
+        'trajectory_dt': {'max': 100.0, 'h' : 'Duration of the drawn trajectories'},
     }
-
     d['color'] = {
-        'black_background': {'t': bool, 'v': False},
-        'random_colors': {'t': bool, 'v': False},
-        'color_behavior': {'t': bool, 'v': False},
+        'black_background': {'t': bool, 'v': False, 'h' : 'Set the background color to black'},
+        'random_colors': {'t': bool, 'v': False, 'h' : 'Color each larva with a random color'},
+        'color_behavior': {'t': bool, 'v': False, 'h' : 'Color the larvae according to their instantaneous behavior'},
     }
-
     d['aux'] = {
-        'visible_clock': {'t': bool, 'v': True},
-        'visible_scale': {'t': bool, 'v': True},
-        'visible_state': {'t': bool, 'v': False},
-        'visible_ids': {'t': bool, 'v': False},
+        'visible_clock': {'t': bool, 'v': True, 'h' : 'Hide/show the simulation clock'},
+        'visible_scale': {'t': bool, 'v': True, 'h' : 'Hide/show the simulation scale'},
+        'visible_state': {'t': bool, 'v': False, 'h' : 'Hide/show the simulation state'},
+        'visible_ids': {'t': bool, 'v': False, 'h' : 'Hide/show the larva IDs'},
     }
     d['visualization'] = {
         'render': d['render'],
@@ -133,17 +139,13 @@ def init_vis_dtypes2():
         'color': d['color'],
         'aux': d['aux'],
     }
-    # d['visualization'] = {'dtype': dict, 'content': {
-    #     'render': {'dtype': dict, 'content':vis_render_dtypes},
-    #     'draw': {'dtype': dict, 'content':vis_draw_dtypes},
-    #     'color': {'dtype': dict, 'content':vis_color_dtypes},
-    #     'aux': {'dtype': dict, 'content':vis_aux_dtypes},
-    # }}
     return d
 
 
 proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI']
 bout_keys = ['stride', 'pause', 'turn']
+to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn',
+                'unused']
 
 # Compound densities (g/cm**3)
 substrate_dict = {
@@ -218,7 +220,6 @@ null_bout_dist = {
     'name': None,
     'mu': None,
     'sigma': None,
-    # 'c': None
 }
 
 
@@ -334,7 +335,7 @@ def init_pars():
                     },
         'turner': {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal']},
                    'base_activation': {'v': 20.0, 'max': 100.0, 'dv': 1.0},
-                   'activation_range': {'t': Tuple[float],'v': (10.0,40.0), 'max': 100.0, 'dv': 1.0},
+                   'activation_range': {'t': Tuple[float], 'v': (10.0, 40.0), 'max': 100.0, 'dv': 1.0},
                    'noise': {'v': 0.15, 'max': 10.0},
                    'activation_noise': {'v': 0.5, 'max': 10.0},
                    'initial_amp': {'max': 20.0},
@@ -386,25 +387,29 @@ def init_pars():
                     'feeder': {'t': bool, 'v': False},
                     'memory': {'t': bool, 'v': False}},
 
-        'sim_params': {
-            'sim_ID': {'t': str},
-            'path': {'t': str},
-            'duration': {'v': 1.0, 'max': 100.0},
-            'timestep': {'v': 0.1, 'max': 0.4, 'dv': 0.05},
-            'Box2D': {'t': bool, 'v': False},
-            'sample': {'t': str, 'v': 'reference', 'vs': list(loadConfDict('Ref').keys())}
-        },
         'essay_params': {
             'essay_ID': {'t': str},
             'path': {'t': str},
             'N': {'t': int, 'min': 1, 'max': 10}
         },
+
+        'sim_params': {
+            'sim_ID': {'t': str, 'h': 'The id of the simulation', 's' : 'id'},
+            'path': {'t': str, 'h': 'The path to save the simulation dataset', 's' : 'path'},
+            'duration': {'v': 1.0, 'max': 100.0, 'h': 'The duration of the simulation in minutes', 's' : 't'},
+            'timestep': {'v': 0.1, 'max': 0.4, 'dv': 0.05, 'h': 'The timestep of the simulation in seconds', 's' : 'dt'},
+            'Box2D': {'t': bool, 'v': False, 'h': 'Use the Box2D physics engine'},
+            'store_data': {'t': bool, 'v': True, 'h': 'Whether to store the simulation data', 's' : 'no_store'},
+            # 'analysis': {'t': bool, 'v': True, 'h': 'Whether to analyze the simulation data', 's' : 'no_analysis'},
+            # 'sample': {'t': str, 'v': 'controls.', 'h': 'The ID of the dataset to sample the parameters from'}
+        },
+
         'logn_dist': {
             'range': {'t': Tuple[float], 'v': (0.0, 2.0), 'max': 10.0, 'dv': 1.0},
             'name': {'t': str, 'v': 'lognormal', 'vs': ['lognormal']},
             'mu': {'v': 1.0, 'max': 10.0},
             'sigma': {'v': 0.0, 'max': 10.0},
-            'fit' : {'t' : bool, 'v' : False}
+            'fit': {'t': bool, 'v': False}
         },
         'par': {
             'p': {'t': str},
@@ -442,16 +447,16 @@ def init_pars():
     }
 
     d['brain'] = {
-        'modules' : d['modules'],
+        'modules': d['modules'],
         **{f'{m}_params': d[m] for m in d['modules'].keys()},
-        'nengo' : {'t': bool, 'v': False}
+        'nengo': {'t': bool, 'v': False}
     }
 
-    d['larva_conf'] ={
-        'brain' : d['brain'],
-        'body' : d['body'],
-        'energetics' : d['energetics'],
-        'physics' : d['physics'],
+    d['larva_conf'] = {
+        'brain': d['brain'],
+        'body': d['body'],
+        'energetics': d['energetics'],
+        'physics': d['physics'],
     }
 
     d['preprocessing'] = {
@@ -480,9 +485,7 @@ def init_pars():
                        'mode': {'t': str, 'v': 'minimal', 'vs': ['minimal', 'full']},
                        'source': {'t': Tuple[float], 'min': -10.0, 'max': 10.0}
                        }
-    d['to_drop'] = {'groups': {n: {'t': bool, 'v': False} for n in
-                               ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn',
-                                'turn','unused']}}
+    d['to_drop'] = {'groups': {k: {'t': bool, 'v': False} for k in to_drop_keys}}
     d['enrichment'] = {k: d[k] for k in
                        ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
 
@@ -494,10 +497,11 @@ def init_pars():
     d['env_conf'] = {'arena': d['arena'],
                      'border_list': {'t': dict, 'v': {}},
                      'food_params': d['food_params'],
-                     'larva_groups': {'t': dict, 'v': {}},
+
                      'odorscape': d['odorscape']}
 
     d['exp_conf'] = {'env_params': {'t': str, 'vs': list(loadConfDict('Env').keys())},
+                     'larva_groups': {'t': dict, 'v': {}},
                      'sim_params': d['sim_params'],
                      'life_params': {'t': str, 'v': 'default', 'vs': list(loadConfDict('Life').keys())},
                      'collections': {'t': List[str], 'v': ['pose']},
@@ -537,7 +541,7 @@ def init_pars():
                              'front_vector': {'t': Tuple[int], 'v': (1, 2), 'min': -12, 'max': 12},
                              'rear_vector': {'t': Tuple[int], 'v': (-2, -1), 'min': -12, 'max': 12},
                              'front_body_ratio': {'v': 0.5, 'max': 1.0},
-                             'point_idx': {'t': int, 'v': 1, 'min': -1, 'max': 12},
+                             'point_idx': {'t': int, 'min': -1, 'max': 12},
                              'use_component_vel': {'t': bool, 'v': False},
                              'scaled_vel_threshold': {'v': 0.2, 'max': 1.0}}
 
@@ -563,11 +567,11 @@ def init_pars():
 
     d['LarvaGroup'] = {
         'model': d['larva_model'],
-        'life': d['life'],
         'sample': {'t': str, 'v': 'controls.exploration'},
         'default_color': {'t': str, 'v': 'black'},
         'imitation': {'t': bool, 'v': False},
         'distribution': d['larva_distro'],
+        'life': d['life'],
         'odor': d['odor']
     }
 
@@ -598,9 +602,8 @@ def init_pars():
     }
     d['Source_DISTRO'] = d['spatial_distro']
 
-    d.update(init_vis_dtypes2())
+    d.update(init_vis())
 
-    # d['visualization'] = init_vis_dtypes2()
     d['replay'] = {
         # 'arena_pars': d['arena'],
         'env_params': {'t': str, 'vs': list(loadConfDict('Env').keys()), 'aux_values': ['']},
@@ -614,11 +617,6 @@ def init_pars():
         'use_background': {'t': bool, 'v': False},
         'draw_Nsegs': {'t': int, 'min': 1, 'max': 12}
     }
-
-
-
-
-
 
     return d
 
@@ -635,10 +633,10 @@ def null_dict(n, key='initial_value', **kwargs):
 
     dic = par_dict(n)
     dic2 = v0(dic)
-    if n not in ['visualization', 'enrichment'] :
+    if n not in ['visualization', 'enrichment']:
         dic2.update(kwargs)
         return dic2
-    else :
+    else:
         for k, v in dic2.items():
             if k in list(kwargs.keys()):
                 dic2[k] = kwargs[k]
@@ -648,25 +646,28 @@ def null_dict(n, key='initial_value', **kwargs):
                         dic2[k][k0] = kwargs[k0]
         return dic2
 
-# def get_dict(n, **kwargs) :
-#     dic = null_dict(n)
-#     if n in ['visualization', 'enrichment']:
-#         for k, v in dic.items():
-#             if k in list(kwargs.keys()):
-#                 dic[k] = kwargs[k]
-#             elif type(v) == dict:
-#                 for k0, v0 in v.items():
-#                     if k0 in list(kwargs.keys()):
-#                         dic[k][k0] = kwargs[k0]
-#     return dic
 
-
-def enrichment_dict(source=None, types=[], bouts=[]):
+def enrichment_dict(source=None, types=[], bouts=[], to_keep=[], pre_kws={}):
+    pre = null_dict('preprocessing', **pre_kws)
     aux = null_dict('enrich_aux', source=source)
-    proc = null_dict('processing', types={n: True if n in types else False for n in proc_type_keys})
-    annot = null_dict('annotation', bouts={n: True if n in bouts else False for n in bout_keys})
-    dic = null_dict('enrichment', processing=proc, annotation=annot, enrich_aux=aux)
+    proc = null_dict('processing', types={k: True if k in types else False for k in proc_type_keys})
+    annot = null_dict('annotation', bouts={k: True if k in bouts else False for k in bout_keys})
+    to_drop = null_dict('to_drop', groups={k: True if k not in to_keep else False for k in to_drop_keys})
+    dic = null_dict('enrichment', preprocessing=pre, processing=proc, annotation=annot, enrich_aux=aux)
     return dic
+
+
+def base_enrich(**kwargs):
+    return enrichment_dict(types=['angular', 'spatial', 'dispersion', 'tortuosity'],
+                           bouts=['stride', 'pause', 'turn'],
+                           to_keep=['midline', 'contour'], **kwargs)
+
+
+def arena(x, y=None):
+    if y is None:
+        return null_dict('arena', arena_shape='circular', arena_dims=(x, x))
+    else:
+        return null_dict('arena', arena_shape='rectangular', arena_dims=(x, y))
 
 
 def init_shortcuts():
@@ -761,7 +762,9 @@ def store_controls():
 
 
 def store_RefPars():
+    from lib.aux.dictsNlists import save_dict
     from lib.stor import paths
+    import lib.aux.naming as nam
     d = {
         'length': 'body.initial_length',
         nam.freq(nam.scal(nam.vel(''))): 'brain.crawler_params.initial_freq',
@@ -769,9 +772,8 @@ def store_RefPars():
         nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.step_to_length_mu',
         nam.std(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.step_to_length_std',
         nam.freq('feed'): 'brain.feeder_params.initial_freq',
-        # **{p: p for p in ['initial_x', 'initial_y', 'initial_front_orientation']}
     }
-    lib.aux.dictsNlists.save_dict(d, paths.path('ParRef'), use_pickle=False)
+    save_dict(d, paths.path('ParRef'), use_pickle=False)
 
 
 if __name__ == '__main__':
@@ -779,3 +781,13 @@ if __name__ == '__main__':
     store_RefPars()
 
 
+def odor(i, s, id='Odor'):
+    return null_dict('odor', odor_id=id, odor_intensity=i, odor_spread=s)
+
+
+def oG(c=1, id='Odor'):
+    return odor(i=2.0 * c, s=0.0002 * np.sqrt(c), id=id)
+
+
+def oD(c=1, id='Odor'):
+    return odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)

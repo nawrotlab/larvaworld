@@ -12,7 +12,7 @@ from unflatten import unflatten
 import lib.aux.dictsNlists
 import lib.aux.sim_aux
 import lib.aux.xy_aux
-from lib.conf.init_dtypes import null_dict
+from lib.conf.dtypes import null_dict
 from lib.model.agents._larva_sim import LarvaSim
 from lib.stor import paths
 
@@ -51,6 +51,7 @@ class LarvaWorld:
                  traj_color=None, allow_clicks=True,
                  experiment=None,
                  progress_bar=None,
+                 larva_groups={},
                  # space_in_mm=False
                  ):
         # self.space_in_mm = space_in_mm
@@ -108,6 +109,7 @@ class LarvaWorld:
 
         self.selection_color = np.array([255, 0, 0])
         self.env_pars = env_params
+        self.larva_groups = larva_groups
         # self.larva_pars = larva_pars
 
         self.snapshot_counter = 0
@@ -445,7 +447,7 @@ class LarvaWorld:
     def add_larva(self, pos, orientation=None, id=None, pars=None, group=None, default_color=None, life=None, odor=None):
         # print(pos, group)
         if group is None and pars is None:
-            group, conf = list(self.env_pars['larva_groups'].items())[0]
+            group, conf = list(self.larva_groups.items())[0]
             sample_dict = sample_group(conf['sample'], 1, self.sample_ps)
             mod = get_sample_bout_distros(conf['model'], conf['sample'])
             pars = self._generate_larvae(1, sample_dict, mod)
@@ -500,6 +502,7 @@ class LarvaWorld:
             if not self.is_paused:
                 self.step()
                 bar.update(self.Nticks)
+
             if mode == 'video':
                 if img_mode != 'snapshots' or self.snapshot_tick:
                     self.render(self.Nticks)
@@ -515,6 +518,7 @@ class LarvaWorld:
             self.capture_snapshot()
         if self._screen:
             self._screen.close()
+
         return self.is_running
 
     @ property
@@ -524,10 +528,10 @@ class LarvaWorld:
     def capture_snapshot(self, tick=None, screen=None):
         if tick is None :
             tick=self.Nticks
-        if screen is None :
-            screen=self._screen
         self.render(tick)
         self.toggle('snapshot #')
+        if screen is None :
+            screen=self._screen
         screen.render()
 
     def move_larvae_to_center(self):
@@ -696,11 +700,12 @@ def generate_larvae(N, sample_dict, base_model, RefPars=None):
     return all_pars
 
 def get_sample_bout_distros(model, sample) :
-    if model['brain']['intermitter_params'] and sample != {}:
+    m=copy.deepcopy(model)
+    if m['brain']['intermitter_params'] and sample != {}:
         for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
-            if model['brain']['intermitter_params'][dist]['fit']:
-                model['brain']['intermitter_params'][dist] = sample['bout_distros'][bout]
-    return model
+            if m['brain']['intermitter_params'][dist]['fit']:
+                m['brain']['intermitter_params'][dist] = sample['bout_distros'][bout]
+    return m
 
 
 def sample_group(sample, N, sample_ps):

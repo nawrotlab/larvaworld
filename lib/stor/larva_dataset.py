@@ -8,35 +8,38 @@ import copy
 
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
-from lib.conf.init_dtypes import null_dict
+from lib.conf.dtypes import null_dict
 
 
 class LarvaDataset:
-    def __init__(self, dir, id='unnamed', fr=16, Npoints=3, Ncontour=0,
-                 par_conf=None, save_data_flag=True, load_data=True,env_params={}):
+    def __init__(self, dir, id='unnamed', fr=16, Npoints=None, Ncontour=0,
+                 par_conf=None, load_data=True,env_params={}, larva_groups={}):
         if par_conf is None :
             from lib.conf.conf import loadConf
             par_conf=loadConf('SimParConf', 'Par')
         self.par_config = par_conf
-        self.save_data_flag = save_data_flag
         self.define_paths(dir)
         if os.path.exists(self.dir_dict['conf']):
             self.config = dNl.load_dict(self.dir_dict['conf'], use_pickle=False)
         else:
-            groups=env_params['larva_groups']
-            group_ids=list(groups.keys())
-            samples= dNl.unique_list(groups[k]['sample'] for k in group_ids)
+            group_ids=list(larva_groups.keys())
+            samples= dNl.unique_list(larva_groups[k]['sample'] for k in group_ids)
             if len(group_ids)==1 :
                 group_id=group_ids[0]
-                color=groups[group_id]['default_color']
-                sample=groups[group_id]['sample']
+                color=larva_groups[group_id]['default_color']
+                sample=larva_groups[group_id]['sample']
             else :
                 group_id=None
                 color=None
-                if len(samples)==1 :
-                    sample=samples[0]
-                else :
-                    sample=None
+                sample=samples[0] if len(samples)==1 else None
+
+            if Npoints is None :
+                try:
+                    # FIXME This only takes the first configuration into account
+                    Npoints = list(larva_groups.values())[0]['model']['body']['Nsegs'] + 1
+                except:
+                    Npoints = 3
+
             self.config = {'id': id,
                            'group_id': group_id,
                            'group_ids': group_ids,
@@ -51,6 +54,7 @@ class LarvaDataset:
                            **par_conf,
                            # 'arena_pars': arena_pars,
                            'env_params': env_params,
+                           'larva_groups': larva_groups,
                            # **life_params
                            }
 
@@ -212,17 +216,16 @@ class LarvaDataset:
             return 0
 
     def save(self, step=True, end=True, food=False, add_reference=False):
-        if self.save_data_flag == True:
-            store = pd.HDFStore(self.dir_dict['data_h5'])
-            if step:
-                store['step'] = self.step_data
-            if end:
-                store['end'] = self.endpoint_data
-            if food:
-                store['food'] = self.food_endpoint_data
-            self.save_config(add_reference=add_reference)
-            store.close()
-            print(f'Dataset {self.id} stored.')
+        store = pd.HDFStore(self.dir_dict['data_h5'])
+        if step:
+            store['step'] = self.step_data
+        if end:
+            store['end'] = self.endpoint_data
+        if food:
+            store['food'] = self.food_endpoint_data
+        self.save_config(add_reference=add_reference)
+        store.close()
+        print(f'Dataset {self.id} stored.')
 
     def save_dicts(self, env):
         for l in env.get_flies():
@@ -468,7 +471,7 @@ class LarvaDataset:
             self.save_agents(ids=[id])
             s0, e0 = self.load_agent(id)
         if close_view :
-            from lib.conf.init_dtypes import null_dict
+            from lib.conf.dtypes import null_dict
             env_params = {'arena': null_dict('arena', arena_dims=(0.01, 0.01))}
         else :
             env_params=self.env_params
@@ -479,7 +482,7 @@ class LarvaDataset:
             save_to = self.vis_dir
         replay_id=f'{id}_fixed_at_{fix_point}'
         if vis_kwargs is None:
-            from lib.conf.init_dtypes import null_dict
+            from lib.conf.dtypes import null_dict
             vis_kwargs = null_dict('visualization', mode='video', video_speed=60, media_name=replay_id)
         base_kws = {
             'vis_kwargs': vis_kwargs,
@@ -660,7 +663,7 @@ class LarvaDataset:
         return self
 
     def drop_immobile_larvae(self, vel_threshold=0.1, is_last=True):
-        # self.compute_spatial_metrics(mode='minimal')
+        # self.comp_spatial(mode='minimal')
         D = self.step_data[nam.scal('velocity')]
         immobile_ids = []
         for id in self.agent_ids:
@@ -709,12 +712,10 @@ class LarvaDataset:
             s,e=self.step_data, self.endpoint_data
             ds = []
             for gID, f in zip(gIDs, fs):
-                gConf=c['env_params']['larva_groups'][gID]
+                gConf=c['larva_groups'][gID]
                 valid_ids = [id for id in self.agent_ids if str.startswith(id, gID)]
                 copy_tree(self.dir, f)
-                env=copy.deepcopy(c['env_params'])
-                env['larva_groups']={gID : gConf}
-                d = LarvaDataset(f, id=gID, env_params=env, load_data=False)
+                d = LarvaDataset(f, id=gID, env_params=c['env_params'],larva_groups = {gID : gConf}, load_data=False)
                 d.set_data(step=s.loc[(slice(None), valid_ids),:], end=e.loc[valid_ids])
                 d.config['parent_plot_dir']=self.plot_dir
                 if is_last :

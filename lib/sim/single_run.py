@@ -5,57 +5,126 @@ import pickle
 import os
 import numpy as np
 from lib.envs._larvaworld_sim import LarvaWorldSim
-from lib.stor import paths
 
+from lib.stor import paths
 from lib.stor.larva_dataset import LarvaDataset
 
+class SingleRun :
+    def __init__(self,
+                 sim_params,
+                 env_params,
+                 larva_groups,
+                 life_params,
+                 enrichment,
+                 collections,
+                 save_to=None,
+                 seed=None,
+                 **kwargs):
+        np.random.seed(seed)
+        id = sim_params['sim_ID']
+        dt = sim_params['timestep']
+        # Nsec = sim_params['duration'] * 60
+        path = sim_params['path']
+        # Box2D = sim_params['Box2D']
+        self.store_data = sim_params['store_data']
+        # analysis = sim_params['analysis']
+        self.enrichment=enrichment
+        if save_to is None:
+            save_to = paths.path("SIM")
+        if path is not None:
+            save_to = os.path.join(save_to, path)
+        dir_path = os.path.join(save_to, id)
 
+        # Store the parameters so that we can save them in the results folder
+        # sim_date = datetime.datetime.now()
+        self.param_dict = locals()
+        self.start = time.time()
+        # Nsteps = int(sim_params['duration'] * 60 / dt)
 
+        self.d = LarvaDataset(dir=dir_path, id=id, fr=1 / dt, Ncontour=0,
+                         env_params=env_params, larva_groups=larva_groups, load_data=False)
+
+        output = set_output(dataset=self.d, collections=collections)
+        self.env = LarvaWorldSim(id=id, dt=dt, Box2D=sim_params['Box2D'],
+                            env_params=env_params,
+                            larva_groups=larva_groups,
+                            output=output,
+                            life_params=life_params,
+                            Nsteps=int(sim_params['duration'] * 60 / dt),
+                            save_to=self.d.vis_dir, **kwargs)
+
+    def run(self):
+        print()
+        print(f'---- Simulation {id} ----')
+        # Run the simulation
+        completed = self.env.run()
+        print()
+        if not completed:
+            self.d.delete()
+            print('    Simulation aborted!')
+            res = None
+            # ds, fig_dict, results = None, None, None
+        else:
+            end = time.time()
+            dur = end - self.start
+            self.param_dict['date'] = datetime.datetime.now()
+            self.param_dict['duration'] = np.round(dur, 2)
+            print(f'    Simulation completed in {np.round(dur).astype(int)} seconds!')
+            res = store_data(self.env, self.d, self.store_data, self.enrichment, self.param_dict)
+            # if analysis and ds is not None :
+            #     from lib.sim.analysis import sim_analysis
+            #     fig_dict, results = sim_analysis(ds, env.experiment)
+            # else :
+            #     fig_dict, results = None, None
+        self.env.close()
+        return res
+
+    def terminate(self):
+        self.env.close()
+        self.d.delete()
 
 def _run_sim(
         sim_params,
         env_params,
+        larva_groups,
         life_params,
         enrichment,
         collections,
         save_to=None,
-        save_data_flag=True,
         seed=None,
         **kwargs):
     np.random.seed(seed)
     id = sim_params['sim_ID']
     dt = sim_params['timestep']
-    Nsec = sim_params['duration'] * 60
+    # Nsec = sim_params['duration'] * 60
     path = sim_params['path']
-    Box2D = sim_params['Box2D']
+    # Box2D = sim_params['Box2D']
+    # save_data_flag = sim_params['store_data']
+    # analysis = sim_params['analysis']
 
     if save_to is None:
         save_to = paths.path("SIM")
-    if path is not None:
+    if path is not None :
         save_to = os.path.join(save_to, path)
     dir_path = os.path.join(save_to, id)
 
     # Store the parameters so that we can save them in the results folder
-    sim_date = datetime.datetime.now()
+    # sim_date = datetime.datetime.now()
     param_dict = locals()
     start = time.time()
-    Nsteps = int(Nsec / dt)
+    # Nsteps = int(sim_params['duration'] * 60 / dt)
 
-    try :
-        # FIXME This only takes the first configuration into account
-        Npoints = list(env_params['larva_groups'].values())[0]['model']['body']['Nsegs'] + 1
-    except :
-        Npoints=3
-    d = LarvaDataset(dir=dir_path, id=id, fr=1 / dt,
-                     Npoints=Npoints, Ncontour=0, env_params=env_params,
-                     save_data_flag=save_data_flag, load_data=False,
-                     )
+
+    d = LarvaDataset(dir=dir_path, id=id, fr=1 / dt,Ncontour=0,
+                     env_params=env_params,larva_groups=larva_groups,load_data=False)
 
     output = set_output(dataset=d, collections=collections)
-    env = LarvaWorldSim(id=id, dt=dt, Box2D=Box2D,
-                        env_params=env_params, output=output,
+    env = LarvaWorldSim(id=id, dt=dt, Box2D=sim_params['Box2D'],
+                        env_params=env_params,
+                        larva_groups=larva_groups,
+                        output=output,
                         life_params=life_params,
-                        Nsteps=Nsteps,
+                        Nsteps=int(sim_params['duration'] * 60 / dt),
                         save_to=d.vis_dir, **kwargs)
     print()
     print(f'---- Simulation {id} ----')
@@ -66,12 +135,19 @@ def _run_sim(
         d.delete()
         print('    Simulation aborted!')
         res = None
+        # ds, fig_dict, results = None, None, None
     else:
         end = time.time()
         dur = end - start
+        param_dict['date'] = datetime.datetime.now()
         param_dict['duration'] = np.round(dur, 2)
         print(f'    Simulation completed in {np.round(dur).astype(int)} seconds!')
-        res = store_data(env, d, save_data_flag, enrichment, param_dict)
+        res = store_data(env, d, sim_params['store_data'], enrichment, param_dict)
+        # if analysis and ds is not None :
+        #     from lib.sim.analysis import sim_analysis
+        #     fig_dict, results = sim_analysis(ds, env.experiment)
+        # else :
+        #     fig_dict, results = None, None
     env.close()
     return res
 
@@ -93,18 +169,13 @@ def store_data(env, d, save_data_flag, enrichment, param_dict, split_groups=True
         food = env.food_end_col.get_agent_vars_dataframe().droplevel('Step')
     else:
         food = None
-
-
-
     d.set_data(step=step,end=end,food=food)
-
     if split_groups:
         ds=d.split_dataset()
     else :
         ds=[d]
     for dd in ds :
         dd.enrich(**enrichment, is_last=False)
-        # Save simulation data and parameters
         if save_data_flag:
             from lib.aux.dictsNlists import dict_to_file
             dd.save()
@@ -166,7 +237,7 @@ def load_reference_dataset(dataset_id='reference', load=False):
 
 def run_essay(id,path, exp_types,durations, vis_kwargs, **kwargs):
     from lib.conf.conf import expandConf
-    from lib.conf.init_dtypes import null_dict
+    from lib.conf.dtypes import null_dict
     ds = []
     for i, (exp, dur) in enumerate(zip(exp_types, durations)):
         sim=null_dict('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
@@ -174,88 +245,10 @@ def run_essay(id,path, exp_types,durations, vis_kwargs, **kwargs):
         conf['sim_params']=sim
         conf['experiment']=exp
         conf.update(**kwargs)
-        d = run_sim(**conf, vis_kwargs=vis_kwargs)
+        d = SingleRun(**conf, vis_kwargs=vis_kwargs).run()
         ds.append(d)
     return ds
 
-# def mimic_dataset(dataset=None, dir=None, idx=0, model='imitation', exp='dish', group_id='Mockers', default_color='black', **kwargs):
-#     d=dataset
-#     if d is None :
-#         d=LarvaDataset(dir)
-#
-#
-#     def imitate_group(d, model) :
-#         s, e, c = d.step_data, d.endpoint_data, d.config
-#         xy=s[nam.xy(c['point'])].dropna().groupby('AgentID').first()
-#         os=np.deg2rad(s['front_orientation'].dropna().groupby('AgentID').first())
-#         larva_conf=expandConf(model, 'Model')
-#
-#         try:
-#             dic=loadConf(d.id, 'Ref')
-#         except:
-#             create_reference_dataset(d.config, dataset_id=d.id, Nstd=3, overwrite=False)
-#             dic = loadConf(d.id, 'Ref')
-#
-#         if larva_conf['brain']['intermitter_params']:
-#             for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
-#                 larva_conf['brain']['intermitter_params'][dist] = dic[bout]['best']
-#
-#
-#         group_pars=[]
-#         # print(os)
-#         for id in d.agent_ids :
-#             pars=copy.deepcopy(larva_conf)
-#             pars['body']['initial_length']=e['length'].loc[id]
-#             pars['body']['length_std']=0.0
-#             pars['body']['Nsegs']=2
-#             pars['body']['seg_ratio']=None
-#             pars['brain']['crawler_params']['initial_freq']=e[nam.scal(nam.freq('velocity'))].loc[id]
-#             pars['brain']['crawler_params']['step_to_length_mu']=e[nam.scal(nam.std(nam.dst('stride')))].loc[id]
-#             pars['brain']['crawler_params']['step_to_length_std']=e[nam.scal(nam.mean(nam.dst('stride')))].loc[id]
-#             # print(pars['brain']['crawler_params'])
-#
-#
-#
-#             kws={
-#                 # 'position' : (0.0,0.0),
-#                 'position' : tuple(xy.loc[id].values),
-#                 'orientation' : os.loc[id],
-#                 'id' : id,
-#                 'group' : group_id,
-#                 'default_color' : default_color,
-#                 'pars' : pars}
-#             # print(kws['position'])
-#             # print(kws['orientation'])
-#             group_pars.append(kws)
-#         return {group_id : group_pars}
-#
-#     def imitate_exp(d, model, exp, **kwargs) :
-#         s, e, c = d.step_data, d.endpoint_data, d.config
-#
-#         sim_params = {
-#             'timestep': c['dt'],
-#             'duration': e['cum_dur'].mean() / 60,
-#             'path': 'single_runs/imitation',
-#             'sim_ID': f'{d.id}_imitation_{idx}',
-#             'sample': d.id,
-#             'Box2D': False
-#         }
-#         exp_conf = expandConf(exp, 'Exp')
-#         exp_conf['env_params']['larva_groups']=imitate_group(d, model)
-#         exp_conf['env_params']['arena']=c['arena_pars']
-#         # exp_conf['env_params']['arena']['arena_dims']=(100.0,100.0)
-#         exp_conf['sim_params']=sim_params
-#
-#         return exp_conf
-#
-#     exp_conf=imitate_exp(d, model, exp)
-#     exp_conf['experiment'] = exp
-#     exp_conf['save_data_flag'] = True
-#     exp_conf.update(kwargs)
-#     dd= run_sim(**exp_conf)
-#     from lib.sim.analysis import sim_analysis
-#     fig_dict, results = sim_analysis(dd, exp)
-#     return fig_dict, results
 
 
 combo_collection_dict = {

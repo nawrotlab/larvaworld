@@ -6,7 +6,7 @@ import lib.aux.dictsNlists
 from lib.anal.sampling import BoutGenerator
 from lib.aux import naming as nam
 from lib.conf.conf import loadConf
-from lib.conf.init_dtypes import null_dict
+from lib.conf.dtypes import null_dict
 from lib.model.modules.basic import Effector
 
 

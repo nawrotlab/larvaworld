@@ -1,36 +1,88 @@
 import sys
+from argparse import ArgumentParser
+
 import numpy as np
 
-
-
-
-sys.path.insert(0, '../../..')
-import lib.conf.env_conf as env
 from lib.conf.conf import loadConfDict
-from lib.conf.init_dtypes import null_dict
-import lib.aux.dictsNlists
+from lib.conf.dtypes import null_dict, arena, par_dict
 
-def add_vis_kwargs(parser):
-    parser.add_argument('-hide', '--show_display', action="store_false", help='Hide display')
-    parser.add_argument('-vid', '--video_speed', type=float, nargs='?', const=1.0,
-                        help='The fast-forward speed of the video')
-    parser.add_argument('-img', '--image_mode', nargs='?', const='final',
-                        choices=['final', 'overlap', 'snapshots'], help='Select image mode')
-    parser.add_argument('-media', '--media_name', type=str, help='Filename for the saved video/image')
-    parser.add_argument('-rnd', '--random_colors', action="store_true", help='Color larvae with random colors')
-    parser.add_argument('-beh', '--color_behavior', action="store_true", help='Color behavioral epochs')
-    parser.add_argument('-trj', '--trajectories', type=float, nargs='?', const=0.0,
-                        help='Show trajectories of specific time duration')
-    parser.add_argument('-blk', '--black_background', action="store_true", help='Black background')
-    parser.add_argument('-head', '--draw_head', action="store_true", help='Color the head and tail')
-    parser.add_argument('-con', '--draw_contour', action="store_false", help='Hide the contour')
-    parser.add_argument('-mid', '--draw_midline', action="store_false", help='Hide the midline')
-    parser.add_argument('-cen', '--draw_centroid', action="store_true", help='Show the centroid')
-    parser.add_argument('-vis_clock', '--visible_clock', action="store_false", help='Visible clock')
-    parser.add_argument('-vis_state', '--visible_state', action="store_false", help='Visible state')
-    parser.add_argument('-vis_scale', '--visible_scale', action="store_false", help='Visible spatial scale')
-    parser.add_argument('-vis_ids', '--visible_ids', action="store_true", help='Visible ids')
+
+class ParsArg :
+    def __init__(self, short, key, **kwargs):
+        self.key=key
+        self.args=[f'-{short}', f'--{key}']
+        self.kwargs=kwargs
+
+    def add(self,p):
+        p.add_argument(*self.args, **self.kwargs)
+        return p
+
+    def get(self, input):
+        return getattr(input, self.key)
+
+class Parser :
+    def __init__(self, name):
+        self.name=name
+        dic=par_dict(name, argparser=True)
+        try :
+            self.parsargs={k : ParsArg(**v) for k,v in dic.items()}
+        except :
+            self.parsargs ={}
+            for k, v in dic.items() :
+                for kk, vv in v['content'].items() :
+                    self.parsargs[kk]=ParsArg(**vv)
+
+    def add(self, parser=None):
+        if parser is None :
+            parser = ArgumentParser()
+        for k,v in self.parsargs.items() :
+            parser=v.add(parser)
+        return parser
+
+    def get(self, input):
+        dic= {k : v.get(input) for k,v in self.parsargs.items()}
+        return null_dict(self.name, **dic)
+
+
+class MultiParser :
+    def __init__(self, names):
+        self.parsers={n:Parser(n) for n in names}
+
+    def add(self, parser=None):
+        if parser is None:
+            parser = ArgumentParser()
+        for k,v in self.parsers.items() :
+            parser=v.add(parser)
+        return parser
+
+    def get(self, input):
+        return {k : v.get(input) for k,v in self.parsers.items()}
+
+def add_exp_kwargs(parser) :
+    parser.add_argument('experiment', choices=list(loadConfDict('Exp').keys()), help='The experiment mode')
+    parser.add_argument('-a', '--analysis', action="store_true", help='Whether to run analysis')
     return parser
+
+def add_vis_kwargs(p):
+    p.add_argument('-hide', '--show_display', action="store_false", help='Hide display')
+    p.add_argument('-vid', '--video_speed', type=float, nargs='?', const=1.0, help='The fast-forward speed of the video')
+    p.add_argument('-img', '--image_mode', nargs='?', const='final',
+                   choices=['final', 'overlap', 'snapshots'], help='Select image mode')
+    p.add_argument('-media', '--media_name', type=str, help='Filename for the saved video/image')
+    p.add_argument('-rnd', '--random_colors', action="store_true", help='Color larvae with random colors')
+    p.add_argument('-beh', '--color_behavior', action="store_true", help='Color behavioral epochs')
+    p.add_argument('-trj', '--trajectories', type=float, nargs='?', const=0.0,
+                   help='Show trajectories of specific time duration')
+    p.add_argument('-blk', '--black_background', action="store_true", help='Black background')
+    p.add_argument('-head', '--draw_head', action="store_true", help='Color the head and tail')
+    p.add_argument('-con', '--draw_contour', action="store_false", help='Hide the contour')
+    p.add_argument('-mid', '--draw_midline', action="store_false", help='Hide the midline')
+    p.add_argument('-cen', '--draw_centroid', action="store_true", help='Show the centroid')
+    p.add_argument('-vis_clock', '--visible_clock', action="store_false", help='Visible clock')
+    p.add_argument('-vis_state', '--visible_state', action="store_false", help='Visible state')
+    p.add_argument('-vis_scale', '--visible_scale', action="store_false", help='Visible spatial scale')
+    p.add_argument('-vis_ids', '--visible_ids', action="store_true", help='Visible ids')
+    return p
 
 
 def get_vis_kwargs(args):
@@ -64,21 +116,21 @@ def get_vis_kwargs(args):
     return vis_kwargs
 
 
-def add_replay_kwargs(parser):
-    parser.add_argument('-trans', '--transposition', choices=['origin', 'arena', 'center'],
-                        help='The transposition mode for visualization')
-    parser.add_argument('-dyn', '--dynamic_color', choices=['lin', 'ang'],
-                        help='Color the trajectories based on velocity')
-    parser.add_argument('-ids', '--agent_ids', type=int, nargs='+', help='The indexes of larvae to visualize')
-    parser.add_argument('-tkr', '--tick_range', type=int, nargs='+', help='The time range to visualize in ticks')
-    parser.add_argument('-fix', '--fix_points', type=int, nargs='+',
-                        help='Fixate a midline point to the center of the screen')
-    parser.add_argument('-Nsegs', '--draw_Nsegs', type=int, nargs='?', const=2,
-                        help='Simplify larva body to N segments')
+def add_replay_kwargs(p):
+    p.add_argument('-trans', '--transposition', choices=['origin', 'arena', 'center'],
+                   help='The transposition mode for visualization')
+    p.add_argument('-dyn', '--dynamic_color', choices=['lin', 'ang'],
+                   help='Color the trajectories based on velocity')
+    p.add_argument('-ids', '--agent_ids', type=int, nargs='+', help='The indexes of larvae to visualize')
+    p.add_argument('-tkr', '--tick_range', type=int, nargs='+', help='The time range to visualize in ticks')
+    p.add_argument('-fix', '--fix_points', type=int, nargs='+',
+                   help='Fixate a midline point to the center of the screen')
+    p.add_argument('-Nsegs', '--draw_Nsegs', type=int, nargs='?', const=2,
+                   help='Simplify larva body to N segments')
 
-    parser.add_argument('-dim', '--arena_dims', type=float, nargs='+', help='The arena dimensions in m')
+    p.add_argument('-dim', '--arena_dims', type=float, nargs='+', help='The arena dimensions in m')
 
-    return parser
+    return p
 
 
 def get_replay_kwargs(args):
@@ -108,9 +160,9 @@ def get_replay_kwargs(args):
     dims = args.arena_dims
     if dims is not None:
         if len(dims) == 2:
-            arena_pars = env.arena(dims[0], dims[1])
+            arena_pars = arena(dims[0], dims[1])
         elif len(dims) == 1:
-            arena_pars = env.dish(dims[0])
+            arena_pars = arena(dims[0])
         else:
             raise ValueError('Inappropriate arena dimensions')
     else:
@@ -130,14 +182,13 @@ def get_replay_kwargs(args):
     return replay_kwargs
 
 
-def add_data_kwargs(parser):
-    # parser.add_argument('dataset_type', mode=str, help='The dataset mode name')
-    parser.add_argument('-fld', '--folders', nargs='+', type=str,
-                        help='Folders under the DataGroup parent dir where to search for datasets')
-    parser.add_argument('-suf', '--suffixes', nargs='+', type=str, help='Suffixes of the dataset names')
-    parser.add_argument('-nam', '--names', nargs='+', default=['enriched'], type=str, help='Names of the datasets')
-    parser.add_argument('-load', '--load_data', action="store_false", help='Not load the data from the datasets')
-    return parser
+def add_data_kwargs(p):
+    p.add_argument('-fld', '--folders', nargs='+', type=str,
+                   help='Folders under the DataGroup parent dir where to search for datasets')
+    p.add_argument('-suf', '--suffixes', nargs='+', type=str, help='Suffixes of the dataset names')
+    p.add_argument('-nam', '--names', nargs='+', default=['enriched'], type=str, help='Names of the datasets')
+    p.add_argument('-load', '--load_data', action="store_false", help='Not load the data from the datasets')
+    return p
 
 
 def get_data_kwargs(args):
@@ -152,16 +203,16 @@ def get_data_kwargs(args):
     return data_kwargs
 
 
-def add_build_kwargs(parser):
-    parser.add_argument('-d_ids', '--dataset_ids', nargs='+', type=str, help='Ids of newly built datasets')
-    parser.add_argument('-raw', '--raw_folders', nargs='+', type=str,
-                        help='Folders where to search for raw data when building a dataset')
-    parser.add_argument('-t', '--min_duration_in_sec', type=float, nargs='?', default=0.0,
-                        help='During dataset building, the minimum duration in sec of included larva tracks.')
-    parser.add_argument('-all', '--all_folders', action="store_true",
-                        help='Create a single merged dataset from all raw folders')
-    parser.add_argument('-each', '--each_folder', action="store_true", help='Create a dataset from each raw folder')
-    return parser
+def add_build_kwargs(p):
+    p.add_argument('-d_ids', '--dataset_ids', nargs='+', type=str, help='Ids of newly built datasets')
+    p.add_argument('-raw', '--raw_folders', nargs='+', type=str,
+                   help='Folders where to search for raw data when building a dataset')
+    p.add_argument('-t', '--min_duration_in_sec', type=float, nargs='?', default=0.0,
+                   help='During dataset building, the minimum duration in sec of included larva tracks.')
+    p.add_argument('-all', '--all_folders', action="store_true",
+                   help='Create a single merged dataset from all raw folders')
+    p.add_argument('-each', '--each_folder', action="store_true", help='Create a dataset from each raw folder')
+    return p
 
 
 def get_build_kwargs(args):
@@ -182,16 +233,16 @@ def get_build_kwargs(args):
     return build_kwargs
 
 
-def add_sim_kwargs(parser):
-    parser.add_argument('-id', '--sim_ID', type=str, help='The id of the simulation')
-    parser.add_argument('-path', '--path', type=str, help='The path to save the simulation dataset')
-    parser.add_argument('-t', '--duration', type=float, nargs='?', default=None,
-                        help='The duration of the simulation in min')
-    parser.add_argument('-dt', '--timestep', type=float, nargs='?', default=0.1, help='The timestep of the simulation in sec')
-    parser.add_argument('-Box2D', '--Box2D', action="store_true", help='Use the Box2D physics engine')
-    parser.add_argument('-sample', '--sample', type=str, nargs='?', default='reference',choices=list(loadConfDict('Ref').keys()),
-                        help='The dataset to sample the parameters from')
-    return parser
+def add_sim_kwargs(p):
+    p.add_argument('-id', '--sim_ID', type=str, help='The id of the simulation')
+    p.add_argument('-path', '--path', type=str, help='The path to save the simulation dataset')
+    p.add_argument('-t', '--duration', type=float, nargs='?', default=None,
+                   help='The duration of the simulation in min')
+    p.add_argument('-dt', '--timestep', type=float, nargs='?', default=0.1, help='The timestep of the simulation in sec')
+    p.add_argument('-Box2D', '--Box2D', action="store_true", help='Use the Box2D physics engine')
+    p.add_argument('-sample', '--sample', type=str, nargs='?', default='reference', choices=list(loadConfDict('Ref').keys()),
+                   help='The dataset to sample the parameters from')
+    return p
 
 
 def get_sim_kwargs(args):
@@ -205,14 +256,14 @@ def get_sim_kwargs(args):
     return sim_kwargs
 
 
-def add_life_kwargs(parser):
-    parser.add_argument('-age', '--hours_as_larva', type=float, nargs='?', default=0.0,
-                        help='The initial larva age since hatch in hours')
-    parser.add_argument('-deb_f', '--substrate_quality', type=float, nargs='?', default=1.0,
-                        help='The base deb functional response where 0 denotes no food and 1 at libitum feeding')
-    parser.add_argument('-starv_h', '--epochs', type=float, nargs='+',
-                        help='The starvation time intervals in hours')
-    return parser
+def add_life_kwargs(p):
+    p.add_argument('-age', '--hours_as_larva', type=float, nargs='?', default=0.0,
+                   help='The initial larva age since hatch in hours')
+    p.add_argument('-deb_f', '--substrate_quality', type=float, nargs='?', default=1.0,
+                   help='The base deb functional response where 0 denotes no food and 1 at libitum feeding')
+    p.add_argument('-starv_h', '--epochs', type=float, nargs='+',
+                   help='The starvation time intervals in hours')
+    return p
 
 
 def get_life_kwargs(args):
@@ -222,7 +273,8 @@ def get_life_kwargs(args):
         if len(args.epochs) % 2 != 0:
             raise ValueError('Starvation intervals must be provided in pairs of start-stop time')
         else:
-            starvation_hours = lib.aux.dictsNlists.group_list_by_n(args.epochs, 2)
+            from lib.aux.dictsNlists import group_list_by_n
+            starvation_hours = group_list_by_n(args.epochs, 2)
 
     # if args.hours_as_larva is None :
     #     hours_as_larva=[0.0]
@@ -236,9 +288,9 @@ def get_life_kwargs(args):
     return life_kwargs
 
 
-def add_batch_kwargs(parser):
-    parser.add_argument('-id_b', '--batch_id', type=str, help='The id of the batch run')
-    return parser
+def add_batch_kwargs(p):
+    p.add_argument('-id_b', '--batch_id', type=str, help='The id of the batch run')
+    return p
 
 
 def get_batch_kwargs(args):
@@ -248,16 +300,16 @@ def get_batch_kwargs(args):
     return kwargs
 
 
-def add_optimization_kwargs(parser):
-    parser.add_argument('-fit_par', '--fit_par', type=str, help='The fit parameter of the batch run')
-    parser.add_argument('-minimize', '--minimize', type=bool, help='Whether to try to minimize the fit parameter')
-    parser.add_argument('-threshold', '--threshold', type=float,
-                        help='The fit parameter threshold for terminating the batch-run')
-    parser.add_argument('-maxN', '--max_Nsims', type=int, nargs='?', default=12,
-                        help='The maximum number of simulations to run')
-    parser.add_argument('-Nbst', '--Nbest', type=int, nargs='?', default=4,
-                        help='The number of best configurations to expand')
-    return parser
+def add_optimization_kwargs(p):
+    p.add_argument('-fit_par', '--fit_par', type=str, help='The fit parameter of the batch run')
+    p.add_argument('-minimize', '--minimize', type=bool, help='Whether to try to minimize the fit parameter')
+    p.add_argument('-threshold', '--threshold', type=float,
+                   help='The fit parameter threshold for terminating the batch-run')
+    p.add_argument('-maxN', '--max_Nsims', type=int, nargs='?', default=12,
+                   help='The maximum number of simulations to run')
+    p.add_argument('-Nbst', '--Nbest', type=int, nargs='?', default=4,
+                   help='The number of best configurations to expand')
+    return p
 
 
 def get_optimization_kwargs(args):
@@ -270,11 +322,11 @@ def get_optimization_kwargs(args):
     return kwargs
 
 
-def add_space_kwargs(parser):
-    parser.add_argument('-par', '--pars', type=str, nargs='+', help='The parameters for space search')
-    parser.add_argument('-rng', '--ranges', type=float, nargs='+', help='The range of the parameters for space search')
-    parser.add_argument('-Ngrd', '--Ngrid', nargs='+', type=int, help='The number of steps for space search')
-    return parser
+def add_space_kwargs(p):
+    p.add_argument('-par', '--pars', type=str, nargs='+', help='The parameters for space search')
+    p.add_argument('-rng', '--ranges', type=float, nargs='+', help='The range of the parameters for space search')
+    p.add_argument('-Ngrd', '--Ngrid', nargs='+', type=int, help='The number of steps for space search')
+    return p
 
 
 def get_space_kwargs(args):
@@ -287,10 +339,10 @@ def get_space_kwargs(args):
     return space_kwargs
 
 
-def add_place_kwargs(parser):
-    parser.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae')
-    parser.add_argument('-M', '--larva_model', choices=list(loadConfDict('Model').keys()), help='The larva model to use')
-    return parser
+def add_place_kwargs(p):
+    p.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae')
+    p.add_argument('-M', '--larva_model', choices=list(loadConfDict('Model').keys()), help='The larva model to use')
+    return p
 
 
 def get_place_kwargs(args):
@@ -299,3 +351,26 @@ def get_place_kwargs(args):
         'larva_model': args.larva_model,
     }
     return place_kwargs
+
+def init_parser(description='', parsers=[]) :
+    dic={
+        'exp' : add_exp_kwargs,
+        'vis' : add_vis_kwargs,
+        'replay' : add_replay_kwargs,
+        'place' : add_place_kwargs,
+        'space' : add_space_kwargs,
+        'opt' : add_optimization_kwargs,
+        'batch' : add_batch_kwargs,
+        'life' : add_life_kwargs,
+        'sim' : add_sim_kwargs,
+        'build' : add_build_kwargs,
+        'data' : add_data_kwargs,
+    }
+    parser = ArgumentParser(description=description)
+    for n in parsers :
+        parser=dic[n](parser)
+    return parser
+
+# if __name__ == '__main__':
+#     kk=Parser('sim_params')
+#     print(kk)

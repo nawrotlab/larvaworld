@@ -32,8 +32,7 @@ class Exec:
             lib.aux.dictsNlists.save_dict(self.conf, f0)
             self.process = subprocess.Popen(['python', f1, self.mode, f0], **kwargs)
         else:
-            self.process = None
-            res = exec_run(self.mode, self.conf, self.w_progressbar)
+            res = self.exec_run()
             self.results = self.retrieve(res)
             self.done = True
 
@@ -58,26 +57,28 @@ class Exec:
             if res is None and self.run_externally:
                 sim_id = self.conf['sim_params']['sim_ID']
                 dir = f"{paths.path('SIM')}/{self.conf['sim_params']['path']}/{sim_id}"
-                res = LarvaDataset(dir)
+                res = [LarvaDataset(dir)]
             if res is not None:
                 fig_dict, results = sim_analysis(res, self.type)
-                entry = {res.id: {'dataset': res, 'figs': fig_dict}}
+                entry = {res[0].id: {'dataset': res[0], 'figs': fig_dict}}
             else:
                 entry, fig_dict = None, None
             return entry, fig_dict
 
 
 
-def exec_run(mode, conf, w_progressbar=None):
-    from lib.sim.single_run import run_sim
-    from lib.sim.batch.batch import batch_run
-    from lib.sim.batch.functions import prepare_batch
-    if mode == 'sim':
-        res = run_sim(**conf, progress_bar=w_progressbar)
-    elif mode == 'batch':
-        batch_kwargs = prepare_batch(conf)
-        res = batch_run(**batch_kwargs)
-    return res
+    def exec_run(self):
+        from lib.sim.single_run import run_sim, SingleRun
+        from lib.sim.batch.batch import batch_run
+        from lib.sim.batch.functions import prepare_batch
+        if self.mode == 'sim':
+            self.process = SingleRun(**self.conf, progress_bar=self.w_progressbar)
+            res = self.process.run()
+        elif self.mode == 'batch':
+            self.process = None
+            batch_kwargs = prepare_batch(self.conf)
+            res = batch_run(**batch_kwargs)
+        return res
 
 
 if __name__ == "__main__":
@@ -92,7 +93,8 @@ if __name__ == "__main__":
 
     conf = lib.aux.dictsNlists.load_dict(args.conf_file)
 
-    exec_run(args.mode, conf)
+    k=Exec(args.mode, conf)
+    k.exec_run()
     # if args.sim_type=='sim' :
     #     run_sim(**conf)
     # elif args.sim_type=='batch' :

@@ -9,7 +9,7 @@ import PySimpleGUI as sg
 
 # sys.path.insert(0, '..')
 from lib.aux.combining import render_mpl_table
-from lib.conf.init_dtypes import null_dict
+from lib.conf.dtypes import null_dict
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, GraphList, CollapsibleTable, SelectionList, DataList
 from lib.gui.aux.functions import t_kws, gui_col, gui_cols
 from lib.gui.aux.buttons import named_bool_button

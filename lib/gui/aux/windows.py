@@ -7,9 +7,11 @@ import PySimpleGUI as sg
 import lib.aux.dictsNlists
 from lib.aux import colsNstr as fun
 from lib.conf.conf import loadConfDict, saveConf, loadConf
-from lib.conf.init_dtypes import null_dict
+from lib.conf.dtypes import null_dict
 from lib.gui.aux.functions import retrieve_value, t_kws, b6_kws, w_kws, col_size
 from lib.gui.aux.buttons import named_bool_button
+
+
 from lib.stor import paths
 
 
@@ -340,3 +342,29 @@ def change_dataset_id(dic, old_ids):
             d.set_id(new_id)
             dic[new_id] = dic.pop(old_id)
     return dic
+
+def larvagroup_window(**kwargs) :
+    from lib.gui.aux.elements import CollapsibleDict
+    from lib.gui.tabs.gui import check_togglesNcollapsibles
+    k='LarvaGroup'
+    # dic = null_dict(k)
+    c0=CollapsibleDict(k, use_header=False, as_entry='Group ID', subdict_state=True, col_idx=[[0,1,2,3,4,7],[5],[6]])
+    c=c0.get_subdicts()
+    l=c0.get_layout(as_col=False)+[[sg.Ok(), sg.Cancel()]]
+    kws=w_kws
+    kws['default_element_size']=(16,1)
+    w = sg.Window(k, l,size=col_size(0.8,0.5), **kws, **kwargs)
+    while True:
+        e, v = w.read()
+        if e == 'Ok':
+            dic = c0.get_dict(v, w)
+            break
+        elif e in ['Cancel', None]:
+            dic = {}
+            break
+        check_togglesNcollapsibles(w, e, v, c)
+    w.close()
+    return dic
+
+if __name__ == "__main__":
+    dic=larvagroup_window()

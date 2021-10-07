@@ -4,7 +4,7 @@ import shutil
 import os
 import numpy as np
 
-
+from lib.conf.dtypes import arena
 from lib.stor import paths as paths
 
 
@@ -289,11 +289,11 @@ def setDataGroup(id=None):
     shape = get_input("Enter arena shape", itype=str, accepted=['circular', 'rectangular'], default='circular')
     if shape == 'circular':
         r = get_input("Enter arena radius in m", itype=float, range=[0, +np.inf], default=0.15)
-        arena_pars = env.dish(r)
+        arena_pars = arena(r)
     elif shape == 'rectangular':
         x = get_input("Enter arena x dimension in m", itype=float, range=[0, +np.inf], default=0.15)
         y = get_input("Enter arena y dimension in m", itype=float, range=[0, +np.inf], default=0.15)
-        arena_pars = env.arena(x, y)
+        arena_pars = arena(x, y)
 
     print(f' -- Step 4 : DataGroup Subgroups')
     Nsubgroups = get_input("How many subgroups are there?", itype=int, default=0)

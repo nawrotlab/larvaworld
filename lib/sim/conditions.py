@@ -2,7 +2,7 @@ import random
 import numpy as np
 
 import lib.aux.sim_aux
-from lib.anal.process.spatial import compute_preference_index
+from lib.anal.process.spatial import comp_PI
 
 def get_exp_condition(exp):
     exp_condition_dict = {
@@ -59,7 +59,7 @@ class PrefTrainCondition:
                 self.toggle_odors(env, c,c)
                 env.move_larvae_to_center()
             elif env.CS_counter == 5:
-                PI = compute_preference_index(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
+                PI = comp_PI(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
                 print()
                 print(f'Test trial off food ended at {m}:{s} with PI={PI}')
                 env.end_condition_met = True
@@ -72,7 +72,7 @@ class PrefTrainCondition:
                 self.toggle_odors(env, 0.0, c)
                 env.move_larvae_to_center()
             elif env.UCS_counter == 4:
-                PI = compute_preference_index(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
+                PI = comp_PI(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
                 print()
                 print(f'Test trial on food ended at {m}:{s} with PI={PI}')
                 print()

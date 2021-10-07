@@ -512,16 +512,17 @@ class LarvaBody:
         self.pos = self.get_global_midspine_of_body()
 
 def draw_body_midline(viewer, midline_xy, radius) :
-    mid=midline_xy
-    r=radius
-    if not any(np.isnan(np.array(mid).flatten())) :
-        Nmid=len(mid)
-        viewer.draw_polyline(mid, color=(0, 0, 255), closed=False, width=r / 10)
-        for i, xy in enumerate(mid):
-            c = 255 * i / (Nmid - 1)
-            viewer.draw_circle(xy, r / 10, color=(c, 255 - c, 0), width=r / 20)
-    # except :
-    #     pass
+    try:
+        mid=midline_xy
+        r=radius
+        if not any(np.isnan(np.array(mid).flatten())) :
+            Nmid=len(mid)
+            viewer.draw_polyline(mid, color=(0, 0, 255), closed=False, width=r / 10)
+            for i, xy in enumerate(mid):
+                c = 255 * i / (Nmid - 1)
+                viewer.draw_circle(xy, r / 10, color=(c, 255 - c, 0), width=r / 20)
+    except :
+        pass
 
 def draw_body_contour(viewer, contour_xy, radius) :
     try :
@@ -535,8 +536,9 @@ def draw_body_centroid(viewer, pos, radius, color) :
     except:
         pass
 
-def draw_body_head(viewer, pos, radius) :
+def draw_body_head(viewer, midline_xy, radius) :
     try:
+        pos = midline_xy[0]
         viewer.draw_circle(pos, radius / 2, color=(255, 0, 0), width=radius / 6)
     except:
         pass

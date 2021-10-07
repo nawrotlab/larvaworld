@@ -1,120 +1,54 @@
 import copy
 import os
 from operator import attrgetter
-
+import siunits as siu
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from scipy.spatial.distance import euclidean
 
-import lib.aux.ang_aux
-import lib.aux.dictsNlists
-import lib.aux.sim_aux
+from lib.aux.ang_aux import angle_to_x_axis, angle_dif
+from lib.aux.dictsNlists import flatten_list, save_dict, load_dicts, unique_list
+
 from lib.aux import naming as nam
-from lib.conf.init_dtypes import null_dict
-from lib.model.DEB.gut import Gut
+from lib.conf.dtypes import null_dict
 from lib.stor import paths
-from lib.conf.par_conf import sub, th, dot, subsup, Delta, bar, wave, paren, \
-    brack, odot, circledcirc, circledast, ddot_th, dot_th
+from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledcirc, circledast, odot, paren, brack, dot_th, ddot_th
 
 from lib.model.agents._larva import Larva
-import siunits as siu
+
 
 
 
 
 def split_si_composite(df) :
     ddf=copy.deepcopy(df)
-    unit_dict={}
+    d={}
     for c in df.columns :
-        # print(c)
-        # print(c, df[c].apply(attrgetter('coef')))
         ddf[c] = df[c].apply(attrgetter('coef'))
-        unit_dict[c] = df[c].iloc[0].unit
-        # us=df[c].apply(attrgetter('unit')).values.tolist()
-    return ddf, unit_dict
-
-class Collection:
-    def __init__(self, name, par_dict, keys=None, object_class=None):
-        collection_dict = {
-            'bouts': ['x', 'y', 'b', 'fou', 'rou', 'v', 'sv', 'd', 'fov', 'bv', 'sd', 'o_cent'],
-            # 'bouts': ['str_d_mu', 'str_sd_mu'],
-            'basic': ['x', 'y', 'b', 'fo'],
-            'e_basic': ['l_mu', nam.cum('d'), f'{nam.cum("sd")}', nam.cum('t'), 'x', 'y', 'sv_mu'],
-            'e_dispersion': ['dsp', 'sdsp', 'dsp_max', 'sdsp_max', 'dsp_0_40', 'dsp_0_80', 'dsp_20_80', 'sdsp_0_40',
-                             'sdsp_0_80', 'sdsp_20_80'],
-            'spatial': lib.aux.dictsNlists.flatten_list([[k, f's{k}'] for k in
-                                                         ['dsp', 'd', 'v', 'a', 'D_x', 'xv', 'xa', 'D_y', 'yv', 'ya', nam.cum('d'),
-                                          nam.cum('D_x'), nam.cum('D_y'), ]]),
-            'e_spatial': [f'tor{i}_mu' for i in ['', 2, 5, 10, 20]],
-            'angular': ['b', 'bv', 'ba', 'fo', 'fov', 'foa', 'ro', 'rov', 'roa'],
-
-            'chemorbit': ['d_cent', 'sd_cent', 'o_cent'],
-            'e_chemorbit': lib.aux.dictsNlists.flatten_list(
-                [[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_cent', 'sd_cent']]),
-            'chemotax': ['d_chem', 'sd_chem', 'o_chem'],
-            'e_chemotax': lib.aux.dictsNlists.flatten_list(
-                [[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_chem', 'sd_chem']]),
-
-            'olfactor': ['Act_tur', 'A_tur', 'A_olf'],
-            'odors': ['c_odor1', 'c_odor2', 'c_odor3', 'dc_odor1', 'dc_odor2', 'dc_odor3'],
-            # 'constants': ['dt', 'x0', 'y0'],
-        }
-        if keys is None:
-            keys = collection_dict[name]
-        self.name = name
-
-        # par_dict = build_par_dict(save=False)
-        pars = [par_dict[k] for k in keys]
-        if object_class is not None:
-            self.object_class = object_class
-        else:
-            os = [p.o for p in pars if p.o is not None]
-            os = lib.aux.dictsNlists.unique_list(os)
-
-            if len(os) == 0:
-                self.object_class = None
-            elif len(os) == 1:
-                self.object_class = os[0]
-            else:
-                raise ValueError('Not all parameters have the same object_class class')
-
-        self.par_names = [p.d for p in pars]
-        self.dict = {p.d: p for p in pars}
-
-    # def get_from(self, object, u=True):
-    #     if self.object_class is not None :
-    #         if not isinstance(object, self.object_class):
-    #             raise ValueError(f'Parameter Group {self.name} collected from {self.object_class} not from {type(object)}')
-    #     dic = {n: p.get_from(object, u=u) for n, p in self.dict.items()}
-    #     return dic
-
+        d[c] = df[c].iloc[0].unit
+    return ddf, d
 
 class AgentCollector:
-    def __init__(self, collection_name, object, save_as=None, save_to=None):
+    def __init__(self, collection_name, object, par_dict,collection_dict,  save_as=None, save_to=None, object_class=None, **kwargs):
         if save_as is None:
             save_as = f'{object.unique_id}.csv'
         self.save_as = save_as
         self.save_to = save_to
         self.object = object
-
-        dic = self.get_constants(self.object)
-        par_dict = build_par_dict(save=False, df=dic)
-        self.collection = Collection(collection_name, par_dict)
-
-        self.table = {n: [] for n in self.collection.par_names}
+        self.collection_name = collection_name
+        par_dict.set_object(self.object)
+        pars = [par_dict[k] for k in collection_dict[collection_name]]
+        self.dict = {p.d: p for p in pars}
+        self.table = {p.d: [] for p in pars}
         self.tick = 0
-
-        if self.collection.object_class is not None:
-            if not isinstance(object, self.collection.object_class):
-                raise ValueError(
-                    f'Parameter Collection {self.collection.name} collected from {self.collection.object_class} not from {type(object)}')
+        self.object_class = self.set_class(object_class, object)
 
     def collect(self, u=True, tick=None, df=None):
         if tick is None:
             tick = self.tick
-        for n, p in self.collection.dict.items():
+        for n, p in self.dict.items():
             try:
                 self.table[n].append(p.get_from(self.object, u=u, tick=tick, df=df))
             except:
@@ -126,16 +60,27 @@ class AgentCollector:
             os.makedirs(self.save_to, exist_ok=True)
             f = f'{self.save_to}/{self.save_as}'
             if as_df:
-                df = pd.DataFrame(self.table)
-                df.to_csv(f, index=True, header=True)
+                pd.DataFrame(self.table).to_csv(f, index=True, header=True)
             else:
-                lib.aux.dictsNlists.save_dict(self.table, f)
+                save_dict(self.table, f)
 
-    def get_constants(self, object):
-        dic = build_constants()
-        for k, p in dic.items():
-            p.const = p.get_from(object, u=False, tick=None, df=None)
-        return dic
+    def set_class(self, object_class, object):
+        if object_class is not None:
+            c= object_class
+        else:
+            os = [p.o for p in pars if p.o is not None]
+            os = unique_list(os)
+
+            if len(os) == 0:
+                c = None
+            elif len(os) == 1:
+                c = os[0]
+            else:
+                raise ValueError('Not all parameters have the same object_class class')
+        if c is not None :
+            if not isinstance(object, c):
+                raise ValueError(
+                    f'Parameter Collection {self.collection_name} collected from {c} not from {type(object)}')
 
 
 class GroupCollector:
@@ -185,18 +130,20 @@ class GroupCollector:
 
                 if save_units_dict:
                     ff = f'{save_to}/units.csv'
-                    lib.aux.dictsNlists.save_dict(u_dict, ff)
+                    save_dict(u_dict, ff)
 
                 if as_df:
                     dddf.to_csv(f, index=True, header=True)
                 else:
-                    lib.aux.dictsNlists.save_dict(dddf.to_dict(), f)
+                    save_dict(dddf.to_dict(), f)
             return dddf, u_dict
 
 
 class CompGroupCollector(GroupCollector):
     def __init__(self, names, save_to=None, save_as=None, save_units=True, **kwargs):
-        # self.collectors=collectors
+        # print('ss')
+        # self.par_dict = ParDict(mode='load')
+        # print('sss')
         if save_as is None:
             save_as = 'complete.csv'
         self.save_units = save_units
@@ -204,6 +151,7 @@ class CompGroupCollector(GroupCollector):
         self.save_to = save_to
         self.collectors = [GroupCollector(name=n, save_to=save_to, save_units=save_units, **kwargs) for n in names]
         self.tick = 0
+        # print('ssss')
 
     def save(self, as_df=False, save_to=None, save_units_dict=False):
         if save_to is None:
@@ -228,22 +176,20 @@ class CompGroupCollector(GroupCollector):
             if as_df:
                 df0.to_csv(f, index=True, header=True)
             else:
-                lib.aux.dictsNlists.save_dict(df0.to_dict(), f)
+                save_dict(df0.to_dict(), f)
             if save_units_dict:
                 f0=paths.path('Unit')
-                # ff = f'{save_to}/units.csv'
-                # fun.save_dict(u0_dict, ff)
                 try:
-                    uu_dict = lib.aux.dictsNlists.load_dicts([f0])[0]
+                    uu_dict = load_dicts([f0])[0]
                     u0_dict.update(uu_dict)
                 except:
                     pass
-                lib.aux.dictsNlists.save_dict(u0_dict, f0)
+                save_dict(u0_dict, f0)
         return df0
 
 
 class Parameter:
-    def __init__(self, p, u, k=None, s=None, o=None, lim=None,
+    def __init__(self, p, u, k=None, s=None, o=Larva, lim=None,
                  d=None, lab=None, exists=True, func=None, const=None, par_dict=None, fraction=False,
                  operator=None, k0=None, k_num=None, k_den=None, dst2source=None, or2source=None, dispersion=False,
                  wrap_mode=None,l=None):
@@ -317,7 +263,6 @@ class Parameter:
         return f'{self.d},  {self.s}$({self.u.unit.abbrev})$' if self.lab is None else self.lab
 
     def get_from(self, o, u=True, tick=None, df=None):
-        # print(o,u,tick,df)
         if self.const is not None:
             v = self.const
         if tick != self.tick:
@@ -338,9 +283,10 @@ class Parameter:
                         v = np.nan
                 elif self.operator == 'freq':
                     if df is not None:
+                        from lib.aux.sim_aux import freq
                         vs = df[self.p0.d].xs(o.unique_id, level='AgentID').dropna()
                         dt = self.par_dict['dt'].get_from(o, u=False)
-                        v = lib.aux.sim_aux.freq(vs, dt)
+                        v = freq(vs, dt)
                     else:
                         v = np.nan
                 elif self.operator == 'final':
@@ -359,8 +305,8 @@ class Parameter:
             elif self.dispersion:
                 v = euclidean(self.xy(o=o, tick=tick, df=df), self.xy0(o=o, df=df))
             elif self.or2source is not None:
-                v = lib.aux.ang_aux.angle_dif(getattr(o, 'front_orientation'),
-                                              lib.aux.ang_aux.angle_to_x_axis(self.xy(o=o, tick=tick, df=df), self.or2source))
+                v = angle_dif(getattr(o, 'front_orientation'),
+                                              angle_to_x_axis(self.xy(o=o, tick=tick, df=df), self.or2source))
             v = self.postprocess(v)
             self.tick = tick
         else:
@@ -390,11 +336,6 @@ class Parameter:
         else:
             xy0 = getattr(o, 'initial_pos')
         return xy0
-
-    # def xy(self, o, u=False, tick=None):
-    #     x = self.par_dict['x'].get_from(o, u=u, tick=tick)
-    #     y = self.par_dict['y'].get_from(o, u=u, tick=tick)
-    #     return x, y
 
     def d_2D(self, o, t0, t1):
         dt = self.par_dict['dt'].get_from(o, u=False)
@@ -427,477 +368,487 @@ class Parameter:
         return vv
 
 
-def add_par(dic, lab=None, **kwargs):
-    p = null_dict('par', **kwargs)
-    # print(p)
-    k = p['k']
-    if k in dic.keys():
-        raise ValueError(f'Key {k} already exists')
-    dic[k] = Parameter(**p, par_dict=dic, lab=lab)
-    return dic
+class ParDict:
+    def __init__(self, mode='load', object=None, save=True):
+        if mode=='load' :
+            self.load()
+        elif mode=='reconstruct' :
+            self.reconstruct()
+        elif mode=='build' :
+            self.build(save=save, object=object)
 
+    def set_object(self, object):
+        for k in self.build_constants().keys():
+            self.dict[k].const = self.dict[k].get_from(object, u=False, tick=None, df=None)
 
-def add_diff_par(dic, k0):
-    b = dic[k0]
-    dic = add_par(dic, p=f'D_{b.p}', k=f'D_{k0}', u=b.u, d=f'{b.d} change', s=Delta(b.s), exists=False, operator='diff',
-                  k0=k0)
-    return dic
-
-
-def add_cum_par(dic, k0, d=None, p=None, s=None, k=None):
-    b = dic[k0]
-    if d is None:
-        d = nam.cum(b.d)
-    if p is None:
-        p = nam.cum(b.p)
-    if s is None:
-        s = sub(b.s, 'cum')
-    if k is None:
-        k = nam.cum(k0)
-        # d = f'total {b.d}'
-    dic = add_par(dic, p=p, k=k, u=b.u, d=d, s=s, exists=False, operator='cum', k0=k0)
-    return dic
-
-
-def add_mean_par(dic, k0, d=None, s=None):
-    b = dic[k0]
-    if d is None:
-        d = nam.mean(b.d)
-        # d = f'total {b.d}'
-    if s is None:
-        s = bar(b.s)
-    dic = add_par(dic, p=nam.mean(b.p), k=f'{b.k}_mu', u=b.u, d=d, s=s, exists=False, operator='mean', k0=k0)
-    return dic
-
-
-def add_std_par(dic, k0, d=None, s=None):
-    b = dic[k0]
-    if d is None:
-        d = nam.std(b.d)
-        # d = f'total {b.d}'
-    if s is None:
-        s = wave(b.s)
-    dic = add_par(dic, p=nam.std(b.p), k=f'{b.k}_std', u=b.u, d=d, s=s, exists=False, operator='std', k0=k0)
-    return dic
-
-
-def add_min_par(dic, k0, d=None, s=None):
-    b = dic[k0]
-    if d is None:
-        d = nam.min(b.d)
-        # d = f'total {b.d}'
-    if s is None:
-        s = sub(b.s, 'min')
-    dic = add_par(dic, p=nam.min(b.p), k=f'{b.k}_min', u=b.u, d=d, s=s, exists=False, operator='min', k0=k0)
-    return dic
-
-
-def add_max_par(dic, k0, d=None, s=None):
-    b = dic[k0]
-    if d is None:
-        d = nam.max(b.d)
-        # d = f'total {b.d}'
-    if s is None:
-        s = sub(b.s, 'max')
-    dic = add_par(dic, p=nam.max(b.p), k=f'{b.k}_max', u=b.u, d=d, s=s, exists=False, operator='max', k0=k0)
-    return dic
-
-
-def add_fin_par(dic, k0, d=None, s=None):
-    b = dic[k0]
-    if d is None:
-        d = nam.final(b.d)
-        # d = f'total {b.d}'
-    if s is None:
-        s = sub(b.s, 'fin')
-    dic = add_par(dic, p=nam.final(b.p), k=f'{b.k}_fin', u=b.u, d=d, s=s, exists=False, operator='final', k0=k0)
-    return dic
-
-
-def add_freq_par(dic, k0, d=None):
-    b = dic[k0]
-    if d is None:
-        d = nam.freq(b.d)
-        # d = f'total {b.d}'
-    dic = add_par(dic, p=nam.freq(b.p), k=f'f{b.k}', u=1 * siu.hz, d=d, s=sub(b.s, 'freq'), exists=False,
-                  operator='freq',
-                  k0=k0)
-    return dic
-
-
-def add_dsp_par(dic, range=(0, 40)):
-    a = 'dispersion'
-    k0 = 'dsp'
-    s0 = circledast('d')
-    r0, r1 = range
-    p = f'{a}_{r0}_{r1}'
-    k = f'{k0}_{r0}_{r1}'
-    dic = add_par(dic, p=p, k=k, d=p, s=subsup(s0, f'{r0}', f'{r1}'), exists=False, func=('d_2D', {'t0': r0, 't1': r1}))
-    # dic = add_rate_par(dic, k_den='l', k_num=k)
-    dic = add_scaled_par(dic, k0=k, s=subsup(paren(k0), f'{r0}', f'{r1}'))
-    # dic = add_rate_par(dic, k_den='l', k_num=k, k=kk)
-    #
-    for k00 in [k, f's{k}']:
-        dic = add_mean_par(dic, k0=k00)
-        dic = add_std_par(dic, k0=k00)
-        dic = add_min_par(dic, k0=k00)
-        dic = add_max_par(dic, k0=k00)
-        dic = add_fin_par(dic, k0=k00)
-
-    return dic
-
-
-def add_rate_par(dic, k0=None, k_time='t', p=None, k=None, d=None, s=None, k_num=None, k_den=None):
-    if k0 is not None:
-        b = dic[k0]
-        if p is None:
-            p = f'd_{k0}'
+    def getPar(self, k=None, p=None, d=None, to_return=['d', 'l']):
+        PF=self.dict
         if k is None:
-            k = f'd_{k0}'
+            if p is not None:
+                if type(p) == str:
+                    k = [k for k in PF.keys() if PF[k]['p'] == p][0]
+                elif type(p) == list:
+                    k = flatten_list([[k for k in PF.keys() if PF[k]['p'] == p0][0] for p0 in p])
+            elif d is not None:
+                if type(d) == str:
+                    k = [k for k in PF.keys() if PF[k]['d'] == d][0]
+                elif type(d) == list:
+                    k = flatten_list([[k for k in PF.keys() if PF[k]['d'] == d0][0] for d0 in d])
+        if type(k) == str:
+            return [PF[k][i] for i in to_return]
+        elif type(k) == list:
+            return [[PF[kk][i] for kk in k] for i in to_return]
+
+    def add(self, dic=None, lab=None, **kwargs):
+        if dic is None :
+            dic=self.dict
+        p = null_dict('par', **kwargs)
+        k = p['k']
+        if k in dic.keys():
+            raise ValueError(f'Key {k} already exists')
+        dic[k] = Parameter(**p, par_dict=dic, lab=lab)
+
+    def add_diff(self, k0):
+        b = self.dict[k0]
+        self.add(p=f'D_{b.p}', k=f'D_{k0}', u=b.u, d=f'{b.d} change', s=Delta(b.s), exists=False,
+                 operator='diff', k0=k0)
+
+    def add_cum(self, k0, d=None, p=None, s=None, k=None):
+        b = self.dict[k0]
         if d is None:
-            d = f'{b.d} rate'
+            d = nam.cum(b.d)
+        if p is None:
+            p = nam.cum(b.p)
         if s is None:
-            s = dot(b.s)
-        if k_num is None:
-            k_num = f'D_{k0}'
-    if k_den is None:
-        k_den = f'D_{k_time}'
+            s = sub(b.s, 'cum')
+        if k is None:
+            k = nam.cum(k0)
+            # d = f'total {b.d}'
+        self.add(p=p, k=k, u=b.u, d=d, s=s, exists=False, operator='cum', k0=k0)
 
-    dic = add_par(dic, p=p, k=k, d=d, s=s, exists=False, fraction=True, k_num=k_num, k_den=k_den)
-    return dic
+    def add_mean(self, k0, d=None, s=None):
+        b = self.dict[k0]
+        if d is None:
+            d = nam.mean(b.d)
+        if s is None:
+            s = bar(b.s)
+        self.add(p=nam.mean(b.p), k=f'{b.k}_mu', u=b.u, d=d, s=s, exists=False, operator='mean', k0=k0)
 
+    def add_std(self, k0, d=None, s=None):
+        b = self.dict[k0]
+        if d is None:
+            d = nam.std(b.d)
+        if s is None:
+            s = wave(b.s)
+        self.add(p=nam.std(b.p), k=f'{b.k}_std', u=b.u, d=d, s=s, exists=False, operator='std', k0=k0)
 
-def add_Vspec_par(dic, k0):
-    b = dic[k0]
-    dic = add_par(dic, p=f'[{k0}]', k=f'[{k0}]', d=f'volume specific {b.d}', s=f'[{b.s}]', exists=False, fraction=True,
-                  k_num=k0, k_den='V')
-    return dic
+    def add_min(self, k0, d=None, s=None):
+        b = self.dict[k0]
+        if d is None:
+            d = nam.min(b.d)
+        if s is None:
+            s = sub(b.s, 'min')
+        self.add(p=nam.min(b.p), k=f'{b.k}_min', u=b.u, d=d, s=s, exists=False, operator='min', k0=k0)
 
+    def add_max(self, k0, d=None, s=None):
+        b = self.dict[k0]
+        if d is None:
+            d = nam.max(b.d)
+        if s is None:
+            s = sub(b.s, 'max')
+        self.add(p=nam.max(b.p), k=f'{b.k}_max', u=b.u, d=d, s=s, exists=False, operator='max', k0=k0)
 
-def add_chunk(dic, pc, kc):
-    p0, p1, pt, pid, ptr, pN = nam.start(pc), nam.stop(pc), nam.dur(pc), nam.id(pc), nam.dur_ratio(pc), nam.num(pc)
+    def add_fin(self, k0, d=None, s=None):
+        b = self.dict[k0]
+        if d is None:
+            d = nam.final(b.d)
+        if s is None:
+            s = sub(b.s, 'fin')
+        self.add(p=nam.final(b.p), k=f'{b.k}_fin', u=b.u, d=d, s=s, exists=False, operator='final', k0=k0)
 
-    dic = add_par(dic, p=pc, k=kc, d=pc, s=f'${kc}$', exists=False)
-    b = dic[kc]
-    dic = add_par(dic, p=p0, k=f'{kc}0', u=1 * siu.s, d=p0, s=subsup('t', kc, 0), exists=False)
-    dic = add_par(dic, p=p1, k=f'{kc}1', u=1 * siu.s, d=p1, s=subsup('t', kc, 1), exists=False)
+    def add_freq(self, k0, d=None):
+        b = self.dict[k0]
+        if d is None:
+            d = nam.freq(b.d)
+        self.add(p=nam.freq(b.p), k=f'f{b.k}', u=1 * siu.hz, d=d, s=sub(b.s, 'freq'), exists=False,
+                 operator='freq',
+                 k0=k0)
 
-    dic = add_par(dic, p=pid, k=f'{kc}_id', d=pid, s=sub('idx', kc), exists=False)
-    dic = add_par(dic, p=ptr, k=f'{kc}_tr', d=ptr, s=sub('r', kc), exists=False)
-    dic = add_par(dic, p=pN, k=f'{kc}_N', d=pN, s=sub('N', f'{pc}s'), exists=False)
-
-    k00 = f'{kc}_t'
-    s00 = Delta('t')
-    dic = add_par(dic, p=pt, k=k00, u=1 * siu.s, d=pt, s=sub(s00, kc), exists=False)
-    dic = add_cum_par(dic, k0=k00)
-    dic = add_mean_par(dic, k0=k00, s=sub(bar(s00), kc))
-    dic = add_std_par(dic, k0=k00, s=sub(wave(s00), kc))
-    dic = add_min_par(dic, k0=k00)
-    dic = add_max_par(dic, k0=k00)
-
-    if str.endswith(pc, 'chain'):
-        pl = nam.length(pc)
-        k00 = f'{kc}_l'
-        dic = add_par(dic, p=pl, k=k00, d=pl, s=sub('l', kc), exists=False)
-        dic = add_cum_par(dic, k0=k00)
-        dic = add_mean_par(dic, k0=k00, s=sub(bar('l'), kc))
-        dic = add_std_par(dic, k0=k00, s=sub(wave('l'), kc))
-        dic = add_min_par(dic, k0=k00)
-        dic = add_max_par(dic, k0=k00)
-
-    return dic
-
-
-def add_chunk_track(dic, kc, k, extrema=True):
-    bc = dic[kc]
-    b = dic[k]
-    u = dic[k].u
-    b0, b1 = dic[f'{kc}0'], dic[f'{kc}1']
-    p0, p1 = nam.at(b.p, b0.p), nam.at(b.p, b1.p)
-
-    k00 = f'{kc}_{k}'
-    s00 = Delta(b.s)
-    dic = add_par(dic, p=nam.chunk_track(bc.p, b.p), k=k00, u=u, d=nam.chunk_track(bc.p, b.p), s=sub(s00, kc),
-                  exists=False)
-    dic = add_mean_par(dic, k0=k00, s=sub(bar(s00), kc))
-    dic = add_std_par(dic, k0=k00, s=sub(wave(s00), kc))
-    if extrema:
-        dic = add_par(dic, p=p0, k=f'{kc}_{k}0', u=u, d=p0, s=subsup(b.s, kc, 0), exists=False)
-        dic = add_par(dic, p=p1, k=f'{kc}_{k}1', u=u, d=p1, s=subsup(b.s, kc, 1), exists=False)
-    return dic
-
-
-def add_scaled_par(dic, k0, s=None):
-    k_den = 'l'
-    k_num = k0
-    b = dic[k0]
-    d = nam.scal(b.d)
-    if s is None:
-        s = paren(b.s)
-    dic = add_par(dic, p=d, k=f's{k0}', d=d, s=s, exists=False, fraction=True, k_num=k_num, k_den=k_den)
-    return dic
+    def add_dsp(self, range=(0, 40)):
+        a = 'dispersion'
+        k0 = 'dsp'
+        s0 = circledast('d')
+        r0, r1 = range
+        p = f'{a}_{r0}_{r1}'
+        k = f'{k0}_{r0}_{r1}'
+        self.add(p=p, k=k, d=p, s=subsup(s0, f'{r0}', f'{r1}'), exists=False,
+                 func=('d_2D', {'t0': r0, 't1': r1}))
+        self.add_scaled(k0=k, s=subsup(paren(k0), f'{r0}', f'{r1}'))
+        for k00 in [k, f's{k}']:
+            self.add_mean(k0=k00)
+            self.add_std(k0=k00)
+            self.add_min(k0=k00)
+            self.add_max(k0=k00)
+            self.add_fin(k0=k00)
 
 
-def build_constants():
-    df = {}
-    df = add_par(df, p='x0', k='x0', u=1 * siu.m, o=Larva, d='initial x coordinate', s=sub('x', 0))
-    df = add_par(df, p='y0', k='y0', u=1 * siu.m, o=Larva, d='initial y coordinate', s=sub('y', 0))
-    df = add_par(df, p='dt', k='dt', u=1 * siu.s, o=Larva, d='timestep', s='$dt$')
-    df = add_par(df, p='real_length', k='l', u=1 * siu.m, o=Larva, d='length', s='l')
-    return df
+    def add_rate(self, k0=None, k_time='t', p=None, k=None, d=None, s=None, k_num=None, k_den=None):
+        if k0 is not None:
+            b = self.dict[k0]
+            if p is None:
+                p = f'd_{k0}'
+            if k is None:
+                k = f'd_{k0}'
+            if d is None:
+                d = f'{b.d} rate'
+            if s is None:
+                s = dot(b.s)
+            if k_num is None:
+                k_num = f'D_{k0}'
+        if k_den is None:
+            k_den = f'D_{k_time}'
+
+        self.add(p=p, k=k, d=d, s=s, exists=False, fraction=True, k_num=k_num, k_den=k_den)
+
+    def add_Vspec(self, k0):
+        b = self.dict[k0]
+        self.add(p=f'[{k0}]', k=f'[{k0}]', d=f'volume specific {b.d}', s=f'[{b.s}]', exists=False,
+                 fraction=True,
+                 k_num=k0, k_den='V')
+
+    def add_chunk(self, pc, kc):
+        p0, p1, pt, pid, ptr, pN = nam.start(pc), nam.stop(pc), nam.dur(pc), nam.id(pc), nam.dur_ratio(pc), nam.num(pc)
+
+        self.add(p=pc, k=kc, d=pc, s=f'${kc}$', exists=False)
+        b = self.dict[kc]
+        self.add(p=p0, k=f'{kc}0', u=1 * siu.s, d=p0, s=subsup('t', kc, 0), exists=False)
+        self.add(p=p1, k=f'{kc}1', u=1 * siu.s, d=p1, s=subsup('t', kc, 1), exists=False)
+
+        self.add(p=pid, k=f'{kc}_id', d=pid, s=sub('idx', kc), exists=False)
+        self.add(p=ptr, k=f'{kc}_tr', d=ptr, s=sub('r', kc), exists=False)
+        self.add(p=pN, k=f'{kc}_N', d=pN, s=sub('N', f'{pc}s'), exists=False)
+
+        k00 = f'{kc}_t'
+        s00 = Delta('t')
+        self.add(p=pt, k=k00, u=1 * siu.s, d=pt, s=sub(s00, kc), exists=False)
+        self.add_cum(k0=k00)
+        self.add_mean(k0=k00, s=sub(bar(s00), kc))
+        self.add_std(k0=k00, s=sub(wave(s00), kc))
+        self.add_min(k0=k00)
+        self.add_max(k0=k00)
+
+        if str.endswith(pc, 'chain'):
+            pl = nam.length(pc)
+            k00 = f'{kc}_l'
+            self.add(p=pl, k=k00, d=pl, s=sub('l', kc), exists=False)
+            self.add_cum(k0=k00)
+            self.add_mean(k0=k00, s=sub(bar('l'), kc))
+            self.add_std(k0=k00, s=sub(wave('l'), kc))
+            self.add_min(k0=k00)
+            self.add_max(k0=k00)
 
 
-def build_DEB_par_dict(df=None):
-    from lib.model.DEB.deb import DEB
-    if df is None:
-        df = {}
-    df = add_par(df, p='L', k='L', u=1 * siu.cm, o=DEB, d='structural length', s='L')
-    df = add_par(df, p='Lw', k='Lw', u=1 * siu.cm, o=DEB, d='physical length', s=sub('L', 'w'))
-    df = add_par(df, p='V', k='V', u=1 * siu.cm ** 3, o=DEB, d='structural volume', s='V')
-    df = add_par(df, p='Ww', k='Ww', u=1 * siu.g, o=DEB, d='wet weight', s=sub('W', 'w'))
-    df = add_par(df, p='age', k='age', u=1 * siu.day, o=DEB, d='age', s='a')
-    df = add_par(df, p='hunger', k='H', o=DEB, d='hunger drive', s='H')
-    df = add_par(df, p='E', k='E', u=1 * siu.j, o=DEB, d='reserve energy', s='E')
-    df = add_par(df, p='E_H', k='E_H', u=1 * siu.j, o=DEB, d='maturity energy', s=sub('E', 'H'))
-    df = add_par(df, p='E_R', k='E_R', u=1 * siu.j, o=DEB, d='reproduction buffer', s=sub('E', 'R'))
-    df = add_par(df, p='deb_p_A', k='deb_p_A', u=1 * siu.j, o=DEB, d='assimilation energy (model)',
+    def add_chunk_track(self, kc, k, extrema=True):
+        bc = self.dict[kc]
+        b = self.dict[k]
+        u = self.dict[k].u
+        b0, b1 = self.dict[f'{kc}0'], self.dict[f'{kc}1']
+        p0, p1 = nam.at(b.p, b0.p), nam.at(b.p, b1.p)
+
+        k00 = f'{kc}_{k}'
+        s00 = Delta(b.s)
+        self.add(p=nam.chunk_track(bc.p, b.p), k=k00, u=u, d=nam.chunk_track(bc.p, b.p), s=sub(s00, kc),
+                 exists=False)
+        self.add_mean(k0=k00, s=sub(bar(s00), kc))
+        self.add_std(k0=k00, s=sub(wave(s00), kc))
+        if extrema:
+            self.add(p=p0, k=f'{kc}_{k}0', u=u, d=p0, s=subsup(b.s, kc, 0), exists=False)
+            self.add(p=p1, k=f'{kc}_{k}1', u=u, d=p1, s=subsup(b.s, kc, 1), exists=False)
+
+    def add_scaled(self, k0, s=None):
+        k_den = 'l'
+        k_num = k0
+        b = self.dict[k0]
+        d = nam.scal(b.d)
+        if s is None:
+            s = paren(b.s)
+        self.add(p=d, k=f's{k0}', d=d, s=s, exists=False, fraction=True, k_num=k_num, k_den=k_den)
+
+    def build_constants(self, object=None):
+        dic={}
+        self.add(dic=dic,p='x0', k='x0', u=1 * siu.m, d='initial x coordinate', s=sub('x', 0))
+        self.add(dic=dic,p='y0', k='y0', u=1 * siu.m, d='initial y coordinate', s=sub('y', 0))
+        self.add(dic=dic,p='dt', k='dt', u=1 * siu.s, d='timestep', s='$dt$')
+        self.add(dic=dic,p='real_length', k='l', u=1 * siu.m, d='length', s='l')
+        if object is not None :
+            for k, p in dic.items():
+                p.const = p.get_from(object, u=False, tick=None, df=None)
+        return dic
+
+    def build_DEB(self):
+        from lib.model.DEB.deb import DEB
+        self.add(p='L', k='L', u=1 * siu.cm, o=DEB, d='structural length', s='L')
+        self.add(p='Lw', k='Lw', u=1 * siu.cm, o=DEB, d='physical length', s=sub('L', 'w'))
+        self.add(p='V', k='V', u=1 * siu.cm ** 3, o=DEB, d='structural volume', s='V')
+        self.add(p='Ww', k='Ww', u=1 * siu.g, o=DEB, d='wet weight', s=sub('W', 'w'))
+        self.add(p='age', k='age', u=1 * siu.day, o=DEB, d='age', s='a')
+        self.add(p='hunger', k='H', o=DEB, d='hunger drive', s='H')
+        self.add(p='E', k='E', u=1 * siu.j, o=DEB, d='reserve energy', s='E')
+        self.add(p='E_H', k='E_H', u=1 * siu.j, o=DEB, d='maturity energy', s=sub('E', 'H'))
+        self.add(p='E_R', k='E_R', u=1 * siu.j, o=DEB, d='reproduction buffer', s=sub('E', 'R'))
+        self.add(p='deb_p_A', k='deb_p_A', u=1 * siu.j, o=DEB, d='assimilation energy (model)',
                  s=subsup('p', 'A', 'deb'))
-    df = add_par(df, p='sim_p_A', k='sim_p_A', u=1 * siu.j, o=DEB, d='assimilation energy (sim)',
+        self.add(p='sim_p_A', k='sim_p_A', u=1 * siu.j, o=DEB, d='assimilation energy (sim)',
                  s=subsup('p', 'A', 'sim'))
-    df = add_par(df, p='gut_p_A', k='gut_p_A', u=1 * siu.j, o=DEB, d='assimilation energy (gut)',
+        self.add(p='gut_p_A', k='gut_p_A', u=1 * siu.j, o=DEB, d='assimilation energy (gut)',
                  s=subsup('p', 'A', 'gut'))
-    df = add_par(df, p='e', k='e', o=DEB, d='scaled reserve density', s='e')
-    df = add_par(df, p='f', k='f', o=DEB, d='scaled functional response', s='f')
-    df = add_par(df, p='base_f', k='f0', o=DEB, d='base scaled functional response', s=sub('f', 0))
-    df = add_par(df, p='F', k='[F]', u=siu.hz / (24 * 60 * 60), o=DEB, d='volume specific filtering rate',
+        self.add(p='e', k='e', o=DEB, d='scaled reserve density', s='e')
+        self.add(p='f', k='f', o=DEB, d='scaled functional response', s='f')
+        self.add(p='base_f', k='f0', o=DEB, d='base scaled functional response', s=sub('f', 0))
+        self.add(p='F', k='[F]', u=siu.hz / (24 * 60 * 60), o=DEB, d='volume specific filtering rate',
                  s=brack(dot('F')))
-    df = add_par(df, p='fr_feed', k='fr_f', u=1 * siu.hz, o=DEB, d='feed motion frequency (estimate)',
+        self.add(p='fr_feed', k='fr_f', u=1 * siu.hz, o=DEB, d='feed motion frequency (estimate)',
                  s=sub(dot('fr'), 'feed'))
-    df = add_par(df, p='pupation_buffer', k='pupation', o=DEB, d='pupation ratio', s=sub('r', 'pup'))
+        self.add(p='pupation_buffer', k='pupation', o=DEB, d='pupation ratio', s=sub('r', 'pup'))
 
-    df = add_diff_par(df, k0='age')
-    for k0 in ['f', 'e', 'H']:
-        df = add_diff_par(df, k0=k0)
-        df = add_rate_par(df, k0=k0, k_time='age')
+        self.add_diff(k0='age')
+        for k0 in ['f', 'e', 'H']:
+            self.add_diff(k0=k0)
+            self.add_rate(k0=k0, k_time='age')
 
-    for k0 in ['E', 'Ww', 'E_R', 'E_H']:
-        df = add_Vspec_par(df, k0=k0)
-
-    return df
+        for k0 in ['E', 'Ww', 'E_R', 'E_H']:
+            self.add_Vspec(k0=k0)
 
 
-def build_gut_par_dict(df=None):
-    if df is None:
-        df = {}
-    df = add_par(df, p='ingested_volume', k='f_am_V', u=1 * siu.m ** 3, o=Gut, d='ingested_food_volume',
+    def build_gut(self):
+        self.add(p='ingested_volume', k='f_am_V', u=1 * siu.m ** 3, d='ingested_food_volume',
                  s=sub('V', 'in'), lab='ingested food volume')
-    df = add_par(df, p='ingested_gut_volume_ratio', k='sf_am_Vg', o=Larva, d='ingested_gut_volume_ratio',
+        self.add(p='ingested_gut_volume_ratio', k='sf_am_Vg', d='ingested_gut_volume_ratio',
                  s=subsup('[V]', 'in', 'gut'), lab='intake as % larva gut volume')
-    df = add_par(df, p='ingested_body_volume_ratio', k='sf_am_V', o=Larva, d='ingested_body_volume_ratio',
+        self.add(p='ingested_body_volume_ratio', k='sf_am_V', d='ingested_body_volume_ratio',
                  s=sub('[V]', 'in'), lab='intake as % larva volume')
-    df = add_par(df, p='ingested_body_area_ratio', k='sf_am_A', o=Larva, d='ingested_body_area_ratio',
+        self.add(p='ingested_body_area_ratio', k='sf_am_A',d='ingested_body_area_ratio',
                  s=sub('{V}', 'in'), lab='intake as % larva area')
-    df = add_par(df, p='ingested_body_mass_ratio', k='sf_am_M', o=Larva, d='ingested_body_mass_ratio',
+        self.add(p='ingested_body_mass_ratio', k='sf_am_M', d='ingested_body_mass_ratio',
                  s=sub('[M]', 'in'), lab='intake as % larva mass')
 
-    return df
 
-
-def build_spatial_par_dict(df):
-    d = nam.dst('')
-    std = nam.straight_dst('')
-    df = add_par(df, p=d, k='d', u=1 * siu.m, o=Larva, d=d, s='d')
-    df = add_par(df, p=std, k='std', u=1 * siu.m, o=Larva, d=std, s='d')
-    df = add_par(df, p='dispersion', k='dsp', u=1 * siu.m, o=Larva, d='dispersion', s=circledast('d'), exists=False,
+    def build_spatial(self):
+        d = nam.dst('')
+        std = nam.straight_dst('')
+        self.add(p=d, k='d', u=1 * siu.m,  d=d, s='d')
+        self.add(p=std, k='std', u=1 * siu.m,  d=std, s='d')
+        self.add(p='dispersion', k='dsp', u=1 * siu.m,  d='dispersion', s=circledast('d'), exists=False,
                  dispersion=True)
 
-    df = add_par(df, p=nam.dst2('center'), k='d_cent', u=1 * siu.m, o=Larva, d=nam.dst2('center'), s=odot('d'),
+        self.add(p=nam.dst2('center'), k='d_cent', u=1 * siu.m,  d=nam.dst2('center'), s=odot('d'),
                  exists=False, dst2source=(0, 0))
-    df = add_par(df, p=nam.dst2('source'), k='d_chem', u=1 * siu.m, o=Larva, d=nam.dst2('source'),
+        self.add(p=nam.dst2('source'), k='d_chem', u=1 * siu.m, d=nam.dst2('source'),
                  s=circledcirc('d'), exists=False, dst2source=(0.04, 0.0))
 
-    df = add_par(df, p='x', k='x', u=1 * siu.m, o=Larva, d='x', s='x')
-    df = add_par(df, p='y', k='y', u=1 * siu.m, o=Larva, d='y', s='y')
+        self.add(p='x', k='x', u=1 * siu.m,  d='x', s='x')
+        self.add(p='y', k='y', u=1 * siu.m, d='y', s='y')
 
-    df = add_diff_par(df, k0='x')
-    df = add_diff_par(df, k0='y')
+        self.add_diff(k0='x')
+        self.add_diff(k0='y')
 
-    space_ks = ['d', 'D_x', 'D_y', 'd_chem', 'd_cent', 'dsp', 'std']
+        space_ks = ['d', 'D_x', 'D_y', 'd_chem', 'd_cent', 'dsp', 'std']
 
-    for k0 in space_ks:
-        df = add_scaled_par(df, k0=k0)
+        for k0 in space_ks:
+            self.add_scaled(k0=k0)
 
-    for k00 in space_ks:
-        for k0 in [k00, f's{k00}']:
-            df = add_cum_par(df, k0=k0)
-            df = add_mean_par(df, k0=k0)
-            df = add_std_par(df, k0=k0)
-            df = add_min_par(df, k0=k0)
-            df = add_max_par(df, k0=k0)
-            df = add_fin_par(df, k0=k0)
-    v = nam.vel('')
-    a = nam.acc('')
-    sv, sa = nam.scal([v, a])
-    df = add_rate_par(df, k_num='d', k_den='dt', k='v', p=v, d=v, s='v')
-    df = add_rate_par(df, k_num='v', k_den='dt', k='a', p=a, d=a, s='a')
-    df = add_rate_par(df, k_num='sd', k_den='dt', k='sv', p=sv, d=sv, s=paren('v'))
-    df = add_rate_par(df, k_num='sv', k_den='dt', k='sa', p=sa, d=sa, s=paren('a'))
+        for k00 in space_ks:
+            for k0 in [k00, f's{k00}']:
+                self.add_cum(k0=k0)
+                self.add_mean(k0=k0)
+                self.add_std(k0=k0)
+                self.add_min(k0=k0)
+                self.add_max(k0=k0)
+                self.add_fin(k0=k0)
+        v = nam.vel('')
+        a = nam.acc('')
+        sv, sa = nam.scal([v, a])
+        self.add_rate(k_num='d', k_den='dt', k='v', p=v, d=v, s='v')
+        self.add_rate(k_num='v', k_den='dt', k='a', p=a, d=a, s='a')
+        self.add_rate(k_num='sd', k_den='dt', k='sv', p=sv, d=sv, s=paren('v'))
+        self.add_rate(k_num='sv', k_den='dt', k='sa', p=sa, d=sa, s=paren('a'))
 
-    for i in [(0, 40), (0, 80), (20, 80)]:
-        df = add_dsp_par(df, range=i)
+        for i in [(0, 40), (0, 80), (20, 80)]:
+            self.add_dsp(range=i)
 
-    for k0 in ['l', 'v', 'sv']:
-        df = add_mean_par(df, k0=k0)
-        # print(df[f'{df[k0].k}_mu'].d)
+        for k0 in ['l', 'v', 'sv']:
+            self.add_mean(k0=k0)
 
-    for k0 in ['sv']:
-        df = add_freq_par(df, k0=k0)
+        for k0 in ['sv']:
+            self.add_freq(k0=k0)
 
-    for i in ['', 2, 5, 10, 20]:
-        if i == '':
-            p = 'tortuosity'
-        else:
-            p = f'tortuosity_{i}'
-        k0 = 'tor'
-        k = f'{k0}{i}'
-        df = add_par(df, p=p, k=k, d=p, s=sub(k0, i), exists=False)
-        df = add_mean_par(df, k0=k, s=sub(bar(k0), i))
-        df = add_std_par(df, k0=k, s=sub(wave(k0), i))
-    return df
+        for i in ['', 2, 5, 10, 20]:
+            if i == '':
+                p = 'tortuosity'
+            else:
+                p = f'tortuosity_{i}'
+            k0 = 'tor'
+            k = f'{k0}{i}'
+            self.add(p=p, k=k, d=p, s=sub(k0, i), exists=False)
+            self.add_mean(k0=k, s=sub(bar(k0), i))
+            self.add_std(k0=k, s=sub(wave(k0), i))
 
-
-def build_angular_par_dict(df):
-    df = add_par(df, p=nam.bearing2('center'), k='o_cent', u=1 * siu.deg, o=Larva, d=nam.bearing2('center'),
+    def build_angular(self):
+        self.add(p=nam.bearing2('center'), k='o_cent', u=1 * siu.deg, d=nam.bearing2('center'),
                  s=odot(th('or')), exists=False, or2source=(0, 0), wrap_mode='zero')
-    df = add_par(df, p=nam.bearing2('source'), k='o_chem', u=1 * siu.deg, o=Larva, d=nam.bearing2('source'),
+        self.add(p=nam.bearing2('source'), k='o_chem', u=1 * siu.deg, d=nam.bearing2('source'),
                  s=circledcirc(th('or')), exists=False, or2source=(0.04, 0.0), wrap_mode='zero')
 
-    df = add_par(df, p='bend', k='b', u=1 * siu.deg, o=Larva, d='bend', s=th('b'), wrap_mode='zero')
-    fo = sub('or', 'f')
-    # fo='or_f'
-    ro = sub('or', 'r')
-    # ro='or_r'
-    df = add_par(df, p='front_orientation', k='fo', u=1 * siu.deg, o=Larva, d=nam.orient('front'), s=th(fo),
+        self.add(p='bend', k='b', u=1 * siu.deg, d='bend', s=th('b'), wrap_mode='zero')
+        fo = sub('or', 'f')
+        ro = sub('or', 'r')
+        self.add(p='front_orientation', k='fo', u=1 * siu.deg, d=nam.orient('front'), s=th(fo),
                  wrap_mode='positive')
-    df = add_par(df, p='rear_orientation', k='ro', u=1 * siu.deg, o=Larva, d=nam.orient('rear'), s=th(ro),
+        self.add(p='rear_orientation', k='ro', u=1 * siu.deg, d=nam.orient('rear'), s=th(ro),
                  wrap_mode='positive')
-    df = add_par(df, p='front_orientation_unwrapped', k='fou', u=1 * siu.deg, o=Larva,
+        self.add(p='front_orientation_unwrapped', k='fou', u=1 * siu.deg,
                  d=nam.unwrap(nam.orient('front')),
                  s=th(fo), wrap_mode=None)
-    df = add_par(df, p='rear_orientation_unwrapped', k='rou', u=1 * siu.deg, o=Larva, d=nam.unwrap(nam.orient('rear')),
+        self.add(p='rear_orientation_unwrapped', k='rou', u=1 * siu.deg,
                  s=th(ro), wrap_mode=None)
 
-    for k0, kv, ka, s in zip(['b', 'fou', 'rou'], ['bv', 'fov', 'rov'],
-                             ['ba', 'foa', 'roa'], ['b', fo, ro]):
-        df = add_diff_par(df, k0=k0)
-        df = add_rate_par(df, k0=k0, k_den='dt', k=kv)
+        for k0, kv, ka, s in zip(['b', 'fou', 'rou'], ['bv', 'fov', 'rov'],
+                                 ['ba', 'foa', 'roa'], ['b', fo, ro]):
+            self.add_diff(k0=k0)
+            self.add_rate(k0=k0, k_den='dt', k=kv)
 
-        if k0 == 'fou':
-            k0 = 'fo'
-        elif k0 == 'rou':
-            k0 = 'ro'
-        df[kv].d = nam.vel(df[k0].d)
-        df[kv].s = dot_th(s)
-        df = add_diff_par(df, k0=kv)
-        df = add_rate_par(df, k0=kv, k_den='dt', k=ka)
-        df[ka].d = nam.acc(df[k0].d)
-        df[ka].s = ddot_th(s)
-        # df[ka].d = f'{df[k0].d} acceleration'
+            if k0 == 'fou':
+                k0 = 'fo'
+            elif k0 == 'rou':
+                k0 = 'ro'
+            self.dict[kv].d = nam.vel(self.dict[k0].d)
+            self.dict[kv].s = dot_th(s)
+            self.add_diff(k0=kv)
+            self.add_rate(k0=kv, k_den='dt', k=ka)
+            self.dict[ka].d = nam.acc(self.dict[k0].d)
+            self.dict[ka].s = ddot_th(s)
 
-    for k0 in ['b', 'bv']:
-        df = add_mean_par(df, k0=k0)
-        df = add_std_par(df, k0=k0)
+        for k0 in ['b', 'bv']:
+            self.add_mean(k0=k0)
+            self.add_std(k0=k0)
 
-    return df
+    def build_neural(self):
+        self.add(p='amount_eaten', k='f_am', u=1 * siu.m ** 3, d='ingested_food_volume', s=sub('V', 'in'),
+                 lab='food intake')
+        self.add(p='scaled_amount_eaten', k='sf_am',  d='ingested_food_volume_ratio', s=sub('[V]', 'in'))
+        self.add(p='lin_activity', k='Act_cr',  d='crawler output', s=sub('A', 'crawl'))
+        self.add(p='ang_activity', k='Act_tur',  d='turner output', s=subsup('A', 'tur', 'out'))
+        self.add(p='turner_activation', k='A_tur',  d='turner input', s=subsup('A', 'tur', 'in'), lim=(10, 40))
+        self.add(p='olfactory_activation', k='A_olf',  d='olfactory activation', s=sub('A', 'olf'), lim=(-1, 1))
+        self.add(p='exploitVSexplore_balance', k='EEB',  d='exploitVSexplore_balance', s='EEB', lim=(0, 1))
 
-
-def build_chunk_par_dict(df):
-    for kc, pc in chunk_dict.items():
-        df = add_chunk(df, pc=pc, kc=kc)
-        for k in ['x', 'y', 'fo', 'fou', 'fov', 'ro', 'rou', 'rov', 'b', 'bv', 'v', 'sv', 'o_cent', 'o_chem', 'd_cent',
-                  'd_chem', 'sd_cent', 'sd_chem']:
-            df = add_chunk_track(df, kc=kc, k=k)
-        if pc == 'stride':
-            for k in ['d', 'std']:
-                # for k in ['d','sd', 'std', 'sstd']:
-                # for k in [nam.cum('d'), nam.cum('sd')]:
-                df = add_par(df, p=nam.chunk_track(pc, df[k].p), k=f'{kc}_{k}', u=df[k].u,
-                             d=nam.chunk_track(pc, df[k].p),
-                             s=sub(Delta(df[k].s), kc), exists=False)
-                df = add_mean_par(df, k0=f'{kc}_{k}')
-                df = add_std_par(df, k0=f'{kc}_{k}')
-                for k0 in [f'{kc}_{k}', f'{kc}_{k}_mu', f'{kc}_{k}_std']:
-                    df = add_scaled_par(df, k0=k0)
-    return df
-
-
-def build_par_dict(save=True, df=None):
-    siu.day = siu.s * 24 * 60 * 60
-    siu.cm = siu.m * 10 ** -2
-    siu.mm = siu.m * 10 ** -3
-    siu.g = siu.kg * 10 ** -3
-    # siu.deg = siu.rad / 180*np.pi
-    siu.deg = siu.I.rename("deg", "deg", "plain angle")
-    siu.microM = siu.mol * 10 ** -6
-    if df is None:
-        df = build_constants()
-
-    df = build_DEB_par_dict(df)
-    df = build_gut_par_dict(df)
-
-    # df = add_par(df, p='dt', k='dt', u=1 * siu.s, o=Larva, d='dt', s='dt')
-    # df = add_par(df, p='cum_dur', k='t', u=1 * siu.s, o=Larva, d=nam.cum('dur'), s='t')
-    df = add_cum_par(df, p='cum_dur', k0='dt', d=nam.cum('dur'), k=nam.cum('t'), s=sub('t', 'cum'))
-    # df = add_par(df, p='cum_dur', k='t', u=1 * siu.s, o=Larva, d='time', s='t')
-    # df = add_diff_par(df, k0='t')
-
-    df = build_spatial_par_dict(df)
-    df = build_angular_par_dict(df)
-    df = build_chunk_par_dict(df)
-
-    df = add_par(df, p='amount_eaten', k='f_am', u=1 * siu.m ** 3, o=Larva, d='ingested_food_volume',
-                 s=sub('V', 'in'), lab='food intake')
-    df = add_par(df, p='scaled_amount_eaten', k='sf_am', o=Larva, d='ingested_food_volume_ratio',
-                 s=sub('[V]', 'in'))
-    df = add_par(df, p='lin_activity', k='Act_cr', o=Larva, d='crawler output', s=sub('A', 'crawl'))
-    df = add_par(df, p='ang_activity', k='Act_tur', o=Larva, d='turner output', s=subsup('A', 'tur', 'out'))
-    df = add_par(df, p='turner_activation', k='A_tur', o=Larva, d='turner input', s=subsup('A', 'tur', 'in'),
-                 lim=(10, 40))
-    df = add_par(df, p='olfactory_activation', k='A_olf', o=Larva, d='olfactory activation', s=sub('A', 'olf'),
-                 lim=(-1, 1))
-    df = add_par(df, p='exploitVSexplore_balance', k='EEB', o=Larva, d='exploitVSexplore_balance', s='EEB', lim=(0, 1))
-
-    for i, n in enumerate(['first', 'second', 'third']):
-        k = f'c_odor{i + 1}'
-        df = add_par(df, p=f'{n}_odor_concentration', k=k, u=1 * siu.microM, o=Larva, d=f'Odor {i + 1} Conc',
+        for i, n in enumerate(['first', 'second', 'third']):
+            k = f'c_odor{i + 1}'
+            self.add(p=f'{n}_odor_concentration', k=k, u=1 * siu.microM,  d=f'Odor {i + 1} Conc',
                      s=sub('C', i + 1))
-        df = add_par(df, p=f'{n}_odor_concentration_change', k=f'd{k}', u=1 * siu.microM, o=Larva,
+            self.add(p=f'{n}_odor_concentration_change', k=f'd{k}', u=1 * siu.microM,
                      d=f'Odor {i + 1} DConc', s=sub(dot('C'), i + 1))
-        kk = f'g_odor{i + 1}'
-        df = add_par(df, p=f'{n}_odor_best_gain', k=kk, o=Larva, d=f'Odor {i + 1} Gain',
+            kk = f'g_odor{i + 1}'
+            self.add(p=f'{n}_odor_best_gain', k=kk,  d=f'Odor {i + 1} Gain',
                      s=sub('G', i + 1))
-        # df = add_par(df, p=f'{n}_odor_concentration_change', k=f'd{k}', u=1 * siu.microM, o=Larva,
-        #              d=f'Odor {i + 1} DConc', s=sub(dot('C'), i + 1))
 
-        # df = add_diff_par(df, k0=k)
-        # df = add_rate_par(df, k0=k, k=f'dc_odor{i+1}',k_den='dt', s=sub(dot('C'), i+1))
+    def build_chunk(self):
+        chunk_dict = {
+            'str': 'stride',
+            'pau': 'pause',
+            'fee': 'feed',
+            'tur': 'turn',
+            'Ltur': 'Lturn',
+            'Rtur': 'Rturn',
+            'str_c': nam.chain('stride'),
+            'fee_c': nam.chain('feed')
+        }
+        for kc, pc in chunk_dict.items():
+            self.add_chunk(pc=pc, kc=kc)
+            for k in ['x', 'y', 'fo', 'fou', 'fov', 'ro', 'rou', 'rov', 'b', 'bv', 'v', 'sv', 'o_cent', 'o_chem',
+                      'd_cent',
+                      'd_chem', 'sd_cent', 'sd_chem']:
+                self.add_chunk_track(kc=kc, k=k)
+            if pc == 'stride':
+                for k in ['d', 'std']:
+                    self.add(p=nam.chunk_track(pc, self.dict[k].p), k=f'{kc}_{k}', u=self.dict[k].u,
+                             d=nam.chunk_track(pc, self.dict[k].p),
+                             s=sub(Delta(self.dict[k].s), kc), exists=False)
+                    self.add_mean(k0=f'{kc}_{k}')
+                    self.add_std(k0=f'{kc}_{k}')
+                    for k0 in [f'{kc}_{k}', f'{kc}_{k}_mu', f'{kc}_{k}_std']:
+                        self.add_scaled(k0=k0)
 
-    #
+    def build(self, save=True, object=None):
+        siu.day = siu.s * 24 * 60 * 60
+        siu.cm = siu.m * 10 ** -2
+        siu.mm = siu.m * 10 ** -3
+        siu.g = siu.kg * 10 ** -3
+        siu.deg = siu.I.rename("deg", "deg", "plain angle")
+        siu.microM = siu.mol * 10 ** -6
+        self.dict=self.build_constants(object=object)
 
-    for k, p in df.items():
-        p.par_dict = df
-    if save:
-        save_ParDict_frame(df)
-    return df
+        self.build_DEB()
+        self.build_gut()
+
+        self.add_cum(p='cum_dur', k0='dt', d=nam.cum('dur'), k=nam.cum('t'), s=sub('t', 'cum'))
+
+        self.build_spatial()
+        self.build_angular()
+        self.build_chunk()
+        self.build_neural()
 
 
-# def post_get_par(dataset, par):
-#     # print(dataset.step_data)
-#     k = getPar(d=par, to_return=['k'])[0]
-#     p = ParDict[k]
-#     vs = [p.get_from(o, u=False, tick=None, df=dataset.step_data) for o in dataset.agent_ids]
-#     # print(vs)
-#     return vs
+        for k, p in self.dict.items():
+            p.par_dict = self.dict
+        if save:
+            self.save()
+
+    def save(self, save_pdf=False):
+        import inspect
+        args = list(inspect.signature(Parameter.__init__).parameters.keys())
+        args = [a for a in args if a not in ['self', 'par_dict']]
+        d = {k: {a: getattr(p, a) for a in args} for k, p in self.dict.items()}
+        save_dict(d, paths.path('ParDict'))
+        if save_pdf:
+            def df2pdf(df, path, **kwargs):
+                # https://stackoverflow.com/questions/32137396/how-do-i-plot-only-a-table-in-matplotlib
+                fig, ax = plt.subplots(figsize=(12, 4))
+                ax.axis('tight')
+                ax.axis('off')
+                the_table = ax.table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center', **kwargs)
+                # the_table.set_fontsize(20)
+                the_table.scale(1, 2)
+                from matplotlib.font_manager import FontProperties
+
+                for (row, col), cell in the_table.get_celld().items():
+                    if (row == 0) or (col == -1):
+                        cell.set_text_props(fontproperties=FontProperties(weight='bold'))
+
+                # https://stackoverflow.com/questions/4042192/reduce-left-and-right-margins-in-matplotlib-plot
+                pp = PdfPages(path)
+                pp.savefig(fig, bbox_inches='tight')
+                pp.close()
+            dd = [{'symbol': p.s, 'unit': p.u.unit.abbrev, 'codename': k, 'interpretation': p.d} for i, (k, p) in
+                  enumerate(self.dict.items()) if 240 < i < 280]
+            ddf = pd.DataFrame.from_records(dd)
+            ws = np.array([1, 1, 1, 5])
+            ws = (ws / sum(ws))
+            ddf.to_csv(paths.path('ParDf'))
+            df2pdf(ddf, paths.path('ParPdf'), colWidths=ws, edges='horizontal')
+
+    def load(self):
+        self.dict = load_dicts([paths.path('ParDict')])[0]
+
+    def reconstruct(self):
+        frame = load_dicts([paths.path('ParDict')])[0]
+        for k, args in frame.items():
+            self.dict[k] = Parameter(**args, par_dict=self.dict)
+        for k, p in self.dict.items():
+            p.par_dict = self.dict
+
+    def runtime_pars(self):
+        return [v['d'] for k, v in self.dict.items() if v['o'] == Larva and not k in self.build_constants().keys()]
 
 
 chunk_dict = {
@@ -911,76 +862,15 @@ chunk_dict = {
     'fee_c': nam.chain('feed')
 }
 
+def runtime_pars( PF=None) :
+    if PF is None :
+        PF = ParDict(mode='load').dict
+    return [v['d'] for k, v in PF.dict.items() if v['o'] == Larva and not k in PF.build_constants().keys()]
 
 
-
-def load_ParDict():
-    # import lib.aux.functions as fun
-    dic = lib.aux.dictsNlists.load_dicts([paths.path('ParDict')])[0]
-    return dic
-
-def df2pdf(df, path, **kwargs) :
-    # https://stackoverflow.com/questions/32137396/how-do-i-plot-only-a-table-in-matplotlib
-    fig, ax = plt.subplots(figsize=(12, 4))
-    ax.axis('tight')
-    ax.axis('off')
-    the_table = ax.table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center', **kwargs)
-    # the_table.set_fontsize(20)
-    the_table.scale(1, 2)
-    from matplotlib.font_manager import FontProperties
-
-    for (row, col), cell in the_table.get_celld().items():
-        if (row == 0) or (col == -1):
-            cell.set_text_props(fontproperties=FontProperties(weight='bold'))
-
-    # https://stackoverflow.com/questions/4042192/reduce-left-and-right-margins-in-matplotlib-plot
-    pp = PdfPages(path)
-    pp.savefig(fig, bbox_inches='tight')
-    pp.close()
-
-def save_ParDict_frame(df, save_pdf=False):
-    import inspect
-    args = list(inspect.signature(Parameter.__init__).parameters.keys())
-    args = [a for a in args if a not in ['self', 'par_dict']]
-    d = {k: {a: getattr(p, a) for a in args} for k, p in df.items()}
-    lib.aux.dictsNlists.save_dict(d, paths.path('ParDict'))
-    if save_pdf:
-        dd = [{'symbol': p.s, 'unit': p.u.unit.abbrev, 'codename': k, 'interpretation': p.d} for i, (k, p) in
-              enumerate(df.items()) if 240 < i < 280]
-        ddf = pd.DataFrame.from_records(dd)
-        ws = np.array([1, 1, 1, 5])
-        ws = (ws / sum(ws))
-        ddf.to_csv(paths.path('ParDf'))
-        df2pdf(ddf, paths.path('ParPdf'), colWidths=ws, edges='horizontal')
-    return d
-
-
-def reconstruct_ParDict(test=False):
-    frame = lib.aux.dictsNlists.load_dicts([paths.path('ParDict')])[0]
-    dic = {}
-    for k, args in frame.items():
-        dic[k] = Parameter(**args, par_dict=dic)
-    for k, p in dic.items():
-        p.par_dict = dic
-
-    # Test
-    if test:
-        dic0 = build_par_dict()
-        for a in args:
-            if a != 'self':
-                print(a, all([getattr(dic0[k], a) == getattr(dic[k], a) for k in dic.keys()]))
-    return dic
-
-
-
-PF = load_ParDict()
-
-def runtime_pars() :
-    return [v['d'] for k, v in PF.items() if v['o'] == Larva and not k in build_constants().keys()]
-
-
-def getPar(k=None, p=None, d=None, to_return=['d', 'l']):
-    from lib.aux.dictsNlists import flatten_list
+def getPar(k=None, p=None, d=None, to_return=['d', 'l'], PF=None):
+    if PF is None :
+        PF = ParDict(mode='load').dict
     if k is None:
         if p is not None:
             if type(p) == str:
@@ -1000,7 +890,11 @@ def getPar(k=None, p=None, d=None, to_return=['d', 'l']):
 
 
 if __name__ == '__main__':
-    # ParDict = build_par_dict()
+    d=ParDict(mode='build').dict
+    print(d.keys())
+    # d = ParDict(mode='reconstruct').dict
+    # print(d.keys())
+    raise
     # for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
     #     p = getPar(short, to_return=['d'])[0]
     #     print(p)

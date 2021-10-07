@@ -40,7 +40,6 @@ def path(n) :
     }
 
     conf_paths = {
-        'Data': f'{CF}/DataConfs.txt',
         'Group': f'{CF}/DataGroups.txt',
         'Env': f'{CF}/EnvConfs.txt',
         'Par': f'{CF}/ParConfs.txt',

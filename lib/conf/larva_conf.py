@@ -3,7 +3,7 @@ The larva model parameters
 '''
 
 import numpy as np
-from lib.conf.init_dtypes import null_dict
+from lib.conf.dtypes import null_dict
 
 ''' Default exploration model'''
 
@@ -91,11 +91,11 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
     return d
 
 
-def RvsS_larva(EEB, Nsegs=2, mock=False, **deb_kws):
+def RvsS_larva(EEB, Nsegs=2, mock=False,hunger_gain= 2.0, DEB_dt= 1.0, **deb_kws):
     b = brain(['L', 'F'], crawler=Cbas, intermitter=Im(EEB)) if not mock else brain(['Im', 'F'],
                                                                                     intermitter=Im(EEB))
     return null_dict('larva_conf', brain=b, body=null_dict('body', initial_length=0.001, Nsegs=Nsegs),
-                     energetics=null_dict('energetics', hunger_as_EEB=True, **deb_kws))
+                     energetics=null_dict('energetics', hunger_as_EEB=True,hunger_gain= hunger_gain, DEB_dt= DEB_dt, **deb_kws))
 
 
 def nengo_brain(EEB):

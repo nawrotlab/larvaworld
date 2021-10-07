@@ -1,23 +1,21 @@
-import itertools
-
 from scipy.spatial.distance import euclidean
 import numpy as np
 
-import lib.anal.process.aux
-import lib.aux.ang_aux
+from lib.anal.process.aux import suppress_stdout, sign_changes, comp_bearing2source
+from lib.aux.ang_aux import angle_to_x_axis
 import lib.aux.naming as nam
 from lib.anal.fitting import fit_bouts
-from lib.anal.process.basic import compute_extrema, compute_freq
+from lib.anal.process.basic import comp_extrema, compute_freq
 from lib.anal.process.spatial import scale_to_length
 from lib.anal.process.store import store_aux_dataset
-from lib.conf.par import load_ParDict
 
 
-def annotate(s, e, config=None,bouts={'stride': True, 'pause': True, 'turn': True},
+def annotate(s, e, config=None, bouts={'stride': True, 'pause': True, 'turn': True},
              recompute=False, track_point=None, track_pars=None, chunk_pars=None,
              vel_par=None, ang_vel_par=None, bend_vel_par=None, min_ang=5.0, min_ang_vel=100.0,
              non_chunks=False, source=None, show_output=True, **kwargs):
-    dic = load_ParDict()
+    from lib.conf.par import ParDict
+    dic = ParDict(mode='load').dict
     if vel_par is None:
         vel_par = dic['sv']['d']
     if ang_vel_par is None:
@@ -48,7 +46,7 @@ def annotate(s, e, config=None,bouts={'stride': True, 'pause': True, 'turn': Tru
         'aux_dir': f'{config["dir"]}/data/aux.h5',
         'recompute': recompute,
     }
-    with lib.anal.process.aux.suppress_stdout(show_output):
+    with suppress_stdout(show_output):
         if bouts['stride']:
             detect_strides(**c, non_chunks=non_chunks, vel_par=vel_par, chunk_pars=chunk_pars, **kwargs)
         if bouts['pause']:
@@ -57,12 +55,12 @@ def annotate(s, e, config=None,bouts={'stride': True, 'pause': True, 'turn': Tru
             detect_turns(**c, ang_vel_par=ang_vel_par, bend_vel_par=bend_vel_par, min_ang=min_ang,
                          min_ang_vel=min_ang_vel, **kwargs)
 
-        if bouts['stride'] and bouts['pause'] :
+        if bouts['stride'] and bouts['pause']:
             fit_bouts(**c, **kwargs)
         if source is not None:
             for b in bouts.keys():
-                if bouts[b] :
-                    compute_chunk_bearing2source(**c, chunk=b, source=source, **kwargs)
+                if bouts[b]:
+                    comp_chunk_bearing(**c, chunk=b, source=source, **kwargs)
     return s, e
 
 
@@ -79,7 +77,7 @@ def detect_turns(s, e, aux_dir, dt, track_pars, min_ang_vel, min_ang=30.0,
     if bend_vel_par is None:
         bend_vel_par = nam.vel('bend')
 
-    # compute_extrema(ss, dt, parameters=[ang_vel_par], interval_in_sec=0.3, abs_threshold=[-min_ang_vel, min_ang_vel])
+    # comp_extrema(ss, dt, parameters=[ang_vel_par], interval_in_sec=0.3, abs_threshold=[-min_ang_vel, min_ang_vel])
     # detect_turn_bouts(ss, e, dt, par=ang_vel_par)
     print(min_ang)
     detect_chunks(ss, e, dt, chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=ang_vel_par,
@@ -129,9 +127,9 @@ def detect_strides(s, e, aux_dir, config, dt, recompute=False, vel_par=None, tra
     mid_flag = nam.max(vel_par)
     edge_flag = nam.min(vel_par)
 
-    compute_extrema(s, dt, parameters=[vel_par], interval_in_sec=0.3, abs_threshold=[np.inf, sv_thr])
+    comp_extrema(s, dt, parameters=[vel_par], interval_in_sec=0.3, abs_threshold=[np.inf, sv_thr])
     compute_freq(s, e, dt, parameters=[vel_par], freq_range=[0.7, 1.8])
-    detect_contacting_chunks(s, e, aux_dir, dt, chunk=c, mid_flag=mid_flag, edge_flag=edge_flag,
+    detect_contacting_chunks(s, e, aux_dir, dt, mid_flag=mid_flag, edge_flag=edge_flag,
                              vel_par=vel_par, control_pars=track_pars,
                              track_point=track_point)
     if non_chunks:
@@ -142,60 +140,78 @@ def detect_strides(s, e, aux_dir, config, dt, recompute=False, vel_par=None, tra
     print('All strides detected')
 
 
-def detect_turn_bouts(s, e, dt, par):
-    ids = s.index.unique('AgentID').values
-    Nids = len(ids)
-    output = f'Detecting chunks-on-condition for {Nids} agents'
-    N = len(s.index.unique('Step'))
-    t0 = int(s.index.unique('Step').min())
-    pos_flag = nam.max(par)
-    neg_flag = nam.min(par)
-    cs, c0=['Lturn', 'Rturn'], 'turn'
-    dic={}
-    for c in cs :
-        c_ps = [nam.start(c), nam.stop(c), nam.id(c), nam.dur(c)]
-        dic[c] = {pp: np.zeros([N, Nids]) * np.nan for pp in c_ps}
+# def detect_turn_bouts(s, e, dt, par):
+#     ids = s.index.unique('AgentID').values
+#     Nids = len(ids)
+#     output = f'Detecting chunks-on-condition for {Nids} agents'
+#     N = len(s.index.unique('Step'))
+#     t0 = int(s.index.unique('Step').min())
+#     pos_flag = nam.max(par)
+#     neg_flag = nam.min(par)
+#     cs, c0 = ['Lturn', 'Rturn'], 'turn'
+#     dic = {}
+#     for c in cs:
+#         c_ps = [nam.start(c), nam.stop(c), nam.id(c), nam.dur(c)]
+#         dic[c] = {pp: np.zeros([N, Nids]) * np.nan for pp in c_ps}
+#
+#     for i, id in enumerate(ids):
+#         sss = s.xs(id, level='AgentID', drop_level=True)
+#         idx0 = np.unique(sign_changes(sss, par).index.values.astype(int))
+#         for c, flag in zip(cs, [pos_flag, neg_flag]):
+#             idxM = np.unique(sss[sss[flag] == True].index.values.astype(int))
+#             s0s, s1s = [], []
+#             for jj, ii in enumerate(idxM):
+#                 try:
+#                     s0, s1 = idx0[idx0 < ii][-1], idx0[idx0 > ii][0]
+#                     if s0 not in s0s and s1 not in s1s:
+#                         s0s.append(s0)
+#                         s1s.append(s1)
+#                 except:
+#                     pass
+#
+#             s0s = np.array(s0s)
+#             s1s = np.array(s1s)
+#             ds = (s1s - s0s) * dt
+#             dic[c][nam.start(c)][s0s - t0, i] = True
+#             dic[c][nam.stop(c)][s1s - t0, i] = True
+#             dic[c][nam.dur(c)][s1s - t0, i] = ds
+#             for j, (s0, s1) in enumerate(zip(s0s, s1s)):
+#                 dic[c][nam.id(c)][s0 - t0:s1 + 1 - t0, i] = j
+#     for c in cs:
+#         for p, a in dic[c].items():
+#             s[p] = a.flatten()
+#     comp_merged_chunk(s, c0, cs)
+#     compute_chunk_metrics(s, e, cs + [c0])
+#
+#     print(output)
+#     print('All chunks-on-condition detected')
 
-    for i, id in enumerate(ids):
-        sss = s.xs(id, level='AgentID', drop_level=True)
-        idx0 = np.unique(lib.anal.process.aux.sign_changes(sss, par).index.values.astype(int))
-        for c, flag in zip(cs, [pos_flag, neg_flag]) :
-            idxM = np.unique(sss[sss[flag] == True].index.values.astype(int))
-            s0s,s1s=[],[]
-            for jj, ii in enumerate(idxM) :
-                try:
-                    s0,s1=idx0[idx0 < ii][-1], idx0[idx0>ii][0]
-                    if s0 not in s0s and s1 not in s1s :
-                        s0s.append(s0)
-                        s1s.append(s1)
-                except :
-                    pass
 
-            s0s =np.array(s0s)
-            s1s =np.array(s1s)
-            ds=(s1s - s0s) * dt
-            dic[c][nam.start(c)][s0s - t0, i] = True
-            dic[c][nam.stop(c)][s1s - t0, i] = True
-            dic[c][nam.dur(c)][s1s - t0, i] = ds
-            for j, (s0, s1) in enumerate(zip(s0s, s1s)):
-                dic[c][nam.id(c)][s0 - t0:s1 + 1 - t0, i] = j
-    for c in cs:
-        for p, a in dic[c].items():
-            s[p] = a.flatten()
+def comp_merged_chunk(s, c0, cs, pars=[], e=None):
+    ps = []
     mc0, mc1, mcdur = nam.start(c0), nam.stop(c0), nam.dur(c0)
-    s[mcdur] = s[[nam.dur(c) for c in cs]].sum(axis=1, min_count=1)
-    s[mc0] = s[[nam.start(c) for c in cs]].sum(axis=1, min_count=1)
-    s[mc1] = s[[nam.stop(c) for c in cs]].sum(axis=1, min_count=1)
-    compute_chunk_metrics(s, e, cs+[c0])
-
-    print(output)
-    print('All chunks-on-condition detected')
+    cs0, cs1, csdur = nam.start(cs), nam.stop(cs), nam.dur(cs)
+    s[mcdur] = s[csdur].sum(axis=1, min_count=1)
+    s[mc0] = s[cs0].sum(axis=1, min_count=1)
+    s[mc1] = s[cs1].sum(axis=1, min_count=1)
+    ps += [mc0, mc1, mcdur]
+    for p in pars:
+        p_mc0, p_mc1, p_mc = nam.at(p, mc0), nam.at(p, mc1), nam.chunk_track(c0, p)
+        p_cs = [nam.chunk_track(c, p) for c in cs]
+        s[p_mc0] = s[nam.at(p, cs0)].sum(axis=1, min_count=1)
+        s[p_mc1] = s[nam.at(p, cs1)].sum(axis=1, min_count=1)
+        s[p_mc] = s[p_cs].sum(axis=1, min_count=1)
+        e[nam.mean(p_mc)] = s[p_cs].abs().groupby('AgentID').mean().mean(axis=1)
+        e[nam.std(p_mc)] = s[p_cs].abs().groupby('AgentID').std().mean(axis=1)
+        ps += [p_mc0, p_mc1, p_mc]
+    return ps
 
 
 def detect_chunks(s, e, dt, chunk_names, par, chunk_only=None, par_ranges=[[-np.inf, np.inf]],
                   ROU_ranges=[[-np.inf, np.inf]],
                   non_overlap_chunk=None, merged_chunk=None, store_min=[False], store_max=[False],
                   min_dur=0.0):
+    cs, c0=chunk_names, merged_chunk
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     output = f'Detecting chunks-on-condition for {Nids} agents'
@@ -212,8 +228,7 @@ def detect_chunks(s, e, dt, chunk_names, par, chunk_only=None, par_ranges=[[-np.
             d = ss.xs(id, level='AgentID', drop_level=True)
             return d[d[nam.id(non_overlap_chunk)].isna()][par]
 
-    for c, (Vmin, Vmax), (Amin, Amax), storMin, storMax in zip(chunk_names, par_ranges, ROU_ranges, store_min,
-                                                               store_max):
+    for c, (Vmin, Vmax), (Amin, Amax), storMin, storMax in zip(cs, par_ranges, ROU_ranges, store_min,store_max):
         c_ps = [S0, S1, Id, Dur, Max, Min] = [nam.start(c), nam.stop(c), nam.id(c), nam.dur(c),
                                               nam.max(nam.chunk_track(c, par)), nam.min(nam.chunk_track(c, par))]
         dic = {pp: np.zeros([N, Nids]) * np.nan for pp in c_ps}
@@ -245,14 +260,10 @@ def detect_chunks(s, e, dt, chunk_names, par, chunk_only=None, par_ranges=[[-np.
 
         for p, a in dic.items():
             s[p] = a.flatten()
-    compute_chunk_metrics(s, e, chunk_names)
-    if merged_chunk is not None:
-        mc0, mc1, mcdur = nam.start(merged_chunk), nam.stop(merged_chunk), nam.dur(merged_chunk)
-        s[mcdur] = s[[nam.dur(c) for c in chunk_names]].sum(axis=1, min_count=1)
-        s[mc0] = s[[nam.start(c) for c in chunk_names]].sum(axis=1, min_count=1)
-        s[mc1] = s[[nam.stop(c) for c in chunk_names]].sum(axis=1, min_count=1)
-        compute_chunk_metrics(s, e, [merged_chunk])
-
+    compute_chunk_metrics(s, e, cs)
+    if c0 is not None:
+        comp_merged_chunk(s, c0, cs)
+        compute_chunk_metrics(s, e, [c0])
     print(output)
     print('All chunks-on-condition detected')
 
@@ -329,145 +340,109 @@ def detect_non_chunks(s, e, dt, chunk_name, guide_parameter, non_chunk_name=None
 def compute_chunk_metrics(s, e, chunks):
     for c in chunks:
         dur = nam.dur(c)
-        e[nam.num(c)] = s[nam.stop(c)].groupby('AgentID').sum()
+        e[nam.num(c)] = s[dur].groupby('AgentID').count()
         e[nam.cum(dur)] = s[dur].groupby('AgentID').sum()
         e[nam.mean(dur)] = s[dur].groupby('AgentID').mean()
         e[nam.std(dur)] = s[dur].groupby('AgentID').std()
         e[nam.dur_ratio(c)] = e[nam.cum(dur)] / e[nam.cum('dur')]
 
 
-def detect_contacting_chunks(s, e, aux_dir, dt, chunk='stride', track_point=None, mid_flag=None, edge_flag=None,
-                             control_pars=[], vel_par=None, chunk_dur_in_sec=None):
+def detect_contacting_chunks(s, e, aux_dir, dt, vel_par,track_point, chunk='stride', mid_flag=None, edge_flag=None,
+                             control_pars=[]):
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     t0 = int(s.index.unique('Step').min())
     N = len(s.index.unique('Step'))
 
-    c_0 = nam.start(chunk)
-    c_1 = nam.stop(chunk)
-    c_id = nam.id(chunk)
-    c_dur = nam.dur(chunk)
-    c_or = nam.orient(chunk)
-    c_chain = nam.chain(chunk)
-    c_chain_dur = nam.dur(c_chain)
-    c_chain_l = nam.length(c_chain)
+    c_chain_dur = nam.dur(nam.chain(chunk))
+    c_chain_l = nam.length(nam.chain(chunk))
     c_dst = nam.dst(chunk)
     c_sdst = nam.straight_dst(chunk)
-    # scaled_chunk_strdst = nam.scal(c_sdst)
-    # scaled_chunk_dst = nam.scal(c_dst)
 
-    if track_point in [None, 'centroid']:
-        track_xy = ['x', 'y']
-        track_dst = 'dst' if 'dst' in s.columns else 'distance'
+    if track_point in [None, 'centroid', -1]:
+        XY0 = ['x', 'y']
+        D0 = 'dst' if 'dst' in s.columns else 'distance'
     else:
-        track_xy = nam.xy(track_point)
-        track_dst = nam.dst(track_point)
-
-    # if 'length' in e.columns.values:
-    #     lengths = e['length'].values
-    # else:
-    #     lengths = None
-
-    cpars = [track_dst] + track_xy + control_pars
+        XY0 = nam.xy(track_point)
+        D0 = nam.dst(track_point)
+    cpars = [D0] + XY0 + control_pars
     cpars = [p for p in cpars if p in s.columns]
 
-    start_array = np.zeros([N, Nids]) * np.nan
-    stop_array = np.zeros([N, Nids]) * np.nan
-    dur_array = np.zeros([N, Nids]) * np.nan
-    orientation_array = np.zeros([N, Nids]) * np.nan
-    id_array = np.zeros([N, Nids]) * np.nan
-    chunk_chain_length_array = np.zeros([N, Nids]) * np.nan
-    chunk_chain_dur_array = np.zeros([N, Nids]) * np.nan
-    dst_array = np.zeros([N, Nids]) * np.nan
-    straight_dst_array = np.zeros([N, Nids]) * np.nan
-    # scaled_dst_array = np.zeros([N, Nids]) * np.nan
-    # scaled_straight_dst_array = np.zeros([N, Nids]) * np.nan
+    A_s0s = np.zeros([N, Nids]) * np.nan
+    A_s1s = np.zeros([N, Nids]) * np.nan
+    A_dur = np.zeros([N, Nids]) * np.nan
+    A_or = np.zeros([N, Nids]) * np.nan
+    A_id = np.zeros([N, Nids]) * np.nan
+    A_cl = np.zeros([N, Nids]) * np.nan
+    A_cdur = np.zeros([N, Nids]) * np.nan
+    A_d = np.zeros([N, Nids]) * np.nan
+    A_sd = np.zeros([N, Nids]) * np.nan
 
-    arrays = [start_array, stop_array, dur_array, id_array,
-              chunk_chain_length_array, chunk_chain_dur_array,
-              dst_array, straight_dst_array, orientation_array]
+    arrays = [A_s0s, A_s1s, A_dur, A_id,
+              A_cl, A_cdur,
+              A_d, A_sd, A_or]
 
-    pars = [c_0, c_1, c_dur, c_id,
+    pars = [nam.start(chunk), nam.stop(chunk), nam.dur(chunk), nam.id(chunk),
             c_chain_l, c_chain_dur,
-            c_dst, c_sdst, c_or]
+            c_dst, c_sdst, nam.orient(chunk)]
 
-    if vel_par:
-        freqs = e[nam.freq(vel_par)]
-        mean_freq = freqs.mean()
-        print(f'Replacing {freqs.isna().sum()} nan values with population mean frequency : {mean_freq}')
-        freqs.fillna(value=mean_freq, inplace=True)
-        chunk_dur_in_ticks = {id: 1 / freqs[id] / dt for id in ids}
-        cpars.append(vel_par)
-        if edge_flag is None:
-            edge_flag = nam.min(vel_par)
-        if mid_flag is None:
-            mid_flag = nam.max(vel_par)
-    elif chunk_dur_in_sec:
-        chunk_dur_in_ticks = {id: chunk_dur_in_sec / dt for id in ids}
+    freqs = e[nam.freq(vel_par)]
+    freqs.fillna(value=freqs.mean(), inplace=True)
+    if edge_flag is None:
+        edge_flag = nam.min(vel_par)
+    if mid_flag is None:
+        mid_flag = nam.max(vel_par)
 
     for i, id in enumerate(ids):
-        t = chunk_dur_in_ticks[id]
+        t = 1 / freqs[id]/dt
+
         d = s.xs(id, level='AgentID', drop_level=True)
         edges = d[d[edge_flag] == True].index.values
         mids = d[d[mid_flag] == True].index.values
         valid = d[cpars].dropna().index.values
-
-        d_dst = d[track_dst].values
-        d_xy = d[track_xy].values
+        # print(id, edges, mids, valid)
+        d_dst = d[D0].values
+        d_xy = d[XY0].values
 
         chunks = np.array([[a, b] for a, b in zip(edges[:-1], edges[1:]) if (b - a >= 0.5 * t)
                            and (b - a <= 2.0 * t)
                            and set(np.arange(a, b + 1)) <= set(valid)
                            and (any((m > a) and (m < b) for m in mids))
                            ]).astype(int)
-        Nchunks = len(chunks)
-        if Nchunks != 0:
-            durs = np.diff(chunks, axis=1)[:, 0] * dt
-            contacts = [int(stop1 == start2) for (start1, stop1), (start2, stop2) in
-                        zip(chunks[:-1, :], chunks[1:, :])] + [0]
-            s0s = chunks[:, 0] - t0
-            s1s = chunks[:, 1] - t0
-            dur_array[s1s, i] = durs
-            chain_counter = 0
-            chain_dur_counter = 0
-            for j, (s0, s1, dur, contact) in enumerate(zip(s0s, s1s, durs, contacts)):
-                if chain_counter > 0:
-                    s0 += 1
-                start_array[s0, i] = True
-                stop_array[s1, i] = True
-                id_array[s0:s1 + 1, i] = j
-                chain_counter += 1
-                chain_dur_counter += dur
-                if contact == 0:
-                    chunk_chain_length_array[s1 + 1, i] = chain_counter
-                    chunk_chain_dur_array[s1 + 1, i] = chain_dur_counter
-                    chain_counter = 0
-                    chain_dur_counter = 0
+        if len(chunks) == 0:
+            continue
 
-                dst_array[s1, i] = np.sum(d_dst[s0 + 1: s1])
-                straight_dst_array[s1, i] = euclidean(tuple(d_xy[s1, :]), tuple(d_xy[s0, :]))
-                orientation_array[s1, i] = lib.aux.ang_aux.angle_to_x_axis(d_xy[s0], d_xy[s1])
+        durs = np.diff(chunks, axis=1)[:, 0] * dt
+        contacts = [int(ss11 == ss02) for (ss01, ss11), (ss02, ss12) in zip(chunks[:-1, :], chunks[1:, :])] + [0]
+        s0s = chunks[:, 0] - t0
+        s1s = chunks[:, 1] - t0
+        A_dur[s1s, i] = durs
+        chain_counter = 0
+        chain_dur_counter = 0
+        for j, (s0, s1, dur, contact) in enumerate(zip(s0s, s1s, durs, contacts)):
+            if chain_counter > 0:
+                s0 += 1
+            A_s0s[s0, i] = True
+            A_s1s[s1, i] = True
+            A_id[s0:s1 + 1, i] = j
+            chain_counter += 1
+            chain_dur_counter += dur
+            if contact == 0:
+                A_cl[s1 + 1, i] = chain_counter
+                A_cdur[s1 + 1, i] = chain_dur_counter
+                chain_counter = 0
+                chain_dur_counter = 0
 
-            # if lengths is not None:
-            #     l = lengths[i]
-            #     scaled_dst_array[s1s, i] = dst_array[s1s, i] / l
-            #     scaled_straight_dst_array[s1s, i] = straight_dst_array[s1s, i] / l
-
-    for array, par in zip(arrays, pars):
-        s[par] = array.flatten()
+            A_d[s1, i] = np.sum(d_dst[s0 + 1: s1])
+            A_sd[s1, i] = euclidean(tuple(d_xy[s1, :]), tuple(d_xy[s0, :]))
+            A_or[s1, i] = angle_to_x_axis(d_xy[s0], d_xy[s1])
+    for a, p in zip(arrays, pars):
+        s[p] = a.flatten()
     for pp in [c_dst, c_sdst]:
         e[nam.cum(pp)] = s[pp].groupby('AgentID').sum()
         e[nam.mean(pp)] = s[pp].groupby('AgentID').mean()
         e[nam.std(pp)] = s[pp].groupby('AgentID').std()
-
     e['stride_reoccurence_rate'] = 1 - 1 / s[c_chain_l].groupby('AgentID').mean()
-
-    # if 'length' in e.columns.values:
-    #     for pp in [c_dst, c_sdst]:
-    #         spp = nam.scal(pp)
-    #         e[nam.cum(spp)] = e[nam.cum(pp)] / e['length']
-    #         e[nam.mean(spp)] = e[nam.mean(pp)] / e['length']
-    #         e[nam.std(spp)] = e[nam.std(pp)] / e['length']
     pars = [c_dst, c_sdst]
     pars = pars + nam.cum(pars) + nam.mean(pars) + nam.std(pars)
     scale_to_length(s, e, pars=pars)
@@ -475,26 +450,6 @@ def detect_contacting_chunks(s, e, aux_dir, dt, chunk='stride', track_point=None
 
     store_aux_dataset(s, pars=[c_chain_dur, c_chain_l], type='distro', file=aux_dir)
     print('All chunks-around-flag detected')
-
-
-def compute_chunk_overlap(s, e, base_chunk, overlapping_chunk):
-    ids = s.index.unique('AgentID').values
-    c0, c1 = base_chunk, overlapping_chunk
-    print(f'Computing overlap of {c1} on {c0} chunks')
-    p = nam.overlap_ratio(base_chunk=c0, overlapping_chunk=c1)
-    s[p] = np.nan
-    p0_id = nam.id(c0)
-    p1_id = nam.id(c1)
-    for id in ids:
-        d = s.xs(id, level='AgentID', drop_level=True)
-        inds = np.unique(d[p0_id].dropna().values)
-        s0s = d[d[nam.stop(c0)] == True].index
-        for i, s0 in zip(inds, s0s):
-            d0 = d[d[p0_id] == i]
-            d1 = d0[p1_id].dropna()
-            s.loc[(s0, id), p] = len(d1) / len(d0)
-    print('All chunk overlaps computed')
-    return s[p].dropna().sum()
 
 
 def track_pars_in_chunks(s, e, aux_dir, chunks, pars, mode='dif', merged_chunk=None):
@@ -524,7 +479,6 @@ def track_pars_in_chunks(s, e, aux_dir, chunks, pars, mode='dif', merged_chunk=N
             p_array = np.zeros([Nticks, Nids, len(p_pars)]) * np.nan
             ds = [d[p] for d in all_d]
             for k, (id, d, s0s, s1s) in enumerate(zip(ids, ds, all_0s, all_1s)):
-                # print(k, id,c, len(s0s), len(s1s))
                 a0s = d[s0s].values
                 a1s = d[s1s].values
                 if mode == 'dif':
@@ -543,23 +497,14 @@ def track_pars_in_chunks(s, e, aux_dir, chunks, pars, mode='dif', merged_chunk=N
         p_aux = p_aux + p_tracks + p0s + p1s
 
     if merged_chunk is not None:
-        mc0, mc1, mcdur = nam.start(merged_chunk), nam.stop(merged_chunk), nam.dur(merged_chunk)
-        for p in pars:
-            p_mc0, p_mc1, p_mc = nam.at(p, mc0), nam.at(p, mc1), nam.chunk_track(merged_chunk, p)
-            s[p_mc0] = s[[nam.at(p, nam.start(c)) for c in chunks]].sum(axis=1, min_count=1)
-            s[p_mc1] = s[[nam.at(p, nam.stop(c)) for c in chunks]].sum(axis=1, min_count=1)
-            s[p_mc] = s[[nam.chunk_track(c, p) for c in chunks]].sum(axis=1, min_count=1)
+        p_aux_m = comp_merged_chunk(s, merged_chunk, chunks, pars, e=e)
+        p_aux += p_aux_m
 
-            p_aux += [p_mc0, p_mc1, mcdur, p_mc]
-            e[nam.mean(p_mc)] = s[[nam.chunk_track(c, p) for c in chunks]].abs().groupby('AgentID').mean().mean(
-                axis=1)
-            e[nam.std(p_mc)] = s[[nam.chunk_track(c, p) for c in chunks]].abs().groupby('AgentID').std().mean(
-                axis=1)
     store_aux_dataset(s, pars=p_aux, type='distro', file=aux_dir)
     print('All parameters tracked')
 
 
-def compute_chunk_bearing2source(s, aux_dir, chunk, source=(-50.0, 0.0), **kwargs):
+def comp_chunk_bearing(s, aux_dir, chunk, source=(-50.0, 0.0), **kwargs):
     c0 = nam.start(chunk)
     c1 = nam.stop(chunk)
     ho = nam.unwrap(nam.orient('front'))
@@ -576,11 +521,10 @@ def compute_chunk_bearing2source(s, aux_dir, chunk, source=(-50.0, 0.0), **kwarg
     b1_par = f'{nam.bearing2(source)}_at_{c1}'
     db_par = f'{chunk}_{nam.bearing2(source)}_correction'
 
-    b0 = lib.anal.process.aux.compute_bearing2source(s[x0_par].dropna().values, s[y0_par].dropna().values,
-                                                     s[ho0_par].dropna().values, loc=source, in_deg=True)
-    b1 = lib.anal.process.aux.compute_bearing2source(s[x1_par].dropna().values, s[y1_par].dropna().values,
-                                                     s[ho1_par].dropna().values, loc=source, in_deg=True)
-
+    b0 = comp_bearing2source(s[x0_par].dropna().values, s[y0_par].dropna().values,
+                             s[ho0_par].dropna().values, loc=source, in_deg=True)
+    b1 = comp_bearing2source(s[x1_par].dropna().values, s[y1_par].dropna().values,
+                             s[ho1_par].dropna().values, loc=source, in_deg=True)
 
     s[b0_par] = np.nan
     s.loc[s[c0] == True, b0_par] = b0

@@ -191,7 +191,7 @@ def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={}, 
 #     PIs = []
 #     Ns = []
 #     for j, d in enumerate(ds):
-#         PI, N = d.compute_preference_index(return_num=True)
+#         PI, N = d.comp_PI(return_num=True)
 #         PIs.append(PI)
 #         Ns.append(N)
 #     df = pd.DataFrame({'PI': PIs, 'N': Ns}, index=ids)

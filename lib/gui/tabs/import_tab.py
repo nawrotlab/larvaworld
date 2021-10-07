@@ -1,7 +1,7 @@
 from lib.gui.aux.elements import ButtonGraphList, CollapsibleDict, DataList, SelectionList
 from lib.gui.aux.functions import gui_cols
 from lib.gui.tabs.tab import GuiTab
-from lib.sim.single_run import run_sim
+from lib.sim.single_run import run_sim, SingleRun
 from lib.stor import paths
 
 
@@ -47,7 +47,7 @@ class ImportTab(GuiTab):
     def imitate(self, conf):
         from lib.anal.comparing import ExpFitter
 
-        dd = run_sim(**conf)
+        dd = SingleRun(**conf).run()
         f = ExpFitter(dd.config['env_params']['larva_groups']['ImitationGroup']['sample'])
         fit = f.compare(dd, save_to_config=True)
         print(fit)

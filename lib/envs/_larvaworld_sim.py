@@ -4,7 +4,7 @@ from mesa.datacollection import DataCollector
 import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import generate_xy_distro
 from lib.aux.colsNstr import N_colors
-from lib.aux.collecting import TargetedDataCollector
+
 from lib.conf.par import CompGroupCollector
 from lib.envs._larvaworld import LarvaWorld, generate_larvae, get_sample_bout_distros, sample_group
 from lib.sim.conditions import get_exp_condition
@@ -14,15 +14,6 @@ from lib.stor import paths
 class LarvaWorldSim(LarvaWorld):
     def __init__(self,life_params,  output, id='Unnamed_Simulation', larva_collisions=True, parameter_dict= {}, **kwargs):
         super().__init__(id=id, **kwargs)
-
-        # if parameter_dict is None:
-        #     parameter_dict = {}
-
-        # if life_params is None:
-        #     life_params = null_dict('life')
-        # elif type(life_params)==str :
-        #     from lib.conf.conf import loadConf
-        #     life_params=loadConf(life_params, 'Life')
         epochs = life_params['epochs']
         if epochs in [None, []]:
             self.sim_epochs = []
@@ -38,7 +29,7 @@ class LarvaWorldSim(LarvaWorld):
         self.larva_collisions = larva_collisions
 
         self._place_food(self.env_pars['food_params'])
-        self.create_larvae(larva_pars=self.env_pars['larva_groups'], parameter_dict=parameter_dict)
+        self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
         if self.env_pars['odorscape'] is not None:
             self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars['odorscape'])
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
@@ -84,8 +75,8 @@ class LarvaWorldSim(LarvaWorld):
         self.refresh_odor_dicts(ids)
         return N, layers
 
-    def create_larvae(self, larva_pars, parameter_dict={}):
-        for gID, gConf in larva_pars.items():
+    def create_larvae(self, larva_groups, parameter_dict={}):
+        for gID, gConf in larva_groups.items():
 
             mod, sample=gConf['model'], gConf['sample']
             if type(sample) == str:
@@ -185,19 +176,27 @@ class LarvaWorldSim(LarvaWorld):
         return False
 
     def create_collectors(self, output):
+        from lib.conf.par import ParDict
+        from lib.aux.collecting import TargetedDataCollector, collection_dict
+        self.par_dict = ParDict(mode='load').dict
+        kws0={'par_dict' : self.par_dict}
+        kws={
+            'objects' : self.get_flies(),
+            'common' : True,
+            'collection_dict' : collection_dict,
+            **kws0
+        }
+
         if output is None:
             output = {'step': [], 'end': [], 'tables': {}}
         s, e, t = output['step'], output['end'], output['tables']
         sg, eg = output['step_groups'], output['end_groups']
-        self.larva_step_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s) if len(s) > 0 else None
-        self.larva_end_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e) if len(e) > 0 else None
-        self.food_end_col = TargetedDataCollector(schedule=self.all_food_schedule,
-                                                  pars=['initial_amount', 'final_amount'])
+        self.larva_step_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s, **kws0) if len(s) > 0 else None
+        self.larva_end_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e, **kws0) if len(e) > 0 else None
+        self.food_end_col = TargetedDataCollector(schedule=self.all_food_schedule, pars=['initial_amount', 'final_amount'], **kws0)
         self.table_collector = DataCollector(tables=t) if len(t) > 0 else None
-        self.step_group_collector = CompGroupCollector(objects=self.get_flies(), names=sg,
-                                                       save_units=True, common=True, save_as='step.csv')
-        self.end_group_collector = CompGroupCollector(objects=self.get_flies(), names=eg,
-                                                      save_units=True, common=True, save_as='end.csv')
+        self.step_group_collector = CompGroupCollector(names=sg, save_as='step.csv', **kws)
+        self.end_group_collector = CompGroupCollector(names=eg, save_as='end.csv', **kws)
 
     def eliminate_overlap(self):
         scale = 3.0

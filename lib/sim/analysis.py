@@ -1,12 +1,12 @@
 import numpy as np
 
-import lib.aux.dictsNlists
+from lib.aux.dictsNlists import flatten_list, unique_list
 from lib.anal.comparing import ExpFitter
 from lib.anal.plotting import plot_endpoint_scatter, plot_turn_Dbearing, plot_turn_amp, plot_turns, plot_timeplot, \
     plot_navigation_index, plot_debs, plot_food_amount, plot_gut, plot_pathlength, plot_endpoint_params, barplot, \
     comparative_analysis, plot_marked_turns, plot_chunk_Dorient2source, plot_marked_strides, targeted_analysis, lineplot
 from lib.conf.conf import loadConf
-from lib.conf.init_dtypes import null_dict
+from lib.conf.dtypes import null_dict
 from lib.conf.par import getPar
 from lib.model.DEB.deb import deb_default
 from lib.stor import paths
@@ -26,7 +26,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show_output=False):
           **ccc}
     figs = {}
     results = {}
-    if exp_type in ['patchy_food', 'uniform_food', 'food_grid']:
+    if 'food' in exp_type:
         # am = e['amount_eaten'].values
         # print(am)
         # cr,pr,fr=e['stride_dur_ratio'].values, e['pause_dur_ratio'].values, e['feed_dur_ratio'].values
@@ -54,20 +54,20 @@ def sim_analysis(ds: LarvaDataset, exp_type, show_output=False):
         figs['orientation to center'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=None, **cc)
         figs['bearing to 270deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=270, par=None, **cc)
 
-    elif exp_type in ['rovers_sitters_on_standard', 'rovers_sitters_on_agar']:
+    if 'RvsS' in exp_type:
         s = exp_type.split('_')[-1]
-        debs = lib.aux.dictsNlists.flatten_list([d.load_deb_dicts(use_pickle=False) for d in ds])
+        debs = flatten_list([d.load_deb_dicts(use_pickle=False) for d in ds])
         figs[f'RS hunger on {s} '] = plot_debs(deb_dicts=debs, save_as=f'deb_on_{s}.pdf',
                                                    mode='hunger', sim_only=True, roversVSsitters=True, **cc)
 
-    elif exp_type in ['growth', 'rovers_sitters']:
+    if exp_type in ['growth', 'RvsS']:
         deb_model = deb_default(epochs=d.config['epochs'], substrate_quality=d.config['substrate_quality'])
-        if exp_type == 'rovers_sitters':
+        if exp_type == 'RvsS':
             roversVSsitters = True
         else:
             roversVSsitters = False
 
-        deb_dicts = lib.aux.dictsNlists.flatten_list([d.load_deb_dicts(use_pickle=False) for d in ds]) + [deb_model]
+        deb_dicts = flatten_list([d.load_deb_dicts(use_pickle=False) for d in ds]) + [deb_model]
         c = {'roversVSsitters': roversVSsitters}
         c1 = {'deb_dicts': deb_dicts[:-1],
               'sim_only': True}
@@ -82,7 +82,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show_output=False):
             save_as = f'{m}_vs_model.pdf'
             figs[f'{m} vs model'] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c, **cc)
 
-        if exp_type == 'rovers_sitters':
+        if exp_type == 'RvsS':
             # cc = {'datasets': ds,
             #       'labels': labels,
             #       'save_to': d.plot_dir,
@@ -106,7 +106,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show_output=False):
                 pass
 
     elif 'dispersion' in exp_type:
-        samples= lib.aux.dictsNlists.unique_list([d.config['sample'] for d in ds])
+        samples= unique_list([d.config['sample'] for d in ds])
         targets=[LarvaDataset(loadConf(sd, 'Ref')['dir'])for sd in samples]
         dic0 = comparative_analysis(datasets=ds+targets,**ccc)
         figs.update(dic0)
@@ -128,13 +128,15 @@ def sim_analysis(ds: LarvaDataset, exp_type, show_output=False):
     #     dic2 = plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:3], min_turn_angle=20, **ccc)
     #     fig_dict.update(dic2)
 
-    elif 'chemotaxis' in exp_type:
-        if exp_type in ['chemotaxis_local', 'chemotaxis_diffusion']:
+    elif 'chemo' in exp_type:
+        if 'chemorbit' in exp_type :
             ps = ['o_cent', 'sd_cent', 'd_cent']
             source = (0.0, 0.0)
-        elif exp_type in ['chemotaxis_approach']:
+        elif 'taxis' in exp_type :
             ps = ['o_chem', 'sd_chem', 'd_chem']
             source = (0.04, 0.0)
+        else :
+            ps=[]
         for p in ps:
             figs[p] = plot_timeplot([p], show_first=False, **cc)
         for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
@@ -152,12 +154,12 @@ def sim_analysis(ds: LarvaDataset, exp_type, show_output=False):
                                      visible_clock=False, visible_scale=False, media_name='single_trajectory')
         d.visualize(agent_ids=[d.agent_ids[0]], vis_kwargs=vis_kwargs)
 
-    if 'odor_pref' in exp_type:
+    if 'PI' in exp_type:
         ind = d.compute_preference_index()
         print(f'Preference for left odor : {np.round(ind, 3)}')
         results['PI'] = ind
 
-    if exp_type in ['odor_pref_RL', 'chemotaxis_RL']:
+    if 'RL' in exp_type:
         c = {
             'show_first': False,
             'table': 'best_gains',
@@ -171,7 +173,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show_output=False):
                                                               individuals=True, **c)
         figs['reward_table'] = plot_timeplot(['cum_reward'], save_as='reward.pdf', **c)
     elif exp_type == 'realistic_imitation':
-        d.save_agents(pars=lib.aux.dictsNlists.flatten_list(d.points_xy) + lib.aux.dictsNlists.flatten_list(d.contour_xy), header=True)
+        d.save_agents(pars=flatten_list(d.points_xy) + flatten_list(d.contour_xy), header=True)
     if exp_type == 'dish':
         targeted_analysis(ds)
         figs = {f'stride_track_idx_0_in_{s0}-{s1}': plot_marked_strides(agent_idx=0,
@@ -205,7 +207,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
 
         def dsNls(ds0, lls=None):
             if lls is None:
-                lls = lib.aux.dictsNlists.flatten_list([ls] * len(ds0))
+                lls = flatten_list([ls] * len(ds0))
             dds = []
             deb_dicts = []
             for d in ds0:
@@ -223,7 +225,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
                     }
 
         if exp == 'pathlength':
-            lls = lib.aux.dictsNlists.flatten_list([[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in ['Agar', 'Yeast']])
+            lls = flatten_list([[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in ['Agar', 'Yeast']])
             kwargs = {
                 ** dsNls(ds0, lls),
                 'xlabel': r'time on substrate_type $(min)$',

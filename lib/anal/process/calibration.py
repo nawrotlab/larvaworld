@@ -7,8 +7,8 @@ from scipy.stats import stats
 import lib.aux.naming as nam
 from lib.anal.plotting import plot_spatiotemporal_variation, plot_bend2orientation_analysis, \
     plot_sliding_window_analysis, plot_marked_strides, plot_stride_distribution
-from lib.anal.process.angular import compute_orientations, compute_spineangles, compute_angular_metrics
-from lib.anal.process.basic import compute_extrema
+from lib.anal.process.angular import comp_orientations, comp_angles, comp_angular
+from lib.anal.process.basic import comp_extrema
 from lib.anal.process.bouts import detect_contacting_chunks
 from lib.aux.parsing import multiparse_dataset_by_sliding_window
 
@@ -34,22 +34,21 @@ def choose_velocity_flag(s=None, e=None, dt=None, Npoints=None, from_file=True, 
     svels_minima = nam.min(svels)
     svels_maxima = nam.max(svels)
 
-    # self.compute_spatial_metrics(mode='full', is_last=True)
-    # self.compute_orientations(mode='full', is_last=True)
-    # self.compute_linear_metrics(mode='full', is_last=True)
+    # self.comp_spatial(mode='full', is_last=True)
+    # self.comp_orientations(mode='full', is_last=True)
+    # self.comp_linear(mode='full', is_last=True)
     int = 0.3
     svel_max_thr = 0.1
 
-    compute_extrema(s=s, dt=dt, parameters=svels, interval_in_sec=int,
-                    threshold_in_std=None, abs_threshold=[np.inf, svel_max_thr])
+    comp_extrema(s=s, dt=dt, parameters=svels, interval_in_sec=int,
+                 threshold_in_std=None, abs_threshold=[np.inf, svel_max_thr])
     if not from_file:
         m_t_cvs = []
         m_s_cvs = []
         mean_crawl_ratios = []
         for sv, p, sv_min, sv_max in zip(svels, points, svels_minima, svels_maxima):
-            detect_contacting_chunks(s=s, e=e, dt=dt, chunk='stride',
-                                     track_point=p, mid_flag=sv_max, edge_flag=sv_min,
-                                     vel_par=sv, chunk_dur_in_sec=None,  **kwargs)
+            detect_contacting_chunks(s=s, e=e, dt=dt, track_point=p, mid_flag=sv_max, edge_flag=sv_min,
+                                     vel_par=sv,  **kwargs)
             t_cvs = []
             s_cvs = []
             for id in ids:
@@ -164,9 +163,9 @@ def choose_rotation_point(s=None, e=None, dt=None, Npoints=None, config=None, da
     # angles = [f'angle{i}' for i in range(Nangles)]
     # Nsegs = np.clip(Npoints - 1, a_min=0, a_max=None)
     # segs = nam.midline(Nsegs, type='seg')
-    compute_orientations(s,e, config)
-    compute_spineangles(s, config, mode='full')
-    compute_angular_metrics(s, config, mode='full')
+    comp_orientations(s, e, config)
+    comp_angles(s, config, mode='full')
+    comp_angular(s, config, mode='full')
 
     if dataset is not None:
         dataset.save()

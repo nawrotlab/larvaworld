@@ -106,7 +106,7 @@ class LarvaReplay(Larva, BodyReplay):
 
     def draw(self, viewer):
         r,c,m, v=self.radius,self.color,self.model, self.vertices
-        h_pos=self.midline[0]
+
         pos=self.cen_pos if not np.isnan(self.cen_pos).any() else self.pos
         mid=self.midline
 
@@ -124,7 +124,7 @@ class LarvaReplay(Larva, BodyReplay):
             draw_body_midline(viewer, mid, r)
 
         if m.draw_head:
-            draw_body_head(viewer, h_pos, r)
+            draw_body_head(viewer, mid, r)
 
         if self.selected:
             draw_selected_body(viewer, pos, v, r, m.selection_color)

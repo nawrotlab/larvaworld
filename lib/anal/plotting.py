@@ -20,6 +20,7 @@ import os
 
 import lib.anal.process.aux
 import lib.aux.dictsNlists
+import lib.aux.par_aux
 from lib.aux.combining import combine_images, combine_pdfs
 from lib.conf import conf
 from lib.aux import naming as nam
@@ -476,7 +477,7 @@ def plot_pauses(dataset, Npauses=10, save_to=None, plot_simulated=False, return_
         sim = True
 
     bend_r, bendvel_r = 180, 600
-    lengths = (~np.isnan(exp_bends)).sum(1)
+    lengths = lib.aux.par_aux.sum(1)
     sel_ind = lengths.argsort()[-Npauses:][::-1]
     sel_exp_bends = [exp_bends[i] for i in sel_ind]
     sel_exp_bendvels = [exp_bendvels[i] for i in sel_ind]
@@ -1006,7 +1007,7 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
     ps = []
     for i in k[:-5]:
         for c in itertools.combinations(avels, i + 1):
-            tseries = s[list(c)].dropna().sum(axis=1)
+            tseries = lib.aux.par_aux.sum(axis=1)
             r, p = stats.pearsonr(target, tseries)
             combos.append(c)
             corrs.append(r)
@@ -1076,7 +1077,7 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
     # plt.subplot2grid((2, 2), (1, 0), colspan=2, rowspan=1)
 
     ylim = [0.6, 1]
-    axs[1].bar(x=[','.join(map(str, c)) for c in best_combos_ind], height=max_corrs, width=0.8, color='black')
+    lib.aux.par_aux.bar(x=[','.join(map(str, c)) for c in best_combos_ind], height=max_corrs, width=0.8, color='black')
     # ax.set_xticks(best_combos_ind)
     axs[1].set_xlabel('combined angular velocities')
     axs[1].set_ylabel('Pearson correlation')
@@ -1226,7 +1227,7 @@ def plot_2D_countour(x, y, z, dimensions, Cmax, filepath):
 
 def gauss(x, y, Sigma, mu):
     X = np.vstack((x, y)).T
-    mat_multi = np.dot((X - mu[None, ...]).dot(np.linalg.inv(Sigma)), (X - mu[None, ...]).T)
+    mat_multi = np.dot(lib.aux.par_aux.dot(np.linalg.inv(Sigma)), (X - mu[None, ...]).T)
     return np.diag(np.exp(-1 * (mat_multi)))
 
 
@@ -2532,8 +2533,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
     warnings.filterwarnings('ignore')
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
     filename = f'endpoint_params_{mode}.{suf}' if save_as is None else save_as
-    fit_filename = 'endpoint_ttest.csv' if save_fits_as is None else save_fits_as
-    fit_filepath = os.path.join(save_to, fit_filename)
+
 
     ylim = [0.0, 0.25]
     nbins = 20
@@ -2613,7 +2613,9 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
 
     lw = 3
     Npars = len(pars)
-    if Npars==4:
+    if Npars==0 :
+        return None
+    elif Npars==4:
         Ncols=2
         Nrows=2
     else:
@@ -2704,7 +2706,8 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
     plt.ylim(ylim)
     axs[0].legend(loc='upper left', prop={'size': 15})
     if Ndatasets > 1:
-        fit_df.to_csv(fit_filepath, index=True, header=True)
+        ff = 'endpoint_ttest.csv' if save_fits_as is None else save_fits_as
+        fit_df.to_csv(os.path.join(save_to, ff), index=True, header=True)
     return process_plot(fig, save_to, filename, return_fig, show)
 
 
@@ -3028,7 +3031,6 @@ def plot_chunk_Dorient2source(datasets, labels=None, chunk='stride', source=(0.0
     Nrows = Ncols - 1 if Ndatasets < Ncols ** 2 - Ncols else Ncols
     fig, axs = plt.subplots(Nrows, Ncols, figsize=(8 * Ncols, 8 * Nrows),
                             subplot_kw=dict(projection='polar'),
-                            # sharex=True,
                             sharey=True
                             )
 
@@ -3056,11 +3058,11 @@ def plot_chunk_Dorient2source(datasets, labels=None, chunk='stride', source=(0.0
         y0_par = f'y_at_{chunk}_start'
         y1_par = f'y_at_{chunk}_stop'
 
-        b0s = [lib.anal.process.aux.compute_bearing2source(d.get_par(x0_par).dropna().values, d.get_par(y0_par).dropna().values,
-                                                           d.get_par(ho0_par).dropna().values, loc=source, in_deg=True) for d in
+        b0s = [lib.anal.process.aux.comp_bearing2source(d.get_par(x0_par).dropna().values, d.get_par(y0_par).dropna().values,
+                                                        d.get_par(ho0_par).dropna().values, loc=source, in_deg=True) for d in
                datasets]
-        b1s = [lib.anal.process.aux.compute_bearing2source(d.get_par(x1_par).dropna().values, d.get_par(y1_par).dropna().values,
-                                                           d.get_par(ho1_par).dropna().values, loc=source, in_deg=True) for d in
+        b1s = [lib.anal.process.aux.comp_bearing2source(d.get_par(x1_par).dropna().values, d.get_par(y1_par).dropna().values,
+                                                        d.get_par(ho1_par).dropna().values, loc=source, in_deg=True) for d in
                datasets]
         dbs = [np.abs(b0) - np.abs(b1) for b0, b1 in zip(b0s, b1s)]
 
@@ -3170,8 +3172,8 @@ def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
         radius = n
 
     # Plot data on ax
-    patches = ax.bar(bins[:-1], radius, zorder=1, align='edge', width=widths,
-                     edgecolor='black', fill=True, linewidth=2, **kwargs)
+    patches = lib.aux.par_aux.bar(bins[:-1], radius, zorder=1, align='edge', width=widths,
+                                  edgecolor='black', fill=True, linewidth=2, **kwargs)
 
     # Set the direction of the zero angle
     ax.set_theta_offset(offset)
@@ -3328,7 +3330,7 @@ def plot_config(datasets, labels, save_to, subfolder=None):
     return Ndatasets, colors, save_to, labels
 
 
-def plot_endpoint_scatter(datasets, labels=None, save_to=None, keys=None, return_fig=False, show=False):
+def plot_endpoint_scatter(datasets, labels=None, save_to=None, keys=None, return_fig=False, show=False, **kwargs):
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to)
 
     pairs = list(itertools.combinations(keys, 2))

@@ -4,6 +4,7 @@ import pandas as pd
 
 import lib.anal.process.aux
 import lib.aux.dictsNlists
+import lib.aux.par_aux
 from lib.stor.match_ids import match_larva_ids
 from lib.aux import naming as nam
 
@@ -158,9 +159,9 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, min_duratio
             xy = data[nam.xy(d.points, flat=True)].values
             spinelength = np.zeros(len(data)) * np.nan
             for j in range(xy.shape[0]):
-                k = np.sum(np.diff(np.array(lib.aux.dictsNlists.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
-                if not np.isnan(np.sum(k)):
-                    sp_l = np.sum([np.sqrt(kk) for kk in k])
+                k = lib.aux.par_aux.sum(np.diff(np.array(lib.aux.dictsNlists.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
+                if not np.isnan(lib.aux.par_aux.sum(k)):
+                    sp_l = lib.aux.par_aux.sum([np.sqrt(kk) for kk in k])
                 else:
                     sp_l = np.nan
                 spinelength[j] = sp_l

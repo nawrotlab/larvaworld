@@ -1,12 +1,12 @@
 import numpy as np
 
-import lib.aux.ang_aux
-import lib.aux.dictsNlists
+from lib.aux.ang_aux import angle_dif, angle, angle_to_x_axis, unwrap_deg
+from lib.aux.dictsNlists import flatten_list
 import lib.aux.naming as nam
 from lib.anal.process.store import store_aux_dataset
 
 
-def compute_spineangles(s, config, chunk_only=None, mode='full'):
+def comp_angles(s, config, chunk_only=None, mode='full'):
     points = nam.midline(config['Npoints'], type='point')
     Nangles = np.clip(config['Npoints'] - 2, a_min=0, a_max=None)
     angles = [f'angle{i}' for i in range(Nangles)]
@@ -22,32 +22,30 @@ def compute_spineangles(s, config, chunk_only=None, mode='full'):
         angles = bend_angles
     N = len(angles)
     print(f'Computing {N} angles')
-    xy_pars = lib.aux.dictsNlists.flatten_list([xy[i] for i in range(N + 2)])
+    xy_pars = flatten_list([xy[i] for i in range(N + 2)])
     xy_ar = s[xy_pars].values
     Npoints = int(xy_ar.shape[1] / 2)
     Nticks = xy_ar.shape[0]
     xy_ar = np.reshape(xy_ar, (Nticks, Npoints, 2))
     c = np.zeros([N, Nticks]) * np.nan
     for i in range(Nticks):
-        c[:, i] = np.array([lib.aux.ang_aux.angle(xy_ar[i, j + 2, :], xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
+        c[:, i] = np.array([angle(xy_ar[i, j + 2, :], xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
     for z, a in enumerate(angles):
         s[a] = c[z].T
     print('All angles computed')
     return bend_angles
 
 
-def compute_bend(s, config, mode='minimal'):
-    # points = nam.midline(config['Npoints'], type='point')
-    # segs = nam.midline(config['Npoints'] - 1, type='seg')
+def comp_bend(s, config, mode='minimal'):
     b_conf = config['bend'] if config is not None else 'from_angles'
     if b_conf is None:
         print('Bending angle not defined. Can not compute angles')
         return
     elif b_conf == 'from_vectors':
         print(f'Computing bending angle as the difference between front and rear orients')
-        s['bend'] = s.apply(lambda r: lib.aux.ang_aux.angle_dif(r[nam.orient('front')], r[nam.orient('rear')]), axis=1)
+        s['bend'] = s.apply(lambda r: angle_dif(r[nam.orient('front')], r[nam.orient('rear')]), axis=1)
     elif b_conf == 'from_angles':
-        bend_angles = compute_spineangles(s, config, mode=mode)
+        bend_angles = comp_angles(s, config, mode=mode)
         print(f'Computing bending angle as the sum of the first {len(bend_angles)} front angles')
         s['bend'] = s[bend_angles].sum(axis=1, min_count=1)
 
@@ -65,13 +63,9 @@ def compute_LR_bias(s, e):
     print('LR biases computed')
 
 
-def compute_orientations(s,e, config, mode='minimal'):
+def comp_orientations(s, e, config, mode='minimal'):
     points = nam.midline(config['Npoints'], type='point')
     segs = nam.midline(config['Npoints']-1, type='seg')
-    # if config is None:
-    #     f1, f2 = 1, 2
-    #     r1, r2 = -2, -1
-    # else:
     for key in ['front_vector', 'rear_vector']:
         if config[key] is None:
             print('Front and rear vectors are not defined. Can not compute orients')
@@ -82,7 +76,7 @@ def compute_orientations(s,e, config, mode='minimal'):
 
     xy = [nam.xy(points[i]) for i in range(len(points))]
     print(f'Computing front and rear orients')
-    xy_pars = lib.aux.dictsNlists.flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1]])
+    xy_pars = flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1]])
     xy_ar = s[xy_pars].values
     Npoints = int(xy_ar.shape[1] / 2)
     Nticks = xy_ar.shape[0]
@@ -91,7 +85,7 @@ def compute_orientations(s,e, config, mode='minimal'):
     c = np.zeros([2, Nticks]) * np.nan
     for i in range(Nticks):
         for j in range(2) :
-            c[j, i] = lib.aux.ang_aux.angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :])
+            c[j, i] = angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :])
     for z, a in enumerate([nam.orient('front'), nam.orient('rear')]):
         s[a] = c[z].T
         e[nam.initial(a)] = s[a].dropna().groupby('AgentID').first()
@@ -99,14 +93,14 @@ def compute_orientations(s,e, config, mode='minimal'):
         N = len(segs)
         print(f'Computing additional orients for {N} spinesegments')
         ors = nam.orient(segs)
-        xy_pars = lib.aux.dictsNlists.flatten_list([xy[i] for i in range(N + 1)])
+        xy_pars = flatten_list([xy[i] for i in range(N + 1)])
         xy_ar = s[xy_pars].values
         Npoints = int(xy_ar.shape[1] / 2)
         Nticks = xy_ar.shape[0]
         xy_ar = np.reshape(xy_ar, (Nticks, Npoints, 2))
         c = np.zeros([N, Nticks]) * np.nan
         for i in range(Nticks):
-            c[:, i] = np.array([lib.aux.ang_aux.angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
+            c[:, i] = np.array([angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
         for z, a in enumerate(ors):
             s[a] = c[z].T
     print('All orientations computed')
@@ -118,11 +112,11 @@ def unwrap_orientations(s, segs):
     for p in pars:
         for id in s.index.unique('AgentID').values:
             ts = s.loc[(slice(None), id), p].values
-            s.loc[(slice(None), id), nam.unwrap(p)] = lib.aux.ang_aux.unwrap_deg(ts)
+            s.loc[(slice(None), id), nam.unwrap(p)] = unwrap_deg(ts)
     print('All orients unwrapped')
 
 
-def compute_angular_metrics(s, config, mode='minimal'):
+def comp_angular(s, config, mode='minimal'):
     dt=config['dt']
     Nangles = np.clip(config['Npoints'] - 2, a_min=0, a_max=None)
     angles = [f'angle{i}' for i in range(Nangles)]
@@ -177,9 +171,9 @@ def angular_processing(s, e, config, dt, Npoints, aux_dir, recompute=False, mode
     if set(ang_pars).issubset(s.columns.values) and not recompute:
         print('Orientation and bend are already computed. If you want to recompute them, set recompute to True')
     else:
-        compute_orientations(s,e, config, mode=mode)
-        compute_bend(s, config, mode=mode)
-    compute_angular_metrics(s, config, mode=mode)
+        comp_orientations(s, e, config, mode=mode)
+        comp_bend(s, config, mode=mode)
+    comp_angular(s, config, mode=mode)
     compute_LR_bias(s, e)
     # if distro_dir is not None:
     #     create_par_distro_dataset(s, ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), dir=distro_dir)

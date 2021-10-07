@@ -186,7 +186,7 @@ def compute_component_velocity(xy, angles, dt, return_dst=False):
         return v
 
 
-def compute_bearing2source(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
+def comp_bearing2source(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
     # Compute the orientation relative to a source located at loc
     # args :
     #       xys : 2D array of the xy position.

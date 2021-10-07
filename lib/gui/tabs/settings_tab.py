@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 
 import lib.aux.dictsNlists
 from lib.conf.conf import saveConfDict, loadConfDict
-from lib.conf.init_dtypes import store_controls
+from lib.conf.dtypes import store_controls
 from lib.gui.aux.elements import CollapsibleDict, Collapsible
 from lib.gui.aux.functions import t_kws, gui_col, gui_cols, get_pygame_key
 from lib.gui.aux.buttons import GraphButton

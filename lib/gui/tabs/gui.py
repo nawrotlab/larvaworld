@@ -6,7 +6,7 @@ import time
 
 import pandas as pd
 
-from lib.conf.init_dtypes import null_dict
+from lib.conf.dtypes import null_dict
 from lib.gui.tabs import intro_tab, model_tab, life_tab, env_tab, sim_tab, batch_tab, essay_tab, import_tab, \
     analysis_tab, video_tab, tutorial_tab, settings_tab
 from lib.stor import paths
@@ -21,7 +21,7 @@ class LarvaworldGui:
             'introduction': (intro_tab.IntroTab, None, None),
             'larva-model': (model_tab.ModelTab, 'Model', 'model_conf'),
             'life-history': (life_tab.LifeTab, 'Life', 'life'),
-            'environment': (env_tab.EnvTab, 'Env', 'env_conf'),
+            # 'environment': (env_tab.EnvTab, 'Env', 'env_conf'),
             'simulation': (sim_tab.SimTab, 'Exp', 'exp_conf'),
             'batch-run': (batch_tab.BatchTab, 'Batch', 'batch_conf'),
             'essay': (essay_tab.EssayTab, 'Essay', 'essay_conf'),
@@ -34,7 +34,7 @@ class LarvaworldGui:
         cls.tabgroups = {
             'introduction': ['introduction'],
             'models': ['larva-model', 'life-history'],
-            'environment': ['environment'],
+            # 'environment': ['environment'],
             'data': ['import', 'analysis'],
             'simulations': ['simulation', 'batch-run', 'essay'],
             'resources': ['tutorials', 'videos'],
@@ -48,7 +48,7 @@ class LarvaworldGui:
             tabs = list(self.tab_dict.keys())
         sg.theme('LightGreen')
         self.background_color = None
-        self.batch_thread = batch_thread
+        # self.batch_thread = batch_thread
         self.terminal = gui_terminal()
         layout, self.collapsibles, self.graph_lists, self.dicts, self.tabs = self.build(tabs)
         c = {'layout': layout, 'size': window_size, **w_kws}
@@ -59,7 +59,6 @@ class LarvaworldGui:
         while True:
 
             e, v = self.window.read()
-            # print(e)
             if e in (None, 'Exit'):
                 self.window.close()
                 break
@@ -68,23 +67,6 @@ class LarvaworldGui:
 
                 n = v['ACTIVE_TAB'].split()[0]
                 self.tabs[n].eval0(e=e, v=v)
-            # self.dicts, self.graph_lists = self.tabs[n].eval0(e=e, v=v)
-
-            # if dicts['batch_kwargs'] :
-            #     thread = threading.Thread(target=batch_thread, args=(dicts['batch_kwargs'], W, dicts),daemon=True)
-            #     thread.start()
-            #     dicts['batch_kwargs'] = None
-            #
-            #
-            # elif e == '-THREAD-':  # Thread has completed
-            #     thread.join(timeout=0)
-            #     # print('Thread finished')
-            #     # sg.popup_animated(None)  # stop animination in case one is running
-            #     thread = None  # reset variables for next run
-            #     # thread, message, progress, timeout = None, '', 0, None  # reset variables for next run
-            #     graph_lists['BATCH'].update(W, dicts['batch_results']['fig_dict'])
-            # print(v)
-        # self.window.close()
 
     def build(self, tabs):
         ls, cs, ds, gs, ts = [], {}, {}, {}, {}
@@ -101,15 +83,7 @@ class LarvaworldGui:
 
         tab_kws = {'font': ("Helvetica", 13, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
                    'tab_background_color': 'lightgrey'}
-        # for nn, ks in self.tabgroups.items():
-        #     if len(ks)>4:
-        #         ll=sg.TabGroup([[dic[k]] for k in ks], key=f'{nn} GROUPTAB', tab_location='topleft', **tab_kws)
-        #         ls.append(ll)
-        #     else :
-        #         ls.append(dic[nn])
-
         l_tabs = sg.TabGroup([ls], key='ACTIVE_TAB', tab_location='topleft', **tab_kws)
-
         l0 = [[sg.Pane([sg.vtop(l_tabs), sg.vbottom(self.terminal)], handle_size=30)]]
         return l0, cs, ds, gs, ts
 

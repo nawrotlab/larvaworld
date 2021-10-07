@@ -2,16 +2,15 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema, spectrogram
 
-import lib.anal.process.aux
-import lib.aux.dictsNlists
+from lib.anal.process.aux import apply_filter_to_array_with_nans_multidim, interpolate_nans, suppress_stdout
+from lib.aux.dictsNlists import common_member
 import lib.aux.naming as nam
 from lib.anal.process.angular import angular_processing
-from lib.anal.process.spatial import spatial_processing, compute_bearingNdst2source, compute_dispersion, \
-    compute_tortuosity, compute_preference_index, align_trajectories
+from lib.anal.process.spatial import spatial_processing, source_analysis, comp_dispersion, comp_tortuosity, comp_PI, align_trajectories
 from lib.conf.par import getPar
 
 
-def compute_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
+def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
 
     if abs_threshold is None:
         abs_threshold = [+np.inf, -np.inf]
@@ -80,7 +79,7 @@ def compute_freq(s, e, dt, parameters, freq_range=None, compare_params=False):
     if compare_params:
         ind = np.argmax(V)
         best_p = parameters[ind]
-        existing = lib.aux.dictsNlists.common_member(nam.freq(parameters), e.columns.values)
+        existing = common_member(nam.freq(parameters), e.columns.values)
         e.drop(columns=existing, inplace=True)
         e[nam.freq(best_p)] = F[ind]
     else:
@@ -101,7 +100,7 @@ def filter(s, dt, Npoints, config, freq=2, N=1, inplace=True, recompute=False,**
     pars = nam.xy(points, flat=True)
     pars = [p for p in pars if p in s.columns]
     data = np.dstack(list(s[pars].groupby('AgentID').apply(pd.DataFrame.to_numpy)))
-    f_array = lib.anal.process.aux.apply_filter_to_array_with_nans_multidim(data, freq=freq, fr=1 / dt, N=N)
+    f_array = apply_filter_to_array_with_nans_multidim(data, freq=freq, fr=1 / dt, N=N)
     fpars = nam.filt(pars) if not inplace else pars
     for j, p in enumerate(fpars):
         s[p] = f_array[:, j, :].flatten()
@@ -116,7 +115,7 @@ def interpolate_nan_values(s, config, pars=None,**kwargs):
     pars = [p for p in pars if p in s.columns]
     for p in pars:
         for id in s.index.unique('AgentID').values:
-            s.loc[(slice(None), id), p] = lib.anal.process.aux.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
+            s.loc[(slice(None), id), p] = interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
     print('All parameters interpolated')
 
 def rescale(s,e, config,Npoints=None,Ncontour=None, recompute=False, scale=1.0,**kwargs):
@@ -164,7 +163,7 @@ def preprocess(s,e,config, rescale_by=None,drop_collisions=False,interpolate_nan
         'recompute': recompute,
         'config': config,
     }
-    with lib.anal.process.aux.suppress_stdout(show_output):
+    with suppress_stdout(show_output):
         if rescale_by is not None :
             rescale(scale=rescale_by, **c)
         if drop_collisions :
@@ -212,18 +211,18 @@ def process(s,e,config,mode='minimal',traj_colors=True,show_output=True,
         'aux_dir': f'{config["dir"]}/data/aux.h5',
     }
 
-    with lib.anal.process.aux.suppress_stdout(show_output):
+    with suppress_stdout(show_output):
         if types['angular']:
             angular_processing(**c, **kwargs)
         if types['spatial']:
             spatial_processing(**c, **kwargs)
         if types['source']:
             if source is not None:
-                compute_bearingNdst2source(s, e, source=source, **kwargs)
+                source_analysis(s, e, source=source, **kwargs)
         if types['dispersion'] and type(dsp_starts)==list and type(dsp_stops)==list:
-            compute_dispersion(**c, starts=dsp_starts, stops=dsp_stops, **kwargs)
+            comp_dispersion(**c, starts=dsp_starts, stops=dsp_stops, **kwargs)
         if types['tortuosity'] and type(tor_durs)==list:
-            compute_tortuosity(**c, durs_in_sec=tor_durs, **kwargs)
+            comp_tortuosity(**c, durs_in_sec=tor_durs, **kwargs)
         if types['PI']:
             if 'x' in e.keys() :
                 px = 'x'
@@ -239,7 +238,7 @@ def process(s,e,config,mode='minimal',traj_colors=True,show_output=True,
                 xs = s[px].dropna().groupby('AgentID').last().values
             else :
                 raise ValueError ('No x coordinate found')
-            PI, N, N_l, N_r = compute_preference_index(xs=xs, arena_xdim=config['env_params']['arena']['arena_dims'][0], return_num=True, return_all=True)
+            PI, N, N_l, N_r = comp_PI(xs=xs, arena_xdim=config['env_params']['arena']['arena_dims'][0], return_num=True, return_all=True)
             config['PI']={'PI':PI, 'N':N, 'N_l':N_l, 'N_r':N_r}
         if traj_colors :
             try :
