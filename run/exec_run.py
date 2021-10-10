@@ -12,7 +12,7 @@ from lib.conf.base import paths
 
 
 class Exec:
-    def __init__(self, mode, conf, run_externally=True, progressbar=None,w_progressbar=None, **kwargs):
+    def __init__(self, mode, conf, run_externally=True, progressbar=None, w_progressbar=None, **kwargs):
         self.run_externally = run_externally
         self.mode = mode
         self.conf = conf
@@ -26,7 +26,7 @@ class Exec:
             self.process.terminate()
 
     def run(self, **kwargs):
-        f0, f1=paths.path('EXECONF'), paths.path('EXEC')
+        f0, f1 = paths.path('EXECONF'), paths.path('EXEC')
         if self.run_externally:
             lib.aux.dictsNlists.save_dict(self.conf, f0)
             self.process = subprocess.Popen(['python', f1, self.mode, f0], **kwargs)
@@ -40,7 +40,7 @@ class Exec:
             if self.run_externally:
                 if self.process.poll() is not None:
                     self.results = self.retrieve()
-                    self.done=True
+                    self.done = True
                     return True
             return False
         else:
@@ -64,8 +64,6 @@ class Exec:
                 entry, fig_dict = None, None
             return entry, fig_dict
 
-
-
     def exec_run(self):
         from lib.sim.single.single_run import SingleRun
         from lib.sim.batch.batch import batch_run
@@ -81,21 +79,12 @@ class Exec:
 
 
 if __name__ == "__main__":
-
-
     parser = argparse.ArgumentParser(description="Run given batch-run/simulation")
     parser.add_argument('mode', choices=['sim', 'batch'],
                         help='Whether we are running a single simulation or a batch-run')
     parser.add_argument('conf_file', type=str, help='The configuration file of the batch-run/simulation')
-
     args = parser.parse_args()
-
     conf = lib.aux.dictsNlists.load_dict(args.conf_file)
-
-    k=Exec(args.mode, conf)
+    k = Exec(args.mode, conf)
     k.exec_run()
-    # if args.sim_type=='sim' :
-    #     run_sim(**conf)
-    # elif args.sim_type=='batch' :
-    #     batch_kwargs = prepare_batch(conf)
-    #     batch_run(**batch_kwargs)
+

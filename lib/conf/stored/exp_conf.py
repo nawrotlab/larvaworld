@@ -52,12 +52,12 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
 PI = enrichment_dict(types=['PI'], bouts=[])
 
 
-def source_enrich(source=(0.0, 0.0)):
-    return enrichment_dict(source=source, types=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'])
+def source_enrich():
+    return enrichment_dict(types=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'])
 
 
-def chemotaxis_exp(name, source=(0.0, 0.0), c=['olfactor'], dur=5.0, **kwargs):
-    return exp(name, sim={'duration': dur}, c=c, enrichment=source_enrich(source), **kwargs)
+def chemotaxis_exp(name, c=['olfactor'], dur=5.0, **kwargs):
+    return exp(name, sim={'duration': dur}, c=c, enrichment=source_enrich(), **kwargs)
 
 
 def food_exp(name, c=['feeder'], dur=10.0, **kwargs):
@@ -117,7 +117,7 @@ grouped_exp_dict = {
     },
 
     'chemotaxis': {
-        'chemotaxis': chemotaxis_exp('odor_gradient', source=(0.04, 0.0),
+        'chemotaxis': chemotaxis_exp('odor_gradient',
                                      l=lg(m='navigator', N=8, p=(-0.04, 0.0), s=(0.005, 0.02),
                                           ors=(-30.0, 30.0))),
         'chemorbit': chemotaxis_exp('mid_odor_gaussian', dur=3.0, l=lg(m='navigator', N=3)),

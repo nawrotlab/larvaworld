@@ -13,7 +13,7 @@ from lib.process.store import store_aux_dataset
 def annotate(s, e, config=None, bouts={'stride': True, 'pause': True, 'turn': True},
              recompute=False, track_point=None, track_pars=None, chunk_pars=None,
              vel_par=None, ang_vel_par=None, bend_vel_par=None, min_ang=5.0, min_ang_vel=100.0,
-             non_chunks=False, source=None, show_output=True, **kwargs):
+             non_chunks=False, show_output=True, **kwargs):
     from lib.conf.base.par import ParDict
     dic = ParDict(mode='load').dict
     if vel_par is None:

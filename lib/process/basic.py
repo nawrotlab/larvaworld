@@ -6,12 +6,12 @@ from lib.process.aux import apply_filter_to_array_with_nans_multidim, interpolat
 from lib.aux.dictsNlists import common_member
 import lib.aux.naming as nam
 from lib.process.angular import angular_processing
-from lib.process.spatial import spatial_processing, comp_source_metrics, comp_dispersion, comp_tortuosity, comp_PI, align_trajectories
+from lib.process.spatial import spatial_processing, comp_source_metrics, comp_dispersion, comp_tortuosity, comp_PI, \
+    align_trajectories
 from lib.conf.base.par import getPar
 
 
 def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
-
     if abs_threshold is None:
         abs_threshold = [+np.inf, -np.inf]
     order = np.round(interval_in_sec / dt).astype(int)
@@ -55,6 +55,7 @@ def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_
         s[p_min] = min_array[:, i, :].flatten()
         s[p_max] = max_array[:, i, :].flatten()
 
+
 def compute_freq(s, e, dt, parameters, freq_range=None, compare_params=False):
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
@@ -88,11 +89,13 @@ def compute_freq(s, e, dt, parameters, freq_range=None, compare_params=False):
     # if is_last:
     #     self.save()
 
-def filter(s, dt, Npoints, config, freq=2, N=1, inplace=True, recompute=False,**kwargs):
+
+def filter(s, dt, Npoints, config, freq=2, N=1, inplace=True, recompute=False, **kwargs):
     if freq in ['', None, np.nan]:
         return
-    if 'filtered_at' in config and not recompute :
-        print(f'Dataset already filtered at {config["filtered_at"]}. If you want to apply additional filter set recompute to True')
+    if 'filtered_at' in config and not recompute:
+        print(
+            f'Dataset already filtered at {config["filtered_at"]}. If you want to apply additional filter set recompute to True')
         return
     config['filtered_at'] = freq
 
@@ -106,10 +109,11 @@ def filter(s, dt, Npoints, config, freq=2, N=1, inplace=True, recompute=False,**
         s[p] = f_array[:, j, :].flatten()
     print(f'All spatial parameters filtered at {freq} Hz')
 
-def interpolate_nan_values(s, config, pars=None,**kwargs):
-    if pars is None :
-        N= config['Npoints'],
-        Nc= config['Ncontour'],
+
+def interpolate_nan_values(s, config, pars=None, **kwargs):
+    if pars is None:
+        N = config['Npoints'],
+        Nc = config['Ncontour'],
         points = nam.midline(N, type='point') + ['centroid', ''] + nam.contour(Nc)
         pars = nam.xy(points, flat=True)
     pars = [p for p in pars if p in s.columns]
@@ -118,20 +122,23 @@ def interpolate_nan_values(s, config, pars=None,**kwargs):
             s.loc[(slice(None), id), p] = interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
     print('All parameters interpolated')
 
-def rescale(s,e, config,Npoints=None,Ncontour=None, recompute=False, scale=1.0,**kwargs):
-    if Npoints is None :
-        Npoints=config['Npoints']
-    if Ncontour is None :
-        Ncontour=config['Ncontour']
+
+def rescale(s, e, config, Npoints=None, Ncontour=None, recompute=False, scale=1.0, **kwargs):
+    if Npoints is None:
+        Npoints = config['Npoints']
+    if Ncontour is None:
+        Ncontour = config['Ncontour']
     if scale in ['', None, np.nan]:
         return
-    if 'rescaled_by' in config and not recompute :
-        print(f'Dataset already rescaled by {config["rescaled_by"]}. If you want to rescale again set recompute to True')
+    if 'rescaled_by' in config and not recompute:
+        print(
+            f'Dataset already rescaled by {config["rescaled_by"]}. If you want to rescale again set recompute to True')
         return
     config['rescaled_by'] = scale
-    points = nam.midline(Npoints, type='point') + ['centroid','']
-    contour_pars=nam.xy(nam.contour(Ncontour), flat=True)
-    pars=nam.xy(points, flat=True) + nam.dst(points) + nam.vel(points) + nam.acc(points) + ['spinelength']+contour_pars
+    points = nam.midline(Npoints, type='point') + ['centroid', '']
+    contour_pars = nam.xy(nam.contour(Ncontour), flat=True)
+    pars = nam.xy(points, flat=True) + nam.dst(points) + nam.vel(points) + nam.acc(points) + [
+        'spinelength'] + contour_pars
     lin_pars = [p for p in pars if p in s.columns]
     for p in lin_pars:
         s[p] = s[p].apply(lambda x: x * scale)
@@ -139,20 +146,22 @@ def rescale(s,e, config,Npoints=None,Ncontour=None, recompute=False, scale=1.0,*
         e['length'] = e['length'].apply(lambda x: x * scale)
     print(f'Dataset rescaled by {scale}.')
 
-def exclude_rows(s,e, dt,  flag, accepted=None, rejected=None,**kwargs):
-        if accepted is not None:
-            s.loc[s[flag] != accepted[0]] = np.nan
-        if rejected is not None:
-            s.loc[s[flag] == rejected[0]] = np.nan
 
-        p=getPar('cum_t', to_return=['d'])[0]
-        for id in s.index.unique('AgentID').values:
-            e.loc[id, p] = len(s.xs(id, level='AgentID', drop_level=True).dropna()) * dt
+def exclude_rows(s, e, dt, flag, accepted=None, rejected=None, **kwargs):
+    if accepted is not None:
+        s.loc[s[flag] != accepted[0]] = np.nan
+    if rejected is not None:
+        s.loc[s[flag] == rejected[0]] = np.nan
 
-        print(f'Rows excluded according to {flag}.')
+    p = getPar('cum_t', to_return=['d'])[0]
+    for id in s.index.unique('AgentID').values:
+        e.loc[id, p] = len(s.xs(id, level='AgentID', drop_level=True).dropna()) * dt
 
-def preprocess(s,e,config, rescale_by=None,drop_collisions=False,interpolate_nans=False,filter_f=None,transposition=None,
-               recompute=False,show_output=True,**kwargs) :
+    print(f'Rows excluded according to {flag}.')
+
+
+def preprocess(s, e, config, rescale_by=None, drop_collisions=False, interpolate_nans=False, filter_f=None,
+               transposition=None,recompute=False, show_output=True, **kwargs):
     c = {
         's': s,
         'e': e,
@@ -164,24 +173,25 @@ def preprocess(s,e,config, rescale_by=None,drop_collisions=False,interpolate_nan
         'config': config,
     }
     with suppress_stdout(show_output):
-        if rescale_by is not None :
+        if rescale_by is not None:
             rescale(scale=rescale_by, **c)
-        if drop_collisions :
+        if drop_collisions:
             exclude_rows(flag='collision_flag', accepted=[0], **c)
-        if interpolate_nans :
+        if interpolate_nans:
             interpolate_nan_values(**c)
-        if filter_f is not None :
+        if filter_f is not None:
             filter(req=filter_f, **c)
-        if transposition is not None :
+        if transposition is not None:
             align_trajectories(mode=transposition, **c)
-        return s,e
+        return s, e
+
 
 def generate_traj_colors(s, sp_vel=None, ang_vel=None):
     N = len(s.index.unique('Step'))
-    if sp_vel is None :
-        sp_vel =getPar('sv', to_return=['d'])[0]
-    if ang_vel is None :
-        ang_vel =getPar('fov', to_return=['d'])[0]
+    if sp_vel is None:
+        sp_vel = getPar('sv', to_return=['d'])[0]
+    if ang_vel is None:
+        ang_vel = getPar('fov', to_return=['d'])[0]
     pars = [sp_vel, ang_vel]
     edge_colors = [[(255, 0, 0), (0, 255, 0)], [(255, 0, 0), (0, 255, 0)]]
     labels = ['lin_color', 'ang_color']
@@ -196,9 +206,10 @@ def generate_traj_colors(s, sp_vel=None, ang_vel=None):
             s[l] = [(np.nan, np.nan, np.nan)] * N
     return s
 
-def process(s,e,config,mode='minimal',traj_colors=True,show_output=True,
-            types={'angular':True, 'spatial':True, 'source':True, 'dispersion':True, 'tortuosity':True, 'PI':True},
-            source=None,dsp_starts=[0], dsp_stops=[40], tor_durs=[2, 5, 10, 20],  **kwargs):
+
+def process(s, e, config, mode='minimal', traj_colors=True, show_output=True,
+            types={'angular': True, 'spatial': True, 'source': True, 'dispersion': True, 'tortuosity': True,
+                   'PI': True}, dsp_starts=[0], dsp_stops=[40], tor_durs=[2, 5, 10, 20], **kwargs):
     c = {
         's': s,
         'e': e,
@@ -218,32 +229,31 @@ def process(s,e,config,mode='minimal',traj_colors=True,show_output=True,
             spatial_processing(**c, **kwargs)
         if types['source']:
             comp_source_metrics(**c, **kwargs)
-        if types['dispersion'] and type(dsp_starts)==list and type(dsp_stops)==list:
+        if types['dispersion'] and type(dsp_starts) == list and type(dsp_stops) == list:
             comp_dispersion(**c, starts=dsp_starts, stops=dsp_stops, **kwargs)
-        if types['tortuosity'] and type(tor_durs)==list:
+        if types['tortuosity'] and type(tor_durs) == list:
             comp_tortuosity(**c, durs_in_sec=tor_durs, **kwargs)
         if types['PI']:
-            if 'x' in e.keys() :
+            if 'x' in e.keys():
                 px = 'x'
                 xs = e[px].values
-            elif nam.final('x') in e.keys() :
+            elif nam.final('x') in e.keys():
                 px = nam.final('x')
                 xs = e[px].values
-            elif 'x' in s.keys() :
+            elif 'x' in s.keys():
                 px = 'x'
                 xs = s[px].dropna().groupby('AgentID').last().values
-            elif 'centroid_x' in s.keys() :
+            elif 'centroid_x' in s.keys():
                 px = 'centroid_x'
                 xs = s[px].dropna().groupby('AgentID').last().values
-            else :
-                raise ValueError ('No x coordinate found')
-            PI, N, N_l, N_r = comp_PI(xs=xs, arena_xdim=config['env_params']['arena']['arena_dims'][0], return_num=True, return_all=True)
-            config['PI']={'PI':PI, 'N':N, 'N_l':N_l, 'N_r':N_r}
-        if traj_colors :
-            try :
+            else:
+                raise ValueError('No x coordinate found')
+            PI, N, N_l, N_r = comp_PI(xs=xs, arena_xdim=config['env_params']['arena']['arena_dims'][0], return_num=True,
+                                      return_all=True)
+            config['PI'] = {'PI': PI, 'N': N, 'N_l': N_l, 'N_r': N_r}
+        if traj_colors:
+            try:
                 generate_traj_colors(s=s, sp_vel=None, ang_vel=None)
-            except :
+            except:
                 pass
-        return s,e
-
-
+        return s, e

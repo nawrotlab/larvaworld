@@ -74,14 +74,7 @@ class LarvaDataGroup:
     #     dirs = [fun.remove_prefix(dr, f'{self.raw_dir}/') for dr in dirs]
     #     pass
 
-if __name__ == "__main__":
-    datagroup_id = 'SchleyerGroup'
-    datagroup = LarvaDataGroup(datagroup_id)
-    p=datagroup.path
-    pp = os.path.normpath(f'{paths.path("DATA")}/{p}')
-    print(pp)
-    print(f'{paths.path("DATA")}/{p}')
-    print(datagroup.get_path())
+
 
 
 def get_input(message, itype, default='', accepted=None, range=None):
@@ -313,3 +306,12 @@ def setDataGroup(id=None):
         DataGroup[key] = value
     saveConf(DataGroup, 'Group')
     return DataGroup
+
+if __name__ == "__main__":
+    datagroup_id = 'SchleyerGroup'
+    datagroup = LarvaDataGroup(datagroup_id)
+    p=datagroup.path
+    pp = os.path.normpath(f'{paths.path("DATA")}/{p}')
+    print(pp)
+    print(f'{paths.path("DATA")}/{p}')
+    print(datagroup.get_path())

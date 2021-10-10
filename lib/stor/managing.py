@@ -157,7 +157,7 @@ def enrich_datasets(datagroup_id, datasets=None, names=None, enrich_conf=None, *
 
 
 def analyse_datasets(datagroup_id, save_to=None, **kwargs):
-    from lib.sim.analysis import comparative_analysis
+    from lib.sim.single.analysis import comparative_analysis
     ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
     if save_to is None and len(ds) > 1:
         g = loadConf(datagroup_id, 'Group')
@@ -178,26 +178,6 @@ def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={}, 
         vis_kwargs['media_name'] = n
         d.visualize(save_to=save_to, vis_kwargs=vis_kwargs, **replay_kwargs)
 
-
-# def compute_PIs(datagroup_id=None, save_to=None, ds=None, save_as='PIs.csv', **kwargs):
-#     if ds is None:
-#         ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
-#     ids = [d.id for d in ds]
-#     if save_to is None and len(ds) > 1 and datagroup_id is not None:
-#         g = loadConf(datagroup_id, 'Group')
-#         save_to = f'{paths.DataFolder}/{g["path"]}/plots/PIs'
-#     if not os.path.exists(save_to):
-#         os.makedirs(save_to)
-#     PIs = []
-#     Ns = []
-#     for j, d in enumerate(ds):
-#         PI, N = d.comp_PI(return_num=True)
-#         PIs.append(PI)
-#         Ns.append(N)
-#     df = pd.DataFrame({'PI': PIs, 'N': Ns}, index=ids)
-#     df.to_csv(f'{save_to}/{save_as}', header=True, index=True)
-#     print(f'PIs saved as {save_as}')
-#     print(df)
 
 
 def detect_dataset(datagroup_id=None, folder_path=None, raw=True, **kwargs):
@@ -278,131 +258,4 @@ if __name__ == '__main__':
     # dr = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/FRUvsQUI/Naive->PUR/EM/control'
     dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/dispersion_x2/dispersion_x2_3.Levy'
     dr2='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/dispersion_x2/dispersion_x2_3.Oscillatory'
-    # dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/imitation/exp_13l_imitation_0'
-    # dr1='/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Satrved'
-    # ddr='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/controls_20l'
-    # c1='/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/FRU->FRU/AM/test_10l'
-    # c2='/home/panos/nawrot_larvaworld/larvaworld/data/pairs/controls_20l_imitation_0'
-    # c3='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/chemotaxis_local/test2'
-    # c3='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/chemotaxis_local/test2'
-    # pref = '/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/raw/3_conditions/AttP240@UAS_TNT/Starved'
-    # x_contour_file = f'{pref}_x_contour.txt'
-    # y_contour_file = f'{pref}_y_contour.txt'
-    # xcs = pd.read_csv(x_contour_file, header=None, sep='\t')
-    # ycs = pd.read_csv(y_contour_file, header=None, sep='\t')
-    # xcs, ycs = fun.convex_hull(xs=xcs.values, ys=ycs.values, N=30)
-    #
-    # contour_xy = nam.xy(nam.contour(30))
-    # xc_pars = [x for x, y in contour_xy]
-    # yc_pars = [y for x, y in contour_xy]
-    # xcs = pd.DataFrame(xcs, columns=xc_pars, index=None)
-    # ycs = pd.DataFrame(ycs, columns=yc_pars, index=None)
-
-    # yys=vertices[:,:][1]
-    from lib.conf.conf import imitation_exp
-
-    # vis_kwargs = dtypes.get_dict('visualization', mode='video', video_speed=60)
-    # exp_conf = imitation_exp('AttP240.Starved', model='explorer', idx=0, save_data_flag=True)
-    # f = ExpFitter('AttP240.Starved')
-    # dd = run_sim(**exp_conf)
-    # # dd= run_sim(**exp_conf, vis_kwargs=vis_kwargs)
-    # fit = f.compare(dd)
-    # print(fit)
-    # raise
-
-    # dr2=paths.RefDatasetPath
-    # print(paths.RefConf)
-    # raise
-    # a = np.array([2.4, 3.4])
-    # ab = np.array([23.4, 31.4])
-    # dr='/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP240@UAS_TNT/Starved'
-    for dddr in [dr1, dr2] :
-        store = pd.HDFStore(f'{dddr}/data/data.h5')
-        print(store.keys())
-        raise
-        d = LarvaDataset(dddr)
-        # # c = d.config
-        # del d.config['agent_ids']
-        # d.config['bout_distros']['stride']=d.config['bout_distros']['stride']['best']
-        # d.config['bout_distros']['pause']=d.config['bout_distros']['pause']['best']
-        # d.save_config()
-        # d.save_agents(ids=['Larva_105'])
-        # s0,e0=d.load_agent('Larva_105')
-        # d.visualize(vis_kwargs=vis_kwargs, s0=s0, e0=e0, fix_point=5,
-        #             env_params={'arena' : null_dict('arena', arena_dims=(0.01,0.01))})
-        # d.visualize_single('Larva_105', fix_point=5, secondary_fix_point=None)
-        # d.visualize(vis_kwargs=vis_kwargs, s0=s0, e0=e0)
-        # d.enrich(preprocessing={'rescale_by':0.001}, enrich_aux={'recompute': True})
-        # d.drop_pars(groups={**{n: True for n in
-        #                                              ['stride', 'non_stride', 'stridechain', 'pause', 'Lturn',
-        #                                               'Rturn', 'turn', 'unused']},
-        #                                           **{'midline': False, 'contour': False}}, is_last=True)
-        s, e = d.step_data, d.endpoint_data
-        # c=d.config
-        # ss=s.xs('Larva_105', level='AgentID', drop_level=True)
-        # print(ss.head())
-        # print(c)
-        # print(s.columns.values)
-        print(e.columns)
-        # print(len(s.columns))
-        # print(ss[fun.flatten_list(d.contour_xy)])
-        # print(ss[fun.flatten_list(d.points_xy)])
-        # print(s['head_x'].dropna().min())
-        # print(s['head_y'].dropna().min())
-        # print(s['head_x'].dropna().max())
-        # print(s['head_y'].dropna().max())
-        # raise
-
-        # rescale(s,e,config=c, scale=0.001, recompute=True)
-        # print(s['head_x'].dropna().min())
-        # print(s['head_y'].dropna().min())
-        # print(s['head_x'].dropna().max())
-        # print(s['head_y'].dropna().max())
-        # print(d.step_data['bend'].dropna().abs().groupby('AgentID').mean().mean())
-        # print(d.step_data['velocity'].dropna().abs().groupby('AgentID').mean().mean())
-        # print(d.endpoint_data['tortuosity_2_mean'].mean())
-        # print(d.endpoint_data['tortuosity_5_mean'].mean())
-        # print(d.endpoint_data['tortuosity_10_mean'].mean())
-        # print(d.endpoint_data['dispersion'].mean())
-        # print(d.endpoint_data['cum_dst'].mean())
-        # print(d.endpoint_data['dispersion_max'].mean())
-        # print(d.endpoint_data['final_dispersion'].mean())
-        # print(d.endpoint_data['dispersion_mean'].mean())
-        # print(d.endpoint_data.columns[10:20])
-    # f = ExpFitter(paths.RefConf)
-    # print(f.df_st)
-    # raise
-
-
-    # dd= run_sim(**exp_conf, vis_kwargs=vis_kwargs)
-    # from lib.sim.analysis import sim_analysis
-    #
-    # fig_dict, results = sim_analysis(dd, 'imitation')
-    # # print(results)
-    # # # res=mimic_dataset(d)
-    # # # d.visualize(vis_kwargs=vis_kwargs, space_in_mm=False, draw_Nsegs=2)
-    # # # s,e=d.step_data,d.endpoint_data
-    #
-    # c=dd.config
-    # print(c['sample_fit'])
-        # print(c.keys())
-        # print(e.columns.values[0:20])
-        # print(e['tortuosity_2_mean'].mean())
-        # print(e['tortuosity_5_mean'].mean())
-        # print(e['tortuosity_10_mean'].mean())
-        # print(e['tortuosity_20_mean'].mean())
-        # print(e['tortuosity_5_std'])
-        # print(e['cum_dst'])
-        # print(s['x'].max(), s['x'].min())
-        # print(s['y'].max(), s['y'].min())
-        # print(e['cum_dur'].mean())
-        # print(e['cum_dur'].std())
-    # ss={'a' :[2], 'b':[3]}
-    # s=pd.DataFrame.from_dict(ss)
-    # bar = pd.DataFrame(np.random.randn(10, 4))
-    # s0=time.time()
-    # store = pd.HDFStore('test.h5')
-    # store['foo'] = s  # write to HDF5
-    # bar = store['foo']  # retrieve
-    # store.close()
 

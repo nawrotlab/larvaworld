@@ -482,7 +482,7 @@ def init_pars():
                        'non_chunks': {'t': bool, 'v': False}}
     d['enrich_aux'] = {'recompute': {'t': bool, 'v': False},
                        'mode': {'t': str, 'v': 'minimal', 'vs': ['minimal', 'full']},
-                       'source': {'t': Tuple[float], 'min': -10.0, 'max': 10.0}
+                       # 'source': {'t': Tuple[float], 'min': -10.0, 'max': 10.0}
                        }
     d['to_drop'] = {'groups': {k: {'t': bool, 'v': False} for k in to_drop_keys}}
     d['enrichment'] = {k: d[k] for k in
