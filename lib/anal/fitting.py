@@ -370,8 +370,8 @@ class BoutGenerator:
             'normal': {'cdf': norm_cdf, 'pdf': norm_pdf, 'args': ['mu', 'sigma']},
             'uniform': {'cdf': uniform_cdf, 'pdf': uniform_pdf, 'args': ['xmin', 'xmax']},
         }
-        xmin, xmax = range
-        kwargs.update({'xmin': xmin, 'xmax': xmax})
+        self.xmin, self.xmax = range
+        kwargs.update({'xmin': self.xmin, 'xmax': self.xmax})
         self.args = {a: kwargs[a] for a in self.ddfs[self.name]['args']}
 
         self.dist = self.build(**self.args)
@@ -381,12 +381,9 @@ class BoutGenerator:
         return vs[0] if size == 1 else vs
 
     def build(self, **kwargs):
-        dt = self.dt
-        xmin, xmax = self.range
-        x0, x1 = int(xmin / dt), int(xmax / dt)
+        x0, x1 = int(self.xmin / self.dt), int(self.xmax / self.dt)
         xx = np.arange(x0, x1 + 1)
-        x = xx * dt
-        pmf = self.ddfs[self.name]['pdf'](x, **kwargs)
+        pmf = self.ddfs[self.name]['pdf'](xx * self.dt, **kwargs)
         pmf /= pmf.sum()
         return rv_discrete(values=(xx, pmf))
 
