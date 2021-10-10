@@ -55,69 +55,42 @@ def exponential_pdf(x, xmin, beta):
     return beta * np.exp(-beta * (x - xmin))
 
 
-def lognorm_cdf(x, mu, sigma, xmin=0):
+def lognorm_cdf(x, mu, sigma):
     return 0.5 + 0.5 * erf((np.log(x) - mu) / np.sqrt(2) / sigma)
 
 
-def lognormal_pdf(x, mu, sigma, xmin=0):
+def lognormal_pdf(x, mu, sigma):
     return 1 / (x * sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((np.log(x) - mu) / sigma) ** 2)
 
 
-def logNpow_pdf(x, mu, sigma, alpha, xmin, switch, ratio, overlap=0):
-    x0 = x[x < switch]
-    x1 = x[x >= switch]
-    log_pdf = lognormal_pdf(x0, mu, sigma, xmin) * ratio
-    pow_pdf = powerlaw_pdf(x1, switch, alpha) * (1 - ratio)
+def logNpow_pdf(x, mu, sigma, alpha, switch, ratio):
+    log_pdf = lognormal_pdf(x[x < switch], mu, sigma) * ratio
+    pow_pdf = powerlaw_pdf(x[x >= switch], switch, alpha) * (1 - ratio)
     return np.hstack([log_pdf, pow_pdf])
 
 
-def logNpow_cdf(x, mu, sigma, alpha, xmin, switch, ratio, overlap=0):
-    x0 = x[x < switch]
-    x1 = x[x >= switch]
-    log_cdf = 1 - lognorm_cdf(x0, mu, sigma)
-    pow_cdf = 1 - powerlaw_cdf(x1, switch, alpha)
-    pow_cdf *= (1 - ratio)
+def logNpow_cdf(x, mu, sigma, alpha, switch, ratio):
+    log_cdf = 1 - lognorm_cdf(x[x < switch], mu, sigma)
+    pow_cdf = (1 - powerlaw_cdf(x[x >= switch], switch, alpha)) * (1 - ratio)
     return 1 - np.hstack([log_cdf, pow_cdf])
 
 
-def get_distro(name, x, range, mode='cdf', **kwargs):
-    ddfs = {
-        'powerlaw': {'cdf': powerlaw_cdf, 'pdf': powerlaw_pdf, 'args': ['alpha'], 'rvs': 'trunc_powerlaw'},
-        'exponential': {'cdf': exponential_cdf, 'pdf': exponential_pdf, 'args': ['beta'], 'rvs': ''},
-        'lognormal': {'cdf': lognorm_cdf, 'pdf': lognormal_pdf, 'args': ['mu', 'sigma'], 'rvs': ''},
-        'logNpow': {'cdf': logNpow_cdf, 'pdf': logNpow_pdf,
-                    'args': ['alpha', 'mu', 'sigma', 'switch', 'ratio', 'overlap'], 'rvs': 'logNpow_distro'},
-        'levy': {'cdf': levy_cdf, 'pdf': levy_pdf, 'args': ['mu', 'sigma'], 'rvs': ''},
-        'norm': {'cdf': norm_cdf, 'pdf': norm_pdf, 'args': ['mu', 'sigma'], 'rvs': ''}
-    }
-    xmin, xmax = range
-    func = ddfs[name][mode]
-    args = ddfs[name]['args']
-    return func(x=x, xmin=xmin, **{a: kwargs[a] for a in args})
-
-
-def get_logNpow(dur, dur0, dur1, durmid, fr, overlap=0, discrete=False):
-    d0 = dur[dur < durmid]
-    d1 = dur[dur >= durmid]
-    r = len(d0) / len(dur)
-    d00 = dur[dur < durmid + overlap * (dur1 - durmid)]
-    m, s = get_lognormal(d00, dur0)
-    a = get_powerlaw_alpha(d1, durmid, dur1, discrete=discrete)
+def get_logNpow(x, xmax, xmid, overlap=0, discrete=False):
+    r = len(x[x < xmid]) / len(x)
+    m, s = get_lognormal(x[x < xmid + overlap * (xmax - xmid)])
+    a = get_powerlaw_alpha(x[x >= xmid], xmid, xmax, discrete=discrete)
     return m, s, a, r
 
 
 def get_powerlaw_alpha(dur, dur0, dur1, discrete=False):
     with suppress_stdout_stderr():
         from powerlaw import Fit
-        results = Fit(dur, xmin=dur0, xmax=dur1, discrete=discrete)
-        alpha = results.power_law.alpha
-        return alpha
+        return Fit(dur, xmin=dur0, xmax=dur1, discrete=discrete).power_law.alpha
 
 
-def get_lognormal(dur, xmin):
-    m = np.mean(np.log(dur))
-    s = np.std(np.log(dur))
-    return m, s
+def get_lognormal(dur):
+    d=np.log(dur)
+    return np.mean(d), np.std(d)
 
 
 def compute_density(x, xmin, xmax, Nbins=64):
@@ -140,8 +113,6 @@ def KS(a1, a2):
 
 
 def MSE(a1, a2, scaled=False):
-    # e=10**-5
-    # s=a1+1 if scaled else 1
     if scaled:
         s1 = sum(a1)
         s2 = sum(a2)
@@ -150,16 +121,15 @@ def MSE(a1, a2, scaled=False):
     return np.sum((a1 / s1 - a2 / s2) ** 2) / a1.shape[0]
 
 
-def logNpow_switch(x, xmin, xmax, u2, du2, c2cum, c2, fr, discrete=False, fit_by='cdf'):
+def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
     xmids = u2[1:-int(len(u2) / 3)][::2]
     overlaps = np.linspace(0, 1, 6)
-    # overlaps = [0]
     temp = np.ones([len(xmids), len(overlaps)])
     for i, xmid in enumerate(xmids):
         for j, ov in enumerate(overlaps):
-            mm, ss, aa, r = get_logNpow(x, xmin, xmax, xmid, fr, discrete=discrete, overlap=ov)
-            lp_cdf = 1 - logNpow_cdf(u2, mm, ss, aa, xmin, xmid, r)
-            lp_pdf = logNpow_pdf(du2, mm, ss, aa, xmin, xmid, r)
+            mm, ss, aa, r = get_logNpow(x, xmax, xmid, discrete=discrete, overlap=ov)
+            lp_cdf = 1 - logNpow_cdf(u2, mm, ss, aa, xmid, r)
+            lp_pdf = logNpow_pdf(du2, mm, ss, aa, xmid, r)
             if fit_by == 'cdf':
                 temp[i, j] = MSE(c2cum, lp_cdf)
             elif fit_by == 'pdf':
@@ -169,9 +139,7 @@ def logNpow_switch(x, xmin, xmax, u2, du2, c2cum, c2, fr, discrete=False, fit_by
         return np.nan
     else:
         ii, jj = np.unravel_index(np.nanargmin(temp), temp.shape)
-        xmid = xmids[ii]
-        ov = overlaps[jj]
-        return xmid, ov
+        return xmids[ii], overlaps[jj]
 
 
 def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=['stride', 'pause'], **kwargs):
@@ -189,7 +157,7 @@ def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=
             x0 = dataset.get_par(p).values
         elif s is not None:
             x0 = s[p].dropna().values
-        dic = fit_bout_distros(x0, xmin, xmax, fr=config['fr'], discrete=disc, print_fits=True,
+        dic = fit_bout_distros(x0, xmin, xmax, discrete=disc, print_fits=True,
                                dataset_id=id, bout=bout, combine=comb, store=store)
         config['bout_distros'][bout] = dic['best'][bout]['best']
 
@@ -208,7 +176,7 @@ def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=
     return dic
 
 
-def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=True,
+def fit_bout_distros(x0, xmin, xmax, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=True,
                      dataset_id='dataset', bout='pause', combine=True, store=False, fit_by='cdf'):
     with suppress_stdout(True):
         warnings.filterwarnings('ignore')
@@ -227,9 +195,9 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
         e_cdf = 1 - exponential_cdf(u2, xmin, b)
         e_pdf = exponential_pdf(du2, xmin, b)
 
-        m, s = get_lognormal(x, xmin)
-        l_cdf = 1 - lognorm_cdf(u2, m, s, xmin)
-        l_pdf = lognormal_pdf(du2, m, s, xmin)
+        m, s = get_lognormal(x)
+        l_cdf = 1 - lognorm_cdf(u2, m, s)
+        l_pdf = lognormal_pdf(du2, m, s)
 
         m_lev, s_lev = levy.fit(x)
         lev_cdf = 1 - levy_cdf(u2, m_lev, s_lev)
@@ -239,22 +207,19 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
         nor_cdf = 1 - norm_cdf(u2, m_nor, s_nor)
         nor_pdf = norm_pdf(du2, m_nor, s_nor)
 
-        # m_nor, s_nor = norm.fit(x)
         uni_cdf = 1 - uniform_cdf(u2, xmin, xmin + xmax)
         uni_pdf = uniform_pdf(du2, xmin, xmin + xmax)
 
         if np.isnan(xmid) and combine:
-            xmid, overlap = logNpow_switch(x, xmin, xmax, u2, du2, c2cum, c2, fr, discrete, fit_by)
+            xmid, overlap = logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete, fit_by)
 
         if not np.isnan(xmid):
-            mm, ss, aa, r = get_logNpow(x, xmin, xmax, xmid, fr, discrete=discrete, overlap=overlap)
-            lp_cdf = 1 - logNpow_cdf(u2, mm, ss, aa, xmin, xmid, r)
-            lp_pdf = logNpow_pdf(du2, mm, ss, aa, xmin, xmid, r)
-            # lp_st, lp_pv = ks_2samp(c2cum, lp_cdf)
+            mm, ss, aa, r = get_logNpow(x, xmax, xmid, discrete=discrete, overlap=overlap)
+            lp_cdf = 1 - logNpow_cdf(u2, mm, ss, aa, xmid, r)
+            lp_pdf = logNpow_pdf(du2, mm, ss, aa, xmid, r)
         else:
             mm, ss, aa, r = np.nan, np.nan, np.nan, np.nan
             lp_cdf, lp_pdf = None, None
-            # lp_st, lp_pv = np.nan, np.nan
 
         if fit_by == 'cdf':
             KS_pow = MSE(c2cum, p_cdf)
@@ -272,16 +237,8 @@ def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.
             KS_lev = MSE(c2, lev_pdf)
             KS_norm = MSE(c2, nor_pdf)
             KS_uni = MSE(c2, uni_pdf)
-        # p_st, p_pv = ks_2samp(c2cum , p_cdf)
-
-        #
-        # e_st, e_pv = ks_2samp(c2cum, e_cdf)
-
-        #
-        # l_st, l_pv = ks_2samp(c2cum, l_cdf)
 
         Ks = np.array([KS_pow, KS_exp, KS_logn, KS_lognNpow, KS_lev, KS_norm, KS_uni])
-        # idx_Kmax = 3
         idx_Kmax = np.nanargmin(Ks)
 
         res = np.round(
@@ -358,7 +315,6 @@ def get_best_distro(bout, f, idx_Kmax=None):
     r = (f[f'min_{k}'], f[f'max_{k}'])
     if idx_Kmax is None:
         idx_Kmax = np.argmin([f[f'KS_{d}_{k}'] for d in ['pow', 'exp', 'log', 'logNpow', 'levy', 'norm', 'uni']])
-    # ind = np.argmin(f[[f'KS_pow_{k}', f'KS_exp_{k}', f'KS_log_{k}', f'KS_logNpow_{k}']])
     if idx_Kmax == 0:
         distro = {'range': r,
                   'name': 'powerlaw',
@@ -403,32 +359,37 @@ class BoutGenerator:
     def __init__(self, name, range, dt, **kwargs):
         self.name = name
         self.dt = dt
-        ddfs = {
+        self.range = range
+        self.ddfs = {
             'powerlaw': {'cdf': powerlaw_cdf, 'pdf': powerlaw_pdf, 'args': ['xmin', 'alpha']},
             'exponential': {'cdf': exponential_cdf, 'pdf': exponential_pdf, 'args': ['xmin', 'beta']},
-            'lognormal': {'cdf': lognorm_cdf, 'pdf': lognormal_pdf, 'args': ['xmin', 'mu', 'sigma']},
+            'lognormal': {'cdf': lognorm_cdf, 'pdf': lognormal_pdf, 'args': ['mu', 'sigma']},
             'logNpow': {'cdf': logNpow_cdf, 'pdf': logNpow_pdf,
-                        'args': ['xmin', 'alpha', 'mu', 'sigma', 'switch', 'ratio', 'overlap']},
+                        'args': ['alpha', 'mu', 'sigma', 'switch', 'ratio']},
             'levy': {'cdf': levy_cdf, 'pdf': levy_pdf, 'args': ['mu', 'sigma']},
             'normal': {'cdf': norm_cdf, 'pdf': norm_pdf, 'args': ['mu', 'sigma']},
             'uniform': {'cdf': uniform_cdf, 'pdf': uniform_pdf, 'args': ['xmin', 'xmax']},
         }
-        self.xmin, self.xmax = range
-        self.pdf = ddfs[name]['pdf']
-        kwargs.update({'xmin': self.xmin, 'xmax': self.xmax})
-        self.args = {a: kwargs[a] for a in ddfs[name]['args']}
+        xmin, xmax = range
+        kwargs.update({'xmin': xmin, 'xmax': xmax})
+        self.args = {a: kwargs[a] for a in self.ddfs[self.name]['args']}
 
-        self.dist = self.build(range, dt, **self.args)
+        self.dist = self.build(**self.args)
 
     def sample(self, size=1):
         vs = self.dist.rvs(size=size) * self.dt
         return vs[0] if size == 1 else vs
 
-    def build(self, range, dt, **kwargs):
-        xmin, xmax = range
+    def build(self, **kwargs):
+        dt = self.dt
+        xmin, xmax = self.range
         x0, x1 = int(xmin / dt), int(xmax / dt)
         xx = np.arange(x0, x1 + 1)
         x = xx * dt
-        pmf = self.pdf(x, **kwargs)
+        pmf = self.ddfs[self.name]['pdf'](x, **kwargs)
         pmf /= pmf.sum()
         return rv_discrete(values=(xx, pmf))
+
+    def get(self, x, mode):
+        func = self.ddfs[self.name][mode]
+        return func(x=x, **self.args)

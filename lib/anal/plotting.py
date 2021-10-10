@@ -21,6 +21,7 @@ import os
 
 import lib.aux.dictsNlists
 # from lib.aux.par_aux
+from lib.anal.fitting import BoutGenerator
 from lib.conf.stored import conf
 from lib.aux import naming as nam
 from lib.aux import colsNstr as fun
@@ -1879,7 +1880,7 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
                         plot_fits='all', range='default', print_fits=False, only_fit_one=True, mode='cdf',
                         subfolder='bouts', refit_distros=False, test_detection=False,
                         save_to=None, save_as=None, save_fits_to=None, save_fits_as=None, return_fig=False, show=False):
-    from lib.anal.fitting import compute_density, get_distro, fit_bout_distros
+    from lib.anal.fitting import compute_density, fit_bout_distros
     warnings.filterwarnings('ignore')
     Ndatasets, colors, save_to, labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
 
@@ -1988,13 +1989,13 @@ def plot_stridesNpauses(datasets, labels=None, stridechain_duration=False, pause
             if not refit_distros and ref is not None:
 
                 u2, du2, c2, c2cum = compute_density(x0, xmin, xmax)
-                fitted = ref[bout]['best']
-                pdfs = [get_distro(x=du2, **fitted, mode='pdf')] * num_distros
-                cdfs = [1 - get_distro(x=u2, **fitted, mode='cdf')] * num_distros
+                b=BoutGenerator(**ref[bout]['best'])
+                pdfs = [b.get(x=du2, mode='pdf')] * num_distros
+                cdfs = [1 - b.get(x=u2, mode='cdf')] * num_distros
                 idx_Kmax = 0
 
             else:
-                fit_dic = fit_bout_distros(x0, xmin, xmax, fr, discr, dataset_id=label, bout=bout,
+                fit_dic = fit_bout_distros(x0, xmin, xmax, discr, dataset_id=label, bout=bout,
                                            print_fits=print_fits, combine=combine)
                 idx_Kmax = fit_dic['idx_Kmax']
                 cdfs = fit_dic['cdfs']
