@@ -7,13 +7,11 @@ import os
 import numpy as np
 from scipy.integrate import quad, solve_ivp
 
-import lib.conf.conf
-import lib.conf.dtypes
 import lib.model.DEB.deb_aux
-from lib.conf.conf import loadConf
+from lib.conf.stored.conf import loadConf
 
 from lib.model.DEB.gut import Gut
-from lib.stor import paths
+from lib.conf.base import paths
 
 '''
 Standard culture medium
@@ -41,7 +39,7 @@ class Substrate:
             'cornmeal' : 359.33,
             'water' : 18.01528,
         }
-        self.d_dict= lib.conf.dtypes.substrate_dict[type]
+        self.d_dict= lib.conf.base.dtypes.substrate_dict[type]
         self.d = self.d_water + sum(list(self.d_dict.values()))
         self.C=self.get_C()
         self.X=self.get_X()

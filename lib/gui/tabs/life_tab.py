@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 
 from lib.anal.plotting import plot_debs
-from lib.conf.dtypes import substrate_dict
+from lib.conf.base.dtypes import substrate_dict
 from lib.gui.aux.elements import CollapsibleDict, Table, GraphList, SelectionList, Header
 from lib.gui.aux.functions import col_size, t_kws, gui_col, gui_row
 from lib.gui.aux.buttons import GraphButton

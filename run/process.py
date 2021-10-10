@@ -9,7 +9,7 @@ if __name__ == '__main__':
     sys.path.insert(0, '..')
     from lib.stor.managing import build_datasets_old, analyse_datasets, visualize_datasets, enrich_datasets
     import lib.aux.argparsers as prs
-    from lib.conf.conf import *
+    from lib.conf.stored.conf import *
 
     parser = argparse.ArgumentParser(description="Initialize processing")
     parser = prs.add_data_kwargs(parser)

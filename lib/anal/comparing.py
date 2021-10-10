@@ -8,7 +8,7 @@ import pandas as pd
 import lib.aux.dictsNlists
 import lib.aux.naming as nam
 
-from lib.conf.par import getPar
+from lib.conf.base.par import getPar
 # from lib.stor.larva_dataset import LarvaDataset
 # from lib.conf import par_conf
 
@@ -23,7 +23,7 @@ class ExpFitter :
             if type(sample)==dict :
                 self.sample_conf=sample
             elif type(sample) == str:
-                from lib.conf.conf import loadConf
+                from lib.conf.stored.conf import loadConf
                 self.sample_conf = loadConf(sample, 'Ref')
             self.sample=LarvaDataset(self.sample_conf['dir'], load_data=True)
 

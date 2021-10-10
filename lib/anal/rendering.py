@@ -6,7 +6,7 @@ import numpy as np
 import pygame
 from scipy.spatial import ConvexHull
 
-import lib.anal.process.aux
+import lib.process.aux
 
 
 class GuppiesViewer(object):

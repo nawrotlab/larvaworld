@@ -2,19 +2,17 @@
 
 import copy
 # import sys
-import os
-import subprocess
 
 import PySimpleGUI as sg
 
 # sys.path.insert(0, '..')
 from lib.aux.combining import render_mpl_table
-from lib.conf.dtypes import null_dict
+from lib.conf.base.dtypes import null_dict
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, GraphList, CollapsibleTable, SelectionList, DataList
-from lib.gui.aux.functions import t_kws, gui_col, gui_cols
+from lib.gui.aux.functions import t_kws, gui_cols
 from lib.gui.aux.buttons import named_bool_button
 
-from lib.conf.conf import loadConf, next_idx
+from lib.conf.stored.conf import loadConf, next_idx
 from lib.gui.tabs.tab import GuiTab
 from lib.sim.batch.aux import stored_trajs, delete_traj
 from lib.sim.batch.functions import retrieve_results

@@ -7,15 +7,13 @@ import PySimpleGUI as sg
 import lib.aux.ang_aux
 import lib.aux.sim_aux
 import lib.aux.xy_aux
-import lib.conf.dtypes
+import lib.conf.base.dtypes
 import lib.gui.aux.functions
-from lib.conf.dtypes import null_dict
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
-from lib.gui.aux.functions import col_size, col_kws, t_kws, retrieve_dict, gui_col
-from lib.gui.aux.buttons import color_pick_layout, GraphButton
-from lib.conf.conf import loadConf
+from lib.conf.base.dtypes import null_dict
+from lib.gui.aux.elements import CollapsibleDict, GraphList
+from lib.gui.aux.functions import col_kws, t_kws, retrieve_dict
+from lib.gui.aux.buttons import color_pick_layout
 from lib.gui.tabs.tab import GuiTab
-from lib.sim.single_run import run_sim
 
 
 class DrawTab(GuiTab):
@@ -157,12 +155,6 @@ class DrawTab(GuiTab):
         self.graph = g1.canvas_element
 
         return l, c, {g1.name: g1}, {self.name: dic}
-
-    # def build(self):
-    #     l1, c1, g1, d1 = self.build_conf_env()
-    #     l2, c2, g2, d2 = self.build_draw_env()
-    #     l = [[l1, l2]]
-    #     return l, {**c1, **c2}, {**g1, **g2}, {**d1, **d2}
 
 
     def eval(self,e, v, w, c, d, g):

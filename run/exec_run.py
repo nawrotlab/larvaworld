@@ -5,11 +5,10 @@ import argparse
 import lib.aux.dictsNlists
 
 sys.path.insert(0, '..')
-from lib.sim.analysis import sim_analysis
+from lib.sim.single.analysis import sim_analysis
 from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results
-
-from lib.stor import paths
+from lib.conf.base import paths
 
 
 class Exec:
@@ -68,7 +67,7 @@ class Exec:
 
 
     def exec_run(self):
-        from lib.sim.single_run import run_sim, SingleRun
+        from lib.sim.single.single_run import SingleRun
         from lib.sim.batch.batch import batch_run
         from lib.sim.batch.functions import prepare_batch
         if self.mode == 'sim':

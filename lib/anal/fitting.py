@@ -9,9 +9,10 @@ import scipy.stats as st
 from scipy import stats as st
 from scipy.stats import ks_2samp, stats, levy, norm, uniform
 
-import lib.anal.process.aux
+import lib.process.aux
 from lib.aux import naming as nam
-from lib.conf.conf import saveConf
+from lib.conf.stored.conf import saveConf
+from lib.process.aux import suppress_stdout, suppress_stdout_stderr
 
 
 
@@ -485,7 +486,7 @@ def get_logNpow(dur, dur0, dur1, durmid, fr, overlap=0, discrete=False):
 
 
 def get_powerlaw_alpha(dur, dur0, dur1, discrete=False):
-    with lib.anal.process.aux.suppress_stdout_stderr():
+    with suppress_stdout_stderr():
         from powerlaw import Fit
         results = Fit(dur, xmin=dur0, xmax=dur1, discrete=discrete)
         alpha = results.power_law.alpha
@@ -588,7 +589,7 @@ def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=
 
 def fit_bout_distros(x0, xmin, xmax, fr, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=True,
                      dataset_id='dataset', bout='pause', combine=True, store=False, fit_by='cdf'):
-    with lib.anal.process.aux.suppress_stdout(True):
+    with suppress_stdout(True):
         warnings.filterwarnings('ignore')
         x = x0[x0 >= xmin]
         x = x[x <= xmax]

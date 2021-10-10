@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 from shapely.geometry import Point
 
-import lib.aux.colsNstr as fun
+from lib.aux.colsNstr import colorname2tuple
 from lib.anal.rendering import InputBox
 
 
@@ -22,7 +22,7 @@ class LarvaworldAgent:
         self.initial_pos = pos
         self.pos = self.initial_pos
         if type(default_color) == str:
-            default_color = fun.colorname2tuple(default_color)
+            default_color = colorname2tuple(default_color)
         self.default_color = default_color
         self.color = self.default_color
         self.radius = radius

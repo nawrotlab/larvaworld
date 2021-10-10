@@ -5,8 +5,8 @@ import numpy as np
 import lib.aux.dictsNlists
 from lib.anal.sampling import BoutGenerator
 from lib.aux import naming as nam
-from lib.conf.conf import loadConf
-from lib.conf.dtypes import null_dict
+from lib.conf.stored.conf import loadConf
+from lib.conf.base.dtypes import null_dict
 from lib.model.modules.basic import Effector
 
 

@@ -1,13 +1,13 @@
 import os
 
-from lib.conf.dtypes import null_dict
+from lib.conf.base.dtypes import null_dict
 
 from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, ButtonGraphList
 from lib.gui.aux.functions import gui_cols
 from lib.gui.tabs.tab import GuiTab
-from lib.sim.single_run import run_essay
-from lib.sim.analysis import essay_analysis
-from lib.conf.conf import loadConf, next_idx
+from lib.sim.single.single_run import run_essay
+from lib.sim.single.analysis import essay_analysis
+from lib.conf.stored.conf import loadConf, next_idx
 
 
 class EssayTab(GuiTab):

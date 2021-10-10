@@ -4,9 +4,10 @@ import time
 import numpy as np
 
 sys.path.insert(0, '..')
-from lib.sim.single_run import run_sim, SingleRun
-from lib.conf.conf import expandConf, loadConfDict
-from lib.anal.argparsers import MultiParser, add_exp_kwargs
+from lib.sim.single.single_run import SingleRun
+from lib.sim.single.analysis import sim_analysis
+from lib.conf.stored.conf import expandConf, loadConfDict
+from lib.anal.argparsers import MultiParser
 
 MP = MultiParser(['visualization', 'sim_params'])
 p = MP.add()
@@ -20,12 +21,10 @@ exp = args.experiment
 s = time.time()
 exp_conf = expandConf(exp, 'Exp')
 exp_conf['sim_params'] = d['sim_params']
-# d = run_sim(**exp_conf, vis_kwargs = d['visualization'])
 ds = SingleRun(**exp_conf, vis_kwargs=d['visualization']).run()
-# ds = run_sim(**exp_conf, vis_kwargs=d['visualization'])
 
 if args.analysis:
-    from lib.sim.analysis import sim_analysis
+
     fig_dict, results=sim_analysis(ds, exp)
 
 e = time.time()

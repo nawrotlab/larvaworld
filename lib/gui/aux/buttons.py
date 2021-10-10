@@ -6,7 +6,7 @@ from PySimpleGUI import Button, BUTTON_TYPE_COLOR_CHOOSER
 
 from lib.gui.aux import graphics
 from lib.gui.aux.functions import b6_kws, t_kws
-from lib.stor import paths as paths
+from lib.conf.base import paths
 
 
 sg.theme('LightGreen')

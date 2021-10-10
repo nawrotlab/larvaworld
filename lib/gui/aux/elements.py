@@ -10,15 +10,15 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 from lib.aux.dictsNlists import flatten_dict, group_list_by_n
-from lib.conf.conf import loadConfDict, deleteConf, loadConf, expandConf
+from lib.conf.stored.conf import loadConfDict, deleteConf, loadConf, expandConf
 import lib.aux.colsNstr as fun
-from lib.conf.dtypes import par_dict, base_dtype, null_dict, par
-from lib.conf.par import runtime_pars, getPar
+from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par
+from lib.conf.base.par import runtime_pars, getPar
 from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse, col_kws
 from lib.gui.aux.buttons import named_bool_button, BoolButton, GraphButton, button_row
 from lib.gui.aux.windows import set_kwargs, save_conf_window, import_window, change_dataset_id
 
-from lib.stor import paths
+from lib.conf.base import paths
 
 
 class SectionDict:
@@ -821,7 +821,11 @@ class CollapsibleTable(Collapsible):
         Ks = v[K]
         if e == f'ADD {self.name}':
             from lib.gui.aux.windows import larvagroup_window
-            entry= larvagroup_window()
+            if len(Ks) > 0 :
+                id = self.data[Ks[0]][0]
+            else :
+                id=None
+            entry= larvagroup_window(id=id, base_dict=self.dict)
             self.dict.update(**entry)
             self.update(w)
         elif e == f'REMOVE {self.name}':

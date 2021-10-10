@@ -13,11 +13,11 @@ import time
 import numpy as np
 from pypet import Environment, load_trajectory, pypetconstants
 
-from lib.conf.dtypes import null_dict
+from lib.conf.base.dtypes import null_dict
 from lib.sim.batch.aux import config_traj, prepare_traj
 from lib.sim.batch.functions import single_run
 
-import lib.stor.paths as paths
+from lib.conf.base import paths
 
 ''' Default batch run.
 Arguments :
@@ -166,7 +166,6 @@ def _batch_run(batch_type='unnamed', batch_id='template', space=None, exp=None, 
 
 if __name__ == "__main__":
     batch_type = 'odor-preference'
-    from lib.conf.conf import expandConf
 
     # conf = expandConf(batch_type, 'Batch')
     #

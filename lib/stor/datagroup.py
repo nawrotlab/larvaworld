@@ -1,16 +1,14 @@
-import json
 import sys
-import shutil
 import os
 import numpy as np
 
-from lib.conf.dtypes import arena
-from lib.stor import paths as paths
+from lib.conf.base.dtypes import arena
+from lib.conf.base import paths
 
 
 sys.path.insert(0, paths.get_parent_dir())
 
-from lib.conf.conf import loadConf, deleteConf, saveConf, loadConfDict
+from lib.conf.stored.conf import loadConf, deleteConf, saveConf, loadConfDict
 
 
 class LarvaDataGroup:
@@ -231,7 +229,7 @@ def setEnrichConf():
 
 
 def setConf(id):
-    import lib.conf.data_conf as dat
+    import lib.conf.stored.data_conf as dat
 
     print(f' --- Definition of Configuration : {id} --- ')
     print(f' - Step 1 : Data configuration')
@@ -269,7 +267,6 @@ def setConf(id):
 
 
 def setDataGroup(id=None):
-    import lib.conf.env_conf as env
     if id is None:
         id = get_input("Enter DataGroup id", itype=str)
     print(f' ----- Registration of new DataGroup : {id} ----- ')

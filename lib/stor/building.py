@@ -2,7 +2,7 @@ import os.path
 
 import pandas as pd
 
-import lib.anal.process.aux
+import lib.process.aux
 import lib.aux.dictsNlists
 import lib.aux.par_aux
 from lib.stor.match_ids import match_larva_ids

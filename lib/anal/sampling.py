@@ -5,11 +5,10 @@ import pandas as pd
 import scipy.stats as stats
 from scipy.stats import truncnorm, lognorm, rv_discrete, uniform
 
-import lib.aux.par_aux
 from lib.anal.fitting import compute_density, powerlaw_cdf, exponential_cdf, lognorm_cdf, powerlaw_pdf, logNpow_pdf, \
     fit_bout_distros, logNpow_cdf, get_distro, lognormal_pdf, exponential_pdf, levy_cdf, levy_pdf, \
     norm_cdf, norm_pdf, uniform_pdf, uniform_cdf
-from lib.conf.conf import loadConf
+from lib.conf.stored.conf import loadConf
 
 
 

@@ -1,4 +1,4 @@
-from lib.conf.conf import loadConf
+from lib.conf.stored.conf import loadConf
 from lib.gui.aux.elements import GuiElement
 
 

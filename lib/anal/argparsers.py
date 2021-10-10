@@ -1,10 +1,9 @@
-import sys
 from argparse import ArgumentParser
 
 import numpy as np
 
-from lib.conf.conf import loadConfDict
-from lib.conf.dtypes import null_dict, arena, par_dict
+from lib.conf.stored.conf import loadConfDict
+from lib.conf.base.dtypes import null_dict, arena, par_dict
 
 
 class ParsArg :

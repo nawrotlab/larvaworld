@@ -1,21 +1,7 @@
-import copy
-import random
-
-import numpy as np
-import PySimpleGUI as sg
-
-import lib.aux.ang_aux
-import lib.aux.sim_aux
-import lib.aux.xy_aux
-import lib.conf.dtypes
-import lib.gui.aux.functions
-from lib.conf.dtypes import null_dict
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
-from lib.gui.aux.functions import col_size, col_kws, t_kws, retrieve_dict, gui_col
-from lib.gui.aux.buttons import color_pick_layout, GraphButton
-from lib.conf.conf import loadConf
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, SelectionList
+from lib.gui.aux.functions import gui_col
+from lib.gui.aux.buttons import GraphButton
 from lib.gui.tabs.tab import GuiTab
-from lib.sim.single_run import run_sim
 
 
 class EnvTab(GuiTab):

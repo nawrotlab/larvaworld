@@ -3,7 +3,7 @@ import pandas as pd
 from pypet import cartesian_product, load_trajectory
 
 import lib.aux.dictsNlists
-from lib.stor import paths as paths
+from lib.conf.base import paths
 
 
 def load_default_configuration(traj, exp):

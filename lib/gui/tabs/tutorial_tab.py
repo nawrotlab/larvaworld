@@ -4,8 +4,7 @@ import webbrowser
 import PySimpleGUI as sg
 
 from lib.gui.tabs.tab import GuiTab
-from lib.stor import paths as paths
-from lib.stor.paths import path
+from lib.conf.base.paths import path
 
 
 class TutorialTab(GuiTab):

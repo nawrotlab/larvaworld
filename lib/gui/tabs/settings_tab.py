@@ -2,8 +2,8 @@ import time
 import PySimpleGUI as sg
 
 import lib.aux.dictsNlists
-from lib.conf.conf import saveConfDict, loadConfDict
-from lib.conf.dtypes import store_controls
+from lib.conf.stored.conf import saveConfDict, loadConfDict
+from lib.conf.base.dtypes import store_controls
 from lib.gui.aux.elements import CollapsibleDict, Collapsible
 from lib.gui.aux.functions import t_kws, gui_col, gui_cols, get_pygame_key
 from lib.gui.aux.buttons import GraphButton
@@ -79,8 +79,8 @@ class SettingsTab(GuiTab):
 
     def build(self):
         c = {}
-        c1 = CollapsibleDict('visualization', state=True)
-        c2 = CollapsibleDict('replay', state=True)
+        c1 = CollapsibleDict('visualization', state=True, subdict_state=True)
+        c2 = CollapsibleDict('replay', state=True, subdict_state=True)
 
         c3, d = self.build_controls_collapsible(c)
 

@@ -1,12 +1,11 @@
 import copy
 import os
 
-from lib.conf.dtypes import null_dict
+from lib.conf.base.dtypes import null_dict
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList
 from lib.gui.aux.functions import col_size, gui_cols
 from lib.gui.tabs.tab import GuiTab
-from lib.stor import paths
-from lib.stor.paths import path
+from lib.conf.base import paths
 
 
 class ModelTab(GuiTab):
@@ -55,7 +54,7 @@ class ModelTab(GuiTab):
         l2 = [i.get_layout() for i in c2]
         b = Collapsible('Brain', content=l2, state=True)
 
-        fdir = path('model')
+        fdir = paths.path('model')
         fig_dict = {f: f'{fdir}/{f}' for f in os.listdir(fdir)}
         g1 = GraphList(self.name, tab=self, list_header='Model', fig_dict=fig_dict, subsample=3,
                        canvas_size=col_size(x_frac=0.6 * 0.9, y_frac=0.9))

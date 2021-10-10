@@ -8,13 +8,14 @@ from lib.gui.aux.functions import t_kws, gui_col, gui_cols
 from lib.gui.tabs.draw_tab import DrawTab
 from lib.gui.tabs.env_tab import EnvTab
 from lib.gui.tabs.tab import GuiTab
-from lib.conf.conf import next_idx, expandConf
+from lib.conf.stored.conf import next_idx, expandConf
 from run.exec_run import Exec
 
 
 class SimTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.canvas_size = (800, 800)
         self.k_stored = f'{self.name}_stored'
         self.k_active = f'{self.name}_active'
         self.k_stored_ids = f'{self.k_stored}_IDS'
@@ -46,10 +47,10 @@ class SimTab(GuiTab):
     def build_RUN(self) :
         kA, kS = self.k_active, self.k_stored
         d = {kA: {}, kS: {}}
-        g1 = GraphList(self.name, tab=self)
+        g1 = GraphList(self.name, tab=self, canvas_size=self.canvas_size)
         dl1 = DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active simulations')
         dl2 = DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Completed simulations')
-        l = gui_cols(cols=[[g1.canvas], [dl1, dl2, g1]], x_fracs=[0.55, 0.2])
+        l = gui_cols(cols=[[g1.canvas], [dl1, dl2, g1]], x_fracs=[0.5, 0.2])
         return l, {}, {g1.name: g1}, d
 
     def build_conf(self):
@@ -75,7 +76,7 @@ class SimTab(GuiTab):
         # dl1 = DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp= 'Active simulations')
         # dl2 = DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp= 'Completed simulations')
         #
-        l = gui_cols(cols=[[sl4, sl3,s1, c1, c2, sl2, tab1]], x_fracs=[0.25])
+        l = gui_cols(cols=[[sl4, sl3,s1, c1, c2, sl2, tab1]], x_fracs=[0.3])
         # l = gui_cols(cols=[[sl4, sl3, sl1,s1, c1, c2, sl2], [g1.canvas], [dl1, dl2, g1]], x_fracs=[0.25, 0.55, 0.2])
 
         c = {}

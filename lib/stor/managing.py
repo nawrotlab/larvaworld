@@ -5,7 +5,7 @@ import pandas as pd
 
 import lib.aux.dictsNlists
 from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni
-from lib.conf.conf import *
+from lib.conf.stored.conf import *
 from lib.stor.larva_dataset import LarvaDataset
 
 
@@ -157,7 +157,7 @@ def enrich_datasets(datagroup_id, datasets=None, names=None, enrich_conf=None, *
 
 
 def analyse_datasets(datagroup_id, save_to=None, **kwargs):
-    from lib.anal.plotting import comparative_analysis
+    from lib.sim.analysis import comparative_analysis
     ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
     if save_to is None and len(ds) > 1:
         g = loadConf(datagroup_id, 'Group')

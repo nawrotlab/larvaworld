@@ -6,13 +6,13 @@ import numpy as np
 import pandas as pd
 from pypet import ObjectTable
 
-from lib.anal.process.aux import suppress_stdout
+from lib.process.aux import suppress_stdout
 from lib.aux.dictsNlists import reconstruct_dict
 import lib.aux.sim_aux
 from lib.anal.plotting import plot_2d, plot_3pars, plot_endpoint_scatter, plot_endpoint_params, plot_debs, \
     plot_heatmap_PI
 from lib.sim.batch.aux import grid_search_dict, load_traj
-from lib.sim.single_run import run_sim, SingleRun
+from lib.sim.single.single_run import run_sim, SingleRun
 from lib.stor.larva_dataset import LarvaDataset
 
 

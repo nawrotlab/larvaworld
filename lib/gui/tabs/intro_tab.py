@@ -3,8 +3,7 @@ import os
 import PySimpleGUI as sg
 
 from lib.gui.tabs.tab import GuiTab
-from lib.stor import paths as paths
-from lib.stor.paths import path
+from lib.conf.base import paths
 
 
 class IntroTab(GuiTab):
@@ -15,7 +14,7 @@ class IntroTab(GuiTab):
                'justification': 'center'
                }
 
-        f0 = path('intro')
+        f0 = paths.path('intro')
         fs = sorted(os.listdir(f0))
 
         bl = [sg.B(image_filename=os.path.join(f0, f), image_subsample=3, pad=(15, 70)) for f in fs]

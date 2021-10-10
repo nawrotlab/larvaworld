@@ -4,15 +4,13 @@ import os
 
 import PySimpleGUI as sg
 
-import lib.aux.dictsNlists
-from lib.aux import colsNstr as fun
-from lib.conf.conf import loadConfDict, saveConf, loadConf
-from lib.conf.dtypes import null_dict
+from lib.aux.dictsNlists import flatten_list
+from lib.aux.colsNstr import remove_prefix, remove_suffix
+from lib.conf.stored.conf import loadConfDict, saveConf, loadConf
+from lib.conf.base.dtypes import null_dict
 from lib.gui.aux.functions import retrieve_value, t_kws, b6_kws, w_kws, col_size
 from lib.gui.aux.buttons import named_bool_button
-
-
-from lib.stor import paths
+from lib.conf.base import paths
 
 
 def get_table(v, pars_dict, Nagents):
@@ -205,7 +203,7 @@ def save_conf_window(conf, conftype, disp=None):
         disp = conftype
     temp = NamedList('save_conf', key=f'{disp}_ID',
                      choices=list(loadConfDict(conftype).keys()),
-                     readonly=False, enable_events=False, header_kws={'text' : f'Store new {disp}'})
+                     readonly=False, enable_events=False, header_kws={'text': f'Store new {disp}'})
     l = [
         temp.get_layout(),
         [sg.Ok(), sg.Cancel()]]
@@ -218,7 +216,7 @@ def save_conf_window(conf, conftype, disp=None):
         return None
 
 
-def import_window(datagroup_id,raw_dic):
+def import_window(datagroup_id, raw_dic):
     from lib.gui.tabs.gui import check_togglesNcollapsibles
     from lib.gui.aux.elements import CollapsibleDict
     g = loadConf(datagroup_id, 'Group')
@@ -232,31 +230,28 @@ def import_window(datagroup_id,raw_dic):
     N = len(raw_dic)
     raw_ids = list(raw_dic.keys())
     raw_dirs = list(raw_dic.values())
-    temp=fun.remove_prefix(raw_dirs[0], f'{raw_folder}/')
-    groupID0=fun.remove_suffix(temp, f'/{raw_ids[0]}')
-    # raw_dirs0 = [fun.remove_prefix(dr, f'{raw_folder}/') for dr in raw_dirs]
-    # raw_dirs0 = [fun.remove_suffix(dr, f'/{id}') for dr, id in zip(raw_dirs0, raw_ids)]
-    # raw_dirs0 = fun.unique_list(raw_dirs0)
-    # groupID0 = raw_dirs0[0] if len(raw_dirs0) == 1 else ''
+    temp = remove_prefix(raw_dirs[0], f'{raw_folder}/')
+    groupID0 = remove_suffix(temp, f'/{raw_ids[0]}')
     if N == 0:
         return proc_dir
     w_size = (1200, 800)
     h_kws = {'font': ('Helvetica', 8, 'bold'), 'justification': 'center', **t_kws(30)}
     l00 = [sg.T('Group ID :', **t_kws(8)), sg.In(default_text=groupID0, k='import_group_id', **t_kws(20)),
-                   *named_bool_button(name=M, state=False, toggle_name=None),
-                   *named_bool_button(name=E, state=False, toggle_name=None, disabled=False),
-                  sg.Ok(), sg.Cancel()]
+           *named_bool_button(name=M, state=False, toggle_name=None),
+           *named_bool_button(name=E, state=False, toggle_name=None, disabled=False),
+           sg.Ok(), sg.Cancel()]
 
     l01 = [sg.Col([[sg.T('RAW DATASETS', **h_kws), sg.T(**t_kws(8)), sg.T('NEW DATASETS', **h_kws)],
-        *[[sg.T(id, **t_kws(30)), sg.T('  -->  ', **t_kws(8)), sg.In(id, k=f'new_{id}', **t_kws(30))] for id in  raw_ids]],
-        vertical_scroll_only=True, scrollable=True, expand_y=True, vertical_alignment='top',
-        size=col_size(y_frac=0.4, win_size=w_size))]
+                   *[[sg.T(id, **t_kws(30)), sg.T('  -->  ', **t_kws(8)), sg.In(id, k=f'new_{id}', **t_kws(30))] for id
+                     in raw_ids]],
+                  vertical_scroll_only=True, scrollable=True, expand_y=True, vertical_alignment='top',
+                  size=col_size(y_frac=0.4, win_size=w_size))]
 
-    s1 = CollapsibleDict('build_conf', disp_name='Configuration',text_kws=t_kws(20), state=True)
+    s1 = CollapsibleDict('build_conf', disp_name='Configuration', text_kws=t_kws(20), state=True)
     c = {}
     for s in [s1]:
         c.update(**s.get_subdicts())
-    l = [l01, l00,s1.get_layout()]
+    l = [l01, l00, s1.get_layout()]
     w = sg.Window('Build new datasets from raw files', l, size=w_size)
     while True:
         e, v = w.read()
@@ -294,8 +289,8 @@ def import_window(datagroup_id,raw_dic):
                         target_id = v[f'new_{source_id}']
                         if datagroup_id in ['Berni lab']:
                             target = f'{target}/{target_id}'
-                            source_files=[os.path.join(source, n) for n in os.listdir(source) if
-                                  n.startswith(source_id)]
+                            source_files = [os.path.join(source, n) for n in os.listdir(source) if
+                                            n.startswith(source_id)]
                             dd = build_dataset(id=target_id, target_dir=target, source_files=source_files, **kws)
                         elif datagroup_id in ['Jovanic lab']:
                             target = f'{target}/{target_id}'
@@ -314,8 +309,8 @@ def import_window(datagroup_id,raw_dic):
 
                     if datagroup_id in ['Berni lab']:
                         target0 = f'{targets[0]}/{target_id0}'
-                        source_files = lib.aux.dictsNlists.flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
-                                                                          n.startswith(source_id)] for source_id, source in raw_dic.items()])
+                        source_files = flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
+                              n.startswith(source_id)] for source_id, source in raw_dic.items()])
                         dd = build_dataset(id=target_id0, target_dir=target0, source_files=source_files, **kws)
                     elif datagroup_id in ['Schleyer lab']:
                         target0 = targets[0].replace(raw_ids[0], target_id0)
@@ -325,7 +320,6 @@ def import_window(datagroup_id,raw_dic):
                     proc_dir[dd.id] = dd
                 break
     return proc_dir
-
 
 
 def change_dataset_id(dic, old_ids):
@@ -343,22 +337,39 @@ def change_dataset_id(dic, old_ids):
             dic[new_id] = dic.pop(old_id)
     return dic
 
-def larvagroup_window(**kwargs) :
+
+def larvagroup_window(base_dict={}, id=None, **kwargs):
     from lib.gui.aux.elements import CollapsibleDict
     from lib.gui.tabs.gui import check_togglesNcollapsibles
-    k='LarvaGroup'
-    # dic = null_dict(k)
-    c0=CollapsibleDict(k, use_header=False, as_entry='Group ID', subdict_state=True, col_idx=[[0,1,2,3,4,7],[5],[6]])
-    c=c0.get_subdicts()
-    l=c0.get_layout(as_col=False)+[[sg.Ok(), sg.Cancel()]]
-    kws=w_kws
-    kws['default_element_size']=(16,1)
-    w = sg.Window(k, l,size=col_size(0.8,0.5), **kws, **kwargs)
+    k = 'LarvaGroup'
+    gID = 'Group ID'
+    c0 = CollapsibleDict(k, use_header=False, as_entry=gID, subdict_state=True, col_idx=[[0, 1, 2, 3, 4, 7], [5], [6]])
+    c = c0.get_subdicts()
+    l = c0.get_layout(as_col=False) + [[sg.Ok(), sg.Cancel()]]
+    kws = w_kws
+    kws['default_element_size'] = (16, 1)
+    w = sg.Window(k, l, size=col_size(0.8, 0.5), **kws, **kwargs)
+    if id is not None:
+        c0.update_window(w, dic={**base_dict[id], gID: id}, prefix=c0.name)
     while True:
         e, v = w.read()
         if e == 'Ok':
             dic = c0.get_dict(v, w)
-            break
+            new_id = list(dic.keys())[0]
+            if new_id in [None, '']:
+                sg.popup_no_buttons(f'{gID} not provided', title='No ID!', auto_close_duration=2, auto_close=True)
+                continue
+            elif new_id in base_dict.keys():
+                choice, _ = sg.Window('Overwrite?',
+                                      [[sg.T(f'{gID} {new_id} already exists.\nOverwrite it?')],
+                                       [sg.Yes(s=10), sg.No(s=10)]],
+                                      disable_close=True).read(close=True)
+                if choice == 'No':
+                    continue
+                else:
+                    break
+            else:
+                break
         elif e in ['Cancel', None]:
             dic = {}
             break
@@ -366,5 +377,6 @@ def larvagroup_window(**kwargs) :
     w.close()
     return dic
 
+
 if __name__ == "__main__":
-    dic=larvagroup_window()
+    dic = larvagroup_window({'dd': 'ss'})

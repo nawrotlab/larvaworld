@@ -4,8 +4,7 @@ import PySimpleGUI as sg
 from lib.gui.aux.buttons import ClickableImage
 from lib.gui.aux.functions import window_size
 from lib.gui.tabs.tab import GuiTab
-from lib.stor import paths as paths
-from lib.stor.paths import path
+from lib.conf.base.paths import path
 
 
 class VideoTab(GuiTab):
