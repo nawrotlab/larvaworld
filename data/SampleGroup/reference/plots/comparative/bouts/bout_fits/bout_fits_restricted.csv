@@ -1,3 +1,0 @@
-,alpha_stride,KS_pow_stride,lambda_stride,KS_exp_stride,mu_log_stride,sigma_log_stride,KS_log_stride,alpha_pause,KS_pow_pause,lambda_pause,KS_exp_pause,mu_log_pause,sigma_log_pause,KS_log_pause,min_pause,max_pause,min_stride,max_stride
-empirical,1.675,0.165,0.136,0.217,1.481,1.109,0.105,2.184,0.231,3.734,0.262,-1.235,0.745,0.144,0.125,2.3125,1.0,89.0
-simulated,1.565,0.209,0.111,0.135,1.769,1.073,0.082,1.991,0.173,3.063,0.2,-1.07,0.748,0.126,0.125,2.3125,1.0,89.0

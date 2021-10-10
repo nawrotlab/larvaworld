@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 import lib.aux.dictsNlists
-from lib.anal.sampling import BoutGenerator
+from lib.anal.fitting import BoutGenerator
 from lib.aux import naming as nam
 from lib.conf.stored.conf import loadConf
 from lib.conf.base.dtypes import null_dict

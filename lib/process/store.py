@@ -1,14 +1,7 @@
-from distutils.dir_util import copy_tree
-
 import numpy as np
 import pandas as pd
-import os
-
 
 import lib.aux.naming as nam
-
-
-
 
 
 def store_aux_dataset(s, pars, type, file):
@@ -26,7 +19,7 @@ def store_aux_dataset(s, pars, type, file):
             # if p=='turn_front_orientation_unwrapped' :
             #     print(d)
             #     print(store[f'{type}.{p}'])
-                # raise
+            # raise
     elif type == 'dispersion':
         for p in ps:
             dsp = s[p]
@@ -68,40 +61,39 @@ def store_aux_dataset(s, pars, type, file):
     store.close()
     print(f'{len(ps)} aux parameters saved')
 
-
-def create_reference_dataset(config, dataset_id='reference', Nstd=3, overwrite=False):
-    from lib.stor.larva_dataset import LarvaDataset
-    from lib.anal.fitting import fit_bouts
-    from lib.conf.conf import saveConf
-    from lib.model.modules.intermitter import get_EEB_poly1d
-    from lib.stor import paths
-    from lib.aux.dictsNlists import load_dict
-
-    path_dir = f'{paths.path("REF")}/{dataset_id}'
-    path_data = f'{path_dir}/data/reference.csv'
-    path_fits = f'{path_dir}/data/bout_fits.csv'
-    if not os.path.exists(path_dir) or overwrite:
-        copy_tree(config['dir'], path_dir)
-    new_d = LarvaDataset(path_dir)
-    new_d.set_id(dataset_id)
-
-    pars = load_dict(paths.path('ParRef'), use_pickle=False)
-
-    pars= {p:pp for p,pp in pars.items() if p in new_d.endpoint_data.columns}
-
-    df = new_d.endpoint_data[list(pars.keys())].rename(columns=pars, inplace=True)
-    df.to_csv(path_data)
-
-    fit_bouts(dataset=new_d,config=new_d.config,e=new_d.endpoint_data, store=True, bouts=['stride', 'pause'])
-
-    dic = {
-        nam.freq('crawl'): df['brain.crawler_params.initial_freq'].mean(),
-        nam.freq('feed'): df['brain.feeder_params.initial_freq'].mean() if 'brain.feeder_params.initial_freq' in df.columns else 2.0,
-        'feeder_reoccurence_rate': None,
-        'dt': 1 / config['fr'],
-    }
-    saveConf(dic, conf_type='Ref', id=dataset_id, mode='update')
-    z = get_EEB_poly1d(dataset_id)
-    saveConf({'EEB_poly1d': z.c.tolist()}, conf_type='Ref', id=dataset_id, mode='update')
-
-    print(f'Reference dataset {dataset_id} saved.')
+# def create_reference_dataset(config, dataset_id='reference', overwrite=False):
+#     from lib.stor.larva_dataset import LarvaDataset
+#     from lib.anal.fitting import fit_bouts
+#     from lib.conf.stored.conf import saveConf
+#     from lib.model.modules.intermitter import get_EEB_poly1d
+#     from lib.conf.base import paths
+#     from lib.aux.dictsNlists import load_dict
+#
+#     path_dir = f'{paths.path("REF")}/{dataset_id}'
+#     path_data = f'{path_dir}/data/reference.csv'
+#     path_fits = f'{path_dir}/data/bout_fits.csv'
+#     if not os.path.exists(path_dir) or overwrite:
+#         copy_tree(config['dir'], path_dir)
+#     new_d = LarvaDataset(path_dir)
+#     new_d.set_id(dataset_id)
+#
+#     pars = load_dict(paths.path('ParRef'), use_pickle=False)
+#
+#     pars= {p:pp for p,pp in pars.items() if p in new_d.endpoint_data.columns}
+#
+#     df = new_d.endpoint_data[list(pars.keys())].rename(columns=pars, inplace=True)
+#     df.to_csv(path_data)
+#
+#     fit_bouts(dataset=new_d,config=new_d.config,e=new_d.endpoint_data, store=True, bouts=['stride', 'pause'])
+#
+#     dic = {
+#         nam.freq('crawl'): df['brain.crawler_params.initial_freq'].mean(),
+#         nam.freq('feed'): df['brain.feeder_params.initial_freq'].mean() if 'brain.feeder_params.initial_freq' in df.columns else 2.0,
+#         'feeder_reoccurence_rate': None,
+#         'dt': 1 / config['fr'],
+#     }
+#     saveConf(dic, conf_type='Ref', id=dataset_id, mode='update')
+#     z = get_EEB_poly1d(dataset_id)
+#     saveConf({'EEB_poly1d': z.c.tolist()}, conf_type='Ref', id=dataset_id, mode='update')
+#
+#     print(f'Reference dataset {dataset_id} saved.')

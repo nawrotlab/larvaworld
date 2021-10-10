@@ -48,6 +48,7 @@ class LarvaDataset:
                            'group_id': group_id,
                            'group_ids': group_ids,
                            'dir': dir,
+                           'aux_dir': self.dir_dict['aux_h5'],
                            'parent_plot_dir': f'{dir}/plots',
                            'fr': fr,
                            'dt': 1 / fr,
@@ -145,7 +146,7 @@ class LarvaDataset:
         if show_output:
             print(f'{len(agents)} agents dropped and {len(self.endpoint_data.index)} remaining.')
 
-    def drop_pars(self, pars=[], groups=None, is_last=True, show_output=True, **kwargs):
+    def drop_pars(self, groups=None, is_last=True, show_output=True, **kwargs):
         if groups is None:
             groups = {n: False for n in
                       ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn',
@@ -153,7 +154,7 @@ class LarvaDataset:
         if self.step_data is None:
             self.load()
         s = self.step_data
-
+        pars=[]
         if groups['midline']:
             pars += dNl.flatten_list(self.points_xy)
         if groups['contour']:
@@ -638,25 +639,25 @@ class LarvaDataset:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
-    def enrich(self, preprocessing={}, processing={}, annotation={}, enrich_aux={},
-               to_drop={}, show_output=False, is_last=True, **kwargs):
+    def enrich(self, preprocessing={}, processing={}, annotation={},
+               to_drop={}, recompute=False, mode='minimal',show_output=False, is_last=True, **kwargs):
         from lib.process.basic import preprocess, process
         from lib.process.bouts import annotate
         print()
         print(f'--- Enriching dataset {self.id} with derived parameters ---')
-        # self.config['front_body_ratio'] = 0.5
-        # self.save_config()
         warnings.filterwarnings('ignore')
         c = {
             's': self.step_data,
             'e': self.endpoint_data,
             'config': self.config,
             'show_output': show_output,
+            'recompute': recompute,
+            'mode': mode,
             'is_last': False
         }
-        preprocess(**preprocessing, **c, **enrich_aux, **kwargs)
-        process(**processing, **enrich_aux, **c, **kwargs)
-        annotate(**annotation, **enrich_aux, **c, **kwargs)
+        preprocess(**preprocessing, **c, **kwargs)
+        process(**processing, **c, **kwargs)
+        annotate(**annotation, **c, **kwargs)
         self.drop_pars(**to_drop, **c)
         if is_last:
             self.save()
@@ -726,14 +727,3 @@ class LarvaDataset:
         if delete_parent:
             self.delete(show_output=show_output)
         return ds
-
-    # def chunk_bearing(self, chunk, source_pos):
-    #     from lib.anal.process.aux import comp_bearing
-    #     ho = nam.unwrap(nam.orient('front'))
-    #     c0 = nam.start(chunk)
-    #     c1 = nam.stop(chunk)
-    #     b0, b1 = [
-    #         comp_bearing(self.get_par(nam.at('x', c)).dropna().values, self.get_par(nam.at('y', c)).dropna().values,
-    #                      self.get_par(nam.at(ho, c)).dropna().values, loc=source_pos) for c in [c0, c1]]
-    #     db=np.abs(b0) - np.abs(b1)
-    #     return b0,b1,db

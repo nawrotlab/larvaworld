@@ -219,7 +219,7 @@ def process(s, e, config, mode='minimal', traj_colors=True, show_output=True,
         'point': config['point'],
         'config': config,
         'mode': mode,
-        'aux_dir': f'{config["dir"]}/data/aux.h5',
+        # 'aux_dir': f'{config["dir"]}/data/aux.h5',
     }
 
     with suppress_stdout(show_output):

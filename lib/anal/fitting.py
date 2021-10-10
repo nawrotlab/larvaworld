@@ -1,398 +1,39 @@
 import os
 import warnings
-import pandas as pd
 import numpy as np
-import scipy as sp
-from fitter import Fitter
-from matplotlib import pyplot as plt
-import scipy.stats as st
-from scipy import stats as st
-from scipy.stats import ks_2samp, stats, levy, norm, uniform
+from scipy.stats import levy, norm, uniform, rv_discrete
+from scipy.special import erf
 
-import lib.process.aux
 from lib.aux import naming as nam
 from lib.conf.stored.conf import saveConf
 from lib.process.aux import suppress_stdout, suppress_stdout_stderr
 
 
-
-def fit_angular_params(d, fit_filepath=None, chunk_only=None, absolute=False,
-                       save_to=None, save_as=None):
-    if save_to is None:
-        save_to = d.plot_dir
-    if save_as is None:
-        if absolute:
-            save_as = 'angular_fit_abs.pdf'
-        else:
-            save_as = 'angular_fit.pdf'
-    filepath = os.path.join(save_to, save_as)
-    if chunk_only is not None:
-        s = d.step_data.loc[d.step_data[nam.id(chunk_only)].dropna().index]
-    else:
-        s = d.step_data
-    # sigma = d.step
-    # TURNER PARAMETERS
-    # -----------------------
-
-    # The bend of the front-body (sum of half the angles) is the target for the turner calibration
-    # The head reorientation velocity is the result of the turner calibration
-    # if mode == 'experiment':
-    #     # point = d.critical_spinepoint
-    #
-    #     ho = d.unwrapped_flag(d.orientation_flag(d.segments[0]))
-    #     # act_r = 'non_rest_dur_fraction'
-    #     # dst = d.dst_param(d.critical_spinepoint)
-    # elif mode == 'simulation':
-    #     # point = 'centroid'
-    #     ho = d.orientation_flag('head')
-    # b = 'front_half_bend'
-    b = 'bend'
-    bv = nam.vel(b)
-    ba = nam.acc(b)
-    # hb=d.angles[0]
-    # hbv=d.vel_param(hb)
-    # hba=d.acc_param(hb)
-    # ho = d.orientation_flag('head')
-    ho = 'front_orientation'
-    hov = nam.vel(ho)
-    hoa = nam.acc(ho)
-    # hca = f'turn_{ho}'
-    hca = f'turn_{nam.unwrap(ho)}'
-    pars = [b, bv, ba, hov, hoa, hca]
-    ranges = [150, 400, 5000, 400, 5000, 100]
-
-    if fit_filepath is None:
-        # These are the fits of a 100 larvae dataset
-        fitted_distros = [{'t': (2.36, 0, 13)},
-                          {'t': (1.71, 0, 32.1)},
-                          {'t': (1.94, 0, 331)},
-                          {'t': (1.54, 0, 26.6)},
-                          {'t': (1.87, 0, 300)},
-                          {'t': (0.965, 0, 5.33)}]
-        target_stats = [0.006, 0.01, 0.01, 0.005, 0.005, 0.026]
-    else:
-        pars, fitted_distros, target_stats = d.load_fits(filepath=fit_filepath, selected_pars=pars)
-    nbins = 500
-    height = 0.05
-    colors = ['g', 'r', 'b', 'r', 'b', 'g']
-    labels = [r'$\theta_{b}$', r'$\dot{\theta}_{b}$', r'$\ddot{\theta}_{b}$', r'$\dot{\theta}_{or}$',
-              r'$\ddot{\theta}_{or}$', r'$\theta_{turn}$']
-    xlabels = ['angle $(deg)$', 'angular velocity $(deg/sec)$', 'angular acceleration, $(deg^2/sec)$',
-               'angular velocity $(deg/sec)$', 'angular acceleration, $(deg^2/sec)$', 'angle $(deg)$']
-    order = [2, 1, 0, 4, 3, 5]
-    fits = []
-    fig, axs = plt.subplots(2, 3, figsize=(18, 8), sharey=True)
-    axs = axs.ravel()
-    for i, (par, w, r, l, xl, j, col, target) in enumerate(
-            zip(pars, fitted_distros, ranges, labels, xlabels, order, colors, target_stats)):
-        x = np.linspace(-r, r, nbins)
-        data = s[par].dropna().values
-        if absolute:
-            data = np.abs(data)
-        weights = np.ones_like(data) / float(len(data))
-        axs[j].hist(data, bins=x, weights=weights, label=l, color=col, alpha=0.8)
-        dist_name = list(w.keys())[0]
-        dist_args = list(w.values())[0]
-        dist = getattr(st, dist_name)
-
-        if dist.shapes is None:
-            dist_args_dict = dict(zip(['loc', 'scale'], dist_args))
-        else:
-            dist_args_dict = dict(zip([dist.shapes] + ['loc', 'scale'], dist_args))
-        stat, pvalue = sp.stats.kstest(data, dist_name, args=dist_args)
-        fits.append([par, stat, pvalue])
-        print(f'Parameter {par} was fitted with stat : {stat} vs target stat : {target}')
-        y = dist.rvs(size=100000, **dist_args_dict)
-        n_weights = np.ones_like(y) / float(len(y))
-        my_n, my_bins, my_patches = axs[j].hist(y, bins=x, weights=n_weights, alpha=0)
-        axs[j].scatter(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, marker='.', c='k', s=40, alpha=0.6)
-        axs[j].plot(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, c='k', linewidth=2, alpha=0.6)
-        axs[j].legend(loc='upper right', fontsize=15)
-        axs[j].set_xlabel(xl, fontsize=15)
-
-        axs[j].set_ylim([0, height])
-        if absolute:
-            axs[j].set_xlim([0, r])
-        else:
-            axs[j].set_xlim([-r, r])
-    axs[0].set_ylabel('probability, $P$', fontsize=15)
-    axs[3].set_ylabel('probability, $P$', fontsize=15)
-    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.1, hspace=0.3)
-    plt.savefig(filepath, dpi=300)
-    print(f'Image saved as {filepath} !')
-    return fits
-
-
-def fit_endpoint_params(d, fit_filepath=None, save_to=None, save_as='endpoint_fit.pdf'):
-    if save_to is None:
-        save_to = d.plot_dir
-    filepath = os.path.join(save_to, save_as)
-    e = d.endpoint_data
-    point = d.point
-    dst = 'distance'
-    v = 'velocity'
-    a = 'acceleration'
-    sv = nam.scal(v)
-    sa = nam.scal(a)
-    cum_dst = nam.cum(dst)
-    cum_sdst = nam.cum(nam.scal(dst))
-
-    # Stride related parameters. The scal-distance-per-stride is the result of the crawler calibration
-    stride_flag = nam.max(sv)
-    stride_d = nam.dst('stride')
-    stride_sd = nam.scal(stride_d)
-    f_crawler = nam.freq(sv)
-    Nstrides = nam.num('stride')
-    stride_ratio = nam.dur_ratio('stride')
-    l = 'length'
-    pars = [l, f_crawler,
-            nam.mean(stride_d), nam.mean(stride_sd),
-            Nstrides, stride_ratio,
-            cum_dst, cum_sdst,
-            nam.max('40sec_dispersion'), nam.scal(nam.max('40sec_dispersion')),
-            nam.final('40sec_dispersion'), nam.scal(nam.final('40sec_dispersion')),
-            'stride_reoccurence_rate', 'stride_reoccurence_rate',
-            nam.mean('bend'), nam.mean(nam.vel('bend'))]
-    ranges = [(2, 6), (0.6, 2.25),
-              (0.4, 1.6), (0.1, 0.35),
-              (100, 300), (0.3, 1.0),
-              (0, 360), (0, 80),
-              (0, 70), (0, 20),
-              (0, 70), (0, 20),
-              (0.5, 1.0), (0.5, 1.0),
-              (-20.0, 20.0), (-8.0, 8.0)]
-
-    if fit_filepath is None:
-        # These are the fits of a 100 larvae dataset
-        fitted_distros = [{'norm': (4.57, 0.54)},
-                          {'norm': (1.44, 0.203)},
-                          {'norm': (1.081, 0.128)},
-                          {'norm': (0.239, 0.031)},
-                          {'norm': (249.8, 36.4)},
-                          {'norm': (55.1, 7.9)},
-                          {'norm': (43.3, 16.2)},
-                          {'norm': (9.65, 3.79)}, ]
-        target_stats = [0.074, 0.087, 0.086, 0.084, 0.057, 0.048, 0.068, 0.094]
-    else:
-        pars, fitted_distros, target_stats = d.load_fits(filepath=fit_filepath, selected_pars=pars)
-    fits = []
-
-    labels = ['body length', 'stride frequency',
-              'stride displacement', 'scal stride displacement',
-              'num strides', 'crawling ratio',
-              'displacement in 3 min', 'scal displacement in 3 min',
-              'max dispersion in 40 sec', 'max scal dispersion in 40 sec',
-              'dispersion in 40 sec', 'scal dispersion in 40 sec',
-              'stride reoccurence rate', 'stride reoccurence rate',
-              'mean bend angle', 'mean bend velocity']
-    xlabels = ['length $(mm)$', 'frequency $(Hz)$',
-               'distance $(mm)$', 'scal distance $(-)$',
-               'counts $(-)$', 'time ratio $(-)$',
-               'distance $(mm)$', 'scal distance $(-)$',
-               'distance $(mm)$', 'scal distance $(-)$',
-               'distance $(mm)$', 'scal distance $(-)$',
-               'rate $(-)$', 'rate $(-)$',
-               'angle $(deg)$', 'angular velocity $(deg/sec)$']
-    nbins = 20
-    height = 0.3
-    fig, axs = plt.subplots(int(len(pars) / 2), 2, figsize=(15, int(5 * len(pars) / 2)), sharey=True)
-    axs = axs.ravel()
-    for i, (par, lab, xl, (rmin, rmax), w, target) in enumerate(
-            zip(pars, labels, xlabels, ranges, fitted_distros, target_stats)):
-        data = e[par].dropna().values
-        x = np.linspace(rmin, rmax, nbins)
-        loc, scale = list(w.values())[0]
-        stat, pvalue = sp.stats.kstest(data, list(w.keys())[0], args=list(w.values())[0])
-        fits.append([par, stat, pvalue])
-        print(f'Parameter {par} was fitted with stat : {stat} vs target stat : {target}')
-        y = sp.norm.rvs(size=10000, loc=loc, scale=scale)
-        n_weights = np.ones_like(y) / float(len(y))
-        my_n, my_bins, my_patches = axs[i].hist(y, bins=x, weights=n_weights, alpha=0)
-        axs[i].scatter(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, marker='o', c='k', s=40, alpha=0.6)
-        axs[i].plot(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, alpha=0.6, c='k', linewidth=2,
-                    label='norm fit')
-
-        weights = np.ones_like(data) / float(len(data))
-        axs[i].hist(data, bins=x, weights=weights, label=lab, color='b', alpha=0.6)
-        axs[i].legend(loc='upper right', fontsize=12)
-        axs[i].set_xlabel(xl, fontsize=12)
-        axs[i].set_ylim([0, height])
-    axs[0].set_ylabel('probability, $P$', fontsize=15)
-    axs[2].set_ylabel('probability, $P$', fontsize=15)
-    axs[4].set_ylabel('probability, $P$', fontsize=15)
-
-    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.01, hspace=0.3)
-    plt.savefig(filepath, dpi=300)
-    print(f'Image saved as {filepath} !')
-    return fits
-
-
-def fit_bout_params(d, fit_filepath=None, save_to=None, save_as='bout_fit.pdf'):
-    if save_to is None:
-        save_to = os.path.join(d.plot_dir, 'plot_bouts')
-    if not os.path.exists(save_to):
-        os.makedirs(save_to)
-    filepath = os.path.join(save_to, save_as)
-    e = d.endpoint_data
-    s = d.step_data
-    pars = [nam.chain_counts_par('stride'), nam.dur(nam.non('stride')),
-            nam.dur_ratio('stride'), nam.dur_ratio('non_stride'),
-            nam.num('stride'), nam.num('non_stride'),
-            nam.dur('rest'), nam.dur('activity'),
-            nam.dur_ratio('rest'), nam.dur_ratio('activity'),
-            nam.num('rest'), nam.num('activity')]
-    ranges = [(1.0, 40.0), (0.0, 10.0),
-              (0.0, 1.0), (0, 1.0),
-              (0, 300), (0, 120),
-              (0, 3), (0, 60),
-              (0.0, 1.0), (0.0, 1.0),
-              (0, 100), (0, 100)]
-
-    if fit_filepath is None:
-        # These are the fits of a 100 larvae dataset
-        raise ValueError('Not implemented. Please provide fit file')
-    else:
-        pars, fitted_distros, target_stats = d.load_fits(filepath=fit_filepath, selected_pars=pars)
-    fits = []
-
-    labels = ['stride chains', 'stride-free bouts',
-              'stride ratio', 'stride-free ratio',
-              'num strides', 'num non-strides',
-              'rest bouts', 'activity bouts',
-              'rest ratio', 'activity ratio',
-              'num rests', 'num activities']
-    xlabels = ['length $(-)$', 'time $(sec)$',
-               'time fraction $(-)$', 'time fraction $(-)$',
-               'counts $(-)$', 'counts $(-)$',
-               'time $(sec)$', 'time $(sec)$',
-               'time fraction $(-)$', 'time fraction $(-)$',
-               'counts $(-)$', 'counts $(-)$']
-    nbins = 30
-    height = 0.4
-    fig, axs = plt.subplots(6, 2, figsize=(15, 30), sharey=True)
-    axs = axs.ravel()
-    for i, (par, lab, xl, (rmin, rmax), w, target) in enumerate(
-            zip(pars, labels, xlabels, ranges, fitted_distros, target_stats)):
-        print(par)
-        try:
-            data = e[par].dropna().values
-        except:
-            data = s[par].dropna().values
-        x = np.linspace(rmin, rmax, nbins)
-        args = list(w.values())[0]
-        name = list(w.keys())[0]
-        stat, pvalue = sp.stats.kstest(data, name, args=args)
-        fits.append([par, stat, pvalue])
-        print(f'Parameter {par} was fitted with stat : {stat} vs target stat : {target}')
-        distr = getattr(sp.stats.distributions, name)
-        y = distr.rvs(*args, size=10000)
-        n_weights = np.ones_like(y) / float(len(y))
-        my_n, my_bins, my_patches = axs[i].hist(y, bins=x, weights=n_weights, alpha=0)
-        axs[i].scatter(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, marker='o', c='k', s=40, alpha=0.6)
-        axs[i].plot(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, alpha=0.6, c='k', linewidth=2,
-                    label=f'{name} fit')
-        weights = np.ones_like(data) / float(len(data))
-        axs[i].hist(data, bins=x, weights=weights, label=lab, color='b', alpha=0.6)
-        axs[i].legend(loc='upper right', fontsize=12)
-        axs[i].set_xlabel(xl, fontsize=12)
-        axs[i].set_ylim([0, height])
-    axs[0].set_ylabel('probability, $P$', fontsize=15)
-    axs[2].set_ylabel('probability, $P$', fontsize=15)
-    axs[4].set_ylabel('probability, $P$', fontsize=15)
-
-    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.01, hspace=0.3)
-    plt.savefig(filepath, dpi=300)
-    print(f'Image saved as {filepath} !')
-    return fits
-
-
-def fit_crawl_params(d, target_point=None, fit_filepath=None, save_to=None, save_as='crawl_fit.pdf'):
-    if save_to is None:
-        save_to = d.plot_dir
-    filepath = os.path.join(save_to, save_as)
-    e = d.endpoint_data
-    if target_point is None:
-        target_point = d.point
-    point = d.point
-    exp_dst = 'distance'
-    dst = 'distance'
-    exp_cum_sdst = nam.cum(nam.scal(exp_dst))
-    cum_sdst = nam.cum(nam.scal(dst))
-    Nstrides = nam.num('stride')
-    stride_ratio = nam.dur_ratio('stride')
-    dispersion = nam.scal(nam.final('40sec_dispersion'))
-
-    exp_pars = [Nstrides, stride_ratio, exp_cum_sdst]
-    pars = [Nstrides, stride_ratio, cum_sdst]
-    ranges = [(100, 300), (0.5, 1.0), (20, 80)]
-    exp_pars, fitted_distros, target_stats = d.load_fits(filepath=fit_filepath, selected_pars=exp_pars)
-    fits = []
-    labels = ['$N_{strides}$', 'crawling ratio',
-              '$distance_{scal}$']
-    xlabels = ['counts $(-)$', 'time ratio $(-)$',
-               'scal distance $(-)$']
-    colors = ['r', 'c', 'g']
-    nbins = 20
-    height = 0.3
-    fig, axs = plt.subplots(int(len(pars) / 3), 3, figsize=(15, int(5 * len(pars) / 3)), sharey=True)
-    axs = axs.ravel()
-    for i, (par, lab, xl, (rmin, rmax), w, target, c) in enumerate(
-            zip(pars, labels, xlabels, ranges, fitted_distros, target_stats, colors)):
-        data = e[par].dropna().values
-        x = np.linspace(rmin, rmax, nbins)
-        loc, scale = list(w.values())[0]
-        stat, pvalue = sp.stats.kstest(data, list(w.keys())[0], args=list(w.values())[0])
-        fits.append([par, stat, pvalue])
-        print(f'Parameter {par} was fitted with stat : {stat} vs target stat : {target}')
-        y = sp.norm.rvs(size=10000, loc=loc, scale=scale)
-        n_weights = np.ones_like(y) / float(len(y))
-        my_n, my_bins, my_patches = axs[i].hist(y, bins=x, weights=n_weights, alpha=0)
-        axs[i].scatter(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, marker='o', c='k', s=40, alpha=0.6)
-        axs[i].plot(my_bins[:-1] + 0.5 * (my_bins[1:] - my_bins[:-1]), my_n, alpha=0.6, c='k', linewidth=2)
-        weights = np.ones_like(data) / float(len(data))
-        axs[i].hist(data, bins=x, weights=weights, label=lab, color=c, alpha=0.6)
-        axs[i].legend(loc='upper right', fontsize=12)
-        axs[i].set_xlabel(xl, fontsize=12)
-        axs[i].set_ylim([0, height])
-    axs[0].set_ylabel('probability, $P$', fontsize=15)
-    plt.subplots_adjust(left=0.05, bottom=0.1, right=0.99, top=0.95, wspace=0.01, hspace=0.3)
-    plt.savefig(filepath, dpi=300)
-    print(f'Image saved as {filepath} !')
-    return fits
-
-
 def powerlaw_cdf(x, xmin, alpha):
-    cum = (x / xmin) ** (1 - alpha)
-    # print(cum)
-    return 1 - cum
+    return 1 - (x / xmin) ** (1 - alpha)
 
 
 def powerlaw_pdf(x, xmin, alpha):
-    res = (alpha - 1) / xmin * (x / xmin) ** (-alpha)
-    # res/=sum(res)
-    return res
+    return (alpha - 1) / xmin * (x / xmin) ** (-alpha)
 
 
 def levy_pdf(x, mu, sigma):
-    res = np.sqrt(sigma / (2 * np.pi)) * np.exp(-sigma / (2 * (x - mu))) / (x - mu) ** 1.5
-    # print(x,res)
-    return res
+    return np.sqrt(sigma / (2 * np.pi)) * np.exp(-sigma / (2 * (x - mu))) / (x - mu) ** 1.5
 
 
 def levy_cdf(x, mu, sigma):
-    res = 1 - sp.special.erf(np.sqrt(sigma / (2 * (x - mu))))
+    res = 1 - erf(np.sqrt(sigma / (2 * (x - mu))))
     if np.isnan(res[0]):
         res[0] = 0
     return res
 
 
 def norm_pdf(x, mu, sigma):
-    res = 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
-    return res
+    return 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
 
 
 def norm_cdf(x, mu, sigma):
-    res = 0.5 * (1 + sp.special.erf((x - mu) / (sigma * np.sqrt(2))))
+    res = 0.5 * (1 + erf((x - mu) / (sigma * np.sqrt(2))))
     if np.isnan(res[0]):
         res[0] = 0
     return res
@@ -415,48 +56,28 @@ def exponential_pdf(x, xmin, beta):
 
 
 def lognorm_cdf(x, mu, sigma, xmin=0):
-    cdf = 0.5 + 0.5 * sp.special.erf((np.log(x) - mu) / np.sqrt(2) / sigma)
-    # print(cdf)
-    return cdf
+    return 0.5 + 0.5 * erf((np.log(x) - mu) / np.sqrt(2) / sigma)
 
 
 def lognormal_pdf(x, mu, sigma, xmin=0):
-    pdf = 1 / (x * sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((np.log(x) - mu) / sigma) ** 2)
-    # pdf/=sum(pdf)
-    return pdf
+    return 1 / (x * sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((np.log(x) - mu) / sigma) ** 2)
 
 
 def logNpow_pdf(x, mu, sigma, alpha, xmin, switch, ratio, overlap=0):
     x0 = x[x < switch]
     x1 = x[x >= switch]
     log_pdf = lognormal_pdf(x0, mu, sigma, xmin) * ratio
-    # log_pdf = log_pdf/np.sum(log_pdf)*ratio
     pow_pdf = powerlaw_pdf(x1, switch, alpha) * (1 - ratio)
-    # pow_pdf = pow_pdf/np.sum(pow_pdf) * (1 - ratio)
-    pdf = np.hstack([log_pdf, pow_pdf])
-    # pdf/=sum(pdf)
-    return pdf
-
-
-def logNpow_cdf2(x, mu, sigma, alpha, xmin, switch, ratio, overlap=0):
-    pdf = logNpow_pdf(x, mu, sigma, alpha, xmin, switch, ratio, overlap)
-    cdf = np.cumsum(pdf)
-    # print(cdf)
-
-    return cdf
+    return np.hstack([log_pdf, pow_pdf])
 
 
 def logNpow_cdf(x, mu, sigma, alpha, xmin, switch, ratio, overlap=0):
     x0 = x[x < switch]
     x1 = x[x >= switch]
-    N0 = x0.shape[0]
     log_cdf = 1 - lognorm_cdf(x0, mu, sigma)
     pow_cdf = 1 - powerlaw_cdf(x1, switch, alpha)
-    # log_cdf *= ratio
     pow_cdf *= (1 - ratio)
-    cdf0 = np.hstack([log_cdf, pow_cdf])
-    cdf = 1 - cdf0
-    return cdf
+    return 1 - np.hstack([log_cdf, pow_cdf])
 
 
 def get_distro(name, x, range, mode='cdf', **kwargs):
@@ -778,248 +399,36 @@ def get_best_distro(bout, f, idx_Kmax=None):
     return distro
 
 
-def analyse_bouts(dataset, parameter, scale_coef=1, label=None, xlabel=r'time$(sec)$',
-                  dur_max_in_std=None, dur_range=None, save_as=None, save_to=None):
-    if label is None:
-        label = parameter
-    if save_as is None:
-        save_as = f'{label}_bouts.pdf'
-    if save_to is None:
-        save_to = os.path.join(dataset.plot_dir, 'plot_bouts')
-    if not os.path.exists(save_to):
-        os.makedirs(save_to)
-    filepath = os.path.join(save_to, save_as)
+class BoutGenerator:
+    def __init__(self, name, range, dt, **kwargs):
+        self.name = name
+        self.dt = dt
+        ddfs = {
+            'powerlaw': {'cdf': powerlaw_cdf, 'pdf': powerlaw_pdf, 'args': ['xmin', 'alpha']},
+            'exponential': {'cdf': exponential_cdf, 'pdf': exponential_pdf, 'args': ['xmin', 'beta']},
+            'lognormal': {'cdf': lognorm_cdf, 'pdf': lognormal_pdf, 'args': ['xmin', 'mu', 'sigma']},
+            'logNpow': {'cdf': logNpow_cdf, 'pdf': logNpow_pdf,
+                        'args': ['xmin', 'alpha', 'mu', 'sigma', 'switch', 'ratio', 'overlap']},
+            'levy': {'cdf': levy_cdf, 'pdf': levy_pdf, 'args': ['mu', 'sigma']},
+            'normal': {'cdf': norm_cdf, 'pdf': norm_pdf, 'args': ['mu', 'sigma']},
+            'uniform': {'cdf': uniform_cdf, 'pdf': uniform_pdf, 'args': ['xmin', 'xmax']},
+        }
+        self.xmin, self.xmax = range
+        self.pdf = ddfs[name]['pdf']
+        kwargs.update({'xmin': self.xmin, 'xmax': self.xmax})
+        self.args = {a: kwargs[a] for a in ddfs[name]['args']}
 
-    s = dataset.step_data
-    fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=True, sharey=True)
-    axs = axs.ravel()
-    dur = s[parameter].dropna().values * scale_coef
-    if dur_range is None:
-        if dur_max_in_std is None:
-            # xmin, durmax = 1, np.max(dur)
-            durmin, durmax = np.min(dur), np.max(dur)
-            print(durmin, durmax)
-        else:
-            std = np.std(dur)
-            m = np.mean(dur)
-            durmin, durmax = np.min(dur), m + dur_max_in_std * std
-    else:
-        durmin, durmax = dur_range
+        self.dist = self.build(range, dt, **self.args)
 
-    dur = dur[dur >= durmin]
-    dur = dur[dur <= durmax]
-    u2, du2, c2, c2cum = compute_density(dur, durmin, durmax)
-    alpha = 1 + len(dur) / np.sum(np.log(dur / durmin))
-    print("powerlaw exponent MLE:", alpha)
+    def sample(self, size=1):
+        vs = self.dist.rvs(size=size) * self.dt
+        return vs[0] if size == 1 else vs
 
-    beta = len(dur) / np.sum(dur - durmin)
-    print("exponential exponent MLE:", beta)
-
-    mean_lognormal = np.mean(np.log(dur))
-    std_lognormal = np.std(np.log(dur))
-    print("lognormal mean,std:", mean_lognormal, std_lognormal)
-
-    KS_plaw = np.max(np.abs(c2cum - 1 + powerlaw_cdf(u2, durmin, alpha)))
-    KS_exp = np.max(np.abs(c2cum - 1 + exponential_cdf(u2, durmin, beta)))
-    KS_logn = np.max(np.abs(c2cum - 1 + lognorm_cdf(u2, mean_lognormal, std_lognormal, durmin)))
-    print()
-    print('MSE plaw', KS_plaw)
-    print('MSE exp', KS_exp)
-    print('MSE logn', KS_logn)
-
-    idx_max = np.argmin([KS_plaw, KS_exp, KS_logn])
-    lws = [2, 2, 2]
-    lws[idx_max] = 4
-
-    # axs[i].loglog(u1, c1, 'or', label=name)
-    axs[0].loglog(du2, c2, 'or', label=label)
-    axs[0].loglog(du2, powerlaw_pdf(du2, durmin, alpha), 'r', lw=lws[0], label='powerlaw MLE')
-    axs[0].loglog(du2, exponential_pdf(du2, durmin, beta), 'g', lw=lws[1], label='exponential MLE')
-    axs[0].loglog(du2, lognormal_pdf(du2, mean_lognormal, std_lognormal, durmin), 'b', lw=lws[2], label='lognormal MLE')
-
-    axs[0].legend(loc='lower left', fontsize=15)
-    axs[0].axis([durmin, durmax, 1E-5, 1E-0])
-
-    axs[1].loglog(u2, c2cum, 'or', label=label)
-    axs[1].loglog(u2, 1 - powerlaw_cdf(u2, durmin, alpha), 'r', lw=lws[0], label='powerlaw MLE')
-    axs[1].loglog(u2, 1 - exponential_cdf(u2, durmin, beta), 'g', lw=lws[1], label='exponential MLE')
-    axs[1].loglog(u2, 1 - lognorm_cdf(u2, mean_lognormal, std_lognormal, durmin), 'b', lw=lws[2], label='lognormal MLE')
-
-    axs[1].legend(loc='lower left', fontsize=15)
-    # axs[1].axis([1.1*xmin, 1.1*durmax,1E-2,1.1*1E-0])
-    axs[0].set_title('pdf', fontsize=20)
-    axs[1].set_title('cdf', fontsize=20)
-    axs[0].set_ylabel('probability', fontsize=15)
-    axs[0].set_xlabel(xlabel, fontsize=15)
-    axs[1].set_xlabel(xlabel, fontsize=15)
-    # axs[i].text(25, 10 ** - 1.5, r'$\alpha=' + str(np.round(alpha * 100) / 100) + '$',
-    #        {'color': 'k', 'fontsize': 16})
-    # fig.text(0.5, 0.04, r'Duration, $d$', ha='center',fontsize=30)
-    # fig.text(0.04, 0.5, r'Cumulative density function, $P_\theta(d)$', va='center', rotation='vertical',fontsize=30)
-    fig.subplots_adjust(top=0.92, bottom=0.15, left=0.1, right=0.95, hspace=.005, wspace=0.005)
-    fig.savefig(filepath, dpi=300)
-    print(f'Plot saved as {filepath}.')
-
-
-def fit_distribution(dataset, parameters, num_sample=None, num_candidate_dist=10, time_to_fit=120,
-                     candidate_distributions=None, distributions=None, save_fits=False,
-                     chunk_only=None, absolute=False):
-    d = dataset
-    if d.step_data is None or d.endpoint_data:
-        d.load()
-    if chunk_only is not None:
-        s = d.step_data.loc[d.step_data[nam.id(chunk_only)].dropna().index]
-    else:
-        s = d.step_data
-    all_dists = sorted([k for k in stats._continuous_distns.__all__ if not (
-        (k.startswith('rv_') or k.endswith('_gen') or (k == 'levy_stable') or (k == 'weibull_min')))])
-    dists = []
-    for k in all_dists:
-        dist = getattr(stats.distributions, k)
-        if dist.shapes is None:
-            dists.append(k)
-        elif len(dist.shapes) <= 1:
-            dists.append(k)
-    results = []
-    for i, p in enumerate(parameters):
-        try:
-            dd = d.endpoint_data[p].dropna().values
-        except:
-            dd = s[p].dropna().values
-        if absolute:
-            dd = np.abs(dd)
-        if distributions is None:
-            if candidate_distributions is None:
-                if num_sample is None:
-                    ids = d.agent_ids
-                else:
-                    ids = d.agent_ids[:num_sample]
-                try:
-                    sample = s.loc[(slice(None), ids), p].dropna().values
-                except:
-                    sample = d.endpoint_data.loc[ids, p].dropna().values
-                if absolute:
-                    sample = np.abs(sample)
-                f = Fitter(sample)
-                f.distributions = dists
-                f.fit()
-                dists = f.summary(Nbest=num_candidate_dist).index.values
-            else:
-                dists = candidate_distributions
-            ff = Fitter(dd)
-            ff.distributions = dists
-            ff.timeout = time_to_fit
-            ff.fit()
-            distribution = ff.get_best()
-        else:
-            distribution = distributions[i]
-        name = list(distribution.keys())[0]
-        args = list(distribution.values())[0]
-        stat, pv = stats.kstest(dd, name, args=args)
-        print(
-            f'Parameter {p} was fitted best by a {name} of args {args} with statistic {stat} and p-value {pv}')
-        results.append((name, args, stat, pv))
-
-    if save_fits:
-        fits = [[p, nam, args, st, pv] for p, (nam, args, st, pv)
-                in zip(parameters, results)]
-        fits_pd = pd.DataFrame(fits, columns=['parameter', 'dist_name', 'dist_args', 'statistic', 'p_value'])
-        fits_pd = fits_pd.set_index('parameter')
-        try:
-            d.fit_data = pd.read_csv(d.dir_dict['conf'], index_col=['parameter'])
-            d.fit_data = fits_pd.combine_first(d.fit_data)
-            print('Updated fits')
-        except:
-            d.fit_data = fits_pd
-            print('Initialized fits')
-        d.fit_data.to_csv(d.dir_dict['conf'], index=True, header=True)
-    return results
-
-
-def fit_dataset(dataset, target_dir, target_point=None, fit_filename=None,
-                angular_fit=True, endpoint_fit=True, bout_fit=True, crawl_fit=True,
-                absolute=False, save_to=None):
-    d = dataset
-    if save_to is None:
-        save_to = d.dir_dict['comp_plot']
-    if not os.path.exists(save_to):
-        os.makedirs(save_to)
-    from lib.stor.larva_dataset import LarvaDataset
-    dd = LarvaDataset(dir=target_dir, load_data=False)
-    file = dd.dir_dict['conf'] if fit_filename is None else os.path.join(dd.data_dir, fit_filename)
-
-    if angular_fit:
-        ang_fits = fit_angular_params(d=d, fit_filepath=file, absolute=absolute,
-                                      save_to=save_to, save_as='angular_fit.pdf')
-    if endpoint_fit:
-        end_fits = fit_endpoint_params(d=d, fit_filepath=file,
-                                       save_to=save_to, save_as='endpoint_fit.pdf')
-    if crawl_fit:
-        crawl_fits = fit_crawl_params(d=d, target_point=target_point, fit_filepath=file,
-                                      save_to=save_to,
-                                      save_as='crawl_fit.pdf')
-    if bout_fit:
-        bout_fits = fit_bout_params(d=d, fit_filepath=file, save_to=save_to,
-                                    save_as='bout_fit.pdf')
-
-
-def fit_distributions_from_file(dataset, filepath, selected_pars=None, save_fits=True):
-    d = dataset
-    pars, dists, stats = d.load_fits(filepath=filepath, selected_pars=selected_pars)
-    results = fit_distribution(dataset=d, parameters=pars, distributions=dists, save_fits=save_fits)
-    global_fit = 0
-    for s, (dist_name, dist_args, statistic, p_value) in zip(stats, results):
-        global_fit += np.clip(statistic - s, a_min=0, a_max=np.inf)
-    return global_fit
-
-
-def fit_geom_to_stridechains(dataset, is_last=True):
-    d = dataset
-    if d.step_data is None:
-        d.load()
-    stridechains = d.step_data[nam.length(nam.chain('stride'))]
-    # self.end['stride_reoccurence_rate'] = 1 - 1 / stridechains.mean()
-    mean, std = stridechains.mean(), stridechains.std()
-    print(f'Mean and std of stride reoccurence rate among larvae : {mean}, {std}')
-    p, sse = fit_geom_distribution(stridechains.dropna().values)
-    print(f'Stride reoccurence rate is {1 - p}')
-    d.stride_reoccurence_rate = 1 - p
-    d.stride_reoccurence_rate_sse = sse
-    d.config['stride_reoccurence_rate'] = d.stride_reoccurence_rate
-    d.config['stride_reoccurence_rate_sse'] = d.stride_reoccurence_rate_sse
-    d.save_config()
-    if is_last:
-        d.save()
-    print('Geometric distribution fitted to stridechains')
-
-
-def fit_geom_distribution(data):
-    data = pd.Series(data)
-    """Model data by finding best fit distribution to data"""
-    x = np.arange(np.min(data), np.max(data) + 1, 1).astype(int)
-    y = np.zeros(len(x)).astype(int)
-
-    counts = data.value_counts()
-    for i, k in enumerate(x):
-        if k in counts.index.values.astype(int):
-            y[i] = int(counts.loc[k])
-    y = y / len(data)
-    # print(y)
-
-    mean = data.mean()
-    p = 1 / mean
-
-    # Calculate fitted PDF and error with fit in distribution
-    pdf = st.geom.pmf(x, p=p)
-    sse = np.sum(np.power(y - pdf, 2.0)) / len(y)
-    print(f'geom distribution fitted with SSE :{sse}')
-    return p, sse
-
-
-def fit_powerlaw_distribution(data):
-    f = Fitter(data)
-    f.distributions = ['powerlaw']
-    f.fit()
-    k = f.get_best()
-    alpha = list(k.values())[0][0]
-    return alpha
+    def build(self, range, dt, **kwargs):
+        xmin, xmax = range
+        x0, x1 = int(xmin / dt), int(xmax / dt)
+        xx = np.arange(x0, x1 + 1)
+        x = xx * dt
+        pmf = self.pdf(x, **kwargs)
+        pmf /= pmf.sum()
+        return rv_discrete(values=(xx, pmf))

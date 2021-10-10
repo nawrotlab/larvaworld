@@ -480,13 +480,12 @@ def init_pars():
                        'min_ang': {'v': 0.0, 'max': 180.0, 'dv': 1.0},
                        'min_ang_vel': {'v': 0.0, 'max': 1000.0, 'dv': 1.0},
                        'non_chunks': {'t': bool, 'v': False}}
-    d['enrich_aux'] = {'recompute': {'t': bool, 'v': False},
-                       'mode': {'t': str, 'v': 'minimal', 'vs': ['minimal', 'full']},
-                       # 'source': {'t': Tuple[float], 'min': -10.0, 'max': 10.0}
+    d['to_drop'] = {kk: {'t': bool, 'v': False} for kk in to_drop_keys}
+    d['enrichment'] = {**{k: d[k] for k in
+                        ['preprocessing', 'processing', 'annotation', 'to_drop']},
+                       'recompute': {'t': bool, 'v': False},
+                       'mode': {'t': str, 'v': 'minimal', 'vs': ['minimal', 'full']}
                        }
-    d['to_drop'] = {'groups': {k: {'t': bool, 'v': False} for k in to_drop_keys}}
-    d['enrichment'] = {k: d[k] for k in
-                       ['preprocessing', 'processing', 'annotation', 'enrich_aux', 'to_drop']}
 
     d['food_params'] = {'source_groups': {'t': dict, 'v': {}},
                         'food_grid': {'t': dict},
@@ -646,13 +645,12 @@ def null_dict(n, key='initial_value', **kwargs):
         return dic2
 
 
-def enrichment_dict(source=None, types=[], bouts=[], to_keep=[], pre_kws={}):
+def enrichment_dict(source=None, types=[], bouts=[], to_keep=[], pre_kws={}, **kwargs):
     pre = null_dict('preprocessing', **pre_kws)
-    aux = null_dict('enrich_aux', source=source)
     proc = null_dict('processing', types={k: True if k in types else False for k in proc_type_keys})
     annot = null_dict('annotation', bouts={k: True if k in bouts else False for k in bout_keys})
-    to_drop = null_dict('to_drop', groups={k: True if k not in to_keep else False for k in to_drop_keys})
-    dic = null_dict('enrichment', preprocessing=pre, processing=proc, annotation=annot, enrich_aux=aux)
+    to_drop = null_dict('to_drop', **{k: True if k not in to_keep else False for k in to_drop_keys})
+    dic = null_dict('enrichment', preprocessing=pre, processing=proc, annotation=annot, to_drop=to_drop, **kwargs)
     return dic
 
 

@@ -1,3 +1,0 @@
-,alpha_stride,KS_pow_stride,lambda_stride,KS_exp_stride,mu_log_stride,sigma_log_stride,KS_log_stride,alpha_pause,KS_pow_pause,lambda_pause,KS_exp_pause,mu_log_pause,sigma_log_pause,KS_log_pause,min_pause,max_pause,min_stride,max_stride
-reference,1.668,0.155,0.127,0.224,1.497,1.13,0.104,2.167,0.202,3.461,0.251,-1.223,0.766,0.136,0.125,11.4375,1.0,146.0
-dispersion_50l_3,1.556,0.217,0.11,0.117,1.797,1.058,0.074,2.017,0.174,3.209,0.196,-1.097,0.738,0.125,0.125,2.125,1.0,104.0

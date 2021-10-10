@@ -254,7 +254,8 @@ def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recom
     return s, e
 
 
-def comp_dispersion(s, e, aux_dir, dt, point, recompute=False, starts=[0], stops=[40], **kwargs):
+def comp_dispersion(s, e, config, dt, point, recompute=False, starts=[0], stops=[40], **kwargs):
+    aux_dir = config['aux_dir']
     ids = s.index.unique('AgentID').values
     ps = []
     pps = []

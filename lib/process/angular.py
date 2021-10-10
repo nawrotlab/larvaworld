@@ -159,7 +159,8 @@ def comp_angular(s, config, mode='minimal'):
     print('All angular parameters computed')
 
 
-def angular_processing(s, e, config, dt, Npoints, aux_dir, recompute=False, mode='minimal', **kwargs):
+def angular_processing(s, e, config, dt, Npoints, recompute=False, mode='minimal', **kwargs):
+    aux_dir = config['aux_dir']
     N = Npoints
     points = nam.midline(N, type='point')
     Nangles = np.clip(N - 2, a_min=0, a_max=None)
