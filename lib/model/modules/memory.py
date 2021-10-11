@@ -8,60 +8,55 @@ from lib.model.modules.basic import Effector
 
 
 class RLmemory(Effector):
-    def __init__(self, brain, gain, decay_coef, DeltadCon=0.02, state_spacePerOdorSide=3,
-                 gain_space=[-500, -50, 50, 500],
-                 decay_coef_space=None, update_dt=2, train_dur=30, alpha=0.05, gamma=0.6, epsilon=0.15, **kwargs):
+    def __init__(self, brain, gain_space, gain, Delta=0.1, state_spacePerSide=0, update_dt=2, train_dur=30, alpha=0.05,
+                 gamma=0.6, epsilon=0.15, **kwargs):
         super().__init__(**kwargs)
+        self.return_global_best=False
         self.brain = brain
         self.effector = True
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
-        self.DeltadCon = DeltadCon
+        self.Delta = Delta
         self.gain_space = gain_space
-        if decay_coef_space is None:
-            decay_coef_space = [decay_coef]
-        self.decay_coef_space = decay_coef_space
-        # self.gain = gain
-        self.odor_ids = list(gain.keys())
-        self.Nodors = len(self.odor_ids)
-        self.fit_pars = self.odor_ids + ['decay_coef']
-        # self.Nfit_pars =self.Nodors + 1
-        self.actions = [ii for ii in itertools.product(gain_space, repeat=self.Nodors)]
-        self.actions = [flatten_tuple(ii) for ii in itertools.product(self.actions, list(self.decay_coef_space))]
-        self.state_spacePerOdorSide = state_spacePerOdorSide
+        self.gain = gain
+        self.best_gain = gain
+        self.gain_ids = list(gain.keys())
+        self.Ngains = len(self.gain_ids)
+        self.state_spacePerSide = state_spacePerSide
         self.state_space = np.array(
-            [ii for ii in itertools.product(range(2 * self.state_spacePerOdorSide + 1), repeat=self.Nodors)])
-        # self.q_table = [np.zeros(len(self.state_space), len(self.actions)) for ii in odor_ids]
+            [ii for ii in itertools.product(range(2*self.state_spacePerSide + 1), repeat=self.Ngains)])
+        self.actions = [ii for ii in itertools.product(self.gain_space, repeat=self.Ngains)]
         self.q_table = np.zeros((self.state_space.shape[0], len(self.actions)))
+
+        self.train_dur = train_dur
+        # self.update_dt = update_dt
         self.lastAction = 0
         self.lastState = 0
         self.Niters = int(update_dt * 60 / self.dt)
         self.iterator = self.Niters
-        self.train_dur = train_dur
-        self.rewardSum = 0
-        self.best_gain = gain
-        # self.decay_coef = decay_coef
-        self.best_decay_coef = decay_coef
-
         self.table = False
+        self.rewardSum = 0
+        # print(self.state_space[13])
+        # raise
 
-    def state_collapse(self, dCon):
-        k=self.state_spacePerOdorSide
-        if len(dCon) > 0:
-            dCon = [dCon]
+    def state_collapse(self, dx):
+        k = self.state_spacePerSide
+        if len(dx) > 0:
+            dx = [dx]
         stateV = []
-        for index in range(len(dCon)):
-            for i in dCon[index]:
-                dConI = dCon[index][i]
+        for index in range(len(dx)):
+            for i in dx[index]:
+
+                dxI = dx[index][i]
                 stateIntermitt = np.zeros(k)
                 for ii in range(k):
-                    stateIntermitt[ii] = np.abs(dConI) > (ii + 1) * self.DeltadCon
-            stateV.append(int(np.sign(dConI) * (np.sum(stateIntermitt)) + k))
+                    stateIntermitt[ii] = np.abs(dxI) > (ii + 1) * self.Delta
+            stateV.append(int(np.sign(dxI) * (np.sum(stateIntermitt)) + k))
         state = np.where((self.state_space == stateV).all(axis=1))[0][0]
         return state
 
-    def step(self, gain, dCon, reward, decay_coef):
+    def step(self, dx, reward):
         if self.table == False:
             temp = self.brain.agent.model.table_collector
             if temp is not None:
@@ -70,30 +65,16 @@ class RLmemory(Effector):
         self.count_time()
         if self.effector and self.total_t > self.train_dur * 60:
             self.effector = False
-            # print(f'Training stopped after {self.train_dur} minutes')
             print(f'Best gain : {self.best_gain}')
+            print(np.array(self.q_table*100).astype(int))
         if self.effector:
-            self.rewardSum += int(reward) - 0.001
-            if self.iterator >= self.Niters:
-                self.iterator = 0
-                state = self.state_collapse(dCon)
-                if random.uniform(0, 1) < self.epsilon:
-                    actionID = random.randrange(len(self.actions))
-                else:
-                    actionID = np.argmax(self.q_table[state])  # Exploit learned values
-                old_value = self.q_table[self.lastState, self.lastAction]
-                next_max = np.max(self.q_table[state])
-                new_value = (1 - self.alpha) * old_value + self.alpha * (self.rewardSum + self.gamma * next_max)
-                self.q_table[self.lastState, self.lastAction] = new_value
-                self.lastAction = actionID
-                self.lastState = state
-                action = self.actions[actionID]
-                for ii, id in enumerate(self.odor_ids):
-                    gain[id] = action[ii]
-                decay_coef = action[-1]
-                best_combo = self.get_best_combo()
-                self.best_gain = {id: best_combo[id] for id in self.odor_ids}
-                self.best_decay_coef = best_combo['decay_coef']
+            self.add_reward(reward)
+            if self.condition(dx):
+                state = self.state_collapse(dx)
+                actionID=self.select_action(state)
+                self.update_q_table(actionID, state,  self.rewardSum)
+                self.best_gain = self.get_best_combo()
+
                 if self.table:
                     for col in list(self.table.keys()):
                         try:
@@ -101,57 +82,72 @@ class RLmemory(Effector):
                         except:
                             self.table[col].append(np.nan)
                 self.rewardSum = 0
+                self.iterator = 0
             self.iterator += 1
-            return gain, decay_coef
+
+            return self.gain
         else:
-            return self.best_gain, self.best_decay_coef
+            if self.return_global_best :
+                return self.best_gain
+            else :
+                state = self.state_collapse(dx)
+                actionID = np.argmax(self.q_table[state])
+                action = self.actions[actionID]
+                for ii, id in enumerate(self.gain_ids):
+                    self.gain[id] = action[ii]
+                # print(self.gain, self.best_gain, self.q_table)
+                return self.gain
+
+    def add_reward(self, reward):
+        self.rewardSum += int(reward) - 0.01
 
     def get_best_combo(self):
-        return dict(zip(self.fit_pars, self.actions[np.argmax(np.mean(self.q_table, axis=0))]))
+        return dict(zip(self.gain_ids, self.actions[np.argmax(np.mean(self.q_table, axis=0))]))
 
-class SimpleMemory(Effector):
-    def __init__(self, brain, gain, decay_coef, DeltaGain=0.02, DeltadCon=0.02, train_dur=30, **kwargs):
-        super().__init__(**kwargs)
-        self.brain = brain
-        self.effector = True
-        self.DeltaGain = DeltaGain
-        self.DeltadCon = DeltadCon
-        self.odor_ids = list(gain.keys())
-        self.Nodors = len(self.odor_ids)
-        self.fit_pars = self.odor_ids + ['decay_coef']
-        self.train_dur = train_dur
-        self.rewardSum = 0
-        self.best_gain = gain
-        self.best_decay_coef = decay_coef
-        self.table = False
+    def condition(self,dx):
+        return self.iterator >= self.Niters
 
-    def step(self, gain, dCon, reward, decay_coef):
-        if self.table == False:
-            temp = self.brain.agent.model.table_collector
-            if temp is not None:
-                self.table = temp.tables['best_gains'] if 'best_gains' in list(temp.tables.keys()) else None
+    def update_q_table(self, actionID, state, reward):
+        old_value = self.q_table[self.lastState, self.lastAction]
+        new_value = (1 - self.alpha) * old_value + self.alpha * (reward + self.gamma * np.max(self.q_table[state]))
+        # print(old_value, new_value, self.rewardSum, next_max)
+        self.q_table[self.lastState, self.lastAction] = new_value
+        self.lastAction = actionID
+        self.lastState = state
 
-        self.count_time()
-        if self.effector and self.total_t > self.train_dur * 60:
-            self.effector = False
-            # print(f'Training stopped after {self.train_dur} minutes')
-            print(f'Best gain : {self.best_gain}')
-        if self.effector:
-            self.rewardSum += int(reward) - 0.001
-            for ii, id in enumerate(self.odor_ids):
-                gain[id] += int(reward)*np.abs(dCon[id])- 0.001
-            # print(np.abs(list(dCon.values())))
-            self.best_gain = gain
-            self.best_decay_coef = decay_coef
-            if self.table:
-                for col in list(self.table.keys()):
-                    try:
-                        self.table[col].append(getattr(self.brain.agent, col))
-                    except:
-                        self.table[col].append(np.nan)
-            return gain, decay_coef
+    def select_action(self, state):
+        if random.uniform(0, 1) < self.epsilon:
+            actionID = random.randrange(len(self.actions))
         else:
-            return self.best_gain, self.best_decay_coef
+            actionID = np.argmax(self.q_table[state])  # Exploit learned values
+        # print(np.array(self.q_table*100).astype(int))
+        for ii, id in enumerate(self.gain_ids):
+            self.gain[id] = self.actions[actionID][ii]
+        return actionID
 
-    # def get_best_combo(self):
-    #     return dict(zip(self.fit_pars, self.actions[np.argmax(np.mean(self.q_table, axis=0))]))
+
+class RLOlfMemory(RLmemory):
+    def __init__(self, mode='olf', **kwargs):
+        super().__init__(**kwargs)
+
+
+
+
+class RLTouchMemory(RLmemory):
+    def __init__(self, mode='touch', **kwargs):
+        # gain = {s: 0.0 for s in brain.agent.get_sensors()}
+        super().__init__(**kwargs)
+
+
+    def condition(self,dx):
+        if 1 in dx.values() or -1 in dx.values():
+            if 1 in dx.values():
+                self.rewardSum = 1/self.iterator
+            elif -1 in dx.values():
+                self.rewardSum = self.iterator
+            return True
+        else :
+            return False
+
+
+

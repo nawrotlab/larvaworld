@@ -20,7 +20,7 @@ from lib.stor.larva_dataset import LarvaDataset
 import lib.aux.naming as nam
 
 
-def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=True):
+def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
     if ds is None:
         return
     if not type(ds) == list:
@@ -48,6 +48,12 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=True):
     #     #                                         **ccc)
     #     figs['scatter_x4'] = plot_endpoint_scatter(keys=['cum_sd', 'f_am', 'str_tr', 'pau_tr'], **cc)
     #     figs['scatter_x2'] = plot_endpoint_scatter(keys=['cum_sd', 'f_am'], **cc)
+    if 'touch' in exp_type:
+        figs['time on food']=timeplot(['cum_f_det'], **cc)
+        figs['turner input']=timeplot(['A_tur'],show_first=True, **cc)
+        figs['tactile activation']=timeplot(['A_touch'],show_first=True, **cc)
+        # figs.update(**source_analysis(d.config['sources'], **cc))
+
 
     if 'RvsS' in exp_type:
         s = exp_type.split('_')[-1]
@@ -140,6 +146,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=True):
         figs.update(figs0)
 
     if 'chemo' in exp_type:
+        # figs['turns']=plot_turns(**cc)
         figs.update(**source_analysis(d.config['sources'], **cc))
         for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
             figs[p] = timeplot([p], **cc)
@@ -198,6 +205,7 @@ def foraging_analysis(sources, **kwargs) :
     figs['turn angle VS Y pos (hist)'] = plot_turn_amp(par_short='tur_y0', mode='hist', **kwargs)
     figs['turn angle VS Y pos (scatter)'] = plot_turn_amp(par_short='tur_y0', mode='scatter', **kwargs)
     figs['turn duration'] = plot_turn_amp(par_short='tur_t', mode='scatter', absolute=True, **kwargs)
+    # figs['turn amplitude'] = TurnPlot(**kwargs).get()
     figs['turn amplitude'] = plot_turns(**kwargs)
     figs['Y position'] = timeplot(['y'], legend_loc='lower left', **kwargs)
     figs['navigation index'] = plot_navigation_index(**kwargs)
@@ -355,7 +363,7 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None, **
                 s = 'scaled_' if scaled else ''
                 l = f'{s}dispersion_{r0}->{r1}_{fig_cols}'
                 try:
-                    figs[l] = plot_dispersion(**cc, scaled=scaled, fig_cols=fig_cols, ranges=[(r0, r1)], **kwargs)
+                    figs[l] = plot_dispersion(**cc, scaled=scaled, fig_cols=fig_cols, range=(r0, r1), **kwargs)
                 except:
                     pass
 
@@ -407,6 +415,6 @@ def targeted_analysis(datasets, labels=None, simVSexp=False, save_to=None, pref=
     plot_endpoint_params(**anal_kws, mode='result', save_as=f'results{pref}.pdf', **kwargs)
     plot_endpoint_params(**anal_kws, mode='reorientation', save_as=f'reorientation{pref}.pdf', **kwargs)
     plot_endpoint_params(**anal_kws, mode='tortuosity', save_as=f'tortuosity{pref}.pdf', **kwargs)
-    plot_dispersion(**anal_kws, scaled=True, fig_cols=2, ranges=[(0, 80)], ymax=18, save_as=f'dispersion{pref}.pdf',
+    plot_dispersion(**anal_kws, scaled=True, fig_cols=2, range=(0, 80), ymax=18, save_as=f'dispersion{pref}.pdf',
                     **kwargs)
     plot_marked_strides(**anal_kws, agent_idx=1, slice=[0, 180], save_as=f'sample_tracks{pref}.pdf', **kwargs)

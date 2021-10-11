@@ -6,7 +6,7 @@ from scipy.stats import stats
 
 import lib.aux.naming as nam
 from lib.anal.plotting import plot_spatiotemporal_variation, plot_bend2orientation_analysis, \
-    plot_sliding_window_analysis, plot_marked_strides, plot_stride_distribution
+    plot_sliding_window_analysis
 from lib.process.angular import comp_orientations, comp_angles, comp_angular
 from lib.process.basic import comp_extrema
 from lib.process.bouts import detect_contacting_chunks
@@ -203,16 +203,3 @@ def stride_max_flag_phase_analysis(dataset, agent_id=None, flag=None, par=None):
     d.save_config()
 
 
-def stride_analysis(dataset, agent_id=None, flag=None, par_to_track=None, stride_max_flag_analysis=True):
-    d = dataset
-    if stride_max_flag_analysis:
-        stride_max_flag_phase_analysis(dataset=d, agent_id=agent_id, flag=flag, par=par_to_track)
-    plot_marked_strides(datasets=[d], agent_idx=0, agent_id=agent_id, slice=[0, 180])
-    plot_stride_distribution(dataset=d, agent_id=agent_id, save_to=None)
-
-# def multiparse_by_sliding_window(dataset, data, par, flag, radius_in_sec, condition='True',
-#                                  description_as=None, overwrite=True):
-#         multiparse_dataset_by_sliding_window(data=data, par=par, flag=flag, condition=condition,
-#                                              radius_in_ticks=np.ceil(radius_in_sec / self.dt),
-#                                              description_to=f'{self.data_dir}/{par}_around_{flag}',
-#                                              description_as=description_as, overwrite=overwrite)

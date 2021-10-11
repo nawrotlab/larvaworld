@@ -51,6 +51,10 @@ class Larva(LarvaworldAgent):
         return self.brain.olfactory_activation
 
     @property
+    def touch_activation(self):
+        return self.brain.touch_activation
+
+    @property
     def first_odor_concentration(self):
         return list(self.brain.olfactor.Con.values())[0]
 
@@ -85,7 +89,14 @@ class Larva(LarvaworldAgent):
 
     @property
     def cum_reward(self):
-        return self.brain.memory.rewardSum
+        try :
+            return self.brain.memory.rewardSum
+        except :
+            return self.brain.touch_memory.rewardSum
+
+    # @property
+    # def on_food(self):
+    #     return int(self.food_detected is not None)
 
     @property
     def dt(self):

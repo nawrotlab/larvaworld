@@ -1134,6 +1134,7 @@ class ButtonGraphList(GraphList):
     def get_graph_kws(self, func):
         signature = inspect.getfullargspec(func)
         vs = signature.defaults
+
         if vs is None:
             return {}
         kws = dict(zip(signature.args[-len(vs):], vs))

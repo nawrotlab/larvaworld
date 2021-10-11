@@ -54,8 +54,8 @@ class Turner(Oscillator, Effector):
         else:
             return A_olf + np.random.normal(scale=self.activation_noise)
 
-    def step(self, inhibited=False, attenuation=1.0, A_olf=0.0):
-        self.activation = self.update_activation(A_olf)
+    def step(self, inhibited=False, attenuation=1.0, A_in=0.0):
+        self.activation = self.update_activation(A_in)
         if not inhibited:
             A = self.compute_angular_activity() + self.buildup
             self.buildup = 0

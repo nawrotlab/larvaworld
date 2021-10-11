@@ -14,38 +14,23 @@ class LarvaSim(BodySim, Larva):
     def __init__(self, unique_id, model, pos, orientation, larva_pars,odor, group='', default_color=None,life=None, **kwargs):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
                        odor=odor, group=group, default_color=default_color)
-        # try:
-        #     larva_pars['brain']['olfactor_params']['odor_dict'] = self.update_odor_dicts(
-        #         larva_pars['brain']['olfactor_params']['odor_dict'])
-        # except:
-        #     pass
+        BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['physics'], **larva_pars['body'],**kwargs)
         self.brain = self.build_brain(larva_pars['brain'])
         self.build_energetics(larva_pars['energetics'], life=life)
-        BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['physics'],**larva_pars['body'], **kwargs)
-        # print(larva_pars['body'])
+
         self.reset_feeder()
         self.radius = self.sim_length / 2
 
         self.food_detected, self.feeder_motion, self.current_V_eaten, self.feed_success = None, False, 0, None
         self.food_missed, self.food_found = False, False
-
-    # def update_odor_dicts(self, odor_dict):  #
-    #
-    #     temp = {'mean': 0.0, 'std': 0.0}
-    #     food_odor_ids = fun.unique_list(
-    #         [s.odor_id for s in self.model.get_food() + [self] if s.odor_id is not None])
-    #     if odor_dict is None:
-    #         odor_dict = {}
-    #         # odor_dict = {odor_id: temp for odor_id in food_odor_ids}
-    #     for odor_id in food_odor_ids:
-    #         if odor_id not in list(odor_dict.keys()):
-    #             odor_dict[odor_id] = temp
-    #     return odor_dict
+        self.cum_food_detected=0
 
     def compute_next_action(self):
         self.cum_dur += self.model.dt
         pos = self.olfactor_pos
-        self.detect_food(pos)
+        self.food_detected=self.detect_food(pos)
+        self.cum_food_detected+=int(self.food_detected is not None)
+
         self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.run(pos)
         self.current_V_eaten, self.feed_success = self.feed(self.food_detected, self.feeder_motion)
         self.run_energetics(self.current_V_eaten)
@@ -53,7 +38,7 @@ class LarvaSim(BodySim, Larva):
 
 
     def detect_food(self, pos):
-        if self.brain.feeder is not None:
+        if self.brain.feeder is not None or self.touch_sensors is not None:
             prev_item = self.food_detected
             item, q = None, None
             grid = self.model.food_grid
@@ -70,7 +55,9 @@ class LarvaSim(BodySim, Larva):
                     item, q = food, food.quality
             self.food_found = True if (prev_item is None and item is not None) else False
             self.food_missed = True if (prev_item is not None and item is None) else False
-            self.food_detected=item
+            return item
+
+
 
     def feed(self, source, motion):
         a_max = self.max_V_bite
@@ -106,8 +93,11 @@ class LarvaSim(BodySim, Larva):
         return self.brain.feeder.V_bite * self.V  # ** (2 / 3)
 
     def build_energetics(self, energetic_pars, life=None):
-        self.real_length = None
-        self.real_mass = None
+        if not hasattr(self, 'real_mass'):
+            self.real_mass = None
+        if not hasattr(self, 'real_length'):
+            self.real_length = None
+
         self.V = None
 
         # p_am=260

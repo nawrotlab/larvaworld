@@ -11,6 +11,7 @@ from mesa.time import RandomActivation
 
 import lib.aux.naming as nam
 from lib.aux.dictsNlists import flatten_list
+
 #
 # body_pars = {
 #     "length": 'length_in_mm',
@@ -184,30 +185,30 @@ from lib.aux.dictsNlists import flatten_list
 #     **food_pars}
 
 collection_dict = {
-            'bouts': ['x', 'y', 'b', 'fou', 'rou', 'v', 'sv', 'd', 'fov', 'bv', 'sd', 'o_cent'],
-            # 'bouts': ['str_d_mu', 'str_sd_mu'],
-            'basic': ['x', 'y', 'b', 'fo'],
-            'e_basic': ['l_mu', nam.cum('d'), f'{nam.cum("sd")}', nam.cum('t'), 'x', 'y', 'sv_mu'],
-            'e_dispersion': ['dsp', 'sdsp', 'dsp_max', 'sdsp_max', 'dsp_0_40', 'dsp_0_80', 'dsp_20_80', 'sdsp_0_40',
-                             'sdsp_0_80', 'sdsp_20_80'],
-            'spatial': flatten_list([[k, f's{k}'] for k in
-                                                         ['dsp', 'd', 'v', 'a', 'D_x', 'xv', 'xa', 'D_y', 'yv', 'ya', nam.cum('d'),
-                                          nam.cum('D_x'), nam.cum('D_y'), ]]),
-            'e_spatial': [f'tor{i}_mu' for i in ['', 2, 5, 10, 20]],
-            'angular': ['b', 'bv', 'ba', 'fo', 'fov', 'foa', 'ro', 'rov', 'roa'],
+    'bouts': ['x', 'y', 'b', 'fou', 'rou', 'v', 'sv', 'd', 'fov', 'bv', 'sd', 'o_cent'],
+    # 'bouts': ['str_d_mu', 'str_sd_mu'],
+    'basic': ['x', 'y', 'b', 'fo'],
+    'e_basic': ['l_mu', nam.cum('d'), f'{nam.cum("sd")}', nam.cum('t'), 'x', 'y', 'sv_mu'],
+    'e_dispersion': ['dsp', 'sdsp', 'dsp_max', 'sdsp_max', 'dsp_0_40', 'dsp_0_80', 'dsp_20_80', 'sdsp_0_40',
+                     'sdsp_0_80', 'sdsp_20_80'],
+    'spatial': flatten_list([[k, f's{k}'] for k in
+                             ['dsp', 'd', 'v', 'a', 'D_x', 'xv', 'xa', 'D_y', 'yv', 'ya', nam.cum('d'),
+                              nam.cum('D_x'), nam.cum('D_y'), ]]),
+    'e_spatial': [f'tor{i}_mu' for i in ['', 2, 5, 10, 20]],
+    'angular': ['b', 'bv', 'ba', 'fo', 'fov', 'foa', 'ro', 'rov', 'roa'],
 
-            'chemorbit': ['d_cent', 'sd_cent', 'o_cent'],
-            'e_chemorbit':
-                flatten_list(
-                [[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_cent', 'sd_cent']]),
-            'chemotax': ['d_chem', 'sd_chem', 'o_chem'],
-            'e_chemotax': flatten_list(
-                [[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_chem', 'sd_chem']]),
+    'chemorbit': ['d_cent', 'sd_cent', 'o_cent'],
+    'e_chemorbit':
+        flatten_list(
+            [[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_cent', 'sd_cent']]),
+    'chemotax': ['d_chem', 'sd_chem', 'o_chem'],
+    'e_chemotax': flatten_list(
+        [[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_chem', 'sd_chem']]),
 
-            'olfactor': ['Act_tur', 'A_tur', 'A_olf'],
-            'odors': ['c_odor1', 'c_odor2', 'c_odor3', 'dc_odor1', 'dc_odor2', 'dc_odor3'],
-            # 'constants': ['dt', 'x0', 'y0'],
-        }
+    'olfactor': ['Act_tur', 'A_tur', 'A_olf'],
+    'odors': ['c_odor1', 'c_odor2', 'c_odor3', 'dc_odor1', 'dc_odor2', 'dc_odor3'],
+    # 'constants': ['dt', 'x0', 'y0'],
+}
 
 
 class NamedRandomActivation(RandomActivation):
@@ -310,12 +311,17 @@ def contour_xy_pars(N=22):
 
 
 output_dict = {
-    'olfactor': {'step': ['c_odor1', 'dc_odor1', 'c_odor2', 'dc_odor2', 'A_olf', 'Act_tur', 'A_tur', 'Act_cr'],
-                 'endpoint': []},
+    'olfactor': {
+        'step': ['c_odor1', 'dc_odor1', 'c_odor2', 'dc_odor2', 'A_olf', 'Act_tur', 'A_tur', 'Act_cr'],
+        'endpoint': []},
+
+    'toucher': {
+        'step': ['A_touch', 'A_tur', 'cum_f_det'],
+        'endpoint': []},
 
     'feeder': {
-        'step': ['l','m', 'f_am', 'sf_am', 'EEB'],
-        'endpoint': ['l','m', 'f_am', 'sf_am', ]},
+        'step': ['l', 'm', 'f_am', 'sf_am', 'EEB'],
+        'endpoint': ['l', 'm', 'f_am', 'sf_am', ]},
 
     'gut': {'step': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M'],
             'endpoint': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']},
@@ -332,4 +338,3 @@ output_dict = {
 }
 
 output_keys = list(output_dict.keys())
-

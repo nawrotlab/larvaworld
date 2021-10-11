@@ -527,6 +527,7 @@ class ParDict:
         self.add(p=pid, k=f'{kc}_id', d=pid, s=sub('idx', kc), exists=False)
         self.add(p=ptr, k=f'{kc}_tr', d=ptr, s=sub('r', kc), exists=False)
         self.add(p=pN, k=f'{kc}_N', d=pN, s=sub('N', f'{pc}s'), exists=False)
+        # print(self.dict[f'{kc}_N'].k, self.dict[f'{kc}_N'].lim)
 
         k00 = f'{kc}_t'
         s00 = Delta('t')
@@ -736,11 +737,14 @@ class ParDict:
     def build_neural(self):
         self.add(p='amount_eaten', k='f_am', u=1 * siu.m ** 3, d='ingested_food_volume', s=sub('V', 'in'),
                  lab='food intake')
+        self.add(p='cum_food_detected', k='cum_f_det', d='cum_food_detected', s=subsup('t', 'on food', 'cum'),
+                 lab='time on food')
         self.add(p='scaled_amount_eaten', k='sf_am',  d='ingested_food_volume_ratio', s=sub('[V]', 'in'))
         self.add(p='lin_activity', k='Act_cr',  d='crawler output', s=sub('A', 'crawl'))
         self.add(p='ang_activity', k='Act_tur',  d='turner output', s=subsup('A', 'tur', 'out'), lim=(-20, 20))
         self.add(p='turner_activation', k='A_tur',  d='turner input', s=subsup('A', 'tur', 'in'), lim=(10, 40))
         self.add(p='olfactory_activation', k='A_olf',  d='olfactory activation', s=sub('A', 'olf'), lim=(-1, 1))
+        self.add(p='touch_activation', k='A_touch',  d='tactile activation', s=sub('A', 'touch'), lim=(-1, 1))
         self.add(p='exploitVSexplore_balance', k='EEB',  d='exploitVSexplore_balance', s='EEB', lim=(0, 1))
 
         for i, n in enumerate(['first', 'second', 'third']):
@@ -891,13 +895,13 @@ def getPar(k=None, p=None, d=None, to_return=['d', 'l'], PF=None):
 
 
 if __name__ == '__main__':
-    o, d = nam.bearing2('n'), nam.dst2('n')
-    fo = getPar(['fo'], to_return=['d'])[0][0]
-    print(o,d)
+    # o, d = nam.bearing2('n'), nam.dst2('n')
+    # fo = getPar(['fo'], to_return=['d'])[0][0]
+    # print(o,d)
     d=ParDict(mode='build').dict
-    print(d.keys())
-    # d = ParDict(mode='reconstruct').dict
-    # print(d.keys())
+    print(getPar(['cum_f_det'], to_return=['d', 's', 's', 'l', 'lim']))
+    # # d = ParDict(mode='reconstruct').dict
+    # # print(d.keys())
     raise
     # for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
     #     p = getPar(short, to_return=['d'])[0]
@@ -973,6 +977,5 @@ if __name__ == '__main__':
     # # plt.xlabel(df['unit'].iloc[1]/1973*u.day)
     # # # plt.xlabel([d[k].symbol for k in list(d.keys())])
     # # plt.show()
-    par_shorts = ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']
-    pars, sim_labels, exp_labels, xlabels, xlims = getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim'])
-    print(pars)
+    pars, sim_ls, exp_ls, xlabs, xlims = getPar(['str_N', 'str_tr', 'cum_d'], to_return=['d', 's', 's', 'l', 'lim'])
+    print(pars, xlims)

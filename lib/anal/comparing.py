@@ -9,45 +9,40 @@ import lib.aux.dictsNlists
 import lib.aux.naming as nam
 
 from lib.conf.base.par import getPar
-# from lib.stor.larva_dataset import LarvaDataset
-# from lib.conf import par_conf
 
-class ExpFitter :
+
+class ExpFitter:
     from lib.stor.larva_dataset import LarvaDataset
-    def __init__(self, sample:Union[dict, str, LarvaDataset], stat_coefs=None, use_symbols=False, overwrite=False):
+    def __init__(self, sample: Union[dict, str, LarvaDataset], stat_coefs=None, use_symbols=False, overwrite=False):
         from lib.stor.larva_dataset import LarvaDataset
-        if isinstance(sample, LarvaDataset) :
+        if isinstance(sample, LarvaDataset):
             self.sample = sample
             self.sample_conf = self.sample.config
-        else :
-            if type(sample)==dict :
-                self.sample_conf=sample
+        else:
+            if type(sample) == dict:
+                self.sample_conf = sample
             elif type(sample) == str:
                 from lib.conf.stored.conf import loadConf
                 self.sample_conf = loadConf(sample, 'Ref')
-            self.sample=LarvaDataset(self.sample_conf['dir'], load_data=True)
-
-
-
+            self.sample = LarvaDataset(self.sample_conf['dir'], load_data=True)
 
         key = 's' if use_symbols else 'd'
         self.df = self.multicol_df(key)
         columns = lib.aux.dictsNlists.flatten_list(self.df['cols'].values.tolist())
         self.m_col = pd.MultiIndex.from_tuples(columns, names=['Field', 'Pars'])
 
-
-        if overwrite :
+        if overwrite:
             self.build(use_symbols, stat_coefs)
 
-        elif not self.retrieve() :
-            self.build( use_symbols, stat_coefs)
+        elif not self.retrieve():
+            self.build(use_symbols, stat_coefs)
 
     def retrieve(self):
         dic = self.sample.load_ExpFitter()
         if dic is not None:
             print('Loaded existing configuration')
-            self.sample_data={k: np.array(v) for k, v in dic['sample_data'].items()}
-            self.stat_coefs=dic['stat_coefs']
+            self.sample_data = {k: np.array(v) for k, v in dic['sample_data'].items()}
+            self.stat_coefs = dic['stat_coefs']
             # temp=np.array()
             self.df_st = pd.DataFrame(dic['stats'], columns=self.m_col)
             # self.df=pd.DataFrame.from_dict(dic['df'])
@@ -55,14 +50,11 @@ class ExpFitter :
             # self.m_col = pd.MultiIndex.from_tuples(columns, names=['Field', 'Pars'])
             # self.df_st = pd.DataFrame(columns=self.m_col)
             return True
-        else :
+        else:
             return False
 
     def build(self, use_symbols, stat_coefs):
-
         self.sample_data = self.get_data(self.sample, self.df)
-
-        # self.df_st = pd.DataFrame(columns=self.m_col)
         if stat_coefs is None:
             stat_coefs = self.default_stat_coefs
         self.stat_coefs = stat_coefs
@@ -70,9 +62,9 @@ class ExpFitter :
         self.store()
         print('New configuration built and stored')
 
-    @ property
+    @property
     def default_stat_coefs(self):
-        coefs={}
+        coefs = {}
         for field, pars in self.df['pars'].items():
             if field in ['angular motion', 'reorientation', 'spatial motion']:
                 for p in pars:
@@ -81,17 +73,17 @@ class ExpFitter :
                 for p in pars:
                     coefs[p] = 1 / len(pars)
             elif field in ['stride cycle curve']:
-                for p in pars :
-                    coefs[p]=1/len(pars)
+                for p in pars:
+                    coefs[p] = 1 / len(pars)
         return coefs
 
     def store(self):
         sample_data_lists = {k: v.tolist() for k, v in self.sample_data.items()}
         # temp={'sample_data': sample_data_lists, 'df': self.df.to_dict(),
-        temp={'sample_data': sample_data_lists, 'stat_coefs': self.stat_coefs,
-              'stats': self.df_st.values.tolist()}
+        temp = {'sample_data': sample_data_lists, 'stat_coefs': self.stat_coefs,
+                'stats': self.df_st.values.tolist()}
 
-        self.sample.save_ExpFitter(temp,)
+        self.sample.save_ExpFitter(temp, )
 
     def multicol_df(self, key='s'):
         shorts = [
@@ -129,9 +121,8 @@ class ExpFitter :
     def simple_df(self):
         pass
 
-
     def get_data(self, d, df):
-        s,e=d.step_data, d.endpoint_data
+        s, e = d.step_data, d.endpoint_data
         d_d = {}
         d_d.update({p: np.abs(d.get_par(p).dropna().values.flatten()) for p in df['par'].loc['angular motion']})
         d_d.update({p: e[p].values for p in df['pars'].loc['spatial motion']})
@@ -141,35 +132,18 @@ class ExpFitter :
         d_d['dispersion'] = d.load_aux('dispersion', 'dispersion')['median'][t0:t1]
         d_d['scaled_dispersion'] = d.load_aux('dispersion', nam.scal('dispersion'))['median'][t0:t1]
 
-        for p in df['pars'].loc['stride cycle curve'] :
-            chunk_d =d.load_aux('stride', p).values
+        for p in df['pars'].loc['stride cycle curve']:
+            chunk_d = d.load_aux('stride', p).values
             if any([x in p for x in ['bend', 'orientation']]):
                 chunk_d = np.abs(chunk_d)
             d_d[f'str_{p}'] = np.nanquantile(chunk_d, q=0.5, axis=0)
         return d_d
 
-# def explore():
-#     def explore():
-#         idxs = []
-#         for Nsegs in Nsegs_list:
-#             for m, l_m in zip(base_model_ids, base_model_labels):
-#                 for suf, l_suf in zip(model_suf_ids, model_suf_labels):
-#                     model_id = f'{m}{suf}'
-#                     sim_id = f'{m}{suf}_{Nsegs}'
-#                     idx = (l_m, l_suf, Nsegs)
-#                     idxs.append(idx)
-#         return idxs
-#     # idxs=explore()
-#
-#     # idx = (l_m, l_suf, Nsegs)
-#     # idx = 0
-#     # for idx in idxs :
-
     def compare(self, d, save_to_config=False):
-        df=self.df
-        ref_d=self.sample_data
+        df = self.df
+        ref_d = self.sample_data
         d_d = self.get_data(d, df)
-        idx=d.id
+        idx = d.id
 
         df_st0 = pd.DataFrame(index=[idx], columns=self.m_col)
         # df_pv0 = pd.DataFrame(index=[idx],columns=m_col)
@@ -187,20 +161,20 @@ class ExpFitter :
                     dist = np.sqrt(np.sum((ref_d[f'str_{p}'] - d_d[f'str_{p}']) ** 2)) / np.sum(
                         np.abs(ref_d[f'str_{p}']))
                     df_st0[c].loc[idx] = dist
-        self.df_st=self.df_st.append(df_st0)
-        df_st00= df_st0.droplevel('Field', axis=1).loc[idx]
-        if save_to_config :
-            dic=df_st00.to_dict()
+        self.df_st = self.df_st.append(df_st0)
+        df_st00 = df_st0.droplevel('Field', axis=1).loc[idx]
+        if save_to_config:
+            dic = df_st00.to_dict()
             d.config['sample_fit'] = dic
             d.save_config()
-        fit=self.get_fit(df_st00)
+        fit = self.get_fit(df_st00)
         return fit
 
     def compare_short(self, d):
-        df=self.df
-        ref_d=self.sample_data
+        df = self.df
+        ref_d = self.sample_data
         d_d = self.get_data(d, df)
-        stats={}
+        stats = {}
         for g in df.index:
             ps, cs = df[['pars', 'cols']].loc[g].values
             for p, c in zip(ps, cs):
@@ -215,26 +189,25 @@ class ExpFitter :
                         np.abs(ref_d[f'str_{p}']))
                     stats[c] = dist
         print(stats)
-        fit=self.get_fit(stats)
+        fit = self.get_fit(stats)
         return fit
 
     def get_fit(self, stats):
-        cs=self.stat_coefs
-        fit=np.sum([s*cs[p] for p,s in stats.items()])
+        cs = self.stat_coefs
+        fit = np.sum([s * cs[p] for p, s in stats.items()])
         return fit
-
 
 
 if __name__ == '__main__':
     ref_dir = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/FRU->PUR/AM/test_10l'
     d_dir = '/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/imitation/test_10l_imitation_0'
     from lib.stor.larva_dataset import LarvaDataset
-    ref=LarvaDataset(ref_dir)
-    c=ref.config
 
-    f=ExpFitter(c)
+    ref = LarvaDataset(ref_dir)
+    c = ref.config
+
+    f = ExpFitter(c)
     # print(f.df['pars'])
-    d=LarvaDataset(d_dir)
-    fit=f.compare(d)
+    d = LarvaDataset(d_dir)
+    fit = f.compare(d)
     print(fit)
-

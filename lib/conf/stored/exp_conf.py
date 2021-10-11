@@ -60,8 +60,8 @@ def chemotaxis_exp(name, c=['olfactor'], dur=5.0, **kwargs):
     return exp(name, sim={'duration': dur}, c=c, enrichment=source_enrich(), **kwargs)
 
 
-def food_exp(name, c=['feeder'], dur=10.0, **kwargs):
-    return exp(name, sim={'duration': dur}, c=c, en=True, **kwargs)
+def food_exp(name, c=['feeder'], dur=10.0, en=True, **kwargs):
+    return exp(name, sim={'duration': dur}, c=c, en=en, **kwargs)
 
 
 def game_exp(name, c=[], dur=20.0, **kwargs):
@@ -80,7 +80,7 @@ def pref_exp(name, dur=5.0, c=['olfactor'], enrichment=enrichment_dict(types=['P
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
-def RvsS_groups(N=1, age=72.0, q=1.0, sub='standard', h_starved=0.0,**kwargs):
+def RvsS_groups(N=1, age=72.0, q=1.0, sub='standard', h_starved=0.0, **kwargs):
     group_kws = {
         'sample': 'AttP2.Fed',
         'life': null_dict('life', hours_as_larva=age, substrate_quality=q, substrate_type=sub,
@@ -89,6 +89,7 @@ def RvsS_groups(N=1, age=72.0, q=1.0, sub='standard', h_starved=0.0,**kwargs):
     }
     return {**lg('Rover', m='rover', c='blue', N=N, **group_kws),
             **lg('Sitter', m='sitter', c='red', N=N, **group_kws)}
+
 
 def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
     x = np.round(x * dim, 3)
@@ -128,9 +129,9 @@ grouped_exp_dict = {
         'chemotaxis_RL': chemotaxis_exp('mid_odor_diffusion', dur=10.0, c=['olfactor', 'memory'],
                                         l=lg(m='RL_navigator', N=10, mode='periphery', s=0.04)),
         'reorientation': chemotaxis_exp('mid_odor_diffusion', l=lg(m='immobile', N=200, s=0.05)),
-        'food_at_bottom': exp('food_at_bottom', sim={'duration': 2.0, 'timestep': 0.1}, en=True,
+        'food_at_bottom': exp('food_at_bottom', sim={'duration': 1.0, 'timestep': 0.1}, en=True,
                               l=lgs(models=['Orco_forager', 'forager'],
-                                    ids=['Orco', 'control'], N=10, sh='oval', p=(0.0, 0.04), s=(0.04, 0.01)))
+                                    ids=['Orco', 'control'], N=5, sh='oval', p=(0.0, 0.04), s=(0.04, 0.01)))
     },
 
     'odor_preference': {
@@ -149,6 +150,15 @@ grouped_exp_dict = {
         'single_patch': food_exp('single_patch',
                                  l=lgs(models=['Orco_forager', 'forager'],
                                        ids=['Orco', 'control'], N=20, mode='periphery', s=0.03)),
+'single_patch_touch': food_exp('single_patch', dur=600.0, c=['toucher'],
+                               l=lgs(models=['RL_toucher_0', 'toucher'],
+                                     ids=['RL_1sensor', 'control'], N=5), en=False),
+        'single_patch_touch_x3': food_exp('single_patch', dur=600.0, c=['toucher'],
+                                       l=lgs(models=['RL_toucher_2', 'RL_toucher_0', 'toucher'],
+                                             ids=['RL_3sensors', 'RL_1sensor', 'control'], N=4), en=False),
+        'multi_patch_touch': food_exp('multi_patch', dur=600.0, c=['toucher'],
+                                      l=lgs(models=['RL_toucher_2', 'RL_toucher_0', 'toucher'],
+                                            ids=['RL_3sensors', 'RL_1sensor', 'control'], N=4), en=False),
         '4corners': exp('4corners', c=['memory'], l=lg(m='RL_forager', N=10, s=0.04))
     },
 
@@ -171,7 +181,7 @@ grouped_exp_dict = {
         'maze': game_exp('maze', c=['olfactor'], l=lg(N=5, p=(-0.4 * 0.1, 0.0), ors=(-60.0, 60.0), m='navigator')),
         'keep_the_flag': game_exp('game', l=game_groups(mode='king')),
         'capture_the_flag': game_exp('game', l=game_groups(mode='flag')),
-        'catch_me': game_exp('arena_50mm_diffusion',l=game_groups(mode='catch_me'))
+        'catch_me': game_exp('arena_50mm_diffusion', l=game_groups(mode='catch_me'))
     },
 
     'other': {

@@ -10,6 +10,7 @@ import lib.aux.sim_aux
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
 
 
+
 class LarvaBody:
     def __init__(self, model, pos=None, orientation=None, density=300.0,
                  initial_length=None, length_std=0, Nsegs=1, interval=0, joint_type=None,
@@ -68,8 +69,10 @@ class LarvaBody:
 
         self.sensors = []
         self.define_sensor('olfactor', (1, 0))
-        if self.touch_sensors:
-            self.add_touch_sensors()
+        if self.touch_sensors is not None:
+            self.add_touch_sensors(self.touch_sensors)
+
+
         # print(self.sensors)
 
     @ property
@@ -149,6 +152,7 @@ class LarvaBody:
         self.sensors.append(sensor_dict)
 
     def get_sensor(self, sensor):
+        # print(sensor)
         for sensor_dict in self.sensors:
             if sensor_dict['sensor'] == sensor:
                 return sensor_dict
@@ -158,6 +162,7 @@ class LarvaBody:
 
     def get_sensor_position(self, sensor):
         d = self.get_sensor(sensor)
+        # print(d)
         return self.segs[d['seg_idx']].get_world_point(d['local_pos'])
 
     def generate_seg_shapes(self, Nsegs, width_to_length_proportion, density, interval, seg_ratio):
@@ -482,17 +487,23 @@ class LarvaBody:
         # contour = contour[ConvexHull(contour).vertices].tolist()
         return contour
 
-    def add_touch_sensors(self):
+    def add_touch_sensors(self, N=8):
         y = 0.1
         x_f, x_m, x_r = 0.75, 0.5, 0.25
-        self.define_sensor('M_front', (1.0, 0.0))
-        self.define_sensor('L_front', (x_f, y))
-        self.define_sensor('R_front', (x_f, -y))
-        self.define_sensor('L_mid', (x_m, y))
-        self.define_sensor('R_mid', (x_m, -y))
-        self.define_sensor('L_rear', (x_r, y))
-        self.define_sensor('R_rear', (x_r, -y))
-        self.define_sensor('M_rear', (0.0, 0.0))
+        if N==8:
+            self.define_sensor('M_front', (1.0, 0.0))
+            self.define_sensor('L_front', (x_f, y))
+            self.define_sensor('R_front', (x_f, -y))
+            self.define_sensor('L_mid', (x_m, y))
+            self.define_sensor('R_mid', (x_m, -y))
+            self.define_sensor('L_rear', (x_r, y))
+            self.define_sensor('R_rear', (x_r, -y))
+            self.define_sensor('M_rear', (0.0, 0.0))
+        elif N==2:
+            self.define_sensor('R_mid', (x_m, -y))
+            self.define_sensor('M_rear', (0.0, 0.0))
+        elif N == 0:
+            pass
 
     def set_head_edges(self):
         self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)

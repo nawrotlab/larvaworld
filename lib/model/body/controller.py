@@ -297,8 +297,9 @@ class BodySim(BodyManager):
         d = lin_vel * dt
         ang_vel0=np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
 
-        def avoid_border(ang_vel, counter, dd=0.0001):
-            if not self.touch_sensors :
+        def avoid_border(ang_vel, counter, dd=0.01):
+
+            if self.touch_sensors is None or any([ss not in self.get_sensors() for ss in ['L_front', 'R_front']]):
                 counter += 1
                 ang_vel *= -(1 + dd * counter)
                 return ang_vel, counter
@@ -331,18 +332,13 @@ class BodySim(BodyManager):
             return in_tank, o1, hr1, hp1
 
         in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
-        # in_tank=False
         counter = -1
-        # ang_vel*=-1
         while not in_tank :
             ang_vel, counter=avoid_border(ang_vel, counter)
-            # print(self.pos)
-            # print(counter, ang_vel)
-            # print(counter, Ld-Rd, ang_vel)
-            # counter+=1
-            # ang_vel*=-(1+0.001*counter)
             in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
-        if counter>=0:
+
+        if counter>0:
+            # print(counter)
             ang_vel = np.abs(ang_vel)*np.sign(ang_vel0)
         head.set_pose(hp1, o1)
         head.update_vertices(hp1, o1)

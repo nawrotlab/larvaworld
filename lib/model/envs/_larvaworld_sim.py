@@ -119,18 +119,17 @@ class LarvaWorldSim(LarvaWorld):
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
 
         for l in self.get_flies():
-            # print(l.unique_id)
             l.compute_next_action()
         self.active_larva_schedule.step()
         self.active_food_schedule.step()
-        # print('ss')
         if self.Box2D:
             self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
             for fly in self.get_flies():
                 fly.update_trajectory()
         if self.larva_step_col is not None:
             self.larva_step_col.collect(self)
-        self.step_group_collector.collect()
+        if self.step_group_collector is not None:
+            self.step_group_collector.collect()
 
         if self.exp_condition is not None:
             self.exp_condition.check(self)
@@ -195,8 +194,8 @@ class LarvaWorldSim(LarvaWorld):
         self.larva_end_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e, **kws0) if len(e) > 0 else None
         self.food_end_col = TargetedDataCollector(schedule=self.all_food_schedule, pars=['initial_amount', 'final_amount'], **kws0)
         self.table_collector = DataCollector(tables=t) if len(t) > 0 else None
-        self.step_group_collector = CompGroupCollector(names=sg, save_as='step.csv', **kws)
-        self.end_group_collector = CompGroupCollector(names=eg, save_as='end.csv', **kws)
+        self.step_group_collector = CompGroupCollector(names=sg, save_as='step.csv', **kws) if len(sg) > 0 else None
+        self.end_group_collector = CompGroupCollector(names=eg, save_as='end.csv', **kws) if len(eg) > 0 else None
 
     def eliminate_overlap(self):
         scale = 3.0
@@ -228,7 +227,7 @@ class LarvaWorldSim(LarvaWorld):
         for l in self.get_flies() :
             for id in odor_ids :
                 try :
-                    if id not in l.brain.olfactor.odor_ids :
+                    if id not in l.brain.olfactor.gain_ids :
                         l.brain.olfactor.add_novel_odor(id)
                 except :
                     pass
