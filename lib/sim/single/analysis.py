@@ -48,7 +48,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
     #     #                                         **ccc)
     #     figs['scatter_x4'] = plot_endpoint_scatter(keys=['cum_sd', 'f_am', 'str_tr', 'pau_tr'], **cc)
     #     figs['scatter_x2'] = plot_endpoint_scatter(keys=['cum_sd', 'f_am'], **cc)
-    if 'touch' in exp_type:
+    if 'tactile' in exp_type:
         figs['time on food']=timeplot(['cum_f_det'], **cc)
         figs['turner input']=timeplot(['A_tur'],show_first=True, **cc)
         figs['tactile activation']=timeplot(['A_touch'],show_first=True, **cc)

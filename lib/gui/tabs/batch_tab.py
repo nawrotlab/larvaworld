@@ -54,7 +54,7 @@ class BatchTab(GuiTab):
             enrichment = loadConf(v[self.selectionlists['Exp'].k], 'Exp')['enrichment']
         conf = null_dict('batch_conf',
                          save_hdf5=w['TOGGLE_save_hdf5'].metadata.state,
-                         exp_kws={'enrichment': enrichment},
+                         exp_kws={'enrichment': enrichment, 'experiment': self.current_conf(v)['exp_kws']['experiment']},
                          batch_methods=c['batch_methods'].get_dict(v, w),
                          optimization=c['optimization'].get_dict(v, w),
                          space_search=c['space_search'].get_dict(v, w),

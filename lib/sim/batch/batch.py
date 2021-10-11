@@ -103,7 +103,7 @@ def get_batch_env(batch_id, batch_type, dir_path, parent_dir_path, exp, params, 
 def _batch_run(batch_type='unnamed', batch_id='template', space=None, exp=None, params=None, post_kws={}, exp_kws={},
                runfunc=single_run, procfunc=None, postfunc=None, finfunc=None, optimization=None,ncores=8,proc_kws={},
                multiproc=True, resumable=False, overwrite_file=False, save_hdf5=False, batch_methods=None):
-
+    # print(exp_kws)
     s0 = time.time()
     parent_dir_path = f'{paths.path("BATCH")}/{batch_type}'
     dir_path = f'{parent_dir_path}/{batch_id}'

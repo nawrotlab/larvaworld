@@ -361,8 +361,13 @@ def init_pars():
             'EEB': {'v': 0.0, 'max': 1.0}},
         'olfactor': {
             'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear']},
-            'olfactor_noise': {'v': 0.0, 'max': 1.0},
+            'input_noise': {'v': 0.0, 'max': 1.0},
             'decay_coef': {'v': 0.0, 'max': 2.0}},
+        'toucher': {
+            'perception': {'t': str, 'v': 'linear', 'vs': ['log', 'linear']},
+            'input_noise': {'v': 0.0, 'max': 1.0},
+            'decay_coef': {'v': 0.5, 'max': 2.0},
+            'initial_gain': {'v': -10.0, 'min': -100.0, 'max': 100.0}},
         'feeder': {'freq_range': {'t': Tuple[float], 'v': (1.0, 3.0), 'max': 4.0},
                    'initial_freq': {'v': 2.0, 'max': 4.0},
                    'feed_radius': {'v': 0.1, 'max': 10.0},
@@ -383,6 +388,7 @@ def init_pars():
                     'interference': {'t': bool, 'v': False},
                     'intermitter': {'t': bool, 'v': False},
                     'olfactor': {'t': bool, 'v': False},
+                    'toucher': {'t': bool, 'v': False},
                     'feeder': {'t': bool, 'v': False},
                     'memory': {'t': bool, 'v': False}},
 

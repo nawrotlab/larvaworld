@@ -10,7 +10,7 @@ def batch(exp, en=None, ss=None, o=None, o_kws={},bm={}, as_entry=True, **kwargs
         enrichment = enrichment_dict(source=en['source'],types=['angular', 'spatial', 'source'])
     else:
         enrichment=en
-    exp_kws = {'enrichment': enrichment}
+    exp_kws = {'enrichment': enrichment, 'experiment' : exp}
     opt = null_dict("optimization", fit_par=o, **o_kws) if o is not None else None
     if bm is None:
         batch_methods = null_dict('batch_methods')
@@ -65,7 +65,11 @@ batch_dict = {
     **batch('imitation',
             ss={'activation_noise': [(0.0, 0.8), 3], 'base_activation': [(15.0, 25.0), 3]},
             o='sample_fit', o_kws={'threshold': 1.0, 'max_Nsims': 20, 'operations': {'mean': False, 'abs': False}},
-            bm={'run':'exp_fit'})
+            bm={'run':'exp_fit'}),
+    **batch('tactile_detection',
+            ss={'initial_gain': [(-20.0, -5.0), 5],'decay_coef': [(0.3, 0.7), 5]},
+            o='cum_food_detected', o_kws={'threshold': 1000.0, 'max_Nsims': 80, 'minimize' : False, 'Nbest' : 8,
+                                          'operations': {'mean': True, 'abs': False}}),
 
 }
 
@@ -81,3 +85,5 @@ def fit_tortuosity_batch(d, model='imitation', exp='dish', idx=0):
     conf['batch_id'] = f'imitation_batchrun_{idx}'
     conf['batch_type'] = 'imitation'
     return conf
+
+# print(batch_dict['tactile_detection']['exp_kws'])

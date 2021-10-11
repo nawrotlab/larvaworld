@@ -7,7 +7,7 @@ from lib.conf.base import paths
 
 
 def load_default_configuration(traj, exp):
-    for k0 in ['env_params', 'sim_params', 'life_params', 'enrichment']:
+    for k0 in ['env_params', 'sim_params', 'life_params', 'enrichment', 'larva_groups']:
         dic = lib.aux.dictsNlists.flatten_dict(exp[k0], parent_key=k0, sep='.')
         for k, v in dic.items():
             if type(v) == list and type(v[0]) == list:

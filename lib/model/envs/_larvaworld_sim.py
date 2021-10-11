@@ -228,7 +228,7 @@ class LarvaWorldSim(LarvaWorld):
             for id in odor_ids :
                 try :
                     if id not in l.brain.olfactor.gain_ids :
-                        l.brain.olfactor.add_novel_odor(id)
+                        l.brain.olfactor.add_novel_gain(id)
                 except :
                     pass
 

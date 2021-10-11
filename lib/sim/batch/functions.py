@@ -282,6 +282,7 @@ def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
                                         sim_ID=f'run_{traj.v_idx}', path=traj.config.dataset_path,
                                         save_data=False),
             life_params=reconstruct_dict(traj.f_get('life_params')),
+            larva_groups=reconstruct_dict(traj.f_get('larva_groups')),
             **exp_kws).run()
 
         if procfunc is None:
