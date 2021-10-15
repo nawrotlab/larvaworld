@@ -11,8 +11,7 @@ from lib.model.modules.basic import Effector
 
 
 class Intermitter(Effector):
-    def __init__(self, brain=None, crawler=None, crawl_bouts=False,
-                 feeder=None, feed_bouts=False,
+    def __init__(self, brain=None,  crawl_bouts=False,feed_bouts=False,
                  pause_dist=None, stridechain_dist=None, crawl_freq=10 / 7, feed_freq=2.0,
                  EEB_decay=1, save_to=None,
                  EEB=0.5, feeder_reoccurence_rate=None, feeder_reocurrence_as_EEB=True,
@@ -21,8 +20,9 @@ class Intermitter(Effector):
         self.brain = brain
         self.save_to = save_to
 
-        self.crawler = crawler
-        self.feeder = feeder
+        self.crawler = brain.crawler
+        self.feeder = brain.feeder
+        self.turner = brain.turner
         self.EEB = EEB
         self.base_EEB = EEB
         self.crawl_freq = crawl_freq

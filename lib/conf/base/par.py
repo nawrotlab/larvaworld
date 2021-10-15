@@ -739,6 +739,7 @@ class ParDict:
                  lab='food intake')
         self.add(p='cum_food_detected', k='cum_f_det', d='cum_food_detected', s=subsup('t', 'on food', 'cum'),
                  lab='time on food')
+        self.add(p=nam.dur_ratio('on_food'), k='on_food_tr', d=nam.dur_ratio('on_food'), s=sub('r', 'on_food'))
         self.add(p='scaled_amount_eaten', k='sf_am',  d='ingested_food_volume_ratio', s=sub('[V]', 'in'))
         self.add(p='lin_activity', k='Act_cr',  d='crawler output', s=sub('A', 'crawl'))
         self.add(p='ang_activity', k='Act_tur',  d='turner output', s=subsup('A', 'tur', 'out'), lim=(-20, 20))
@@ -898,8 +899,8 @@ if __name__ == '__main__':
     # o, d = nam.bearing2('n'), nam.dst2('n')
     # fo = getPar(['fo'], to_return=['d'])[0][0]
     # print(o,d)
-    d=ParDict(mode='build').dict
-    print(getPar(['cum_f_det'], to_return=['d', 's', 's', 'l', 'lim']))
+    # d=ParDict(mode='build').dict
+    print(getPar(['on_food_tr'], to_return=['d', 's', 's', 'l', 'lim']))
     # # d = ParDict(mode='reconstruct').dict
     # # print(d.keys())
     raise

@@ -73,30 +73,30 @@ class Oscillator(Effector):
 
 
 class Oscillator_coupling():
-    def __init__(self, crawler_phi_range=[0.0, 0.0],feeder_phi_range=[0.0, 0.0],attenuation=0.0):
+    def __init__(self,brain, crawler_phi_range=[0.0, 0.0],feeder_phi_range=[0.0, 0.0],attenuation=0.0):
         self.crawler_phi_range = crawler_phi_range
         self.feeder_phi_range = feeder_phi_range
         self.attenuation = attenuation
+        self.brain = brain
+        self.crawler = brain.crawler
+        self.feeder = brain.feeder
 
-    def step(self, crawler=None, feeder=None):
-        return self.resolve_coupling(crawler, feeder)
-
-    def resolve_coupling(self, crawler, feeder):
-        if crawler is not None:
-            if crawler.effector:
-                phi = crawler.phi / np.pi
+    def step(self):
+        if self.crawler is not None:
+            if self.crawler.effector:
+                phi = self.crawler.phi / np.pi
                 p0, p1 = self.crawler_phi_range
-                if crawler.waveform in ['realistic', 'gaussian'] and (phi < p0 or phi > p1):
+                if self.crawler.waveform in ['realistic', 'gaussian'] and (phi < p0 or phi > p1):
                     return True
-                elif crawler.waveform == 'square' and not phi <= 2 * crawler.square_signal_duty:
+                elif self.crawler.waveform == 'square' and not phi <= 2 * self.crawler.square_signal_duty:
                     return True
-                elif crawler.waveform == 'constant':
+                elif self.crawler.waveform == 'constant':
                     return True
 
 
-        if feeder is not None:
-            if feeder.effector:
-                phi = feeder.phi / np.pi
+        if self.feeder is not None:
+            if self.feeder.effector:
+                phi = self.feeder.phi / np.pi
                 p0, p1 = self.feeder_phi_range
                 if p0 < phi < p1:
                     return True

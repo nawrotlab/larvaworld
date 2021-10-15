@@ -30,9 +30,12 @@ class EnvTab(GuiTab):
         }
 
     def build(self):
-        s2 = CollapsibleTable(self.Sg, index='Group ID',heading_dict={'N':'distribution.N', 'color': 'default_color', 'odor_id' : 'odor.odor_id', 'amount' : 'amount'},dict_name='SourceGroup', state=True)
-        s3 = CollapsibleTable(self.Su, index='ID', heading_dict={'color': 'default_color', 'odor_id' : 'odor.odor_id', 'amount' : 'amount'},dict_name='source', state=True)
-        s4 = CollapsibleTable(self.Bg, index='ID', heading_dict={'color': 'default_color', 'points' : 'points' },dict_name='border_list')
+        s2 = CollapsibleTable(self.Sg,dict_name='SourceGroup', state=True, index='Group ID',col_widths=[10,4,8,8,8],
+                              heading_dict={'N':'distribution.N', 'color': 'default_color', 'odor' : 'odor.odor_id', 'amount' : 'amount'},)
+        s3 = CollapsibleTable(self.Su,dict_name='source', state=True, index='ID', col_widths=[10,8,8,8],
+                              heading_dict={'color': 'default_color', 'odor' : 'odor.odor_id', 'amount' : 'amount'},)
+        s4 = CollapsibleTable(self.Bg,dict_name='border_list', index='ID', col_widths=[10,8,20],
+                              heading_dict={'color': 'default_color', 'points' : 'points' },)
 
         c1 = [CollapsibleDict(n, **kw)
               for n, kw in zip(['arena', 'food_grid', 'odorscape'], [{'next_to_header':[

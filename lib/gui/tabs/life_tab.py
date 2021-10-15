@@ -1,7 +1,9 @@
+import copy
+
 import PySimpleGUI as sg
 
 from lib.anal.plotting import plot_debs
-from lib.conf.base.dtypes import substrate_dict
+from lib.conf.base.dtypes import substrate_dict, null_dict
 from lib.gui.aux.elements import CollapsibleDict, Table, GraphList, SelectionList, Header
 from lib.gui.aux.functions import col_size, t_kws, gui_col, gui_row
 from lib.gui.aux.buttons import GraphButton
@@ -18,11 +20,9 @@ class LifeTab(GuiTab):
         self.ep = 'rearing epoch'
         self.K = 'EPOCHS'
 
-    # def build(self):
-    #     return [], {}, {}, {}
     def build(self):
         sl1_kws = {
-            'size': (40, 20),
+            'size': (30, 20),
             'enable_events': True,
             'orientation': 'h'
         }
@@ -45,7 +45,8 @@ class LifeTab(GuiTab):
 
         sl0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
 
-        sub = CollapsibleDict('substrate', header_dict=substrate_dict, header_value='standard')
+        sub = CollapsibleDict('substrate', dict_name='substrate_composition', header_dict=substrate_dict,
+                              header_value='standard', state=True)
         l1 = [[sg.T('Epoch start (hours) : ', **t_kws(24))],
               [sg.Slider(range=(0, 150), default_value=0, k=self.S0,
                          tick_interval=24, resolution=1, trough_color='green', **sl1_kws)],
@@ -61,50 +62,52 @@ class LifeTab(GuiTab):
 
         after_header = [GraphButton('Button_Add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
                         GraphButton('Button_Remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.')]
-        content = [Table(headings=[self.s0, self.s1, 'quality'], def_col_width=7, key=self.K, num_rows=0)]
+        content = [Table(headings=[self.s0, self.s1, 'quality', 'type'], def_col_width=7, key=self.K, num_rows=0)]
         l_tab = Header('Epochs', text=f'{ep.capitalize()}s (h)', header_text_kws=t_kws(18),
                        after_header=after_header, single_line=False, content=content).layout
 
         g1 = GraphList(self.name, tab=self, fig_dict={m: plot_debs for m in deb_modes}, default_values=['reserve'],
                        canvas_size=r1_size, list_header='DEB parameters', auto_eval=False)
 
-        l0 = gui_col([sl0, sub, g1], x1, y)
+        l0 = gui_col([sl0, g1], x1, y)
         l3 = gui_col([g1.canvas], 1 - x1, y)
 
         l = [
             [l0, l3],
-            gui_row([l_tab, l1, l2], y_frac=1 - y, x_fracs=[1 - x2, x2 / 2, x2 / 2]),
+            gui_row([l_tab, l1, l2, sub.get_layout(as_col=False)], y_frac=1 - y, x_fracs=[1 - x2, x2 / 3, x2 / 3, x2 / 3]),
         ]
 
         return l, {sub.name: sub}, {g1.name: g1}, {}
 
     def update(self, w, c, conf, id=None):
-        c['substrate'].update_header(w, conf['substrate_type'])
+        print(conf)
+        # c['substrate'].update_header(w, conf['substrate']['type'])
 
-        w.Element(self.Sq).Update(value=conf['substrate_quality'])
-        w.Element(self.Sa).Update(value=conf['hours_as_larva'])
-        if conf['epochs'] is not None:
-            epochs = [[t0, t1, q] for (t0, t1), q in zip(conf['epochs'], conf['epoch_qs'])]
-            w.Element(self.K).Update(values=epochs, num_rows=len(epochs))
-        else:
-            w.Element(self.K).Update(values=[], num_rows=0)
+        # w.Element(self.Sq).Update(value=conf['substrate_quality'])
+        w.Element(self.Sa).Update(value=conf['age'])
+        # if type(conf['epochs']) == str:
+        #     eps =copy.deepcopy(loadConf())
+        # else :
+        eps=conf['epochs']
+        rows = [[ep['start'], ep['stop'], ep['substrate']['quality'], ep['substrate']['type']] for ep in eps.values()]
+        w.Element(self.K).Update(values=rows, num_rows=len(rows))
+        # else:
+        #     w.Element(self.K).Update(values=[], num_rows=0)
 
         w.write_event_value('Draw', 'Draw the initial plot')
 
     def get(self, w, v, c, as_entry=False):
-        epochs = w.Element(self.K).get()
-        life = {
-            'epochs': [(t1, t2) for t1, t2, q in epochs] if len(epochs) > 0 else None,
-            'epoch_qs': [q for t1, t2, q in epochs] if len(epochs) > 0 else None,
-            'hours_as_larva': v[self.Sa],
-            'substrate_quality': v[self.Sq],
-            'substrate_type': c['substrate'].header_value,
+        rows = w.Element(self.K).get()
+        life_history = {
+            'epochs': {i : {'start': r[0], 'stop': r[1], 'substrate': null_dict('substrate', type=r[3], quality=r[2])} for
+                        i, r in enumerate(rows)},
+            'age': v[self.Sa],
         }
-        return life
+        return life_history
 
     def eval(self, e, v, w, c, d, g):
         S0, S1, Sa, Sq, K, ep = self.S0, self.S1, self.Sa, self.Sq, self.K, self.ep
-        v0, v1, q = row = v[S0], v[S1], v[Sq]
+        v0, v1, q, sub = row = v[S0], v[S1], v[Sq], c['substrate'].header_value
         Ks = v[K]
         if e == self.graphlist_k:
             w.write_event_value('Draw', 'Draw the initial plot')
@@ -120,8 +123,6 @@ class LifeTab(GuiTab):
             if len(Ks) > 0:
                 w.Element(K).remove_row(w, Ks[0])
                 w.write_event_value('Draw', 'Draw the initial plot')
-        # elif e in [Sq]:
-        #     w.write_event_value('Draw', 'Draw the initial plot')
 
         elif e == 'Draw':
             if q > 0:
@@ -136,7 +137,7 @@ class LifeTab(GuiTab):
                 w.Element(S1).Update(value=v0)
             elif e == S1 and v1 < v0:
                 w.Element(S0).Update(value=v1)
-            for t1, t2, q in w.Element(K).get():
+            for t1, t2, q, sub in w.Element(K).get():
                 if t1 < v0 < t2:
                     w.Element(S0).Update(value=t2)
                 elif v0 < t1 and v1 > t1:

@@ -27,7 +27,7 @@ class Brain():
         return cons
 
     def sense_food(self):
-        a=self.agent
+        a = self.agent
         sensors = a.get_sensors()
         return {s: int(a.detect_food(a.get_sensor_position(s)) is not None) for s in sensors}
         # reward = np.mean(list(dic.values()))
@@ -40,48 +40,53 @@ class Brain():
         # return dx, reward
 
 
-
-
 class DefaultBrain(Brain):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         dt = self.agent.model.dt
         m = self.modules
         c = self.conf
+        self.crawler, self.turner, self.feeder, self.intermitter, self.olfactor, self.memory, self.touch_memory = [None] * 7
 
-        self.coupling = Oscillator_coupling(**c['interference_params']) if m['interference'] else Oscillator_coupling()
-        self.crawler = Crawler(dt=dt, **c['crawler_params']) if m['crawler'] else None
-        self.turner = Turner(dt=dt, **c['turner_params']) if m['turner'] else None
-        self.feeder = Feeder(dt=dt, model=self.agent.model, **c['feeder_params']) if m['feeder'] else None
-        self.intermitter = Intermitter(brain=self, dt=dt, crawler=self.crawler, feeder=self.feeder,
-                                       **c['intermitter_params']) if m['intermitter'] else None
-        o = self.olfactor = Olfactor(brain=self, dt=dt, **c['olfactor_params']) if m['olfactor'] else None
-        self.memory = RLOlfMemory(brain=self, dt=dt, gain=o.gain,
-                                  **c['memory_params']) if (m['memory'] and c['memory_params']['mode'] =='olf') else None
-        t=self.toucher = Toucher(brain=self, dt=dt, gain_dict={s:0.0 for s in self.agent.get_sensors()})
-        self.touch_memory = RLTouchMemory(brain=self, dt=dt, gain=t.gain,
-                                          **c['memory_params']) if (m['memory'] and c['memory_params']['mode'] =='touch') else None
 
+        if m['crawler']:
+            self.crawler = Crawler(dt=dt, **c['crawler_params'])
+        if m['turner']:
+            self.turner = Turner(dt=dt, **c['turner_params'])
+        if m['feeder']:
+            self.feeder = Feeder(dt=dt, model=self.agent.model, **c['feeder_params'])
+        self.coupling = Oscillator_coupling(brain=self, **c['interference_params']) if m[
+            'interference'] else Oscillator_coupling(brain=self)
+        if m['intermitter']:
+            self.intermitter = Intermitter(brain=self, dt=dt, **c['intermitter_params'])
+        if m['olfactor']:
+            o = self.olfactor = Olfactor(brain=self, dt=dt, **c['olfactor_params'])
+            if m['memory'] and c['memory_params']['mode'] == 'olf':
+                self.memory = RLOlfMemory(brain=self, dt=dt, gain=o.gain, **c['memory_params'])
+        t = self.toucher = Toucher(brain=self, dt=dt, gain_dict={s: 0.0 for s in self.agent.get_sensors()})
+        if m['memory'] and c['memory_params']['mode'] == 'touch':
+            self.touch_memory = RLTouchMemory(brain=self, dt=dt, gain=t.gain, **c['memory_params'])
 
     def run(self, pos):
+        lin, ang, feed_motion = 0, 0, False
+        reward = self.agent.food_detected is not None
         if self.intermitter:
             self.intermitter.step()
-
-        # Step the feeder
-        feed_motion = self.feeder.step() if self.feeder else False
-        reward = self.agent.food_detected is not None
+        if self.feeder:
+            feed_motion = self.feeder.step()
         if self.memory:
-            self.olfactor.gain = self.memory.step(self.olfactor.get_dCon(),reward)
-        lin = self.crawler.step(self.agent.sim_length) if self.crawler else 0
-        self.olfactory_activation = self.olfactor.step(self.sense_odors(pos)) if self.olfactor else 0
-
-        # print(np.round(list(self.sense_odors(pos).values()),4))
-        # ... and finally step the turner...
+            self.olfactor.gain = self.memory.step(self.olfactor.get_dX(), reward)
+        if self.crawler:
+            lin = self.crawler.step(self.agent.sim_length)
+        if self.olfactor:
+            self.olfactory_activation = self.olfactor.step(self.sense_odors(pos))
         if self.touch_memory:
-            self.toucher.gain=self.touch_memory.step(self.toucher.get_dCon(),reward)
-        self.touch_activation = self.toucher.step(self.sense_food()) if self.toucher else 0
-        ang = self.turner.step(inhibited=self.coupling.step(crawler=self.crawler, feeder=self.feeder),
-                               attenuation=self.coupling.attenuation,
-                               A_in=self.olfactory_activation + self.touch_activation) if self.turner else 0
+            self.toucher.gain = self.touch_memory.step(self.toucher.get_dX(), reward)
+        if self.toucher:
+            self.touch_activation = self.toucher.step(self.sense_food())
+        if self.turner:
+            ang = self.turner.step(inhibited=self.coupling.step(),
+                                   attenuation=self.coupling.attenuation,
+                                   A_in=self.olfactory_activation + self.touch_activation)
 
         return lin, ang, feed_motion

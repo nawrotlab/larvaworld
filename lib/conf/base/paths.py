@@ -51,6 +51,7 @@ def path(n) :
         'Batch': f'{CF}/BatchConfs.txt',
         'Settings': f'{CF}/SetConfs.txt',
         'Ref': f"{CF}/ReferenceDatasets.txt",
+        'Trial': f"{CF}/TrialConfs.txt",
         'Life': f"{CF}/LifeConfs.txt",
         'SimIdx': f'{CF}/SimIdx.txt',
     }

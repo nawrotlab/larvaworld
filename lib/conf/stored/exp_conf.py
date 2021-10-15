@@ -1,7 +1,7 @@
 import numpy as np
 
 from lib.conf.stored.conf import imitation_exp
-from lib.conf.base.dtypes import enrichment_dict, null_dict, oG, oD
+from lib.conf.base.dtypes import enrichment_dict, null_dict, oG, oD, prestarved
 
 
 def lgs(models, ids=None, **kwargs):
@@ -48,10 +48,6 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
             exp_name = env_name
         return {exp_name: exp_conf}
 
-
-PI = enrichment_dict(types=['PI'], bouts=[])
-
-
 def source_enrich():
     return enrichment_dict(types=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'])
 
@@ -76,15 +72,15 @@ def simple_exp(name, dur=10.0, en=True, **kwargs):
     return exp(name, sim={'duration': dur}, en=en, **kwargs)
 
 
-def pref_exp(name, dur=5.0, c=['olfactor'], enrichment=enrichment_dict(types=['PI'], bouts=[]), **kwargs):
+def pref_exp(name, dur=5.0, c=[], enrichment=enrichment_dict(types=['PI']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
-def RvsS_groups(N=1, age=72.0, q=1.0, sub='standard', h_starved=0.0, **kwargs):
+def RvsS_groups(N=1, age=96.0, q=1.0, h_starved=0.0,sample='AttP2.Fed',substrate_type='standard',  **kwargs):
+    l=null_dict('life_history', age=age, epochs=prestarved(h=h_starved, age=age, q=q, substrate_type=substrate_type))
     group_kws = {
-        'sample': 'AttP2.Fed',
-        'life': null_dict('life', hours_as_larva=age, substrate_quality=q, substrate_type=sub,
-                          epochs=[(age - h_starved, age)], epoch_qs=[0.0]),
+        'sample': sample,
+        'life_history': l,
         **kwargs
     }
     return {**lg('Rover', m='rover', c='blue', N=N, **group_kws),
@@ -135,12 +131,12 @@ grouped_exp_dict = {
     },
 
     'odor_preference': {
-        'PItest_off': pref_exp('CS_UCS_off_food', l=lg(N=25, s=(0.005, 0.02), m='navigator_x2')),
+        'PItest_off': pref_exp('CS_UCS_off_food',dur=3.0, l=lg(N=25, s=(0.005, 0.02), m='navigator_x2')),
         'PItest_on': pref_exp('CS_UCS_on_food', l=lg(N=25, s=(0.005, 0.02), m='forager_x2')),
-        'PItrain_mini': pref_exp('CS_UCS_on_food', dur=1.56, c=['olfactor', 'memory'],
-                                 life_params='odor_preference_short', l=lg(N=25, s=(0.005, 0.02), m='RL_forager')),
-        'PItrain': pref_exp('CS_UCS_on_food', dur=41.0, c=['olfactor', 'memory'],
-                            life_params='odor_preference', l=lg(N=25, s=(0.005, 0.02), m='RL_forager')),
+        'PItrain_mini': pref_exp('CS_UCS_on_food_x2', dur=1.0, c=['olfactor', 'memory'],
+                                 trials='odor_preference_short', l=lg(N=25, s=(0.005, 0.02), m='RL_forager')),
+        'PItrain': pref_exp('CS_UCS_on_food_x2', dur=41.0, c=['olfactor', 'memory'],
+                            trials='odor_preference', l=lg(N=25, s=(0.005, 0.02), m='RL_forager')),
         'PItest_off_RL': pref_exp('CS_UCS_off_food', dur=105.0, c=['olfactor', 'memory'],
                                   l=lg(N=25, s=(0.005, 0.02), m='RL_navigator'))},
     'foraging': {
@@ -150,14 +146,16 @@ grouped_exp_dict = {
         'single_patch': food_exp('single_patch',
                                  l=lgs(models=['Orco_forager', 'forager'],
                                        ids=['Orco', 'control'], N=20, mode='periphery', s=0.03)),
+        'double_patch': food_exp('double_patch', l=RvsS_groups(N=5),
+                                 c=['toucher', 'feeder', 'olfactor'], enrichment=source_enrich(), en=False),
         'tactile_detection': food_exp('single_patch', dur=5.0, c=['toucher'],
-                                       l=lg(m='toucher', N=5), en=False),
+                                      l=lg(m='toucher', N=5), en=False),
         'tactile_detection_x3': food_exp('single_patch', dur=600.0, c=['toucher'],
-                                          l=lgs(models=['RL_toucher_2', 'RL_toucher_0', 'toucher'],
-                                                ids=['RL_3sensors', 'RL_1sensor', 'control'], N=4), en=False),
+                                         l=lgs(models=['RL_toucher_2', 'RL_toucher_0', 'toucher'],
+                                               ids=['RL_3sensors', 'RL_1sensor', 'control'], N=15), en=False),
         'multi_tactile_detection': food_exp('multi_patch', dur=600.0, c=['toucher'],
-                                      l=lgs(models=['RL_toucher_2', 'RL_toucher_0', 'toucher'],
-                                            ids=['RL_3sensors', 'RL_1sensor', 'control'], N=4), en=False),
+                                            l=lgs(models=['RL_toucher_2', 'RL_toucher_0', 'toucher'],
+                                                  ids=['RL_3sensors', 'RL_1sensor', 'control'], N=4), en=False),
         '4corners': exp('4corners', c=['memory'], l=lg(m='RL_forager', N=10, s=0.04))
     },
 
@@ -189,3 +187,7 @@ grouped_exp_dict = {
     }
 
 }
+# from lib.conf.stored.conf import imitation_exp, expandConf
+# # a=grouped_exp_dict['odor_preference']['PItrain_mini']
+# a=expandConf('PItrain_mini', 'Exp')
+# print(a['trials'])

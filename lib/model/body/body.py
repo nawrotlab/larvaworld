@@ -44,6 +44,7 @@ class LarvaBody:
         self.angles = np.zeros(self.Nangles)
         self.seg_colors = self.generate_seg_colors(Nsegs)
 
+        # print(self.real_length)
         if not hasattr(self, 'real_length'):
             self.real_length = None
         if self.real_length is None:

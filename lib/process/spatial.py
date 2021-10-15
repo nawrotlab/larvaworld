@@ -372,6 +372,7 @@ def comp_source_metrics(s, e, config, **kwargs):
             s[nam.scal(d)] = s.apply(rowFunc, axis=1)
             for p in [pmax, pmu, pfin] :
                 e[nam.scal(p)] = e[p] / l
+
         print('Bearing and distance to source computed')
 
 
@@ -415,7 +416,7 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', conf
         return s
 
 
-def fixate_larva(s, config, point, arena_dims, secondary_point=None):
+def fixate_larva(s, config, point, arena_dims, fix_segment=None):
     ids = s.index.unique(level='AgentID').values
     points = nam.midline(config['Npoints'], type='point') + ['centroid']
     points_xy = nam.xy(points, flat=True)
@@ -430,9 +431,9 @@ def fixate_larva(s, config, point, arena_dims, secondary_point=None):
         if point == -1:
             point = 'centroid'
         else:
-            if secondary_point is not None:
-                if type(secondary_point) == int and np.abs(secondary_point) == 1:
-                    secondary_point = points[point + secondary_point]
+            if fix_segment is not None:
+                if type(fix_segment) == int and np.abs(fix_segment) == 1:
+                    fix_segment = points[point + fix_segment]
             point = points[point]
 
     pars = [p for p in all_xy_pars if p in s.columns.values]
@@ -448,13 +449,13 @@ def fixate_larva(s, config, point, arena_dims, secondary_point=None):
         for x, y in group_list_by_n(pars, 2):
             s.loc[(slice(None), id), [x, y]] -= p
 
-    if secondary_point is not None:
-        if set(nam.xy(secondary_point)).issubset(s.columns):
-            print(f'Fixing {secondary_point} as secondary point on vertical axis')
-            xy_sec = [s[nam.xy(secondary_point)].xs(id, level='AgentID').copy(deep=True).values for id in ids]
+    if fix_segment is not None:
+        if set(nam.xy(fix_segment)).issubset(s.columns):
+            print(f'Fixing {fix_segment} as secondary point on vertical axis')
+            xy_sec = [s[nam.xy(fix_segment)].xs(id, level='AgentID').copy(deep=True).values for id in ids]
             bg_a = np.array([np.arctan2(xy_sec[i][:, 1], xy_sec[i][:, 0]) - np.pi / 2 for i in range(len(xy_sec))])
         else:
-            raise ValueError(f" The requested secondary {secondary_point} is not part of the dataset")
+            raise ValueError(f" The requested secondary {fix_segment} is not part of the dataset")
 
         for id, angle in zip(ids, bg_a):
             d = s[pars].xs(id, level='AgentID', drop_level=True).copy(deep=True).values

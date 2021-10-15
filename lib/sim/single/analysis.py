@@ -49,6 +49,8 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
     #     figs['scatter_x4'] = plot_endpoint_scatter(keys=['cum_sd', 'f_am', 'str_tr', 'pau_tr'], **cc)
     #     figs['scatter_x2'] = plot_endpoint_scatter(keys=['cum_sd', 'f_am'], **cc)
     if 'tactile' in exp_type:
+        figs['time ratio on food (final)'] = plot_endpoint_params(par_shorts=['on_food_tr'], **cc)
+        figs['time ratio on food']=timeplot(['on_food_tr'], **cc)
         figs['time on food']=timeplot(['cum_f_det'], **cc)
         figs['turner input']=timeplot(['A_tur'],show_first=True, **cc)
         figs['tactile activation']=timeplot(['A_touch'],show_first=True, **cc)
@@ -236,12 +238,12 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
         def dsNls(ds0, lls=None):
             if lls is None:
                 lls = flatten_list([ls] * len(ds0))
-            dds = []
-            deb_dicts = []
-            for d in ds0:
-                ds, debs = split_rovers_sitters(d)
-                dds += ds
-                deb_dicts += debs
+            dds = flatten_list(ds0)
+            deb_dicts = [d.load_deb_dicts(use_pickle=False) for d in dds]
+            # for d in ds0:
+            #     ds, debs = split_rovers_sitters(d)
+            #     dds += ds
+            #     deb_dicts += debs
 
             return {'datasets': dds,
                     'labels': lls,

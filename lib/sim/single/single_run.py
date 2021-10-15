@@ -5,18 +5,18 @@ import pickle
 import os
 import numpy as np
 
-
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 
 from lib.conf.base import paths
 from lib.stor.larva_dataset import LarvaDataset
 
-class SingleRun :
+
+class SingleRun:
     def __init__(self,
                  sim_params,
                  env_params,
                  larva_groups,
-                 life_params,
+                 trials,
                  enrichment,
                  collections,
                  experiment,
@@ -25,36 +25,36 @@ class SingleRun :
                  **kwargs):
         np.random.seed(seed)
         id = sim_params['sim_ID']
-        if id is None :
+        if id is None:
             from lib.conf.stored.conf import next_idx
-            id=f'{experiment}_{next_idx(experiment)}'
+            id = f'{experiment}_{next_idx(experiment)}'
         self.id = id
         dt = sim_params['timestep']
         path = sim_params['path']
         self.store_data = sim_params['store_data']
         # analysis = sim_params['analysis']
-        self.enrichment=enrichment
+        self.enrichment = enrichment
         if save_to is None:
             save_to = paths.path("SIM")
         if path is None:
-            path=f'single_runs/{experiment}'
+            path = f'single_runs/{experiment}'
         save_to = os.path.join(save_to, path)
         dir_path = os.path.join(save_to, self.id)
         self.param_dict = locals()
         self.start = time.time()
 
         self.d = LarvaDataset(dir=dir_path, id=self.id, fr=1 / dt, Ncontour=0,
-                         env_params=env_params, larva_groups=larva_groups, load_data=False)
+                              env_params=env_params, larva_groups=larva_groups, load_data=False)
 
         output = set_output(dataset=self.d, collections=collections)
         self.env = LarvaWorldSim(id=self.id, dt=dt, Box2D=sim_params['Box2D'],
-                            env_params=env_params,
-                            larva_groups=larva_groups,
-                            output=output,
+                                 env_params=env_params,
+                                 larva_groups=larva_groups,
+                                 output=output,
                                  experiment=experiment,
-                            life_params=life_params,
-                            Nsteps=int(sim_params['duration'] * 60 / dt),
-                            save_to=self.d.vis_dir, **kwargs)
+                                 trials=trials,
+                                 Nsteps=int(sim_params['duration'] * 60 / dt),
+                                 save_to=self.d.vis_dir, **kwargs)
 
     def run(self):
         print()
@@ -86,79 +86,79 @@ class SingleRun :
         self.env.close()
         self.d.delete()
 
-def _run_sim(
-        sim_params,
-        env_params,
-        larva_groups,
-        life_params,
-        enrichment,
-        collections,
-        experiment,
-        save_to=None,
-        seed=None,
-        **kwargs):
-    np.random.seed(seed)
-    id = sim_params['sim_ID']
-    dt = sim_params['timestep']
-    # Nsec = sim_params['duration'] * 60
-    path = sim_params['path']
-    # Box2D = sim_params['Box2D']
-    # save_data_flag = sim_params['store_data']
-    # analysis = sim_params['analysis']
 
-    if save_to is None:
-        save_to = paths.path("SIM")
-    if path is not None :
-        save_to = os.path.join(save_to, path)
-    dir_path = os.path.join(save_to, id)
+# def _run_sim(
+#         sim_params,
+#         env_params,
+#         larva_groups,
+#         trials,
+#         enrichment,
+#         collections,
+#         experiment,
+#         save_to=None,
+#         seed=None,
+#         **kwargs):
+#     np.random.seed(seed)
+#     id = sim_params['sim_ID']
+#     dt = sim_params['timestep']
+#     # Nsec = sim_params['duration'] * 60
+#     path = sim_params['path']
+#     # Box2D = sim_params['Box2D']
+#     # save_data_flag = sim_params['store_data']
+#     # analysis = sim_params['analysis']
+#
+#     if save_to is None:
+#         save_to = paths.path("SIM")
+#     if path is not None:
+#         save_to = os.path.join(save_to, path)
+#     dir_path = os.path.join(save_to, id)
+#
+#     # Store the parameters so that we can save them in the results folder
+#     # sim_date = datetime.datetime.now()
+#     param_dict = locals()
+#     start = time.time()
+#     # Nsteps = int(sim_params['duration'] * 60 / dt)
+#
+#     d = LarvaDataset(dir=dir_path, id=id, fr=1 / dt, Ncontour=0,
+#                      env_params=env_params, larva_groups=larva_groups, load_data=False)
+#
+#     output = set_output(dataset=d, collections=collections)
+#     env = LarvaWorldSim(id=id, dt=dt, Box2D=sim_params['Box2D'],
+#                         env_params=env_params,
+#                         larva_groups=larva_groups,
+#                         output=output,
+#                         experiment=experiment,
+#                         trials=trials,
+#                         Nsteps=int(sim_params['duration'] * 60 / dt),
+#                         save_to=d.vis_dir, **kwargs)
+#     print()
+#     print(f'---- Simulation {id} ----')
+#     # Run the simulation
+#     completed = env.run()
+#     print()
+#     if not completed:
+#         d.delete()
+#         print('    Simulation aborted!')
+#         res = None
+#         # ds, fig_dict, results = None, None, None
+#     else:
+#         end = time.time()
+#         dur = end - start
+#         param_dict['date'] = datetime.datetime.now()
+#         param_dict['duration'] = np.round(dur, 2)
+#         print(f'    Simulation completed in {np.round(dur).astype(int)} seconds!')
+#         res = store_data(env, d, sim_params['store_data'], enrichment, param_dict)
+#         # if analysis and ds is not None :
+#         #     from lib.sim.analysis import sim_analysis
+#         #     fig_dict, results = sim_analysis(ds, env.experiment)
+#         # else :
+#         #     fig_dict, results = None, None
+#     env.close()
+#     return res
 
-    # Store the parameters so that we can save them in the results folder
-    # sim_date = datetime.datetime.now()
-    param_dict = locals()
-    start = time.time()
-    # Nsteps = int(sim_params['duration'] * 60 / dt)
 
-
-    d = LarvaDataset(dir=dir_path, id=id, fr=1 / dt,Ncontour=0,
-                     env_params=env_params,larva_groups=larva_groups,load_data=False)
-
-    output = set_output(dataset=d, collections=collections)
-    env = LarvaWorldSim(id=id, dt=dt, Box2D=sim_params['Box2D'],
-                        env_params=env_params,
-                        larva_groups=larva_groups,
-                        output=output,
-                        experiment=experiment,
-                        life_params=life_params,
-                        Nsteps=int(sim_params['duration'] * 60 / dt),
-                        save_to=d.vis_dir, **kwargs)
-    print()
-    print(f'---- Simulation {id} ----')
-    # Run the simulation
-    completed = env.run()
-    print()
-    if not completed:
-        d.delete()
-        print('    Simulation aborted!')
-        res = None
-        # ds, fig_dict, results = None, None, None
-    else:
-        end = time.time()
-        dur = end - start
-        param_dict['date'] = datetime.datetime.now()
-        param_dict['duration'] = np.round(dur, 2)
-        print(f'    Simulation completed in {np.round(dur).astype(int)} seconds!')
-        res = store_data(env, d, sim_params['store_data'], enrichment, param_dict)
-        # if analysis and ds is not None :
-        #     from lib.sim.analysis import sim_analysis
-        #     fig_dict, results = sim_analysis(ds, env.experiment)
-        # else :
-        #     fig_dict, results = None, None
-    env.close()
-    return res
-
-
-ser = pickle.dumps(_run_sim)
-run_sim = pickle.loads(ser)
+# ser = pickle.dumps(_run_sim)
+# run_sim = pickle.loads(ser)
 
 
 def store_data(env, d, save_data_flag, enrichment, param_dict, split_groups=True):
@@ -167,6 +167,8 @@ def store_data(env, d, save_data_flag, enrichment, param_dict, split_groups=True
     if env.larva_end_col is not None:
         env.larva_end_col.collect(env)
         end = env.larva_end_col.get_agent_vars_dataframe().droplevel('Step')
+        # print(end)
+        # raise
     else:
         end = None
     if env.food_end_col is not None:
@@ -174,12 +176,12 @@ def store_data(env, d, save_data_flag, enrichment, param_dict, split_groups=True
         food = env.food_end_col.get_agent_vars_dataframe().droplevel('Step')
     else:
         food = None
-    d.set_data(step=step,end=end,food=food)
+    d.set_data(step=step, end=end, food=food)
     if split_groups:
-        ds=d.split_dataset()
-    else :
-        ds=[d]
-    for dd in ds :
+        ds = d.split_dataset()
+    else:
+        ds = [d]
+    for dd in ds:
         dd.enrich(**enrichment, is_last=False)
         if save_data_flag:
             from lib.aux.dictsNlists import dict_to_file
@@ -192,7 +194,7 @@ def store_data(env, d, save_data_flag, enrichment, param_dict, split_groups=True
 
 
 def set_output(dataset, collections):
-    from lib.aux.dictsNlists import unique_list,flatten_list
+    from lib.aux.dictsNlists import unique_list, flatten_list
     from lib.aux.collecting import output_dict
 
     if collections is None:
@@ -240,20 +242,19 @@ def load_reference_dataset(dataset_id='reference', load=False):
     return d
 
 
-def run_essay(id,path, exp_types,durations, vis_kwargs, **kwargs):
-    from lib.conf.conf import expandConf
+def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):
+    from lib.conf.stored.conf import expandConf
     from lib.conf.base.dtypes import null_dict
     ds = []
     for i, (exp, dur) in enumerate(zip(exp_types, durations)):
-        sim=null_dict('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
+        sim = null_dict('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
         conf = expandConf(exp, 'Exp')
-        conf['sim_params']=sim
-        conf['experiment']=exp
+        conf['sim_params'] = sim
+        conf['experiment'] = exp
         conf.update(**kwargs)
         d = SingleRun(**conf, vis_kwargs=vis_kwargs).run()
         ds.append(d)
     return ds
-
 
 
 combo_collection_dict = {
@@ -262,5 +263,3 @@ combo_collection_dict = {
     'source_approach': {'step': ['chemotax'], 'end': ['e_chemotax']},
     'olfactor': {'step': ['odors', 'olfactor'], 'end': []},
 }
-
-

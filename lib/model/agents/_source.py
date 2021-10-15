@@ -47,18 +47,12 @@ class Source(LarvaworldAgent):
 
 class Food(Source):
     def __init__(self, amount=1.0, quality=1.0,default_color=None,type='standard', **kwargs):
-        # print(kwargs)
         if default_color is None :
             default_color = 'green'
         super().__init__(default_color=default_color,**kwargs)
         self.initial_amount = amount
-        self.quality = quality
         self.amount = self.initial_amount
-        self.type = type
-        self.substrate = Substrate(type=type)
-
-    # def get_mol(self, V, **kwargs):
-    #     return self.substrate.get_mol(V=V, quality=self.quality, **kwargs)
+        self.substrate = Substrate(type=type, quality=quality)
 
     def get_amount(self):
         return self.amount

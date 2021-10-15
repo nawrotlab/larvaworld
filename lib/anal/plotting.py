@@ -2396,6 +2396,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
             e = d.read('end')
         ends.append(e)
     pars, = getPar(par_shorts, to_return=['d'])
+
     pars = [p for p in pars if all([p in e.columns for e in ends])]
     symbols, exp_symbols, xlabels, xlims, disps = getPar(par_shorts, to_return=['s', 's', 'l', 'lim', 'd'])
 
@@ -2825,49 +2826,32 @@ def calibration_plot(save_to=None, files=None):
     save_plot(fig, filepath, filename)
     return fig
 
+
 def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False, show=False):
     filename = 'PI_heatmap.pdf'
     print('Creating heatmap')
-    new_data = pd.read_csv(csv_filepath, index_col=0)
-    new_data.sort_index(ascending=True, inplace=True)
-    new_data = new_data.reindex(sorted(new_data.columns, reverse=True), axis=1)
-    Lgains = new_data.index.values.astype(int)
-    Rgains = new_data.columns.values.astype(int)
+    d = pd.read_csv(csv_filepath, index_col=0)
+    Lgains = d.index.values.astype(int)
+    Rgains = d.columns.values.astype(int)
     Ngains = len(Lgains)
-
-    grid_kws = {"height_ratios": (.9, .05), "hspace": 0.4}
     fig, ax = plt.subplots(figsize=(12, 10))
-    sns.heatmap(new_data, annot=False, fmt="g", cmap='RdYlGn', vmin=-1, vmax=1, ax=ax,
+    sns.heatmap(d, annot=False, fmt="g", cmap='RdYlGn', vmin=-1, vmax=1, ax=ax,
                 cbar_kws={"orientation": "vertical",
                           'label': 'Preference for left odor',
                           'ticks': [1, 0, -1]})
-    # ax.set_size_cm(3.5, 3.5)
     cax = plt.gcf().axes[-1]
     cax.tick_params(length=0)
 
-    # ax.set_title('Preference index for variable odor gain combinations')
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
     ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
-    ax.set_xlabel(r'Left odor gain, $G_{L}$')
-    ax.set_ylabel(r'Right odor gain, $G_{R}$')
-    # ax.set_ylabel(r'$V_{left}$')
-    # ax.set_ylabel(r'Valence$_{left}$')
-    # ax.set_ylabel('Left odor valence')
-    # ax.set_xlabel(r'$Gain_{right}$')
-    # ax.set_xlabel(r'$V_{right}$')
-    # ax.set_xlabel(r'Valence$_{right}$')
-    # ax.set_xlabel('Right odor valence')
-    # ax.xaxis.set_ticks_position('top')
+    ax.set_ylabel(r'Left odor gain, $G_{L}$')
+    ax.set_xlabel(r'Right odor gain, $G_{R}$')
     r = np.linspace(0.5, Ngains - 0.5, 5)
     ax.set_xticks(r)
     ax.set_yticks(r)
-    # print(Rgains)
-    # print(Lgains)
-
-    # print(Lgains[r.astype(int)])
-    # print(Rgains[r.astype(int)])
     ax.set_xticklabels(Lgains[r.astype(int)])
     ax.set_yticklabels(Rgains[r.astype(int)])
-    plt.subplots_adjust(left=0.15, right=0.95, bottom=0.15, top=0.95)
+    fig.subplots_adjust(left=0.15, right=0.95, bottom=0.15, top=0.95)
     return process_plot(fig, save_to, filename, return_fig, show)
 
 graph_dict = {

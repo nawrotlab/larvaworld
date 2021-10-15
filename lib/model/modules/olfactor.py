@@ -23,9 +23,9 @@ class Sensor(Effector):
         if len(input) == 0:
             self.activation = 0
         else:
-            self.compute_dif(input)
+            self.compute_dX(input)
             self.activation *= self.exp_decay_coef
-            self.activation += self.dt * np.sum([self.gain[id] * self.dCon[id] for id in self.gain_ids])
+            self.activation += self.dt * np.sum([self.gain[id] * self.dX[id] for id in self.gain_ids])
 
             if self.activation > self.A1:
                 self.activation = self.A1
@@ -38,8 +38,8 @@ class Sensor(Effector):
         if gain_dict in [None, 'empty_dict']:
             gain_dict = {}
         self.base_gain = {}
-        self.Con = {}
-        self.dCon = {}
+        self.X = {}
+        self.dX = {}
         self.Ngains = len(gain_dict)
         self.gain_ids = list(gain_dict.keys())
         # print(odor_dict)
@@ -49,12 +49,12 @@ class Sensor(Effector):
                 self.base_gain[id] = float(np.random.normal(m, s, 1))
             else:
                 self.base_gain[id] = p
-            self.Con[id] = 0.0
-            self.dCon[id] = 0.0
+            self.X[id] = 0.0
+            self.dX[id] = 0.0
         self.gain = self.base_gain
 
-    def get_dCon(self):
-        return self.dCon
+    def get_dX(self):
+        return self.dX
 
     def get_gain(self):
         return self.gain
@@ -68,25 +68,25 @@ class Sensor(Effector):
     def reset_all_gains(self):
         self.gain = self.base_gain
 
-    def compute_dif(self, input):
+    def compute_dX(self, input):
         for id, cur in input.items():
             if id not in self.gain_ids:
                 self.add_novel_gain(id, con=cur, gain=0.0)
             else:
-                prev = self.Con[id]
+                prev = self.X[id]
                 if self.perception == 'log':
-                    self.dCon[id] = cur / prev - 1 if prev != 0 else 0
+                    self.dX[id] = cur / prev - 1 if prev != 0 else 0
                 elif self.perception == 'linear':
-                    self.dCon[id] = cur - prev
-        self.Con = input
+                    self.dX[id] = cur - prev
+        self.X = input
 
     def add_novel_gain(self, id, con=0.0, gain=0.0):
         self.Ngains += 1
         self.gain_ids.append(id)
         self.base_gain[id] = gain
         self.gain[id] = gain
-        self.dCon[id] = 0.0
-        self.Con[id] = con
+        self.dX[id] = 0.0
+        self.X[id] = con
 
 
 class Olfactor(Sensor):

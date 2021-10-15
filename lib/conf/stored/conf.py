@@ -23,7 +23,7 @@ def expandConf(id, conf_type):
         elif conf_type == 'Exp':
             conf['experiment'] = id
             conf['env_params'] = expandConf(conf['env_params'], 'Env')
-            conf['life_params'] = loadConf(conf['life_params'], 'Life')
+            conf['trials'] = loadConf(conf['trials'], 'Trial')
             for k, v in conf['larva_groups'].items():
                 if type(v['model']) == str:
                     v['model'] = loadConf(v['model'], 'Model')
@@ -118,19 +118,21 @@ def store_reference_data_confs():
          in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
     dds = flatten_list(dds)
     dds.append(f'{DATA}/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/exploration')
+    dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/200_controls')
     for dr in dds:
         d = LarvaDataset(dr, load_data=False)
-        # # c = d.config
-        # del d.config['agent_ids']
-        # d.config['bout_distros']['stride']=d.config['bout_distros']['stride']['best']
-        # d.config['bout_distros']['pause']=d.config['bout_distros']['pause']['best']
         d.save_config(add_reference=True)
 
 
 def store_confs(keys=None):
     if keys is None:
-        keys = ['Ref', 'Data', 'Model', 'Env', 'Exp']
-
+        keys = ['Ref', 'Data', 'Model', 'Env', 'Exp', 'Life']
+    if 'Life' in keys:
+        from lib.conf.stored.trial_conf import trial_dict, life_dict
+        for k, v in trial_dict.items():
+            saveConf(v, 'Trial', k)
+        for k, v in life_dict.items():
+            saveConf(v, 'Life', k)
     if 'Data' in keys:
         from lib.conf.stored.data_conf import importformats, import_par_confs
         for k, v in import_par_confs.items():
@@ -179,8 +181,7 @@ def imitation_exp(config, model='explorer', idx=0, **kwargs):
         'ImitationGroup': null_dict('LarvaGroup', sample=config, model=base_larva, default_color='blue', imitation=True,
                                     distribution=None)})
 
-    exp_conf = null_dict('exp_conf', sim_params=sim_params, env_params=env_params, life_params=null_dict('life'),
-                         enrichment=base_enrich())
+    exp_conf = null_dict('exp_conf', sim_params=sim_params, env_params=env_params, trials=[],enrichment=base_enrich())
     exp_conf['experiment'] = 'imitation'
     exp_conf.update(**kwargs)
     return exp_conf

@@ -159,7 +159,7 @@ def gui_row(element_list, x_frac=1.0, y_frac=0.5,x_fracs=None, **kwargs):
     N=len(element_list)
     if x_fracs is None :
         x_fracs=[x_frac/N]*N
-    l = [sg.Col(e, **col_kws, size=col_size(x_frac=x, y_frac=y_frac)) for e, x in zip(element_list, x_fracs)]
+    l = [sg.Col(e, **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs) for e, x in zip(element_list, x_fracs)]
     # r = sg.Col(*l, **col_kws, size=col_size(x_frac=x_frac, y_frac=y_frac), **kwargs)
     return l
 

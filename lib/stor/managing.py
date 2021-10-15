@@ -9,14 +9,14 @@ from lib.conf.stored.conf import *
 from lib.stor.larva_dataset import LarvaDataset
 
 
-def build_dataset(datagroup_id,id,group_id, target_dir, source_dir=None,source_files=None, **kwargs):
+def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None, **kwargs):
     warnings.filterwarnings('ignore')
     g = loadConf(datagroup_id, 'Group')
     build_conf = g['tracker']['filesystem']
     data_conf = g['tracker']['resolution']
     par_conf = g['parameterization']
     arena_pars = g['tracker']['arena']
-    env_params={'arena' : arena_pars}
+    env_params=null_dict('env_conf', arena=arena_pars)
 
 
     try:
@@ -24,7 +24,7 @@ def build_dataset(datagroup_id,id,group_id, target_dir, source_dir=None,source_f
     except:
         pass
 
-    d = LarvaDataset(dir=target_dir, id=id, group_id=group_id, par_conf=par_conf, env_params=env_params,
+    d = LarvaDataset(dir=target_dir, id=id, par_conf=par_conf, env_params=env_params,
                      load_data=False, **data_conf)
 
 

@@ -2,7 +2,7 @@ import subprocess
 import sys
 import argparse
 
-from lib.sim.batch.batch import _batch_run
+
 
 sys.path.insert(0, '..')
 from lib.sim.single.analysis import sim_analysis
@@ -10,6 +10,7 @@ from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results
 from lib.conf.base import paths
 import lib.aux.dictsNlists
+from lib.sim.batch.batch import batch_run
 
 class Exec:
     def __init__(self, mode, conf, run_externally=True, progressbar=None, w_progressbar=None, **kwargs):
@@ -74,7 +75,7 @@ class Exec:
         elif self.mode == 'batch':
             self.process = None
             batch_kwargs = prepare_batch(self.conf)
-            res = _batch_run(**batch_kwargs)
+            res = batch_run(**batch_kwargs)
         return res
 
 

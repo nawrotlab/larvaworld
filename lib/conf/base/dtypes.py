@@ -24,13 +24,12 @@ def base_dtype(t):
     return base_t
 
 
-def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_values=None,
-        return_dtype=True, Ndigits=None, h='',s='', argparser=False):
+def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, Ndigits=None, h='', s='', argparser=False):
     if not argparser:
         cur_dtype = base_dtype(t)
-        if vs is None:
+        if cur_dtype in [float, int]:
             if any([arg is not None for arg in [min, max, dv]]):
-                if cur_dtype in [float, int]:
+                if vs is None:
                     if min is None:
                         min = 0
                     if max is None:
@@ -41,36 +40,34 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_values=
                         elif cur_dtype == float:
                             dv = 0.1
 
-                    array = np.arange(min, max + dv, dv)
+                    ar = np.arange(min, max + dv, dv)
                     if cur_dtype == float:
-                        Ndecimals = len(str(format(dv, 'f')).split('.')[1])
-                        array = np.round(array, Ndecimals)
-                    vs = array.astype(cur_dtype)
-                    Ndigits = maxNdigits(vs, 4)
-                    vs = vs.tolist()
+                        Ndec = len(str(format(dv, 'f')).split('.')[1])
+                        ar = np.round(ar, Ndec)
+                    vs = ar.astype(cur_dtype)
 
-        if aux_values is not None and vs is not None:
-            vs += aux_values
-        d = {'initial_value': v, 'values': vs}
-        if return_dtype:
-            d['dtype'] = t
-        d['Ndigits'] = Ndigits
+                    vs = vs.tolist()
+            Ndigits = maxNdigits(np.array(vs), 4)
+        if aux_vs is not None and vs is not None:
+            vs += aux_vs
+        d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype' : t}
+
         return {name: d}
     else:
         d = {
             'key': name,
-            'short': s if s!='' else name,
+            'short': s if s != '' else name,
             'help': h,
         }
         if t == bool:
             d['action'] = 'store_true' if not v else 'store_false'
         else:
             d['type'] = t
-            if vs is not None :
-                d['choices']=vs
-            if v is not None :
-                d['default']=v
-                d['nargs']='?'
+            if vs is not None:
+                d['choices'] = vs
+            if v is not None:
+                d['default'] = v
+                d['nargs'] = '?'
         return {name: d}
 
 
@@ -106,37 +103,39 @@ def pars_to_df(d):
 def init_vis():
     d = {}
     d['render'] = {
-        'mode': {'t': str, 'v':None, 'vs': [None, 'video', 'image'], 'h' : 'The visualization mode', 's' : 'm'},
-        'image_mode': {'t': str, 'vs': [None, 'final', 'snapshots', 'overlap'], 'h' : 'The image-render mode', 's' : 'im'},
-        'video_speed': {'t': int, 'v': 60, 'min': 1, 'max': 100, 'h' : 'The video speed', 's' : 'vid'},
-        'media_name': {'t': str, 'h' : 'Filename for the saved video/image', 's' : 'media'},
-        'show_display': {'t': bool, 'v': True, 'h' : 'Hide display', 's' : 'hide'},
+        'mode': {'t': str, 'v': None, 'vs': [None, 'video', 'image'], 'h': 'The visualization mode', 's': 'm'},
+        'image_mode': {'t': str, 'vs': [None, 'final', 'snapshots', 'overlap'], 'h': 'The image-render mode',
+                       's': 'im'},
+        'video_speed': {'t': int, 'v': 60, 'min': 1, 'max': 100, 'h': 'The video speed', 's': 'vid'},
+        'media_name': {'t': str, 'h': 'Filename for the saved video/image', 's': 'media'},
+        'show_display': {'t': bool, 'v': True, 'h': 'Hide display', 's': 'hide'},
     }
     d['draw'] = {
-        'draw_head': {'t': bool, 'v': False, 'h' : 'Draw the larva head'},
-        'draw_centroid': {'t': bool, 'v': False, 'h' : 'Draw the larva centroid'},
-        'draw_midline': {'t': bool, 'v': True, 'h' : 'Draw the larva midline'},
-        'draw_contour': {'t': bool, 'v': True, 'h' : 'Draw the larva contour'},
-        'draw_sensors': {'t': bool, 'v': False, 'h' : 'Draw the larva sensors'},
-        'trails': {'t': bool, 'v': False, 'h' : 'Draw the larva trajectories'},
-        'trajectory_dt': {'max': 100.0, 'h' : 'Duration of the drawn trajectories'},
+        'draw_head': {'t': bool, 'v': False, 'h': 'Draw the larva head'},
+        'draw_centroid': {'t': bool, 'v': False, 'h': 'Draw the larva centroid'},
+        'draw_midline': {'t': bool, 'v': True, 'h': 'Draw the larva midline'},
+        'draw_contour': {'t': bool, 'v': True, 'h': 'Draw the larva contour'},
+        'draw_sensors': {'t': bool, 'v': False, 'h': 'Draw the larva sensors'},
+        'trails': {'t': bool, 'v': False, 'h': 'Draw the larva trajectories'},
+        'trajectory_dt': {'max': 100.0, 'h': 'Duration of the drawn trajectories'},
     }
     d['color'] = {
-        'black_background': {'t': bool, 'v': False, 'h' : 'Set the background color to black'},
-        'random_colors': {'t': bool, 'v': False, 'h' : 'Color each larva with a random color'},
-        'color_behavior': {'t': bool, 'v': False, 'h' : 'Color the larvae according to their instantaneous behavior'},
+        'black_background': {'t': bool, 'v': False, 'h': 'Set the background color to black'},
+        'random_colors': {'t': bool, 'v': False, 'h': 'Color each larva with a random color'},
+        'color_behavior': {'t': bool, 'v': False, 'h': 'Color the larvae according to their instantaneous behavior'},
     }
     d['aux'] = {
-        'visible_clock': {'t': bool, 'v': True, 'h' : 'Hide/show the simulation clock'},
-        'visible_scale': {'t': bool, 'v': True, 'h' : 'Hide/show the simulation scale'},
-        'visible_state': {'t': bool, 'v': False, 'h' : 'Hide/show the simulation state'},
-        'visible_ids': {'t': bool, 'v': False, 'h' : 'Hide/show the larva IDs'},
+        'visible_clock': {'t': bool, 'v': True, 'h': 'Hide/show the simulation clock'},
+        'visible_scale': {'t': bool, 'v': True, 'h': 'Hide/show the simulation scale'},
+        'visible_state': {'t': bool, 'v': False, 'h': 'Hide/show the simulation state'},
+        'visible_ids': {'t': bool, 'v': False, 'h': 'Hide/show the larva IDs'},
     }
     d['visualization'] = {
         'render': d['render'],
+        'aux': d['aux'],
         'draw': d['draw'],
         'color': d['color'],
-        'aux': d['aux'],
+
     }
     return d
 
@@ -223,10 +222,11 @@ null_bout_dist = {
 
 
 def init_pars():
+    bF, bT = {'t': bool, 'v': False}, {'t': bool, 'v': True}
     from lib.conf.stored.conf import loadConfDict
 
     bout_dist_dtypes = {
-        'fit': {'t': bool, 'v': True},
+        'fit': bT,
         'range': {'t': Tuple[float], 'max': 100.0},
         'name': {'t': str,
                  'vs': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy', 'normal', 'uniform']},
@@ -241,28 +241,7 @@ def init_pars():
             'odor_intensity': {'max': 10.0},
             'odor_spread': {'max': 10.0}
         },
-        'food': {
-            'radius': {'v': 0.003, 'max': 0.1, 'dv': 0.001},
-            'amount': {'v': 0.0, 'max': 1.0},
-            'quality': {'v': 1.0, 'max': 1.0},
-            'can_be_carried': {'t': bool, 'v': False},
-            'type': {'t': str, 'v': 'standard', 'vs': list(substrate_dict.keys())}
-        },
-        'food_grid':
-            {'unique_id': {'t': str, 'v': 'Food_grid', },
-             'grid_dims': {'t': Tuple[int], 'v': (20, 20), 'min': 10, 'max': 200},
-             'initial_value': {'v': 0.001, 'max': 0.1, 'dv': 0.001},
-             'distribution': {'t': str, 'v': 'uniform', 'vs': ['uniform']},
-             'type': {'t': str, 'v': 'standard', 'vs': list(substrate_dict.keys())}
-             },
-        'life':
-            {
-                'epochs': {'t': List[Tuple[float]], 'max': 250.0, 'dv': 0.1},
-                'epoch_qs': {'t': List[float], 'max': 1.0},
-                'hours_as_larva': {'v': 0.0, 'max': 250.0, 'dv': 1.0},
-                'substrate_quality': {'v': 1.0, 'max': 1.0, 'dv': 0.05},
-                'substrate_type': {'t': str, 'v': 'standard', 'vs': list(substrate_dict.keys())}
-            },
+
         'odorscape': {'odorscape': {'t': str, 'v': 'Gaussian', 'vs': ['Gaussian', 'Diffusion']},
                       'grid_dims': {'t': Tuple[int], 'min': 10, 'max': 100},
                       'evap_const': {'max': 1.0},
@@ -275,14 +254,14 @@ def init_pars():
         },
         'optimization': {
             'fit_par': {'t': str},
-            'minimize': {'t': bool, 'v': True},
+            'minimize': bT,
             'threshold': {'v': 0.001, 'max': 0.01, 'dv': 0.0001},
             'max_Nsims': {'t': int, 'v': 7, 'max': 100},
             'Nbest': {'t': int, 'v': 3, 'max': 10},
             'operations': {
-                'mean': {'t': bool, 'v': True},
-                'std': {'t': bool, 'v': False},
-                'abs': {'t': bool, 'v': False}
+                'mean': bT,
+                'std': bF,
+                'abs': bF
             },
         },
         'batch_methods': {
@@ -298,9 +277,8 @@ def init_pars():
         'space_search': {'pars': {'t': List[str]},
                          'ranges': {'t': List[Tuple[float]], 'max': 100.0, 'min': -100.0, 'dv': 1.0},
                          'Ngrid': {'t': int, 'max': 100}},
-        # 'body': {'initial_length': {'v': 'sample', 'max': 0.01, 'dv': 0.0001, 'aux_values': ['sample']},
-        'body': {'initial_length': {'v': 'sample', 'max': 0.01, 'dv': 0.0001, 'aux_values': ['sample']},
-                 'length_std': {'v': 0.0, 'max': 0.001, 'dv': 0.0001, 'aux_values': ['sample']},
+        'body': {'initial_length': {'v': 'sample', 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample']},
+                 'length_std': {'v': 0.0, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample']},
                  'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12},
                  'seg_ratio': {'max': 1.0},  # [5 / 11, 6 / 11]
                  'touch_sensors': {'t': int, 'min': 0, 'max': 8},
@@ -316,18 +294,19 @@ def init_pars():
         },
         'energetics': {'f_decay': {'v': 0.1, 'max': 1.0, 'dv': 0.1},
                        'absorption': {'max': 1.0},
-                       'hunger_as_EEB': {'t': bool, 'v': True},
+                       'V_bite': {'v': 0.0002, 'max': 0.001, 'dv': 0.0001},
+                       'hunger_as_EEB': bT,
                        'hunger_gain': {'v': 0.0, 'max': 1.0},
-                       'deb_on': {'t': bool, 'v': True},
+                       'deb_on': bT,
                        'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb']},
                        'DEB_dt': {'max': 1.0}},
         'crawler': {'waveform': {'t': str, 'v': 'realistic', 'vs': ['realistic', 'square', 'gaussian', 'constant']},
                     'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5), 'max': 2.0},
-                    'initial_freq': {'v': 'sample', 'max': 10.0, 'aux_values': ['sample']},  # From D1 fit
+                    'initial_freq': {'v': 'sample', 'max': 10.0, 'aux_vs': ['sample']},  # From D1 fit
                     'freq_std': {'v': 0.0, 'max': 1.0},  # From D1 fit
-                    'step_to_length_mu': {'v': 'sample', 'max': 1.0, 'dv': 0.01, 'aux_values': ['sample']},
+                    'step_to_length_mu': {'v': 'sample', 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample']},
                     # From D1 fit
-                    'step_to_length_std': {'v': 'sample', 'max': 1.0, 'aux_values': ['sample']},  # From D1 fit
+                    'step_to_length_std': {'v': 'sample', 'max': 1.0, 'aux_vs': ['sample']},  # From D1 fit
                     'initial_amp': {'max': 2.0},
                     'noise': {'v': 0.1, 'max': 1.0, 'dv': 0.01},
                     'max_vel_phase': {'v': 1.0, 'max': 2.0}
@@ -349,11 +328,9 @@ def init_pars():
         },
         'intermitter': {
             'pause_dist': bout_dist_dtypes,
-            # 'pause_dist': dict,
             'stridechain_dist': bout_dist_dtypes,
-            # 'stridechain_dist': dict,
-            'crawl_bouts': {'t': bool, 'v': True},
-            'feed_bouts': {'t': bool, 'v': False},
+            'crawl_bouts': bT,
+            'feed_bouts': bF,
             'crawl_freq': {'v': 1.43, 'max': 2.0, 'dv': 0.01},
             'feed_freq': {'v': 2.0, 'max': 4.0, 'dv': 0.01},
             'feeder_reoccurence_rate': {'max': 1.0},
@@ -383,14 +360,14 @@ def init_pars():
                    'train_dur': {'v': 20.0, 'max': 100.0},
                    'mode': {'t': str},
                    },
-        'modules': {'turner': {'t': bool, 'v': False},
-                    'crawler': {'t': bool, 'v': False},
-                    'interference': {'t': bool, 'v': False},
-                    'intermitter': {'t': bool, 'v': False},
-                    'olfactor': {'t': bool, 'v': False},
-                    'toucher': {'t': bool, 'v': False},
-                    'feeder': {'t': bool, 'v': False},
-                    'memory': {'t': bool, 'v': False}},
+        'modules': {'turner': bF,
+                    'crawler': bF,
+                    'interference': bF,
+                    'intermitter': bF,
+                    'olfactor': bF,
+                    'toucher': bF,
+                    'feeder': bF,
+                    'memory': bF},
 
         'essay_params': {
             'essay_ID': {'t': str},
@@ -399,12 +376,12 @@ def init_pars():
         },
 
         'sim_params': {
-            'sim_ID': {'t': str, 'h': 'The id of the simulation', 's' : 'id'},
-            'path': {'t': str, 'h': 'The path to save the simulation dataset', 's' : 'path'},
-            'duration': {'v': 1.0, 'max': 100.0, 'h': 'The duration of the simulation in minutes', 's' : 't'},
-            'timestep': {'v': 0.1, 'max': 0.4, 'dv': 0.05, 'h': 'The timestep of the simulation in seconds', 's' : 'dt'},
+            'sim_ID': {'t': str, 'h': 'The id of the simulation', 's': 'id'},
+            'path': {'t': str, 'h': 'The path to save the simulation dataset', 's': 'path'},
+            'duration': {'v': 1.0, 'max': 100.0, 'h': 'The duration of the simulation in minutes', 's': 't'},
+            'timestep': {'v': 0.1, 'max': 0.4, 'dv': 0.05, 'h': 'The timestep of the simulation in seconds', 's': 'dt'},
             'Box2D': {'t': bool, 'v': False, 'h': 'Use the Box2D physics engine'},
-            'store_data': {'t': bool, 'v': True, 'h': 'Whether to store the simulation data', 's' : 'no_store'},
+            'store_data': {'t': bool, 'v': True, 'h': 'Whether to store the simulation data', 's': 'no_store'},
             # 'analysis': {'t': bool, 'v': True, 'h': 'Whether to analyze the simulation data', 's' : 'no_analysis'},
             # 'sample': {'t': str, 'v': 'controls.', 'h': 'The ID of the dataset to sample the parameters from'}
         },
@@ -414,7 +391,7 @@ def init_pars():
             'name': {'t': str, 'v': 'lognormal', 'vs': ['lognormal']},
             'mu': {'v': 1.0, 'max': 10.0},
             'sigma': {'v': 0.0, 'max': 10.0},
-            'fit': {'t': bool, 'v': False}
+            'fit': bF
         },
         'par': {
             'p': {'t': str},
@@ -425,12 +402,10 @@ def init_pars():
             'lim': {'t': Tuple[float]},
             'd': {'t': str},
             'l': {'t': str},
-            'exists': {'t': bool, 'v': False},
+            'exists': bF,
             'func': {'t': str},
             'const': {'t': str},
             'operator': {'t': str, 'vs': [None, 'diff', 'cum', 'max', 'min', 'mean', 'std', 'final']},
-            # 'diff': bool,
-            # 'cum': bool,
             'k0': {'t': str},
             'k_num': {'t': str},
             'k_den': {'t': str},
@@ -447,14 +422,62 @@ def init_pars():
             'max_Nagents': {'t': int, 'v': 500, 'max': 500},
             'save_mode': {'t': str, 'v': 'semifull', 'vs': ['minimal', 'semifull', 'full', 'points']},
         },
-        'substrate': {k: {'v': v, 'max': 1000.0, 'dv': 5.0} for k, v in substrate_dict['standard'].items()},
-        'output': {n: {'t': bool, 'v': False} for n in output_keys}
+        # 'substrate': {k: {'v': v, 'max': 1000.0, 'dv': 5.0} for k, v in substrate_dict['standard'].items()},
+        'output': {n: bF for n in output_keys}
+    }
+
+    d['substrate_composition'] = {n: {'v': 0.0, 'max': 10.0} for n in
+                                  ['glucose', 'dextrose', 'saccharose', 'yeast', 'agar', 'cornmeal']}
+
+    d['substrate'] = {
+        'type': {'t': str, 'v': 'standard', 'vs': list(substrate_dict.keys())},
+        'quality': {'v': 1.0, 'max': 1.0}
+
+    }
+
+    d['food'] = {
+        'radius': {'v': 0.003, 'max': 0.1, 'dv': 0.001},
+        'amount': {'v': 0.0, 'max': 1.0},
+        'can_be_carried': bF,
+        **d['substrate']
+    }
+    d['food_grid'] = {
+        'unique_id': {'t': str, 'v': 'Food_grid'},
+        'grid_dims': {'t': Tuple[int], 'v': (20, 20), 'min': 10, 'max': 200},
+        'initial_value': {'v': 0.001, 'max': 0.1, 'dv': 0.001},
+        'distribution': {'t': str, 'v': 'uniform', 'vs': ['uniform']},
+        **d['substrate']
+        # 'substrate' : d['substrate']
+    }
+
+    # d['life']={
+    #     'epochs': {'t': List[Tuple[float]], 'max': 250.0, 'dv': 0.1},
+    #     'epoch_qs': {'t': List[float], 'max': 1.0},
+    #     'hours_as_larva': {'v': 0.0, 'max': 250.0, 'dv': 1.0},
+    #     'substrate' : d['substrate']
+    # }
+
+    d['epoch'] = {
+        'start': {'max': 200.0},
+        'stop': {'max': 200.0},
+        # 'duration': {'max': 200.0},
+        'substrate': d['substrate']
+
+    }
+
+    # d['epochs'] = {
+    #     'epochs': {'t': List[Tuple[float]], 'max': 250.0, 'dv': 0.1},
+    #     'epoch_qs': {'t': List[float], 'max': 1.0},
+    # }
+    d['life_history'] = {
+        'epochs': {'t': dict},
+        'age': {'v': 0.0, 'max': 250.0, 'dv': 1.0},
     }
 
     d['brain'] = {
         'modules': d['modules'],
         **{f'{m}_params': d[m] for m in d['modules'].keys()},
-        'nengo': {'t': bool, 'v': False}
+        'nengo': bF
     }
 
     d['larva_conf'] = {
@@ -466,17 +489,17 @@ def init_pars():
 
     d['preprocessing'] = {
         'rescale_by': {'max': 10.0},
-        'drop_collisions': {'t': bool, 'v': False},
-        'interpolate_nans': {'t': bool, 'v': False},
+        'drop_collisions': bF,
+        'interpolate_nans': bF,
         'filter_f': {'max': 10.0},
         'transposition': {'t': str, 'vs': ['', 'origin', 'arena', 'center']}
     }
     d['processing'] = {
-        'types': {t: {'t': bool, 'v': False} for t in proc_type_keys},
+        'types': {t: bF for t in proc_type_keys},
         'dsp_starts': {'t': List[float], 'max': 200.0, 'dv': 1.0},
         'dsp_stops': {'t': List[float], 'max': 200.0, 'dv': 1.0},
         'tor_durs': {'t': List[int], 'max': 100, 'dv': 1}}
-    d['annotation'] = {'bouts': {b: {'t': bool, 'v': False} for b in bout_keys},
+    d['annotation'] = {'bouts': {b: bF for b in bout_keys},
                        'track_point': {'t': str},
                        'track_pars': {'t': List[str]},
                        'chunk_pars': {'t': List[str]},
@@ -485,11 +508,11 @@ def init_pars():
                        'bend_vel_par': {'t': str},
                        'min_ang': {'v': 0.0, 'max': 180.0, 'dv': 1.0},
                        'min_ang_vel': {'v': 0.0, 'max': 1000.0, 'dv': 1.0},
-                       'non_chunks': {'t': bool, 'v': False}}
-    d['to_drop'] = {kk: {'t': bool, 'v': False} for kk in to_drop_keys}
+                       'non_chunks': bF}
+    d['to_drop'] = {kk: bF for kk in to_drop_keys}
     d['enrichment'] = {**{k: d[k] for k in
-                        ['preprocessing', 'processing', 'annotation', 'to_drop']},
-                       'recompute': {'t': bool, 'v': False},
+                          ['preprocessing', 'processing', 'annotation', 'to_drop']},
+                       'recompute': bF,
                        'mode': {'t': str, 'v': 'minimal', 'vs': ['minimal', 'full']}
                        }
 
@@ -501,20 +524,19 @@ def init_pars():
     d['env_conf'] = {'arena': d['arena'],
                      'border_list': {'t': dict, 'v': {}},
                      'food_params': d['food_params'],
-
                      'odorscape': d['odorscape']}
 
     d['exp_conf'] = {'env_params': {'t': str, 'vs': list(loadConfDict('Env').keys())},
                      'larva_groups': {'t': dict, 'v': {}},
                      'sim_params': d['sim_params'],
-                     'life_params': {'t': str, 'v': 'default', 'vs': list(loadConfDict('Life').keys())},
+                     'trials': {'t': str, 'v': 'default', 'vs': list(loadConfDict('Trial').keys())},
                      'collections': {'t': List[str], 'v': ['pose']},
                      'enrichment': d['enrichment'],
                      'experiment': {'t': str, 'vs': list(loadConfDict('Exp').keys())},
                      }
     d['batch_setup'] = {
         'batch_id': {'t': str},
-        'save_hdf5': {'t': bool, 'v': False},
+        'save_hdf5': bF,
     }
     d['batch_conf'] = {'exp': {'t': str},
                        'space_search': d['space_search'],
@@ -523,7 +545,7 @@ def init_pars():
                        'exp_kws': {'t': dict, 'v': {'enrichment': d['enrichment']}},
                        'post_kws': {'t': dict, 'v': {}},
                        'proc_kws': {'t': dict, 'v': {}},
-                       'save_hdf5': {'t': bool, 'v': False}
+                       'save_hdf5': bF
                        }
 
     d['tracker'] = {
@@ -533,7 +555,7 @@ def init_pars():
                        },
         'filesystem': {
             'read_sequence': {'t': List[str]},
-            'read_metadata': {'t': bool, 'v': False},
+            'read_metadata': bF,
             'detect': {
                 'folder': {'pref': {'t': str}, 'suf': {'t': str}},
                 'file': {'pref': {'t': str}, 'suf': {'t': str}, 'sep': {'t': str}}
@@ -546,7 +568,7 @@ def init_pars():
                              'rear_vector': {'t': Tuple[int], 'v': (-2, -1), 'min': -12, 'max': 12},
                              'front_body_ratio': {'v': 0.5, 'max': 1.0},
                              'point_idx': {'t': int, 'min': -1, 'max': 12},
-                             'use_component_vel': {'t': bool, 'v': False},
+                             'use_component_vel': bF,
                              'scaled_vel_threshold': {'v': 0.2, 'max': 1.0}}
 
     d['spatial_distro'] = {
@@ -573,14 +595,13 @@ def init_pars():
         'model': d['larva_model'],
         'sample': {'t': str, 'v': 'controls.exploration'},
         'default_color': {'t': str, 'v': 'black'},
-        'imitation': {'t': bool, 'v': False},
+        'imitation': bF,
         'distribution': d['larva_distro'],
-        'life': d['life'],
+        'life_history': d['life_history'],
         'odor': d['odor']
     }
 
     d['agent'] = {
-        # 'unique_id': {'t': str},
         'group': {'t': str, 'v': ''},
 
     }
@@ -610,15 +631,15 @@ def init_pars():
 
     d['replay'] = {
         # 'arena_pars': d['arena'],
-        'env_params': {'t': str, 'vs': list(loadConfDict('Env').keys()), 'aux_values': ['']},
+        'env_params': {'t': str, 'vs': list(loadConfDict('Env').keys()), 'aux_vs': ['']},
         'track_point': {'t': int, 'v': -1, 'min': -1, 'max': 12},
         'dynamic_color': {'t': str, 'vs': [None, 'lin_color', 'ang_color']},
         'agent_ids': {'t': List[str]},
         'time_range': {'t': Tuple[float], 'max': 1000.0, 'dv': 1.0},
         'transposition': {'t': str, 'vs': [None, 'origin', 'arena', 'center']},
         'fix_point': {'t': int, 'min': 1, 'max': 12},
-        'secondary_fix_point': {'t': int, 'vs': [-1, 1]},
-        'use_background': {'t': bool, 'v': False},
+        'fix_segment': {'t': int, 'vs': [-1, 1]},
+        'use_background': bF,
         'draw_Nsegs': {'t': int, 'min': 1, 'max': 12}
     }
 
@@ -651,7 +672,7 @@ def null_dict(n, key='initial_value', **kwargs):
         return dic2
 
 
-def enrichment_dict(source=None, types=[], bouts=[], to_keep=[], pre_kws={}, **kwargs):
+def enrichment_dict(types=[], bouts=[], to_keep=[], pre_kws={}, **kwargs):
     pre = null_dict('preprocessing', **pre_kws)
     proc = null_dict('processing', types={k: True if k in types else False for k in proc_type_keys})
     annot = null_dict('annotation', bouts={k: True if k in bouts else False for k in bout_keys})
@@ -671,6 +692,13 @@ def arena(x, y=None):
         return null_dict('arena', arena_shape='circular', arena_dims=(x, x))
     else:
         return null_dict('arena', arena_shape='rectangular', arena_dims=(x, y))
+
+
+def prestarved(h=0.0, age=0.0, q=1.0, substrate_type='standard'):
+    sub0 = null_dict('substrate', type=substrate_type, quality=q)
+    sub1 = null_dict('substrate', type=substrate_type, quality=0.0)
+    return {0: null_dict('epoch', start=0.0, stop=age - h, substrate=sub0),
+            1: null_dict('epoch', start=age - h, stop=age, substrate=sub1)}
 
 
 def init_shortcuts():
@@ -779,9 +807,6 @@ def store_RefPars():
     save_dict(d, paths.path('ParRef'), use_pickle=False)
 
 
-
-
-
 def odor(i, s, id='Odor'):
     return null_dict('odor', odor_id=id, odor_intensity=i, odor_spread=s)
 
@@ -792,6 +817,7 @@ def oG(c=1, id='Odor'):
 
 def oD(c=1, id='Odor'):
     return odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)
+
 
 if __name__ == '__main__':
     store_controls()

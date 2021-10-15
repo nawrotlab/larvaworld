@@ -275,10 +275,10 @@ def import_window(datagroup_id, raw_dic):
                     for i, (id, dir) in enumerate(raw_dic.items()):
                         w.Element(f'new_{id}').Update(value=f'{gID}_{i}')
             if e == 'Ok':
-                conf = s1.get_dict(values=v, window=w)
+                conf = s1.get_dict(v, w)
                 kws = {
                     'datagroup_id': datagroup_id,
-                    'group_id': gID,
+                    'larva_groups': {gID: null_dict('LarvaGroup', sample=None)},
                     **conf}
                 w.close()
                 from lib.stor.managing import build_dataset
@@ -310,7 +310,8 @@ def import_window(datagroup_id, raw_dic):
                     if datagroup_id in ['Berni lab']:
                         target0 = f'{targets[0]}/{target_id0}'
                         source_files = flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
-                              n.startswith(source_id)] for source_id, source in raw_dic.items()])
+                                                      n.startswith(source_id)] for source_id, source in
+                                                     raw_dic.items()])
                         dd = build_dataset(id=target_id0, target_dir=target0, source_files=source_files, **kws)
                     elif datagroup_id in ['Schleyer lab']:
                         target0 = targets[0].replace(raw_ids[0], target_id0)

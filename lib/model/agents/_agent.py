@@ -26,7 +26,7 @@ class LarvaworldAgent:
         self.default_color = default_color
         self.color = self.default_color
         self.radius = radius
-        self.id_box = self.init_id_box()
+        self.id_box = InputBox(text=self.unique_id,color_inactive=self.default_color, color_active=self.default_color,agent=self)
         self.odor_id = odor['odor_id']
         self.set_odor_dist(odor['odor_intensity'], odor['odor_spread'])
 
@@ -37,14 +37,8 @@ class LarvaworldAgent:
     def get_position(self):
         return tuple(self.pos)
 
-    def get_radius(self):
-        return self.radius
-
-    def init_id_box(self):
-        id_box = InputBox(visible=False, text=self.unique_id,
-                              color_inactive=self.default_color, color_active=self.default_color,
-                              screen_pos=None, agent=self)
-        return id_box
+    # def get_radius(self):
+    #     return self.radius
 
     def set_id(self, id):
         self.unique_id = id

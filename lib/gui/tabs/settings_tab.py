@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 import lib.aux.dictsNlists
 from lib.conf.stored.conf import saveConfDict, loadConfDict
 from lib.conf.base.dtypes import store_controls
-from lib.gui.aux.elements import CollapsibleDict, Collapsible
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, PadDict
 from lib.gui.aux.functions import t_kws, gui_col, gui_cols, get_pygame_key
 from lib.gui.aux.buttons import GraphButton
 from lib.gui.tabs.tab import GuiTab
@@ -39,32 +39,35 @@ class SettingsTab(GuiTab):
 
     def single_control_layout(self, k, v, prefix=None, editable=True):
         k0=f'{prefix} {k}' if prefix is not None else k
-        l = [sg.T("", **t_kws(2)), sg.T(k, **t_kws(16)),
+        l = [sg.T(k, **t_kws(14)),
+        # l = [sg.T("", **t_kws(2)), sg.T(k, **t_kws(14)),
                sg.In(default_text=v, key=self.control_k(k0), disabled=True,
                      disabled_readonly_background_color='black', enable_events=True,
-                     text_color='white', **t_kws(10), justification='center')]
+                     text_color='white', **t_kws(8), justification='center')]
         if editable :
             l+=[GraphButton('Document_2_Edit', f'{self.k_edit} {k0}', tooltip=f'Edit shortcut for {k}')]
         return l
 
-    def single_control_collapsible(self, name, dic, editable=True) :
+    def single_control_collapsible(self, name, dic, editable=True, **kwargs) :
         l = [self.single_control_layout(k, v, prefix=name, editable=editable) for k, v in dic.items()]
-        c = Collapsible(f'{self.k}_{name}', content=l, disp_name=name)
+        # c = PadDict(f'{self.k}_{name}', content=l, disp_name=name, **kwargs)
+        c = Collapsible(f'{self.k}_{name}', content=l, disp_name=name, **kwargs)
         return c
 
     def build_controls_collapsible(self, c):
+        kws={'state':True, 'subdict_state':True}
         b_reset=GraphButton('Button_Burn', self.k_reset,tooltip='Reset all controls to the defaults. '
                                    'Restart Larvaworld after changing shortcuts.')
         conf = loadConfDict('Settings')
         l = []
         for title, dic in conf['keys'].items():
-            cc = self.single_control_collapsible(title, dic)
+            cc = self.single_control_collapsible(title, dic, **kws)
             l += cc.get_layout(as_col=False)
             c.update(cc.get_subdicts())
-        c_keyboard = Collapsible('Keyboard', content=l, next_to_header=[b_reset])
-        c_mouse=self.single_control_collapsible('mouse', conf['mouse'], editable=False)
+        c_keyboard = Collapsible('Keyboard', content=l, next_to_header=[b_reset], state=True, Ncols=2)
+        c_mouse=self.single_control_collapsible('mouse', conf['mouse'], editable=False, **kws)
 
-        c_controls = Collapsible('Controls', content=[[gui_col([c_keyboard, c_mouse], 0.33)]])
+        c_controls = Collapsible('Controls', content=[[gui_col([c_keyboard, c_mouse], 0.33)]], state=True)
         for s in [c_keyboard, c_mouse]:
             c.update(s.get_subdicts())
 
@@ -79,7 +82,7 @@ class SettingsTab(GuiTab):
 
     def build(self):
         c = {}
-        c1 = CollapsibleDict('visualization', state=True, subdict_state=True)
+        c1 = CollapsibleDict('visualization', state=True, subdict_state=True, Ncols=2, value_kws={'size' : (10,1)})
         c2 = CollapsibleDict('replay', state=True, subdict_state=True)
 
         c3, d = self.build_controls_collapsible(c)
@@ -87,7 +90,7 @@ class SettingsTab(GuiTab):
         for s in [c1, c2, c3]:
             c.update(s.get_subdicts())
 
-        l = gui_cols(cols=[[c1], [c2], [c3]])
+        l = gui_cols(cols=[[c1], [c2], [c3]], x_fracs=[0.35,0.2,0.45])
 
         return l, c, {}, d
 

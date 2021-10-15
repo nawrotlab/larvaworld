@@ -1,14 +1,13 @@
 import copy
 import PySimpleGUI as sg
 
-
 from lib.aux.collecting import output_keys
 from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, CollapsibleTable
 from lib.gui.aux.functions import t_kws, gui_col, gui_cols
 from lib.gui.tabs.draw_tab import DrawTab
 from lib.gui.tabs.env_tab import EnvTab
 from lib.gui.tabs.tab import GuiTab
-from lib.conf.stored.conf import next_idx, expandConf
+from lib.conf.stored.conf import next_idx, expandConf, loadConf
 from run.exec_run import Exec
 
 
@@ -25,7 +24,7 @@ class SimTab(GuiTab):
     def DL0(self):
         return self.datalists[self.k_active]
 
-    @ property
+    @property
     def DL1(self):
         return self.datalists[self.k_stored]
 
@@ -35,16 +34,15 @@ class SimTab(GuiTab):
         self.draw_tab = DrawTab(name='draw', gui=self.gui)
         l3, c3, g3, d3 = self.draw_tab.build()
 
-
         tab_kws = {'font': ("Helvetica", 13, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
                    'tab_background_color': 'lightgrey'}
 
-        ts=[sg.Tab(n, nl, key=f'{n}_SIM TAB') for n,nl in zip(['DRAW', 'RUN'], [l3,l2])]
+        ts = [sg.Tab(n, nl, key=f'{n}_SIM TAB') for n, nl in zip(['DRAW', 'RUN'], [l3, l2])]
         l_tabs = sg.TabGroup([ts], key='ACTIVE_SIM_TAB', tab_location='topleft', **tab_kws)
         l = [[l1[0][0], l_tabs]]
         return l, {**c1, **c2, **c3}, {**g1, **g2, **g3}, {**d1, **d2, **d3}
 
-    def build_RUN(self) :
+    def build_RUN(self):
         kA, kS = self.k_active, self.k_stored
         d = {kA: {}, kS: {}}
         g1 = GraphList(self.name, tab=self, canvas_size=self.canvas_size)
@@ -54,69 +52,64 @@ class SimTab(GuiTab):
         return l, {}, {g1.name: g1}, d
 
     def build_conf(self):
-        s1 = CollapsibleTable('larva_groups', buttons=['add', 'remove'],index='Group ID',
+        s1 = CollapsibleTable('larva_groups', buttons=['add', 'remove'], index='Group ID', col_widths=[10, 4, 8, 12],
                               heading_dict={'N': 'distribution.N', 'color': 'default_color', 'model': 'model'},
                               dict_name='LarvaGroup', state=True)
-        tab1=EnvTab(name='environment', gui=self.gui, conftype='Env')
-        tab1_l, tab1_c, tab1_g, tab1_d=tab1.build()
-        sl1=tab1.selectionlists[tab1.conftype]
+        tab1 = EnvTab(name='environment', gui=self.gui, conftype='Env')
+        tab1_l, tab1_c, tab1_g, tab1_d = tab1.build()
+        sl1 = tab1.selectionlists[tab1.conftype]
 
-        # sl1 = SelectionList(tab=self, conftype='Env', idx=1)
-        sl2 = SelectionList(tab=self, conftype='Life', idx=1, with_dict=True, header_value='default',
-                           text_kws=t_kws(14), value_kws=t_kws(10), width=12, header_text_kws=t_kws(9))
+        s2 = CollapsibleTable('trials', buttons=['add', 'remove'], index='idx', col_widths=[3, 5, 5, 6, 10],
+                              heading_dict={'start': 'start', 'stop': 'stop', 'quality': 'substrate.quality',
+                                            'type': 'substrate.type'},
+                              dict_name='epoch', state=True)
         sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], progress=True,
-                            sublists={'env_params': sl1, 'life_params' : sl2, 'larva_groups' : s1})
-        sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Simulation types', buttons=[], sublists={'simulations': sl3})
-
-
+                            sublists={'env_params': sl1, 'larva_groups': s1})
+        sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Simulation type :', buttons=[],single_line=True,
+                            width=16, sublists={'simulations': sl3})
 
         c1 = CollapsibleDict('sim_params', disp_name='Configuration')
         c2 = CollapsibleDict('output')
-        # g1 = GraphList(self.name, tab=self)
-        # dl1 = DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp= 'Active simulations')
-        # dl2 = DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp= 'Completed simulations')
-        #
-        l = gui_cols(cols=[[sl4, sl3,s1, c1, c2, sl2, tab1]], x_fracs=[0.3])
-        # l = gui_cols(cols=[[sl4, sl3, sl1,s1, c1, c2, sl2], [g1.canvas], [dl1, dl2, g1]], x_fracs=[0.25, 0.55, 0.2])
+        l = gui_cols(cols=[[sl4, sl3, s1, c1, c2, s2, tab1]], x_fracs=[0.3])
 
         c = {}
-        for i in [c1, c2, sl2, s1]:
+        for i in [c1, c2, s2, s1]:
             c.update(i.get_subdicts())
         c.update(**tab1_c)
         return l, c, {}, {}
 
-    def update(self, w,  c, conf, id):
+    def update(self, w, c, conf, id):
         output_dict = dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys]))
         c['output'].update(w, output_dict)
-        sim=copy.deepcopy(conf['sim_params'])
-        sim.update({'sim_ID' : f'{id}_{next_idx(id)}', 'path' : f'single_runs/{id}'})
+        sim = copy.deepcopy(conf['sim_params'])
+        sim.update({'sim_ID': f'{id}_{next_idx(id)}', 'path': f'single_runs/{id}'})
         c['sim_params'].update(w, sim)
-
+        c['trials'].update(w, loadConf(conf['trials'], 'Trial'))
         self.draw_tab.set_env_db(env=expandConf(conf['env_params'], 'Env'), lg=conf['larva_groups'])
         w.write_event_value('RESET_ARENA', 'Draw the initial arena')
 
     def get(self, w, v, c, as_entry=True):
         conf = {
-                'sim_params': c['sim_params'].get_dict(v, w),
-                # 'life_params': c['sim_params'].get_dict(v, w),
-                'collections': [k for k in output_keys if c['output'].get_dict(v, w)[k]],
-                'enrichment': self.current_conf(v)['enrichment'],
-                }
+            'sim_params': c['sim_params'].get_dict(v, w),
+            'collections': [k for k in output_keys if c['output'].get_dict(v, w)[k]],
+            'enrichment': self.current_conf(v)['enrichment'],
+            'trials': c['trials'].get_dict(v, w),
+        }
         return conf
 
-    def run(self, v, w,c,d,g, conf,id):
-        N=conf['sim_params']['duration'] * 60 / conf['sim_params']['timestep']
-        p=self.base_list.progressbar
+    def run(self, v, w, c, d, g, conf, id):
+        N = conf['sim_params']['duration'] * 60 / conf['sim_params']['timestep']
+        p = self.base_list.progressbar
         p.run(w, max=N)
         conf['experiment'] = id
         conf['vis_kwargs'] = self.gui.get_vis_kwargs(v)
-        self.active_id=conf['sim_params']['sim_ID']
-        exec = Exec(mode='sim', conf=conf, progressbar = p,w_progressbar = w[p.k], run_externally=self.gui.run_externally['sim'])
+        self.active_id = conf['sim_params']['sim_ID']
+        exec = Exec(mode='sim', conf=conf, progressbar=p, w_progressbar=w[p.k],
+                    run_externally=self.gui.run_externally['sim'])
         self.DL0.add(w, {self.active_id: exec})
         exec.run()
 
-        return d,g
-
+        return d, g
 
     def eval(self, e, v, w, c, d, g):
         # print(e)
@@ -145,5 +138,6 @@ class SimTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-    larvaworld_gui = LarvaworldGui(tabs=['simulation','settings'])
+
+    larvaworld_gui = LarvaworldGui(tabs=['simulation', 'settings'])
     larvaworld_gui.run()

@@ -5,14 +5,14 @@ import lib.aux.sim_aux
 from lib.process.spatial import comp_PI
 
 def get_exp_condition(exp):
-    exp_condition_dict = {
-        'odor_pref_train': PrefTrainCondition,
+    d = {
+        'PItrain_mini': PrefTrainCondition,
+        'PItrain': PrefTrainCondition,
         'catch_me': CatchMeCondition,
         'keep_the_flag': KeepFlagCondition,
         'capture_the_flag': CaptureFlagCondition,
-        # 'odor_pref_train': PrefTrainCondition,
     }
-    return exp_condition_dict[exp] if exp in exp_condition_dict.keys() else None
+    return d[exp] if exp in d.keys() else None
 
 
 class PrefTrainCondition:
@@ -48,49 +48,48 @@ class PrefTrainCondition:
         if on_food :
             env.CS_counter += 1
             if env.CS_counter <= 3:
-                print()
-                print(f'Training trial {env.CS_counter} with CS started at {m}:{s}')
+                text=f'Training trial {env.CS_counter}'
                 self.toggle_odors(env, c,0.0)
                 env.move_larvae_to_center()
             elif env.CS_counter == 4:
-                print()
-                print(f'Test trial on food started at {m}:{s}')
+                text = f'Test trial on food'
                 self.init_test(env)
                 self.toggle_odors(env, c,c)
                 env.move_larvae_to_center()
-            elif env.CS_counter == 5:
-                PI = comp_PI(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
-                print()
-                print(f'Test trial off food ended at {m}:{s} with PI={PI}')
-                env.end_condition_met = True
+
 
         else:
             env.UCS_counter += 1
             if env.UCS_counter <= 3:
-                print()
-                print(f'Starvation trial {env.UCS_counter} with UCS started at {m}:{s}')
+                text = f'Starvation trial {env.UCS_counter}'
                 self.toggle_odors(env, 0.0, c)
                 env.move_larvae_to_center()
             elif env.UCS_counter == 4:
                 PI = comp_PI(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
                 print()
                 print(f'Test trial on food ended at {m}:{s} with PI={PI}')
-                print()
-                print(f'Test trial off food started at {m}:{s}')
+                text = f'Test trial off food'
                 self.toggle_odors(env, c, c)
                 env.move_larvae_to_center()
-
-
-
+        env.input_box.flash_text(text)
 
     def check(self, env):
-        m, s = env.sim_clock.minute, env.sim_clock.second
-
-        if env.CS_counter == 0 or env.sim_clock.timer_closed:
-            self.start_trial(env, on_food=True)
-
-        if env.sim_clock.timer_opened or (m >= 39 and s>=50):
-            self.start_trial(env, on_food=False)
+        for i, ep in env.sim_epochs.items():
+            if env.Nticks == ep['start']:
+                q=ep['substrate']['quality']
+                if q == 0.0:
+                    env.food_grid.empty_grid()
+                    self.start_trial(env, on_food=False)
+                elif q == 1.0:
+                    env.food_grid.reset()
+                    self.start_trial(env, on_food=True)
+            elif env.Nticks == ep['stop'] and i==len(env.sim_epochs)-1 :
+                PI = comp_PI(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
+                print()
+                print(f'Test trial off food ended with PI={PI}')
+                text = f'Test trial off food PI={PI}'
+                env.input_box.flash_text(text)
+                env.end_condition_met = True
 
 
 
@@ -105,6 +104,8 @@ class CatchMeCondition:
                       env.follower_group: 0.0}
 
     def check(self, env):
+        if env.Nticks == 0:
+            env.input_box.flash_text('Catch me')
         def set_target_group(group):
             env.target_group = group
             env.follower_group = 'Right' if env.target_group == 'Left' else 'Left'
@@ -133,6 +134,8 @@ class KeepFlagCondition:
         env.r_t = 0
 
     def check(self, env):
+        if env.Nticks == 0:
+            env.input_box.flash_text('Keep the flag')
         dur = 180
         carrier = env.flag.is_carried_by
         if carrier is None:
@@ -167,6 +170,8 @@ class CaptureFlagCondition:
         env.r_dst0 = env.flag.radius * 2 + env.r_base.radius * 2
 
     def check(self, env):
+        if env.Nticks == 0:
+            env.input_box.flash_text('Capture the flag')
         flag_p = env.flag.get_position()
         l_dst = -env.l_dst0 + lib.aux.sim_aux.compute_dst(flag_p, env.l_base_p)
         r_dst = -env.r_dst0 + lib.aux.sim_aux.compute_dst(flag_p, env.r_base_p)

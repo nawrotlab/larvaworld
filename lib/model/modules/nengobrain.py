@@ -12,43 +12,37 @@ class NengoBrain(Network, Brain):
     def __init__(self, agent, modules, conf, **kwargs):
         super().__init__(**kwargs)
         Brain.__init__(self, agent, modules, conf)
-        self.food_feedback=False
-        self.osc_coupling = Oscillator_coupling(**self.conf['interference_params'])
-        self.feeder = NengoEffector(**self.conf['feeder_params'])
-
-        self.turner = NengoEffector(**self.conf['turner_params'])
-        self.crawler = NengoEffector(**self.conf['crawler_params'])
-        if self.modules['olfactor'] :
-            self.olfactor = NengoEffector(**self.conf['olfactor_params'])
-        else :
-            self.olfactor=False
-        self.nengo_manager = NengoManager(crawler=self.crawler,
-                                          turner=self.turner,
-                                          feeder=self.feeder,
-                                          osc_coupling=self.osc_coupling,
-                                          Nodors=self.agent.model.Nodors)
-        if self.modules['intermitter']:
-            self.intermitter = NengoIntermitter(dt=self.agent.model.dt,brain=self,
-                                           crawler=self.crawler, turner=self.turner, feeder=self.feeder,
-                                           nengo_manager=self.nengo_manager,
-                                           **self.conf['intermitter_params'])
+        dt = self.agent.model.dt
+        m = self.modules
+        c = self.conf
+        self.food_feedback = False
+        self.osc_coupling = Oscillator_coupling(**c['interference_params'])
+        self.feeder = NengoEffector(**c['feeder_params'])
+        self.turner = NengoEffector(**c['turner_params'])
+        self.crawler = NengoEffector(**c['crawler_params'])
+        if m['olfactor']:
+            self.olfactor = NengoEffector(**c['olfactor_params'])
+        else:
+            self.olfactor = None
+        nm = self.nengo_manager = NengoManager(crawler=self.crawler,
+                                               turner=self.turner,
+                                               feeder=self.feeder,
+                                               osc_coupling=self.osc_coupling,
+                                               Nodors=self.agent.model.Nodors)
+        if m['intermitter']:
+            self.intermitter = NengoIntermitter(dt=dt, brain=self, nengo_manager=nm, **c['intermitter_params'])
             self.intermitter.start_effector()
-        else :
-            self.intermitter=None
+        else:
+            self.intermitter = None
         self.build()
         self.sim = Simulator(self, dt=0.01)
-        self.Nsteps = int(self.agent.model.dt / self.sim.dt)
-
-    # def setup(self, **kwargs):
-    #     Brain.__init__(self, **kwargs)
-    #     dt=
-
+        self.Nsteps = int(dt / self.sim.dt)
 
     def build(self):
-        m=self.nengo_manager
+        m = self.nengo_manager
         with self:
-            if self.olfactor:
-                N=m.Nodors
+            if self.olfactor is not None:
+                N = m.Nodors
                 odors = Node(m.get_odor_concentrations, size_in=N)
 
                 odor_memory = EnsembleArray(n_neurons=100, n_ensembles=N, ens_dimensions=2)
@@ -144,7 +138,6 @@ class NengoBrain(Network, Brain):
             linear_freq_node = Node(m.crawler.get_freq, size_out=1)
             angular_freq_node = Node(m.turner.get_freq, size_out=1)
 
-
             linear_freq = Ensemble(n_neurons=50, dimensions=1, neuron_type=Direct())
             angular_freq = Ensemble(n_neurons=50, dimensions=1, neuron_type=Direct())
 
@@ -158,7 +151,6 @@ class NengoBrain(Network, Brain):
             Connection(x[0], interference[0], synapse=0)
             Connection(y[0], interference[1], synapse=0)
 
-
             speeds = Ensemble(n_neurons=200, dimensions=3, neuron_type=Direct())
             Connection(interference, speeds, synapse=0.01, function=intermittency)
 
@@ -168,18 +160,12 @@ class NengoBrain(Network, Brain):
             Connection(speeds[0], linear_s, synapse=0, function=crawler)
             Connection(speeds[1], angular_s, synapse=0, function=turner)
 
-
-
             # Collect data for plotting
             self.p_speeds = Probe(speeds)
             self.p_linear_s = Probe(linear_s)
             self.p_angular_s = Probe(angular_s)
 
-
-
-
-
-            if self.feeder.initial_freq==0 :
+            if self.feeder.initial_freq == 0:
                 z = Ensemble(n_neurons=200, dimensions=3, neuron_type=Direct())
                 Connection(z, z[:2], synapse=synapse, function=feeding_oscillator)
                 feeding_freq_node = Node(m.feeder.get_freq, size_out=1)
@@ -191,7 +177,7 @@ class NengoBrain(Network, Brain):
                 Connection(speeds[2], feeding_s, synapse=0, function=feeder)
                 self.p_feeding_s = Probe(feeding_s)
 
-                if self.food_feedback :
+                if self.food_feedback:
                     f_cur = Node(m.get_food_detected, size_out=1)
                     f_suc = Node(m.get_feed_success, size_out=1)
                     Connection(f_cur, linear_freq)
@@ -200,12 +186,6 @@ class NengoBrain(Network, Brain):
                     Connection(f_cur, feeding_freq, synapse=1, transform=1)
                     Connection(f_suc, feeding_freq, synapse=0.01, transform=1)
                     Connection(f_suc, linear_freq, synapse=0.01, transform=-1)
-
-
-
-
-
-
 
     def mean_odor_change(self, data, Nticks):
         c = data[self.p_change]

@@ -273,12 +273,13 @@ class HeadedElement(GuiElement):
 
 class SelectionList(GuiElement):
     def __init__(self, tab, conftype=None, disp=None, buttons=[], button_kws = {}, sublists={}, idx=None, progress=False, width=24,
-                 with_dict=False, name=None, **kwargs):
+                 with_dict=False, name=None,single_line=False, **kwargs):
         self.conftype = conftype if conftype is not None else tab.conftype
         # print(self.conftype, tab.conftype)
         if name is None:
             name = self.conftype
         super().__init__(name=name)
+        self.single_line = single_line
         self.with_dict = with_dict
         self.width = width
         self.tab = tab
@@ -321,7 +322,7 @@ class SelectionList(GuiElement):
             l = NamedList(self.name, key=self.k, choices=self.confs, default_value=None,
                           drop_down=True, size=(self.width, None),
                           list_kws={'tooltip': f'The currently loaded {n}.'},
-                          header_kws={'text': n.capitalize(), 'after_header': bs, 'single_line': False}).layout
+                          header_kws={'text': n.capitalize(), 'after_header': bs, 'single_line': self.single_line}).layout
         if self.progressbar is not None:
             l.append(self.progressbar.l)
         return l
@@ -631,12 +632,13 @@ class DataList(NamedList):
 class Collapsible(HeadedElement, GuiElement):
     def __init__(self, name, state=False, content=[], disp_name=None, toggle=None, disabled=False, next_to_header=None,
                  auto_open=False, header_dict=None, header_value=None, header_list_width=10, header_list_kws={},
-                 header_text_kws=t_kws(12), header_key=None,use_header=True, **kwargs):
+                 header_text_kws=t_kws(12), header_key=None,use_header=True,Ncols=1,col_idx=None,  **kwargs):
         if disp_name is None:
             disp_name = get_disp_name(name)
         self.disp_name = disp_name
         self.state = state
         self.toggle = toggle
+        content=self.arrange(content, Ncols=Ncols, col_idx=col_idx)
         if use_header :
 
             self.auto_open = auto_open
@@ -743,10 +745,18 @@ class Collapsible(HeadedElement, GuiElement):
         subdicts[self.name] = self
         return subdicts
 
+    def arrange(self, content, Ncols=1, col_idx=None):
+        if col_idx is not None :
+            content = [[content[i] for i in idx] for idx in col_idx]
+            content = [[sg.Col(ii, **col_kws) for ii in content]]
+        elif Ncols > 1:
+            content = group_list_by_n([*content], int(np.ceil(len(content) / Ncols)))
+            content = [[sg.Col(ii, **col_kws) for ii in content]]
+        return content
 
 class CollapsibleTable(Collapsible):
     def __init__(self, name, index=None, dict_name=None, heading_dict={}, dict={},
-                 buttons=[], button_args={}, **kwargs):
+                 buttons=[], button_args={},col_widths=None, **kwargs):
         if dict_name is None:
             dict_name = name
         if index is None:
@@ -761,20 +771,24 @@ class CollapsibleTable(Collapsible):
         self.dict=dict
         self.data=self.dict2data()
         self.Ncols = len(self.headings)+1
-        col_widths = [10]
+
         col_visible = [True] * self.Ncols
         self.color_idx = None
         for i, p in enumerate(self.headings):
-            if p in ['id', 'group']:
-                col_widths.append(10)
-            elif p in ['color']:
-                col_widths.append(8)
-                self.color_idx = i+1
-                col_visible[i+1] = False
-            elif p in ['model']:
-                col_widths.append(14)
-            else:
-                col_widths.append(10)
+            if p in ['color']:
+                self.color_idx = i + 1
+                col_visible[i + 1] = False
+        if col_widths is None :
+            col_widths = [10]
+            for i, p in enumerate(self.headings):
+                if p in ['id', 'group']:
+                    col_widths.append(10)
+                elif p in ['color']:
+                    col_widths.append(8)
+                elif p in ['model']:
+                    col_widths.append(14)
+                else:
+                    col_widths.append(10)
         after_header = button_row(name, buttons, button_args)
         content = [[Table(values=self.data, headings=[index]+self.headings,
                           def_col_width=7, key=self.key, num_rows=max([1,len(self.data)]),
@@ -835,10 +849,88 @@ class CollapsibleTable(Collapsible):
             self.update(w)
 
 
+def v_layout(k0,args, value_kws={}):
+    v = args['initial_value']
+    vs = args['values']
+    t = args['dtype']
+    if t == bool:
+        temp = BoolButton(k0, v)
+    elif t == str:
+        if vs is None:
+            temp = sg.In(v, key=k0, **value_kws)
+        else:
+            temp = sg.Combo(vs, default_value=v, key=k0, enable_events=True, readonly=True, **value_kws)
+    elif t == List[str]:
+        temp = sg.In(v, key=k0, **value_kws)
+    else:
+        spin_kws = {
+            'values': vs,
+            'initial_value': v,
+            'key': k0,
+            'dtype': base_dtype(t),
+            'value_kws': {'size': (args['Ndigits'], 1)}
+        }
+        if t in [List[float], List[int]]:
+            temp = MultiSpin(tuples=False, **spin_kws)
+        elif t in [List[Tuple[float]], List[Tuple[int]]]:
+            temp = MultiSpin(tuples=True, **spin_kws)
+        elif t in [Tuple[float], Tuple[int]]:
+            temp = MultiSpin(**spin_kws, Nspins=2)
+        elif t in [float, int]:
+            temp = SingleSpin(**spin_kws)
+    return temp
+
+def d_layout(name, type_dict=None, text_kws={}, value_kws={}, col_idx=None, Ncols=1):
+    if type_dict is None:
+        type_dict = par_dict(name)
+    l = []
+    for k, args in type_dict.items():
+        ii = [sg.T(f'{get_disp_name(k)}:', **text_kws), v_layout(f'{name}_{k}', args, value_kws)]
+        l.append(ii)
+    if col_idx is not None:
+        l = [[l[i] for i in idx] for idx in col_idx]
+        l = [[sg.Col(ii, **col_kws) for ii in l]]
+    elif Ncols > 1:
+        l = group_list_by_n([*l], int(np.ceil(len(l) / Ncols)))
+        l = [[sg.Col(ii, **col_kws) for ii in l]]
+    return l
+
+class PadDict:
+    def __init__(self, name,type_dict=None, disp_name=None, content=None, layout_pane_kwargs = {'border_width' : 10},**kwargs):
+
+        if content is None :
+            content=d_layout(name,type_dict=type_dict, **kwargs)
+        if disp_name is None :
+            disp_name=name
+        header=[[sg.T(disp_name.upper(), justification='center',background_color='green', border_width=4, **t_kws(24))]]
+        self.layout=header+content
+        self.name=name
+        self.layout_pane_kwargs=layout_pane_kwargs
+        # self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()}
+
+    def get_layout(self, as_col=True, **kwargs):
+        self.layout_pane_kwargs.update(kwargs)
+        return [[sg.Pane([sg.Col(self.layout)],**self.layout_pane_kwargs)]]
+        # return [sg.Col(self.layout, **self.layout_col_kwargs)] if as_col else self.layout
+
+    def get_subdicts(self):
+        return {self.name:self}
+
+    def get_dict(self, v, w):
+        d = {}
+        for k, t in self.dtypes.items():
+            k0 = f'{self.name}_{k}'
+            if t == bool:
+                d[k] = w[f'TOGGLE_{k0}'].get_state()
+            elif base_dtype(t) in [int, float]:
+                d[k] = w[k0].get()
+            else:
+                d[k] = retrieve_value(v[k0], t)
+        return d
 
 class CollapsibleDict(Collapsible):
-    def __init__(self, name, dict_name=None, type_dict=None,Ncols=1, value_kws={}, text_kws={},as_entry=None,
-                 subdict_state=False,col_idx=None,  **kwargs):
+    def __init__(self, name, dict_name=None, type_dict=None,value_kws={}, text_kws={},as_entry=None,
+                 subdict_state=False,  **kwargs):
         if type_dict is None:
             entry=par(name=as_entry, t=str, v='Unnamed') if as_entry is not None else {}
             dic = par_dict(name if dict_name is None else dict_name)
@@ -846,7 +938,7 @@ class CollapsibleDict(Collapsible):
         self.as_entry=as_entry
         self.subdict_state=subdict_state
 
-        content, self.subdicts=self.build(name,type_dict, value_kws, text_kws, Ncols, col_idx)
+        content, self.subdicts=self.build(name,type_dict, value_kws, text_kws)
         self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()}
         del type_dict
         super().__init__(name, content=content, **kwargs)
@@ -886,53 +978,26 @@ class CollapsibleDict(Collapsible):
         text_kws['size']=int(text_kws['size'][0]/Ncols), text_kws['size'][1]
         return text_kws
 
-    def build(self,name,type_dict, value_kws={}, text_kws={}, Ncols=1, col_idx=None) :
+    def build(self,name,type_dict, value_kws={}, text_kws={}) :
         subdicts = {}
-        # text_kws = self.set_element_size(text_kws, Ncols=Ncols)
         content = []
         for k, args in type_dict.items():
             k0 = f'{name}_{k}'
             t = args['dtype']
             if t == dict:
                 subdicts[k0] = CollapsibleDict(k0, disp_name=k, type_dict=args['content'],
-                                               text_kws=text_kws, state=self.subdict_state)
+                                               text_kws=text_kws,value_kws = value_kws, state=self.subdict_state)
                 ii = subdicts[k0].get_layout()
             else:
-                v = args['initial_value']
-                vs = args['values']
-                if t == bool:
-                    temp = BoolButton(k0, v)
-                elif t == str:
-                    if vs is None:
-                        temp = sg.In(v, key=k0, **value_kws)
-                    else:
-                        temp = sg.Combo(vs, default_value=v, key=k0, enable_events=True, readonly=True, **value_kws)
-                elif t == List[str]:
-                    temp = sg.In(v, key=k0, **value_kws)
-                else:
-                    spin_kws = {
-                        'values': vs,
-                        'initial_value': v,
-                        'key': k0,
-                        'dtype': base_dtype(t),
-                        'value_kws': {'size': (args['Ndigits'], 1)}
-                    }
-                    if t in [List[float], List[int]]:
-                        temp = MultiSpin(tuples=False, **spin_kws)
-                    elif t in [List[Tuple[float]], List[Tuple[int]]]:
-                        temp = MultiSpin(tuples=True, **spin_kws)
-                    elif t in [Tuple[float], Tuple[int]]:
-                        temp = MultiSpin(**spin_kws, Nspins=2)
-                    elif t in [float, int]:
-                        temp = SingleSpin(**spin_kws)
+                temp=v_layout(k0,args, value_kws)
                 ii = [sg.T(f'{get_disp_name(k)}:', **text_kws), temp]
             content.append(ii)
-        if col_idx is not None :
-            content = [[content[i] for i in idx] for idx in col_idx]
-            content = [[sg.Col(ii, **col_kws) for ii in content]]
-        elif Ncols > 1:
-            content = group_list_by_n([*content], int(np.ceil(len(content) / Ncols)))
-            content = [[sg.Col(ii, **col_kws) for ii in content]]
+        # if col_idx is not None :
+        #     content = [[content[i] for i in idx] for idx in col_idx]
+        #     content = [[sg.Col(ii, **col_kws) for ii in content]]
+        # elif Ncols > 1:
+        #     content = group_list_by_n([*content], int(np.ceil(len(content) / Ncols)))
+        #     content = [[sg.Col(ii, **col_kws) for ii in content]]
         return content, subdicts
 
 # class LayoutDict :

@@ -141,13 +141,13 @@ def get_replay_kwargs(args):
     if fix is not None:
         use_background = True
         if len(fix) == 2 and np.abs(fix[1]) == 1:
-            fix_point, secondary_fix_point = fix[0], fix[1]
+            fix_point, fix_segment = fix[0], fix[1]
         elif len(fix) == 1:
-            fix_point, secondary_fix_point = fix[0], None
+            fix_point, fix_segment = fix[0], None
         else:
             raise ValueError('Inappropriate fix points')
     else:
-        fix_point, secondary_fix_point = None, None
+        fix_point, fix_segment = None, None
         use_background = False
     if args.dynamic_color is None:
         dynamic_color = None
@@ -170,7 +170,7 @@ def get_replay_kwargs(args):
     replay_kwargs = {'agent_ids': args.agent_ids,
                      'transposition': args.transposition,
                      'fix_point': fix_point,
-                     'secondary_fix_point': secondary_fix_point,
+                     'fix_segment': fix_segment,
                      'draw_Nsegs': args.draw_Nsegs,
                      'use_background': use_background,
                      'time_range': args.tick_range,
@@ -281,8 +281,8 @@ def get_life_kwargs(args):
     #     substrate_quality=[1.0]
     life_kwargs = {
         'hours_as_larva': args.hours_as_larva,
-        'substrate_quality': args.substrate_quality,
-        'epochs': starvation_hours
+        'epochs': starvation_hours,
+        'substrate' : null_dict('substrate', quality=args.substrate_quality)
     }
     return life_kwargs
 

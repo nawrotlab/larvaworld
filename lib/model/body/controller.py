@@ -167,7 +167,6 @@ class BodySim(BodyManager):
         for o in self.carried_objects:
             o.pos = self.pos
 
-        # print(self.unique_id, self.cum_dst)
 
     def compute_new_lin_vel_vector(self, target_segment):
         # Option 1 : Create the linear velocity from orientation.
@@ -259,12 +258,6 @@ class BodySim(BodyManager):
         self.head_contacts_ground = value
 
     def step_no_physics(self, lin_vel, ang_vel):
-
-        # print()
-        # print(np.round(fun.comp_bearing([self.pos[0]], [self.pos[1]],  np.rad2deg(self.get_head().get_orientation()), loc=(0.2,0.2), in_deg=True))[0])
-        # self.body_bend += self.dt * ang_velocity
-        # self.body_bend = np.clip(self.body_bend, a_min=-np.pi, a_max=np.pi)
-
         # BIO : Translate motor signal to behavior (how much to turn, how much to move)
         # distance = motor_vector[0] * self.max_speed
         # self.header = (self.header + motor_vector[1] * math.pi / 2) % (2 * math.pi)
@@ -275,71 +268,15 @@ class BodySim(BodyManager):
         # TECH : Move the agent
         # Compute orientation
         dt = self.model.dt
-        a0 = self.spineangles[0] if len(self.spineangles) > 0 else 0.0
+
         head = self.get_head()
         hp0, o0 = head.get_pose()
         hr0 = self.get_global_rear_end_of_head()
-        # print(self.unique_id)
 
-
-        border_collision = any([l.intersects(self.segs[0].get_shape()) for l in self.model.border_lines]) if len(self.model.border_lines) > 0 else False
-        if not self.model.larva_collisions:
-            ids=self.model.detect_collisions(self.unique_id)
-            larva_collision=False if len(ids)==0 else True
-        else:
-            larva_collision = False
-        if border_collision or larva_collision:
-            lin_vel = 0
-            ang_vel += np.sign(ang_vel)*np.pi/10
-
-
-
+        lin_vel, ang_vel=self.assess_collisions(lin_vel, ang_vel, head)
         d = lin_vel * dt
-        ang_vel0=np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
+        ang_vel, o1, hr1, hp1 = self.assess_tank_contact(ang_vel, o0, d, hr0, hp0, dt)
 
-        def avoid_border(ang_vel, counter, dd=0.01):
-
-            if self.touch_sensors is None or any([ss not in self.get_sensors() for ss in ['L_front', 'R_front']]):
-                counter += 1
-                ang_vel *= -(1 + dd * counter)
-                return ang_vel, counter
-            else :
-                s=self.sim_length/1000
-                L,R=self.get_sensor_position('L_front'), self.get_sensor_position('R_front')
-                Ld, Rd=self.model.tank_polygon.exterior.distance(Point(L)), self.model.tank_polygon.exterior.distance(Point(R))
-                Ld, Rd=Ld/s,Rd/s
-                LRd=Ld-Rd
-                ang_vel += dd * LRd
-                return ang_vel, counter
-
-
-        def check_in_tank(ang_vel, o0, d, hr0) :
-
-            o1 = o0 + ang_vel * dt
-            # print(o1,o0,ang_vel,dt)
-            k = np.array([math.cos(o1), math.sin(o1)])
-            dxy = k * d
-            if self.Nsegs > 1:
-                hr1 = hr0 + dxy
-                hp1 = hr1 + k * self.seg_lengths[0] / 2
-                hf1 = hr1 + k * self.seg_lengths[0]
-            else:
-                hr1 = None
-                hp1 = hp0 + dxy
-                hf1 = hp1 + k * (self.sim_length / 2)
-            hf1_ok, hp1_ok = lib.aux.sim_aux.inside_polygon(points=[hf1, hp1], tank_polygon=self.model.tank_polygon)
-            in_tank = all([hf1_ok, hp1_ok])
-            return in_tank, o1, hr1, hp1
-
-        in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
-        counter = -1
-        while not in_tank :
-            ang_vel, counter=avoid_border(ang_vel, counter)
-            in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
-
-        if counter>0:
-            # print(counter)
-            ang_vel = np.abs(ang_vel)*np.sign(ang_vel0)
         head.set_pose(hp1, o1)
         head.update_vertices(hp1, o1)
         if self.Nsegs > 1:
@@ -389,3 +326,66 @@ class BodySim(BodyManager):
 
     def compute_body_bend(self):
         self.body_bend = sum(self.spineangles[:self.Nangles_b])
+
+    def assess_collisions(self, lin_vel, ang_vel, head):
+        border_collision = any([l.intersects(head.get_shape()) for l in self.model.border_lines]) if len(
+            self.model.border_lines) > 0 else False
+        if not self.model.larva_collisions:
+            ids = self.model.detect_collisions(self.unique_id)
+            larva_collision = False if len(ids) == 0 else True
+        else:
+            larva_collision = False
+        if border_collision or larva_collision:
+            lin_vel = 0
+            ang_vel += np.sign(ang_vel) * np.pi / 10
+        return lin_vel, ang_vel
+
+    def assess_tank_contact(self, ang_vel, o0, d, hr0, hp0, dt):
+        a0 = self.spineangles[0] if len(self.spineangles) > 0 else 0.0
+        ang_vel0 = np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
+
+        def avoid_border(ang_vel, counter, dd=0.01):
+
+            if self.touch_sensors is None or any([ss not in self.get_sensors() for ss in ['L_front', 'R_front']]):
+                counter += 1
+                ang_vel *= -(1 + dd * counter)
+                return ang_vel, counter
+            else:
+                s = self.sim_length / 1000
+                L, R = self.get_sensor_position('L_front'), self.get_sensor_position('R_front')
+                Ld, Rd = self.model.tank_polygon.exterior.distance(Point(L)), self.model.tank_polygon.exterior.distance(
+                    Point(R))
+                Ld, Rd = Ld / s, Rd / s
+                LRd = Ld - Rd
+                ang_vel += dd * LRd
+                return ang_vel, counter
+
+        def check_in_tank(ang_vel, o0, d, hr0):
+
+            o1 = o0 + ang_vel * dt
+            # print(o1,o0,ang_vel,dt)
+            k = np.array([math.cos(o1), math.sin(o1)])
+            dxy = k * d
+            if self.Nsegs > 1:
+                hr1 = hr0 + dxy
+                hp1 = hr1 + k * self.seg_lengths[0] / 2
+                hf1 = hr1 + k * self.seg_lengths[0]
+            else:
+                hr1 = None
+                hp1 = hp0 + dxy
+                hf1 = hp1 + k * (self.sim_length / 2)
+            hf1_ok, hp1_ok = lib.aux.sim_aux.inside_polygon(points=[hf1, hp1], tank_polygon=self.model.tank_polygon)
+            in_tank = all([hf1_ok, hp1_ok])
+            return in_tank, o1, hr1, hp1
+
+        in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
+        counter = -1
+        while not in_tank:
+            ang_vel, counter = avoid_border(ang_vel, counter)
+            in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
+
+        if counter > 0:
+            # print(counter)
+            ang_vel = np.abs(ang_vel) * np.sign(ang_vel0)
+        return ang_vel, o1, hr1, hp1
+

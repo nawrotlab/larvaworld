@@ -1,7 +1,6 @@
 import math
 import os
 import time
-
 import numpy as np
 import pygame
 from scipy.spatial import ConvexHull
@@ -9,7 +8,7 @@ from scipy.spatial import ConvexHull
 import lib.process.aux
 
 
-class GuppiesViewer(object):
+class Viewer(object):
     def __init__(self, width, height, caption="", fps=10, dt=0.1, show_display=True, record_video_to=None,
                  record_image_to=None, zoom=1):
         x = 1550
@@ -46,22 +45,14 @@ class GuppiesViewer(object):
         self._scale = np.array([[1., .0], [.0, -1.]])
         self._translation = np.zeros(2)
 
-    def draw_arena(self, tank_shape, tank_color, screen_color):
-        # t0=time.time()
+    def draw_arena(self, vertices, tank_color, screen_color):
         surf1 = pygame.Surface(self.display_size, pygame.SRCALPHA)
         surf2 = pygame.Surface(self.display_size, pygame.SRCALPHA)
-        tank_shape = [self._transform(v) for v in tank_shape]
-        pygame.draw.polygon(surf1, tank_color, tank_shape, 0)
-
-        # screen_shape = [self._transform(v) for v in screen_shape]
-        # pygame.draw.polygon(surf2, screen_color, screen_shape, 0)
+        vertices = [self._transform(v) for v in vertices]
+        pygame.draw.polygon(surf1, tank_color, vertices, 0)
         pygame.draw.rect(surf2, screen_color, surf2.get_rect())
-        # surf1.blit(surf2, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
         surf2.blit(surf1, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
         self._window.blit(surf2, (0, 0))
-        # t1 = time.time()
-        # print()
-        # print(np.round((t1-t0)*1000))
 
     def init_screen(self):
         if self.show_display:
@@ -220,8 +211,8 @@ class ScreenItem:
 
 
 class InputBox(ScreenItem):
-    def __init__(self, visible=False, text='', color_inactive=None, color_active=None,
-                 screen_pos=None, linewidth=0.01, show_frame=False, agent=None, end_time=0, start_time=0):
+    def __init__(self, visible=False, text='', color_inactive=None, color_active=None,center=False, w=140, h=32,
+                 screen_pos=None, linewidth=0.01, show_frame=False, agent=None, end_time=0, start_time=0, font=None):
         super().__init__(color=color_active)
         self.screen_pos = screen_pos
         self.linewidth = linewidth
@@ -235,13 +226,21 @@ class InputBox(ScreenItem):
         self.color_inactive = color_inactive
         self.visible = visible
         self.active = False
-        self.font = pygame.font.Font(None, 32)
+        if font is None :
+            font = pygame.font.Font(None, 32)
+        self.font = font
         self.text = text
         self.text_font = None
         self.agent = agent
         self.end_time = end_time
         self.start_time = start_time
-        self.shape = None
+        self.center = center
+        self.w = w
+        self.h = h
+        if self.screen_pos is not None :
+            self.set_shape(self.screen_pos)
+        else :
+            self.shape = None
 
     def draw(self, viewer):
         if self.visible:
@@ -292,7 +291,10 @@ class InputBox(ScreenItem):
 
     def set_shape(self, pos):
         if pos is not None and not any(np.isnan(pos)):
-            self.shape = pygame.Rect(pos[0], pos[1], 140, 32)
+            if self.center :
+                self.shape = pygame.Rect(pos[0]-self.w/2, pos[1]-self.h/2, self.w, self.h)
+            else :
+                self.shape = pygame.Rect(pos[0], pos[1], self.w, self.h)
         else:
             self.shape = None
 
@@ -310,6 +312,11 @@ class InputBox(ScreenItem):
         self.text_font_r = self.text_font.get_rect()
         self.text_font_r.center = (x_pos * 0.91, y_pos)
 
+    def flash_text(self, text, t=2):
+        self.text = text
+        self.end_time = pygame.time.get_ticks() + t*1000
+        self.start_time = pygame.time.get_ticks() + int(0.1 * 1000)
+
 
 class SimulationClock(ScreenItem):
 
@@ -322,16 +329,16 @@ class SimulationClock(ScreenItem):
         self.second = 0
         self.minute = 0
         self.hour = 0
-        self.counter = 0
+        # self.counter = 0
 
-        self.timer_on = False
-        self.next_on = None
-        self.next_off = None
-        self.timer_opened = False
-        self.timer_closed = False
+        # self.timer_on = False
+        # self.next_on = None
+        # self.next_off = None
+        # self.timer_opened = False
+        # self.timer_closed = False
 
     def tick_clock(self):
-        self.counter += 1
+        # self.counter += 1
         self.dmsecond += self.sim_step_in_dms
         if self.dmsecond >= 100:
             self.second += 1
@@ -342,7 +349,6 @@ class SimulationClock(ScreenItem):
                 if self.minute >= 60:
                     self.hour += 1
                     self.minute -= 60
-        self.check_timer()
 
     def render_clock(self, width, height):
         # Scale to screen
@@ -389,33 +395,33 @@ class SimulationClock(ScreenItem):
         viewer.draw_text_box(self.second_font, self.second_font_r)
         viewer.draw_text_box(self.dmsecond_font, self.msecond_font_r)
 
-    def set_timer(self, on_ticks, off_ticks):
-        self.Ndurs = len(on_ticks)
-        self.timer_on_ticks, self.timer_off_ticks = on_ticks, off_ticks
-        self.dur_idx = 0
-        self.next_on, self.next_off = self.timer_on_ticks[self.dur_idx], self.timer_off_ticks[self.dur_idx]
-        self.timer_on = False
-
-    def check_timer(self):
-        self.timer_opened = False
-        self.timer_closed = False
-        if not self.timer_on and self.next_on is not None:
-            if self.counter >= self.next_on:
-                self.timer_on = True
-                self.timer_opened = True
-                self.dur_idx += 1
-                if self.dur_idx < self.Ndurs:
-                    self.next_on = self.timer_on_ticks[self.dur_idx]
-                else:
-                    self.next_on = None
-        elif self.timer_on and self.next_off is not None:
-            if self.counter >= self.next_off:
-                self.timer_on = False
-                self.timer_closed = True
-                if self.dur_idx < self.Ndurs:
-                    self.next_off = self.timer_off_ticks[self.dur_idx]
-                else:
-                    self.next_on = None
+    # def set_timer(self, on_ticks, off_ticks):
+    #     self.Ndurs = len(on_ticks)
+    #     self.timer_on_ticks, self.timer_off_ticks = on_ticks, off_ticks
+    #     self.dur_idx = 0
+    #     self.next_on, self.next_off = self.timer_on_ticks[self.dur_idx], self.timer_off_ticks[self.dur_idx]
+    #     self.timer_on = False
+    #
+    # def check_timer(self):
+    #     self.timer_opened = False
+    #     self.timer_closed = False
+    #     if not self.timer_on and self.next_on is not None:
+    #         if self.counter >= self.next_on:
+    #             self.timer_on = True
+    #             self.timer_opened = True
+    #             self.dur_idx += 1
+    #             if self.dur_idx < self.Ndurs:
+    #                 self.next_on = self.timer_on_ticks[self.dur_idx]
+    #             else:
+    #                 self.next_on = None
+    #     elif self.timer_on and self.next_off is not None:
+    #         if self.counter >= self.next_off:
+    #             self.timer_on = False
+    #             self.timer_closed = True
+    #             if self.dur_idx < self.Ndurs:
+    #                 self.next_off = self.timer_off_ticks[self.dur_idx]
+    #             else:
+    #                 self.next_on = None
 
 
 class SimulationScale(ScreenItem):
@@ -511,7 +517,7 @@ def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, traj_colo
         # This is the case for larva trajectories derived from experiments where some values are np.nan
         else:
             traj_x = np.array([x for x, y in traj])
-            ds, de = lib.anal.process.aux.parse_array_at_nans(traj_x)
+            ds, de = lib.process.aux.parse_array_at_nans(traj_x)
             parsed_traj = [traj[s:e] for s, e in zip(ds, de)]
             parsed_traj_col = [traj_col[s:e] for s, e in zip(ds, de)]
 

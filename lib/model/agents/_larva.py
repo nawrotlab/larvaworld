@@ -56,23 +56,23 @@ class Larva(LarvaworldAgent):
 
     @property
     def first_odor_concentration(self):
-        return list(self.brain.olfactor.Con.values())[0]
+        return list(self.brain.olfactor.X.values())[0]
 
     # @property
     # def odor_Con0(self):
-    #     return list(self.brain.olfactor.Con.values())[0]
+    #     return list(self.brain.olfactor.X.values())[0]
     #
     # @property
     # def odor_Con1(self):
-    #     return list(self.brain.olfactor.Con.values())[1]
+    #     return list(self.brain.olfactor.X.values())[1]
     #
     # @property
     # def odor_Con2(self):
-    #     return list(self.brain.olfactor.Con.values())[2]
+    #     return list(self.brain.olfactor.X.values())[2]
 
     @property
     def second_odor_concentration(self):
-        return list(self.brain.olfactor.Con.values())[1]
+        return list(self.brain.olfactor.X.values())[1]
 
     @property
     def first_odor_best_gain(self):
@@ -104,11 +104,11 @@ class Larva(LarvaworldAgent):
 
     @property
     def first_odor_concentration_change(self):
-        return list(self.brain.olfactor.dCon.values())[0]
+        return list(self.brain.olfactor.dX.values())[0]
 
     @property
     def second_odor_concentration_change(self):
-        return list(self.brain.olfactor.dCon.values())[1]
+        return list(self.brain.olfactor.dX.values())[1]
 
     # @property
     # def length_in_mm(self):

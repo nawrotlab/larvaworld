@@ -402,7 +402,7 @@ class LarvaDataset:
 
     def visualize(self, s0=None, e0=None, vis_kwargs=None, agent_ids=None, save_to=None, time_range=None,
                   draw_Nsegs=None, env_params=None, track_point=None, dynamic_color=None, use_background=False,
-                  transposition=None, fix_point=None, secondary_fix_point=None, **kwargs):
+                  transposition=None, fix_point=None, fix_segment=None, **kwargs):
         from lib.model.envs._larvaworld_replay import LarvaWorldReplay
         if vis_kwargs is None:
             vis_kwargs = null_dict('visualization', mode='video')
@@ -432,7 +432,7 @@ class LarvaDataset:
             n1 = 'transposed'
         elif fix_point is not None:
             from lib.process.spatial import fixate_larva
-            s, bg = fixate_larva(s, point=fix_point, secondary_point=secondary_fix_point,
+            s, bg = fixate_larva(s, point=fix_point, fix_segment=fix_segment,
                                  arena_dims=arena_dims, config=self.config)
             n1 = 'fixed'
         else:
@@ -466,7 +466,7 @@ class LarvaDataset:
         replay_env.run()
         print('Visualization complete')
 
-    def visualize_single(self, id, close_view=True, fix_point=-1, secondary_fix_point=None, save_to=None,
+    def visualize_single(self, id, close_view=True, fix_point=-1, fix_segment=None, save_to=None,
                          draw_Nsegs=None, vis_kwargs=None, **kwargs):
         from lib.model.envs._larvaworld_replay import LarvaWorldReplay
         from lib.process.spatial import fixate_larva
@@ -481,7 +481,7 @@ class LarvaDataset:
         else:
             env_params = self.env_params
         dic, pars, track_point = self.get_pars_list(fix_point, s0, draw_Nsegs)
-        s, bg = fixate_larva(s0, point=fix_point, secondary_point=secondary_fix_point,
+        s, bg = fixate_larva(s0, point=fix_point, fix_segment=fix_segment,
                              arena_dims=env_params['arena']['arena_dims'], config=self.config)
         if save_to is None:
             save_to = self.vis_dir

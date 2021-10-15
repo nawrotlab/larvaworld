@@ -316,12 +316,12 @@ output_dict = {
         'endpoint': []},
 
     'toucher': {
-        'step': ['A_touch', 'A_tur', 'cum_f_det'],
-        'endpoint': []},
+        'step': ['A_touch', 'A_tur', 'cum_f_det', 'on_food_tr'],
+        'endpoint': ['on_food_tr']},
 
     'feeder': {
         'step': ['l', 'm', 'f_am', 'sf_am', 'EEB'],
-        'endpoint': ['l', 'm', 'f_am', 'sf_am', ]},
+        'endpoint': ['l', 'm', 'f_am', 'sf_am', 'on_food_tr']},
 
     'gut': {'step': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M'],
             'endpoint': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']},

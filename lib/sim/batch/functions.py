@@ -12,7 +12,7 @@ import lib.aux.sim_aux
 from lib.anal.plotting import plot_2d, plot_3pars, plot_endpoint_scatter, plot_endpoint_params, plot_debs, \
     plot_heatmap_PI
 from lib.sim.batch.aux import grid_search_dict, load_traj
-from lib.sim.single.single_run import run_sim, SingleRun
+from lib.sim.single.single_run import SingleRun
 from lib.stor.larva_dataset import LarvaDataset
 
 
@@ -281,7 +281,7 @@ def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
             sim_params=reconstruct_dict(traj.f_get('sim_params'),
                                         sim_ID=f'run_{traj.v_idx}', path=traj.config.dataset_path,
                                         save_data=False),
-            life_params=reconstruct_dict(traj.f_get('life_params')),
+            trials=reconstruct_dict(traj.f_get('trials')),
             larva_groups=reconstruct_dict(traj.f_get('larva_groups')),
             **exp_kws).run()
 
@@ -303,7 +303,7 @@ def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
 
 
 def PI_computation(traj, dataset):
-    ind = dataset.comp_PI()
+    ind = dataset.config['PI']['PI']
     traj.f_add_result('PI', ind, comment=f'The preference index')
     return dataset, ind
 
