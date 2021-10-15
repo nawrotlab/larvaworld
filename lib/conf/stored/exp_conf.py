@@ -78,7 +78,7 @@ def pref_exp(name, dur=5.0, c=[], enrichment=enrichment_dict(types=['PI']), **kw
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
-def RvsS_groups(N=1, age=96.0, q=1.0, h_starved=0.0,sample='AttP2.Fed',substrate_type='standard',pref='',navigator=False,  **kwargs):
+def RvsS_groups(N=1, age=72.0, q=1.0, h_starved=0.0,sample='AttP2.Fed',substrate_type='standard',pref='',navigator=False,  **kwargs):
     l=null_dict('life_history', age=age, epochs=prestarved(h=h_starved, age=age, q=q, substrate_type=substrate_type))
     group_kws = {
         'sample': sample,

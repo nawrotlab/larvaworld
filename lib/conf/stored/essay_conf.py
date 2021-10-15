@@ -67,7 +67,7 @@ def run_RvsS_essay(**kwargs) :
     shutil.rmtree(f'{essay_kws["path"]}/data')
     return figs, results
 
-def double_patch_essay(substrates=['sucrose', 'standard', 'cornmeal'],N=2, dur=2.0,**kwargs):
+def double_patch_essay(substrates=['sucrose', 'standard', 'cornmeal'],N=5, dur=5.0, **kwargs):
     from lib.conf.stored.conf import next_idx
     essay_id = 'double_patch'
     kws = {
@@ -87,8 +87,9 @@ def double_patch_essay(substrates=['sucrose', 'standard', 'cornmeal'],N=2, dur=2
         return null_dict('sim_params', sim_ID=id, path=path, duration=dur, store_data=False)
 
     def conf(exp, id, dur, type='standard', l_kws={}):
+        lgs=RvsS_groups(expand=True, age=72.0, **l_kws)
         return null_dict('exp_conf', sim_params=sim(id, dur), env_params=double_patch_env(type=type),
-                         larva_groups=RvsS_groups(expand=True,**l_kws), experiment=exp,trials={}, **kws)
+                         larva_groups=lgs, experiment=exp,trials={}, **kws)
 
     def time_ratio_exp(dur=dur, exp='double_patch'):
         return {

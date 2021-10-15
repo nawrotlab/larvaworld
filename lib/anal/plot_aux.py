@@ -3,7 +3,9 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt, patches, transforms, ticker
 from matplotlib.pyplot import bar
+from scipy.stats import mannwhitneyu
 
+from lib.anal.fitting import pvalue_star
 from lib.aux.dictsNlists import unique_list
 from lib.aux.colsNstr import N_colors
 from lib.conf.base.par import getPar
@@ -363,3 +365,22 @@ def boolean_indexing(v, fillval=np.nan):
     out = np.full(mask.shape, fillval)
     out[mask] = np.concatenate(v)
     return out
+
+def annotate_plot(data, x,y,hue,**kwargs):
+    from statannotations.Annotator import Annotator
+    h1, h2 = np.unique(data[hue].values)
+    subIDs0 = np.unique(data[x].values)
+    pairs = [((subID, h1), (subID, h2)) for subID in subIDs0]
+    pvs = []
+    for subID in subIDs0:
+        dd = data[data[x] == subID]
+        dd0 = dd[dd[hue] == h1][y].values
+        dd1 = dd[dd[hue] == h2][y].values
+        pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
+    f_pvs = [pvalue_star(pv) for pv in pvs]
+    # f_pvs = [f'p={pv:.2e}' for pv in pvs]
+
+    # Add annotations
+    annotator = Annotator(pairs=pairs,data=data, x=x,y=y,hue=hue, **kwargs)
+    annotator.verbose = False
+    annotator.annotate_custom_annotations(f_pvs)

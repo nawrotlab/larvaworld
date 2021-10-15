@@ -14,7 +14,7 @@ from matplotlib.ticker import FixedLocator, FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
 import statsmodels.api as sm
 from scipy import stats, signal, interpolate
-from scipy.stats import ttest_ind, mannwhitneyu
+from scipy.stats import ttest_ind
 from sklearn.linear_model import LinearRegression
 from PIL import Image
 import os
@@ -22,7 +22,7 @@ import os
 from lib.aux.dictsNlists import unique_list, flatten_list
 from lib.anal.fitting import BoutGenerator
 from lib.anal.plot_aux import plot_mean_and_range, circular_hist, dual_half_circle, confidence_ellipse, save_plot, \
-    plot_config, dataset_legend, process_plot, label_diff, boolean_indexing, Plot, plot_quantiles
+    plot_config, dataset_legend, process_plot, label_diff, boolean_indexing, Plot, plot_quantiles, annotate_plot
 from lib.aux import naming as nam
 from lib.aux.colsNstr import  N_colors
 
@@ -2721,15 +2721,19 @@ def boxplot_double_patch(xlabel='substrate', complex_colors=True, **kwargs):
     DataIDs = unique_list([d.config['group_id'] for d in P.datasets])
     ModIDs = unique_list([l.split('_')[-1] for l in DataIDs])
     subIDs = unique_list([l.split('_')[0] for l in DataIDs])
-
+    Nmods=len(ModIDs)
     Csubs= dict(zip(subIDs, ['green', 'orange', 'magenta']))
-    Cmods= dict(zip(ModIDs, ['dark', 'light']))
+    if Nmods==2 :
+        temp=['dark', 'light']
+    elif Nmods==3 :
+        temp=['dark', 'light', '']
+    Cmods= dict(zip(ModIDs, temp))
 
     shorts = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
     pars,  labs, lims = getPar(shorts, to_return=['d', 'l', 'lim'])
     Npars=len(pars)
 
-    P.build(Ncols=2,Nrows=3, figsize=(16 * 2, 10* 3))
+    P.build(Ncols=2,Nrows=3, figsize=(14 * 2, 8* 3))
     for ii in range(Npars):
         sh=shorts[ii]
         p = pars[ii]
@@ -2764,18 +2768,7 @@ def boxplot_double_patch(xlabel='substrate', complex_colors=True, **kwargs):
             return mdf
 
         def plot_p(data, ii,hue, agar=False) :
-            from statannotations.Annotator import Annotator
-            h1,h2=np.unique(data[hue].values)
-            subIDs0 = np.unique(data['Substrate'].values)
-            pairs = [((subID, h1), (subID, h2)) for subID in subIDs0]
-            pvs = []
-            for subID in subIDs0:
-                dd = data[data['Substrate'] == subID]
-                dd0 = dd[dd[hue] == h1]['value'].values
-                dd1 = dd[dd[hue] == h2]['value'].values
-                pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
 
-            f_pvs = [f'p={pv:.2e}' for pv in pvs]
             with sns.plotting_context('notebook', font_scale=1.4):
                 kws = {
                     'x': "Substrate",
@@ -2787,11 +2780,7 @@ def boxplot_double_patch(xlabel='substrate', complex_colors=True, **kwargs):
                 }
                 g1 = sns.boxplot(**kws)  # RUN PLOT
                 g1.get_legend().remove()
-                # Add annotations
-                annotator = Annotator(pairs=pairs,verbose=False, **kws)
-                annotator.configure(pvalue_format='star')
-                annotator.set_custom_annotations(f_pvs)
-                annotator.annotate()
+                annotate_plot(**kws)
                 g1.set(xlabel=None)
                 g2 = sns.stripplot(x="Substrate", y="value", hue=hue, data=data, color='black',
                                    ax=P.axs[ii])  # RUN PLOT
@@ -2809,9 +2798,9 @@ def boxplot_double_patch(xlabel='substrate', complex_colors=True, **kwargs):
                             cols.append(f'xkcd:{Cmods[cID]} cyan')
                         P.axs[ii].set_xticklabels(subIDs * 2)
                         P.axs[ii].axvline(2.5, color='black', alpha=1.0, linestyle='dashed', linewidth=6)
-                        P.axs[ii].text(0.1, 0.95, 'Rovers', ha='center', va='top', color='k',
+                        P.axs[ii].text(0.25, 1.1, r'$\bf{Rovers}$', ha='center', va='top', color='k',
                                        fontsize=25, transform=P.axs[ii].transAxes)
-                        P.axs[ii].text(0.6, 0.95, 'Sitters', ha='center', va='top', color='k',
+                        P.axs[ii].text(0.75, 1.1, r'$\bf{Sitters}$', ha='center', va='top', color='k',
                                        fontsize=25, transform=P.axs[ii].transAxes)
                     for j, patch in enumerate(P.axs[ii].artists):
                         patch.set_facecolor(cols[j])

@@ -89,7 +89,7 @@ def get_powerlaw_alpha(dur, dur0, dur1, discrete=False):
 
 
 def get_lognormal(dur):
-    d=np.log(dur)
+    d = np.log(dur)
     return np.mean(d), np.std(d)
 
 
@@ -355,6 +355,16 @@ def get_best_distro(bout, f, idx_Kmax=None):
     return distro
 
 
+def pvalue_star(pv):
+    a = {1e-4 : "****", 1e-3 : "***",
+           1e-2 : "**", 0.05 : "*", 1 : "ns"}
+    for k, v in a.items() :
+        if pv<k :
+            return v
+    return "ns"
+
+
+
 class BoutGenerator:
     def __init__(self, name, range, dt, **kwargs):
         self.name = name
@@ -393,3 +403,4 @@ class BoutGenerator:
     def get(self, x, mode):
         func = self.ddfs[self.name][mode]
         return func(x=x, **self.args)
+
