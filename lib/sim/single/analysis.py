@@ -10,7 +10,7 @@ from lib.anal.plotting import plot_turn_Dbearing, plot_turn_amp, plot_turns, tim
     plot_navigation_index, plot_debs, plot_food_amount, plot_gut, plot_pathlength, plot_endpoint_params, barplot, \
     plot_chunk_Dorient2source, plot_marked_strides, lineplot, plot_stridesNpauses, \
     plot_interference, plot_dispersion, plot_stride_Dbend, plot_stride_Dorient, plot_ang_pars, calibration_plot, \
-    plot_crawl_pars, boxplot
+    plot_crawl_pars, boxplot, boxplot_double_patch
 from lib.conf.stored.conf import loadConf
 from lib.conf.base.dtypes import null_dict
 from lib.conf.base.par import getPar
@@ -335,16 +335,17 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
     if essay_type in ['double_patch']:
         if exp == 'double_patch':
             kwargs = {'datasets': flatten_list(ds0),
-                      'pair_ids': ['sucrose', 'standard', 'cornmeal'],
-                      'common_ids': ['Rover', 'Sitter'],
-                      'xlabel': 'substrate',
+                      'save_to' : plot_dir,
+                      'save_as' : 'double_patch.pdf',
+                      # 'pair_ids': ['sucrose', 'standard', 'cornmeal'],
+                      # 'common_ids': ['Rover', 'Sitter'],
+                      # 'xlabel': 'substrate',
                       'show': True,
-                      'complex_colors' : True,
-                      'pair_colors': dict(zip(['sucrose', 'standard', 'cornmeal'], ['green', 'orange', 'magenta'])),
-                      'common_color_prefs': dict(zip(['Rover', 'Sitter'], ['dark', 'light'])),
+                      # 'complex_colors' : True,
+                      # 'pair_colors': dict(zip(['sucrose', 'standard', 'cornmeal'], ['green', 'orange', 'magenta'])),
+                      # 'common_color_prefs': dict(zip(['Rover', 'Sitter'], ['dark', 'light'])),
                       }
-            figs['double_patch'] = boxplot(par_shorts=['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr'],
-                                           **kwargs)
+            figs['double_patch'] = boxplot_double_patch(**kwargs)
 
         # elif exp == 'intake':
         #     kwargs = {**dsNls(ds0),

@@ -336,11 +336,13 @@ def process_plot(fig, save_to, filename, return_fig, show=False):
         plt.show()
     fig.patch.set_visible(False)
     if return_fig:
-        return fig, save_to, filename
+        res= fig, save_to, filename
     else:
         filepath = os.path.join(save_to, filename)
         save_plot(fig, filepath, filename)
-        return fig
+        res= fig
+
+    return res
 
 
 def label_diff(i, j, text, X, Y, ax):

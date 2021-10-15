@@ -67,7 +67,7 @@ def run_RvsS_essay(**kwargs) :
     shutil.rmtree(f'{essay_kws["path"]}/data')
     return figs, results
 
-def double_patch_essay(N=3, dur=3.0,**kwargs):
+def double_patch_essay(substrates=['sucrose', 'standard', 'cornmeal'],N=2, dur=2.0,**kwargs):
     from lib.conf.stored.conf import next_idx
     essay_id = 'double_patch'
     kws = {
@@ -92,7 +92,7 @@ def double_patch_essay(N=3, dur=3.0,**kwargs):
 
     def time_ratio_exp(dur=dur, exp='double_patch'):
         return {
-            exp: [conf(exp, f'{exp}_{n}_{dur}min', dur, type=n, l_kws={'N':N, 'navigator' : True, 'pref' : f'{n}_'}) for n in ['sucrose', 'standard', 'cornmeal']]}
+            exp: [conf(exp, f'{exp}_{n}_{dur}min', dur, type=n, l_kws={'N':N, 'navigator' : True, 'pref' : f'{n}_'}) for n in substrates]}
 
     # def intake_exp(durs=[10, 15, 20], exp='intake'):
     #     return {exp: [conf(exp, f'{exp}_{dur}min', dur) for dur in durs]}

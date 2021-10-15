@@ -58,7 +58,7 @@ class Gut:
         dX = np.min([dX0, self.gut_X])
         # print(dX0*self.f/self.gut_X)
         # print(1/self.deb.T_factor)
-        dV = dX / self.X
+        dV = dX / self.X if self.X!=0 else 0.0
         self.V -= dV
         self.gut_X -= dX
         self.gut_f += dX * self.deb.y_P_X

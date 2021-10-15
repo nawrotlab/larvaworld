@@ -88,7 +88,7 @@ def detect_turns(s, e, config, dt, track_pars, min_ang_vel, min_ang=30.0,
                   par_ranges=[[min_ang_vel, np.inf], [-np.inf, -min_ang_vel]], merged_chunk='turn',
                   store_max=[True, False], store_min=[False, True])
     track_pars_in_chunks(ss, e, aux_dir, chunks=['Lturn', 'Rturn'], pars=track_pars, merged_chunk='turn')
-    e['handedness_score']=e[nam.num('Lturn')]/e[nam.num('turn')]
+
     if constant_bend_chunks:
         print('Additionally detecting constant bend chunks.')
         detect_chunks(ss, e, dt, chunk_names=['constant_bend'], chunk_only=chunk_only, par=bend_vel_par,
@@ -561,3 +561,6 @@ def comp_patch_metrics(s, e, config, **kwargs):
 
     e[f'{v_mu}_{on}'] = e[f'{cdst}_{on}'] / e[cum_t] / e[on_tr]
     e[f'{v_mu}_{off}'] = e[f'{cdst}_{off}'] /  e[cum_t] / (1 - e[on_tr])
+    e['handedness_score'] = e[nam.num('Lturn')] / e[nam.num('turn')]
+    e[f'handedness_score_{on}'] = e[f"{nam.num('Lturn')}_{on}"] / e[f"{nam.num('turn')}_{on}"]
+    e[f'handedness_score_{off}'] = e[f"{nam.num('Lturn')}_{off}"] / e[f"{nam.num('turn')}_{off}"]

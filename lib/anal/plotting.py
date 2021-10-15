@@ -14,7 +14,7 @@ from matplotlib.ticker import FixedLocator, FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
 import statsmodels.api as sm
 from scipy import stats, signal, interpolate
-from scipy.stats import ttest_ind
+from scipy.stats import ttest_ind, mannwhitneyu
 from sklearn.linear_model import LinearRegression
 from PIL import Image
 import os
@@ -559,86 +559,6 @@ def barplot(par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None, 
         P.set(fig)
         return P.get()
 
-# def boxplot(par_short='f_am', coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
-#     P = Plot(name=par_short, **kwargs)
-#     w = 0.15
-#
-#     if coupled_labels is not None:
-#         Npairs = len(coupled_labels)
-#         N = int(P.Ndatasets / Npairs)
-#         if leg_cols is None:
-#             leg_cols = N_colors(N)
-#         colors = leg_cols * Npairs
-#         leg_ids = P.labels[:N]
-#         ind = np.hstack([np.linspace(0 + i / N, w + i / N, N) for i in range(Npairs)])
-#         new_ind = ind[::N] + (ind[N - 1] - ind[0]) / N
-#     else:
-#         ind = np.arange(0, w * P.Ndatasets, w)
-#         colors=P.colors
-#         leg_ids = P.labels
-#
-#     pars, sim_labels, exp_labels, units = getPar([par_short], to_return=['d', 's', 's', 'l'])
-#
-#
-#     es = [d.endpoint_data for d in P.datasets]
-#
-#     # colors = N_colors(Ngroups)
-#     palette = {id: c for id, c in zip(leg_ids, colors)}
-#
-#
-#
-#
-#
-#     values = [e[pars[0]] for e in es]
-#     # means = [v.mean() for v in values]
-#     # stds = [v.std() for v in values]
-#     array = boolean_indexing(values).T
-#     df = pd.DataFrame(array, columns=leg_ids).assign(Trial='agar')
-#     cdf = pd.concat([df])  # CONCATENATE
-#     mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Group'])  # MELT
-#     P.build(figsize=(10, 5))
-#     sns.boxplot(x="Trial", y="value", hue="Group", data=mdf, palette=palette, ax=P.axs[0], width=.5,
-#             fliersize=3, linewidth=None, whis=1.0)
-#
-#     P.conf_ax(xlab=xlabel, ylab=units[0], leg_loc='upper right')
-#     P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.2, right=0.9, hspace=.005, wspace=0.05)
-#
-#     # if not coupled_labels:
-#     #     for i, j in itertools.combinations(np.arange(P.Ndatasets).tolist(), 2):
-#     #         st, pv = ttest_ind(values[i], values[j], equal_var=False)
-#     #         pv = np.round(pv, 4)
-#     #         label_diff(i, j, f'p={pv}', ind, means, ax)
-#     # else:
-#     #     for k in range(Npairs):
-#     #         i, j = k * N, k * N + 1
-#     #         st, pv = ttest_ind(values[i], values[j], equal_var=False)
-#     #         if pv <= 0.05:
-#     #             ax.text(ind[i], means[i] + stds[i], '*', ha='center', fontsize=20)
-#     #             # label_diff(i, j, '*', ind, means, ax)
-#     #
-#     # h = 2 * (np.nanmax(means) + np.nanmax(stds))
-#     # ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
-#     # ax.ticklabel_format(axis='y', useMathText=True, scilimits=(-3, 3), useOffset=True)
-#     # if coupled_labels is None:
-#     #     plt.xticks(ind, P.labels, color='k')
-#     # else:
-#     #     plt.xticks(new_ind, coupled_labels, color='k')
-#     #     dataset_legend(leg_ids, leg_cols, ax=ax, loc='upper left', handlelength=1, handleheight=1)
-#     # if ylabel is None:
-#     #     plt.ylabel(u)
-#     # else:
-#     #     plt.ylabel(ylabel)
-#     # try:
-#     #     plt.ylim(0, h)
-#     # except:
-#     #     ax.set_ylim(ymin=0)
-#     # if xlabel is not None:
-#     #     plt.xlabel(xlabel)
-#     # plt.subplots_adjust(hspace=0.05, top=0.95, bottom=0.15, left=0.15, right=0.95)
-#     # P.set(fig)
-#     return P.get()
-
-
 def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None,leg_cols=None, scale=1.0, **kwargs):
     P = Plot(name=par_shorts[0], **kwargs)
 
@@ -1037,39 +957,6 @@ def boxplot(par_shorts, sort_labels=False,xlabel=None, pair_ids =None, common_id
             df = pd.DataFrame(array, columns=group_ids).assign(Trial=1)
             cdf = pd.concat([df])  # CONCATENATE
         mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Group'])  # MELT
-        # if complex_colors :
-        #     mdf['ComboID']=mdf['Group']+mdf['Trial']
-        #     hue='ComboID'
-        #     if pair_colors is None:
-        #         pair_colors = dict(zip(pair_ids,N_colors(Npairs)))
-        #     if common_color_prefs is None:
-        #         raise NotImplementedError
-        #     palette={}
-        #     for cID, pID in itertools.product(common_ids, pair_ids) :
-        #         palette[f'{cID}{pID}']=f'xkcd:{common_color_prefs[cID]} {pair_colors[pID]}'
-
-        # if complex_colors:
-        #     for pID in pair_ids:
-        #         mdf0=mdf[mdf['Trial']==pID]
-        #         print(mdf0)
-        #         palette={cID :  f'xkcd:{common_color_prefs[cID]} {pair_colors[pID]}' for cID in common_ids}
-        #         g1 = sns.boxplot(x="Trial", y="value", hue='Group', data=mdf0, palette=palette, ax=P.axs[ii], width=0.5,
-        #                          fliersize=3, linewidth=None, whis=1.5)  # RUN PLOT
-        #         g1.get_legend().remove()
-        #         g2 = sns.stripplot(x="Trial", y="value", hue='Group', data=mdf0, palette=palette, ax=P.axs[ii])  # RUN PLOT
-        #         g2.get_legend().remove()
-        #     # mdf['ComboID'] = mdf['Group'] + mdf['Trial']
-        #     # hue = 'ComboID'
-        #     # if pair_colors is None:
-        #     #     pair_colors = dict(zip(pair_ids, N_colors(Npairs)))
-        #     # if common_color_prefs is None:
-        #     #     raise NotImplementedError
-        #     # palette = {}
-        #     # for cID, pID in itertools.product(common_ids, pair_ids):
-        #     #     palette[f'{cID}{pID}'] = f'xkcd:{common_color_prefs[cID]} {pair_colors[pID]}'
-        # else:
-            # hue = 'Group'
-
 
         g1=sns.boxplot(x="Trial", y="value", hue='Group', data=mdf, palette=palette, ax=P.axs[ii], width=0.5,
                     fliersize=3, linewidth=None, whis=1.5)  # RUN PLOT
@@ -1084,7 +971,6 @@ def boxplot(par_shorts, sort_labels=False,xlabel=None, pair_ids =None, common_id
                 patch.set_facecolor(cols[j])
         g2 = sns.stripplot(x="Trial", y="value", hue='Group', data=mdf, palette=palette, ax=P.axs[ii])  # RUN PLOT
         g2.get_legend().remove()
-        # P.conf_ax(ii, ylab=ylabel, ylim=ylim)
         P.conf_ax(ii, xlab=xlabel, ylab=ylabel, ylim=ylim)
     P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.1, right=0.95, hspace=0.3, wspace=0.3)
     return P.get()
@@ -2683,8 +2569,6 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
         axs[i].xaxis.set_major_locator(ticker.MaxNLocator(4))
         axs[i].yaxis.set_major_locator(ticker.MaxNLocator(4))
         axs[i].xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=True, useMathText=True))
-        # axs[i].ticklabel_format(axis='x', useMathText=True, scilimits=(-3, 3))
-        # axs[i].ticklabel_format(axis='x', useMathText=True, scilimits=(-3, 3), useOffset=True)
 
         if Ndatasets > 1:
             ii = 0
@@ -2775,15 +2659,11 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
     ax_histx.tick_params(**cc)
     ax_histy = plt.axes(rect_histy)
     ax_histy.tick_params(labelleft=False, **cc)
-    # ax_histy.xaxis.set_ticks([0,0.1,0.2])
 
     ax_scatter.set_xlim([x0, x1])
     ax_scatter.set_ylim(ylim)
     ax_histx.set_xlim(ax_scatter.get_xlim())
     ax_histy.set_ylim(ax_scatter.get_ylim())
-
-    # ax_histy.set_xlim(xmin=0.0)
-
     ax_histy.set_xlabel('pdf', fontsize=labelsize)
     if xlabel is not None:
         ax_histx.set_xlabel(xlabel, fontsize=labelsize2)
@@ -2836,7 +2716,124 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
 
 
 
+def boxplot_double_patch(xlabel='substrate', complex_colors=True, **kwargs):
+    P = Plot(name='double_patch', **kwargs)
+    DataIDs = unique_list([d.config['group_id'] for d in P.datasets])
+    ModIDs = unique_list([l.split('_')[-1] for l in DataIDs])
+    subIDs = unique_list([l.split('_')[0] for l in DataIDs])
 
+    Csubs= dict(zip(subIDs, ['green', 'orange', 'magenta']))
+    Cmods= dict(zip(ModIDs, ['dark', 'light']))
+
+    shorts = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
+    pars,  labs, lims = getPar(shorts, to_return=['d', 'l', 'lim'])
+    Npars=len(pars)
+
+    P.build(Ncols=2,Nrows=3, figsize=(16 * 2, 10* 3))
+    for ii in range(Npars):
+        sh=shorts[ii]
+        p = pars[ii]
+        ylabel = labs[ii]
+        ylim = lims[ii]
+        scale = 1
+        onVSoff=True if sh in ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H'] else False
+        if sh=='cum_d' :
+            ylabel="Pathlength 5' (mm)"
+            scale=1000
+        elif sh=='v_mu':
+            ylabel = "Crawling speed (mm/s)"
+            scale = 1000
+        elif sh=='tur_N_mu':
+            ylabel = "Avg. number turns per min"
+            scale = 60
+        elif sh=='pau_tr':
+            ylabel = "Fraction of pauses"
+
+
+        def get_df(p):
+            dic = {id: [d.endpoint_data[p].values * scale for d in P.datasets if d.config['group_id'] == id] for id in
+                   DataIDs}
+
+            pair_dfs = []
+            for subID in subIDs:
+                subModIDs = [f'{subID}_{ModID}' for ModID in ModIDs]
+                pair_vs = flatten_list([dic[id] for id in subModIDs])
+                pair_dfs.append(pd.DataFrame(boolean_indexing(pair_vs).T, columns=ModIDs).assign(Substrate=subID))
+                cdf = pd.concat(pair_dfs)  # CONCATENATE
+            mdf = pd.melt(cdf, id_vars=['Substrate'], var_name=['Model'])  # MELT
+            return mdf
+
+        def plot_p(data, ii,hue, agar=False) :
+            from statannotations.Annotator import Annotator
+            h1,h2=np.unique(data[hue].values)
+            subIDs0 = np.unique(data['Substrate'].values)
+            pairs = [((subID, h1), (subID, h2)) for subID in subIDs0]
+            pvs = []
+            for subID in subIDs0:
+                dd = data[data['Substrate'] == subID]
+                dd0 = dd[dd[hue] == h1]['value'].values
+                dd1 = dd[dd[hue] == h2]['value'].values
+                pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
+
+            f_pvs = [f'p={pv:.2e}' for pv in pvs]
+            with sns.plotting_context('notebook', font_scale=1.4):
+                kws = {
+                    'x': "Substrate",
+                    'y': "value",
+                    'hue': hue,
+                    'data': data,
+                    'ax': P.axs[ii],
+                    'width': 0.5,
+                }
+                g1 = sns.boxplot(**kws)  # RUN PLOT
+                g1.get_legend().remove()
+                # Add annotations
+                annotator = Annotator(pairs=pairs,verbose=False, **kws)
+                annotator.configure(pvalue_format='star')
+                annotator.set_custom_annotations(f_pvs)
+                annotator.annotate()
+                g1.set(xlabel=None)
+                g2 = sns.stripplot(x="Substrate", y="value", hue=hue, data=data, color='black',
+                                   ax=P.axs[ii])  # RUN PLOT
+                g2.get_legend().remove()
+                g2.set(xlabel=None)
+
+                if complex_colors:
+                    cols = []
+                    if not agar:
+                        for pID, cID in itertools.product(subIDs, ModIDs):
+                            cols.append(f'xkcd:{Cmods[cID]} {Csubs[pID]}')
+                    else:
+                        for cID, pID in itertools.product(ModIDs, subIDs):
+                            cols.append(f'xkcd:{Cmods[cID]} {Csubs[pID]}')
+                            cols.append(f'xkcd:{Cmods[cID]} cyan')
+                        P.axs[ii].set_xticklabels(subIDs * 2)
+                        P.axs[ii].axvline(2.5, color='black', alpha=1.0, linestyle='dashed', linewidth=6)
+                        P.axs[ii].text(0.1, 0.95, 'Rovers', ha='center', va='top', color='k',
+                                       fontsize=25, transform=P.axs[ii].transAxes)
+                        P.axs[ii].text(0.6, 0.95, 'Sitters', ha='center', va='top', color='k',
+                                       fontsize=25, transform=P.axs[ii].transAxes)
+                    for j, patch in enumerate(P.axs[ii].artists):
+                        patch.set_facecolor(cols[j])
+                P.conf_ax(ii, xlab=xlabel, ylab=ylabel, ylim=ylim)
+
+
+        if not onVSoff:
+            mdf=get_df(p)
+            plot_p(mdf,ii, 'Model')
+        else :
+            mdf_on = get_df(f'{p}_on_food')
+            mdf_off = get_df(f'{p}_off_food')
+            mdf_on['food']='on'
+            mdf_off['food']='off'
+            mdf=pd.concat([mdf_on, mdf_off])
+            mdf.sort_index(inplace=True)
+            mdf.sort_values(['Model','Substrate', 'food'],ascending=[True, False, False], inplace=True)
+            mdf['Substrate']=mdf['Model']+mdf['Substrate']
+            mdf.drop(['Model'], axis=1, inplace=True)
+            plot_p(mdf, ii,'food', agar=True)
+    P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.1, right=0.95, hspace=0.3, wspace=0.3)
+    return P.get()
 
 
 
