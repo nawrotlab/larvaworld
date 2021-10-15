@@ -26,13 +26,14 @@ class LarvaSim(BodySim, Larva):
 
         self.food_detected, self.feeder_motion, self.current_V_eaten, self.feed_success = None, False, 0, None
         self.food_missed, self.food_found = False, False
-        self.cum_food_detected, self.on_food_dur_ratio=0, 0
+        self.cum_food_detected, self.on_food_dur_ratio, self.on_food=0, 0, False
 
     def compute_next_action(self):
         self.cum_dur += self.model.dt
         pos = self.olfactor_pos
         self.food_detected=self.detect_food(pos)
-        self.cum_food_detected+=int(self.food_detected is not None)
+        self.on_food=self.food_detected is not None
+        self.cum_food_detected+=int(self.on_food)
         self.on_food_dur_ratio=self.cum_food_detected*self.model.dt/self.cum_dur
 
         self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.run(pos)
@@ -111,7 +112,7 @@ class LarvaSim(BodySim, Larva):
                 self.temp_cum_V_eaten = 0
                 self.temp_mean_f = []
                 self.f_exp_coef = np.exp(-energetic_pars['f_decay'] * self.model.dt)
-                steps_per_day = 24 * 60
+                steps_per_day = 24 * 6
                 cc = {
                     'id': self.unique_id,
                     'steps_per_day': steps_per_day,
@@ -119,7 +120,7 @@ class LarvaSim(BodySim, Larva):
                     'hunger_as_EEB': energetic_pars['hunger_as_EEB'],
                     'V_bite': energetic_pars['V_bite'],
                     'absorption': energetic_pars['absorption'],
-                    'substrate': self.model.food_grid.substrate,
+                    # 'substrate': self.model.food_grid.substrate,
                     # 'substrate': life['substrate'],
                     # 'substrate_type': life['substrate_type'],
                     # 'intermitter': self.brain.intermitter,

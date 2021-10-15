@@ -20,9 +20,9 @@ class Intermitter(Effector):
         self.brain = brain
         self.save_to = save_to
 
-        self.crawler = brain.crawler
-        self.feeder = brain.feeder
-        self.turner = brain.turner
+        self.crawler = brain.crawler if brain is not None else None
+        self.feeder = brain.feeder if brain is not None else None
+        self.turner = brain.turner if brain is not None else None
         self.EEB = EEB
         self.base_EEB = EEB
         self.crawl_freq = crawl_freq
@@ -458,10 +458,12 @@ def get_EEB_poly1d(sample=None, dt=None, **kwargs):
         kws = kwargs
     if dt is not None:
         kws['dt'] = dt
+    # print(kws)
 
     EEBs = np.arange(0, 1, 0.05)
     ms = []
     for EEB in EEBs:
+        # print(EEB)
         inter = OfflineIntermitter(EEB=EEB, **kws)
         max_ticks = int(60 * 60 / inter.dt)
         while inter.total_ticks < max_ticks:

@@ -177,7 +177,7 @@ def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=
 
 
 def fit_bout_distros(x0, xmin, xmax, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=True,
-                     dataset_id='dataset', bout='pause', combine=True, store=False, fit_by='cdf'):
+                     dataset_id='dataset', bout='pause', combine=True, store=False, fit_by='pdf'):
     with suppress_stdout(True):
         warnings.filterwarnings('ignore')
         x = x0[x0 >= xmin]
@@ -384,6 +384,9 @@ class BoutGenerator:
         x0, x1 = int(self.xmin / self.dt), int(self.xmax / self.dt)
         xx = np.arange(x0, x1 + 1)
         pmf = self.ddfs[self.name]['pdf'](xx * self.dt, **kwargs)
+        mask = ~np.isnan(pmf)
+        pmf = pmf[mask]
+        xx = xx[mask]
         pmf /= pmf.sum()
         return rv_discrete(values=(xx, pmf))
 

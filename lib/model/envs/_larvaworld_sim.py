@@ -109,6 +109,7 @@ class LarvaWorldSim(LarvaWorld):
                                    default_color=gConf['default_color'], life_history=gConf['life_history'])
 
     def step(self):
+
         self.sim_clock.tick_clock()
 
 

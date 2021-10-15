@@ -10,7 +10,7 @@ from lib.anal.plotting import plot_turn_Dbearing, plot_turn_amp, plot_turns, tim
     plot_navigation_index, plot_debs, plot_food_amount, plot_gut, plot_pathlength, plot_endpoint_params, barplot, \
     plot_chunk_Dorient2source, plot_marked_strides, lineplot, plot_stridesNpauses, \
     plot_interference, plot_dispersion, plot_stride_Dbend, plot_stride_Dorient, plot_ang_pars, calibration_plot, \
-    plot_crawl_pars
+    plot_crawl_pars, boxplot
 from lib.conf.stored.conf import loadConf
 from lib.conf.base.dtypes import null_dict
 from lib.conf.base.par import getPar
@@ -50,12 +50,11 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
     #     figs['scatter_x2'] = plot_endpoint_scatter(keys=['cum_sd', 'f_am'], **cc)
     if 'tactile' in exp_type:
         figs['time ratio on food (final)'] = plot_endpoint_params(par_shorts=['on_food_tr'], **cc)
-        figs['time ratio on food']=timeplot(['on_food_tr'], **cc)
-        figs['time on food']=timeplot(['cum_f_det'], **cc)
-        figs['turner input']=timeplot(['A_tur'],show_first=True, **cc)
-        figs['tactile activation']=timeplot(['A_touch'],show_first=True, **cc)
+        figs['time ratio on food'] = timeplot(['on_food_tr'], **cc)
+        figs['time on food'] = timeplot(['cum_f_det'], **cc)
+        figs['turner input'] = timeplot(['A_tur'], show_first=True, **cc)
+        figs['tactile activation'] = timeplot(['A_touch'], show_first=True, **cc)
         # figs.update(**source_analysis(d.config['sources'], **cc))
-
 
     if 'RvsS' in exp_type:
         s = exp_type.split('_')[-1]
@@ -84,14 +83,6 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
         for m in ['energy', 'growth', 'full']:
             save_as = f'{m}_vs_model.pdf'
             figs[f'{m} vs model'] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c, **cc)
-
-
-
-
-
-
-
-
     # elif exp_type == 'dispersion':
     #     target_dataset = load_reference_dataset(dataset_id=d.config['sample_dataset'])
     #     ds = [d, target_dataset]
@@ -138,7 +129,9 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
         print(results['sample_fit'])
 
     if exp_type in ['food_at_bottom']:
-        figs.update(**foraging_analysis(d.config['sources'],**cc))
+        figs.update(**foraging_analysis(d.config['sources'], **cc))
+    # if 'double_patch' in exp_type:
+    #     figs.update(**double_patch_analysis(d.config['sources'],**cc))
     if 'RvsS' in exp_type:
         figs.update(**intake_analysis(**cc))
     if 'dispersion' in exp_type:
@@ -156,7 +149,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
                                random_colors=True, trails=True,
                                visible_clock=False, visible_scale=False, media_name='single_trajectory')
         d.visualize(agent_ids=[d.agent_ids[0]], vis_kwargs=vis_kwargs)
-    if delete_datasets :
+    if delete_datasets:
         for d in ds:
             d.delete()
     print(f'    Analysis complete!')
@@ -201,8 +194,9 @@ def source_analysis(sources, **kwargs):
                     pass
     return figs
 
-def foraging_analysis(sources, **kwargs) :
-    figs={}
+
+def foraging_analysis(sources, **kwargs):
+    figs = {}
     figs['bearing correction VS Y pos'] = plot_turn_amp(par_short='tur_y0', mode='hist', ref_angle=270, **kwargs)
     figs['turn angle VS Y pos (hist)'] = plot_turn_amp(par_short='tur_y0', mode='hist', **kwargs)
     figs['turn angle VS Y pos (scatter)'] = plot_turn_amp(par_short='tur_y0', mode='scatter', **kwargs)
@@ -212,8 +206,26 @@ def foraging_analysis(sources, **kwargs) :
     figs['Y position'] = timeplot(['y'], legend_loc='lower left', **kwargs)
     figs['navigation index'] = plot_navigation_index(**kwargs)
     for n, pos in sources.items():
-        figs[f'bearing to {n}'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=None,source_ID=n, **kwargs)
+        figs[f'bearing to {n}'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=None, source_ID=n, **kwargs)
         figs['bearing to 270deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=270, source_ID=n, **kwargs)
+    return figs
+
+
+def double_patch_analysis(sources, **kwargs):
+    figs = {}
+    figs['time_inside_patches'] = boxplot(par_short='on_food_tr',
+                                          xlabel='substrate', **kwargs)
+    # figs['bearing correction VS Y pos'] = plot_turn_amp(par_short='tur_y0', mode='hist', ref_angle=270, **kwargs)
+    # figs['turn angle VS Y pos (hist)'] = plot_turn_amp(par_short='tur_y0', mode='hist', **kwargs)
+    # figs['turn angle VS Y pos (scatter)'] = plot_turn_amp(par_short='tur_y0', mode='scatter', **kwargs)
+    # figs['turn duration'] = plot_turn_amp(par_short='tur_t', mode='scatter', absolute=True, **kwargs)
+    # # figs['turn amplitude'] = TurnPlot(**kwargs).get()
+    # figs['turn amplitude'] = plot_turns(**kwargs)
+    # figs['Y position'] = timeplot(['y'], legend_loc='lower left', **kwargs)
+    # figs['navigation index'] = plot_navigation_index(**kwargs)
+    # for n, pos in sources.items():
+    #     figs[f'bearing to {n}'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=None,source_ID=n, **kwargs)
+    #     figs['bearing to 270deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=270, source_ID=n, **kwargs)
     return figs
 
 
@@ -317,6 +329,78 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
                     p = getPar(s, to_return=['d'])[0]
                     figs[f'refeeding {p}'] = timeplot(par_shorts=[s], show_first=False, subfolder=None,
                                                       save_as=f'{n}{p}.pdf', **kwargs)
+        # for d in kwargs['datasets'] :
+        #     d.delete()
+
+    if essay_type in ['double_patch']:
+        if exp == 'double_patch':
+            kwargs = {'datasets': flatten_list(ds0),
+                      'pair_ids': ['sucrose', 'standard', 'cornmeal'],
+                      'common_ids': ['Rover', 'Sitter'],
+                      'xlabel': 'substrate',
+                      'show': True,
+                      'complex_colors' : True,
+                      'pair_colors': dict(zip(['sucrose', 'standard', 'cornmeal'], ['green', 'orange', 'magenta'])),
+                      'common_color_prefs': dict(zip(['Rover', 'Sitter'], ['dark', 'light'])),
+                      }
+            figs['double_patch'] = boxplot(par_shorts=['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr'],
+                                           **kwargs)
+
+        # elif exp == 'intake':
+        #     kwargs = {**dsNls(ds0),
+        #               'coupled_labels': [10, 15, 20],
+        #               'xlabel': r'Time spent on food $(min)$'}
+        #     figs['2_intake'] = barplot(par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
+        #     if all_figs:
+        #         for s in shorts:
+        #             p = getPar(s, to_return=['d'])[0]
+        #             figs[f'intake {p}'] = barplot(par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
+        #
+        # elif exp == 'starvation':
+        #     hs = [0, 1, 2, 3, 4]
+        #     kwargs = {**dsNls(ds0),
+        #               'coupled_labels': hs,
+        #               'xlabel': r'Food deprivation $(h)$'}
+        #     figs['3_starvation'] = lineplot(par_shorts=['f_am_V'], save_as='3_POST-STARVATION_INTAKE.pdf',
+        #                                     ylabel='Food intake', scale=1000, **kwargs)
+        #     if all_figs:
+        #         for ii in ['feeding']:
+        #             figs[ii] = plot_debs(mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf', include_egg=False,
+        #                                  label_epochs=False, **kwargs)
+        #         for s in shorts:
+        #             p = getPar(s, to_return=['d'])[0]
+        #             figs[f'post-starvation {p}'] = lineplot(par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
+        #                                                     **kwargs)
+        #
+        # elif exp == 'quality':
+        #     qs = [1.0, 0.75, 0.5, 0.25, 0.15]
+        #     qs_labels = [int(q * 100) for q in qs]
+        #     kwargs = {**dsNls(ds0),
+        #               'coupled_labels': qs_labels,
+        #               'xlabel': 'Food quality (%)'
+        #               }
+        #     figs['4_quality'] = barplot(par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
+        #     if all_figs:
+        #         for s in shorts:
+        #             p = getPar(s, to_return=['d'])[0]
+        #             figs[f'rearing-quality {p}'] = barplot(par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
+        #
+        # elif exp == 'refeeding':
+        #     h = 3
+        #     n = f'5_REFEEDING_after_{h}h_starvation_'
+        #     kwargs = dsNls(ds0)
+        #     figs['5_refeeding'] = plot_food_amount(scaled=True, filt_amount=True, save_as='5_REFEEDING_INTAKE.pdf',
+        #                                            **kwargs)
+        #
+        #     if all_figs:
+        #         figs[f'refeeding food-intake'] = plot_food_amount(scaled=True, save_as=f'{n}scaled_intake.pdf',
+        #                                                           **kwargs)
+        #         figs[f'refeeding food-intake(filt)'] = plot_food_amount(scaled=True, filt_amount=True,
+        #                                                                 save_as=f'{n}scaled_intake_filt.pdf', **kwargs)
+        #         for s in shorts:
+        #             p = getPar(s, to_return=['d'])[0]
+        #             figs[f'refeeding {p}'] = timeplot(par_shorts=[s], show_first=False, subfolder=None,
+        #                                               save_as=f'{n}{p}.pdf', **kwargs)
         # for d in kwargs['datasets'] :
         #     d.delete()
     print(f'    Analysis complete!')

@@ -79,8 +79,7 @@ class SimTab(GuiTab):
         return l, c, {}, {}
 
     def update(self, w, c, conf, id):
-        output_dict = dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys]))
-        c['output'].update(w, output_dict)
+        c['output'].update(w, dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys])))
         sim = copy.deepcopy(conf['sim_params'])
         sim.update({'sim_ID': f'{id}_{next_idx(id)}', 'path': f'single_runs/{id}'})
         c['sim_params'].update(w, sim)

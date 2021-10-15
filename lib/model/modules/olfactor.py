@@ -20,6 +20,7 @@ class Sensor(Effector):
         pass
 
     def step(self, input):
+        # print(input)
         if len(input) == 0:
             self.activation = 0
         else:

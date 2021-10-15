@@ -46,7 +46,7 @@ class LifeTab(GuiTab):
         sl0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
 
         sub = CollapsibleDict('substrate', dict_name='substrate_composition', header_dict=substrate_dict,
-                              header_value='standard', state=True)
+                              header_value='standard', state=True, value_kws=t_kws(8))
         l1 = [[sg.T('Epoch start (hours) : ', **t_kws(24))],
               [sg.Slider(range=(0, 150), default_value=0, k=self.S0,
                          tick_interval=24, resolution=1, trough_color='green', **sl1_kws)],
@@ -62,7 +62,7 @@ class LifeTab(GuiTab):
 
         after_header = [GraphButton('Button_Add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
                         GraphButton('Button_Remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.')]
-        content = [Table(headings=[self.s0, self.s1, 'quality', 'type'], def_col_width=7, key=self.K, num_rows=0)]
+        content = [Table(headings=[self.s0, self.s1, 'quality', 'type'], col_widths=[5,5,6,7], key=self.K, num_rows=0)]
         l_tab = Header('Epochs', text=f'{ep.capitalize()}s (h)', header_text_kws=t_kws(18),
                        after_header=after_header, single_line=False, content=content).layout
 

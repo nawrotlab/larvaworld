@@ -56,6 +56,11 @@ def CS_UCS(N=2, x=0.04):
         }
 
 
+def double_patches(type='standard'):
+    return {**su('Left_patch', pos=(-0.06, 0.0), o=oG(id='Odor'), c='green', r=0.025, a=0.1, type=type),
+            **su('Right_patch', pos=(0.06, 0.0), o=oG(id='Odor'), c='green', r=0.025, a=0.1, type=type)}
+
+
 def maze_conf(n, h):
     def maze(nx=15, ny=15, ix=0, iy=0, h=0.1, return_points=False):
         from lib.model.envs._maze import Maze
@@ -116,8 +121,7 @@ env_dict = {
     'single_patch': env(arena(0.02, 0.02), f_pars(su=su('Patch', a=0.1, r=0.005))),
     'multi_patch': env(arena(0.02, 0.02), f_pars(sg=sg(N=8, s=0.007, m='periphery', a=0.1, r=0.0015))),
     'double_patch': env(arena(0.24, 0.24),
-                        f_pars(su={**su('Left_patch', pos=(-0.06, 0.0), o=oG(id='Odor'), c='green',r=0.025, a=0.1),
-                                   **su('Right_patch', pos=(0.06, 0.0), o=oG(id='Odor'), c='green',r=0.025, a=0.1)}),
+                        f_pars(su=double_patches()),
                         'G'),
 
     'maze': maze_conf(15, 0.1),

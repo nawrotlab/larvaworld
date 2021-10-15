@@ -47,6 +47,7 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
                     vs = ar.astype(cur_dtype)
 
                     vs = vs.tolist()
+        if vs is not None :
             Ndigits = maxNdigits(np.array(vs), 4)
         if aux_vs is not None and vs is not None:
             vs += aux_vs
@@ -450,13 +451,6 @@ def init_pars():
         # 'substrate' : d['substrate']
     }
 
-    # d['life']={
-    #     'epochs': {'t': List[Tuple[float]], 'max': 250.0, 'dv': 0.1},
-    #     'epoch_qs': {'t': List[float], 'max': 1.0},
-    #     'hours_as_larva': {'v': 0.0, 'max': 250.0, 'dv': 1.0},
-    #     'substrate' : d['substrate']
-    # }
-
     d['epoch'] = {
         'start': {'max': 200.0},
         'stop': {'max': 200.0},
@@ -465,10 +459,6 @@ def init_pars():
 
     }
 
-    # d['epochs'] = {
-    #     'epochs': {'t': List[Tuple[float]], 'max': 250.0, 'dv': 0.1},
-    #     'epoch_qs': {'t': List[float], 'max': 1.0},
-    # }
     d['life_history'] = {
         'epochs': {'t': dict},
         'age': {'v': 0.0, 'max': 250.0, 'dv': 1.0},
@@ -506,9 +496,11 @@ def init_pars():
                        'vel_par': {'t': str},
                        'ang_vel_par': {'t': str},
                        'bend_vel_par': {'t': str},
-                       'min_ang': {'v': 0.0, 'max': 180.0, 'dv': 1.0},
+                       'min_ang': {'v': 30.0, 'max': 180.0, 'dv': 1.0},
                        'min_ang_vel': {'v': 0.0, 'max': 1000.0, 'dv': 1.0},
-                       'non_chunks': bF}
+                       'non_chunks': bF,
+                       'on_food': bF,
+                       'fits' : bT}
     d['to_drop'] = {kk: bF for kk in to_drop_keys}
     d['enrichment'] = {**{k: d[k] for k in
                           ['preprocessing', 'processing', 'annotation', 'to_drop']},
@@ -593,7 +585,7 @@ def init_pars():
 
     d['LarvaGroup'] = {
         'model': d['larva_model'],
-        'sample': {'t': str, 'v': 'controls.exploration'},
+        'sample': {'t': str, 'v': 'None.200_controls'},
         'default_color': {'t': str, 'v': 'black'},
         'imitation': bF,
         'distribution': d['larva_distro'],
@@ -672,10 +664,10 @@ def null_dict(n, key='initial_value', **kwargs):
         return dic2
 
 
-def enrichment_dict(types=[], bouts=[], to_keep=[], pre_kws={}, **kwargs):
+def enrichment_dict(types=[], bouts=[], to_keep=[], pre_kws={},fits=True,on_food=False, **kwargs):
     pre = null_dict('preprocessing', **pre_kws)
     proc = null_dict('processing', types={k: True if k in types else False for k in proc_type_keys})
-    annot = null_dict('annotation', bouts={k: True if k in bouts else False for k in bout_keys})
+    annot = null_dict('annotation', bouts={k: True if k in bouts else False for k in bout_keys}, fits=fits, on_food=on_food)
     to_drop = null_dict('to_drop', **{k: True if k not in to_keep else False for k in to_drop_keys})
     dic = null_dict('enrichment', preprocessing=pre, processing=proc, annotation=annot, to_drop=to_drop, **kwargs)
     return dic

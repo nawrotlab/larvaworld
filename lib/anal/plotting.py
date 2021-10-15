@@ -559,6 +559,85 @@ def barplot(par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None, 
         P.set(fig)
         return P.get()
 
+# def boxplot(par_short='f_am', coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
+#     P = Plot(name=par_short, **kwargs)
+#     w = 0.15
+#
+#     if coupled_labels is not None:
+#         Npairs = len(coupled_labels)
+#         N = int(P.Ndatasets / Npairs)
+#         if leg_cols is None:
+#             leg_cols = N_colors(N)
+#         colors = leg_cols * Npairs
+#         leg_ids = P.labels[:N]
+#         ind = np.hstack([np.linspace(0 + i / N, w + i / N, N) for i in range(Npairs)])
+#         new_ind = ind[::N] + (ind[N - 1] - ind[0]) / N
+#     else:
+#         ind = np.arange(0, w * P.Ndatasets, w)
+#         colors=P.colors
+#         leg_ids = P.labels
+#
+#     pars, sim_labels, exp_labels, units = getPar([par_short], to_return=['d', 's', 's', 'l'])
+#
+#
+#     es = [d.endpoint_data for d in P.datasets]
+#
+#     # colors = N_colors(Ngroups)
+#     palette = {id: c for id, c in zip(leg_ids, colors)}
+#
+#
+#
+#
+#
+#     values = [e[pars[0]] for e in es]
+#     # means = [v.mean() for v in values]
+#     # stds = [v.std() for v in values]
+#     array = boolean_indexing(values).T
+#     df = pd.DataFrame(array, columns=leg_ids).assign(Trial='agar')
+#     cdf = pd.concat([df])  # CONCATENATE
+#     mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Group'])  # MELT
+#     P.build(figsize=(10, 5))
+#     sns.boxplot(x="Trial", y="value", hue="Group", data=mdf, palette=palette, ax=P.axs[0], width=.5,
+#             fliersize=3, linewidth=None, whis=1.0)
+#
+#     P.conf_ax(xlab=xlabel, ylab=units[0], leg_loc='upper right')
+#     P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.2, right=0.9, hspace=.005, wspace=0.05)
+#
+#     # if not coupled_labels:
+#     #     for i, j in itertools.combinations(np.arange(P.Ndatasets).tolist(), 2):
+#     #         st, pv = ttest_ind(values[i], values[j], equal_var=False)
+#     #         pv = np.round(pv, 4)
+#     #         label_diff(i, j, f'p={pv}', ind, means, ax)
+#     # else:
+#     #     for k in range(Npairs):
+#     #         i, j = k * N, k * N + 1
+#     #         st, pv = ttest_ind(values[i], values[j], equal_var=False)
+#     #         if pv <= 0.05:
+#     #             ax.text(ind[i], means[i] + stds[i], '*', ha='center', fontsize=20)
+#     #             # label_diff(i, j, '*', ind, means, ax)
+#     #
+#     # h = 2 * (np.nanmax(means) + np.nanmax(stds))
+#     # ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
+#     # ax.ticklabel_format(axis='y', useMathText=True, scilimits=(-3, 3), useOffset=True)
+#     # if coupled_labels is None:
+#     #     plt.xticks(ind, P.labels, color='k')
+#     # else:
+#     #     plt.xticks(new_ind, coupled_labels, color='k')
+#     #     dataset_legend(leg_ids, leg_cols, ax=ax, loc='upper left', handlelength=1, handleheight=1)
+#     # if ylabel is None:
+#     #     plt.ylabel(u)
+#     # else:
+#     #     plt.ylabel(ylabel)
+#     # try:
+#     #     plt.ylim(0, h)
+#     # except:
+#     #     ax.set_ylim(ymin=0)
+#     # if xlabel is not None:
+#     #     plt.xlabel(xlabel)
+#     # plt.subplots_adjust(hspace=0.05, top=0.95, bottom=0.15, left=0.15, right=0.95)
+#     # P.set(fig)
+#     return P.get()
+
 
 def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None,leg_cols=None, scale=1.0, **kwargs):
     P = Plot(name=par_shorts[0], **kwargs)
@@ -872,6 +951,142 @@ def boxplot_PI(sort_labels=False,xlabel='Trials', **kwargs):
                 fliersize=3, linewidth=None, whis=1.0)  # RUN PLOT
     P.conf_ax(xlab=xlabel, ylab='Odor preference', ylim=[-1, 1], leg_loc='lower left')
     P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.2, right=0.9, hspace=.005, wspace=0.05)
+    return P.get()
+
+def boxplot(par_shorts, sort_labels=False,xlabel=None, pair_ids =None, common_ids = None,complex_colors=False,
+            pair_colors=None, common_color_prefs=None,**kwargs):
+    P = Plot(name=par_shorts[0], **kwargs)
+    pars, sim_labels, exp_labels, labs, lims = getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim'])
+    Npars=len(pars)
+
+    group_ids = unique_list([d.config['group_id'] for d in P.datasets])
+    Ngroups = len(group_ids)
+    if common_ids is None :
+        common_ids = unique_list([l.split('_')[-1] for l in group_ids])
+
+    Ncommon = len(common_ids)
+    if pair_ids is None :
+        pair_ids = unique_list([l.split('_')[0] for l in group_ids])
+
+
+    Npairs = len(pair_ids)
+    coupled_labels = True if Ngroups == Npairs * Ncommon else False
+    # print(group_ids)
+    # print(pair_ids)
+    # print(common_ids)
+    # if Npairs == 3 and all([l in pair_ids for l in ['Low', 'Medium', 'High']]):
+    #     pair_ids = ['Low', 'Medium', 'High']
+    #     xlabel = 'Substate fructose concentration'
+    # elif Npairs == 3 and all([l in pair_ids for l in ['1:20', '1:200', '1:2000']]):
+    #     pair_ids = ['1:20', '1:200', '1:2000']
+    #     xlabel = 'Odor concentration'
+    # if Ncommon == 2 and all([l in common_ids for l in ['AM', 'EM']]):
+    #     common_ids = ['EM', 'AM']
+
+    if sort_labels:
+        common_ids = sorted(common_ids)
+        pair_ids = sorted(pair_ids)
+    if Npars>3 :
+        Ncols = int(Npars / 2)
+        Nrows=int(Npars / Ncols)
+        P.build(Ncols=Ncols,Nrows=Nrows, figsize=(8 * Ncols, 7* Nrows))
+    else :
+        P.build(Ncols=Npars, figsize=(7*Npars, 6))
+    for ii in range(Npars):
+
+        p = pars[ii]
+        ylabel = labs[ii]
+        ylim = lims[ii]
+        scale = 1
+        if par_shorts[ii]=='cum_d' :
+            ylabel="Pathlength 5' (mm)"
+            scale=1000
+        elif par_shorts[ii]=='v_mu':
+            ylabel = "Crawling speed (mm/s)"
+            scale = 1000
+        elif par_shorts[ii]=='tur_N_mu':
+            ylabel = "Avg. number turns per min"
+            scale = 60
+        elif par_shorts[ii]=='pau_tr':
+            ylabel = "Fraction of pauses"
+        all_vs = []
+        all_vs_dict = {}
+        for group_id in group_ids:
+            group_ds = [d for d in P.datasets if d.config['group_id'] == group_id]
+            vs = [d.endpoint_data[p].values*scale for d in group_ds]
+            all_vs.append(vs)
+            all_vs_dict[group_id] = vs
+        all_vs=flatten_list(all_vs)
+        if coupled_labels:
+            colors = N_colors(Ncommon)
+            palette = {id: c for id, c in zip(common_ids, colors)}
+            pair_dfs = []
+            for pair_id in pair_ids:
+                paired_group_ids = [f'{pair_id}_{common_id}' for common_id in common_ids]
+                pair_vs = [all_vs_dict[id] for id in paired_group_ids]
+                pair_vs = flatten_list(pair_vs)
+                pair_array = boolean_indexing(pair_vs).T
+                pair_df = pd.DataFrame(pair_array, columns=common_ids).assign(Trial=pair_id)
+                pair_dfs.append(pair_df)
+                cdf = pd.concat(pair_dfs)  # CONCATENATE
+
+        else:
+            colors = N_colors(Ngroups)
+            palette = {id: c for id, c in zip(group_ids, colors)}
+            array = boolean_indexing(all_vs).T
+            df = pd.DataFrame(array, columns=group_ids).assign(Trial=1)
+            cdf = pd.concat([df])  # CONCATENATE
+        mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Group'])  # MELT
+        # if complex_colors :
+        #     mdf['ComboID']=mdf['Group']+mdf['Trial']
+        #     hue='ComboID'
+        #     if pair_colors is None:
+        #         pair_colors = dict(zip(pair_ids,N_colors(Npairs)))
+        #     if common_color_prefs is None:
+        #         raise NotImplementedError
+        #     palette={}
+        #     for cID, pID in itertools.product(common_ids, pair_ids) :
+        #         palette[f'{cID}{pID}']=f'xkcd:{common_color_prefs[cID]} {pair_colors[pID]}'
+
+        # if complex_colors:
+        #     for pID in pair_ids:
+        #         mdf0=mdf[mdf['Trial']==pID]
+        #         print(mdf0)
+        #         palette={cID :  f'xkcd:{common_color_prefs[cID]} {pair_colors[pID]}' for cID in common_ids}
+        #         g1 = sns.boxplot(x="Trial", y="value", hue='Group', data=mdf0, palette=palette, ax=P.axs[ii], width=0.5,
+        #                          fliersize=3, linewidth=None, whis=1.5)  # RUN PLOT
+        #         g1.get_legend().remove()
+        #         g2 = sns.stripplot(x="Trial", y="value", hue='Group', data=mdf0, palette=palette, ax=P.axs[ii])  # RUN PLOT
+        #         g2.get_legend().remove()
+        #     # mdf['ComboID'] = mdf['Group'] + mdf['Trial']
+        #     # hue = 'ComboID'
+        #     # if pair_colors is None:
+        #     #     pair_colors = dict(zip(pair_ids, N_colors(Npairs)))
+        #     # if common_color_prefs is None:
+        #     #     raise NotImplementedError
+        #     # palette = {}
+        #     # for cID, pID in itertools.product(common_ids, pair_ids):
+        #     #     palette[f'{cID}{pID}'] = f'xkcd:{common_color_prefs[cID]} {pair_colors[pID]}'
+        # else:
+            # hue = 'Group'
+
+
+        g1=sns.boxplot(x="Trial", y="value", hue='Group', data=mdf, palette=palette, ax=P.axs[ii], width=0.5,
+                    fliersize=3, linewidth=None, whis=1.5)  # RUN PLOT
+        g1.get_legend().remove()
+
+        if complex_colors :
+            cols=[]
+            for pID, cID in itertools.product(pair_ids, common_ids):
+                ccc=f'xkcd:{common_color_prefs[cID]} {pair_colors[pID]}'
+                cols.append(ccc)
+            for j, patch in enumerate(P.axs[ii].artists):
+                patch.set_facecolor(cols[j])
+        g2 = sns.stripplot(x="Trial", y="value", hue='Group', data=mdf, palette=palette, ax=P.axs[ii])  # RUN PLOT
+        g2.get_legend().remove()
+        # P.conf_ax(ii, ylab=ylabel, ylim=ylim)
+        P.conf_ax(ii, xlab=xlabel, ylab=ylabel, ylim=ylim)
+    P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.1, right=0.95, hspace=0.3, wspace=0.3)
     return P.get()
 
 

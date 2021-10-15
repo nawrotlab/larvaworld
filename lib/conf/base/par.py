@@ -492,7 +492,7 @@ class ParDict:
             self.add_fin(k0=k00)
 
 
-    def add_rate(self, k0=None, k_time='t', p=None, k=None, d=None, s=None, k_num=None, k_den=None):
+    def add_rate(self, k0=None, k_time='t', p=None, k=None, d=None, s=None, k_num=None, k_den=None, **kwargs):
         if k0 is not None:
             b = self.dict[k0]
             if p is None:
@@ -508,7 +508,7 @@ class ParDict:
         if k_den is None:
             k_den = f'D_{k_time}'
 
-        self.add(p=p, k=k, d=d, s=s, exists=False, fraction=True, k_num=k_num, k_den=k_den)
+        self.add(p=p, k=k, d=d, s=s, exists=False, fraction=True, k_num=k_num, k_den=k_den, **kwargs)
 
     def add_Vspec(self, k0):
         b = self.dict[k0]
@@ -527,7 +527,11 @@ class ParDict:
         self.add(p=pid, k=f'{kc}_id', d=pid, s=sub('idx', kc), exists=False)
         self.add(p=ptr, k=f'{kc}_tr', d=ptr, s=sub('r', kc), exists=False)
         self.add(p=pN, k=f'{kc}_N', d=pN, s=sub('N', f'{pc}s'), exists=False)
-        # print(self.dict[f'{kc}_N'].k, self.dict[f'{kc}_N'].lim)
+        self.add_rate(k_num=f'{kc}_N', k_den=nam.cum('t'), k=f'{kc}_N_mu', p=nam.mean(pN), d=nam.mean(pN), s=bar(f'{kc}_N'))
+        self.add(p=f'{nam.mean(pN)}_on_food', k=f'{kc}_N_mu_on_food')
+        self.add(p=f'{nam.mean(pN)}_off_food', k=f'{kc}_N_mu_off_food')
+        self.add(p=f'{ptr}_on_food', k=f'{kc}_tr_on_food')
+        self.add(p=f'{ptr}_off_food', k=f'{kc}_tr_off_food')
 
         k00 = f'{kc}_t'
         s00 = Delta('t')
@@ -739,7 +743,11 @@ class ParDict:
                  lab='food intake')
         self.add(p='cum_food_detected', k='cum_f_det', d='cum_food_detected', s=subsup('t', 'on food', 'cum'),
                  lab='time on food')
-        self.add(p=nam.dur_ratio('on_food'), k='on_food_tr', d=nam.dur_ratio('on_food'), s=sub('r', 'on_food'))
+        self.add(p='on_food', k='on_food', d='on_food', s='on_food',lab='Is inside patches')
+        self.add(p=f'{nam.mean(nam.vel(""))}_on_food', k='v_mu_on_food')
+        self.add(p=f'{nam.mean(nam.vel(""))}_off_food', k='v_mu_off_food')
+        self.add(p=nam.dur_ratio('on_food'), k='on_food_tr', d=nam.dur_ratio('on_food'), s=sub('r', 'on_food'),
+                 lab='Fraction of time spent inside patches', lim=(0.0,1.0))
         self.add(p='scaled_amount_eaten', k='sf_am',  d='ingested_food_volume_ratio', s=sub('[V]', 'in'))
         self.add(p='lin_activity', k='Act_cr',  d='crawler output', s=sub('A', 'crawl'))
         self.add(p='ang_activity', k='Act_tur',  d='turner output', s=subsup('A', 'tur', 'out'), lim=(-20, 20))
@@ -784,6 +792,11 @@ class ParDict:
                     self.add_std(k0=f'{kc}_{k}')
                     for k0 in [f'{kc}_{k}', f'{kc}_{k}_mu', f'{kc}_{k}_std']:
                         self.add_scaled(k0=k0)
+        self.add_rate(k_num='Ltur_N', k_den='tur_N', k='tur_H', p='handedness_score', d='handedness_score',
+                      s=sub('H', 'tur'), lim=(0.0,1.0), lab='Handedness score')
+        self.add(p=f'handedness_score_on_food', k='tur_H_on_food')
+        self.add(p=f'handedness_score_off_food', k='tur_H_off_food')
+
 
     def build(self, save=True, object=None):
         siu.day = siu.s * 24 * 60 * 60
@@ -899,8 +912,8 @@ if __name__ == '__main__':
     # o, d = nam.bearing2('n'), nam.dst2('n')
     # fo = getPar(['fo'], to_return=['d'])[0][0]
     # print(o,d)
-    # d=ParDict(mode='build').dict
-    print(getPar(['on_food_tr'], to_return=['d', 's', 's', 'l', 'lim']))
+    d=ParDict(mode='build').dict
+    # print(getPar(['on_food_tr'], to_return=['d', 's', 's', 'l', 'lim']))
     # # d = ParDict(mode='reconstruct').dict
     # # print(d.keys())
     raise

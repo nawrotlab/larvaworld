@@ -61,6 +61,7 @@ class LarvaWorld:
         self.__dict__.update(self.vis_kwargs['color'])
         self.__dict__.update(self.vis_kwargs['aux'])
 
+        self.draw_odor_aura = False
         self.experiment = experiment
         self.dynamic_graphs = []
         self.focus_mode = False

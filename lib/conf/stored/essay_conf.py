@@ -1,7 +1,9 @@
 import shutil
 from lib.conf.base.dtypes import enrichment_dict, null_dict, arena
+from lib.conf.stored.env_conf import env, f_pars, double_patches
 from lib.conf.stored.exp_conf import RvsS_groups
 from lib.conf.base import paths
+
 
 
 def RvsS_essay(**kwargs) :
@@ -65,7 +67,65 @@ def run_RvsS_essay(**kwargs) :
     shutil.rmtree(f'{essay_kws["path"]}/data')
     return figs, results
 
+def double_patch_essay(N=3, dur=3.0,**kwargs):
+    from lib.conf.stored.conf import next_idx
+    essay_id = 'double_patch'
+    kws = {
+        'enrichment': enrichment_dict(types=['spatial','angular', 'source'], bouts=['stride', 'pause', 'turn'], fits=False, on_food=True),
+        'collections': ['pose', 'toucher', 'feeder', 'olfactor'],
+        # 'experiment' : 'RvsS'
+    }
+    path0 = f'{paths.path("ESSAY")}/{essay_id}/{essay_id}_{next_idx(essay_id, type="essay")}'
+    path = f'{path0}/data'
 
+    def double_patch_env(type='standard'):
+        return env(arena(0.24, 0.24),
+                        f_pars(su=double_patches(type)),
+                        'G')
+
+    def sim(id, dur):
+        return null_dict('sim_params', sim_ID=id, path=path, duration=dur, store_data=False)
+
+    def conf(exp, id, dur, type='standard', l_kws={}):
+        return null_dict('exp_conf', sim_params=sim(id, dur), env_params=double_patch_env(type=type),
+                         larva_groups=RvsS_groups(expand=True,**l_kws), experiment=exp,trials={}, **kws)
+
+    def time_ratio_exp(dur=dur, exp='double_patch'):
+        return {
+            exp: [conf(exp, f'{exp}_{n}_{dur}min', dur, type=n, l_kws={'N':N, 'navigator' : True, 'pref' : f'{n}_'}) for n in ['sucrose', 'standard', 'cornmeal']]}
+
+    # def intake_exp(durs=[10, 15, 20], exp='intake'):
+    #     return {exp: [conf(exp, f'{exp}_{dur}min', dur) for dur in durs]}
+    #
+    # def starvation_exp(hs=[0, 1, 2, 3, 4], dur=dur2, exp='starvation'):
+    #     return {exp: [conf(exp, f'{exp}_{h}h_{dur}min', dur, l_kws={'h_starved': h}) for h in hs]}
+    #
+    # def quality_exp(qs=[1.0, 0.75, 0.5, 0.25, 0.15], dur=dur2, exp='quality'):
+    #     return {exp: [conf(exp, f'{exp}_{q}_{dur}min', dur, l_kws={'q': q}) for q in qs]}
+    #
+    # def refeeding_exp(h=3, dur=dur3, exp='refeeding'):
+    #     return {exp: [conf(exp, f'{exp}_{h}h_{dur}min', dur, l_kws={'h_starved': h}) for h in [h]]}
+
+    exps = {**time_ratio_exp()}
+    # exps = {**pathlength_exp(), **intake_exp(), **starvation_exp(), **quality_exp(), **refeeding_exp()}
+    return exps, {'path': path0, 'essay_type': essay_id}
+
+
+def run_double_patch_essay(**kwargs) :
+    from lib.sim.single.analysis import essay_analysis
+    from lib.sim.single.single_run import SingleRun
+    exps, essay_kws = double_patch_essay(**kwargs)
+    figs = {}
+    results = {}
+    for exp, exp_confs in exps.items():
+        ds0 = [SingleRun(**c).run() for c in exp_confs]
+        # ds0 = [run_sim(**c) for c in exp_confs]
+        if ds0 is not None:
+            fig_dict, res = essay_analysis(exp=exp, ds0=ds0, **essay_kws)
+            figs.update(fig_dict)
+            results[exp] = res
+    shutil.rmtree(f'{essay_kws["path"]}/data')
+    return figs, results
 
 rover_sitter_essay = {
     'experiments':{
@@ -112,7 +172,7 @@ essay_dict = {
               }
 
 if __name__ == "__main__":
-    figs, results=run_RvsS_essay()
+    figs, results=run_double_patch_essay()
     print(results)
 
 

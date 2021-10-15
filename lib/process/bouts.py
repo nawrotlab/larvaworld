@@ -12,8 +12,8 @@ from lib.process.store import store_aux_dataset
 
 def annotate(s, e, config=None, bouts={'stride': True, 'pause': True, 'turn': True},
              recompute=False, track_point=None, track_pars=None, chunk_pars=None,
-             vel_par=None, ang_vel_par=None, bend_vel_par=None, min_ang=5.0, min_ang_vel=100.0,
-             non_chunks=False, show_output=True, **kwargs):
+             vel_par=None, ang_vel_par=None, bend_vel_par=None, min_ang=30.0, min_ang_vel=100.0,
+             non_chunks=False, show_output=True,fits=True,on_food=False, **kwargs):
     from lib.conf.base.par import ParDict
     dic = ParDict(mode='load').dict
     if vel_par is None:
@@ -53,8 +53,11 @@ def annotate(s, e, config=None, bouts={'stride': True, 'pause': True, 'turn': Tr
             detect_turns(**c, ang_vel_par=ang_vel_par, bend_vel_par=bend_vel_par, min_ang=min_ang,
                          min_ang_vel=min_ang_vel, **kwargs)
 
-        if bouts['stride'] and bouts['pause']:
+        if bouts['stride'] and bouts['pause'] and fits:
             fit_bouts(**c, **kwargs)
+        if on_food :
+            comp_patch_metrics(**c, **kwargs)
+
         for b in bouts.keys():
             if bouts[b]:
                 comp_chunk_bearing(**c, chunk=b, **kwargs)
@@ -72,7 +75,6 @@ def detect_turns(s, e, config, dt, track_pars, min_ang_vel, min_ang=30.0,
         return
     aux_dir = config['aux_dir']
     ss = s.loc[s[nam.id(chunk_only)].dropna().index] if chunk_only is not None else s
-
     if ang_vel_par is None:
         ang_vel_par = nam.vel(nam.orient('front'))
     if bend_vel_par is None:
@@ -86,6 +88,7 @@ def detect_turns(s, e, config, dt, track_pars, min_ang_vel, min_ang=30.0,
                   par_ranges=[[min_ang_vel, np.inf], [-np.inf, -min_ang_vel]], merged_chunk='turn',
                   store_max=[True, False], store_min=[False, True])
     track_pars_in_chunks(ss, e, aux_dir, chunks=['Lturn', 'Rturn'], pars=track_pars, merged_chunk='turn')
+    e['handedness_score']=e[nam.num('Lturn')]/e[nam.num('turn')]
     if constant_bend_chunks:
         print('Additionally detecting constant bend chunks.')
         detect_chunks(ss, e, dt, chunk_names=['constant_bend'], chunk_only=chunk_only, par=bend_vel_par,
@@ -341,11 +344,13 @@ def detect_non_chunks(s, e, dt, chunk_name, guide_parameter, non_chunk_name=None
 def compute_chunk_metrics(s, e, chunks):
     for c in chunks:
         dur = nam.dur(c)
-        e[nam.num(c)] = s[dur].groupby('AgentID').count()
+        N=nam.num(c)
+        e[N] = s[dur].groupby('AgentID').count()
         e[nam.cum(dur)] = s[dur].groupby('AgentID').sum()
         e[nam.mean(dur)] = s[dur].groupby('AgentID').mean()
         e[nam.std(dur)] = s[dur].groupby('AgentID').std()
         e[nam.dur_ratio(c)] = e[nam.cum(dur)] / e[nam.cum('dur')]
+        e[nam.mean(N)] = e[N]/ e[nam.cum('dur')]
 
 
 def detect_contacting_chunks(s, e, aux_dir, dt, vel_par, track_point, chunk='stride', mid_flag=None, edge_flag=None,
@@ -527,3 +532,32 @@ def comp_chunk_bearing(s, config, chunk, **kwargs):
         s.loc[s[c1] == True, db_par] = np.abs(b0) - np.abs(b1)
         store_aux_dataset(s, pars=[b0_par, b1_par, db_par], type='distro', file=aux_dir)
         print(f'Bearing to source {n} during {chunk} computed')
+
+def comp_patch_metrics(s, e, config, **kwargs):
+    cum_t=nam.cum('dur')
+    on='on_food'
+    off='off_food'
+    on_tr=nam.dur_ratio(on)
+    for c in ['Lturn', 'turn', 'pause'] :
+        dur = nam.dur(c)
+        cdur = nam.cum(dur)
+        N = nam.num(c)
+        e[f'{N}_{on}'] = s[s[on] == True][dur].groupby('AgentID').count()
+        e[f'{N}_{off}'] = s[s[on] == False][dur].groupby('AgentID').count()
+
+        e[f'{cdur}_{on}'] = s[s[on] == True][dur].groupby('AgentID').sum()
+        e[f'{cdur}_{off}'] = s[s[on] == False][dur].groupby('AgentID').sum()
+
+        e[f'{nam.dur_ratio(c)}_{on}'] = e[f'{cdur}_{on}'] / e[cum_t] / e[on_tr]
+        e[f'{nam.dur_ratio(c)}_{off}'] = e[f'{cdur}_{off}'] / e[cum_t] / (1 - e[on_tr])
+        e[f'{nam.mean(N)}_{on}'] = e[f'{N}_{on}'] / e[cum_t] / e[on_tr]
+        e[f'{nam.mean(N)}_{off}'] = e[f'{N}_{off}'] / e[cum_t] / (1 - e[on_tr])
+
+    dst = nam.dst('')
+    cdst = nam.cum(dst)
+    v_mu=nam.mean(nam.vel(''))
+    e[f'{cdst}_{on}'] = s[s[on] == True][dst].dropna().groupby('AgentID').sum()
+    e[f'{cdst}_{off}'] = s[s[on] == False][dst].dropna().groupby('AgentID').sum()
+
+    e[f'{v_mu}_{on}'] = e[f'{cdst}_{on}'] / e[cum_t] / e[on_tr]
+    e[f'{v_mu}_{off}'] = e[f'{cdst}_{off}'] /  e[cum_t] / (1 - e[on_tr])

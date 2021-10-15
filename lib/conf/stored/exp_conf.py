@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.conf.stored.conf import imitation_exp
+from lib.conf.stored.conf import imitation_exp, loadConf
 from lib.conf.base.dtypes import enrichment_dict, null_dict, oG, oD, prestarved
 
 
@@ -18,7 +18,9 @@ def lgs(models, ids=None, **kwargs):
 
 
 def lg(group='Larva', c='black', N=1, mode='uniform', sh='circle', p=(0.0, 0.0), ors=(0.0, 360.0),
-       s=(0.0, 0.0), m='explorer', o=null_dict('odor'), **kwargs):
+       s=(0.0, 0.0), m='explorer', o=null_dict('odor'),expand=False, **kwargs):
+    if expand :
+        m=loadConf(m, 'Model')
     if type(s) == float:
         s = (s, s)
     dist = null_dict('larva_distro', N=N, mode=mode, shape=sh, loc=p, orientation_range=ors, scale=s)
@@ -76,15 +78,16 @@ def pref_exp(name, dur=5.0, c=[], enrichment=enrichment_dict(types=['PI']), **kw
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
-def RvsS_groups(N=1, age=96.0, q=1.0, h_starved=0.0,sample='AttP2.Fed',substrate_type='standard',  **kwargs):
+def RvsS_groups(N=1, age=96.0, q=1.0, h_starved=0.0,sample='AttP2.Fed',substrate_type='standard',pref='',navigator=False,  **kwargs):
     l=null_dict('life_history', age=age, epochs=prestarved(h=h_starved, age=age, q=q, substrate_type=substrate_type))
     group_kws = {
         'sample': sample,
         'life_history': l,
         **kwargs
     }
-    return {**lg('Rover', m='rover', c='blue', N=N, **group_kws),
-            **lg('Sitter', m='sitter', c='red', N=N, **group_kws)}
+    mR,mS=['rover','sitter'] if not navigator else ['navigator_rover','navigator_sitter']
+    return {**lg(f'{pref}Rover', m=mR, c='blue', N=N, **group_kws),
+            **lg(f'{pref}Sitter', m=mS, c='red', N=N, **group_kws)}
 
 
 def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
@@ -147,7 +150,7 @@ grouped_exp_dict = {
                                  l=lgs(models=['Orco_forager', 'forager'],
                                        ids=['Orco', 'control'], N=20, mode='periphery', s=0.03)),
         'double_patch': food_exp('double_patch', l=RvsS_groups(N=5),
-                                 c=['toucher', 'feeder', 'olfactor'], enrichment=source_enrich(), en=False),
+                                 c=['toucher', 'feeder', 'olfactor'], enrichment=enrichment_dict(types=['spatial', 'angular', 'source']), en=False),
         'tactile_detection': food_exp('single_patch', dur=5.0, c=['toucher'],
                                       l=lg(m='toucher', N=5), en=False),
         'tactile_detection_x3': food_exp('single_patch', dur=600.0, c=['toucher'],

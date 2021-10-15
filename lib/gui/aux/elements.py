@@ -849,10 +849,14 @@ class CollapsibleTable(Collapsible):
             self.update(w)
 
 
-def v_layout(k0,args, value_kws={}):
+def v_layout(k0,args, value_kws0={}):
     v = args['initial_value']
     vs = args['values']
     t = args['dtype']
+    Ndig = args['Ndigits']
+    value_kws=copy.deepcopy(value_kws0)
+    if 'size' not in value_kws0.keys() and Ndig is not None:
+        value_kws['size'] = (Ndig, 1)
     if t == bool:
         temp = BoolButton(k0, v)
     elif t == str:
@@ -863,12 +867,13 @@ def v_layout(k0,args, value_kws={}):
     elif t == List[str]:
         temp = sg.In(v, key=k0, **value_kws)
     else:
+
         spin_kws = {
             'values': vs,
             'initial_value': v,
             'key': k0,
             'dtype': base_dtype(t),
-            'value_kws': {'size': (args['Ndigits'], 1)}
+            'value_kws': value_kws
         }
         if t in [List[float], List[int]]:
             temp = MultiSpin(tuples=False, **spin_kws)
@@ -983,8 +988,8 @@ class CollapsibleDict(Collapsible):
         content = []
         for k, args in type_dict.items():
             k0 = f'{name}_{k}'
-            t = args['dtype']
-            if t == dict:
+            # t = args['dtype']
+            if args['dtype'] == dict:
                 subdicts[k0] = CollapsibleDict(k0, disp_name=k, type_dict=args['content'],
                                                text_kws=text_kws,value_kws = value_kws, state=self.subdict_state)
                 ii = subdicts[k0].get_layout()

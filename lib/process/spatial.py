@@ -506,3 +506,4 @@ def scale_to_length(s, e, pars=None, keys=None):
     e_pars = [p for p in pars if p in e.columns]
     if len(e_pars) > 0:
         e[nam.scal(e_pars)] = (e[e_pars].values.T / l.values).T
+
