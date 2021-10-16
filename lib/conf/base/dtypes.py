@@ -688,9 +688,13 @@ def arena(x, y=None):
 
 def prestarved(h=0.0, age=0.0, q=1.0, substrate_type='standard'):
     sub0 = null_dict('substrate', type=substrate_type, quality=q)
-    sub1 = null_dict('substrate', type=substrate_type, quality=0.0)
-    return {0: null_dict('epoch', start=0.0, stop=age - h, substrate=sub0),
-            1: null_dict('epoch', start=age - h, stop=age, substrate=sub1)}
+    ep0={0: null_dict('epoch', start=0.0, stop=age - h, substrate=sub0)}
+    if h==0.0 :
+        return ep0
+    else :
+        sub1 = null_dict('substrate', type=substrate_type, quality=0.0)
+        ep1 = {1: null_dict('epoch', start=age - h, stop=age, substrate=sub1)}
+    return {**ep0,**ep1}
 
 
 def init_shortcuts():

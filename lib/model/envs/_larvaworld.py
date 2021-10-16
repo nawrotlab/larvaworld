@@ -409,26 +409,21 @@ class LarvaWorld:
 
     def _place_food(self, food_pars):
         if food_pars is not None:
-            pars0 = copy.deepcopy(food_pars)
-            if pars0['food_grid'] is not None:
+            if food_pars['food_grid'] is not None:
                 self._create_food_grid(space_range=self.space_edges_for_screen,
-                                       grid_pars=pars0['food_grid'])
-            if pars0['source_groups'] is not None:
-                for gID, gConf in pars0['source_groups'].items():
-                    ps = lib.aux.xy_aux.generate_xy_distro(**gConf['distribution'])
-                    for i, p in enumerate(ps):
-                        id = f'{gID}_{i}'
-                        self.add_food(id=id, position=p, food_pars=gConf)
+                                       grid_pars=food_pars['food_grid'])
+            for gID, gConf in food_pars['source_groups'].items():
+                ps = lib.aux.xy_aux.generate_xy_distro(**gConf['distribution'])
+                for i, p in enumerate(ps):
+                    self.add_food(id=f'{gID}_{i}', pos=p, **gConf)
 
-            for id, f_pars in pars0['source_units'].items():
-                position = f_pars['pos']
-                f_pars.pop('pos')
-                self.add_food(id=id, position=position, food_pars=f_pars)
+            for id, f_pars in food_pars['source_units'].items():
+                self.add_food(id=id, **f_pars)
 
-    def add_food(self, position, id=None, food_pars={}):
+    def add_food(self, pos, id=None, **food_pars):
         if id is None:
             id = self.next_id(type='Food')
-        f = Food(unique_id=id, pos=position, model=self, **food_pars)
+        f = Food(unique_id=id, pos=pos, model=self, **food_pars)
         self.active_food_schedule.add(f)
         self.all_food_schedule.add(f)
         return f

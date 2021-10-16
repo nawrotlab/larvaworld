@@ -18,16 +18,6 @@ class LarvaWorldSim(LarvaWorld):
         for idx, ep in self.sim_epochs.items() :
             ep['start']=int(ep['start']* 60 / self.dt)
             ep['stop']=int(ep['stop']* 60 / self.dt)
-        # if trials['epochs'] in [None, []]:
-        #     self.sim_epochs = []
-        #     # self.sim_epoch_qs = []
-        # else:
-        #     self.sim_epochs=trials['epochs']
-        #     # durs=[int(ep['duration']* 60 / self.dt) for ep in eps]
-        #     # cumdurs=np.cumsum([0]+durs)
-        #     # self.sim_epochs = [(t0,t1) for t0,t1 in zip(cumdurs[:-1], cumdurs[1:])]
-        #     self.sim_epoch_qs = [ep['substrate']['quality'] for ep in eps]
-
         self.larva_collisions = larva_collisions
 
         self._place_food(self.env_pars['food_params'])

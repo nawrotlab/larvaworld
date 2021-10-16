@@ -20,7 +20,7 @@ from lib.stor.larva_dataset import LarvaDataset
 import lib.aux.naming as nam
 
 
-def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
+def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=False):
     if ds is None:
         return
     if not type(ds) == list:
@@ -33,56 +33,31 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
           **ccc}
     figs = {}
     results = {}
-    # if 'food' in exp_type:
-    #     # am = e['amount_eaten'].values
-    #     # print(am)
-    #     # cr,pr,fr=e['stride_dur_ratio'].values, e['pause_dur_ratio'].values, e['feed_dur_ratio'].values
-    #     # print(cr+pr+fr)
-    #     # cN, pN, fN = e['num_strides'].values, e['num_pauses'].values, e['num_feeds'].values
-    #     # print(cN, pN, fN)
-    #     # cum_sd, f_success=e['cum_scaled_dst'].values, e['feed_success_rate'].values
-    #     # print(cum_sd, f_success)
-    #
-    #     # fig_dict['angular'] = plot_ang_pars(datasets=[d], **ccc)
-    #     # fig_dict['bouts'] = plot_stridesNpauses(datasets=[d], plot_fits=None, only_fit_one=False, test_detection=True,
-    #     #                                         **ccc)
-    #     figs['scatter_x4'] = plot_endpoint_scatter(keys=['cum_sd', 'f_am', 'str_tr', 'pau_tr'], **cc)
-    #     figs['scatter_x2'] = plot_endpoint_scatter(keys=['cum_sd', 'f_am'], **cc)
+
     if 'tactile' in exp_type:
         figs['time ratio on food (final)'] = plot_endpoint_params(par_shorts=['on_food_tr'], **cc)
         figs['time ratio on food'] = timeplot(['on_food_tr'], **cc)
         figs['time on food'] = timeplot(['cum_f_det'], **cc)
         figs['turner input'] = timeplot(['A_tur'], show_first=True, **cc)
         figs['tactile activation'] = timeplot(['A_touch'], show_first=True, **cc)
-        # figs.update(**source_analysis(d.config['sources'], **cc))
 
-    if 'RvsS' in exp_type:
-        s = exp_type.split('_')[-1]
-        debs = flatten_list([d.load_deb_dicts(use_pickle=False) for d in ds])
-        figs[f'RS hunger on {s} '] = plot_debs(deb_dicts=debs, save_as=f'deb_on_{s}.pdf',
-                                               mode='hunger', sim_only=True, roversVSsitters=True, **cc)
 
     if exp_type in ['growth', 'RvsS']:
-        deb_model = deb_default(epochs=d.config['epochs'], substrate_quality=d.config['substrate_quality'])
-        if exp_type == 'RvsS':
-            roversVSsitters = True
-        else:
-            roversVSsitters = False
-
+        deb_model = deb_default(**d.config['life_history'])
         deb_dicts = flatten_list([d.load_deb_dicts(use_pickle=False) for d in ds]) + [deb_model]
-        c = {'roversVSsitters': roversVSsitters}
+        c = {'roversVSsitters': True}
         c1 = {'deb_dicts': deb_dicts[:-1],
               'sim_only': True}
 
         for m in ['feeding', 'reserve_density', 'fs', 'assimilation', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
-                  'food_mass_2']:
+                  'food_mass_2', 'hunger']:
             for t in ['hours']:
                 save_as = f'{m}_in_{t}.pdf'
-                figs[f'{m} ({t})'] = plot_debs(save_as=save_as, mode=m, time_unit=t, **c, **c1, **cc)
+                figs[f'FEED.{m} ({t})'] = plot_debs(save_as=save_as, mode=m, time_unit=t, **c, **c1, **cc)
 
         for m in ['energy', 'growth', 'full']:
             save_as = f'{m}_vs_model.pdf'
-            figs[f'{m} vs model'] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c, **cc)
+            figs[f'DEB.{m} vs model'] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c, **cc)
     # elif exp_type == 'dispersion':
     #     target_dataset = load_reference_dataset(dataset_id=d.config['sample_dataset'])
     #     ds = [d, target_dataset]
@@ -97,11 +72,6 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
     #     fig_dict.update(dic1)
     #     dic2 = plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:3], min_turn_angle=20, **ccc)
     #     fig_dict.update(dic2)
-
-    if 'PI' in exp_type:
-        ind = d.compute_preference_index()
-        print(f'Preference for left odor : {np.round(ind, 3)}')
-        results['PI'] = ind
 
     if 'RL' in exp_type:
         c = {
@@ -130,8 +100,6 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
 
     if exp_type in ['food_at_bottom']:
         figs.update(**foraging_analysis(d.config['sources'], **cc))
-    # if 'double_patch' in exp_type:
-    #     figs.update(**double_patch_analysis(d.config['sources'],**cc))
     if 'RvsS' in exp_type:
         figs.update(**intake_analysis(**cc))
     if 'dispersion' in exp_type:
@@ -406,13 +374,6 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
         #     d.delete()
     print(f'    Analysis complete!')
     return figs, results
-
-
-def split_rovers_sitters(d):
-    ds = d.split_dataset()
-    debs = d.load_deb_dicts(use_pickle=False)
-    d.delete(show_output=False)
-    return ds, debs
 
 
 def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None, **kwargs):

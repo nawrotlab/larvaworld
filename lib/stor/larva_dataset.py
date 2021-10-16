@@ -32,10 +32,12 @@ class LarvaDataset:
                 group_id = group_ids[0]
                 color = larva_groups[group_id]['default_color']
                 sample = larva_groups[group_id]['sample']
+                life_history = larva_groups[group_id]['life_history']
             else:
                 group_id = None
                 color = None
                 sample = samples[0] if len(samples) == 1 else None
+                life_history = None
 
             if Npoints is None:
                 try:
@@ -61,6 +63,7 @@ class LarvaDataset:
                            'env_params': env_params,
                            'larva_groups': larva_groups,
                            'sources': sources,
+                           'life_history': life_history
                            # **life_params
                            }
 

@@ -162,7 +162,7 @@ grouped_exp_dict = {
         '4corners': exp('4corners', c=['memory'], l=lg(m='RL_forager', N=10, s=0.04))
     },
 
-    'growth': {'growth': deb_exp('food_grid', dur=24 * 60.0, l=lg(m='sitter', N=1)),
+    'growth': {'growth': deb_exp('food_grid', dur=24 * 60.0, l=RvsS_groups(age=0.0)),
                'RvsS': deb_exp('food_grid', dur=180.0, l=RvsS_groups()),
                'RvsS_on': deb_exp('food_grid', dur=20.0, l=RvsS_groups()),
                'RvsS_off': deb_exp('arena_200mm', dur=20.0, l=RvsS_groups()),

@@ -873,8 +873,7 @@ def boxplot_PI(sort_labels=False,xlabel='Trials', **kwargs):
     P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.2, right=0.9, hspace=.005, wspace=0.05)
     return P.get()
 
-def boxplot(par_shorts, sort_labels=False,xlabel=None, pair_ids =None, common_ids = None,complex_colors=False,
-            pair_colors=None, common_color_prefs=None,**kwargs):
+def boxplot(par_shorts, sort_labels=False,xlabel=None, pair_ids =None, common_ids = None,**kwargs):
     P = Plot(name=par_shorts[0], **kwargs)
     pars, sim_labels, exp_labels, labs, lims = getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim'])
     Npars=len(pars)
@@ -887,22 +886,8 @@ def boxplot(par_shorts, sort_labels=False,xlabel=None, pair_ids =None, common_id
     Ncommon = len(common_ids)
     if pair_ids is None :
         pair_ids = unique_list([l.split('_')[0] for l in group_ids])
-
-
     Npairs = len(pair_ids)
     coupled_labels = True if Ngroups == Npairs * Ncommon else False
-    # print(group_ids)
-    # print(pair_ids)
-    # print(common_ids)
-    # if Npairs == 3 and all([l in pair_ids for l in ['Low', 'Medium', 'High']]):
-    #     pair_ids = ['Low', 'Medium', 'High']
-    #     xlabel = 'Substate fructose concentration'
-    # elif Npairs == 3 and all([l in pair_ids for l in ['1:20', '1:200', '1:2000']]):
-    #     pair_ids = ['1:20', '1:200', '1:2000']
-    #     xlabel = 'Odor concentration'
-    # if Ncommon == 2 and all([l in common_ids for l in ['AM', 'EM']]):
-    #     common_ids = ['EM', 'AM']
-
     if sort_labels:
         common_ids = sorted(common_ids)
         pair_ids = sorted(pair_ids)
@@ -917,23 +902,11 @@ def boxplot(par_shorts, sort_labels=False,xlabel=None, pair_ids =None, common_id
         p = pars[ii]
         ylabel = labs[ii]
         ylim = lims[ii]
-        scale = 1
-        if par_shorts[ii]=='cum_d' :
-            ylabel="Pathlength 5' (mm)"
-            scale=1000
-        elif par_shorts[ii]=='v_mu':
-            ylabel = "Crawling speed (mm/s)"
-            scale = 1000
-        elif par_shorts[ii]=='tur_N_mu':
-            ylabel = "Avg. number turns per min"
-            scale = 60
-        elif par_shorts[ii]=='pau_tr':
-            ylabel = "Fraction of pauses"
         all_vs = []
         all_vs_dict = {}
         for group_id in group_ids:
             group_ds = [d for d in P.datasets if d.config['group_id'] == group_id]
-            vs = [d.endpoint_data[p].values*scale for d in group_ds]
+            vs = [d.endpoint_data[p].values for d in group_ds]
             all_vs.append(vs)
             all_vs_dict[group_id] = vs
         all_vs=flatten_list(all_vs)
@@ -960,17 +933,10 @@ def boxplot(par_shorts, sort_labels=False,xlabel=None, pair_ids =None, common_id
 
         g1=sns.boxplot(x="Trial", y="value", hue='Group', data=mdf, palette=palette, ax=P.axs[ii], width=0.5,
                     fliersize=3, linewidth=None, whis=1.5)  # RUN PLOT
-        g1.get_legend().remove()
+        # g1.get_legend().remove()
 
-        if complex_colors :
-            cols=[]
-            for pID, cID in itertools.product(pair_ids, common_ids):
-                ccc=f'xkcd:{common_color_prefs[cID]} {pair_colors[pID]}'
-                cols.append(ccc)
-            for j, patch in enumerate(P.axs[ii].artists):
-                patch.set_facecolor(cols[j])
         g2 = sns.stripplot(x="Trial", y="value", hue='Group', data=mdf, palette=palette, ax=P.axs[ii])  # RUN PLOT
-        g2.get_legend().remove()
+        # g2.get_legend().remove()
         P.conf_ax(ii, xlab=xlabel, ylab=ylabel, ylim=ylim)
     P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.1, right=0.95, hspace=0.3, wspace=0.3)
     return P.get()
@@ -1559,8 +1525,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     labels = [labels0[i] for i in idx]
     ylabels = [ylabels0[i] for i in idx]
     Npars = len(labels)
-    figsize = (13, 4 * Npars)
-    fig, axs = plt.subplots(Npars, figsize=figsize, sharex=True, sharey=sharey)
+    fig, axs = plt.subplots(Npars, figsize=(13, 4 * Npars), sharex=True, sharey=sharey)
     axs = axs.ravel() if Npars > 1 else [axs]
 
     rr0, gg0, bb0 = q_col1 = np.array([255, 0, 0]) / 255
@@ -1568,9 +1533,10 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     quality_col_range = np.array([rr1 - rr0, gg1 - gg0, bb1 - bb0])
 
     t0s, t1s, t2s, t3s, max_ages = [], [], [], [], []
-    for d, id, c in zip(deb_dicts, ids, cols):
+    for jj, (d, id, c) in enumerate(zip(deb_dicts, ids, cols)):
         t0_sim, t0, t1, t2, t3, age = d['sim_start'], d['birth'], d['pupation'], d['death'], d['hours_as_larva'] + d[
             'birth'], np.array(d['age'])
+        # print(t0_sim, t0, t1, t2, t3, id)
         t00 = 0
         epochs = np.array(d['epochs'])
         if 'epoch_qs' in d.keys():
@@ -1651,28 +1617,30 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                 ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
             if mode == 'assimilation':
                 ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
-            if label_lifestages:
+            if label_lifestages and not sim_only:
+                y0, y1 = ax.get_ylim()
+                x0, x1 = ax.get_xlim()
+                if jj==Ndebs-1:
+                    try:
+                        ytext = y0 + 0.5 * (y1 - y0)
+                        xtext = t00 + 0.5 * (t0 - t00)
+                        ax.annotate('$incubation$', rotation=90, fontsize=25, va='center', ha='center',
+                                    xy=(xtext, ytext), xycoords='data',
+                                    )
+                    except:
+                        pass
+
                 try:
-                    y0, y1 = ax.get_ylim()
+
                     ytext = y0 + 0.5 * (y1 - y0)
-                    xtext = t00 + 0.5 * (t0 - t00)
-                    ax.annotate('$incubation$', rotation=90, fontsize=25, va='center', ha='center',
-                                xy=(xtext, ytext), xycoords='data',
-                                )
+                    if not np.isnan(t1) and x1>t1:
+                        xtext = t1 + 0.5 * (x1 - t1)
+                        ax.annotate('$pupation$', rotation=90, fontsize=25, va='center', ha='center',
+                                    xy=(xtext, ytext), xycoords='data',
+                                    )
                 except:
                     pass
-                try:
-                    y0, y1 = ax.get_ylim()
-                    x0, x1 = ax.get_xlim()
-                    ytext = y0 + 0.5 * (y1 - y0)
-                    xtext = t3 + 0.5 * (x1 - t3)
-                    ax.axvspan(t3, x1, color='darkgrey', alpha=0.5)
-                    ax.annotate('$pupation$', rotation=90, fontsize=25, va='center', ha='center',
-                                xy=(xtext, ytext), xycoords='data',
-                                )
-                except:
-                    pass
-            if label_epochs:
+            if label_epochs and Ndebs==1:
 
                 try:
                     y0, y1 = ax.get_ylim()
@@ -2523,10 +2491,7 @@ def plot_endpoint_params(datasets, labels=None, mode='basic', par_shorts=None, s
     fig, axs = plt.subplots(Nrows, Ncols, figsize=(fig_s * Ncols, fig_s * Nrows), sharey=True)
     axs = axs.ravel() if Nrows * Ncols > 1 else [axs]
     for i, (p, symbol, xlabel, xlim, disp) in enumerate(zip(pars, symbols, xlabels, xlims, disps)):
-        # if xlim is not None :
-        #     print(p, xlabel,xlim, mode(xlim), xlim[0])
         values = [e[p].values for e in ends]
-        # print(p)
         if Ndatasets > 1:
             for ind, (v1, v2) in zip(fit_ind, itertools.combinations(values, 2)):
                 st, pv = ttest_ind(v1, v2, equal_var=False)
