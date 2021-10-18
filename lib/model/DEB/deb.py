@@ -52,7 +52,6 @@ class Substrate:
         Xs=[self.d_dict[c]/self.w_dict[c]*quality for c in compounds]
         return sum(Xs) if return_sum else Xs
 
-        
     def get_mol(self, V, **kwargs):
         return self.get_X(**kwargs)*V
 

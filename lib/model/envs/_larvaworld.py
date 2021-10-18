@@ -9,12 +9,7 @@ import webcolors
 from shapely.geometry import Polygon
 from unflatten import unflatten
 
-import lib.aux.dictsNlists
-import lib.aux.sim_aux
-import lib.aux.xy_aux
-from lib.conf.base.dtypes import null_dict
-from lib.model.agents._larva_sim import LarvaSim
-from lib.conf.base import paths
+
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -22,12 +17,18 @@ from shapely.affinity import affine_transform
 from Box2D import b2World, b2ChainShape, b2EdgeShape
 from mesa.space import ContinuousSpace
 
+
+import lib.aux.dictsNlists
+import lib.aux.sim_aux
+import lib.aux.xy_aux
+from lib.conf.base.dtypes import null_dict
+from lib.model.agents._larva_sim import LarvaSim
+from lib.conf.base import paths
 from lib.aux.collecting import NamedRandomActivation
 from lib.model.envs._space import FoodGrid
 import lib.anal.rendering as ren
 import lib.aux.colsNstr as fun
 from lib.model.envs._maze import Border
-import tests.various.gui.dtype_dicts as dtypes
 from lib.model.agents._agent import LarvaworldAgent
 from lib.model.agents._source import Food
 from lib.sim.single.input_lib import evaluate_input, evaluate_graphs
@@ -571,9 +572,7 @@ class LarvaWorld:
             agents = self.get_flies()
         elif class_name == 'Border':
             agents = self.borders
-        pars = list(dtypes.get_dict_dtypes(class_name).keys())
-        # pars = list(dtypes.get_dict_dtypes('agent', class_name=class_name).keys())
-        # pars = list(agent_dtypes[class_name].keys())
+        pars = list(null_dict(class_name).keys())
         data = {}
         for f in agents:
             dic = {}
