@@ -1,9 +1,11 @@
+import itertools
 import os
 
+import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt, patches, transforms, ticker
 from matplotlib.pyplot import bar
-from scipy.stats import mannwhitneyu
+from scipy.stats import mannwhitneyu, ttest_ind
 
 from lib.anal.fitting import pvalue_star
 from lib.aux.dictsNlists import unique_list
@@ -28,6 +30,8 @@ class Plot :
         self.filename = f'{name}.{suf}' if save_as is None else save_as
         ff = f'{name}_fits.csv' if save_fits_as is None else save_fits_as
         self.fit_filename=os.path.join(self.save_to, ff) if ff is not None else None
+        self.fit_ind = None
+        self.fit_df = None
         self.return_fig=return_fig
         self.show=show
         # self.fig=self.build(**kwargs)
@@ -67,7 +71,65 @@ class Plot :
         self.fig=fig
 
     def get(self):
+        if self.fit_df :
+            self.fit_df.to_csv(self.fit_filename, index=True, header=True)
         return process_plot(self.fig, self.save_to, self.filename, self.return_fig, self.show)
+
+    def init_fits(self, pars, names=('dataset1', 'dataset2'), multiindex=True):
+        if self.Ndatasets > 1:
+            if multiindex :
+                fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(self.labels, 2)])
+                self.fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=names)
+                self.fit_df = pd.DataFrame(index=self.fit_ind, columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
+            else :
+                self.fit_df = pd.DataFrame(index=self.labels,columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
+
+    def comp_pvalues(self,ind, v1,v2,p):
+        # for ind, (v1, v2) in zip(self.fit_ind, itertools.combinations(vs, 2)):
+        st, pv = ttest_ind(v1, v2, equal_var=False)
+        if not pv <= 0.01:
+            self.fit_df[p].loc[ind] = 0
+        else:
+            self.fit_df[p].loc[ind] = 1 if np.nanmean(v1) < np.nanmean(v2) else -1
+        self.fit_df[f'S_{p}'].loc[ind] = st
+        self.fit_df[f'P_{p}'].loc[ind] = np.round(pv, 11)
+
+    def plot_half_circles(self,p,i):
+        if self.fit_df:
+            ax=self.axs[i]
+            ii = 0
+            for z, (l1, l2) in enumerate(self.fit_df.index.values):
+                col1,col2=self.colors[self.labels.index(l1)], self.colors[self.labels.index(l2)]
+                res=self.plot_half_circle(p,ax,col1,col2,v=self.fit_df[p].iloc[z],ind=(l1, l2), coef=z - ii)
+                if not res :
+                    ii += 1
+                    continue
+
+    def plot_half_circle(self,p,ax,col1,col2,v,ind,coef=0):
+        res=True
+        if  v== 1:
+            c1, c2 = col1, col2
+        elif v == -1:
+            c1, c2 = col2, col1
+        else:
+            res = False
+
+        if res :
+            rad = 0.04
+            yy = 0.95 - coef * 0.08
+            xx = 0.75
+            dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=ax, colors=(c1, c2), transform=ax.transAxes)
+            pv = self.fit_df[f'P_{p}'].loc[ind]
+            if pv == 0:
+                pvi = -9
+            else:
+                for pvi in np.arange(-1, -10, -1):
+                    if np.log10(pv) > pvi:
+                        pvi += 1
+                        break
+            ax.text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k',
+                    fontsize=15, transform=ax.transAxes)
+        return res
 
 # class TurnPlot(Plot) :
 #     def __init__(self, absolute=True,**kwargs):

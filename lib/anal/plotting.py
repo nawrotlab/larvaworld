@@ -156,11 +156,7 @@ def plot_ang_pars(simVSexp=False, absolute=True, include_rear=False, subfolder='
     p_ls = [[sl, el] for sl, el in zip(sim_ls, exp_ls)] if simVSexp else [[sl] * P.Ndatasets for sl in
                                                                           sim_ls]
 
-    if P.Ndatasets > 1:
-        fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(P.labels, 2)])
-        fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=('dataset1', 'dataset2'))
-        fit_df = pd.DataFrame(index=fit_ind, columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
-
+    P.init_fits(pars)
     P.build(1, len(pars), figsize=(len(pars) * 5, 5), sharey=True)
     nbins = 200
 
@@ -180,48 +176,15 @@ def plot_ang_pars(simVSexp=False, absolute=True, include_rear=False, subfolder='
                           linewidth=2)
             P.axs[i].set_xlim(xmin=0)
 
-        if P.Ndatasets > 1:
-            for ind, (v1, v2) in zip(fit_ind, itertools.combinations(vs, 2)):
-                st, pv = ttest_ind(v1, v2, equal_var=False)
-                signif = pv <= 0.01
-                temp = np.nanmean(v1) < np.nanmean(v2)
-                if not signif:
-                    fit_df[p].loc[ind] = 0
-                else:
-                    fit_df[p].loc[ind] = 1 if temp else -1
-                fit_df[f'S_{p}'].loc[ind] = st
-                fit_df[f'P_{p}'].loc[ind] = np.round(pv, 11)
-            ii = 0
-            for z, (l1, l2) in enumerate(fit_df.index.values):
-                if fit_df[p].iloc[z] == 1:
-                    c1, c2 = P.colors[P.labels.index(l1)], P.colors[P.labels.index(l2)]
-                elif fit_df[p].iloc[z] == -1:
-                    c1, c2 = P.colors[P.labels.index(l2)], P.colors[P.labels.index(l1)]
-                else:
-                    ii += 1
-                    continue
-                rad = 0.04
-                yy = 0.95 - (z - ii) * 0.08
-                xx = 0.75
-                dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=P.axs[i], colors=(c1, c2),
-                                 transform=P.axs[i].transAxes)
-                pv = fit_df[f'P_{p}'].loc[(l1, l2)]
-                if pv == 0:
-                    pvi = -9
-                else:
-                    for pvi in np.arange(-1, -10, -1):
-                        if np.log10(pv) > pvi:
-                            pvi += 1
-                            break
-                P.axs[i].text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k',
-                              fontsize=15,
-                              transform=P.axs[i].transAxes)
+        if P.fit_ind :
+            for ind, (v1, v2) in zip(P.fit_ind, itertools.combinations(vs, 2)):
+                P.comp_pvalues(ind, v1, v2, p)
+            P.plot_half_circles(p,i)
+
         P.conf_ax(i, xlab=xlab, yMaxN=3)
     dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left')
     P.conf_ax(0, ylab='probability', ylim=[0, ylim])
     P.fig.subplots_adjust(bottom=0.15, top=0.95, left=0.3 / len(pars), right=0.99, wspace=0.01)
-    if P.Ndatasets > 1:
-        fit_df.to_csv(P.fit_filename, index=True, header=True)
     return P.get()
 
 
@@ -232,10 +195,7 @@ def plot_crawl_pars(simVSexp=False, subfolder='endpoint', par_legend=False, **kw
 
     p_ls = [[sl, el] for sl, el in zip(sim_ls, exp_ls)] if simVSexp else [[sl] * P.Ndatasets for sl in sim_ls]
 
-    if P.Ndatasets > 1:
-        fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(P.labels, 2)])
-        fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=('dataset1', 'dataset2'))
-        fit_df = pd.DataFrame(index=fit_ind, columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
+    P.init_fits(pars)
 
     P.build(1, len(pars), figsize=(len(pars) * 5, 5), sharey=True)
     for i, (p, p_lab, xlab, xlim) in enumerate(zip(pars, p_ls, xlabs, xlims)):
@@ -246,48 +206,15 @@ def plot_crawl_pars(simVSexp=False, subfolder='endpoint', par_legend=False, **kw
             sns.histplot(vs[j], color=P.colors[j], bins=x, kde=True, ax=P.axs[i], label=p_lab[j],
                          stat="probability", element="step")
 
-        if P.Ndatasets > 1:
-            for ind, (v1, v2) in zip(fit_ind, itertools.combinations(vs, 2)):
-                st, pv = ttest_ind(v1, v2, equal_var=False)
-                signif = pv <= 0.01
-                temp = np.nanmean(v1) < np.nanmean(v2)
-                if not signif:
-                    fit_df[p].loc[ind] = 0
-                else:
-                    fit_df[p].loc[ind] = 1 if temp else -1
-                fit_df[f'S_{p}'].loc[ind] = st
-                fit_df[f'P_{p}'].loc[ind] = np.round(pv, 11)
-            ii = 0
-            for z, (l1, l2) in enumerate(fit_df.index.values):
-                if fit_df[p].iloc[z] == 1:
-                    c1, c2 = P.colors[P.labels.index(l1)], P.colors[P.labels.index(l2)]
-                elif fit_df[p].iloc[z] == -1:
-                    c1, c2 = P.colors[P.labels.index(l2)], P.colors[P.labels.index(l1)]
-                else:
-                    ii += 1
-                    continue
-                rad = 0.04
-                yy = 0.95 - (z - ii) * 0.08
-                xx = 0.75
-                dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=P.axs[i], colors=(c1, c2),
-                                 transform=P.axs[i].transAxes)
-                pv = fit_df[f'P_{p}'].loc[(l1, l2)]
-                if pv == 0:
-                    pvi = -9
-                else:
-                    for pvi in np.arange(-1, -10, -1):
-                        if np.log10(pv) > pvi:
-                            pvi += 1
-                            break
-                P.axs[i].text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k',
-                              fontsize=15,
-                              transform=P.axs[i].transAxes)
+        if P.fit_ind:
+            for ind, (v1, v2) in zip(P.fit_ind, itertools.combinations(vs, 2)):
+                P.comp_pvalues(ind, v1, v2, p)
+            P.plot_half_circles(p, i)
+
         P.conf_ax(i, xlab=xlab, xlim=xlim, yMaxN=4, leg_loc='upper right' if par_legend else None)
     dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left', fontsize=15)
     P.axs[0].set_ylabel('probability')
     P.fig.subplots_adjust(bottom=0.15, top=0.95, left=0.25 / len(pars), right=0.99, wspace=0.01)
-    if P.Ndatasets > 1:
-        fit_df.to_csv(P.fit_filename, index=True, header=True)
     return P.get()
 
 
@@ -569,12 +496,12 @@ def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, yla
         N = int(P.Ndatasets / Npairs)
         if leg_cols is None:
             leg_cols = N_colors(N)
-        colors = leg_cols * Npairs
+        # colors = leg_cols * Npairs
         leg_ids = P.labels[:N]
         ind = np.arange(Npairs)
     else:
         ind = np.arange(P.Ndatasets)
-        colors = P.colors
+        # colors = P.colors
         leg_ids = P.labels
         N = P.Ndatasets
 
@@ -634,15 +561,10 @@ def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, yla
 
 def plot_stride_Dorient(simVSexp=False, absolute=True, subfolder='stride', **kwargs):
     P = Plot(name='stride_orient_change', subfolder=subfolder, **kwargs)
-
     pars, sim_ls, exp_ls, xlabels = getPar(['str_fo', 'str_ro'], to_return=['d', 's', 's', 'l'])
-
     ranges = [80, 80]
-
     p_labels = [[sl, el] for sl, el in zip(sim_ls, exp_ls)] if simVSexp else [[sl] * P.Ndatasets for sl in sim_ls]
-
     P.build(1, len(pars))
-
     for i, (p, r, p_lab, xlab) in enumerate(zip(pars, ranges, p_labels, xlabels)):
         for j, d in enumerate(P.datasets):
             v = d.get_par(p).dropna().values
@@ -651,9 +573,8 @@ def plot_stride_Dorient(simVSexp=False, absolute=True, subfolder='stride', **kwa
                 r1, r2 = 0, r
             else:
                 r1, r2 = -r, r
-            x = np.linspace(r1, r2, 200)
-            weights = np.ones_like(v) / len(v)
-            P.axs[i].hist(v, color=P.colors[j], bins=x, label=p_lab[j], weights=weights, alpha=0.5)
+            P.axs[i].hist(v, color=P.colors[j], bins=np.linspace(r1, r2, 200), label=p_lab[j],
+                          weights=np.ones_like(v) / len(v), alpha=0.5)
         P.conf_ax(i, xlab=xlab, yMaxN=4, leg_loc='upper left')
     P.axs[0].set_ylabel('probability')
     P.fig.subplots_adjust(bottom=0.2, top=0.95, left=0.12, right=0.99, wspace=0.01)
@@ -675,27 +596,25 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
     elif mode == 'spinelength':
         shorts.append('l')
 
-    pars, units = getPar(shorts, to_return=['d', 'l'])
+    pars, ylabs = getPar(shorts, to_return=['d', 'l'])
     P.build(len(pars), 1, figsize=(10, len(pars) * 5), sharex=True)
 
-    ang_ylim = [0, 60] if mode in ['bend', 'orientation', 'orientation_x2'] else None
+    ylim = [0, 60] if mode in ['bend', 'orientation', 'orientation_x2'] else None
 
     if agent_idx is not None:
         data = [[d.load_aux(type='stride', par=p).loc[d.agent_ids[agent_idx]].values for p in pars] for
                 d in P.datasets]
     else:
         data = [[d.load_aux(type='stride', par=p).values for p in pars] for d in P.datasets]
-    Npoints = data[0][0].shape[1]
-    for d0, c, color, label in zip(data, P.colors, P.colors, P.labels):
+    Npoints = data[0][0].shape[1]- 1
+    for d0, c, l in zip(data, P.colors, P.labels):
         if mode in ['bend', 'orientation']:
             d0 = [np.abs(d) for d in d0]
-        for i, (p, u, pd) in enumerate(zip(pars, units, d0)):
-            plot_quantiles(df=pd, from_np=True, axis=P.axs[i], color_mean=c, color_shading=color, label=label)
-            P.conf_ax(i, ylab=u, ylim=ang_ylim if i != 0 else [0.0, 0.6], yMaxN=4, leg_loc='upper right')
+        for i, (p, ylab, df) in enumerate(zip(pars, ylabs, d0)):
+            plot_quantiles(df=df, from_np=True, axis=P.axs[i], color_shading=c, label=l)
+            P.conf_ax(i, ylab=ylab, ylim=ylim if i != 0 else [0.0, 0.6], yMaxN=4, leg_loc='upper right')
 
-    Nticks = 5
-    ticks = np.linspace(0, Npoints - 1, Nticks)
-    P.conf_ax(-1, xlab='$\phi_{stride}$', xlim=[0, Npoints - 1], xticks=ticks,
+    P.conf_ax(-1, xlab='$\phi_{stride}$', xlim=[0, Npoints], xticks=np.linspace(0, Npoints, 5),
               xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
 
     P.fig.subplots_adjust(top=0.97, bottom=0.2 / len(pars), left=0.12, right=0.95, hspace=.1, wspace=0.05)
@@ -963,7 +882,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
     P = Plot(name=name, subfolder=subfolder, **kwargs)
 
     P.build(figsize=(7.5, 5))
-
+    ax=P.axs[0]
     for p, symbol, ylab, ylim, c in zip(pars, symbols, ylabs, ylims, cols):
         xlab = 'time, $sec$' if table is None else 'timesteps'
         P.conf_ax(xlab=xlab, ylab=ylab, ylim=ylim, yMaxN=4)
@@ -978,25 +897,25 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                 dc_m = dc.groupby(level='Step').quantile(q=0.5)
                 Nticks = len(dc_m)
                 x = np.linspace(0, int(Nticks / d.fr), Nticks) if table is None else np.arange(Nticks)
-                P.axs[0].set_xlim([x[0], x[-1]])
+                ax.set_xlim([x[0], x[-1]])
 
                 if individuals:
                     for id in dc.index.get_level_values('AgentID'):
                         dc_single = dc.xs(id, level='AgentID')
-                        P.axs[0].plot(x, dc_single, color=c, linewidth=1)
-                    P.axs[0].plot(x, dc_m, color=c, linewidth=2)
+                        ax.plot(x, dc_single, color=c, linewidth=1)
+                    ax.plot(x, dc_m, color=c, linewidth=2)
                 else:
-                    plot_quantiles(df=dc, x=x, axis=P.axs[0], color_shading=c, label=symbol)
+                    plot_quantiles(df=dc, x=x, axis=ax, color_shading=c, label=symbol)
                     if show_first:
                         dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
-                        P.axs[0].plot(x, dc0, color=c)
+                        ax.plot(x, dc0, color=c)
             except:
                 pass
 
     if N > 1:
-        P.axs[0].legend()
+        ax.legend()
     if P.Ndatasets > 1:
-        dataset_legend(P.labels, P.colors, ax=P.axs[0], loc=legend_loc, fontsize=15)
+        dataset_legend(P.labels, P.colors, ax=ax, loc=legend_loc, fontsize=15)
 
     P.fig.subplots_adjust(bottom=0.15, left=0.2, right=0.95, top=0.95)
     return P.get()
@@ -1193,37 +1112,30 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
 
 def plot_bout_ang_pars(simVSexp=False, absolute=True, include_rear=True, subfolder='turn', **kwargs):
     P = Plot(name='bout_ang_pars', subfolder=subfolder, **kwargs)
-    par_shorts = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
+    shorts = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
     ranges = [250, 250, 50, 2000, 2000, 500] if include_rear else [200, 200, 2000, 2000]
-    ylim = 0.04
 
-    pars, sim_labels, exp_labels, xlabels, xlims, disps = getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim', 'd'])
+    pars, sim_ls, exp_ls, xlabels, xlims, disps = getPar(shorts, to_return=['d', 's', 's', 'l', 'lim', 'd'])
 
     chunks = ['stride', 'pause']
     chunk_cols = ['green', 'purple']
 
 
-    p_labels = [[sl, el] for sl, el in zip(sim_labels, exp_labels)] if simVSexp else [[sl] * P.Ndatasets for sl in
-                                                                                      sim_labels]
+    p_labs = [[sl, el] for sl, el in zip(sim_ls, exp_ls)] if simVSexp else [[sl] * P.Ndatasets for sl in sim_ls]
 
-    fit_ind = P.labels
-    fit_df = pd.DataFrame(index=fit_ind, columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
+    P.init_fits(pars, multiindex=False)
 
     Ncols = int(len(pars) / 2)
-    fig, axs = plt.subplots(2, Ncols, figsize=(Ncols * 7, 14), sharey=True)
-    axs = axs.ravel()
+    P.build(2, Ncols, figsize=(Ncols * 7, 14), sharey=True)
     nbins = 200
 
-    for i, (p, r, p_lab, xlab, disp) in enumerate(zip(pars, ranges, p_labels, xlabels, disps)):
-
+    for i, (p, r, p_lab, xlab, disp) in enumerate(zip(pars, ranges, p_labs, xlabels, disps)):
+        ax=P.axs[i]
         for j, (d, l) in enumerate(zip(P.datasets, P.labels)):
             vs = []
             s, e = d.step_data, d.endpoint_data
             for c, col in zip(chunks, chunk_cols):
-                temp = s.dropna(subset=[nam.id(c)])
-                # if c=='pause' and pause_min_dur!=0.0 :
-                #     temp = temp[temp.groupby('AgentID')]
-                v = temp[p].values
+                v = s.dropna(subset=[nam.id(c)])[p].values
                 if absolute:
                     v = np.abs(v)
                     r1, r2 = 0, r
@@ -1232,56 +1144,15 @@ def plot_bout_ang_pars(simVSexp=False, absolute=True, include_rear=True, subfold
                 vs.append(v)
                 x = np.linspace(r1, r2, nbins)
                 weights = np.ones_like(v) / float(len(v))
-                axs[i].hist(v, color=col, bins=x, label=c, weights=weights, alpha=1.0, histtype='step', linewidth=2)
-                axs[i].set_xlim([r1, r2])
+                ax.hist(v, color=col, bins=x, label=c, weights=weights, alpha=1.0, histtype='step', linewidth=2)
+                ax.set_xlim([r1, r2])
+            P.comp_pvalues(l, vs[0], vs[1], p)
+            P.plot_half_circle(p, ax, col1=chunk_cols[0], col2=chunk_cols[1], v=P.fit_df[p].loc[l], ind=l)
 
-            # if Ndatasets > 1:
-            #     for ind, (v1, v2) in zip(fit_ind, itertools.combinations(vs, 2)):
-            st, pv = ttest_ind(vs[0], vs[1], equal_var=False)
-            signif = pv <= 0.01
-            temp = np.nanmean(vs[0]) < np.nanmean(vs[1])
-            if not signif:
-                fit_df[p].loc[l] = 0
-            else:
-                fit_df[p].loc[l] = 1 if temp else -1
-            fit_df[f'S_{p}'].loc[l] = st
-            fit_df[f'P_{p}'].loc[l] = np.round(pv, 11)
-            # ii = 0
-            # for z, (l1, l2) in enumerate(fit_df.index.values):
-            if fit_df[p].loc[l] == 1:
-                c1, c2 = chunk_cols[0], chunk_cols[1]
-            elif fit_df[p].loc[l] == -1:
-                c1, c2 = chunk_cols[1], chunk_cols[0]
-            else:
-                # ii += 1
-                continue
-            rad = 0.04
-            yy = 0.95
-            xx = 0.75
-            dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=axs[i], colors=(c1, c2),
-                             transform=axs[i].transAxes)
-            pv = fit_df[f'P_{p}'].loc[l]
-            if pv == 0:
-                pvi = -9
-            else:
-                for pvi in np.arange(-1, -10, -1):
-                    if np.log10(pv) > pvi:
-                        pvi += 1
-                        break
-            axs[i].text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k', fontsize=15,
-                        transform=axs[i].transAxes)
-
-        axs[i].set_xlabel(xlab)
-        axs[i].yaxis.set_major_locator(ticker.MaxNLocator(3))
-    axs[0].set_ylabel('probability')
-    axs[Ncols].set_ylabel('probability')
-    axs[0].set_ylim([0, ylim])
-    axs[0].legend(loc='upper left')
-    axs[Ncols].legend(loc='upper left')
-    plt.subplots_adjust(bottom=0.1, top=0.9, left=0.25 / Ncols, right=0.95, wspace=0.1, hspace=0.3)
-    if P.Ndatasets > 1:
-        fit_df.to_csv(P.fit_filename, index=True, header=True)
-    P.set(fig)
+        P.conf_ax(i, xlab=xlab, yMaxN=3)
+    P.conf_ax(0, ylab='probability', ylim=[0, 0.04], leg_loc='upper left')
+    P.conf_ax(Ncols, ylab='probability', leg_loc='upper left')
+    P.fig.subplots_adjust(bottom=0.1, top=0.9, left=0.25 / Ncols, right=0.95, wspace=0.1, hspace=0.3)
     return P.get()
 
 
@@ -1357,14 +1228,11 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
     pars, = getPar(par_shorts, to_return=['d'])
 
     pars = [p for p in pars if all([p in e.columns for e in ends])]
-    symbols, exp_symbols, xlabels, xlims, disps = getPar(par_shorts, to_return=['s', 's', 'l', 'lim', 'd'])
+    xlabels, xlims, disps = getPar(par_shorts, to_return=['l', 'lim', 'd'])
 
     if mode == 'stride_def':
         xlims = [[2.5, 4.8], [0.8, 2.0], [0.1, 0.25], [0.02, 0.09]]
-    if P.Ndatasets > 1:
-        fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(P.labels, 2)])
-        fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=('dataset1', 'dataset2'))
-        fit_df = pd.DataFrame(index=fit_ind, columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
+    P.init_fits(pars)
 
     lw = 3
     Npars = len(pars)
@@ -1378,25 +1246,13 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
         Nrows = int(np.ceil(Npars / Ncols))
     fig_s = 5
 
-    fig, axs = plt.subplots(Nrows, Ncols, figsize=(fig_s * Ncols, fig_s * Nrows), sharey=True)
-    axs = axs.ravel() if Nrows * Ncols > 1 else [axs]
-    for i, (p, symbol, xlabel, xlim, disp) in enumerate(zip(pars, symbols, xlabels, xlims, disps)):
+    P.build(Nrows, Ncols, figsize=(fig_s * Ncols, fig_s * Nrows), sharey=True)
+    for i, (p, xlabel, xlim, disp) in enumerate(zip(pars, xlabels, xlims, disps)):
+        ax=P.axs[i]
         values = [e[p].values for e in ends]
-        if P.Ndatasets > 1:
-            for ind, (v1, v2) in zip(fit_ind, itertools.combinations(values, 2)):
-                st, pv = ttest_ind(v1, v2, equal_var=False)
-                signif = pv <= 0.01
-                temp = np.nanmean(v1) < np.nanmean(v2)
-                if not signif:
-                    ii = 0
-                else:
-                    if temp:
-                        ii = 1
-                    else:
-                        ii = -1
-                fit_df[f'S_{p}'].loc[ind] = st
-                fit_df[f'P_{p}'].loc[ind] = np.round(pv, 11)
-                fit_df[p].loc[ind] = ii
+        if P.fit_ind:
+            for ind, (v1, v2) in zip(P.fit_ind, itertools.combinations(values, 2)):
+                P.comp_pvalues(ind, v1, v2, p)
 
         Nvalues = [len(i) for i in values]
         a = np.empty((np.max(Nvalues), len(values),)) * np.nan
@@ -1408,56 +1264,23 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
                 v = df[[col]].dropna().values
                 weights = np.ones_like(v) / float(len(v))
                 bins = nbins if xlim is None else np.linspace(xlim[0], xlim[1], nbins)
-                y, x, patches = axs[i].hist(v, bins=bins, weights=weights, color=P.colors[j], alpha=0.5)
+                y, x, patches = ax.hist(v, bins=bins, weights=weights, color=P.colors[j], alpha=0.5)
                 x = x[:-1] + (x[1] - x[0]) / 2
                 y_smooth = np.polyfit(x, y, 5)
                 poly_y = np.poly1d(y_smooth)(x)
-                axs[i].plot(x, poly_y, color=P.colors[j], label=lab, linewidth=lw)
+                ax.plot(x, poly_y, color=P.colors[j], label=lab, linewidth=lw)
             except:
                 pass
         if i % Ncols == 0:
-            axs[i].set_ylabel('probability')
-        axs[i].set_title(disp)
-        axs[i].set_xlabel(xlabel)
-        if xlim is not None:
-            axs[i].set_xlim(xlim)
-        axs[i].xaxis.set_major_locator(ticker.MaxNLocator(4))
-        axs[i].yaxis.set_major_locator(ticker.MaxNLocator(4))
-        axs[i].xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=True, useMathText=True))
+            ax.set_ylabel('probability')
+        P.conf_ax(i, xlab=xlabel, xlim=xlim, ylim=ylim, xMaxN=4, yMaxN=4, title=disp)
+        ax.xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=True, useMathText=True))
+        P.plot_half_circles(p, i)
 
-        if P.Ndatasets > 1:
-            ii = 0
-            for z, (l1, l2) in enumerate(fit_df.index.values):
-                if fit_df[p].iloc[z] == 1:
-                    c1, c2 = P.colors[P.labels.index(l1)], P.colors[P.labels.index(l2)]
-                elif fit_df[p].iloc[z] == -1:
-                    c1, c2 = P.colors[P.labels.index(l2)], P.colors[P.labels.index(l1)]
-                else:
-                    ii += 1
-                    continue
-                rad = 0.04
-                yy = 0.95 - (z - ii) * 0.08
-                xx = 0.7
-                dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=axs[i], colors=(c1, c2),
-                                 transform=axs[i].transAxes)
-                pv = fit_df[f'P_{p}'].loc[(l1, l2)]
-                if pv == 0:
-                    pvi = -9
-                else:
-                    for pvi in np.arange(-1, -10, -1):
-                        if np.log10(pv) > pvi:
-                            pvi += 1
-                            break
-                axs[i].text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k', fontsize=15,
-                            transform=axs[i].transAxes)
 
-    plt.subplots_adjust(wspace=0.1, hspace=0.2 * Nrows, left=0.1, right=0.97, top=1 - (0.1 / Nrows),
+    P.fig.subplots_adjust(wspace=0.1, hspace=0.2 * Nrows, left=0.1, right=0.97, top=1 - (0.1 / Nrows),
                         bottom=0.17 / Nrows)
-    plt.ylim(ylim)
-    axs[0].legend(loc='upper left', prop={'size': 15})
-    if P.Ndatasets > 1:
-        fit_df.to_csv(P.fit_filename, index=True, header=True)
-    P.set(fig)
+    P.axs[0].legend(loc='upper left', prop={'size': 15})
     return P.get()
 
 
@@ -1476,9 +1299,7 @@ def plot_chunk_Dorient2source(source_ID,subfolder='bouts', chunk='stride', Nbins
         P.labels.insert(0, 'merged')
     Ncols = int(np.ceil(np.sqrt(P.Ndatasets)))
     Nrows = Ncols - 1 if P.Ndatasets < Ncols ** 2 - Ncols else Ncols
-    fig, axs = plt.subplots(Nrows, Ncols, figsize=(8 * Ncols, 8 * Nrows), subplot_kw=dict(projection='polar'),
-                            sharey=True)
-    axs = axs.ravel() if P.Ndatasets > 1 else [axs]
+    P.build(Nrows, Ncols, figsize=(8 * Ncols, 8 * Nrows), subplot_kw=dict(projection='polar'),sharey=True)
 
     durs = [d.get_par(nam.dur(chunk)) for d in P.datasets]
     c0 = nam.start(chunk)
@@ -1498,6 +1319,7 @@ def plot_chunk_Dorient2source(source_ID,subfolder='bouts', chunk='stride', Nbins
         durs.insert(0, np.vstack(durs))
 
     for i, (b0, b1, db, dur, label, c) in enumerate(zip(b0s, b1s, dbs, durs, P.labels, P.colors)):
+        ax=P.axs[i]
         b0 = b0[dur > min_dur]
         b1 = b1[dur > min_dur]
         db = db[dur > min_dur]
@@ -1505,31 +1327,29 @@ def plot_chunk_Dorient2source(source_ID,subfolder='bouts', chunk='stride', Nbins
         dbm = np.round(np.mean(db), 2)
         if np.isnan([dbm, b0m, b1m]).any():
             continue
-        circular_hist(axs[i], b0, bins=Nbins, alpha=0.3, label='start', color=c, offset=np.pi / 2)
-        circular_hist(axs[i], b1, bins=Nbins, alpha=0.6, label='stop', color=c, offset=np.pi / 2)
+        circular_hist(ax, b0, bins=Nbins, alpha=0.3, label='start', color=c, offset=np.pi / 2)
+        circular_hist(ax, b1, bins=Nbins, alpha=0.6, label='stop', color=c, offset=np.pi / 2)
         arrow0 = patches.FancyArrowPatch((0, 0), (np.deg2rad(b0m), 0.3), zorder=2, mutation_scale=30, alpha=0.3,
                                          facecolor=c, edgecolor='black', fill=True, linewidth=0.5)
 
-        axs[i].add_patch(arrow0)
+        ax.add_patch(arrow0)
         arrow1 = patches.FancyArrowPatch((0, 0), (np.deg2rad(b1m), 0.3), zorder=2, mutation_scale=30, alpha=0.6,
                                          facecolor=c, edgecolor='black', fill=True, linewidth=0.5)
-        axs[i].add_patch(arrow1)
+        ax.add_patch(arrow1)
 
         text_x = -0.3
         text_y = 1.2
-        axs[i].text(text_x, text_y, f'Dataset : {label}', transform=axs[i].transAxes)
-        axs[i].text(text_x, text_y - 0.1, f'Chunk (#) : {chunk} ({len(b0)})', transform=axs[i].transAxes)
-        axs[i].text(text_x, text_y - 0.2, f'Min duration : {min_dur} sec', transform=axs[i].transAxes)
-        axs[i].text(text_x, text_y - 0.3, fr'Correction $\Delta\theta_{{{"or"}}} : {dbm}^{{{"o"}}}$',
-                    transform=axs[i].transAxes)
-        axs[i].legend(loc=[0.9, 0.9])
-        axs[i].set_title(f'Bearing before and after a {chunk}.', fontsize=15, y=-0.2)
-    for ax in axs:
+        ax.text(text_x, text_y, f'Dataset : {label}', transform=ax.transAxes)
+        ax.text(text_x, text_y - 0.1, f'Chunk (#) : {chunk} ({len(b0)})', transform=ax.transAxes)
+        ax.text(text_x, text_y - 0.2, f'Min duration : {min_dur} sec', transform=ax.transAxes)
+        ax.text(text_x, text_y - 0.3, fr'Correction $\Delta\theta_{{{"or"}}} : {dbm}^{{{"o"}}}$',transform=ax.transAxes)
+        ax.legend(loc=[0.9, 0.9])
+        ax.set_title(f'Bearing before and after a {chunk}.', fontsize=15, y=-0.2)
+    for ax in P.axs:
         ticks_loc = ax.get_xticks().tolist()
         ax.xaxis.set_major_locator(FixedLocator(ticks_loc))
         ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''])
-    plt.subplots_adjust(bottom=0.2, top=0.8, left=0.05 * Ncols / 2, right=0.9, wspace=0.8, hspace=0.3)
-    P.set(fig)
+    P.fig.subplots_adjust(bottom=0.2, top=0.8, left=0.05 * Ncols / 2, right=0.9, wspace=0.8, hspace=0.3)
     return P.get()
 
 
