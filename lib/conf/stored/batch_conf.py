@@ -30,11 +30,11 @@ def batch(exp, en=None, ss=None, o=None, o_kws={},bm={}, as_entry=True, **kwargs
         return conf
 
 batch_dict = {
-    **batch('chemotaxis_approach',
+    **batch('chemotaxis',
             ss={'Odor.mean': [(300.0, 1300.0), 3],'decay_coef': [(0.1, 0.5), 3]},
             o='final_dst_to_source',
             en={'source': (0.04, 0.0)}),
-    **batch('chemotaxis_local',
+    **batch('chemorbit',
             ss={'Odor.mean': [(300.0, 1300.0), 3],'decay_coef': [(0.1, 0.5), 3]},
             o='final_dst_to_center',
             en={'source': (0.0, 0.0)}),

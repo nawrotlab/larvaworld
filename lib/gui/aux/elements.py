@@ -411,12 +411,12 @@ class SelectionList(GuiElement):
 
         else :
             for kk, vv in self.sublists.items():
-                try:
+                if isinstance(vv, SelectionList):
                     if not vv.with_dict:
                         conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
                     else:
                         conf[kk] = vv.collapsible.get_dict(v, w)
-                except:
+                else:
                     conf[kk] = vv.get_dict()
                     if kk=='larva_groups':
                         for n, gr in conf[kk].items():
