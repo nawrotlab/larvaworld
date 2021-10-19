@@ -44,7 +44,7 @@ class Plot :
 
 
     def conf_ax(self, idx=0, xlab=None, ylab=None, xlim=None, ylim=None, xticks=None, xticklabels=None,
-                xMaxN=None, yMaxN=None,xMath=None,tickMath=None, leg_loc=None, title=None):
+                xMaxN=None, yMaxN=None,xMath=None,tickMath=None, leg_loc=None,leg_handles=None, title=None):
         ax=self.axs[idx]
         if ylab is not None:
             ax.set_ylabel(ylab)
@@ -70,7 +70,10 @@ class Plot :
         if title is not None:
             ax.set_title(title)
         if leg_loc is not None:
-            ax.legend(loc=leg_loc)
+            if leg_handles is not None :
+                ax.legend(handles=leg_handles,loc=leg_loc)
+            else :
+                ax.legend(loc=leg_loc)
 
     def set(self, fig):
         self.fig=fig

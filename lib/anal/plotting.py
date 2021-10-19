@@ -293,13 +293,8 @@ def plot_marked_strides(agent_idx=0, agent_id=None, slice=[20, 40], subfolder='i
 
     for ii, (d, l) in enumerate(zip(P.datasets, P.labels)):
         ax = P.axs[ii]
-        if ii == Nds - 1:
-            ax.set_xlabel(r'time $(sec)$')
-        ax.set_ylabel(ylab)
-        ax.set_ylim([0.0, 1.0])
-        ax.set_xlim(slice)
-        ax.legend(handles=handles, loc='upper right')
-
+        P.conf_ax(ii, xlab=r'time $(sec)$' if ii == Nds - 1 else None, ylab=ylab, ylim=[0, 1.0], xlim=slice,
+                  leg_loc='upper right', leg_handles=handles)
         temp_id = d.agent_ids[agent_idx] if agent_id is None else agent_id
         s = copy.deepcopy(d.read('step').xs(temp_id, level='AgentID', drop_level=True))
         s.set_index(s.index * d.dt, inplace=True)
@@ -348,12 +343,10 @@ def plot_sample_tracks(mode='strides', agent_idx=0, agent_id=None, slice=[20, 40
 
     for ii, (d, l) in enumerate(zip(P.datasets, P.labels)):
         ax = P.axs[ii]
-        if ii == Nds - 1:
-            ax.set_xlabel(r'time $(sec)$')
-        ax.set_ylabel(ylab)
-        ax.set_ylim([0, ylim])
-        ax.set_xlim(slice)
-        ax.legend(handles=handles, loc='upper right')
+
+        P.conf_ax(ii, xlab=r'time $(sec)$' if ii == Nds - 1 else None, ylab=ylab,ylim=[0, ylim],xlim=slice,
+                  leg_loc='upper right', leg_handles=handles)
+
 
         temp_id = d.agent_ids[agent_idx] if agent_id is None else agent_id
         s = copy.deepcopy(d.read('step').xs(temp_id, level='AgentID', drop_level=True))
@@ -827,8 +820,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
     P.build(figsize=(7.5, 5))
     ax=P.axs[0]
     for p, symbol, ylab, ylim, c in zip(pars, symbols, ylabs, ylims, cols):
-        xlab = 'time, $sec$' if table is None else 'timesteps'
-        P.conf_ax(xlab=xlab, ylab=ylab, ylim=ylim, yMaxN=4)
+        P.conf_ax(xlab='time, $sec$' if table is None else 'timesteps', ylab=ylab, ylim=ylim, yMaxN=4)
         for d, d_col, d_lab in zip(P.datasets, P.colors, P.labels):
             if P.Ndatasets > 1:
                 c = d_col
