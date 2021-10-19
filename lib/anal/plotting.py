@@ -60,7 +60,7 @@ def plot_turns(absolute=True, subfolder='turn', **kwargs):
                       histtype='step')
 
     P.conf_ax(xlab=xlab, ylab='probability, $P$', xlim=[r0, r1], yMaxN=4, leg_loc='upper right')
-    P.fig.subplots_adjust(top=0.92, bottom=0.15, left=0.25, right=0.95, hspace=.005, wspace=0.05)
+    P.adjust((0.25,0.95), (0.15,0.92), 0.05, 0.005)
     return P.get()
 
 
@@ -77,10 +77,9 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
         name = f'turn_Dorient_to_{ang0}deg'
         par = nam.unwrap(nam.orient('front'))
     P = Plot(name=name, subfolder=subfolder, **kwargs)
-    fig, axs = plt.subplots(P.Ndatasets, Nplots, figsize=(5 * Nplots, 5 * P.Ndatasets),
+    P.build(P.Ndatasets, Nplots, figsize=(5 * Nplots, 5 * P.Ndatasets),
                             subplot_kw=dict(projection='polar'),
                             sharey=True)
-    axs = axs.ravel()
 
     def circNarrow(ax, data, alpha, label, color):
         circular_hist(ax, data, bins=16, alpha=alpha, label=label, color=color, offset=np.pi / 2)
@@ -108,8 +107,8 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
             B1 = np.deg2rad(b1[(np.abs(db) > min_angle) & (np.abs(db) < max_angle)])
             if Nplots == 2:
                 for tt, BB, aa in zip(['start', 'stop'], [B0, B1], [0.3, 0.6]):
-                    circNarrow(axs[ii + k], BB, aa, tt, c)
-                axs[ii + 1].legend(bbox_to_anchor=(-0.7, 0.1), loc='center', fontsize=12)
+                    circNarrow(P.axs[ii + k], BB, aa, tt, c)
+                P.axs[ii + 1].legend(bbox_to_anchor=(-0.7, 0.1), loc='center', fontsize=12)
             elif Nplots == 4:
                 B00 = B0[B0 < 0]
                 B10 = B1[B0 < 0]
@@ -118,21 +117,20 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
                 for tt, BB, aa in zip([r'$\theta^{init}_{or}$', r'$\theta^{fin}_{or}$'], [(B01, B00), (B11, B10)],
                                       [0.3, 0.6]):
                     for kk, ss, BBB in zip([0, 1], [r'$L_{sided}$', r'$R_{sided}$'], BB):
-                        circNarrow(axs[ii + k + 2 * kk], BBB, aa, f'{ss} {tt}', c)
-                        axs[ii + 1].legend(bbox_to_anchor=(-0.3, 0.1), loc='center', fontsize=12)
-                        axs[ii + 2 + 1].legend(bbox_to_anchor=(-0.3, 0.1), loc='center', fontsize=12)
+                        circNarrow(P.axs[ii + k + 2 * kk], BBB, aa, f'{ss} {tt}', c)
+                        P.axs[ii + 1].legend(bbox_to_anchor=(-0.3, 0.1), loc='center', fontsize=12)
+                        P.axs[ii + 2 + 1].legend(bbox_to_anchor=(-0.3, 0.1), loc='center', fontsize=12)
             if i == P.Ndatasets - 1:
                 if Nplots == 2:
-                    axs[ii + k].set_title(f'Bearing due to {side} turn.', y=-0.4)
+                    P.axs[ii + k].set_title(f'Bearing due to {side} turn.', y=-0.4)
                 elif Nplots == 4:
-                    axs[ii + k].set_title(fr'$L_{{sided}}$ {side} turn.', y=-0.4)
-                    axs[ii + 2 + k].set_title(fr'$R_{{sided}}$ {side} turn.', y=-0.4)
-    for ax in axs:
+                    P.axs[ii + k].set_title(fr'$L_{{sided}}$ {side} turn.', y=-0.4)
+                    P.axs[ii + 2 + k].set_title(fr'$R_{{sided}}$ {side} turn.', y=-0.4)
+    for ax in P.axs:
         ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''], fontsize=15)
-    dataset_legend(P.labels, P.colors, ax=axs[0], loc='upper center', anchor=(0.5, 0.99),
-                   bbox_transform=fig.transFigure)
-    fig.subplots_adjust(bottom=0.15, top=1 - 0.1, left=0.0, right=1.0, wspace=0.0, hspace=0.35)
-    P.set(fig)
+    dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper center', anchor=(0.5, 0.99),
+                   bbox_transform=P.fig.transFigure)
+    P.adjust((0.0, 1.0), (0.15, 0.9), 0.0, 0.35)
     return P.get()
 
 
@@ -176,7 +174,7 @@ def plot_ang_pars(absolute=True, include_rear=False, subfolder='turn', Npars=3, 
         P.conf_ax(i, xlab=xlab, yMaxN=3)
     dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left')
     P.conf_ax(0, ylab='probability', ylim=[0, ylim])
-    P.fig.subplots_adjust(bottom=0.15, top=0.95, left=0.3 / len(pars), right=0.99, wspace=0.01)
+    P.adjust((0.3 / len(pars), 0.99), (0.15, 0.95), 0.01)
     return P.get()
 
 
@@ -200,7 +198,7 @@ def plot_crawl_pars(subfolder='endpoint', par_legend=False, **kwargs):
         P.conf_ax(i, xlab=xlab, xlim=xlim, yMaxN=4, leg_loc='upper right' if par_legend else None)
     dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left', fontsize=15)
     P.axs[0].set_ylabel('probability')
-    P.fig.subplots_adjust(bottom=0.15, top=0.95, left=0.25 / len(pars), right=0.99, wspace=0.01)
+    P.adjust((0.25 / len(pars), 0.99), (0.15, 0.95), 0.01)
     return P.get()
 
 
@@ -239,27 +237,24 @@ def plot_turn_amp(par_short='tur_t', ref_angle=None, subfolder='turn', mode='his
     xs = [d.get_par(xpar).dropna().values.flatten() for d in P.datasets]
 
     if mode == 'scatter':
-        fig, axs = plt.subplots(1, 1, figsize=(10, 10))
+        P.build(1, 1, figsize=(10, 10))
+        ax=P.axs[0]
         for x, y, l, c in zip(xs, ys, P.labels, P.colors):
-            plt.scatter(x=x, y=y, marker='o', s=5.0, color=c, alpha=0.5)
+            ax.scatter(x=x, y=y, marker='o', s=5.0, color=c, alpha=0.5)
             m, k = np.polyfit(x, y, 1)
-            axs.plot(x, m * x + k, linewidth=4, color=c, label=l)
-            plt.legend(loc='upper left')
-            plt.xlabel(xlab)
-            plt.ylabel(ylab)
-            plt.ylim(ylim)
-            axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
-            plt.subplots_adjust(bottom=0.1, top=0.95, left=0.15, right=0.95, wspace=0.01)
+            ax.plot(x, m * x + k, linewidth=4, color=c, label=l)
+            P.conf_ax(xlab=xlab, ylab=ylab, ylim=ylim, yMaxN=4, leg_loc='upper left')
+            P.adjust((0.15,0.95), (0.1,0.95), 0.01)
     elif mode == 'hist':
-        fig = scatter_hist(xs, ys, P.labels, P.colors, xlabel=xlab, ylabel=ylab, ylim=ylim, cumylabel=cumylab,
+        P.fig = scatter_hist(xs, ys, P.labels, P.colors, xlabel=xlab, ylabel=ylab, ylim=ylim, cumylabel=cumylab,
                            cumy=cumy)
-    P.set(fig)
     return P.get()
 
 
 def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
     P = Plot(name='stride_bend_change', subfolder=subfolder, **kwargs)
     P.build()
+    ax=P.axs[0]
 
     fits = {}
     for i, (d, label, c) in enumerate(zip(P.datasets, P.labels, P.colors)):
@@ -269,19 +264,19 @@ def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
         b0 *= sign_b
         b1 *= sign_b
         db = b1 - b0
-        P.axs[0].scatter(x=b0, y=db, marker='o', s=2.0, alpha=0.6, color=c, label=label)
+        ax.scatter(x=b0, y=db, marker='o', s=2.0, alpha=0.6, color=c, label=label)
         m, k = np.polyfit(b0, db, 1)
         m = np.round(m, 2)
         k = np.round(k, 2)
         fits[label] = [m, k]
-        P.axs[0].plot(b0, m * b0 + k, linewidth=4, color=c)
+        ax.plot(b0, m * b0 + k, linewidth=4, color=c)
         if show_text:
-            P.axs[0].text(0.3, 0.9 - i * 0.1, rf'${label} : \Delta\theta_{{b}}={m} \cdot \theta_{{b}}$', fontsize=12,
-                          transform=P.axs.transAxes)
+            ax.text(0.3, 0.9 - i * 0.1, rf'${label} : \Delta\theta_{{b}}={m} \cdot \theta_{{b}}$', fontsize=12,
+                          transform=ax.transAxes)
             print(f'Bend correction during strides for {label} fitted as : db={m}*b + {k}')
     P.conf_ax(xlab=r'$\theta_{bend}$ at stride start $(deg)$', ylab=r'$\Delta\theta_{bend}$ over stride $(deg)$',
               xlim=[0, 85], ylim=[-60, 60], yMaxN=5)
-    P.fig.subplots_adjust(bottom=0.2, top=0.95, left=0.25, right=0.95, wspace=0.01)
+    P.adjust((0.25, 0.95), (0.2, 0.95), 0.01)
     return P.get()
 
 
@@ -323,8 +318,7 @@ def plot_marked_strides(agent_idx=0, agent_id=None, slice=[20, 40], subfolder='i
 
         ax.plot(s[p].loc[s[nam.max(p)] == True], linestyle='None', lw=10, color='green', marker='v')
         ax.plot(s[p].loc[s[nam.min(p)] == True], linestyle='None', lw=10, color='red', marker='^')
-
-    P.fig.subplots_adjust(bottom=0.15, top=0.95, left=0.08, right=0.95, hspace=0.1)
+    P.adjust((0.08, 0.95), (0.15, 0.95), H=0.1)
     return P.get()
 
 
@@ -379,8 +373,7 @@ def plot_sample_tracks(mode='strides', agent_idx=0, agent_id=None, slice=[20, 40
 
         ax.plot(s[p].loc[s[nam.max(p)] == True], linestyle='None', lw=10, color='green', marker='v')
         ax.plot(s[p].loc[s[nam.min(p)] == True], linestyle='None', lw=10, color='red', marker='^')
-
-    P.fig.subplots_adjust(bottom=0.15, top=0.95, left=0.08, right=0.95, hspace=0.1)
+    P.adjust((0.08, 0.95), (0.15, 0.95), H=0.1)
     return P.get()
 
 
@@ -448,8 +441,8 @@ def barplot(par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None, 
             ax.set_ylim(ymin=0)
         if xlabel is not None:
             plt.xlabel(xlabel)
-        plt.subplots_adjust(hspace=0.05, top=0.95, bottom=0.15, left=0.15, right=0.95)
         P.set(fig)
+        P.adjust((0.15, 0.95), (0.15, 0.95), H=0.05)
         return P.get()
 
 
@@ -520,8 +513,8 @@ def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, yla
             ax.set_ylim(ymin=0)
         if xlabel is not None:
             plt.xlabel(xlabel)
-        plt.subplots_adjust(hspace=0.05, top=0.95, bottom=0.15, left=0.15, right=0.95)
         P.set(fig)
+        P.adjust((0.15, 0.95), (0.15, 0.95), H=0.05)
         return P.get()
 
 
@@ -542,7 +535,7 @@ def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
                           weights=np.ones_like(v) / len(v), alpha=0.5)
         P.conf_ax(i, xlab=xlab, yMaxN=4, leg_loc='upper left')
     P.axs[0].set_ylabel('probability')
-    P.fig.subplots_adjust(bottom=0.2, top=0.95, left=0.12, right=0.99, wspace=0.01)
+    P.adjust((0.12, 0.99), (0.2, 0.95), 0.01)
     return P.get()
 
 
@@ -581,8 +574,7 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
 
     P.conf_ax(-1, xlab='$\phi_{stride}$', xlim=[0, Npoints], xticks=np.linspace(0, Npoints, 5),
               xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
-
-    P.fig.subplots_adjust(top=0.97, bottom=0.2 / len(pars), left=0.12, right=0.95, hspace=.1, wspace=0.05)
+    P.adjust((0.12, 0.95), (0.2 / len(pars), 0.97), 0.05, 0.1)
     return P.get()
 
 
@@ -604,7 +596,7 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', fig_col
                             ub=dsp['lower'].values[t0:t1],
                             axis=P.axs[0], color_shading=c, label=lab)
     P.conf_ax(xlab='time, $sec$', ylab=ylab, xlim=[x[0], x[-1]], ylim=[0, ymax], xMaxN=4, yMaxN=4, leg_loc='upper left')
-    P.fig.subplots_adjust(top=0.95, bottom=0.15, left=0.2 / fig_cols, right=0.95, hspace=.005, wspace=0.05)
+    P.adjust((0.2 / fig_cols, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
 
@@ -633,7 +625,7 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
         plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
 
     P.conf_ax(xlab=xlabel, ylab=ylab, xlim=[t0, t1], ylim=[0, None], xMaxN=5, leg_loc='upper left')
-    P.fig.subplots_adjust(top=0.95, bottom=0.15, left=0.2, right=0.95, hspace=.005, wspace=0.05)
+    P.adjust((0.2, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
 
@@ -649,7 +641,7 @@ def plot_gut(**kwargs):
         plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
     P.conf_ax(xlab='time, $min$', ylab='% gut occupied',
               xlim=[t0, t1], ylim=[0, 100], xMaxN=5, yMaxN=5, leg_loc='upper left')
-    P.fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.95, hspace=.005, wspace=0.05)
+    P.adjust((0.1, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
 
@@ -690,7 +682,7 @@ def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
             dst_b = signal.sosfiltfilt(sos, dst_b)
         plot_mean_and_range(x=x, mean=dst_m, lb=dst_b, ub=dst_u, axis=P.axs[0], color_shading=c, label=lab)
     P.conf_ax(xlab='time, $min$', ylab=ylab, xlim=[t0, t1], xMaxN=5, leg_loc='upper left')
-    P.fig.subplots_adjust(top=0.95, bottom=0.15, left=0.1, right=0.95, hspace=.005, wspace=0.05)
+    P.adjust((0.1, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
 
@@ -753,7 +745,7 @@ def boxplot_PI(sort_labels=False, xlabel='Trials', **kwargs):
     sns.boxplot(x="Trial", y="value", hue="Group", data=mdf, palette=palette, ax=P.axs[0], width=.5,
                 fliersize=3, linewidth=None, whis=1.0)  # RUN PLOT
     P.conf_ax(xlab=xlabel, ylab='Odor preference', ylim=[-1, 1], leg_loc='lower left')
-    P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.2, right=0.9, hspace=.005, wspace=0.05)
+    P.adjust((0.2, 0.9), (0.15, 0.9), 0.05, 0.005)
     return P.get()
 
 
@@ -822,7 +814,7 @@ def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_id
         g2 = sns.stripplot(x="Trial", y="value", hue='Group', data=mdf, palette=palette, ax=P.axs[ii])  # RUN PLOT
         # g2.get_legend().remove()
         P.conf_ax(ii, xlab=xlabel, ylab=ylabel, ylim=ylim)
-    P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.1, right=0.95, hspace=0.3, wspace=0.3)
+    P.adjust((0.1, 0.95), (0.15, 0.9), 0.3, 0.3)
     return P.get()
 
 
@@ -881,8 +873,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
         ax.legend()
     if P.Ndatasets > 1:
         dataset_legend(P.labels, P.colors, ax=ax, loc=legend_loc, fontsize=15)
-
-    P.fig.subplots_adjust(bottom=0.15, left=0.2, right=0.95, top=0.95)
+    P.adjust((0.2, 0.95), (0.15, 0.95))
     return P.get()
 
 
@@ -913,7 +904,7 @@ def plot_navigation_index(subfolder='source', **kwargs):
         vy0 = np.nanmean(np.array(vys), axis=0)
         P.axs[0].plot(np.linspace(0, Nsec, Nticks - 1), vx0, color=c, label=g)
         P.axs[1].plot(np.linspace(0, Nsec, Nticks - 1), vy0, color=c, label=g)
-    P.fig.subplots_adjust(top=0.98, bottom=0.2, left=0.1, right=0.95, hspace=0.15)
+    P.adjust((0.1, 0.95), (0.2, 0.98), H=0.15)
     P.conf_ax(0, ylab='X index', leg_loc='upper right')
     P.conf_ax(1, xlab='time (sec)', ylab='Y index', xlim=[0, Nsec], ylim=[-1.0, 1.0])
     P.axs[0].axhline(0.0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
@@ -1069,7 +1060,7 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
         dataset_legend(P.labels, P.colors, ax=P.axs[ii], loc='upper right', fontsize=15)
     P.conf_ax(0, xlab=chain_xlabel, ylab=ylabel, xlim=[chn_t0, chn_t1], title=r'$\bf{stridechains}$')
     P.conf_ax(1, xlab=pause_xlabel, xlim=[pau_t0, pau_t1], ylim=[10 ** -3.5, 10 ** 0], title=r'$\bf{pauses}$')
-    P.fig.subplots_adjust(top=0.92, bottom=0.15, left=0.15, right=0.95, hspace=.005, wspace=0.05)
+    P.adjust((0.15, 0.95), (0.15, 0.92), 0.05, 0.005)
     fit_df = pd.DataFrame.from_dict(fits, orient="index")
     fit_df.to_csv(P.fit_filename, index=True, header=True)
     return P.get()
@@ -1115,7 +1106,7 @@ def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwa
         P.conf_ax(i, xlab=xlab, yMaxN=3)
     P.conf_ax(0, ylab='probability', ylim=[0, 0.04], leg_loc='upper left')
     P.conf_ax(Ncols, ylab='probability', leg_loc='upper left')
-    P.fig.subplots_adjust(bottom=0.1, top=0.9, left=0.25 / Ncols, right=0.95, wspace=0.1, hspace=0.3)
+    P.adjust((0.25 / Ncols, 0.95), (0.1, 0.9), 0.1, 0.3)
     return P.get()
 
 
@@ -1238,9 +1229,7 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
         P.conf_ax(i, xlab=xlabel, xlim=xlim, ylim=ylim, xMaxN=4, yMaxN=4,xMath=True, title=disp)
         P.plot_half_circles(p, i)
 
-
-    P.fig.subplots_adjust(wspace=0.1, hspace=0.2 * Nrows, left=0.1, right=0.97, top=1 - (0.1 / Nrows),
-                        bottom=0.17 / Nrows)
+    P.adjust((0.1, 0.97), (0.17 / Nrows, 1 - (0.1 / Nrows)), 0.1, 0.2 * Nrows)
     P.axs[0].legend(loc='upper left', prop={'size': 15})
     return P.get()
 
@@ -1311,6 +1300,7 @@ def plot_chunk_Dorient2source(source_ID,subfolder='bouts', chunk='stride', Nbins
         ax.xaxis.set_major_locator(FixedLocator(ticks_loc))
         ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''])
     P.fig.subplots_adjust(bottom=0.2, top=0.8, left=0.05 * Ncols / 2, right=0.9, wspace=0.8, hspace=0.3)
+    P.adjust((0.05 * Ncols / 2, 0.9), (0.2, 0.8), 0.8, 0.3)
     return P.get()
 
 

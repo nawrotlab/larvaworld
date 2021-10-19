@@ -16,10 +16,11 @@ class NengoBrain(Network, Brain):
         m = self.modules
         c = self.conf
         self.food_feedback = False
-        self.osc_coupling = Oscillator_coupling(**c['interference_params'])
+
         self.feeder = NengoEffector(**c['feeder_params'])
         self.turner = NengoEffector(**c['turner_params'])
         self.crawler = NengoEffector(**c['crawler_params'])
+        self.osc_coupling = Oscillator_coupling(brain=self, **c['interference_params'])
         if m['olfactor']:
             self.olfactor = NengoEffector(**c['olfactor_params'])
         else:

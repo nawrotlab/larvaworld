@@ -139,6 +139,20 @@ class Plot :
                     fontsize=15, transform=ax.transAxes)
         return res
 
+    def adjust(self, LR=None, BT=None, W=None, H=None):
+        kws={}
+        if LR is not None :
+            kws['left']=LR[0]
+            kws['right']=LR[1]
+        if BT is not None :
+            kws['bottom']=BT[0]
+            kws['top']=BT[1]
+        if W is not None :
+            kws['wspace']=W
+        if H is not None :
+            kws['hspace']=H
+        self.fig.subplots_adjust(**kws)
+
 # class TurnPlot(Plot) :
 #     def __init__(self, absolute=True,**kwargs):
 #         self.absolute = absolute
