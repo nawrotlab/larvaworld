@@ -47,10 +47,7 @@ def plot_turns(absolute=True, subfolder='turn', **kwargs):
     P = Plot(name='turn_amplitude', subfolder=subfolder, **kwargs)
     P.build()
     p, xlab = getPar('tur_fou', to_return=['d', 'l'])
-    r = 150
-    r0, r1 = (0, r) if absolute else (-r, r)
-    Nbins = 30 if absolute else 30 * 2
-    bins = np.linspace(r0, r1, Nbins)
+    bins, xlim=P.angrange(150,absolute,30)
 
     for d, c, l in zip(P.datasets, P.colors, P.labels):
         x = d.get_par(p).dropna().values
@@ -59,7 +56,7 @@ def plot_turns(absolute=True, subfolder='turn', **kwargs):
         P.axs[0].hist(x, bins=bins, weights=np.ones_like(x) / float(len(x)), label=l, color=c, alpha=1.0,
                       histtype='step')
 
-    P.conf_ax(xlab=xlab, ylab='probability, $P$', xlim=[r0, r1], yMaxN=4, leg_loc='upper right')
+    P.conf_ax(xlab=xlab, ylab='probability, $P$', xlim=xlim, yMaxN=4, leg_loc='upper right')
     P.adjust((0.25,0.95), (0.15,0.92), 0.05, 0.005)
     return P.get()
 
@@ -70,12 +67,12 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
         name = f'turn_Dorient_to_center'
         ang0 = 0
         norm = False
-        par = nam.bearing2(source_ID)
+        p = nam.bearing2(source_ID)
     else:
         ang0 = ref_angle
         norm = True
         name = f'turn_Dorient_to_{ang0}deg'
-        par = nam.unwrap(nam.orient('front'))
+        p = nam.unwrap(nam.orient('front'))
     P = Plot(name=name, subfolder=subfolder, **kwargs)
     P.build(P.Ndatasets, Nplots, figsize=(5 * Nplots, 5 * P.Ndatasets),
                             subplot_kw=dict(projection='polar'),
@@ -87,12 +84,12 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
                                         facecolor=color, edgecolor='black', fill=True, linewidth=0.5)
         ax.add_patch(arrow)
 
-    for i, (d, label, c) in enumerate(zip(P.datasets, P.labels, P.colors)):
+    for i, (d, c) in enumerate(zip(P.datasets, P.colors)):
         ii = Nplots * i
         for k, (chunk, side) in enumerate(zip(['Lturn', 'Rturn'], ['left', 'right'])):
-            b0_par = nam.at(par, nam.start(chunk))
-            b1_par = nam.at(par, nam.stop(chunk))
-            bd_par = nam.chunk_track(chunk, par)
+            b0_par = nam.at(p, nam.start(chunk))
+            b1_par = nam.at(p, nam.stop(chunk))
+            bd_par = nam.chunk_track(chunk, p)
 
             b0 = d.get_par(b0_par).dropna().values.flatten() - ang0
             b1 = d.get_par(b1_par).dropna().values.flatten() - ang0
@@ -155,8 +152,7 @@ def plot_ang_pars(absolute=True, include_rear=False, subfolder='turn', Npars=3, 
     P.build(1, len(pars), figsize=(len(pars) * 5, 5), sharey=True)
 
     for i, (p, r, p_lab, xlab) in enumerate(zip(pars, rs, p_ls, xlabs)):
-        r0, r1 = (0, r) if absolute else (-r, r)
-        x = np.linspace(r0, r1, 200)
+        x, xlim=P.angrange(r,absolute,200)
         vs = []
         for j, d in enumerate(P.datasets):
             v = d.get_par(p).dropna().values
@@ -214,13 +210,13 @@ def plot_turn_amp(par_short='tur_t', ref_angle=None, subfolder='turn', mode='his
 
     if ref_angle is not None:
         A0 = float(ref_angle)
-        pars_ref, = getPar(['tur_fo0', 'tur_fo1'], to_return=['d'])
+        p_ref, = getPar(['tur_fo0', 'tur_fo1'], to_return=['d'])
         ys = []
         ylab = r'$\Delta\theta_{bearing} (deg)$'
         cumylab = r'$\bar{\Delta\theta}_{bearing} (deg)$'
         for d in P.datasets:
-            y0 = d.get_par(pars_ref[0]).dropna().values.flatten() - A0
-            y1 = d.get_par(pars_ref[1]).dropna().values.flatten() - A0
+            y0 = d.get_par(p_ref[0]).dropna().values.flatten() - A0
+            y1 = d.get_par(p_ref[1]).dropna().values.flatten() - A0
             y0 %= 360
             y1 %= 360
             y0[y0 > 180] -= 360
@@ -525,8 +521,7 @@ def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
     p_labels = [[sl] * P.Ndatasets for sl in sim_ls]
     P.build(1, len(pars))
     for i, (p, r, p_lab, xlab) in enumerate(zip(pars, ranges, p_labels, xlabels)):
-        r0, r1 = (0, r) if absolute else (-r, r)
-        x = np.linspace(r0, r1, 200)
+        x, xlim=P.angrange(r,absolute,200)
         for j, d in enumerate(P.datasets):
             v = d.get_par(p).dropna().values
             if absolute:
@@ -609,9 +604,6 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
         name = f'{lab}'
         ylab = f'{lab} $({unit})$'
     P = Plot(name=name, **kwargs)
-    Nticks = len(P.datasets[0].step_data.index.unique('Step'))
-    t0, t1 = 0, int(Nticks / P.datasets[0].fr / 60)
-    x = np.linspace(t0, t1, Nticks)
     if xlabel is None:
         xlabel = 'time, $min$'
     P.build(figsize=(7, 6))
@@ -622,25 +614,22 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
         if not scaled and unit == 'cm':
             if dst_SI.unit == siunits.m:
                 df *= 100
-        plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
+        plot_quantiles(df=df, x=P.trange, axis=P.axs[0], color_shading=c, label=lab)
 
-    P.conf_ax(xlab=xlabel, ylab=ylab, xlim=[t0, t1], ylim=[0, None], xMaxN=5, leg_loc='upper left')
+    P.conf_ax(xlab=xlabel, ylab=ylab, xlim=P.tlim, ylim=[0, None], xMaxN=5, leg_loc='upper left')
     P.adjust((0.2, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
 
 def plot_gut(**kwargs):
     P = Plot(name='gut', **kwargs)
-    Nticks = len(P.datasets[0].step_data.index.unique('Step'))
-    t0, t1 = 0, int(Nticks / P.datasets[0].fr / 60)
-    x = np.linspace(t0, t1, Nticks)
     P.build()
 
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
         df = d.step_data['gut_occupancy'] * 100
-        plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
+        plot_quantiles(df=df, x=P.trange, axis=P.axs[0], color_shading=c, label=lab)
     P.conf_ax(xlab='time, $min$', ylab='% gut occupied',
-              xlim=[t0, t1], ylim=[0, 100], xMaxN=5, yMaxN=5, leg_loc='upper left')
+              xlim=P.tlim, ylim=[0, 100], xMaxN=5, yMaxN=5, leg_loc='upper left')
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
@@ -659,9 +648,6 @@ def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
     if filt_amount and scaled:
         ylab = 'Food intake as % larval mass'
     P = Plot(name=name, **kwargs)
-    Nticks = len(P.datasets[0].step_data.index.unique('Step'))
-    t0, t1 = 0, int(Nticks / P.datasets[0].fr / 60)
-    x = np.linspace(t0, t1, Nticks)
     P.build()
 
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
@@ -680,8 +666,8 @@ def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
             dst_b = dst_b.diff()
             dst_b.iloc[0] = 0
             dst_b = signal.sosfiltfilt(sos, dst_b)
-        plot_mean_and_range(x=x, mean=dst_m, lb=dst_b, ub=dst_u, axis=P.axs[0], color_shading=c, label=lab)
-    P.conf_ax(xlab='time, $min$', ylab=ylab, xlim=[t0, t1], xMaxN=5, leg_loc='upper left')
+        plot_mean_and_range(x=P.trange, mean=dst_m, lb=dst_b, ub=dst_u, axis=P.axs[0], color_shading=c, label=lab)
+    P.conf_ax(xlab='time, $min$', ylab=ylab, xlim=P.tlim, xMaxN=5, leg_loc='upper left')
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
@@ -1083,11 +1069,9 @@ def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwa
 
     Ncols = int(len(pars) / 2)
     P.build(2, Ncols, figsize=(Ncols * 7, 14), sharey=True)
-    nbins = 200
 
     for i, (p, r, p_lab, xlab, disp) in enumerate(zip(pars, ranges, p_labs, xlabels, disps)):
-        r0, r1 = (0, r) if absolute else (-r, r)
-        x = np.linspace(r0, r1, nbins)
+        x, xlim=P.angrange(r,absolute,200)
         ax=P.axs[i]
         for j, (d, l) in enumerate(zip(P.datasets, P.labels)):
             vs = []
@@ -1099,7 +1083,7 @@ def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwa
                 vs.append(v)
                 ax.hist(v, color=col, bins=x, label=c, weights=np.ones_like(v) / float(len(v)),
                         alpha=1.0, histtype='step', linewidth=2)
-                ax.set_xlim([r0, r1])
+                ax.set_xlim(xlim)
             P.comp_pvalue(l, vs[0], vs[1], p)
             P.plot_half_circle(p, ax, col1=chunk_cols[0], col2=chunk_cols[1], v=P.fit_df[p].loc[l], ind=l)
 
@@ -1118,32 +1102,25 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
     nbins = 20
     l_par = 'l'  # 'l_mu
     if par_shorts is None:
-        if mode == 'basic':
-            par_shorts = [l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
+        dic={
+            'basic':[l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
                           'str_tr', 'pau_tr', 'Ltur_tr', 'Rtur_tr',
-                          'tor20_mu', 'dsp_0_40_fin', 'b_mu', 'bv_mu']
-        elif mode == 'minimal':
-            par_shorts = [l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
+                          'tor20_mu', 'dsp_0_40_fin', 'b_mu', 'bv_mu'],
+            'minimal':[l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
                           'cum_t', 'str_tr', 'pau_tr', 'tor',
                           'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
-                          'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr']
-        elif mode == 'stride_def':
-            par_shorts = [l_par, 'fsv', 'sstr_d_mu', 'sstr_d_std']
-        elif mode == 'reorientation':
-            par_shorts = ['str_fo_mu', 'str_fo_std', 'tur_fou_mu', 'tur_fou_std']
-        elif mode == 'tortuosity':
-            par_shorts = ['tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu']
-        elif mode == 'result':
-            par_shorts = ['sv_mu', 'str_tr', 'pau_tr', 'pau_t_mu']
-        elif mode == 'limited':
-            par_shorts = [l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
+                          'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'],
+            'stride_def':[l_par, 'fsv', 'sstr_d_mu', 'sstr_d_std'],
+            'reorientation':['str_fo_mu', 'str_fo_std', 'tur_fou_mu', 'tur_fou_std'],
+            'tortuosity':['tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu'],
+            'result':['sv_mu', 'str_tr', 'pau_tr', 'pau_t_mu'],
+            'limited':[l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
                           'cum_t', 'str_tr', 'pau_tr', 'pau_t_mu',
                           'tor5_mu', 'tor5_std', 'tor20_mu', 'tor20_std',
                           'tor', 'sdsp_mu', 'sdsp_0_40_max', 'sdsp_0_40_fin',
                           'b_mu', 'b_std', 'bv_mu', 'bv_std',
-                          'Ltur_tr', 'Rtur_tr', 'Ltur_fou_mu', 'Rtur_fou_mu']
-        elif mode == 'full':
-            par_shorts = [l_par, 'str_N', 'fsv',
+                          'Ltur_tr', 'Rtur_tr', 'Ltur_fou_mu', 'Rtur_fou_mu'],
+            'full':[l_par, 'str_N', 'fsv',
                           'cum_d', 'cum_sd', 'v_mu', 'sv_mu',
                           'str_d_mu', 'str_d_std', 'sstr_d_mu', 'sstr_d_std',
                           'str_std_mu', 'str_std_std', 'sstr_std_mu', 'sstr_std_std',
@@ -1159,9 +1136,8 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
                           'Rtur_t_mu', 'Rtur_t_std', 'cum_Rtur_t', 'Rtur_tr',
                           'Ltur_fou_mu', 'Ltur_fou_std', 'Rtur_fou_mu', 'Rtur_fou_std',
                           'b_mu', 'b_std', 'bv_mu', 'bv_std',
-                          ]
-        elif mode == 'deb':
-            par_shorts = [
+                          ],
+            'deb':[
                 'deb_f_mu', 'hunger', 'reserve_density', 'puppation_buffer',
                 'cum_d', 'cum_sd', 'str_N', 'fee_N',
                 'str_tr', 'pau_tr', 'fee_tr', 'f_am',
@@ -1170,6 +1146,9 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
                 # 'v_mu', 'sv_mu',
 
             ]
+        }
+        if mode in dic.keys():
+            par_shorts =dic[mode]
         else:
             raise ValueError('Provide parameter shortcuts or define a mode')
     ends = []
@@ -1299,7 +1278,6 @@ def plot_chunk_Dorient2source(source_ID,subfolder='bouts', chunk='stride', Nbins
         ticks_loc = ax.get_xticks().tolist()
         ax.xaxis.set_major_locator(FixedLocator(ticks_loc))
         ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''])
-    P.fig.subplots_adjust(bottom=0.2, top=0.8, left=0.05 * Ncols / 2, right=0.9, wspace=0.8, hspace=0.3)
     P.adjust((0.05 * Ncols / 2, 0.9), (0.2, 0.8), 0.8, 0.3)
     return P.get()
 
@@ -1322,7 +1300,7 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
     P = Plot(name=name, subfolder=subfolder, **kwargs)
     P.build(Nx, Ny, figsize=(10 * Ny, 10 * Nx))
     for i, (p0, p1) in enumerate(pairs):
-        pars, sim_labels, exp_labels, units = getPar([p0, p1], to_return=['d', 's', 's', 'l'])
+        pars, labs = getPar([p0, p1], to_return=['d', 'l'])
 
         v0_all = [d.endpoint_data[pars[0]].values for d in P.datasets]
         v1_all = [d.endpoint_data[pars[1]].values for d in P.datasets]
@@ -1332,7 +1310,7 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
 
         for v0, v1, l, c in zip(v0_all, v1_all, P.labels, P.colors):
             P.axs[i].scatter(v0, v1, color=c, label=l)
-        P.conf_ax(i, xlab=units[0], ylab=units[1],xlim=v0_r, ylim=v1_r,tickMath=True,
+        P.conf_ax(i, xlab=labs[0], ylab=labs[1],xlim=v0_r, ylim=v1_r,tickMath=True,
                   title=f'{pars[1]}_vs_{pars[0]}', leg_loc='upper right')
 
     return P.get()

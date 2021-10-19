@@ -45,37 +45,38 @@ class Plot :
 
     def conf_ax(self, idx=0, xlab=None, ylab=None, xlim=None, ylim=None, xticks=None, xticklabels=None,
                 xMaxN=None, yMaxN=None,xMath=None,tickMath=None, leg_loc=None, title=None):
+        ax=self.axs[idx]
         if ylab is not None:
-            self.axs[idx].set_ylabel(ylab)
+            ax.set_ylabel(ylab)
         if xlab is not None:
-            self.axs[idx].set_xlabel(xlab)
+            ax.set_xlabel(xlab)
         if xlim is not None:
-            self.axs[idx].set_xlim(xlim)
+            ax.set_xlim(xlim)
         if ylim is not None:
-            self.axs[idx].set_ylim(ylim)
+            ax.set_ylim(ylim)
 
         if xticks is not None:
-            self.axs[idx].set_xticks(ticks=xticks)
+            ax.set_xticks(ticks=xticks)
         if xticklabels is not None:
-            self.axs[idx].set_xticklabels(labels=xticklabels)
+            ax.set_xticklabels(labels=xticklabels)
         if tickMath is not None:
-            self.axs[idx].ticklabel_format(useMathText=True, scilimits=(0, 0))
+            ax.ticklabel_format(useMathText=True, scilimits=(0, 0))
         if xMaxN is not None:
-            self.axs[idx].xaxis.set_major_locator(ticker.MaxNLocator(xMaxN))
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(xMaxN))
         if yMaxN is not None:
-            self.axs[idx].yaxis.set_major_locator(ticker.MaxNLocator(yMaxN))
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(yMaxN))
         if xMath is not None:
-            self.axs[idx].xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=True, useMathText=True))
+            ax.xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=True, useMathText=True))
         if title is not None:
-            self.axs[idx].set_title(title)
+            ax.set_title(title)
         if leg_loc is not None:
-            self.axs[idx].legend(loc=leg_loc)
+            ax.legend(loc=leg_loc)
 
     def set(self, fig):
         self.fig=fig
 
     def get(self):
-        if self.fit_df :
+        if self.fit_df is not None:
             self.fit_df.to_csv(self.fit_filename, index=True, header=True)
         return process_plot(self.fig, self.save_to, self.filename, self.return_fig, self.show)
 
@@ -89,7 +90,7 @@ class Plot :
                 self.fit_df = pd.DataFrame(index=self.labels,columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
 
     def comp_pvalues(self,values, p):
-        if self.fit_ind:
+        if self.fit_ind is not None:
             for ind, (v1, v2) in zip(self.fit_ind, itertools.combinations(values, 2)):
                 self.comp_pvalue(ind, v1, v2, p)
 
@@ -103,7 +104,7 @@ class Plot :
         self.fit_df[f'P_{p}'].loc[ind] = np.round(pv, 11)
 
     def plot_half_circles(self,p,i):
-        if self.fit_df:
+        if self.fit_df is not None:
             ax=self.axs[i]
             ii = 0
             for z, (l1, l2) in enumerate(self.fit_df.index.values):
@@ -152,6 +153,23 @@ class Plot :
         if H is not None :
             kws['hspace']=H
         self.fig.subplots_adjust(**kws)
+
+    @ property
+    def trange(self):
+        Nticks_list = [len(d.step_data.index.unique('Step')) for d in self.datasets]
+        self.Nticks=np.max(unique_list(Nticks_list))
+        fr_list=[d.fr for d in self.datasets]
+        self.fr = np.max(unique_list(fr_list))
+        self.tlim=t0, t1 = 0, int(self.Nticks / self.fr / 60)
+        x = np.linspace(t0, t1, self.Nticks)
+        return x
+
+
+    def angrange(self, r,  absolute=False,nbins=200):
+        lim =(r0, r1) = (0, r) if absolute else (-r, r)
+        x = np.linspace(r0, r1, nbins)
+        return x, lim
+
 
 # class TurnPlot(Plot) :
 #     def __init__(self, absolute=True,**kwargs):
