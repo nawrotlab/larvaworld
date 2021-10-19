@@ -1825,10 +1825,13 @@ def plot_3d(df, labels, lims=None, save_to=None, pref=None, save_as=None, show=F
     ax.xaxis.set_major_locator(ticker.MaxNLocator(4))
     ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
     ax.zaxis.set_major_locator(ticker.MaxNLocator(4))
+    ax.xaxis.set_tick_params(pad=10)
+    ax.yaxis.set_tick_params(pad=10)
+    ax.zaxis.set_tick_params(pad=10)
 
-    ax.set_xlabel(l0, labelpad=20)
-    ax.set_ylabel(l1, labelpad=20)
-    ax.set_zlabel(l2, labelpad=20)
+    ax.set_xlabel(l0, labelpad=30)
+    ax.set_ylabel(l1, labelpad=30)
+    ax.set_zlabel(l2, labelpad=30)
     if lims is not None:
         ax.set_xlim(lims[0])
         ax.set_ylim(lims[1])
@@ -1851,7 +1854,7 @@ def plot_3d(df, labels, lims=None, save_to=None, pref=None, save_as=None, show=F
 def plot_3d_multi(dfs,dfIDs,df_colors=None,show=True, **kwargs) :
     if df_colors is None :
         df_colors=[None]*len(dfs)
-    fig = plt.figure(figsize=(15, 10))
+    fig = plt.figure(figsize=(18, 12))
     ax = Axes3D(fig, azim=115, elev=15)
     for df, dfID, dfC in zip(dfs,dfIDs, df_colors) :
         plot_3d(df,dfID=dfID,color=dfC, ax=ax, fig=fig,show=False, **kwargs)

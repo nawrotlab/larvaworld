@@ -70,8 +70,8 @@ class Substrate:
 
 class DEB:
     def __init__(self, id='DEB model', species='default', steps_per_day=24*60, cv=0, T=298.15, eb=1.0, substrate=None,
-                 aging=False, print_output=False, starvation_strategy=False, assimilation_mode='deb', save_dict=True,y_E_X=None, save_to=None,
-                 V_bite=0.0005, absorption=None, base_hunger=0.5, hunger_gain=0,hunger_as_EEB=False, hours_as_larva=0, simulation=True, use_gut=True,
+                 aging=False, print_output=False, starvation_strategy=False, assimilation_mode='deb', save_dict=True, save_to=None,
+                 V_bite=0.001, absorption=None, base_hunger=0.5, hunger_gain=0,hunger_as_EEB=False, hours_as_larva=0, simulation=True, use_gut=True,
                  intermitter=None):
 
         # Drosophila model by default
@@ -107,8 +107,8 @@ class DEB:
         self.assimilation_mode = assimilation_mode
         self.absorption = absorption
 
-        if y_E_X is not None :
-            self.y_E_X = y_E_X
+        # if y_E_X is not None :
+        #     self.y_E_X = y_E_X
         self.epochs = []
         self.epoch_fs = []
         self.epoch_qs = []
@@ -524,7 +524,9 @@ class DEB:
 
     @property
     def F(self): # Vol specific filtering rate (cm**3/(d*cm**3) -> vol of environment/vol of individual*day
+        # F = self.F_mm * self.K/(self.K + self.substrate.X)
         F = (self.F_mm ** -1 + self.substrate.X * self.J_X_Amm ** -1) ** -1
+        # F = (self.F_mm ** -1 + self.substrate.X * self.J_X_Amm ** -1) ** -1
         return F
 
     @property
@@ -780,7 +782,7 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hung
     f"{nam.freq('feed')}_exp" :  np.round(inter.get_mean_feed_freq(),2),
     f"{nam.freq('feed')}_est" :  np.round(deb.fr_feed,2)
     }
-    print(mini_dic)
+    d_sim.update(mini_dic)
     if model_id is None :
         return d_sim
     else :
@@ -790,14 +792,28 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hung
 
 
 if __name__ == '__main__':
-    # ddd=deb_default(print_output=True)
-    # deb=DEB(print_output=True, steps_per_day=24*60, species='sitter')
-    # # deb.grow_larva(age=72)
-    # print(deb.fr_feed)
+    from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB,get_EEB_poly1d
+    ffrs=np.round(np.arange(0.2, 2.2, 0.2), 1)
+    sample = loadConf('None.200_controls', 'Ref')
+    z=np.poly1d(sample['EEB_poly1d'])
+    print(np.round(z(ffrs),2))
+    z=get_EEB_poly1d(sample=sample)
+    print(np.round(z(ffrs),2))
+    raise
+    ds=[]
+    # for q in np.round(np.arange(0.02,1.02,0.02),2) :
+    for ffr in np.round(np.arange(0.2, 2.2, 0.2), 1):
+        d=deb_sim(sample='None.200_controls', dt=0.1, EEB=z(ffr),deb_dt=60)
+        ds.append(d)
+        # deb=DEB(substrate={'quality':q, 'type':'standard'})
+        print(ffr, d[f"{nam.freq('feed')}_exp"], d[f"{nam.freq('feed')}_est"],d['EEB'])
+        # for
+    import pandas as pd
+    df=pd.DataFrame.from_records(ds)
     # d_sim=deb_sim(sample='None.200_controls', dt=0.1, deb_dt=1.0)
     # print(d_sim)
     # deb.run_larva_stage()
-
+    raise
     # print(deb.K)
     # print(deb.V*deb.J_E_Amm)
     # print(deb.substrate.X/(deb.substrate.X+ deb.K))

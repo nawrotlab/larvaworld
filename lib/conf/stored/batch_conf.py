@@ -79,7 +79,7 @@ batch_dict = {
 
 
 def fit_tortuosity_batch(d, model='imitation', exp='dish', idx=0):
-    from lib.conf.conf import imitation_exp
+    from lib.conf.stored.conf import imitation_exp
     conf=batch(exp=None,
                ss={'activation_noise': [(0.0, 2.0), 3],'base_activation': [(15.0, 25.0), 3]},
                o='tortuosity_20_mean', o_kws={'max_Nsims': 120, 'operations': {'mean': True}},
@@ -89,5 +89,3 @@ def fit_tortuosity_batch(d, model='imitation', exp='dish', idx=0):
     conf['batch_id'] = f'imitation_batchrun_{idx}'
     conf['batch_type'] = 'imitation'
     return conf
-
-# print(batch_dict['tactile_detection']['exp_kws'])

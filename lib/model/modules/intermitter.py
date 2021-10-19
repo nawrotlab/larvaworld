@@ -275,8 +275,9 @@ class Intermitter(Effector):
 
 
 class OfflineIntermitter(Intermitter):
-    def __init__(self, **kwargs):
+    def __init__(self,register_bouts=True, **kwargs):
         super().__init__(**kwargs)
+        self.register_bouts = register_bouts
 
     def step(self):
         super().count_ticks()
@@ -288,18 +289,22 @@ class OfflineIntermitter(Intermitter):
             self.stride_stop = True
             if self.current_numstrides >= self.current_stridechain_length:
                 self.register('stride')
+                self.current_numstrides = 0
+                self.current_stridechain_length = None
                 self.current_pause_ticks = int(self.pause_dist.sample() / self.dt)
                 self.inhibit_locomotion()
         elif self.current_feedchain_length and t >= self.current_feed_ticks:
             self.feed_counter += 1
             if np.random.uniform(0, 1, 1) >= self.feeder_reoccurence_rate:
                 self.register('feed')
+                self.current_feedchain_length = None
                 self.current_pause_ticks = int(self.pause_dist.sample() / self.dt)
                 self.inhibit_locomotion()
             else:
                 self.current_feedchain_length += 1
         elif self.current_pause_ticks and t > self.current_pause_ticks:
             self.register('pause')
+            self.current_pause_ticks = None
             self.disinhibit_locomotion()
 
     def disinhibit_locomotion(self):
@@ -317,24 +322,24 @@ class OfflineIntermitter(Intermitter):
 
 
     def register(self, bout):
-        t = self.ticks
-        dur = t * self.dt
-        if bout=='feed' :
-            self.feedchain_counter += 1
-            self.cum_feedchain_dur += dur
-            self.feedchain_lengths.append(self.current_feedchain_length)
-            self.current_feedchain_length = None
-        elif bout=='stride' :
-            self.stridechain_counter += 1
-            self.cum_stridechain_dur += dur
-            self.stridechain_lengths.append(self.current_stridechain_length)
-            self.current_numstrides = 0
-            self.current_stridechain_length = None
-        elif bout=='pause' :
-            self.pause_counter += 1
-            self.cum_pause_dur += dur
-            self.pause_durs.append(dur)
-            self.current_pause_ticks = None
+        if self.register_bouts :
+            t = self.ticks
+            dur = t * self.dt
+            if bout=='feed' :
+                self.feedchain_counter += 1
+                self.cum_feedchain_dur += dur
+                self.feedchain_lengths.append(self.current_feedchain_length)
+
+            elif bout=='stride' :
+                self.stridechain_counter += 1
+                self.cum_stridechain_dur += dur
+                self.stridechain_lengths.append(self.current_stridechain_length)
+
+            elif bout=='pause' :
+                self.pause_counter += 1
+                self.cum_pause_dur += dur
+                self.pause_durs.append(dur)
+
         self.reset_ticks()
 
 
@@ -464,10 +469,10 @@ def get_EEB_poly1d(sample=None, dt=None, **kwargs):
     if dt is not None:
         kws['dt'] = dt
 
-    EEBs = np.arange(0, 1, 0.01)
+    EEBs = np.arange(0, 1.05, 0.05)
     ms = []
     for EEB in EEBs:
-        inter = OfflineIntermitter(EEB=EEB, **kws)
+        inter = OfflineIntermitter(EEB=EEB,register_bouts=False, **kws)
         max_ticks = int(60 * 60 / inter.dt)
         while inter.total_ticks < max_ticks:
             inter.step()
@@ -495,7 +500,7 @@ def get_EEB_time_fractions(sample=None, dt=None,**kwargs):
         kws['dt'] = dt
 
     rts= {f'{q} ratio' : nam.dur_ratio(p) for p,q in zip(['stridechain', 'pause','feedchain'], ['crawl', 'pause','feed'])}
-    EEBs = np.arange(0, 1, 0.05)
+    EEBs = np.round(np.arange(0, 1, 0.02),2)
     data=[]
     for EEB in EEBs:
         inter = OfflineIntermitter(EEB=EEB, **kws)
