@@ -40,7 +40,7 @@ class Essay:
                 fig_dict, res = self.analyze(exp=exp, ds0=ds0)
                 self.figs.update(fig_dict)
                 self.results[exp] = res
-        shutil.rmtree(self.data_dir)
+        shutil.rmtree(self.data_dir, ignore_errors=True)
         return figs, results
 
     def analyze(self, exp, ds0):

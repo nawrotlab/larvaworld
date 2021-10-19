@@ -912,8 +912,8 @@ if __name__ == '__main__':
     # o, d = nam.bearing2('n'), nam.dst2('n')
     # fo = getPar(['fo'], to_return=['d'])[0][0]
     # print(o,d)
-    d=ParDict(mode='build').dict
-    # print(getPar(['on_food_tr'], to_return=['d', 's', 's', 'l', 'lim']))
+    # d=ParDict(mode='build').dict
+    print(getPar(['D_olf'], to_return=['d', 's', 's', 'l', 'lim']))
     # # d = ParDict(mode='reconstruct').dict
     # # print(d.keys())
     raise

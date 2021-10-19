@@ -89,7 +89,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
     elif exp_type == 'realistic_imitation':
         d.save_agents(pars=flatten_list(d.points_xy) + flatten_list(d.contour_xy))
     if exp_type == 'dish':
-        targeted_analysis(ds)
+        # targeted_analysis(ds)
         figs = {f'stride_track_idx_0_in_{s0}-{s1}': plot_marked_strides(agent_idx=0,
                                                                         slice=[s0, s1], **cc) for (s0, s1) in
                 [(0, 60)]}
@@ -109,7 +109,6 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
         figs.update(figs0)
 
     if 'chemo' in exp_type:
-        # figs['turns']=plot_turns(**cc)
         figs.update(**source_analysis(d.config['sources'], **cc))
         for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
             figs[p] = timeplot([p], **cc)
