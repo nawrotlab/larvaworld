@@ -16,18 +16,18 @@ class SingleRun:
                  sim_params,
                  env_params,
                  larva_groups,
-                 trials,
                  enrichment,
                  collections,
                  experiment,
+                 trials={},
                  save_to=None,
                  seed=None,
                  **kwargs):
         np.random.seed(seed)
         id = sim_params['sim_ID']
-        if id is None:
-            from lib.conf.stored.conf import next_idx
-            id = f'{experiment}_{next_idx(experiment)}'
+        # if id is None:
+        #     from lib.conf.stored.conf import next_idx
+        #     id = f'{experiment}_{next_idx(experiment)}'
         self.id = id
         dt = sim_params['timestep']
         path = sim_params['path']
@@ -36,8 +36,8 @@ class SingleRun:
         self.enrichment = enrichment
         if save_to is None:
             save_to = paths.path("SIM")
-        if path is None:
-            path = f'single_runs/{experiment}'
+        # if path is None:
+        #     path = f'single_runs/{experiment}'
         save_to = os.path.join(save_to, path)
         dir_path = os.path.join(save_to, self.id)
         self.param_dict = locals()

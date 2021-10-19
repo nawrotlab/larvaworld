@@ -172,6 +172,7 @@ def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=
         'feeder_reoccurence_rate': None,
     }
     config['EEB_poly1d'] = get_EEB_poly1d(**config['intermitter']).c.tolist()
+    # config['EEB_poly1d'] = {config['dt']: get_EEB_poly1d(**config['intermitter']).c.tolist()}
 
     return dic
 
@@ -356,13 +357,12 @@ def get_best_distro(bout, f, idx_Kmax=None):
 
 
 def pvalue_star(pv):
-    a = {1e-4 : "****", 1e-3 : "***",
-           1e-2 : "**", 0.05 : "*", 1 : "ns"}
-    for k, v in a.items() :
-        if pv<k :
+    a = {1e-4: "****", 1e-3: "***",
+         1e-2: "**", 0.05: "*", 1: "ns"}
+    for k, v in a.items():
+        if pv < k:
             return v
     return "ns"
-
 
 
 class BoutGenerator:
@@ -403,4 +403,3 @@ class BoutGenerator:
     def get(self, x, mode):
         func = self.ddfs[self.name][mode]
         return func(x=x, **self.args)
-

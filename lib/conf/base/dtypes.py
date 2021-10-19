@@ -24,7 +24,8 @@ def base_dtype(t):
     return base_t
 
 
-def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, Ndigits=None, h='', s='', argparser=False):
+def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, Ndigits=None, h='', s='',
+        argparser=False):
     if not argparser:
         cur_dtype = base_dtype(t)
         if cur_dtype in [float, int]:
@@ -47,11 +48,11 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
                     vs = ar.astype(cur_dtype)
 
                     vs = vs.tolist()
-        if vs is not None :
+        if vs is not None:
             Ndigits = maxNdigits(np.array(vs), 4)
         if aux_vs is not None and vs is not None:
             vs += aux_vs
-        d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype' : t}
+        d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t}
 
         return {name: d}
     else:
@@ -275,9 +276,10 @@ def init_pars():
             'Ngrid': {'t': int, 'max': 100},
             'values': {'t': List[float], 'min': -100.0, 'max': 100.0}
         },
-        'space_search': {'pars': {'t': List[str]},
-                         'ranges': {'t': List[Tuple[float]], 'max': 100.0, 'min': -100.0, 'dv': 1.0},
-                         'Ngrid': {'t': int, 'max': 100}},
+        'space_search': {'pars': {'t': List[str], 'h' : 'The parameters for space search', 's' :'ss.pars'},
+                         'ranges': {'t': List[Tuple[float]], 'max': 100.0, 'min': -100.0, 'dv': 1.0,
+                                    'h' : 'The range of the parameters for space search', 's' :'ss.ranges'},
+                         'Ngrid': {'t': int, 'max': 100, 'h' : 'The number of steps for space search', 's' :'ss.Ngrid'}},
         'body': {'initial_length': {'v': 'sample', 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample']},
                  'length_std': {'v': 0.0, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample']},
                  'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12},
@@ -379,7 +381,7 @@ def init_pars():
         'sim_params': {
             'sim_ID': {'t': str, 'h': 'The id of the simulation', 's': 'id'},
             'path': {'t': str, 'h': 'The path to save the simulation dataset', 's': 'path'},
-            'duration': {'v': 1.0, 'max': 100.0, 'h': 'The duration of the simulation in minutes', 's': 't'},
+            'duration': {'max': 100.0, 'h': 'The duration of the simulation in minutes', 's': 't'},
             'timestep': {'v': 0.1, 'max': 0.4, 'dv': 0.05, 'h': 'The timestep of the simulation in seconds', 's': 'dt'},
             'Box2D': {'t': bool, 'v': False, 'h': 'Use the Box2D physics engine'},
             'store_data': {'t': bool, 'v': True, 'h': 'Whether to store the simulation data', 's': 'no_store'},
@@ -500,7 +502,7 @@ def init_pars():
                        'min_ang_vel': {'v': 0.0, 'max': 1000.0, 'dv': 1.0},
                        'non_chunks': bF,
                        'on_food': bF,
-                       'fits' : bT}
+                       'fits': bT}
     d['to_drop'] = {kk: bF for kk in to_drop_keys}
     d['enrichment'] = {**{k: d[k] for k in
                           ['preprocessing', 'processing', 'annotation', 'to_drop']},
@@ -527,8 +529,8 @@ def init_pars():
                      'experiment': {'t': str, 'vs': list(loadConfDict('Exp').keys())},
                      }
     d['batch_setup'] = {
-        'batch_id': {'t': str},
-        'save_hdf5': bF,
+        'batch_id': {'t': str, 'h': 'The id of the batch-run', 's': 'b_id'},
+        'save_hdf5': {'t': bool, 'v': False, 'h': 'Whether to store the batch-run data', 's': 'store_batch'}
     }
     d['batch_conf'] = {'exp': {'t': str},
                        'space_search': d['space_search'],
@@ -664,10 +666,11 @@ def null_dict(n, key='initial_value', **kwargs):
         return dic2
 
 
-def enrichment_dict(types=[], bouts=[], to_keep=[], pre_kws={},fits=True,on_food=False, **kwargs):
+def enrichment_dict(types=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, **kwargs):
     pre = null_dict('preprocessing', **pre_kws)
     proc = null_dict('processing', types={k: True if k in types else False for k in proc_type_keys})
-    annot = null_dict('annotation', bouts={k: True if k in bouts else False for k in bout_keys}, fits=fits, on_food=on_food)
+    annot = null_dict('annotation', bouts={k: True if k in bouts else False for k in bout_keys}, fits=fits,
+                      on_food=on_food)
     to_drop = null_dict('to_drop', **{k: True if k not in to_keep else False for k in to_drop_keys})
     dic = null_dict('enrichment', preprocessing=pre, processing=proc, annotation=annot, to_drop=to_drop, **kwargs)
     return dic
@@ -688,13 +691,13 @@ def arena(x, y=None):
 
 def prestarved(h=0.0, age=0.0, q=1.0, substrate_type='standard'):
     sub0 = null_dict('substrate', type=substrate_type, quality=q)
-    ep0={0: null_dict('epoch', start=0.0, stop=age - h, substrate=sub0)}
-    if h==0.0 :
+    ep0 = {0: null_dict('epoch', start=0.0, stop=age - h, substrate=sub0)}
+    if h == 0.0:
         return ep0
-    else :
+    else:
         sub1 = null_dict('substrate', type=substrate_type, quality=0.0)
         ep1 = {1: null_dict('epoch', start=age - h, stop=age, substrate=sub1)}
-    return {**ep0,**ep1}
+    return {**ep0, **ep1}
 
 
 def init_shortcuts():

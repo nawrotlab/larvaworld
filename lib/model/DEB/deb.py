@@ -3,14 +3,13 @@ DEB pipeline from literature
 '''
 import json
 import os
-
 import numpy as np
 from scipy.integrate import quad, solve_ivp
 
-import lib.model.DEB.deb_aux
-from lib.conf.base.dtypes import null_dict
+from lib.model.DEB.deb_aux import beta0, simplex
+from lib.conf.base.dtypes import null_dict, substrate_dict
 from lib.conf.stored.conf import loadConf
-
+import lib.aux.naming as nam
 from lib.model.DEB.gut import Gut
 from lib.conf.base import paths
 
@@ -40,7 +39,7 @@ class Substrate:
             'cornmeal' : 359.33,
             'water' : 18.01528,
         }
-        self.d_dict= lib.conf.base.dtypes.substrate_dict[type]
+        self.d_dict= substrate_dict[type]
         self.d = self.d_water + sum(list(self.d_dict.values()))
         self.C=self.get_C()
         self.X=self.get_X()
@@ -76,13 +75,10 @@ class DEB:
                  intermitter=None):
 
         # Drosophila model by default
-        if type(species) == str:
-        # if species == 'default':
-            with open(paths.path('DEB_MODS')[species]) as tfp:
-                self.species = json.load(tfp)
-        else:
-            self.species = species
-        self.__dict__.update(self.species)
+        self.species=species
+        with open(paths.path('DEB_MODS')[species]) as tfp:
+            self.species_dict = json.load(tfp)
+        self.__dict__.update(self.species_dict)
 
         # DEB methods enabled
         self.starvation_strategy = starvation_strategy
@@ -165,8 +161,6 @@ class DEB:
     def L(self):
         return self.V ** (1 / 3)
 
-
-
     def scale_time(self):
         dt = self.dt * self.T_factor
         self.F_m_dt = self.F_m * dt
@@ -186,9 +180,6 @@ class DEB:
             self.gut.get_Nticks(dt)
             self.J_X_A_array = np.ones(self.gut.gut_Nticks)*self.J_X_A
 
-
-
-
     def set_steps_per_day(self, steps_per_day):
         self.steps_per_day = steps_per_day
         self.dt = 1 / steps_per_day
@@ -196,20 +187,7 @@ class DEB:
         # raise
         self.scale_time()
 
-    # def set_substrate_quality(self, quality):
-    #     self.substrate_quality=quality
-    #     self.base_f = self.substrate.get_f(K=self.K, quality=quality)
-    #     # self.substrate_C = self.substrate.get_C(quality=quality)
-    #     # self.substrate_X_ratio = self.substrate.get_X_ratio(quality=quality)
-    #     self.f = self.base_f
-    #     # self.F=self.get_F()
-    #     # self.feed_freq_estimate = self.get_feed_freq_estimate()
-    #     if self.gut is not None :
-    #         self.gut.get_tau_gut(self.base_f, self.J_X_Am, self.Lb)
-    #         self.gut.get_Nticks(self.dt * self.T_factor)
-
     def derived_pars(self):
-
         kap = self.kap
         v = self.v
         p_Am = self.p_Am = self.z * self.p_M / kap
@@ -217,7 +195,6 @@ class DEB:
         self.J_X_Am = self.J_E_Am / self.y_E_X
         self.p_Xm=p_Am/self.kap_X
         self.K=self.J_X_Am/self.F_m
-
 
         self.E_M = p_Am / v
         self.E_V = self.mu_V * self.d_V / self.w_V
@@ -274,7 +251,7 @@ class DEB:
 
     def get_tau_b(self, eb=1.0):
         def get_tb(x, ab, xb):
-            return x ** (-2 / 3) / (1 - x) / (ab - lib.model.DEB.deb_aux.beta0(x, xb))
+            return x ** (-2 / 3) / (1 - x) / (ab - beta0(x, xb))
 
         g = self.g
         xb = g / (eb + g)
@@ -293,7 +270,7 @@ class DEB:
         dx = xb / n
         x3 = x ** (1 / 3)
 
-        b = lib.model.DEB.deb_aux.beta0(x, xb) / (3 * g)
+        b = beta0(x, xb) / (3 * g)
 
         t0 = xb * g * vHb
         i = 0
@@ -322,7 +299,7 @@ class DEB:
     def get_initial_reserve(self, eb=1.0):
         g = self.g
         xb = g / (g + eb)
-        return np.real((3 * g / (3 * g * xb ** (1 / 3) / self.lb - lib.model.DEB.deb_aux.beta0(0, xb))) ** 3)
+        return np.real((3 * g / (3 * g * xb ** (1 / 3) / self.lb - beta0(0, xb))) ** 3)
 
     def predict_larva_stage(self, f=1.0):
         g = self.g
@@ -335,7 +312,7 @@ class DEB:
             ert = np.exp(- tau_j * self.rho_j)
             return np.abs(self.v_Rj - c1 * (1 - ert) + c2 * tau_j * ert)
 
-        self.tau_j = lib.model.DEB.deb_aux.simplex(get_tj, 1)
+        self.tau_j = simplex(get_tj, 1)
         self.lj = lb * np.exp(self.tau_j * self.rho_j / 3)
         self.t_j = self.tau_j / self.k_M / self.T_factor
         self.Lj = self.lj * self.Lm
@@ -505,7 +482,6 @@ class DEB:
             f = self.base_f
         if assimilation_mode is None:
             assimilation_mode = self.assimilation_mode
-        # print(f)
         self.f = f
         self.age += self.dt
 
@@ -515,8 +491,6 @@ class DEB:
         if self.E_R < self.E_Rj:
             if self.gut is not None:
                 self.gut.update(X_V)
-            # self.SU.step(X_V)
-            # self.SU.step(self.substrate.X)
             p_A = self.get_p_A(f=f, assimilation_mode=assimilation_mode)
             p_S = self.p_M_dt * self.V
             p_C = self.E * (E_G * self.k_E_dt + p_S / self.V) / (kap * self.E / self.V + E_G)
@@ -527,7 +501,6 @@ class DEB:
             self.V += p_G / E_G
             self.E_R += p_R
             self.update_hunger()
-
         elif self.stage == 'larva':
             self.pupation_time_in_hours = np.round(self.age * 24, 1)
             self.stage = 'pupa'
@@ -771,11 +744,10 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hung
     steps_per_day=np.round(24 * 60 * 60 / deb_dt).astype(int)
     deb = DEB(id=id, assimilation_mode='gut', save_dict=save_dict,**kwargs)
     if EEB is None :
-        EEB=get_best_EEB(deb, sample, dt)
+        EEB=get_best_EEB(deb, sample)
     deb.set_steps_per_day(steps_per_day=steps_per_day)
     deb.base_hunger=EEB
     Nticks=np.round(deb_dt / dt).astype(int)
-    # print(EEB)
     inter=OfflineIntermitter(**kws2, EEB=EEB)
     counter=0
     feeds=0
@@ -795,12 +767,20 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hung
                 inter.EEB=deb.hunger
                 if inter.feeder_reocurrence_as_EEB :
                     inter.feeder_reoccurence_rate=inter.EEB
-            if deb.age * 24>counter :
-                print(counter, int(deb.pupation_buffer*100))
-                counter+=24
+            # if deb.age * 24>counter :
+            #     print(counter, int(deb.pupation_buffer*100))
+            #     counter+=24
     deb.finalize_dict()
     d_sim= deb.return_dict()
-    print(EEB, np.mean(feed_dict))
+    d_inter = inter.build_dict()
+    mini_dic={
+        'DEB model' : deb.species,
+        'EEB' : np.round(EEB,2),
+        **{f'{q} ratio' : np.round(d_inter[nam.dur_ratio(p)],2) for p,q in zip(['stridechain', 'pause','feedchain'], ['crawl', 'pause','feed'])},
+    f"{nam.freq('feed')}_exp" :  np.round(inter.get_mean_feed_freq(),2),
+    f"{nam.freq('feed')}_est" :  np.round(deb.fr_feed,2)
+    }
+    print(mini_dic)
     if model_id is None :
         return d_sim
     else :
@@ -810,11 +790,12 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hung
 
 
 if __name__ == '__main__':
-    ddd=deb_default(print_output=True)
-    # deb=DEB(print_output=True, steps_per_day=24*60)
-    # deb.grow_larva(age=72)
-    # print(deb.Lw*10/1000, deb.age*24)
-    # deb_sim(sample='AttP2.Fed', dt=0.1, deb_dt=1.0)
+    # ddd=deb_default(print_output=True)
+    # deb=DEB(print_output=True, steps_per_day=24*60, species='sitter')
+    # # deb.grow_larva(age=72)
+    # print(deb.fr_feed)
+    # d_sim=deb_sim(sample='None.200_controls', dt=0.1, deb_dt=1.0)
+    # print(d_sim)
     # deb.run_larva_stage()
 
     # print(deb.K)
@@ -825,6 +806,12 @@ if __name__ == '__main__':
     # for EEB in [0.57,0.95] :
     #     d=deb_sim(EEB=EEB, dt=0.1, deb_dt=60)
         # print(EEB, d['pupation'])
+    from lib.model.modules.intermitter import get_best_EEB
+
+    sample = loadConf('None.200_controls', 'Ref')
+    for sp in ['default', 'rover', 'sitter'] :
+        deb = DEB(species=sp)
+        print(sp, deb.fr_feed, deb.K, deb.base_f, deb.kap_X, get_best_EEB(deb, sample))
     raise
 
     dt_bite=1/(24*60*60)*2

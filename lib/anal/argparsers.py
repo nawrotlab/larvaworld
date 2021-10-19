@@ -370,6 +370,22 @@ def init_parser(description='', parsers=[]) :
         parser=dic[n](parser)
     return parser
 
+def update_exp_conf(exp,d,N) :
+    from lib.conf.stored.conf import expandConf, next_idx
+    exp_conf = expandConf(exp, 'Exp')
+    sim=d['sim_params']
+    if sim['duration'] is None:
+        sim['duration'] = exp_conf['sim_params']['duration']
+    if sim['sim_ID'] is None:
+        sim['sim_ID'] = f'{exp}_{next_idx(exp)}'
+    if sim['path'] is None:
+        sim['path'] = f'single_runs/{exp}'
+    exp_conf['sim_params'] = d['sim_params']
+    if N is not None:
+        for gID, gConf in exp_conf['larva_groups'].items():
+            gConf['distribution']['N'] = N
+    return exp_conf
+
 # if __name__ == '__main__':
 #     kk=Parser('sim_params')
 #     print(kk)

@@ -9,14 +9,11 @@ import webcolors
 from shapely.geometry import Polygon
 from unflatten import unflatten
 
-
-
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from shapely.affinity import affine_transform
 from Box2D import b2World, b2ChainShape, b2EdgeShape
 from mesa.space import ContinuousSpace
-
 
 import lib.aux.dictsNlists
 import lib.aux.sim_aux
@@ -44,15 +41,9 @@ class LarvaWorld:
         cls.random = random.Random(cls._seed)
         return object.__new__(cls)
 
-    def __init__(self, env_params, vis_kwargs=None,
-                 id='unnamed', dt=0.1, Nsteps=None, save_to='.',
-                 background_motion=None, Box2D=False,
-                 use_background=False,
-                 traj_color=None, allow_clicks=True,
-                 experiment=None,
-                 progress_bar=None,
-                 larva_groups={},
-                 ):
+    def __init__(self, env_params, vis_kwargs=None, id='unnamed', dt=0.1, Nsteps=None, save_to='.',
+                 background_motion=None, Box2D=False, use_background=False, traj_color=None, allow_clicks=True,
+                 experiment=None, progress_bar=None, larva_groups={}):
         self.progress_bar = progress_bar
         self.Box2D = Box2D
         if vis_kwargs is None:
@@ -113,10 +104,9 @@ class LarvaWorld:
         self.create_schedules()
         self.create_arena(**self.env_pars['arena'])
         self.space = self.create_space()
-        if 'border_list' in list(self.env_pars.keys()):
-            for id, pars in self.env_pars['border_list'].items():
-                b = Border(model=self, unique_id=id, **pars)
-                self.add_border(b)
+        for id, pars in self.env_pars['border_list'].items():
+            b = Border(model=self, unique_id=id, **pars)
+            self.add_border(b)
 
         self.sim_clock = ren.SimulationClock(self.dt, color=self.scale_clock_color)
         self.sim_scale = ren.SimulationScale(self.arena_dims[0], color=self.scale_clock_color)
@@ -124,7 +114,7 @@ class LarvaWorld:
 
         self.screen_texts = self.create_screen_texts(color=self.scale_clock_color)
         self.input_box = ren.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
-                                      center=True, w=120*4, h=32*4, font=pygame.font.SysFont("comicsansms", 32*2))
+                                      center=True, w=120 * 4, h=32 * 4, font=pygame.font.SysFont("comicsansms", 32 * 2))
         self.end_condition_met = False
 
     def toggle(self, name, value=None, show=False, minus=False, plus=False, disp=None):
