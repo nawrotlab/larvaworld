@@ -155,13 +155,26 @@ class Plot :
         self.fig.subplots_adjust(**kws)
 
     @ property
-    def trange(self):
+    def Nticks(self):
         Nticks_list = [len(d.step_data.index.unique('Step')) for d in self.datasets]
-        self.Nticks=np.max(unique_list(Nticks_list))
-        fr_list=[d.fr for d in self.datasets]
-        self.fr = np.max(unique_list(fr_list))
-        self.tlim=t0, t1 = 0, int(self.Nticks / self.fr / 60)
-        x = np.linspace(t0, t1, self.Nticks)
+        return np.max(unique_list(Nticks_list))
+
+    @property
+    def fr(self):
+        fr_list = [d.fr for d in self.datasets]
+        return np.max(unique_list(fr_list))
+
+    @property
+    def tlim(self):
+        return (0, int(self.Nticks / self.fr))
+
+    def trange(self, unit='min'):
+        if unit=='min':
+            T=60
+        elif unit=='sec':
+            T=1
+        t0, t1 = self.tlim
+        x = np.linspace(t0/T, t1/T, self.Nticks)
         return x
 
 

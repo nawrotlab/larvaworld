@@ -614,7 +614,7 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
         if not scaled and unit == 'cm':
             if dst_SI.unit == siunits.m:
                 df *= 100
-        plot_quantiles(df=df, x=P.trange, axis=P.axs[0], color_shading=c, label=lab)
+        plot_quantiles(df=df, x=P.trange(), axis=P.axs[0], color_shading=c, label=lab)
 
     P.conf_ax(xlab=xlabel, ylab=ylab, xlim=P.tlim, ylim=[0, None], xMaxN=5, leg_loc='upper left')
     P.adjust((0.2, 0.95), (0.15, 0.95), 0.05, 0.005)
@@ -627,7 +627,7 @@ def plot_gut(**kwargs):
 
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
         df = d.step_data['gut_occupancy'] * 100
-        plot_quantiles(df=df, x=P.trange, axis=P.axs[0], color_shading=c, label=lab)
+        plot_quantiles(df=df, x=P.trange(), axis=P.axs[0], color_shading=c, label=lab)
     P.conf_ax(xlab='time, $min$', ylab='% gut occupied',
               xlim=P.tlim, ylim=[0, 100], xMaxN=5, yMaxN=5, leg_loc='upper left')
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.05, 0.005)
@@ -656,7 +656,7 @@ def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
         dst_u = dst_df.groupby(level='Step').quantile(q=0.75)
         dst_b = dst_df.groupby(level='Step').quantile(q=0.25)
         if filt_amount:
-            sos = signal.butter(N=1, Wn=0.1, btype='lowpass', analog=False, fs=Nticks / (t1 - t0), output='sos')
+            sos = signal.butter(N=1, Wn=0.1, btype='lowpass', analog=False, fs=P.Nticks / P.tlim[1], output='sos')
             dst_m = dst_m.diff()
             dst_m.iloc[0] = 0
             dst_m = signal.sosfiltfilt(sos, dst_m)
@@ -666,7 +666,7 @@ def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
             dst_b = dst_b.diff()
             dst_b.iloc[0] = 0
             dst_b = signal.sosfiltfilt(sos, dst_b)
-        plot_mean_and_range(x=P.trange, mean=dst_m, lb=dst_b, ub=dst_u, axis=P.axs[0], color_shading=c, label=lab)
+        plot_mean_and_range(x=P.trange(), mean=dst_m, lb=dst_b, ub=dst_u, axis=P.axs[0], color_shading=c, label=lab)
     P.conf_ax(xlab='time, $min$', ylab=ylab, xlim=P.tlim, xMaxN=5, leg_loc='upper left')
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
