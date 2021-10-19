@@ -420,26 +420,25 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None, **
     except:
         pass
     try:
-        figs['stride_Dorient'] = plot_stride_Dorient(**cc, simVSexp=simVSexp, absolute=True, **kwargs)
+        figs['stride_Dorient'] = plot_stride_Dorient(**cc, absolute=True, **kwargs)
     except:
         pass
     try:
-        figs['ang_pars'] = plot_ang_pars(**cc, simVSexp=simVSexp, absolute=True, include_turns=False, Npars=3,
-                                         **kwargs)
+        figs['ang_pars'] = plot_ang_pars(**cc, absolute=True, include_turns=False, Npars=3,**kwargs)
     except:
         pass
     try:
         figs['calibration'] = calibration_plot(save_to=save_to, **kwargs)
     except:
         pass
-    figs['crawl_pars'] = plot_crawl_pars(**cc, simVSexp=simVSexp, **kwargs)
+    figs['crawl_pars'] = plot_crawl_pars(**cc, **kwargs)
     figs['turns'] = plot_turns(**cc, **kwargs)
     figs['turn_duration'] = plot_turn_amp(**cc, **kwargs)
     combine_pdfs(file_dir=save_to)
     return figs
 
 
-def targeted_analysis(datasets, labels=None, simVSexp=False, save_to=None, pref='', show=False, **kwargs):
+def targeted_analysis(datasets, labels=None, save_to=None, pref='', show=False, **kwargs):
     # with fun.suppress_stdout():
     if save_to is None:
         save_to = datasets[0].dir_dict['comp_plot']
