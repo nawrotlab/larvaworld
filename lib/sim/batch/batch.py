@@ -88,22 +88,12 @@ def get_batch_env(batch_id, batch_type, dir_path, parent_dir_path, exp, params, 
             return env
         except:
             pass
-        # try:
-        #     env_kws['overwrite_file']=True
-        #     env = Environment(trajectory=traj_name, filename=filename, **env_kws)
-        #     print('Created novel environment overwriting existing')
-        #     traj = prepare_traj(env.traj, exp, params, batch_id, dir_path)
-        #     traj = config_traj(traj, optimization)
-        #     traj.f_explore(space)
-        #     return env
-        # except:
     raise ValueError('Loading, resuming or creating a new environment failed')
 
 
 def _batch_run(batch_type='unnamed', batch_id='template', space=None, exp=None, params=None, post_kws={}, exp_kws={},
                runfunc=single_run, procfunc=None, postfunc=None, finfunc=None, optimization=None,ncores=8,proc_kws={},
                multiproc=True, resumable=False, overwrite_file=False, save_hdf5=False, batch_methods=None):
-    # print(exp_kws)
     s0 = time.time()
     parent_dir_path = f'{paths.path("BATCH")}/{batch_type}'
     dir_path = f'{parent_dir_path}/{batch_id}'
@@ -152,10 +142,6 @@ def _batch_run(batch_type='unnamed', batch_id='template', space=None, exp=None, 
         print('Batch run complete')
         return env
     env =test_batch()
-    # except :
-    #     env_kws['overwrite_file'] = True
-    #     env =test_batch()
-    #     print('Overwritten existing file')
 
     if finfunc is not None:
         res = finfunc(env.traj)
@@ -164,8 +150,8 @@ def _batch_run(batch_type='unnamed', batch_id='template', space=None, exp=None, 
     return res
 
 
-if __name__ == "__main__":
-    batch_type = 'odor-preference'
+# if __name__ == "__main__":
+#     batch_type = 'odor-preference'
 
     # conf = expandConf(batch_type, 'Batch')
     #

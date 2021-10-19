@@ -11,7 +11,7 @@ from lib.aux.dictsNlists import reconstruct_dict
 import lib.aux.sim_aux
 from lib.anal.plotting import plot_2d, plot_3pars, plot_endpoint_scatter, plot_endpoint_params, plot_debs, \
     plot_heatmap_PI
-from lib.sim.batch.aux import grid_search_dict, load_traj
+from lib.sim.batch.aux import grid_search_dict, load_traj, retrieve_exp_conf
 from lib.sim.single.single_run import SingleRun
 from lib.stor.larva_dataset import LarvaDataset
 
@@ -275,27 +275,17 @@ def post_processing(traj, result_tuple):
 
 def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
     with suppress_stdout(True):
-        try :
-            trials=reconstruct_dict(traj.f_get('trials'))
-        except :
-            trials={}
-        ds = SingleRun(
-            env_params=reconstruct_dict(traj.f_get('env_params')),
-            sim_params=reconstruct_dict(traj.f_get('sim_params'),
-                                        sim_ID=f'run_{traj.v_idx}', path=traj.config.dataset_path,
-                                        save_data=False),
-            trials=trials,
-            larva_groups=reconstruct_dict(traj.f_get('larva_groups')),
-            **exp_kws).run()
+        ds = SingleRun(**retrieve_exp_conf(traj), **exp_kws).run()
 
         if procfunc is None:
             results = np.nan
         else:
-            if len(ds)==1:
-                d=ds[0]
+            if len(ds) == 1:
+                d = ds[0]
                 d, results = procfunc(traj, d, **proc_kws)
-            else :
-                raise ValueError (f'Splitting resulting dataset yielded {len(ds)} datasets but the batch-run is configured for a single one.')
+            else:
+                raise ValueError(
+                    f'Splitting resulting dataset yielded {len(ds)} datasets but the batch-run is configured for a single one.')
 
     if save_hdf5:
         s, e = [ObjectTable(data=k, index=k.index, columns=k.columns.values, copy=True) for k in

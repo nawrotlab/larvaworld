@@ -6,7 +6,7 @@ import lib.aux.dictsNlists
 from lib.conf.base import paths
 
 
-def load_default_configuration(traj, exp):
+def load_exp_conf(traj, exp):
     for k0 in ['env_params', 'sim_params', 'trials', 'enrichment', 'larva_groups']:
         dic = lib.aux.dictsNlists.flatten_dict(exp[k0], parent_key=k0, sep='.')
         for k, v in dic.items():
@@ -14,6 +14,18 @@ def load_default_configuration(traj, exp):
                 v = np.array(v)
             traj.f_apar(k, v)
     return traj
+
+def retrieve_exp_conf(traj):
+    from lib.aux.dictsNlists import reconstruct_dict
+    d={}
+    for k0 in ['env_params', 'sim_params', 'trials', 'larva_groups']:
+        kws={'sim_ID':f'run_{traj.v_idx}', 'path':traj.config.dataset_path,'store_data':False} if k0=='sim_params' else {}
+        try :
+            c=traj.f_get(k0)
+            d[k0]=reconstruct_dict(c, **kws)
+        except:
+            d[k0]={}
+    return d
 
 
 def config_traj(traj, optimization, batch_methods):
@@ -29,7 +41,7 @@ def config_traj(traj, optimization, batch_methods):
 
 
 def prepare_traj(traj, exp, params, batch_id, dir_path):
-    traj = load_default_configuration(traj, exp)
+    traj = load_exp_conf(traj, exp)
     if params is not None:
         for p in params:
             traj.f_apar(p, 0.0)

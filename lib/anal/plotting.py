@@ -1790,8 +1790,6 @@ def plot_3d(df, labels, lims=None, save_to=None, pref=None, save_as=None, show=F
             line=False, ax=None, fig=None, dfID=None, color=None):
     if color is None :
         color='black'
-    # import statsmodels.api as sm
-    # from matplotlib import ticker
     l0, l1, l2 = labels
     X = df[[l0, l1]]
     y = df[l2]
