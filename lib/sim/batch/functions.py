@@ -275,13 +275,16 @@ def post_processing(traj, result_tuple):
 
 def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
     with suppress_stdout(True):
+        try :
+            trials=reconstruct_dict(traj.f_get('trials'))
+        except :
+            trials={}
         ds = SingleRun(
-        # ds = run_sim(
             env_params=reconstruct_dict(traj.f_get('env_params')),
             sim_params=reconstruct_dict(traj.f_get('sim_params'),
                                         sim_ID=f'run_{traj.v_idx}', path=traj.config.dataset_path,
                                         save_data=False),
-            trials=reconstruct_dict(traj.f_get('trials')),
+            trials=trials,
             larva_groups=reconstruct_dict(traj.f_get('larva_groups')),
             **exp_kws).run()
 

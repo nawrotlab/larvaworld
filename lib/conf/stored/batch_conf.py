@@ -6,7 +6,7 @@ def batch(exp, en=None, ss=None, o=None, o_kws={},bm={}, as_entry=True, **kwargs
         enrichment = null_dict('enrichment')
     elif en == 'PI':
         enrichment = enrichment_dict(types=['PI'])
-    elif 'source' in en.keys():
+    elif en == 'source':
         enrichment = enrichment_dict(types=['angular', 'spatial', 'source'])
     else:
         enrichment=en
@@ -32,12 +32,12 @@ def batch(exp, en=None, ss=None, o=None, o_kws={},bm={}, as_entry=True, **kwargs
 batch_dict = {
     **batch('chemotaxis',
             ss={'Odor.mean': [(300.0, 1300.0), 3],'decay_coef': [(0.1, 0.5), 3]},
-            o='final_dst_to_source',
-            en={'source': (0.04, 0.0)}),
+            o='final_dst_to_Source',
+            en='source'),
     **batch('chemorbit',
             ss={'Odor.mean': [(300.0, 1300.0), 3],'decay_coef': [(0.1, 0.5), 3]},
-            o='final_dst_to_center',
-            en={'source': (0.0, 0.0)}),
+            o='final_dst_to_Source',
+            en='source'),
     **batch('PItest_off',
             ss={'odor_dict.CS.mean': [(-100.0, 100.0), 21],'odor_dict.UCS.mean': [(-100.0, 100.0), 21]},
             bm = 'PI',

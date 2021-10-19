@@ -1769,7 +1769,7 @@ def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=N
 def plot_3pars(df, labels, save_to, z0=None, pref=None, show=False):
     fig_dict = {}
     pr = f'{labels[0]}VS{labels[1]}'
-    fig1 = plot_3d(df, labels, save_to, pref=pref, save_as=None, show=show)
+    fig1 = plot_3d(df=df, labels=labels, save_to=save_to, pref=pref, save_as=None, show=show)
     fig_dict[f'{pr}_3d'] = fig1
     try:
         x, y = np.unique(df[labels[0]].values), np.unique(df[labels[1]].values)
@@ -1787,7 +1787,7 @@ def plot_3pars(df, labels, save_to, z0=None, pref=None, show=False):
 
 
 def plot_3d(df, labels, lims=None, save_to=None, pref=None, save_as=None, show=False, surface=True,
-            line=True, ax=None, fig=None, dfID=None, color=None):
+            line=False, ax=None, fig=None, dfID=None, color=None):
     if color is None :
         color='black'
     # import statsmodels.api as sm
