@@ -45,7 +45,7 @@ class Plot :
 
 
     def conf_ax(self, idx=0, xlab=None, ylab=None, xlim=None, ylim=None, xticks=None, xticklabels=None,
-                xMaxN=None, yMaxN=None,xMath=None,tickMath=None, leg_loc=None,leg_handles=None, title=None):
+                xMaxN=None, yMaxN=None,xMath=None,tickMath=None,ytickMath=None, leg_loc=None,leg_handles=None, title=None):
         ax=self.axs[idx]
         if ylab is not None:
             ax.set_ylabel(ylab)
@@ -61,7 +61,9 @@ class Plot :
         if xticklabels is not None:
             ax.set_xticklabels(labels=xticklabels)
         if tickMath is not None:
-            ax.ticklabel_format(useMathText=True, scilimits=(0, 0))
+            ax.ticklabel_format(useMathText=True, scilimits=tickMath)
+        if ytickMath is not None:
+            ax.ticklabel_format(axis='y',useMathText=True, scilimits=ytickMath, useOffset=True)
         if xMaxN is not None:
             ax.xaxis.set_major_locator(ticker.MaxNLocator(xMaxN))
         if yMaxN is not None:

@@ -913,7 +913,9 @@ if __name__ == '__main__':
     # fo = getPar(['fo'], to_return=['d'])[0][0]
     # print(o,d)
     # d=ParDict(mode='build').dict
-    print(getPar(['D_olf'], to_return=['d', 's', 's', 'l', 'lim']))
+    (pars,), (us,)=getPar(['fo'], to_return=['d', 'l'])
+    print(pars)
+    print(us)
     # # d = ParDict(mode='reconstruct').dict
     # # print(d.keys())
     raise
