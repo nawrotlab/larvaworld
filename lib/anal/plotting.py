@@ -48,14 +48,7 @@ def plot_turns(absolute=True, subfolder='turn', **kwargs):
     P.build()
     p, xlab = getPar('tur_fou', to_return=['d', 'l'])
     bins, xlim=P.angrange(150,absolute,30)
-
-    for d, c, l in zip(P.datasets, P.colors, P.labels):
-        x = d.get_par(p).dropna().values
-        if absolute:
-            x = np.abs(x)
-        P.axs[0].hist(x, bins=bins, weights=np.ones_like(x) / float(len(x)), label=l, color=c, alpha=1.0,
-                      histtype='step')
-
+    P.plot_par(p, bins, i=0, absolute=absolute, alpha=1.0,histtype='step')
     P.conf_ax(xlab=xlab, ylab='probability, $P$', xlim=xlim, yMaxN=4, leg_loc='upper right')
     P.adjust((0.25,0.95), (0.15,0.92), 0.05, 0.005)
     return P.get()
@@ -74,9 +67,7 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
         name = f'turn_Dorient_to_{ang0}deg'
         p = nam.unwrap(nam.orient('front'))
     P = Plot(name=name, subfolder=subfolder, **kwargs)
-    P.build(P.Ndatasets, Nplots, figsize=(5 * Nplots, 5 * P.Ndatasets),
-                            subplot_kw=dict(projection='polar'),
-                            sharey=True)
+    P.build(P.Ndatasets, Nplots, figsize=(5 * Nplots, 5 * P.Ndatasets),subplot_kw=dict(projection='polar'),sharey=True)
 
     def circNarrow(ax, data, alpha, label, color):
         circular_hist(ax, data, bins=16, alpha=alpha, label=label, color=color, offset=np.pi / 2)
@@ -141,6 +132,8 @@ def plot_ang_pars(absolute=True, include_rear=False, subfolder='turn', Npars=3, 
         shorts = ['b', 'bv', 'fov']
         rs = [100, 200, 200]
         ylim = 0.05
+    else :
+        raise ValueError('3 or 5 pars allowed')
 
     if include_rear:
         shorts += ['rov', 'roa']
@@ -149,27 +142,14 @@ def plot_ang_pars(absolute=True, include_rear=False, subfolder='turn', Npars=3, 
     pars, sim_ls, xlabs = getPar(shorts, to_return=['d', 's', 'l'])
     p_ls = [[sl] * P.Ndatasets for sl in sim_ls]
     P.init_fits(pars)
-    P.build(1, len(pars), figsize=(len(pars) * 5, 5), sharey=True)
+    P.build(1, len(shorts), figsize=(len(shorts) * 5, 5), sharey=True)
 
     for i, (p, r, p_lab, xlab) in enumerate(zip(pars, rs, p_ls, xlabs)):
-        x, xlim=P.angrange(r,absolute,200)
-        vs = []
-        for j, d in enumerate(P.datasets):
-            v = d.get_par(p).dropna().values
-            if absolute:
-                v = np.abs(v)
-            vs.append(v)
-
-            P.axs[i].hist(v, color=P.colors[j], bins=x, label=p_lab[j], weights=np.ones_like(v) / float(len(v)),
-                          alpha=0.8, histtype='step',linewidth=2)
-            # P.axs[i].set_xlim(xmin=0)
-
-        P.comp_pvalues(vs, p)
-        P.plot_half_circles(p,i)
-
-        P.conf_ax(i, xlab=xlab, yMaxN=3)
+        bins, xlim=P.angrange(r,absolute,200)
+        P.plot_par(p, bins, i=i, absolute=absolute, labels=p_lab, alpha=0.8, histtype='step',linewidth=2,
+                       pvalues=True, half_circles=True)
+        P.conf_ax(i, ylab='probability' if i==0 else None, xlab=xlab,ylim=[0, ylim], yMaxN=3)
     dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left')
-    P.conf_ax(0, ylab='probability', ylim=[0, ylim])
     P.adjust((0.3 / len(pars), 0.99), (0.15, 0.95), 0.01)
     return P.get()
 
@@ -181,16 +161,8 @@ def plot_crawl_pars(subfolder='endpoint', par_legend=False, **kwargs):
     P.init_fits(pars)
     P.build(1, len(pars), figsize=(len(pars) * 5, 5), sharey=True)
     for i, (p, p_lab, xlab, xlim) in enumerate(zip(pars, p_ls, xlabs, xlims)):
-        vs = [d.get_par(p).dropna().values for d in P.datasets]
-        r1, r2 = np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs])
-        x = np.linspace(r1, r2, 40)
-        for j in range(P.Ndatasets):
-            sns.histplot(vs[j], color=P.colors[j], bins=x, kde=True, ax=P.axs[i], label=p_lab[j],
-                         stat="probability", element="step")
-
-        P.comp_pvalues(vs, p)
-        P.plot_half_circles(p, i)
-
+        P.plot_par(p, bins='broad',nbins=40,labels=p_lab, i=i, kde=True,stat="probability", element="step",
+                        type='sns.hist', pvalues=True, half_circles=True)
         P.conf_ax(i, xlab=xlab, xlim=xlim, yMaxN=4, leg_loc='upper right' if par_legend else None)
     dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left', fontsize=15)
     P.axs[0].set_ylabel('probability')
@@ -514,15 +486,9 @@ def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
     p_labels = [[sl] * P.Ndatasets for sl in sim_ls]
     P.build(1, len(pars))
     for i, (p, r, p_lab, xlab) in enumerate(zip(pars, ranges, p_labels, xlabels)):
-        x, xlim=P.angrange(r,absolute,200)
-        for j, d in enumerate(P.datasets):
-            v = d.get_par(p).dropna().values
-            if absolute:
-                v = np.abs(v)
-            P.axs[i].hist(v, color=P.colors[j], bins=x, label=p_lab[j],
-                          weights=np.ones_like(v) / len(v), alpha=0.5)
-        P.conf_ax(i, xlab=xlab, yMaxN=4, leg_loc='upper left')
-    P.axs[0].set_ylabel('probability')
+        bins, xlim=P.angrange(r,absolute,200)
+        P.plot_par(p, bins, i=i, absolute=absolute,labels=p_lab, alpha=0.5)
+        P.conf_ax(i, ylab='probability' if i==0 else None,xlab=xlab, yMaxN=4, leg_loc='upper left')
     P.adjust((0.12, 0.99), (0.2, 0.95), 0.01)
     return P.get()
 
@@ -1049,7 +1015,7 @@ def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwa
     shorts = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
     ranges = [250, 250, 50, 2000, 2000, 500] if include_rear else [200, 200, 2000, 2000]
 
-    pars, sim_ls, xlabels, xlims, disps = getPar(shorts, to_return=['d', 's', 'l', 'lim', 'd'])
+    pars, sim_ls, xlabels, disps = getPar(shorts, to_return=['d', 's', 'l', 'd'])
 
     chunks = ['stride', 'pause']
     chunk_cols = ['green', 'purple']
@@ -1063,23 +1029,21 @@ def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwa
     P.build(2, Ncols, figsize=(Ncols * 7, 14), sharey=True)
 
     for i, (p, r, p_lab, xlab, disp) in enumerate(zip(pars, ranges, p_labs, xlabels, disps)):
-        x, xlim=P.angrange(r,absolute,200)
+        bins, xlim=P.angrange(r,absolute,200)
         ax=P.axs[i]
-        for j, (d, l) in enumerate(zip(P.datasets, P.labels)):
+        for d, l in zip(P.datasets, P.labels):
             vs = []
-            s, e = d.step_data, d.endpoint_data
             for c, col in zip(chunks, chunk_cols):
-                v = s.dropna(subset=[nam.id(c)])[p].values
+                v = d.step_data.dropna(subset=[nam.id(c)])[p].values
                 if absolute:
                     v = np.abs(v)
                 vs.append(v)
-                ax.hist(v, color=col, bins=x, label=c, weights=np.ones_like(v) / float(len(v)),
+                ax.hist(v, color=col, bins=bins, label=c, weights=np.ones_like(v) / float(len(v)),
                         alpha=1.0, histtype='step', linewidth=2)
-                ax.set_xlim(xlim)
             P.comp_pvalue(l, vs[0], vs[1], p)
             P.plot_half_circle(p, ax, col1=chunk_cols[0], col2=chunk_cols[1], v=P.fit_df[p].loc[l], ind=l)
 
-        P.conf_ax(i, xlab=xlab, yMaxN=3)
+        P.conf_ax(i, xlab=xlab,xlim=xlim, yMaxN=3)
     P.conf_ax(0, ylab='probability', ylim=[0, 0.04], leg_loc='upper left')
     P.conf_ax(Ncols, ylab='probability', leg_loc='upper left')
     P.adjust((0.25 / Ncols, 0.95), (0.1, 0.9), 0.1, 0.3)
@@ -1195,9 +1159,8 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
                 ax.plot(x, poly_y, color=P.colors[j], label=lab, linewidth=lw)
             except:
                 pass
-        if i % Ncols == 0:
-            ax.set_ylabel('probability')
-        P.conf_ax(i, xlab=xlabel, xlim=xlim, ylim=ylim, xMaxN=4, yMaxN=4,xMath=True, title=disp)
+        P.conf_ax(i, ylab='probability' if i % Ncols==0 else None, xlab=xlabel, xlim=xlim, ylim=ylim,
+                  xMaxN=4, yMaxN=4,xMath=True, title=disp)
         P.plot_half_circles(p, i)
 
     P.adjust((0.1, 0.97), (0.17 / Nrows, 1 - (0.1 / Nrows)), 0.1, 0.2 * Nrows)

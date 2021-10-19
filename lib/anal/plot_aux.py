@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 import numpy as np
+import seaborn as sns
 from matplotlib import pyplot as plt, patches, transforms, ticker
 from matplotlib.pyplot import bar
 from scipy.stats import mannwhitneyu, ttest_ind
@@ -186,6 +187,28 @@ class Plot :
         x = np.linspace(r0, r1, nbins)
         return x, lim
 
+    def plot_par(self, par, bins, i=0,labels=None, absolute=False,nbins=None, type='plt.hist',
+                 pvalues=False, half_circles=False, **kwargs):
+        if labels is None :
+            labels=self.labels
+        vs=[]
+        for d in self.datasets:
+            v = d.get_par(par).dropna().values
+            if absolute:
+                v = np.abs(v)
+            vs.append(v)
+        if bins=='broad' and nbins is not None:
+            bins = np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
+        for v, c, l in zip(vs, self.colors, labels):
+            if type=='sns.hist' :
+                sns.histplot(v, color=c, bins=bins, ax=self.axs[i], label=l,**kwargs)
+            elif type=='plt.hist':
+                self.axs[i].hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), label=l, color=c, **kwargs)
+        if pvalues :
+            self.comp_pvalues(vs, par)
+        if half_circles :
+            self.plot_half_circles(par, i)
+        return vs
 
 # class TurnPlot(Plot) :
 #     def __init__(self, absolute=True,**kwargs):

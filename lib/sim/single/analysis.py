@@ -109,6 +109,8 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
         figs.update(figs0)
 
     if 'chemo' in exp_type:
+        figs['turns'] = plot_turns(**cc)
+        figs['ang_pars'] = plot_ang_pars(Npars=5,**cc)
         figs.update(**source_analysis(d.config['sources'], **cc))
         for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
             figs[p] = timeplot([p], **cc)

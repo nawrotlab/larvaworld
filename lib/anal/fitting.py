@@ -136,7 +136,7 @@ def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
                 temp[i, j] = MSE(c2, lp_pdf)
 
     if all(np.isnan(temp.flatten())):
-        return np.nan
+        return np.nan, np.nan
     else:
         ii, jj = np.unravel_index(np.nanargmin(temp), temp.shape)
         return xmids[ii], overlaps[jj]
