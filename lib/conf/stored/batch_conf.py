@@ -10,20 +10,24 @@ def batch(exp, en=None, ss=None, o=None, o_kws={},bm={}, as_entry=True, **kwargs
         enrichment = enrichment_dict(types=['angular', 'spatial', 'source'])
     else:
         enrichment=en
-    exp_kws = {'enrichment': enrichment, 'experiment' : exp}
-    opt = null_dict("optimization", fit_par=o, **o_kws) if o is not None else None
+
     if bm is None:
-        batch_methods = null_dict('batch_methods')
+        bm_kws = {}
     elif bm == 'PI':
-        batch_methods =null_dict('batch_methods', run= 'odor_preference',post= 'null', final='odor_preference')
+        bm_kws = {'run': 'odor_preference','post': 'null', 'final':'odor_preference'}
     elif bm == 'DEB':
-        batch_methods =null_dict('batch_methods', run= 'deb',post= 'null', final='deb')
+        bm_kws = {'run': 'deb','post': 'null', 'final':'deb'}
     else :
-        batch_methods = null_dict('batch_methods', **bm)
+        bm_kws = bm
     if ss is not None:
         ss = {p: null_dict('space_search_par', range=r, Ngrid=N) for p, (r, N) in ss.items()}
-    conf = null_dict('batch_conf', exp=exp, exp_kws=exp_kws, optimization=opt, space_search=ss,
-                     batch_methods=batch_methods, **kwargs)
+    conf = null_dict('batch_conf',
+                     exp=exp,
+                     exp_kws={'enrichment': enrichment, 'experiment' : exp},
+                     optimization=null_dict("optimization", fit_par=o, **o_kws) if o is not None else None,
+                     space_search=ss,
+                     batch_methods=null_dict('batch_methods', **bm_kws),
+                     **kwargs)
     if as_entry :
         return {exp: conf}
     else :
@@ -59,9 +63,9 @@ batch_dict = {
     **batch('growth',
             ss={'EEB': [(0.5, 0.8), 8],'hunger_gain': [(0.0, 0.0), 1]},
             o='deb_f_deviation', o_kws={'max_Nsims': 20, 'operations': {'mean': True, 'abs': True}}),
-    **batch('RvsS',
-            ss={'substrate_quality': [(0.5, 0.8), 2], 'hours_as_larva': [(0, 100), 2]},
-            bm = 'DEB'),
+    # **batch('RvsS',
+    #         ss={'substrate_quality': [(0.5, 0.8), 2], 'hours_as_larva': [(0, 100), 2]},
+    #         bm = 'DEB'),
     **batch('imitation',
             ss={'activation_noise': [(0.0, 0.8), 3], 'base_activation': [(15.0, 25.0), 3]},
             o='sample_fit', o_kws={'threshold': 1.0, 'max_Nsims': 20, 'operations': {'mean': False, 'abs': False}},

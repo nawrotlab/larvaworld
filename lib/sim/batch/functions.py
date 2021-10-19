@@ -1,7 +1,6 @@
 import itertools
 import os
 import random
-
 import numpy as np
 import pandas as pd
 from pypet import ObjectTable
@@ -108,23 +107,14 @@ def default_processing(traj, d=None):
     elif p in s.columns:
         vals = s[p].groupby('AgentID').mean()
     else:
-        # d.process(types='source',source=(0.04,0), show_output=True)
-        # s, e = d.step_data, d.endpoint_data
-        # vals = e[p].values
-        # # try :
-        # from lib.conf.par import post_get_par
-        # vals=post_get_par(d,p)
-        # except :
         raise ValueError('Could not retrieve fit parameter from dataset')
 
-    ops_mean = traj.config.operations.mean
-    ops_std = traj.config.operations.std
-    ops_abs = traj.config.operations.abs
-    if ops_abs:
+    ops = traj.config.operations
+    if ops.abs:
         vals = np.abs(vals)
-    if ops_mean:
+    if ops.mean:
         fit = np.mean(vals)
-    elif ops_std:
+    elif ops.std:
         fit = np.std(vals)
     traj.f_add_result(p, fit, comment='The fit')
     return d, fit
@@ -155,25 +145,21 @@ def null_post_processing(traj, result_tuple):
 
 
 def plot_results(traj, df):
-    fig_dict = {}
-    filepath = traj.config.dir_path
+    figs = {}
     p_ns = [traj.f_get(p).v_name for p in traj.f_get_explored_parameters()]
     r_ns = np.unique([traj.f_get(r).v_name for r in traj.f_get_results()])
-    kwargs = {'df': df,
-              'save_to': filepath,
-              'show': False}
+    kws = {'df': df,
+           'save_to': traj.config.dir_path,
+           'show': False}
     for r_n in r_ns:
         if len(p_ns) == 1:
-            fig = plot_2d(labels=p_ns + [r_n], pref=r_n, **kwargs)
-            fig_dict[f'{p_ns[0]}VS{r_n}'] = fig
+            figs[f'{p_ns[0]}VS{r_n}'] = plot_2d(labels=p_ns + [r_n], pref=r_n, **kws)
         elif len(p_ns) == 2:
-            dic = plot_3pars(labels=p_ns + [r_n], pref=r_n, **kwargs)
-            fig_dict.update(dic)
+            figs.update(plot_3pars(labels=p_ns + [r_n], pref=r_n, **kws))
         elif len(p_ns) > 2:
             for i, pair in enumerate(itertools.combinations(p_ns, 2)):
-                dic = plot_3pars(labels=list(pair) + [r_n], pref=f'{i}_{r_n}', **kwargs)
-                fig_dict.update(dic)
-    return fig_dict
+                figs.update(plot_3pars(labels=list(pair) + [r_n], pref=f'{i}_{r_n}', **kws))
+    return figs
 
 
 def null_final_processing(traj):
