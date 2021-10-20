@@ -92,7 +92,6 @@ class DEB:
         if self.hunger_as_EEB and self.intermitter is not None:
             base_hunger=self.intermitter.base_EEB
         self.base_hunger = base_hunger
-
         self.T = T
         self.L0 = 10 ** -10
         self.hours_as_larva = hours_as_larva
@@ -484,7 +483,7 @@ class DEB:
             assimilation_mode = self.assimilation_mode
         self.f = f
         self.age += self.dt
-
+        # print(self.dt*24*60*60, self.age)
         kap = self.kap
         E_G = self.E_G
 
@@ -792,6 +791,13 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hung
 
 
 if __name__ == '__main__':
+    deb=DEB(print_output=True)
+    print(deb.age, deb.stage)
+    # deb.run_larva_stage()
+    # print(deb.age, deb.stage)
+    deb.grow_larva(epochs={'0':{'start':0.0, 'stop':80.0, 'substrate':{'quality':1.0, 'type': 'standard'}}})
+    print(deb.age, deb.stage)
+    raise
     from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB,get_EEB_poly1d
     ffrs=np.round(np.arange(0.2, 2.2, 0.2), 1)
     sample = loadConf('None.200_controls', 'Ref')

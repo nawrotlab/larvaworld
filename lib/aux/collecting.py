@@ -140,8 +140,8 @@ output_dict = {
         'step': ['l', 'm', 'f_am', 'sf_am', 'EEB'],
         'endpoint': ['l', 'm', 'f_am', 'sf_am', 'on_food_tr']},
 
-    'gut': {'step': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M'],
-            'endpoint': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']},
+    'gut': {'step': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M', 'sf_abs_M', 'f_abs_M', 'sf_faeces_M', 'f_faeces_M','f_am'],
+            'endpoint': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M', 'sf_abs_M', 'f_abs_M', 'sf_faeces_M', 'f_faeces_M', 'f_am']},
     'pose': {'step': ['x', 'y', 'b', 'fo', 'ro'],
              'endpoint': ['l', 'cum_t', 'x']},
     'memory': {'step': [],

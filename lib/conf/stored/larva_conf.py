@@ -87,7 +87,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
     return d
 
 
-def RvsS_larva(EEB, Nsegs=2, mock=False, hunger_gain=2.0, DEB_dt=1.0, OD=None, **deb_kws):
+def RvsS_larva(EEB, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=1.0, OD=None, **deb_kws):
     if OD is None:
         ms = ['L', 'F']
     else:
@@ -194,12 +194,12 @@ larvae = {
                     phys={'ang_damping': 1.0, 'body_spring_k': 1.0}),
 }
 RvsS = {
-    'rover': RvsS_larva(EEB=0.37, absorption=0.5),
-    'navigator_rover': RvsS_larva(EEB=0.37, absorption=0.5, OD=OD1),
-    'mock_rover': RvsS_larva(EEB=0.37, absorption=0.5, Nsegs=1, mock=True),
-    'sitter': RvsS_larva(EEB=0.67, absorption=0.15),
-    'navigator_sitter': RvsS_larva(EEB=0.67, absorption=0.15, OD=OD1),
-    'mock_sitter': RvsS_larva(EEB=0.67, absorption=0.15, Nsegs=1, mock=True),
+    'rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover'),
+    'navigator_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', OD=OD1),
+    'mock_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', Nsegs=1, mock=True),
+    'sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter'),
+    'navigator_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', OD=OD1),
+    'mock_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', Nsegs=1, mock=True),
 }
 
 
@@ -225,3 +225,5 @@ mod_dict = {
     **RvsS,
     **gamers,
 }
+
+print(mod_dict['rover']['energetics'])

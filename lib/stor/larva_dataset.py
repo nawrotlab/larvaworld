@@ -75,7 +75,6 @@ class LarvaDataset:
                 self.load()
             except:
                 print('Data not found. Load them manually.')
-
     def set_data(self, step=None, end=None, food=None):
         if step is not None:
             self.step_data = step
@@ -719,9 +718,10 @@ class LarvaDataset:
                 gConf = c['larva_groups'][gID]
                 valid_ids = [id for id in self.agent_ids if str.startswith(id, gID)]
                 copy_tree(self.dir, f)
-                d = LarvaDataset(f, id=gID, env_params=c['env_params'], larva_groups={gID: gConf}, load_data=False)
+                d = LarvaDataset(f, fr=self.fr, id=gID, env_params=c['env_params'], larva_groups={gID: gConf}, load_data=False)
                 d.set_data(step=s.loc[(slice(None), valid_ids), :], end=e.loc[valid_ids])
                 d.config['parent_plot_dir'] = self.plot_dir
+                # print(d.dt)
                 if is_last:
                     d.save()
                 ds.append(d)

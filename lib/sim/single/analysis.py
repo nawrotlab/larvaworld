@@ -20,7 +20,7 @@ from lib.stor.larva_dataset import LarvaDataset
 import lib.aux.naming as nam
 
 
-def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
+def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=False):
     if ds is None:
         return
     if not type(ds) == list:
@@ -41,6 +41,8 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
         figs['turner input'] = timeplot(['A_tur'], show_first=True, **cc)
         figs['tactile activation'] = timeplot(['A_touch'], show_first=True, **cc)
 
+    if 'RvsS' in exp_type:
+        figs.update(**intake_analysis(**cc))
 
     if exp_type in ['growth', 'RvsS']:
         deb_model = deb_default(**d.config['life_history'])
@@ -50,7 +52,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
               'sim_only': True}
 
         for m in ['feeding', 'reserve_density', 'fs', 'assimilation', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
-                  'food_mass_2', 'hunger']:
+                  'food_mass_2', 'hunger', 'EEB']:
             for t in ['hours']:
                 save_as = f'{m}_in_{t}.pdf'
                 figs[f'FEED.{m} ({t})'] = plot_debs(save_as=save_as, mode=m, time_unit=t, **c, **c1, **cc)
@@ -100,8 +102,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
 
     if exp_type in ['food_at_bottom']:
         figs.update(**foraging_analysis(d.config['sources'], **cc))
-    if 'RvsS' in exp_type:
-        figs.update(**intake_analysis(**cc))
+
     if 'dispersion' in exp_type:
         samples = unique_list([d.config['sample'] for d in ds])
         targets = [LarvaDataset(loadConf(sd, 'Ref')['dir']) for sd in samples]
@@ -126,19 +127,19 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
 
 
 def intake_analysis(**kwargs):
-    kwargs0 = {'show_first': False, 'legend_loc': 'upper_left', **kwargs}
+    kwargs0 = {'show_first': False, 'legend_loc': 'upper left', **kwargs}
     figs = {}
-    figs['faeces ratio'] = timeplot(['f_out_r'], **kwargs0)
-    figs['faeces amount'] = timeplot(['f_out'], **kwargs0)
-    figs['food absorption efficiency'] = timeplot(['abs_r'], **kwargs0)
-    figs['food absorbed'] = timeplot(['f_ab'], **kwargs0)
+    figs['faeces ratio'] = timeplot(['sf_faeces_M'], **kwargs0)
+    figs['faeces amount'] = timeplot(['f_faeces_M'], **kwargs0)
+    figs['food absorption efficiency'] = timeplot(['sf_abs_M'], **kwargs0)
+    figs['food absorbed'] = timeplot(['f_abs_M'], **kwargs0)
     figs['food intake (timeplot)'] = timeplot(['f_am'], **kwargs0)
 
     figs['food intake'] = plot_food_amount(**kwargs)
     figs['food intake (filt)'] = plot_food_amount(filt_amount=True, **kwargs)
-    figs['gut occupancy'] = plot_gut(**kwargs)
+    # figs['gut occupancy'] = plot_gut(**kwargs)
     figs['pathlength'] = plot_pathlength(scaled=False, **kwargs)
-    figs['endpoint'] = plot_endpoint_params(mode='deb', **kwargs)
+    # figs['endpoint'] = plot_endpoint_params(mode='deb', **kwargs)
     try:
         figs['food intake (barplot)'] = barplot(par_shorts=['f_am'], **kwargs)
     except:

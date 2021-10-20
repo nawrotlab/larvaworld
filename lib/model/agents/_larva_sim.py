@@ -120,6 +120,7 @@ class LarvaSim(BodySim, Larva):
                     'hunger_as_EEB': energetic_pars['hunger_as_EEB'],
                     'V_bite': energetic_pars['V_bite'],
                     'absorption': energetic_pars['absorption'],
+                    'species': energetic_pars['species'],
                     # 'substrate': self.model.food_grid.substrate,
                     # 'substrate': life['substrate'],
                     # 'substrate_type': life['substrate_type'],

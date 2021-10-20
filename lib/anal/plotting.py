@@ -107,8 +107,8 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
                                       [0.3, 0.6]):
                     for kk, ss, BBB in zip([0, 1], [r'$L_{sided}$', r'$R_{sided}$'], BB):
                         circNarrow(P.axs[ii + k + 2 * kk], BBB, aa, f'{ss} {tt}', c)
-                        P.axs[ii + 1].legend(bbox_to_anchor=(-0.3, 0.1), loc='center', fontsize=12)
-                        P.axs[ii + 2 + 1].legend(bbox_to_anchor=(-0.3, 0.1), loc='center', fontsize=12)
+                        for iii in [ii + 1, ii + 2 + 1] :
+                            P.axs[iii].legend(bbox_to_anchor=(-0.3, 0.1), loc='center', fontsize=12)
             if i == P.Ndatasets - 1:
                 if Nplots == 2:
                     P.axs[ii + k].set_title(f'Bearing due to {side} turn.', y=-0.4)
@@ -164,9 +164,9 @@ def plot_crawl_pars(subfolder='endpoint', par_legend=False, **kwargs):
     for i, (p, p_lab, xlab, xlim) in enumerate(zip(pars, p_ls, xlabs, xlims)):
         P.plot_par(p, bins='broad', nbins=40, labels=p_lab, i=i, kde=True, stat="probability", element="step",
                    type='sns.hist', pvalues=True, half_circles=True)
-        P.conf_ax(i, xlab=xlab, xlim=xlim, yMaxN=4, leg_loc='upper right' if par_legend else None)
+        P.conf_ax(i, ylab='probability' if i==0 else None,xlab=xlab, xlim=xlim, yMaxN=4,
+                  leg_loc='upper right' if par_legend else None)
     dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left', fontsize=15)
-    P.axs[0].set_ylabel('probability')
     P.adjust((0.25 / len(pars), 0.99), (0.15, 0.95), 0.01)
     return P.get()
 
@@ -226,23 +226,23 @@ def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
     ax = P.axs[0]
 
     fits = {}
-    for i, (d, label, c) in enumerate(zip(P.datasets, P.labels, P.colors)):
+    for i, (d, l, c) in enumerate(zip(P.datasets, P.labels, P.colors)):
         b0 = d.get_par(nam.at('bend', nam.start('stride'))).dropna().values.flatten()[:500]
         b1 = d.get_par(nam.at('bend', nam.stop('stride'))).dropna().values.flatten()[:500]
         sign_b = np.sign(b0)
         b0 *= sign_b
         b1 *= sign_b
         db = b1 - b0
-        ax.scatter(x=b0, y=db, marker='o', s=2.0, alpha=0.6, color=c, label=label)
+        ax.scatter(x=b0, y=db, marker='o', s=2.0, alpha=0.6, color=c, label=l)
         m, k = np.polyfit(b0, db, 1)
         m = np.round(m, 2)
         k = np.round(k, 2)
-        fits[label] = [m, k]
+        fits[l] = [m, k]
         ax.plot(b0, m * b0 + k, linewidth=4, color=c)
         if show_text:
-            ax.text(0.3, 0.9 - i * 0.1, rf'${label} : \Delta\theta_{{b}}={m} \cdot \theta_{{b}}$', fontsize=12,
+            ax.text(0.3, 0.9 - i * 0.1, rf'${l} : \Delta\theta_{{b}}={m} \cdot \theta_{{b}}$', fontsize=12,
                     transform=ax.transAxes)
-            print(f'Bend correction during strides for {label} fitted as : db={m}*b + {k}')
+            print(f'Bend correction during strides for {l} fitted as : db={m}*b + {k}')
     P.conf_ax(xlab=r'$\theta_{bend}$ at stride start $(deg)$', ylab=r'$\Delta\theta_{bend}$ over stride $(deg)$',
               xlim=[0, 85], ylim=[-60, 60], yMaxN=5)
     P.adjust((0.25, 0.95), (0.2, 0.95), 0.01)
@@ -353,24 +353,24 @@ def barplot(par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None, 
         leg_ids = P.labels[:N]
         ind = np.hstack([np.linspace(0 + i / N, w + i / N, N) for i in range(Npairs)])
         new_ind = ind[::N] + (ind[N - 1] - ind[0]) / N
+        xticks, xticklabels=new_ind, coupled_labels
     else:
         ind = np.arange(0, w * Nds, w)
         colors = P.colors
         leg_ids = P.labels
+        xticks, xticklabels = ind, P.labels
 
     bar_kwargs = {'width': w, 'color': colors, 'linewidth': 2, 'zorder': 5, 'align': 'center', 'edgecolor': 'black'}
     err_kwargs = {'zorder': 20, 'fmt': 'none', 'linewidth': 4, 'ecolor': 'k', 'barsabove': True, 'capsize': 10}
-
     P.build(Npars, 1, figsize=(9, 6))
     for ii, sh in enumerate(par_shorts):
         ax = P.axs[ii]
-        (p,), (u,) = getPar([sh], to_return=['d', 'l'])
+        p, u = getPar(sh, to_return=['d', 'l'])
         vs = [d.endpoint_data[p] for d in P.datasets]
         means = [v.mean() for v in vs]
         stds = [v.std() for v in vs]
-
-        ax.p1 = plt.bar(ind, means, **bar_kwargs)
-        ax.errs = plt.errorbar(ind, means, yerr=stds, **err_kwargs)
+        ax.p1 = ax.bar(ind, means, **bar_kwargs)
+        ax.errs = ax.errorbar(ind, means, yerr=stds, **err_kwargs)
 
         if not coupled_labels:
             for i, j in itertools.combinations(np.arange(Nds).tolist(), 2):
@@ -383,15 +383,11 @@ def barplot(par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None, 
                 st, pv = ttest_ind(vs[i], vs[j], equal_var=False)
                 if pv <= 0.05:
                     ax.text(ind[i], means[i] + stds[i], '*', ha='center', fontsize=20)
+            dataset_legend(leg_ids, leg_cols, ax=ax, loc='upper left', handlelength=1, handleheight=1)
 
         h = 2 * (np.nanmax(means) + np.nanmax(stds))
         P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=u if ylabel is None else ylabel,
-                  ylim=[0, h], yMaxN=4, ytickMath=(-3, 3))
-        if coupled_labels is None:
-            ax.set_xticks(ind, P.labels, color='k')
-        else:
-            ax.set_xticks(new_ind, coupled_labels, color='k')
-            dataset_legend(leg_ids, leg_cols, ax=ax, loc='upper left', handlelength=1, handleheight=1)
+                  ylim=[0, None], yMaxN=4, ytickMath=(-3, 3), xticks=xticks, xticklabels=xticklabels)
     P.adjust((0.15, 0.95), (0.15, 0.95), H=0.05)
     return P.get()
 
@@ -408,10 +404,12 @@ def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, yla
             leg_cols = N_colors(N)
         leg_ids = P.labels[:N]
         ind = np.arange(Npairs)
+        xticks, xticklabels = ind, coupled_labels
     else:
         ind = np.arange(Nds)
         leg_ids = P.labels
         N = Nds
+        xticks, xticklabels = ind, P.labels
 
     # Pull the formatting out here
     plot_kws = {'linewidth': 2, 'zorder': 5}
@@ -420,13 +418,13 @@ def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, yla
     P.build(Npars, 1, figsize=(8, 7))
     for ii, sh in enumerate(par_shorts):
         ax = P.axs[ii]
-        (p,), (u,) = getPar([sh], to_return=['d', 'l'])
+        p, u = getPar(sh, to_return=['d', 'l'])
         vs = [d.endpoint_data[p] * scale for d in P.datasets]
         means = [v.mean() for v in vs]
         stds = [v.std() for v in vs]
         for n, marker in zip(range(N), markers):
-            ax.errs = plt.errorbar(ind, means[n::N], yerr=stds[n::N], **err_kws)
-            ax.p1 = plt.plot(ind, means[n::N], marker=marker, label=leg_ids[n],
+            ax.errs = ax.errorbar(ind, means[n::N], yerr=stds[n::N], **err_kws)
+            ax.p1 = ax.plot(ind, means[n::N], marker=marker, label=leg_ids[n],
                              markeredgecolor='black', markerfacecolor=leg_cols[n], markersize=8, **plot_kws)
 
         if coupled_labels is None:
@@ -439,16 +437,11 @@ def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, yla
                 i, j = k * N, k * N + 1
                 st, pv = ttest_ind(vs[i], vs[j], equal_var=False)
                 if pv <= 0.05:
-                    ax.text(ind[k], np.max([means[i], means[j]]) + np.max([stds[i], stds[j]]), '*', ha='center',
-                            fontsize=20)
+                    ax.text(ind[k], np.max([means[i], means[j]]) + np.max([stds[i], stds[j]]), '*', ha='center',fontsize=20)
 
         h = 2 * (np.nanmax(means) + np.nanmax(stds))
-        P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=u if ylabel is None else ylabel,
-                  ylim=[0, h], yMaxN=4, ytickMath=(-3, 3), leg_loc='upper right')
-        if coupled_labels is None:
-            ax.set_xticks(ind, P.labels, color='k')
-        else:
-            ax.set_xticks(ind, coupled_labels, color='k')
+        P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=u if ylabel is None else ylabel,ylim=[0, None],
+                  yMaxN=4, ytickMath=(-3, 3), leg_loc='upper right', xticks=xticks, xticklabels=xticklabels)
     P.adjust((0.15, 0.95), (0.15, 0.95), H=0.05)
     return P.get()
 
@@ -458,7 +451,7 @@ def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
     shorts = ['str_fo', 'str_ro']
     P.build(1, len(shorts))
     for i, sh in enumerate(shorts):
-        (p,), (sl,), (xlab,) = getPar([sh], to_return=['d', 's', 'l'])
+        p, sl, xlab = getPar(sh, to_return=['d', 's', 'l'])
         bins, xlim = P.angrange(80, absolute, 200)
         P.plot_par(p, bins, i=i, absolute=absolute, labels=[sl] * P.Ndatasets, alpha=0.5)
         P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=xlab, yMaxN=4, leg_loc='upper left')
@@ -480,9 +473,10 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
         shorts.append('bv')
     elif mode == 'spinelength':
         shorts.append('l')
+    Npars=len(shorts)
 
     pars, ylabs = getPar(shorts, to_return=['d', 'l'])
-    P.build(len(pars), 1, figsize=(10, len(pars) * 5), sharex=True)
+    P.build(Npars, 1, figsize=(10, Npars * 5), sharex=True)
 
     ylim = [0, 60] if mode in ['bend', 'orientation', 'orientation_x2'] else None
 
@@ -501,7 +495,7 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
 
     P.conf_ax(-1, xlab='$\phi_{stride}$', xlim=[0, Npoints], xticks=np.linspace(0, Npoints, 5),
               xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
-    P.adjust((0.12, 0.95), (0.2 / len(pars), 0.97), 0.05, 0.1)
+    P.adjust((0.12, 0.95), (0.2 / Npars, 0.97), 0.05, 0.1)
     return P.get()
 
 
@@ -541,14 +535,15 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
     P.build(figsize=(7, 6))
 
     dst_par, dst_SI = getPar('cum_d', to_return=['d', 'u'])
+    x = P.trange()
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
         df = d.step_data[dst_par]
         if not scaled and unit == 'cm':
             if dst_SI.unit == siunits.m:
                 df *= 100
-        plot_quantiles(df=df, x=P.trange(), axis=P.axs[0], color_shading=c, label=lab)
+        plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
 
-    P.conf_ax(xlab=xlabel, ylab=ylab, xlim=P.tlim, ylim=[0, None], xMaxN=5, leg_loc='upper left')
+    P.conf_ax(xlab=xlabel, ylab=ylab, xlim=(x[0], x[-1]), ylim=[0, None], xMaxN=5, leg_loc='upper left')
     P.adjust((0.2, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
@@ -556,12 +551,12 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
 def plot_gut(**kwargs):
     P = Plot(name='gut', **kwargs)
     P.build()
-
-    for d, lab, c in zip(P.datasets, P.labels, P.colors):
+    x = P.trange()
+    for d, l, c in zip(P.datasets, P.labels, P.colors):
         df = d.step_data['gut_occupancy'] * 100
-        plot_quantiles(df=df, x=P.trange(), axis=P.axs[0], color_shading=c, label=lab)
+        plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=l)
     P.conf_ax(xlab='time, $min$', ylab='% gut occupied',
-              xlim=P.tlim, ylim=[0, 100], xMaxN=5, yMaxN=5, leg_loc='upper left')
+              xlim=(x[0], x[-1]), ylim=[0, 100], xMaxN=5, yMaxN=5, leg_loc='upper left')
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
@@ -569,7 +564,7 @@ def plot_gut(**kwargs):
 def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
     name = 'food_intake'
     ylab = r'Cumulative food intake $(mg)$'
-    par = 'amount_eaten'
+    par = 'ingested_food_volume'
     if scaled:
         name = f'scaled_{name}'
         ylab = r'Cumulative food intake as % larval mass'
@@ -598,8 +593,9 @@ def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
             dst_b = dst_b.diff()
             dst_b.iloc[0] = 0
             dst_b = signal.sosfiltfilt(sos, dst_b)
-        plot_mean_and_range(x=P.trange(), mean=dst_m, lb=dst_b, ub=dst_u, axis=P.axs[0], color_shading=c, label=lab)
-    P.conf_ax(xlab='time, $min$', ylab=ylab, xlim=P.tlim, xMaxN=5, leg_loc='upper left')
+        x = P.trange()
+        plot_mean_and_range(x=x, mean=dst_m, lb=dst_b, ub=dst_u, axis=P.axs[0], color_shading=c, label=lab)
+    P.conf_ax(xlab='time, $min$', ylab=ylab, xlim=(x[0], x[-1]), xMaxN=5, leg_loc='upper left')
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
@@ -1111,13 +1107,13 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
     for i, (p, xlabel, xlim, disp) in enumerate(zip(pars, xlabels, xlims, disps)):
         bins = nbins if xlim is None else np.linspace(xlim[0], xlim[1], nbins)
         ax = P.axs[i]
-        values = [e[p].values for e in ends]
-        P.comp_pvalues(values, p)
+        vs = [e[p].values for e in ends]
+        P.comp_pvalues(vs, p)
 
-        Nvalues = [len(i) for i in values]
-        a = np.empty((np.max(Nvalues), len(values),)) * np.nan
-        for k in range(len(values)):
-            a[:Nvalues[k], k] = values[k]
+        Nvalues = [len(i) for i in vs]
+        a = np.empty((np.max(Nvalues), len(vs),)) * np.nan
+        for k in range(len(vs)):
+            a[:Nvalues[k], k] = vs[k]
         df = pd.DataFrame(a, columns=P.labels)
         for j, (col, lab) in enumerate(zip(df.columns, P.labels)):
             try:
@@ -1474,11 +1470,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     if save_as is None:
         save_as = f'debs.{suf}'
     if deb_dicts is None:
-        deb_dicts = []
-        for d, l in zip(datasets, labels):
-            dataset_deb_dicts = d.load_deb_dicts()
-            deb_dicts.append(dataset_deb_dicts)
-        deb_dicts = flatten_list(deb_dicts)
+        deb_dicts = flatten_list([d.load_deb_dicts() for d in datasets])
     Ndebs = len(deb_dicts)
     ids = [d['id'] for d in deb_dicts]
     if Ndebs == 1:
@@ -1569,18 +1561,17 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     labels = [labels0[i] for i in idx]
     ylabels = [ylabels0[i] for i in idx]
     Npars = len(labels)
-    fig, axs = plt.subplots(Npars, figsize=(13, 4 * Npars), sharex=True, sharey=sharey)
+    fig, axs = plt.subplots(Npars, figsize=(10, 6 * Npars), sharex=True, sharey=sharey)
     axs = axs.ravel() if Npars > 1 else [axs]
 
     rr0, gg0, bb0 = q_col1 = np.array([255, 0, 0]) / 255
-    rr1, gg1, bb1 = q_col2 = np.array([0, 255, 0]) / 255
+    rr1, gg1, bb1 = q_col2 = np.array([255, 255, 255]) / 255
     quality_col_range = np.array([rr1 - rr0, gg1 - gg0, bb1 - bb0])
 
     t0s, t1s, t2s, t3s, max_ages = [], [], [], [], []
     for jj, (d, id, c) in enumerate(zip(deb_dicts, ids, cols)):
         t0_sim, t0, t1, t2, t3, age = d['sim_start'], d['birth'], d['pupation'], d['death'], d['hours_as_larva'] + d[
             'birth'], np.array(d['age'])
-        # print(t0_sim, t0, t1, t2, t3, id)
         t00 = 0
         epochs = np.array(d['epochs'])
         if 'epoch_qs' in d.keys():
@@ -1623,7 +1614,6 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         max_ages.append(age[-1])
 
         for j, (l, yl) in enumerate(zip(labels, ylabels)):
-            # print(l, yl, len(age))
             if l == 'f_filt':
                 P = d['f']
                 sos = signal.butter(N=1, Wn=d['fr'] / 1000, btype='lowpass', analog=False, fs=d['fr'], output='sos')
@@ -1645,9 +1635,9 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                 q_col = q_col1 + qq * quality_col_range if color_epoch_quality else c
                 ax.axvspan(st0, st1, color=q_col, alpha=0.2)
 
-            ax.set_ylabel(yl, labelpad=15, fontsize=15)
+            ax.set_ylabel(yl, labelpad=15, fontsize=10)
             ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
-            ax.tick_params(axis='y', labelsize=15)
+            ax.tick_params(axis='y', labelsize=10)
             ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 
             if l in ['pupation_buffer', 'EEB', 'R_faeces', 'R_absorbed', 'R_not_digested',
@@ -1668,7 +1658,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                     try:
                         ytext = y0 + 0.5 * (y1 - y0)
                         xtext = t00 + 0.5 * (t0 - t00)
-                        ax.annotate('$incubation$', rotation=90, fontsize=25, va='center', ha='center',
+                        ax.annotate('$incubation$', rotation=90, fontsize=15, va='center', ha='center',
                                     xy=(xtext, ytext), xycoords='data',
                                     )
                     except:
@@ -1679,7 +1669,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                     ytext = y0 + 0.5 * (y1 - y0)
                     if not np.isnan(t1) and x1 > t1:
                         xtext = t1 + 0.5 * (x1 - t1)
-                        ax.annotate('$pupation$', rotation=90, fontsize=25, va='center', ha='center',
+                        ax.annotate('$pupation$', rotation=90, fontsize=15, va='center', ha='center',
                                     xy=(xtext, ytext), xycoords='data',
                                     )
                 except:
@@ -1691,12 +1681,12 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                     ytext = y0 + 0.8 * (y1 - y0)
                     xpre = t0 + 0.5 * (t0_sim - t0)
                     if t0_sim - t0 > 0.2 * (np.max(age) - t00):
-                        ax.annotate('$prediction$', rotation=0, fontsize=20, va='center', ha='center',
+                        ax.annotate('$prediction$', rotation=0, fontsize=15, va='center', ha='center',
                                     xy=(xpre, ytext), xycoords='data',
                                     )
                     xsim = t0_sim + 0.5 * (np.max(age) - t0_sim)
                     if np.max(age) - t0_sim > 0.2 * (np.max(age) - t00):
-                        ax.annotate('$simulation$', rotation=0, fontsize=20, va='center', ha='center',
+                        ax.annotate('$simulation$', rotation=0, fontsize=15, va='center', ha='center',
                                     xy=(xsim, ytext), xycoords='data',
                                     )
                 except:
@@ -1744,7 +1734,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             ax.set_xticks(ticks=np.arange(0, np.max(max_ages), tickstep))
 
     dataset_legend(leg_ids, leg_cols, ax=axs[0], loc='upper left', fontsize=20, prop={'size': 15})
-    fig.subplots_adjust(top=0.95, bottom=0.25, left=0.15, right=0.93, hspace=0.02)
+    fig.subplots_adjust(top=0.95, bottom=0.15, left=0.15, right=0.93, hspace=0.15)
     return process_plot(fig, save_to, save_as, return_fig, show)
 
 

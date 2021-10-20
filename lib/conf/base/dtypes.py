@@ -302,7 +302,8 @@ def init_pars():
                        'hunger_gain': {'v': 0.0, 'max': 1.0},
                        'deb_on': bT,
                        'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb']},
-                       'DEB_dt': {'max': 1.0}},
+                       'DEB_dt': {'max': 1.0},
+                       'species' : {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter']}},
         'crawler': {'waveform': {'t': str, 'v': 'realistic', 'vs': ['realistic', 'square', 'gaussian', 'constant']},
                     'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5), 'max': 2.0},
                     'initial_freq': {'v': 'sample', 'max': 10.0, 'aux_vs': ['sample']},  # From D1 fit
@@ -446,8 +447,8 @@ def init_pars():
     }
     d['food_grid'] = {
         'unique_id': {'t': str, 'v': 'Food_grid'},
-        'grid_dims': {'t': Tuple[int], 'v': (20, 20), 'min': 10, 'max': 200},
-        'initial_value': {'v': 0.001, 'max': 0.1, 'dv': 0.001},
+        'grid_dims': {'t': Tuple[int], 'v': (50, 50), 'min': 10, 'max': 200},
+        'initial_value': {'v': 0.1, 'max': 1.0, 'dv': 0.01},
         'distribution': {'t': str, 'v': 'uniform', 'vs': ['uniform']},
         **d['substrate']
         # 'substrate' : d['substrate']

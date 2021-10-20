@@ -171,8 +171,15 @@ class Plot :
         return np.max(unique_list(fr_list))
 
     @property
+    def dt(self):
+        dt_list = unique_list([d.dt for d in self.datasets])
+        # print(dt_list)
+        return np.max(dt_list)
+
+    @property
     def tlim(self):
-        return (0, int(self.Nticks / self.fr))
+        return (0, int(self.Nticks * self.dt))
+        # return (0, int(self.Nticks / self.fr))
 
     def trange(self, unit='min'):
         if unit=='min':
@@ -181,6 +188,8 @@ class Plot :
             T=1
         t0, t1 = self.tlim
         x = np.linspace(t0/T, t1/T, self.Nticks)
+        # print(t1, self.fr, self.dt, T, t1/T, self.Nticks)
+        # raise
         return x
 
 

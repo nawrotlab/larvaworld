@@ -83,6 +83,7 @@ def RvsS_groups(N=1, age=72.0, q=1.0, h_starved=0.0,sample='AttP2.Fed',substrate
     group_kws = {
         'sample': sample,
         'life_history': l,
+        's':0.005,
         **kwargs
     }
     mR,mS=['rover','sitter'] if not navigator else ['navigator_rover','navigator_sitter']
@@ -163,7 +164,7 @@ grouped_exp_dict = {
     },
 
     'growth': {'growth': deb_exp('food_grid', dur=24 * 60.0, l=RvsS_groups(age=0.0)),
-               'RvsS': deb_exp('food_grid', dur=180.0, l=RvsS_groups()),
+               'RvsS': deb_exp('food_grid', dur=180.0, l=RvsS_groups(age=0.0)),
                'RvsS_on': deb_exp('food_grid', dur=20.0, l=RvsS_groups()),
                'RvsS_off': deb_exp('arena_200mm', dur=20.0, l=RvsS_groups()),
                'RvsS_on_q75': deb_exp('food_grid', l=RvsS_groups(q=0.75)),

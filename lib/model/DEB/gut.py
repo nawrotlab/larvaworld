@@ -36,6 +36,7 @@ class Gut:
 
     def update(self, X_V=0):
         if X_V>0 :
+
             self.Nfeeds += 1
             self.V += X_V
             self.mol_ingested += self.deb.substrate.C * X_V
