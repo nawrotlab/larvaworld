@@ -627,7 +627,7 @@ class ParDict:
 
 
     def build_gut(self):
-        self.add(p='ingested_volume', k='f_am_V', u=1 * siu.m ** 3, d='ingested_food_volume',
+        self.add(p='deb.gut.ingested_volume', k='f_am_V', u=1 * siu.m ** 3, d='ingested_food_volume',
                  s=sub('V', 'in'), lab='ingested food volume')
         self.add(p='ingested_gut_volume_ratio', k='sf_am_Vg', d='ingested_gut_volume_ratio',lim=(0,0.2),
                  s=subsup('[V]', 'in', 'gut'), lab='intake as % larva gut volume')
@@ -637,13 +637,13 @@ class ParDict:
                  s=sub('{V}', 'in'), lab='intake as % larva area')
         self.add(p='ingested_body_mass_ratio', k='sf_am_M', d='ingested_body_mass_ratio',lim=(0,0.2),
                  s=sub('[M]', 'in'), lab='intake as % larva mass')
-        self.add(p='food_absorption_efficiency', k='sf_abs_M', d='food_absorption_efficiency',lim=(0,0.2),
+        self.add(p='deb.gut.R_absorbed', k='sf_abs_M', d='food_absorption_efficiency',lim=(0,0.2),
                  s=sub('[M]', 'abs'), lab='absorption efficiency')
-        self.add(p='faeces_ratio', k='sf_faeces_M', d='faeces_ratio',lim=(0,0.2),
+        self.add(p='deb.gut.R_faeces', k='sf_faeces_M', d='faeces_ratio',lim=(0,0.2),
                  s=sub('[M]', 'faeces'), lab='faeces ratio')
         self.add(p='amount_absorbed', k='f_abs_M', d='amount_absorbed',
                  s=sub('M', 'abs'), lab='absorbed food mass')
-        self.add(p='amount_faeces', k='f_faeces_M', d='amount_faeces',
+        self.add(p='deb.gut.M_faeces', k='f_faeces_M', d='amount_faeces',
                  s=sub('M', 'faeces'), lab='faeces mass')
 
 
@@ -920,9 +920,9 @@ if __name__ == '__main__':
     # o, d = nam.bearing2('n'), nam.dst2('n')
     # fo = getPar(['fo'], to_return=['d'])[0][0]
     # print(o,d)
-    # d=ParDict(mode='build').dict
-    pars=getPar('f_am', to_return=['d'])
-    print(pars)
+    d=ParDict(mode='build').dict
+    # pars=getPar('f_am', to_return=['d'])
+    # print(pars)
     # print(us)
     # # d = ParDict(mode='reconstruct').dict
     # # print(d.keys())

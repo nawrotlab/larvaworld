@@ -226,7 +226,7 @@ class Gut:
         elif unit == 'mg':
             return m * 1000
 
-    def absorbed_mass(self, unit='g'):
+    def absorbed_mass(self, unit='mg'):
         m = self.mol_absorbed * self.deb.w_E
         if unit == 'g':
             return m

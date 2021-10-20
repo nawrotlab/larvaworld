@@ -20,7 +20,7 @@ from lib.stor.larva_dataset import LarvaDataset
 import lib.aux.naming as nam
 
 
-def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=False):
+def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
     if ds is None:
         return
     if not type(ds) == list:
@@ -110,11 +110,12 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=False):
         figs.update(figs0)
 
     if 'chemo' in exp_type:
+        for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
+            figs[p] = timeplot([p], **cc)
         figs['turns'] = plot_turns(**cc)
         figs['ang_pars'] = plot_ang_pars(Npars=5,**cc)
         figs.update(**source_analysis(d.config['sources'], **cc))
-        for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
-            figs[p] = timeplot([p], **cc)
+
         vis_kwargs = null_dict('visualization', mode='image', image_mode='final', show_display=False,
                                random_colors=True, trails=True,
                                visible_clock=False, visible_scale=False, media_name='single_trajectory')

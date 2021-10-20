@@ -26,15 +26,13 @@ class LarvaSim(BodySim, Larva):
 
         self.food_detected, self.feeder_motion, self.current_V_eaten, self.feed_success = None, False, 0, None
         self.food_missed, self.food_found = False, False
-        self.cum_food_detected, self.on_food_dur_ratio, self.on_food=0, 0, False
+        self.cum_food_detected=0
 
     def compute_next_action(self):
         self.cum_dur += self.model.dt
         pos = self.olfactor_pos
         self.food_detected=self.detect_food(pos)
-        self.on_food=self.food_detected is not None
         self.cum_food_detected+=int(self.on_food)
-        self.on_food_dur_ratio=self.cum_food_detected*self.model.dt/self.cum_dur
 
         self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.run(pos)
         self.current_V_eaten, self.feed_success = self.feed(self.food_detected, self.feeder_motion)
@@ -108,43 +106,44 @@ class LarvaSim(BodySim, Larva):
         # p_am=260
         if energetic_pars is not None:
             self.energetics = True
-            if energetic_pars['deb_on']:
-                self.temp_cum_V_eaten = 0
-                self.temp_mean_f = []
-                self.f_exp_coef = np.exp(-energetic_pars['f_decay'] * self.model.dt)
-                steps_per_day = 24 * 6
-                cc = {
-                    'id': self.unique_id,
-                    'steps_per_day': steps_per_day,
-                    'hunger_gain': energetic_pars['hunger_gain'],
-                    'hunger_as_EEB': energetic_pars['hunger_as_EEB'],
-                    'V_bite': energetic_pars['V_bite'],
-                    'absorption': energetic_pars['absorption'],
-                    'species': energetic_pars['species'],
-                    # 'substrate': self.model.food_grid.substrate,
-                    # 'substrate': life['substrate'],
-                    # 'substrate_type': life['substrate_type'],
-                    # 'intermitter': self.brain.intermitter,
-                }
-                self.deb = DEB(**cc)
+            # if energetic_pars['deb_on']:
+            self.temp_cum_V_eaten = 0
+            self.temp_mean_f = []
+            self.f_exp_coef = np.exp(-energetic_pars['f_decay'] * self.model.dt)
+            steps_per_day = 24 * 6
+            cc = {
+                'id': self.unique_id,
+                'steps_per_day': steps_per_day,
+                'hunger_gain': energetic_pars['hunger_gain'],
+                'hunger_as_EEB': energetic_pars['hunger_as_EEB'],
+                'V_bite': energetic_pars['V_bite'],
+                'absorption': energetic_pars['absorption'],
+                'species': energetic_pars['species'],
+                # 'substrate': self.model.food_grid.substrate,
+                # 'substrate': life['substrate'],
+                # 'substrate_type': life['substrate_type'],
+                # 'intermitter': self.brain.intermitter,
+            }
+            self.deb = DEB(**cc)
 
-                self.deb.grow_larva(**life_history)
-                if energetic_pars['DEB_dt'] is None:
-                    self.deb_step_every = 1
-                    self.deb.set_steps_per_day(int(24 * 60 * 60 / self.model.dt))
-                else:
-                    self.deb_step_every = int(energetic_pars['DEB_dt'] / self.model.dt)
-                    self.deb.set_steps_per_day(int(24 * 60 * 60 / energetic_pars['DEB_dt']))
-                self.deb.assimilation_mode = energetic_pars['assimilation_mode']
-                self.real_length = self.deb.Lw * 10 / 1000
-                self.real_mass = self.deb.Ww
-                self.V = self.deb.V
-
+            self.deb.grow_larva(**life_history)
+            if energetic_pars['DEB_dt'] is None:
+                self.deb_step_every = 1
+                self.deb.set_steps_per_day(int(24 * 60 * 60 / self.model.dt))
             else:
-                self.deb = None
-                self.food_to_biomass_ratio = 0.3
+                self.deb_step_every = int(energetic_pars['DEB_dt'] / self.model.dt)
+                self.deb.set_steps_per_day(int(24 * 60 * 60 / energetic_pars['DEB_dt']))
+            self.deb.assimilation_mode = energetic_pars['assimilation_mode']
+            self.real_length = self.deb.Lw * 10 / 1000
+            self.real_mass = self.deb.Ww
+            self.V = self.deb.V
+
+            # else:
+            #     self.deb = None
+            #     self.food_to_biomass_ratio = 0.3
         else:
             self.energetics = False
+            self.deb = None
 
     def build_brain(self, conf):
         modules = conf['modules']
@@ -156,30 +155,30 @@ class LarvaSim(BodySim, Larva):
 
     def run_energetics(self, V_eaten):
         if self.energetics:
-            if self.deb :
-                f = self.deb.f
-                if V_eaten>0:
-                    f += self.deb.absorption
-                    # f += food_quality * self.deb.absorption
-                f *= self.f_exp_coef
-                self.temp_cum_V_eaten += V_eaten
-                self.temp_mean_f.append(f)
-                if self.model.Nticks % self.deb_step_every == 0:
-                    self.deb.run(f=np.mean(self.temp_mean_f), X_V=self.temp_cum_V_eaten)
-                    self.temp_cum_V_eaten = 0
-                    self.temp_mean_f = []
+            # if self.deb :
+            f = self.deb.f
+            if V_eaten>0:
+                f += self.deb.absorption
+                # f += food_quality * self.deb.absorption
+            f *= self.f_exp_coef
+            self.temp_cum_V_eaten += V_eaten
+            self.temp_mean_f.append(f)
+            if self.model.Nticks % self.deb_step_every == 0:
+                self.deb.run(f=np.mean(self.temp_mean_f), X_V=self.temp_cum_V_eaten)
+                self.temp_cum_V_eaten = 0
+                self.temp_mean_f = []
 
-                self.real_length = self.deb.Lw * 10 / 1000
-                self.real_mass = self.deb.Ww
-                self.V = self.deb.V
-                self.adjust_body_vertices()
+            self.real_length = self.deb.Lw * 10 / 1000
+            self.real_mass = self.deb.Ww
+            self.V = self.deb.V
+            self.adjust_body_vertices()
 
-            else:
-                if V_eaten>0:
-                    self.real_mass += V_eaten * self.food_to_biomass_ratio
-                    self.adjust_shape_to_mass()
-                    self.adjust_body_vertices()
-                    self.V = self.real_length ** 3
+            # else:
+            #     if V_eaten>0:
+            #         self.real_mass += V_eaten * self.food_to_biomass_ratio
+            #         self.adjust_shape_to_mass()
+            #         self.adjust_body_vertices()
+            #         self.V = self.real_length ** 3
             self.max_V_bite = self.get_max_V_bite()
 
 
@@ -202,6 +201,14 @@ class LarvaSim(BodySim, Larva):
             d['Rturn_id'] = True
         color = self.update_color(self.default_color, d)
         self.set_color([color]*self.Nsegs)
+
+    @property
+    def on_food_dur_ratio(self):
+        return self.cum_food_detected*self.model.dt/self.cum_dur
+
+    @property
+    def on_food(self):
+        return self.food_detected is not None
 
     @property
     def front_orientation(self):

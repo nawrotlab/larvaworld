@@ -300,7 +300,7 @@ def init_pars():
                        'V_bite': {'v': 0.001, 'max': 0.01, 'dv': 0.0001},
                        'hunger_as_EEB': bT,
                        'hunger_gain': {'v': 0.0, 'max': 1.0},
-                       'deb_on': bT,
+                       # 'deb_on': bT,
                        'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb']},
                        'DEB_dt': {'max': 1.0},
                        'species' : {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter']}},
