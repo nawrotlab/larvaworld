@@ -27,8 +27,11 @@ Ccon = null_dict('crawler', waveform='constant', initial_amp=0.0012)
 RL_olf_memory = null_dict('memory', Delta=0.1, state_spacePerSide=1, mode='olf',
                           gain_space=np.arange(-200.0, 200.0, 50.0).tolist())
 
-RL_touch_memory = null_dict('memory', Delta=0.5, state_spacePerSide=1, mode='touch', train_dur=60, update_dt=0.5,
-                            gain_space=np.round(np.arange(-10, 11, 5), 1).tolist())
+RL_touch_memory = null_dict('memory', Delta=0.5, state_spacePerSide=1, mode='touch', train_dur=120, update_dt=0.5,
+                            gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=True)
+
+gRL_touch_memory = null_dict('memory', Delta=0.5, state_spacePerSide=1, mode='touch', train_dur=120, update_dt=0.5,
+                            gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=False)
 
 OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}
 OD2 = {'CS': {'mean': 150.0, 'std': 0.0}, 'UCS': {'mean': 0.0, 'std': 0.0}}
@@ -176,7 +179,9 @@ larvae = {
     'explorer': mod(brain(['L'])),
     'toucher': mod(brain(['L', 'To'], turner=Tno_noise), bod={'touch_sensors': 0}),
     'RL_toucher_0': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory), bod={'touch_sensors': 0}),
+    'gRL_toucher_0': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory), bod={'touch_sensors': 0}),
     'RL_toucher_2': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory), bod={'touch_sensors': 2}),
+    'gRL_toucher_2': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory), bod={'touch_sensors': 2}),
     'Levy-walker': mod(Levy_brain),
     'navigator': mod(brain(['L', 'O'], OD=OD1)),
     'navigator_x2': mod(brain(['L', 'O'], OD=OD2)),

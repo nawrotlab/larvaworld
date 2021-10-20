@@ -204,7 +204,7 @@ class LarvaSim(BodySim, Larva):
 
     @property
     def on_food_dur_ratio(self):
-        return self.cum_food_detected*self.model.dt/self.cum_dur
+        return self.cum_food_detected*self.model.dt/self.cum_dur if self.cum_dur!=0 else 0
 
     @property
     def on_food(self):

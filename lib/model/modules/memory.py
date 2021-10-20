@@ -9,9 +9,9 @@ from lib.model.modules.basic import Effector
 
 class RLmemory(Effector):
     def __init__(self, brain, gain_space, gain, Delta=0.1, state_spacePerSide=0, update_dt=2, train_dur=30, alpha=0.05,
-                 gamma=0.6, epsilon=0.15, **kwargs):
+                 gamma=0.6, epsilon=0.15, state_specific_best=True, **kwargs):
         super().__init__(**kwargs)
-        self.return_global_best=False
+        self.state_specific_best=state_specific_best
         self.brain = brain
         self.effector = True
         self.alpha = alpha
@@ -87,7 +87,7 @@ class RLmemory(Effector):
 
             return self.gain
         else:
-            if self.return_global_best :
+            if not self.state_specific_best :
                 return self.best_gain
             else :
                 state = self.state_collapse(dx)

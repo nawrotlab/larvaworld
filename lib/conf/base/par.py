@@ -920,12 +920,12 @@ if __name__ == '__main__':
     # o, d = nam.bearing2('n'), nam.dst2('n')
     # fo = getPar(['fo'], to_return=['d'])[0][0]
     # print(o,d)
-    d=ParDict(mode='build').dict
-    # pars=getPar('f_am', to_return=['d'])
-    # print(pars)
+    # d=ParDict(mode='build').dict
+    pars=getPar('on_food_tr', to_return=['p','d'])
+    print(pars)
     # print(us)
     # # d = ParDict(mode='reconstruct').dict
-    # # print(d.keys())
+    # print(d.keys())
     raise
     # for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
     #     p = getPar(short, to_return=['d'])[0]

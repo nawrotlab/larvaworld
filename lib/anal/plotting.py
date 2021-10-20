@@ -732,8 +732,9 @@ def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_id
     return P.get()
 
 
-def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None,
+def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None,unit='sec',
              show_first=False, subfolder='timeplots', legend_loc='upper left', **kwargs):
+    unit_coefs={'sec' : 1, 'min':1/60, 'hour':1/60/60}
     if len(pars) == 0:
         pars, symbols, ylabs, ylims = getPar(par_shorts, to_return=['d', 's', 'l', 'lim'])
     else:
@@ -755,7 +756,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
     P.build(figsize=(7.5, 5))
     ax = P.axs[0]
     for p, symbol, ylab, ylim, c in zip(pars, symbols, ylabs, ylims, cols):
-        P.conf_ax(xlab='time, $sec$' if table is None else 'timesteps', ylab=ylab, ylim=ylim, yMaxN=4)
+        P.conf_ax(xlab=f'time, ${unit}$' if table is None else 'timesteps', ylab=ylab, ylim=ylim, yMaxN=4)
         for d, d_col, d_lab in zip(P.datasets, P.colors, P.labels):
             if P.Ndatasets > 1:
                 c = d_col
@@ -766,7 +767,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                     dc = d.read('step')[p]
                 dc_m = dc.groupby(level='Step').quantile(q=0.5)
                 Nticks = len(dc_m)
-                x = np.linspace(0, int(Nticks / d.fr), Nticks) if table is None else np.arange(Nticks)
+                x = np.linspace(0, int(Nticks / d.fr)*unit_coefs[unit], Nticks) if table is None else np.arange(Nticks)
                 ax.set_xlim([x[0], x[-1]])
 
                 if individuals:

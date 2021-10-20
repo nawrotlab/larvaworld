@@ -117,7 +117,7 @@ env_dict = {
 
     'patchy_food': env(arena(0.2, 0.2), f_pars(sg=sg(N=8, s=0.07, m='periphery', a=0.001, o=oG(2))), 'G'),
     'uniform_food': env(arena(0.05), f_pars(sg=sg(N=2000, s=0.025, a=0.01, r=0.0001))),
-    'food_grid': env(arena(0.1, 0.1), f_pars(grid=null_dict('food_grid'))),
+    'food_grid': env(arena(0.02, 0.02), f_pars(grid=null_dict('food_grid'))),
     'single_patch': env(arena(0.02, 0.02), f_pars(su=su('Patch', a=0.1, r=0.005))),
     'multi_patch': env(arena(0.02, 0.02), f_pars(sg=sg(N=8, s=0.007, m='periphery', a=0.1, r=0.0015))),
     'double_patch': env(arena(0.24, 0.24),
