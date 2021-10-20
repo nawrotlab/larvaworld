@@ -347,8 +347,9 @@ def init_pars():
         'toucher': {
             'perception': {'t': str, 'v': 'linear', 'vs': ['log', 'linear']},
             'input_noise': {'v': 0.0, 'max': 1.0},
-            'decay_coef': {'v': 0.5, 'max': 2.0},
+            'decay_coef': {'v': 0.001, 'max': 2.0},
             'state_specific_best': bT,
+            'brute_force': bT,
             'initial_gain': {'v': -10.0, 'min': -100.0, 'max': 100.0}},
         'feeder': {'freq_range': {'t': Tuple[float], 'v': (1.0, 3.0), 'max': 4.0},
                    'initial_freq': {'v': 2.0, 'max': 4.0},

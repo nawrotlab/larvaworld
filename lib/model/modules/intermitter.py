@@ -105,6 +105,7 @@ class Intermitter(Effector):
         super().count_time()
         # super().count_ticks()
         self.update_state()
+        # print(self.t, self.active_bouts)
         # print(self.brain.agent.unique_id, self.EEB, self.feeder_reoccurence_rate)
         # print(self.current_stridechain_length, self.current_feedchain_length, self.current_pause_duration)
 
@@ -273,6 +274,18 @@ class Intermitter(Effector):
     def active_bouts(self):
         return self.current_stridechain_length, self.current_feedchain_length, self.current_pause_ticks
 
+    def interrupt_locomotion(self):
+        if self.current_pause_duration is None:
+            if self.current_feedchain_length is not None:
+                self.register_feedchain()
+            elif self.current_stridechain_length is not None:
+                self.register_stridechain()
+            self.inhibit_locomotion()
+
+    def trigger_locomotion(self):
+        if self.current_pause_duration is not None:
+            self.register_pause()
+            self.disinhibit_locomotion()
 
 class OfflineIntermitter(Intermitter):
     def __init__(self,register_bouts=True, **kwargs):

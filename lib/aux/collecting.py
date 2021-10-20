@@ -133,7 +133,7 @@ output_dict = {
         'endpoint': []},
 
     'toucher': {
-        'step': ['A_touch', 'A_tur', 'cum_f_det', 'on_food_tr', 'on_food'],
+        'step': ['A_touch', 'A_tur','Act_tur', 'cum_f_det', 'on_food_tr', 'on_food'],
         'endpoint': ['on_food_tr']},
 
     'feeder': {

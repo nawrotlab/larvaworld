@@ -4,12 +4,14 @@ from lib.model.modules.basic import Effector
 
 
 class Sensor(Effector):
-    def __init__(self, brain, perception='linear', gain_dict={}, decay_coef=1, input_noise=0, **kwargs):
+    def __init__(self, brain, perception='linear', gain_dict={}, decay_coef=1, input_noise=0,
+                 brute_force=True, **kwargs):
         super().__init__(**kwargs)
         self.brain = brain
         self.perception = perception
         self.decay_coef = decay_coef
         self.noise = input_noise
+        self.brute_force = brute_force
         self.A0, self.A1 = [-1.0, 1.0]
         self.activation = 0
         self.exp_decay_coef = np.exp(- self.dt * self.decay_coef)
@@ -25,6 +27,8 @@ class Sensor(Effector):
             self.activation = 0
         else:
             self.compute_dX(input)
+            if self.brute_force :
+                self.affect_locomotion()
             self.activation *= self.exp_decay_coef
             self.activation += self.dt * np.sum([self.gain[id] * self.dX[id] for id in self.gain_ids])
 
@@ -34,6 +38,9 @@ class Sensor(Effector):
                 self.activation = self.A0
 
         return self.activation
+
+    def affect_locomotion(self):
+        pass
 
     def init_gain(self, gain_dict):
         if gain_dict in [None, 'empty_dict']:
@@ -97,4 +104,15 @@ class Olfactor(Sensor):
 class Toucher(Sensor):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
+
+    def affect_locomotion(self):
+        for id in self.gain_ids:
+            if self.dX[id]==1:
+                # print('in')
+                self.brain.intermitter.trigger_locomotion()
+                break
+            elif self.dX[id]==-1:
+                # print('out')
+                self.brain.intermitter.interrupt_locomotion()
+                break
 

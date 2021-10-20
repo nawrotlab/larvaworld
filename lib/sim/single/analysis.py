@@ -40,6 +40,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
         figs['time ratio on food'] = timeplot(['on_food_tr'], **tact_kws)
         figs['time on food'] = timeplot(['cum_f_det'], **tact_kws)
         figs['turner input'] = timeplot(['A_tur'], show_first=True, **tact_kws)
+        figs['turner output'] = timeplot(['Act_tur'], show_first=True, **tact_kws)
         figs['tactile activation'] = timeplot(['A_touch'], show_first=True, **tact_kws)
 
     if 'RvsS' in exp_type:
