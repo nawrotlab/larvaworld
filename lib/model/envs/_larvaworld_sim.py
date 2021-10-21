@@ -91,7 +91,7 @@ class LarvaWorldSim(LarvaWorld):
                 a1, a2 = np.deg2rad(d['orientation_range'])
                 ors = np.random.uniform(low=a1, high=a2, size=N).tolist()
                 ps = generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
-                sample_dict = sample_group(sample, N, self.sample_ps)
+                sample_dict = sample_group(sample, N, self.sample_ps) if len(self.sample_ps)>0 else {}
             sample_dict.update(parameter_dict)
             all_pars = generate_larvae(N, sample_dict, mod, RefPars)
             for id, p, o, pars in zip(ids, ps, ors, all_pars):

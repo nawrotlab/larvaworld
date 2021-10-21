@@ -280,8 +280,8 @@ def init_pars():
                          'ranges': {'t': List[Tuple[float]], 'max': 100.0, 'min': -100.0, 'dv': 1.0,
                                     'h' : 'The range of the parameters for space search', 's' :'ss.ranges'},
                          'Ngrid': {'t': int, 'max': 100, 'h' : 'The number of steps for space search', 's' :'ss.Ngrid'}},
-        'body': {'initial_length': {'v': 'sample', 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample']},
-                 'length_std': {'v': 0.0, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample']},
+        'body': {'initial_length': {'v': 0.003, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample']},
+                 'length_std': {'v': 0.0001, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample']},
                  'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12},
                  'seg_ratio': {'max': 1.0},  # [5 / 11, 6 / 11]
                  'touch_sensors': {'t': int, 'min': 0, 'max': 8},
@@ -306,11 +306,11 @@ def init_pars():
                        'species' : {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter']}},
         'crawler': {'waveform': {'t': str, 'v': 'realistic', 'vs': ['realistic', 'square', 'gaussian', 'constant']},
                     'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5), 'max': 2.0},
-                    'initial_freq': {'v': 'sample', 'max': 10.0, 'aux_vs': ['sample']},  # From D1 fit
-                    'freq_std': {'v': 0.0, 'max': 1.0},  # From D1 fit
-                    'step_to_length_mu': {'v': 'sample', 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample']},
+                    'initial_freq': {'v': 1.5, 'max': 10.0, 'aux_vs': ['sample']},  # From D1 fit
+                    'freq_std': {'v': 0.2, 'max': 1.0},  # From D1 fit
+                    'step_to_length_mu': {'v': 0.2, 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample']},
                     # From D1 fit
-                    'step_to_length_std': {'v': 'sample', 'max': 1.0, 'aux_vs': ['sample']},  # From D1 fit
+                    'step_to_length_std': {'v': 0.02, 'max': 1.0, 'aux_vs': ['sample']},  # From D1 fit
                     'initial_amp': {'max': 2.0},
                     'noise': {'v': 0.1, 'max': 1.0, 'dv': 0.01},
                     'max_vel_phase': {'v': 1.0, 'max': 2.0}
@@ -389,7 +389,6 @@ def init_pars():
             'Box2D': {'t': bool, 'v': False, 'h': 'Use the Box2D physics engine'},
             'store_data': {'t': bool, 'v': True, 'h': 'Whether to store the simulation data', 's': 'no_store'},
             # 'analysis': {'t': bool, 'v': True, 'h': 'Whether to analyze the simulation data', 's' : 'no_analysis'},
-            # 'sample': {'t': str, 'v': 'controls.', 'h': 'The ID of the dataset to sample the parameters from'}
         },
 
         'logn_dist': {
