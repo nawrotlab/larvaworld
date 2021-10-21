@@ -66,22 +66,18 @@ class Viewer(object):
         return window
 
     def scale_dims(self):
-        _width = int(self.window_size[0] / self.zoom)
-        _height = int(self.window_size[1] / self.zoom)
-        return _width, _height
+        w,h =(np.array(self.window_size)/self.zoom).astype(int)
+        return w,h
 
     def zoom_screen(self, d_zoom, pos=None):
         if pos is None:
-            pos = self.get_mouse_position()
+            pos = self.mouse_position
         if 0.001 <= self.zoom + d_zoom <= 1:
             self.zoom = np.round(self.zoom + d_zoom, 2)
             self.display_size = self.scale_dims()
             self.center = np.clip(self.center - pos * d_zoom, self.center_lim, -self.center_lim)
         if self.zoom == 1.0:
             self.center = np.array([0.0, 0.0])
-
-    def __del__(self):
-        self.close()
 
     def set_bounds(self, left, right, bottom, top):
         assert right > left and top > bottom
@@ -160,9 +156,10 @@ class Viewer(object):
         image_data = pygame.surfarray.array3d(self._window)
         return image_data
 
-    def get_mouse_position(self):
-        mouse_pos = np.array(pygame.mouse.get_pos()) - self._translation
-        return np.linalg.inv(self._scale).dot(mouse_pos)
+    @ property
+    def mouse_position(self):
+        p = np.array(pygame.mouse.get_pos()) - self._translation
+        return np.linalg.inv(self._scale).dot(p)
 
     def render(self):
         if self.show_display:
@@ -252,15 +249,12 @@ class InputBox(ScreenItem):
                 # Render the current text.
                 lines = self.text.splitlines()
                 txt_surfaces = [self.font.render(l, True, self.color) for l in lines]
-                # txt_surface = self.font.render(self.text, True, self.color)
                 # Blit the text.
                 for i,s in enumerate(txt_surfaces) :
                     viewer.draw_text_box(s, (self.shape.x + 5, self.shape.y + 5+i*100))
-                # viewer._window.blit(txt_surface, (self.shape.x + 5, self.shape.y + 5))
                 if self.show_frame:
                     # Blit the input_box rect.
                     viewer.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
-                    # pygame.draw.rect(viewer._window, self.color, self.shape, self.linewidth)
             elif self.text_font is not None:
                 self.text_font = self.font_large.render(self.text, 1, self.color)
                 viewer.draw_text_box(self.text_font, self.text_font_r)

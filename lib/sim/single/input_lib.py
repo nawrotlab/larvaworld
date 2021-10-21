@@ -23,12 +23,12 @@ def evaluate_input(model, screen):
 
         if model.allow_clicks:
             if e.type == pygame.MOUSEBUTTONDOWN:
-                model.mousebuttondown_pos = screen.get_mouse_position()
+                model.mousebuttondown_pos = screen.mouse_position
                 # model.mousebuttondown_time = time.time()
             elif e.type == pygame.MOUSEBUTTONUP:
                 # model.mousebuttonup_time = time.time()
                 # dt = model.mousebuttonup_time - model.mousebuttondown_time
-                p = screen.get_mouse_position()
+                p = screen.mouse_position
                 if e.button == 1:
                     if not eval_selection(model, p, ctrl=pygame.key.get_mods() & pygame.KMOD_CTRL):
                         model.add_agent(agent_class=model.selected_type, p0=tuple(p),
