@@ -116,6 +116,8 @@ class LarvaWorld:
         self.screen_texts = self.create_screen_texts(color=self.scale_clock_color)
         self.input_box = ren.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
                                       center=True, w=120 * 4, h=32 * 4, font=pygame.font.SysFont("comicsansms", 32 * 2))
+        self.configuration_box = ren.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),color_active=pygame.Color('white'),
+                                      center=True, w=220 * 4, h=200 * 4, font=pygame.font.SysFont("comicsansms", 25))
         self.end_condition_met = False
 
     def toggle(self, name, value=None, show=False, minus=False, plus=False, disp=None):
@@ -389,9 +391,12 @@ class LarvaWorld:
 
     def display_configuration(self, screen):
         if self.configuration_text is not None :
+            self.configuration_box.text=self.configuration_text
+            self.configuration_box.visible=True
             for i in range(200):
-                ren.blit_text(surface=screen._window, text=self.configuration_text, pos=(0,0))
+                self.configuration_box.draw(screen)
                 screen.render()
+            self.configuration_box.visible = False
 
     def screen2space_pos(self, pos):
         p = (2 * pos[0] / self.screen_width - 1), -(2 * pos[1] / self.screen_height - 1)
@@ -672,9 +677,6 @@ def sample_group(sample, N, sample_ps):
     e = d.read('end')
     ps = [p for p in sample_ps if p in e.columns]
     means = [e[p].mean() for p in ps]
-    # for p in ps :
-    #     print(p, e[p].mean())
-    #     print(p, e[p].std())
 
     if len(ps) >= 2:
         base = e[ps].values.T

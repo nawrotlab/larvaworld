@@ -219,7 +219,6 @@ class InputBox(ScreenItem):
         self.screen_pos = screen_pos
         self.linewidth = linewidth
         self.show_frame = show_frame
-        # self.set_shape(self.screen_pos)
         if color_active is None:
             color_active = pygame.Color('dodgerblue2')
         self.color_active = color_active
@@ -251,9 +250,12 @@ class InputBox(ScreenItem):
                 self.color = self.agent.default_color
             if self.shape is not None:
                 # Render the current text.
-                txt_surface = self.font.render(self.text, True, self.color)
+                lines = self.text.splitlines()
+                txt_surfaces = [self.font.render(l, True, self.color) for l in lines]
+                # txt_surface = self.font.render(self.text, True, self.color)
                 # Blit the text.
-                viewer.draw_text_box(txt_surface, (self.shape.x + 5, self.shape.y + 5))
+                for i,s in enumerate(txt_surfaces) :
+                    viewer.draw_text_box(s, (self.shape.x + 5, self.shape.y + 5+i*100))
                 # viewer._window.blit(txt_surface, (self.shape.x + 5, self.shape.y + 5))
                 if self.show_frame:
                     # Blit the input_box rect.

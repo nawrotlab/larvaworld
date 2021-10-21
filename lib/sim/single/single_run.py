@@ -33,7 +33,9 @@ class SingleRun:
         self.enrichment = enrichment
         if save_to is None:
             save_to = paths.path("SIM")
-        dir_path = f'{save_to}/{sim_params["path"]}/{self.id}'
+        self.save_to=save_to
+        self.storage_path=f'{sim_params["path"]}/{self.id}'
+        dir_path = f'{save_to}/{self.storage_path}'
         self.param_dict = locals()
         self.start = time.time()
 
@@ -89,7 +91,8 @@ class SingleRun:
                f"Simulation ID : {self.id}\n" \
                f"Duration (min) : {sim['duration']}\n" \
                f"Timestep (sec) : {sim['timestep']}\n" \
-               f"Path : {self.d.dir}"
+               f"Parent path : {self.save_to}\n" \
+               f"Dataset path : {self.storage_path}"
         return text
 
 
