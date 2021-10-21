@@ -331,7 +331,7 @@ class LarvaWorld:
         self.sim_clock.render_clock(width, height)
         self.sim_scale.render_scale(width, height)
         self.sim_state.render_state(width, height)
-        for name, text in self.screen_texts.items():
+        for text in self.screen_texts.values():
             text.render(width, height)
 
     def render(self, tick=None, background_motion=None):
@@ -412,9 +412,7 @@ class LarvaWorld:
                 self.add_food(id=id, **f_pars)
 
     def add_food(self, pos, id=None, **food_pars):
-        if id is None:
-            id = self.next_id(type='Food')
-        f = Food(unique_id=id, pos=pos, model=self, **food_pars)
+        f = Food(unique_id=self.next_id(type='Food') if id is None else id, pos=pos, model=self, **food_pars)
         self.active_food_schedule.add(f)
         self.all_food_schedule.add(f)
         return f
@@ -430,14 +428,11 @@ class LarvaWorld:
             odor = conf['odor']
             if default_color is None:
                 default_color = conf['default_color']
-        if id is None:
-            id = self.next_id(type='Larva')
-        if orientation is None:
-            orientation = np.random.uniform(0, 2 * np.pi, 1)[0]
         while not lib.aux.sim_aux.inside_polygon([pos], self.tank_polygon)[0]:
             pos = tuple(np.array(pos) * 0.999)
-        l = LarvaSim(model=self, pos=pos, orientation=orientation, unique_id=id, odor=odor,
-                     larva_pars=pars, group=group, default_color=default_color, life_history=life_history)
+        l = LarvaSim(unique_id=self.next_id(type='Larva') if id is None else id, model=self, pos=pos,
+                     orientation=np.random.uniform(0, 2 * np.pi, 1)[0] if orientation is None else orientation,
+                     odor=odor, larva_pars=pars, group=group, default_color=default_color, life_history=life_history)
         self.active_larva_schedule.add(l)
         self.all_larva_schedule.add(l)
 
@@ -636,11 +631,12 @@ class LarvaWorld:
 
 
 def generate_larvae(N, sample_dict, base_model, RefPars=None):
+    from lib.aux.dictsNlists import load_dict, flatten_dict
     if RefPars is None:
-        RefPars = lib.aux.dictsNlists.load_dict(paths.path('ParRef'), use_pickle=False)
+        RefPars = load_dict(paths.path('ParRef'), use_pickle=False)
     if len(sample_dict) > 0:
         all_pars = []
-        modF = lib.aux.dictsNlists.flatten_dict(base_model)
+        modF = flatten_dict(base_model)
         for i in range(N):
             lF = copy.deepcopy(modF)
             for p, vs in sample_dict.items():

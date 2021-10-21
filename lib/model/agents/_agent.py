@@ -8,7 +8,6 @@ from lib.anal.rendering import InputBox
 
 class LarvaworldAgent:
     def __init__(self,unique_id: str,model, pos=None, default_color=None, radius=None,visible=True,
-                 # odor_id=None, odor_intensity=0.0, odor_spread=0.1,
                  odor={'odor_id':None, 'odor_intensity':None, 'odor_spread':None},
                  group='', can_be_carried=False, **kwargs):
         self.visible = visible
