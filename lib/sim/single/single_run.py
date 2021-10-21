@@ -25,6 +25,8 @@ class SingleRun:
                  **kwargs):
         np.random.seed(seed)
         self.id = sim_params['sim_ID']
+        self.sim_params = sim_params
+        self.experiment = experiment
         dt = sim_params['timestep']
         self.store_data = sim_params['store_data']
         # analysis = sim_params['analysis']
@@ -43,10 +45,10 @@ class SingleRun:
                                  env_params=env_params,
                                  larva_groups=larva_groups,
                                  output=output,
-                                 experiment=experiment,
+                                 experiment=self.experiment,
                                  trials=trials,
                                  Nsteps=int(sim_params['duration'] * 60 / dt),
-                                 save_to=self.d.vis_dir, **kwargs)
+                                 save_to=self.d.vis_dir,configuration_text=self.configuration_text, **kwargs)
 
     def run(self):
         print()
@@ -77,6 +79,18 @@ class SingleRun:
     def terminate(self):
         self.env.close()
         self.d.delete()
+
+    @ property
+    def configuration_text(self):
+        sim=self.sim_params
+        text = f"Simulation configuration : \n" \
+               "\n" \
+               f"Experiment : {self.experiment}\n" \
+               f"Simulation ID : {self.id}\n" \
+               f"Duration (min) : {sim['duration']}\n" \
+               f"Timestep (sec) : {sim['timestep']}\n" \
+               f"Path : {self.d.dir}"
+        return text
 
 
 

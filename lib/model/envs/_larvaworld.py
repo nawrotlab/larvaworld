@@ -43,7 +43,8 @@ class LarvaWorld:
 
     def __init__(self, env_params, vis_kwargs=None, id='unnamed', dt=0.1, Nsteps=None, save_to='.',
                  background_motion=None, Box2D=False, use_background=False, traj_color=None, allow_clicks=True,
-                 experiment=None, progress_bar=None, larva_groups={}):
+                 experiment=None, progress_bar=None, larva_groups={}, configuration_text=None):
+        self.configuration_text = configuration_text
         self.progress_bar = progress_bar
         self.Box2D = Box2D
         if vis_kwargs is None:
@@ -348,9 +349,12 @@ class LarvaWorld:
                                       fps=self.video_fps, dt=self.dt,
                                       show_display=self.vis_kwargs['render']['show_display'],
                                       record_video_to=vid, record_image_to=im)
+            self.display_configuration(self._screen)
             self.render_aux(self.screen_width, self.screen_height)
             self.set_background(self._screen._window.get_width(), self._screen._window.get_height())
+
             self.draw_arena(self._screen, background_motion)
+
             print('Screen opened')
         elif self._screen.close_requested():
             self._screen.close()
@@ -382,6 +386,12 @@ class LarvaWorld:
         if self.vis_kwargs['render']['image_mode'] != 'overlap':
             self.draw_aux(self._screen)
             self._screen.render()
+
+    def display_configuration(self, screen):
+        if self.configuration_text is not None :
+            for i in range(200):
+                ren.blit_text(surface=screen._window, text=self.configuration_text, pos=(0,0))
+                screen.render()
 
     def screen2space_pos(self, pos):
         p = (2 * pos[0] / self.screen_width - 1), -(2 * pos[1] / self.screen_height - 1)
@@ -678,8 +688,6 @@ def sample_group(sample, N, sample_ps):
     dic = {p: v for p, v in zip(ps, vs)}
     return dic
 
-
-
 # if __name__ == '__main__':
 #     RefPars = lib.aux.dictsNlists.load_dict(paths.path('ParRef'), use_pickle=False)
 #     print(RefPars)
@@ -688,4 +696,4 @@ def sample_group(sample, N, sample_ps):
 #     from lib.conf.stored.conf import loadConf
 #     sample=loadConf('None.200_controls', 'Ref')
 #     dic=sample_group(sample, 10, sample_ps)
-    # print(dic)
+# print(dic)

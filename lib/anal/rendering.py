@@ -142,6 +142,7 @@ class Viewer(object):
     def draw_text_box(self, text_font, text_position):
         self._window.blit(text_font, text_position)
 
+
     def draw_arrow(self, start, end, color=(0, 0, 0), width=.01):
         size = 4
         start = self._transform(start)
@@ -197,6 +198,7 @@ class Viewer(object):
         if pos is None:
             pos = self.center - self.center_lim * [dx, dy]
         self.center = np.clip(pos, self.center_lim, -self.center_lim)
+
 
 
 class ScreenItem:
@@ -533,3 +535,22 @@ def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, traj_colo
                     c = [tuple(float(x) for x in s.strip('()').split(',')) for s in c]
                     c = [s if not np.isnan(s).any() else (255, 0, 0) for s in c]
                     screen.draw_polyline(t, color=c, closed=False, width=0.01 * space_dims[0], dynamic_color=True)
+
+def blit_text(surface, text, pos, font=None, color=pygame.Color('white')):
+    if font is None :
+        font=pygame.font.SysFont('Arial', 20)
+    words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
+    space = font.size(' ')[0]  # The width of a space.
+    max_width, max_height = surface.get_size()
+    x, y = pos
+    for line in words:
+        for word in line:
+            word_surface = font.render(word, 0, color)
+            word_width, word_height = word_surface.get_size()
+            if x + word_width >= max_width:
+                x = pos[0]  # Reset the x.
+                y += word_height  # Start on new row.
+            surface.blit(word_surface, (x, y))
+            x += word_width + space
+        x = pos[0]  # Reset the x.
+        y += word_height  # Start on new row.
