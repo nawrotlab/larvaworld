@@ -666,6 +666,9 @@ def sample_group(sample, N, sample_ps):
     e = d.read('end')
     ps = [p for p in sample_ps if p in e.columns]
     means = [e[p].mean() for p in ps]
+    # for p in ps :
+    #     print(p, e[p].mean())
+    #     print(p, e[p].std())
 
     if len(ps) >= 2:
         base = e[ps].values.T
@@ -678,3 +681,15 @@ def sample_group(sample, N, sample_ps):
         return {}
     dic = {p: v for p, v in zip(ps, vs)}
     return dic
+
+
+
+# if __name__ == '__main__':
+#     RefPars = lib.aux.dictsNlists.load_dict(paths.path('ParRef'), use_pickle=False)
+#     print(RefPars)
+#     sample_ps=list(RefPars.keys())
+#
+#     from lib.conf.stored.conf import loadConf
+#     sample=loadConf('None.200_controls', 'Ref')
+#     dic=sample_group(sample, 10, sample_ps)
+    # print(dic)

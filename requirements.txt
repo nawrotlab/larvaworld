@@ -4,7 +4,7 @@ nengo==3.1.0
 mesa~=0.8.6
 box2d-py
 imageio
-#imageio-ffmpeg
+imageio-ffmpeg
 pygame==2.0.1
 pandas==1.1.5
 joblib==1.0.1
@@ -32,6 +32,6 @@ progressbar2~=3.53.1
 ipykernel
 PySimpleGUI==4.40.0
 #future~=0.18.2
-#siunits~=0.0.5
+siunits~=0.0.5
 statsmodels~=0.12.2
 webcolors~=1.3
