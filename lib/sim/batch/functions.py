@@ -227,6 +227,7 @@ def post_processing(traj, result_tuple):
     runs = traj.f_get_run_names()
     Nruns = len(runs)
     fits = [traj.res.runs.f_get(run).f_get(fit_par).f_get() for run in runs]
+
     if minimize:
         best = np.nanmin(fits)
         best_idx = np.nanargmin(fits)
@@ -253,16 +254,11 @@ def post_processing(traj, result_tuple):
         else:
             print(f'Best result reached threshold. Halting search')
         print(f'Best configuration is {best_config} with result {best}')
-    # try:
-    #     traj.f_remove_items(['best_run_name'])
-    # except:
-    #     pass
-    # traj.f_add_result('best_run_name', best_run, comment=f'The run with the best result')
     traj.f_store()
 
 
 def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
-    with suppress_stdout(True):
+    with suppress_stdout(False):
         ds = SingleRun(**retrieve_exp_conf(traj), **exp_kws).run()
 
         if procfunc is None:

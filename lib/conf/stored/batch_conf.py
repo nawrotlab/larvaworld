@@ -63,9 +63,6 @@ batch_dict = {
     **batch('growth',
             ss={'EEB': [(0.5, 0.8), 8],'hunger_gain': [(0.0, 0.0), 1]},
             o='deb_f_deviation', o_kws={'max_Nsims': 20, 'operations': {'mean': True, 'abs': True}}),
-    # **batch('RvsS',
-    #         ss={'substrate_quality': [(0.5, 0.8), 2], 'hours_as_larva': [(0, 100), 2]},
-    #         bm = 'DEB'),
     **batch('imitation',
             ss={'activation_noise': [(0.0, 0.8), 3], 'base_activation': [(15.0, 25.0), 3]},
             o='sample_fit', o_kws={'threshold': 1.0, 'max_Nsims': 20, 'operations': {'mean': False, 'abs': False}},
@@ -75,9 +72,11 @@ batch_dict = {
             o='cum_food_detected', o_kws={'threshold': 1000.0, 'max_Nsims': 80, 'minimize' : False, 'Nbest' : 8,
                                           'operations': {'mean': True, 'abs': False}}),
 **batch('anemotaxis',
-            ss={f'windsensor_params.weights.{m1}_{m2}': [(-10.0, 10.0), 3] for m1,m2 in zip(['bend','bend', 'hunch','hunch'], ['lin','ang', 'lin','ang'])},
-            o='anemotaxis', o_kws={'threshold': 1000.0, 'max_Nsims': 50, 'minimize' : False, 'Nbest' : 8,
-                                          'operations': {'mean': True, 'abs': False}}, en=enrichment_dict(types=['spatial', 'angular', 'wind'])),
+            # ss={f'windsensor_params.weights.{m1}_{m2}': [(-20.0, 20.0), 2] for m1,m2 in zip(['bend','bend', 'hunch','hunch'], ['lin','ang', 'lin','ang'])},
+            ss={f'windsensor_params.weights.{m1}_{m2}': [(-20.0, 20.0), 6] for m1,m2 in zip(['bend', 'hunch'], ['ang', 'lin'])},
+            o='anemotaxis', o_kws={'threshold': 1000.0, 'max_Nsims': 100, 'minimize' : False, 'Nbest' : 8,
+                                          'operations': {'mean': True, 'abs': False}}, en=enrichment_dict(types=['wind'])),
+                                          # 'operations': {'mean': True, 'abs': False}}, en=enrichment_dict(types=['wind', 'spatial', 'angular'])),
 
 }
 

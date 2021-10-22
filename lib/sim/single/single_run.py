@@ -68,7 +68,7 @@ class SingleRun:
             dur = end - self.start
             self.param_dict['date'] = datetime.datetime.now()
             self.param_dict['duration'] = np.round(dur, 2)
-            print(f'    Simulation completed in {np.round(dur).astype(int)} seconds!')
+            print(f'    Simulation {self.id} completed in {np.round(dur).astype(int)} seconds!')
             res = store_data(self.env, self.d, self.store_data, self.enrichment, self.param_dict)
             # if analysis and ds is not None :
             #     from lib.sim.analysis import sim_analysis

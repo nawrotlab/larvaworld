@@ -393,6 +393,20 @@ def comp_wind_metrics(s, e,config, **kwargs):
         s[nam.bearing2('wind')]=s.apply(lambda r: angle_dif(r[nam.orient('front')], wo), axis=1)
         e['anemotaxis'] = s['anemotaxis'].groupby('AgentID').last()
 
+def comp_final_anemotaxis(s, e,config, **kwargs) :
+    w = config['env_params']['windscape']
+    if w is not None:
+        wo, wv = w['wind_direction'], w['wind_speed']
+        woo = np.deg2rad(wo)
+        xy0 = s[['x', 'y']].groupby('AgentID').first()
+        xy1 = s[['x', 'y']].groupby('AgentID').last()
+        dx = xy1.values[:, 0] - xy0.values[:, 0]
+        dy = xy1.values[:, 1] - xy0.values[:, 1]
+        d=np.sqrt(dx**2+dy**2)
+        angs = np.arctan2(dy, dx)
+        a = np.array([angle_dif(ang, woo) for ang in angs])
+        e['anemotaxis'] = d * np.cos(a)
+        # print(e['anemotaxis'])
 
 def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', config=None, **kwargs):
     ids = s.index.unique(level='AgentID').values

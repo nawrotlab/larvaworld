@@ -7,7 +7,7 @@ from lib.aux.dictsNlists import common_member
 import lib.aux.naming as nam
 from lib.process.angular import angular_processing
 from lib.process.spatial import spatial_processing, comp_source_metrics, comp_dispersion, comp_tortuosity, comp_PI, \
-    align_trajectories, comp_wind_metrics
+    align_trajectories, comp_wind_metrics, comp_final_anemotaxis
 from lib.conf.base.par import getPar
 
 
@@ -230,7 +230,10 @@ def process(s, e, config, mode='minimal', traj_colors=True, show_output=True,
         if types['source']:
             comp_source_metrics(**c, **kwargs)
         if types['wind']:
-            comp_wind_metrics(**c, **kwargs)
+            if types['spatial']:
+                comp_wind_metrics(**c, **kwargs)
+            else :
+                comp_final_anemotaxis(**c, **kwargs)
         if types['dispersion'] and type(dsp_starts) == list and type(dsp_stops) == list:
             comp_dispersion(**c, starts=dsp_starts, stops=dsp_stops, **kwargs)
         if types['tortuosity'] and type(tor_durs) == list:

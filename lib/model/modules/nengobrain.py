@@ -29,7 +29,7 @@ class NengoBrain(Network, Brain):
         else:
             self.intermitter = None
         self.build()
-        self.sim = Simulator(self, dt=0.01)
+        self.sim = Simulator(self, dt=0.01, progress_bar=False)
         self.Nsteps = int(dt / self.sim.dt)
 
     def build(self):
@@ -153,7 +153,7 @@ class NengoBrain(Network, Brain):
 
             Connection(Vs[0], linV, synapse=0, function=crawler)
             Connection(Vs[1], angV, synapse=0, function=turner)
-            self.loco_probes = {k: Probe(v) for k, v in zip(['Vs', 'linV', 'angV', 'interference', 'angFr', 'linFr', 'linFrIn', 'angFrIn'], [Vs, linV, angV, interference, angFr, linFr, linFrIn, angFrIn])}
+
             # Collect data for plotting
             self.p_speeds = Probe(Vs)
             self.p_linV = Probe(linV)
@@ -170,7 +170,7 @@ class NengoBrain(Network, Brain):
                 Connection(z[0], interference[2], synapse=0)
                 Connection(Vs[2], feeV, synapse=0, function=feeder)
                 self.p_feeV = Probe(feeV)
-                self.feed_probes = {k: Probe(v) for k, v in zip(['feeFrIn', 'feeFr', 'feeV'],[feeFrIn, feeFr, feeV])}
+
 
                 if self.food_feedback:
                     f_cur = Node(a.get_on_food, size_out=1)
@@ -181,9 +181,7 @@ class NengoBrain(Network, Brain):
                     Connection(f_cur, feeFr, synapse=s1, transform=1)
                     Connection(f_suc, feeFr, synapse=0.01, transform=1)
                     Connection(f_suc, linFr, synapse=0.01, transform=-1)
-                    self.feed_probes.update({k: Probe(v) for k, v in zip(['f_cur', 'f_suc'],[f_cur, f_suc])})
-            else :
-                self.feed_probes = {}
+
 
             if ws is not None:
                 Ch = Node(ws.get_activation, size_out=1)
@@ -198,47 +196,59 @@ class NengoBrain(Network, Brain):
                 Bend = Ensemble(N2, 1, neuron_type=Direct())
                 Connection(Ch, LNa, synapse=0.01, transform=1)
                 Connection(Ch, LNb, synapse=0.01, transform=1)
-                Connection(Ch, Hb, synapse=0.01, transform=0.1)
+                Connection(Ch, Hb, synapse=0.01, transform=0.3)
                 Connection(Ch, B1, synapse=0.01, transform=1)
-                Connection(Ch, B2, synapse=0.01, transform=0.1)
+                Connection(Ch, B2, synapse=0.01, transform=0.3)
                 Connection(LNa, LNb, synapse=0.01, transform=-1)
                 Connection(LNb, LNa, synapse=0.01, transform=-1)
                 Connection(LNa, B2, synapse=0.01, transform=-1)
                 Connection(LNb, B1, synapse=0.01, transform=-1)
                 Connection(LNa, B1, synapse=0.01, transform=-0.1)
                 Connection(LNb, B2, synapse=0.01, transform=-0.1)
-                Connection(LNa, Ha, synapse=0.01, transform=-0.1)
-                Connection(LNb, Ha, synapse=0.01, transform=-0.1)
-                Connection(LNa, Hb, synapse=0.01, transform=-0.1)
-                Connection(LNb, Hb, synapse=0.01, transform=-0.1)
-                Connection(Ha, LNa, synapse=0.01, transform=-0.1)
-                Connection(Ha, LNb, synapse=0.01, transform=-0.1)
-                Connection(Hb, LNa, synapse=0.01, transform=-0.5)
-                Connection(Hb, LNb, synapse=0.01, transform=-0.5)
+                Connection(LNa, Ha, synapse=0.01, transform=-0.2)
+                Connection(LNb, Ha, synapse=0.01, transform=-0.2)
+                Connection(LNa, Hb, synapse=0.01, transform=-0.2)
+                Connection(LNb, Hb, synapse=0.01, transform=-0.2)
+                Connection(Ha, LNa, synapse=0.01, transform=-0.2)
+                Connection(Ha, LNb, synapse=0.01, transform=-0.2)
+                Connection(Hb, LNa, synapse=0.01, transform=-0.6)
+                Connection(Hb, LNb, synapse=0.01, transform=-0.6)
                 Connection(B1, Ha, synapse=0.01, transform=0.1)
                 Connection(B2, Ha, synapse=0.01, transform=0.1)
                 Connection(B2, Hb, synapse=0.01, transform=0.1)
-                Connection(B2, Hunch, synapse=0.01, transform=-0.1)
-                Connection(B2, Bend, synapse=0.01, transform=0.1)
-                Connection(B1, Hunch, synapse=0.01, transform=0.1)
-                Connection(B1, Bend, synapse=0.01, transform=0.1)
-                Connection(Hunch, linV, synapse=0.0, transform=ws.weights['hunch_lin'])
-                Connection(Hunch, angV, synapse=0.0, transform=ws.weights['hunch_ang'])
-                Connection(Bend, linV, synapse=0.0, transform=ws.weights['bend_lin'])
-                Connection(Bend, angV, synapse=0.0, transform=ws.weights['bend_ang'])
-                self.anemo_probes = {k: Probe(v) for k, v in zip(['Ch', 'LNa', 'LNb', 'Ha', 'Hb', 'B1', 'B2', 'Bend', 'Hunch'],
-                                                                 [Ch, LNa, LNb, Ha, Hb, B1, B2, Bend, Hunch])}
+                Connection(B2, Hunch, synapse=0.01, transform=-0.3)
+                Connection(B2, Bend, synapse=0.01, transform=0.3)
+                Connection(B1, Hunch, synapse=0.01, transform=0.3)
+                Connection(B1, Bend, synapse=0.01, transform=0.3)
+                Connection(Hunch, linFr, synapse=0.0, transform=ws.weights['hunch_lin'])
+                Connection(Hunch, angFr, synapse=0.0, transform=ws.weights['hunch_ang'])
+                Connection(Bend, linFr, synapse=0.0, transform=ws.weights['bend_lin'])
+                Connection(Bend, angFr, synapse=0.0, transform=ws.weights['bend_ang'])
+
+            if True :
+                if self.feeder is not None :
+                    self.feed_probes = {k: Probe(v) for k, v in zip(['feeFrIn', 'feeFr', 'feeV'], [feeFrIn, feeFr, feeV])}
+                    if self.food_feedback :
+                        self.feed_probes.update({k: Probe(v) for k, v in zip(['f_cur', 'f_suc'], [f_cur, f_suc])})
+                else:
+                    self.feed_probes = {}
+                if ws is not None :
+                    self.anemo_probes = {k: Probe(v) for k, v in zip(['Ch', 'LNa', 'LNb', 'Ha', 'Hb', 'B1', 'B2', 'Bend', 'Hunch'],
+                                                                     [Ch, LNa, LNb, Ha, Hb, B1, B2, Bend, Hunch])}
+                else :
+                    self.anemo_probes={}
+                self.loco_probes = {k: Probe(v) for k, v in
+                                    zip(['Vs', 'linV', 'angV', 'interference', 'angFr', 'linFr', 'linFrIn', 'angFrIn'],
+                                        [Vs, linV, angV, interference, angFr, linFr, linFrIn, angFrIn])}
+                self.dict = {
+                    'anemotaxis':{k: [] for k in self.anemo_probes.keys()},
+                    'locomotion':{k: [] for k in self.loco_probes.keys()},
+                    'feeding':{k: [] for k in self.feed_probes.keys()},
+                             }
             else :
-                self.anemo_probes={}
-            self.dict = {
-                'anemotaxis':{k: [] for k in self.anemo_probes.keys()},
-                'locomotion':{k: [] for k in self.loco_probes.keys()},
-                'feeding':{k: [] for k in self.feed_probes.keys()},
-                         }
-            # self.dict = {k: [] for k in list(self.anemo_probes.keys())+list(self.loco_probes.keys())+list(self.feed_probes.keys())}
+                self.dict=None
 
     def update_dict(self, data):
-        # for n in [self.anemo_probes] :
         for n,m in zip([self.anemo_probes, self.loco_probes, self.feed_probes], ['anemotaxis', 'locomotion', 'feeding']) :
             for k, v in n.items() :
                 self.dict[m][k].append(np.mean(data[v][-self.Nsteps:]))
@@ -276,7 +286,8 @@ class NengoBrain(Network, Brain):
         lin = self.mean_lin_s(d) * l + np.random.normal(scale=self.crawler.noise * l)
         feed = self.feed_event(d)
         self.olfactory_activation = 100 * self.mean_odor_change(d)
-        self.update_dict(d)
+        if self.dict is not None :
+            self.update_dict(d)
         self.sim.clear_probes()
         return lin, ang, feed
 

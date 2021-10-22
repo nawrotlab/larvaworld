@@ -326,7 +326,8 @@ class BodySim(BodyManager):
         ang_vel0 = np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
 
         def avoid_border(ang_vel, counter, dd=0.01):
-
+            if math.isinf(ang_vel):
+                ang_vel = 1.0
             if self.touch_sensors is None or any([ss not in self.get_sensors() for ss in ['L_front', 'R_front']]):
                 counter += 1
                 ang_vel *= -(1 + dd * counter)
@@ -344,7 +345,6 @@ class BodySim(BodyManager):
         def check_in_tank(ang_vel, o0, d, hr0):
 
             o1 = o0 + ang_vel * dt
-            # print(o1,o0,ang_vel,dt)
             k = np.array([math.cos(o1), math.sin(o1)])
             dxy = k * d
             if self.Nsegs > 1:
@@ -363,7 +363,10 @@ class BodySim(BodyManager):
         counter = -1
         while not in_tank:
             ang_vel, counter = avoid_border(ang_vel, counter)
-            in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
+            try :
+                in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
+            except :
+                pass
 
         if counter > 0:
             # print(counter)

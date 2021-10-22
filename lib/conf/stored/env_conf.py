@@ -113,7 +113,7 @@ env_dict = {
                           f_pars(sg=sg('FoodLine', o=oG(), a=0.002, r=0.001, N=20, sh='oval', s=(0.01, 0.0),
                                        m='periphery')), 'G'),
 
-    'windy_arena': env(arena(0.2, 0.2), w=[85.0, 1.0]),
+    'windy_arena': env(arena(0.3, 0.3), w=[0.0, 1.0]),
 
     'CS_UCS_on_food': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(1)), 'G'),
     'CS_UCS_on_food_x2': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(2)), 'G'),

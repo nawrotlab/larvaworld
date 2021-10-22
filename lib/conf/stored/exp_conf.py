@@ -75,6 +75,11 @@ def simple_exp(name, dur=10.0, en=True, **kwargs):
     return exp(name, sim={'duration': dur}, en=en, **kwargs)
 
 
+def anemo_exp(name, dur=5.0, c=['wind'], en=False, enrichment=enrichment_dict(types=['spatial', 'angular', 'wind']),
+              **kwargs):
+    return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
+
+
 def pref_exp(name, dur=5.0, c=[], enrichment=enrichment_dict(types=['PI']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
@@ -135,9 +140,10 @@ grouped_exp_dict = {
                               l=lgs(models=['Orco_forager', 'forager'],
                                     ids=['Orco', 'control'], N=5, sh='oval', p=(0.0, 0.04), s=(0.04, 0.01)))
     },
-    'anemotaxis' : {
-        'anemotaxis': simple_exp('windy_arena', dur=0.5, l=lg(m='nengo_explorer', N=10),c=['wind'],
-                                 enrichment=enrichment_dict(types=['spatial', 'angular', 'wind']), en=False)
+    'anemotaxis': {
+        'anemotaxis': anemo_exp('windy_arena', dur=0.5, l=lg(m='nengo_explorer', N=4)),
+        'anemotaxis_x2': anemo_exp('windy_arena', dur=2, l=lgs(models=['nengo_explorer', 'explorer'],
+                                                                 ids=['nengo', 'control'], N=10))
     },
 
     'odor_preference': {
@@ -154,8 +160,8 @@ grouped_exp_dict = {
         'uniform_food': food_exp('uniform_food', l=lg(m='Orco_forager', N=5, s=0.005)),
         'food_grid': food_exp('food_grid', l=lg(m='Orco_forager', N=25)),
         'single_odor_patch': food_exp('single_odor_patch',
-                                 l=lgs(models=['Orco_forager', 'forager', 'nengo_forager'],
-                                       ids=['Orco', 'control', 'nengo'], N=5, mode='periphery', s=0.03)),
+                                      l=lgs(models=['Orco_forager', 'forager', 'nengo_forager'],
+                                            ids=['Orco', 'control', 'nengo'], N=5, mode='periphery', s=0.03)),
         'double_patch': food_exp('double_patch', l=RvsS_groups(N=5),
                                  c=['toucher', 'feeder', 'olfactor'],
                                  enrichment=enrichment_dict(types=['spatial', 'angular', 'source']), en=False),
@@ -200,4 +206,3 @@ grouped_exp_dict = {
         'imitation': imitation_exp('None.200_controls', model='explorer'),
     }
 }
-
