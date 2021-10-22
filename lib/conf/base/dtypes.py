@@ -348,17 +348,11 @@ def init_pars():
             'input_noise': {'v': 0.0, 'max': 1.0},
             'decay_coef': {'v': 0.0, 'max': 2.0}},
         'windsensor': {
-            # 'weights': {
-            #     'hunch_lin': {'v': -20.0, 'min': -100.0, 'max': 100.0},
-            #     'hunch_ang': {'v': 0.0, 'min': -100.0, 'max': 100.0},
-            #     'bend_lin': {'v': 0.0, 'min': -100.0, 'max': 100.0},
-            #     'bend_ang': {'v': 20.0, 'min': -100.0, 'max': 100.0},
-            # }
             'weights': {
-                'hunch_lin': {'v': -20.0, 'min': -100.0, 'max': 100.0},
-                'hunch_ang': {'v': 20.0, 'min': -100.0, 'max': 100.0},
-                'bend_lin': {'v': -20.0, 'min': -100.0, 'max': 100.0},
-                'bend_ang': {'v': -20.0, 'min': -100.0, 'max': 100.0},
+                'hunch_lin': {'v': -1.0, 'min': -100.0, 'max': 100.0},
+                'hunch_ang': {'v': 0.0, 'min': -100.0, 'max': 100.0},
+                'bend_lin': {'v': 0.0, 'min': -100.0, 'max': 100.0},
+                'bend_ang': {'v': 1.0, 'min': -100.0, 'max': 100.0},
             }
         },
         'toucher': {
