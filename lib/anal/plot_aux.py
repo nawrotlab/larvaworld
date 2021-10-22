@@ -44,7 +44,7 @@ class Plot :
         self.axs = axs.ravel() if Nrows*Ncols > 1 else [axs]
 
 
-    def conf_ax(self, idx=0, xlab=None, ylab=None, xlim=None, ylim=None, xticks=None, xticklabels=None,
+    def conf_ax(self, idx=0, xlab=None, ylab=None, xlim=None, ylim=None, xticks=None, xticklabels=None,yticks=None, yticklabels=None,
                 xMaxN=None, yMaxN=None,xMath=None,tickMath=None,ytickMath=None, leg_loc=None,leg_handles=None, title=None):
         ax=self.axs[idx]
         if ylab is not None:
@@ -60,6 +60,10 @@ class Plot :
             ax.set_xticks(ticks=xticks)
         if xticklabels is not None:
             ax.set_xticklabels(labels=xticklabels)
+        if yticks is not None:
+            ax.set_yticks(ticks=yticks)
+        if yticklabels is not None:
+            ax.set_yticklabels(labels=yticklabels)
         if tickMath is not None:
             ax.ticklabel_format(useMathText=True, scilimits=tickMath)
         if ytickMath is not None:

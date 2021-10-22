@@ -32,43 +32,8 @@ class Larva(LarvaworldAgent):
         return color
 
     @property
-    def first_odor_concentration(self):
-        return list(self.brain.olfactor.X.values())[0]
-
-    @property
-    def second_odor_concentration(self):
-        return list(self.brain.olfactor.X.values())[1]
-
-    @property
-    def first_odor_best_gain(self):
-        return list(self.brain.memory.best_gain.values())[0]
-
-    @property
-    def second_odor_best_gain(self):
-        return list(self.brain.memory.best_gain.values())[1]
-
-    # @property
-    # def best_olfactor_decay(self):
-    #     return self.brain.memory.best_decay_coef
-
-    @property
-    def cum_reward(self):
-        try:
-            return self.brain.memory.rewardSum
-        except:
-            return self.brain.touch_memory.rewardSum
-
-    @property
     def dt(self):
         return self.model.dt
-
-    @property
-    def first_odor_concentration_change(self):
-        return list(self.brain.olfactor.dX.values())[0]
-
-    @property
-    def second_odor_concentration_change(self):
-        return list(self.brain.olfactor.dX.values())[1]
 
     @property
     def scaled_amount_eaten(self):

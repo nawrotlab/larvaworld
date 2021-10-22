@@ -107,6 +107,22 @@ class Olfactor(Sensor):
     def __init__(self, odor_dict={}, **kwargs):
         super().__init__(gain_dict=odor_dict, **kwargs)
 
+    @property
+    def first_odor_concentration(self):
+        return list(self.X.values())[0]
+
+    @property
+    def second_odor_concentration(self):
+        return list(self.X.values())[1]
+
+    @property
+    def first_odor_concentration_change(self):
+        return list(self.dX.values())[0]
+
+    @property
+    def second_odor_concentration_change(self):
+        return list(self.dX.values())[1]
+
 class Toucher(Sensor):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)

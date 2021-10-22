@@ -2,6 +2,7 @@ from nengo import *
 import numpy as np
 from nengo.networks import EnsembleArray
 
+from lib.aux.dictsNlists import save_dict
 from lib.model.modules.brain import Brain
 from lib.model.modules.basic import Oscillator_coupling
 from lib.model.modules.intermitter import NengoIntermitter
@@ -152,7 +153,7 @@ class NengoBrain(Network, Brain):
 
             Connection(Vs[0], linV, synapse=0, function=crawler)
             Connection(Vs[1], angV, synapse=0, function=turner)
-
+            self.loco_probes = {k: Probe(v) for k, v in zip(['Vs', 'linV', 'angV', 'interference', 'angFr', 'linFr', 'linFrIn', 'angFrIn'], [Vs, linV, angV, interference, angFr, linFr, linFrIn, angFrIn])}
             # Collect data for plotting
             self.p_speeds = Probe(Vs)
             self.p_linV = Probe(linV)
@@ -169,6 +170,7 @@ class NengoBrain(Network, Brain):
                 Connection(z[0], interference[2], synapse=0)
                 Connection(Vs[2], feeV, synapse=0, function=feeder)
                 self.p_feeV = Probe(feeV)
+                self.feed_probes = {k: Probe(v) for k, v in zip(['feeFrIn', 'feeFr', 'feeV'],[feeFrIn, feeFr, feeV])}
 
                 if self.food_feedback:
                     f_cur = Node(a.get_on_food, size_out=1)
@@ -179,9 +181,13 @@ class NengoBrain(Network, Brain):
                     Connection(f_cur, feeFr, synapse=s1, transform=1)
                     Connection(f_suc, feeFr, synapse=0.01, transform=1)
                     Connection(f_suc, linFr, synapse=0.01, transform=-1)
+                    self.feed_probes.update({k: Probe(v) for k, v in zip(['f_cur', 'f_suc'],[f_cur, f_suc])})
+            else :
+                self.feed_probes = {}
 
             if ws is not None:
                 Ch = Node(ws.get_activation, size_out=1)
+
                 LNa = Ensemble(N2, 1, neuron_type=Direct())
                 LNb = Ensemble(N2, 1, neuron_type=Direct())
                 Ha = Ensemble(N2, 1, neuron_type=Direct())
@@ -220,8 +226,23 @@ class NengoBrain(Network, Brain):
                 Connection(Hunch, angV, synapse=0.0, transform=ws.weights['hunch_ang'])
                 Connection(Bend, linV, synapse=0.0, transform=ws.weights['bend_lin'])
                 Connection(Bend, angV, synapse=0.0, transform=ws.weights['bend_ang'])
-                self.p_Bend = Probe(Bend)
-                self.p_Hunch = Probe(Hunch)
+                self.anemo_probes = {k: Probe(v) for k, v in zip(['Ch', 'LNa', 'LNb', 'Ha', 'Hb', 'B1', 'B2', 'Bend', 'Hunch'],
+                                                                 [Ch, LNa, LNb, Ha, Hb, B1, B2, Bend, Hunch])}
+            else :
+                self.anemo_probes={}
+            self.dict = {
+                'anemotaxis':{k: [] for k in self.anemo_probes.keys()},
+                'locomotion':{k: [] for k in self.loco_probes.keys()},
+                'feeding':{k: [] for k in self.feed_probes.keys()},
+                         }
+            # self.dict = {k: [] for k in list(self.anemo_probes.keys())+list(self.loco_probes.keys())+list(self.feed_probes.keys())}
+
+    def update_dict(self, data):
+        # for n in [self.anemo_probes] :
+        for n,m in zip([self.anemo_probes, self.loco_probes, self.feed_probes], ['anemotaxis', 'locomotion', 'feeding']) :
+            for k, v in n.items() :
+                self.dict[m][k].append(np.mean(data[v][-self.Nsteps:]))
+
 
     def mean_odor_change(self, data):
         if self.olfactor is not None :
@@ -255,8 +276,13 @@ class NengoBrain(Network, Brain):
         lin = self.mean_lin_s(d) * l + np.random.normal(scale=self.crawler.noise * l)
         feed = self.feed_event(d)
         self.olfactory_activation = 100 * self.mean_odor_change(d)
+        self.update_dict(d)
         self.sim.clear_probes()
         return lin, ang, feed
+
+    def save_dicts(self, path):
+        if self.dict is not None:
+            save_dict(self.dict, f'{path}/{self.agent.unique_id}.txt', use_pickle=False)
 
 class NengoEffector:
     def __init__(self, initial_freq=None, default_freq=None, freq_range=None, initial_amp=None, amp_range=None,

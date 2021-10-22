@@ -2704,6 +2704,28 @@ def boxplot_double_patch(xlabel='substrate', complex_colors=True, **kwargs):
     P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.1, right=0.95, hspace=0.3, wspace=0.3)
     return P.get()
 
+def plot_nengo_network(subfolder='nengo',k0='anemotaxis', **kwargs):
+    P = Plot(name=f'{k0}_network', subfolder=subfolder, **kwargs)
+    Nds=P.Ndatasets
+    Nids=np.max([len(d.agent_ids) for d in P.datasets])
+    dur = np.max([d.duration for d in P.datasets])
+    dt = np.max([d.dt for d in P.datasets])
+    x = np.arange(0, dur/60, dt/60)
+    P.build(Nids, Nds, figsize=(Nds * 20, Nids * 10), sharex=True, sharey=True)
+    for i,d in enumerate(P.datasets) :
+        dics=d.load_dicts('nengo', use_pickle=False)
+        Nprobes=len(dics[0][k0])
+        probecols=N_colors(Nprobes)
+        for j, dic in enumerate(dics) :
+            idx=j*Nds+i
+            for ii,(k,v) in enumerate(dic[k0].items()) :
+                P.axs[idx].plot(x, v, color=probecols[ii], label=k)
+            P.conf_ax(idx, xlab=r'time $min$' if j==Nids-1 else None, ylab='activity' if i==0 else None,
+                      yticks=[] if i!=0 else None,yticklabels=[] if i!=0 else None,yMaxN=8, leg_loc='upper right')
+    P.adjust((0.15, 0.95), (0.1, 0.95), 0.1, 0.001)
+    return P.get()
+
+
 
 graph_dict = {
     'crawl pars': plot_crawl_pars,

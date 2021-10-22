@@ -718,26 +718,25 @@ class DEB:
     def deb_f_mean(self):
         return np.mean(self.dict['f'])
 
-    @property
-    def gut_occupancy(self):
-        return self.gut.occupancy
+    # @property
+    # def gut_occupancy(self):
+    #     return self.gut.occupancy
 
     @property
     def ingested_body_mass_ratio(self):
-        return self.gut.ingested_mass() / self.deb.Ww * 100
+        return self.gut.ingested_mass() / self.Ww * 100
 
     @property
     def ingested_body_volume_ratio(self):
-        return self.gut.ingested_volume / self.deb.V * 100
+        return self.gut.ingested_volume / self.V * 100
 
     @property
     def ingested_gut_volume_ratio(self):
-        return self.gut.ingested_volume / (self.deb.V * self.deb.gut.V_gm) * 100
+        return self.gut.ingested_volume / (self.V * self.gut.V_gm) * 100
 
     @property
     def ingested_body_area_ratio(self):
-        return (self.gut.ingested_volume / self.deb.V) ** (1 / 2) * 100
-        # return (self.deb.gut.ingested_volume()/self.deb.V)**(2/3)*100
+        return (self.gut.ingested_volume / self.V) ** (1 / 2) * 100
 
     @property
     def amount_absorbed(self):

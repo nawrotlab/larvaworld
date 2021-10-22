@@ -125,10 +125,22 @@ class RLmemory(Effector):
             self.gain[id] = self.actions[actionID][ii]
         return actionID
 
+    # @property
+    # def cum_reward(self):
+    #     return self.rewardSum
+
 
 class RLOlfMemory(RLmemory):
     def __init__(self, mode='olf', **kwargs):
         super().__init__(**kwargs)
+
+    @property
+    def first_odor_best_gain(self):
+        return list(self.best_gain.values())[0]
+
+    @property
+    def second_odor_best_gain(self):
+        return list(self.best_gain.values())[1]
 
 
 

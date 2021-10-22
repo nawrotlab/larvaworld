@@ -12,6 +12,7 @@ import lib.aux.naming as nam
 from lib.conf.base.dtypes import null_dict
 
 
+
 class LarvaDataset:
     def __init__(self, dir, id='unnamed', fr=16, Npoints=None, Ncontour=0,
                  par_conf=None, load_data=True, env_params={}, larva_groups={}):
@@ -235,9 +236,12 @@ class LarvaDataset:
         print(f'Dataset {self.id} stored.')
 
     def save_dicts(self, env):
+        from lib.model.modules.nengobrain import NengoBrain
         for l in env.get_flies():
             if hasattr(l, 'deb') and l.deb is not None:
                 l.deb.finalize_dict(self.dir_dict['deb'])
+            elif isinstance(l.brain, NengoBrain) :
+                l.brain.save_dicts(self.dir_dict['nengo'])
             if l.brain.intermitter is not None:
                 l.brain.intermitter.save_dict(self.dir_dict['bout_dicts'])
 
@@ -349,6 +353,13 @@ class LarvaDataset:
             ids = self.agent_ids
         files = [f'{id}.txt' for id in ids]
         ds = dNl.load_dicts(files=files, folder=self.dir_dict['deb'], **kwargs)
+        return ds
+
+    def load_dicts(self, type, ids=None, **kwargs):
+        if ids is None:
+            ids = self.agent_ids
+        files = [f'{id}.txt' for id in ids]
+        ds = dNl.load_dicts(files=files, folder=self.dir_dict[type], **kwargs)
         return ds
 
     def get_pars_list(self, p0, s0, draw_Nsegs):
@@ -620,6 +631,7 @@ class LarvaDataset:
             'vis': self.vis_dir,
             'comp_plot': os.path.join(self.plot_dir, 'comparative'),
             'deb': os.path.join(self.data_dir, 'deb_dicts'),
+            'nengo': os.path.join(self.data_dir, 'nengo_probes'),
             'single_tracks': os.path.join(self.data_dir, 'single_tracks'),
             'bout_dicts': os.path.join(self.data_dir, 'bout_dicts'),
             'tables_h5': os.path.join(self.data_dir, 'tables.h5'),

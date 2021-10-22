@@ -770,12 +770,12 @@ class ParDict:
 
         for i, n in enumerate(['first', 'second', 'third']):
             k = f'c_odor{i + 1}'
-            self.add(p=f'{n}_odor_concentration', k=k, u=1 * siu.microM,  d=f'Odor {i + 1} Conc',
+            self.add(p=f'brain.olfactor.{n}_odor_concentration', k=k, u=1 * siu.microM,  d=f'Odor {i + 1} Conc',
                      s=sub('C', i + 1), lim=(0.0,2.5))
-            self.add(p=f'{n}_odor_concentration_change', k=f'd{k}', u=1 * siu.microM,
+            self.add(p=f'brain.olfactor.{n}_odor_concentration_change', k=f'd{k}', u=1 * siu.microM,
                      d=f'Odor {i + 1} DConc', s=sub(dot('C'), i + 1))
             kk = f'g_odor{i + 1}'
-            self.add(p=f'{n}_odor_best_gain', k=kk,  d=f'Odor {i + 1} Gain',
+            self.add(p=f'brain.memory.{n}_odor_best_gain', k=kk,  d=f'Odor {i + 1} Gain',
                      s=sub('G', i + 1))
 
     def build_chunk(self):
