@@ -225,12 +225,12 @@ def post_processing(traj, result_tuple):
     Nruns = len(runs)
     fits = [traj.res.runs.f_get(run).f_get(fit_par).f_get() for run in runs]
     if minimize:
-        best = min(fits)
-        best_idx = np.argmin(fits)
+        best = np.nanmin(fits)
+        best_idx = np.nanargmin(fits)
         thr_reached = best <= thr
     else:
-        best = max(fits)
-        best_idx = np.argmax(fits)
+        best = np.nanmax(fits)
+        best_idx = np.nanargmax(fits)
         thr_reached = best >= thr
     best_run = runs[best_idx]
     print(f'Best result out of {Nruns} runs : {best} in run {best_run}')

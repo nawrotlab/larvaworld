@@ -94,10 +94,15 @@ def fit_tortuosity_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
 def fit_global_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
     from lib.conf.stored.conf import imitation_exp
     conf=batch(exp=None,
-               ss={'activation_noise': [(0.0, 2.0), 3],'base_activation': [(15.0, 25.0), 3]},
-               o='sample_fit', o_kws={'threshold': 1.0, 'max_Nsims': 20, 'operations': {'mean': False, 'abs': False}},
+               ss={
+                   'turner_params.initial_amp': [(25.0, 50.0), 4],
+                   'turner_params.noise': [(0.0, 4.0), 4],
+                   'turner_params.activation_noise': [(0.0, 4.0), 4],
+               },
+               o='sample_fit', o_kws={'threshold': 0.1, 'Nbest': 8, 'max_Nsims': 140, 'operations': {'mean': False, 'abs': False}},
                bm={'run': 'exp_fit'},
-               en=base_enrich(fits=False),
+               en=enrichment_dict(types=['angular']),
+               # en=base_enrich(fits=False),
                as_entry=False
                )
     conf['exp'] = imitation_exp(sample, model=model, exp=exp, idx=idx, **kwargs)
@@ -109,7 +114,8 @@ def run_fit_global_batch(sample, **kwargs) :
     from run.exec_run import Exec
     from lib.anal.comparing import ExpFitter
     conf = fit_global_batch(sample=sample, **kwargs)
-    conf['proc_kws']['exp_fitter'] = ExpFitter(sample)
+    conf['proc_kws']['exp_fitter'] = ExpFitter(sample, valid_fields=['angular motion'])
+    # conf['proc_kws']['exp_fitter'] = ExpFitter(sample, valid_fields=['angular motion', 'reorientation', 'spatial motion'])
     k = Exec('batch', conf)
     return k.exec_run()
 

@@ -108,7 +108,7 @@ def nengo_brain(EEB):
     else:
         f_fr0, f_fr_r = 0.0, (0.0, 0.0)
     return brain(['L', 'F'],
-                 turner=null_dict('turner', initial_freq=0.3, initial_amp=10.0, noise=0.0, freq_range=(0.2, 0.4)),
+                 turner=null_dict('turner', initial_freq=0.3, initial_amp=38.0, noise=3.85, activation_noise=0.8, freq_range=(0.2, 0.4)),
                  crawler=null_dict('crawler', initial_freq=1.5, initial_amp=0.6, freq_range=(1.2, 1.8),
                                    waveform=None, step_to_length_mu=0.25, step_to_length_std=0.01),
                  feeder=null_dict('feeder', initial_freq=f_fr0, freq_range=f_fr_r),

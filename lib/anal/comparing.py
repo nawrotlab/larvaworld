@@ -13,7 +13,10 @@ from lib.conf.base.par import getPar
 
 class ExpFitter:
     from lib.stor.larva_dataset import LarvaDataset
-    def __init__(self, sample: Union[dict, str, LarvaDataset], stat_coefs=None, use_symbols=False, overwrite=False):
+    def __init__(self, sample: Union[dict, str, LarvaDataset], stat_coefs=None,
+                 valid_fields=['angular motion', 'reorientation', 'spatial motion', 'dispersion curve',
+                               'stride cycle curve'],
+                 use_symbols=False, overwrite=False):
         from lib.stor.larva_dataset import LarvaDataset
         if isinstance(sample, LarvaDataset):
             self.sample = sample
@@ -27,6 +30,7 @@ class ExpFitter:
             self.sample = LarvaDataset(self.sample_conf['dir'], load_data=True)
 
         key = 's' if use_symbols else 'd'
+        self.valid_fields = valid_fields
         self.df = self.multicol_df(key)
         columns = lib.aux.dictsNlists.flatten_list(self.df['cols'].values.tolist())
         self.m_col = pd.MultiIndex.from_tuples(columns, names=['Field', 'Pars'])
@@ -64,17 +68,18 @@ class ExpFitter:
 
     @property
     def default_stat_coefs(self):
+        N=5/len(self.valid_fields)
         coefs = {}
         for field, pars in self.df['pars'].items():
             if field in ['angular motion', 'reorientation', 'spatial motion']:
                 for p in pars:
-                    coefs[p] = 1 / len(pars)
+                    coefs[p] = N / len(pars)
             elif field in ['dispersion curve']:
                 for p in pars:
-                    coefs[p] = 1 / len(pars)
+                    coefs[p] = N / len(pars)
             elif field in ['stride cycle curve']:
                 for p in pars:
-                    coefs[p] = 1 / len(pars)
+                    coefs[p] = N / len(pars)
         return coefs
 
     def store(self):
@@ -124,19 +129,24 @@ class ExpFitter:
     def get_data(self, d, df):
         s, e = d.step_data, d.endpoint_data
         d_d = {}
-        d_d.update({p: np.abs(d.get_par(p).dropna().values.flatten()) for p in df['pars'].loc['angular motion']})
-        d_d.update({p: e[p].values for p in df['pars'].loc['spatial motion']})
-        d_d.update({p: d.get_par(p).dropna().values.flatten() for p in df['pars'].loc['reorientation']})
+        if 'angular motion' in self.valid_fields:
+            d_d.update({p: np.abs(d.get_par(p).dropna().values.flatten()) for p in df['pars'].loc['angular motion']})
+        if 'spatial motion' in self.valid_fields:
+            d_d.update({p: e[p].values for p in df['pars'].loc['spatial motion']})
+        if 'reorientation' in self.valid_fields:
+            d_d.update({p: d.get_par(p).dropna().values.flatten() for p in df['pars'].loc['reorientation']})
 
-        t0, t1 = int(0 * d.fr), int(40 * d.fr)
-        d_d['dispersion'] = d.load_aux('dispersion', 'dispersion')['median'][t0:t1]
-        d_d['scaled_dispersion'] = d.load_aux('dispersion', nam.scal('dispersion'))['median'][t0:t1]
+        if 'dispersion curve' in self.valid_fields:
+            t0, t1 = int(0 * d.fr), int(40 * d.fr)
+            d_d['dispersion'] = d.load_aux('dispersion', 'dispersion')['median'][t0:t1]
+            d_d['scaled_dispersion'] = d.load_aux('dispersion', nam.scal('dispersion'))['median'][t0:t1]
 
-        for p in df['pars'].loc['stride cycle curve']:
-            chunk_d = d.load_aux('stride', p).values
-            if any([x in p for x in ['bend', 'orientation']]):
-                chunk_d = np.abs(chunk_d)
-            d_d[f'str_{p}'] = np.nanquantile(chunk_d, q=0.5, axis=0)
+        if 'stride cycle curve' in self.valid_fields:
+            for p in df['pars'].loc['stride cycle curve']:
+                chunk_d = d.load_aux('stride', p).values
+                if any([x in p for x in ['bend', 'orientation']]):
+                    chunk_d = np.abs(chunk_d)
+                d_d[f'str_{p}'] = np.nanquantile(chunk_d, q=0.5, axis=0)
         return d_d
 
     def compare(self, d, save_to_config=False):
@@ -151,16 +161,22 @@ class ExpFitter:
             ps, cs = df[['pars', 'cols']].loc[g].values
             for p, c in zip(ps, cs):
                 if g in ['angular motion', 'reorientation', 'spatial motion']:
-                    st, pv = ks_2samp(ref_d[p], d_d[p])
-                    df_st0[c].loc[idx] = st
-                    # df_pv0[c].loc[idx] = pv
+                    if g in self.valid_fields:
+                        if d_d[p].shape[0] != 0:
+                            st, pv = ks_2samp(ref_d[p], d_d[p])
+                        else:
+                            st = 1.0
+                        df_st0[c].loc[idx] = st
+                        # df_pv0[c].loc[idx] = pv
                 elif g in ['dispersion curve']:
-                    dist = np.sqrt(np.sum((ref_d[p] - d_d[p]) ** 2)) / np.sum(np.abs(ref_d[p]))
-                    df_st0[c].loc[idx] = dist
+                    if g in self.valid_fields:
+                        dist = np.sqrt(np.sum((ref_d[p] - d_d[p]) ** 2)) / np.sum(np.abs(ref_d[p]))
+                        df_st0[c].loc[idx] = dist
                 elif g in ['stride cycle curve']:
-                    dist = np.sqrt(np.sum((ref_d[f'str_{p}'] - d_d[f'str_{p}']) ** 2)) / np.sum(
-                        np.abs(ref_d[f'str_{p}']))
-                    df_st0[c].loc[idx] = dist
+                    if g in self.valid_fields:
+                        dist = np.sqrt(np.sum((ref_d[f'str_{p}'] - d_d[f'str_{p}']) ** 2)) / np.sum(
+                            np.abs(ref_d[f'str_{p}']))
+                        df_st0[c].loc[idx] = dist
         self.df_st = self.df_st.append(df_st0)
         df_st00 = df_st0.droplevel('Field', axis=1).loc[idx]
         if save_to_config:
@@ -194,7 +210,7 @@ class ExpFitter:
 
     def get_fit(self, stats):
         cs = self.stat_coefs
-        fit = np.sum([s * cs[p] for p, s in stats.items()])
+        fit = np.nansum([s * cs[p] for p, s in stats.items()])
         return fit
 
 
