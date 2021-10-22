@@ -42,29 +42,30 @@ plt_conf = {'axes.labelsize': 20,
 plt.rcParams.update(plt_conf)
 suf = 'pdf'
 
-def plot_2pars(shorts,subfolder='step', **kwargs) :
+
+def plot_2pars(shorts, subfolder='step', **kwargs):
     ypar, ylab, ylim = getPar(shorts[1], to_return=['d', 'l', 'lim'])
     xpar, xlab, xlim = getPar(shorts[0], to_return=['d', 'l', 'lim'])
     P = Plot(name=f'{ypar}_VS_{xpar}', subfolder=subfolder, **kwargs)
     P.build()
-    ax=P.axs[0]
+    ax = P.axs[0]
     if P.Ndatasets == 1:
-        d=P.datasets[0]
+        d = P.datasets[0]
         Nids = len(d.agent_ids)
         cs = N_colors(Nids)
         s = d.read('step')
-        for j, id in enumerate(d.agent_ids) :
-            ss=s.xs(id, level='AgentID', drop_level=True)
+        for j, id in enumerate(d.agent_ids):
+            ss = s.xs(id, level='AgentID', drop_level=True)
             ax.scatter(ss[xpar], ss[ypar], color=cs[j], marker='.', label=id)
             ax.legend()
-    else :
+    else:
         for d, c in zip(P.datasets, P.colors):
-            s=d.read('step')
-            for id in d.agent_ids :
-                ss=s.xs(id, level='AgentID', drop_level=True)
+            s = d.read('step')
+            for id in d.agent_ids:
+                ss = s.xs(id, level='AgentID', drop_level=True)
                 ax.scatter(ss[xpar], ss[ypar], color=c, marker='.')
         dataset_legend(P.labels, P.colors, ax=ax, loc='upper left')
-    P.conf_ax(xlab=xlab, ylab=ylab, xlim=xlim,ylim=ylim, xMaxN=4, yMaxN=4)
+    P.conf_ax(xlab=xlab, ylab=ylab, xlim=xlim, ylim=ylim, xMaxN=4, yMaxN=4)
     P.adjust((0.15, 0.95), (0.15, 0.92), 0.05, 0.005)
     return P.get()
 
@@ -133,7 +134,7 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
                                       [0.3, 0.6]):
                     for kk, ss, BBB in zip([0, 1], [r'$L_{sided}$', r'$R_{sided}$'], BB):
                         circNarrow(P.axs[ii + k + 2 * kk], BBB, aa, f'{ss} {tt}', c)
-                        for iii in [ii + 1, ii + 2 + 1] :
+                        for iii in [ii + 1, ii + 2 + 1]:
                             P.axs[iii].legend(bbox_to_anchor=(-0.3, 0.1), loc='center', fontsize=12)
             if i == P.Ndatasets - 1:
                 if Nplots == 2:
@@ -190,7 +191,7 @@ def plot_crawl_pars(subfolder='endpoint', par_legend=False, **kwargs):
     for i, (p, p_lab, xlab, xlim) in enumerate(zip(pars, p_ls, xlabs, xlims)):
         P.plot_par(p, bins='broad', nbins=40, labels=p_lab, i=i, kde=True, stat="probability", element="step",
                    type='sns.hist', pvalues=True, half_circles=True)
-        P.conf_ax(i, ylab='probability' if i==0 else None,xlab=xlab, xlim=xlim, yMaxN=4,
+        P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=xlab, xlim=xlim, yMaxN=4,
                   leg_loc='upper right' if par_legend else None)
     dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left', fontsize=15)
     P.adjust((0.25 / len(pars), 0.99), (0.15, 0.95), 0.01)
@@ -379,7 +380,7 @@ def barplot(par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None, 
         leg_ids = P.labels[:N]
         ind = np.hstack([np.linspace(0 + i / N, w + i / N, N) for i in range(Npairs)])
         new_ind = ind[::N] + (ind[N - 1] - ind[0]) / N
-        xticks, xticklabels=new_ind, coupled_labels
+        xticks, xticklabels = new_ind, coupled_labels
     else:
         ind = np.arange(0, w * Nds, w)
         colors = P.colors
@@ -451,7 +452,7 @@ def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, yla
         for n, marker in zip(range(N), markers):
             ax.errs = ax.errorbar(ind, means[n::N], yerr=stds[n::N], **err_kws)
             ax.p1 = ax.plot(ind, means[n::N], marker=marker, label=leg_ids[n],
-                             markeredgecolor='black', markerfacecolor=leg_cols[n], markersize=8, **plot_kws)
+                            markeredgecolor='black', markerfacecolor=leg_cols[n], markersize=8, **plot_kws)
 
         if coupled_labels is None:
             for i, j in itertools.combinations(np.arange(Nds).tolist(), 2):
@@ -463,10 +464,11 @@ def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, yla
                 i, j = k * N, k * N + 1
                 st, pv = ttest_ind(vs[i], vs[j], equal_var=False)
                 if pv <= 0.05:
-                    ax.text(ind[k], np.max([means[i], means[j]]) + np.max([stds[i], stds[j]]), '*', ha='center',fontsize=20)
+                    ax.text(ind[k], np.max([means[i], means[j]]) + np.max([stds[i], stds[j]]), '*', ha='center',
+                            fontsize=20)
 
         h = 2 * (np.nanmax(means) + np.nanmax(stds))
-        P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=u if ylabel is None else ylabel,ylim=[0, None],
+        P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=u if ylabel is None else ylabel, ylim=[0, None],
                   yMaxN=4, ytickMath=(-3, 3), leg_loc='upper right', xticks=xticks, xticklabels=xticklabels)
     P.adjust((0.15, 0.95), (0.15, 0.95), H=0.05)
     return P.get()
@@ -499,7 +501,7 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
         shorts.append('bv')
     elif mode == 'spinelength':
         shorts.append('l')
-    Npars=len(shorts)
+    Npars = len(shorts)
 
     pars, ylabs = getPar(shorts, to_return=['d', 'l'])
     P.build(Npars, 1, figsize=(10, Npars * 5), sharex=True)
@@ -758,9 +760,9 @@ def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_id
     return P.get()
 
 
-def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None,unit='sec',
+def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None, unit='sec',
              show_first=False, subfolder='timeplots', legend_loc='upper left', **kwargs):
-    unit_coefs={'sec' : 1, 'min':1/60, 'hour':1/60/60}
+    unit_coefs = {'sec': 1, 'min': 1 / 60, 'hour': 1 / 60 / 60}
     if len(pars) == 0:
         pars, symbols, ylabs, ylims = getPar(par_shorts, to_return=['d', 's', 'l', 'lim'])
     else:
@@ -793,7 +795,8 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                     dc = d.read('step')[p]
                 dc_m = dc.groupby(level='Step').quantile(q=0.5)
                 Nticks = len(dc_m)
-                x = np.linspace(0, int(Nticks / d.fr)*unit_coefs[unit], Nticks) if table is None else np.arange(Nticks)
+                x = np.linspace(0, int(Nticks / d.fr) * unit_coefs[unit], Nticks) if table is None else np.arange(
+                    Nticks)
                 ax.set_xlim([x[0], x[-1]])
 
                 if individuals:
@@ -2704,27 +2707,58 @@ def boxplot_double_patch(xlabel='substrate', complex_colors=True, **kwargs):
     P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.1, right=0.95, hspace=0.3, wspace=0.3)
     return P.get()
 
-def plot_nengo_network(subfolder='nengo',k0='anemotaxis', **kwargs):
-    P = Plot(name=f'{k0}_network', subfolder=subfolder, **kwargs)
-    Nds=P.Ndatasets
-    Nids=np.max([len(d.agent_ids) for d in P.datasets])
-    dur = np.max([d.duration for d in P.datasets])
-    dt = np.max([d.dt for d in P.datasets])
-    x = np.arange(0, dur/60, dt/60)
-    P.build(Nids, Nds, figsize=(Nds * 20, Nids * 10), sharex=True, sharey=True)
-    for i,d in enumerate(P.datasets) :
-        dics=d.load_dicts('nengo', use_pickle=False)
-        Nprobes=len(dics[0][k0])
-        probecols=N_colors(Nprobes)
-        for j, dic in enumerate(dics) :
-            idx=j*Nds+i
-            for ii,(k,v) in enumerate(dic[k0].items()) :
-                P.axs[idx].plot(x, v, color=probecols[ii], label=k)
-            P.conf_ax(idx, xlab=r'time $min$' if j==Nids-1 else None, ylab='activity' if i==0 else None,
-                      yticks=[] if i!=0 else None,yticklabels=[] if i!=0 else None,yMaxN=8, leg_loc='upper right')
-    P.adjust((0.15, 0.95), (0.1, 0.95), 0.1, 0.001)
-    return P.get()
 
+def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='nengo', **kwargs):
+    probe_groups = {
+        'anemotaxis': ['Ch', 'LNa', 'LNb', 'Ha', 'Hb', 'B1', 'B2', 'Bend', 'Hunch'],
+        'frequency': ['linFrIn', 'angFrIn', 'linFr', 'angFr'],
+        'frequency_x3': ['linFrIn', 'angFrIn', 'feeFrIn', 'linFr', 'angFr', 'feeFr'],
+        'velocity': ['Vs', 'linV', 'angV'],
+        'velocity_x3': ['Vs', 'linV', 'angV', 'feeV'],
+        'interference': ['Vs', 'interference'],
+        'crawler': ['linFrIn', 'linFr', 'linV'],
+        'turner': ['angFrIn', 'angFr', 'angV'],
+        'feeder': ['feeFrIn', 'feeFr', 'feeV'],
+        'feeding': ['feeFrIn', 'feeFr', 'feeV', 'f_cur', 'f_suc'],
+        'wind_effect_on_V': ['Bend', 'Hunch', 'linV', 'angV'],
+        'wind_effect_on_Fr': ['Bend', 'Hunch', 'linFr', 'angFr'],
+    }
+    if group is not None:
+        probes = probe_groups[group]
+        name = f'{group}_network'
+    elif probes is None:
+        raise ValueError('Either a probe group or individual probes have to be defined')
+    else:
+        name = f'{probes[0]}_VS_{probes[1]}'
+    N = len(probes)
+    Cprobes = N_colors(N)
+    P = Plot(name=name, subfolder=subfolder, **kwargs)
+    Nds = P.Ndatasets
+    Nids = np.max([len(d.agent_ids) for d in P.datasets])
+    Nticks = np.max([d.num_ticks for d in P.datasets])
+    dt = np.max([d.dt for d in P.datasets])
+    x = np.linspace(0, (Nticks * dt) / 60, Nticks)
+    if same_plot:
+        Nrows = Nds
+        sharey = False
+        yMaxN = 8
+    else:
+        Nrows = N * Nds
+        sharey = False
+        yMaxN = 3
+    P.build(Nrows, Nids, figsize=(Nids * 30, Nrows * 15), sharex=True, sharey=sharey)
+    for i, d in enumerate(P.datasets):
+        dics = d.load_dicts('nengo', use_pickle=False)
+        for j, dic in enumerate(dics):
+            for k, (p, c) in enumerate(zip(probes, Cprobes)):
+                Nrow = i if same_plot else i * Nds + k
+                idx = j + Nrow * Nids
+                P.axs[idx].plot(x, dic[p], color=c, label=p)
+                P.conf_ax(idx, xlab=r'time $min$' if Nrow == Nrows - 1 else None, ylab='activity' if j == 0 else None,
+                          yticks=[] if j != 0 else None, yticklabels=[] if j != 0 else None, yMaxN=yMaxN,
+                          leg_loc='upper right')
+    P.adjust((0.1, 0.95), (0.1, 0.95), 0.01, 0.05)
+    return P.get()
 
 
 graph_dict = {

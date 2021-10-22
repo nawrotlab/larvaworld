@@ -20,7 +20,7 @@ from lib.stor.larva_dataset import LarvaDataset
 import lib.aux.naming as nam
 
 
-def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=False):
+def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
     if ds is None:
         return
     if not type(ds) == list:
@@ -106,14 +106,16 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=False):
         figs.update(**foraging_analysis(d.config['sources'], **cc))
 
     if 'anemo' in exp_type:
+        for group in ['anemotaxis', 'frequency', 'interference', 'velocity', 'crawler', 'turner', 'wind_effect_on_V', 'wind_effect_on_Fr'] :
+            figs[group] = plot_nengo_network(group,same_plot=True if group=='anemotaxis' else False, **cc)
         figs['anemotaxis'] = timeplot(['anemotaxis'], show_first=False, **cc)
         figs['final anemotaxis'] = plot_endpoint_params(par_shorts=['anemotaxis'], **cc)
-        figs['anemotaxis network'] = plot_nengo_network(k0='anemotaxis',**cc)
-        figs['locomotion network'] = plot_nengo_network(k0='locomotion',**cc)
+
         figs['wind activation VS bearing to wind'] = plot_2pars(['o_wind','A_wind'], **cc)
         figs['wind activation'] = timeplot(['A_wind'], show_first=False, **cc)
         figs['anemotaxis VS bearing to wind'] = plot_2pars(['anemotaxis','o_wind'], **cc)
         figs['bearing to wind direction'] = timeplot(['o_wind'], show_first=False, **cc)
+
 
 
 

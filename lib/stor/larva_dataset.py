@@ -273,7 +273,7 @@ class LarvaDataset:
     def save_config(self, add_reference=False):
         # print(self.config['ExpFitter'])
 
-        for a in ['N', 't0', 'duration', 'quality']:
+        for a in ['N', 't0', 'duration', 'quality', 'num_ticks']:
             try:
                 self.config[a] = getattr(self, a)
             except:

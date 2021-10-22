@@ -56,8 +56,7 @@ class NengoBrain(Network, Brain):
                 self.p_odor = Probe(odors)
                 self.p_change = Probe(dConOut)
 
-            x = Ensemble(N1, 3, neuron_type=Direct())
-            y = Ensemble(N1, 3, neuron_type=Direct())
+
 
             s1 = 1.0
 
@@ -126,8 +125,7 @@ class NengoBrain(Network, Brain):
                 else:
                     return 0
 
-            Connection(x, x[:2], synapse=s1, function=linOsc)
-            Connection(y, y[:2], synapse=s1, function=angOsc)
+
 
             linFrIn = Node(self.crawler.get_freq, size_out=1)
             angFrIn = Node(self.turner.get_freq, size_out=1)
@@ -138,6 +136,10 @@ class NengoBrain(Network, Brain):
             Connection(linFrIn, linFr)
             Connection(angFrIn, angFr)
 
+            x = Ensemble(N1, 3, neuron_type=Direct())
+            y = Ensemble(N1, 3, neuron_type=Direct())
+            Connection(x, x[:2], synapse=s1, function=linOsc)
+            Connection(y, y[:2], synapse=s1, function=angOsc)
             Connection(linFr, x[2])
             Connection(angFr, y[2])
 
@@ -160,11 +162,12 @@ class NengoBrain(Network, Brain):
             self.p_angV = Probe(angV)
 
             if self.feeder is not None:
-                z = Ensemble(N1, 3, neuron_type=Direct())
-                Connection(z, z[:2], synapse=s1, function=feeOsc)
+
                 feeFrIn = Node(self.feeder.get_freq, size_out=1)
                 feeFr = Ensemble(N2, 1, neuron_type=Direct())
                 Connection(feeFrIn, feeFr)
+                z = Ensemble(N1, 3, neuron_type=Direct())
+                Connection(z, z[:2], synapse=s1, function=feeOsc)
                 Connection(feeFr, z[2])
                 feeV = Node(size_in=1)
                 Connection(z[0], interference[2], synapse=0)
@@ -226,32 +229,28 @@ class NengoBrain(Network, Brain):
                 Connection(Bend, angFr, synapse=0.0, transform=ws.weights['bend_ang'])
 
             if True :
+                self.probe_dict={}
                 if self.feeder is not None :
-                    self.feed_probes = {k: Probe(v) for k, v in zip(['feeFrIn', 'feeFr', 'feeV'], [feeFrIn, feeFr, feeV])}
+                    self.probe_dict.update(
+                        {k: Probe(v) for k, v in zip(['feeFrIn', 'feeFr', 'feeV'], [feeFrIn, feeFr, feeV])})
                     if self.food_feedback :
-                        self.feed_probes.update({k: Probe(v) for k, v in zip(['f_cur', 'f_suc'], [f_cur, f_suc])})
-                else:
-                    self.feed_probes = {}
+                        self.probe_dict.update({k: Probe(v) for k, v in zip(['f_cur', 'f_suc'], [f_cur, f_suc])})
                 if ws is not None :
-                    self.anemo_probes = {k: Probe(v) for k, v in zip(['Ch', 'LNa', 'LNb', 'Ha', 'Hb', 'B1', 'B2', 'Bend', 'Hunch'],
-                                                                     [Ch, LNa, LNb, Ha, Hb, B1, B2, Bend, Hunch])}
-                else :
-                    self.anemo_probes={}
-                self.loco_probes = {k: Probe(v) for k, v in
-                                    zip(['Vs', 'linV', 'angV', 'interference', 'angFr', 'linFr', 'linFrIn', 'angFrIn'],
-                                        [Vs, linV, angV, interference, angFr, linFr, linFrIn, angFrIn])}
-                self.dict = {
-                    'anemotaxis':{k: [] for k in self.anemo_probes.keys()},
-                    'locomotion':{k: [] for k in self.loco_probes.keys()},
-                    'feeding':{k: [] for k in self.feed_probes.keys()},
-                             }
+                    self.probe_dict.update({k: Probe(v) for k, v in zip(['Ch', 'LNa', 'LNb', 'Ha', 'Hb', 'B1', 'B2', 'Bend', 'Hunch'],
+                                                                     [Ch, LNa, LNb, Ha, Hb, B1, B2, Bend, Hunch])})
+                self.probe_dict.update({k: Probe(v) for k, v in
+                                    zip(['Vs', 'linV', 'angV', 'interference'],
+                                        [Vs, linV, angV, interference])})
+                self.probe_dict.update({k: Probe(v) for k, v in
+                                    zip(['angFr', 'linFr', 'linFrIn', 'angFrIn'],
+                                        [angFr, linFr, linFrIn, angFrIn])})
+                self.dict = {k: [] for k in self.probe_dict.keys()}
             else :
                 self.dict=None
 
     def update_dict(self, data):
-        for n,m in zip([self.anemo_probes, self.loco_probes, self.feed_probes], ['anemotaxis', 'locomotion', 'feeding']) :
-            for k, v in n.items() :
-                self.dict[m][k].append(np.mean(data[v][-self.Nsteps:]))
+        for k, p in self.probe_dict.items() :
+            self.dict[k].append(np.mean(data[p][-self.Nsteps:]))
 
 
     def mean_odor_change(self, data):
