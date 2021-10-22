@@ -330,6 +330,7 @@ class LarvaDataset:
         return df
 
     def load_aux(self, type, par=None):
+        # print(pd.HDFStore(self.dir_dict['aux_h5']).keys())
         df = self.read(key=f'{type}.{par}', file='aux_h5')
         return df
 

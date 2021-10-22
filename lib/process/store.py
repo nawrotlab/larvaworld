@@ -22,6 +22,7 @@ def store_aux_dataset(s, pars, type, file):
             # raise
     elif type == 'dispersion':
         for p in ps:
+            # print(p)
             dsp = s[p]
             steps = s.index.unique('Step')
             Nticks = len(steps)

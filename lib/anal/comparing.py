@@ -124,7 +124,7 @@ class ExpFitter:
     def get_data(self, d, df):
         s, e = d.step_data, d.endpoint_data
         d_d = {}
-        d_d.update({p: np.abs(d.get_par(p).dropna().values.flatten()) for p in df['par'].loc['angular motion']})
+        d_d.update({p: np.abs(d.get_par(p).dropna().values.flatten()) for p in df['pars'].loc['angular motion']})
         d_d.update({p: e[p].values for p in df['pars'].loc['spatial motion']})
         d_d.update({p: d.get_par(p).dropna().values.flatten() for p in df['pars'].loc['reorientation']})
 

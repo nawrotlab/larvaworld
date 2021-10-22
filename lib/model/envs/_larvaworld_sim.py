@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 from mesa.datacollection import DataCollector
 
@@ -80,11 +82,13 @@ class LarvaWorldSim(LarvaWorld):
             sample_ks = [p for p in modF if modF[p] == 'sample']
             RefPars = dNl.load_dict(paths.path('ParRef'), use_pickle=False)
             invRefPars = {v: k for k, v in RefPars.items()}
-            self.sample_ps = [invRefPars[p] for p in sample_ks]
+
             if gConf['imitation'] and sample != {}:
-                ids, ps, ors, sample_dict = imitate_group(sample, self.sample_ps)
+                self.sample_ps = list(invRefPars.values())
+                ids, ps, ors, sample_dict = imitate_group(sample, self.sample_ps, N=gConf['distribution']['N'])
                 N = len(ids)
             else:
+                self.sample_ps = [invRefPars[p] for p in sample_ks]
                 d = gConf['distribution']
                 N = d['N']
                 ids = [f'{gID}_{i}' for i in range(N)]
@@ -99,16 +103,12 @@ class LarvaWorldSim(LarvaWorld):
                                    default_color=gConf['default_color'], life_history=gConf['life_history'])
 
     def step(self):
-
         self.sim_clock.tick_clock()
-
-
         if not self.larva_collisions:
             self.larva_bodies = self.get_larva_bodies()
         # Update value_layers
         for id, layer in self.odor_layers.items():
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
-
         for l in self.get_flies():
             l.compute_next_action()
         self.active_larva_schedule.step()
@@ -219,11 +219,15 @@ class LarvaWorldSim(LarvaWorld):
                     pass
 
 
-def imitate_group(config, sample_pars=[]):
+def imitate_group(config, sample_pars=[], N=None):
     from lib.stor.larva_dataset import LarvaDataset
     d = LarvaDataset(config['dir'], load_data=False)
     e = d.read('end')
     ids = e.index.values.tolist()
+    sample_pars=[p for p in sample_pars if p in e.columns]
+
+    if N is not None :
+        ids=random.sample(ids, N)
     ps = [tuple(e[['initial_x', 'initial_y']].loc[id].values) for id in ids]
     try:
         ors = [e['initial_front_orientation'].loc[id] for id in ids]

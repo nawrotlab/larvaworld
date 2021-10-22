@@ -1,4 +1,4 @@
-from lib.conf.base.dtypes import null_dict, enrichment_dict
+from lib.conf.base.dtypes import null_dict, enrichment_dict, base_enrich
 
 
 def batch(exp, en=None, ss=None, o=None, o_kws={},bm={}, as_entry=True, **kwargs):
@@ -78,14 +78,43 @@ batch_dict = {
 }
 
 
-def fit_tortuosity_batch(d, model='imitation', exp='dish', idx=0):
+def fit_tortuosity_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
     from lib.conf.stored.conf import imitation_exp
     conf=batch(exp=None,
                ss={'activation_noise': [(0.0, 2.0), 3],'base_activation': [(15.0, 25.0), 3]},
                o='tortuosity_20_mean', o_kws={'max_Nsims': 120, 'operations': {'mean': True}},
-               en=enrichment_dict(types=['tortuosity'])
+               en=enrichment_dict(types=['tortuosity']),
+               as_entry=False
                )
-    conf['exp'] = imitation_exp(d.config, model=model, exp=exp, idx=idx)
+    conf['exp'] = imitation_exp(sample, model=model, exp=exp, idx=idx, **kwargs)
     conf['batch_id'] = f'imitation_batchrun_{idx}'
     conf['batch_type'] = 'imitation'
     return conf
+
+def fit_global_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
+    from lib.conf.stored.conf import imitation_exp
+    conf=batch(exp=None,
+               ss={'activation_noise': [(0.0, 2.0), 3],'base_activation': [(15.0, 25.0), 3]},
+               o='sample_fit', o_kws={'threshold': 1.0, 'max_Nsims': 20, 'operations': {'mean': False, 'abs': False}},
+               bm={'run': 'exp_fit'},
+               en=base_enrich(fits=False),
+               as_entry=False
+               )
+    conf['exp'] = imitation_exp(sample, model=model, exp=exp, idx=idx, **kwargs)
+    conf['batch_id'] = f'imitation_batchrun_{idx}'
+    conf['batch_type'] = 'imitation'
+    return conf
+
+def run_fit_global_batch(sample, **kwargs) :
+    from run.exec_run import Exec
+    from lib.anal.comparing import ExpFitter
+    conf = fit_global_batch(sample=sample, **kwargs)
+    conf['proc_kws']['exp_fitter'] = ExpFitter(sample)
+    k = Exec('batch', conf)
+    return k.exec_run()
+
+if __name__ == '__main__':
+    from run.exec_run import Exec
+    conf=fit_tortuosity_batch(sample='None.200_controls', model='explorer', exp='dish', idx=0)
+    k = Exec('batch', conf)
+    k.exec_run()

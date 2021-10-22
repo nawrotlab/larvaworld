@@ -92,7 +92,6 @@ def save_results_df(traj):
 
 
 def exp_fit_processing(traj, d, exp_fitter):
-    from lib.anal.comparing import ExpFitter
     p = traj.config.fit_par
     fit = exp_fitter.compare(d)
     traj.f_add_result(p, fit, comment='The fit')

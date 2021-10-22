@@ -100,7 +100,6 @@ class SingleRun:
 def store_data(env, d, save_data_flag, enrichment, param_dict, split_groups=True):
     # Read the data collected during the simulation
     step = env.larva_step_col.get_agent_vars_dataframe() if env.larva_step_col else None
-    print(step.columns)
     if env.larva_end_col is not None:
         env.larva_end_col.collect(env)
         end = env.larva_end_col.get_agent_vars_dataframe().droplevel('Step')

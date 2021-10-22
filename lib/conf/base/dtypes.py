@@ -276,10 +276,10 @@ def init_pars():
             'Ngrid': {'t': int, 'max': 100},
             'values': {'t': List[float], 'min': -100.0, 'max': 100.0}
         },
-        'space_search': {'pars': {'t': List[str], 'h' : 'The parameters for space search', 's' :'ss.pars'},
+        'space_search': {'pars': {'t': List[str], 'h': 'The parameters for space search', 's': 'ss.pars'},
                          'ranges': {'t': List[Tuple[float]], 'max': 100.0, 'min': -100.0, 'dv': 1.0,
-                                    'h' : 'The range of the parameters for space search', 's' :'ss.ranges'},
-                         'Ngrid': {'t': int, 'max': 100, 'h' : 'The number of steps for space search', 's' :'ss.Ngrid'}},
+                                    'h': 'The range of the parameters for space search', 's': 'ss.ranges'},
+                         'Ngrid': {'t': int, 'max': 100, 'h': 'The number of steps for space search', 's': 'ss.Ngrid'}},
         'body': {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample']},
                  'length_std': {'v': 0.0004, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample']},
                  'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12},
@@ -303,7 +303,7 @@ def init_pars():
                        # 'deb_on': bT,
                        'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb']},
                        'DEB_dt': {'max': 1.0},
-                       'species' : {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter']}},
+                       'species': {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter']}},
         'crawler': {'waveform': {'t': str, 'v': 'realistic', 'vs': ['realistic', 'square', 'gaussian', 'constant']},
                     'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5), 'max': 2.0},
                     'initial_freq': {'v': 1.418, 'max': 10.0, 'aux_vs': ['sample']},  # From D1 fit
@@ -490,8 +490,8 @@ def init_pars():
     }
     d['processing'] = {
         'types': {t: bF for t in proc_type_keys},
-        'dsp_starts': {'t': List[float], 'max': 200.0, 'dv': 1.0},
-        'dsp_stops': {'t': List[float], 'max': 200.0, 'dv': 1.0},
+        'dsp_starts': {'t': List[float], 'v': [0.0], 'max': 200.0, 'dv': 1.0},
+        'dsp_stops': {'t': List[float], 'v': [40.0], 'max': 200.0, 'dv': 1.0},
         'tor_durs': {'t': List[int], 'max': 100, 'dv': 1}}
     d['annotation'] = {'bouts': {b: bF for b in bout_keys},
                        'track_point': {'t': str},

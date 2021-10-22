@@ -48,9 +48,10 @@ class ImportTab(GuiTab):
         from lib.anal.comparing import ExpFitter
 
         dd = SingleRun(**conf).run()
-        f = ExpFitter(dd.config['env_params']['larva_groups']['ImitationGroup']['sample'])
-        fit = f.compare(dd, save_to_config=True)
-        print(fit)
+        for d in dd :
+            f = ExpFitter(d.config['sample'])
+            fit = f.compare(d, save_to_config=True)
+            print(d.id, fit)
 
 
 if __name__ == "__main__":

@@ -112,7 +112,7 @@ grouped_exp_dict = {
     'exploration': {
         'focus': simple_exp('focus', l=lg(m='explorer', N=1, ors=[90.0, 90.0])),
         'dish': simple_exp('dish', l=lg(m='explorer', N=5, s=0.02)),
-        'nengo_dish': simple_exp('dish', l=lg(m='nengo_explorer', N=25, s=0.02), dur=3.0),
+        'nengo_dish': simple_exp('dish', l=lg(m='nengo_explorer', N=25, s=0.02)),
         'dispersion': simple_exp('arena_200mm', l=lg(m='explorer', N=25)),
         'dispersion_x4': simple_exp('arena_200mm', dur=3.0,
                                     l=lgs(models=['explorer', 'Levy-walker', 'explorer_3con', 'nengo_explorer'],
@@ -193,11 +193,7 @@ grouped_exp_dict = {
 
     'other': {
         'realistic_imitation': exp('dish', l=lg(m='imitator', N=25), sim={'Box2D': True}, c=['midline', 'contour']),
-        'imitation': imitation_exp('controls.exploration', model='explorer'),
+        'imitation': imitation_exp('None.200_controls', model='explorer'),
     }
-
 }
-# from lib.conf.stored.conf import imitation_exp, expandConf
-# # a=grouped_exp_dict['odor_preference']['PItrain_mini']
-# a=expandConf('PItrain_mini', 'Exp')
-# print(a['trials'])
+

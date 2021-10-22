@@ -98,7 +98,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
                                                                         slice=[s0, s1], **cc) for (s0, s1) in
                 [(0, 60)]}
     if exp_type == 'imitation':
-        f = ExpFitter(d.config['env_params']['larva_groups']['ImitationGroup']['sample'])
+        f = ExpFitter(d.config['sample'])
         results['sample_fit'] = f.compare(d, save_to_config=True)
         print(results['sample_fit'])
 

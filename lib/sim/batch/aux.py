@@ -10,8 +10,11 @@ def load_exp_conf(traj, exp):
     for k0 in ['env_params', 'sim_params', 'trials', 'enrichment', 'larva_groups']:
         dic = lib.aux.dictsNlists.flatten_dict(exp[k0], parent_key=k0, sep='.')
         for k, v in dic.items():
-            if type(v) == list and type(v[0]) == list:
-                v = np.array(v)
+            if type(v) == list :
+                if len(v)==0:
+                    v=None
+                elif type(v[0]) == list:
+                    v = np.array(v)
             traj.f_apar(k, v)
     return traj
 

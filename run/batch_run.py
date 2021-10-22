@@ -2,7 +2,7 @@ import sys
 import argparse
 
 sys.path.insert(0, '..')
-from lib.conf.stored.conf import next_idx, loadConfDict, loadConf, get_exp_conf, expandConf
+from lib.conf.stored.conf import next_idx, loadConfDict, loadConf
 import lib.anal.argparsers as prs
 from run.exec_run import Exec
 
