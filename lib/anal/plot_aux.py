@@ -39,7 +39,7 @@ class Plot :
 
     def build(self, Nrows=1, Ncols=1, figsize=None, **kwargs):
         if figsize is None :
-            figsize=(6*Ncols, 5*Nrows)
+            figsize=(12*Ncols, 10*Nrows)
         self.fig, axs = plt.subplots(Nrows, Ncols, figsize=figsize, **kwargs)
         self.axs = axs.ravel() if Nrows*Ncols > 1 else [axs]
 

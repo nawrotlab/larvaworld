@@ -137,7 +137,7 @@ class LarvaBody:
 
     @ property
     def olfactor_pos(self):
-        return self.get_global_front_end_of_head()
+        return self.global_front_end_of_head
 
     def define_sensor(self, sensor, pos_on_body):
         x, y = pos_on_body
@@ -345,10 +345,10 @@ class LarvaBody:
 
     def draw(self, viewer):
         m=self.model
-        c, r = self.get_head().color, self.radius
-        h_pos=self.get_global_front_end_of_head()
+        c, r = self.head.color, self.radius
+        h_pos=self.global_front_end_of_head
         pos=self.get_position()
-        mid = [self.get_global_front_end_of_seg(i) for i in range(self.Nsegs)] + [self.get_global_rear_end_of_body()]
+        mid = [self.get_global_front_end_of_seg(i) for i in range(self.Nsegs)] + [self.global_rear_end_of_body]
 
         if m.draw_contour:
             for seg in self.segs:
@@ -406,10 +406,12 @@ class LarvaBody:
     def get_segment(self, seg_index):
         return self.segs[seg_index]
 
-    def get_head(self):
+    @ property
+    def head(self):
         return self.segs[0]
 
-    def get_tail(self):
+    @property
+    def tail(self):
         return self.segs[-1]
 
     def get_centroid_position(self):
@@ -447,17 +449,20 @@ class LarvaBody:
         global_pos = self.get_segment(seg_index).get_world_point(local_pos)
         return global_pos
 
-    def get_global_rear_end_of_head(self):
+    @property
+    def global_rear_end_of_head(self):
         return self.segs[0].get_world_point(self.local_rear_end_of_head)
 
-    def get_global_front_end_of_head(self):
+    @property
+    def global_front_end_of_head(self):
         return np.array(self.segs[0].get_world_point(self.local_front_end_of_head))
 
-    def get_global_midspine_of_body(self):
+    @property
+    def global_midspine_of_body(self):
         if self.Nsegs == 1:
             return self.segs[0].get_position()
         elif self.Nsegs == 2:
-            return self.get_global_rear_end_of_head()
+            return self.global_rear_end_of_head
         if (self.Nsegs % 2) == 0:
             seg_idx = int(self.Nsegs / 2)
             global_pos = self.get_global_front_end_of_seg(seg_idx)
@@ -466,7 +471,8 @@ class LarvaBody:
             global_pos = self.segs[seg_idx].get_world_point((0.0, 0.0))
         return global_pos
 
-    def get_global_rear_end_of_body(self):
+    @property
+    def global_rear_end_of_body(self):
         local_pos = self.get_local_rear_end_of_seg(-1)
         global_pos = self.segs[-1].get_world_point(local_pos)
         return global_pos
@@ -521,7 +527,7 @@ class LarvaBody:
             new_p = p + np.array([dx, dy])
             seg.set_position(tuple(new_p))
             seg.update_vertices(new_p, o)
-        self.pos = self.get_global_midspine_of_body()
+        self.pos = self.gglobal_midspine_of_body
 
 def draw_body_midline(viewer, midline_xy, radius) :
     try:

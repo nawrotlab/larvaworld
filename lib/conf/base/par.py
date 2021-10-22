@@ -584,7 +584,7 @@ class ParDict:
         dic={}
         self.add(dic=dic,p='x0', k='x0', u=1 * siu.m, d='initial x coordinate', s=sub('x', 0))
         self.add(dic=dic,p='y0', k='y0', u=1 * siu.m, d='initial y coordinate', s=sub('y', 0))
-        self.add(dic=dic,p='dt', k='dt', u=1 * siu.s, d='timestep', s='$dt$')
+        self.add(dic=dic,p='model.dt', k='dt', u=1 * siu.s, d='timestep', s='$dt$')
         self.add(dic=dic,p='real_length', k='l', u=1 * siu.m, d='length', s='l')
         if object is not None :
             for k, p in dic.items():
@@ -593,29 +593,29 @@ class ParDict:
 
     def build_DEB(self):
         from lib.model.DEB.deb import DEB
-        self.add(p='L', k='L', u=1 * siu.cm, o=DEB, d='structural length', s='L')
-        self.add(p='Lw', k='Lw', u=1 * siu.cm, o=DEB, d='physical length', s=sub('L', 'w'))
-        self.add(p='V', k='V', u=1 * siu.cm ** 3, o=DEB, d='structural volume', s='V')
-        self.add(p='Ww', k='Ww', u=1 * siu.g, o=DEB, d='wet weight', s=sub('W', 'w'))
-        self.add(p='age', k='age', u=1 * siu.day, o=DEB, d='age', s='a')
-        self.add(p='hunger', k='H', o=DEB, d='hunger drive', s='H')
-        self.add(p='E', k='E', u=1 * siu.j, o=DEB, d='reserve energy', s='E')
-        self.add(p='E_H', k='E_H', u=1 * siu.j, o=DEB, d='maturity energy', s=sub('E', 'H'))
-        self.add(p='E_R', k='E_R', u=1 * siu.j, o=DEB, d='reproduction buffer', s=sub('E', 'R'))
-        self.add(p='deb_p_A', k='deb_p_A', u=1 * siu.j, o=DEB, d='assimilation energy (model)',
+        self.add(p='deb.L', k='L', u=1 * siu.cm, d='structural length', s='L')
+        self.add(p='deb.Lw', k='Lw', u=1 * siu.cm, d='physical length', s=sub('L', 'w'))
+        self.add(p='deb.V', k='V', u=1 * siu.cm ** 3,  d='structural volume', s='V')
+        self.add(p='deb.Ww', k='Ww', u=1 * siu.g, d='wet weight', s=sub('W', 'w'))
+        self.add(p='deb.age', k='age', u=1 * siu.day,  d='age', s='a')
+        self.add(p='deb.hunger', k='H',  d='hunger drive', s='H')
+        self.add(p='deb.E', k='E', u=1 * siu.j,  d='reserve energy', s='E')
+        self.add(p='deb.E_H', k='E_H', u=1 * siu.j,  d='maturity energy', s=sub('E', 'H'))
+        self.add(p='deb.E_R', k='E_R', u=1 * siu.j,  d='reproduction buffer', s=sub('E', 'R'))
+        self.add(p='deb.deb_p_A', k='deb_p_A', u=1 * siu.j,  d='assimilation energy (model)',
                  s=subsup('p', 'A', 'deb'))
-        self.add(p='sim_p_A', k='sim_p_A', u=1 * siu.j, o=DEB, d='assimilation energy (sim)',
+        self.add(p='deb.sim_p_A', k='sim_p_A', u=1 * siu.j, d='assimilation energy (sim)',
                  s=subsup('p', 'A', 'sim'))
-        self.add(p='gut_p_A', k='gut_p_A', u=1 * siu.j, o=DEB, d='assimilation energy (gut)',
+        self.add(p='deb.gut_p_A', k='gut_p_A', u=1 * siu.j,  d='assimilation energy (gut)',
                  s=subsup('p', 'A', 'gut'))
-        self.add(p='e', k='e', o=DEB, d='scaled reserve density', s='e')
-        self.add(p='f', k='f', o=DEB, d='scaled functional response', s='f')
-        self.add(p='base_f', k='f0', o=DEB, d='base scaled functional response', s=sub('f', 0))
-        self.add(p='F', k='[F]', u=siu.hz / (24 * 60 * 60), o=DEB, d='volume specific filtering rate',
+        self.add(p='deb.e', k='e',  d='scaled reserve density', s='e')
+        self.add(p='deb.f', k='f',  d='scaled functional response', s='f')
+        self.add(p='deb.base_f', k='f0',  d='base scaled functional response', s=sub('f', 0))
+        self.add(p='deb.F', k='[F]', u=siu.hz / (24 * 60 * 60), d='volume specific filtering rate',
                  s=brack(dot('F')))
-        self.add(p='fr_feed', k='fr_f', u=1 * siu.hz, o=DEB, d='feed motion frequency (estimate)',
+        self.add(p='deb.fr_feed', k='fr_f', u=1 * siu.hz,  d='feed motion frequency (estimate)',
                  s=sub(dot('fr'), 'feed'))
-        self.add(p='pupation_buffer', k='pupation', o=DEB, d='pupation ratio', s=sub('r', 'pup'))
+        self.add(p='deb.pupation_buffer', k='pupation', d='pupation ratio', s=sub('r', 'pup'))
 
         self.add_diff(k0='age')
         for k0 in ['f', 'e', 'H']:
@@ -629,19 +629,19 @@ class ParDict:
     def build_gut(self):
         self.add(p='deb.gut.ingested_volume', k='f_am_V', u=1 * siu.m ** 3, d='ingested_food_volume',
                  s=sub('V', 'in'), lab='ingested food volume')
-        self.add(p='ingested_gut_volume_ratio', k='sf_am_Vg', d='ingested_gut_volume_ratio',lim=(0,0.2),
+        self.add(p='deb.ingested_gut_volume_ratio', k='sf_am_Vg', d='ingested_gut_volume_ratio',lim=(0,0.2),
                  s=subsup('[V]', 'in', 'gut'), lab='intake as % larva gut volume')
-        self.add(p='ingested_body_volume_ratio', k='sf_am_V', d='ingested_body_volume_ratio',lim=(0,0.2),
+        self.add(p='deb.ingested_body_volume_ratio', k='sf_am_V', d='ingested_body_volume_ratio',lim=(0,0.2),
                  s=sub('[V]', 'in'), lab='intake as % larva volume')
-        self.add(p='ingested_body_area_ratio', k='sf_am_A',d='ingested_body_area_ratio',lim=(0,0.2),
+        self.add(p='deb.ingested_body_area_ratio', k='sf_am_A',d='ingested_body_area_ratio',lim=(0,0.2),
                  s=sub('{V}', 'in'), lab='intake as % larva area')
-        self.add(p='ingested_body_mass_ratio', k='sf_am_M', d='ingested_body_mass_ratio',lim=(0,0.2),
+        self.add(p='deb.ingested_body_mass_ratio', k='sf_am_M', d='ingested_body_mass_ratio',lim=(0,0.2),
                  s=sub('[M]', 'in'), lab='intake as % larva mass')
         self.add(p='deb.gut.R_absorbed', k='sf_abs_M', d='food_absorption_efficiency',lim=(0,0.2),
                  s=sub('[M]', 'abs'), lab='absorption efficiency')
         self.add(p='deb.gut.R_faeces', k='sf_faeces_M', d='faeces_ratio',lim=(0,0.2),
                  s=sub('[M]', 'faeces'), lab='faeces ratio')
-        self.add(p='amount_absorbed', k='f_abs_M', d='amount_absorbed',
+        self.add(p='deb.amount_absorbed', k='f_abs_M', d='amount_absorbed',
                  s=sub('M', 'abs'), lab='absorbed food mass')
         self.add(p='deb.gut.M_faeces', k='f_faeces_M', d='amount_faeces',
                  s=sub('M', 'faeces'), lab='faeces mass')
@@ -706,12 +706,15 @@ class ParDict:
             self.add(p=p, k=k, d=p, s=sub(k0, i), exists=False)
             self.add_mean(k0=k, s=sub(bar(k0), i))
             self.add_std(k0=k, s=sub(wave(k0), i))
+        self.add(p='anemotaxis', k='anemotaxis', u=1 * siu.m, d='anemotaxis', s='anemotaxis')
 
     def build_angular(self):
         self.add(p=nam.bearing2('center'), k='o_cent', u=1 * siu.deg, d=nam.bearing2('center'),
                  s=odot(th('or')), exists=False, or2source=(0, 0), wrap_mode='zero', lim=(-180.0,180.0))
         self.add(p=nam.bearing2('source'), k='o_chem', u=1 * siu.deg, d=nam.bearing2('source'),
                  s=circledcirc(th('or')), exists=False, or2source=(0.04, 0.0), wrap_mode='zero', lim=(-180.0,180.0))
+        self.add(p=nam.bearing2('wind'), k='o_wind', u=1 * siu.deg, d=nam.bearing2('wind'),
+                 s=th('wind'), exists=False, wrap_mode='zero', lim=(-180.0, 180.0))
 
         self.add(p='bend', k='b', u=1 * siu.deg, d='bend', s=th('b'), wrap_mode='zero')
         fo = sub('or', 'f')
@@ -759,10 +762,11 @@ class ParDict:
         self.add(p='scaled_amount_eaten', k='sf_am',  d='ingested_food_volume_ratio', s=sub('[V]', 'in'))
         self.add(p='lin_activity', k='Act_cr',  d='crawler output', s=sub('A', 'crawl'))
         self.add(p='ang_activity', k='Act_tur',  d='turner output', s=subsup('A', 'tur', 'out'), lim=(-20, 20))
-        self.add(p='turner_activation', k='A_tur',  d='turner input', s=subsup('A', 'tur', 'in'), lim=(10, 40))
-        self.add(p='olfactory_activation', k='A_olf',  d='olfactory activation', s=sub('A', 'olf'), lim=(-1, 1))
-        self.add(p='touch_activation', k='A_touch',  d='tactile activation', s=sub('A', 'touch'), lim=(-1, 1))
-        self.add(p='exploitVSexplore_balance', k='EEB',  d='exploitVSexplore_balance', s='EEB', lim=(0, 1))
+        self.add(p='brain.turner.activation', k='A_tur',  d='turner input', s=subsup('A', 'tur', 'in'), lim=(10, 40))
+        self.add(p='brain.olfactory_activation', k='A_olf',  d='olfactory activation', s=sub('A', 'olf'), lim=(-1, 1))
+        self.add(p='brain.touch_activation', k='A_touch',  d='tactile activation', s=sub('A', 'touch'), lim=(-1, 1))
+        self.add(p='brain.wind_activation', k='A_wind',  d='wind activation', s=sub('A', 'wind'))
+        self.add(p='brain.intermitter.EEB', k='EEB',  d='exploitVSexplore_balance', s='EEB', lim=(0, 1))
 
         for i, n in enumerate(['first', 'second', 'third']):
             k = f'c_odor{i + 1}'
@@ -920,9 +924,9 @@ if __name__ == '__main__':
     # o, d = nam.bearing2('n'), nam.dst2('n')
     # fo = getPar(['fo'], to_return=['d'])[0][0]
     # print(o,d)
-    # d=ParDict(mode='build').dict
-    pars=getPar('on_food_tr', to_return=['p','d'])
-    print(pars)
+    d=ParDict(mode='build').dict
+    # pars=getPar('on_food_tr', to_return=['p','d'])
+    # print(pars)
     # print(us)
     # # d = ParDict(mode='reconstruct').dict
     # print(d.keys())

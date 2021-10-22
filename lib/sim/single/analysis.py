@@ -10,7 +10,7 @@ from lib.anal.plotting import plot_turn_Dbearing, plot_turn_amp, plot_turns, tim
     plot_navigation_index, plot_debs, plot_food_amount, plot_gut, plot_pathlength, plot_endpoint_params, barplot, \
     plot_chunk_Dorient2source, plot_marked_strides, lineplot, plot_stridesNpauses, \
     plot_interference, plot_dispersion, plot_stride_Dbend, plot_stride_Dorient, plot_ang_pars, calibration_plot, \
-    plot_crawl_pars, boxplot, boxplot_double_patch
+    plot_crawl_pars, boxplot, boxplot_double_patch, plot_2pars
 from lib.conf.stored.conf import loadConf
 from lib.conf.base.dtypes import null_dict
 from lib.conf.base.par import getPar
@@ -104,6 +104,15 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
 
     if exp_type in ['food_at_bottom']:
         figs.update(**foraging_analysis(d.config['sources'], **cc))
+
+    if 'anemo' in exp_type:
+
+        figs['wind activation VS bearing to wind'] = plot_2pars(['o_wind','A_wind'], **cc)
+        figs['anemotaxis VS bearing to wind'] = plot_2pars(['anemotaxis','A_wind'], **cc)
+        figs['wind activation'] = timeplot(['A_wind'], show_first=False, **cc)
+        figs['bearing to wind direction'] = timeplot(['o_wind'], show_first=False, **cc)
+        figs['anemotaxis'] = timeplot(['anemotaxis'], show_first=False, **cc)
+        figs['final anemotaxis'] = plot_endpoint_params(par_shorts=['anemotaxis'], **cc)
 
     if 'dispersion' in exp_type:
         samples = unique_list([d.config['sample'] for d in ds])

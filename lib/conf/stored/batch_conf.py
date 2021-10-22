@@ -74,6 +74,10 @@ batch_dict = {
             ss={'initial_gain': [(-20.0, -5.0), 5],'decay_coef': [(0.3, 0.7), 5]},
             o='cum_food_detected', o_kws={'threshold': 1000.0, 'max_Nsims': 80, 'minimize' : False, 'Nbest' : 8,
                                           'operations': {'mean': True, 'abs': False}}),
+**batch('anemotaxis',
+            ss={f'windsensor_params.weights.{m1}_{m2}': [(-10.0, 10.0), 3] for m1,m2 in zip(['bend','bend', 'hunch','hunch'], ['lin','ang', 'lin','ang'])},
+            o='anemotaxis', o_kws={'threshold': 1000.0, 'max_Nsims': 50, 'minimize' : False, 'Nbest' : 8,
+                                          'operations': {'mean': True, 'abs': False}}, en=enrichment_dict(types=['spatial', 'angular', 'wind'])),
 
 }
 

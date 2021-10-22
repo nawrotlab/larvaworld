@@ -135,6 +135,10 @@ grouped_exp_dict = {
                               l=lgs(models=['Orco_forager', 'forager'],
                                     ids=['Orco', 'control'], N=5, sh='oval', p=(0.0, 0.04), s=(0.04, 0.01)))
     },
+    'anemotaxis' : {
+        'anemotaxis': simple_exp('windy_arena', dur=0.5, l=lg(m='nengo_explorer', N=10),c=['wind'],
+                                 enrichment=enrichment_dict(types=['spatial', 'angular', 'wind']), en=False)
+    },
 
     'odor_preference': {
         'PItest_off': pref_exp('CS_UCS_off_food', dur=3.0, l=lg(N=25, s=(0.005, 0.02), m='navigator_x2')),
@@ -149,9 +153,9 @@ grouped_exp_dict = {
         'patchy_food': food_exp('patchy_food', l=lg(m='forager', N=25)),
         'uniform_food': food_exp('uniform_food', l=lg(m='Orco_forager', N=5, s=0.005)),
         'food_grid': food_exp('food_grid', l=lg(m='Orco_forager', N=25)),
-        'single_patch': food_exp('single_patch',
-                                 l=lgs(models=['Orco_forager', 'forager'],
-                                       ids=['Orco', 'control'], N=20, mode='periphery', s=0.03)),
+        'single_odor_patch': food_exp('single_odor_patch',
+                                 l=lgs(models=['Orco_forager', 'forager', 'nengo_forager'],
+                                       ids=['Orco', 'control', 'nengo'], N=5, mode='periphery', s=0.03)),
         'double_patch': food_exp('double_patch', l=RvsS_groups(N=5),
                                  c=['toucher', 'feeder', 'olfactor'],
                                  enrichment=enrichment_dict(types=['spatial', 'angular', 'source']), en=False),

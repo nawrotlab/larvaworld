@@ -42,6 +42,32 @@ plt_conf = {'axes.labelsize': 20,
 plt.rcParams.update(plt_conf)
 suf = 'pdf'
 
+def plot_2pars(shorts,subfolder='step', **kwargs) :
+    ypar, ylab, ylim = getPar(shorts[1], to_return=['d', 'l', 'lim'])
+    xpar, xlab, xlim = getPar(shorts[0], to_return=['d', 'l', 'lim'])
+    P = Plot(name=f'{ypar}_VS_{xpar}', subfolder=subfolder, **kwargs)
+    P.build()
+    ax=P.axs[0]
+    if P.Ndatasets == 1:
+        d=P.datasets[0]
+        Nids = len(d.agent_ids)
+        cs = N_colors(Nids)
+        s = d.read('step')
+        for j, id in enumerate(d.agent_ids) :
+            ss=s.xs(id, level='AgentID', drop_level=True)
+            ax.scatter(ss[xpar], ss[ypar], color=cs[j], marker='.', label=id)
+            ax.legend()
+    else :
+        for d, c in zip(P.datasets, P.colors):
+            s=d.read('step')
+            for id in d.agent_ids :
+                ss=s.xs(id, level='AgentID', drop_level=True)
+                ax.scatter(ss[xpar], ss[ypar], color=c, marker='.')
+        dataset_legend(P.labels, P.colors, ax=ax, loc='upper left')
+    P.conf_ax(xlab=xlab, ylab=ylab, xlim=xlim,ylim=ylim, xMaxN=4, yMaxN=4)
+    P.adjust((0.15, 0.95), (0.15, 0.92), 0.05, 0.005)
+    return P.get()
+
 
 def plot_turns(absolute=True, subfolder='turn', **kwargs):
     P = Plot(name='turn_amplitude', subfolder=subfolder, **kwargs)

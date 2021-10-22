@@ -163,7 +163,10 @@ def plot_results(traj, df):
 
 def null_final_processing(traj):
     df = save_results_df(traj)
-    plots = plot_results(traj, df)
+    try :
+        plots = plot_results(traj, df)
+    except :
+        pass
     return df, plots
 
 

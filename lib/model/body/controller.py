@@ -156,7 +156,7 @@ class BodySim(BodyManager):
                 # UPdate : 0 damping does not fix the two-pick (though makes it a bit better).Interference neither.
                 # But maybe I cn raise the torque coef of 0.07 becuse two_osc reach -20,20 and interference drops it to -10,10.
                 ang_vel = self.compute_ang_vel(torque=self.torque,
-                                               v=self.get_head().get_angularvelocity(),
+                                               v=self.head.get_angularvelocity(),
                                                z=self.ang_damping)
             elif self.ang_mode == 'velocity':
                 ang_vel = self.ang_activity * self.ang_vel_coef
@@ -214,17 +214,7 @@ class BodySim(BodyManager):
 
     # Update 4.1.2020 : Setting b=0 because it is a substitute of the angular damping of the environment
     def compute_ang_vel(self, torque=0.0, v=0.0, z=0.0):
-
-        k = self.body_spring_k
-        b = self.body_bend
-        new_v = v + (-z * v - k * b + torque) * self.model.dt
-        # if new_v * v<0:
-        #     return 0.0
-        # else:
-        #     return new_v
-        # if new_v>0 :
-        #     print('dd')
-        return new_v
+        return v + (-z * v - self.body_spring_k * self.body_bend + torque) * self.model.dt
 
     def restore_body_bend(self):
         self.compute_spineangles()
@@ -238,17 +228,10 @@ class BodySim(BodyManager):
                                                                 correction_coef=self.bend_correction_coef)
         self.compute_body_bend()
 
-    # def set_lin_activity(self, value):
-    #     self.lin_activity = value
-
-    # def set_ang_activity(self, value):
-    #     self.ang_activity = value
-
-
     def update_trajectory(self):
         last_pos = self.trajectory[-1]
         if self.model.Box2D:
-            self.pos = self.get_global_midspine_of_body()
+            self.pos = self.global_midspine_of_body
         self.dst = np.sqrt(np.sum(np.array(self.pos - last_pos) ** 2))
         self.cum_dst += self.dst
         self.trajectory.append(self.pos)
@@ -269,9 +252,9 @@ class BodySim(BodyManager):
         # Compute orientation
         dt = self.model.dt
 
-        head = self.get_head()
+        head = self.head
         hp0, o0 = head.get_pose()
-        hr0 = self.get_global_rear_end_of_head()
+        hr0 = self.global_rear_end_of_head
 
         lin_vel, ang_vel=self.assess_collisions(lin_vel, ang_vel, head)
         d = lin_vel * dt
@@ -281,7 +264,7 @@ class BodySim(BodyManager):
         head.update_vertices(hp1, o1)
         if self.Nsegs > 1:
             self.position_rest_of_body(o1-o0, head_rear_pos=hr1, head_or=o1)
-        self.pos = self.get_global_midspine_of_body() if self.Nsegs != 2 else hr1
+        self.pos = self.global_midspine_of_body if self.Nsegs != 2 else hr1
         self.model.space.move_agent(self, self.pos)
         head.set_lin_vel(lin_vel)
         head.set_ang_vel(ang_vel)
@@ -298,9 +281,8 @@ class BodySim(BodyManager):
                 seg = self.segs[1]
                 self.spineangles[0] += d_orientation
                 new_or = head_or - self.spineangles[0]
-                seg.set_orientation(new_or)
                 new_p = head_rear_pos + np.array([-np.cos(new_or), -np.sin(new_or)]) * self.seg_lengths[1] / 2
-                seg.set_position(new_p)
+                seg.set_pose(new_p, new_or)
                 seg.update_vertices(new_p, new_or)
             else:
                 bend_per_spineangle = d_orientation / (N / 2)
@@ -314,9 +296,8 @@ class BodySim(BodyManager):
                     if i + 1 <= N / 2:
                         self.spineangles[i] += bend_per_spineangle
                     new_or = previous_seg_or - self.spineangles[i]
-                    seg.set_orientation(new_or)
                     new_p = global_p + np.array([-np.cos(new_or), -np.sin(new_or)]) * l / 2
-                    seg.set_position(new_p)
+                    seg.set_pose(new_p, new_or)
                     seg.update_vertices(new_p, new_or)
             self.compute_body_bend()
 

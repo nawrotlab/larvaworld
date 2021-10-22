@@ -10,6 +10,7 @@ from mesa.datacollection import DataCollector
 from mesa.time import RandomActivation
 
 import lib.aux.naming as nam
+from lib.aux.colsNstr import rgetattr
 from lib.aux.dictsNlists import flatten_list
 
 
@@ -60,21 +61,17 @@ class TargetedDataCollector(DataCollector):
         pref = [f'model.{self.schedule.id}.steps', 'unique_id']
         self.rep_funcs = self.agent_reporters.values()
         if all([hasattr(r, 'attribute_name') for r in self.rep_funcs]):
-            # attributes = [f.attribute_name for f in self.rep_funcs]
             self.reports = attrgetter(*pref + [r.attribute_name for r in self.rep_funcs])
         else:
             self.reports = None
 
     def valid_reporters(self, pars, par_dict):
-        # from lib.conf.par import load_ParDict
-        dic0 = par_dict
-        # dic0 = load_ParDict()
-        ks = [k for k in pars if k in dic0.keys()]
+        ks = [k for k in pars if k in par_dict.keys()]
         dic = {}
         for k in ks:
-            d, p = dic0[k]['d'], dic0[k]['p']
+            d, p = par_dict[k]['d'], par_dict[k]['p']
             try:
-                temp = [getattr(l, p) for l in self.schedule.agents]
+                temp = [rgetattr(l, p) for l in self.schedule.agents]
                 dic.update({d: p})
             except:
                 pass
@@ -135,6 +132,10 @@ output_dict = {
     'toucher': {
         'step': ['A_touch', 'A_tur','Act_tur', 'cum_f_det', 'on_food_tr', 'on_food'],
         'endpoint': ['on_food_tr']},
+
+    'wind' : {
+        'step': ['A_wind'],
+        'endpoint': []},
 
     'feeder': {
         'step': ['l', 'm', 'f_am', 'sf_am', 'EEB'],

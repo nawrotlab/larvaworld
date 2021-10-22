@@ -528,7 +528,7 @@ class LarvaWorld:
 
         for l, p, o in zip(self.get_flies(), positions, orientations):
             temp = np.array([-np.cos(o), -np.sin(o)])
-            head = l.get_head()
+            head = l.head
             head.set_pose(p, o)
             head.update_vertices(p, o)
             for i, seg in enumerate(l.segs[1:]):
@@ -538,7 +538,7 @@ class LarvaWorld:
                 seg.set_position(new_p)
                 seg.set_lin_vel(0.0)
                 seg.set_ang_vel(0.0)
-            l.pos = l.get_global_midspine_of_body()
+            l.pos = l.global_midspine_of_body
             self.space.move_agent(l, l.pos)
 
     def create_borders(self, lines):

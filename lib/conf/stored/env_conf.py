@@ -27,7 +27,7 @@ def foodNodor_4corners(d=0.05):
     return dic
 
 
-def env(a, f=f_pars(), o=None, bl={}):
+def env(a, f=f_pars(), o=None, bl={}, w=None):
     if o == 'D':
         o = {'odorscape': 'Diffusion',
              'grid_dims': [100, 100],
@@ -40,7 +40,9 @@ def env(a, f=f_pars(), o=None, bl={}):
              'evap_const': None,
              'gaussian_sigma': None
              }
-    return null_dict('env_conf', arena=a, food_params=f, odorscape=o, border_list=bl)
+    if w is not None:
+        w = null_dict('windscape', wind_direction=w[0], wind_speed=w[1])
+    return null_dict('env_conf', arena=a, food_params=f, odorscape=o, border_list=bl, windscape=w)
 
 
 def CS_UCS(N=2, x=0.04):
@@ -111,6 +113,8 @@ env_dict = {
                           f_pars(sg=sg('FoodLine', o=oG(), a=0.002, r=0.001, N=20, sh='oval', s=(0.01, 0.0),
                                        m='periphery')), 'G'),
 
+    'windy_arena': env(arena(0.2, 0.2), w=[85.0, 1.0]),
+
     'CS_UCS_on_food': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(1)), 'G'),
     'CS_UCS_on_food_x2': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(2)), 'G'),
     'CS_UCS_off_food': env(arena(0.1), f_pars(su=CS_UCS(1)), 'G'),
@@ -118,6 +122,7 @@ env_dict = {
     'patchy_food': env(arena(0.2, 0.2), f_pars(sg=sg(N=8, s=0.07, m='periphery', a=0.001, o=oG(2))), 'G'),
     'uniform_food': env(arena(0.05), f_pars(sg=sg(N=2000, s=0.025, a=0.01, r=0.0001))),
     'food_grid': env(arena(0.02, 0.02), f_pars(grid=null_dict('food_grid'))),
+    'single_odor_patch': env(arena(0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01, o=oG())), 'G'),
     'single_patch': env(arena(0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01))),
     'multi_patch': env(arena(0.02, 0.02), f_pars(sg=sg(N=8, s=0.007, m='periphery', a=0.1, r=0.0015))),
     'double_patch': env(arena(0.24, 0.24),

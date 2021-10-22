@@ -22,7 +22,6 @@ class Sensor(Effector):
         pass
 
     def step(self, input):
-        # print(input)
         if len(input) == 0:
             self.activation = 0
         else:
@@ -50,7 +49,6 @@ class Sensor(Effector):
         self.dX = {}
         self.Ngains = len(gain_dict)
         self.gain_ids = list(gain_dict.keys())
-        # print(odor_dict)
         for id, p in gain_dict.items():
             if type(p) == dict:
                 m, s = p['mean'], p['std']
@@ -64,8 +62,14 @@ class Sensor(Effector):
     def get_dX(self):
         return self.dX
 
+    def get_X_values(self, t, N):
+        return list(self.X.values())
+
     def get_gain(self):
         return self.gain
+
+    def get_activation(self, t):
+        return self.activation
 
     def set_gain(self, value, gain_id):
         self.gain[gain_id] = value
@@ -86,6 +90,8 @@ class Sensor(Effector):
                     self.dX[id] = cur / prev - 1 if prev != 0 else 0
                 elif self.perception == 'linear':
                     self.dX[id] = cur - prev
+                elif self.perception == 'null':
+                    self.dX[id] = cur
         self.X = input
 
     def add_novel_gain(self, id, con=0.0, gain=0.0):
@@ -108,11 +114,14 @@ class Toucher(Sensor):
     def affect_locomotion(self):
         for id in self.gain_ids:
             if self.dX[id]==1:
-                # print('in')
                 self.brain.intermitter.trigger_locomotion()
                 break
             elif self.dX[id]==-1:
-                # print('out')
                 self.brain.intermitter.interrupt_locomotion()
                 break
+
+class WindSensor(Sensor):
+    def __init__(self,weights, perception='null', **kwargs):
+        super().__init__(perception=perception, **kwargs)
+        self.weights=weights
 

@@ -3,7 +3,7 @@ from sklearn.metrics.pairwise import nan_euclidean_distances
 import numpy as np
 
 from lib.process.aux import compute_component_velocity, compute_velocity, compute_centroid
-from lib.aux.ang_aux import rotate_multiple_points
+from lib.aux.ang_aux import rotate_multiple_points, angle_dif
 from lib.aux.dictsNlists import group_list_by_n, flatten_list
 import lib.aux.naming as nam
 from lib.process.store import store_aux_dataset
@@ -374,6 +374,24 @@ def comp_source_metrics(s, e, config, **kwargs):
                 e[nam.scal(p)] = e[p] / l
 
         print('Bearing and distance to source computed')
+
+def comp_wind_metrics(s, e,config, **kwargs):
+    w = config['env_params']['windscape']
+    if w is not None :
+        wo, wv = w['wind_direction'], w['wind_speed']
+        woo=np.deg2rad(wo)
+        ids = s.index.unique('AgentID').values
+        for id in ids :
+            xy = s[['x', 'y']].xs(id, level='AgentID', drop_level=True).values
+            origin=e[[nam.initial('x'), nam.initial('y')]].loc[id]
+            d = nan_euclidean_distances(list(xy), [origin])[:, 0]
+            dx=xy[:,0]-origin[0]
+            dy=xy[:,1]-origin[1]
+            angs=np.arctan2(dy, dx)
+            a=np.array([angle_dif(ang,woo) for ang in angs])
+            s.loc[(slice(None), id), 'anemotaxis'] =d*np.cos(a)
+        s[nam.bearing2('wind')]=s.apply(lambda r: angle_dif(r[nam.orient('front')], wo), axis=1)
+        e['anemotaxis'] = s['anemotaxis'].groupby('AgentID').last()
 
 
 def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', config=None, **kwargs):

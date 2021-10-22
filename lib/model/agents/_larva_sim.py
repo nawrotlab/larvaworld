@@ -24,7 +24,7 @@ class LarvaSim(BodySim, Larva):
         self.reset_feeder()
         self.radius = self.sim_length / 2
 
-        self.food_detected, self.feeder_motion, self.current_V_eaten, self.feed_success = None, False, 0, None
+        self.food_detected, self.feeder_motion, self.current_V_eaten, self.feed_success = None, False, 0, 0
         self.food_missed, self.food_found = False, False
         self.cum_food_detected=0
 
@@ -61,10 +61,10 @@ class LarvaSim(BodySim, Larva):
             return item
 
 
-
     def feed(self, source, motion):
-        a_max = self.max_V_bite
+
         if motion:
+            a_max = self.max_V_bite
             if source is not None:
                 grid = self.model.food_grid
                 if grid:
@@ -73,11 +73,11 @@ class LarvaSim(BodySim, Larva):
                     V = source.subtract_amount(a_max)
                 self.feed_success_counter += 1
                 self.amount_eaten += V * 1000
-                return V, True
+                return V, 1
             else:
-                return 0, False
+                return 0, -1
         else:
-            return 0, None
+            return 0, 0
 
     def reset_feeder(self):
         self.feed_success_counter = 0
@@ -182,7 +182,8 @@ class LarvaSim(BodySim, Larva):
             self.max_V_bite = self.get_max_V_bite()
 
 
-
+    def get_feed_success(self, t):
+        return self.feed_success
 
     def update_behavior_dict(self):
         d = self.null_behavior_dict.copy()
@@ -210,21 +211,24 @@ class LarvaSim(BodySim, Larva):
     def on_food(self):
         return self.food_detected is not None
 
+    def get_on_food(self, t):
+        return self.on_food
+
     @property
     def front_orientation(self):
-        return np.rad2deg(self.get_head().get_normalized_orientation())
+        return np.rad2deg(self.head.get_normalized_orientation())
 
     @property
     def front_orientation_unwrapped(self):
-        return np.rad2deg(self.get_head().get_orientation())
+        return np.rad2deg(self.head.get_orientation())
 
     @property
     def rear_orientation_unwrapped(self):
-        return np.rad2deg(self.get_tail().get_orientation())
+        return np.rad2deg(self.tail.get_orientation())
 
     @property
     def rear_orientation(self):
-        return np.rad2deg(self.get_tail().get_normalized_orientation())
+        return np.rad2deg(self.tail.get_normalized_orientation())
 
     @property
     def bend(self):
@@ -241,7 +245,7 @@ class LarvaSim(BodySim, Larva):
 
     @property
     def front_orientation_vel(self):
-        return np.rad2deg(self.get_head().get_angularvelocity())
+        return np.rad2deg(self.head.get_angularvelocity())
 
 
     def resolve_carrying(self, food):

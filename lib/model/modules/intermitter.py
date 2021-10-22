@@ -254,12 +254,12 @@ class Intermitter(Effector):
             self.EEB *= self.EEB_exp_coef
         else:
             self.EEB = self.base_EEB
-        if feed_success == True:
+        if feed_success == 1:
             if self.feeder_reocurrence_as_EEB:
                 self.feeder_reoccurence_rate = self.EEB
             else:
                 self.feeder_reoccurence_rate = max_refeed_rate
-        elif feed_success == False:
+        elif feed_success == -1:
             self.feeder_reoccurence_rate *= refeed_rate_coef
 
     @property
@@ -358,24 +358,27 @@ class OfflineIntermitter(Intermitter):
 
 
 class NengoIntermitter(OfflineIntermitter):
-    def __init__(self, nengo_manager, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.nengo_manager = nengo_manager
+        # self.nengo_manager = nengo_manager
         self.current_stridechain_length = self.stridechain_dist.sample()
 
     def disinhibit_locomotion(self):
         if np.random.uniform(0, 1, 1) >= self.EEB:
             self.crawler.set_freq(self.crawler.default_freq)
-            self.feeder.set_freq(0)
+            if self.feeder is not None :
+                self.feeder.set_freq(0)
             self.current_stridechain_length = self.stridechain_dist.sample()
         else:
-            self.feeder.set_freq(self.feeder.default_freq)
+            if self.feeder is not None:
+                self.feeder.set_freq(self.feeder.default_freq)
             self.crawler.set_freq(0)
             self.current_feedchain_length = 1
 
     def inhibit_locomotion(self):
         self.crawler.set_freq(0)
-        self.feeder.set_freq(0)
+        if self.feeder is not None:
+            self.feeder.set_freq(0)
 
     # def update_state(self):
     #     if not self.effector:

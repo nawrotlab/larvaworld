@@ -142,7 +142,7 @@ def init_vis():
     return d
 
 
-proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI']
+proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
 bout_keys = ['stride', 'pause', 'turn']
 to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn',
                 'unused']
@@ -249,6 +249,9 @@ def init_pars():
                       'evap_const': {'max': 1.0},
                       'gaussian_sigma': {'t': Tuple[float], 'max': 1.0}
                       },
+        'windscape': {'wind_direction': {'t': float, 'min': 0.0, 'max': 360.0, 'dv': 1.0},
+                      'wind_speed': {'t': float, 'min': 0.0, 'max': 100.0, 'dv': 1.0},
+                      },
         'odor_gains': {
             'unique_id': {'t': str},
             'mean': {'max': 1000.0, 'dv': 10.0},
@@ -341,9 +344,17 @@ def init_pars():
             'EEB_decay': {'v': 1.0, 'max': 2.0},
             'EEB': {'v': 0.0, 'max': 1.0}},
         'olfactor': {
-            'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear']},
+            'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear', 'null']},
             'input_noise': {'v': 0.0, 'max': 1.0},
             'decay_coef': {'v': 0.0, 'max': 2.0}},
+        'windsensor': {
+            'weights': {
+                'hunch_lin': {'v': 0.0, 'min': -100.0, 'max': 100.0},
+                'hunch_ang': {'v': 10.0, 'min': -100.0, 'max': 100.0},
+                'bend_lin': {'v': 10.0, 'min': -100.0, 'max': 100.0},
+                'bend_ang': {'v': -10.0, 'min': -100.0, 'max': 100.0},
+            }
+        },
         'toucher': {
             'perception': {'t': str, 'v': 'linear', 'vs': ['log', 'linear']},
             'input_noise': {'v': 0.0, 'max': 1.0},
@@ -371,6 +382,7 @@ def init_pars():
                     'interference': bF,
                     'intermitter': bF,
                     'olfactor': bF,
+                    'windsensor': bF,
                     'toucher': bF,
                     'feeder': bF,
                     'memory': bF},
@@ -520,7 +532,8 @@ def init_pars():
     d['env_conf'] = {'arena': d['arena'],
                      'border_list': {'t': dict, 'v': {}},
                      'food_params': d['food_params'],
-                     'odorscape': d['odorscape']}
+                     'odorscape': d['odorscape'],
+                     'windscape': d['windscape']}
 
     d['exp_conf'] = {'env_params': {'t': str, 'vs': list(loadConfDict('Env').keys())},
                      'larva_groups': {'t': dict, 'v': {}},

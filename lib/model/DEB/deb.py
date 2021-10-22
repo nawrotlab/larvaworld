@@ -714,6 +714,43 @@ class DEB:
         elif assimilation_mode == 'deb':
             return self.deb_p_A
 
+    @property
+    def deb_f_mean(self):
+        return np.mean(self.dict['f'])
+
+    @property
+    def gut_occupancy(self):
+        return self.gut.occupancy
+
+    @property
+    def ingested_body_mass_ratio(self):
+        return self.gut.ingested_mass() / self.deb.Ww * 100
+
+    @property
+    def ingested_body_volume_ratio(self):
+        return self.gut.ingested_volume / self.deb.V * 100
+
+    @property
+    def ingested_gut_volume_ratio(self):
+        return self.gut.ingested_volume / (self.deb.V * self.deb.gut.V_gm) * 100
+
+    @property
+    def ingested_body_area_ratio(self):
+        return (self.gut.ingested_volume / self.deb.V) ** (1 / 2) * 100
+        # return (self.deb.gut.ingested_volume()/self.deb.V)**(2/3)*100
+
+    @property
+    def amount_absorbed(self):
+        return self.gut.absorbed_mass('mg')
+
+    @property
+    def deb_f_deviation(self):
+        return self.f - 1
+
+    @property
+    def deb_f_deviation_mean(self):
+        return np.mean(np.array(self.dict['f']) - 1)
+
 
 # p.257 in S. a. L. M. Kooijman, “Dynamic Energy Budget theory for metabolic organisation : Summary of concepts of the third edition,” Water, vol. 365, p. 68, 2010.
 
