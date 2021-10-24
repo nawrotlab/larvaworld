@@ -6,13 +6,13 @@ import numpy as np
 sys.path.insert(0, '..')
 from lib.sim.single.single_run import SingleRun
 from lib.sim.single.analysis import sim_analysis
-from lib.conf.stored.conf import loadConfDict
+from lib.conf.stored.conf import kConfDict
 from lib.anal.argparsers import MultiParser, update_exp_conf
 
 s = time.time()
 MP = MultiParser(['visualization', 'sim_params'])
 p = MP.add()
-p.add_argument('experiment', choices=list(loadConfDict('Exp').keys()), help='The experiment mode')
+p.add_argument('experiment', choices=kConfDict('Exp'), help='The experiment mode')
 p.add_argument('-a', '--analysis', action="store_true", help='Whether to run analysis')
 p.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae in each larva group')
 

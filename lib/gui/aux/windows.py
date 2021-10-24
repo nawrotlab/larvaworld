@@ -6,7 +6,7 @@ import PySimpleGUI as sg
 
 from lib.aux.dictsNlists import flatten_list
 from lib.aux.colsNstr import remove_prefix, remove_suffix
-from lib.conf.stored.conf import loadConfDict, saveConf, loadConf
+from lib.conf.stored.conf import saveConf, loadConf, kConfDict
 from lib.conf.base.dtypes import null_dict
 from lib.gui.aux.functions import retrieve_value, t_kws, b6_kws, w_kws, col_size
 from lib.gui.aux.buttons import named_bool_button
@@ -202,7 +202,7 @@ def save_conf_window(conf, conftype, disp=None):
     if disp is None:
         disp = conftype
     temp = NamedList('save_conf', key=f'{disp}_ID',
-                     choices=list(loadConfDict(conftype).keys()),
+                     choices=kConfDict(conftype),
                      readonly=False, enable_events=False, header_kws={'text': f'Store new {disp}'})
     l = [
         temp.get_layout(),

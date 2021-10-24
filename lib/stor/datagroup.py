@@ -8,7 +8,7 @@ from lib.conf.base import paths
 
 sys.path.insert(0, paths.get_parent_dir())
 
-from lib.conf.stored.conf import loadConf, deleteConf, saveConf, loadConfDict
+from lib.conf.stored.conf import loadConf, deleteConf, saveConf, kConfDict
 
 
 class LarvaDataGroup:
@@ -243,7 +243,7 @@ def setConf(id):
     print(f' - Step 4 : Parameter configuration')
     if get_input("Use an existing parameter configuration?", itype=bool, default=False):
         par_conf_id = get_input("Enter the id of the parameter configuration to use", itype=str,
-                                accepted=list(loadConfDict('Par').keys()))
+                                accepted=kConfDict('Par'))
     else:
         par_conf_id = get_input("Enter the id of the new parameter configuration", itype=str, default=f'{id}Par')
         par_conf = setParConf(data_conf['Npoints'])
@@ -267,7 +267,7 @@ def setDataGroup(id=None):
     print(f' -- Step 1 : DataGroup Configuration')
     if get_input("Use an existing configuration? ", itype=bool, default=False):
         conf_id = get_input("Enter the id of the DataGroup Configuration to use", itype=str,
-                            accepted=list(loadConfDict('Data').keys()))
+                            accepted=kConfDict('Data'))
     else:
         conf_id = get_input("Enter the id of the new DataGroup Configuration", itype=str, default=f'{id}Conf')
         conf = setConf(conf_id)

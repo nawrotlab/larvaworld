@@ -10,7 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 from lib.aux.dictsNlists import flatten_dict, group_list_by_n
-from lib.conf.stored.conf import loadConfDict, deleteConf, loadConf, expandConf
+from lib.conf.stored.conf import loadConfDict, deleteConf, loadConf, expandConf, kConfDict
 import lib.aux.colsNstr as fun
 from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par
 from lib.conf.base.par import runtime_pars, getPar
@@ -384,10 +384,6 @@ class SelectionList(GuiElement):
     def save(self, conf):
         return save_conf_window(conf, self.conftype, disp=self.disp)
 
-        # for i in range(3):
-        #     k = f'{self.conf_k}{i}'
-        #     w.Element(k, silent_on_error=True).Update(values=list(loadConfDict(k).keys()),value=id)
-
     def load(self,w,c,id):
         conf = loadConf(id, self.conftype)
         self.tab.update(w, c, conf, id)
@@ -439,7 +435,7 @@ class SelectionList(GuiElement):
 
     @property
     def confs(self):
-        return list(loadConfDict(self.conftype).keys())
+        return kConfDict(self.conftype)
 
     @property
     def Nconfs(self):

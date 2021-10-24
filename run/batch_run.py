@@ -2,13 +2,13 @@ import sys
 import argparse
 
 sys.path.insert(0, '..')
-from lib.conf.stored.conf import next_idx, loadConfDict, loadConf
+from lib.conf.stored.conf import next_idx, loadConf, kConfDict
 import lib.anal.argparsers as prs
 from run.exec_run import Exec
 
 MP = prs.MultiParser(['sim_params', 'batch_setup'])
 p = MP.add()
-p.add_argument('batch', choices=list(loadConfDict('Batch').keys()), help='The batch-run mode')
+p.add_argument('batch', choices=kConfDict('Batch'), help='The batch-run mode')
 p.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae in each larva group')
 
 args = p.parse_args()

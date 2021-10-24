@@ -4,6 +4,7 @@ import pandas as pd
 from siunits import BaseUnit, Composite, DerivedUnit
 
 from lib.aux.collecting import output_keys
+from lib.conf.stored.conf import kConfDict
 from lib.gui.aux.functions import get_pygame_key
 
 
@@ -225,7 +226,6 @@ null_bout_dist = {
 
 def init_pars():
     bF, bT = {'t': bool, 'v': False}, {'t': bool, 'v': True}
-    from lib.conf.stored.conf import loadConfDict
 
     bout_dist_dtypes = {
         'fit': bT,
@@ -535,13 +535,13 @@ def init_pars():
                      'odorscape': d['odorscape'],
                      'windscape': d['windscape']}
 
-    d['exp_conf'] = {'env_params': {'t': str, 'vs': list(loadConfDict('Env').keys())},
+    d['exp_conf'] = {'env_params': {'t': str, 'vs': kConfDict('Env')},
                      'larva_groups': {'t': dict, 'v': {}},
                      'sim_params': d['sim_params'],
-                     'trials': {'t': str, 'v': 'default', 'vs': list(loadConfDict('Trial').keys())},
+                     'trials': {'t': str, 'v': 'default', 'vs': kConfDict('Trial')},
                      'collections': {'t': List[str], 'v': ['pose']},
                      'enrichment': d['enrichment'],
-                     'experiment': {'t': str, 'vs': list(loadConfDict('Exp').keys())},
+                     'experiment': {'t': str, 'vs': kConfDict('Exp')},
                      }
     d['batch_setup'] = {
         'batch_id': {'t': str, 'h': 'The id of the batch-run', 's': 'b_id'},
@@ -593,7 +593,7 @@ def init_pars():
         'orientation_range': {'t': Tuple[float], 'v': (0.0, 360.0), 'min': 0.0, 'max': 360.0, 'dv': 1.0}
     }
 
-    d['larva_model'] = {'t': str, 'v': 'explorer', 'vs': list(loadConfDict('Model').keys())}
+    d['larva_model'] = {'t': str, 'v': 'explorer', 'vs': kConfDict('Model')}
 
     d['Larva_DISTRO'] = {
         'model': d['larva_model'],
@@ -640,7 +640,7 @@ def init_pars():
 
     d['replay'] = {
         # 'arena_pars': d['arena'],
-        'env_params': {'t': str, 'vs': list(loadConfDict('Env').keys()), 'aux_vs': ['']},
+        'env_params': {'t': str, 'vs': kConfDict('Env'), 'aux_vs': ['']},
         'track_point': {'t': int, 'v': -1, 'min': -1, 'max': 12},
         'dynamic_color': {'t': str, 'vs': [None, 'lin_color', 'ang_color']},
         'agent_ids': {'t': List[str]},

@@ -41,6 +41,9 @@ def loadConfDict(conf_type):
     except:
         return {}
 
+def kConfDict(conf_type) :
+    return list(loadConfDict(conf_type).keys())
+
 
 def saveConf(conf, conf_type, id=None, mode='overwrite'):
     try:
@@ -90,9 +93,9 @@ def next_idx(exp, type='single'):
         with open(F0) as f:
             d = json.load(f)
     except:
-        ksExp = list(loadConfDict('Exp').keys())
-        ksBatch = list(loadConfDict('Batch').keys())
-        ksEssay = list(loadConfDict('Essay').keys())
+        ksExp = kConfDict('Exp')
+        ksBatch = kConfDict('Batch')
+        ksEssay = kConfDict('Essay')
         dExp = dict(zip(ksExp, [0] * len(ksExp)))
         dBatch = dict(zip(ksBatch, [0] * len(ksBatch)))
         dEssay = dict(zip(ksEssay, [0] * len(ksEssay)))

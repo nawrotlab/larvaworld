@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 
-from lib.conf.stored.conf import loadConfDict
+from lib.conf.stored.conf import kConfDict
 from lib.conf.base.dtypes import null_dict, arena, par_dict
 
 
@@ -58,7 +58,7 @@ class MultiParser :
         return {k : v.get(input) for k,v in self.parsers.items()}
 
 def add_exp_kwargs(parser) :
-    parser.add_argument('experiment', choices=list(loadConfDict('Exp').keys()), help='The experiment mode')
+    parser.add_argument('experiment', choices=kConfDict('Exp'), help='The experiment mode')
     parser.add_argument('-a', '--analysis', action="store_true", help='Whether to run analysis')
     return parser
 
@@ -239,7 +239,7 @@ def add_sim_kwargs(p):
                    help='The duration of the simulation in min')
     p.add_argument('-dt', '--timestep', type=float, nargs='?', default=0.1, help='The timestep of the simulation in sec')
     p.add_argument('-Box2D', '--Box2D', action="store_true", help='Use the Box2D physics engine')
-    p.add_argument('-sample', '--sample', type=str, nargs='?', default='reference', choices=list(loadConfDict('Ref').keys()),
+    p.add_argument('-sample', '--sample', type=str, nargs='?', default='reference', choices=kConfDict('Ref'),
                    help='The dataset to sample the parameters from')
     return p
 
@@ -340,7 +340,7 @@ def get_space_kwargs(args):
 
 def add_place_kwargs(p):
     p.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae')
-    p.add_argument('-M', '--larva_model', choices=list(loadConfDict('Model').keys()), help='The larva model to use')
+    p.add_argument('-M', '--larva_model', choices=kConfDict('Model'), help='The larva model to use')
     return p
 
 
