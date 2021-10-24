@@ -1,3 +1,4 @@
+import pandas as pd
 from nengo import *
 import numpy as np
 from nengo.networks import EnsembleArray
@@ -6,7 +7,6 @@ from lib.aux.dictsNlists import save_dict
 from lib.model.modules.brain import Brain
 from lib.model.modules.basic import Oscillator_coupling
 from lib.model.modules.intermitter import NengoIntermitter
-from lib.model.modules.sensor import WindSensor
 
 
 class NengoBrain(Network, Brain):
@@ -37,6 +37,7 @@ class NengoBrain(Network, Brain):
         ws = self.windsensor
         a = self.agent
         N1, N2=50,10
+
         with self:
             if o is not None:
                 N = o.Ngains
@@ -188,7 +189,6 @@ class NengoBrain(Network, Brain):
 
             if ws is not None:
                 Ch = Node(ws.get_activation, size_out=1)
-
                 LNa = Ensemble(N2, 1, neuron_type=Direct())
                 LNb = Ensemble(N2, 1, neuron_type=Direct())
                 Ha = Ensemble(N2, 1, neuron_type=Direct())
@@ -197,32 +197,64 @@ class NengoBrain(Network, Brain):
                 B2 = Ensemble(N2, 1, neuron_type=Direct())
                 Hunch = Ensemble(N2, 1, neuron_type=Direct())
                 Bend = Ensemble(N2, 1, neuron_type=Direct())
-                Connection(Ch, LNa, synapse=0.01, transform=1)
-                Connection(Ch, LNb, synapse=0.01, transform=1)
-                Connection(Ch, Hb, synapse=0.01, transform=0.3)
-                Connection(Ch, B1, synapse=0.01, transform=1)
-                Connection(Ch, B2, synapse=0.01, transform=0.3)
-                Connection(LNa, LNb, synapse=0.01, transform=-1)
-                Connection(LNb, LNa, synapse=0.01, transform=-1)
-                Connection(LNa, B2, synapse=0.01, transform=-1)
-                Connection(LNb, B1, synapse=0.01, transform=-1)
-                Connection(LNa, B1, synapse=0.01, transform=-0.1)
-                Connection(LNb, B2, synapse=0.01, transform=-0.1)
-                Connection(LNa, Ha, synapse=0.01, transform=-0.2)
-                Connection(LNb, Ha, synapse=0.01, transform=-0.2)
-                Connection(LNa, Hb, synapse=0.01, transform=-0.2)
-                Connection(LNb, Hb, synapse=0.01, transform=-0.2)
-                Connection(Ha, LNa, synapse=0.01, transform=-0.2)
-                Connection(Ha, LNb, synapse=0.01, transform=-0.2)
-                Connection(Hb, LNa, synapse=0.01, transform=-0.6)
-                Connection(Hb, LNb, synapse=0.01, transform=-0.6)
-                Connection(B1, Ha, synapse=0.01, transform=0.1)
-                Connection(B2, Ha, synapse=0.01, transform=0.1)
-                Connection(B2, Hb, synapse=0.01, transform=0.1)
-                Connection(B2, Hunch, synapse=0.01, transform=-0.3)
-                Connection(B2, Bend, synapse=0.01, transform=0.3)
-                Connection(B1, Hunch, synapse=0.01, transform=0.3)
-                Connection(B1, Bend, synapse=0.01, transform=0.3)
+
+                ws_list=[
+                    [Ch, LNa, 0.01, 1],
+                    [Ch, LNb, 0.01, 1],
+                    [Ch, Hb, 0.01, 0.3],
+                    [Ch, B1, 0.01, 1],
+                    [Ch, B2, 0.01, 0.3],
+                    [LNa, LNb, 0.01, -1],
+                    [LNb, LNa, 0.01, -1],
+                    [LNa, B1, 0.01, -0.1],
+                    [LNb, B1, 0.01, -1],
+                    [LNa, B2, 0.01, -1],
+                    [LNb, B2, 0.01, -0.1],
+                    [LNa, Ha, 0.01, -0.2],
+                    [LNb, Ha, 0.01, -0.2],
+                    [LNa, Hb, 0.01, -0.2],
+                    [LNb, Hb, 0.01, -0.2],
+                    [Ha, LNa, 0.01, -0.2],
+                    [Hb, LNa, 0.01, -0.6],
+                    [Ha, LNb, 0.01, -0.2],
+                    [Hb, LNb, 0.01, -0.6],
+                    [B1, Ha, 0.01, 0.1],
+                    [B1, Hb, 0.01, 0.1],
+                    [B2, Hb, 0.01, 0.1],
+                    [B1, Hunch, 0.01, 0.3],
+                    [B1, Bend, 0.01, 0.3],
+                    [B2, Hunch, 0.01, -0.3],
+                    [B2, Bend, 0.01, 0.3],
+                ]
+                for i0,i1,syn,tr in ws_list :
+                    Connection(i0, i1, synapse=syn, transform=tr)
+
+                # Connection(Ch, LNa, synapse=0.01, transform=1)
+                # Connection(Ch, LNb, synapse=0.01, transform=1)
+                # Connection(Ch, Hb, synapse=0.01, transform=0.3)
+                # Connection(Ch, B1, synapse=0.01, transform=1)
+                # Connection(Ch, B2, synapse=0.01, transform=0.3)
+                # Connection(LNa, LNb, synapse=0.01, transform=-1)
+                # Connection(LNb, LNa, synapse=0.01, transform=-1)
+                # Connection(LNa, B2, synapse=0.01, transform=-1)
+                # Connection(LNb, B1, synapse=0.01, transform=-1)
+                # Connection(LNa, B1, synapse=0.01, transform=-0.1)
+                # Connection(LNb, B2, synapse=0.01, transform=-0.1)
+                # Connection(LNa, Ha, synapse=0.01, transform=-0.2)
+                # Connection(LNb, Ha, synapse=0.01, transform=-0.2)
+                # Connection(LNa, Hb, synapse=0.01, transform=-0.2)
+                # Connection(LNb, Hb, synapse=0.01, transform=-0.2)
+                # Connection(Ha, LNa, synapse=0.01, transform=-0.2)
+                # Connection(Ha, LNb, synapse=0.01, transform=-0.2)
+                # Connection(Hb, LNa, synapse=0.01, transform=-0.6)
+                # Connection(Hb, LNb, synapse=0.01, transform=-0.6)
+                # Connection(B1, Ha, synapse=0.01, transform=0.1)
+                # Connection(B2, Ha, synapse=0.01, transform=0.1)
+                # Connection(B2, Hb, synapse=0.01, transform=0.1)
+                # Connection(B2, Hunch, synapse=0.01, transform=-0.3)
+                # Connection(B2, Bend, synapse=0.01, transform=0.3)
+                # Connection(B1, Hunch, synapse=0.01, transform=0.3)
+                # Connection(B1, Bend, synapse=0.01, transform=0.3)
                 Connection(Hunch, linFr, synapse=0.0, transform=ws.weights['hunch_lin'])
                 Connection(Hunch, angFr, synapse=0.0, transform=ws.weights['hunch_ang'])
                 Connection(Bend, linFr, synapse=0.0, transform=ws.weights['bend_lin'])
@@ -251,7 +283,6 @@ class NengoBrain(Network, Brain):
     def update_dict(self, data):
         for k, p in self.probe_dict.items() :
             self.dict[k].append(np.mean(data[p][-self.Nsteps:]))
-
 
     def mean_odor_change(self, data):
         if self.olfactor is not None :

@@ -1,6 +1,4 @@
 import os
-
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -8,16 +6,13 @@ import lib.aux.dictsNlists
 from lib.anal.fitting import BoutGenerator
 from lib.aux import naming as nam
 from lib.conf.stored.conf import loadConf
-from lib.conf.base.dtypes import null_dict
 from lib.model.modules.basic import Effector
 
 
 class Intermitter(Effector):
-    def __init__(self, brain=None, crawl_bouts=False, feed_bouts=False,
-                 pause_dist=None, stridechain_dist=None, crawl_freq=10 / 7, feed_freq=2.0,
-                 EEB_decay=1, save_to=None,
-                 EEB=0.5, feeder_reoccurence_rate=None, feeder_reocurrence_as_EEB=True,
-                 **kwargs):
+    def __init__(self, brain=None, crawl_bouts=False, feed_bouts=False, crawl_freq=10 / 7, feed_freq=2.0,
+                 pause_dist=None, stridechain_dist=None, feeder_reoccurence_rate=None, feeder_reocurrence_as_EEB=True,
+                 EEB_decay=1, save_to=None, EEB=0.5, **kwargs):
         super().__init__(**kwargs)
         self.brain = brain
         self.save_to = save_to
@@ -331,9 +326,6 @@ class OfflineIntermitter(Intermitter):
     def inhibit_locomotion(self):
         pass
 
-
-
-
     def register(self, bout):
         if self.register_bouts :
             t = self.ticks
@@ -355,12 +347,9 @@ class OfflineIntermitter(Intermitter):
 
         self.reset_ticks()
 
-
-
 class NengoIntermitter(OfflineIntermitter):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.nengo_manager = nengo_manager
         self.current_stridechain_length = self.stridechain_dist.sample()
 
     def disinhibit_locomotion(self):
@@ -379,83 +368,6 @@ class NengoIntermitter(OfflineIntermitter):
         self.crawler.set_freq(0)
         if self.feeder is not None:
             self.feeder.set_freq(0)
-
-    # def update_state(self):
-    #     if not self.effector:
-    #         if np.random.uniform(0, 1, 1) > 0.97:
-    #             self.start_effector()
-
-
-class BranchIntermitter(Effector):
-    def __init__(self, rest_duration_range=(None, None), dt=0.1, sigma=1.0, m=0.01, N=1000):
-        self.dt = dt
-        self.N = N
-        self.m = m
-        self.xmin, self.xmax = rest_duration_range
-        if self.xmin is None:
-            self.xmin = self.dt
-        if self.xmax is None:
-            self.xmax = 2 ** 9
-
-        # Starting in activity state
-        self.S = 0
-        self.c_act = 0
-        self.c_rest = 0
-
-        self.rest_start = False
-        self.rest_stop = False
-        self.non_rest_start = True
-        self.non_rest_stop = False
-        self.rest_dur = np.nan
-        self.non_rest_dur = np.nan
-
-        def step():
-            self.rest_start = False
-            self.rest_stop = False
-            self.non_rest_start = False
-            self.non_rest_stop = False
-            self.rest_dur = np.nan
-            self.non_rest_dur = np.nan
-            # TODO Right now low threshold has no effect and equals dt
-            p = np.clip(sigma * self.S / self.N + self.m / self.N, a_min=0, a_max=1)
-            self.S = np.random.binomial(self.N, p)
-            if (self.S <= 0):
-                if self.c_rest > 0:
-                    self.rest_dur = self.c_rest
-                    self.rest_stop = True
-                    self.non_rest_start = True
-                    # D_rest.append(c_rest)
-                    self.disinhibit_locomotion()
-
-                    self.c_rest = 0
-                self.c_act += self.dt
-                if self.c_act >= self.xmax:
-                    self.non_rest_dur = self.c_act
-                    self.non_rest_stop = True
-                    self.rest_start = True
-                    self.inhibit_locomotion()
-                    self.c_act = 0
-                    self.S = 1
-                    return
-            elif (self.S > 0):
-                if self.c_act > 0:
-                    # D_act.append(c_act)
-
-                    self.non_rest_dur = self.c_act
-                    self.non_rest_stop = True
-                    self.rest_start = True
-                    self.inhibit_locomotion()
-                    self.c_act = 0
-                self.c_rest += dt
-                if self.c_rest >= self.xmax:
-                    self.rest_dur = self.c_rest
-                    self.rest_stop = True
-                    self.non_rest_start = True
-                    self.disinhibit_locomotion()
-                    self.c_rest = 0
-                    self.S = 0
-                    return
-
 
 class FittedIntermitter(OfflineIntermitter):
     def __init__(self, sample_dataset, **kwargs):
@@ -538,31 +450,3 @@ if __name__ == "__main__":
     d=LarvaDataset(sample['dir'])
     d.config['EEB_poly1d'] = get_EEB_poly1d(**d.config['intermitter']).c.tolist()
     d.save_config()
-
-    raise
-    ffrs=np.arange(0,2,0.1)
-    fig,ax=plt.subplots(1,1)
-    sample='None.200_controls'
-    for dt in [0.1, 0.08,0.12, 0.0625]:
-        z=get_EEB_poly1d(sample,dt)
-        plt.plot(ffrs,z(ffrs), label=dt)
-        # dt=0.1
-        # df=get_EEB_time_fractions(sample, dt)
-        # print(dt, )
-        # print(nam.mean(nam.freq('feed')))
-    plt.show()
-    raise
-    inter = FittedIntermitter(sample_dataset='reference', dt=0.001, EEB=0.8, EEB_decay=1.0)
-    # print(inter.EEB_decay)
-    sample = loadConf('reference', 'Ref')
-    kws = {
-        'crawl_freq': sample['crawl_freq'],
-        'feed_freq': sample['feed_freq'],
-        'dt': 0.001,
-        'crawl_bouts': True,
-        'feed_bouts': True,
-        'stridechain_dist': sample['stride']['best'],
-        'pause_dist': sample['pause']['best'],
-        'feeder_reoccurence_rate': sample['feeder_reoccurence_rate'],
-    }
-    inter2 = OfflineIntermitter(**null_dict('intermitter', EEB=0.8, **kws))

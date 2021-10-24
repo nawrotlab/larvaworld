@@ -14,13 +14,21 @@ from lib.conf.base.dtypes import null_dict
 
 
 class LarvaDataset:
-    def __init__(self, dir, id='unnamed', fr=16, Npoints=None, Ncontour=0,
-                 par_conf=None, load_data=True, env_params={}, larva_groups={}):
+    def __init__(self, dir, load_data=True, **kwargs):
+        self.define_paths(dir)
+        self.retrieve_conf(**kwargs)
+        self.configure_body()
+        self.define_linear_metrics()
+        if load_data:
+            try:
+                self.load()
+            except:
+                print('Data not found. Load them manually.')
+
+    def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0,par_conf=None,  env_params={}, larva_groups={}):
         if par_conf is None:
             from lib.conf.stored.conf import loadConf
             par_conf = loadConf('SimParConf', 'Par')
-        self.par_config = par_conf
-        self.define_paths(dir)
         if os.path.exists(self.dir_dict['conf']):
             self.config = dNl.load_dict(self.dir_dict['conf'], use_pickle=False)
         else:
@@ -60,22 +68,14 @@ class LarvaDataset:
                            'sample': sample,
                            'color': color,
                            **par_conf,
-                           # 'arena_pars': arena_pars,
                            'env_params': env_params,
                            'larva_groups': larva_groups,
                            'sources': sources,
                            'life_history': life_history
-                           # **life_params
                            }
 
         self.__dict__.update(self.config)
-        self.configure_body()
-        self.define_linear_metrics()
-        if load_data:
-            try:
-                self.load()
-            except:
-                print('Data not found. Load them manually.')
+
     def set_data(self, step=None, end=None, food=None):
         if step is not None:
             self.step_data = step
@@ -85,69 +85,6 @@ class LarvaDataset:
             self.endpoint_data = end
         if food is not None:
             self.food_endpoint_data = food
-
-    # def replace_outliers_with_nan(self, pars, stds=None, thresholds=None, additional_pars=None):
-    #     if self.step_data is None:
-    #         self.load()
-    #     s = self.step_data
-    #     for i, p in enumerate(pars):
-    #         for id in self.agent_ids:
-    #             k = s.loc[(slice(None), id), p]
-    #             l = k.values
-    #             if stds is not None:
-    #                 m = k.mean()
-    #                 s = k.std()
-    #                 ind = np.abs(l - m) > stds * s
-    #             if thresholds is not None:
-    #                 low, high = thresholds[i]
-    #                 if low is not None:
-    #                     ind = l < low
-    #                 if high is not None:
-    #                     ind = l > high
-    #             l[ind] = np.nan
-    #             s.loc[(slice(None), id), p] = l
-    #             if additional_pars is not None:
-    #                 for apar in additional_pars:
-    #                     ak = s.loc[(slice(None), id), apar]
-    #                     al = ak.values
-    #                     al[ind] = np.nan
-    #                     s.loc[(slice(None), id), apar] = al
-    #
-    #     self.save()
-    #     print('All outliers replaced')
-
-    def drop_agents(self, agents, is_last=True, show_output=True):
-        if self.step_data is None:
-            self.load()
-        self.step_data.drop(agents, level='AgentID', inplace=True)
-        self.endpoint_data.drop(agents, inplace=True)
-        self.agent_ids = self.step_data.index.unique('AgentID').values
-        self.num_ticks = self.step_data.index.unique('Step').size
-
-        aux = pd.HDFStore(self.dir_dict['aux_h5'])
-        for k in aux.keys():
-            # print(k)
-            df = aux[k]
-            # print(df.index)
-            df.drop(agents, inplace=True)
-            aux[k] = df
-        aux.close()
-
-        # try:
-        #     fs = [f'{self.aux_dir}/{f}' for f in os.listdir(self.aux_dir)]
-        #     ns = fun.flatten_list([[f'{f}/{n}' for n in os.listdir(f) if n.endswith('.csv')] for f in fs])
-        #     for n in ns:
-        #         try:
-        #             df = pd.read_csv(n, index_col=0)
-        #             df.loc[~df.index.isin(agents)].to_csv(n, index=True, header=True)
-        #         except:
-        #             pass
-        # except:
-        #     pass
-        if is_last:
-            self.save()
-        if show_output:
-            print(f'{len(agents)} agents dropped and {len(self.endpoint_data.index)} remaining.')
 
     def drop_pars(self, groups=None, is_last=True, show_output=True, **kwargs):
         if groups is None:
@@ -197,7 +134,6 @@ class LarvaDataset:
         store = pd.HDFStore(self.dir_dict['data_h5'])
         if step:
             self.step_data = store['step']
-            # print(self.step_data)
             self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
             self.agent_ids = self.step_data.index.unique('AgentID').values
             self.num_ticks = self.step_data.index.unique('Step').size
@@ -241,7 +177,8 @@ class LarvaDataset:
             if hasattr(l, 'deb') and l.deb is not None:
                 l.deb.finalize_dict(self.dir_dict['deb'])
             elif isinstance(l.brain, NengoBrain) :
-                l.brain.save_dicts(self.dir_dict['nengo'])
+                if l.brain.dict is not None:
+                    dNl.save_dict(l.brain.dict, f'{self.dir_dict["nengo"]}/{l.unique_id}.txt', use_pickle=False)
             if l.brain.intermitter is not None:
                 l.brain.intermitter.save_dict(self.dir_dict['bout_dicts'])
 
@@ -271,8 +208,6 @@ class LarvaDataset:
             return None
 
     def save_config(self, add_reference=False):
-        # print(self.config['ExpFitter'])
-
         for a in ['N', 't0', 'duration', 'quality', 'num_ticks']:
             try:
                 self.config[a] = getattr(self, a)
@@ -523,63 +458,6 @@ class LarvaDataset:
         replay_env.run()
         print('Visualization complete')
 
-    def compute_preference_index(self, return_num=False, return_all=False):
-        if not hasattr(self, 'endpoint_data'):
-            self.load(step=False)
-        e = self.endpoint_data
-        r = 0.2 * self.env_params['arena']['arena_dims'][0]
-        p = 'x' if 'x' in e.keys() else nam.final('x')
-        d = e[p]
-        N = d.count()
-        N_l = d[d <= -r / 2].count()
-        N_r = d[d >= +r / 2].count()
-        N_m = d[(d <= +r / 2) & (d >= -r / 2)].count()
-        pI = np.round((N_l - N_r) / N, 3)
-        if return_num:
-            if return_all:
-                return pI, N, N_l, N_r
-            else:
-                return pI, N
-        else:
-            return pI
-
-    def load_pause_dataset(self, load_simulated=False):
-        try:
-            filenames = [f'pause_{n}_dataset.csv' for n in ['bends', 'bendvels']]
-            paths = [os.path.join(self.data_dir, name) for name in filenames]
-            exp_bends = pd.read_csv(paths[0], index_col=0).values
-            exp_bendvels = pd.read_csv(paths[1], index_col=0).values
-        except:
-            raise ValueError('Experimental pauses not found')
-
-        if load_simulated:
-            try:
-                filenames = [f'pause_best_{n}_dataset.csv' for n in ['bends', 'bendvels', 'acts']]
-                paths = [os.path.join(self.data_dir, name) for name in filenames]
-                sim_bends = pd.read_csv(paths[0], index_col=0).values
-                sim_bendvels = pd.read_csv(paths[1], index_col=0).values
-                sim_acts = pd.read_csv(paths[2], index_col=0).values
-                return exp_bends, exp_bendvels, sim_bends, sim_bendvels, sim_acts
-            except:
-                raise ValueError('Simulated pauses not found')
-        else:
-            return exp_bends, exp_bendvels
-
-    def load_fits(self, filepath=None, selected_pars=None):
-        if filepath is None:
-            filepath = self.dir_dict['conf']
-        target = pd.read_csv(filepath, index_col='parameter')
-        if selected_pars is not None:
-            valid_pars = [p for p in selected_pars if p in target.index.values]
-            target = target.loc[valid_pars]
-        pars = target.index.values.tolist()
-        dist_names = target['dist_name'].values.tolist()
-        dist_args = target['dist_args'].values.tolist()
-        dist_args = [tuple(float(s) for s in v.strip("()").split(",")) for v in dist_args]
-        dists = [{k: v} for k, v in zip(dist_names, dist_args)]
-        stats = target['statistic'].values.tolist()
-        return pars, dists, stats
-
     def configure_body(self):
         N, Nc = self.Npoints, self.Ncontour
         self.points = nam.midline(N, type='point')
@@ -677,18 +555,6 @@ class LarvaDataset:
         if is_last:
             self.save()
         return self
-
-    def drop_immobile_larvae(self, vel_threshold=0.1, is_last=True):
-        # self.comp_spatial(mode='minimal')
-        D = self.step_data[nam.scal('velocity')]
-        immobile_ids = []
-        for id in self.agent_ids:
-            d = D.xs(id, level='AgentIDs').dropna().values
-            if len(d[d > vel_threshold]) == 0:
-                immobile_ids.append(id)
-        print(f'{len(immobile_ids)} immobile larvae will be dropped')
-        if len(immobile_ids) > 0:
-            self.drop_agents(agents=immobile_ids, is_last=is_last)
 
     def get_par(self, par):
         try:

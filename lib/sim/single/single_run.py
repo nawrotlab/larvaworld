@@ -6,23 +6,13 @@ import os
 import numpy as np
 
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
-
 from lib.conf.base import paths
 from lib.stor.larva_dataset import LarvaDataset
 
 
 class SingleRun:
-    def __init__(self,
-                 sim_params,
-                 env_params,
-                 larva_groups,
-                 enrichment,
-                 collections,
-                 experiment,
-                 trials={},
-                 save_to=None,
-                 seed=None,
-                 **kwargs):
+    def __init__(self,sim_params,env_params,larva_groups,enrichment,collections,experiment,
+                 trials={},save_to=None,seed=None,**kwargs):
         np.random.seed(seed)
         self.id = sim_params['sim_ID']
         self.sim_params = sim_params
@@ -41,15 +31,10 @@ class SingleRun:
 
         self.d = LarvaDataset(dir=dir_path, id=self.id, fr=1 / dt,
                               env_params=env_params, larva_groups=larva_groups, load_data=False)
-
         output = set_output(dataset=self.d, collections=collections)
-        self.env = LarvaWorldSim(id=self.id, dt=dt, Box2D=sim_params['Box2D'],
-                                 env_params=env_params,
-                                 larva_groups=larva_groups,
-                                 output=output,
-                                 experiment=self.experiment,
-                                 trials=trials,
-                                 Nsteps=int(sim_params['duration'] * 60 / dt),
+        self.env = LarvaWorldSim(id=self.id, dt=dt, Box2D=sim_params['Box2D'],output=output,
+                                 env_params=env_params,larva_groups=larva_groups,trials=trials,
+                                 experiment=self.experiment,Nsteps=int(sim_params['duration'] * 60 / dt),
                                  save_to=self.d.vis_dir,configuration_text=self.configuration_text, **kwargs)
 
     def run(self):
@@ -62,7 +47,6 @@ class SingleRun:
             self.d.delete()
             print('    Simulation aborted!')
             res = None
-            # ds, fig_dict, results = None, None, None
         else:
             end = time.time()
             dur = end - self.start

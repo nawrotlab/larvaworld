@@ -20,7 +20,7 @@ from lib.stor.larva_dataset import LarvaDataset
 import lib.aux.naming as nam
 
 
-def sim_analysis(ds: LarvaDataset, exp_type, show=True, delete_datasets=False):
+def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=False):
     if ds is None:
         return
     if not type(ds) == list:

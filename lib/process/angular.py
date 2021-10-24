@@ -6,15 +6,12 @@ import lib.aux.naming as nam
 from lib.process.store import store_aux_dataset
 
 
-def comp_angles(s, config, chunk_only=None, mode='full'):
+def comp_angles(s, config, mode='full'):
     points = nam.midline(config['Npoints'], type='point')
     Nangles = np.clip(config['Npoints'] - 2, a_min=0, a_max=None)
     angles = [f'angle{i}' for i in range(Nangles)]
     r = config['front_body_ratio'] if config is not None else 0.5
     bend_angles = angles[:int(np.round(r * len(angles)))]
-    if chunk_only is not None:
-        print(f'Computation restricted to {chunk_only} chunks')
-        s = s.loc[s[nam.id(chunk_only)].dropna().index.values].copy(deep=False)
     xy = [nam.xy(points[i]) for i in range(len(points))]
     if mode == 'full':
         angles = angles
@@ -65,7 +62,7 @@ def compute_LR_bias(s, e):
 
 def comp_orientations(s, e, config, mode='minimal'):
     points = nam.midline(config['Npoints'], type='point')
-    segs = nam.midline(config['Npoints']-1, type='seg')
+    segs = nam.midline(config['Npoints'] - 1, type='seg')
     for key in ['front_vector', 'rear_vector']:
         if config[key] is None:
             print('Front and rear vectors are not defined. Can not compute orients')
@@ -84,7 +81,7 @@ def comp_orientations(s, e, config, mode='minimal'):
 
     c = np.zeros([2, Nticks]) * np.nan
     for i in range(Nticks):
-        for j in range(2) :
+        for j in range(2):
             c[j, i] = angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :])
     for z, a in enumerate([nam.orient('front'), nam.orient('rear')]):
         s[a] = c[z].T
@@ -117,7 +114,7 @@ def unwrap_orientations(s, segs):
 
 
 def comp_angular(s, config, mode='minimal'):
-    dt=config['dt']
+    dt = config['dt']
     Nangles = np.clip(config['Npoints'] - 2, a_min=0, a_max=None)
     angles = [f'angle{i}' for i in range(Nangles)]
     segs = nam.midline(config['Npoints'] - 1, type='seg')
@@ -141,21 +138,17 @@ def comp_angular(s, config, mode='minimal'):
 
     all_d = [s.xs(id, level='AgentID', drop_level=True) for id in ids]
 
-    vels = nam.vel(pars)
-    accs = nam.acc(pars)
-
     for i, p in enumerate(pars):
         if nam.unwrap(p) in s.columns:
             p = nam.unwrap(p)
         for j, d in enumerate(all_d):
-            angle = d[p].values
-            avel = np.diff(angle) / dt
+            avel = np.diff(d[p].values) / dt
             aacc = np.diff(avel) / dt
             V[1:, i, j] = avel
             A[2:, i, j] = aacc
-    for k, (v, a) in enumerate(zip(vels, accs)):
-        s[v] = V[:, k, :].flatten()
-        s[a] = A[:, k, :].flatten()
+    for k, p in enumerate(pars):
+        s[nam.vel(p)] = V[:, k, :].flatten()
+        s[nam.acc(p)] = A[:, k, :].flatten()
     print('All angular parameters computed')
 
 
@@ -176,11 +169,5 @@ def angular_processing(s, e, config, dt, Npoints, recompute=False, mode='minimal
         comp_bend(s, config, mode=mode)
     comp_angular(s, config, mode=mode)
     compute_LR_bias(s, e)
-    # if distro_dir is not None:
-    #     create_par_distro_dataset(s, ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), dir=distro_dir)
     store_aux_dataset(s, pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), type='distro', file=aux_dir)
     print(f'Completed {mode} angular processing.')
-    return s,e
-
-
-
