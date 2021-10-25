@@ -22,31 +22,34 @@ plt_conf = {'axes.labelsize': 20,
             'legend.title_fontsize': 20}
 plt.rcParams.update(plt_conf)
 
-class Plot :
+
+class Plot:
     def __init__(self, name, datasets, labels=None, subfolder=None,
-                       save_fits_as=None, save_as=None, save_to=None, return_fig=False, show=False, **kwargs):
+                 save_fits_as=None, save_as=None, save_to=None, return_fig=False, show=False, **kwargs):
         suf = 'pdf'
-        self.datasets=datasets
-        self.Ndatasets, self.colors, self.save_to, self.labels = plot_config(datasets, labels, save_to, subfolder=subfolder)
+        self.datasets = datasets
+        self.Ndatasets, self.colors, self.save_to, self.labels = plot_config(datasets, labels, save_to,
+                                                                             subfolder=subfolder)
         self.filename = f'{name}.{suf}' if save_as is None else save_as
         ff = f'{name}_fits.csv' if save_fits_as is None else save_fits_as
-        self.fit_filename=os.path.join(self.save_to, ff) if ff is not None else None
+        self.fit_filename = os.path.join(self.save_to, ff) if ff is not None else None
         self.fit_ind = None
         self.fit_df = None
-        self.return_fig=return_fig
-        self.show=show
+        self.return_fig = return_fig
+        self.show = show
         # self.fig=self.build(**kwargs)
 
     def build(self, Nrows=1, Ncols=1, figsize=None, **kwargs):
-        if figsize is None :
-            figsize=(12*Ncols, 10*Nrows)
+        if figsize is None:
+            figsize = (12 * Ncols, 10 * Nrows)
         self.fig, axs = plt.subplots(Nrows, Ncols, figsize=figsize, **kwargs)
-        self.axs = axs.ravel() if Nrows*Ncols > 1 else [axs]
+        self.axs = axs.ravel() if Nrows * Ncols > 1 else [axs]
 
-
-    def conf_ax(self, idx=0, xlab=None, ylab=None, xlim=None, ylim=None, xticks=None, xticklabels=None,yticks=None, yticklabels=None,
-                xMaxN=None, yMaxN=None,xMath=None,tickMath=None,ytickMath=None, leg_loc=None,leg_handles=None, title=None):
-        ax=self.axs[idx]
+    def conf_ax(self, idx=0, xlab=None, ylab=None, xlim=None, ylim=None, xticks=None, xticklabels=None, yticks=None,
+                yticklabels=None,
+                xMaxN=None, yMaxN=None, xMath=None, tickMath=None, ytickMath=None, leg_loc=None, leg_handles=None,
+                title=None):
+        ax = self.axs[idx]
         if ylab is not None:
             ax.set_ylabel(ylab)
         if xlab is not None:
@@ -67,7 +70,7 @@ class Plot :
         if tickMath is not None:
             ax.ticklabel_format(useMathText=True, scilimits=tickMath)
         if ytickMath is not None:
-            ax.ticklabel_format(axis='y',useMathText=True, scilimits=ytickMath, useOffset=True)
+            ax.ticklabel_format(axis='y', useMathText=True, scilimits=ytickMath, useOffset=True)
         if xMaxN is not None:
             ax.xaxis.set_major_locator(ticker.MaxNLocator(xMaxN))
         if yMaxN is not None:
@@ -77,13 +80,13 @@ class Plot :
         if title is not None:
             ax.set_title(title)
         if leg_loc is not None:
-            if leg_handles is not None :
-                ax.legend(handles=leg_handles,loc=leg_loc)
-            else :
+            if leg_handles is not None:
+                ax.legend(handles=leg_handles, loc=leg_loc)
+            else:
                 ax.legend(loc=leg_loc)
 
     def set(self, fig):
-        self.fig=fig
+        self.fig = fig
 
     def get(self):
         if self.fit_df is not None:
@@ -92,14 +95,16 @@ class Plot :
 
     def init_fits(self, pars, names=('dataset1', 'dataset2'), multiindex=True):
         if self.Ndatasets > 1:
-            if multiindex :
+            if multiindex:
                 fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(self.labels, 2)])
                 self.fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=names)
-                self.fit_df = pd.DataFrame(index=self.fit_ind, columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
-            else :
-                self.fit_df = pd.DataFrame(index=self.labels,columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
+                self.fit_df = pd.DataFrame(index=self.fit_ind,
+                                           columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
+            else:
+                self.fit_df = pd.DataFrame(index=self.labels,
+                                           columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
 
-    def comp_pvalues(self,values, p):
+    def comp_pvalues(self, values, p):
         if self.fit_ind is not None:
             for ind, (v1, v2) in zip(self.fit_ind, itertools.combinations(values, 2)):
                 self.comp_pvalue(ind, v1, v2, p)
@@ -113,27 +118,27 @@ class Plot :
         self.fit_df[f'S_{p}'].loc[ind] = st
         self.fit_df[f'P_{p}'].loc[ind] = np.round(pv, 11)
 
-    def plot_half_circles(self,p,i):
+    def plot_half_circles(self, p, i):
         if self.fit_df is not None:
-            ax=self.axs[i]
+            ax = self.axs[i]
             ii = 0
             for z, (l1, l2) in enumerate(self.fit_df.index.values):
-                col1,col2=self.colors[self.labels.index(l1)], self.colors[self.labels.index(l2)]
-                res=self.plot_half_circle(p,ax,col1,col2,v=self.fit_df[p].iloc[z],ind=(l1, l2), coef=z - ii)
-                if not res :
+                col1, col2 = self.colors[self.labels.index(l1)], self.colors[self.labels.index(l2)]
+                res = self.plot_half_circle(p, ax, col1, col2, v=self.fit_df[p].iloc[z], ind=(l1, l2), coef=z - ii)
+                if not res:
                     ii += 1
                     continue
 
-    def plot_half_circle(self,p,ax,col1,col2,v,ind,coef=0):
-        res=True
-        if  v== 1:
+    def plot_half_circle(self, p, ax, col1, col2, v, ind, coef=0):
+        res = True
+        if v == 1:
             c1, c2 = col1, col2
         elif v == -1:
             c1, c2 = col2, col1
         else:
             res = False
 
-        if res :
+        if res:
             rad = 0.04
             yy = 0.95 - coef * 0.08
             xx = 0.75
@@ -151,20 +156,20 @@ class Plot :
         return res
 
     def adjust(self, LR=None, BT=None, W=None, H=None):
-        kws={}
-        if LR is not None :
-            kws['left']=LR[0]
-            kws['right']=LR[1]
-        if BT is not None :
-            kws['bottom']=BT[0]
-            kws['top']=BT[1]
-        if W is not None :
-            kws['wspace']=W
-        if H is not None :
-            kws['hspace']=H
+        kws = {}
+        if LR is not None:
+            kws['left'] = LR[0]
+            kws['right'] = LR[1]
+        if BT is not None:
+            kws['bottom'] = BT[0]
+            kws['top'] = BT[1]
+        if W is not None:
+            kws['wspace'] = W
+        if H is not None:
+            kws['hspace'] = H
         self.fig.subplots_adjust(**kws)
 
-    @ property
+    @property
     def Nticks(self):
         Nticks_list = [len(d.step_data.index.unique('Step')) for d in self.datasets]
         return np.max(unique_list(Nticks_list))
@@ -186,44 +191,44 @@ class Plot :
         # return (0, int(self.Nticks / self.fr))
 
     def trange(self, unit='min'):
-        if unit=='min':
-            T=60
-        elif unit=='sec':
-            T=1
+        if unit == 'min':
+            T = 60
+        elif unit == 'sec':
+            T = 1
         t0, t1 = self.tlim
-        x = np.linspace(t0/T, t1/T, self.Nticks)
+        x = np.linspace(t0 / T, t1 / T, self.Nticks)
         # print(t1, self.fr, self.dt, T, t1/T, self.Nticks)
         # raise
         return x
 
-
-    def angrange(self, r,  absolute=False,nbins=200):
-        lim =(r0, r1) = (0, r) if absolute else (-r, r)
+    def angrange(self, r, absolute=False, nbins=200):
+        lim = (r0, r1) = (0, r) if absolute else (-r, r)
         x = np.linspace(r0, r1, nbins)
         return x, lim
 
-    def plot_par(self, par, bins, i=0,labels=None, absolute=False,nbins=None, type='plt.hist',
+    def plot_par(self, par, bins, i=0, labels=None, absolute=False, nbins=None, type='plt.hist',
                  pvalues=False, half_circles=False, **kwargs):
-        if labels is None :
-            labels=self.labels
-        vs=[]
+        if labels is None:
+            labels = self.labels
+        vs = []
         for d in self.datasets:
             v = d.get_par(par).dropna().values
             if absolute:
                 v = np.abs(v)
             vs.append(v)
-        if bins=='broad' and nbins is not None:
+        if bins == 'broad' and nbins is not None:
             bins = np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
         for v, c, l in zip(vs, self.colors, labels):
-            if type=='sns.hist' :
-                sns.histplot(v, color=c, bins=bins, ax=self.axs[i], label=l,**kwargs)
-            elif type=='plt.hist':
+            if type == 'sns.hist':
+                sns.histplot(v, color=c, bins=bins, ax=self.axs[i], label=l, **kwargs)
+            elif type == 'plt.hist':
                 self.axs[i].hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), label=l, color=c, **kwargs)
-        if pvalues :
+        if pvalues:
             self.comp_pvalues(vs, par)
-        if half_circles :
+        if half_circles:
             self.plot_half_circles(par, i)
         return vs
+
 
 # class TurnPlot(Plot) :
 #     def __init__(self, absolute=True,**kwargs):
@@ -260,25 +265,26 @@ class Plot :
 #         axs.legend(loc='upper right', fontsize=10)
 #         fig.subplots_adjust(top=0.92, bottom=0.15, left=0.25, right=0.95, hspace=.005, wspace=0.05)
 #         return fig
-def plot_quantiles(df,from_np=False,x=None, **kwargs):
-    if from_np :
+def plot_quantiles(df, from_np=False, x=None, **kwargs):
+    if from_np:
         df_m = np.nanquantile(df, q=0.5, axis=0)
         df_u = np.nanquantile(df, q=0.75, axis=0)
         df_b = np.nanquantile(df, q=0.25, axis=0)
         x = np.arange(len(df_m))
-    else :
+    else:
         df_m = df.groupby(level='Step').quantile(q=0.5)
         df_u = df.groupby(level='Step').quantile(q=0.75)
         df_b = df.groupby(level='Step').quantile(q=0.25)
-    plot_mean_and_range(x=x, mean=df_m, lb=df_b, ub=df_u,  **kwargs)
+    plot_mean_and_range(x=x, mean=df_m, lb=df_b, ub=df_u, **kwargs)
 
-def plot_mean_and_range(x, mean, lb, ub, axis, color_shading,color_mean=None,  label=None):
+
+def plot_mean_and_range(x, mean, lb, ub, axis, color_shading, color_mean=None, label=None):
     if x.shape[0] > mean.shape[0]:
         xx = x[:mean.shape[0]]
     elif x.shape[0] == mean.shape[0]:
         xx = x
-    if color_mean is None :
-        color_mean=color_shading
+    if color_mean is None:
+        color_mean = color_shading
     # plot the shaded range of e.g. the confidence intervals
     axis.fill_between(xx, ub, lb, color=color_shading, alpha=.2)
     # plot the mean on top
@@ -450,19 +456,22 @@ def plot_config(datasets, labels, save_to, subfolder=None):
     Ndatasets = len(datasets)
     if Ndatasets != len(labels):
         raise ValueError(f'Number of labels {len(labels)} does not much number of datasets {Ndatasets}')
-    try:
-        cs = [d.config['color'] for d in datasets]
-        u_cs = unique_list(cs)
-        if len(u_cs) == len(cs):
-            colors = cs
-        elif len(u_cs) == len(cs) - 1 and cs[-1] in cs[:-1]:
-            if 'black' not in cs:
+
+    def get_colors(datasets):
+        try:
+            cs = [d.config['color'] for d in datasets]
+            u_cs = unique_list(cs)
+            if len(u_cs) == len(cs):
+                colors = cs
+            elif len(u_cs) == len(cs) - 1 and cs[-1] in cs[:-1] and 'black' not in cs:
                 cs[-1] = 'black'
                 colors = cs
-        else:
+            else:
+                colors = N_colors(Ndatasets)
+        except:
             colors = N_colors(Ndatasets)
-    except:
-        colors = N_colors(Ndatasets)
+        return colors
+
     if save_to is None:
         save_to = datasets[0].config['parent_plot_dir']
     if subfolder is not None:
@@ -470,7 +479,7 @@ def plot_config(datasets, labels, save_to, subfolder=None):
     if not os.path.exists(save_to):
         os.makedirs(save_to)
 
-    return Ndatasets, colors, save_to, labels
+    return Ndatasets, get_colors(datasets), save_to, labels
 
 
 def dataset_legend(labels, colors, ax=None, loc=None, anchor=None, fontsize=None, handlelength=0.5, handleheight=0.5,
@@ -494,11 +503,11 @@ def process_plot(fig, save_to, filename, return_fig, show=False):
         plt.show()
     fig.patch.set_visible(False)
     if return_fig:
-        res= fig, save_to, filename
+        res = fig, save_to, filename
     else:
         filepath = os.path.join(save_to, filename)
         save_plot(fig, filepath, filename)
-        res= fig
+        res = fig
 
     return res
 
@@ -522,7 +531,8 @@ def boolean_indexing(v, fillval=np.nan):
     out[mask] = np.concatenate(v)
     return out
 
-def annotate_plot(data, x,y,hue,**kwargs):
+
+def annotate_plot(data, x, y, hue, **kwargs):
     from statannotations.Annotator import Annotator
     h1, h2 = np.unique(data[hue].values)
     subIDs0 = np.unique(data[x].values)
@@ -537,6 +547,6 @@ def annotate_plot(data, x,y,hue,**kwargs):
     # f_pvs = [f'p={pv:.2e}' for pv in pvs]
 
     # Add annotations
-    annotator = Annotator(pairs=pairs,data=data, x=x,y=y,hue=hue, **kwargs)
+    annotator = Annotator(pairs=pairs, data=data, x=x, y=y, hue=hue, **kwargs)
     annotator.verbose = False
     annotator.annotate_custom_annotations(f_pvs)

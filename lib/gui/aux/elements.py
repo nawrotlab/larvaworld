@@ -1,6 +1,7 @@
 import copy
 import inspect
 import os
+import tkinter
 from tkinter import PhotoImage
 from typing import Tuple, List
 import numpy as np
@@ -274,7 +275,7 @@ class HeadedElement(GuiElement):
 
 class SelectionList(GuiElement):
     def __init__(self, tab, conftype=None, disp=None, buttons=[], button_kws={}, sublists={}, idx=None, progress=False,
-                 width=24,with_dict=False, name=None, single_line=False, **kwargs):
+                 width=24, with_dict=False, name=None, single_line=False, **kwargs):
         self.conftype = conftype if conftype is not None else tab.conftype
         # print(self.conftype, tab.conftype)
         if name is None:
@@ -588,7 +589,8 @@ class DataList(NamedList):
                 self.tab.imitate(exp_conf)
         elif e == f'ADD_REF {n}':
             from lib.stor.larva_dataset import LarvaDataset
-            dd = LarvaDataset(dir=f'{paths.path("REF")}/reference')
+            sample = loadConf('None.10_controls', 'Ref')
+            dd = LarvaDataset(dir=sample['dir'])
             self.add(w, {dd.id: dd})
         elif e == f'IMPORT {n}':
             dl1 = self.tab.datalists[self.tab.proc_key]
@@ -673,8 +675,7 @@ class Collapsible(HeadedElement, GuiElement):
                     if isinstance(b, BoolButton):
                         b.set_state(v)
                 elif type(v) == dict:
-                    new_prefix = k if prefix is not None else None
-                    self.update_window(w, v, prefix=new_prefix)
+                    self.update_window(w, v, prefix=k if prefix is not None else None)
                 elif isinstance(w[k], MultiSpin) or isinstance(w[k], SingleSpin):
                     w[k].update(v)
                 elif v is None:
@@ -1178,9 +1179,7 @@ class GraphList(NamedList):
 
 class ButtonGraphList(GraphList):
     def __init__(self, name, buttons=['refresh_figs', 'conf_fig', 'draw_fig', 'save_fig'], button_args={}, **kwargs):
-
-        after_header = button_row(name, buttons, button_args)
-        super().__init__(name=name, next_to_header=after_header, **kwargs)
+        super().__init__(name=name, next_to_header=button_row(name, buttons, button_args), **kwargs)
 
         self.fig, self.save_to, self.save_as = None, '', ''
         self.func, self.func_kws = None, {}
@@ -1202,7 +1201,9 @@ class ButtonGraphList(GraphList):
             try:
                 self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()),
                                                                  return_fig=True, **self.func_kws)
-                self.draw_fig(w, self.fig)
+                fig = resize_fig(self.fig, self.canvas_size)
+                self.draw_fig(w, fig)
+                # self.draw_fig(w, self.fig)
             except:
                 print('Plot not available')
 
@@ -1278,6 +1279,8 @@ class ButtonGraphList(GraphList):
 
 
 def draw_canvas(canvas, figure, side='top', fill='both', expand=True):
+    # size = figure.get_size_inches() * figure.dpi  # size in pixels
+    # print(size)
     agg = FigureCanvasTkAgg(figure, canvas)
     agg.draw()
     agg.get_tk_widget().pack(side=side, fill=fill, expand=expand)
@@ -1287,6 +1290,22 @@ def draw_canvas(canvas, figure, side='top', fill='both', expand=True):
 def delete_figure_agg(figure_agg):
     figure_agg.get_tk_widget().forget()
     plt.close('all')
+
+
+def resize_fig(fig, canvas_size, margin=1.0):
+    x, y = fig.get_size_inches() * fig.dpi  # size in pixels
+    x0, y0 = canvas_size
+    x0 *= margin
+    y0 *= margin
+    if x > x0:
+        y *= (x0 / x)
+        x = x0
+    if y > y0:
+        x *= (y0 / y)
+        y = y0
+    fig.set_size_inches(x / fig.dpi, y / fig.dpi)
+    fig.tight_layout()
+    return fig
 
 
 class DynamicGraph:
