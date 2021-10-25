@@ -9,7 +9,7 @@ from lib.aux.colsNstr import N_colors
 
 from lib.conf.base.par import CompGroupCollector
 from lib.model.envs._larvaworld import LarvaWorld, generate_larvae, get_sample_bout_distros, sample_group
-from lib.model.envs._space import AnemoScape
+from lib.model.envs._space import WindScape
 from lib.sim.single.conditions import get_exp_condition
 from lib.conf.base import paths
 
@@ -27,7 +27,8 @@ class LarvaWorldSim(LarvaWorld):
         self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
         if self.env_pars['odorscape'] is not None:
             self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars['odorscape'])
-        self.windscape = AnemoScape(model=self, **self.env_pars['windscape'])
+        if self.env_pars['windscape'] is not None:
+            self.windscape = WindScape(model=self, **self.env_pars['windscape'])
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
         self.create_collectors(output)
@@ -134,13 +135,11 @@ class LarvaWorldSim(LarvaWorld):
     def plot_odorscape(self, save_to=None, show=False):
         from lib.anal.plotting import plot_surface
         for id, layer in self.odor_layers.items():
-            title = f'{id} odorscape'
             X, Y = layer.meshgrid
-            V = layer.get_grid()
             x = self.space_to_mm(X)
             y = self.space_to_mm(Y)
-            plot_surface(x=x, y=y, z=V,
-                         labels=[r'x $(mm)$', r'y $(mm)$', r'concentration $(μM)$'], title=title,
+            plot_surface(x=x, y=y, z=layer.get_grid(),
+                         labels=[r'x $(mm)$', r'y $(mm)$', r'concentration $(μM)$'], title=f'{id} odorscape',
                          save_to=save_to, save_as=f'{id}_odorscape_{self.odorscape_counter}', show=show)
 
     def get_larva_bodies(self, scale=1.0):

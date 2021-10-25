@@ -211,7 +211,7 @@ class DiffusionValueLayer(ValueLayer):
         self.grid = gaussian_filter(self.grid, sigma=self.sigma) * self.evap_const
 
 
-class AnemoScape:
+class WindScape:
     def __init__(self, model, wind_direction, wind_speed, default_color='red', visible=False):
         from lib.aux.ang_aux import rotate_around_center_multi
         self.model = model
