@@ -145,20 +145,6 @@ class LarvaDataset:
             self.food_endpoint_data.sort_index(inplace=True)
         store.close()
 
-    @property
-    def N(self):
-        try:
-            return len(self.agent_ids)
-        except:
-            return len(self.endpoint_data.index.values)
-
-    @property
-    def t0(self):
-        try:
-            return int(self.step_data.index.unique('Step')[0])
-        except:
-            return 0
-
     def save(self, step=True, end=True, food=False, add_reference=False):
         store = pd.HDFStore(self.dir_dict['data_h5'])
         if step:
@@ -207,13 +193,38 @@ class LarvaDataset:
         except:
             return None
 
-    def save_config(self, add_reference=False, refID=None):
-        for a in ['N', 't0', 'duration', 'quality', 'num_ticks']:
+    def update_config(self):
+        self.config['dt'] = 1 / self.fr
+        if 'N' not in self.config.keys():
             try:
-                self.config[a] = getattr(self, a)
+                self.config['N'] = len(self.agent_ids)
+            except:
+                self.config['N'] = len(self.endpoint_data.index.values)
+        if 't0' not in self.config.keys():
+            try:
+                self.config['t0'] = int(self.step_data.index.unique('Step')[0])
+            except:
+                self.config['t0'] = 0
+        if 'Nticks' not in self.config.keys():
+            try:
+                self.config['Nticks'] = self.step_data.index.unique('Step').size
+            except:
+                self.config['Nticks'] = self.endpoint_data['Nticks'].max()
+        if 'duration' not in self.config.keys():
+            try:
+                self.config['duration'] = int(self.endpoint_data['cum_dur'].max())
+            except:
+                self.config['duration'] = self.config['dt'] * self.config['Nticks']
+        if 'quality' not in self.config.keys():
+            try:
+                df = self.step_data[nam.xy(self.point)[0]].values.flatten()
+                valid = np.count_nonzero(~np.isnan(df))
+                self.config['duration'] = np.round(valid / df.shape[0], 2)
             except:
                 pass
-        self.config['dt'] = 1 / self.fr
+
+    def save_config(self, add_reference=False, refID=None):
+        self.update_config()
         for k, v in self.config.items():
             if type(v) == np.ndarray:
                 self.config[k] = v.tolist()
@@ -274,16 +285,6 @@ class LarvaDataset:
         # print(pd.HDFStore(self.dir_dict['aux_h5']).keys())
         df = self.read(key=f'{type}.{par}', file='aux_h5')
         return df
-
-    @property
-    def quality(self):
-        df = self.step_data[nam.xy(self.point)[0]].values.flatten()
-        valid = np.count_nonzero(~np.isnan(df))
-        return np.round(valid / df.shape[0], 2)
-
-    @property
-    def duration(self):
-        return int(self.endpoint_data['cum_dur'].max())
 
     def load_deb_dicts(self, ids=None, **kwargs):
         if ids is None:

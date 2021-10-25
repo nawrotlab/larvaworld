@@ -219,15 +219,15 @@ def add_ref_window():
     from lib.gui.aux.elements import NamedList
     from lib.stor.larva_dataset import LarvaDataset
     k = 'ID'
-    temp = NamedList('Reference ID : ', key=k, choices=kConfDict('Ref'),size=(35, None),
-                     readonly=False, enable_events=False, header_kws={'text': 'Load a reference dataset'})
+    temp = NamedList('Reference ID : ', key=k, choices=kConfDict('Ref'),size=(30, None),
+                     readonly=True, enable_events=False, header_kws={'text': 'Load a reference dataset'})
     l = [
         temp.get_layout(),
         [sg.Ok(), sg.Cancel()]]
     e, v = sg.Window('Load a reference dataset', l).read(close=True)
     if e == 'Ok':
         sample = loadConf(v[k], 'Ref')
-        dd = LarvaDataset(dir=sample['dir'])
+        dd = LarvaDataset(dir=sample['dir'], load_data=False)
         return dd
     elif e == 'Cancel':
         return None
