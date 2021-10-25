@@ -143,10 +143,7 @@ class LarvaWorldSim(LarvaWorld):
                          save_to=save_to, save_as=f'{id}_odorscape_{self.odorscape_counter}', show=show)
 
     def get_larva_bodies(self, scale=1.0):
-        larva_bodies = {}
-        for l in self.get_flies():
-            larva_bodies[l.unique_id] = l.get_polygon(scale=scale)
-        return larva_bodies
+        return {l.unique_id : l.get_polygon(scale=scale) for l in self.get_flies()}
 
     def larva_bodies_except(self, id):
         return {k: v for k, v in self.larva_bodies.items() if k != id}
@@ -207,7 +204,6 @@ class LarvaWorldSim(LarvaWorld):
                         l.move_body(dx, dy)
                         self.larva_bodies[l.unique_id] = l.get_polygon(scale=scale)
                     else:
-                        # overlap=False
                         break
 
     def refresh_odor_dicts(self, odor_ids):
