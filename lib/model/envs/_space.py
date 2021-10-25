@@ -223,8 +223,9 @@ class AnemoScape:
 
         self.N = 40
         ds = self.max_dim / self.N * np.sqrt(2)
-        self.p0s = rotate_around_center_multi([(-self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
-        self.p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
+        p0s = rotate_around_center_multi([(-self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
+        p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
+        self.scapelines=[(p0,p1) for p0,p1 in zip(p0s,p1s)]
 
     def get_value(self, agent):
         if self.obstructed(agent.pos):
@@ -240,8 +241,7 @@ class AnemoScape:
         return any([l.intersects(ll) for l in self.model.border_lines])
 
     def draw(self, viewer):
-        for i in range(self.N) :
-            p0, p1 = self.p0s[i], self.p1s[i]
+        for p0, p1 in self.scapelines :
             l=LineString([p0, p1])
             ps=[l.intersection(b) for b in self.model.border_lines if l.intersects(b)]
             if len(ps)!=0 :
