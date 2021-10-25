@@ -213,6 +213,7 @@ class DiffusionValueLayer(ValueLayer):
 
 class AnemoScape:
     def __init__(self, model, wind_direction, wind_speed, default_color='red', visible=False):
+        from lib.aux.ang_aux import rotate_around_center_multi
         self.model = model
         self.wind_direction = wind_direction
         self.wind_speed = wind_speed
@@ -220,14 +221,18 @@ class AnemoScape:
         self.default_color=default_color
         self.visible=visible
 
+        self.N = 40
+        ds = self.max_dim / self.N * np.sqrt(2)
+        self.p0s = rotate_around_center_multi([(-self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
+        self.p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
+
     def get_value(self, agent):
         if self.obstructed(agent.pos):
-            v = 0
+            return 0
         else:
             from lib.aux.ang_aux import angle_dif
             o = np.rad2deg(agent.head.get_orientation())
-            v = np.abs(angle_dif(o, self.wind_direction)) / 180 * self.wind_speed
-        return v
+            return np.abs(angle_dif(o, self.wind_direction)) / 180 * self.wind_speed
 
     def obstructed(self, pos):
         from lib.aux.ang_aux import line_through_point
@@ -235,18 +240,10 @@ class AnemoScape:
         return any([l.intersects(ll) for l in self.model.border_lines])
 
     def draw(self, viewer):
-        from lib.aux.ang_aux import rotate_around_center_multi
-        bs=self.model.border_lines
-        N=40
-        ds=self.max_dim/N*np.sqrt(2)
-        p0s=rotate_around_center_multi([(-self.max_dim,(i-N/2)*ds) for i in range(N)], -self.wind_direction)
-        p1s=rotate_around_center_multi([(self.max_dim,(i-N/2)*ds) for i in range(N)], -self.wind_direction)
-
-        for i in range(N) :
-            l=LineString([p0s[i], p1s[i]])
-            ps=[l.intersection(b) for b in bs if l.intersects(b)]
-            if len(ps)==0 :
-                p1=p1s[i]
-            else :
-                p1=ps[np.argmin([Point(p0s[i]).distance(p2) for p2 in ps])].coords[0]
-            viewer.draw_arrow(p0s[i], p1, self.default_color, width=0.001)
+        for i in range(self.N) :
+            p0, p1 = self.p0s[i], self.p1s[i]
+            l=LineString([p0, p1])
+            ps=[l.intersection(b) for b in self.model.border_lines if l.intersects(b)]
+            if len(ps)!=0 :
+                p1=ps[np.argmin([Point(p0).distance(p2) for p2 in ps])].coords[0]
+            viewer.draw_arrow(p0, p1, self.default_color, width=0.001)
