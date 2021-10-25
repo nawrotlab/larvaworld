@@ -519,14 +519,11 @@ class DataList(NamedList):
         # print(self.name, ks, 1)
 
     def get_aux_cols(self, ks):
-        # df=np.zeros((len(ks), len(self.aux_cols)+1))
         ls = []
         for k in ks:
-            # for i,k in enumerate(ks):
             l = [k]
             d = self.dict[k]
             for c in self.aux_cols:
-                # for j,c in enumerate(self.aux_cols):
                 try:
                     a = getattr(d, c)
                 except:
@@ -826,9 +823,14 @@ class CollapsibleTable(Collapsible):
 
 
 def v_layout(k0, args, value_kws0={}):
+    t = args['dtype']
+    # if t == dict:
+    #     subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'],
+    #                                    text_kws=text_kws, value_kws=value_kws0)
+    #     ii = subdicts[k0].get_layout()
+
     v = args['initial_value']
     vs = args['values']
-    t = args['dtype']
     Ndig = args['Ndigits']
     value_kws = copy.deepcopy(value_kws0)
     if 'size' not in value_kws0.keys() and Ndig is not None:
@@ -862,44 +864,37 @@ def v_layout(k0, args, value_kws0={}):
     return temp
 
 
-def d_layout(name, type_dict=None, text_kws={}, value_kws={}, col_idx=None, Ncols=1):
-    if type_dict is None:
-        type_dict = par_dict(name)
-    l = []
-    for k, args in type_dict.items():
-        ii = [sg.T(f'{get_disp_name(k)}:', **text_kws), v_layout(f'{name}_{k}', args, value_kws)]
-        l.append(ii)
-    if col_idx is not None:
-        l = [[l[i] for i in idx] for idx in col_idx]
-        l = [[sg.Col(ii, **col_kws) for ii in l]]
-    elif Ncols > 1:
-        l = group_list_by_n([*l], int(np.ceil(len(l) / Ncols)))
-        l = [[sg.Col(ii, **col_kws) for ii in l]]
-    return l
-
-
 class PadDict:
     def __init__(self, name, type_dict=None, disp_name=None, content=None, layout_pane_kwargs={'border_width': 10},
-                 **kwargs):
-
+                 background_color='green', Ncols=1, col_idx=None, after_header=None, **kwargs):
+        self.subdicts = {}
         if content is None:
-            content = d_layout(name, type_dict=type_dict, **kwargs)
+            if type_dict is None:
+                type_dict = par_dict(name)
+            content = self.build(name, type_dict=type_dict,**kwargs)
+        content=self.arrange_content(content, Ncols=Ncols, col_idx= col_idx)
+        self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()} if type_dict is not None else None
         if disp_name is None:
             disp_name = name
         header = [
-            [sg.T(disp_name.upper(), justification='center', background_color='green', border_width=4, **t_kws(24))]]
+            [sg.T(disp_name.upper(), justification='center', background_color=background_color, border_width=4, **t_kws(24*Ncols))]]
+        if after_header is not None:
+            header[0] += after_header
+        # header_kws = {'text': disp_name.upper(), 'header_text_kws': header_text_kws, 'justification':'center',
+        #               'after_header': after_header}
         self.layout = header + content
         self.name = name
         self.layout_pane_kwargs = layout_pane_kwargs
-        # self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()}
 
     def get_layout(self, as_col=True, **kwargs):
         self.layout_pane_kwargs.update(kwargs)
         return [[sg.Pane([sg.Col(self.layout)], **self.layout_pane_kwargs)]]
-        # return [sg.Col(self.layout, **self.layout_col_kwargs)] if as_col else self.layout
 
     def get_subdicts(self):
-        return {self.name: self}
+        subdicts = {}
+        for s in list(self.subdicts.values()):
+            subdicts.update(s.get_subdicts())
+        return {self.name: self, **subdicts}
 
     def get_dict(self, v, w):
         d = {}
@@ -909,9 +904,40 @@ class PadDict:
                 d[k] = w[f'TOGGLE_{k0}'].get_state()
             elif base_dtype(t) in [int, float]:
                 d[k] = w[k0].get()
+            elif t == dict or type(t) == dict:
+                d[k] = self.subdicts[k0].get_dict(v, w)
             else:
                 d[k] = retrieve_value(v[k0], t)
         return d
+
+    def build(self, name, type_dict=None, text_kws={}, value_kws={}):
+
+        l = []
+        for k, args in type_dict.items():
+            if args['dtype']==dict :
+                k0 = f'{name}_{k}'
+                self.subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'],
+                                               text_kws=text_kws, value_kws=value_kws)
+                ii = self.subdicts[k0].get_layout()[0]
+            else :
+                ii = [sg.T(f'{get_disp_name(k)}:', **text_kws), v_layout(f'{name}_{k}', args, value_kws)]
+            l.append(ii)
+        # if col_idx is not None:
+        #     l = [[l[i] for i in idx] for idx in col_idx]
+        #     l = [[sg.Col(ii, **col_kws) for ii in l]]
+        # elif Ncols > 1:
+        #     l = group_list_by_n([*l], int(np.ceil(len(l) / Ncols)))
+        #     l = [[sg.Col(ii, **col_kws) for ii in l]]
+        return l
+
+    def arrange_content(self, l, col_idx=None, Ncols=1):
+        if col_idx is not None:
+            l = [[l[i] for i in idx] for idx in col_idx]
+            l = [[sg.Col(ii, **col_kws) for ii in l]]
+        elif Ncols > 1:
+            l = group_list_by_n([*l], int(np.ceil(len(l) / Ncols)))
+            l = [[sg.Col(ii, **col_kws) for ii in l]]
+        return l
 
 
 class CollapsibleDict(Collapsible):
@@ -977,12 +1003,6 @@ class CollapsibleDict(Collapsible):
                 temp = v_layout(k0, args, value_kws)
                 ii = [sg.T(f'{get_disp_name(k)}:', **text_kws), temp]
             content.append(ii)
-        # if col_idx is not None :
-        #     content = [[content[i] for i in idx] for idx in col_idx]
-        #     content = [[sg.Col(ii, **col_kws) for ii in content]]
-        # elif Ncols > 1:
-        #     content = group_list_by_n([*content], int(np.ceil(len(content) / Ncols)))
-        #     content = [[sg.Col(ii, **col_kws) for ii in content]]
         return content, subdicts
 
 class Table(sg.Table):

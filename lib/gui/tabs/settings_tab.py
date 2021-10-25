@@ -5,7 +5,7 @@ import lib.aux.dictsNlists
 from lib.conf.stored.conf import saveConfDict, loadConfDict
 from lib.conf.base.dtypes import store_controls
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, PadDict
-from lib.gui.aux.functions import t_kws, gui_col, gui_cols, get_pygame_key
+from lib.gui.aux.functions import t_kws, gui_col, gui_cols, get_pygame_key, gui_row
 from lib.gui.aux.buttons import GraphButton
 from lib.gui.tabs.tab import GuiTab
 
@@ -16,6 +16,7 @@ class SettingsTab(GuiTab):
         self.k = 'controls'
         self.k_reset = f'RESET_{self.k}'
         self.k_edit = f'EDIT_{self.k}'
+        self.Cvis, self.Ccon = 'green', 'red'
 
     @ property
     def controls_dict(self):
@@ -50,12 +51,13 @@ class SettingsTab(GuiTab):
 
     def single_control_collapsible(self, name, dic, editable=True, **kwargs) :
         l = [self.single_control_layout(k, v, prefix=name, editable=editable) for k, v in dic.items()]
-        # c = PadDict(f'{self.k}_{name}', content=l, disp_name=name, **kwargs)
-        c = Collapsible(f'{self.k}_{name}', content=l, disp_name=name, **kwargs)
+        c = PadDict(f'{self.k}_{name}', content=l, disp_name=name,**kwargs)
+        # c = Collapsible(f'{self.k}_{name}', content=l, disp_name=name, **kwargs)
         return c
 
     def build_controls_collapsible(self, c):
-        kws={'state':True, 'subdict_state':True}
+        kws={'background_color':self.Ccon}
+        # kws={'state':True, 'subdict_state':True, 'background_color':self.Ccon}
         b_reset=GraphButton('Button_Burn', self.k_reset,tooltip='Reset all controls to the defaults. '
                                    'Restart Larvaworld after changing shortcuts.')
         conf = loadConfDict('Settings')
@@ -64,11 +66,16 @@ class SettingsTab(GuiTab):
             cc = self.single_control_collapsible(title, dic, **kws)
             l += cc.get_layout(as_col=False)
             c.update(cc.get_subdicts())
-        c_keyboard = Collapsible('Keyboard', content=l, next_to_header=[b_reset], state=True, Ncols=2)
+        # c_keyboard = PadDict('Keyboard', content=l, after_header=[b_reset],Ncols=3, **kws)
+        # c_keyboard = Collapsible('Keyboard', content=l, next_to_header=[b_reset], state=True, Ncols=2)
         c_mouse=self.single_control_collapsible('mouse', conf['mouse'], editable=False, **kws)
-
-        c_controls = Collapsible('Controls', content=[[gui_col([c_keyboard, c_mouse], 0.33)]], state=True)
-        for s in [c_keyboard, c_mouse]:
+        l += c_mouse.get_layout(as_col=False)
+        c_controls = PadDict('Controls', content=l, after_header=[b_reset],Ncols=3, **kws)
+        # c_controls = PadDict('Controls', content=gui_cols([[c_keyboard], [c_mouse]], x_fracs=[0.4,0.2]), **kws)
+        # c_controls = PadDict('Controls', content=[[gui_col([c_keyboard, c_mouse], 0.33)]], **kws)
+        # c_controls = Collapsible('Controls', content=[[gui_col([c_keyboard, c_mouse], 0.33)]], state=True)
+        for s in [c_mouse]:
+        # for s in [c_keyboard, c_mouse]:
             c.update(s.get_subdicts())
 
         d=self.inti_control_dict(conf)
@@ -82,15 +89,20 @@ class SettingsTab(GuiTab):
 
     def build(self):
         c = {}
-        c1 = CollapsibleDict('visualization', state=True, subdict_state=True, Ncols=2, value_kws={'size' : (10,1)})
-        c2 = CollapsibleDict('replay', state=True, subdict_state=True)
-
+        c1 = PadDict('visualization', Ncols=2, value_kws=t_kws(8), text_kws=t_kws(12))
+        # c1 = CollapsibleDict('visualization', state=True, subdict_state=True, Ncols=2, value_kws=t_kws(8), text_kws=t_kws(12))
+        c2 = PadDict('replay',Ncols=2)
+        # c2 = CollapsibleDict('replay', state=True, subdict_state=True)
+        # cc1=gui_col([c1,c2], x_frac=0.4, y_frac=1.0)
         c3, d = self.build_controls_collapsible(c)
-
+        # cc2=gui_col([c3], x_frac=0.6, y_frac=1.0)
+        # for s in [c2, c3]:
         for s in [c1, c2, c3]:
             c.update(s.get_subdicts())
 
-        l = gui_cols(cols=[[c1], [c2], [c3]], x_fracs=[0.35,0.2,0.45])
+        # l = [gui_row([[cc1, c3.get_layout()]], x_fracs=[0.4,0.6], y_frac=1.0)]
+        # l = [gui_row([[cc1], [c3.get_layout(as_col=False)]], x_fracs=[0.4,0.6], y_frac=1.0)]
+        l = gui_cols(cols=[[c1, c2], [c3]], x_fracs=[0.4,0.6])
 
         return l, c, {}, d
 

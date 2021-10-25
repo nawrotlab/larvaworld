@@ -6,7 +6,7 @@ import PySimpleGUI as sg
 
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'
-window_size = (2000, 1200)
+window_size = (2400, 1200)
 
 
 def col_size(x_frac=1.0, y_frac=1.0, win_size=None):
@@ -21,8 +21,8 @@ w_kws = {
     'default_button_element_size': (6, 1),
     'default_element_size': (14, 1),
     'font': ('Helvetica', 10, 'normal'),
-    'auto_size_text': None,
-    'auto_size_buttons': None,
+    'auto_size_text': False,
+    'auto_size_buttons': False,
     'text_justification': 'left',
     'element_justification': 'center',
     'debugger_enabled': True,
