@@ -27,9 +27,6 @@ class SettingsTab(GuiTab):
     def cur(self):
         return self.controls_dict['cur']
 
-    # def set_cur(self, cur):
-    #     self.controls_dict['cur'] = cur
-
     def control_k(self,k):
         return f'{self.k} {k}'
 
@@ -41,7 +38,6 @@ class SettingsTab(GuiTab):
     def single_control_layout(self, k, v, prefix=None, editable=True):
         k0=f'{prefix} {k}' if prefix is not None else k
         l = [sg.T(k, **t_kws(14)),
-        # l = [sg.T("", **t_kws(2)), sg.T(k, **t_kws(14)),
                sg.In(default_text=v, key=self.control_k(k0), disabled=True,
                      disabled_readonly_background_color='black', enable_events=True,
                      text_color='white', **t_kws(8), justification='center')]
@@ -52,7 +48,6 @@ class SettingsTab(GuiTab):
     def single_control_collapsible(self, name, dic, editable=True, **kwargs) :
         l = [self.single_control_layout(k, v, prefix=name, editable=editable) for k, v in dic.items()]
         c = PadDict(f'{self.k}_{name}', content=l, disp_name=name,**kwargs)
-        # c = Collapsible(f'{self.k}_{name}', content=l, disp_name=name, **kwargs)
         return c
 
     def build_controls_collapsible(self, c):
@@ -60,17 +55,14 @@ class SettingsTab(GuiTab):
         b_reset=GraphButton('Button_Burn', self.k_reset,tooltip='Reset all controls to the defaults. '
                                    'Restart Larvaworld after changing shortcuts.')
         conf = loadConfDict('Settings')
-        l = []
-        for title, dic in conf['keys'].items():
-            cc = self.single_control_collapsible(title, dic, **kws)
-            l += cc.get_layout(as_col=False)
+        cs = [self.single_control_collapsible(k, v, **kws) for k, v in conf['keys'].items()]
+        cs.append(self.single_control_collapsible('mouse', conf['mouse'], editable=False, **kws))
+        l=[]
+        for cc in cs :
             c.update(cc.get_subdicts())
-        c_mouse=self.single_control_collapsible('mouse', conf['mouse'], editable=False, **kws)
-        l += c_mouse.get_layout(as_col=False)
-        c.update(c_mouse.get_subdicts())
+            l += cc.get_layout(as_col=False)
         c_controls = PadDict('Controls', content=l, after_header=[b_reset],Ncols=3, **kws)
         d=self.inti_control_dict(conf)
-
         return c_controls, d
 
     def inti_control_dict(self, conf):
