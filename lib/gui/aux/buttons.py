@@ -21,6 +21,7 @@ def button_row(name, buttons, button_args={}):
         'import': 'Build a dataset from raw files.',
         'enrich': 'Enrich the dataset.',
         'add_ref': 'Add a reference experimental dataset to the list.',
+        'save_ref': 'Save reference experimental dataset for later sampling.',
         'select_all': 'Select all list elements.',
         'add': 'Add an item to the list.',
         'remove': 'Remove an item from the list.',
@@ -55,7 +56,6 @@ def button_row(name, buttons, button_args={}):
             cur.update(kws)
         else :
             cur=kws
-        # print(cur)
         bl.append(GraphButton(f'Button_{b}', f'{b.upper()} {name}', tooltip=but_tips[b], **cur))
     return bl
 

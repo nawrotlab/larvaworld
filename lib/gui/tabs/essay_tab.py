@@ -65,7 +65,7 @@ class EssayTab(GuiTab):
 
     def eval(self, e, v, w, c, d, g):
         k = self.essay_exps_key
-        k0 = self.datalists[k].list_key
+        k0 = self.datalists[k].key
         if e == f'RUN {k}':
             essay_exp = v[k0][0]
             if essay_exp not in [None, '']:

@@ -631,7 +631,7 @@ def init_pars():
         'odor': d['odor']
     }
 
-    d['border'] = {
+    d['Border'] = {
         'default_color': {'t': str, 'v': 'black'},
         'width': {'v': 0.01, 'min': 0.0},
         'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0},
@@ -711,7 +711,7 @@ def arena(x, y=None):
         return null_dict('arena', arena_shape='rectangular', arena_dims=(x, y))
 
 def border(ps, c='black', w=0.01,id=None):
-    b=null_dict('border', points=ps, default_color=c, width=w)
+    b=null_dict('Border', points=ps, default_color=c, width=w)
     if id is not None :
         return {id : b}
     else :

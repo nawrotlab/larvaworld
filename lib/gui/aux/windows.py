@@ -215,6 +215,32 @@ def save_conf_window(conf, conftype, disp=None):
     elif e == 'Cancel':
         return None
 
+def add_ref_window():
+    from lib.gui.aux.elements import NamedList
+    from lib.stor.larva_dataset import LarvaDataset
+    k = 'ID'
+    temp = NamedList('Reference ID : ', key=k, choices=kConfDict('Ref'),size=(35, None),
+                     readonly=False, enable_events=False, header_kws={'text': 'Load a reference dataset'})
+    l = [
+        temp.get_layout(),
+        [sg.Ok(), sg.Cancel()]]
+    e, v = sg.Window('Load a reference dataset', l).read(close=True)
+    if e == 'Ok':
+        sample = loadConf(v[k], 'Ref')
+        dd = LarvaDataset(dir=sample['dir'])
+        return dd
+    elif e == 'Cancel':
+        return None
+
+
+def save_ref_window(d):
+    k = 'ID'
+    l = [[sg.Text('Reference ID : ', size=(12, 1)), sg.In(default_text=f'{d.group_id}.{d.id}', k=k, size=(30, 1))],
+         [sg.Ok(), sg.Cancel()]]
+    e, v = sg.Window('Store reference dataset', l).read(close=True)
+    if e == 'Ok':
+        d.save_config(add_reference=True, refID=v[k])
+
 
 def import_window(datagroup_id, raw_dic):
     from lib.gui.tabs.gui import check_togglesNcollapsibles

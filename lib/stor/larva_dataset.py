@@ -207,7 +207,7 @@ class LarvaDataset:
         except:
             return None
 
-    def save_config(self, add_reference=False):
+    def save_config(self, add_reference=False, refID=None):
         for a in ['N', 't0', 'duration', 'quality', 'num_ticks']:
             try:
                 self.config[a] = getattr(self, a)
@@ -220,7 +220,9 @@ class LarvaDataset:
         dNl.save_dict(self.config, self.dir_dict['conf'], use_pickle=False)
         if add_reference:
             from lib.conf.stored.conf import saveConf
-            saveConf(self.config, 'Ref', f'{self.group_id}.{self.id}')
+            if refID is None :
+                refID = f'{self.group_id}.{self.id}'
+            saveConf(self.config, 'Ref', refID)
 
     def save_agents(self, ids=None, pars=None):
         if self.step_data is None:

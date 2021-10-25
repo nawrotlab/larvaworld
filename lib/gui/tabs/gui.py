@@ -48,7 +48,6 @@ class LarvaworldGui:
             tabs = list(self.tab_dict.keys())
         sg.theme('LightGreen')
         self.background_color = None
-        # self.batch_thread = batch_thread
         self.terminal = gui_terminal()
         layout, self.collapsibles, self.graph_lists, self.dicts, self.tabs = self.build(tabs)
         c = {'layout': layout, 'size': window_size, **w_kws}
@@ -81,7 +80,7 @@ class LarvaworldGui:
             dic[n] = sg.Tab(n, l, background_color=self.background_color, key=f'{n} TAB')
             ls.append(dic[n])
 
-        tab_kws = {'font': ("Helvetica", 13, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
+        tab_kws = {'font': ("Helvetica", 14, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
                    'tab_background_color': 'lightgrey'}
         l_tabs = sg.TabGroup([ls], key='ACTIVE_TAB', tab_location='topleft', **tab_kws)
         l0 = [[sg.Pane([sg.vtop(l_tabs), sg.vbottom(self.terminal)], handle_size=30)]]

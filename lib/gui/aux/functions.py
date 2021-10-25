@@ -14,16 +14,18 @@ def col_size(x_frac=1.0, y_frac=1.0, win_size=None):
         win_size = window_size
     return int(win_size[0] * x_frac), int(win_size[1] * y_frac)
 
-
+default_list_width=25
 w_kws = {
     'finalize': True,
     'resizable': True,
     'default_button_element_size': (6, 1),
     'default_element_size': (14, 1),
-    'font': ('Helvetica', 8, 'normal'),
-    'auto_size_text': False,
-    'auto_size_buttons': False,
+    'font': ('Helvetica', 10, 'normal'),
+    'auto_size_text': None,
+    'auto_size_buttons': None,
     'text_justification': 'left',
+    'element_justification': 'center',
+    'debugger_enabled': True,
 }
 col_kws = {'vertical_alignment': 't', 'expand_x': False, 'expand_y': False}
 b_kws = {'font': ('size', 6)}
@@ -131,7 +133,6 @@ def retrieve_value(v, t):
 def retrieve_dict(dic, type_dic):
     return {k: retrieve_value(v, type_dic[k]) for k, v in dic.items()}
 
-
 def gui_col(element_list, x_frac=0.25, y_frac=1.0, **kwargs):
     l = []
     for e in element_list:
@@ -153,8 +154,6 @@ def gui_cols(cols, x_fracs=None, y_fracs=None, **kwargs) :
         ls.append(l)
     return [ls]
 
-
-
 def gui_row(element_list, x_frac=1.0, y_frac=0.5,x_fracs=None, **kwargs):
     N=len(element_list)
     if x_fracs is None :
@@ -173,14 +172,6 @@ def collapse(layout, key, visible=True):
     """
     return sg.pin(sg.Col(layout, key=key, visible=visible))
 
-
-def agent_list2dict(l, header='unique_id'):
-    d = {}
-    for a in l:
-        id = a[header]
-        a.pop(header)
-        d[id] = a
-    return d
 
 
 def get_pygame_key(key):

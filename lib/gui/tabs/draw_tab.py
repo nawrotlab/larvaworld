@@ -11,7 +11,7 @@ import lib.conf.base.dtypes
 import lib.gui.aux.functions
 from lib.conf.base.dtypes import null_dict
 from lib.gui.aux.elements import CollapsibleDict, GraphList
-from lib.gui.aux.functions import col_kws, t_kws, retrieve_dict
+from lib.gui.aux.functions import col_kws, t_kws
 from lib.gui.aux.buttons import color_pick_layout
 from lib.gui.tabs.tab import GuiTab
 
@@ -19,17 +19,17 @@ from lib.gui.tabs.tab import GuiTab
 class DrawTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.canvas_size=(800,800)
+        self.canvas_size = (800, 800)
         self.S, self.L, self.B = 'Source', 'Larva', 'Border'
-        self.Su, self.Sg=f'{self.S.lower()}_units', f'{self.S.lower()}_groups'
-        self.Lu, self.Lg=f'{self.L.lower()}_units', f'{self.L.lower()}_groups'
+        self.Su, self.Sg = f'{self.S.lower()}_units', f'{self.S.lower()}_groups'
+        self.Lu, self.Lg = f'{self.L.lower()}_units', f'{self.L.lower()}_groups'
         self.Bg = f'{self.B.lower()}_list'
 
     # @property
-    def food_on(self,w):
+    def food_on(self, w):
         return w['TOGGLE_food'].get_state()
 
-    def odor_on(self,w, n):
+    def odor_on(self, w, n):
         o = f'{n}_ODOR'
         To = f'TOGGLE_{o}'
         return w[To].get_state()
@@ -41,27 +41,26 @@ class DrawTab(GuiTab):
         return k_f, k_fM
 
     def odor_ks(self, i):
-        o=f'{i}_ODOR'
-        o0=f'{o}_odor_id'
-        oM=f'{o}_odor_intensity'
-        oS=f'{o}_odor_spread'
+        o = f'{i}_ODOR'
+        o0 = f'{o}_odor_id'
+        oM = f'{o}_odor_intensity'
+        oS = f'{o}_odor_spread'
         # To=f'TOGGLE_{o}'
-        return o, o0,oM,oS
+        return o, o0, oM, oS
 
     def group_ks(self, i):
-        s=f'{i}_single'
-        g=f'{i}_group'
-        s0=f'{i}_id'
-        g0=f'{g}_id'
-        D=f'{i}_DISTRO'
-        DN=f'{D}_N'
-        Dm=f'{D}_mode'
-        Ds=f'{D}_shape'
-        return g,g0,D,DN,Dm,Ds, s,s0
-
+        s = f'{i}_single'
+        g = f'{i}_group'
+        s0 = f'{i}_id'
+        g0 = f'{g}_id'
+        D = f'{i}_DISTRO'
+        DN = f'{D}_N'
+        Dm = f'{D}_mode'
+        Ds = f'{D}_shape'
+        return g, g0, D, DN, Dm, Ds, s, s0
 
     def arena_pars(self, v, w, c):
-        dic=c['arena'].get_dict(v, w)
+        dic = c['arena'].get_dict(v, w)
         return dic['arena_shape'], dic['arena_dims']
 
     @property
@@ -69,16 +68,16 @@ class DrawTab(GuiTab):
         return self.base_dict['s']
 
     def get_drag_ps(self, scaled=False):
-        d=self.base_dict
-        p1,p2= d['start_point'], d['end_point']
-        return [self.scale_xy(p1), self.scale_xy(p2)] if scaled else [p1,p2]
+        d = self.base_dict
+        p1, p2 = d['start_point'], d['end_point']
+        return [self.scale_xy(p1), self.scale_xy(p2)] if scaled else [p1, p2]
 
-    def set_drag_ps(self, p1=None,p2=None):
-        d=self.base_dict
-        if p1 is not None :
-            d['start_point']=p1
-        if p2 is not None :
-            d['end_point']=p2
+    def set_drag_ps(self, p1=None, p2=None):
+        d = self.base_dict
+        if p1 is not None:
+            d['start_point'] = p1
+        if p2 is not None:
+            d['end_point'] = p2
 
     def add_agent_layout(self, n0, color, c):
         g, g0, D, DN, Dm, Ds, s, s0 = self.group_ks(n0)
@@ -86,22 +85,24 @@ class DrawTab(GuiTab):
 
         s1 = CollapsibleDict(D, default=True, toggle=False, disabled=True, disp_name='Distribution')
 
-        s2 = CollapsibleDict(o, default=True,toggle=False, disp_name='Odor', dict_name='odor')
+        s2 = CollapsibleDict(o, default=True, toggle=False, disp_name='Odor', dict_name='odor')
 
-        for ss in [s1,s2]:
+        for ss in [s1, s2]:
             c.update(ss.get_subdicts())
 
-        l = [[sg.R(f'Add {n0}', 1, k=n0, enable_events=True, **t_kws(10)),*color_pick_layout(n0, color)],
-             [sg.T('', **t_kws(2)),sg.R('single ID', 2, disabled=True, k=s, enable_events=True, **t_kws(5)),sg.In(n0, k=s0)],
-             [sg.T('', **t_kws(2)), sg.R('group ID', 2, disabled=True, k=g, enable_events=True, **t_kws(5)),sg.In(k=g0)],
+        l = [[sg.R(f'Add {n0}', 1, k=n0, enable_events=True, **t_kws(10)), *color_pick_layout(n0, color)],
+             [sg.T('', **t_kws(2)), sg.R('single ID', 2, disabled=True, k=s, enable_events=True, **t_kws(5)),
+              sg.In(n0, k=s0)],
+             [sg.T('', **t_kws(2)), sg.R('group ID', 2, disabled=True, k=g, enable_events=True, **t_kws(5)),
+              sg.In(k=g0)],
 
              [sg.T('', **t_kws(5)), *s1.get_layout()],
              [sg.T('', **t_kws(5)), *s2.get_layout()]]
         return l, c
 
     def build(self):
-        S,L,B = self.S,self.L,self.B
-        dic={
+        S, L, B = self.S, self.L, self.B
+        dic = {
             'env_db': self.set_env_db(store=False),
             's': None,
             'arena': None,
@@ -110,7 +111,7 @@ class DrawTab(GuiTab):
             'dragging': None,
             'drag_figures': [],
             'current': {},
-            'last_xy': (0,0),
+            'last_xy': (0, 0),
             'start_point': None,
             'end_point': None,
             'prior_rect': None,
@@ -124,20 +125,21 @@ class DrawTab(GuiTab):
         source_l, c = self.add_agent_layout(S, 'green', c)
         lL, c = self.add_agent_layout(L, 'black', c)
 
-        lI=[[sg.R('Erase item', 1, k='-ERASE-', enable_events=True)],
-            [sg.R('Move item', 1, True, k='-MOVE-', enable_events=True)],
-            [sg.R('Inspect item', 1, True, k='-INSPECT-', enable_events=True)]]
+        lI = [[sg.R('Erase item', 1, k='-ERASE-', enable_events=True)],
+              [sg.R('Move item', 1, True, k='-MOVE-', enable_events=True)],
+              [sg.R('Inspect item', 1, True, k='-INSPECT-', enable_events=True)]]
         lB = [[sg.R(f'Add {B}', 1, k=B, enable_events=True, **t_kws(10)), *color_pick_layout(B, 'black')],
               [sg.T('', **t_kws(4)), sg.T('id', **t_kws(5)), sg.In(B, k=f'{B}_id')],
-              [sg.T('', **t_kws(4)), sg.T('width', **t_kws(5)), sg.Spin(values=np.arange(0.1,1000,0.1).tolist(), initial_value=0.001, k=f'{B}_width')],
+              [sg.T('', **t_kws(4)), sg.T('width', **t_kws(5)),
+               sg.Spin(values=np.arange(0.1, 1000, 0.1).tolist(), initial_value=0.001, k=f'{B}_width')],
               ]
-        lS=[*source_l,
-            [sg.T('', **t_kws(5)), *s2.get_layout()],
-            [sg.T('', **t_kws(5)), sg.T('shape', **t_kws(5)),
-             sg.Combo(['rect', 'circle'], default_value='circle', k=f'{S}_shape', enable_events=True, readonly=True)]]
+        lS = [*source_l,
+              [sg.T('', **t_kws(5)), *s2.get_layout()],
+              [sg.T('', **t_kws(5)), sg.T('shape', **t_kws(5)),
+               sg.Combo(['rect', 'circle'], default_value='circle', k=f'{S}_shape', enable_events=True, readonly=True)]]
 
-        col2 = sg.Col([[sg.Col(ll, pad=(10,10))] for ll in [lL,lS,lB,lI]], **col_kws)
-        g1 = GraphList(self.name, tab=self, graph=True,canvas_size=self.canvas_size, canvas_kws={
+        col2 = sg.Col([[sg.Col(ll, pad=(10, 10))] for ll in [lL, lS, lB, lI]], **col_kws)
+        g1 = GraphList(self.name, tab=self, graph=True, canvas_size=self.canvas_size, canvas_kws={
             'graph_bottom_left': (0, 0),
             'graph_top_right': self.canvas_size,
             'change_submits': True,
@@ -156,10 +158,9 @@ class DrawTab(GuiTab):
 
         return l, c, {g1.name: g1}, {self.name: dic}
 
-
-    def eval(self,e, v, w, c, d, g):
-        S,L,B = self.S,self.L,self.B
-        gg=self.graph
+    def eval(self, e, v, w, c, d, g):
+        S, L, B = self.S, self.L, self.B
+        gg = self.graph
         gg.bind('<Button-3>', '+RIGHT+')
         dic = self.base_dict
         info = w["info"]
@@ -241,14 +242,16 @@ class DrawTab(GuiTab):
                             if v[f'{o}_single'] or (v[f'{o}_group'] and dic['sample_fig'] is None):
                                 fill_color = color if self.food_on(w) else None
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{o}_shape'], p1=p1, p2=p2,
-                                                               line_color=color, fill_color=fill_color)
+                                                                    line_color=color, fill_color=fill_color)
                                 temp = np.max(np.abs(np.array(p2) - np.array(p1)))
                                 w['food_radius'].update(value=temp / self.s)
                                 dic['sample_pars'] = {'default_color': color,
                                                       **c['food'].get_dict(v, w, check_toggle=False),
-                                                      'odor' : c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False),
+                                                      'odor': c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False),
                                                       }
                                 if v[f'{o}_single']:
+                                    # dic['current'] = su(id=v[f'{o}_id'], group=v[f'{o}_group_id'], pos=P1, c=color,
+                                    #                     o=c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False))
                                     dic['current'] = {v[f'{o}_id']: {
                                         'group': v[f'{o}_group_id'],
                                         'pos': P1,
@@ -265,49 +268,39 @@ class DrawTab(GuiTab):
                                     **dic['sample_pars']
                                 }
                                 dic['current'] = {v[f'{S}_group_id']: null_dict('SourceGroup', **temp_dic)}
-                                # dic['current'] = {v[f'{S}_group_id']: {
-                                #     **c[f'{S}_DISTRO'].get_dict(v, w, check_toggle=False),
-                                #     **dic['sample_pars']
-                                # }}
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{o}_DISTRO_shape'], p1=p1,
-                                                               p2=p2, line_color=color)
+                                                                    p2=p2, line_color=color)
                         elif v[L] and not self.check_abort(L, w, v, db[self.Lu]['items'], db[self.Lg]['items']):
                             o = L
                             color = v[f'{o}_color']
                             sample_larva_pars = {'default_color': color,
-                                                 'odor' :c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False),
+                                                 'odor': c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False),
                                                  }
                             if v[f'{o}_group']:
                                 self.update_window_distro(v, w, o)
                                 temp = c[f'{o}_DISTRO'].get_dict(v, w, check_toggle=False)
                                 model = temp['model']
                                 temp.pop('model')
-                                temp_dic= {
+                                temp_dic = {
                                     'model': model,
                                     'distribution': temp,
                                     **sample_larva_pars
                                 }
-                                dic['current'] = {v[f'{o}_group_id']:null_dict('LarvaGroup', **temp_dic)}
+                                dic['current'] = {v[f'{o}_group_id']: null_dict('LarvaGroup', **temp_dic)}
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{o}_DISTRO_shape'], p1=p1,
-                                                               p2=p2, line_color=color)
+                                                                    p2=p2, line_color=color)
 
                         elif v[B]:
                             id = v[f'{B}_id']
                             if id in list(db[self.Bg]['items'].keys()) or id == '':
                                 info.update(value=f"{B} id {id} already exists or is empty")
                             else:
-                                dic0 = {'unique_id': id,
-                                        'default_color': v[f'{B}_color'],
-                                        'width': v[f'{B}_width'],
-                                        'points': [P1, P2]}
-                                dic['current'] = lib.gui.aux.functions.agent_list2dict(
-                                    [retrieve_dict(dic0, null_dict(B,'dtype'))])
-
+                                dic['current'] = lib.conf.base.dtypes.border(ps=[P1, P2], c=v[f'{B}_color'],
+                                                                             w=float(v[f'{B}_width']), id=id)
                                 dic['prior_rect'] = self.graph.draw_line(p1, p2, color=v[f'{B}_color'],
-                                                                    width=int(float(v[f'{B}_width']) * self.s))
-
+                                                                         width=int(float(v[f'{B}_width']) * self.s))
         elif e.endswith('+UP'):  # The drawing has ended because mouse up
-            if dic['arena'] is None :
+            if dic['arena'] is None:
                 return d, g
             P1, P2 = self.get_drag_ps(scaled=True)
             current, prior_rect, sample_pars = dic['current'], dic['prior_rect'], dic['sample_pars']
@@ -381,7 +374,7 @@ class DrawTab(GuiTab):
         return d, g
 
     def update_window_distro(self, v, w, name):
-        D=f'{name}_DISTRO'
+        D = f'{name}_DISTRO'
         P1, P2 = self.get_drag_ps(scaled=True)
         s = np.abs(np.array(P2) - np.array(P1))
         if v[f'{D}_shape'] == 'circle':
@@ -392,7 +385,7 @@ class DrawTab(GuiTab):
         w[f'{D}_loc'].update(value=P1)
 
     def draw_shape(self, p1, p2, shape, **kwargs):
-        g=self.graph
+        g = self.graph
         if p2 == p1:
             return None
         pp1, pp2 = np.array(p1), np.array(p2)
@@ -414,13 +407,13 @@ class DrawTab(GuiTab):
         W, H = self.graph_list.canvas_size
         g = self.graph
         g.erase()
-        shape, (X,Y)=self.arena_pars(v, w, c)
-        kws={'fill_color' : 'white',
-             'line_color' : 'black'}
+        shape, (X, Y) = self.arena_pars(v, w, c)
+        kws = {'fill_color': 'white',
+               'line_color': 'black'}
         if shape == 'circular' and X is not None:
-            arena = g.draw_circle((int(W / 2), int(H / 2)), int(W / 2),line_width=5, **kws)
+            arena = g.draw_circle((int(W / 2), int(H / 2)), int(W / 2), line_width=5, **kws)
             s = W / X
-        elif shape == 'rectangular' and X is not None and Y is not None :
+        elif shape == 'rectangular' and X is not None and Y is not None:
             if X >= Y:
                 dif = (X - Y) / X
                 arena = g.draw_rectangle((0, int(H * dif / 2)), (W, H - int(H * dif / 2)), line_width=5, **kws)
@@ -429,11 +422,11 @@ class DrawTab(GuiTab):
                 dif = (Y - X) / Y
                 arena = g.draw_rectangle((int(W * dif / 2), 0), (W - int(W * dif / 2), H), **kws)
                 s = H / Y
-        self.base_dict['s']=s
-        self.base_dict['arena']=arena
+        self.base_dict['s'] = s
+        self.base_dict['arena'] = arena
 
     def reset_arena(self, v, w, c):
-        S=self.S
+        S = self.S
         db = copy.deepcopy(self.base_dict['env_db'])
         self.draw_arena(v, w, c)
         for id, ps in db[self.Su]['items'].items():
@@ -450,24 +443,24 @@ class DrawTab(GuiTab):
         for id, ps in db[self.Bg]['items'].items():
             points = [self.scale_xy(p) for p in ps['points']]
             f = self.graph.draw_lines(points=points, color=ps['default_color'],
-                                    width=int(ps['width'] * self.s))
+                                      width=int(ps['width'] * self.s))
             db[self.Bg]['figs'][f] = id
         w['out'].update(value='Arena has been reset.')
-        self.base_dict['env_db']=db
+        self.base_dict['env_db'] = db
 
     def scale_xy(self, xy, reverse=False):
-        if xy is None :
+        if xy is None:
             return None
         W, H = self.graph_list.canvas_size
-        s=self.s
-        x,y=xy
-        if reverse :
+        s = self.s
+        x, y = xy
+        if reverse:
             return x * s + W / 2, y * s + H / 2
-        else :
+        else:
             return (x - W / 2) / s, (y - H / 2) / s
 
     def out_of_bounds(self, xy, v, w, c):
-        shape, (X,Y)=self.arena_pars(v, w, c)
+        shape, (X, Y) = self.arena_pars(v, w, c)
         x, y = xy
         if shape == 'circular':
             return np.sqrt(x ** 2 + y ** 2) > X / 2
@@ -475,10 +468,10 @@ class DrawTab(GuiTab):
             return not (-X / 2 < x < X / 2 and -Y / 2 < y < Y / 2)
 
     def delete_prior(self, fig=None):
-        if fig is None :
-            fig=self.base_dict['prior_rect']
+        if fig is None:
+            fig = self.base_dict['prior_rect']
         g = self.graph
-        if fig is None :
+        if fig is None:
             pass
         elif type(fig) == list:
             for f in fig:
@@ -486,29 +479,32 @@ class DrawTab(GuiTab):
         else:
             g.delete_figure(fig)
 
-    def inspect_distro(self, item, default_color, mode=None, shape=None, N=None, loc=None, scale=None,orientation_range=None,distribution=None, **kwargs):
-        if distribution is not None :
-            mode=distribution['mode']
-            shape=distribution['shape']
-            N=distribution['N']
-            loc=distribution['loc']
-            scale=distribution['scale']
+    def inspect_distro(self, item, default_color, mode=None, shape=None, N=None, loc=None, scale=None,
+                       orientation_range=None, distribution=None, **kwargs):
+        if distribution is not None:
+            mode = distribution['mode']
+            shape = distribution['shape']
+            N = distribution['N']
+            loc = distribution['loc']
+            scale = distribution['scale']
 
-        Ps = lib.aux.xy_aux.generate_xy_distro(mode, shape, N, loc=self.scale_xy(loc, reverse=True), scale=np.array(scale) * self.s)
+        Ps = lib.aux.xy_aux.generate_xy_distro(mode, shape, N, loc=self.scale_xy(loc, reverse=True),
+                                               scale=np.array(scale) * self.s)
         group_figs = []
         for i, P0 in enumerate(Ps):
             if item == self.S:
                 temp = self.draw_source(P0, default_color, **kwargs)
             elif item == self.L:
-                if distribution is not None :
+                if distribution is not None:
                     orientation_range = distribution['orientation_range']
-                temp = self.draw_larva(P0, default_color,orientation_range, **kwargs)
+                temp = self.draw_larva(P0, default_color, orientation_range, **kwargs)
             group_figs.append(temp)
         return group_figs
 
     def draw_source(self, P0, default_color, amount, radius, **kwargs):
         fill_color = default_color if amount > 0 else None
-        temp = self.graph.draw_circle(P0, radius *self.s, line_width=3, line_color=default_color, fill_color=fill_color)
+        temp = self.graph.draw_circle(P0, radius * self.s, line_width=3, line_color=default_color,
+                                      fill_color=fill_color)
         return temp
 
     def draw_larva(self, P0, color, orientation_range, **kwargs):
@@ -520,15 +516,15 @@ class DrawTab(GuiTab):
         return temp
 
     def check_abort(self, name, w, v, units, groups):
-        S,L=self.S, self.L
-        n=name
-        n0=n.lower()
-        g,g0,D,DN,Dm,Ds, s,s0=self.group_ks(n)
-        o, o0, oM, oS=self.odor_ks(n)
-        f, fM=self.food_ks
+        S, L = self.S, self.L
+        n = name
+        n0 = n.lower()
+        g, g0, D, DN, Dm, Ds, s, s0 = self.group_ks(n)
+        o, o0, oM, oS = self.odor_ks(n)
+        f, fM = self.food_ks
         info = w['info']
         abort = True
-        O = self.odor_on(w,name)
+        O = self.odor_on(w, name)
         F = self.food_on(w)
 
         if not O:
@@ -546,13 +542,13 @@ class DrawTab(GuiTab):
             elif not F and float(v[fM]) != 0.0:
                 w[fM].update(value=0.0)
                 # t = f"{S} food amount set to 0"
-        elif n==L:
+        elif n == L:
             if v[f'{D}_model'] == '':
                 info.update(value="Assign a larva-model for the larva group")
                 return True
 
         if v[g0] == '' and v[s0] == '':
-            t=f"Both {n0} single id and group id are empty"
+            t = f"Both {n0} single id and group id are empty"
         elif not v[g] and not v[s]:
             t = f"Select to add a single or a group of {n0}s"
         elif v[s] and (v[s0] in list(units.keys()) or v[s0] == ''):
@@ -590,13 +586,12 @@ class DrawTab(GuiTab):
                  env['food_params'][self.Su], env['food_params'][self.Sg],
                  {}, lg]
         dic = {k: {'items': ii, 'figs': {}} for k, ii in zip([self.Bg, self.Su, self.Sg, self.Lu, self.Lg], items)}
-        if store :
-            self.base_dict['env_db']=dic
-        else :
+        if store:
+            self.base_dict['env_db'] = dic
+        else:
             return dic
 
     def aux_reset(self):
-        dic=self.base_dict
+        dic = self.base_dict
         dic['dragging'], dic['current'] = False, {}
         dic['start_point'], dic['end_point'], dic['prior_rect'] = None, None, None
-

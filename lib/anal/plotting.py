@@ -1591,7 +1591,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     labels = [labels0[i] for i in idx]
     ylabels = [ylabels0[i] for i in idx]
     Npars = len(labels)
-    fig, axs = plt.subplots(Npars, figsize=(10, 6 * Npars), sharex=True, sharey=sharey)
+    fig, axs = plt.subplots(Npars, figsize=(14, 6 * Npars), sharex=True, sharey=sharey)
     axs = axs.ravel() if Npars > 1 else [axs]
 
     rr0, gg0, bb0 = q_col1 = np.array([255, 0, 0]) / 255
