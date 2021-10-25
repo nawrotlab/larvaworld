@@ -18,12 +18,13 @@ class Brain():
         self.olfactory_activation = 0
         self.touch_activation = 0
         self.wind_activation = 0
-        self.crawler, self.turner, self.feeder, self.intermitter, self.olfactor, self.memory, self.touch_memory = [None] * 7
+        self.crawler, self.turner, self.feeder, self.intermitter, self.olfactor, self.memory, self.touch_memory = [
+                                                                                                                      None] * 7
 
         dt = self.agent.model.dt
         m = self.modules
         c = self.conf
-        self.windsensor = WindSensor(brain=self, dt=dt, gain_dict={'windsensor': 1.0},**c['windsensor_params'])
+        self.windsensor = WindSensor(brain=self, dt=dt, gain_dict={'windsensor': 1.0}, **c['windsensor_params'])
         if m['olfactor']:
             self.olfactor = Olfactor(brain=self, dt=dt, **c['olfactor_params'])
 
@@ -44,17 +45,19 @@ class Brain():
 
     def sense_wind(self):
         from lib.aux.ang_aux import angle_dif
-        a=self.agent
-        w=a.model.windscape
-        if w is None :
-            v=0.0
-        else :
-            wo, wv=w['wind_direction'], w['wind_speed']
-            o=np.rad2deg(a.head.get_orientation())
-            v=np.abs(angle_dif(o,wo))/180*wv
-        # sensors = a.get_sensors()
+        a = self.agent
+        w = a.model.windscape
+        if w is None:
+            v = 0.0
+        else:
+            wo, wv = w['wind_direction'], w['wind_speed']
+            if a.wind_obstructed(wo):
+                v = 0
+            else:
+                o = np.rad2deg(a.head.get_orientation())
+                v = np.abs(angle_dif(o, wo)) / 180 * wv
         return {'windsensor': v}
-        # return {s: int(a.detect_wind(a.get_sensor_position(s)) is not None) for s in sensors}
+
 
 class DefaultBrain(Brain):
     def __init__(self, **kwargs):
@@ -62,8 +65,6 @@ class DefaultBrain(Brain):
         dt = self.agent.model.dt
         m = self.modules
         c = self.conf
-
-
 
         if m['crawler']:
             self.crawler = Crawler(dt=dt, **c['crawler_params'])

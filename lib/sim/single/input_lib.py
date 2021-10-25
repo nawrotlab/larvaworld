@@ -3,6 +3,7 @@ import numpy as np
 import lib.gui.aux.elements as gui
 import lib.gui.aux.windows
 # import lib.stor.datagroup
+from lib.anal.rendering import SimulationScale
 from lib.conf.stored.conf import loadConfDict
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.agents._larva import Larva
@@ -38,12 +39,13 @@ def evaluate_input(model, screen):
                     loc = tuple(np.array(screen.w_loc) + np.array(pygame.mouse.get_pos()))
                     if len(model.selected_agents) > 0:
                         for sel in model.selected_agents:
-                            # sel = model.selected_agents[0]
                             sel = lib.gui.aux.windows.set_agent_kwargs(sel, location=loc)
                     else:
                         model.selected_type = lib.gui.aux.windows.object_menu(model.selected_type, location=loc)
                 elif e.button in [4, 5]:
                     screen.zoom_screen(d_zoom=-d_zoom if e.button == 4 else d_zoom)
+                    model.sim_scale = SimulationScale(model.arena_dims[0]*screen.zoom, color=model.sim_scale.color)
+                    model.sim_scale.render_scale(model.screen_width, model.screen_height)
                     model.toggle(name='zoom', value=screen.zoom)
             # lib.stor.datagroup.get_input(e)
     if model.focus_mode and len(model.selected_agents) > 0:

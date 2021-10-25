@@ -11,9 +11,7 @@ import lib.process.aux
 class Viewer(object):
     def __init__(self, width, height, caption="", fps=10, dt=0.1, show_display=True, record_video_to=None,
                  record_image_to=None, zoom=1):
-        x = 1550
-        y = 400
-        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x, y)
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (1550, 400)
         self.w_loc = [int(x) for x in os.environ['SDL_VIDEO_WINDOW_POS'].split(',')]
         self.zoom = zoom
         self.caption = caption
@@ -27,8 +25,6 @@ class Viewer(object):
 
         self.display_size = self.scale_dims()
         self._window = self.init_screen()
-
-        # winInfo = pygame.PygameWindowInfo()
 
         if record_video_to:
             import imageio
@@ -48,8 +44,8 @@ class Viewer(object):
     def draw_arena(self, vertices, tank_color, screen_color):
         surf1 = pygame.Surface(self.display_size, pygame.SRCALPHA)
         surf2 = pygame.Surface(self.display_size, pygame.SRCALPHA)
-        vertices = [self._transform(v) for v in vertices]
-        pygame.draw.polygon(surf1, tank_color, vertices, 0)
+        vs = [self._transform(v) for v in vertices]
+        pygame.draw.polygon(surf1, tank_color, vs, 0)
         pygame.draw.rect(surf2, screen_color, surf2.get_rect())
         surf2.blit(surf1, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
         self._window.blit(surf2, (0, 0))
@@ -66,8 +62,7 @@ class Viewer(object):
         return window
 
     def scale_dims(self):
-        w,h =(np.array(self.window_size)/self.zoom).astype(int)
-        return w,h
+        return (np.array(self.window_size) / self.zoom).astype(int)
 
     def zoom_screen(self, d_zoom, pos=None):
         if pos is None:
@@ -81,63 +76,60 @@ class Viewer(object):
 
     def set_bounds(self, left, right, bottom, top):
         assert right > left and top > bottom
-        scale_x = self.display_size[0] / (right - left)
-        scale_y = self.display_size[1] / (top - bottom)
-        self._scale = np.array([[scale_x, .0], [.0, -scale_y]])
-        self._translation = np.array([(-left * self.zoom) * scale_x, (-bottom * self.zoom) * scale_y])
-        self._translation += self.center * [-scale_x, scale_y]
+        x = self.display_size[0] / (right - left)
+        y = self.display_size[1] / (top - bottom)
+        self._scale = np.array([[x, .0], [.0, -y]])
+        self._translation = np.array([(-left * self.zoom) * x, (-bottom * self.zoom) * y]) + self.center * [-x, y]
         self.center_lim = (1 - self.zoom) * np.array([left, bottom])
 
     def _transform(self, position):
         return np.round(self._scale.dot(position) + self._translation).astype(int)
 
     def draw_circle(self, position=(0, 0), radius=.1, color=(0, 0, 0), filled=True, width=.01):
-        position = self._transform(position)
-        radius = int(self._scale[0, 0] * radius)
-        # width = 0 if filled else int(np.ceil(radius * width))
-        width = 0 if filled else int(self._scale[0, 0] * width)
-        pygame.draw.circle(self._window, color, position, radius, width)
+        p = self._transform(position)
+        r = int(self._scale[0, 0] * radius)
+        w = 0 if filled else int(self._scale[0, 0] * width)
+        pygame.draw.circle(self._window, color, p, r, w)
 
     def draw_polygon(self, vertices, color=(0, 0, 0), filled=True, width=.01):
-        vertices = [self._transform(v) for v in vertices]
-        width = 0 if filled else int(self._scale[0, 0] * width)
-        pygame.draw.polygon(self._window, color, vertices, 0 if filled else width)
+        vs = [self._transform(v) for v in vertices]
+        w = 0 if filled else int(self._scale[0, 0] * width)
+        pygame.draw.polygon(self._window, color, vs, w)
 
     def draw_convex(self, vertices, **kwargs):
-        vertices2 = vertices[ConvexHull(vertices).vertices].tolist()
-        self.draw_polygon(vertices2, **kwargs)
+        vs = vertices[ConvexHull(vertices).vertices].tolist()
+        self.draw_polygon(vs, **kwargs)
 
     def draw_grid(self, all_vertices, colors, filled=True, width=.01):
         all_vertices = [[self._transform(v) for v in vertices] for vertices in all_vertices]
-        width = 0 if filled else int(self._scale[0, 0] * width)
-        for vertices, color in zip(all_vertices, colors):
-            pygame.draw.polygon(self._window, color, vertices, 0 if filled else width)
+        w = 0 if filled else int(self._scale[0, 0] * width)
+        for vs, c in zip(all_vertices, colors):
+            pygame.draw.polygon(self._window, c, vs, w)
 
     def draw_polyline(self, vertices, color=(0, 0, 0), closed=False, width=.01, dynamic_color=False):
-        vertices = [self._transform(v) for v in vertices]
-        width = int(self._scale[0, 0] * width)
+        vs = [self._transform(v) for v in vertices]
+        w = int(self._scale[0, 0] * width)
         if not dynamic_color:
-            pygame.draw.lines(self._window, color, closed, vertices, width)
+            pygame.draw.lines(self._window, color, closed, vs, w)
         else:
-            for v1, v2, c in zip(vertices[:-1], vertices[1:], color):
-                pygame.draw.lines(self._window, c, closed, [v1, v2], width)
+            for v1, v2, c in zip(vs[:-1], vs[1:], color):
+                pygame.draw.lines(self._window, c, closed, [v1, v2], w)
 
     def draw_line(self, start, end, color=(0, 0, 0), width=.01):
         start = self._transform(start)
         end = self._transform(end)
-        width = int(self._scale[0, 0] * width)
-        pygame.draw.line(self._window, color, start, end, width)
+        w = int(self._scale[0, 0] * width)
+        pygame.draw.line(self._window, color, start, end, w)
 
     def draw_transparent_circle(self, position=(0, 0), radius=.1, color=(0, 0, 0, 125), filled=True, width=.01):
-        radius = int(self._scale[0, 0] * radius)
-        s = pygame.Surface((2 * radius, 2 * radius), pygame.HWSURFACE | pygame.SRCALPHA)
-        width = 0 if filled else int(self._scale[0, 0] * width)
-        pygame.draw.circle(s, color, (radius, radius), radius, width)
-        self._window.blit(s, self._transform(position) - radius)
+        r = int(self._scale[0, 0] * radius)
+        s = pygame.Surface((2 * r, 2 * r), pygame.HWSURFACE | pygame.SRCALPHA)
+        w = 0 if filled else int(self._scale[0, 0] * width)
+        pygame.draw.circle(s, color, (r, r), radius, w)
+        self._window.blit(s, self._transform(position) - r)
 
     def draw_text_box(self, text_font, text_position):
         self._window.blit(text_font, text_position)
-
 
     def draw_arrow(self, start, end, color=(0, 0, 0), width=.01):
         size = 4
@@ -152,11 +144,10 @@ class Viewer(object):
             (end[0] + size * math.sin(math.radians(rotation + 120)),
              end[1] + size * math.cos(math.radians(rotation + 120)))))
 
-    def get_array(self):
-        image_data = pygame.surfarray.array3d(self._window)
-        return image_data
+    # def get_array(self):
+    #     return pygame.surfarray.array3d(self._window)
 
-    @ property
+    @property
     def mouse_position(self):
         p = np.array(pygame.mouse.get_pos()) - self._translation
         return np.linalg.inv(self._scale).dot(p)
@@ -183,7 +174,6 @@ class Viewer(object):
 
     def close(self):
         pygame.display.quit()
-        # pygame.quit()
         if self._video_writer:
             self._video_writer.close()
         if self._image_writer:
@@ -195,7 +185,6 @@ class Viewer(object):
         if pos is None:
             pos = self.center - self.center_lim * [dx, dy]
         self.center = np.clip(pos, self.center_lim, -self.center_lim)
-
 
 
 class ScreenItem:
@@ -210,7 +199,7 @@ class ScreenItem:
 
 
 class InputBox(ScreenItem):
-    def __init__(self, visible=False, text='', color_inactive=None, color_active=None,center=False, w=140, h=32,
+    def __init__(self, visible=False, text='', color_inactive=None, color_active=None, center=False, w=140, h=32,
                  screen_pos=None, linewidth=0.01, show_frame=False, agent=None, end_time=0, start_time=0, font=None):
         super().__init__(color=color_active)
         self.screen_pos = screen_pos
@@ -224,7 +213,7 @@ class InputBox(ScreenItem):
         self.color_inactive = color_inactive
         self.visible = visible
         self.active = False
-        if font is None :
+        if font is None:
             font = pygame.font.Font(None, 32)
         self.font = font
         self.text = text
@@ -235,9 +224,9 @@ class InputBox(ScreenItem):
         self.center = center
         self.w = w
         self.h = h
-        if self.screen_pos is not None :
+        if self.screen_pos is not None:
             self.set_shape(self.screen_pos)
-        else :
+        else:
             self.shape = None
 
     def draw(self, viewer):
@@ -250,8 +239,8 @@ class InputBox(ScreenItem):
                 lines = self.text.splitlines()
                 txt_surfaces = [self.font.render(l, True, self.color) for l in lines]
                 # Blit the text.
-                for i,s in enumerate(txt_surfaces) :
-                    viewer.draw_text_box(s, (self.shape.x + 5, self.shape.y + 5+i*100))
+                for i, s in enumerate(txt_surfaces):
+                    viewer.draw_text_box(s, (self.shape.x + 5, self.shape.y + 5 + i * 100))
                 if self.show_frame:
                     # Blit the input_box rect.
                     viewer.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
@@ -289,9 +278,9 @@ class InputBox(ScreenItem):
 
     def set_shape(self, pos):
         if pos is not None and not any(np.isnan(pos)):
-            if self.center :
-                self.shape = pygame.Rect(pos[0]-self.w/2, pos[1]-self.h/2, self.w, self.h)
-            else :
+            if self.center:
+                self.shape = pygame.Rect(pos[0] - self.w / 2, pos[1] - self.h / 2, self.w, self.h)
+            else:
                 self.shape = pygame.Rect(pos[0], pos[1], self.w, self.h)
         else:
             self.shape = None
@@ -312,7 +301,7 @@ class InputBox(ScreenItem):
 
     def flash_text(self, text, t=2):
         self.text = text
-        self.end_time = pygame.time.get_ticks() + t*1000
+        self.end_time = pygame.time.get_ticks() + t * 1000
         self.start_time = pygame.time.get_ticks() + int(0.1 * 1000)
 
 
@@ -327,13 +316,6 @@ class SimulationClock(ScreenItem):
         self.second = 0
         self.minute = 0
         self.hour = 0
-        # self.counter = 0
-
-        # self.timer_on = False
-        # self.next_on = None
-        # self.next_off = None
-        # self.timer_opened = False
-        # self.timer_closed = False
 
     def tick_clock(self):
         # self.counter += 1
@@ -393,34 +375,6 @@ class SimulationClock(ScreenItem):
         viewer.draw_text_box(self.second_font, self.second_font_r)
         viewer.draw_text_box(self.dmsecond_font, self.msecond_font_r)
 
-    # def set_timer(self, on_ticks, off_ticks):
-    #     self.Ndurs = len(on_ticks)
-    #     self.timer_on_ticks, self.timer_off_ticks = on_ticks, off_ticks
-    #     self.dur_idx = 0
-    #     self.next_on, self.next_off = self.timer_on_ticks[self.dur_idx], self.timer_off_ticks[self.dur_idx]
-    #     self.timer_on = False
-    #
-    # def check_timer(self):
-    #     self.timer_opened = False
-    #     self.timer_closed = False
-    #     if not self.timer_on and self.next_on is not None:
-    #         if self.counter >= self.next_on:
-    #             self.timer_on = True
-    #             self.timer_opened = True
-    #             self.dur_idx += 1
-    #             if self.dur_idx < self.Ndurs:
-    #                 self.next_on = self.timer_on_ticks[self.dur_idx]
-    #             else:
-    #                 self.next_on = None
-    #     elif self.timer_on and self.next_off is not None:
-    #         if self.counter >= self.next_off:
-    #             self.timer_on = False
-    #             self.timer_closed = True
-    #             if self.dur_idx < self.Ndurs:
-    #                 self.next_off = self.timer_off_ticks[self.dur_idx]
-    #             else:
-    #                 self.next_on = None
-
 
 class SimulationScale(ScreenItem):
 
@@ -428,13 +382,13 @@ class SimulationScale(ScreenItem):
         super().__init__(color=color)
 
         # Get 1/10 of max real dimension, transform it to mm and find the closest reasonable scale
-        real_width_in_mm = real_width*1000
-        # real_width_in_mm = real_width if space_in_mm else real_width*1000
-        self.scale_in_mm = self.closest(lst=[1, 2.5, 5, 7.5, 10, 25, 50, 75, 100, 250, 500, 750, 1000],
-                                        k=real_width_in_mm / 10)
+        w_in_mm = real_width * 1000
+        self.scale_in_mm = self.closest(
+            lst=[0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, 25, 50, 75, 100, 250, 500, 750, 1000], k=w_in_mm / 10)
         # I don't exactly understand why this works...
-        self.scale_to_draw = self.scale_in_mm / real_width_in_mm
+        self.scale_to_draw = self.scale_in_mm / w_in_mm
         self.lines = None
+        self.real_width = real_width
 
     def compute_lines(self, x, y, scale):
         return [[(x - scale / 2, y), (x + scale / 2, y)],
@@ -491,9 +445,6 @@ class SimulationState(ScreenItem):
         self.text = text
 
 
-
-
-
 def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, traj_color=None):
     trajs = [fly.trajectory for fly in agents]
     if traj_color is not None:
@@ -532,9 +483,10 @@ def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, traj_colo
                     c = [s if not np.isnan(s).any() else (255, 0, 0) for s in c]
                     screen.draw_polyline(t, color=c, closed=False, width=0.01 * space_dims[0], dynamic_color=True)
 
+
 def blit_text(surface, text, pos, font=None, color=pygame.Color('white')):
-    if font is None :
-        font=pygame.font.SysFont('Arial', 20)
+    if font is None:
+        font = pygame.font.SysFont('Arial', 20)
     words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
     space = font.size(' ')[0]  # The width of a space.
     max_width, max_height = surface.get_size()

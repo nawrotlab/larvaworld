@@ -142,6 +142,7 @@ grouped_exp_dict = {
     },
     'anemotaxis': {
         'anemotaxis': anemo_exp('windy_arena', dur=0.5, l=lg(m='nengo_explorer', N=4)),
+        'anemotaxis_bordered': anemo_exp('windy_arena_bordered', dur=0.5, l=lg(m='nengo_explorer', N=4)),
         'anemotaxis_x2': anemo_exp('windy_arena', dur=2, l=lgs(models=['nengo_explorer', 'explorer'],
                                                                  ids=['nengo', 'control'], N=10))
     },

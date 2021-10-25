@@ -125,3 +125,16 @@ def unwrap_deg(ts):
     b = np.copy(ts)
     b[~np.isnan(b)] = np.unwrap(b[~np.isnan(b)] * np.pi / 180) * 180 / np.pi
     return b
+
+def line_through_point(pos, angle, length, pos_as_start=False) :
+    import math
+    from shapely.geometry import LineString, Point
+
+    if not pos_as_start :
+        length=-length
+
+    start = Point(pos)
+    end = Point(start.x + length * math.cos(angle),
+                start.y + length * math.sin(angle))
+    return LineString([start, end])
+

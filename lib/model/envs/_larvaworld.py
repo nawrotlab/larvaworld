@@ -308,8 +308,6 @@ class LarvaWorld:
             self.sim_scale.draw_scale(screen)
         if self.visible_state:
             self.sim_state.draw_state(screen)
-        # self.input_box.draw(screen)
-
         self.draw_screen_texts(screen)
 
     def draw_arena(self, screen, background_motion):

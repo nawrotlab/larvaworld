@@ -4,7 +4,7 @@ import pandas as pd
 from siunits import BaseUnit, Composite, DerivedUnit
 
 from lib.aux.collecting import output_keys
-from lib.conf.stored.conf import kConfDict
+
 from lib.gui.aux.functions import get_pygame_key
 
 
@@ -225,6 +225,7 @@ null_bout_dist = {
 
 
 def init_pars():
+    from lib.conf.stored.conf import kConfDict
     bF, bT = {'t': bool, 'v': False}, {'t': bool, 'v': True}
 
     bout_dist_dtypes = {
@@ -630,8 +631,14 @@ def init_pars():
         'odor': d['odor']
     }
 
+    d['border'] = {
+        'default_color': {'t': str, 'v': 'black'},
+        'width': {'v': 0.01, 'min': 0.0},
+        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0},
+    }
+
     d['border_list'] = {
-        'default_color': {'t': str, 'v': 'green'},
+        'default_color': {'t': str, 'v': 'black'},
         'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0},
     }
     d['Source_DISTRO'] = d['spatial_distro']
@@ -703,6 +710,20 @@ def arena(x, y=None):
     else:
         return null_dict('arena', arena_shape='rectangular', arena_dims=(x, y))
 
+def border(ps, c='black', w=0.01,id=None):
+    b=null_dict('border', points=ps, default_color=c, width=w)
+    if id is not None :
+        return {id : b}
+    else :
+        return b
+
+def hborder(y,xs, **kwargs):
+    ps=[(x,y) for x in xs]
+    return border(ps, **kwargs)
+
+def vborder(x,ys, **kwargs):
+    ps=[(x,y) for y in ys]
+    return border(ps, **kwargs)
 
 def prestarved(h=0.0, age=0.0, q=1.0, substrate_type='standard'):
     sub0 = null_dict('substrate', type=substrate_type, quality=q)
