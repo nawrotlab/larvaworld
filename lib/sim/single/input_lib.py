@@ -86,6 +86,12 @@ def eval_keypress(k, screen, model):
             pass
     elif k == 'snapshot':
         model.toggle('snapshot #')
+    elif k == 'windscape' :
+        try :
+            model.windscape.visible = not model.windscape.visible
+            model.toggle('windscape', 'ON' if model.windscape.visible else 'OFF')
+        except :
+            pass
     elif k == 'delete item':
         if lib.gui.aux.windows.delete_objects_window(model.selected_agents):
             for f in model.selected_agents:

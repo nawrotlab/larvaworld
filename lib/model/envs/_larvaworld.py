@@ -100,8 +100,9 @@ class LarvaWorld:
         self.odorscape_counter = 0
         self.Nodors, self.odor_layers = 0, {}
         self.food_grid = None
+        self.windscape = None
 
-        # Add mesa schecule to use datacollector class
+        # Add mesa schedule to use datacollector class
         self.create_schedules()
         self.create_arena(**self.env_pars['arena'])
         self.space = self.create_space()
@@ -318,12 +319,16 @@ class LarvaWorld:
                 layer.draw(screen)
                 arena_drawn = True
                 break
-        if not arena_drawn and self.food_grid:
+        if not arena_drawn and self.food_grid is not None:
             self.food_grid.draw(screen)
             arena_drawn = True
+
         if not arena_drawn:
             screen.draw_polygon(self.tank_shape, color=self.tank_color)
             self.draw_background(screen, background_motion)
+
+        if self.windscape is not None and self.windscape.visible:
+            self.windscape.draw(screen)
 
         for i, b in enumerate(self.borders):
             b.draw(screen)
@@ -621,6 +626,7 @@ class LarvaWorld:
             'zoom',
             'snapshot #',
             'odorscape #',
+            'windscape',
             'is_paused',
         ]
         return {name: ren.InputBox(text=name, color_active=color, color_inactive=color) for name in names}

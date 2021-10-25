@@ -1,11 +1,14 @@
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
+from shapely.geometry import LineString, Point
+
 from lib.aux.colsNstr import colorname2tuple
+from lib.aux.dictsNlists import flatten_list
 from lib.model.DEB.deb import Substrate
 
 
 class ValueGrid:
-    def __init__(self, unique_id, space_range, grid_dims=[50, 50], distribution='uniform',visible=False,
+    def __init__(self, unique_id, space_range, grid_dims=[50, 50], distribution='uniform', visible=False,
                  initial_value=0, default_color=(255, 255, 255), max_value=np.inf, min_value=-np.inf):
         self.visible = visible
         self.unique_id = unique_id
@@ -121,7 +124,7 @@ class FoodGrid(ValueGrid):
 
     def get_color(self, v):
         v0 = self.initial_value
-        c = int((v0 - v) / v0 * 255) if v0!=0 else 255
+        c = int((v0 - v) / v0 * 255) if v0 != 0 else 255
         col = np.clip(np.array(self.default_color) + c, a_min=0, a_max=255)
         return col
 
@@ -206,3 +209,44 @@ class DiffusionValueLayer(ValueLayer):
             intensity = s.odor_intensity
             self.add_value(source_pos, intensity)
         self.grid = gaussian_filter(self.grid, sigma=self.sigma) * self.evap_const
+
+
+class AnemoScape:
+    def __init__(self, model, wind_direction, wind_speed, default_color='red', visible=False):
+        self.model = model
+        self.wind_direction = wind_direction
+        self.wind_speed = wind_speed
+        self.max_dim=np.max(self.model.arena_dims)
+        self.default_color=default_color
+        self.visible=visible
+
+    def get_value(self, agent):
+        if self.obstructed(agent.pos):
+            v = 0
+        else:
+            from lib.aux.ang_aux import angle_dif
+            o = np.rad2deg(agent.head.get_orientation())
+            v = np.abs(angle_dif(o, self.wind_direction)) / 180 * self.wind_speed
+        return v
+
+    def obstructed(self, pos):
+        from lib.aux.ang_aux import line_through_point
+        ll = line_through_point(pos, self.wind_direction, self.max_dim)
+        return any([l.intersects(ll) for l in self.model.border_lines])
+
+    def draw(self, viewer):
+        from lib.aux.ang_aux import rotate_around_center_multi
+        bs=self.model.border_lines
+        N=40
+        ds=self.max_dim/N*np.sqrt(2)
+        p0s=rotate_around_center_multi([(-self.max_dim,(i-N/2)*ds) for i in range(N)], -self.wind_direction)
+        p1s=rotate_around_center_multi([(self.max_dim,(i-N/2)*ds) for i in range(N)], -self.wind_direction)
+
+        for i in range(N) :
+            l=LineString([p0s[i], p1s[i]])
+            ps=[l.intersection(b) for b in bs if l.intersects(b)]
+            if len(ps)==0 :
+                p1=p1s[i]
+            else :
+                p1=ps[np.argmin([Point(p0s[i]).distance(p2) for p2 in ps])].coords[0]
+            viewer.draw_arrow(p0s[i], p1, self.default_color, width=0.001)

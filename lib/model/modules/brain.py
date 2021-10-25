@@ -45,17 +45,17 @@ class Brain():
 
     def sense_wind(self):
         from lib.aux.ang_aux import angle_dif
-        a = self.agent
-        w = a.model.windscape
+        w = self.agent.model.windscape
         if w is None:
             v = 0.0
         else:
-            wo, wv = w['wind_direction'], w['wind_speed']
-            if a.wind_obstructed(wo):
-                v = 0
-            else:
-                o = np.rad2deg(a.head.get_orientation())
-                v = np.abs(angle_dif(o, wo)) / 180 * wv
+            v=w.get_value(self.agent)
+            # wo, wv = w['wind_direction'], w['wind_speed']
+            # if a.wind_obstructed(wo):
+            #     v = 0
+            # else:
+            #     o = np.rad2deg(a.head.get_orientation())
+            #     v = np.abs(angle_dif(o, wo)) / 180 * wv
         return {'windsensor': v}
 
 

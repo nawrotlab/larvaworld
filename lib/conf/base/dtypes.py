@@ -751,7 +751,7 @@ def init_shortcuts():
 
     inspect = {
         'focus_mode': 'f',
-        'odor gains': 'w',
+        'odor gains': 'z',
         'dynamic graph': 'q',
     }
 
@@ -784,7 +784,7 @@ def init_shortcuts():
     }
 
     odorscape = {
-
+        'windscape' : 'w',
         'plot odorscapes': 'o',
         **{f'odorscape {i}': i for i in range(10)},
         # 'move_right': 'RIGHT',
@@ -797,7 +797,7 @@ def init_shortcuts():
         'screen': screen,
         'simulation': sim,
         'inspect': inspect,
-        'odorscape': odorscape,
+        'landscape': odorscape,
     }
 
     return d

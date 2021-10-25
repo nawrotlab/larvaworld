@@ -373,9 +373,9 @@ class BodySim(BodyManager):
             ang_vel = np.abs(ang_vel) * np.sign(ang_vel0)
         return ang_vel, o1, hr1, hp1
 
-    def wind_obstructed(self, wind_direction):
-        from lib.aux.ang_aux import line_through_point
-        ll=line_through_point(self.pos, wind_direction, np.max(self.model.arena_dims))
-        return any([l.intersects(ll) for l in self.model.border_lines])
+    # def wind_obstructed(self, wind_direction):
+    #     from lib.aux.ang_aux import line_through_point
+    #     ll=line_through_point(self.pos, wind_direction, np.max(self.model.arena_dims))
+    #     return any([l.intersects(ll) for l in self.model.border_lines])
 
 

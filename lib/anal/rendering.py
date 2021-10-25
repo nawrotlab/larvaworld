@@ -131,18 +131,21 @@ class Viewer(object):
     def draw_text_box(self, text_font, text_position):
         self._window.blit(text_font, text_position)
 
-    def draw_arrow(self, start, end, color=(0, 0, 0), width=.01):
-        size = 4
+    def draw_arrow(self, start, end, color=(0, 0, 0), width=.01, s=10, loc=0.5):
         start = self._transform(start)
         end = self._transform(end)
-        pygame.draw.line(self._window, color, start, end, 2)
-        rotation = math.degrees(math.atan2(start[1] - end[1], end[0] - start[0])) + 90
+        p=(start[0]+(end[0]-start[0])*loc, start[1]+(end[1]-start[1])*loc)
+        w = int(self._scale[0, 0] * width)
+        pygame.draw.line(self._window, color, start, end, w)
+        a = math.degrees(math.atan2(start[1] - end[1], end[0] - start[0])) + 90
+        sin0, cos0 = math.sin(math.radians(a)) * s, math.cos(math.radians(a)) * s
+        sin1, cos1 = math.sin(math.radians(a - 120)) * s, math.cos(math.radians(a - 120)) * s
+        sin2, cos2 = math.sin(math.radians(a + 120)) * s, math.cos(math.radians(a + 120)) * s
         pygame.draw.polygon(self._window, color, (
-            (end[0] + size * math.sin(math.radians(rotation)), end[1] + size * math.cos(math.radians(rotation))), (
-                end[0] + size * math.sin(math.radians(rotation - 120)),
-                end[1] + size * math.cos(math.radians(rotation - 120))),
-            (end[0] + size * math.sin(math.radians(rotation + 120)),
-             end[1] + size * math.cos(math.radians(rotation + 120)))))
+            (p[0] + sin0, p[1] + cos0),
+            (p[0] + sin1, p[1] + cos1),
+            (p[0] + sin2, p[1] + cos2)
+        ))
 
     # def get_array(self):
     #     return pygame.surfarray.array3d(self._window)

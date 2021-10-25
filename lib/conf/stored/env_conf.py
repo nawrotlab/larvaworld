@@ -114,7 +114,7 @@ env_dict = {
                                        m='periphery')), 'G'),
 
     'windy_arena': env(arena(0.3, 0.3), w=[0.0, 1.0]),
-    'windy_arena_bordered': env(arena(0.3, 0.3), w=[0.0, 1.0],bl={'Border' : vborder(-0.03, [-0.01, -0.06], w=0.015)}),
+    'windy_arena_bordered': env(arena(0.3, 0.3), w=[45.0, 1.0],bl={'Border' : vborder(-0.03, [-0.01, -0.06], w=0.005)}),
 
     'CS_UCS_on_food': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(1)), 'G'),
     'CS_UCS_on_food_x2': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(2)), 'G'),
