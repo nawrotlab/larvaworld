@@ -646,17 +646,16 @@ def init_pars():
     d.update(init_vis())
 
     d['replay'] = {
-        # 'arena_pars': d['arena'],
         'env_params': {'t': str, 'vs': kConfDict('Env'), 'aux_vs': ['']},
-        'track_point': {'t': int, 'v': -1, 'min': -1, 'max': 12},
-        'dynamic_color': {'t': str, 'vs': [None, 'lin_color', 'ang_color']},
-        'agent_ids': {'t': List[str]},
-        'time_range': {'t': Tuple[float], 'max': 1000.0, 'dv': 1.0},
         'transposition': {'t': str, 'vs': [None, 'origin', 'arena', 'center']},
+        'agent_ids': {'t': List[str]},
+        'dynamic_color': {'t': str, 'vs': [None, 'lin_color', 'ang_color']},
+        'time_range': {'t': Tuple[float], 'max': 1000.0, 'dv': 1.0},
+        'track_point': {'t': int, 'v': -1, 'min': -1, 'max': 12},
+        'draw_Nsegs': {'t': int, 'min': 1, 'max': 12},
         'fix_point': {'t': int, 'min': 1, 'max': 12},
         'fix_segment': {'t': int, 'vs': [-1, 1]},
-        'use_background': bF,
-        'draw_Nsegs': {'t': int, 'min': 1, 'max': 12}
+        'use_background': bF
     }
 
     return d
