@@ -186,42 +186,42 @@ def detect_dataset(datagroup_id=None, folder_path=None, raw=True, **kwargs):
         return dic
     if raw:
         conf = loadConf(datagroup_id, 'Group')['tracker']['filesystem']
-        if 'detect' in conf.keys():
-            d = conf['detect']
-            dF, df = d['folder'], d['file']
-            dFp, dFs = dF['pref'], dF['suf']
-            dfp, dfs, df_ = df['pref'], df['suf'], df['sep']
+        # if 'detect' in conf.keys():
+        # d = conf['detect']
+        dF, df = conf['folder'], conf['file']
+        dFp, dFs = dF['pref'], dF['suf']
+        dfp, dfs, df_ = df['pref'], df['suf'], df['sep']
 
-            fn = folder_path.split('/')[-1]
-            if dFp is not None:
-                if fn.startswith(dFp):
-                    dic[fn] = folder_path
-                else:
-                    ids, dirs = detect_dataset_in_subdirs(datagroup_id, folder_path, fn, **kwargs)
-                    for id, dr in zip(ids, dirs):
-                        dic[id] = dr
-            elif dFs is not None:
-                if fn.startswith(dFs):
-                    dic[fn] = folder_path
-                else:
-                    ids, dirs = detect_dataset_in_subdirs(datagroup_id, folder_path, fn, **kwargs)
-                    for id, dr in zip(ids, dirs):
-                        dic[id] = dr
-            elif dfp is not None:
-                fs = os.listdir(folder_path)
-                ids, dirs = [f.split(df_)[1:][0] for f in fs if f.startswith(dfp)], [folder_path]
+        fn = folder_path.split('/')[-1]
+        if dFp is not None:
+            if fn.startswith(dFp):
+                dic[fn] = folder_path
+            else:
+                ids, dirs = detect_dataset_in_subdirs(datagroup_id, folder_path, fn, **kwargs)
                 for id, dr in zip(ids, dirs):
                     dic[id] = dr
-            elif dfs is not None:
-                fs = os.listdir(folder_path)
-                ids = [f.split(df_)[:-1][0] for f in fs if f.endswith(dfs)]
-                for id in ids:
-                    dic[id] = folder_path
-            elif df_ is not None:
-                fs = os.listdir(folder_path)
-                ids = lib.aux.dictsNlists.unique_list([f.split(df_)[0] for f in fs if df_ in f])
-                for id in ids:
-                    dic[id] = folder_path
+        elif dFs is not None:
+            if fn.startswith(dFs):
+                dic[fn] = folder_path
+            else:
+                ids, dirs = detect_dataset_in_subdirs(datagroup_id, folder_path, fn, **kwargs)
+                for id, dr in zip(ids, dirs):
+                    dic[id] = dr
+        elif dfp is not None:
+            fs = os.listdir(folder_path)
+            ids, dirs = [f.split(df_)[1:][0] for f in fs if f.startswith(dfp)], [folder_path]
+            for id, dr in zip(ids, dirs):
+                dic[id] = dr
+        elif dfs is not None:
+            fs = os.listdir(folder_path)
+            ids = [f.split(df_)[:-1][0] for f in fs if f.endswith(dfs)]
+            for id in ids:
+                dic[id] = folder_path
+        elif df_ is not None:
+            fs = os.listdir(folder_path)
+            ids = lib.aux.dictsNlists.unique_list([f.split(df_)[0] for f in fs if df_ in f])
+            for id in ids:
+                dic[id] = folder_path
         return dic
     else:
         if os.path.exists(f'{folder_path}/data'):

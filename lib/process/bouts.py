@@ -11,7 +11,7 @@ from lib.process.store import store_aux_dataset
 
 
 def annotate(s, e, config=None, bouts={'stride': True, 'pause': True, 'turn': True},
-             recompute=False, track_point=None, track_pars=None, chunk_pars=None,
+             recompute=False, track_point=None, track_pars=None, chunk_pars=None,scaled_vel_threshold=0.2,
              vel_par=None, ang_vel_par=None, bend_vel_par=None, min_ang=30.0, min_ang_vel=100.0,
              non_chunks=False, show_output=True,fits=True,on_food=False, **kwargs):
     from lib.conf.base.par import ParDict
@@ -40,6 +40,7 @@ def annotate(s, e, config=None, bouts={'stride': True, 'pause': True, 'turn': Tr
         'Npoints': config['Npoints'],
         'track_point': track_point,
         'track_pars': track_pars,
+        'scaled_vel_threshold': scaled_vel_threshold,
         'config': config,
 
         'recompute': recompute,
@@ -97,19 +98,17 @@ def detect_turns(s, e, config, dt, track_pars, min_ang_vel, min_ang=30.0,
 
 
 def detect_pauses(s, e, config, dt, track_pars, recompute=False, stride_non_overlap=True, vel_par=None,
-                  min_dur=0.4, **kwargs):
+                  min_dur=0.4,scaled_vel_threshold=0.2, **kwargs):
     c = 'pause'
     if nam.num(c) in e.columns.values and not recompute:
         print('Pauses are already detected. If you want to recompute it, set recompute to True')
         return
     aux_dir = config['aux_dir']
-    sv_thr = config['scaled_vel_threshold'] if config is not None else 0.3
-    par_range = [-np.inf, sv_thr]
     if vel_par is None:
         vel_par = nam.scal(nam.vel(''))
     non_overlap_chunk = 'stride' if stride_non_overlap else None
 
-    detect_chunks(s, e, dt, chunk_names=[c], par=vel_par, par_ranges=[par_range],
+    detect_chunks(s, e, dt, chunk_names=[c], par=vel_par, par_ranges=[[-np.inf, scaled_vel_threshold]],
                   non_overlap_chunk=non_overlap_chunk, min_dur=min_dur)
 
     track_pars_in_chunks(s, e, aux_dir, chunks=[c], pars=track_pars)
@@ -119,19 +118,18 @@ def detect_pauses(s, e, config, dt, track_pars, recompute=False, stride_non_over
 
 
 def detect_strides(s, e, config, dt, recompute=False, vel_par=None, track_point=None, track_pars=None,
-                   chunk_pars=[], non_chunks=False, **kwargs):
+                   chunk_pars=[], non_chunks=False,scaled_vel_threshold=0.2, **kwargs):
     c = 'stride'
     if nam.num(c) in e.columns.values and not recompute:
         print('Strides are already detected. If you want to recompute it, set recompute to True')
         return
     aux_dir=config['aux_dir']
-    sv_thr = config['scaled_vel_threshold'] if config is not None else 0.3
     if vel_par is None:
         vel_par = nam.scal(nam.vel(''))
     mid_flag = nam.max(vel_par)
     edge_flag = nam.min(vel_par)
 
-    comp_extrema(s, dt, parameters=[vel_par], interval_in_sec=0.3, abs_threshold=[np.inf, sv_thr])
+    comp_extrema(s, dt, parameters=[vel_par], interval_in_sec=0.3, abs_threshold=[np.inf, scaled_vel_threshold])
     compute_freq(s, e, dt, parameters=[vel_par], freq_range=[0.7, 1.8])
     detect_contacting_chunks(s, e, aux_dir, dt, mid_flag=mid_flag, edge_flag=edge_flag,
                              vel_par=vel_par, control_pars=track_pars,

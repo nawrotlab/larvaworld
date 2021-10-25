@@ -209,7 +209,10 @@ class LarvaDataset:
             try:
                 self.config['Nticks'] = self.step_data.index.unique('Step').size
             except:
-                self.config['Nticks'] = self.endpoint_data['Nticks'].max()
+                try :
+                    self.config['Nticks'] = self.endpoint_data['num_ticks'].max()
+                except :
+                    pass
         if 'duration' not in self.config.keys():
             try:
                 self.config['duration'] = int(self.endpoint_data['cum_dur'].max())

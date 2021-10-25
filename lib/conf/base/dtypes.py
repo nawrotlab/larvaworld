@@ -493,7 +493,13 @@ def init_pars():
         'energetics': d['energetics'],
         'physics': d['physics'],
     }
+    d['parameterization'] = {'bend': {'t': str, 'v': 'from_angles', 'vs': ['from_angles', 'from_vectors']},
+                             'front_vector': {'t': Tuple[int], 'v': (1, 2), 'min': -12, 'max': 12},
+                             'rear_vector': {'t': Tuple[int], 'v': (-2, -1), 'min': -12, 'max': 12},
+                             'front_body_ratio': {'v': 0.5, 'max': 1.0},
+                             'point_idx': {'t': int, 'min': -1, 'max': 12},
 
+                             'use_component_vel': bF}
     d['preprocessing'] = {
         'rescale_by': {'max': 10.0},
         'drop_collisions': bF,
@@ -508,14 +514,15 @@ def init_pars():
         'tor_durs': {'t': List[int], 'max': 100, 'dv': 1}}
     d['annotation'] = {'bouts': {b: bF for b in bout_keys},
                        'track_point': {'t': str},
-                       'track_pars': {'t': List[str]},
-                       'chunk_pars': {'t': List[str]},
-                       'vel_par': {'t': str},
-                       'ang_vel_par': {'t': str},
-                       'bend_vel_par': {'t': str},
+                       'scaled_vel_threshold': {'v': 0.2, 'max': 1.0},
+                       # 'track_pars': {'t': List[str]},
+                       # 'chunk_pars': {'t': List[str]},
+                       # 'vel_par': {'t': str},
+                       # 'ang_vel_par': {'t': str},
+                       # 'bend_vel_par': {'t': str},
                        'min_ang': {'v': 30.0, 'max': 180.0, 'dv': 1.0},
                        'min_ang_vel': {'v': 0.0, 'max': 1000.0, 'dv': 1.0},
-                       'non_chunks': bF,
+                       # 'non_chunks': bF,
                        'on_food': bF,
                        'fits': bT}
     d['to_drop'] = {kk: bF for kk in to_drop_keys}
@@ -563,23 +570,16 @@ def init_pars():
                        'Npoints': {'t': int, 'v': 1, 'max': 20},
                        'Ncontour': {'t': int, 'v': 0, 'max': 100}
                        },
+        'arena': d['arena'],
         'filesystem': {
             'read_sequence': {'t': List[str]},
             'read_metadata': bF,
-            'detect': {
-                'folder': {'pref': {'t': str}, 'suf': {'t': str}},
-                'file': {'pref': {'t': str}, 'suf': {'t': str}, 'sep': {'t': str}}
-            }
+            'folder': {'pref': {'t': str}, 'suf': {'t': str}},
+            'file': {'pref': {'t': str}, 'suf': {'t': str}, 'sep': {'t': str}}
         },
-        'arena': d['arena']
+
     }
-    d['parameterization'] = {'bend': {'t': str, 'v': 'from_angles', 'vs': ['from_angles', 'from_vectors']},
-                             'front_vector': {'t': Tuple[int], 'v': (1, 2), 'min': -12, 'max': 12},
-                             'rear_vector': {'t': Tuple[int], 'v': (-2, -1), 'min': -12, 'max': 12},
-                             'front_body_ratio': {'v': 0.5, 'max': 1.0},
-                             'point_idx': {'t': int, 'min': -1, 'max': 12},
-                             'use_component_vel': bF,
-                             'scaled_vel_threshold': {'v': 0.2, 'max': 1.0}}
+
 
     d['spatial_distro'] = {
         'mode': {'t': str, 'v': 'normal', 'vs': ['normal', 'periphery', 'uniform']},
@@ -709,20 +709,24 @@ def arena(x, y=None):
     else:
         return null_dict('arena', arena_shape='rectangular', arena_dims=(x, y))
 
-def border(ps, c='black', w=0.01,id=None):
-    b=null_dict('Border', points=ps, default_color=c, width=w)
-    if id is not None :
-        return {id : b}
-    else :
+
+def border(ps, c='black', w=0.01, id=None):
+    b = null_dict('Border', points=ps, default_color=c, width=w)
+    if id is not None:
+        return {id: b}
+    else:
         return b
 
-def hborder(y,xs, **kwargs):
-    ps=[(x,y) for x in xs]
+
+def hborder(y, xs, **kwargs):
+    ps = [(x, y) for x in xs]
     return border(ps, **kwargs)
 
-def vborder(x,ys, **kwargs):
-    ps=[(x,y) for y in ys]
+
+def vborder(x, ys, **kwargs):
+    ps = [(x, y) for y in ys]
     return border(ps, **kwargs)
+
 
 def prestarved(h=0.0, age=0.0, q=1.0, substrate_type='standard'):
     sub0 = null_dict('substrate', type=substrate_type, quality=q)
@@ -783,7 +787,7 @@ def init_shortcuts():
     }
 
     odorscape = {
-        'windscape' : 'w',
+        'windscape': 'w',
         'plot odorscapes': 'o',
         **{f'odorscape {i}': i for i in range(10)},
         # 'move_right': 'RIGHT',

@@ -1,5 +1,5 @@
-from lib.gui.aux.elements import ButtonGraphList, CollapsibleDict, DataList, SelectionList
-from lib.gui.aux.functions import gui_cols
+from lib.gui.aux.elements import ButtonGraphList, CollapsibleDict, DataList, SelectionList, PadDict
+from lib.gui.aux.functions import gui_cols, t_kws
 from lib.gui.tabs.tab import GuiTab
 from lib.sim.single.single_run import SingleRun
 from lib.conf.base import paths
@@ -24,15 +24,26 @@ class ImportTab(GuiTab):
     def build(self):
         kR, kP = self.raw_key, self.proc_key
         d = {kR: {}, kP: {}}
-
+        kws = {'background_color': 'purple'}
         sl1 = SelectionList(tab=self, disp='Data format/lab', buttons=['load'])
         dl1 = DataList(kR, tab=self, dict=d[kR], buttons=['import', 'select_all', 'remove', 'change_ID', 'browse'],
-                       raw=True, size=(25,5))
+                       raw=True, size=(30,5))
         dl2 = DataList(kP, tab=self, dict=d[kP],buttons=['replay', 'imitate', 'enrich', 'select_all', 'remove', 'change_ID','save_ref', 'browse'],
                        aux_cols=['N', 'duration', 'quality'], size=(40,5))
-        c1,c2,c3=[CollapsibleDict(n) for n in self.fields]
+        # c1=PadDict('tracker', Ncols=1, text_kws=t_kws(10), **kws)
+        # c2=PadDict('parameterization', Ncols=1, text_kws=t_kws(16), **kws)
+        # c3=PadDict('enrichment', col_idx=[[4,5,0],[1],[2],[3]], text_kws=t_kws(8), **kws)
+        # c3=PadDict('enrichment', col_idx=[[4,5,0,3],[1],[2]], text_kws=t_kws(8), **kws,
+        #            subconfs={'preprocessing' : {'text_kws' : t_kws(14)},
+        #                      'to_drop' : {'Ncols' : 2},
+                             # 'types' : {'Ncols' : 2},
+                             # })
+        # c1,c2,c3=[PadDict(n, Ncols=2, text_kws=t_kws(10)) for n in self.fields]
+        c1,c2,c3=[CollapsibleDict(n, state=True) for n in self.fields]
         g1 = ButtonGraphList(self.name, tab=self, fig_dict={})
-        l = gui_cols(cols=[[sl1, c1], [dl1,c2], [dl2, c3]], x_fracs=[0.25, 0.25, 0.5])
+        l = gui_cols(cols=[[sl1, c1], [dl1,dl2, c2], [c3]], x_fracs=[0.22, 0.25, 0.55])
+        # l = gui_cols(cols=[[sl1, c1], [dl1,c2], [dl2, c3]], x_fracs=[0.25, 0.25, 0.5])
+        # l = gui_cols(cols=[[sl1, c1], [dl1,c2], [dl2, c3]], x_fracs=[0.25, 0.25, 0.5], as_pane=True)
 
         c = {}
         for s in [c1, c2, c3]:

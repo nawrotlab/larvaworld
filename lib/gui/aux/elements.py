@@ -230,9 +230,14 @@ class GuiElement:
         self.layout = layout
         self.layout_col_kwargs = layout_col_kwargs
 
-    def get_layout(self, as_col=True, **kwargs):
-        self.layout_col_kwargs.update(kwargs)
-        return [sg.Col(self.layout, **self.layout_col_kwargs)] if as_col else self.layout
+    def get_layout(self, as_col=True, as_pane=False, **kwargs):
+        if not as_col:
+            return self.layout
+        elif not as_pane:
+            self.layout_col_kwargs.update(kwargs)
+            return [sg.Col(self.layout, **self.layout_col_kwargs)]
+        else:
+            return [[sg.Pane([sg.Col(self.layout)], **kwargs)]]
 
 
 class ProgressBarLayout:
@@ -462,7 +467,8 @@ class Header(HeadedElement):
 
 
 class NamedList(Header):
-    def __init__(self, name, key, choices, default_value=None, drop_down=True, size=(default_list_width, None), readonly=True,
+    def __init__(self, name, key, choices, default_value=None, drop_down=True, size=(default_list_width, None),
+                 readonly=True,
                  enable_events=True, list_kws={}, aux_cols=None, select_mode=None, header_kws={}, **kwargs):
 
         self.aux_cols = aux_cols
@@ -582,8 +588,8 @@ class DataList(NamedList):
                 exp_conf['vis_kwargs'] = self.tab.gui.get_vis_kwargs(v)
                 self.tab.imitate(exp_conf)
         elif e == f'ADD_REF {n}':
-            dd=add_ref_window()
-            if dd is not None :
+            dd = add_ref_window()
+            if dd is not None:
                 self.add(w, {dd.id: dd})
         elif e == f'IMPORT {n}':
             dl1 = self.tab.datalists[self.tab.proc_key]
@@ -866,22 +872,24 @@ def v_layout(k0, args, value_kws0={}):
 
 class PadDict:
     def __init__(self, name, type_dict=None, disp_name=None, content=None, layout_pane_kwargs={'border_width': 10},
-                 background_color='green', Ncols=1, col_idx=None, after_header=None, **kwargs):
+                 background_color='green', Ncols=1, subconfs={}, col_idx=None, after_header=None, **kwargs):
         self.subdicts = {}
+        self.subconfs = subconfs
+        if col_idx is not None :
+            Ncols=len(col_idx)
         if content is None:
             if type_dict is None:
                 type_dict = par_dict(name)
-            content = self.build(name, type_dict=type_dict,**kwargs)
-        content=self.arrange_content(content, Ncols=Ncols, col_idx= col_idx)
+            content = self.build(name, type_dict=type_dict, background_color=background_color, **kwargs)
+        content = self.arrange_content(content, Ncols=Ncols, col_idx=col_idx)
         self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()} if type_dict is not None else None
         if disp_name is None:
             disp_name = name
         header = [
-            [sg.T(disp_name.upper(), justification='center', background_color=background_color, border_width=4, **t_kws(24*Ncols))]]
+            [sg.T(disp_name.upper(), justification='center', background_color=background_color, border_width=4,
+                  **t_kws(24 * Ncols))]]
         if after_header is not None:
             header[0] += after_header
-        # header_kws = {'text': disp_name.upper(), 'header_text_kws': header_text_kws, 'justification':'center',
-        #               'after_header': after_header}
         self.layout = header + content
         self.name = name
         self.layout_pane_kwargs = layout_pane_kwargs
@@ -910,16 +918,22 @@ class PadDict:
                 d[k] = retrieve_value(v[k0], t)
         return d
 
-    def build(self, name, type_dict=None, text_kws={}, value_kws={}):
+    def build(self, name, type_dict=None, text_kws={}, value_kws={}, **kwargs):
 
         l = []
         for k, args in type_dict.items():
-            if args['dtype']==dict :
+            if args['dtype'] == dict:
                 k0 = f'{name}_{k}'
-                self.subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'],
-                                               text_kws=text_kws, value_kws=value_kws)
+                subkws = {
+                    'text_kws': text_kws,
+                    'value_kws': value_kws,
+                    **kwargs
+                }
+                if k in self.subconfs.keys():
+                    subkws.update(self.subconfs[k])
+                self.subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'], **subkws)
                 ii = self.subdicts[k0].get_layout()[0]
-            else :
+            else:
                 ii = [sg.T(f'{get_disp_name(k)}:', **text_kws), v_layout(f'{name}_{k}', args, value_kws)]
             l.append(ii)
         # if col_idx is not None:
@@ -1004,6 +1018,7 @@ class CollapsibleDict(Collapsible):
                 ii = [sg.T(f'{get_disp_name(k)}:', **text_kws), temp]
             content.append(ii)
         return content, subdicts
+
 
 class Table(sg.Table):
     def __init__(self, values=[], background_color='lightblue', header_background_color='lightgrey',
