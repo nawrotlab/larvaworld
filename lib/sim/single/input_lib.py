@@ -2,7 +2,6 @@ import pygame
 import numpy as np
 import lib.gui.aux.elements as gui
 import lib.gui.aux.windows
-# import lib.stor.datagroup
 from lib.anal.rendering import SimulationScale
 from lib.conf.stored.conf import loadConfDict
 from lib.model.agents._larva_sim import LarvaSim
@@ -25,10 +24,7 @@ def evaluate_input(model, screen):
         if model.allow_clicks:
             if e.type == pygame.MOUSEBUTTONDOWN:
                 model.mousebuttondown_pos = screen.mouse_position
-                # model.mousebuttondown_time = time.time()
             elif e.type == pygame.MOUSEBUTTONUP:
-                # model.mousebuttonup_time = time.time()
-                # dt = model.mousebuttonup_time - model.mousebuttondown_time
                 p = screen.mouse_position
                 if e.button == 1:
                     if not eval_selection(model, p, ctrl=pygame.key.get_mods() & pygame.KMOD_CTRL):
@@ -105,11 +101,8 @@ def eval_keypress(k, screen, model):
     elif k == 'odor gains':
         if len(model.selected_agents) > 0:
             sel = model.selected_agents[0]
-            if isinstance(sel, LarvaSim):
-                if sel.brain.olfactor is not None:
-                    odor_gains = sel.brain.olfactor.gain
-                    odor_gains = lib.gui.aux.windows.set_kwargs(odor_gains, title='Odor gains')
-                    sel.brain.olfactor.gain = odor_gains
+            if isinstance(sel, LarvaSim) and sel.brain.olfactor is not None:
+                sel.brain.olfactor.gain = lib.gui.aux.windows.set_kwargs(sel.brain.olfactor.gain, title='Odor gains')
     else:
         model.toggle(k)
 
