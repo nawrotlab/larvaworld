@@ -3,7 +3,7 @@ import shutil
 from lib.anal.plotting import plot_pathlength, barplot, timeplot, plot_food_amount, lineplot, plot_debs, \
     boxplot_double_patch
 from lib.aux.dictsNlists import flatten_list
-from lib.conf.base.dtypes import enrichment_dict, null_dict, arena, base_enrich
+from lib.conf.base.dtypes import enr_dict, null_dict, arena, base_enrich
 from lib.conf.base.par import getPar
 from lib.conf.stored.env_conf import env, f_pars, double_patches
 from lib.conf.stored.exp_conf import RvsS_groups
@@ -50,7 +50,7 @@ class Essay:
 
 class RvsS_Essay(Essay):
     def __init__(self, all_figs=False, **kwargs):
-        super().__init__(type='RvsS', enrichment=enrichment_dict(types=['spatial']),
+        super().__init__(type='RvsS', enrichment=enr_dict(types=['spatial']),
                          collections=['pose', 'feeder', 'gut'], **kwargs)
         self.exp_dict = {**self.intake_exp(), **self.starvation_exp(),
                          **self.quality_exp(), **self.refeeding_exp(),**self.pathlength_exp()}
@@ -175,9 +175,9 @@ class RvsS_Essay(Essay):
 
 class Patch_Essay(Essay):
     def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], N=5, dur=5.0, **kwargs):
-        super().__init__(type='Patch', enrichment=enrichment_dict(types=['spatial', 'angular', 'source'],
-                                                                  bouts=['stride', 'pause', 'turn'],
-                                                                  fits=False, on_food=True),
+        super().__init__(type='Patch', enrichment=enr_dict(types=['spatial', 'angular', 'source'],
+                                                           bouts=['stride', 'pause', 'turn'],
+                                                           fits=False, on_food=True),
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)
         self.substrates = substrates
         self.N = N

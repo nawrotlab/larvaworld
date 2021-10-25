@@ -1,5 +1,5 @@
 from lib.aux import naming as nam
-from lib.conf.base.dtypes import null_dict, base_enrich, enrichment_dict, arena
+from lib.conf.base.dtypes import null_dict, base_enrich, enr_dict, arena
 
 
 def parconf(**kwargs):
@@ -83,7 +83,7 @@ importformats = [
             'arena': arena(0.24, 0.24)
         },
         'parameterization': parconf(bend=None, point_idx=0, scaled_vel_threshold=None),
-        'enrichment': enrichment_dict(pre_kws={'filter_f':0.1, 'rescale_by':0.001, 'transposition':'arena'})
+        'enrichment': enr_dict(pre_kws={'filter_f':0.1, 'rescale_by':0.001, 'transposition': 'arena'})
 
     }
 ]

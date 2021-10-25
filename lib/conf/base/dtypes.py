@@ -688,7 +688,7 @@ def null_dict(n, key='initial_value', **kwargs):
         return dic2
 
 
-def enrichment_dict(types=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, **kwargs):
+def enr_dict(types=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, **kwargs):
     pre = null_dict('preprocessing', **pre_kws)
     proc = null_dict('processing', types={k: True if k in types else False for k in proc_type_keys})
     annot = null_dict('annotation', bouts={k: True if k in bouts else False for k in bout_keys}, fits=fits,
@@ -699,9 +699,9 @@ def enrichment_dict(types=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_fo
 
 
 def base_enrich(**kwargs):
-    return enrichment_dict(types=['angular', 'spatial', 'dispersion', 'tortuosity'],
-                           bouts=['stride', 'pause', 'turn'],
-                           to_keep=['midline', 'contour'], **kwargs)
+    return enr_dict(types=['angular', 'spatial', 'dispersion', 'tortuosity'],
+                    bouts=['stride', 'pause', 'turn'],
+                    to_keep=['midline', 'contour'], **kwargs)
 
 
 def arena(x, y=None):

@@ -1,13 +1,13 @@
-from lib.conf.base.dtypes import null_dict, enrichment_dict, base_enrich
+from lib.conf.base.dtypes import null_dict, enr_dict, base_enrich
 
 
 def batch(exp, en=None, ss=None, o=None, o_kws={},bm={}, as_entry=True, **kwargs):
     if en is None:
         enrichment = null_dict('enrichment')
     elif en == 'PI':
-        enrichment = enrichment_dict(types=['PI'])
+        enrichment = enr_dict(types=['PI'])
     elif en == 'source':
-        enrichment = enrichment_dict(types=['angular', 'spatial', 'source'])
+        enrichment = enr_dict(types=['angular', 'spatial', 'source'])
     else:
         enrichment=en
 
@@ -72,11 +72,11 @@ batch_dict = {
             o='cum_food_detected', o_kws={'threshold': 1000.0, 'max_Nsims': 80, 'minimize' : False, 'Nbest' : 8,
                                           'operations': {'mean': True, 'abs': False}}),
 **batch('anemotaxis',
-            # ss={f'windsensor_params.weights.{m1}_{m2}': [(-20.0, 20.0), 2] for m1,m2 in zip(['bend','bend', 'hunch','hunch'], ['lin','ang', 'lin','ang'])},
-            ss={f'windsensor_params.weights.{m1}_{m2}': [(-20.0, 20.0), 6] for m1,m2 in zip(['bend', 'hunch'], ['ang', 'lin'])},
-            o='anemotaxis', o_kws={'threshold': 1000.0, 'max_Nsims': 100, 'minimize' : False, 'Nbest' : 8,
-                                          'operations': {'mean': True, 'abs': False}}, en=enrichment_dict(types=['wind'])),
-                                          # 'operations': {'mean': True, 'abs': False}}, en=enrichment_dict(types=['wind', 'spatial', 'angular'])),
+        # ss={f'windsensor_params.weights.{m1}_{m2}': [(-20.0, 20.0), 2] for m1,m2 in zip(['bend','bend', 'hunch','hunch'], ['lin','ang', 'lin','ang'])},
+        ss={f'windsensor_params.weights.{m1}_{m2}': [(-20.0, 20.0), 6] for m1,m2 in zip(['bend', 'hunch'], ['ang', 'lin'])},
+        o='anemotaxis', o_kws={'threshold': 1000.0, 'max_Nsims': 100, 'minimize' : False, 'Nbest' : 8,
+                                          'operations': {'mean': True, 'abs': False}}, en=enr_dict(types=['wind'])),
+                                          # 'operations': {'mean': True, 'abs': False}}, en=enr_dict(types=['wind', 'spatial', 'angular'])),
 
 }
 
@@ -86,7 +86,7 @@ def fit_tortuosity_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
     conf=batch(exp=None,
                ss={'activation_noise': [(0.0, 2.0), 3],'base_activation': [(15.0, 25.0), 3]},
                o='tortuosity_20_mean', o_kws={'max_Nsims': 120, 'operations': {'mean': True}},
-               en=enrichment_dict(types=['tortuosity']),
+               en=enr_dict(types=['tortuosity']),
                as_entry=False
                )
     conf['exp'] = imitation_exp(sample, model=model, exp=exp, idx=idx, **kwargs)
@@ -104,7 +104,7 @@ def fit_global_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
                },
                o='sample_fit', o_kws={'threshold': 0.1, 'Nbest': 8, 'max_Nsims': 140, 'operations': {'mean': False, 'abs': False}},
                bm={'run': 'exp_fit'},
-               en=enrichment_dict(types=['angular']),
+               en=enr_dict(types=['angular']),
                # en=base_enrich(fits=False),
                as_entry=False
                )

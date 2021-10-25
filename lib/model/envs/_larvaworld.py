@@ -332,8 +332,8 @@ class LarvaWorld:
         self.sim_clock.render_clock(width, height)
         self.sim_scale.render_scale(width, height)
         self.sim_state.render_state(width, height)
-        for text in self.screen_texts.values():
-            text.render(width, height)
+        for t in self.screen_texts.values():
+            t.render(width, height)
 
     def render(self, tick=None, background_motion=None):
         if background_motion is None:
@@ -542,20 +542,19 @@ class LarvaWorld:
     def create_borders(self, lines):
         s = self.scaling_factor
         T = [s, 0, 0, s, 0, 0]
-        lines = [affine_transform(l, T) for l in lines]
-        ps = [p.coords.xy for p in lines]
-        border_xy = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
-        return border_xy, lines
+        ls = [affine_transform(l, T) for l in lines]
+        ps = [l.coords.xy for l in ls]
+        xy = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
+        return xy, ls
 
     def create_border_bodies(self, border_xy):
         if self.Box2D:
-            border_bodies = []
+            bs = []
             for xy in border_xy:
                 b = self.space.CreateStaticBody(position=(.0, .0))
-                border_shape = b2EdgeShape(vertices=xy.tolist())
-                b.CreateFixture(shape=border_shape)
-                border_bodies.append(b)
-            return border_bodies
+                b.CreateFixture(shape=b2EdgeShape(vertices=xy.tolist()))
+                bs.append(b)
+            return bs
         else:
             return []
 

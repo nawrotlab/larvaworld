@@ -1,7 +1,7 @@
 import numpy as np
 
 from lib.conf.stored.conf import imitation_exp, loadConf
-from lib.conf.base.dtypes import enrichment_dict, null_dict, oG, oD, prestarved
+from lib.conf.base.dtypes import enr_dict, null_dict, oG, oD, prestarved
 
 
 def lgs(models, ids=None, **kwargs):
@@ -39,8 +39,8 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
     kw.update(kwargs)
     if en:
         exp_conf = null_dict('exp_conf',
-                             enrichment=enrichment_dict(types=['angular', 'spatial', 'dispersion', 'tortuosity'],
-                                                        bouts=['stride', 'pause', 'turn']), **kw)
+                             enrichment=enr_dict(types=['angular', 'spatial', 'dispersion', 'tortuosity'],
+                                                 bouts=['stride', 'pause', 'turn']), **kw)
     else:
         exp_conf = null_dict('exp_conf', **kw)
     if not as_entry:
@@ -51,12 +51,9 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
         return {exp_name: exp_conf}
 
 
-def source_enrich():
-    return enrichment_dict(types=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'])
-
-
-def chemotaxis_exp(name, c=['olfactor'], dur=5.0, **kwargs):
-    return exp(name, sim={'duration': dur}, c=c, enrichment=source_enrich(), **kwargs)
+def chem_exp(name, c=['olfactor'], dur=5.0, **kwargs):
+    return exp(name, sim={'duration': dur}, c=c,
+               enrichment=enr_dict(types=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn']), **kwargs)
 
 
 def food_exp(name, c=['feeder'], dur=10.0, en=True, **kwargs):
@@ -67,7 +64,7 @@ def game_exp(name, c=[], dur=20.0, **kwargs):
     return exp(name, sim={'duration': dur}, c=c, **kwargs)
 
 
-def deb_exp(name, c=['feeder', 'gut'], dur=5.0, enrichment=enrichment_dict(types=['spatial']), **kwargs):
+def deb_exp(name, c=['feeder', 'gut'], dur=5.0, enrichment=enr_dict(types=['spatial']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
@@ -75,12 +72,11 @@ def simple_exp(name, dur=10.0, en=True, **kwargs):
     return exp(name, sim={'duration': dur}, en=en, **kwargs)
 
 
-def anemo_exp(name, dur=5.0, c=['wind'], en=False, enrichment=enrichment_dict(types=['spatial', 'angular', 'wind']),
-              **kwargs):
+def anemo_exp(name, dur=5.0, c=['wind'], en=False, enrichment=enr_dict(types=['spatial', 'angular', 'wind']),**kwargs):
     return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
 
 
-def pref_exp(name, dur=5.0, c=[], enrichment=enrichment_dict(types=['PI']), **kwargs):
+def pref_exp(name, dur=5.0, c=[], enrichment=enr_dict(types=['PI']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
@@ -125,17 +121,17 @@ grouped_exp_dict = {
     },
 
     'chemotaxis': {
-        'chemotaxis': chemotaxis_exp('odor_gradient',
-                                     l=lg(m='navigator', N=8, p=(-0.04, 0.0), s=(0.005, 0.02),
-                                          ors=(-30.0, 30.0))),
-        'chemorbit': chemotaxis_exp('mid_odor_gaussian', dur=3.0, l=lg(m='navigator', N=3)),
-        'chemorbit_x3': chemotaxis_exp('mid_odor_gaussian', dur=3.0,
-                                       l=lgs(models=['navigator', 'RL_navigator', 'basic_navigator'],
-                                             ids=['CoupledOsc', 'RL', 'basic'], N=10)),
-        'chemotaxis_diffusion': chemotaxis_exp('mid_odor_diffusion', dur=10.0, l=lg(m='navigator', N=30)),
-        'chemotaxis_RL': chemotaxis_exp('mid_odor_diffusion', dur=10.0, c=['olfactor', 'memory'],
-                                        l=lg(m='RL_navigator', N=10, mode='periphery', s=0.04)),
-        'reorientation': chemotaxis_exp('mid_odor_diffusion', l=lg(m='immobile', N=200, s=0.05)),
+        'chemotaxis': chem_exp('odor_gradient',
+                               l=lg(m='navigator', N=8, p=(-0.04, 0.0), s=(0.005, 0.02),
+                                    ors=(-30.0, 30.0))),
+        'chemorbit': chem_exp('mid_odor_gaussian', dur=3.0, l=lg(m='navigator', N=3)),
+        'chemorbit_x3': chem_exp('mid_odor_gaussian', dur=3.0,
+                                 l=lgs(models=['navigator', 'RL_navigator', 'basic_navigator'],
+                                       ids=['CoupledOsc', 'RL', 'basic'], N=10)),
+        'chemotaxis_diffusion': chem_exp('mid_odor_diffusion', dur=10.0, l=lg(m='navigator', N=30)),
+        'chemotaxis_RL': chem_exp('mid_odor_diffusion', dur=10.0, c=['olfactor', 'memory'],
+                                  l=lg(m='RL_navigator', N=10, mode='periphery', s=0.04)),
+        'reorientation': chem_exp('mid_odor_diffusion', l=lg(m='immobile', N=200, s=0.05)),
         'food_at_bottom': exp('food_at_bottom', sim={'duration': 1.0, 'timestep': 0.1}, en=True,
                               l=lgs(models=['Orco_forager', 'forager'],
                                     ids=['Orco', 'control'], N=5, sh='oval', p=(0.0, 0.04), s=(0.04, 0.01)))
@@ -144,7 +140,7 @@ grouped_exp_dict = {
         'anemotaxis': anemo_exp('windy_arena', dur=0.5, l=lg(m='nengo_explorer', N=4)),
         'anemotaxis_bordered': anemo_exp('windy_arena_bordered', dur=0.5, l=lg(m='nengo_explorer', N=4)),
         'anemotaxis_x2': anemo_exp('windy_arena', dur=2, l=lgs(models=['nengo_explorer', 'explorer'],
-                                                                 ids=['nengo', 'control'], N=10))
+                                                               ids=['nengo', 'control'], N=10))
     },
 
     'odor_preference': {
@@ -165,7 +161,7 @@ grouped_exp_dict = {
                                             ids=['Orco', 'control', 'nengo'], N=5, mode='periphery', s=0.03)),
         'double_patch': food_exp('double_patch', l=RvsS_groups(N=5),
                                  c=['toucher', 'feeder', 'olfactor'],
-                                 enrichment=enrichment_dict(types=['spatial', 'angular', 'source']), en=False),
+                                 enrichment=enr_dict(types=['spatial', 'angular', 'source']), en=False),
         'tactile_detection': food_exp('single_patch', dur=5.0, c=['toucher'],
                                       l=lg(m='toucher', N=5), en=False),
         'tactile_detection_x3': food_exp('single_patch', dur=600.0, c=['toucher'],

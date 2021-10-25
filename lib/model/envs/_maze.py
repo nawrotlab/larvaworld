@@ -2,7 +2,7 @@ import random
 from matplotlib.patches import Circle
 from shapely.geometry import LineString, Point
 
-import lib.aux.dictsNlists
+from lib.aux.dictsNlists import group_list_by_n
 import lib.aux.colsNstr as fun
 
 class Cell:
@@ -165,21 +165,15 @@ class Maze:
 
     def maze_lines(self):
         lines=[]
-        aspect_ratio = self.nx / self.ny
-        # Height and width of the maze image (excluding padding), in pixels
-        height = self.height
-        width = height * aspect_ratio
         # Scaling factors mapping maze coordinates to image coordinates
-        scy, scx = height / self.ny, width / self.nx
+        scy, scx = self.height / self.ny, self.height / self.ny
 
         for x in range(self.nx):
             for y in range(self.ny):
                 if self.cell_at(x, y).walls['S']:
-                    x1, y1, x2, y2 = x * scx, (y + 1) * scy, (x + 1) * scx, (y + 1) * scy
-                    lines.append(LineString([(x1, y1), (x2, y2)]))
+                    lines.append(LineString([(x * scx, (y + 1) * scy), ((x + 1) * scx, (y + 1) * scy)]))
                 if self.cell_at(x, y).walls['E']:
-                    x1, y1, x2, y2 = (x + 1) * scx, y * scy, (x + 1) * scx, (y + 1) * scy
-                    lines.append(LineString([(x1, y1), (x2, y2)]))
+                    lines.append(LineString([((x + 1) * scx, y * scy), ((x + 1) * scx, (y + 1) * scy)]))
         return lines
 
 class Border:
@@ -196,8 +190,7 @@ class Border:
         self.unique_id = unique_id
         self.width=width * self.model.scaling_factor
         self.points=points
-        lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in lib.aux.dictsNlists.group_list_by_n(points, 2)]
-            # lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in zip(points[:-1], points[1:])]
+        lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in group_list_by_n(points, 2)]
         self.border_xy, self.border_lines = self.model.create_borders(lines)
         self.border_bodies = self.model.create_border_bodies(self.border_xy)
         self.selected=False
