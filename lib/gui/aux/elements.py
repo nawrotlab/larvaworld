@@ -947,8 +947,9 @@ class PadDict:
         self.layout_pane_kwargs = layout_pane_kwargs
 
     def get_layout(self, as_col=True,as_pane=True, **kwargs):
-        self.layout_pane_kwargs.update(kwargs)
-        return [[sg.Pane([sg.Col(self.layout)], **self.layout_pane_kwargs)]]
+        kws=copy.deepcopy(self.layout_pane_kwargs)
+        kws.update(kwargs)
+        return [[sg.Pane([sg.Col(self.layout)], **kws)]]
 
     def get_subdicts(self):
         subdicts = {}

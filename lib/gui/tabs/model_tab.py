@@ -92,7 +92,6 @@ class ModelTab(GuiTab):
                 c.update(cc.get_subdicts())
 
                 if v=='olfactor' :
-                    print('xx')
                     ll = cc.get_layout(size=(ss[0], int(ss[1]/2)))
                     ll.append(s1.get_layout())
                 else :
@@ -130,6 +129,7 @@ class ModelTab(GuiTab):
         # ll = gui_cols(cols=[[l0, s1, g1], [g1.canvas]], x_fracs=[0.2,0.3], as_pane=True, pad=(20,20))
         # l.append([l_tabs])
         l1=[ll1,ll2]
+        # l1=[ll1,ll2]
         l2=g1.canvas.get_layout(as_pane=True)
 
         l=[[sg.Col([l1,l2[0]])]]
@@ -141,5 +141,5 @@ class ModelTab(GuiTab):
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
 
-    larvaworld_gui = LarvaworldGui(tabs=['larva-model'])
+    larvaworld_gui = LarvaworldGui(tabs=['larva-model', 'settings'])
     larvaworld_gui.run()
