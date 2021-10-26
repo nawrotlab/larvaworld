@@ -1,5 +1,5 @@
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, SelectionList
-from lib.gui.aux.functions import gui_col
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, SelectionList, PadDict
+from lib.gui.aux.functions import gui_col, gui_cols
 from lib.gui.aux.buttons import GraphButton
 from lib.gui.tabs.tab import GuiTab
 
@@ -9,10 +9,9 @@ class EnvTab(GuiTab):
         super().__init__(**kwargs)
         # self.canvas_size=(800,800)
         self.S, self.L, self.B = 'Source', 'Larva', 'Border'
-        self.Su, self.Sg=f'{self.S.lower()}_units', f'{self.S.lower()}_groups'
+        self.Su, self.Sg = f'{self.S.lower()}_units', f'{self.S.lower()}_groups'
         # self.Lu, self.Lg=f'{self.L.lower()}_units', f'{self.L.lower()}_groups'
         self.Bg = f'{self.B.lower()}_list'
-
 
     def update(self, w, c, conf, id=None):
         for n in [self.Bg, 'arena', 'odorscape']:
@@ -30,33 +29,34 @@ class EnvTab(GuiTab):
         }
 
     def build(self):
-        s2 = CollapsibleTable(self.Sg,dict_name='SourceGroup', state=True, index='Group ID',col_widths=[10,4,8,8,8],
-                              heading_dict={'N':'distribution.N', 'color': 'default_color', 'odor' : 'odor.odor_id', 'amount' : 'amount'},)
-        s3 = CollapsibleTable(self.Su,dict_name='source', state=True, index='ID', col_widths=[10,8,8,8],
-                              heading_dict={'color': 'default_color', 'odor' : 'odor.odor_id', 'amount' : 'amount'},)
-        s4 = CollapsibleTable(self.Bg,dict_name='border_list', index='ID', col_widths=[10,8,20],
-                              heading_dict={'color': 'default_color', 'points' : 'points' },)
+        s2 = CollapsibleTable(self.Sg, dict_name='SourceGroup', state=True, index='Group ID',
+                              col_widths=[10, 3, 8, 7, 6], num_rows=5,
+                              heading_dict={'N': 'distribution.N', 'color': 'default_color', 'odor': 'odor.odor_id',
+                                            'amount': 'amount'}, )
+        s3 = CollapsibleTable(self.Su, dict_name='source', state=True, index='ID', col_widths=[10, 8, 8, 8], num_rows=5,
+                              heading_dict={'color': 'default_color', 'odor': 'odor.odor_id', 'amount': 'amount'}, )
+        s4 = CollapsibleTable(self.Bg, dict_name='border_list', index='ID', col_widths=[10, 8, 16], num_rows=5,
+                              heading_dict={'color': 'default_color', 'points': 'points'}, state=True)
 
-        c1 = [CollapsibleDict(n, **kw)
-              for n, kw in zip(['arena', 'food_grid', 'odorscape'], [{'next_to_header':[
-                                 GraphButton('Button_Burn', 'RESET_ARENA',
-                                                tooltip='Reset to the initial arena. All drawn items will be erased.'),
-                                 GraphButton('Globe_Active', 'NEW_ARENA',
-                                                tooltip='Create a new arena.All drawn items will be erased.'),
-                             ]}, {'toggle': True}, {}])]
+
+        s5 = PadDict('arena', header_width=23, after_header=[GraphButton('Button_Burn', 'RESET_ARENA',
+                                                                         tooltip='Reset to the initial arena. All drawn items will be erased.'),
+                                                             GraphButton('Globe_Active', 'NEW_ARENA',
+                                                                         tooltip='Create a new arena.All drawn items will be erased.')])
+
+        s6 = PadDict('food_grid', header_width=26,toggle=True)
+        s7 = PadDict('odorscape', header_width=31)
+
         c = {}
-        for s in c1 + [s2, s3, s4]:
+        for s in [s2, s3, s4, s5, s6, s7]:
             c.update(s.get_subdicts())
-        l1 = [c[n].get_layout() for n in [self.Sg, self.Su, 'food_grid']]
-        c2 = Collapsible(self.S, content=l1, state=True)
+        l1 = [c[n].get_layout(as_pane=True)[0] for n in [self.Sg, self.Su, 'food_grid']]
+        c2 = PadDict(self.S, content=l1, header_width=34)
         c.update(c2.get_subdicts())
-        l2 = [c[n] for n in ['arena', self.S, self.Bg, 'odorscape']]
-        # print(self.name)
-        sl1 = SelectionList(tab=self, buttons=['save', 'delete'], disp=self.name)
-        l = [[gui_col([sl1,*l2], 0.25)]]
-        self.layout=l
+        sl1 = SelectionList(tab=self, buttons=['save', 'delete'], disp=self.name, width=30)
+        l = gui_cols([[sl1, s7, s4], [c2]], x_fracs=[0.25,0.25], as_pane=True, pad=(10,10))
+        self.layout = l
         return l, c, {}, {}
-
 
     # def run(self, v, w,c,d,g, conf,id):
     #     sim=null_dict('sim_params', sim_ID='env_test', duration=0.5)
@@ -70,7 +70,9 @@ class EnvTab(GuiTab):
     #     res = run_sim(**exp_conf)
     #     return d, g
 
+
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
+
     larvaworld_gui = LarvaworldGui(tabs=['environment'])
     larvaworld_gui.run()

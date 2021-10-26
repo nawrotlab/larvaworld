@@ -148,11 +148,11 @@ class DrawTab(GuiTab):
         })
 
         col1 = [
-            g1.canvas.get_layout(),
+            g1.canvas.get_layout(as_pane=True, pad=(10,10))[0],
             [sg.T('Hints : '), sg.T('', k='info', **t_kws(40))],
             [sg.T('Actions : '), sg.T('', k='out', **t_kws(40))],
         ]
-        l = [[sg.Col(col1, **col_kws), col2]]
+        l = [[sg.Col(col1, pad=(10,10),**col_kws), col2]]
 
         self.graph = g1.canvas_element
 

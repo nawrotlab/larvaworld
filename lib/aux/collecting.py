@@ -151,8 +151,8 @@ output_dict = {
                                          'best_olfactor_decay']}},
     'midline': None,
     'contour': None,
-    'source_vincinity': {'step': [], 'endpoint': ['d_cent_fin']},
-    'source_approach': {'step': [], 'endpoint': ['d_chem_fin']},
+    # 'source_vincinity': {'step': [], 'endpoint': ['d_cent_fin']},
+    # 'source_approach': {'step': [], 'endpoint': ['d_chem_fin']},
 }
 
 output_keys = list(output_dict.keys())

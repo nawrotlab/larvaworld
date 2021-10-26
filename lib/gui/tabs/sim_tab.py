@@ -2,8 +2,8 @@ import copy
 import PySimpleGUI as sg
 
 from lib.aux.collecting import output_keys
-from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, CollapsibleTable
-from lib.gui.aux.functions import t_kws, gui_col, gui_cols
+from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, CollapsibleTable, PadDict
+from lib.gui.aux.functions import t_kws, gui_col, gui_cols, col_size, default_list_width, col_kws
 from lib.gui.tabs.draw_tab import DrawTab
 from lib.gui.tabs.env_tab import EnvTab
 from lib.gui.tabs.tab import GuiTab
@@ -14,7 +14,7 @@ from run.exec_run import Exec
 class SimTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.canvas_size = (800, 800)
+        self.canvas_size = col_size(0.5,0.8)
         self.k_stored = f'{self.name}_stored'
         self.k_active = f'{self.name}_active'
         self.k_stored_ids = f'{self.k_stored}_IDS'
@@ -29,7 +29,7 @@ class SimTab(GuiTab):
         return self.datalists[self.k_stored]
 
     def build(self):
-        l1, c1, g1, d1 = self.build_conf()
+        l0, l1, c1, g1, d1 = self.build_conf()
         l2, c2, g2, d2 = self.build_RUN()
         self.draw_tab = DrawTab(name='draw', gui=self.gui)
         l3, c3, g3, d3 = self.draw_tab.build()
@@ -37,46 +37,56 @@ class SimTab(GuiTab):
         tab_kws = {'font': ("Helvetica", 13, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
                    'tab_background_color': 'lightgrey'}
 
-        ts = [sg.Tab(n, nl, key=f'{n}_SIM TAB') for n, nl in zip(['DRAW', 'RUN'], [l3, l2])]
+        ts = [sg.Tab(n, nl, key=f'{n}_SIM TAB') for n, nl in zip(['DRAW','SETUP', 'RUN'], [l3,l1, l2])]
         l_tabs = sg.TabGroup([ts], key='ACTIVE_SIM_TAB', tab_location='topleft', **tab_kws)
-        l = [[l1[0][0], l_tabs]]
+        l = [[l0, l_tabs]]
         return l, {**c1, **c2, **c3}, {**g1, **g2, **g3}, {**d1, **d2, **d3}
 
     def build_RUN(self):
         kA, kS = self.k_active, self.k_stored
         d = {kA: {}, kS: {}}
-        g1 = GraphList(self.name, tab=self, canvas_size=self.canvas_size)
-        dl1 = DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active simulations')
-        dl2 = DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Completed simulations')
-        l = gui_cols(cols=[[g1.canvas], [dl1, dl2, g1]], x_fracs=[0.5, 0.2])
+        g1 = GraphList(self.name, tab=self, canvas_size=self.canvas_size,list_size = (default_list_width, 15))
+        dl1 = DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active simulations',size=(default_list_width, 6))
+        dl2 = DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Completed simulations',size=(default_list_width, 6))
+        l = gui_cols(cols=[[g1.canvas], [dl1, dl2, g1]], x_fracs=[0.53, 0.25],as_pane=True, pad=(10,10))
         return l, {}, {g1.name: g1}, d
 
     def build_conf(self):
-        s1 = CollapsibleTable('larva_groups', buttons=['add', 'remove'], index='Group ID', col_widths=[10, 4, 8, 12],
+        kws = {'background_color': 'lightgreen'}
+        # kws = {'background_color': 'lightgreen', 'text_kws': t_kws(10)}
+        s1 = CollapsibleTable('larva_groups', buttons=['add', 'remove'], index='Group ID', col_widths=[10, 3, 7, 10],
                               heading_dict={'N': 'distribution.N', 'color': 'default_color', 'model': 'model'},
-                              dict_name='LarvaGroup', state=True)
+                              dict_name='LarvaGroup', state=True, num_rows=6)
         tab1 = EnvTab(name='environment', gui=self.gui, conftype='Env')
         tab1_l, tab1_c, tab1_g, tab1_d = tab1.build()
         sl1 = tab1.selectionlists[tab1.conftype]
 
-        s2 = CollapsibleTable('trials', buttons=['add', 'remove'], index='idx', col_widths=[3, 5, 5, 6, 10],
+        s2 = CollapsibleTable('trials', buttons=['add', 'remove'], index='idx', col_widths=[3, 4, 4, 5, 8],
                               heading_dict={'start': 'start', 'stop': 'stop', 'quality': 'substrate.quality',
                                             'type': 'substrate.type'},
-                              dict_name='epoch', state=True)
+                              dict_name='epoch', state=True, num_rows=5)
         sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], progress=True,
-                            sublists={'env_params': sl1, 'larva_groups': s1})
-        sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Simulation type :', buttons=[],single_line=True,
-                            width=16, sublists={'simulations': sl3})
+                            sublists={'env_params': sl1, 'larva_groups': s1},text_kws=t_kws(15), width=28)
+        sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Behavior/field :', buttons=[],single_line=True,
+                            width=15, text_kws=t_kws(12),sublists={'simulations': sl3})
 
-        c1 = CollapsibleDict('sim_params', disp_name='Configuration')
-        c2 = CollapsibleDict('output')
-        l = gui_cols(cols=[[sl4, sl3, s1, c1, c2, s2, tab1]], x_fracs=[0.3])
+        c1 = PadDict('sim_params', disp_name='Configuration',text_kws= t_kws(10),header_width=30, **kws)
+        # c1 = CollapsibleDict('sim_params', disp_name='Configuration')
+        c2 = PadDict('output',text_kws= t_kws(7), Ncols=2,header_width=30, **kws)
+        # c2 = CollapsibleDict('output')
+
+        ll3 = gui_col([c1, c2, s2], x_frac=0.25, as_pane=True)
+        # ll2 = gui_col([s1, tab1], x_frac=0.2)
+        l1 = [tab1.layout[0]+[ll3]]
+        # ll2 = sg.Col([tab1.get_layout(as_col=False)[0]], **col_kws, size=col_size(x_frac=0.25))
+        # l1=[[ll2,ll3]]
 
         c = {}
         for i in [c1, c2, s2, s1]:
             c.update(i.get_subdicts())
         c.update(**tab1_c)
-        return l, c, {}, {}
+        l0 = gui_col([sl4, sl3, s1, c['arena']], x_frac=0.25, as_pane=True, pad=(10,10))
+        return l0, l1, c, {}, {}
 
     def update(self, w, c, conf, id):
         c['output'].update(w, dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys])))

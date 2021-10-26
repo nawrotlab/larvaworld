@@ -241,14 +241,14 @@ class GuiElement:
 
 
 class ProgressBarLayout:
-    def __init__(self, list):
+    def __init__(self, list, size=(8.8, 20)):
         self.list = list
         n = self.list.disp
         self.k = f'{n}_PROGRESSBAR'
         self.k_complete = f'{n}_COMPLETE'
         self.k_incomplete = f'{n}_INCOMPLETE'
         self.l = [sg.Text('Progress :', **t_kws(8)),
-                  sg.ProgressBar(100, orientation='h', size=(8.8, 20), key=self.k,
+                  sg.ProgressBar(100, orientation='h', size=size, key=self.k,
                                  bar_color=('green', 'lightgrey'), border_width=3),
                   GraphButton('Button_Check', self.k_complete, visible=False,
                               tooltip=f'Whether the current {n} was completed.'),
@@ -299,7 +299,7 @@ class SelectionList(GuiElement):
         self.disp = disp
         # print(disp)
 
-        self.progressbar = ProgressBarLayout(self) if progress else None
+        self.progressbar = ProgressBarLayout(self, size=(self.width-16, 20)) if progress else None
         self.k0 = f'{self.conftype}_CONF'
         if idx is not None:
             self.k = f'{self.k0}{idx}'
@@ -329,7 +329,7 @@ class SelectionList(GuiElement):
                           drop_down=True, size=(self.width, None),
                           list_kws={'tooltip': f'The currently loaded {n}.'},
                           header_kws={'text': n.capitalize(), 'after_header': bs,
-                                      'single_line': self.single_line}).layout
+                                      'single_line': self.single_line, **kwargs}).layout
         if self.progressbar is not None:
             l.append(self.progressbar.l)
         return l
@@ -448,17 +448,16 @@ class SelectionList(GuiElement):
 
 
 class Header(HeadedElement):
-    def __init__(self, name, content=[], text=None, before_header=None, after_header=None, header_text_kws=None,
-                 single_line=True):
+    def __init__(self, name, content=[], text=None, single_line=True, **kwargs):
         if text is None:
             text = name
-        header = self.build_header(text, before_header, after_header, header_text_kws)
+        header = self.build_header(text, **kwargs)
         super().__init__(name=name, header=header, content=content, single_line=single_line)
 
-    def build_header(self, text, before_header, after_header, header_text_kws):
-        if header_text_kws is None:
-            header_text_kws = {'size': (len(text), 1)}
-        header = [sg.Text(text, **header_text_kws)]
+    def build_header(self, text, before_header=None, after_header=None, text_kws=None):
+        if text_kws is None:
+            text_kws = {'size': (len(text), 1)}
+        header = [sg.Text(text, **text_kws)]
         if after_header is not None:
             header += after_header
         if before_header is not None:
@@ -634,7 +633,7 @@ class Collapsible(HeadedElement, GuiElement):
             after_header = [BoolButton(name, toggle, disabled)] if toggle is not None else []
             if next_to_header is not None:
                 after_header += next_to_header
-            header_kws = {'text': disp_name, 'header_text_kws': header_text_kws,
+            header_kws = {'text': disp_name, 'text_kws': header_text_kws,
                           'before_header': [self.sec_symbol], 'after_header': after_header}
 
             if header_dict is None:
@@ -796,7 +795,8 @@ class CollapsibleTable(Collapsible):
         else:
             row_cols = None
         w[self.key].update(values=self.data, num_rows=len(self.data), row_colors=row_cols)
-        self.open(w) if len(self.dict) > 0 else self.close(w)
+        if self.auto_open :
+            self.open(w) if len(self.dict) > 0 else self.close(w)
 
     def get_dict(self, *args, **kwargs):
         return self.dict
@@ -910,7 +910,7 @@ def combo_layout(name, title, dic, **kwargs) :
     return [sg.Pane(l, border_width=4)]
 
 class PadDict:
-    def __init__(self, name, type_dict=None, disp_name=None, content=None,toggle=None, disabled=False,
+    def __init__(self, name, dict_name=None, type_dict=None, disp_name=None, content=None,toggle=None, disabled=False,
                  layout_pane_kwargs={'border_width': 8},
                  background_color='green', Ncols=1, subconfs={}, col_idx=None,row_idx=None, after_header=None, header_width=None,
                  **kwargs):
@@ -927,7 +927,7 @@ class PadDict:
         # self.header_width=header_width
         if content is None:
             if type_dict is None:
-                type_dict = par_dict(name)
+                type_dict = par_dict(name if dict_name is None else dict_name)
             content = self.build(name, type_dict=type_dict, background_color=background_color, **kwargs)
         content = self.arrange_content(content, Ncols=Ncols, col_idx=col_idx, row_idx=row_idx)
         self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()} if type_dict is not None else None
@@ -1175,7 +1175,7 @@ class GraphList(NamedList):
             list_size = (default_list_width, h)
 
         header_kws = {'text': list_header, 'after_header': next_to_header,
-                      'header_text_kws': t_kws(14), 'single_line': False}
+                      'text_kws': t_kws(14), 'single_line': False}
         default_value = default_values[0] if default_values is not None else None
         super().__init__(name=name, key=self.list_key, choices=values, default_value=default_value, drop_down=False,
                          size=list_size, header_kws=header_kws, auto_size_text=True, **kwargs)
