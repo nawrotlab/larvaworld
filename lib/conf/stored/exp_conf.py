@@ -39,7 +39,7 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
     kw.update(kwargs)
     if en:
         exp_conf = null_dict('exp_conf',
-                             enrichment=enr_dict(types=['angular', 'spatial', 'dispersion', 'tortuosity'],
+                             enrichment=enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
                                                  bouts=['stride', 'pause', 'turn']), **kw)
     else:
         exp_conf = null_dict('exp_conf', **kw)
@@ -53,7 +53,7 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
 
 def chem_exp(name, c=['olfactor'], dur=5.0, **kwargs):
     return exp(name, sim={'duration': dur}, c=c,
-               enrichment=enr_dict(types=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn']), **kwargs)
+               enrichment=enr_dict(proc=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn']), **kwargs)
 
 
 def food_exp(name, c=['feeder'], dur=10.0, en=True, **kwargs):
@@ -64,7 +64,7 @@ def game_exp(name, c=[], dur=20.0, **kwargs):
     return exp(name, sim={'duration': dur}, c=c, **kwargs)
 
 
-def deb_exp(name, c=['feeder', 'gut'], dur=5.0, enrichment=enr_dict(types=['spatial']), **kwargs):
+def deb_exp(name, c=['feeder', 'gut'], dur=5.0, enrichment=enr_dict(proc=['spatial']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
@@ -72,11 +72,11 @@ def simple_exp(name, dur=10.0, en=True, **kwargs):
     return exp(name, sim={'duration': dur}, en=en, **kwargs)
 
 
-def anemo_exp(name, dur=5.0, c=['wind'], en=False, enrichment=enr_dict(types=['spatial', 'angular', 'wind']),**kwargs):
+def anemo_exp(name, dur=5.0, c=['wind'], en=False, enrichment=enr_dict(proc=['spatial', 'angular', 'wind']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
 
 
-def pref_exp(name, dur=5.0, c=[], enrichment=enr_dict(types=['PI']), **kwargs):
+def pref_exp(name, dur=5.0, c=[], enrichment=enr_dict(proc=['PI']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
@@ -161,7 +161,7 @@ grouped_exp_dict = {
                                             ids=['Orco', 'control', 'nengo'], N=5, mode='periphery', s=0.03)),
         'double_patch': food_exp('double_patch', l=RvsS_groups(N=5),
                                  c=['toucher', 'feeder', 'olfactor'],
-                                 enrichment=enr_dict(types=['spatial', 'angular', 'source']), en=False),
+                                 enrichment=enr_dict(proc=['spatial', 'angular', 'source']), en=False),
         'tactile_detection': food_exp('single_patch', dur=5.0, c=['toucher'],
                                       l=lg(m='toucher', N=5), en=False),
         'tactile_detection_x3': food_exp('single_patch', dur=600.0, c=['toucher'],

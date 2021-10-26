@@ -24,5 +24,3 @@ life_dict={
     'default' : life_conf(durs=[0.0], qs=[1.0], age=0.0),
     '72h_q50' : life_conf(durs=[72.0], qs=[0.5], age=72.0),
 }
-
-print(life_dict)

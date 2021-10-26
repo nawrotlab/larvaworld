@@ -133,10 +133,13 @@ def retrieve_value(v, t):
 def retrieve_dict(dic, type_dic):
     return {k: retrieve_value(v, type_dic[k]) for k, v in dic.items()}
 
-def gui_col(element_list, x_frac=0.25, y_frac=1.0, **kwargs):
+def gui_col(element_list, x_frac=0.25, y_frac=1.0,as_pane=False,pad=None, **kwargs):
     l = []
     for e in element_list:
-        l += e.get_layout(as_col=False)
+        if not as_pane :
+            l += e.get_layout(as_col=False)
+        else :
+            l += e.get_layout(as_pane=True, pad=pad)
     c = sg.Col(l, **col_kws, size=col_size(x_frac=x_frac, y_frac=y_frac), **kwargs)
     return c
 
@@ -157,13 +160,30 @@ def gui_cols(cols, x_fracs=None, y_fracs=None,as_pane=False, **kwargs) :
     return [ls]
 
 
-def gui_row(element_list, x_frac=1.0, y_frac=0.5,x_fracs=None, **kwargs):
+def gui_row(element_list, x_frac=1.0, y_frac=0.5,x_fracs=None,as_pane=False, **kwargs):
     N=len(element_list)
     if x_fracs is None :
         x_fracs=[x_frac/N]*N
-    l = [sg.Col(e, **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs) for e, x in zip(element_list, x_fracs)]
-    return l
+    if not as_pane :
+        return [sg.Col(e, **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs) for e, x in zip(element_list, x_fracs)]
+    else :
+        return [sg.Col(e.get_layout(as_pane=True), **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs) for e, x in
+                zip(element_list, x_fracs)]
+    # return l
 
+def gui_rowNcol(element_list, x_fracs, y_fracs, as_pane=False) :
+    l=[]
+    for i,e in enumerate(element_list):
+        if type(e)==list :
+            if all([type(ee)!=list for ee in e]):
+                e=gui_col(e, x_frac=x_fracs[i], y_frac=y_fracs[i], as_pane=as_pane)
+            else :
+                e=gui_rowNcol(e, x_fracs=x_fracs[i], y_fracs=y_fracs[i], as_pane=as_pane)
+            l.append(e)
+        else :
+            e=gui_row([e],x_frac=x_fracs[i], y_frac=y_fracs[i], as_pane=as_pane)
+            l.append(e)
+    return l
 
 def collapse(layout, key, visible=True):
     """

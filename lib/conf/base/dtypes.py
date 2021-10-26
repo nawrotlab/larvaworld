@@ -4,6 +4,7 @@ import pandas as pd
 from siunits import BaseUnit, Composite, DerivedUnit
 
 from lib.aux.collecting import output_keys
+from lib.aux.par_aux import sub
 
 from lib.gui.aux.functions import get_pygame_key
 
@@ -25,7 +26,7 @@ def base_dtype(t):
     return base_t
 
 
-def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, Ndigits=None, h='', s='',
+def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', s='',
         argparser=False):
     if not argparser:
         cur_dtype = base_dtype(t)
@@ -50,10 +51,11 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
 
                     vs = vs.tolist()
         if vs is not None:
-            Ndigits = maxNdigits(np.array(vs), 4)
+            Ndigits = maxNdigits(np.array(vs), 3)
         if aux_vs is not None and vs is not None:
             vs += aux_vs
-        d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t}
+        d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t,
+             'disp': disp if disp is not None else name}
 
         return {name: d}
     else:
@@ -290,8 +292,8 @@ def init_pars():
                  'seg_ratio': {'max': 1.0},  # [5 / 11, 6 / 11]
                  'touch_sensors': {'t': int, 'min': 0, 'max': 8},
                  },
-        'arena': {'arena_dims': {'t': Tuple[float], 'v': (0.1, 0.1), 'max': 1.0, 'dv': 0.01},
-                  'arena_shape': {'t': str, 'v': 'circular', 'vs': ['circular', 'rectangular']}
+        'arena': {'arena_dims': {'t': Tuple[float], 'v': (0.1, 0.1), 'max': 1.0, 'dv': 0.01, 'disp' : 'X,Y (m)'},
+                  'arena_shape': {'t': str, 'v': 'circular', 'vs': ['circular', 'rectangular'], 'disp' : 'shape'}
                   },
         'physics': {
             'torque_coef': {'v': 0.41, 'max': 5.0, 'dv': 0.01},
@@ -493,13 +495,50 @@ def init_pars():
         'energetics': d['energetics'],
         'physics': d['physics'],
     }
-    d['parameterization'] = {'bend': {'t': str, 'v': 'from_angles', 'vs': ['from_angles', 'from_vectors']},
-                             'front_vector': {'t': Tuple[int], 'v': (1, 2), 'min': -12, 'max': 12},
-                             'rear_vector': {'t': Tuple[int], 'v': (-2, -1), 'min': -12, 'max': 12},
-                             'front_body_ratio': {'v': 0.5, 'max': 1.0},
-                             'point_idx': {'t': int, 'min': -1, 'max': 12},
+    # d['parameterization'] = {'bend': {'t': str, 'v': 'from_angles', 'vs': ['from_angles', 'from_vectors']},
+    #                          'front_vector': {'t': Tuple[int], 'v': (1, 2), 'min': -12, 'max': 12},
+    #                          'rear_vector': {'t': Tuple[int], 'v': (-2, -1), 'min': -12, 'max': 12},
+    #                          'front_body_ratio': {'v': 0.5, 'max': 1.0},
+    #                          'point_idx': {'t': int, 'min': -1, 'max': 12},
+    #
+    #                          'use_component_vel': bF}
+    d['ang_definition'] = {
+        'bend': {'t': str, 'v': 'from_angles', 'vs': ['from_angles', 'from_vectors']},
+        'front_vector': {'t': Tuple[int], 'v': (1, 2), 'min': -12, 'max': 12},
+        'rear_vector': {'t': Tuple[int], 'v': (-2, -1), 'min': -12, 'max': 12},
+        'front_body_ratio': {'v': 0.5, 'max': 1.0, 'disp': 'front_ratio'}
+    }
+    d['spatial_definition'] = {
+        'point_idx': {'t': int, 'min': -1, 'max': 12},
+        'use_component_vel': {**bF, 'disp': 'vel_component'}
+    }
 
-                             'use_component_vel': bF}
+    d['metric_definition'] = {
+        'angular': d['ang_definition'],
+        'spatial': d['spatial_definition'],
+        'dispersion': {
+            'dsp_starts': {'t': List[float], 'v': [0.0], 'max': 200.0, 'dv': 1.0, 'disp': 'starts'},
+            'dsp_stops': {'t': List[float], 'v': [40.0], 'max': 200.0, 'dv': 1.0, 'disp': 'stops'},
+        },
+        'tortuosity': {
+            'tor_durs': {'t': List[int], 'v': [5, 10, 20], 'max': 100, 'dv': 1, 'disp' : 't (sec)'}
+        },
+        'stride': {
+            'track_point': {'t': str},
+            'use_scaled_vel': {**bT, 'disp': 'vel_scaled'},
+            'vel_threshold': {'v': 0.2, 'max': 1.0, 'disp' : 'vel_thr'},
+        },
+        'pause': {
+            'stride_non_overlap': {**bT, 'disp': 'excl. strides'},
+            'min_dur': {'v': 0.4, 'max': 2.0},
+        },
+        'turn': {
+            'min_ang': {'v': 30.0, 'max': 180.0, 'dv': 1.0},
+            'min_ang_vel': {'v': 0.0, 'max': 1000.0, 'dv': 1.0},
+            'chunk_only': {'t': str},
+        }
+    }
+
     d['preprocessing'] = {
         'rescale_by': {'max': 10.0},
         'drop_collisions': bF,
@@ -507,27 +546,13 @@ def init_pars():
         'filter_f': {'max': 10.0},
         'transposition': {'t': str, 'vs': ['', 'origin', 'arena', 'center']}
     }
-    d['processing'] = {
-        'types': {t: bF for t in proc_type_keys},
-        'dsp_starts': {'t': List[float], 'v': [0.0], 'max': 200.0, 'dv': 1.0},
-        'dsp_stops': {'t': List[float], 'v': [40.0], 'max': 200.0, 'dv': 1.0},
-        'tor_durs': {'t': List[int], 'max': 100, 'dv': 1}}
-    d['annotation'] = {'bouts': {b: bF for b in bout_keys},
-                       'track_point': {'t': str},
-                       'scaled_vel_threshold': {'v': 0.2, 'max': 1.0},
-                       # 'track_pars': {'t': List[str]},
-                       # 'chunk_pars': {'t': List[str]},
-                       # 'vel_par': {'t': str},
-                       # 'ang_vel_par': {'t': str},
-                       # 'bend_vel_par': {'t': str},
-                       'min_ang': {'v': 30.0, 'max': 180.0, 'dv': 1.0},
-                       'min_ang_vel': {'v': 0.0, 'max': 1000.0, 'dv': 1.0},
-                       # 'non_chunks': bF,
+    d['processing'] = {t: bF for t in proc_type_keys}
+    d['annotation'] = {**{b: bF for b in bout_keys},
                        'on_food': bF,
                        'fits': bT}
     d['to_drop'] = {kk: bF for kk in to_drop_keys}
     d['enrichment'] = {**{k: d[k] for k in
-                          ['preprocessing', 'processing', 'annotation', 'to_drop']},
+                          ['metric_definition', 'preprocessing', 'processing', 'annotation', 'to_drop']},
                        'recompute': bF,
                        'mode': {'t': str, 'v': 'minimal', 'vs': ['minimal', 'full']}
                        }
@@ -566,20 +591,19 @@ def init_pars():
                        }
 
     d['tracker'] = {
-        'resolution': {'fr': {'v': 10.0, 'max': 100.0},
-                       'Npoints': {'t': int, 'v': 1, 'max': 20},
-                       'Ncontour': {'t': int, 'v': 0, 'max': 100}
+        'resolution': {'fr': {'v': 10.0, 'max': 100.0, 'disp' : 'framerate (Hz)'},
+                       'Npoints': {'t': int, 'v': 1, 'max': 20, 'disp' : '# midline xy'},
+                       'Ncontour': {'t': int, 'v': 0, 'max': 100, 'disp' : '# contour xy'}
                        },
         'arena': d['arena'],
         'filesystem': {
-            'read_sequence': {'t': List[str]},
-            'read_metadata': bF,
+            'read_sequence': {'t': List[str], 'disp': 'columns'},
+            'read_metadata': {**bF, 'disp': 'metadata'},
             'folder': {'pref': {'t': str}, 'suf': {'t': str}},
             'file': {'pref': {'t': str}, 'suf': {'t': str}, 'sep': {'t': str}}
         },
 
     }
-
 
     d['spatial_distro'] = {
         'mode': {'t': str, 'v': 'normal', 'vs': ['normal', 'periphery', 'uniform']},
@@ -687,18 +711,33 @@ def null_dict(n, key='initial_value', **kwargs):
         return dic2
 
 
-def enr_dict(types=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, **kwargs):
+def ang_def(b='from_angles', fv=(1, 2), rv=(-2, -1), **kwargs):
+    return null_dict('ang_definition', bend=b, front_vector=fv, rear_vector=rv, **kwargs)
+
+
+def metric_def(ang={}, sp={}, **kwargs):
+    # def metric_def(ang={}, sp={}, dsp={}, tor={}, str={}, pau={}, tur={}) :
+    return null_dict('metric_definition',
+                     angular=ang_def(**ang),
+                     spatial=null_dict('spatial_definition', **sp),
+                     **kwargs
+                     )
+
+
+def enr_dict(proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, def_kws={}, **kwargs):
+    metrdef = metric_def(**def_kws)
     pre = null_dict('preprocessing', **pre_kws)
-    proc = null_dict('processing', types={k: True if k in types else False for k in proc_type_keys})
-    annot = null_dict('annotation', bouts={k: True if k in bouts else False for k in bout_keys}, fits=fits,
+    proc = null_dict('processing', **{k: True if k in proc else False for k in proc_type_keys})
+    annot = null_dict('annotation', **{k: True if k in bouts else False for k in bout_keys}, fits=fits,
                       on_food=on_food)
     to_drop = null_dict('to_drop', **{k: True if k not in to_keep else False for k in to_drop_keys})
-    dic = null_dict('enrichment', preprocessing=pre, processing=proc, annotation=annot, to_drop=to_drop, **kwargs)
+    dic = null_dict('enrichment', metric_definition=metrdef, preprocessing=pre, processing=proc, annotation=annot,
+                    to_drop=to_drop, **kwargs)
     return dic
 
 
 def base_enrich(**kwargs):
-    return enr_dict(types=['angular', 'spatial', 'dispersion', 'tortuosity'],
+    return enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
                     bouts=['stride', 'pause', 'turn'],
                     to_keep=['midline', 'contour'], **kwargs)
 

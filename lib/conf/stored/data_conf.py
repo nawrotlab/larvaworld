@@ -1,17 +1,13 @@
 from lib.aux import naming as nam
-from lib.conf.base.dtypes import null_dict, base_enrich, enr_dict, arena
-
-
-def parconf(**kwargs):
-    return null_dict('parameterization', **kwargs)
+from lib.conf.base.dtypes import null_dict, base_enrich, enr_dict, arena, metric_def
 
 
 import_par_confs = {
-    'SchleyerParConf': parconf(rear_vector=(7, 11)),
-    'JovanicParConf': parconf(front_vector=(2, 3), rear_vector=(7, 8)),
-    'PaisiosParConf': parconf(bend='from_vectors', front_vector=(2, 4), rear_vector=(7, 11), point_idx=6),
-    'SinglepointParConf': parconf(bend=None, point_idx=0, scaled_vel_threshold=None),
-    'SimParConf': parconf(),
+    'SchleyerParConf': metric_def(ang= {'rv': (7, 11)}),
+    'JovanicParConf': metric_def(ang= {'fv': (2, 3), 'rv': (7, 8)}),
+    'PaisiosParConf': metric_def(ang= {'b' : 'from_vectors','fv': (2, 4), 'rv': (7, 11)}, sp={'point_idx' : 6}),
+    'SinglepointParConf': metric_def(ang= {'b' :None}, sp={'point_idx' : 0}),
+    'SimParConf': metric_def(),
 }
 
 importformats = [
@@ -38,8 +34,9 @@ importformats = [
             },
             'arena': arena(0.15)
         },
-        'parameterization': parconf(rear_vector=(7, 11)),
-        'enrichment': base_enrich(pre_kws={'filter_f': 2.0, 'drop_collisions': True, 'rescale_by': 0.001}),
+        # 'parameterization': parconf(rear_vector=(7, 11)),
+        'enrichment': base_enrich(pre_kws={'filter_f': 2.0, 'drop_collisions': True, 'rescale_by': 0.001},
+                                  def_kws={'ang': {'rv': (7, 11)}}),
 
     },
     {
@@ -58,9 +55,9 @@ importformats = [
             },
             'arena': arena(0.193, 0.193)
         },
-        'parameterization': parconf(front_vector=(2, 3), rear_vector=(7, 8)),
-        'enrichment': base_enrich(pre_kws={'filter_f': 2.0, 'rescale_by': 0.001, 'transposition': 'arena'})
-
+        # 'parameterization': parconf(front_vector=(2, 3), rear_vector=(7, 8)),
+        'enrichment': base_enrich(pre_kws={'filter_f': 2.0, 'rescale_by': 0.001, 'transposition': 'arena'},
+                                  def_kws={'ang': {'fv': (2, 3), 'rv': (7, 8)}}),
     },
     {
         'id': 'Berni lab',
@@ -81,8 +78,8 @@ importformats = [
             },
             'arena': arena(0.24, 0.24)
         },
-        'parameterization': parconf(bend=None, point_idx=0),
-        'enrichment': enr_dict(pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'})
-
+        # 'parameterization': parconf(bend=None, point_idx=0),
+        'enrichment': enr_dict(pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
+                               def_kws={'ang': {'b': None}, 'sp': {'point_idx': 0}}),
     }
 ]

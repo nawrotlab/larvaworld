@@ -207,9 +207,7 @@ def generate_traj_colors(s, sp_vel=None, ang_vel=None):
     return s
 
 
-def process(s, e, config, mode='minimal', traj_colors=True, show_output=True,
-            types={'angular': True, 'spatial': True, 'source': True, 'dispersion': True, 'tortuosity': True,
-                   'PI': True}, dsp_starts=[0], dsp_stops=[40], tor_durs=[2, 5, 10, 20], **kwargs):
+def process(processing, s, e, config, mode='minimal', traj_colors=True, show_output=True, **kwargs):
     c = {
         's': s,
         'e': e,
@@ -219,26 +217,27 @@ def process(s, e, config, mode='minimal', traj_colors=True, show_output=True,
         'point': config['point'],
         'config': config,
         'mode': mode,
-        # 'aux_dir': f'{config["dir"]}/data/aux.h5',
     }
 
     with suppress_stdout(show_output):
-        if types['angular']:
+        if processing['angular']:
             angular_processing(**c, **kwargs)
-        if types['spatial']:
+        if processing['spatial']:
             spatial_processing(**c, **kwargs)
-        if types['source']:
+        if processing['source']:
             comp_source_metrics(**c, **kwargs)
-        if types['wind']:
-            if types['spatial']:
+        if processing['wind']:
+            if processing['spatial']:
                 comp_wind_metrics(**c, **kwargs)
             else :
                 comp_final_anemotaxis(**c, **kwargs)
-        if types['dispersion'] and type(dsp_starts) == list and type(dsp_stops) == list:
-            comp_dispersion(**c, starts=dsp_starts, stops=dsp_stops, **kwargs)
-        if types['tortuosity'] and type(tor_durs) == list:
-            comp_tortuosity(**c, durs_in_sec=tor_durs, **kwargs)
-        if types['PI']:
+        if processing['dispersion'] :
+        # if processing['dispersion'] and type(dsp_starts) == list and type(dsp_stops) == list:
+            comp_dispersion(**c, **kwargs)
+        if processing['tortuosity'] :
+        # if processing['tortuosity'] and type(tor_durs) == list:
+            comp_tortuosity(**c, **kwargs)
+        if processing['PI']:
             if 'x' in e.keys():
                 px = 'x'
                 xs = e[px].values

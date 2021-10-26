@@ -109,14 +109,6 @@ def nengo_brain(module_shorts, EEB, OD=None):
         f_fr0, f_fr_r = 2.0, (1.0, 3.0)
     else:
         f_fr0, f_fr_r = 0.0, (0.0, 0.0)
-    # print(OD)
-    # if OD is None :
-    #     module_shorts =['L', 'F']
-    #     # olfactor = None
-    # else :
-    #     module_shorts =['LOF']
-        # olfactor = null_dict('olfactor')
-        # olfactor['odor_dict']=OD
     return brain(module_shorts,
                  turner=null_dict('turner', initial_freq=0.3, initial_amp=30.0, noise=1.85, activation_noise=0.8, freq_range=(0.2, 0.4)),
                  crawler=null_dict('crawler', initial_freq=1.5, initial_amp=0.6, freq_range=(1.2, 1.8),
@@ -243,5 +235,3 @@ mod_dict = {
     **RvsS,
     **gamers,
 }
-
-print(mod_dict['nengo_forager']['brain']['olfactor_params'])

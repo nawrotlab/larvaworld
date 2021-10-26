@@ -14,7 +14,7 @@ def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None,
     g = loadConf(datagroup_id, 'Group')
     build_conf = g['tracker']['filesystem']
     data_conf = g['tracker']['resolution']
-    par_conf = g['parameterization']
+    spatial_def = g['enrichment']['metric_definition']['spatial']
     arena_pars = g['tracker']['arena']
     env_params=null_dict('env_conf', arena=arena_pars)
 
@@ -24,7 +24,7 @@ def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None,
     except:
         pass
 
-    d = LarvaDataset(dir=target_dir, id=id, par_conf=par_conf, env_params=env_params,
+    d = LarvaDataset(dir=target_dir, id=id, spatial_def=spatial_def, env_params=env_params,
                      load_data=False, **data_conf)
 
 

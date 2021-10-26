@@ -25,10 +25,10 @@ class LarvaDataset:
             except:
                 print('Data not found. Load them manually.')
 
-    def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0,par_conf=None,  env_params={}, larva_groups={}):
-        if par_conf is None:
+    def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0,spatial_def=None,  env_params={}, larva_groups={}):
+        if spatial_def is None:
             from lib.conf.stored.conf import loadConf
-            par_conf = loadConf('SimParConf', 'Par')
+            spatial_def = loadConf('SimParConf', 'Par')['spatial']
         if os.path.exists(self.dir_dict['conf']):
             self.config = dNl.load_dict(self.dir_dict['conf'], use_pickle=False)
         else:
@@ -58,6 +58,7 @@ class LarvaDataset:
             self.config = {'id': id,
                            'group_id': group_id,
                            'group_ids': group_ids,
+                           'refID':None,
                            'dir': self.dir,
                            'aux_dir': self.dir_dict['aux_h5'],
                            'parent_plot_dir': f'{self.dir}/plots',
@@ -67,7 +68,7 @@ class LarvaDataset:
                            'Ncontour': Ncontour,
                            'sample': sample,
                            'color': color,
-                           **par_conf,
+                           **spatial_def,
                            'env_params': env_params,
                            'larva_groups': larva_groups,
                            'sources': sources,
@@ -236,6 +237,7 @@ class LarvaDataset:
             from lib.conf.stored.conf import saveConf
             if refID is None :
                 refID = f'{self.group_id}.{self.id}'
+            self.config['refID']=refID
             saveConf(self.config, 'Ref', refID)
 
     def save_agents(self, ids=None, pars=None):
@@ -496,11 +498,7 @@ class LarvaDataset:
         self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang)
         self.xy_pars = nam.xy(self.points + self.contour + ['centroid'], flat=True) + nam.xy('')
 
-        try:
-            self.config['point'] = self.points[self.config['point_idx'] - 1]
-        except:
-            self.config['point'] = 'centroid'
-        self.point = self.config['point']
+
 
     def define_paths(self, dir):
         self.dir = dir
@@ -531,6 +529,11 @@ class LarvaDataset:
                 os.makedirs(v, exist_ok=True)
 
     def define_linear_metrics(self):
+        try:
+            self.config['point'] = self.points[self.config['point_idx'] - 1]
+        except:
+            self.config['point'] = 'centroid'
+        self.point = self.config['point']
         self.distance = nam.dst(self.point)
         self.velocity = nam.vel(self.point)
         self.acceleration = nam.acc(self.point)
@@ -538,13 +541,17 @@ class LarvaDataset:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
-    def enrich(self, preprocessing={}, processing={}, annotation={},
+    def enrich(self, metric_definition, preprocessing={}, processing={}, annotation={},
                to_drop={}, recompute=False, mode='minimal',show_output=False, is_last=True, **kwargs):
+        self.config.update(**metric_definition['angular'])
+        self.config.update(**metric_definition['spatial'])
+        self.define_linear_metrics()
         from lib.process.basic import preprocess, process
         from lib.process.bouts import annotate
         print()
         print(f'--- Enriching dataset {self.id} with derived parameters ---')
         warnings.filterwarnings('ignore')
+        md=metric_definition
         c = {
             's': self.step_data,
             'e': self.endpoint_data,
@@ -552,11 +559,12 @@ class LarvaDataset:
             'show_output': show_output,
             'recompute': recompute,
             'mode': mode,
-            'is_last': False
+            'is_last': False,
+            # 'metric_definition' : metric_definition
         }
         preprocess(**preprocessing, **c, **kwargs)
-        process(**processing, **c, **kwargs)
-        annotate(**annotation, **c, **kwargs)
+        process(processing=processing, **c, **kwargs, **md['dispersion'], **md['tortuosity'])
+        annotate(**annotation, **c, **kwargs, **md['stride'], **md['turn'], **md['pause'])
         self.drop_pars(**to_drop, **c)
         if is_last:
             self.save()

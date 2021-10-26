@@ -50,7 +50,7 @@ class Essay:
 
 class RvsS_Essay(Essay):
     def __init__(self, all_figs=False, **kwargs):
-        super().__init__(type='RvsS', enrichment=enr_dict(types=['spatial']),
+        super().__init__(type='RvsS', enrichment=enr_dict(proc=['spatial']),
                          collections=['pose', 'feeder', 'gut'], **kwargs)
         self.exp_dict = {**self.intake_exp(), **self.starvation_exp(),
                          **self.quality_exp(), **self.refeeding_exp(),**self.pathlength_exp()}
@@ -175,7 +175,7 @@ class RvsS_Essay(Essay):
 
 class Patch_Essay(Essay):
     def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], N=5, dur=5.0, **kwargs):
-        super().__init__(type='Patch', enrichment=enr_dict(types=['spatial', 'angular', 'source'],
+        super().__init__(type='Patch', enrichment=enr_dict(proc=['spatial', 'angular', 'source'],
                                                            bouts=['stride', 'pause', 'turn'],
                                                            fits=False, on_food=True),
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)

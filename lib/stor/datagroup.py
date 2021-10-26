@@ -176,7 +176,7 @@ def setParConf(N):
                 'front_body_ratio': fr_ratio,
                 'point_idx': point_idx,
                 'use_component_vel': use_component_vel,
-                'scaled_vel_threshold': scaled_vel_threshold}
+                'vel_threshold': scaled_vel_threshold}
     return par_conf
 
 

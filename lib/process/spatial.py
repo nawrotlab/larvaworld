@@ -254,12 +254,14 @@ def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recom
     return s, e
 
 
-def comp_dispersion(s, e, config, dt, point, recompute=False, starts=[0], stops=[40], **kwargs):
+def comp_dispersion(s, e, config, dt, point, recompute=False, dsp_starts=[0], dsp_stops=[40], **kwargs):
+    if dsp_starts is None or dsp_stops is None :
+        return
     aux_dir = config['aux_dir']
     ids = s.index.unique('AgentID').values
     ps = []
     pps = []
-    for s0, s1 in itertools.product(starts, stops):
+    for s0, s1 in itertools.product(dsp_starts, dsp_stops):
         if s0 == 0 and s1 == 40:
             p = f'dispersion'
         else:
@@ -295,13 +297,15 @@ def comp_dispersion(s, e, config, dt, point, recompute=False, starts=[0], stops=
     print('Dispersions computed')
 
 
-def comp_tortuosity(s, e, dt, durs_in_sec=[2, 5, 10, 20], **kwargs):
+def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
+    if tor_durs is None :
+        return
     try:
         dsp_par = nam.final('dispersion') if nam.final('dispersion') in e.columns else 'dispersion'
         e['tortuosity'] = 1 - e[dsp_par] / e[nam.cum(nam.dst(''))]
     except:
         pass
-    durs = [int(1 / dt * d) for d in durs_in_sec]
+    durs = [int(1 / dt * d) for d in tor_durs]
     Ndurs = len(durs)
     if Ndurs > 0:
         ids = s.index.unique('AgentID').values
@@ -309,7 +313,7 @@ def comp_tortuosity(s, e, dt, durs_in_sec=[2, 5, 10, 20], **kwargs):
         ds = [s[['x', 'y']].xs(id, level='AgentID') for id in ids]
         ds = [d.loc[d.first_valid_index(): d.last_valid_index()].values for d in ds]
         for j, r in enumerate(durs):
-            par = f'tortuosity_{durs_in_sec[j]}'
+            par = f'tortuosity_{tor_durs[j]}'
             par_m, par_s = nam.mean(par), nam.std(par)
             T_m = np.ones(Nids) * np.nan
             T_s = np.ones(Nids) * np.nan

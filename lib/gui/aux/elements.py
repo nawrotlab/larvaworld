@@ -125,7 +125,7 @@ class SingleSpin(sg.Spin):
 
 
 class MultiSpin(sg.Pane):
-    def __init__(self, initial_value, values, key, steps=100, Nspins=4, tuples=False, dtype=float, value_kws={}):
+    def __init__(self, initial_value, values, key, steps=100, Nspins=3, tuples=False, dtype=float, value_kws={}):
         self.value_kws = value_kws
         self.Nspins = Nspins
         self.steps = steps
@@ -237,7 +237,7 @@ class GuiElement:
             self.layout_col_kwargs.update(kwargs)
             return [sg.Col(self.layout, **self.layout_col_kwargs)]
         else:
-            return [[sg.Pane([sg.Col(self.layout)], **kwargs)]]
+            return [[sg.Pane([sg.Col(self.layout)],border_width=8, **kwargs)]]
 
 
 class ProgressBarLayout:
@@ -495,7 +495,7 @@ class NamedList(Header):
                 w0 = int(self.W * w00)
                 col_widths = [w0] + [int(self.W * (1 - w00) / N)] * N
                 l = [Table(values=vs, headings=['Dataset ID'] + self.aux_cols, col_widths=col_widths,
-                           display_row_numbers=True, select_mode=select_mode, **kws)]
+                           display_row_numbers=True, select_mode=select_mode,size=(self.W, self.H), **kws)]
         return l
 
 
@@ -583,8 +583,10 @@ class DataList(NamedList):
                                      **self.tab.gui.get_replay_kwargs(v))
         elif e == f'IMITATE {n}':
             if len(v0) > 0:
+                if d0[kks[0]].config['refID'] is None:
+                    save_ref_window(d0[kks[0]])
                 from lib.conf.stored.conf import imitation_exp
-                exp_conf = imitation_exp(d0[kks[0]].config)
+                exp_conf = imitation_exp(d0[kks[0]].config['refID'])
                 exp_conf['vis_kwargs'] = self.tab.gui.get_vis_kwargs(v)
                 self.tab.imitate(exp_conf)
         elif e == f'ADD_REF {n}':
@@ -835,6 +837,7 @@ def v_layout(k0, args, value_kws0={}):
     #                                    text_kws=text_kws, value_kws=value_kws0)
     #     ii = subdicts[k0].get_layout()
 
+
     v = args['initial_value']
     vs = args['values']
     Ndig = args['Ndigits']
@@ -871,30 +874,37 @@ def v_layout(k0, args, value_kws0={}):
 
 
 class PadDict:
-    def __init__(self, name, type_dict=None, disp_name=None, content=None, layout_pane_kwargs={'border_width': 10},
-                 background_color='green', Ncols=1, subconfs={}, col_idx=None, after_header=None, **kwargs):
+    def __init__(self, name, type_dict=None, disp_name=None, content=None, layout_pane_kwargs={'border_width': 8},
+                 background_color='green', Ncols=1, subconfs={}, col_idx=None,row_idx=None, after_header=None, header_width=None,
+                 **kwargs):
+        # print(name, header_width)
         self.subdicts = {}
         self.subconfs = subconfs
-        if col_idx is not None :
-            Ncols=len(col_idx)
+        if col_idx is not None:
+            Ncols = len(col_idx)
+        if header_width is None:
+            header_width = 18 * Ncols + 6 * (Ncols - 1)
+        # self.header_width=header_width
         if content is None:
             if type_dict is None:
                 type_dict = par_dict(name)
             content = self.build(name, type_dict=type_dict, background_color=background_color, **kwargs)
-        content = self.arrange_content(content, Ncols=Ncols, col_idx=col_idx)
+        content = self.arrange_content(content, Ncols=Ncols, col_idx=col_idx, row_idx=row_idx)
         self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()} if type_dict is not None else None
         if disp_name is None:
             disp_name = name
+
         header = [
-            [sg.T(disp_name.upper(), justification='center', background_color=background_color, border_width=4,
-                  **t_kws(24 * Ncols))]]
+            [sg.T(disp_name.upper(), justification='center', background_color=background_color, border_width=3,
+                  **t_kws(header_width)
+                  )]]
         if after_header is not None:
             header[0] += after_header
         self.layout = header + content
         self.name = name
         self.layout_pane_kwargs = layout_pane_kwargs
 
-    def get_layout(self, as_col=True, **kwargs):
+    def get_layout(self, as_col=True,as_pane=True, **kwargs):
         self.layout_pane_kwargs.update(kwargs)
         return [[sg.Pane([sg.Col(self.layout)], **self.layout_pane_kwargs)]]
 
@@ -927,6 +937,7 @@ class PadDict:
                 subkws = {
                     'text_kws': text_kws,
                     'value_kws': value_kws,
+                    # 'header_width': self.header_width,
                     **kwargs
                 }
                 if k in self.subconfs.keys():
@@ -934,7 +945,8 @@ class PadDict:
                 self.subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'], **subkws)
                 ii = self.subdicts[k0].get_layout()[0]
             else:
-                ii = [sg.T(f'{get_disp_name(k)}:', **text_kws), v_layout(f'{name}_{k}', args, value_kws)]
+                disp = args['disp']
+                ii = [sg.T(f'{get_disp_name(disp)}:', **text_kws), v_layout(f'{name}_{k}', args, value_kws)]
             l.append(ii)
         # if col_idx is not None:
         #     l = [[l[i] for i in idx] for idx in col_idx]
@@ -944,15 +956,41 @@ class PadDict:
         #     l = [[sg.Col(ii, **col_kws) for ii in l]]
         return l
 
-    def arrange_content(self, l, col_idx=None, Ncols=1):
+    def arrange_content(self, l, col_idx=None,row_idx=None, Ncols=1):
         if col_idx is not None:
             l = [[l[i] for i in idx] for idx in col_idx]
             l = [[sg.Col(ii, **col_kws) for ii in l]]
+        elif row_idx is not None:
+            l = [[l[i] for i in idx] for idx in row_idx]
+            # l = [[sg.Col(*l, **col_kws)]]
         elif Ncols > 1:
             l = group_list_by_n([*l], int(np.ceil(len(l) / Ncols)))
             l = [[sg.Col(ii, **col_kws) for ii in l]]
         return l
 
+    def update(self, w, dict, use_prefix=True):
+        if dict is not None:
+            prefix = self.name if use_prefix else None
+            self.update_window(w, dict, prefix=prefix)
+        return w
+
+    def update_window(self, w, dic, prefix=None):
+        if dic is not None:
+            for k, v in dic.items():
+                if prefix is not None:
+                    k = f'{prefix}_{k}'
+                if type(v) == bool:
+                    b = w[f'TOGGLE_{k}']
+                    if isinstance(b, BoolButton):
+                        b.set_state(v)
+                elif type(v) == dict:
+                    self.update_window(w, v, prefix=k if prefix is not None else None)
+                elif isinstance(w[k], MultiSpin) or isinstance(w[k], SingleSpin):
+                    w[k].update(v)
+                elif v is None:
+                    w.Element(k).Update(value='')
+                else:
+                    w.Element(k).Update(value=v)
 
 class CollapsibleDict(Collapsible):
     def __init__(self, name, dict_name=None, type_dict=None, value_kws={}, text_kws={}, as_entry=None,
@@ -981,6 +1019,7 @@ class CollapsibleDict(Collapsible):
         else:
             d = {}
             for k, t in self.dtypes.items():
+                # print(k,t)
                 k0 = f'{self.name}_{k}'
                 if t == bool:
                     d[k] = w[f'TOGGLE_{k0}'].get_state()
@@ -989,6 +1028,7 @@ class CollapsibleDict(Collapsible):
                 elif t == dict or type(t) == dict:
                     d[k] = self.subdicts[k0].get_dict(v, w)
                 else:
+                    # print(k,t,k0,v[k0])
                     d[k] = retrieve_value(v[k0], t)
             if self.as_entry is None:
                 return d
