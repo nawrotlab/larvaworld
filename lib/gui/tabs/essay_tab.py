@@ -2,8 +2,8 @@ import os
 
 from lib.conf.base.dtypes import null_dict
 
-from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, ButtonGraphList
-from lib.gui.aux.functions import gui_cols
+from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, ButtonGraphList, PadDict
+from lib.gui.aux.functions import gui_cols, t_kws, col_size
 from lib.gui.tabs.tab import GuiTab
 from lib.sim.single.single_run import run_essay
 from lib.sim.single.analysis import essay_analysis
@@ -15,19 +15,21 @@ class EssayTab(GuiTab):
         super().__init__(**kwargs)
         self.essay_exps_key = 'Essay_experiments'
         self.exp_figures_key = 'Essay_exp_figures'
-        self.canvas_size = (1000, 500)
 
     def build(self):
-        s1 = CollapsibleDict('essay_params', disp_name='Configuration')
+        kws={'list_size' : (25,15), 'canvas_size' : col_size(x_frac=0.5, y_frac=0.4), 'tab' : self}
+        s1 = PadDict('essay_params', disp_name='Configuration', background_color='orange', text_kws=t_kws(10),
+                     header_width=25)
+        # s1 = CollapsibleDict('essay_params', disp_name='Configuration')
         sl1 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'])
-        dl1 = DataList(self.essay_exps_key, tab=self, buttons=['run'], select_mode=None)
-        g1 = GraphList(self.name, tab=self, list_header='Simulated', canvas_size=self.canvas_size)
-        g2 = ButtonGraphList(self.exp_figures_key, tab=self, list_header='Observed',
-                             canvas_size=self.canvas_size, fig_dict={},
+        dl1 = DataList(self.essay_exps_key, tab=self, buttons=['run'], select_mode=None, size=(24,10))
+        g1 = GraphList(self.name, list_header='Simulated', **kws)
+        g2 = ButtonGraphList(self.exp_figures_key, list_header='Observed',fig_dict={}, **kws,
                              buttons=['browse_figs'],button_args={'browse_figs': {'target': (2, -1)}}
                              )
 
-        l = gui_cols(cols=[[sl1, s1, dl1], [g1.canvas, g2.canvas], [g1, g2]], x_fracs=[0.2, 0.6, 0.2])
+        l = gui_cols(cols=[[sl1, s1, dl1], [g1.canvas, g2.canvas], [g1, g2]], x_fracs=[0.2, 0.55, 0.25],
+                     as_pane=True, pad=(20,10))
 
         return l, s1.get_subdicts(), {g1.name: g1, g2.name: g2}, {self.name: {'fig_dict': {}}}
 

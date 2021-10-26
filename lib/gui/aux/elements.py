@@ -1088,7 +1088,7 @@ class Table(sg.Table):
 class GraphList(NamedList):
     def __init__(self, name, tab, fig_dict={}, next_to_header=None, default_values=None, canvas_size=(1000, 800),
                  list_size=None, list_header='Graphs', auto_eval=True, canvas_kws={'background_color': 'Lightblue'},
-                 graph=False, subsample=1):
+                 graph=False, subsample=1, **kwargs):
 
         self.tab = tab
         self.tab.graphlists[name] = self
@@ -1106,7 +1106,7 @@ class GraphList(NamedList):
                       'header_text_kws': t_kws(10), 'single_line': False}
         default_value = default_values[0] if default_values is not None else None
         super().__init__(name=name, key=self.list_key, choices=values, default_value=default_value, drop_down=False,
-                         size=list_size, header_kws=header_kws, auto_size_text=True)
+                         size=list_size, header_kws=header_kws, auto_size_text=True, **kwargs)
 
         self.canvas_size = canvas_size
         self.canvas_key = f'{name}_CANVAS'

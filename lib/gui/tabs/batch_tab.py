@@ -8,7 +8,8 @@ import PySimpleGUI as sg
 # sys.path.insert(0, '..')
 from lib.aux.combining import render_mpl_table
 from lib.conf.base.dtypes import null_dict
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, GraphList, CollapsibleTable, SelectionList, DataList
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, GraphList, CollapsibleTable, SelectionList, DataList, \
+    PadDict
 from lib.gui.aux.functions import t_kws, gui_cols
 from lib.gui.aux.buttons import named_bool_button
 
@@ -80,9 +81,12 @@ class BatchTab(GuiTab):
                       named_bool_button('Save data', False, toggle_name='save_hdf5'),
                       ]
         s0 = Collapsible(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration')
+        # s0 = PadDict(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration')
+        # s1 = PadDict('batch_methods')
         s1 = CollapsibleDict('batch_methods')
 
         s2 = CollapsibleDict('optimization', toggle=True, disabled=True)
+        # s2 = PadDict('optimization')
         s3 = CollapsibleTable('space_search', index='Parameter', heading_dict={'Range': 'range', 'N': 'Ngrid'},
                               dict_name='space_search_par', state=True)
         g1 = GraphList(self.name, tab=self)
@@ -91,6 +95,7 @@ class BatchTab(GuiTab):
         dl2 = DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active batch-runs')
 
         l = gui_cols(cols=[[sl2, sl1, s0, s1, s2, s3, dl2, dl1], [g1.canvas], [g1]], x_fracs=[0.2, 0.6, 0.2])
+        # l = gui_cols(cols=[[sl2, sl1, s0, s1, s2, s3, dl2, dl1], [g1.canvas], [g1]], x_fracs=[0.2, 0.6, 0.2], as_pane=True)
 
         c = {}
         for s in [s0, s1, s2, s3]:
