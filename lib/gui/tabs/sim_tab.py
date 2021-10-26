@@ -57,9 +57,9 @@ class SimTab(GuiTab):
         s1 = CollapsibleTable('larva_groups', buttons=['add', 'remove'], index='Group ID', col_widths=[10, 3, 7, 10],
                               heading_dict={'N': 'distribution.N', 'color': 'default_color', 'model': 'model'},
                               dict_name='LarvaGroup', state=True, num_rows=6)
-        tab1 = EnvTab(name='environment', gui=self.gui, conftype='Env')
-        tab1_l, tab1_c, tab1_g, tab1_d = tab1.build()
-        sl1 = tab1.selectionlists[tab1.conftype]
+        self.envtab = EnvTab(name='environment', gui=self.gui, conftype='Env')
+        tab1_l, tab1_c, tab1_g, tab1_d = self.envtab.build()
+        sl1 = self.envtab.selectionlists[self.envtab.conftype]
 
         s2 = CollapsibleTable('trials', buttons=['add', 'remove'], index='idx', col_widths=[3, 4, 4, 5, 8],
                               heading_dict={'start': 'start', 'stop': 'stop', 'quality': 'substrate.quality',
@@ -77,7 +77,7 @@ class SimTab(GuiTab):
 
         ll3 = gui_col([c1, c2, s2], x_frac=0.25, as_pane=True)
         # ll2 = gui_col([s1, tab1], x_frac=0.2)
-        l1 = [tab1.layout[0]+[ll3]]
+        l1 = [self.envtab.layout[0]+[ll3]]
         # ll2 = sg.Col([tab1.get_layout(as_col=False)[0]], **col_kws, size=col_size(x_frac=0.25))
         # l1=[[ll2,ll3]]
 
@@ -85,7 +85,7 @@ class SimTab(GuiTab):
         for i in [c1, c2, s2, s1]:
             c.update(i.get_subdicts())
         c.update(**tab1_c)
-        l0 = gui_col([sl4, sl3, s1, c['arena']], x_frac=0.25, as_pane=True, pad=(10,10))
+        l0 = gui_col([sl4, sl3, s1, c['arena']], x_frac=0.2, as_pane=True, pad=(10,10))
         return l0, l1, c, {}, {}
 
     def update(self, w, c, conf, id):
@@ -99,6 +99,7 @@ class SimTab(GuiTab):
 
     def get(self, w, v, c, as_entry=True):
         conf = {
+
             'sim_params': c['sim_params'].get_dict(v, w),
             'collections': [k for k in output_keys if c['output'].get_dict(v, w)[k]],
             'enrichment': self.current_conf(v)['enrichment'],
@@ -107,6 +108,8 @@ class SimTab(GuiTab):
         return conf
 
     def run(self, v, w, c, d, g, conf, id):
+        conf['env_params'] = self.envtab.get(w, v, c, as_entry=False)
+        print(conf['env_params'])
         N = conf['sim_params']['duration'] * 60 / conf['sim_params']['timestep']
         p = self.base_list.progressbar
         p.run(w, max=N)

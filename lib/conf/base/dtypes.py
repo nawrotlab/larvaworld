@@ -253,9 +253,9 @@ def init_pars():
     },
         'xy': {'t': Tuple[float], 'v': (0.0, 0.0), 'min': -1.0, 'max': 1.0},
         'odor': {
-            'odor_id': {'t': str},
-            'odor_intensity': {'max': 10.0},
-            'odor_spread': {'max': 10.0}
+            'odor_id': {'t': str, 'disp': 'ID'},
+            'odor_intensity': {'max': 10.0, 'disp' :'C peak (μmole)'},
+            'odor_spread': {'max': 10.0, 'disp' : 'spread'}
         },
 
         'odorscape': {'odorscape': {'t': str, 'v': 'Gaussian', 'vs': ['Gaussian', 'Diffusion']},
@@ -472,7 +472,7 @@ def init_pars():
     d['food'] = {
         'radius': {'v': 0.003, 'max': 0.1, 'dv': 0.001},
         'amount': {'v': 0.0, 'max': 1.0},
-        'can_be_carried': bF,
+        'can_be_carried': {**bF, 'disp' : 'carriable'},
         **d['substrate']
     }
     d['food_grid'] = {
@@ -629,7 +629,7 @@ def init_pars():
 
     d['larva_distro'] = {
         **d['spatial_distro'],
-        'orientation_range': {'t': Tuple[float], 'v': (0.0, 360.0), 'min': 0.0, 'max': 360.0, 'dv': 1.0}
+        'orientation_range': {'t': Tuple[float], 'v': (0.0, 360.0), 'min': 0.0, 'max': 360.0, 'dv': 1.0, 'disp' : 'heading'}
     }
 
     d['larva_model'] = {'t': str, 'v': 'explorer', 'vs': kConfDict('Model')}

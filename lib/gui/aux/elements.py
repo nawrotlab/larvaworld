@@ -854,7 +854,8 @@ def v_layout(k0, args, value_kws0={}):
     elif t == List[str]:
         temp = sg.In(v, key=k0, **value_kws)
     else:
-
+        if Ndig is not None:
+            value_kws['size'] = (Ndig, 1)
         spin_kws = {
             'values': vs,
             'initial_value': v,
@@ -912,7 +913,7 @@ def combo_layout(name, title, dic, **kwargs) :
 class PadDict:
     def __init__(self, name, dict_name=None, type_dict=None, disp_name=None, content=None,toggle=None, disabled=False,
                  layout_pane_kwargs={'border_width': 8},
-                 background_color='green', Ncols=1, subconfs={}, col_idx=None,row_idx=None, after_header=None, header_width=None,
+                 background_color=None, Ncols=1, subconfs={}, col_idx=None,row_idx=None, after_header=None, header_width=None,
                  **kwargs):
         # print(name, header_width)
         self.toggle = toggle

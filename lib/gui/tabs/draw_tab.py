@@ -10,7 +10,7 @@ import lib.aux.xy_aux
 import lib.conf.base.dtypes
 import lib.gui.aux.functions
 from lib.conf.base.dtypes import null_dict
-from lib.gui.aux.elements import CollapsibleDict, GraphList
+from lib.gui.aux.elements import CollapsibleDict, GraphList, PadDict
 from lib.gui.aux.functions import col_kws, t_kws
 from lib.gui.aux.buttons import color_pick_layout
 from lib.gui.tabs.tab import GuiTab
@@ -83,9 +83,11 @@ class DrawTab(GuiTab):
         g, g0, D, DN, Dm, Ds, s, s0 = self.group_ks(n0)
         o, o0, oM, oS = self.odor_ks(n0)
 
-        s1 = CollapsibleDict(D, default=True, toggle=False, disabled=True, disp_name='Distribution')
+        s1 = PadDict(D, toggle=False, disabled=True, disp_name='Distribution', value_kws=t_kws(12), text_kws=t_kws(8), header_width=14)
+        # s1 = CollapsibleDict(D, default=True, toggle=False, disabled=True, disp_name='Distribution', state=True)
 
-        s2 = CollapsibleDict(o, default=True, toggle=False, disp_name='Odor', dict_name='odor')
+        s2 = PadDict(o, toggle=False, disp_name='Odor', dict_name='odor', value_kws=t_kws(12), text_kws=t_kws(8), header_width=14)
+        # s2 = CollapsibleDict(o, default=True, toggle=False, disp_name='Odor', dict_name='odor', state=True)
 
         for ss in [s1, s2]:
             c.update(ss.get_subdicts())
@@ -96,8 +98,8 @@ class DrawTab(GuiTab):
              [sg.T('', **t_kws(2)), sg.R('group ID', 2, disabled=True, k=g, enable_events=True, **t_kws(5)),
               sg.In(k=g0)],
 
-             [sg.T('', **t_kws(5)), *s1.get_layout()],
-             [sg.T('', **t_kws(5)), *s2.get_layout()]]
+             [sg.T('', **t_kws(2)), *s1.get_layout()[0]],
+             [sg.T('', **t_kws(2)), *s2.get_layout()[0]]]
         return l, c
 
     def build(self):
@@ -119,7 +121,8 @@ class DrawTab(GuiTab):
             'P2': None,
         }
         c = {}
-        s2 = CollapsibleDict('food', toggle=False)
+        s2 = PadDict('food', toggle=False, value_kws=t_kws(12), text_kws=t_kws(8), header_width=14)
+        # s2 = CollapsibleDict('food', toggle=False, state=True)
 
         c.update(s2.get_subdicts())
         source_l, c = self.add_agent_layout(S, 'green', c)
@@ -129,16 +132,17 @@ class DrawTab(GuiTab):
               [sg.R('Move item', 1, True, k='-MOVE-', enable_events=True)],
               [sg.R('Inspect item', 1, True, k='-INSPECT-', enable_events=True)]]
         lB = [[sg.R(f'Add {B}', 1, k=B, enable_events=True, **t_kws(10)), *color_pick_layout(B, 'black')],
-              [sg.T('', **t_kws(4)), sg.T('id', **t_kws(5)), sg.In(B, k=f'{B}_id')],
-              [sg.T('', **t_kws(4)), sg.T('width', **t_kws(5)),
+              [sg.T('', **t_kws(2)), sg.T('id', **t_kws(5)), sg.In(B, k=f'{B}_id')],
+              [sg.T('', **t_kws(2)), sg.T('width', **t_kws(5)),
                sg.Spin(values=np.arange(0.1, 1000, 0.1).tolist(), initial_value=0.001, k=f'{B}_width')],
               ]
         lS = [*source_l,
-              [sg.T('', **t_kws(5)), *s2.get_layout()],
-              [sg.T('', **t_kws(5)), sg.T('shape', **t_kws(5)),
+              [sg.T('', **t_kws(2)), *s2.get_layout()[0]],
+              [sg.T('', **t_kws(2)), sg.T('shape', **t_kws(5)),
                sg.Combo(['rect', 'circle'], default_value='circle', k=f'{S}_shape', enable_events=True, readonly=True)]]
 
-        col2 = sg.Col([[sg.Col(ll, pad=(10, 10))] for ll in [lL, lS, lB, lI]], **col_kws)
+        col2 = sg.Col([[sg.Pane([sg.Col(ll, **col_kws)], border_width=8, pad=(10,10))] for ll in [lL, lB, lI]])
+        col3=sg.Col([[sg.Pane([sg.Col(lS, **col_kws)], border_width=8, pad=(10,10))]], **col_kws)
         g1 = GraphList(self.name, tab=self, graph=True, canvas_size=self.canvas_size, canvas_kws={
             'graph_bottom_left': (0, 0),
             'graph_top_right': self.canvas_size,
@@ -148,11 +152,11 @@ class DrawTab(GuiTab):
         })
 
         col1 = [
-            g1.canvas.get_layout(as_pane=True, pad=(10,10))[0],
+            g1.canvas.get_layout(as_pane=True, pad=(0,10))[0],
             [sg.T('Hints : '), sg.T('', k='info', **t_kws(40))],
             [sg.T('Actions : '), sg.T('', k='out', **t_kws(40))],
         ]
-        l = [[sg.Col(col1, pad=(10,10),**col_kws), col2]]
+        l = [[sg.Col(col1,**col_kws), col2, col3]]
 
         self.graph = g1.canvas_element
 
@@ -246,12 +250,10 @@ class DrawTab(GuiTab):
                                 temp = np.max(np.abs(np.array(p2) - np.array(p1)))
                                 w['food_radius'].update(value=temp / self.s)
                                 dic['sample_pars'] = {'default_color': color,
-                                                      **c['food'].get_dict(v, w, check_toggle=False),
-                                                      'odor': c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False),
+                                                      **c['food'].get_dict(v, w),
+                                                      'odor': c[f'{o}_ODOR'].get_dict(v, w),
                                                       }
                                 if v[f'{o}_single']:
-                                    # dic['current'] = su(id=v[f'{o}_id'], group=v[f'{o}_group_id'], pos=P1, c=color,
-                                    #                     o=c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False))
                                     dic['current'] = {v[f'{o}_id']: {
                                         'group': v[f'{o}_group_id'],
                                         'pos': P1,
@@ -263,8 +265,7 @@ class DrawTab(GuiTab):
                             elif v[f'{o}_group']:
                                 self.update_window_distro(v, w, o)
                                 temp_dic = {
-                                    # 'model': model,
-                                    'distribution': c[f'{S}_DISTRO'].get_dict(v, w, check_toggle=False),
+                                    'distribution': c[f'{S}_DISTRO'].get_dict(v, w),
                                     **dic['sample_pars']
                                 }
                                 dic['current'] = {v[f'{S}_group_id']: null_dict('SourceGroup', **temp_dic)}
@@ -274,11 +275,11 @@ class DrawTab(GuiTab):
                             o = L
                             color = v[f'{o}_color']
                             sample_larva_pars = {'default_color': color,
-                                                 'odor': c[f'{o}_ODOR'].get_dict(v, w, check_toggle=False),
+                                                 'odor': c[f'{o}_ODOR'].get_dict(v, w),
                                                  }
                             if v[f'{o}_group']:
                                 self.update_window_distro(v, w, o)
-                                temp = c[f'{o}_DISTRO'].get_dict(v, w, check_toggle=False)
+                                temp = c[f'{o}_DISTRO'].get_dict(v, w)
                                 model = temp['model']
                                 temp.pop('model')
                                 temp_dic = {

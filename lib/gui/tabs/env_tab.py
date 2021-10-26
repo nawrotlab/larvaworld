@@ -24,9 +24,11 @@ class EnvTab(GuiTab):
     def get(self, w, v, c, as_entry=False):
         return {
             'food_params': {n: c[n].get_dict(v, w) for n in [self.Sg, self.Su, 'food_grid']},
-            **{n: c[n].get_dict(v, w) for n in [self.Bg, 'arena', 'odorscape']}
+            **{n: c[n].get_dict(v, w) for n in [self.Bg, 'arena', 'odorscape']},
+            'windscape' : None
             # **{n: c[n].get_dict(v, w) for n in [self.Lg, self.Bg, 'arena', 'odorscape']}
         }
+
 
     def build(self):
         s2 = CollapsibleTable(self.Sg, dict_name='SourceGroup', state=True, index='Group ID',
