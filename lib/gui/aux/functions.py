@@ -160,16 +160,21 @@ def gui_cols(cols, x_fracs=None, y_fracs=None,**kwargs) :
     return [ls]
 
 
-def gui_row(element_list, x_frac=1.0, y_frac=0.5,x_fracs=None,as_pane=False, **kwargs):
+def gui_row(element_list, x_frac=1.0, y_frac=0.5,x_fracs=None,as_pane=False,pad=None, **kwargs):
     N=len(element_list)
     if x_fracs is None :
         x_fracs=[x_frac/N]*N
-    if not as_pane :
-        return [sg.Col(e, **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs) for e, x in zip(element_list, x_fracs)]
-    else :
-        return [sg.Col(e.get_layout(as_pane=True), **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs) for e, x in
-                zip(element_list, x_fracs)]
-    # return l
+    l=[]
+    for e, x in zip(element_list, x_fracs) :
+        if not as_pane :
+            ll=sg.Col(e, **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs)
+        else :
+            try :
+                ll=sg.Col(e.get_layout(as_pane=True), **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs)
+            except :
+                ll = sg.Col([[sg.Pane([sg.Col(e)], pad=pad, border_width=8)]], **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs)
+        l.append(ll)
+    return l
 
 def gui_rowNcol(element_list, x_fracs, y_fracs, as_pane=False) :
     l=[]

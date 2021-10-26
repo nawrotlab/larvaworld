@@ -755,13 +755,14 @@ class DEB:
 
 
 def deb_default(id='DEB model', epochs={}, age=None, **kwargs):
-    # print(epochs)
     deb = DEB(id=id, simulation=False, use_gut=False, **kwargs)
     N=len(epochs)
     if N==0 :
         epochs={0:null_dict('epoch', start=0.0, stop=None)}
-    elif epochs[str(N-1)]['stop'] is not None:
+    elif str(N-1) in epochs.keys() and epochs[str(N-1)]['stop'] is not None:
         epochs.update({N : null_dict('epoch', start=epochs[str(N-1)]['stop'], stop=None)})
+    elif N-1 in epochs.keys() and epochs[N-1]['stop'] is not None:
+        epochs.update({N : null_dict('epoch', start=epochs[N-1]['stop'], stop=None)})
     deb.grow_larva(epochs=epochs, age=age)
     deb.finalize_dict()
     d = deb.return_dict()

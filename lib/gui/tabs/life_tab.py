@@ -38,10 +38,10 @@ class LifeTab(GuiTab):
                      ]
         sg.theme('LightGreen')
         ep = self.ep
-        y = 0.5
+        y = 0.55
         x1 = 0.2
         x2 = 0.8
-        r1_size = col_size(x_frac=1 - x1, y_frac=y)
+        r1_size = col_size(x_frac=1 - x1-0.05, y_frac=y-0.05)
 
         sl0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
 
@@ -62,19 +62,20 @@ class LifeTab(GuiTab):
 
         after_header = [GraphButton('Button_Add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
                         GraphButton('Button_Remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.')]
-        content = [Table(headings=[self.s0, self.s1, 'quality', 'type'], col_widths=[5,5,6,7], key=self.K, num_rows=0)]
+        content = [Table(headings=[self.s0, self.s1, 'quality', 'type'], col_widths=[5,5,6,7], key=self.K, num_rows=8)]
         l_tab = Header('Epochs', text=f'{ep.capitalize()}s (h)', header_text_kws=t_kws(18),
-                       after_header=after_header, single_line=False, content=content).layout
+                       after_header=after_header, single_line=False, content=content)
 
         g1 = GraphList(self.name, tab=self, fig_dict={m: plot_debs for m in deb_modes}, default_values=['reserve'],
                        canvas_size=r1_size, list_header='DEB parameters', auto_eval=False)
-
-        l0 = gui_col([sl0, g1], x1, y)
-        l3 = gui_col([g1.canvas], 1 - x1, y)
+        pane_kws={'as_pane': True, 'pad': (20,20)}
+        l0 = gui_col([sl0, g1], x1, y, **pane_kws)
+        l3 = gui_col([g1.canvas], 1 - x1, y, **pane_kws)
 
         l = [
             [l0, l3],
-            gui_row([l_tab, l1, l2, sub.get_layout(as_col=False)], y_frac=1 - y, x_fracs=[1 - x2, x2 / 3, x2 / 3, x2 / 3]),
+            gui_row([l_tab, l1, l2, sub], y_frac=1 - y, x_fracs=[1 - x2, x2 / 3, x2 / 3, x2 / 3], **pane_kws),
+            # gui_row([l_tab, l1, l2, sub.get_layout(as_col=False)], y_frac=1 - y, x_fracs=[1 - x2, x2 / 3, x2 / 3, x2 / 3]),
         ]
 
         return l, {sub.name: sub}, {g1.name: g1}, {}

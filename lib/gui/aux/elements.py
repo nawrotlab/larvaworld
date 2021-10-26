@@ -1103,7 +1103,7 @@ class GraphList(NamedList):
             list_size = (default_list_width, h)
 
         header_kws = {'text': list_header, 'after_header': next_to_header,
-                      'header_text_kws': t_kws(10), 'single_line': False}
+                      'header_text_kws': t_kws(14), 'single_line': False}
         default_value = default_values[0] if default_values is not None else None
         super().__init__(name=name, key=self.list_key, choices=values, default_value=default_value, drop_down=False,
                          size=list_size, header_kws=header_kws, auto_size_text=True, **kwargs)
