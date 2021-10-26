@@ -737,7 +737,7 @@ class Collapsible(HeadedElement, GuiElement):
 
 class CollapsibleTable(Collapsible):
     def __init__(self, name, index=None, dict_name=None, heading_dict={}, dict={},
-                 buttons=[], button_args={}, col_widths=None, **kwargs):
+                 buttons=[], button_args={}, col_widths=None,num_rows=1, **kwargs):
         if dict_name is None:
             dict_name = name
         if index is None:
@@ -772,7 +772,7 @@ class CollapsibleTable(Collapsible):
                     col_widths.append(10)
         after_header = button_row(name, buttons, button_args)
         content = [[Table(values=self.data, headings=[index] + self.headings,
-                          def_col_width=7, key=self.key, num_rows=max([1, len(self.data)]),
+                          def_col_width=7, key=self.key, num_rows=max([num_rows, len(self.data)]),
                           col_widths=col_widths, visible_column_map=col_visible)]]
         super().__init__(name, content=content, next_to_header=after_header, **kwargs)
 

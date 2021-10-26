@@ -10,7 +10,7 @@ from lib.aux.combining import render_mpl_table
 from lib.conf.base.dtypes import null_dict
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, GraphList, CollapsibleTable, SelectionList, DataList, \
     PadDict
-from lib.gui.aux.functions import t_kws, gui_cols
+from lib.gui.aux.functions import t_kws, gui_cols, default_list_width, col_size
 from lib.gui.aux.buttons import named_bool_button
 
 from lib.conf.stored.conf import loadConf, next_idx
@@ -72,6 +72,7 @@ class BatchTab(GuiTab):
         return copy.deepcopy(conf)
 
     def build(self):
+        kws = {'background_color': 'pink', 'text_kws' : t_kws(10)}
         kA, kS = self.k_active, self.k_stored
         d = {kA: {}, kS: {}}
 
@@ -80,21 +81,21 @@ class BatchTab(GuiTab):
         batch_conf = [[sg.T('Batch id:', **t_kws(8)), sg.In('unnamed_batch_0', k=self.batch_id_key, **t_kws(16))],
                       named_bool_button('Save data', False, toggle_name='save_hdf5'),
                       ]
-        s0 = Collapsible(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration')
-        # s0 = PadDict(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration')
-        # s1 = PadDict('batch_methods')
-        s1 = CollapsibleDict('batch_methods')
+        # s0 = Collapsible(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration')
+        s0 = PadDict(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration', **kws)
+        s1 = PadDict('batch_methods',value_kws=t_kws(13), **kws)
+        # s1 = CollapsibleDict('batch_methods')
 
-        s2 = CollapsibleDict('optimization', toggle=True, disabled=True)
-        # s2 = PadDict('optimization')
+        # s2 = CollapsibleDict('optimization', toggle=True, disabled=True)
+        s2 = PadDict('optimization', toggle=True, disabled=True, **kws)
         s3 = CollapsibleTable('space_search', index='Parameter', heading_dict={'Range': 'range', 'N': 'Ngrid'},
-                              dict_name='space_search_par', state=True)
-        g1 = GraphList(self.name, tab=self)
+                              dict_name='space_search_par', state=True, col_widths=[12,8,4], num_rows=5)
+        g1 = GraphList(self.name, tab=self, canvas_size=col_size(0.5,0.8))
 
-        dl1 = DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Stored batch-runs')
-        dl2 = DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active batch-runs')
+        dl1 = DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Stored batch-runs', size=(default_list_width, 5))
+        dl2 = DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active batch-runs', size=(default_list_width, 5))
 
-        l = gui_cols(cols=[[sl2, sl1, s0, s1, s2, s3, dl2, dl1], [g1.canvas], [g1]], x_fracs=[0.2, 0.6, 0.2])
+        l = gui_cols(cols=[[sl2, sl1, dl2, dl1, g1],[s0, s1, s2, s3], [g1.canvas]], x_fracs=[0.20, 0.22, 0.55], as_pane=True, pad=(20,10))
         # l = gui_cols(cols=[[sl2, sl1, s0, s1, s2, s3, dl2, dl1], [g1.canvas], [g1]], x_fracs=[0.2, 0.6, 0.2], as_pane=True)
 
         c = {}
