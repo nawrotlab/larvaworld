@@ -7,8 +7,8 @@ import time
 import pandas as pd
 
 from lib.conf.base.dtypes import null_dict
-from lib.gui.tabs import intro_tab, model_tab, life_tab, sim_tab, batch_tab, essay_tab, import_tab, \
-    analysis_tab, video_tab, tutorial_tab, settings_tab
+from lib.gui.tabs import intro_tab, life_tab, sim_tab, batch_tab, essay_tab, import_tab, \
+    analysis_tab, video_tab, tutorial_tab, settings_tab, model_tab
 from lib.conf.base import paths
 from lib.gui.aux.functions import col_size, window_size, w_kws
 

@@ -3,7 +3,7 @@ import inspect
 import os
 import tkinter
 from tkinter import PhotoImage
-from typing import Tuple, List
+from typing import Tuple, List, Any
 import numpy as np
 import PySimpleGUI as sg
 from matplotlib import ticker
@@ -872,12 +872,52 @@ def v_layout(k0, args, value_kws0={}):
             temp = SingleSpin(**spin_kws)
     return temp
 
+def combo_layout(name, title, dic, **kwargs) :
+    d={p : [] for p in ['mu', 'std', 'r', 'noise']}
+    for k, args in dic.items():
+        kws={
+            'values': args['values'],
+
+            'key': f'{name}_{k}',
+            **kwargs
+        }
+        spin_kws = {
+            'initial_value': args['initial_value'],
+            'dtype': base_dtype(args['dtype']),
+            'value_kws': t_kws(5),
+            **kws
+        }
+        disp=args['disp']
+        if disp in ['initial', 'mean'] :
+            d['mu']=[sg.T(f'{disp}:', **t_kws(5)), SingleSpin(**spin_kws)]
+        elif disp in ['noise'] :
+            d['noise']=[sg.T(f'{disp}:', **t_kws(5)), SingleSpin(**spin_kws)]
+        elif disp in ['std'] :
+            d['std']=[sg.T(f'{disp}:', **t_kws(3)), SingleSpin(**spin_kws)]
+        elif disp in ['range'] :
+            d['r']=[sg.T(f'{disp}:', **t_kws(5)), MultiSpin(**spin_kws, Nspins=2)]
+        elif disp in ['name'] :
+            d['name']=[sg.T(f'{title}:', **t_kws(6)), sg.Combo(**kws, default_value=args['initial_value'], enable_events=True, readonly=True, **t_kws(10))]
+        elif disp in ['fit'] :
+            d['fit']=BoolButton(kws['key'], args['initial_value'])
+    if 'name' in d.keys() :
+        ii=d['name']
+    else :
+        ii=[sg.T(f'{title}', **t_kws(20), justification='center',font = ('Helvetica', 10, 'bold'))]
+    if 'fit' in d.keys() :
+        ii.append(d['fit'])
+    l = [sg.Col([ii, d['mu'] + d['std'] + d['noise'], d['r']], vertical_alignment=True)]
+    return [sg.Pane(l, border_width=4)]
 
 class PadDict:
-    def __init__(self, name, type_dict=None, disp_name=None, content=None, layout_pane_kwargs={'border_width': 8},
+    def __init__(self, name, type_dict=None, disp_name=None, content=None,toggle=None, disabled=False,
+                 layout_pane_kwargs={'border_width': 8},
                  background_color='green', Ncols=1, subconfs={}, col_idx=None,row_idx=None, after_header=None, header_width=None,
                  **kwargs):
         # print(name, header_width)
+        self.toggle = toggle
+        self.disabled = disabled
+        self.toggle_key = f'TOGGLE_{name}'
         self.subdicts = {}
         self.subconfs = subconfs
         if col_idx is not None:
@@ -900,6 +940,8 @@ class PadDict:
                   )]]
         if after_header is not None:
             header[0] += after_header
+        if toggle is not None :
+            header[0]+=[BoolButton(name, toggle, disabled)]
         self.layout = header + content
         self.name = name
         self.layout_pane_kwargs = layout_pane_kwargs
@@ -929,11 +971,14 @@ class PadDict:
         return d
 
     def build(self, name, type_dict=None, text_kws={}, value_kws={}, **kwargs):
-
+        combos={}
         l = []
         for k, args in type_dict.items():
+
             if args['dtype'] == dict:
+
                 k0 = f'{name}_{k}'
+                # print(k0)
                 subkws = {
                     'text_kws': text_kws,
                     'value_kws': value_kws,
@@ -944,10 +989,19 @@ class PadDict:
                     subkws.update(self.subconfs[k])
                 self.subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'], **subkws)
                 ii = self.subdicts[k0].get_layout()[0]
+            elif args['combo'] is not None :
+                if args['combo'] not in combos.keys():
+                    combos[args['combo']]={}
+                combos[args['combo']].update({k: args})
+                continue
             else:
                 disp = args['disp']
                 ii = [sg.T(f'{get_disp_name(disp)}:', **text_kws), v_layout(f'{name}_{k}', args, value_kws)]
             l.append(ii)
+
+        for title, dic in combos.items():
+            # print(name, title, dic)
+            l.append(combo_layout(name, title, dic))
         # if col_idx is not None:
         #     l = [[l[i] for i in idx] for idx in col_idx]
         #     l = [[sg.Col(ii, **col_kws) for ii in l]]
@@ -972,6 +1026,15 @@ class PadDict:
         if dict is not None:
             prefix = self.name if use_prefix else None
             self.update_window(w, dict, prefix=prefix)
+            try :
+                self.enable(w)
+            except :
+                pass
+        else :
+            try :
+                self.disable(w)
+            except :
+                pass
         return w
 
     def update_window(self, w, dic, prefix=None):
@@ -991,6 +1054,14 @@ class PadDict:
                     w.Element(k).Update(value='')
                 else:
                     w.Element(k).Update(value=v)
+
+    def disable(self, w):
+        if self.toggle is not None:
+            w[self.toggle_key].set_state(disabled=True)
+
+    def enable(self, w):
+        if self.toggle is not None:
+            w[self.toggle_key].set_state(disabled=False)
 
 class CollapsibleDict(Collapsible):
     def __init__(self, name, dict_name=None, type_dict=None, value_kws={}, text_kws={}, as_entry=None,

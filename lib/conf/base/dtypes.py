@@ -27,7 +27,7 @@ def base_dtype(t):
 
 
 def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', s='',
-        argparser=False):
+        combo=None, argparser=False):
     if not argparser:
         cur_dtype = base_dtype(t)
         if cur_dtype in [float, int]:
@@ -55,7 +55,7 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
         if aux_vs is not None and vs is not None:
             vs += aux_vs
         d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t,
-             'disp': disp if disp is not None else name}
+             'disp': disp if disp is not None else name, 'combo' : combo}
 
         return {name: d}
     else:
@@ -80,6 +80,7 @@ def par_dict(name, d0=None, **kwargs):
     if d0 is None:
         d0 = init_pars()[name]
     d = {}
+    # print(name,d0)
     for n, v in d0.items():
         try:
             entry = par(n, **v, **kwargs)
@@ -230,16 +231,26 @@ def init_pars():
     from lib.conf.stored.conf import kConfDict
     bF, bT = {'t': bool, 'v': False}, {'t': bool, 'v': True}
 
-    bout_dist_dtypes = {
-        'fit': bT,
-        'range': {'t': Tuple[float], 'max': 100.0},
-        'name': {'t': str,
-                 'vs': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy', 'normal', 'uniform']},
-        'mu': {'max': 10.0},
-        'sigma': {'max': 10.0},
-    }
+    # bout_dist_dtypes = {
+    #     'fit': {**bT, 'combo': 'distro'},
+    #     'range': {'t': Tuple[float], 'max': 100.0, 'combo': 'distro'},
+    #     'name': {'t': str,
+    #              'vs': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy', 'normal', 'uniform'],
+    #              'combo': 'distro'},
+    #     'mu': {'max': 10.0, 'disp': 'mean', 'combo': 'distro'},
+    #     'sigma': {'max': 10.0, 'disp': 'std', 'combo': 'distro'},
+    # }
 
     d = {
+        'bout_distro': {
+        'fit': {**bT, 'combo': 'distro'},
+        'range': {'t': Tuple[float], 'max': 100.0, 'combo': 'distro'},
+        'name': {'t': str,
+                 'vs': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy', 'normal', 'uniform'],
+                 'combo': 'distro'},
+        'mu': {'max': 10.0, 'disp': 'mean', 'combo': 'distro'},
+        'sigma': {'max': 10.0, 'disp': 'std', 'combo': 'distro'},
+    },
         'xy': {'t': Tuple[float], 'v': (0.0, 0.0), 'min': -1.0, 'max': 1.0},
         'odor': {
             'odor_id': {'t': str},
@@ -286,8 +297,8 @@ def init_pars():
                          'ranges': {'t': List[Tuple[float]], 'max': 100.0, 'min': -100.0, 'dv': 1.0,
                                     'h': 'The range of the parameters for space search', 's': 'ss.ranges'},
                          'Ngrid': {'t': int, 'max': 100, 'h': 'The number of steps for space search', 's': 'ss.Ngrid'}},
-        'body': {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample']},
-                 'length_std': {'v': 0.0004, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample']},
+        'body': {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp' : 'initial', 'combo' : 'length'},
+                 'length_std': {'v': 0.0004, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp' : 'std', 'combo' : 'length'},
                  'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12},
                  'seg_ratio': {'max': 1.0},  # [5 / 11, 6 / 11]
                  'touch_sensors': {'t': int, 'min': 0, 'max': 8},
@@ -311,41 +322,32 @@ def init_pars():
                        'DEB_dt': {'max': 1.0},
                        'species': {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter']}},
         'crawler': {'waveform': {'t': str, 'v': 'realistic', 'vs': ['realistic', 'square', 'gaussian', 'constant']},
-                    'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5), 'max': 2.0},
-                    'initial_freq': {'v': 1.418, 'max': 10.0, 'aux_vs': ['sample']},  # From D1 fit
-                    'freq_std': {'v': 0.184, 'max': 1.0},  # From D1 fit
-                    'step_to_length_mu': {'v': 0.224, 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample']},
+                    'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5), 'max': 2.0, 'disp' : 'range', 'combo' : 'frequency'},
+                    'initial_freq': {'v': 1.418, 'max': 10.0, 'aux_vs': ['sample'], 'disp' : 'initial', 'combo' : 'frequency'},  # From D1 fit
+                    'freq_std': {'v': 0.184, 'max': 1.0, 'disp' : 'std', 'combo' : 'frequency'},  # From D1 fit
+                    'step_to_length_mu': {'v': 0.224, 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample'], 'disp' : 'mean', 'combo' : 'scaled distance / stride'},
                     # From D1 fit
-                    'step_to_length_std': {'v': 0.033, 'max': 1.0, 'aux_vs': ['sample']},  # From D1 fit
-                    'initial_amp': {'max': 2.0},
-                    'noise': {'v': 0.1, 'max': 1.0, 'dv': 0.01},
+                    'step_to_length_std': {'v': 0.033, 'max': 1.0, 'aux_vs': ['sample'], 'disp' : 'std', 'combo' : 'scaled distance / stride'},  # From D1 fit
+                    'initial_amp': {'max': 2.0, 'disp' : 'initial', 'combo' : 'amplitude'},
+                    'noise': {'v': 0.1, 'max': 1.0, 'dv': 0.01, 'disp' : 'noise', 'combo' : 'amplitude'},
                     'max_vel_phase': {'v': 1.0, 'max': 2.0}
                     },
         'turner': {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal']},
-                   'base_activation': {'v': 20.0, 'max': 100.0, 'dv': 1.0},
-                   'activation_range': {'t': Tuple[float], 'v': (10.0, 40.0), 'max': 100.0, 'dv': 1.0},
-                   'noise': {'v': 0.15, 'max': 10.0},
-                   'activation_noise': {'v': 0.5, 'max': 10.0},
-                   'initial_amp': {'max': 20.0},
-                   'amp_range': {'t': Tuple[float], 'max': 20.0},
-                   'initial_freq': {'max': 2.0},
-                   'freq_range': {'t': Tuple[float], 'max': 2.0},
+                   'base_activation': {'v': 20.0, 'max': 100.0, 'dv': 1.0, 'disp' : 'mean', 'combo' : 'activation'},
+                   'activation_range': {'t': Tuple[float], 'v': (10.0, 40.0), 'max': 100.0, 'dv': 1.0, 'disp' : 'range', 'combo' : 'activation'},
+                   'noise': {'v': 0.15, 'max': 10.0, 'disp' : 'noise', 'combo' : 'amplitude'},
+                   'activation_noise': {'v': 0.5, 'max': 10.0, 'disp' : 'noise', 'combo' : 'activation'},
+                   'initial_amp': {'max': 20.0, 'disp' : 'initial', 'combo' : 'amplitude'},
+                   'amp_range': {'t': Tuple[float], 'max': 20.0, 'disp' : 'range', 'combo' : 'amplitude'},
+                   'initial_freq': {'max': 2.0, 'disp' : 'initial', 'combo' : 'frequency'},
+                   'freq_range': {'t': Tuple[float], 'max': 2.0, 'disp' : 'range', 'combo' : 'frequency'},
                    },
         'interference': {
             'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0},  # np.pi * 0.55,  # 0.9, #,
             'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0},
             'attenuation': {'v': 1.0, 'max': 1.0}
         },
-        'intermitter': {
-            'pause_dist': bout_dist_dtypes,
-            'stridechain_dist': bout_dist_dtypes,
-            'crawl_bouts': bT,
-            'feed_bouts': bF,
-            'crawl_freq': {'v': 1.43, 'max': 2.0, 'dv': 0.01},
-            'feed_freq': {'v': 2.0, 'max': 4.0, 'dv': 0.01},
-            'feeder_reoccurence_rate': {'max': 1.0},
-            'EEB_decay': {'v': 1.0, 'max': 2.0},
-            'EEB': {'v': 0.0, 'max': 1.0}},
+
         'olfactor': {
             'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear', 'null']},
             'input_noise': {'v': 0.0, 'max': 1.0},
@@ -365,12 +367,12 @@ def init_pars():
             'state_specific_best': bT,
             'brute_force': bT,
             'initial_gain': {'v': -10.0, 'min': -100.0, 'max': 100.0}},
-        'feeder': {'freq_range': {'t': Tuple[float], 'v': (1.0, 3.0), 'max': 4.0},
-                   'initial_freq': {'v': 2.0, 'max': 4.0},
+        'feeder': {'freq_range': {'t': Tuple[float], 'v': (1.0, 3.0), 'max': 4.0, 'disp' : 'range', 'combo' : 'frequency'},
+                   'initial_freq': {'v': 2.0, 'max': 4.0, 'disp' : 'initial', 'combo' : 'frequency'},
                    'feed_radius': {'v': 0.1, 'max': 10.0},
                    'V_bite': {'v': 0.001, 'max': 0.01, 'dv': 0.0001}},
         'memory': {'Delta': {'v': 0.1, 'max': 10.0},
-                   'state_spacePerSide': {'t': int, 'v': 0, 'max': 20},
+                   'state_spacePerSide': {'t': int, 'v': 0, 'max': 20, 'disp' : 'state space dim'},
                    'gain_space': {'t': List[float], 'v': [-300.0, -50.0, 50.0, 300.0], 'min': 1000.0, 'max': 1000.0,
                                   'dv': 1.0},
                    'update_dt': {'v': 1.0, 'max': 10.0, 'dv': 1.0},
@@ -444,6 +446,18 @@ def init_pars():
         },
         # 'substrate': {k: {'v': v, 'max': 1000.0, 'dv': 5.0} for k, v in substrate_dict['standard'].items()},
         'output': {n: bF for n in output_keys}
+    }
+
+    d['intermitter']= {
+        'stridechain_dist': d['bout_distro'],
+        'pause_dist': d['bout_distro'],
+        'crawl_bouts': bT,
+        'feed_bouts': bF,
+        'crawl_freq': {'v': 1.43, 'max': 2.0, 'dv': 0.01},
+        'feed_freq': {'v': 2.0, 'max': 4.0, 'dv': 0.01},
+        'feeder_reoccurence_rate': {'max': 1.0, 'disp': 'feed reoccurence'},
+        'EEB_decay': {'v': 1.0, 'max': 2.0},
+        'EEB': {'v': 0.0, 'max': 1.0},
     }
 
     d['substrate_composition'] = {n: {'v': 0.0, 'max': 10.0} for n in
