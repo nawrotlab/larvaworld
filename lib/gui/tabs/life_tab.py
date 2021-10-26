@@ -63,7 +63,7 @@ class LifeTab(GuiTab):
         after_header = [GraphButton('Button_Add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
                         GraphButton('Button_Remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.')]
         content = [Table(headings=[self.s0, self.s1, 'quality', 'type'], col_widths=[5,5,6,7], key=self.K, num_rows=8)]
-        l_tab = Header('Epochs', text=f'{ep.capitalize()}s (h)', header_text_kws=t_kws(18),
+        l_tab = Header('Epochs', text=f'{ep.capitalize()}s (h)', text_kws=t_kws(18),
                        after_header=after_header, single_line=False, content=content)
 
         g1 = GraphList(self.name, tab=self, fig_dict={m: plot_debs for m in deb_modes}, default_values=['reserve'],

@@ -71,9 +71,10 @@ class SettingsTab(GuiTab):
         return d
 
     def build(self):
+        kws = {'background_color': self.Cvis, 'header_width' : 55, 'Ncols' : 2, 'text_kws' : t_kws(14), 'value_kws' : t_kws(12)}
         c = {}
-        c1 = PadDict('visualization', Ncols=2, value_kws=t_kws(8), text_kws=t_kws(14), header_width=55)
-        c2 = PadDict('replay',Ncols=2, text_kws=t_kws(12), header_width=55)
+        c1 = PadDict('visualization',**kws)
+        c2 = PadDict('replay',**kws)
         c3, d = self.build_controls_collapsible(c)
         for s in [c1, c2, c3]:
             c.update(s.get_subdicts())

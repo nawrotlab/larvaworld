@@ -1,5 +1,5 @@
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, SelectionList, PadDict
-from lib.gui.aux.functions import gui_col, gui_cols
+from lib.gui.aux.elements import CollapsibleTable, SelectionList, PadDict
+from lib.gui.aux.functions import gui_cols
 from lib.gui.aux.buttons import GraphButton
 from lib.gui.tabs.tab import GuiTab
 
@@ -26,7 +26,6 @@ class EnvTab(GuiTab):
             'food_params': {n: c[n].get_dict(v, w) for n in [self.Sg, self.Su, 'food_grid']},
             **{n: c[n].get_dict(v, w) for n in [self.Bg, 'arena', 'odorscape']},
             'windscape' : None
-            # **{n: c[n].get_dict(v, w) for n in [self.Lg, self.Bg, 'arena', 'odorscape']}
         }
 
 
