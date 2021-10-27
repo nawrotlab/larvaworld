@@ -243,18 +243,18 @@ def init_pars():
         },
         'xy': {'t': Tuple[float], 'v': (0.0, 0.0), 'min': -1.0, 'max': 1.0},
         'odor': {
-            'odor_id': {'t': str, 'disp': 'ID'},
-            'odor_intensity': {'max': 10.0, 'disp': 'C peak (μmole)'},
-            'odor_spread': {'max': 10.0, 'disp': 'spread'}
+            'odor_id': {'t': str, 'disp': 'ID','h': 'The unique ID of the odorant'},
+            'odor_intensity': {'max': 10.0, 'disp': 'C peak (μmole)','h': 'The peak concentration of the odorant in micromoles'},
+            'odor_spread': {'max': 10.0, 'disp': 'spread','h': 'The spread of the concentration gradient around the peak'}
         },
 
-        'odorscape': {'odorscape': {'t': str, 'v': 'Gaussian', 'vs': ['Gaussian', 'Diffusion']},
-                      'grid_dims': {'t': Tuple[int], 'min': 10, 'max': 100},
-                      'evap_const': {'max': 1.0},
-                      'gaussian_sigma': {'t': Tuple[float], 'max': 1.0}
+        'odorscape': {'odorscape': {'t': str, 'v': 'Gaussian', 'vs': ['Gaussian', 'Diffusion'],'h': 'The algorithm used for odorscape generation'},
+                      'grid_dims': {'t': Tuple[int], 'min': 10, 'max': 100,'h': 'The odorscape grid resolution'},
+                      'evap_const': {'max': 1.0,'h': 'The evaporation constant of the diffusion algorithm'},
+                      'gaussian_sigma': {'t': Tuple[float], 'max': 1.0,'h': 'The sigma of the gaussian difusion algorithm'}
                       },
-        'windscape': {'wind_direction': {'t': float, 'min': 0.0, 'max': 360.0, 'dv': 1.0},
-                      'wind_speed': {'t': float, 'min': 0.0, 'max': 100.0, 'dv': 1.0},
+        'windscape': {'wind_direction': {'t': float, 'min': 0.0, 'max': 360.0, 'dv': 1.0,'h': 'The absolute polar direction of the wind/air puff'},
+                      'wind_speed': {'t': float, 'min': 0.0, 'max': 100.0, 'dv': 1.0,'h': 'The speed of the wind/air puff'},
                       },
         'odor_gains': {
             'unique_id': {'t': str},
@@ -262,15 +262,15 @@ def init_pars():
             'std': {'max': 10.0, 'dv': 1.0}
         },
         'optimization': {
-            'fit_par': {'t': str},
-            'minimize': bT,
-            'threshold': {'v': 0.001, 'max': 0.01, 'dv': 0.0001},
-            'max_Nsims': {'t': int, 'v': 7, 'max': 100},
-            'Nbest': {'t': int, 'v': 3, 'max': 10},
+            'fit_par': {'t': str,'h': 'The utility parameter optimized'},
+            'minimize': {**bT,'h': 'Whether to minimize or maximize the utility parameter'},
+            'threshold': {'v': 0.001, 'max': 0.01, 'dv': 0.0001,'h': 'The utility threshold to reach before terminating the batch-run'},
+            'max_Nsims': {'t': int, 'v': 7, 'max': 100,'h': 'The maximum number of single runs before terminating the batch-run'},
+            'Nbest': {'t': int, 'v': 3, 'max': 10,'h': 'The number of best parameter combinations to use for generating the next generation'},
             'operations': {
-                'mean': bT,
-                'std': bF,
-                'abs': bF
+                'mean': {**bT, 'h': 'Whether to use the mean of the utility across individuals'},
+                'std': {**bF, 'h': 'Whether to use the standard deviation of the utility across individuals'},
+                'abs': {**bF, 'h': 'Whether to use the absolute value of the utility'}
             },
         },
         'batch_methods': {
@@ -288,21 +288,21 @@ def init_pars():
                                     'h': 'The range of the parameters for space search', 's': 'ss.ranges'},
                          'Ngrid': {'t': int, 'max': 100, 'h': 'The number of steps for space search', 's': 'ss.Ngrid'}},
         'body': {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'initial',
-                                    'combo': 'length'},
+                                    'combo': 'length','h': 'The initial body length'},
                  'length_std': {'v': 0.0004, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'std',
-                                'combo': 'length'},
-                 'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12},
-                 'seg_ratio': {'max': 1.0},  # [5 / 11, 6 / 11]
-                 'touch_sensors': {'t': int, 'min': 0, 'max': 8},
+                                'combo': 'length','h': 'The standard deviation of the initial body length'},
+                 'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12,'h': 'The number of segments comprising the larva body'},
+                 'seg_ratio': {'max': 1.0,'h': 'The length ratio of the body segments. If null, equal-length segments are generated'},  # [5 / 11, 6 / 11]
+                 'touch_sensors': {'t': int, 'min': 0, 'max': 8,'h': 'The number of touch sensors existing on the larva body'},
                  },
-        'arena': {'arena_dims': {'t': Tuple[float], 'v': (0.1, 0.1), 'max': 1.0, 'dv': 0.01, 'disp': 'X,Y (m)'},
-                  'arena_shape': {'t': str, 'v': 'circular', 'vs': ['circular', 'rectangular'], 'disp': 'shape'}
+        'arena': {'arena_dims': {'t': Tuple[float], 'v': (0.1, 0.1), 'max': 1.0, 'dv': 0.01, 'disp': 'X,Y (m)','h': 'The arena dimensions in meters'},
+                  'arena_shape': {'t': str, 'v': 'circular', 'vs': ['circular', 'rectangular'], 'disp': 'shape','h': 'The arena shape'}
                   },
         'physics': {
-            'torque_coef': {'v': 0.41, 'max': 5.0, 'dv': 0.01},
-            'ang_damping': {'v': 2.5, 'max': 10.0},
-            'body_spring_k': {'v': 0.02, 'max': 1.0, 'dv': 0.01},
-            'bend_correction_coef': {'v': 1.4, 'max': 10.0},
+            'torque_coef': {'v': 0.41, 'max': 5.0, 'dv': 0.01,'h': 'The coefficient converting the lateral oscillator (TURNER) activity to bending torque'},
+            'ang_damping': {'v': 2.5, 'max': 10.0,'h': 'The environmental angular damping exerted on bending angular velocity'},
+            'body_spring_k': {'v': 0.02, 'max': 1.0, 'dv': 0.01,'h': 'The torsional spring constant of the larva body restoring the bending angle to 0'},
+            'bend_correction_coef': {'v': 1.4, 'max': 10.0,'h': 'The correction coefficient restoring the bending angle during forward motion by aligning the rear body segments to the front heading axis'},
         },
         'energetics': {'species': {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype','h': 'The phenotype/species-specific fitted DEB model to use'},
                        'f_decay': {'v': 0.1, 'max': 1.0, 'dv': 0.1,'h': 'The exponential decay coefficient of the DEB functional response'},
