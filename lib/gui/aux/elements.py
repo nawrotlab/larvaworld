@@ -237,7 +237,7 @@ class GuiElement:
             self.layout_col_kwargs.update(kwargs)
             return [sg.Col(self.layout, **self.layout_col_kwargs)]
         else:
-            return [[sg.Pane([sg.Col(self.layout)],border_width=8, **kwargs)]]
+            return [[sg.Pane([sg.Col(self.layout)], border_width=8, **kwargs)]]
 
 
 class ProgressBarLayout:
@@ -299,7 +299,7 @@ class SelectionList(GuiElement):
         self.disp = disp
         # print(disp)
 
-        self.progressbar = ProgressBarLayout(self, size=(self.width-16, 20)) if progress else None
+        self.progressbar = ProgressBarLayout(self, size=(self.width - 16, 20)) if progress else None
         self.k0 = f'{self.conftype}_CONF'
         if idx is not None:
             self.k = f'{self.k0}{idx}'
@@ -494,7 +494,7 @@ class NamedList(Header):
                 w0 = int(self.W * w00)
                 col_widths = [w0] + [int(self.W * (1 - w00) / N)] * N
                 l = [Table(values=vs, headings=['Dataset ID'] + self.aux_cols, col_widths=col_widths,
-                           display_row_numbers=True, select_mode=select_mode,size=(self.W, self.H), **kws)]
+                           display_row_numbers=True, select_mode=select_mode, size=(self.W, self.H), **kws)]
         return l
 
 
@@ -736,7 +736,7 @@ class Collapsible(HeadedElement, GuiElement):
 
 class CollapsibleTable(Collapsible):
     def __init__(self, name, index=None, dict_name=None, heading_dict={}, dict={},
-                 buttons=[], button_args={}, col_widths=None,num_rows=1, **kwargs):
+                 buttons=[], button_args={}, col_widths=None, num_rows=1, **kwargs):
         if dict_name is None:
             dict_name = name
         if index is None:
@@ -795,7 +795,7 @@ class CollapsibleTable(Collapsible):
         else:
             row_cols = None
         w[self.key].update(values=self.data, num_rows=len(self.data), row_colors=row_cols)
-        if self.auto_open :
+        if self.auto_open:
             self.open(w) if len(self.dict) > 0 else self.close(w)
 
     def get_dict(self, *args, **kwargs):
@@ -832,12 +832,6 @@ class CollapsibleTable(Collapsible):
 
 def v_layout(k0, args, value_kws0={}):
     t = args['dtype']
-    # if t == dict:
-    #     subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'],
-    #                                    text_kws=text_kws, value_kws=value_kws0)
-    #     ii = subdicts[k0].get_layout()
-
-
     v = args['initial_value']
     vs = args['values']
     Ndig = args['Ndigits']
@@ -873,10 +867,11 @@ def v_layout(k0, args, value_kws0={}):
             temp = SingleSpin(**spin_kws)
     return temp
 
-def combo_layout(name, title, dic, **kwargs) :
-    d={p : [] for p in ['mu', 'std', 'r', 'noise']}
+
+def combo_layout(name, title, dic, **kwargs):
+    d = {p: [] for p in ['mu', 'std', 'r', 'noise']}
     for k, args in dic.items():
-        kws={
+        kws = {
             'values': args['values'],
 
             'key': f'{name}_{k}',
@@ -888,32 +883,36 @@ def combo_layout(name, title, dic, **kwargs) :
             'value_kws': t_kws(5),
             **kws
         }
-        disp=args['disp']
-        if disp in ['initial', 'mean'] :
-            d['mu']=[sg.T(f'{disp}:', **t_kws(5)), SingleSpin(**spin_kws)]
-        elif disp in ['noise'] :
-            d['noise']=[sg.T(f'{disp}:', **t_kws(5)), SingleSpin(**spin_kws)]
-        elif disp in ['std'] :
-            d['std']=[sg.T(f'{disp}:', **t_kws(3)), SingleSpin(**spin_kws)]
-        elif disp in ['range'] :
-            d['r']=[sg.T(f'{disp}:', **t_kws(5)), MultiSpin(**spin_kws, Nspins=2)]
-        elif disp in ['name'] :
-            d['name']=[sg.T(f'{title}:', **t_kws(6)), sg.Combo(**kws, default_value=args['initial_value'], enable_events=True, readonly=True, **t_kws(10))]
-        elif disp in ['fit'] :
-            d['fit']=BoolButton(kws['key'], args['initial_value'])
-    if 'name' in d.keys() :
-        ii=d['name']
-    else :
-        ii=[sg.T(f'{title}', **t_kws(20), justification='center',font = ('Helvetica', 10, 'bold'))]
-    if 'fit' in d.keys() :
+        disp = args['disp']
+        if disp in ['initial', 'mean']:
+            d['mu'] = [sg.T(f'{disp}:', **t_kws(5)), SingleSpin(**spin_kws)]
+        elif disp in ['noise']:
+            d['noise'] = [sg.T(f'{disp}:', **t_kws(5)), SingleSpin(**spin_kws)]
+        elif disp in ['std']:
+            d['std'] = [sg.T(f'{disp}:', **t_kws(3)), SingleSpin(**spin_kws)]
+        elif disp in ['range']:
+            d['r'] = [sg.T(f'{disp}:', **t_kws(5)), MultiSpin(**spin_kws, Nspins=2)]
+        elif disp in ['name']:
+            d['name'] = [sg.T(f'{title}:', **t_kws(6)),
+                         sg.Combo(**kws, default_value=args['initial_value'], enable_events=True, readonly=True,
+                                  **t_kws(10))]
+        elif disp in ['fit']:
+            d['fit'] = BoolButton(kws['key'], args['initial_value'])
+    if 'name' in d.keys():
+        ii = d['name']
+    else:
+        ii = [sg.T(f'{title}', **t_kws(20), justification='center', font=('Helvetica', 10, 'bold'))]
+    if 'fit' in d.keys():
         ii.append(d['fit'])
     l = [sg.Col([ii, d['mu'] + d['std'] + d['noise'], d['r']], vertical_alignment=True)]
     return [sg.Pane(l, border_width=4)]
 
+
 class PadDict:
-    def __init__(self, name, dict_name=None, type_dict=None, disp_name=None, content=None,toggle=None, disabled=False,
+    def __init__(self, name, dict_name=None, type_dict=None, disp_name=None, content=None, toggle=None, disabled=False,
                  layout_pane_kwargs={'border_width': 8},
-                 background_color=None, Ncols=1, subconfs={}, col_idx=None,row_idx=None, after_header=None, header_width=None,
+                 background_color=None, Ncols=1, subconfs={}, col_idx=None, row_idx=None, after_header=None,
+                 header_width=None,
                  **kwargs):
         # print(name, header_width)
         self.toggle = toggle
@@ -941,14 +940,14 @@ class PadDict:
                   )]]
         if after_header is not None:
             header[0] += after_header
-        if toggle is not None :
-            header[0]+=[BoolButton(name, toggle, disabled)]
+        if toggle is not None:
+            header[0] += [BoolButton(name, toggle, disabled)]
         self.layout = header + content
         self.name = name
         self.layout_pane_kwargs = layout_pane_kwargs
 
-    def get_layout(self, as_col=True,as_pane=True, **kwargs):
-        kws=copy.deepcopy(self.layout_pane_kwargs)
+    def get_layout(self, as_col=True, as_pane=True, **kwargs):
+        kws = copy.deepcopy(self.layout_pane_kwargs)
         kws.update(kwargs)
         return [[sg.Pane([sg.Col(self.layout)], **kws)]]
 
@@ -973,14 +972,11 @@ class PadDict:
         return d
 
     def build(self, name, type_dict=None, text_kws={}, value_kws={}, **kwargs):
-        combos={}
+        combos = {}
         l = []
         for k, args in type_dict.items():
-
             if args['dtype'] == dict:
-
                 k0 = f'{name}_{k}'
-                # print(k0)
                 subkws = {
                     'text_kws': text_kws,
                     'value_kws': value_kws,
@@ -991,28 +987,22 @@ class PadDict:
                     subkws.update(self.subconfs[k])
                 self.subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'], **subkws)
                 ii = self.subdicts[k0].get_layout()[0]
-            elif args['combo'] is not None :
+            elif args['combo'] is not None:
                 if args['combo'] not in combos.keys():
-                    combos[args['combo']]={}
+                    combos[args['combo']] = {}
                 combos[args['combo']].update({k: args})
                 continue
             else:
                 disp = args['disp']
-                ii = [sg.T(f'{get_disp_name(disp)}:', **text_kws), v_layout(f'{name}_{k}', args, value_kws)]
+                ii = [sg.T(f'{get_disp_name(disp)}:', tooltip=args['tooltip'], **text_kws),
+                      v_layout(f'{name}_{k}', args, value_kws)]
             l.append(ii)
 
         for title, dic in combos.items():
-            # print(name, title, dic)
             l.append(combo_layout(name, title, dic))
-        # if col_idx is not None:
-        #     l = [[l[i] for i in idx] for idx in col_idx]
-        #     l = [[sg.Col(ii, **col_kws) for ii in l]]
-        # elif Ncols > 1:
-        #     l = group_list_by_n([*l], int(np.ceil(len(l) / Ncols)))
-        #     l = [[sg.Col(ii, **col_kws) for ii in l]]
         return l
 
-    def arrange_content(self, l, col_idx=None,row_idx=None, Ncols=1):
+    def arrange_content(self, l, col_idx=None, row_idx=None, Ncols=1):
         if col_idx is not None:
             l = [[l[i] for i in idx] for idx in col_idx]
             l = [[sg.Col(ii, **col_kws) for ii in l]]
@@ -1028,14 +1018,14 @@ class PadDict:
         if dict is not None:
             prefix = self.name if use_prefix else None
             self.update_window(w, dict, prefix=prefix)
-            try :
+            try:
                 self.enable(w)
-            except :
+            except:
                 pass
-        else :
-            try :
+        else:
+            try:
                 self.disable(w)
-            except :
+            except:
                 pass
         return w
 
@@ -1064,6 +1054,7 @@ class PadDict:
     def enable(self, w):
         if self.toggle is not None:
             w[self.toggle_key].set_state(disabled=False)
+
 
 class CollapsibleDict(Collapsible):
     def __init__(self, name, dict_name=None, type_dict=None, value_kws={}, text_kws={}, as_entry=None,

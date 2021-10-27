@@ -79,6 +79,7 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
 
 def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, min_duration_in_sec=0.0,
                   match_ids=True,**kwargs):
+    print('Initializing format-specific dataset import...')
     pref=f'{source_dir}/{dataset.id}'
     temp_step_path = f'{pref}_step.csv'
     temp_length_path = f'{pref}_length.csv'
@@ -112,7 +113,7 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, min_duratio
 
         xcs = pd.read_csv(f'{pref}_x_contour.txt', header=None, sep='\t')
         ycs = pd.read_csv(f'{pref}_y_contour.txt', header=None, sep='\t')
-        xcs,ycs= lib.anal.process.aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
+        xcs,ycs= lib.process.aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
         xcs=pd.DataFrame(xcs, columns=xc_pars, index=None)
         ycs=pd.DataFrame(ycs, columns=yc_pars, index=None)
 
@@ -142,7 +143,6 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, min_duratio
         ls = []
         for id in agent_ids:
             data = temp.loc[id]
-            # data = temp.xs(id)
             t = data['Step'].values
             t0 = int((t[0] - min_t) * fr)
             t1 = t0 + len(t)
@@ -152,16 +152,12 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, min_duratio
             starts.append(t0)
             stops.append(t1)
 
-
-
-        # for id in agent_ids:
-        #     ag_temp = temp.loc[id]
             xy = data[nam.xy(d.points, flat=True)].values
             spinelength = np.zeros(len(data)) * np.nan
             for j in range(xy.shape[0]):
-                k = lib.aux.par_aux.sum(np.diff(np.array(lib.aux.dictsNlists.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
-                if not np.isnan(lib.aux.par_aux.sum(k)):
-                    sp_l = lib.aux.par_aux.sum([np.sqrt(kk) for kk in k])
+                k = np.sum(np.diff(np.array(lib.aux.dictsNlists.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
+                if not np.isnan(np.sum(k)):
+                    sp_l = np.sum([np.sqrt(kk) for kk in k])
                 else:
                     sp_l = np.nan
                 spinelength[j] = sp_l
@@ -195,9 +191,6 @@ def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, min_duratio
     if 'state' in temp.columns:
         columns.append('state')
     step = pd.DataFrame(temp, index=my_index, columns=columns)
-    # step.update(temp)
-
-    # print(end)
     if max_Nagents is not None:
         selected = end.nlargest(max_Nagents, 'num_ticks').index.values
         step = step.loc[(slice(None), selected), :]

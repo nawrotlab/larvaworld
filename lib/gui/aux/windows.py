@@ -3,6 +3,7 @@ import operator
 import os
 
 import PySimpleGUI as sg
+from PySimpleGUI import TITLE_LOCATION_TOP
 
 from lib.aux.dictsNlists import flatten_list
 from lib.aux.colsNstr import remove_prefix, remove_suffix
@@ -244,7 +245,7 @@ def save_ref_window(d):
 
 def import_window(datagroup_id, raw_dic):
     from lib.gui.tabs.gui import check_togglesNcollapsibles
-    from lib.gui.aux.elements import CollapsibleDict
+    from lib.gui.aux.elements import PadDict
     g = loadConf(datagroup_id, 'Group')
     group_dir = f'{paths.path("DATA")}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
@@ -262,10 +263,10 @@ def import_window(datagroup_id, raw_dic):
         return proc_dir
     w_size = (1200, 800)
     h_kws = {'font': ('Helvetica', 8, 'bold'), 'justification': 'center', **t_kws(30)}
-    l00 = [sg.T('Group ID :', **t_kws(8)), sg.In(default_text=groupID0, k='import_group_id', **t_kws(20)),
-           *named_bool_button(name=M, state=False, toggle_name=None),
-           *named_bool_button(name=E, state=False, toggle_name=None, disabled=False),
-           sg.Ok(), sg.Cancel()]
+    l00 = sg.Col([[sg.T('Group ID :', **t_kws(8)), sg.In(default_text=groupID0, k='import_group_id', **t_kws(20))],
+           [*named_bool_button(name=M, state=False, toggle_name=None),
+           *named_bool_button(name=E, state=False, toggle_name=None, disabled=False)],
+           [sg.Ok(), sg.Cancel()]])
 
     l01 = [sg.Col([[sg.T('RAW DATASETS', **h_kws), sg.T(**t_kws(8)), sg.T('NEW DATASETS', **h_kws)],
                    *[[sg.T(id, **t_kws(30)), sg.T('  -->  ', **t_kws(8)), sg.In(id, k=f'new_{id}', **t_kws(30))] for id
@@ -273,11 +274,15 @@ def import_window(datagroup_id, raw_dic):
                   vertical_scroll_only=True, scrollable=True, expand_y=True, vertical_alignment='top',
                   size=col_size(y_frac=0.4, win_size=w_size))]
 
-    s1 = CollapsibleDict('build_conf', disp_name='Configuration', text_kws=t_kws(20), state=True)
+    s1 = PadDict('build_conf', disp_name='Configuration', text_kws=t_kws(20), header_width=30, background_color='purple')
+
+    l2=[[sg.Frame(title='Options', layout=[[sg.Col(s1.layout), l00]], title_color='green',background_color='blue',
+                  border_width=8, pad=(40,40),element_justification='center', title_location=TITLE_LOCATION_TOP)]]
+
     c = {}
     for s in [s1]:
         c.update(**s.get_subdicts())
-    l = [l01, l00, s1.get_layout()]
+    l = [l01, l2]
     w = sg.Window('Build new datasets from raw files', l, size=w_size)
     while True:
         e, v = w.read()

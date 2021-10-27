@@ -24,13 +24,13 @@ Tno_noise = null_dict('turner', activation_noise=0.0, noise=0.0)
 
 Ccon = null_dict('crawler', waveform='constant', initial_amp=0.0012)
 
-RL_olf_memory = null_dict('memory', Delta=0.1, state_spacePerSide=1, mode='olf',
+RL_olf_memory = null_dict('memory', Delta=0.1, state_spacePerSide=1, modality='olfaction',
                           gain_space=np.arange(-200.0, 200.0, 50.0).tolist())
 
-RL_touch_memory = null_dict('memory', Delta=0.5, state_spacePerSide=1, mode='touch', train_dur=30, update_dt=0.5,
+RL_touch_memory = null_dict('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30, update_dt=0.5,
                             gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=True)
 
-gRL_touch_memory = null_dict('memory', Delta=0.5, state_spacePerSide=1, mode='touch', train_dur=30, update_dt=0.5,
+gRL_touch_memory = null_dict('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30, update_dt=0.5,
                             gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=False)
 
 OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}

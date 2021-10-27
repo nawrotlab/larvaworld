@@ -7,7 +7,7 @@ import numpy as np
 
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 from lib.conf.base import paths
-from lib.stor.larva_dataset import LarvaDataset
+
 
 
 class SingleRun:
@@ -25,17 +25,17 @@ class SingleRun:
             save_to = paths.path("SIM")
         self.save_to=save_to
         self.storage_path=f'{sim_params["path"]}/{self.id}'
-        dir_path = f'{save_to}/{self.storage_path}'
+        self.dir_path = f'{save_to}/{self.storage_path}'
         self.param_dict = locals()
         self.start = time.time()
 
-        self.d = LarvaDataset(dir=dir_path, id=self.id, fr=1 / dt,
-                              env_params=env_params, larva_groups=larva_groups, load_data=False)
-        output = set_output(dataset=self.d, collections=collections)
+        # self.d = LarvaDataset(dir=dir_path, id=self.id, fr=1 / dt,
+        #                       env_params=env_params, larva_groups=larva_groups, load_data=False)
+        output = set_output(collections=collections, Nsegs=list(larva_groups.values())[0]['model']['body']['Nsegs'])
         self.env = LarvaWorldSim(id=self.id, dt=dt, Box2D=sim_params['Box2D'],output=output,
                                  env_params=env_params,larva_groups=larva_groups,trials=trials,
                                  experiment=self.experiment,Nsteps=int(sim_params['duration'] * 60 / dt),
-                                 save_to=self.d.vis_dir,configuration_text=self.configuration_text, **kwargs)
+                                 save_to=f'{self.dir_path}/visuals',configuration_text=self.configuration_text, **kwargs)
 
     def run(self):
         print()
@@ -44,15 +44,20 @@ class SingleRun:
         completed = self.env.run()
         print()
         if not completed:
-            self.d.delete()
+            # self.d.delete()
             print('    Simulation aborted!')
             res = None
         else:
+            from lib.stor.larva_dataset import LarvaDataset
             end = time.time()
             dur = end - self.start
             self.param_dict['date'] = datetime.datetime.now()
             self.param_dict['duration'] = np.round(dur, 2)
             print(f'    Simulation {self.id} completed in {np.round(dur).astype(int)} seconds!')
+
+            self.d = LarvaDataset(dir=self.dir_path, id=self.id, fr=1 / self.env.dt,
+                                  env_params=self.env.env_pars, larva_groups=self.env.larva_groups, load_data=False)
+
             res = store_data(self.env, self.d, self.store_data, self.enrichment, self.param_dict)
             # if analysis and ds is not None :
             #     from lib.sim.analysis import sim_analysis
@@ -113,23 +118,27 @@ def store_data(env, d, save_data_flag, enrichment, param_dict, split_groups=True
     return ds
 
 
-def set_output(dataset, collections):
+def set_output(collections, Nsegs=2, Ncontour=0):
     from lib.aux.dictsNlists import unique_list, flatten_list
     from lib.aux.collecting import output_dict
 
     if collections is None:
         collections = ['pose']
     cd = output_dict
-    d = dataset
+    # d = dataset
     step = []
     end = []
     tables = {}
     for c in collections:
         if c == 'midline':
             from lib.aux.collecting import midline_xy_pars
-            step += list(midline_xy_pars(N=d.Nsegs).keys())
+            # Nsegs=np.clip(Npoints - 1, a_min=0, a_max=None)
+            step += list(midline_xy_pars(N=Nsegs).keys())
         elif c == 'contour':
-            step += flatten_list(d.contour_xy)
+            from lib.aux import naming as nam
+            nam.contour(Ncontour)
+            contour_xy = nam.xy(nam.contour(Ncontour))
+            step += flatten_list(contour_xy)
         else:
             step += cd[c]['step']
             end += cd[c]['endpoint']

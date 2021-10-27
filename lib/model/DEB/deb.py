@@ -2,6 +2,7 @@
 DEB pipeline from literature
 '''
 import json
+import math
 import os
 import numpy as np
 from scipy.integrate import quad, solve_ivp
@@ -207,7 +208,7 @@ class DEB:
         self.vHe = self.U_He * ii
         self.Lm = v / (g * k_M)
         self.T_factor = np.exp(self.T_A / self.T_ref - self.T_A / self.T);  # Arrhenius factor
-
+        # v**-1*L=e*E_G/(g*pM)
         lb = self.lb = self.get_length_at_birth(eb=self.eb)
         Lb = self.Lb = lb * self.Lm
         self.Lwb = Lb / self.del_M
@@ -360,6 +361,11 @@ class DEB:
             print('-------------Emergence--------------')
             print(f'Wet weight      (mg) :      {np.round(self.Wwe * 1000, 5)}')
             print(f'Physical length (mm) :      {np.round(self.Lwe * 10, 3)}')
+
+    def time_to_death_by_starvation(self):
+        #     p.312 of the DEB textbook. Assuming that at time 0 the reserve density is e(0)=l=L/Lm then death comes at t=u**-1 *L*ln(k**-1) or t=u**-1 *L*(k**-1)
+        # return self.v**-1*self.L*self.kap**-1
+        return self.v**-1*self.L*math.log(self.kap**-1)
 
     def predict_imago_stage(self, f=1.0):
         # if np.abs(self.sG) < 1e-10:
@@ -768,7 +774,7 @@ def deb_default(id='DEB model', epochs={}, age=None, **kwargs):
     d = deb.return_dict()
     return d
 
-def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hunger=False,model_id=None,save_dict=True, **kwargs) :
+def deb_sim(sample, id='DEB sim', EEB=None, deb_dt=None, dt=None,  use_hunger=False,model_id=None,save_dict=True, **kwargs) :
     from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB
     sample=loadConf(sample, 'Ref')
     kws2=sample['intermitter']
@@ -805,9 +811,9 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hung
                 inter.EEB=deb.hunger
                 if inter.feeder_reocurrence_as_EEB :
                     inter.feeder_reoccurence_rate=inter.EEB
-            # if deb.age * 24>counter :
-            #     print(counter, int(deb.pupation_buffer*100))
-            #     counter+=24
+            if deb.age * 24>counter :
+                print(counter, int(deb.pupation_buffer*100), deb.e, deb.time_to_death_by_starvation(), deb.L/deb.Lm)
+                counter+=24
     deb.finalize_dict()
     d_sim= deb.return_dict()
     d_inter = inter.build_dict()
@@ -828,12 +834,15 @@ def deb_sim(id='DEB sim', EEB=None, deb_dt=None, dt=None,  sample=None, use_hung
 
 
 if __name__ == '__main__':
+    # d=deb_sim(sample='None.10_controls',deb_dt=1, substrate=null_dict('substrate', quality=0.01))
+    #
+    # raise
     deb=DEB(print_output=True)
-    print(deb.age, deb.stage)
-    # deb.run_larva_stage()
-    # print(deb.age, deb.stage)
+    # print(deb.age, deb.time_to_death_by_starvation())
+    # # deb.run_larva_stage()
+    # # print(deb.age, deb.stage)
     deb.grow_larva(epochs={'0':{'start':0.0, 'stop':80.0, 'substrate':{'quality':1.0, 'type': 'standard'}}})
-    print(deb.age, deb.stage)
+    print(deb.age, deb.time_to_death_by_starvation()*24, deb.e, deb.f, deb.L/deb.Lm)
     raise
     from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB,get_EEB_poly1d
     ffrs=np.round(np.arange(0.2, 2.2, 0.2), 1)

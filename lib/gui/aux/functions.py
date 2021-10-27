@@ -26,6 +26,7 @@ w_kws = {
     'text_justification': 'left',
     'element_justification': 'center',
     'debugger_enabled': True,
+    # 'border_depth': 4,
 }
 col_kws = {'vertical_alignment': 't', 'expand_x': False, 'expand_y': False}
 b_kws = {'font': ('size', 6)}

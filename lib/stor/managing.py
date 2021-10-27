@@ -1,6 +1,8 @@
 import os
 import warnings
 from itertools import product
+
+import numpy as np
 import pandas as pd
 
 import lib.aux.dictsNlists
@@ -253,6 +255,67 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
 
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    c=loadConf('Puff.Starved', 'Ref')
+    d=LarvaDataset(c['dir'], load_data=False)
+    e=d.read()
+    # print(e.columns.values)
+    sk=d.read('step')
+    rating_probs = sk.groupby('state').size().div(len(sk))
+    print(rating_probs)
+
+
+    sk['beh']=np.nan
+    # sk.loc[sk['scaled_velocity']<0.2, 'beh']=-0.2
+    # sk.loc[sk['scaled_velocity']<0.1, 'beh']=-0.1
+    # sk.loc[sk['scaled_velocity']<0, 'beh']=-0.001
+    # sk.loc[sk['scaled_velocity'] > 0, 'beh']=0
+    # sk.loc[sk['scaled_velocity'] > 0.1, 'beh'] = 0.1
+    # sk.loc[sk['scaled_velocity'] > 0.2, 'beh'] = 0.2
+    # sk.loc[sk['scaled_velocity'] > 0.3, 'beh'] = 0.3
+    # sk.loc[sk['scaled_velocity'] > 0.4, 'beh'] = 0.4
+    # sk.loc[sk['scaled_velocity'] > 0.5, 'beh'] = 0.5
+    # sk.loc[sk['scaled_velocity'] > 0.6, 'beh'] = 0.6
+    # sk.loc[sk['scaled_velocity'] > 0.7, 'beh'] = 0.7
+    sk.loc[sk['scaled_velocity'] > 1.2, 'beh'] = 1.2
+    sk.loc[sk['scaled_velocity'] > 1.5, 'beh'] = 1.5
+
+    rrr=sk.groupby(['beh', 'state']).size().div(len(sk)).div(rating_probs, axis=0, level='state')
+    print(rrr)
+    raise
+    # print(s['state'])
+    s=sk[sk['state']>0]
+    a=s['state'].values.shape[0]
+
+
+    aa={i : s['state'][s['state']==i].dropna().values.shape[0]/a for i in range(10)}
+    print(aa)
+    v0=-20
+    for p in ['bend_velocity'] :
+    # for p in ['stride_id','pause_id', 'Lturn_id', 'Rturn_id'] :
+        Pb=s[p][s[p] <= v0].values.shape[0]/s[p].values.shape[0]
+        print(Pb)
+        ss = s[s[p]<= v0]
+        k={}
+        for i in range(9) :
+            Pa = aa[i]
+            if Pa>0 :
+            # try:
+
+
+                PaPb=ss['state'][ss['state']==i].values.shape[0]/ss['state'].values.shape[0]
+                # x=s[(s[p] >= 0) & (s['state']==i)].dropna().values.shape[0]
+                # PaPb=x/s[s[p] >= 0].dropna().values.shape[0]
+                # PaPb=x/Pb*a
+                PbPa=PaPb*Pb/Pa
+                k[i]=PbPa
+            # except :
+            #     pass
+        print(p)
+        print(k)
+        print('-----------------------------')
+
+    raise
     # dds=[[f'/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
     # dds=fun.flatten_list(dds)
     # dr = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/FRUvsQUI/Naive->PUR/EM/control'

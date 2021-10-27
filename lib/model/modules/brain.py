@@ -78,10 +78,10 @@ class DefaultBrain(Brain):
             self.intermitter = Intermitter(brain=self, dt=dt, **c['intermitter_params'])
         # if m['olfactor']:
         #     self.olfactor = Olfactor(brain=self, dt=dt, **c['olfactor_params'])
-        if m['memory'] and c['memory_params']['mode'] == 'olf':
+        if m['memory'] and c['memory_params']['modality'] == 'olfaction':
             self.memory = RLOlfMemory(brain=self, dt=dt, gain=self.olfactor.gain, **c['memory_params'])
         t = self.toucher = Toucher(brain=self, dt=dt, gain_dict={s: 0.0 for s in self.agent.get_sensors()})
-        if m['memory'] and c['memory_params']['mode'] == 'touch':
+        if m['memory'] and c['memory_params']['modality'] == 'touch':
             self.touch_memory = RLTouchMemory(brain=self, dt=dt, gain=t.gain, **c['memory_params'])
 
     def run(self, pos):
