@@ -28,13 +28,9 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
     if track_pars is None:
         track_pars = [dic[k]['d'] for k in ['fou', 'rou', 'fo', 'ro', 'b', 'x', 'y']]
         track_pars += nam.bearing2(list(config['source_xy'].keys()))
-        # print(track_pars)
-        # raise
     if chunk_pars is None:
         chunk_pars = [dic[k]['d'] for k in ['sv', 'fov', 'rov', 'bv', 'l']]
     track_pars = [p for p in track_pars if p in s.columns]
-    # print(track_pars)
-    # raise
     if track_point is None:
         track_point = config['point']
     if min_ang is None:
@@ -413,7 +409,6 @@ def detect_contacting_chunks(s, e, aux_dir, dt, vel_par, track_point, chunk='str
         edges = d[d[edge_flag] == True].index.values
         mids = d[d[mid_flag] == True].index.values
         valid = d[cpars].dropna().index.values
-        # print(id, edges, mids, valid)
         d_dst = d[D0].values
         d_xy = d[XY0].values
 

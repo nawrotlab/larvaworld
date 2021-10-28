@@ -550,6 +550,9 @@ class LarvaDataset:
 
     def enrich(self, metric_definition, preprocessing={}, processing={}, annotation={},
                to_drop={}, recompute=False, mode='minimal',show_output=False, is_last=True, **kwargs):
+        import time
+        # t0=[]
+        # t0.append(time.time())
         self.config.update(**metric_definition['angular'])
         self.config.update(**metric_definition['spatial'])
         self.define_linear_metrics()
@@ -569,10 +572,16 @@ class LarvaDataset:
             'is_last': False,
             # 'metric_definition' : metric_definition
         }
+        # t0.append(time.time())
         preprocess(**preprocessing, **c, **kwargs)
+        # t0.append(time.time())
         process(processing=processing, **c, **kwargs, **md['dispersion'], **md['tortuosity'])
+        # t0.append(time.time())
         annotate(**annotation, **c, **kwargs, **md['stride'], **md['turn'], **md['pause'])
+        # t0.append(time.time())
         self.drop_pars(**to_drop, **c)
+        # t0.append(time.time())
+        # print(np.diff(np.array(t0)))
         if is_last:
             self.save()
         return self

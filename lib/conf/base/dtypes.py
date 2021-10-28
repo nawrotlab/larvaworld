@@ -82,6 +82,7 @@ def par_dict(name, d0=None, **kwargs):
     d = {}
     # print(name,d0)
     for n, v in d0.items():
+        # print(n,v)
         try:
             entry = par(n, **v, **kwargs)
         except:

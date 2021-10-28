@@ -53,7 +53,7 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
 
 def chem_exp(name, c=['olfactor'], dur=5.0, **kwargs):
     return exp(name, sim={'duration': dur}, c=c,
-               enrichment=enr_dict(proc=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn']), **kwargs)
+               enrichment=enr_dict(proc=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'],fits=False), **kwargs)
 
 
 def food_exp(name, c=['feeder'], dur=10.0, en=True, **kwargs):
