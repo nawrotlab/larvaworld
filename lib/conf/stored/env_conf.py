@@ -1,4 +1,6 @@
 import numpy as np
+
+from lib.aux.colsNstr import col_range
 from lib.conf.base.dtypes import null_dict, arena, oG, oD, border, vborder
 
 
@@ -12,6 +14,27 @@ def sg(id='Source', c='green', r=0.003, a=0.0, o=null_dict('odor'), N=1, s=(0.0,
         s = (s, s)
     d = null_dict('spatial_distro', N=N, loc=loc, scale=s, shape=sh, mode=m)
     return {id: null_dict('SourceGroup', default_color=c, distribution=d, radius=r, amount=a, odor=o, **kwargs)}
+
+
+def sgs(Ngs, ids=None, cs=None, rs=None, ams=None, os=None, qs=None, **kwargs):
+    if ids is None:
+        ids = [f'Source{i}' for i in range(Ngs)]
+
+    if ams is None:
+        ams = np.random.uniform(0.002, 0.01, Ngs)
+    if rs is None:
+        rs = ams
+    if qs is None:
+        qs = np.linspace(0.1, 1, Ngs)
+    if cs is None:
+        cs = [tuple(col_range(q, low=(255, 0, 0), high=(0, 128, 0))) for q in qs]
+    if os is None:
+        os = [oG(id=f'Odor{i}') for i in range(Ngs)]
+    l = [sg(id=ids[i], c=cs[i], r=rs[i], a=ams[i], o=os[i], quality=qs[i], **kwargs) for i in range(Ngs)]
+    result = {}
+    for d in l:
+        result.update(d)
+    return result
 
 
 def f_pars(sg={}, su={}, grid=None):
@@ -114,13 +137,14 @@ env_dict = {
                                        m='periphery')), 'G'),
 
     'windy_arena': env(arena(0.3, 0.3), w=[0.0, 1.0]),
-    'windy_arena_bordered': env(arena(0.3, 0.3), w=[45.0, 1.0],bl={'Border' : vborder(-0.03, [-0.01, -0.06], w=0.005)}),
+    'windy_arena_bordered': env(arena(0.3, 0.3), w=[45.0, 1.0], bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),
 
     'CS_UCS_on_food': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(1)), 'G'),
     'CS_UCS_on_food_x2': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(2)), 'G'),
     'CS_UCS_off_food': env(arena(0.1), f_pars(su=CS_UCS(1)), 'G'),
 
     'patchy_food': env(arena(0.2, 0.2), f_pars(sg=sg(N=8, s=0.07, m='periphery', a=0.001, o=oG(2))), 'G'),
+    'random_food': env(arena(0.1, 0.1), f_pars(sg=sgs(4, N=1, s=0.04, m='uniform', shape='rectangular')), 'G'),
     'uniform_food': env(arena(0.05), f_pars(sg=sg(N=2000, s=0.025, a=0.01, r=0.0001))),
     'food_grid': env(arena(0.02, 0.02), f_pars(grid=null_dict('food_grid'))),
     'single_odor_patch': env(arena(0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01, o=oG())), 'G'),

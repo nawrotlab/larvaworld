@@ -174,6 +174,7 @@ class LarvaDataset:
         deb_dicts={}
         nengo_dicts={}
         bout_dicts={}
+        foraging_dicts={}
         for l in env.get_flies():
             if l.unique_id in self.agent_ids :
                 if hasattr(l, 'deb') and l.deb is not None:
@@ -183,7 +184,10 @@ class LarvaDataset:
                         nengo_dicts[l.unique_id] =l.brain.dict
                 if l.brain.intermitter is not None:
                     bout_dicts[l.unique_id] =l.brain.intermitter.build_dict()
-        self.larva_dicts={'deb' : deb_dicts, 'nengo' : nengo_dicts, 'bout_dicts' : bout_dicts}
+                if len(env.foodtypes)>0 :
+                    foraging_dicts[l.unique_id]=l.finalize_foraging_dict()
+                self.config['foodtypes']= env.foodtypes
+        self.larva_dicts={'deb' : deb_dicts, 'nengo' : nengo_dicts, 'bout_dicts' : bout_dicts, 'foraging' : foraging_dicts}
 
     def get_larva_tables(self, env):
         if env.table_collector is not None:
@@ -520,6 +524,7 @@ class LarvaDataset:
             'plot': self.plot_dir,
             'vis': self.vis_dir,
             # 'comp_plot': os.path.join(self.plot_dir, 'comparative'),
+            'foraging': os.path.join(self.data_dir, 'foraging_dicts'),
             'deb': os.path.join(self.data_dir, 'deb_dicts'),
             'nengo': os.path.join(self.data_dir, 'nengo_probes'),
             'single_tracks': os.path.join(self.data_dir, 'single_tracks'),

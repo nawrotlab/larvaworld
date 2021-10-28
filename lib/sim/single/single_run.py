@@ -12,10 +12,9 @@ from lib.model.envs._larvaworld_sim import LarvaWorldSim
 from lib.conf.base import paths
 
 
-
 class SingleRun:
     def __init__(self, sim_params, env_params, larva_groups, enrichment, collections, experiment,
-                 trials={}, save_to=None, seed=None,analysis=False, **kwargs):
+                 trials={}, save_to=None, seed=None, analysis=False, **kwargs):
         np.random.seed(seed)
         self.id = sim_params['sim_ID']
         self.sim_params = sim_params
@@ -30,10 +29,10 @@ class SingleRun:
         self.save_to = save_to
         self.storage_path = f'{sim_params["path"]}/{self.id}'
         self.dir_path = f'{save_to}/{self.storage_path}'
-        self.plot_dir=f'{self.dir_path}/plots'
+        self.plot_dir = f'{self.dir_path}/plots'
         self.param_dict = locals()
         self.start = time.time()
-        self.source_xy=get_source_xy(env_params['food_params'])
+        self.source_xy = get_source_xy(env_params['food_params'])
 
         # self.d = LarvaDataset(dir=dir_path, id=self.id, fr=1 / dt,
         #                       env_params=env_params, larva_groups=larva_groups, load_data=False)
@@ -59,9 +58,7 @@ class SingleRun:
             end = time.time()
             dur = end - self.start
 
-
-
-            if self.store_data :
+            if self.store_data:
                 self.param_dict['date'] = datetime.datetime.now()
                 self.param_dict['duration'] = np.round(dur, 2)
                 self.store()
@@ -109,8 +106,9 @@ class SingleRun:
         else:
             food = None
 
-        ds=split_dataset(step, end,food, env_params=self.env.env_pars, larva_groups=self.env.larva_groups,source_xy=self.source_xy,
-                         fr=1 / self.env.dt, dir=self.dir_path, id=self.id,plot_dir=self.plot_dir, show_output=False)
+        ds = split_dataset(step, end, food, env_params=self.env.env_pars, larva_groups=self.env.larva_groups,
+                           source_xy=self.source_xy,
+                           fr=1 / self.env.dt, dir=self.dir_path, id=self.id, plot_dir=self.plot_dir, show_output=False)
         for d in ds:
             d.enrich(**self.enrichment, is_last=False)
             d.get_larva_dicts(env)
@@ -125,50 +123,49 @@ class SingleRun:
             d.save_larva_tables()
             dict_to_file(self.param_dict, d.dir_dict['sim'])
 
-    def analyze(self,save_to=None, **kwargs):
+    def analyze(self, save_to=None, **kwargs):
         from lib.sim.single.analysis import source_analysis, deb_analysis, comparative_analysis, foraging_analysis
         from lib.conf.stored.analysis_conf import analysis_dict
         if 'tactile' in self.experiment:
-            anal_params=analysis_dict['tactile']
+            anal_params = analysis_dict['tactile']
         elif 'RvsS' in self.experiment or 'growth' in self.experiment:
-            anal_params= analysis_dict['intake']
+            anal_params = analysis_dict['intake']
         elif 'anemo' in self.experiment:
-            anal_params=analysis_dict['anemotaxis']
+            anal_params = analysis_dict['anemotaxis']
         elif 'chemo' in self.experiment:
-            anal_params=analysis_dict['chemo']
+            anal_params = analysis_dict['chemo']
         elif 'RL' in self.experiment:
-            anal_params=analysis_dict['RL']
-        elif self.experiment in ['food_at_bottom'] :
-            anal_params =['foraging_analysis']
-        elif 'dispersion' in self.experiment :
-            anal_params =['comparative_analysis']
+            anal_params = analysis_dict['RL']
+        elif self.experiment in ['food_at_bottom']:
+            anal_params = ['foraging_analysis']
+        elif self.experiment in ['random_food']:
+            anal_params = analysis_dict['survival']
+        elif 'dispersion' in self.experiment:
+            anal_params = ['comparative_analysis']
         # elif self.experiment in ['growth', 'RvsS'] :
         #     anal_params = analysis_dict['DEB']
-        else :
+        else:
             return None, None
 
-        kws={'datasets' : self.datasets,'save_to':save_to if save_to is not None else self.plot_dir, **kwargs}
+        kws = {'datasets': self.datasets, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
         from lib.anal.plotting import graph_dict
-        figs, results={}, {}
-        for entry in anal_params :
-            if entry=='source_analysis' :
+        figs, results = {}, {}
+        for entry in anal_params:
+            if entry == 'source_analysis':
                 figs.update(**source_analysis(self.source_xy, **kws))
-            elif entry=='foraging_analysis' :
+            elif entry == 'foraging_analysis':
                 figs.update(**foraging_analysis(self.source_xy, **kws))
-            elif entry=='deb_analysis' :
+            elif entry == 'deb_analysis':
                 figs.update(**deb_analysis(**kws))
-            elif entry=='comparative_analysis' :
+            elif entry == 'comparative_analysis':
                 samples = unique_list([d.config['sample'] for d in self.datasets])
                 targets = [loadRef(sd) for sd in samples]
-                kkws=copy.deepcopy(kws)
-                kkws['datasets']=self.datasets+ targets
+                kkws = copy.deepcopy(kws)
+                kkws['datasets'] = self.datasets + targets
                 figs.update(**comparative_analysis(**kkws))
-            else :
-                figs[entry['title']]=graph_dict[entry['plotID']](**entry['args'], **kws)
+            else:
+                figs[entry['title']] = graph_dict[entry['plotID']](**entry['args'], **kws)
         return figs, results
-
-
-
 
 
 def set_output(collections, Nsegs=2, Ncontour=0):
@@ -231,7 +228,8 @@ def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):
         ds.append(d)
     return ds
 
-def get_source_xy(food_params) :
+
+def get_source_xy(food_params):
     sources_u = {k: v['pos'] for k, v in food_params['source_units'].items()}
     sources_g = {k: v['distribution']['loc'] for k, v in food_params['source_groups'].items()}
     return {**sources_u, **sources_g}

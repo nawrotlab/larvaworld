@@ -5,6 +5,7 @@ import os
 import pickle
 import sys
 from collections import deque
+from itertools import groupby
 
 from pypet import ParameterGroup, Parameter
 
@@ -182,3 +183,18 @@ def replace_in_dict(d0, replace_d, inverse=False) :
         elif v in list(replace_d.keys()):
             d[k] = replace_d[v]
     return d
+
+def group_dicts(dics):
+  if all(not isinstance(i, dict) for i in dics):
+    return [i for b in dics for i in b]
+  r = [i for b in dics for i in b.items()]
+  _d = [[a, [c for _, c in b]] for a, b in groupby(sorted(r, key=lambda x:x[0]), key=lambda x:x[0])]
+  return {a:b[0] if len(b) == 1 else group_dicts(b) for a, b in _d}
+
+def merge(item):
+  from collections import defaultdict
+  merged = defaultdict(list)
+  for ref in item.get('ref', []):
+    for key, val in ref.items():
+      merged[key].append(val)
+  return {**item, 'ref': dict(merged)}

@@ -61,7 +61,6 @@ class RLmemory(Effector):
             temp = self.brain.agent.model.table_collector
             if temp is not None:
                 self.table = temp.tables['best_gains'] if 'best_gains' in list(temp.tables.keys()) else None
-
         self.count_time()
         if self.effector and self.total_t > self.train_dur * 60:
             self.effector = False
@@ -84,7 +83,6 @@ class RLmemory(Effector):
                 self.rewardSum = 0
                 self.iterator = 0
             self.iterator += 1
-
             return self.gain
         else:
             if not self.state_specific_best :

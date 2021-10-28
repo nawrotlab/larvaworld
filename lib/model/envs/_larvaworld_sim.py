@@ -14,15 +14,19 @@ from lib.sim.single.conditions import get_exp_condition
 from lib.conf.base import paths
 
 
+
+
+
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, trials, output, larva_collisions=True, parameter_dict={}, **kwargs):
         super().__init__(**kwargs)
         self.sim_epochs = trials
-        for idx, ep in self.sim_epochs.items() :
-            ep['start']=int(ep['start']* 60 / self.dt)
-            ep['stop']=int(ep['stop']* 60 / self.dt)
+        for idx, ep in self.sim_epochs.items():
+            ep['start'] = int(ep['start'] * 60 / self.dt)
+            ep['stop'] = int(ep['stop'] * 60 / self.dt)
         self.larva_collisions = larva_collisions
-
+        self.odor_ids=get_all_odors(self.larva_groups, self.env_pars['food_params'])
+        self.foodtypes=get_all_foodtypes(self.env_pars['food_params'])
         self._place_food(self.env_pars['food_params'])
         self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
         if self.env_pars['odorscape'] is not None:
@@ -53,8 +57,14 @@ class LarvaWorldSim(LarvaWorld):
         layers = {}
         for i, (id, c) in enumerate(zip(ids, cols)):
             od_sources = [f for f in sources if f.odor_id == id]
-            temp = list(set([s.default_color for s in od_sources]))
-            default_color = temp[0] if len(temp) == 1 else c
+            # print(np.unique([s.default_color for s in od_sources]))
+            temp = np.unique([s.default_color for s in od_sources])
+            if len(temp) == 1:
+                default_color = temp[0]
+            elif len(temp) == 3 and all([type(k) == float] for k in temp):
+                default_color = temp
+            else:
+                default_color = c
             kwargs = {
                 'unique_id': id,
                 'sources': od_sources,
@@ -69,7 +79,7 @@ class LarvaWorldSim(LarvaWorld):
                                                  **kwargs)
             elif pars['odorscape'] == 'Gaussian':
                 layers[id] = GaussianValueLayer(**kwargs)
-        self.refresh_odor_dicts(ids)
+        # self.refresh_odor_dicts(ids)
         return N, layers
 
     def create_larvae(self, larva_groups, parameter_dict={}):
@@ -98,7 +108,7 @@ class LarvaWorldSim(LarvaWorld):
                 a1, a2 = np.deg2rad(d['orientation_range'])
                 ors = np.random.uniform(low=a1, high=a2, size=N).tolist()
                 ps = generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
-                sample_dict = sample_group(sample, N, self.sample_ps) if len(self.sample_ps)>0 else {}
+                sample_dict = sample_group(sample, N, self.sample_ps) if len(self.sample_ps) > 0 else {}
             sample_dict.update(parameter_dict)
             all_pars = generate_larvae(N, sample_dict, mod, RefPars)
             for id, p, o, pars in zip(ids, ps, ors, all_pars):
@@ -143,7 +153,7 @@ class LarvaWorldSim(LarvaWorld):
                          save_to=save_to, save_as=f'{id}_odorscape_{self.odorscape_counter}', show=show)
 
     def get_larva_bodies(self, scale=1.0):
-        return {l.unique_id : l.get_polygon(scale=scale) for l in self.get_flies()}
+        return {l.unique_id: l.get_polygon(scale=scale) for l in self.get_flies()}
 
     def larva_bodies_except(self, id):
         return {k: v for k, v in self.larva_bodies.items() if k != id}
@@ -221,10 +231,10 @@ def imitate_group(config, sample_pars=[], N=None):
     d = LarvaDataset(config['dir'], load_data=False)
     e = d.read('end')
     ids = e.index.values.tolist()
-    sample_pars=[p for p in sample_pars if p in e.columns]
+    sample_pars = [p for p in sample_pars if p in e.columns]
 
-    if N is not None :
-        ids=random.sample(ids, N)
+    if N is not None:
+        ids = random.sample(ids, N)
     ps = [tuple(e[['initial_x', 'initial_y']].loc[id].values) for id in ids]
     try:
         ors = [e['initial_front_orientation'].loc[id] for id in ids]
@@ -232,3 +242,19 @@ def imitate_group(config, sample_pars=[], N=None):
         ors = np.random.uniform(low=0, high=2 * np.pi, size=len(ids)).tolist()
     dic = {p: [e[p].loc[id] for id in ids] for p in sample_pars}
     return ids, ps, ors, dic
+
+def get_all_odors(larva_groups, food_params):
+    lg=[conf['odor']['odor_id'] for conf in larva_groups.values()]
+    su=[conf['odor']['odor_id'] for conf in food_params['source_units'].values()]
+    sg=[conf['odor']['odor_id'] for conf in food_params['source_groups'].values()]
+    ids= dNl.unique_list([id for id in lg + su + sg if id is not None])
+    return ids
+
+def get_all_foodtypes(food_params):
+    sg= {k:v['default_color'] for k,v in food_params['source_groups'].items()}
+    su={conf['group'] : conf['default_color'] for conf in food_params['source_units'].values()}
+    gr={k : v['default_color'] for k,v in food_params['food_grid'].items()} if food_params['food_grid'] is not None else {}
+    ids= {**gr,**su, **sg}
+    ks = dNl.unique_list(list(ids.keys()))
+    ids={k : np.array(ids[k])/255 for k in ks}
+    return ids

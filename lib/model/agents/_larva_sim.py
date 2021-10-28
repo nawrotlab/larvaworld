@@ -11,55 +11,60 @@ from lib.model.DEB.deb import DEB
 
 
 class LarvaSim(BodySim, Larva):
-    def __init__(self, unique_id, model, pos, orientation, larva_pars,odor, group='', default_color=None,life_history=None, **kwargs):
+    def __init__(self, unique_id, model, pos, orientation, larva_pars, odor, group='', default_color=None,
+                 life_history=None, **kwargs):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
                        odor=odor, group=group, default_color=default_color)
         self.build_energetics(larva_pars['energetics'], life_history=life_history)
-        BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['physics'], **larva_pars['body'],**kwargs)
+        BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['physics'], **larva_pars['body'],
+                         **kwargs)
         self.brain = self.build_brain(larva_pars['brain'])
-        if self.energetics :
-            self.deb.intermitter=self.brain.intermitter
-
+        if self.energetics:
+            self.deb.intermitter = self.brain.intermitter
 
         self.reset_feeder()
         self.radius = self.sim_length / 2
 
         self.food_detected, self.feeder_motion, self.current_V_eaten, self.feed_success = None, False, 0, 0
         self.food_missed, self.food_found = False, False
-        self.cum_food_detected=0
+        self.cum_food_detected = 0
+        self.foraging_dict = {id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
+                              self.model.foodtypes.keys()}
+        # self.foraging_dict= {action :{id: [0] for id in self.model.foodtypes} for action in ['detection', 'consumption']}
 
     def compute_next_action(self):
         self.cum_dur += self.model.dt
         pos = self.olfactor_pos
-        self.food_detected=self.detect_food(pos)
-        self.cum_food_detected+=int(self.on_food)
+        self.food_detected, foodtype = self.detect_food(pos)
+
+        self.cum_food_detected += int(self.on_food)
 
         self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.run(pos)
         self.current_V_eaten, self.feed_success = self.feed(self.food_detected, self.feeder_motion)
+        self.update_foraging_dict(foodtype, self.current_V_eaten)
         self.run_energetics(self.current_V_eaten)
         self.update_behavior()
-
 
     def detect_food(self, pos):
         if self.brain.feeder is not None or self.touch_sensors is not None:
             prev_item = self.food_detected
-            item, q = None, None
+            item, q, foodtype = None, None, None
             grid = self.model.food_grid
             if grid:
                 cell = grid.get_grid_cell(pos)
                 if grid.get_cell_value(cell) > 0:
-                    item, q = cell, grid.substrate.quality
+                    item, q, foodtype = cell, grid.substrate.quality, grid.unique_id
             else:
                 valid = [a for a in self.model.get_food() if a.amount > 0]
                 accessible_food = [a for a in valid if a.contained(pos)]
                 if accessible_food:
                     food = random.choice(accessible_food)
                     self.resolve_carrying(food)
-                    item, q = food, food.substrate.quality
+                    item, q, foodtype = food, food.substrate.quality, food.group
             self.food_found = True if (prev_item is None and item is not None) else False
             self.food_missed = True if (prev_item is not None and item is None) else False
-            return item
 
+            return item, foodtype
 
     def feed(self, source, motion):
 
@@ -157,7 +162,7 @@ class LarvaSim(BodySim, Larva):
         if self.energetics:
             # if self.deb :
             f = self.deb.f
-            if V_eaten>0:
+            if V_eaten > 0:
                 f += self.deb.absorption
                 # f += food_quality * self.deb.absorption
             f *= self.f_exp_coef
@@ -181,14 +186,13 @@ class LarvaSim(BodySim, Larva):
             #         self.V = self.real_length ** 3
             self.max_V_bite = self.get_max_V_bite()
 
-
     def get_feed_success(self, t):
         return self.feed_success
 
     def update_behavior_dict(self):
         d = self.null_behavior_dict.copy()
-        inter=self.brain.intermitter
-        if inter is not None :
+        inter = self.brain.intermitter
+        if inter is not None:
             s, f, p = inter.active_bouts
             d['stride_id'] = s is not None
             d['feed_id'] = f is not None
@@ -201,11 +205,11 @@ class LarvaSim(BodySim, Larva):
         elif orvel < 0:
             d['Rturn_id'] = True
         color = self.update_color(self.default_color, d)
-        self.set_color([color]*self.Nsegs)
+        self.set_color([color] * self.Nsegs)
 
     @property
     def on_food_dur_ratio(self):
-        return self.cum_food_detected*self.model.dt/self.cum_dur if self.cum_dur!=0 else 0
+        return self.cum_food_detected * self.model.dt / self.cum_dur if self.cum_dur != 0 else 0
 
     @property
     def on_food(self):
@@ -247,7 +251,6 @@ class LarvaSim(BodySim, Larva):
     def front_orientation_vel(self):
         return np.rad2deg(self.head.get_angularvelocity())
 
-
     def resolve_carrying(self, food):
         if food.can_be_carried and food not in self.carried_objects:
             if food.is_carried_by is not None:
@@ -283,3 +286,19 @@ class LarvaSim(BodySim, Larva):
         # print(self.deb.hunger, self.deb.e)
         self.brain.intermitter.update(food_present=self.food_detected, feed_success=self.feed_success)
 
+    def update_foraging_dict(self, foodtype, current_V_eaten):
+        # if foodtype is None:
+        #     if current_V_eaten!=0:
+        #         raise ValueError
+        # for action, dic in self.foraging_dict.items() :
+        #     for id,v in dic.items() :
+        #         v.append(v[-1])
+        if foodtype is not None:
+            self.foraging_dict[foodtype]['on_food_tr'] += self.model.dt
+            self.foraging_dict[foodtype]['sf_am'] += current_V_eaten
+
+    def finalize_foraging_dict(self):
+        for id, vs in self.foraging_dict.items():
+            vs['on_food_tr'] /= self.cum_dur
+            vs['sf_am'] /= self.V
+        return self.foraging_dict

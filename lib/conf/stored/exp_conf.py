@@ -154,6 +154,9 @@ grouped_exp_dict = {
                                   l=lg(N=25, s=(0.005, 0.02), m='RL_navigator'))},
     'foraging': {
         'patchy_food': food_exp('patchy_food', l=lg(m='forager', N=25)),
+        'random_food': food_exp('random_food', c=['feeder', 'toucher'], l=lgs(models=['Orco_forager', 'RL_forager'],
+                                            ids=['Orco', 'RL'], N=5, mode='uniform',shape='rectangular', s=0.04),
+                                enrichment=enr_dict(proc=['spatial'], bouts=[]), en=False),
         'uniform_food': food_exp('uniform_food', l=lg(m='Orco_forager', N=5, s=0.005)),
         'food_grid': food_exp('food_grid', l=lg(m='Orco_forager', N=25)),
         'single_odor_patch': food_exp('single_odor_patch',

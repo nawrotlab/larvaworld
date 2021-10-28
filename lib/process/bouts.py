@@ -85,10 +85,6 @@ def detect_turns(s, e, config, dt, track_pars, min_ang_vel, min_ang=30.0,
         ang_vel_par = nam.vel(nam.orient('front'))
     if bend_vel_par is None:
         bend_vel_par = nam.vel('bend')
-
-    # comp_extrema(ss, dt, parameters=[ang_vel_par], interval_in_sec=0.3, abs_threshold=[-min_ang_vel, min_ang_vel])
-    # detect_turn_bouts(ss, e, dt, par=ang_vel_par)
-    print(min_ang)
     detect_chunks(ss, e, dt, chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=ang_vel_par,
                   ROU_ranges=[[min_ang, np.inf], [-np.inf, -min_ang]],
                   par_ranges=[[min_ang_vel, np.inf], [-np.inf, -min_ang_vel]], merged_chunk='turn',

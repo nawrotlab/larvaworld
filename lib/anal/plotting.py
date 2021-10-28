@@ -19,13 +19,13 @@ from sklearn.linear_model import LinearRegression
 from PIL import Image
 import os
 
-from lib.aux.dictsNlists import unique_list, flatten_list
+from lib.aux.dictsNlists import unique_list, flatten_list, group_dicts, merge
 from lib.anal.fitting import BoutGenerator
 from lib.anal.plot_aux import plot_mean_and_range, circular_hist, dual_half_circle, confidence_ellipse, save_plot, \
     plot_config, dataset_legend, process_plot, label_diff, boolean_indexing, Plot, plot_quantiles, annotate_plot, \
     concat_datasets
 from lib.aux import naming as nam
-from lib.aux.colsNstr import N_colors
+from lib.aux.colsNstr import N_colors, col_range
 
 from lib.conf.base.par import getPar
 from lib.model.DEB.deb import DEB
@@ -364,8 +364,10 @@ def plot_sample_tracks(mode='strides', agent_idx=0, agent_id=None, slice=[20, 40
     P.adjust((0.08, 0.95), (0.15, 0.95), H=0.1)
     return P.get()
 
-def intake_barplot(**kwargs) :
+
+def intake_barplot(**kwargs):
     return barplot(par_shorts=['f_am'], **kwargs)
+
 
 def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
     P = Plot(name=par_shorts[0], **kwargs)
@@ -766,9 +768,9 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
              show_first=False, subfolder='timeplots', legend_loc='upper left', **kwargs):
     unit_coefs = {'sec': 1, 'min': 1 / 60, 'hour': 1 / 60 / 60}
     if len(pars) == 0:
-        if len(par_shorts)==0 :
-            raise ValueError ('Either parameter names or shortcuts must be provided')
-        else :
+        if len(par_shorts) == 0:
+            raise ValueError('Either parameter names or shortcuts must be provided')
+        else:
             pars, symbols, ylabs, ylims = getPar(par_shorts, to_return=['d', 's', 'l', 'lim'])
     else:
         symbols = pars
@@ -789,7 +791,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
 
     P.build(figsize=(7.5, 5))
     ax = P.axs[0]
-    counter=0
+    counter = 0
     for p, symbol, ylab, ylim, c in zip(pars, symbols, ylabs, ylims, cols):
         P.conf_ax(xlab=f'time, ${unit}$' if table is None else 'timesteps', ylab=ylab, ylim=ylim, yMaxN=4)
         for d, d_col, d_lab in zip(P.datasets, P.colors, P.labels):
@@ -817,11 +819,11 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                     if show_first:
                         dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
                         ax.plot(x, dc0, color=c)
-                counter+=1
+                counter += 1
             except:
                 pass
-    if counter==0 :
-        raise ValueError ('None of the parameters exist in any dataset')
+    if counter == 0:
+        raise ValueError('None of the parameters exist in any dataset')
     if N > 1:
         ax.legend()
     if P.Ndatasets > 1:
@@ -1616,9 +1618,9 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     fig, axs = plt.subplots(Npars, figsize=(20, 6 * Npars), sharex=True, sharey=sharey)
     axs = axs.ravel() if Npars > 1 else [axs]
 
-    rr0, gg0, bb0 = q_col1 = np.array([255, 0, 0]) / 255
-    rr1, gg1, bb1 = q_col2 = np.array([255, 255, 255]) / 255
-    quality_col_range = np.array([rr1 - rr0, gg1 - gg0, bb1 - bb0])
+    # rr0, gg0, bb0 = q_col1 = np.array([255, 0, 0]) / 255
+    # rr1, gg1, bb1 = q_col2 = np.array([255, 255, 255]) / 255
+    # quality_col_range = np.array([rr1 - rr0, gg1 - gg0, bb1 - bb0])
 
     t0s, t1s, t2s, t3s, max_ages = [], [], [], [], []
     for jj, (d, id, c) in enumerate(zip(deb_dicts, ids, cols)):
@@ -1684,7 +1686,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             if d['simulation']:
                 ax.axvspan(t0, t3, color='grey', alpha=0.05)
             for (st0, st1), qq in zip(epochs, epoch_qs):
-                q_col = q_col1 + qq * quality_col_range if color_epoch_quality else c
+                q_col = col_range(qq, low=(255, 0, 0), high=(255, 255, 255)) if color_epoch_quality else c
                 ax.axvspan(st0, st1, color=q_col, alpha=0.2)
 
             ax.set_ylabel(yl, labelpad=15, fontsize=10)
@@ -2782,13 +2784,62 @@ def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='neng
     P.adjust((0.1, 0.95), (0.1, 0.95), 0.01, 0.05)
     return P.get()
 
-def ggboxplot(p='length', subfolder='ggplot', **kwargs) :
-    from plotnine import ggplot, aes, geom_boxplot,scale_color_manual, theme
+
+def ggboxplot(p='length', subfolder='ggplot', **kwargs):
+    from plotnine import ggplot, aes, geom_boxplot, scale_color_manual, theme
     P = Plot(name=p, subfolder=subfolder, **kwargs)
-    e=concat_datasets(P.datasets, key='end')
-    Cdict=dict(zip(P.labels, P.colors))
-    P.fig =(ggplot(e, aes(x='GroupID', y=p, color='GroupID')) + geom_boxplot()+ scale_color_manual(Cdict)+ theme(figure_size=(12,6))).draw()
+    e = concat_datasets(P.datasets, key='end')
+    Cdict = dict(zip(P.labels, P.colors))
+    P.fig = (ggplot(e, aes(x='GroupID', y=p, color='GroupID')) + geom_boxplot() + scale_color_manual(Cdict) + theme(
+        figure_size=(12, 6))).draw()
     return P.get()
+
+
+# def plot_foraging(**kwargs) :
+#     P = Plot(name='foraging', **kwargs)
+#     P.build(2, 1, figsize=(10, 10), sharex=True)
+#     for i, d in enumerate(P.datasets):
+#         dics = d.load_dicts('foraging')
+#         for dic in dics :
+#             for j,(action, vs) in enumerate(dic.items()):
+#                 for k, (foodtype, timeseries) in enumerate(vs.items()) :
+#                     P.axs[j].plot(timeseries, color='red')
+#     P.get()
+
+def plot_foraging(**kwargs):
+    P = Plot(name='foraging', **kwargs)
+    P.build(1, 2, figsize=(15, 10), sharex=True)
+    for j, action in enumerate(['on_food_tr','sf_am']):
+        dfs=[]
+        for i, d in enumerate(P.datasets):
+            foodtypes = d.config['foodtypes']
+            dics = d.load_dicts('foraging')
+            dic0 = {ft: [d[ft][action] for d in dics] for ft in foodtypes.keys()}
+            df=pd.DataFrame.from_dict(dic0)
+            df['Group']=d.id
+            dfs.append(df)
+        df0=pd.concat(dfs)
+        par=getPar(action, to_return=['lab'])[0]
+        mdf = pd.melt(df0, id_vars=['Group'], var_name='foodtype', value_name=par)
+        with sns.plotting_context('notebook', font_scale=1.4):
+            kws = {
+                'x': "Group",
+                'y': par,
+                'hue': 'foodtype',
+                'palette': foodtypes,
+                'data': mdf,
+                'ax': P.axs[j],
+                'width': 0.5,
+            }
+            g1 = sns.boxplot(**kws)
+            # g1.get_legend().remove()
+
+        # annotate_plot(**kws)
+            P.conf_ax(yMaxN=4, leg_loc='upper right')
+    # P.conf_ax(xlab=xlab, ylab='probability, $P$', xlim=xlim, yMaxN=4, leg_loc='upper right')
+    P.adjust((0.1, 0.95), (0.15, 0.92), 0.2, 0.005)
+    P.get()
+
 
 graph_dict = {
     'crawl pars': plot_crawl_pars,
@@ -2816,8 +2867,9 @@ graph_dict = {
     'food intake (barplot)': intake_barplot,
     'deb': plot_debs,
     'timeplot': timeplot,
+    'foraging': plot_foraging,
     'barplot': barplot,
-    'scatter' : plot_2pars,
-    'nengo' : plot_nengo_network,
-    'ggboxplot' : ggboxplot
+    'scatter': plot_2pars,
+    'nengo': plot_nengo_network,
+    'ggboxplot': ggboxplot
 }

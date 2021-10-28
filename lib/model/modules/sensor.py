@@ -35,7 +35,6 @@ class Sensor(Effector):
                 self.activation = self.A1
             elif self.activation < self.A0:
                 self.activation = self.A0
-
         return self.activation
 
     def affect_locomotion(self):
@@ -106,6 +105,12 @@ class Sensor(Effector):
 class Olfactor(Sensor):
     def __init__(self, odor_dict={}, **kwargs):
         super().__init__(gain_dict=odor_dict, **kwargs)
+        for id in self.brain.agent.model.odor_ids:
+            # try:
+            if id not in self.gain_ids:
+                self.add_novel_gain(id)
+            # except:
+            #     pass
 
     @property
     def first_odor_concentration(self):

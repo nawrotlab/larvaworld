@@ -41,7 +41,7 @@ class Brain():
     def sense_food(self):
         a = self.agent
         sensors = a.get_sensors()
-        return {s: int(a.detect_food(a.get_sensor_position(s)) is not None) for s in sensors}
+        return {s: int(a.detect_food(a.get_sensor_position(s))[0] is not None) for s in sensors}
 
     def sense_wind(self):
         from lib.aux.ang_aux import angle_dif
