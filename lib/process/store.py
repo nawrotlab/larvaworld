@@ -5,7 +5,7 @@ import lib.aux.naming as nam
 
 
 def store_aux_dataset(s, pars, type, file):
-    # print('sssssssssssssssssssssss')
+    # print(pars)
     # print(file)
     # print('sssssssssssssssssssssss')
     store = pd.HDFStore(file)

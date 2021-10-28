@@ -502,6 +502,7 @@ def process_plot(fig, save_to, filename, return_fig, show=False):
     if show:
         plt.show()
     fig.patch.set_visible(False)
+    os.makedirs(save_to, exist_ok=True)
     if return_fig:
         res = fig, save_to, filename
     else:
@@ -550,3 +551,20 @@ def annotate_plot(data, x, y, hue, **kwargs):
     annotator = Annotator(pairs=pairs, data=data, x=x, y=y, hue=hue, **kwargs)
     annotator.verbose = False
     annotator.annotate_custom_annotations(f_pvs)
+
+
+def concat_datasets(ds, key='end', unit='sec'):
+    dfs = []
+    for d in ds:
+        df = d.read(key)
+        df['GroupID'] = d.id
+        dfs.append(df)
+    df0 = pd.concat(dfs)
+    if key == 'step':
+        df0.reset_index(level='Step', drop=False, inplace=True)
+        dts = np.unique([d.config['dt'] for d in ds])
+        if len(dts) == 1:
+            dt = dts[0]
+            dic = {'sec': 1, 'min': 60, 'hour': 60 * 60, 'day': 24 * 60 * 60}
+            df0['Step'] *= dt / dic[unit]
+    return df0

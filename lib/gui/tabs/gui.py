@@ -43,7 +43,7 @@ class LarvaworldGui:
         return object.__new__(cls)
 
     def __init__(self, tabs=None, batch_thread=None):
-        self.run_externally = {'sim': False, 'batch': True}
+        self.run_externally = {'sim': True, 'batch': True}
         if tabs is None:
             tabs = list(self.tab_dict.keys())
         sg.theme('LightGreen')
@@ -57,7 +57,8 @@ class LarvaworldGui:
 
         while True:
 
-            e, v = self.window.read()
+            e, v = self.window.read(10000)
+
             if e in (None, 'Exit'):
                 self.window.close()
                 break

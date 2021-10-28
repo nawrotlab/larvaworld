@@ -3,7 +3,10 @@ import sys
 import time
 import numpy as np
 
+
+
 sys.path.insert(0, '..')
+from run.exec_run import Exec
 from lib.sim.single.single_run import SingleRun
 from lib.sim.single.analysis import sim_analysis
 from lib.conf.stored.conf import kConfDict
@@ -23,10 +26,18 @@ N = args.Nagents
 
 
 exp_conf = update_exp_conf(exp, d, N)
-ds = SingleRun(**exp_conf, vis_kwargs=d['visualization']).run()
+
+# exec = Exec(mode='sim', conf=exp_conf, run_externally=True)
+# exec.run()
+# while not exec.check() :
+#     pass
+# fig_dict, results = exec.results
+run = SingleRun(**exp_conf, vis_kwargs=d['visualization'])
+ds=run.run()
 
 if args.analysis:
-    fig_dict, results = sim_analysis(ds, exp)
+    fig_dict, results = run.analyze(show=False)
+    # fig_dict, results = sim_analysis(ds, exp)
 
 e = time.time()
 if d is not None:

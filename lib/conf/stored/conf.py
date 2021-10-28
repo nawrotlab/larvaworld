@@ -44,6 +44,10 @@ def loadConfDict(conf_type):
 def kConfDict(conf_type) :
     return list(loadConfDict(conf_type).keys())
 
+def loadRef(id) :
+    from lib.stor.larva_dataset import LarvaDataset
+    return LarvaDataset(loadConf(id, 'Ref')['dir'], load_data=False)
+
 
 def saveConf(conf, conf_type, id=None, mode='overwrite'):
     try:

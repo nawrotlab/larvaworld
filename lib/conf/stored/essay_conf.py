@@ -95,7 +95,7 @@ class RvsS_Essay(Essay):
             if lls is None:
                 lls = flatten_list([ls] * len(ds0))
             dds = flatten_list(ds0)
-            deb_dicts = flatten_list([d.load_deb_dicts(use_pickle=False) for d in dds])
+            deb_dicts = flatten_list([d.load_dicts('deb') for d in dds])
             return {'datasets': dds,
                     'labels': lls,
                     'deb_dicts': deb_dicts,

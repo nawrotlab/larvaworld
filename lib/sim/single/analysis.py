@@ -1,5 +1,6 @@
 import itertools
 import warnings
+from typing import List
 
 import numpy as np
 
@@ -20,11 +21,11 @@ from lib.stor.larva_dataset import LarvaDataset
 import lib.aux.naming as nam
 
 
-def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=False):
+def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=False):
     if ds is None:
         return
-    if not type(ds) == list:
-        ds = [ds]
+    # if not type(ds) == list:
+    #     ds = [ds]
     d = ds[0]
     ccc = {'show': show,
            'save_to': d.config['parent_plot_dir']}
@@ -47,35 +48,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=False):
         figs.update(**intake_analysis(**cc))
 
     if exp_type in ['growth', 'RvsS']:
-        deb_model = deb_default(**d.config['life_history'])
-        deb_dicts = flatten_list([d.load_deb_dicts(use_pickle=False) for d in ds]) + [deb_model]
-        c = {'roversVSsitters': True}
-        c1 = {'deb_dicts': deb_dicts[:-1],
-              'sim_only': True}
-
-        for m in ['feeding', 'reserve_density', 'fs', 'assimilation', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
-                  'food_mass_2', 'hunger', 'EEB']:
-            for t in ['hours']:
-                save_as = f'{m}_in_{t}.pdf'
-                figs[f'FEED.{m} ({t})'] = plot_debs(save_as=save_as, mode=m, time_unit=t, **c, **c1, **cc)
-
-        for m in ['energy', 'growth', 'full']:
-            save_as = f'{m}_vs_model.pdf'
-            figs[f'DEB.{m} vs model'] = plot_debs(deb_dicts=deb_dicts, save_as=save_as, mode=m, **c, **cc)
-    # elif exp_type == 'dispersion':
-    #     target_dataset = load_reference_dataset(dataset_id=d.config['sample_dataset'])
-    #     ds = [d, target_dataset]
-    #     labels = ['simulated', 'empirical']
-    #     # targeted_analysis(ds)
-    #     dic0 = comparative_analysis(datasets=ds, labels=labels, simVSexp=True, save_to=None, **ccc)
-    #     fig_dict.update(dic0)
-    #     dic1 = {f'marked_strides_idx_0_slice_{s0}-{s1}': plot_marked_strides(datasets=[d], agent_idx=0,
-    #                                                                          slice=[s0, s1], **ccc) for (s0, s1) in
-    #             [(10, 50), (60, 100)]}
-    #     # dic1 = plot_marked_strides(dataset=d, agent_ids=d.agent_ids[:3], title=' ', slices=[[10, 50], [60, 100]])
-    #     fig_dict.update(dic1)
-    #     dic2 = plot_marked_turns(dataset=d, agent_ids=d.agent_ids[:3], min_turn_angle=20, **ccc)
-    #     fig_dict.update(dic2)
+        figs.update(**deb_analysis(**ccc))
 
     if 'RL' in exp_type:
         c = {
@@ -131,7 +104,7 @@ def sim_analysis(ds: LarvaDataset, exp_type, show=False, delete_datasets=False):
             figs[p] = timeplot([p], **cc)
         figs['turns'] = plot_turns(**cc)
         figs['ang_pars'] = plot_ang_pars(Npars=5,**cc)
-        figs.update(**source_analysis(d.config['sources'], **cc))
+        figs.update(**source_analysis(d.config['source_xy'], **cc))
 
         vis_kwargs = null_dict('visualization', mode='image', image_mode='final', show_display=False,
                                random_colors=True, trails=True,
@@ -165,9 +138,9 @@ def intake_analysis(**kwargs):
     return figs
 
 
-def source_analysis(sources, **kwargs):
+def source_analysis(source_xy, **kwargs):
     figs = {}
-    for n, pos in sources.items():
+    for n, pos in source_xy.items():
         for p in [nam.bearing2(n), nam.dst2(n), nam.scal(nam.dst2(n))]:
             figs[p] = timeplot(pars=[p], **kwargs)
 
@@ -176,7 +149,6 @@ def source_analysis(sources, **kwargs):
                 try:
                     figs[f'{chunk}_bearing2_{n}_min_{dur}_sec'] = plot_chunk_Dorient2source(chunk=chunk,
                                                                                             source_ID=n,
-                                                                                            # source_pos=pos,
                                                                                             min_dur=dur, **kwargs)
                 except:
                     pass
@@ -185,6 +157,9 @@ def source_analysis(sources, **kwargs):
 
 def foraging_analysis(sources, **kwargs):
     figs = {}
+    for n, pos in sources.items():
+        figs[f'bearing to {n}'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=None, source_ID=n, **kwargs)
+        figs['bearing to 270deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=270, source_ID=n, **kwargs)
     figs['bearing correction VS Y pos'] = plot_turn_amp(par_short='tur_y0', mode='hist', ref_angle=270, **kwargs)
     figs['turn angle VS Y pos (hist)'] = plot_turn_amp(par_short='tur_y0', mode='hist', **kwargs)
     figs['turn angle VS Y pos (scatter)'] = plot_turn_amp(par_short='tur_y0', mode='scatter', **kwargs)
@@ -193,9 +168,7 @@ def foraging_analysis(sources, **kwargs):
     figs['turn amplitude'] = plot_turns(**kwargs)
     figs['Y position'] = timeplot(['y'], legend_loc='lower left', **kwargs)
     figs['navigation index'] = plot_navigation_index(**kwargs)
-    for n, pos in sources.items():
-        figs[f'bearing to {n}'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=None, source_ID=n, **kwargs)
-        figs['bearing to 270deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=270, source_ID=n, **kwargs)
+
     return figs
 
 
@@ -239,7 +212,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
             if lls is None:
                 lls = flatten_list([ls] * len(ds0))
             dds = flatten_list(ds0)
-            deb_dicts = [d.load_deb_dicts(use_pickle=False) for d in dds]
+            deb_dicts = [d.load_dicts('deb') for d in dds]
             # for d in ds0:
             #     ds, debs = split_rovers_sitters(d)
             #     dds += ds
@@ -485,3 +458,23 @@ def targeted_analysis(datasets, labels=None, save_to=None, pref='', show=False, 
     plot_dispersion(**anal_kws, scaled=True, fig_cols=2, range=(0, 80), ymax=18, save_as=f'dispersion{pref}.pdf',
                     **kwargs)
     plot_marked_strides(**anal_kws, agent_idx=1, slice=[0, 180], save_as=f'sample_tracks{pref}.pdf', **kwargs)
+
+def deb_analysis(datasets,**kwargs) :
+    figs={}
+    deb_model = deb_default(**datasets[0].config['life_history'])
+    deb_dicts = flatten_list([d.load_dicts('deb') for d in datasets])
+    kws = {'roversVSsitters': True,
+         'datasets':datasets,
+         **kwargs}
+
+    for m in ['energy', 'growth', 'full']:
+        save_as = f'{m}_vs_model.pdf'
+        figs[f'DEB.{m} vs model'] = plot_debs(deb_dicts=deb_dicts+ [deb_model], save_as=save_as, mode=m, **kws)
+    for m in ['feeding', 'reserve_density', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
+              'food_mass_2', 'hunger', 'EEB','fs']:
+        for t in ['hours']:
+            save_as = f'{m}_in_{t}.pdf'
+            figs[f'FEED.{m} ({t})'] = plot_debs(deb_dicts=deb_dicts,sim_only=True,save_as=save_as, mode=m, time_unit=t, **kws)
+
+
+    return figs

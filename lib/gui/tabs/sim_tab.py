@@ -17,8 +17,8 @@ class SimTab(GuiTab):
         self.canvas_size = col_size(0.5,0.8)
         self.k_stored = f'{self.name}_stored'
         self.k_active = f'{self.name}_active'
-        self.k_stored_ids = f'{self.k_stored}_IDS'
-        self.k_active_ids = f'{self.k_active}_IDS'
+        # self.k_stored_ids = f'{self.k_stored}_IDS'
+        # self.k_active_ids = f'{self.k_active}_IDS'
 
     @property
     def DL0(self):
@@ -109,7 +109,6 @@ class SimTab(GuiTab):
 
     def run(self, v, w, c, d, g, conf, id):
         conf['env_params'] = self.envtab.get(w, v, c, as_entry=False)
-        print(conf['env_params'])
         N = conf['sim_params']['duration'] * 60 / conf['sim_params']['timestep']
         p = self.base_list.progressbar
         p.run(w, max=N)
@@ -124,24 +123,37 @@ class SimTab(GuiTab):
         return d, g
 
     def eval(self, e, v, w, c, d, g):
-        # print(e)
+        if e==self.DL1.key :
+            ks=v[self.DL1.key]
+            if len(ks)>0:
+                self.graph_list.update(w, self.DL1.dict[ks[0]]['figs'])
+
         # print(self.base_list.progressbar.k_incomplete)
+        # active_ids = v[self.k_active_ids]
+        # if e == f'STOP {self.k_active}':
+        #     for act_id in active_ids:
+        #         # self.DL0.dict[act_id]['process'].kill()
+        #         self.DL0.dict[act_id].terminate()
+        #     self.DL0.remove(w, active_ids)
+
         if e == self.base_list.progressbar.k_incomplete:
             pass
             # self.DL0.dict[self.active_id].terminate()
         self.draw_tab.eval(e, v, w, c, d, g)
         self.check_subprocesses(w)
 
+
+
     def check_subprocesses(self, w):
         complete = []
         for sim_id, ex in self.DL0.dict.items():
             if ex.check():
-                entry, fig_dict = ex.results
-                if entry is not None:
+                entries, fig_dict = ex.results
+                if entries is not None:
                     ex.progressbar.done(w)
 
                     self.graph_list.update(w, fig_dict)
-                    self.DL1.add(w, entry)
+                    self.DL1.add(w, entries)
                 else:
                     ex.progressbar.reset(w)
                 complete.append(sim_id)

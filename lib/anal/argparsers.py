@@ -370,7 +370,7 @@ def init_parser(description='', parsers=[]) :
         parser=dic[n](parser)
     return parser
 
-def update_exp_conf(exp,d,N) :
+def update_exp_conf(exp,d,N=None) :
     from lib.conf.stored.conf import expandConf, next_idx
     exp_conf = expandConf(exp, 'Exp')
     sim=d['sim_params']

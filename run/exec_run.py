@@ -25,6 +25,7 @@ class Exec:
     def terminate(self):
         if self.process is not None:
             self.process.terminate()
+            self.process.kill()
 
     def run(self, **kwargs):
         f0, f1 = paths.path('EXECONF'), paths.path('EXEC')
@@ -54,13 +55,15 @@ class Exec:
                 res = retrieve_results(**args)
             return res
         elif self.mode == 'sim':
+            sim_id = self.conf['sim_params']['sim_ID']
             if res is None and self.run_externally:
-                sim_id = self.conf['sim_params']['sim_ID']
-                dir = f"{paths.path('SIM')}/{self.conf['sim_params']['path']}/{sim_id}"
-                res = [LarvaDataset(dir)]
+                dir0 = f"{paths.path('SIM')}/{self.conf['sim_params']['path']}/{sim_id}"
+                res = [LarvaDataset(f'{dir0}/{sim_id}.{gID}') for gID in self.conf['larva_groups'].keys()]
             if res is not None:
+                # fig_dict, results = self.process.analyze()
                 fig_dict, results = sim_analysis(res, self.type)
-                entry = {res[0].id: {'dataset': res[0], 'figs': fig_dict}}
+                entry = {sim_id: {'dataset': res, 'figs': fig_dict}}
+                # entry = {d.id: {'dataset': d, 'figs': fig_dict} for d in res}
             else:
                 entry, fig_dict = None, None
             return entry, fig_dict

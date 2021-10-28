@@ -35,4 +35,7 @@ PySimpleGUI==4.40.0
 siunits~=0.0.5
 statsmodels~=0.12.2
 webcolors~=1.3
-h5py
+h5py~=3.5.0
+statannotations
+Pillow~=8.4.0
+plotnine~=0.8.0

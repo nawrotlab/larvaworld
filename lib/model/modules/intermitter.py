@@ -231,18 +231,18 @@ class Intermitter(Effector):
 
         return d
 
-    def save_dict(self, path=None):
-        dic = self.build_dict()
+    def save_dict(self, path=None, dic=None):
+        if dic is None :
+            dic = self.build_dict()
         if path is None:
             if self.save_to is not None:
                 path = self.save_to
             else:
                 raise ValueError('No path to save intermittency dict')
-        if dic is not None:
-            file = f'{path}/{self.brain.agent.unique_id}.txt'
-            if not os.path.exists(path):
-                os.makedirs(path)
-            lib.aux.dictsNlists.save_dict(dic, file)
+        file = f'{path}/{self.brain.agent.unique_id}.txt'
+        if not os.path.exists(path):
+            os.makedirs(path)
+        lib.aux.dictsNlists.save_dict(dic, file)
 
     def update(self, max_refeed_rate=0.9, refeed_rate_coef=0, food_present=None, feed_success=None):
         if food_present is None:

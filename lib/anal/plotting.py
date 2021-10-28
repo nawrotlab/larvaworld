@@ -22,7 +22,8 @@ import os
 from lib.aux.dictsNlists import unique_list, flatten_list
 from lib.anal.fitting import BoutGenerator
 from lib.anal.plot_aux import plot_mean_and_range, circular_hist, dual_half_circle, confidence_ellipse, save_plot, \
-    plot_config, dataset_legend, process_plot, label_diff, boolean_indexing, Plot, plot_quantiles, annotate_plot
+    plot_config, dataset_legend, process_plot, label_diff, boolean_indexing, Plot, plot_quantiles, annotate_plot, \
+    concat_datasets
 from lib.aux import naming as nam
 from lib.aux.colsNstr import N_colors
 
@@ -109,11 +110,10 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
             b0_par = nam.at(p, nam.start(chunk))
             b1_par = nam.at(p, nam.stop(chunk))
             bd_par = nam.chunk_track(chunk, p)
-
+            # print(b0_par)
             b0 = d.get_par(b0_par).dropna().values.flatten() - ang0
             b1 = d.get_par(b1_par).dropna().values.flatten() - ang0
             db = d.get_par(bd_par).dropna().values.flatten()
-
             if norm:
                 b0 %= 360
                 b1 = b0 + db
@@ -364,8 +364,10 @@ def plot_sample_tracks(mode='strides', agent_idx=0, agent_id=None, slice=[20, 40
     P.adjust((0.08, 0.95), (0.15, 0.95), H=0.1)
     return P.get()
 
+def intake_barplot(**kwargs) :
+    return barplot(par_shorts=['f_am'], **kwargs)
 
-def barplot(par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
+def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
     P = Plot(name=par_shorts[0], **kwargs)
     Nds = P.Ndatasets
     Npars = len(par_shorts)
@@ -764,11 +766,15 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
              show_first=False, subfolder='timeplots', legend_loc='upper left', **kwargs):
     unit_coefs = {'sec': 1, 'min': 1 / 60, 'hour': 1 / 60 / 60}
     if len(pars) == 0:
-        pars, symbols, ylabs, ylims = getPar(par_shorts, to_return=['d', 's', 'l', 'lim'])
+        if len(par_shorts)==0 :
+            raise ValueError ('Either parameter names or shortcuts must be provided')
+        else :
+            pars, symbols, ylabs, ylims = getPar(par_shorts, to_return=['d', 's', 'l', 'lim'])
     else:
         symbols = pars
         ylabs = pars
         ylims = [None] * len(pars)
+    # pars=[p for p in pars if all([p in ])]
     N = len(pars)
     cols = ['grey'] if N == 1 else N_colors(N)
     if not same_plot:
@@ -783,6 +789,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
 
     P.build(figsize=(7.5, 5))
     ax = P.axs[0]
+    counter=0
     for p, symbol, ylab, ylim, c in zip(pars, symbols, ylabs, ylims, cols):
         P.conf_ax(xlab=f'time, ${unit}$' if table is None else 'timesteps', ylab=ylab, ylim=ylim, yMaxN=4)
         for d, d_col, d_lab in zip(P.datasets, P.colors, P.labels):
@@ -792,7 +799,8 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                 if table is not None:
                     dc = d.load_table(table)[p]
                 else:
-                    dc = d.read('step')[p]
+                    dc = d.get_par(p, key='step')
+                    # dc = d.read('step')[p]
                 dc_m = dc.groupby(level='Step').quantile(q=0.5)
                 Nticks = len(dc_m)
                 x = np.linspace(0, int(Nticks / d.fr) * unit_coefs[unit], Nticks) if table is None else np.arange(
@@ -809,9 +817,11 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                     if show_first:
                         dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
                         ax.plot(x, dc0, color=c)
+                counter+=1
             except:
                 pass
-
+    if counter==0 :
+        raise ValueError ('None of the parameters exist in any dataset')
     if N > 1:
         ax.legend()
     if P.Ndatasets > 1:
@@ -911,7 +921,13 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
 
     if test_detection:
         for l, d, col in zip(P.labels, P.datasets, P.colors):
-            dic = d.load_bout_dicts()
+            dic0 = d.load_dicts('bout_dicts')
+            dic = {}
+            for iid, ddd in dic0.items():
+                df = pd.DataFrame.from_dict(ddd)
+                df.index.set_names(0, inplace=True)
+                dic[iid] = df
+
             pau_dur = np.array(flatten_list([ddic[pause_par] for ddic in dic.values()]))
             chn_dur = np.array(flatten_list([ddic[chain_par] for ddic in dic.values()]))
             pau_durs.append(pau_dur)
@@ -1178,7 +1194,7 @@ def plot_chunk_Dorient2source(source_ID, subfolder='bouts', chunk='stride', Nbin
     Nrows = Ncols - 1 if P.Ndatasets < Ncols ** 2 - Ncols else Ncols
     P.build(Nrows, Ncols, figsize=(8 * Ncols, 8 * Nrows), subplot_kw=dict(projection='polar'), sharey=True)
 
-    durs = [d.get_par(nam.dur(chunk)) for d in P.datasets]
+    durs = [d.get_par(nam.dur(chunk)).dropna().values for d in P.datasets]
     c0 = nam.start(chunk)
     c1 = nam.stop(chunk)
     b = nam.bearing2(source_ID)
@@ -1188,6 +1204,12 @@ def plot_chunk_Dorient2source(source_ID, subfolder='bouts', chunk='stride', Nbin
     b0s = [d.get_par(b0_par).dropna().values for d in P.datasets]
     b1s = [d.get_par(b1_par).dropna().values for d in P.datasets]
     dbs = [d.get_par(db_par).dropna().values for d in P.datasets]
+    # print(len(durs[0]))
+    # print(len(b0s[0]))
+    # print(len(b1s[0]))
+    # print(len(dbs[0]))
+    # print(chunk)
+    # print(P.datasets[0].step_data[nam.dur(chunk)])
 
     if plot_merged:
         b0s.insert(0, np.vstack(b0s))
@@ -1500,7 +1522,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     if save_as is None:
         save_as = f'debs.{suf}'
     if deb_dicts is None:
-        deb_dicts = flatten_list([d.load_deb_dicts() for d in datasets])
+        deb_dicts = flatten_list([d.load_dicts('deb') for d in datasets])
     Ndebs = len(deb_dicts)
     ids = [d['id'] for d in deb_dicts]
     if Ndebs == 1:
@@ -2748,7 +2770,7 @@ def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='neng
         yMaxN = 3
     P.build(Nrows, Nids, figsize=(Nids * 30, Nrows * 15), sharex=True, sharey=sharey)
     for i, d in enumerate(P.datasets):
-        dics = d.load_dicts('nengo', use_pickle=False)
+        dics = d.load_dicts('nengo')
         for j, dic in enumerate(dics):
             for k, (p, c) in enumerate(zip(probes, Cprobes)):
                 Nrow = i if same_plot else i * Nds + k
@@ -2760,6 +2782,13 @@ def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='neng
     P.adjust((0.1, 0.95), (0.1, 0.95), 0.01, 0.05)
     return P.get()
 
+def ggboxplot(p='length', subfolder='ggplot', **kwargs) :
+    from plotnine import ggplot, aes, geom_boxplot,scale_color_manual, theme
+    P = Plot(name=p, subfolder=subfolder, **kwargs)
+    e=concat_datasets(P.datasets, key='end')
+    Cdict=dict(zip(P.labels, P.colors))
+    P.fig =(ggplot(e, aes(x='GroupID', y=p, color='GroupID')) + geom_boxplot()+ scale_color_manual(Cdict)+ theme(figure_size=(12,6))).draw()
+    return P.get()
 
 graph_dict = {
     'crawl pars': plot_crawl_pars,
@@ -2784,6 +2813,11 @@ graph_dict = {
     'pathlength': plot_pathlength,
     'food intake (timeplot)': plot_food_amount,
     'gut': plot_gut,
-    'food intake (barplot)': barplot,
+    'food intake (barplot)': intake_barplot,
     'deb': plot_debs,
+    'timeplot': timeplot,
+    'barplot': barplot,
+    'scatter' : plot_2pars,
+    'nengo' : plot_nengo_network,
+    'ggboxplot' : ggboxplot
 }

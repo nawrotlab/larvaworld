@@ -213,7 +213,7 @@ def deb_analysis(traj):
         plot_endpoint_params(ds, new_ids, mode='deb', save_to=save_to)
     # deb_dicts = fun.flatten_list(
     #     [[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
-    deb_dicts = lib.aux.dictsNlists.flatten_list([d.load_deb_dicts() for d in ds])
+    deb_dicts = lib.aux.dictsNlists.flatten_list([d.load_dicts('deb') for d in ds])
     fig_dict = {}
     for m in ['energy', 'growth', 'full']:
         f = plot_debs(deb_dicts=deb_dicts, save_to=save_to, save_as=f'deb_{m}.pdf', mode=m)

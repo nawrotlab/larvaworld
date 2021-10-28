@@ -347,8 +347,7 @@ def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
 def comp_source_metrics(s, e, config, **kwargs):
     fo = getPar(['fo'], to_return=['d'])[0][0]
     xy = nam.xy('')
-    sources=config['sources']
-    for n,pos in sources.items() :
+    for n,pos in config['source_xy'].items() :
         print(f'Computing bearing and distance to {n} based on xy position')
         o, d = nam.bearing2(n), nam.dst2(n)
         pmax, pmu, pfin= nam.max(d), nam.mean(d), nam.final(d)

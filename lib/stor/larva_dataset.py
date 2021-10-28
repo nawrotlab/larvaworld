@@ -25,16 +25,17 @@ class LarvaDataset:
             except:
                 print('Data not found. Load them manually.')
 
-    def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0,spatial_def=None,  env_params={}, larva_groups={}):
+    def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0,spatial_def=None,  env_params={}, larva_groups={},
+                      source_xy={}):
         if spatial_def is None:
             from lib.conf.stored.conf import loadConf
             spatial_def = loadConf('SimParConf', 'Par')['spatial']
         if os.path.exists(self.dir_dict['conf']):
             self.config = dNl.load_dict(self.dir_dict['conf'], use_pickle=False)
         else:
-            sources_u = {k: v['pos'] for k, v in env_params['food_params']['source_units'].items()}
-            sources_g = {k: v['distribution']['loc'] for k, v in env_params['food_params']['source_groups'].items()}
-            sources = {**sources_u, **sources_g}
+            # sources_u = {k: v['pos'] for k, v in env_params['food_params']['source_units'].items()}
+            # sources_g = {k: v['distribution']['loc'] for k, v in env_params['food_params']['source_groups'].items()}
+            # sources = {**sources_u, **sources_g}
             group_ids = list(larva_groups.keys())
             samples = dNl.unique_list(larva_groups[k]['sample'] for k in group_ids)
             if len(group_ids) == 1:
@@ -71,10 +72,11 @@ class LarvaDataset:
                            **spatial_def,
                            'env_params': env_params,
                            'larva_groups': larva_groups,
-                           'sources': sources,
+                           'source_xy': source_xy,
                            'life_history': life_history
                            }
-
+            self.larva_tables={}
+            self.larva_dicts={}
         self.__dict__.update(self.config)
 
     def set_data(self, step=None, end=None, food=None):
@@ -158,30 +160,49 @@ class LarvaDataset:
         store.close()
         print(f'Dataset {self.id} stored.')
 
-    def save_dicts(self, env):
-        from lib.model.modules.nengobrain import NengoBrain
-        for l in env.get_flies():
-            if hasattr(l, 'deb') and l.deb is not None:
-                l.deb.finalize_dict(self.dir_dict['deb'])
-            elif isinstance(l.brain, NengoBrain) :
-                if l.brain.dict is not None:
-                    dNl.save_dict(l.brain.dict, f'{self.dir_dict["nengo"]}/{l.unique_id}.txt', use_pickle=False)
-            if l.brain.intermitter is not None:
-                l.brain.intermitter.save_dict(self.dir_dict['bout_dicts'])
+    def save_larva_dicts(self):
+        for k, vs in self.larva_dicts.items() :
+            os.makedirs(self.dir_dict[k], exist_ok=True)
+            for id, dic in vs.items() :
+                try :
+                    dNl.save_dict(dic, f'{self.dir_dict[k]}/{id}.txt', use_pickle=False)
+                except :
+                    dNl.save_dict(dic, f'{self.dir_dict[k]}/{id}.txt', use_pickle=True)
 
-    def save_tables(self, tables):
+    def get_larva_dicts(self, env):
+        from lib.model.modules.nengobrain import NengoBrain
+        deb_dicts={}
+        nengo_dicts={}
+        bout_dicts={}
+        for l in env.get_flies():
+            if l.unique_id in self.agent_ids :
+                if hasattr(l, 'deb') and l.deb is not None:
+                    deb_dicts[l.unique_id] =l.deb.finalize_dict()
+                elif isinstance(l.brain, NengoBrain) :
+                    if l.brain.dict is not None:
+                        nengo_dicts[l.unique_id] =l.brain.dict
+                if l.brain.intermitter is not None:
+                    bout_dicts[l.unique_id] =l.brain.intermitter.build_dict()
+        self.larva_dicts={'deb' : deb_dicts, 'nengo' : nengo_dicts, 'bout_dicts' : bout_dicts}
+
+    def get_larva_tables(self, env):
+        if env.table_collector is not None:
+            for name, table in env.table_collector.tables.items():
+                df = pd.DataFrame(table)
+                if 'unique_id' in df.columns:
+                    df.rename(columns={'unique_id': 'AgentID'}, inplace=True)
+                    N = len(df['AgentID'].unique().tolist())
+                    if N > 0:
+                        Nrows = int(len(df.index) / N)
+                        df['Step'] = np.array([[i] * N for i in range(Nrows)]).flatten()
+                        df.set_index(['Step', 'AgentID'], inplace=True)
+                        df.sort_index(level=['Step', 'AgentID'], inplace=True)
+                        self.larva_tables[name] = df
+
+    def save_larva_tables(self):
         store = pd.HDFStore(self.dir_dict['tables_h5'])
-        for name, table in tables.items():
-            df = pd.DataFrame(table)
-            if 'unique_id' in df.columns:
-                df.rename(columns={'unique_id': 'AgentID'}, inplace=True)
-                N = len(df['AgentID'].unique().tolist())
-                if N > 0:
-                    Nrows = int(len(df.index) / N)
-                    df['Step'] = np.array([[i] * N for i in range(Nrows)]).flatten()
-                    df.set_index(['Step', 'AgentID'], inplace=True)
-                    df.sort_index(level=['Step', 'AgentID'], inplace=True)
-                store[name] = df
+        for name, df in self.larva_tables.items():
+            store[name] = df
         store.close()
 
     def save_ExpFitter(self, dic=None):
@@ -247,8 +268,10 @@ class LarvaDataset:
             ids = self.agent_ids
         if pars is None:
             pars = self.step_data.columns
+        path = self.dir_dict['single_tracks']
+        os.makedirs(path, exist_ok=True)
         for id in ids:
-            f = os.path.join(self.dir_dict['single_tracks'], f'{id}.csv')
+            f = os.path.join(path, f'{id}.csv')
             store = pd.HDFStore(f)
             store['step'] = self.step_data[pars].loc[(slice(None), id), :]
             store['end'] = self.endpoint_data.loc[[id]]
@@ -266,20 +289,6 @@ class LarvaDataset:
         except:
             return None, None
 
-    def load_bout_dicts(self, ids=None):
-        if ids is None:
-            ids = self.agent_ids
-        dir = self.dir_dict['bout_dicts']
-        d = {}
-        for id in ids:
-            file = f'{dir}/{id}.txt'
-            dic = dNl.load_dicts([file])[0]
-            df = pd.DataFrame.from_dict(dic)
-            df.index.set_names(0, inplace=True)
-            d[id] = df
-
-        return d
-
     def load_table(self, name):
         store = pd.HDFStore(self.dir_dict['tables_h5'])
         df = store[name]
@@ -291,18 +300,17 @@ class LarvaDataset:
         df = self.read(key=f'{type}.{par}', file='aux_h5')
         return df
 
-    def load_deb_dicts(self, ids=None, **kwargs):
+    def load_dicts(self, type, ids=None):
         if ids is None:
             ids = self.agent_ids
-        files = [f'{id}.txt' for id in ids]
-        ds = dNl.load_dicts(files=files, folder=self.dir_dict['deb'], **kwargs)
-        return ds
-
-    def load_dicts(self, type, ids=None, **kwargs):
-        if ids is None:
-            ids = self.agent_ids
-        files = [f'{id}.txt' for id in ids]
-        ds = dNl.load_dicts(files=files, folder=self.dir_dict[type], **kwargs)
+        if type in self.larva_dicts and all([id in self.larva_dicts[type].keys() for id in ids]) :
+            ds=[self.larva_dicts[type][id] for id in ids]
+        else :
+            files = [f'{id}.txt' for id in ids]
+            try :
+                ds = dNl.load_dicts(files=files, folder=self.dir_dict[type], use_pickle=False)
+            except :
+                ds = dNl.load_dicts(files=files, folder=self.dir_dict[type], use_pickle=True)
         return ds
 
     def get_pars_list(self, p0, s0, draw_Nsegs):
@@ -511,7 +519,7 @@ class LarvaDataset:
             'data': self.data_dir,
             'plot': self.plot_dir,
             'vis': self.vis_dir,
-            'comp_plot': os.path.join(self.plot_dir, 'comparative'),
+            # 'comp_plot': os.path.join(self.plot_dir, 'comparative'),
             'deb': os.path.join(self.data_dir, 'deb_dicts'),
             'nengo': os.path.join(self.data_dir, 'nengo_probes'),
             'single_tracks': os.path.join(self.data_dir, 'single_tracks'),
@@ -524,9 +532,8 @@ class LarvaDataset:
             'data_h5': os.path.join(self.data_dir, 'data.h5'),
             'aux_h5': os.path.join(self.data_dir, 'aux.h5'),
         }
-        for k, v in self.dir_dict.items():
-            if not str.endswith(v, 'csv') and not str.endswith(v, 'txt') and not str.endswith(v, 'h5'):
-                os.makedirs(v, exist_ok=True)
+        for k in ['parent', 'data']:
+            os.makedirs(self.dir_dict[k], exist_ok=True)
 
     def define_linear_metrics(self):
         try:
@@ -570,18 +577,42 @@ class LarvaDataset:
             self.save()
         return self
 
-    def get_par(self, par):
-        try:
-            return self.read(key='end')[par]
-        except:
+    def get_par(self, par, key=None):
+        def get_end_par(par) :
+            try:
+                return self.read(key='end')[par]
+            except:
+                try:
+                    return self.endpoint_data[par]
+                except:
+                    return None
+
+        def get_step_par(par):
             try:
                 return self.read(key='step')[par]
             except:
                 try:
-                    return self.read(key=f'distro.{par}', file='aux_h5')
+                    return self.step_data[par]
                 except:
-                    print(f'Parameter {par} not found.')
                     return None
+
+        if key=='end' :
+            return get_end_par(par)
+        elif key=='step' :
+            return get_step_par(par)
+        else :
+            e=get_end_par(par)
+            if e is not None :
+                return e
+            else :
+                s = get_step_par(par)
+                if s is not None:
+                    return s
+                else:
+                    try:
+                        return self.read(key=f'distro.{par}', file='aux_h5')
+                    except:
+                        return None
 
     def delete(self, show_output=True):
         shutil.rmtree(self.dir)
@@ -594,32 +625,32 @@ class LarvaDataset:
         if save:
             self.save_config()
 
-    def split_dataset(self, is_last=False, show_output=False, delete_parent=False):
-        c = self.config
-        gIDs = c['group_ids']
-        if len(gIDs) == 1:
-            return [self]
-        fs = [f'{self.dir}/../{self.id}.{gID}' for gID in gIDs]
-        if all([os.path.exists(f) for f in fs]):
-            ds = [LarvaDataset(f) for f in fs]
-        else:
-            if self.step_data is None:
-                self.load()
-            s, e = self.step_data, self.endpoint_data
-            ds = []
-            for gID, f in zip(gIDs, fs):
-                gConf = c['larva_groups'][gID]
-                valid_ids = [id for id in self.agent_ids if str.startswith(id, gID)]
-                copy_tree(self.dir, f)
-                d = LarvaDataset(f, fr=self.fr, id=gID, env_params=c['env_params'], larva_groups={gID: gConf}, load_data=False)
-                d.set_data(step=s.loc[(slice(None), valid_ids), :], end=e.loc[valid_ids])
-                d.config['parent_plot_dir'] = self.plot_dir
-                # print(d.dt)
-                if is_last:
-                    d.save()
-                ds.append(d)
-            if show_output:
-                print(f'Dataset {self.id} splitted in {[d.id for d in ds]}')
-        if delete_parent:
-            self.delete(show_output=show_output)
-        return ds
+    # def split_dataset(self, is_last=False, show_output=False, delete_parent=False):
+    #     c = self.config
+    #     gIDs = c['group_ids']
+    #     if len(gIDs) == 1:
+    #         return [self]
+    #     fs = [f'{self.dir}/../{self.id}.{gID}' for gID in gIDs]
+    #     if all([os.path.exists(f) for f in fs]):
+    #         ds = [LarvaDataset(f) for f in fs]
+    #     else:
+    #         if self.step_data is None:
+    #             self.load()
+    #         s, e = self.step_data, self.endpoint_data
+    #         ds = []
+    #         for gID, f in zip(gIDs, fs):
+    #             gConf = c['larva_groups'][gID]
+    #             valid_ids = [id for id in self.agent_ids if str.startswith(id, gID)]
+    #             copy_tree(self.dir, f)
+    #             d = LarvaDataset(f, fr=self.fr, id=gID, env_params=c['env_params'], larva_groups={gID: gConf}, load_data=False)
+    #             d.set_data(step=s.loc[(slice(None), valid_ids), :], end=e.loc[valid_ids])
+    #             d.config['parent_plot_dir'] = self.plot_dir
+    #             # print(d.dt)
+    #             if is_last:
+    #                 d.save()
+    #             ds.append(d)
+    #         if show_output:
+    #             print(f'Dataset {self.id} splitted in {[d.id for d in ds]}')
+    #     if delete_parent:
+    #         self.delete(show_output=show_output)
+    #     return ds

@@ -83,6 +83,6 @@ if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
 
     # larvaworld_gui = LarvaworldGui(tabs=['import'])
-    larvaworld_gui = LarvaworldGui(tabs=['import', 'settings'])
+    larvaworld_gui = LarvaworldGui(tabs=['import','analysis', 'settings'])
 
     larvaworld_gui.run()

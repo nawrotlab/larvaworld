@@ -10,16 +10,16 @@ from lib.process.spatial import scale_to_length
 from lib.process.store import store_aux_dataset
 
 
-def annotate(s, e, config=None, stride= True,pause= True, turn= True,use_scaled=True,
-             recompute=False, track_point=None, track_pars=None, chunk_pars=None,vel_threshold=0.2,
+def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=True,
+             recompute=False, track_point=None, track_pars=None, chunk_pars=None, vel_threshold=0.2,
              vel_par=None, ang_vel_par=None, bend_vel_par=None, min_ang=30.0, min_ang_vel=100.0,
-             non_chunks=False, show_output=True,fits=True,on_food=False, **kwargs):
+             non_chunks=False, show_output=True, fits=True, on_food=False, **kwargs):
     from lib.conf.base.par import ParDict
     dic = ParDict(mode='load').dict
     if vel_par is None:
-        if use_scaled :
+        if use_scaled:
             vel_par = dic['sv']['d']
-        else :
+        else:
             vel_par = dic['v']['d']
     if ang_vel_par is None:
         ang_vel_par = dic['fov']['d']
@@ -27,9 +27,14 @@ def annotate(s, e, config=None, stride= True,pause= True, turn= True,use_scaled=
         bend_vel_par = dic['bv']['d']
     if track_pars is None:
         track_pars = [dic[k]['d'] for k in ['fou', 'rou', 'fo', 'ro', 'b', 'x', 'y']]
+        track_pars += nam.bearing2(list(config['source_xy'].keys()))
+        # print(track_pars)
+        # raise
     if chunk_pars is None:
         chunk_pars = [dic[k]['d'] for k in ['sv', 'fov', 'rov', 'bv', 'l']]
     track_pars = [p for p in track_pars if p in s.columns]
+    # print(track_pars)
+    # raise
     if track_point is None:
         track_point = config['point']
     if min_ang is None:
@@ -58,16 +63,16 @@ def annotate(s, e, config=None, stride= True,pause= True, turn= True,use_scaled=
 
         if stride and pause and fits:
             fit_bouts(**c, **kwargs)
-        if on_food :
+        if on_food:
             comp_patch_metrics(**c, **kwargs)
 
         for b in ['stride', 'pause', 'turn']:
             try:
                 comp_chunk_bearing(**c, chunk=b, **kwargs)
-                if b=='turn' :
+                if b == 'turn':
                     comp_chunk_bearing(**c, chunk='Lturn', **kwargs)
                     comp_chunk_bearing(**c, chunk='Rturn', **kwargs)
-            except :
+            except:
                 pass
     return s, e
 
@@ -127,7 +132,7 @@ def detect_strides(s, e, config, dt, recompute=False, vel_par=None, track_point=
     if nam.num(c) in e.columns.values and not recompute:
         print('Strides are already detected. If you want to recompute it, set recompute to True')
         return
-    aux_dir=config['aux_dir']
+    aux_dir = config['aux_dir']
     if vel_par is None:
         vel_par = nam.scal(nam.vel(''))
     mid_flag = nam.max(vel_par)
@@ -346,13 +351,13 @@ def detect_non_chunks(s, e, dt, chunk_name, guide_parameter, non_chunk_name=None
 def compute_chunk_metrics(s, e, chunks):
     for c in chunks:
         dur = nam.dur(c)
-        N=nam.num(c)
+        N = nam.num(c)
         e[N] = s[dur].groupby('AgentID').count()
         e[nam.cum(dur)] = s[dur].groupby('AgentID').sum()
         e[nam.mean(dur)] = s[dur].groupby('AgentID').mean()
         e[nam.std(dur)] = s[dur].groupby('AgentID').std()
         e[nam.dur_ratio(c)] = e[nam.cum(dur)] / e[nam.cum('dur')]
-        e[nam.mean(N)] = e[N]/ e[nam.cum('dur')]
+        e[nam.mean(N)] = e[N] / e[nam.cum('dur')]
 
 
 def detect_contacting_chunks(s, e, aux_dir, dt, vel_par, track_point, chunk='stride', mid_flag=None, edge_flag=None,
@@ -535,12 +540,13 @@ def comp_chunk_bearing(s, config, chunk, **kwargs):
         store_aux_dataset(s, pars=[b0_par, b1_par, db_par], type='distro', file=aux_dir)
         print(f'Bearing to source {n} during {chunk} computed')
 
+
 def comp_patch_metrics(s, e, config, **kwargs):
-    cum_t=nam.cum('dur')
-    on='on_food'
-    off='off_food'
-    on_tr=nam.dur_ratio(on)
-    for c in ['Lturn', 'turn', 'pause'] :
+    cum_t = nam.cum('dur')
+    on = 'on_food'
+    off = 'off_food'
+    on_tr = nam.dur_ratio(on)
+    for c in ['Lturn', 'turn', 'pause']:
         dur = nam.dur(c)
         cdur = nam.cum(dur)
         N = nam.num(c)
@@ -557,12 +563,12 @@ def comp_patch_metrics(s, e, config, **kwargs):
 
     dst = nam.dst('')
     cdst = nam.cum(dst)
-    v_mu=nam.mean(nam.vel(''))
+    v_mu = nam.mean(nam.vel(''))
     e[f'{cdst}_{on}'] = s[s[on] == True][dst].dropna().groupby('AgentID').sum()
     e[f'{cdst}_{off}'] = s[s[on] == False][dst].dropna().groupby('AgentID').sum()
 
     e[f'{v_mu}_{on}'] = e[f'{cdst}_{on}'] / e[cum_t] / e[on_tr]
-    e[f'{v_mu}_{off}'] = e[f'{cdst}_{off}'] /  e[cum_t] / (1 - e[on_tr])
+    e[f'{v_mu}_{off}'] = e[f'{cdst}_{off}'] / e[cum_t] / (1 - e[on_tr])
     e['handedness_score'] = e[nam.num('Lturn')] / e[nam.num('turn')]
     e[f'handedness_score_{on}'] = e[f"{nam.num('Lturn')}_{on}"] / e[f"{nam.num('turn')}_{on}"]
     e[f'handedness_score_{off}'] = e[f"{nam.num('Lturn')}_{off}"] / e[f"{nam.num('turn')}_{off}"]

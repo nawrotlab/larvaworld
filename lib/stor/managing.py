@@ -253,6 +253,22 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
                 dirs.append(dr)
     return ids, dirs
 
+def split_dataset(step,end, food, larva_groups,dir, id,plot_dir,  show_output=False, **kwargs):
+    agent_ids = end.index.values
+    ds = []
+    for gID, gConf in larva_groups.items():
+        f=f'{dir}/{id}.{gID}'
+        valid_ids = [id for id in agent_ids if str.startswith(id, gID)]
+        d = LarvaDataset(f, id=gID, larva_groups={gID: gConf}, load_data=False, **kwargs)
+        d.set_data(step=step.loc[(slice(None), valid_ids), :], end=end.loc[valid_ids], food=food)
+        d.config['parent_plot_dir'] = plot_dir
+        # if is_last:
+        #     d.save()
+        ds.append(d)
+    if show_output:
+        print(f'Dataset {id} splitted in {[d.id for d in ds]}')
+    return ds
+
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt

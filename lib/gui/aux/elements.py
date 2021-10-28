@@ -559,6 +559,7 @@ class DataList(NamedList):
         d0 = self.dict
         v0 = v[k]
         kks = [v0[i] if self.aux_cols is None else list(d0.keys())[v0[i]] for i in range(len(v0))]
+        # print(kks)
         datagroup_id = self.tab.current_ID(v) if self.raw else None
         if e == self.browse_key:
             new = detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw)
@@ -589,9 +590,9 @@ class DataList(NamedList):
                 exp_conf['vis_kwargs'] = self.tab.gui.get_vis_kwargs(v)
                 self.tab.imitate(exp_conf)
         elif e == f'ADD_REF {n}':
-            dd = add_ref_window()
-            if dd is not None:
-                self.add(w, {dd.id: dd})
+            dds = add_ref_window()
+            if dds is not None:
+                self.add(w, dds)
         elif e == f'IMPORT {n}':
             dl1 = self.tab.datalists[self.tab.proc_key]
             d1 = dl1.dict
@@ -1241,11 +1242,10 @@ class ButtonGraphList(GraphList):
     def generate(self, w, data):
         if self.func is not None and len(list(data.keys())) > 0:
             try:
-                self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()), labels=list(data.keys()),
+                self.fig, self.save_to, self.save_as = self.func(datasets=list(data.values()),
                                                                  return_fig=True, **self.func_kws)
                 fig = resize_fig(self.fig, self.canvas_size)
                 self.draw_fig(w, fig)
-                # self.draw_fig(w, self.fig)
             except:
                 print('Plot not available')
 

@@ -132,7 +132,7 @@ grouped_exp_dict = {
         'chemotaxis_RL': chem_exp('mid_odor_diffusion', dur=10.0, c=['olfactor', 'memory'],
                                   l=lg(m='RL_navigator', N=10, mode='periphery', s=0.04)),
         'reorientation': chem_exp('mid_odor_diffusion', l=lg(m='immobile', N=200, s=0.05)),
-        'food_at_bottom': exp('food_at_bottom', sim={'duration': 1.0, 'timestep': 0.1}, en=True,
+        'food_at_bottom': chem_exp('food_at_bottom', dur=1.0,
                               l=lgs(models=['Orco_forager', 'forager'],
                                     ids=['Orco', 'control'], N=5, sh='oval', p=(0.0, 0.04), s=(0.04, 0.01)))
     },
