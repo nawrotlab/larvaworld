@@ -446,7 +446,7 @@ class LarvaWorld:
             odor = conf['odor']
             if default_color is None:
                 default_color = conf['default_color']
-        while not lib.aux.sim_aux.inside_polygon([pos], self.tank_polygon)[0]:
+        while not lib.aux.sim_aux.inside_polygon([pos], self.tank_polygon):
             pos = tuple(np.array(pos) * 0.999)
 
         l = LarvaSim(unique_id=self.next_id(type='Larva') if id is None else id, model=self, pos=pos,

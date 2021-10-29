@@ -64,20 +64,11 @@ def angle_to_x_axis(point_1, point_2, in_deg=True):
 
 
 def angle_dif(angle_1, angle_2, in_deg=True):
-    dif = angle_1 - angle_2
+    a = angle_1 - angle_2
     if in_deg:
-        dif%=360
-        if dif > 180:
-            dif -= 2 * 180
-        elif dif <= -180:
-            dif += 2 * 180
-    else:
-        dif%=2*np.pi
-        if dif > np.pi:
-            dif -= np.pi * 2
-        elif dif < -np.pi:
-            dif += np.pi * 2
-    return dif
+        return (a + 180) % 360 - 180
+    else :
+        return (a + np.pi) % (np.pi * 2) - np.pi
 
 
 def rotate_around_point(point, radians, origin=[0, 0]):

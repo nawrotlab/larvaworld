@@ -1,12 +1,14 @@
 import abc
 import math
+import time
+
 import numpy as np
 from shapely.geometry import LineString, Polygon, Point
 
 import lib.aux.ang_aux
-import lib.aux.sim_aux
+from lib.aux.sim_aux import inside_polygon
 from lib.model.body.body import LarvaBody
-
+from lib.aux.ang_aux import angle_dif
 
 class BodyManager(LarvaBody):
     def __init__(self, model, pos, orientation, **kwargs) :
@@ -78,6 +80,8 @@ class BodySim(BodyManager):
         # self.collector=AgentCollector(g,self)
 
     def step(self):
+        # t0=[]
+        # t0.append(time.time())
         self.restore_body_bend()
         # Trying restoration for any number of segments
         # if self.Nsegs == 1:
@@ -142,28 +146,23 @@ class BodySim(BodyManager):
                     vel = lin_vel_amp * seg.get_world_facing_axis()
                     seg.set_lin_vel(vel, local=False)
         else:
+            # t0.append(time.time())
             if self.lin_mode == 'velocity':
                 lin_vel_amp = self.lin_activity * self.lin_vel_coef
             else:
                 raise ValueError(f'Linear mode {self.lin_mode} not implemented for non-physics simulation')
             if self.ang_mode == 'torque':
                 self.torque = self.ang_activity * self.torque_coef
-                # The damping free mode is much closer to the experimental histogram of body bends (singlelarva_turns.ipynb)
-                # On the other hand even a minor damping of 0.01 produces a two-top distribution at -20,20 (test_turner.py)
-                # So I m gonna explore the no damping case.
-                # TODO Attention, the experimental distribution is from a larva constantly striding but my findings are on stationary turner component
-                #  I should explore whether interference corrects the dist even when damping is present
-                # UPdate : 0 damping does not fix the two-pick (though makes it a bit better).Interference neither.
-                # But maybe I cn raise the torque coef of 0.07 becuse two_osc reach -20,20 and interference drops it to -10,10.
                 ang_vel = self.compute_ang_vel(torque=self.torque,
                                                v=self.head.get_angularvelocity(),
                                                z=self.ang_damping)
             elif self.ang_mode == 'velocity':
                 ang_vel = self.ang_activity * self.ang_vel_coef
                 ang_vel = self.compute_ang_vel(v=ang_vel, z=self.ang_damping)
-
+            # t0.append(time.time())
             self.step_no_physics(lin_vel=lin_vel_amp, ang_vel=ang_vel)
-
+            # t0.append(time.time())
+            # print(np.array(np.diff(t0) * 1000000).astype(int))
         for o in self.carried_objects:
             o.pos = self.pos
 
@@ -217,8 +216,11 @@ class BodySim(BodyManager):
         return v + (-z * v - self.body_spring_k * self.body_bend + torque) * self.model.dt
 
     def restore_body_bend(self):
+        # t0=[]
+        # t0.append(time.time())
         self.compute_spineangles()
         d, l = self.dst, self.sim_length
+        # t0.append(time.time())
         if not self.model.Box2D:
             if self.Nsegs == 2:
                 self.spineangles[0] = lib.aux.ang_aux.restore_bend_2seg(self.spineangles[0], d, l,
@@ -226,7 +228,10 @@ class BodySim(BodyManager):
             else:
                 self.spineangles = lib.aux.ang_aux.restore_bend(self.spineangles, d, l, self.Nsegs,
                                                                 correction_coef=self.bend_correction_coef)
+        # t0.append(time.time())
         self.compute_body_bend()
+        # t0.append(time.time())
+        # print(np.array(np.diff(t0) * 10000000).astype(int))
 
     def update_trajectory(self):
         last_pos = self.trajectory[-1]
@@ -241,29 +246,25 @@ class BodySim(BodyManager):
         self.head_contacts_ground = value
 
     def step_no_physics(self, lin_vel, ang_vel):
-        # BIO : Translate motor signal to behavior (how much to turn, how much to move)
-        # distance = motor_vector[0] * self.max_speed
-        # self.header = (self.header + motor_vector[1] * math.pi / 2) % (2 * math.pi)
-
-        # COUNTER
-        # self.total_distance += distance
-
-        # TECH : Move the agent
-        # Compute orientation
+        # t0=[]
+        # t0.append(time.time())
         dt = self.model.dt
-
+        l0=self.seg_lengths[0]
         head = self.head
         hp0, o0 = head.get_pose()
         hr0 = self.global_rear_end_of_head
-
         lin_vel, ang_vel=self.assess_collisions(lin_vel, ang_vel, head)
         d = lin_vel * dt
-        ang_vel, o1, hr1, hp1 = self.assess_tank_contact(ang_vel, o0, d, hr0, hp0, dt)
-
+        # t0.append(time.time())
+        ang_vel, o1, hr1, hp1 = self.assess_tank_contact(ang_vel, o0, d, hr0, hp0, dt, l0)
+        # t0.append(time.time())
         head.set_pose(hp1, o1)
         head.update_vertices(hp1, o1)
+
         if self.Nsegs > 1:
             self.position_rest_of_body(o1-o0, head_rear_pos=hr1, head_or=o1)
+
+
         self.pos = self.global_midspine_of_body if self.Nsegs != 2 else hr1
         self.model.space.move_agent(self, self.pos)
         head.set_lin_vel(lin_vel)
@@ -271,6 +272,7 @@ class BodySim(BodyManager):
         self.dst = d
         self.cum_dst += d
         self.trajectory.append(self.pos)
+
 
     def position_rest_of_body(self, d_orientation, head_rear_pos, head_or):
         N = self.Nsegs
@@ -302,8 +304,10 @@ class BodySim(BodyManager):
             self.compute_body_bend()
 
     def compute_spineangles(self):
-        seg_ors = [seg.get_orientation() for seg in self.segs]
-        self.spineangles = [lib.aux.ang_aux.angle_dif(seg_ors[i], seg_ors[i + 1], in_deg=False) for i in range(self.Nangles)]
+        if self.Nangles==1:
+            self.spineangles =[angle_dif(self.head.get_orientation(), self.segs[1].get_orientation(), in_deg=False)]
+        else :
+            self.spineangles = [angle_dif(self.segs[i].get_orientation(), self.segs[i + 1].get_orientation(), in_deg=False) for i in range(self.Nangles)]
 
     def compute_body_bend(self):
         self.body_bend = sum(self.spineangles[:self.Nangles_b])
@@ -321,9 +325,9 @@ class BodySim(BodyManager):
             ang_vel += np.sign(ang_vel) * np.pi / 10
         return lin_vel, ang_vel
 
-    def assess_tank_contact(self, ang_vel, o0, d, hr0, hp0, dt):
-        a0 = self.spineangles[0] if len(self.spineangles) > 0 else 0.0
-        ang_vel0 = np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
+    def assess_tank_contact(self, ang_vel, o0, d, hr0, hp0, dt, l0):
+        # a0 = self.spineangles[0] if len(self.spineangles) > 0 else 0.0
+        # ang_vel0 = np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
 
         def avoid_border(ang_vel, counter, dd=0.01):
             if math.isinf(ang_vel):
@@ -342,35 +346,38 @@ class BodySim(BodyManager):
                 ang_vel += dd * LRd
                 return ang_vel, counter
 
-        def check_in_tank(ang_vel, o0, d, hr0):
-
+        def check_in_tank(ang_vel, o0, d, hr0, l0):
+            # t0=[]
+            # t0.append(time.time())
             o1 = o0 + ang_vel * dt
             k = np.array([math.cos(o1), math.sin(o1)])
             dxy = k * d
             if self.Nsegs > 1:
                 hr1 = hr0 + dxy
-                hp1 = hr1 + k * self.seg_lengths[0] / 2
-                hf1 = hr1 + k * self.seg_lengths[0]
+                hp1 = hr1 + k * l0 / 2
+                hf1 = hr1 + k * l0
+                # t0.append(time.time())
             else:
                 hr1 = None
                 hp1 = hp0 + dxy
                 hf1 = hp1 + k * (self.sim_length / 2)
-            hf1_ok, hp1_ok = lib.aux.sim_aux.inside_polygon(points=[hf1, hp1], tank_polygon=self.model.tank_polygon)
-            in_tank = all([hf1_ok, hp1_ok])
+            in_tank = inside_polygon(points=[hf1], tank_polygon=self.model.tank_polygon)
+            # t0.append(time.time())
+            # print(np.array(np.diff(t0) * 1000000).astype(int))
             return in_tank, o1, hr1, hp1
 
-        in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
+        in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)
         counter = -1
         while not in_tank:
             ang_vel, counter = avoid_border(ang_vel, counter)
             try :
-                in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0)
+                in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)
             except :
                 pass
-
-        if counter > 0:
+        # print(counter)
+        # if counter > 0:
             # print(counter)
-            ang_vel = np.abs(ang_vel) * np.sign(ang_vel0)
+            # ang_vel = np.abs(ang_vel) * np.sign(ang_vel0)
         return ang_vel, o1, hr1, hp1
 
     # def wind_obstructed(self, wind_direction):

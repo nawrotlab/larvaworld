@@ -1,4 +1,5 @@
 import random
+import time
 
 import numpy as np
 from mesa.datacollection import DataCollector
@@ -116,20 +117,25 @@ class LarvaWorldSim(LarvaWorld):
                                    default_color=gConf['default_color'], life_history=gConf['life_history'])
 
     def step(self):
+        t0=[]
+        # t0.append(time.time())
         self.sim_clock.tick_clock()
         if not self.larva_collisions:
             self.larva_bodies = self.get_larva_bodies()
         # Update value_layers
         for id, layer in self.odor_layers.items():
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
+        # t0.append(time.time())
         for l in self.get_flies():
             l.compute_next_action()
+        # t0.append(time.time())
         self.active_larva_schedule.step()
         self.active_food_schedule.step()
         if self.Box2D:
             self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
             for fly in self.get_flies():
                 fly.update_trajectory()
+        # t0.append(time.time())
         if self.larva_step_col is not None:
             self.larva_step_col.collect(self)
         if self.step_group_collector is not None:
@@ -139,6 +145,8 @@ class LarvaWorldSim(LarvaWorld):
             self.exp_condition.check(self)
         self.Nticks += 1
 
+        # t0.append(time.time())
+        # print(np.array(np.diff(t0)*1000).astype(int))
     def space_to_mm(self, array):
         return array * 1000 / self.scaling_factor
 
@@ -253,8 +261,11 @@ def get_all_odors(larva_groups, food_params):
 def get_all_foodtypes(food_params):
     sg= {k:v['default_color'] for k,v in food_params['source_groups'].items()}
     su={conf['group'] : conf['default_color'] for conf in food_params['source_units'].values()}
-    gr={k : v['default_color'] for k,v in food_params['food_grid'].items()} if food_params['food_grid'] is not None else {}
+    gr={food_params['food_grid']['unique_id'] : food_params['food_grid']['default_color']} if food_params['food_grid'] is not None else {}
     ids= {**gr,**su, **sg}
     ks = dNl.unique_list(list(ids.keys()))
-    ids={k : np.array(ids[k])/255 for k in ks}
+    try :
+        ids={k : np.array(ids[k])/255 for k in ks}
+    except :
+        ids = {k: ids[k] for k in ks}
     return ids

@@ -46,17 +46,17 @@ class LarvaSim(BodySim, Larva):
         self.update_behavior()
 
     def detect_food(self, pos):
+        item, q, foodtype = None, None, None
         if self.brain.feeder is not None or self.touch_sensors is not None:
             prev_item = self.food_detected
-            item, q, foodtype = None, None, None
             grid = self.model.food_grid
             if grid:
                 cell = grid.get_grid_cell(pos)
                 if grid.get_cell_value(cell) > 0:
                     item, q, foodtype = cell, grid.substrate.quality, grid.unique_id
             else:
-                valid = [a for a in self.model.get_food() if a.amount > 0]
-                accessible_food = [a for a in valid if a.contained(pos)]
+                accessible_food = [a for a in self.model.get_food() if a.amount > 0 and a.contained(pos)]
+                # accessible_food = [a for a in valid if a.contained(pos)]
                 if accessible_food:
                     food = random.choice(accessible_food)
                     self.resolve_carrying(food)
@@ -64,7 +64,7 @@ class LarvaSim(BodySim, Larva):
             self.food_found = True if (prev_item is None and item is not None) else False
             self.food_missed = True if (prev_item is not None and item is None) else False
 
-            return item, foodtype
+        return item, foodtype
 
     def feed(self, source, motion):
 
@@ -287,12 +287,6 @@ class LarvaSim(BodySim, Larva):
         self.brain.intermitter.update(food_present=self.food_detected, feed_success=self.feed_success)
 
     def update_foraging_dict(self, foodtype, current_V_eaten):
-        # if foodtype is None:
-        #     if current_V_eaten!=0:
-        #         raise ValueError
-        # for action, dic in self.foraging_dict.items() :
-        #     for id,v in dic.items() :
-        #         v.append(v[-1])
         if foodtype is not None:
             self.foraging_dict[foodtype]['on_food_tr'] += self.model.dt
             self.foraging_dict[foodtype]['sf_am'] += current_V_eaten

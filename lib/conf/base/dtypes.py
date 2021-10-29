@@ -482,6 +482,7 @@ def init_pars():
         'grid_dims': {'t': Tuple[int], 'v': (50, 50), 'min': 10, 'max': 200},
         'initial_value': {'v': 0.1, 'max': 1.0, 'dv': 0.01},
         'distribution': {'t': str, 'v': 'uniform', 'vs': ['uniform']},
+        'default_color': {'t': str, 'v': 'green'},
         **d['substrate']
         # 'substrate' : d['substrate']
     }
