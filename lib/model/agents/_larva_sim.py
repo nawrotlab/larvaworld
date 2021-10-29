@@ -1,4 +1,5 @@
 import random
+import time
 
 import numpy as np
 
@@ -33,19 +34,27 @@ class LarvaSim(BodySim, Larva):
         # self.foraging_dict= {action :{id: [0] for id in self.model.foodtypes} for action in ['detection', 'consumption']}
 
     def compute_next_action(self):
+        # t0 = []
+        # t0.append(time.time())
         self.cum_dur += self.model.dt
         pos = self.olfactor_pos
         self.food_detected, foodtype = self.detect_food(pos)
-
+        # t0.append(time.time())
         self.cum_food_detected += int(self.on_food)
 
         self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.run(pos)
+        # t0.append(time.time())
         self.current_V_eaten, self.feed_success = self.feed(self.food_detected, self.feeder_motion)
+        # t0.append(time.time())
         self.update_foraging_dict(foodtype, self.current_V_eaten)
         self.run_energetics(self.current_V_eaten)
         self.update_behavior()
 
+        # t0.append(time.time())
+        # print(np.array(np.diff(t0) * 1000000).astype(int))
     def detect_food(self, pos):
+        t0 = []
+        # t0.append(time.time())
         item, q, foodtype = None, None, None
         if self.brain.feeder is not None or self.touch_sensors is not None:
             prev_item = self.food_detected
@@ -54,16 +63,22 @@ class LarvaSim(BodySim, Larva):
                 cell = grid.get_grid_cell(pos)
                 if grid.get_cell_value(cell) > 0:
                     item, q, foodtype = cell, grid.substrate.quality, grid.unique_id
+
             else:
-                accessible_food = [a for a in self.model.get_food() if a.amount > 0 and a.contained(pos)]
-                # accessible_food = [a for a in valid if a.contained(pos)]
+                # t0.append(time.time())
+                valid = [a for a in self.model.get_food() if a.amount > 0]
+
+                accessible_food = [a for a in valid if a.contained(pos)]
+                # t0.append(time.time())
                 if accessible_food:
                     food = random.choice(accessible_food)
                     self.resolve_carrying(food)
                     item, q, foodtype = food, food.substrate.quality, food.group
+                # t0.append(time.time())
             self.food_found = True if (prev_item is None and item is not None) else False
             self.food_missed = True if (prev_item is not None and item is None) else False
-
+        # t0.append(time.time())
+        # print(np.array(np.diff(t0) * 1000000).astype(int))
         return item, foodtype
 
     def feed(self, source, motion):

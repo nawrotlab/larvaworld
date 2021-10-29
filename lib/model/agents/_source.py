@@ -5,6 +5,7 @@ from shapely import affinity
 from shapely.geometry import Point, Polygon
 
 import lib.aux.sim_aux
+from lib.aux.xy_aux import eudis5
 from lib.model.DEB.deb import Substrate
 from lib.model.agents._agent import LarvaworldAgent
 
@@ -91,6 +92,7 @@ class Food(Source):
             viewer.draw_circle(p, r * 1.1, self.model.selection_color, False, r / 5)
 
     def contained(self, point):
-        return euclidean(self.get_position(), point)<=self.radius
+        return eudis5(self.get_position(), point)<=self.radius
+        # return euclidean(self.get_position(), point)<=self.radius
         # return Point(self.get_position()).distance(Point(point))<=self.radius
         # return Circle(self.get_position(), radius=self.radius).contains_point(point)

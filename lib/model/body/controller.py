@@ -347,8 +347,6 @@ class BodySim(BodyManager):
                 return ang_vel, counter
 
         def check_in_tank(ang_vel, o0, d, hr0, l0):
-            # t0=[]
-            # t0.append(time.time())
             o1 = o0 + ang_vel * dt
             k = np.array([math.cos(o1), math.sin(o1)])
             dxy = k * d
@@ -356,14 +354,11 @@ class BodySim(BodyManager):
                 hr1 = hr0 + dxy
                 hp1 = hr1 + k * l0 / 2
                 hf1 = hr1 + k * l0
-                # t0.append(time.time())
             else:
                 hr1 = None
                 hp1 = hp0 + dxy
                 hf1 = hp1 + k * (self.sim_length / 2)
             in_tank = inside_polygon(points=[hf1], tank_polygon=self.model.tank_polygon)
-            # t0.append(time.time())
-            # print(np.array(np.diff(t0) * 1000000).astype(int))
             return in_tank, o1, hr1, hp1
 
         in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)

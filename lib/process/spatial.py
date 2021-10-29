@@ -1,5 +1,6 @@
 import itertools
-from sklearn.metrics.pairwise import nan_euclidean_distances
+import time
+
 import numpy as np
 
 from lib.process.aux import compute_component_velocity, compute_velocity, compute_centroid
@@ -8,6 +9,7 @@ from lib.aux.dictsNlists import group_list_by_n, flatten_list
 import lib.aux.naming as nam
 from lib.process.store import store_aux_dataset
 from lib.conf.base.par import getPar
+from lib.aux.xy_aux import eudi5x
 
 
 def raw_or_filtered_xy(s, points):
@@ -281,12 +283,12 @@ def comp_dispersion(s, e, config, dt, point, recompute=False, dsp_starts=[0], ds
         for id in ids:
             xy = s[['x', 'y']].xs(id, level='AgentID', drop_level=True)
             try:
-                origin_xy = list(xy.dropna().values[t0])
+                origin_xy = xy.dropna().values[t0]
             except:
                 print(f'No values to set origin point for {id}')
                 s.loc[(slice(None), id), p] = np.empty(len(xy)) * np.nan
                 continue
-            d = nan_euclidean_distances(list(xy.values), [origin_xy])[:, 0]
+            d = eudi5x(xy.values, origin_xy)
             d[:t0] = np.nan
             s.loc[(slice(None), id), p] = d
             e.loc[id, mp] = np.nanmax(d)
@@ -355,7 +357,7 @@ def comp_source_metrics(s, e, config, **kwargs):
         temp = np.array(pos) - s[xy].values
         s[o] = (s[fo] + 180 - np.rad2deg(np.arctan2(temp[:, 1], temp[:, 0]))) % 360 - 180
         s[pabs] = s[o].abs()
-        s[d] = nan_euclidean_distances(s[xy].values.tolist(), [pos])[:, 0]
+        s[d] = eudi5x(s[xy].values, np.array(pos))
         e[pmax] = s[d].groupby('AgentID').max()
         e[pmu] = s[d].groupby('AgentID').mean()
         e[pfin] = s[d].dropna().groupby('AgentID').last()
@@ -387,7 +389,8 @@ def comp_wind_metrics(s, e,config, **kwargs):
         for id in ids :
             xy = s[['x', 'y']].xs(id, level='AgentID', drop_level=True).values
             origin=e[[nam.initial('x'), nam.initial('y')]].loc[id]
-            d = nan_euclidean_distances(list(xy), [origin])[:, 0]
+            d = eudi5x(xy, np.array(origin))
+            print(d)
             dx=xy[:,0]-origin[0]
             dy=xy[:,1]-origin[1]
             angs=np.arctan2(dy, dx)

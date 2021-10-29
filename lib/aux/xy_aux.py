@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 
@@ -60,3 +62,13 @@ def generate_xy_distro(mode, shape, N, loc=(0.0, 0.0), scale=(0.0, 0.0)):
             return xy_along_rect(N, loc, scale)
     else:
         raise ValueError(f'XY distribution {mode} not implemented.')
+
+def eudis5(v1, v2):
+    dist = [(a - b)**2 for a, b in zip(v1, v2)]
+    dist = math.sqrt(sum(dist))
+    return dist
+
+def eudi5x(a,b) :
+    return np.sqrt(np.sum((a - b) ** 2, axis=1))
+
+#
