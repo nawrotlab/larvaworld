@@ -234,13 +234,13 @@ def init_pars():
 
     d = {
         'bout_distro': {
-            'fit': {**bT, 'combo': 'distro'},
-            'range': {'t': Tuple[float], 'max': 100.0, 'combo': 'distro'},
+            'fit': {**bT, 'combo': 'distro','h': 'Whether the distribution is sampled from a reference dataset. Once this is set to "ON" no other parameter is taken into account.'},
+            'range': {'t': Tuple[float], 'max': 100.0, 'combo': 'distro', 'h': 'The distribution range'},
             'name': {'t': str,
                      'vs': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy', 'normal', 'uniform'],
-                     'combo': 'distro'},
-            'mu': {'max': 10.0, 'disp': 'mean', 'combo': 'distro'},
-            'sigma': {'max': 10.0, 'disp': 'std', 'combo': 'distro'},
+                     'combo': 'distro', 'h': 'The distribution name'},
+            'mu': {'max': 10.0, 'disp': 'mean', 'combo': 'distro','h': 'The "mean" argument for constructing the distribution'},
+            'sigma': {'max': 10.0, 'disp': 'std', 'combo': 'distro','h': 'The "sigma" argument for constructing the distribution'},
         },
         'xy': {'t': Tuple[float], 'v': (0.0, 0.0), 'min': -1.0, 'max': 1.0},
         'odor': {
@@ -258,12 +258,12 @@ def init_pars():
                       'wind_speed': {'t': float, 'min': 0.0, 'max': 100.0, 'dv': 1.0,'h': 'The speed of the wind/air puff'},
                       },
         'odor_gains': {
-            'unique_id': {'t': str},
-            'mean': {'max': 1000.0, 'dv': 10.0},
-            'std': {'max': 10.0, 'dv': 1.0}
+            'unique_id': {'t': str, 'h': 'The unique ID of the odorant'},
+            'mean': {'max': 1000.0, 'dv': 10.0, 'h': 'The mean gain/valence for the odorant. Positive/negative for appettitive/aversive valence'},
+            'std': {'max': 10.0, 'dv': 1.0, 'h': 'The standard deviation for the odorant gain/valence'}
         },
         'optimization': {
-            'fit_par': {'t': str,'h': 'The utility parameter optimized'},
+            'fit_par': {'t': str,'disp': 'Utility metric', 'h': 'The utility parameter optimized'},
             'minimize': {**bT,'h': 'Whether to minimize or maximize the utility parameter'},
             'threshold': {'v': 0.001, 'max': 0.01, 'dv': 0.0001,'h': 'The utility threshold to reach before terminating the batch-run'},
             'max_Nsims': {'t': int, 'v': 7, 'max': 100,'h': 'The maximum number of single runs before terminating the batch-run'},
@@ -275,14 +275,14 @@ def init_pars():
             },
         },
         'batch_methods': {
-            'run': {'t': str, 'v': 'default', 'vs': ['null', 'default', 'deb', 'odor_preference', 'exp_fit']},
-            'post': {'t': str, 'v': 'default', 'vs': ['null', 'default']},
-            'final': {'t': str, 'v': 'null', 'vs': ['null', 'scatterplots', 'deb', 'odor_preference']}
+            'run': {'t': str, 'v': 'default', 'vs': ['null', 'default', 'deb', 'odor_preference', 'exp_fit'], 'h': 'The method to be applied on simulated data derived from every individual run'},
+            'post': {'t': str, 'v': 'default', 'vs': ['null', 'default'], 'h': 'The method to be applied after a generation of runs is completed to judge whether space-search will continue or batch-run will be terminated'},
+            'final': {'t': str, 'v': 'null', 'vs': ['null', 'scatterplots', 'deb', 'odor_preference'], 'h': 'The method to be applied once the batch-run is complete to plot/save the results'}
         },
         'space_search_par': {
-            'range': {'t': Tuple[float], 'max': 100.0, 'min': -100.0, 'dv': 1.0},
-            'Ngrid': {'t': int, 'max': 100},
-            'values': {'t': List[float], 'min': -100.0, 'max': 100.0}
+            'range': {'t': Tuple[float], 'max': 100.0, 'min': -100.0, 'dv': 1.0, 'h': 'The parameter range to perform the space-search'},
+            'Ngrid': {'t': int, 'max': 100,'disp' : '# steps',  'h': 'The number of equally-distanced values to parse the parameter range'},
+            'values': {'t': List[float], 'min': -100.0, 'max': 100.0, 'h': 'A list of values of the parameter to space-search. Once this is filled no range/# steps parameters are taken into account'}
         },
         'space_search': {'pars': {'t': List[str], 'h': 'The parameters for space search', 's': 'ss.pars'},
                          'ranges': {'t': List[Tuple[float]], 'max': 100.0, 'min': -100.0, 'dv': 1.0,
@@ -462,34 +462,34 @@ def init_pars():
         'EEB': {'v': 0.0, 'max': 1.0},
     }
 
-    d['substrate_composition'] = {n: {'v': 0.0, 'max': 10.0} for n in
+    d['substrate_composition'] = {n: {'v': 0.0, 'max': 10.0, 'h' : f'{n} density in g/cm**3'} for n in
                                   ['glucose', 'dextrose', 'saccharose', 'yeast', 'agar', 'cornmeal']}
 
     d['substrate'] = {
-        'type': {'t': str, 'v': 'standard', 'vs': list(substrate_dict.keys())},
-        'quality': {'v': 1.0, 'max': 1.0}
+        'type': {'t': str, 'v': 'standard', 'vs': list(substrate_dict.keys()), 'h' : 'The type of substrate'},
+        'quality': {'v': 1.0, 'max': 1.0, 'h' : 'The substrate quality as percentage of nutrients relative to the intact substrate type'}
 
     }
 
     d['food'] = {
-        'radius': {'v': 0.003, 'max': 0.1, 'dv': 0.001},
-        'amount': {'v': 0.0, 'max': 1.0},
-        'can_be_carried': {**bF, 'disp': 'carriable'},
+        'radius': {'v': 0.003, 'max': 0.1, 'dv': 0.001, 'h' : 'The spatial radius of the source in meters'},
+        'amount': {'v': 0.0, 'max': 1.0, 'h' : 'The unique ID of the food grid', 'h' : 'The food amount in the source'},
+        'can_be_carried': {**bF, 'disp': 'carriable', 'h' : 'Whether the source can be carried around'},
         **d['substrate']
     }
     d['food_grid'] = {
-        'unique_id': {'t': str, 'v': 'Food_grid'},
-        'grid_dims': {'t': Tuple[int], 'v': (50, 50), 'min': 10, 'max': 200},
-        'initial_value': {'v': 0.1, 'max': 1.0, 'dv': 0.01},
-        'distribution': {'t': str, 'v': 'uniform', 'vs': ['uniform']},
-        'default_color': {'t': str, 'v': 'green'},
+        'unique_id': {'t': str, 'v': 'Food_grid','disp' : 'ID', 'h' : 'The unique ID of the food grid'},
+        'grid_dims': {'t': Tuple[int], 'v': (50, 50), 'min': 10, 'max': 200,'disp' : 'XY dims', 'h' : 'The spatial resolution of the food grid'},
+        'initial_value': {'v': 0.1, 'max': 1.0, 'dv': 0.01,'disp' : 'Initial amount',  'h' : 'The initial amount of food in each cell of the grid'},
+        'distribution': {'t': str, 'v': 'uniform', 'vs': ['uniform'], 'h' : 'The distribution of food in the grid'},
+        'default_color': {'t': str, 'v': 'green','disp' : 'color', 'h' : 'The default color of the food grid'},
         **d['substrate']
         # 'substrate' : d['substrate']
     }
 
     d['epoch'] = {
-        'start': {'max': 200.0},
-        'stop': {'max': 200.0},
+        'start': {'max': 200.0, 'h' : 'The beginning of the epoch in hours post-hatch'},
+        'stop': {'max': 200.0, 'h' : 'The end of the epoch in hours post-hatch'},
         # 'duration': {'max': 200.0},
         'substrate': d['substrate']
 
