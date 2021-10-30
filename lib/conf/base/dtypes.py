@@ -248,7 +248,7 @@ def init_pars():
         'xy': {'t': Tuple[float], 'v': (0.0, 0.0), 'min': -1.0, 'max': 1.0},
         'odor': {
             'odor_id': {'t': str, 'disp': 'ID', 'h': 'The unique ID of the odorant.'},
-            'odor_intensity': {'max': 10.0, 'disp': 'C peak (μmole)',
+            'odor_intensity': {'max': 10.0, 'disp': 'C peak',
                                'h': 'The peak concentration of the odorant in micromoles.'},
             'odor_spread': {'max': 10.0, 'disp': 'spread',
                             'h': 'The spread of the concentration gradient around the peak.'}
@@ -697,24 +697,24 @@ def init_pars():
                        }
 
     d['tracker'] = {
-        'resolution': {'fr': {'v': 10.0, 'max': 100.0, 'disp': 'framerate (Hz)'},
-                       'Npoints': {'t': int, 'v': 1, 'max': 20, 'disp': '# midline xy'},
-                       'Ncontour': {'t': int, 'v': 0, 'max': 100, 'disp': '# contour xy'}
+        'resolution': {'fr': {'v': 10.0, 'max': 100.0, 'disp': 'framerate (Hz)', 'h': 'The framerate of the tracker recordings.'},
+                       'Npoints': {'t': int, 'v': 1, 'max': 20, 'disp': '# midline xy', 'h': 'The number of points tracked along the larva midline.'},
+                       'Ncontour': {'t': int, 'v': 0, 'max': 100, 'disp': '# contour xy', 'h': 'The number of points tracked around the larva contour.'}
                        },
         'arena': d['arena'],
         'filesystem': {
-            'read_sequence': {'t': List[str], 'disp': 'columns'},
-            'read_metadata': {**bF, 'disp': 'metadata'},
-            'folder': {'pref': {'t': str}, 'suf': {'t': str}},
-            'file': {'pref': {'t': str}, 'suf': {'t': str}, 'sep': {'t': str}}
+            'read_sequence': {'t': List[str], 'disp': 'columns', 'h': 'The sequence of columns in the tracker-exported files.'},
+            'read_metadata': {**bF, 'disp': 'metadata', 'h': 'Whether metadata files are available for the tracker-exported files/folders.'},
+            'folder': {'pref': {'t': str, 'h': 'A prefix for detecting a raw-data folder.'}, 'suf': {'t': str, 'h': 'A suffix for detecting a raw-data folder.'}},
+            'file': {'pref': {'t': str, 'h': 'A prefix for detecting a raw-data file.'}, 'suf': {'t': str, 'h': 'A suffix for detecting a raw-data file.'}, 'sep': {'t': str, 'h': 'A separator for detecting a raw-data file.'}}
         },
 
     }
 
     d['spatial_distro'] = {
-        'mode': {'t': str, 'v': 'normal', 'vs': ['normal', 'periphery', 'uniform']},
-        'shape': {'t': str, 'v': 'circle', 'vs': ['circle', 'rect', 'oval']},
-        'N': {'t': int, 'v': 10, 'max': 1000},
+        'mode': {'t': str, 'v': 'normal', 'vs': ['normal', 'periphery', 'uniform'], 'disp': 'placing', 'h': 'The wa to place agents in the distribution shape.'},
+        'shape': {'t': str, 'v': 'circle', 'vs': ['circle', 'rect', 'oval'], 'h': 'The space of the spatial distribution.'},
+        'N': {'t': int, 'v': 10, 'max': 1000, 'h': 'The number of agents in the group.'},
         'loc': d['xy'],
         'scale': d['xy'],
     }
@@ -722,7 +722,7 @@ def init_pars():
     d['larva_distro'] = {
         **d['spatial_distro'],
         'orientation_range': {'t': Tuple[float], 'v': (0.0, 360.0), 'min': 0.0, 'max': 360.0, 'dv': 1.0,
-                              'disp': 'heading'}
+                              'disp': 'heading', 'h': 'The range of larva body orientations to sample from, in degrees.'}
     }
 
     d['larva_model'] = {'t': str, 'v': 'explorer', 'vs': kConfDict('Model')}
@@ -735,7 +735,7 @@ def init_pars():
     d['LarvaGroup'] = {
         'model': d['larva_model'],
         'sample': {'t': str, 'v': 'None.200_controls'},
-        'default_color': {'t': str, 'v': 'black'},
+        'default_color': {'t': str, 'v': 'black', 'disp': 'color', 'h': 'The default color of the larva group.'},
         'imitation': bF,
         'distribution': d['larva_distro'],
         'life_history': d['life_history'],
@@ -743,13 +743,13 @@ def init_pars():
     }
 
     d['agent'] = {
-        'group': {'t': str, 'v': ''},
+        'group': {'t': str, 'v': '', 'h': 'The unique ID of the agent group.'},
 
     }
 
     d['source'] = {
         **d['agent'],
-        'default_color': {'t': str, 'v': 'green'},
+        'default_color': {'t': str, 'v': 'green', 'disp': 'color', 'h': 'The default color of the source.'},
         'pos': d['xy'],
         **d['food'],
         'odor': d['odor']
@@ -757,36 +757,36 @@ def init_pars():
 
     d['SourceGroup'] = {
         'distribution': d['spatial_distro'],
-        'default_color': {'t': str, 'v': 'green'},
+        'default_color': {'t': str, 'v': 'green', 'disp': 'color', 'h': 'The default color of the source group.'},
         **d['food'],
         'odor': d['odor']
     }
 
     d['Border'] = {
-        'default_color': {'t': str, 'v': 'black'},
-        'width': {'v': 0.01, 'min': 0.0},
-        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0},
+        'default_color': {'t': str, 'v': 'black', 'disp': 'color', 'h': 'The default color of the border.'},
+        'width': {'v': 0.01, 'min': 0.0, 'h': 'The width of the border.'},
+        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0, 'h': 'The XY coordinates of the consecutive border segments.'},
     }
 
     d['border_list'] = {
-        'default_color': {'t': str, 'v': 'black'},
-        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0},
+        'default_color': {'t': str, 'v': 'black', 'disp': 'color', 'h': 'The default color of the border.'},
+        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0, 'h': 'The XY coordinates of the consecutive border segments.'},
     }
     d['Source_DISTRO'] = d['spatial_distro']
 
     d.update(init_vis())
 
     d['replay'] = {
-        'env_params': {'t': str, 'vs': kConfDict('Env'), 'aux_vs': ['']},
-        'transposition': {'t': str, 'vs': [None, 'origin', 'arena', 'center']},
-        'agent_ids': {'t': List[str]},
-        'dynamic_color': {'t': str, 'vs': [None, 'lin_color', 'ang_color']},
-        'time_range': {'t': Tuple[float], 'max': 1000.0, 'dv': 1.0},
-        'track_point': {'t': int, 'v': -1, 'min': -1, 'max': 12},
-        'draw_Nsegs': {'t': int, 'min': 1, 'max': 12},
-        'fix_point': {'t': int, 'min': 1, 'max': 12},
-        'fix_segment': {'t': int, 'vs': [-1, 1]},
-        'use_background': bF
+        'env_params': {'t': str, 'vs': kConfDict('Env'), 'aux_vs': [''], 'h': 'The arena configuration to display the replay on, if not the default one in the dataset configuration.'},
+        'transposition': {'t': str, 'vs': [None, 'origin', 'arena', 'center'], 'h': 'Whether to transpose the dataset spatial coordinates.'},
+        'agent_ids': {'t': List[str], 'h': 'Whether to only display some larvae of the dataset, defined by their indexes.'},
+        'dynamic_color': {'t': str, 'vs': [None, 'lin_color', 'ang_color'], 'h': 'Whether to display larva tracks according to the instantaneous forward or angular velocity.'},
+        'time_range': {'t': Tuple[float], 'max': 1000.0, 'dv': 1.0, 'h': 'Whether to only replay a defined temporal slice of the dataset.'},
+        'track_point': {'t': int, 'v': -1, 'min': -1, 'max': 12, 'h': 'The midline point to use for defining the larva position.'},
+        'draw_Nsegs': {'t': int, 'min': 1, 'max': 12, 'h': 'Whether to artificially simplify the experimentally tracked larva body to a segmented virtual body of the given number of segments.'},
+        'fix_point': {'t': int, 'min': 1, 'max': 12, 'h': 'Whether to fixate a specific midline point to the center of the screen. Relevant when replaying a single larva track.'},
+        'fix_segment': {'t': int, 'vs': [-1, 1], 'h': 'Whether to additionally fixate the above or below body segment.'},
+        'use_background': {**bF, 'h': 'Whether to use a virtual moving background when replaying a fixated larva.'}
     }
 
     return d
