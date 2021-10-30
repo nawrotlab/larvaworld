@@ -18,8 +18,8 @@ class Brain():
         self.olfactory_activation = 0
         self.touch_activation = 0
         self.wind_activation = 0
-        self.crawler, self.turner, self.feeder, self.intermitter, self.olfactor, self.memory, self.touch_memory = [
-                                                                                                                      None] * 7
+        self.crawler, self.turner, self.feeder, self.intermitter, self.olfactor, self.memory,self.toucher, self.touch_memory = [
+                                                                                                                      None] * 8
 
         dt = self.agent.model.dt
         m = self.modules
@@ -80,7 +80,8 @@ class DefaultBrain(Brain):
         #     self.olfactor = Olfactor(brain=self, dt=dt, **c['olfactor_params'])
         if m['memory'] and c['memory_params']['modality'] == 'olfaction':
             self.memory = RLOlfMemory(brain=self, dt=dt, gain=self.olfactor.gain, **c['memory_params'])
-        t = self.toucher = Toucher(brain=self, dt=dt, **c['toucher_params'])
+        if m['toucher']:
+            t = self.toucher = Toucher(brain=self, dt=dt, **c['toucher_params'])
         if m['memory'] and c['memory_params']['modality'] == 'touch':
             self.touch_memory = RLTouchMemory(brain=self, dt=dt, gain=t.gain, **c['memory_params'])
 

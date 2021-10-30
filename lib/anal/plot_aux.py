@@ -6,6 +6,7 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt, patches, transforms, ticker
 from matplotlib.pyplot import bar
+from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import mannwhitneyu, ttest_ind
 
 from lib.anal.fitting import pvalue_star
@@ -23,50 +24,62 @@ plt_conf = {'axes.labelsize': 20,
 plt.rcParams.update(plt_conf)
 
 
-class Plot:
-    def __init__(self, name, datasets, labels=None, subfolder=None,
-                 save_fits_as=None, save_as=None, save_to=None, return_fig=False, show=False, **kwargs):
-        suf = 'pdf'
-        self.datasets = datasets
-        self.Ndatasets, self.colors, self.save_to, self.labels = plot_config(datasets, labels, save_to,
-                                                                             subfolder=subfolder)
+class BasePlot:
+    def __init__(self, name, save_to='.', save_as=None, return_fig=False, show=False, suf='pdf', **kwargs):
         self.filename = f'{name}.{suf}' if save_as is None else save_as
-        ff = f'{name}_fits.csv' if save_fits_as is None else save_fits_as
-        self.fit_filename = os.path.join(self.save_to, ff) if ff is not None else None
-        self.fit_ind = None
-        self.fit_df = None
         self.return_fig = return_fig
         self.show = show
-        # self.fig=self.build(**kwargs)
+        self.fit_df = None
+        self.save_to = save_to
 
-    def build(self, Nrows=1, Ncols=1, figsize=None, **kwargs):
-        if figsize is None:
-            figsize = (12 * Ncols, 10 * Nrows)
-        self.fig, axs = plt.subplots(Nrows, Ncols, figsize=figsize, **kwargs)
-        self.axs = axs.ravel() if Nrows * Ncols > 1 else [axs]
+    def build(self, Nrows=1, Ncols=1, figsize=None, fig=None, axs=None,dim3=False, **kwargs):
+        if fig is None and axs is None :
+            if figsize is None:
+                figsize = (12 * Ncols, 10 * Nrows)
+            if not dim3 :
+                self.fig, axs = plt.subplots(Nrows, Ncols, figsize=figsize, **kwargs)
+                self.axs = axs.ravel() if Nrows * Ncols > 1 else [axs]
+            else :
+                self.fig = plt.figure(figsize=(15, 10))
+                ax = Axes3D(self.fig, azim=115, elev=15)
+                self.axs=[ax]
+        else :
+            self.fig=fig
+            self.axs=axs if type(axs)==list else [axs]
 
-    def conf_ax(self, idx=0, xlab=None, ylab=None, xlim=None, ylim=None, xticks=None, xticklabels=None, yticks=None,
-                yticklabels=None,
-                xMaxN=None, yMaxN=None, xMath=None, tickMath=None, ytickMath=None, leg_loc=None, leg_handles=None,
+    def conf_ax(self, idx=0, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
+                xticklabels=None, yticks=None,xticklabelrotation=None, yticklabelrotation=None,
+                yticklabels=None, zticks=None, zticklabels=None, xtickpos=None, xtickpad=None, ytickpad=None,
+                ztickpad=None,
+                xlabelpad=None, ylabelpad=None, zlabelpad=None,
+                xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, tickMath=None, ytickMath=None, leg_loc=None,
+                leg_handles=None,
                 title=None):
         ax = self.axs[idx]
         if ylab is not None:
-            ax.set_ylabel(ylab)
+            ax.set_ylabel(ylab, labelpad=ylabelpad)
         if xlab is not None:
-            ax.set_xlabel(xlab)
+            ax.set_xlabel(xlab, labelpad=xlabelpad)
+        if zlab is not None:
+            ax.set_zlabel(zlab, labelpad=zlabelpad)
         if xlim is not None:
             ax.set_xlim(xlim)
         if ylim is not None:
             ax.set_ylim(ylim)
-
+        if zlim is not None:
+            ax.set_zlim(zlim)
         if xticks is not None:
             ax.set_xticks(ticks=xticks)
         if xticklabels is not None:
-            ax.set_xticklabels(labels=xticklabels)
+            ax.set_xticklabels(labels=xticklabels, rotation=xticklabelrotation)
         if yticks is not None:
             ax.set_yticks(ticks=yticks)
         if yticklabels is not None:
-            ax.set_yticklabels(labels=yticklabels)
+            ax.set_yticklabels(labels=yticklabels, rotation=yticklabelrotation)
+        if zticks is not None:
+            ax.set_zticks(ticks=zticks)
+        if zticklabels is not None:
+            ax.set_zticklabels(labels=zticklabels)
         if tickMath is not None:
             ax.ticklabel_format(useMathText=True, scilimits=tickMath)
         if ytickMath is not None:
@@ -75,15 +88,40 @@ class Plot:
             ax.xaxis.set_major_locator(ticker.MaxNLocator(xMaxN))
         if yMaxN is not None:
             ax.yaxis.set_major_locator(ticker.MaxNLocator(yMaxN))
+        if zMaxN is not None:
+            ax.zaxis.set_major_locator(ticker.MaxNLocator(zMaxN))
         if xMath is not None:
             ax.xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=True, useMathText=True))
+        if xtickpos is not None:
+            ax.xaxis.set_ticks_position(xtickpos)
         if title is not None:
             ax.set_title(title)
+        if xtickpad is not None:
+            ax.xaxis.set_tick_params(pad=xtickpad)
+        if ytickpad is not None:
+            ax.yaxis.set_tick_params(pad=ytickpad)
+        if ztickpad is not None:
+            ax.zaxis.set_tick_params(pad=ztickpad)
+
         if leg_loc is not None:
             if leg_handles is not None:
                 ax.legend(handles=leg_handles, loc=leg_loc)
             else:
                 ax.legend(loc=leg_loc)
+
+    def adjust(self, LR=None, BT=None, W=None, H=None):
+        kws = {}
+        if LR is not None:
+            kws['left'] = LR[0]
+            kws['right'] = LR[1]
+        if BT is not None:
+            kws['bottom'] = BT[0]
+            kws['top'] = BT[1]
+        if W is not None:
+            kws['wspace'] = W
+        if H is not None:
+            kws['hspace'] = H
+        self.fig.subplots_adjust(**kws)
 
     def set(self, fig):
         self.fig = fig
@@ -92,6 +130,35 @@ class Plot:
         if self.fit_df is not None:
             self.fit_df.to_csv(self.fit_filename, index=True, header=True)
         return process_plot(self.fig, self.save_to, self.filename, self.return_fig, self.show)
+
+
+class ParPlot(BasePlot):
+    def __init__(self, name, pref=None, **kwargs):
+        if pref is not None:
+            name = f'{pref}_{name}'
+        super().__init__(name, **kwargs)
+
+    def conf_ax_3d(self, vars, target, lims=None, title=None, maxN=5, labelpad=30, tickpad=10, idx=0):
+        if lims is None:
+            xlim, ylim, zlim = None, None, None
+        else:
+            xlim, ylim, zlim = lims
+        self.conf_ax(idx=idx, xlab=vars[0], ylab=vars[1], zlab=target, xlim=xlim, ylim=ylim, zlim=zlim,
+                     xtickpad=tickpad, ytickpad=tickpad, ztickpad=tickpad,
+                     xlabelpad=labelpad, ylabelpad=labelpad, zlabelpad=labelpad,
+                     xMaxN=maxN, yMaxN=maxN, zMaxN=maxN, title=title)
+
+
+class Plot(BasePlot):
+    def __init__(self, name, datasets, labels=None, subfolder=None, save_fits_as=None, save_to=None, **kwargs):
+
+        self.Ndatasets, self.colors, save_to, self.labels = plot_config(datasets, labels, save_to,
+                                                                        subfolder=subfolder)
+        super().__init__(name, save_to=save_to, **kwargs)
+        self.datasets = datasets
+        ff = f'{name}_fits.csv' if save_fits_as is None else save_fits_as
+        self.fit_filename = os.path.join(self.save_to, ff) if ff is not None else None
+        self.fit_ind = None
 
     def init_fits(self, pars, names=('dataset1', 'dataset2'), multiindex=True):
         if self.Ndatasets > 1:
@@ -155,19 +222,7 @@ class Plot:
                     fontsize=15, transform=ax.transAxes)
         return res
 
-    def adjust(self, LR=None, BT=None, W=None, H=None):
-        kws = {}
-        if LR is not None:
-            kws['left'] = LR[0]
-            kws['right'] = LR[1]
-        if BT is not None:
-            kws['bottom'] = BT[0]
-            kws['top'] = BT[1]
-        if W is not None:
-            kws['wspace'] = W
-        if H is not None:
-            kws['hspace'] = H
-        self.fig.subplots_adjust(**kws)
+
 
     @property
     def Nticks(self):
@@ -230,41 +285,6 @@ class Plot:
         return vs
 
 
-# class TurnPlot(Plot) :
-#     def __init__(self, absolute=True,**kwargs):
-#         self.absolute = absolute
-#         super().__init__(name='turns', **kwargs)
-#
-#
-#     def build(self):
-#         fig, axs = plt.subplots(1, 1, figsize=(6, 5))
-#         par, xlabel = getPar('tur_fou', to_return=['d', 'l'])
-#
-#         ts = [d.get_par(par).dropna().values for d in self.datasets]
-#
-#         r = 150
-#         Nbins = 30
-#
-#         for data, col, l in zip(ts, self.colors, self.labels):
-#             if self.absolute:
-#                 data = np.abs(data)
-#                 r0, r1 = np.min(data), r
-#
-#             else:
-#                 r0, r1 = -r, r
-#                 Nbins *= 2
-#
-#             x = np.linspace(r0, r1, Nbins)
-#             weights = np.ones_like(data) / float(len(data))
-#             axs.hist(data, bins=x, weights=weights, label=l, color=col, alpha=1.0, histtype='step')
-#
-#         axs.set_ylabel('probability, $P$')
-#         axs.set_xlabel(xlabel)
-#         axs.set_xlim([r0, r1])
-#         axs.yaxis.set_major_locator(ticker.MaxNLocator(4))
-#         axs.legend(loc='upper right', fontsize=10)
-#         fig.subplots_adjust(top=0.92, bottom=0.15, left=0.25, right=0.95, hspace=.005, wspace=0.05)
-#         return fig
 def plot_quantiles(df, from_np=False, x=None, **kwargs):
     if from_np:
         df_m = np.nanquantile(df, q=0.5, axis=0)
@@ -498,7 +518,7 @@ def dataset_legend(labels, colors, ax=None, loc=None, anchor=None, fontsize=None
     return leg
 
 
-def process_plot(fig, save_to, filename, return_fig, show=False):
+def process_plot(fig, save_to, filename, return_fig=False, show=False):
     if show:
         plt.show()
     fig.patch.set_visible(False)
@@ -568,3 +588,29 @@ def concat_datasets(ds, key='end', unit='sec'):
             dic = {'sec': 1, 'min': 60, 'hour': 60 * 60, 'day': 24 * 60 * 60}
             df0['Step'] *= dt / dic[unit]
     return df0
+
+
+def conf_ax_3d(vars, target, ax=None, fig=None, lims=None, title=None, maxN=5, labelpad=30, tickpad=10):
+    if fig is None and ax is None:
+        fig = plt.figure(figsize=(15, 10))
+        ax = Axes3D(fig, azim=115, elev=15)
+
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(maxN))
+    ax.yaxis.set_major_locator(ticker.MaxNLocator(maxN))
+    ax.zaxis.set_major_locator(ticker.MaxNLocator(maxN))
+    ax.xaxis.set_tick_params(pad=tickpad)
+    ax.yaxis.set_tick_params(pad=tickpad)
+    ax.zaxis.set_tick_params(pad=tickpad)
+
+    ax.set_xlabel(vars[0], labelpad=labelpad)
+    ax.set_ylabel(vars[1], labelpad=labelpad)
+    ax.set_zlabel(target, labelpad=labelpad)
+    if lims is not None:
+        ax.set_xlim(lims[0])
+        ax.set_ylim(lims[1])
+        ax.set_zlim(lims[2])
+
+    if title is not None:
+        ax.set_suptitle(title, fontsize=20)
+
+    return fig, ax

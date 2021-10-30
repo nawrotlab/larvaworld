@@ -365,6 +365,45 @@ def pvalue_star(pv):
     return "ns"
 
 
+def fit2d_matrix(x, N):
+    degrees = [(i, j) for i in range(N) for j in range(N)]  # list of monomials x**i * y**j to use
+    matrix = np.stack([np.prod(x ** d, axis=1) for d in degrees], axis=-1)  # stack monomials like columns
+    return matrix
+
+def fit2d_coeff(df, vars, target,N=3, show=True):
+    x = df[vars].values
+    z = df[target].values
+    matrix = fit2d_matrix(x, N)
+    coeff = np.linalg.lstsq(matrix, z, rcond=None)[0]  # lstsq returns some additional info we ignore
+    fit = np.dot(matrix, coeff)
+    if show:
+        import matplotlib.pyplot as plt
+        from lib.anal.plotting import plot_3d
+        plot_3d(df, vars=vars, target=target, show=show, surface=True)
+        plt.plot(fit, color='red', label='fitted')
+        plt.plot(z, color='green', label='original')
+        plt.legend()
+        plt.show()
+    return coeff
+
+
+def fit2d_predict(coeff, ranges,  Ngrid=100, target=None,vars=None,  show=True):
+    (r00, r01), (r10, r11) = ranges
+    y0 = np.linspace(r00, r01, Ngrid)
+    y1 = np.linspace(r10, r11, Ngrid)
+    yy0, yy1 = np.meshgrid(y0, y1)
+    yy0f, yy1f = np.array(yy0).flatten(), np.array(yy1).flatten()
+    x = np.stack((yy0f, yy1f), axis=-1)
+    N = int(np.sqrt(len(coeff)))
+    matrix = fit2d_matrix(x, N)
+    predict = np.dot(matrix, coeff)
+    if show:
+        import matplotlib.pyplot as plt
+        from lib.anal.plotting import plot_surface
+        z0 = predict.reshape(yy0.shape)
+        fig3 = plot_surface(yy0, yy1, z0, vars=vars, target=target, show=show)
+
+
 class BoutGenerator:
     def __init__(self, name, range, dt, **kwargs):
         self.name = name

@@ -147,18 +147,18 @@ class LarvaWorldSim(LarvaWorld):
 
         # t0.append(time.time())
         # print(np.array(np.diff(t0)*1000).astype(int))
+
     def space_to_mm(self, array):
         return array * 1000 / self.scaling_factor
 
-    def plot_odorscape(self, save_to=None, show=False):
+    def plot_odorscape(self, **kwargs):
         from lib.anal.plotting import plot_surface
         for id, layer in self.odor_layers.items():
             X, Y = layer.meshgrid
             x = self.space_to_mm(X)
             y = self.space_to_mm(Y)
-            plot_surface(x=x, y=y, z=layer.get_grid(),
-                         labels=[r'x $(mm)$', r'y $(mm)$', r'concentration $(μM)$'], title=f'{id} odorscape',
-                         save_to=save_to, save_as=f'{id}_odorscape_{self.odorscape_counter}', show=show)
+            plot_surface(x=x, y=y, z=layer.get_grid(),vars=[r'x $(mm)$', r'y $(mm)$'], target=r'concentration $(μM)$',
+                         title=f'{id} odorscape',save_as=f'{id}_odorscape_{self.odorscape_counter}', **kwargs)
 
     def get_larva_bodies(self, scale=1.0):
         return {l.unique_id: l.get_polygon(scale=scale) for l in self.get_flies()}

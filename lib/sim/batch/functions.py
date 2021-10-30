@@ -34,6 +34,8 @@ def prepare_batch(batch, **kwargs):
         'proc_kws': batch['proc_kws'],
         **kwargs
     }
+    # print(batch['batch_type'])
+    # raise
     return prepared_batch
 
 
@@ -159,10 +161,10 @@ def plot_results(traj, df):
         if len(p_ns) == 1:
             figs[f'{p_ns[0]}VS{r_n}'] = plot_2d(labels=p_ns + [r_n], pref=r_n, **kws)
         elif len(p_ns) == 2:
-            figs.update(plot_3pars(labels=p_ns + [r_n], pref=r_n, **kws))
+            figs.update(plot_3pars(vars=p_ns, target=r_n, pref=r_n, **kws))
         elif len(p_ns) > 2:
             for i, pair in enumerate(itertools.combinations(p_ns, 2)):
-                figs.update(plot_3pars(labels=list(pair) + [r_n], pref=f'{i}_{r_n}', **kws))
+                figs.update(plot_3pars(vars=list(pair), target=r_n, pref=f'{i}_{r_n}', **kws))
     return figs
 
 
@@ -263,9 +265,11 @@ def post_processing(traj, result_tuple):
 
 
 def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
-    with suppress_stdout(False):
+    # print(procfunc)
+    # raise
+    with suppress_stdout(True):
         ds = SingleRun(**retrieve_exp_conf(traj), **exp_kws).run()
-
+        # raise
         if procfunc is None:
             results = np.nan
         else:

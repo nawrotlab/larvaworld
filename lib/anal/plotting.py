@@ -23,7 +23,7 @@ from lib.aux.dictsNlists import unique_list, flatten_list, group_dicts, merge
 from lib.anal.fitting import BoutGenerator
 from lib.anal.plot_aux import plot_mean_and_range, circular_hist, dual_half_circle, confidence_ellipse, save_plot, \
     plot_config, dataset_legend, process_plot, label_diff, boolean_indexing, Plot, plot_quantiles, annotate_plot, \
-    concat_datasets
+    concat_datasets, conf_ax_3d, BasePlot, ParPlot
 from lib.aux import naming as nam
 from lib.aux.colsNstr import N_colors, col_range
 
@@ -1792,156 +1792,111 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     return process_plot(fig, save_to, save_as, return_fig, show)
 
 
-def plot_surface(x, y, z, labels, z0=None, title=None, save_to=None, save_as=None, pref=None, show=False):
-    fig = plt.figure(figsize=(20, 10))
-    if title is not None:
-        fig.suptitle(title)
-    # ax = fig.gca(projection='3d')
-    # ax = fig.add_subplot(111, projection='3d')
-    ax = Axes3D(fig)
-    ax.plot_surface(x, y, z,
-                    cmap=cm.coolwarm,
-                    linewidth=0,
-                    antialiased=True)
+def plot_surface(x, y, z, vars, target, z0=None, ax=None, fig=None, title=None, lims=None, **kwargs):
+    P = ParPlot(name='3d_surface', **kwargs)
+    P.build(fig=fig, axs=ax, dim3=True)
+    P.conf_ax_3d(vars, target, lims=lims, title=title)
+    P.axs[0].plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=True)
     if z0 is not None:
-        ax.plot_surface(x, y, np.ones(x.shape) * z0, alpha=0.5)
-    ax.set_xlabel(labels[0])
-    ax.set_ylabel(labels[1])
-    ax.set_zlabel(labels[2])
-
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
-    ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
-    ax.zaxis.set_major_locator(ticker.MaxNLocator(5))
-    if show:
-        plt.show()
-    if save_to is not None:
-        os.makedirs(save_to, exist_ok=True)
-        if save_as is None:
-            save_as = f'surface.{suf}'
-            if pref is not None:
-                save_as = f'{pref}_{save_as}'
-        filepath = os.path.join(save_to, save_as)
-        fig.savefig(filepath, dpi=300)
-        print(f'Surface saved as {save_as}')
-    plt.close('all')
-    return fig
+        P.axs[0].plot_surface(x, y, np.ones(x.shape) * z0, alpha=0.5)
+    return P.get()
 
 
-def plot_heatmap(x, y, z, labels, title=None, save_to=None, save_as=None, pref=None, show=False):
-    # fig = plt.figure(figsize=(10, 5))
-    fig, ax = plt.subplots(figsize=(12, 10))
-    sns.heatmap(z, annot=True, fmt="g", cmap=cm.coolwarm,
-                xticklabels=x.tolist(), yticklabels=y.tolist(), ax=ax,
-                cbar_kws={"orientation": "vertical",
-                          'label': labels[2],
-                          # 'ticks': [1, 0, -1]
-                          })
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(4))
-    ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
-    ax.xaxis.set_ticks_position('top')
-    ax.set_ylabel(labels[1])
-    ax.set_xlabel(labels[0])
-    if title is not None:
-        ax.set_suptitle(title, fontsize=20)
-    if show:
-        plt.show()
-    if save_to is not None:
-        os.makedirs(save_to, exist_ok=True)
-        if save_as is None:
-            save_as = f'heatmap.{suf}'
-            if pref is not None:
-                save_as = f'{pref}_{save_as}'
-        filepath = os.path.join(save_to, save_as)
-        plt.savefig(filepath, dpi=300)
-        print(f'Heatmap saved as {filepath}')
-    plt.close('all')
-    return fig
+def plot_heatmap(z, heat_kws={}, ax_kws={}, cbar_kws={}, **kwargs):
+    base_heat_kws={'annot': True, 'cmap': cm.coolwarm, 'vmin': None, 'vmax': None}
+    base_heat_kws.update(heat_kws)
+    P = ParPlot(name='heatmap', **kwargs)
+    P.build()
+    sns.heatmap(z, ax=P.axs[0], **base_heat_kws,
+                cbar_kws={"orientation": "vertical", **cbar_kws})
+    cax = plt.gcf().axes[-1]
+    cax.tick_params(length=0)
+    P.conf_ax(**ax_kws)
+    P.adjust((0.15, 0.95), (0.15, 0.95))
+    return P.get()
 
 
-def plot_3pars(df, labels, save_to, z0=None, pref=None, show=False):
-    fig_dict = {}
-    pr = f'{labels[0]}VS{labels[1]}'
-    fig1 = plot_3d(df=df, labels=labels, save_to=save_to, pref=pref, save_as=None, show=show)
-    fig_dict[f'{pr}_3d'] = fig1
+def plot_heatmap_PI(csv_filepath='PIs.csv', **kwargs):
+    z = pd.read_csv(csv_filepath, index_col=0)
+    Lgains = z.index.values.astype(int)
+    Rgains = z.columns.values.astype(int)
+    Ngains = len(Lgains)
+    r = np.linspace(0.5, Ngains - 0.5, 5)
+    ax_kws = {
+        'xticklabels': Rgains[r.astype(int)],
+        'yticklabels': Lgains[r.astype(int)],
+        'xticklabelrotation': 0,
+        'yticklabelrotation': 0,
+        'xticks': r,
+        'yticks': r,
+        'xlab': r'Right odor gain, $G_{R}$',
+        'ylab': r'Left odor gain, $G_{L}$',
+        'xlabelpad':20
+    }
+    heat_kws = {
+        'annot': False,
+        'vmin': -1,
+        'vmax': 1,
+        'cmap': 'RdYlGn',
+    }
+
+    cbar_kws = {
+        'label': 'Preference for left odor',
+        'ticks': [1, 0, -1]
+    }
+
+    return plot_heatmap(z, heat_kws=heat_kws, ax_kws=ax_kws, cbar_kws=cbar_kws, save_as='PI_heatmap.pdf', **kwargs)
+
+
+def plot_3pars(df, vars, target, z0=None, **kwargs):
+    figs = {}
+    pr = f'{vars[0]}VS{vars[1]}'
+    figs[f'{pr}_3d'] = plot_3d(df=df, vars=vars, target=target, **kwargs)
     try:
-        x, y = np.unique(df[labels[0]].values), np.unique(df[labels[1]].values)
+        x, y = np.unique(df[vars[0]].values), np.unique(df[vars[1]].values)
         X, Y = np.meshgrid(x, y)
 
-        z = df[labels[2]].values.reshape(X.shape).T
+        z = df[target].values.reshape(X.shape).T
 
-        fig2 = plot_heatmap(x, y, z, labels, save_to=save_to, pref=pref, show=show)
-        fig3 = plot_surface(X, Y, z, labels, save_to=save_to, z0=z0, pref=pref, show=show)
-        fig_dict[f'{pr}_heatmap'] = fig2
-        fig_dict[f'{pr}_surface'] = fig3
+        figs[f'{pr}_heatmap'] = plot_heatmap(z, ax_kws={'xticklabels': x.tolist(), 'yticklabels': y.tolist(),
+                                                     'xlab': vars[0], 'ylab': vars[1]},
+                                             cbar_kws={'label': target}, **kwargs)
+        figs[f'{pr}_surface'] = plot_surface(X, Y, z, vars=vars, target=target, z0=z0, **kwargs)
     except:
         pass
-    return fig_dict
+    return figs
 
 
-def plot_3d(df, labels, lims=None, save_to=None, pref=None, save_as=None, show=False, surface=True,
-            line=False, ax=None, fig=None, dfID=None, color=None):
-    if color is None:
-        color = 'black'
-    l0, l1, l2 = labels
-    X = df[[l0, l1]]
-    y = df[l2]
+def plot_3d(df, vars, target, lims=None, title=None, surface=True, line=False, ax=None, fig=None, dfID=None,
+            color='black', **kwargs):
+    P = ParPlot(name='3d_plot', **kwargs)
+    P.build(fig=fig, axs=ax, dim3=True)
+    P.conf_ax_3d(vars, target, lims=lims, title=title)
+
+    l0, l1 = vars
+    X = df[vars]
+    y = df[target]
 
     X = sm.add_constant(X)
-    est = sm.OLS(y, X).fit()
-
-    xx1, xx2 = np.meshgrid(np.linspace(X[l0].min(), X[l0].max(), 100),
-                           np.linspace(X[l1].min(), X[l1].max(), 100))
-
-    # plot the hyperplane by evaluating the parameters on the grid
-    Z = est.params[0] + est.params[1] * xx1 + est.params[2] * xx2
-
-    # create matplotlib 3d axes
-    if fig is None and ax is None:
-        fig = plt.figure(figsize=(15, 10))
-        ax = Axes3D(fig, azim=115, elev=15)
 
     # plot hyperplane
     if surface:
-        surf = ax.plot_surface(xx1, xx2, Z, cmap=plt.cm.RdBu_r, alpha=0.6, linewidth=0)
-        col_over, col_under = 'white', color
+        est = sm.OLS(y, X).fit()
+
+        xx1, xx2 = np.meshgrid(np.linspace(X[l0].min(), X[l0].max(), 100),
+                               np.linspace(X[l1].min(), X[l1].max(), 100))
+        # plot the hyperplane by evaluating the parameters on the grid
+        Z = est.params[0] + est.params[1] * xx1 + est.params[2] * xx2
+        surf = P.axs[0].plot_surface(xx1, xx2, Z, cmap=plt.cm.RdBu_r, alpha=0.6, linewidth=0)
+        # plot data points - points over the HP are white, points below are black
+        resid = y - est.predict(X)
+        P.axs[0].scatter(X[resid >= 0][l0], X[resid >= 0][l1], y[resid >= 0], color='black', alpha=0.4,
+                         facecolor='white')
+        P.axs[0].scatter(X[resid < 0][l0], X[resid < 0][l1], y[resid < 0], color='black', alpha=0.4, facecolor=color)
     else:
-        col_over, col_under = color, color
+        P.axs[0].scatter(X[l0], X[l1], y, color='black', alpha=0.4)
 
-    # plot data points - points over the HP are white, points below are black
-    resid = y - est.predict(X)
-    ax.scatter(X[resid >= 0][l0], X[resid >= 0][l1], y[resid >= 0], color='black', alpha=0.4, facecolor=col_over)
-    ax.scatter(X[resid < 0][l0], X[resid < 0][l1], y[resid < 0], color='black', alpha=0.4, facecolor=col_under)
-    if line:
-        ax.plot(X[l0], X[l1], y, label=dfID, color=color)
-
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(4))
-    ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
-    ax.zaxis.set_major_locator(ticker.MaxNLocator(4))
-    ax.xaxis.set_tick_params(pad=10)
-    ax.yaxis.set_tick_params(pad=10)
-    ax.zaxis.set_tick_params(pad=10)
-
-    ax.set_xlabel(l0, labelpad=30)
-    ax.set_ylabel(l1, labelpad=30)
-    ax.set_zlabel(l2, labelpad=30)
-    if lims is not None:
-        ax.set_xlim(lims[0])
-        ax.set_ylim(lims[1])
-        ax.set_zlim(lims[2])
-
-    if show:
-        plt.show()
-    if save_to is not None:
-        os.makedirs(save_to, exist_ok=True)
-        if save_as is None:
-            save_as = f'3d_plot.{suf}'
-            if pref is not None:
-                save_as = f'{pref}_{save_as}'
-        filepath = os.path.join(save_to, save_as)
-        plt.savefig(filepath, dpi=300)
-        print(f'3D plot saved as {filepath}')
-    # plt.close('all')
-    return fig
+    return P.get()
 
 
 def plot_3d_multi(dfs, dfIDs, df_colors=None, show=True, **kwargs):
@@ -1955,28 +1910,16 @@ def plot_3d_multi(dfs, dfIDs, df_colors=None, show=True, **kwargs):
         plt.show()
 
 
-def plot_2d(df, labels, save_to=None, pref=None, save_as=None, show=False):
+def plot_2d(df, labels, **kwargs):
+    P = ParPlot(name='2d_plot', **kwargs)
     par = labels[0]
     res = labels[1]
     p = df[par].values
     r = df[res].values
-    fig, axs = plt.subplots(1, 1, figsize=(10, 10))
-    axs.scatter(p, r)
-    axs.set_xlabel(par)
-    axs.set_ylabel(res)
-    if show:
-        plt.show()
-    if save_to is not None:
-        os.makedirs(save_to, exist_ok=True)
-        if save_as is None:
-            save_as = f'2d_plot.{suf}'
-            if pref is not None:
-                save_as = f'{pref}_{save_as}'
-        filepath = os.path.join(save_to, save_as)
-        plt.savefig(filepath, dpi=300)
-        print(f'3D plot saved as {filepath}')
-    plt.close('all')
-    return fig
+    P.build()
+    P.axs[0].scatter(p, r)
+    P.conf_ax(xlab=par, ylab=res)
+    return P.get()
 
 
 def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orientation.{suf}'):
@@ -2195,44 +2138,44 @@ def plot_spatiotemporal_variation(dataset, spatial_cvs, temporal_cvs, sizes=None
     print(f'Image saved as {filepath}')
 
 
-def plot_2D_countour(x, y, z, dimensions, Cmax, filepath):
-    xmin, xmax = dimensions[0]
-    ymin, ymax = dimensions[1]
-    # define grid.
-    xi = np.linspace(xmin, xmax, 1000)
-    yi = np.linspace(ymin, ymax, 1000)
-    ## grid the data.
-    zi = interpolate.griddata((x, y), z, (xi[None, :], yi[:, None]), method='cubic')
-    levels = np.linspace(0.0, Cmax, 10000)
-    fig = plt.figure(figsize=(xmax - xmin, ymax - ymin))
-    # CS = plt.contour(xi, yi, zi, len(levels), linewidths=0.0, colors='k', levels=levels)
-    CS = plt.contourf(xi, yi, zi, len(levels), cmap=cm.Purples, levels=levels, alpha=0.9)
-    cbaxes = fig.add_axes([0.68, 0.93, 2.0, 0.2])
-    cbar = fig.colorbar(CS, cax=cbaxes, orientation="horizontal", ticks=[0, Cmax])
-    cbar.ax.set_xticklabels([0, f'${int(Cmax)} \mu$M'])
-
-    plt.xlim(xmin, xmax)
-    plt.ylim(ymin, ymax)
-    plt.locator_params(nbins=4)
-    fig.savefig(filepath, dpi=300)
-    print(f'Image saved as {filepath}')
-
-
-def gauss(x, y, Sigma, mu):
-    from lib.aux.par_aux import dot
-    X = np.vstack((x, y)).T
-    mat_multi = np.dot(dot(np.linalg.inv(Sigma)), (X - mu[None, ...]).T)
-    return np.diag(np.exp(-1 * (mat_multi)))
+# def plot_2D_countour(x, y, z, dimensions, Cmax, filepath):
+#     xmin, xmax = dimensions[0]
+#     ymin, ymax = dimensions[1]
+#     # define grid.
+#     xi = np.linspace(xmin, xmax, 1000)
+#     yi = np.linspace(ymin, ymax, 1000)
+#     ## grid the data.
+#     zi = interpolate.griddata((x, y), z, (xi[None, :], yi[:, None]), method='cubic')
+#     levels = np.linspace(0.0, Cmax, 10000)
+#     fig = plt.figure(figsize=(xmax - xmin, ymax - ymin))
+#     # CS = plt.contour(xi, yi, zi, len(levels), linewidths=0.0, colors='k', levels=levels)
+#     CS = plt.contourf(xi, yi, zi, len(levels), cmap=cm.Purples, levels=levels, alpha=0.9)
+#     cbaxes = fig.add_axes([0.68, 0.93, 2.0, 0.2])
+#     cbar = fig.colorbar(CS, cax=cbaxes, orientation="horizontal", ticks=[0, Cmax])
+#     cbar.ax.set_xticklabels([0, f'${int(Cmax)} \mu$M'])
+#
+#     plt.xlim(xmin, xmax)
+#     plt.ylim(ymin, ymax)
+#     plt.locator_params(nbins=4)
+#     fig.savefig(filepath, dpi=300)
+#     print(f'Image saved as {filepath}')
 
 
-def plot_2D_odorscape(dimensions, Cmax, Cstd, filepath, pos=None):
-    if pos is None:
-        pos = [0., 0.]
-    npts = 10000
-    x = np.random.uniform(dimensions[0][0], dimensions[0][1], npts)
-    y = np.random.uniform(dimensions[1][0], dimensions[1][1], npts)
-    z = gauss(x, y, Sigma=np.asarray([[Cstd, 0.0], [0.0, Cstd]]), mu=np.asarray(pos)) * Cmax
-    plot_2D_countour(x, y, z, dimensions=dimensions, Cmax=Cmax, filepath=filepath)
+# def gauss(x, y, Sigma, mu):
+#     from lib.aux.par_aux import dot
+#     X = np.vstack((x, y)).T
+#     mat_multi = np.dot(dot(np.linalg.inv(Sigma)), (X - mu[None, ...]).T)
+#     return np.diag(np.exp(-1 * (mat_multi)))
+
+
+# def plot_2D_odorscape(dimensions, Cmax, Cstd, filepath, pos=None):
+#     if pos is None:
+#         pos = [0., 0.]
+#     npts = 10000
+#     x = np.random.uniform(dimensions[0][0], dimensions[0][1], npts)
+#     y = np.random.uniform(dimensions[1][0], dimensions[1][1], npts)
+#     z = gauss(x, y, Sigma=np.asarray([[Cstd, 0.0], [0.0, Cstd]]), mu=np.asarray(pos)) * Cmax
+#     plot_2D_countour(x, y, z, dimensions=dimensions, Cmax=Cmax, filepath=filepath)
 
 
 def plot_bend_change_over_displacement(dataset, return_fig=False):
@@ -2507,50 +2450,50 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
     return fig
 
 
-def plot_nengo(d, save_to=None):
-    if save_to is None:
-        save_to = d.plot_dir
-    s = d.step_data.xs(d.agent_ids[0], level='AgentID')
-    t = np.linspace(0, d.num_ticks * d.dt, d.num_ticks)
-    filename = f'nengo.{suf}'
-    filepath = os.path.join(save_to, filename)
-
-    pars = [['crawler_activity', 'turner_activity'], ['crawler_activity', 'feeder_motion']]
-    labels = [['crawler', 'turner'], ['crawler', 'feeder']]
-    colors = [['blue', 'red'], ['blue', 'green']]
-
-    try:
-        chunk1 = 'pause'
-        pau1s = s.index[s[f'{chunk1}_stop'] == True] * d.dt
-        pau0s = s.index[s[f'{chunk1}_start'] == True] * d.dt
-        pause = True
-    except:
-        pause = False
-    try:
-        chunk2 = 'stride'
-        str1s = s.index[s[f'{chunk2}_stop'] == True] * d.dt
-        str0s = s.index[s[f'{chunk2}_start'] == True] * d.dt
-        stride = True
-    except:
-        stride = False
-    fig, axs = plt.subplots(2, 1, figsize=(20, 5))
-    axs = axs.ravel()
-    for ax1, (p1, p2), (l1, l2), (c1, c2) in zip(axs, pars, labels, colors):
-        # ax1=axs[0]
-        ax2 = ax1.twinx()
-        ax1.plot(t, s[p1], color=c1, label=l1)
-        ax2.plot(t, s[p2], color=c2, label=l2)
-        ax1.legend(loc='upper left')
-        ax2.legend(loc='upper right')
-
-        if pause:
-            for start, stop in zip(pau0s, pau1s):
-                plt.axvspan(start, stop, color='grey', alpha=0.3)
-        if stride:
-            for start, stop in zip(str0s, str1s):
-                plt.axvspan(start, stop, color='blue', alpha=0.3)
-    plt.xlabel(r'time $(sec)$')
-    save_plot(fig, filepath, filename)
+# def plot_nengo(d, save_to=None):
+#     if save_to is None:
+#         save_to = d.plot_dir
+#     s = d.step_data.xs(d.agent_ids[0], level='AgentID')
+#     t = np.linspace(0, d.num_ticks * d.dt, d.num_ticks)
+#     filename = f'nengo.{suf}'
+#     filepath = os.path.join(save_to, filename)
+#
+#     pars = [['crawler_activity', 'turner_activity'], ['crawler_activity', 'feeder_motion']]
+#     labels = [['crawler', 'turner'], ['crawler', 'feeder']]
+#     colors = [['blue', 'red'], ['blue', 'green']]
+#
+#     try:
+#         chunk1 = 'pause'
+#         pau1s = s.index[s[f'{chunk1}_stop'] == True] * d.dt
+#         pau0s = s.index[s[f'{chunk1}_start'] == True] * d.dt
+#         pause = True
+#     except:
+#         pause = False
+#     try:
+#         chunk2 = 'stride'
+#         str1s = s.index[s[f'{chunk2}_stop'] == True] * d.dt
+#         str0s = s.index[s[f'{chunk2}_start'] == True] * d.dt
+#         stride = True
+#     except:
+#         stride = False
+#     fig, axs = plt.subplots(2, 1, figsize=(20, 5))
+#     axs = axs.ravel()
+#     for ax1, (p1, p2), (l1, l2), (c1, c2) in zip(axs, pars, labels, colors):
+#         # ax1=axs[0]
+#         ax2 = ax1.twinx()
+#         ax1.plot(t, s[p1], color=c1, label=l1)
+#         ax2.plot(t, s[p2], color=c2, label=l2)
+#         ax1.legend(loc='upper left')
+#         ax2.legend(loc='upper right')
+#
+#         if pause:
+#             for start, stop in zip(pau0s, pau1s):
+#                 plt.axvspan(start, stop, color='grey', alpha=0.3)
+#         if stride:
+#             for start, stop in zip(str0s, str1s):
+#                 plt.axvspan(start, stop, color='blue', alpha=0.3)
+#     plt.xlabel(r'time $(sec)$')
+#     save_plot(fig, filepath, filename)
 
 
 def calibration_plot(save_to=None, files=None):
@@ -2595,34 +2538,6 @@ def calibration_plot(save_to=None, files=None):
     filepath = os.path.join(save_to, filename)
     save_plot(fig, filepath, filename)
     return fig
-
-
-def plot_heatmap_PI(save_to, csv_filepath='PIs.csv', return_fig=False, show=False):
-    filename = 'PI_heatmap.pdf'
-    print('Creating heatmap')
-    d = pd.read_csv(csv_filepath, index_col=0)
-    Lgains = d.index.values.astype(int)
-    Rgains = d.columns.values.astype(int)
-    Ngains = len(Lgains)
-    fig, ax = plt.subplots(figsize=(12, 10))
-    sns.heatmap(d, annot=False, fmt="g", cmap='RdYlGn', vmin=-1, vmax=1, ax=ax,
-                cbar_kws={"orientation": "vertical",
-                          'label': 'Preference for left odor',
-                          'ticks': [1, 0, -1]})
-    cax = plt.gcf().axes[-1]
-    cax.tick_params(length=0)
-
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=0)
-    ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
-    ax.set_ylabel(r'Left odor gain, $G_{L}$')
-    ax.set_xlabel(r'Right odor gain, $G_{R}$')
-    r = np.linspace(0.5, Ngains - 0.5, 5)
-    ax.set_xticks(r)
-    ax.set_yticks(r)
-    ax.set_xticklabels(Lgains[r.astype(int)])
-    ax.set_yticklabels(Rgains[r.astype(int)])
-    fig.subplots_adjust(left=0.15, right=0.95, bottom=0.15, top=0.95)
-    return process_plot(fig, save_to, filename, return_fig, show)
 
 
 def boxplot_double_patch(xlabel='substrate', complex_colors=True, **kwargs):
@@ -2809,17 +2724,17 @@ def ggboxplot(p='length', subfolder='ggplot', **kwargs):
 def plot_foraging(**kwargs):
     P = Plot(name='foraging', **kwargs)
     P.build(1, 2, figsize=(15, 10), sharex=True)
-    for j, action in enumerate(['on_food_tr','sf_am']):
-        dfs=[]
+    for j, action in enumerate(['on_food_tr', 'sf_am']):
+        dfs = []
         for i, d in enumerate(P.datasets):
             foodtypes = d.config['foodtypes']
             dics = d.load_dicts('foraging')
             dic0 = {ft: [d[ft][action] for d in dics] for ft in foodtypes.keys()}
-            df=pd.DataFrame.from_dict(dic0)
-            df['Group']=d.id
+            df = pd.DataFrame.from_dict(dic0)
+            df['Group'] = d.id
             dfs.append(df)
-        df0=pd.concat(dfs)
-        par=getPar(action, to_return=['lab'])[0]
+        df0 = pd.concat(dfs)
+        par = getPar(action, to_return=['lab'])[0]
         mdf = pd.melt(df0, id_vars=['Group'], var_name='foodtype', value_name=par)
         with sns.plotting_context('notebook', font_scale=1.4):
             kws = {
@@ -2834,7 +2749,7 @@ def plot_foraging(**kwargs):
             g1 = sns.boxplot(**kws)
             # g1.get_legend().remove()
 
-        # annotate_plot(**kws)
+            # annotate_plot(**kws)
             P.conf_ax(yMaxN=4, leg_loc='upper right')
     # P.conf_ax(xlab=xlab, ylab='probability, $P$', xlim=xlim, yMaxN=4, leg_loc='upper right')
     P.adjust((0.1, 0.95), (0.15, 0.92), 0.2, 0.005)

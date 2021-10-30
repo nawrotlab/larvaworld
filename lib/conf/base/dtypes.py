@@ -4,8 +4,6 @@ import pandas as pd
 from siunits import BaseUnit, Composite, DerivedUnit
 
 from lib.aux.collecting import output_keys
-from lib.aux.par_aux import sub
-
 from lib.gui.aux.functions import get_pygame_key
 
 
@@ -80,9 +78,7 @@ def par_dict(name, d0=None, **kwargs):
     if d0 is None:
         d0 = init_pars()[name]
     d = {}
-    # print(name,d0)
     for n, v in d0.items():
-        # print(n,v)
         try:
             entry = par(n, **v, **kwargs)
         except:
@@ -219,13 +215,13 @@ substrate_dict = {
     #     },
 
 }
-null_bout_dist = {
-    'fit': True,
-    'range': None,
-    'name': None,
-    'mu': None,
-    'sigma': None,
-}
+# null_bout_dist = {
+#     'fit': True,
+#     'range': None,
+#     'name': None,
+#     'mu': None,
+#     'sigma': None,
+# }
 
 
 def init_pars():
@@ -361,15 +357,12 @@ def init_pars():
                                      'h': 'The initial frequency of the repetitive crawling behavior.'},  # From D1 fit
                     'freq_std': {'v': 0.184, 'max': 1.0, 'disp': 'std', 'combo': 'frequency',
                                  'h': 'The standard deviation of the frequency of the repetitive crawling behavior.'},
-                    # From D1 fit
                     'step_to_length_mu': {'v': 0.224, 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample'], 'disp': 'mean',
                                           'combo': 'scaled distance / stride',
                                           'h': 'The mean displacement achieved in a single peristaltic stride as a fraction of the body length.'},
-                    # From D1 fit
                     'step_to_length_std': {'v': 0.033, 'max': 1.0, 'aux_vs': ['sample'], 'disp': 'std',
                                            'combo': 'scaled distance / stride',
                                            'h': 'The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.'},
-                    # From D1 fit
                     'initial_amp': {'max': 2.0, 'disp': 'initial', 'combo': 'amplitude',
                                     'h': 'The initial amplitude of the CRAWLER-generated forward velocity if this is hardcoded (e.g. constant waveform).'},
                     'noise': {'v': 0.1, 'max': 1.0, 'dv': 0.01, 'disp': 'noise', 'combo': 'amplitude',
@@ -399,7 +392,6 @@ def init_pars():
         'interference': {
             'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0,
                                   'h': 'The CRAWLER oscillator cycle range during which it interferes with the TURNER.'},
-            # np.pi * 0.55,  # 0.9, #,
             'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0,
                                  'h': 'The FEEDER oscillator cycle range during which it interferes with the TURNER.'},
             'attenuation': {'v': 1.0, 'max': 1.0,
@@ -573,13 +565,11 @@ def init_pars():
         'distribution': {'t': str, 'v': 'uniform', 'vs': ['uniform'], 'h': 'The distribution of food in the grid.'},
         'default_color': {'t': str, 'v': 'green', 'disp': 'color', 'h': 'The default color of the food grid.'},
         **d['substrate']
-        # 'substrate' : d['substrate']
     }
 
     d['epoch'] = {
         'start': {'max': 200.0, 'h': 'The beginning of the epoch in hours post-hatch.'},
         'stop': {'max': 200.0, 'h': 'The end of the epoch in hours post-hatch.'},
-        # 'duration': {'max': 200.0},
         'substrate': d['substrate']
 
     }
