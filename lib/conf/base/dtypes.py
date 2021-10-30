@@ -234,40 +234,53 @@ def init_pars():
 
     d = {
         'bout_distro': {
-            'fit': {**bT, 'combo': 'distro','h': 'Whether the distribution is sampled from a reference dataset. Once this is set to "ON" no other parameter is taken into account.'},
-            'range': {'t': Tuple[float], 'max': 100.0, 'combo': 'distro', 'h': 'The distribution range'},
+            'fit': {**bT, 'combo': 'distro',
+                    'h': 'Whether the distribution is sampled from a reference dataset. Once this is set to "ON" no other parameter is taken into account.'},
+            'range': {'t': Tuple[float], 'max': 100.0, 'combo': 'distro', 'h': 'The distribution range.'},
             'name': {'t': str,
                      'vs': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy', 'normal', 'uniform'],
-                     'combo': 'distro', 'h': 'The distribution name'},
-            'mu': {'max': 10.0, 'disp': 'mean', 'combo': 'distro','h': 'The "mean" argument for constructing the distribution'},
-            'sigma': {'max': 10.0, 'disp': 'std', 'combo': 'distro','h': 'The "sigma" argument for constructing the distribution'},
+                     'combo': 'distro', 'h': 'The distribution name.'},
+            'mu': {'max': 10.0, 'disp': 'mean', 'combo': 'distro',
+                   'h': 'The "mean" argument for constructing the distribution.'},
+            'sigma': {'max': 10.0, 'disp': 'std', 'combo': 'distro',
+                      'h': 'The "sigma" argument for constructing the distribution.'},
         },
         'xy': {'t': Tuple[float], 'v': (0.0, 0.0), 'min': -1.0, 'max': 1.0},
         'odor': {
-            'odor_id': {'t': str, 'disp': 'ID','h': 'The unique ID of the odorant'},
-            'odor_intensity': {'max': 10.0, 'disp': 'C peak (μmole)','h': 'The peak concentration of the odorant in micromoles'},
-            'odor_spread': {'max': 10.0, 'disp': 'spread','h': 'The spread of the concentration gradient around the peak'}
+            'odor_id': {'t': str, 'disp': 'ID', 'h': 'The unique ID of the odorant.'},
+            'odor_intensity': {'max': 10.0, 'disp': 'C peak (μmole)',
+                               'h': 'The peak concentration of the odorant in micromoles.'},
+            'odor_spread': {'max': 10.0, 'disp': 'spread',
+                            'h': 'The spread of the concentration gradient around the peak.'}
         },
 
-        'odorscape': {'odorscape': {'t': str, 'v': 'Gaussian', 'vs': ['Gaussian', 'Diffusion'],'h': 'The algorithm used for odorscape generation'},
-                      'grid_dims': {'t': Tuple[int], 'min': 10, 'max': 100,'h': 'The odorscape grid resolution'},
-                      'evap_const': {'max': 1.0,'h': 'The evaporation constant of the diffusion algorithm'},
-                      'gaussian_sigma': {'t': Tuple[float], 'max': 1.0,'h': 'The sigma of the gaussian difusion algorithm'}
+        'odorscape': {'odorscape': {'t': str, 'v': 'Gaussian', 'vs': ['Gaussian', 'Diffusion'],
+                                    'h': 'The algorithm used for odorscape generation.'},
+                      'grid_dims': {'t': Tuple[int], 'min': 10, 'max': 100, 'h': 'The odorscape grid resolution.'},
+                      'evap_const': {'max': 1.0, 'h': 'The evaporation constant of the diffusion algorithm.'},
+                      'gaussian_sigma': {'t': Tuple[float], 'max': 1.0,
+                                         'h': 'The sigma of the gaussian difusion algorithm.'}
                       },
-        'windscape': {'wind_direction': {'t': float, 'min': 0.0, 'max': 360.0, 'dv': 1.0,'h': 'The absolute polar direction of the wind/air puff'},
-                      'wind_speed': {'t': float, 'min': 0.0, 'max': 100.0, 'dv': 1.0,'h': 'The speed of the wind/air puff'},
+        'windscape': {'wind_direction': {'t': float, 'min': 0.0, 'max': 360.0, 'dv': 1.0,
+                                         'h': 'The absolute polar direction of the wind/air puff.'},
+                      'wind_speed': {'t': float, 'min': 0.0, 'max': 100.0, 'dv': 1.0,
+                                     'h': 'The speed of the wind/air puff.'},
                       },
         'odor_gains': {
-            'unique_id': {'t': str, 'h': 'The unique ID of the odorant'},
-            'mean': {'max': 1000.0, 'dv': 10.0, 'h': 'The mean gain/valence for the odorant. Positive/negative for appettitive/aversive valence'},
-            'std': {'max': 10.0, 'dv': 1.0, 'h': 'The standard deviation for the odorant gain/valence'}
+            'unique_id': {'t': str, 'h': 'The unique ID of the odorant.'},
+            'mean': {'max': 1000.0, 'dv': 10.0,
+                     'h': 'The mean gain/valence for the odorant. Positive/negative for appettitive/aversive valence.'},
+            'std': {'max': 10.0, 'dv': 1.0, 'h': 'The standard deviation for the odorant gain/valence.'}
         },
         'optimization': {
-            'fit_par': {'t': str,'disp': 'Utility metric', 'h': 'The utility parameter optimized'},
-            'minimize': {**bT,'h': 'Whether to minimize or maximize the utility parameter'},
-            'threshold': {'v': 0.001, 'max': 0.01, 'dv': 0.0001,'h': 'The utility threshold to reach before terminating the batch-run'},
-            'max_Nsims': {'t': int, 'v': 7, 'max': 100,'h': 'The maximum number of single runs before terminating the batch-run'},
-            'Nbest': {'t': int, 'v': 3, 'max': 10,'h': 'The number of best parameter combinations to use for generating the next generation'},
+            'fit_par': {'t': str, 'disp': 'Utility metric', 'h': 'The utility parameter optimized.'},
+            'minimize': {**bT, 'h': 'Whether to minimize or maximize the utility parameter.'},
+            'threshold': {'v': 0.001, 'max': 0.01, 'dv': 0.0001,
+                          'h': 'The utility threshold to reach before terminating the batch-run.'},
+            'max_Nsims': {'t': int, 'v': 7, 'max': 100,
+                          'h': 'The maximum number of single runs before terminating the batch-run.'},
+            'Nbest': {'t': int, 'v': 3, 'max': 10,
+                      'h': 'The number of best parameter combinations to use for generating the next generation.'},
             'operations': {
                 'mean': {**bT, 'h': 'Whether to use the mean of the utility across individuals'},
                 'std': {**bF, 'h': 'Whether to use the standard deviation of the utility across individuals'},
@@ -275,114 +288,179 @@ def init_pars():
             },
         },
         'batch_methods': {
-            'run': {'t': str, 'v': 'default', 'vs': ['null', 'default', 'deb', 'odor_preference', 'exp_fit'], 'h': 'The method to be applied on simulated data derived from every individual run'},
-            'post': {'t': str, 'v': 'default', 'vs': ['null', 'default'], 'h': 'The method to be applied after a generation of runs is completed to judge whether space-search will continue or batch-run will be terminated'},
-            'final': {'t': str, 'v': 'null', 'vs': ['null', 'scatterplots', 'deb', 'odor_preference'], 'h': 'The method to be applied once the batch-run is complete to plot/save the results'}
+            'run': {'t': str, 'v': 'default', 'vs': ['null', 'default', 'deb', 'odor_preference', 'exp_fit'],
+                    'h': 'The method to be applied on simulated data derived from every individual run'},
+            'post': {'t': str, 'v': 'default', 'vs': ['null', 'default'],
+                     'h': 'The method to be applied after a generation of runs is completed to judge whether space-search will continue or batch-run will be terminated.'},
+            'final': {'t': str, 'v': 'null', 'vs': ['null', 'scatterplots', 'deb', 'odor_preference'],
+                      'h': 'The method to be applied once the batch-run is complete to plot/save the results.'}
         },
         'space_search_par': {
-            'range': {'t': Tuple[float], 'max': 100.0, 'min': -100.0, 'dv': 1.0, 'h': 'The parameter range to perform the space-search'},
-            'Ngrid': {'t': int, 'max': 100,'disp' : '# steps',  'h': 'The number of equally-distanced values to parse the parameter range'},
-            'values': {'t': List[float], 'min': -100.0, 'max': 100.0, 'h': 'A list of values of the parameter to space-search. Once this is filled no range/# steps parameters are taken into account'}
+            'range': {'t': Tuple[float], 'max': 100.0, 'min': -100.0, 'dv': 1.0,
+                      'h': 'The parameter range to perform the space-search.'},
+            'Ngrid': {'t': int, 'max': 100, 'disp': '# steps',
+                      'h': 'The number of equally-distanced values to parse the parameter range.'},
+            'values': {'t': List[float], 'min': -100.0, 'max': 100.0,
+                       'h': 'A list of values of the parameter to space-search. Once this is filled no range/# steps parameters are taken into account.'}
         },
-        'space_search': {'pars': {'t': List[str], 'h': 'The parameters for space search', 's': 'ss.pars'},
+        'space_search': {'pars': {'t': List[str], 'h': 'The parameters for space search.', 's': 'ss.pars'},
                          'ranges': {'t': List[Tuple[float]], 'max': 100.0, 'min': -100.0, 'dv': 1.0,
-                                    'h': 'The range of the parameters for space search', 's': 'ss.ranges'},
-                         'Ngrid': {'t': int, 'max': 100, 'h': 'The number of steps for space search', 's': 'ss.Ngrid'}},
+                                    'h': 'The range of the parameters for space search.', 's': 'ss.ranges'},
+                         'Ngrid': {'t': int, 'max': 100, 'h': 'The number of steps for space search.',
+                                   's': 'ss.Ngrid'}},
         'body': {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'initial',
-                                    'combo': 'length','h': 'The initial body length'},
+                                    'combo': 'length', 'h': 'The initial body length.'},
                  'length_std': {'v': 0.0004, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'std',
-                                'combo': 'length','h': 'The standard deviation of the initial body length'},
-                 'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12,'h': 'The number of segments comprising the larva body'},
-                 'seg_ratio': {'max': 1.0,'h': 'The length ratio of the body segments. If null, equal-length segments are generated'},  # [5 / 11, 6 / 11]
-                 'touch_sensors': {'t': int, 'min': 0, 'max': 8,'h': 'The number of touch sensors existing on the larva body'},
+                                'combo': 'length', 'h': 'The standard deviation of the initial body length.'},
+                 'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12,
+                           'h': 'The number of segments comprising the larva body.'},
+                 'seg_ratio': {'max': 1.0,
+                               'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
+                 # [5 / 11, 6 / 11]
+                 'touch_sensors': {'t': int, 'min': 0, 'max': 8,
+                                   'h': 'The number of touch sensors existing on the larva body.'},
                  },
-        'arena': {'arena_dims': {'t': Tuple[float], 'v': (0.1, 0.1), 'max': 1.0, 'dv': 0.01, 'disp': 'X,Y (m)','h': 'The arena dimensions in meters'},
-                  'arena_shape': {'t': str, 'v': 'circular', 'vs': ['circular', 'rectangular'], 'disp': 'shape','h': 'The arena shape'}
+        'arena': {'arena_dims': {'t': Tuple[float], 'v': (0.1, 0.1), 'max': 1.0, 'dv': 0.01, 'disp': 'X,Y (m)',
+                                 'h': 'The arena dimensions in meters.'},
+                  'arena_shape': {'t': str, 'v': 'circular', 'vs': ['circular', 'rectangular'], 'disp': 'shape',
+                                  'h': 'The arena shape.'}
                   },
         'physics': {
-            'torque_coef': {'v': 0.41, 'max': 5.0, 'dv': 0.01,'h': 'The coefficient converting the lateral oscillator (TURNER) activity to bending torque'},
-            'ang_damping': {'v': 2.5, 'max': 10.0,'h': 'The environmental angular damping exerted on bending angular velocity'},
-            'body_spring_k': {'v': 0.02, 'max': 1.0, 'dv': 0.01,'h': 'The torsional spring constant of the larva body restoring the bending angle to 0'},
-            'bend_correction_coef': {'v': 1.4, 'max': 10.0,'h': 'The correction coefficient restoring the bending angle during forward motion by aligning the rear body segments to the front heading axis'},
+            'torque_coef': {'v': 0.41, 'max': 5.0, 'dv': 0.01,
+                            'h': 'The coefficient converting the lateral oscillator (TURNER) activity to bending torque.'},
+            'ang_damping': {'v': 2.5, 'max': 10.0,
+                            'h': 'The environmental angular damping exerted on bending angular velocity.'},
+            'body_spring_k': {'v': 0.02, 'max': 1.0, 'dv': 0.01,
+                              'h': 'The torsional spring constant of the larva body restoring the bending angle to 0.'},
+            'bend_correction_coef': {'v': 1.4, 'max': 10.0,
+                                     'h': 'The correction coefficient restoring the bending angle during forward motion by aligning the rear body segments to the front heading axis.'},
         },
-        'energetics': {'species': {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype','h': 'The phenotype/species-specific fitted DEB model to use'},
-                       'f_decay': {'v': 0.1, 'max': 1.0, 'dv': 0.1,'h': 'The exponential decay coefficient of the DEB functional response'},
-                       'absorption': {'max': 1.0,'h': 'The absorption ration for consumed food'},
-                       'V_bite': {'v': 0.001, 'max': 0.01, 'dv': 0.0001,'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume'},
-                       'hunger_as_EEB': {**bT,'h': 'Whether the DEB-generated hunger drive informs the exploration-exploitation balance'},
-                       'hunger_gain': {'v': 0.0, 'max': 1.0, 'h': 'The sensitivy of the hunger drive in deviations of the DEB reserve density'},
-                       'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb'], 'h': 'The method used to calculate the DEB assimilation energy flow'},
-                       'DEB_dt': {'max': 1.0, 'disp' : 'DEB timestep', 'h': 'The timestep of the DEB energetics module in seconds'},
+        'energetics': {'species': {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype',
+                                   'h': 'The phenotype/species-specific fitted DEB model to use.'},
+                       'f_decay': {'v': 0.1, 'max': 1.0, 'dv': 0.1,
+                                   'h': 'The exponential decay coefficient of the DEB functional response.'},
+                       'absorption': {'max': 1.0, 'h': 'The absorption ration for consumed food.'},
+                       'V_bite': {'v': 0.001, 'max': 0.01, 'dv': 0.0001,
+                                  'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'},
+                       'hunger_as_EEB': {**bT,
+                                         'h': 'Whether the DEB-generated hunger drive informs the exploration-exploitation balance.'},
+                       'hunger_gain': {'v': 0.0, 'max': 1.0,
+                                       'h': 'The sensitivy of the hunger drive in deviations of the DEB reserve density.'},
+                       'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb'],
+                                             'h': 'The method used to calculate the DEB assimilation energy flow.'},
+                       'DEB_dt': {'max': 1.0, 'disp': 'DEB timestep',
+                                  'h': 'The timestep of the DEB energetics module in seconds.'},
                        },
-        'crawler': {'waveform': {'t': str, 'v': 'realistic', 'vs': ['realistic', 'square', 'gaussian', 'constant'], 'h': 'The waveform of the repetitive crawling oscillator (CRAWLER) module'},
+        'crawler': {'waveform': {'t': str, 'v': 'realistic', 'vs': ['realistic', 'square', 'gaussian', 'constant'],
+                                 'h': 'The waveform of the repetitive crawling oscillator (CRAWLER) module.'},
                     'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5), 'max': 2.0, 'disp': 'range',
-                                   'combo': 'frequency', 'h': 'The frequency range of the repetitive crawling behavior'},
+                                   'combo': 'frequency',
+                                   'h': 'The frequency range of the repetitive crawling behavior.'},
                     'initial_freq': {'v': 1.418, 'max': 10.0, 'aux_vs': ['sample'], 'disp': 'initial',
-                                     'combo': 'frequency', 'h': 'The initial frequency of the repetitive crawling behavior'},  # From D1 fit
-                    'freq_std': {'v': 0.184, 'max': 1.0, 'disp': 'std', 'combo': 'frequency', 'h': 'The standard deviation of the frequency of the repetitive crawling behavior'},  # From D1 fit
+                                     'combo': 'frequency',
+                                     'h': 'The initial frequency of the repetitive crawling behavior.'},  # From D1 fit
+                    'freq_std': {'v': 0.184, 'max': 1.0, 'disp': 'std', 'combo': 'frequency',
+                                 'h': 'The standard deviation of the frequency of the repetitive crawling behavior.'},
+                    # From D1 fit
                     'step_to_length_mu': {'v': 0.224, 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample'], 'disp': 'mean',
-                                          'combo': 'scaled distance / stride', 'h': 'The mean displacement achieved in a single peristaltic stride as a fraction of the body length'},
+                                          'combo': 'scaled distance / stride',
+                                          'h': 'The mean displacement achieved in a single peristaltic stride as a fraction of the body length.'},
                     # From D1 fit
                     'step_to_length_std': {'v': 0.033, 'max': 1.0, 'aux_vs': ['sample'], 'disp': 'std',
-                                           'combo': 'scaled distance / stride', 'h': 'The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length'},  # From D1 fit
-                    'initial_amp': {'max': 2.0, 'disp': 'initial', 'combo': 'amplitude', 'h': 'The initial amplitude of the CRAWLER-generated forward velocity if this is hardcoded (e.g. constant waveform)'},
-                    'noise': {'v': 0.1, 'max': 1.0, 'dv': 0.01, 'disp': 'noise', 'combo': 'amplitude', 'h': 'The intrinsic output noise of the CRAWLER-generated forward velocity'},
-                    'max_vel_phase': {'v': 1.0, 'max': 2.0, 'h': 'The phase of the crawling oscillation cycle where the output (forward velocity) is maximum'}
+                                           'combo': 'scaled distance / stride',
+                                           'h': 'The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.'},
+                    # From D1 fit
+                    'initial_amp': {'max': 2.0, 'disp': 'initial', 'combo': 'amplitude',
+                                    'h': 'The initial amplitude of the CRAWLER-generated forward velocity if this is hardcoded (e.g. constant waveform).'},
+                    'noise': {'v': 0.1, 'max': 1.0, 'dv': 0.01, 'disp': 'noise', 'combo': 'amplitude',
+                              'h': 'The intrinsic output noise of the CRAWLER-generated forward velocity.'},
+                    'max_vel_phase': {'v': 1.0, 'max': 2.0,
+                                      'h': 'The phase of the crawling oscillation cycle where the output (forward velocity) is maximum.'}
                     },
-        'turner': {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal'], 'h': 'The implementation mode of the lateral oscillator (TURNER) module'},
-                   'base_activation': {'v': 20.0, 'max': 100.0, 'dv': 1.0, 'disp': 'mean', 'combo': 'activation', 'h': 'The baseline activation/input of the TURNER module'},
+        'turner': {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal'],
+                            'h': 'The implementation mode of the lateral oscillator (TURNER) module.'},
+                   'base_activation': {'v': 20.0, 'max': 100.0, 'dv': 1.0, 'disp': 'mean', 'combo': 'activation',
+                                       'h': 'The baseline activation/input of the TURNER module.'},
                    'activation_range': {'t': Tuple[float], 'v': (10.0, 40.0), 'max': 100.0, 'dv': 1.0, 'disp': 'range',
-                                        'combo': 'activation', 'h': 'The activation/input range of the TURNER module'},
-                   'noise': {'v': 0.15, 'max': 10.0, 'disp': 'noise', 'combo': 'amplitude', 'h': 'The intrinsic output noise of the TURNER activity amplitude'},
-                   'activation_noise': {'v': 0.5, 'max': 10.0, 'disp': 'noise', 'combo': 'activation', 'h': 'The intrinsic input noise of the TURNER module'},
-                   'initial_amp': {'max': 20.0, 'disp': 'initial', 'combo': 'amplitude', 'h': 'The initial activity amplitude of the TURNER module'},
-                   'amp_range': {'t': Tuple[float], 'max': 20.0, 'disp': 'range', 'combo': 'amplitude', 'h': 'The activity amplitude range of the TURNER module'},
-                   'initial_freq': {'max': 2.0, 'disp': 'initial', 'combo': 'frequency', 'h': 'The initial frequency of the repetitive lateral bending behavior if this is hardcoded (e.g. sinusoidal mode)'},
-                   'freq_range': {'t': Tuple[float], 'max': 2.0, 'disp': 'range', 'combo': 'frequency', 'h': 'The frequency range of the repetitive lateral bending behavior'},
+                                        'combo': 'activation', 'h': 'The activation/input range of the TURNER module.'},
+                   'noise': {'v': 0.15, 'max': 10.0, 'disp': 'noise', 'combo': 'amplitude',
+                             'h': 'The intrinsic output noise of the TURNER activity amplitude.'},
+                   'activation_noise': {'v': 0.5, 'max': 10.0, 'disp': 'noise', 'combo': 'activation',
+                                        'h': 'The intrinsic input noise of the TURNER module.'},
+                   'initial_amp': {'max': 20.0, 'disp': 'initial', 'combo': 'amplitude',
+                                   'h': 'The initial activity amplitude of the TURNER module.'},
+                   'amp_range': {'t': Tuple[float], 'max': 20.0, 'disp': 'range', 'combo': 'amplitude',
+                                 'h': 'The activity amplitude range of the TURNER module.'},
+                   'initial_freq': {'max': 2.0, 'disp': 'initial', 'combo': 'frequency',
+                                    'h': 'The initial frequency of the repetitive lateral bending behavior if this is hardcoded (e.g. sinusoidal mode).'},
+                   'freq_range': {'t': Tuple[float], 'max': 2.0, 'disp': 'range', 'combo': 'frequency',
+                                  'h': 'The frequency range of the repetitive lateral bending behavior.'},
                    },
         'interference': {
-            'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0, 'h': 'The CRAWLER oscillator cycle range during which it interferes with the TURNER'},  # np.pi * 0.55,  # 0.9, #,
-            'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0, 'h': 'The FEEDER oscillator cycle range during which it interferes with the TURNER'},
-            'attenuation': {'v': 1.0, 'max': 1.0, 'h': 'The activity attenuation exerted on the TURNER module due to interference by other oscillators'}
+            'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0,
+                                  'h': 'The CRAWLER oscillator cycle range during which it interferes with the TURNER.'},
+            # np.pi * 0.55,  # 0.9, #,
+            'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0,
+                                 'h': 'The FEEDER oscillator cycle range during which it interferes with the TURNER.'},
+            'attenuation': {'v': 1.0, 'max': 1.0,
+                            'h': 'The activity attenuation exerted on the TURNER module due to interference by other oscillators.'}
         },
 
         'olfactor': {
-            'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear', 'null'], 'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input'},
-            'input_noise': {'v': 0.0, 'max': 1.0, 'h': 'The intrinsic noise of the sensory input'},
-            'decay_coef': {'v': 0.0, 'max': 2.0, 'h': 'The linear decay coefficient of the olfactory sensory activation'}
+            'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear', 'null'],
+                           'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input.'},
+            'input_noise': {'v': 0.0, 'max': 1.0, 'h': 'The intrinsic noise of the sensory input.'},
+            'decay_coef': {'v': 0.0, 'max': 2.0,
+                           'h': 'The linear decay coefficient of the olfactory sensory activation.'}
         },
         'windsensor': {
             'weights': {
-                'hunch_lin': {'v': -1.0, 'min': -100.0, 'max': 100.0, 'disp': 'HUNCH->CRAWLER', 'h': 'The connection weight between the HUNCH neuron ensemble and the CRAWLER module'},
-                'hunch_ang': {'v': 0.0, 'min': -100.0, 'max': 100.0, 'disp': 'HUNCH->TURNER', 'h': 'The connection weight between the HUNCH neuron ensemble and the TURNER module'},
-                'bend_lin': {'v': 0.0, 'min': -100.0, 'max': 100.0, 'disp': 'BEND->CRAWLER', 'h': 'The connection weight between the BEND neuron ensemble and the CRAWLER module'},
-                'bend_ang': {'v': 1.0, 'min': -100.0, 'max': 100.0, 'disp': 'BEND->TURNER', 'h': 'The connection weight between the BEND neuron ensemble and the TURNER module'},
+                'hunch_lin': {'v': -1.0, 'min': -100.0, 'max': 100.0, 'disp': 'HUNCH->CRAWLER',
+                              'h': 'The connection weight between the HUNCH neuron ensemble and the CRAWLER module.'},
+                'hunch_ang': {'v': 0.0, 'min': -100.0, 'max': 100.0, 'disp': 'HUNCH->TURNER',
+                              'h': 'The connection weight between the HUNCH neuron ensemble and the TURNER module.'},
+                'bend_lin': {'v': 0.0, 'min': -100.0, 'max': 100.0, 'disp': 'BEND->CRAWLER',
+                             'h': 'The connection weight between the BEND neuron ensemble and the CRAWLER module.'},
+                'bend_ang': {'v': 1.0, 'min': -100.0, 'max': 100.0, 'disp': 'BEND->TURNER',
+                             'h': 'The connection weight between the BEND neuron ensemble and the TURNER module.'},
             }
         },
         'toucher': {
-            'perception': {'t': str, 'v': 'linear', 'vs': ['log', 'linear'], 'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input'},
-            'input_noise': {'v': 0.0, 'max': 1.0, 'h': 'The intrinsic noise of the sensory input'},
-            'decay_coef': {'v': 0.1, 'max': 2.0, 'h': 'The exponential decay coefficient of the tactile sensory activation'},
-            'state_specific_best': {**bT,'h': 'Whether to use the state-specific or the global highest evaluated gain after the end of the memory training period'},
-            'brute_force': {**bF, 'h': 'Whether to apply direct rule-based modulation on locomotion or not'},
-            'initial_gain': {'v': 40.0, 'min': -100.0, 'max': 100.0, 'h': 'The initial gain of the tactile sensor'}
+            'perception': {'t': str, 'v': 'linear', 'vs': ['log', 'linear'],
+                           'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input.'},
+            'input_noise': {'v': 0.0, 'max': 1.0, 'h': 'The intrinsic noise of the sensory input.'},
+            'decay_coef': {'v': 0.1, 'max': 2.0,
+                           'h': 'The exponential decay coefficient of the tactile sensory activation.'},
+            'state_specific_best': {**bT,
+                                    'h': 'Whether to use the state-specific or the global highest evaluated gain after the end of the memory training period.'},
+            'brute_force': {**bF, 'h': 'Whether to apply direct rule-based modulation on locomotion or not.'},
+            'initial_gain': {'v': 40.0, 'min': -100.0, 'max': 100.0, 'h': 'The initial gain of the tactile sensor.'}
         },
         'feeder': {
-            'freq_range': {'t': Tuple[float], 'v': (1.0, 3.0), 'max': 4.0, 'disp': 'range', 'combo': 'frequency', 'h': 'The frequency range of the repetitive feeding behavior'},
-            'initial_freq': {'v': 2.0, 'max': 4.0, 'disp': 'initial', 'combo': 'frequency', 'h': 'The initial default frequency of the repetitive feeding behavior'},
-            'feed_radius': {'v': 0.1, 'max': 10.0, 'h': 'The radius around the mouth in which food is consumable as a fraction of the body length'},
-            'V_bite': {'v': 0.001, 'max': 0.01, 'dv': 0.0001, 'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume'}
+            'freq_range': {'t': Tuple[float], 'v': (1.0, 3.0), 'max': 4.0, 'disp': 'range', 'combo': 'frequency',
+                           'h': 'The frequency range of the repetitive feeding behavior.'},
+            'initial_freq': {'v': 2.0, 'max': 4.0, 'disp': 'initial', 'combo': 'frequency',
+                             'h': 'The initial default frequency of the repetitive feeding behavior.'},
+            'feed_radius': {'v': 0.1, 'max': 10.0,
+                            'h': 'The radius around the mouth in which food is consumable as a fraction of the body length.'},
+            'V_bite': {'v': 0.001, 'max': 0.01, 'dv': 0.0001,
+                       'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'}
         },
-        'memory': {'modality': {'t': str, 'v': 'olfaction', 'vs': ['olfaction', 'touch'], 'h': 'The modality for which the memory module is used'},
-                   'Delta': {'v': 0.1, 'max': 10.0, 'h': 'The input sensitivity of the memory'},
-                   'state_spacePerSide': {'t': int, 'v': 0, 'max': 20, 'disp': 'state space dim', 'h': 'The number of discrete states to parse the state space on either side of 0'},
+        'memory': {'modality': {'t': str, 'v': 'olfaction', 'vs': ['olfaction', 'touch'],
+                                'h': 'The modality for which the memory module is used.'},
+                   'Delta': {'v': 0.1, 'max': 10.0, 'h': 'The input sensitivity of the memory.'},
+                   'state_spacePerSide': {'t': int, 'v': 0, 'max': 20, 'disp': 'state space dim',
+                                          'h': 'The number of discrete states to parse the state space on either side of 0.'},
                    'gain_space': {'t': List[float], 'v': [-300.0, -50.0, 50.0, 300.0], 'min': 1000.0, 'max': 1000.0,
-                                  'dv': 1.0, 'h': 'The possible values for memory gain to choose from'},
-                   'update_dt': {'v': 1.0, 'max': 10.0, 'dv': 1.0, 'h': 'The interval duration between gain switches'},
-                   'alpha': {'v': 0.05, 'max': 1.0, 'dv': 0.01, 'h': 'The alpha parameter of reinforcement learning algorithm'},
-                   'gamma': {'v': 0.6, 'max': 1.0, 'h': 'The probability of sampling a random gain rather than exploiting the currently highest evaluated gain for the current state'},
-                   'epsilon': {'v': 0.3, 'max': 1.0, 'h': 'The epsilon parameter of reinforcement learning algorithm'},
-                   'train_dur': {'v': 20.0, 'max': 100.0, 'h': 'The duration of the training period after which no further learning will take place'}
+                                  'dv': 1.0, 'h': 'The possible values for memory gain to choose from.'},
+                   'update_dt': {'v': 1.0, 'max': 10.0, 'dv': 1.0, 'h': 'The interval duration between gain switches.'},
+                   'alpha': {'v': 0.05, 'max': 1.0, 'dv': 0.01,
+                             'h': 'The alpha parameter of reinforcement learning algorithm.'},
+                   'gamma': {'v': 0.6, 'max': 1.0,
+                             'h': 'The probability of sampling a random gain rather than exploiting the currently highest evaluated gain for the current state.'},
+                   'epsilon': {'v': 0.3, 'max': 1.0, 'h': 'The epsilon parameter of reinforcement learning algorithm.'},
+                   'train_dur': {'v': 20.0, 'max': 100.0,
+                                 'h': 'The duration of the training period after which no further learning will take place.'}
                    },
         'modules': {'turner': bF,
                     'crawler': bF,
@@ -395,18 +473,19 @@ def init_pars():
                     'memory': bF},
 
         'essay_params': {
-            'essay_ID': {'t': str, 'h': 'The unique ID of the essay'},
-            'path': {'t': str, 'h': 'The relative path to store the essay datasets'},
-            'N': {'t': int, 'min': 1, 'max': 100, 'disp': '# larvae', 'h': 'The number of larvae per larva-group'}
+            'essay_ID': {'t': str, 'h': 'The unique ID of the essay.'},
+            'path': {'t': str, 'h': 'The relative path to store the essay datasets.'},
+            'N': {'t': int, 'min': 1, 'max': 100, 'disp': '# larvae', 'h': 'The number of larvae per larva-group.'}
         },
 
         'sim_params': {
-            'sim_ID': {'t': str, 'h': 'The unique ID of the simulation', 's': 'id'},
-            'path': {'t': str, 'h': 'The relative path to save the simulation dataset', 's': 'path'},
-            'duration': {'max': 100.0, 'h': 'The duration of the simulation in minutes', 's': 't'},
-            'timestep': {'v': 0.1, 'max': 0.4, 'dv': 0.05, 'h': 'The timestep of the simulation in seconds', 's': 'dt'},
-            'Box2D': {'t': bool, 'v': False, 'h': 'Whether to use the Box2D physics engine or not'},
-            'store_data': {'t': bool, 'v': True, 'h': 'Whether to store the simulation data or not', 's': 'no_store'},
+            'sim_ID': {'t': str, 'h': 'The unique ID of the simulation.', 's': 'id'},
+            'path': {'t': str, 'h': 'The relative path to save the simulation dataset.', 's': 'path'},
+            'duration': {'max': 100.0, 'h': 'The duration of the simulation in minutes.', 's': 't'},
+            'timestep': {'v': 0.1, 'max': 0.4, 'dv': 0.05, 'h': 'The timestep of the simulation in seconds.',
+                         's': 'dt'},
+            'Box2D': {'t': bool, 'v': False, 'h': 'Whether to use the Box2D physics engine or not.'},
+            'store_data': {'t': bool, 'v': True, 'h': 'Whether to store the simulation data or not.', 's': 'no_store'},
             # 'analysis': {'t': bool, 'v': True, 'h': 'Whether to analyze the simulation data', 's' : 'no_analysis'},
         },
 
@@ -453,51 +532,61 @@ def init_pars():
     d['intermitter'] = {
         'stridechain_dist': d['bout_distro'],
         'pause_dist': d['bout_distro'],
-        'crawl_bouts': bT,
-        'feed_bouts': bF,
-        'crawl_freq': {'v': 1.43, 'max': 2.0, 'dv': 0.01},
-        'feed_freq': {'v': 2.0, 'max': 4.0, 'dv': 0.01},
-        'feeder_reoccurence_rate': {'max': 1.0, 'disp': 'feed reoccurence'},
-        'EEB_decay': {'v': 1.0, 'max': 2.0},
-        'EEB': {'v': 0.0, 'max': 1.0},
+        'EEB': {'v': 0.0, 'max': 1.0,
+                'h': 'The baseline exploitation-exploration balance. 0 means only exploitation, 1 only exploration.'},
+        'EEB_decay': {'v': 1.0, 'max': 2.0,
+                      'h': 'The exponential decay coefficient of the exploitation-exploration balance when no food is detected.'},
+        'crawl_bouts': {**bT, 'disp': 'crawling bouts',
+                        'h': 'Whether crawling bouts (runs/stridechains) are generated.'},
+        'feed_bouts': {**bF, 'disp': 'feeding bouts', 'h': 'Whether feeding bouts (feedchains) are generated.'},
+        'crawl_freq': {'v': 1.43, 'max': 2.0, 'dv': 0.01, 'disp': 'crawling frequency',
+                       'h': 'The default frequency of the CRAWLER oscillator when simulating offline.'},
+        'feed_freq': {'v': 2.0, 'max': 4.0, 'dv': 0.01, 'disp': 'feeding frequency',
+                      'h': 'The default frequency of the FEEDER oscillator when simulating offline.'},
+        'feeder_reoccurence_rate': {'max': 1.0, 'disp': 'feed reoccurence',
+                                    'h': 'The default reoccurence rate of the feeding motion.'}
+
     }
 
-    d['substrate_composition'] = {n: {'v': 0.0, 'max': 10.0, 'h' : f'{n} density in g/cm**3'} for n in
+    d['substrate_composition'] = {n: {'v': 0.0, 'max': 10.0, 'h': f'{n} density in g/cm**3.'} for n in
                                   ['glucose', 'dextrose', 'saccharose', 'yeast', 'agar', 'cornmeal']}
 
     d['substrate'] = {
-        'type': {'t': str, 'v': 'standard', 'vs': list(substrate_dict.keys()), 'h' : 'The type of substrate'},
-        'quality': {'v': 1.0, 'max': 1.0, 'h' : 'The substrate quality as percentage of nutrients relative to the intact substrate type'}
+        'type': {'t': str, 'v': 'standard', 'vs': list(substrate_dict.keys()), 'h': 'The type of substrate.'},
+        'quality': {'v': 1.0, 'max': 1.0,
+                    'h': 'The substrate quality as percentage of nutrients relative to the intact substrate type.'}
 
     }
 
     d['food'] = {
-        'radius': {'v': 0.003, 'max': 0.1, 'dv': 0.001, 'h' : 'The spatial radius of the source in meters'},
-        'amount': {'v': 0.0, 'max': 1.0, 'h' : 'The unique ID of the food grid', 'h' : 'The food amount in the source'},
-        'can_be_carried': {**bF, 'disp': 'carriable', 'h' : 'Whether the source can be carried around'},
+        'radius': {'v': 0.003, 'max': 0.1, 'dv': 0.001, 'h': 'The spatial radius of the source in meters.'},
+        'amount': {'v': 0.0, 'max': 1.0, 'h': 'The unique ID of the food grid', 'h': 'The food amount in the source.'},
+        'can_be_carried': {**bF, 'disp': 'carriable', 'h': 'Whether the source can be carried around.'},
         **d['substrate']
     }
     d['food_grid'] = {
-        'unique_id': {'t': str, 'v': 'Food_grid','disp' : 'ID', 'h' : 'The unique ID of the food grid'},
-        'grid_dims': {'t': Tuple[int], 'v': (50, 50), 'min': 10, 'max': 200,'disp' : 'XY dims', 'h' : 'The spatial resolution of the food grid'},
-        'initial_value': {'v': 0.1, 'max': 1.0, 'dv': 0.01,'disp' : 'Initial amount',  'h' : 'The initial amount of food in each cell of the grid'},
-        'distribution': {'t': str, 'v': 'uniform', 'vs': ['uniform'], 'h' : 'The distribution of food in the grid'},
-        'default_color': {'t': str, 'v': 'green','disp' : 'color', 'h' : 'The default color of the food grid'},
+        'unique_id': {'t': str, 'v': 'Food_grid', 'disp': 'ID', 'h': 'The unique ID of the food grid.'},
+        'grid_dims': {'t': Tuple[int], 'v': (50, 50), 'min': 10, 'max': 200, 'disp': 'XY dims',
+                      'h': 'The spatial resolution of the food grid.'},
+        'initial_value': {'v': 0.1, 'max': 1.0, 'dv': 0.01, 'disp': 'Initial amount',
+                          'h': 'The initial amount of food in each cell of the grid.'},
+        'distribution': {'t': str, 'v': 'uniform', 'vs': ['uniform'], 'h': 'The distribution of food in the grid.'},
+        'default_color': {'t': str, 'v': 'green', 'disp': 'color', 'h': 'The default color of the food grid.'},
         **d['substrate']
         # 'substrate' : d['substrate']
     }
 
     d['epoch'] = {
-        'start': {'max': 200.0, 'h' : 'The beginning of the epoch in hours post-hatch'},
-        'stop': {'max': 200.0, 'h' : 'The end of the epoch in hours post-hatch'},
+        'start': {'max': 200.0, 'h': 'The beginning of the epoch in hours post-hatch.'},
+        'stop': {'max': 200.0, 'h': 'The end of the epoch in hours post-hatch.'},
         # 'duration': {'max': 200.0},
         'substrate': d['substrate']
 
     }
 
     d['life_history'] = {
-        'epochs': {'t': dict},
-        'age': {'v': 0.0, 'max': 250.0, 'dv': 1.0},
+        'epochs': {'t': dict, 'h': 'The feeding epochs comprising life-history.'},
+        'age': {'v': 0.0, 'max': 250.0, 'dv': 1.0, 'h': 'The larva age in hours post-hatch.'},
     }
 
     d['brain'] = {
@@ -512,56 +601,56 @@ def init_pars():
         'energetics': d['energetics'],
         'physics': d['physics'],
     }
-    # d['parameterization'] = {'bend': {'t': str, 'v': 'from_angles', 'vs': ['from_angles', 'from_vectors']},
-    #                          'front_vector': {'t': Tuple[int], 'v': (1, 2), 'min': -12, 'max': 12},
-    #                          'rear_vector': {'t': Tuple[int], 'v': (-2, -1), 'min': -12, 'max': 12},
-    #                          'front_body_ratio': {'v': 0.5, 'max': 1.0},
-    #                          'point_idx': {'t': int, 'min': -1, 'max': 12},
-    #
-    #                          'use_component_vel': bF}
     d['ang_definition'] = {
-        'bend': {'t': str, 'v': 'from_angles', 'vs': ['from_angles', 'from_vectors']},
-        'front_vector': {'t': Tuple[int], 'v': (1, 2), 'min': -12, 'max': 12},
-        'rear_vector': {'t': Tuple[int], 'v': (-2, -1), 'min': -12, 'max': 12},
-        'front_body_ratio': {'v': 0.5, 'max': 1.0, 'disp': 'front_ratio'}
+        'bend': {'t': str, 'v': 'from_angles', 'vs': ['from_angles', 'from_vectors'],
+                 'h': 'Whether bending angle is computed as a sum of sequential segmental angles or as the angle between front and rear body vectors.'},
+        'front_vector': {'t': Tuple[int], 'v': (1, 2), 'min': -12, 'max': 12,
+                         'h': 'The initial & final segment of the front body vector.'},
+        'rear_vector': {'t': Tuple[int], 'v': (-2, -1), 'min': -12, 'max': 12,
+                        'h': 'The initial & final segment of the rear body vector.'},
+        'front_body_ratio': {'v': 0.5, 'max': 1.0, 'disp': 'front_ratio',
+                             'h': 'The fraction of the body considered front, relevant for bend computation from angles.'}
     }
     d['spatial_definition'] = {
-        'point_idx': {'t': int, 'min': -1, 'max': 12},
-        'use_component_vel': {**bF, 'disp': 'vel_component'}
+        'point_idx': {'t': int, 'min': -1, 'max': 12, 'h': 'The index of the segment used as the larva spatial position (-1 means using the centroid).'},
+        'use_component_vel': {**bF, 'disp': 'vel_component', 'h': 'Whether to use the component velocity ralative to the axis of forward motion.'}
     }
 
     d['metric_definition'] = {
         'angular': d['ang_definition'],
         'spatial': d['spatial_definition'],
         'dispersion': {
-            'dsp_starts': {'t': List[float], 'v': [0.0], 'max': 200.0, 'dv': 1.0, 'disp': 'starts'},
-            'dsp_stops': {'t': List[float], 'v': [40.0], 'max': 200.0, 'dv': 1.0, 'disp': 'stops'},
+            'dsp_starts': {'t': List[float], 'v': [0.0], 'max': 200.0, 'dv': 1.0, 'disp': 'starts',
+                           'h': 'The timepoints to start calculating dispersion in seconds.'},
+            'dsp_stops': {'t': List[float], 'v': [40.0], 'max': 200.0, 'dv': 1.0, 'disp': 'stops',
+                          'h': 'The timepoints to stop calculating dispersion in seconds.'},
         },
         'tortuosity': {
-            'tor_durs': {'t': List[int], 'v': [5, 10, 20], 'max': 100, 'dv': 1, 'disp': 't (sec)'}
+            'tor_durs': {'t': List[int], 'v': [5, 10, 20], 'max': 100, 'dv': 1, 'disp': 't (sec)',
+                         'h': 'The time windows to use when calculating tortuosity in seconds.'}
         },
         'stride': {
-            'track_point': {'t': str},
-            'use_scaled_vel': {**bT, 'disp': 'vel_scaled'},
-            'vel_threshold': {'v': 0.2, 'max': 1.0, 'disp': 'vel_thr'},
+            'track_point': {'t': str, 'h': 'The midline point to use when detecting the strides. When none is provided, the default position of the larva is used (see spatial definition).'},
+            'use_scaled_vel': {**bT, 'disp': 'vel_scaled', 'h': 'Whether to use the velocity scaled to the body length.'},
+            'vel_threshold': {'v': 0.2, 'max': 1.0, 'disp': 'vel_thr', 'h': 'The velocity threshold to be reached in every stride cycle.'},
         },
         'pause': {
-            'stride_non_overlap': {**bT, 'disp': 'excl. strides'},
-            'min_dur': {'v': 0.4, 'max': 2.0},
+            'stride_non_overlap': {**bT, 'disp': 'excl. strides', 'h': 'Whether pause bouts are required not to overlap with strides.'},
+            'min_dur': {'v': 0.4, 'max': 2.0, 'h': 'The minimum duration for detecting a pause, in seconds.'},
         },
         'turn': {
-            'min_ang': {'v': 30.0, 'max': 180.0, 'dv': 1.0},
-            'min_ang_vel': {'v': 0.0, 'max': 1000.0, 'dv': 1.0},
-            'chunk_only': {'t': str},
+            'min_ang': {'v': 30.0, 'max': 180.0, 'dv': 1.0, 'h': 'The minimum orientation angle change required to detect a turn.'},
+            'min_ang_vel': {'v': 0.0, 'max': 1000.0, 'dv': 1.0, 'h': 'The minimum angular velocity maximum required to detect a turn.'},
+            'chunk_only': {'t': str, 'vs' : ['', 'stride', 'pause'], 'h': 'Whether to only detect turns whithin a given bout type.'},
         }
     }
 
     d['preprocessing'] = {
-        'rescale_by': {'max': 10.0},
-        'drop_collisions': bF,
-        'interpolate_nans': bF,
-        'filter_f': {'max': 10.0},
-        'transposition': {'t': str, 'vs': ['', 'origin', 'arena', 'center']}
+        'rescale_by': {'max': 10.0, 'h': 'Whether to rescale spatial coordinates by a scalar in meters.'},
+        'drop_collisions': {**bF, 'h': 'Whether to drop timepoints where larva collisions are detected.'},
+        'interpolate_nans': {**bF, 'h': 'Whether to interplolate missing values.'},
+        'filter_f': {'max': 10.0, 'disp' : 'filter frequency', 'h': 'Whether to filter spatial coordinates by a grade-1 low-pass filter of the given cut-off frequency.'},
+        'transposition': {'t': str, 'vs': ['', 'origin', 'arena', 'center'], 'h': 'Whether to transpose spatial coordinates.'}
     }
     d['processing'] = {t: bF for t in proc_type_keys}
     d['annotation'] = {**{b: bF for b in bout_keys},
