@@ -362,10 +362,10 @@ def init_pars():
         'toucher': {
             'perception': {'t': str, 'v': 'linear', 'vs': ['log', 'linear'], 'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input'},
             'input_noise': {'v': 0.0, 'max': 1.0, 'h': 'The intrinsic noise of the sensory input'},
-            'decay_coef': {'v': 0.001, 'max': 2.0, 'h': 'The exponential decay coefficient of the tactile sensory activation'},
+            'decay_coef': {'v': 0.1, 'max': 2.0, 'h': 'The exponential decay coefficient of the tactile sensory activation'},
             'state_specific_best': {**bT,'h': 'Whether to use the state-specific or the global highest evaluated gain after the end of the memory training period'},
-            'brute_force': {**bT, 'h': 'Whether to apply direct rule-based modulation on locomotion or not'},
-            'initial_gain': {'v': -10.0, 'min': -100.0, 'max': 100.0, 'h': 'The initial gain of the tactile sensor'}
+            'brute_force': {**bF, 'h': 'Whether to apply direct rule-based modulation on locomotion or not'},
+            'initial_gain': {'v': 40.0, 'min': -100.0, 'max': 100.0, 'h': 'The initial gain of the tactile sensor'}
         },
         'feeder': {
             'freq_range': {'t': Tuple[float], 'v': (1.0, 3.0), 'max': 4.0, 'disp': 'range', 'combo': 'frequency', 'h': 'The frequency range of the repetitive feeding behavior'},

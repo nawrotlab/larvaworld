@@ -20,7 +20,7 @@ def prepare_batch(batch, **kwargs):
     space = grid_search_dict(batch['space_search'])
     if batch['optimization'] is not None:
         batch['optimization']['ranges'] = np.array(
-            [batch['space_search'][k]['range'] for k in batch['space_search'].keys()])
+            [batch['space_search'][k]['range'] for k in batch['space_search'].keys() if 'range' in batch['space_search'][k].keys()])
     prepared_batch = {
         'batch_type': batch['batch_type'],
         'batch_id': batch['batch_id'],
@@ -88,6 +88,11 @@ def save_results_df(traj):
     except:
         pass
     df.to_csv(os.path.join(traj.config.dir_path, 'results.csv'), index=True, header=True)
+    try:
+        for p in df.columns.values[:-1]:
+            print(p, df[p].corr(df[traj.config.fit_par]))
+    except :
+        pass
     return df
 
 

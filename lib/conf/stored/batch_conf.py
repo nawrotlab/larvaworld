@@ -1,7 +1,7 @@
 from lib.conf.base.dtypes import null_dict, enr_dict, base_enrich
 
 
-def batch(exp, en=None, ss=None, o=None, o_kws={},bm={}, as_entry=True, **kwargs):
+def batch(exp, en=None, ss=None,ssbool=None, o=None, o_kws={},bm={}, as_entry=True, **kwargs):
     if en is None:
         enrichment = null_dict('enrichment')
     elif en == 'PI':
@@ -21,11 +21,21 @@ def batch(exp, en=None, ss=None, o=None, o_kws={},bm={}, as_entry=True, **kwargs
         bm_kws = bm
     if ss is not None:
         ss = {p: null_dict('space_search_par', range=r, Ngrid=N) for p, (r, N) in ss.items()}
+    else :
+        ss={}
+    if ssbool is not None :
+        ssbool={p:{'values' : [True, False]} for p in ssbool}
+    else :
+        ssbool={}
+    ss0={**ss, **ssbool}
+    if len(ss0)==0 :
+        ss0=None
+
     conf = null_dict('batch_conf',
                      exp=exp,
                      exp_kws={'enrichment': enrichment, 'experiment' : exp},
                      optimization=null_dict("optimization", fit_par=o, **o_kws) if o is not None else None,
-                     space_search=ss,
+                     space_search=ss0,
                      batch_methods=null_dict('batch_methods', **bm_kws),
                      **kwargs)
     if as_entry :
@@ -68,8 +78,9 @@ batch_dict = {
             o='sample_fit', o_kws={'threshold': 1.0, 'max_Nsims': 20, 'operations': {'mean': False, 'abs': False}},
             bm={'run':'exp_fit'}),
     **batch('tactile_detection',
-            ss={'initial_gain': [(-20.0, -5.0), 5],'decay_coef': [(0.3, 0.7), 5]},
-            o='cum_food_detected', o_kws={'threshold': 1000.0, 'max_Nsims': 80, 'minimize' : False, 'Nbest' : 8,
+            ss={'initial_gain': [(0.0, 80.0), 5],'decay_coef': [(0.001, 1.0), 5]},
+            # ssbool=['brute_force'],
+            o='cum_food_detected', o_kws={'threshold': 100000.0, 'max_Nsims': 600, 'minimize' : False, 'Nbest' : 16,
                                           'operations': {'mean': True, 'abs': False}}),
 **batch('anemotaxis',
         # ss={f'windsensor_params.weights.{m1}_{m2}': [(-20.0, 20.0), 2] for m1,m2 in zip(['bend','bend', 'hunch','hunch'], ['lin','ang', 'lin','ang'])},

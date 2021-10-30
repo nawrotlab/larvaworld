@@ -41,8 +41,10 @@ class Intermitter(Effector):
 
         self.disinhibit_locomotion()
 
+
     def reset(self):
         # self.initialize()
+
         self.t = 0
         self.total_t = 0
         self.ticks = 0
@@ -73,6 +75,8 @@ class Intermitter(Effector):
         self.feed_durs = []
         self.stride_durs = []
 
+        self.stride_stop = False
+
     def step(self):
         super().count_time()
         self.update_state()
@@ -101,9 +105,11 @@ class Intermitter(Effector):
             self.feeder.stop_effector()
 
     def update_state(self):
+        self.stride_stop=False
         if self.current_stridechain_length is not None:
             if self.crawler.complete_iteration:
                 self.current_numstrides += 1
+                self.stride_stop = True
                 self.stride_counter += 1
                 if self.current_numstrides >= self.current_stridechain_length:
                     self.register_stridechain()

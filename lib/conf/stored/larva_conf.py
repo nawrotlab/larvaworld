@@ -182,6 +182,7 @@ def mod(brain, bod={}, energetics=None, phys={}):
 larvae = {
     'explorer': mod(brain(['L'])),
     'toucher': mod(brain(['L', 'To'], turner=Tno_noise), bod={'touch_sensors': 0}),
+    'toucher_brute': mod(brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', brute_force=True)), bod={'touch_sensors': 0}),
     'RL_toucher_0': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory), bod={'touch_sensors': 0}),
     'gRL_toucher_0': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory), bod={'touch_sensors': 0}),
     'RL_toucher_2': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory), bod={'touch_sensors': 2}),

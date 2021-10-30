@@ -5,7 +5,7 @@ from lib.model.modules.basic import Effector
 
 class Sensor(Effector):
     def __init__(self, brain, perception='linear', gain_dict={}, decay_coef=1, input_noise=0,
-                 brute_force=True, **kwargs):
+                 brute_force=False, **kwargs):
         super().__init__(**kwargs)
         self.brain = brain
         self.perception = perception
@@ -35,6 +35,9 @@ class Sensor(Effector):
                 self.activation = self.A1
             elif self.activation < self.A0:
                 self.activation = self.A0
+        # if list(input.values())[0]!=0 :
+        #     print(input)
+        # print(self.gain)
         return self.activation
 
     def affect_locomotion(self):
@@ -129,8 +132,9 @@ class Olfactor(Sensor):
         return list(self.dX.values())[1]
 
 class Toucher(Sensor):
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
+    def __init__(self,initial_gain, brain, **kwargs):
+        gain_dict = {s: initial_gain for s in brain.agent.get_sensors()}
+        super().__init__(brain=brain, gain_dict=gain_dict, **kwargs)
 
     def affect_locomotion(self):
         for id in self.gain_ids:

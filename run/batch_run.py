@@ -16,6 +16,8 @@ d = MP.get(args)
 batch_type = args.batch
 N = args.Nagents
 
+
+
 batch_conf = loadConf(batch_type, 'Batch')
 
 batch_id = d['batch_setup']['batch_id']
