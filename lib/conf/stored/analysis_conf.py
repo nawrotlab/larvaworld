@@ -116,12 +116,13 @@ analysis_dict = {
         'source_analysis'
     ],
     'intake': [
+        'deb_analysis',
         *[time(p) for p in ['sf_faeces_M', 'f_faeces_M', 'sf_abs_M', 'f_abs_M', 'f_am']],
         entry('food intake (timeplot)', 'food intake (raw)'),
         entry('food intake (timeplot)', 'food intake (filtered)', filt_amount=True),
         entry('pathlength', scaled=False),
-        bar('f_am', 'food intake (barplot)'),
-        'deb_analysis'
+        bar('f_am', 'food intake (barplot)')
+
     ],
     'anemotaxis': [
         *[nengo(p, same_plot=True if p == 'anemotaxis' else False) for p in

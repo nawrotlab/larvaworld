@@ -1,4 +1,5 @@
 import math
+import time
 
 import numpy as np
 
@@ -99,9 +100,27 @@ def rotate_around_center(point, radians):
     return np.array([qx, qy])
 
 
-def rotate_around_center_multi(points, radians):
+def rotate_around_center_multi(points : np.array, radians):
     cos_rad = math.cos(radians)
     sin_rad = math.sin(radians)
+    # def func(point):
+    #     # x,y=point
+    #     return cos_rad * point[0] + sin_rad * point[1], -sin_rad * point[0] + cos_rad * point[1]
+    # # print(points)
+    # # print(type(points))
+    # # print(type(points[0]))
+    # tt=time.time()
+    # b=np.array([(cos_rad * x + sin_rad * y, -sin_rad * x + cos_rad * y) for x, y in points])
+    # # print(b)
+    # ttt = time.time()
+    #
+    #
+    # a=np.apply_along_axis(func, 1, points)
+    # tttt = time.time()
+    # print(ttt-tt, tttt-ttt)
+    # # print(a)
+    # # print(a==b)
+    # raise
     return np.array([(cos_rad * x + sin_rad * y, -sin_rad * x + cos_rad * y) for x, y in points])
 
 

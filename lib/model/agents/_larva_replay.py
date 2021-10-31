@@ -12,7 +12,7 @@ from lib.model.body.controller import BodyReplay
 class LarvaReplay(Larva, BodyReplay):
     def __init__(self, unique_id, model, length=5, data=None, **kwargs):
         Larva.__init__(self, unique_id=unique_id, model=model, radius=length / 2, **kwargs)
-        m=self.model
+        m = self.model
         N = m.Nsteps
         self.chunk_ids = None
         self.trajectory = []
@@ -20,18 +20,16 @@ class LarvaReplay(Larva, BodyReplay):
         self.real_length = length
         self.pos_ar = data[m.pos_pars].values
         self.pos = self.pos_ar[0]
-        if len(m.cen_pars) == 2 :
+        if len(m.cen_pars) == 2:
             self.cen_ar = data[m.cen_pars].values
-            self.cen_pos=self.cen_ar[0]
-        else :
-            self.cen_ar=None
-            self.cen_pos=(np.nan, np.nan)
+            self.cen_pos = self.cen_ar[0]
+        else:
+            self.cen_ar = None
+            self.cen_pos = (np.nan, np.nan)
 
         self.Nsegs = m.draw_Nsegs
         self.mid_ar = data[lib.aux.dictsNlists.flatten_list(m.mid_pars)].values.reshape([N, m.Npoints, 2])
         self.con_ar = data[lib.aux.dictsNlists.flatten_list(m.con_pars)].values.reshape([N, m.Ncontour, 2])
-
-
 
         vp_beh = [p for p in self.behavior_pars if p in m.chunk_pars]
         self.beh_ar = np.zeros([N, len(self.behavior_pars)], dtype=bool)
@@ -52,13 +50,13 @@ class LarvaReplay(Larva, BodyReplay):
 
     def read_step(self, i):
         self.midline = self.mid_ar[i].tolist()
-        self.vertices = self.con_ar[i][~np.isnan(self.con_ar[i])].reshape(-1,2)
-        if self.cen_ar is not None :
+        self.vertices = self.con_ar[i][~np.isnan(self.con_ar[i])].reshape(-1, 2)
+        if self.cen_ar is not None:
             self.cen_pos = self.cen_ar[i]
         self.pos = self.pos_ar[i]
         self.trajectory = self.pos_ar[:i, :].tolist()
         self.beh_dict = dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist()))
-        if self.Nsegs is not None :
+        if self.Nsegs is not None:
             self.angles = self.ang_ar[i]
             self.orients = self.or_ar[i]
             self.front_orientation = self.front_or_ar[i]
@@ -67,7 +65,7 @@ class LarvaReplay(Larva, BodyReplay):
                 setattr(self, p, self.data[p].values[i] if p in self.data.columns else np.nan)
 
     def step(self):
-        m=self.model
+        m = self.model
         step = m.active_larva_schedule.steps
         self.read_step(step)
         mid = self.midline
@@ -87,7 +85,7 @@ class LarvaReplay(Larva, BodyReplay):
                     seg.set_orientation(o)
                     seg.update_vertices(pos, o)
             elif len(segs) == 2:
-                l1, l2 = [self.sim_length * r for r in self.seg_ratio]
+                l1, l2 = self.sim_length * self.seg_ratio
                 x, y = self.pos
                 h_or = self.front_orientation
                 b_or = self.front_orientation - self.bend
@@ -105,10 +103,10 @@ class LarvaReplay(Larva, BodyReplay):
                 self.midline = np.array([p_head, self.pos, p_tail])
 
     def draw(self, viewer):
-        r,c,m, v=self.radius,self.color,self.model, self.vertices
+        r, c, m, v = self.radius, self.color, self.model, self.vertices
 
-        pos=self.cen_pos if not np.isnan(self.cen_pos).any() else self.pos
-        mid=self.midline
+        pos = self.cen_pos if not np.isnan(self.cen_pos).any() else self.pos
+        mid = self.midline
 
         if m.draw_contour:
             if self.Nsegs is not None:
@@ -120,7 +118,7 @@ class LarvaReplay(Larva, BodyReplay):
         if m.draw_centroid:
             draw_body_centroid(viewer, pos, r, c)
 
-        if m.draw_midline :
+        if m.draw_midline:
             draw_body_midline(viewer, mid, r)
 
         if m.draw_head:

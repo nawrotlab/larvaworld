@@ -59,7 +59,7 @@ class Intermitter(Effector):
         self.current_stridechain_length = None
         self.cum_stridechain_dur = 0
         self.current_numstrides = 0
-        self.stride_counter = 0
+        # self.stride_counter = 0
 
         self.feedchain_counter = 0
         self.current_feedchain_length = None
@@ -110,7 +110,7 @@ class Intermitter(Effector):
             if self.crawler.complete_iteration:
                 self.current_numstrides += 1
                 self.stride_stop = True
-                self.stride_counter += 1
+                # self.stride_counter += 1
                 if self.current_numstrides >= self.current_stridechain_length:
                     self.register_stridechain()
                     self.inhibit_locomotion()
@@ -249,7 +249,7 @@ class OfflineIntermitter(Intermitter):
         self.stride_stop = False
         if self.current_stridechain_length and t >= self.current_crawl_ticks:
             self.current_numstrides += 1
-            self.stride_counter += 1
+            # self.stride_counter += 1
             self.stride_stop = True
             if self.current_numstrides >= self.current_stridechain_length:
                 self.register('stride')

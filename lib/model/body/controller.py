@@ -264,7 +264,7 @@ class BodySim(BodyManager):
         if self.Nsegs > 1:
             self.position_rest_of_body(o1-o0, head_rear_pos=hr1, head_or=o1)
 
-
+        # t0.append(time.time())
         self.pos = self.global_midspine_of_body if self.Nsegs != 2 else hr1
         self.model.space.move_agent(self, self.pos)
         head.set_lin_vel(lin_vel)
@@ -273,6 +273,8 @@ class BodySim(BodyManager):
         self.cum_dst += d
         self.trajectory.append(self.pos)
 
+        # t0.append(time.time())
+        # print(np.array(np.diff(t0)*1000000).astype(int))
 
     def position_rest_of_body(self, d_orientation, head_rear_pos, head_or):
         N = self.Nsegs

@@ -69,7 +69,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
     elif 'LOF' in module_shorts:
         module_shorts.remove('LOF')
         module_shorts += ['T', 'C', 'If', 'Im', 'O', 'F']
-    module_shorts.append('W')
+    # module_shorts.append('W')
     modules = [module_dict[k] for k in module_shorts]
 
     modules = null_dict('modules', **{m: True for m in modules})
@@ -92,7 +92,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
     return d
 
 
-def RvsS_larva(EEB, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=1.0, OD=None, **deb_kws):
+def RvsS_larva(EEB, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=None, **deb_kws):
     if OD is None:
         ms = ['L', 'F']
     else:
@@ -180,7 +180,7 @@ def mod(brain, bod={}, energetics=None, phys={}):
 
 
 larvae = {
-    'explorer': mod(brain(['L'])),
+    'explorer': mod(brain(['L', 'W'])),
     'toucher': mod(brain(['L', 'To'], turner=Tno_noise), bod={'touch_sensors': 0}),
     'toucher_brute': mod(brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', brute_force=True)), bod={'touch_sensors': 0}),
     'RL_toucher_0': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory), bod={'touch_sensors': 0}),
@@ -199,7 +199,7 @@ larvae = {
     'basic_navigator': mod(brain(['L', 'O'], OD=OD1, turner=Tsin, crawler=Ccon), bod={'Nsegs': 1}),
     'explorer_3con': mod(brain_3c, bod={'initial_length': 3.85 / 1000, 'length_std': 0.35 / 1000}),
     'nengo_feeder': mod(nengo_brain(['L', 'F'],EEB=0.75)),
-    'nengo_explorer': mod(nengo_brain(['L'], EEB=0.0)),
+    'nengo_explorer': mod(nengo_brain(['L','W'], EEB=0.0)),
     'nengo_forager': mod(nengo_brain(['LOF'],EEB=0.75, OD=OD1)),
     'imitator': mod(brain(['L']), bod={'initial_length': 0.0045, 'length_std': 0.0001, 'Nsegs': 11},
                     phys={'ang_damping': 1.0, 'body_spring_k': 1.0}),

@@ -1675,7 +1675,9 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             else:
                 P = d[l]
             ax = axs[j]
-
+            # print(id)
+            # print(age)
+            # raise
             ax.plot(age, P, color=c, label=id, linewidth=2, alpha=1.0)
             ax.axvline(t0, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
             ax.axvline(t1, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
@@ -1805,10 +1807,11 @@ def plot_surface(x, y, z, vars, target, z0=None, ax=None, fig=None, title=None, 
 def plot_heatmap(z, heat_kws={}, ax_kws={}, cbar_kws={}, **kwargs):
     base_heat_kws={'annot': True, 'cmap': cm.coolwarm, 'vmin': None, 'vmax': None}
     base_heat_kws.update(heat_kws)
+    base_cbar_kws = {"orientation": "vertical"}
+    base_cbar_kws.update(cbar_kws)
     P = ParPlot(name='heatmap', **kwargs)
     P.build()
-    sns.heatmap(z, ax=P.axs[0], **base_heat_kws,
-                cbar_kws={"orientation": "vertical", **cbar_kws})
+    sns.heatmap(z, ax=P.axs[0], **base_heat_kws, cbar_kws=base_cbar_kws)
     cax = plt.gcf().axes[-1]
     cax.tick_params(length=0)
     P.conf_ax(**ax_kws)

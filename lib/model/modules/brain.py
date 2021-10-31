@@ -18,13 +18,14 @@ class Brain():
         self.olfactory_activation = 0
         self.touch_activation = 0
         self.wind_activation = 0
-        self.crawler, self.turner, self.feeder, self.intermitter, self.olfactor, self.memory,self.toucher, self.touch_memory = [
-                                                                                                                      None] * 8
+        self.crawler, self.turner, self.feeder, self.intermitter, self.olfactor, self.memory,self.toucher, self.touch_memory, self.windsensor = [
+                                                                                                                      None] * 9
 
         dt = self.agent.model.dt
         m = self.modules
         c = self.conf
-        self.windsensor = WindSensor(brain=self, dt=dt, gain_dict={'windsensor': 1.0}, **c['windsensor_params'])
+        if m['windsensor']:
+            self.windsensor = WindSensor(brain=self, dt=dt, gain_dict={'windsensor': 1.0}, **c['windsensor_params'])
         if m['olfactor']:
             self.olfactor = Olfactor(brain=self, dt=dt, **c['olfactor_params'])
 

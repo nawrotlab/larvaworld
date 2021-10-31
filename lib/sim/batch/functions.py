@@ -131,18 +131,12 @@ def null_processing(traj, d=None):
 
 
 def deb_processing(traj, d=None):
-    # dataset.deb_analysis()
     e = d.endpoint_data
-    deb_f_mean = e['deb_f_mean'].mean()
-    traj.f_add_result('deb_f_mean', deb_f_mean, comment='The average mean deb functional response')
-    deb_f_deviation_mean = e['deb_f_deviation_mean'].mean()
-    traj.f_add_result('deb_f_deviation_mean', deb_f_deviation_mean,
-                      comment='The deviation of average mean deb functional response from 1')
-    hunger = e['hunger'].mean()
-    traj.f_add_result('hunger', hunger, comment='The average final hunger')
-    reserve_density = e['reserve_density'].mean()
-    traj.f_add_result('reserve_density', reserve_density, comment='The average final reserve density')
-
+    for p in ['deb_f_mean', 'deb_f_deviation_mean', 'hunger', 'reserve_density'] :
+        try :
+            traj.f_add_result(p, e[p].mean())
+        except :
+            pass
     return d, np.nan
 
 
@@ -265,11 +259,8 @@ def post_processing(traj, result_tuple):
 
 
 def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
-    # print(procfunc)
-    # raise
-    with suppress_stdout(True):
+    with suppress_stdout(False):
         ds = SingleRun(**retrieve_exp_conf(traj), **exp_kws).run()
-        # raise
         if procfunc is None:
             results = np.nan
         else:
@@ -295,6 +286,7 @@ def PI_computation(traj, dataset):
 
 
 def heat_map_generation(traj):
+    # df0 = save_results_df(traj)
     csv_filepath = f'{traj.config.dir_path}/PIs.csv'
     p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
     PIs = [traj.f_get(run).f_get('PI').f_get() for run in traj.f_get_run_names(sort=True)]

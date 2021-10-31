@@ -117,7 +117,7 @@ class LarvaWorldSim(LarvaWorld):
                                    default_color=gConf['default_color'], life_history=gConf['life_history'])
 
     def step(self):
-        t0=[]
+        # t0=[]
         # t0.append(time.time())
         self.sim_clock.tick_clock()
         if not self.larva_collisions:
@@ -146,7 +146,7 @@ class LarvaWorldSim(LarvaWorld):
         self.Nticks += 1
 
         # t0.append(time.time())
-        # print(np.array(np.diff(t0)*1000).astype(int))
+        # print(np.array(np.diff(t0)*100000).astype(int))
 
     def space_to_mm(self, array):
         return array * 1000 / self.scaling_factor
