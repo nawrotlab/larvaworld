@@ -15,15 +15,14 @@ from lib.sim.single.single_run import SingleRun
 from lib.stor.larva_dataset import LarvaDataset
 
 
-def get_Nbest(traj, mutate=True, recombine=True):
-    traj.f_load(index=None, load_parameters=2, load_results=2)
+def get_Nbest(traj, mutate=True, recombine=False):
     N = traj.config.Nbest
-    p_n0s = [traj.f_get(p).v_full_name for p in traj.f_get_explored_parameters()]
-    p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
-    fits = np.array([traj.f_get(run).f_get(traj.config.fit_par).f_get() for run in traj.f_get_run_names(sort=True)])
+    df=traj_df(traj)
+    p_n0s = df.columns[:-1]
+    fits = df[traj.config.fit_par].values
     idx0 = np.argpartition(fits, N)
     idx = idx0[:N] if traj.config.minimize else idx0[-N:]
-    V0s = np.array([[np.round(np.array(v)[i], 2) for v in p_vs] for i in idx]).T
+    V0s = np.round(df[p_n0s].iloc[idx].values, 2)
     if mutate:
         space = []
         for v0s, r in zip(V0s, traj.config.ranges):
@@ -198,9 +197,18 @@ def deb_analysis(traj):
         fig_dict[f'deb_{m}'] = f
     return df, fig_dict
 
+def traj_df(traj):
+    dics=[]
+    for idx in traj.f_iter_runs(yields='idx'):
+        dic={'idx' : idx, **traj.f_get_explored_parameters(fast_access=True), **traj.runs[idx].f_to_dict(short_names=True, fast_access=True)}
+        dics.append(dic)
+    df=pd.DataFrame.from_records(dics, index='idx')
+    return df
+
+
 
 def post_processing(traj, result_tuple):
-    traj.f_load(index=None, load_parameters=0, load_results=2)
+    traj.f_load(index=None, load_parameters=2, load_results=2)
     def threshold_reached(traj):
         fits = list(traj.f_get_from_runs(traj.config.fit_par, use_indices=True, fast_access=True).values())
         if traj.config.minimize:
@@ -212,8 +220,7 @@ def post_processing(traj, result_tuple):
     elif threshold_reached(traj):
         print(f'Best result reached threshold. Halting search')
     else:
-        space = get_Nbest(traj)
-        traj.f_expand(space)
+        traj.f_expand(get_Nbest(traj))
     traj.f_store()
 
 
