@@ -2,24 +2,12 @@ import numpy as np
 import pandas as pd
 from pypet import cartesian_product, load_trajectory
 
-import lib.aux.dictsNlists
+from lib.aux.dictsNlists import flatten_list, reconstruct_dict
 from lib.conf.base import paths
 
 
-def load_exp_conf(traj, exp):
-    for k0 in ['env_params', 'sim_params', 'trials', 'enrichment', 'larva_groups']:
-        dic = lib.aux.dictsNlists.flatten_dict(exp[k0], parent_key=k0, sep='.')
-        for k, v in dic.items():
-            if type(v) == list :
-                if len(v)==0:
-                    v=None
-                elif type(v[0]) == list:
-                    v = np.array(v)
-            traj.f_apar(k, v)
-    return traj
 
 def retrieve_exp_conf(traj):
-    from lib.aux.dictsNlists import reconstruct_dict
     d={}
     for k0 in ['env_params', 'sim_params', 'trials', 'larva_groups']:
         kws={'sim_ID':f'run_{traj.v_idx}', 'path':traj.config.dataset_path,'store_data':False} if k0=='sim_params' else {}
@@ -29,32 +17,6 @@ def retrieve_exp_conf(traj):
         except:
             d[k0]={}
     return d
-
-
-def config_traj(traj, optimization, batch_methods):
-    if optimization is not None:
-        opt_dict = lib.aux.dictsNlists.flatten_dict(optimization, parent_key='optimization', sep='.')
-        for k, v in opt_dict.items():
-            traj.f_aconf(k, v)
-    if batch_methods is not None:
-        opt_dict = lib.aux.dictsNlists.flatten_dict(batch_methods, parent_key='batch_methods', sep='.')
-        for k, v in opt_dict.items():
-            traj.f_aconf(k, v)
-    return traj
-
-
-def prepare_traj(traj, exp, params, batch_id, dir_path):
-    traj = load_exp_conf(traj, exp)
-    if params is not None:
-        for p in params:
-            traj.f_apar(p, 0.0)
-
-    traj.f_aconf('dir_path', dir_path, comment='Directory for saving data')
-
-    traj.f_aconf('plot_path', f'{dir_path}/{batch_id}.pdf', comment='File for saving plot')
-    traj.f_aconf('data_path', f'{dir_path}/{batch_id}.csv', comment='File for saving data')
-    traj.f_aconf('dataset_path', f'{dir_path}/datasets', comment='Directory for saving datasets')
-    return traj
 
 def grid_search_dict(space_dict):
     dic={}
@@ -68,29 +30,6 @@ def grid_search_dict(space_dict):
                 vs = vs.astype(int)
             dic[p] = vs.tolist()
     return cartesian_product(dic)
-
-# def grid_search_dict2(pars, ranges, Ngrid, values=None):
-#     if values is not None:
-#         dic = dict(zip(pars, values))
-#     else:
-#         Npars, Nsteps = len(pars), len(Ngrid)
-#         if any([type(s) != int for s in Ngrid]):
-#             raise ValueError('Parameter space steps are not integers')
-#         if Npars != Nsteps:
-#             if Nsteps == 1:
-#                 Ngrid = [Ngrid[0]] * Npars
-#                 print('Using the same step for all parameters')
-#             else:
-#                 raise ValueError('Number of parameter space steps does not match number of parameters and is not one')
-#         if np.isnan(ranges).any():
-#             raise ValueError('Ranges of parameters not provided')
-#         dic = {}
-#         for p, (r0, r1), s in zip(pars, ranges, Ngrid):
-#             vs = np.linspace(r0, r1, s)
-#             if type(r0) == int and type(r1) == int:
-#                 vs = vs.astype(int)
-#             dic[p]=vs.tolist()
-#     return cartesian_product(dic)
 
 
 def get_space_from_file(space_filepath=None, params=None, space_pd=None, returned_params=None, flag=None,
@@ -118,7 +57,7 @@ def get_space_from_file(space_filepath=None, params=None, space_pd=None, returne
         for p, vs in zip(additional_params, additional_values):
             Nspace = len(values[0])
             Nv = len(vs)
-            values = [a * Nv for a in values] + lib.aux.dictsNlists.flatten_list([[v] * Nspace for v in vs])
+            values = [a * Nv for a in values] + flatten_list([[v] * Nspace for v in vs])
             returned_params += [p]
 
     space = dict(zip(returned_params, values))

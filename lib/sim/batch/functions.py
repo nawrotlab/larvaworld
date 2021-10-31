@@ -10,46 +10,23 @@ from lib.aux.dictsNlists import reconstruct_dict
 import lib.aux.sim_aux
 from lib.anal.plotting import plot_2d, plot_3pars, plot_endpoint_scatter, plot_endpoint_params, plot_debs, \
     plot_heatmap_PI
-from lib.sim.batch.aux import grid_search_dict, load_traj, retrieve_exp_conf
+from lib.sim.batch.aux import load_traj, retrieve_exp_conf
 from lib.sim.single.single_run import SingleRun
 from lib.stor.larva_dataset import LarvaDataset
 
 
-def prepare_batch(batch, **kwargs):
-    # print(batch.keys())
-    space = grid_search_dict(batch['space_search'])
-    if batch['optimization'] is not None:
-        batch['optimization']['ranges'] = np.array(
-            [batch['space_search'][k]['range'] for k in batch['space_search'].keys() if 'range' in batch['space_search'][k].keys()])
-    prepared_batch = {
-        'batch_type': batch['batch_type'],
-        'batch_id': batch['batch_id'],
-        'exp': batch['exp'],
-        'space': space,
-        'batch_methods': batch['batch_methods'],
-        **batch_methods(**batch['batch_methods']),
-        'optimization': batch['optimization'],
-        'exp_kws': batch['exp_kws'],
-        'post_kws': {},
-        'proc_kws': batch['proc_kws'],
-        **kwargs
-    }
-    # print(batch['batch_type'])
-    # raise
-    return prepared_batch
-
-
-def get_Nbest(traj, fit_par, ranges, Nbest=20, minimize=True, mutate=True, recombine=True):
+def get_Nbest(traj, mutate=True, recombine=True):
     traj.f_load(index=None, load_parameters=2, load_results=2)
+    N = traj.config.Nbest
     p_n0s = [traj.f_get(p).v_full_name for p in traj.f_get_explored_parameters()]
     p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
-    fits = np.array([traj.f_get(run).f_get(fit_par).f_get() for run in traj.f_get_run_names(sort=True)])
-    idx0 = np.argpartition(fits, Nbest)
-    idx = idx0[:Nbest] if minimize else idx0[-Nbest:]
+    fits = np.array([traj.f_get(run).f_get(traj.config.fit_par).f_get() for run in traj.f_get_run_names(sort=True)])
+    idx0 = np.argpartition(fits, N)
+    idx = idx0[:N] if traj.config.minimize else idx0[-N:]
     V0s = np.array([[np.round(np.array(v)[i], 2) for v in p_vs] for i in idx]).T
     if mutate:
         space = []
-        for v0s, r in zip(V0s, ranges):
+        for v0s, r in zip(V0s, traj.config.ranges):
             vs = [lib.aux.sim_aux.mutate_value(v0, r, scale=0.1) for v0 in v0s]
             if recombine:
                 random.shuffle(vs)
@@ -93,7 +70,7 @@ def save_results_df(traj):
     try:
         for p in df.columns.values[:-1]:
             print(p, df[p].corr(df[traj.config.fit_par]))
-    except :
+    except:
         pass
     return df
 
@@ -132,10 +109,10 @@ def null_processing(traj, d=None):
 
 def deb_processing(traj, d=None):
     e = d.endpoint_data
-    for p in ['deb_f_mean', 'deb_f_deviation_mean', 'hunger', 'reserve_density'] :
-        try :
+    for p in ['deb_f_mean', 'deb_f_deviation_mean', 'hunger', 'reserve_density']:
+        try:
             traj.f_add_result(p, e[p].mean())
-        except :
+        except:
             pass
     return d, np.nan
 
@@ -164,9 +141,9 @@ def plot_results(traj, df):
 
 def null_final_processing(traj):
     df = save_results_df(traj)
-    try :
+    try:
         plots = plot_results(traj, df)
-    except :
+    except:
         pass
     return df, plots
 
@@ -223,38 +200,20 @@ def deb_analysis(traj):
 
 
 def post_processing(traj, result_tuple):
-    fit_par, minimize, thr, max_Nsims, Nbest, ranges = traj.config.fit_par, traj.config.minimize, traj.config.threshold, traj.config.max_Nsims, traj.config.Nbest, traj.config.ranges
-    traj.f_load(index=None, load_parameters=2, load_results=2)
-    runs = traj.f_get_run_names()
-    Nruns = len(runs)
-    fits = [traj.res.runs.f_get(run).f_get(fit_par).f_get() for run in runs]
-
-    if minimize:
-        best = np.nanmin(fits)
-        best_idx = np.nanargmin(fits)
-        thr_reached = best <= thr
-    else:
-        best = np.nanmax(fits)
-        best_idx = np.nanargmax(fits)
-        thr_reached = best >= thr
-    best_run = runs[best_idx]
-    print(f'Best result out of {Nruns} runs : {best} in run {best_run}')
-    maxNreached = Nruns >= max_Nsims
-    if not thr_reached and not maxNreached:
-        space = get_Nbest(traj, ranges=ranges, fit_par=fit_par, Nbest=Nbest, minimize=minimize, mutate=True)
-        traj.f_expand(space)
-        print(f'Continuing expansion with another {Nbest} configurations')
-    else:
-        p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
-        p_ns = [traj.f_get(p).v_name for p in traj.f_get_explored_parameters()]
-        best_config = {}
-        for l, p in zip(p_vs, p_ns):
-            best_config.update({p: l[best_idx]})
-        if maxNreached:
-            print(f'Maximum number of simulations reached. Halting search')
+    traj.f_load(index=None, load_parameters=0, load_results=2)
+    def threshold_reached(traj):
+        fits = list(traj.f_get_from_runs(traj.config.fit_par, use_indices=True, fast_access=True).values())
+        if traj.config.minimize:
+            return np.nanmin(fits) <= traj.config.threshold
         else:
-            print(f'Best result reached threshold. Halting search')
-        print(f'Best configuration is {best_config} with result {best}')
+            return np.nanmax(fits) >= traj.config.threshold
+    if len(traj) >= traj.config.max_Nsims:
+        print(f'Maximum number of simulations reached. Halting search')
+    elif threshold_reached(traj):
+        print(f'Best result reached threshold. Halting search')
+    else:
+        space = get_Nbest(traj)
+        traj.f_expand(space)
     traj.f_store()
 
 
@@ -322,7 +281,7 @@ finfunc_dict = {
 }
 
 
-def batch_methods(run='default', post='default', final='null'):
+def batch_method_unpack(run='default', post='default', final='null'):
     return {'procfunc': procfunc_dict[run],
             'postfunc': postfunc_dict[post],
             'finfunc': finfunc_dict[final], }

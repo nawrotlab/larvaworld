@@ -922,7 +922,7 @@ def getPar(k=None, p=None, d=None, to_return=['d', 'l'], PF=None):
 
 if __name__ == '__main__':
     # o, d = nam.bearing2('n'), nam.dst2('n')
-    fo = getPar('fo', to_return=['d'])[0]
+    fo = getPar('fo', to_return=['s'])[0]
     print(fo)
     # d=ParDict(mode='build').dict
     # pars=getPar('on_food_tr', to_return=['p','d'])

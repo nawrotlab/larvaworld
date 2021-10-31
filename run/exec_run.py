@@ -10,7 +10,8 @@ from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results
 from lib.conf.base import paths
 import lib.aux.dictsNlists
-from lib.sim.batch.batch import batch_run
+
+
 
 class Exec:
     def __init__(self, mode, conf, run_externally=True, progressbar=None, w_progressbar=None, **kwargs):
@@ -70,15 +71,20 @@ class Exec:
 
     def exec_run(self):
         from lib.sim.single.single_run import SingleRun
-        from lib.sim.batch.batch import batch_run
-        from lib.sim.batch.functions import prepare_batch
+        from lib.sim.batch.batch import BatchRun
+        # from lib.sim.batch.batch import batch_run
+        # from lib.sim.batch.functions import prepare_batch
         if self.mode == 'sim':
             self.process = SingleRun(**self.conf, progress_bar=self.w_progressbar)
             res = self.process.run()
         elif self.mode == 'batch':
             self.process = None
-            batch_kwargs = prepare_batch(self.conf)
-            res = batch_run(**batch_kwargs)
+            # batch_kwargs = prepare_batch(self.conf)
+            # res = batch_run(**batch_kwargs)
+
+            k = BatchRun(**self.conf)
+            res=k.run()
+
         return res
 
 
