@@ -131,7 +131,7 @@ class BatchRun:
         return env
 
     def run(self):
-        # print([self.env.traj.f_get(p).v_name for p in self.env.traj.f_get_explored_parameters()])
+        # print(self.env.traj.config.ranges)
         # raise
         self.env.run(**self.run_kws)
         self.env.disable_logging()

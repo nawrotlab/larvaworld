@@ -22,11 +22,11 @@ def get_Nbest(traj, mutate=True, recombine=False):
     fits = df[traj.config.fit_par].values
     idx0 = np.argpartition(fits, N)
     idx = idx0[:N] if traj.config.minimize else idx0[-N:]
-    V0s = np.round(df[p_n0s].iloc[idx].values, 2)
+    V0s = df[p_n0s].iloc[idx].values.T
     if mutate:
         space = []
         for v0s, r in zip(V0s, traj.config.ranges):
-            vs = [lib.aux.sim_aux.mutate_value(v0, r, scale=0.1) for v0 in v0s]
+            vs = lib.aux.sim_aux.mutate_value(v0s, r, scale=0.01)
             if recombine:
                 random.shuffle(vs)
             space.append(vs)
