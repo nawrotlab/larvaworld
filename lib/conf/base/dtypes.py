@@ -755,7 +755,7 @@ def init_pars():
 
     d['Border'] = {
         'default_color': {'t': str, 'v': 'black', 'disp': 'color', 'h': 'The default color of the border.'},
-        'width': {'v': 0.01, 'min': 0.0, 'h': 'The width of the border.'},
+        'width': {'v': 0.001, 'min': 0.0, 'h': 'The width of the border.'},
         'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0, 'h': 'The XY coordinates of the consecutive border segments.'},
     }
 

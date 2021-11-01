@@ -32,8 +32,7 @@ class LarvaWorldSim(LarvaWorld):
         self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
         if self.env_pars['odorscape'] is not None:
             self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars['odorscape'])
-        if self.env_pars['windscape'] is not None:
-            self.windscape = WindScape(model=self, **self.env_pars['windscape'])
+
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
         self.create_collectors(output)

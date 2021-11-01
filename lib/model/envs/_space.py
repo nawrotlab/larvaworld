@@ -213,7 +213,7 @@ class DiffusionValueLayer(ValueLayer):
 
 class WindScape:
     def __init__(self, model, wind_direction, wind_speed, default_color='red', visible=False):
-        from lib.aux.ang_aux import rotate_around_center_multi
+
         self.model = model
         self.wind_direction = wind_direction
         self.wind_speed = wind_speed
@@ -222,10 +222,11 @@ class WindScape:
         self.visible=visible
 
         self.N = 40
-        ds = self.max_dim / self.N * np.sqrt(2)
-        p0s = rotate_around_center_multi([(-self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
-        p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
-        self.scapelines=[(p0,p1) for p0,p1 in zip(p0s,p1s)]
+
+        self.scapelines=self.generate_scapelines(self.max_dim, self.N, self.wind_direction)
+        # p0s = rotate_around_center_multi([(-self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
+        # p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
+        # self.scapelines=[(p0,p1) for p0,p1 in zip(p0s,p1s)]
 
     def get_value(self, agent):
         if self.obstructed(agent.pos):
@@ -246,4 +247,15 @@ class WindScape:
             ps=[l.intersection(b) for b in self.model.border_lines if l.intersects(b)]
             if len(ps)!=0 :
                 p1=ps[np.argmin([Point(p0).distance(p2) for p2 in ps])].coords[0]
-            viewer.draw_arrow(p0, p1, self.default_color, width=0.001)
+            viewer.draw_arrow(p0, p1, self.default_color, width=0.0001*self.wind_speed)
+
+    def generate_scapelines(self,D,N, A):
+        from lib.aux.ang_aux import rotate_around_center_multi
+        ds = self.max_dim / N * np.sqrt(2)
+        p0s = rotate_around_center_multi([(-D, (i - N / 2) * ds) for i in range(N)],-A)
+        p1s = rotate_around_center_multi([(D, (i - N / 2) * ds) for i in range(N)],-A)
+        return [(p0, p1) for p0, p1 in zip(p0s, p1s)]
+
+    def set_wind_direction(self, A):
+        self.wind_direction=A
+        self.scapelines = self.generate_scapelines(self.max_dim, self.N, self.wind_direction)

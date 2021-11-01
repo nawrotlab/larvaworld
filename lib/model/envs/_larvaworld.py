@@ -22,7 +22,7 @@ from lib.conf.base.dtypes import null_dict
 from lib.model.agents._larva_sim import LarvaSim
 from lib.conf.base import paths
 from lib.aux.collecting import NamedRandomActivation
-from lib.model.envs._space import FoodGrid
+from lib.model.envs._space import FoodGrid, WindScape
 import lib.anal.rendering as ren
 import lib.aux.colsNstr as fun
 from lib.model.envs._maze import Border
@@ -45,6 +45,8 @@ class LarvaWorld:
                  background_motion=None, Box2D=False, use_background=False, traj_color=None, allow_clicks=True,
                  experiment=None, progress_bar=None, larva_groups={}, configuration_text=None):
         self.configuration_text = configuration_text
+        if progress_bar is None :
+            progress_bar= progressbar.ProgressBar(max_value=Nsteps)
         self.progress_bar = progress_bar
         self.Box2D = Box2D
         if vis_kwargs is None:
@@ -100,14 +102,16 @@ class LarvaWorld:
         self.odorscape_counter = 0
         self.Nodors, self.odor_layers = 0, {}
         self.food_grid = None
-        self.windscape = None
+
 
         # Add mesa schedule to use datacollector class
         self.create_schedules()
         self.create_arena(**self.env_pars['arena'])
         self.space = self.create_space()
         for id, pars in self.env_pars['border_list'].items():
+            print(id)
             b = Border(model=self, unique_id=id, **pars)
+
             self.add_border(b)
 
         self.sim_clock = ren.SimulationClock(self.dt, color=self.scale_clock_color)
@@ -120,6 +124,11 @@ class LarvaWorld:
         self.configuration_box = ren.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),color_active=pygame.Color('white'),
                                       center=True, w=220 * 4, h=200 * 4, font=pygame.font.SysFont("comicsansms", 25))
         self.end_condition_met = False
+
+        if self.env_pars['windscape'] is not None:
+            self.windscape = WindScape(model=self, **self.env_pars['windscape'])
+        else :
+            self.windscape = None
 
     def toggle(self, name, value=None, show=False, minus=False, plus=False, disp=None):
         if disp is None:
@@ -479,18 +488,19 @@ class LarvaWorld:
 
     def step(self):
         # Overriden by subclasses
-        pass
+        self.Nticks += 1
+        # Tick sim_clock
+        self.sim_clock.tick_clock()
 
     def run(self):
         mode = self.vis_kwargs['render']['mode']
         img_mode = self.vis_kwargs['render']['image_mode']
         self.is_running = True
         warnings.filterwarnings('ignore')
-        bar = self.progress_bar if self.progress_bar is not None else progressbar.ProgressBar(max_value=self.Nsteps)
         while self.is_running and self.Nticks < self.Nsteps and not self.end_condition_met:
             if not self.is_paused:
                 self.step()
-                bar.update(self.Nticks)
+                self.progress_bar.update(self.Nticks)
 
             if mode == 'video':
                 if img_mode != 'snapshots' or self.snapshot_tick:
