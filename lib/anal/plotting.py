@@ -1675,9 +1675,6 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             else:
                 P = d[l]
             ax = axs[j]
-            # print(id)
-            # print(age)
-            # raise
             ax.plot(age, P, color=c, label=id, linewidth=2, alpha=1.0)
             ax.axvline(t0, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
             ax.axvline(t1, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)

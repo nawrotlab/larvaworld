@@ -82,7 +82,11 @@ def get_logNpow(x, xmax, xmid, overlap=0, discrete=False):
     return m, s, a, r
 
 
-def get_powerlaw_alpha(dur, dur0, dur1, discrete=False):
+def get_powerlaw_alpha(dur, dur0=None, dur1=None, discrete=False):
+    if dur0 is None :
+        dur0=np.min(dur)
+    if dur1 is None :
+        dur1=np.max(dur)
     with suppress_stdout_stderr():
         from powerlaw import Fit
         return Fit(dur, xmin=dur0, xmax=dur1, discrete=discrete).power_law.alpha
@@ -92,6 +96,10 @@ def get_lognormal(dur):
     d = np.log(dur)
     return np.mean(d), np.std(d)
 
+def get_exp_beta(x, xmin=None) :
+    if xmin is None :
+        xmin=np.min(x)
+    return len(x) / np.sum(x - xmin)
 
 def compute_density(x, xmin, xmax, Nbins=64):
     log_range = np.linspace(np.log2(xmin), np.log2(xmax), Nbins)
@@ -192,7 +200,8 @@ def fit_bout_distros(x0, xmin, xmax, discrete=False, xmid=np.nan, overlap=0.0, N
         p_cdf = 1 - powerlaw_cdf(u2, xmin, a)
         p_pdf = powerlaw_pdf(du2, xmin, a)
 
-        b = len(x) / np.sum(x - xmin)
+        b = get_exp_beta(x, xmin)
+        # b = len(x) / np.sum(x - xmin)
         e_cdf = 1 - exponential_cdf(u2, xmin, b)
         e_pdf = exponential_pdf(du2, xmin, b)
 
@@ -403,6 +412,39 @@ def fit2d_predict(coeff, ranges,  Ngrid=100, target=None,vars=None,  show=True):
         z0 = predict.reshape(yy0.shape)
         fig3 = plot_surface(yy0, yy1, z0, vars=vars, target=target, show=show)
 
+def critical_bout(c=0.9, sigma=1, N=1000, tmax=1100, tmin=1) :
+    t = 0
+    S = 1
+    S_prev = 0
+    while S > 0:
+        p = (sigma * S - c * (S - S_prev)) / N
+        p = np.clip(p, 0, 1)
+        S_prev = S
+        S = np.random.binomial(N, p)
+        t += 1
+        if t > tmax:
+            t = 0
+            S = 1
+            S_prev = 0
+        if S<=0 and t<tmin :
+            t = 0
+            S = 1
+            S_prev = 0
+    return t
+
+def exp_bout(beta=0.01, tmax=1100, tmin=1) :
+    t = 0
+    S = 0
+    while S <= 0:
+        S = int(np.random.rand() < beta)
+        t += 1
+        if t > tmax:
+            t = 0
+            S = 0
+        if S>0 and t<tmin :
+            t = 0
+            S = 0
+    return t
 
 class BoutGenerator:
     def __init__(self, name, range, dt, **kwargs):
@@ -442,3 +484,4 @@ class BoutGenerator:
     def get(self, x, mode):
         func = self.ddfs[self.name][mode]
         return func(x=x, **self.args)
+

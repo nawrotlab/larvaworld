@@ -64,8 +64,7 @@ class BatchRun:
         self.batch_methods = batch_methods
 
         if optimization is not None:
-            optimization['ranges'] = np.array(
-                [space_search[k]['range'] for k in space_search.keys() if 'range' in space_search[k].keys()])
+            optimization['ranges'] = np.array([space_search[k]['range'] for k in space_search.keys() if 'range' in space_search[k].keys()])
         self.space = grid_search_dict(space_search)
         self.optimization = optimization
         self.exp = exp
@@ -131,8 +130,6 @@ class BatchRun:
         return env
 
     def run(self):
-        # print(self.env.traj.config.ranges)
-        # raise
         self.env.run(**self.run_kws)
         self.env.disable_logging()
         print('Batch run complete')

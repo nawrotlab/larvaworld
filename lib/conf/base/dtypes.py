@@ -109,7 +109,7 @@ def init_vis():
         'mode': {'t': str, 'v': None, 'vs': [None, 'video', 'image'], 'h': 'The visualization mode', 's': 'm'},
         'image_mode': {'t': str, 'vs': [None, 'final', 'snapshots', 'overlap'], 'h': 'The image-render mode',
                        's': 'im'},
-        'video_speed': {'t': int, 'v': 60, 'min': 1, 'max': 100, 'h': 'The video speed', 's': 'vid'},
+        'video_speed': {'t': int, 'v': 60, 'min': 1, 'max': 100, 'h': 'The video speed', 's': 'fps'},
         'media_name': {'t': str, 'h': 'Filename for the saved video/image', 's': 'media'},
         'show_display': {'t': bool, 'v': True, 'h': 'Hide display', 's': 'hide'},
     }

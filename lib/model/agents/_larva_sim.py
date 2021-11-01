@@ -191,6 +191,8 @@ class LarvaSim(BodySim, Larva):
         inter = self.brain.intermitter
         if inter is not None:
             s, f, p = inter.active_bouts
+            # print()
+            # print(s,f,p)
             d['stride_id'] = s is not None
             d['feed_id'] = f is not None
             d['pause_id'] = p is not None

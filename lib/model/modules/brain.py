@@ -4,7 +4,7 @@ import numpy as np
 from lib.model.modules.basic import Oscillator_coupling
 from lib.model.modules.crawler import Crawler
 from lib.model.modules.feeder import Feeder
-from lib.model.modules.intermitter import Intermitter
+from lib.model.modules.intermitter import Intermitter, BranchIntermitter
 from lib.model.modules.memory import RLOlfMemory, RLTouchMemory
 from lib.model.modules.sensor import Olfactor, Toucher, WindSensor
 from lib.model.modules.turner import Turner
@@ -76,6 +76,7 @@ class DefaultBrain(Brain):
         self.coupling = Oscillator_coupling(brain=self, **c['interference_params']) if m[
             'interference'] else Oscillator_coupling(brain=self)
         if m['intermitter']:
+            # self.intermitter = BranchIntermitter(brain=self, dt=dt, **c['intermitter_params'])
             self.intermitter = Intermitter(brain=self, dt=dt, **c['intermitter_params'])
         # if m['olfactor']:
         #     self.olfactor = Olfactor(brain=self, dt=dt, **c['olfactor_params'])

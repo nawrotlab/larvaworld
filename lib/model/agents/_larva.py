@@ -20,6 +20,7 @@ class Larva(LarvaworldAgent):
             #     color=np.array([0, 255, 0])
             if behavior_dict['stride_id']:
                 color = np.array([0, 150, 0])
+
             elif behavior_dict['pause_id']:
                 color = np.array([255, 0, 0])
             elif behavior_dict['feed_id']:

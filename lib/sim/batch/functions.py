@@ -29,6 +29,7 @@ def get_Nbest(traj, mutate=True, recombine=False):
             vs = lib.aux.sim_aux.mutate_value(v0s, r, scale=0.01)
             if recombine:
                 random.shuffle(vs)
+            vs=[float(v) for v in vs]
             space.append(vs)
     else:
         space = list(V0s)

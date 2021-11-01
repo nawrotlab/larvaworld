@@ -17,7 +17,7 @@ def LvsRtoggle(side):
 
 def mutate_value(v, range, scale=0.01):
     r0, r1 = range
-    return np.clip(np.random.normal(loc=v, scale=scale * np.abs(r1 - r0)), a_min=r0, a_max=r1)
+    return np.clip(np.random.normal(loc=v, scale=scale * np.abs(r1 - r0)), a_min=r0, a_max=r1).astype(float)
 
 
 def circle_to_polygon(sides, radius, rotation=0, translation=None):

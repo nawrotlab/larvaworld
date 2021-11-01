@@ -26,6 +26,8 @@ def grid_search_dict(space_dict):
         else :
             r0,r1=args['range']
             vs = np.linspace(r0, r1, args['Ngrid'])
+            # print(type(r0), type(vs[0]))
+            # raise
             if type(r0) == int and type(r1) == int:
                 vs = vs.astype(int)
             dic[p] = vs.tolist()
