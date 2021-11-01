@@ -242,12 +242,13 @@ class WindScape:
         return any([l.intersects(ll) for l in self.model.border_lines])
 
     def draw(self, viewer):
-        for p0, p1 in self.scapelines :
-            l=LineString([p0, p1])
-            ps=[l.intersection(b) for b in self.model.border_lines if l.intersects(b)]
-            if len(ps)!=0 :
-                p1=ps[np.argmin([Point(p0).distance(p2) for p2 in ps])].coords[0]
-            viewer.draw_arrow(p0, p1, self.default_color, width=0.0001*self.wind_speed)
+        if self.wind_speed>0 :
+            for p0, p1 in self.scapelines :
+                l=LineString([p0, p1])
+                ps=[l.intersection(b) for b in self.model.border_lines if l.intersects(b)]
+                if len(ps)!=0 :
+                    p1=ps[np.argmin([Point(p0).distance(p2) for p2 in ps])].coords[0]
+                viewer.draw_arrow_line(p0, p1, self.default_color, width=0.0001*self.wind_speed)
 
     def generate_scapelines(self,D,N, A):
         from lib.aux.ang_aux import rotate_around_center_multi

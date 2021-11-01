@@ -2,11 +2,11 @@ import numpy as np
 from lib.conf.base.dtypes import null_dict
 from lib.model.envs._larvaworld import LarvaWorld
 
-test_direction=True
+test_direction=False
 test_speed=True
 # test_mode='direction'
 
-N=10
+N=1000
 windscape=null_dict('windscape', wind_direction=0.0, wind_speed=10.0)
 env_params=null_dict('env_conf', windscape=windscape, border_list={'Border' : null_dict('Border', points=[(-0.03,0.02), (0.03,0.02)])})
 env=LarvaWorld(env_params=env_params, Nsteps=N, vis_kwargs=null_dict('visualization', mode='video', video_speed=1, media_name='windscape'))

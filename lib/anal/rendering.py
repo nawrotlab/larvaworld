@@ -131,21 +131,28 @@ class Viewer(object):
     def draw_text_box(self, text_font, text_position):
         self._window.blit(text_font, text_position)
 
-    def draw_arrow(self, start, end, color=(0, 0, 0), width=.01, s=10, loc=0.5):
-        start = self._transform(start)
-        end = self._transform(end)
-        p=(start[0]+(end[0]-start[0])*loc, start[1]+(end[1]-start[1])*loc)
+    def draw_arrow(self, color, pos, a0, s=10):
+        a=a0+np.pi/2
+        sin0, cos0 = math.sin(a) * s, math.cos(a) * s
+        sin1, cos1 = math.sin(a - np.pi * 2 / 3) * s, math.cos(a - np.pi * 2 / 3) * s
+        sin2, cos2 = math.sin(a + np.pi * 2 / 3) * s, math.cos(a + np.pi * 2 / 3) * s
+        p0 = (pos[0] + sin0, pos[1] + cos0)
+        p1 = (pos[0] + sin1, pos[1] + cos1)
+        p2 = (pos[0] + sin2, pos[1] + cos2)
+        print(p0,p1,p2)
+        pygame.draw.polygon(self._window, color, (p0, p1, p2))
+
+    def draw_arrow_line(self, start, end, color=(0, 0, 0), width=.01, dl=0.02):
+        a0 = math.atan2(end[1] - start[1], end[0] - start[0])
+        l0 = np.sqrt((end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2)
         w = int(self._scale[0, 0] * width)
-        pygame.draw.line(self._window, color, start, end, w)
-        a = math.degrees(math.atan2(start[1] - end[1], end[0] - start[0])) + 90
-        sin0, cos0 = math.sin(math.radians(a)) * s, math.cos(math.radians(a)) * s
-        sin1, cos1 = math.sin(math.radians(a - 120)) * s, math.cos(math.radians(a - 120)) * s
-        sin2, cos2 = math.sin(math.radians(a + 120)) * s, math.cos(math.radians(a + 120)) * s
-        pygame.draw.polygon(self._window, color, (
-            (p[0] + sin0, p[1] + cos0),
-            (p[0] + sin1, p[1] + cos1),
-            (p[0] + sin2, p[1] + cos2)
-        ))
+        pygame.draw.line(self._window, color, self._transform(start), self._transform(end), w)
+        print(self._transform(start), self._transform(end))
+        l = 0
+        while l < l0:
+            pos = (start[0] + math.cos(a0) * l, start[1] + math.sin(a0) * l)
+            self.draw_arrow(color, self._transform(pos), a0)
+            l += dl
 
     # def get_array(self):
     #     return pygame.surfarray.array3d(self._window)
