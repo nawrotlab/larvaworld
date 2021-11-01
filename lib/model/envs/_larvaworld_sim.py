@@ -124,6 +124,8 @@ class LarvaWorldSim(LarvaWorld):
         # Update value_layers
         for id, layer in self.odor_layers.items():
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
+        if self.windscape is not None :
+            self.windscape.update()
         # t0.append(time.time())
         for l in self.get_flies():
             l.compute_next_action()

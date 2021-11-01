@@ -217,16 +217,17 @@ class WindScape:
         self.model = model
         self.wind_direction = wind_direction
         self.wind_speed = wind_speed
-        self.max_dim=np.max(self.model.arena_dims)
-        self.default_color=default_color
-        self.visible=visible
+        self.max_dim = np.max(self.model.arena_dims)
+        self.default_color = default_color
+        self.visible = visible
 
         self.N = 40
-
-        self.scapelines=self.generate_scapelines(self.max_dim, self.N, self.wind_direction)
+        self.draw_phi = 0
+        self.scapelines = self.generate_scapelines(self.max_dim, self.N, self.wind_direction)
         # p0s = rotate_around_center_multi([(-self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
         # p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
         # self.scapelines=[(p0,p1) for p0,p1 in zip(p0s,p1s)]
+        self.events = {}
 
     def get_value(self, agent):
         if self.obstructed(agent.pos):
@@ -242,21 +243,41 @@ class WindScape:
         return any([l.intersects(ll) for l in self.model.border_lines])
 
     def draw(self, viewer):
-        if self.wind_speed>0 :
-            for p0, p1 in self.scapelines :
-                l=LineString([p0, p1])
-                ps=[l.intersection(b) for b in self.model.border_lines if l.intersects(b)]
-                if len(ps)!=0 :
-                    p1=ps[np.argmin([Point(p0).distance(p2) for p2 in ps])].coords[0]
-                viewer.draw_arrow_line(p0, p1, self.default_color, width=0.0001*self.wind_speed)
+        if self.wind_speed > 0:
+            for p0, p1 in self.scapelines:
+                l = LineString([p0, p1])
+                ps = [l.intersection(b) for b in self.model.border_lines if l.intersects(b)]
+                if len(ps) != 0:
+                    p1 = ps[np.argmin([Point(p0).distance(p2) for p2 in ps])].coords[0]
+                # k=100/self.wind_speed
+                viewer.draw_arrow_line(p0, p1, self.default_color, width=0.001,
+                                       phi=(self.draw_phi % 1000) / 1000)
+        self.draw_phi += self.wind_speed
+        # viewer.draw_arrow_line(p0, p1, self.default_color, width=0.0001*self.wind_speed)
 
-    def generate_scapelines(self,D,N, A):
+    def generate_scapelines(self, D, N, A):
         from lib.aux.ang_aux import rotate_around_center_multi
         ds = self.max_dim / N * np.sqrt(2)
-        p0s = rotate_around_center_multi([(-D, (i - N / 2) * ds) for i in range(N)],-A)
-        p1s = rotate_around_center_multi([(D, (i - N / 2) * ds) for i in range(N)],-A)
+        p0s = rotate_around_center_multi([(-D, (i - N / 2) * ds) for i in range(N)], -A)
+        p1s = rotate_around_center_multi([(D, (i - N / 2) * ds) for i in range(N)], -A)
         return [(p0, p1) for p0, p1 in zip(p0s, p1s)]
 
     def set_wind_direction(self, A):
-        self.wind_direction=A
+        self.wind_direction = A
         self.scapelines = self.generate_scapelines(self.max_dim, self.N, self.wind_direction)
+
+    def add_puff(self, duration, speed, direction=None, start_time=None):
+        Nticks = int(duration / self.model.dt)
+        if start_time is None:
+            start = self.model.Nticks
+        else:
+            start = int(start_time / self.model.dt)
+        self.events[start] = {'wind_speed': speed, 'wind_direction': direction}
+        self.events[start + Nticks] = {'wind_speed': self.wind_speed, 'wind_direction': self.wind_direction}
+
+    def update(self):
+        for t, args in self.events.items():
+            if self.model.Nticks == t:
+                if args['wind_direction'] is not None and args['wind_direction'] != self.wind_direction:
+                    self.set_wind_direction(args['wind_direction'])
+                self.wind_speed = args['wind_speed']

@@ -491,6 +491,8 @@ class LarvaWorld:
         self.Nticks += 1
         # Tick sim_clock
         self.sim_clock.tick_clock()
+        if self.windscape is not None :
+            self.windscape.update()
 
     def run(self):
         mode = self.vis_kwargs['render']['mode']
