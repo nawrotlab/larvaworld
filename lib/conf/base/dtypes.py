@@ -671,6 +671,7 @@ def init_pars():
                      'collections': {'t': List[str], 'v': ['pose']},
                      'enrichment': d['enrichment'],
                      'experiment': {'t': str, 'vs': kConfDict('Exp')},
+
                      }
     d['batch_setup'] = {
         'batch_id': {'t': str, 'h': 'The id of the batch-run', 's': 'b_id'},

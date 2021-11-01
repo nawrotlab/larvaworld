@@ -381,8 +381,10 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None, **
           'save_to': save_to}
     for r in ['default']:
         # for r in ['broad', 'default', 'restricted']:
-        for m in ['cdf', 'pdf']:
-            for f in ['best', 'all']:
+        for m in ['cdf']:
+        # for m in ['cdf', 'pdf']:
+            for f in ['best']:
+            # for f in ['best', 'all']:
                 n = f'bout_{m}_fit_{f}_{r}'
                 try:
                     figs[n] = plot_stridesNpauses(**cc, plot_fits=f, range=r, only_fit_one=False, mode=m,

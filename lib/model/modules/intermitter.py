@@ -45,6 +45,7 @@ class BaseIntermitter(Effector):
 
         self.pause_counter = 0
         self.current_pause_duration = None
+        self.current_pause_ticks = None
         self.cum_pause_dur = 0
 
         self.stridechain_counter = 0

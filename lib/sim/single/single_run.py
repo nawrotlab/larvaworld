@@ -140,7 +140,7 @@ class SingleRun:
             anal_params = ['foraging_analysis']
         elif self.experiment in ['random_food']:
             anal_params = analysis_dict['survival']
-        elif 'dispersion' in self.experiment:
+        elif 'dispersion' in self.experiment or 'dish' in self.experiment:
             anal_params = ['comparative_analysis']
         # elif self.experiment in ['growth', 'RvsS'] :
         #     anal_params = analysis_dict['DEB']
