@@ -76,9 +76,11 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
         return {name: d}
 
 
-def par_dict(name, d0=None, **kwargs):
+def par_dict(name=None, d0=None, **kwargs):
     if d0 is None:
-        d0 = init_pars()[name]
+        d0 = init_pars().get(name, None)
+    if d0 is None :
+        return None
     d = {}
     for n, v in d0.items():
         try:

@@ -993,24 +993,32 @@ class PadElement:
         self.disabled = disabled
         self.text_kws = text_kws
         self.value_kws = value_kws
+        self.after_header = after_header
         self.toggle_key = f'TOGGLE_{name}'
         self.subdicts = {}
-
         if disp_name is None:
-            disp_name = get_disp_name(name)
+            disp_name = get_disp_name(self.name)
+        self.disp_name = disp_name
+
 
         if dict_name is None:
             dict_name = name
         self.dict_name=dict_name
 
-        self.header = [
-            [sg.T(disp_name.upper(), justification='center', background_color=self.background_color, border_width=3,
+
+
+    def build_header(self, header_width):
+        header = [
+            [sg.T(self.disp_name.upper(), justification='center', background_color=self.background_color, border_width=3,
                   **t_kws(header_width)
                   )]]
-        if after_header is not None:
-            self.header[0] += after_header
-        if toggle is not None:
-            self.header[0] += [BoolButton(name, toggle, disabled)]
+        if self.after_header is not None:
+            header[0] += self.after_header
+        if self.toggle is not None:
+            header[0] += [BoolButton(self.name, self.toggle, self.disabled)]
+        return header
+
+
 
     def get_layout(self, as_col=True, as_pane=True, **kwargs):
         kws = copy.deepcopy(self.layout_pane_kwargs)
@@ -1037,21 +1045,46 @@ class PadDict(PadElement):
                  type_dict=None, content=None, **kwargs):
         self.subconfs = subconfs
 
-        if header_width is None:
-            header_width = 18 * Ncols + 6 * (Ncols - 1)
-        super().__init__(name=name,header_width =header_width, **kwargs)
+        # if header_width is None:
+        #     header_width = 18 * Ncols + 6 * (Ncols - 1)
+        super().__init__(name=name,**kwargs)
         if col_idx is None :
             col_idx = col_idx_dict.get(self.dict_name, None)
         if col_idx is not None:
             Ncols = len(col_idx)
+        if type_dict is None:
+            type_dict = par_dict(self.dict_name)
+        self.type_dict = type_dict
         if content is None:
-            if type_dict is None:
-                type_dict = par_dict(self.dict_name)
-            content = self.build(name, type_dict=type_dict, background_color=self.background_color)
+            content = self.build(name)
         self.content = self.arrange_content(content, col_idx=col_idx, row_idx=row_idx, Ncols=Ncols)
         self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()} if type_dict is not None else None
 
+        self.header=self.build_header(self.get_header_width(header_width, Ncols))
         self.layout = self.header + self.content
+
+    # def get_header_width(self, header_width):
+    #     if header_width is not None :
+    #         s= header_width
+    #     else :
+    #         s=get_layout_size(self.content)
+    #     return s
+
+
+    def get_header_width(self, header_width, Ncols):
+        if header_width is not None :
+            return header_width
+        else :
+            if 'size' in self.text_kws.keys() :
+                s1=self.text_kws['size'][0]
+            else :
+                s1=w_kws['default_element_size'][0]
+            if 'size' in self.value_kws.keys() :
+                s2=self.value_kws['size'][0]
+            else :
+                s2=w_kws['default_button_element_size'][0]
+            s=s1+s2
+            return (s+1)*Ncols
 
     def arrange_content(self, l, col_idx=None, row_idx=None, Ncols=1):
         if col_idx is not None:
@@ -1083,17 +1116,16 @@ class PadDict(PadElement):
                 d[k] = retrieve_value(v[k0], t)
         return d
 
-    def build(self, name, type_dict=None, **kwargs):
+    def build(self, name, **kwargs):
         combos = {}
         l = []
-        for k, args in type_dict.items():
+        for k, args in self.type_dict.items():
             if args['dtype'] in [dict, TypedDict]:
-                # print(k)
                 k0 = f'{name}_{k}'
                 subkws = {
                     'text_kws': self.text_kws,
                     'value_kws': self.value_kws,
-                    # 'header_width': self.header_width,
+                    'background_color':self.background_color,
                     **kwargs
                 }
                 if k in self.subconfs.keys():
@@ -1155,8 +1187,8 @@ class PadTable(PadElement):
     def __init__(self,name, index=None, heading_dict=None, dict={},header_width =28,
                  buttons=[], button_args={}, col_widths=None, num_rows=5, **kwargs):
         after_header = button_row(name, buttons, button_args)
-        header_width=header_width-2*len(buttons)
-        super().__init__(name=name,header_width =header_width,after_header=after_header, **kwargs)
+
+        super().__init__(name=name,after_header=after_header, **kwargs)
 
         if index is None:
             index = self.name
@@ -1176,9 +1208,10 @@ class PadTable(PadElement):
                 self.color_idx = i + 1
                 col_visible[i + 1] = False
 
-
+        self.header_width = header_width - 2 * len(buttons)
         self.content = self.build(col_widths=col_widths, num_rows=num_rows, col_visible=col_visible)
 
+        self.header = self.build_header(self.header_width)
         self.layout = self.header + self.content
 
     def build(self, col_widths, num_rows, col_visible):

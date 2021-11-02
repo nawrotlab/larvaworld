@@ -1,8 +1,10 @@
 import subprocess
+import numpy as np
 from ast import literal_eval
 from pydoc import locate
 from typing import List, Tuple, Union, Type
 import PySimpleGUI as sg
+from PySimpleGUI import Element
 
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'
@@ -201,8 +203,6 @@ def collapse(layout, key, visible=True):
     """
     return sg.pin(sg.Col(layout, key=key, visible=visible))
 
-
-
 def get_pygame_key(key):
     pygame_keys = {
         'BackSpace': 'BACKSPACE',
@@ -231,3 +231,24 @@ def get_pygame_key(key):
         'asterisk': 'ASTERISK',
     }
     return f'K_{pygame_keys[key]}' if key in list(pygame_keys.keys()) else f'K_{key}'
+
+# def get_layout_size(l) :
+#     if isinstance(l, Element):
+#         s= l.get_size()[0]
+#         # print(s)
+#     elif type(l) == list():
+#         s = np.sum([get_layout_size(ee) for ee in l])
+#     # ss=[]
+#     # for e in l :
+#     #     if isinstance(e, Element) :
+#     #         ss.append(e.get_size()[0])
+#     #     elif type(e)==list() :
+#     #         s=np.sum([get_layout_size(ee) for ee in e])
+#     return s
+#
+# if __name__ == "__main__":
+#     l=[sg.T(), sg.In()]
+#     # print(type(l), type(l[0]))
+#     # print(isinstance(l, Element), isinstance(l[0], Element))
+#     print(l[0].get_size())
+#     # s=get_layout_size(l)

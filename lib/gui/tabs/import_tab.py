@@ -39,9 +39,9 @@ class ImportTab(GuiTab):
                                'arena': {'header_width': 20, 'text_kws': t_kws(7)}}
                      )
         pd2 = PadDict('enrichment', background_color=self.Cenr, header_width=125,
-                     subconfs={'preprocessing': {'text_kws': t_kws(14), 'header_width': 20},
-                               'to_drop': {'Ncols': 2, 'header_width': 30, 'text_kws': t_kws(9)},
-                               'processing': {'Ncols': 2, 'header_width': 30, 'text_kws': t_kws(9)},
+                     subconfs={'preprocessing': {'text_kws': t_kws(14)},
+                               'to_drop': {'Ncols': 2, 'text_kws': t_kws(9)},
+                               'processing': {'Ncols': 2, 'text_kws': t_kws(9)},
                                'metric_definition': {'header_width': 60,'text_kws': t_kws(9)}}
                      )
 
