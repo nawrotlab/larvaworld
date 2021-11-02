@@ -4,6 +4,7 @@ import time
 import numpy as np
 import pygame
 from scipy.spatial import ConvexHull
+from shapely.geometry import MultiPoint
 
 import lib.process.aux
 
@@ -89,6 +90,7 @@ class Viewer(object):
         p = self._transform(position)
         r = int(self._scale[0, 0] * radius)
         w = 0 if filled else int(self._scale[0, 0] * width)
+        # print(self._scale[0, 0])
         pygame.draw.circle(self._window, color, p, r, w)
 
     def draw_polygon(self, vertices, color=(0, 0, 0), filled=True, width=.01):
@@ -96,8 +98,10 @@ class Viewer(object):
         w = 0 if filled else int(self._scale[0, 0] * width)
         pygame.draw.polygon(self._window, color, vs, w)
 
-    def draw_convex(self, vertices, **kwargs):
-        vs = vertices[ConvexHull(vertices).vertices].tolist()
+    def draw_convex(self, points, **kwargs):
+        ps=np.array(points)
+        vs = ps[ConvexHull(ps).vertices].tolist()
+        # print(vs)
         self.draw_polygon(vs, **kwargs)
 
     def draw_grid(self, all_vertices, colors, filled=True, width=.01):
@@ -131,6 +135,11 @@ class Viewer(object):
     def draw_text_box(self, text_font, text_position):
         self._window.blit(text_font, text_position)
 
+    def draw_envelope(self, points, **kwargs):
+        # print(MultiPoint([(0, 0), (1, 1),(2, 2), (3, 1)]))
+        vs = list(MultiPoint(points).envelope.exterior.coords)
+        # print(vs)
+        self.draw_polygon(vs, **kwargs)
     # def draw_arrow(self, color, pos, a0, s=10):
     #
     #     p0 = (pos[0] + sin0, pos[1] + cos0)

@@ -19,7 +19,7 @@ from lib.conf.base import paths
 
 
 class LarvaWorldSim(LarvaWorld):
-    def __init__(self, trials, output, larva_collisions=True, parameter_dict={}, **kwargs):
+    def __init__(self,  output=None,trials={}, larva_collisions=True, parameter_dict={}, **kwargs):
         super().__init__(**kwargs)
         self.sim_epochs = trials
         for idx, ep in self.sim_epochs.items():
@@ -196,7 +196,7 @@ class LarvaWorldSim(LarvaWorld):
         }
 
         if output is None:
-            output = {'step': [], 'end': [], 'tables': {}}
+            output = {'step': [], 'end': [], 'tables': {}, 'step_groups': [], 'end_groups': []}
         s, e, t = output['step'], output['end'], output['tables']
         sg, eg = output['step_groups'], output['end_groups']
         self.larva_step_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s, **kws0) if len(

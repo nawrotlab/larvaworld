@@ -2,8 +2,9 @@ import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 from shapely.geometry import LineString, Point
 
+from lib.anal.rendering import InputBox
 from lib.aux.colsNstr import colorname2tuple
-from lib.aux.dictsNlists import flatten_list
+from lib.aux.dictsNlists import flatten_list, unique_list
 from lib.model.DEB.deb import Substrate
 
 
@@ -27,11 +28,12 @@ class ValueGrid:
         xr, yr = x1 - x0, y1 - y0
         self.x = xr / self.X
         self.y = yr / self.Y
+        self.cell_radius=np.sqrt(np.sum((self.x/2)**2+(self.y/2)**2))
         self.xy = np.array([self.x, self.y])
         self.XY_half = np.array([self.X / 2, self.Y / 2])
 
-        x_linspace = np.linspace(x0, x1, self.X)
-        y_linspace = np.linspace(y0, y1, self.Y)
+        x_linspace = np.linspace(x0, x1, self.X+1)
+        y_linspace = np.linspace(y0, y1, self.Y+1)
         self.meshgrid = np.meshgrid(x_linspace, y_linspace)
 
         if distribution == 'uniform':
@@ -89,11 +91,14 @@ class ValueGrid:
     def cell_vertices(self, i, j):
         x, y = self.x, self.y
         X, Y = self.X / 2, self.Y / 2
-        v = [[x * int(i - X), y * int(j - Y)],
-             [x * int(i + 1 - X), y * int(j - Y)],
-             [x * int(i + 1 - X), y * int(j + 1 - Y)],
-             [x * int(i - X), y * int(j + 1 - Y)]]
+        v = [[x * (i - X), y * (j - Y)],
+             [x * (i + 1 - X), y * (j - Y)],
+             [x * (i + 1 - X), y * (j + 1 - Y)],
+             [x * (i - X), y * (j + 1 - Y)]]
         return v
+
+    def cel_pos(self, i, j):
+        return self.x * (i - self.X / 2 + 0.5), self.y * (j - self.Y / 2 + 0.5)
 
     def reset(self):
         self.grid = np.ones(self.grid_dims) * self.initial_value
@@ -101,14 +106,53 @@ class ValueGrid:
     def empty_grid(self):
         self.grid = np.zeros(self.grid_dims)
 
+    def draw_peak(self, viewer):
+        idx = np.unravel_index(self.grid.argmax(), self.grid.shape)
+        p = self.cel_pos(*idx)
+        vs = self.cell_vertices(*idx)
+
+        viewer.draw_circle(p, self.cell_radius, 'white', filled=True, width=0.0005)
+        viewer.draw_polygon(vs, 'white', filled=False, width=0.0005)
+
+        p_text = (p[0] + self.x, p[1] - self.y)
+        text_box = InputBox(text=str(np.round(self.grid.max(), 2)), color_active='white', visible=True,screen_pos=viewer._transform(p_text))
+        text_box.draw(viewer)
+
     def draw(self, viewer):
         color_grid = self.get_color_grid()
         for vertices, col in zip(self.grid_vertices, color_grid):
             viewer.draw_polygon(vertices, col, filled=True)
+        self.draw_peak(viewer)
+        self.draw_isocontours(viewer)
+
+    def draw_isocontours(self, viewer):
+    # def draw(self, viewer):
+        N = 8
+        k=4
+        g = self.get_grid()
+        c='white'
+        # c=self.default_color
+        vmax = np.max(g)
+        for i in range(N):
+            v = vmax *k**-i
+            if v<=0 :
+                continue
+            inds = np.argwhere(v <= g).tolist()
+            # inds = np.argwhere((v *0.8 <= g) & (g < v*1.2)).tolist()
+            points = [self.cel_pos(i, j) for (i, j) in inds]
+            if len(points) > 2:
+                ps=np.array(points)
+                px = np.max(ps[0,:])
+                p_text=(px+self.cell_radius, np.min(ps[ps[:,0]==px][:,1])-self.cell_radius)
+                viewer.draw_convex(points, color=c, filled=False, width=0.0005)
+                text_box = InputBox(text=str(np.round(v, 2)), color_active=c, visible=True,
+                                    screen_pos=viewer._transform(p_text))
+                text_box.draw(viewer)
+
 
     def get_color_grid(self):
         v0 = self.initial_value
-        cs = np.array((v0 - self.grid.flatten()) * 255).astype(int)
+        cs = np.array((v0 - self.get_grid().flatten()) * 255).astype(int)
         cs = np.array([cs, cs, cs]).T
         color_grid = np.clip(np.array(self.default_color) + cs, a_min=0, a_max=255)
         return color_grid
@@ -162,7 +206,7 @@ class GaussianValueLayer(ValueLayer):
             value += s.get_gaussian_odor_value(rel_pos)
         return value
 
-    def compute_grid(self):
+    def get_grid(self):
         X, Y = self.meshgrid
 
         @np.vectorize
@@ -173,12 +217,19 @@ class GaussianValueLayer(ValueLayer):
         V = func(X, Y)
         return V
 
-    def draw(self, viewer):
-        V = self.compute_grid().T
-        self.grid = V / np.max(V)
-        color_grid = self.get_color_grid()
-        for vertices, col in zip(self.grid_vertices, color_grid):
-            viewer.draw_polygon(vertices, col, filled=True)
+    # def draw(self, viewer):
+    def draw_isocontours(self, viewer):
+        # g=self.get_grid()
+        # vs=np.linspace(np.min(g), np.max(g), 5)
+        for s in self.sources:
+            p = s.get_position()
+            for r in np.arange(0, 0.050, 0.01):
+                pX = (p[0] + r, p[1])
+                v = s.get_gaussian_odor_value(pX)
+                viewer.draw_circle(p, r, self.default_color, filled=False, width=0.0005)
+                text_box = InputBox(text=str(np.round(v, 2)), color_active=self.default_color, visible=True,
+                                    screen_pos=viewer._transform(pX))
+                text_box.draw(viewer)
 
 
 class DiffusionValueLayer(ValueLayer):
@@ -212,7 +263,7 @@ class DiffusionValueLayer(ValueLayer):
 
 
 class WindScape:
-    def __init__(self, model, wind_direction, wind_speed,puffs={}, default_color='red', visible=False):
+    def __init__(self, model, wind_direction, wind_speed, puffs={}, default_color='red', visible=False):
 
         self.model = model
         self.wind_direction = wind_direction
@@ -228,7 +279,7 @@ class WindScape:
         # p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
         # self.scapelines=[(p0,p1) for p0,p1 in zip(p0s,p1s)]
         self.events = {}
-        for idx, puff in puffs.items() :
+        for idx, puff in puffs.items():
             self.add_puff(**puff)
 
     def get_value(self, agent):
@@ -274,11 +325,11 @@ class WindScape:
             start = self.model.Nticks
         else:
             start = int(start_time / self.model.dt)
-        interval_ticks=int(interval / self.model.dt)
-        if N is None :
-            N=int(self.model.Nsteps/interval_ticks)
-        for i in range(N) :
-            t0=start+i*interval_ticks
+        interval_ticks = int(interval / self.model.dt)
+        if N is None:
+            N = int(self.model.Nsteps / interval_ticks)
+        for i in range(N):
+            t0 = start + i * interval_ticks
             self.events[t0] = {'wind_speed': speed, 'wind_direction': direction}
             self.events[t0 + Nticks] = {'wind_speed': self.wind_speed, 'wind_direction': self.wind_direction}
 

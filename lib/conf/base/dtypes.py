@@ -28,7 +28,7 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
         combo=None, argparser=False, entry=None):
     if not argparser:
         if t==TypedDict :
-            return {name: {'dtype': t, 'entry':entry, 'disp':disp}}
+            return {name: {'initial_value': v, 'dtype': t, 'entry':entry, 'disp':disp}}
         cur_dtype = base_dtype(t)
         if cur_dtype in [float, int]:
             if any([arg is not None for arg in [min, max, dv]]):
@@ -256,7 +256,7 @@ def init_pars():
 
         'odorscape': {'odorscape': {'t': str, 'v': 'Gaussian', 'vs': ['Gaussian', 'Diffusion'],
                                     'h': 'The algorithm used for odorscape generation.'},
-                      'grid_dims': {'t': Tuple[int], 'min': 10, 'max': 100, 'h': 'The odorscape grid resolution.'},
+                      'grid_dims': {'t': Tuple[int],'v':(51,51), 'min': 10, 'max': 100, 'h': 'The odorscape grid resolution.'},
                       'evap_const': {'max': 1.0, 'h': 'The evaporation constant of the diffusion algorithm.'},
                       'gaussian_sigma': {'t': Tuple[float], 'max': 1.0,
                                          'h': 'The sigma of the gaussian difusion algorithm.'}
@@ -1018,3 +1018,4 @@ def oD(c=1, id='Odor'):
 if __name__ == '__main__':
     store_controls()
     store_RefPars()
+    # print(null_dict('windscape'))
