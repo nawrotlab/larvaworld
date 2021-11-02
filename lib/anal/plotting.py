@@ -2,7 +2,6 @@ import copy
 import heapq
 import itertools
 import warnings
-import pylab as pl
 from matplotlib import collections  as mc
 from matplotlib import pyplot as plt
 import numpy as np
@@ -14,17 +13,17 @@ from matplotlib.pyplot import bar
 from matplotlib.ticker import FixedLocator, FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
 import statsmodels.api as sm
-from scipy import stats, signal, interpolate
+from scipy import stats, signal
 from scipy.stats import ttest_ind
 from sklearn.linear_model import LinearRegression
 from PIL import Image
 import os
 
-from lib.aux.dictsNlists import unique_list, flatten_list, group_dicts, merge
+from lib.aux.dictsNlists import unique_list, flatten_list
 from lib.anal.fitting import BoutGenerator
-from lib.anal.plot_aux import plot_mean_and_range, circular_hist, dual_half_circle, confidence_ellipse, save_plot, \
+from lib.anal.plot_aux import plot_mean_and_range, circular_hist, confidence_ellipse, save_plot, \
     plot_config, dataset_legend, process_plot, label_diff, boolean_indexing, Plot, plot_quantiles, annotate_plot, \
-    concat_datasets, conf_ax_3d, BasePlot, ParPlot
+    concat_datasets, ParPlot
 from lib.aux import naming as nam
 from lib.aux.colsNstr import N_colors, col_range
 
@@ -87,24 +86,19 @@ def plot_2pars(shorts, subfolder='step',larva_legend=True, **kwargs):
     P = Plot(name=f'{ypar}_VS_{xpar}', subfolder=subfolder, **kwargs)
     P.build()
     ax = P.axs[0]
-    if P.Ndatasets == 1:
+    if P.Ndatasets == 1 and larva_legend:
         d = P.datasets[0]
         Nids = len(d.agent_ids)
         cs = N_colors(Nids)
         s = d.read('step')
-        if larva_legend:
-            for j, id in enumerate(d.agent_ids):
-                ss = s.xs(id, level='AgentID', drop_level=True)
-                ax.scatter(ss[xpar], ss[ypar], color=cs[j], marker='.', label=id)
-                ax.legend()
-        else :
-            ax.scatter(s[xpar], s[ypar], color=P.colors[0], marker='.')
+        for j, id in enumerate(d.agent_ids):
+            ss = s.xs(id, level='AgentID', drop_level=True)
+            ax.scatter(ss[xpar], ss[ypar], color=cs[j], marker='.', label=id)
+            ax.legend()
     else:
         for d, c in zip(P.datasets, P.colors):
             s = d.read('step')
-            for id in d.agent_ids:
-                ss = s.xs(id, level='AgentID', drop_level=True)
-                ax.scatter(ss[xpar], ss[ypar], color=c, marker='.')
+            ax.scatter(s[xpar], s[ypar], color=c, marker='.')
         dataset_legend(P.labels, P.colors, ax=ax, loc='upper left')
     P.conf_ax(xlab=xlab, ylab=ylab, xlim=xlim, ylim=ylim, xMaxN=4, yMaxN=4)
     P.adjust((0.15, 0.95), (0.15, 0.92), 0.05, 0.005)
