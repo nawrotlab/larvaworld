@@ -57,8 +57,9 @@ class LarvaWorldSim(LarvaWorld):
         layers = {}
         for i, (id, c) in enumerate(zip(ids, cols)):
             od_sources = [f for f in sources if f.odor_id == id]
-            # print(np.unique([s.default_color for s in od_sources]))
-            temp = np.unique([s.default_color for s in od_sources])
+
+            temp = dNl.unique_list([s.default_color for s in od_sources])
+
             if len(temp) == 1:
                 default_color = temp[0]
             elif len(temp) == 3 and all([type(k) == float] for k in temp):

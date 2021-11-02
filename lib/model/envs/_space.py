@@ -23,6 +23,7 @@ class ValueGrid:
         self.default_color = default_color
         self.grid_dims = grid_dims
         self.X, self.Y = grid_dims
+        # print(space_range)
         x_range = tuple(space_range[0:2])
         y_range = tuple(space_range[2:])
         x0, x1 = x_range[0], x_range[1]
@@ -37,7 +38,7 @@ class ValueGrid:
         x_linspace = np.linspace(x0, x1, self.X+1)
         y_linspace = np.linspace(y0, y1, self.Y+1)
         self.meshgrid = np.meshgrid(x_linspace, y_linspace)
-
+        # print(self.X, self.Y, self.x, self.y)
         if distribution == 'uniform':
             self.grid = np.ones(self.grid_dims) * self.initial_value
 
@@ -46,12 +47,16 @@ class ValueGrid:
                            [xr / 2, -yr / 2],
                            [xr / 2, yr / 2],
                            [-xr / 2, yr / 2]]
+        # self.grid[3,:]=300.0
+        # print(self.grid_edges)
         if max_value is None :
             max_value=np.max(self.grid)
         self.max_value=max_value
 
+
     def add_value(self, p, value):
         cell = self.get_grid_cell(p)
+        # print(p,cell)
         v = self.add_cell_value(cell, value)
         return v
 
@@ -64,7 +69,12 @@ class ValueGrid:
         return self.get_cell_value(cell)
 
     def get_grid_cell(self, p):
+        # print(p)
+        # print(p/ self.xy)
+        # print(p/ self.xy+ self.XY_half)
         c = np.floor(p / self.xy + self.XY_half).astype(int)
+        # print(c)
+        # raise
         return tuple(c)
         # return tuple(c)
 
@@ -75,6 +85,7 @@ class ValueGrid:
         self.grid[cell] = value
 
     def add_cell_value(self, cell, value):
+        # print(cell)
         v0 = self.get_cell_value(cell)
         v1 = v0 + value
         if not self.fixed_max :
@@ -89,19 +100,19 @@ class ValueGrid:
             return value
 
     def generate_grid_vertices(self):
-        vertices = []
+        vertices = np.zeros([self.X,self.Y,4,2])
         for i in range(self.X):
             for j in range(self.Y):
-                vertices.append(self.cell_vertices(i, j))
+                vertices[i,j]=self.cell_vertices(i, j)
         return vertices
 
     def cell_vertices(self, i, j):
         x, y = self.x, self.y
         X, Y = self.X / 2, self.Y / 2
-        v = [[x * (i - X), y * (j - Y)],
-             [x * (i + 1 - X), y * (j - Y)],
-             [x * (i + 1 - X), y * (j + 1 - Y)],
-             [x * (i - X), y * (j + 1 - Y)]]
+        v = np.array([(x * (i - X), y * (j - Y)),
+             (x * (i + 1 - X), y * (j - Y)),
+             (x * (i + 1 - X), y * (j + 1 - Y)),
+             (x * (i - X), y * (j + 1 - Y))])
         return v
 
     def cel_pos(self, i, j):
@@ -118,17 +129,21 @@ class ValueGrid:
         p = self.cel_pos(*idx)
         vs = self.cell_vertices(*idx)
 
-        viewer.draw_circle(p, self.cell_radius, self.default_color, filled=True, width=0.0005)
-        # viewer.draw_polygon(vs, 'white', filled=False, width=0.0005)
+        viewer.draw_circle(p, self.cell_radius/2, self.default_color, filled=True, width=0.0005)
+        # viewer.draw_polygon(vs, self.default_color, filled=True, width=0.0005)
 
         p_text = (p[0] + self.x, p[1] - self.y)
         text_box = InputBox(text=str(np.round(self.grid.max(), 2)), color_active=self.default_color, visible=True,screen_pos=viewer._transform(p_text))
         text_box.draw(viewer)
 
     def draw(self, viewer):
-        color_grid = self.get_color_grid()
-        for vertices, col in zip(self.grid_vertices, color_grid):
-            viewer.draw_polygon(vertices, col, filled=True)
+        Cgrid = self.get_color_grid().reshape([self.X,self.Y,3])
+        for i in range(self.X):
+            for j in range(self.Y):
+                viewer.draw_polygon(self.grid_vertices[i,j], Cgrid[i,j], filled=True)
+        # print(color_grid.shape)
+        # for vertices, col in zip(self.grid_vertices, color_grid):
+        #     viewer.draw_polygon(vertices, col, filled=True)
         self.draw_peak(viewer)
         if self.model.odor_aura :
             self.draw_isocontours(viewer)
@@ -157,11 +172,14 @@ class ValueGrid:
 
     def get_color_grid(self):
         v0,v1 = self.min_value, self.max_value
+        # g=self.get_grid()
+        # print(g.shape)
         g=self.get_grid().flatten()
         gg=(g-v0)/(v1-v0)
         k=10**2
         m=(1-np.exp(-k))**-1
         q=m*(1-np.exp(-k*gg))
+        # print(q.shape)
         return col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
 
     def get_grid(self):
@@ -175,20 +193,17 @@ class FoodGrid(ValueGrid):
         # self.max_value=self.initial_value
 
     def get_color(self, v):
-        v0 = self.initial_value
-        c = int((v0 - v) / v0 * 255) if v0 != 0 else 255
-        col = np.clip(np.array(self.default_color) + c, a_min=0, a_max=255)
-        return col
+        v0, v1 = self.min_value, self.max_value
+        q = (v - v0) / (v1 - v0)
+        return col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
 
     def draw(self, viewer):
         viewer.draw_polygon(self.grid_edges, self.get_color(v=self.initial_value), filled=True)
-        not_full = np.array([[k, v] for k, v in enumerate(self.grid.flatten().tolist()) if
-                             v != self.initial_value])
-        if not_full.shape[0] != 0:
-            vertices = [self.grid_vertices[int(i)] for i in not_full[:, 0]]
-            colors = [self.get_color(v) for v in not_full[:, 1]]
-            for v, c in zip(vertices, colors):
-                viewer.draw_polygon(v, c, filled=True)
+        for i in range(self.X):
+            for j in range(self.Y):
+                v=self.grid[i,j]
+                if v != self.initial_value :
+                    viewer.draw_polygon(self.grid_vertices[i,j], self.get_color(v), filled=True)
 
 
 class ValueLayer(ValueGrid):
@@ -267,19 +282,26 @@ class DiffusionValueLayer(ValueLayer):
         k=1000
         if self.model.windscape is not None :
             v,a=self.model.windscape.wind_speed, self.model.windscape.wind_direction
-            dx=v*np.cos(a)*self.model.dt
-            dy=v*np.sin(a)*self.model.dt
-            Px,Py=dx/self.x/k, dy/self.y/k
-            Gx=self.grid*Px
-            Gy=self.grid*Py
-            Gx=np.roll(Gx,1, axis=0)
-            Gx[:,0]=0
-            Gy=np.roll(Gy,1, axis=1)
-            Gy[0,:] = 0
-            self.grid*=(1-Px-Py)
-            self.grid+=(Gx+Gy)
-            np.clip(self.grid, a_min=0, a_max=None)
-            # print(Px,Py, a)
+            if v!=0 :
+                dx=v*np.cos(a)*self.model.dt
+                dy=v*np.sin(a)*self.model.dt
+                Px,Py=dx/self.x/k, dy/self.y/k
+
+                Pr=np.abs(Px/(Px+Py))
+                # print(Pr, Px, Py, self.max_value)
+                Px=np.clip(Px, a_min=-Pr, a_max=Pr)
+                Py=np.clip(Py, a_min=-1+Pr, a_max=1-Pr)
+                # print(Pr, Px, Py, self.max_value)
+                Gx=self.grid*Px
+                Gy=self.grid*Py
+                Gx=np.roll(Gx,1, axis=0)
+                Gx[0,:]=0
+                Gy=np.roll(Gy,1, axis=1)
+                Gy[:,0] = 0
+                self.grid*=(1-Px-Py)
+                self.grid+=(Gx+Gy)
+                np.clip(self.grid, a_min=0, a_max=None)
+
 
         for s in self.sources:
             source_pos = s.get_position()

@@ -94,7 +94,7 @@ class Viewer(object):
         pygame.draw.circle(self._window, color, p, r, w)
 
     def draw_polygon(self, vertices, color=(0, 0, 0), filled=True, width=.01):
-        print(color)
+        # print(color)
         vs = [self._transform(v) for v in vertices]
         w = 0 if filled else int(self._scale[0, 0] * width)
         pygame.draw.polygon(self._window, color, vs, w)

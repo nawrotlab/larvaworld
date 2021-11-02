@@ -193,12 +193,12 @@ class LarvaWorld:
         X, Y = arena_dims
         D = self.sim_screen_dim
         self.arena_dims = np.array([X, Y])
-        self.screen_width, self.screen_height = (D, int(D * X / Y)) if X <= Y else (int(D * X / Y), D)
+        self.screen_width, self.screen_height = (D, int(D * Y / X)) if X > Y else (int(D * X / Y), D)
         self.unscaled_space_edges = np.array([(-X / 2, -Y / 2),
                                               (-X / 2, Y / 2),
                                               (X / 2, Y / 2),
                                               (X / 2, -Y / 2)])
-
+        # print(X,Y,self.screen_width, self.screen_height)
         if arena_shape == 'circular':
             # This is a circle_to_polygon shape from the function
             self.unscaled_tank_shape = lib.aux.sim_aux.circle_to_polygon(60, X / 2)
