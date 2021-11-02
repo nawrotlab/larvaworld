@@ -14,7 +14,7 @@ class EnvTab(GuiTab):
         self.Bg = f'{self.B.lower()}_list'
 
     def update(self, w, c, conf, id=None):
-        for n in [self.Bg, 'arena', 'odorscape']:
+        for n in [self.Bg, 'arena', 'odorscape', 'windscape']:
             c[n].update(w, conf[n] if n in conf.keys() else {})
         for n in [self.Sg, self.Su, 'food_grid']:
             c[n].update(w, conf['food_params'][n])
@@ -24,8 +24,8 @@ class EnvTab(GuiTab):
     def get(self, w, v, c, as_entry=False):
         return {
             'food_params': {n: c[n].get_dict(v, w) for n in [self.Sg, self.Su, 'food_grid']},
-            **{n: c[n].get_dict(v, w) for n in [self.Bg, 'arena', 'odorscape']},
-            'windscape' : None
+            **{n: c[n].get_dict(v, w) for n in [self.Bg, 'arena', 'odorscape', 'windscape']},
+            # 'windscape' : None
         }
 
 
@@ -47,15 +47,16 @@ class EnvTab(GuiTab):
 
         s6 = PadDict('food_grid', header_width=26,toggle=True)
         s7 = PadDict('odorscape', header_width=31)
+        s8 = PadDict('windscape', header_width=31)
 
         c = {}
-        for s in [s2, s3, s4, s5, s6, s7]:
+        for s in [s2, s3, s4, s5, s6, s7, s8]:
             c.update(s.get_subdicts())
         l1 = [c[n].get_layout(as_pane=True)[0] for n in [self.Sg, self.Su, 'food_grid']]
         c2 = PadDict(self.S, content=l1, header_width=34)
         c.update(c2.get_subdicts())
         sl1 = SelectionList(tab=self, buttons=['save', 'delete'], disp=self.name, width=30)
-        l = gui_cols([[sl1, s7, s4], [c2]], x_fracs=[0.25,0.25], as_pane=True, pad=(10,10))
+        l = gui_cols([[sl1, s7,s8, s4], [c2]], x_fracs=[0.25,0.25], as_pane=True, pad=(10,10))
         self.layout = l
         return l, c, {}, {}
 

@@ -17,6 +17,8 @@ class LarvaDataset:
     def __init__(self, dir, load_data=True, **kwargs):
         self.define_paths(dir)
         self.retrieve_conf(**kwargs)
+        self.larva_tables = {}
+        self.larva_dicts = {}
         self.configure_body()
         self.define_linear_metrics()
         if load_data:
@@ -75,8 +77,7 @@ class LarvaDataset:
                            'source_xy': source_xy,
                            'life_history': life_history
                            }
-            self.larva_tables={}
-            self.larva_dicts={}
+
         self.__dict__.update(self.config)
 
     def set_data(self, step=None, end=None, food=None):

@@ -212,7 +212,7 @@ class DiffusionValueLayer(ValueLayer):
 
 
 class WindScape:
-    def __init__(self, model, wind_direction, wind_speed, default_color='red', visible=False):
+    def __init__(self, model, wind_direction, wind_speed,puffs={}, default_color='red', visible=False):
 
         self.model = model
         self.wind_direction = wind_direction
@@ -228,6 +228,8 @@ class WindScape:
         # p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
         # self.scapelines=[(p0,p1) for p0,p1 in zip(p0s,p1s)]
         self.events = {}
+        for idx, puff in puffs.items() :
+            self.add_puff(**puff)
 
     def get_value(self, agent):
         if self.obstructed(agent.pos):
@@ -266,14 +268,19 @@ class WindScape:
         self.wind_direction = A
         self.scapelines = self.generate_scapelines(self.max_dim, self.N, self.wind_direction)
 
-    def add_puff(self, duration, speed, direction=None, start_time=None):
+    def add_puff(self, duration, speed, direction=None, start_time=None, N=1, interval=10.0):
         Nticks = int(duration / self.model.dt)
         if start_time is None:
             start = self.model.Nticks
         else:
             start = int(start_time / self.model.dt)
-        self.events[start] = {'wind_speed': speed, 'wind_direction': direction}
-        self.events[start + Nticks] = {'wind_speed': self.wind_speed, 'wind_direction': self.wind_direction}
+        interval_ticks=int(interval / self.model.dt)
+        if N is None :
+            N=int(self.model.Nsteps/interval_ticks)
+        for i in range(N) :
+            t0=start+i*interval_ticks
+            self.events[t0] = {'wind_speed': speed, 'wind_direction': direction}
+            self.events[t0 + Nticks] = {'wind_speed': self.wind_speed, 'wind_direction': self.wind_direction}
 
     def update(self):
         for t, args in self.events.items():

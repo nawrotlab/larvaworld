@@ -3,7 +3,7 @@ import inspect
 import os
 import tkinter
 from tkinter import PhotoImage
-from typing import Tuple, List, Any
+from typing import Tuple, List, Any, TypedDict
 import numpy as np
 import PySimpleGUI as sg
 from matplotlib import ticker
@@ -736,7 +736,7 @@ class Collapsible(HeadedElement, GuiElement):
 
 
 class CollapsibleTable(Collapsible):
-    def __init__(self, name, index=None, dict_name=None, heading_dict={}, dict={},
+    def __init__(self, name, index=None, dict_name=None, heading_dict=None, dict={},
                  buttons=[], button_args={}, col_widths=None, num_rows=1, **kwargs):
         if dict_name is None:
             dict_name = name
@@ -746,6 +746,8 @@ class CollapsibleTable(Collapsible):
         self.dict_name = dict_name
         self.key = f'TABLE {name}'
         self.null_dict = null_dict(dict_name)
+        if heading_dict is None :
+            heading_dict={k:k for k in self.null_dict.keys()}
         self.heading_dict = heading_dict
         self.heading_dict_inv = {v: k for k, v in heading_dict.items()}
         self.headings = list(heading_dict.keys())
@@ -909,152 +911,7 @@ def combo_layout(name, title, dic, **kwargs):
     return [sg.Pane(l, border_width=4)]
 
 
-class PadDict:
-    def __init__(self, name, dict_name=None, type_dict=None, disp_name=None, content=None, toggle=None, disabled=False,
-                 layout_pane_kwargs={'border_width': 8},
-                 background_color=None, Ncols=1, subconfs={}, col_idx=None, row_idx=None, after_header=None,
-                 header_width=None,
-                 **kwargs):
-        # print(name, header_width)
-        self.toggle = toggle
-        self.disabled = disabled
-        self.toggle_key = f'TOGGLE_{name}'
-        self.subdicts = {}
-        self.subconfs = subconfs
-        if col_idx is not None:
-            Ncols = len(col_idx)
-        if header_width is None:
-            header_width = 18 * Ncols + 6 * (Ncols - 1)
-        # self.header_width=header_width
-        if content is None:
-            if type_dict is None:
-                type_dict = par_dict(name if dict_name is None else dict_name)
-            content = self.build(name, type_dict=type_dict, background_color=background_color, **kwargs)
-        content = self.arrange_content(content, Ncols=Ncols, col_idx=col_idx, row_idx=row_idx)
-        self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()} if type_dict is not None else None
-        if disp_name is None:
-            disp_name = name
 
-        header = [
-            [sg.T(disp_name.upper(), justification='center', background_color=background_color, border_width=3,
-                  **t_kws(header_width)
-                  )]]
-        if after_header is not None:
-            header[0] += after_header
-        if toggle is not None:
-            header[0] += [BoolButton(name, toggle, disabled)]
-        self.layout = header + content
-        self.name = name
-        self.layout_pane_kwargs = layout_pane_kwargs
-
-    def get_layout(self, as_col=True, as_pane=True, **kwargs):
-        kws = copy.deepcopy(self.layout_pane_kwargs)
-        kws.update(kwargs)
-        return [[sg.Pane([sg.Col(self.layout)], **kws)]]
-
-    def get_subdicts(self):
-        subdicts = {}
-        for s in list(self.subdicts.values()):
-            subdicts.update(s.get_subdicts())
-        return {self.name: self, **subdicts}
-
-    def get_dict(self, v, w):
-        d = {}
-        for k, t in self.dtypes.items():
-            k0 = f'{self.name}_{k}'
-            if t == bool:
-                d[k] = w[f'TOGGLE_{k0}'].get_state()
-            elif base_dtype(t) in [int, float]:
-                d[k] = w[k0].get()
-            elif t == dict or type(t) == dict:
-                d[k] = self.subdicts[k0].get_dict(v, w)
-            else:
-                d[k] = retrieve_value(v[k0], t)
-        return d
-
-    def build(self, name, type_dict=None, text_kws={}, value_kws={}, **kwargs):
-        combos = {}
-        l = []
-        for k, args in type_dict.items():
-            if args['dtype'] == dict:
-                k0 = f'{name}_{k}'
-                subkws = {
-                    'text_kws': text_kws,
-                    'value_kws': value_kws,
-                    # 'header_width': self.header_width,
-                    **kwargs
-                }
-                if k in self.subconfs.keys():
-                    subkws.update(self.subconfs[k])
-                self.subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'], **subkws)
-                ii = self.subdicts[k0].get_layout()[0]
-            elif args['combo'] is not None:
-                if args['combo'] not in combos.keys():
-                    combos[args['combo']] = {}
-                combos[args['combo']].update({k: args})
-                continue
-            else:
-                disp = args['disp']
-                ii = [sg.T(f'{get_disp_name(disp)}:', tooltip=args['tooltip'], **text_kws),
-                      v_layout(f'{name}_{k}', args, value_kws)]
-            l.append(ii)
-
-        for title, dic in combos.items():
-            l.append(combo_layout(name, title, dic))
-        return l
-
-    def arrange_content(self, l, col_idx=None, row_idx=None, Ncols=1):
-        if col_idx is not None:
-            l = [[l[i] for i in idx] for idx in col_idx]
-            l = [[sg.Col(ii, **col_kws) for ii in l]]
-        elif row_idx is not None:
-            l = [[l[i] for i in idx] for idx in row_idx]
-            # l = [[sg.Col(*l, **col_kws)]]
-        elif Ncols > 1:
-            l = group_list_by_n([*l], int(np.ceil(len(l) / Ncols)))
-            l = [[sg.Col(ii, **col_kws) for ii in l]]
-        return l
-
-    def update(self, w, dict, use_prefix=True):
-        if dict is not None:
-            prefix = self.name if use_prefix else None
-            self.update_window(w, dict, prefix=prefix)
-            try:
-                self.enable(w)
-            except:
-                pass
-        else:
-            try:
-                self.disable(w)
-            except:
-                pass
-        return w
-
-    def update_window(self, w, dic, prefix=None):
-        if dic is not None:
-            for k, v in dic.items():
-                if prefix is not None:
-                    k = f'{prefix}_{k}'
-                if type(v) == bool:
-                    b = w[f'TOGGLE_{k}']
-                    if isinstance(b, BoolButton):
-                        b.set_state(v)
-                elif type(v) == dict:
-                    self.update_window(w, v, prefix=k if prefix is not None else None)
-                elif isinstance(w[k], MultiSpin) or isinstance(w[k], SingleSpin):
-                    w[k].update(v)
-                elif v is None:
-                    w.Element(k).Update(value='')
-                else:
-                    w.Element(k).Update(value=v)
-
-    def disable(self, w):
-        if self.toggle is not None:
-            w[self.toggle_key].set_state(disabled=True)
-
-    def enable(self, w):
-        if self.toggle is not None:
-            w[self.toggle_key].set_state(disabled=False)
 
 
 class CollapsibleDict(Collapsible):
@@ -1123,6 +980,281 @@ class CollapsibleDict(Collapsible):
                 ii = [sg.T(f'{get_disp_name(k)}:', **text_kws), temp]
             content.append(ii)
         return content, subdicts
+
+class PadElement:
+    def __init__(self, name, dict_name=None, disp_name=None, toggle=None, disabled=False,
+                 layout_pane_kwargs={'border_width': 8},header_width=None,background_color=None, after_header=None,
+                 **kwargs):
+        self.name = name
+        self.background_color = background_color
+        self.layout_pane_kwargs = layout_pane_kwargs
+        self.header_width = header_width
+        self.toggle = toggle
+        self.disabled = disabled
+        self.toggle_key = f'TOGGLE_{name}'
+        self.subdicts = {}
+
+        if disp_name is None:
+            disp_name = name
+
+        if dict_name is None:
+            dict_name = name
+        self.dict_name=dict_name
+
+        self.header = [
+            [sg.T(disp_name.upper(), justification='center', background_color=self.background_color, border_width=3,
+                  **t_kws(header_width)
+                  )]]
+        if after_header is not None:
+            self.header[0] += after_header
+        if toggle is not None:
+            self.header[0] += [BoolButton(name, toggle, disabled)]
+
+    def get_layout(self, as_col=True, as_pane=True, **kwargs):
+        kws = copy.deepcopy(self.layout_pane_kwargs)
+        kws.update(kwargs)
+        return [[sg.Pane([sg.Col(self.layout)], **kws)]]
+
+    def get_subdicts(self):
+        subdicts = {}
+        for s in list(self.subdicts.values()):
+            subdicts.update(s.get_subdicts())
+        return {self.name: self, **subdicts}
+
+    def disable(self, w):
+        if self.toggle is not None:
+            w[self.toggle_key].set_state(disabled=True, state=False)
+
+    def enable(self, w):
+        if self.toggle is not None:
+            w[self.toggle_key].set_state(disabled=False, state=True)
+
+
+class PadDict(PadElement):
+    def __init__(self,name, Ncols=1, subconfs={}, col_idx=None,header_width=None,row_idx=None,
+                 type_dict=None, content=None, **kwargs):
+        self.subconfs = subconfs
+        if col_idx is not None:
+            Ncols = len(col_idx)
+        if header_width is None:
+            header_width = 18 * Ncols + 6 * (Ncols - 1)
+        super().__init__(name=name,header_width =header_width, **kwargs)
+        if content is None:
+            if type_dict is None:
+                type_dict = par_dict(self.dict_name)
+            content = self.build(name, type_dict=type_dict, background_color=self.background_color)
+        self.content = self.arrange_content(content, col_idx=col_idx, row_idx=row_idx, Ncols=Ncols)
+        self.dtypes = {k: type_dict[k]['dtype'] for k in type_dict.keys()} if type_dict is not None else None
+
+        self.layout = self.header + self.content
+
+    def arrange_content(self, l, col_idx=None, row_idx=None, Ncols=1):
+        if col_idx is not None:
+            l = [[l[i] for i in idx] for idx in col_idx]
+            l = [[sg.Col(ii, **col_kws) for ii in l]]
+        elif row_idx is not None:
+            l = [[l[i] for i in idx] for idx in row_idx]
+            # l = [[sg.Col(*l, **col_kws)]]
+        elif Ncols > 1:
+            l = group_list_by_n([*l], int(np.ceil(len(l) / Ncols)))
+            l = [[sg.Col(ii, **col_kws) for ii in l]]
+        return l
+
+    def get_dict(self, v, w):
+        if self.toggle is not None :
+            if not w[self.toggle_key].get_state():
+                return None
+
+        d = {}
+        for k, t in self.dtypes.items():
+            k0 = f'{self.name}_{k}'
+            if t == bool:
+                d[k] = w[f'TOGGLE_{k0}'].get_state()
+            elif base_dtype(t) in [int, float]:
+                d[k] = w[k0].get()
+            elif t in [dict, TypedDict] or type(t) == dict:
+                d[k] = self.subdicts[k0].get_dict(v, w)
+            else:
+                d[k] = retrieve_value(v[k0], t)
+        return d
+
+    def build(self, name, type_dict=None, text_kws={}, value_kws={}, **kwargs):
+        combos = {}
+        l = []
+        for k, args in type_dict.items():
+            if args['dtype'] == dict:
+                # print(k)
+                k0 = f'{name}_{k}'
+                subkws = {
+                    'text_kws': text_kws,
+                    'value_kws': value_kws,
+                    # 'header_width': self.header_width,
+                    **kwargs
+                }
+                if k in self.subconfs.keys():
+                    subkws.update(self.subconfs[k])
+                self.subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'], **subkws)
+                ii = self.subdicts[k0].get_layout()[0]
+            elif args['dtype'] == TypedDict:
+                k0 = f'{name}_{k}'
+                subkws = {
+                    'text_kws': text_kws,
+                    'value_kws': value_kws,
+                    # 'header_width': self.header_width,
+                    **kwargs
+                }
+                self.subdicts[k0] = PadTable(k0, dict_name=args['entry'], state=True,
+                                                     index=f'ID', **subkws
+                                                     # index=f'{args["entry"]} ID', **subkws
+                                                     # col_widths=[10, 3, 8, 7, 6], num_rows=5,
+                                                     # heading_dict={'N': 'distribution.N', 'color': 'default_color',
+                                                     #               'odor': 'odor.odor_id',
+                                                     #               'amount': 'amount'},
+                                                     )
+                ii = self.subdicts[k0].get_layout()[0]
+            elif args['combo'] is not None:
+                if args['combo'] not in combos.keys():
+                    combos[args['combo']] = {}
+                combos[args['combo']].update({k: args})
+                continue
+            else:
+                disp = args['disp']
+                ii = [sg.T(f'{get_disp_name(disp)}:', tooltip=args['tooltip'], **text_kws),
+                      v_layout(f'{name}_{k}', args, value_kws)]
+            l.append(ii)
+
+        for title, dic in combos.items():
+            l.append(combo_layout(name, title, dic))
+        return l
+
+    def update(self, w, d):
+        if d is not None:
+            for k, t in self.dtypes.items():
+                k0 = f'{self.name}_{k}'
+                if t == bool:
+                    w[f'TOGGLE_{k0}'].set_state(d[k])
+                elif base_dtype(t) in [int, float]:
+                    w[k0].update(d[k])
+                elif t in [dict, TypedDict] or type(t) == dict:
+                    self.subdicts[k0].update(w, d[k])
+                elif d[k] is None:
+                    w.Element(k0).Update(value='')
+                else:
+                    w.Element(k0).Update(value=d[k])
+            try:
+                self.enable(w)
+            except:
+                pass
+        else:
+            try:
+                self.disable(w)
+            except:
+                pass
+        return w
+
+
+class PadTable(PadElement):
+    def __init__(self,name, index=None, heading_dict=None, dict={},header_width =28,
+                 buttons=[], button_args={}, col_widths=None, num_rows=1, **kwargs):
+        after_header = button_row(name, buttons, button_args)
+        super().__init__(name=name,header_width =header_width,after_header=after_header, **kwargs)
+
+        if index is None:
+            index = self.name
+        self.index = index
+        self.key = f'TABLE {self.name}'
+        if heading_dict is None :
+            heading_dict={k:k for k in null_dict(self.dict_name).keys()}
+        self.heading_dict = heading_dict
+        self.headings = list(heading_dict.keys())
+        self.dict = dict
+        self.data = self.dict2data()
+
+        col_visible = [True] * (len(self.headings) + 1)
+        self.color_idx = None
+        for i, p in enumerate(self.headings):
+            if p in ['color']:
+                self.color_idx = i + 1
+                col_visible[i + 1] = False
+
+
+        self.content = self.build(col_widths=col_widths, num_rows=num_rows, col_visible=col_visible)
+
+        self.layout = self.header + self.content
+
+    def build(self, col_widths, num_rows, col_visible):
+        if col_widths is None:
+            w=int(self.header_width/(len(self.headings)+1))
+            col_widths = [w]
+            for i, p in enumerate(self.headings):
+                if p in ['id', 'group']:
+                    col_widths.append(w)
+                elif p in ['color']:
+                    col_widths.append(8)
+                elif p in ['model']:
+                    col_widths.append(w+4)
+                elif p in ['N']:
+                    col_widths.append(4)
+                else:
+                    col_widths.append(w)
+
+        content = [[Table(values=self.data, headings=[self.index] + self.headings,
+                          def_col_width=7, key=self.key, num_rows=max([num_rows, len(self.data)]),
+                          col_widths=col_widths, visible_column_map=col_visible)]]
+        return content
+
+
+    def update(self, w, d=None):
+        if d is not None:
+            self.dict = d
+        self.data = self.dict2data()
+        if self.color_idx is not None:
+            row_cols = []
+            for i in range(len(self.data)):
+                c0 = self.data[i][self.color_idx]
+                if c0 == '':
+                    c2, c1 = ['lightblue', 'black']
+                else:
+                    try:
+                        c2, c1 = fun.invert_color(c0, return_self=True)
+                    except:
+                        c2, c1 = ['lightblue', 'black']
+                        # c2, c1 = [c0, 'black']
+                row_cols.append((i, c1, c2))
+        else:
+            row_cols = None
+        w[self.key].update(values=self.data, num_rows=len(self.data), row_colors=row_cols)
+
+    def get_dict(self, *args, **kwargs):
+        return self.dict
+
+    def dict2data(self):
+        dH = self.heading_dict
+        d = self.dict
+        data = []
+        for id in d.keys():
+            dF = flatten_dict(d[id])
+            row = [id] + [dF[dH[h]] for h in self.headings]
+            data.append(row)
+        return data
+
+    def eval(self, e, v, w, c, d, g):
+        K = self.key
+        Ks = v[K]
+        if e == f'ADD {self.name}':
+            from lib.gui.aux.windows import larvagroup_window
+            if len(Ks) > 0:
+                id = self.data[Ks[0]][0]
+            else:
+                id = None
+            entry = larvagroup_window(id=id, base_dict=self.dict)
+            self.dict.update(**entry)
+            self.update(w)
+        elif e == f'REMOVE {self.name}':
+            for k in Ks:
+                id = self.data[k][0]
+                self.dict.pop(id, None)
+            self.update(w)
 
 
 class Table(sg.Table):

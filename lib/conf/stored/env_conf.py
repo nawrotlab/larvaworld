@@ -64,7 +64,12 @@ def env(a, f=f_pars(), o=None, bl={}, w=None):
              'gaussian_sigma': None
              }
     if w is not None:
-        w = null_dict('windscape', wind_direction=w[0], wind_speed=w[1])
+        if 'puffs' in w.keys():
+            for id, args in w['puffs'].items() :
+                w['puffs'][id] = null_dict('air_puff', **args)
+        else:
+            w['puffs'] = {}
+        w = null_dict('windscape', **w)
     return null_dict('env_conf', arena=a, food_params=f, odorscape=o, border_list=bl, windscape=w)
 
 
@@ -136,8 +141,11 @@ env_dict = {
                           f_pars(sg=sg('FoodLine', o=oG(), a=0.002, r=0.001, N=20, sh='oval', s=(0.01, 0.0),
                                        m='periphery')), 'G'),
 
-    'windy_arena': env(arena(0.3, 0.3), w=[0.0, 1.0]),
-    'windy_arena_bordered': env(arena(0.3, 0.3), w=[45.0, 1.0], bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),
+    'windy_arena': env(arena(0.3, 0.3), w={'wind_speed': 10.0}),
+    'windy_arena_bordered': env(arena(0.3, 0.3), w={'wind_speed': 10.0},
+                                bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),
+    'puff_arena_bordered': env(arena(0.3, 0.3), w={'puffs': {'PuffGroup' : {}}},
+                               bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),
 
     'CS_UCS_on_food': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(1)), 'G'),
     'CS_UCS_on_food_x2': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(2)), 'G'),

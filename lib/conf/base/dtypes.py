@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, TypedDict
 import pandas as pd
 from siunits import BaseUnit, Composite, DerivedUnit
 
@@ -25,8 +25,10 @@ def base_dtype(t):
 
 
 def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', s='',
-        combo=None, argparser=False):
+        combo=None, argparser=False, entry=None):
     if not argparser:
+        if t==TypedDict :
+            return {name: {'dtype': t, 'entry':entry}}
         cur_dtype = base_dtype(t)
         if cur_dtype in [float, int]:
             if any([arg is not None for arg in [min, max, dv]]):
@@ -257,10 +259,19 @@ def init_pars():
                       'gaussian_sigma': {'t': Tuple[float], 'max': 1.0,
                                          'h': 'The sigma of the gaussian difusion algorithm.'}
                       },
-        'windscape': {'wind_direction': {'t': float, 'min': 0.0, 'max': 360.0, 'dv': 1.0,
+        'air_puff' : {
+            'duration' : {'v': 1.0, 'max': 100.0, 'h': 'The duration of the air-puff in seconds.'},
+            'speed' : {'v': 10.0, 'max': 1000.0, 'h': 'The wind speed of the air-puff.'},
+            'direction' : {'v': 0.0, 'max': 100.0, 'h': 'The directions of the air puff in radians.'},
+            'start_time' : {'v': 0.0, 'max': 10000.0,'dv': 1.0, 'h': 'The starting time of the air-puff in seconds.'},
+            'N' : {'max': 10000, 'h': 'The number of repetitions of the puff. If N>1 an interval must be provided'},
+            'interval':{'v': 5.0, 'max': 10000.0, 'h': 'Whether the puff will reoccur at constant time intervals in seconds. Ignored if N=1'},
+        },
+        'windscape': {'wind_direction': {'t': float,'v': 0.0, 'min': 0.0, 'max': 360.0, 'dv': 1.0,
                                          'h': 'The absolute polar direction of the wind/air puff.'},
-                      'wind_speed': {'t': float, 'min': 0.0, 'max': 100.0, 'dv': 1.0,
+                      'wind_speed': {'t': float,'v': 0.0, 'min': 0.0, 'max': 100.0, 'dv': 1.0,
                                      'h': 'The speed of the wind/air puff.'},
+                      'puffs' : {'t' : TypedDict, 'v' : {}, 'entry' : 'air_puff'}
                       },
         'odor_gains': {
             'unique_id': {'t': str, 'h': 'The unique ID of the odorant.'},
@@ -992,7 +1003,6 @@ def oG(c=1, id='Odor'):
 
 def oD(c=1, id='Odor'):
     return odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)
-
 
 if __name__ == '__main__':
     store_controls()
