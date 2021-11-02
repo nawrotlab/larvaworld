@@ -146,6 +146,7 @@ class ValueGrid:
         #     viewer.draw_polygon(vertices, col, filled=True)
         self.draw_peak(viewer)
         if self.model.odor_aura :
+
             self.draw_isocontours(viewer)
 
     def draw_isocontours(self, viewer):
@@ -162,24 +163,27 @@ class ValueGrid:
             inds = np.argwhere((v <= g) & (g < v*k)).tolist()
             points = [self.cel_pos(i, j) for (i, j) in inds]
             if len(points) > 2:
-                ps=np.array(points)
-                pxy=ps[np.argmax(ps[:,0]),:]+np.array([self.x, -self.y])
-                viewer.draw_convex(points, color=c, filled=False, width=0.0005)
-                text_box = InputBox(text=str(np.round(v, 2)), color_active=c, visible=True,
-                                    screen_pos=viewer._transform(pxy))
-                text_box.draw(viewer)
+                try:
+                    ps=np.array(points)
+                    pxy=ps[np.argmax(ps[:,0]),:]+np.array([self.x, -self.y])
+                    viewer.draw_convex(points, color=c, filled=False, width=0.0005)
+                    text_box = InputBox(text=str(np.round(v, 2)), color_active=c, visible=True,
+                                        screen_pos=viewer._transform(pxy))
+                    text_box.draw(viewer)
+                except :
+                    pass
 
 
     def get_color_grid(self):
+        g = self.get_grid().flatten()
+        # if not self.fixed_max :
+        #     self.max_value=np.max([self.max_value, np.max(g)])
         v0,v1 = self.min_value, self.max_value
-        # g=self.get_grid()
-        # print(g.shape)
-        g=self.get_grid().flatten()
         gg=(g-v0)/(v1-v0)
         k=10**2
         m=(1-np.exp(-k))**-1
         q=m*(1-np.exp(-k*gg))
-        # print(q.shape)
+        q=np.clip(q, a_min=0, a_max=1)
         return col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
 
     def get_grid(self):
