@@ -796,7 +796,9 @@ def init_pars():
 
 
 col_idx_dict={
-    'LarvaGroup' : [[0, 1, 2, 3, 6], [4], [5]]
+    'LarvaGroup' : [[0, 1, 2, 3, 6], [4], [5]],
+    'enrichment' : [[0], [5, 1, 3], [6, 2, 4]],
+    'metric_definition' : [[0, 1, 4], [2, 3, 5, 6]],
 }
 
 

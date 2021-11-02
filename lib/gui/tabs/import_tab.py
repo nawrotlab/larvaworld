@@ -38,12 +38,11 @@ class ImportTab(GuiTab):
                                'resolution': {'header_width': 20, 'text_kws': t_kws(13)},
                                'arena': {'header_width': 20, 'text_kws': t_kws(7)}}
                      )
-        pd2 = PadDict('enrichment', col_idx=[[0], [5, 1, 3], [6, 2, 4]], background_color=self.Cenr, header_width=125,
+        pd2 = PadDict('enrichment', background_color=self.Cenr, header_width=125,
                      subconfs={'preprocessing': {'text_kws': t_kws(14), 'header_width': 20},
                                'to_drop': {'Ncols': 2, 'header_width': 30, 'text_kws': t_kws(9)},
                                'processing': {'Ncols': 2, 'header_width': 30, 'text_kws': t_kws(9)},
-                               'metric_definition': {'col_idx': [[0, 1, 4], [2, 3, 5, 6]], 'header_width': 60,
-                                                     'text_kws': t_kws(9)}}
+                               'metric_definition': {'header_width': 60,'text_kws': t_kws(9)}}
                      )
 
         dd1 = gui_col([sl1, pd1], x_frac=x, as_pane=True, pad=(0,0))

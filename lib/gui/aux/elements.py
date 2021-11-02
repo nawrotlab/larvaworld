@@ -1099,7 +1099,7 @@ class PadDict(PadElement):
                 if k in self.subconfs.keys():
                     subkws.update(self.subconfs[k])
                 if args['dtype']==dict :
-                    self.subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'], **subkws)
+                    self.subdicts[k0] = PadDict(k0, disp_name=k,dict_name=k, type_dict=args['content'], **subkws)
                 else :
                     self.subdicts[k0] = PadTable(k0, dict_name=args['entry'], disp_name=args['disp'],
                                                  index=f'ID', **subkws
