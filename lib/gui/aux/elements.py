@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from lib.aux.dictsNlists import flatten_dict, group_list_by_n
 from lib.conf.stored.conf import loadConfDict, deleteConf, loadConf, expandConf, kConfDict
 import lib.aux.colsNstr as fun
-from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par
+from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par, col_idx_dict
 from lib.conf.base.par import runtime_pars, getPar
 from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse, \
     col_kws, default_list_width
@@ -818,12 +818,12 @@ class CollapsibleTable(Collapsible):
         K = self.key
         Ks = v[K]
         if e == f'ADD {self.name}':
-            from lib.gui.aux.windows import larvagroup_window
+            from lib.gui.aux.windows import entry_window
             if len(Ks) > 0:
                 id = self.data[Ks[0]][0]
             else:
                 id = None
-            entry = larvagroup_window(id=id, base_dict=self.dict)
+            entry = entry_window(id=id, base_dict=self.dict)
             self.dict.update(**entry)
             self.update(w)
         elif e == f'REMOVE {self.name}':
@@ -982,7 +982,7 @@ class CollapsibleDict(Collapsible):
         return content, subdicts
 
 class PadElement:
-    def __init__(self, name, dict_name=None, disp_name=None, toggle=None, disabled=False,
+    def __init__(self, name, dict_name=None, disp_name=None, toggle=None, disabled=False,text_kws={}, value_kws={},
                  layout_pane_kwargs={'border_width': 8},header_width=None,background_color=None, after_header=None,
                  **kwargs):
         self.name = name
@@ -991,11 +991,13 @@ class PadElement:
         self.header_width = header_width
         self.toggle = toggle
         self.disabled = disabled
+        self.text_kws = text_kws
+        self.value_kws = value_kws
         self.toggle_key = f'TOGGLE_{name}'
         self.subdicts = {}
 
         if disp_name is None:
-            disp_name = name
+            disp_name = get_disp_name(name)
 
         if dict_name is None:
             dict_name = name
@@ -1034,11 +1036,14 @@ class PadDict(PadElement):
     def __init__(self,name, Ncols=1, subconfs={}, col_idx=None,header_width=None,row_idx=None,
                  type_dict=None, content=None, **kwargs):
         self.subconfs = subconfs
-        if col_idx is not None:
-            Ncols = len(col_idx)
+
         if header_width is None:
             header_width = 18 * Ncols + 6 * (Ncols - 1)
         super().__init__(name=name,header_width =header_width, **kwargs)
+        if col_idx is None :
+            col_idx = col_idx_dict.get(self.dict_name, None)
+        if col_idx is not None:
+            Ncols = len(col_idx)
         if content is None:
             if type_dict is None:
                 type_dict = par_dict(self.dict_name)
@@ -1078,39 +1083,32 @@ class PadDict(PadElement):
                 d[k] = retrieve_value(v[k0], t)
         return d
 
-    def build(self, name, type_dict=None, text_kws={}, value_kws={}, **kwargs):
+    def build(self, name, type_dict=None, **kwargs):
         combos = {}
         l = []
         for k, args in type_dict.items():
-            if args['dtype'] == dict:
+            if args['dtype'] in [dict, TypedDict]:
                 # print(k)
                 k0 = f'{name}_{k}'
                 subkws = {
-                    'text_kws': text_kws,
-                    'value_kws': value_kws,
+                    'text_kws': self.text_kws,
+                    'value_kws': self.value_kws,
                     # 'header_width': self.header_width,
                     **kwargs
                 }
                 if k in self.subconfs.keys():
                     subkws.update(self.subconfs[k])
-                self.subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'], **subkws)
-                ii = self.subdicts[k0].get_layout()[0]
-            elif args['dtype'] == TypedDict:
-                k0 = f'{name}_{k}'
-                subkws = {
-                    'text_kws': text_kws,
-                    'value_kws': value_kws,
-                    # 'header_width': self.header_width,
-                    **kwargs
-                }
-                self.subdicts[k0] = PadTable(k0, dict_name=args['entry'], state=True,
-                                                     index=f'ID', **subkws
-                                                     # index=f'{args["entry"]} ID', **subkws
-                                                     # col_widths=[10, 3, 8, 7, 6], num_rows=5,
-                                                     # heading_dict={'N': 'distribution.N', 'color': 'default_color',
-                                                     #               'odor': 'odor.odor_id',
-                                                     #               'amount': 'amount'},
-                                                     )
+                if args['dtype']==dict :
+                    self.subdicts[k0] = PadDict(k0, disp_name=k, type_dict=args['content'], **subkws)
+                else :
+                    self.subdicts[k0] = PadTable(k0, dict_name=args['entry'], disp_name=args['disp'],
+                                                 index=f'ID', **subkws
+                                                 # index=f'{args["entry"]} ID', **subkws
+                                                 # col_widths=[10, 3, 8, 7, 6], num_rows=5,
+                                                 # heading_dict={'N': 'distribution.N', 'color': 'default_color',
+                                                 #               'odor': 'odor.odor_id',
+                                                 #               'amount': 'amount'},
+                                                 )
                 ii = self.subdicts[k0].get_layout()[0]
             elif args['combo'] is not None:
                 if args['combo'] not in combos.keys():
@@ -1119,8 +1117,8 @@ class PadDict(PadElement):
                 continue
             else:
                 disp = args['disp']
-                ii = [sg.T(f'{get_disp_name(disp)}:', tooltip=args['tooltip'], **text_kws),
-                      v_layout(f'{name}_{k}', args, value_kws)]
+                ii = [sg.T(f'{get_disp_name(disp)}:', tooltip=args['tooltip'], **self.text_kws),
+                      v_layout(f'{name}_{k}', args, self.value_kws)]
             l.append(ii)
 
         for title, dic in combos.items():
@@ -1155,8 +1153,9 @@ class PadDict(PadElement):
 
 class PadTable(PadElement):
     def __init__(self,name, index=None, heading_dict=None, dict={},header_width =28,
-                 buttons=[], button_args={}, col_widths=None, num_rows=1, **kwargs):
+                 buttons=[], button_args={}, col_widths=None, num_rows=5, **kwargs):
         after_header = button_row(name, buttons, button_args)
+        header_width=header_width-2*len(buttons)
         super().__init__(name=name,header_width =header_width,after_header=after_header, **kwargs)
 
         if index is None:
@@ -1242,12 +1241,12 @@ class PadTable(PadElement):
         K = self.key
         Ks = v[K]
         if e == f'ADD {self.name}':
-            from lib.gui.aux.windows import larvagroup_window
+            from lib.gui.aux.windows import entry_window
             if len(Ks) > 0:
                 id = self.data[Ks[0]][0]
             else:
                 id = None
-            entry = larvagroup_window(id=id, base_dict=self.dict)
+            entry = entry_window(id=id, base_dict=self.dict, index=self.index, dict_name=self.dict_name)
             self.dict.update(**entry)
             self.update(w)
         elif e == f'REMOVE {self.name}':

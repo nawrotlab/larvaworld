@@ -2,7 +2,8 @@ import copy
 import PySimpleGUI as sg
 
 from lib.aux.collecting import output_keys
-from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, CollapsibleTable, PadDict
+from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, CollapsibleTable, PadDict, \
+    PadTable
 from lib.gui.aux.functions import t_kws, gui_col, gui_cols, col_size, default_list_width, col_kws
 from lib.gui.tabs.draw_tab import DrawTab
 from lib.gui.tabs.env_tab import EnvTab
@@ -54,26 +55,23 @@ class SimTab(GuiTab):
     def build_conf(self):
         kws = {'background_color': 'lightgreen'}
         # kws = {'background_color': 'lightgreen', 'text_kws': t_kws(10)}
-        s1 = CollapsibleTable('larva_groups', buttons=['add', 'remove'], index='Group ID', col_widths=[10, 3, 7, 10],
+        s1 = PadTable('larva_groups', buttons=['add', 'remove'], index='Group ID', col_widths=[10, 3, 7, 10],
                               heading_dict={'N': 'distribution.N', 'color': 'default_color', 'model': 'model'},
-                              dict_name='LarvaGroup', state=True, num_rows=6)
+                              dict_name='LarvaGroup')
         self.envtab = EnvTab(name='environment', gui=self.gui, conftype='Env')
         tab1_l, tab1_c, tab1_g, tab1_d = self.envtab.build()
         sl1 = self.envtab.selectionlists[self.envtab.conftype]
 
-        s2 = CollapsibleTable('trials', buttons=['add', 'remove'], index='idx', col_widths=[3, 4, 4, 5, 8],
+        s2 = PadTable('trials', buttons=['add', 'remove'], index='idx', col_widths=[3, 4, 4, 5, 8],
                               heading_dict={'start': 'start', 'stop': 'stop', 'quality': 'substrate.quality',
-                                            'type': 'substrate.type'},
-                              dict_name='epoch', state=True, num_rows=5)
+                                            'type': 'substrate.type'},dict_name='epoch')
         sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], progress=True,
                             sublists={'env_params': sl1, 'larva_groups': s1},text_kws=t_kws(15), width=28)
         sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Behavior/field :', buttons=[],single_line=True,
                             width=15, text_kws=t_kws(12),sublists={'simulations': sl3})
 
         c1 = PadDict('sim_params', disp_name='Configuration',text_kws= t_kws(10),header_width=30, **kws)
-        # c1 = CollapsibleDict('sim_params', disp_name='Configuration')
         c2 = PadDict('output',text_kws= t_kws(7), Ncols=2,header_width=30, **kws)
-        # c2 = CollapsibleDict('output')
 
         ll3 = gui_col([c1, c2, s2], x_frac=0.25, as_pane=True)
         # ll2 = gui_col([s1, tab1], x_frac=0.2)

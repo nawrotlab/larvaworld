@@ -28,7 +28,7 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
         combo=None, argparser=False, entry=None):
     if not argparser:
         if t==TypedDict :
-            return {name: {'dtype': t, 'entry':entry}}
+            return {name: {'dtype': t, 'entry':entry, 'disp':disp}}
         cur_dtype = base_dtype(t)
         if cur_dtype in [float, int]:
             if any([arg is not None for arg in [min, max, dv]]):
@@ -271,7 +271,7 @@ def init_pars():
                                          'h': 'The absolute polar direction of the wind/air puff.'},
                       'wind_speed': {'t': float,'v': 0.0, 'min': 0.0, 'max': 100.0, 'dv': 1.0,
                                      'h': 'The speed of the wind/air puff.'},
-                      'puffs' : {'t' : TypedDict, 'v' : {}, 'entry' : 'air_puff'}
+                      'puffs' : {'t' : TypedDict, 'v' : {}, 'entry' : 'air_puff', 'disp' : 'air-puffs', 'h': 'Repetitive or single air-puff stimuli.'}
                       },
         'odor_gains': {
             'unique_id': {'t': str, 'h': 'The unique ID of the odorant.'},
@@ -586,8 +586,9 @@ def init_pars():
     }
 
     d['life_history'] = {
-        'epochs': {'t': dict, 'h': 'The feeding epochs comprising life-history.'},
         'age': {'v': 0.0, 'max': 250.0, 'dv': 1.0, 'h': 'The larva age in hours post-hatch.'},
+        'epochs': {'t' : TypedDict, 'v' : {}, 'entry' : 'epoch', 'disp' : 'life epochs', 'h': 'The feeding epochs comprising life-history.'}
+
     }
 
     d['brain'] = {
@@ -792,6 +793,12 @@ def init_pars():
     }
 
     return d
+
+
+col_idx_dict={
+    'LarvaGroup' : [[0, 1, 2, 3, 6], [4], [5]]
+}
+
 
 
 def null_dict(n, key='initial_value', **kwargs):

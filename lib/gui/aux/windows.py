@@ -8,8 +8,8 @@ from PySimpleGUI import TITLE_LOCATION_TOP
 from lib.aux.dictsNlists import flatten_list
 from lib.aux.colsNstr import remove_prefix, remove_suffix
 from lib.conf.stored.conf import saveConf, loadConf, kConfDict
-from lib.conf.base.dtypes import null_dict
-from lib.gui.aux.functions import retrieve_value, t_kws, b6_kws, w_kws, col_size
+from lib.conf.base.dtypes import null_dict, col_idx_dict
+from lib.gui.aux.functions import retrieve_value, t_kws, b6_kws, w_kws, col_size, get_disp_name
 from lib.gui.aux.buttons import named_bool_button
 from lib.conf.base import paths
 
@@ -216,11 +216,12 @@ def save_conf_window(conf, conftype, disp=None):
     elif e == 'Cancel':
         return None
 
+
 def add_ref_window():
     from lib.gui.aux.elements import NamedList
     from lib.stor.larva_dataset import LarvaDataset
     k = 'ID'
-    temp = NamedList('Reference ID : ', key=k, choices=kConfDict('Ref'),size=(30, 10),
+    temp = NamedList('Reference ID : ', key=k, choices=kConfDict('Ref'), size=(30, 10),
                      select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED, drop_down=False,
                      readonly=True, enable_events=False, header_kws={'text': 'Select reference datasets'})
     l = [
@@ -228,7 +229,7 @@ def add_ref_window():
         [sg.Ok(), sg.Cancel()]]
     e, v = sg.Window('Load reference datasets', l).read(close=True)
     if e == 'Ok':
-        return {id : LarvaDataset(dir=loadConf(id, 'Ref')['dir'], load_data=False) for id in v[k]}
+        return {id: LarvaDataset(dir=loadConf(id, 'Ref')['dir'], load_data=False) for id in v[k]}
     elif e == 'Cancel':
         return None
 
@@ -263,9 +264,9 @@ def import_window(datagroup_id, raw_dic):
     w_size = (1200, 800)
     h_kws = {'font': ('Helvetica', 8, 'bold'), 'justification': 'center', **t_kws(30)}
     l00 = sg.Col([[sg.T('Group ID :', **t_kws(8)), sg.In(default_text=groupID0, k='import_group_id', **t_kws(20))],
-           [*named_bool_button(name=M, state=False, toggle_name=None),
-           *named_bool_button(name=E, state=False, toggle_name=None, disabled=False)],
-           [sg.Ok(), sg.Cancel()]])
+                  [*named_bool_button(name=M, state=False, toggle_name=None),
+                   *named_bool_button(name=E, state=False, toggle_name=None, disabled=False)],
+                  [sg.Ok(), sg.Cancel()]])
 
     l01 = [sg.Col([[sg.T('RAW DATASETS', **h_kws), sg.T(**t_kws(8)), sg.T('NEW DATASETS', **h_kws)],
                    *[[sg.T(id, **t_kws(30)), sg.T('  -->  ', **t_kws(8)), sg.In(id, k=f'new_{id}', **t_kws(30))] for id
@@ -273,10 +274,11 @@ def import_window(datagroup_id, raw_dic):
                   vertical_scroll_only=True, scrollable=True, expand_y=True, vertical_alignment='top',
                   size=col_size(y_frac=0.4, win_size=w_size))]
 
-    s1 = PadDict('build_conf', disp_name='Configuration', text_kws=t_kws(20), header_width=30, background_color='purple')
+    s1 = PadDict('build_conf', disp_name='Configuration', text_kws=t_kws(20), header_width=30,
+                 background_color='purple')
 
-    l2=[[sg.Frame(title='Options', layout=[[sg.Col(s1.layout), l00]], title_color='green',background_color='blue',
-                  border_width=8, pad=(40,40),element_justification='center', title_location=TITLE_LOCATION_TOP)]]
+    l2 = [[sg.Frame(title='Options', layout=[[sg.Col(s1.layout), l00]], title_color='green', background_color='blue',
+                    border_width=8, pad=(40, 40), element_justification='center', title_location=TITLE_LOCATION_TOP)]]
 
     c = {}
     for s in [s1]:
@@ -369,31 +371,33 @@ def change_dataset_id(dic, old_ids):
     return dic
 
 
-def larvagroup_window(base_dict={}, id=None, **kwargs):
-    from lib.gui.aux.elements import CollapsibleDict
-    from lib.gui.tabs.gui import check_togglesNcollapsibles
-    k = 'LarvaGroup'
-    gID = 'Group ID'
-    c0 = CollapsibleDict(k, use_header=False, as_entry=gID, subdict_state=True, col_idx=[[0, 1, 2, 3, 4, 7], [5], [6]])
-    c = c0.get_subdicts()
-    l = c0.get_layout(as_col=False) + [[sg.Ok(), sg.Cancel()]]
+def entry_window(index, dict_name, base_dict={}, id=None, **kwargs):
+    from lib.gui.aux.elements import PadDict
+    c0 = PadDict(dict_name)
+    l0 = c0.get_layout(pad=(20, 20))
+    lID = [sg.T(f'{index}:', **t_kws(10), tooltip='The ID of the new entry'),
+           sg.In(key='kID', **t_kws(30), pad=((0, 100), (0, 0)))]
+    l1 = sg.Pane([sg.Col([[*lID, sg.Ok(), sg.Cancel()]])], border_width=8, pad=(20, 20))
+    l = [[l0], [l1]]
     kws = w_kws
     kws['default_element_size'] = (16, 1)
-    w = sg.Window(k, l, size=col_size(0.8, 0.5), **kws, **kwargs)
+    w = sg.Window(get_disp_name(dict_name), l, size=col_size(0.8, 0.5), **kws, **kwargs)
     if id is not None:
-        c0.update_window(w, dic={**base_dict[id], gID: id}, prefix=c0.name)
+        c0.update(w, base_dict[id])
+        w.Element('kID').Update(value=id)
     while True:
         e, v = w.read()
         if e == 'Ok':
             dic = c0.get_dict(v, w)
-            new_id = list(dic.keys())[0]
+            new_id = w.Element('kID').get()
+            entry={new_id:dic}
             if new_id in [None, '']:
-                sg.popup_no_buttons(f'{gID} not provided', title='No ID!', auto_close_duration=2, auto_close=True)
+                sg.popup_no_buttons(f'{index} not provided', title='No ID!', auto_close_duration=2, auto_close=True)
                 continue
             elif new_id in base_dict.keys():
                 choice, _ = sg.Window('Overwrite?',
-                                      [[sg.T(f'{gID} {new_id} already exists.\nOverwrite it?')],
-                                       [sg.Yes(s=10), sg.No(s=10)]],
+                                      [[sg.T(f'{index} {new_id} already exists.', pad=(20, 20))],
+                                       [sg.T('Overwrite it? '), sg.Yes(), sg.No()]],
                                       disable_close=True).read(close=True)
                 if choice == 'No':
                     continue
@@ -402,12 +406,12 @@ def larvagroup_window(base_dict={}, id=None, **kwargs):
             else:
                 break
         elif e in ['Cancel', None]:
-            dic = {}
+            entry = {}
             break
-        check_togglesNcollapsibles(w, e, v, c)
     w.close()
-    return dic
+    return entry
 
 
 if __name__ == "__main__":
-    dic = larvagroup_window({'dd': 'ss'})
+    dic = entry_window(index='ID', dict_name='LarvaGroup', base_dict={'dd': 'ss'})
+    # print(col_idx_dict.get('Larvaroup', None))
