@@ -9,8 +9,9 @@ from lib.model.DEB.deb import Substrate
 
 
 class ValueGrid:
-    def __init__(self, unique_id, space_range, grid_dims=[50, 50], distribution='uniform', visible=False,
+    def __init__(self,model,  unique_id, space_range, grid_dims=[50, 50], distribution='uniform', visible=False,
                  initial_value=0, default_color=(255, 255, 255), max_value=np.inf, min_value=-np.inf):
+        self.model = model
         self.visible = visible
         self.unique_id = unique_id
         self.initial_value = initial_value
@@ -123,10 +124,10 @@ class ValueGrid:
         for vertices, col in zip(self.grid_vertices, color_grid):
             viewer.draw_polygon(vertices, col, filled=True)
         self.draw_peak(viewer)
-        self.draw_isocontours(viewer)
+        if self.model.odor_aura :
+            self.draw_isocontours(viewer)
 
     def draw_isocontours(self, viewer):
-    # def draw(self, viewer):
         N = 8
         k=4
         g = self.get_grid()
@@ -137,16 +138,14 @@ class ValueGrid:
             v = vmax *k**-i
             if v<=0 :
                 continue
-            inds = np.argwhere(v <= g).tolist()
-            # inds = np.argwhere((v *0.8 <= g) & (g < v*1.2)).tolist()
+            inds = np.argwhere((v <= g) & (g < v*k)).tolist()
             points = [self.cel_pos(i, j) for (i, j) in inds]
             if len(points) > 2:
                 ps=np.array(points)
-                px = np.max(ps[0,:])
-                p_text=(px+self.cell_radius, np.min(ps[ps[:,0]==px][:,1])-self.cell_radius)
+                pxy=ps[np.argmax(ps[:,0]),:]+np.array([self.x, -self.y])
                 viewer.draw_convex(points, color=c, filled=False, width=0.0005)
                 text_box = InputBox(text=str(np.round(v, 2)), color_active=c, visible=True,
-                                    screen_pos=viewer._transform(p_text))
+                                    screen_pos=viewer._transform(pxy))
                 text_box.draw(viewer)
 
 

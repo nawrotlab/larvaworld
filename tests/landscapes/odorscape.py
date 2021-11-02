@@ -15,15 +15,23 @@ mode='D'
 # mode='G'
 # odorscape=null_dict('odorscape')
 if mode=='D' :
-    o = null_dict('odorscape', odorscape='Diffusion', grid_dims=(51,51), gaussian_sigma=(0.95,0.95), evap_const=0.9)
-    env_params = null_dict('env_conf', food_params=f_pars(su=su(pos=(0.0, 0.0), o=oD())), odorscape=o)
+    odorscape = null_dict('odorscape', odorscape='Diffusion', grid_dims=(51,51), gaussian_sigma=(0.95,0.95), evap_const=0.5)
+    oR = oD(id='Odor_R')
+    oL = oD(id='Odor_L')
+    # env_params = null_dict('env_conf', food_params=f_pars(su=su(pos=(0.0, 0.0), o=oD())), odorscape=odorscape)
 elif mode== 'G' :
-    o = null_dict('odorscape', odorscape='Gaussian')
-    env_params=null_dict('env_conf', food_params=f_pars(su=su(pos=(0.0, 0.0), o=oG())), odorscape=o)
+    odorscape = null_dict('odorscape', odorscape='Gaussian')
+    oR = oG(id='Odor_R')
+    oL = oG(id='Odor_L')
+sus={
+    **su(id='Source_R', pos=(0.01, 0.0), o=oR),
+    **su(id='Source_L', pos=(-0.01, 0.0), o=oL),
+     }
+env_params=null_dict('env_conf', food_params=f_pars(su=sus), odorscape=odorscape)
 # env_params=null_dict('env_conf', odorscape=odorscape, food_params=f_pars(su=su(pos=(0.0, 0.0), o=oG(2, id='Odor'))))
 # env_params=null_dict('env_conf', windscape=windscape, border_list={'Border' : null_dict('Border', points=[(-0.03,0.02), (0.03,0.02)])})
 env=LarvaWorldSim(env_params=env_params, Nsteps=N, vis_kwargs=null_dict('visualization', mode='video', video_speed=10, media_name='odorscape'))
-env.odor_layers['Odor'].visible=True
+env.odor_layers['Odor_R'].visible=True
 # env.windscape.visible=True
 env.is_running=True
 while env.is_running and env.Nticks < env.Nsteps:

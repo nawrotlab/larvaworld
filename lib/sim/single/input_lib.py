@@ -17,6 +17,7 @@ def evaluate_input(model, screen):
         if e.type == pygame.QUIT:
             screen.close_requested()
         if e.type == pygame.KEYDOWN:
+            # print(e)
             for k, v in shortcuts['pygame_keys'].items():
                 if e.key == getattr(pygame, v):
                     eval_keypress(k, screen, model)
@@ -53,6 +54,7 @@ def evaluate_input(model, screen):
 
 
 def eval_keypress(k, screen, model):
+    # print(k)
     if k == '▲ trail duration':
         model.toggle('trajectory_dt', plus=True, disp='trail duration')
     elif k == '▼ trail duration':

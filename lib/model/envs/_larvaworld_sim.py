@@ -66,6 +66,7 @@ class LarvaWorldSim(LarvaWorld):
             else:
                 default_color = c
             kwargs = {
+                'model': self,
                 'unique_id': id,
                 'sources': od_sources,
                 'default_color': default_color,

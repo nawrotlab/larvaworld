@@ -56,7 +56,7 @@ class LarvaWorld:
         self.__dict__.update(self.vis_kwargs['color'])
         self.__dict__.update(self.vis_kwargs['aux'])
 
-        self.draw_odor_aura = False
+        self.odor_aura = False
         self.experiment = experiment
         self.dynamic_graphs = []
         self.focus_mode = False
@@ -239,7 +239,7 @@ class LarvaWorld:
 
     def _create_food_grid(self, space_range, grid_pars):
         if grid_pars:
-            self.food_grid = FoodGrid(**grid_pars, space_range=space_range)
+            self.food_grid = FoodGrid(**grid_pars, space_range=space_range, model=self)
 
     def create_schedules(self):
         self.active_larva_schedule = NamedRandomActivation('active_larva_schedule', self)
@@ -631,6 +631,7 @@ class LarvaWorld:
             'visible_clock',
             'visible_ids',
             'visible_state',
+            'odor_aura',
             'color_behavior',
             'random_colors',
             'black_background',

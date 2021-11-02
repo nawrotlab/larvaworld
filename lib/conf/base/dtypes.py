@@ -946,6 +946,7 @@ def init_shortcuts():
     }
 
     odorscape = {
+        'odor_aura': 'u',
         'windscape': 'w',
         'plot odorscapes': 'o',
         **{f'odorscape {i}': i for i in range(10)},
