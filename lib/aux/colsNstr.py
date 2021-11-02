@@ -85,11 +85,15 @@ def rgetattr(obj, attr, *args):
         return getattr(obj, attr, *args)
     return functools.reduce(_getattr, [obj] + attr.split('.'))
 
-def col_range(q, low=(255, 0, 0),high=(255, 255, 255)) :
+def col_range(q, low=(255, 0, 0),high=(255, 255, 255), mul255=False) :
     rr0, gg0, bb0 = q_col1 = np.array(low)/255
     rr1, gg1, bb1 = q_col2 = np.array(high)/255
     qrange = np.array([rr1 - rr0, gg1 - gg0, bb1 - bb0])
-    return q_col1 + q * qrange
+    res= q_col1 + np.array([q,q,q]).T * qrange
+    res=np.clip(res, a_min=0, a_max=1)
+    if mul255 :
+        res*=255
+    return res
 
 
 # for q in np.arange(0,1,0.1):

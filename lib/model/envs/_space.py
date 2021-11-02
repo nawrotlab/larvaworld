@@ -3,20 +3,21 @@ from scipy.ndimage.filters import gaussian_filter
 from shapely.geometry import LineString, Point
 
 from lib.anal.rendering import InputBox
-from lib.aux.colsNstr import colorname2tuple
+from lib.aux.colsNstr import colorname2tuple, col_range
 from lib.aux.dictsNlists import flatten_list, unique_list
 from lib.model.DEB.deb import Substrate
 
 
 class ValueGrid:
-    def __init__(self,model,  unique_id, space_range, grid_dims=[50, 50], distribution='uniform', visible=False,
-                 initial_value=0, default_color=(255, 255, 255), max_value=np.inf, min_value=-np.inf):
+    def __init__(self,model,  unique_id, space_range, grid_dims=[51, 51], distribution='uniform', visible=False,
+                 initial_value=0.0, default_color=(255, 255, 255), max_value=None, min_value=0.0, fixed_max=False):
         self.model = model
         self.visible = visible
         self.unique_id = unique_id
         self.initial_value = initial_value
-        self.max_value = max_value
+
         self.min_value = min_value
+        self.fixed_max = fixed_max
         if type(default_color) == str:
             default_color = colorname2tuple(default_color)
         self.default_color = default_color
@@ -45,6 +46,9 @@ class ValueGrid:
                            [xr / 2, -yr / 2],
                            [xr / 2, yr / 2],
                            [-xr / 2, yr / 2]]
+        if max_value is None :
+            max_value=np.max(self.grid)
+        self.max_value=max_value
 
     def add_value(self, p, value):
         cell = self.get_grid_cell(p)
@@ -73,6 +77,8 @@ class ValueGrid:
     def add_cell_value(self, cell, value):
         v0 = self.get_cell_value(cell)
         v1 = v0 + value
+        if not self.fixed_max :
+            self.max_value=np.max([self.max_value, v1])
         v2 = np.clip(v1, a_min=self.min_value, a_max=self.max_value)
         self.set_cell_value(cell, v2)
         if v1 < v2:
@@ -112,11 +118,11 @@ class ValueGrid:
         p = self.cel_pos(*idx)
         vs = self.cell_vertices(*idx)
 
-        viewer.draw_circle(p, self.cell_radius, 'white', filled=True, width=0.0005)
-        viewer.draw_polygon(vs, 'white', filled=False, width=0.0005)
+        viewer.draw_circle(p, self.cell_radius, self.default_color, filled=True, width=0.0005)
+        # viewer.draw_polygon(vs, 'white', filled=False, width=0.0005)
 
         p_text = (p[0] + self.x, p[1] - self.y)
-        text_box = InputBox(text=str(np.round(self.grid.max(), 2)), color_active='white', visible=True,screen_pos=viewer._transform(p_text))
+        text_box = InputBox(text=str(np.round(self.grid.max(), 2)), color_active=self.default_color, visible=True,screen_pos=viewer._transform(p_text))
         text_box.draw(viewer)
 
     def draw(self, viewer):
@@ -131,8 +137,8 @@ class ValueGrid:
         N = 8
         k=4
         g = self.get_grid()
-        c='white'
-        # c=self.default_color
+        # c='white'
+        c=self.default_color
         vmax = np.max(g)
         for i in range(N):
             v = vmax *k**-i
@@ -150,11 +156,13 @@ class ValueGrid:
 
 
     def get_color_grid(self):
-        v0 = self.initial_value
-        cs = np.array((v0 - self.get_grid().flatten()) * 255).astype(int)
-        cs = np.array([cs, cs, cs]).T
-        color_grid = np.clip(np.array(self.default_color) + cs, a_min=0, a_max=255)
-        return color_grid
+        v0,v1 = self.min_value, self.max_value
+        g=self.get_grid().flatten()
+        gg=(g-v0)/(v1-v0)
+        k=10**2
+        m=(1-np.exp(-k))**-1
+        q=m*(1-np.exp(-k*gg))
+        return col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
 
     def get_grid(self):
         return self.grid
@@ -162,8 +170,9 @@ class ValueGrid:
 
 class FoodGrid(ValueGrid):
     def __init__(self, default_color=(0, 255, 0), quality=1, type='standard', **kwargs):
-        super().__init__(default_color=default_color, min_value=0.0, **kwargs)
+        super().__init__(default_color=default_color,fixed_max=True, **kwargs)
         self.substrate = Substrate(type=type, quality=quality)
+        # self.max_value=self.initial_value
 
     def get_color(self, v):
         v0 = self.initial_value
@@ -249,15 +258,34 @@ class DiffusionValueLayer(ValueLayer):
         cell_width, cell_height = self.x / scaling_factor, self.y / scaling_factor
         rad_x, rad_y = D * dt / cell_width, D * dt / cell_height
         temp = 10 ** 5
-        sigma = int(rad_x * temp), int(rad_y * temp)
+        # sigma = int(rad_x * temp), int(rad_y * temp)
         self.evap_const = evap_const
         self.sigma = gaussian_sigma
+        # print(gaussian_sigma)
 
     def update_values(self):
+        k=1000
+        if self.model.windscape is not None :
+            v,a=self.model.windscape.wind_speed, self.model.windscape.wind_direction
+            dx=v*np.cos(a)*self.model.dt
+            dy=v*np.sin(a)*self.model.dt
+            Px,Py=dx/self.x/k, dy/self.y/k
+            Gx=self.grid*Px
+            Gy=self.grid*Py
+            Gx=np.roll(Gx,1, axis=0)
+            Gx[:,0]=0
+            Gy=np.roll(Gy,1, axis=1)
+            Gy[0,:] = 0
+            self.grid*=(1-Px-Py)
+            self.grid+=(Gx+Gy)
+            np.clip(self.grid, a_min=0, a_max=None)
+            # print(Px,Py, a)
+
         for s in self.sources:
             source_pos = s.get_position()
             intensity = s.odor_intensity
             self.add_value(source_pos, intensity)
+
         self.grid = gaussian_filter(self.grid, sigma=self.sigma) * self.evap_const
 
 
