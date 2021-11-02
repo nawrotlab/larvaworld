@@ -57,8 +57,11 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
             detect_turns(**c, ang_vel_par=ang_vel_par, bend_vel_par=bend_vel_par, min_ang=min_ang,
                          min_ang_vel=min_ang_vel, **kwargs)
 
-        if stride and pause and fits:
-            fit_bouts(**c, **kwargs)
+        if  fits:
+            try :
+                fit_bouts(**c, **kwargs)
+            except:
+                pass
         if on_food:
             comp_patch_metrics(**c, **kwargs)
 
@@ -118,7 +121,7 @@ def detect_pauses(s, e, config, dt, track_pars, recompute=False, stride_non_over
     print('All crawl-pauses detected')
 
 
-def detect_strides(s, e, config, dt, recompute=False, vel_par=None, track_point=None, track_pars=None,
+def detect_strides(s, e, config, dt=None, recompute=False, vel_par=None, track_point=None, track_pars=[],
                    chunk_pars=[], non_chunks=False, vel_threshold=0.2, **kwargs):
     c = 'stride'
     if nam.num(c) in e.columns.values and not recompute:
@@ -127,6 +130,8 @@ def detect_strides(s, e, config, dt, recompute=False, vel_par=None, track_point=
     aux_dir = config['aux_dir']
     if vel_par is None:
         vel_par = nam.scal(nam.vel(''))
+    if dt is None :
+        dt=config['dt']
     mid_flag = nam.max(vel_par)
     edge_flag = nam.min(vel_par)
 
@@ -359,8 +364,7 @@ def detect_contacting_chunks(s, e, aux_dir, dt, vel_par, track_point, chunk='str
     t0 = int(s.index.unique('Step').min())
     N = len(s.index.unique('Step'))
 
-    c_chain_dur = nam.dur(nam.chain(chunk))
-    c_chain_l = nam.length(nam.chain(chunk))
+
     c_dst = nam.dst(chunk)
     c_sdst = nam.straight_dst(chunk)
 
@@ -378,17 +382,21 @@ def detect_contacting_chunks(s, e, aux_dir, dt, vel_par, track_point, chunk='str
     A_dur = np.zeros([N, Nids]) * np.nan
     A_or = np.zeros([N, Nids]) * np.nan
     A_id = np.zeros([N, Nids]) * np.nan
+    A_c0s = np.zeros([N, Nids]) * np.nan
+    A_c1s = np.zeros([N, Nids]) * np.nan
     A_cl = np.zeros([N, Nids]) * np.nan
     A_cdur = np.zeros([N, Nids]) * np.nan
     A_d = np.zeros([N, Nids]) * np.nan
     A_sd = np.zeros([N, Nids]) * np.nan
 
     arrays = [A_s0s, A_s1s, A_dur, A_id,
-              A_cl, A_cdur,
+              A_c0s, A_c1s,A_cl, A_cdur,
               A_d, A_sd, A_or]
 
+    chain=nam.chain(chunk)
     pars = [nam.start(chunk), nam.stop(chunk), nam.dur(chunk), nam.id(chunk),
-            c_chain_l, c_chain_dur,
+            nam.start(chain), nam.stop(chain), nam.dur(chain),nam.length(chain),
+
             c_dst, c_sdst, nam.orient(chunk)]
 
     freqs = e[nam.freq(vel_par)]
@@ -426,6 +434,8 @@ def detect_contacting_chunks(s, e, aux_dir, dt, vel_par, track_point, chunk='str
         for j, (s0, s1, dur, contact) in enumerate(zip(s0s, s1s, durs, contacts)):
             if chain_counter > 0:
                 s0 += 1
+            else :
+                A_c0s[s0, i] = True
             A_s0s[s0, i] = True
             A_s1s[s1, i] = True
             A_id[s0:s1 + 1, i] = j
@@ -434,6 +444,7 @@ def detect_contacting_chunks(s, e, aux_dir, dt, vel_par, track_point, chunk='str
             if contact == 0:
                 A_cl[s1 + 1, i] = chain_counter
                 A_cdur[s1 + 1, i] = chain_dur_counter
+                A_c1s[s1 + 1, i] = True
                 chain_counter = 0
                 chain_dur_counter = 0
 
@@ -446,13 +457,13 @@ def detect_contacting_chunks(s, e, aux_dir, dt, vel_par, track_point, chunk='str
         e[nam.cum(pp)] = s[pp].groupby('AgentID').sum()
         e[nam.mean(pp)] = s[pp].groupby('AgentID').mean()
         e[nam.std(pp)] = s[pp].groupby('AgentID').std()
-    e['stride_reoccurence_rate'] = 1 - 1 / s[c_chain_l].groupby('AgentID').mean()
+    e['stride_reoccurence_rate'] = 1 - 1 / s[nam.length(chain)].groupby('AgentID').mean()
     pars = [c_dst, c_sdst]
     pars = pars + nam.cum(pars) + nam.mean(pars) + nam.std(pars)
     scale_to_length(s, e, pars=pars)
     compute_chunk_metrics(s, e, [chunk])
 
-    store_aux_dataset(s, pars=[c_chain_dur, c_chain_l], type='distro', file=aux_dir)
+    store_aux_dataset(s, pars=[nam.dur(chain),nam.length(chain)], type='distro', file=aux_dir)
     print('All chunks-around-flag detected')
 
 

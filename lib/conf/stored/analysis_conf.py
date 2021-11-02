@@ -17,7 +17,7 @@ def entry(plotID, title=None, **kwargs):
     return {'title': title, 'plotID': plotID, 'args': kwargs}
 
 
-def time(short, title=None, u='sec', f1=False, **kwargs):
+def time(short, title=None, u='sec', f1=False,abs=False, **kwargs):
     if title is None:
         title = getPar(short, to_return=['d'])[0]
         # name =f'{short} timeplot'
@@ -25,6 +25,7 @@ def time(short, title=None, u='sec', f1=False, **kwargs):
         'par_shorts': [short],
         'show_first': f1,
         'unit': u,
+        'absolute': abs,
         **kwargs
     }
     return {'title': title, 'plotID': 'timeplot', 'args': args}
@@ -107,12 +108,14 @@ analysis_dict = {
         time('cum_f_det', 'time on food', u='min'),
         time('A_tur', 'turner input', u='min', f1=True),
         time('Act_tur', 'turner output', u='min', f1=True),
-        time('A_touch', 'tactile activation', u='min', f1=True)
+        time('A_touch', 'tactile activation', u='min', f1=True),
+        entry('ethogram'),
     ],
     'chemo': [
         *[time(p) for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']],
         entry('turn amplitude'),
         entry('angular pars', Npars=5),
+        entry('ethogram'),
         'source_analysis'
     ],
     'intake': [
@@ -121,7 +124,8 @@ analysis_dict = {
         entry('food intake (timeplot)', 'food intake (raw)'),
         entry('food intake (timeplot)', 'food intake (filtered)', filt_amount=True),
         entry('pathlength', scaled=False),
-        bar('f_am', 'food intake (barplot)')
+        bar('f_am', 'food intake (barplot)'),
+        entry('ethogram'),
 
     ],
     'anemotaxis': [
@@ -130,7 +134,13 @@ analysis_dict = {
            'wind_effect_on_Fr']],
         *[time(p) for p in ['A_wind', 'anemotaxis', 'o_wind']],
         *[scat(p) for p in [['o_wind', 'A_wind'], ['anemotaxis', 'o_wind']]],
-        end(['anemotaxis'], 'final anemotaxis'),
+        end(['anemotaxis'], 'final anemotaxis')
+
+    ],
+    'puff': [
+        entry('ethogram', add_samples=True),
+*[time(p, abs=True) for p in ['fov', 'foa','b', 'bv', 'ba']],
+*[time(p) for p in ['sv', 'sa', 'v', 'a']],
     ],
     'RL': [
         time('D_olf', 'olfactor_decay_table', save_as='olfactor_decay.pdf', table='best_gains'),

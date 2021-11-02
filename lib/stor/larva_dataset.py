@@ -29,12 +29,13 @@ class LarvaDataset:
 
     def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0,spatial_def=None,  env_params={}, larva_groups={},
                       source_xy={}):
-        if spatial_def is None:
-            from lib.conf.stored.conf import loadConf
-            spatial_def = loadConf('SimParConf', 'Par')['spatial']
+
         if os.path.exists(self.dir_dict['conf']):
             self.config = dNl.load_dict(self.dir_dict['conf'], use_pickle=False)
         else:
+            if spatial_def is None:
+                from lib.conf.stored.conf import loadConf
+                spatial_def = loadConf('SimParConf', 'Par')['spatial']
             # sources_u = {k: v['pos'] for k, v in env_params['food_params']['source_units'].items()}
             # sources_g = {k: v['distribution']['loc'] for k, v in env_params['food_params']['source_groups'].items()}
             # sources = {**sources_u, **sources_g}
@@ -222,11 +223,16 @@ class LarvaDataset:
 
     def update_config(self):
         self.config['dt'] = 1 / self.fr
-        if 'N' not in self.config.keys():
+        if 'agent_ids' not in self.config.keys():
             try:
-                self.config['N'] = len(self.agent_ids)
+                ids = self.agent_ids
             except:
-                self.config['N'] = len(self.endpoint_data.index.values)
+                try:
+                    ids = self.endpoint_data.index.values
+                except :
+                    ids = self.read('end').index.values
+            self.config['agent_ids'] = ids
+            self.config['N'] = len(ids)
         if 't0' not in self.config.keys():
             try:
                 self.config['t0'] = int(self.step_data.index.unique('Step')[0])
@@ -639,33 +645,3 @@ class LarvaDataset:
         self.config['id'] = id
         if save:
             self.save_config()
-
-    # def split_dataset(self, is_last=False, show_output=False, delete_parent=False):
-    #     c = self.config
-    #     gIDs = c['group_ids']
-    #     if len(gIDs) == 1:
-    #         return [self]
-    #     fs = [f'{self.dir}/../{self.id}.{gID}' for gID in gIDs]
-    #     if all([os.path.exists(f) for f in fs]):
-    #         ds = [LarvaDataset(f) for f in fs]
-    #     else:
-    #         if self.step_data is None:
-    #             self.load()
-    #         s, e = self.step_data, self.endpoint_data
-    #         ds = []
-    #         for gID, f in zip(gIDs, fs):
-    #             gConf = c['larva_groups'][gID]
-    #             valid_ids = [id for id in self.agent_ids if str.startswith(id, gID)]
-    #             copy_tree(self.dir, f)
-    #             d = LarvaDataset(f, fr=self.fr, id=gID, env_params=c['env_params'], larva_groups={gID: gConf}, load_data=False)
-    #             d.set_data(step=s.loc[(slice(None), valid_ids), :], end=e.loc[valid_ids])
-    #             d.config['parent_plot_dir'] = self.plot_dir
-    #             # print(d.dt)
-    #             if is_last:
-    #                 d.save()
-    #             ds.append(d)
-    #         if show_output:
-    #             print(f'Dataset {self.id} splitted in {[d.id for d in ds]}')
-    #     if delete_parent:
-    #         self.delete(show_output=show_output)
-    #     return ds

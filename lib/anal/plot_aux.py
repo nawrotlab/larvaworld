@@ -13,6 +13,7 @@ from lib.anal.fitting import pvalue_star
 from lib.aux.dictsNlists import unique_list
 from lib.aux.colsNstr import N_colors
 from lib.conf.base.par import getPar
+from lib.conf.stored.conf import loadRef, kConfDict
 
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
@@ -150,8 +151,15 @@ class ParPlot(BasePlot):
 
 
 class Plot(BasePlot):
-    def __init__(self, name, datasets, labels=None, subfolder=None, save_fits_as=None, save_to=None, **kwargs):
+    def __init__(self, name, datasets, labels=None, subfolder=None, save_fits_as=None, save_to=None,add_samples=False, **kwargs):
 
+        if add_samples :
+            targetIDs = unique_list([d.config['sample'] for d in datasets])
+
+            targets = [loadRef(id) for id in targetIDs if id in kConfDict('Ref')]
+            datasets+=targets
+            if labels is not None :
+                labels+=targetIDs
         self.Ndatasets, self.colors, save_to, self.labels = plot_config(datasets, labels, save_to,
                                                                         subfolder=subfolder)
         super().__init__(name, save_to=save_to, **kwargs)

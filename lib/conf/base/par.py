@@ -682,10 +682,10 @@ class ParDict:
         v = nam.vel('')
         a = nam.acc('')
         sv, sa = nam.scal([v, a])
-        self.add_rate(k_num='d', k_den='dt', k='v', p=v, d=v, s='v')
-        self.add_rate(k_num='v', k_den='dt', k='a', p=a, d=a, s='a')
-        self.add_rate(k_num='sd', k_den='dt', k='sv', p=sv, d=sv, s=paren('v'))
-        self.add_rate(k_num='sv', k_den='dt', k='sa', p=sa, d=sa, s=paren('a'))
+        self.add_rate(k_num='d', k_den='dt', k='v', p=v, d=v, s='v', lim=(-0.02,0.2))
+        self.add_rate(k_num='v', k_den='dt', k='a', p=a, d=a, s='a', lim=(-2.0,2.0))
+        self.add_rate(k_num='sd', k_den='dt', k='sv', p=sv, d=sv, s=paren('v'), lim=(-5.0,50.0))
+        self.add_rate(k_num='sv', k_den='dt', k='sa', p=sa, d=sa, s=paren('a'), lim=(-100.0,100.0))
 
         for i in [(0, 40), (0, 80), (20, 80)]:
             self.add_dsp(range=i)
@@ -922,15 +922,15 @@ def getPar(k=None, p=None, d=None, to_return=['d', 'l'], PF=None):
 
 if __name__ == '__main__':
     # o, d = nam.bearing2('n'), nam.dst2('n')
-    fo = getPar('fo', to_return=['s'])[0]
-    print(fo)
-    # d=ParDict(mode='build').dict
+    # fo = getPar('fo', to_return=['s'])[0]
+    # print(fo)
+    d=ParDict(mode='build').dict
     # pars=getPar('on_food_tr', to_return=['p','d'])
     # print(pars)
     # print(us)
     # # d = ParDict(mode='reconstruct').dict
     # print(d.keys())
-    raise
+    # raise
     # for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
     #     p = getPar(short, to_return=['d'])[0]
     #     print(p)

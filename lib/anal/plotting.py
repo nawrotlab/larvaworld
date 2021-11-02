@@ -2,7 +2,8 @@ import copy
 import heapq
 import itertools
 import warnings
-
+import pylab as pl
+from matplotlib import collections  as mc
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
@@ -44,7 +45,43 @@ plt.rcParams.update(plt_conf)
 suf = 'pdf'
 
 
-def plot_2pars(shorts, subfolder='step', **kwargs):
+def plot_ethogram(subfolder='timeplots', **kwargs):
+    P = Plot(name='ethogram', subfolder=subfolder, **kwargs)
+    P.build(P.Ndatasets, 2, sharex=True)
+    Cbouts = {
+        'lin': {'stridechain': 'green',
+                'pause': 'red',
+                'feedchain': 'blue'},
+        'ang': {'Lturn': 'cyan',
+                'Rturn': 'orange'}
+
+    }
+    for i, d in enumerate(P.datasets):
+        N = d.config['N']
+        s = d.read('step')
+        for k,(n,title) in enumerate(zip(['lin', 'ang'],[r'$\bf{runs & pauses}$', r'$\bf{left & right turns}$'])) :
+            idx=2 * i+k
+            ax=P.axs[idx]
+            P.conf_ax(idx, xlab='time $(sec)$', ylab='Individuals $(idx)$', ylim=(0, N + 2), xlim=(0,d.config['Nticks']*d.dt), title=title if i==0 else None)
+            for b,c in Cbouts[n].items() :
+                bp0,bp1=nam.start(b), nam.stop(b)
+                if not {bp0, bp1}.issubset(s.columns.values):
+                    continue
+                for j, id in enumerate(s.index.unique('AgentID').values) :
+                    bbs=s[[bp0,bp1]].xs(id, level='AgentID')
+                    b0s=bbs[bp0].dropna().index.values*d.dt
+                    b1s=bbs[bp1].dropna().index.values*d.dt
+                    lines = [[(b0, j+1), (b1, j+1)] for b0,b1 in zip(b0s, b1s)]
+                    lc = mc.LineCollection(lines, colors=c, linewidths=2)
+                    ax.add_collection(lc)
+            dataset_legend(labels=list(Cbouts[n].keys()), colors=list(Cbouts[n].values()), ax=ax,
+                           loc=None, anchor=None, fontsize=None, handlelength=0.5, handleheight=0.5)
+
+    P.adjust((0.1, 0.95), (0.15, 0.92), 0.15, 0.1)
+    return P.get()
+
+
+def plot_2pars(shorts, subfolder='step',larva_legend=True, **kwargs):
     ypar, ylab, ylim = getPar(shorts[1], to_return=['d', 'l', 'lim'])
     xpar, xlab, xlim = getPar(shorts[0], to_return=['d', 'l', 'lim'])
     P = Plot(name=f'{ypar}_VS_{xpar}', subfolder=subfolder, **kwargs)
@@ -55,10 +92,13 @@ def plot_2pars(shorts, subfolder='step', **kwargs):
         Nids = len(d.agent_ids)
         cs = N_colors(Nids)
         s = d.read('step')
-        for j, id in enumerate(d.agent_ids):
-            ss = s.xs(id, level='AgentID', drop_level=True)
-            ax.scatter(ss[xpar], ss[ypar], color=cs[j], marker='.', label=id)
-            ax.legend()
+        if larva_legend:
+            for j, id in enumerate(d.agent_ids):
+                ss = s.xs(id, level='AgentID', drop_level=True)
+                ax.scatter(ss[xpar], ss[ypar], color=cs[j], marker='.', label=id)
+                ax.legend()
+        else :
+            ax.scatter(s[xpar], s[ypar], color=P.colors[0], marker='.')
     else:
         for d, c in zip(P.datasets, P.colors):
             s = d.read('step')
@@ -764,7 +804,7 @@ def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_id
     return P.get()
 
 
-def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None, unit='sec',
+def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None, unit='sec',absolute=True,
              show_first=False, subfolder='timeplots', legend_loc='upper left', **kwargs):
     unit_coefs = {'sec': 1, 'min': 1 / 60, 'hour': 1 / 60 / 60}
     if len(pars) == 0:
@@ -802,6 +842,8 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                     dc = d.load_table(table)[p]
                 else:
                     dc = d.get_par(p, key='step')
+                if absolute :
+                    dc=dc.abs()
                     # dc = d.read('step')[p]
                 dc_m = dc.groupby(level='Step').quantile(q=0.5)
                 Nticks = len(dc_m)
@@ -1802,7 +1844,7 @@ def plot_surface(x, y, z, vars, target, z0=None, ax=None, fig=None, title=None, 
 
 
 def plot_heatmap(z, heat_kws={}, ax_kws={}, cbar_kws={}, **kwargs):
-    base_heat_kws={'annot': True, 'cmap': cm.coolwarm, 'vmin': None, 'vmax': None}
+    base_heat_kws = {'annot': True, 'cmap': cm.coolwarm, 'vmin': None, 'vmax': None}
     base_heat_kws.update(heat_kws)
     base_cbar_kws = {"orientation": "vertical"}
     base_cbar_kws.update(cbar_kws)
@@ -1831,7 +1873,7 @@ def plot_heatmap_PI(csv_filepath='PIs.csv', **kwargs):
         'yticks': r,
         'xlab': r'Right odor gain, $G_{R}$',
         'ylab': r'Left odor gain, $G_{L}$',
-        'xlabelpad':20
+        'xlabelpad': 20
     }
     heat_kws = {
         'annot': False,
@@ -1859,7 +1901,7 @@ def plot_3pars(df, vars, target, z0=None, **kwargs):
         z = df[target].values.reshape(X.shape).T
 
         figs[f'{pr}_heatmap'] = plot_heatmap(z, ax_kws={'xticklabels': x.tolist(), 'yticklabels': y.tolist(),
-                                                     'xlab': vars[0], 'ylab': vars[1]},
+                                                        'xlab': vars[0], 'ylab': vars[1]},
                                              cbar_kws={'label': target}, **kwargs)
         figs[f'{pr}_surface'] = plot_surface(X, Y, z, vars=vars, target=target, z0=z0, **kwargs)
     except:
@@ -2782,6 +2824,7 @@ graph_dict = {
     'food intake (barplot)': intake_barplot,
     'deb': plot_debs,
     'timeplot': timeplot,
+    'ethogram': plot_ethogram,
     'foraging': plot_foraging,
     'barplot': barplot,
     'scatter': plot_2pars,

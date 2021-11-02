@@ -146,6 +146,7 @@ env_dict = {
                                 bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),
     'puff_arena_bordered': env(arena(0.3, 0.3), w={'puffs': {'PuffGroup' : {}}},
                                bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),
+'single_puff': env(arena(0.3, 0.3), w={'puffs': {'Puff' : {'N':1,'duration':30.0, 'start_time' : 55, 'speed' : 100}}}),
 
     'CS_UCS_on_food': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(1)), 'G'),
     'CS_UCS_on_food_x2': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(2)), 'G'),

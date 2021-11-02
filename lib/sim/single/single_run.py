@@ -132,6 +132,8 @@ class SingleRun:
             anal_params = analysis_dict['intake']
         elif 'anemo' in self.experiment:
             anal_params = analysis_dict['anemotaxis']
+        elif 'puff' in self.experiment:
+            anal_params = analysis_dict['puff']
         elif 'chemo' in self.experiment:
             anal_params = analysis_dict['chemo']
         elif 'RL' in self.experiment:
