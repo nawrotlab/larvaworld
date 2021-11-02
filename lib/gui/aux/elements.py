@@ -359,10 +359,13 @@ class SelectionList(GuiElement):
             deleteConf(id, k0)
             self.update(w)
         elif e == f'RUN {n}' and id != '':
-            conf = self.get(w, v, c, as_entry=False)
-            d, g = self.tab.run(v, w, c, d, g, conf, id)
-            self.tab.gui.dicts = d
-            self.tab.gui.graph_lists = g
+            try :
+                conf = self.get(w, v, c, as_entry=False)
+                d, g = self.tab.run(v, w, c, d, g, conf, id)
+                self.tab.gui.dicts = d
+                self.tab.gui.graph_lists = g
+            except :
+                pass
 
         elif e == f'EDIT {n}':
             conf = self.tab.get(w, v, c, as_entry=False)
@@ -598,9 +601,10 @@ class DataList(NamedList):
             d1 = dl1.dict
             k1 = dl1.key
             raw_dic = {id: dir for id, dir in d0.items() if id in v[k]}
-            proc_dic = import_window(datagroup_id=datagroup_id, raw_dic=raw_dic)
-            d1.update(proc_dic)
-            dl1.update_window(w)
+            if len(raw_dic)>0 :
+                proc_dic = import_window(datagroup_id=datagroup_id, raw_dic=raw_dic)
+                d1.update(proc_dic)
+                dl1.update_window(w)
         elif e == f'ENRICH {n}':
             dds = [dd for i, (id, dd) in enumerate(d0.items()) if i in v[k]]
             if len(dds) > 0:

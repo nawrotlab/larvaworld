@@ -325,8 +325,9 @@ def import_window(datagroup_id, raw_dic):
                                             n.startswith(source_id)]
                             dd = build_dataset(id=target_id, target_dir=target, source_files=source_files, **kws)
                         elif datagroup_id in ['Jovanic lab']:
+                            # print(source_id)
                             target = f'{target}/{target_id}'
-                            dd = build_dataset(id=target_id, target_dir=target, source_dir=source, **kws)
+                            dd = build_dataset(id=target_id, target_dir=target, source_dir=source,source_id=source_id, **kws)
                         elif datagroup_id in ['Schleyer lab']:
                             target = target.replace(source_id, target_id)
                             dd = build_dataset(id=target_id, target_dir=target, source_dir=[source], **kws)

@@ -77,10 +77,10 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
     return step, end
 
 
-def build_Jovanic(dataset, build_conf, source_dir, max_Nagents=None, min_duration_in_sec=0.0,
+def build_Jovanic(dataset, build_conf, source_dir, source_id, max_Nagents=None, min_duration_in_sec=0.0,
                   match_ids=True,**kwargs):
     print('Initializing format-specific dataset import...')
-    pref=f'{source_dir}/{dataset.id}'
+    pref=f'{source_dir}/{source_id}'
     temp_step_path = f'{pref}_step.csv'
     temp_length_path = f'{pref}_length.csv'
 

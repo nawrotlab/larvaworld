@@ -79,13 +79,16 @@ def convex_hull(xs=None, ys=None, N=None, interp_nans=True):
 
     for i, p in enumerate(ps) :
         if len(p) > 0:
-            b = p[ConvexHull(p).vertices]
-            s = np.min([b.shape[0],N])
-            xxs[i,:s]=b[:s,0]
-            yys[i,:s]=b[:s,1]
-            if interp_nans :
-                xxs[i] = interpolate_nans(xxs[i])
-                yys[i] = interpolate_nans(yys[i])
+            try :
+                b = p[ConvexHull(p).vertices]
+                s = np.min([b.shape[0],N])
+                xxs[i,:s]=b[:s,0]
+                yys[i,:s]=b[:s,1]
+                if interp_nans :
+                    xxs[i] = interpolate_nans(xxs[i])
+                    yys[i] = interpolate_nans(yys[i])
+            except :
+                pass
     return xxs, yys
 
 
