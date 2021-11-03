@@ -30,8 +30,9 @@ class LarvaDataset:
     def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0,spatial_def=None,  env_params={}, larva_groups={},
                       source_xy={}):
 
-        if os.path.exists(self.dir_dict['conf']):
-            self.config = dNl.load_dict(self.dir_dict['conf'], use_pickle=False)
+        if os.path.exists(self.dir_dict.conf):
+            config = dNl.load_dict(self.dir_dict.conf, use_pickle=False)
+
         else:
             if spatial_def is None:
                 from lib.conf.stored.conf import loadConf
@@ -59,12 +60,12 @@ class LarvaDataset:
                 except:
                     Npoints = 3
 
-            self.config = {'id': id,
+            config = {'id': id,
                            'group_id': group_id,
                            'group_ids': group_ids,
                            'refID':None,
                            'dir': self.dir,
-                           'aux_dir': self.dir_dict['aux_h5'],
+                           'aux_dir': self.dir_dict.aux_h5,
                            'parent_plot_dir': f'{self.dir}/plots',
                            'fr': fr,
                            'dt': 1 / fr,
@@ -78,6 +79,7 @@ class LarvaDataset:
                            'source_xy': source_xy,
                            'life_history': life_history
                            }
+        self.config = dNl.AttrDict.from_nested_dicts(config)
 
         self.__dict__.update(self.config)
 
@@ -136,7 +138,7 @@ class LarvaDataset:
         return pd.read_hdf(self.dir_dict[file], key)
 
     def load(self, step=True, end=True, food=False):
-        store = pd.HDFStore(self.dir_dict['data_h5'])
+        store = pd.HDFStore(self.dir_dict.data_h5)
         if step:
             self.step_data = store['step']
             self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
@@ -151,7 +153,7 @@ class LarvaDataset:
         store.close()
 
     def save(self, step=True, end=True, food=False, add_reference=False):
-        store = pd.HDFStore(self.dir_dict['data_h5'])
+        store = pd.HDFStore(self.dir_dict.data_h5)
         if step:
             store['step'] = self.step_data
         if end:
@@ -188,7 +190,7 @@ class LarvaDataset:
                     bout_dicts[l.unique_id] =l.brain.intermitter.build_dict()
                 if len(env.foodtypes)>0 :
                     foraging_dicts[l.unique_id]=l.finalize_foraging_dict()
-                self.config['foodtypes']= env.foodtypes
+                self.config.foodtypes= env.foodtypes
         self.larva_dicts={'deb' : deb_dicts, 'nengo' : nengo_dicts, 'bout_dicts' : bout_dicts, 'foraging' : foraging_dicts}
 
     def get_larva_tables(self, env):
@@ -206,23 +208,23 @@ class LarvaDataset:
                         self.larva_tables[name] = df
 
     def save_larva_tables(self):
-        store = pd.HDFStore(self.dir_dict['tables_h5'])
+        store = pd.HDFStore(self.dir_dict.tables_h5)
         for name, df in self.larva_tables.items():
             store[name] = df
         store.close()
 
     def save_ExpFitter(self, dic=None):
-        dNl.save_dict(dic, self.dir_dict['ExpFitter'], use_pickle=False)
+        dNl.save_dict(dic, self.dir_dict.ExpFitter, use_pickle=False)
 
     def load_ExpFitter(self):
         try:
-            dic = dNl.load_dict(self.dir_dict['ExpFitter'], use_pickle=False)
+            dic = dNl.load_dict(self.dir_dict.ExpFitter, use_pickle=False)
             return dic
         except:
             return None
 
     def update_config(self):
-        self.config['dt'] = 1 / self.fr
+        self.config.dt = 1 / self.fr
         if 'agent_ids' not in self.config.keys():
             try:
                 ids = self.agent_ids
@@ -231,31 +233,31 @@ class LarvaDataset:
                     ids = self.endpoint_data.index.values
                 except :
                     ids = self.read('end').index.values
-            self.config['agent_ids'] = ids
-            self.config['N'] = len(ids)
+            self.config.agent_ids = ids
+            self.config.N = len(ids)
         if 't0' not in self.config.keys():
             try:
-                self.config['t0'] = int(self.step_data.index.unique('Step')[0])
+                self.config.t0 = int(self.step_data.index.unique('Step')[0])
             except:
-                self.config['t0'] = 0
+                self.config.t0 = 0
         if 'Nticks' not in self.config.keys():
             try:
-                self.config['Nticks'] = self.step_data.index.unique('Step').size
+                self.config.Nticks = self.step_data.index.unique('Step').size
             except:
                 try :
-                    self.config['Nticks'] = self.endpoint_data['num_ticks'].max()
+                    self.config.Nticks = self.endpoint_data['num_ticks'].max()
                 except :
                     pass
         if 'duration' not in self.config.keys():
             try:
-                self.config['duration'] = int(self.endpoint_data['cum_dur'].max())
+                self.config.duration = int(self.endpoint_data['cum_dur'].max())
             except:
-                self.config['duration'] = self.config['dt'] * self.config['Nticks']
+                self.config.duration = self.config.dt * self.config.Nticks
         if 'quality' not in self.config.keys():
             try:
                 df = self.step_data[nam.xy(self.point)[0]].values.flatten()
                 valid = np.count_nonzero(~np.isnan(df))
-                self.config['duration'] = np.round(valid / df.shape[0], 2)
+                self.config.duration = np.round(valid / df.shape[0], 2)
             except:
                 pass
 
@@ -264,12 +266,12 @@ class LarvaDataset:
         for k, v in self.config.items():
             if type(v) == np.ndarray:
                 self.config[k] = v.tolist()
-        dNl.save_dict(self.config, self.dir_dict['conf'], use_pickle=False)
+        dNl.save_dict(self.config, self.dir_dict.conf, use_pickle=False)
         if add_reference:
             from lib.conf.stored.conf import saveConf
             if refID is None :
                 refID = f'{self.group_id}.{self.id}'
-            self.config['refID']=refID
+            self.config.refID=refID
             saveConf(self.config, 'Ref', refID)
 
     def save_agents(self, ids=None, pars=None):
@@ -279,7 +281,7 @@ class LarvaDataset:
             ids = self.agent_ids
         if pars is None:
             pars = self.step_data.columns
-        path = self.dir_dict['single_tracks']
+        path = self.dir_dict.single_tracks
         os.makedirs(path, exist_ok=True)
         for id in ids:
             f = os.path.join(path, f'{id}.csv')
@@ -291,7 +293,7 @@ class LarvaDataset:
 
     def load_agent(self, id):
         try:
-            f = os.path.join(self.dir_dict['single_tracks'], f'{id}.csv')
+            f = os.path.join(self.dir_dict.single_tracks, f'{id}.csv')
             store = pd.HDFStore(f)
             s = store['step']
             e = store['end']
@@ -301,7 +303,7 @@ class LarvaDataset:
             return None, None
 
     def load_table(self, name):
-        store = pd.HDFStore(self.dir_dict['tables_h5'])
+        store = pd.HDFStore(self.dir_dict.tables_h5)
         df = store[name]
         store.close()
         return df
@@ -525,7 +527,7 @@ class LarvaDataset:
         self.plot_dir = os.path.join(dir, 'plots')
         self.vis_dir = os.path.join(dir, 'visuals')
         self.aux_dir = os.path.join(dir, 'aux')
-        self.dir_dict = {
+        dir_dict = {
             'parent': self.dir,
             'data': self.data_dir,
             'plot': self.plot_dir,
@@ -544,19 +546,20 @@ class LarvaDataset:
             'data_h5': os.path.join(self.data_dir, 'data.h5'),
             'aux_h5': os.path.join(self.data_dir, 'aux.h5'),
         }
+        self.dir_dict= dNl.AttrDict.from_nested_dicts(dir_dict)
         for k in ['parent', 'data']:
             os.makedirs(self.dir_dict[k], exist_ok=True)
 
     def define_linear_metrics(self):
         try:
-            self.config['point'] = self.points[self.config['point_idx'] - 1]
+            self.config.point = self.points[self.config.point_idx - 1]
         except:
-            self.config['point'] = 'centroid'
-        self.point = self.config['point']
+            self.config.point = 'centroid'
+        self.point = self.config.point
         self.distance = nam.dst(self.point)
         self.velocity = nam.vel(self.point)
         self.acceleration = nam.acc(self.point)
-        if self.config['use_component_vel']:
+        if self.config.use_component_vel:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
@@ -642,6 +645,6 @@ class LarvaDataset:
 
     def set_id(self, id, save=True):
         self.id = id
-        self.config['id'] = id
+        self.config.id = id
         if save:
             self.save_config()

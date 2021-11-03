@@ -14,10 +14,10 @@ from lib.stor.larva_dataset import LarvaDataset
 def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None, **kwargs):
     warnings.filterwarnings('ignore')
     g = loadConf(datagroup_id, 'Group')
-    build_conf = g['tracker']['filesystem']
-    data_conf = g['tracker']['resolution']
-    spatial_def = g['enrichment']['metric_definition']['spatial']
-    arena_pars = g['tracker']['arena']
+    build_conf = g.tracker.filesystem
+    data_conf = g.tracker.resolution
+    spatial_def = g.enrichment.metric_definition.spatial
+    arena_pars = g.tracker.arena
     env_params=null_dict('env_conf', arena=arena_pars)
 
 
@@ -103,9 +103,10 @@ def build_datasets_old(datagroup_id, raw_folders, folders=None, suffixes=None,
 def get_datasets(datagroup_id, names, last_common='processed', folders=None, suffixes=None,
                  mode='load', load_data=True, ids=None, **kwargs):
     g = loadConf(datagroup_id, 'Group')
-    data_conf = g['tracker']['resolution']
+    data_conf = g.tracker.resolution
+    spatial_def = g.enrichment.metric_definition.spatial
+    arena_pars = g.tracker.arena
     par_conf = g['parameterization']
-    arena_pars = g['tracker']['arena']
     group_dir = f'{paths.path("DATA")}/{g["path"]}'
 
     last_common = f'{group_dir}/{last_common}'
@@ -187,12 +188,12 @@ def detect_dataset(datagroup_id=None, folder_path=None, raw=True, **kwargs):
     if folder_path in ['', None]:
         return dic
     if raw:
-        conf = loadConf(datagroup_id, 'Group')['tracker']['filesystem']
+        conf = loadConf(datagroup_id, 'Group').tracker.filesystem
         # if 'detect' in conf.keys():
         # d = conf['detect']
-        dF, df = conf['folder'], conf['file']
-        dFp, dFs = dF['pref'], dF['suf']
-        dfp, dfs, df_ = df['pref'], df['suf'], df['sep']
+        dF, df = conf.folder, conf.file
+        dFp, dFs = dF.pref, dF.suf
+        dfp, dfs, df_ = df.pref, df.suf, df.sep
 
         fn = folder_path.split('/')[-1]
         if dFp is not None:
@@ -244,7 +245,6 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
         fs = os.listdir(folder_path)
         for f in fs:
             dic = detect_dataset(datagroup_id, f'{folder_path}/{f}', full_ID=full_ID, raw=True)
-            # id, dir = detect_dataset(datagroup_id, f'{folder_path}/{f}', full_ID=full_ID)
             for id, dr in dic.items():
                 if full_ID:
                     ids += [f'{fn}/{id0}' for id0 in id]
@@ -261,7 +261,7 @@ def split_dataset(step,end, food, larva_groups,dir, id,plot_dir,  show_output=Fa
         valid_ids = [id for id in agent_ids if str.startswith(id, gID)]
         d = LarvaDataset(f, id=gID, larva_groups={gID: gConf}, load_data=False, **kwargs)
         d.set_data(step=step.loc[(slice(None), valid_ids), :], end=end.loc[valid_ids], food=food)
-        d.config['parent_plot_dir'] = plot_dir
+        d.config.parent_plot_dir = plot_dir
         # if is_last:
         #     d.save()
         ds.append(d)

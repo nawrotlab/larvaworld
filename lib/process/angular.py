@@ -7,10 +7,10 @@ from lib.process.store import store_aux_dataset
 
 
 def comp_angles(s, config, mode='full'):
-    points = nam.midline(config['Npoints'], type='point')
-    Nangles = np.clip(config['Npoints'] - 2, a_min=0, a_max=None)
+    points = nam.midline(config.Npoints, type='point')
+    Nangles = np.clip(config.Npoints - 2, a_min=0, a_max=None)
     angles = [f'angle{i}' for i in range(Nangles)]
-    r = config['front_body_ratio'] if config is not None else 0.5
+    r = config.front_body_ratio if config is not None else 0.5
     bend_angles = angles[:int(np.round(r * len(angles)))]
     xy = [nam.xy(points[i]) for i in range(len(points))]
     if mode == 'full':
@@ -34,7 +34,7 @@ def comp_angles(s, config, mode='full'):
 
 
 def comp_bend(s, config, mode='minimal'):
-    b_conf = config['bend'] if config is not None else 'from_angles'
+    b_conf = config.bend if config is not None else 'from_angles'
     if b_conf is None:
         print('Bending angle not defined. Can not compute angles')
         return
@@ -61,15 +61,15 @@ def compute_LR_bias(s, e):
 
 
 def comp_orientations(s, e, config, mode='minimal'):
-    points = nam.midline(config['Npoints'], type='point')
-    segs = nam.midline(config['Npoints'] - 1, type='seg')
+    points = nam.midline(config.Npoints, type='point')
+    segs = nam.midline(config.Npoints - 1, type='seg')
     for key in ['front_vector', 'rear_vector']:
         if config[key] is None:
             print('Front and rear vectors are not defined. Can not compute orients')
             return
     else:
-        f1, f2 = config['front_vector']
-        r1, r2 = config['rear_vector']
+        f1, f2 = config.front_vector
+        r1, r2 = config.rear_vector
 
     xy = [nam.xy(points[i]) for i in range(len(points))]
     print(f'Computing front and rear orients')
@@ -114,10 +114,10 @@ def unwrap_orientations(s, segs):
 
 
 def comp_angular(s, config, mode='minimal'):
-    dt = config['dt']
-    Nangles = np.clip(config['Npoints'] - 2, a_min=0, a_max=None)
+    dt = config.dt
+    Nangles = np.clip(config.Npoints - 2, a_min=0, a_max=None)
     angles = [f'angle{i}' for i in range(Nangles)]
-    segs = nam.midline(config['Npoints'] - 1, type='seg')
+    segs = nam.midline(config.Npoints - 1, type='seg')
     ang_pars = [nam.orient('front'), nam.orient('rear'), 'bend']
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
@@ -153,7 +153,6 @@ def comp_angular(s, config, mode='minimal'):
 
 
 def angular_processing(s, e, config, dt, Npoints, recompute=False, mode='minimal', **kwargs):
-    aux_dir = config['aux_dir']
     N = Npoints
     points = nam.midline(N, type='point')
     Nangles = np.clip(N - 2, a_min=0, a_max=None)
@@ -169,5 +168,5 @@ def angular_processing(s, e, config, dt, Npoints, recompute=False, mode='minimal
         comp_bend(s, config, mode=mode)
     comp_angular(s, config, mode=mode)
     compute_LR_bias(s, e)
-    store_aux_dataset(s, pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), type='distro', file=aux_dir)
+    store_aux_dataset(s, pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), type='distro', file=config.aux_dir)
     print(f'Completed {mode} angular processing.')

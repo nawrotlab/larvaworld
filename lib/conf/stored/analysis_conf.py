@@ -1,4 +1,6 @@
 import numpy as np
+
+from lib.aux.dictsNlists import AttrDict
 from lib.conf.base.dtypes import null_dict
 from lib.conf.base.par import getPar
 
@@ -101,7 +103,7 @@ def deb(mode, title=None, u='hours', pref='FEED', **kwargs):
     return {'title': title, 'plotID': 'deb', 'args': args}
 
 
-analysis_dict = {
+predict = {
     'tactile': [
         end(['on_food_tr'], 'time ratio on food (final)'),
         time('on_food_tr', 'time ratio on food', u='min'),
@@ -162,5 +164,5 @@ analysis_dict = {
     #     *[deb(m, pref='FEED') for m in ['feeding', 'reserve_density', 'assimilation', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
     #               'food_mass_2', 'hunger', 'EEB','fs']],
     # ]
-
 }
+analysis_dict =AttrDict.from_nested_dicts(predict)

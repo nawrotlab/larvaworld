@@ -4,6 +4,7 @@ import pandas as pd
 from siunits import BaseUnit, Composite, DerivedUnit
 
 from lib.aux.collecting import output_keys
+from lib.aux.dictsNlists import AttrDict
 from lib.gui.aux.functions import get_pygame_key
 
 
@@ -847,7 +848,8 @@ def null_dict(n, key='initial_value', **kwargs):
     dic2 = v0(dic)
     if n not in ['visualization', 'enrichment']:
         dic2.update(kwargs)
-        return dic2
+        return AttrDict.from_nested_dicts(dic2)
+        # return dic2
     else:
         for k, v in dic2.items():
             if k in list(kwargs.keys()):
@@ -856,7 +858,8 @@ def null_dict(n, key='initial_value', **kwargs):
                 for k0, v0 in v.items():
                     if k0 in list(kwargs.keys()):
                         dic2[k][k0] = kwargs[k0]
-        return dic2
+        return AttrDict.from_nested_dicts(dic2)
+        # return dic2
 
 
 def ang_def(b='from_angles', fv=(1, 2), rv=(-2, -1), **kwargs):

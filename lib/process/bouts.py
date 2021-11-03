@@ -27,12 +27,12 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
         bend_vel_par = dic['bv']['d']
     if track_pars is None:
         track_pars = [dic[k]['d'] for k in ['fou', 'rou', 'fo', 'ro', 'b', 'x', 'y']]
-        track_pars += nam.bearing2(list(config['source_xy'].keys()))
+        track_pars += nam.bearing2(list(config.source_xy.keys()))
     if chunk_pars is None:
         chunk_pars = [dic[k]['d'] for k in ['sv', 'fov', 'rov', 'bv', 'l']]
     track_pars = [p for p in track_pars if p in s.columns]
     if track_point is None:
-        track_point = config['point']
+        track_point = config.point
     if min_ang is None:
         min_ang = 0.0
     if min_ang_vel is None:
@@ -40,8 +40,8 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
     c = {
         's': s,
         'e': e,
-        'dt': config['dt'],
-        'Npoints': config['Npoints'],
+        'dt': config.dt,
+        'Npoints': config.Npoints,
         'track_point': track_point,
         'track_pars': track_pars,
         'vel_threshold': vel_threshold,
@@ -82,7 +82,6 @@ def detect_turns(s, e, config, dt, track_pars, min_ang_vel, min_ang=30.0,
     if set(nam.num(['Lturn', 'Rturn'])).issubset(e.columns.values) and not recompute:
         print('Turns are already detected. If you want to recompute it, set recompute_turns to True')
         return
-    aux_dir = config['aux_dir']
     ss = s.loc[s[nam.id(chunk_only)].dropna().index] if chunk_only is not None else s
     if ang_vel_par is None:
         ang_vel_par = nam.vel(nam.orient('front'))
@@ -92,7 +91,7 @@ def detect_turns(s, e, config, dt, track_pars, min_ang_vel, min_ang=30.0,
                   ROU_ranges=[[min_ang, np.inf], [-np.inf, -min_ang]],
                   par_ranges=[[min_ang_vel, np.inf], [-np.inf, -min_ang_vel]], merged_chunk='turn',
                   store_max=[True, False], store_min=[False, True])
-    track_pars_in_chunks(ss, e, aux_dir, chunks=['Lturn', 'Rturn'], pars=track_pars, merged_chunk='turn')
+    track_pars_in_chunks(ss, e, config.aux_dir, chunks=['Lturn', 'Rturn'], pars=track_pars, merged_chunk='turn')
 
     if constant_bend_chunks:
         print('Additionally detecting constant bend chunks.')
@@ -107,7 +106,7 @@ def detect_pauses(s, e, config, dt, track_pars, recompute=False, stride_non_over
     if nam.num(c) in e.columns.values and not recompute:
         print('Pauses are already detected. If you want to recompute it, set recompute to True')
         return
-    aux_dir = config['aux_dir']
+    aux_dir = config.aux_dir
     if vel_par is None:
         vel_par = nam.scal(nam.vel(''))
     non_overlap_chunk = 'stride' if stride_non_overlap else None
@@ -127,11 +126,11 @@ def detect_strides(s, e, config, dt=None, recompute=False, vel_par=None, track_p
     if nam.num(c) in e.columns.values and not recompute:
         print('Strides are already detected. If you want to recompute it, set recompute to True')
         return
-    aux_dir = config['aux_dir']
+    aux_dir = config.aux_dir
     if vel_par is None:
         vel_par = nam.scal(nam.vel(''))
     if dt is None :
-        dt=config['dt']
+        dt=config.dt
     mid_flag = nam.max(vel_par)
     edge_flag = nam.min(vel_par)
 
@@ -520,13 +519,12 @@ def track_pars_in_chunks(s, e, aux_dir, chunks, pars, mode='dif', merged_chunk=N
 
 
 def comp_chunk_bearing(s, config, chunk, **kwargs):
-    aux_dir = config['aux_dir']
     c0 = nam.start(chunk)
     c1 = nam.stop(chunk)
     ho = nam.unwrap(nam.orient('front'))
     ho0s = s[nam.at(ho, c0)].dropna().values
     ho1s = s[nam.at(ho, c1)].dropna().values
-    for n, pos in config['sources'].items():
+    for n, pos in config.sources.items():
         b = nam.bearing2(n)
         b0_par = nam.at(b, c0)
         b1_par = nam.at(b, c1)
@@ -539,7 +537,7 @@ def comp_chunk_bearing(s, config, chunk, **kwargs):
         s.loc[s[c1] == True, b1_par] = b1
         s[db_par] = np.nan
         s.loc[s[c1] == True, db_par] = np.abs(b0) - np.abs(b1)
-        store_aux_dataset(s, pars=[b0_par, b1_par, db_par], type='distro', file=aux_dir)
+        store_aux_dataset(s, pars=[b0_par, b1_par, db_par], type='distro', file=config.aux_dir)
         print(f'Bearing to source {n} during {chunk} computed')
 
 

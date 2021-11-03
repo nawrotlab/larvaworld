@@ -349,7 +349,7 @@ def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
 def comp_source_metrics(s, e, config, **kwargs):
     fo = getPar(['fo'], to_return=['d'])[0][0]
     xy = nam.xy('')
-    for n,pos in config['source_xy'].items() :
+    for n,pos in config.source_xy.items() :
         print(f'Computing bearing and distance to {n} based on xy position')
         o, d = nam.bearing2(n), nam.dst2(n)
         pmax, pmu, pfin= nam.max(d), nam.mean(d), nam.final(d)
@@ -381,9 +381,9 @@ def comp_source_metrics(s, e, config, **kwargs):
         print('Bearing and distance to source computed')
 
 def comp_wind_metrics(s, e,config, **kwargs):
-    w = config['env_params']['windscape']
+    w = config.env_params.windscape
     if w is not None :
-        wo, wv = w['wind_direction'], w['wind_speed']
+        wo, wv = w.wind_direction, w.wind_speed
         woo=np.deg2rad(wo)
         ids = s.index.unique('AgentID').values
         for id in ids :
@@ -400,9 +400,9 @@ def comp_wind_metrics(s, e,config, **kwargs):
         e['anemotaxis'] = s['anemotaxis'].groupby('AgentID').last()
 
 def comp_final_anemotaxis(s, e,config, **kwargs) :
-    w = config['env_params']['windscape']
+    w = config.env_params.windscape
     if w is not None:
-        wo, wv = w['wind_direction'], w['wind_speed']
+        wo, wv = w.wind_direction, w.wind_speed
         woo = np.deg2rad(wo)
         xy0 = s[['x', 'y']].groupby('AgentID').first()
         xy1 = s[['x', 'y']].groupby('AgentID').last()
@@ -417,13 +417,13 @@ def comp_final_anemotaxis(s, e,config, **kwargs) :
 def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', config=None, **kwargs):
     ids = s.index.unique(level='AgentID').values
 
-    xy_pairs = nam.xy(nam.midline(config['Npoints'], type='point') + ['centroid', ''] + nam.contour(config['Ncontour']))
+    xy_pairs = nam.xy(nam.midline(config.Npoints, type='point') + ['centroid', ''] + nam.contour(config.Ncontour))
     xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
     xy_pairs = group_list_by_n(np.unique(flatten_list(xy_pairs)), 2)
     if mode == 'arena':
         print('Centralizing trajectories in arena center')
         if arena_dims is None:
-            arena_dims = config['env_params']['arena']['arena_dims']
+            arena_dims = config.env_params.arena.arena_dims
         x0, y0 = arena_dims
         X, Y = x0 / 2, y0 / 2
         for x, y in xy_pairs:
@@ -432,7 +432,7 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', conf
         return s
     else :
         if track_point is None:
-            track_point = config['point']
+            track_point = config.point
 
         XY = nam.xy(track_point) if set(nam.xy(track_point)).issubset(s.columns) else ['x', 'y']
         if not set(XY).issubset(s.columns):
@@ -456,9 +456,9 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', conf
 
 def fixate_larva(s, config, point, arena_dims, fix_segment=None):
     ids = s.index.unique(level='AgentID').values
-    points = nam.midline(config['Npoints'], type='point') + ['centroid']
+    points = nam.midline(config.Npoints, type='point') + ['centroid']
     points_xy = nam.xy(points, flat=True)
-    contour = nam.contour(config['Ncontour'])
+    contour = nam.contour(config.Ncontour)
     contour_xy = nam.xy(contour, flat=True)
 
     all_xy_pars = points_xy + contour_xy

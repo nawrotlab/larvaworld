@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 
+from lib.aux.dictsNlists import AttrDict
 from lib.conf.stored.conf import kConfDict
 from lib.conf.base.dtypes import null_dict, arena, par_dict
 
@@ -373,17 +374,18 @@ def init_parser(description='', parsers=[]) :
 def update_exp_conf(exp,d,N=None) :
     from lib.conf.stored.conf import expandConf, next_idx
     exp_conf = expandConf(exp, 'Exp')
-    sim=d['sim_params']
-    if sim['duration'] is None:
-        sim['duration'] = exp_conf['sim_params']['duration']
-    if sim['sim_ID'] is None:
-        sim['sim_ID'] = f'{exp}_{next_idx(exp)}'
-    if sim['path'] is None:
-        sim['path'] = f'single_runs/{exp}'
-    exp_conf['sim_params'] = d['sim_params']
+    d=AttrDict.from_nested_dicts(d)
+    sim=d.sim_params
+    if sim.duration is None:
+        sim.duration = exp_conf.sim_params.duration
+    if sim.sim_ID is None:
+        sim.sim_ID = f'{exp}_{next_idx(exp)}'
+    if sim.path is None:
+        sim.path = f'single_runs/{exp}'
+    exp_conf.sim_params = d.sim_params
     if N is not None:
-        for gID, gConf in exp_conf['larva_groups'].items():
-            gConf['distribution']['N'] = N
+        for gID, gConf in exp_conf.larva_groups.items():
+            gConf.distribution.N = N
     return exp_conf
 
 # if __name__ == '__main__':

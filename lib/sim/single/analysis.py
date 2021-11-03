@@ -373,7 +373,7 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None, **
     figs = {}
     warnings.filterwarnings('ignore')
     if save_to is None:
-        save_to = datasets[0].dir_dict['comp_plot']
+        save_to = datasets[0].dir_dict.comp_plot
     if labels is None:
         labels = [d.id for d in datasets]
     cc = {'datasets': datasets,
@@ -436,7 +436,7 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None, **
 def targeted_analysis(datasets, labels=None, save_to=None, pref='', show=False, **kwargs):
     # with fun.suppress_stdout():
     if save_to is None:
-        save_to = datasets[0].dir_dict['comp_plot']
+        save_to = datasets[0].dir_dict.comp_plot
     if labels is None:
         labels = [d.id for d in datasets]
     anal_kws = {'datasets': datasets,

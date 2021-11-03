@@ -25,9 +25,9 @@ if batch_id is None:
     idx = next_idx(batch_type, type='batch')
     batch_id = f'{batch_type}_{idx}'
 
-batch_conf['exp'] = prs.update_exp_conf(batch_conf['exp'], d, N)
-batch_conf['batch_id'] = batch_id
-batch_conf['batch_type'] = batch_type
+batch_conf.exp = prs.update_exp_conf(batch_conf.exp, d, N)
+batch_conf.batch_id = batch_id
+batch_conf.batch_type = batch_type
 
 exec = Exec(mode='batch', conf=batch_conf, run_externally=False)
 exec.run()

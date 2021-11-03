@@ -165,10 +165,10 @@ def preprocess(s, e, config, rescale_by=None, drop_collisions=False, interpolate
     c = {
         's': s,
         'e': e,
-        'dt': config['dt'],
-        'Npoints': config['Npoints'],
-        'Ncontour': config['Ncontour'],
-        'point': config['point'],
+        'dt': config.dt,
+        'Npoints': config.Npoints,
+        'Ncontour': config.Ncontour,
+        'point': config.point,
         'recompute': recompute,
         'config': config,
     }
@@ -211,10 +211,10 @@ def process(processing, s, e, config, mode='minimal', traj_colors=True, show_out
     c = {
         's': s,
         'e': e,
-        'dt': config['dt'],
-        'Npoints': config['Npoints'],
-        'Ncontour': config['Ncontour'],
-        'point': config['point'],
+        'dt': config.dt,
+        'Npoints': config.Npoints,
+        'Ncontour': config.Ncontour,
+        'point': config.point,
         'config': config,
         'mode': mode,
     }
@@ -252,9 +252,9 @@ def process(processing, s, e, config, mode='minimal', traj_colors=True, show_out
                 xs = s[px].dropna().groupby('AgentID').last().values
             else:
                 raise ValueError('No x coordinate found')
-            PI, N, N_l, N_r = comp_PI(xs=xs, arena_xdim=config['env_params']['arena']['arena_dims'][0], return_num=True,
+            PI, N, N_l, N_r = comp_PI(xs=xs, arena_xdim=config.env_params.arena.arena_dims[0], return_num=True,
                                       return_all=True)
-            config['PI'] = {'PI': PI, 'N': N, 'N_l': N_l, 'N_r': N_r}
+            config.PI = {'PI': PI, 'N': N, 'N_l': N_l, 'N_r': N_r}
         if traj_colors:
             try:
                 generate_traj_colors(s=s, sp_vel=None, ang_vel=None)

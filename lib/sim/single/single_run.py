@@ -121,27 +121,27 @@ class SingleRun:
             d.save()
             d.save_larva_dicts()
             d.save_larva_tables()
-            dict_to_file(self.param_dict, d.dir_dict['sim'])
+            dict_to_file(self.param_dict, d.dir_dict.sim)
 
     def analyze(self, save_to=None, **kwargs):
         from lib.sim.single.analysis import source_analysis, deb_analysis, comparative_analysis, foraging_analysis
         from lib.conf.stored.analysis_conf import analysis_dict
         if 'tactile' in self.experiment:
-            anal_params = analysis_dict['tactile']
+            anal_params = analysis_dict.tactile
         elif 'RvsS' in self.experiment or 'growth' in self.experiment:
-            anal_params = analysis_dict['intake']
+            anal_params = analysis_dict.intake
         elif 'anemo' in self.experiment:
-            anal_params = analysis_dict['anemotaxis']
+            anal_params = analysis_dict.anemotaxis
         elif 'puff' in self.experiment:
-            anal_params = analysis_dict['puff']
+            anal_params = analysis_dict.puff
         elif 'chemo' in self.experiment:
-            anal_params = analysis_dict['chemo']
+            anal_params = analysis_dict.chemo
         elif 'RL' in self.experiment:
-            anal_params = analysis_dict['RL']
+            anal_params = analysis_dict.RL
         elif self.experiment in ['food_at_bottom']:
             anal_params = ['foraging_analysis']
         elif self.experiment in ['random_food']:
-            anal_params = analysis_dict['survival']
+            anal_params = analysis_dict.survival
         elif 'dispersion' in self.experiment or 'dish' in self.experiment:
             anal_params = ['comparative_analysis']
         # elif self.experiment in ['growth', 'RvsS'] :
@@ -160,7 +160,7 @@ class SingleRun:
             elif entry == 'deb_analysis':
                 figs.update(**deb_analysis(**kws))
             elif entry == 'comparative_analysis':
-                samples = unique_list([d.config['sample'] for d in self.datasets])
+                samples = unique_list([d.config.sample for d in self.datasets])
                 targets = [loadRef(sd) for sd in samples]
                 kkws = copy.deepcopy(kws)
                 kkws['datasets'] = self.datasets + targets
@@ -221,10 +221,9 @@ def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):
     from lib.conf.base.dtypes import null_dict
     ds = []
     for i, (exp, dur) in enumerate(zip(exp_types, durations)):
-        sim = null_dict('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
         conf = expandConf(exp, 'Exp')
-        conf['sim_params'] = sim
-        conf['experiment'] = exp
+        conf.sim_params = null_dict('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
+        conf.experiment = exp
         conf.update(**kwargs)
         d = SingleRun(**conf, vis_kwargs=vis_kwargs).run()
         ds.append(d)

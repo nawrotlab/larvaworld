@@ -72,16 +72,16 @@ batch_dict = {
             o='ingested_food_volume'),
     **batch('growth',
             ss={'EEB': [[0.5, 0.8], 8],'hunger_gain': [[0.0, 0.0], 1]},
-            o='deb_f_deviation', o_kws={'max_Nsims': 20, 'operations': {'mean': True, 'abs': True}}),
+            o='deb_f_deviation', o_kws={'max_Nsims': 20, 'operations': {'mean': True, 'abs': True, 'std': False}}),
     **batch('imitation',
             ss={'activation_noise': [[0.0, 0.8], 3], 'base_activation': [[15.0, 25.0], 3]},
-            o='sample_fit', o_kws={'threshold': 1.0, 'max_Nsims': 20, 'operations': {'mean': False, 'abs': False}},
+            o='sample_fit', o_kws={'threshold': 1.0, 'max_Nsims': 20, 'operations': {'mean': False, 'abs': False, 'std': False}},
             bm={'run':'exp_fit'}),
     **batch('tactile_detection',
             ss={'initial_gain': [[25.0, 75.0], 10],'decay_coef': [[0.01, 0.5], 4]},
             # ssbool=['brute_force'],
             o='cum_food_detected', o_kws={'threshold': 100000.0, 'max_Nsims': 600, 'minimize' : False, 'Nbest' : 8,
-                                          'operations': {'mean': True, 'abs': False}}),
+                                          'operations': {'mean': True, 'abs': False, 'std': False}}),
 **batch('anemotaxis',
         # ss={f'windsensor_params.weights.{m1}_{m2}': [(-20.0, 20.0), 2] for m1,m2 in zip(['bend','bend', 'hunch','hunch'], ['lin','ang', 'lin','ang'])},
         ss={f'windsensor_params.weights.{m1}_{m2}': [[-20.0, 20.0], 3] for m1,m2 in zip(['bend', 'hunch'], ['ang', 'lin'])},
@@ -134,7 +134,10 @@ def run_fit_global_batch(sample, **kwargs) :
     return k.exec_run()
 
 if __name__ == '__main__':
-    from run.exec_run import Exec
-    conf=fit_tortuosity_batch(sample='None.200_controls', model='explorer', exp='dish', idx=0)
-    k = Exec('batch', conf)
-    k.exec_run()
+    # from run.exec_run import Exec
+    # conf=fit_tortuosity_batch(sample='None.200_controls', model='explorer', exp='dish', idx=0)
+    # k = Exec('batch', conf)
+    # k.exec_run()
+    from lib.conf.stored.conf import saveConf
+    for k, v in batch_dict.items():
+        saveConf(v, 'Batch', k)

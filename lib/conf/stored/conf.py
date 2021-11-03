@@ -2,6 +2,7 @@ import copy
 import json
 import shutil
 
+from lib.aux.dictsNlists import AttrDict
 from lib.conf.base.dtypes import null_dict, base_enrich
 from lib.conf.base import paths
 
@@ -10,24 +11,24 @@ def loadConf(id, conf_type):
     try:
         conf_dict = loadConfDict(conf_type)
         conf = conf_dict[id]
-        return conf
+        return AttrDict.from_nested_dicts(conf)
+        # return conf
     except:
         raise ValueError(f'{conf_type} Configuration {id} does not exist')
 
 
 def expandConf(id, conf_type):
     conf = loadConf(id, conf_type)
-    # print(conf.keys(), id)
     try:
         if conf_type == 'Batch':
-            conf['exp'] = expandConf(conf['exp'], 'Exp')
+            conf.exp = expandConf(conf.exp, 'Exp')
         elif conf_type == 'Exp':
-            conf['experiment'] = id
-            conf['env_params'] = expandConf(conf['env_params'], 'Env')
-            conf['trials'] = loadConf(conf['trials'], 'Trial')
-            for k, v in conf['larva_groups'].items():
-                if type(v['model']) == str:
-                    v['model'] = loadConf(v['model'], 'Model')
+            conf.experiment = id
+            conf.env_params = expandConf(conf.env_params, 'Env')
+            conf.trials = loadConf(conf.trials, 'Trial')
+            for k, v in conf.larva_groups.items():
+                if type(v.model) == str:
+                    v.model = loadConf(v.model, 'Model')
     except:
         pass
     return conf
@@ -182,13 +183,13 @@ def store_confs(keys=None):
 
 def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None, **kwargs):
     sample_conf = loadConf(sample, 'Ref')
-    id = sample_conf['id']
+    id = sample_conf.id
     base_larva = expandConf(model, 'Model')
     if duration is None :
-        duration = sample_conf['duration'] / 60
+        duration = sample_conf.duration / 60
     sim_params = null_dict('sim_params', timestep=1 / sample_conf['fr'], duration=duration,
                            path='single_runs/imitation', sim_ID=f'{id}_imitation_{idx}')
-    env_params = null_dict('env_conf', arena=sample_conf['env_params']['arena'])
+    env_params = null_dict('env_conf', arena=sample_conf.env_params.arena)
     larva_groups = {
         'ImitationGroup': null_dict('LarvaGroup', sample=sample, model=base_larva, default_color='blue', imitation=True,
                                     distribution={'N': N})}
