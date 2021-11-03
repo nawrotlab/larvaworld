@@ -7,7 +7,7 @@ from PySimpleGUI import TITLE_LOCATION_TOP
 
 from lib.aux.dictsNlists import flatten_list
 from lib.aux.colsNstr import remove_prefix, remove_suffix
-from lib.conf.stored.conf import saveConf, loadConf, kConfDict
+from lib.conf.stored.conf import saveConf, loadConf, kConfDict, deleteConf
 from lib.conf.base.dtypes import null_dict, col_idx_dict
 from lib.gui.aux.functions import retrieve_value, t_kws, b6_kws, w_kws, col_size, get_disp_name
 from lib.gui.aux.buttons import named_bool_button
@@ -216,6 +216,20 @@ def save_conf_window(conf, conftype, disp=None):
     elif e == 'Cancel':
         return None
 
+def delete_conf_window(id, conftype, disp=None) :
+    if disp is None:
+        disp = conftype
+    l = [[sg.Col([[sg.Text(f'Are you sure you want to delete \n '
+                            f'the {disp} configuration with ID : {id} ?', size=(40, 3))],
+         [sg.Ok(), sg.Cancel()]], justification='center', vertical_alignment='center', element_justification='center',pad=(20,20))]]
+    e, v = sg.Window(f'Delete configuration', l, size=(500,250)).read(close=True)
+    if e == 'Ok':
+        deleteConf(id, conftype)
+        return True
+    elif e == 'Cancel':
+        return False
+
+
 
 def add_ref_window():
     from lib.gui.aux.elements import NamedList
@@ -414,5 +428,6 @@ def entry_window(index, dict_name, base_dict={}, id=None, **kwargs):
 
 
 if __name__ == "__main__":
-    dic = entry_window(index='ID', dict_name='LarvaGroup', base_dict={'dd': 'ss'})
+    res = delete_conf_window(id='ID', conftype='Ref')
+    # dic = entry_window(index='ID', dict_name='LarvaGroup', base_dict={'dd': 'ss'})
     # print(col_idx_dict.get('Larvaroup', None))

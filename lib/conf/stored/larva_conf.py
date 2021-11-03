@@ -160,7 +160,7 @@ stridechain_dist_Starved = {'range': (1, 191),
 
 Levy_brain = brain(['L'], turner=Tsin, crawler=Ccon,
                    interference=null_dict('interference', attenuation=0.0),
-                   intermitter=ImD({'fit': False, 'range': (0.01, 3.0), 'name': 'uniform'},
+                   intermitter=ImD({'fit': False, 'range': (0.01, 3.0), 'name': 'uniform', 'mu': None, 'sigma': None},
                                    {'fit': False, 'range': (1, 120), 'name': 'levy', 'mu': 0, 'sigma': 1})
                    )
 
@@ -171,13 +171,21 @@ brain_3c = brain(['L'],
                                  null_dict('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)))
 
 
-def mod(brain, bod={}, energetics=None, phys={}):
+def mod(brain, bod={}, energetics=None, phys={}, Box2D={}):
     return null_dict('larva_conf', brain=brain,
                      energetics=energetics,
                      body=null_dict('body', **bod),
                      physics=null_dict('physics', **phys),
+                    Box2D_params=null_dict('Box2D_params', **Box2D)
                      )
-
+RvsS = {
+    'rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover'),
+    'navigator_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', OD=OD1),
+    'mock_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', Nsegs=1, mock=True),
+    'sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter'),
+    'navigator_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', OD=OD1),
+    'mock_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', Nsegs=1, mock=True),
+}
 
 larvae = {
     'explorer': mod(brain(['L', 'W'])),
@@ -204,14 +212,7 @@ larvae = {
     'imitator': mod(brain(['L']), bod={'initial_length': 0.0045, 'length_std': 0.0001, 'Nsegs': 11},
                     phys={'ang_damping': 1.0, 'body_spring_k': 1.0}),
 }
-RvsS = {
-    'rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover'),
-    'navigator_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', OD=OD1),
-    'mock_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', Nsegs=1, mock=True),
-    'sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter'),
-    'navigator_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', OD=OD1),
-    'mock_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', Nsegs=1, mock=True),
-}
+
 
 
 def OD(ids: list, means: list, stds=None) -> dict:
@@ -236,3 +237,12 @@ mod_dict = {
     **RvsS,
     **gamers,
 }
+# Box2D_params=null_dict('Box2D_params')
+# for k, v in mod_dict.items():
+#     v['Box2D_params'] = Box2D_params
+#
+# from lib.conf.stored.conf import saveConf
+#
+# for k, v in mod_dict.items():
+#     print(k)
+#     saveConf(v, 'Model', k)

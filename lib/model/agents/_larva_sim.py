@@ -18,7 +18,7 @@ class LarvaSim(BodySim, Larva):
                        odor=odor, group=group, default_color=default_color)
         self.build_energetics(larva_pars['energetics'], life_history=life_history)
         BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['physics'], **larva_pars['body'],
-                         **kwargs)
+                         **larva_pars['Box2D_params'],**kwargs)
         self.brain = self.build_brain(larva_pars['brain'])
         if self.energetics:
             self.deb.intermitter = self.brain.intermitter
@@ -33,7 +33,7 @@ class LarvaSim(BodySim, Larva):
                               self.model.foodtypes.keys()}
         # self.foraging_dict= {action :{id: [0] for id in self.model.foodtypes} for action in ['detection', 'consumption']}
 
-    def compute_next_action(self):
+    def compute_step(self):
         # t0 = []
         # t0.append(time.time())
         self.cum_dur += self.model.dt
@@ -283,7 +283,8 @@ class LarvaSim(BodySim, Larva):
         if self.model.color_behavior:
             self.update_behavior_dict()
         # print(self.deb.hunger, self.deb.e)
-        self.brain.intermitter.update(food_present=self.food_detected, feed_success=self.feed_success)
+        if self.brain.intermitter is not None :
+            self.brain.intermitter.update(food_present=self.food_detected, feed_success=self.feed_success)
 
     def update_foraging_dict(self, foodtype, current_V_eaten):
         if foodtype is not None:

@@ -80,6 +80,7 @@ class BodySim(BodyManager):
         # self.collector=AgentCollector(g,self)
 
     def step(self):
+        self.compute_step()
         # t0=[]
         # t0.append(time.time())
         self.restore_body_bend()
@@ -104,8 +105,10 @@ class BodySim(BodyManager):
                     for i in np.arange(1, self.mid_seg_index, 1):
                         self.segs[i].set_ang_vel(ang_vel / i)
             elif self.ang_mode == 'torque':
-                self.torque = self.ang_activity * self.torque_coef*10000
-                self.segs[0]._body.ApplyTorque(self.torque, wake=True)
+                self.torque = self.ang_activity * self.torque_coef*100000
+                # print(self.torque)
+                self.rotator.ApplyTorque(self.torque, wake=True)
+                # self.segs[0]._body.ApplyTorque(self.torque, wake=True)
                 if self.Nsegs > 1:
                     for i in np.arange(1, self.mid_seg_index, 1):
                         self.segs[i]._body.ApplyTorque(self.torque / i, wake=True)
@@ -132,6 +135,7 @@ class BodySim(BodyManager):
             #     # pass
 
             # Option : Apply to all body segments. This allows to control velocity for any Npoints. But it has the same shitty visualization as all options
+            # for seg in [self.segs[0]]:
             for seg in self.segs:
                 if self.lin_mode == 'impulse':
                     temp_lin_vec_amp = self.lin_activity * self.lin_vel_coef

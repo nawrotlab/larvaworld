@@ -317,18 +317,8 @@ def init_pars():
                                     'h': 'The range of the parameters for space search.', 's': 'ss.ranges'},
                          'Ngrid': {'t': int, 'max': 100, 'h': 'The number of steps for space search.',
                                    's': 'ss.Ngrid'}},
-        'body': {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'initial',
-                                    'combo': 'length', 'h': 'The initial body length.'},
-                 'length_std': {'v': 0.0004, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'std',
-                                'combo': 'length', 'h': 'The standard deviation of the initial body length.'},
-                 'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12,
-                           'h': 'The number of segments comprising the larva body.'},
-                 'seg_ratio': {'max': 1.0,
-                               'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
-                 # [5 / 11, 6 / 11]
-                 'touch_sensors': {'t': int, 'min': 0, 'max': 8,
-                                   'h': 'The number of touch sensors existing on the larva body.'},
-                 },
+
+
         'arena': {'arena_dims': {'t': Tuple[float], 'v': (0.1, 0.1), 'max': 1.0, 'dv': 0.01, 'disp': 'X,Y (m)',
                                  'h': 'The arena dimensions in meters.'},
                   'arena_shape': {'t': str, 'v': 'circular', 'vs': ['circular', 'rectangular'], 'disp': 'shape',
@@ -534,6 +524,43 @@ def init_pars():
         'output': {n: bF for n in output_keys}
     }
 
+    d['Box2D_joint_N']={'t': int, 'v': 0, 'max': 2}
+
+    d['friction_joint']={'N': d['Box2D_joint_N'], 'args': {'maxForce': {'v': 10 ** 0, 'max': 10 ** 5},
+                                                                     'maxTorque': {'v': 10 ** 0, 'max': 10 ** 5}
+                                                                     }}
+    d['revolute_joint']={'N': d['Box2D_joint_N'], 'args': {
+                'enableMotor': bT,  # )
+                'maxMotorTorque': {'v': 0.0, 'max': 10 ** 5},
+                'motorSpeed': {'v': 0.0, 'max': 10 ** 5}
+            } }
+    d['distance_joint']={'N': d['Box2D_joint_N'], 'args': {
+                'frequencyHz': {'v': 5.0, 'max': 20.0},
+                'dampingRatio': {'v': 1.0, 'max': 10 ** 5},
+            }}
+
+    d['Box2D_params']= {
+        'joint_types': {
+            'friction': d['friction_joint'],
+            'revolute': d['revolute_joint'],
+            'distance': d['distance_joint']
+        }
+    }
+
+    d['body'] = {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'initial',
+                                    'combo': 'length', 'h': 'The initial body length.'},
+                 'length_std': {'v': 0.0004, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'std',
+                                'combo': 'length', 'h': 'The standard deviation of the initial body length.'},
+                 'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12,
+                           'h': 'The number of segments comprising the larva body.'},
+                 'seg_ratio': {'max': 1.0,
+                               'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
+                 # [5 / 11, 6 / 11]
+                 'touch_sensors': {'t': int, 'min': 0, 'max': 8,
+                                   'h': 'The number of touch sensors existing on the larva body.'}
+                 # **d['Box2D_params']
+                 }
+
     d['intermitter'] = {
         'stridechain_dist': d['bout_distro'],
         'pause_dist': d['bout_distro'],
@@ -604,6 +631,7 @@ def init_pars():
         'body': d['body'],
         'energetics': d['energetics'],
         'physics': d['physics'],
+        'Box2D_params': d['Box2D_params'],
     }
     d['ang_definition'] = {
         'bend': {'t': str, 'v': 'from_angles', 'vs': ['from_angles', 'from_vectors'],
@@ -1017,6 +1045,6 @@ def oD(c=1, id='Odor'):
     return odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)
 
 if __name__ == '__main__':
-    store_controls()
-    store_RefPars()
-    # print(null_dict('windscape'))
+    # store_controls()
+    # store_RefPars()
+    print(null_dict('Box2D_params'))

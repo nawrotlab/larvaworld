@@ -383,7 +383,7 @@ class LarvaDataset:
         if vis_kwargs is None:
             vis_kwargs = null_dict('visualization', mode='video')
         if s0 is None and e0 is None:
-            if self.step_data is None:
+            if not hasattr(self, 'step_data'):
                 self.load()
             s0, e0 = self.step_data, self.endpoint_data
         dic, pars, track_point = self.get_pars_list(track_point, s0, draw_Nsegs)

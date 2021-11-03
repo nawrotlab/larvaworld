@@ -19,7 +19,7 @@ from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp
     col_kws, default_list_width
 from lib.gui.aux.buttons import named_bool_button, BoolButton, GraphButton, button_row
 from lib.gui.aux.windows import set_kwargs, save_conf_window, import_window, change_dataset_id, save_ref_window, \
-    add_ref_window
+    add_ref_window, delete_conf_window
 from lib.conf.base import paths
 
 
@@ -356,8 +356,8 @@ class SelectionList(GuiElement):
             if id is not None:
                 self.update(w, id)
         elif e == f'DELETE {n}' and id != '':
-            deleteConf(id, k0)
-            self.update(w)
+            if self.delete(id, k0) :
+                self.update(w)
         elif e == f'RUN {n}' and id != '':
             try :
                 conf = self.get(w, v, c, as_entry=False)
@@ -393,6 +393,9 @@ class SelectionList(GuiElement):
 
     def save(self, conf):
         return save_conf_window(conf, self.conftype, disp=self.disp)
+
+    def delete(self, id, k0):
+        return delete_conf_window(id, conftype = k0, disp=self.disp)
 
     def load(self, w, c, id):
         conf = loadConf(id, self.conftype)
@@ -448,6 +451,8 @@ class SelectionList(GuiElement):
     @property
     def Nconfs(self):
         return len(self.confs)
+
+
 
 
 class Header(HeadedElement):

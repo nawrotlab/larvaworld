@@ -150,7 +150,7 @@ def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
         return xmids[ii], overlaps[jj]
 
 
-def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=['stride', 'pause'], **kwargs):
+def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=['stride', 'pause'],min_dur=0.4, **kwargs):
     from lib.model.modules.intermitter import get_EEB_poly1d
     if id is None:
         id = config['id']
@@ -160,7 +160,7 @@ def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=
                                                  ['stridechain_length', 'pause_dur'],
                                                  [True, False],
                                                  [False, True],
-                                                 [(1, 100), (0.4, 20.0)]):
+                                                 [(1, 100), (min_dur, 20.0)]):
         if dataset is not None:
             x0 = dataset.get_par(p).values
         elif s is not None:

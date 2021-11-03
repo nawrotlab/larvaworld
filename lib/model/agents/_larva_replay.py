@@ -48,7 +48,7 @@ class LarvaReplay(Larva, BodyReplay):
                                 initial_length=self.sim_length, length_std=0, Nsegs=self.Nsegs, interval=0)
         self.data = data
 
-    def read_step(self, i):
+    def compute_step(self, i):
         self.midline = self.mid_ar[i].tolist()
         self.vertices = self.con_ar[i][~np.isnan(self.con_ar[i])].reshape(-1, 2)
         if self.cen_ar is not None:
@@ -67,7 +67,7 @@ class LarvaReplay(Larva, BodyReplay):
     def step(self):
         m = self.model
         step = m.active_larva_schedule.steps
-        self.read_step(step)
+        self.compute_step(step)
         mid = self.midline
         if not np.isnan(self.pos).any():
             m.space.move_agent(self, self.pos)

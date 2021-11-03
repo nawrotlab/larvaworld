@@ -12,7 +12,7 @@ from unflatten import unflatten
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from shapely.affinity import affine_transform
-from Box2D import b2World, b2ChainShape, b2EdgeShape
+
 from mesa.space import ContinuousSpace
 
 import lib.aux.dictsNlists
@@ -75,8 +75,7 @@ class LarvaWorld:
         self.allow_clicks = allow_clicks
         self.Nticks = 0
         self.Nsteps = Nsteps
-        snapshot_interval_in_sec = 60
-        self.snapshot_interval = int(snapshot_interval_in_sec / dt)
+        self.snapshot_interval = int( 60 / dt)
         self.id = id
 
         self._screen = None
@@ -125,7 +124,7 @@ class LarvaWorld:
                                       center=True, w=220 * 4, h=200 * 4, font=pygame.font.SysFont("comicsansms", 25))
         self.end_condition_met = False
 
-        if self.env_pars['windscape'] is not None:
+        if self.env_pars['windscape'] is not None and self.env_pars['windscape']['wind_speed'] is not None:
             self.windscape = WindScape(model=self, **self.env_pars['windscape'])
         else :
             self.windscape = None
@@ -216,6 +215,7 @@ class LarvaWorld:
         self.tank_polygon = Polygon(self.tank_shape * k)
 
         if self.Box2D:
+            from Box2D import b2World, b2ChainShape, b2EdgeShape
             self._sim_velocity_iterations = 6
             self._sim_position_iterations = 2
 
@@ -405,7 +405,7 @@ class LarvaWorld:
         if self.configuration_text is not None :
             self.configuration_box.text=self.configuration_text
             self.configuration_box.visible=True
-            for i in range(200):
+            for i in range(10):
                 self.configuration_box.draw(screen)
                 screen.render()
             self.configuration_box.visible = False
@@ -565,6 +565,7 @@ class LarvaWorld:
         return xy, ls
 
     def create_border_bodies(self, border_xy):
+        from Box2D import b2EdgeShape
         if self.Box2D:
             bs = []
             for xy in border_xy:
@@ -660,6 +661,18 @@ class LarvaWorld:
             self.scale_clock_color = (0, 0, 0)
         for i in [self.sim_clock, self.sim_scale, self.sim_state] + list(self.screen_texts.values()):
             i.set_color(self.scale_clock_color)
+
+    def plot_odorscape(self, **kwargs):
+        from lib.anal.plotting import plot_surface
+        for id, layer in self.odor_layers.items():
+            X, Y = layer.meshgrid
+            x = self.space_to_mm(X)
+            y = self.space_to_mm(Y)
+            plot_surface(x=x, y=y, z=layer.get_grid(),vars=[r'x $(mm)$', r'y $(mm)$'], target=r'concentration $(μM)$',
+                         title=f'{id} odorscape',save_as=f'{id}_odorscape_{self.odorscape_counter}', **kwargs)
+
+    def space_to_mm(self, array):
+        return array * 1000 / self.scaling_factor
 
 
 def generate_larvae(N, sample_dict, base_model, RefPars=None):

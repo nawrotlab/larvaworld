@@ -111,6 +111,7 @@ def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
 
 grouped_exp_dict = {
     'exploration': {
+        'tethered': simple_exp('focus', dur=30.0, l=lg(m='immobile', N=1, ors=[90.0, 90.0])),
         'focus': simple_exp('focus', l=lg(m='explorer', N=1, ors=[90.0, 90.0])),
         'dish': simple_exp('dish', l=lg(m='explorer', N=5, s=0.02)),
         'nengo_dish': simple_exp('dish', l=lg(m='nengo_explorer', N=25, s=0.02)),

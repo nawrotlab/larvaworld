@@ -153,6 +153,7 @@ def store_confs(keys=None):
     if 'Model' in keys:
         from lib.conf.stored.larva_conf import mod_dict
         for k, v in mod_dict.items():
+            print(k)
             saveConf(v, 'Model', k)
     if 'Env' in keys:
         from lib.conf.stored.env_conf import env_dict

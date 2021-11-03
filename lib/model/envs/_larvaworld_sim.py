@@ -43,10 +43,10 @@ class LarvaWorldSim(LarvaWorld):
         k = get_exp_condition(self.experiment)
         self.exp_condition = k(self) if k is not None else None
 
-    def prepare_odor_layer(self, timesteps):
-        for i in range(timesteps):
-            for id, layer in self.odor_layers.items():
-                layer.update_values()  # Currently doing something only for the DiffusionValueLayer
+    # def prepare_odor_layer(self, timesteps):
+    #     for i in range(timesteps):
+    #         for id, layer in self.odor_layers.items():
+    #             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
 
     def _create_odor_layers(self, pars):
         from lib.model.envs._space import DiffusionValueLayer, GaussianValueLayer
@@ -129,9 +129,6 @@ class LarvaWorldSim(LarvaWorld):
         if self.windscape is not None :
             self.windscape.update()
         # t0.append(time.time())
-        for l in self.get_flies():
-            l.compute_next_action()
-        # t0.append(time.time())
         self.active_larva_schedule.step()
         self.active_food_schedule.step()
         if self.Box2D:
@@ -151,17 +148,9 @@ class LarvaWorldSim(LarvaWorld):
         # t0.append(time.time())
         # print(np.array(np.diff(t0)*100000).astype(int))
 
-    def space_to_mm(self, array):
-        return array * 1000 / self.scaling_factor
 
-    def plot_odorscape(self, **kwargs):
-        from lib.anal.plotting import plot_surface
-        for id, layer in self.odor_layers.items():
-            X, Y = layer.meshgrid
-            x = self.space_to_mm(X)
-            y = self.space_to_mm(Y)
-            plot_surface(x=x, y=y, z=layer.get_grid(),vars=[r'x $(mm)$', r'y $(mm)$'], target=r'concentration $(μM)$',
-                         title=f'{id} odorscape',save_as=f'{id}_odorscape_{self.odorscape_counter}', **kwargs)
+
+
 
     def get_larva_bodies(self, scale=1.0):
         return {l.unique_id: l.get_polygon(scale=scale) for l in self.get_flies()}
