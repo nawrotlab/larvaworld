@@ -4,6 +4,7 @@ import time
 import numpy as np
 
 import lib.aux.sim_aux
+from lib.aux.dictsNlists import AttrDict
 from lib.model.agents._larva import Larva
 from lib.model.body.controller import BodySim
 from lib.model.modules.brain import DefaultBrain
@@ -19,6 +20,7 @@ class LarvaSim(BodySim, Larva):
         self.build_energetics(larva_pars['energetics'], life_history=life_history)
         BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['physics'], **larva_pars['body'],
                          **larva_pars['Box2D_params'],**kwargs)
+
         self.brain = self.build_brain(larva_pars['brain'])
         if self.energetics:
             self.deb.intermitter = self.brain.intermitter

@@ -123,10 +123,6 @@ class RLmemory(Effector):
             self.gain[id] = self.actions[actionID][ii]
         return actionID
 
-    # @property
-    # def cum_reward(self):
-    #     return self.rewardSum
-
 
 class RLOlfMemory(RLmemory):
     def __init__(self, mode='olf', **kwargs):

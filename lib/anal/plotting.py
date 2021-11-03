@@ -57,7 +57,10 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
     }
     for i, d in enumerate(P.datasets):
         N = d.config['N']
-        s = d.read('step')
+        try :
+            s=d.step_data
+        except :
+            s = d.read('step')
         for k,(n,title) in enumerate(zip(['lin', 'ang'],[r'$\bf{runs & pauses}$', r'$\bf{left & right turns}$'])) :
             idx=2 * i+k
             ax=P.axs[idx]

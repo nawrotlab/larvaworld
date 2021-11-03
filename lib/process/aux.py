@@ -39,7 +39,6 @@ def apply_sos_filter_to_array_with_nans(array, sos, padlen=6):
         return array_filt
     except:
         array_filt = sosfiltfilt(sos, array, padlen=padlen)
-        # raise ValueError
         return array_filt
 
 

@@ -36,7 +36,7 @@ run = SingleRun(**exp_conf, vis_kwargs=d['visualization'])
 ds=run.run()
 
 if args.analysis:
-    fig_dict, results = run.analyze(show=True)
+    fig_dict, results = run.analyze(show=False)
     # fig_dict, results = sim_analysis(ds, exp)
 
 e = time.time()

@@ -92,6 +92,7 @@ class LarvaDataset:
             self.endpoint_data = end
         if food is not None:
             self.food_endpoint_data = food
+        self.update_config()
 
     def drop_pars(self, groups=None, is_last=True, show_output=True, **kwargs):
         if groups is None:

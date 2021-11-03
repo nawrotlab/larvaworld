@@ -124,25 +124,26 @@ class SingleRun:
             dict_to_file(self.param_dict, d.dir_dict.sim)
 
     def analyze(self, save_to=None, **kwargs):
+        exp=self.experiment
         from lib.sim.single.analysis import source_analysis, deb_analysis, comparative_analysis, foraging_analysis
         from lib.conf.stored.analysis_conf import analysis_dict
-        if 'tactile' in self.experiment:
+        if 'tactile' in exp:
             anal_params = analysis_dict.tactile
-        elif 'RvsS' in self.experiment or 'growth' in self.experiment:
+        elif 'RvsS' in exp or 'growth' in exp:
             anal_params = analysis_dict.intake
-        elif 'anemo' in self.experiment:
+        elif 'anemo' in exp:
             anal_params = analysis_dict.anemotaxis
-        elif 'puff' in self.experiment:
+        elif 'puff' in exp:
             anal_params = analysis_dict.puff
-        elif 'chemo' in self.experiment:
+        elif 'chemo' in exp:
             anal_params = analysis_dict.chemo
-        elif 'RL' in self.experiment:
+        elif 'RL' in exp:
             anal_params = analysis_dict.RL
-        elif self.experiment in ['food_at_bottom']:
+        elif exp in ['food_at_bottom']:
             anal_params = ['foraging_analysis']
-        elif self.experiment in ['random_food']:
+        elif exp in ['random_food']:
             anal_params = analysis_dict.survival
-        elif 'dispersion' in self.experiment or 'dish' in self.experiment:
+        elif 'dispersion' in exp or 'dish' in exp:
             anal_params = ['comparative_analysis']
         # elif self.experiment in ['growth', 'RvsS'] :
         #     anal_params = analysis_dict['DEB']

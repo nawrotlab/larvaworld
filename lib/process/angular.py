@@ -152,14 +152,7 @@ def comp_angular(s, config, mode='minimal'):
     print('All angular parameters computed')
 
 
-def angular_processing(s, e, config, dt, Npoints, recompute=False, mode='minimal', **kwargs):
-    N = Npoints
-    points = nam.midline(N, type='point')
-    Nangles = np.clip(N - 2, a_min=0, a_max=None)
-    angles = [f'angle{i}' for i in range(Nangles)]
-    Nsegs = np.clip(N - 1, a_min=0, a_max=None)
-    segs = nam.midline(Nsegs, type='seg')
-
+def angular_processing(s, e, config, recompute=False, mode='minimal', **kwargs):
     ang_pars = [nam.orient('front'), nam.orient('rear'), 'bend']
     if set(ang_pars).issubset(s.columns.values) and not recompute:
         print('Orientation and bend are already computed. If you want to recompute them, set recompute to True')

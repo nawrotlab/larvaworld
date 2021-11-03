@@ -232,10 +232,8 @@ def process(processing, s, e, config, mode='minimal', traj_colors=True, show_out
             else :
                 comp_final_anemotaxis(**c, **kwargs)
         if processing['dispersion'] :
-        # if processing['dispersion'] and type(dsp_starts) == list and type(dsp_stops) == list:
             comp_dispersion(**c, **kwargs)
         if processing['tortuosity'] :
-        # if processing['tortuosity'] and type(tor_durs) == list:
             comp_tortuosity(**c, **kwargs)
         if processing['PI']:
             if 'x' in e.keys():

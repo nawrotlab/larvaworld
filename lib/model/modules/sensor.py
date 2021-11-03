@@ -52,7 +52,7 @@ class Sensor(Effector):
         self.Ngains = len(gain_dict)
         self.gain_ids = list(gain_dict.keys())
         for id, p in gain_dict.items():
-            if type(p) == dict:
+            if isinstance(p, dict):
                 m, s = p['mean'], p['std']
                 self.base_gain[id] = float(np.random.normal(m, s, 1))
             else:

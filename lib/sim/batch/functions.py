@@ -19,10 +19,7 @@ def get_Nbest(traj, mutate=True, recombine=False):
     N = traj.config.Nbest
     df=traj_df(traj)
     p_n0s = df.columns[:-1]
-    fits = df[traj.config.fit_par].values
-    idx0 = np.argpartition(fits, N)
-    idx = idx0[:N] if traj.config.minimize else idx0[-N:]
-    V0s = df[p_n0s].iloc[idx].values.T
+    V0s = df[p_n0s].iloc[np.arange(N)].values.T
     if mutate:
         space = []
         for v0s, r in zip(V0s, traj.config.ranges):
@@ -37,35 +34,10 @@ def get_Nbest(traj, mutate=True, recombine=False):
     return best_pop
 
 
-def get_results(traj, res_names=None):
-    p_vs = [traj.f_get(p).f_get_range() for p in traj.f_get_explored_parameters()]
-    p_ns = [traj.f_get(p).v_name for p in traj.f_get_explored_parameters()]
-    p_n0s = [traj.f_get(p).v_full_name for p in traj.f_get_explored_parameters()]
-    runs = traj.f_get_run_names(sort=True)
-    runs_idx = [int(i) for i in traj.f_iter_runs(yields='idx')]
-    if res_names is None:
-        res_names = np.unique([traj.f_get(r).v_name for r in traj.f_get_results()])
-
-    r_vs = [[traj.f_get(run).f_get(r_n).f_get() for run in runs] for r_n in res_names]
-    # r_vs = []
-    # for res in res_names:
-    #     try:
-    #         r_vs.append([traj.f_get(run).f_get(res).f_get() for run in runs])
-    #     except:
-    #         res_names = [r for r in res_names if r != res]
-    return runs_idx, p_ns, p_n0s, p_vs, res_names, r_vs
-
-
 def save_results_df(traj):
-    runs_idx, p_ns, p_n0s, p_vs, r_ns, r_vs = get_results(traj, res_names=None)
-    cols = list(p_ns) + list(r_ns)
-    df = pd.DataFrame(np.array(p_vs + r_vs).T, index=runs_idx, columns=cols)
-    df.index.name = 'run_idx'
-    try:
-        fit_par, minimize = traj.config.fit_par, traj.config.minimize
-        df.sort_values(by=fit_par, ascending=minimize, inplace=True)
-    except:
-        pass
+    df=traj_df(traj)
+    pairs={traj.f_get(p).v_full_name : traj.f_get(p).v_name for p in traj.f_get_explored_parameters()}
+    df.rename(pairs, axis=1, inplace=True)
     df.to_csv(os.path.join(traj.config.dir_path, 'results.csv'), index=True, header=True)
     try:
         for p in df.columns.values[:-1]:
@@ -204,6 +176,11 @@ def traj_df(traj):
         dic={'idx' : idx, **traj.f_get_explored_parameters(fast_access=True), **traj.runs[idx].f_to_dict(short_names=True, fast_access=True)}
         dics.append(dic)
     df=pd.DataFrame.from_records(dics, index='idx')
+    try:
+        fit_par, minimize = traj.config.fit_par, traj.config.minimize
+        df.sort_values(by=fit_par, ascending=minimize, inplace=True)
+    except:
+        pass
     return df
 
 
