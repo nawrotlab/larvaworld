@@ -14,7 +14,8 @@ class LarvaBody:
     def __init__(self, model, pos=None, orientation=None, density=300.0,
                  initial_length=None, length_std=0, Nsegs=1, interval=0,
                  seg_ratio=None, touch_sensors=False, **kwargs):
-
+        # print(Nsegs, initial_length)
+        # raise
         self.touch_sensors = touch_sensors
         self.model = model
         self.density = density
@@ -44,7 +45,8 @@ class LarvaBody:
             self.real_length = float(np.random.normal(loc=initial_length, scale=length_std, size=1))
 
         self.seg_lengths = self.sim_length * self.seg_ratio
-        self.seg_vertices = self.base_seg_vertices * self.sim_length
+        self.seg_vertices = [s* self.sim_length for s in self.base_seg_vertices ]
+        # self.seg_vertices = self.base_seg_vertices * self.sim_length
         self.set_head_edges()
 
         if not hasattr(self, 'real_mass'):
@@ -94,7 +96,8 @@ class LarvaBody:
     def adjust_body_vertices(self):
         self.radius = self.sim_length / 2
         self.seg_lengths = self.sim_length * self.seg_ratio
-        self.seg_vertices = self.base_seg_vertices * self.sim_length
+        self.seg_vertices = [s* self.sim_length for s in self.base_seg_vertices ]
+        # self.seg_vertices = self.base_seg_vertices * self.sim_length
         for vec, seg in zip(self.seg_vertices, self.segs):
             seg.seg_vertices = vec
         self.set_head_edges()
@@ -163,8 +166,8 @@ class LarvaBody:
         points = np.array([[0.9, w], [0.05, w]])
         xy0 = lib.aux.sim_aux.body(points)
         ps = lib.aux.sim_aux.segment_body(Nsegs, xy0, seg_ratio=seg_ratio, centered=True)
-        seg_vertices = [np.array([p]) * 1 for p in ps]
-        return np.array(seg_vertices)
+        seg_vertices = [np.array([p]) for p in ps]
+        return seg_vertices
 
     # def get_larva_shape(self, filepath=None):
     #     if filepath is None:
