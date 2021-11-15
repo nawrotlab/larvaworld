@@ -3,7 +3,8 @@ The larva model parameters
 '''
 
 import numpy as np
-from lib.conf.base.dtypes import null_dict
+from lib.conf.base.dtypes import null_dict, null_Box2D_params, Box2Djoints
+
 
 ''' Default exploration model'''
 
@@ -31,7 +32,7 @@ RL_touch_memory = null_dict('memory', Delta=0.5, state_spacePerSide=1, modality=
                             gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=True)
 
 gRL_touch_memory = null_dict('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30, update_dt=0.5,
-                            gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=False)
+                             gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=False)
 
 OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}
 OD2 = {'CS': {'mean': 150.0, 'std': 0.0}, 'UCS': {'mean': 0.0, 'std': 0.0}}
@@ -110,7 +111,8 @@ def nengo_brain(module_shorts, EEB, OD=None):
     else:
         f_fr0, f_fr_r = 0.0, (0.0, 0.0)
     return brain(module_shorts,
-                 turner=null_dict('turner', initial_freq=0.3, initial_amp=30.0, noise=1.85, activation_noise=0.8, freq_range=(0.2, 0.4)),
+                 turner=null_dict('turner', initial_freq=0.3, initial_amp=30.0, noise=1.85, activation_noise=0.8,
+                                  freq_range=(0.2, 0.4)),
                  crawler=null_dict('crawler', initial_freq=1.5, initial_amp=0.6, freq_range=(1.2, 1.8),
                                    waveform=None, step_to_length_mu=0.25, step_to_length_std=0.01),
                  feeder=null_dict('feeder', initial_freq=f_fr0, freq_range=f_fr_r),
@@ -172,47 +174,18 @@ brain_3c = brain(['L'],
 
 
 def mod(brain, bod={}, energetics=None, phys={}, Box2D={}):
+    if Box2D == {}:
+        # print('ss')
+        Box2D_params = null_Box2D_params
+    else:
+        # print('dd')
+        Box2D_params = null_dict('Box2D_params', **Box2D)
     return null_dict('larva_conf', brain=brain,
                      energetics=energetics,
                      body=null_dict('body', **bod),
                      physics=null_dict('physics', **phys),
-                    Box2D_params=null_dict('Box2D_params', **Box2D)
+                     Box2D_params=Box2D_params
                      )
-RvsS = {
-    'rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover'),
-    'navigator_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', OD=OD1),
-    'mock_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', Nsegs=1, mock=True),
-    'sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter'),
-    'navigator_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', OD=OD1),
-    'mock_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', Nsegs=1, mock=True),
-}
-
-larvae = {
-    'explorer': mod(brain(['L', 'W'])),
-    'toucher': mod(brain(['L', 'To'], turner=Tno_noise), bod={'touch_sensors': 0}),
-    'toucher_brute': mod(brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', brute_force=True)), bod={'touch_sensors': 0}),
-    'RL_toucher_0': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory), bod={'touch_sensors': 0}),
-    'gRL_toucher_0': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory), bod={'touch_sensors': 0}),
-    'RL_toucher_2': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory), bod={'touch_sensors': 2}),
-    'gRL_toucher_2': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory), bod={'touch_sensors': 2}),
-    'Levy-walker': mod(Levy_brain),
-    'navigator': mod(brain(['L', 'O'], OD=OD1)),
-    'navigator_x2': mod(brain(['L', 'O'], OD=OD2)),
-    'immobile': mod(brain(['T', 'O'], OD=OD1)),
-    'Orco_forager': mod(brain(['L', 'F'], intermitter=Im(0.5))),
-    'forager': mod(brain(['LOF'], OD=OD1, intermitter=Im(0.5))),
-    'forager_x2': mod(brain(['LOF'], OD=OD2, intermitter=Im(0.5))),
-    'RL_navigator': mod(brain(['LOF', 'M'])),
-    'RL_forager': mod(brain(['LOF', 'M'], intermitter=Im(0.5))),
-    'basic_navigator': mod(brain(['L', 'O'], OD=OD1, turner=Tsin, crawler=Ccon), bod={'Nsegs': 1}),
-    'explorer_3con': mod(brain_3c, bod={'initial_length': 3.85 / 1000, 'length_std': 0.35 / 1000}),
-    'nengo_feeder': mod(nengo_brain(['L', 'F'],EEB=0.75)),
-    'nengo_explorer': mod(nengo_brain(['L','W'], EEB=0.0)),
-    'nengo_forager': mod(nengo_brain(['LOF'],EEB=0.75, OD=OD1)),
-    'imitator': mod(brain(['L']), bod={'initial_length': 0.0045, 'length_std': 0.0001, 'Nsegs': 11},
-                    phys={'ang_damping': 1.0, 'body_spring_k': 1.0}),
-}
-
 
 
 def OD(ids: list, means: list, stds=None) -> dict:
@@ -225,24 +198,76 @@ def OD(ids: list, means: list, stds=None) -> dict:
     return odor_dict
 
 
-gamers = {
-    'gamer': mod(brain(['LOF'], OD=OD(odors3, [150.0, 0.0, 0.0]))),
-    'gamer-5x': mod(brain(['LOF'], OD=OD(odors5, [150.0, 0.0, 0.0, 0.0, 0.0]))),
-    'follower-R': mod(brain(['LOF'], OD=OD(odors2, [150.0, 0.0]))),
-    'follower-L': mod(brain(['LOF'], OD=OD(odors2, [0.0, 150.0]))),
-}
+def create_mod_dict() :
+    # print('xx')
 
-mod_dict = {
-    **larvae,
-    **RvsS,
-    **gamers,
-}
-# Box2D_params=null_dict('Box2D_params')
-# for k, v in mod_dict.items():
-#     v['Box2D_params'] = Box2D_params
-#
-# from lib.conf.stored.conf import saveConf
-#
-# for k, v in mod_dict.items():
-#     print(k)
-#     saveConf(v, 'Model', k)
+    larvae = {
+        'explorer': mod(brain(['L', 'W'])),
+        'toucher': mod(brain(['L', 'To'], turner=Tno_noise), bod={'touch_sensors': 0}),
+        'toucher_brute': mod(brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', brute_force=True)),
+                             bod={'touch_sensors': 0}),
+        'RL_toucher_0': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory), bod={'touch_sensors': 0}),
+        'gRL_toucher_0': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory), bod={'touch_sensors': 0}),
+        'RL_toucher_2': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory), bod={'touch_sensors': 2}),
+        'gRL_toucher_2': mod(brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory), bod={'touch_sensors': 2}),
+        'Levy-walker': mod(Levy_brain),
+        'navigator': mod(brain(['L', 'O'], OD=OD1)),
+        'navigator_x2': mod(brain(['L', 'O'], OD=OD2)),
+        'immobile': mod(brain(['T', 'O'], OD=OD1)),
+        'Orco_forager': mod(brain(['L', 'F'], intermitter=Im(0.5))),
+        'forager': mod(brain(['LOF'], OD=OD1, intermitter=Im(0.5))),
+        'forager_x2': mod(brain(['LOF'], OD=OD2, intermitter=Im(0.5))),
+        'RL_navigator': mod(brain(['LOF', 'M'])),
+        'RL_forager': mod(brain(['LOF', 'M'], intermitter=Im(0.5))),
+        'basic_navigator': mod(brain(['L', 'O'], OD=OD1, turner=Tsin, crawler=Ccon), bod={'Nsegs': 1}),
+        'explorer_3con': mod(brain_3c, bod={'initial_length': 3.85 / 1000, 'length_std': 0.35 / 1000}),
+        'nengo_feeder': mod(nengo_brain(['L', 'F'], EEB=0.75)),
+        'nengo_explorer': mod(nengo_brain(['L', 'W'], EEB=0.0)),
+        'nengo_forager': mod(nengo_brain(['LOF'], EEB=0.75, OD=OD1)),
+        'imitator': mod(brain(['L']), bod={'initial_length': 0.0045, 'length_std': 0.0001, 'Nsegs': 11},
+                        phys={'ang_damping': 1.0, 'body_spring_k': 1.0}),
+    }
+
+    RvsS = {
+        'rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover'),
+        'navigator_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', OD=OD1),
+        'mock_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', Nsegs=1, mock=True),
+        'sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter'),
+        'navigator_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', OD=OD1),
+        'mock_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', Nsegs=1, mock=True),
+    }
+
+    gamers = {
+        'gamer': mod(brain(['LOF'], OD=OD(odors3, [150.0, 0.0, 0.0]))),
+        'gamer-5x': mod(brain(['LOF'], OD=OD(odors5, [150.0, 0.0, 0.0, 0.0, 0.0]))),
+        'follower-R': mod(brain(['LOF'], OD=OD(odors2, [150.0, 0.0]))),
+        'follower-L': mod(brain(['LOF'], OD=OD(odors2, [0.0, 150.0]))),
+    }
+
+    zebrafish = {
+        'zebrafish': mod(brain(['L']),
+                         bod={'initial_length': 0.02, 'length_std': 0.002, 'Nsegs': 2, 'shape': 'zebrafish_larva'},
+                         phys={'ang_damping': 1.0, 'body_spring_k': 1.0, 'torque_coef': 0.3},
+                         Box2D={'joint_types': {'revolute': Box2Djoints(N=1, maxMotorTorque=10 ** 5, motorSpeed=1)}})
+        # Box2D={'joint_types': {'distance': d, 'revolute': Box2Djoints(N=1, maxMotorTorque=10**5, motorSpeed=1), 'friction': f}})
+    }
+
+    mod_dict = {
+        **larvae,
+        **RvsS,
+        **gamers,
+        **zebrafish,
+    }
+    return mod_dict
+
+if __name__ == '__main__':
+    zebrafish = {
+        'zebrafish': mod(brain(['L']),
+                         bod={'initial_length': 0.02, 'length_std': 0.001, 'Nsegs': 2, 'shape': 'zebrafish_larva'},
+                         phys={'ang_damping': 1.0, 'body_spring_k': 1.0, 'torque_coef': 0.3},
+                         Box2D={'joint_types': {'revolute': Box2Djoints(N=1, maxMotorTorque=10 ** 5, motorSpeed=1)}})
+        # Box2D={'joint_types': {'distance': d, 'revolute': Box2Djoints(N=1, maxMotorTorque=10**5, motorSpeed=1), 'friction': f}})
+    }
+    from lib.conf.stored.conf import saveConf
+    for k, v in zebrafish.items():
+        saveConf(v, 'Model', k)

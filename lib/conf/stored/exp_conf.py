@@ -24,6 +24,7 @@ def lg(group='Larva', c='black', N=1, mode='uniform', sh='circle', p=(0.0, 0.0),
         m = loadConf(m, 'Model')
     if type(s) == float:
         s = (s, s)
+        # print(s)
     dist = null_dict('larva_distro', N=N, mode=mode, shape=sh, loc=p, orientation_range=ors, scale=s)
     g = null_dict('LarvaGroup', distribution=dist, default_color=c, model=m, odor=o, **kwargs)
     return {group: g}
@@ -54,7 +55,8 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
 
 def chem_exp(name, c=['olfactor'], dur=5.0, **kwargs):
     return exp(name, sim={'duration': dur}, c=c,
-               enrichment=enr_dict(proc=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'],fits=False), **kwargs)
+               enrichment=enr_dict(proc=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'],
+                                   fits=False), **kwargs)
 
 
 def food_exp(name, c=['feeder'], dur=10.0, en=True, **kwargs):
@@ -135,14 +137,14 @@ grouped_exp_dict = {
                                   l=lg(m='RL_navigator', N=10, mode='periphery', s=0.04)),
         'reorientation': chem_exp('mid_odor_diffusion', l=lg(m='immobile', N=200, s=0.05)),
         'food_at_bottom': chem_exp('food_at_bottom', dur=1.0,
-                              l=lgs(models=['Orco_forager', 'forager'],
-                                    ids=['Orco', 'control'], N=5, sh='oval', p=(0.0, 0.04), s=(0.04, 0.01)))
+                                   l=lgs(models=['Orco_forager', 'forager'],
+                                         ids=['Orco', 'control'], N=5, sh='oval', p=(0.0, 0.04), s=(0.04, 0.01)))
     },
     'anemotaxis': {
         'anemotaxis': anemo_exp('windy_arena', dur=0.5, l=lg(m='nengo_explorer', N=4)),
         'anemotaxis_bordered': anemo_exp('windy_arena_bordered', dur=0.5, l=lg(m='nengo_explorer', N=4)),
         'puff_anemotaxis_bordered': anemo_exp('puff_arena_bordered', dur=0.5, l=lg(m='nengo_explorer', N=4)),
-        'single_puff': chem_exp('single_puff', dur=2.5, l=lg(m='nengo_explorer', N=20, sample= 'Puff.Starved')),
+        'single_puff': chem_exp('single_puff', dur=2.5, l=lg(m='nengo_explorer', N=20, sample='Puff.Starved')),
         'anemotaxis_x2': anemo_exp('windy_arena', dur=2, l=lgs(models=['nengo_explorer', 'explorer'],
                                                                ids=['nengo', 'control'], N=10))
     },
@@ -159,7 +161,8 @@ grouped_exp_dict = {
     'foraging': {
         'patchy_food': food_exp('patchy_food', l=lg(m='forager', N=25)),
         'random_food': food_exp('random_food', c=['feeder', 'toucher'], l=lgs(models=['Orco_forager', 'RL_forager'],
-                                            ids=['Orco', 'RL'], N=5, mode='uniform',shape='rectangular', s=0.04),
+                                                                              ids=['Orco', 'RL'], N=5, mode='uniform',
+                                                                              shape='rectangular', s=0.04),
                                 enrichment=enr_dict(proc=['spatial'], bouts=[]), en=False),
         'uniform_food': food_exp('uniform_food', l=lg(m='Orco_forager', N=5, s=0.005)),
         'food_grid': food_exp('food_grid', l=lg(m='Orco_forager', N=25)),
@@ -170,12 +173,14 @@ grouped_exp_dict = {
                                  c=['toucher', 'feeder', 'olfactor'],
                                  enrichment=enr_dict(proc=['spatial', 'angular', 'source']), en=False),
         'tactile_detection': food_exp('single_patch', dur=5.0, c=['toucher'],
-                                      l=lg(m='toucher', N=15,mode='periphery', s=0.03), en=False),
+                                      l=lg(m='toucher', N=15, mode='periphery', s=0.03), en=False),
         'tactile_detection_x3': food_exp('single_patch', dur=600.0, c=['toucher'],
                                          # l=lgs(models=['toucher', 'toucher_brute'],
-                                         l=lgs(models=['RL_toucher_2', 'RL_toucher_0', 'toucher', 'toucher_brute', 'gRL_toucher_0'],
+                                         l=lgs(models=['RL_toucher_2', 'RL_toucher_0', 'toucher', 'toucher_brute',
+                                                       'gRL_toucher_0'],
                                                # ids=['control', 'brute'], N=10), en=False),
-                                               ids=['RL_3sensors', 'RL_1sensor', 'control', 'brute', 'RL global best'], N=10), en=False),
+                                               ids=['RL_3sensors', 'RL_1sensor', 'control', 'brute', 'RL global best'],
+                                               N=10), en=False),
         'tactile_detection_g': food_exp('single_patch', dur=600.0, c=['toucher'],
                                         l=lgs(models=['RL_toucher_0', 'gRL_toucher_0'],
                                               ids=['RL state-specific best', 'RL global best'], N=10), en=False),
@@ -207,6 +212,10 @@ grouped_exp_dict = {
         'catch_me': game_exp('arena_50mm_diffusion', l=game_groups(mode='catch_me'))
     },
 
+    'zebrafish': {
+        'prey_detection': exp('windy_blob_arena', l=lg(m='zebrafish', N=4, s=(0.02,0.05)), sim={'Box2D': True, 'duration' : 20.0})
+    },
+
     'other': {
         'realistic_imitation': exp('dish', l=lg(m='imitator', N=25), sim={'Box2D': True}, c=['midline', 'contour']),
         'imitation': imitation_exp('None.200_controls', model='explorer'),
@@ -214,7 +223,6 @@ grouped_exp_dict = {
 }
 
 if __name__ == '__main__':
-
     # from lib.conf.stored.conf import saveConf
     # for k, v in batch_dict.items():
     #     saveConf(v, 'Batch', k)
@@ -223,5 +231,5 @@ if __name__ == '__main__':
     # print(data1.chemotaxis.chemorbit_x3.larva_groups.CoupledOsc.distribution['N'])  # -> b3bval
     # data1.chemotaxis.chemorbit_x3.larva_groups.CoupledOsc.distribution['N']=5
     print(type(data1))
-    print(type(data1)==dict)
+    print(type(data1) == dict)
     print(isinstance(data1, dict))

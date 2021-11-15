@@ -355,11 +355,9 @@ class WindScape:
                 ps = [l.intersection(b) for b in self.model.border_lines if l.intersects(b)]
                 if len(ps) != 0:
                     p1 = ps[np.argmin([Point(p0).distance(p2) for p2 in ps])].coords[0]
-                # k=100/self.wind_speed
                 viewer.draw_arrow_line(p0, p1, self.default_color, width=0.001,
                                        phi=(self.draw_phi % 1000) / 1000)
         self.draw_phi += self.wind_speed
-        # viewer.draw_arrow_line(p0, p1, self.default_color, width=0.0001*self.wind_speed)
 
     def generate_scapelines(self, D, N, A):
         from lib.aux.ang_aux import rotate_around_center_multi

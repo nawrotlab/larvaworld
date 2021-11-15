@@ -76,12 +76,12 @@ def segment_body(N, xy0, seg_ratio=None, centered=True):
 
     # Create a polygon from the given body contour
     p = Polygon(xy0)
-    # Get maximum x value of contour
+    # Get maximum y value of contour
     y0 = np.max(p.exterior.coords.xy[1])
 
     # Segment body via vertical lines
     ps = [p]
-    for i, (r, cum_r) in enumerate(zip(seg_ratio, np.cumsum(seg_ratio))):
+    for cum_r in np.cumsum(seg_ratio):
         l = LineString([(1 - cum_r, y0), (1 - cum_r, -y0)])
         new_ps = []
         for p in ps:
@@ -100,6 +100,7 @@ def segment_body(N, xy0, seg_ratio=None, centered=True):
     if centered:
         for i, (r, cum_r) in enumerate(zip(seg_ratio, np.cumsum(seg_ratio))):
             ps[i] -= [(1 - cum_r) + r / 2, 0]
+            # pass
 
     # Put front point at the start of segment vertices. Drop duplicate rows
     for i in range(len(ps)):
@@ -110,7 +111,10 @@ def segment_body(N, xy0, seg_ratio=None, centered=True):
             ps[i] = np.flip(np.roll(ps[i], 1, axis=0), axis=0)
         _, idx = np.unique(ps[i], axis=0, return_index=True)
         ps[i] = ps[i][np.sort(idx)]
+        # ps[i][:,0]+=0.5
     # ps[0]=np.vstack([ps[0], np.array(ps[0][0,:])])
+
+    # print(ps)
     return ps
 
 

@@ -28,8 +28,8 @@ def base_dtype(t):
 def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', s='',
         combo=None, argparser=False, entry=None):
     if not argparser:
-        if t==TypedDict :
-            return {name: {'initial_value': v, 'dtype': t, 'entry':entry, 'disp':disp}}
+        if t == TypedDict:
+            return {name: {'initial_value': v, 'dtype': t, 'entry': entry, 'disp': disp}}
         cur_dtype = base_dtype(t)
         if cur_dtype in [float, int]:
             if any([arg is not None for arg in [min, max, dv]]):
@@ -80,7 +80,7 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
 def par_dict(name=None, d0=None, **kwargs):
     if d0 is None:
         d0 = init_pars().get(name, None)
-    if d0 is None :
+    if d0 is None:
         return None
     d = {}
     for n, v in d0.items():
@@ -220,6 +220,8 @@ substrate_dict = {
     #     },
 
 }
+
+
 # null_bout_dist = {
 #     'fit': True,
 #     'range': None,
@@ -257,24 +259,27 @@ def init_pars():
 
         'odorscape': {'odorscape': {'t': str, 'v': 'Gaussian', 'vs': ['Gaussian', 'Diffusion'],
                                     'h': 'The algorithm used for odorscape generation.'},
-                      'grid_dims': {'t': Tuple[int],'v':(51,51), 'min': 10, 'max': 100, 'h': 'The odorscape grid resolution.'},
+                      'grid_dims': {'t': Tuple[int], 'v': (51, 51), 'min': 10, 'max': 100,
+                                    'h': 'The odorscape grid resolution.'},
                       'evap_const': {'max': 1.0, 'h': 'The evaporation constant of the diffusion algorithm.'},
                       'gaussian_sigma': {'t': Tuple[float], 'max': 1.0,
                                          'h': 'The sigma of the gaussian difusion algorithm.'}
                       },
-        'air_puff' : {
-            'duration' : {'v': 1.0, 'max': 100.0, 'h': 'The duration of the air-puff in seconds.'},
-            'speed' : {'v': 10.0, 'max': 1000.0, 'h': 'The wind speed of the air-puff.'},
-            'direction' : {'v': 0.0, 'max': 100.0, 'h': 'The directions of the air puff in radians.'},
-            'start_time' : {'v': 0.0, 'max': 10000.0,'dv': 1.0, 'h': 'The starting time of the air-puff in seconds.'},
-            'N' : {'max': 10000, 'h': 'The number of repetitions of the puff. If N>1 an interval must be provided'},
-            'interval':{'v': 5.0, 'max': 10000.0, 'h': 'Whether the puff will reoccur at constant time intervals in seconds. Ignored if N=1'},
+        'air_puff': {
+            'duration': {'v': 1.0, 'max': 100.0, 'h': 'The duration of the air-puff in seconds.'},
+            'speed': {'v': 10.0, 'max': 1000.0, 'h': 'The wind speed of the air-puff.'},
+            'direction': {'v': 0.0, 'max': 100.0, 'h': 'The directions of the air puff in radians.'},
+            'start_time': {'v': 0.0, 'max': 10000.0, 'dv': 1.0, 'h': 'The starting time of the air-puff in seconds.'},
+            'N': {'max': 10000, 'h': 'The number of repetitions of the puff. If N>1 an interval must be provided'},
+            'interval': {'v': 5.0, 'max': 10000.0,
+                         'h': 'Whether the puff will reoccur at constant time intervals in seconds. Ignored if N=1'},
         },
-        'windscape': {'wind_direction': {'t': float,'v': 0.0, 'min': 0.0, 'max': 360.0, 'dv': 1.0,
+        'windscape': {'wind_direction': {'t': float, 'v': np.pi, 'min': 0.0, 'max': 2 * np.pi, 'dv': 0.1,
                                          'h': 'The absolute polar direction of the wind/air puff.'},
-                      'wind_speed': {'t': float,'v': 0.0, 'min': 0.0, 'max': 100.0, 'dv': 1.0,
+                      'wind_speed': {'t': float, 'v': 0.0, 'min': 0.0, 'max': 100.0, 'dv': 1.0,
                                      'h': 'The speed of the wind/air puff.'},
-                      'puffs' : {'t' : TypedDict, 'v' : {}, 'entry' : 'air_puff', 'disp' : 'air-puffs', 'h': 'Repetitive or single air-puff stimuli.'}
+                      'puffs': {'t': TypedDict, 'v': {}, 'entry': 'air_puff', 'disp': 'air-puffs',
+                                'h': 'Repetitive or single air-puff stimuli.'}
                       },
         'odor_gains': {
             'unique_id': {'t': str, 'h': 'The unique ID of the odorant.'},
@@ -318,7 +323,6 @@ def init_pars():
                                     'h': 'The range of the parameters for space search.', 's': 'ss.ranges'},
                          'Ngrid': {'t': int, 'max': 100, 'h': 'The number of steps for space search.',
                                    's': 'ss.Ngrid'}},
-
 
         'arena': {'arena_dims': {'t': Tuple[float], 'v': (0.1, 0.1), 'max': 1.0, 'dv': 0.01, 'disp': 'X,Y (m)',
                                  'h': 'The arena dimensions in meters.'},
@@ -525,22 +529,22 @@ def init_pars():
         'output': {n: bF for n in output_keys}
     }
 
-    d['Box2D_joint_N']={'t': int, 'v': 0, 'max': 2}
+    d['Box2D_joint_N'] = {'t': int, 'v': 0, 'max': 2}
 
-    d['friction_joint']={'N': d['Box2D_joint_N'], 'args': {'maxForce': {'v': 10 ** 0, 'max': 10 ** 5},
-                                                                     'maxTorque': {'v': 10 ** 0, 'max': 10 ** 5}
-                                                                     }}
-    d['revolute_joint']={'N': d['Box2D_joint_N'], 'args': {
-                'enableMotor': bT,  # )
-                'maxMotorTorque': {'v': 0.0, 'max': 10 ** 5},
-                'motorSpeed': {'v': 0.0, 'max': 10 ** 5}
-            } }
-    d['distance_joint']={'N': d['Box2D_joint_N'], 'args': {
-                'frequencyHz': {'v': 5.0, 'max': 20.0},
-                'dampingRatio': {'v': 1.0, 'max': 10 ** 5},
-            }}
+    d['friction_joint'] = {'N': d['Box2D_joint_N'], 'args': {'maxForce': {'v': 10 ** 0, 'max': 10 ** 5},
+                                                             'maxTorque': {'v': 10 ** 0, 'max': 10 ** 5}
+                                                             }}
+    d['revolute_joint'] = {'N': d['Box2D_joint_N'], 'args': {
+        'enableMotor': bT,  # )
+        'maxMotorTorque': {'v': 0.0, 'max': 10 ** 5},
+        'motorSpeed': {'v': 0.0, 'max': 10 ** 5}
+    }}
+    d['distance_joint'] = {'N': d['Box2D_joint_N'], 'args': {
+        'frequencyHz': {'v': 5.0, 'max': 20.0},
+        'dampingRatio': {'v': 1.0, 'max': 10 ** 5},
+    }}
 
-    d['Box2D_params']= {
+    d['Box2D_params'] = {
         'joint_types': {
             'friction': d['friction_joint'],
             'revolute': d['revolute_joint'],
@@ -558,8 +562,9 @@ def init_pars():
                                'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
                  # [5 / 11, 6 / 11]
                  'touch_sensors': {'t': int, 'min': 0, 'max': 8,
-                                   'h': 'The number of touch sensors existing on the larva body.'}
-                 # **d['Box2D_params']
+                                   'h': 'The number of touch sensors existing on the larva body.'},
+                 'shape': {'t': str, 'v': 'drosophila_larva', 'vs': ['drosophila_larva', 'zebrafish_larva'],
+                           'h': 'The body shape.'},
                  }
 
     d['intermitter'] = {
@@ -595,6 +600,7 @@ def init_pars():
         'radius': {'v': 0.003, 'max': 0.1, 'dv': 0.001, 'h': 'The spatial radius of the source in meters.'},
         'amount': {'v': 0.0, 'max': 1.0, 'h': 'The unique ID of the food grid', 'h': 'The food amount in the source.'},
         'can_be_carried': {**bF, 'disp': 'carriable', 'h': 'Whether the source can be carried around.'},
+        'can_be_displaced': {**bF, 'disp': 'displaceable', 'h': 'Whether the source can be displaced by wind/water.'},
         **d['substrate']
     }
     d['food_grid'] = {
@@ -617,7 +623,8 @@ def init_pars():
 
     d['life_history'] = {
         'age': {'v': 0.0, 'max': 250.0, 'dv': 1.0, 'h': 'The larva age in hours post-hatch.'},
-        'epochs': {'t' : TypedDict, 'v' : {}, 'entry' : 'epoch', 'disp' : 'life epochs', 'h': 'The feeding epochs comprising life-history.'}
+        'epochs': {'t': TypedDict, 'v': {}, 'entry': 'epoch', 'disp': 'life epochs',
+                   'h': 'The feeding epochs comprising life-history.'}
 
     }
 
@@ -645,8 +652,10 @@ def init_pars():
                              'h': 'The fraction of the body considered front, relevant for bend computation from angles.'}
     }
     d['spatial_definition'] = {
-        'point_idx': {'t': int, 'min': -1, 'max': 12, 'h': 'The index of the segment used as the larva spatial position (-1 means using the centroid).'},
-        'use_component_vel': {**bF, 'disp': 'vel_component', 'h': 'Whether to use the component velocity ralative to the axis of forward motion.'}
+        'point_idx': {'t': int, 'min': -1, 'max': 12,
+                      'h': 'The index of the segment used as the larva spatial position (-1 means using the centroid).'},
+        'use_component_vel': {**bF, 'disp': 'vel_component',
+                              'h': 'Whether to use the component velocity ralative to the axis of forward motion.'}
     }
 
     d['metric_definition'] = {
@@ -663,18 +672,25 @@ def init_pars():
                          'h': 'The time windows to use when calculating tortuosity in seconds.'}
         },
         'stride': {
-            'track_point': {'t': str, 'h': 'The midline point to use when detecting the strides. When none is provided, the default position of the larva is used (see spatial definition).'},
-            'use_scaled_vel': {**bT, 'disp': 'vel_scaled', 'h': 'Whether to use the velocity scaled to the body length.'},
-            'vel_threshold': {'v': 0.2, 'max': 1.0, 'disp': 'vel_thr', 'h': 'The velocity threshold to be reached in every stride cycle.'},
+            'track_point': {'t': str,
+                            'h': 'The midline point to use when detecting the strides. When none is provided, the default position of the larva is used (see spatial definition).'},
+            'use_scaled_vel': {**bT, 'disp': 'vel_scaled',
+                               'h': 'Whether to use the velocity scaled to the body length.'},
+            'vel_threshold': {'v': 0.2, 'max': 1.0, 'disp': 'vel_thr',
+                              'h': 'The velocity threshold to be reached in every stride cycle.'},
         },
         'pause': {
-            'stride_non_overlap': {**bT, 'disp': 'excl. strides', 'h': 'Whether pause bouts are required not to overlap with strides.'},
+            'stride_non_overlap': {**bT, 'disp': 'excl. strides',
+                                   'h': 'Whether pause bouts are required not to overlap with strides.'},
             'min_dur': {'v': 0.4, 'max': 2.0, 'h': 'The minimum duration for detecting a pause, in seconds.'},
         },
         'turn': {
-            'min_ang': {'v': 30.0, 'max': 180.0, 'dv': 1.0, 'h': 'The minimum orientation angle change required to detect a turn.'},
-            'min_ang_vel': {'v': 0.0, 'max': 1000.0, 'dv': 1.0, 'h': 'The minimum angular velocity maximum required to detect a turn.'},
-            'chunk_only': {'t': str, 'vs' : ['', 'stride', 'pause'], 'h': 'Whether to only detect turns whithin a given bout type.'},
+            'min_ang': {'v': 30.0, 'max': 180.0, 'dv': 1.0,
+                        'h': 'The minimum orientation angle change required to detect a turn.'},
+            'min_ang_vel': {'v': 0.0, 'max': 1000.0, 'dv': 1.0,
+                            'h': 'The minimum angular velocity maximum required to detect a turn.'},
+            'chunk_only': {'t': str, 'vs': ['', 'stride', 'pause'],
+                           'h': 'Whether to only detect turns whithin a given bout type.'},
         }
     }
 
@@ -682,8 +698,10 @@ def init_pars():
         'rescale_by': {'max': 10.0, 'h': 'Whether to rescale spatial coordinates by a scalar in meters.'},
         'drop_collisions': {**bF, 'h': 'Whether to drop timepoints where larva collisions are detected.'},
         'interpolate_nans': {**bF, 'h': 'Whether to interplolate missing values.'},
-        'filter_f': {'max': 10.0, 'disp' : 'filter frequency', 'h': 'Whether to filter spatial coordinates by a grade-1 low-pass filter of the given cut-off frequency.'},
-        'transposition': {'t': str, 'vs': ['', 'origin', 'arena', 'center'], 'h': 'Whether to transpose spatial coordinates.'}
+        'filter_f': {'max': 10.0, 'disp': 'filter frequency',
+                     'h': 'Whether to filter spatial coordinates by a grade-1 low-pass filter of the given cut-off frequency.'},
+        'transposition': {'t': str, 'vs': ['', 'origin', 'arena', 'center'],
+                          'h': 'Whether to transpose spatial coordinates.'}
     }
     d['processing'] = {t: bF for t in proc_type_keys}
     d['annotation'] = {**{b: bF for b in bout_keys},
@@ -731,23 +749,33 @@ def init_pars():
                        }
 
     d['tracker'] = {
-        'resolution': {'fr': {'v': 10.0, 'max': 100.0, 'disp': 'framerate (Hz)', 'h': 'The framerate of the tracker recordings.'},
-                       'Npoints': {'t': int, 'v': 1, 'max': 20, 'disp': '# midline xy', 'h': 'The number of points tracked along the larva midline.'},
-                       'Ncontour': {'t': int, 'v': 0, 'max': 100, 'disp': '# contour xy', 'h': 'The number of points tracked around the larva contour.'}
-                       },
+        'resolution': {
+            'fr': {'v': 10.0, 'max': 100.0, 'disp': 'framerate (Hz)', 'h': 'The framerate of the tracker recordings.'},
+            'Npoints': {'t': int, 'v': 1, 'max': 20, 'disp': '# midline xy',
+                        'h': 'The number of points tracked along the larva midline.'},
+            'Ncontour': {'t': int, 'v': 0, 'max': 100, 'disp': '# contour xy',
+                         'h': 'The number of points tracked around the larva contour.'}
+        },
         'arena': d['arena'],
         'filesystem': {
-            'read_sequence': {'t': List[str], 'disp': 'columns', 'h': 'The sequence of columns in the tracker-exported files.'},
-            'read_metadata': {**bF, 'disp': 'metadata', 'h': 'Whether metadata files are available for the tracker-exported files/folders.'},
-            'folder': {'pref': {'t': str, 'h': 'A prefix for detecting a raw-data folder.'}, 'suf': {'t': str, 'h': 'A suffix for detecting a raw-data folder.'}},
-            'file': {'pref': {'t': str, 'h': 'A prefix for detecting a raw-data file.'}, 'suf': {'t': str, 'h': 'A suffix for detecting a raw-data file.'}, 'sep': {'t': str, 'h': 'A separator for detecting a raw-data file.'}}
+            'read_sequence': {'t': List[str], 'disp': 'columns',
+                              'h': 'The sequence of columns in the tracker-exported files.'},
+            'read_metadata': {**bF, 'disp': 'metadata',
+                              'h': 'Whether metadata files are available for the tracker-exported files/folders.'},
+            'folder': {'pref': {'t': str, 'h': 'A prefix for detecting a raw-data folder.'},
+                       'suf': {'t': str, 'h': 'A suffix for detecting a raw-data folder.'}},
+            'file': {'pref': {'t': str, 'h': 'A prefix for detecting a raw-data file.'},
+                     'suf': {'t': str, 'h': 'A suffix for detecting a raw-data file.'},
+                     'sep': {'t': str, 'h': 'A separator for detecting a raw-data file.'}}
         },
 
     }
 
     d['spatial_distro'] = {
-        'mode': {'t': str, 'v': 'normal', 'vs': ['normal', 'periphery', 'uniform'], 'disp': 'placing', 'h': 'The wa to place agents in the distribution shape.'},
-        'shape': {'t': str, 'v': 'circle', 'vs': ['circle', 'rect', 'oval'], 'h': 'The space of the spatial distribution.'},
+        'mode': {'t': str, 'v': 'normal', 'vs': ['normal', 'periphery', 'uniform'], 'disp': 'placing',
+                 'h': 'The wa to place agents in the distribution shape.'},
+        'shape': {'t': str, 'v': 'circle', 'vs': ['circle', 'rect', 'oval'],
+                  'h': 'The space of the spatial distribution.'},
         'N': {'t': int, 'v': 10, 'max': 1000, 'h': 'The number of agents in the group.'},
         'loc': d['xy'],
         'scale': d['xy'],
@@ -756,7 +784,8 @@ def init_pars():
     d['larva_distro'] = {
         **d['spatial_distro'],
         'orientation_range': {'t': Tuple[float], 'v': (0.0, 360.0), 'min': 0.0, 'max': 360.0, 'dv': 1.0,
-                              'disp': 'heading', 'h': 'The range of larva body orientations to sample from, in degrees.'}
+                              'disp': 'heading',
+                              'h': 'The range of larva body orientations to sample from, in degrees.'}
     }
 
     d['larva_model'] = {'t': str, 'v': 'explorer', 'vs': kConfDict('Model')}
@@ -793,45 +822,73 @@ def init_pars():
         'distribution': d['spatial_distro'],
         'default_color': {'t': str, 'v': 'green', 'disp': 'color', 'h': 'The default color of the source group.'},
         **d['food'],
-        'odor': d['odor']
+        'odor': d['odor'],
+        'regeneration': {**bF, 'h': 'Whether to regenerate a source when depleted.'},
+        'regeneration_pos': {
+            'loc': d['xy'],
+            'scale': d['xy'],
+        }
     }
 
     d['Border'] = {
         'default_color': {'t': str, 'v': 'black', 'disp': 'color', 'h': 'The default color of the border.'},
         'width': {'v': 0.001, 'min': 0.0, 'h': 'The width of the border.'},
-        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0, 'h': 'The XY coordinates of the consecutive border segments.'},
+        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0,
+                   'h': 'The XY coordinates of the consecutive border segments.'},
     }
 
     d['border_list'] = {
         'default_color': {'t': str, 'v': 'black', 'disp': 'color', 'h': 'The default color of the border.'},
-        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0, 'h': 'The XY coordinates of the consecutive border segments.'},
+        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0,
+                   'h': 'The XY coordinates of the consecutive border segments.'},
     }
     d['Source_DISTRO'] = d['spatial_distro']
 
     d.update(init_vis())
 
     d['replay'] = {
-        'env_params': {'t': str, 'vs': kConfDict('Env'), 'aux_vs': [''], 'h': 'The arena configuration to display the replay on, if not the default one in the dataset configuration.'},
-        'transposition': {'t': str, 'vs': [None, 'origin', 'arena', 'center'], 'h': 'Whether to transpose the dataset spatial coordinates.'},
-        'agent_ids': {'t': List[str], 'h': 'Whether to only display some larvae of the dataset, defined by their indexes.'},
-        'dynamic_color': {'t': str, 'vs': [None, 'lin_color', 'ang_color'], 'h': 'Whether to display larva tracks according to the instantaneous forward or angular velocity.'},
-        'time_range': {'t': Tuple[float], 'max': 1000.0, 'dv': 1.0, 'h': 'Whether to only replay a defined temporal slice of the dataset.'},
-        'track_point': {'t': int, 'v': -1, 'min': -1, 'max': 12, 'h': 'The midline point to use for defining the larva position.'},
-        'draw_Nsegs': {'t': int, 'min': 1, 'max': 12, 'h': 'Whether to artificially simplify the experimentally tracked larva body to a segmented virtual body of the given number of segments.'},
-        'fix_point': {'t': int, 'min': 1, 'max': 12, 'h': 'Whether to fixate a specific midline point to the center of the screen. Relevant when replaying a single larva track.'},
-        'fix_segment': {'t': int, 'vs': [-1, 1], 'h': 'Whether to additionally fixate the above or below body segment.'},
+        'env_params': {'t': str, 'vs': kConfDict('Env'), 'aux_vs': [''],
+                       'h': 'The arena configuration to display the replay on, if not the default one in the dataset configuration.'},
+        'transposition': {'t': str, 'vs': [None, 'origin', 'arena', 'center'],
+                          'h': 'Whether to transpose the dataset spatial coordinates.'},
+        'agent_ids': {'t': List[str],
+                      'h': 'Whether to only display some larvae of the dataset, defined by their indexes.'},
+        'dynamic_color': {'t': str, 'vs': [None, 'lin_color', 'ang_color'],
+                          'h': 'Whether to display larva tracks according to the instantaneous forward or angular velocity.'},
+        'time_range': {'t': Tuple[float], 'max': 1000.0, 'dv': 1.0,
+                       'h': 'Whether to only replay a defined temporal slice of the dataset.'},
+        'track_point': {'t': int, 'v': -1, 'min': -1, 'max': 12,
+                        'h': 'The midline point to use for defining the larva position.'},
+        'draw_Nsegs': {'t': int, 'min': 1, 'max': 12,
+                       'h': 'Whether to artificially simplify the experimentally tracked larva body to a segmented virtual body of the given number of segments.'},
+        'fix_point': {'t': int, 'min': 1, 'max': 12,
+                      'h': 'Whether to fixate a specific midline point to the center of the screen. Relevant when replaying a single larva track.'},
+        'fix_segment': {'t': int, 'vs': [-1, 1],
+                        'h': 'Whether to additionally fixate the above or below body segment.'},
         'use_background': {**bF, 'h': 'Whether to use a virtual moving background when replaying a fixated larva.'}
     }
 
     return d
 
 
-col_idx_dict={
-    'LarvaGroup' : [[0, 1, 2, 3, 6], [4], [5]],
-    'enrichment' : [[0], [5, 1, 3], [6, 2, 4]],
-    'metric_definition' : [[0, 1, 4], [2, 3, 5, 6]],
+col_idx_dict = {
+    'LarvaGroup': [[0, 1, 2, 3, 6], [4], [5]],
+    'enrichment': [[0], [5, 1, 3], [6, 2, 4]],
+    'metric_definition': [[0, 1, 4], [2, 3, 5, 6]],
 }
 
+
+def Box2Djoints(N, **kwargs):
+    return {'N': N, 'args': kwargs}
+
+
+null_Box2D_params = {
+    'joint_types': {
+        'friction': {'N': 0, 'args': {}},
+        'revolute': {'N': 0, 'args': {}},
+        'distance': {'N': 0, 'args': {}}
+    }
+}
 
 
 def null_dict(n, key='initial_value', **kwargs):
@@ -1046,6 +1103,7 @@ def oG(c=1, id='Odor'):
 
 def oD(c=1, id='Odor'):
     return odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)
+
 
 if __name__ == '__main__':
     # store_controls()

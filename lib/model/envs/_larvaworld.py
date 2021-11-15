@@ -34,8 +34,8 @@ from lib.sim.single.input_lib import evaluate_input, evaluate_graphs
 class LarvaWorld:
     def __new__(cls, *args: Any, **kwargs: Any) -> Any:
         pygame.init()
-        max_screen_height = pygame.display.Info().current_h
-        cls.sim_screen_dim = int(max_screen_height * 2 / 3)
+        W, H = pygame.display.Info().current_w, pygame.display.Info().current_h
+        cls.screen_dim_W, cls.screen_dim_H = int(W * 2 / 3/16)*16, int(H * 2 / 3/16)*16
         """Create a new model object_class and instantiate its RNG automatically."""
         cls._seed = kwargs.get("seed", None)
         cls.random = random.Random(cls._seed)
@@ -45,8 +45,8 @@ class LarvaWorld:
                  background_motion=None, Box2D=False, use_background=False, traj_color=None, allow_clicks=True,
                  experiment=None, progress_bar=None, larva_groups={}, configuration_text=None):
         self.configuration_text = configuration_text
-        if progress_bar is None :
-            progress_bar= progressbar.ProgressBar(max_value=Nsteps)
+        if progress_bar is None:
+            progress_bar = progressbar.ProgressBar(max_value=Nsteps)
         self.progress_bar = progress_bar
         self.Box2D = Box2D
         if vis_kwargs is None:
@@ -75,7 +75,7 @@ class LarvaWorld:
         self.allow_clicks = allow_clicks
         self.Nticks = 0
         self.Nsteps = Nsteps
-        self.snapshot_interval = int( 60 / dt)
+        self.snapshot_interval = int(60 / dt)
         self.id = id
 
         self._screen = None
@@ -102,7 +102,6 @@ class LarvaWorld:
         self.Nodors, self.odor_layers = 0, {}
         self.food_grid = None
 
-
         # Add mesa schedule to use datacollector class
         self.create_schedules()
         self.create_arena(**self.env_pars['arena'])
@@ -120,13 +119,15 @@ class LarvaWorld:
         self.screen_texts = self.create_screen_texts(color=self.scale_clock_color)
         self.input_box = ren.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
                                       center=True, w=120 * 4, h=32 * 4, font=pygame.font.SysFont("comicsansms", 32 * 2))
-        self.configuration_box = ren.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),color_active=pygame.Color('white'),
-                                      center=True, w=220 * 4, h=200 * 4, font=pygame.font.SysFont("comicsansms", 25))
+        self.configuration_box = ren.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
+                                              color_active=pygame.Color('white'),
+                                              center=True, w=220 * 4, h=200 * 4,
+                                              font=pygame.font.SysFont("comicsansms", 25))
         self.end_condition_met = False
 
         if self.env_pars['windscape'] is not None and self.env_pars['windscape']['wind_speed'] is not None:
             self.windscape = WindScape(model=self, **self.env_pars['windscape'])
-        else :
+        else:
             self.windscape = None
 
     def toggle(self, name, value=None, show=False, minus=False, plus=False, disp=None):
@@ -189,15 +190,14 @@ class LarvaWorld:
         return tank_color, screen_color, scale_clock_color, default_larva_color
 
     def create_arena(self, arena_dims, arena_shape):
-        X, Y = arena_dims
-        D = self.sim_screen_dim
-        self.arena_dims = np.array([X, Y])
-        self.screen_width, self.screen_height = (D, int(D * Y / X)) if X > Y else (int(D * X / Y), D)
+        self.arena_dims = X, Y = np.array(arena_dims)
+        W0, H0 = self.screen_dim_W, self.screen_dim_H
+        R0, R = W0 / H0, X / Y
+        self.screen_width, self.screen_height = (W0, int(W0 / R/16)*16) if R0 < R else (int(H0 * R/16)*16, H0)
         self.unscaled_space_edges = np.array([(-X / 2, -Y / 2),
                                               (-X / 2, Y / 2),
                                               (X / 2, Y / 2),
                                               (X / 2, -Y / 2)])
-        # print(X,Y,self.screen_width, self.screen_height)
         if arena_shape == 'circular':
             # This is a circle_to_polygon shape from the function
             self.unscaled_tank_shape = lib.aux.sim_aux.circle_to_polygon(60, X / 2)
@@ -402,9 +402,9 @@ class LarvaWorld:
             self._screen.render()
 
     def display_configuration(self, screen):
-        if self.configuration_text is not None :
-            self.configuration_box.text=self.configuration_text
-            self.configuration_box.visible=True
+        if self.configuration_text is not None:
+            self.configuration_box.text = self.configuration_text
+            self.configuration_box.visible = True
             for i in range(10):
                 self.configuration_box.draw(screen)
                 screen.render()
@@ -433,7 +433,7 @@ class LarvaWorld:
             for gID, gConf in food_pars['source_groups'].items():
                 ps = lib.aux.xy_aux.generate_xy_distro(**gConf['distribution'])
                 for i, p in enumerate(ps):
-                    self.add_food(id=f'{gID}_{i}', pos=p,group=gID, **gConf)
+                    self.add_food(id=f'{gID}_{i}', pos=p, group=gID, **gConf)
 
             for id, f_pars in food_pars['source_units'].items():
                 self.add_food(id=id, **f_pars)
@@ -491,7 +491,7 @@ class LarvaWorld:
         self.Nticks += 1
         # Tick sim_clock
         self.sim_clock.tick_clock()
-        if self.windscape is not None :
+        if self.windscape is not None:
             self.windscape.update()
 
     def run(self):
@@ -668,8 +668,8 @@ class LarvaWorld:
             X, Y = layer.meshgrid
             x = self.space_to_mm(X)
             y = self.space_to_mm(Y)
-            plot_surface(x=x, y=y, z=layer.get_grid(),vars=[r'x $(mm)$', r'y $(mm)$'], target=r'concentration $(μM)$',
-                         title=f'{id} odorscape',save_as=f'{id}_odorscape_{self.odorscape_counter}', **kwargs)
+            plot_surface(x=x, y=y, z=layer.get_grid(), vars=[r'x $(mm)$', r'y $(mm)$'], target=r'concentration $(μM)$',
+                         title=f'{id} odorscape', save_as=f'{id}_odorscape_{self.odorscape_counter}', **kwargs)
 
     def space_to_mm(self, array):
         return array * 1000 / self.scaling_factor

@@ -105,13 +105,12 @@ class BodySim(BodyManager):
                     for i in np.arange(1, self.mid_seg_index, 1):
                         self.segs[i].set_ang_vel(ang_vel / i)
             elif self.ang_mode == 'torque':
-                self.torque = self.ang_activity * self.torque_coef*100000
-                # print(self.torque)
-                # self.rotator.ApplyTorque(self.torque, wake=True)
+                self.torque = self.ang_activity * self.torque_coef
+                # self.segs[0]._body.ApplyAngularImpulse(self.torque, wake=True)
                 self.segs[0]._body.ApplyTorque(self.torque, wake=True)
-                if self.Nsegs > 1:
-                    for i in np.arange(1, self.mid_seg_index, 1):
-                        self.segs[i]._body.ApplyTorque(self.torque / i, wake=True)
+                # if self.Nsegs > 1:
+                #     for i in np.arange(1, self.mid_seg_index, 1):
+                #         self.segs[i]._body.ApplyTorque(self.torque / i, wake=True)
 
 
             # Linear component

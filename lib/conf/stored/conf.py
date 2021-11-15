@@ -152,9 +152,10 @@ def store_confs(keys=None):
     if 'Ref' in keys:
         store_reference_data_confs()
     if 'Model' in keys:
-        from lib.conf.stored.larva_conf import mod_dict
-        for k, v in mod_dict.items():
-            print(k)
+        from lib.conf.stored.larva_conf import create_mod_dict
+        for k, v in create_mod_dict().items():
+            # if k=='zebrafish' :
+            #     saveConf(v, 'Model', k)
             saveConf(v, 'Model', k)
     if 'Env' in keys:
         from lib.conf.stored.env_conf import env_dict
@@ -224,4 +225,5 @@ def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None, **kwarg
 #     return conf
 
 if __name__ == '__main__':
-    store_confs()
+    # store_confs(['Model'])
+    store_confs(['Env', 'Exp'])

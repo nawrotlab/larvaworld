@@ -13,9 +13,7 @@ from lib.model.body.segment import Box2DPolygon, DefaultSegment
 class LarvaBody:
     def __init__(self, model, pos=None, orientation=None, density=300.0,
                  initial_length=None, length_std=0, Nsegs=1, interval=0,
-                 seg_ratio=None, touch_sensors=False, **kwargs):
-        # print(Nsegs, initial_length)
-        # raise
+                 seg_ratio=None, touch_sensors=False, shape='drosophila_larva', **kwargs):
         self.touch_sensors = touch_sensors
         self.model = model
         self.density = density
@@ -32,7 +30,7 @@ class LarvaBody:
 
         self.base_seg_vertices = self.generate_seg_shapes(Nsegs, self.width_to_length_ratio,
                                                           density=self.density, interval=self.interval,
-                                                          seg_ratio=self.seg_ratio)
+                                                          seg_ratio=self.seg_ratio, shape=shape)
 
         self.Nsegs = Nsegs
         self.Nangles = Nsegs - 1
@@ -45,7 +43,7 @@ class LarvaBody:
             self.real_length = float(np.random.normal(loc=initial_length, scale=length_std, size=1))
 
         self.seg_lengths = self.sim_length * self.seg_ratio
-        self.seg_vertices = [s* self.sim_length for s in self.base_seg_vertices ]
+        self.seg_vertices = [s * self.sim_length for s in self.base_seg_vertices]
         # self.seg_vertices = self.base_seg_vertices * self.sim_length
         self.set_head_edges()
 
@@ -67,8 +65,6 @@ class LarvaBody:
         self.define_sensor('olfactor', (1, 0))
         if self.touch_sensors is not None:
             self.add_touch_sensors(self.touch_sensors)
-
-        # print(self.sensors)
 
     @property
     def sim_length(self):
@@ -96,7 +92,7 @@ class LarvaBody:
     def adjust_body_vertices(self):
         self.radius = self.sim_length / 2
         self.seg_lengths = self.sim_length * self.seg_ratio
-        self.seg_vertices = [s* self.sim_length for s in self.base_seg_vertices ]
+        self.seg_vertices = [s * self.sim_length for s in self.base_seg_vertices]
         # self.seg_vertices = self.base_seg_vertices * self.sim_length
         for vec, seg in zip(self.seg_vertices, self.segs):
             seg.seg_vertices = vec
@@ -147,7 +143,6 @@ class LarvaBody:
         self.sensors.append(sensor_dict)
 
     def get_sensor(self, sensor):
-        # print(sensor)
         for sensor_dict in self.sensors:
             if sensor_dict['sensor'] == sensor:
                 return sensor_dict
@@ -157,13 +152,17 @@ class LarvaBody:
 
     def get_sensor_position(self, sensor):
         d = self.get_sensor(sensor)
-        # print(d)
         return self.segs[d['seg_idx']].get_world_point(d['local_pos'])
 
-    def generate_seg_shapes(self, Nsegs, width_to_length_proportion, density, interval, seg_ratio):
+    def generate_seg_shapes(self, Nsegs, width_to_length_proportion, density, interval, seg_ratio, shape):
         self.density = density / (1 - 2 * (Nsegs - 1) * interval)
         w = width_to_length_proportion / 2
-        points = np.array([[0.9, w], [0.05, w]])
+        if shape == 'drosophila_larva':
+            points = np.array([[0.9, w], [0.05, w]])
+        elif shape == 'zebrafish_larva':
+            points = np.array([[0.9, 2.5 * w], [0.7, 2.5 * w], [0.6, 0.5 * w], [0.05, 0.5 * w]])
+        else :
+            raise NotImplementedError
         xy0 = lib.aux.sim_aux.body(points)
         ps = lib.aux.sim_aux.segment_body(Nsegs, xy0, seg_ratio=seg_ratio, centered=True)
         seg_vertices = [np.array([p]) for p in ps]
@@ -241,7 +240,6 @@ class LarvaBody:
         # Trying to implement friction joint
         # if joint_types is None :
         #     joint_types = {'distance': 0, 'revolute': 0, 'friction' : 0}
-        print(joint_types['friction'])
         for i in range(Nsegs):
             if i == 0:
                 continue
@@ -553,7 +551,6 @@ class LarvaBody:
         vs = lib.aux.sim_aux.circle_to_polygon(5, l0)
         rotator_shape = Box2D.b2ChainShape(vertices=vs.tolist())
         self.rotator.CreateFixture(shape=rotator_shape)
-        # # print(l0,w)
 
         dist_kws = {'collideConnected': False, 'length': l0 * 0.01}
         rev_kws = {'collideConnected': False,

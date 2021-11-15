@@ -10,7 +10,6 @@ from lib.aux.colsNstr import N_colors
 
 from lib.conf.base.par import CompGroupCollector
 from lib.model.envs._larvaworld import LarvaWorld, generate_larvae, get_sample_bout_distros, sample_group
-from lib.model.envs._space import WindScape
 from lib.sim.single.conditions import get_exp_condition
 from lib.conf.base import paths
 

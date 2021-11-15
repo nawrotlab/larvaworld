@@ -5,6 +5,7 @@ from shapely.geometry import Polygon
 
 from lib.aux.ang_aux import rotate_around_center_multi, rotate_around_center
 
+
 class BodySegment:
     def __init__(self, space, pos, orientation, seg_vertices, color, idx):
         self.space = space
@@ -15,8 +16,8 @@ class BodySegment:
         self.idx = idx
 
     def draw(self, viewer, color=None, filled=True):
-        if color is None :
-            color=self.color
+        if color is None:
+            color = self.color
         for vertices in self.vertices:
             viewer.draw_polygon(vertices, filled=filled, color=color)
 
@@ -67,10 +68,10 @@ class Box2DSegment(BodySegment):
         if self.__class__ == Box2DSegment:
             raise NotImplementedError('Abstract class Box2DSegment cannot be instantiated.')
         self.physics_pars = physics_pars
-        # self._body: Box2D.b2Body = self.space.CreateStaticBody(
         self._body: Box2D.b2Body = self.space.CreateDynamicBody(
             position=Box2D.b2Vec2(*self.pos),
             angle=self.orientation,
+
             # gravityScale=100,
             # fixedRotation=True if  self.idx!=0 else False,
             linearDamping=physics_pars['lin_damping'],
@@ -78,18 +79,16 @@ class Box2DSegment(BodySegment):
         self._body.linearVelocity = Box2D.b2Vec2(*[.0, .0])
         self._body.angularVelocity = .0
         self._body.bullet = True
-        # if self.idx!=0 :
-        #     print(self._body.gravityScale)
 
         # overriden by LarvaBody
         self.facing_axis = facing_axis
 
         # CAUTION
         # This sets the body'sigma origin (where pos, orientation is derived from)
-        # self._body.localCenter = b2Vec2(0.0, 0.0)
+        # self._body.localCenter = Box2D.b2Vec2(11.0, 10.0)
         # this sets the body' center of mass (where velocity is set etc)
-        # self._body.massData.center= self._body.localCenter
-        # self._body.massData.center= b2Vec2(0.0, 0.0)
+        # self._body.massData.center = self._body.localCenter
+        # self._body.massData.center= Box2D.b2Vec2(11.0, 10.0)
         # self._body.localCenter = self._body.massData.center
 
     # @property
@@ -185,10 +184,9 @@ class Box2DPolygon(Box2DSegment):
             centroid += np.mean(vs, axis=0) * a
 
         centroid /= area
-
-        self.__local_vertices = vertices - centroid
+        self.__local_vertices = vertices
+        # self.__local_vertices = vertices - centroid
         self.__local_vertices.setflags(write=False)
-        # print(self.__local_vertices)
         for v in self.__local_vertices:
             self._body.CreatePolygonFixture(
                 shape=Box2D.b2PolygonShape(vertices=v.tolist()),
@@ -211,10 +209,7 @@ class Box2DPolygon(Box2DSegment):
 class DefaultSegment(BodySegment):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # print(self.seg_vertices[0], self.pos)
         self.update_vertices(self.pos, self.orientation)
-        # print(self.seg_vertices[0], self.pos)
-        # print(self.vertices, self.pos)
 
         self.lin_vel = 0.0
         self.ang_vel = 0.0
@@ -237,4 +232,3 @@ class DefaultSegment(BodySegment):
 
     def set_ang_vel(self, ang_vel):
         self.ang_vel = ang_vel
-

@@ -38,10 +38,10 @@ def xy_along_rect(N, loc, scale):
     return p
 
 
-def xy_uniform_circle(N, loc, radius):
+def xy_uniform_circle(N, loc, scale):
     angles = np.random.uniform(0, 2 * np.pi, N).tolist()
-    xs = np.random.uniform(0, radius[0] ** 2, N) ** 0.5 * np.cos(angles)
-    ys = np.random.uniform(0, radius[1] ** 2, N) ** 0.5 * np.sin(angles)
+    xs = np.random.uniform(0, scale[0] ** 2, N) ** 0.5 * np.cos(angles)
+    ys = np.random.uniform(0, scale[1] ** 2, N) ** 0.5 * np.sin(angles)
     p = [(loc[0] + x, loc[1] + y) for a, x, y in zip(angles, xs, ys)]
     return p
 
@@ -50,7 +50,7 @@ def generate_xy_distro(mode, shape, N, loc=(0.0, 0.0), scale=(0.0, 0.0)):
     loc, scale = np.array(loc), np.array(scale)
     if mode == 'uniform':
         if shape in ['circle', 'oval']:
-            return xy_uniform_circle(N=N, loc=loc, radius=scale)
+            return xy_uniform_circle(N=N, loc=loc, scale=scale)
         elif shape == 'rect':
             return list(map(tuple, np.random.uniform(low=-scale, high=scale, size=(N, 2)) + loc))
     elif mode == 'normal':

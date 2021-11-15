@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.aux.colsNstr import col_range
+from lib.aux.colsNstr import col_range, N_colors
 from lib.conf.base.dtypes import null_dict, arena, oG, oD, border, vborder
 
 
@@ -65,7 +65,7 @@ def env(a, f=f_pars(), o=None, bl={}, w=None):
              }
     if w is not None:
         if 'puffs' in w.keys():
-            for id, args in w['puffs'].items() :
+            for id, args in w['puffs'].items():
                 w['puffs'][id] = null_dict('air_puff', **args)
         else:
             w['puffs'] = {}
@@ -142,11 +142,16 @@ env_dict = {
                                        m='periphery')), 'G'),
 
     'windy_arena': env(arena(0.3, 0.3), w={'wind_speed': 10.0}),
+    'windy_blob_arena': env(arena(0.7, 0.3),
+                            f_pars(sg=sgs(4, qs=np.ones(4),cs=N_colors(4), N=1, s=(0.0, 0.15),loc=(0.3,0.0), m='uniform', shape='rectangular', can_be_displaced=True,
+                                          regeneration=True, regeneration_pos={'loc' : (0.3,0.0), 'scale': (0.0, 0.15)})),
+                            w={'wind_speed': 1.0}),
     'windy_arena_bordered': env(arena(0.3, 0.3), w={'wind_speed': 10.0},
                                 bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),
-    'puff_arena_bordered': env(arena(0.3, 0.3), w={'puffs': {'PuffGroup' : {}}},
+    'puff_arena_bordered': env(arena(0.3, 0.3), w={'puffs': {'PuffGroup': {}}},
                                bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),
-'single_puff': env(arena(0.3, 0.3), w={'puffs': {'Puff' : {'N':1,'duration':30.0, 'start_time' : 55, 'speed' : 100}}}),
+    'single_puff': env(arena(0.3, 0.3),
+                       w={'puffs': {'Puff': {'N': 1, 'duration': 30.0, 'start_time': 55, 'speed': 100}}}),
 
     'CS_UCS_on_food': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(1)), 'G'),
     'CS_UCS_on_food_x2': env(arena(0.1), f_pars(grid=null_dict('food_grid'), su=CS_UCS(2)), 'G'),
