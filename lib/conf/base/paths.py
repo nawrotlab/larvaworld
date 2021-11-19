@@ -53,6 +53,7 @@ def path(n) :
         'Ref': f"{CF}/ReferenceDatasets.txt",
         'Trial': f"{CF}/TrialConfs.txt",
         'Life': f"{CF}/LifeConfs.txt",
+        'Body': f"{CF}/BodyConfs.txt",
         'SimIdx': f'{CF}/SimIdx.txt',
     }
 

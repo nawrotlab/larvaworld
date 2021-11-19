@@ -199,7 +199,6 @@ def OD(ids: list, means: list, stds=None) -> dict:
 
 
 def create_mod_dict() :
-    # print('xx')
 
     larvae = {
         'explorer': mod(brain(['L', 'W'])),
@@ -246,10 +245,9 @@ def create_mod_dict() :
 
     zebrafish = {
         'zebrafish': mod(brain(['L']),
-                         bod={'initial_length': 0.0004, 'length_std': 0.00001, 'Nsegs': 2, 'shape': 'zebrafish_larva'},
+                         bod={'initial_length': 0.004, 'length_std': 0.0001, 'Nsegs': 2, 'shape': 'zebrafish_larva'},
                          phys={'ang_damping': 1.0, 'body_spring_k': 1.0, 'torque_coef': 0.3},
                          Box2D={'joint_types': {'revolute': Box2Djoints(N=1, maxMotorTorque=10 ** 5, motorSpeed=1)}})
-        # Box2D={'joint_types': {'distance': d, 'revolute': Box2Djoints(N=1, maxMotorTorque=10**5, motorSpeed=1), 'friction': f}})
     }
 
     mod_dict = {
@@ -263,7 +261,7 @@ def create_mod_dict() :
 if __name__ == '__main__':
     zebrafish = {
         'zebrafish': mod(brain(['L']),
-                         bod={'initial_length': 0.02, 'length_std': 0.001, 'Nsegs': 2, 'shape': 'zebrafish_larva'},
+                         bod={'initial_length': 0.004, 'length_std': 0.0001, 'Nsegs': 2, 'shape': 'zebrafish_larva'},
                          phys={'ang_damping': 1.0, 'body_spring_k': 1.0, 'torque_coef': 0.3},
                          Box2D={'joint_types': {'revolute': Box2Djoints(N=1, maxMotorTorque=10 ** 5, motorSpeed=1)}})
         # Box2D={'joint_types': {'distance': d, 'revolute': Box2Djoints(N=1, maxMotorTorque=10**5, motorSpeed=1), 'friction': f}})

@@ -163,7 +163,7 @@ substrate_dict = {
         'agar': 16 / 1000,
         'cornmeal': 0
     },
-    'standard': { # w_X = 20.45 g/mol
+    'standard': {  # w_X = 20.45 g/mol
         'glucose': 100 / 1000,
         'dextrose': 0,
         'saccharose': 0,
@@ -219,6 +219,11 @@ substrate_dict = {
     #         'apple_juice': 1.05*5/200,
     #     },
 
+}
+
+body_dict = {
+    'drosophila_larva': [(0.9, 0.1), (0.05, 0.1)],
+    'zebrafish_larva': [(0.9, 0.25), (0.7, 0.25), (0.6, 0.005), (0.05, 0.005)]
 }
 
 
@@ -550,6 +555,13 @@ def init_pars():
             'revolute': d['revolute_joint'],
             'distance': d['distance_joint']
         }
+    }
+
+    d['body_shape'] = {
+        'symmetry': {'t': str, 'v': 'bilateral', 'vs': ['bilateral', 'radial'],
+                     'h': 'The body symmetry.'},
+        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0,
+                   'h': 'The XY coordinates of the body contour.'}
     }
 
     d['body'] = {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'initial',

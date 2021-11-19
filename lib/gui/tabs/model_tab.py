@@ -82,27 +82,20 @@ class ModelTab(GuiTab):
                               col_widths=[13, 7, 6])
         c.update(s1.get_subdicts())
         tt = []
-        xx = []
         pp = {}
         for k, vs in dic.items():
             ppp = []
             for v in vs:
-                cc = PadDict(v, toggle=True if v not in ['body', 'physics'] else None, background_color=col_dict[v], text_kws=t_kws(16),
-                         )
+                cc = PadDict(v, toggle=True if v not in ['body', 'physics'] else None, background_color=col_dict[v], text_kws=t_kws(16))
                 c.update(cc.get_subdicts())
-
                 if v=='olfactor' :
                     ll = cc.get_layout(size=(ss[0], int(ss[1]/2)))
                     ll.append(s1.get_layout())
                 else :
                     ll = cc.get_layout(size=ss)
-                # ppp+=cc.get_layout()
                 ppp.append(sg.Col(ll, scrollable=True, vertical_scroll_only=True))
             pp[k] = [[sg.Pane(ppp, orientation='horizontal', show_handle=False)]]
-            # xx.append(sg.Col(pp[k], scrollable=True, vertical_scroll_only=True))
-            # pp[k] = sg.Pane(ppp, border_width=8, handle_size=20, orientation='horizontal')
             tt.append(sg.Tab(k, pp[k], key=f'{k} MODULES'))
-        #
         tab_kws = {'font': ("Helvetica", 14, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
                    'tab_background_color': 'lightgrey'}
         l_tabs = sg.TabGroup([tt], key='ACTIVE_MODULES', tab_location='topcenter', **tab_kws)
