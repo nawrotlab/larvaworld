@@ -42,13 +42,22 @@ class Substrate:
         }
         # Number of carbon atoms
         self.Cmol_dict = {
-            'glucose': 6,
-            'dextrose': 6,
-            'saccharose': 12,
-            'yeast': 19,  # Baker's yeast
-            'agar': 0,
-            'cornmeal': 27,
+            'glucose': 6, # C6H12O6
+            'dextrose': 6, # C6H14O7
+            'saccharose': 12, # C12H22O11
+            'yeast': 19,  # C19H14O2
+            'agar': 0, # C24H38O19
+            'cornmeal': 27,# C27H48O20
             'water': 0,
+        }
+        self.CHONmol_dict = {
+            'glucose': {'C' : 6, 'H' : 12, 'O' : 6, 'N' : 0},  # C6H12O6
+            'dextrose': {'C' : 6, 'H' : 12, 'O' : 7, 'N' : 0},  # C6H14O7
+            'saccharose': {'C' : 12, 'H' : 22, 'O' : 11, 'N' : 0},  # C12H22O11
+            'yeast': {'C' : 19, 'H' : 14, 'O' : 2, 'N' : 0},  # C19H14O2
+            'agar': {'C' : 24, 'H' : 38, 'O' : 19, 'N' : 0}, # C24H38O19
+            'cornmeal': {'C' : 27, 'H' : 48, 'O' : 20, 'N' : 0},  # C27H48O20
+            'water': {'C' : 0, 'H' : 2, 'O' : 1, 'N' : 0},
         }
         self.d_dict= substrate_dict[type]
         self.d = self.d_water + sum(list(self.d_dict.values()))
@@ -56,16 +65,43 @@ class Substrate:
         self.X=self.get_X()
         self.X_ratio=self.get_X_ratio()
 
-    def get_X(self, quality=None, compounds = ['glucose', 'dextrose', 'yeast', 'cornmeal', 'saccharose'], return_sum=True):
+    def get_d_X(self, compounds=['glucose', 'dextrose', 'yeast', 'cornmeal', 'saccharose'], quality=None):
+        if quality is None:
+            quality=self.quality
+        d_X = 0
+        for c in compounds:
+            d_X += self.d_dict[c]
+        return d_X * quality
+
+    def get_w_X(self, compounds = ['glucose', 'dextrose', 'yeast', 'cornmeal', 'saccharose'], quality=None):
+        ds={}
+        ws={}
+        d_X=self.get_d_X(compounds, quality=1)
+        for c in compounds:
+            ds[c]=self.d_dict[c]
+            comp=self.CHONmol_dict[c]
+            ws[c]=comp['C']*12+comp['H']*1+comp['O']*16+comp['N']*14
+        w_X=sum([ds[c]/d_X * ws[c] for c in compounds])
+        return w_X
+
+    # def get_X(self, quality=None, compounds = ['glucose', 'dextrose', 'yeast', 'cornmeal', 'saccharose'], return_sum=True):
+    #     if quality is None :
+    #         quality=self.quality
+    #     Xs=[]
+    #     for c in compounds :
+    #         # Xi=self.d_dict[c]/self.w_dict[c]*quality
+    #         Xi=self.d_dict[c]/self.w_dict[c]*self.Cmol_dict[c]*quality
+    #         # print(c,self.w_dict[c],self.Cmol_dict[c], Xi)
+    #         Xs.append(Xi)
+    #     return sum(Xs) if return_sum else Xs
+
+    def get_X(self, quality=None, compounds = ['glucose', 'dextrose', 'yeast', 'cornmeal', 'saccharose']):
         if quality is None :
             quality=self.quality
-        Xs=[]
-        for c in compounds :
-            # Xi=self.d_dict[c]/self.w_dict[c]*quality
-            Xi=self.d_dict[c]/self.w_dict[c]*self.Cmol_dict[c]*quality
-            # print(c,self.w_dict[c],self.Cmol_dict[c], Xi)
-            Xs.append(Xi)
-        return sum(Xs) if return_sum else Xs
+        d_X = self.get_d_X(compounds, quality)
+        w_X = self.get_w_X(compounds)
+        X=d_X/w_X
+        return X
 
     def get_mol(self, V, **kwargs):
         return self.get_X(**kwargs)*V
@@ -850,6 +886,21 @@ def deb_sim(sample, id='DEB sim', EEB=None, deb_dt=None, dt=None,  use_hunger=Fa
         d_mod = deb_default(id=model_id,save_dict=save_dict,**kwargs)
         return d_sim, d_mod
 
+def test_substrates() :
+    for s in substrate_dict.keys() :
+        try :
+            q=1
+            V_bite=0.0005
+            deb = DEB(substrate={'quality': q, 'type': s},assimilation_mode='sim', steps_per_day=24*60, V_bite=V_bite)
+            print()
+            print('substrate type : ', s)
+            print('w_X : ', int(deb.substrate.get_w_X()), 'g/mole')
+            print('d_X : ', int(deb.substrate.get_d_X(quality=1)*1000), 'mg/cm**3')
+            # print([[q, deb.substrate.get_X(quality=q)] for q in np.arange(0,1.01,0.3)])
+            print(*[(f'quality : {q}', f'f : {np.round(deb.substrate.get_f(K=deb.K, quality=q),2)}') for q in np.arange(0,1.01,0.25)])
+        except :
+            pass
+
 
 
 if __name__ == '__main__':
@@ -903,13 +954,18 @@ if __name__ == '__main__':
     #
     # dt_bite=1/(24*60*60)*2
     # for s in ['standard'] :
+    test_substrates()
+    raise
     for s in ['standard', 'cornmeal', 'PED_tracker','cornmeal2',] :
         q=1
         V_bite=0.0005
         deb = DEB(substrate={'quality': q, 'type': s},assimilation_mode='sim', steps_per_day=24*60, V_bite=V_bite)
-        print(s)
-        # print([[q, deb.substrate.get_X(quality=q)] for q in np.arange(0,1.01,0.5)])
-        print([[q, deb.substrate.get_f(K=deb.K, quality=q)] for q in np.arange(0,1.01,0.1)])
+        print()
+        print('substrate type : ', s)
+        print('w_X : ', int(deb.substrate.get_w_X()), 'g/mole')
+        print('d_X : ', int(deb.substrate.get_d_X(quality=1)*1000), 'mg/cm**3')
+        # print([[q, deb.substrate.get_X(quality=q)] for q in np.arange(0,1.01,0.3)])
+        print(*[(f'quality : {q}', f'f : {np.round(deb.substrate.get_f(K=deb.K, quality=q),2)}') for q in np.arange(0,1.01,0.25)])
         continue
         th_F=0.01
         th_X=deb.gut.V_gm

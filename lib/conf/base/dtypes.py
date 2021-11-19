@@ -163,7 +163,7 @@ substrate_dict = {
         'agar': 16 / 1000,
         'cornmeal': 0
     },
-    'standard': {
+    'standard': { # w_X = 20.45 g/mol
         'glucose': 100 / 1000,
         'dextrose': 0,
         'saccharose': 0,
