@@ -213,7 +213,7 @@ grouped_exp_dict = {
     },
 
     'zebrafish': {
-        'prey_detection': exp('windy_blob_arena', l=lg(m='zebrafish', N=4, s=(0.02,0.05)), sim={'Box2D': True, 'duration' : 20.0})
+        'prey_detection': exp('windy_blob_arena', l=lg(m='zebrafish', N=4, s=(0.002,0.005)), sim={'Box2D': True, 'duration' : 20.0})
     },
 
     'other': {

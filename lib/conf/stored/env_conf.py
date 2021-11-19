@@ -142,9 +142,9 @@ env_dict = {
                                        m='periphery')), 'G'),
 
     'windy_arena': env(arena(0.3, 0.3), w={'wind_speed': 10.0}),
-    'windy_blob_arena': env(arena(0.7, 0.3),
-                            f_pars(sg=sgs(4, qs=np.ones(4),cs=N_colors(4), N=1, s=(0.0, 0.15),loc=(0.3,0.0), m='uniform', shape='rectangular', can_be_displaced=True,
-                                          regeneration=True, regeneration_pos={'loc' : (0.3,0.0), 'scale': (0.0, 0.15)})),
+    'windy_blob_arena': env(arena(0.128, 0.014),
+                            f_pars(sg=sgs(1, qs=np.ones(4),cs=N_colors(4), N=1, s=(0.0, 0.0),loc=(0.005,0.0), m='uniform', shape='rectangular', can_be_displaced=True,
+                                          regeneration=True, regeneration_pos={'loc' : (0.005,0.0), 'scale': (0.0, 0.0)})),
                             w={'wind_speed': 1.0}),
     'windy_arena_bordered': env(arena(0.3, 0.3), w={'wind_speed': 10.0},
                                 bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),

@@ -40,6 +40,16 @@ class Substrate:
             'cornmeal' : 359.33,
             'water' : 18.01528,
         }
+        # Number of carbon atoms
+        self.Cmol_dict = {
+            'glucose': 6,
+            'dextrose': 6,
+            'saccharose': 12,
+            'yeast': 19,  # Baker's yeast
+            'agar': 0,
+            'cornmeal': 27,
+            'water': 0,
+        }
         self.d_dict= substrate_dict[type]
         self.d = self.d_water + sum(list(self.d_dict.values()))
         self.C=self.get_C()
@@ -49,7 +59,12 @@ class Substrate:
     def get_X(self, quality=None, compounds = ['glucose', 'dextrose', 'yeast', 'cornmeal', 'saccharose'], return_sum=True):
         if quality is None :
             quality=self.quality
-        Xs=[self.d_dict[c]/self.w_dict[c]*quality for c in compounds]
+        Xs=[]
+        for c in compounds :
+            # Xi=self.d_dict[c]/self.w_dict[c]*quality
+            Xi=self.d_dict[c]/self.w_dict[c]*self.Cmol_dict[c]*quality
+            # print(c,self.w_dict[c],self.Cmol_dict[c], Xi)
+            Xs.append(Xi)
         return sum(Xs) if return_sum else Xs
 
     def get_mol(self, V, **kwargs):
@@ -133,9 +148,11 @@ class DEB:
         self.deb_p_A = 0
         self.sim_p_A = 0
         self.gut_p_A = 0
+        # print(substrate)
         if substrate is None :
             substrate=null_dict('substrate')
-        if type(substrate)==dict :
+        # print(substrate)
+        if isinstance(substrate, dict) :
             self.substrate = Substrate(type=substrate['type'], quality=substrate['quality'])
         else :
             self.substrate=substrate
@@ -839,59 +856,60 @@ if __name__ == '__main__':
     # d=deb_sim(sample='None.10_controls',deb_dt=1, substrate=null_dict('substrate', quality=0.01))
     #
     # raise
-    deb=DEB(print_output=True)
-    # print(deb.age, deb.time_to_death_by_starvation())
+    # deb=DEB(print_output=True)
+    # # print(deb.age, deb.time_to_death_by_starvation())
+    # # # deb.run_larva_stage()
+    # # # print(deb.age, deb.stage)
+    # deb.grow_larva(epochs={'0':{'start':0.0, 'stop':80.0, 'substrate':{'quality':1.0, 'type': 'standard'}}})
+    # print(deb.age, deb.time_to_death_by_starvation()*24, deb.e, deb.f, deb.L/deb.Lm)
+    # raise
+    # from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB,get_EEB_poly1d
+    # ffrs=np.round(np.arange(0.2, 2.2, 0.2), 1)
+    # sample = loadConf('None.200_controls', 'Ref')
+    # z=np.poly1d(sample['EEB_poly1d'])
+    # print(np.round(z(ffrs),2))
+    # z=get_EEB_poly1d(sample=sample)
+    # print(np.round(z(ffrs),2))
+    # raise
+    # ds=[]
+    # # for q in np.round(np.arange(0.02,1.02,0.02),2) :
+    # for ffr in np.round(np.arange(0.2, 2.2, 0.2), 1):
+    #     d=deb_sim(sample='None.200_controls', dt=0.1, EEB=z(ffr),deb_dt=60)
+    #     ds.append(d)
+    #     # deb=DEB(substrate={'quality':q, 'type':'standard'})
+    #     print(ffr, d[f"{nam.freq('feed')}_exp"], d[f"{nam.freq('feed')}_est"],d['EEB'])
+    #     # for
+    # import pandas as pd
+    # df=pd.DataFrame.from_records(ds)
+    # # d_sim=deb_sim(sample='None.200_controls', dt=0.1, deb_dt=1.0)
+    # # print(d_sim)
     # # deb.run_larva_stage()
-    # # print(deb.age, deb.stage)
-    deb.grow_larva(epochs={'0':{'start':0.0, 'stop':80.0, 'substrate':{'quality':1.0, 'type': 'standard'}}})
-    print(deb.age, deb.time_to_death_by_starvation()*24, deb.e, deb.f, deb.L/deb.Lm)
-    raise
-    from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB,get_EEB_poly1d
-    ffrs=np.round(np.arange(0.2, 2.2, 0.2), 1)
-    sample = loadConf('None.200_controls', 'Ref')
-    z=np.poly1d(sample['EEB_poly1d'])
-    print(np.round(z(ffrs),2))
-    z=get_EEB_poly1d(sample=sample)
-    print(np.round(z(ffrs),2))
-    raise
-    ds=[]
-    # for q in np.round(np.arange(0.02,1.02,0.02),2) :
-    for ffr in np.round(np.arange(0.2, 2.2, 0.2), 1):
-        d=deb_sim(sample='None.200_controls', dt=0.1, EEB=z(ffr),deb_dt=60)
-        ds.append(d)
-        # deb=DEB(substrate={'quality':q, 'type':'standard'})
-        print(ffr, d[f"{nam.freq('feed')}_exp"], d[f"{nam.freq('feed')}_est"],d['EEB'])
-        # for
-    import pandas as pd
-    df=pd.DataFrame.from_records(ds)
-    # d_sim=deb_sim(sample='None.200_controls', dt=0.1, deb_dt=1.0)
-    # print(d_sim)
-    # deb.run_larva_stage()
-    raise
-    # print(deb.K)
-    # print(deb.V*deb.J_E_Amm)
-    # print(deb.substrate.X/(deb.substrate.X+ deb.K))
-    # print(deb.substrate.X_ratio)
-    # print(10**6*deb.V*deb.J_E_Amm/deb.k_E/deb.y_E_X)
-    # for EEB in [0.57,0.95] :
-    #     d=deb_sim(EEB=EEB, dt=0.1, deb_dt=60)
-        # print(EEB, d['pupation'])
-    from lib.model.modules.intermitter import get_best_EEB
-
-    sample = loadConf('None.200_controls', 'Ref')
-    for sp in ['default', 'rover', 'sitter'] :
-        deb = DEB(species=sp)
-        print(sp, deb.fr_feed, deb.K, deb.base_f, deb.kap_X, get_best_EEB(deb, sample))
-    raise
-
-    dt_bite=1/(24*60*60)*2
+    # raise
+    # # print(deb.K)
+    # # print(deb.V*deb.J_E_Amm)
+    # # print(deb.substrate.X/(deb.substrate.X+ deb.K))
+    # # print(deb.substrate.X_ratio)
+    # # print(10**6*deb.V*deb.J_E_Amm/deb.k_E/deb.y_E_X)
+    # # for EEB in [0.57,0.95] :
+    # #     d=deb_sim(EEB=EEB, dt=0.1, deb_dt=60)
+    #     # print(EEB, d['pupation'])
+    # from lib.model.modules.intermitter import get_best_EEB
+    #
+    # sample = loadConf('None.200_controls', 'Ref')
+    # for sp in ['default', 'rover', 'sitter'] :
+    #     deb = DEB(species=sp)
+    #     print(sp, deb.fr_feed, deb.K, deb.base_f, deb.kap_X, get_best_EEB(deb, sample))
+    # raise
+    #
+    # dt_bite=1/(24*60*60)*2
     # for s in ['standard'] :
-    for s in ['standard', 'cornmeal', 'PED_tracker'] :
+    for s in ['standard', 'cornmeal', 'PED_tracker','cornmeal2',] :
         q=1
         V_bite=0.0005
-        deb=DEB(substrate_quality=q, assimilation_mode='sim', steps_per_day=24*60, V_bite=V_bite, substrate_type=s)
-
-        print([[q, deb.substrate.get_f(K=deb.K, quality=q)] for q in np.arange(0,1.01,0.5)])
+        deb = DEB(substrate={'quality': q, 'type': s},assimilation_mode='sim', steps_per_day=24*60, V_bite=V_bite)
+        print(s)
+        # print([[q, deb.substrate.get_X(quality=q)] for q in np.arange(0,1.01,0.5)])
+        print([[q, deb.substrate.get_f(K=deb.K, quality=q)] for q in np.arange(0,1.01,0.1)])
         continue
         th_F=0.01
         th_X=deb.gut.V_gm
