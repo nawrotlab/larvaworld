@@ -168,9 +168,14 @@ def dict_to_file(dictionary, filename):
 
 
 def unique_list(l):
-    seen = set()
-    seen_add = seen.add
-    return [x for x in l if not (x in seen or seen_add(x))]
+    if len(l)==0:
+        return []
+    elif len(l)==1:
+        return l
+    else :
+        seen = set()
+        seen_add = seen.add
+        return [x for x in l if not (x in seen or seen_add(x))]
 
 
 def replace_in_dict(d0, replace_d, inverse=False) :

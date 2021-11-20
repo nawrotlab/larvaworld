@@ -30,8 +30,8 @@ class LarvaBody:
         self.density = density / (1 - 2 * (Nsegs - 1) * interval)
 
         from lib.conf.stored.aux_conf import body_dict
-        points = body_dict[shape]['points']
-        self.base_seg_vertices = lib.aux.sim_aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio, points=points)
+        self.contour_points = body_dict[shape]['points']
+        self.base_seg_vertices = lib.aux.sim_aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio, points=self.contour_points)
 
         self.Nsegs = Nsegs
         self.Nangles = Nsegs - 1
@@ -483,23 +483,43 @@ class LarvaBody:
         # contour = contour[ConvexHull(contour).vertices].tolist()
         return contour
 
-    def add_touch_sensors(self, N=8):
-        y = 0.1
-        x_f, x_m, x_r = 0.75, 0.5, 0.25
-        if N == 8:
-            self.define_sensor('M_front', (1.0, 0.0))
-            self.define_sensor('L_front', (x_f, y))
-            self.define_sensor('R_front', (x_f, -y))
-            self.define_sensor('L_mid', (x_m, y))
-            self.define_sensor('R_mid', (x_m, -y))
-            self.define_sensor('L_rear', (x_r, y))
-            self.define_sensor('R_rear', (x_r, -y))
-            self.define_sensor('M_rear', (0.0, 0.0))
-        elif N == 2:
-            self.define_sensor('R_mid', (x_m, -y))
-            self.define_sensor('M_rear', (0.0, 0.0))
-        elif N == 0:
-            pass
+    # def add_touch_sensors(self, N=8):
+    #     y = 0.1
+    #     x_f, x_m, x_r = 0.75, 0.5, 0.25
+    #     if N == 8:
+    #         self.define_sensor('M_front', (1.0, 0.0))
+    #         self.define_sensor('L_front', (x_f, y))
+    #         self.define_sensor('R_front', (x_f, -y))
+    #         self.define_sensor('L_mid', (x_m, y))
+    #         self.define_sensor('R_mid', (x_m, -y))
+    #         self.define_sensor('L_rear', (x_r, y))
+    #         self.define_sensor('R_rear', (x_r, -y))
+    #         self.define_sensor('M_rear', (0.0, 0.0))
+    #     elif N == 2:
+    #         self.define_sensor('R_mid', (x_m, -y))
+    #         self.define_sensor('M_rear', (0.0, 0.0))
+    #     elif N == 0:
+    #         pass
+
+    def add_touch_sensors(self, idx):
+        for i in idx :
+            self.define_sensor(f'touch_sensor_{i}', self.contour_points[i])
+        # y = 0.1
+        # x_f, x_m, x_r = 0.75, 0.5, 0.25
+        # if N == 8:
+        #     self.define_sensor('M_front', (1.0, 0.0))
+        #     self.define_sensor('L_front', (x_f, y))
+        #     self.define_sensor('R_front', (x_f, -y))
+        #     self.define_sensor('L_mid', (x_m, y))
+        #     self.define_sensor('R_mid', (x_m, -y))
+        #     self.define_sensor('L_rear', (x_r, y))
+        #     self.define_sensor('R_rear', (x_r, -y))
+        #     self.define_sensor('M_rear', (0.0, 0.0))
+        # elif N == 2:
+        #     self.define_sensor('R_mid', (x_m, -y))
+        #     self.define_sensor('M_rear', (0.0, 0.0))
+        # elif N == 0:
+        #     pass
 
     def set_head_edges(self):
         self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)

@@ -23,7 +23,6 @@ class ValueGrid:
         self.default_color = default_color
         self.grid_dims = grid_dims
         self.X, self.Y = grid_dims
-        # print(space_range)
         x_range = tuple(space_range[0:2])
         y_range = tuple(space_range[2:])
         x0, x1 = x_range[0], x_range[1]
@@ -35,12 +34,12 @@ class ValueGrid:
         self.xy = np.array([self.x, self.y])
         self.XY_half = np.array([self.X / 2, self.Y / 2])
 
-        x_linspace = np.linspace(x0, x1, self.X+1)
-        y_linspace = np.linspace(y0, y1, self.Y+1)
+        x_linspace = np.linspace(x0, x1, self.X)
+        y_linspace = np.linspace(y0, y1, self.Y)
         self.meshgrid = np.meshgrid(x_linspace, y_linspace)
-        # print(self.X, self.Y, self.x, self.y)
         if distribution == 'uniform':
             self.grid = np.ones(self.grid_dims) * self.initial_value
+
 
         self.grid_vertices = self.generate_grid_vertices()
         self.grid_edges = [[-xr / 2, -yr / 2],
@@ -52,6 +51,7 @@ class ValueGrid:
         if max_value is None :
             max_value=np.max(self.grid)
         self.max_value=max_value
+
 
 
     def add_value(self, p, value):
@@ -137,13 +137,11 @@ class ValueGrid:
         text_box.draw(viewer)
 
     def draw(self, viewer):
+
         Cgrid = self.get_color_grid().reshape([self.X,self.Y,3])
         for i in range(self.X):
             for j in range(self.Y):
                 viewer.draw_polygon(self.grid_vertices[i,j], Cgrid[i,j], filled=True)
-        # print(color_grid.shape)
-        # for vertices, col in zip(self.grid_vertices, color_grid):
-        #     viewer.draw_polygon(vertices, col, filled=True)
         self.draw_peak(viewer)
         if self.model.odor_aura :
 
@@ -176,8 +174,7 @@ class ValueGrid:
 
     def get_color_grid(self):
         g = self.get_grid().flatten()
-        # if not self.fixed_max :
-        #     self.max_value=np.max([self.max_value, np.max(g)])
+        self.max_value = np.max(g)
         v0,v1 = self.min_value, self.max_value
         gg=(g-v0)/(v1-v0)
         k=10**2
@@ -275,8 +272,8 @@ class DiffusionValueLayer(ValueLayer):
         '''
         D = 10 ** -6
         cell_width, cell_height = self.x / scaling_factor, self.y / scaling_factor
-        rad_x, rad_y = D * dt / cell_width, D * dt / cell_height
-        temp = 10 ** 5
+        # rad_x, rad_y = D * dt / cell_width, D * dt / cell_height
+        # temp = 10 ** 5
         # sigma = int(rad_x * temp), int(rad_y * temp)
         self.evap_const = evap_const
         self.sigma = gaussian_sigma

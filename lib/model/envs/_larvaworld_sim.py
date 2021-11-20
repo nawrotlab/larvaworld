@@ -25,12 +25,12 @@ class LarvaWorldSim(LarvaWorld):
             ep['start'] = int(ep['start'] * 60 / self.dt)
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
         self.larva_collisions = larva_collisions
-        self.odor_ids=get_all_odors(self.larva_groups, self.env_pars['food_params'])
-        self.foodtypes=get_all_foodtypes(self.env_pars['food_params'])
-        self._place_food(self.env_pars['food_params'])
+        self.odor_ids=get_all_odors(self.larva_groups, self.env_pars.food_params)
+        self.foodtypes=get_all_foodtypes(self.env_pars.food_params)
+        self._place_food(self.env_pars.food_params)
         self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
-        if self.env_pars['odorscape'] is not None:
-            self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars['odorscape'])
+        if self.env_pars.odorscape is not None:
+            self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars.odorscape)
 
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
@@ -41,11 +41,6 @@ class LarvaWorldSim(LarvaWorld):
 
         k = get_exp_condition(self.experiment)
         self.exp_condition = k(self) if k is not None else None
-
-    # def prepare_odor_layer(self, timesteps):
-    #     for i in range(timesteps):
-    #         for id, layer in self.odor_layers.items():
-    #             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
 
     def _create_odor_layers(self, pars):
         from lib.model.envs._space import DiffusionValueLayer, GaussianValueLayer
@@ -58,25 +53,25 @@ class LarvaWorldSim(LarvaWorld):
             od_sources = [f for f in sources if f.odor_id == id]
             temp = dNl.unique_list([s.default_color for s in od_sources])
             if len(temp) == 1:
-                default_color = temp[0]
+                c0 = temp[0]
             elif len(temp) == 3 and all([type(k) == float] for k in temp):
-                default_color = temp
+                c0 = temp
             else:
-                default_color = c
+                c0 = c
             kwargs = {
                 'model': self,
                 'unique_id': id,
                 'sources': od_sources,
-                'default_color': default_color,
+                'default_color': c0,
                 'space_range': self.space_edges_for_screen,
             }
-            if pars['odorscape'] == 'Diffusion':
+            if pars.odorscape == 'Diffusion':
                 layers[id] = DiffusionValueLayer(dt=self.dt, scaling_factor=self.scaling_factor,
                                                  grid_dims=pars['grid_dims'],
                                                  evap_const=pars['evap_const'],
                                                  gaussian_sigma=pars['gaussian_sigma'],
                                                  **kwargs)
-            elif pars['odorscape'] == 'Gaussian':
+            elif pars.odorscape == 'Gaussian':
                 layers[id] = GaussianValueLayer(**kwargs)
         # self.refresh_odor_dicts(ids)
         return N, layers
