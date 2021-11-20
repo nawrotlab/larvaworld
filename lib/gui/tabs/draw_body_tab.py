@@ -112,10 +112,20 @@ class DrawBodyTab(DrawTab):
                 # if v['-MOVE-']:
                 delta_X, delta_Y = delta_x / self.s, delta_y / self.s
                 for idx,entry in dic['drag_figures'].items() :
-                    X0, Y0 = entry['pos']
-                    dic['contour'][idx]['pos'] = (X0 + delta_X, Y0 + delta_Y)
-                    # gg.move_figure(entry['fig'], delta_x, delta_y)
-                    # gg.update()
+                    X0, Y0 =p= entry['pos']
+                    new_p=(X0 + delta_X, Y0 + delta_Y)
+
+                    # conf=c['body_shape'].get_dict(v, w)
+                    # try :
+                    #     conf['points'].remove(p)
+                    # except:
+                    #     pass
+                    # conf['points'].append(new_p)
+                    # c['body_shape'].update(w, conf)
+                    # self.update(w, c, conf, id=None)
+                    dic['contour'][idx]['pos'] = new_p
+                    gg.move_figure(entry['fig'], delta_x, delta_y)
+                    gg.update()
                     self.draw_body()
         elif e.endswith('+UP'):  # The drawing has ended because mouse up
             self.aux_reset()
