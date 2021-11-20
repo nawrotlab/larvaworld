@@ -69,7 +69,7 @@ def body(points, start=[1, 0], stop=[0, 0]):
 
 
 # Segment body in N segments of given ratios via vertical lines
-def segment_body(N, xy0, seg_ratio=None, centered=True):
+def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
     # If segment ratio is not provided, generate equal-length segments
     if seg_ratio is None:
         seg_ratio = [1 / N] * N
@@ -111,11 +111,19 @@ def segment_body(N, xy0, seg_ratio=None, centered=True):
             ps[i] = np.flip(np.roll(ps[i], 1, axis=0), axis=0)
         _, idx = np.unique(ps[i], axis=0, return_index=True)
         ps[i] = ps[i][np.sort(idx)]
+        if closed :
+            ps[i]=np.concatenate([ps[i], [ps[i][0]]])
         # ps[i][:,0]+=0.5
     # ps[0]=np.vstack([ps[0], np.array(ps[0][0,:])])
 
     # print(ps)
     return ps
+
+def generate_seg_shapes(Nsegs, seg_ratio, points, centered=True, closed=False, **kwargs):
+    xy0 = body(points)
+    ps = segment_body(Nsegs, xy0, seg_ratio=seg_ratio, centered=centered, closed=closed)
+    seg_vertices = [np.array([p]) for p in ps]
+    return seg_vertices
 
 
 def compute_dst(point1, point2):

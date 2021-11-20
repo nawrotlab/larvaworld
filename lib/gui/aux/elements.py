@@ -281,10 +281,11 @@ class SelectionList(GuiElement):
     def __init__(self, tab, conftype=None, disp=None, buttons=[], button_kws={}, sublists={}, idx=None, progress=False,
                  width=24, with_dict=False, name=None, single_line=False, **kwargs):
         self.conftype = conftype if conftype is not None else tab.conftype
-        # print(self.conftype, tab.conftype)
+
         if name is None:
             name = self.conftype
         super().__init__(name=name)
+        # print(self.conftype, name, disp)
         self.single_line = single_line
         self.with_dict = with_dict
         self.width = width
@@ -872,6 +873,7 @@ def v_layout(k0, args, value_kws0={}):
         if t in [List[float], List[int]]:
             temp = MultiSpin(tuples=False, **spin_kws)
         elif t in [List[Tuple[float]], List[Tuple[int]]]:
+            # print(k0)
             temp = MultiSpin(tuples=True, **spin_kws)
         elif t in [Tuple[float], Tuple[int]]:
             temp = MultiSpin(**spin_kws, Nspins=2)

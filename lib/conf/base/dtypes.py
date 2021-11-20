@@ -221,10 +221,10 @@ substrate_dict = {
 
 }
 
-body_dict = {
-    'drosophila_larva': [(0.9, 0.1), (0.05, 0.1)],
-    'zebrafish_larva': [(0.9, 0.25), (0.7, 0.25), (0.6, 0.005), (0.05, 0.005)]
-}
+# body_dict = {
+#     'drosophila_larva': [(0.9, 0.1), (0.05, 0.1)],
+#     'zebrafish_larva': [(0.9, 0.25), (0.7, 0.25), (0.6, 0.005), (0.05, 0.005)]
+# }
 
 
 # null_bout_dist = {
@@ -560,6 +560,10 @@ def init_pars():
     d['body_shape'] = {
         'symmetry': {'t': str, 'v': 'bilateral', 'vs': ['bilateral', 'radial'],
                      'h': 'The body symmetry.'},
+        'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12,
+                  'h': 'The number of segments comprising the larva body.'},
+        'seg_ratio': {'max': 1.0,
+                      'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
         'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0,
                    'h': 'The XY coordinates of the body contour.'}
     }

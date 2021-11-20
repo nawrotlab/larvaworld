@@ -16,7 +16,7 @@ from lib.gui.aux.buttons import color_pick_layout
 from lib.gui.tabs.tab import GuiTab
 
 
-class DrawTab(GuiTab):
+class DrawEnvTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.canvas_size = (800, 800)

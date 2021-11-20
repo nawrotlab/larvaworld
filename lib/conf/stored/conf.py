@@ -136,13 +136,15 @@ def store_reference_data_confs():
 
 def store_confs(keys=None):
     if keys is None:
-        keys = ['Ref', 'Data', 'Model', 'Env', 'Exp', 'Life']
-    if 'Life' in keys:
-        from lib.conf.stored.trial_conf import trial_dict, life_dict
+        keys = ['Ref', 'Data', 'Aux', 'Model', 'Env', 'Exp']
+    if 'Aux' in keys:
+        from lib.conf.stored.aux_conf import trial_dict, life_dict, body_dict
         for k, v in trial_dict.items():
             saveConf(v, 'Trial', k)
         for k, v in life_dict.items():
             saveConf(v, 'Life', k)
+        for k, v in body_dict.items():
+            saveConf(v, 'Body', k)
     if 'Data' in keys:
         from lib.conf.stored.data_conf import importformats, import_par_confs
         for k, v in import_par_confs.items():
@@ -151,6 +153,7 @@ def store_confs(keys=None):
             saveConf(g, 'Group')
     if 'Ref' in keys:
         store_reference_data_confs()
+
     if 'Model' in keys:
         from lib.conf.stored.larva_conf import create_mod_dict
         for k, v in create_mod_dict().items():
@@ -202,28 +205,7 @@ def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None, **kwarg
     return exp_conf
 
 
-# def get_exp_conf(exp_type, sim_params, life_params=None, N=None, larva_model=None):
-#     conf = copy.deepcopy(expandConf(exp_type, 'Exp'))
-#     for k in list(conf['env_params']['larva_groups'].keys()):
-#         if N is not None:
-#             conf['env_params']['larva_groups'][k]['N'] = N
-#         if larva_model is not None:
-#             conf['env_params']['larva_groups'][k]['model'] = loadConf(larva_model, 'Model')
-#     if life_params is not None:
-#         conf['life_params'] = life_params
-#
-#     if sim_params['sim_ID'] is None:
-#         idx = next_idx(exp_type)
-#         sim_params['sim_ID'] = f'{exp_type}_{idx}'
-#     if sim_params['path'] is None:
-#         sim_params['path'] = f'single_runs/{exp_type}'
-#     if sim_params['duration'] is None:
-#         sim_params['duration'] = conf['sim_params']['duration']
-#     conf['sim_params'] = sim_params
-#     conf['experiment'] = exp_type
-#
-#     return conf
-
 if __name__ == '__main__':
     # store_confs(['Model'])
-    store_confs(['Env', 'Exp'])
+    store_confs(['Aux'])
+    # store_confs(['Env', 'Exp'])

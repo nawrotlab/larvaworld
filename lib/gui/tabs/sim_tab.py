@@ -5,7 +5,7 @@ from lib.aux.collecting import output_keys
 from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, CollapsibleTable, PadDict, \
     PadTable
 from lib.gui.aux.functions import t_kws, gui_col, gui_cols, col_size, default_list_width, col_kws
-from lib.gui.tabs.draw_tab import DrawTab
+from lib.gui.tabs.draw_env_tab import DrawEnvTab
 from lib.gui.tabs.env_tab import EnvTab
 from lib.gui.tabs.tab import GuiTab
 from lib.conf.stored.conf import next_idx, expandConf, loadConf
@@ -32,7 +32,7 @@ class SimTab(GuiTab):
     def build(self):
         l0, l1, c1, g1, d1 = self.build_conf()
         l2, c2, g2, d2 = self.build_RUN()
-        self.draw_tab = DrawTab(name='draw', gui=self.gui)
+        self.draw_tab = DrawEnvTab(name='draw', gui=self.gui)
         l3, c3, g3, d3 = self.draw_tab.build()
 
         tab_kws = {'font': ("Helvetica", 13, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
@@ -74,10 +74,7 @@ class SimTab(GuiTab):
         c2 = PadDict('output',text_kws= t_kws(7), Ncols=2,header_width=30, **kws)
 
         ll3 = gui_col([c1, c2, s2], x_frac=0.25, as_pane=True)
-        # ll2 = gui_col([s1, tab1], x_frac=0.2)
         l1 = [self.envtab.layout[0]+[ll3]]
-        # ll2 = sg.Col([tab1.get_layout(as_col=False)[0]], **col_kws, size=col_size(x_frac=0.25))
-        # l1=[[ll2,ll3]]
 
         c = {}
         for i in [c1, c2, s2, s1]:
@@ -87,6 +84,7 @@ class SimTab(GuiTab):
         return l0, l1, c, {}, {}
 
     def update(self, w, c, conf, id):
+        # print('dd')
         c['output'].update(w, dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys])))
         sim = copy.deepcopy(conf['sim_params'])
         sim.update({'sim_ID': f'{id}_{next_idx(id)}', 'path': f'single_runs/{id}'})
@@ -121,6 +119,7 @@ class SimTab(GuiTab):
         return d, g
 
     def eval(self, e, v, w, c, d, g):
+        # print(e)
         if e==self.DL1.key :
             ks=v[self.DL1.key]
             if len(ks)>0:

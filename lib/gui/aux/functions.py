@@ -39,6 +39,8 @@ b6_kws = {'font': ('size', 6),
 b12_kws = {'font': ('size', 6),
            'size': (12, 1)}
 spin_size={'size' :  (4, 1)}
+tab_kws = {'font': ("Helvetica", 14, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
+                   'tab_background_color': 'lightgrey'}
 
 
 def t_kws(w, h=1):

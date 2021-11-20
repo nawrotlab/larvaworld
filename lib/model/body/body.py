@@ -27,10 +27,11 @@ class LarvaBody:
         self.seg_ratio = np.array(seg_ratio)
         self.interval = interval
         self.shape_scale = 1
+        self.density = density / (1 - 2 * (Nsegs - 1) * interval)
 
-        self.base_seg_vertices = self.generate_seg_shapes(Nsegs, self.width_to_length_ratio,
-                                                          density=self.density, interval=self.interval,
-                                                          seg_ratio=self.seg_ratio, shape=shape)
+        from lib.conf.stored.aux_conf import body_dict
+        points = body_dict[shape]['points']
+        self.base_seg_vertices = lib.aux.sim_aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio, points=points)
 
         self.Nsegs = Nsegs
         self.Nangles = Nsegs - 1
@@ -154,21 +155,7 @@ class LarvaBody:
         d = self.get_sensor(sensor)
         return self.segs[d['seg_idx']].get_world_point(d['local_pos'])
 
-    def generate_seg_shapes(self, Nsegs, width_to_length_proportion, density, interval, seg_ratio, shape):
-        self.density = density / (1 - 2 * (Nsegs - 1) * interval)
-        from lib.conf.base.dtypes import body_dict
-        points=body_dict[shape]
-        # w = width_to_length_proportion / 2
-        # if shape == 'drosophila_larva':
-        #     points = np.array([[0.9, w], [0.05, w]])
-        # elif shape == 'zebrafish_larva':
-        #     points = np.array([[0.9, 2.5 * w], [0.7, 2.5 * w], [0.6, 0.5 * w], [0.05, 0.5 * w]])
-        # else :
-        #     raise NotImplementedError
-        xy0 = lib.aux.sim_aux.body(points)
-        ps = lib.aux.sim_aux.segment_body(Nsegs, xy0, seg_ratio=seg_ratio, centered=True)
-        seg_vertices = [np.array([p]) for p in ps]
-        return seg_vertices
+
 
     # def get_larva_shape(self, filepath=None):
     #     if filepath is None:

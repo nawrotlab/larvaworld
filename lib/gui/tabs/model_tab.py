@@ -4,7 +4,8 @@ import os
 
 from lib.conf.base.dtypes import null_dict
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList, PadDict
-from lib.gui.aux.functions import col_size, gui_cols, t_kws, gui_col
+from lib.gui.aux.functions import col_size, gui_cols, t_kws, gui_col, tab_kws, col_kws
+from lib.gui.tabs.draw_body_tab import DrawBodyTab
 from lib.gui.tabs.tab import GuiTab
 from lib.conf.base import paths
 
@@ -14,6 +15,7 @@ class ModelTab(GuiTab):
         super().__init__(**kwargs)
         self.fields = ['physics', 'energetics', 'body']
         self.module_keys = list(null_dict('modules').keys())
+        self.canvas_size = (1200, 1000)
 
     def update(self, w, c, conf, id=None):
         for n in self.fields:
@@ -96,39 +98,43 @@ class ModelTab(GuiTab):
                 ppp.append(sg.Col(ll, scrollable=True, vertical_scroll_only=True))
             pp[k] = [[sg.Pane(ppp, orientation='horizontal', show_handle=False)]]
             tt.append(sg.Tab(k, pp[k], key=f'{k} MODULES'))
-        tab_kws = {'font': ("Helvetica", 14, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
-                   'tab_background_color': 'lightgrey'}
-        l_tabs = sg.TabGroup([tt], key='ACTIVE_MODULES', tab_location='topcenter', **tab_kws)
-        return l_tabs, c
 
-    def build(self):
-        l_tabs, c = self.build_module_tab()
-        l0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
-        # c1 = [CollapsibleDict(n, **kws) for n, kws in zip(self.fields, [{}, {'toggle': True}, {}, {}])]
-        # s1 = CollapsibleTable('odor_gains', index='ID', heading_dict={'mean': 'mean', 'std': 'std'}, state=True, col_widths = [8,6,6])
-        # c2 = [CollapsibleDict(k, toggle=True) for k in self.module_keys]
-        # l2 = [i.get_layout() for i in c2]
-        # b = Collapsible('Brain', content=l2, state=True)
+        modules_tab = sg.TabGroup([tt], key='ACTIVE_MODULES', tab_location='topcenter', **tab_kws)
+        l=sg.Col([[modules_tab]])
+        return l, c
 
+    def build_architecture_tab(self):
         fdir = paths.path('model')
         fig_dict = {f: f'{fdir}/{f}' for f in os.listdir(fdir)}
-        g1 = GraphList(self.name, tab=self, list_header='Model', fig_dict=fig_dict, subsample=3,
-                       canvas_size=col_size(x_frac= 0.9, y_frac=0.4))
+        g2 = GraphList(self.name, tab=self, list_header='Model', fig_dict=fig_dict, subsample=3,
+                       canvas_size=self.canvas_size)
+        col1 = gui_col([g2], x_frac=0.2, y_frac=0.6, as_pane=True, pad=(20, 20))
+        col2 = sg.Col([g2.canvas.get_layout(as_pane=True, pad=(0, 10))[0]], **col_kws)
+        l2 = [[col1, col2]]
+        return l2, {g2.name: g2}
 
-        ll1 = gui_col([l0, g1], x_frac=0.2,y_frac=0.6, as_pane=True, pad=(20,20))
-        # ll1 = gui_col([l0, s1, g1], x_frac=0.2,y_frac=0.6, as_pane=True, pad=(20,20))
-        # ll3=gui_col([g1.canvas], x_frac=0.3, as_pane=True, pad=(20,20))
-        ll2=sg.Col([[l_tabs]], size=col_size(0.8, 0.6))
-        # ll = gui_cols(cols=[[l0, s1, g1], [g1.canvas]], x_fracs=[0.2,0.3], as_pane=True, pad=(20,20))
-        # l.append([l_tabs])
-        l1=[ll1,ll2]
-        # l1=[ll1,ll2]
-        l2=g1.canvas.get_layout(as_pane=True)
+    def build(self):
+        sl0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
+        l00 = gui_col([sl0], x_frac=0.2, y_frac=0.6, as_pane=True, pad=(20, 20))
+        l01, c1 = self.build_module_tab()
+        l1=[[l00, l01]]
+        l2, g2 = self.build_architecture_tab()
+        self.draw_tab = DrawBodyTab(name='body', gui=self.gui, conftype='Body')
+        l3, c3, g3, d3 = self.draw_tab.build()
+        self.selectionlists[self.draw_tab.conftype] = self.draw_tab.selectionlists[self.draw_tab.conftype]
 
-        l=[[sg.Col([l1,l2[0]])]]
-        # l = [[sg.Pane([sg.vtop(l1), sg.vbottom(l2[0])], handle_size=30)]]
+        tabs={}
+        tabs['MODULES'] = l1
+        tabs['ARCHITECTURE'] = l2
+        tabs['DRAW'] = l3
+        l_tabs=[sg.Tab(k, v, key=f'{k}_TAB') for k,v in tabs.items()]
+        l = [[sg.TabGroup([l_tabs], key='ACTIVE_MODEL_TAB', tab_location='topleft', **tab_kws)]]
+        return l, {**c1, **c3}, {**g2, **g3}, {**{}, **d3}
 
-        return l, c, {g1.name: g1}, {}
+    def eval(self, e, v, w, c, d, g):
+        # print(e)
+        # self.draw_tab.eval(e, v, w, c, d, g)
+        return d,g
 
 
 if __name__ == "__main__":
