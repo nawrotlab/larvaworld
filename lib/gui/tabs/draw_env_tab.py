@@ -13,13 +13,12 @@ from lib.conf.base.dtypes import null_dict
 from lib.gui.aux.elements import CollapsibleDict, GraphList, PadDict
 from lib.gui.aux.functions import col_kws, t_kws
 from lib.gui.aux.buttons import color_pick_layout
-from lib.gui.tabs.tab import GuiTab
+from lib.gui.tabs.tab import GuiTab, DrawTab
 
 
-class DrawEnvTab(GuiTab):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.canvas_size = (800, 800)
+class DrawEnvTab(DrawTab):
+    def __init__(self,canvas_size = (800, 800), **kwargs):
+        super().__init__(canvas_size = canvas_size,**kwargs)
         self.S, self.L, self.B = 'Source', 'Larva', 'Border'
         self.Su, self.Sg = f'{self.S.lower()}_units', f'{self.S.lower()}_groups'
         self.Lu, self.Lg = f'{self.L.lower()}_units', f'{self.L.lower()}_groups'
@@ -63,21 +62,7 @@ class DrawEnvTab(GuiTab):
         dic = c['arena'].get_dict(v, w)
         return dic['arena_shape'], dic['arena_dims']
 
-    @property
-    def s(self):
-        return self.base_dict['s']
 
-    def get_drag_ps(self, scaled=False):
-        d = self.base_dict
-        p1, p2 = d['start_point'], d['end_point']
-        return [self.scale_xy(p1), self.scale_xy(p2)] if scaled else [p1, p2]
-
-    def set_drag_ps(self, p1=None, p2=None):
-        d = self.base_dict
-        if p1 is not None:
-            d['start_point'] = p1
-        if p2 is not None:
-            d['end_point'] = p2
 
     def add_agent_layout(self, n0, color, c):
         g, g0, D, DN, Dm, Ds, s, s0 = self.group_ks(n0)
@@ -449,16 +434,7 @@ class DrawEnvTab(GuiTab):
         w['out'].update(value='Arena has been reset.')
         self.base_dict['env_db'] = db
 
-    def scale_xy(self, xy, reverse=False):
-        if xy is None:
-            return None
-        W, H = self.graph_list.canvas_size
-        s = self.s
-        x, y = xy
-        if reverse:
-            return x * s + W / 2, y * s + H / 2
-        else:
-            return (x - W / 2) / s, (y - H / 2) / s
+
 
     def out_of_bounds(self, xy, v, w, c):
         shape, (X, Y) = self.arena_pars(v, w, c)
@@ -592,7 +568,4 @@ class DrawEnvTab(GuiTab):
         else:
             return dic
 
-    def aux_reset(self):
-        dic = self.base_dict
-        dic['dragging'], dic['current'] = False, {}
-        dic['start_point'], dic['end_point'], dic['prior_rect'] = None, None, None
+

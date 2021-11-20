@@ -129,7 +129,42 @@ class GuiTab(GuiElement):
             # return res
             # sys.exit(0)
 
+class DrawTab(GuiTab):
+    def __init__(self,canvas_size = (800, 800), **kwargs):
+        super().__init__(**kwargs)
+        self.canvas_size = canvas_size
 
+    @property
+    def s(self):
+        return self.base_dict['s']
+
+    def get_drag_ps(self, scaled=False):
+        d = self.base_dict
+        p1, p2 = d['start_point'], d['end_point']
+        return [self.scale_xy(p1), self.scale_xy(p2)] if scaled else [p1, p2]
+
+    def set_drag_ps(self, p1=None, p2=None):
+        d = self.base_dict
+        if p1 is not None:
+            d['start_point'] = p1
+        if p2 is not None:
+            d['end_point'] = p2
+
+    def scale_xy(self, xy, reverse=False):
+        if xy is None:
+            return None
+        W, H = self.graph_list.canvas_size
+        s = self.s
+        x, y = xy
+        if reverse:
+            return x * s + W / 2, y * s + H / 2
+        else:
+            return (x - W / 2) / s, (y - H / 2) / s
+
+    def aux_reset(self):
+        dic = self.base_dict
+        dic['dragging'], dic['current'] = False, {}
+        dic['start_point'], dic['end_point'], dic['prior_rect'] = None, None, None
 
 if __name__ == "__main__":
     pass

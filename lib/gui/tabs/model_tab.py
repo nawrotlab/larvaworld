@@ -132,13 +132,12 @@ class ModelTab(GuiTab):
         return l, {**c1, **c3}, {**g2, **g3}, {**{}, **d3}
 
     def eval(self, e, v, w, c, d, g):
-        # print(e)
-        # self.draw_tab.eval(e, v, w, c, d, g)
+        self.draw_tab.eval(e, v, w, c, d, g)
         return d,g
 
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
 
-    larvaworld_gui = LarvaworldGui(tabs=['larva-model', 'settings'])
+    larvaworld_gui = LarvaworldGui(tabs=['larva-model'])
     larvaworld_gui.run()
