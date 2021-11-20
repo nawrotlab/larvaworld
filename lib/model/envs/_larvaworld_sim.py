@@ -56,9 +56,7 @@ class LarvaWorldSim(LarvaWorld):
         layers = {}
         for i, (id, c) in enumerate(zip(ids, cols)):
             od_sources = [f for f in sources if f.odor_id == id]
-
             temp = dNl.unique_list([s.default_color for s in od_sources])
-
             if len(temp) == 1:
                 default_color = temp[0]
             elif len(temp) == 3 and all([type(k) == float] for k in temp):
@@ -243,6 +241,7 @@ def imitate_group(config, sample_pars=[], N=None):
     return ids, ps, ors, dic
 
 def get_all_odors(larva_groups, food_params):
+
     lg=[conf['odor']['odor_id'] for conf in larva_groups.values()]
     su=[conf['odor']['odor_id'] for conf in food_params['source_units'].values()]
     sg=[conf['odor']['odor_id'] for conf in food_params['source_groups'].values()]

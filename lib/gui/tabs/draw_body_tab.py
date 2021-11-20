@@ -4,22 +4,25 @@ import random
 import numpy as np
 import PySimpleGUI as sg
 
-import lib.aux.ang_aux
-import lib.aux.sim_aux
-import lib.aux.xy_aux
-import lib.conf.base.dtypes
-import lib.gui.aux.functions
-from lib.conf.base.dtypes import null_dict
-from lib.gui.aux.elements import CollapsibleDict, GraphList, PadDict, SelectionList
-from lib.gui.aux.functions import t_kws, gui_col, gui_cols, col_size, default_list_width, col_kws
-from lib.gui.aux.buttons import color_pick_layout, GraphButton
-from lib.gui.tabs.tab import GuiTab, DrawTab
+from lib.aux.sim_aux import generate_seg_shapes, rearrange_contour
+from lib.gui.aux.elements import GraphList, PadDict, SelectionList
+from lib.gui.aux.functions import t_kws, gui_col, col_kws
+from lib.gui.aux.buttons import GraphButton
+from lib.gui.tabs.tab import DrawTab
 
 
 class DrawBodyTab(DrawTab):
     def __init__(self, canvas_size=(1200, 800), **kwargs):
         super().__init__(canvas_size=canvas_size, **kwargs)
         self.p_radius = self.canvas_size[0] / 240
+        self.c_key='body_shape'
+        self.P, self.S, self.O, self.T='points','segs','olfaction_sensors','touch_sensors'
+        self.Cdict = {
+            self.P: 'black',
+            self.S: 'black',
+            self.T: 'green',
+            self.O: 'magenta',
+        }
 
     def build(self):
         c = {}
@@ -27,12 +30,10 @@ class DrawBodyTab(DrawTab):
         dic = {
             # 'env_db': self.set_env_db(store=False),
             's': self.canvas_size[0] * 0.7,
-            'sample_fig': None,
-            'sample_pars': {},
-            'contour': {},
             'dragging': None,
             'drag_figures': {},
             'current': {},
+            self.S: [],
             'last_xy': (0, 0),
             'start_point': None,
             'end_point': None,
@@ -44,16 +45,18 @@ class DrawBodyTab(DrawTab):
         sl = SelectionList(tab=self, disp='Body', buttons=['load', 'save', 'delete', 'run'],
                            width=30, text_kws=t_kws(12))
 
-        c1 = PadDict('body_shape', disp_name='Configuration', text_kws=t_kws(10), header_width=25,
-                     subconfs={'points': {'Nspins': 16}},background_color='orange',
+        c1 = PadDict(self.c_key, disp_name='Configuration', text_kws=t_kws(8), header_width=25,
+                     background_color='orange',
+                     subconfs={self.P: {'Nspins': 12, 'indexing': True, 'group_by_N': 2, 'text_kws': {'text_color': self.Cdict[self.P]}},
+                               self.T: {'Nspins': 8, 'group_by_N': 4, 'text_kws': {'text_color': self.Cdict[self.T]}},
+                               self.O: {'Nspins': 4, 'text_kws': {'text_color': self.Cdict[self.O]}}
+                               },
                      after_header=[GraphButton('Button_Burn', 'RESET_BODY',
                                                tooltip='Reset to the initial body.'),
                                    GraphButton('Globe_Active', 'NEW_BODY',
                                                tooltip='Create a new body.All drawn items will be erased.')])
         c.update(c1.get_subdicts())
-
         col1 = gui_col([sl, c1], x_frac=0.3, as_pane=True, pad=(10, 10))
-
         g1 = GraphList(self.name, tab=self, graph=True, canvas_size=self.canvas_size, canvas_kws={
             'graph_bottom_left': (0, 0),
             'graph_top_right': self.canvas_size,
@@ -62,30 +65,29 @@ class DrawBodyTab(DrawTab):
             'background_color': 'white',
         })
         col2 = sg.Col([g1.canvas.get_layout(as_pane=True, pad=(0, 10))[0]], **col_kws)
-
         l = [[col1, col2]]
         self.graph = g1.canvas_element
 
         return l, c, {g1.name: g1}, {self.name: dic}
 
     def update(self, w, c, conf, id):
-        c['body_shape'].update(w, conf)
-        self.set_contour(conf)
-        self.draw_body()
+        if conf[self.P] is not None:
+            conf[self.P] = rearrange_contour(conf[self.P])
+            self.c.update(w, conf)
+
+            self.draw_body(conf)
 
     def get(self, w, v, c, as_entry=True):
-        conf = c['body_shape'].get_dict(v, w)
+        conf = self.c.get_dict(v, w)
         return conf
 
     def eval(self, e, v, w, c, d, g):
-        r = self.p_radius
         gg = self.graph
         gg.bind('<Button-3>', '+RIGHT+')
         # gg.Widget.config(cursor='fleur')
         dic = self.base_dict
         if e == 'RESET_BODY':
             conf = self.get(w, v, c)
-            conf['points']=lib.aux.sim_aux.rearrange_contour(conf['points'])
             self.update(w, c, conf, id=None)
         elif e == 'NEW_BODY':
             gg.erase()
@@ -94,7 +96,7 @@ class DrawBodyTab(DrawTab):
             if not dic['dragging']:
                 self.set_drag_ps(p1=(x, y))
                 dic['dragging'] = True
-                for idx, entry in dic['contour'].items():
+                for idx, entry in dic[self.P].items():
                     if entry['fig'] in gg.get_figures_at_location((x, y)):
                         dic['drag_figures'][idx] = entry
                     else:
@@ -110,47 +112,57 @@ class DrawBodyTab(DrawTab):
             if None not in self.get_drag_ps():
                 delta_X, delta_Y = delta_x / self.s, delta_y / self.s
                 for idx, entry in dic['drag_figures'].items():
-                    X0, Y0 = p = entry['pos']
+                    X0, Y0 = entry['pos']
                     new_p = (X0 + delta_X, Y0 + delta_Y)
-
-                    # conf=c['body_shape'].get_dict(v, w)
-                    # try :
-                    #     conf['points'].remove(p)
-                    # except:
-                    #     pass
-                    # conf['points'].append(new_p)
-                    # c['body_shape'].update(w, conf)
-                    # self.update(w, c, conf, id=None)
-                    dic['contour'][idx]['pos'] = new_p
-                    gg.move_figure(entry['fig'], delta_x, delta_y)
-                    gg.update()
-                    self.draw_body()
+                    conf = self.get(w, v, c)
+                    conf[self.P][idx] = new_p
+                    self.update(w, c, conf, id=None)
         elif e.endswith('+UP'):  # The drawing has ended because mouse up
             self.aux_reset()
 
         return d, g
 
-    def draw_body(self, color='black', **kwargs):
+    def draw_body(self, conf, **kwargs):
         self.graph.erase()
-        cc = self.base_dict['contour']
-        segs = {}
-        for (i, j), entry in cc.items():
-            p0 = self.scale_xy(entry['pos'] - np.array([0.5, 0.0]), reverse=True)
-            entry['fig'] = self.graph.draw_circle(p0, self.p_radius, line_width=1, line_color=color, fill_color=color)
-            if i not in segs.keys():
-                segs[i] = []
-            segs[i].append(p0)
-        for vs in segs.values():
-            vs.append(vs[0])
-            # print(vs)
-            self.graph.draw_lines(vs, width=2, color=color)
+        self.xy_reset()
+        self.draw_segs(conf)
+        self.draw_points(conf)
 
-    def set_contour(self, conf, **kwargs):
-        self.base_dict['contour'] = {}
-        if conf['symmetry'] == 'bilateral':
-            segs = lib.aux.sim_aux.generate_seg_shapes(centered=False, closed=False, **conf)
-        else:
-            raise NotImplementedError
-        for i, seg in enumerate(segs):
-            for j, p in enumerate(seg[0]):
-                self.base_dict['contour'][(i, j)] = {'fig': None, 'pos': p}
+    def draw_points(self, conf, **kwargs):
+        Cps = self.Cdict[self.P]
+        dic = self.base_dict
+        r = self.p_radius
+        gg = self.graph
+        ts = conf[self.T]
+        os = conf[self.O]
+
+        for i, p0 in enumerate(conf[self.P]):
+            p = self.scale_xy(p0 - np.array([0.5, 0.0]), reverse=True)
+            f = gg.draw_circle(p, r, line_width=1, line_color=Cps, fill_color=Cps)
+            dic[self.P][i] = {'fig': f, 'pos': p}
+            if ts is not None and i in ts:
+                f = gg.draw_circle(p, r * 1.8, line_width=6, line_color= self.Cdict[self.T])
+                dic[self.T][i] = {'fig': f, 'pos': p}
+            if os is not None and i in os:
+                f = gg.draw_circle(p, r * 2.6, line_width=5, line_color=self.Cdict[self.O])
+                dic[self.O][i] = {'fig': f, 'pos': p}
+
+    def draw_segs(self, conf, **kwargs):
+        dic = self.base_dict
+        gg = self.graph
+        for i, ps0 in enumerate(generate_seg_shapes(centered=False, **conf)):
+            ps = [self.scale_xy(p0 - np.array([0.5, 0.0]), reverse=True) for p0 in ps0[0]]
+            ps.append(ps[0])
+            f = gg.draw_lines(ps, width=2, color=self.Cdict[self.S])
+            dic[self.S][i] = {'fig': f, 'pos': ps}
+
+    def xy_reset(self):
+        dic = self.base_dict
+        dic[self.P] = {}
+        dic[self.T] = {}
+        dic[self.O] = {}
+        dic[self.S] = {}
+
+    @property
+    def c(self):
+        return self.gui.collapsibles[self.c_key]

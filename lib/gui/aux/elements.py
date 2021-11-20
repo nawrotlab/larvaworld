@@ -125,8 +125,11 @@ class SingleSpin(sg.Spin):
 
 
 class MultiSpin(sg.Pane):
-    def __init__(self, initial_value, values, key, steps=100, Nspins=3, tuples=False, dtype=float, value_kws={}):
+    def __init__(self, initial_value, values, key, steps=100, Nspins=2, group_by_N=None,
+                 tuples=False, dtype=float, value_kws={}, indexing=False, **kwargs):
+        self.indexing = indexing
         self.value_kws = value_kws
+        self.group_by_N = group_by_N
         self.Nspins = Nspins
         self.steps = steps
         self.dtype = dtype
@@ -161,14 +164,9 @@ class MultiSpin(sg.Pane):
             'dtype': self.dtype,
             'value_kws': self.value_kws,
         }
-        if not self.tuples:
-            spins = [SingleSpin(initial_value=vv, key=kk, visible=vis, **spin_kws) for vv, kk, vis in
-                     zip(self.v_spins, self.k_spins, self.visibles)]
-        else:
-            # print(self.key)
-            spins = [MultiSpin(initial_value=vv, key=kk, Nspins=2, **spin_kws) for vv, kk, vis in
-                     zip(self.v_spins, self.k_spins, self.visibles)]
-            # spins=[sg.Col([[s] for s in spins])]
+        func = MultiSpin if self.tuples else SingleSpin
+        spins = [func(initial_value=vv, key=kk, visible=vis, **spin_kws) for vv, kk, vis in
+                 zip(self.v_spins, self.k_spins, self.visibles)]
         return spins
 
     def get(self):
@@ -185,7 +183,6 @@ class MultiSpin(sg.Pane):
             self.N = len(value)
             for i, spin in enumerate(self.spins):
                 vv = value[i] if i < self.N else ''
-                # print(i,vv)
                 spin.update(vv)
 
     def add_spin(self, window):
@@ -216,15 +213,17 @@ class MultiSpin(sg.Pane):
             self.N -= 1
 
     def build_layout(self):
-        if not self.tuples:
-            return self.spins
+        Ng = self.group_by_N
+        ss = self.spins
+        if self.indexing:
+            ss = [sg.Col([[sg.T(i, **t_kws(1)), s]]) for i, s in enumerate(ss)]
+
+        if Ng is not None and self.Nspins >= Ng:
+            spins = group_list_by_n(ss, Ng)
+            spins = [sg.Col(spins)]
+            return spins
         else:
-            if self.Nspins > 2:
-                spins = group_list_by_n(self.spins, 2)
-                spins = [sg.Col(spins)]
-                return spins
-            else:
-                return self.spins
+            return ss
 
 
 class GuiElement:
@@ -1157,8 +1156,11 @@ class PadDict(PadElement):
                 combos[args['combo']].update({k: args})
                 continue
             else:
+                text_kws = {**self.text_kws}
+                if 'text_kws' in subconfkws.keys():
+                    text_kws.update(subconfkws['text_kws'])
                 disp = args['disp']
-                ii = [sg.T(f'{get_disp_name(disp)}:', tooltip=args['tooltip'], **self.text_kws),
+                ii = [sg.T(f'{get_disp_name(disp)}:', tooltip=args['tooltip'], **text_kws),
                       v_layout(f'{name}_{k}', args, self.value_kws, **subconfkws)]
             l.append(ii)
 

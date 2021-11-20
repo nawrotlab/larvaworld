@@ -120,9 +120,7 @@ def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
     return ps
 
 def generate_seg_shapes(Nsegs, seg_ratio, points, centered=True, closed=False, **kwargs):
-    xy0 = np.array(points)
-    # xy0 = body(points)
-    ps = segment_body(Nsegs, xy0, seg_ratio=seg_ratio, centered=centered, closed=closed)
+    ps = segment_body(Nsegs, np.array(points), seg_ratio=seg_ratio, centered=centered, closed=closed)
     seg_vertices = [np.array([p]) for p in ps]
     return seg_vertices
 

@@ -564,7 +564,13 @@ def init_pars():
                   'h': 'The number of segments comprising the larva body.'},
         'seg_ratio': {'max': 1.0,
                       'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
-        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0,
+
+        'olfaction_sensors': {'t': List[int], 'min': 0, 'max': 16, 'v' : [0],'disp' : 'olfaction',
+                          'h': 'The indexes of the contour points bearing olfaction sensors.'},
+
+        'touch_sensors': {'t': List[int], 'min': 0, 'max': 16,'disp' : 'touch',
+                          'h': 'The indexes of the contour points bearing touch sensors.'},
+        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0,'disp' : 'contour',
                    'h': 'The XY coordinates of the body contour.'},
     }
 
