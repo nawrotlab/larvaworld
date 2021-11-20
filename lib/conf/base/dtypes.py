@@ -565,7 +565,7 @@ def init_pars():
         'seg_ratio': {'max': 1.0,
                       'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
         'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0,
-                   'h': 'The XY coordinates of the body contour.'}
+                   'h': 'The XY coordinates of the body contour.'},
     }
 
     d['body'] = {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'initial',

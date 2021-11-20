@@ -220,7 +220,7 @@ class MultiSpin(sg.Pane):
             return self.spins
         else:
             if self.Nspins > 2:
-                spins = group_list_by_n(self.spins, 1)
+                spins = group_list_by_n(self.spins, 2)
                 spins = [sg.Col(spins)]
                 return spins
             else:

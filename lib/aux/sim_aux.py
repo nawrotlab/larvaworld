@@ -51,7 +51,7 @@ def inside_polygon(points, tank_polygon):
 
 
 def body(points, start=[1, 0], stop=[0, 0]):
-    xy = np.zeros([len(points) * 2 + 2, 2]) * np.nan
+    xy = np.zeros([len(points) * 2, 2]) * np.nan
     xy[0, :] = start
     xy[len(points) + 1, :] = stop
     for i in range(len(points)):
@@ -120,11 +120,18 @@ def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
     return ps
 
 def generate_seg_shapes(Nsegs, seg_ratio, points, centered=True, closed=False, **kwargs):
-    xy0 = body(points)
+    xy0 = np.array(points)
+    # xy0 = body(points)
     ps = segment_body(Nsegs, xy0, seg_ratio=seg_ratio, centered=centered, closed=closed)
     seg_vertices = [np.array([p]) for p in ps]
     return seg_vertices
 
+def rearrange_contour(ps0):
+    ps_plus = [p for p in ps0 if p[1] >= 0]
+    ps_plus.sort(key=lambda x: x[0], reverse=True)
+    ps_minus = [p for p in ps0 if p[1] < 0]
+    ps_minus.sort(key=lambda x: x[0], reverse=False)
+    return ps_plus + ps_minus
 
 def compute_dst(point1, point2):
     x1, y1 = point1
