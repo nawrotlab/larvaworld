@@ -45,6 +45,7 @@ class DrawBodyTab(DrawTab):
                            width=30, text_kws=t_kws(12))
 
         c1 = PadDict('body_shape', disp_name='Configuration', text_kws=t_kws(10), header_width=30,
+                     subconfs={'points' : {'Nspins' : 8}},
                      after_header=[GraphButton('Button_Burn', 'RESET_BODY',
                                                tooltip='Reset to the initial body.'),
                                    GraphButton('Globe_Active', 'NEW_BODY',
