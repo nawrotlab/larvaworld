@@ -20,9 +20,10 @@ class NengoBrain(Network, Brain):
         self.food_feedback = False
         if m['feeder']:
             self.feeder = NengoEffector(**c['feeder_params'])
-        self.turner = NengoEffector(**c['turner_params'])
-        self.crawler = NengoEffector(**c['crawler_params'])
-        self.osc_coupling = Oscillator_coupling(brain=self, **c['interference_params'])
+        if m['turner'] and m['crawler']:
+            self.turner = NengoEffector(**c['turner_params'])
+            self.crawler = NengoEffector(**c['crawler_params'])
+            self.osc_coupling = Oscillator_coupling(brain=self, **c['interference_params'])
         if m['intermitter']:
             self.intermitter = NengoIntermitter(dt=dt, brain=self, **c['intermitter_params'])
             self.intermitter.start_effector()
@@ -35,27 +36,14 @@ class NengoBrain(Network, Brain):
     def build(self):
         o = self.olfactor
         ws = self.windsensor
+        cra=self.crawler
+        tur=self.turner
+        fee=self.feeder
         a = self.agent
         N1, N2=50,10
 
         with self:
-            if o is not None:
-                N = o.Ngains
-                odors = Node(o.get_X_values, size_in=N)
 
-                olfMem = EnsembleArray(100, N, 2)
-                dCon = EnsembleArray(200, N, 1, radius=0.01, intercepts=dists.Uniform(0, 0.1))
-                dConOut = Ensemble(200, N, neuron_type=Direct())
-                for i in range(N):
-                    Connection(odors[i], olfMem.ensembles[i][0], transform=[[1]], synapse=0.01)
-                    Connection(olfMem.ensembles[i][0], olfMem.ensembles[i][1], transform=1, synapse=1.0)
-                    Connection(olfMem.ensembles[i][0], dCon.input[i], transform=1, synapse=0.1)
-                    Connection(olfMem.ensembles[i][1], dCon.input[i], transform=-1, synapse=0.1)
-                    Connection(dCon.ensembles[i], dConOut[i], transform=1, synapse=0.0)
-
-                # Collect data for plotting
-                self.p_odor = Probe(odors)
-                self.p_change = Probe(dConOut)
 
 
 
@@ -126,51 +114,50 @@ class NengoBrain(Network, Brain):
                 else:
                     return 0
 
+            if cra and tur :
 
+                linFrIn = Node(cra.get_freq, size_out=1, label='Crawl Freq Stim')
+                angFrIn = Node(tur.get_freq, size_out=1, label='Bend Freq Stim')
 
-            linFrIn = Node(self.crawler.get_freq, size_out=1)
-            angFrIn = Node(self.turner.get_freq, size_out=1)
+                linFr = Ensemble(N2, 1, neuron_type=Direct(), label='Crawl Freq')
+                angFr = Ensemble(N2, 1, neuron_type=Direct(), label='Bend Freq')
 
-            linFr = Ensemble(N2, 1, neuron_type=Direct())
-            angFr = Ensemble(N2, 1, neuron_type=Direct())
+                Connection(linFrIn, linFr)
+                Connection(angFrIn, angFr)
 
-            Connection(linFrIn, linFr)
-            Connection(angFrIn, angFr)
+                x = Ensemble(N1, 3, neuron_type=Direct(), label='Crawl Osc')
+                y = Ensemble(N1, 3, neuron_type=Direct(), label='Bend Osc')
+                Connection(x, x[:2], synapse=s1, function=linOsc)
+                Connection(y, y[:2], synapse=s1, function=angOsc)
+                Connection(linFr, x[2])
+                Connection(angFr, y[2])
 
-            x = Ensemble(N1, 3, neuron_type=Direct())
-            y = Ensemble(N1, 3, neuron_type=Direct())
-            Connection(x, x[:2], synapse=s1, function=linOsc)
-            Connection(y, y[:2], synapse=s1, function=angOsc)
-            Connection(linFr, x[2])
-            Connection(angFr, y[2])
+                interference = Ensemble(N1, 3, neuron_type=Direct(), label='Interference')
+                Connection(x[0], interference[0], synapse=0)
+                Connection(y[0], interference[1], synapse=0)
 
-            interference = Ensemble(N1, 3, neuron_type=Direct())
-            Connection(x[0], interference[0], synapse=0)
-            Connection(y[0], interference[1], synapse=0)
+                Vs = Ensemble(N1, 3, neuron_type=Direct(), label='Osc Vels')
+                Connection(interference, Vs, synapse=0.01, function=intermittency)
 
-            Vs = Ensemble(N1, 3, neuron_type=Direct())
-            Connection(interference, Vs, synapse=0.01, function=intermittency)
+                linV = Node(size_in=1, label='Crawl Vel')
+                angV = Node(size_in=1, label='Bend Vel')
 
-            linV = Node(size_in=1)
-            angV = Node(size_in=1)
+                Connection(Vs[0], linV, synapse=0, function=crawler)
+                Connection(Vs[1], angV, synapse=0, function=turner)
 
-            Connection(Vs[0], linV, synapse=0, function=crawler)
-            Connection(Vs[1], angV, synapse=0, function=turner)
+                # Collect data for plotting
+                self.p_speeds = Probe(Vs)
+                self.p_linV = Probe(linV)
+                self.p_angV = Probe(angV)
 
-            # Collect data for plotting
-            self.p_speeds = Probe(Vs)
-            self.p_linV = Probe(linV)
-            self.p_angV = Probe(angV)
-
-            if self.feeder is not None:
-
-                feeFrIn = Node(self.feeder.get_freq, size_out=1)
-                feeFr = Ensemble(N2, 1, neuron_type=Direct())
+            if fee :
+                feeFrIn = Node(fee.get_freq, size_out=1, label='Feed Freq Stim')
+                feeFr = Ensemble(N2, 1, neuron_type=Direct(), label='Feed Freq')
                 Connection(feeFrIn, feeFr)
-                z = Ensemble(N1, 3, neuron_type=Direct())
+                z = Ensemble(N1, 3, neuron_type=Direct(), label='Feed Osc')
                 Connection(z, z[:2], synapse=s1, function=feeOsc)
                 Connection(feeFr, z[2])
-                feeV = Node(size_in=1)
+                feeV = Node(size_in=1, label='Feed Vel')
                 Connection(z[0], interference[2], synapse=0)
                 Connection(Vs[2], feeV, synapse=0, function=feeder)
                 self.p_feeV = Probe(feeV)
@@ -186,17 +173,37 @@ class NengoBrain(Network, Brain):
                     Connection(f_suc, feeFr, synapse=0.01, transform=1)
                     Connection(f_suc, linFr, synapse=0.01, transform=-1)
 
+            if o is not None:
+
+                N = o.Ngains
+                odors = Node(o.get_X_values, size_in=N, label='Olf Stim')
+
+                olfMem = EnsembleArray(100, N, 2, label='Olf Mem')
+                dCon = EnsembleArray(200, N, 1, radius=0.01, intercepts=dists.Uniform(0, 0.1), label='Olf Perception')
+                dConOut = Ensemble(200, N, neuron_type=Direct(), label='Olf Modulation')
+                for i in range(N):
+                    Connection(odors[i], olfMem.ensembles[i][0], transform=[[1]], synapse=0.01)
+                    Connection(olfMem.ensembles[i][0], olfMem.ensembles[i][1], transform=1, synapse=1.0)
+                    Connection(olfMem.ensembles[i][0], dCon.input[i], transform=1, synapse=0.1)
+                    Connection(olfMem.ensembles[i][1], dCon.input[i], transform=-1, synapse=0.1)
+                    Connection(dCon.ensembles[i], dConOut[i], transform=10, synapse=0.0)
+                    Connection(dConOut[i], angFr, transform=1, synapse=0.0)
+
+                # Collect data for plotting
+                self.p_odor = Probe(odors)
+                self.p_change = Probe(dConOut)
+
 
             if ws is not None:
-                Ch = Node(ws.get_activation, size_out=1)
-                LNa = Ensemble(N2, 1, neuron_type=Direct())
-                LNb = Ensemble(N2, 1, neuron_type=Direct())
-                Ha = Ensemble(N2, 1, neuron_type=Direct())
-                Hb = Ensemble(N2, 1, neuron_type=Direct())
-                B1 = Ensemble(N2, 1, neuron_type=Direct())
-                B2 = Ensemble(N2, 1, neuron_type=Direct())
-                Hunch = Ensemble(N2, 1, neuron_type=Direct())
-                Bend = Ensemble(N2, 1, neuron_type=Direct())
+                Ch = Node(ws.get_activation, size_out=1, label='Ch')
+                LNa = Ensemble(N2, 1, neuron_type=Direct(), label='LNa')
+                LNb = Ensemble(N2, 1, neuron_type=Direct(), label='LNb')
+                Ha = Ensemble(N2, 1, neuron_type=Direct(), label='Ha')
+                Hb = Ensemble(N2, 1, neuron_type=Direct(), label='Hb')
+                B1 = Ensemble(N2, 1, neuron_type=Direct(), label='B1')
+                B2 = Ensemble(N2, 1, neuron_type=Direct(), label='B2')
+                Hunch = Ensemble(N2, 1, neuron_type=Direct(), label='Hunch Output')
+                Bend = Ensemble(N2, 1, neuron_type=Direct(), label='Bend Output')
 
                 ws_list=[
                     [Ch, LNa, 0.01, 1],

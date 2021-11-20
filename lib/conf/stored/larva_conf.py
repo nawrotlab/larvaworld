@@ -222,6 +222,8 @@ def create_mod_dict() :
         'explorer_3con': mod(brain_3c, bod={'initial_length': 3.85 / 1000, 'length_std': 0.35 / 1000}),
         'nengo_feeder': mod(nengo_brain(['L', 'F'], EEB=0.75)),
         'nengo_explorer': mod(nengo_brain(['L', 'W'], EEB=0.0)),
+        'nengo_navigator': mod(nengo_brain(['L', 'O'], EEB=0.0)),
+        'nengo_navigator_x2': mod(brain(['L', 'O'], EEB=0.0, OD=OD2)),
         'nengo_forager': mod(nengo_brain(['LOF'], EEB=0.75, OD=OD1)),
         'imitator': mod(brain(['L']), bod={'initial_length': 0.0045, 'length_std': 0.0001, 'Nsegs': 11},
                         phys={'ang_damping': 1.0, 'body_spring_k': 1.0}),
@@ -260,11 +262,7 @@ def create_mod_dict() :
 
 if __name__ == '__main__':
     zebrafish = {
-        'zebrafish': mod(brain(['L']),
-                         bod={'initial_length': 0.004, 'length_std': 0.0001, 'Nsegs': 2, 'shape': 'zebrafish_larva'},
-                         phys={'ang_damping': 1.0, 'body_spring_k': 1.0, 'torque_coef': 0.3},
-                         Box2D={'joint_types': {'revolute': Box2Djoints(N=1, maxMotorTorque=10 ** 5, motorSpeed=1)}})
-        # Box2D={'joint_types': {'distance': d, 'revolute': Box2Djoints(N=1, maxMotorTorque=10**5, motorSpeed=1), 'friction': f}})
+        'nengo_navigator_x2': mod(brain(['L', 'O'], EEB=0.0, OD=OD2))
     }
     from lib.conf.stored.conf import saveConf
     for k, v in zebrafish.items():
