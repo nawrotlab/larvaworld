@@ -145,7 +145,7 @@ class LarvaWorldSim(LarvaWorld):
 
 
     def get_larva_bodies(self, scale=1.0):
-        return {l.unique_id: l.get_polygon(scale=scale) for l in self.get_flies()}
+        return {l.unique_id: l.get_shape(scale=scale) for l in self.get_flies()}
 
     def larva_bodies_except(self, id):
         return {k: v for k, v in self.larva_bodies.items() if k != id}

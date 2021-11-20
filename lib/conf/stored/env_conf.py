@@ -53,7 +53,7 @@ def foodNodor_4corners(d=0.05):
 def env(a, f=f_pars(), o=None, bl={}, w=None):
     if o == 'D':
         o = {'odorscape': 'Diffusion',
-             'grid_dims': [100, 100],
+             'grid_dims': [51, 51],
              'evap_const': 0.9,
              'gaussian_sigma': (7, 7)
              }

@@ -33,21 +33,14 @@ class ValueGrid:
         self.cell_radius=np.sqrt(np.sum((self.x/2)**2+(self.y/2)**2))
         self.xy = np.array([self.x, self.y])
         self.XY_half = np.array([self.X / 2, self.Y / 2])
-
-        x_linspace = np.linspace(x0, x1, self.X)
-        y_linspace = np.linspace(y0, y1, self.Y)
-        self.meshgrid = np.meshgrid(x_linspace, y_linspace)
+        self.meshgrid = np.meshgrid(np.linspace(x0, x1, self.X), np.linspace(y0, y1, self.Y))
         if distribution == 'uniform':
             self.grid = np.ones(self.grid_dims) * self.initial_value
-
-
         self.grid_vertices = self.generate_grid_vertices()
         self.grid_edges = [[-xr / 2, -yr / 2],
                            [xr / 2, -yr / 2],
                            [xr / 2, yr / 2],
                            [-xr / 2, yr / 2]]
-        # self.grid[3,:]=300.0
-        # print(self.grid_edges)
         if max_value is None :
             max_value=np.max(self.grid)
         self.max_value=max_value
@@ -85,7 +78,6 @@ class ValueGrid:
         self.grid[cell] = value
 
     def add_cell_value(self, cell, value):
-        # print(cell)
         v0 = self.get_cell_value(cell)
         v1 = v0 + value
         if not self.fixed_max :
@@ -174,13 +166,15 @@ class ValueGrid:
 
     def get_color_grid(self):
         g = self.get_grid().flatten()
-        self.max_value = np.max(g)
+
         v0,v1 = self.min_value, self.max_value
         gg=(g-v0)/(v1-v0)
         k=10**2
         m=(1-np.exp(-k))**-1
         q=m*(1-np.exp(-k*gg))
         q=np.clip(q, a_min=0, a_max=1)
+        # print()
+        # print(v0,v1,g.shape, self.grid_dims)
         return col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
 
     def get_grid(self):
@@ -239,9 +233,9 @@ class GaussianValueLayer(ValueLayer):
             return v
 
         V = func(X, Y)
+        self.max_value = np.max(V.flatten())
         return V
 
-    # def draw(self, viewer):
     def draw_isocontours(self, viewer):
         # g=self.get_grid()
         # vs=np.linspace(np.min(g), np.max(g), 5)
