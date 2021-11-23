@@ -39,3 +39,4 @@ h5py~=3.5.0
 statannotations
 Pillow~=8.4.0
 plotnine~=0.8.0
+typing-extensions

@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union, TypedDict
+
 import numpy as np
 from siunits import BaseUnit, Composite, DerivedUnit
 
@@ -118,6 +118,7 @@ def init_vis():
     return d
 
 def init_pars():
+    from typing import List, Tuple, Union, TypedDict
     from lib.conf.stored.conf import kConfDict
     bF, bT = {'t': bool, 'v': False}, {'t': bool, 'v': True}
 

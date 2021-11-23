@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List, Tuple, TypedDict
+
 import pandas as pd
 
 from lib.aux.dictsNlists import AttrDict
@@ -15,6 +15,7 @@ def maxNdigits(array, Min=None):
 
 
 def base_dtype(t):
+    from typing import List, Tuple
     if t in [float, Tuple[float], List[float], List[Tuple[float]]]:
         base_t = float
     elif t in [int, Tuple[int], List[int], List[Tuple[int]]]:
@@ -26,7 +27,9 @@ def base_dtype(t):
 
 def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', s='',
         combo=None, argparser=False, entry=None):
+
     if not argparser:
+        from typing import TypedDict
         if t == TypedDict:
             return {name: {'initial_value': v, 'dtype': t, 'entry': entry, 'disp': disp}}
         cur_dtype = base_dtype(t)
