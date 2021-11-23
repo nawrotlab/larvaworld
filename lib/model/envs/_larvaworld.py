@@ -238,9 +238,8 @@ class LarvaWorld:
             space = ContinuousSpace(x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2, torus=False)
         return space
 
-    def _create_food_grid(self, space_range, grid_pars):
-        if grid_pars:
-            self.food_grid = FoodGrid(**grid_pars, space_range=space_range, model=self)
+    # def _create_food_grid(self, space_range, grid_pars):
+    #     self.food_grid = FoodGrid(**grid_pars, space_range=space_range, model=self)
 
     def create_schedules(self):
         self.active_larva_schedule = NamedRandomActivation('active_larva_schedule', self)
@@ -428,8 +427,9 @@ class LarvaWorld:
 
     def _place_food(self, food_pars):
         if food_pars is not None:
-            if food_pars.food_grid is not None:
-                self._create_food_grid(space_range=self.space_edges_for_screen,grid_pars=food_pars.food_grid)
+            if food_pars.food_grid is not None :
+                self.food_grid = FoodGrid(**food_pars.food_grid, space_range=self.space_edges_for_screen, model=self)
+                # self._create_food_grid(space_range=self.space_edges_for_screen,grid_pars=food_pars.food_grid)
             for gID, gConf in food_pars.source_groups.items():
                 ps = lib.aux.xy_aux.generate_xy_distro(**gConf.distribution)
                 for i, p in enumerate(ps):
