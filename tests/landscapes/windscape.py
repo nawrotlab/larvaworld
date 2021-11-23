@@ -3,10 +3,10 @@ from lib.conf.base.dtypes import null_dict
 from lib.model.envs._larvaworld import LarvaWorld
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 
-test_direction=True
+test_direction=False
 test_speed=False
 test_single_puffs=False
-test_repetitive_puffs=False
+test_repetitive_puffs=True
 # test_mode='direction'
 
 N=1000

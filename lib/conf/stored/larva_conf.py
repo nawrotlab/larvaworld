@@ -262,7 +262,7 @@ def create_mod_dict() :
 
 if __name__ == '__main__':
     zebrafish = {
-        'nengo_navigator_x2': mod(brain(['L', 'O'], EEB=0.0, OD=OD2))
+        'nengo_explorer': mod(nengo_brain(['L', 'W'], EEB=0.0)),
     }
     from lib.conf.stored.conf import saveConf
     for k, v in zebrafish.items():

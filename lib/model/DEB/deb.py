@@ -8,7 +8,8 @@ import numpy as np
 from scipy.integrate import quad, solve_ivp
 
 from lib.model.DEB.deb_aux import beta0, simplex
-from lib.conf.base.dtypes import null_dict, substrate_dict
+from lib.conf.base.dtypes import null_dict
+from lib.conf.base.init_pars import substrate_dict
 from lib.conf.stored.conf import loadConf
 import lib.aux.naming as nam
 from lib.model.DEB.gut import Gut

@@ -682,10 +682,10 @@ class ParDict:
         v = nam.vel('')
         a = nam.acc('')
         sv, sa = nam.scal([v, a])
-        self.add_rate(k_num='d', k_den='dt', k='v', p=v, d=v, s='v', lim=(-0.02,0.2))
-        self.add_rate(k_num='v', k_den='dt', k='a', p=a, d=a, s='a', lim=(-2.0,2.0))
-        self.add_rate(k_num='sd', k_den='dt', k='sv', p=sv, d=sv, s=paren('v'), lim=(-5.0,50.0))
-        self.add_rate(k_num='sv', k_den='dt', k='sa', p=sa, d=sa, s=paren('a'), lim=(-100.0,100.0))
+        self.add_rate(k_num='d', k_den='dt', k='v', p=v, d=v, s='v', lim=(-0.0005,0.005))
+        self.add_rate(k_num='v', k_den='dt', k='a', p=a, d=a, s='a', lim=(-0.05,0.05))
+        self.add_rate(k_num='sd', k_den='dt', k='sv', p=sv, d=sv, s=paren('v'), lim=(-0.05,1.5))
+        self.add_rate(k_num='sv', k_den='dt', k='sa', p=sa, d=sa, s=paren('a'), lim=(-7.0,7.0))
 
         for i in [(0, 40), (0, 80), (20, 80)]:
             self.add_dsp(range=i)
@@ -925,6 +925,7 @@ if __name__ == '__main__':
     # fo = getPar('fo', to_return=['s'])[0]
     # print(fo)
     d=ParDict(mode='build').dict
+    raise
     # pars=getPar('on_food_tr', to_return=['p','d'])
     # print(pars)
     # print(us)

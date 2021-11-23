@@ -37,11 +37,8 @@ class LarvaDataset:
             if spatial_def is None:
                 from lib.conf.stored.conf import loadConf
                 spatial_def = loadConf('SimParConf', 'Par')['spatial']
-            # sources_u = {k: v['pos'] for k, v in env_params['food_params']['source_units'].items()}
-            # sources_g = {k: v['distribution']['loc'] for k, v in env_params['food_params']['source_groups'].items()}
-            # sources = {**sources_u, **sources_g}
             group_ids = list(larva_groups.keys())
-            samples = dNl.unique_list(larva_groups[k]['sample'] for k in group_ids)
+            samples = dNl.unique_list([larva_groups[k]['sample'] for k in group_ids])
             if len(group_ids) == 1:
                 group_id = group_ids[0]
                 color = larva_groups[group_id]['default_color']
@@ -88,6 +85,8 @@ class LarvaDataset:
             self.step_data = step
             self.agent_ids = step.index.unique('AgentID').values
             self.num_ticks = step.index.unique('Step').size
+            # print(self.num_ticks)
+            # raise
         if end is not None:
             self.endpoint_data = end
         if food is not None:

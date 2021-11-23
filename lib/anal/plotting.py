@@ -2731,7 +2731,13 @@ def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='neng
             for k, (p, c) in enumerate(zip(probes, Cprobes)):
                 Nrow = i if same_plot else i * Nds + k
                 idx = j + Nrow * Nids
-                P.axs[idx].plot(x, dic[p], color=c, label=p)
+                y=np.array(dic[p])
+                dim=y.shape[1]
+                if dim==1:
+                    P.axs[idx].plot(x, y, color=c, label=p)
+                else :
+                    for jj in range(dim) :
+                        P.axs[idx].plot(x, y[:,jj], label=f'{p}_{jj}')
                 P.conf_ax(idx, xlab=r'time $min$' if Nrow == Nrows - 1 else None, ylab='activity' if j == 0 else None,
                           yticks=[] if j != 0 else None, yticklabels=[] if j != 0 else None, yMaxN=yMaxN,
                           leg_loc='upper right')

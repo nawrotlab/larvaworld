@@ -4,10 +4,10 @@ from lib.conf.stored.env_conf import f_pars, su
 from lib.model.envs._larvaworld import LarvaWorld
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 
-test_direction=True
+test_direction=False
 test_speed=False
 test_single_puffs=False
-test_repetitive_puffs=False
+test_repetitive_puffs=True
 
 N=1000
 mode='D'

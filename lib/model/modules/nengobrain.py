@@ -95,15 +95,18 @@ class NengoBrain(Network, Brain):
                 if s is None:
                     x[0] = 0
                 elif s > 0:
-                    x[1] *= 0.1
+                    x[1] *= (1-x[0])
                 if f is None:
                     x[2] = 0
                 elif f > 0:
-                    x[1] *= 0.1
+                    x[1] *= (1-x[2])
                 return x
 
             def crawler(x):
-                return np.abs(x) * 2 * self.crawler.step_to_length_mu
+                if x<=0 :
+                    return 0
+                else :
+                    return x * 2 * self.crawler.step_to_length_mu
 
             def turner(x):
                 return x * self.turner.get_amp(0)
@@ -125,6 +128,7 @@ class NengoBrain(Network, Brain):
                 Connection(linFrIn, linFr)
                 Connection(angFrIn, angFr)
 
+                # raise
                 x = Ensemble(N1, 3, neuron_type=Direct(), label='Crawl Osc')
                 y = Ensemble(N1, 3, neuron_type=Direct(), label='Bend Osc')
                 Connection(x, x[:2], synapse=s1, function=linOsc)
@@ -138,7 +142,6 @@ class NengoBrain(Network, Brain):
 
                 Vs = Ensemble(N1, 3, neuron_type=Direct(), label='Osc Vels')
                 Connection(interference, Vs, synapse=0.01, function=intermittency)
-
                 linV = Node(size_in=1, label='Crawl Vel')
                 angV = Node(size_in=1, label='Bend Vel')
 
@@ -235,37 +238,16 @@ class NengoBrain(Network, Brain):
                 ]
                 for i0,i1,syn,tr in ws_list :
                     Connection(i0, i1, synapse=syn, transform=tr)
+                mode='freq'
+                if mode=='freq' :
+                    lin_target, ang_target=linFr,angFr
+                elif mode=='vel' :
+                    lin_target, ang_target=linV,angV
 
-                # Connection(Ch, LNa, synapse=0.01, transform=1)
-                # Connection(Ch, LNb, synapse=0.01, transform=1)
-                # Connection(Ch, Hb, synapse=0.01, transform=0.3)
-                # Connection(Ch, B1, synapse=0.01, transform=1)
-                # Connection(Ch, B2, synapse=0.01, transform=0.3)
-                # Connection(LNa, LNb, synapse=0.01, transform=-1)
-                # Connection(LNb, LNa, synapse=0.01, transform=-1)
-                # Connection(LNa, B2, synapse=0.01, transform=-1)
-                # Connection(LNb, B1, synapse=0.01, transform=-1)
-                # Connection(LNa, B1, synapse=0.01, transform=-0.1)
-                # Connection(LNb, B2, synapse=0.01, transform=-0.1)
-                # Connection(LNa, Ha, synapse=0.01, transform=-0.2)
-                # Connection(LNb, Ha, synapse=0.01, transform=-0.2)
-                # Connection(LNa, Hb, synapse=0.01, transform=-0.2)
-                # Connection(LNb, Hb, synapse=0.01, transform=-0.2)
-                # Connection(Ha, LNa, synapse=0.01, transform=-0.2)
-                # Connection(Ha, LNb, synapse=0.01, transform=-0.2)
-                # Connection(Hb, LNa, synapse=0.01, transform=-0.6)
-                # Connection(Hb, LNb, synapse=0.01, transform=-0.6)
-                # Connection(B1, Ha, synapse=0.01, transform=0.1)
-                # Connection(B2, Ha, synapse=0.01, transform=0.1)
-                # Connection(B2, Hb, synapse=0.01, transform=0.1)
-                # Connection(B2, Hunch, synapse=0.01, transform=-0.3)
-                # Connection(B2, Bend, synapse=0.01, transform=0.3)
-                # Connection(B1, Hunch, synapse=0.01, transform=0.3)
-                # Connection(B1, Bend, synapse=0.01, transform=0.3)
-                Connection(Hunch, linFr, synapse=0.0, transform=ws.weights['hunch_lin'])
-                Connection(Hunch, angFr, synapse=0.0, transform=ws.weights['hunch_ang'])
-                Connection(Bend, linFr, synapse=0.0, transform=ws.weights['bend_lin'])
-                Connection(Bend, angFr, synapse=0.0, transform=ws.weights['bend_ang'])
+                Connection(Hunch, lin_target, synapse=0.0, transform=ws.weights['hunch_lin'])
+                Connection(Hunch, ang_target, synapse=0.0, transform=ws.weights['hunch_ang'])
+                Connection(Bend, lin_target, synapse=0.0, transform=ws.weights['bend_lin'])
+                Connection(Bend, ang_target, synapse=0.0, transform=ws.weights['bend_ang'])
 
             if True :
                 self.probe_dict={}
@@ -289,7 +271,11 @@ class NengoBrain(Network, Brain):
 
     def update_dict(self, data):
         for k, p in self.probe_dict.items() :
-            self.dict[k].append(np.mean(data[p][-self.Nsteps:]))
+            self.dict[k].append(np.mean(data[p][-self.Nsteps:], axis=0))
+            # if k=='Vs' :
+            #     kk=data[p][-self.Nsteps:]
+            #     print(np.mean(kk, axis=1))
+            #     raise
 
     def mean_odor_change(self, data):
         if self.olfactor is not None :
