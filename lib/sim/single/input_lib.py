@@ -1,7 +1,6 @@
 import pygame
 import numpy as np
-import lib.gui.aux.elements as gui
-import lib.gui.aux.windows
+
 from lib.anal.rendering import SimulationScale
 from lib.conf.stored.conf import loadConfDict
 from lib.model.agents._larva_sim import LarvaSim
@@ -11,6 +10,7 @@ shortcuts = loadConfDict('Settings')
 
 
 def evaluate_input(model, screen):
+
     d_zoom = 0.01
     ev = pygame.event.get()
     for e in ev:
@@ -33,6 +33,7 @@ def evaluate_input(model, screen):
                                         p1=tuple(model.mousebuttondown_pos))
 
                 elif e.button == 3:
+                    import lib.gui.aux.windows
                     loc = tuple(np.array(screen.w_loc) + np.array(pygame.mouse.get_pos()))
                     if len(model.selected_agents) > 0:
                         for sel in model.selected_agents:
@@ -91,7 +92,8 @@ def eval_keypress(k, screen, model):
         except :
             pass
     elif k == 'delete item':
-        if lib.gui.aux.windows.delete_objects_window(model.selected_agents):
+        from lib.gui.aux.windows import delete_objects_window
+        if delete_objects_window(model.selected_agents):
             for f in model.selected_agents:
                 model.selected_agents.remove(f)
                 model.delete_agent(f)
@@ -99,12 +101,14 @@ def eval_keypress(k, screen, model):
         if len(model.selected_agents) > 0:
             sel = model.selected_agents[0]
             if isinstance(sel, Larva):
-                model.dynamic_graphs.append(gui.DynamicGraph(agent=sel))
+                from lib.gui.aux.elements import DynamicGraph
+                model.dynamic_graphs.append(DynamicGraph(agent=sel))
     elif k == 'odor gains':
         if len(model.selected_agents) > 0:
             sel = model.selected_agents[0]
             if isinstance(sel, LarvaSim) and sel.brain.olfactor is not None:
-                sel.brain.olfactor.gain = lib.gui.aux.windows.set_kwargs(sel.brain.olfactor.gain, title='Odor gains')
+                from lib.gui.aux.windows import set_kwargs
+                sel.brain.olfactor.gain = set_kwargs(sel.brain.olfactor.gain, title='Odor gains')
     else:
         model.toggle(k)
 
