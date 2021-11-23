@@ -4,7 +4,7 @@ import pandas as pd
 
 from lib.aux.dictsNlists import AttrDict
 from lib.conf.base.init_pars import init_pars, proc_type_keys, bout_keys, to_drop_keys
-from lib.gui.aux.functions import get_pygame_key
+
 
 
 def maxNdigits(array, Min=None):
@@ -297,6 +297,7 @@ def init_shortcuts():
 
 
 def init_controls():
+    from lib.gui.aux.functions import get_pygame_key
     k = init_shortcuts()
     d = {'keys': {}, 'pygame_keys': {}, 'mouse': {
         'select item': 'left click',
