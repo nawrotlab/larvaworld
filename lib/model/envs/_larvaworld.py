@@ -29,6 +29,7 @@ from lib.model.envs._maze import Border
 from lib.model.agents._agent import LarvaworldAgent
 from lib.model.agents._source import Food
 from lib.sim.single.input_lib import evaluate_input, evaluate_graphs
+from lib.aux.dictsNlists import AttrDict
 
 
 class LarvaWorld:
@@ -51,10 +52,10 @@ class LarvaWorld:
         self.Box2D = Box2D
         if vis_kwargs is None:
             vis_kwargs = null_dict('visualization', mode=None)
-        self.vis_kwargs = vis_kwargs
-        self.__dict__.update(self.vis_kwargs['draw'])
-        self.__dict__.update(self.vis_kwargs['color'])
-        self.__dict__.update(self.vis_kwargs['aux'])
+        self.vis_kwargs = AttrDict.from_nested_dicts(vis_kwargs)
+        self.__dict__.update(self.vis_kwargs.draw)
+        self.__dict__.update(self.vis_kwargs.color)
+        self.__dict__.update(self.vis_kwargs.aux)
 
         self.odor_aura = False
         self.experiment = experiment
@@ -71,7 +72,7 @@ class LarvaWorld:
         self.is_running = False
         self.is_paused = False
         self.dt = dt
-        self.video_fps = int(self.vis_kwargs['render']['video_speed'] / dt)
+        self.video_fps = int(self.vis_kwargs.render.video_speed / dt)
         self.allow_clicks = allow_clicks
         self.Nticks = 0
         self.Nsteps = Nsteps
@@ -82,8 +83,8 @@ class LarvaWorld:
         self.save_to = save_to
 
         os.makedirs(save_to, exist_ok=True)
-        if self.vis_kwargs['render']['media_name']:
-            self.media_name = os.path.join(save_to, self.vis_kwargs['render']['media_name'])
+        if self.vis_kwargs.render.media_name:
+            self.media_name = os.path.join(save_to, self.vis_kwargs.render.media_name)
         else:
             self.media_name = os.path.join(save_to, self.id)
 
@@ -94,8 +95,8 @@ class LarvaWorld:
             self.black_background)
 
         self.selection_color = np.array([255, 0, 0])
-        self.env_pars = env_params
-        self.larva_groups = larva_groups
+        self.env_pars = AttrDict.from_nested_dicts(env_params)
+        self.larva_groups = AttrDict.from_nested_dicts(larva_groups)
 
         self.snapshot_counter = 0
         self.odorscape_counter = 0
@@ -104,9 +105,9 @@ class LarvaWorld:
 
         # Add mesa schedule to use datacollector class
         self.create_schedules()
-        self.create_arena(**self.env_pars['arena'])
+        self.create_arena(**self.env_pars.arena)
         self.space = self.create_space()
-        for id, pars in self.env_pars['border_list'].items():
+        for id, pars in self.env_pars.border_list.items():
             print(id)
             b = Border(model=self, unique_id=id, **pars)
 
@@ -125,8 +126,8 @@ class LarvaWorld:
                                               font=pygame.font.SysFont("comicsansms", 25))
         self.end_condition_met = False
 
-        if self.env_pars['windscape'] is not None and self.env_pars['windscape']['wind_speed'] is not None:
-            self.windscape = WindScape(model=self, **self.env_pars['windscape'])
+        if self.env_pars.windscape is not None and self.env_pars.windscape.wind_speed is not None:
+            self.windscape = WindScape(model=self, **self.env_pars.windscape)
         else:
             self.windscape = None
 
@@ -427,15 +428,14 @@ class LarvaWorld:
 
     def _place_food(self, food_pars):
         if food_pars is not None:
-            if food_pars['food_grid'] is not None:
-                self._create_food_grid(space_range=self.space_edges_for_screen,
-                                       grid_pars=food_pars['food_grid'])
-            for gID, gConf in food_pars['source_groups'].items():
-                ps = lib.aux.xy_aux.generate_xy_distro(**gConf['distribution'])
+            if food_pars.food_grid is not None:
+                self._create_food_grid(space_range=self.space_edges_for_screen,grid_pars=food_pars.food_grid)
+            for gID, gConf in food_pars.source_groups.items():
+                ps = lib.aux.xy_aux.generate_xy_distro(**gConf.distribution)
                 for i, p in enumerate(ps):
                     self.add_food(id=f'{gID}_{i}', pos=p, group=gID, **gConf)
 
-            for id, f_pars in food_pars['source_units'].items():
+            for id, f_pars in food_pars.source_units.items():
                 self.add_food(id=id, **f_pars)
 
     def add_food(self, pos, id=None, **food_pars):

@@ -14,19 +14,16 @@ from lib.sim.single.conditions import get_exp_condition
 from lib.conf.base import paths
 
 
-
-
-
 class LarvaWorldSim(LarvaWorld):
-    def __init__(self,  output=None,trials={}, larva_collisions=True, parameter_dict={}, **kwargs):
+    def __init__(self, output=None, trials={}, larva_collisions=True, parameter_dict={}, **kwargs):
         super().__init__(**kwargs)
         self.sim_epochs = trials
         for idx, ep in self.sim_epochs.items():
             ep['start'] = int(ep['start'] * 60 / self.dt)
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
         self.larva_collisions = larva_collisions
-        self.odor_ids=get_all_odors(self.larva_groups, self.env_pars.food_params)
-        self.foodtypes=get_all_foodtypes(self.env_pars.food_params)
+        self.odor_ids = get_all_odors(self.larva_groups, self.env_pars.food_params)
+        self.foodtypes = get_all_foodtypes(self.env_pars.food_params)
         self._place_food(self.env_pars.food_params)
         self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
         if self.env_pars.odorscape is not None:
@@ -118,7 +115,7 @@ class LarvaWorldSim(LarvaWorld):
         # Update value_layers
         for id, layer in self.odor_layers.items():
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
-        if self.windscape is not None :
+        if self.windscape is not None:
             self.windscape.update()
         # t0.append(time.time())
         self.active_larva_schedule.step()
@@ -139,10 +136,6 @@ class LarvaWorldSim(LarvaWorld):
 
         # t0.append(time.time())
         # print(np.array(np.diff(t0)*100000).astype(int))
-
-
-
-
 
     def get_larva_bodies(self, scale=1.0):
         return {l.unique_id: l.get_shape(scale=scale) for l in self.get_flies()}
@@ -235,22 +228,24 @@ def imitate_group(config, sample_pars=[], N=None):
     dic = {p: [e[p].loc[id] for id in ids] for p in sample_pars}
     return ids, ps, ors, dic
 
-def get_all_odors(larva_groups, food_params):
 
-    lg=[conf['odor']['odor_id'] for conf in larva_groups.values()]
-    su=[conf['odor']['odor_id'] for conf in food_params['source_units'].values()]
-    sg=[conf['odor']['odor_id'] for conf in food_params['source_groups'].values()]
-    ids= dNl.unique_list([id for id in lg + su + sg if id is not None])
+def get_all_odors(larva_groups, food_params):
+    lg = [conf.odor.odor_id for conf in larva_groups.values()]
+    su = [conf.odor.odor_id for conf in food_params.source_units.values()]
+    sg = [conf.odor.odor_id for conf in food_params.source_groups.values()]
+    ids = dNl.unique_list([id for id in lg + su + sg if id is not None])
     return ids
 
+
 def get_all_foodtypes(food_params):
-    sg= {k:v['default_color'] for k,v in food_params['source_groups'].items()}
-    su={conf['group'] : conf['default_color'] for conf in food_params['source_units'].values()}
-    gr={food_params['food_grid']['unique_id'] : food_params['food_grid']['default_color']} if food_params['food_grid'] is not None else {}
-    ids= {**gr,**su, **sg}
+    sg = {k: v.default_color for k, v in food_params.source_groups.items()}
+    su = {conf.group: conf.default_color for conf in food_params.source_units.values()}
+    gr = {
+        food_params.food_grid.unique_id: food_params.food_grid.default_color} if food_params.food_grid is not None else {}
+    ids = {**gr, **su, **sg}
     ks = dNl.unique_list(list(ids.keys()))
-    try :
-        ids={k : np.array(ids[k])/255 for k in ks}
-    except :
+    try:
+        ids = {k: np.array(ids[k]) / 255 for k in ks}
+    except:
         ids = {k: ids[k] for k in ks}
     return ids
