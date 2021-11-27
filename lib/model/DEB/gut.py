@@ -3,7 +3,7 @@ import numpy as np
 
 class Gut:
     def __init__(self, deb, M_gm=10 ** -2, y_P_X=0.9, constant_M_c=True,
-                 k_abs=1, f_abs=1, k_dig=1, f_dig=1, M_c_per_cm2=5*10 ** -8, J_g_per_cm2=10 ** -2, k_c=1, k_g=1,
+                 k_abs=1, f_abs=1, k_dig=1, f_dig=1, M_c_per_cm2=5*10 ** -8, J_g_per_cm2=10 ** -2/(24*60*60), k_c=1, k_g=1,
                  save_dict=True, **kwargs):
 
         self.deb = deb
@@ -77,20 +77,19 @@ class Gut:
 
 
     def digest(self):
-        # print(self.deb.dt)
-        dt = self.deb.dt
-        # print(dt*24*60*60)
 
-        self.M_g += (self.J_g - self.k_g * self.M_g) *1
+        dt = self.deb.dt*24*60*60
+        # print(dt)
+        self.M_g += (self.J_g*dt - self.k_g * self.M_g)
         if self.M_X > 0:
-            temp = self.k_dig * self.f_dig * self.M_g * dt
+            temp = self.k_dig * self.f_dig * self.M_g
             dM_X = - np.min([self.M_X, temp])
         else:
             dM_X = 0
         self.M_X += dM_X
         dM_P_added = -self.y_P_X * dM_X
         if self.M_P > 0 and self.M_c > 0:
-            temp = self.k_abs * self.f_abs * self.M_c * dt*24*60*60
+            temp = self.k_abs * self.f_abs * self.M_c * dt
             dM_Pu = np.min([self.M_P, temp])
         else:
             dM_Pu = 0
@@ -100,7 +99,7 @@ class Gut:
         if self.constant_M_c:
             self.M_c = self.M_c_max
         else:
-            dM_c_released = (self.M_c_max - self.M_c) * self.k_c * dt*24*60*60
+            dM_c_released = (self.M_c_max - self.M_c) * self.k_c * dt
             dM_c = dM_c_released - dM_Pu
             self.M_c += dM_c
         self.p_A = dM_Pu * self.deb.mu_E

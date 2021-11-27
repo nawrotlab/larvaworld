@@ -475,8 +475,10 @@ def deb_analysis(datasets,**kwargs) :
     for m in ['feeding', 'reserve_density', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
               'food_mass_2', 'hunger', 'EEB','fs']:
         for t in ['hours']:
-            save_as = f'{m}_in_{t}.pdf'
-            figs[f'FEED.{m} ({t})'] = plot_debs(deb_dicts=deb_dicts,sim_only=True,save_as=save_as, mode=m, time_unit=t, **kws)
-
+            try :
+                save_as = f'{m}_in_{t}.pdf'
+                figs[f'FEED.{m} ({t})'] = plot_debs(deb_dicts=deb_dicts,sim_only=True,save_as=save_as, mode=m, time_unit=t, **kws)
+            except :
+                pass
 
     return figs
