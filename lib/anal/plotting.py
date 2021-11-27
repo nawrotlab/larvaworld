@@ -1597,20 +1597,26 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                'pupation_buffer',
                'f', 'f_filt',
                'EEB',
-               'M_gut', 'M_ingested', 'M_absorbed', 'M_faeces', 'M_not_digested', 'M_not_absorbed',
+               'M_gut', 'mol_ingested', 'M_absorbed', 'M_faeces', 'M_not_digested', 'M_not_absorbed',
                'R_faeces', 'R_absorbed', 'R_not_digested', 'gut_occupancy',
-               'deb_p_A', 'sim_p_A', 'gut_p_A', 'gut_f', 'gut_p_A_deviation'
+               'deb_p_A', 'sim_p_A', 'gut_p_A', 'gut_f', 'gut_p_A_deviation',
+               'M_X', 'M_P', 'M_Pu','M_g', 'M_c','R_M_c','R_M_g','R_M_X_M_P','R_M_X','R_M_P'
                ]
     ylabels0 = ['wet weight $(mg)$', 'body length $(mm)$',
                 r'reserve $(J)$', r'reserve density $(-)$', r'hunger drive $(-)$',
                 r'pupation buffer $(-)$',
                 r'f $^{sim}$ $(-)$', r'f $_{filt}^{sim}$ $(-)$',
                 r'exploit VS explore $(-)$',
-                'gut content $(mg)$', 'food intake $(mg)$', 'food absorption $(mg)$',
+                'gut content $(mg)$', 'food intake $(C-mmole)$', 'food absorption $(mg)$',
                 'faeces $(mg)$', 'food not digested $(mg)$', 'product not absorbed $(mg)$',
                 'faeces fraction', 'absorption efficiency', 'fraction not digested', 'gut occupancy',
-                r'[p$_{A}^{deb}$] $(\mu J/cm^3)$', r'[p$_{A}^{sim}$] $(\mu J/cm^3)$',
-                r'[p$_{A}^{gut}$] $(\mu J/cm^3)$', r'f $^{gut}$ $(-)$', r'$\Delta$p$_{A}^{gut}$ $(-)$'
+                r'[p$_{A}^{deb}$] $(microJ/cm^3)$', r'[p$_{A}^{sim}$] $(microJ/cm^3)$',r'[p$_{A}^{gut}$] $(microJ/cm^3)$',
+                # r'[p$_{A}^{deb}$] $(\mu J/cm^3)$', r'[p$_{A}^{sim}$] $(\mu J/cm^3)$',r'[p$_{A}^{gut}$] $(\mu J/cm^3)$',
+                r'f $^{gut}$ $(-)$', r'$\Delta$p$_{A}^{gut}$ $(-)$',
+                r'Food in gut $(C-moles)$', r'Product in gut $(C-moles)$', r'Product absorbed $(C-mmoles)$',
+                r'Active enzyme amount in gut $(-)$', r'Available carrier amount in gut surface $(-)$',
+                r'Available carrier ratio in gut surface $(-)$',r'Active enzyme ratio in gut surface $(-)$',r'Food VS Product ratio in gut $(-)$',
+                r'Ratio of Food in gut $(-)$', r'Ratio of Product in gut $(-)$'
                 # r'(deb) assimilation energy $(J)$', r'(f) assimilation energy $(J)$', r'(gut) assimilation energy $(J)$'
                 ]
     sharey = False
@@ -1625,7 +1631,9 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     elif mode in labels0:
         idx = [labels0.index(mode)]
     elif mode == 'food_mass':
-        idx = [9, 10, 11, 12, 13, 14]
+        idx = [10, 26]
+        # idx = [9, 10, 11, 12, 13, 14]
+        sharey = True
     elif mode == 'food_ratio':
         idx = [17, 15, 16, 18]
     elif mode == 'food_mass_1':
@@ -1633,7 +1641,8 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     elif mode == 'food_mass_2':
         idx = [12, 13, 14]
     elif mode == 'food_ratio_1':
-        idx = [18, 16]
+        idx = [16]
+        # idx = [18, 16]
     elif mode == 'food_ratio_2':
         idx = [17, 15]
     elif mode == 'assimilation':
@@ -1642,6 +1651,12 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     elif mode == 'fs':
         idx = [6, 7, 22]
         sharey = True
+    elif mode == 'plug_flow_food':
+        idx = [24, 25, 32, 33, 31]
+        # sharey = True
+    elif mode == 'plug_flow_enzymes':
+        idx = [29, 30]
+        # sharey = True
 
     tickstep = 24
     time_unit_dict = {

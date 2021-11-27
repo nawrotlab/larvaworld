@@ -1,109 +1,114 @@
 import numpy as np
 
 
-
 class Gut:
-    def __init__(self,deb, M_gm=0.0015, V_bite=0.001, save_dict=True, **kwargs):
-        self.deb=deb
+    def __init__(self, deb, M_gm=10 ** -2, y_P_X=0.9, constant_M_c=True,
+                 k_abs=1, f_abs=1, k_dig=1, f_dig=1, M_c_per_cm2=10 ** -2, J_g_per_cm2=10 ** -2, k_c=1, k_g=1,
+                 save_dict=True, **kwargs):
+
+        self.deb = deb
         # Arbitrary parameters
-        self.M_gm = M_gm  # Max vol specific gut capacity (mol/cm**3)
-        self.V_gm = self.M_gm * self.deb.w_V / self.deb.d_V  # Max vol specific gut volume (-)
-        self.V_bite = V_bite  # V_bite : Vol spec vol of food per feeding motion
+        self.M_gm = M_gm  # gut capacity in C-moles for unit of gut volume
+        r_w2l = 0.2  # body width to length ratio
+        r_gut_w = 0.7  # gut width relative to body width
+        self.r_gut_V = np.pi * r_w2l * r_gut_w / 4  # gut volume per unit of body volume
+        self.r_gut_A = np.pi * r_w2l * r_gut_w  # gut surface area per unit of body surface area
+        self.A_g = self.r_gut_A * self.deb.L ** 2  # Gut surface area
+        self.V_gm = self.r_gut_V * self.deb.V
+
+        # Constants
+        self.k_dig = k_dig  # rate constant for digestion : k_X * y_Xg
+        self.f_dig = f_dig  # scaled functional response for digestion : M_X/(M_X+M_K_X)
+        self.k_abs = k_abs  # rate constant for absorption : k_P * y_Pc
+        self.f_abs = f_abs  # scaled functional response for absorption : M_P/(M_P+M_K_P)
+        self.M_c_per_cm2 = M_c_per_cm2  # area specific amount of carriers in the gut per unit of gut surface
+        self.J_g_per_cm2 = J_g_per_cm2  # secretion rate of enzyme per unit of gut surface per day
+        self.k_c = k_c  # release rate of carriers
+        self.k_g = k_g  # decay rate of enzyme
+        self.y_P_X = y_P_X  # yield of product by food
+        self.constant_M_c = constant_M_c  # yield of product by food
+
+        self.M_c_max = self.M_c_per_cm2 * self.A_g  # amount of carriers in the gut surface
+        self.J_g = self.J_g_per_cm2 * self.A_g  # total secretion rate of enzyme in the gut surface
+
+        # print(self.k_abs)
+        self.M_X = 0
+        self.M_P = 0
+        self.M_Pu = 0
+        self.M_g = self.J_g
+        self.M_c = self.M_c_max
 
         self.get_tau_gut(self.deb.base_f, self.deb.J_X_Am, self.deb.Lb)
         self.mol_not_digested = 0
         self.mol_not_absorbed = 0
         self.mol_faeces = 0
-        self.mol_absorbed = 0
         self.p_A = 0
         self.mol_ingested = 0
-        self.V=0
+        self.V = 0
         self.gut_X = 0
         self.gut_f = 0
         self.Nfeeds = 0
-        self.SU = SynthesizingUnit(dt=self.deb.dt, K=self.deb.K)
+
         if save_dict:
             self.dict = self.init_dict()
         else:
             self.dict = None
 
+    def update(self, X_V=0):
+
+        self.A_g = self.r_gut_A * self.deb.L ** 2  # Gut surface area
+        self.V_gm = self.r_gut_V * self.deb.V
+        self.M_c_max = self.M_c_per_cm2 * self.A_g  # amount of carriers in the gut surface
+        self.J_g = self.J_g_per_cm2 * self.A_g  # total secretion rate of enzyme in the gut surface
+        # self.M_c = self.M_c_max
+
+        if X_V > 0:
+            self.Nfeeds += 1
+            self.V += X_V
+            M_X_in = self.deb.substrate.X * X_V
+            self.mol_ingested += M_X_in
+            self.M_X += M_X_in
+        self.digest()
+
+
+    def digest(self):
+        dt = self.deb.dt
+
+        self.M_g += (self.J_g - self.k_g * self.M_g) * dt
+        if self.M_X > 0:
+            temp = self.k_dig * self.f_dig * self.M_g * dt
+            dM_X = - np.min([self.M_X, temp])
+        else:
+            dM_X = 0
+        # print(int(self.R_M_g * 100))
+        self.M_X += dM_X
+        dM_P_added = -self.y_P_X * dM_X
+        if self.M_P > 0 and self.M_c > 0:
+            temp = self.k_abs * self.f_abs * self.M_c * dt
+            dM_Pu = np.min([self.M_P, temp])
+        else:
+            dM_Pu = 0
+        self.M_P += dM_P_added - dM_Pu
+        self.M_Pu += dM_Pu
+
+        if self.constant_M_c:
+            self.M_c = self.M_c_max
+
+        else:
+            dM_c_released = (self.M_c_max - self.M_c) * self.k_c * dt
+            dM_c = dM_c_released - dM_Pu
+            self.M_c += dM_c
+
+        self.p_A = dM_Pu * self.deb.mu_E
+
     def get_tau_gut(self, f, J_X_Am, Lb):
-        self.tau_gut = self.M_gm / (J_X_Am / Lb) / f
+        k=self.r_gut_V*self.M_gm
+        self.tau_gut = k / (J_X_Am / Lb) / f
+        # print(self.tau_gut*24*60)
+        # raise
 
     def get_Nticks(self, dt):
         self.gut_Nticks = int(self.tau_gut / dt)
-        # print(self.M_gm, self.V_gm, self.tau_gut * 24, self.gut_Nticks)
-
-    def update(self, X_V=0):
-        if X_V>0 :
-
-            self.Nfeeds += 1
-            self.V += X_V
-            self.mol_ingested += self.deb.substrate.C * X_V
-            self.gut_X += self.deb.substrate.X *X_V
-        self.digest()
-        self.resolve_occupancy()
-
-    def digest2(self):
-        dX, dP=self.SU.step(self.X)
-        dV = dP / self.deb.substrate.C
-        self.V -= dV
-        if self.V<0 :
-            self.V=0
-        self.gut_X -= dX
-        self.mol_absorbed += dP
-        self.p_A = dP * self.deb.mu_E * self.deb.y_E_X
-
-    def digest(self):
-        dX0 = self.deb.J_X_Amm_dt * self.deb.V
-        dX = np.min([dX0, self.gut_X])
-        dV = dX / self.X if self.X!=0 else 0.0
-        self.V -= dV
-        self.gut_X -= dX
-        self.gut_f += dX * self.deb.y_P_X
-        self.mol_absorbed += dX
-        self.p_A = dX * self.deb.mu_E * self.deb.y_E_X
-        # self.p_A = self.deb.J_X_Amm_dt * V * self.deb.mu_E * self.deb.y_E_X * self.f
-
-
-
-
-
-    # def resolve_occupancy(self):
-    #     over = self.V - self.Vmax
-    #     # over = self.gut_X + self.gut_P - self.max_capacity
-    #     # over = self.gut_X + self.gut_P + self.gut_f - self.max_capacity
-    #     # over=self.gut_X + self.gut_P - self.max_capacity
-    #     # print(over)
-    #     if over > 0:
-    #
-    #         X=self.gut_X
-    #         P=self.gut_P
-    #         C=X+P
-    #         rX=X/C
-    #         dC=over*C/self.V
-    #         # df = over * (1 - self.deb.y_E_X)
-    #         dX = rX * dC
-    #         # dX = (self.gut_X / self.gut_X + self.gut_P) * (over - df)
-    #         dP = (1-rX)*dC
-    #         # dP = over - dX - df
-    #         self.gut_X -= dX
-    #         self.gut_P -= dP
-    #         # self.gut_f -= df
-    #         self.mol_not_digested += dX
-    #         self.mol_not_absorbed += dP
-    #         # self.mol_faeces += df
-    #         self.V=self.Vmax
-
-    def resolve_occupancy(self):
-        dV = self.V - self.Vmax
-        if dV > 0:
-            # print(dV)
-            dX = dV*self.X
-            dX=np.min([self.gut_X, dX])
-            self.gut_X -= dX
-            self.mol_not_digested += dX
-            self.V=self.Vmax
 
     @property
     def M_ingested(self):
@@ -123,7 +128,7 @@ class Gut:
 
     @property
     def R_absorbed(self):
-        return self.mol_absorbed / self.mol_ingested if self.mol_ingested != 0 else 0
+        return self.M_Pu / self.mol_ingested if self.mol_ingested != 0 else 0
 
     @property
     def R_faeces(self):
@@ -133,79 +138,138 @@ class Gut:
     def R_not_digested(self):
         return self.mol_not_digested / self.mol_ingested if self.mol_ingested != 0 else 0
 
-    @ property
+    @property
+    def R_M_c(self):
+        return self.M_c / self.M_c_max
+
+    @property
+    def R_M_g(self):
+        return self.M_g / self.J_g
+
+    @property
+    def R_M_X_M_P(self):
+        return self.M_X / self.M_P if self.M_P != 0 else 0
+
+    @property
+    def R_M_X(self):
+        return self.M_X / self.Cmax
+
+    @property
+    def R_M_P(self):
+        return self.M_P / self.Cmax
+
+    @property
     def occupancy(self):
         return self.V / self.Vmax
 
-    @ property
+    @property
     def M(self):
         return self.V * self.deb.d_V * 1000
 
-    @ property
+    @property
     def Vmax(self):
         # print(self.deb.V)
         return self.V_gm * self.deb.V
 
     @property
     def Cmax(self):  # in mol
-        return self.M_gm * self.deb.V
+        return self.M_gm * self.V_gm
 
+    # def init_dict(self):
+    #     self.dict_keys = [
+    #         'M_gut',
+    #         'M_ingested',
+    #         'M_absorbed',
+    #         'M_faeces',
+    #         'M_not_digested',
+    #         'M_not_absorbed',
+    #         'R_faeces',
+    #         'R_absorbed',
+    #         'R_not_digested',
+    #         'gut_occupancy',
+    #         'gut_p_A',
+    #         'gut_f',
+    #         'gut_p_A_deviation',
+    #         'M_X',
+    #         'M_P',
+    #         'M_Pu',
+    #         'M_g',
+    #         'M_c',
+    #         'R_M_c',
+    #         'R_M_g',
+    #         'R_M_X_M_P',
+    #     ]
+    #     return {k: [] for k in self.dict_keys}
+    #
+    # def update_dict(self):
+    #     gut_dict_values = [
+    #         self.M,
+    #         self.ingested_mass('mg'),
+    #         self.absorbed_mass('mg'),
+    #         self.M_faeces,
+    #         self.M_not_digested,
+    #         self.M_not_absorbed,
+    #         self.R_faeces,
+    #         self.R_absorbed,
+    #         self.R_not_digested,
+    #         self.occupancy,
+    #         self.p_A / self.deb.V,
+    #         self.f,
+    #         self.p_A / self.deb.deb_p_A,
+    #         self.M_X,
+    #         self.M_P,
+    #         self.M_Pu,
+    #         self.M_g,
+    #         self.M_c,
+    #         self.R_M_c,
+    #         self.R_M_g,
+    #         self.R_M_X_M_P,
+    #     ]
+    #     for k, v in zip(self.dict_keys, gut_dict_values):
+    #         self.dict[k].append(v)
     def init_dict(self):
         self.dict_keys = [
-            'M_gut',
-            'M_ingested',
-            'M_absorbed',
-            'M_faeces',
-            'M_not_digested',
-            'M_not_absorbed',
-            'R_faeces',
             'R_absorbed',
-            'R_not_digested',
-            'gut_occupancy',
+            'mol_ingested',
+            # 'mol_absorbed',
             'gut_p_A',
-            'gut_f',
-            'gut_p_A_deviation',
+            'M_X',
+            'M_P',
+            'M_Pu',
+            'R_M_c',
+            'R_M_g',
+            'R_M_X',
+            'R_M_P',
+            'R_M_X_M_P'
         ]
         return {k: [] for k in self.dict_keys}
 
     def update_dict(self):
         gut_dict_values = [
-            self.M,
-            self.ingested_mass('mg'),
-            self.absorbed_mass('mg'),
-            self.M_faeces,
-            self.M_not_digested,
-            self.M_not_absorbed,
-            self.R_faeces,
             self.R_absorbed,
-            self.R_not_digested,
-            self.occupancy,
+            self.mol_ingested * 1000,
+            # self.mol_absorbed,
             self.p_A / self.deb.V,
-            self.f,
-            self.p_A/self.deb.deb_p_A,
+            self.M_X,
+            self.M_P,
+            self.M_Pu*1000,
+            self.R_M_c,
+            self.R_M_g,
+            self.R_M_X,
+            self.R_M_P,
+            self.R_M_X_M_P,
         ]
         for k, v in zip(self.dict_keys, gut_dict_values):
             self.dict[k].append(v)
 
-    # def finalize_dict(self):
-    #     d = self.dict
-    #     d['Nfeeds'] = self.Nfeeds
-    #     d['pupation'] = self.pupation_time_in_hours
-    #     d['emergence'] = self.emergence_time_in_hours
-    #     d['death'] = self.death_time_in_hours
-    #     d['id'] = self.id
-    #     d['simulation'] = self.simulation
-    #     d['sim_start'] = self.hours_as_larva
-    #     d['epochs'] = self.epochs
-    #     d['fr'] = 1 / (self.dt * 24 * 60 * 60)
     @property
     def X(self):
-        X=self.gut_X/self.V if self.V>0 else 0
+        X = self.gut_X / self.V if self.V > 0 else 0
         return X
 
-    @ property
+    @property
     def f(self):
-        return self.X/(self.deb.K+self.X)
+        return self.X / (self.deb.K + self.X)
 
     # def intake_as_body_volume_ratio(self, V, percent=True):
     #     r = self.ingested_volume() / V
@@ -227,7 +291,7 @@ class Gut:
             return m * 1000
 
     def absorbed_mass(self, unit='mg'):
-        m = self.mol_absorbed * self.deb.w_E
+        m = self.M_Pu * self.deb.w_E
         if unit == 'g':
             return m
         elif unit == 'mg':
@@ -237,170 +301,6 @@ class Gut:
     def ingested_volume(self):
         return self.mol_ingested * self.deb.w_X / self.deb.d_X
 
-# class SynthesizingUnit3:
-#     def __init__(self,gut, k_E, b_X=5):
-#         self.gut=gut
-#         self.q0=1
-#
-#         self.qE=0
-#         self.qX = 1-self.q0-self.qE
-#         self.k_X=self.deb.K*b_X
-#         self.k_E=k_E
-#         self.b_X=b_X
-#         self.dt=self.deb.dt
-#         self.Pcum=0
-#         self.Xicum=0
-#         self.Xdcum=0
-#
-#     def step(self,X):
-#         # print(X)
-#         # if X in [None, np.nan]:
-#         #     X=0
-#         P=self.k_E*self.qE*self.dt
-#         Xi=X*self.b_X*self.q0*self.dt
-#         Xd=self.k_X*self.qX*self.dt
-#         self.q0+=P - Xi
-#         self.qE+=Xd - P
-#         self.qX = 1 - self.q0 - self.qE
-#         # print(self.k_E)
-#
-#         self.Pcum+=P
-#         self.Xicum+=Xi
-#         self.Xdcum+=Xd
-#         # print(self.J_E_A_ratio)
-#         print(self.ths)
-#         # print(self.Xicum, self.Xdcum, self.Pcum)
-#         return P
-#
-#     @ property
-#     def J_E_A(self):
-#         X=self.deb.substrate.X
-#         o=self.k_X**-1+self.k_E**-1
-#         return self.deb.y_E_X*self.b_X*X/(1+self.b_X*X*o)
-#
-#     @property
-#     def J_E_A_ratio(self):
-#         # return self.J_E_A/(self.deb.J_E_Amm)
-#         return self.J_E_A/(self.deb.V*self.deb.J_E_Amm)
-#
-#
-#
-#     @ property
-#     def ths(self) :
-#         return [int(10**6*qq) for qq in [self.q0, self.qX,self.qE]]
-#         # return self.q0, self.qX, self.qE
-#
-# class SynthesizingUnit2:
-#     def __init__(self,deb, b_X=0.000001):
-#         self.deb=deb
-#         self.q0=1
-#
-#         # self.qE=0
-#         self.qX = 1-self.q0
-#         self.k_X=self.deb.K*b_X
-#         # self.k_E=k_E
-#         self.b_X=b_X
-#         self.dt=self.deb.dt
-#         self.Pcum=0
-#         self.Picum=0
-#         self.Xicum=0
-#         self.Xcum=0
-#
-#     def step(self,X):
-#         self.Xcum+=X
-#         self.Xicum+=X
-#         # print(X)
-#         # if X in [None, np.nan]:
-#         #     X=0
-#
-#         Xi=self.Xicum/self.deb.gut.Vmax*self.b_X*self.q0*self.dt
-#         self.Xicum -= Xi
-#         self.Picum += Xi
-#         P = self.Picum/self.deb.gut.Vmax*self.k_X * self.qX * self.dt
-#
-#         self.Pcum += P
-#         self.Picum -= P
-#         # Xd=self.k_X*self.qX*self.dt
-#         self.q0+=P - Xi
-#         self.qX+=Xi - P
-#         # self.qX = 1 - self.q0 - self.qE
-#         # print(self.k_E)
-#
-#
-#         # self.Xicum+=Xi
-#
-#         # print(self.J_E_A, self.J_E_A_ratio)
-#         print(self.ths)
-#         # try:
-#         #     print(int(100*self.Xicum/self.Xcum), int(100*self.Picum/self.Xcum), int(100*self.Pcum/self.Xcum))
-#         # except :
-#         #     pass
-#         return P
-#
-#     @ property
-#     def J_E_A(self):
-#         X=self.deb.substrate.X
-#         # o=self.k_X**-1+self.k_E**-1
-#         return self.deb.y_E_X*self.k_X*self.b_X*X/(self.k_X+self.b_X*X)
-#     #
-#     @property
-#     def J_E_A_ratio(self):
-#         return self.J_E_A/(self.deb.J_E_Am)
-#         # return self.J_E_A/(self.deb.V*self.deb.J_E_Amm)
-#
-#
-#
-#     @ property
-#     def ths(self) :
-#         return [int(10**2*qq) for qq in [self.q0, self.qX]]
-#         # return self.q0, self.qX, self.qE
-
-class SynthesizingUnit:
-    def __init__(self,dt, K=5*10**-5, k_X=0.5, b_X=0.2, X=None):
-        self.dt=dt
-        self.q0=1
-        self.K=K
-        self.qX = 1-self.q0
-        self.k_X=K*b_X
-        # self.k_X=k_X
-        self.b_X=b_X
-        self.X=X
-
-    def step(self,X=None):
-        if X is None :
-            X=self.X
-        dP=self.k_X*self.qX*self.dt
-        dX=X*self.b_X*self.q0*self.dt
-        self.q0+=dP - dX
-        self.qX+=dX - dP
-        # print(dP, dX)
-        print(self.ths)
-        # print(self.gut.get_R_absorbed())
-        return dX, dP
-
-    # @ property
-    def J_E_A(self, deb):
-        X=deb.substrate.X
-        o=self.k_X**-1+deb.k_E**-1
-        return deb.y_E_X*self.b_X*X/(1+self.b_X*X*o)
-
-    # @property
-    # def J_E_A_ratio(self):
-    #     # return self.J_E_A/(self.deb.J_E_Amm)
-    #     return self.J_E_A/(self.gut.deb.V*self.gut.deb.J_E_Amm)
-
-
-
-    @ property
-    def ths(self) :
-        return [int(10**2*qq) for qq in [self.q0, self.qX]]
-        # return self.q0, self.qX, self.qE
 
 if __name__ == '__main__':
-    su=SynthesizingUnit(dt=1/(24*60*60*10), X=0.93)
-    Ndays=5
-    Nticks=int(Ndays/su.dt)
-    for i in range(Nticks) :
-        su.step()
-    # print(su.X/(su.K+su.X))
-    # print(su.k_X/su.b_X)
+    Ndays = 5

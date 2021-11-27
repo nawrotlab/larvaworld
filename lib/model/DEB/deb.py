@@ -124,8 +124,8 @@ class Substrate:
 class DEB:
     def __init__(self, id='DEB model', species='default', steps_per_day=24*60, cv=0, T=298.15, eb=1.0, substrate=None,
                  aging=False, print_output=False, starvation_strategy=False, assimilation_mode='deb', save_dict=True, save_to=None,
-                 V_bite=0.001, absorption=None, base_hunger=0.5, hunger_gain=0,hunger_as_EEB=False, hours_as_larva=0, simulation=True, use_gut=True,
-                 intermitter=None):
+                 V_bite=0.0005, absorption=None, base_hunger=0.5, hunger_gain=0,hunger_as_EEB=False, hours_as_larva=0, simulation=True, use_gut=True,
+                 intermitter=None, **kwargs):
 
         # Drosophila model by default
         self.species=species
@@ -200,7 +200,7 @@ class DEB:
         self.steps_per_day = steps_per_day
         self.dt = 1 / steps_per_day
 
-        self.gut = Gut(deb=self, V_bite=self.V_bite, save_dict=save_dict) if use_gut else None
+        self.gut = Gut(deb=self, save_dict=save_dict, **kwargs) if use_gut else None
         self.set_steps_per_day(steps_per_day)
         self.run_embryo_stage()
         self.predict_larva_stage(f=self.base_f)
@@ -268,7 +268,7 @@ class DEB:
         self.Lwb = Lb / self.del_M
         self.tau_b = self.get_tau_b(eb=self.eb)
         self.t_b = self.tau_b / k_M / self.T_factor
-
+        # print(Lb)
         self.k_E = v / Lb
 
         # For the larva the volume specific max assimilation rate p_Amm is used instead of the surface-specific p_Am
@@ -711,6 +711,7 @@ class DEB:
             if self.gut is not None :
                 d['Nfeeds'] = self.gut.Nfeeds
                 d['mean_feed_freq'] = self.gut.Nfeeds/(self.age-self.birth_time_in_hours)/(60*60)
+                d['gut_residence_time'] = self.gut.tau_gut
             if self.gut is not None :
                 d.update(self.gut.dict)
             
@@ -771,6 +772,7 @@ class DEB:
             return self.sim_p_A
         elif assimilation_mode == 'gut':
             self.gut_p_A = self.gut.p_A
+            # print(self.gut_p_A, self.deb_p_A)
             # print(int(100*self.gut_p_A/ self.deb_p_A))
             return self.gut.p_A
         elif assimilation_mode == 'deb':
@@ -868,7 +870,8 @@ def deb_sim(sample, id='DEB sim', EEB=None, deb_dt=None, dt=None,  use_hunger=Fa
                 if inter.feeder_reocurrence_as_EEB :
                     inter.feeder_reoccurence_rate=inter.EEB
             if deb.age * 24>counter :
-                print(counter, int(deb.pupation_buffer*100), deb.e, deb.time_to_death_by_starvation(), deb.L/deb.Lm)
+                print(counter, int(deb.pupation_buffer*100))
+                # print(counter, int(deb.pupation_buffer*100), deb.e, deb.time_to_death_by_starvation(), deb.L/deb.Lm)
                 counter+=24
     deb.finalize_dict()
     d_sim= deb.return_dict()
@@ -891,8 +894,7 @@ def test_substrates() :
     for s in substrate_dict.keys() :
         try :
             q=1
-            V_bite=0.0005
-            deb = DEB(substrate={'quality': q, 'type': s},assimilation_mode='sim', steps_per_day=24*60, V_bite=V_bite)
+            deb = DEB(substrate={'quality': q, 'type': s},assimilation_mode='sim', steps_per_day=24*60)
             print()
             print('substrate type : ', s)
             print('w_X : ', int(deb.substrate.get_w_X()), 'g/mole')
