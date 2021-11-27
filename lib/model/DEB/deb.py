@@ -712,7 +712,6 @@ class DEB:
                 d['Nfeeds'] = self.gut.Nfeeds
                 d['mean_feed_freq'] = self.gut.Nfeeds/(self.age-self.birth_time_in_hours)/(60*60)
                 d['gut_residence_time'] = self.gut.tau_gut
-            if self.gut is not None :
                 d.update(self.gut.dict)
             
         # self.save_dict(path)
