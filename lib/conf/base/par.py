@@ -896,7 +896,7 @@ chunk_dict = {
 def runtime_pars( PF=None) :
     if PF is None :
         PF = ParDict(mode='load').dict
-    return [v['d'] for k, v in PF.dict.items() if v['o'] == Larva and not k in PF.build_constants().keys()]
+    return [v['d'] for k, v in PF.items() if v['o'] == Larva and not k in PF.build_constants().keys()]
 
 
 def getPar(k=None, p=None, d=None, to_return=['d', 'l'], PF=None):

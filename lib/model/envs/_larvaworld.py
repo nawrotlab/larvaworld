@@ -44,8 +44,9 @@ class LarvaWorld:
 
     def __init__(self, env_params, vis_kwargs=None, id='unnamed', dt=0.1, Nsteps=None, save_to='.',
                  background_motion=None, Box2D=False, use_background=False, traj_color=None, allow_clicks=True,
-                 experiment=None, progress_bar=None, larva_groups={}, configuration_text=None):
+                 experiment=None, progress_bar=None, larva_groups={}, configuration_text=None,larva_collisions=True):
         self.configuration_text = configuration_text
+        self.larva_collisions = larva_collisions
         if progress_bar is None:
             progress_bar = progressbar.ProgressBar(max_value=Nsteps)
         self.progress_bar = progress_bar
@@ -175,6 +176,7 @@ class LarvaWorld:
         elif name == 'black_background':
             self.update_default_colors()
         elif name == 'larva_collisions':
+
             self.eliminate_overlap()
 
     def set_default_colors(self, black_background):
@@ -632,6 +634,7 @@ class LarvaWorld:
             'visible_clock',
             'visible_ids',
             'visible_state',
+            'visible_scale',
             'odor_aura',
             'color_behavior',
             'random_colors',
@@ -673,6 +676,9 @@ class LarvaWorld:
 
     def space_to_mm(self, array):
         return array * 1000 / self.scaling_factor
+
+    def eliminate_overlap(self):
+        pass
 
 
 def generate_larvae(N, sample_dict, base_model, RefPars=None):

@@ -15,13 +15,13 @@ from lib.conf.base import paths
 
 
 class LarvaWorldSim(LarvaWorld):
-    def __init__(self, output=None, trials={}, larva_collisions=True, parameter_dict={}, **kwargs):
+    def __init__(self, output=None, trials={}, parameter_dict={}, **kwargs):
         super().__init__(**kwargs)
         self.sim_epochs = trials
         for idx, ep in self.sim_epochs.items():
             ep['start'] = int(ep['start'] * 60 / self.dt)
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
-        self.larva_collisions = larva_collisions
+
         self.odor_ids = get_all_odors(self.larva_groups, self.env_pars.food_params)
         self.foodtypes = get_all_foodtypes(self.env_pars.food_params)
         self._place_food(self.env_pars.food_params)
