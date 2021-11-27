@@ -3,7 +3,7 @@ import numpy as np
 
 class Gut:
     def __init__(self, deb, M_gm=10 ** -2, y_P_X=0.9, constant_M_c=True,
-                 k_abs=1, f_abs=1, k_dig=1, f_dig=1, M_c_per_cm2=10 ** -2, J_g_per_cm2=10 ** -2, k_c=1, k_g=1,
+                 k_abs=1, f_abs=1, k_dig=1, f_dig=1, M_c_per_cm2=5*10 ** -8, J_g_per_cm2=10 ** -2, k_c=1, k_g=1,
                  save_dict=True, **kwargs):
 
         self.deb = deb
@@ -17,6 +17,10 @@ class Gut:
         self.V_gm = self.r_gut_V * self.deb.V
 
         # Constants
+        if f_dig is None :
+            f_dig=self.deb.base_f
+        if k_dig is None:
+            k_dig = self.deb.kap_X
         self.k_dig = k_dig  # rate constant for digestion : k_X * y_Xg
         self.f_dig = f_dig  # scaled functional response for digestion : M_X/(M_X+M_K_X)
         self.k_abs = k_abs  # rate constant for absorption : k_P * y_Pc
@@ -35,10 +39,10 @@ class Gut:
         self.M_X = 0
         self.M_P = 0
         self.M_Pu = 0
-        self.M_g = self.J_g
+        self.M_g = 0
         self.M_c = self.M_c_max
 
-        self.get_tau_gut(self.deb.base_f, self.deb.J_X_Am, self.deb.Lb)
+        self.tau_gut = self.get_tau_gut(self.deb.base_f, self.deb.J_X_Am, self.deb.Lb)
         self.mol_not_digested = 0
         self.mol_not_absorbed = 0
         self.mol_faeces = 0
@@ -54,12 +58,13 @@ class Gut:
         else:
             self.dict = None
 
+
     def update(self, X_V=0):
 
         self.A_g = self.r_gut_A * self.deb.L ** 2  # Gut surface area
         self.V_gm = self.r_gut_V * self.deb.V
         self.M_c_max = self.M_c_per_cm2 * self.A_g  # amount of carriers in the gut surface
-        self.J_g = self.J_g_per_cm2 * self.A_g  # total secretion rate of enzyme in the gut surface
+        self.J_g = self.J_g_per_cm2 * self.A_g # total secretion rate of enzyme in the gut surface
         # self.M_c = self.M_c_max
 
         if X_V > 0:
@@ -72,19 +77,20 @@ class Gut:
 
 
     def digest(self):
+        # print(self.deb.dt)
         dt = self.deb.dt
+        # print(dt*24*60*60)
 
-        self.M_g += (self.J_g - self.k_g * self.M_g) * dt
+        self.M_g += (self.J_g - self.k_g * self.M_g) *1
         if self.M_X > 0:
             temp = self.k_dig * self.f_dig * self.M_g * dt
             dM_X = - np.min([self.M_X, temp])
         else:
             dM_X = 0
-        # print(int(self.R_M_g * 100))
         self.M_X += dM_X
         dM_P_added = -self.y_P_X * dM_X
         if self.M_P > 0 and self.M_c > 0:
-            temp = self.k_abs * self.f_abs * self.M_c * dt
+            temp = self.k_abs * self.f_abs * self.M_c * dt*24*60*60
             dM_Pu = np.min([self.M_P, temp])
         else:
             dM_Pu = 0
@@ -93,19 +99,15 @@ class Gut:
 
         if self.constant_M_c:
             self.M_c = self.M_c_max
-
         else:
-            dM_c_released = (self.M_c_max - self.M_c) * self.k_c * dt
+            dM_c_released = (self.M_c_max - self.M_c) * self.k_c * dt*24*60*60
             dM_c = dM_c_released - dM_Pu
             self.M_c += dM_c
-
         self.p_A = dM_Pu * self.deb.mu_E
 
     def get_tau_gut(self, f, J_X_Am, Lb):
-        k=self.r_gut_V*self.M_gm
-        self.tau_gut = k / (J_X_Am / Lb) / f
-        # print(self.tau_gut*24*60)
-        # raise
+        return self.r_gut_V*self.M_gm / (J_X_Am / Lb) / f
+
 
     def get_Nticks(self, dt):
         self.gut_Nticks = int(self.tau_gut / dt)
@@ -236,6 +238,8 @@ class Gut:
             'M_X',
             'M_P',
             'M_Pu',
+            'M_g',
+            'M_c',
             'R_M_c',
             'R_M_g',
             'R_M_X',
@@ -253,6 +257,8 @@ class Gut:
             self.M_X,
             self.M_P,
             self.M_Pu*1000,
+            self.M_g,
+            self.M_c,
             self.R_M_c,
             self.R_M_g,
             self.R_M_X,
