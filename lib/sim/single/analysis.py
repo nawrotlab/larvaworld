@@ -444,29 +444,27 @@ def targeted_analysis(datasets, labels=None, save_to=None, pref='', show=False, 
                 'labels': labels,
                 'save_to': save_to,
                 'subfolder': None,
-                'show': show}
+                'show': show,
+                **kwargs}
 
-    for mode in ['turns', 'strides'] :
-        plot_sample_tracks(**anal_kws, mode=mode,slice=[0, 60], **kwargs)
-    raise
+
+    plot_sample_tracks(**anal_kws, slice=[0, 60])
+    plot_ang_pars(**anal_kws, Npars=3, save_as=f'ang_pars{pref}.pdf', save_fits_as=f'ang_pars_ttest{pref}.csv')
     plot_marked_turns(dataset=datasets[0],show=show, agent_ids=['Larva_0'], slices=[(0, 180)], **kwargs)
-    plot_marked_strides(**anal_kws, agent_idx=1, slice=[0, 180], save_as=f'sample_tracks{pref}.pdf', **kwargs)
+    plot_marked_strides(**anal_kws, agent_idx=1, slice=[0, 180], save_as=f'sample_tracks{pref}.pdf')
 
-    # init_dir, res_dir = 'init', 'result'
     plot_stridesNpauses(**anal_kws, plot_fits='best', time_unit='sec', range='default', print_fits=False,
-                        save_as=f'bouts{pref}.pdf', save_fits_as=f'bout_fits{pref}.csv', **kwargs)
+                        save_as=f'bouts{pref}.pdf', save_fits_as=f'bout_fits{pref}.csv')
     plot_endpoint_params(**anal_kws, mode='stride_def', save_as=f'stride_pars{pref}.pdf',
-                         save_fits_as=f'stride_pars_ttest{pref}.csv', **kwargs)
+                         save_fits_as=f'stride_pars_ttest{pref}.csv')
+    plot_turns(**anal_kws)
+    plot_interference(**anal_kws, mode='orientation', save_as=f'interference{pref}.pdf')
+    plot_crawl_pars(**anal_kws, save_as=f'crawl_pars{pref}.pdf', save_fits_as=f'crawl_pars_ttest{pref}.csv')
 
-    plot_interference(**anal_kws, mode='orientation', save_as=f'interference{pref}.pdf', **kwargs)
-    plot_crawl_pars(**anal_kws, save_as=f'crawl_pars{pref}.pdf', save_fits_as=f'crawl_pars_ttest{pref}.csv', **kwargs)
-    plot_ang_pars(**anal_kws, Npars=3, save_as=f'ang_pars{pref}.pdf', save_fits_as=f'ang_pars_ttest{pref}.csv',
-                  **kwargs)
-    plot_endpoint_params(**anal_kws, mode='result', save_as=f'results{pref}.pdf', **kwargs)
-    plot_endpoint_params(**anal_kws, mode='reorientation', save_as=f'reorientation{pref}.pdf', **kwargs)
-    plot_endpoint_params(**anal_kws, mode='tortuosity', save_as=f'tortuosity{pref}.pdf', **kwargs)
-    plot_dispersion(**anal_kws, scaled=True, fig_cols=2, range=(0, 80), ymax=18, save_as=f'dispersion{pref}.pdf',
-                    **kwargs)
+    plot_endpoint_params(**anal_kws, mode='result', save_as=f'results{pref}.pdf')
+    plot_endpoint_params(**anal_kws, mode='reorientation', save_as=f'reorientation{pref}.pdf')
+    plot_endpoint_params(**anal_kws, mode='tortuosity', save_as=f'tortuosity{pref}.pdf')
+    plot_dispersion(**anal_kws, scaled=True, fig_cols=2, range=(0, 80), ymax=18, save_as=f'dispersion{pref}.pdf')
 
 
 def deb_analysis(datasets,**kwargs) :
