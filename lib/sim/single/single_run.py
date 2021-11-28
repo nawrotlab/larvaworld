@@ -147,7 +147,7 @@ class SingleRun:
         elif 'dispersion' in exp :
             anal_params = ['comparative_analysis']
         elif 'dish' in exp:
-            anal_params = ['targeted_analysis']
+            anal_params = ['comparative_analysis']
         # elif self.experiment in ['growth', 'RvsS'] :
         #     anal_params = analysis_dict['DEB']
         else:

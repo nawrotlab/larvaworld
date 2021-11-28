@@ -489,7 +489,7 @@ def plot_config(datasets, labels, save_to, subfolder=None):
         try:
             cs = [d.config['color'] for d in datasets]
             u_cs = unique_list(cs)
-            if len(u_cs) == len(cs):
+            if len(u_cs) == len(cs) and None not in u_cs:
                 colors = cs
             elif len(u_cs) == len(cs) - 1 and cs[-1] in cs[:-1] and 'black' not in cs:
                 cs[-1] = 'black'
@@ -500,14 +500,13 @@ def plot_config(datasets, labels, save_to, subfolder=None):
             colors = N_colors(Ndatasets)
         return colors
 
+    cols = get_colors(datasets)
     if save_to is None:
         save_to = datasets[0].config['parent_plot_dir']
     if subfolder is not None:
         save_to = f'{save_to}/{subfolder}'
-    if not os.path.exists(save_to):
-        os.makedirs(save_to)
-
-    return Ndatasets, get_colors(datasets), save_to, labels
+    os.makedirs(save_to, exist_ok=True)
+    return Ndatasets, cols, save_to, labels
 
 
 def dataset_legend(labels, colors, ax=None, loc=None, anchor=None, fontsize=None, handlelength=0.5, handleheight=0.5,

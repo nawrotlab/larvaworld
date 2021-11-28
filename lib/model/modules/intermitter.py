@@ -16,7 +16,6 @@ class BaseIntermitter(Effector):
         super().__init__(**kwargs)
         self.brain = brain
         self.save_to = save_to
-        # print(EEB)
         self.crawler = brain.crawler if brain is not None else None
         self.feeder = brain.feeder if brain is not None else None
         self.turner = brain.turner if brain is not None else None
@@ -346,20 +345,17 @@ class NengoIntermitter(OfflineIntermitter):
 
 
 class BranchIntermitter(BaseIntermitter):
-    def __init__(self,pause_dist=None, stridechain_dist=None,sample=None, **kwargs):
+    def __init__(self,pause_dist=None, stridechain_dist=None,sample=None,beta=None, **kwargs):
         super().__init__(**kwargs)
-        if sample is not None :
+        if beta is not None :
+            self.beta=beta
+        elif sample is not None :
             from lib.conf.stored.conf import loadRef
             d = loadRef(sample)
-            # dConf = d.config
-            sample_dt = d.config['dt']
-
-            # d_pau = d.load_aux('distro', nam.dur('pause')) // sample_dt
-            # d_run = d.load_aux('distro', nam.dur('stridechain')) // sample_dt
             l_run = d.load_aux('distro', nam.length('stridechain'))
             self.beta = get_exp_beta(l_run)
         else :
-            self.beta=0.01
+            self.beta=0.15
 
         self.stridechain_min, self.stridechain_max = stridechain_dist['range']
         self.pau_min, self.pau_max = (np.array(pause_dist['range'])/self.dt).astype(int)

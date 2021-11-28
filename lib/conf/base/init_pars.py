@@ -458,6 +458,8 @@ def init_pars():
                  }
 
     d['intermitter'] = {
+        'mode': {'t': str, 'v': 'default', 'vs': ['', 'default', 'branch', 'nengo'],
+                 'h': 'The implementation mode of the intermittency (INTERMITTER) module.'},
         'stridechain_dist': d['bout_distro'],
         'pause_dist': d['bout_distro'],
         'EEB': {'v': 0.0, 'max': 1.0,

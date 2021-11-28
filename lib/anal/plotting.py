@@ -372,7 +372,7 @@ def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, sl
 
     for ii, (d, l) in enumerate(zip(P.datasets, P.labels)):
         for jj, key in enumerate(mode) :
-            kk=ii*Nrows+jj
+            kk=ii+Nrows*jj
             ax = P.axs[kk]
             if key == 'strides':
                 chunks = ['stride', 'pause']
@@ -1065,7 +1065,7 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
                 P.axs[i].loglog(xrange, ddf, color=cc, lw=lw, label=l)
 
     for ii in [0, 1]:
-        if plot_fits == 'all':
+        if plot_fits in ['all']:
             dataset_legend(distro_ls, distro_cs, ax=P.axs[ii], loc='lower left', fontsize=15)
         dataset_legend(P.labels, P.colors, ax=P.axs[ii], loc='upper right', fontsize=15)
     P.conf_ax(0, xlab=chain_xlabel, ylab=ylabel, xlim=[chn_t0, chn_t1], title=r'$\bf{stridechains}$')
@@ -1130,6 +1130,8 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
             'minimal': [l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
                         'cum_t', 'str_tr', 'pau_tr', 'tor',
                         'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
+                        'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'],
+            'tiny': ['fsv', 'sv_mu','str_tr', 'pau_tr',
                         'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'],
             'stride_def': [l_par, 'fsv', 'sstr_d_mu', 'sstr_d_std'],
             'reorientation': ['str_fo_mu', 'str_fo_std', 'tur_fou_mu', 'tur_fou_std'],
@@ -1456,7 +1458,7 @@ def plot_bend_pauses(dataset, save_to=None):
     print(f'Image saved as {filepath}')
 
 
-def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
+def plot_marked_turns(dataset, agent_ids=None,agent_idx=[0], turn_epochs=['Rturn', 'Lturn'],
                       vertical_boundaries=False, min_turn_angle=0, slices=[], subfolder='individuals',
                       save_to=None, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets=[dataset], labels=[dataset.id], save_to=save_to,
@@ -1465,7 +1467,10 @@ def plot_marked_turns(dataset, agent_ids=None, turn_epochs=['Rturn', 'Lturn'],
     d = dataset
 
     if agent_ids is None:
-        agent_ids = d.agent_ids
+        if agent_idx is None :
+            agent_ids = d.agent_ids
+        else :
+            agent_ids=[d.agent_ids[idx] for idx in agent_idx]
 
     xx = f'marked_turns_min_angle_{min_turn_angle}'
     filepath_full = f'{xx}_full.{suf}'

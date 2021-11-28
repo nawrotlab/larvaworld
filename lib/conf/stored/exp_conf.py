@@ -78,8 +78,10 @@ def simple_exp(name, dur=10.0, en=True, **kwargs):
 def anemo_exp(name, dur=5.0, c=['wind'], en=False, enrichment=enr_dict(proc=['spatial', 'angular', 'wind']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
 
-def chemanemo_exp(name, dur=5.0, c=['olfactor','wind'], en=False, enrichment=enr_dict(proc=['spatial', 'angular', 'source', 'wind'], bouts=['stride', 'pause', 'turn'],
-                                   fits=False), **kwargs):
+
+def chemanemo_exp(name, dur=5.0, c=['olfactor', 'wind'], en=False,
+                  enrichment=enr_dict(proc=['spatial', 'angular', 'source', 'wind'], bouts=['stride', 'pause', 'turn'],
+                                      fits=False), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
 
 
@@ -119,8 +121,10 @@ def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
 grouped_exp_dict = {
     'exploration': {
         'tethered': simple_exp('focus', dur=30.0, l=lg(m='immobile', N=1, ors=[90.0, 90.0])),
-        'focus': simple_exp('focus', l=lg(m='explorer', N=1, ors=[90.0, 90.0])),
-        'dish': simple_exp('dish', l=lg(m='Levy-walker', N=5, s=0.02)),
+        'focus': simple_exp('focus', l=lg(m='Levy-walker', N=1, ors=[90.0, 90.0])),
+        'dish': simple_exp('dish', l=lg(m='branch_explorer', N=5, s=0.02)),
+        'dish_x2': simple_exp('dish', l=lgs(models=['explorer', 'branch_explorer'],
+                                            ids=['default', 'branch'], N=5)),
         'nengo_dish': simple_exp('dish', l=lg(m='nengo_explorer', N=25, s=0.02)),
         'dispersion': simple_exp('arena_200mm', l=lg(m='explorer', N=25)),
         'dispersion_x4': simple_exp('arena_200mm', dur=3.0,
@@ -217,7 +221,8 @@ grouped_exp_dict = {
     },
 
     'zebrafish': {
-        'prey_detection': exp('windy_blob_arena', l=lg(m='zebrafish', N=4, s=(0.002,0.005)), sim={'Box2D': True, 'duration' : 20.0})
+        'prey_detection': exp('windy_blob_arena', l=lg(m='zebrafish', N=4, s=(0.002, 0.005)),
+                              sim={'Box2D': True, 'duration': 20.0})
     },
 
     'other': {

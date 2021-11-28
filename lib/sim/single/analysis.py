@@ -380,19 +380,8 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None, **
     cc = {'datasets': datasets,
           'labels': labels,
           'save_to': save_to}
-    for r in ['default']:
-        # for r in ['broad', 'default', 'restricted']:
-        for m in ['cdf']:
-        # for m in ['cdf', 'pdf']:
-            for f in ['best']:
-            # for f in ['best', 'all']:
-                n = f'bout_{m}_fit_{f}_{r}'
-                try:
-                    figs[n] = plot_stridesNpauses(**cc, plot_fits=f, range=r, only_fit_one=False, mode=m,
-                                                  print_fits=False, **kwargs)
-                except:
-                    pass
-    for m in ['minimal', 'limited', 'full']:
+    figs['stridesNpauses'] = plot_stridesNpauses(**cc, **kwargs)
+    for m in ['minimal', 'tiny']:
         figs[f'endpoint_{m}'] = plot_endpoint_params(**cc, mode=m, **kwargs)
     for m in ['orientation', 'orientation_x2', 'bend', 'spinelength']:
         for agent_idx in [None, 0, 1]:
@@ -448,13 +437,16 @@ def targeted_analysis(datasets, labels=None, save_to=None, pref='', show=False, 
                 **kwargs}
 
 
+    for k in ['best'] :
+        plot_stridesNpauses(**anal_kws, plot_fits=k, save_as=f'bouts{pref}.pdf', save_fits_as=f'bout_fits{pref}.csv')
+    raise
+    plot_endpoint_params(**anal_kws, mode='tiny')
     plot_sample_tracks(**anal_kws, slice=[0, 60])
     plot_ang_pars(**anal_kws, Npars=3, save_as=f'ang_pars{pref}.pdf', save_fits_as=f'ang_pars_ttest{pref}.csv')
-    plot_marked_turns(dataset=datasets[0],show=show, agent_ids=['Larva_0'], slices=[(0, 180)], **kwargs)
+    plot_marked_turns(dataset=datasets[0], slices=[(0, 180)], **kwargs)
     plot_marked_strides(**anal_kws, agent_idx=1, slice=[0, 180], save_as=f'sample_tracks{pref}.pdf')
 
-    plot_stridesNpauses(**anal_kws, plot_fits='best', time_unit='sec', range='default', print_fits=False,
-                        save_as=f'bouts{pref}.pdf', save_fits_as=f'bout_fits{pref}.csv')
+
     plot_endpoint_params(**anal_kws, mode='stride_def', save_as=f'stride_pars{pref}.pdf',
                          save_fits_as=f'stride_pars_ttest{pref}.csv')
     plot_turns(**anal_kws)

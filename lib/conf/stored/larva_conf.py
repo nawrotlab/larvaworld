@@ -41,15 +41,15 @@ OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}
 OD2 = {'CS': {'mean': 150.0, 'std': 0.0}, 'UCS': {'mean': 0.0, 'std': 0.0}}
 
 
-def Im(EEB):
+def Im(EEB, **kwargs):
     if EEB > 0:
-        return null_dict('intermitter', feed_bouts=True, EEB=EEB)
+        return null_dict('intermitter', feed_bouts=True, EEB=EEB, **kwargs)
     else:
-        return null_dict('intermitter', feed_bouts=False, EEB=0.0)
+        return null_dict('intermitter', feed_bouts=False, EEB=0.0, **kwargs)
 
 
-def ImD(pau, str):
-    return null_dict('intermitter', pause_dist=pau, stridechain_dist=str)
+def ImD(pau, str, **kwargs):
+    return null_dict('intermitter', pause_dist=pau, stridechain_dist=str, **kwargs)
 
 
 # -------------------------------------------WHOLE NEURAL MODES---------------------------------------------------------
@@ -121,7 +121,7 @@ def nengo_brain(module_shorts, EEB, OD=None):
                                    waveform=None, step_to_length_mu=0.25, step_to_length_std=0.01),
                  feeder=null_dict('feeder', initial_freq=f_fr0, freq_range=f_fr_r),
                  # olfactor=olfactor,
-                 intermitter=Im(EEB),
+                 intermitter=Im(EEB, mode='nengo'),
                  nengo=True,
                  OD=OD
                  )
@@ -312,6 +312,7 @@ def create_mod_dict3() :
 def create_mod_dict() :
     larvae = {
         'explorer': mod(brain(['L', 'W'])),
+        'branch_explorer': mod(brain(['L', 'W'], intermitter=Im(0.0, mode='branch'))),
         'toucher': mod(brain(['L', 'To'], turner=Tno_noise), bod={'touch_sensors': []}),
         'toucher_brute': mod(brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', brute_force=True)),
                              bod={'touch_sensors': []}),
@@ -458,8 +459,8 @@ def create_mod_dict2() :
 
 if __name__ == '__main__':
     zebrafish = {
-        'rover': RvsS_larva(EEB=0.37, gut_kws={'k_abs' : 0.8}),
-        'sitter': RvsS_larva(EEB=0.67, gut_kws={'k_abs' : 0.4}),
+         'explorer': mod(brain(['L', 'W'])),
+        'branch_explorer': mod(brain(['L', 'W'], intermitter=Im(0.0, mode='branch'))),
     }
     from lib.conf.stored.conf import saveConf
     for k, v in zebrafish.items():

@@ -76,8 +76,11 @@ class DefaultBrain(Brain):
         self.coupling = Oscillator_coupling(brain=self, **c['interference_params']) if m[
             'interference'] else Oscillator_coupling(brain=self)
         if m['intermitter']:
-            # self.intermitter = BranchIntermitter(brain=self, dt=dt, **c['intermitter_params'])
-            self.intermitter = Intermitter(brain=self, dt=dt, **c['intermitter_params'])
+            mode=c['intermitter_params']['mode'] if 'mode' in c['intermitter_params'].keys() else 'default'
+            if mode == 'default':
+                self.intermitter = Intermitter(brain=self, dt=dt, **c['intermitter_params'])
+            elif mode=='branch':
+                self.intermitter = BranchIntermitter(brain=self, dt=dt, **c['intermitter_params'])
         # if m['olfactor']:
         #     self.olfactor = Olfactor(brain=self, dt=dt, **c['olfactor_params'])
         if m['memory'] and c['memory_params']['modality'] == 'olfaction':
