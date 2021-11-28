@@ -464,23 +464,24 @@ def fixate_larva(s, config, point, arena_dims, fix_segment=None):
     all_xy_pars = points_xy + contour_xy
     if len(ids) != 1:
         raise ValueError('Fixation only implemented for a single agent.')
-
+    # id=ids[0]
     if type(point) == int:
         if point == -1:
             point = 'centroid'
         else:
-            if fix_segment is not None:
-                if type(fix_segment) == int and np.abs(fix_segment) == 1:
-                    fix_segment = points[point + fix_segment]
+            if fix_segment is not None and type(fix_segment) == int and np.abs(fix_segment) == 1:
+                fix_segment = points[point + fix_segment]
             point = points[point]
 
     pars = [p for p in all_xy_pars if p in s.columns.values]
-    if set(nam.xy(point)).issubset(s.columns):
+    xy_ps=nam.xy(point)
+    if set(xy_ps).issubset(s.columns):
         print(f'Fixing {point} to arena center')
-        xy = [s[nam.xy(point)].xs(id, level='AgentID').copy(deep=True).values for id in ids]
-        xy_start = [s[nam.xy(point)].xs(id, level='AgentID').copy(deep=True).dropna().values[0] for id in ids]
-        bg_x = np.array([(p[:, 0] - start[0]) / arena_dims[0] for p, start in zip(xy, xy_start)])
-        bg_y = np.array([(p[:, 1] - start[1]) / arena_dims[1] for p, start in zip(xy, xy_start)])
+        X,Y=arena_dims
+        xy = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).values for id in ids]
+        xy_start = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).dropna().values[0] for id in ids]
+        bg_x = np.array([(p[:, 0] - start[0]) / X for p, start in zip(xy, xy_start)])
+        bg_y = np.array([(p[:, 1] - start[1]) / Y for p, start in zip(xy, xy_start)])
     else:
         raise ValueError(f" The requested {point} is not part of the dataset")
     for id, p in zip(ids, xy):

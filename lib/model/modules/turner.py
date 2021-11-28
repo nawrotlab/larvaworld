@@ -128,7 +128,6 @@ class NeuralOscillator:
         self.H_C_l = 0  # 10
 
         self.scaled_tau = self.dt / self.tau
-        # self.scaled_tau_h=None
 
     def step(self, A=0):
         t = self.scaled_tau

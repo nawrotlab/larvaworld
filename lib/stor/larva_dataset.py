@@ -85,8 +85,6 @@ class LarvaDataset:
             self.step_data = step
             self.agent_ids = step.index.unique('AgentID').values
             self.num_ticks = step.index.unique('Step').size
-            # print(self.num_ticks)
-            # raise
         if end is not None:
             self.endpoint_data = end
         if food is not None:
@@ -275,7 +273,7 @@ class LarvaDataset:
             saveConf(self.config, 'Ref', refID)
 
     def save_agents(self, ids=None, pars=None):
-        if self.step_data is None:
+        if not hasattr(self, 'step_data'):
             self.load()
         if ids is None:
             ids = self.agent_ids
@@ -334,7 +332,7 @@ class LarvaDataset:
         dic = {}
         dic['pos_p'] = pos_p = nam.xy(p0) if set(nam.xy(p0)).issubset(s0.columns) else ['x', 'y']
         dic['mid_p'] = mid_p = [xy for xy in self.points_xy if set(xy).issubset(s0.columns)]
-        dic['cen_p'] = cen_p = self.cent_xy if set(self.cent_xy).issubset(s0.columns) else []
+        dic['cen_p'] = cen_p = nam.xy('centroid') if set(nam.xy('centroid')).issubset(s0.columns) else []
         dic['con_p'] = con_p = [xy for xy in self.contour_xy if set(xy).issubset(s0.columns)]
         dic['chunk_p'] = chunk_p = [p for p in ['stride_stop', 'stride_id', 'pause_id', 'feed_id'] if p in s0.columns]
         if draw_Nsegs is None:
@@ -361,18 +359,15 @@ class LarvaDataset:
             ids = [self.agent_ids[i] for i in ids]
         if dynamic_color is not None and dynamic_color in s0.columns:
             pars.append(dynamic_color)
-            # traj_color =s0[dynamic_color]
         else:
             dynamic_color = None
         pars = [p for p in pars if p in s0.columns]
-        print(ids)
         if time_range is None:
             s = copy.deepcopy(s0.loc[(slice(None), ids), pars])
         else:
             a, b = time_range
             a = int(a / self.dt)
             b = int(b / self.dt)
-            # tick_range=(np.array(time_range)/self.dt).astype(int)
             s = copy.deepcopy(s0.loc[(slice(a, b), ids), pars])
         e = copy.deepcopy(e0.loc[ids])
         traj_color = s[dynamic_color] if dynamic_color is not None else None
@@ -404,14 +399,12 @@ class LarvaDataset:
 
         if transposition is not None:
             from lib.process.spatial import align_trajectories
-            s = align_trajectories(s, track_point=track_point, arena_dims=arena_dims, mode=transposition,
-                                   config=self.config)
+            s = align_trajectories(s, track_point=track_point, arena_dims=arena_dims, mode=transposition,config=self.config)
             bg = None
             n1 = 'transposed'
         elif fix_point is not None:
             from lib.process.spatial import fixate_larva
-            s, bg = fixate_larva(s, point=fix_point, fix_segment=fix_segment,
-                                 arena_dims=arena_dims, config=self.config)
+            s, bg = fixate_larva(s, point=fix_point, fix_segment=fix_segment,arena_dims=arena_dims, config=self.config)
             n1 = 'fixed'
         else:
             bg = None
@@ -436,21 +429,20 @@ class LarvaDataset:
             'traj_color': traj_color,
             # 'space_in_mm': space_in_mm
         }
-
-        replay_env = LarvaWorldReplay(step_data=s, endpoint_data=e, config=self.config,
-                                      **dic, draw_Nsegs=draw_Nsegs,
-                                      **base_kws, **kwargs)
+        replay_env = LarvaWorldReplay(step_data=s, endpoint_data=e, config=self.config,draw_Nsegs=draw_Nsegs,
+                                      **dic, **base_kws, **kwargs)
 
         replay_env.run()
         print('Visualization complete')
 
-    def visualize_single(self, id, close_view=True, fix_point=-1, fix_segment=None, save_to=None,
+    def visualize_single(self, id=0, close_view=True, fix_point=-1, fix_segment=None, save_to=None,
                          draw_Nsegs=None, vis_kwargs=None, **kwargs):
         from lib.model.envs._larvaworld_replay import LarvaWorldReplay
         from lib.process.spatial import fixate_larva
-        try:
-            s0, e0 = self.load_agent(id)
-        except:
+        if type(id)==int :
+            id=self.config.agent_ids[id]
+        s0, e0 = self.load_agent(id)
+        if s0 is None :
             self.save_agents(ids=[id])
             s0, e0 = self.load_agent(id)
         if close_view:
@@ -480,9 +472,8 @@ class LarvaDataset:
             'traj_color': None,
             # 'space_in_mm': space_in_mm
         }
-        replay_env = LarvaWorldReplay(step_data=s, endpoint_data=e0, config=self.config,
-                                      **dic, draw_Nsegs=draw_Nsegs,
-                                      **base_kws, **kwargs)
+        replay_env = LarvaWorldReplay(step_data=s, endpoint_data=e0, config=self.config,draw_Nsegs=draw_Nsegs,
+                                      **dic, **base_kws, **kwargs)
 
         replay_env.run()
         print('Visualization complete')
@@ -497,23 +488,23 @@ class LarvaDataset:
         self.segs = nam.midline(self.Nsegs, type='seg')
 
         self.points_xy = nam.xy(self.points)
-        self.points_dst = nam.dst(self.points)
-        self.points_vel = nam.vel(self.points)
-        self.points_acc = nam.acc(self.points)
-        self.point_lin_pars = self.points_dst + self.points_vel + self.points_acc
+        # self.points_dst = nam.dst(self.points)
+        # self.points_vel = nam.vel(self.points)
+        # self.points_acc = nam.acc(self.points)
+        # self.point_lin_pars = self.points_dst + self.points_vel + self.points_acc
 
-        self.angles_vel = nam.vel(self.angles)
-        self.angles_acc = nam.acc(self.angles)
-        self.angle_pars = self.angles + self.angles_vel + self.angles_acc
+        # self.angles_vel = nam.vel(self.angles)
+        # self.angles_acc = nam.acc(self.angles)
+        # self.angle_pars = self.angles + self.angles_vel + self.angles_acc
 
         self.contour = nam.contour(Nc)
         self.contour_xy = nam.xy(self.contour)
 
-        self.cent_xy = nam.xy('centroid')
-        self.cent_dst = nam.dst('centroid')
-        self.cent_vel = nam.vel('centroid')
-        self.cent_acc = nam.acc('centroid')
-        self.cent_lin_pars = [self.cent_dst, self.cent_vel, self.cent_acc]
+        # self.cent_xy = nam.xy('centroid')
+        # self.cent_dst = nam.dst('centroid')
+        # self.cent_vel = nam.vel('centroid')
+        # self.cent_acc = nam.acc('centroid')
+        # self.cent_lin_pars = [self.cent_dst, self.cent_vel, self.cent_acc]
 
         ang = ['front_orientation', 'rear_orientation', 'bend']
         self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang)

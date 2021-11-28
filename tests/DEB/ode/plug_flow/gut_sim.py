@@ -10,6 +10,7 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 
 from lib.anal.plotting import plot_debs
+from lib.conf.base.dtypes import null_dict
 from lib.model.DEB.deb import DEB, deb_sim
 
 substrates=False
@@ -35,8 +36,9 @@ if substrates :
 if plug_flow :
     show=True
     ds,dds=[],[]
-    for k_abs, pref in zip([1.0,0.5], ['Rovers', 'Sitters']) :
-        d,dd = deb_sim(sample='None.10_controls',id=f'{pref} SIM', model_id=f'{pref} DEB', deb_dt=60, dt=0.1, k_abs=k_abs)
+    for k_abs, pref in zip([0.95,0.5], ['Rovers', 'Sitters']) :
+        gut_params=null_dict('gut_params', k_abs=k_abs)
+        d,dd = deb_sim(sample='None.10_controls',id=f'{pref} SIM', model_id=f'{pref} DEB', deb_dt=60, dt=0.1, gut_params=gut_params)
         ds.append(d)
         dds.append(dd)
         break

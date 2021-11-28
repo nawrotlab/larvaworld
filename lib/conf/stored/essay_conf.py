@@ -17,10 +17,7 @@ class Essay:
         self.type = type
         self.enrichment = enrichment
         self.collections = collections
-        # self.full_path = f'{paths.path("ESSAY")}/{type}/{self.essay_id}/'
-        # self.path = f'essays/{type}'
         self.essay_id = f'{type}_{next_idx(type, "essay")}'
-        # self.dir = f'essays/{type}/{self.essay_id}'
         self.path = f'essays/{type}/{self.essay_id}/data'
         self.full_path = f'{paths.path("ESSAY")}/{type}/{self.essay_id}/data'
         self.plot_dir = f'{paths.path("ESSAY")}/{type}/{self.essay_id}/plots'
@@ -52,6 +49,11 @@ class RvsS_Essay(Essay):
     def __init__(self, all_figs=False, **kwargs):
         super().__init__(type='RvsS', enrichment=enr_dict(proc=['spatial']),
                          collections=['pose', 'feeder', 'gut'], **kwargs)
+        self.qs=[1.0, 0.75, 0.5, 0.25, 0.15]
+        self.hs=[0, 1, 2, 3, 4]
+        self.durs=[10, 15, 20]
+        self.dur=5
+        self.substrates=['Agar', 'Yeast']
         self.exp_dict = {**self.intake_exp(), **self.starvation_exp(),
                          **self.quality_exp(), **self.refeeding_exp(),**self.pathlength_exp()}
         self.all_figs = all_figs
@@ -68,16 +70,16 @@ class RvsS_Essay(Essay):
     def pathlength_exp(self, dur=20, exp='pathlength'):
         return {
             exp: [self.conf2(exp=exp, id=f'{exp}_{n}_{dur}min', dur=dur, on_food=nb) for n, nb in
-                  zip(['agar', 'yeast'], [False, True])]}
+                  zip(self.substrates, [False, True])]}
 
-    def intake_exp(self, durs=[10, 15, 20], exp='intake'):
-        return {exp: [self.conf2(exp=exp, id=f'{exp}_{dur}min', dur=dur) for dur in durs]}
+    def intake_exp(self,  exp='intake'):
+        return {exp: [self.conf2(exp=exp, id=f'{exp}_{dur}min', dur=dur) for dur in self.durs]}
 
-    def starvation_exp(self, hs=[0, 1, 2, 3, 4], dur=5, exp='starvation'):
-        return {exp: [self.conf2(exp=exp, id=f'{exp}_{h}h_{dur}min', dur=dur, l_kws={'h_starved': h}) for h in hs]}
+    def starvation_exp(self, exp='starvation'):
+        return {exp: [self.conf2(exp=exp, id=f'{exp}_{h}h_{self.dur}min', dur=self.dur, l_kws={'h_starved': h}) for h in self.hs]}
 
-    def quality_exp(self, qs=[1.0, 0.75, 0.5, 0.25, 0.15], dur=5, exp='quality'):
-        return {exp: [self.conf2(exp=exp, id=f'{exp}_{q}_{dur}min', dur=dur, l_kws={'q': q}) for q in qs]}
+    def quality_exp(self, exp='quality'):
+        return {exp: [self.conf2(exp=exp, id=f'{exp}_{q}_{self.dur}min', dur=self.dur, l_kws={'q': q}) for q in self.qs]}
 
     def refeeding_exp(self, h=3, dur=120, exp='refeeding'):
         return {exp: [self.conf2(exp=exp, id=f'{exp}_{h}h_{dur}min', dur=dur, l_kws={'h_starved': h}) for h in [h]]}
@@ -87,9 +89,6 @@ class RvsS_Essay(Essay):
         markers = ['D', 's']
         ls = [r'$for^{R}$', r'$for^{S}$']
         shorts = ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']
-
-        # figs = {}
-        # results = {}
 
         def dsNls(ds0, lls=None):
             if lls is None:
@@ -102,33 +101,31 @@ class RvsS_Essay(Essay):
                     'save_to': self.plot_dir,
                     'leg_cols': RS_leg_cols,
                     'markers': markers,
-                    # 'show': True,
                     }
 
         if exp == 'pathlength':
-            lls = flatten_list([[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in ['Agar', 'Yeast']])
+            lls = flatten_list([[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in self.substrates])
             kwargs = {
                 **dsNls(ds0, lls),
                 'xlabel': r'time on substrate $(min)$',
             }
-            self.figs['1_pathlength'] = plot_pathlength(scaled=False, save_as=f'1_PATHLENGTH.pdf', unit='cm', **kwargs)
+            self.figs[f'1_{exp}'] = plot_pathlength(scaled=False, save_as=f'1_PATHLENGTH.pdf', unit='cm', **kwargs)
 
         elif exp == 'intake':
             kwargs = {**dsNls(ds0),
-                      'coupled_labels': [10, 15, 20],
+                      'coupled_labels': self.durs,
                       'xlabel': r'Time spent on food $(min)$'}
-            self.figs['2_intake'] = barplot(par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
+            self.figs[f'2_{exp}'] = barplot(par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
             if self.all_figs:
                 for s in shorts:
                     p = getPar(s, to_return=['d'])[0]
-                    self.figs[f'intake {p}'] = barplot(par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
+                    self.figs[f'{exp} {p}'] = barplot(par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
 
         elif exp == 'starvation':
-            hs = [0, 1, 2, 3, 4]
             kwargs = {**dsNls(ds0),
-                      'coupled_labels': hs,
+                      'coupled_labels': self.hs,
                       'xlabel': r'Food deprivation $(h)$'}
-            self.figs['3_starvation'] = lineplot(par_shorts=['f_am_V'], save_as='3_POST-STARVATION_INTAKE.pdf',
+            self.figs[f'3_{exp}'] = lineplot(par_shorts=['f_am_V'], save_as='3_POST-STARVATION_INTAKE.pdf',
                                                  ylabel='Food intake', scale=1000, **kwargs)
             if self.all_figs:
                 for ii in ['feeding']:
@@ -136,41 +133,37 @@ class RvsS_Essay(Essay):
                                               label_epochs=False, **kwargs)
                 for s in shorts:
                     p = getPar(s, to_return=['d'])[0]
-                    self.figs[f'post-starvation {p}'] = lineplot(par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
+                    self.figs[f'{exp} {p}'] = lineplot(par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
                                                                  **kwargs)
 
         elif exp == 'quality':
-            qs = [1.0, 0.75, 0.5, 0.25, 0.15]
-            qs_labels = [int(q * 100) for q in qs]
             kwargs = {**dsNls(ds0),
-                      'coupled_labels': qs_labels,
+                      'coupled_labels': [int(q * 100) for q in self.qs],
                       'xlabel': 'Food quality (%)'
                       }
-            self.figs['4_quality'] = barplot(par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
+            self.figs[f'4_{exp}'] = barplot(par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
             if self.all_figs:
                 for s in shorts:
                     p = getPar(s, to_return=['d'])[0]
-                    self.figs[f'rearing-quality {p}'] = barplot(par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
+                    self.figs[f'{exp} {p}'] = barplot(par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
 
         elif exp == 'refeeding':
             h = 3
             n = f'5_REFEEDING_after_{h}h_starvation_'
             kwargs = dsNls(ds0)
-            self.figs['5_refeeding'] = plot_food_amount(scaled=True, filt_amount=True, save_as='5_REFEEDING_INTAKE.pdf',
+            self.figs[f'5_{exp}'] = plot_food_amount(scaled=True, filt_amount=True, save_as='5_REFEEDING_INTAKE.pdf',
                                                         **kwargs)
 
             if self.all_figs:
-                self.figs[f'refeeding food-intake'] = plot_food_amount(scaled=True, save_as=f'{n}scaled_intake.pdf',
-                                                                       **kwargs)
-                self.figs[f'refeeding food-intake(filt)'] = plot_food_amount(scaled=True, filt_amount=True,
+                self.figs[f'{exp} food-intake'] = plot_food_amount(scaled=True, save_as=f'{n}scaled_intake.pdf',**kwargs)
+                self.figs[f'{exp} food-intake(filt)'] = plot_food_amount(scaled=True, filt_amount=True,
                                                                              save_as=f'{n}scaled_intake_filt.pdf',
                                                                              **kwargs)
                 for s in shorts:
                     p = getPar(s, to_return=['d'])[0]
-                    self.figs[f'refeeding {p}'] = timeplot(par_shorts=[s], show_first=False, subfolder=None,
+                    self.figs[f'{exp} {p}'] = timeplot(par_shorts=[s], show_first=False, subfolder=None,
                                                            save_as=f'{n}{p}.pdf', **kwargs)
 
-        # return figs, results
 
 
 class Patch_Essay(Essay):
@@ -195,16 +188,15 @@ class Patch_Essay(Essay):
     def time_ratio_exp(self, exp='double_patch'):
         return {
             exp: [self.conf2(exp=exp, id=f'{exp}_{n}_{self.dur}min', dur=self.dur, type=n,
-                             l_kws={'N': self.N, 'navigator': True, 'pref': f'{n}_'}) for
-                  n in self.substrates]}
+                             l_kws={'N': self.N, 'navigator': True, 'pref': f'{n}_'}) for n in self.substrates]}
 
     def analyze(self, exp, ds0):
         if exp == 'double_patch':
             kwargs = {'datasets': flatten_list(ds0),
                       'save_to': self.plot_dir,
-                      'save_as': 'double_patch.pdf',
+                      'save_as': f'{exp}.pdf',
                       'show': True}
-            self.figs['double_patch'] = boxplot_double_patch(**kwargs)
+            self.figs[exp] = boxplot_double_patch(**kwargs)
 
 
 
@@ -253,5 +245,5 @@ essay_dict = {
 }
 
 if __name__ == "__main__":
-    figs, results = RvsS_Essay(all_figs=True).run()
+    figs, results = RvsS_Essay(all_figs=False).run()
     # figs, results = Patch_Essay().run()

@@ -108,11 +108,10 @@ class LarvaWorld:
         self.create_schedules()
         self.create_arena(**self.env_pars.arena)
         self.space = self.create_space()
-        for id, pars in self.env_pars.border_list.items():
-            print(id)
-            b = Border(model=self, unique_id=id, **pars)
-
-            self.add_border(b)
+        if 'border_list' in self.env_pars.keys() :
+            for id, pars in self.env_pars.border_list.items():
+                b = Border(model=self, unique_id=id, **pars)
+                self.add_border(b)
 
         self.sim_clock = ren.SimulationClock(self.dt, color=self.scale_clock_color)
         self.sim_scale = ren.SimulationScale(self.arena_dims[0], color=self.scale_clock_color)
@@ -127,7 +126,7 @@ class LarvaWorld:
                                               font=pygame.font.SysFont("comicsansms", 25))
         self.end_condition_met = False
 
-        if self.env_pars.windscape is not None and self.env_pars.windscape.wind_speed is not None:
+        if 'windscape' in self.env_pars.keys() and self.env_pars.windscape is not None and self.env_pars.windscape.wind_speed is not None:
             self.windscape = WindScape(model=self, **self.env_pars.windscape)
         else:
             self.windscape = None
@@ -227,21 +226,14 @@ class LarvaWorld:
 
             # create a static body for the space borders
             self.tank = space.CreateStaticBody(position=(.0, .0))
-            tank_shape = b2ChainShape(vertices=self.tank_shape.tolist())
-            self.tank.CreateFixture(shape=tank_shape)
-
+            self.tank.CreateFixture(shape=b2ChainShape(vertices=self.tank_shape.tolist()))
             #     create second static body to attach friction
             self.friction_body = space.CreateStaticBody(position=(.0, .0))
-            friction_body_shape = b2ChainShape(vertices=self.space_edges)
-            self.friction_body.CreateFixture(shape=friction_body_shape)
-
-
+            self.friction_body.CreateFixture(shape=b2ChainShape(vertices=self.space_edges))
         else:
             space = ContinuousSpace(x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2, torus=False)
         return space
 
-    # def _create_food_grid(self, space_range, grid_pars):
-    #     self.food_grid = FoodGrid(**grid_pars, space_range=space_range, model=self)
 
     def create_schedules(self):
         self.active_larva_schedule = NamedRandomActivation('active_larva_schedule', self)
@@ -276,11 +268,7 @@ class LarvaWorld:
             return self.get_flies()
 
     def generate_larva_color(self):
-        if self.random_colors:
-            color = fun.random_colors(1)[0]
-        else:
-            color = self.default_larva_color
-        return color
+        return fun.random_colors(1)[0] if self.random_colors else self.default_larva_color
 
     def set_background(self, width, height):
         if self.use_background:
@@ -355,15 +343,15 @@ class LarvaWorld:
         if background_motion is None:
             background_motion = [0, 0, 0]
         if self.background_motion is not None and tick is not None:
-            background_motion = self.background_motion[:, tick]
+            background_motion = self.background_motion[:, tick-1]
         if self._screen is None:
-            m = self.vis_kwargs['render']['mode']
+            m = self.vis_kwargs.render.mode
             vid = f'{self.media_name}.mp4' if m == 'video' else None
             im = f'{self.media_name}_{self.snapshot_counter}.png' if m == 'image' else None
 
             self._screen = ren.Viewer(self.screen_width, self.screen_height, caption=self.id,
                                       fps=self.video_fps, dt=self.dt,
-                                      show_display=self.vis_kwargs['render']['show_display'],
+                                      show_display=self.vis_kwargs.render.show_display,
                                       record_video_to=vid, record_image_to=im)
             self.display_configuration(self._screen)
             self.render_aux(self.screen_width, self.screen_height)
@@ -692,18 +680,19 @@ def generate_larvae(N, sample_dict, base_model, RefPars=None):
             lF = copy.deepcopy(modF)
             for p, vs in sample_dict.items():
                 lF.update({RefPars[p]: vs[i]})
-            all_pars.append(unflatten(lF))
+            dic=AttrDict.from_nested_dicts(unflatten(lF))
+            all_pars.append(dic)
     else:
         all_pars = [base_model] * N
     return all_pars
 
 
 def get_sample_bout_distros(model, sample):
-    m = copy.deepcopy(model)
-    if m['brain']['intermitter_params'] and sample != {}:
+    m = AttrDict.from_nested_dicts(copy.deepcopy(model))
+    if m.brain.intermitter_params and sample != {}:
         for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
-            if m['brain']['intermitter_params'][dist]['fit']:
-                m['brain']['intermitter_params'][dist] = sample['bout_distros'][bout]
+            if m.brain.intermitter_params[dist].fit:
+                m.brain.intermitter_params[dist] = sample.bout_distros[bout]
     return m
 
 

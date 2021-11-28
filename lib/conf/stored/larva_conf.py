@@ -93,16 +93,17 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
     return d
 
 
-def RvsS_larva(EEB, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=None, **deb_kws):
+def RvsS_larva(EEB, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=None,gut_kws={}, **deb_kws):
     if OD is None:
         ms = ['L', 'F']
     else:
         ms = ['LOF']
     b = brain(ms, OD=OD, crawler=Cbas, intermitter=Im(EEB)) if not mock else brain(['Im', 'F'],
                                                                                    intermitter=Im(EEB))
+
     return null_dict('larva_conf', brain=b, body=null_dict('body', initial_length=0.001, Nsegs=Nsegs),
                      energetics=null_dict('energetics', hunger_as_EEB=True, hunger_gain=hunger_gain, DEB_dt=DEB_dt,
-                                          **deb_kws))
+                                          gut_params=null_dict('gut_params',  **gut_kws),**deb_kws))
 
 
 def nengo_brain(module_shorts, EEB, OD=None):
@@ -230,10 +231,12 @@ def create_mod_dict() :
     }
 
     RvsS = {
-        'rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover'),
+        'rover': RvsS_larva(EEB=0.37, gut_kws={'k_abs' : 0.8}),
+        'sitter': RvsS_larva(EEB=0.67, gut_kws={'k_abs' : 0.4}),
+        'old_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover'),
+        'old_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter'),
         'navigator_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', OD=OD1),
         'mock_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', Nsegs=1, mock=True),
-        'sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter'),
         'navigator_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', OD=OD1),
         'mock_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', Nsegs=1, mock=True),
     }
@@ -262,7 +265,8 @@ def create_mod_dict() :
 
 if __name__ == '__main__':
     zebrafish = {
-        'nengo_explorer': mod(nengo_brain(['L', 'W'], EEB=0.0)),
+        'rover': RvsS_larva(EEB=0.37, gut_kws={'k_abs' : 0.8}),
+        'sitter': RvsS_larva(EEB=0.67, gut_kws={'k_abs' : 0.4}),
     }
     from lib.conf.stored.conf import saveConf
     for k, v in zebrafish.items():

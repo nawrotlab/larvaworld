@@ -1,7 +1,6 @@
 import numpy as np
 from siunits import BaseUnit, Composite, DerivedUnit
 
-
 from lib.aux.collecting import output_keys
 
 proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
@@ -115,7 +114,9 @@ def init_vis():
         'color': d['color'],
 
     }
+
     return d
+
 
 def init_pars():
     from typing import List, Tuple, Union, TypedDict
@@ -226,22 +227,7 @@ def init_pars():
             'bend_correction_coef': {'v': 1.4, 'max': 10.0,
                                      'h': 'The correction coefficient restoring the bending angle during forward motion by aligning the rear body segments to the front heading axis.'},
         },
-        'energetics': {'species': {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype',
-                                   'h': 'The phenotype/species-specific fitted DEB model to use.'},
-                       'f_decay': {'v': 0.1, 'max': 1.0, 'dv': 0.1,
-                                   'h': 'The exponential decay coefficient of the DEB functional response.'},
-                       'absorption': {'max': 1.0, 'h': 'The absorption ration for consumed food.'},
-                       'V_bite': {'v': 0.001, 'max': 0.01, 'dv': 0.0001,
-                                  'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'},
-                       'hunger_as_EEB': {**bT,
-                                         'h': 'Whether the DEB-generated hunger drive informs the exploration-exploitation balance.'},
-                       'hunger_gain': {'v': 0.0, 'max': 1.0,
-                                       'h': 'The sensitivy of the hunger drive in deviations of the DEB reserve density.'},
-                       'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb'],
-                                             'h': 'The method used to calculate the DEB assimilation energy flow.'},
-                       'DEB_dt': {'max': 1.0, 'disp': 'DEB timestep',
-                                  'h': 'The timestep of the DEB energetics module in seconds.'},
-                       },
+
         'crawler': {'waveform': {'t': str, 'v': 'realistic', 'vs': ['realistic', 'square', 'gaussian', 'constant'],
                                  'h': 'The waveform of the repetitive crawling oscillator (CRAWLER) module.'},
                     'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5), 'max': 2.0, 'disp': 'range',
@@ -447,12 +433,12 @@ def init_pars():
         'seg_ratio': {'max': 1.0,
                       'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
 
-        'olfaction_sensors': {'t': List[int], 'min': 0, 'max': 16, 'v' : [0],'disp' : 'olfaction',
-                          'h': 'The indexes of the contour points bearing olfaction sensors.'},
+        'olfaction_sensors': {'t': List[int], 'min': 0, 'max': 16, 'v': [0], 'disp': 'olfaction',
+                              'h': 'The indexes of the contour points bearing olfaction sensors.'},
 
-        'touch_sensors': {'t': List[int], 'min': 0, 'max': 16,'disp' : 'touch',
+        'touch_sensors': {'t': List[int], 'min': 0, 'max': 16, 'disp': 'touch',
                           'h': 'The indexes of the contour points bearing touch sensors.'},
-        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0,'disp' : 'contour',
+        'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0, 'disp': 'contour',
                    'h': 'The XY coordinates of the body contour.'},
     }
 
@@ -537,6 +523,40 @@ def init_pars():
         **{f'{m}_params': d[m] for m in d['modules'].keys()},
         'nengo': bF
     }
+
+    d['gut_params'] = {
+        'M_gm': {'v': 10 ** -2, 'min': 0.0, 'h': 'Gut capacity in C-moles per unit of gut volume.'},
+        'y_P_X': {'v': 0.9, 'min': 0.0, 'max': 1.0, 'h': 'Yield of product per unit of food.'},
+        'k_g': {'v': 1.0, 'min': 0.0, 'h': 'Decay rate of digestive enzyme.'},
+        'k_c': {'v': 1.0, 'min': 0.0, 'h': 'Release rate of carrier enzymes.'},
+        'k_abs': {'v': 1.0, 'min': 0.0, 'h': 'Rate constant for absorption : k_P * y_Pc.'},
+        'k_dig': {'v': 1.0, 'min': 0.0, 'h': 'Rate constant for digestion : k_X * y_Xg.'},
+        'f_dig': {'v': 1.0, 'min': 0.0, 'max': 1.0, 'h': 'Scaled functional response for digestion : M_X/(M_X+M_K_X)'},
+        'f_abs': {'v': 1.0, 'min': 0.0, 'max': 1.0, 'h': 'Scaled functional response for absorption : M_P/(M_P+M_K_P)'},
+        'M_c_per_cm2': {'v': 5 * 10 ** -8, 'min': 0.0,
+                        'h': 'Area specific amount of carriers in the gut per unit of gut surface.'},
+        'J_g_per_cm2': {'v': 10 ** -2 / (24 * 60 * 60), 'min': 0.0,
+                        'h': 'Secretion rate of enzyme per unit of gut surface per second.'},
+        'constant_M_c': {**bT, 'h': 'Whether to assume a constant amount of carrier enzymes on the gut surface.'}
+    }
+
+    d['energetics'] = {'species': {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype',
+                                   'h': 'The phenotype/species-specific fitted DEB model to use.'},
+                       'f_decay': {'v': 0.1, 'max': 1.0, 'dv': 0.1,
+                                   'h': 'The exponential decay coefficient of the DEB functional response.'},
+                       'absorption': {'v': 0.5, 'max': 1.0, 'h': 'The absorption ration for consumed food.'},
+                       'V_bite': {'v': 0.001, 'max': 0.01, 'dv': 0.0001,
+                                  'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'},
+                       'hunger_as_EEB': {**bT,
+                                         'h': 'Whether the DEB-generated hunger drive informs the exploration-exploitation balance.'},
+                       'hunger_gain': {'v': 0.0, 'max': 1.0,
+                                       'h': 'The sensitivy of the hunger drive in deviations of the DEB reserve density.'},
+                       'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb'],
+                                             'h': 'The method used to calculate the DEB assimilation energy flow.'},
+                       'DEB_dt': {'max': 1.0, 'disp': 'DEB timestep',
+                                  'h': 'The timestep of the DEB energetics module in seconds.'},
+                       'gut_params':d['gut_params']
+                       }
 
     d['larva_conf'] = {
         'brain': d['brain'],
@@ -772,7 +792,10 @@ def init_pars():
         'use_background': {**bF, 'h': 'Whether to use a virtual moving background when replaying a fixated larva.'}
     }
 
+
+
     return d
+
 
 if __name__ == '__main__':
     dic = init_pars()

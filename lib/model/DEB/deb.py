@@ -7,6 +7,7 @@ import os
 import numpy as np
 from scipy.integrate import quad, solve_ivp
 
+from lib.aux.dictsNlists import save_dict
 from lib.model.DEB.deb_aux import beta0, simplex
 from lib.conf.base.dtypes import null_dict
 from lib.conf.base.init_pars import substrate_dict
@@ -125,7 +126,7 @@ class DEB:
     def __init__(self, id='DEB model', species='default', steps_per_day=24*60, cv=0, T=298.15, eb=1.0, substrate=None,
                  aging=False, print_output=False, starvation_strategy=False, assimilation_mode='deb', save_dict=True, save_to=None,
                  V_bite=0.0005, absorption=None, base_hunger=0.5, hunger_gain=0,hunger_as_EEB=False, hours_as_larva=0, simulation=True, use_gut=True,
-                 intermitter=None, **kwargs):
+                 intermitter=None,gut_params=None, **kwargs):
 
         # Drosophila model by default
         self.species=species
@@ -140,11 +141,9 @@ class DEB:
         # Hunger drive parameters
         self.hunger_gain = hunger_gain
         self.hunger_as_EEB = hunger_as_EEB
-        self.intermitter = intermitter
 
-        if self.hunger_as_EEB and self.intermitter is not None:
-            base_hunger=self.intermitter.base_EEB
-        self.base_hunger = base_hunger
+        self.set_intermitter(intermitter, base_hunger)
+
         self.T = T
         self.L0 = 10 ** -10
         self.hours_as_larva = hours_as_larva
@@ -184,7 +183,7 @@ class DEB:
         self.V = self.L0 ** 3
         self.deb_p_A = 0
         self.sim_p_A = 0
-        self.gut_p_A = 0
+        # self.gut_p_A = 0
         # print(substrate)
         if substrate is None :
             substrate=null_dict('substrate')
@@ -199,8 +198,10 @@ class DEB:
 
         self.steps_per_day = steps_per_day
         self.dt = 1 / steps_per_day
+        if gut_params is None:
+            gut_params=null_dict('gut_params')
 
-        self.gut = Gut(deb=self, save_dict=save_dict, **kwargs) if use_gut else None
+        self.gut = Gut(deb=self, save_dict=save_dict, **gut_params) if use_gut else None
         self.set_steps_per_day(steps_per_day)
         self.run_embryo_stage()
         self.predict_larva_stage(f=self.base_f)
@@ -231,14 +232,18 @@ class DEB:
         self.k_E_dt = self.k_E * dt
 
         if self.gut is not None :
-            self.gut.get_Nticks(dt)
-            self.J_X_A_array = np.ones(self.gut.gut_Nticks)*self.J_X_A
+            self.gut.get_residence_ticks(dt)
+            self.J_X_A_array = np.ones(self.gut.residence_ticks) * self.J_X_A
+
+    def set_intermitter(self, intermitter,base_hunger=0.5):
+        self.intermitter = intermitter
+        if self.hunger_as_EEB and self.intermitter is not None:
+            base_hunger = self.intermitter.base_EEB
+        self.base_hunger=base_hunger
 
     def set_steps_per_day(self, steps_per_day):
         self.steps_per_day = steps_per_day
         self.dt = 1 / steps_per_day
-        # print(steps_per_day/24/60)
-        # raise
         self.scale_time()
 
     def derived_pars(self):
@@ -417,8 +422,6 @@ class DEB:
             print(f'Physical length (mm) :      {np.round(self.Lwe * 10, 3)}')
 
     def time_to_death_by_starvation(self):
-        #     p.312 of the DEB textbook. Assuming that at time 0 the reserve density is e(0)=l=L/Lm then death comes at t=u**-1 *L*ln(k**-1) or t=u**-1 *L*(k**-1)
-        # return self.v**-1*self.L*self.kap**-1
         return self.v**-1*self.L*math.log(self.kap**-1)
 
     def predict_imago_stage(self, f=1.0):
@@ -463,8 +466,8 @@ class DEB:
         t = 0
 
         while self.E_H < self.E_Hb:
-            p_S = self.p_M_dt * self.V + self.p_T_dt * self.V ** (
-                    2 / 3)  # This is in e/t and below needs to be volume-specific
+            # This is in e/t and below needs to be volume-specific
+            p_S = self.p_M_dt * self.V + self.p_T_dt * self.V ** (2 / 3)
             p_C = self.E * (E_G * self.v_dt / self.V ** (1 / 3) + p_S / self.V) / (kap * self.E / self.V + E_G)
             p_G = kap * p_C - p_S
             p_J = self.k_J_dt * self.E_H
@@ -543,14 +546,10 @@ class DEB:
             assimilation_mode = self.assimilation_mode
         self.f = f
         self.age += self.dt
-        # print(self.dt*24*60*60, self.age)
         kap = self.kap
         E_G = self.E_G
-
         if self.E_R < self.E_Rj:
-            if self.gut is not None:
-                self.gut.update(X_V)
-            p_A = self.get_p_A(f=f, assimilation_mode=assimilation_mode)
+            p_A = self.get_p_A(f=f, assimilation_mode=assimilation_mode, X_V=X_V)
             p_S = self.p_M_dt * self.V
             p_C = self.E * (E_G * self.k_E_dt + p_S / self.V) / (kap * self.E / self.V + E_G)
             p_G = kap * p_C - p_S
@@ -641,6 +640,9 @@ class DEB:
             self.epoch_qs.append(q)
             self.epochs.append([ep['start']+tb, ep['stop']+tb if ep['stop'] is not None else self.pupation_time_in_hours])
         self.hours_as_larva = self.age*24 - tb
+        if self.gut is not None :
+            self.gut.update()
+
 
     @ property
     def pupation_buffer(self):
@@ -711,8 +713,9 @@ class DEB:
             if self.gut is not None :
                 d['Nfeeds'] = self.gut.Nfeeds
                 d['mean_feed_freq'] = self.gut.Nfeeds/(self.age-self.birth_time_in_hours)/(60*60)
-                d['gut_residence_time'] = self.gut.tau_gut
+                d['gut_residence_time'] = self.gut.residence_time
                 d.update(self.gut.dict)
+                # print(self.id, self.gut.Nfeeds, self.intermitter.base_EEB, self.base_hunger)
             
         # self.save_dict(path)
         return d
@@ -725,20 +728,19 @@ class DEB:
         else :
             return {**self.dict, **self.gut.dict}
 
-    def store_epochs(self, epochs, fs):
-        t0 = self.birth_time_in_hours
-        t1 = self.pupation_time_in_hours
-        t2 = self.death_time_in_hours
-        epochs = [[s0 + t0, s1 + t0] for [s0, s1] in epochs]
-        # print(t0,t1,t2,epochs, fs)
-        for t in [t1, t2]:
-            if not np.isnan(t):
-                f_epochs = [[(s0, np.clip(s1, a_min=s0, a_max=t)),f] for [s0, s1], f in zip(epochs,fs) if s0 <= t]
-            else :
-                f_epochs = [[(s0, s1), f] for [s0, s1], f in zip(epochs, fs)]
-        epochs=[(s0,s1) for (s0,s1),f in f_epochs]
-        fs=[f for (s0,s1),f in f_epochs]
-        return epochs,fs
+    # def store_epochs(self, epochs, fs):
+    #     t0 = self.birth_time_in_hours
+    #     t1 = self.pupation_time_in_hours
+    #     t2 = self.death_time_in_hours
+    #     epochs = [[s0 + t0, s1 + t0] for [s0, s1] in epochs]
+    #     for t in [t1, t2]:
+    #         if not np.isnan(t):
+    #             f_epochs = [[(s0, np.clip(s1, a_min=s0, a_max=t)),f] for [s0, s1], f in zip(epochs,fs) if s0 <= t]
+    #         else :
+    #             f_epochs = [[(s0, s1), f] for [s0, s1], f in zip(epochs, fs)]
+    #     epochs=[(s0,s1) for (s0,s1),f in f_epochs]
+    #     fs=[f for (s0,s1),f in f_epochs]
+    #     return epochs,fs
 
     def save_dict(self, path=None):
         if path is None :
@@ -748,31 +750,23 @@ class DEB:
                 return
                 # raise ValueError ('No path to save DEB dict')
         if self.dict is not None:
-            # self.finalize_dict()
+            os.makedirs(path, exist_ok=True)
             self.dict_file = f'{path}/{self.id}.txt'
-            # self.deb_dict_file = f'{path}/deb_{self.id}.txt'
-            # self.gut_dict_file = f'{path}/gut_{self.id}.txt'
             if self.gut is not None :
                 d={**self.dict, **self.gut.dict}
             else :
                 d=self.dict
-            if not os.path.exists(path):
-                os.makedirs(path)
-            for f,d in zip([self.dict_file], [d]) :
-            # for f,d in zip([self.dict_file,self.deb_dict_file,self.gut_dict_file], [self.dict, self.deb_dict, self.gut_dict]) :
-                with open(f, "w") as fp:
-                    json.dump(d, fp)
+            save_dict(d, self.dict_file, use_pickle=False)
 
-    def get_p_A(self, f, assimilation_mode):
+
+    def get_p_A(self, f, assimilation_mode, X_V):
         self.deb_p_A = self.p_Amm_dt * self.base_f * self.V
         self.sim_p_A = self.p_Amm_dt * f * self.V
 
         if assimilation_mode == 'sim':
             return self.sim_p_A
-        elif assimilation_mode == 'gut':
-            self.gut_p_A = self.gut.p_A
-            # print(self.gut_p_A, self.deb_p_A)
-            # print(int(100*self.gut_p_A/ self.deb_p_A))
+        elif assimilation_mode == 'gut' and self.gut is not None:
+            self.gut.update(X_V)
             return self.gut.p_A
         elif assimilation_mode == 'deb':
             return self.deb_p_A

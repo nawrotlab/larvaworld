@@ -626,7 +626,7 @@ def draw_body_midline(viewer, midline_xy, radius):
             viewer.draw_polyline(mid, color=(0, 0, 255), closed=False, width=r / 10)
             for i, xy in enumerate(mid):
                 c = 255 * i / (Nmid - 1)
-                viewer.draw_circle(xy, r / 10, color=(c, 255 - c, 0), width=r / 20)
+                viewer.draw_circle(xy, r / 15, color=(c, 255 - c, 0), width=r / 20)
     except:
         pass
 

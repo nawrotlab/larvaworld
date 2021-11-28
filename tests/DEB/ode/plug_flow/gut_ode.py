@@ -18,7 +18,7 @@ def prepare_deb(q=1, dt=0.1, **kwargs):
     # Aux
     # dt = 0.1
     substrate = {'type': 'standard', 'quality': q}
-    deb = DEB(species='default', substrate=substrate, constant_M_c=True, save_to='./plug_flow_ode',
+    deb = DEB(substrate=substrate, save_to='./plug_flow_ode',
               # Gut parameters
               # M_gm=10 ** -2,  # gut capacity in C-moles for unit of gut volume
               # k_dig=1,  # rate constant for digestion : k_X * y_Xg
@@ -34,7 +34,6 @@ def prepare_deb(q=1, dt=0.1, **kwargs):
               **kwargs)
     deb.grow_larva(epochs={0: null_dict('epoch', start=0.0, stop=72, substrate=substrate)})
     deb.set_steps_per_day(steps_per_day=int(24 * 60 * 60 / dt))
-    # print(deb.dt*24*60*60)
     return deb
 
 
@@ -122,7 +121,7 @@ def run_gut(g, N_t_gs, dt, mode='ode'):
 
 def test_gut(q=1,dt=0.1, N_t_gs=2, mode='ode', title=None, fig=None, ax=None, show=True, **kwargs):
     print(mode)
-    deb = prepare_deb(q=q,dt=dt, **kwargs)
+    deb = prepare_deb(q=q,dt=dt, gut_params=null_dict('gut_params',  **kwargs))
     z, t, t_g, M0 = run_gut(deb.gut, N_t_gs, dt, mode=mode)
     plot_gut(deb, deb.gut, z, t, t_g, M0, N_t_gs, dt, fig=fig, ax=ax, show=show, title=title)
 
@@ -137,4 +136,4 @@ def compare_gut(save_to=None, save_as = 'SIMvsODE_gut_plug-flow.pdf', show=True,
     if show:
         plt.show()
 
-compare_gut(save_to='./SIMvsODE', q=0.35, dt=3.34, k_g=0.7)
+compare_gut(save_to='./SIMvsODE', q=0.35, dt=3.34, k_g=1)

@@ -16,7 +16,7 @@ class BaseIntermitter(Effector):
         super().__init__(**kwargs)
         self.brain = brain
         self.save_to = save_to
-
+        # print(EEB)
         self.crawler = brain.crawler if brain is not None else None
         self.feeder = brain.feeder if brain is not None else None
         self.turner = brain.turner if brain is not None else None

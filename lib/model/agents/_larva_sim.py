@@ -17,23 +17,21 @@ class LarvaSim(BodySim, Larva):
                  life_history=None, **kwargs):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
                        odor=odor, group=group, default_color=default_color)
-        self.build_energetics(larva_pars['energetics'], life_history=life_history)
-        BodySim.__init__(self, model=model, orientation=orientation, **larva_pars['physics'], **larva_pars['body'],
-                         **larva_pars['Box2D_params'],**kwargs)
+        self.build_energetics(larva_pars.energetics, life_history=life_history)
+        BodySim.__init__(self, model=model, orientation=orientation, **larva_pars.physics, **larva_pars.body,
+                         **larva_pars.Box2D_params,**kwargs)
 
-        self.brain = self.build_brain(larva_pars['brain'])
-        if self.energetics:
-            self.deb.intermitter = self.brain.intermitter
+        self.brain = self.build_brain(larva_pars.brain)
+        if self.deb is not None:
+            self.deb.set_intermitter(self.brain.intermitter)
 
         self.reset_feeder()
         self.radius = self.sim_length / 2
 
         self.food_detected, self.feeder_motion, self.current_V_eaten, self.feed_success = None, False, 0, 0
-        # self.food_missed, self.food_found = False, False
         self.cum_food_detected = 0
-        self.foraging_dict = {id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
-                              self.model.foodtypes.keys()}
-        # self.foraging_dict= {action :{id: [0] for id in self.model.foodtypes} for action in ['detection', 'consumption']}
+        self.foraging_dict = AttrDict.from_nested_dicts({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
+                              self.model.foodtypes.keys()})
 
     def compute_step(self):
         # t0 = []
@@ -54,6 +52,7 @@ class LarvaSim(BodySim, Larva):
 
         # t0.append(time.time())
         # print(np.array(np.diff(t0) * 1000000).astype(int))
+
     def detect_food(self, pos):
         t0 = []
         # t0.append(time.time())
@@ -118,59 +117,34 @@ class LarvaSim(BodySim, Larva):
         return self.brain.feeder.V_bite * self.V  # ** (2 / 3)
 
     def build_energetics(self, energetic_pars, life_history):
-        if not hasattr(self, 'real_mass'):
-            self.real_mass = None
-        if not hasattr(self, 'real_length'):
-            self.real_length = None
-
-        self.V = None
-
         if energetic_pars is not None:
-            self.energetics = True
+            dt=energetic_pars.DEB_dt
+            if dt is None:
+                dt=self.model.dt
             self.temp_cum_V_eaten = 0
-            self.f_exp_coef = np.exp(-energetic_pars['f_decay'] * energetic_pars['DEB_dt'])
-            steps_per_day = 24 * 6
-            cc = {
-                'id': self.unique_id,
-                'steps_per_day': steps_per_day,
-                'hunger_gain': energetic_pars['hunger_gain'],
-                'hunger_as_EEB': energetic_pars['hunger_as_EEB'],
-                'V_bite': energetic_pars['V_bite'],
-                'absorption': energetic_pars['absorption'],
-                'species': energetic_pars['species'],
-                # 'substrate': self.model.food_grid.substrate,
-                # 'substrate': life['substrate'],
-                # 'substrate_type': life['substrate_type'],
-                # 'intermitter': self.brain.intermitter,
-            }
-            self.deb = DEB(**cc)
-
+            self.f_exp_coef = np.exp(-energetic_pars.f_decay * dt)
+            self.deb = DEB(id=self.unique_id, steps_per_day=24*6, **energetic_pars)
             self.deb.grow_larva(**life_history)
-            if energetic_pars['DEB_dt'] is None:
-                self.deb_step_every = 1
-                self.deb.set_steps_per_day(int(24 * 60 * 60 / self.model.dt))
-            else:
-                self.deb_step_every = int(energetic_pars['DEB_dt'] / self.model.dt)
-                self.deb.set_steps_per_day(int(24 * 60 * 60 / energetic_pars['DEB_dt']))
-            self.deb.assimilation_mode = energetic_pars['assimilation_mode']
+            self.deb_step_every = int(dt / self.model.dt)
+            self.deb.set_steps_per_day(int(24 * 60 * 60 / dt))
             self.real_length = self.deb.Lw * 10 / 1000
             self.real_mass = self.deb.Ww
             self.V = self.deb.V
 
         else:
-            self.energetics = False
             self.deb = None
+            self.V = None
+            self.real_mass = None
+            self.real_length = None
 
     def build_brain(self, conf):
-        modules = conf['modules']
-        if conf['nengo']:
-            brain = NengoBrain(agent=self, modules=modules, conf=conf)
+        if conf.nengo:
+            return NengoBrain(agent=self, modules=conf.modules, conf=conf)
         else:
-            brain = DefaultBrain(agent=self, modules=modules, conf=conf)
-        return brain
+            return DefaultBrain(agent=self, modules=conf.modules, conf=conf)
 
     def run_energetics(self, V_eaten):
-        if self.energetics:
+        if self.deb is not None:
             self.temp_cum_V_eaten += V_eaten
             if self.model.Nticks % self.deb_step_every == 0:
                 X_V = self.temp_cum_V_eaten
@@ -183,28 +157,25 @@ class LarvaSim(BodySim, Larva):
                 self.real_mass = self.deb.Ww
                 self.V = self.deb.V
                 self.adjust_body_vertices()
-                # self.max_V_bite = self.get_max_V_bite()
 
     def get_feed_success(self, t):
         return self.feed_success
 
     def update_behavior_dict(self):
-        d = self.null_behavior_dict.copy()
+        d = AttrDict.from_nested_dicts(self.null_behavior_dict.copy())
         inter = self.brain.intermitter
         if inter is not None:
             s, f, p = inter.active_bouts
-            # print()
-            # print(s,f,p)
-            d['stride_id'] = s is not None
-            d['feed_id'] = f is not None
-            d['pause_id'] = p is not None
-            d['stride_stop'] = inter.stride_stop
+            d.stride_id = s is not None
+            d.feed_id = f is not None
+            d.pause_id = p is not None
+            d.stride_stop = inter.stride_stop
 
         orvel = self.front_orientation_vel
         if orvel > 0:
-            d['Lturn_id'] = True
+            d.Lturn_id = True
         elif orvel < 0:
-            d['Rturn_id'] = True
+            d.Rturn_id = True
         color = self.update_color(self.default_color, d)
         self.set_color([color] * self.Nsegs)
 
@@ -284,18 +255,17 @@ class LarvaSim(BodySim, Larva):
         # Paint the body to visualize effector state
         if self.model.color_behavior:
             self.update_behavior_dict()
-        # print(self.deb.hunger, self.deb.e)
         if self.brain.intermitter is not None :
             self.brain.intermitter.update(food_present=self.food_detected, feed_success=self.feed_success)
 
     def update_foraging_dict(self, foodtype, current_V_eaten):
         if foodtype is not None:
-            self.foraging_dict[foodtype]['on_food_tr'] += self.model.dt
-            self.foraging_dict[foodtype]['sf_am'] += current_V_eaten
+            self.foraging_dict[foodtype].on_food_tr += self.model.dt
+            self.foraging_dict[foodtype].sf_am += current_V_eaten
             self.cum_food_detected += int(self.on_food)
 
     def finalize_foraging_dict(self):
         for id, vs in self.foraging_dict.items():
-            vs['on_food_tr'] /= self.cum_dur
-            vs['sf_am'] /= self.V
+            vs.on_food_tr /= self.cum_dur
+            vs.sf_am /= self.V
         return self.foraging_dict

@@ -8,7 +8,7 @@ from lib.aux.combining import combine_pdfs
 from lib.aux.dictsNlists import flatten_list, unique_list
 from lib.anal.comparing import ExpFitter
 from lib.anal.plotting import plot_turn_Dbearing, plot_turn_amp, plot_turns, timeplot, \
-    plot_navigation_index, plot_debs, plot_food_amount, plot_gut, plot_pathlength, plot_endpoint_params, barplot, \
+    plot_navigation_index, plot_debs, plot_food_amount, plot_pathlength, plot_endpoint_params, barplot, \
     plot_chunk_Dorient2source, plot_marked_strides, lineplot, plot_stridesNpauses, \
     plot_interference, plot_dispersion, plot_stride_Dbend, plot_stride_Dorient, plot_ang_pars, calibration_plot, \
     plot_crawl_pars, boxplot, boxplot_double_patch, plot_2pars, plot_nengo_network

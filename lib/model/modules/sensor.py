@@ -35,9 +35,6 @@ class Sensor(Effector):
                 self.activation = self.A1
             elif self.activation < self.A0:
                 self.activation = self.A0
-        # if list(input.values())[0]!=0 :
-        #     print(input)
-        # print(self.gain)
         return self.activation
 
     def affect_locomotion(self):

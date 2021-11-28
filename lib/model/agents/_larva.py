@@ -1,6 +1,7 @@
 from copy import deepcopy
 import numpy as np
 
+from lib.aux.dictsNlists import AttrDict
 from lib.model.agents._agent import LarvaworldAgent
 
 
@@ -13,22 +14,19 @@ class Larva(LarvaworldAgent):
         self.behavior_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id', 'Lturn_id', 'Rturn_id']
         self.null_behavior_dict = dict(zip(self.behavior_pars, [False] * len(self.behavior_pars)))
 
-    def update_color(self, default_color, behavior_dict, mode='lin'):
+    def update_color(self, default_color, dic, mode='lin'):
         color = deepcopy(default_color)
         if mode == 'lin':
-            # if beh_dict['stride_stop'] :
-            #     color=np.array([0, 255, 0])
-            if behavior_dict['stride_id']:
+            if dic.stride_id:
                 color = np.array([0, 150, 0])
-
-            elif behavior_dict['pause_id']:
+            elif dic.pause_id:
                 color = np.array([255, 0, 0])
-            elif behavior_dict['feed_id']:
+            elif dic.feed_id:
                 color = np.array([0, 0, 255])
         elif mode == 'ang':
-            if behavior_dict['Lturn_id']:
+            if dic.Lturn_id:
                 color[2] = 150
-            elif behavior_dict['Rturn_id']:
+            elif dic.Rturn_id:
                 color[2] = 50
         return color
 

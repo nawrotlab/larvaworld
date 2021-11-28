@@ -30,15 +30,12 @@ class RLmemory(Effector):
         self.q_table = np.zeros((self.state_space.shape[0], len(self.actions)))
 
         self.train_dur = train_dur
-        # self.update_dt = update_dt
         self.lastAction = 0
         self.lastState = 0
         self.Niters = int(update_dt * 60 / self.dt)
         self.iterator = self.Niters
         self.table = False
         self.rewardSum = 0
-        # print(self.state_space[13])
-        # raise
 
     def state_collapse(self, dx):
         k = self.state_spacePerSide

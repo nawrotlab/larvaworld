@@ -3,7 +3,7 @@ from copy import deepcopy
 import numpy as np
 
 import lib.aux.ang_aux
-import lib.aux.dictsNlists
+import lib.aux.dictsNlists as dNl
 from lib.model.agents._larva import Larva
 from lib.model.body.body import draw_body_midline, draw_body_head, draw_body_centroid, draw_selected_body
 from lib.model.body.controller import BodyReplay
@@ -28,8 +28,8 @@ class LarvaReplay(Larva, BodyReplay):
             self.cen_pos = (np.nan, np.nan)
 
         self.Nsegs = m.draw_Nsegs
-        self.mid_ar = data[lib.aux.dictsNlists.flatten_list(m.mid_pars)].values.reshape([N, m.Npoints, 2])
-        self.con_ar = data[lib.aux.dictsNlists.flatten_list(m.con_pars)].values.reshape([N, m.Ncontour, 2])
+        self.mid_ar = data[dNl.flatten_list(m.mid_pars)].values.reshape([N, m.Npoints, 2])
+        self.con_ar = data[dNl.flatten_list(m.con_pars)].values.reshape([N, m.Ncontour, 2])
 
         vp_beh = [p for p in self.behavior_pars if p in m.chunk_pars]
         self.beh_ar = np.zeros([N, len(self.behavior_pars)], dtype=bool)
@@ -55,7 +55,7 @@ class LarvaReplay(Larva, BodyReplay):
             self.cen_pos = self.cen_ar[i]
         self.pos = self.pos_ar[i]
         self.trajectory = self.pos_ar[:i, :].tolist()
-        self.beh_dict = dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist()))
+        self.beh_dict = dNl.AttrDict.from_nested_dicts(dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist())))
         if self.Nsegs is not None:
             self.angles = self.ang_ar[i]
             self.orients = self.or_ar[i]

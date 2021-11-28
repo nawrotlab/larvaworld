@@ -31,18 +31,16 @@ class Gut:
         self.k_g = k_g  # decay rate of enzyme
         self.y_P_X = y_P_X  # yield of product by food
         self.constant_M_c = constant_M_c  # yield of product by food
-
         self.M_c_max = self.M_c_per_cm2 * self.A_g  # amount of carriers in the gut surface
         self.J_g = self.J_g_per_cm2 * self.A_g  # total secretion rate of enzyme in the gut surface
 
-        # print(self.k_abs)
         self.M_X = 0
         self.M_P = 0
         self.M_Pu = 0
         self.M_g = 0
         self.M_c = self.M_c_max
 
-        self.tau_gut = self.get_tau_gut(self.deb.base_f, self.deb.J_X_Am, self.deb.Lb)
+        self.residence_time = self.get_residence_time(self.deb.base_f, self.deb.J_X_Am, self.deb.Lb)
         self.mol_not_digested = 0
         self.mol_not_absorbed = 0
         self.mol_faeces = 0
@@ -74,7 +72,18 @@ class Gut:
             self.mol_ingested += M_X_in
             self.M_X += M_X_in
         self.digest()
+        self.resolve_occupancy()
 
+    def resolve_occupancy(self):
+        dM=self.M_X + self.M_P-self.Cmax
+        if dM>0 :
+            rP=self.M_P/(self.M_P+self.M_X)
+            dP=rP*dM
+            self.M_P-=dP
+            self.mol_not_absorbed+=dP
+            dX=(1-rP)*dM
+            self.M_X-=dX
+            self.mol_not_digested += dX
 
     def digest(self):
 
@@ -104,12 +113,12 @@ class Gut:
             self.M_c += dM_c
         self.p_A = dM_Pu * self.deb.mu_E
 
-    def get_tau_gut(self, f, J_X_Am, Lb):
+    def get_residence_time(self, f, J_X_Am, Lb):
         return self.r_gut_V*self.M_gm / (J_X_Am / Lb) / f
 
 
-    def get_Nticks(self, dt):
-        self.gut_Nticks = int(self.tau_gut / dt)
+    def get_residence_ticks(self, dt):
+        self.residence_ticks = int(self.residence_time / dt)
 
     @property
     def M_ingested(self):
@@ -169,7 +178,6 @@ class Gut:
 
     @property
     def Vmax(self):
-        # print(self.deb.V)
         return self.V_gm * self.deb.V
 
     @property
@@ -267,14 +275,14 @@ class Gut:
         for k, v in zip(self.dict_keys, gut_dict_values):
             self.dict[k].append(v)
 
-    @property
-    def X(self):
-        X = self.gut_X / self.V if self.V > 0 else 0
-        return X
+    # @property
+    # def X(self):
+    #     X = self.gut_X / self.V if self.V > 0 else 0
+    #     return X
 
-    @property
-    def f(self):
-        return self.X / (self.deb.K + self.X)
+    # @property
+    # def f(self):
+    #     return self.X / (self.deb.K + self.X)
 
     # def intake_as_body_volume_ratio(self, V, percent=True):
     #     r = self.ingested_volume() / V
