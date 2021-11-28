@@ -3,6 +3,7 @@ import numpy as np
 from lib.aux.ang_aux import angle_dif, angle, angle_to_x_axis, unwrap_deg
 from lib.aux.dictsNlists import flatten_list
 import lib.aux.naming as nam
+
 from lib.process.store import store_aux_dataset
 
 
@@ -153,6 +154,7 @@ def comp_angular(s, config, mode='minimal'):
 
 
 def angular_processing(s, e, config, recompute=False, mode='minimal', **kwargs):
+    from lib.process.basic import comp_extrema
     ang_pars = [nam.orient('front'), nam.orient('rear'), 'bend']
     if set(ang_pars).issubset(s.columns.values) and not recompute:
         print('Orientation and bend are already computed. If you want to recompute them, set recompute to True')
@@ -160,6 +162,7 @@ def angular_processing(s, e, config, recompute=False, mode='minimal', **kwargs):
         comp_orientations(s, e, config, mode=mode)
         comp_bend(s, config, mode=mode)
     comp_angular(s, config, mode=mode)
+    comp_extrema(s, dt=config.dt, parameters=[nam.vel(nam.orient('front'))], interval_in_sec=0.3)
     compute_LR_bias(s, e)
     store_aux_dataset(s, pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), type='distro', file=config.aux_dir)
     print(f'Completed {mode} angular processing.')

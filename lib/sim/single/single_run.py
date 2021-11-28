@@ -10,6 +10,7 @@ from lib.aux.dictsNlists import unique_list
 from lib.conf.stored.conf import loadRef
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 from lib.conf.base import paths
+from lib.sim.single.analysis import targeted_analysis
 
 
 class SingleRun:
@@ -143,8 +144,10 @@ class SingleRun:
             anal_params = ['foraging_analysis']
         elif exp in ['random_food']:
             anal_params = analysis_dict.survival
-        elif 'dispersion' in exp or 'dish' in exp:
+        elif 'dispersion' in exp :
             anal_params = ['comparative_analysis']
+        elif 'dish' in exp:
+            anal_params = ['targeted_analysis']
         # elif self.experiment in ['growth', 'RvsS'] :
         #     anal_params = analysis_dict['DEB']
         else:
@@ -160,6 +163,8 @@ class SingleRun:
                 figs.update(**foraging_analysis(self.source_xy, **kws))
             elif entry == 'deb_analysis':
                 figs.update(**deb_analysis(**kws))
+            elif entry == 'targeted_analysis':
+                figs.update(**targeted_analysis(**kws))
             elif entry == 'comparative_analysis':
                 samples = unique_list([d.config.sample for d in self.datasets])
                 targets = [loadRef(sd) for sd in samples]

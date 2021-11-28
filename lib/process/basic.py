@@ -23,7 +23,6 @@ def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_
 
     min_array = np.ones([Nticks, Npars, Nids]) * np.nan
     max_array = np.ones([Nticks, Npars, Nids]) * np.nan
-
     for i, p in enumerate(parameters):
         p_min, p_max = nam.min(p), nam.max(p)
         s[p_min] = np.nan

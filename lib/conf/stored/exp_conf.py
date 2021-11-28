@@ -120,7 +120,7 @@ grouped_exp_dict = {
     'exploration': {
         'tethered': simple_exp('focus', dur=30.0, l=lg(m='immobile', N=1, ors=[90.0, 90.0])),
         'focus': simple_exp('focus', l=lg(m='explorer', N=1, ors=[90.0, 90.0])),
-        'dish': simple_exp('dish', l=lg(m='explorer', N=5, s=0.02)),
+        'dish': simple_exp('dish', l=lg(m='Levy-walker', N=5, s=0.02)),
         'nengo_dish': simple_exp('dish', l=lg(m='nengo_explorer', N=25, s=0.02)),
         'dispersion': simple_exp('arena_200mm', l=lg(m='explorer', N=25)),
         'dispersion_x4': simple_exp('arena_200mm', dur=3.0,

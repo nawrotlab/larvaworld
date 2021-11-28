@@ -134,11 +134,11 @@ def detect_strides(s, e, config, dt=None, recompute=False, vel_par=None, track_p
     mid_flag = nam.max(vel_par)
     edge_flag = nam.min(vel_par)
 
-    comp_extrema(s, dt, parameters=[vel_par], interval_in_sec=0.3, abs_threshold=[np.inf, vel_threshold])
+    comp_extrema(s, dt, parameters=[vel_par], interval_in_sec=0.5, abs_threshold=[np.inf, vel_threshold])
     compute_freq(s, e, dt, parameters=[vel_par], freq_range=[0.7, 1.8])
     detect_contacting_chunks(s, e, aux_dir, dt, mid_flag=mid_flag, edge_flag=edge_flag,
                              vel_par=vel_par, control_pars=track_pars,
-                             track_point=track_point)
+                             track_point=track_point, vel_threshold=vel_threshold)
     if non_chunks:
         detect_non_chunks(s, e, dt, chunk_name=c, guide_parameter=vel_par)
     track_pars_in_chunks(s, e, aux_dir, chunks=[c], pars=track_pars)
@@ -357,7 +357,7 @@ def compute_chunk_metrics(s, e, chunks):
 
 
 def detect_contacting_chunks(s, e, aux_dir, dt, vel_par, track_point, chunk='stride', mid_flag=None, edge_flag=None,
-                             control_pars=[]):
+                             control_pars=[], vel_threshold=0.0):
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     t0 = int(s.index.unique('Step').min())
@@ -414,11 +414,14 @@ def detect_contacting_chunks(s, e, aux_dir, dt, vel_par, track_point, chunk='str
         valid = d[cpars].dropna().index.values
         d_dst = d[D0].values
         d_xy = d[XY0].values
+        guide=d[vel_par]
+        v_edges=guide.loc[edges]
+        v_mids=guide.loc[mids]
 
-        chunks = np.array([[a, b] for a, b in zip(edges[:-1], edges[1:]) if (b - a >= 0.5 * t)
+        chunks = np.array([[a, b] for a, b, va, vb in zip(edges[:-1], edges[1:],v_edges[:-1],v_edges[1:] ) if (b - a >= 0.5 * t)
                            and (b - a <= 2.0 * t)
                            and set(np.arange(a, b + 1)) <= set(valid)
-                           and (any((m > a) and (m < b) for m in mids))
+                           and (any((m > a) and (m < b) and (np.abs(vm-va)>vel_threshold) and (np.abs(vm-vb)>vel_threshold) for m, vm in zip(mids, v_mids)))
                            ]).astype(int)
         if len(chunks) == 0:
             continue

@@ -362,7 +362,7 @@ def plot_sample_tracks(mode='strides', agent_idx=0, agent_id=None, slice=[20, 40
         chunk_cols = ['lightblue', 'grey']
 
         p, ylab, ylim = getPar('sv', to_return=['d', 'l', 'lim'])
-        ylim = 1.0
+        ylim = (0.0,1.0)
     elif mode == 'turns':
         chunks = ['Rturn', 'Lturn']
         chunk_cols = ['lightgreen', 'orange']
@@ -371,6 +371,7 @@ def plot_sample_tracks(mode='strides', agent_idx=0, agent_id=None, slice=[20, 40
         bv = nam.vel(b)
         ho = nam.orient('front')
         hov = nam.vel(ho)
+        p, ylab, ylim = getPar('fov', to_return=['d', 'l', 'lim'])
 
     figx = 15 * 6 * 3 if slice is None else int((t1 - t0) / 3)
     figy = 5
@@ -381,7 +382,7 @@ def plot_sample_tracks(mode='strides', agent_idx=0, agent_id=None, slice=[20, 40
     for ii, (d, l) in enumerate(zip(P.datasets, P.labels)):
         ax = P.axs[ii]
 
-        P.conf_ax(ii, xlab=r'time $(sec)$' if ii == Nds - 1 else None, ylab=ylab, ylim=[0, ylim], xlim=slice,
+        P.conf_ax(ii, xlab=r'time $(sec)$' if ii == Nds - 1 else None, ylab=ylab, ylim=ylim, xlim=slice,
                   leg_loc='upper right', leg_handles=handles)
 
         temp_id = d.agent_ids[agent_idx] if agent_id is None else agent_id

@@ -206,6 +206,6 @@ def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None, **kwarg
 
 
 if __name__ == '__main__':
-    store_confs(['Model'])
+    # store_confs(['Model'])
     # store_confs(['Aux'])
-    # store_confs(['Env', 'Exp'])
+    store_confs(['Exp'])

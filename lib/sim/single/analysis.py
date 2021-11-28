@@ -11,7 +11,8 @@ from lib.anal.plotting import plot_turn_Dbearing, plot_turn_amp, plot_turns, tim
     plot_navigation_index, plot_debs, plot_food_amount, plot_pathlength, plot_endpoint_params, barplot, \
     plot_chunk_Dorient2source, plot_marked_strides, lineplot, plot_stridesNpauses, \
     plot_interference, plot_dispersion, plot_stride_Dbend, plot_stride_Dorient, plot_ang_pars, calibration_plot, \
-    plot_crawl_pars, boxplot, boxplot_double_patch, plot_2pars, plot_nengo_network
+    plot_crawl_pars, boxplot, boxplot_double_patch, plot_2pars, plot_nengo_network, plot_marked_turns, \
+    plot_sample_tracks
 from lib.conf.stored.conf import loadConf
 from lib.conf.base.dtypes import null_dict
 from lib.conf.base.par import getPar
@@ -444,6 +445,13 @@ def targeted_analysis(datasets, labels=None, save_to=None, pref='', show=False, 
                 'save_to': save_to,
                 'subfolder': None,
                 'show': show}
+
+    for mode in ['turns', 'strides'] :
+        plot_sample_tracks(**anal_kws, mode=mode,slice=[0, 60], **kwargs)
+    raise
+    plot_marked_turns(dataset=datasets[0],show=show, agent_ids=['Larva_0'], slices=[(0, 180)], **kwargs)
+    plot_marked_strides(**anal_kws, agent_idx=1, slice=[0, 180], save_as=f'sample_tracks{pref}.pdf', **kwargs)
+
     # init_dir, res_dir = 'init', 'result'
     plot_stridesNpauses(**anal_kws, plot_fits='best', time_unit='sec', range='default', print_fits=False,
                         save_as=f'bouts{pref}.pdf', save_fits_as=f'bout_fits{pref}.csv', **kwargs)
@@ -459,7 +467,7 @@ def targeted_analysis(datasets, labels=None, save_to=None, pref='', show=False, 
     plot_endpoint_params(**anal_kws, mode='tortuosity', save_as=f'tortuosity{pref}.pdf', **kwargs)
     plot_dispersion(**anal_kws, scaled=True, fig_cols=2, range=(0, 80), ymax=18, save_as=f'dispersion{pref}.pdf',
                     **kwargs)
-    plot_marked_strides(**anal_kws, agent_idx=1, slice=[0, 180], save_as=f'sample_tracks{pref}.pdf', **kwargs)
+
 
 def deb_analysis(datasets,**kwargs) :
     figs={}

@@ -19,7 +19,7 @@ def entry(plotID, title=None, **kwargs):
     return {'title': title, 'plotID': plotID, 'args': kwargs}
 
 
-def time(short, title=None, u='sec', f1=False,abs=False, **kwargs):
+def time(short, title=None, u='sec', f1=False, abs=False, **kwargs):
     if title is None:
         title = getPar(short, to_return=['d'])[0]
         # name =f'{short} timeplot'
@@ -141,16 +141,16 @@ predict = {
     ],
     'puff': [
 
-# *[nengo(p, same_plot=True if p == 'anemotaxis' else False) for p in
-#           ['anemotaxis', 'frequency', 'interference', 'velocity', 'crawler', 'turner', 'wind_effect_on_V',
-#            'wind_effect_on_Fr']],
-# entry('ethogram', add_samples=True),
-entry('ethogram', add_samples=False),
-# *[time(p) for p in ['A_wind', 'anemotaxis', 'o_wind']],
-*[time(p, abs=True) for p in ['fov', 'foa']],
-# *[time(p, abs=True) for p in ['fov', 'foa','b', 'bv', 'ba']],
-*[time(p) for p in ['sv', 'sa']],
-# *[time(p) for p in ['sv', 'sa', 'v', 'a']],
+        # *[nengo(p, same_plot=True if p == 'anemotaxis' else False) for p in
+        #           ['anemotaxis', 'frequency', 'interference', 'velocity', 'crawler', 'turner', 'wind_effect_on_V',
+        #            'wind_effect_on_Fr']],
+        # entry('ethogram', add_samples=True),
+        entry('ethogram', add_samples=False),
+        # *[time(p) for p in ['A_wind', 'anemotaxis', 'o_wind']],
+        *[time(p, abs=True) for p in ['fov', 'foa']],
+        # *[time(p, abs=True) for p in ['fov', 'foa','b', 'bv', 'ba']],
+        *[time(p) for p in ['sv', 'sa']],
+        # *[time(p) for p in ['sv', 'sa', 'v', 'a']],
     ],
     'RL': [
         time('D_olf', 'olfactor_decay_table', save_as='olfactor_decay.pdf', table='best_gains'),
@@ -173,4 +173,4 @@ entry('ethogram', add_samples=False),
     #               'food_mass_2', 'hunger', 'EEB','fs']],
     # ]
 }
-analysis_dict =AttrDict.from_nested_dicts(predict)
+analysis_dict = AttrDict.from_nested_dicts(predict)
