@@ -314,8 +314,9 @@ class LarvaDataset:
     def load_dicts(self, type, ids=None):
         if ids is None:
             ids = self.agent_ids
-        if type in self.larva_dicts and all([id in self.larva_dicts[type].keys() for id in ids]) :
-            ds=[self.larva_dicts[type][id] for id in ids]
+        ds0=self.larva_dicts
+        if type in ds0 and all([id in ds0[type].keys() for id in ids]) :
+            ds=[ds0[type][id] for id in ids]
         else :
             files = [f'{id}.txt' for id in ids]
             try :
