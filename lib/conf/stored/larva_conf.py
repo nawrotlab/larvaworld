@@ -96,7 +96,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
     return AttrDict.from_nested_dicts(d)
 
 
-def RvsS_larva(EEB, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=None,gut_kws={}, **deb_kws):
+def RvsS_larva(EEB=0.5, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=None,gut_kws={}, **deb_kws):
     if OD is None:
         ms = ['L', 'F']
     else:
@@ -104,9 +104,10 @@ def RvsS_larva(EEB, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=None,g
     b = brain(ms, OD=OD, crawler=Cbas, intermitter=Im(EEB)) if not mock else brain(['Im', 'F'],
                                                                                    intermitter=Im(EEB))
 
+    gut = null_dict('gut', **gut_kws)
+    deb = null_dict('DEB', hunger_as_EEB=True, hunger_gain=hunger_gain, DEB_dt=DEB_dt,**deb_kws)
     return null_dict('larva_conf', brain=b, body=null_dict('body', initial_length=0.001, Nsegs=Nsegs),
-                     energetics=null_dict('energetics', hunger_as_EEB=True, hunger_gain=hunger_gain, DEB_dt=DEB_dt,
-                                          gut_params=null_dict('gut_params',  **gut_kws),**deb_kws))
+                     energetics={'DEB' : deb, 'gut' : gut})
 
 
 def nengo_brain(module_shorts, EEB, OD=None):
@@ -388,6 +389,10 @@ def create_mod_dict():
     LO=brain(['L', 'O'])
     LW=brain(['L', 'W'])
     L=brain(['L'])
+    LTo=brain(['L', 'To'], turner=Tno_noise)
+    LToM=brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory)
+    LToMg=brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory)
+    LTo_brute=brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', brute_force=True))
     nLO=nengo_brain(['L', 'O'], EEB=0.0)
 
     def add_OD(OD, B0=LOF):
@@ -432,17 +437,12 @@ def create_mod_dict():
     }
 
     touchers = {
-        'toucher': add_brain(brain(['L', 'To'], turner=Tno_noise), bod={'touch_sensors': []}),
-        'toucher_brute': add_brain(brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', brute_force=True)),
-                             bod={'touch_sensors': []}),
-        'RL_toucher_0': add_brain(brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory),
-                            bod={'touch_sensors': []}),
-        'gRL_toucher_0': add_brain(brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory),
-                             bod={'touch_sensors': []}),
-        'RL_toucher_2': add_brain(brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory),
-                            bod={'touch_sensors': [0, 2]}),
-        'gRL_toucher_2': add_brain(brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory),
-                             bod={'touch_sensors': [0, 2]}),
+        'toucher': add_brain(LTo, bod={'touch_sensors': []}),
+        'toucher_brute': add_brain(LTo_brute,bod={'touch_sensors': []}),
+        'RL_toucher_0': add_brain(LToM,bod={'touch_sensors': []}),
+        'gRL_toucher_0': add_brain(LToMg,bod={'touch_sensors': []}),
+        'RL_toucher_2': add_brain(LToM,bod={'touch_sensors': [0, 2]}),
+        'gRL_toucher_2': add_brain(LToMg,bod={'touch_sensors': [0, 2]}),
     }
 
     other= {

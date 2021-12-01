@@ -118,12 +118,14 @@ class LarvaSim(BodySim, Larva):
 
     def build_energetics(self, energetic_pars, life_history):
         if energetic_pars is not None:
-            dt=energetic_pars.DEB_dt
+            pDEB=energetic_pars.DEB
+            pGUT=energetic_pars.gut
+            dt=pDEB.DEB_dt
             if dt is None:
                 dt=self.model.dt
             self.temp_cum_V_eaten = 0
-            self.f_exp_coef = np.exp(-energetic_pars.f_decay * dt)
-            self.deb = DEB(id=self.unique_id, steps_per_day=24*6, **energetic_pars)
+            self.f_exp_coef = np.exp(-pDEB.f_decay * dt)
+            self.deb = DEB(id=self.unique_id, steps_per_day=24*6,gut_params=pGUT, **pDEB)
             self.deb.grow_larva(**life_history)
             self.deb_step_every = int(dt / self.model.dt)
             self.deb.set_steps_per_day(int(24 * 60 * 60 / dt))

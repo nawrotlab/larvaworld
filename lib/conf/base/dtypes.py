@@ -54,7 +54,7 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
 
                     vs = vs.tolist()
         if vs is not None:
-            Ndigits = maxNdigits(np.array(vs), 3)
+            Ndigits = maxNdigits(np.array(vs), 4)
         if aux_vs is not None and vs is not None:
             vs += aux_vs
         d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t,

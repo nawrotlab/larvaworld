@@ -13,13 +13,24 @@ from lib.conf.base import paths
 class ModelTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.fields = ['physics', 'energetics', 'body']
+        self.fields = ['physics', 'body']
         self.module_keys = list(null_dict('modules').keys())
+        self.energetics_keys = list(null_dict('energetics').keys())
         self.canvas_size = (1200, 1000)
 
     def update(self, w, c, conf, id=None):
         for n in self.fields:
             c[n].update(w, conf[n])
+        if conf['energetics'] is None :
+            for k in self.energetics_keys:
+                c[k].disable(w)
+        else:
+            for k, v in conf['energetics'].items():
+                dic = conf['energetics'][k]
+                c[k].update(w, dic)
+                c[k].enable(w)
+
+
         module_dict = conf['brain']['modules']
         for k, v in module_dict.items():
             dic = conf['brain'][f'{k}_params']
@@ -42,6 +53,10 @@ class ModelTab(GuiTab):
         m = {}
         for n in self.fields:
             m[n] = None if c[n].disabled else c[n].get_dict(v, w)
+        if all([c[k].disabled for k in self.energetics_keys]):
+            m['energetics'] = None
+        else :
+            m['energetics'] = {k : c[k].get_dict(v, w) for k in self.energetics_keys}
 
         b = {}
         b['modules'] = module_dict
@@ -67,7 +82,9 @@ class ModelTab(GuiTab):
             'body': Cbody,
             'physics': Cbody,
             'feeder': Ceffector,
-            'energetics': Cener,
+            'DEB': Cener,
+            'gut': Cener,
+            # 'energetics': Cener,
         }
         dic = {
 
@@ -75,7 +92,9 @@ class ModelTab(GuiTab):
             'effectors': ['crawler', 'turner', 'feeder'],
             'sensors': ['olfactor', 'toucher', 'windsensor'],
             # 'modulation/memory': ['intermitter'],
-            'body/energetics': ['body', 'physics', 'energetics'],
+            'body': ['body', 'physics'],
+            'energetics': ['DEB', 'gut'],
+            # 'energetics': ['energetics'],
         }
 
         ss = (500, 650)
@@ -88,7 +107,8 @@ class ModelTab(GuiTab):
         for k, vs in dic.items():
             ppp = []
             for v in vs:
-                cc = PadDict(v, toggle=True if v not in ['body', 'physics'] else None, background_color=col_dict[v], text_kws=t_kws(16))
+                tS=20 if v in ['gut'] else 16
+                cc = PadDict(v, toggle=True if v not in ['body', 'physics'] else None, background_color=col_dict[v], text_kws=t_kws(tS))
                 c.update(cc.get_subdicts())
                 if v=='olfactor' :
                     ll = cc.get_layout(size=(ss[0], int(ss[1]/2)))
@@ -115,11 +135,8 @@ class ModelTab(GuiTab):
 
     def build(self):
         sl0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
-
-        # sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], progress=True,
-        #                     sublists={'env_params': sl1, 'larva_groups': s1},text_kws=t_kws(15), width=28)
         sl1 = SelectionList(tab=self, conftype='ModelGroup', disp='Model family :', buttons=[], single_line=True,
-                            width=15, text_kws=t_kws(12),sublists={'model families': sl0})
+                            width=15, text_kws=t_kws(10),sublists={'model families': sl0})
 
         l00 = gui_col([sl1, sl0], x_frac=0.2, y_frac=0.6, as_pane=True, pad=(20, 20))
         l01, c1 = self.build_module_tab()

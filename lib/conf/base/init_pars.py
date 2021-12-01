@@ -526,23 +526,25 @@ def init_pars():
         'nengo': bF
     }
 
-    d['gut_params'] = {
-        'M_gm': {'v': 10 ** -2, 'min': 0.0, 'h': 'Gut capacity in C-moles per unit of gut volume.'},
-        'y_P_X': {'v': 0.9, 'min': 0.0, 'max': 1.0, 'h': 'Yield of product per unit of food.'},
-        'k_g': {'v': 1.0, 'min': 0.0, 'h': 'Decay rate of digestive enzyme.'},
-        'k_c': {'v': 1.0, 'min': 0.0, 'h': 'Release rate of carrier enzymes.'},
-        'k_abs': {'v': 1.0, 'min': 0.0, 'h': 'Rate constant for absorption : k_P * y_Pc.'},
-        'k_dig': {'v': 1.0, 'min': 0.0, 'h': 'Rate constant for digestion : k_X * y_Xg.'},
-        'f_dig': {'v': 1.0, 'min': 0.0, 'max': 1.0, 'h': 'Scaled functional response for digestion : M_X/(M_X+M_K_X)'},
-        'f_abs': {'v': 1.0, 'min': 0.0, 'max': 1.0, 'h': 'Scaled functional response for absorption : M_P/(M_P+M_K_P)'},
-        'M_c_per_cm2': {'v': 5 * 10 ** -8, 'min': 0.0,
-                        'h': 'Area specific amount of carriers in the gut per unit of gut surface.'},
-        'J_g_per_cm2': {'v': 10 ** -2 / (24 * 60 * 60), 'min': 0.0,
+    d['gut'] = {
+        'M_gm': {'v': 10 ** -2, 'min': 0.0,'disp': 'gut scaled capacity', 'h': 'Gut capacity in C-moles per unit of gut volume.'},
+        'y_P_X': {'v': 0.9, 'min': 0.0, 'max': 1.0,'disp': 'food->product yield', 'h': 'Yield of product per unit of food.'},
+        'J_g_per_cm2': {'v': 10 ** -2 / (24 * 60 * 60), 'min': 0.0, 'disp': 'digestion secretion rate',
                         'h': 'Secretion rate of enzyme per unit of gut surface per second.'},
-        'constant_M_c': {**bT, 'h': 'Whether to assume a constant amount of carrier enzymes on the gut surface.'}
+        'k_g': {'v': 1.0, 'min': 0.0,'disp': 'digestion decay rate', 'h': 'Decay rate of digestive enzyme.'},
+        'k_dig': {'v': 1.0, 'min': 0.0, 'disp': 'digestion rate', 'h': 'Rate constant for digestion : k_X * y_Xg.'},
+        'f_dig': {'v': 1.0, 'min': 0.0, 'max': 1.0, 'disp': 'digestion response',
+                  'h': 'Scaled functional response for digestion : M_X/(M_X+M_K_X)'},
+        'M_c_per_cm2': {'v': 5 * 10 ** -8, 'min': 0.0, 'disp': 'carrier density',
+                        'h': 'Area specific amount of carriers in the gut per unit of gut surface.'},
+        'constant_M_c': {**bT, 'disp': 'constant carrier density',
+                         'h': 'Whether to assume a constant amount of carrier enzymes on the gut surface.'},
+        'k_c': {'v': 1.0, 'min': 0.0,'disp': 'carrier release rate', 'h': 'Release rate of carrier enzymes.'},
+        'k_abs': {'v': 1.0, 'min': 0.0,'disp': 'absorption rate', 'h': 'Rate constant for absorption : k_P * y_Pc.'},
+        'f_abs': {'v': 1.0, 'min': 0.0, 'max': 1.0,'disp': 'absorption response', 'h': 'Scaled functional response for absorption : M_P/(M_P+M_K_P)'},
     }
 
-    d['energetics'] = {'species': {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype',
+    d['DEB'] = {'species': {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype',
                                    'h': 'The phenotype/species-specific fitted DEB model to use.'},
                        'f_decay': {'v': 0.1, 'max': 1.0, 'dv': 0.1,
                                    'h': 'The exponential decay coefficient of the DEB functional response.'},
@@ -555,10 +557,15 @@ def init_pars():
                                        'h': 'The sensitivy of the hunger drive in deviations of the DEB reserve density.'},
                        'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb'],
                                              'h': 'The method used to calculate the DEB assimilation energy flow.'},
-                       'DEB_dt': {'max': 1.0, 'disp': 'DEB timestep',
+                       'DEB_dt': {'max': 1.0, 'disp': 'DEB timestep (sec)',
                                   'h': 'The timestep of the DEB energetics module in seconds.'},
-                       'gut_params':d['gut_params']
+                       # 'gut_params':d['gut_params']
                        }
+
+    d['energetics'] = {
+        'DEB' : d['DEB'],
+        'gut': d['gut']
+    }
 
     d['larva_conf'] = {
         'brain': d['brain'],
