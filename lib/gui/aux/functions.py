@@ -138,13 +138,14 @@ def retrieve_value(v, t):
 def retrieve_dict(dic, type_dic):
     return {k: retrieve_value(v, type_dic[k]) for k, v in dic.items()}
 
-def gui_col(element_list, x_frac=0.25, y_frac=1.0,as_pane=False,pad=None, **kwargs):
+def gui_col(element_list, x_frac=0.25, y_frac=1.0,as_pane=False,pad=None,add_to_bottom=[], **kwargs):
     l = []
     for e in element_list:
         if not as_pane :
             l += e.get_layout(as_col=False)
         else :
             l += e.get_layout(as_pane=True, pad=pad)
+    l+=add_to_bottom
     c = sg.Col(l, **col_kws, size=col_size(x_frac=x_frac, y_frac=y_frac), **kwargs)
     return c
 

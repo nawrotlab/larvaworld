@@ -3,6 +3,7 @@ import copy
 import os
 
 from lib.conf.base.dtypes import null_dict
+from lib.gui.aux.buttons import BoolButton, named_bool_button
 from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList, PadDict
 from lib.gui.aux.functions import col_size, gui_cols, t_kws, gui_col, tab_kws, col_kws
 from lib.gui.tabs.draw_body_tab import DrawBodyTab
@@ -47,6 +48,8 @@ class ModelTab(GuiTab):
             else :
                 c[k].disable(w)
         # c['Brain'].update(w, module_dict, use_prefix=False)
+        for kk in ['nengo'] :
+            w[f'TOGGLE_{kk}'].set_state(conf['brain'][kk])
 
     def get(self, w, v, c, as_entry=True):
         module_dict = dict(zip(self.module_keys, [w[f'TOGGLE_{k}'].get_state() for k in self.module_keys]))
@@ -64,7 +67,8 @@ class ModelTab(GuiTab):
             b[f'{k}_params'] = c[k].get_dict(v, w)
         if b['olfactor_params'] is not None:
             b['olfactor_params']['odor_dict'] = c['odor_gains'].dict
-        b['nengo'] = False
+        for kk in ['nengo']:
+            b[kk] = w[f'TOGGLE_{kk}'].get_state()
         m['brain'] = b
         return copy.deepcopy(m)
 
@@ -137,8 +141,8 @@ class ModelTab(GuiTab):
         sl0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
         sl1 = SelectionList(tab=self, conftype='ModelGroup', disp='Model family :', buttons=[], single_line=True,
                             width=15, text_kws=t_kws(10),sublists={'model families': sl0})
-
-        l00 = gui_col([sl1, sl0], x_frac=0.2, y_frac=0.6, as_pane=True, pad=(20, 20))
+        b_nengo = named_bool_button('nengo', False)
+        l00 = gui_col([sl1, sl0], x_frac=0.2, y_frac=0.6, as_pane=True, pad=(20, 20), add_to_bottom=[b_nengo])
         l01, c1 = self.build_module_tab()
         l1=[[l00, l01]]
         l2, g2 = self.build_architecture_tab()
