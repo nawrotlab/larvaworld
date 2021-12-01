@@ -380,10 +380,10 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None, **
     cc = {'datasets': datasets,
           'labels': labels,
           'save_to': save_to}
-    figs['stridesNpauses'] = plot_stridesNpauses(**cc, **kwargs)
+    figs['stridesNpauses'] = plot_stridesNpauses(**cc, plot_fits='best',**kwargs)
     for m in ['minimal', 'tiny']:
         figs[f'endpoint_{m}'] = plot_endpoint_params(**cc, mode=m, **kwargs)
-    for m in ['orientation', 'orientation_x2', 'bend', 'spinelength']:
+    for m in ['orientation', 'bend', 'spinelength']:
         for agent_idx in [None, 0, 1]:
             i = '' if agent_idx is None else f'_{agent_idx}'
             try:

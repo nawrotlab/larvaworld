@@ -345,7 +345,7 @@ class NengoIntermitter(OfflineIntermitter):
 
 
 class BranchIntermitter(BaseIntermitter):
-    def __init__(self,pause_dist=None, stridechain_dist=None,sample=None,beta=None, **kwargs):
+    def __init__(self,pause_dist=None, stridechain_dist=None,sample=None,beta=None,c=0.7,sigma=1, **kwargs):
         super().__init__(**kwargs)
         if beta is not None :
             self.beta=beta
@@ -356,17 +356,17 @@ class BranchIntermitter(BaseIntermitter):
             self.beta = get_exp_beta(l_run)
         else :
             self.beta=0.15
-
+        self.c=c
+        self.sigma=sigma
         self.stridechain_min, self.stridechain_max = stridechain_dist['range']
         self.pau_min, self.pau_max = (np.array(pause_dist['range'])/self.dt).astype(int)
-        # self.pau_min, self.pau_max = int(np.min(d_pau)), int(np.max(d_pau))
         self.disinhibit_locomotion()
 
     def generate_stridechain(self):
         return exp_bout(beta=self.beta, tmax=self.stridechain_max, tmin=self.stridechain_min)
 
     def generate_pause(self):
-        return critical_bout(c=0.9, sigma=1, N=1000, tmax=self.pau_max, tmin=self.pau_min)*self.dt
+        return critical_bout(c=self.c, sigma=self.sigma, N=1000, tmax=self.pau_max, tmin=self.pau_min)*self.dt
 
 
 class FittedIntermitter(OfflineIntermitter):

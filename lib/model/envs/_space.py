@@ -5,7 +5,7 @@ from shapely.geometry import LineString, Point
 from lib.anal.rendering import InputBox
 from lib.aux.colsNstr import colorname2tuple, col_range
 from lib.aux.dictsNlists import flatten_list, unique_list
-from lib.model.DEB.deb import Substrate
+from lib.model.DEB.substrate import Substrate
 
 
 class ValueGrid:

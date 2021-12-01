@@ -6,7 +6,7 @@ from shapely.geometry import Point, Polygon
 
 import lib.aux.sim_aux
 from lib.aux.xy_aux import eudis5, xy_uniform_circle
-from lib.model.DEB.deb import Substrate
+from lib.model.DEB.substrate import Substrate
 from lib.model.agents._agent import LarvaworldAgent
 
 

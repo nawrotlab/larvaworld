@@ -11,8 +11,9 @@ class Gut:
         self.M_gm = M_gm  # gut capacity in C-moles for unit of gut volume
         r_w2l = 0.2  # body width to length ratio
         r_gut_w = 0.7  # gut width relative to body width
-        self.r_gut_V = np.pi * r_w2l * r_gut_w / 4  # gut volume per unit of body volume
-        self.r_gut_A = np.pi * r_w2l * r_gut_w  # gut surface area per unit of body surface area
+        r_gut_w2L=0.5*r_w2l * r_gut_w # gut radius relative to body length
+        self.r_gut_V = np.pi * r_gut_w2L  # gut volume per unit of body volume
+        self.r_gut_A = 2* np.pi * r_gut_w2L  # gut surface area per unit of body surface area
         self.A_g = self.r_gut_A * self.deb.L ** 2  # Gut surface area
         self.V_gm = self.r_gut_V * self.deb.V
 
