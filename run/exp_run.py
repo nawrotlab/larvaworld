@@ -18,14 +18,16 @@ p = MP.add()
 p.add_argument('experiment', choices=kConfDict('Exp'), help='The experiment mode')
 p.add_argument('-a', '--analysis', action="store_true", help='Whether to run analysis')
 p.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae in each larva group')
+p.add_argument('-ms', '--models', type=str, nargs='+', help='The larva models to use for creating the simulation larva groups')
 
 args = p.parse_args()
 d = MP.get(args)
 exp = args.experiment
 N = args.Nagents
+models = args.models
 
 
-exp_conf = update_exp_conf(exp, d, N)
+exp_conf = update_exp_conf(exp, d, N, models)
 
 # exec = Exec(mode='sim', conf=exp_conf, run_externally=True)
 # exec.run()

@@ -1,7 +1,9 @@
+import copy
 from argparse import ArgumentParser
 
 import numpy as np
 
+from lib.aux.colsNstr import N_colors
 from lib.aux.dictsNlists import AttrDict
 from lib.conf.stored.conf import kConfDict
 from lib.conf.base.dtypes import null_dict, arena, par_dict
@@ -371,7 +373,7 @@ def init_parser(description='', parsers=[]) :
         parser=dic[n](parser)
     return parser
 
-def update_exp_conf(exp,d,N=None) :
+def update_exp_conf(exp,d,N=None, models=None) :
     from lib.conf.stored.conf import expandConf, next_idx
     exp_conf = expandConf(exp, 'Exp')
     d=AttrDict.from_nested_dicts(d)
@@ -383,6 +385,20 @@ def update_exp_conf(exp,d,N=None) :
     if sim.path is None:
         sim.path = f'single_runs/{exp}'
     exp_conf.sim_params = d.sim_params
+    if models is not None:
+        larva_groups={}
+        Nmodels=len(models)
+        colors=N_colors(Nmodels)
+        gConf0=list(exp_conf.larva_groups.values())[0]
+        for m,col in zip(models, colors) :
+            gConf = AttrDict.from_nested_dicts(copy.deepcopy(gConf0))
+            try :
+                gConf.model=expandConf(m, 'Model')
+            except :
+                raise ValueError (f'{m} larva-model does not exist!')
+            gConf.default_color=col
+            larva_groups[m]=gConf
+        exp_conf.larva_groups = larva_groups
     if N is not None:
         for gID, gConf in exp_conf.larva_groups.items():
             gConf.distribution.N = N

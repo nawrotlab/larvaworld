@@ -233,8 +233,6 @@ class LarvaSim(BodySim, Larva):
                     return
                 prev_carrier.carried_objects.remove(food)
                 prev_carrier.brain.olfactor.reset_all_gains()
-                # if self.model.experiment=='flag' :
-                #     prev_carrier.brain.olfactor.reset_gain(prev_carrier.base_odor_id)
             food.is_carried_by = self
             self.carried_objects.append(food)
             if self.model.experiment == 'capture_the_flag':
@@ -247,10 +245,8 @@ class LarvaSim(BodySim, Larva):
                 for f in self.model.get_flies():
                     if f.group == carrier_group:
                         f.brain.olfactor.set_gain(f.gain_for_base_odor, opponent_group_odor_id)
-                        # f.brain.olfactor.set_gain(0.0, 'Flag odor')
                     else:
                         f.brain.olfactor.set_gain(0.0, carrier_group_odor_id)
-                        # f.brain.olfactor.reset_gain('Flag odor')
                 self.brain.olfactor.set_gain(-self.gain_for_base_odor, opponent_group_odor_id)
 
     def update_behavior(self):
