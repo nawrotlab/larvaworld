@@ -566,9 +566,9 @@ class LarvaWorld:
         else:
             return []
 
-    def get_image_path(self):
-        return f'{self.media_name}_{self.snapshot_counter}.png'
-        # return None
+    # def get_image_path(self):
+    #     return f'{self.media_name}_{self.snapshot_counter}.png'
+    #     # return None
 
     def get_agent_list(self, class_name):
         global id

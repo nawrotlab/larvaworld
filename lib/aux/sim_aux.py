@@ -51,7 +51,7 @@ def inside_polygon(points, tank_polygon):
 
 
 def body(points, start=[1, 0], stop=[0, 0]):
-    xy = np.zeros([len(points) * 2, 2]) * np.nan
+    xy = np.zeros([len(points) * 2+2, 2]) * np.nan
     xy[0, :] = start
     xy[len(points) + 1, :] = stop
     for i in range(len(points)):

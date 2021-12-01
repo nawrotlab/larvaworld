@@ -48,6 +48,7 @@ def path(n) :
         'ExpGroup': f'{CF}/ExpGroupConfs.txt',
         'Essay': f'{CF}/EssayConfs.txt',
         'Model': f'{CF}/ModelConfs.txt',
+        'ModelGroup': f'{CF}/ModelGroupConfs.txt',
         'Batch': f'{CF}/BatchConfs.txt',
         'Settings': f'{CF}/SetConfs.txt',
         'Ref': f"{CF}/ReferenceDatasets.txt",

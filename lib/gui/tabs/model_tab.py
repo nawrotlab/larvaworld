@@ -115,7 +115,13 @@ class ModelTab(GuiTab):
 
     def build(self):
         sl0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
-        l00 = gui_col([sl0], x_frac=0.2, y_frac=0.6, as_pane=True, pad=(20, 20))
+
+        # sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], progress=True,
+        #                     sublists={'env_params': sl1, 'larva_groups': s1},text_kws=t_kws(15), width=28)
+        sl1 = SelectionList(tab=self, conftype='ModelGroup', disp='Model family :', buttons=[], single_line=True,
+                            width=15, text_kws=t_kws(12),sublists={'model families': sl0})
+
+        l00 = gui_col([sl1, sl0], x_frac=0.2, y_frac=0.6, as_pane=True, pad=(20, 20))
         l01, c1 = self.build_module_tab()
         l1=[[l00, l01]]
         l2, g2 = self.build_architecture_tab()
@@ -124,9 +130,9 @@ class ModelTab(GuiTab):
         self.selectionlists[self.draw_tab.conftype] = self.draw_tab.selectionlists[self.draw_tab.conftype]
 
         tabs={}
-        tabs['MODULES'] = l1
-        tabs['ARCHITECTURE'] = l2
-        tabs['DRAW'] = l3
+        tabs['modules'] = l1
+        tabs['architecture'] = l2
+        tabs['draw'] = l3
         l_tabs=[sg.Tab(k, v, key=f'{k}_TAB') for k,v in tabs.items()]
         l = [[sg.TabGroup([l_tabs], key='ACTIVE_MODEL_TAB', tab_location='topleft', **tab_kws)]]
         return l, {**c1, **c3}, {**g2, **g3}, {**{}, **d3}
