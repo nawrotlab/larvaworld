@@ -1,3 +1,4 @@
+import base64
 import copy
 import webbrowser
 
@@ -8,13 +9,13 @@ from lib.gui.aux import graphics
 from lib.gui.aux.functions import b6_kws, t_kws
 from lib.conf.base import paths
 
-
 sg.theme('LightGreen')
 b_kws = {
-            'button_color': (sg.theme_background_color(), sg.theme_background_color()),
-            'disabled_button_color': (sg.theme_background_color(), sg.theme_background_color()),
-             'border_width': 0,
-             }
+    'button_color': (sg.theme_background_color(), sg.theme_background_color()),
+    'disabled_button_color': (sg.theme_background_color(), sg.theme_background_color()),
+    'border_width': 0,
+}
+
 
 def button_row(name, buttons, button_args={}):
     but_tips = {
@@ -41,21 +42,22 @@ def button_row(name, buttons, button_args={}):
         'stop': "Stop the selected simulation.",
         'imitate': "Imitate the selected dataset in a simulation.",
     }
-    but_kws={
-        'browse' : {'initial_folder' : paths.path('DATA'), 'enable_events' : True,
-                    'target': (0,-1), 'button_type' : sg.BUTTON_TYPE_BROWSE_FOLDER},
-        'browse_figs' : {'initial_folder' : paths.path('exp_figs'), 'enable_events' : True,
-                         'target': (0,-1), 'button_type' : sg.BUTTON_TYPE_BROWSE_FILES, 'file_types':(("png Files", "*.png"),)},
+    but_kws = {
+        'browse': {'initial_folder': paths.path('DATA'), 'enable_events': True,
+                   'target': (0, -1), 'button_type': sg.BUTTON_TYPE_BROWSE_FOLDER},
+        'browse_figs': {'initial_folder': paths.path('exp_figs'), 'enable_events': True,
+                        'target': (0, -1), 'button_type': sg.BUTTON_TYPE_BROWSE_FILES,
+                        'file_types': (("png Files", "*.png"),)},
     }
     bl = []
     for b in buttons:
         kws = button_args[b] if b in list(button_args.keys()) else {}
 
         if b in but_kws.keys():
-            cur=copy.deepcopy(but_kws[b])
+            cur = copy.deepcopy(but_kws[b])
             cur.update(kws)
-        else :
-            cur=kws
+        else:
+            cur = kws
         bl.append(GraphButton(f'Button_{b}', f'{b.upper()} {name}', tooltip=but_tips[b], **cur))
     return bl
 
@@ -63,9 +65,7 @@ def button_row(name, buttons, button_args={}):
 def named_bool_button(name, state, toggle_name=None, text_kws={}, **kwargs):
     if toggle_name is None:
         toggle_name = name
-    l = [sg.T(f'{name} :', **text_kws), BoolButton(toggle_name, state, **kwargs)]
-
-    return l
+    return [sg.T(f'{name} :', **text_kws), BoolButton(toggle_name, state, **kwargs)]
 
 
 class GraphButton(Button):
@@ -80,7 +80,7 @@ class BoolButton(Button):
         self.state = state
         self.disabled = disabled
         super().__init__(image_data=self.get_image(self.state, self.disabled), k=f'TOGGLE_{self.name}',
-                         metadata=BtnInfo(state=self.state), **b6_kws,**b_kws, **kwargs)
+                         metadata=BtnInfo(state=self.state), **b6_kws, **b_kws, **kwargs)
 
     def toggle(self):
         if not self.disabled:
@@ -132,6 +132,19 @@ def color_pick_layout(name, color=None, show_text=False):
                      **t_kws(10)),
             GraphButton('Button_Color_Circle', f'PICK {name}_color', button_type=BUTTON_TYPE_COLOR_CHOOSER,
                         target=f'{name}_color', enable_events=True)]
+
+
+def bs64_to_png(bs64, save_as=None, save_to='.'):
+    import base64
+    from PIL import Image
+    from io import BytesIO
+
+    k = Image.open(BytesIO(base64.b64decode(bs64)))
+
+    if save_as is not None:
+        f = f'{save_to}/{save_as}.png'
+        k.save(f, 'PNG')
+    return k
 
 
 color_map = {
