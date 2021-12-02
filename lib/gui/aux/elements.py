@@ -803,7 +803,6 @@ class CollapsibleTable(Collapsible):
                         c2, c1 = fun.invert_color(c0, return_self=True)
                     except:
                         c2, c1 = ['lightblue', 'black']
-                        # c2, c1 = [c0, 'black']
                 row_cols.append((i, c1, c2))
         else:
             row_cols = None
@@ -829,10 +828,7 @@ class CollapsibleTable(Collapsible):
         Ks = v[K]
         if e == f'ADD {self.name}':
             from lib.gui.aux.windows import entry_window
-            if len(Ks) > 0:
-                id = self.data[Ks[0]][0]
-            else:
-                id = None
+            id = self.data[Ks[0]][0] if len(Ks) > 0 else None
             entry = entry_window(id=id, base_dict=self.dict)
             self.dict.update(**entry)
             self.update(w)
@@ -950,7 +946,6 @@ class CollapsibleDict(Collapsible):
         else:
             d = {}
             for k, t in self.dtypes.items():
-                # print(k,t)
                 k0 = f'{self.name}_{k}'
                 if t == bool:
                     d[k] = w[f'TOGGLE_{k0}'].get_state()
@@ -959,7 +954,6 @@ class CollapsibleDict(Collapsible):
                 elif t == dict or type(t) == dict:
                     d[k] = self.subdicts[k0].get_dict(v, w)
                 else:
-                    # print(k,t,k0,v[k0])
                     d[k] = retrieve_value(v[k0], t)
             if self.as_entry is None:
                 return d
@@ -979,7 +973,6 @@ class CollapsibleDict(Collapsible):
         content = []
         for k, args in type_dict.items():
             k0 = f'{name}_{k}'
-            # t = args['dtype']
             if args['dtype'] == dict:
                 subdicts[k0] = CollapsibleDict(k0, disp_name=k, type_dict=args['content'],
                                                text_kws=text_kws, value_kws=value_kws, state=self.subdict_state)
@@ -1050,9 +1043,6 @@ class PadDict(PadElement):
     def __init__(self, name, Ncols=1, subconfs={}, col_idx=None, header_width=None, row_idx=None,
                  type_dict=None, content=None, **kwargs):
         self.subconfs = subconfs
-
-        # if header_width is None:
-        #     header_width = 18 * Ncols + 6 * (Ncols - 1)
         super().__init__(name=name, **kwargs)
         if col_idx is None:
             col_idx = col_idx_dict.get(self.dict_name, None)
@@ -1068,13 +1058,6 @@ class PadDict(PadElement):
 
         self.header = self.build_header(self.get_header_width(header_width, Ncols))
         self.layout = self.header + self.content
-
-    # def get_header_width(self, header_width):
-    #     if header_width is not None :
-    #         s= header_width
-    #     else :
-    #         s=get_layout_size(self.content)
-    #     return s
 
     def get_header_width(self, header_width, Ncols):
         if header_width is not None:
@@ -1142,13 +1125,7 @@ class PadDict(PadElement):
                     self.subdicts[k0] = PadDict(k0, disp_name=k, dict_name=k, type_dict=args['content'], **subkws)
                 else:
                     self.subdicts[k0] = PadTable(k0, dict_name=args['entry'], disp_name=args['disp'],
-                                                 index=f'ID', **subkws
-                                                 # index=f'{args["entry"]} ID', **subkws
-                                                 # col_widths=[10, 3, 8, 7, 6], num_rows=5,
-                                                 # heading_dict={'N': 'distribution.N', 'color': 'default_color',
-                                                 #               'odor': 'odor.odor_id',
-                                                 #               'amount': 'amount'},
-                                                 )
+                                                 index=f'ID', **subkws)
                 ii = self.subdicts[k0].get_layout()[0]
             elif args['combo'] is not None:
                 if args['combo'] not in combos.keys():
@@ -1163,7 +1140,6 @@ class PadDict(PadElement):
                 ii = [sg.T(f'{get_disp_name(disp)}:', tooltip=args['tooltip'], **text_kws),
                       v_layout(f'{name}_{k}', args, self.value_kws, **subconfkws)]
             l.append(ii)
-
         for title, dic in combos.items():
             l.append(combo_layout(name, title, dic))
         return l
@@ -1198,9 +1174,7 @@ class PadTable(PadElement):
     def __init__(self, name, index=None, heading_dict=None, dict={}, header_width=28,
                  buttons=[], button_args={}, col_widths=None, num_rows=5, **kwargs):
         after_header = button_row(name, buttons, button_args)
-
         super().__init__(name=name, after_header=after_header, **kwargs)
-
         if index is None:
             index = self.name
         self.index = index
@@ -1211,17 +1185,14 @@ class PadTable(PadElement):
         self.headings = list(heading_dict.keys())
         self.dict = dict
         self.data = self.dict2data()
-
         col_visible = [True] * (len(self.headings) + 1)
         self.color_idx = None
         for i, p in enumerate(self.headings):
             if p in ['color']:
                 self.color_idx = i + 1
                 col_visible[i + 1] = False
-
         self.header_width = header_width - 2 * len(buttons)
         self.content = self.build(col_widths=col_widths, num_rows=num_rows, col_visible=col_visible)
-
         self.header = self.build_header(self.header_width)
         self.layout = self.header + self.content
 
@@ -1240,11 +1211,9 @@ class PadTable(PadElement):
                     col_widths.append(4)
                 else:
                     col_widths.append(w)
-
-        content = [[Table(values=self.data, headings=[self.index] + self.headings,
+        return [[Table(values=self.data, headings=[self.index] + self.headings,
                           def_col_width=7, key=self.key, num_rows=max([num_rows, len(self.data)]),
                           col_widths=col_widths, visible_column_map=col_visible)]]
-        return content
 
     def update(self, w, d=None):
         if d is not None:
@@ -1261,7 +1230,6 @@ class PadTable(PadElement):
                         c2, c1 = fun.invert_color(c0, return_self=True)
                     except:
                         c2, c1 = ['lightblue', 'black']
-                        # c2, c1 = [c0, 'black']
                 row_cols.append((i, c1, c2))
         else:
             row_cols = None
@@ -1314,8 +1282,6 @@ class Table(sg.Table):
         vs.append(row)
         if sort_idx is not None:
             vs.sort(key=lambda x: x[sort_idx])
-        # self.epochs.append([t1, t2, q])
-        # self.epochs.sort(key=lambda x: x[0])
         window.Element(self.Key).Update(values=vs, num_rows=len(vs))
 
     def remove_row(self, window, idx):
@@ -1328,25 +1294,21 @@ class GraphList(NamedList):
     def __init__(self, name, tab, fig_dict={}, next_to_header=None, default_values=None, canvas_size=(1000, 800),
                  list_size=None, list_header='Graphs', auto_eval=True, canvas_kws={'background_color': 'Lightblue'},
                  graph=False, subsample=1, **kwargs):
-
         self.tab = tab
         self.tab.graphlists[name] = self
         self.fig_dict = fig_dict
         self.subsample = subsample
         self.auto_eval = auto_eval
         self.list_key = f'{name}_GRAPH_LIST'
-
         values = list(fig_dict.keys())
         if list_size is None:
             h = int(np.max([len(values), 10]))
             list_size = (default_list_width, h)
-
         header_kws = {'text': list_header, 'after_header': next_to_header,
                       'text_kws': t_kws(14), 'single_line': False}
         default_value = default_values[0] if default_values is not None else None
         super().__init__(name=name, key=self.list_key, choices=values, default_value=default_value, drop_down=False,
                          size=list_size, header_kws=header_kws, auto_size_text=True, **kwargs)
-
         self.canvas_size = canvas_size
         self.canvas_key = f'{name}_CANVAS'
         self.canvas, self.canvas_element = self.init_canvas(canvas_size, canvas_kws, graph)
@@ -1387,8 +1349,7 @@ class GraphList(NamedList):
     def show_fig(self, w, fig):
         c = w[self.canvas_key].TKCanvas
         c.pack()
-        img = PhotoImage(file=fig)
-        img = img.subsample(self.subsample)
+        img = PhotoImage(file=fig).subsample(self.subsample)
         W, H = self.canvas_size
         c.create_image(int(W / 2), int(H / 2), image=img)
         self.fig_agg = img
@@ -1397,14 +1358,12 @@ class GraphList(NamedList):
 class ButtonGraphList(GraphList):
     def __init__(self, name, buttons=['refresh_figs', 'conf_fig', 'draw_fig', 'save_fig'], button_args={}, **kwargs):
         super().__init__(name=name, next_to_header=button_row(name, buttons, button_args), **kwargs)
-
         self.fig, self.save_to, self.save_as = None, '', ''
         self.func, self.func_kws = None, {}
 
     def get_graph_kws(self, func):
         signature = inspect.getfullargspec(func)
         vs = signature.defaults
-
         if vs is None:
             return {}
         kws = dict(zip(signature.args[-len(vs):], vs))
@@ -1447,7 +1406,6 @@ class ButtonGraphList(GraphList):
                 [sg.T('Directory', **t_kws(10)), sg.In(self.save_to, k=kFil, **t_kws(80)),
                  sg.FolderBrowse(initial_folder=paths.get_parent_dir(), key=kFil, change_submits=True)],
                 [sg.Ok(), sg.Cancel()]]
-
             e, v = sg.Window('Save figure', l).read(close=True)
             if e == 'Ok':
                 path = os.path.join(v[kFil], v[kDir])
@@ -1458,7 +1416,6 @@ class ButtonGraphList(GraphList):
         n = self.name
         k = self.list_key
         d0 = self.fig_dict
-
         if e == f'BROWSE_FIGS {n}':
             v0 = v[k]
             v1 = v[f'BROWSE_FIGS {n}']
@@ -1495,8 +1452,6 @@ class ButtonGraphList(GraphList):
 
 
 def draw_canvas(canvas, figure, side='top', fill='both', expand=True):
-    # size = figure.get_size_inches() * figure.dpi  # size in pixels
-    # print(size)
     agg = FigureCanvasTkAgg(figure, canvas)
     agg.draw()
     agg.get_tk_widget().pack(side=side, fill=fill, expand=expand)
@@ -1539,13 +1494,11 @@ class DynamicGraph:
         self.my_dpi = 96
         self.figsize = (int(Wc / self.my_dpi), int(Hc / self.my_dpi))
         self.layout = self.build_layout()
-
         self.window = sg.Window(f'{self.agent.unique_id} Dynamic Graph', self.layout, finalize=True, location=(0, 0),
                                 size=(W, H))
         self.canvas_elem = self.window.FindElement('-CANVAS-')
         self.canvas = self.canvas_elem.TKCanvas
         self.fig_agg = None
-
         self.cur_layout = 1
 
     def build_layout(self):
@@ -1554,15 +1507,13 @@ class DynamicGraph:
         l0 = [[sg.T('Choose parameters')],
               [sg.Col([*[[sg.CB(p, k=f'k_{p}', **t_kws(24))] for p in par_lists[i]]]) for i in range(Ncols)],
               [sg.B('Ok', **t_kws(8)), sg.B('Cancel', **t_kws(8))]]
-
         l1 = [
             [sg.Canvas(size=(1280, 1200), k='-CANVAS-')],
             [sg.T('Time in seconds to display on screen')],
             [sg.Slider(range=(0.1, 60), default_value=self.init_dur, size=(40, 10), orientation='h',
                        k='-SLIDER-TIME-')],
             [sg.B('Choose', **t_kws(8))]]
-        l = [[sg.Col(l0, k='-COL1-'), sg.Col(l1, visible=False, k='-COL2-')]]
-        return l
+        return [[sg.Col(l0, k='-COL1-'), sg.Col(l1, visible=False, k='-COL2-')]]
 
     def evaluate(self):
         w = self.window
@@ -1584,7 +1535,6 @@ class DynamicGraph:
             w[f'-COL1-'].update(visible=False)
             w[f'-COL2-'].update(visible=True)
             self.cur_layout = 2
-
         if self.cur_layout == 2 and self.Npars > 0:
             secs = v['-SLIDER-TIME-']
             Nticks = int(secs / self.dt)  # draw this many data points (on next line)
@@ -1616,7 +1566,6 @@ class DynamicGraph:
         self.pars, syms, us, lims, pcs = getPar(d=self.pars, to_return=['d', 's', 'l', 'lim', 'p'])
         self.Npars = len(self.pars)
         self.yranges = {}
-
         self.fig, axs = plt.subplots(self.Npars, 1, figsize=self.figsize, dpi=self.my_dpi, sharex=True)
         self.axs = axs.ravel() if self.Npars > 1 else [axs]
         Nticks = int(self.init_dur / self.dt)
