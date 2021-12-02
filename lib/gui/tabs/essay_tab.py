@@ -20,17 +20,14 @@ class EssayTab(GuiTab):
         kws={'list_size' : (25,15), 'canvas_size' : col_size(x_frac=0.5, y_frac=0.4), 'tab' : self}
         s1 = PadDict('essay_params', disp_name='Configuration', background_color='orange', text_kws=t_kws(10),
                      header_width=25)
-        # s1 = CollapsibleDict('essay_params', disp_name='Configuration')
         sl1 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'])
         dl1 = DataList(self.essay_exps_key, tab=self, buttons=['run'], select_mode=None, size=(24,10))
         g1 = GraphList(self.name, list_header='Simulated', **kws)
         g2 = ButtonGraphList(self.exp_figures_key, list_header='Observed',fig_dict={}, **kws,
                              buttons=['browse_figs'],button_args={'browse_figs': {'target': (2, -1)}}
                              )
-
         l = gui_cols(cols=[[sl1, s1, dl1], [g1.canvas, g2.canvas], [g1, g2]], x_fracs=[0.2, 0.55, 0.25],
                      as_pane=True, pad=(20,10))
-
         return l, s1.get_subdicts(), {g1.name: g1, g2.name: g2}, {self.name: {'fig_dict': {}}}
 
     def run(self, v, w, c, d, g, conf, id):
@@ -40,16 +37,11 @@ class EssayTab(GuiTab):
         return d, g
 
     def update(self, w, c, conf, id):
-        # exps = list(conf['experiments'].keys())
         self.datalists[self.essay_exps_key].dict = conf['experiments']
         self.datalists[self.essay_exps_key].update_window(w)
-        # w.Element(self.essay_exps_key).Update(values=exps)
-
         essay = null_dict('essay_params', essay_ID=f'{id}_{next_idx(id)}', path=f'essays/{id}')
         c['essay_params'].update(w, essay)
-
         fdir = conf['exp_fig_folder']
-
         temp = {f.split('.')[0]: f'{fdir}/{f}' for f in os.listdir(fdir)}
         temp = dict(sorted(temp.items()))
         self.gui.graph_lists[self.exp_figures_key].update(w, temp)
@@ -97,6 +89,5 @@ class EssayTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-
     larvaworld_gui = LarvaworldGui(tabs=['essay'])
     larvaworld_gui.run()

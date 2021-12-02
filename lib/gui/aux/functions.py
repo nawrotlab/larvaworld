@@ -16,7 +16,8 @@ def col_size(x_frac=1.0, y_frac=1.0, win_size=None):
         win_size = window_size
     return int(win_size[0] * x_frac), int(win_size[1] * y_frac)
 
-default_list_width=25
+
+default_list_width = 25
 w_kws = {
     'finalize': True,
     'resizable': True,
@@ -38,9 +39,9 @@ b6_kws = {'font': ('size', 6),
           'size': (6, 1)}
 b12_kws = {'font': ('size', 6),
            'size': (12, 1)}
-spin_size={'size' :  (4, 1)}
+spin_size = {'size': (4, 1)}
 tab_kws = {'font': ("Helvetica", 14, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
-                   'tab_background_color': 'lightgrey'}
+           'tab_background_color': 'lightgrey'}
 
 
 def t_kws(w, h=1):
@@ -138,63 +139,68 @@ def retrieve_value(v, t):
 def retrieve_dict(dic, type_dic):
     return {k: retrieve_value(v, type_dic[k]) for k, v in dic.items()}
 
-def gui_col(element_list, x_frac=0.25, y_frac=1.0,as_pane=False,pad=None,add_to_bottom=[], **kwargs):
+
+def gui_col(element_list, x_frac=0.25, y_frac=1.0, as_pane=False, pad=None, add_to_bottom=[], **kwargs):
     l = []
     for e in element_list:
-        if not as_pane :
+        if not as_pane:
             l += e.get_layout(as_col=False)
-        else :
+        else:
             l += e.get_layout(as_pane=True, pad=pad)
-    l+=add_to_bottom
+    l += add_to_bottom
     c = sg.Col(l, **col_kws, size=col_size(x_frac=x_frac, y_frac=y_frac), **kwargs)
     return c
 
-def gui_cols(cols, x_fracs=None, y_fracs=None,**kwargs) :
-    N=len(cols)
-    if x_fracs is None :
-        x_fracs=[1.0/N]*N
-    elif type(x_fracs)==float :
+
+def gui_cols(cols, x_fracs=None, y_fracs=None, **kwargs):
+    N = len(cols)
+    if x_fracs is None:
+        x_fracs = [1.0 / N] * N
+    elif type(x_fracs) == float:
         x_fracs = [x_fracs] * N
-    if y_fracs is None :
-        y_fracs=[1.0]*N
-    ls=[]
-    for col,x,y in zip(cols, x_fracs, y_fracs) :
-        l=gui_col(col, x_frac=x, y_frac=y, **kwargs)
+    if y_fracs is None:
+        y_fracs = [1.0] * N
+    ls = []
+    for col, x, y in zip(cols, x_fracs, y_fracs):
+        l = gui_col(col, x_frac=x, y_frac=y, **kwargs)
         # if as_pane:
         #     l=sg.Pane([l])
         ls.append(l)
     return [ls]
 
 
-def gui_row(element_list, x_frac=1.0, y_frac=0.5,x_fracs=None,as_pane=False,pad=None, **kwargs):
-    N=len(element_list)
-    if x_fracs is None :
-        x_fracs=[x_frac/N]*N
-    l=[]
-    for e, x in zip(element_list, x_fracs) :
-        if not as_pane :
-            ll=sg.Col(e, **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs)
-        else :
-            try :
-                ll=sg.Col(e.get_layout(as_pane=True), **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs)
-            except :
-                ll = sg.Col([[sg.Pane([sg.Col(e)], pad=pad, border_width=8)]], **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs)
+def gui_row(element_list, x_frac=1.0, y_frac=0.5, x_fracs=None, as_pane=False, pad=None, **kwargs):
+    N = len(element_list)
+    if x_fracs is None:
+        x_fracs = [x_frac / N] * N
+    l = []
+    for e, x in zip(element_list, x_fracs):
+        if not as_pane:
+            ll = sg.Col(e, **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs)
+        else:
+            try:
+                ll = sg.Col(e.get_layout(as_pane=True), **col_kws, size=col_size(x_frac=x, y_frac=y_frac), **kwargs)
+            except:
+                ll = sg.Col([[sg.Pane([sg.Col(e)], pad=pad, border_width=8)]], **col_kws,
+                            size=col_size(x_frac=x, y_frac=y_frac), **kwargs)
         l.append(ll)
     return l
 
-def gui_rowNcol(element_list, x_fracs, y_fracs, as_pane=False) :
-    l=[]
-    for i,e in enumerate(element_list):
-        if type(e)==list :
-            if all([type(ee)!=list for ee in e]):
-                e=gui_col(e, x_frac=x_fracs[i], y_frac=y_fracs[i], as_pane=as_pane)
-            else :
-                e=gui_rowNcol(e, x_fracs=x_fracs[i], y_fracs=y_fracs[i], as_pane=as_pane)
+
+def gui_rowNcol(element_list, x_fracs, y_fracs, as_pane=False):
+    l = []
+    for i, e in enumerate(element_list):
+        if type(e) == list:
+            if all([type(ee) != list for ee in e]):
+                e = gui_col(e, x_frac=x_fracs[i], y_frac=y_fracs[i], as_pane=as_pane)
+            else:
+                e = gui_rowNcol(e, x_fracs=x_fracs[i], y_fracs=y_fracs[i], as_pane=as_pane)
             l.append(e)
-        else :
-            e=gui_row([e],x_frac=x_fracs[i], y_frac=y_fracs[i], as_pane=as_pane)
+        else:
+            e = gui_row([e], x_frac=x_fracs[i], y_frac=y_fracs[i], as_pane=as_pane)
             l.append(e)
     return l
+
 
 def collapse(layout, key, visible=True):
     """
@@ -205,6 +211,7 @@ def collapse(layout, key, visible=True):
     :rtype: sg.pin
     """
     return sg.pin(sg.Col(layout, key=key, visible=visible))
+
 
 def get_pygame_key(key):
     pygame_keys = {
@@ -234,24 +241,3 @@ def get_pygame_key(key):
         'asterisk': 'ASTERISK',
     }
     return f'K_{pygame_keys[key]}' if key in list(pygame_keys.keys()) else f'K_{key}'
-
-# def get_layout_size(l) :
-#     if isinstance(l, Element):
-#         s= l.get_size()[0]
-#         # print(s)
-#     elif type(l) == list():
-#         s = np.sum([get_layout_size(ee) for ee in l])
-#     # ss=[]
-#     # for e in l :
-#     #     if isinstance(e, Element) :
-#     #         ss.append(e.get_size()[0])
-#     #     elif type(e)==list() :
-#     #         s=np.sum([get_layout_size(ee) for ee in e])
-#     return s
-#
-# if __name__ == "__main__":
-#     l=[sg.T(), sg.In()]
-#     # print(type(l), type(l[0]))
-#     # print(isinstance(l, Element), isinstance(l[0], Element))
-#     print(l[0].get_size())
-#     # s=get_layout_size(l)

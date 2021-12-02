@@ -30,8 +30,6 @@ class BatchTab(GuiTab):
         self.k_stored_ids = f'{self.k_stored}_IDS'
         self.k_active_ids = f'{self.k_active}_IDS'
 
-        # self.subprocesses = {}
-
     @property
     def DL0(self):
         return self.datalists[self.k_active]
@@ -42,10 +40,8 @@ class BatchTab(GuiTab):
 
     def update(self, w, c, conf, id):
         w.Element(self.batch_id_key).Update(value=f'{id}_{next_idx(id, type="batch")}')
-        # w.Element(self.batch_path_key).Update(value=id)
         for n in ['batch_methods', 'optimization', 'space_search']:
             c[n].update(w, conf[n])
-        # w['TOGGLE_save_hdf5'].set_state(state=conf['exp_kws']['save_data_flag'])
         self.DL1.add(w, stored_trajs(id), replace=True)
 
     def get(self, w, v, c, **kwargs):
@@ -60,44 +56,27 @@ class BatchTab(GuiTab):
                          optimization=c['optimization'].get_dict(v, w),
                          space_search=c['space_search'].get_dict(v, w),
                          )
-        # conf = {
-        #     'save_hdf5': w['TOGGLE_save_hdf5'].metadata.state,
-        #     **{n: c[n].get_dict(v, w) for n in ['batch_methods', 'optimization', 'space_search']},
-        #     'exp_kws': {
-        #         #
-        #         'enrichment': enrichment,
-        #         # 'enrichment': self.current_conf(v)['exp_kws']['enrichment'],
-        #     }
-        # }
         return copy.deepcopy(conf)
 
     def build(self):
         kws = {'background_color': 'pink', 'text_kws' : t_kws(10)}
         kA, kS = self.k_active, self.k_stored
         d = {kA: {}, kS: {}}
-
         sl1 = SelectionList(tab=self, conftype='Exp', idx=1)
         sl2 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], sublists={'exp': sl1})
         batch_conf = [[sg.T('Batch id:', **t_kws(8)), sg.In('unnamed_batch_0', k=self.batch_id_key, **t_kws(16))],
                       named_bool_button('Save data', False, toggle_name='save_hdf5'),
                       ]
-        # s0 = Collapsible(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration')
         s0 = PadDict(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration', **kws)
         s1 = PadDict('batch_methods',value_kws=t_kws(13), **kws)
-        # s1 = CollapsibleDict('batch_methods')
-
-        # s2 = CollapsibleDict('optimization', toggle=True, disabled=True)
         s2 = PadDict('optimization', toggle=True, disabled=True, **kws)
         s3 = CollapsibleTable('space_search', index='Parameter', heading_dict={'Range': 'range', 'N': 'Ngrid'},
                               dict_name='space_search_par', state=True, col_widths=[12,8,4], num_rows=5)
         g1 = GraphList(self.name, tab=self, canvas_size=col_size(0.5,0.8))
-
         dl1 = DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Stored batch-runs', size=(default_list_width, 5))
         dl2 = DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active batch-runs', size=(default_list_width, 5))
 
         l = gui_cols(cols=[[sl2, sl1, dl2, dl1, g1],[s0, s1, s2, s3], [g1.canvas]], x_fracs=[0.20, 0.22, 0.55], as_pane=True, pad=(20,10))
-        # l = gui_cols(cols=[[sl2, sl1, s0, s1, s2, s3, dl2, dl1], [g1.canvas], [g1]], x_fracs=[0.2, 0.6, 0.2], as_pane=True)
-
         c = {}
         for s in [s0, s1, s2, s3]:
             c.update(s.get_subdicts())
@@ -124,6 +103,7 @@ class BatchTab(GuiTab):
                 w.Element(self.batch_id_key).Update(value=traj0)
                 df, fig_dict = retrieve_results(id0, traj0)
                 self.draw(df, fig_dict, w)
+
         elif e == f'REMOVE {self.k_stored}':
             for stor_id in stor_ids:
                 delete_traj(id0, stor_id)
@@ -131,7 +111,6 @@ class BatchTab(GuiTab):
 
         if e == f'STOP {self.k_active}':
             for act_id in active_ids:
-                # self.DL0.dict[act_id]['process'].kill()
                 self.DL0.dict[act_id].terminate()
             self.DL0.remove(w, active_ids)
 
@@ -155,6 +134,5 @@ class BatchTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-
     larvaworld_gui = LarvaworldGui(tabs=['batch-run'])
     larvaworld_gui.run()

@@ -44,25 +44,15 @@ class ImportTab(GuiTab):
                                'processing': {'Ncols': 2, 'text_kws': t_kws(9)},
                                'metric_definition': {'header_width': 60,'text_kws': t_kws(9)}}
                      )
-
         dd1 = gui_col([sl1, pd1], x_frac=x, as_pane=True, pad=(0,0))
         dd2 = gui_row([dl1, dl2], x_frac=1 - x, y_frac=y, x_fracs=[x1, 1 - x1 - x], as_pane=True)
         dd3 = pd2.get_layout()
         dd5 = sg.Col([dd2, dd3[0]])
         g1 = ButtonGraphList(self.name, tab=self, fig_dict={})
-        # l = gui_cols(cols=[[sl1, c1], [dl1,dl2], [c2]], x_fracs=[0.15, 0.25, 0.60])
         l = [[dd1, dd5]]
-
-        # l=gui_rowNcol([[sl1, pd1],[[dl1,dl2],pd2]],
-        #               x_fracs=[[x, x],[[0.3,1-0.3-x],1-x]],
-        #               y_fracs=[[0.2, 1-0.2],[[y,y],1-y]], as_pane=True)
-        # l = gui_cols(cols=[[sl1, c1], [dl1,c2], [dl2, c3]], x_fracs=[0.25, 0.25, 0.5])
-        # l = gui_cols(cols=[[sl1, c1], [dl1,c2], [dl2, c3]], x_fracs=[0.25, 0.25, 0.5], as_pane=True)
-
         c = {}
         for s in [pd1, pd2]:
             c.update(**s.get_subdicts())
-
         return l, c, {g1.name: g1}, d
 
     def eval(self, e, v, w, c, d, g):
@@ -70,7 +60,6 @@ class ImportTab(GuiTab):
 
     def imitate(self, conf):
         from lib.anal.comparing import ExpFitter
-
         dd = SingleRun(**conf).run()
         for d in dd:
             f = ExpFitter(d.config['sample'])
@@ -80,8 +69,5 @@ class ImportTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-
-    # larvaworld_gui = LarvaworldGui(tabs=['import'])
     larvaworld_gui = LarvaworldGui(tabs=['import','analysis', 'settings'])
-
     larvaworld_gui.run()

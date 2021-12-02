@@ -17,7 +17,6 @@ class VideoTab(GuiTab):
         ffs=[os.path.join(f0, f) for f in fs]
         bl = [ClickableImage(name=n, link=f'{link0}{n}.mp4',image_filename=ff,
                              image_subsample=5, pad=(25, 40)) for ff,n in zip(ffs, ns)]
-
         n = 3
         bl = [bl[i * n:(i + 1) * n] for i in range((len(bl) + n - 1) // n)]
         l = [[sg.Col(bl, vertical_scroll_only=True, scrollable=True, size=window_size)]]
@@ -30,6 +29,5 @@ class VideoTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-
     larvaworld_gui = LarvaworldGui(tabs=['videos'])
     larvaworld_gui.run()

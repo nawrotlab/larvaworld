@@ -5,15 +5,12 @@ from lib.gui.aux.elements import GuiElement
 class GuiTab(GuiElement):
     def __init__(self, name, gui, conftype=None, dtype=None):
         super().__init__(name)
-        # self.name = name
         self.gui = gui
         self.conftype = conftype
         self.dtype = dtype
         self.selectionlists = {}
         self.datalists = {}
         self.graphlists = {}
-        # super().__init__(name)
-        # self.graph_list=None
 
     @property
     def graph_list(self):

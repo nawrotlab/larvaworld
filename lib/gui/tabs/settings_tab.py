@@ -140,6 +140,5 @@ class SettingsTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-
     larvaworld_gui = LarvaworldGui(tabs=['settings'])
     larvaworld_gui.run()

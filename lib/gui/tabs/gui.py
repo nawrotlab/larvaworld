@@ -42,7 +42,7 @@ class LarvaworldGui:
         }
         return object.__new__(cls)
 
-    def __init__(self, tabs=None, batch_thread=None):
+    def __init__(self, tabs=None):
         self.run_externally = {'sim': False, 'batch': True}
         if tabs is None:
             tabs = list(self.tab_dict.keys())
@@ -54,17 +54,13 @@ class LarvaworldGui:
         self.window = sg.Window('Larvaworld gui', **c)
 
     def run(self):
-
         while True:
-
             e, v = self.window.read(10000)
-
             if e in (None, 'Exit'):
                 self.window.close()
                 break
             else:
                 self.run0(e, v)
-
                 n = v['ACTIVE_TAB'].split()[0]
                 self.tabs[n].eval0(e=e, v=v)
 
@@ -80,7 +76,6 @@ class LarvaworldGui:
             gs.update(g)
             dic[n] = sg.Tab(n, l, background_color=self.background_color, key=f'{n} TAB')
             ls.append(dic[n])
-
         tab_kws = {'font': ("Helvetica", 14, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
                    'tab_background_color': 'lightgrey'}
         l_tabs = sg.TabGroup([ls], key='ACTIVE_TAB', tab_location='topleft', **tab_kws)
@@ -102,7 +97,6 @@ class LarvaworldGui:
         w = self.window
         check_togglesNcollapsibles(w, e, v, self.collapsibles)
         check_multispins(w, e)
-
         if e.startswith('EDIT_TABLE'):
             self.collapsibles[e.split()[-1]].edit_table(w)
 
@@ -150,8 +144,6 @@ def gui_terminal(size=col_size(y_frac=0.3)):
 
 def speed_test():
     import numpy as np
-
-    # ns0=['introduction']
     ns0 = ['introduction', 'tutorials', 'larva-model', 'environment', 'life-history', 'simulation', 'essay',
            'batch-run', 'analysis', 'import', 'videos', 'settings']
     ns = [[n] for n in ns0]

@@ -16,9 +16,7 @@ class AnalysisTab(GuiTab):
                        aux_cols=['N', 'duration', 'quality'], size=(28,20)
                        )
         g1 = ButtonGraphList(self.name, tab=self, fig_dict=graph_dict, canvas_size=col_size(x_frac=0.5, y_frac=0.8))
-
         l = gui_cols(cols=[[dl1], [g1.canvas], [g1]], x_fracs=[0.25, 0.52, 0.2], as_pane=True, pad=(10,20))
-
         return l, {}, {g1.name: g1}, d
 
     def eval(self, e, v, w, c, d, g):
@@ -27,6 +25,5 @@ class AnalysisTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-
     larvaworld_gui = LarvaworldGui(tabs=['analysis'])
     larvaworld_gui.run()
