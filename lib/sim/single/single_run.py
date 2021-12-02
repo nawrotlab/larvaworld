@@ -148,6 +148,16 @@ class SingleRun:
             anal_params = ['comparative_analysis']
         elif 'dish' in exp:
             anal_params = ['targeted_analysis']
+        elif 'PI' in exp:
+            PIs = {}
+            PI2s = {}
+            print()
+            for d in self.datasets :
+                PIs[d.id]=d.config.PI["PI"]
+                PI2s[d.id]=d.config.PI2
+                print(f'Group {d.id} -> PI : {PIs[d.id]}')
+                print(f'Group {d.id} -> PI2 : {PI2s[d.id]}')
+            return None, {'PIs': PIs, 'PI2s': PI2s}
         # elif self.experiment in ['growth', 'RvsS'] :
         #     anal_params = analysis_dict['DEB']
         else:

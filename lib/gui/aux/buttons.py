@@ -1,5 +1,6 @@
 import base64
 import copy
+import os
 import webbrowser
 
 import PySimpleGUI as sg
@@ -14,6 +15,7 @@ b_kws = {
     'button_color': (sg.theme_background_color(), sg.theme_background_color()),
     'disabled_button_color': (sg.theme_background_color(), sg.theme_background_color()),
     'border_width': 0,
+
 }
 
 
@@ -42,6 +44,9 @@ def button_row(name, buttons, button_args={}):
         'stop': "Stop the selected simulation.",
         'imitate': "Imitate the selected dataset in a simulation.",
     }
+    png_dict={
+        'settings': 'developer-tools',
+    }
     but_kws = {
         'browse': {'initial_folder': paths.path('DATA'), 'enable_events': True,
                    'target': (0, -1), 'button_type': sg.BUTTON_TYPE_BROWSE_FOLDER},
@@ -58,7 +63,10 @@ def button_row(name, buttons, button_args={}):
             cur.update(kws)
         else:
             cur = kws
-        bl.append(GraphButton(f'Button_{b}', f'{b.upper()} {name}', tooltip=but_tips[b], **cur))
+        try :
+            bl.append(GraphButton(png_dict[b], f'{b.upper()} {name}', from_bs64=False, tooltip=but_tips[b], **cur))
+        except :
+            bl.append(GraphButton(f'Button_{b}', f'{b.upper()} {name}', from_bs64=True, tooltip=but_tips[b], **cur))
     return bl
 
 
@@ -69,9 +77,18 @@ def named_bool_button(name, state, toggle_name=None, text_kws={}, **kwargs):
 
 
 class GraphButton(Button):
-    def __init__(self, name, key, **kwargs):
-        bs64 = getattr(graphics, name)
-        super().__init__(image_data=bs64, k=key, **b_kws, **kwargs)
+    def __init__(self, name, key,from_bs64=True, **kwargs):
+        if from_bs64 :
+            bs64 = getattr(graphics, name)
+            super().__init__(image_data=bs64, k=key, **b_kws, **kwargs)
+        else :
+            for i in range(3) :
+                try :
+                    image_subsample=1 if i!=2 else 8
+                    filename = f'../lib/media/icons/icons{i+1}/{name}.png'
+                    super().__init__(image_filename=filename, k=key,image_subsample=image_subsample, **b_kws, **kwargs)
+                except :
+                    continue
 
 
 class BoolButton(Button):

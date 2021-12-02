@@ -104,3 +104,14 @@ def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14,
         else:
             cell.set_facecolor(row_colors[k[0] % len(row_colors)])
     return ax, fig
+
+def concat_files(filenames, save_as):
+    # filenames = ['file1.txt', 'file2.txt', ...]
+    with open(save_as, 'w') as outfile:
+        for fname in filenames:
+            with open(fname) as infile:
+                for line in infile:
+                    outfile.write(line)
+
+if __name__ == '__main__':
+    concat_files(filenames= ['graphics.py', 'output.py'], save_as= 'graphics2.py')

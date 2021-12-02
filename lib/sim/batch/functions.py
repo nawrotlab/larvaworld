@@ -226,6 +226,11 @@ def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
 def PI_computation(traj, dataset):
     ind = dataset.config['PI']['PI']
     traj.f_add_result('PI', ind, comment=f'The preference index')
+    try :
+        ind2 = dataset.config['PI2']
+        traj.f_add_result('PI2', ind2, comment=f'The preference index, version 2')
+    except :
+        pass
     return dataset, ind
 
 
@@ -244,6 +249,17 @@ def heat_map_generation(traj):
     df.to_csv(csv_filepath, index=True, header=True)
     fig = plot_heatmap_PI(save_to=traj.config.dir_path, csv_filepath=csv_filepath)
     fig_dict = {'PI_heatmap': fig}
+    try:
+        csv2_filepath = f'{traj.config.dir_path}/PI2s.csv'
+        PI2s = [traj.f_get(run).f_get('PI2').f_get() for run in traj.f_get_run_names(sort=True)]
+        df2 = pd.DataFrame(index=Lgain_range, columns=Rgain_range, dtype=float)
+        for Lgain, Rgain, PI2 in zip(Lgains, Rgains, PI2s):
+            df2[Rgain].loc[Lgain] = PI2
+        df2.to_csv(csv2_filepath, index=True, header=True)
+        fig2 = plot_heatmap_PI(save_to=traj.config.dir_path, csv_filepath=csv2_filepath, save_as='PI2_heatmap.pdf')
+        fig_dict = {'PI2_heatmap': fig2}
+    except :
+        pass
     return df, fig_dict
 
 

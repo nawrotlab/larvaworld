@@ -1885,7 +1885,7 @@ def plot_heatmap(z, heat_kws={}, ax_kws={}, cbar_kws={}, **kwargs):
     return P.get()
 
 
-def plot_heatmap_PI(csv_filepath='PIs.csv', **kwargs):
+def plot_heatmap_PI(csv_filepath='PIs.csv',save_as='PI_heatmap.pdf', **kwargs):
     z = pd.read_csv(csv_filepath, index_col=0)
     Lgains = z.index.values.astype(int)
     Rgains = z.columns.values.astype(int)
@@ -1914,7 +1914,7 @@ def plot_heatmap_PI(csv_filepath='PIs.csv', **kwargs):
         'ticks': [1, 0, -1]
     }
 
-    return plot_heatmap(z, heat_kws=heat_kws, ax_kws=ax_kws, cbar_kws=cbar_kws, save_as='PI_heatmap.pdf', **kwargs)
+    return plot_heatmap(z, heat_kws=heat_kws, ax_kws=ax_kws, cbar_kws=cbar_kws, save_as=save_as, **kwargs)
 
 
 def plot_3pars(df, vars, target, z0=None, **kwargs):

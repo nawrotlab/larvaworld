@@ -30,7 +30,6 @@ class Sensor(Effector):
                 self.affect_locomotion()
             self.activation *= self.exp_decay_coef
             self.activation += self.dt * np.sum([self.gain[id] * self.dX[id] for id in self.gain_ids])
-
             if self.activation > self.A1:
                 self.activation = self.A1
             elif self.activation < self.A0:
@@ -106,11 +105,16 @@ class Olfactor(Sensor):
     def __init__(self, odor_dict={}, **kwargs):
         super().__init__(gain_dict=odor_dict, **kwargs)
         for id in self.brain.agent.model.odor_ids:
-            # try:
             if id not in self.gain_ids:
                 self.add_novel_gain(id)
             # except:
             #     pass
+
+    def affect_locomotion(self):
+        if self.activation<0:
+            self.brain.intermitter.inhibit_locomotion()
+        elif self.activation>0:
+            self.brain.intermitter.trigger_locomotion()
 
     @property
     def first_odor_concentration(self):

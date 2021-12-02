@@ -2,6 +2,7 @@ import random
 import numpy as np
 
 import lib.aux.sim_aux
+from lib.aux.xy_aux import eudi5x, eudis5
 from lib.process.spatial import comp_PI
 
 def get_exp_condition(exp):
@@ -97,9 +98,10 @@ class CatchMeCondition:
     def __init__(self, env):
         env.target_group = 'Left' if random.uniform(0, 1) > 0.5 else 'Right'
         env.follower_group = 'Right' if env.target_group == 'Left' else 'Left'
-        for f in env.get_flies():
-            if f.group == env.target_group:
-                f.brain.olfactor.gain = {id: -v for id, v in f.brain.olfactor.gain.items()}
+        env.targets = [f for f in env.get_flies() if f.group == env.target_group]
+        env.followers = [f for f in env.get_flies() if f.group == env.follower_group]
+        for f in env.targets:
+            f.brain.olfactor.gain = {id: -v for id, v in f.brain.olfactor.gain.items()}
         env.score = {env.target_group: 0.0,
                       env.follower_group: 0.0}
 
@@ -109,18 +111,18 @@ class CatchMeCondition:
         def set_target_group(group):
             env.target_group = group
             env.follower_group = 'Right' if env.target_group == 'Left' else 'Left'
+            env.targets=[f for f in env.get_flies() if f.group == env.target_group]
+            env.followers = [f for f in env.get_flies() if f.group == env.follower_group]
             for f in env.get_flies():
                 f.brain.olfactor.gain = {id: -v for id, v in f.brain.olfactor.gain.items()}
-
-        targets = {f: f.get_position() for f in env.get_flies() if f.group == env.target_group}
-        followers = [f for f in env.get_flies() if f.group == env.follower_group]
-        for f in followers:
-            if any([f.contained(p) for p in list(targets.values())]):
+        targets_pos = [f.get_position() for f in env.targets]
+        for f in env.followers:
+            if any([eudis5(f.get_position(),p)<f.radius for p in targets_pos]):
                 set_target_group(f.group)
                 break
         env.score[env.target_group] += env.dt
         for group, score in env.score.items():
-            if score >= 1200.0:
+            if score >= 20000.0:
                 print(f'{group} group wins')
                 env.end_condition_met = True
         env.sim_state.set_text(f'L:{np.round(env.score["Left"], 1)} vs R:{np.round(env.score["Right"], 1)}')

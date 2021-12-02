@@ -9,7 +9,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from scipy.spatial.distance import euclidean
 
 from lib.aux.ang_aux import angle_to_x_axis, angle_dif
-from lib.aux.dictsNlists import flatten_list, save_dict, load_dicts, unique_list
+from lib.aux.dictsNlists import flatten_list, save_dict, load_dicts, unique_list, AttrDict
 
 from lib.aux import naming as nam
 from lib.conf.base.dtypes import null_dict
@@ -589,7 +589,7 @@ class ParDict:
         if object is not None :
             for k, p in dic.items():
                 p.const = p.get_from(object, u=False, tick=None, df=None)
-        return dic
+        return AttrDict.from_nested_dicts(dic)
 
     def build_DEB(self):
         from lib.model.DEB.deb import DEB

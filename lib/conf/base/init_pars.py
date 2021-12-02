@@ -84,7 +84,8 @@ def init_vis():
         'image_mode': {'t': str, 'vs': [None, 'final', 'snapshots', 'overlap'], 'h': 'The image-render mode',
                        's': 'im'},
         'video_speed': {'t': int, 'v': 60, 'min': 1, 'max': 100, 'h': 'The video speed', 's': 'fps'},
-        'media_name': {'t': str, 'h': 'Filename for the saved video/image. File extension mp4/png sutomatically added.', 's': 'media'},
+        'media_name': {'t': str, 'h': 'Filename for the saved video/image. File extension mp4/png sutomatically added.',
+                       's': 'media'},
         'show_display': {'t': bool, 'v': True, 'h': 'Hide display', 's': 'hide'},
     }
     d['draw'] = {
@@ -284,7 +285,8 @@ def init_pars():
                            'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input.'},
             'input_noise': {'v': 0.0, 'max': 1.0, 'h': 'The intrinsic noise of the sensory input.'},
             'decay_coef': {'v': 0.0, 'max': 2.0,
-                           'h': 'The linear decay coefficient of the olfactory sensory activation.'}
+                           'h': 'The linear decay coefficient of the olfactory sensory activation.'},
+            'brute_force': {**bF, 'h': 'Whether to apply direct rule-based modulation on locomotion or not.'}
         },
         'windsensor': {
             'weights': {
@@ -316,7 +318,7 @@ def init_pars():
                              'h': 'The initial default frequency of the repetitive feeding behavior.'},
             'feed_radius': {'v': 0.1, 'max': 10.0,
                             'h': 'The radius around the mouth in which food is consumable as a fraction of the body length.'},
-            'V_bite': {'v': 0.001, 'max': 0.01, 'dv': 0.0001,
+            'V_bite': {'v': 0.0005, 'max': 0.01, 'dv': 0.0001,
                        'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'}
         },
         'memory': {'modality': {'t': str, 'v': 'olfaction', 'vs': ['olfaction', 'touch'],
@@ -527,11 +529,13 @@ def init_pars():
     }
 
     d['gut'] = {
-        'M_gm': {'v': 10 ** -2, 'min': 0.0,'disp': 'gut scaled capacity', 'h': 'Gut capacity in C-moles per unit of gut volume.'},
-        'y_P_X': {'v': 0.9, 'min': 0.0, 'max': 1.0,'disp': 'food->product yield', 'h': 'Yield of product per unit of food.'},
+        'M_gm': {'v': 10 ** -2, 'min': 0.0, 'disp': 'gut scaled capacity',
+                 'h': 'Gut capacity in C-moles per unit of gut volume.'},
+        'y_P_X': {'v': 0.9, 'min': 0.0, 'max': 1.0, 'disp': 'food->product yield',
+                  'h': 'Yield of product per unit of food.'},
         'J_g_per_cm2': {'v': 10 ** -2 / (24 * 60 * 60), 'min': 0.0, 'disp': 'digestion secretion rate',
                         'h': 'Secretion rate of enzyme per unit of gut surface per second.'},
-        'k_g': {'v': 1.0, 'min': 0.0,'disp': 'digestion decay rate', 'h': 'Decay rate of digestive enzyme.'},
+        'k_g': {'v': 1.0, 'min': 0.0, 'disp': 'digestion decay rate', 'h': 'Decay rate of digestive enzyme.'},
         'k_dig': {'v': 1.0, 'min': 0.0, 'disp': 'digestion rate', 'h': 'Rate constant for digestion : k_X * y_Xg.'},
         'f_dig': {'v': 1.0, 'min': 0.0, 'max': 1.0, 'disp': 'digestion response',
                   'h': 'Scaled functional response for digestion : M_X/(M_X+M_K_X)'},
@@ -539,31 +543,32 @@ def init_pars():
                         'h': 'Area specific amount of carriers in the gut per unit of gut surface.'},
         'constant_M_c': {**bT, 'disp': 'constant carrier density',
                          'h': 'Whether to assume a constant amount of carrier enzymes on the gut surface.'},
-        'k_c': {'v': 1.0, 'min': 0.0,'disp': 'carrier release rate', 'h': 'Release rate of carrier enzymes.'},
-        'k_abs': {'v': 1.0, 'min': 0.0,'disp': 'absorption rate', 'h': 'Rate constant for absorption : k_P * y_Pc.'},
-        'f_abs': {'v': 1.0, 'min': 0.0, 'max': 1.0,'disp': 'absorption response', 'h': 'Scaled functional response for absorption : M_P/(M_P+M_K_P)'},
+        'k_c': {'v': 1.0, 'min': 0.0, 'disp': 'carrier release rate', 'h': 'Release rate of carrier enzymes.'},
+        'k_abs': {'v': 1.0, 'min': 0.0, 'disp': 'absorption rate', 'h': 'Rate constant for absorption : k_P * y_Pc.'},
+        'f_abs': {'v': 1.0, 'min': 0.0, 'max': 1.0, 'disp': 'absorption response',
+                  'h': 'Scaled functional response for absorption : M_P/(M_P+M_K_P)'},
     }
 
     d['DEB'] = {'species': {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype',
-                                   'h': 'The phenotype/species-specific fitted DEB model to use.'},
-                       'f_decay': {'v': 0.1, 'max': 1.0, 'dv': 0.1,
-                                   'h': 'The exponential decay coefficient of the DEB functional response.'},
-                       'absorption': {'v': 0.5, 'max': 1.0, 'h': 'The absorption ration for consumed food.'},
-                       'V_bite': {'v': 0.001, 'max': 0.01, 'dv': 0.0001,
-                                  'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'},
-                       'hunger_as_EEB': {**bT,
-                                         'h': 'Whether the DEB-generated hunger drive informs the exploration-exploitation balance.'},
-                       'hunger_gain': {'v': 0.0, 'max': 1.0,
-                                       'h': 'The sensitivy of the hunger drive in deviations of the DEB reserve density.'},
-                       'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb'],
-                                             'h': 'The method used to calculate the DEB assimilation energy flow.'},
-                       'DEB_dt': {'max': 1.0, 'disp': 'DEB timestep (sec)',
-                                  'h': 'The timestep of the DEB energetics module in seconds.'},
-                       # 'gut_params':d['gut_params']
-                       }
+                            'h': 'The phenotype/species-specific fitted DEB model to use.'},
+                'f_decay': {'v': 0.1, 'max': 1.0, 'dv': 0.1,
+                            'h': 'The exponential decay coefficient of the DEB functional response.'},
+                'absorption': {'v': 0.5, 'max': 1.0, 'h': 'The absorption ration for consumed food.'},
+                'V_bite': {'v': 0.0005, 'max': 0.01, 'dv': 0.0001,
+                           'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'},
+                'hunger_as_EEB': {**bT,
+                                  'h': 'Whether the DEB-generated hunger drive informs the exploration-exploitation balance.'},
+                'hunger_gain': {'v': 0.0, 'max': 1.0,
+                                'h': 'The sensitivy of the hunger drive in deviations of the DEB reserve density.'},
+                'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb'],
+                                      'h': 'The method used to calculate the DEB assimilation energy flow.'},
+                'DEB_dt': {'max': 1.0, 'disp': 'DEB timestep (sec)',
+                           'h': 'The timestep of the DEB energetics module in seconds.'},
+                # 'gut_params':d['gut_params']
+                }
 
     d['energetics'] = {
-        'DEB' : d['DEB'],
+        'DEB': d['DEB'],
         'gut': d['gut']
     }
 
@@ -800,8 +805,6 @@ def init_pars():
                         'h': 'Whether to additionally fixate the above or below body segment.'},
         'use_background': {**bF, 'h': 'Whether to use a virtual moving background when replaying a fixated larva.'}
     }
-
-
 
     return d
 

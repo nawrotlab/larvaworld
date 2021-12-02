@@ -509,6 +509,19 @@ def fixate_larva(s, config, point, arena_dims, fix_segment=None):
     print('Fixed-point dataset generated')
     return s, bg
 
+def comp_PI2(arena_xdim, xys, x=0.04):
+    Nticks=xys.index.unique('Step').size
+    ids=xys.index.unique('AgentID').values
+    N = len(ids)
+    dLR=np.zeros([N, Nticks])*np.nan
+    for i, id in enumerate(ids) :
+        xy=xys.xs(id, level='AgentID').values
+        dL = eudi5x(xy, np.array((-x,0)))
+        dR = eudi5x(xy, np.array((x,0)))
+        dLR[i,:]=(dR-dL)/(2*x)
+    dLR_mu = np.mean(dLR, axis=1)
+    mu_dLR_mu=np.mean(dLR_mu)
+    return mu_dLR_mu
 
 def comp_PI(arena_xdim, xs, return_num=False, return_all=False):
     N = len(xs)

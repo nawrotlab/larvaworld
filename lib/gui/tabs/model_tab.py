@@ -111,7 +111,7 @@ class ModelTab(GuiTab):
         for k, vs in dic.items():
             ppp = []
             for v in vs:
-                tS=20 if v in ['gut'] else 16
+                tS=18 if v in ['gut'] else 16
                 cc = PadDict(v, toggle=True if v not in ['body', 'physics'] else None, background_color=col_dict[v], text_kws=t_kws(tS))
                 c.update(cc.get_subdicts())
                 if v=='olfactor' :

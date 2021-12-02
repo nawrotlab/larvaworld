@@ -119,7 +119,7 @@ def load_dict(file, use_pickle=True) :
     else:
         with open(file) as tfp:
             d = json.load(tfp)
-    return d
+    return AttrDict.from_nested_dicts(d)
 
 
 def save_dict(d, file, use_pickle=True) :

@@ -107,14 +107,14 @@ def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
     x = np.round(x * dim, 3)
     y = np.round(y * dim, 3)
     if mode == 'king':
-        l = {**lg('Left', N=N, p=(-x, y), m='gamer-5x', c='darkblue', o=oG(id='Left_Odor')),
-             **lg('Right', N=N, p=(+x, y), m='gamer-5x', c='darkred', o=oG(id='Right_Odor'))}
+        l = {**lg('Left', N=N, p=(-x, y), m='gamer-5x', c='darkblue', o=oG(id='Left_odor')),
+             **lg('Right', N=N, p=(+x, y), m='gamer-5x', c='darkred', o=oG(id='Right_odor'))}
     elif mode == 'flag':
         l = {**lg('Left', N=N, p=(-x, y), m='gamer', c='darkblue'),
              **lg('Right', N=N, p=(+x, y), m='gamer', c='darkred')}
     elif mode == 'catch_me':
-        l = {**lg('Left', N=1, p=(-0.01, 0.0), m='follower-L', c='darkblue', o=oD(id='Left_Odor')),
-             **lg('Right', N=1, p=(+0.01, 0.0), m='follower-R', c='darkred', o=oD(id='Right_Odor'))}
+        l = {**lg('Left', N=1, p=(-0.01, 0.0), m='follower-L', c='darkblue', o=oD(id='Left_odor')),
+             **lg('Right', N=1, p=(+0.01, 0.0), m='follower-R', c='darkred', o=oD(id='Right_odor'))}
     return l
 
 
@@ -123,9 +123,9 @@ grouped_exp_dict = {
         'tethered': simple_exp('focus', dur=30.0, l=lg(m='immobile', N=1, ors=[90.0, 90.0])),
         'focus': simple_exp('focus', l=lg(m='Levy-walker', N=1, ors=[90.0, 90.0])),
         'dish': simple_exp('dish', l=lg(m='branch_explorer', N=5, s=0.02)),
-        'dish_x2': simple_exp('dish', l=lgs(models=['explorer', 'branch_explorer'],
-                                            ids=['default', 'branch'], N=5)),
-        'nengo_dish': simple_exp('dish', l=lg(m='nengo_explorer', N=25, s=0.02)),
+        # 'dish_x2': simple_exp('dish', l=lgs(models=['explorer', 'branch_explorer'],
+        #                                     ids=['default', 'branch'], N=5)),
+        # 'nengo_dish': simple_exp('dish', l=lg(m='nengo_explorer', N=25, s=0.02)),
         'dispersion': simple_exp('arena_200mm', l=lg(m='explorer', N=25)),
         'dispersion_x4': simple_exp('arena_200mm', dur=3.0,
                                     l=lgs(models=['explorer', 'Levy-walker', 'explorer_3con', 'nengo_explorer'],
@@ -153,8 +153,8 @@ grouped_exp_dict = {
         'anemotaxis_bordered': anemo_exp('windy_arena_bordered', dur=0.5, l=lg(m='nengo_explorer', N=4)),
         'puff_anemotaxis_bordered': anemo_exp('puff_arena_bordered', dur=0.5, l=lg(m='nengo_explorer', N=4)),
         'single_puff': chemanemo_exp('single_puff', dur=2.5, l=lg(m='nengo_explorer', N=20, sample='Puff.Starved')),
-        'anemotaxis_x2': anemo_exp('windy_arena', dur=2, l=lgs(models=['nengo_explorer', 'explorer'],
-                                                               ids=['nengo', 'control'], N=10))
+        # 'anemotaxis_x2': anemo_exp('windy_arena', dur=2, l=lgs(models=['nengo_explorer', 'explorer'],
+        #                                                        ids=['nengo', 'control'], N=10))
     },
 
     'odor_preference': {

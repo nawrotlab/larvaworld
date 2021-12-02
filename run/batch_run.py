@@ -10,12 +10,13 @@ MP = prs.MultiParser(['sim_params', 'batch_setup'])
 p = MP.add()
 p.add_argument('batch', choices=kConfDict('Batch'), help='The batch-run mode')
 p.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae in each larva group')
+p.add_argument('-ms', '--models', type=str, nargs='+', help='The larva models to use for creating the simulation larva groups')
 
 args = p.parse_args()
 d = MP.get(args)
 batch_type = args.batch
 N = args.Nagents
-
+models = args.models
 
 
 batch_conf = loadConf(batch_type, 'Batch')
@@ -25,7 +26,7 @@ if batch_id is None:
     idx = next_idx(batch_type, type='batch')
     batch_id = f'{batch_type}_{idx}'
 
-batch_conf.exp = prs.update_exp_conf(batch_conf.exp, d, N)
+batch_conf.exp = prs.update_exp_conf(batch_conf.exp, d, N, models)
 batch_conf.batch_id = batch_id
 batch_conf.batch_type = batch_type
 

@@ -7,7 +7,7 @@ from lib.aux.dictsNlists import common_member
 import lib.aux.naming as nam
 from lib.process.angular import angular_processing
 from lib.process.spatial import spatial_processing, comp_source_metrics, comp_dispersion, comp_tortuosity, comp_PI, \
-    align_trajectories, comp_wind_metrics, comp_final_anemotaxis
+    align_trajectories, comp_wind_metrics, comp_final_anemotaxis, comp_PI2
 from lib.conf.base.par import getPar
 
 
@@ -216,24 +216,25 @@ def process(processing, s, e, config, mode='minimal', traj_colors=True, show_out
         'point': config.point,
         'config': config,
         'mode': mode,
+        **kwargs
     }
 
     with suppress_stdout(show_output):
         if processing['angular']:
-            angular_processing(**c, **kwargs)
+            angular_processing(**c)
         if processing['spatial']:
-            spatial_processing(**c, **kwargs)
+            spatial_processing(**c)
         if processing['source']:
-            comp_source_metrics(**c, **kwargs)
+            comp_source_metrics(**c)
         if processing['wind']:
             if processing['spatial']:
-                comp_wind_metrics(**c, **kwargs)
+                comp_wind_metrics(**c)
             else :
-                comp_final_anemotaxis(**c, **kwargs)
+                comp_final_anemotaxis(**c)
         if processing['dispersion'] :
-            comp_dispersion(**c, **kwargs)
+            comp_dispersion(**c)
         if processing['tortuosity'] :
-            comp_tortuosity(**c, **kwargs)
+            comp_tortuosity(**c)
         if processing['PI']:
             if 'x' in e.keys():
                 px = 'x'
@@ -252,6 +253,10 @@ def process(processing, s, e, config, mode='minimal', traj_colors=True, show_out
             PI, N, N_l, N_r = comp_PI(xs=xs, arena_xdim=config.env_params.arena.arena_dims[0], return_num=True,
                                       return_all=True)
             config.PI = {'PI': PI, 'N': N, 'N_l': N_l, 'N_r': N_r}
+            try :
+                config.PI2 = comp_PI2(xys=s[nam.xy('')], arena_xdim=config.env_params.arena.arena_dims[0])
+            except :
+                pass
         if traj_colors:
             try:
                 generate_traj_colors(s=s, sp_vel=None, ang_vel=None)
