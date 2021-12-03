@@ -109,7 +109,6 @@ def pars_to_df(names, d0=None):
     dic={}
     for name in names :
         d=par_dict(name,d0)
-        # print(d)
         df = pd.DataFrame.from_dict(d, orient='index',
                                     columns=['dtype', 'initial_value', 'tooltip'])
                                     # columns=['dtype', 'initial_value', 'h', 'min', 'max', 'interval'])
@@ -158,10 +157,21 @@ def pars_to_tree(name):
             d = par_dict(k0, d0)
             add_multientry0(d, k0, name)
     ddf = pd.DataFrame(data, columns=columns2)
-
     if 'dtype' in columns2 :
         ddf['dtype']=[dtype_name(v) for v in ddf['dtype'] ]
     ddf = ddf.fillna(value=' ')
+    ddf.replace({}, ' ', inplace=True)
+    # for kkk in ddf.values.flatten() :
+    #     if not type(kkk) in [str, bool, int, float] :
+    #         print (kkk, type(kkk))
+    #         # if kkk=={} :
+    #         #     print(kkk)
+
+
+
+
+    # print(ddf['default_value'], type(ddf))
+
     return ddf
 
 

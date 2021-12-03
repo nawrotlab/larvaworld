@@ -683,7 +683,7 @@ def init_pars():
                        'exp_kws': {'t': dict, 'v': {'enrichment': d['enrichment']}},
                        'post_kws': {'t': dict, 'v': {}},
                        'proc_kws': {'t': dict, 'v': {}},
-                       'save_hdf5': bF
+                       'save_hdf5': {**bF, 'h': 'Whether to store the sur datasets.'}
                        }
 
     d['tracker'] = {

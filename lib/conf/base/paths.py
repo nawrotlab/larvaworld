@@ -59,6 +59,7 @@ def path(n) :
         'Life': f"{CF}/LifeConfs.txt",
         'Body': f"{CF}/BodyConfs.txt",
         'SimIdx': f'{CF}/SimIdx.txt',
+        'Tree': f'{CF}/ParTree.txt',
     }
 
     data_paths = {

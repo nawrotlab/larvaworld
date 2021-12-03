@@ -29,7 +29,7 @@ class BatchTab(GuiTab):
         self.k_active = f'{self.name}_active'
         self.k_stored_ids = f'{self.k_stored}_IDS'
         self.k_active_ids = f'{self.k_active}_IDS'
-        self.tree = GuiTreeData('batch_conf')
+        # self.tree = GuiTreeData('batch_conf')
 
     @property
     def DL0(self):
@@ -64,7 +64,7 @@ class BatchTab(GuiTab):
         kA, kS = self.k_active, self.k_stored
         d = {kA: {}, kS: {}}
         sl1 = SelectionList(tab=self, conftype='Exp', idx=1)
-        sl2 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run', 'tree'], sublists={'exp': sl1})
+        sl2 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], sublists={'exp': sl1})
         batch_conf = [[sg.T('Batch id:', **t_kws(8)), sg.In('unnamed_batch_0', k=self.batch_id_key, **t_kws(16))],
                       named_bool_button('Save data', False, toggle_name='save_hdf5'),
                       ]

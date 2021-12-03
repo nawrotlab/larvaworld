@@ -18,7 +18,7 @@ class SimTab(GuiTab):
         self.canvas_size = col_size(0.5,0.8)
         self.k_stored = f'{self.name}_stored'
         self.k_active = f'{self.name}_active'
-        self.tree = GuiTreeData('exp_conf')
+
         # self.k_stored_ids = f'{self.k_stored}_IDS'
         # self.k_active_ids = f'{self.k_active}_IDS'
 
@@ -55,18 +55,18 @@ class SimTab(GuiTab):
 
     def build_conf(self):
         kws = {'background_color': 'lightgreen'}
-        # kws = {'background_color': 'lightgreen', 'text_kws': t_kws(10)}
         s1 = PadTable('larva_groups', buttons=['add', 'remove'], index='Group ID', col_widths=[10, 3, 7, 10],
                               heading_dict={'N': 'distribution.N', 'color': 'default_color', 'model': 'model'},
                               dict_name='LarvaGroup')
         self.envtab = EnvTab(name='environment', gui=self.gui, conftype='Env')
         tab1_l, tab1_c, tab1_g, tab1_d = self.envtab.build()
         sl1 = self.envtab.selectionlists[self.envtab.conftype]
+        self.selectionlists[sl1.conftype] = sl1
 
         s2 = PadTable('trials', buttons=['add', 'remove'], index='idx', col_widths=[3, 4, 4, 5, 8],
                               heading_dict={'start': 'start', 'stop': 'stop', 'quality': 'substrate.quality',
                                             'type': 'substrate.type'},dict_name='epoch')
-        sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run', 'tree'], progress=True,
+        sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run', 'tree'], progress=True,root_key='exp_conf',
                             sublists={'env_params': sl1, 'larva_groups': s1},text_kws=t_kws(15), width=28)
         sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Behavior/field :', buttons=[],single_line=True,
                             width=15, text_kws=t_kws(12),sublists={'simulations': sl3})
@@ -138,6 +138,7 @@ class SimTab(GuiTab):
             pass
             # self.DL0.dict[self.active_id].terminate()
         self.draw_tab.eval(e, v, w, c, d, g)
+        # self.env_tab.eval(e, v, w, c, d, g)
         self.check_subprocesses(w)
 
 

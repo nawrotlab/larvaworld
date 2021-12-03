@@ -19,7 +19,7 @@ class ModelTab(GuiTab):
         self.module_keys = list(null_dict('modules').keys())
         self.energetics_keys = list(null_dict('energetics').keys())
         self.canvas_size = (1200, 1000)
-        self.tree=GuiTreeData('larva_conf')
+
 
     def update(self, w, c, conf, id=None):
         for n in self.fields:
@@ -140,7 +140,7 @@ class ModelTab(GuiTab):
         return l2, {g2.name: g2}
 
     def build(self):
-        sl0 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'tree'])
+        sl0 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'tree'], root_key='larva_conf')
         sl1 = SelectionList(tab=self, conftype='ModelGroup', disp='Model family :', buttons=[], single_line=True,
                             width=15, text_kws=t_kws(10),sublists={'model families': sl0})
         b_nengo = named_bool_button('nengo', False)

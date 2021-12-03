@@ -12,7 +12,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 from lib.aux.dictsNlists import flatten_dict, group_list_by_n
-from lib.conf.stored.conf import loadConfDict, deleteConf, loadConf, expandConf, kConfDict
+from lib.conf.stored.conf import loadConfDict, deleteConf, loadConf, expandConf, kConfDict, saveConf
 import lib.aux.colsNstr as fun
 from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par, col_idx_dict, pars_to_tree
 from lib.conf.base.par import runtime_pars, getPar
@@ -283,7 +283,7 @@ class HeadedElement(GuiElement):
 
 class SelectionList(GuiElement):
     def __init__(self, tab, conftype=None, disp=None, buttons=[], button_kws={}, sublists={}, idx=None, progress=False,
-                 width=24, with_dict=False, name=None, single_line=False, **kwargs):
+                 width=24, with_dict=False, name=None, single_line=False,root_key=None,  **kwargs):
         self.conftype = conftype if conftype is not None else tab.conftype
 
         if name is None:
@@ -312,6 +312,8 @@ class SelectionList(GuiElement):
             self.k = self.get_next(self.k0)
         self.sublists = sublists
         self.tab.selectionlists[self.conftype] = self
+        self.root_key=root_key
+        self.tree = GuiTreeData(self.root_key) if self.root_key is not None else None
 
         bs = button_row(self.disp, buttons, button_kws)
 
@@ -376,8 +378,8 @@ class SelectionList(GuiElement):
             conf = self.tab.get(w, v, c, as_entry=False)
             new_conf = self.tab.edit(conf)
             self.tab.update(w, c, new_conf, id=None)
-        elif e == f'TREE {n}':
-            self.tab.tree.test()
+        elif e == f'TREE {n}' and self.tree is not None:
+            self.tree.test()
 
         elif self.collapsible is not None and e == self.collapsible.header_key:
             self.collapsible.update_header(w, id)
@@ -1594,12 +1596,12 @@ class DynamicGraph:
         self.fig_agg = draw_canvas(self.canvas, self.fig)
 
 class GuiTreeData(sg.TreeData, GuiElement):
-    def __init__(self,name='larva_conf',root_key=None,build_glossary=True, **kwargs):
+    def __init__(self,name='larva_conf',root_key=None,build_tree=True, **kwargs):
         sg.TreeData.__init__(self)
         if root_key is None :
             root_key=name
         self.root_key=root_key
-        self.build_glossary=build_glossary
+        self.build_tree=build_tree
         self.build()
         layout=self.build_layout()
         GuiElement.__init__(self, name=name, layout=layout)
@@ -1630,11 +1632,12 @@ class GuiTreeData(sg.TreeData, GuiElement):
             [' ' * 4 * level + self._NodeStr(child, level + 1, k, v) for child in node.children])
 
     def build(self):
-        if self.build_glossary :
+        if not self.build_tree and self.root_key in kConfDict('Tree'):
+            self.df = pd.DataFrame.from_dict(loadConf(self.root_key, 'Tree'))
+        else:
             from lib.conf.base.dtypes import pars_to_tree
-            self.df =pars_to_tree(self.root_key)
-        else :
-            self.df = pd.read_csv(paths.path('ParGlossary'), index_col=0)
+            self.df = pars_to_tree(self.root_key)
+            saveConf(self.df.to_dict(), 'Tree', self.root_key)
         self.headings = self.df.columns.values.tolist()[3:]
         for _, row in self.df.iterrows():
             d = row.to_dict()
@@ -1648,7 +1651,6 @@ class GuiTreeData(sg.TreeData, GuiElement):
     def save(self, **kwargs):
         with open(paths.path('ParGlossaryTxT'), 'w') as f:
             f.write(self._NodeStr(**kwargs))
-        self.df.to_csv(paths.path('ParGlossary'))
 
     def build_layout(self):
         return [[sg.Tree(self, headings=self.headings, auto_size_columns=False, show_expanded=True,justification='center',

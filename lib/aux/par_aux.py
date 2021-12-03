@@ -102,13 +102,20 @@ def lin(p):
     return fr'${{{p.replace("$", "")}}}_{{l}}$'
 
 def dtype_name(v) :
+    def typing_arg(v):
+        return v.__args__[0]
     if v is None :
-        return None
+        n= ' '
     else :
         try :
-            return v.__name__
+            n= v.__name__
         except :
             try :
-                return f'{v._name}[{v.__args__[0].__name__}]'
+                n= f'{v._name}[{typing_arg(v).__name__}]'
             except :
-                return v
+                try:
+                    v0=typing_arg(v)
+                    n = f'{v._name}[{v0._name}[{typing_arg(v0).__name__}]]'
+                except:
+                    n = v
+    return n
