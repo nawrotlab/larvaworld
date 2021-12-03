@@ -1,17 +1,17 @@
 root : None
-    larva_conf : nan
-        brain : nan
-            modules : nan
-                turner : nan
-                crawler : nan
-                interference : nan
-                intermitter : nan
-                olfactor : nan
-                windsensor : nan
-                toucher : nan
-                feeder : nan
-                memory : nan
-            turner_params : nan
+    larva_conf :  
+        brain :  
+            modules :  
+                turner : 
+                crawler : 
+                interference : 
+                intermitter : 
+                olfactor : 
+                windsensor : 
+                toucher : 
+                feeder : 
+                memory : 
+            turner_params :  
                 mode : The implementation mode of the lateral oscillator (TURNER) module.
                 base_activation : The baseline activation/input of the TURNER module.
                 activation_range : The activation/input range of the TURNER module.
@@ -21,7 +21,7 @@ root : None
                 amp_range : The activity amplitude range of the TURNER module.
                 initial_freq : The initial frequency of the repetitive lateral bending behavior if this is hardcoded (e.g. sinusoidal mode).
                 freq_range : The frequency range of the repetitive lateral bending behavior.
-            crawler_params : nan
+            crawler_params :  
                 waveform : The waveform of the repetitive crawling oscillator (CRAWLER) module.
                 freq_range : The frequency range of the repetitive crawling behavior.
                 initial_freq : The initial frequency of the repetitive crawling behavior.
@@ -31,19 +31,19 @@ root : None
                 initial_amp : The initial amplitude of the CRAWLER-generated forward velocity if this is hardcoded (e.g. constant waveform).
                 noise : The intrinsic output noise of the CRAWLER-generated forward velocity.
                 max_vel_phase : The phase of the crawling oscillation cycle where the output (forward velocity) is maximum.
-            interference_params : nan
+            interference_params :  
                 crawler_phi_range : The CRAWLER oscillator cycle range during which it interferes with the TURNER.
                 feeder_phi_range : The FEEDER oscillator cycle range during which it interferes with the TURNER.
                 attenuation : The activity attenuation exerted on the TURNER module due to interference by other oscillators.
-            intermitter_params : nan
+            intermitter_params :  
                 mode : The implementation mode of the intermittency (INTERMITTER) module.
-                stridechain_dist : nan
+                stridechain_dist :  
                     fit : Whether the distribution is sampled from a reference dataset. Once this is set to "ON" no other parameter is taken into account.
                     range : The distribution range.
                     name : The distribution name.
                     mu : The "mean" argument for constructing the distribution.
                     sigma : The "sigma" argument for constructing the distribution.
-                pause_dist : nan
+                pause_dist :  
                     fit : Whether the distribution is sampled from a reference dataset. Once this is set to "ON" no other parameter is taken into account.
                     range : The distribution range.
                     name : The distribution name.
@@ -56,30 +56,30 @@ root : None
                 crawl_freq : The default frequency of the CRAWLER oscillator when simulating offline.
                 feed_freq : The default frequency of the FEEDER oscillator when simulating offline.
                 feeder_reoccurence_rate : The default reoccurence rate of the feeding motion.
-            olfactor_params : nan
+            olfactor_params :  
                 perception : The method used to calculate the perceived sensory activation from the current and previous sensory input.
                 input_noise : The intrinsic noise of the sensory input.
                 decay_coef : The linear decay coefficient of the olfactory sensory activation.
                 brute_force : Whether to apply direct rule-based modulation on locomotion or not.
-            windsensor_params : nan
-                weights : nan
+            windsensor_params :  
+                weights :  
                     hunch_lin : The connection weight between the HUNCH neuron ensemble and the CRAWLER module.
                     hunch_ang : The connection weight between the HUNCH neuron ensemble and the TURNER module.
                     bend_lin : The connection weight between the BEND neuron ensemble and the CRAWLER module.
                     bend_ang : The connection weight between the BEND neuron ensemble and the TURNER module.
-            toucher_params : nan
+            toucher_params :  
                 perception : The method used to calculate the perceived sensory activation from the current and previous sensory input.
                 input_noise : The intrinsic noise of the sensory input.
                 decay_coef : The exponential decay coefficient of the tactile sensory activation.
                 state_specific_best : Whether to use the state-specific or the global highest evaluated gain after the end of the memory training period.
                 brute_force : Whether to apply direct rule-based modulation on locomotion or not.
                 initial_gain : The initial gain of the tactile sensor.
-            feeder_params : nan
+            feeder_params :  
                 freq_range : The frequency range of the repetitive feeding behavior.
                 initial_freq : The initial default frequency of the repetitive feeding behavior.
                 feed_radius : The radius around the mouth in which food is consumable as a fraction of the body length.
                 V_bite : The volume of food consumed on a single feeding motion as a fraction of the body volume.
-            memory_params : nan
+            memory_params :  
                 modality : The modality for which the memory module is used.
                 Delta : The input sensitivity of the memory.
                 state_spacePerSide : The number of discrete states to parse the state space on either side of 0.
@@ -89,16 +89,16 @@ root : None
                 gamma : The probability of sampling a random gain rather than exploiting the currently highest evaluated gain for the current state.
                 epsilon : The epsilon parameter of reinforcement learning algorithm.
                 train_dur : The duration of the training period after which no further learning will take place.
-            nengo : nan
-        body : nan
+            nengo : 
+        body :  
             initial_length : The initial body length.
             length_std : The standard deviation of the initial body length.
             Nsegs : The number of segments comprising the larva body.
             seg_ratio : The length ratio of the body segments. If null, equal-length segments are generated.
             touch_sensors : The number of touch sensors existing on the larva body.
             shape : The body shape.
-        energetics : nan
-            DEB : nan
+        energetics :  
+            DEB :  
                 species : The phenotype/species-specific fitted DEB model to use.
                 f_decay : The exponential decay coefficient of the DEB functional response.
                 absorption : The absorption ration for consumed food.
@@ -107,7 +107,7 @@ root : None
                 hunger_gain : The sensitivy of the hunger drive in deviations of the DEB reserve density.
                 assimilation_mode : The method used to calculate the DEB assimilation energy flow.
                 DEB_dt : The timestep of the DEB energetics module in seconds.
-            gut : nan
+            gut :  
                 M_gm : Gut capacity in C-moles per unit of gut volume.
                 y_P_X : Yield of product per unit of food.
                 J_g_per_cm2 : Secretion rate of enzyme per unit of gut surface per second.
@@ -119,26 +119,26 @@ root : None
                 k_c : Release rate of carrier enzymes.
                 k_abs : Rate constant for absorption : k_P * y_Pc.
                 f_abs : Scaled functional response for absorption : M_P/(M_P+M_K_P)
-        physics : nan
+        physics :  
             torque_coef : The coefficient converting the lateral oscillator (TURNER) activity to bending torque.
             ang_damping : The environmental angular damping exerted on bending angular velocity.
             body_spring_k : The torsional spring constant of the larva body restoring the bending angle to 0.
             bend_correction_coef : The correction coefficient restoring the bending angle during forward motion by aligning the rear body segments to the front heading axis.
-        Box2D_params : nan
-            joint_types : nan
-                friction : nan
-                    N : nan
-                    args : nan
-                        maxForce : nan
-                        maxTorque : nan
-                revolute : nan
-                    N : nan
-                    args : nan
-                        enableMotor : nan
-                        maxMotorTorque : nan
-                        motorSpeed : nan
-                distance : nan
-                    N : nan
-                    args : nan
-                        frequencyHz : nan
-                        dampingRatio : nan
+        Box2D_params :  
+            joint_types :  
+                friction :  
+                    N : 
+                    args :  
+                        maxForce : 
+                        maxTorque : 
+                revolute :  
+                    N : 
+                    args :  
+                        enableMotor : 
+                        maxMotorTorque : 
+                        motorSpeed : 
+                distance :  
+                    N : 
+                    args :  
+                        frequencyHz : 
+                        dampingRatio : 

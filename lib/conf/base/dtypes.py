@@ -163,7 +163,8 @@ def pars_to_tree(name):
 
     if 'dtype' in columns2 :
         ddf['dtype']=[dtype_name(v) for v in ddf['dtype'] ]
-    ddf.to_csv(paths.path('ParGlossary'))
+    ddf = ddf.fillna(value=' ')
+    return ddf
 
 
 

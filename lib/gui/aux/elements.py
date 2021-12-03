@@ -1590,15 +1590,16 @@ class DynamicGraph:
             delete_figure_agg(self.fig_agg)
         self.fig_agg = draw_canvas(self.canvas, self.fig)
 
-class GuiTreeData(sg.TreeData):
-    def __init__(self,root_key='larva_conf',build_glossary=True, **kwargs):
-        super().__init__()
+class GuiTreeData(sg.TreeData, GuiElement):
+    def __init__(self,name='larva_conf',root_key=None,build_glossary=False, **kwargs):
+        sg.TreeData.__init__(self)
+        if root_key is None :
+            root_key=name
         self.root_key=root_key
         self.build_glossary=build_glossary
-        if self.build_glossary :
-            from lib.conf.base.dtypes import pars_to_tree
-            pars_to_tree(root_key)
         self.build()
+        layout=self.build_layout()
+        GuiElement.__init__(self, name=name, layout=layout)
 
     def get_value_arg(self, node, arg):
         if hasattr(node, arg):
@@ -1628,9 +1629,13 @@ class GuiTreeData(sg.TreeData):
             [' ' * 4 * level + self._NodeStr(child, level + 1, k, v) for child in node.children])
 
     def build(self):
-        df = pd.read_csv(paths.path('ParGlossary'), index_col=0)
-        self.headings = df.columns.values.tolist()[3:]
-        for _, row in df.iterrows():
+        if self.build_glossary :
+            from lib.conf.base.dtypes import pars_to_tree
+            self.df =pars_to_tree(self.root_key)
+        else :
+            self.df = pd.read_csv(paths.path('ParGlossary'), index_col=0)
+        self.headings = self.df.columns.values.tolist()[3:]
+        for _, row in self.df.iterrows():
             d = row.to_dict()
             dd = {}
             dd['parent'] = d['parent'] if d['parent'] != 'root' else ''
@@ -1642,16 +1647,15 @@ class GuiTreeData(sg.TreeData):
     def save(self, **kwargs):
         with open(paths.path('ParGlossaryTxT'), 'w') as f:
             f.write(self._NodeStr(**kwargs))
+        self.df.to_csv(paths.path('ParGlossary'))
 
-    def get_layout(self):
-        tt = sg.Tree(self, headings=self.headings, auto_size_columns=False, show_expanded=True,justification='center',
+    def build_layout(self):
+        return [[sg.Tree(self, headings=self.headings, auto_size_columns=False, show_expanded=True,justification='center',
                      max_col_width=1000, def_col_width=20, row_height=50, num_rows=30, col_widths=[20, 10, 80],
-                     col0_width=20)
-        l = [[sg.Col([[tt]], size=col_size(1, 1))]]
-        return l
+                     col0_width=20)]]
 
     def test(self):
-        w = sg.Window('Par tree', self.get_layout(), size=col_size(1, 1))
+        w = sg.Window('Parameter tree', self.get_layout(as_col=False), size=col_size(1, 1))
         while True:
             e, v = w.read()
             if e == 'Ok':
