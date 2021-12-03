@@ -1,0 +1,19 @@
+,parent,key,text,description,default_value,dtype
+0,root,env_conf,env_conf,,,
+1,env_conf,env_conf.arena,arena,,,
+2,env_conf.arena,env_conf.arena.arena_dims,arena_dims,The arena dimensions in meters.,"(0.1, 0.1)",typing.Tuple[float]
+3,env_conf.arena,env_conf.arena.arena_shape,arena_shape,The arena shape.,circular,<class 'str'>
+4,env_conf,env_conf.border_list,border_list,,{},<class 'dict'>
+5,env_conf,env_conf.food_params,food_params,,,
+6,env_conf.food_params,env_conf.food_params.source_groups,source_groups,,{},<class 'dict'>
+7,env_conf.food_params,env_conf.food_params.food_grid,food_grid,,,<class 'dict'>
+8,env_conf.food_params,env_conf.food_params.source_units,source_units,,{},<class 'dict'>
+9,env_conf,env_conf.odorscape,odorscape,,,
+10,env_conf.odorscape,env_conf.odorscape.odorscape,odorscape,The algorithm used for odorscape generation.,Gaussian,<class 'str'>
+11,env_conf.odorscape,env_conf.odorscape.grid_dims,grid_dims,The odorscape grid resolution.,"(51, 51)",typing.Tuple[int]
+12,env_conf.odorscape,env_conf.odorscape.evap_const,evap_const,The evaporation constant of the diffusion algorithm.,,<class 'float'>
+13,env_conf.odorscape,env_conf.odorscape.gaussian_sigma,gaussian_sigma,The sigma of the gaussian difusion algorithm.,,typing.Tuple[float]
+14,env_conf,env_conf.windscape,windscape,,,
+15,env_conf.windscape,env_conf.windscape.wind_direction,wind_direction,The absolute polar direction of the wind/air puff.,3.141592653589793,<class 'float'>
+16,env_conf.windscape,env_conf.windscape.wind_speed,wind_speed,The speed of the wind/air puff.,0.0,<class 'float'>
+17,env_conf.windscape,env_conf.windscape.puffs,puffs,Repetitive or single air-puff stimuli.,{},<class 'typing.TypedDict'>

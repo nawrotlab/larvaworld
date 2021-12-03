@@ -31,7 +31,7 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
     if not argparser:
         from typing import TypedDict
         if t == TypedDict:
-            return {name: {'initial_value': v, 'dtype': t, 'entry': entry, 'disp': disp}}
+            return {name: {'initial_value': v, 'dtype': t, 'entry': entry, 'disp': disp, 'tooltip': h}}
         cur_dtype = base_dtype(t)
         if cur_dtype in [float, int]:
             if any([arg is not None for arg in [min, max, dv]]):
@@ -120,45 +120,52 @@ def pars_to_df(names, d0=None):
     ddf.to_csv(paths.path('ParGlossary'))
     print(ddf)
 
-def pars_to_tree():
+def pars_to_tree(name):
     invalid=[]
+    valid=[]
     def add_entry(k4,v4, parent) :
-        try:
-            entry = [parent, f'{parent}.{k4}',k4] + [v4[c] for c in columns[3:]]
+        key=f'{parent}.{k4}'
+        if 'content' in v4.keys():
+            dd=v4['content']
+            if key not in valid:
+                data.append([parent, key, k4, None, None, None])
+                valid.append(key)
+            for k1, v1 in dd.items():
+                add_entry(k1, v1, key)
+        else:
+            print(v4.keys())
+            entry = [parent, key,k4] + [v4[c] for c in columns[3:]]
             data.append(entry)
-        except:
-            invalid.append(k4)
-    def add_multientry(k2,v2, parent) :
-        try :
-            add_entry(k2, v2, parent)
-        except :
-            for k3,v3 in v2.items():
-                add_multientry(k3, v3, parent=k2)
+            valid.append(key)
+    def add_multientry0(d, k0, name):
+        key = f'{name}.{k0}'
+        if key not in valid:
+            data.append([name, key, k0, None, None, None])
+            valid.append(key)
+        for k1, v1 in d.items():
+            add_entry(k1, v1, key)
     from lib.conf.base import paths
     data=[]
     columns = ['parent', 'key','text','tooltip', 'initial_value', 'dtype']
-    # columns2 = ['parent','key','values', 'text']
-    P=init_pars()
+    columns2 = ['parent', 'key','text','description', 'default_value', 'dtype']
+    P=init_pars()[name]
+    data.append(['root', name, name, None, None, None])
+    valid.append(name)
     for k0,v0 in P.items():
-        data.append(['root', k0,k0, None, None, None])
-        # print(k0)
         d0=P.get(k0, None)
         try:
-            d=par_dict(k0,d0)
+            d = par(k0, **v0)
+            add_entry(k0, d[k0], name)
         except:
-            d=par(k0, **v0)
-        for k1, v1 in d.items():
-            if 'entry' in v1.keys() :
-                continue
-            add_multientry(k1, v1, k0)
-    print(invalid)
-    print(data)
+            d = par_dict(k0, d0)
+            add_multientry0(d, k0, name)
 
-    # ddf= pd.DataFrame.from_dict(dic, orient='index')
-    ddf = pd.DataFrame(data, columns=columns)
-    # ddf.index.name = 'group'
+
+
+    # print(invalid)
+    # print(valid)
+    ddf = pd.DataFrame(data, columns=columns2)
     ddf.to_csv(paths.path('ParGlossary'))
-    # print(ddf)
 
 
 
@@ -401,7 +408,7 @@ def oD(c=1, id='Odor'):
 
 
 if __name__ == '__main__':
-    pars_to_tree()
+    pars_to_tree('env_conf')
     raise
     store_controls()
     store_RefPars()

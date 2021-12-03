@@ -429,6 +429,8 @@ def entry_window(index, dict_name, base_dict={}, id=None, **kwargs):
 
 def tree_window():
     df=pd.read_csv(paths.path('ParGlossary'), index_col=0)
+    headings =df.columns.values.tolist()[3:]
+
     t=sg.TreeData()
     for _,row in df.iterrows() :
         d=row.to_dict()
@@ -436,12 +438,11 @@ def tree_window():
         dd['parent']=d['parent'] if d['parent']!='root' else ''
         dd['key'] = d['key']
         dd['text'] = d['text']
-        dd['values'] = [d['tooltip'], d['initial_value'], d['dtype']]
+        dd['values'] = [d[h] for h in headings]
         t.insert(**dd)
-    tt=sg.Tree(t, headings=['tooltip','initial_value', 'dtype'],auto_size_columns=False,
-                max_col_width=10000,def_col_width=20,row_height=50,num_rows=30, col_widths=[50,20,20],col0_width=20)
+    tt=sg.Tree(t, headings=headings,auto_size_columns=False,show_expanded=True,
+                max_col_width=1000,def_col_width=20,row_height=50,num_rows=30, col_widths=[60,20,20],col0_width=20)
     l=[[sg.Col([[tt]],size=col_size(1,1))]]
-    # l=[[sg.Tree(t, headings=['tooltip','initial_value', 'dtype'],col_widths=[30,40,10,10], max_col_width=100,def_col_width=50)]]
     w = sg.Window('Par tree', l,size=col_size(1, 1))
     while True:
         e, v = w.read()
