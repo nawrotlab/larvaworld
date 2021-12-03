@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import typing
 
-from lib.aux.dictsNlists import AttrDict
+from lib.aux.dictsNlists import AttrDict, tree_dict
 from lib.aux.par_aux import dtype_name
 from lib.conf.base.init_pars import init_pars, proc_type_keys, bout_keys, to_drop_keys
 
@@ -162,6 +162,16 @@ def pars_to_tree(name):
     ddf = ddf.fillna(value=' ')
     ddf =ddf.replace({}, ' ')
     return ddf
+
+def conf_to_tree(conf, conftype):
+    from lib.gui.aux.elements import GuiTreeData
+    from lib.conf.stored.conf import expandConf
+    d=expandConf(conf, conftype)
+    entries=tree_dict(d=d, parent_key=conf, sep='.')
+    tree = GuiTreeData(entries=entries, headings=['value'], col_widths=[40,20])
+    return tree
+
+
 
 
 col_idx_dict = {
@@ -401,5 +411,9 @@ def oD(c=1, id='Odor'):
 
 
 if __name__ == '__main__':
+    t=conf_to_tree('explorer', 'Model')
+    # t.save(k='text', v='value')
+    t.test()
+    raise
     store_controls()
     store_RefPars()

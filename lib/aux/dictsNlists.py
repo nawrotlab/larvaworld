@@ -45,6 +45,32 @@ def flatten_dict(d, parent_key='', sep='.'):
     return dict(items)
 
 
+def tree_dict(d, parent_key='', sep='.'):
+    cols = ['parent', 'key', 'text', 'values']
+    entries = []
+    keys = []
+
+    def add(item):
+        entry = dict(zip(cols, item))
+        if not entry['key'] in keys :
+            entries.append(entry)
+            keys.append(entry['key'])
+    add(['', parent_key, parent_key, [' ']])
+
+    def tree_dict0(d, parent_key='', sep='.'):
+        for k, v in d.items():
+            new_key = parent_key + sep + k
+            if isinstance(v, collections.MutableMapping):
+                add([parent_key, new_key, k, [' ']])
+                if len(v) > 0:
+                    tree_dict0(v, new_key, sep=sep)
+            else:
+                add([parent_key, new_key, k, [v]])
+        return entries
+
+    return tree_dict0(d, parent_key, sep)
+
+
 def reconstruct_dict(param_group, **kwargs):
     dict = {}
     for p in param_group:
@@ -64,12 +90,12 @@ def reconstruct_dict(param_group, **kwargs):
 
 
 def group_list_by_n(l, n):
-    Nmore=int(len(l) % n)
-    N=int((len(l)-Nmore) / n)
+    Nmore = int(len(l) % n)
+    N = int((len(l) - Nmore) / n)
     # if not len(l) % n == 0.0:
     #     raise ValueError('List length must be multiple of n')
-    g= [l[i * n:(i + 1) * n] for i in range(N)]
-    if Nmore!=0 :
+    g = [l[i * n:(i + 1) * n] for i in range(N)]
+    if Nmore != 0:
         g.append(l[-Nmore:])
     return g
 
@@ -80,13 +106,13 @@ def common_member(a, b):
     return a_set & b_set
 
 
-def merge_dicts(dict_list) :
+def merge_dicts(dict_list):
     # import collections
     super_dict = {}
     # super_dict = collections.defaultdict(set)
     for d in dict_list:
         for k, v in d.items():  # d.items() in Python 3+
-            super_dict[k]=v
+            super_dict[k] = v
             # super_dict[k].add(v)
     return super_dict
 
@@ -101,7 +127,7 @@ def load_dicts(files=None, pref=None, suf=None, folder=None, extension='txt', us
     ds = []
     for f in files:
         n = f'{folder}/{f}' if folder is not None else f
-        d=load_dict(n, use_pickle=use_pickle)
+        d = load_dict(n, use_pickle=use_pickle)
         # if use_pickle :
         #     with open(n, 'rb') as tfp:
         #         d = pickle.load(tfp)
@@ -112,7 +138,7 @@ def load_dicts(files=None, pref=None, suf=None, folder=None, extension='txt', us
     return ds
 
 
-def load_dict(file, use_pickle=True) :
+def load_dict(file, use_pickle=True):
     if use_pickle:
         with open(file, 'rb') as tfp:
             d = pickle.load(tfp)
@@ -122,11 +148,11 @@ def load_dict(file, use_pickle=True) :
     return AttrDict.from_nested_dicts(d)
 
 
-def save_dict(d, file, use_pickle=True) :
-    if use_pickle :
+def save_dict(d, file, use_pickle=True):
+    if use_pickle:
         with open(file, 'wb') as fp:
             pickle.dump(d, fp, protocol=pickle.HIGHEST_PROTOCOL)
-    else :
+    else:
         with open(file, "w") as fp:
             json.dump(d, fp)
 
@@ -168,41 +194,44 @@ def dict_to_file(dictionary, filename):
 
 
 def unique_list(l):
-    if len(l)==0:
+    if len(l) == 0:
         return []
-    elif len(l)==1:
+    elif len(l) == 1:
         return l
-    else :
+    else:
         seen = set()
         seen_add = seen.add
         return [x for x in l if not (x in seen or seen_add(x))]
 
 
-def replace_in_dict(d0, replace_d, inverse=False) :
+def replace_in_dict(d0, replace_d, inverse=False):
     d = copy.deepcopy(d0)
-    if inverse :
-        replace_d={v0:k0 for k0,v0 in replace_d.items()}
-    for k,v in d.items():  # for each elem in the list datastreams
-        if type(v)==dict :
-            d[k]=replace_in_dict(v, replace_d, inverse=False)
+    if inverse:
+        replace_d = {v0: k0 for k0, v0 in replace_d.items()}
+    for k, v in d.items():  # for each elem in the list datastreams
+        if type(v) == dict:
+            d[k] = replace_in_dict(v, replace_d, inverse=False)
         elif v in list(replace_d.keys()):
             d[k] = replace_d[v]
     return d
 
+
 def group_dicts(dics):
-  if all(not isinstance(i, dict) for i in dics):
-    return [i for b in dics for i in b]
-  r = [i for b in dics for i in b.items()]
-  _d = [[a, [c for _, c in b]] for a, b in groupby(sorted(r, key=lambda x:x[0]), key=lambda x:x[0])]
-  return {a:b[0] if len(b) == 1 else group_dicts(b) for a, b in _d}
+    if all(not isinstance(i, dict) for i in dics):
+        return [i for b in dics for i in b]
+    r = [i for b in dics for i in b.items()]
+    _d = [[a, [c for _, c in b]] for a, b in groupby(sorted(r, key=lambda x: x[0]), key=lambda x: x[0])]
+    return {a: b[0] if len(b) == 1 else group_dicts(b) for a, b in _d}
+
 
 def merge(item):
-  from collections import defaultdict
-  merged = defaultdict(list)
-  for ref in item.get('ref', []):
-    for key, val in ref.items():
-      merged[key].append(val)
-  return {**item, 'ref': dict(merged)}
+    from collections import defaultdict
+    merged = defaultdict(list)
+    for ref in item.get('ref', []):
+        for key, val in ref.items():
+            merged[key].append(val)
+    return {**item, 'ref': dict(merged)}
+
 
 class AttrDict(dict):
     '''
@@ -222,6 +251,7 @@ class AttrDict(dict):
     # >>> print len(obj)
     0
     '''
+
     def __init__(self, *args, **kwargs):
         super(AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
@@ -236,7 +266,6 @@ class AttrDict(dict):
 
 
 if __name__ == '__main__':
-
     data = {
         "a": "aval",
         "b": {
@@ -252,4 +281,3 @@ if __name__ == '__main__':
 
     data1 = AttrDict.from_nested_dicts(data)
     print(data1.b.b1.b2a.b3b)  # -> b3bval
-

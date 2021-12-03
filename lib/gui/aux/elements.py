@@ -1597,16 +1597,21 @@ class DynamicGraph:
         self.fig_agg = draw_canvas(self.canvas, self.fig)
 
 
-class GuiTreeData(sg.TreeData, GuiElement):
-    def __init__(self, name='larva_conf', root_key=None, build_tree=False, **kwargs):
+class GuiTreeData(sg.TreeData):
+    def __init__(self, name='larva_conf', root_key=None, build_tree=False,entries=None, headings=None,
+                 col_widths=[20, 10, 80], **kwargs):
         sg.TreeData.__init__(self)
         if root_key is None:
             root_key = name
+        self.name = name
+        self.col_widths = col_widths
         self.root_key = root_key
         self.build_tree = build_tree
+        self.headings =headings
+        self.entries = self.get_entries() if entries is None else entries
         self.build()
-        layout = self.build_layout()
-        GuiElement.__init__(self, name=name, layout=layout)
+        # layout = self.build_layout()
+        # GuiElement.__init__(self, name=name, layout=layout)
 
     def get_value_arg(self, node, arg):
         if hasattr(node, arg):
@@ -1622,11 +1627,13 @@ class GuiTreeData(sg.TreeData, GuiElement):
         if node is None:
             node = self.root_node
 
-        def str_pair(node, k, v, max_l=15):
+        def str_pair(node, k, v, max_l=50):
             k0 = str(self.get_value_arg(node, k))
             v0 = str(self.get_value_arg(node, v))
+            if v0==' ' :
+                return k0
             if max_l is not None :
-                b = '{:<' + str(max_l) + '}'
+                b = '{:<' + str(max_l-4 * (level-1)) + '}'
                 k0= b.format(k0)
             kv0 = k0 + ' : ' + v0
             return kv0
@@ -1643,14 +1650,20 @@ class GuiTreeData(sg.TreeData, GuiElement):
             [str_pair(node, k, v)] +
             [' ' * 4 * level + self._NodeStr(child, level + 1, k, v) for child in node.children])
 
-    def build(self):
+    def get_df(self):
         if not self.build_tree and self.root_key in kConfDict('Tree'):
-            self.df = pd.DataFrame.from_dict(loadConf(self.root_key, 'Tree'))
+            df = pd.DataFrame.from_dict(loadConf(self.root_key, 'Tree'))
         else:
             from lib.conf.base.dtypes import pars_to_tree
-            self.df = pars_to_tree(self.root_key)
-            saveConf(self.df.to_dict(), 'Tree', self.root_key)
-        self.headings = self.df.columns.values.tolist()[3:]
+            df = pars_to_tree(self.root_key)
+            saveConf(df.to_dict(), 'Tree', self.root_key)
+        return df
+
+    def get_entries(self):
+        self.df = self.get_df()
+        if self.headings is None :
+            self.headings = self.df.columns.values.tolist()[3:]
+        entries = []
         for _, row in self.df.iterrows():
             d = row.to_dict()
             dd = {}
@@ -1658,7 +1671,12 @@ class GuiTreeData(sg.TreeData, GuiElement):
             dd['key'] = d['key']
             dd['text'] = d['text']
             dd['values'] = [d[h] for h in self.headings]
-            self.insert(**dd)
+            entries.append(dd)
+        return entries
+
+    def build(self):
+        for entry in self.entries :
+            self.insert(**entry)
 
     def save(self, **kwargs):
         with open(paths.path('ParGlossaryTxT'), 'w') as f:
@@ -1667,11 +1685,11 @@ class GuiTreeData(sg.TreeData, GuiElement):
     def build_layout(self):
         return [
             [sg.Tree(self, headings=self.headings, auto_size_columns=False, show_expanded=True, justification='center',
-                     max_col_width=1000, def_col_width=20, row_height=50, num_rows=30, col_widths=[20, 10, 80],
+                     max_col_width=1000, def_col_width=20, row_height=50, num_rows=30, col_widths=self.col_widths,
                      col0_width=20)]]
 
     def test(self):
-        w = sg.Window('Parameter tree', self.get_layout(as_col=False), size=col_size(1, 1))
+        w = sg.Window('Parameter tree', self.build_layout(), size=col_size(1, 1))
         while True:
             e, v = w.read()
             if e == 'Ok':
