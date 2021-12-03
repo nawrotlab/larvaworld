@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import typing
 
-from lib.aux.dictsNlists import AttrDict, tree_dict
+from lib.aux.dictsNlists import AttrDict, tree_dict, unique_list
 from lib.aux.par_aux import dtype_name
 from lib.conf.base.init_pars import init_pars, proc_type_keys, bout_keys, to_drop_keys
 
@@ -171,6 +171,27 @@ def conf_to_tree(conf, id=''):
     tree = GuiTreeData(entries=entries, headings=['value'], col_widths=[40,20])
     return tree
 
+def multiconf_to_tree(ids, conftype):
+    from lib.gui.aux.elements import GuiTreeData
+    from lib.conf.stored.conf import expandConf
+    dfs=[]
+    for i, id in enumerate(ids) :
+        conf=expandConf(id, conftype)
+        entries = tree_dict(d=conf, parent_key=id)
+        df=pd.DataFrame.from_records(entries, index=['parent', 'key', 'text'])
+        dfs.append(df)
+    ind0=unique_list([df.index.values for df in dfs])
+    vs=np.zeros([len(ind0), len(ids)])*np.nan
+    df0=pd.DataFrame(vs, index=ind0, columns=ids)
+    for id, df in zip(ids, dfs) :
+        for key in df.index :
+            df0[id].loc[key]=df['values'].loc[key][0]
+    df0.reset_index(inplace=True)
+    df0['values']=[df0[id] for id in ids]
+    df0.drop(ids, axis=1)
+    comp_entries = df0.to_dict(orient='records')
+    tree = GuiTreeData(entries=comp_entries, headings=[ids], col_widths=[40]+[20]*len(ids))
+    return tree
 
 
 
@@ -411,7 +432,8 @@ def oD(c=1, id='Odor'):
 
 
 if __name__ == '__main__':
-    t=conf_to_tree('explorer', 'Model')
+    t=multiconf_to_tree(['explorer', 'nengo_explorer'], 'Model')
+    # t=conf_to_tree('explorer', 'Model')
     # t.save(k='text', v='value')
     t.test()
     raise
