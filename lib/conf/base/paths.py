@@ -39,6 +39,7 @@ def path(n) :
         'Unit': f'{CF}/UnitDict.csv',
         'ParRef': f'{CF}/RefPars.txt',
         'ParGlossary': f'{CF}/ParGlossary.csv',
+        'ParGlossaryTxT': f'{CF}/ParGlossaryTxT.txt',
     }
 
     conf_paths = {

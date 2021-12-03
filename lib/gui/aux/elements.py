@@ -1,6 +1,7 @@
 import copy
 import inspect
 import os
+import pandas as pd
 import tkinter
 from tkinter import PhotoImage
 from typing import Tuple, List, Any, TypedDict
@@ -13,10 +14,10 @@ import matplotlib.pyplot as plt
 from lib.aux.dictsNlists import flatten_dict, group_list_by_n
 from lib.conf.stored.conf import loadConfDict, deleteConf, loadConf, expandConf, kConfDict
 import lib.aux.colsNstr as fun
-from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par, col_idx_dict
+from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par, col_idx_dict, pars_to_tree
 from lib.conf.base.par import runtime_pars, getPar
 from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse, \
-    col_kws, default_list_width
+    col_kws, default_list_width, col_size
 from lib.gui.aux.buttons import named_bool_button, BoolButton, GraphButton, button_row
 from lib.gui.aux.windows import set_kwargs, save_conf_window, import_window, change_dataset_id, save_ref_window, \
     add_ref_window, delete_conf_window
@@ -1588,3 +1589,78 @@ class DynamicGraph:
         if self.fig_agg:
             delete_figure_agg(self.fig_agg)
         self.fig_agg = draw_canvas(self.canvas, self.fig)
+
+class GuiTreeData(sg.TreeData):
+    def __init__(self,root_key='larva_conf',build_glossary=True, **kwargs):
+        super().__init__()
+        self.root_key=root_key
+        self.build_glossary=build_glossary
+        if self.build_glossary :
+            from lib.conf.base.dtypes import pars_to_tree
+            pars_to_tree(root_key)
+        self.build()
+
+    def get_value_arg(self, node, arg):
+        if hasattr(node, arg):
+            return getattr(node, arg)
+        elif arg in self.headings:
+            idx = self.headings.index(arg)
+            try :
+                return node.values[idx]
+            except :
+                return None
+
+    def _NodeStr(self, node=None, level=1, k='key', v='text'):
+        if node is None :
+            node=self.root_node
+        """
+        Does the magic of converting the TreeData into a nicely formatted string version
+
+        :param node:  The node to begin printing the tree
+        :type node: (TreeData.Node)
+        :param level: The indentation level for string formatting
+        :type level: (int)
+        """
+
+        # print(node.values)
+        return '\n'.join(
+            [str(self.get_value_arg(node, k)) + ' : ' + str(self.get_value_arg(node, v))] +
+            [' ' * 4 * level + self._NodeStr(child, level + 1, k, v) for child in node.children])
+
+    def build(self):
+        df = pd.read_csv(paths.path('ParGlossary'), index_col=0)
+        self.headings = df.columns.values.tolist()[3:]
+        for _, row in df.iterrows():
+            d = row.to_dict()
+            dd = {}
+            dd['parent'] = d['parent'] if d['parent'] != 'root' else ''
+            dd['key'] = d['key']
+            dd['text'] = d['text']
+            dd['values'] = [d[h] for h in self.headings]
+            self.insert(**dd)
+
+    def save(self, **kwargs):
+        with open(paths.path('ParGlossaryTxT'), 'w') as f:
+            f.write(self._NodeStr(**kwargs))
+
+    def get_layout(self):
+        tt = sg.Tree(self, headings=self.headings, auto_size_columns=False, show_expanded=True,justification='center',
+                     max_col_width=1000, def_col_width=20, row_height=50, num_rows=30, col_widths=[20, 10, 80],
+                     col0_width=20)
+        l = [[sg.Col([[tt]], size=col_size(1, 1))]]
+        return l
+
+    def test(self):
+        w = sg.Window('Par tree', self.get_layout(), size=col_size(1, 1))
+        while True:
+            e, v = w.read()
+            if e == 'Ok':
+                pass
+            elif e in ['Cancel', None]:
+                break
+        w.close()
+
+if __name__ == "__main__":
+    t=GuiTreeData('larva_conf')
+    # t.save(k='text', v='description')
+    t.test()

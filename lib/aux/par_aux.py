@@ -100,3 +100,12 @@ def ddot_hat_th(p):
 
 def lin(p):
     return fr'${{{p.replace("$", "")}}}_{{l}}$'
+
+def dtype_name(v) :
+    if v is None :
+        return None
+    else :
+        try :
+            return v.__name__
+        except :
+            return f'{v._name}[{v.__args__[0].__name__}]'

@@ -1,19 +1,144 @@
-,parent,key,text,description,default_value,dtype
-0,root,env_conf,env_conf,,,
-1,env_conf,env_conf.arena,arena,,,
-2,env_conf.arena,env_conf.arena.arena_dims,arena_dims,The arena dimensions in meters.,"(0.1, 0.1)",typing.Tuple[float]
-3,env_conf.arena,env_conf.arena.arena_shape,arena_shape,The arena shape.,circular,<class 'str'>
-4,env_conf,env_conf.border_list,border_list,,{},<class 'dict'>
-5,env_conf,env_conf.food_params,food_params,,,
-6,env_conf.food_params,env_conf.food_params.source_groups,source_groups,,{},<class 'dict'>
-7,env_conf.food_params,env_conf.food_params.food_grid,food_grid,,,<class 'dict'>
-8,env_conf.food_params,env_conf.food_params.source_units,source_units,,{},<class 'dict'>
-9,env_conf,env_conf.odorscape,odorscape,,,
-10,env_conf.odorscape,env_conf.odorscape.odorscape,odorscape,The algorithm used for odorscape generation.,Gaussian,<class 'str'>
-11,env_conf.odorscape,env_conf.odorscape.grid_dims,grid_dims,The odorscape grid resolution.,"(51, 51)",typing.Tuple[int]
-12,env_conf.odorscape,env_conf.odorscape.evap_const,evap_const,The evaporation constant of the diffusion algorithm.,,<class 'float'>
-13,env_conf.odorscape,env_conf.odorscape.gaussian_sigma,gaussian_sigma,The sigma of the gaussian difusion algorithm.,,typing.Tuple[float]
-14,env_conf,env_conf.windscape,windscape,,,
-15,env_conf.windscape,env_conf.windscape.wind_direction,wind_direction,The absolute polar direction of the wind/air puff.,3.141592653589793,<class 'float'>
-16,env_conf.windscape,env_conf.windscape.wind_speed,wind_speed,The speed of the wind/air puff.,0.0,<class 'float'>
-17,env_conf.windscape,env_conf.windscape.puffs,puffs,Repetitive or single air-puff stimuli.,{},<class 'typing.TypedDict'>
+,parent,key,text,default_value,dtype,description
+0,root,larva_conf,larva_conf,,dict,
+1,larva_conf,larva_conf.brain,brain,,dict,
+2,larva_conf.brain,larva_conf.brain.modules,modules,,dict,
+3,larva_conf.brain.modules,larva_conf.brain.modules.turner,turner,False,bool,
+4,larva_conf.brain.modules,larva_conf.brain.modules.crawler,crawler,False,bool,
+5,larva_conf.brain.modules,larva_conf.brain.modules.interference,interference,False,bool,
+6,larva_conf.brain.modules,larva_conf.brain.modules.intermitter,intermitter,False,bool,
+7,larva_conf.brain.modules,larva_conf.brain.modules.olfactor,olfactor,False,bool,
+8,larva_conf.brain.modules,larva_conf.brain.modules.windsensor,windsensor,False,bool,
+9,larva_conf.brain.modules,larva_conf.brain.modules.toucher,toucher,False,bool,
+10,larva_conf.brain.modules,larva_conf.brain.modules.feeder,feeder,False,bool,
+11,larva_conf.brain.modules,larva_conf.brain.modules.memory,memory,False,bool,
+12,larva_conf.brain,larva_conf.brain.turner_params,turner_params,,dict,
+13,larva_conf.brain.turner_params,larva_conf.brain.turner_params.mode,mode,neural,str,The implementation mode of the lateral oscillator (TURNER) module.
+14,larva_conf.brain.turner_params,larva_conf.brain.turner_params.base_activation,base_activation,20.0,float,The baseline activation/input of the TURNER module.
+15,larva_conf.brain.turner_params,larva_conf.brain.turner_params.activation_range,activation_range,"(10.0, 40.0)",Tuple[float],The activation/input range of the TURNER module.
+16,larva_conf.brain.turner_params,larva_conf.brain.turner_params.noise,noise,0.15,float,The intrinsic output noise of the TURNER activity amplitude.
+17,larva_conf.brain.turner_params,larva_conf.brain.turner_params.activation_noise,activation_noise,0.5,float,The intrinsic input noise of the TURNER module.
+18,larva_conf.brain.turner_params,larva_conf.brain.turner_params.initial_amp,initial_amp,,float,The initial activity amplitude of the TURNER module.
+19,larva_conf.brain.turner_params,larva_conf.brain.turner_params.amp_range,amp_range,,Tuple[float],The activity amplitude range of the TURNER module.
+20,larva_conf.brain.turner_params,larva_conf.brain.turner_params.initial_freq,initial_freq,,float,The initial frequency of the repetitive lateral bending behavior if this is hardcoded (e.g. sinusoidal mode).
+21,larva_conf.brain.turner_params,larva_conf.brain.turner_params.freq_range,freq_range,,Tuple[float],The frequency range of the repetitive lateral bending behavior.
+22,larva_conf.brain,larva_conf.brain.crawler_params,crawler_params,,dict,
+23,larva_conf.brain.crawler_params,larva_conf.brain.crawler_params.waveform,waveform,realistic,str,The waveform of the repetitive crawling oscillator (CRAWLER) module.
+24,larva_conf.brain.crawler_params,larva_conf.brain.crawler_params.freq_range,freq_range,"(0.5, 2.5)",Tuple[float],The frequency range of the repetitive crawling behavior.
+25,larva_conf.brain.crawler_params,larva_conf.brain.crawler_params.initial_freq,initial_freq,1.418,float,The initial frequency of the repetitive crawling behavior.
+26,larva_conf.brain.crawler_params,larva_conf.brain.crawler_params.freq_std,freq_std,0.184,float,The standard deviation of the frequency of the repetitive crawling behavior.
+27,larva_conf.brain.crawler_params,larva_conf.brain.crawler_params.step_to_length_mu,step_to_length_mu,0.224,float,The mean displacement achieved in a single peristaltic stride as a fraction of the body length.
+28,larva_conf.brain.crawler_params,larva_conf.brain.crawler_params.step_to_length_std,step_to_length_std,0.033,float,The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.
+29,larva_conf.brain.crawler_params,larva_conf.brain.crawler_params.initial_amp,initial_amp,,float,The initial amplitude of the CRAWLER-generated forward velocity if this is hardcoded (e.g. constant waveform).
+30,larva_conf.brain.crawler_params,larva_conf.brain.crawler_params.noise,noise,0.1,float,The intrinsic output noise of the CRAWLER-generated forward velocity.
+31,larva_conf.brain.crawler_params,larva_conf.brain.crawler_params.max_vel_phase,max_vel_phase,1.0,float,The phase of the crawling oscillation cycle where the output (forward velocity) is maximum.
+32,larva_conf.brain,larva_conf.brain.interference_params,interference_params,,dict,
+33,larva_conf.brain.interference_params,larva_conf.brain.interference_params.crawler_phi_range,crawler_phi_range,"(0.0, 0.0)",Tuple[float],The CRAWLER oscillator cycle range during which it interferes with the TURNER.
+34,larva_conf.brain.interference_params,larva_conf.brain.interference_params.feeder_phi_range,feeder_phi_range,"(0.0, 0.0)",Tuple[float],The FEEDER oscillator cycle range during which it interferes with the TURNER.
+35,larva_conf.brain.interference_params,larva_conf.brain.interference_params.attenuation,attenuation,1.0,float,The activity attenuation exerted on the TURNER module due to interference by other oscillators.
+36,larva_conf.brain,larva_conf.brain.intermitter_params,intermitter_params,,dict,
+37,larva_conf.brain.intermitter_params,larva_conf.brain.intermitter_params.mode,mode,default,str,The implementation mode of the intermittency (INTERMITTER) module.
+38,larva_conf.brain.intermitter_params,larva_conf.brain.intermitter_params.stridechain_dist,stridechain_dist,,dict,
+39,larva_conf.brain.intermitter_params.stridechain_dist,larva_conf.brain.intermitter_params.stridechain_dist.fit,fit,True,bool,"Whether the distribution is sampled from a reference dataset. Once this is set to ""ON"" no other parameter is taken into account."
+40,larva_conf.brain.intermitter_params.stridechain_dist,larva_conf.brain.intermitter_params.stridechain_dist.range,range,,Tuple[float],The distribution range.
+41,larva_conf.brain.intermitter_params.stridechain_dist,larva_conf.brain.intermitter_params.stridechain_dist.name,name,,str,The distribution name.
+42,larva_conf.brain.intermitter_params.stridechain_dist,larva_conf.brain.intermitter_params.stridechain_dist.mu,mu,,float,"The ""mean"" argument for constructing the distribution."
+43,larva_conf.brain.intermitter_params.stridechain_dist,larva_conf.brain.intermitter_params.stridechain_dist.sigma,sigma,,float,"The ""sigma"" argument for constructing the distribution."
+44,larva_conf.brain.intermitter_params,larva_conf.brain.intermitter_params.pause_dist,pause_dist,,dict,
+45,larva_conf.brain.intermitter_params.pause_dist,larva_conf.brain.intermitter_params.pause_dist.fit,fit,True,bool,"Whether the distribution is sampled from a reference dataset. Once this is set to ""ON"" no other parameter is taken into account."
+46,larva_conf.brain.intermitter_params.pause_dist,larva_conf.brain.intermitter_params.pause_dist.range,range,,Tuple[float],The distribution range.
+47,larva_conf.brain.intermitter_params.pause_dist,larva_conf.brain.intermitter_params.pause_dist.name,name,,str,The distribution name.
+48,larva_conf.brain.intermitter_params.pause_dist,larva_conf.brain.intermitter_params.pause_dist.mu,mu,,float,"The ""mean"" argument for constructing the distribution."
+49,larva_conf.brain.intermitter_params.pause_dist,larva_conf.brain.intermitter_params.pause_dist.sigma,sigma,,float,"The ""sigma"" argument for constructing the distribution."
+50,larva_conf.brain.intermitter_params,larva_conf.brain.intermitter_params.EEB,EEB,0.0,float,"The baseline exploitation-exploration balance. 0 means only exploitation, 1 only exploration."
+51,larva_conf.brain.intermitter_params,larva_conf.brain.intermitter_params.EEB_decay,EEB_decay,1.0,float,The exponential decay coefficient of the exploitation-exploration balance when no food is detected.
+52,larva_conf.brain.intermitter_params,larva_conf.brain.intermitter_params.crawl_bouts,crawl_bouts,True,bool,Whether crawling bouts (runs/stridechains) are generated.
+53,larva_conf.brain.intermitter_params,larva_conf.brain.intermitter_params.feed_bouts,feed_bouts,False,bool,Whether feeding bouts (feedchains) are generated.
+54,larva_conf.brain.intermitter_params,larva_conf.brain.intermitter_params.crawl_freq,crawl_freq,1.43,float,The default frequency of the CRAWLER oscillator when simulating offline.
+55,larva_conf.brain.intermitter_params,larva_conf.brain.intermitter_params.feed_freq,feed_freq,2.0,float,The default frequency of the FEEDER oscillator when simulating offline.
+56,larva_conf.brain.intermitter_params,larva_conf.brain.intermitter_params.feeder_reoccurence_rate,feeder_reoccurence_rate,,float,The default reoccurence rate of the feeding motion.
+57,larva_conf.brain,larva_conf.brain.olfactor_params,olfactor_params,,dict,
+58,larva_conf.brain.olfactor_params,larva_conf.brain.olfactor_params.perception,perception,log,str,The method used to calculate the perceived sensory activation from the current and previous sensory input.
+59,larva_conf.brain.olfactor_params,larva_conf.brain.olfactor_params.input_noise,input_noise,0.0,float,The intrinsic noise of the sensory input.
+60,larva_conf.brain.olfactor_params,larva_conf.brain.olfactor_params.decay_coef,decay_coef,0.0,float,The linear decay coefficient of the olfactory sensory activation.
+61,larva_conf.brain.olfactor_params,larva_conf.brain.olfactor_params.brute_force,brute_force,False,bool,Whether to apply direct rule-based modulation on locomotion or not.
+62,larva_conf.brain,larva_conf.brain.windsensor_params,windsensor_params,,dict,
+63,larva_conf.brain.windsensor_params,larva_conf.brain.windsensor_params.weights,weights,,dict,
+64,larva_conf.brain.windsensor_params.weights,larva_conf.brain.windsensor_params.weights.hunch_lin,hunch_lin,10.0,float,The connection weight between the HUNCH neuron ensemble and the CRAWLER module.
+65,larva_conf.brain.windsensor_params.weights,larva_conf.brain.windsensor_params.weights.hunch_ang,hunch_ang,0.0,float,The connection weight between the HUNCH neuron ensemble and the TURNER module.
+66,larva_conf.brain.windsensor_params.weights,larva_conf.brain.windsensor_params.weights.bend_lin,bend_lin,0.0,float,The connection weight between the BEND neuron ensemble and the CRAWLER module.
+67,larva_conf.brain.windsensor_params.weights,larva_conf.brain.windsensor_params.weights.bend_ang,bend_ang,-10.0,float,The connection weight between the BEND neuron ensemble and the TURNER module.
+68,larva_conf.brain,larva_conf.brain.toucher_params,toucher_params,,dict,
+69,larva_conf.brain.toucher_params,larva_conf.brain.toucher_params.perception,perception,linear,str,The method used to calculate the perceived sensory activation from the current and previous sensory input.
+70,larva_conf.brain.toucher_params,larva_conf.brain.toucher_params.input_noise,input_noise,0.0,float,The intrinsic noise of the sensory input.
+71,larva_conf.brain.toucher_params,larva_conf.brain.toucher_params.decay_coef,decay_coef,0.1,float,The exponential decay coefficient of the tactile sensory activation.
+72,larva_conf.brain.toucher_params,larva_conf.brain.toucher_params.state_specific_best,state_specific_best,True,bool,Whether to use the state-specific or the global highest evaluated gain after the end of the memory training period.
+73,larva_conf.brain.toucher_params,larva_conf.brain.toucher_params.brute_force,brute_force,False,bool,Whether to apply direct rule-based modulation on locomotion or not.
+74,larva_conf.brain.toucher_params,larva_conf.brain.toucher_params.initial_gain,initial_gain,40.0,float,The initial gain of the tactile sensor.
+75,larva_conf.brain,larva_conf.brain.feeder_params,feeder_params,,dict,
+76,larva_conf.brain.feeder_params,larva_conf.brain.feeder_params.freq_range,freq_range,"(1.0, 3.0)",Tuple[float],The frequency range of the repetitive feeding behavior.
+77,larva_conf.brain.feeder_params,larva_conf.brain.feeder_params.initial_freq,initial_freq,2.0,float,The initial default frequency of the repetitive feeding behavior.
+78,larva_conf.brain.feeder_params,larva_conf.brain.feeder_params.feed_radius,feed_radius,0.1,float,The radius around the mouth in which food is consumable as a fraction of the body length.
+79,larva_conf.brain.feeder_params,larva_conf.brain.feeder_params.V_bite,V_bite,0.0005,float,The volume of food consumed on a single feeding motion as a fraction of the body volume.
+80,larva_conf.brain,larva_conf.brain.memory_params,memory_params,,dict,
+81,larva_conf.brain.memory_params,larva_conf.brain.memory_params.modality,modality,olfaction,str,The modality for which the memory module is used.
+82,larva_conf.brain.memory_params,larva_conf.brain.memory_params.Delta,Delta,0.1,float,The input sensitivity of the memory.
+83,larva_conf.brain.memory_params,larva_conf.brain.memory_params.state_spacePerSide,state_spacePerSide,0,int,The number of discrete states to parse the state space on either side of 0.
+84,larva_conf.brain.memory_params,larva_conf.brain.memory_params.gain_space,gain_space,"[-300.0, -50.0, 50.0, 300.0]",List[float],The possible values for memory gain to choose from.
+85,larva_conf.brain.memory_params,larva_conf.brain.memory_params.update_dt,update_dt,1.0,float,The interval duration between gain switches.
+86,larva_conf.brain.memory_params,larva_conf.brain.memory_params.alpha,alpha,0.05,float,The alpha parameter of reinforcement learning algorithm.
+87,larva_conf.brain.memory_params,larva_conf.brain.memory_params.gamma,gamma,0.6,float,The probability of sampling a random gain rather than exploiting the currently highest evaluated gain for the current state.
+88,larva_conf.brain.memory_params,larva_conf.brain.memory_params.epsilon,epsilon,0.3,float,The epsilon parameter of reinforcement learning algorithm.
+89,larva_conf.brain.memory_params,larva_conf.brain.memory_params.train_dur,train_dur,20.0,float,The duration of the training period after which no further learning will take place.
+90,larva_conf.brain,larva_conf.brain.nengo,nengo,False,bool,
+91,larva_conf,larva_conf.body,body,,dict,
+92,larva_conf.body,larva_conf.body.initial_length,initial_length,0.004,float,The initial body length.
+93,larva_conf.body,larva_conf.body.length_std,length_std,0.0004,float,The standard deviation of the initial body length.
+94,larva_conf.body,larva_conf.body.Nsegs,Nsegs,2,int,The number of segments comprising the larva body.
+95,larva_conf.body,larva_conf.body.seg_ratio,seg_ratio,,float,"The length ratio of the body segments. If null, equal-length segments are generated."
+96,larva_conf.body,larva_conf.body.touch_sensors,touch_sensors,,int,The number of touch sensors existing on the larva body.
+97,larva_conf.body,larva_conf.body.shape,shape,drosophila_larva,str,The body shape.
+98,larva_conf,larva_conf.energetics,energetics,,dict,
+99,larva_conf.energetics,larva_conf.energetics.DEB,DEB,,dict,
+100,larva_conf.energetics.DEB,larva_conf.energetics.DEB.species,species,default,str,The phenotype/species-specific fitted DEB model to use.
+101,larva_conf.energetics.DEB,larva_conf.energetics.DEB.f_decay,f_decay,0.1,float,The exponential decay coefficient of the DEB functional response.
+102,larva_conf.energetics.DEB,larva_conf.energetics.DEB.absorption,absorption,0.5,float,The absorption ration for consumed food.
+103,larva_conf.energetics.DEB,larva_conf.energetics.DEB.V_bite,V_bite,0.0005,float,The volume of food consumed on a single feeding motion as a fraction of the body volume.
+104,larva_conf.energetics.DEB,larva_conf.energetics.DEB.hunger_as_EEB,hunger_as_EEB,True,bool,Whether the DEB-generated hunger drive informs the exploration-exploitation balance.
+105,larva_conf.energetics.DEB,larva_conf.energetics.DEB.hunger_gain,hunger_gain,0.0,float,The sensitivy of the hunger drive in deviations of the DEB reserve density.
+106,larva_conf.energetics.DEB,larva_conf.energetics.DEB.assimilation_mode,assimilation_mode,gut,str,The method used to calculate the DEB assimilation energy flow.
+107,larva_conf.energetics.DEB,larva_conf.energetics.DEB.DEB_dt,DEB_dt,,float,The timestep of the DEB energetics module in seconds.
+108,larva_conf.energetics,larva_conf.energetics.gut,gut,,dict,
+109,larva_conf.energetics.gut,larva_conf.energetics.gut.M_gm,M_gm,0.01,float,Gut capacity in C-moles per unit of gut volume.
+110,larva_conf.energetics.gut,larva_conf.energetics.gut.y_P_X,y_P_X,0.9,float,Yield of product per unit of food.
+111,larva_conf.energetics.gut,larva_conf.energetics.gut.J_g_per_cm2,J_g_per_cm2,1.1574074074074074e-07,float,Secretion rate of enzyme per unit of gut surface per second.
+112,larva_conf.energetics.gut,larva_conf.energetics.gut.k_g,k_g,1.0,float,Decay rate of digestive enzyme.
+113,larva_conf.energetics.gut,larva_conf.energetics.gut.k_dig,k_dig,1.0,float,Rate constant for digestion : k_X * y_Xg.
+114,larva_conf.energetics.gut,larva_conf.energetics.gut.f_dig,f_dig,1.0,float,Scaled functional response for digestion : M_X/(M_X+M_K_X)
+115,larva_conf.energetics.gut,larva_conf.energetics.gut.M_c_per_cm2,M_c_per_cm2,5e-08,float,Area specific amount of carriers in the gut per unit of gut surface.
+116,larva_conf.energetics.gut,larva_conf.energetics.gut.constant_M_c,constant_M_c,True,bool,Whether to assume a constant amount of carrier enzymes on the gut surface.
+117,larva_conf.energetics.gut,larva_conf.energetics.gut.k_c,k_c,1.0,float,Release rate of carrier enzymes.
+118,larva_conf.energetics.gut,larva_conf.energetics.gut.k_abs,k_abs,1.0,float,Rate constant for absorption : k_P * y_Pc.
+119,larva_conf.energetics.gut,larva_conf.energetics.gut.f_abs,f_abs,1.0,float,Scaled functional response for absorption : M_P/(M_P+M_K_P)
+120,larva_conf,larva_conf.physics,physics,,dict,
+121,larva_conf.physics,larva_conf.physics.torque_coef,torque_coef,0.41,float,The coefficient converting the lateral oscillator (TURNER) activity to bending torque.
+122,larva_conf.physics,larva_conf.physics.ang_damping,ang_damping,2.5,float,The environmental angular damping exerted on bending angular velocity.
+123,larva_conf.physics,larva_conf.physics.body_spring_k,body_spring_k,0.02,float,The torsional spring constant of the larva body restoring the bending angle to 0.
+124,larva_conf.physics,larva_conf.physics.bend_correction_coef,bend_correction_coef,1.4,float,The correction coefficient restoring the bending angle during forward motion by aligning the rear body segments to the front heading axis.
+125,larva_conf,larva_conf.Box2D_params,Box2D_params,,dict,
+126,larva_conf.Box2D_params,larva_conf.Box2D_params.joint_types,joint_types,,dict,
+127,larva_conf.Box2D_params.joint_types,larva_conf.Box2D_params.joint_types.friction,friction,,dict,
+128,larva_conf.Box2D_params.joint_types.friction,larva_conf.Box2D_params.joint_types.friction.N,N,0,int,
+129,larva_conf.Box2D_params.joint_types.friction,larva_conf.Box2D_params.joint_types.friction.args,args,,dict,
+130,larva_conf.Box2D_params.joint_types.friction.args,larva_conf.Box2D_params.joint_types.friction.args.maxForce,maxForce,1,float,
+131,larva_conf.Box2D_params.joint_types.friction.args,larva_conf.Box2D_params.joint_types.friction.args.maxTorque,maxTorque,1,float,
+132,larva_conf.Box2D_params.joint_types,larva_conf.Box2D_params.joint_types.revolute,revolute,,dict,
+133,larva_conf.Box2D_params.joint_types.revolute,larva_conf.Box2D_params.joint_types.revolute.N,N,0,int,
+134,larva_conf.Box2D_params.joint_types.revolute,larva_conf.Box2D_params.joint_types.revolute.args,args,,dict,
+135,larva_conf.Box2D_params.joint_types.revolute.args,larva_conf.Box2D_params.joint_types.revolute.args.enableMotor,enableMotor,True,bool,
+136,larva_conf.Box2D_params.joint_types.revolute.args,larva_conf.Box2D_params.joint_types.revolute.args.maxMotorTorque,maxMotorTorque,0.0,float,
+137,larva_conf.Box2D_params.joint_types.revolute.args,larva_conf.Box2D_params.joint_types.revolute.args.motorSpeed,motorSpeed,0.0,float,
+138,larva_conf.Box2D_params.joint_types,larva_conf.Box2D_params.joint_types.distance,distance,,dict,
+139,larva_conf.Box2D_params.joint_types.distance,larva_conf.Box2D_params.joint_types.distance.N,N,0,int,
+140,larva_conf.Box2D_params.joint_types.distance,larva_conf.Box2D_params.joint_types.distance.args,args,,dict,
+141,larva_conf.Box2D_params.joint_types.distance.args,larva_conf.Box2D_params.joint_types.distance.args.frequencyHz,frequencyHz,5.0,float,
+142,larva_conf.Box2D_params.joint_types.distance.args,larva_conf.Box2D_params.joint_types.distance.args.dampingRatio,dampingRatio,1.0,float,

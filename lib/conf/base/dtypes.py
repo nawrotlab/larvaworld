@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
-
+import typing
 
 from lib.aux.dictsNlists import AttrDict
+from lib.aux.par_aux import dtype_name
 from lib.conf.base.init_pars import init_pars, proc_type_keys, bout_keys, to_drop_keys
 
 
@@ -128,28 +129,27 @@ def pars_to_tree(name):
         if 'content' in v4.keys():
             dd=v4['content']
             if key not in valid:
-                data.append([parent, key, k4, None, None, None])
+                data.append([parent, key, k4, None, dict, None])
                 valid.append(key)
             for k1, v1 in dd.items():
                 add_entry(k1, v1, key)
         else:
-            print(v4.keys())
             entry = [parent, key,k4] + [v4[c] for c in columns[3:]]
             data.append(entry)
             valid.append(key)
     def add_multientry0(d, k0, name):
         key = f'{name}.{k0}'
         if key not in valid:
-            data.append([name, key, k0, None, None, None])
+            data.append([name, key, k0,  None, dict,None])
             valid.append(key)
         for k1, v1 in d.items():
             add_entry(k1, v1, key)
     from lib.conf.base import paths
     data=[]
-    columns = ['parent', 'key','text','tooltip', 'initial_value', 'dtype']
-    columns2 = ['parent', 'key','text','description', 'default_value', 'dtype']
+    columns = ['parent', 'key','text','initial_value', 'dtype', 'tooltip']
+    columns2 = ['parent', 'key','text','default_value', 'dtype', 'description']
     P=init_pars()[name]
-    data.append(['root', name, name, None, None, None])
+    data.append(['root', name, name, None, dict,None])
     valid.append(name)
     for k0,v0 in P.items():
         d0=P.get(k0, None)
@@ -159,12 +159,10 @@ def pars_to_tree(name):
         except:
             d = par_dict(k0, d0)
             add_multientry0(d, k0, name)
-
-
-
-    # print(invalid)
-    # print(valid)
     ddf = pd.DataFrame(data, columns=columns2)
+
+    if 'dtype' in columns2 :
+        ddf['dtype']=[dtype_name(v) for v in ddf['dtype'] ]
     ddf.to_csv(paths.path('ParGlossary'))
 
 
@@ -408,7 +406,10 @@ def oD(c=1, id='Odor'):
 
 
 if __name__ == '__main__':
-    pars_to_tree('env_conf')
+    a=2
+    t=typing.Tuple[float].__dict__
+    print(t)
+    # print(t.__name__)
     raise
     store_controls()
     store_RefPars()
