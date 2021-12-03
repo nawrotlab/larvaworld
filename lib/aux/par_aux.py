@@ -108,4 +108,7 @@ def dtype_name(v) :
         try :
             return v.__name__
         except :
-            return f'{v._name}[{v.__args__[0].__name__}]'
+            try :
+                return f'{v._name}[{v.__args__[0].__name__}]'
+            except :
+                return v

@@ -376,6 +376,9 @@ class SelectionList(GuiElement):
             conf = self.tab.get(w, v, c, as_entry=False)
             new_conf = self.tab.edit(conf)
             self.tab.update(w, c, new_conf, id=None)
+        elif e == f'TREE {n}':
+            self.tab.tree.test()
+
         elif self.collapsible is not None and e == self.collapsible.header_key:
             self.collapsible.update_header(w, id)
 
@@ -1591,7 +1594,7 @@ class DynamicGraph:
         self.fig_agg = draw_canvas(self.canvas, self.fig)
 
 class GuiTreeData(sg.TreeData, GuiElement):
-    def __init__(self,name='larva_conf',root_key=None,build_glossary=False, **kwargs):
+    def __init__(self,name='larva_conf',root_key=None,build_glossary=True, **kwargs):
         sg.TreeData.__init__(self)
         if root_key is None :
             root_key=name
@@ -1622,8 +1625,6 @@ class GuiTreeData(sg.TreeData, GuiElement):
         :param level: The indentation level for string formatting
         :type level: (int)
         """
-
-        # print(node.values)
         return '\n'.join(
             [str(self.get_value_arg(node, k)) + ' : ' + str(self.get_value_arg(node, v))] +
             [' ' * 4 * level + self._NodeStr(child, level + 1, k, v) for child in node.children])

@@ -119,7 +119,6 @@ def pars_to_df(names, d0=None):
     ddf= pd.DataFrame.from_dict(dic, orient='index')
     ddf.index.name = 'group'
     ddf.to_csv(paths.path('ParGlossary'))
-    print(ddf)
 
 def pars_to_tree(name):
     invalid=[]
@@ -144,7 +143,6 @@ def pars_to_tree(name):
             valid.append(key)
         for k1, v1 in d.items():
             add_entry(k1, v1, key)
-    from lib.conf.base import paths
     data=[]
     columns = ['parent', 'key','text','initial_value', 'dtype', 'tooltip']
     columns2 = ['parent', 'key','text','default_value', 'dtype', 'description']
@@ -165,9 +163,6 @@ def pars_to_tree(name):
         ddf['dtype']=[dtype_name(v) for v in ddf['dtype'] ]
     ddf = ddf.fillna(value=' ')
     return ddf
-
-
-
 
 
 col_idx_dict = {
@@ -407,11 +402,5 @@ def oD(c=1, id='Odor'):
 
 
 if __name__ == '__main__':
-    a=2
-    t=typing.Tuple[float].__dict__
-    print(t)
-    # print(t.__name__)
-    raise
     store_controls()
     store_RefPars()
-    # print(null_dict('Box2D_params'))

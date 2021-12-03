@@ -1,4 +1,4 @@
-from lib.gui.aux.elements import CollapsibleTable, SelectionList, PadDict, PadTable
+from lib.gui.aux.elements import CollapsibleTable, SelectionList, PadDict, PadTable, GuiTreeData
 from lib.gui.aux.functions import gui_cols
 from lib.gui.aux.buttons import GraphButton
 from lib.gui.tabs.tab import GuiTab
@@ -12,6 +12,7 @@ class EnvTab(GuiTab):
         self.Su, self.Sg = f'{self.S.lower()}_units', f'{self.S.lower()}_groups'
         # self.Lu, self.Lg=f'{self.L.lower()}_units', f'{self.L.lower()}_groups'
         self.Bg = f'{self.B.lower()}_list'
+        self.tree = GuiTreeData('env_conf')
 
     def update(self, w, c, conf, id=None):
         for n in [self.Bg, 'arena', 'odorscape', 'windscape']:
@@ -48,7 +49,7 @@ class EnvTab(GuiTab):
         l1 = [c[n].get_layout(as_pane=True)[0] for n in [self.Sg, self.Su, 'food_grid']]
         c2 = PadDict(self.S, content=l1, header_width=34)
         c.update(c2.get_subdicts())
-        sl1 = SelectionList(tab=self, buttons=['save', 'delete'], disp=self.name, width=35)
+        sl1 = SelectionList(tab=self, buttons=['save', 'delete', 'tree'], disp=self.name, width=35)
         l = gui_cols([[sl1, s7, s8, s4], [c2]], x_fracs=[0.25, 0.25], as_pane=True, pad=(10, 10))
         self.layout = l
         return l, c, {}, {}

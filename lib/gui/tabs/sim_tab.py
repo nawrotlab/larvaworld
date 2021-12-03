@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 
 from lib.aux.collecting import output_keys
 from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, CollapsibleTable, PadDict, \
-    PadTable
+    PadTable, GuiTreeData
 from lib.gui.aux.functions import t_kws, gui_col, gui_cols, col_size, default_list_width, col_kws
 from lib.gui.tabs.draw_env_tab import DrawEnvTab
 from lib.gui.tabs.env_tab import EnvTab
@@ -18,6 +18,7 @@ class SimTab(GuiTab):
         self.canvas_size = col_size(0.5,0.8)
         self.k_stored = f'{self.name}_stored'
         self.k_active = f'{self.name}_active'
+        self.tree = GuiTreeData('exp_conf')
         # self.k_stored_ids = f'{self.k_stored}_IDS'
         # self.k_active_ids = f'{self.k_active}_IDS'
 
@@ -65,7 +66,7 @@ class SimTab(GuiTab):
         s2 = PadTable('trials', buttons=['add', 'remove'], index='idx', col_widths=[3, 4, 4, 5, 8],
                               heading_dict={'start': 'start', 'stop': 'stop', 'quality': 'substrate.quality',
                                             'type': 'substrate.type'},dict_name='epoch')
-        sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], progress=True,
+        sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run', 'tree'], progress=True,
                             sublists={'env_params': sl1, 'larva_groups': s1},text_kws=t_kws(15), width=28)
         sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Behavior/field :', buttons=[],single_line=True,
                             width=15, text_kws=t_kws(12),sublists={'simulations': sl3})

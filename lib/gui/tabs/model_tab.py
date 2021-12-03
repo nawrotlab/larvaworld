@@ -4,7 +4,8 @@ import os
 
 from lib.conf.base.dtypes import null_dict
 from lib.gui.aux.buttons import BoolButton, named_bool_button
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList, PadDict
+from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList, PadDict, \
+    GuiTreeData
 from lib.gui.aux.functions import col_size, gui_cols, t_kws, gui_col, tab_kws, col_kws
 from lib.gui.tabs.draw_body_tab import DrawBodyTab
 from lib.gui.tabs.tab import GuiTab
@@ -18,6 +19,7 @@ class ModelTab(GuiTab):
         self.module_keys = list(null_dict('modules').keys())
         self.energetics_keys = list(null_dict('energetics').keys())
         self.canvas_size = (1200, 1000)
+        self.tree=GuiTreeData('larva_conf')
 
     def update(self, w, c, conf, id=None):
         for n in self.fields:
@@ -138,7 +140,7 @@ class ModelTab(GuiTab):
         return l2, {g2.name: g2}
 
     def build(self):
-        sl0 = SelectionList(tab=self, buttons=['load', 'save', 'delete'])
+        sl0 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'tree'])
         sl1 = SelectionList(tab=self, conftype='ModelGroup', disp='Model family :', buttons=[], single_line=True,
                             width=15, text_kws=t_kws(10),sublists={'model families': sl0})
         b_nengo = named_bool_button('nengo', False)

@@ -28,6 +28,7 @@ def path(n) :
         'tutorials': f'{MF}/tutorial_slides',
         'model': f'{MF}/model_figures',
         'exp_figs': f'{MF}/exp_figures',
+        'icons': f'{MF}/icons',
     }
 
     par_paths = {
