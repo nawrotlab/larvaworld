@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from lib.aux.dictsNlists import flatten_dict, group_list_by_n
 from lib.conf.stored.conf import loadConfDict, deleteConf, loadConf, expandConf, kConfDict, saveConf
 import lib.aux.colsNstr as fun
-from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par, col_idx_dict, pars_to_tree
+from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par, col_idx_dict, pars_to_tree, conf_to_tree
 from lib.conf.base.par import runtime_pars, getPar
 from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse, \
     col_kws, default_list_width, col_size
@@ -381,6 +381,10 @@ class SelectionList(GuiElement):
             self.tab.update(w, c, new_conf, id=None)
         elif e == f'TREE {n}' and self.tree is not None:
             self.tree.test()
+        elif e == f'CONF_TREE {n}'and id != '':
+            conf = self.get(w, v, c, as_entry=False)
+            tree = conf_to_tree(conf, id)
+            tree.test()
 
         elif self.collapsible is not None and e == self.collapsible.header_key:
             self.collapsible.update_header(w, id)
@@ -1600,18 +1604,17 @@ class DynamicGraph:
 class GuiTreeData(sg.TreeData):
     def __init__(self, name='larva_conf', root_key=None, build_tree=False,entries=None, headings=None,
                  col_widths=[20, 10, 80], **kwargs):
-        sg.TreeData.__init__(self)
+        super().__init__()
         if root_key is None:
             root_key = name
         self.name = name
         self.col_widths = col_widths
+        self.w_width = np.sum(col_widths)
         self.root_key = root_key
         self.build_tree = build_tree
         self.headings =headings
         self.entries = self.get_entries() if entries is None else entries
         self.build()
-        # layout = self.build_layout()
-        # GuiElement.__init__(self, name=name, layout=layout)
 
     def get_value_arg(self, node, arg):
         if hasattr(node, arg):
@@ -1689,7 +1692,7 @@ class GuiTreeData(sg.TreeData):
                      col0_width=20)]]
 
     def test(self):
-        w = sg.Window('Parameter tree', self.build_layout(), size=col_size(1, 1))
+        w = sg.Window('Parameter tree', self.build_layout(), size=(self.w_width*20, 800))
         while True:
             e, v = w.read()
             if e == 'Ok':

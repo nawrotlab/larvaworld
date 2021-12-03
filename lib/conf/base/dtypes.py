@@ -163,11 +163,11 @@ def pars_to_tree(name):
     ddf =ddf.replace({}, ' ')
     return ddf
 
-def conf_to_tree(conf, conftype):
+def conf_to_tree(conf, id=''):
     from lib.gui.aux.elements import GuiTreeData
-    from lib.conf.stored.conf import expandConf
-    d=expandConf(conf, conftype)
-    entries=tree_dict(d=d, parent_key=conf, sep='.')
+    # from lib.conf.stored.conf import expandConf
+    # d=expandConf(id, conftype)
+    entries=tree_dict(d=conf, parent_key=id, sep='.')
     tree = GuiTreeData(entries=entries, headings=['value'], col_widths=[40,20])
     return tree
 

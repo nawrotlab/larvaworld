@@ -43,11 +43,13 @@ def button_row(name, buttons, button_args={}):
         'conf_fig': "Configure the selected graph's arguments.",
         'stop': "Stop the selected simulation.",
         'imitate': "Imitate the selected dataset in a simulation.",
-        'tree': "Inspect the configuration parameter tree.",
+        'tree': "Inspect the default configuration parameter tree.",
+        'conf_tree': "Inspect the specific configuration parameter tree.",
     }
     png_dict={
         'settings': 'developer-tools',
-        'tree': 'load-balancing',
+        'tree': 'kinesis-data-streams',
+        'conf_tree': 'kinesis-data-firehose',
     }
     but_kws = {
         'browse': {'initial_folder': paths.path('DATA'), 'enable_events': True,
@@ -86,7 +88,7 @@ class GraphButton(Button):
         else :
             for i in range(3) :
                 try :
-                    image_subsample=1 if i!=2 else 8
+                    image_subsample=1 if i!=2 else 10
                     filename = f'{paths.path("icons")}/icons{i+1}/{name}.png'
                     super().__init__(image_filename=filename, k=key,image_subsample=image_subsample, **b_kws, **kwargs)
                 except :

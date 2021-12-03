@@ -48,7 +48,7 @@ class EnvTab(GuiTab):
         l1 = [c[n].get_layout(as_pane=True)[0] for n in [self.Sg, self.Su, 'food_grid']]
         c2 = PadDict(self.S, content=l1, header_width=34)
         c.update(c2.get_subdicts())
-        sl1 = SelectionList(tab=self, buttons=['save', 'delete', 'tree'], disp=self.name, width=35,root_key='env_conf',)
+        sl1 = SelectionList(tab=self, buttons=['save', 'delete', 'tree', 'conf_tree'], disp=self.name, width=35,root_key='env_conf',)
         l = gui_cols([[sl1, s7, s8, s4], [c2]], x_fracs=[0.25, 0.25], as_pane=True, pad=(10, 10))
         self.layout = l
         return l, c, {}, {}
