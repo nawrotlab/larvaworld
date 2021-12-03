@@ -227,6 +227,7 @@ class MultiSpin(sg.Pane):
 
 
 class GuiElement:
+    """ The base class for all Gui Elements. Holds the basic description of an Element like size and colors """
     def __init__(self, name, layout=None, layout_col_kwargs={}):
         self.name = name
         self.layout = layout

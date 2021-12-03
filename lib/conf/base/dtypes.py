@@ -103,11 +103,62 @@ def par_dict_from_df(name, df):
     return {name: d}
 
 
-def pars_to_df(d):
-    df = pd.DataFrame.from_dict(d, orient='index',
-                                columns=['dtype', 'initial_value', 'value_list', 'min', 'max', 'interval'])
-    df.index.name = 'name'
-    df = df.where(pd.notnull(df), None)
+def pars_to_df(names, d0=None):
+    from lib.conf.base import paths
+    dic={}
+    for name in names :
+        d=par_dict(name,d0)
+        # print(d)
+        df = pd.DataFrame.from_dict(d, orient='index',
+                                    columns=['dtype', 'initial_value', 'tooltip'])
+                                    # columns=['dtype', 'initial_value', 'h', 'min', 'max', 'interval'])
+        df.index.name = 'parameter'
+        df = df.where(pd.notnull(df), None)
+        dic[name]=df
+    ddf= pd.DataFrame.from_dict(dic, orient='index')
+    ddf.index.name = 'group'
+    ddf.to_csv(paths.path('ParGlossary'))
+    print(ddf)
+
+def pars_to_tree():
+    invalid=[]
+    def add_entry(k4,v4, parent) :
+        try:
+            entry = [parent, f'{parent}.{k4}',k4] + [v4[c] for c in columns[3:]]
+            data.append(entry)
+        except:
+            invalid.append(k4)
+    def add_multientry(k2,v2, parent) :
+        try :
+            add_entry(k2, v2, parent)
+        except :
+            for k3,v3 in v2.items():
+                add_multientry(k3, v3, parent=k2)
+    from lib.conf.base import paths
+    data=[]
+    columns = ['parent', 'key','text','tooltip', 'initial_value', 'dtype']
+    # columns2 = ['parent','key','values', 'text']
+    P=init_pars()
+    for k0,v0 in P.items():
+        data.append(['root', k0,k0, None, None, None])
+        # print(k0)
+        d0=P.get(k0, None)
+        try:
+            d=par_dict(k0,d0)
+        except:
+            d=par(k0, **v0)
+        for k1, v1 in d.items():
+            if 'entry' in v1.keys() :
+                continue
+            add_multientry(k1, v1, k0)
+    print(invalid)
+    print(data)
+
+    # ddf= pd.DataFrame.from_dict(dic, orient='index')
+    ddf = pd.DataFrame(data, columns=columns)
+    # ddf.index.name = 'group'
+    ddf.to_csv(paths.path('ParGlossary'))
+    # print(ddf)
 
 
 
@@ -348,7 +399,10 @@ def oD(c=1, id='Odor'):
     return odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)
 
 
+
 if __name__ == '__main__':
+    pars_to_tree()
+    raise
     store_controls()
     store_RefPars()
     # print(null_dict('Box2D_params'))

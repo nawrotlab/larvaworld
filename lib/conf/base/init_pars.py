@@ -137,7 +137,7 @@ def init_pars():
             'sigma': {'max': 10.0, 'disp': 'std', 'combo': 'distro',
                       'h': 'The "sigma" argument for constructing the distribution.'},
         },
-        'xy': {'t': Tuple[float], 'v': (0.0, 0.0), 'min': -1.0, 'max': 1.0},
+        'xy': {'t': Tuple[float], 'v': (0.0, 0.0), 'min': -1.0, 'max': 1.0, 'h': 'The xy spatial position coordinates.'},
         'odor': {
             'odor_id': {'t': str, 'disp': 'ID', 'h': 'The unique ID of the odorant.'},
             'odor_intensity': {'max': 10.0, 'disp': 'C peak',

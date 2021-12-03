@@ -10,6 +10,10 @@ from lib.conf.base.dtypes import null_dict, arena, par_dict
 
 
 class ParsArg :
+    """
+    Create a single parser argument
+    This is a class used to populate a parser with arguments and get their values.
+    """
     def __init__(self, short, key, **kwargs):
         self.key=key
         self.args=[f'-{short}', f'--{key}']
@@ -23,6 +27,9 @@ class ParsArg :
         return getattr(input, self.key)
 
 class Parser :
+    """
+    Create an argument parser for a group of arguments (normally from a dict).
+    """
     def __init__(self, name):
         self.name=name
         dic=par_dict(name, argparser=True)
@@ -47,6 +54,9 @@ class Parser :
 
 
 class MultiParser :
+    """
+    Combine multiple parsers under a single multi-parser
+    """
     def __init__(self, names):
         self.parsers={n:Parser(n) for n in names}
 
