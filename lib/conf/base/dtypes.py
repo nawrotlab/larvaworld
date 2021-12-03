@@ -127,7 +127,7 @@ def pars_to_tree(name):
         if 'content' in v4.keys():
             dd=v4['content']
             if key not in valid:
-                data.append([parent, key, k4, None, dict, None])
+                data.append([parent, key, k4, None, dict, None, k4])
                 valid.append(key)
             for k1, v1 in dd.items():
                 add_entry(k1, v1, key)
@@ -138,15 +138,15 @@ def pars_to_tree(name):
     def add_multientry0(d, k0, name):
         key = f'{name}.{k0}'
         if key not in valid:
-            data.append([name, key, k0,  None, dict,None])
+            data.append([name, key, k0,  None, dict,None, k0])
             valid.append(key)
         for k1, v1 in d.items():
             add_entry(k1, v1, key)
     data=[]
-    columns = ['parent', 'key','text','initial_value', 'dtype', 'tooltip']
-    columns2 = ['parent', 'key','text','default_value', 'dtype', 'description']
+    columns = ['parent', 'key','text','initial_value', 'dtype', 'tooltip', 'disp']
+    columns2 = ['parent', 'key','text','default_value', 'dtype', 'description', 'name']
     P=init_pars()[name]
-    data.append(['root', name, name, None, dict,None])
+    data.append(['root', name, name, None, dict,None, name])
     valid.append(name)
     for k0,v0 in P.items():
         d0=P.get(k0, None)
@@ -160,18 +160,7 @@ def pars_to_tree(name):
     if 'dtype' in columns2 :
         ddf['dtype']=[dtype_name(v) for v in ddf['dtype'] ]
     ddf = ddf.fillna(value=' ')
-    ddf.replace({}, ' ', inplace=True)
-    # for kkk in ddf.values.flatten() :
-    #     if not type(kkk) in [str, bool, int, float] :
-    #         print (kkk, type(kkk))
-    #         # if kkk=={} :
-    #         #     print(kkk)
-
-
-
-
-    # print(ddf['default_value'], type(ddf))
-
+    ddf =ddf.replace({}, ' ')
     return ddf
 
 

@@ -229,6 +229,7 @@ class MultiSpin(sg.Pane):
 
 class GuiElement:
     """ The base class for all Gui Elements. Holds the basic description of an Element like size and colors """
+
     def __init__(self, name, layout=None, layout_col_kwargs={}):
         self.name = name
         self.layout = layout
@@ -283,7 +284,7 @@ class HeadedElement(GuiElement):
 
 class SelectionList(GuiElement):
     def __init__(self, tab, conftype=None, disp=None, buttons=[], button_kws={}, sublists={}, idx=None, progress=False,
-                 width=24, with_dict=False, name=None, single_line=False,root_key=None,  **kwargs):
+                 width=24, with_dict=False, name=None, single_line=False, root_key=None, **kwargs):
         self.conftype = conftype if conftype is not None else tab.conftype
 
         if name is None:
@@ -312,7 +313,7 @@ class SelectionList(GuiElement):
             self.k = self.get_next(self.k0)
         self.sublists = sublists
         self.tab.selectionlists[self.conftype] = self
-        self.root_key=root_key
+        self.root_key = root_key
         self.tree = GuiTreeData(self.root_key) if self.root_key is not None else None
 
         bs = button_row(self.disp, buttons, button_kws)
@@ -1219,8 +1220,8 @@ class PadTable(PadElement):
                 else:
                     col_widths.append(w)
         return [[Table(values=self.data, headings=[self.index] + self.headings,
-                          def_col_width=7, key=self.key, num_rows=max([num_rows, len(self.data)]),
-                          col_widths=col_widths, visible_column_map=col_visible)]]
+                       def_col_width=7, key=self.key, num_rows=max([num_rows, len(self.data)]),
+                       col_widths=col_widths, visible_column_map=col_visible)]]
 
     def update(self, w, d=None):
         if d is not None:
@@ -1595,15 +1596,16 @@ class DynamicGraph:
             delete_figure_agg(self.fig_agg)
         self.fig_agg = draw_canvas(self.canvas, self.fig)
 
+
 class GuiTreeData(sg.TreeData, GuiElement):
-    def __init__(self,name='larva_conf',root_key=None,build_tree=True, **kwargs):
+    def __init__(self, name='larva_conf', root_key=None, build_tree=False, **kwargs):
         sg.TreeData.__init__(self)
-        if root_key is None :
-            root_key=name
-        self.root_key=root_key
-        self.build_tree=build_tree
+        if root_key is None:
+            root_key = name
+        self.root_key = root_key
+        self.build_tree = build_tree
         self.build()
-        layout=self.build_layout()
+        layout = self.build_layout()
         GuiElement.__init__(self, name=name, layout=layout)
 
     def get_value_arg(self, node, arg):
@@ -1611,14 +1613,24 @@ class GuiTreeData(sg.TreeData, GuiElement):
             return getattr(node, arg)
         elif arg in self.headings:
             idx = self.headings.index(arg)
-            try :
+            try:
                 return node.values[idx]
-            except :
+            except:
                 return None
 
-    def _NodeStr(self, node=None, level=1, k='key', v='text'):
-        if node is None :
-            node=self.root_node
+    def _NodeStr(self, node=None, level=1, k='name', v='description'):
+        if node is None:
+            node = self.root_node
+
+        def str_pair(node, k, v, max_l=15):
+            k0 = str(self.get_value_arg(node, k))
+            v0 = str(self.get_value_arg(node, v))
+            if max_l is not None :
+                b = '{:<' + str(max_l) + '}'
+                k0= b.format(k0)
+            kv0 = k0 + ' : ' + v0
+            return kv0
+
         """
         Does the magic of converting the TreeData into a nicely formatted string version
 
@@ -1628,7 +1640,7 @@ class GuiTreeData(sg.TreeData, GuiElement):
         :type level: (int)
         """
         return '\n'.join(
-            [str(self.get_value_arg(node, k)) + ' : ' + str(self.get_value_arg(node, v))] +
+            [str_pair(node, k, v)] +
             [' ' * 4 * level + self._NodeStr(child, level + 1, k, v) for child in node.children])
 
     def build(self):
@@ -1653,7 +1665,8 @@ class GuiTreeData(sg.TreeData, GuiElement):
             f.write(self._NodeStr(**kwargs))
 
     def build_layout(self):
-        return [[sg.Tree(self, headings=self.headings, auto_size_columns=False, show_expanded=True,justification='center',
+        return [
+            [sg.Tree(self, headings=self.headings, auto_size_columns=False, show_expanded=True, justification='center',
                      max_col_width=1000, def_col_width=20, row_height=50, num_rows=30, col_widths=[20, 10, 80],
                      col0_width=20)]]
 
@@ -1667,7 +1680,8 @@ class GuiTreeData(sg.TreeData, GuiElement):
                 break
         w.close()
 
+
 if __name__ == "__main__":
-    t=GuiTreeData('larva_conf')
-    # t.save(k='text', v='description')
-    t.test()
+    t = GuiTreeData('larva_conf')
+    t.save()
+    # t.test()
