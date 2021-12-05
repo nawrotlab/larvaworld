@@ -8,7 +8,6 @@ import numpy as np
 from lib.aux.dictsNlists import AttrDict
 from lib.conf.base.dtypes import null_dict, null_Box2D_params, Box2Djoints
 
-
 ''' Default exploration model'''
 
 Cbas = null_dict('crawler', initial_freq=1.5, step_to_length_mu=0.25, step_to_length_std=0.0)
@@ -23,10 +22,21 @@ Tsin = null_dict('turner',
                  noise=0.15,
                  activation_noise=0.5,
                  )
+Tsin_no_noise = null_dict('turner',
+                          mode='sinusoidal',
+                          initial_amp=15.0,
+                          amp_range=[0.0, 50.0],
+                          initial_freq=0.3,
+                          freq_range=[0.1, 1.0],
+                          noise=0.0,
+                          activation_noise=0.0,
+                          )
 
 Tno_noise = null_dict('turner', activation_noise=0.0, noise=0.0)
 
 Ccon = null_dict('crawler', waveform='constant', initial_amp=0.0012)
+
+Ccon_no_noise = null_dict('crawler', waveform='constant', initial_amp=0.0012, noise=0.0)
 
 RL_olf_memory = null_dict('memory', Delta=0.1, state_spacePerSide=1, modality='olfaction',
                           gain_space=np.arange(-200.0, 200.0, 50.0).tolist())
@@ -96,7 +106,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
     return AttrDict.from_nested_dicts(d)
 
 
-def RvsS_larva(EEB=0.5, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=None,gut_kws={}, **deb_kws):
+def RvsS_larva(EEB=0.5, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=None, gut_kws={}, **deb_kws):
     if OD is None:
         ms = ['L', 'F']
     else:
@@ -105,9 +115,9 @@ def RvsS_larva(EEB=0.5, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=No
                                                                                    intermitter=Im(EEB))
 
     gut = null_dict('gut', **gut_kws)
-    deb = null_dict('DEB', hunger_as_EEB=True, hunger_gain=hunger_gain, DEB_dt=DEB_dt,**deb_kws)
+    deb = null_dict('DEB', hunger_as_EEB=True, hunger_gain=hunger_gain, DEB_dt=DEB_dt, **deb_kws)
     return null_dict('larva_conf', brain=b, body=null_dict('body', initial_length=0.001, Nsegs=Nsegs),
-                     energetics={'DEB' : deb, 'gut' : gut})
+                     energetics={'DEB': deb, 'gut': gut})
 
 
 def nengo_brain(module_shorts, EEB, OD=None):
@@ -200,6 +210,7 @@ def OD(ids: list, means: list, stds=None) -> dict:
                          'std': s}
     return odor_dict
 
+
 def create_mod_dict():
     M0 = mod()
 
@@ -211,17 +222,17 @@ def create_mod_dict():
         M1.Box2D_params.update(**Box2D)
         return M1
 
-    LOF=brain(['LOF'])
-    LOFM=brain(['LOF', 'M'])
-    LO=brain(['L', 'O'])
+    LOF = brain(['LOF'])
+    LOFM = brain(['LOF', 'M'])
+    LO = brain(['L', 'O'])
     LO_brute = brain(['L', 'O'], olfactor=null_dict('olfactor', brute_force=True))
-    LW=brain(['L', 'W'])
-    L=brain(['L'])
-    LTo=brain(['L', 'To'], turner=Tno_noise)
-    LToM=brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory)
-    LToMg=brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory)
-    LTo_brute=brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', brute_force=True))
-    nLO=nengo_brain(['L', 'O'], EEB=0.0)
+    LW = brain(['L', 'W'])
+    L = brain(['L'])
+    LTo = brain(['L', 'To'], turner=Tno_noise)
+    LToM = brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory)
+    LToMg = brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory)
+    LTo_brute = brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', brute_force=True))
+    nLO = nengo_brain(['L', 'O'], EEB=0.0)
 
     def add_OD(OD, B0=LOF):
         B1 = AttrDict.from_nested_dicts(copy.deepcopy(B0))
@@ -250,12 +261,11 @@ def create_mod_dict():
         'navigator_x2': add_brain(add_OD(OD2, LO)),
         'navigator_x2_brute': add_brain(add_OD(OD2, LO_brute)),
         'basic_navigator': add_brain(brain(['L', 'O'], OD=OD1, turner=Tsin, crawler=Ccon), bod={'Nsegs': 1}),
+        'continuous_navigator': add_brain(brain(['C', 'T', 'O'], OD=OD1, turner=Tno_noise, crawler=Ccon_no_noise), bod={'Nsegs': 1}),
         'RL_navigator': add_brain(LOFM),
         'nengo_navigator': add_brain(nLO),
         'nengo_navigator_x2': add_brain(add_OD(OD2, nLO)),
     }
-
-
 
     foragers = {
         'Orco_forager': add_brain(brain(['L', 'F'], intermitter=Im(0.5))),
@@ -268,17 +278,16 @@ def create_mod_dict():
 
     touchers = {
         'toucher': add_brain(LTo, bod={'touch_sensors': []}),
-        'toucher_brute': add_brain(LTo_brute,bod={'touch_sensors': []}),
-        'RL_toucher_0': add_brain(LToM,bod={'touch_sensors': []}),
-        'gRL_toucher_0': add_brain(LToMg,bod={'touch_sensors': []}),
-        'RL_toucher_2': add_brain(LToM,bod={'touch_sensors': [0, 2]}),
-        'gRL_toucher_2': add_brain(LToMg,bod={'touch_sensors': [0, 2]}),
+        'toucher_brute': add_brain(LTo_brute, bod={'touch_sensors': []}),
+        'RL_toucher_0': add_brain(LToM, bod={'touch_sensors': []}),
+        'gRL_toucher_0': add_brain(LToMg, bod={'touch_sensors': []}),
+        'RL_toucher_2': add_brain(LToM, bod={'touch_sensors': [0, 2]}),
+        'gRL_toucher_2': add_brain(LToMg, bod={'touch_sensors': [0, 2]}),
     }
 
-    other= {
+    other = {
         'immobile': add_brain(brain(['T', 'O'], OD=OD1)),
     }
-
 
     RvsS = {
         'rover': RvsS_larva(EEB=0.37, gut_kws={'k_abs': 0.8}),
@@ -299,32 +308,44 @@ def create_mod_dict():
     }
     zebrafish = {
         'zebrafish': add_brain(L,
-                         bod={'initial_length': 0.004, 'length_std': 0.0001, 'Nsegs': 2, 'shape': 'zebrafish_larva'},
-                         phys={'ang_damping': 1.0, 'body_spring_k': 1.0, 'torque_coef': 0.3},
-                         Box2D={'joint_types': {'revolute': Box2Djoints(N=1, maxMotorTorque=10 ** 5, motorSpeed=1)}})
+                               bod={'initial_length': 0.004, 'length_std': 0.0001, 'Nsegs': 2,
+                                    'shape': 'zebrafish_larva'},
+                               phys={'ang_damping': 1.0, 'body_spring_k': 1.0, 'torque_coef': 0.3},
+                               Box2D={
+                                   'joint_types': {'revolute': Box2Djoints(N=1, maxMotorTorque=10 ** 5, motorSpeed=1)}})
     }
 
-
-
     grouped_mod_dict = {
-        'explorers' : explorers,
-        'navigators' : navigators,
-        'foragers' : foragers,
-        'touchers' : touchers,
-        'foraging phenotypes' : RvsS,
-        'games' : gamers,
-        'zebrafish' : zebrafish,
-        'other' : other,
+        'explorers': explorers,
+        'navigators': navigators,
+        'foragers': foragers,
+        'touchers': touchers,
+        'foraging phenotypes': RvsS,
+        'games': gamers,
+        'zebrafish': zebrafish,
+        'other': other,
     }
 
     return grouped_mod_dict
 
 
 if __name__ == '__main__':
+    M0 = mod()
+
+
+    def add_brain(brain, M0=M0, bod={}, phys={}, Box2D={}):
+        M1 = AttrDict.from_nested_dicts(copy.deepcopy(M0))
+        M1.brain = brain
+        M1.body.update(**bod)
+        M1.physics.update(**phys)
+        M1.Box2D_params.update(**Box2D)
+        return M1
+
+
     zebrafish = {
-         'explorer': mod(brain(['L', 'W'])),
-        'branch_explorer': mod(brain(['L', 'W'], intermitter=Im(0.0, mode='branch'))),
+        'continuous_navigator': add_brain(brain(['C', 'T', 'O'], OD=OD1, turner=Tno_noise, crawler=Ccon_no_noise), bod={'Nsegs': 1}),
     }
     from lib.conf.stored.conf import saveConf
+
     for k, v in zebrafish.items():
         saveConf(v, 'Model', k)

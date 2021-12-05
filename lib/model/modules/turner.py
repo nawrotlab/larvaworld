@@ -69,6 +69,7 @@ class Turner(Oscillator, Effector):
                 A = 0.0
         n = np.random.normal(scale=self.noise)
         A += n
+        print(A, attenuation)
         return A
 
     def init_neural(self, dt, base_activation=20, activation_range=None, **kwargs):

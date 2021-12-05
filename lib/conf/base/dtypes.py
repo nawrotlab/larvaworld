@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import typing
 
-from lib.aux.dictsNlists import AttrDict, tree_dict, unique_list
+from lib.aux.dictsNlists import AttrDict, tree_dict, unique_list, flatten_list
 from lib.aux.par_aux import dtype_name
 from lib.conf.base.init_pars import init_pars, proc_type_keys, bout_keys, to_drop_keys
 
@@ -180,11 +180,16 @@ def multiconf_to_tree(ids, conftype):
         entries = tree_dict(d=conf, parent_key=id)
         df=pd.DataFrame.from_records(entries, index=['parent', 'key', 'text'])
         dfs.append(df)
-    ind0=unique_list([df.index.values for df in dfs])
+    ind0=[]
+    for df in dfs :
+        for ind in df.index.values :
+            if ind not in ind0 :
+                ind0.append(ind)
     vs=np.zeros([len(ind0), len(ids)])*np.nan
     df0=pd.DataFrame(vs, index=ind0, columns=ids)
     for id, df in zip(ids, dfs) :
         for key in df.index :
+            print(key, key in df0.index)
             df0[id].loc[key]=df['values'].loc[key][0]
     df0.reset_index(inplace=True)
     df0['values']=[df0[id] for id in ids]

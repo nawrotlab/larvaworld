@@ -162,7 +162,8 @@ class BodySim(BodyManager):
             elif self.ang_mode == 'velocity':
                 ang_vel = self.ang_activity * self.ang_vel_coef
                 ang_vel = self.compute_ang_vel(v=ang_vel, z=self.ang_damping)
-            # t0.append(time.time())
+            # print()
+            # print(lin_vel_amp, self.ang_activity)
             self.step_no_physics(lin_vel=lin_vel_amp, ang_vel=ang_vel)
             # t0.append(time.time())
             # print(np.array(np.diff(t0) * 1000000).astype(int))

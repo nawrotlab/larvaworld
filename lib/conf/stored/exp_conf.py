@@ -134,9 +134,9 @@ grouped_exp_dict = {
 
     'chemotaxis': {
         'chemotaxis': chem_exp('odor_gradient',
-                               l=lg(m='navigator', N=8, p=(-0.04, 0.0), s=(0.005, 0.02),
+                               l=lg(m='continuous_navigator', N=8, p=(-0.04, 0.0), s=(0.005, 0.02),
                                     ors=(-30.0, 30.0))),
-        'chemorbit': chem_exp('mid_odor_gaussian', dur=3.0, l=lg(m='navigator', N=3)),
+        'chemorbit': chem_exp('mid_odor_gaussian', dur=3.0, l=lg(m='continuous_navigator', N=3)),
         'chemorbit_x3': chem_exp('mid_odor_gaussian', dur=3.0,
                                  l=lgs(models=['navigator', 'RL_navigator', 'basic_navigator'],
                                        ids=['CoupledOsc', 'RL', 'basic'], N=10)),

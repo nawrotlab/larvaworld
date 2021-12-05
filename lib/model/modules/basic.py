@@ -91,7 +91,7 @@ class Oscillator_coupling():
                 elif self.crawler.waveform == 'square' and not phi <= 2 * self.crawler.square_signal_duty:
                     return True
                 elif self.crawler.waveform == 'constant':
-                    return True
+                    return False
 
 
         if self.feeder is not None:
