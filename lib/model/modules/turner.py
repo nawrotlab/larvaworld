@@ -157,3 +157,7 @@ class NeuralOscillator:
             return r
         else:
             return 0.0
+
+    def get_state(self):
+        state=[self.E_l, self.H_E_l, self.E_r, self.H_E_r,self.C_l, self.H_C_l,self.C_r, self.H_C_r]
+        return state
