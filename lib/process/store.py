@@ -32,12 +32,13 @@ def store_aux_dataset(s, pars, type, file):
         columns = np.arange(Npoints).tolist()
         pID=nam.id(type)
         ss=s[s[pID].notnull()][ps+[pID]].reset_index(level='Step', drop=True)
-        sss=ss.groupby(['AgentID', pID])
-        def func(ts) :
-            return np.interp(x=x, xp=np.linspace(0, 2 * np.pi, ts.shape[0]), fp=ts, left=0,right=0)
-        for p in ps :
-            df=sss[p].apply(func).reset_index(level=pID, drop=True)
-            df0 = pd.DataFrame(df.values.tolist(),index=df.index, columns=columns)
-            store[f'{type}.{p}'] = df0
+        if len(ss)>0 :
+            sss=ss.groupby(['AgentID', pID])
+            def func(ts) :
+                return np.interp(x=x, xp=np.linspace(0, 2 * np.pi, ts.shape[0]), fp=ts, left=0,right=0)
+            for p in ps :
+                df=sss[p].apply(func).reset_index(level=pID, drop=True)
+                df0 = pd.DataFrame(df.values.tolist(),index=df.index, columns=columns)
+                store[f'{type}.{p}'] = df0
     store.close()
     print(f'{len(ps)} aux parameters saved')

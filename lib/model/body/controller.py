@@ -35,7 +35,7 @@ class BodySim(BodyManager):
         self.trajectory = [self.pos]
         self.lin_activity = 0
         self.ang_activity = 0
-        self.ang_vel = 0
+        # self.ang_vel = 0
         self.body_bend = 0
         self.body_bend_errors = 0
         self.Nangles_b = int(self.Nangles + 1 / 2)
@@ -81,8 +81,6 @@ class BodySim(BodyManager):
 
     def step(self):
         self.compute_step()
-        # t0=[]
-        # t0.append(time.time())
         self.restore_body_bend()
         # Trying restoration for any number of segments
         # if self.Nsegs == 1:
@@ -149,7 +147,6 @@ class BodySim(BodyManager):
                     vel = lin_vel_amp * seg.get_world_facing_axis()
                     seg.set_lin_vel(vel, local=False)
         else:
-            # t0.append(time.time())
             if self.lin_mode == 'velocity':
                 lin_vel_amp = self.lin_activity * self.lin_vel_coef
             else:
@@ -162,14 +159,9 @@ class BodySim(BodyManager):
             elif self.ang_mode == 'velocity':
                 ang_vel = self.ang_activity * self.ang_vel_coef
                 ang_vel = self.compute_ang_vel(v=ang_vel, z=self.ang_damping)
-            # print()
-            # print(lin_vel_amp, self.ang_activity)
             self.step_no_physics(lin_vel=lin_vel_amp, ang_vel=ang_vel)
-            # t0.append(time.time())
-            # print(np.array(np.diff(t0) * 1000000).astype(int))
         for o in self.carried_objects:
             o.pos = self.pos
-
 
     def compute_new_lin_vel_vector(self, target_segment):
         # Option 1 : Create the linear velocity from orientation.

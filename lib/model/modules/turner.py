@@ -38,6 +38,7 @@ class Turner(Oscillator, Effector):
 
     def update_activation(self, A_olf):
         if self.mode == 'neural':
+            # A_olf=0
             # Map valence modulation to sigmoid accounting for the non middle location of base_activation
             # b = self.base_activation
             # rd, ru = self.A0, self.A1
@@ -69,7 +70,7 @@ class Turner(Oscillator, Effector):
                 A = 0.0
         n = np.random.normal(scale=self.noise)
         A += n
-        print(A, attenuation)
+        # print(A, attenuation)
         return A
 
     def init_neural(self, dt, base_activation=20, activation_range=None, **kwargs):
@@ -131,6 +132,7 @@ class NeuralOscillator:
         self.scaled_tau = self.dt / self.tau
 
     def step(self, A=0):
+        # print(A)
         t = self.scaled_tau
         tau_h = 3 / (1 + (0.04 * A) ** 2)
         t_h = self.dt / tau_h
@@ -159,5 +161,24 @@ class NeuralOscillator:
             return 0.0
 
     def get_state(self):
-        state=[self.E_l, self.H_E_l, self.E_r, self.H_E_r,self.C_l, self.H_C_l,self.C_r, self.H_C_r]
+        state = [self.E_l, self.H_E_l, self.E_r, self.H_E_r, self.C_l, self.H_C_l, self.C_r, self.H_C_r]
         return state
+
+
+if __name__ == '__main__':
+    O = NeuralOscillator(dt=0.1)
+    N = 10000
+    a = np.zeros([N, 8]) * np.nan
+    for i in range(N):
+        a[i, :] = O.get_state()
+        O.step(A=20)
+    print(a.shape)
+    Nbins = 1000
+    import pyinform
+
+    a0, nbins, l = pyinform.utils.bin_series(a, b=Nbins)
+    print(a0.shape)
+    d0=[pyinform.Dist(a0[:,i]) for i in range(a0.shape[1])]
+
+    h0=[pyinform.shannon.entropy(d0[i], b=2.0) for i in range(len(d0))]
+    print(h0)

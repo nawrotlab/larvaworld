@@ -383,9 +383,11 @@ def init_parser(description='', parsers=[]) :
         parser=dic[n](parser)
     return parser
 
-def update_exp_conf(exp,d,N=None, models=None) :
+def update_exp_conf(exp,d=None,N=None, models=None) :
     from lib.conf.stored.conf import expandConf, next_idx
     exp_conf = expandConf(exp, 'Exp')
+    if d is None :
+        d={'sim_params': null_dict('sim_params')}
     d=AttrDict.from_nested_dicts(d)
     sim=d.sim_params
     if sim.duration is None:

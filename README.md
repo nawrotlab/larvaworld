@@ -3,6 +3,10 @@
 Drosophila larva behavioral analysis and simulation platform
 
 ================================================
+Publication :
+A realistic locomotory model of Drosophila larva for behavioral simulations
+Panagiotis Sakagiannis, Anna-Maria Jürgensen, Martin Paul Nawrot
+doi: https://doi.org/10.1101/2021.07.07.451470 
 
 GUI
 ===================
@@ -46,7 +50,7 @@ Multiple aspects of real larvae are captured in various models. These can be con
 
             
          
-Data importation & Behavioral analysis
+Data import & Behavioral analysis
 ========================================
 Experimental datasets from a variety of tracker software can be imported and transformed to a common hdf5 format so that they can be analysed and directly compared to the simulated data. To make datasets compatible and facilitate reproducibility, only the primary tracked x,y coordinates are used, both of the midline points and optionally points around the body contour.Compatible formats are text files, either per individual or per group. All secondary parameters are derived via an identical pipeline that allows parameterization and definition of novel metrics. 
             
