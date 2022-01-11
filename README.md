@@ -3,9 +3,13 @@
 Drosophila larva behavioral analysis and simulation platform
 
 ================================================
+
 Publication :
+
 A realistic locomotory model of Drosophila larva for behavioral simulations
+
 Panagiotis Sakagiannis, Anna-Maria Jürgensen, Martin Paul Nawrot
+
 doi: https://doi.org/10.1101/2021.07.07.451470 
 
 GUI
