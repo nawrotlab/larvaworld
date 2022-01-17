@@ -6,6 +6,7 @@ import pickle
 import sys
 from collections import deque
 from itertools import groupby
+import numpy as np
 
 from pypet import ParameterGroup, Parameter
 
@@ -231,6 +232,12 @@ def merge(item):
         for key, val in ref.items():
             merged[key].append(val)
     return {**item, 'ref': dict(merged)}
+
+def moving_average(a, n=3) :
+    # ret = np.cumsum(a, dtype=float)
+    # ret[n:] = ret[n:] - ret[:-n]
+    return np.convolve(a, np.ones((n,))/n, mode='same')
+    # return ret[n - 1:] / n
 
 
 class AttrDict(dict):

@@ -223,7 +223,7 @@ def init_pars():
                             'h': 'The coefficient converting the lateral oscillator (TURNER) activity to bending torque.'},
             'ang_damping': {'v': 2.5, 'max': 10.0,
                             'h': 'The environmental angular damping exerted on bending angular velocity.'},
-            'body_spring_k': {'v': 0.02, 'max': 1.0, 'dv': 0.01,
+            'body_spring_k': {'v': 0.25, 'max': 1.0, 'dv': 0.01,
                               'h': 'The torsional spring constant of the larva body restoring the bending angle to 0.'},
             'bend_correction_coef': {'v': 1.4, 'max': 10.0,
                                      'h': 'The correction coefficient restoring the bending angle during forward motion by aligning the rear body segments to the front heading axis.'},

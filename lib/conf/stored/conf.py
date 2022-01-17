@@ -218,8 +218,8 @@ def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None, **kwarg
 
 if __name__ == '__main__':
     t0=time.time()
-    # store_confs(['Model'])
-    # store_confs(['Aux'])
+    store_confs(['Model'])
+    store_confs(['Aux'])
     store_confs(['Exp'])
     t1 = time.time()
     print(int((t1-t0)*10**3))

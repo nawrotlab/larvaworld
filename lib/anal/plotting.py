@@ -18,8 +18,9 @@ from scipy.stats import ttest_ind
 from sklearn.linear_model import LinearRegression
 from PIL import Image
 import os
+from scipy.fft import fft, fftfreq
 
-from lib.aux.dictsNlists import unique_list, flatten_list
+from lib.aux.dictsNlists import unique_list, flatten_list, moving_average
 from lib.anal.fitting import BoutGenerator
 from lib.anal.plot_aux import plot_mean_and_range, circular_hist, confidence_ellipse, save_plot, \
     plot_config, dataset_legend, process_plot, label_diff, boolean_indexing, Plot, plot_quantiles, annotate_plot, \
@@ -871,6 +872,70 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                 counter += 1
             except:
                 pass
+    if counter == 0:
+        raise ValueError('None of the parameters exist in any dataset')
+    if N > 1:
+        ax.legend()
+    if P.Ndatasets > 1:
+        dataset_legend(P.labels, P.colors, ax=ax, loc=legend_loc, fontsize=15)
+    P.adjust((0.2, 0.95), (0.15, 0.95))
+    return P.get()
+
+def powerspectrum(par_shorts=['v', 'fov'], pars=[], subfolder='powerspectrums', legend_loc='upper left', **kwargs):
+    if len(pars) == 0:
+        if len(par_shorts) == 0:
+            raise ValueError('Either parameter names or shortcuts must be provided')
+        else:
+            pars, symbols, ylabs, ylims = getPar(par_shorts, to_return=['d', 's', 'l', 'lim'])
+    else:
+        symbols = pars
+        ylabs = pars
+        ylims = [None] * len(pars)
+    N = len(pars)
+    cols = ['grey'] if N == 1 else N_colors(N)
+    if N == 1:
+        name = f'{pars[0]}'
+    elif N == 2:
+        name = f'{pars[0]}_VS_{pars[1]}'
+    else:
+        name = f'{N}_pars'
+    P = Plot(name=name, subfolder=subfolder, **kwargs)
+
+    P.build(figsize=(10, 8))
+    ax = P.axs[0]
+    counter = 0
+    for p, symbol, ylab, ylim, c in zip(pars, symbols, ylabs, ylims, cols):
+        P.conf_ax(xlab='Frequency in Hertz [Hz]', ylab='Frequency Domain (Spectrum) Magnitude', xlim=(0,3.5), ylim=(0,5))
+        for d, d_col, d_lab in zip(P.datasets, P.colors, P.labels):
+            if P.Ndatasets > 1:
+                c = d_col
+            dc = d.get_par(p, key='step')
+            Nticks = len(dc.index.get_level_values('Step').unique())
+            xf = fftfreq(Nticks, 1 / d.fr)[:Nticks//2]
+            ids = dc.index.get_level_values('AgentID').unique()
+            yf0 = np.zeros(Nticks//2)
+            for id in ids:
+
+                dc_single = dc.xs(id, level='AgentID').values
+                dc_single = np.nan_to_num(dc_single)
+                yf = fft(dc_single)
+                yf=2.0/Nticks * np.abs(yf[0:Nticks//2])
+                yf = 1000 * yf / np.sum(yf)
+                yf=moving_average(yf, n=21)
+                ax.plot(xf, yf, color=c, alpha=0.2)
+                yf0 += yf
+            #xf=np.sort(xf)
+            yf0=1000*yf0/np.sum(yf0)
+            ax.plot(xf, yf0, color=c, label=symbol)
+            ymax = np.max(yf0[xf>0.2])
+            xpos = np.argmax(yf0[xf>0.2])
+            xmax = xf[xf>0.2][xpos]
+            ax.plot(xmax,ymax,  color=c, marker='o')
+            ax.annotate(np.round(xmax,2), xy=(xmax, ymax), xytext=(xmax+0.2, ymax+0.1), color=c, fontsize=25)
+            # yf0 = moving_average(yf0, n=11)
+            # ax.plot(xf, yf0, color=c, label=symbol)
+            counter += 1
+
     if counter == 0:
         raise ValueError('None of the parameters exist in any dataset')
     if N > 1:
