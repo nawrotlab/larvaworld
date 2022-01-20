@@ -17,10 +17,15 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
     raw_fs = []
     inv_xs = []
     for i, f in enumerate(raw_folders):
+
         fs = [os.path.join(f, n) for n in os.listdir(f) if n.endswith('.csv')]
         raw_fs += fs
+
         if build_conf['read_metadata']:
-            inv_xs += get_invert_x_array(read_Schleyer_metadata(f), len(fs))
+            try :
+                inv_xs += get_invert_x_array(read_Schleyer_metadata(f), len(fs))
+            except :
+                pass
     if len(inv_xs) == 0:
         inv_xs = [False] * len(raw_fs)
 
@@ -40,11 +45,13 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
     ids = []
     for f, inv_x in zip(raw_fs, inv_xs):
         df = pd.read_csv(f, header=None, index_col=0, names=cols0)
-        # FIXME This has been added because some csv in Schleyer datasets have index=NA. This happens if a larva is lost and refound by tracker
-        df = df.dropna()
 
+        # If indexing is in strings replace with ascending floats
+        if all([type(ii)==str for ii in df.index.values]) :
+            df.reset_index(inplace=True,drop=True)
         if len(df) >= int(min_duration_in_sec / dt) and df.index.max() >= int(min_end_time_in_sec / dt):
             df = df[df.index >= int(start_time_in_sec / dt)]
+            # cols1=df.columns.values
             df = df[cols1]
             df = df.apply(pd.to_numeric, errors='coerce')
             if inv_x:
