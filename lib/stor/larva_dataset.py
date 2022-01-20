@@ -556,7 +556,7 @@ class LarvaDataset:
             self.acceleration = nam.lin(self.acceleration)
 
     def enrich(self, metric_definition, preprocessing={}, processing={}, annotation={},
-               to_drop={}, recompute=False, mode='minimal',show_output=False, is_last=True, **kwargs):
+               to_drop={}, recompute=False, mode='minimal',show_output=True, is_last=True, **kwargs):
         import time
         # t0=[]
         # t0.append(time.time())

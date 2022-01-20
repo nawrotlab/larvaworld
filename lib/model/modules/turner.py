@@ -22,6 +22,9 @@ class Turner(Oscillator, Effector):
         elif mode == 'sinusoidal':
             self.init_sinusoidal(dt=dt, **kwargs)
 
+        elif mode == 'constant':
+            self.init_constant(dt=dt, **kwargs)
+
         self.start_effector()
 
     def compute_angular_activity(self):
@@ -35,6 +38,9 @@ class Turner(Oscillator, Effector):
             self.complete_iteration = False
             super().oscillate()
             return self.amp * np.sin(self.phi)
+        elif self.mode == 'constant':
+            return self.amp
+
 
     def update_activation(self, A_olf):
         if self.mode == 'neural':
@@ -99,6 +105,12 @@ class Turner(Oscillator, Effector):
         self.amp_range = amp_range
         self.noise = np.abs(self.initial_amp * self.noise)
 
+    def init_constant(self, dt, amp_range=[0.5, 2.0], initial_amp=1.0, **kwargs):
+        Effector.__init__(self, dt=dt)
+        self.initial_amp = initial_amp
+        self.amp = initial_amp
+        self.amp_range = amp_range
+        self.noise = np.abs(self.initial_amp * self.noise)
 
 class NeuralOscillator:
     def __init__(self, dt):

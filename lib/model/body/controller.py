@@ -20,7 +20,7 @@ class BodyReplay(BodyManager):
 
 class BodySim(BodyManager):
     def __init__(self, model, orientation,density=300.0,
-                 lin_vel_coef=1.0, ang_vel_coef=None, lin_force_coef=None, torque_coef=1.0,
+                 lin_vel_coef=1.0, ang_vel_coef=1.0, lin_force_coef=1.0, torque_coef=1.0,
                  lin_mode='velocity', ang_mode='torque', body_spring_k=1.0, bend_correction_coef=1.0,
                  lin_damping=1.0, ang_damping=1.0, **kwargs):
         self.lin_damping = lin_damping
@@ -158,7 +158,7 @@ class BodySim(BodyManager):
                                                z=self.ang_damping)
             elif self.ang_mode == 'velocity':
                 ang_vel = self.ang_activity * self.ang_vel_coef
-                ang_vel = self.compute_ang_vel(v=ang_vel, z=self.ang_damping)
+                # ang_vel = self.compute_ang_vel(v=ang_vel, z=self.ang_damping)
             self.step_no_physics(lin_vel=lin_vel_amp, ang_vel=ang_vel)
         for o in self.carried_objects:
             o.pos = self.pos

@@ -220,13 +220,17 @@ def init_pars():
                   },
         'physics': {
             'torque_coef': {'v': 0.41, 'max': 5.0, 'dv': 0.01,
-                            'h': 'The coefficient converting the lateral oscillator (TURNER) activity to bending torque.'},
+                            'h': 'The coefficient converting the TURNER activity to bending torque (ang_mode:torque).'},
+            'ang_vel_coef': {'v': 1.0, 'max': 5.0, 'dv': 0.01,
+                            'h': 'The coefficient converting the TURNER activity to angular velocity (ang_mode:velocity).'},
             'ang_damping': {'v': 2.5, 'max': 10.0,
                             'h': 'The environmental angular damping exerted on bending angular velocity.'},
             'body_spring_k': {'v': 0.25, 'max': 1.0, 'dv': 0.01,
                               'h': 'The torsional spring constant of the larva body restoring the bending angle to 0.'},
             'bend_correction_coef': {'v': 1.4, 'max': 10.0,
                                      'h': 'The correction coefficient restoring the bending angle during forward motion by aligning the rear body segments to the front heading axis.'},
+            'ang_mode': {'t': str, 'v': 'torque', 'vs': ['torque', 'velocity'],
+                         'h': 'Whether the Turner module output is equivalent to torque or angular velocity.'},
         },
 
         'crawler': {'waveform': {'t': str, 'v': 'realistic', 'vs': ['realistic', 'square', 'gaussian', 'constant'],
@@ -252,8 +256,9 @@ def init_pars():
                     'max_vel_phase': {'v': 1.0, 'max': 2.0,
                                       'h': 'The phase of the crawling oscillation cycle where the output (forward velocity) is maximum.'}
                     },
-        'turner': {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal'],
+        'turner': {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal', 'constant'],
                             'h': 'The implementation mode of the lateral oscillator (TURNER) module.'},
+
                    'base_activation': {'v': 20.0, 'max': 100.0, 'dv': 1.0, 'disp': 'mean', 'combo': 'activation',
                                        'h': 'The baseline activation/input of the TURNER module.'},
                    'activation_range': {'t': Tuple[float], 'v': (10.0, 40.0), 'max': 100.0, 'dv': 1.0, 'disp': 'range',

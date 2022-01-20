@@ -179,7 +179,7 @@ def preprocess(s, e, config, rescale_by=None, drop_collisions=False, interpolate
         if interpolate_nans:
             interpolate_nan_values(**c)
         if filter_f is not None:
-            filter(req=filter_f, **c)
+            filter(freq=filter_f, **c)
         if transposition is not None:
             align_trajectories(mode=transposition, **c)
         return s, e
