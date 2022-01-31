@@ -10,15 +10,15 @@ from lib.model.modules.basic import Effector
 
 
 class BaseIntermitter(Effector):
-    def __init__(self, brain=None, crawl_bouts=False, feed_bouts=False,
+    def __init__(self, locomotor=None, crawl_bouts=False, feed_bouts=False,
                  feeder_reoccurence_rate=None, feeder_reocurrence_as_EEB=True,
                  EEB_decay=1, save_to=None, EEB=0.5, **kwargs):
         super().__init__(**kwargs)
-        self.brain = brain
+        self.locomotor = locomotor
         self.save_to = save_to
-        self.crawler = brain.crawler if brain is not None else None
-        self.feeder = brain.feeder if brain is not None else None
-        self.turner = brain.turner if brain is not None else None
+        self.crawler = locomotor.crawler if locomotor is not None else None
+        self.feeder = locomotor.feeder if locomotor is not None else None
+        self.turner = locomotor.turner if locomotor is not None else None
         self.EEB = EEB
         self.base_EEB = EEB
 
@@ -193,7 +193,7 @@ class BaseIntermitter(Effector):
                 path = self.save_to
             else:
                 raise ValueError('No path to save intermittency dict')
-        file = f'{path}/{self.brain.agent.unique_id}.txt'
+        file = f'{path}/{self.locomotor.agent.unique_id}.txt'
         if not os.path.exists(path):
             os.makedirs(path)
         lib.aux.dictsNlists.save_dict(dic, file)
@@ -232,6 +232,10 @@ class BaseIntermitter(Effector):
 class Intermitter(BaseIntermitter):
     def __init__(self, pause_dist=None, stridechain_dist=None, **kwargs):
         super().__init__(**kwargs)
+        if pause_dist.range is None and stridechain_dist.range is None:
+            conf=loadConf('None.200_controls', 'Ref').bout_distros
+            pause_dist=conf.pause
+            stridechain_dist=conf.stride
         self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
         self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
         self.disinhibit_locomotion()

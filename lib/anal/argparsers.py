@@ -398,22 +398,30 @@ def update_exp_conf(exp,d=None,N=None, models=None) :
         sim.path = f'single_runs/{exp}'
     exp_conf.sim_params = d.sim_params
     if models is not None:
-        larva_groups={}
-        Nmodels=len(models)
-        colors=N_colors(Nmodels)
-        gConf0=list(exp_conf.larva_groups.values())[0]
-        for m,col in zip(models, colors) :
-            gConf = AttrDict.from_nested_dicts(copy.deepcopy(gConf0))
-            try :
-                gConf.model=expandConf(m, 'Model')
-            except :
-                raise ValueError (f'{m} larva-model does not exist!')
-            gConf.default_color=col
-            larva_groups[m]=gConf
-        exp_conf.larva_groups = larva_groups
+        exp_conf=update_exp_models(exp_conf, models)
     if N is not None:
         for gID, gConf in exp_conf.larva_groups.items():
             gConf.distribution.N = N
+    return exp_conf
+
+def update_exp_models(exp_conf, models) :
+    from lib.conf.stored.conf import expandConf
+    larva_groups = {}
+    Nmodels = len(models)
+    colors = N_colors(Nmodels)
+    gConf0 = list(exp_conf.larva_groups.values())[0]
+    for m, col in zip(models, colors):
+        gConf = AttrDict.from_nested_dicts(copy.deepcopy(gConf0))
+        try:
+            gConf.model = expandConf(m, 'Model')
+        except:
+            try:
+                gConf.model.brain = expandConf(m, 'Brain')
+            except:
+                raise ValueError(f'{m} larva-model or brain-model does not exist!')
+        gConf.default_color = col
+        larva_groups[m] = gConf
+    exp_conf.larva_groups = larva_groups
     return exp_conf
 
 # if __name__ == '__main__':

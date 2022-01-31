@@ -58,6 +58,7 @@ def path(n) :
         'Trial': f"{CF}/TrialConfs.txt",
         'Life': f"{CF}/LifeConfs.txt",
         'Body': f"{CF}/BodyConfs.txt",
+        'Brain': f"{CF}/BrainConfs.txt",
         'SimIdx': f'{CF}/SimIdx.txt',
         'Tree': f'{CF}/ParTree.txt',
     }

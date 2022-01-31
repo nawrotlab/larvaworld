@@ -31,7 +31,8 @@ class LarvaBody:
 
         from lib.conf.stored.aux_conf import body_dict
         self.contour_points = body_dict[shape]['points']
-        self.base_seg_vertices = lib.aux.sim_aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio, points=self.contour_points)
+        self.base_seg_vertices = lib.aux.sim_aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,
+                                                                     points=self.contour_points)
 
         self.Nsegs = Nsegs
         self.Nangles = Nsegs - 1
@@ -155,8 +156,6 @@ class LarvaBody:
         d = self.get_sensor(sensor)
         return self.segs[d['seg_idx']].get_world_point(d['local_pos'])
 
-
-
     # def get_larva_shape(self, filepath=None):
     #     if filepath is None:
     #         filepath = LarvaShape_path
@@ -259,6 +258,28 @@ class LarvaBody:
                           'length': l0 * 0.01}
         joint_types['distance']['args'].update(dist_joint_def)
         w = self.width_to_length_ratio * Nsegs / 2
+
+        for i in range(Nsegs - 1):
+            weld_def = {
+                'dampingRatio': 0.1,
+                        'referenceAngle': 0,
+                        'frequencyHz': 2000
+            }
+            A, B = segs[i]._body, segs[i + 1]._body
+            # if joint_types['distance']['N'] == 2:
+
+            space.CreateWeldJoint(**weld_def,
+                                  bodyA=A,
+                                  bodyB=B,
+                                  localAnchorA=tuple(l0 * x for x in (-0.5, w)),
+                                  localAnchorB=tuple(l0 * x for x in (0.5, w))
+
+                                  )
+            # space.CreateWeldJoint(**weld_def,
+            #                       bodyA=A, bodyB=B,
+            #                       localAnchorA=tuple(l0 * x for x in (-0.5, -w)),
+            #                       localAnchorB=tuple(l0 * x for x in (0.5, -w)))
+
         for i in range(Nsegs - 1):
             A, B = segs[i]._body, segs[i + 1]._body
             if joint_types['distance']['N'] == 2:
@@ -502,7 +523,7 @@ class LarvaBody:
     #         pass
 
     def add_touch_sensors(self, idx):
-        for i in idx :
+        for i in idx:
             self.define_sensor(f'touch_sensor_{i}', self.contour_points[i])
         # y = 0.1
         # x_f, x_m, x_r = 0.75, 0.5, 0.25

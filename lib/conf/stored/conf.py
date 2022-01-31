@@ -199,12 +199,13 @@ def store_confs(keys=None):
 def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None, **kwargs):
     sample_conf = loadConf(sample, 'Ref')
     id = sample_conf.id
-    base_larva = expandConf(model, 'Model')
+
     if duration is None :
         duration = sample_conf.duration / 60
     sim_params = null_dict('sim_params', timestep=1 / sample_conf['fr'], duration=duration,
                            path='single_runs/imitation', sim_ID=f'{id}_imitation_{idx}')
     env_params = null_dict('env_conf', arena=sample_conf.env_params.arena)
+    base_larva = expandConf(model, 'Model')
     larva_groups = {
         'ImitationGroup': null_dict('LarvaGroup', sample=sample, model=base_larva, default_color='blue', imitation=True,
                                     distribution={'N': N})}

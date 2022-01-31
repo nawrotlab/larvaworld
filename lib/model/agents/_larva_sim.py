@@ -23,64 +23,37 @@ class LarvaSim(BodySim, Larva):
 
         self.brain = self.build_brain(larva_pars.brain)
         if self.deb is not None:
-            self.deb.set_intermitter(self.brain.intermitter)
+            self.deb.set_intermitter(self.brain.locomotor.intermitter)
 
         self.reset_feeder()
         self.radius = self.sim_length / 2
 
-        self.food_detected, self.feeder_motion, self.current_V_eaten, self.feed_success = None, False, 0, 0
+        self.food_detected, self.feeder_motion, self.current_V_eaten, self.current_foodtype, self.feed_success = None, False, None, 0,0
         self.cum_food_detected = 0
         self.foraging_dict = AttrDict.from_nested_dicts({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
                               self.model.foodtypes.keys()})
 
-    def compute_step(self):
+    def update_larva(self):
         # t0 = []
         # t0.append(time.time())
-        self.cum_dur += self.model.dt
-        pos = self.olfactor_pos
-        self.food_detected, foodtype = self.detect_food(pos)
+
+        # pos = self.olfactor_pos
+        # self.food_detected, foodtype = self.detect_food(pos)
         # t0.append(time.time())
 
 
-        self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.run(pos)
+
         # t0.append(time.time())
         self.current_V_eaten, self.feed_success = self.feed(self.food_detected, self.feeder_motion)
         # t0.append(time.time())
-        self.update_foraging_dict(foodtype, self.current_V_eaten)
+        self.update_foraging_dict(self.current_foodtype, self.current_V_eaten)
         self.run_energetics(self.current_V_eaten)
         self.update_behavior()
 
         # t0.append(time.time())
         # print(np.array(np.diff(t0) * 1000000).astype(int))
 
-    def detect_food(self, pos):
-        t0 = []
-        # t0.append(time.time())
-        item, foodtype = None, None
-        if self.brain.feeder is not None or self.touch_sensors is not None:
-            # prev_item = self.food_detected
-            grid = self.model.food_grid
-            if grid:
-                cell = grid.get_grid_cell(pos)
-                if grid.get_cell_value(cell) > 0:
-                    item, foodtype = cell, grid.unique_id
 
-            else:
-                # t0.append(time.time())
-                valid = [a for a in self.model.get_food() if a.amount > 0]
-
-                accessible_food = [a for a in valid if a.contained(pos)]
-                # t0.append(time.time())
-                if accessible_food:
-                    food = random.choice(accessible_food)
-                    self.resolve_carrying(food)
-                    item, foodtype = food, food.group
-                # t0.append(time.time())
-            # self.food_found = True if (prev_item is None and item is not None) else False
-            # self.food_missed = True if (prev_item is not None and item is None) else False
-        # t0.append(time.time())
-        # print(np.array(np.diff(t0) * 1000000).astype(int))
-        return item, foodtype
 
     def feed(self, source, motion):
 
@@ -114,7 +87,7 @@ class LarvaSim(BodySim, Larva):
             pass
 
     def get_max_V_bite(self):
-        return self.brain.feeder.V_bite * self.V  # ** (2 / 3)
+        return self.brain.locomotor.feeder.V_bite * self.V  # ** (2 / 3)
 
     def build_energetics(self, energetic_pars, life_history):
         if energetic_pars is not None:
@@ -165,7 +138,7 @@ class LarvaSim(BodySim, Larva):
 
     def update_behavior_dict(self):
         d = AttrDict.from_nested_dicts(self.null_behavior_dict.copy())
-        inter = self.brain.intermitter
+        inter = self.brain.locomotor.intermitter
         if inter is not None:
             s, f, p = inter.active_bouts
             d.stride_id = s is not None
@@ -253,8 +226,8 @@ class LarvaSim(BodySim, Larva):
         # Paint the body to visualize effector state
         if self.model.color_behavior:
             self.update_behavior_dict()
-        if self.brain.intermitter is not None :
-            self.brain.intermitter.update(food_present=self.food_detected, feed_success=self.feed_success)
+        if self.brain.locomotor.intermitter is not None :
+            self.brain.locomotor.intermitter.update(food_present=self.food_detected, feed_success=self.feed_success)
 
     def update_foraging_dict(self, foodtype, current_V_eaten):
         if foodtype is not None:

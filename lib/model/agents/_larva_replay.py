@@ -107,6 +107,7 @@ class LarvaReplay(Larva, BodyReplay):
 
         pos = self.cen_pos if not np.isnan(self.cen_pos).any() else self.pos
         mid = self.midline
+        #print(mid)
 
         if m.draw_contour:
             if self.Nsegs is not None:

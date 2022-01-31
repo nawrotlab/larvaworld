@@ -90,6 +90,7 @@ class LarvaWorldSim(LarvaWorld):
             if gConf['imitation'] and sample != {}:
                 self.sample_ps = list(invRefPars.values())
                 ids, ps, ors, sample_dict = imitate_group(sample, self.sample_ps, N=gConf['distribution']['N'])
+                ids = [f'{gID}_{id}' for id in ids]
                 N = len(ids)
             else:
                 self.sample_ps = [invRefPars[p] for p in sample_ks]

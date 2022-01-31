@@ -1,5 +1,6 @@
 import abc
 import math
+import random
 import time
 
 import numpy as np
@@ -78,10 +79,52 @@ class BodySim(BodyManager):
         # from lib.conf.par import AgentCollector
         # g=pargroups['full']
         # self.collector=AgentCollector(g,self)
+    def detect_food(self, pos):
+        t0 = []
+        # t0.append(time.time())
+        item, foodtype = None, None
+        if self.brain.locomotor.feeder is not None or self.touch_sensors is not None:
+            # prev_item = self.food_detected
+            grid = self.model.food_grid
+            if grid:
+                cell = grid.get_grid_cell(pos)
+                if grid.get_cell_value(cell) > 0:
+                    item, foodtype = cell, grid.unique_id
+
+            else:
+                # t0.append(time.time())
+                valid = [a for a in self.model.get_food() if a.amount > 0]
+
+                accessible_food = [a for a in valid if a.contained(pos)]
+                # t0.append(time.time())
+                if accessible_food:
+                    food = random.choice(accessible_food)
+                    self.resolve_carrying(food)
+                    item, foodtype = food, food.group
+                # t0.append(time.time())
+            # self.food_found = True if (prev_item is None and item is not None) else False
+            # self.food_missed = True if (prev_item is not None and item is None) else False
+        # t0.append(time.time())
+        # print(np.array(np.diff(t0) * 1000000).astype(int))
+        return item, foodtype
+
+    def get_velocities(self):
+        pass
 
     def step(self):
-        self.compute_step()
+        self.cum_dur += self.model.dt
         self.restore_body_bend()
+
+        pos = self.olfactor_pos
+        self.food_detected, self.current_foodtype = self.detect_food(pos)
+        reward = self.food_detected is not None
+        self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.run(pos, reward)
+        # self.lin_activity*=self.sim_length
+
+        # self.get_velocities()
+
+        self.update_larva()
+
         # Trying restoration for any number of segments
         # if self.Nsegs == 1:
         # if self.Nsegs > 0:

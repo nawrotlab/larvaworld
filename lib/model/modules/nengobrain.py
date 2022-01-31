@@ -5,40 +5,41 @@ from nengo.networks import EnsembleArray
 
 from lib.aux.dictsNlists import save_dict
 from lib.model.modules.brain import Brain
-from lib.model.modules.basic import Oscillator_coupling
+from lib.model.modules.crawl_bend_interference import Oscillator_coupling
 from lib.model.modules.intermitter import NengoIntermitter
+from lib.model.modules.locomotor import Locomotor
 
 
 class NengoBrain(Network, Brain):
 
-    def __init__(self, agent, modules, conf, **kwargs):
+    def __init__(self, conf, agent=None, modules=None, dt=None, **kwargs):
         super().__init__(**kwargs)
-        Brain.__init__(self, agent, modules, conf)
-        dt = self.agent.model.dt
+        Brain.__init__(self, conf=conf, agent=agent, modules=modules, dt=dt)
         m = self.modules
         c = self.conf
         self.food_feedback = False
-        if m['feeder']:
-            self.feeder = NengoEffector(**c['feeder_params'])
-        if m['turner'] and m['crawler']:
-            self.turner = NengoEffector(**c['turner_params'])
-            self.crawler = NengoEffector(**c['crawler_params'])
-            self.osc_coupling = Oscillator_coupling(brain=self, **c['interference_params'])
-        if m['intermitter']:
-            self.intermitter = NengoIntermitter(dt=dt, brain=self, **c['intermitter_params'])
-            self.intermitter.start_effector()
-        else:
-            self.intermitter = None
+        self.locomotor = NengoLocomotor(dt=self.dt, c=self.conf)
+        # if m['feeder']:
+        #     self.feeder = NengoEffector(**c['feeder_params'])
+        # if m['turner'] and m['crawler']:
+        #     self.turner = NengoEffector(**c['turner_params'])
+        #     self.crawler = NengoEffector(**c['crawler_params'])
+        #     self.osc_coupling = Oscillator_coupling(brain=self, **c['interference_params'])
+        # if m['intermitter']:
+        #     self.intermitter = NengoIntermitter(dt=self.dt, brain=self, **c['intermitter_params'])
+        #     self.intermitter.start_effector()
+        # else:
+        #     self.intermitter = None
         self.build()
         self.sim = Simulator(self, dt=0.01, progress_bar=False)
-        self.Nsteps = int(dt / self.sim.dt)
+        self.Nsteps = int(self.dt / self.sim.dt)
 
     def build(self):
         o = self.olfactor
         ws = self.windsensor
-        cra=self.crawler
-        tur=self.turner
-        fee=self.feeder
+        cra=self.locomotor.crawler
+        tur=self.locomotor.turner
+        fee=self.locomotor.feeder
         a = self.agent
         N1, N2=50,10
 
@@ -91,7 +92,7 @@ class NengoBrain(Network, Brain):
                 return v
 
             def intermittency(x):
-                s, f, p = self.intermitter.active_bouts
+                s, f, p = self.locomotor.intermitter.active_bouts
                 if s is None:
                     x[0] = 0
                 elif s > 0:
@@ -106,10 +107,10 @@ class NengoBrain(Network, Brain):
                 if x<=0 :
                     return 0
                 else :
-                    return x * 2 * self.crawler.step_to_length_mu
+                    return x * 2 * self.locomotor.crawler.step_to_length_mu
 
             def turner(x):
-                return x * self.turner.get_amp(0)
+                return x * self.locomotor.turner.get_amp(0)
 
             def feeder(x):
                 if x > 0.99:
@@ -251,7 +252,7 @@ class NengoBrain(Network, Brain):
 
             if True :
                 self.probe_dict={}
-                if self.feeder is not None :
+                if fee is not None :
                     self.probe_dict.update(
                         {k: Probe(v) for k, v in zip(['feeFrIn', 'feeFr', 'feeV'], [feeFrIn, feeFr, feeV])})
                     if self.food_feedback :
@@ -295,18 +296,21 @@ class NengoBrain(Network, Brain):
         else :
             return False
 
-    def run(self, pos):
-        l = self.agent.sim_length
+    def run(self, pos=None, reward=False):
+        length = self.agent.sim_length
+        # if length is None :
+        #     length=self.agent.sim_length
         if self.olfactor:
             self.olfactor.X = self.sense_odors(pos)
         if self.windsensor:
             self.wind_activation = self.windsensor.step(self.sense_wind())
-        self.intermitter.step()
+        self.locomotor.intermitter.step()
         self.sim.run_steps(self.Nsteps, progress_bar=False)
         d = self.sim.data
 
-        ang = self.mean_ang_s(d) + np.random.normal(scale=self.turner.noise)
-        lin = self.mean_lin_s(d) * l + np.random.normal(scale=self.crawler.noise * l)
+        ang = self.mean_ang_s(d) + np.random.normal(scale=self.locomotor.turner.noise)
+        lin = self.mean_lin_s(d) + np.random.normal(scale=self.locomotor.crawler.noise)
+        lin*=length
         feed = self.feed_event(d)
         self.olfactory_activation = 100 * self.mean_odor_change(d)
         if self.dict is not None :
@@ -357,3 +361,19 @@ class NengoEffector:
             return True
         else:
             return False
+
+class NengoLocomotor(Locomotor):
+    def __init__(self, conf, **kwargs):
+        super().__init__(**kwargs)
+        m, c = conf.modules, conf
+        if m['feeder']:
+            self.feeder = NengoEffector(**c['feeder_params'])
+        if m['turner'] and m['crawler']:
+            self.turner = NengoEffector(**c['turner_params'])
+            self.crawler = NengoEffector(**c['crawler_params'])
+            self.osc_coupling = Oscillator_coupling(locomotor=self, **c['interference_params'])
+        if m['intermitter']:
+            self.intermitter = NengoIntermitter(dt=self.dt, locomotor=self, **c['intermitter_params'])
+            self.intermitter.start_effector()
+        else:
+            self.intermitter = None

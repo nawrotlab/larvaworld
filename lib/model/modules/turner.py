@@ -41,7 +41,6 @@ class Turner(Oscillator, Effector):
         elif self.mode == 'constant':
             return self.amp
 
-
     def update_activation(self, A_olf):
         if self.mode == 'neural':
             # A_olf=0
@@ -76,7 +75,6 @@ class Turner(Oscillator, Effector):
                 A = 0.0
         n = np.random.normal(scale=self.noise)
         A += n
-        # print(A, attenuation)
         return A
 
     def init_neural(self, dt, base_activation=20, activation_range=None, **kwargs):
@@ -112,16 +110,17 @@ class Turner(Oscillator, Effector):
         self.amp_range = amp_range
         self.noise = np.abs(self.initial_amp * self.noise)
 
+
 class NeuralOscillator:
-    def __init__(self, dt):
+    def __init__(self, dt, tau=0.1, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0):
         self.dt = dt
-        self.tau = 0.1
-        self.w_ee = 3.0
-        self.w_ce = 0.1
-        self.w_ec = 4.0
-        self.w_cc = 4.0
-        self.m = 100.0
-        self.n = 2.0
+        self.tau = tau
+        self.w_ee = w_ee
+        self.w_ce = w_ce
+        self.w_ec = w_ec
+        self.w_cc = w_cc
+        self.m = m
+        self.n = n
 
         # Variable parameters
         # self.g = None
@@ -190,7 +189,7 @@ if __name__ == '__main__':
 
     a0, nbins, l = pyinform.utils.bin_series(a, b=Nbins)
     print(a0.shape)
-    d0=[pyinform.Dist(a0[:,i]) for i in range(a0.shape[1])]
+    d0 = [pyinform.Dist(a0[:, i]) for i in range(a0.shape[1])]
 
-    h0=[pyinform.shannon.entropy(d0[i], b=2.0) for i in range(len(d0))]
+    h0 = [pyinform.shannon.entropy(d0[i], b=2.0) for i in range(len(d0))]
     print(h0)

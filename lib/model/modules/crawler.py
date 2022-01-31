@@ -13,7 +13,7 @@ class Crawler(Oscillator):
         self.waveform = waveform
         self.activity = 0
         self.amp = initial_amp
-        self.scaled_noise = crawler_noise
+        self.noise = crawler_noise
         # self.noise = self.scaled_noise * self.
         step_mu, step_std = [np.max([0.0, ii]) for ii in [step_to_length_mu, step_to_length_std]]
         if self.waveform == 'square':
@@ -23,6 +23,7 @@ class Crawler(Oscillator):
             self.step_to_length_mu = step_mu
             self.step_to_length_std = step_std
             self.step_to_length = self.generate_step_to_length()
+            # self.amp = self.square_oscillator_amp()
         elif self.waveform == 'gaussian':
             self.gaussian_window_std = gaussian_window_std
         elif self.waveform == 'realistic':
@@ -41,44 +42,28 @@ class Crawler(Oscillator):
     def generate_step_to_length(self):
         return np.random.normal(loc=self.step_to_length_mu, scale=self.step_to_length_std)
 
-    def adapt_square_oscillator_amp(self, length):
-        distance = length * self.step_to_length
-        timesteps_active_per_iteration = self.timesteps_per_iteration * self.square_signal_duty
-        distance_per_active_timestep = distance / timesteps_active_per_iteration
-        lin_vel_when_active = distance_per_active_timestep / self.dt
-        self.amp = lin_vel_when_active / 2
-        # print(self.amp, self.timesteps_per_iteration * self.square_signal_duty)
+    # def square_oscillator_amp(self):
+    #     return 0.5 * self.step_to_length*self.dt / (self.timesteps_per_iteration * self.square_signal_duty)
 
-    def step(self, length):
+    def step(self):
         self.complete_iteration = False
         if self.effector:
             if self.waveform == 'realistic':
                 activity = self.realistic_oscillator(phi=self.phi, freq=self.freq,
-                                                     sd=self.step_to_length, max_vel_phase=self.max_vel_phase) * length
+                                                     sd=self.step_to_length, max_vel_phase=self.max_vel_phase)
             elif self.waveform == 'square':
-                self.adapt_square_oscillator_amp(length)
-                activity = self.square_oscillator()
+                activity = self.amp * signal.square(self.phi, duty=self.square_signal_duty) + self.amp
             elif self.waveform == 'gaussian':
                 activity = self.gaussian_oscillator()
             elif self.waveform == 'constant':
                 activity = self.amp
-
-                # b=0.05-activity
-                # if b>0:
-                #     add=np.random.uniform(low=0.0, high=b)
-                #     activity += add
-
-            # if self.noise:
-            #     activity += np.random.normal(scale=np.abs(activity * self.noise))
             super().oscillate()
             if self.complete_iteration and self.waveform == 'realistic':
                 self.step_to_length = self.generate_step_to_length()
-            # activity += np.random.normal(scale=self.scaled_noise * length)
         else:
             activity = 0
-        activity += np.random.normal(scale=self.scaled_noise * length)
+
         return activity
-        # return np.clip(activity, a_min=0, a_max=np.inf)
 
     def gaussian_oscillator(self):
         window = signal.gaussian(self.timesteps_per_iteration,

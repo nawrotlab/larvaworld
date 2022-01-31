@@ -184,8 +184,8 @@ class LarvaDataset:
                 elif isinstance(l.brain, NengoBrain) :
                     if l.brain.dict is not None:
                         nengo_dicts[l.unique_id] =l.brain.dict
-                if l.brain.intermitter is not None:
-                    bout_dicts[l.unique_id] =l.brain.intermitter.build_dict()
+                if l.brain.locomotor.intermitter is not None:
+                    bout_dicts[l.unique_id] =l.brain.locomotor.intermitter.build_dict()
                 if len(env.foodtypes)>0 :
                     foraging_dicts[l.unique_id]=l.finalize_foraging_dict()
                 self.config.foodtypes= env.foodtypes
