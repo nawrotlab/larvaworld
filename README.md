@@ -91,18 +91,16 @@ The homeostasis/energetics module is based on the [DEB](http://www.debtheory.org
 
 **Installation**
 
-Open linux terminal.
+Open linux/macOS terminal.
 Navigate to a directory of your choice.
 Download or clone the repository to your local drive :
 
     git clone https://github.com/nawrotlab/larvaworld.git
 
-Make sure python 3.7 is your default python interpreter.
-Optionally create a python 3.7 virtual environment, for example in folder `larvaworld_venv`, and activate it:
+Either make sure python 3.9 is your default python interpreter,
+Or optionally create a python 3.9 virtual environment, for example in folder `larvaworld_venv`, and activate it:
 
-    apt-get install python-virtualenv
-
-    virtualenv -p /usr/bin/python3 larvaworld_venv
+    python3.9 -m venv larvaworld_venv
 
     source larvaworld_venv/bin/activate
 

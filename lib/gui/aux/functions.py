@@ -8,7 +8,7 @@ from PySimpleGUI import Element
 
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'
-window_size = (2400, 1200)
+window_size = sg.Window.get_screen_size() #(2400, 1200)
 
 
 def col_size(x_frac=1.0, y_frac=1.0, win_size=None):
@@ -241,3 +241,4 @@ def get_pygame_key(key):
         'asterisk': 'ASTERISK',
     }
     return f'K_{pygame_keys[key]}' if key in list(pygame_keys.keys()) else f'K_{key}'
+
