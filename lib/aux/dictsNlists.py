@@ -239,6 +239,20 @@ def moving_average(a, n=3) :
     return np.convolve(a, np.ones((n,))/n, mode='same')
     # return ret[n - 1:] / n
 
+def fft_max(array, dt, thr=0.0) :
+    from scipy.fft import fft, fftfreq
+    array = np.nan_to_num(array)
+    Nticks = len(array)
+    xf = fftfreq(Nticks, dt)[:Nticks // 2]
+    yf = fft(array)
+    yf = 2.0 / Nticks * np.abs(yf[0:Nticks // 2])
+    yf = 1000 * yf / np.sum(yf)
+    yf = moving_average(yf, n=21)
+    xf_trunc = xf[xf > thr]
+    yf_trunc = yf[xf > thr]
+    xmax = xf_trunc[np.argmax(yf_trunc)]
+    return xmax
+
 
 class AttrDict(dict):
     '''

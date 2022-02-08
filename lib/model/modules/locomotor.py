@@ -85,6 +85,19 @@ class Wystrach2016(Locomotor):
 
         return lin, self.ang_vel, feed_motion
 
+    def step_TiPI(self, S, A_in=0):
+        ang_vel, bend, lin=S
+
+        lin = self.lin_constant
+        lin += np.random.normal(scale=self.crawler_noise)
+
+        input = (self.turner_input_constant + A_in) * (1 + np.random.normal(scale=self.turner_input_noise))
+
+        self.neural_oscillator.step(input)
+        output = self.neural_oscillator.activity * (1 + np.random.normal(scale=self.turner_output_noise))
+
+        return np.array([output,lin])
+
 
 class Davies2015(Locomotor):
     def __init__(self, dt, conf=None, lin_constant=0.001, min_run_dur=1.0,

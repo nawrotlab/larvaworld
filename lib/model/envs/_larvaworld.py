@@ -491,6 +491,7 @@ class LarvaWorld:
         self.is_running = True
         warnings.filterwarnings('ignore')
         while self.is_running and self.Nticks < self.Nsteps and not self.end_condition_met:
+            # print(self.Nticks)
             if not self.is_paused:
                 self.step()
                 self.progress_bar.update(self.Nticks)

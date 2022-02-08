@@ -881,7 +881,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
     P.adjust((0.2, 0.95), (0.15, 0.95))
     return P.get()
 
-def powerspectrum(par_shorts=['v', 'fov'], pars=[], subfolder='powerspectrums', legend_loc='upper left', **kwargs):
+def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspectrums', legend_loc='upper left', **kwargs):
     if len(pars) == 0:
         if len(par_shorts) == 0:
             raise ValueError('Either parameter names or shortcuts must be provided')
@@ -927,9 +927,9 @@ def powerspectrum(par_shorts=['v', 'fov'], pars=[], subfolder='powerspectrums', 
             #xf=np.sort(xf)
             yf0=1000*yf0/np.sum(yf0)
             ax.plot(xf, yf0, color=c, label=symbol)
-            ymax = np.max(yf0[xf>0.2])
-            xpos = np.argmax(yf0[xf>0.2])
-            xmax = xf[xf>0.2][xpos]
+            ymax = np.max(yf0[xf>thr])
+            xpos = np.argmax(yf0[xf>thr])
+            xmax = xf[xf>thr][xpos]
             ax.plot(xmax,ymax,  color=c, marker='o')
             ax.annotate(np.round(xmax,2), xy=(xmax, ymax), xytext=(xmax+0.2, ymax+0.1), color=c, fontsize=25)
             # yf0 = moving_average(yf0, n=11)

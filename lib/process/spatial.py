@@ -300,6 +300,18 @@ def comp_dispersion(s, e, config, dt, point, recompute=False, dsp_starts=[0], ds
 
 
 def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
+    '''
+    Trajectory tortuosity metrics
+    In the simplest case a single value is computed as T=1-D/L where D is the dispersal and L the actual pathlength.
+    This metric has been used in :
+    [1] J. Loveless and B. Webb, “A Neuromechanical Model of Larval Chemotaxis,” Integr. Comp. Biol., vol. 58, no. 5, pp. 906–914, 2018.
+    Additionally tortuosity can be computed over a given time interval in which case the result is a vector called straightness index in [2].
+    The mean and std are then computed.
+
+    TODO Check also for binomial distribution over the straightness index vector. If there is a switch between global exploration and local search there should be evidence over a certain time interval.
+    Data from here is relevant :
+    [2] D. W. Sims, N. E. Humphries, N. Hu, V. Medan, and J. Berni, “Optimal searching behaviour generated intrinsically by the central pattern generator for locomotion,” Elife, vol. 8, pp. 1–31, 2019.
+    '''
     if tor_durs is None :
         return
     try:
@@ -344,6 +356,61 @@ def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
 
     print('Tortuosities computed')
 
+
+import numpy as np
+
+import numpy as np
+
+
+def rolling_window(a, w):
+    # Get windows of size w from array a
+    return np.vstack(np.roll(a, -i) for i in range(w)).T[:-w + 1]
+
+
+def rolling_window_xy(xy, w):
+    # Get windows of size w from 2D array xy
+    xs = rolling_window(xy[:, 0], w)
+    ys = rolling_window(xy[:, 1], w)
+    xys = np.dstack([xs, ys])
+    return xys
+
+
+def tortuosity(xy):
+    # Compute tortuosity over a 2D xy array
+    xy = xy[~np.isnan(xy).any(axis=1)]
+    if xy.shape[0] < 2:
+        return np.nan
+    D = np.nansum(np.sqrt(np.nansum(np.diff(xy, axis=0) ** 2, axis=1)))
+    L = np.sqrt(np.nansum(np.array(xy[-1, :] - xy[0, :]) ** 2))
+    return 1 - L / D
+
+
+def straightness_index(xy, w):
+    # Compute tortuosity over intervals of duration w
+    xys = rolling_window_xy(xy, w)
+    k = xy.shape[0] - xys.shape[0]
+    k1 = int(k / 2)
+    SI = [np.nan] * k1 + [tortuosity(xys[i, :]) for i in range(xys.shape[0])] + [np.nan] * (k - k1)
+    return np.array(SI)
+
+
+def comp_straightness_index(s, e,config, dt, tor_durs=[2, 5, 10, 20], **kwargs):
+    aux_dir = config['aux_dir']
+    Nticks = len(s.index.unique('Step'))
+    ids = s.index.unique('AgentID').values
+    Nids = len(ids)
+    for dur in tor_durs:
+        par = f'tortuosity_{dur}'
+        r = int(dur / dt / 2)
+        # T=s[['x', 'y']].groupby('AgentID').transform(lambda xy: straightness_index(xy.values, r))
+        # print(T)
+
+        T = np.zeros([Nticks, Nids]) * np.nan
+        for j, id in enumerate(ids):
+            xy = s[['x', 'y']].xs(id, level='AgentID').values
+            T[:, j] = straightness_index(xy, r)
+        s[par] = T.flatten()
+        store_aux_dataset(s, pars=[par], type='exploration', file=aux_dir)
 
 
 def comp_source_metrics(s, e, config, **kwargs):

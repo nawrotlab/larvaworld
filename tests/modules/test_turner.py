@@ -10,8 +10,12 @@ from lib.model.modules.turner import Turner
 from lib.sim.single.single_run import SingleRun
 
 
-# Setup  Turner modules
+# Crawl-bend interference
+CT_exclusive = null_dict('interference', crawler_phi_range=(0.0,2.0), attenuation=0.0)
+CT_continuous=null_dict('interference', crawler_phi_range=(0.0,2.0), attenuation=1.0)
+CT_phasic = null_dict('interference', crawler_phi_range=(0.5,1.0), attenuation=0.2)
 
+# Setup  Turner modules
 Tcon = null_dict('turner',
                  mode='constant',
                  initial_amp=240.0,
