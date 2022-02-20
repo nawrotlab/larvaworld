@@ -52,12 +52,11 @@ def comp_bend(s, config, mode='minimal'):
 
 def compute_LR_bias(s, e):
     for id in s.index.unique('AgentID').values:
-        b = s['bend'].xs(id, level='AgentID', drop_level=True).dropna()
-        bv = s[nam.vel('bend')].xs(id, level='AgentID', drop_level=True).dropna()
-        e.loc[id, 'bend_mean'] = b.mean()
-        e.loc[id, 'bend_vel_mean'] = bv.mean()
-        e.loc[id, 'bend_std'] = b.std()
-        e.loc[id, 'bend_vel_std'] = bv.std()
+        for p in ['bend', nam.vel('bend'), nam.vel(nam.orient('front'))]:
+            if p in s.columns:
+                b = s[p].xs(id, level='AgentID', drop_level=True).dropna()
+                e.loc[id, nam.mean(p)] = b.mean()
+                e.loc[id, nam.std(p)] = b.std()
     print('LR biases computed')
 
 
@@ -159,10 +158,69 @@ def angular_processing(s, e, config, recompute=False, mode='minimal', **kwargs):
     if set(ang_pars).issubset(s.columns.values) and not recompute:
         print('Orientation and bend are already computed. If you want to recompute them, set recompute to True')
     else:
-        comp_orientations(s, e, config, mode=mode)
-        comp_bend(s, config, mode=mode)
+        try:
+            comp_orientations(s, e, config, mode=mode)
+            comp_bend(s, config, mode=mode)
+        except:
+            comp_ang_from_xy(s, e, dt=config.dt)
     comp_angular(s, config, mode=mode)
     comp_extrema(s, dt=config.dt, parameters=[nam.vel(nam.orient('front'))], interval_in_sec=0.3)
     compute_LR_bias(s, e)
     store_aux_dataset(s, pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), type='distro', file=config.aux_dir)
     print(f'Completed {mode} angular processing.')
+
+
+def ang_from_xy(x, y):
+    dx_dt = np.gradient(x)
+    dy_dt = np.gradient(y)
+    velocity = np.array([[dx_dt[i], dy_dt[i]] for i in range(dx_dt.size)])
+    ds_dt = np.sqrt(dx_dt * dx_dt + dy_dt * dy_dt)
+    tangent = np.array([1 / ds_dt] * 2).transpose() * velocity
+    tangent_x = tangent[:, 0]
+    tangent_y = tangent[:, 1]
+
+    deriv_tangent_x = np.gradient(tangent_x)
+    deriv_tangent_y = np.gradient(tangent_y)
+
+    dT_dt = np.array([[deriv_tangent_x[i], deriv_tangent_y[i]] for i in range(deriv_tangent_x.size)])
+
+    length_dT_dt = np.sqrt(deriv_tangent_x * deriv_tangent_x + deriv_tangent_y * deriv_tangent_y)
+
+    normal = np.array([1 / length_dT_dt] * 2).transpose() * dT_dt
+    d2s_dt2 = np.gradient(ds_dt)
+    d2x_dt2 = np.gradient(dx_dt)
+    d2y_dt2 = np.gradient(dy_dt)
+
+    curvature = np.abs(d2x_dt2 * dy_dt - dx_dt * d2y_dt2) / (dx_dt * dx_dt + dy_dt * dy_dt) ** 1.5
+    t_component = np.array([d2s_dt2] * 2).transpose()
+    n_component = np.array([curvature * ds_dt * ds_dt] * 2).transpose()
+
+    acceleration = t_component * tangent + n_component * normal
+
+    ang_vel = np.arctan(normal[:, 0] / normal[:, 1])
+
+    ang_acc = np.arctan(acceleration[:, 0] / acceleration[:, 1])
+    return ang_vel, ang_acc
+
+
+def comp_ang_from_xy(s, e, dt):
+    p = nam.orient('front')
+    p_vel, p_acc = nam.vel(p), nam.acc(p)
+    s[p_vel] = np.nan
+    s[p_acc] = np.nan
+    ids = s.index.unique('AgentID').values
+    Nids = len(ids)
+    Nticks = len(s.index.unique('Step'))
+
+    V = np.zeros([Nticks, 1, Nids]) * np.nan
+    A = np.zeros([Nticks, 1, Nids]) * np.nan
+    for j, id in enumerate(ids):
+        x = s["x"].xs(id, level='AgentID').values
+        y = s["y"].xs(id, level='AgentID').values
+        avel, aacc = ang_from_xy(x, y)
+        V[:, 0, j] = avel / dt
+        A[:, 0, j] = aacc / dt
+    s[p_vel] = V[:, 0, :].flatten()
+    s[p_acc] = A[:, 0, :].flatten()
+    e[nam.mean(p_vel)] = s[p_vel].dropna().groupby('AgentID').mean()
+    e[nam.mean(p_acc)] = s[p_acc].dropna().groupby('AgentID').mean()

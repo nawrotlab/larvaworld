@@ -401,14 +401,21 @@ def comp_straightness_index(s, e,config, dt, tor_durs=[2, 5, 10, 20], **kwargs):
     Nids = len(ids)
     for dur in tor_durs:
         par = f'tortuosity_{dur}'
+        par_m, par_s = nam.mean(par), nam.std(par)
         r = int(dur / dt / 2)
         # T=s[['x', 'y']].groupby('AgentID').transform(lambda xy: straightness_index(xy.values, r))
         # print(T)
 
         T = np.zeros([Nticks, Nids]) * np.nan
+        T_m = np.ones(Nids) * np.nan
+        T_s = np.ones(Nids) * np.nan
         for j, id in enumerate(ids):
             xy = s[['x', 'y']].xs(id, level='AgentID').values
             T[:, j] = straightness_index(xy, r)
+            T_m[j] = np.nanmean(T[:, j])
+            T_s[j] = np.nanstd(T[:, j])
+        e[par_m] = T_m
+        e[par_s] = T_s
         s[par] = T.flatten()
         store_aux_dataset(s, pars=[par], type='exploration', file=aux_dir)
 
