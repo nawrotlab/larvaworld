@@ -134,28 +134,13 @@ The executable files are in `larvaworld/run` directory.
 
    Larvaworld via Linux terminal
    =========================================
-   Optionally Larvaworld can be launched through Linux terminal via the remaining three executable python files.
+   Optionally Larvaworld can be launched through Linux terminal via the remaining two executable python files.
    Help on how to use these can be found in the [tutorial notebook](tutorial/walkthrough.ipynb).
    Three modes are available :
 
-   1. Analysis 
+   
 
-       Run analysis on the existing sample empirical data (3 dishes of freely exploring larvae).
-       First build a larvaworld dataset for each of the raw dishes, selecting tracks longer than 160''.
-       Then enrich the datasets computing derived parameters and annotating epochs and analyse them creating comparative plots.
-
-           python process.py TestGroup build -each -t 160
-           python process.py TestGroup enrich anal -nam dish_0 dish_1 dish_2
-
-       Check the comparative plots in `larvaworld/data/TestGroup/plots`.
-
-       Visualize one of the dishes (dish 1) you have created by generating a video.
-
-           python process.py TestGroup vis -nam dish_1 -vid
-
-       Check the generated video in `larvaworld/data/TestGroup/processed/dish_1/visuals`.
-
-   2. Simulation
+   1. Simulation
 
        Run a single simulation of one of multiple available experiments. 
        Optionally run the respetive analysis.
@@ -172,7 +157,7 @@ The executable files are in `larvaworld/run` directory.
 
        Check the plots comparing simulated to empirical data in `larvaworld/data/SimGroup/single_runs/dispersion`.
 
-   3. Batch run
+   2. Batch run
 
        Run multiple trials of a given experiment with different parameters.
        This line runs a batch run of odor preference experiments for different valences of the two odor sources.

@@ -27,7 +27,10 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
         bend_vel_par = dic['bv']['d']
     if track_pars is None:
         track_pars = [dic[k]['d'] for k in ['fou', 'rou', 'fo', 'ro', 'b', 'x', 'y']]
-        track_pars += nam.bearing2(list(config.source_xy.keys()))
+        try :
+            track_pars += nam.bearing2(list(config.source_xy.keys()))
+        except :
+            pass
     if chunk_pars is None:
         chunk_pars = [dic[k]['d'] for k in ['sv', 'fov', 'rov', 'bv', 'l']]
     track_pars = [p for p in track_pars if p in s.columns]
@@ -134,8 +137,8 @@ def detect_strides(s, e, config, dt=None, recompute=False, vel_par=None, track_p
     mid_flag = nam.max(vel_par)
     edge_flag = nam.min(vel_par)
 
-    comp_extrema(s, dt, parameters=[vel_par], interval_in_sec=0.5, abs_threshold=[np.inf, vel_threshold])
-    compute_freq(s, e, dt, parameters=[vel_par], freq_range=[0.7, 1.8])
+    comp_extrema(s, dt, parameters=[vel_par], interval_in_sec=0.2, abs_threshold=[np.inf, vel_threshold])
+    compute_freq(s, e, dt, parameters=[vel_par], freq_range=[0.7, 2.8])
     detect_contacting_chunks(s, e, aux_dir, dt, mid_flag=mid_flag, edge_flag=edge_flag,
                              vel_par=vel_par, control_pars=track_pars,
                              track_point=track_point, vel_threshold=vel_threshold)

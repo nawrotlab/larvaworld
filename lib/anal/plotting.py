@@ -2,7 +2,7 @@ import copy
 import heapq
 import itertools
 import warnings
-from matplotlib import collections  as mc
+from matplotlib import collections as mc
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
@@ -20,13 +20,14 @@ from PIL import Image
 import os
 from scipy.fft import fft, fftfreq
 
-from lib.aux.dictsNlists import unique_list, flatten_list, moving_average
+from lib.aux.dictsNlists import unique_list, flatten_list
 from lib.anal.fitting import BoutGenerator
 from lib.anal.plot_aux import plot_mean_and_range, circular_hist, confidence_ellipse, save_plot, \
     plot_config, dataset_legend, process_plot, label_diff, boolean_indexing, Plot, plot_quantiles, annotate_plot, \
     concat_datasets, ParPlot
 from lib.aux import naming as nam
 from lib.aux.colsNstr import N_colors, col_range
+from lib.process.aux import moving_average, detect_strides
 
 from lib.conf.base.par import getPar
 from lib.model.DEB.deb import DEB
@@ -58,23 +59,24 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
     }
     for i, d in enumerate(P.datasets):
         N = d.config['N']
-        try :
-            s=d.step_data
-        except :
+        try:
+            s = d.step_data
+        except:
             s = d.read('step')
-        for k,(n,title) in enumerate(zip(['lin', 'ang'],[r'$\bf{runs & pauses}$', r'$\bf{left & right turns}$'])) :
-            idx=2 * i+k
-            ax=P.axs[idx]
-            P.conf_ax(idx, xlab='time $(sec)$', ylab='Individuals $(idx)$', ylim=(0, N + 2), xlim=(0,d.config['Nticks']*d.dt), title=title if i==0 else None)
-            for b,c in Cbouts[n].items() :
-                bp0,bp1=nam.start(b), nam.stop(b)
+        for k, (n, title) in enumerate(zip(['lin', 'ang'], [r'$\bf{runs & pauses}$', r'$\bf{left & right turns}$'])):
+            idx = 2 * i + k
+            ax = P.axs[idx]
+            P.conf_ax(idx, xlab='time $(sec)$', ylab='Individuals $(idx)$', ylim=(0, N + 2),
+                      xlim=(0, d.config['Nticks'] * d.dt), title=title if i == 0 else None)
+            for b, c in Cbouts[n].items():
+                bp0, bp1 = nam.start(b), nam.stop(b)
                 if not {bp0, bp1}.issubset(s.columns.values):
                     continue
-                for j, id in enumerate(s.index.unique('AgentID').values) :
-                    bbs=s[[bp0,bp1]].xs(id, level='AgentID')
-                    b0s=bbs[bp0].dropna().index.values*d.dt
-                    b1s=bbs[bp1].dropna().index.values*d.dt
-                    lines = [[(b0, j+1), (b1, j+1)] for b0,b1 in zip(b0s, b1s)]
+                for j, id in enumerate(s.index.unique('AgentID').values):
+                    bbs = s[[bp0, bp1]].xs(id, level='AgentID')
+                    b0s = bbs[bp0].dropna().index.values * d.dt
+                    b1s = bbs[bp1].dropna().index.values * d.dt
+                    lines = [[(b0, j + 1), (b1, j + 1)] for b0, b1 in zip(b0s, b1s)]
                     lc = mc.LineCollection(lines, colors=c, linewidths=2)
                     ax.add_collection(lc)
             dataset_legend(labels=list(Cbouts[n].keys()), colors=list(Cbouts[n].values()), ax=ax,
@@ -84,7 +86,7 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
     return P.get()
 
 
-def plot_2pars(shorts, subfolder='step',larva_legend=True, **kwargs):
+def plot_2pars(shorts, subfolder='step', larva_legend=True, **kwargs):
     ypar, ylab, ylim = getPar(shorts[1], to_return=['d', 'l', 'lim'])
     xpar, xlab, xlim = getPar(shorts[0], to_return=['d', 'l', 'lim'])
     P = Plot(name=f'{ypar}_VS_{xpar}', subfolder=subfolder, **kwargs)
@@ -351,29 +353,27 @@ def plot_marked_strides(agent_idx=0, agent_id=None, slice=[20, 40], subfolder='i
     return P.get()
 
 
-def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, slice=[20, 40], subfolder='individuals', **kwargs):
+def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, slice=[20, 40], subfolder='individuals',
+                       **kwargs):
     Nrows = len(mode)
-    if Nrows==2 :
-        suf='stridesVSturns'
-    else :
-        suf=mode[0]
+    if Nrows == 2:
+        suf = 'stridesVSturns'
+    else:
+        suf = mode[0]
     t0, t1 = slice
     temp = f'sample_marked_{suf}_{t0}-{t1}'
     name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
     P = Plot(name=name, subfolder=subfolder, **kwargs)
     Nds = P.Ndatasets
 
-
-
     figx = 15 * 6 * 3 if slice is None else int((t1 - t0) / 3)
     figy = 5
 
-    P.build(Nrows,Nds, figsize=(figx* Nds, figy * Nrows), sharey=False, sharex=True)
-
+    P.build(Nrows, Nds, figsize=(figx * Nds, figy * Nrows), sharey=False, sharex=True)
 
     for ii, (d, l) in enumerate(zip(P.datasets, P.labels)):
-        for jj, key in enumerate(mode) :
-            kk=ii+Nrows*jj
+        for jj, key in enumerate(mode):
+            kk = ii + Nrows * jj
             ax = P.axs[kk]
             if key == 'strides':
                 chunks = ['stride', 'pause']
@@ -812,7 +812,7 @@ def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_id
     return P.get()
 
 
-def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None, unit='sec',absolute=True,
+def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None, unit='sec', absolute=True,
              show_first=False, subfolder='timeplots', legend_loc='upper left', **kwargs):
     unit_coefs = {'sec': 1, 'min': 1 / 60, 'hour': 1 / 60 / 60}
     if len(pars) == 0:
@@ -850,8 +850,8 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                     dc = d.load_table(table)[p]
                 else:
                     dc = d.get_par(p, key='step')
-                if absolute :
-                    dc=dc.abs()
+                if absolute:
+                    dc = dc.abs()
                     # dc = d.read('step')[p]
                 dc_m = dc.groupby(level='Step').quantile(q=0.5)
                 Nticks = len(dc_m)
@@ -881,7 +881,9 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
     P.adjust((0.2, 0.95), (0.15, 0.95))
     return P.get()
 
-def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspectrums', legend_loc='upper left', **kwargs):
+
+def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspectrums', legend_loc='upper left',
+                  **kwargs):
     if len(pars) == 0:
         if len(par_shorts) == 0:
             raise ValueError('Either parameter names or shortcuts must be provided')
@@ -905,33 +907,33 @@ def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspe
     ax = P.axs[0]
     counter = 0
     for p, symbol, ylab, ylim, c in zip(pars, symbols, ylabs, ylims, cols):
-        P.conf_ax(xlab='Frequency in Hertz [Hz]', ylab='Frequency Domain (Spectrum) Magnitude', xlim=(0,3.5), ylim=(0,5))
+        P.conf_ax(xlab='Frequency in Hertz [Hz]', ylab='Frequency Domain (Spectrum) Magnitude', xlim=(0, 3.5),
+                  ylim=(0, 5))
         for d, d_col, d_lab in zip(P.datasets, P.colors, P.labels):
             if P.Ndatasets > 1:
                 c = d_col
             dc = d.get_par(p, key='step')
             Nticks = len(dc.index.get_level_values('Step').unique())
-            xf = fftfreq(Nticks, 1 / d.fr)[:Nticks//2]
+            xf = fftfreq(Nticks, 1 / d.fr)[:Nticks // 2]
             ids = dc.index.get_level_values('AgentID').unique()
-            yf0 = np.zeros(Nticks//2)
+            yf0 = np.zeros(Nticks // 2)
             for id in ids:
-
                 dc_single = dc.xs(id, level='AgentID').values
                 dc_single = np.nan_to_num(dc_single)
                 yf = fft(dc_single)
-                yf=2.0/Nticks * np.abs(yf[0:Nticks//2])
+                yf = 2.0 / Nticks * np.abs(yf[0:Nticks // 2])
                 yf = 1000 * yf / np.sum(yf)
-                yf=moving_average(yf, n=21)
+                yf = moving_average(yf, n=21)
                 ax.plot(xf, yf, color=c, alpha=0.2)
                 yf0 += yf
-            #xf=np.sort(xf)
-            yf0=1000*yf0/np.sum(yf0)
+            # xf=np.sort(xf)
+            yf0 = 1000 * yf0 / np.sum(yf0)
             ax.plot(xf, yf0, color=c, label=symbol)
-            ymax = np.max(yf0[xf>thr])
-            xpos = np.argmax(yf0[xf>thr])
-            xmax = xf[xf>thr][xpos]
-            ax.plot(xmax,ymax,  color=c, marker='o')
-            ax.annotate(np.round(xmax,2), xy=(xmax, ymax), xytext=(xmax+0.2, ymax+0.1), color=c, fontsize=25)
+            ymax = np.max(yf0[xf > thr])
+            xpos = np.argmax(yf0[xf > thr])
+            xmax = xf[xf > thr][xpos]
+            ax.plot(xmax, ymax, color=c, marker='o')
+            ax.annotate(np.round(xmax, 2), xy=(xmax, ymax), xytext=(xmax + 0.2, ymax + 0.1), color=c, fontsize=25)
             # yf0 = moving_average(yf0, n=11)
             # ax.plot(xf, yf0, color=c, label=symbol)
             counter += 1
@@ -1196,8 +1198,8 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
                         'cum_t', 'str_tr', 'pau_tr', 'tor',
                         'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
                         'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'],
-            'tiny': ['fsv', 'sv_mu','str_tr', 'pau_tr',
-                        'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'],
+            'tiny': ['fsv', 'sv_mu', 'str_tr', 'pau_tr',
+                     'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'],
             'stride_def': [l_par, 'fsv', 'sstr_d_mu', 'sstr_d_std'],
             'reorientation': ['str_fo_mu', 'str_fo_std', 'tur_fou_mu', 'tur_fou_std'],
             'tortuosity': ['tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu'],
@@ -1523,7 +1525,7 @@ def plot_bend_pauses(dataset, save_to=None):
     print(f'Image saved as {filepath}')
 
 
-def plot_marked_turns(dataset, agent_ids=None,agent_idx=[0], turn_epochs=['Rturn', 'Lturn'],
+def plot_marked_turns(dataset, agent_ids=None, agent_idx=[0], turn_epochs=['Rturn', 'Lturn'],
                       vertical_boundaries=False, min_turn_angle=0, slices=[], subfolder='individuals',
                       save_to=None, return_fig=False, show=False):
     Ndatasets, colors, save_to, labels = plot_config(datasets=[dataset], labels=[dataset.id], save_to=save_to,
@@ -1532,10 +1534,10 @@ def plot_marked_turns(dataset, agent_ids=None,agent_idx=[0], turn_epochs=['Rturn
     d = dataset
 
     if agent_ids is None:
-        if agent_idx is None :
+        if agent_idx is None:
             agent_ids = d.agent_ids
-        else :
-            agent_ids=[d.agent_ids[idx] for idx in agent_idx]
+        else:
+            agent_ids = [d.agent_ids[idx] for idx in agent_idx]
 
     xx = f'marked_turns_min_angle_{min_turn_angle}'
     filepath_full = f'{xx}_full.{suf}'
@@ -1680,7 +1682,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                'M_gut', 'mol_ingested', 'M_absorbed', 'M_faeces', 'M_not_digested', 'M_not_absorbed',
                'R_faeces', 'R_absorbed', 'R_not_digested', 'gut_occupancy',
                'deb_p_A', 'sim_p_A', 'gut_p_A', 'gut_f', 'gut_p_A_deviation',
-               'M_X', 'M_P', 'M_Pu','M_g', 'M_c','R_M_c','R_M_g','R_M_X_M_P','R_M_X','R_M_P'
+               'M_X', 'M_P', 'M_Pu', 'M_g', 'M_c', 'R_M_c', 'R_M_g', 'R_M_X_M_P', 'R_M_X', 'R_M_P'
                ]
     ylabels0 = ['wet weight $(mg)$', 'body length $(mm)$',
                 r'reserve $(J)$', r'reserve density $(-)$', r'hunger drive $(-)$',
@@ -1690,12 +1692,14 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
                 'gut content $(mg)$', 'food intake $(C-mmole)$', 'food absorption $(mg)$',
                 'faeces $(mg)$', 'food not digested $(mg)$', 'product not absorbed $(mg)$',
                 'faeces fraction', 'absorption efficiency', 'fraction not digested', 'gut occupancy',
-                r'[p$_{A}^{deb}$] $(microJ/cm^3)$', r'[p$_{A}^{sim}$] $(microJ/cm^3)$',r'[p$_{A}^{gut}$] $(microJ/cm^3)$',
+                r'[p$_{A}^{deb}$] $(microJ/cm^3)$', r'[p$_{A}^{sim}$] $(microJ/cm^3)$',
+                r'[p$_{A}^{gut}$] $(microJ/cm^3)$',
                 # r'[p$_{A}^{deb}$] $(\mu J/cm^3)$', r'[p$_{A}^{sim}$] $(\mu J/cm^3)$',r'[p$_{A}^{gut}$] $(\mu J/cm^3)$',
                 r'f $^{gut}$ $(-)$', r'$\Delta$p$_{A}^{gut}$ $(-)$',
                 r'Food in gut $(C-moles)$', r'Product in gut $(C-moles)$', r'Product absorbed $(C-mmoles)$',
                 r'Active enzyme amount in gut $(-)$', r'Available carrier amount in gut surface $(-)$',
-                r'Available carrier ratio in gut surface $(-)$',r'Active enzyme ratio in gut surface $(-)$',r'Food VS Product ratio in gut $(-)$',
+                r'Available carrier ratio in gut surface $(-)$', r'Active enzyme ratio in gut surface $(-)$',
+                r'Food VS Product ratio in gut $(-)$',
                 r'Ratio of Food in gut $(-)$', r'Ratio of Product in gut $(-)$'
                 # r'(deb) assimilation energy $(J)$', r'(f) assimilation energy $(J)$', r'(gut) assimilation energy $(J)$'
                 ]
@@ -1950,7 +1954,7 @@ def plot_heatmap(z, heat_kws={}, ax_kws={}, cbar_kws={}, **kwargs):
     return P.get()
 
 
-def plot_heatmap_PI(csv_filepath='PIs.csv',save_as='PI_heatmap.pdf', **kwargs):
+def plot_heatmap_PI(csv_filepath='PIs.csv', save_as='PI_heatmap.pdf', **kwargs):
     z = pd.read_csv(csv_filepath, index_col=0)
     Lgains = z.index.values.astype(int)
     Rgains = z.columns.values.astype(int)
@@ -2826,13 +2830,13 @@ def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='neng
             for k, (p, c) in enumerate(zip(probes, Cprobes)):
                 Nrow = i if same_plot else i * Nds + k
                 idx = j + Nrow * Nids
-                y=np.array(dic[p])
-                dim=y.shape[1]
-                if dim==1:
+                y = np.array(dic[p])
+                dim = y.shape[1]
+                if dim == 1:
                     P.axs[idx].plot(x, y, color=c, label=p)
-                else :
-                    for jj in range(dim) :
-                        P.axs[idx].plot(x, y[:,jj], label=f'{p}_{jj}')
+                else:
+                    for jj in range(dim):
+                        P.axs[idx].plot(x, y[:, jj], label=f'{p}_{jj}')
                 P.conf_ax(idx, xlab=r'time $min$' if Nrow == Nrows - 1 else None, ylab='activity' if j == 0 else None,
                           yticks=[] if j != 0 else None, yticklabels=[] if j != 0 else None, yMaxN=yMaxN,
                           leg_loc='upper right')
@@ -2894,6 +2898,78 @@ def plot_foraging(**kwargs):
     # P.conf_ax(xlab=xlab, ylab='probability, $P$', xlim=xlim, yMaxN=4, leg_loc='upper right')
     P.adjust((0.1, 0.95), (0.15, 0.92), 0.2, 0.005)
     P.get()
+
+
+def annotated_strideplot(a, dt, ax=None, ylim=None, xlim=None, show_extrema=True, show_strides=True,
+                         moving_average_interval=None, **kwargs):
+    """
+    Plots annotated strides-runs and pauses in timeseries.
+
+    Extended description of function.
+
+    Parameters
+    ----------
+    a : array
+        1D np.array : velocity timeseries
+    dt : float
+        Timestep of the timeseries
+    ax : obj
+        The matplotlib axis on which to draw
+    ylim : Tuple[float,float]
+        The yaxis boundaries
+    xlim : Tuple[float,float]
+        The xaxis boundaries.Default is the whole a.
+    show_extrema : bool
+        Annotate minima & maxima. Default : True.
+    show_strides : bool
+        Annotate strides by vertical dashed lines. Default : True.
+    moving_average_interval : float
+        Plot moving average of velocity over a time interval instead of the actual. Default : None.
+    **kwargs : dict
+        Other arguments for bout annotation
+
+    Returns
+    -------
+    ax : obj
+        The drawn matplotlib axis
+
+    """
+    chunk_cols = ["lightblue", "grey"]
+    trange = np.arange(0, a.shape[0] * dt, dt)
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=(20, 5), sharex=True, sharey=True)
+    if xlim is None:
+        xlim = (0, trange[-1])
+
+    fr, strides, i_min, i_max, runs, runs_durs, runs_counts, pauses, pauses_durs = detect_strides(a=a, dt=dt, **kwargs)
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    ax.set_xlabel("time (sec)")
+    ax.set_ylabel("velocity (1/sec)")
+
+    if moving_average_interval:
+        a = moving_average(a, n=int(moving_average_interval / dt))
+    ax.plot(trange, a)
+    if show_extrema:
+        ax.plot(trange[i_max], a[i_max], linestyle='None', lw=10, color='green', marker='v')
+        ax.plot(trange[i_min], a[i_min], linestyle='None', lw=10, color='red', marker='^')
+    if show_strides:
+        for s0, s1 in strides:
+            # ax.axvspan(trange[s0], trange[s1], color=chunk_cols[0], alpha=1.0)
+            ax.axvline(trange[s0], color=f'{0.4 * (0 + 1)}', alpha=0.3, linestyle='dashed', linewidth=1)
+            ax.axvline(trange[s1], color=f'{0.4 * (0 + 1)}', alpha=0.3, linestyle='dashed', linewidth=1)
+    for s0, s1 in runs:
+        pass
+        ax.axvspan(trange[s0], trange[s1], color=chunk_cols[0], alpha=1.0)
+        # ax.axvline(trange[s0], color=f'{0.4 * (0 + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
+        # ax.axvline(trange[s1], color=f'{0.4 * (0 + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
+    for p0, p1 in pauses:
+        ax.axvspan(trange[p0], trange[p1], color=chunk_cols[1], alpha=1.0)
+        # ax.axvline(trange[p0], color=f'{0.4 * (1 + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
+        # ax.axvline(trange[p1], color=f'{0.4 * (1 + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
+    labels = ['runs', 'pauses']
+    handles = [patches.Patch(color=col, label=n) for n, col in zip(labels, chunk_cols)]
+    ax.legend(loc="upper right", handles=handles, labels=labels)
 
 
 graph_dict = {

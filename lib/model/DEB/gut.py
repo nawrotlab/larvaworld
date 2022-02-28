@@ -58,7 +58,7 @@ class Gut:
             self.dict = None
 
 
-    def update(self, X_V=0):
+    def update(self, V_X=0):
 
         self.A_g = self.r_gut_A * self.deb.L ** 2  # Gut surface area
         self.V_gm = self.r_gut_V * self.deb.V
@@ -66,10 +66,10 @@ class Gut:
         self.J_g = self.J_g_per_cm2 * self.A_g # total secretion rate of enzyme in the gut surface
         # self.M_c = self.M_c_max
 
-        if X_V > 0:
+        if V_X > 0:
             self.Nfeeds += 1
-            self.V += X_V
-            M_X_in = self.deb.substrate.X * X_V
+            self.V += V_X
+            M_X_in = self.deb.substrate.X * V_X
             self.mol_ingested += M_X_in
             self.M_X += M_X_in
         self.digest()
@@ -90,6 +90,7 @@ class Gut:
 
         dt = self.deb.dt*24*60*60
         # print(dt)
+        # FIXME there should be another term A_g after J_g
         self.M_g += (self.J_g*dt - self.k_g * self.M_g)
         if self.M_X > 0:
             temp = self.k_dig * self.f_dig * self.M_g

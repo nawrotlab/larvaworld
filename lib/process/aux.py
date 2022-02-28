@@ -5,25 +5,18 @@ from contextlib import contextmanager, redirect_stderr, redirect_stdout
 import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
-from scipy.signal import sosfiltfilt, butter
+from scipy.signal import sosfiltfilt, butter, find_peaks, argrelextrema
 from scipy.spatial import ConvexHull
+from scipy.fft import fft, fftfreq
+import statsmodels.api as sm
 
 
-def parse_array_at_nans(array):
-    array = np.insert(array, 0, np.nan)
-    array = np.insert(array, -1, np.nan)
-    dif = np.diff(np.isnan(array).astype(int))
+def parse_array_at_nans(a):
+    a = np.insert(a, 0, np.nan)
+    a = np.insert(a, -1, np.nan)
+    dif = np.diff(np.isnan(a).astype(int))
     de = np.where(dif == 1)[0]
     ds = np.where(dif == -1)[0]
-    # c = array
-    # c_filt = np.full_like(c, np.nan)
-    # d = np.where(np.isnan(c))[0]
-    # ds = [i + 1 for i in d if i + 1 not in d and not i + 1 == len(c)]
-    # de = [i for i in d if i - 1 not in d and not i - 1 == -1]
-    # if not np.isnan(array[0]):
-    #     ds = np.insert(ds, 0, 0)
-    # if not np.isnan(array[-1]):
-    #     de = np.append([de, len(array)])
     return ds, de
 
 
@@ -76,22 +69,22 @@ def convex_hull(xs=None, ys=None, N=None, interp_nans=True):
     yys = np.zeros((Nrows, N))
     yys[:] = np.nan
 
-    for i, p in enumerate(ps) :
+    for i, p in enumerate(ps):
         if len(p) > 0:
-            try :
+            try:
                 b = p[ConvexHull(p).vertices]
-                s = np.min([b.shape[0],N])
-                xxs[i,:s]=b[:s,0]
-                yys[i,:s]=b[:s,1]
-                if interp_nans :
+                s = np.min([b.shape[0], N])
+                xxs[i, :s] = b[:s, 0]
+                yys[i, :s] = b[:s, 1]
+                if interp_nans:
                     xxs[i] = interpolate_nans(xxs[i])
                     yys[i] = interpolate_nans(yys[i])
-            except :
+            except:
                 pass
     return xxs, yys
 
 
-def sign_changes(df, col) :
+def sign_changes(df, col):
     a = df[col].values
     u = np.sign(df[col])
     m = np.flatnonzero(u.diff().abs().eq(2))
@@ -99,7 +92,7 @@ def sign_changes(df, col) :
     g = np.stack([m - 1, m], axis=1)
     v = np.abs(a[g]).argmin(1)
 
-    res=df.iloc[g[np.arange(g.shape[0]), v]]
+    res = df.iloc[g[np.arange(g.shape[0]), v]]
     return res
 
 
@@ -214,9 +207,209 @@ def compute_velocity_threshold(v, Nbins=500, max_v=None, kernel_width=0.02):
     density = np.exp(np.convolve(np.log(hist), ker, 'same'))
     plt.semilogy(vals, density)
 
-    mi, ma = sp.signal.argrelextrema(density, np.less)[0], sp.signal.argrelextrema(density, np.greater)[0]
+    mi, ma = argrelextrema(density, np.less)[0], argrelextrema(density, np.greater)[0]
     try:
         minimum = vals[mi][0]
     except:
         minimum = np.nan
     return minimum
+
+
+def moving_average(a, n=3):
+    # ret = np.cumsum(a, dtype=float)
+    # ret[n:] = ret[n:] - ret[:-n]
+    return np.convolve(a, np.ones((n,)) / n, mode='same')
+    # return ret[n - 1:] / n
+
+
+def fft_max(a, dt, fr_range=(0.0, +np.inf)):
+    """
+    Powerspectrum of signal.
+
+    Compute the powerspectrum of a signal abd its dominant frequency within some range.
+
+    Parameters
+    ----------
+    a : array
+        1D np.array : velocity timeseries
+    dt : float
+        Timestep of the timeseries
+    fr_range : Tuple[float,float]
+        Frequency range allowed. Default is (0.0, +np.inf)
+
+    Returns
+    -------
+    xf : array
+        Array of computed frequencies.
+    yf : array
+        Array of computed frequency powers.
+    xmax : float
+        Dominant frequency within range.
+
+    """
+
+    a = np.nan_to_num(a)
+    Nticks = len(a)
+    xf = fftfreq(Nticks, dt)[:Nticks // 2]
+    yf = fft(a, norm="backward")
+    yf = 2.0 / Nticks * np.abs(yf[:Nticks // 2])
+    yf = 1000 * yf / np.sum(yf)
+    # yf = moving_average(yf, n=21)
+    xf_trunc = xf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
+    yf_trunc = yf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
+    xmax = xf_trunc[np.argmax(yf_trunc)]
+    return xf, yf, xmax
+
+
+def slow_freq(a, dt, tmax=60.0):
+    """
+    Dominant slow frequency of signal.
+
+    Compute the dominant frequency of a timeseries after smoothing it by a moving average over several (long) intervals.
+
+    Parameters
+    ----------
+    a : array
+        1D np.array : velocity timeseries
+    dt : float
+        Timestep of the timeseries
+    tmax : float
+        Maximum time interval over which to apply moving average in secs. Default is 60.0
+
+    Returns
+    -------
+    fr_median : float
+       The median of the dominant frequencies over all time intervals
+
+    """
+    lags = int(2 * tmax / dt)
+    frs = []
+    ts = np.arange(1, 60, 0.5)
+    for t in ts:
+        aa = moving_average(a, n=int(t / dt))
+        autocor = sm.tsa.acf(aa, nlags=lags, missing="conservative")
+        try:
+            fr = 1 / (find_peaks(autocor)[0][0] * dt)
+        except:
+            fr = np.nan
+        frs.append(fr)
+    fr_median = np.nanmedian(frs)
+    return fr_median
+
+
+def detect_pauses(a, dt, vel_thr=0.3, runs=None):
+    """
+    Annotates crawl-pauses in timeseries.
+
+    Extended description of function.
+
+    Parameters
+    ----------
+    a : array
+        1D np.array : velocity timeseries
+    dt : float
+        Timestep of the timeseries
+    vel_thr : float
+        Maximum velocity threshold
+    runs : list
+        A list of pairs of the start-end indices of the runs.
+        If provided pauses that overlap with runs will be excluded.
+
+    Returns
+    -------
+    pauses : list
+        A list of pairs of the start-end indices of the pauses.
+    pauses_durs : list
+        Durations of the pauses.
+
+    """
+    pauses = []
+    idx = np.where(a <= vel_thr)[0]
+    if runs is not None:
+        for r0, r1 in runs:
+            idx = idx[(idx <= r0) | (idx >= r1)]
+    p0s = idx[np.where(np.diff(idx, prepend=[-np.inf]) != 1)[0]]
+    p1s = idx[np.where(np.diff(idx, append=[np.inf]) != 1)[0]]
+    pauses = [[p0, p1] for p0, p1 in zip(p0s, p1s) if p0 != p1]
+    pauses_durs = [(p1 - p0) * dt for p0, p1 in pauses]
+    return pauses, pauses_durs
+
+
+def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0)):
+    """
+    Annotates strides-runs and pauses in timeseries.
+
+    Extended description of function.
+
+    Parameters
+    ----------
+    a : array
+        1D np.array : velocity timeseries
+    dt : float
+        Timestep of the timeseries
+    vel_thr : float
+        Maximum velocity threshold
+    stretch : Tuple[float,float]
+        The min-max stretch of a stride relative to the default derived from the dominnt frequency
+
+    Returns
+    -------
+    fr : float
+        The dominant crawling frequency.
+    strides : list
+        A list of pairs of the start-end indices of the strides.
+    i_min : array
+        Indices of the local minima.
+    i_max : array
+        Indices of the local maxima.
+    runs : list
+         A list of pairs of the start-end indices of the runs/stridechains.
+    runs_durs : list
+        Durations of the runs.
+    runs_counts : list
+         Stride-counts of the runs/stridechains.
+    pauses : list
+        A list of pairs of the start-end indices of the pauses.
+    pauses_durs : list
+        Durations of the pauses.
+
+    """
+    xf, yf, fr = fft_max(a, dt, fr_range=(0.5, 3.0))
+    tmin = stretch[0] // (fr * dt)
+    tmax = stretch[1] // (fr * dt)
+    i_min = find_peaks(-a, height=-2 * vel_thr, distance=tmin)[0]
+    i_max = find_peaks(a, height=vel_thr, distance=tmin)[0]
+    strides = []
+    for m in i_max:
+        try:
+            s0, s1 = [i_min[i_min < m][-1], i_min[i_min > m][0]]
+            if (s1 - s0) <= tmax:
+                strides.append([s0, s1])
+        except:
+            pass
+
+    runs = []
+    s00, s11 = None, None
+    runs_durs, runs_counts = [], []
+
+    def register(s00, s11, count):
+        runs.append([s00, s11])
+        runs_durs.append((s11 - s00) * dt)
+        runs_counts.append(count)
+
+    for s0, s1 in strides:
+        if s00 is None:
+            s00, s11 = s0, s1
+            count = 1
+        elif s11 == s0:
+            s11 = s1
+            count += 1
+        else:
+            register(s00, s11, count)
+            count = 1
+            s00, s11 = s0, s1
+        register(s00, s11, count)
+
+    pauses, pauses_durs = detect_pauses(a, dt, vel_thr=vel_thr, runs=runs)
+
+    return fr, strides, i_min, i_max, runs, runs_durs, runs_counts, pauses, pauses_durs

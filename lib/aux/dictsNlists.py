@@ -22,11 +22,6 @@ def flatten_tuple(test_tuple):
                 res.append(i)
         return tuple(res)
 
-    # res = []
-    # for sub in test_tuple:
-    #     res += flatten_tuple(sub)
-    # return tuple(res)
-
 
 def flatten_list(l):
     return [item for sublist in l for item in sublist]
@@ -53,9 +48,10 @@ def tree_dict(d, parent_key='', sep='.'):
 
     def add(item):
         entry = dict(zip(cols, item))
-        if not entry['key'] in keys :
+        if not entry['key'] in keys:
             entries.append(entry)
             keys.append(entry['key'])
+
     add(['', parent_key, parent_key, [' ']])
 
     def tree_dict0(d, parent_key='', sep='.'):
@@ -233,31 +229,11 @@ def merge(item):
             merged[key].append(val)
     return {**item, 'ref': dict(merged)}
 
-def moving_average(a, n=3) :
-    # ret = np.cumsum(a, dtype=float)
-    # ret[n:] = ret[n:] - ret[:-n]
-    return np.convolve(a, np.ones((n,))/n, mode='same')
-    # return ret[n - 1:] / n
-
-def fft_max(array, dt, thr=0.0) :
-    from scipy.fft import fft, fftfreq
-    array = np.nan_to_num(array)
-    Nticks = len(array)
-    xf = fftfreq(Nticks, dt)[:Nticks // 2]
-    yf = fft(array)
-    yf = 2.0 / Nticks * np.abs(yf[0:Nticks // 2])
-    yf = 1000 * yf / np.sum(yf)
-    yf = moving_average(yf, n=21)
-    xf_trunc = xf[xf > thr]
-    yf_trunc = yf[xf > thr]
-    xmax = xf_trunc[np.argmax(yf_trunc)]
-    return xmax
-
 
 class AttrDict(dict):
+
     '''
-    Dictionary subclass whose entries can be accessed by attributes (as well
-        as normally).
+    Dictionary subclass whose entries can be accessed by attributes (as well as normally).
     # >>> obj = AttrDict()
     # >>> obj['test'] = 'hi'
     # >>> print obj.test
