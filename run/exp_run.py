@@ -30,7 +30,7 @@ models = args.models
 
 exp_conf = update_exp_conf(exp, d, N, models)
 
-# exec = Exec(mode='sim', conf=exp_conf, run_externally=True)
+# exec = Exec(mode='sim', conf=exp_conf, run_externally=False)
 # exec.run()
 # while not exec.check() :
 #     pass
@@ -40,7 +40,6 @@ ds=run.run()
 
 if args.analysis:
     fig_dict, results = run.analyze(show=args.show)
-    # fig_dict, results = sim_analysis(ds, exp)
 
 e = time.time()
 if d is not None:

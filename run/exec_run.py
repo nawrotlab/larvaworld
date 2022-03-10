@@ -72,16 +72,11 @@ class Exec:
     def exec_run(self):
         from lib.sim.single.single_run import SingleRun
         from lib.sim.batch.batch import BatchRun
-        # from lib.sim.batch.batch import batch_run
-        # from lib.sim.batch.functions import prepare_batch
         if self.mode == 'sim':
             self.process = SingleRun(**self.conf, progress_bar=self.w_progressbar)
             res = self.process.run()
         elif self.mode == 'batch':
             self.process = None
-            # batch_kwargs = prepare_batch(self.conf)
-            # res = batch_run(**batch_kwargs)
-
             k = BatchRun(**self.conf)
             res=k.run()
 

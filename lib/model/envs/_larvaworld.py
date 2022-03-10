@@ -49,6 +49,7 @@ class LarvaWorld:
         self.larva_collisions = larva_collisions
         if progress_bar is None:
             progress_bar = progressbar.ProgressBar(Nsteps)
+            progress_bar.start()
         self.progress_bar = progress_bar
         self.Box2D = Box2D
         if vis_kwargs is None:
@@ -485,7 +486,7 @@ class LarvaWorld:
             self.windscape.update()
 
     def run(self):
-        self.progress_bar.start()
+
         mode = self.vis_kwargs['render']['mode']
         img_mode = self.vis_kwargs['render']['image_mode']
         self.is_running = True

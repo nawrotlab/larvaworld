@@ -276,6 +276,10 @@ class ProgressBarLayout:
         w[self.k_incomplete].update(visible=True)
         w[self.k].update(0, max=max)
 
+    # def start(self):
+    #     # To make compaible with terminal run
+    #     return self
+
 
 class HeadedElement(GuiElement):
     def __init__(self, name, header, content=[], single_line=True):
