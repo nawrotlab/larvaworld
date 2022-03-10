@@ -79,14 +79,14 @@ class Wystrach2016(Locomotor):
         output = self.neural_oscillator.activity * (1 + np.random.normal(scale=self.turner_output_noise))
 
         self.ang_vel += (
-                                output * self.torque_coef - self.ang_damp_coef * self.ang_vel - self.body_spring_k * self.bend) * self.dt
+                                    output * self.torque_coef - self.ang_damp_coef * self.ang_vel - self.body_spring_k * self.bend) * self.dt
 
         feed_motion = False
 
         return lin, self.ang_vel, feed_motion
 
     def step_TiPI(self, S, A_in=0):
-        ang_vel, bend, lin=S
+        ang_vel, bend, lin = S
 
         lin = self.lin_constant
         lin += np.random.normal(scale=self.crawler_noise)
@@ -96,7 +96,7 @@ class Wystrach2016(Locomotor):
         self.neural_oscillator.step(input)
         output = self.neural_oscillator.activity * (1 + np.random.normal(scale=self.turner_output_noise))
 
-        return np.array([output,lin])
+        return np.array([output, lin])
 
 
 class Davies2015(Locomotor):
@@ -208,9 +208,11 @@ Levy_locomotor_conf = {
     'pause_dist': {'range': [0.4, 20.0], 'name': 'uniform'},
 }
 
+
 class Levy_locomotor(Locomotor):
     def __init__(self, dt, conf=None,
-                 pause_dist= {'range': [0.4, 20.0], 'name': 'uniform'}, run_dist={'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
+                 pause_dist={'range': [0.4, 20.0], 'name': 'uniform'},
+                 run_dist={'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
                  lin_constant=0.001,
                  crawler_noise=0, turner_input_noise=0, turner_output_noise=0, **kwargs):
         super().__init__(dt=dt)
@@ -231,13 +233,13 @@ class Levy_locomotor(Locomotor):
         self.cur_pause_dur = None
 
     def intermit(self):
-        if self.cur_state == 'run' and self.cur_run_dur>=self.cur_run_dur_max :
+        if self.cur_state == 'run' and self.cur_run_dur >= self.cur_run_dur_max:
             self.cur_run_dur = None
             self.cur_run_dur_max = None
             self.cur_pause_dur_max = self.pause_dist.sample()
             self.cur_pause_dur = 0
             self.cur_state = 'pause'
-        elif self.cur_state=='pause' and self.cur_pause_dur>=self.cur_pause_dur_max :
+        elif self.cur_state == 'pause' and self.cur_pause_dur >= self.cur_pause_dur_max:
             self.cur_pause_dur = None
             self.cur_pause_dur_max = None
             self.cur_run_dur_max = self.run_dist.sample()
@@ -246,11 +248,11 @@ class Levy_locomotor(Locomotor):
 
     def step(self, A_in=0, length=1):
         self.intermit()
-        if self.cur_state == 'run' :
+        if self.cur_state == 'run':
             lin = self.lin_constant
-            ang=0
-            self.cur_run_dur +=self.dt
-        elif self.cur_state=='pause' :
+            ang = 0
+            self.cur_run_dur += self.dt
+        elif self.cur_state == 'pause':
             lin = 0
             ang = self.ang_vel
             self.cur_pause_dur += self.dt
@@ -262,6 +264,7 @@ class Levy_locomotor(Locomotor):
         feed_motion = False
 
         return lin, ang, feed_motion
+
 
 Sakagiannis2022_conf = {
     'step_mu': 0.224,
@@ -277,7 +280,7 @@ Sakagiannis2022_conf = {
     'turner_output_noise': 0.0,
     'attenuation': 0.0,
     'crawler_phi_range': (0.5, 1.5),
-'run_dist': {'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
+    'run_dist': {'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
     'pause_dist': {'range': [0.4, 20.0], 'name': 'uniform'},
 }
 
@@ -379,8 +382,8 @@ class Sakagiannis2022(Locomotor):
 
         return lin, self.ang_vel, feed_motion
 
-    def step_TiPI(self, S, A_in=0,):
-        ang_vel, bend, lin=S
+    def step_TiPI(self, S, A_in=0, ):
+        ang_vel, bend, lin = S
         self.intermit()
         if self.cur_state == 'run':
             self.oscillate()
@@ -407,7 +410,7 @@ class Sakagiannis2022(Locomotor):
         #
         # feed_motion = False
 
-        return np.array([output,lin])
+        return np.array([output, lin])
 
 
 if __name__ == '__main__':

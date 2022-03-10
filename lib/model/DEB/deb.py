@@ -106,7 +106,8 @@ class DEB:
         self.steps_per_day = steps_per_day
         self.dt = 1 / steps_per_day
         if gut_params is None:
-            gut_params=null_dict('gut_params')
+            gut_params=null_dict('gut')
+            # gut_params=null_dict('gut_params')
 
         self.gut = Gut(deb=self, save_dict=save_dict, **gut_params) if use_gut else None
         self.set_steps_per_day(steps_per_day)
