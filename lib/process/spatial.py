@@ -357,14 +357,14 @@ def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
     print('Tortuosities computed')
 
 
-import numpy as np
 
-import numpy as np
+
+
 
 
 def rolling_window(a, w):
     # Get windows of size w from array a
-    return np.vstack(np.roll(a, -i) for i in range(w)).T[:-w + 1]
+    return np.vstack([np.roll(a, -i) for i in range(w)]).T[:-w + 1]
 
 
 def rolling_window_xy(xy, w):
@@ -394,8 +394,7 @@ def straightness_index(xy, w):
     return np.array(SI)
 
 
-def comp_straightness_index(s, e,config, dt, tor_durs=[2, 5, 10, 20], **kwargs):
-    aux_dir = config['aux_dir']
+def comp_straightness_index(s, dt, e=None, config=None, tor_durs=[2, 5, 10, 20], **kwargs):
     Nticks = len(s.index.unique('Step'))
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
@@ -414,10 +413,15 @@ def comp_straightness_index(s, e,config, dt, tor_durs=[2, 5, 10, 20], **kwargs):
             T[:, j] = straightness_index(xy, r)
             T_m[j] = np.nanmean(T[:, j])
             T_s[j] = np.nanstd(T[:, j])
-        e[par_m] = T_m
-        e[par_s] = T_s
         s[par] = T.flatten()
-        store_aux_dataset(s, pars=[par], type='exploration', file=aux_dir)
+
+        if e is not None :
+            e[par_m] = T_m
+            e[par_s] = T_s
+
+        if config is not None :
+            aux_dir = config['aux_dir']
+            store_aux_dataset(s, pars=[par], type='exploration', file=aux_dir)
 
 
 def comp_source_metrics(s, e, config, **kwargs):

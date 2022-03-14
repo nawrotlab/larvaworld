@@ -185,8 +185,12 @@ def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=
     return dic
 
 
-def fit_bout_distros(x0, xmin, xmax, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=True,
+def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=True,
                      dataset_id='dataset', bout='pause', combine=True, store=False, fit_by='pdf'):
+    if xmin is None :
+        xmin=np.nanmin(x0)
+    if xmax is None :
+        xmax=np.nanmax(x0)
     with suppress_stdout(True):
         warnings.filterwarnings('ignore')
         x = x0[x0 >= xmin]

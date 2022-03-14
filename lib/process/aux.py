@@ -10,6 +10,8 @@ from scipy.spatial import ConvexHull
 from scipy.fft import fft, fftfreq
 import statsmodels.api as sm
 
+from lib.aux.dictsNlists import flatten_list
+
 
 def parse_array_at_nans(a):
     a = np.insert(a, 0, np.nan)
@@ -297,7 +299,39 @@ def slow_freq(a, dt, tmax=60.0):
     return fr_median
 
 
+def slowNfast_freqs(s, e, c, point_idx=8, scaled=False):
+    from lib.conf.base.par import ParDict
+    dic = ParDict(mode='load').dict
+    l,fov = [dic[k]['d'] for k in ['l','fov']]
+
+    if point_idx is None:
+        xy_pair = ["x", "y"]
+    else:
+        import lib.aux.naming as nam
+        xy_pair = nam.xy(nam.midline(c.Npoints, type='point'))[point_idx]
+    fr0l, fr1l = "lin_short_fr", "lin_long_fr"
+    e[fr0l] = np.nan
+    e[fr1l] = np.nan
+    fr0a, fr1a = "ang_short_fr", "ang_long_fr"
+    e[fr0a] = np.nan
+    e[fr1a] = np.nan
+    for id in c.agent_ids:
+        # print(id)
+        df = s.xs(id, level="AgentID")
+        # l_mu=np.nanmedian(df[l])
+        xy = df[xy_pair].values
+        v0 = compute_velocity(xy, dt=c.dt)
+        if scaled:
+            v0 /= e[l].loc[id]
+        e[fr1l].loc[id] = slow_freq(v0, c.dt)
+        e[fr0l].loc[id] = fft_max(v0, c.dt, fr_range=(0.5, +np.inf))[2]
+
+        fov0 = df[fov].values
+        e[fr1a].loc[id] = slow_freq(fov0, c.dt)
+        e[fr0a].loc[id] = fft_max(fov0, c.dt, fr_range=(0.15, +np.inf))[2]
+
 def detect_pauses(a, dt, vel_thr=0.3, runs=None):
+    from lib.aux.dictsNlists import flatten_list
     """
     Annotates crawl-pauses in timeseries.
 
@@ -332,10 +366,12 @@ def detect_pauses(a, dt, vel_thr=0.3, runs=None):
     p1s = idx[np.where(np.diff(idx, append=[np.inf]) != 1)[0]]
     pauses = [[p0, p1] for p0, p1 in zip(p0s, p1s) if p0 != p1]
     pauses_durs = [(p1 - p0) * dt for p0, p1 in pauses]
-    return pauses, pauses_durs
+    pause_vel_mu = np.mean(flatten_list([a[p0:p1] for p0, p1 in pauses]))
+    return pauses, pauses_durs, pause_vel_mu
 
 
 def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0)):
+    from lib.aux.dictsNlists import flatten_list
     """
     Annotates strides-runs and pauses in timeseries.
 
@@ -410,6 +446,58 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0)):
             s00, s11 = s0, s1
         register(s00, s11, count)
 
-    pauses, pauses_durs = detect_pauses(a, dt, vel_thr=vel_thr, runs=runs)
+    stride_vel_mu = np.mean(flatten_list([a[s0:s1] for s0, s1 in strides]))
 
-    return fr, strides, i_min, i_max, runs, runs_durs, runs_counts, pauses, pauses_durs
+    pauses, pauses_durs, pause_vel_mu = detect_pauses(a, dt, vel_thr=vel_thr, runs=runs)
+
+    return fr, strides, i_min, i_max, runs, runs_durs, runs_counts, pauses, pauses_durs, stride_vel_mu, pause_vel_mu
+
+
+def lin_annotate(s, e, c, point=None, p='scaled_velocity', **kwargs):
+    import lib.aux.naming as nam
+    from lib.anal.fitting import fit_bout_distros
+    e["stride_dst_mean"] = np.nan
+    e["stride_dst_std"] = np.nan
+    e["stride_scaled_vel_mu"] = np.nan
+    e["pause_scaled_vel_mu"] = np.nan
+    e["crawl_freq"] = np.nan
+
+    all_runs_durs,all_runs_counts, all_pauses_durs =[], [], []
+    for id in c.agent_ids:
+        a = s[p].xs(id, level="AgentID")
+        fr, strides, i_min, i_max, runs, runs_durs, runs_counts, pauses, pauses_durs, stride_vel_mu, pause_vel_mu = detect_strides(
+            a, c.dt, **kwargs)
+        if point is None:
+            point = c.point
+        xy = s[nam.xy(point)].xs(id, level="AgentID").values
+        stride_dsts = [np.sqrt(np.sum((xy[s1] - xy[s0]) ** 2)) for s0, s1 in strides]
+
+        e["stride_dst_mean"].loc[id] = np.mean(stride_dsts)
+        e["stride_dst_std"].loc[id] = np.std(stride_dsts)
+        e["crawl_freq"].loc[id] = fr
+        e["stride_scaled_vel_mu"].loc[id] = stride_vel_mu
+        e["pause_scaled_vel_mu"].loc[id] = pause_vel_mu
+
+        all_runs_durs.append(runs_durs)
+        all_runs_counts.append(runs_counts)
+        all_pauses_durs.append(pauses_durs)
+
+    e["scaled_stride_dst_mean"] = e["stride_dst_mean"] / e["length"]
+    e["scaled_stride_dst_std"] = e["stride_dst_std"] / e["length"]
+
+    all_runs_durs=np.array(flatten_list(all_runs_durs))
+    all_runs_counts=np.array(flatten_list(all_runs_counts))
+    all_pauses_durs=np.array(flatten_list(all_pauses_durs))
+
+    c.bout_distros={}
+
+    dic = fit_bout_distros(all_runs_durs, discrete=False, print_fits=False,
+                           dataset_id=c.id, bout='run_dur', combine=False, store=False)
+    c.bout_distros["run_durs"]=dic["best"]["run_dur"]["best"]
+    dic = fit_bout_distros(all_runs_counts, discrete=True, print_fits=False,
+                           dataset_id=c.id, bout='run_count', combine=False, store=False)
+    c.bout_distros["run_counts"] = dic["best"]["run_count"]["best"]
+    dic = fit_bout_distros(all_pauses_durs, discrete=False, print_fits=False,
+                           dataset_id=c.id, bout='pause_dur', combine=False, store=False)
+    c.bout_distros["pause_durs"] = dic["best"]["pause_dur"]["best"]
+

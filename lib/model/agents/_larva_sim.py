@@ -53,8 +53,6 @@ class LarvaSim(BodySim, Larva):
         # t0.append(time.time())
         # print(np.array(np.diff(t0) * 1000000).astype(int))
 
-
-
     def feed(self, source, motion):
 
         if motion:

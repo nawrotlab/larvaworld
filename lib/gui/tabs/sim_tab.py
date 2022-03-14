@@ -66,7 +66,6 @@ class SimTab(GuiTab):
         s2 = PadTable('trials', buttons=['add', 'remove'], index='idx', col_widths=[3, 4, 4, 5, 8],
                               heading_dict={'start': 'start', 'stop': 'stop', 'quality': 'substrate.quality',
                                             'type': 'substrate.type'},dict_name='epoch')
-        # FIXME progress=TRUE does not work correctly
         sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run', 'tree', 'conf_tree'], progress=True,root_key='exp_conf',
                             sublists={'env_params': sl1, 'larva_groups': s1},text_kws=t_kws(10), width=28)
         sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Behavior/field :', buttons=[],single_line=True,
