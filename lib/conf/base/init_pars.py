@@ -640,7 +640,7 @@ def init_pars():
     d['preprocessing'] = {
         'rescale_by': {'max': 10.0, 'h': 'Whether to rescale spatial coordinates by a scalar in meters.'},
         'drop_collisions': {**bF, 'h': 'Whether to drop timepoints where larva collisions are detected.'},
-        'interpolate_nans': {**bF, 'h': 'Whether to interplolate missing values.'},
+        'interpolate_nans': {**bF, 'h': 'Whether to interpolate missing values.'},
         'filter_f': {'max': 10.0, 'disp': 'filter frequency',
                      'h': 'Whether to filter spatial coordinates by a grade-1 low-pass filter of the given cut-off frequency.'},
         'transposition': {'t': str, 'vs': ['', 'origin', 'arena', 'center'],

@@ -250,6 +250,48 @@ def build_Berni(dataset, build_conf, source_files, max_Nagents=None, min_duratio
     return step, end
 
 
+def build_Arguello(dataset, build_conf, source_files, max_Nagents=None, min_duration_in_sec=0.0,
+                  match_ids=True,min_end_time_in_sec=0, start_time_in_sec=0,**kwargs):
+    d = dataset
+    dt = d.dt
+    end = pd.DataFrame(columns=['AgentID', 'num_ticks', 'cum_dur'])
+    Nvalid = 0
+    dfs = []
+    ids = []
+    cols0 = build_conf['read_sequence']
+    cols1=cols0[1:]
+    fs = source_files
+    # fs = [os.path.join(source_dir, n) for n in os.listdir(source_dir) if n.startswith(dataset.id)]
+    for f in fs:
+        df = pd.read_csv(f, header=0, index_col=0, names=cols0)
+        df.reset_index(drop=True,inplace=True)
+        if len(df) >= int(min_duration_in_sec / dt) and len(df) >= int(min_end_time_in_sec / dt):
+            # df = df[df.index >= int(start_time_in_sec / dt)]
+            df = df[cols1]
+            df = df.apply(pd.to_numeric, errors='coerce')
+            Nvalid += 1
+            dfs.append(df)
+            ids.append(f'Larva_{Nvalid}')
+            if max_Nagents is not None and Nvalid >= max_Nagents:
+                break
+        if len(dfs) == 0:
+            return None, None
+    Nticks=np.max([len(df) for df in dfs])
+    df0 = pd.DataFrame(np.nan, index=np.arange(Nticks).tolist(), columns=cols1)
+    df0.index.name = 'Step'
+
+    for i, (df, id) in enumerate(zip(dfs, ids)):
+        ddf = df0.copy(deep=True)
+        # ddf = ddf.interpolate() # DEALING WITH MISSING DATA? DROP OR INTERPOLATE? DEFAULT IS LINEAR.
+        end = end.append({'AgentID': id,
+                          'num_ticks': len(df),
+                          'cum_dur': len(df) * dt}, ignore_index=True)
+        ddf.update(df)
+        ddf = ddf.assign(AgentID=id).set_index('AgentID', append=True)
+        step = ddf if i == 0 else step.append(ddf)
+    end.set_index('AgentID', inplace=True)
+    return step, end
+
 def read_Schleyer_metadata(dir):
     meta_filename = os.path.join(dir, 'vidAndLogs/metadata.txt')
     dictionary = {}

@@ -113,7 +113,7 @@ def interpolate_nan_values(s, config, pars=None, **kwargs):
     if pars is None:
         N = config['Npoints'],
         Nc = config['Ncontour'],
-        points = nam.midline(N, type='point') + ['centroid', ''] + nam.contour(Nc)
+        points = nam.midline(N[0], type='point') + ['centroid', ''] + nam.contour(Nc[0]) # changed from N and Nc to N[0] and Nc[0] as comma above was turning them into tuples, which the naming function does not accept.
         pars = nam.xy(points, flat=True)
     pars = [p for p in pars if p in s.columns]
     for p in pars:
