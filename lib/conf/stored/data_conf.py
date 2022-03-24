@@ -81,5 +81,29 @@ importformats = [
         # 'parameterization': parconf(bend=None, point_idx=0),
         'enrichment': enr_dict(pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
                                def_kws={'ang': {'b': None}, 'sp': {'point_idx': 0}}),
-    }
+    },
+
+        {
+        'id': 'Arguello lab',
+        'path': 'ArguelloGroup',
+        'tracker': {
+            'resolution': {'fr': 10,
+                           'Npoints': 5,
+                           'Ncontour': 0},
+
+            'filesystem': {
+                'read_sequence': ['Date', 'head_x', 'head_y', 'spinepoint_1_x', 'spinepoint_1_y', 'spinepoint_2_x', 'spinepoint_2_y', 'spinepoint_2_x','spinepoint_2_y', 'spinepoint_3_x', 'spinepoint_3_y', 'tail_x', 'tail_y', 'centroid_x', 'centroid_y'],
+                'read_metadata': False,
+                # 'detect': {
+                'folder': {'pref': None, 'suf': None},
+                'file': {'pref': None, 'suf': None, 'sep': '_-_'}
+                # }
+
+            },
+            'arena': arena(0.17, 0.17)
+        },
+        # 'parameterization': parconf(bend=None, point_idx=0),
+        'enrichment': enr_dict(pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
+                               def_kws={'ang': {'b': None}, 'sp': {'point_idx': 0}}),
+        }
 ]

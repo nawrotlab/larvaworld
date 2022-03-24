@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 import lib.aux.dictsNlists
-from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni
+from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni, build_Arguello
 from lib.conf.stored.conf import *
 from lib.stor.larva_dataset import LarvaDataset
 
@@ -36,6 +36,9 @@ def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None,
         step, end = build_Berni(d, build_conf, source_files=source_files, **kwargs)
     elif datagroup_id in ['Schleyer lab']:
         step, end = build_Schleyer(d, build_conf, raw_folders=source_dir, **kwargs)
+    elif datagroup_id in [ 'Arguello lab']:
+        step, end = build_Arguello(d, build_conf, source_files=source_files, **kwargs)
+
     else:
         raise ValueError(f'Configuration for {datagroup_id} is not supported for building new datasets')
     if step is not None:

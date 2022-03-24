@@ -346,6 +346,13 @@ def import_window(datagroup_id, raw_dic):
                         elif datagroup_id in ['Schleyer lab']:
                             target = target.replace(source_id, target_id)
                             dd = build_dataset(id=target_id, target_dir=target, source_dir=[source], **kws)
+                        elif datagroup_id in ['Arguello lab']:
+                            target = f'{target}/{target_id}'
+                            source_files = [os.path.join(source, n) for n in os.listdir(source) if
+                                            n.startswith(source_id)]
+                            dd = build_dataset(id=target_id, target_dir=target, source_files=source_files, **kws)
+
+
                         if dd is not None:
                             proc_dir[target_id] = dd
                         else:
@@ -355,7 +362,7 @@ def import_window(datagroup_id, raw_dic):
                     print(f'------ Building a single merged dataset ------')
                     target_id0 = v[f'new_{raw_ids[0]}']
 
-                    if datagroup_id in ['Berni lab']:
+                    if datagroup_id in ['Berni lab', 'Arguello lab']:
                         target0 = f'{targets[0]}/{target_id0}'
                         source_files = flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
                                                       n.startswith(source_id)] for source_id, source in

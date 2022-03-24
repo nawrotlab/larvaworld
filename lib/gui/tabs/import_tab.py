@@ -45,7 +45,7 @@ class ImportTab(GuiTab):
                                'metric_definition': {'header_width': 60,'text_kws': t_kws(9)}}
                      )
         dd1 = gui_col([sl1, pd1], x_frac=x, as_pane=True, pad=(0,0))
-        dd2 = gui_row([dl1, dl2], x_frac=1 - x, y_frac=y, x_fracs=[x1, 1 - x1 - x], as_pane=True)
+        dd2 = gui_row([dl1, dl2], x_frac=1 - x - x1, y_frac=y, x_fracs=[x1, 1 - x1 - x], as_pane=True, pad = None)
         dd3 = pd2.get_layout()
         dd5 = sg.Col([dd2, dd3[0]])
         g1 = ButtonGraphList(self.name, tab=self, fig_dict={})

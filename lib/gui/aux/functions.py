@@ -8,7 +8,7 @@ from PySimpleGUI import Element
 
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'
-window_size = (2400, 1200)
+window_size = (2400, 1200)  #(1512,982)
 # window_size = sg.Window.get_screen_size() #(2400, 1200)
 
 
