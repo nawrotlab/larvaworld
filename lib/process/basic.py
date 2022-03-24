@@ -232,7 +232,6 @@ def process(processing, s, e, config, mode='minimal', traj_colors=True, show_out
             else :
                 comp_final_anemotaxis(**c)
         if processing['dispersion'] :
-
             comp_dispersion(**c)
         if processing['tortuosity'] :
             comp_tortuosity(**c)

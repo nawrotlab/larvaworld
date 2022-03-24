@@ -24,7 +24,6 @@ class LarvaSim(BodySim, Larva):
         self.brain = self.build_brain(larva_pars.brain)
         if self.deb is not None:
             self.deb.set_intermitter(self.brain.locomotor.intermitter)
-
         self.reset_feeder()
         self.radius = self.sim_length / 2
 

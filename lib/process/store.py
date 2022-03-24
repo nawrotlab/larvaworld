@@ -3,6 +3,19 @@ import pandas as pd
 
 import lib.aux.naming as nam
 
+def get_dsp(s, p):
+    dsp = s[p]
+    steps = s.index.unique('Step')
+    Nticks = len(steps)
+    dsp_ar = np.zeros([Nticks, 3]) * np.nan
+    dsp_m = dsp.groupby(level='Step').quantile(q=0.5)
+    dsp_u = dsp.groupby(level='Step').quantile(q=0.75)
+    dsp_b = dsp.groupby(level='Step').quantile(q=0.25)
+    dsp_ar[:, 0] = dsp_m
+    dsp_ar[:, 1] = dsp_u
+    dsp_ar[:, 2] = dsp_b
+    return pd.DataFrame(dsp_ar, index=steps, columns=['median', 'upper', 'lower'])
+
 
 def store_aux_dataset(s, pars, type, file):
     store = pd.HDFStore(file)
@@ -14,17 +27,7 @@ def store_aux_dataset(s, pars, type, file):
             store[f'{type}.{p}'] = d
     elif type == 'dispersion':
         for p in ps:
-            dsp = s[p]
-            steps = s.index.unique('Step')
-            Nticks = len(steps)
-            dsp_ar = np.zeros([Nticks, 3]) * np.nan
-            dsp_m = dsp.groupby(level='Step').quantile(q=0.5)
-            dsp_u = dsp.groupby(level='Step').quantile(q=0.75)
-            dsp_b = dsp.groupby(level='Step').quantile(q=0.25)
-            dsp_ar[:, 0] = dsp_m
-            dsp_ar[:, 1] = dsp_u
-            dsp_ar[:, 2] = dsp_b
-            d = pd.DataFrame(dsp_ar, index=steps, columns=['median', 'upper', 'lower'])
+            d=get_dsp(s, p)
             store[f'{type}.{p}'] = d
     elif type == 'stride':
         Npoints = 32

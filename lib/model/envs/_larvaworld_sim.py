@@ -75,7 +75,6 @@ class LarvaWorldSim(LarvaWorld):
 
     def create_larvae(self, larva_groups, parameter_dict={}):
         for gID, gConf in larva_groups.items():
-
             mod, sample = gConf['model'], gConf['sample']
             if type(sample) == str:
                 from lib.conf.stored.conf import loadConf

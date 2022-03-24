@@ -742,6 +742,27 @@ def boxplot_PI(sort_labels=False, xlabel='Trials', **kwargs):
     P.adjust((0.2, 0.9), (0.15, 0.9), 0.05, 0.005)
     return P.get()
 
+def PIboxplot(df, exp, path, ylabel, ylim=None, show=False) :
+    f=f'{path}/boxplots/{exp}.pdf'
+    boxplot = df.boxplot(figsize=(10, 7), grid=False,
+                          color=dict(boxes='k', whiskers='k', medians='b', caps='k'),
+                          boxprops=dict(linestyle='-', linewidth=3),
+                          # flierprops=dict(linestyle='-', linewidth=1.5),
+                          medianprops=dict(linestyle='-', linewidth=3),
+                          whiskerprops=dict(linestyle='-', linewidth=3),
+                          capprops=dict(linestyle='-', linewidth=3)
+                          )
+    boxplot.set_title(exp, fontsize=35)
+    boxplot.set_xlabel('# training trials', fontsize=25)
+    boxplot.set_ylabel(ylabel, fontsize=25)
+    boxplot.set_ylim(ylim)
+    plt.tick_params(labelsize=20)
+    plt.tight_layout()
+    plt.savefig(f, dpi=300)
+    if show :
+        plt.show()
+    plt.close()
+
 
 def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_ids=None, **kwargs):
     P = Plot(name=par_shorts[0], **kwargs)
@@ -1527,7 +1548,7 @@ def plot_bend_pauses(dataset, save_to=None):
 
 def plot_marked_turns(dataset, agent_ids=None, agent_idx=[0], turn_epochs=['Rturn', 'Lturn'],
                       vertical_boundaries=False, min_turn_angle=0, slices=[], subfolder='individuals',
-                      save_to=None, return_fig=False, show=False):
+                      save_to=None, return_fig=False, show=False, sizes=['short', 'long']):
     Ndatasets, colors, save_to, labels = plot_config(datasets=[dataset], labels=[dataset.id], save_to=save_to,
                                                      subfolder=subfolder)
     # We plot the complete or a slice of the timeseries of scal centroid velocity. The grey areas are stridechains
@@ -1545,13 +1566,13 @@ def plot_marked_turns(dataset, agent_ids=None, agent_idx=[0], turn_epochs=['Rtur
     filepath_slices = []
     for i, slice in enumerate(slices):
         filepath_slices.append(f'{xx}_slice_{i}.{suf}')
-    generic_filepaths = [filepath_full_long, filepath_full] + filepath_slices
+    generic_filepaths = [filepath_full_long] + filepath_slices
 
     figsize_short = (20, 5)
     figsize_long = (15 * 6, 5)
-    figsizes = [figsize_long, figsize_short] + [figsize_short] * len(generic_filepaths)
+    figsizes = [figsize_long] + [figsize_short] * len(generic_filepaths)
 
-    xlims = [None, None] + slices
+    xlims = [(0,d.duration)] + slices
 
     # ymax=1.0
 
@@ -1564,8 +1585,6 @@ def plot_marked_turns(dataset, agent_ids=None, agent_idx=[0], turn_epochs=['Rtur
         filepaths = [f'{agent_id}_{f}' for f in generic_filepaths]
 
         s = d.step_data.xs(agent_id, level='AgentID', drop_level=True)
-        # Nticks=len(sigma.index)
-        # dur=Nticks/d.fr
         s.set_index(s.index.values / d.fr, inplace=True)
 
         b0 = s[b]
@@ -1583,15 +1602,22 @@ def plot_marked_turns(dataset, agent_ids=None, agent_idx=[0], turn_epochs=['Rtur
                 epoch_handles = []
                 temp = None
                 for i, (chunk, color) in enumerate(zip(turn_epochs, colors)):
-                    start_flag = f'{chunk}_start'
-                    stop_flag = f'{chunk}_stop'
-                    stop_indexes = s.index[s[stop_flag] == True]
-                    start_indexes = s.index[s[start_flag] == True]
-                    if min_turn_angle > 0:
-                        angle_flag = nam.chunk_track(chunk, nam.unwrap(nam.orient('front')))
-                        angles = np.abs(s[angle_flag].dropna().values)
-                        stop_indexes = stop_indexes[angles > min_turn_angle]
-                        start_indexes = start_indexes[angles > min_turn_angle]
+                    try :
+                        idx01 = d.load_chunk_dicts()[agent_id][chunk]/ d.fr
+                        if min_turn_angle > 0:
+                            angles = np.abs([np.trapz(hov0[s0:s1 + 1], dx=d.dt) for s0, s1 in idx01])
+                            idx01 = idx01[angles >= min_turn_angle]
+                        start_indexes, stop_indexes = idx01[:, 0], idx01[:, 1]
+                    except :
+                        start_flag = f'{chunk}_start'
+                        stop_flag = f'{chunk}_stop'
+                        stop_indexes = s.index[s[stop_flag] == True]
+                        start_indexes = s.index[s[start_flag] == True]
+                        if min_turn_angle > 0:
+                            angle_flag = nam.chunk_track(chunk, nam.unwrap(nam.orient('front')))
+                            angles = np.abs(s[angle_flag].dropna().values)
+                            stop_indexes = stop_indexes[angles > min_turn_angle]
+                            start_indexes = start_indexes[angles > min_turn_angle]
 
                     for start, stop in zip(start_indexes, stop_indexes):
                         temp = plt.axvspan(start, stop, color=color, alpha=1.0)
@@ -1606,6 +1632,7 @@ def plot_marked_turns(dataset, agent_ids=None, agent_idx=[0], turn_epochs=['Rtur
             ax1.set_xlabel(r'time $(sec)$')
             ax1.set_ylim([-100, 100])
             ax1.set_xlim(xlim)
+            # print(xlim)
             # plt.legend(loc= 'upper left')
             ax2 = bv0.plot(secondary_y=True, label=r'$\dot{\theta}_{b}$', lw=2, color='green')
             ax2.plot(hov0, label=r'$\dot{\theta}_{or}$', lw=3, color='black')
@@ -1619,9 +1646,6 @@ def plot_marked_turns(dataset, agent_ids=None, agent_idx=[0], turn_epochs=['Rtur
                 for h, l in zip(*ax.get_legend_handles_labels()):
                     handles.append(h)
                     labels.append(l)
-
-            # plt.legend(handles, labels, loc='upper left')
-
             par_legend = plt.legend(handles, labels, loc=2)
             plt.legend(epoch_handles, turn_epochs, loc=1)
             plt.gca().add_artist(par_legend)
@@ -2899,7 +2923,6 @@ def plot_foraging(**kwargs):
     P.adjust((0.1, 0.95), (0.15, 0.92), 0.2, 0.005)
     P.get()
 
-
 def annotated_strideplot(a, dt, ax=None, ylim=None, xlim=None, show_extrema=True, show_strides=True,
                          moving_average_interval=None, **kwargs):
     """
@@ -2941,7 +2964,9 @@ def annotated_strideplot(a, dt, ax=None, ylim=None, xlim=None, show_extrema=True
     if xlim is None:
         xlim = (0, trange[-1])
 
-    fr, strides, i_min, i_max, runs, runs_durs, runs_counts, pauses, pauses_durs = detect_strides(a=a, dt=dt, **kwargs)
+    fr, i_min, i_max, strides,stride_slices, stride_idx, stride_dsts, runs,run_slices, run_idx, runs1, run_durs, run_dsts, run_counts = detect_strides(
+        a=a, dt=dt, **kwargs)
+    pauses,pause_slices, pause_idx, pauses1, pause_durs = detect_pauses(a, dt, runs=runs)
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     ax.set_xlabel("time (sec)")
@@ -2970,6 +2995,61 @@ def annotated_strideplot(a, dt, ax=None, ylim=None, xlim=None, show_extrema=True
     labels = ['runs', 'pauses']
     handles = [patches.Patch(color=col, label=n) for n, col in zip(labels, chunk_cols)]
     ax.legend(loc="upper right", handles=handles, labels=labels)
+
+
+def stride_cycle_solo(strides, a, Nbins=64, quantiles=True, color='red', ax=None):
+    if ax is None :
+        fig, ax = plt.subplots(1, 1, figsize=(20, 10))
+    x = np.linspace(0, 2 * np.pi, Nbins)
+    aa = np.zeros([len(strides), Nbins])
+    for ii, (s0, s1) in enumerate(strides):
+        aa[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a[s0:s1])
+    if quantiles:
+        plot_quantiles(df=aa, from_np=True, axis=ax, color_shading=color, x=x)
+    else:
+        ax.plot(x, np.nanquantile(aa, q=0.5, axis=0), color, linewidth=2, alpha=1.0)
+    ax.set_xlabel('$\phi_{stride}$')
+    ax.set_xlim([0, 2 * np.pi])
+    ax.set_xticks(np.linspace(0, 2 * np.pi, 5))
+    ax.set_xticklabels([r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
+    #ax.set_ylabel(p)
+    ax.axhline(0.0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
+    for xx in [np.pi / 2, np.pi, 3 / 2 * np.pi]:
+        ax.axvline(xx, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
+
+def stride_cycle(s, dt, e=None, Nbins=64, color='red') :
+    from lib.conf.base.par import ParDict
+    dic = ParDict(mode='load').dict
+    sv, fov, pau_fov_mu = [dic[k]['d'] for k in ['sv', 'fov', 'pau_fov_mu']]
+    ids=s.index.unique('AgentID').values
+    x = np.linspace(0, 2 * np.pi, Nbins)
+    ys=np.zeros([len(ids), Nbins]) * np.nan
+    fig, ax = plt.subplots(1, 1, figsize=(20, 10))
+    for jj, id in enumerate(ids):
+        a_sv = s[sv].xs(id, level="AgentID").values
+        a_fov = s[fov].xs(id, level="AgentID").abs().values
+        fr, i_min, i_max, strides,stride_slices, stride_idx, stride_dsts, runs,run_slices, run_idx, runs1, run_durs, run_dsts, run_counts = detect_strides(a_sv, dt)
+        aa = np.zeros([len(strides), Nbins])
+        for ii, (s0, s1) in enumerate(strides):
+            aa[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_fov[s0:s1])
+        ys[jj, :] = np.nanquantile(aa, q=0.5, axis=0)
+    plot_quantiles(df=ys, from_np=True, axis=ax, color_shading=color, x=x)
+    ax.set_xlabel('$\phi_{stride}$')
+    ax.set_xlim([0, 2 * np.pi])
+    ax.set_ylim([0, None])
+    ax.set_xticks(np.linspace(0, 2 * np.pi, 5))
+    ax.set_xticklabels([r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
+    ax.set_ylabel(fov)
+    for xx in [np.pi / 2, np.pi, 3 / 2 * np.pi]:
+        ax.axvline(xx, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
+    if e is not None :
+        pau_fov_mu_mu=e[pau_fov_mu].mean()
+        pau_fov_mu_std = e[pau_fov_mu].std()
+        ax.axhline(pau_fov_mu_mu, color='green', alpha=1.0, linestyle='dashed', linewidth=1)
+        ax.axhline(pau_fov_mu_mu+pau_fov_mu_std, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
+        ax.axhline(pau_fov_mu_mu-pau_fov_mu_std, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
+        #ax.fill_between(xx, pau_fov_mu_mu+pau_fov_mu_std, pau_fov_mu_mu-pau_fov_mu_std, color='green', alpha=.2)
+
 
 
 graph_dict = {

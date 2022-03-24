@@ -1,6 +1,7 @@
 """ Run a simulation and save the parameters and data to files."""
 import copy
 import datetime
+import random
 import time
 import pickle
 import os
@@ -15,8 +16,10 @@ from lib.sim.single.analysis import targeted_analysis
 
 class SingleRun:
     def __init__(self, sim_params, env_params, larva_groups, enrichment, collections, experiment,
-                 trials={}, save_to=None, seed=None, analysis=False, **kwargs):
+                 trials={}, save_to=None, seed=None, analysis=False, show_output=False, **kwargs):
         np.random.seed(seed)
+        random.seed(seed)
+        self.show_output = show_output
         self.id = sim_params['sim_ID']
         self.sim_params = sim_params
         self.experiment = experiment
@@ -34,9 +37,6 @@ class SingleRun:
         self.param_dict = locals()
         self.start = time.time()
         self.source_xy = get_source_xy(env_params['food_params'])
-
-        # self.d = LarvaDataset(dir=dir_path, id=self.id, fr=1 / dt,
-        #                       env_params=env_params, larva_groups=larva_groups, load_data=False)
         output = set_output(collections=collections, Nsegs=list(larva_groups.values())[0]['model']['body']['Nsegs'])
         self.env = LarvaWorldSim(id=self.id, dt=dt, Box2D=sim_params['Box2D'], output=output,
                                  env_params=env_params, larva_groups=larva_groups, trials=trials,
@@ -45,20 +45,19 @@ class SingleRun:
                                  **kwargs)
 
     def run(self):
-        print()
-        print(f'---- Simulation {self.id} ----')
+        if self.show_output :
+            print()
+            print(f'---- Simulation {self.id} ----')
         # Run the simulation
         completed = self.env.run()
-        print()
+        #print()
         if not completed:
-            # self.d.delete()
             print('    Simulation aborted!')
             self.datasets = None
         else:
             self.datasets = self.retrieve()
             end = time.time()
             dur = end - self.start
-
             if self.store_data:
                 self.param_dict['date'] = datetime.datetime.now()
                 self.param_dict['duration'] = np.round(dur, 2)
@@ -70,13 +69,13 @@ class SingleRun:
             #     fig_dict, results = sim_analysis(ds, env.experiment)
             # else :
             #     fig_dict, results = None, None
-            print(f'    Simulation {self.id} completed in {np.round(dur).astype(int)} seconds!')
+            if self.show_output :
+                print(f'    Simulation {self.id} completed in {np.round(dur).astype(int)} seconds!')
         self.env.close()
         return self.datasets
 
     def terminate(self):
         self.env.close()
-        # self.d.delete()
 
     @property
     def configuration_text(self):
@@ -109,9 +108,12 @@ class SingleRun:
 
         ds = split_dataset(step, end, food, env_params=self.env.env_pars, larva_groups=self.env.larva_groups,
                            source_xy=self.source_xy,
-                           fr=1 / self.env.dt, dir=self.dir_path, id=self.id, plot_dir=self.plot_dir, show_output=False)
+                           fr=1 / self.env.dt, dir=self.dir_path, id=self.id, plot_dir=self.plot_dir, show_output=self.show_output)
         for d in ds:
-            d.enrich(**self.enrichment, is_last=False)
+            if self.show_output :
+                print()
+                print(f'--- Enriching dataset {self.id} with derived parameters ---')
+            d.enrich(**self.enrichment, is_last=False, show_output=self.show_output)
             d.get_larva_dicts(env)
             d.get_larva_tables(env)
         return ds
@@ -151,12 +153,13 @@ class SingleRun:
         elif 'PI' in exp:
             PIs = {}
             PI2s = {}
-            print()
+            #print()
             for d in self.datasets :
                 PIs[d.id]=d.config.PI["PI"]
                 PI2s[d.id]=d.config.PI2
-                print(f'Group {d.id} -> PI : {PIs[d.id]}')
-                print(f'Group {d.id} -> PI2 : {PI2s[d.id]}')
+                if self.show_output :
+                    print(f'Group {d.id} -> PI : {PIs[d.id]}')
+                    print(f'Group {d.id} -> PI2 : {PI2s[d.id]}')
             return None, {'PIs': PIs, 'PI2s': PI2s}
         # elif self.experiment in ['growth', 'RvsS'] :
         #     anal_params = analysis_dict['DEB']

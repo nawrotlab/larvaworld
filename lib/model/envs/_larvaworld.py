@@ -673,16 +673,19 @@ class LarvaWorld:
 
 
 def generate_larvae(N, sample_dict, base_model, RefPars=None):
+
     from lib.aux.dictsNlists import load_dict, flatten_dict
     if RefPars is None:
         RefPars = load_dict(paths.path('ParRef'), use_pickle=False)
     if len(sample_dict) > 0:
+        # print(sample_dict)
         all_pars = []
         modF = flatten_dict(base_model)
         for i in range(N):
             lF = copy.deepcopy(modF)
             for p, vs in sample_dict.items():
-                lF.update({RefPars[p]: vs[i]})
+                p=RefPars[p] if p in RefPars.keys() else p
+                lF.update({p: vs[i]})
             dic=AttrDict.from_nested_dicts(unflatten(lF))
             all_pars.append(dic)
     else:

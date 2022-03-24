@@ -28,11 +28,12 @@ class LarvaDataset:
                 print('Data not found. Load them manually.')
 
     def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0,spatial_def=None,  env_params={}, larva_groups={},
-                      source_xy={}):
-
+                      source_xy={}, **kwargs):
+        # try:
         if os.path.exists(self.dir_dict.conf):
             config = dNl.load_dict(self.dir_dict.conf, use_pickle=False)
 
+        # except:
         else:
             if spatial_def is None:
                 from lib.conf.stored.conf import loadConf
@@ -135,27 +136,48 @@ class LarvaDataset:
     def read(self, key='end', file='data_h5'):
         return pd.read_hdf(self.dir_dict[file], key)
 
-    def load(self, step=True, end=True, food=False):
+    def load(self, step=True, end=True, food=False, contour=True):
         store = pd.HDFStore(self.dir_dict.data_h5)
         if step:
             self.step_data = store['step']
+            if contour :
+                try :
+                    contour_ps = dNl.flatten_list(self.contour_xy)
+                    temp = pd.HDFStore(self.dir_dict.contour_h5)
+                    self.step_data[contour_ps]=temp['contour']
+                    temp.close()
+                except:
+                    pass
             self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
             self.agent_ids = self.step_data.index.unique('AgentID').values
             self.num_ticks = self.step_data.index.unique('Step').size
         if end:
-            self.endpoint_data = store['end']
-            self.endpoint_data.sort_index(inplace=True)
+            try :
+                endpoint = pd.HDFStore(self.dir_dict.endpoint_h5)
+                self.endpoint_data = endpoint['end']
+                self.endpoint_data.sort_index(inplace=True)
+                endpoint.close()
+            except:
+                self.endpoint_data = store['end']
         if food:
             self.food_endpoint_data = store['food']
             self.food_endpoint_data.sort_index(inplace=True)
         store.close()
 
-    def save(self, step=True, end=True, food=False, add_reference=False):
+    def save(self, step=True, end=True, food=False,contour=True, add_reference=False):
         store = pd.HDFStore(self.dir_dict.data_h5)
         if step:
-            store['step'] = self.step_data
+            contour_ps = dNl.flatten_list(self.contour_xy)
+            if contour :
+                temp = pd.HDFStore(self.dir_dict.contour_h5)
+                temp['contour'] = self.step_data[contour_ps]
+                temp.close()
+
+            store['step'] = self.step_data.drop(contour_ps, axis=1, errors='ignore')
         if end:
-            store['end'] = self.endpoint_data
+            endpoint=pd.HDFStore(self.dir_dict.endpoint_h5)
+            endpoint['end'] = self.endpoint_data
+            endpoint.close()
         if food:
             store['food'] = self.food_endpoint_data
         self.save_config(add_reference=add_reference)
@@ -530,12 +552,17 @@ class LarvaDataset:
             'nengo': os.path.join(self.data_dir, 'nengo_probes'),
             'single_tracks': os.path.join(self.data_dir, 'single_tracks'),
             'bout_dicts': os.path.join(self.data_dir, 'bout_dicts'),
+            'group_bout_dicts': os.path.join(self.data_dir, 'group_bout_dicts'),
+            'chunk_dicts': os.path.join(self.data_dir, 'chunk_dicts'),
             'tables_h5': os.path.join(self.data_dir, 'tables.h5'),
             'sim': os.path.join(self.data_dir, 'sim_conf.txt'),
             'ExpFitter': os.path.join(self.data_dir, 'ExpFitter.txt'),
             'fit': os.path.join(self.data_dir, 'dataset_fit.csv'),
             'conf': os.path.join(self.data_dir, 'dataset_conf.csv'),
             'data_h5': os.path.join(self.data_dir, 'data.h5'),
+            'endpoint_h5': os.path.join(self.data_dir, 'endpoint.h5'),
+            'derived_h5': os.path.join(self.data_dir, 'derived.h5'),
+            'contour_h5': os.path.join(self.data_dir, 'contour.h5'),
             'aux_h5': os.path.join(self.data_dir, 'aux.h5'),
         }
         self.dir_dict= dNl.AttrDict.from_nested_dicts(dir_dict)
@@ -557,18 +584,16 @@ class LarvaDataset:
 
     def enrich(self, metric_definition, preprocessing={}, processing={}, annotation={},
                to_drop={}, recompute=False, mode='minimal',show_output=True, is_last=True, **kwargs):
-        import time
-        # t0=[]
-        # t0.append(time.time())
-        self.config.update(**metric_definition['angular'])
-        self.config.update(**metric_definition['spatial'])
+        md = metric_definition
+        self.config.update(**md['angular'])
+        self.config.update(**md['spatial'])
         self.define_linear_metrics()
         from lib.process.basic import preprocess, process
         from lib.process.bouts import annotate
         print()
         print(f'--- Enriching dataset {self.id} with derived parameters ---')
         warnings.filterwarnings('ignore')
-        md=metric_definition
+
         c = {
             's': self.step_data,
             'e': self.endpoint_data,
@@ -579,16 +604,10 @@ class LarvaDataset:
             'is_last': False,
             # 'metric_definition' : metric_definition
         }
-        # t0.append(time.time())
         preprocess(**preprocessing, **c, **kwargs)
-        # t0.append(time.time())
         process(processing=processing, **c, **kwargs, **md['dispersion'], **md['tortuosity'])
-        # t0.append(time.time())
         annotate(**annotation, **c, **kwargs, **md['stride'], **md['turn'], **md['pause'])
-        # t0.append(time.time())
         self.drop_pars(**to_drop, **c)
-        # t0.append(time.time())
-        # print(np.diff(np.array(t0)))
         if is_last:
             self.save()
         return self
@@ -640,3 +659,16 @@ class LarvaDataset:
         self.config.id = id
         if save:
             self.save_config()
+
+    def load_group_bout_dict(self, id=None):
+        if id is None :
+            id=self.id
+        path=os.path.join(self.dir_dict['group_bout_dicts'], f'{id}.txt')
+        dic=dNl.load_dict(path,use_pickle=True)
+        return dic
+
+    def load_chunk_dicts(self, id=None):
+        if id is None :
+            id=self.id
+        path = os.path.join(self.dir_dict.chunk_dicts, f'{id}.txt')
+        return dNl.load_dict(path,use_pickle=True)

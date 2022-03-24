@@ -38,7 +38,7 @@ def flatten_dict(d, parent_key='', sep='.'):
                 items.append((new_key, 'empty_dict'))
         else:
             items.append((new_key, v))
-    return dict(items)
+    return AttrDict(items)
 
 
 def tree_dict(d, parent_key='', sep='.'):

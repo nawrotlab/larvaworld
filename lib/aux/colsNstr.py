@@ -47,6 +47,8 @@ def N_colors(N, as_rgb=False):
         cs = ['red', 'blue', 'darkred', 'darkblue']
     elif N == 5:
         cs = ['green', 'red', 'blue', 'darkred', 'darkblue']
+    elif N == 10:
+        cs = ['lightgreen','green', 'red',  'darkred','lightblue','blue', 'darkblue', 'magenta', 'cyan', 'orange', 'purple']
     else:
         colormap = cm.get_cmap('brg')
         cs = [colormap(i) for i in np.linspace(0, 1, N)]

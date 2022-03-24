@@ -69,7 +69,7 @@ def comp_linear(s, e, dt, Npoints, point, mode='minimal'):
         A = np.zeros([Nticks, Nids]) * np.nan
 
         for i, data in enumerate(all_d):
-            v, d = compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=dt,return_dst=True)
+            v, d = compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=dt, return_dst=True)
             a = np.diff(v) / dt
             cum_d = np.nancumsum(d)
             D[1:, i] = d
@@ -217,10 +217,10 @@ def comp_centroid(s, Ncontour, recompute=False):
 
 
 def store_spatial(s, e, point):
-    dst=nam.dst('')
-    sdst=nam.scal(dst)
-    cdst=nam.cum(dst)
-    csdst=nam.cum(sdst)
+    dst = nam.dst('')
+    sdst = nam.scal(dst)
+    cdst = nam.cum(dst)
+    csdst = nam.cum(sdst)
     dic = {
         'x': nam.xy(point)[0],
         'y': nam.xy(point)[1],
@@ -235,15 +235,16 @@ def store_spatial(s, e, point):
         except:
             pass
     e[cdst] = s[dst].dropna().groupby('AgentID').sum()
-    for i in ['x', 'y'] :
+    for i in ['x', 'y']:
         e[nam.final(i)] = s[i].dropna().groupby('AgentID').last()
         e[nam.initial(i)] = s[i].dropna().groupby('AgentID').first()
     e[nam.mean(nam.vel(''))] = e[cdst] / e[nam.cum('dur')]
 
     scale_to_length(s, e, pars=[dst, nam.vel(''), nam.acc('')])
 
-    e[csdst] = s[sdst].dropna().groupby('AgentID').sum()
-    e[nam.mean(nam.scal(nam.vel('')))] = e[csdst] / e[nam.cum('dur')]
+    if sdst in s.columns :
+        e[csdst] = s[sdst].dropna().groupby('AgentID').sum()
+        e[nam.mean(nam.scal(nam.vel('')))] = e[csdst] / e[nam.cum('dur')]
 
 
 def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recompute=False, **kwargs):
@@ -256,18 +257,15 @@ def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recom
     return s, e
 
 
-def comp_dispersion(s, e, config, dt, point, recompute=False, dsp_starts=[0], dsp_stops=[40], **kwargs):
-    if dsp_starts is None or dsp_stops is None :
+def comp_dispersion(s, e, dt, point, config=None, recompute=False, dsp_starts=[0], dsp_stops=[40], **kwargs):
+    if dsp_starts is None or dsp_stops is None:
         return
-    aux_dir = config['aux_dir']
+
     ids = s.index.unique('AgentID').values
     ps = []
     pps = []
     for s0, s1 in itertools.product(dsp_starts, dsp_stops):
-        if s0 == 0 and s1 == 40:
-            p = f'dispersion'
-        else:
-            p = f'dispersion_{s0}_{s1}'
+        p = f'dispersion_{s0}_{s1}'
         ps.append(p)
 
         t0 = int(s0 / dt)
@@ -277,9 +275,10 @@ def comp_dispersion(s, e, config, dt, point, recompute=False, dsp_starts=[0], ds
         pps += [fp, mp, mup]
 
         if set([mp]).issubset(e.columns.values) and not recompute:
-            print(f'Dispersion in {s0}-{s1} sec is already detected. If you want to recompute it, set recompute_dispersion to True')
+            print(
+                f'Dispersion in {s0}-{s1} sec is already detected. If you want to recompute it, set recompute_dispersion to True')
             continue
-        print(f'Computing dispersion in {s0}-{s1} sec based on {point}')
+        #print(f'Computing dispersion in {s0}-{s1} sec based on {point}')
         for id in ids:
             xy = s[['x', 'y']].xs(id, level='AgentID', drop_level=True)
             try:
@@ -295,8 +294,10 @@ def comp_dispersion(s, e, config, dt, point, recompute=False, dsp_starts=[0], ds
             e.loc[id, mup] = np.nanmean(d)
             e.loc[id, fp] = s[p].xs(id, level='AgentID').dropna().values[-1]
     scale_to_length(s, e, pars=ps + pps)
-    store_aux_dataset(s, pars=ps + nam.scal(ps), type='dispersion', file=aux_dir)
-    print('Dispersions computed')
+    if config is not None:
+        aux_dir = config['aux_dir']
+        store_aux_dataset(s, pars=ps + nam.scal(ps), type='dispersion', file=aux_dir)
+    #print('Dispersions computed')
 
 
 def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
@@ -312,7 +313,7 @@ def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
     Data from here is relevant :
     [2] D. W. Sims, N. E. Humphries, N. Hu, V. Medan, and J. Berni, “Optimal searching behaviour generated intrinsically by the central pattern generator for locomotion,” Elife, vol. 8, pp. 1–31, 2019.
     '''
-    if tor_durs is None :
+    if tor_durs is None:
         return
     try:
         dsp_par = nam.final('dispersion') if nam.final('dispersion') in e.columns else 'dispersion'
@@ -355,11 +356,6 @@ def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
             e[par_s] = T_s
 
     print('Tortuosities computed')
-
-
-
-
-
 
 
 def rolling_window(a, w):
@@ -415,11 +411,11 @@ def comp_straightness_index(s, dt, e=None, config=None, tor_durs=[2, 5, 10, 20],
             T_s[j] = np.nanstd(T[:, j])
         s[par] = T.flatten()
 
-        if e is not None :
+        if e is not None:
             e[par_m] = T_m
             e[par_s] = T_s
 
-        if config is not None :
+        if config is not None:
             aux_dir = config['aux_dir']
             store_aux_dataset(s, pars=[par], type='exploration', file=aux_dir)
 
@@ -427,11 +423,11 @@ def comp_straightness_index(s, dt, e=None, config=None, tor_durs=[2, 5, 10, 20],
 def comp_source_metrics(s, e, config, **kwargs):
     fo = getPar(['fo'], to_return=['d'])[0][0]
     xy = nam.xy('')
-    for n,pos in config.source_xy.items() :
+    for n, pos in config.source_xy.items():
         print(f'Computing bearing and distance to {n} based on xy position')
         o, d = nam.bearing2(n), nam.dst2(n)
-        pmax, pmu, pfin= nam.max(d), nam.mean(d), nam.final(d)
-        pabs=nam.abs(o)
+        pmax, pmu, pfin = nam.max(d), nam.mean(d), nam.final(d)
+        pabs = nam.abs(o)
         temp = np.array(pos) - s[xy].values
         s[o] = (s[fo] + 180 - np.rad2deg(np.arctan2(temp[:, 1], temp[:, 0]))) % 360 - 180
         s[pabs] = s[o].abs()
@@ -453,31 +449,33 @@ def comp_source_metrics(s, e, config, **kwargs):
                 return row[d] / rowLength(row)
 
             s[nam.scal(d)] = s.apply(rowFunc, axis=1)
-            for p in [pmax, pmu, pfin] :
+            for p in [pmax, pmu, pfin]:
                 e[nam.scal(p)] = e[p] / l
 
         print('Bearing and distance to source computed')
 
-def comp_wind_metrics(s, e,config, **kwargs):
+
+def comp_wind_metrics(s, e, config, **kwargs):
     w = config.env_params.windscape
-    if w is not None :
+    if w is not None:
         wo, wv = w.wind_direction, w.wind_speed
-        woo=np.deg2rad(wo)
+        woo = np.deg2rad(wo)
         ids = s.index.unique('AgentID').values
-        for id in ids :
+        for id in ids:
             xy = s[['x', 'y']].xs(id, level='AgentID', drop_level=True).values
-            origin=e[[nam.initial('x'), nam.initial('y')]].loc[id]
+            origin = e[[nam.initial('x'), nam.initial('y')]].loc[id]
             d = eudi5x(xy, np.array(origin))
             print(d)
-            dx=xy[:,0]-origin[0]
-            dy=xy[:,1]-origin[1]
-            angs=np.arctan2(dy, dx)
-            a=np.array([angle_dif(ang,woo) for ang in angs])
-            s.loc[(slice(None), id), 'anemotaxis'] =d*np.cos(a)
-        s[nam.bearing2('wind')]=s.apply(lambda r: angle_dif(r[nam.orient('front')], wo), axis=1)
+            dx = xy[:, 0] - origin[0]
+            dy = xy[:, 1] - origin[1]
+            angs = np.arctan2(dy, dx)
+            a = np.array([angle_dif(ang, woo) for ang in angs])
+            s.loc[(slice(None), id), 'anemotaxis'] = d * np.cos(a)
+        s[nam.bearing2('wind')] = s.apply(lambda r: angle_dif(r[nam.orient('front')], wo), axis=1)
         e['anemotaxis'] = s['anemotaxis'].groupby('AgentID').last()
 
-def comp_final_anemotaxis(s, e,config, **kwargs) :
+
+def comp_final_anemotaxis(s, e, config, **kwargs):
     w = config.env_params.windscape
     if w is not None:
         wo, wv = w.wind_direction, w.wind_speed
@@ -486,11 +484,12 @@ def comp_final_anemotaxis(s, e,config, **kwargs) :
         xy1 = s[['x', 'y']].groupby('AgentID').last()
         dx = xy1.values[:, 0] - xy0.values[:, 0]
         dy = xy1.values[:, 1] - xy0.values[:, 1]
-        d=np.sqrt(dx**2+dy**2)
+        d = np.sqrt(dx ** 2 + dy ** 2)
         angs = np.arctan2(dy, dx)
         a = np.array([angle_dif(ang, woo) for ang in angs])
         e['anemotaxis'] = d * np.cos(a)
         # print(e['anemotaxis'])
+
 
 def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', config=None, **kwargs):
     ids = s.index.unique(level='AgentID').values
@@ -508,7 +507,7 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', conf
             s[x] -= X
             s[y] -= Y
         return s
-    else :
+    else:
         if track_point is None:
             track_point = config.point
 
@@ -526,7 +525,7 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', conf
             xy = [(max + min) / 2 for max, min in zip(xy_max, xy_min)]
 
         for id, p in zip(ids, xy):
-            for x, y in xy_pairs :
+            for x, y in xy_pairs:
                 s.loc[(slice(None), id), x] -= p[0]
                 s.loc[(slice(None), id), y] -= p[1]
         return s
@@ -552,10 +551,10 @@ def fixate_larva(s, config, point, arena_dims, fix_segment=None):
             point = points[point]
 
     pars = [p for p in all_xy_pars if p in s.columns.values]
-    xy_ps=nam.xy(point)
+    xy_ps = nam.xy(point)
     if set(xy_ps).issubset(s.columns):
         print(f'Fixing {point} to arena center')
-        X,Y=arena_dims
+        X, Y = arena_dims
         xy = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).values for id in ids]
         xy_start = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).dropna().values[0] for id in ids]
         bg_x = np.array([(p[:, 0] - start[0]) / X for p, start in zip(xy, xy_start)])
@@ -576,8 +575,9 @@ def fixate_larva(s, config, point, arena_dims, fix_segment=None):
 
         for id, angle in zip(ids, bg_a):
             d = s[pars].xs(id, level='AgentID', drop_level=True).copy(deep=True).values
-            s.loc[(slice(None), id), pars] = [flatten_list(rotate_multiple_points(points=np.array(group_list_by_n(d[i].tolist(), 2)),
-                                                       radians=a)) for i, a in enumerate(angle)]
+            s.loc[(slice(None), id), pars] = [
+                flatten_list(rotate_multiple_points(points=np.array(group_list_by_n(d[i].tolist(), 2)),
+                                                    radians=a)) for i, a in enumerate(angle)]
     else:
         bg_a = np.array([np.zeros(len(bg_x[0])) for i in range(len(ids))])
     bg = [np.vstack((bg_x[i, :], bg_y[i, :], bg_a[i, :])) for i in range(len(ids))]
@@ -587,19 +587,21 @@ def fixate_larva(s, config, point, arena_dims, fix_segment=None):
     print('Fixed-point dataset generated')
     return s, bg
 
+
 def comp_PI2(arena_xdim, xys, x=0.04):
-    Nticks=xys.index.unique('Step').size
-    ids=xys.index.unique('AgentID').values
+    Nticks = xys.index.unique('Step').size
+    ids = xys.index.unique('AgentID').values
     N = len(ids)
-    dLR=np.zeros([N, Nticks])*np.nan
-    for i, id in enumerate(ids) :
-        xy=xys.xs(id, level='AgentID').values
-        dL = eudi5x(xy, np.array((-x,0)))
-        dR = eudi5x(xy, np.array((x,0)))
-        dLR[i,:]=(dR-dL)/(2*x)
+    dLR = np.zeros([N, Nticks]) * np.nan
+    for i, id in enumerate(ids):
+        xy = xys.xs(id, level='AgentID').values
+        dL = eudi5x(xy, np.array((-x, 0)))
+        dR = eudi5x(xy, np.array((x, 0)))
+        dLR[i, :] = (dR - dL) / (2 * x)
     dLR_mu = np.mean(dLR, axis=1)
-    mu_dLR_mu=np.mean(dLR_mu)
+    mu_dLR_mu = np.mean(dLR_mu)
     return mu_dLR_mu
+
 
 def comp_PI(arena_xdim, xs, return_num=False, return_all=False):
     N = len(xs)
@@ -636,4 +638,3 @@ def scale_to_length(s, e, pars=None, keys=None):
     e_pars = [p for p in pars if p in e.columns]
     if len(e_pars) > 0:
         e[nam.scal(e_pars)] = (e[e_pars].values.T / l.values).T
-

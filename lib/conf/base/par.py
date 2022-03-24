@@ -562,10 +562,12 @@ class ParDict:
 
         k00 = f'{kc}_{k}'
         s00 = Delta(b.s)
-        self.add(p=nam.chunk_track(bc.p, b.p), k=k00, u=u, d=nam.chunk_track(bc.p, b.p), s=sub(s00, kc),
+        self.add(p=nam.chunk_track(bc.p, b.p), k=k00, u=u, d=nam.chunk_track(bc.d, b.d), s=sub(s00, kc),
                  exists=False)
         self.add_mean(k0=k00, s=sub(bar(s00), kc))
         self.add_std(k0=k00, s=sub(wave(s00), kc))
+        self.add_max(k0=k00)
+        self.add_min(k0=k00)
         if extrema:
             self.add(p=p0, k=f'{kc}_{k}0', u=u, d=p0, s=subsup(b.s, kc, 0), exists=False)
             self.add(p=p1, k=f'{kc}_{k}1', u=u, d=p1, s=subsup(b.s, kc, 1), exists=False)
@@ -692,8 +694,9 @@ class ParDict:
 
         for k0 in ['l', 'v', 'sv']:
             self.add_mean(k0=k0)
+            self.add_std(k0=k0)
 
-        for k0 in ['sv']:
+        for k0 in ['v', 'sv']:
             self.add_freq(k0=k0)
 
         for i in ['', 2, 5, 10, 20]:
@@ -745,9 +748,10 @@ class ParDict:
             self.dict[ka].d = nam.acc(self.dict[k0].d)
             self.dict[ka].s = ddot_th(s)
 
-        for k0 in ['b', 'bv']:
+        for k0 in ['b', 'bv', 'rov', 'fov']:
             self.add_mean(k0=k0)
             self.add_std(k0=k0)
+            self.add_freq(k0=k0)
 
     def build_neural(self):
         self.add(p='amount_eaten', k='f_am', u=1 * siu.m ** 3, d='ingested_food_volume', s=sub('V', 'in'),
@@ -786,24 +790,26 @@ class ParDict:
             'tur': 'turn',
             'Ltur': 'Lturn',
             'Rtur': 'Rturn',
+            'run': 'run',
             'str_c': nam.chain('stride'),
             'fee_c': nam.chain('feed')
         }
         for kc, pc in chunk_dict.items():
             self.add_chunk(pc=pc, kc=kc)
-            for k in ['x', 'y', 'fo', 'fou', 'fov', 'ro', 'rou', 'rov', 'b', 'bv', 'v', 'sv', 'o_cent', 'o_chem',
-                      'd_cent',
-                      'd_chem', 'sd_cent', 'sd_chem']:
+            for k in ['fov','rov','foa','roa','x', 'y', 'fo', 'fou',  'ro', 'rou',  'b', 'bv','ba', 'v', 'sv','a', 'sa', 'o_cent', 'o_chem',
+                      'd_cent','d_chem', 'sd_cent', 'sd_chem']:
                 self.add_chunk_track(kc=kc, k=k)
-            if pc == 'stride':
-                for k in ['d', 'std']:
-                    self.add(p=nam.chunk_track(pc, self.dict[k].p), k=f'{kc}_{k}', u=self.dict[k].u,
-                             d=nam.chunk_track(pc, self.dict[k].p),
-                             s=sub(Delta(self.dict[k].s), kc), exists=False)
-                    self.add_mean(k0=f'{kc}_{k}')
-                    self.add_std(k0=f'{kc}_{k}')
-                    for k0 in [f'{kc}_{k}', f'{kc}_{k}_mu', f'{kc}_{k}_std']:
-                        self.add_scaled(k0=k0)
+                #self.add_mean(k0=f'{kc}_{k}')
+                #self.add_std(k0=f'{kc}_{k}')
+            if pc in ['stride', 'run']:
+                 for k in ['d', 'std']:
+                     self.add(p=nam.chunk_track(pc, self.dict[k].p), k=f'{kc}_{k}', u=self.dict[k].u,
+                              d=nam.chunk_track(pc, self.dict[k].p),
+                              s=sub(Delta(self.dict[k].s), kc), exists=False)
+                     self.add_mean(k0=f'{kc}_{k}')
+                     self.add_std(k0=f'{kc}_{k}')
+                     for k0 in [f'{kc}_{k}', f'{kc}_{k}_mu', f'{kc}_{k}_std']:
+                         self.add_scaled(k0=k0)
         self.add_rate(k_num='Ltur_N', k_den='tur_N', k='tur_H', p='handedness_score', d='handedness_score',
                       s=sub('H', 'tur'), lim=(0.0,1.0), lab='Handedness score')
         self.add(p=f'handedness_score_on_food', k='tur_H_on_food')
@@ -921,20 +927,27 @@ def getPar(k=None, p=None, d=None, to_return=['d', 'l'], PF=None):
 
 
 if __name__ == '__main__':
-    # o, d = nam.bearing2('n'), nam.dst2('n')
-    # fo = getPar('fo', to_return=['s'])[0]
-    # print(fo)
+    from lib.conf.base.par import ParDict
+
+    #dic = ParDict(mode='load').dict
+    #print([dic[k]['d'] for k in ['Ltur_tr', 'pau_fov_std','ffov']])
+    #print(dic.keys())
+
+    #aaa=getPar(['cum_run_t'], to_return=['d'])[0]
     d=ParDict(mode='build').dict
     raise
-    # pars=getPar('on_food_tr', to_return=['p','d'])
-    # print(pars)
+    pars, =getPar(['pau_foa_mu', 'pau_fov_mu', 'pau_ba_mu', 'd', 'fo','x', 'y','b', 'dsp', 'cum_d', 'sv', 'a', 'sa', 'foa'], to_return=['d'])
+
+
+    print(pars)
+    raise
     # print(us)
     # # d = ParDict(mode='reconstruct').dict
     # print(d.keys())
     # raise
-    # for short in ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']:
-    #     p = getPar(short, to_return=['d'])[0]
-    #     print(p)
+    for short in ['tur_fov_max', 'pau_fov_std','ffov']:
+        p = getPar(short, to_return=['d'])[0]
+        print(p)
     # dic = build_par_dict()
     # print(dic.keys())
     # print(runtime_pars)
@@ -1006,5 +1019,6 @@ if __name__ == '__main__':
     # # plt.xlabel(df['unit'].iloc[1]/1973*u.day)
     # # # plt.xlabel([d[k].symbol for k in list(d.keys())])
     # # plt.show()
-    pars, sim_ls, exp_ls, xlabs, xlims = getPar(['str_N', 'str_tr', 'cum_d'], to_return=['d', 's', 's', 'l', 'lim'])
-    print(pars, xlims)
+    #pars, sim_ls, exp_ls, xlabs, xlims = getPar(['fov_mu', 'b_mu'], to_return=['d', 's', 's', 'l', 'lim'])
+
+    #print(pars, xlims)

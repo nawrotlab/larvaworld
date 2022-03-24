@@ -65,6 +65,7 @@ class DefaultLocomotor(Locomotor):
             self.feeder = Feeder(dt=self.dt, **c['feeder_params'])
         self.coupling = Oscillator_coupling(locomotor=self, **c['interference_params']) if m[
             'interference'] else Oscillator_coupling(locomotor=self)
+
         if m['intermitter']:
             mode = c['intermitter_params']['mode'] if 'mode' in c['intermitter_params'].keys() else 'default'
             if mode == 'default':
@@ -272,9 +273,7 @@ class Sakagiannis2022(Locomotor):
             self.phi %= 2 * np.pi
             self.complete_iteration = True
             self.iteration_counter += 1
-            if self.current_numstrides is not None :
-                self.current_numstrides+=1
-            self.step_to_length = self.new_stride
+
         else:
             self.complete_iteration = False
 
@@ -318,6 +317,9 @@ class Sakagiannis2022(Locomotor):
             if self.cur_run_dur is not None :
                 self.cur_run_dur += self.dt
             self.oscillate()
+            if self.complete_iteration and self.current_numstrides is not None :
+                self.current_numstrides+=1
+                self.step_to_length = self.new_stride
             self.lin_vel = self.freq * self.step_to_length * (1 + 0.6 * np.cos(self.phi - self.max_vel_phase))*length
             attenuation_coef = self.attenuation_func
         elif self.cur_state == 'pause':

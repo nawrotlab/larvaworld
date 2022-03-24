@@ -83,7 +83,25 @@ def combine_pdfs(file_dir='.', save_as="final.pdf", pref=''):
 
 def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14,
                      header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black',
-                     bbox=[0, 0, 1, 1], header_columns=0, ax=None, **kwargs):
+                     bbox=[0, 0, 1, 1], header_columns=0, ax=None,highlighted_cells=None,highlight_color='yellow', **kwargs):
+
+    def get_idx(highlighted_cells):
+        if highlighted_cells=='row_min' :
+            idx=np.nanargmin(data.values, axis=1)
+            return [(i+1, idx[i]) for i in range(data.shape[0])]
+        elif highlighted_cells=='row_max' :
+            idx=np.nanargmax(data.values, axis=1)
+            return [(i+1, idx[i]) for i in range(data.shape[0])]
+        elif highlighted_cells=='col_min' :
+            idx=np.nanargmin(data.values, axis=0)
+            return [(idx[i]+1,i) for i in range(data.shape[1])]
+        elif highlighted_cells=='col_max' :
+            idx=np.nanargmax(data.values, axis=0)
+            return [(idx[i]+1,i) for i in range(data.shape[1])]
+        else :
+            return  []
+
+    highlight_idx=get_idx(highlighted_cells)
     if ax is None:
         size = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
         fig, ax = plt.subplots(figsize=size)
@@ -91,14 +109,16 @@ def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14,
     else:
         fig = None
 
-    mpl_table = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns, **kwargs)
+    mpl_table = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns,rowLabels=data.index, **kwargs)
 
     mpl_table.auto_set_font_size(False)
     mpl_table.set_fontsize(font_size)
 
     for k, cell in six.iteritems(mpl_table._cells):
         cell.set_edgecolor(edge_color)
-        if k[0] == 0 or k[1] < header_columns:
+        if k in highlight_idx :
+            cell.set_facecolor(highlight_color)
+        elif k[0] == 0 or k[1] < header_columns:
             cell.set_text_props(weight='bold', color='w')
             cell.set_facecolor(header_color)
         else:

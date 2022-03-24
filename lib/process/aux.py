@@ -10,8 +10,6 @@ from scipy.spatial import ConvexHull
 from scipy.fft import fft, fftfreq
 import statsmodels.api as sm
 
-from lib.aux.dictsNlists import flatten_list
-
 
 def parse_array_at_nans(a):
     a = np.insert(a, 0, np.nan)
@@ -302,7 +300,7 @@ def slow_freq(a, dt, tmax=60.0):
 def slowNfast_freqs(s, e, c, point_idx=8, scaled=False):
     from lib.conf.base.par import ParDict
     dic = ParDict(mode='load').dict
-    l,fov = [dic[k]['d'] for k in ['l','fov']]
+    l, fov = [dic[k]['d'] for k in ['l', 'fov']]
 
     if point_idx is None:
         xy_pair = ["x", "y"]
@@ -328,10 +326,11 @@ def slowNfast_freqs(s, e, c, point_idx=8, scaled=False):
 
         fov0 = df[fov].values
         e[fr1a].loc[id] = slow_freq(fov0, c.dt)
+
         e[fr0a].loc[id] = fft_max(fov0, c.dt, fr_range=(0.15, +np.inf))[2]
 
-def detect_pauses(a, dt, vel_thr=0.3, runs=None):
-    from lib.aux.dictsNlists import flatten_list
+
+def detect_pauses(a, dt, vel_thr=0.3, runs=None, min_dur=None):
     """
     Annotates crawl-pauses in timeseries.
 
@@ -340,7 +339,7 @@ def detect_pauses(a, dt, vel_thr=0.3, runs=None):
     Parameters
     ----------
     a : array
-        1D np.array : velocity timeseries
+        1D np.array : forward velocity timeseries
     dt : float
         Timestep of the timeseries
     vel_thr : float
@@ -357,6 +356,8 @@ def detect_pauses(a, dt, vel_thr=0.3, runs=None):
         Durations of the pauses.
 
     """
+    if min_dur is None:
+        min_dur = 2 * dt
     pauses = []
     idx = np.where(a <= vel_thr)[0]
     if runs is not None:
@@ -364,14 +365,97 @@ def detect_pauses(a, dt, vel_thr=0.3, runs=None):
             idx = idx[(idx <= r0) | (idx >= r1)]
     p0s = idx[np.where(np.diff(idx, prepend=[-np.inf]) != 1)[0]]
     p1s = idx[np.where(np.diff(idx, append=[np.inf]) != 1)[0]]
-    pauses = [[p0, p1] for p0, p1 in zip(p0s, p1s) if p0 != p1]
-    pauses_durs = [(p1 - p0) * dt for p0, p1 in pauses]
-    pause_vel_mu = np.mean(flatten_list([a[p0:p1] for p0, p1 in pauses]))
-    return pauses, pauses_durs, pause_vel_mu
+    pauses = np.vstack([p0s, p1s]).T
+    durs = np.diff(pauses).flatten() * dt
+    pauses = pauses[durs >= min_dur]
+    pause_durs = durs[durs >= min_dur]
+    pauses1 = pauses[:, 1]
+    pause_slices = [np.arange(p0, p1 + 1, 1) for p0, p1 in pauses]
+    pause_idx = np.concatenate(pause_slices) if len(pause_slices) > 0 else np.array([])
+    return pauses, pause_slices, pause_idx, pauses1, pause_durs
+
+
+def detect_runs2(a, dt, vel_thr=0.01):
+    """
+    Annotates crawl-runs in timeseries.
+
+    Extended description of function.
+
+    Parameters
+    ----------
+    a : array
+        1D np.array : forward velocity timeseries
+    dt : float
+        Timestep of the timeseries
+    vel_thr : float
+        Maximum velocity threshold
+
+    Returns
+    -------
+    runs : list
+        A list of pairs of the start-end indices of the runs.
+    runs_durs : list
+        Durations of the runs.
+    runs_dsts : list
+        Pathlengths of the runs.
+
+    """
+    # runs = []
+    idx = np.where(a >= vel_thr)[0]
+    r0s = idx[np.where(np.diff(idx, prepend=[-np.inf]) != 1)[0]]
+    r1s = idx[np.where(np.diff(idx, append=[np.inf]) != 1)[0]]
+    # runs = np.vstack([r0s, r1s])
+    # runs=runs[]
+
+    runs = [[r0, r1] for r0, r1 in zip(r0s, r1s) if r0 != r1]
+    runs1 = [r1 for r0, r1 in runs]
+    runs_durs = [(r1 - r0) * dt for r0, r1 in runs]
+    runs_dsts = [np.trapz(a[r0:r1], dx=dt) for r0, r1 in runs]
+    return runs, runs1, runs_durs, runs_dsts
+
+
+def detect_runs(a, dt, vel_thr=0.3, min_dur=0.5):
+    """
+    Annotates crawl-runs in timeseries.
+
+    Extended description of function.
+
+    Parameters
+    ----------
+    a : array
+        1D np.array : forward velocity timeseries
+    dt : float
+        Timestep of the timeseries
+    vel_thr : float
+        Maximum velocity threshold
+
+    Returns
+    -------
+    runs : list
+        A list of pairs of the start-end indices of the runs.
+    runs_durs : list
+        Durations of the runs.
+    runs_dsts : list
+        Pathlengths of the runs.
+
+    """
+    if min_dur is None:
+        min_dur = 2 * dt
+    idx = np.where(a >= vel_thr)[0]
+    r0s = idx[np.where(np.diff(idx, prepend=[-np.inf]) != 1)[0]]
+    r1s = idx[np.where(np.diff(idx, append=[np.inf]) != 1)[0]]
+    runs = np.vstack([r0s, r1s]).T
+    durs = np.diff(runs).flatten() * dt
+    runs = runs[durs >= min_dur]
+    run_durs = durs[durs >= min_dur]
+    runs1 = runs[:, 1]
+    run_slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in runs]
+    run_dsts = np.array([np.trapz(a[p], dx=dt) for p in run_slices])
+    run_idx = np.concatenate(run_slices) if len(run_slices) > 0 else np.array([])
+    return runs, run_slices, run_idx, runs1, run_durs, run_dsts
 
 
 def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0)):
-    from lib.aux.dictsNlists import flatten_list
     """
     Annotates strides-runs and pauses in timeseries.
 
@@ -380,7 +464,7 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0)):
     Parameters
     ----------
     a : array
-        1D np.array : velocity timeseries
+        1D np.array : forward velocity timeseries
     dt : float
         Timestep of the timeseries
     vel_thr : float
@@ -419,85 +503,304 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0)):
     for m in i_max:
         try:
             s0, s1 = [i_min[i_min < m][-1], i_min[i_min > m][0]]
-            if (s1 - s0) <= tmax:
+            if ((s1 - s0) <= tmax) and ([s0, s1] not in strides):
                 strides.append([s0, s1])
         except:
             pass
 
-    runs = []
+    runs, run_counts = [], []
     s00, s11 = None, None
-    runs_durs, runs_counts = [], []
 
     def register(s00, s11, count):
         runs.append([s00, s11])
-        runs_durs.append((s11 - s00) * dt)
-        runs_counts.append(count)
+        run_counts.append(count)
 
-    for s0, s1 in strides:
-        if s00 is None:
+    count = 0
+    for ii, (s0, s1) in enumerate(strides):
+        if ii == 0:
             s00, s11 = s0, s1
             count = 1
-        elif s11 == s0:
+            continue
+        if s11 == s0:
             s11 = s1
             count += 1
         else:
             register(s00, s11, count)
             count = 1
             s00, s11 = s0, s1
-        register(s00, s11, count)
+        if ii == len(strides) - 1:
+            register(s00, s11, count)
+            break
+    runs = np.array(runs)
+    runs1 = runs[:, 1]
+    run_durs = np.diff(runs).flatten() * dt
+    run_slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in runs]
+    run_dsts = np.array([np.trapz(a[p], dx=dt) for p in run_slices])
+    run_idx = np.concatenate(run_slices)
 
-    stride_vel_mu = np.mean(flatten_list([a[s0:s1] for s0, s1 in strides]))
+    stride_slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in strides]
+    stride_dsts = np.array([np.trapz(a[p], dx=dt) for p in stride_slices])
+    stride_idx = np.concatenate(stride_slices) if len(stride_slices) > 0 else np.array([])
+    return fr, i_min, i_max, strides, stride_slices, stride_idx, stride_dsts, runs, run_slices, run_idx, runs1, run_durs, run_dsts, run_counts
 
-    pauses, pauses_durs, pause_vel_mu = detect_pauses(a, dt, vel_thr=vel_thr, runs=runs)
 
-    return fr, strides, i_min, i_max, runs, runs_durs, runs_counts, pauses, pauses_durs, stride_vel_mu, pause_vel_mu
+def detect_turns(a, dt, min_dur=None):
+    """
+    Annotates turns in timeseries.
+
+    Extended description of function.
+
+    Parameters
+    ----------
+    a : array
+        1D np.array : angular velocity timeseries
+    dt : float
+        Timestep of the timeseries
+
+    Returns
+    -------
+    fr : float
+        The dominant angular velocity frequency.
+    Lturns : list
+        A list of pairs of the start-end indices of the Left turns.
+    Rturns : list
+        A list of pairs of the start-end indices of the Right turns.
+    Lmaxs : array
+        A list of the local angular velocity maxima of Left turns.
+    Rmaxs : array
+        A list of the local angular velocity maxima of Right turns.
+    Ldurs : list
+        A list of the durations of the Left turns.
+    Rdurs : list
+        A list of the durations of the Right turns.
+    Lamps : list
+         A list of the angle amplitudes of the Left turns.
+    Ramps : list
+         A list of the angle amplitudes of the Right turns.
+
+    """
+    if min_dur is None:
+        min_dur = 2 * dt
+
+    xf, yf, fr = fft_max(a, dt, fr_range=(0.1, +np.inf))
+    i_zeros = np.where(np.sign(a).diff().ne(0) == True)[0]
+    Rturns, Lturns = [], []
+    for s0, s1 in zip(i_zeros[:-1], i_zeros[1:]):
+        if (s1 - s0) < 2:
+            continue
+        elif np.isnan(np.sum(a[s0:s1])):
+            continue
+        else:
+            if all(a[s0:s1] >= 0):
+                Lturns.append([s0, s1])
+            elif all(a[s0:s1] <= 0):
+                Rturns.append([s0, s1])
+
+    Lturns = np.array(Lturns)
+    Rturns = np.array(Rturns)
+    # Lturns1 = Lturns[:, 1]
+    # Rturns1 = Rturns[:, 1]
+    Ldurs = np.diff(Lturns).flatten() * dt
+    Rdurs = np.diff(Rturns).flatten() * dt
+
+    Lturn_slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in Lturns]
+    Rturn_slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in Rturns]
+    Lamps = np.abs([np.trapz(a[p], dx=dt) for p in Lturn_slices])
+    Ramps = np.abs([np.trapz(a[p], dx=dt) for p in Rturn_slices])
+    Lmaxs = np.array([np.max(a[p]) for p in Lturn_slices])
+    Rmaxs = np.array([np.max(-a[p]) for p in Rturn_slices])
+
+    Lturn_idx = np.concatenate(Lturn_slices) if len(Lturn_slices) > 0 else np.array([])
+    Rturn_idx = np.concatenate(Rturn_slices) if len(Rturn_slices) > 0 else np.array([])
+    return fr, Lturns, Rturns, Lmaxs, Rmaxs, Lamps, Ramps, Ldurs, Rdurs, Lturn_slices, Rturn_slices, Lturn_idx, Rturn_idx
 
 
-def lin_annotate(s, e, c, point=None, p='scaled_velocity', **kwargs):
+def stride_interference(a_sv, a_fov, pau_fov_mu, strides, Nbins=64):
+    x = np.linspace(0, 2 * np.pi, Nbins)
+
+    ar_sv = np.zeros([len(strides), Nbins])
+    ar_fov = np.zeros([len(strides), Nbins])
+    for ii, (s0, s1) in enumerate(strides):
+        ar_fov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_fov[s0:s1])
+        ar_sv[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_sv[s0:s1])
+    ar_fov_mu = np.nanquantile(np.abs(ar_fov), q=0.5, axis=0)
+    ar_sv_mu = np.nanquantile(ar_sv, q=0.5, axis=0)
+    at_min, at_max, phi_at_max = np.min(ar_fov_mu) / pau_fov_mu, (np.max(ar_fov_mu) - np.min(ar_fov_mu)) / pau_fov_mu, \
+                                 x[np.argmax(ar_fov_mu)]
+    phi_sv_max = x[np.argmax(ar_sv_mu)]
+    return [at_min, at_max, phi_at_max, phi_sv_max]
+
+
+def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=None, **kwargs):
     import lib.aux.naming as nam
-    from lib.anal.fitting import fit_bout_distros
-    e["stride_dst_mean"] = np.nan
-    e["stride_dst_std"] = np.nan
-    e["stride_scaled_vel_mu"] = np.nan
-    e["pause_scaled_vel_mu"] = np.nan
-    e["crawl_freq"] = np.nan
+    from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
+    from lib.conf.base.par import ParDict, getPar
 
-    all_runs_durs,all_runs_counts, all_pauses_durs =[], [], []
-    for id in c.agent_ids:
-        a = s[p].xs(id, level="AgentID")
-        fr, strides, i_min, i_max, runs, runs_durs, runs_counts, pauses, pauses_durs, stride_vel_mu, pause_vel_mu = detect_strides(
-            a, c.dt, **kwargs)
-        if point is None:
+    # Parameter easy naming
+    dic = ParDict(mode='load').dict
+    l, dst, v, sv, acc, fov, foa, b, bv, ba = [dic[k]['d'] for k in
+                                               ['l', 'd', 'v', 'sv', 'a', 'fov', 'foa', 'b', 'bv', 'ba']]
+    cum_t, cum_d, v_mu, sv_mu = [dic[k]['d'] for k in ['cum_t', 'cum_d', 'v_mu', 'sv_mu']]
+    sstr_d_mu, sstr_d_std, run_tr, pau_tr = [dic[k]['d'] for k in
+                                             ['sstr_d_mu', 'sstr_d_std', 'run_tr', 'pau_tr']]
+
+    str_ps, = getPar(['str_d_mu', 'str_d_std', 'fsv', 'str_sv_mu', 'str_fov_mu', 'str_fov_std'], to_return=['d'])
+    lin_ps, = getPar(
+        ['run_v_mu', 'pau_v_mu', 'run_a_mu', 'pau_a_mu', 'run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std',
+         'run_foa_mu', 'pau_foa_mu', 'pau_b_mu', 'pau_b_std', 'pau_bv_mu', 'pau_bv_std', 'pau_ba_mu', 'pau_ba_std',
+         'cum_run_t', 'cum_pau_t',
+         'ffov', 'Ltur_tr', 'Rtur_tr', 'run_t_min'], to_return=['d'])
+
+    att = 'attenuation'
+    att_ps = [nam.min(att), nam.max(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')]
+    if point is None:
+        if c.point == 'body':
+            point = ''
+        else:
             point = c.point
-        xy = s[nam.xy(point)].xs(id, level="AgentID").values
-        stride_dsts = [np.sqrt(np.sum((xy[s1] - xy[s0]) ** 2)) for s0, s1 in strides]
+    ids = e.index.values
+    Nids = len(ids)
 
-        e["stride_dst_mean"].loc[id] = np.mean(stride_dsts)
-        e["stride_dst_std"].loc[id] = np.std(stride_dsts)
-        e["crawl_freq"].loc[id] = fr
-        e["stride_scaled_vel_mu"].loc[id] = stride_vel_mu
-        e["pause_scaled_vel_mu"].loc[id] = pause_vel_mu
+    step_ps, = getPar(['tur_fou', 'tur_t', 'tur_fov_max', 'pau_t', 'run_t', 'run_d'], to_return=['d'])
+    step_vs = np.zeros([c.Nticks, Nids, len(step_ps)]) * np.nan
 
-        all_runs_durs.append(runs_durs)
-        all_runs_counts.append(runs_counts)
-        all_pauses_durs.append(pauses_durs)
+    all_runs_durs, all_runs_counts, all_runs_dsts, all_pauses_durs, all_turns_durs, all_turns_angles, all_turns_fov_max = [], [], [], [], [], [], []
+    vs_ps = np.zeros([Nids, len(lin_ps)]) * np.nan
+    vs_str_ps = np.zeros([Nids, len(str_ps) + len(att_ps)]) * np.nan
+    chunk_dicts = {}
+    for jj, id in enumerate(ids):
+        chunk_dict={}
+        # print(jj)
+        # Angular
+        a_fov = s[fov].xs(id, level="AgentID")
 
-    e["scaled_stride_dst_mean"] = e["stride_dst_mean"] / e["length"]
-    e["scaled_stride_dst_std"] = e["stride_dst_std"] / e["length"]
+        fov_fr, Lturns, Rturns, Lmaxs, Rmaxs, Lamps, Ramps, Ldurs, Rdurs, Lturn_slices, Rturn_slices, Lturn_idx, Rturn_idx = detect_turns(
+            a_fov, c.dt)
 
-    all_runs_durs=np.array(flatten_list(all_runs_durs))
-    all_runs_counts=np.array(flatten_list(all_runs_counts))
-    all_pauses_durs=np.array(flatten_list(all_pauses_durs))
+        # print(jj, id, Lturns.shape, Rturns.shape)
 
-    c.bout_distros={}
+        step_vs[Lturns[:,1], jj, 0] = Lamps
+        step_vs[Rturns[:,1], jj, 0] = Ramps
+        step_vs[Lturns[:,1], jj, 1] = Ldurs
+        step_vs[Rturns[:,1], jj, 1] = Rdurs
+        step_vs[Lturns[:,1], jj, 2] = Lmaxs
+        step_vs[Rturns[:,1], jj, 2] = Rmaxs
 
-    dic = fit_bout_distros(all_runs_durs, discrete=False, print_fits=False,
-                           dataset_id=c.id, bout='run_dur', combine=False, store=False)
-    c.bout_distros["run_durs"]=dic["best"]["run_dur"]["best"]
-    dic = fit_bout_distros(all_runs_counts, discrete=True, print_fits=False,
-                           dataset_id=c.id, bout='run_count', combine=False, store=False)
-    c.bout_distros["run_counts"] = dic["best"]["run_count"]["best"]
-    dic = fit_bout_distros(all_pauses_durs, discrete=False, print_fits=False,
-                           dataset_id=c.id, bout='pause_dur', combine=False, store=False)
-    c.bout_distros["pause_durs"] = dic["best"]["pause_dur"]["best"]
+        chunk_dict['Lturn']=Lturns
+        chunk_dict['Rturn']=Rturns
+        a_v = s[v].xs(id, level="AgentID")
 
+        if c.Npoints > 1:
+            a_sv = s[sv].xs(id, level="AgentID")
+            if strides_enabled:
+                fr, i_min, i_max, strides, stride_slices, stride_idx, stride_sdsts, runs, run_slices, run_idx, runs1, run_durs, run_sdsts, run_counts = detect_strides(
+                    a_sv, c.dt, **kwargs)
+                chunk_dict['stride'] = strides
+                run_dsts = run_sdsts * e[l].loc[id]
+                stride_dsts = stride_sdsts * e[l].loc[id]
+                str_fovs = a_fov.abs()[stride_idx]
+                vs_str_ps[jj, :len(str_ps)] = [np.mean(stride_dsts),
+                                               np.std(stride_dsts),
+                                               fr,
+                                               np.mean(a_sv[stride_idx]),
+                                               np.mean(str_fovs),
+                                               np.std(str_fovs)]
+                all_runs_counts.append(run_counts)
+                pauses, pause_slices, pause_idx, pauses1, pause_durs = detect_pauses(a_sv, c.dt, runs=runs)
+            else:
+                runs, run_slices, run_idx, runs1, run_durs, run_sdsts = detect_runs(a_sv, c.dt)
+                run_dsts = run_sdsts * e[l].loc[id]
+                pauses, pause_slices, pause_idx, pauses1, pause_durs = detect_pauses(a_sv, c.dt, runs=runs)
+        else:
+            runs, run_slices, run_idx, runs1, run_durs, run_dsts = detect_runs(a_v, c.dt, vel_thr=vel_thr)
+            pauses, pause_slices, pause_idx, pauses1, pause_durs = detect_pauses(a_v, c.dt, runs=runs, vel_thr=vel_thr)
+        chunk_dict['run'] = runs
+        chunk_dict['pause'] = pauses
+
+        step_vs[pauses1, jj, 3] = pause_durs
+        step_vs[runs1, jj, 4] = run_durs
+        step_vs[runs1, jj, 5] = run_dsts
+
+        pau_bs = s[b].xs(id, level="AgentID").abs()[pause_idx]
+        pau_bvs = s[bv].xs(id, level="AgentID").abs()[pause_idx]
+        pau_bas = s[ba].xs(id, level="AgentID").abs()[pause_idx]
+        a_foa = s[foa].xs(id, level="AgentID").abs()
+        a_acc = s[acc].xs(id, level="AgentID")
+        pau_fovs = a_fov.abs()[pause_idx]
+        run_fovs = a_fov.abs()[run_idx]
+        pau_foas = a_foa[pause_idx]
+        run_foas = a_foa[run_idx]
+        vs_ps[jj, :] = [
+            np.mean(a_v[run_idx]),
+            np.mean(a_v[pause_idx]),
+            np.mean(a_acc[run_idx]),
+            np.mean(a_acc[pause_idx]),
+            np.mean(run_fovs), np.std(run_fovs),
+            np.mean(pau_fovs), np.std(pau_fovs),
+            np.mean(run_foas),
+            np.mean(pau_foas),
+            np.mean(pau_bs), np.std(pau_bs),
+            np.mean(pau_bvs), np.std(pau_bvs),
+            np.mean(pau_bas), np.std(pau_bas),
+            np.sum(run_durs),
+            np.sum(pause_durs),
+            fov_fr,
+            np.sum(Ldurs) / e[cum_t].loc[id],
+            np.sum(Rdurs) / e[cum_t].loc[id],
+            np.min(run_durs) if len(run_durs) > 0 else 1]
+        if c.Npoints > 1 and strides_enabled:
+            vs_str_ps[jj, len(str_ps):] = stride_interference(a_sv, a_fov.abs(), np.mean(pau_fovs), strides)
+
+        all_runs_durs.append(run_durs)
+        all_runs_dsts.append(run_dsts)
+        all_pauses_durs.append(pause_durs)
+        all_turns_durs.append(np.concatenate([Ldurs, Rdurs]))
+        all_turns_angles.append(np.concatenate([Lamps, Ramps]))
+        all_turns_fov_max.append(np.concatenate([Lmaxs, Rmaxs]))
+        chunk_dicts[id]=chunk_dict
+    chunk_dicts = AttrDict(chunk_dicts)
+    if save_to is not None:
+        os.makedirs(save_to, exist_ok=True)
+        save_dict(chunk_dicts, f'{save_to}/{c.id}.txt', use_pickle=True)
+    s[step_ps] = step_vs.reshape([c.Nticks * Nids, len(step_ps)])
+    e[lin_ps] = vs_ps
+    e[run_tr] = e[getPar(['cum_run_t'], to_return=['d'])[0][0]] / e[cum_t]
+    e[pau_tr] = e[getPar(['cum_pau_t'], to_return=['d'])[0][0]] / e[cum_t]
+
+    if c.Npoints > 1 and strides_enabled:
+        e[str_ps + att_ps] = vs_str_ps
+        e[sstr_d_mu] = e[getPar(['str_d_mu'], to_return=['d'])[0][0]] / e[l]
+        e[sstr_d_std] = e[getPar(['str_d_std'], to_return=['d'])[0][0]] / e[l]
+
+    aux_dic = {
+        'run_dur': np.array(flatten_list(all_runs_durs)),
+        'run_dst': np.array(flatten_list(all_runs_dsts)),
+        'pause_dur': np.array(flatten_list(all_pauses_durs)),
+        'run_count': np.array(flatten_list(all_runs_counts)),
+        'turn_dur': np.array(flatten_list(all_turns_durs)),
+        'turn_amp': np.array(flatten_list(all_turns_angles)),
+        'turn_vel_max': np.array(flatten_list(all_turns_fov_max))
+    }
+    return aux_dic
+
+
+def fit_bouts(aux_dic, dataset_id, c, save_to=None):
+    from lib.anal.fitting import fit_bout_distros
+    from lib.aux.dictsNlists import AttrDict, load_dict, save_dict
+    dic, best = {}, {}
+    for k, v in aux_dic.items():
+        discr = True if k == 'run_count' else False
+        try:
+            dic[k] = fit_bout_distros(v, dataset_id=dataset_id, bout=k, combine=False, discrete=discr)
+            best[k] = dic[k]['best'][k]['best']
+        except:
+            dic[k] = None
+            best[k] = None
+
+    c.bout_distros = AttrDict(best)
+
+    dic = AttrDict(dic)
+    if save_to is not None:
+        os.makedirs(save_to, exist_ok=True)
+        save_dict(dic, f'{save_to}/{dataset_id}.txt', use_pickle=True)
+    return dic

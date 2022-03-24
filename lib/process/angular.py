@@ -61,8 +61,13 @@ def compute_LR_bias(s, e):
 
 
 def comp_orientations(s, e, config, mode='minimal'):
-    points = nam.midline(config.Npoints, type='point')
-    segs = nam.midline(config.Npoints - 1, type='seg')
+    Np=config.Npoints
+    if Np==1 :
+        comp_orientation_1point(s, e, config)
+        return
+
+    points = nam.midline(Np, type='point')
+    segs = nam.midline(Np - 1, type='seg')
     for key in ['front_vector', 'rear_vector']:
         if config[key] is None:
             print('Front and rear vectors are not defined. Can not compute orients')
@@ -100,6 +105,23 @@ def comp_orientations(s, e, config, mode='minimal'):
             c[:, i] = np.array([angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
         for z, a in enumerate(ors):
             s[a] = c[z].T
+    print('All orientations computed')
+    return
+
+def comp_orientation_1point(s, e, config):
+    if config.Npoints!=1 :
+        return
+    fov=nam.orient('front')
+    ids = s.index.unique('AgentID').values
+    Nids=len(ids)
+    Nticks = len(s.index.unique('Step'))
+    c = np.zeros([Nticks,Nids]) * np.nan
+    for j,id in enumerate(ids) :
+        xy = s[['x', 'y']].xs(id, level='AgentID').values
+        for i in range(Nticks-1):
+            c[i+1, j] =angle_to_x_axis(xy[i,:], xy[i+1,:], in_deg=True)
+    s[fov] = c.flatten()
+    e[nam.initial(fov)] = s[fov].dropna().groupby('AgentID').first()
     print('All orientations computed')
     return
 

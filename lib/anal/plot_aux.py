@@ -9,7 +9,7 @@ from matplotlib.pyplot import bar
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import mannwhitneyu, ttest_ind
 
-from lib.anal.fitting import pvalue_star
+from lib.anal.fitting import pvalue_star, fit_bout_distros
 from lib.aux.dictsNlists import unique_list
 from lib.aux.colsNstr import N_colors
 from lib.conf.base.par import getPar
@@ -298,7 +298,8 @@ def plot_quantiles(df, from_np=False, x=None, **kwargs):
         df_m = np.nanquantile(df, q=0.5, axis=0)
         df_u = np.nanquantile(df, q=0.75, axis=0)
         df_b = np.nanquantile(df, q=0.25, axis=0)
-        x = np.arange(len(df_m))
+        if x is None :
+            x = np.arange(len(df_m))
     else:
         df_m = df.groupby(level='Step').quantile(q=0.5)
         df_u = df.groupby(level='Step').quantile(q=0.75)
@@ -621,3 +622,46 @@ def conf_ax_3d(vars, target, ax=None, fig=None, lims=None, title=None, maxN=5, l
         ax.set_suptitle(title, fontsize=20)
 
     return fig, ax
+
+
+def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits = 'best',
+                     marker='.'):
+    distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy', 'normal', 'uniform']
+    distro_cs = ['c', 'g', 'm', 'k', 'orange', 'brown', 'purple']
+    num_distros = len(distro_ls)
+    lws = [2] * num_distros
+
+    if fit_dic is None :
+        xmin, xmax = np.min(x0), np.max(x0)
+        fit_dic = fit_bout_distros(x0, xmin, xmax, discr, dataset_id='test', bout=bout,
+                               print_fits=False, combine=False, fit_by='pdf')
+    idx_Kmax = fit_dic['idx_Kmax']
+    cdfs = fit_dic['cdfs']
+    pdfs = fit_dic['pdfs']
+    u2, du2, c2, c2cum = fit_dic['values']
+    lws[idx_Kmax] = 4
+    ylabel = 'cumulative probability'
+    xrange = u2
+    y = c2cum
+    ddfs = cdfs
+    for ii in ddfs:
+        if ii is not None:
+            ii /= ii[0]
+    axs[i].loglog(xrange, y, marker, color=color, alpha=0.7, label=label)
+    axs[i].set_title(bout)
+    axs[i].set_ylim([10 ** -3.5, 10 ** 0.5])
+    for z, (l, col, lw, ddf) in enumerate(zip(distro_ls, distro_cs, lws, ddfs)):
+        if ddf is None:
+            continue
+        if plot_fits == 'best' and z == idx_Kmax:
+            cc = color
+        elif plot_fits == 'all':
+            cc = col
+        else:
+            continue
+        axs[i].loglog(xrange, ddf, color=cc, lw=lw, label=l)
+    dataset_legend(distro_ls, distro_cs, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
+    #dataset_legend(gIDs, colors, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
+    # fig.subplots_adjust(left=0.1, right=0.95, wspace=0.08, hspace=0.3, bottom=0.05)
+    for jj in [0]:
+        axs[jj].set_ylabel(ylabel, fontsize=25)

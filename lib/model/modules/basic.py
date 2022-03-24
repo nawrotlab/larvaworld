@@ -46,10 +46,9 @@ class Oscillator(Effector):
         self.freq_range = freq_range
         self.complete_iteration = False
         self.iteration_counter = 0
-        self.initial_phi = np.random.rand() * 2 * np.pi if random_phi else 0
+        self.d_phi = 2 * np.pi * self.dt * self.freq
         self.timesteps_per_iteration = int(round((1 / self.freq) / self.dt))
-        self.d_phi = 2 * np.pi / self.timesteps_per_iteration
-        self.phi = self.initial_phi
+        self.phi = np.random.rand() * 2 * np.pi if random_phi else 0
 
     def set_frequency(self, freq):
         self.freq = freq
@@ -63,6 +62,8 @@ class Oscillator(Effector):
             self.t = 0
             self.complete_iteration = True
             self.iteration_counter += 1
+        else:
+            self.complete_iteration = False
 
     def reset(self):
         self.t = 0

@@ -114,15 +114,10 @@ class BodySim(BodyManager):
     def step(self):
         self.cum_dur += self.model.dt
         self.restore_body_bend()
-
         pos = self.olfactor_pos
         self.food_detected, self.current_foodtype = self.detect_food(pos)
         reward = self.food_detected is not None
         self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.run(pos, reward)
-        # self.lin_activity*=self.sim_length
-
-        # self.get_velocities()
-
         self.update_larva()
 
         # Trying restoration for any number of segments
@@ -255,11 +250,8 @@ class BodySim(BodyManager):
         return v + (-z * v - self.body_spring_k * self.body_bend + torque) * self.model.dt
 
     def restore_body_bend(self):
-        # t0=[]
-        # t0.append(time.time())
         self.compute_spineangles()
         d, l = self.dst, self.sim_length
-        # t0.append(time.time())
         if not self.model.Box2D:
             if self.Nsegs == 2:
                 self.spineangles[0] = lib.aux.ang_aux.restore_bend_2seg(self.spineangles[0], d, l,
@@ -267,10 +259,7 @@ class BodySim(BodyManager):
             else:
                 self.spineangles = lib.aux.ang_aux.restore_bend(self.spineangles, d, l, self.Nsegs,
                                                                 correction_coef=self.bend_correction_coef)
-        # t0.append(time.time())
         self.compute_body_bend()
-        # t0.append(time.time())
-        # print(np.array(np.diff(t0) * 10000000).astype(int))
 
     def update_trajectory(self):
         last_pos = self.trajectory[-1]
@@ -285,8 +274,6 @@ class BodySim(BodyManager):
         self.head_contacts_ground = value
 
     def step_no_physics(self, lin_vel, ang_vel):
-        # t0=[]
-        # t0.append(time.time())
         dt = self.model.dt
         l0=self.seg_lengths[0]
         head = self.head
@@ -294,16 +281,13 @@ class BodySim(BodyManager):
         hr0 = self.global_rear_end_of_head
         lin_vel, ang_vel=self.assess_collisions(lin_vel, ang_vel, head)
         d = lin_vel * dt
-        # t0.append(time.time())
         ang_vel, o1, hr1, hp1 = self.assess_tank_contact(ang_vel, o0, d, hr0, hp0, dt, l0)
-        # t0.append(time.time())
         head.set_pose(hp1, o1)
         head.update_vertices(hp1, o1)
 
         if self.Nsegs > 1:
             self.position_rest_of_body(o1-o0, head_rear_pos=hr1, head_or=o1)
 
-        # t0.append(time.time())
         self.pos = self.global_midspine_of_body if self.Nsegs != 2 else hr1
         self.model.space.move_agent(self, self.pos)
         head.set_lin_vel(lin_vel)
@@ -311,9 +295,6 @@ class BodySim(BodyManager):
         self.dst = d
         self.cum_dst += d
         self.trajectory.append(self.pos)
-
-        # t0.append(time.time())
-        # print(np.array(np.diff(t0)*1000000).astype(int))
 
     def position_rest_of_body(self, d_orientation, head_rear_pos, head_or):
         N = self.Nsegs
