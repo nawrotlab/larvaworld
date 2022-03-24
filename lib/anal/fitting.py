@@ -1,13 +1,17 @@
 import os
+import pandas as pd
 import warnings
 import numpy as np
-from scipy.stats import levy, norm, uniform, rv_discrete
+from scipy.stats import levy, norm, uniform, rv_discrete, ks_2samp
 from scipy.special import erf
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from lib.aux import naming as nam
 from lib.conf.stored.conf import saveConf
 from lib.process.aux import suppress_stdout, suppress_stdout_stderr
 
+def gaussian(x, mu, sig):
+    return np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
 
 def powerlaw_cdf(x, xmin, alpha):
     return 1 - (x / xmin) ** (1 - alpha)
@@ -128,6 +132,12 @@ def MSE(a1, a2, scaled=False):
         s1, s2 = 1, 1
     return np.sum((a1 / s1 - a2 / s2) ** 2) / a1.shape[0]
 
+def KS2(a1, a2):
+    if len(a1)==0 or len(a2)==0 :
+        return np.nan
+    else :
+        return ks_2samp(a1, a2)[0]
+
 
 def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
     xmids = u2[1:-int(len(u2) / 3)][::2]
@@ -185,8 +195,15 @@ def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=
     return dic
 
 
-def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=True,
-                     dataset_id='dataset', bout='pause', combine=True, store=False, fit_by='pdf'):
+def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=False,
+                     dataset_id='dataset', bout='pause', combine=True, fit_by='pdf', eval_func_id='KS2'):
+    eval_func_dic={
+        'MSE':MSE,
+        'KS':KS,
+        'KS2':KS2,
+    }
+    eval_func=eval_func_dic[eval_func_id]
+
     if xmin is None :
         xmin=np.nanmin(x0)
     if xmax is None :
@@ -236,21 +253,21 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
             lp_cdf, lp_pdf = None, None
 
         if fit_by == 'cdf':
-            KS_pow = MSE(c2cum, p_cdf)
-            KS_exp = MSE(c2cum, e_cdf)
-            KS_logn = MSE(c2cum, l_cdf)
-            KS_lognNpow = MSE(c2cum, lp_cdf) if lp_cdf is not None else np.nan
-            KS_lev = MSE(c2cum, lev_cdf)
-            KS_norm = MSE(c2cum, nor_cdf)
-            KS_uni = MSE(c2cum, uni_cdf)
+            KS_pow = eval_func(c2cum, p_cdf)
+            KS_exp = eval_func(c2cum, e_cdf)
+            KS_logn = eval_func(c2cum, l_cdf)
+            KS_lognNpow = eval_func(c2cum, lp_cdf) if lp_cdf is not None else np.nan
+            KS_lev = eval_func(c2cum, lev_cdf)
+            KS_norm = eval_func(c2cum, nor_cdf)
+            KS_uni = eval_func(c2cum, uni_cdf)
         elif fit_by == 'pdf':
-            KS_pow = MSE(c2, p_pdf)
-            KS_exp = MSE(c2, e_pdf)
-            KS_logn = MSE(c2, l_pdf)
-            KS_lognNpow = MSE(c2, lp_pdf) if lp_pdf is not None else np.nan
-            KS_lev = MSE(c2, lev_pdf)
-            KS_norm = MSE(c2, nor_pdf)
-            KS_uni = MSE(c2, uni_pdf)
+            KS_pow = eval_func(c2, p_pdf)
+            KS_exp = eval_func(c2, e_pdf)
+            KS_logn = eval_func(c2, l_pdf)
+            KS_lognNpow = eval_func(c2, lp_pdf) if lp_pdf is not None else np.nan
+            KS_lev = eval_func(c2, lev_pdf)
+            KS_norm = eval_func(c2, nor_pdf)
+            KS_uni = eval_func(c2, uni_pdf)
 
         Ks = np.array([KS_pow, KS_exp, KS_logn, KS_lognNpow, KS_lev, KS_norm, KS_uni])
         idx_Kmax = np.nanargmin(Ks)
@@ -285,8 +302,8 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
     res_dict2 = dict(zip(names2, res))
     best = {bout: {'best': get_best_distro(p, res_dict, idx_Kmax=idx_Kmax),
                    'fits': res_dict2}}
-    if store:
-        saveConf(best, conf_type='Ref', id=dataset_id, mode='update')
+    # if store:
+    #     saveConf(best, conf_type='Ref', id=dataset_id, mode='update')
 
     if print_fits:
         print()
@@ -489,3 +506,12 @@ class BoutGenerator:
         func = self.ddfs[self.name][mode]
         return func(x=x, **self.args)
 
+
+
+def std_norm(df) :
+    df_std = StandardScaler().fit(df).transform(df)
+    return pd.DataFrame(df_std, index=df.index, columns=df.columns)
+
+def minmax(df) :
+    df_minmax = MinMaxScaler().fit(df).transform(df)
+    return pd.DataFrame(df_minmax, index=df.index, columns=df.columns)
