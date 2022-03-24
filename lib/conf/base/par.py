@@ -934,8 +934,8 @@ if __name__ == '__main__':
     #print(dic.keys())
 
     #aaa=getPar(['cum_run_t'], to_return=['d'])[0]
-    d=ParDict(mode='build').dict
-    raise
+    # d=ParDict(mode='build').dict
+    # raise
     pars, =getPar(['pau_foa_mu', 'pau_fov_mu', 'pau_ba_mu', 'd', 'fo','x', 'y','b', 'dsp', 'cum_d', 'sv', 'a', 'sa', 'foa'], to_return=['d'])
 
 

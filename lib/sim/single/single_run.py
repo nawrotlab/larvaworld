@@ -130,30 +130,27 @@ class SingleRun:
         exp=self.experiment
         from lib.sim.single.analysis import source_analysis, deb_analysis, comparative_analysis, foraging_analysis
         from lib.conf.stored.analysis_conf import analysis_dict
-        if 'tactile' in exp:
-            anal_params = analysis_dict.tactile
-        elif 'RvsS' in exp or 'growth' in exp:
-            anal_params = analysis_dict.intake
-        elif 'anemo' in exp:
-            anal_params = analysis_dict.anemotaxis
-        elif 'puff' in exp:
-            anal_params = analysis_dict.puff
-        elif 'chemo' in exp:
-            anal_params = analysis_dict.chemo
-        elif 'RL' in exp:
-            anal_params = analysis_dict.RL
-        elif exp in ['food_at_bottom']:
+        dic={
+            'tactile' : analysis_dict.tactile,
+            'RvsS' : analysis_dict.intake,
+            'growth' : analysis_dict.intake,
+            'anemo' : analysis_dict.anemotaxis,
+            'puff' : analysis_dict.puff,
+            'chemo' : analysis_dict.chemo,
+            'RL' : analysis_dict.RL,
+            'dispersion' :  ['comparative_analysis'],
+            'dish' :  ['targeted_analysis'],
+        }
+        for k,v in dic.items() :
+            if k in exp :
+                anal_params = v
+        if exp in ['food_at_bottom']:
             anal_params = ['foraging_analysis']
         elif exp in ['random_food']:
             anal_params = analysis_dict.survival
-        elif 'dispersion' in exp :
-            anal_params = ['comparative_analysis']
-        elif 'dish' in exp:
-            anal_params = ['targeted_analysis']
         elif 'PI' in exp:
             PIs = {}
             PI2s = {}
-            #print()
             for d in self.datasets :
                 PIs[d.id]=d.config.PI["PI"]
                 PI2s[d.id]=d.config.PI2
@@ -161,8 +158,6 @@ class SingleRun:
                     print(f'Group {d.id} -> PI : {PIs[d.id]}')
                     print(f'Group {d.id} -> PI2 : {PI2s[d.id]}')
             return None, {'PIs': PIs, 'PI2s': PI2s}
-        # elif self.experiment in ['growth', 'RvsS'] :
-        #     anal_params = analysis_dict['DEB']
         else:
             return None, None
 

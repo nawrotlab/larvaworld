@@ -5,7 +5,7 @@ from nengo.networks import EnsembleArray
 
 from lib.aux.dictsNlists import save_dict
 from lib.model.modules.brain import Brain
-from lib.model.modules.crawl_bend_interference import Oscillator_coupling
+from lib.model.modules.crawl_bend_interference import SquareCoupling
 from lib.model.modules.intermitter import NengoIntermitter
 from lib.model.modules.locomotor import Locomotor
 
@@ -24,7 +24,7 @@ class NengoBrain(Network, Brain):
         # if m['turner'] and m['crawler']:
         #     self.turner = NengoEffector(**c['turner_params'])
         #     self.crawler = NengoEffector(**c['crawler_params'])
-        #     self.osc_coupling = Oscillator_coupling(brain=self, **c['interference_params'])
+        #     self.osc_coupling = DefaultCoupling(brain=self, **c['interference_params'])
         # if m['intermitter']:
         #     self.intermitter = NengoIntermitter(dt=self.dt, brain=self, **c['intermitter_params'])
         #     self.intermitter.start_effector()
@@ -371,7 +371,7 @@ class NengoLocomotor(Locomotor):
         if m['turner'] and m['crawler']:
             self.turner = NengoEffector(**c['turner_params'])
             self.crawler = NengoEffector(**c['crawler_params'])
-            self.osc_coupling = Oscillator_coupling(locomotor=self, **c['interference_params'])
+            self.osc_coupling = SquareCoupling(locomotor=self, **c['interference_params'])
         if m['intermitter']:
             self.intermitter = NengoIntermitter(dt=self.dt, locomotor=self, **c['intermitter_params'])
             self.intermitter.start_effector()

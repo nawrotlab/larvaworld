@@ -2,11 +2,11 @@ import random
 
 import numpy as np
 
-# from lib.model.modules.crawl_bend_interference import Oscillator_coupling
+# from lib.model.modules.crawl_bend_interference import DefaultCoupling
 # from lib.model.modules.crawler import Crawler
 # from lib.model.modules.feeder import Feeder
 # from lib.model.modules.intermitter import Intermitter, BranchIntermitter
-from lib.model.modules.locomotor import Locomotor, DefaultLocomotor
+from lib.model.modules.locomotor import Locomotor, DefaultLocomotor, PhasicLocomotor
 from lib.model.modules.memory import RLOlfMemory, RLTouchMemory
 from lib.model.modules.sensor import Olfactor, Toucher, WindSensor
 # from lib.model.modules.turner import Turner
@@ -80,6 +80,7 @@ class DefaultBrain(Brain):
         m = self.modules
         c = self.conf
 
+        # self.locomotor=PhasicLocomotor(dt=self.dt, conf=self.conf)
         self.locomotor=DefaultLocomotor(dt=self.dt, conf=self.conf)
 
         # if m['olfactor']:

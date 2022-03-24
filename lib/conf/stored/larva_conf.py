@@ -11,7 +11,9 @@ from lib.conf.base.dtypes import null_dict, null_Box2D_params, Box2Djoints
 ''' Default exploration model'''
 
 Cbas = null_dict('crawler', initial_freq=1.5, step_to_length_mu=0.25, step_to_length_std=0.0)
-base_coupling = null_dict('interference', crawler_phi_range=(0.45, 1.0), feeder_phi_range=(0.0, 0.0), attenuation=0.1)
+base_coupling = null_dict('interference', mode='square', crawler_phi_range=(0.45, 1.0), feeder_phi_range=(0.0, 0.0),
+                          attenuation=0.1)
+phasic_coupling = null_dict('interference', mode='phasic', attenuation_min=0.2, attenuation_max=0.31)
 
 Tsin = null_dict('turner',
                  mode='sinusoidal',
@@ -58,8 +60,16 @@ def Im(EEB, **kwargs):
         return null_dict('intermitter', feed_bouts=False, EEB=0.0, **kwargs)
 
 
-def ImD(pau, str, **kwargs):
-    return null_dict('intermitter', pause_dist=pau, stridechain_dist=str, **kwargs)
+def ImD(pau, str, run=None, **kwargs):
+    return null_dict('intermitter', pause_dist=pau, stridechain_dist=str, run_dist=run, **kwargs)
+
+
+ImFitted = ImD(
+    mode='simple',
+    pau={'fit': False, 'range': (0.125, 15.875), 'name': 'lognormal', 'mu': -0.24223, 'sigma': 0.96498},
+    str={'fit': False, 'range': (1, 157), 'name': 'lognormal', 'mu': 1.34411, 'sigma': 1.16138},
+    run={'fit': False, 'range': (0.375, 115.9375), 'name': 'powerlaw', 'alpha': 1.48249},
+)
 
 
 # -------------------------------------------WHOLE NEURAL MODES---------------------------------------------------------
@@ -187,6 +197,13 @@ brain_3c = brain(['L'],
                  intermitter=ImD(null_dict('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74),
                                  null_dict('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)))
 
+brain_phasic = brain(['L'],
+                     crawler=null_dict('crawler', step_to_length_mu=0.224, step_to_length_std=0.033, initial_freq=1.418,
+                                       max_vel_phase=3.6),
+                     turner=Tno_noise,
+                     interference=phasic_coupling,
+                     intermitter=ImFitted)
+
 
 def mod(brain=None, bod={}, energetics=None, phys={}, Box2D={}):
     if Box2D == {}:
@@ -246,6 +263,7 @@ def create_mod_dict():
 
     explorers = {
         'explorer': add_brain(LW),
+        'phasic_explorer': add_brain(brain_phasic),
         'branch_explorer': add_brain(add_Im(Im(0.0, mode='branch'), LW)),
         'nengo_explorer': add_brain(nengo_brain(['L', 'W'], EEB=0.0)),
         'Levy-walker': add_brain(Levy_brain),
@@ -261,7 +279,8 @@ def create_mod_dict():
         'navigator_x2': add_brain(add_OD(OD2, LO)),
         'navigator_x2_brute': add_brain(add_OD(OD2, LO_brute)),
         'basic_navigator': add_brain(brain(['L', 'O'], OD=OD1, turner=Tsin, crawler=Ccon), bod={'Nsegs': 1}),
-        'continuous_navigator': add_brain(brain(['C', 'T', 'O'], OD=OD1, turner=Tno_noise, crawler=Ccon_no_noise), bod={'Nsegs': 1}),
+        'continuous_navigator': add_brain(brain(['C', 'T', 'O'], OD=OD1, turner=Tno_noise, crawler=Ccon_no_noise),
+                                          bod={'Nsegs': 1}),
         'RL_navigator': add_brain(LOFM),
         'nengo_navigator': add_brain(nLO),
         'nengo_navigator_x2': add_brain(add_OD(OD2, nLO)),
@@ -343,7 +362,8 @@ if __name__ == '__main__':
 
 
     zebrafish = {
-        'continuous_navigator': add_brain(brain(['C', 'T', 'O'], OD=OD1, turner=Tno_noise, crawler=Ccon_no_noise), bod={'Nsegs': 1}),
+        'continuous_navigator': add_brain(brain(['C', 'T', 'O'], OD=OD1, turner=Tno_noise, crawler=Ccon_no_noise),
+                                          bod={'Nsegs': 1}),
     }
     from lib.conf.stored.conf import saveConf
 

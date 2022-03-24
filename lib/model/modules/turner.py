@@ -59,21 +59,22 @@ class Turner(Oscillator, Effector):
         # else:
         #     return A_olf + np.random.normal(scale=self.activation_noise)
         # return A_olf
-        return A_olf + np.random.normal(loc=A_olf, scale=self.activation_noise)
+        return A_olf * (1 + np.random.normal(scale=self.activation_noise))
 
-    def step(self, inhibited=False, attenuation=1.0, A_in=0.0):
+    def step(self, A_in=0.0):
         self.activation = self.update_activation(A_in)
-        if not inhibited:
-            A = self.compute_angular_activity() + self.buildup
-            self.buildup = 0
-        else:
-            if self.continuous:
-                a = self.compute_angular_activity()
-                A = a * attenuation + self.buildup
-                if self.rebound:
-                    self.buildup += a
-            else:
-                A = 0.0
+        A = self.compute_angular_activity()
+        # if not inhibited:
+        #     A = self.compute_angular_activity() + self.buildup
+        #     self.buildup = 0
+        # else:
+        #     if self.continuous:
+        #         a = self.compute_angular_activity()
+        #         A = a * attenuation + self.buildup
+        #         if self.rebound:
+        #             self.buildup += a
+        #     else:
+        #         A = 0.0
         n = np.random.normal(scale=self.noise)
         A += n
         return A
@@ -165,6 +166,7 @@ class NeuralOscillator:
         self.H_C_l += t_h * (-self.H_C_l + self.E_l)
         self.H_C_r += t_h * (-self.H_C_r + self.E_r)
         self.activity = self.E_r - self.E_l
+        return self.activity
 
     def compute_R(self, x, h):
         if x > 0:

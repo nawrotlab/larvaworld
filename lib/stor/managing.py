@@ -17,8 +17,7 @@ def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None,
     build_conf = g.tracker.filesystem
     data_conf = g.tracker.resolution
     spatial_def = g.enrichment.metric_definition.spatial
-    arena_pars = g.tracker.arena
-    env_params=null_dict('env_conf', arena=arena_pars)
+    env_params=null_dict('env_conf', arena=g.tracker.arena)
 
 
     try:

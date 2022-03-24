@@ -2,10 +2,10 @@ import numpy as np
 
 from lib.anal.fitting import BoutGenerator, gaussian
 from lib.aux.ang_aux import restore_bend_2seg
-from lib.model.modules.crawl_bend_interference import Oscillator_coupling
+from lib.model.modules.crawl_bend_interference import DefaultCoupling, SquareCoupling, PhasicCoupling
 from lib.model.modules.crawler import Crawler
 from lib.model.modules.feeder import Feeder
-from lib.model.modules.intermitter import Intermitter, BranchIntermitter, NengoIntermitter
+from lib.model.modules.intermitter import Intermitter, BranchIntermitter, NengoIntermitter, SimpleIntermitter
 from lib.model.modules.turner import Turner, NeuralOscillator
 
 
@@ -58,38 +58,41 @@ class DefaultLocomotor(Locomotor):
         super().__init__(**kwargs)
         m, c = conf.modules, conf
         if m['crawler']:
-            self.crawler = Crawler(dt=self.dt, **c['crawler_params'])
+            self.crawler = Crawler(dt=self.dt, **c.crawler_params)
         if m['turner']:
-            self.turner = Turner(dt=self.dt, **c['turner_params'])
+            self.turner = Turner(dt=self.dt, **c.turner_params)
         if m['feeder']:
-            self.feeder = Feeder(dt=self.dt, **c['feeder_params'])
-        self.coupling = Oscillator_coupling(locomotor=self, **c['interference_params']) if m[
-            'interference'] else Oscillator_coupling(locomotor=self)
+            self.feeder = Feeder(dt=self.dt, **c.feeder_params)
+        mode = c.interference_params.mode if 'mode' in c.interference_params.keys() else 'default'
+        if mode == 'default':
+            self.coupling = DefaultCoupling(locomotor=self, **c.interference_params)
+        elif mode == 'square':
+            self.coupling = SquareCoupling(locomotor=self, **c.interference_params)
+        elif mode == 'phasic':
+            self.coupling = PhasicCoupling(locomotor=self, **c.interference_params)
 
         if m['intermitter']:
-            mode = c['intermitter_params']['mode'] if 'mode' in c['intermitter_params'].keys() else 'default'
+            mode = c.intermitter_params.mode if 'mode' in c.intermitter_params.keys() else 'default'
             if mode == 'default':
-                self.intermitter = Intermitter(locomotor=self, dt=self.dt, **c['intermitter_params'])
+                self.intermitter = Intermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
             elif mode == 'branch':
-                self.intermitter = BranchIntermitter(locomotor=self, dt=self.dt, **c['intermitter_params'])
+                self.intermitter = BranchIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
+            elif mode == 'simple':
+                self.intermitter = SimpleIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
 
     def step(self, A_in=0, length=1):
-        self.lin_vel, ang, feed_motion = 0, 0, False
+        self.lin_vel, Aang, feed_motion = 0, 0, False
         if self.intermitter:
             self.intermitter.step()
         if self.feeder:
             self.feed_motion = self.feeder.step()
         if self.crawler:
-            self.lin_vel = self.crawler.step()
+            self.lin_vel = (self.crawler.step() + np.random.normal(scale=self.crawler_noise)) * length
         if self.turner:
-            self.ang_vel = self.turner.step(inhibited=self.coupling.step(),
-                                            attenuation=self.coupling.attenuation,
-                                            A_in=A_in)
+            Aang0=self.turner.step(A_in=A_in)
+            Aang = self.coupling.step(self.crawler.phi) * Aang0 * (1 + np.random.normal(scale=self.turner_output_noise))
 
-        self.add_noise()
-        self.scale2length(length)
-
-        return self.lin_vel, self.ang_vel, self.feed_motion
+        return self.lin_vel, Aang, self.feed_motion
 
 
 class Levy_locomotor(Locomotor):
@@ -214,6 +217,43 @@ class Davies2015(Locomotor):
         self.add_noise()
         return self.lin_vel, self.ang_vel, self.feed_motion
 
+class PhasicLocomotor(Locomotor):
+    def __init__(self, conf,
+                 pause_dist={'range': [0.4, 20.0], 'name': 'uniform'},
+                 run_dist={'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
+                 stridechain_dist=None,
+                 initial_freq=1.418, step_mu=0.224, step_std=0.033,
+                 attenuation_min=0.2, attenuation_max=0.31, max_vel_phase=3.6,
+                 turner_input_constant=19, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0,
+                 **kwargs):
+        super().__init__(**kwargs)
+        # m, c = conf.modules, conf
+        self.max_vel_phase=max_vel_phase
+        max_attenuation_phase = max_vel_phase -1.2
+        self.coupling = PhasicCoupling(locomotor=self, attenuation_min=attenuation_min, attenuation_max=attenuation_max, max_attenuation_phase = max_attenuation_phase)
+        self.neural_oscillator = NeuralOscillator(dt=self.dt, w_ee=w_ee, w_ce=w_ce, w_ec=w_ec, w_cc=w_cc, m=m, n=n)
+        self.crawler = Crawler(dt=self.dt, **conf['crawler_params'])
+
+        self.turner_input_constant = turner_input_constant
+        self.intermitter = SimpleIntermitter(dt=self.dt, locomotor=self, pause_dist=pause_dist,
+                 run_dist=run_dist,stridechain_dist=stridechain_dist)
+
+
+
+    def step(self, A_in=0, length=1):
+        state=self.intermitter.step()
+        # self.bend = restore_bend_2seg(self.bend, self.last_dist, length, correction_coef=self.bend_correction_coef)
+        if state == 'run':
+            attenuation_coef = self.coupling.step(self.crawler.phi)
+        elif state == 'pause':
+            attenuation_coef = 1
+
+        self.lin_vel = (self.crawler.step() + np.random.normal(scale=self.crawler_noise)) * length
+
+        input = (self.turner_input_constant + A_in) * (1 + np.random.normal(scale=self.turner_input_noise))
+        Aang = attenuation_coef * self.neural_oscillator.step(input)* (1 + np.random.normal(scale=self.turner_output_noise))
+
+        return self.lin_vel, Aang, self.feed_motion
 
 class Sakagiannis2022(Locomotor):
     def __init__(self, dt, conf=None,

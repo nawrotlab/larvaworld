@@ -277,12 +277,18 @@ def init_pars():
                                   'h': 'The frequency range of the repetitive lateral bending behavior.'},
                    },
         'interference': {
+            'mode': {'t': str, 'v': 'square', 'vs': ['default', 'square', 'phasic'],
+                                 'h': 'The interference mode of the CRAWLER on the TURNER.'},
             'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0,
                                   'h': 'The CRAWLER oscillator cycle range during which it interferes with the TURNER.'},
             'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0,
                                  'h': 'The FEEDER oscillator cycle range during which it interferes with the TURNER.'},
             'attenuation': {'v': 1.0, 'max': 1.0,
-                            'h': 'The activity attenuation exerted on the TURNER module due to interference by other oscillators.'}
+                            'h': 'The activity attenuation exerted on the TURNER module due to interference by other oscillators.'},
+            'attenuation_min': {'v': 0.2, 'max': 1.0,
+                            'h': 'The minimum activity attenuation exerted on the TURNER module due to interference by other oscillators.'},
+            'attenuation_max': {'v': 0.31, 'max': 1.0,
+                            'h': 'The maximum activity attenuation exerted on the TURNER module due to interference by other oscillators.'},
         },
 
         'olfactor': {
@@ -465,9 +471,10 @@ def init_pars():
                  }
 
     d['intermitter'] = {
-        'mode': {'t': str, 'v': 'default', 'vs': ['', 'default', 'branch', 'nengo'],
+        'mode': {'t': str, 'v': 'default', 'vs': ['', 'default', 'branch', 'nengo', 'simple'],
                  'h': 'The implementation mode of the intermittency (INTERMITTER) module.'},
         'stridechain_dist': d['bout_distro'],
+        'run_dist': d['bout_distro'],
         'pause_dist': d['bout_distro'],
         'EEB': {'v': 0.0, 'max': 1.0,
                 'h': 'The baseline exploitation-exploration balance. 0 means only exploitation, 1 only exploration.'},
