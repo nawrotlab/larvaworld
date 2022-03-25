@@ -92,7 +92,7 @@ importformats = [
                            'Ncontour': 0},
 
             'filesystem': {
-                'read_sequence': ['Date', 'head_x', 'head_y', 'spinepoint_1_x', 'spinepoint_1_y', 'spinepoint_2_x', 'spinepoint_2_y', 'spinepoint_2_x','spinepoint_2_y', 'spinepoint_3_x', 'spinepoint_3_y', 'tail_x', 'tail_y', 'centroid_x', 'centroid_y'],
+                'read_sequence': ['Date', 'head_x', 'head_y', 'spinepoint_1_x', 'spinepoint_1_y', 'spinepoint_2_x','spinepoint_2_y', 'spinepoint_3_x', 'spinepoint_3_y', 'tail_x', 'tail_y', 'centroid_x', 'centroid_y'],
                 'read_metadata': False,
                 # 'detect': {
                 'folder': {'pref': None, 'suf': None},

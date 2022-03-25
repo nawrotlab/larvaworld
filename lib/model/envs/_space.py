@@ -381,3 +381,63 @@ class WindScape:
                 if args['wind_direction'] is not None and args['wind_direction'] != self.wind_direction:
                     self.set_wind_direction(args['wind_direction'])
                 self.wind_speed = args['wind_speed']
+
+# @todo adding thermoscape class - need to edit functions within this class mix of gaussian GaussianValueLayer(ValueLayer)
+
+class ThermoScape(ValueLayer):
+    def __init__(self, pTemp, origins=[], diffTemps=[], default_color='green', visible=False):
+
+        self.plate_temp = pTemp
+        self.thermo_sources = origins
+        self.thermo_source_dTemps = diffTemps
+        # self.model = model
+        # self.wind_direction = wind_direction
+        # self.wind_speed = wind_speed
+        # self.max_dim = np.max(self.model.arena_dims)
+        self.default_color = default_color
+        self.visible = visible
+
+        # p0s = rotate_around_center_multi([(-self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
+        # p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
+        # self.scapelines=[(p0,p1) for p0,p1 in zip(p0s,p1s)]
+
+
+
+
+    def update_values(self):
+        pass
+
+    def get_value(self, pos):
+
+        value = 0
+        for s in self.sources:
+            # print(s.unique_id, s.odor_peak_value)
+            p = s.get_position()
+            rel_pos = [pos[0] - p[0], pos[1] - p[1]]
+            value += s.get_thermo_value(rel_pos)
+        return value
+
+    def get_grid(self):
+        X, Y = self.meshgrid
+
+        @np.vectorize
+        def func(a, b):
+            v = self.get_value((a, b))
+            return v
+
+        V = func(X, Y)
+        self.max_value = np.max(V.flatten())
+        return V
+
+    def draw_isocontours(self, viewer):
+        # g=self.get_grid()
+        # vs=np.linspace(np.min(g), np.max(g), 5)
+        for s in self.sources:
+            p = s.get_position()
+            for r in np.arange(0, 0.050, 0.01):
+                pX = (p[0] + r, p[1])
+                v = s.get_thermo_value(pX)
+                viewer.draw_circle(p, r, self.default_color, filled=False, width=0.0005)
+                text_box = InputBox(text=str(np.round(v, 2)), color_active=self.default_color, visible=True,
+                                    screen_pos=viewer._transform(pX))
+                text_box.draw(viewer)

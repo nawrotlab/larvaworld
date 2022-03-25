@@ -131,7 +131,7 @@ grouped_exp_dict = {
                                     l=lgs(models=['explorer', 'Levy-walker', 'explorer_3con', 'nengo_explorer'],
                                           ids=['CoupledOsc', 'Levy', '3con', 'nengo'], N=5)),
     },
-
+#@todo need to add thermotaxis here
     'chemotaxis': {
         'chemotaxis': chem_exp('odor_gradient',
                                l=lg(m='continuous_navigator', N=8, p=(-0.04, 0.0), s=(0.005, 0.02),

@@ -132,6 +132,33 @@ class Olfactor(Sensor):
     def second_odor_concentration_change(self):
         return list(self.dX.values())[1]
 
+
+# @todo add class Thermosensor(Sensor) here with a double gain dict
+class Thermosensor(Sensor):
+    def __init__(self, thermo_dict={'cool', 'warm'}, **kwargs):
+        super().__init__(gain_dict=thermo_dict, **kwargs)
+        for id in self.brain.agent.model.thermo:
+            if id not in self.gain_ids:
+                self.add_novel_gain(id)
+            # except:
+            #     pass
+
+    def affect_locomotion(self):
+        if self.activation<0:
+            self.brain.intermitter.inhibit_locomotion()
+        elif self.activation>0:
+            self.brain.intermitter.trigger_locomotion()
+
+    @property
+    def detected_temperature(self):
+        return list(self.X.values())[0]
+
+    @property
+    def detected_temperature_change(self):
+        return list(self.dX.values())[0]
+
+
+
 class Toucher(Sensor):
     def __init__(self,initial_gain, brain, **kwargs):
         gain_dict = {s: initial_gain for s in brain.agent.get_sensors()}

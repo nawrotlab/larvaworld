@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import numpy as np
 from scipy.stats import multivariate_normal
 from shapely.geometry import Point
@@ -8,7 +9,7 @@ from lib.anal.rendering import InputBox
 
 class LarvaworldAgent:
     def __init__(self,unique_id: str,model, pos=None, default_color=None, radius=None,visible=True,
-                 odor={'odor_id':None, 'odor_intensity':None, 'odor_spread':None},regeneration=False,regeneration_pos=None,
+                 odor={'odor_id':None, 'odor_intensity':None, 'odor_spread':None},thermo={'temp_spread':None, 'plate_temp':22, 'thermo_origins': None, 'thermo_differences': None},regeneration=False,regeneration_pos=None,
                  group='', can_be_carried=False, can_be_displaced=False, **kwargs):
         self.visible = visible
         self.selected = False
@@ -28,7 +29,7 @@ class LarvaworldAgent:
         self.id_box = InputBox(text=self.unique_id,color_inactive=self.default_color, color_active=self.default_color,agent=self)
         self.odor_id = odor['odor_id']
         self.set_odor_dist(odor['odor_intensity'], odor['odor_spread'])
-
+        #self.set_thermo_dist()
         self.carried_objects = []
         self.can_be_carried = can_be_carried
         self.can_be_displaced = can_be_displaced
@@ -77,6 +78,56 @@ class LarvaworldAgent:
 
     def get_gaussian_odor_value(self, pos):
         return self.odor_dist.pdf(pos) * self.odor_peak_value
+
+#@todo need to add set_thermo_dist and get_thermo_value
+# for get_thermo_value I need to see what resolution we want data at (I guess at 10th of a mm will be enough) - so set_thermo_dist needs to be 1700x1700 so its a 10th of a mm.
+
+
+    def set_thermo_dist(self, rezo=0.1, spread=1700, pTemp = 22, origins = [[85,10], [10,85], [85,160], [160,85]], tempDiff = [8,-8,8,-8], size):
+        '''
+        size is the length of the square arena in mm.
+        rezo is the resolution with 1 being a mm, 0.1 being a 10th of a mm.
+        spread is the spread put into the multivariate_normal function.
+        pTem is the plate Temp i.e. the standard temperature of the plate - default is 22˚C.
+        origins are the coordinate locations on the size x size plate of the heat or cold sources. type: list
+        tempDiff needs to be a list the same length as origins, and determines if that source will be cold or hot and by how much.
+
+        In other words a <ptemp> of 22 and a <origins> of [[10,20], [30,40]] and <tempDiff> of [8,-8] would make a temperature source at
+        [10,20] that is ~30˚C and a source at [30,40] that is ~14˚C. The mean is taken where the temperatures of multiple sources overlap.
+        '''
+        size, size2 = self.model.arena_dims * 1000 #it is in m and we want it in mm.
+        if spread is None:
+            spread = size * 10
+
+        self.thermo_spread = spread 
+        self.plate_temp = pTemp 
+        self.thermo_origins = {str(i):o for i,o in enumerate(origins)} # @todo need to put this in dictionary (with same 1 2 3 4 and rv_dict)
+        self.thermo_origins_dTemp = {str(i):o for i,o in enumerate(tempDiff)} # @todo need to put this in dictionary (with same 1 2 3 4 and rv_dict)
+        if len(origins) != len(tempDiff):
+            raise ValueError # need to raise a more informative error.
+
+        x, y = np.mgrid[0:size:rezo, 0:size2:rezo] # setting 170 x 170 grid
+        pos = np.dstack((x, y))
+
+        rv_dict = {}
+        thermoDists_Dict = {}
+        for k,v in enumerate(origins):
+            rv_dict[k] = multivariate_normal(v, [[spread, 0], [0, spread]])
+            thermoDists_Dict[k] = (rv_dict[k].pdf(pos)/rv_dict[k].pdf(v))*(tempDiff[k] * len(origins))
+        
+        self.thermo_dist_raw = rv_dict
+        # plt.imshow(22 + rv, cmap='hot', interpolation='nearest'); plt.colorbar(); plt.show()
+        # plt.hist(pTemp + rv.flatten(), bins=50 ); plt.show()
+        self.thermo_dist = pTemp + sum(thermoDists_Dict.values()) / len(thermoDists_Dict) # alternatively I could just store thermoDists_Dict and get_thermo_value calculate each time with plateTemp (if this is memory inefificent)
+        # return  pTemp + sum(thermoDists_Dict.values()) / len(thermoDists_Dict)
+
+    def get_thermo_value(self, pos):
+        pos_temp = {}
+        for k,v in self.thermo_dist_raw:
+            v.pdf[pos * 1000] / v.pdf(self.origins[k]) * (self.thermo_origins_dTemp[k] * len(self.thermo_origins_dTemp)) #@todo need to check if this works
+        return self.plate_temp + sum(pos_temp.values()) / len(pos_temp)
+        # x,y = pos * 1000 #@todo need to multiply x and y based on what unit they are in i.e. if they are in mm multiple by 10
+        # return self.thermo_dist[y,x]
 
     def draw(self, viewer, filled=True):
         if self.get_shape() is None :

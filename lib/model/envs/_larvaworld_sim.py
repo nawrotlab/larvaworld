@@ -73,6 +73,43 @@ class LarvaWorldSim(LarvaWorld):
         # self.refresh_odor_dicts(ids)
         return N, layers
 
+
+#@todo add _create_thermo_layers
+    def _create_thermo_layers(self, pars):
+        from lib.model.envs._space import ThermoScape, GaussianValueLayer
+        sources = self.get_food() + self.get_flies()
+        ids = dNl.unique_list([s.thermo_id for s in sources if s.thermo_id is not None]) #@note thermo_id needs to be added to ExpConfs.txt
+        N = len(ids)
+        cols = N_colors(N, as_rgb=True)
+        layers = {}
+        for i, (id, c) in enumerate(zip(ids, cols)):
+            od_sources = [f for f in sources if f.odor_id == id]
+            temp = dNl.unique_list([s.default_color for s in od_sources])
+            if len(temp) == 1:
+                c0 = temp[0]
+            elif len(temp) == 3 and all([type(k) == float] for k in temp):
+                c0 = temp
+            else:
+                c0 = c
+            kwargs = {
+                'model': self,
+                'unique_id': id,
+                'sources': od_sources,
+                'default_color': c0,
+                'space_range': self.space_edges_for_screen,
+            }
+            if pars.odorscape == 'Diffusion':
+                layers[id] = DiffusionValueLayer(dt=self.dt, scaling_factor=self.scaling_factor,
+                                                 grid_dims=pars['grid_dims'],
+                                                 evap_const=pars['evap_const'],
+                                                 gaussian_sigma=pars['gaussian_sigma'],
+                                                 **kwargs)
+            elif pars.odorscape == 'Gaussian':
+                layers[id] = GaussianValueLayer(**kwargs)
+        # self.refresh_odor_dicts(ids)
+        return N, layers
+
+
     def create_larvae(self, larva_groups, parameter_dict={}):
         for gID, gConf in larva_groups.items():
 

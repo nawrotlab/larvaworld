@@ -70,6 +70,17 @@ class Brain():
             #     v = np.abs(angle_dif(o, wo)) / 180 * wv
         return {'windsensor': v}
 
+
+    def sense_temperature(self, pos=None):
+        if pos is None:
+            pos = self.agent.pos
+        cons = {}
+        for id, layer in self.agent.model.thermo_layers.items():
+            v = layer.get_value(pos)
+            cons[id] = v + np.random.normal(scale=v * self.thermo.noise)
+        # print(self.agent.unique_id, cons)
+        return cons
+    #@todo need to edit sense_temperature(self) appropriately. Do we want noise?
     # def sense(self):
 
 
