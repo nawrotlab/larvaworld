@@ -22,6 +22,7 @@ class BaseIntermitter(Effector):
         self.turner = locomotor.turner if locomotor is not None else None
         self.EEB = EEB
         self.base_EEB = EEB
+        self.cur_state = None
 
         self.feeder_reoccurence_rate = feeder_reoccurence_rate if feeder_reoccurence_rate is not None else self.EEB
         self.feeder_reocurrence_as_EEB = feeder_reocurrence_as_EEB
@@ -36,8 +37,6 @@ class BaseIntermitter(Effector):
 
 
     def reset(self):
-        # self.initialize()
-
         self.t = 0
         self.total_t = 0
         self.ticks = 0
@@ -79,6 +78,7 @@ class BaseIntermitter(Effector):
     def step(self):
         super().count_time()
         self.update_state()
+        return self.cur_state
 
     def generate_stridechain(self):
         pass
@@ -101,13 +101,15 @@ class BaseIntermitter(Effector):
                     self.feeder.start_effector()
                 if self.crawler is not None:
                     self.crawler.stop_effector()
+                self.cur_state = 'feed'
 
     def run_initiation(self) :
-        pass
+        self.cur_state='run'
 
     def inhibit_locomotion(self):
         # print('ffff')
         self.current_pause_duration = self.generate_pause()
+        self.cur_state='pause'
         if self.crawl_bouts and self.crawler is not None:
             self.crawler.stop_effector()
         if self.feed_bouts and self.feeder is not None:
@@ -237,7 +239,7 @@ class BaseIntermitter(Effector):
 
     @property
     def active_bouts(self):
-        return self.current_stridechain_length, self.current_feedchain_length, self.current_pause_duration
+        return self.current_stridechain_length, self.current_feedchain_length, self.current_pause_duration, self.current_run_duration
 
     def interrupt_locomotion(self):
         if self.current_pause_duration is None:
@@ -245,51 +247,44 @@ class BaseIntermitter(Effector):
                 self.register_feedchain()
             elif self.current_stridechain_length is not None:
                 self.register_stridechain()
+            elif self.current_run_duration is not None:
+                self.register_run()
             self.inhibit_locomotion()
 
     def trigger_locomotion(self):
         if self.current_pause_duration is not None:
             self.register_pause()
             self.disinhibit_locomotion()
+#
 
-class SimpleIntermitter(BaseIntermitter) :
-    def __init__(self,pause_dist={'range': [0.4, 20.0], 'name': 'uniform'},
-                 run_dist={'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791}, stridechain_dist=None,
-                 **kwargs):
+class Intermitter(BaseIntermitter):
+    def __init__(self, pause_dist=None, stridechain_dist=None, run_dist= None, run_mode='stridechain',**kwargs):
         super().__init__(**kwargs)
+        if pause_dist.range is None and stridechain_dist.range is None:
+            conf=loadConf('None.200_controls', 'Ref').bout_distros
+            pause_dist=conf.pause
+            stridechain_dist=conf.stride
 
-
-        if stridechain_dist is None :
-            self.run_dist = BoutGenerator(**run_dist, dt=self.dt)
-            # self.cur_run_dur_max = self.run_dist.sample()
-            # self.cur_run_dur = 0
-            # self.current_numstrides = None
-            self.stridechain_dist = None
-        else :
-            self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
-            # self.cur_stridechain_length = self.stridechain_dist.sample()
-            # self.current_numstrides = 0
-            self.run_dist = None
-            # self.cur_run_dur = None
-
+        if run_mode=='stridechain' :
+            if stridechain_dist is not None :
+                self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
+                self.run_dist = None
+            else :
+                run_mode = 'run'
+        if run_mode=='run' :
+            if run_dist is not None :
+                self.run_dist = BoutGenerator(**run_dist, dt=self.dt)
+                self.stridechain_dist = None
+            else :
+                raise ValueError ('None of stidechain or run distribution exist')
         self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
-        # self.cur_pause_dur_max = None
-        # self.cur_pause_dur = None
-        self.cur_state = None
-        self.run_initiation()
+        self.disinhibit_locomotion()
 
-    @property
-    def run_termination(self):
-        if self.stridechain_dist is not None and self.current_numstrides >= self.current_stridechain_length:
-            self.current_stridechain_length = None
-            self.current_numstrides = None
-            return True
-        elif self.run_dist is not None and self.t >= self.current_run_duration:
-            self.current_run_duration = None
-            # self.cur_run_dur_max = None
-            return True
-        else:
-            return False
+    def generate_stridechain(self):
+        return self.stridechain_dist.sample()
+
+    def generate_run(self):
+        return self.run_dist.sample()
 
     def run_initiation(self):
         if self.stridechain_dist is not None:
@@ -300,43 +295,6 @@ class SimpleIntermitter(BaseIntermitter) :
             # self.cur_run_dur = 0
         self.cur_state = 'run'
         # self.locomotor.crawler.effector = True
-
-    def generate_pause(self):
-        return self.pause_dist.sample()
-
-
-    def step(self):
-        super().count_time()
-        self.update_state()
-        return self.cur_state
-
-    # def step(self):
-    #     self.intermit()
-    #     if self.cur_state == 'run':
-    #         if self.cur_run_dur is not None:
-    #             self.cur_run_dur += self.dt
-    #         if self.locomotor.crawler.complete_iteration and self.current_numstrides is not None:
-    #             self.current_numstrides += 1
-    #     elif self.cur_state == 'pause':
-    #         self.current_pause_duration += self.dt
-    #     return self.cur_state
-
-    # def update(self, **kwargs):
-    #     pass
-
-class Intermitter(BaseIntermitter):
-    def __init__(self, pause_dist=None, stridechain_dist=None, **kwargs):
-        super().__init__(**kwargs)
-        if pause_dist.range is None and stridechain_dist.range is None:
-            conf=loadConf('None.200_controls', 'Ref').bout_distros
-            pause_dist=conf.pause
-            stridechain_dist=conf.stride
-        self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
-        self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
-        self.disinhibit_locomotion()
-
-    def generate_stridechain(self):
-        return self.stridechain_dist.sample()
 
     def generate_pause(self):
         return self.pause_dist.sample()

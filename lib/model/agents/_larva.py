@@ -17,7 +17,7 @@ class Larva(LarvaworldAgent):
     def update_color(self, default_color, dic, mode='lin'):
         color = deepcopy(default_color)
         if mode == 'lin':
-            if dic.stride_id:
+            if dic.stride_id or dic.run_id:
                 color = np.array([0, 150, 0])
             elif dic.pause_id:
                 color = np.array([255, 0, 0])

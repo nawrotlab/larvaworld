@@ -5,7 +5,7 @@ from lib.aux.ang_aux import restore_bend_2seg
 from lib.model.modules.crawl_bend_interference import DefaultCoupling, SquareCoupling, PhasicCoupling
 from lib.model.modules.crawler import Crawler
 from lib.model.modules.feeder import Feeder
-from lib.model.modules.intermitter import Intermitter, BranchIntermitter, NengoIntermitter, SimpleIntermitter
+from lib.model.modules.intermitter import Intermitter, BranchIntermitter, NengoIntermitter
 from lib.model.modules.turner import Turner, NeuralOscillator
 
 
@@ -41,7 +41,7 @@ class Locomotor:
             self.cur_pause_dur += self.dt
 
     def add_noise(self):
-        self.lin_vel += np.random.normal(scale=self.crawler_noise)
+        self.lin_vel = self.lin_vel *(1+np.random.normal(scale=self.crawler_noise))
         self.ang_vel = self.ang_vel * (1 + np.random.normal(scale=self.turner_output_noise))
 
     def scale2length(self, length):
@@ -77,8 +77,8 @@ class DefaultLocomotor(Locomotor):
                 self.intermitter = Intermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
             elif mode == 'branch':
                 self.intermitter = BranchIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
-            elif mode == 'simple':
-                self.intermitter = SimpleIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
+            # elif mode == 'simple':
+            #     self.intermitter = SimpleIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
 
     def step(self, A_in=0, length=1):
         self.lin_vel, Aang, feed_motion = 0, 0, False
@@ -99,10 +99,10 @@ class Levy_locomotor(Locomotor):
     def __init__(self, dt, conf=None,
                  pause_dist={'range': [0.4, 20.0], 'name': 'uniform'},
                  run_dist={'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
-                 run_scaled_velocity=None,run_velocity=None, ang_vel_headcast=0.3, **kwargs):
+                 run_scaled_velocity_mean=None,run_velocity_mean=None, ang_vel_headcast=0.3, **kwargs):
         super().__init__(dt=dt)
-        self.run_scaled_velocity = run_scaled_velocity
-        self.run_velocity = run_velocity
+        self.run_scaled_velocity_mean = run_scaled_velocity_mean
+        self.run_velocity_mean = run_velocity_mean
         self.ang_vel_headcast = ang_vel_headcast
 
         self.run_dist = BoutGenerator(**run_dist, dt=self.dt)
@@ -125,7 +125,7 @@ class Levy_locomotor(Locomotor):
             self.cur_run_dur_max = self.run_dist.sample()
             self.cur_run_dur = 0
             self.cur_state = 'run'
-            self.lin_vel = self.run_scaled_velocity * length if self.run_scaled_velocity is not None else self.run_velocity
+            self.lin_vel = self.run_scaled_velocity_mean * length if self.run_scaled_velocity_mean is not None else self.run_velocity_mean
             self.ang_vel = 0
         self.update()
         self.add_noise()
@@ -134,18 +134,18 @@ class Levy_locomotor(Locomotor):
 
 
 class Wystrach2016(Locomotor):
-    def __init__(self, dt, conf=None, run_scaled_velocity=None,run_velocity=None,
+    def __init__(self, dt, conf=None, run_scaled_velocity_mean=None,run_velocity_mean=None,
                  turner_input_constant=19, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0, **kwargs):
         super().__init__(dt=dt, **kwargs)
-        self.run_scaled_velocity = run_scaled_velocity
-        self.run_velocity = run_velocity
+        self.run_scaled_velocity_mean = run_scaled_velocity_mean
+        self.run_velocity_mean = run_velocity_mean
 
         self.turner_input_constant = turner_input_constant
         self.neural_oscillator = NeuralOscillator(dt=self.dt, w_ee=w_ee, w_ce=w_ce, w_ec=w_ec, w_cc=w_cc, m=m, n=n)
 
     def step(self, A_in=0, length=1):
         self.bend = restore_bend_2seg(self.bend, self.last_dist, length, correction_coef=self.bend_correction_coef)
-        self.lin_vel =  self.run_scaled_velocity * length if self.run_scaled_velocity is not None else self.run_velocity
+        self.lin_vel =  self.run_scaled_velocity_mean * length if self.run_scaled_velocity_mean is not None else self.run_velocity_mean
 
         input = (self.turner_input_constant + A_in) * (1 + np.random.normal(scale=self.turner_input_noise))
 
@@ -162,15 +162,15 @@ class Wystrach2016(Locomotor):
 
 
 class Davies2015(Locomotor):
-    def __init__(self, dt, conf=None, run_scaled_velocity=None, run_velocity=None, min_run_dur=1.0,
+    def __init__(self, dt, conf=None, run_scaled_velocity_mean=None, run_velocity_mean=None, run_dur_min=1.0,
                  theta_min_headcast=37, theta_max_headcast=120,
                  theta_max_weathervane=20, ang_vel_weathervane=0.1, ang_vel_headcast=0.3,
                  r_run2headcast=0.148, r_headcast2run=2.0,
                  r_weathervane_stop=2.0, r_weathervane_resume=1.0, **kwargs):
         super().__init__(dt=dt)
-        self.run_scaled_velocity = run_scaled_velocity
-        self.run_velocity = run_velocity
-        self.min_run_dur = min_run_dur
+        self.run_scaled_velocity_mean = run_scaled_velocity_mean
+        self.run_velocity_mean = run_velocity_mean
+        self.run_dur_min = run_dur_min
         self.theta_min_headcast, self.theta_max_headcast = theta_min_headcast, theta_max_headcast
         self.ang_vel_headcast = ang_vel_headcast
         self.theta_max_weathervane, self.ang_vel_weathervane = theta_max_weathervane, ang_vel_weathervane
@@ -181,7 +181,7 @@ class Davies2015(Locomotor):
         self.cur_weathervane = 0
 
     def step(self, A_in=0, length=1):
-        if self.cur_state == 'run' and self.cur_run_dur >= self.min_run_dur:
+        if self.cur_state == 'run' and self.cur_run_dur >= self.run_dur_min:
             if np.random.uniform(0, 1, 1) <= self.r_run2headcast * self.dt:
                 self.cur_state = 'headcast'
                 sign = np.sign(self.bend)[0] if self.bend != 0 else np.random.choice([-1, 1], 1)[0]
@@ -193,7 +193,7 @@ class Davies2015(Locomotor):
                 self.ang_vel = np.random.choice([-1, 1], 1)[0] * self.ang_vel_weathervane
         if self.cur_state == 'run':
             self.cur_run_dur += self.dt
-            self.lin_vel =  self.run_scaled_velocity * length if self.run_scaled_velocity is not None else self.run_velocity
+            self.lin_vel =  self.run_scaled_velocity_mean * length if self.run_scaled_velocity_mean is not None else self.run_velocity_mean
             self.cur_headcast = 0
 
             if self.ang_vel == 0.0:
@@ -216,44 +216,6 @@ class Davies2015(Locomotor):
             self.cur_headcast += self.ang_vel * self.dt
         self.add_noise()
         return self.lin_vel, self.ang_vel, self.feed_motion
-
-class PhasicLocomotor(Locomotor):
-    def __init__(self, conf,
-                 pause_dist={'range': [0.4, 20.0], 'name': 'uniform'},
-                 run_dist={'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
-                 stridechain_dist=None,
-                 initial_freq=1.418, step_mu=0.224, step_std=0.033,
-                 attenuation_min=0.2, attenuation_max=0.31, max_vel_phase=3.6,
-                 turner_input_constant=19, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0,
-                 **kwargs):
-        super().__init__(**kwargs)
-        # m, c = conf.modules, conf
-        self.max_vel_phase=max_vel_phase
-        max_attenuation_phase = max_vel_phase -1.2
-        self.coupling = PhasicCoupling(locomotor=self, attenuation_min=attenuation_min, attenuation_max=attenuation_max, max_attenuation_phase = max_attenuation_phase)
-        self.neural_oscillator = NeuralOscillator(dt=self.dt, w_ee=w_ee, w_ce=w_ce, w_ec=w_ec, w_cc=w_cc, m=m, n=n)
-        self.crawler = Crawler(dt=self.dt, **conf['crawler_params'])
-
-        self.turner_input_constant = turner_input_constant
-        self.intermitter = SimpleIntermitter(dt=self.dt, locomotor=self, pause_dist=pause_dist,
-                 run_dist=run_dist,stridechain_dist=stridechain_dist)
-
-
-
-    def step(self, A_in=0, length=1):
-        state=self.intermitter.step()
-        # self.bend = restore_bend_2seg(self.bend, self.last_dist, length, correction_coef=self.bend_correction_coef)
-        if state == 'run':
-            attenuation_coef = self.coupling.step(self.crawler.phi)
-        elif state == 'pause':
-            attenuation_coef = 1
-
-        self.lin_vel = (self.crawler.step() + np.random.normal(scale=self.crawler_noise)) * length
-
-        input = (self.turner_input_constant + A_in) * (1 + np.random.normal(scale=self.turner_input_noise))
-        Aang = attenuation_coef * self.neural_oscillator.step(input)* (1 + np.random.normal(scale=self.turner_output_noise))
-
-        return self.lin_vel, Aang, self.feed_motion
 
 class Sakagiannis2022(Locomotor):
     def __init__(self, dt, conf=None,

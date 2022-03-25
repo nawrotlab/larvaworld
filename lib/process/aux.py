@@ -1,7 +1,7 @@
 import os
 import sys
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
-
+import pandas as pd
 import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
@@ -257,8 +257,8 @@ def fft_max(a, dt, fr_range=(0.0, +np.inf)):
     # yf = moving_average(yf, n=21)
     xf_trunc = xf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
     yf_trunc = yf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
-    xmax = xf_trunc[np.argmax(yf_trunc)]
-    return xf, yf, xmax
+    fr = xf_trunc[np.argmax(yf_trunc)]
+    return xf, yf, fr
 
 
 def slow_freq(a, dt, tmax=60.0):
@@ -314,7 +314,6 @@ def slowNfast_freqs(s, e, c, point_idx=8, scaled=False):
     e[fr0a] = np.nan
     e[fr1a] = np.nan
     for id in c.agent_ids:
-        # print(id)
         df = s.xs(id, level="AgentID")
         # l_mu=np.nanmedian(df[l])
         xy = df[xy_pair].values
@@ -494,7 +493,7 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0)):
         Durations of the pauses.
 
     """
-    xf, yf, fr = fft_max(a, dt, fr_range=(0.5, 3.0))
+    xf, yf, fr = fft_max(a, dt, fr_range=(1, 2.5))
     tmin = stretch[0] // (fr * dt)
     tmax = stretch[1] // (fr * dt)
     i_min = find_peaks(-a, height=-2 * vel_thr, distance=tmin)[0]
@@ -532,11 +531,18 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0)):
             register(s00, s11, count)
             break
     runs = np.array(runs)
-    runs1 = runs[:, 1]
-    run_durs = np.diff(runs).flatten() * dt
-    run_slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in runs]
-    run_dsts = np.array([np.trapz(a[p], dx=dt) for p in run_slices])
-    run_idx = np.concatenate(run_slices)
+    if runs.shape[0]==0 :
+        runs1 =[]
+        run_durs =np.array([])
+        run_slices =[]
+        run_dsts =np.array([])
+        run_idx =np.array([])
+    else :
+        runs1 = runs[:, 1]
+        run_durs = np.diff(runs).flatten() * dt
+        run_slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in runs]
+        run_dsts = np.array([np.trapz(a[p], dx=dt) for p in run_slices])
+        run_idx = np.concatenate(run_slices)
 
     stride_slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in strides]
     stride_dsts = np.array([np.trapz(a[p], dx=dt) for p in stride_slices])
@@ -582,7 +588,7 @@ def detect_turns(a, dt, min_dur=None):
     if min_dur is None:
         min_dur = 2 * dt
 
-    xf, yf, fr = fft_max(a, dt, fr_range=(0.1, +np.inf))
+    xf, yf, fr = fft_max(a, dt, fr_range=(0.1, 0.8))
     i_zeros = np.where(np.sign(a).diff().ne(0) == True)[0]
     Rturns, Lturns = [], []
     for s0, s1 in zip(i_zeros[:-1], i_zeros[1:]):
@@ -630,6 +636,16 @@ def stride_interference(a_sv, a_fov, pau_fov_mu, strides, Nbins=64):
     phi_sv_max = x[np.argmax(ar_sv_mu)]
     return [at_min, at_max, phi_at_max, phi_sv_max]
 
+def weathervanesNheadcasts(run_idx,pause_idx, Lturn_slices, Rturn_slices, Lamps, Ramps):
+    amps = np.concatenate([Lamps, Ramps])
+    turn_slices = Lturn_slices + Rturn_slices
+    wvane_idx=[ii for ii,t in enumerate(turn_slices) if all([tt in run_idx for tt in t])]
+    cast_idx=[ii for ii,t in enumerate(turn_slices) if all([tt in pause_idx for tt in t])]
+    wvane_amps=amps[wvane_idx]
+    cast_amps=amps[cast_idx]
+    wvane_min, wvane_max = np.nanquantile(wvane_amps, 0.25), np.nanquantile(wvane_amps, 0.75)
+    cast_min, cast_max = np.nanquantile(cast_amps, 0.25), np.nanquantile(cast_amps, 0.75)
+    return wvane_min, wvane_max, cast_min, cast_max
 
 def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=None, **kwargs):
     import lib.aux.naming as nam
@@ -668,23 +684,23 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
     vs_ps = np.zeros([Nids, len(lin_ps)]) * np.nan
     vs_str_ps = np.zeros([Nids, len(str_ps) + len(att_ps)]) * np.nan
     chunk_dicts = {}
+    wNh = {}
+    wNh_ps = ['weathervane_q25_amp', 'weathervane_q75_amp', 'headcast_q25_amp', 'headcast_q75_amp']
     for jj, id in enumerate(ids):
         chunk_dict={}
-        # print(jj)
         # Angular
         a_fov = s[fov].xs(id, level="AgentID")
 
         fov_fr, Lturns, Rturns, Lmaxs, Rmaxs, Lamps, Ramps, Ldurs, Rdurs, Lturn_slices, Rturn_slices, Lturn_idx, Rturn_idx = detect_turns(
             a_fov, c.dt)
-
-        # print(jj, id, Lturns.shape, Rturns.shape)
-
-        step_vs[Lturns[:,1], jj, 0] = Lamps
-        step_vs[Rturns[:,1], jj, 0] = Ramps
-        step_vs[Lturns[:,1], jj, 1] = Ldurs
-        step_vs[Rturns[:,1], jj, 1] = Rdurs
-        step_vs[Lturns[:,1], jj, 2] = Lmaxs
-        step_vs[Rturns[:,1], jj, 2] = Rmaxs
+        if Lturns.shape[0]>0 :
+            step_vs[Lturns[:,1], jj, 0] = Lamps
+            step_vs[Lturns[:,1], jj, 1] = Ldurs
+            step_vs[Lturns[:, 1], jj, 2] = Lmaxs
+        if Rturns.shape[0] > 0:
+            step_vs[Rturns[:, 1], jj, 0] = Ramps
+            step_vs[Rturns[:,1], jj, 1] = Rdurs
+            step_vs[Rturns[:,1], jj, 2] = Rmaxs
 
         chunk_dict['Lturn']=Lturns
         chunk_dict['Rturn']=Rturns
@@ -714,6 +730,8 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
         else:
             runs, run_slices, run_idx, runs1, run_durs, run_dsts = detect_runs(a_v, c.dt, vel_thr=vel_thr)
             pauses, pause_slices, pause_idx, pauses1, pause_durs = detect_pauses(a_v, c.dt, runs=runs, vel_thr=vel_thr)
+
+        wNh[id] = dict(zip(wNh_ps, weathervanesNheadcasts(run_idx, pause_idx, Lturn_slices, Rturn_slices, Lamps, Ramps)))
         chunk_dict['run'] = runs
         chunk_dict['pause'] = pauses
 
@@ -758,6 +776,7 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
         all_turns_angles.append(np.concatenate([Lamps, Ramps]))
         all_turns_fov_max.append(np.concatenate([Lmaxs, Rmaxs]))
         chunk_dicts[id]=chunk_dict
+    e[wNh_ps] = pd.DataFrame.from_dict(wNh).T
     chunk_dicts = AttrDict(chunk_dicts)
     if save_to is not None:
         os.makedirs(save_to, exist_ok=True)
@@ -766,7 +785,7 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
     e[lin_ps] = vs_ps
     e[run_tr] = e[getPar(['cum_run_t'], to_return=['d'])[0][0]] / e[cum_t]
     e[pau_tr] = e[getPar(['cum_pau_t'], to_return=['d'])[0][0]] / e[cum_t]
-
+    e['turner_input_constant']=(e[getPar(['ffov'], to_return=['d'])[0][0]] / 0.024) + 5
     if c.Npoints > 1 and strides_enabled:
         e[str_ps + att_ps] = vs_str_ps
         e[sstr_d_mu] = e[getPar(['str_d_mu'], to_return=['d'])[0][0]] / e[l]

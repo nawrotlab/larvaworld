@@ -214,6 +214,8 @@ class ExpFitter:
         return fit
 
 
+
+
 if __name__ == '__main__':
     ref_dir = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/FRU->PUR/AM/test_10l'
     d_dir = '/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/imitation/test_10l_imitation_0'

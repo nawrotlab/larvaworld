@@ -936,7 +936,7 @@ if __name__ == '__main__':
     #aaa=getPar(['cum_run_t'], to_return=['d'])[0]
     # d=ParDict(mode='build').dict
     # raise
-    pars, =getPar(['pau_foa_mu', 'pau_fov_mu', 'pau_ba_mu', 'd', 'fo','x', 'y','b', 'dsp', 'cum_d', 'sv', 'a', 'sa', 'foa'], to_return=['d'])
+    pars, =getPar(['run_t_min', 'run_sv_mu', 'pau_ba_mu', 'd', 'fo','x', 'y','b', 'dsp', 'cum_d', 'sv', 'a', 'sa', 'foa'], to_return=['d'])
 
 
     print(pars)

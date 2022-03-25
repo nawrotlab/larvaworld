@@ -107,6 +107,8 @@ class Olfactor(Sensor):
         for id in self.brain.agent.model.odor_ids:
             if id not in self.gain_ids:
                 self.add_novel_gain(id)
+                # print(self.brain.agent.unique_id, id, 'new')
+        # print(self.brain.agent.unique_id, self.gain)
             # except:
             #     pass
 

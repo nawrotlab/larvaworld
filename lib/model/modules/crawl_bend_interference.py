@@ -8,7 +8,7 @@ class DefaultCoupling():
         self.cur_attenuation = 1
         self.locomotor = locomotor
 
-    def step(self):
+    def step(self, phi):
         return self.cur_attenuation
 
 class SquareCoupling(DefaultCoupling):
@@ -20,11 +20,11 @@ class SquareCoupling(DefaultCoupling):
         self.crawler = self.locomotor.crawler
         self.feeder = self.locomotor.feeder
 
-    def step(self):
+    def step(self, phi):
         c,f=self.locomotor.crawler, self.locomotor.feeder
         if c is not None:
             if c.effector:
-                phi = c.phi / np.pi
+                phi = phi / np.pi
                 p0, p1 = self.crawler_phi_range
                 if c.waveform in ['realistic', 'gaussian'] and (phi < p0 or phi > p1):
                     self.cur_attenuation = self.attenuation

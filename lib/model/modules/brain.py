@@ -6,7 +6,7 @@ import numpy as np
 # from lib.model.modules.crawler import Crawler
 # from lib.model.modules.feeder import Feeder
 # from lib.model.modules.intermitter import Intermitter, BranchIntermitter
-from lib.model.modules.locomotor import Locomotor, DefaultLocomotor, PhasicLocomotor
+from lib.model.modules.locomotor import Locomotor, DefaultLocomotor
 from lib.model.modules.memory import RLOlfMemory, RLTouchMemory
 from lib.model.modules.sensor import Olfactor, Toucher, WindSensor
 # from lib.model.modules.turner import Turner

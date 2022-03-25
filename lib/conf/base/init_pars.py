@@ -471,8 +471,10 @@ def init_pars():
                  }
 
     d['intermitter'] = {
-        'mode': {'t': str, 'v': 'default', 'vs': ['', 'default', 'branch', 'nengo', 'simple'],
+        'mode': {'t': str, 'v': 'default', 'vs': ['', 'default', 'branch', 'nengo'],
                  'h': 'The implementation mode of the intermittency (INTERMITTER) module.'},
+        'run_mode': {'t': str, 'v': 'stridechain', 'vs': ['stridechain', 'run'],
+                 'h': 'The generation mode of run epochs.'},
         'stridechain_dist': d['bout_distro'],
         'run_dist': d['bout_distro'],
         'pause_dist': d['bout_distro'],

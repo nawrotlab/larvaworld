@@ -65,7 +65,7 @@ def ImD(pau, str, run=None, **kwargs):
 
 
 ImFitted = ImD(
-    mode='simple',
+    run_mode='run',
     pau={'fit': False, 'range': (0.125, 15.875), 'name': 'lognormal', 'mu': -0.24223, 'sigma': 0.96498},
     str={'fit': False, 'range': (1, 157), 'name': 'lognormal', 'mu': 1.34411, 'sigma': 1.16138},
     run={'fit': False, 'range': (0.375, 115.9375), 'name': 'powerlaw', 'alpha': 1.48249},

@@ -137,10 +137,11 @@ class LarvaSim(BodySim, Larva):
         d = AttrDict.from_nested_dicts(self.null_behavior_dict.copy())
         inter = self.brain.locomotor.intermitter
         if inter is not None:
-            s, f, p = inter.active_bouts
+            s, f, p, r = inter.active_bouts
             d.stride_id = s is not None
             d.feed_id = f is not None
             d.pause_id = p is not None
+            d.run_id = r is not None
             d.stride_stop = inter.stride_stop
 
         orvel = self.front_orientation_vel
