@@ -174,21 +174,21 @@ def comp_angular(s, config, mode='minimal'):
     print('All angular parameters computed')
 
 
-def angular_processing(s, e, config, recompute=False, mode='minimal', **kwargs):
+def angular_processing(s, e, c, recompute=False, mode='minimal', **kwargs):
     from lib.process.basic import comp_extrema
     ang_pars = [nam.orient('front'), nam.orient('rear'), 'bend']
     if set(ang_pars).issubset(s.columns.values) and not recompute:
         print('Orientation and bend are already computed. If you want to recompute them, set recompute to True')
     else:
         try:
-            comp_orientations(s, e, config, mode=mode)
-            comp_bend(s, config, mode=mode)
+            comp_orientations(s, e, c, mode=mode)
+            comp_bend(s, c, mode=mode)
         except:
-            comp_ang_from_xy(s, e, dt=config.dt)
-    comp_angular(s, config, mode=mode)
-    comp_extrema(s, dt=config.dt, parameters=[nam.vel(nam.orient('front'))], interval_in_sec=0.3)
+            comp_ang_from_xy(s, e, dt=c.dt)
+    comp_angular(s, c, mode=mode)
+    comp_extrema(s, dt=c.dt, parameters=[nam.vel(nam.orient('front'))], interval_in_sec=0.3)
     compute_LR_bias(s, e)
-    store_aux_dataset(s, pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), type='distro', file=config.aux_dir)
+    store_aux_dataset(s, pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), type='distro', file=c.aux_dir)
     print(f'Completed {mode} angular processing.')
 
 

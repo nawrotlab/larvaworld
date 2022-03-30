@@ -26,26 +26,21 @@ def raw_or_filtered_xy(s, points):
         return
 
 
-def comp_linear(s, e, dt, Npoints, point, mode='minimal'):
-    points = nam.midline(Npoints, type='point')
-    Nsegs = np.clip(Npoints - 1, a_min=0, a_max=None)
+def comp_linear(s, e, c, mode='minimal'):
+    points = nam.midline(c.Npoints, type='point')
+    Nsegs = np.clip(c.Npoints - 1, a_min=0, a_max=None)
     segs = nam.midline(Nsegs, type='seg')
-
-    ids = s.index.unique('AgentID').values
-    Nids = len(ids)
-    Nticks = len(s.index.unique('Step'))
-
     if mode == 'full':
         print(f'Computing linear distances, velocities and accelerations for {len(points) - 1} points')
         points = points[1:]
         orientations = nam.orient(segs)
     elif mode == 'minimal':
-        if point == 'centroid' or point == points[0]:
+        if c.point == 'centroid' or c.point == points[0]:
             print('Defined point is either centroid or head. Orientation of front segment not defined.')
             return
         else:
             print(f'Computing linear distances, velocities and accelerations for a single spinepoint')
-            points = [point]
+            points = [c.point]
             orientations = ['rear_orientation']
 
     if not set(orientations).issubset(s.columns):
@@ -55,22 +50,21 @@ def comp_linear(s, e, dt, Npoints, point, mode='minimal'):
     xy_params = raw_or_filtered_xy(s, points)
     xy_params = group_list_by_n(xy_params, 2)
 
-    all_d = [s.xs(id, level='AgentID', drop_level=True) for id in ids]
+    all_d = [s.xs(id, level='AgentID', drop_level=True) for id in c.agent_ids]
     dsts = nam.lin(nam.dst(points))
     cum_dsts = nam.cum(nam.lin(dsts))
     vels = nam.lin(nam.vel(points))
     accs = nam.lin(nam.acc(points))
 
     for p, xy, dst, cum_dst, vel, acc, orient in zip(points, xy_params, dsts, cum_dsts, vels, accs, orientations):
-        # dic={a : np.zeros([Nticks, Nids]) * np.nan for a in [dst, cum_dst, vel, acc]}
-        D = np.zeros([Nticks, Nids]) * np.nan
-        Dcum = np.zeros([Nticks, Nids]) * np.nan
-        V = np.zeros([Nticks, Nids]) * np.nan
-        A = np.zeros([Nticks, Nids]) * np.nan
+        D = np.zeros([c.Nticks, c.N]) * np.nan
+        Dcum = np.zeros([c.Nticks, c.N]) * np.nan
+        V = np.zeros([c.Nticks, c.N]) * np.nan
+        A = np.zeros([c.Nticks, c.N]) * np.nan
 
         for i, data in enumerate(all_d):
-            v, d = compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=dt, return_dst=True)
-            a = np.diff(v) / dt
+            v, d = compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=c.dt, return_dst=True)
+            a = np.diff(v) / c.dt
             cum_d = np.nancumsum(d)
             D[1:, i] = d
             Dcum[1:, i] = cum_d
@@ -82,72 +76,46 @@ def comp_linear(s, e, dt, Npoints, point, mode='minimal'):
         s[vel] = V.flatten()
         s[acc] = A.flatten()
         e[nam.cum(dst)] = Dcum[-1, :]
-
-        # if lengths is not None:
-        #     s[nam.scal(dst)] = sD.flatten()
-        #     s[nam.cum(nam.scal(dst))] = sDcum.flatten()
-        #     s[nam.scal(vel)] = sV.flatten()
-        #     s[nam.scal(acc)] = sA.flatten()
-        #     e[nam.cum(nam.scal(dst))] = sDcum[-1, :]
-
     pars = flatten_list(xy_params) + dsts + cum_dsts + vels + accs
-
     scale_to_length(s, e, pars=pars)
     print('All linear parameters computed')
 
 
-def comp_spatial(s, e, dt, Npoints, point, mode='minimal'):
-    points = nam.midline(Npoints, type='point')
-    ids = s.index.unique('AgentID').values
-    Nids = len(ids)
-    Nticks = len(s.index.unique('Step'))
-    # if 'length' in e.columns.values:
-    #     lengths = e['length'].values
-    # else:
-    #     lengths = None
-
+def comp_spatial(s, e, c, mode='minimal'):
+    points = nam.midline(c.Npoints, type='point')
     if mode == 'full':
         print(f'Computing distances, velocities and accelerations for {len(points)} points')
         points += ['centroid']
     elif mode == 'minimal':
         print(f'Computing distances, velocities and accelerations for a single spinepoint')
-        points = [point]
+        points = [c.point]
     points += ['']
-
     points = np.unique(points).tolist()
     points = [p for p in points if set(nam.xy(p)).issubset(s.columns.values)]
 
     xy_params = raw_or_filtered_xy(s, points)
     xy_params = group_list_by_n(xy_params, 2)
 
-    all_d = [s.xs(id, level='AgentID', drop_level=True) for id in ids]
+    all_d = [s.xs(id, level='AgentID', drop_level=True) for id in c.agent_ids]
     dsts = nam.dst(points)
     cum_dsts = nam.cum(dsts)
     vels = nam.vel(points)
     accs = nam.acc(points)
 
     for p, xy, dst, cum_dst, vel, acc in zip(points, xy_params, dsts, cum_dsts, vels, accs):
-        D = np.zeros([Nticks, Nids]) * np.nan
-        Dcum = np.zeros([Nticks, Nids]) * np.nan
-        V = np.zeros([Nticks, Nids]) * np.nan
-        A = np.zeros([Nticks, Nids]) * np.nan
+        D = np.zeros([c.Nticks, c.N]) * np.nan
+        Dcum = np.zeros([c.Nticks, c.N]) * np.nan
+        V = np.zeros([c.Nticks, c.N]) * np.nan
+        A = np.zeros([c.Nticks, c.N]) * np.nan
 
         for i, data in enumerate(all_d):
-            v, d = compute_velocity(xy=data[xy].values, dt=dt, return_dst=True)
-            a = np.diff(v) / dt
+            v, d = compute_velocity(xy=data[xy].values, dt=c.dt, return_dst=True)
+            a = np.diff(v) / c.dt
             cum_d = np.nancumsum(d)
-
-            D[1:, i] = d
-            Dcum[1:, i] = cum_d
-            V[1:, i] = v
-            A[2:, i] = a
-            # if lengths is not None:
-            #     l = lengths[i]
-            #     sD[1:, i] = d / l
-            #     sDcum[1:, i] = cum_d / l
-            #     sV[1:, i] = v / l
-            #     sA[2:, i] = a / l
-
+            D[:, i] = d
+            Dcum[:, i] = cum_d
+            V[:, i] = v
+            A[:, i] = a
         s[dst] = D.flatten()
         s[cum_dst] = Dcum.flatten()
         s[vel] = V.flatten()
@@ -155,7 +123,6 @@ def comp_spatial(s, e, dt, Npoints, point, mode='minimal'):
         e[nam.cum(dst)] = Dcum[-1, :]
 
     pars = flatten_list(xy_params) + dsts + cum_dsts + vels + accs
-
     scale_to_length(s, e, pars=pars)
     print('All spatial parameters computed')
 
@@ -247,17 +214,16 @@ def store_spatial(s, e, point):
         e[nam.mean(nam.scal(nam.vel('')))] = e[csdst] / e[nam.cum('dur')]
 
 
-def spatial_processing(s, e, dt, Npoints, point, Ncontour, mode='minimal', recompute=False, **kwargs):
-    comp_length(s, e, Npoints, mode=mode, recompute=recompute)
-    comp_centroid(s, Ncontour, recompute=recompute)
-    comp_spatial(s, e, dt, Npoints, point, mode=mode)
-    comp_linear(s, e, dt, Npoints, point, mode=mode)
-    store_spatial(s, e, point)
+def spatial_processing(s, e, c, mode='minimal', recompute=False, **kwargs):
+    comp_length(s, e, c.Npoints, mode=mode, recompute=recompute)
+    comp_centroid(s, c.Ncontour, recompute=recompute)
+    comp_spatial(s, e, c, mode=mode)
+    comp_linear(s, e, c, mode=mode)
+    store_spatial(s, e, c.point)
     print(f'Completed {mode} spatial processing.')
-    return s, e
 
 
-def comp_dispersion(s, e, dt, point, config=None, recompute=False, dsp_starts=[0], dsp_stops=[40], **kwargs):
+def comp_dispersion(s, e, dt, point, c=None, recompute=False, dsp_starts=[0], dsp_stops=[40], **kwargs):
     if dsp_starts is None or dsp_stops is None:
         return
 
@@ -294,9 +260,8 @@ def comp_dispersion(s, e, dt, point, config=None, recompute=False, dsp_starts=[0
             e.loc[id, mup] = np.nanmean(d)
             e.loc[id, fp] = s[p].xs(id, level='AgentID').dropna().values[-1]
     scale_to_length(s, e, pars=ps + pps)
-    if config is not None:
-        aux_dir = config['aux_dir']
-        store_aux_dataset(s, pars=ps + nam.scal(ps), type='dispersion', file=aux_dir)
+    if c is not None:
+        store_aux_dataset(s, pars=ps + nam.scal(ps), type='dispersion', file=c.aux_dir)
     #print('Dispersions computed')
 
 
@@ -390,7 +355,7 @@ def straightness_index(xy, w):
     return np.array(SI)
 
 
-def comp_straightness_index(s, dt, e=None, config=None, tor_durs=[2, 5, 10, 20], **kwargs):
+def comp_straightness_index(s, dt, e=None, c=None, tor_durs=[2, 5, 10, 20], **kwargs):
     Nticks = len(s.index.unique('Step'))
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
@@ -398,9 +363,6 @@ def comp_straightness_index(s, dt, e=None, config=None, tor_durs=[2, 5, 10, 20],
         par = f'tortuosity_{dur}'
         par_m, par_s = nam.mean(par), nam.std(par)
         r = int(dur / dt / 2)
-        # T=s[['x', 'y']].groupby('AgentID').transform(lambda xy: straightness_index(xy.values, r))
-        # print(T)
-
         T = np.zeros([Nticks, Nids]) * np.nan
         T_m = np.ones(Nids) * np.nan
         T_s = np.ones(Nids) * np.nan
@@ -415,15 +377,14 @@ def comp_straightness_index(s, dt, e=None, config=None, tor_durs=[2, 5, 10, 20],
             e[par_m] = T_m
             e[par_s] = T_s
 
-        if config is not None:
-            aux_dir = config['aux_dir']
-            store_aux_dataset(s, pars=[par], type='exploration', file=aux_dir)
+        if c is not None:
+            store_aux_dataset(s, pars=[par], type='exploration', file=c.aux_dir)
 
 
-def comp_source_metrics(s, e, config, **kwargs):
+def comp_source_metrics(s, e, c, **kwargs):
     fo = getPar(['fo'], to_return=['d'])[0][0]
     xy = nam.xy('')
-    for n, pos in config.source_xy.items():
+    for n, pos in c.source_xy.items():
         print(f'Computing bearing and distance to {n} based on xy position')
         o, d = nam.bearing2(n), nam.dst2(n)
         pmax, pmu, pfin = nam.max(d), nam.mean(d), nam.final(d)
@@ -455,8 +416,8 @@ def comp_source_metrics(s, e, config, **kwargs):
         print('Bearing and distance to source computed')
 
 
-def comp_wind_metrics(s, e, config, **kwargs):
-    w = config.env_params.windscape
+def comp_wind_metrics(s, e, c, **kwargs):
+    w = c.env_params.windscape
     if w is not None:
         wo, wv = w.wind_direction, w.wind_speed
         woo = np.deg2rad(wo)
@@ -475,8 +436,8 @@ def comp_wind_metrics(s, e, config, **kwargs):
         e['anemotaxis'] = s['anemotaxis'].groupby('AgentID').last()
 
 
-def comp_final_anemotaxis(s, e, config, **kwargs):
-    w = config.env_params.windscape
+def comp_final_anemotaxis(s, e, c, **kwargs):
+    w = c.env_params.windscape
     if w is not None:
         wo, wv = w.wind_direction, w.wind_speed
         woo = np.deg2rad(wo)

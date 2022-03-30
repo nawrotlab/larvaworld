@@ -210,11 +210,11 @@ def process(processing, s, e, config, mode='minimal', traj_colors=True, show_out
     c = {
         's': s,
         'e': e,
+        'c': config,
         'dt': config.dt,
         'Npoints': config.Npoints,
         'Ncontour': config.Ncontour,
         'point': config.point,
-        'config': config,
         'mode': mode,
         **kwargs
     }

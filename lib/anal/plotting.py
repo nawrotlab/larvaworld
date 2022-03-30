@@ -21,13 +21,13 @@ import os
 from scipy.fft import fft, fftfreq
 
 from lib.aux.dictsNlists import unique_list, flatten_list
-from lib.anal.fitting import BoutGenerator
+from lib.anal.fitting import BoutGenerator, gaussian
 from lib.anal.plot_aux import plot_mean_and_range, circular_hist, confidence_ellipse, save_plot, \
     plot_config, dataset_legend, process_plot, label_diff, boolean_indexing, Plot, plot_quantiles, annotate_plot, \
     concat_datasets, ParPlot
 from lib.aux import naming as nam
 from lib.aux.colsNstr import N_colors, col_range
-from lib.process.aux import moving_average, detect_strides
+from lib.process.aux import moving_average, detect_strides, detect_pauses, compute_velocity
 
 from lib.conf.base.par import getPar
 from lib.model.DEB.deb import DEB
@@ -2964,9 +2964,8 @@ def annotated_strideplot(a, dt, ax=None, ylim=None, xlim=None, show_extrema=True
     if xlim is None:
         xlim = (0, trange[-1])
 
-    fr, i_min, i_max, strides,stride_slices, stride_idx, stride_dsts, runs,run_slices, run_idx, runs1, run_durs, run_dsts, run_counts = detect_strides(
-        a=a, dt=dt, **kwargs)
-    pauses,pause_slices, pause_idx, pauses1, pause_durs = detect_pauses(a, dt, runs=runs)
+    i_min, i_max, strides, runs, run_counts = detect_strides(a=a, dt=dt, **kwargs)
+    pauses = detect_pauses(a, dt, runs=runs)
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     ax.set_xlabel("time (sec)")
@@ -2984,7 +2983,6 @@ def annotated_strideplot(a, dt, ax=None, ylim=None, xlim=None, show_extrema=True
             ax.axvline(trange[s0], color=f'{0.4 * (0 + 1)}', alpha=0.3, linestyle='dashed', linewidth=1)
             ax.axvline(trange[s1], color=f'{0.4 * (0 + 1)}', alpha=0.3, linestyle='dashed', linewidth=1)
     for s0, s1 in runs:
-        pass
         ax.axvspan(trange[s0], trange[s1], color=chunk_cols[0], alpha=1.0)
         # ax.axvline(trange[s0], color=f'{0.4 * (0 + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
         # ax.axvline(trange[s1], color=f'{0.4 * (0 + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
@@ -3017,6 +3015,56 @@ def stride_cycle_solo(strides, a, Nbins=64, quantiles=True, color='red', ax=None
     for xx in [np.pi / 2, np.pi, 3 / 2 * np.pi]:
         ax.axvline(xx, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
 
+def stride_cycle_all_points(strides, ss, ee=None, c=None, Nbins=64, angular=True, maxNpoints=5, save_to=None):
+    from lib.conf.base.par import getPar
+    import lib.aux.naming as nam
+    l,sv, fov, pau_fov_mu = getPar(['l','sv', 'fov', 'pau_fov_mu'], to_return=['d'])[0]
+    att = 'attenuation'
+    att_max, att_min, phi_att_max, phi_sv_max = nam.max(att), nam.min(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')
+
+    pi2=2 * np.pi
+    x = np.linspace(0, pi2, Nbins)
+    if angular :
+        fig, axs = plt.subplots(2, 1, figsize=(20, 12))
+        axs=axs.ravel()
+        aa_fov = np.zeros([len(strides), Nbins])
+        for ii, (s0, s1) in enumerate(strides):
+            aa_fov[ii, :] = np.interp(x, np.linspace(0, pi2, s1 - s0), ss[fov].abs().values[s0:s1])
+        plot_quantiles(df=aa_fov, from_np=True, axis=axs[1], color_shading='blue', x=x, label='experiment')
+        y_sim = (gaussian(x, ee[phi_att_max], 1) * ee[att_max] + ee[att_min]) * ee[pau_fov_mu]
+        axs[1].plot(x, y_sim, color='red', linewidth=3, label='model')
+        axs[1].set_ylabel(r'angular velocity $(\frac{deg}{s})$')
+        axs[0].xaxis.set_visible(False)
+    else :
+        fig, ax = plt.subplots(1, 1, figsize=(20, 6))
+        axs=[ax]
+    points = nam.midline(c.Npoints, type='point')
+    if c.Npoints>maxNpoints :
+        points=[points[0]]+[points[2+int(ii*(c.Npoints-2)/(maxNpoints-2))] for ii in range(maxNpoints-2)]+[points[-1]]
+    pointcols = cm.rainbow(np.linspace(0, 1, len(points)))
+    for p, col in zip(points, pointcols) :
+        v_p=nam.vel(p)
+        a=ss[v_p] if v_p in ss.columns else compute_velocity(ss[nam.xy(p)].values, dt=c.dt)
+        a = a / ee[l]
+        aa = np.zeros([len(strides), Nbins])
+        for ii, (s0, s1) in enumerate(strides):
+            aa[ii, :] = np.interp(x, np.linspace(0, pi2, s1 - s0), a[s0:s1])
+        axs[0].plot(x, np.nanquantile(aa, q=0.5, axis=0), color=col, linewidth=2, alpha=1.0, label=p)
+    axs[-1].set_xlabel('$\phi_{stride}$')
+    axs[0].set_ylabel(r'scaled velocity $(sec^{-1})$')
+    for ax in axs :
+        ax.set_xlim([0, pi2])
+        ax.set_xticks(np.linspace(0, pi2, 5))
+        ax.set_xticklabels([r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
+        ax.legend(loc='upper left', fontsize=15)
+        for xx in [pi2 / 4, pi2/2, 3 /4 * pi2]:
+            ax.axvline(xx, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
+    fig.subplots_adjust(hspace=0.01)
+    if save_to is not None :
+        path=f'{save_to}/stride_cycle_all_points.pdf'
+        fig.savefig(path, dpi=300)
+        print(f'Plot saved as {path}')
+
 def stride_cycle(s, dt, e=None, Nbins=64, color='red') :
     from lib.conf.base.par import ParDict
     dic = ParDict(mode='load').dict
@@ -3028,7 +3076,7 @@ def stride_cycle(s, dt, e=None, Nbins=64, color='red') :
     for jj, id in enumerate(ids):
         a_sv = s[sv].xs(id, level="AgentID").values
         a_fov = s[fov].xs(id, level="AgentID").abs().values
-        fr, i_min, i_max, strides,stride_slices, stride_idx, stride_dsts, runs,run_slices, run_idx, runs1, run_durs, run_dsts, run_counts = detect_strides(a_sv, dt)
+        i_min, i_max, strides, runs, run_counts = detect_strides(a_sv, dt)
         aa = np.zeros([len(strides), Nbins])
         for ii, (s0, s1) in enumerate(strides):
             aa[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_fov[s0:s1])
@@ -3040,6 +3088,7 @@ def stride_cycle(s, dt, e=None, Nbins=64, color='red') :
     ax.set_xticks(np.linspace(0, 2 * np.pi, 5))
     ax.set_xticklabels([r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
     ax.set_ylabel(fov)
+
     for xx in [np.pi / 2, np.pi, 3 / 2 * np.pi]:
         ax.axvline(xx, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
     if e is not None :

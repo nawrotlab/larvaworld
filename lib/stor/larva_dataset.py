@@ -12,7 +12,6 @@ import lib.aux.naming as nam
 from lib.conf.base.dtypes import null_dict
 
 
-
 class LarvaDataset:
     def __init__(self, dir, load_data=True, **kwargs):
         self.define_paths(dir)
@@ -27,7 +26,8 @@ class LarvaDataset:
             except:
                 print('Data not found. Load them manually.')
 
-    def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0,spatial_def=None,  env_params={}, larva_groups={},
+    def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0, spatial_def=None, env_params={},
+                      larva_groups={},
                       source_xy={}, **kwargs):
         # try:
         if os.path.exists(self.dir_dict.conf):
@@ -59,24 +59,24 @@ class LarvaDataset:
                     Npoints = 3
 
             config = {'id': id,
-                           'group_id': group_id,
-                           'group_ids': group_ids,
-                           'refID':None,
-                           'dir': self.dir,
-                           'aux_dir': self.dir_dict.aux_h5,
-                           'parent_plot_dir': f'{self.dir}/plots',
-                           'fr': fr,
-                           'dt': 1 / fr,
-                           'Npoints': Npoints,
-                           'Ncontour': Ncontour,
-                           'sample': sample,
-                           'color': color,
-                           **spatial_def,
-                           'env_params': env_params,
-                           'larva_groups': larva_groups,
-                           'source_xy': source_xy,
-                           'life_history': life_history
-                           }
+                      'group_id': group_id,
+                      'group_ids': group_ids,
+                      'refID': None,
+                      'dir': self.dir,
+                      'aux_dir': self.dir_dict.aux_h5,
+                      'parent_plot_dir': f'{self.dir}/plots',
+                      'fr': fr,
+                      'dt': 1 / fr,
+                      'Npoints': Npoints,
+                      'Ncontour': Ncontour,
+                      'sample': sample,
+                      'color': color,
+                      **spatial_def,
+                      'env_params': env_params,
+                      'larva_groups': larva_groups,
+                      'source_xy': source_xy,
+                      'life_history': life_history
+                      }
         self.config = dNl.AttrDict.from_nested_dicts(config)
 
         self.__dict__.update(self.config)
@@ -100,7 +100,7 @@ class LarvaDataset:
         if self.step_data is None:
             self.load()
         s = self.step_data
-        pars=[]
+        pars = []
         if groups['midline']:
             pars += dNl.flatten_list(self.points_xy)
         if groups['contour']:
@@ -140,11 +140,11 @@ class LarvaDataset:
         store = pd.HDFStore(self.dir_dict.data_h5)
         if step:
             self.step_data = store['step']
-            if contour :
-                try :
+            if contour:
+                try:
                     contour_ps = dNl.flatten_list(self.contour_xy)
                     temp = pd.HDFStore(self.dir_dict.contour_h5)
-                    self.step_data[contour_ps]=temp['contour']
+                    self.step_data[contour_ps] = temp['contour']
                     temp.close()
                 except:
                     pass
@@ -152,7 +152,7 @@ class LarvaDataset:
             self.agent_ids = self.step_data.index.unique('AgentID').values
             self.num_ticks = self.step_data.index.unique('Step').size
         if end:
-            try :
+            try:
                 endpoint = pd.HDFStore(self.dir_dict.endpoint_h5)
                 self.endpoint_data = endpoint['end']
                 self.endpoint_data.sort_index(inplace=True)
@@ -164,18 +164,18 @@ class LarvaDataset:
             self.food_endpoint_data.sort_index(inplace=True)
         store.close()
 
-    def save(self, step=True, end=True, food=False,contour=True, add_reference=False):
+    def save(self, step=True, end=True, food=False, contour=True, add_reference=False):
         store = pd.HDFStore(self.dir_dict.data_h5)
         if step:
             contour_ps = dNl.flatten_list(self.contour_xy)
-            if contour :
+            if contour:
                 temp = pd.HDFStore(self.dir_dict.contour_h5)
                 temp['contour'] = self.step_data[contour_ps]
                 temp.close()
 
             store['step'] = self.step_data.drop(contour_ps, axis=1, errors='ignore')
         if end:
-            endpoint=pd.HDFStore(self.dir_dict.endpoint_h5)
+            endpoint = pd.HDFStore(self.dir_dict.endpoint_h5)
             endpoint['end'] = self.endpoint_data
             endpoint.close()
         if food:
@@ -185,33 +185,34 @@ class LarvaDataset:
         print(f'Dataset {self.id} stored.')
 
     def save_larva_dicts(self):
-        for k, vs in self.larva_dicts.items() :
+        for k, vs in self.larva_dicts.items():
             os.makedirs(self.dir_dict[k], exist_ok=True)
-            for id, dic in vs.items() :
-                try :
+            for id, dic in vs.items():
+                try:
                     dNl.save_dict(dic, f'{self.dir_dict[k]}/{id}.txt', use_pickle=False)
-                except :
+                except:
                     dNl.save_dict(dic, f'{self.dir_dict[k]}/{id}.txt', use_pickle=True)
 
     def get_larva_dicts(self, env):
         from lib.model.modules.nengobrain import NengoBrain
-        deb_dicts={}
-        nengo_dicts={}
-        bout_dicts={}
-        foraging_dicts={}
+        deb_dicts = {}
+        nengo_dicts = {}
+        bout_dicts = {}
+        foraging_dicts = {}
         for l in env.get_flies():
-            if l.unique_id in self.agent_ids :
+            if l.unique_id in self.agent_ids:
                 if hasattr(l, 'deb') and l.deb is not None:
-                    deb_dicts[l.unique_id] =l.deb.finalize_dict()
-                elif isinstance(l.brain, NengoBrain) :
+                    deb_dicts[l.unique_id] = l.deb.finalize_dict()
+                elif isinstance(l.brain, NengoBrain):
                     if l.brain.dict is not None:
-                        nengo_dicts[l.unique_id] =l.brain.dict
+                        nengo_dicts[l.unique_id] = l.brain.dict
                 if l.brain.locomotor.intermitter is not None:
-                    bout_dicts[l.unique_id] =l.brain.locomotor.intermitter.build_dict()
-                if len(env.foodtypes)>0 :
-                    foraging_dicts[l.unique_id]=l.finalize_foraging_dict()
-                self.config.foodtypes= env.foodtypes
-        self.larva_dicts={'deb' : deb_dicts, 'nengo' : nengo_dicts, 'bout_dicts' : bout_dicts, 'foraging' : foraging_dicts}
+                    bout_dicts[l.unique_id] = l.brain.locomotor.intermitter.build_dict()
+                if len(env.foodtypes) > 0:
+                    foraging_dicts[l.unique_id] = l.finalize_foraging_dict()
+                self.config.foodtypes = env.foodtypes
+        self.larva_dicts = {'deb': deb_dicts, 'nengo': nengo_dicts, 'bout_dicts': bout_dicts,
+                            'foraging': foraging_dicts}
 
     def get_larva_tables(self, env):
         if env.table_collector is not None:
@@ -251,7 +252,7 @@ class LarvaDataset:
             except:
                 try:
                     ids = self.endpoint_data.index.values
-                except :
+                except:
                     ids = self.read('end').index.values
             self.config.agent_ids = ids
             self.config.N = len(ids)
@@ -264,9 +265,9 @@ class LarvaDataset:
             try:
                 self.config.Nticks = self.step_data.index.unique('Step').size
             except:
-                try :
+                try:
                     self.config.Nticks = self.endpoint_data['num_ticks'].max()
-                except :
+                except:
                     pass
         if 'duration' not in self.config.keys():
             try:
@@ -289,9 +290,9 @@ class LarvaDataset:
         dNl.save_dict(self.config, self.dir_dict.conf, use_pickle=False)
         if add_reference:
             from lib.conf.stored.conf import saveConf
-            if refID is None :
+            if refID is None:
                 refID = f'{self.group_id}.{self.id}'
-            self.config.refID=refID
+            self.config.refID = refID
             saveConf(self.config, 'Ref', refID)
 
     def save_agents(self, ids=None, pars=None):
@@ -336,14 +337,14 @@ class LarvaDataset:
     def load_dicts(self, type, ids=None):
         if ids is None:
             ids = self.agent_ids
-        ds0=self.larva_dicts
-        if type in ds0 and all([id in ds0[type].keys() for id in ids]) :
-            ds=[ds0[type][id] for id in ids]
-        else :
+        ds0 = self.larva_dicts
+        if type in ds0 and all([id in ds0[type].keys() for id in ids]):
+            ds = [ds0[type][id] for id in ids]
+        else:
             files = [f'{id}.txt' for id in ids]
-            try :
+            try:
                 ds = dNl.load_dicts(files=files, folder=self.dir_dict[type], use_pickle=False)
-            except :
+            except:
                 ds = dNl.load_dicts(files=files, folder=self.dir_dict[type], use_pickle=True)
         return ds
 
@@ -422,12 +423,13 @@ class LarvaDataset:
 
         if transposition is not None:
             from lib.process.spatial import align_trajectories
-            s = align_trajectories(s, track_point=track_point, arena_dims=arena_dims, mode=transposition,config=self.config)
+            s = align_trajectories(s, track_point=track_point, arena_dims=arena_dims, mode=transposition,
+                                   config=self.config)
             bg = None
             n1 = 'transposed'
         elif fix_point is not None:
             from lib.process.spatial import fixate_larva
-            s, bg = fixate_larva(s, point=fix_point, fix_segment=fix_segment,arena_dims=arena_dims, config=self.config)
+            s, bg = fixate_larva(s, point=fix_point, fix_segment=fix_segment, arena_dims=arena_dims, config=self.config)
             n1 = 'fixed'
         else:
             bg = None
@@ -452,7 +454,7 @@ class LarvaDataset:
             'traj_color': traj_color,
             # 'space_in_mm': space_in_mm
         }
-        replay_env = LarvaWorldReplay(step_data=s, endpoint_data=e, config=self.config,draw_Nsegs=draw_Nsegs,
+        replay_env = LarvaWorldReplay(step_data=s, endpoint_data=e, config=self.config, draw_Nsegs=draw_Nsegs,
                                       **dic, **base_kws, **kwargs)
 
         replay_env.run()
@@ -462,10 +464,10 @@ class LarvaDataset:
                          draw_Nsegs=None, vis_kwargs=None, **kwargs):
         from lib.model.envs._larvaworld_replay import LarvaWorldReplay
         from lib.process.spatial import fixate_larva
-        if type(id)==int :
-            id=self.config.agent_ids[id]
+        if type(id) == int:
+            id = self.config.agent_ids[id]
         s0, e0 = self.load_agent(id)
-        if s0 is None :
+        if s0 is None:
             self.save_agents(ids=[id])
             s0, e0 = self.load_agent(id)
         if close_view:
@@ -495,7 +497,7 @@ class LarvaDataset:
             'traj_color': None,
             # 'space_in_mm': space_in_mm
         }
-        replay_env = LarvaWorldReplay(step_data=s, endpoint_data=e0, config=self.config,draw_Nsegs=draw_Nsegs,
+        replay_env = LarvaWorldReplay(step_data=s, endpoint_data=e0, config=self.config, draw_Nsegs=draw_Nsegs,
                                       **dic, **base_kws, **kwargs)
 
         replay_env.run()
@@ -533,8 +535,6 @@ class LarvaDataset:
         self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang)
         self.xy_pars = nam.xy(self.points + self.contour + ['centroid'], flat=True) + nam.xy('')
 
-
-
     def define_paths(self, dir):
         self.dir = dir
         self.data_dir = os.path.join(dir, 'data')
@@ -565,7 +565,7 @@ class LarvaDataset:
             'contour_h5': os.path.join(self.data_dir, 'contour.h5'),
             'aux_h5': os.path.join(self.data_dir, 'aux.h5'),
         }
-        self.dir_dict= dNl.AttrDict.from_nested_dicts(dir_dict)
+        self.dir_dict = dNl.AttrDict.from_nested_dicts(dir_dict)
         for k in ['parent', 'data']:
             os.makedirs(self.dir_dict[k], exist_ok=True)
 
@@ -583,7 +583,7 @@ class LarvaDataset:
             self.acceleration = nam.lin(self.acceleration)
 
     def enrich(self, metric_definition, preprocessing={}, processing={}, annotation={},
-               to_drop={}, recompute=False, mode='minimal',show_output=True, is_last=True, **kwargs):
+               to_drop={}, recompute=False, mode='minimal', show_output=True, is_last=True, **kwargs):
         md = metric_definition
         self.config.update(**md['angular'])
         self.config.update(**md['spatial'])
@@ -613,7 +613,7 @@ class LarvaDataset:
         return self
 
     def get_par(self, par, key=None):
-        def get_end_par(par) :
+        def get_end_par(par):
             try:
                 return self.read(key='end')[par]
             except:
@@ -631,15 +631,15 @@ class LarvaDataset:
                 except:
                     return None
 
-        if key=='end' :
+        if key == 'end':
             return get_end_par(par)
-        elif key=='step' :
+        elif key == 'step':
             return get_step_par(par)
-        else :
-            e=get_end_par(par)
-            if e is not None :
+        else:
+            e = get_end_par(par)
+            if e is not None:
                 return e
-            else :
+            else:
                 s = get_step_par(par)
                 if s is not None:
                     return s
@@ -661,14 +661,14 @@ class LarvaDataset:
             self.save_config()
 
     def load_group_bout_dict(self, id=None):
-        if id is None :
-            id=self.id
-        path=os.path.join(self.dir_dict['group_bout_dicts'], f'{id}.txt')
-        dic=dNl.load_dict(path,use_pickle=True)
+        if id is None:
+            id = self.id
+        path = os.path.join(self.dir_dict['group_bout_dicts'], f'{id}.txt')
+        dic = dNl.load_dict(path, use_pickle=True)
         return dic
 
     def load_chunk_dicts(self, id=None):
-        if id is None :
-            id=self.id
+        if id is None:
+            id = self.id
         path = os.path.join(self.dir_dict.chunk_dicts, f'{id}.txt')
-        return dNl.load_dict(path,use_pickle=True)
+        return dNl.load_dict(path, use_pickle=True)
