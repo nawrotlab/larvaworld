@@ -224,7 +224,7 @@ def moving_average(a, n=3):
     # return ret[n - 1:] / n
 
 
-def fft_max(a, dt, fr_range=(0.0, +np.inf)):
+def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
     """
     Powerspectrum of signal.
 
@@ -260,7 +260,10 @@ def fft_max(a, dt, fr_range=(0.0, +np.inf)):
     xf_trunc = xf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
     yf_trunc = yf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
     fr = xf_trunc[np.argmax(yf_trunc)]
-    return fr
+    if return_amps :
+        return fr, yf
+    else :
+        return fr
 
 
 def slow_freq(a, dt, tmax=60.0):
@@ -492,6 +495,7 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None):
             run_counts.append(count)
             break
     runs = np.array(runs)
+    strides = np.array(strides)
     return i_min, i_max, strides, runs, run_counts
 
 
@@ -538,7 +542,6 @@ def detect_turns(a, dt, min_dur=None):
 
 def stride_interference(a_sv, a_fov, pau_fov_mu, strides, Nbins=64):
     x = np.linspace(0, 2 * np.pi, Nbins)
-
     ar_sv = np.zeros([len(strides), Nbins])
     ar_fov = np.zeros([len(strides), Nbins])
     for ii, (s0, s1) in enumerate(strides):
@@ -551,9 +554,30 @@ def stride_interference(a_sv, a_fov, pau_fov_mu, strides, Nbins=64):
     phi_sv_max = x[np.argmax(ar_sv_mu)]
     return [at_min, at_max, phi_at_max, phi_sv_max]
 
+def stride_max_vel_phis(s, e, c, Nbins=64) :
+    import lib.aux.naming as nam
+    from lib.conf.base.par import getPar
+    points = nam.midline(c.Npoints, type='point')
+    l, sv, pau_fov_mu = getPar(['l', 'sv', 'pau_fov_mu'], to_return=['d'])[0]
+    x = np.linspace(0, 2 * np.pi, Nbins)
+    phis=np.zeros([c.Npoints, c.N])*np.nan
+    for j, id in enumerate(c.agent_ids):
+        ss = s.xs(id, level='AgentID')
+        i_min, i_max, strides, runs, run_counts = detect_strides(ss[sv], c.dt)
+        for i,p in enumerate(points):
+            ar_v = np.zeros([len(strides), Nbins])
+            v_p=nam.vel(p)
+            a=ss[v_p] if v_p in ss.columns else compute_velocity(ss[nam.xy(p)].values, dt=c.dt)
+            for ii, (s0, s1) in enumerate(strides):
+                ar_v[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a[s0:s1])
+            ar_v_mu = np.nanquantile(ar_v, q=0.5, axis=0)
+            phis[i,j] = x[np.argmax(ar_v_mu)]
+    for i, p in enumerate(points):
+        e[nam.max(f'phi_{nam.vel(p)}')] = phis[i,:]
+
 
 def weathervanesNheadcasts(run_idx, pause_idx, Lturn_slices, Rturn_slices, Lamps, Ramps):
-    amps = np.concatenate([Lamps, Ramps])
+    amps = np.abs(np.concatenate([Lamps, Ramps]))
     turn_slices = Lturn_slices + Rturn_slices
     wvane_idx = [ii for ii, t in enumerate(turn_slices) if all([tt in run_idx for tt in t])]
     cast_idx = [ii for ii, t in enumerate(turn_slices) if all([tt in pause_idx for tt in t])]
@@ -633,10 +657,9 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
                                                np.mean(str_fovs),
                                                np.std(str_fovs)]
                 all_runs_counts.append(run_counts)
-                pauses = detect_pauses(a_sv, c.dt, runs=runs)
             else:
                 runs = detect_runs(a_sv, c.dt)
-                pauses = detect_pauses(a_sv, c.dt, runs=runs)
+            pauses = detect_pauses(a_sv, c.dt, runs=runs)
         else:
             runs = detect_runs(a_v, c.dt, vel_thr=vel_thr)
             pauses = detect_pauses(a_v, c.dt, runs=runs, vel_thr=vel_thr)

@@ -39,9 +39,9 @@ def adapt_conf(conf0, ee, c):
         run_v_mu : ee[run_v_mu],
         run_t_min : ee[run_t_min],
         'ang_vel_headcast' : np.deg2rad(ee[pau_fov_mu]),
-        'theta_min_headcast' :  ee['headcast_q25_amp'],
-        'theta_max_headcast' : ee['headcast_q75_amp'],
-        'theta_max_weathervane' : ee['weathervane_q75_amp'],
+        'theta_min_headcast' :  np.deg2rad(ee['headcast_q25_amp']),
+        'theta_max_headcast' : np.deg2rad(ee['headcast_q75_amp']),
+        'theta_max_weathervane' : np.deg2rad(ee['weathervane_q75_amp']),
         'ang_vel_weathervane' : np.deg2rad(ee[run_fov_mu]),
         'turner_input_constant' : ee['turner_input_constant'],
         'run_dist' : c.bout_distros.run_dur,
@@ -141,6 +141,7 @@ def sim_dataset(d,s, e, c, ids, loco_id, loco_func, loco_conf, adapted):
 
 
 def eval_dataset(s, ss, e, ee, end_ps, distro_ps):
+    # print(e.index, ee.index)
     eval_func = np.median
 
     ids = e.index.values
@@ -169,6 +170,8 @@ def eval_dataset(s, ss, e, ee, end_ps, distro_ps):
                 sp, ssp = s[p].xs(id, level="AgentID").dropna().values, ss[p].xs(id, level="AgentID").dropna().values
                 if sp.shape[0] > N and ssp.shape[0] > N:
                     pps.append(ks_2samp(sp, ssp)[0])
+                # else :
+                #     print(p, id)
             Edistro[pl] = eval_func(pps)
             spp, sspp = s[p].dropna().values, ss[p].dropna().values
             if spp.shape[0] > N and sspp.shape[0] > N:
@@ -177,7 +180,8 @@ def eval_dataset(s, ss, e, ee, end_ps, distro_ps):
 
     return Eend, Eend_pool, Edistro, Edistro_pool
 
-def run_locomotor_evaluation(d, locomotor_models, Nids=None,end_ps=None, distro_ps=None, save_to=None) :
+def run_locomotor_evaluation(d, locomotor_models, Nids=None,end_ps=None, distro_ps=None, save_to=None,
+                             stridechain_duration=False) :
     if save_to is not None :
         os.makedirs(save_to, exist_ok=True)
 
@@ -186,6 +190,7 @@ def run_locomotor_evaluation(d, locomotor_models, Nids=None,end_ps=None, distro_
     s, e, c = d.step_data, d.endpoint_data, d.config
     if Nids is None:
         ids=c.agent_ids
+        Nids=len(ids)
     else :
         ids = e.nlargest(Nids, 'cum_dur').index.values
     # Individual-specific model fitting
@@ -227,10 +232,11 @@ def run_locomotor_evaluation(d, locomotor_models, Nids=None,end_ps=None, distro_
     }
 
     error_tables(error_dict, save_to=save_to)
+    error_barplots(error_dict, normalization='raw', save_to=save_to)
     error_barplots(error_dict, normalization='minmax', save_to=save_to)
     plot_trajectories(loco_dict, save_to=save_to)
-    plot_bouts(bout_dict, save_to=save_to)
-    plot_comparative_dispersion(loco_dict, save_to=save_to)
+    plot_bouts(bout_dict, save_to=save_to, stridechain_duration=stridechain_duration)
+    plot_comparative_dispersion(loco_dict, c=c,save_to=save_to)
     return error_dict, loco_dict, bout_dict
 
 def error_tables(error_dict, save_to=None) :
@@ -252,7 +258,7 @@ def error_barplots(error_dict, normalization='minmax', save_to=None) :
         df1, df2, df3, df4 = minmax(df1), minmax(df2), minmax(df3), minmax(df4)
     elif normalization=='std' :
         df1, df2, df3, df4 = std_norm(df1), std_norm(df2), std_norm(df3), std_norm(df4)
-    dfs = dict(zip(['minmax solo', 'minmax pooled', 'KS solo', 'KS pooled'], [df1, df2, df3, df4]))
+    dfs = dict(zip([f'{normalization} solo', f'{normalization} pooled', 'KS solo', 'KS pooled'], [df1, df2, df3, df4]))
 
     fig, axs = plt.subplots(4, 1, figsize=(20, 15), sharex=True)
     axs = axs.ravel()
@@ -289,44 +295,51 @@ def plot_trajectories(loco_dict, save_to=None, show=False) :
         plt.show()
     return fig
 
-def plot_bouts(bout_dict, save_to=None, show=False) :
+def plot_bouts(bout_dict, save_to=None, show=False, plot_fits='best', stridechain_duration=False, legend_outside=False,
+               axs=None, fig=None) :
     bout_dict= dNl.AttrDict.from_nested_dicts(bout_dict)
-    # bout_dicts = {d.id : d.load_group_bout_dict(),**{k: d.load_group_bout_dict(k) for k in locos.keys()}}
-
     cols = N_colors(len(bout_dict))
-
-    fig, axs = plt.subplots(1, 2, figsize=(20, 10))
+    if axs is None and fig is None :
+        fig, axs = plt.subplots(1, 2, figsize=(15, 6), sharey=True)
     for j, (k, v) in enumerate(bout_dict.items()):
-        print(k,v.keys())
         kws = {
             'marker': 'o' if k == 'experiment' else '.',
-            'plot_fits': 'best',
+            'plot_fits': plot_fits,
             'label': k,
             'color': cols[j],
-            'discr': False,
+            'legend_outside': legend_outside,
             'axs': axs,
             'x0': None
 
         }
         if v.pause_dur is not None:
-            bout = 'pause'
+            bout = 'pauses'
             fit_dic = v.pause_dur
             print(k, bout, fit_dic.best.pause_dur.best)
-            plot_single_bout(fit_dic=fit_dic, bout=bout, i=1, **kws)
-        if v.run_dur is not None:
-            bout = 'run'
+            plot_single_bout(fit_dic=fit_dic,discr=False, bout=bout, i=1, **kws)
+        if stridechain_duration and v.run_dur is not None:
+            bout = 'runs'
             fit_dic = v.run_dur
             print(k, bout, fit_dic.best.run_dur.best)
-            plot_single_bout(fit_dic=fit_dic, bout=bout, i=0, **kws)
-            print()
-    dataset_legend(bout_dict.keys(), cols, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
+            plot_single_bout(fit_dic=fit_dic,discr=False, bout=bout, i=0, **kws)
+        elif not stridechain_duration and v.run_count is not None:
+            bout = 'stridechains'
+            fit_dic = v.run_count
+            print(k, bout, fit_dic.best.run_count.best)
+            plot_single_bout(fit_dic=fit_dic,discr=True, bout=bout, i=0, **kws)
+        print()
+    axs[1].yaxis.set_visible(False)
+    if len(bout_dict.keys())>1 :
+        dataset_legend(bout_dict.keys(), cols, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
     if save_to is not None:
+        # fig.savefig(f'{save_to}/comparative_bouts.eps', dpi=300)
         fig.savefig(f'{save_to}/comparative_bouts.pdf', dpi=300)
+        # fig.savefig(f'{save_to}/comparative_bouts.png', dpi=300)
     if show :
         plt.show()
-    return fig
+    # return fig, axs
 
-def plot_comparative_dispersion(loco_dict, **kwargs) :
+def plot_comparative_dispersion(loco_dict, c,**kwargs) :
     from lib.anal.plot_aux import BasePlot, plot_mean_and_range
     from lib.aux.colsNstr import random_colors
 

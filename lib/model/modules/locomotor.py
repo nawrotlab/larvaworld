@@ -111,6 +111,7 @@ class Levy_locomotor(Locomotor):
         self.cur_pause_dur_max = None
 
     def step(self, A_in=0, length=1):
+        self.bend = restore_bend_2seg(self.bend, self.last_dist, length, correction_coef=self.bend_correction_coef)
         if self.cur_state == 'run' and self.cur_run_dur >= self.cur_run_dur_max:
             self.cur_run_dur = None
             self.cur_run_dur_max = None
@@ -129,7 +130,8 @@ class Levy_locomotor(Locomotor):
             self.ang_vel = 0
         self.update()
         self.add_noise()
-        #self.scale2length(length)
+        self.bend += self.ang_vel * self.dt
+        self.last_dist = self.lin_vel * self.dt
         return self.lin_vel, self.ang_vel, self.feed_motion
 
 
@@ -152,9 +154,6 @@ class Wystrach2016(Locomotor):
         self.neural_oscillator.step(input)
         self.add_noise()
         self.bend_body(self.neural_oscillator.activity)
-
-        #self.scale2length(length)
-        # print(self.lin_vel, length, self.lin_constant)
         self.last_dist = self.lin_vel * self.dt
 
         return self.lin_vel, self.ang_vel, self.feed_motion
@@ -181,10 +180,11 @@ class Davies2015(Locomotor):
         self.cur_weathervane = 0
 
     def step(self, A_in=0, length=1):
+        self.bend = restore_bend_2seg(self.bend, self.last_dist, length, correction_coef=self.bend_correction_coef)
         if self.cur_state == 'run' and self.cur_run_dur >= self.run_dur_min:
             if np.random.uniform(0, 1, 1) <= self.r_run2headcast * self.dt:
                 self.cur_state = 'headcast'
-                sign = np.sign(self.bend)[0] if self.bend != 0 else np.random.choice([-1, 1], 1)[0]
+                sign = np.sign(self.bend) if self.bend != 0 else np.random.choice([-1, 1], 1)[0]
                 self.ang_vel = sign * self.ang_vel_headcast
         elif self.cur_state == 'headcast' and np.abs(
                 self.cur_headcast) >= self.theta_min_headcast and np.sign(self.cur_headcast * self.ang_vel) == 1:
@@ -215,6 +215,8 @@ class Davies2015(Locomotor):
                 self.ang_vel *= -1
             self.cur_headcast += self.ang_vel * self.dt
         self.add_noise()
+        self.bend += self.ang_vel * self.dt
+        self.last_dist = self.lin_vel * self.dt
         return self.lin_vel, self.ang_vel, self.feed_motion
 
 class Sakagiannis2022(Locomotor):

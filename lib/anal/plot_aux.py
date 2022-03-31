@@ -315,12 +315,12 @@ def plot_mean_and_range(x, mean, lb, ub, axis, color_shading, color_mean=None, l
     if color_mean is None:
         color_mean = color_shading
     # plot the shaded range of e.g. the confidence intervals
-    axis.fill_between(xx, ub, lb, color=color_shading, alpha=.2)
+    axis.fill_between(xx, ub, lb, color=color_shading, alpha=.2,zorder=0)
     # plot the mean on top
     if label is not None:
-        axis.plot(xx, mean, color_mean, label=label, linewidth=2, alpha=1.0)
+        axis.plot(xx, mean, color_mean, label=label, linewidth=2, alpha=1.0,zorder=10)
     else:
-        axis.plot(xx, mean, color_mean, linewidth=2, alpha=1.0)
+        axis.plot(xx, mean, color_mean, linewidth=2, alpha=1.0,zorder=10)
 
     # pass
 
@@ -530,14 +530,14 @@ def process_plot(fig, save_to, filename, return_fig=False, show=False):
     if show:
         plt.show()
     fig.patch.set_visible(False)
-    os.makedirs(save_to, exist_ok=True)
     if return_fig:
         res = fig, save_to, filename
-    else:
-        filepath = os.path.join(save_to, filename)
-        save_plot(fig, filepath, filename)
+    else :
         res = fig
-
+        if save_to is not None :
+            os.makedirs(save_to, exist_ok=True)
+            filepath = os.path.join(save_to, filename)
+            save_plot(fig, filepath, filename)
     return res
 
 
@@ -625,7 +625,7 @@ def conf_ax_3d(vars, target, ax=None, fig=None, lims=None, title=None, maxN=5, l
 
 
 def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits = 'best',
-                     marker='.'):
+                     marker='.', legend_outside=False):
     distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy', 'normal', 'uniform']
     distro_cs = ['c', 'g', 'm', 'k', 'orange', 'brown', 'purple']
     num_distros = len(distro_ls)
@@ -641,6 +641,7 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
     u2, du2, c2, c2cum = fit_dic['values']
     lws[idx_Kmax] = 4
     ylabel = 'cumulative probability'
+    xlabel = 'time (sec)' if not discr else '# strides'
     xrange = u2
     y = c2cum
     ddfs = cdfs
@@ -649,19 +650,28 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
             ii /= ii[0]
     axs[i].loglog(xrange, y, marker, color=color, alpha=0.7, label=label)
     axs[i].set_title(bout)
-    axs[i].set_ylim([10 ** -3.5, 10 ** 0.5])
+    axs[i].set_xlabel(xlabel)
+    axs[i].set_ylim([10 ** -3.5, 10 ** 0.2])
+    distro_ls0, distro_cs0=[],[]
     for z, (l, col, lw, ddf) in enumerate(zip(distro_ls, distro_cs, lws, ddfs)):
         if ddf is None:
             continue
         if plot_fits == 'best' and z == idx_Kmax:
             cc = color
-        elif plot_fits == 'all':
+        elif plot_fits == 'all' or l in plot_fits:
+            distro_ls0.append(l)
+            distro_cs0.append(col)
             cc = col
         else:
             continue
         axs[i].loglog(xrange, ddf, color=cc, lw=lw, label=l)
-    dataset_legend(distro_ls, distro_cs, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
+    if len(distro_ls0)>1 :
+        if legend_outside :
+            dataset_legend(distro_ls0, distro_cs0, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
+        else :
+            for ax in axs :
+                dataset_legend(distro_ls0, distro_cs0, ax=ax, loc='lower left', fontsize=15)
     #dataset_legend(gIDs, colors, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
     # fig.subplots_adjust(left=0.1, right=0.95, wspace=0.08, hspace=0.3, bottom=0.05)
     for jj in [0]:
-        axs[jj].set_ylabel(ylabel, fontsize=25)
+        axs[jj].set_ylabel(ylabel)

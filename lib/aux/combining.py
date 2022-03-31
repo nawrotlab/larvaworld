@@ -81,27 +81,49 @@ def combine_pdfs(file_dir='.', save_as="final.pdf", pref=''):
     print(f'Concatenated pdfs saved as {filepath}')
 
 
-def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14,title=None,
+def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None,
                      header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black',
-                     bbox=[0, 0, 1, 1], header_columns=0, ax=None,highlighted_cells=None,highlight_color='yellow', **kwargs):
-
+                     bbox=[0, 0, 1, 1], header_columns=0, ax=None, highlighted_cells=None, highlight_color='yellow',
+                     **kwargs):
     def get_idx(highlighted_cells):
-        if highlighted_cells=='row_min' :
-            idx=np.nanargmin(data.values, axis=1)
-            return [(i+1, idx[i]) for i in range(data.shape[0])]
-        elif highlighted_cells=='row_max' :
-            idx=np.nanargmax(data.values, axis=1)
-            return [(i+1, idx[i]) for i in range(data.shape[0])]
-        elif highlighted_cells=='col_min' :
-            idx=np.nanargmin(data.values, axis=0)
-            return [(idx[i]+1,i) for i in range(data.shape[1])]
-        elif highlighted_cells=='col_max' :
-            idx=np.nanargmax(data.values, axis=0)
-            return [(idx[i]+1,i) for i in range(data.shape[1])]
-        else :
-            return  []
+        d = data.values
+        res = []
+        if highlighted_cells == 'row_min':
+            idx = np.nanargmin(d, axis=1)
+            for i in range(d.shape[0]):
+                res.append((i + 1, idx[i]))
+                for j in range(d.shape[1]):
+                    if d[i, j] == d[i, idx[i]] and j != idx[i]:
+                        res.append((i + 1, j))
+        elif highlighted_cells == 'row_max':
+            idx = np.nanargmax(d, axis=1)
+            for i in range(d.shape[0]):
+                res.append((i + 1, idx[i]))
+                for j in range(d.shape[1]):
+                    if d[i, j] == d[i, idx[i]] and j != idx[i]:
+                        res.append((i + 1, j))
+        elif highlighted_cells == 'col_min':
+            idx = np.nanargmin(d, axis=0)
+            for i in range(d.shape[1]):
+                res.append((idx[i] + 1, i))
+                for j in range(d.shape[0]):
+                    if d[j, i] == d[idx[i], i] and j != idx[i]:
+                        res.append((j + 1, i))
+        elif highlighted_cells == 'col_max':
+            idx = np.nanargmax(d, axis=0)
+            for i in range(d.shape[1]):
+                res.append((idx[i] + 1, i))
+                for j in range(d.shape[0]):
+                    if d[j, i] == d[idx[i], i] and j != idx[i]:
+                        res.append((j + 1, i))
+        # else :
+        #     res=  []
+        return res
 
-    highlight_idx=get_idx(highlighted_cells)
+    try:
+        highlight_idx = get_idx(highlighted_cells)
+    except:
+        highlight_idx = []
     if ax is None:
         size = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
         fig, ax = plt.subplots(figsize=size)
@@ -109,14 +131,14 @@ def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14,title=N
     else:
         fig = None
 
-    mpl_table = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns,rowLabels=data.index, **kwargs)
+    mpl_table = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns, rowLabels=data.index, **kwargs)
 
     mpl_table.auto_set_font_size(False)
     mpl_table.set_fontsize(font_size)
 
     for k, cell in six.iteritems(mpl_table._cells):
         cell.set_edgecolor(edge_color)
-        if k in highlight_idx :
+        if k in highlight_idx:
             cell.set_facecolor(highlight_color)
         elif k[0] == 0 or k[1] < header_columns:
             cell.set_text_props(weight='bold', color='w')
@@ -127,6 +149,7 @@ def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14,title=N
     ax.set_title(title)
     return ax, fig
 
+
 def concat_files(filenames, save_as):
     # filenames = ['file1.txt', 'file2.txt', ...]
     with open(save_as, 'w') as outfile:
@@ -135,5 +158,6 @@ def concat_files(filenames, save_as):
                 for line in infile:
                     outfile.write(line)
 
+
 if __name__ == '__main__':
-    concat_files(filenames= ['graphics.py', 'output.py'], save_as= 'graphics2.py')
+    concat_files(filenames=['graphics.py', 'output.py'], save_as='graphics2.py')

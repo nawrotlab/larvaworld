@@ -28,12 +28,12 @@ def restore_bend(state, d, l, num_segments, correction_coef=1.0):
 
 def restore_bend_2seg(bend, d, l, correction_coef=1.0):
     # print(bend,d,l)
-    k0 = 0.5 * l / correction_coef
-    if 0 <= d < k0:
-        return bend * (1 - d / k0)
-    elif k0 <= d:
+    k0 = 2*d*correction_coef/ l
+    if 0 <= k0 < 1:
+        return bend * (1 - k0)
+    elif 1 <= k0:
         return 0
-    elif d < 0:
+    elif k0 < 0:
         return bend
 
 
