@@ -210,6 +210,7 @@ class ValueLayer(ValueGrid):
 class GaussianValueLayer(ValueLayer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        print(f'grid: {len(self.grid)} and {len(self.grid[0])}')
 
     def update_values(self):
         pass
@@ -222,6 +223,8 @@ class GaussianValueLayer(ValueLayer):
             p = s.get_position()
             rel_pos = [pos[0] - p[0], pos[1] - p[1]]
             value += s.get_gaussian_odor_value(rel_pos)
+            # print(f'{rel_pos} and {p} and {s}')
+            print(self.meshgrid, len(self.meshgrid), value)
         return value
 
     def get_grid(self):
@@ -384,12 +387,12 @@ class WindScape:
 
 # @todo adding thermoscape class - need to edit functions within this class mix of gaussian GaussianValueLayer(ValueLayer)
 
-class ThermoScape(ValueLayer):
-    def __init__(self, pTemp, origins=[], diffTemps=[], default_color='green', visible=False):
+class ThermoScape(ValueGrid):
+    def __init__(self, pTemp, origins=[], tempDiff=[], default_color='green', visible=False):
 
         self.plate_temp = pTemp
-        self.thermo_sources = origins
-        self.thermo_source_dTemps = diffTemps
+        self.thermo_origins = {str(i):o for i,o in enumerate(origins)} 
+        self.thermo_source_dTemps = {str(i):o for i,o in enumerate(tempDiff)}
         # self.model = model
         # self.wind_direction = wind_direction
         # self.wind_speed = wind_speed
@@ -406,16 +409,64 @@ class ThermoScape(ValueLayer):
 
     def update_values(self):
         pass
+#@todo remove rezo, it is actually only important if I want to draw.
+#thermo={'temp_spread':None, 'plate_temp':22, 'thermo_origins': None, 'thermo_differences': None}
+    def generate_thermoscape(self, spread=0.1, pTemp = 22, origins = [[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]], tempDiff = [8,-8,8,-8]):
+        '''
+        size is the length of the square arena in mm.
+        rezo is the resolution with 1 being a mm, 0.1 being a 10th of a mm.
+        spread is the spread put into the multivariate_normal function.
+        pTem is the plate Temp i.e. the standard temperature of the plate - default is 22˚C.
+        origins are the coordinate locations on the size x size plate of the heat or cold sources. type: list
+        tempDiff needs to be a list the same length as origins, and determines if that source will be cold or hot and by how much.
 
-    def get_value(self, pos):
+        In other words a <ptemp> of 22 and a <origins> of [[10,20], [30,40]] and <tempDiff> of [8,-8] would make a temperature source at
+        [10,20] that is ~30˚C and a source at [30,40] that is ~14˚C. The mean is taken where the temperatures of multiple sources overlap.
+        '''
+        from scipy.stats import multivariate_normal
+        
+        # size,size2 = [1,1]
+        # size, size2 = self.arena_dims * 1000 #model.grid_dims #it is in m and we want it in mm.
+        # if spread is None:
+        #     spread = size * 10
 
-        value = 0
-        for s in self.sources:
-            # print(s.unique_id, s.odor_peak_value)
-            p = s.get_position()
-            rel_pos = [pos[0] - p[0], pos[1] - p[1]]
-            value += s.get_thermo_value(rel_pos)
-        return value
+        self.thermo_spread = spread 
+        self.plate_temp = pTemp 
+        self.thermo_origins = {str(i):o for i,o in enumerate(origins)} 
+        self.thermo_source_dTemps = {str(i):o for i,o in enumerate(tempDiff)}
+        if len(origins) != len(tempDiff):
+            raise ValueError # need to raise a more informative error.
+        # origins =  [[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]] #  [[85,8.5], [8.5,85], [85,161.5], [161.5,85]]
+        # origins_ad = [[size*og[0], size2*og[1]] for og in origins] # origins on arena dimensions
+
+        # x, y = np.mgrid[0:size:rezo, 0:size2:rezo] # setting 170 x 170 grid #don't need to do this anymore
+        pos = np.dstack((x, y)) 
+
+        rv_dict = {}
+        # thermoDists_Dict = {}
+        for k,v in self.thermo_origins:
+            # v_ad = [size*v[0], size2*v[1]]
+            rv_dict[k] = multivariate_normal(v, [[spread, 0], [0, spread]])
+            # thermoDists_Dict[k] = (rv_dict[k].pdf(pos)/rv_dict[k].pdf(v_ad))*(tempDiff[k] * len(origins)) # don't need this either
+        
+        self.thermoscape_layers = rv_dict
+        # plt.imshow(22 + rv, cmap='hot', interpolation='nearest'); plt.colorbar(); plt.show()
+        # plt.hist(pTemp + rv.flatten(), bins=50 ); plt.show()
+        # self.thermo_dist = pTemp + sum(thermoDists_Dict.values()) / len(thermoDists_Dict) # I do not need to store this anymore! - so i won't need SIZE anymore. alternatively I could just store thermoDists_Dict and get_thermo_value calculate each time with plateTemp (if this is memory inefificent)
+        # return  pTemp + sum(thermoDists_Dict.values()) / len(thermoDists_Dict)
+
+
+    def get_thermo_value(self, pos):
+        size,size2 = [1,1]
+        # size, size2 = self.arena_dims * 1000  #it is in m and we want it in mm.
+        pos_ad = [size*pos[0], size2*pos[1]]
+        pos_temp = {}
+        if self.thermoscape_layers is None:
+            return 0 # or np.nan
+        for k,v in self.thermoscape_layers:
+            pos_temp[k] = v.pdf[pos_ad] / v.pdf(self.thermo_origins[k]) * (self.thermo_origins_dTemp[k] * len(self.thermo_origins_dTemp)) #@todo need to check if this works
+        return self.plate_temp + sum(pos_temp.values()) / len(pos_temp)
+
 
     def get_grid(self):
         X, Y = self.meshgrid
@@ -429,15 +480,67 @@ class ThermoScape(ValueLayer):
         self.max_value = np.max(V.flatten())
         return V
 
-    def draw_isocontours(self, viewer):
+    def draw_isocontours(self, viewer): #@todo need to make a draw function for thermogrid.
         # g=self.get_grid()
         # vs=np.linspace(np.min(g), np.max(g), 5)
-        for s in self.sources:
-            p = s.get_position()
+        for k,p in self.thermo_origins:
             for r in np.arange(0, 0.050, 0.01):
                 pX = (p[0] + r, p[1])
-                v = s.get_thermo_value(pX)
-                viewer.draw_circle(p, r, self.default_color, filled=False, width=0.0005)
-                text_box = InputBox(text=str(np.round(v, 2)), color_active=self.default_color, visible=True,
-                                    screen_pos=viewer._transform(pX))
+                v = self.thermo_source_dTemps[k]
+                if v < 0:
+                    color2use = 'blue'
+                else:
+                    color2use = 'red'
+                viewer.draw_circle(p, r, color2use, filled=False, width=0.0005)
+                text_box = InputBox(text=str(np.round(v, 2)), color_active=self.default_color, visible=True)
                 text_box.draw(viewer)
+
+
+
+
+
+    # def set_thermo_dist(self, rezo=0.1, spread=1700, pTemp = 22, origins = [[85,10], [10,85], [85,160], [160,85]], tempDiff = [8,-8,8,-8], size):
+    #     '''
+    #     size is the length of the square arena in mm.
+    #     rezo is the resolution with 1 being a mm, 0.1 being a 10th of a mm.
+    #     spread is the spread put into the multivariate_normal function.
+    #     pTem is the plate Temp i.e. the standard temperature of the plate - default is 22˚C.
+    #     origins are the coordinate locations on the size x size plate of the heat or cold sources. type: list
+    #     tempDiff needs to be a list the same length as origins, and determines if that source will be cold or hot and by how much.
+
+    #     In other words a <ptemp> of 22 and a <origins> of [[10,20], [30,40]] and <tempDiff> of [8,-8] would make a temperature source at
+    #     [10,20] that is ~30˚C and a source at [30,40] that is ~14˚C. The mean is taken where the temperatures of multiple sources overlap.
+    #     '''
+    #     size, size2 = self.model.arena_dims * 1000 #it is in m and we want it in mm.
+    #     if spread is None:
+    #         spread = size * 10
+
+    #     self.thermo_spread = spread 
+    #     self.plate_temp = pTemp 
+    #     self.thermo_origins = {str(i):o for i,o in enumerate(origins)} # @todo need to put this in dictionary (with same 1 2 3 4 and rv_dict)
+    #     self.thermo_origins_dTemp = {str(i):o for i,o in enumerate(tempDiff)} # @todo need to put this in dictionary (with same 1 2 3 4 and rv_dict)
+    #     if len(origins) != len(tempDiff):
+    #         raise ValueError # need to raise a more informative error.
+
+    #     x, y = np.mgrid[0:size:rezo, 0:size2:rezo] # setting 170 x 170 grid
+    #     pos = np.dstack((x, y))
+
+    #     rv_dict = {}
+    #     thermoDists_Dict = {}
+    #     for k,v in enumerate(origins):
+    #         rv_dict[k] = multivariate_normal(v, [[spread, 0], [0, spread]])
+    #         thermoDists_Dict[k] = (rv_dict[k].pdf(pos)/rv_dict[k].pdf(v))*(tempDiff[k] * len(origins))
+        
+    #     self.thermo_dist_raw = rv_dict
+    #     # plt.imshow(22 + rv, cmap='hot', interpolation='nearest'); plt.colorbar(); plt.show()
+    #     # plt.hist(pTemp + rv.flatten(), bins=50 ); plt.show()
+    #     self.thermo_dist = pTemp + sum(thermoDists_Dict.values()) / len(thermoDists_Dict) # I do not need to store this anymore! - so i won't need SIZE anymore. alternatively I could just store thermoDists_Dict and get_thermo_value calculate each time with plateTemp (if this is memory inefificent)
+    #     # return  pTemp + sum(thermoDists_Dict.values()) / len(thermoDists_Dict)
+
+    # def get_thermo_value(self, pos):
+    #     pos_temp = {}
+    #     for k,v in self.thermo_dist_raw:
+    #         v.pdf[pos * 1000] / v.pdf(self.origins[k]) * (self.thermo_origins_dTemp[k] * len(self.thermo_origins_dTemp)) #@todo need to check if this works
+    #     return self.plate_temp + sum(pos_temp.values()) / len(pos_temp)
+    #     # x,y = pos * 1000 #@todo need to multiply x and y based on what unit they are in i.e. if they are in mm multiple by 10
+    #     # return self.thermo_dist[y,x]

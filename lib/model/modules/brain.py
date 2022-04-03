@@ -8,7 +8,7 @@ import numpy as np
 # from lib.model.modules.intermitter import Intermitter, BranchIntermitter
 from lib.model.modules.locomotor import Locomotor, DefaultLocomotor
 from lib.model.modules.memory import RLOlfMemory, RLTouchMemory
-from lib.model.modules.sensor import Olfactor, Toucher, WindSensor
+from lib.model.modules.sensor import Olfactor, Toucher, WindSensor, Thermosensor
 # from lib.model.modules.turner import Turner
 
 
@@ -23,7 +23,7 @@ class Brain():
         self.olfactory_activation = 0
         self.touch_activation = 0
         self.wind_activation = 0
-        self.olfactor, self.memory, self.toucher, self.touch_memory, self.windsensor = [
+        self.olfactor, self.memory, self.toucher, self.touch_memory, self.windsensor, self.thermosensor = [
                                                                                                                                                      None] * 5
 
         if dt is None:
@@ -35,6 +35,8 @@ class Brain():
             self.windsensor = WindSensor(brain=self, dt=dt, gain_dict={'windsensor': 1.0}, **c['windsensor_params'])
         if m['olfactor']:
             self.olfactor = Olfactor(brain=self, dt=dt, **c['olfactor_params'])
+        if m['thermosensor']
+            self.thermosensor = Thermosensor(brain=self, dt=dt, **c['thermosensor'])
 
         # self.crawler, self.turner, self.feeder, self.olfactor, self.intermitter = None, None, None, None, None
 
@@ -74,12 +76,13 @@ class Brain():
     def sense_temperature(self, pos=None):
         if pos is None:
             pos = self.agent.pos
-        cons = {}
-        for id, layer in self.agent.model.thermo_layers.items():
-            v = layer.get_value(pos)
-            cons[id] = v + np.random.normal(scale=v * self.thermo.noise)
+
+        thermolayer = self.agent.model.thermoscape # are these fom env_param
+        
+        tpr = thermolayer.get_thermo_value(self, pos) #tpr = temperature
+            # cons[id] = v + np.random.normal(scale=v * self.thermo.noise)
         # print(self.agent.unique_id, cons)
-        return cons
+        return tpr
     #@todo need to edit sense_temperature(self) appropriately. Do we want noise?
     # def sense(self):
 
@@ -101,7 +104,8 @@ class DefaultBrain(Brain):
             t = self.toucher = Toucher(brain=self, dt=self.dt, **c['toucher_params'])
         if m['memory'] and c['memory_params']['modality'] == 'touch':
             self.touch_memory = RLTouchMemory(brain=self, dt=self.dt, gain=t.gain, **c['memory_params'])
-
+        # if m['memory'] and c['memory_params']['modality'] == 'thermotaxis':
+        #     self.memory = RLOlfMemory(brain=self, dt=self.dt, gain=self.thermosensor.gain, **c['memory_params']) #@todo if I want memory also need to add memory_params to ModelConfs.txt
     def run(self, pos, reward=False,**kwargs):
 
 
@@ -115,4 +119,6 @@ class DefaultBrain(Brain):
             self.touch_activation = self.toucher.step(self.sense_food())
         if self.windsensor:
             self.wind_activation = self.windsensor.step(self.sense_wind())
+        if self.thermosensor:
+            self.thermo_activation = self.thermosensor.step(self.sense_temperature()) #@todo work out what this is doing.
         return self.locomotor.step(A_in=self.touch_activation + self.wind_activation, length = self.agent.sim_length)

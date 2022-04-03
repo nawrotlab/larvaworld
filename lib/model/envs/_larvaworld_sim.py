@@ -29,6 +29,12 @@ class LarvaWorldSim(LarvaWorld):
         if self.env_pars.odorscape is not None:
             self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars.odorscape)
 
+        # if self.env_pars.thermoscape is not None:
+        #     print('Making thermoscape')
+        #     # self.Ntemps, self.thermo_layer = self._create_thermo_layers(self.env_pars.thermoscape)
+        #     self.thermolayer_base = self._create_thermo_layers(self.env_pars.thermoscape)
+        #     self.thermolayer_base.generate_thermoscape(self)
+
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
         self.create_collectors(output)
@@ -74,38 +80,41 @@ class LarvaWorldSim(LarvaWorld):
         return N, layers
 
 
-#@todo add _create_thermo_layers
+#@todo use _create_thermo_layers
     def _create_thermo_layers(self, pars):
-        from lib.model.envs._space import ThermoScape, GaussianValueLayer
-        sources = self.get_food() + self.get_flies()
-        ids = dNl.unique_list([s.thermo_id for s in sources if s.thermo_id is not None]) #@note thermo_id needs to be added to ExpConfs.txt
-        N = len(ids)
+        from lib.model.envs._space import ThermoScape
+        # sources = self.get_food() + self.get_flies()
+        sources = self.thermo_sources # dictionary
+        # ids = dNl.unique_list([s.thermo_id for s in sources if s.thermo_id is not None]) #@note thermo_id needs to be added to ExpConfs.txt
+        # N = len(sources)
+        N=1; id='temp'
         cols = N_colors(N, as_rgb=True)
         layers = {}
-        for i, (id, c) in enumerate(zip(ids, cols)):
-            od_sources = [f for f in sources if f.odor_id == id]
-            temp = dNl.unique_list([s.default_color for s in od_sources])
-            if len(temp) == 1:
-                c0 = temp[0]
-            elif len(temp) == 3 and all([type(k) == float] for k in temp):
-                c0 = temp
-            else:
-                c0 = c
-            kwargs = {
-                'model': self,
-                'unique_id': id,
-                'sources': od_sources,
-                'default_color': c0,
-                'space_range': self.space_edges_for_screen,
+        # for i, (id, c) in enumerate(zip(sources, cols)):
+        #     od_sources = [f for f in sources if f.odor_id == id]
+        #     temp = dNl.unique_list([s.default_color for s in od_sources])
+        #     if len(temp) == 1:
+        #         c0 = temp[0]
+        #     elif len(temp) == 3 and all([type(k) == float] for k in temp):
+        #         c0 = temp
+        #     else:
+        #         c0 = c
+
+        plate_temp = self.plate_temp # int/float
+        source_temp_diff = self.thermo_source_dTemps # dict
+        kwargs = {
+            'model': self,
+            'pTemp': plate_temp,
+            'spread': None,
+            'unique_id': id,
+            'origins':sources,
+            'tempDiff': source_temp_diff,
+            'default_color': 'green',
+            'space_range': self.space_edges_for_screen,
+
             }
-            if pars.odorscape == 'Diffusion':
-                layers[id] = DiffusionValueLayer(dt=self.dt, scaling_factor=self.scaling_factor,
-                                                 grid_dims=pars['grid_dims'],
-                                                 evap_const=pars['evap_const'],
-                                                 gaussian_sigma=pars['gaussian_sigma'],
-                                                 **kwargs)
-            elif pars.odorscape == 'Gaussian':
-                layers[id] = GaussianValueLayer(**kwargs)
+
+        layers[id] = ThermoScape(**kwargs)
         # self.refresh_odor_dicts(ids)
         return N, layers
 
