@@ -1,6 +1,7 @@
 import random
 
 import numpy as np
+import pandas as pd
 from matplotlib import cm, colors
 
 
@@ -96,6 +97,60 @@ def col_range(q, low=(255, 0, 0),high=(255, 255, 255), mul255=False) :
     if mul255 :
         res*=255
     return res
+
+def col_df(shorts=None, groups=None, group_cols=None):
+    from lib.conf.base.par import ParDict, getPar
+
+
+
+    if shorts is None and groups is None :
+        shorts = [
+            ['ffov', 'run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std'],
+            ['fsv', 'run_tr', 'pau_tr', 'cum_d', 'v_mu', 'run_v_mu'],
+            # ['str_N', 'str_tr', 'cum_d', 'v_mu', 'tor5_mu'],
+            # ['str_fo', 'str_b', 'tur_fo', 'tur_t'],
+            ['dsp_0_40_mu', 'dsp_0_40_max', 'dsp_0_40_fin'],
+            # ['sv', 'fov', 'bv'],
+        ]
+        groups = [
+            'angular motion',
+            'spatial motion',
+            # 'reorientation',
+            'dispersal',
+            # 'stride cycle curve',
+        ]
+
+    if group_cols is None :
+        group_col_dic={
+            'angular motion' : 'Blues',
+            'spatial motion' : 'Greens',
+            'time allocation' : 'Reds',
+            'dispersal' : 'Purples',
+            'tortuosity' : 'Purples',
+            'epochs' : 'Oranges',
+
+        }
+        group_cols = [group_col_dic[g] for g in groups]
+    df = pd.DataFrame(
+        {'group': groups,
+         'shorts': shorts,
+         'group_color': group_cols
+         })
+
+    df['pars'] = [getPar(s, to_return='d')[0] for s in shorts]
+    # df['pars'] = df['shorts'].apply(lambda row: par_conf.par_dict_lists(shorts=row, to_return=['par'])[0])
+    df['symbols'] = [getPar(s, to_return='l')[0] for s in shorts]
+    # df['labels'] = [getPar(s, to_return='lab')[0] for s in shorts]
+    # df['symbols'] = df['shorts'].apply(lambda row: par_conf.par_dict_lists(shorts=row, to_return=['symbol'])[0])
+    df['cols'] = df.apply(lambda row: [(row['group'], p) for p in row['symbols']], axis=1)
+    df['par_colors'] = df.apply(
+        lambda row: [cm.get_cmap(row['group_color'])(i) for i in np.linspace(0.4, 0.7, len(row['pars']))], axis=1)
+
+    df.set_index('group', inplace=True)
+
+    # columns = lib.aux.dictsNlists.flatten_list(df['cols'].values.tolist())
+    # par_colors = lib.aux.dictsNlists.flatten_list(df['par_colors'].values.tolist())
+    return df
 
 
 # for q in np.arange(0,1,0.1):

@@ -18,10 +18,17 @@ from lib.conf.stored.conf import loadConf, kConfDict
 from lib.sim.single.single_run import SingleRun
 
 # Crawl-bend interference
-CT_exclusive = null_dict('interference', crawler_phi_range=(0.0,2.0), attenuation=0.0)
-CT_continuous=null_dict('interference', crawler_phi_range=(0.0,2.0), attenuation=1.0)
-CT_constant=null_dict('interference', crawler_phi_range=(0.0,2.0), attenuation=0.5)
-CT_phasic = null_dict('interference', crawler_phi_range=(0.5,1.0), attenuation=0.2)
+# CT = null_dict('interference')
+# CTtemp={k:None for k,v in CT.items()}
+# CT_exclusive = CTtemp.update({'mode':'default', 'attenuation':0.0})
+# CT_continuous = CTtemp.update({'mode':'default', 'attenuation':1.0})
+# CT_constant = CTtemp.update({'mode':'default', 'attenuation':0.25})
+# CT_phasic = CTtemp.update({'mode':'phasic', 'attenuation_min':0.2, 'attenuation_max':0.31, 'max_attenuation_phase':2.4})
+
+CT_exclusive = null_dict('interference', mode='default', attenuation=0.0)
+CT_continuous=null_dict('interference', mode='default', attenuation=1.0)
+CT_constant=null_dict('interference', mode='default', attenuation=0.25)
+CT_phasic = null_dict('interference', mode='phasic', attenuation_min=0.4, attenuation_max=0.2, max_attenuation_phase=2.4)
 
 CT_dict={
     'exclusive' : CT_exclusive,
@@ -30,11 +37,17 @@ CT_dict={
     'phasic' : CT_phasic,
 }
 
+
+T = null_dict('turner')
+# Ttemp={k:None for k,v in T.items()}
+
+# Tcon = Ttemp.update({'mode':'constant', 'initial_amp':0.964, 'noise':0.1, 'activation_noise':0.1})
+# Tcon_no_noise = Ttemp.update({'mode':'constant', 'initial_amp':0.964, 'noise':0.0, 'activation_noise':0.0})
 # Turner module
-Tcon = null_dict('turner',
+Tcon_no_noise = null_dict('turner',
                  mode='constant',
-                 initial_amp=20.0,
-                 amp_range=[-20.0, 20.0],
+                 initial_amp=0.964,
+                 amp_range=None,
                  initial_freq=None,
                  freq_range=None,
                  noise=0.0,
@@ -43,9 +56,8 @@ Tcon = null_dict('turner',
                  activation_range=None
                  )
 
-T = null_dict('turner')
-
 Tno_noise = null_dict('turner', activation_noise=0.0, noise=0.0)
+T_Sak = null_dict('turner', activation_noise=0.0, noise=0.0, base_activation=24)
 
 Tsin = null_dict('turner',
                  mode='sinusoidal',
@@ -69,33 +81,55 @@ Tsin_no_noise = null_dict('turner',
 T_dict = {
     'neural': T,
     'neural*': Tno_noise,
+    'Sak': T_Sak,
     'sinusoidal': Tsin,
     'sinusoidal*': Tsin_no_noise,
-    'constant': Tcon,
+    # 'constant': Tcon,
+    'constant*': Tcon_no_noise,
 }
 
 # Crawler module
 C = null_dict('crawler')
 C_no_noise = null_dict('crawler', noise=0.0)
-Ccon = null_dict('crawler', waveform='constant', initial_amp=0.2)
+C_Sak = null_dict('crawler', noise=0.0, initial_freq = 1.37, freq_std=0.0,#freq_std=0.18,
+                  step_to_length_mu=0.24, step_to_length_std=0.07, max_vel_phase=3.6)
 
-Ccon_no_noise = null_dict('crawler', waveform='constant', initial_amp=0.2, noise=0.0)
+# Ctemp={k:None for k,v in C.items()}
+# Ccon = Ctemp.update({'waveform':'constant', 'initial_amp':0.323, 'noise':0.1})
+Ccon = null_dict('crawler', waveform='constant', initial_amp=0.323)
+
+# Ccon_no_noise = Ctemp.update({'waveform':'constant', 'initial_amp':0.323, 'noise':0.0})
+Ccon_no_noise = null_dict('crawler', waveform='constant', initial_amp=0.323, noise=0.0)
 
 C_dict = {
     'default': C,
     'default*': C_no_noise,
+    'Sak': C_Sak,
     'constant': Ccon,
     'constant*': Ccon_no_noise,
 }
 
 # Intermittency module
 Im = null_dict('intermitter')
+Im_Levy = null_dict('intermitter', run_mode = 'run', stridechain_dist = None,
+                    run_dist ={'range': [0.44, 133.0], 'name': 'powerlaw','alpha': 1.53},
+                    pause_dist = {'range': [0.125, 16], 'name': 'uniform'})
+Im_Davies = null_dict('intermitter', run_mode = 'run', stridechain_dist = None,
+                    run_dist ={'range': [0.44, 133.0],'name': 'exponential', 'beta': 0.148},
+                    pause_dist = {'range': [0.125, 16],'name': 'exponential','beta': 2.0})
+Im_Sak = null_dict('intermitter', run_mode = 'stridechain',run_dist =None,
+                   stridechain_dist ={'range': [1.0, 178.0], 'name': 'exponential', 'beta': 0.13784},
+                   pause_dist ={'range': [0.125, 16], 'name': 'lognormal','mu': -0.2269, 'sigma': 0.96917}
+                   )
 Im_sampled = null_dict('intermitter')
 Im_branch=null_dict('intermitter', mode='branch')
 Im_nengo=null_dict('intermitter', mode='nengo')
 
 Im_dict = {
     'default': Im,
+    'Davies': Im_Davies,
+    'Levy': Im_Levy,
+    'Sak': Im_Sak,
     'stochastic': Im,
     'sampled': Im_sampled,
     'branch': Im_branch,
@@ -103,11 +137,28 @@ Im_dict = {
 }
 
 loco_combs={
-    'Levy' : ['constant*', 'constant','exclusive',  'default'],
+    'Levy' : ['constant*', 'constant*','exclusive',  'Levy'],
     'Wystrach_2016' : ['constant*', 'neural*','continuous',  None],
-    'Davies_2015' : ['constant*', 'constant','constant',  'default'],
-    'Sakagiannis_2022' : ['default*', 'neural*','phasic',  'default']
+    'Davies_2015' : ['constant*', 'constant*','constant',  'Davies'],
+    'Sakagiannis_2022' : ['Sak', 'Sak','phasic',  'Sak']
 }
+
+# def build_loco_offline(c,t,ct,im) :
+#     kws={f'{m}_params': mps for mps, m in zip([c,t,ct,im], ['crawler', 'turner', 'interference', 'intermitter'])}
+#     if c is not None :
+#         B.modules.crawler=True
+#         B.crawler_params=C_dict[c]
+#     if t is not None:
+#         B.modules.turner=True
+#         B.turner_params=T_dict[t]
+#     if ct is not None:
+#         B.modules.interference=True
+#         B.interference_params=CT_dict[ct]
+#     if im is not None:
+#         B.modules.intermitter = True
+#         B.intermitter_params = Im_dict[im]
+#     L=null_dict('locomotor', **kws)
+#     return L
 
 def build_loco(c,t,ct,im, B=None) :
     if B is None :
@@ -126,6 +177,10 @@ def build_loco(c,t,ct,im, B=None) :
     if im is not None:
         B.modules.intermitter = True
         B.intermitter_params = Im_dict[im]
+    for k,v in B.modules.items() :
+        if not v :
+            B[f'{k}_params']=None
+    # B['bend_correction_coef']=1
     return B
 
 loco_dict={k:build_loco(*v) for k, v in loco_combs.items()}
@@ -182,9 +237,20 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
 
 
 if __name__ == '__main__':
+    from lib.model.modules.locomotor import DefaultLocomotor
+    # for k, v in loco_dict.items() :
+    # #     print(v)
+    # # raise
+    # for k, v in loco_dict.items():
+    #     L = DefaultLocomotor(dt=0.1, conf=v)
+    #     for i in range(5000):
+    #         v, fov, feed = L.step(length=0.004)
+    # raise
+
+
     # print(kConfDict('Brain'))
     from lib.conf.stored.conf import saveConf, loadRef
-    print(loadConf('None.200_controls', 'Ref').bout_distros.stride.keys())
+    # print(loadConf('None.200_controls', 'Ref').bout_distros.stride.keys())
 
     for k, v in loco_dict.items():
         # print(v.intermitter_params.mode)

@@ -625,7 +625,7 @@ def conf_ax_3d(vars, target, ax=None, fig=None, lims=None, title=None, maxN=5, l
 
 
 def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits = 'best',
-                     marker='.', legend_outside=False):
+                     marker='.', legend_outside=False, **kwargs):
     distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy', 'normal', 'uniform']
     distro_cs = ['c', 'g', 'm', 'k', 'orange', 'brown', 'purple']
     num_distros = len(distro_ls)
@@ -633,8 +633,7 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
 
     if fit_dic is None :
         xmin, xmax = np.min(x0), np.max(x0)
-        fit_dic = fit_bout_distros(x0, xmin, xmax, discr, dataset_id='test', bout=bout,
-                               print_fits=False, combine=False, fit_by='pdf')
+        fit_dic = fit_bout_distros(x0, xmin, xmax, discr, dataset_id='test', bout=bout,**kwargs)
     idx_Kmax = fit_dic['idx_Kmax']
     cdfs = fit_dic['cdfs']
     pdfs = fit_dic['pdfs']

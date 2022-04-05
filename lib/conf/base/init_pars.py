@@ -536,6 +536,15 @@ def init_pars():
 
     }
 
+    d['locomotor'] = {
+        'modules': {'turner': bT,
+                    'crawler': bT,
+                    'interference': bT,
+                    'intermitter': bT,
+                    'feeder': bF},
+        **{f'{m}_params': d[m] for m in ['crawler', 'turner', 'interference', 'intermitter','feeder']}
+    }
+
     d['brain'] = {
         'modules': d['modules'],
         **{f'{m}_params': d[m] for m in d['modules'].keys()},

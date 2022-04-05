@@ -192,7 +192,7 @@ class Parameter:
     def __init__(self, p, u, k=None, s=None, o=Larva, lim=None,
                  d=None, lab=None, exists=True, func=None, const=None, par_dict=None, fraction=False,
                  operator=None, k0=None, k_num=None, k_den=None, dst2source=None, or2source=None, dispersion=False,
-                 wrap_mode=None,l=None):
+                 wrap_mode=None,l=None, unit=None):
         # print(p,k)
         self.wrap_mode = wrap_mode
         self.fraction = fraction
@@ -261,6 +261,14 @@ class Parameter:
     @property
     def l(self):
         return f'{self.d},  {self.s}$({self.u.unit.abbrev})$' if self.lab is None else self.lab
+
+    @property
+    def unit(self):
+        try :
+            u=self.u.unit.abbrev
+        except :
+            u=None
+        return u
 
     def get_from(self, o, u=True, tick=None, df=None):
         if self.const is not None:
@@ -689,7 +697,7 @@ class ParDict:
         self.add_rate(k_num='sd', k_den='dt', k='sv', p=sv, d=sv, s=paren('v'), lim=(-0.05,1.5))
         self.add_rate(k_num='sv', k_den='dt', k='sa', p=sa, d=sa, s=paren('a'), lim=(-7.0,7.0))
 
-        for i in [(0, 40), (0, 80), (20, 80)]:
+        for i in [(0, 40), (0,60), (0, 80), (20, 80),(0,120),(0,240), (0,300),(0,600), (60,120), (60,240), (60,300), (60,600)]:
             self.add_dsp(range=i)
 
         for k0 in ['l', 'v', 'sv']:
@@ -699,7 +707,7 @@ class ParDict:
         for k0 in ['v', 'sv']:
             self.add_freq(k0=k0)
 
-        for i in ['', 2, 5, 10, 20]:
+        for i in ['', 2, 5, 10, 20, 60,120, 240, 300, 600]:
             if i == '':
                 p = 'tortuosity'
             else:
@@ -835,7 +843,53 @@ class ParDict:
         self.build_chunk()
         self.build_neural()
 
-
+        label_dict={
+            'v' : 'velocity',
+            'a' : 'acceleration',
+            'fov' : 'angular velocity',
+            'foa' : 'angular acceleration',
+            'bv' : 'bending angular velocity',
+            'ba' : 'bending angular acceleration',
+            'b' : 'bending angle',
+            'run_d' : 'run length',
+            'run_t' : 'run duration',
+            'pau_t' : 'pause duration',
+            'run_tr' : 'run time ratio',
+            'pau_tr' : 'pause time ratio',
+            'cum_d' : 'total pathlength',
+            'v_mu' : 'mean velocity',
+            'run_v_mu' : 'mean velocity during runs',
+            'pau_v_mu' : 'mean velocity during pauses',
+            # 'a_mu': 'mean acceleration',
+            'run_a_mu': 'mean acceleration during runs',
+            'pau_a_mu': 'mean acceleration during pauses',
+            # 'fov_mu': 'mean angular velocity',
+            'run_fov_mu': 'mean angular velocity during runs',
+            'pau_fov_mu': 'mean angular velocity during pauses',
+            'run_foa_mu': 'mean angular acceleration during runs',
+            'pau_foa_mu': 'mean angular acceleration during pauses',
+            'run_fov_std': 'std angular velocity during runs',
+            'pau_fov_std': 'std angular velocity during pauses',
+            'run_foa_std': 'std angular acceleration during runs',
+            'pau_foa_std': 'std angular acceleration during pauses',
+            'tur_fou' : 'turn-angle amplitude',
+            'tur_fov_max' : 'turn maximum angular velocity',
+            'fsv' : 'dominant crawling frequency',
+            'ffov' : 'dominant bending frequency',
+            # 'tur_fov_max' : 'turn maximum angular velocity',
+            'tor2' : "tortuosity over 2'' window",
+            'tor5' : "tortuosity over 5'' window",
+            'tor10' : "tortuosity over 10'' window",
+            'tor20' : "tortuosity over 20'' window",
+            'tor60' : "tortuosity over 60'' window",
+            'dsp_0_40' : "dispersal in 40''",
+            'dsp_0_40_max' : "maximum dispersal in 40''",
+            'dsp_0_40_mu' : "average dispersal during 40''",
+            'dsp_0_40_fin' : "final dispersal after 40''",
+            # 'tur_fov_max' : 'turn maximum angular velocity',
+        }
+        for k,lab in label_dict.items() :
+            self.dict[k].lab=lab
         for k, p in self.dict.items():
             p.par_dict = self.dict
         if save:
@@ -929,14 +983,20 @@ def getPar(k=None, p=None, d=None, to_return=['d', 'l'], PF=None):
 if __name__ == '__main__':
     from lib.conf.base.par import ParDict
 
-    #dic = ParDict(mode='load').dict
-    #print([dic[k]['d'] for k in ['Ltur_tr', 'pau_fov_std','ffov']])
+    dic = ParDict(mode='load').dict
+    print([dic[k]['unit'] for k in ['v', 'fov','dsp_0_40_fin']])
     #print(dic.keys())
+
+    # print(dic['v'].keys())
+
 
     #aaa=getPar(['cum_run_t'], to_return=['d'])[0]
     # d=ParDict(mode='build').dict
-    # raise
-    pars, =getPar(['fsv', 'ffov', 'fv', 'd', 'fo','x', 'y','b', 'dsp', 'cum_d', 'sv', 'a', 'sa', 'foa'], to_return=['d'])
+    raise
+    pars, =getPar(['dsp_0_40_max', 'ffov', 'fv', 'd', 'fo','x', 'y','b', 'dsp', 'cum_d', 'sv', 'a', 'sa', 'foa'], to_return=['d'])
+
+
+
 
 
     print(pars)

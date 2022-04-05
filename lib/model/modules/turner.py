@@ -59,25 +59,12 @@ class Turner(Oscillator, Effector):
         # else:
         #     return A_olf + np.random.normal(scale=self.activation_noise)
         # return A_olf
-        return A_olf * (1 + np.random.normal(scale=self.activation_noise))
+        return A_olf
+        # return A_olf * (1 + np.random.normal(scale=self.activation_noise))
 
     def step(self, A_in=0.0):
         self.activation = self.update_activation(A_in)
-        A = self.compute_angular_activity()
-        # if not inhibited:
-        #     A = self.compute_angular_activity() + self.buildup
-        #     self.buildup = 0
-        # else:
-        #     if self.continuous:
-        #         a = self.compute_angular_activity()
-        #         A = a * attenuation + self.buildup
-        #         if self.rebound:
-        #             self.buildup += a
-        #     else:
-        #         A = 0.0
-        n = np.random.normal(scale=self.noise)
-        A += n
-        return A
+        return self.compute_angular_activity()
 
     def init_neural(self, dt, base_activation=20, activation_range=None,noise=0.0, **kwargs):
         Effector.__init__(self, dt=dt)
@@ -115,7 +102,7 @@ class Turner(Oscillator, Effector):
 
 
 class NeuralOscillator:
-    def __init__(self, dt, tau=0.1, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0):
+    def __init__(self, dt, tau=0.1, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0, warm_up=True):
         self.dt = dt
         self.tau = tau
         self.w_ee = w_ee
@@ -144,6 +131,10 @@ class NeuralOscillator:
         self.H_C_l = 0  # 10
 
         self.scaled_tau = self.dt / self.tau
+
+        if warm_up :
+            for i in range(100) :
+                self.step()
 
     def step(self, A=0):
         # print(A)

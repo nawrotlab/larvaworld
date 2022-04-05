@@ -36,6 +36,8 @@ class BaseIntermitter(Effector):
 
 
 
+
+
     def reset(self):
         self.t = 0
         self.total_t = 0
@@ -46,11 +48,13 @@ class BaseIntermitter(Effector):
         self.current_pause_duration = None
         self.current_pause_ticks = None
         self.cum_pause_dur = 0
+        self.pause_termination_allowed = True
 
         self.run_counter = 0
         self.current_run_duration = None
         self.current_run_ticks = None
         self.cum_run_dur = 0
+        self.run_termination_allowed = True
 
         self.stridechain_counter = 0
         self.current_stridechain_length = None
@@ -137,12 +141,12 @@ class BaseIntermitter(Effector):
                     self.current_feedchain_length += 1
 
         elif self.current_pause_duration is not None:
-            if self.t > self.current_pause_duration:
+            if self.t > self.current_pause_duration and self.pause_termination_allowed:
                 self.register_pause()
                 self.disinhibit_locomotion()
 
         elif self.current_run_duration is not None:
-            if self.t > self.current_run_duration:
+            if self.t > self.current_run_duration and self.run_termination_allowed:
                 self.register_run()
                 self.inhibit_locomotion()
 

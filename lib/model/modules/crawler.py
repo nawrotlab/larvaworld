@@ -1,8 +1,23 @@
 import numpy as np
 from scipy import signal
 
-from lib.model.modules.basic import Oscillator
+from lib.model.modules.basic import Oscillator, Effector
 
+
+# class BaseCrawler(Effector) :
+#     def __init__(self, initial_amp, **kwargs):
+#         super().__init__(**kwargs)
+#         self.amp = initial_amp
+#         self.activity = 0
+#         self.start_effector()
+#
+#     def step(self):
+#         if self.effector:
+#             self.count_time()
+#             self.activity = self.amp
+#         else:
+#             self.activity = 0
+#         return self.activity
 
 class Crawler(Oscillator):
     def __init__(self, waveform, initial_amp=None, square_signal_duty=None, step_to_length_mu=None,
@@ -14,10 +29,11 @@ class Crawler(Oscillator):
         self.activity = 0
         self.amp = initial_amp
         self.noise = crawler_noise
-        step_mu, step_std = [np.max([0.0, ii]) for ii in [step_to_length_mu, step_to_length_std]]
+
         if waveform == 'square':
             # the percentage of the crawler iteration for which linear force/velocity is applied to the body.
             # It is passed to the duty arg of the square signal of the oscillator
+            step_mu, step_std = [np.max([0.0, ii]) for ii in [step_to_length_mu, step_to_length_std]]
             self.square_signal_duty = square_signal_duty
             self.step_to_length_mu = step_mu
             self.step_to_length_std = step_std
@@ -25,14 +41,18 @@ class Crawler(Oscillator):
         elif waveform == 'gaussian':
             self.gaussian_window_std = gaussian_window_std
         elif waveform == 'realistic':
+            step_mu, step_std = [np.max([0.0, ii]) for ii in [step_to_length_mu, step_to_length_std]]
             self.step_to_length_mu = step_mu
             self.step_to_length_std = step_std
             self.step_to_length = self.new_stride
             self.max_vel_phase = max_vel_phase * np.pi
+        # elif waveform == 'constant':
+
         waveform_func_dict = {
             'square': self.square_oscillator,
             'gaussian': self.gaussian_oscillator,
             'realistic': self.realistic_oscillator,
+            'constant': self.constant_crawler,
         }
         self.waveform_func = waveform_func_dict[waveform]
         self.start_effector()
@@ -57,6 +77,9 @@ class Crawler(Oscillator):
 
     def square_oscillator(self):
         return self.amp * signal.square(self.phi, duty=self.square_signal_duty) + self.amp
+
+    def constant_crawler(self):
+        return self.amp
 
     def realistic_oscillator(self):
         if self.complete_iteration:

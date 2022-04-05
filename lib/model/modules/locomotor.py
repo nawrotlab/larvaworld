@@ -2,6 +2,7 @@ import numpy as np
 
 from lib.anal.fitting import BoutGenerator, gaussian
 from lib.aux.ang_aux import restore_bend_2seg
+from lib.aux.dictsNlists import AttrDict
 from lib.model.modules.crawl_bend_interference import DefaultCoupling, SquareCoupling, PhasicCoupling
 from lib.model.modules.crawler import Crawler
 from lib.model.modules.feeder import Feeder
@@ -10,10 +11,15 @@ from lib.model.modules.turner import Turner, NeuralOscillator
 
 
 class Locomotor:
-    def __init__(self, dt, ang_mode='torque', crawler_noise=0, turner_input_noise=0, turner_output_noise=0,
-                 torque_coef=1, ang_damp_coef=1, body_spring_k=1, bend_correction_coef=1.4):
+    def __init__(self, dt, ang_mode='torque',lin_mode='velocity', offline=False, crawler_noise=0, turner_input_noise=0, turner_output_noise=0,
+                 torque_coef=1, ang_damp_coef=1, body_spring_k=1, bend_correction_coef=1):
+        self.offline = offline
+        self.ang_mode = ang_mode
+        self.lin_mode = lin_mode
         self.dt = dt
         self.crawler, self.turner, self.feeder, self.intermitter = [None] * 4
+        self.ang_activity = 0.0
+        self.lin_activity = 0.0
 
         self.bend = 0.0
         self.ang_vel = 0.0
@@ -34,6 +40,8 @@ class Locomotor:
         self.cur_run_dur = 0
         self.cur_pause_dur = None
 
+        # self.new_run, self.new_pause=False, False
+
     def update(self):
         if self.cur_state == 'run':
             self.cur_run_dur += self.dt
@@ -41,16 +49,32 @@ class Locomotor:
             self.cur_pause_dur += self.dt
 
     def add_noise(self):
-        self.lin_vel = self.lin_vel *(1+np.random.normal(scale=self.crawler_noise))
-        self.ang_vel = self.ang_vel * (1 + np.random.normal(scale=self.turner_output_noise))
+        self.lin_activity = self.lin_activity * (1 + np.random.normal(scale=self.crawler_noise))
+        self.ang_activity = self.ang_activity * (1 + np.random.normal(scale=self.turner_output_noise))
 
     def scale2length(self, length):
-        self.lin_vel *= length
+        self.lin_activity *= length
 
-    def bend_body(self, output):
-        dv=output * self.torque_coef - self.ang_damp_coef * self.ang_vel - self.body_spring_k * self.bend
-        self.ang_vel += dv * self.dt
+    def update_body(self, length):
+        if self.lin_mode == 'velocity':
+            self.lin_vel = self.lin_activity
+        self.last_dist = self.lin_vel * self.dt
+        self.bend = restore_bend_2seg(self.bend, self.last_dist, length, correction_coef=self.bend_correction_coef)
+        self.bend_body()
+
+    def bend_body(self):
+        if self.ang_mode=='torque' :
+            dv = self.ang_activity * self.torque_coef - self.ang_damp_coef * self.ang_vel - self.body_spring_k * self.bend
+            self.ang_vel += dv * self.dt
+        elif self.ang_mode == 'velocity':
+            self.ang_vel = self.ang_activity
         self.bend += self.ang_vel * self.dt
+
+    def on_new_pause(self):
+        pass
+
+    def on_new_run(self):
+        pass
 
 
 class DefaultLocomotor(Locomotor):
@@ -77,68 +101,118 @@ class DefaultLocomotor(Locomotor):
                 self.intermitter = Intermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
             elif mode == 'branch':
                 self.intermitter = BranchIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
-            # elif mode == 'simple':
-            #     self.intermitter = SimpleIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
 
     def step(self, A_in=0, length=1):
-        self.lin_vel, Aang, feed_motion = 0, 0, False
+        self.lin_activity, self.ang_activity, self.feed_motion = 0, 0, False
         if self.intermitter:
+            pre_state = self.intermitter.cur_state
             self.intermitter.step()
+            # cur_state = self.intermitter.cur_state
+            if pre_state=='run' and self.intermitter.cur_state =='pause' :
+                # self.new_run, self.new_pause=False, True
+                self.on_new_pause()
+            elif pre_state=='pause' and self.intermitter.cur_state =='run' :
+                # self.new_run, self.new_pause=True, False
+                self.on_new_run()
+            # else :
+            #     self.new_run, self.new_pause = False, False
         if self.feeder:
             self.feed_motion = self.feeder.step()
         if self.crawler:
-            self.lin_vel = (self.crawler.step() + np.random.normal(scale=self.crawler_noise)) * length
+            self.lin_activity = self.crawler.step()
         if self.turner:
-            Aang0=self.turner.step(A_in=A_in)
-            Aang = self.coupling.step(self.crawler.phi) * Aang0 * (1 + np.random.normal(scale=self.turner_output_noise))
+            A_in*=(1 + np.random.normal(scale=self.turner_input_noise))
+            self.ang_activity = self.coupling.step() * self.turner.step(A_in=A_in)
+        # if self.new_run :
+        #     self.on_new_run()
+        # elif self.new_pause :
+        #     self.on_new_pause()
+        self.add_noise()
+        self.scale2length(length)
+        if not self.offline :
+            return self.lin_activity, self.ang_activity, self.feed_motion
+        else :
+            self.update_body(length)
+            return self.lin_vel, self.ang_vel, self.feed_motion
 
-        return self.lin_vel, Aang, self.feed_motion
 
 
-class Levy_locomotor(Locomotor):
+
+
+class Levy_locomotor(DefaultLocomotor):
     def __init__(self, dt, conf=None,
                  pause_dist={'range': [0.4, 20.0], 'name': 'uniform'},
                  run_dist={'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
-                 run_scaled_velocity_mean=None,run_velocity_mean=None, ang_vel_headcast=0.3, **kwargs):
-        super().__init__(dt=dt)
-        self.run_scaled_velocity_mean = run_scaled_velocity_mean
-        self.run_velocity_mean = run_velocity_mean
-        self.ang_vel_headcast = ang_vel_headcast
+                 run_scaled_velocity_mean=None, run_velocity_mean=None, ang_vel_headcast=0.3, **kwargs):
+        from lib.conf.base.dtypes import null_dict
+        if conf is None :
+            conf=null_dict('locomotor',
+                       crawler_params=null_dict('crawler', waveform ='constant', initial_amp=run_scaled_velocity_mean),
+                       turner_params=null_dict('turner',  mode='constant', initial_amp=ang_vel_headcast),
+                       interference_params=null_dict('interference', mode ='default', attenuation =0),
+                       intermitter_params=null_dict('intermitter', run_dist =run_dist, pause_dist=pause_dist, run_mode ='run')
+                       )
+        super().__init__(dt=dt, ang_mode='velocity', offline=True, conf=conf)
+        # self.run_scaled_velocity_mean = run_scaled_velocity_mean
+        # self.run_velocity_mean = run_velocity_mean
+        # self.ang_vel_headcast = ang_vel_headcast
+        # self.crawler = Crawler(dt=self.dt, waveform='constant', initial_amp=run_scaled_velocity_mean)
+        # self.turner = Turner(dt=self.dt, mode='constant', initial_amp=ang_vel_headcast)
+        # intermitter_params = AttrDict.from_nested_dicts({
+        #     'pause_dist': pause_dist,
+        #     'run_dist': run_dist,
+        #     'run_mode': 'run',
+        #     'crawl_bouts': True,
+        #     'EEB': 0,
+        # })
+        # self.intermitter = Intermitter(locomotor=self, dt=self.dt, **intermitter_params)
+        # self.coupling = DefaultCoupling(locomotor=self, cur_attenuation=0)
 
-        self.run_dist = BoutGenerator(**run_dist, dt=self.dt)
-        self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
-        self.cur_run_dur_max = self.run_dist.sample()
-        self.cur_pause_dur_max = None
+    def on_new_pause(self):
+        self.turner.amp *= np.random.choice([-1, 1])
+        # print(np.sign(self.ang_activity))
 
-    def step(self, A_in=0, length=1):
-        self.bend = restore_bend_2seg(self.bend, self.last_dist, length, correction_coef=self.bend_correction_coef)
-        if self.cur_state == 'run' and self.cur_run_dur >= self.cur_run_dur_max:
-            self.cur_run_dur = None
-            self.cur_run_dur_max = None
-            self.cur_pause_dur_max = self.pause_dist.sample()
-            self.cur_pause_dur = 0
-            self.cur_state = 'pause'
-            self.lin_vel = 0
-            self.ang_vel = self.ang_vel_headcast * np.random.choice([-1, 1])
-        elif self.cur_state == 'pause' and self.cur_pause_dur >= self.cur_pause_dur_max:
-            self.cur_pause_dur = None
-            self.cur_pause_dur_max = None
-            self.cur_run_dur_max = self.run_dist.sample()
-            self.cur_run_dur = 0
-            self.cur_state = 'run'
-            self.lin_vel = self.run_scaled_velocity_mean * length if self.run_scaled_velocity_mean is not None else self.run_velocity_mean
-            self.ang_vel = 0
-        self.update()
-        self.add_noise()
-        self.bend += self.ang_vel * self.dt
-        self.last_dist = self.lin_vel * self.dt
-        return self.lin_vel, self.ang_vel, self.feed_motion
+    # def step(self, A_in=0, length=1):
+    #     pre_state = self.intermitter.cur_state
+    #     self.intermitter.step()
+    #     cur_state = self.intermitter.cur_state
+    #     # self.lin_activity = self.crawler.step()
+    #     # A_in *= (1 + np.random.normal(scale=self.turner_input_noise))
+    #     # self.ang_activity = self.coupling.step() * self.turner.step(A_in=A_in)
+    #     if cur_state != pre_state:
+    #         if cur_state == 'run':
+    #             self.lin_activity = self.run_scaled_velocity_mean * length if self.run_scaled_velocity_mean is not None else self.run_velocity_mean
+    #             self.ang_activity = 0
+    #         elif cur_state == 'pause':
+    #             self.lin_activity = 0
+    #             self.ang_activity = self.ang_vel_headcast * np.random.choice([-1, 1])
+    #
+    #     # if self.cur_state == 'run' and self.cur_run_dur >= self.cur_run_dur_max:
+    #     #     self.cur_run_dur = None
+    #     #     self.cur_run_dur_max = None
+    #     #     self.cur_pause_dur_max = self.pause_dist.sample()
+    #     #     self.cur_pause_dur = 0
+    #     #     self.cur_state = 'pause'
+    #     #     self.lin_vel = 0
+    #     #     self.ang_vel = self.ang_vel_headcast * np.random.choice([-1, 1])
+    #     # elif self.cur_state == 'pause' and self.cur_pause_dur >= self.cur_pause_dur_max:
+    #     #     self.cur_pause_dur = None
+    #     #     self.cur_pause_dur_max = None
+    #     #     self.cur_run_dur_max = self.run_dist.sample()
+    #     #     self.cur_run_dur = 0
+    #     #     self.cur_state = 'run'
+    #     #     self.lin_vel = self.run_scaled_velocity_mean * length if self.run_scaled_velocity_mean is not None else self.run_velocity_mean
+    #     #     self.ang_vel = 0
+    #     # self.update()
+    #     self.add_noise()
+    #     self.update_body(length)
+    #     return self.lin_vel, self.ang_vel, self.feed_motion
 
 
 class Wystrach2016(Locomotor):
-    def __init__(self, dt, conf=None, run_scaled_velocity_mean=None,run_velocity_mean=None,
+    def __init__(self, dt, conf=None, run_scaled_velocity_mean=None, run_velocity_mean=None,
                  turner_input_constant=19, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0, **kwargs):
-        super().__init__(dt=dt, **kwargs)
+        super().__init__(dt=dt, ang_mode='torque', offline=True, **kwargs)
         self.run_scaled_velocity_mean = run_scaled_velocity_mean
         self.run_velocity_mean = run_velocity_mean
 
@@ -146,88 +220,89 @@ class Wystrach2016(Locomotor):
         self.neural_oscillator = NeuralOscillator(dt=self.dt, w_ee=w_ee, w_ce=w_ce, w_ec=w_ec, w_cc=w_cc, m=m, n=n)
 
     def step(self, A_in=0, length=1):
-        self.bend = restore_bend_2seg(self.bend, self.last_dist, length, correction_coef=self.bend_correction_coef)
-        self.lin_vel =  self.run_scaled_velocity_mean * length if self.run_scaled_velocity_mean is not None else self.run_velocity_mean
+        self.lin_activity = self.run_scaled_velocity_mean * length if self.run_scaled_velocity_mean is not None else self.run_velocity_mean
 
         input = (self.turner_input_constant + A_in) * (1 + np.random.normal(scale=self.turner_input_noise))
 
         self.neural_oscillator.step(input)
+        self.ang_activity =self.neural_oscillator.activity
         self.add_noise()
-        self.bend_body(self.neural_oscillator.activity)
-        self.last_dist = self.lin_vel * self.dt
-
+        self.update_body(length)
         return self.lin_vel, self.ang_vel, self.feed_motion
-
 
 
 class Davies2015(Locomotor):
     def __init__(self, dt, conf=None, run_scaled_velocity_mean=None, run_velocity_mean=None, run_dur_min=1.0,
-                 theta_min_headcast=37, theta_max_headcast=120,
+                 run_dur_max=100.0,
+                 theta_min_headcast=37, theta_max_headcast=120, pause_dur_max=100.0,
                  theta_max_weathervane=20, ang_vel_weathervane=0.1, ang_vel_headcast=0.3,
                  r_run2headcast=0.148, r_headcast2run=2.0,
                  r_weathervane_stop=2.0, r_weathervane_resume=1.0, **kwargs):
-        super().__init__(dt=dt)
+        super().__init__(dt=dt, ang_mode='velocity', offline=True)
+        pause_dur_min = theta_min_headcast / ang_vel_headcast
+        intermitter_params = AttrDict.from_nested_dicts({
+            'pause_dist': {'range': (pause_dur_min, pause_dur_max), 'name': 'exponential', 'beta': r_headcast2run},
+            'run_dist': {'range': (run_dur_min, run_dur_max), 'name': 'exponential', 'beta': r_run2headcast},
+            'run_mode': 'run',
+            'crawl_bouts': True,
+            'EEB': 0,
+        })
+        self.intermitter = Intermitter(locomotor=self, dt=self.dt, **intermitter_params)
         self.run_scaled_velocity_mean = run_scaled_velocity_mean
         self.run_velocity_mean = run_velocity_mean
-        self.run_dur_min = run_dur_min
         self.theta_min_headcast, self.theta_max_headcast = theta_min_headcast, theta_max_headcast
         self.ang_vel_headcast = ang_vel_headcast
         self.theta_max_weathervane, self.ang_vel_weathervane = theta_max_weathervane, ang_vel_weathervane
-        self.r_run2headcast, self.r_headcast2run = r_run2headcast, r_headcast2run
         self.r_weathervane_stop, self.r_weathervane_resume = r_weathervane_stop, r_weathervane_resume
+        self.cur_turn_amp = 0
+        self.state_weathervane = 'on'
 
-        self.cur_headcast = 0
-        self.cur_weathervane = 0
+    @property
+    def headcast_termination_allowed(self):
+        return np.abs(self.cur_turn_amp) >= self.theta_min_headcast and np.sign(self.cur_turn_amp * self.ang_vel) == 1
 
     def step(self, A_in=0, length=1):
-        self.bend = restore_bend_2seg(self.bend, self.last_dist, length, correction_coef=self.bend_correction_coef)
-        if self.cur_state == 'run' and self.cur_run_dur >= self.run_dur_min:
-            if np.random.uniform(0, 1, 1) <= self.r_run2headcast * self.dt:
-                self.cur_state = 'headcast'
+        pre_state = self.intermitter.cur_state
+        self.intermitter.pause_termination_allowed = self.headcast_termination_allowed
+        self.intermitter.step()
+        cur_state = self.intermitter.cur_state
+        if cur_state != pre_state:
+            if cur_state == 'run':
+                self.lin_activity = self.run_scaled_velocity_mean * length if self.run_scaled_velocity_mean is not None else self.run_velocity_mean
+                self.ang_activity = np.random.choice([-1, 1], 1)[0] * self.ang_vel_weathervane
+            elif cur_state == 'pause':
+                self.lin_activity = 0
                 sign = np.sign(self.bend) if self.bend != 0 else np.random.choice([-1, 1], 1)[0]
-                self.ang_vel = sign * self.ang_vel_headcast
-        elif self.cur_state == 'headcast' and np.abs(
-                self.cur_headcast) >= self.theta_min_headcast and np.sign(self.cur_headcast * self.ang_vel) == 1:
-            if np.random.uniform(0, 1, 1) <= self.r_headcast2run * self.dt:
-                self.cur_state = 'run'
-                self.ang_vel = np.random.choice([-1, 1], 1)[0] * self.ang_vel_weathervane
-        if self.cur_state == 'run':
-            self.cur_run_dur += self.dt
-            self.lin_vel =  self.run_scaled_velocity_mean * length if self.run_scaled_velocity_mean is not None else self.run_velocity_mean
-            self.cur_headcast = 0
-
-            if self.ang_vel == 0.0:
-                if np.random.uniform(0, 1, 1) <= self.r_weathervane_resume * self.dt:
-                    self.ang_vel = np.random.choice([-1, 1], 1)[0] * self.ang_vel_weathervane
-            else:
-                if np.random.uniform(0, 1, 1) <= self.r_weathervane_stop * self.dt:
-                    self.ang_vel = 0.0
-                    self.cur_weathervane = 0
-
-            if np.abs(self.cur_weathervane) >= self.theta_max_weathervane:
-                self.ang_vel *= -1
-            self.cur_weathervane += self.ang_vel * self.dt
-        elif self.cur_state == 'headcast':
-            self.lin_vel = 0
-            self.cur_run_dur = 0
-            self.cur_weathervane = 0
-            if np.abs(self.cur_headcast) >= self.theta_max_headcast:
-                self.ang_vel *= -1
-            self.cur_headcast += self.ang_vel * self.dt
+                self.ang_activity = sign * self.ang_vel_headcast
+            self.cur_turn_amp = 0
+        if cur_state == 'run':
+            if self.state_weathervane == 'on' and np.random.uniform(0, 1, 1) <= self.r_weathervane_stop * self.dt:
+                self.state_weathervane = 'off'
+                self.ang_activity = 0.0
+                self.cur_turn_amp = 0
+            elif self.state_weathervane == 'off' and np.random.uniform(0, 1, 1) <= self.r_weathervane_resume * self.dt:
+                self.state_weathervane = 'on'
+                self.ang_activity = np.random.choice([-1, 1], 1)[0] * self.ang_vel_weathervane
+            if np.abs(self.cur_turn_amp) >= self.theta_max_weathervane:
+                self.ang_activity *= -1
+        elif cur_state == 'pause':
+            if np.abs(self.cur_turn_amp) >= self.theta_max_headcast:
+                self.ang_activity *= -1
         self.add_noise()
-        self.bend += self.ang_vel * self.dt
-        self.last_dist = self.lin_vel * self.dt
+        self.update_body(length)
+        self.cur_turn_amp += self.ang_vel * self.dt
         return self.lin_vel, self.ang_vel, self.feed_motion
+
 
 class Sakagiannis2022(Locomotor):
     def __init__(self, dt, conf=None,
                  pause_dist={'range': [0.4, 20.0], 'name': 'uniform'},
                  run_dist={'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
-                 stridechain_dist=None,
+                 stridechain_dist=None,freq_std=0.18,
                  initial_freq=1.418, step_mu=0.224, step_std=0.033,
                  attenuation_min=0.2, attenuation_max=0.31, max_vel_phase=3.6,
                  turner_input_constant=19, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0, **kwargs):
-        super().__init__(dt=dt, **kwargs)
+        super().__init__(dt=dt, ang_mode='torque', offline=True, **kwargs)
         self.turner_input_constant = turner_input_constant
         self.neural_oscillator = NeuralOscillator(dt=self.dt, w_ee=w_ee, w_ce=w_ce, w_ec=w_ec, w_cc=w_cc, m=m, n=n)
 
@@ -236,12 +311,12 @@ class Sakagiannis2022(Locomotor):
         self.step_to_length_std = step_std
         self.step_to_length = self.new_stride
 
-        if stridechain_dist is None :
+        if stridechain_dist is None:
             self.run_dist = BoutGenerator(**run_dist, dt=self.dt)
             self.cur_run_dur_max = self.run_dist.sample()
             self.current_numstrides = None
             self.stridechain_dist = None
-        else :
+        else:
             self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
             self.cur_stridechain_length = self.stridechain_dist.sample()
             self.current_numstrides = 0
@@ -250,27 +325,28 @@ class Sakagiannis2022(Locomotor):
         self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
         self.cur_pause_dur_max = None
 
-        self.d_phi = 2 * np.pi*self.dt*self.freq
+        self.d_phi = 2 * np.pi * self.dt * self.freq
         self.phi = 0
         self.complete_iteration = False
         self.iteration_counter = 0
         self.attenuation_min = attenuation_min
         self.attenuation_max = attenuation_max
         self.max_vel_phase = max_vel_phase
-        self.max_attenuation_phase = max_vel_phase-1.2
+        self.max_attenuation_phase = max_vel_phase - 1.2
 
-    @ property
+    @property
     def attenuation_func(self):
-        a=gaussian(self.phi, self.max_attenuation_phase, 1) * self.attenuation_max + self.attenuation_min
-        if a>=1 :
-            a=1
-        elif a<=0 :
-            a=0
+        a = gaussian(self.phi, self.max_attenuation_phase, 1) * self.attenuation_max + self.attenuation_min
+        if a >= 1:
+            a = 1
+        elif a <= 0:
+            a = 0
         return a
 
-    @ property
+    @property
     def new_stride(self):
         return np.random.normal(loc=self.step_to_length_mu, scale=self.step_to_length_std)
+
     def oscillate(self):
         self.phi += self.d_phi
         if self.phi >= 2 * np.pi:
@@ -281,9 +357,9 @@ class Sakagiannis2022(Locomotor):
         else:
             self.complete_iteration = False
 
-    @ property
+    @property
     def run_termination(self):
-        if self.stridechain_dist is not None and self.current_numstrides>=self.cur_stridechain_length :
+        if self.stridechain_dist is not None and self.current_numstrides >= self.cur_stridechain_length:
             self.cur_stridechain_length = None
             self.current_numstrides = None
             return True
@@ -291,18 +367,17 @@ class Sakagiannis2022(Locomotor):
             self.cur_run_dur = None
             self.cur_run_dur_max = None
             return True
-        else :
+        else:
             return False
 
     def run_initiation(self):
         if self.stridechain_dist is not None:
             self.cur_stridechain_length = self.stridechain_dist.sample()
             self.current_numstrides = 0
-        elif self.run_dist is not None :
+        elif self.run_dist is not None:
             self.cur_run_dur_max = self.run_dist.sample()
             self.cur_run_dur = 0
         self.cur_state = 'run'
-
 
     def intermit(self):
         if self.cur_state == 'run' and self.run_termination:
@@ -315,35 +390,36 @@ class Sakagiannis2022(Locomotor):
             self.run_initiation()
 
     def step(self, A_in=0, length=1):
-        self.bend = restore_bend_2seg(self.bend, self.last_dist, length, correction_coef=self.bend_correction_coef)
+        # self.bend = restore_bend_2seg(self.bend, self.last_dist, length, correction_coef=self.bend_correction_coef)
         self.intermit()
         if self.cur_state == 'run':
-            if self.cur_run_dur is not None :
+            if self.cur_run_dur is not None:
                 self.cur_run_dur += self.dt
             self.oscillate()
-            if self.complete_iteration and self.current_numstrides is not None :
-                self.current_numstrides+=1
+            if self.complete_iteration and self.current_numstrides is not None:
+                self.current_numstrides += 1
                 self.step_to_length = self.new_stride
-            self.lin_vel = self.freq * self.step_to_length * (1 + 0.6 * np.cos(self.phi - self.max_vel_phase))*length
+            self.lin_activity = self.freq * self.step_to_length * (1 + 0.6 * np.cos(self.phi - self.max_vel_phase)) * length
             attenuation_coef = self.attenuation_func
         elif self.cur_state == 'pause':
             self.cur_pause_dur += self.dt
             self.phi = 0
-            self.lin_vel = 0
+            self.lin_activity = 0
             attenuation_coef = 1
 
         input = (self.turner_input_constant + A_in) * (1 + np.random.normal(scale=self.turner_input_noise))
 
         self.neural_oscillator.step(input)
-
+        self.ang_activity= self.neural_oscillator.activity* attenuation_coef
         self.add_noise()
-        self.bend_body(self.neural_oscillator.activity * attenuation_coef)
-        self.last_dist = self.lin_vel * self.dt
+        self.update_body(length)
+        # self.lin_vel = self.lin_activity
+        # self.bend_body(self.ang_activity)
+        # self.last_dist = self.lin_vel * self.dt
         return self.lin_vel, self.ang_vel, self.feed_motion
 
 
-
-Levy_locomotor_conf = {
+Levy_conf = {
     'run_scaled_velocity': 0.1,
     'ang_vel_headcast': np.deg2rad(60),
     'crawler_noise': 0.0,
@@ -398,22 +474,66 @@ Sakagiannis2022_conf = {
     'turner_output_noise': 0.0,
     'attenuation_min': 0.2,
     'attenuation_max': 0.31,
-    #'crawler_phi_range': (0.5, 1.5),
+    # 'crawler_phi_range': (0.5, 1.5),
     'run_dist': {'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
     'pause_dist': {'range': [0.4, 20.0], 'name': 'uniform'},
 }
 
 if __name__ == '__main__':
-    dt=0.065
-    l = 1
-    labs = ["Levy", "Wystrach2016", "Davies2015", "Sakagiannis2022"]
-    loco_pairs = [[Levy_locomotor, Levy_locomotor_conf], [Wystrach2016, Wystrach2016_conf],
-                  [Davies2015, Davies2015_conf], [Sakagiannis2022, Sakagiannis2022_conf]]
-    for lab,(func,conf) in zip(labs, loco_pairs) :
-        L = func(dt=dt, **conf)
-        vs = []
-        for i in range(5000):
-            v, fov, feed = L.step(length=l)
-            vs.append(v)
-        print(lab, np.mean(vs))
-        # break
+    from lib.anal.evaluation import sim_locomotor, sim_dataset,adapt_conf, run_locomotor_evaluation
+    from lib.conf.base.par import ParDict, getPar
+    # df_cols, = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'], to_return=['d'])
+    # Lev = AttrDict.from_nested_dicts({
+    #     'run_velocity_mean': 0.001,
+    #     'ang_vel_headcast': np.deg2rad(240.0),  # 60,
+    #     'run_dist': {'range': [1, 172.125],
+    #                  'name': 'powerlaw',
+    #                  'alpha': 1.46},
+    #     'pause_dist': {'range': [0.4, 2.0],
+    #                    'name': 'uniform'},
+    # })
+    # dt = 0.1
+    # N = 2880
+    # Ncols = len(df_cols)
+    # # aaL = np.zeros([N, Ncols]) * np.nan
+    # L = Levy_locomotor(dt=0.1, **Lev)
+    # aaL = sim_locomotor(L, N, dt, df_cols, {'length' : 0.004})
+    # # for i in range(5000):
+    # #     v, fov, feed = L.step(length=0.004)
+    # #     print(L.intermitter.cur_state)
+    # # from lib.conf.base.dtypes import null_dict
+    # # print(null_dict('locomotor'))
+    # raise
+    Dav = {
+        'run_velocity_mean': 0.001,
+        'run_dur_min': 1,
+        'theta_min_headcast': np.deg2rad(37),
+        'theta_max_headcast': np.deg2rad(120),
+        'theta_max_weathervane': np.deg2rad(20),
+        'ang_vel_weathervane': np.deg2rad(60.0),
+        'ang_vel_headcast': np.deg2rad(240.0),
+        'r_run2headcast': 0.148,
+        'r_headcast2run': 2.0,
+        'r_weathervane_stop': 2.0,
+        'r_weathervane_resume': 1.0,
+    }
+    L = Davies2015(dt=1/16, **Dav)
+    N=2880
+    states=np.zeros([N])*np.nan
+    for i in range(N):
+        v, fov, feed = L.step(length=0.004)
+        states[i] =1 if L.intermitter.cur_state=='run' else 0
+    print(np.sum(states)/N)
+    # dt = 0.065
+    # l = 1
+    # labs = ["Levy", "Wystrach2016", "Davies2015", "Sakagiannis2022"]
+    # loco_pairs = [[Levy_locomotor, Levy_locomotor_conf], [Wystrach2016, Wystrach2016_conf],
+    #               [Davies2015, Davies2015_conf], [Sakagiannis2022, Sakagiannis2022_conf]]
+    # for lab, (func, conf) in zip(labs, loco_pairs):
+    #     L = func(dt=dt, **conf)
+    #     vs = []
+    #     for i in range(5000):
+    #         v, fov, feed = L.step(length=l)
+    #         vs.append(v)
+    #     print(lab, np.mean(vs))
+    #     # break

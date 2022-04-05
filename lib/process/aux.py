@@ -344,7 +344,7 @@ def process_epochs(a, epochs, dt) :
         maxs = np.array([])
     else:
         stops = epochs[:, 1]
-        durs = np.diff(epochs).flatten() * dt
+        durs = (np.diff(epochs).flatten()+1) * dt
         slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in epochs]
         amps = np.array([np.trapz(a[p], dx=dt) for p in slices])
         idx = np.concatenate(slices)
@@ -385,7 +385,7 @@ def detect_pauses(a, dt, vel_thr=0.3, runs=None, min_dur=None):
     p0s = idx[np.where(np.diff(idx, prepend=[-np.inf]) != 1)[0]]
     p1s = idx[np.where(np.diff(idx, append=[np.inf]) != 1)[0]]
     pauses = np.vstack([p0s, p1s]).T
-    durs = np.diff(pauses).flatten() * dt
+    durs = (np.diff(pauses).flatten()+1) * dt
     pauses = pauses[durs >= min_dur]
     return pauses
 
@@ -418,7 +418,7 @@ def detect_runs(a, dt, vel_thr=0.3, min_dur=0.5):
     r0s = idx[np.where(np.diff(idx, prepend=[-np.inf]) != 1)[0]]
     r1s = idx[np.where(np.diff(idx, append=[np.inf]) != 1)[0]]
     runs = np.vstack([r0s, r1s]).T
-    durs = np.diff(runs).flatten() * dt
+    durs = (np.diff(runs).flatten()+1) * dt
     runs = runs[durs >= min_dur]
     return runs
 
@@ -576,13 +576,12 @@ def stride_max_vel_phis(s, e, c, Nbins=64) :
         e[nam.max(f'phi_{nam.vel(p)}')] = phis[i,:]
 
 
-def weathervanesNheadcasts(run_idx, pause_idx, Lturn_slices, Rturn_slices, Lamps, Ramps):
-    amps = np.abs(np.concatenate([Lamps, Ramps]))
-    turn_slices = Lturn_slices + Rturn_slices
+def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
+    # turn_slices = Lturn_slices + Rturn_slices
     wvane_idx = [ii for ii, t in enumerate(turn_slices) if all([tt in run_idx for tt in t])]
     cast_idx = [ii for ii, t in enumerate(turn_slices) if all([tt in pause_idx for tt in t])]
-    wvane_amps = amps[wvane_idx]
-    cast_amps = amps[cast_idx]
+    wvane_amps = Tamps[wvane_idx]
+    cast_amps = Tamps[cast_idx]
     wvane_min, wvane_max = np.nanquantile(wvane_amps, 0.25), np.nanquantile(wvane_amps, 0.75)
     cast_min, cast_max = np.nanquantile(cast_amps, 0.25), np.nanquantile(cast_amps, 0.75)
     return wvane_min, wvane_max, cast_min, cast_max
@@ -592,20 +591,24 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
     from lib.conf.base.par import getPar
     import lib.aux.naming as nam
     from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
-    l, v, sv, dst, acc, fov, foa, b, bv, ba, fv,ffov = getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv','ffov'], to_return=['d'])[0]
-    e[fv] = s[v].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(1.0, 2.5))
+    l, v, sv, dst, acc, fov, foa, b, bv, ba, fv,fsv, ffov = getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv','fsv','ffov'], to_return=['d'])[0]
+    try :
+        e[fv] = s[v].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(1.0, 2.5))
+        e[fsv] =e[fv]
+    except :
+        pass
     e[ffov] = s[fov].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(0.1, 0.8))
     e['turner_input_constant'] = (e[ffov] / 0.024) + 5
 
     # Parameter easy naming
     cum_t, cum_d, v_mu, sv_mu = getPar(['cum_t', 'cum_d', 'v_mu', 'sv_mu'], to_return=['d'])[0]
-    sstr_d_mu, sstr_d_std, run_tr, pau_tr, cum_run_t, cum_pau_t = getPar(['sstr_d_mu', 'sstr_d_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t'], to_return=['d'])[0]
+    str_d_mu, str_d_std,sstr_d_mu, sstr_d_std, run_tr, pau_tr, cum_run_t, cum_pau_t = getPar(['str_d_mu', 'str_d_std','sstr_d_mu', 'sstr_d_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t'], to_return=['d'])[0]
 
     str_ps, = getPar(['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std'], to_return=['d'])
     lin_ps, = getPar(
         ['run_v_mu', 'pau_v_mu', 'run_a_mu', 'pau_a_mu', 'run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std',
          'run_foa_mu', 'pau_foa_mu', 'pau_b_mu', 'pau_b_std', 'pau_bv_mu', 'pau_bv_std', 'pau_ba_mu', 'pau_ba_std',
-         'cum_run_t', 'cum_pau_t', 'Ltur_tr', 'Rtur_tr', 'run_t_min'], to_return=['d'])
+         'cum_run_t', 'cum_pau_t', 'Ltur_tr', 'Rtur_tr', 'run_t_min' , 'run_t_max', 'pau_t_min', 'pau_t_max'], to_return=['d'])
 
     att = 'attenuation'
     att_ps = [nam.min(att), nam.max(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')]
@@ -616,13 +619,14 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
     step_ps, = getPar(['tur_fou', 'tur_t', 'tur_fov_max', 'pau_t', 'run_t', 'run_d'], to_return=['d'])
     step_vs = np.zeros([c.Nticks, Nids, len(step_ps)]) * np.nan
 
-    all_runs_durs, all_runs_counts, all_runs_dsts, all_pauses_durs, all_turns_durs, all_turns_angles, all_turns_fov_max = [], [], [], [], [], [], []
+    GRdurs, GRcounts, GRdsts, GPdurs, GTdurs, GTamps, GTmaxs = [], [], [], [], [], [], []
     vs_ps = np.zeros([Nids, len(lin_ps)]) * np.nan
     vs_str_ps = np.zeros([Nids, len(str_ps) + len(att_ps)]) * np.nan
     chunk_dicts = {}
     wNh = {}
     wNh_ps = ['weathervane_q25_amp', 'weathervane_q75_amp', 'headcast_q25_amp', 'headcast_q75_amp']
     for jj, id in enumerate(ids):
+        # print(jj, Nids)
         chunk_dict = {}
         # Angular
         a_fov = s[fov].xs(id, level="AgentID")
@@ -630,7 +634,10 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
 
         Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov, Lturns, c.dt)
         Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov, Rturns, c.dt)
-
+        Tamps=np.abs(np.concatenate([Lamps, Ramps]))
+        Tdurs=np.concatenate([Ldurs, Rdurs])
+        Tmaxs=np.concatenate([Lmaxs, Rmaxs])
+        Tslices = Lturn_slices + Rturn_slices
         if Lturns.shape[0] > 0:
             step_vs[Lturns[:, 1], jj, 0] = Lamps
             step_vs[Lturns[:, 1], jj, 1] = Ldurs
@@ -656,19 +663,20 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
                                                np.mean(a_sv[stride_idx]),
                                                np.mean(str_fovs),
                                                np.std(str_fovs)]
-                all_runs_counts.append(run_counts)
+                GRcounts.append(run_counts)
             else:
                 runs = detect_runs(a_sv, c.dt)
             pauses = detect_pauses(a_sv, c.dt, runs=runs)
         else:
+            if vel_thr is None :
+                vel_thr =c.vel_thr
             runs = detect_runs(a_v, c.dt, vel_thr=vel_thr)
             pauses = detect_pauses(a_v, c.dt, runs=runs, vel_thr=vel_thr)
 
         pauses1, pause_durs, pause_slices, pause_dsts, pause_idx, pause_maxs = process_epochs(a_v, pauses, c.dt)
         runs1, run_durs, run_slices, run_dsts, run_idx, run_maxs = process_epochs(a_v, runs, c.dt)
 
-        wNh[id] = dict(
-            zip(wNh_ps, weathervanesNheadcasts(run_idx, pause_idx, Lturn_slices, Rturn_slices, Lamps, Ramps)))
+        wNh[id] = dict(zip(wNh_ps, weathervanesNheadcasts(run_idx, pause_idx, Tslices, Tamps)))
         chunk_dict['run'] = runs
         chunk_dict['pause'] = pauses
 
@@ -676,9 +684,13 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
         step_vs[runs1, jj, 4] = run_durs
         step_vs[runs1, jj, 5] = run_dsts
 
-        pau_bs = s[b].xs(id, level="AgentID").abs()[pause_idx]
-        pau_bvs = s[bv].xs(id, level="AgentID").abs()[pause_idx]
-        pau_bas = s[ba].xs(id, level="AgentID").abs()[pause_idx]
+        if b in s.columns :
+            pau_bs = s[b].xs(id, level="AgentID").abs()[pause_idx]
+            pau_bvs = s[bv].xs(id, level="AgentID").abs()[pause_idx]
+            pau_bas = s[ba].xs(id, level="AgentID").abs()[pause_idx]
+            pau_b_temp=[np.mean(pau_bs), np.std(pau_bs),np.mean(pau_bvs), np.std(pau_bvs),np.mean(pau_bas), np.std(pau_bas)]
+        else :
+            pau_b_temp =[np.nan]*6
         a_foa = s[foa].xs(id, level="AgentID").abs()
         a_acc = s[acc].xs(id, level="AgentID")
         pau_fovs = a_fov.abs()[pause_idx]
@@ -694,23 +706,25 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
             np.mean(pau_fovs), np.std(pau_fovs),
             np.mean(run_foas),
             np.mean(pau_foas),
-            np.mean(pau_bs), np.std(pau_bs),
-            np.mean(pau_bvs), np.std(pau_bvs),
-            np.mean(pau_bas), np.std(pau_bas),
+            *pau_b_temp,
             np.sum(run_durs),
             np.sum(pause_durs),
             np.sum(Ldurs) / e[cum_t].loc[id],
             np.sum(Rdurs) / e[cum_t].loc[id],
-            np.min(run_durs) if len(run_durs) > 0 else 1]
+            np.nanmin(run_durs) if len(run_durs) > 0 else 1,
+            np.nanmax(run_durs) if len(run_durs) > 0 else 100,
+            np.nanmin(pause_durs) if len(pause_durs) > 0 else c.dt,
+            np.nanmax(pause_durs) if len(pause_durs) > 0 else 100,
+        ]
         if c.Npoints > 1 and strides_enabled:
             vs_str_ps[jj, len(str_ps):] = stride_interference(a_sv, a_fov.abs(), np.mean(pau_fovs), strides)
 
-        all_runs_durs.append(run_durs)
-        all_runs_dsts.append(run_dsts)
-        all_pauses_durs.append(pause_durs)
-        all_turns_durs.append(np.concatenate([Ldurs, Rdurs]))
-        all_turns_angles.append(np.concatenate([Lamps, Ramps]))
-        all_turns_fov_max.append(np.concatenate([Lmaxs, Rmaxs]))
+        GRdurs.append(run_durs)
+        GRdsts.append(run_dsts)
+        GPdurs.append(pause_durs)
+        GTdurs.append(Tdurs)
+        GTamps.append(Tamps)
+        GTmaxs.append(Tmaxs)
         chunk_dicts[id] = chunk_dict
     e[wNh_ps] = pd.DataFrame.from_dict(wNh).T
     chunk_dicts = AttrDict(chunk_dicts)
@@ -724,17 +738,17 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
 
     if c.Npoints > 1 and strides_enabled:
         e[str_ps + att_ps] = vs_str_ps
-        e[sstr_d_mu] = e[getPar(['str_d_mu'], to_return=['d'])[0][0]] / e[l]
-        e[sstr_d_std] = e[getPar(['str_d_std'], to_return=['d'])[0][0]] / e[l]
+        e[sstr_d_mu] = e[str_d_mu] / e[l]
+        e[sstr_d_std] = e[str_d_std] / e[l]
 
     aux_dic = {
-        'run_dur': np.array(flatten_list(all_runs_durs)),
-        'run_dst': np.array(flatten_list(all_runs_dsts)),
-        'pause_dur': np.array(flatten_list(all_pauses_durs)),
-        'run_count': np.array(flatten_list(all_runs_counts)),
-        'turn_dur': np.array(flatten_list(all_turns_durs)),
-        'turn_amp': np.array(flatten_list(all_turns_angles)),
-        'turn_vel_max': np.array(flatten_list(all_turns_fov_max))
+        'run_dur': np.array(flatten_list(GRdurs)),
+        'run_dst': np.array(flatten_list(GRdsts)),
+        'pause_dur': np.array(flatten_list(GPdurs)),
+        'run_count': np.array(flatten_list(GRcounts)),
+        'turn_dur': np.array(flatten_list(GTdurs)),
+        'turn_amp': np.array(flatten_list(GTamps)),
+        'turn_vel_max': np.array(flatten_list(GTmaxs))
     }
     return aux_dic
 

@@ -3124,38 +3124,44 @@ def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, angular=True, maxNpoints=5
         # print(f'Plot saved as {path}')
     # return fig, axs, axx
 
-def stride_cycle(s, dt, e=None, Nbins=64, color='red'):
+def stride_cycle(s, dt, e, ang_short='fov',absolute=True,Nbins=64, color='red', scaled=False, pooled=False):
     from lib.conf.base.par import ParDict
     dic = ParDict(mode='load').dict
-    sv, fov, pau_fov_mu = [dic[k]['d'] for k in ['sv', 'fov', 'pau_fov_mu']]
+    sv, pau_fov_mu = [dic[k]['d'] for k in ['sv', 'pau_fov_mu']]
+    ang,ang_label = dic[ang_short]['d'],dic[ang_short]['l']
     ids = s.index.unique('AgentID').values
     x = np.linspace(0, 2 * np.pi, Nbins)
     ys = np.zeros([len(ids), Nbins]) * np.nan
     fig, ax = plt.subplots(1, 1, figsize=(20, 10))
     for jj, id in enumerate(ids):
         a_sv = s[sv].xs(id, level="AgentID").values
-        a_fov = s[fov].xs(id, level="AgentID").abs().values
+        a_ang = s[ang].xs(id, level="AgentID").values
+        if absolute :
+            a_ang =np.abs(a_ang)
+        if scaled and not pooled:
+            a_ang/=e[pau_fov_mu].loc[id]
         i_min, i_max, strides, runs, run_counts = detect_strides(a_sv, dt)
         aa = np.zeros([len(strides), Nbins])
         for ii, (s0, s1) in enumerate(strides):
-            aa[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_fov[s0:s1])
+            aa[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_ang[s0:s1])
         ys[jj, :] = np.nanquantile(aa, q=0.5, axis=0)
-    plot_quantiles(df=ys, from_np=True, axis=ax, color_shading=color, x=x)
+        if not pooled:
+            ax.plot(x, ys[jj, :], color, linewidth=2, alpha=1.0, zorder=10)
+        #plot_quantiles(df=aa, from_np=True, axis=ax, color_shading=color, x=x)
+    if pooled :
+        if scaled :
+            ys/=e[pau_fov_mu].mean()
+        plot_quantiles(df=ys, from_np=True, axis=ax, color_shading=color, x=x)
     ax.set_xlabel('$\phi_{stride}$')
     ax.set_xlim([0, 2 * np.pi])
-    ax.set_ylim([0, None])
+
     ax.set_xticks(np.linspace(0, 2 * np.pi, 5))
     ax.set_xticklabels([r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
-    ax.set_ylabel(fov)
+    ax.set_ylabel(ang_label)
 
     for xx in [np.pi / 2, np.pi, 3 / 2 * np.pi]:
         ax.axvline(xx, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
-    if e is not None:
-        pau_fov_mu_mu = e[pau_fov_mu].mean()
-        pau_fov_mu_std = e[pau_fov_mu].std()
-        ax.axhline(pau_fov_mu_mu, color='green', alpha=1.0, linestyle='dashed', linewidth=1)
-        ax.axhline(pau_fov_mu_mu + pau_fov_mu_std, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
-        ax.axhline(pau_fov_mu_mu - pau_fov_mu_std, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
+
         # ax.fill_between(xx, pau_fov_mu_mu+pau_fov_mu_std, pau_fov_mu_mu-pau_fov_mu_std, color='green', alpha=.2)
 
 
