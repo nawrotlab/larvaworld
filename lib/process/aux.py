@@ -423,7 +423,7 @@ def detect_runs(a, dt, vel_thr=0.3, min_dur=0.5):
     return runs
 
 
-def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None):
+def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None, return_extrema=True, return_runs=True):
     """
     Annotates strides-runs and pauses in timeseries.
 
@@ -472,12 +472,18 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None):
                 strides.append([s0, s1])
         except:
             pass
+    strides = np.array(strides)
+    if not return_runs :
+        if return_extrema :
+            return i_min, i_max, strides
+        else :
+            return strides
 
     runs, run_counts = [], []
     s00, s11 = None, None
 
     count = 0
-    for ii, (s0, s1) in enumerate(strides):
+    for ii, (s0, s1) in enumerate(strides.tolist()):
         if ii == 0:
             s00, s11 = s0, s1
             count = 1
@@ -495,8 +501,10 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None):
             run_counts.append(count)
             break
     runs = np.array(runs)
-    strides = np.array(strides)
-    return i_min, i_max, strides, runs, run_counts
+    if return_extrema:
+        return i_min, i_max, strides, runs, run_counts
+    else :
+        return strides, runs, run_counts
 
 
 def detect_turns(a, dt, min_dur=None):
@@ -563,9 +571,10 @@ def stride_max_vel_phis(s, e, c, Nbins=64) :
     phis=np.zeros([c.Npoints, c.N])*np.nan
     for j, id in enumerate(c.agent_ids):
         ss = s.xs(id, level='AgentID')
-        i_min, i_max, strides, runs, run_counts = detect_strides(ss[sv], c.dt)
+        strides = detect_strides(ss[sv], c.dt, return_runs=False, return_extrema=False)
+        strides=strides.tolist()
         for i,p in enumerate(points):
-            ar_v = np.zeros([len(strides), Nbins])
+            ar_v = np.zeros([strides, Nbins])
             v_p=nam.vel(p)
             a=ss[v_p] if v_p in ss.columns else compute_velocity(ss[nam.xy(p)].values, dt=c.dt)
             for ii, (s0, s1) in enumerate(strides):
@@ -587,24 +596,25 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
     return wvane_min, wvane_max, cast_min, cast_max
 
 
-def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=None, **kwargs):
+def annotation(s, e, cc, point=None, vel_thr=None, strides_enabled=True, save_to=None, **kwargs):
+    dt=cc.dt
     from lib.conf.base.par import getPar
     import lib.aux.naming as nam
     from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
     l, v, sv, dst, acc, fov, foa, b, bv, ba, fv,fsv, ffov = getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv','fsv','ffov'], to_return=['d'])[0]
     try :
-        e[fv] = s[v].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(1.0, 2.5))
+        e[fv] = s[v].groupby("AgentID").apply(fft_max, dt=dt, fr_range=(1.0, 2.5))
         e[fsv] =e[fv]
     except :
         pass
-    e[ffov] = s[fov].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(0.1, 0.8))
+    e[ffov] = s[fov].groupby("AgentID").apply(fft_max, dt=dt, fr_range=(0.1, 0.8))
     e['turner_input_constant'] = (e[ffov] / 0.024) + 5
 
     # Parameter easy naming
     cum_t, cum_d, v_mu, sv_mu = getPar(['cum_t', 'cum_d', 'v_mu', 'sv_mu'], to_return=['d'])[0]
     str_d_mu, str_d_std,sstr_d_mu, sstr_d_std, run_tr, pau_tr, cum_run_t, cum_pau_t = getPar(['str_d_mu', 'str_d_std','sstr_d_mu', 'sstr_d_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t'], to_return=['d'])[0]
 
-    str_ps, = getPar(['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std'], to_return=['d'])
+    str_ps, = getPar(['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'], to_return=['d'])
     lin_ps, = getPar(
         ['run_v_mu', 'pau_v_mu', 'run_a_mu', 'pau_a_mu', 'run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std',
          'run_foa_mu', 'pau_foa_mu', 'pau_b_mu', 'pau_b_std', 'pau_bv_mu', 'pau_bv_std', 'pau_ba_mu', 'pau_ba_std',
@@ -617,7 +627,7 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
     Nids = len(ids)
 
     step_ps, = getPar(['tur_fou', 'tur_t', 'tur_fov_max', 'pau_t', 'run_t', 'run_d'], to_return=['d'])
-    step_vs = np.zeros([c.Nticks, Nids, len(step_ps)]) * np.nan
+    step_vs = np.zeros([cc.Nticks, Nids, len(step_ps)]) * np.nan
 
     GRdurs, GRcounts, GRdsts, GPdurs, GTdurs, GTamps, GTmaxs = [], [], [], [], [], [], []
     vs_ps = np.zeros([Nids, len(lin_ps)]) * np.nan
@@ -630,10 +640,10 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
         chunk_dict = {}
         # Angular
         a_fov = s[fov].xs(id, level="AgentID")
-        Lturns, Rturns = detect_turns(a_fov, c.dt)
+        Lturns, Rturns = detect_turns(a_fov, dt)
 
-        Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov, Lturns, c.dt)
-        Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov, Rturns, c.dt)
+        Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov, Lturns, dt)
+        Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov, Rturns, dt)
         Tamps=np.abs(np.concatenate([Lamps, Ramps]))
         Tdurs=np.concatenate([Ldurs, Rdurs])
         Tmaxs=np.concatenate([Lmaxs, Rmaxs])
@@ -651,30 +661,32 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
         chunk_dict['Rturn'] = Rturns
         a_v = s[v].xs(id, level="AgentID")
 
-        if c.Npoints > 1:
+        if cc.Npoints > 1:
             a_sv = s[sv].xs(id, level="AgentID")
             if strides_enabled:
-                i_min, i_max, strides, runs, run_counts = detect_strides(a_sv, c.dt, fr=e[fv].loc[id])
-                strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_v, strides, c.dt)
+                strides, runs, run_counts = detect_strides(a_sv, dt, fr=e[fv].loc[id], return_extrema=False)
+                strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_v, strides, dt)
                 chunk_dict['stride'] = strides
                 str_fovs = a_fov.abs()[stride_idx]
                 vs_str_ps[jj, :len(str_ps)] = [np.mean(stride_dsts),
                                                np.std(stride_dsts),
                                                np.mean(a_sv[stride_idx]),
                                                np.mean(str_fovs),
-                                               np.std(str_fovs)]
+                                               np.std(str_fovs),
+                                               np.sum(run_counts),
+                                               ]
                 GRcounts.append(run_counts)
             else:
-                runs = detect_runs(a_sv, c.dt)
-            pauses = detect_pauses(a_sv, c.dt, runs=runs)
+                runs = detect_runs(a_sv, dt)
+            pauses = detect_pauses(a_sv, dt, runs=runs)
         else:
             if vel_thr is None :
-                vel_thr =c.vel_thr
-            runs = detect_runs(a_v, c.dt, vel_thr=vel_thr)
-            pauses = detect_pauses(a_v, c.dt, runs=runs, vel_thr=vel_thr)
+                vel_thr =cc.vel_thr
+            runs = detect_runs(a_v, dt, vel_thr=vel_thr)
+            pauses = detect_pauses(a_v, dt, runs=runs, vel_thr=vel_thr)
 
-        pauses1, pause_durs, pause_slices, pause_dsts, pause_idx, pause_maxs = process_epochs(a_v, pauses, c.dt)
-        runs1, run_durs, run_slices, run_dsts, run_idx, run_maxs = process_epochs(a_v, runs, c.dt)
+        pauses1, pause_durs, pause_slices, pause_dsts, pause_idx, pause_maxs = process_epochs(a_v, pauses, dt)
+        runs1, run_durs, run_slices, run_dsts, run_idx, run_maxs = process_epochs(a_v, runs, dt)
 
         wNh[id] = dict(zip(wNh_ps, weathervanesNheadcasts(run_idx, pause_idx, Tslices, Tamps)))
         chunk_dict['run'] = runs
@@ -713,10 +725,10 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
             np.sum(Rdurs) / e[cum_t].loc[id],
             np.nanmin(run_durs) if len(run_durs) > 0 else 1,
             np.nanmax(run_durs) if len(run_durs) > 0 else 100,
-            np.nanmin(pause_durs) if len(pause_durs) > 0 else c.dt,
+            np.nanmin(pause_durs) if len(pause_durs) > 0 else dt,
             np.nanmax(pause_durs) if len(pause_durs) > 0 else 100,
         ]
-        if c.Npoints > 1 and strides_enabled:
+        if cc.Npoints > 1 and strides_enabled:
             vs_str_ps[jj, len(str_ps):] = stride_interference(a_sv, a_fov.abs(), np.mean(pau_fovs), strides)
 
         GRdurs.append(run_durs)
@@ -730,13 +742,13 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
     chunk_dicts = AttrDict(chunk_dicts)
     if save_to is not None:
         os.makedirs(save_to, exist_ok=True)
-        save_dict(chunk_dicts, f'{save_to}/{c.id}.txt', use_pickle=True)
-    s[step_ps] = step_vs.reshape([c.Nticks * Nids, len(step_ps)])
+        save_dict(chunk_dicts, f'{save_to}/{cc.id}.txt', use_pickle=True)
+    s[step_ps] = step_vs.reshape([cc.Nticks * Nids, len(step_ps)])
     e[lin_ps] = vs_ps
     e[run_tr] = e[cum_run_t] / e[cum_t]
     e[pau_tr] = e[cum_pau_t] / e[cum_t]
 
-    if c.Npoints > 1 and strides_enabled:
+    if cc.Npoints > 1 and strides_enabled:
         e[str_ps + att_ps] = vs_str_ps
         e[sstr_d_mu] = e[str_d_mu] / e[l]
         e[sstr_d_std] = e[str_d_std] / e[l]
@@ -753,7 +765,7 @@ def annotation(s, e, c, point=None, vel_thr=None, strides_enabled=True, save_to=
     return aux_dic
 
 
-def fit_bouts(aux_dic, dataset_id, c, save_to=None):
+def fit_bouts(aux_dic, dataset_id, cc, save_to=None):
     from lib.anal.fitting import fit_bout_distros
     from lib.aux.dictsNlists import AttrDict, load_dict, save_dict
     dic, best = {}, {}
@@ -766,7 +778,7 @@ def fit_bouts(aux_dic, dataset_id, c, save_to=None):
             dic[k] = None
             best[k] = None
 
-    c.bout_distros = AttrDict(best)
+    cc.bout_distros = AttrDict(best)
 
     dic = AttrDict(dic)
     if save_to is not None:

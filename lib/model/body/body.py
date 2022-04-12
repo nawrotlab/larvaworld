@@ -5,8 +5,8 @@ from shapely.ops import cascaded_union
 # TODO Find a way to use this. Now if changed everything is scal except locomotion. It seems that
 #  ApplyForceToCenter function does not scale
 # _world_scale = np.int(100)
-import lib.aux.dictsNlists
-import lib.aux.sim_aux
+import lib.aux.dictsNlists as dNl
+from lib.aux.sim_aux import generate_seg_shapes, circle_to_polygon
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
 
 
@@ -14,10 +14,21 @@ class LarvaBody:
     def __init__(self, model, pos=None, orientation=None, density=300.0,
                  initial_length=None, length_std=0, Nsegs=1, interval=0,
                  seg_ratio=None, touch_sensors=False, shape='drosophila_larva', **kwargs):
-        self.touch_sensors = touch_sensors
         self.model = model
         self.density = density
         self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
+
+        self.interval = interval
+        self.shape_scale = 1
+        self.density = density / (1 - 2 * (Nsegs - 1) * interval)
+
+        self.Nsegs = Nsegs
+        self.Nangles = Nsegs - 1
+        self.angles = np.zeros(self.Nangles)
+
+        self.initialize(initial_length, length_std)
+        from lib.conf.stored.aux_conf import body_dict
+
         if seg_ratio is None:
             seg_ratio = [1 / Nsegs] * Nsegs
         elif type(seg_ratio) == str:
@@ -25,29 +36,33 @@ class LarvaBody:
             seg_ratio = seg_ratio.replace(')', '')
             seg_ratio = [float(x) for x in seg_ratio.split(',')]
         self.seg_ratio = np.array(seg_ratio)
-        self.interval = interval
-        self.shape_scale = 1
-        self.density = density / (1 - 2 * (Nsegs - 1) * interval)
-
-        from lib.conf.stored.aux_conf import body_dict
         self.contour_points = body_dict[shape]['points']
-        self.base_seg_vertices = lib.aux.sim_aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,
-                                                                     points=self.contour_points)
-
-        self.Nsegs = Nsegs
-        self.Nangles = Nsegs - 1
-        self.angles = np.zeros(self.Nangles)
+        self.base_seg_vertices = generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,
+                                                     points=self.contour_points)
         self.seg_colors = self.generate_seg_colors(Nsegs)
+        self.seg_lengths = self.sim_length * self.seg_ratio
+        self.seg_vertices = [s * self.sim_length for s in self.base_seg_vertices]
+        self.segs = self.generate_segs(pos, orientation, length=self.sim_length,
+                                       seg_lengths=self.seg_lengths, **kwargs)
 
+        self.contour = self.set_contour(self.segs)
+
+
+        self.set_head_edges()
+
+
+
+        self.sensors = []
+        self.define_sensor('olfactor', (1, 0))
+        self.touch_sensors = touch_sensors
+        if touch_sensors:
+            self.add_touch_sensors(touch_sensors)
+
+    def initialize(self,initial_length,length_std):
         if not hasattr(self, 'real_length'):
             self.real_length = None
         if self.real_length is None:
             self.real_length = float(np.random.normal(loc=initial_length, scale=length_std, size=1))
-
-        self.seg_lengths = self.sim_length * self.seg_ratio
-        self.seg_vertices = [s * self.sim_length for s in self.base_seg_vertices]
-        # self.seg_vertices = self.base_seg_vertices * self.sim_length
-        self.set_head_edges()
 
         if not hasattr(self, 'real_mass'):
             self.real_mass = None
@@ -58,15 +73,6 @@ class LarvaBody:
             self.V = None
         if self.V is None:
             self.V = self.real_length ** 3
-
-        self.segs = self.generate_segs(pos, orientation, **kwargs)
-
-        self.contour = self.set_contour()
-
-        self.sensors = []
-        self.define_sensor('olfactor', (1, 0))
-        if self.touch_sensors is not None:
-            self.add_touch_sensors(self.touch_sensors)
 
     @property
     def sim_length(self):
@@ -102,7 +108,11 @@ class LarvaBody:
         self.update_sensor_position()
 
     def generate_seg_colors(self, N):
-        c = np.copy(self.default_color)
+        try:
+            col = self.default_color
+        except:
+            col = [0.0,0.0,0.0]
+        c = np.copy(col)
         return [np.array((0, 255, 0))] + [c] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [c] * N
 
     '''
@@ -156,21 +166,17 @@ class LarvaBody:
         d = self.get_sensor(sensor)
         return self.segs[d['seg_idx']].get_world_point(d['local_pos'])
 
-    # def get_larva_shape(self, filepath=None):
-    #     if filepath is None:
-    #         filepath = LarvaShape_path
-    #     return np.loadtxt(filepath, dtype=float, delimiter=",")
+    def generate_segs(self, position, orientation, length, seg_lengths, **kwargs):
 
-    def generate_segs(self, position, orientation, **kwargs):
-        from Box2D import b2Vec2
-        N = self.Nsegs
-        ls_x = [np.cos(orientation) * l for l in self.seg_lengths]
-        ls_y = np.sin(orientation) * self.sim_length / N
+        N = len(seg_lengths)
+        ls_x = [np.cos(orientation) * l for l in seg_lengths]
+        ls_y = np.sin(orientation) * length / N
         seg_positions = [[position[0] + (-i + (N - 1) / 2) * ls_x[i],
                           position[1] + (-i + (N - 1) / 2) * ls_y] for i in range(N)]
 
         segs = []
         if self.model.Box2D:
+            from Box2D import b2Vec2
             physics_pars = {'density': self.density,
                             'friction': 10.0,
                             'restitution': 0.0,
@@ -262,8 +268,8 @@ class LarvaBody:
         for i in range(Nsegs - 1):
             weld_def = {
                 'dampingRatio': 0.1,
-                        'referenceAngle': 0,
-                        'frequencyHz': 2000
+                'referenceAngle': 0,
+                'frequencyHz': 2000
             }
             A, B = segs[i]._body, segs[i + 1]._body
             # if joint_types['distance']['N'] == 2:
@@ -358,14 +364,15 @@ class LarvaBody:
         m = self.model
         c, r = self.head.color, self.radius
         h_pos = self.global_front_end_of_head
-        pos = self.get_position()
+        # pos = self.get_position()
+        pos = tuple(self.pos)
         mid = [self.get_global_front_end_of_seg(i) for i in range(self.Nsegs)] + [self.global_rear_end_of_body]
 
         if m.draw_contour:
             for seg in self.segs:
                 seg.draw(viewer)
         else:
-            self.contour = self.set_contour()
+            self.contour = self.set_contour(self.segs)
             viewer.draw_polygon(self.contour, c, True, r / 5)
 
         if m.draw_head:
@@ -490,10 +497,10 @@ class LarvaBody:
     def get_contour(self):
         return self.contour
 
-    def set_contour(self, Ncontour=22):
-        vertices = [np.array(seg.vertices[0]) for seg in self.segs]
-        l_side = lib.aux.dictsNlists.flatten_list([v[:int(len(v) / 2)] for v in vertices])
-        r_side = lib.aux.dictsNlists.flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
+    def set_contour(self, segs, Ncontour=22):
+        vertices = [np.array(seg.vertices[0]) for seg in segs]
+        l_side = dNl.flatten_list([v[:int(len(v) / 2)] for v in vertices])
+        r_side = dNl.flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
         r_side.reverse()
         total_contour = l_side + r_side
         if len(total_contour) > Ncontour:
@@ -501,26 +508,7 @@ class LarvaBody:
             contour = [total_contour[i] for i in sorted(sample(range(len(total_contour)), Ncontour))]
         else:
             contour = total_contour
-        # contour = contour[ConvexHull(contour).vertices].tolist()
         return contour
-
-    # def add_touch_sensors(self, N=8):
-    #     y = 0.1
-    #     x_f, x_m, x_r = 0.75, 0.5, 0.25
-    #     if N == 8:
-    #         self.define_sensor('M_front', (1.0, 0.0))
-    #         self.define_sensor('L_front', (x_f, y))
-    #         self.define_sensor('R_front', (x_f, -y))
-    #         self.define_sensor('L_mid', (x_m, y))
-    #         self.define_sensor('R_mid', (x_m, -y))
-    #         self.define_sensor('L_rear', (x_r, y))
-    #         self.define_sensor('R_rear', (x_r, -y))
-    #         self.define_sensor('M_rear', (0.0, 0.0))
-    #     elif N == 2:
-    #         self.define_sensor('R_mid', (x_m, -y))
-    #         self.define_sensor('M_rear', (0.0, 0.0))
-    #     elif N == 0:
-    #         pass
 
     def add_touch_sensors(self, idx):
         for i in idx:
@@ -578,8 +566,7 @@ class LarvaBody:
         self.rotator.bullet = True
         l0 = np.mean(self.seg_lengths)
         w = l0 / 10
-        vs = lib.aux.sim_aux.circle_to_polygon(5, l0)
-        rotator_shape = Box2D.b2ChainShape(vertices=vs.tolist())
+        rotator_shape = Box2D.b2ChainShape(vertices=circle_to_polygon(5, l0).tolist())
         self.rotator.CreateFixture(shape=rotator_shape)
 
         dist_kws = {'collideConnected': False, 'length': l0 * 0.01}

@@ -65,10 +65,17 @@ class Locomotor:
     def bend_body(self):
         if self.ang_mode=='torque' :
             dv = self.ang_activity * self.torque_coef - self.ang_damp_coef * self.ang_vel - self.body_spring_k * self.bend
+            # print(self.bend,self.ang_vel, dv)
+            # raise
             self.ang_vel += dv * self.dt
         elif self.ang_mode == 'velocity':
             self.ang_vel = self.ang_activity
         self.bend += self.ang_vel * self.dt
+        if self.bend > np.pi :
+            self.bend = np.pi
+        elif self.bend < -np.pi:
+            self.bend = -np.pi
+
 
     def on_new_pause(self):
         pass
@@ -87,13 +94,16 @@ class DefaultLocomotor(Locomotor):
             self.turner = Turner(dt=self.dt, **c.turner_params)
         if m['feeder']:
             self.feeder = Feeder(dt=self.dt, **c.feeder_params)
-        mode = c.interference_params.mode if 'mode' in c.interference_params.keys() else 'default'
-        if mode == 'default':
-            self.coupling = DefaultCoupling(locomotor=self, **c.interference_params)
-        elif mode == 'square':
-            self.coupling = SquareCoupling(locomotor=self, **c.interference_params)
-        elif mode == 'phasic':
-            self.coupling = PhasicCoupling(locomotor=self, **c.interference_params)
+        if c.interference_params is None :
+            self.coupling = DefaultCoupling(locomotor=self, attenuation=1)
+        else :
+            mode = c.interference_params.mode if 'mode' in c.interference_params.keys() else 'default'
+            if mode == 'default':
+                self.coupling = DefaultCoupling(locomotor=self, **c.interference_params)
+            elif mode == 'square':
+                self.coupling = SquareCoupling(locomotor=self, **c.interference_params)
+            elif mode == 'phasic':
+                self.coupling = PhasicCoupling(locomotor=self, **c.interference_params)
 
         if m['intermitter']:
             mode = c.intermitter_params.mode if 'mode' in c.intermitter_params.keys() else 'default'
@@ -122,7 +132,16 @@ class DefaultLocomotor(Locomotor):
             self.lin_activity = self.crawler.step()
         if self.turner:
             A_in*=(1 + np.random.normal(scale=self.turner_input_noise))
-            self.ang_activity = self.coupling.step() * self.turner.step(A_in=A_in)
+            if self.coupling.suppression_mode=='amplitude' :
+                self.ang_activity = self.coupling.step() * self.turner.step(A_in=A_in)
+            elif self.coupling.suppression_mode=='oscillation' :
+                A_in+=(1-self.coupling.step())
+                self.ang_activity =  self.turner.step(A_in=A_in)
+                # print(self.coupling.step())
+            elif self.coupling.suppression_mode == 'both':
+                A_in+=(1-self.coupling.step())
+                self.ang_activity = self.coupling.step() * self.turner.step(A_in=A_in)
+                #print(self.coupling.step())
         # if self.new_run :
         #     self.on_new_run()
         # elif self.new_pause :

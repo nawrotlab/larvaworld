@@ -278,7 +278,9 @@ def init_pars():
                    },
         'interference': {
             'mode': {'t': str, 'v': 'square', 'vs': ['default', 'square', 'phasic'],
-                                 'h': 'The interference mode of the CRAWLER on the TURNER.'},
+                                 'h': 'The suppression phase mode of the CRAWLER on the TURNER.'},
+            'suppression_mode': {'t': str, 'v': 'amplitude', 'vs': ['amplitude', 'oscillation', 'both'],
+                     'h': 'The suppression mode of the CRAWLER on the TURNER.'},
             'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0,
                                   'h': 'The CRAWLER oscillator cycle range during which it interferes with the TURNER.'},
             'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0,

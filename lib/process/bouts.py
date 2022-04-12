@@ -1,14 +1,15 @@
 from scipy.spatial.distance import euclidean
 import numpy as np
 
-from lib.process.aux import suppress_stdout, comp_bearing
+from lib.conf.base.par import getPar
+from lib.process.aux import suppress_stdout, comp_bearing, detect_strides, process_epochs, detect_pauses, detect_turns, \
+    fft_max
 from lib.aux.ang_aux import angle_to_x_axis
 import lib.aux.naming as nam
 from lib.anal.fitting import fit_bouts
 from lib.process.basic import comp_extrema, compute_freq
 from lib.process.spatial import scale_to_length
 from lib.process.store import store_aux_dataset
-
 
 def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=True,
              recompute=False, track_point=None, track_pars=None, chunk_pars=None, vel_threshold=0.2,
@@ -52,12 +53,193 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
         'recompute': recompute,
     }
     with suppress_stdout(show_output):
+        c=config
+        dt=c.dt
+        l, v, sv, dst, acc, fov, foa, b, bv, ba, fv, fsv, ffov = \
+        getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv', 'fsv', 'ffov'], to_return=['d'])[0]
+        str_ps = getPar(['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'], to_return=['d'])[0]
+        lin_ps = getPar(
+            ['run_v_mu', 'pau_v_mu', 'run_a_mu', 'pau_a_mu', 'run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std',
+             'run_foa_mu', 'pau_foa_mu', 'pau_b_mu', 'pau_b_std', 'pau_bv_mu', 'pau_bv_std', 'pau_ba_mu', 'pau_ba_std',
+             'cum_run_t', 'cum_pau_t', 'Ltur_tr', 'Rtur_tr', 'run_t_min', 'run_t_max', 'pau_t_min', 'pau_t_max'],
+            to_return=['d'])[0]
+
+        att = 'attenuation'
+        att_ps = [nam.min(att), nam.max(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')]
+
+        # Parameter easy naming
+        cum_t, cum_d, v_mu, sv_mu = getPar(['cum_t', 'cum_d', 'v_mu', 'sv_mu'], to_return=['d'])[0]
+        str_d_mu, str_d_std, sstr_d_mu, sstr_d_std, run_tr, pau_tr, cum_run_t, cum_pau_t = \
+        getPar(['str_d_mu', 'str_d_std', 'sstr_d_mu', 'sstr_d_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t'],
+               to_return=['d'])[0]
+
+        step_ps, = getPar(['tur_fou', 'tur_t', 'tur_fov_max', 'pau_t', 'run_t', 'run_d'], to_return=['d'])
+        step_vs = np.zeros([c.Nticks, c.N, len(step_ps)]) * np.nan
+        vs_ps = np.zeros([c.N, len(lin_ps)]) * np.nan
+        vs_str_ps = np.zeros([c.N, len(str_ps) + len(att_ps)]) * np.nan
         if stride:
-            detect_strides(**c, non_chunks=non_chunks, vel_par=vel_par, chunk_pars=chunk_pars, **kwargs)
-        if pause:
-            detect_pauses(**c, vel_par=vel_par, **kwargs)
+            e[fv] = s[v].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(1.0, 2.5))
+            e[fsv] = e[fv]
         if turn:
-            detect_turns(**c, ang_vel_par=ang_vel_par, bend_vel_par=bend_vel_par, min_ang=min_ang,
+            e[ffov] = s[fov].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(0.1, 0.8))
+            e['turner_input_constant'] = (e[ffov] / 0.024) + 5
+
+        for jj, id in enumerate(c.agent_ids):
+
+
+            if turn:
+                a_fov = s[fov].xs(id, level="AgentID")
+                a_foa = s[foa].xs(id, level="AgentID")
+                a_acc = s[acc].xs(id, level="AgentID")
+                Lturns, Rturns = detect_turns(a_fov, dt)
+                Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov, Lturns, dt)
+                Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov, Rturns, dt)
+                Tamps = np.abs(np.concatenate([Lamps, Ramps]))
+                Tdurs = np.concatenate([Ldurs, Rdurs])
+                Tmaxs = np.concatenate([Lmaxs, Rmaxs])
+                Tslices = Lturn_slices + Rturn_slices
+                if Lturns.shape[0] > 0:
+                    step_vs[Lturns[:, 1], jj, 0] = Lamps
+                    step_vs[Lturns[:, 1], jj, 1] = Ldurs
+                    step_vs[Lturns[:, 1], jj, 2] = Lmaxs
+                if Rturns.shape[0] > 0:
+                    step_vs[Rturns[:, 1], jj, 0] = Ramps
+                    step_vs[Rturns[:, 1], jj, 1] = Rdurs
+                    step_vs[Rturns[:, 1], jj, 2] = Rmaxs
+            if stride:
+                a_acc = s[acc].xs(id, level="AgentID")
+                a_sv = s[sv].xs(id, level="AgentID")
+                a_fov = s[fov].xs(id, level="AgentID")
+                strides, runs, run_counts = detect_strides(a_sv, dt, fr=e[fv].loc[id], return_extrema=False)
+                strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_sv,
+                                                                                                            strides,
+                                                                                                            dt)
+                str_fovs = a_fov.abs()[stride_idx]
+                vs_str_ps[jj, :len(str_ps)] = [np.mean(stride_dsts),
+                                               np.std(stride_dsts),
+                                               np.mean(a_sv[stride_idx]),
+                                               np.mean(str_fovs),
+                                               np.std(str_fovs),
+                                               np.sum(run_counts),
+                                               ]
+                pauses = detect_pauses(a_sv, dt, runs=runs)
+                pauses1, pause_durs, pause_slices, pause_dsts, pause_idx, pause_maxs = process_epochs(a_sv, pauses, dt)
+                runs1, run_durs, run_slices, run_dsts, run_idx, run_maxs = process_epochs(a_sv, runs, dt)
+
+                step_vs[pauses1, jj, 3] = pause_durs
+                step_vs[runs1, jj, 4] = run_durs
+                step_vs[runs1, jj, 5] = run_dsts
+
+                if b in s.columns:
+                    pau_bs = s[b].xs(id, level="AgentID").abs()[pause_idx]
+                    pau_bvs = s[bv].xs(id, level="AgentID").abs()[pause_idx]
+                    pau_bas = s[ba].xs(id, level="AgentID").abs()[pause_idx]
+                    pau_b_temp = [np.mean(pau_bs), np.std(pau_bs), np.mean(pau_bvs), np.std(pau_bvs), np.mean(pau_bas),
+                                  np.std(pau_bas)]
+                else:
+                    pau_b_temp = [np.nan] * 6
+
+                pau_fovs = a_fov.abs()[pause_idx]
+                run_fovs = a_fov.abs()[run_idx]
+                pau_foas = a_foa.abs()[pause_idx]
+                run_foas = a_foa.abs()[run_idx]
+                vs_ps[jj, :] = [
+                    np.mean(a_sv[run_idx]),
+                    np.mean(a_sv[pause_idx]),
+                    np.mean(a_acc[run_idx]),
+                    np.mean(a_acc[pause_idx]),
+                    np.mean(run_fovs), np.std(run_fovs),
+                    np.mean(pau_fovs), np.std(pau_fovs),
+                    np.mean(run_foas),
+                    np.mean(pau_foas),
+                    *pau_b_temp,
+                    np.sum(run_durs),
+                    np.sum(pause_durs),
+                    np.sum(Ldurs) / e[cum_t].loc[id],
+                    np.sum(Rdurs) / e[cum_t].loc[id],
+                    np.nanmin(run_durs) if len(run_durs) > 0 else 1,
+                    np.nanmax(run_durs) if len(run_durs) > 0 else 100,
+                    np.nanmin(pause_durs) if len(pause_durs) > 0 else dt,
+                    np.nanmax(pause_durs) if len(pause_durs) > 0 else 100,
+                ]
+        s[step_ps] = step_vs.reshape([c.Nticks * c.N, len(step_ps)])
+        e[lin_ps] = vs_ps
+        e[run_tr] = e[cum_run_t] / e[cum_t]
+        e[pau_tr] = e[cum_pau_t] / e[cum_t]
+
+        e[str_ps + att_ps] = vs_str_ps
+        e[sstr_d_mu] = e[str_d_mu] / e[l]
+        e[sstr_d_std] = e[str_d_std] / e[l]
+        if  fits:
+            try :
+                fit_bouts(**c, **kwargs)
+            except:
+                pass
+        if on_food:
+            comp_patch_metrics(**c, **kwargs)
+
+        for b in ['stride', 'pause', 'turn']:
+            try:
+                comp_chunk_bearing(**c, chunk=b, **kwargs)
+                if b == 'turn':
+                    comp_chunk_bearing(**c, chunk='Lturn', **kwargs)
+                    comp_chunk_bearing(**c, chunk='Rturn', **kwargs)
+            except:
+                pass
+    return s, e
+
+
+
+
+
+def annotate_old(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=True,
+             recompute=False, track_point=None, track_pars=None, chunk_pars=None, vel_threshold=0.2,
+             vel_par=None, ang_vel_par=None, bend_vel_par=None, min_ang=30.0, min_ang_vel=100.0,
+             non_chunks=False, show_output=True, fits=True, on_food=False, **kwargs):
+    from lib.conf.base.par import ParDict
+    dic = ParDict(mode='load').dict
+    if vel_par is None:
+        if use_scaled:
+            vel_par = dic['sv']['d']
+        else:
+            vel_par = dic['v']['d']
+    if ang_vel_par is None:
+        ang_vel_par = dic['fov']['d']
+    if bend_vel_par is None:
+        bend_vel_par = dic['bv']['d']
+    if track_pars is None:
+        track_pars = [dic[k]['d'] for k in ['fou', 'rou', 'fo', 'ro', 'b', 'x', 'y']]
+        try :
+            track_pars += nam.bearing2(list(config.source_xy.keys()))
+        except :
+            pass
+    if chunk_pars is None:
+        chunk_pars = [dic[k]['d'] for k in ['sv', 'fov', 'rov', 'bv', 'l']]
+    track_pars = [p for p in track_pars if p in s.columns]
+    if track_point is None:
+        track_point = config.point
+    if min_ang is None:
+        min_ang = 0.0
+    if min_ang_vel is None:
+        min_ang_vel = 0.0
+    c = {
+        's': s,
+        'e': e,
+        'dt': config.dt,
+        'Npoints': config.Npoints,
+        'track_point': track_point,
+        'track_pars': track_pars,
+        'vel_threshold': vel_threshold,
+        'config': config,
+        'recompute': recompute,
+    }
+    with suppress_stdout(show_output):
+        if stride:
+            detect_strides_old(**c, non_chunks=non_chunks, vel_par=vel_par, chunk_pars=chunk_pars, **kwargs)
+        if pause:
+            detect_pauses_old(**c, vel_par=vel_par, **kwargs)
+        if turn:
+            detect_turns_old(**c, ang_vel_par=ang_vel_par, bend_vel_par=bend_vel_par, min_ang=min_ang,
                          min_ang_vel=min_ang_vel, **kwargs)
 
         if  fits:
@@ -79,7 +261,7 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
     return s, e
 
 
-def detect_turns(s, e, config, dt, track_pars, min_ang_vel, min_ang=30.0,
+def detect_turns_old(s, e, config, dt, track_pars, min_ang_vel, min_ang=30.0,
                  ang_vel_par=None, bend_vel_par=None, chunk_only=None, recompute=False,
                  constant_bend_chunks=False, **kwargs):
     if set(nam.num(['Lturn', 'Rturn'])).issubset(e.columns.values) and not recompute:
@@ -103,7 +285,7 @@ def detect_turns(s, e, config, dt, track_pars, min_ang_vel, min_ang=30.0,
     print('All turns detected')
 
 
-def detect_pauses(s, e, config, dt, track_pars, recompute=False, stride_non_overlap=True, vel_par=None,
+def detect_pauses_old(s, e, config, dt, track_pars, recompute=False, stride_non_overlap=True, vel_par=None,
                   min_dur=0.4, vel_threshold=0.2, **kwargs):
     c = 'pause'
     if nam.num(c) in e.columns.values and not recompute:
@@ -123,7 +305,7 @@ def detect_pauses(s, e, config, dt, track_pars, recompute=False, stride_non_over
     print('All crawl-pauses detected')
 
 
-def detect_strides(s, e, config, dt=None, recompute=False, vel_par=None, track_point=None, track_pars=[],
+def detect_strides_old(s, e, config, dt=None, recompute=False, vel_par=None, track_point=None, track_pars=[],
                    chunk_pars=[], non_chunks=False, vel_threshold=0.2, **kwargs):
     c = 'stride'
     if nam.num(c) in e.columns.values and not recompute:
@@ -150,51 +332,6 @@ def detect_strides(s, e, config, dt=None, recompute=False, vel_par=None, track_p
     print('All strides detected')
 
 
-# def detect_turn_bouts(s, e, dt, par):
-#     ids = s.index.unique('AgentID').values
-#     Nids = len(ids)
-#     output = f'Detecting chunks-on-condition for {Nids} agents'
-#     N = len(s.index.unique('Step'))
-#     t0 = int(s.index.unique('Step').min())
-#     pos_flag = nam.max(par)
-#     neg_flag = nam.min(par)
-#     cs, c0 = ['Lturn', 'Rturn'], 'turn'
-#     dic = {}
-#     for c in cs:
-#         c_ps = [nam.start(c), nam.stop(c), nam.id(c), nam.dur(c)]
-#         dic[c] = {pp: np.zeros([N, Nids]) * np.nan for pp in c_ps}
-#
-#     for i, id in enumerate(ids):
-#         sss = s.xs(id, level='AgentID', drop_level=True)
-#         idx0 = np.unique(sign_changes(sss, par).index.values.astype(int))
-#         for c, flag in zip(cs, [pos_flag, neg_flag]):
-#             idxM = np.unique(sss[sss[flag] == True].index.values.astype(int))
-#             s0s, s1s = [], []
-#             for jj, ii in enumerate(idxM):
-#                 try:
-#                     s0, s1 = idx0[idx0 < ii][-1], idx0[idx0 > ii][0]
-#                     if s0 not in s0s and s1 not in s1s:
-#                         s0s.append(s0)
-#                         s1s.append(s1)
-#                 except:
-#                     pass
-#
-#             s0s = np.array(s0s)
-#             s1s = np.array(s1s)
-#             ds = (s1s - s0s) * dt
-#             dic[c][nam.start(c)][s0s - t0, i] = True
-#             dic[c][nam.stop(c)][s1s - t0, i] = True
-#             dic[c][nam.dur(c)][s1s - t0, i] = ds
-#             for j, (s0, s1) in enumerate(zip(s0s, s1s)):
-#                 dic[c][nam.id(c)][s0 - t0:s1 + 1 - t0, i] = j
-#     for c in cs:
-#         for p, a in dic[c].items():
-#             s[p] = a.flatten()
-#     comp_merged_chunk(s, c0, cs)
-#     compute_chunk_metrics(s, e, cs + [c0])
-#
-#     print(output)
-#     print('All chunks-on-condition detected')
 
 
 def comp_merged_chunk(s, c0, cs, pars=[], e=None):

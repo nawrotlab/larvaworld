@@ -437,10 +437,11 @@ def oD(c=1, id='Odor'):
 
 
 if __name__ == '__main__':
-    t=multiconf_to_tree(['explorer', 'nengo_explorer'], 'Model')
+    print(null_dict('physics', key='disp'))
+    # t=multiconf_to_tree(['explorer', 'nengo_explorer'], 'Model')
     # t=conf_to_tree('explorer', 'Model')
     # t.save(k='text', v='value')
-    t.test()
+    # t.test()
     raise
     store_controls()
     store_RefPars()

@@ -14,6 +14,7 @@ Cbas = null_dict('crawler', initial_freq=1.5, step_to_length_mu=0.25, step_to_le
 base_coupling = null_dict('interference', mode='square', crawler_phi_range=(0.45, 1.0), feeder_phi_range=(0.0, 0.0),
                           attenuation=0.1)
 phasic_coupling = null_dict('interference', mode='phasic', attenuation_min=0.2, attenuation_max=0.31)
+null_coupling = null_dict('interference', mode='default', attenuation=1.0)
 
 Tsin = null_dict('turner',
                  mode='sinusoidal',
@@ -279,7 +280,9 @@ def create_mod_dict():
         'navigator_x2': add_brain(add_OD(OD2, LO)),
         'navigator_x2_brute': add_brain(add_OD(OD2, LO_brute)),
         'basic_navigator': add_brain(brain(['L', 'O'], OD=OD1, turner=Tsin, crawler=Ccon), bod={'Nsegs': 1}),
-        'continuous_navigator': add_brain(brain(['C', 'T', 'O'], OD=OD1, turner=Tno_noise, crawler=Ccon_no_noise),
+        'continuous_navigator': add_brain(brain(['C', 'T','If', 'O'], OD=OD1,
+                                                turner=Tno_noise, crawler=Ccon_no_noise,
+                                                interference=null_coupling),
                                           bod={'Nsegs': 1}),
         'RL_navigator': add_brain(LOFM),
         'nengo_navigator': add_brain(nLO),

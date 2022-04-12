@@ -9,75 +9,82 @@ from lib.conf.stored.conf import kConfDict
 from lib.conf.base.dtypes import null_dict, arena, par_dict
 
 
-class ParsArg :
+class ParsArg:
     """
     Create a single parser argument
     This is a class used to populate a parser with arguments and get their values.
     """
-    def __init__(self, short, key, **kwargs):
-        self.key=key
-        self.args=[f'-{short}', f'--{key}']
-        self.kwargs=kwargs
 
-    def add(self,p):
+    def __init__(self, short, key, **kwargs):
+        self.key = key
+        self.args = [f'-{short}', f'--{key}']
+        self.kwargs = kwargs
+
+    def add(self, p):
         p.add_argument(*self.args, **self.kwargs)
         return p
 
     def get(self, input):
         return getattr(input, self.key)
 
-class Parser :
+
+class Parser:
     """
     Create an argument parser for a group of arguments (normally from a dict).
     """
+
     def __init__(self, name):
-        self.name=name
-        dic=par_dict(name, argparser=True)
-        try :
-            self.parsargs={k : ParsArg(**v) for k,v in dic.items()}
-        except :
-            self.parsargs ={}
-            for k, v in dic.items() :
-                for kk, vv in v['content'].items() :
-                    self.parsargs[kk]=ParsArg(**vv)
-
-    def add(self, parser=None):
-        if parser is None :
-            parser = ArgumentParser()
-        for k,v in self.parsargs.items() :
-            parser=v.add(parser)
-        return parser
-
-    def get(self, input):
-        dic= {k : v.get(input) for k,v in self.parsargs.items()}
-        return null_dict(self.name, **dic)
-
-
-class MultiParser :
-    """
-    Combine multiple parsers under a single multi-parser
-    """
-    def __init__(self, names):
-        self.parsers={n:Parser(n) for n in names}
+        self.name = name
+        dic = par_dict(name, argparser=True)
+        try:
+            self.parsargs = {k: ParsArg(**v) for k, v in dic.items()}
+        except:
+            self.parsargs = {}
+            for k, v in dic.items():
+                for kk, vv in v['content'].items():
+                    self.parsargs[kk] = ParsArg(**vv)
 
     def add(self, parser=None):
         if parser is None:
             parser = ArgumentParser()
-        for k,v in self.parsers.items() :
-            parser=v.add(parser)
+        for k, v in self.parsargs.items():
+            parser = v.add(parser)
         return parser
 
     def get(self, input):
-        return {k : v.get(input) for k,v in self.parsers.items()}
+        dic = {k: v.get(input) for k, v in self.parsargs.items()}
+        return null_dict(self.name, **dic)
 
-def add_exp_kwargs(parser) :
+
+class MultiParser:
+    """
+    Combine multiple parsers under a single multi-parser
+    """
+
+    def __init__(self, names):
+        self.parsers = {n: Parser(n) for n in names}
+
+    def add(self, parser=None):
+        if parser is None:
+            parser = ArgumentParser()
+        for k, v in self.parsers.items():
+            parser = v.add(parser)
+        return parser
+
+    def get(self, input):
+        return {k: v.get(input) for k, v in self.parsers.items()}
+
+
+def add_exp_kwargs(parser):
     parser.add_argument('experiment', choices=kConfDict('Exp'), help='The experiment mode')
     parser.add_argument('-a', '--analysis', action="store_true", help='Whether to run analysis')
     return parser
 
+
 def add_vis_kwargs(p):
     p.add_argument('-hide', '--show_display', action="store_false", help='Hide display')
-    p.add_argument('-vid', '--video_speed', type=float, nargs='?', const=1.0, help='The fast-forward speed of the video')
+    p.add_argument('-vid', '--video_speed', type=float, nargs='?', const=1.0,
+                   help='The fast-forward speed of the video')
     p.add_argument('-img', '--image_mode', nargs='?', const='final',
                    choices=['final', 'overlap', 'snapshots'], help='Select image mode')
     p.add_argument('-media', '--media_name', type=str, help='Filename for the saved video/image')
@@ -116,15 +123,15 @@ def get_vis_kwargs(args):
         trajectory_dt = args.trajectories
 
     vis_kwargs = null_dict('visualization', mode=mode, image_mode=args.image_mode, video_speed=video_speed,
-                                     show_display=args.show_display, media_name=args.media_name,
-                                     draw_head=args.draw_head, draw_centroid=args.draw_centroid,
-                                     draw_midline=args.draw_midline, draw_contour=args.draw_contour,
-                                     trajectories=trajectories, trajectory_dt=trajectory_dt,
-                                     black_background=args.black_background, random_colors=args.random_colors,
-                                     color_behavior=args.color_behavior,
-                                     visible_clock=args.visible_clock, visible_state=args.visible_state,
-                                     visible_scale=args.visible_scale, visible_ids=args.visible_ids,
-                                     )
+                           show_display=args.show_display, media_name=args.media_name,
+                           draw_head=args.draw_head, draw_centroid=args.draw_centroid,
+                           draw_midline=args.draw_midline, draw_contour=args.draw_contour,
+                           trajectories=trajectories, trajectory_dt=trajectory_dt,
+                           black_background=args.black_background, random_colors=args.random_colors,
+                           color_behavior=args.color_behavior,
+                           visible_clock=args.visible_clock, visible_state=args.visible_state,
+                           visible_scale=args.visible_scale, visible_ids=args.visible_ids,
+                           )
     return vis_kwargs
 
 
@@ -250,7 +257,8 @@ def add_sim_kwargs(p):
     p.add_argument('-path', '--path', type=str, help='The path to save the simulation dataset')
     p.add_argument('-t', '--duration', type=float, nargs='?', default=None,
                    help='The duration of the simulation in min')
-    p.add_argument('-dt', '--timestep', type=float, nargs='?', default=0.1, help='The timestep of the simulation in sec')
+    p.add_argument('-dt', '--timestep', type=float, nargs='?', default=0.1,
+                   help='The timestep of the simulation in sec')
     p.add_argument('-Box2D', '--Box2D', action="store_true", help='Use the Box2D physics engine')
     p.add_argument('-sample', '--sample', type=str, nargs='?', default='reference', choices=kConfDict('Ref'),
                    help='The dataset to sample the parameters from')
@@ -295,7 +303,7 @@ def get_life_kwargs(args):
     life_kwargs = {
         'hours_as_larva': args.hours_as_larva,
         'epochs': starvation_hours,
-        'substrate' : null_dict('substrate', quality=args.substrate_quality)
+        'substrate': null_dict('substrate', quality=args.substrate_quality)
     }
     return life_kwargs
 
@@ -364,32 +372,34 @@ def get_place_kwargs(args):
     }
     return place_kwargs
 
-def init_parser(description='', parsers=[]) :
-    dic={
-        'exp' : add_exp_kwargs,
-        'vis' : add_vis_kwargs,
-        'replay' : add_replay_kwargs,
-        'place' : add_place_kwargs,
-        'space' : add_space_kwargs,
-        'opt' : add_optimization_kwargs,
-        'batch' : add_batch_kwargs,
-        'life' : add_life_kwargs,
-        'sim' : add_sim_kwargs,
-        'build' : add_build_kwargs,
-        'data' : add_data_kwargs,
+
+def init_parser(description='', parsers=[]):
+    dic = {
+        'exp': add_exp_kwargs,
+        'vis': add_vis_kwargs,
+        'replay': add_replay_kwargs,
+        'place': add_place_kwargs,
+        'space': add_space_kwargs,
+        'opt': add_optimization_kwargs,
+        'batch': add_batch_kwargs,
+        'life': add_life_kwargs,
+        'sim': add_sim_kwargs,
+        'build': add_build_kwargs,
+        'data': add_data_kwargs,
     }
     parser = ArgumentParser(description=description)
-    for n in parsers :
-        parser=dic[n](parser)
+    for n in parsers:
+        parser = dic[n](parser)
     return parser
 
-def update_exp_conf(exp,d=None,N=None, models=None) :
+
+def update_exp_conf(exp, d=None, N=None, models=None):
     from lib.conf.stored.conf import expandConf, next_idx
     exp_conf = expandConf(exp, 'Exp')
-    if d is None :
-        d={'sim_params': null_dict('sim_params')}
-    d=AttrDict.from_nested_dicts(d)
-    sim=d.sim_params
+    if d is None:
+        d = {'sim_params': null_dict('sim_params')}
+    d = AttrDict.from_nested_dicts(d)
+    sim = d.sim_params
     if sim.duration is None:
         sim.duration = exp_conf.sim_params.duration
     if sim.sim_ID is None:
@@ -398,29 +408,34 @@ def update_exp_conf(exp,d=None,N=None, models=None) :
         sim.path = f'single_runs/{exp}'
     exp_conf.sim_params = d.sim_params
     if models is not None:
-        exp_conf=update_exp_models(exp_conf, models)
+        exp_conf = update_exp_models(exp_conf, models)
     if N is not None:
         for gID, gConf in exp_conf.larva_groups.items():
             gConf.distribution.N = N
     return exp_conf
 
-def update_exp_models(exp_conf, models) :
+
+def update_exp_models(exp_conf, models):
     from lib.conf.stored.conf import expandConf
     larva_groups = {}
     Nmodels = len(models)
     colors = N_colors(Nmodels)
     gConf0 = list(exp_conf.larva_groups.values())[0]
-    for m, col in zip(models, colors):
+    for i, (m, col) in enumerate(zip(models, colors)):
         gConf = AttrDict.from_nested_dicts(copy.deepcopy(gConf0))
-        try:
+        if isinstance(m, dict):
+            gConf.model = m
+            larva_groups[f'LarvaGroup{i}'] = gConf
+        elif m in kConfDict('Model'):
             gConf.model = expandConf(m, 'Model')
-        except:
-            try:
-                gConf.model.brain = expandConf(m, 'Brain')
-            except:
-                raise ValueError(f'{m} larva-model or brain-model does not exist!')
+            larva_groups[m] = gConf
+        elif m in kConfDict('Brain'):
+            gConf.model = expandConf(m, 'Brain')
+            larva_groups[m] = gConf
+        else:
+            raise ValueError(f'{m} larva-model or brain-model does not exist!')
         gConf.default_color = col
-        larva_groups[m] = gConf
+
     exp_conf.larva_groups = larva_groups
     return exp_conf
 

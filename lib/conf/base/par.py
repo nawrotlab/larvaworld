@@ -14,7 +14,7 @@ from lib.aux.dictsNlists import flatten_list, save_dict, load_dicts, unique_list
 from lib.aux import naming as nam
 from lib.conf.base.dtypes import null_dict
 from lib.conf.base import paths
-from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledcirc, circledast, odot, paren, brack, dot_th, ddot_th
+from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledcirc, circledast, odot, paren, brack, dot_th, ddot_th, omega
 
 from lib.model.agents._larva import Larva
 
@@ -595,7 +595,7 @@ class ParDict:
         self.add(dic=dic,p='x0', k='x0', u=1 * siu.m, d='initial x coordinate', s=sub('x', 0))
         self.add(dic=dic,p='y0', k='y0', u=1 * siu.m, d='initial y coordinate', s=sub('y', 0))
         self.add(dic=dic,p='model.dt', k='dt', u=1 * siu.s, d='timestep', s='$dt$')
-        self.add(dic=dic,p='real_length', k='l', u=1 * siu.m, d='length', s='l')
+        self.add(dic=dic,p='real_length', k='l', u=1 * siu.m, d='length', s='$l$')
         if object is not None :
             for k, p in dic.items():
                 p.const = p.get_from(object, u=False, tick=None, df=None)
@@ -854,8 +854,8 @@ class ParDict:
             'run_d' : 'run length',
             'run_t' : 'run duration',
             'pau_t' : 'pause duration',
-            'run_tr' : 'run time ratio',
-            'pau_tr' : 'pause time ratio',
+            'run_tr' : '% time crawling',#'run time ratio',
+            'pau_tr' : '% time pausing',#'pause time ratio',
             'cum_d' : 'total pathlength',
             'v_mu' : 'mean velocity',
             'run_v_mu' : 'mean velocity during runs',
@@ -875,6 +875,7 @@ class ParDict:
             'tur_fou' : 'turn-angle amplitude',
             'tur_fov_max' : 'turn maximum angular velocity',
             'fsv' : 'dominant crawling frequency',
+            'fv': 'dominant crawling frequency',
             'ffov' : 'dominant bending frequency',
             # 'tur_fov_max' : 'turn maximum angular velocity',
             'tor2' : "tortuosity over 2'' window",
@@ -886,6 +887,14 @@ class ParDict:
             'dsp_0_40_max' : "maximum dispersal in 40''",
             'dsp_0_40_mu' : "average dispersal during 40''",
             'dsp_0_40_fin' : "final dispersal after 40''",
+                       'str_d_mu': 'mean stride displacement',
+                       'str_d_std': 'std stride displacement',
+            'sstr_d_mu': 'mean stride displacement in body-length units',
+            'sstr_d_std': 'std stride displacement in body-length units',
+                       'str_sv_mu': 'mean velocity during strides',
+                       'str_fov_mu': 'mean angular velocity during strides',
+                       'str_fov_std': 'std angular velocity during strides',
+            'str_N' : '# strides'
             # 'tur_fov_max' : 'turn maximum angular velocity',
         }
         for k,lab in label_dict.items() :
@@ -984,8 +993,8 @@ if __name__ == '__main__':
     from lib.conf.base.par import ParDict
 
     dic = ParDict(mode='load').dict
-    print([dic[k]['unit'] for k in ['v', 'fov','dsp_0_40_fin']])
-    #print(dic.keys())
+    print([dic[k]['lab'] for k in ['torque_coef']])
+    # print(dic.keys())
 
     # print(dic['v'].keys())
 

@@ -495,7 +495,8 @@ class LarvaWorld:
             # print(self.Nticks)
             if not self.is_paused:
                 self.step()
-                self.progress_bar.update(self.Nticks)
+                if self.progress_bar:
+                    self.progress_bar.update(self.Nticks)
 
             if mode == 'video':
                 if img_mode != 'snapshots' or self.snapshot_tick:
@@ -694,11 +695,23 @@ def generate_larvae(N, sample_dict, base_model, RefPars=None):
 
 
 def get_sample_bout_distros(model, sample):
+    dic={
+        'pause_dist' : ['pause', 'pause_dur'],
+        'stridechain_dist' : ['stride', 'run_count'],
+        'run_dist' : ['run', 'run_dur'],
+         }
     m = AttrDict.from_nested_dicts(copy.deepcopy(model))
-    if m.brain.intermitter_params and sample != {}:
-        for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
-            if m.brain.intermitter_params[dist].fit:
-                m.brain.intermitter_params[dist] = sample.bout_distros[bout]
+    Im=m.brain.intermitter_params
+    if Im and sample != {}:
+
+        ds=[ii for ii in ['pause_dist', 'stridechain_dist', 'run_dist'] if (ii in Im.keys()) and (Im[ii] is not None) and ('fit' in Im[ii].keys()) and (Im[ii]['fit'])]
+        for d in ds :
+            for sample_d in dic[d] :
+                if sample_d in sample.bout_distros.keys() and sample.bout_distros[sample_d] is not None :
+                    Im[d]=sample.bout_distros[sample_d]
+        # for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
+        #     if 'fit' in m.brain.intermitter_params[dist].keys() and m.brain.intermitter_params[dist].fit :
+        #         m.brain.intermitter_params[dist] = sample.bout_distros[bout]
     return m
 
 

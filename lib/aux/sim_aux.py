@@ -119,7 +119,9 @@ def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
     # print(ps)
     return ps
 
-def generate_seg_shapes(Nsegs, seg_ratio, points, centered=True, closed=False, **kwargs):
+def generate_seg_shapes(Nsegs,  points,seg_ratio=None, centered=True, closed=False, **kwargs):
+    if seg_ratio is None :
+        seg_ratio = np.array([1 / Nsegs] * Nsegs)
     ps = segment_body(Nsegs, np.array(points), seg_ratio=seg_ratio, centered=centered, closed=closed)
     seg_vertices = [np.array([p]) for p in ps]
     return seg_vertices
@@ -149,3 +151,21 @@ def freq(d, dt, range=[0.7, 1.8]) :
     except:
         max_freq = np.nan
     return max_freq
+
+def get_tank_polygon(c, k=0.97, return_polygon=True):
+    X, Y = c.env_params.arena.arena_dims
+    shape = c.env_params.arena.arena_shape
+    if shape == 'circular':
+        # This is a circle_to_polygon shape from the function
+        tank_shape = circle_to_polygon(60, X / 2)
+    elif shape == 'rectangular':
+        # This is a rectangular shape
+        tank_shape = np.array([(-X / 2, -Y / 2),
+                               (-X / 2, Y / 2),
+                               (X / 2, Y / 2),
+                               (X / 2, -Y / 2)])
+    if return_polygon :
+        return Polygon(tank_shape * k)
+    else :
+        # tank_shape=np.insert(tank_shape,-1,tank_shape[0,:])
+        return tank_shape

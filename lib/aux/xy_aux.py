@@ -71,4 +71,3 @@ def eudis5(v1, v2):
 def eudi5x(a,b) :
     return np.sqrt(np.sum((a - b) ** 2, axis=1))
 
-#

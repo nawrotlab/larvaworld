@@ -36,6 +36,9 @@ def ast(p):
 def th(p):
     return fr'$\theta_{{{p.replace("$", "")}}}$'
 
+def omega(p):
+    return fr'$\omega_{{{p.replace("$", "")}}}$'
+
 
 def Delta(p):
     return fr'$\Delta{{{p.replace("$", "")}}}$'

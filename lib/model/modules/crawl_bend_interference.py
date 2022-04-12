@@ -4,10 +4,11 @@ from lib.anal.fitting import gaussian
 
 
 class DefaultCoupling:
-    def __init__(self,locomotor, attenuation = 0.0, **kwargs):
+    def __init__(self,locomotor, attenuation = 0.0,suppression_mode='amplitude', **kwargs):
         self.attenuation = attenuation
         self.cur_attenuation = attenuation
         self.locomotor = locomotor
+        self.suppression_mode=suppression_mode
 
     def step(self):
         c, f = self.locomotor.crawler, self.locomotor.feeder

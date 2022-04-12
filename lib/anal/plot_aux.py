@@ -33,23 +33,23 @@ class BasePlot:
         self.fit_df = None
         self.save_to = save_to
 
-    def build(self, Nrows=1, Ncols=1, figsize=None, fig=None, axs=None,dim3=False, **kwargs):
-        if fig is None and axs is None :
+    def build(self, Nrows=1, Ncols=1, figsize=None, fig=None, axs=None, dim3=False, **kwargs):
+        if fig is None and axs is None:
             if figsize is None:
                 figsize = (12 * Ncols, 10 * Nrows)
-            if not dim3 :
+            if not dim3:
                 self.fig, axs = plt.subplots(Nrows, Ncols, figsize=figsize, **kwargs)
                 self.axs = axs.ravel() if Nrows * Ncols > 1 else [axs]
-            else :
+            else:
                 self.fig = plt.figure(figsize=(15, 10))
                 ax = Axes3D(self.fig, azim=115, elev=15)
-                self.axs=[ax]
-        else :
-            self.fig=fig
-            self.axs=axs if type(axs)==list else [axs]
+                self.axs = [ax]
+        else:
+            self.fig = fig
+            self.axs = axs if type(axs) == list else [axs]
 
     def conf_ax(self, idx=0, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
-                xticklabels=None, yticks=None,xticklabelrotation=None, yticklabelrotation=None,
+                xticklabels=None, yticks=None, xticklabelrotation=None, yticklabelrotation=None,
                 yticklabels=None, zticks=None, zticklabels=None, xtickpos=None, xtickpad=None, ytickpad=None,
                 ztickpad=None,
                 xlabelpad=None, ylabelpad=None, zlabelpad=None,
@@ -151,15 +151,16 @@ class ParPlot(BasePlot):
 
 
 class Plot(BasePlot):
-    def __init__(self, name, datasets, labels=None, subfolder=None, save_fits_as=None, save_to=None,add_samples=False, **kwargs):
+    def __init__(self, name, datasets, labels=None, subfolder=None, save_fits_as=None, save_to=None, add_samples=False,
+                 **kwargs):
 
-        if add_samples :
+        if add_samples:
             targetIDs = unique_list([d.config['sample'] for d in datasets])
 
             targets = [loadRef(id) for id in targetIDs if id in kConfDict('Ref')]
-            datasets+=targets
-            if labels is not None :
-                labels+=targetIDs
+            datasets += targets
+            if labels is not None:
+                labels += targetIDs
         self.Ndatasets, self.colors, save_to, self.labels = plot_config(datasets, labels, save_to,
                                                                         subfolder=subfolder)
         super().__init__(name, save_to=save_to, **kwargs)
@@ -230,8 +231,6 @@ class Plot(BasePlot):
                     fontsize=15, transform=ax.transAxes)
         return res
 
-
-
     @property
     def Nticks(self):
         Nticks_list = [len(d.step_data.index.unique('Step')) for d in self.datasets]
@@ -298,7 +297,7 @@ def plot_quantiles(df, from_np=False, x=None, **kwargs):
         df_m = np.nanquantile(df, q=0.5, axis=0)
         df_u = np.nanquantile(df, q=0.75, axis=0)
         df_b = np.nanquantile(df, q=0.25, axis=0)
-        if x is None :
+        if x is None:
             x = np.arange(len(df_m))
     else:
         df_m = df.groupby(level='Step').quantile(q=0.5)
@@ -315,12 +314,12 @@ def plot_mean_and_range(x, mean, lb, ub, axis, color_shading, color_mean=None, l
     if color_mean is None:
         color_mean = color_shading
     # plot the shaded range of e.g. the confidence intervals
-    axis.fill_between(xx, ub, lb, color=color_shading, alpha=.2,zorder=0)
+    axis.fill_between(xx, ub, lb, color=color_shading, alpha=.2, zorder=0)
     # plot the mean on top
     if label is not None:
-        axis.plot(xx, mean, color_mean, label=label, linewidth=2, alpha=1.0,zorder=10)
+        axis.plot(xx, mean, color_mean, label=label, linewidth=2, alpha=1.0, zorder=10)
     else:
-        axis.plot(xx, mean, color_mean, linewidth=2, alpha=1.0,zorder=10)
+        axis.plot(xx, mean, color_mean, linewidth=2, alpha=1.0, zorder=10)
 
     # pass
 
@@ -481,7 +480,7 @@ def save_plot(fig, filepath, filename=None):
 
 def plot_config(datasets, labels, save_to, subfolder=None):
     if labels is None:
-        labels = [d.id for d in datasets]
+        labels = [d.config.id for d in datasets]
     Ndatasets = len(datasets)
     if Ndatasets != len(labels):
         raise ValueError(f'Number of labels {len(labels)} does not much number of datasets {Ndatasets}')
@@ -532,9 +531,9 @@ def process_plot(fig, save_to, filename, return_fig=False, show=False):
     fig.patch.set_visible(False)
     if return_fig:
         res = fig, save_to, filename
-    else :
+    else:
         res = fig
-        if save_to is not None :
+        if save_to is not None:
             os.makedirs(save_to, exist_ok=True)
             filepath = os.path.join(save_to, filename)
             save_plot(fig, filepath, filename)
@@ -624,16 +623,16 @@ def conf_ax_3d(vars, target, ax=None, fig=None, lims=None, title=None, maxN=5, l
     return fig, ax
 
 
-def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits = 'best',
+def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits='best',
                      marker='.', legend_outside=False, **kwargs):
     distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy', 'normal', 'uniform']
     distro_cs = ['c', 'g', 'm', 'k', 'orange', 'brown', 'purple']
     num_distros = len(distro_ls)
     lws = [2] * num_distros
 
-    if fit_dic is None :
+    if fit_dic is None:
         xmin, xmax = np.min(x0), np.max(x0)
-        fit_dic = fit_bout_distros(x0, xmin, xmax, discr, dataset_id='test', bout=bout,**kwargs)
+        fit_dic = fit_bout_distros(x0, xmin, xmax, discr, dataset_id='test', bout=bout, **kwargs)
     idx_Kmax = fit_dic['idx_Kmax']
     cdfs = fit_dic['cdfs']
     pdfs = fit_dic['pdfs']
@@ -651,7 +650,7 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
     axs[i].set_title(bout)
     axs[i].set_xlabel(xlabel)
     axs[i].set_ylim([10 ** -3.5, 10 ** 0.2])
-    distro_ls0, distro_cs0=[],[]
+    distro_ls0, distro_cs0 = [], []
     for z, (l, col, lw, ddf) in enumerate(zip(distro_ls, distro_cs, lws, ddfs)):
         if ddf is None:
             continue
@@ -664,13 +663,13 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
         else:
             continue
         axs[i].loglog(xrange, ddf, color=cc, lw=lw, label=l)
-    if len(distro_ls0)>1 :
-        if legend_outside :
+    if len(distro_ls0) > 1:
+        if legend_outside:
             dataset_legend(distro_ls0, distro_cs0, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
-        else :
-            for ax in axs :
+        else:
+            for ax in axs:
                 dataset_legend(distro_ls0, distro_cs0, ax=ax, loc='lower left', fontsize=15)
-    #dataset_legend(gIDs, colors, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
+    # dataset_legend(gIDs, colors, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
     # fig.subplots_adjust(left=0.1, right=0.95, wspace=0.08, hspace=0.3, bottom=0.05)
     for jj in [0]:
         axs[jj].set_ylabel(ylabel)

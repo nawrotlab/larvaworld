@@ -51,6 +51,9 @@ def loadRef(id) :
     return LarvaDataset(loadConf(id, 'Ref')['dir'], load_data=False)
 
 
+def copyConf(id, conf_type) :
+    return AttrDict.from_nested_dicts(copy.deepcopy(expandConf(id, conf_type)))
+
 def saveConf(conf, conf_type, id=None, mode='overwrite'):
     try:
         d = loadConfDict(conf_type)
