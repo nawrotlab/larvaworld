@@ -83,6 +83,7 @@ class LarvaDataset:
 
     def set_data(self, step=None, end=None, food=None):
         if step is not None:
+            step.sort_index(level=['Step', 'AgentID'], inplace=True)
             self.step_data = step
             self.agent_ids = step.index.unique('AgentID').values
             self.num_ticks = step.index.unique('Step').size

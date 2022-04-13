@@ -89,11 +89,11 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
 
             if turn:
                 a_fov = s[fov].xs(id, level="AgentID")
-                a_foa = s[foa].xs(id, level="AgentID")
-                a_acc = s[acc].xs(id, level="AgentID")
+
+                # a_acc = s[acc].xs(id, level="AgentID")
                 Lturns, Rturns = detect_turns(a_fov, dt)
-                Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov, Lturns, dt)
-                Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov, Rturns, dt)
+                Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov.values, Lturns, dt)
+                Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov.values, Rturns, dt)
                 Tamps = np.abs(np.concatenate([Lamps, Ramps]))
                 Tdurs = np.concatenate([Ldurs, Rdurs])
                 Tmaxs = np.concatenate([Lmaxs, Rmaxs])
@@ -107,14 +107,15 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
                     step_vs[Rturns[:, 1], jj, 1] = Rdurs
                     step_vs[Rturns[:, 1], jj, 2] = Rmaxs
             if stride:
-                a_acc = s[acc].xs(id, level="AgentID")
-                a_sv = s[sv].xs(id, level="AgentID")
-                a_fov = s[fov].xs(id, level="AgentID")
+                a_acc = s[acc].xs(id, level="AgentID").values
+                a_sv = s[sv].xs(id, level="AgentID").values
+                a_fov = s[fov].xs(id, level="AgentID").values
+                a_foa = s[foa].xs(id, level="AgentID").values
                 strides, runs, run_counts = detect_strides(a_sv, dt, fr=e[fv].loc[id], return_extrema=False)
                 strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_sv,
                                                                                                             strides,
                                                                                                             dt)
-                str_fovs = a_fov.abs()[stride_idx]
+                str_fovs = np.abs(a_fov[stride_idx])
                 vs_str_ps[jj, :len(str_ps)] = [np.mean(stride_dsts),
                                                np.std(stride_dsts),
                                                np.mean(a_sv[stride_idx]),
@@ -131,18 +132,18 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
                 step_vs[runs1, jj, 5] = run_dsts
 
                 if b in s.columns:
-                    pau_bs = s[b].xs(id, level="AgentID").abs()[pause_idx]
-                    pau_bvs = s[bv].xs(id, level="AgentID").abs()[pause_idx]
-                    pau_bas = s[ba].xs(id, level="AgentID").abs()[pause_idx]
+                    pau_bs = s[b].xs(id, level="AgentID").abs().values[pause_idx]
+                    pau_bvs = s[bv].xs(id, level="AgentID").abs().values[pause_idx]
+                    pau_bas = s[ba].xs(id, level="AgentID").abs().values[pause_idx]
                     pau_b_temp = [np.mean(pau_bs), np.std(pau_bs), np.mean(pau_bvs), np.std(pau_bvs), np.mean(pau_bas),
                                   np.std(pau_bas)]
                 else:
                     pau_b_temp = [np.nan] * 6
 
-                pau_fovs = a_fov.abs()[pause_idx]
-                run_fovs = a_fov.abs()[run_idx]
-                pau_foas = a_foa.abs()[pause_idx]
-                run_foas = a_foa.abs()[run_idx]
+                pau_fovs = np.abs(a_fov[pause_idx])
+                run_fovs = np.abs(a_fov[run_idx])
+                pau_foas = np.abs(a_foa[pause_idx])
+                run_foas = np.abs(a_foa[run_idx])
                 vs_ps[jj, :] = [
                     np.mean(a_sv[run_idx]),
                     np.mean(a_sv[pause_idx]),

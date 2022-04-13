@@ -754,8 +754,8 @@ def boxplot_PI(sort_labels=False, xlabel='Trials', **kwargs):
     return P.get()
 
 
-def PIboxplot(df, exp, path, ylabel, ylim=None, show=False):
-    f = f'{path}/boxplots/{exp}.pdf'
+def PIboxplot(df, exp, path, ylabel, ylim=None, show=False, suf=''):
+    f = f'{path}/boxplots/{exp}{suf}.pdf'
     boxplot = df.boxplot(figsize=(10, 7), grid=False,
                          color=dict(boxes='k', whiskers='k', medians='b', caps='k'),
                          boxprops=dict(linestyle='-', linewidth=3),

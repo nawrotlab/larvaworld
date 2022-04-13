@@ -12,7 +12,7 @@ from lib.model.modules.turner import Turner, NeuralOscillator
 
 class Locomotor:
     def __init__(self, dt, ang_mode='torque',lin_mode='velocity', offline=False, crawler_noise=0, turner_input_noise=0, turner_output_noise=0,
-                 torque_coef=1, ang_damp_coef=1, body_spring_k=1, bend_correction_coef=1):
+                 torque_coef=1, ang_damp_coef=1, body_spring_k=1, bend_correction_coef=1, ang_vel_coef=1):
         self.offline = offline
         self.ang_mode = ang_mode
         self.lin_mode = lin_mode
@@ -35,6 +35,7 @@ class Locomotor:
         self.torque_coef = torque_coef
         self.ang_damp_coef = ang_damp_coef
         self.body_spring_k = body_spring_k
+        self.ang_vel_coef = ang_vel_coef
 
         self.cur_state = 'run'
         self.cur_run_dur = 0
@@ -69,7 +70,7 @@ class Locomotor:
             # raise
             self.ang_vel += dv * self.dt
         elif self.ang_mode == 'velocity':
-            self.ang_vel = self.ang_activity
+            self.ang_vel = self.ang_activity*self.ang_vel_coef
         self.bend += self.ang_vel * self.dt
         if self.bend > np.pi :
             self.bend = np.pi
@@ -317,7 +318,7 @@ class Sakagiannis2022(Locomotor):
     def __init__(self, dt, conf=None,
                  pause_dist={'range': [0.4, 20.0], 'name': 'uniform'},
                  run_dist={'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
-                 stridechain_dist=None,freq_std=0.18,
+                 stridechain_dist=None,freq_std=0.18,suppression_mode='amplitude',
                  initial_freq=1.418, step_mu=0.224, step_std=0.033,
                  attenuation_min=0.2, attenuation_max=0.31, max_vel_phase=3.6,
                  turner_input_constant=19, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0, **kwargs):
@@ -325,9 +326,10 @@ class Sakagiannis2022(Locomotor):
         self.turner_input_constant = turner_input_constant
         self.neural_oscillator = NeuralOscillator(dt=self.dt, w_ee=w_ee, w_ce=w_ce, w_ec=w_ec, w_cc=w_cc, m=m, n=n)
 
+        self.suppression_mode = suppression_mode
         self.freq = initial_freq
-        self.step_to_length_mu = step_mu
-        self.step_to_length_std = step_std
+        self.stride_dst_mean = step_mu
+        self.stride_dst_std = step_std
         self.step_to_length = self.new_stride
 
         if stridechain_dist is None:
@@ -364,7 +366,7 @@ class Sakagiannis2022(Locomotor):
 
     @property
     def new_stride(self):
-        return np.random.normal(loc=self.step_to_length_mu, scale=self.step_to_length_std)
+        return np.random.normal(loc=self.stride_dst_mean, scale=self.stride_dst_std)
 
     def oscillate(self):
         self.phi += self.d_phi
@@ -428,8 +430,15 @@ class Sakagiannis2022(Locomotor):
 
         input = (self.turner_input_constant + A_in) * (1 + np.random.normal(scale=self.turner_input_noise))
 
-        self.neural_oscillator.step(input)
-        self.ang_activity= self.neural_oscillator.activity* attenuation_coef
+        if self.suppression_mode == 'amplitude':
+            self.neural_oscillator.step(input)
+            self.ang_activity = self.neural_oscillator.activity * attenuation_coef
+        elif self.suppression_mode == 'oscillation':
+            self.neural_oscillator.step(input+1 - attenuation_coef)
+            self.ang_activity = self.neural_oscillator.activity
+        elif self.suppression_mode == 'both':
+            self.neural_oscillator.step(input + 1 - attenuation_coef)
+            self.ang_activity = self.neural_oscillator.activity* attenuation_coef
         self.add_noise()
         self.update_body(length)
         # self.lin_vel = self.lin_activity

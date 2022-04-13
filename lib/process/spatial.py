@@ -96,7 +96,7 @@ def comp_spatial(s, e, c, mode='minimal'):
     xy_params = raw_or_filtered_xy(s, points)
     xy_params = group_list_by_n(xy_params, 2)
 
-    all_d = [s.xs(id, level='AgentID', drop_level=True) for id in c.agent_ids]
+    # all_d = [s.xs(id, level='AgentID', drop_level=True) for id in c.agent_ids]
     dsts = nam.dst(points)
     cum_dsts = nam.cum(dsts)
     vels = nam.vel(points)
@@ -108,8 +108,8 @@ def comp_spatial(s, e, c, mode='minimal'):
         V = np.zeros([c.Nticks, c.N]) * np.nan
         A = np.zeros([c.Nticks, c.N]) * np.nan
 
-        for i, data in enumerate(all_d):
-            v, d = compute_velocity(xy=data[xy].values, dt=c.dt, return_dst=True)
+        for i, id in enumerate(c.agent_ids):
+            v, d = compute_velocity(xy=s[xy].xs(id, level='AgentID').values, dt=c.dt, return_dst=True)
             a = np.diff(v) / c.dt
             cum_d = np.nancumsum(d)
             D[:, i] = d

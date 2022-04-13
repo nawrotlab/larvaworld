@@ -156,8 +156,8 @@ def compute_velocity(xy, dt, return_dst=False):
     dy = np.diff(y)
     d = np.sqrt(dx ** 2 + dy ** 2)
     v = d / dt
-    v=np.insert(v, 0, np.nan)
-    d=np.insert(d, 0, np.nan)
+    v = np.insert(v, 0, np.nan)
+    d = np.insert(d, 0, np.nan)
     if return_dst:
         return v, d
     else:
@@ -260,9 +260,9 @@ def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
     xf_trunc = xf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
     yf_trunc = yf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
     fr = xf_trunc[np.argmax(yf_trunc)]
-    if return_amps :
+    if return_amps:
         return fr, yf
-    else :
+    else:
         return fr
 
 
@@ -334,7 +334,7 @@ def slowNfast_freqs(s, e, c, point_idx=8, scaled=False):
         e[fr0a].loc[id] = fft_max(fov0, c.dt, fr_range=(0.15, +np.inf))
 
 
-def process_epochs(a, epochs, dt) :
+def process_epochs(a, epochs, dt):
     if epochs.shape[0] == 0:
         stops = []
         durs = np.array([])
@@ -342,14 +342,19 @@ def process_epochs(a, epochs, dt) :
         amps = np.array([])
         idx = np.array([])
         maxs = np.array([])
+
     else:
+        if epochs.shape == (2,):
+            epochs = np.array([epochs, ])
         stops = epochs[:, 1]
-        durs = (np.diff(epochs).flatten()+1) * dt
+        durs = (np.diff(epochs).flatten() + 1) * dt
         slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in epochs]
+        # print(epochs, slices)
         amps = np.array([np.trapz(a[p], dx=dt) for p in slices])
         idx = np.concatenate(slices)
         maxs = np.array([np.max(a[p]) for p in slices])
     return stops, durs, slices, amps, idx, maxs
+
 
 def detect_pauses(a, dt, vel_thr=0.3, runs=None, min_dur=None):
     """
@@ -385,7 +390,7 @@ def detect_pauses(a, dt, vel_thr=0.3, runs=None, min_dur=None):
     p0s = idx[np.where(np.diff(idx, prepend=[-np.inf]) != 1)[0]]
     p1s = idx[np.where(np.diff(idx, append=[np.inf]) != 1)[0]]
     pauses = np.vstack([p0s, p1s]).T
-    durs = (np.diff(pauses).flatten()+1) * dt
+    durs = (np.diff(pauses).flatten() + 1) * dt
     pauses = pauses[durs >= min_dur]
     return pauses
 
@@ -418,7 +423,7 @@ def detect_runs(a, dt, vel_thr=0.3, min_dur=0.5):
     r0s = idx[np.where(np.diff(idx, prepend=[-np.inf]) != 1)[0]]
     r1s = idx[np.where(np.diff(idx, append=[np.inf]) != 1)[0]]
     runs = np.vstack([r0s, r1s]).T
-    durs = (np.diff(runs).flatten()+1) * dt
+    durs = (np.diff(runs).flatten() + 1) * dt
     runs = runs[durs >= min_dur]
     return runs
 
@@ -458,7 +463,7 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None, return_extr
          Stride-counts of the runs/stridechains.
 
     """
-    if fr is None :
+    if fr is None:
         fr = fft_max(a, dt, fr_range=(1, 2.5))
     tmin = stretch[0] // (fr * dt)
     tmax = stretch[1] // (fr * dt)
@@ -473,10 +478,10 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None, return_extr
         except:
             pass
     strides = np.array(strides)
-    if not return_runs :
-        if return_extrema :
+    if not return_runs:
+        if return_extrema:
             return i_min, i_max, strides
-        else :
+        else:
             return strides
 
     runs, run_counts = [], []
@@ -503,7 +508,7 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None, return_extr
     runs = np.array(runs)
     if return_extrema:
         return i_min, i_max, strides, runs, run_counts
-    else :
+    else:
         return strides, runs, run_counts
 
 
@@ -534,7 +539,7 @@ def detect_turns(a, dt, min_dur=None):
     i_zeros = np.where(np.sign(a).diff().ne(0) == True)[0]
     Rturns, Lturns = [], []
     for s0, s1 in zip(i_zeros[:-1], i_zeros[1:]):
-        if (s1 - s0) < 2:
+        if (s1 - s0) <= 2:
             continue
         elif np.isnan(np.sum(a[s0:s1])):
             continue
@@ -548,41 +553,47 @@ def detect_turns(a, dt, min_dur=None):
     return Lturns, Rturns
 
 
-def stride_interference(a_sv, a_fov, pau_fov_mu, strides, Nbins=64):
+def stride_interference(a_sv, a_fov, strides, Nbins=64, strict=True, absolute=True):
     x = np.linspace(0, 2 * np.pi, Nbins)
+
+    if strict:
+        strides = [(s0, s1) for s0, s1 in strides if all(np.sign(a_fov[s0:s1]) >= 0) or all(np.sign(a_fov[s0:s1]) <= 0)]
+
     ar_sv = np.zeros([len(strides), Nbins])
     ar_fov = np.zeros([len(strides), Nbins])
     for ii, (s0, s1) in enumerate(strides):
         ar_fov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_fov[s0:s1])
         ar_sv[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_sv[s0:s1])
-    ar_fov_mu = np.nanquantile(np.abs(ar_fov), q=0.5, axis=0)
+    if absolute:
+        ar_fov = np.abs(ar_fov)
+    ar_fov_mu = np.nanquantile(ar_fov, q=0.5, axis=0)
     ar_sv_mu = np.nanquantile(ar_sv, q=0.5, axis=0)
-    at_min, at_max, phi_at_max = np.min(ar_fov_mu) / pau_fov_mu, (np.max(ar_fov_mu) - np.min(ar_fov_mu)) / pau_fov_mu, \
-                                 x[np.argmax(ar_fov_mu)]
-    phi_sv_max = x[np.argmax(ar_sv_mu)]
-    return [at_min, at_max, phi_at_max, phi_sv_max]
 
-def stride_max_vel_phis(s, e, c, Nbins=64) :
+    # cycle_curves = {'sv': ar_sv_mu, 'fov': ar_fov_mu}
+    return ar_sv_mu, ar_fov_mu, x
+
+
+def stride_max_vel_phis(s, e, c, Nbins=64):
     import lib.aux.naming as nam
     from lib.conf.base.par import getPar
     points = nam.midline(c.Npoints, type='point')
     l, sv, pau_fov_mu = getPar(['l', 'sv', 'pau_fov_mu'], to_return=['d'])[0]
     x = np.linspace(0, 2 * np.pi, Nbins)
-    phis=np.zeros([c.Npoints, c.N])*np.nan
+    phis = np.zeros([c.Npoints, c.N]) * np.nan
     for j, id in enumerate(c.agent_ids):
         ss = s.xs(id, level='AgentID')
         strides = detect_strides(ss[sv], c.dt, return_runs=False, return_extrema=False)
-        strides=strides.tolist()
-        for i,p in enumerate(points):
+        strides = strides.tolist()
+        for i, p in enumerate(points):
             ar_v = np.zeros([strides, Nbins])
-            v_p=nam.vel(p)
-            a=ss[v_p] if v_p in ss.columns else compute_velocity(ss[nam.xy(p)].values, dt=c.dt)
+            v_p = nam.vel(p)
+            a = ss[v_p] if v_p in ss.columns else compute_velocity(ss[nam.xy(p)].values, dt=c.dt)
             for ii, (s0, s1) in enumerate(strides):
                 ar_v[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a[s0:s1])
             ar_v_mu = np.nanquantile(ar_v, q=0.5, axis=0)
-            phis[i,j] = x[np.argmax(ar_v_mu)]
+            phis[i, j] = x[np.argmax(ar_v_mu)]
     for i, p in enumerate(points):
-        e[nam.max(f'phi_{nam.vel(p)}')] = phis[i,:]
+        e[nam.max(f'phi_{nam.vel(p)}')] = phis[i, :]
 
 
 def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
@@ -597,31 +608,35 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
 
 
 def annotation(s, e, cc, point=None, vel_thr=None, strides_enabled=True, save_to=None, **kwargs):
-    dt=cc.dt
+    # save_to=d.dir_dict.chunk_dicts
+    dt = cc.dt
     from lib.conf.base.par import getPar
     import lib.aux.naming as nam
     from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
-    l, v, sv, dst, acc, fov, foa, b, bv, ba, fv,fsv, ffov = getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv','fsv','ffov'], to_return=['d'])[0]
-    try :
+    l, v, sv, dst, acc, fov, foa, b, bv, ba, fv, fsv, ffov = \
+        getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv', 'fsv', 'ffov'], to_return=['d'])[0]
+    try:
         e[fv] = s[v].groupby("AgentID").apply(fft_max, dt=dt, fr_range=(1.0, 2.5))
-        e[fsv] =e[fv]
-    except :
+        e[fsv] = e[fv]
+    except:
         pass
     e[ffov] = s[fov].groupby("AgentID").apply(fft_max, dt=dt, fr_range=(0.1, 0.8))
     e['turner_input_constant'] = (e[ffov] / 0.024) + 5
 
     # Parameter easy naming
     cum_t, cum_d, v_mu, sv_mu = getPar(['cum_t', 'cum_d', 'v_mu', 'sv_mu'], to_return=['d'])[0]
-    str_d_mu, str_d_std,sstr_d_mu, sstr_d_std, run_tr, pau_tr, cum_run_t, cum_pau_t = getPar(['str_d_mu', 'str_d_std','sstr_d_mu', 'sstr_d_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t'], to_return=['d'])[0]
+    str_d_mu, str_d_std, sstr_d_mu, sstr_d_std, run_tr, pau_tr, cum_run_t, cum_pau_t = \
+        getPar(['str_d_mu', 'str_d_std', 'sstr_d_mu', 'sstr_d_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t'],
+               to_return=['d'])[0]
 
     str_ps, = getPar(['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'], to_return=['d'])
     lin_ps, = getPar(
         ['run_v_mu', 'pau_v_mu', 'run_a_mu', 'pau_a_mu', 'run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std',
          'run_foa_mu', 'pau_foa_mu', 'pau_b_mu', 'pau_b_std', 'pau_bv_mu', 'pau_bv_std', 'pau_ba_mu', 'pau_ba_std',
-         'cum_run_t', 'cum_pau_t', 'Ltur_tr', 'Rtur_tr', 'run_t_min' , 'run_t_max', 'pau_t_min', 'pau_t_max'], to_return=['d'])
+         'cum_run_t', 'cum_pau_t', 'Ltur_tr', 'Rtur_tr', 'run_t_min', 'run_t_max', 'pau_t_min', 'pau_t_max'],
+        to_return=['d'])
 
-    att = 'attenuation'
-    att_ps = [nam.min(att), nam.max(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')]
+
 
     ids = e.index.values
     Nids = len(ids)
@@ -631,10 +646,13 @@ def annotation(s, e, cc, point=None, vel_thr=None, strides_enabled=True, save_to
 
     GRdurs, GRcounts, GRdsts, GPdurs, GTdurs, GTamps, GTmaxs = [], [], [], [], [], [], []
     vs_ps = np.zeros([Nids, len(lin_ps)]) * np.nan
-    vs_str_ps = np.zeros([Nids, len(str_ps) + len(att_ps)]) * np.nan
+    vs_str_ps = np.zeros([Nids, len(str_ps)]) * np.nan
     chunk_dicts = {}
     wNh = {}
     wNh_ps = ['weathervane_q25_amp', 'weathervane_q75_amp', 'headcast_q25_amp', 'headcast_q75_amp']
+    Nbins = 64
+    # stride_cycle_curves={}
+
     for jj, id in enumerate(ids):
         # print(jj, Nids)
         chunk_dict = {}
@@ -642,11 +660,11 @@ def annotation(s, e, cc, point=None, vel_thr=None, strides_enabled=True, save_to
         a_fov = s[fov].xs(id, level="AgentID")
         Lturns, Rturns = detect_turns(a_fov, dt)
 
-        Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov, Lturns, dt)
-        Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov, Rturns, dt)
-        Tamps=np.abs(np.concatenate([Lamps, Ramps]))
-        Tdurs=np.concatenate([Ldurs, Rdurs])
-        Tmaxs=np.concatenate([Lmaxs, Rmaxs])
+        Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov.values, Lturns, dt)
+        Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov.values, Rturns, dt)
+        Tamps = np.abs(np.concatenate([Lamps, Ramps]))
+        Tdurs = np.concatenate([Ldurs, Rdurs])
+        Tmaxs = np.concatenate([Lmaxs, Rmaxs])
         Tslices = Lturn_slices + Rturn_slices
         if Lturns.shape[0] > 0:
             step_vs[Lturns[:, 1], jj, 0] = Lamps
@@ -659,15 +677,16 @@ def annotation(s, e, cc, point=None, vel_thr=None, strides_enabled=True, save_to
 
         chunk_dict['Lturn'] = Lturns
         chunk_dict['Rturn'] = Rturns
-        a_v = s[v].xs(id, level="AgentID")
+        a_v = s[v].xs(id, level="AgentID").values
 
         if cc.Npoints > 1:
-            a_sv = s[sv].xs(id, level="AgentID")
+            a_sv = s[sv].xs(id, level="AgentID").values
             if strides_enabled:
                 strides, runs, run_counts = detect_strides(a_sv, dt, fr=e[fv].loc[id], return_extrema=False)
-                strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_v, strides, dt)
+                strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_v,
+                                                                                                            strides, dt)
                 chunk_dict['stride'] = strides
-                str_fovs = a_fov.abs()[stride_idx]
+                str_fovs = np.abs(a_fov.values[stride_idx])
                 vs_str_ps[jj, :len(str_ps)] = [np.mean(stride_dsts),
                                                np.std(stride_dsts),
                                                np.mean(a_sv[stride_idx]),
@@ -680,8 +699,8 @@ def annotation(s, e, cc, point=None, vel_thr=None, strides_enabled=True, save_to
                 runs = detect_runs(a_sv, dt)
             pauses = detect_pauses(a_sv, dt, runs=runs)
         else:
-            if vel_thr is None :
-                vel_thr =cc.vel_thr
+            if vel_thr is None:
+                vel_thr = cc.vel_thr
             runs = detect_runs(a_v, dt, vel_thr=vel_thr)
             pauses = detect_pauses(a_v, dt, runs=runs, vel_thr=vel_thr)
 
@@ -696,17 +715,18 @@ def annotation(s, e, cc, point=None, vel_thr=None, strides_enabled=True, save_to
         step_vs[runs1, jj, 4] = run_durs
         step_vs[runs1, jj, 5] = run_dsts
 
-        if b in s.columns :
-            pau_bs = s[b].xs(id, level="AgentID").abs()[pause_idx]
-            pau_bvs = s[bv].xs(id, level="AgentID").abs()[pause_idx]
-            pau_bas = s[ba].xs(id, level="AgentID").abs()[pause_idx]
-            pau_b_temp=[np.mean(pau_bs), np.std(pau_bs),np.mean(pau_bvs), np.std(pau_bvs),np.mean(pau_bas), np.std(pau_bas)]
-        else :
-            pau_b_temp =[np.nan]*6
-        a_foa = s[foa].xs(id, level="AgentID").abs()
-        a_acc = s[acc].xs(id, level="AgentID")
-        pau_fovs = a_fov.abs()[pause_idx]
-        run_fovs = a_fov.abs()[run_idx]
+        if b in s.columns:
+            pau_bs = s[b].xs(id, level="AgentID").abs().values[pause_idx]
+            pau_bvs = s[bv].xs(id, level="AgentID").abs().values[pause_idx]
+            pau_bas = s[ba].xs(id, level="AgentID").abs().values[pause_idx]
+            pau_b_temp = [np.mean(pau_bs), np.std(pau_bs), np.mean(pau_bvs), np.std(pau_bvs), np.mean(pau_bas),
+                          np.std(pau_bas)]
+        else:
+            pau_b_temp = [np.nan] * 6
+        a_foa = s[foa].xs(id, level="AgentID").abs().values
+        a_acc = s[acc].xs(id, level="AgentID").values
+        pau_fovs = np.abs(a_fov.values[pause_idx])
+        run_fovs = np.abs(a_fov.values[run_idx])
         pau_foas = a_foa[pause_idx]
         run_foas = a_foa[run_idx]
         vs_ps[jj, :] = [
@@ -728,8 +748,13 @@ def annotation(s, e, cc, point=None, vel_thr=None, strides_enabled=True, save_to
             np.nanmin(pause_durs) if len(pause_durs) > 0 else dt,
             np.nanmax(pause_durs) if len(pause_durs) > 0 else 100,
         ]
-        if cc.Npoints > 1 and strides_enabled:
-            vs_str_ps[jj, len(str_ps):] = stride_interference(a_sv, a_fov.abs(), np.mean(pau_fovs), strides)
+        # if cc.Npoints > 1 and strides_enabled:
+        #     ar_sv_mu, ar_fov_mu, xx = stride_interference(a_sv, a_fov, strides, Nbins=Nbins)
+        #     single_cycle_curves['sv'][jj, :] = ar_sv_mu
+        #     single_cycle_curves['fov'][jj, :] = ar_fov_mu
+        #     vs_str_ps[jj, len(str_ps):] = [np.min(ar_fov_mu) / np.mean(pau_fovs),
+        #                                    (np.max(ar_fov_mu) - np.min(ar_fov_mu)) / np.mean(pau_fovs),
+        #                                    xx[np.argmax(ar_fov_mu)], xx[np.argmax(ar_sv_mu)]]
 
         GRdurs.append(run_durs)
         GRdsts.append(run_dsts)
@@ -738,6 +763,12 @@ def annotation(s, e, cc, point=None, vel_thr=None, strides_enabled=True, save_to
         GTamps.append(Tamps)
         GTmaxs.append(Tmaxs)
         chunk_dicts[id] = chunk_dict
+
+    # cc.pooled_cycle_curves = {
+    #     'sv': np.nanquantile(single_cycle_curves['sv'], q=0.5, axis=0),
+    #     'fov': np.nanquantile(single_cycle_curves['fov'], q=0.5, axis=0),
+    # }
+
     e[wNh_ps] = pd.DataFrame.from_dict(wNh).T
     chunk_dicts = AttrDict(chunk_dicts)
     if save_to is not None:
@@ -749,9 +780,11 @@ def annotation(s, e, cc, point=None, vel_thr=None, strides_enabled=True, save_to
     e[pau_tr] = e[cum_pau_t] / e[cum_t]
 
     if cc.Npoints > 1 and strides_enabled:
-        e[str_ps + att_ps] = vs_str_ps
+        e[str_ps] = vs_str_ps
         e[sstr_d_mu] = e[str_d_mu] / e[l]
         e[sstr_d_std] = e[str_d_std] / e[l]
+
+    compute_interference(s, e, cc)
 
     aux_dic = {
         'run_dur': np.array(flatten_list(GRdurs)),
@@ -766,6 +799,7 @@ def annotation(s, e, cc, point=None, vel_thr=None, strides_enabled=True, save_to
 
 
 def fit_bouts(aux_dic, dataset_id, cc, save_to=None):
+    # save_to=d.dir_dict.group_bout_dicts
     from lib.anal.fitting import fit_bout_distros
     from lib.aux.dictsNlists import AttrDict, load_dict, save_dict
     dic, best = {}, {}
@@ -785,3 +819,49 @@ def fit_bouts(aux_dic, dataset_id, cc, save_to=None):
         os.makedirs(save_to, exist_ok=True)
         save_dict(dic, f'{save_to}/{dataset_id}.txt', use_pickle=True)
     return dic
+
+
+def compute_interference(s, e, c, Nbins=64, strict=True, absolute=True):
+    from lib.conf.base.par import getPar
+    import lib.aux.naming as nam
+    from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
+    l, v, sv, dst, acc, fov, foa, b, bv, ba, fv, fsv, ffov,pau_fov_mu = \
+        getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv', 'fsv', 'ffov','pau_fov_mu'], to_return=['d'])[0]
+
+
+    sv_curves = np.zeros([c.N, Nbins]) * np.nan
+    fov_curves = np.zeros([c.N, Nbins]) * np.nan
+    for jj, id in enumerate(c.agent_ids):
+        a_sv = s[sv].xs(id, level="AgentID").values
+        a_fov = s[fov].xs(id, level="AgentID").values
+        strides = detect_strides(a_sv, c.dt, return_runs=False, return_extrema=False)
+        x = np.linspace(0, 2 * np.pi, Nbins)
+
+        if strict:
+            strides = [(s0, s1) for s0, s1 in strides if
+                       all(np.sign(a_fov[s0:s1]) >= 0) or all(np.sign(a_fov[s0:s1]) <= 0)]
+
+        ar_sv = np.zeros([len(strides), Nbins])
+        ar_fov = np.zeros([len(strides), Nbins])
+        for ii, (s0, s1) in enumerate(strides):
+            ar_fov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_fov[s0:s1])
+            ar_sv[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_sv[s0:s1])
+        if absolute:
+            ar_fov = np.abs(ar_fov)
+        fov_curves[jj, :] = np.nanquantile(ar_fov, q=0.5, axis=0)
+        sv_curves[jj, :] = np.nanquantile(ar_sv, q=0.5, axis=0)
+
+    att0s, att1s=np.min(fov_curves,axis=1),np.max(fov_curves,axis=1)
+    e[nam.min('attenuation')]=att0s/e[pau_fov_mu]
+    e[nam.max('attenuation')]=(att1s-att0s)/e[pau_fov_mu]
+    e[nam.max('phi_attenuation')]=x[np.argmax(fov_curves,axis=1)]
+    e[nam.max(f'phi_{sv}')]=x[np.argmax(sv_curves,axis=1)]
+
+    pooled_fov_curve=np.nanquantile(fov_curves, q=0.5, axis=0)
+    pooled_sv_curve=np.nanquantile(sv_curves, q=0.5, axis=0)
+
+    c.pooled_cycle_curves = {
+        'sv': pooled_sv_curve.tolist(),
+        'fov':pooled_fov_curve.tolist()
+    }
+

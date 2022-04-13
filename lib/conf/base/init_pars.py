@@ -243,18 +243,18 @@ def init_pars():
                                      'h': 'The initial frequency of the repetitive crawling behavior.'},  # From D1 fit
                     'freq_std': {'v': 0.184, 'max': 1.0, 'disp': 'std', 'combo': 'frequency',
                                  'h': 'The standard deviation of the frequency of the repetitive crawling behavior.'},
-                    'step_to_length_mu': {'v': 0.224, 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample'], 'disp': 'mean',
+                    'stride_dst_mean': {'v': 0.224, 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample'], 'disp': 'mean',
                                           'combo': 'scaled distance / stride',
                                           'h': 'The mean displacement achieved in a single peristaltic stride as a fraction of the body length.'},
-                    'step_to_length_std': {'v': 0.033, 'max': 1.0, 'aux_vs': ['sample'], 'disp': 'std',
+                    'stride_dst_std': {'v': 0.033, 'max': 1.0, 'aux_vs': ['sample'], 'disp': 'std',
                                            'combo': 'scaled distance / stride',
                                            'h': 'The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.'},
                     'initial_amp': {'max': 2.0, 'disp': 'initial', 'combo': 'amplitude',
                                     'h': 'The initial amplitude of the CRAWLER-generated forward velocity if this is hardcoded (e.g. constant waveform).'},
                     'noise': {'v': 0.1, 'max': 1.0, 'dv': 0.01, 'disp': 'noise', 'combo': 'amplitude',
                               'h': 'The intrinsic output noise of the CRAWLER-generated forward velocity.'},
-                    'max_vel_phase': {'v': 1.0, 'max': 2.0,
-                                      'h': 'The phase of the crawling oscillation cycle where the output (forward velocity) is maximum.'}
+                    'max_vel_phase': {'v': 3.6, 'max': 6.28,
+                                      'h': 'The phase of the crawling oscillation cycle where forward velocity is maximum.'}
                     },
         'turner': {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal', 'constant'],
                             'h': 'The implementation mode of the lateral oscillator (TURNER) module.'},

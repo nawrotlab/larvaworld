@@ -306,7 +306,7 @@ def plot_quantiles(df, from_np=False, x=None, **kwargs):
     plot_mean_and_range(x=x, mean=df_m, lb=df_b, ub=df_u, **kwargs)
 
 
-def plot_mean_and_range(x, mean, lb, ub, axis, color_shading, color_mean=None, label=None):
+def plot_mean_and_range(x, mean, lb, ub, axis, color_shading, color_mean=None, label=None,linewidth=2):
     if x.shape[0] > mean.shape[0]:
         xx = x[:mean.shape[0]]
     elif x.shape[0] == mean.shape[0]:
@@ -317,9 +317,9 @@ def plot_mean_and_range(x, mean, lb, ub, axis, color_shading, color_mean=None, l
     axis.fill_between(xx, ub, lb, color=color_shading, alpha=.2, zorder=0)
     # plot the mean on top
     if label is not None:
-        axis.plot(xx, mean, color_mean, label=label, linewidth=2, alpha=1.0, zorder=10)
+        axis.plot(xx, mean, color_mean, label=label, linewidth=linewidth, alpha=1.0, zorder=10)
     else:
-        axis.plot(xx, mean, color_mean, linewidth=2, alpha=1.0, zorder=10)
+        axis.plot(xx, mean, color_mean, linewidth=linewidth, alpha=1.0, zorder=10)
 
     # pass
 

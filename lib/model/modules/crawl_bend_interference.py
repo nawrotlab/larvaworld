@@ -43,7 +43,7 @@ class SquareCoupling(DefaultCoupling):
         return self.cur_attenuation
 
 class PhasicCoupling(DefaultCoupling) :
-    def __init__(self, attenuation_min=0.2, attenuation_max=0.31, max_attenuation_phase = 2.4, **kwargs):
+    def __init__(self, attenuation_min=0.2, attenuation_max=0.31, max_attenuation_phase = 3.4, **kwargs):
         super().__init__(**kwargs)
         self.attenuation_min = attenuation_min
         self.attenuation_max = attenuation_max

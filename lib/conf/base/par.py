@@ -930,7 +930,7 @@ class ParDict:
                 pp.savefig(fig, bbox_inches='tight')
                 pp.close()
             dd = [{'symbol': p.s, 'unit': p.u.unit.abbrev, 'codename': k, 'interpretation': p.d} for i, (k, p) in
-                  enumerate(self.dict.items()) if 240 < i < 280]
+                  enumerate(self.dict.items())]
             ddf = pd.DataFrame.from_records(dd)
             ws = np.array([1, 1, 1, 5])
             ws = (ws / sum(ws))
@@ -992,15 +992,16 @@ def getPar(k=None, p=None, d=None, to_return=['d', 'l'], PF=None):
 if __name__ == '__main__':
     from lib.conf.base.par import ParDict
 
-    dic = ParDict(mode='load').dict
-    print([dic[k]['lab'] for k in ['torque_coef']])
+    # dic = ParDict(mode='load').dict
+    # print([dic[k]['lab'] for k in ['torque_coef']])
     # print(dic.keys())
 
-    # print(dic['v'].keys())
+    # print(dic['str_d_std']['lim'])
 
 
-    #aaa=getPar(['cum_run_t'], to_return=['d'])[0]
-    # d=ParDict(mode='build').dict
+    # aaa=getPar(['run_l'], to_return=['d'])[0]
+    # print(aaa)
+    d=ParDict(mode='build').dict
     raise
     pars, =getPar(['dsp_0_40_max', 'ffov', 'fv', 'd', 'fo','x', 'y','b', 'dsp', 'cum_d', 'sv', 'a', 'sa', 'foa'], to_return=['d'])
 

@@ -20,8 +20,8 @@ from lib.model.modules.basic import Oscillator, Effector
 #         return self.activity
 
 class Crawler(Oscillator):
-    def __init__(self, waveform, initial_amp=None, square_signal_duty=None, step_to_length_mu=None,
-                 step_to_length_std=0.0, initial_freq=1.3, freq_std=0.0,
+    def __init__(self, waveform, initial_amp=None, square_signal_duty=None, stride_dst_mean=None,
+                 stride_dst_std=0.0, initial_freq=1.3, freq_std=0.0,
                  gaussian_window_std=None, max_vel_phase=1.0, crawler_noise=0, **kwargs):
         initial_freq = np.random.normal(initial_freq, freq_std)
         super().__init__(initial_freq=initial_freq, **kwargs)
@@ -33,17 +33,17 @@ class Crawler(Oscillator):
         if waveform == 'square':
             # the percentage of the crawler iteration for which linear force/velocity is applied to the body.
             # It is passed to the duty arg of the square signal of the oscillator
-            step_mu, step_std = [np.max([0.0, ii]) for ii in [step_to_length_mu, step_to_length_std]]
+            step_mu, step_std = [np.max([0.0, ii]) for ii in [stride_dst_mean, stride_dst_std]]
             self.square_signal_duty = square_signal_duty
-            self.step_to_length_mu = step_mu
-            self.step_to_length_std = step_std
+            self.stride_dst_mean = step_mu
+            self.stride_dst_std = step_std
             self.step_to_length = self.new_stride
         elif waveform == 'gaussian':
             self.gaussian_window_std = gaussian_window_std
         elif waveform == 'realistic':
-            step_mu, step_std = [np.max([0.0, ii]) for ii in [step_to_length_mu, step_to_length_std]]
-            self.step_to_length_mu = step_mu
-            self.step_to_length_std = step_std
+            step_mu, step_std = [np.max([0.0, ii]) for ii in [stride_dst_mean, stride_dst_std]]
+            self.stride_dst_mean = step_mu
+            self.stride_dst_std = step_std
             self.step_to_length = self.new_stride
             self.max_vel_phase = max_vel_phase * np.pi
         # elif waveform == 'constant':
@@ -59,7 +59,7 @@ class Crawler(Oscillator):
 
     @property
     def new_stride(self):
-        return np.random.normal(loc=self.step_to_length_mu, scale=self.step_to_length_std)
+        return np.random.normal(loc=self.stride_dst_mean, scale=self.stride_dst_std)
 
     def step(self):
         if self.effector:

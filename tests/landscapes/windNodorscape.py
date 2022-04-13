@@ -24,7 +24,7 @@ elif mode== 'G' :
     oL = oG(id='Odor_L')
 sus={
     # **su(id='Source_R', pos=(0.08, -0.12), o=oR, c='cyan'),
-    **su(id='Source_L', pos=(-0.1, 0.05), o=oL, c='blue'),
+    **su(id='Source_L', pos=(0.0, 0.0), o=oL, c='blue'),
      }
 
 Npuffs=100
@@ -41,7 +41,7 @@ windscape=null_dict('windscape', wind_direction=-np.pi/2, wind_speed=wind_speed,
 env_params=null_dict('env_conf',arena=arena(0.3,0.3), food_params=f_pars(su=sus), odorscape=odorscape, windscape=windscape)
 # env_params=null_dict('env_conf', odorscape=odorscape, food_params=f_pars(su=su(pos=(0.0, 0.0), o=oG(2, id='Odor'))))
 # env_params=null_dict('env_conf', windscape=windscape, border_list={'Border' : null_dict('Border', points=[(-0.03,0.02), (0.03,0.02)])})
-env=LarvaWorldSim(env_params=env_params, Nsteps=N, vis_kwargs=null_dict('visualization', mode='video', video_speed=60, media_name='odorscape'))
+env=LarvaWorldSim(env_params=env_params, Nsteps=N, vis_kwargs=null_dict('visualization', mode='video', video_speed=5, media_name='windNodorscape'))
 env.odor_layers['Odor_L'].visible=True
 env.odor_aura=True
 env.windscape.visible=True

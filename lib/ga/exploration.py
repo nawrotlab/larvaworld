@@ -24,9 +24,9 @@ class Exploration:
     N_INITIAL_WALLS = 0
 
     # DEFAULT_GENOMES_FILE = None
-    DEFAULT_GENOMES_FILE = 'saved_genomes/genomes_2022-04-12_14.14.39.txt'
+    DEFAULT_GENOMES_FILE = 'saved_genomes/Sakagiannis2022_optimization_30generations_x_30larvae_x_1000steps.txt'
     DEFAULT_SCENE_FILE = 'saved_scenes/no_boxes.txt'
-    DEFAULT_SCENE_SPEED = 200
+    DEFAULT_SCENE_SPEED = 30
     SCENE_MAX_SPEED = 1000
     SCENE_MIN_SPEED = 1
     SCENE_SPEED_CHANGE_COEFF = 1.5

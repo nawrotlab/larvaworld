@@ -181,8 +181,8 @@ def eval_all_datasets(loco_dict, s, e, save_to, suf, evaluation, mode='1:1',
     GEend, GEdistro = {}, {}
     for loco_id in loco_dict.keys():
         Eend, Edistro = {}, {}
-        ss = loco_dict[loco_id]['step']
-        ee = loco_dict[loco_id]['end']
+        ss = loco_dict[loco_id]['step_data']
+        ee = loco_dict[loco_id]['endpoint_data']
         ids = e.index.values
         ps1, ps1l = getPar(end_ps, to_return=['d', 'lab'])
         for p, pl in zip(ps1, ps1l):
@@ -579,7 +579,7 @@ def plot_endpoint(loco_dict, end_ps, save_to=None, show=False):
     for i, (p, l) in enumerate(zip(ps2, ps2l)):
         vs = []
         for ii, (id, d) in enumerate(loco_dict.items()):
-            vs.append(d['end'][p].dropna().values)
+            vs.append(d['endpoint_data'][p].dropna().values)
         vvs = np.hstack(vs).flatten()
         bins = np.linspace(np.min(vvs), np.max(vvs), 20)
         for ii, (id, d) in enumerate(loco_dict.items()):

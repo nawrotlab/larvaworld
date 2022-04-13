@@ -393,9 +393,11 @@ def init_parser(description='', parsers=[]):
     return parser
 
 
-def update_exp_conf(exp, d=None, N=None, models=None):
+def update_exp_conf(exp, d=None, N=None, models=None, arena=None):
     from lib.conf.stored.conf import expandConf, next_idx
     exp_conf = expandConf(exp, 'Exp')
+    if arena is not None :
+        exp_conf.env_params.arena = arena
     if d is None:
         d = {'sim_params': null_dict('sim_params')}
     d = AttrDict.from_nested_dicts(d)
@@ -421,20 +423,27 @@ def update_exp_models(exp_conf, models):
     Nmodels = len(models)
     colors = N_colors(Nmodels)
     gConf0 = list(exp_conf.larva_groups.values())[0]
-    for i, (m, col) in enumerate(zip(models, colors)):
-        gConf = AttrDict.from_nested_dicts(copy.deepcopy(gConf0))
-        if isinstance(m, dict):
+    if isinstance(models, dict):
+        for i, ((gID, m), col) in enumerate(zip(models.items(), colors)):
+            gConf = AttrDict.from_nested_dicts(copy.deepcopy(gConf0))
+            gConf.default_color = col
             gConf.model = m
-            larva_groups[f'LarvaGroup{i}'] = gConf
-        elif m in kConfDict('Model'):
-            gConf.model = expandConf(m, 'Model')
-            larva_groups[m] = gConf
-        elif m in kConfDict('Brain'):
-            gConf.model = expandConf(m, 'Brain')
-            larva_groups[m] = gConf
-        else:
-            raise ValueError(f'{m} larva-model or brain-model does not exist!')
-        gConf.default_color = col
+            larva_groups[gID] = gConf
+    elif isinstance(models, list):
+        for i, (m, col) in enumerate(zip(models, colors)):
+            gConf = AttrDict.from_nested_dicts(copy.deepcopy(gConf0))
+            gConf.default_color = col
+            if isinstance(m, dict):
+                gConf.model = m
+                larva_groups[f'LarvaGroup{i}'] = gConf
+            elif m in kConfDict('Model'):
+                gConf.model = expandConf(m, 'Model')
+                larva_groups[m] = gConf
+            elif m in kConfDict('Brain'):
+                gConf.model = expandConf(m, 'Brain')
+                larva_groups[m] = gConf
+            else:
+                raise ValueError(f'{m} larva-model or brain-model does not exist!')
 
     exp_conf.larva_groups = larva_groups
     return exp_conf

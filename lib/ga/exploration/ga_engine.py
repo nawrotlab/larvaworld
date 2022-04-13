@@ -28,7 +28,7 @@ def target(shorts) :
 
 class GaLarvaEngine:
     DEFAULT_POPULATION_NUM = 30
-    DEFAULT_ELITISM_NUM = 0
+    DEFAULT_ELITISM_NUM = 3
     DEFAULT_OBSTACLE_SENSOR_ERROR = 0
     DEFAULT_MUTATION_PROBABILITY = 0.3  # 0 < MUTATION_PROBABILITY < 1
     DEFAULT_MUTATION_COEFFICIENT = 0.1
@@ -37,11 +37,11 @@ class GaLarvaEngine:
     LONG_LASTING_GENERATION_OBSTACLE_PROB_DELTA = 0.0005  # increasing probability to add a new obstacle in the scene.
     BOX_MIN_SIZE = 20
     BOX_MAX_SIZE = 60
-    MULTICORE = False
+    MULTICORE = True
 
     def __init__(self, scene, side_panel, population_num, elitism_num, robot_random_direction, multicore,
                  obstacle_sensor_error, mutation_probability, mutation_coefficient, selection_ratio,
-                 long_lasting_generations, verbose,dt = 0.1,arena=None,eval_shorts=['b', 'fov', 'foa', 'tor2', 'tor5']):
+                 long_lasting_generations, verbose,dt = 0.1,arena=None,eval_shorts=['b', 'fov', 'foa', 'tor5', 'v', 'a']):
 
         # print(multicore)
         # raise
@@ -198,7 +198,6 @@ class GaLarvaEngine:
         genomes_selected = self.ga_selection()  # parents of the new generation
         self.printd(1, '\ngenomes selected:', genomes_selected)
         self.generation_num += 1
-        # new_genomes = self.ga_crossover_mutation(genomes_selected)
         self.genomes = self.ga_crossover_mutation(genomes_selected)
 
         # draw a label for the elite individuals

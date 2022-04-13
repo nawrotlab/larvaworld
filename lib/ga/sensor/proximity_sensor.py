@@ -65,9 +65,14 @@ class ProximitySensor(Sensor):
             else:
                 return proximity_value
 
-    def draw(self):
-        dir_sensor = self.robot.direction + self.delta_direction
-        x_sensor_eol = self.robot.x + self.max_distance * cos(dir_sensor)
-        y_sensor_eol = self.robot.y + self.max_distance * -sin(dir_sensor)
+    def draw(self, pos=None, direction=None):
+        if pos is None :
+            pos=[self.robot.x, self.robot.y]
+        if direction is None :
+            direction=self.robot.direction
+        x,y=pos
+        dir_sensor = -direction - self.delta_direction
+        x_sensor_eol = x + self.max_distance * cos(dir_sensor)
+        y_sensor_eol = y + self.max_distance * sin(dir_sensor)
 
-        pygame.draw.line(self.scene.screen, Color.RED, (self.robot.x, self.robot.y), (x_sensor_eol, y_sensor_eol))
+        pygame.draw.line(self.scene.screen, Color.RED, (x, y), (x_sensor_eol, y_sensor_eol))

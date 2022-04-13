@@ -416,8 +416,8 @@ def store_RefPars():
         'length': 'body.initial_length',
         nam.freq(nam.scal(nam.vel(''))): 'brain.crawler_params.initial_freq',
         'stride_reoccurence_rate': 'brain.intermitter_params.crawler_reoccurence_rate',
-        nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.step_to_length_mu',
-        nam.std(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.step_to_length_std',
+        nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_mean',
+        nam.std(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_std',
         nam.freq('feed'): 'brain.feeder_params.initial_freq',
     }
     save_dict(d, paths.path('ParRef'), use_pickle=False)
@@ -437,7 +437,7 @@ def oD(c=1, id='Odor'):
 
 
 if __name__ == '__main__':
-    print(null_dict('physics', key='disp'))
+    print(null_dict('crawler'))
     # t=multiconf_to_tree(['explorer', 'nengo_explorer'], 'Model')
     # t=conf_to_tree('explorer', 'Model')
     # t.save(k='text', v='value')

@@ -10,7 +10,7 @@ from lib.conf.base.dtypes import null_dict, null_Box2D_params, Box2Djoints
 
 ''' Default exploration model'''
 
-Cbas = null_dict('crawler', initial_freq=1.5, step_to_length_mu=0.25, step_to_length_std=0.0)
+Cbas = null_dict('crawler', initial_freq=1.5, stride_dst_mean=0.25, stride_dst_std=0.0)
 base_coupling = null_dict('interference', mode='square', crawler_phi_range=(0.45, 1.0), feeder_phi_range=(0.0, 0.0),
                           attenuation=0.1)
 phasic_coupling = null_dict('interference', mode='phasic', attenuation_min=0.2, attenuation_max=0.31)
@@ -140,7 +140,7 @@ def nengo_brain(module_shorts, EEB, OD=None):
                  turner=null_dict('turner', initial_freq=0.3, initial_amp=30.0, noise=1.85, activation_noise=0.8,
                                   freq_range=(0.2, 0.4)),
                  crawler=null_dict('crawler', initial_freq=1.5, initial_amp=0.6, freq_range=(1.2, 1.8),
-                                   waveform=None, step_to_length_mu=0.25, step_to_length_std=0.01),
+                                   waveform=None, stride_dst_mean=0.25, stride_dst_std=0.01),
                  feeder=null_dict('feeder', initial_freq=f_fr0, freq_range=f_fr_r),
                  # olfactor=olfactor,
                  intermitter=Im(EEB, mode='nengo'),
@@ -193,13 +193,13 @@ Levy_brain = brain(['L'], turner=Tsin, crawler=Ccon,
                    )
 
 brain_3c = brain(['L'],
-                 crawler=null_dict('crawler', step_to_length_mu=0.18, step_to_length_std=0.055, initial_freq=1.35,
+                 crawler=null_dict('crawler', stride_dst_mean=0.18, stride_dst_std=0.055, initial_freq=1.35,
                                    freq_std=0.14),
                  intermitter=ImD(null_dict('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74),
                                  null_dict('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)))
 
 brain_phasic = brain(['L'],
-                     crawler=null_dict('crawler', step_to_length_mu=0.224, step_to_length_std=0.033, initial_freq=1.418,
+                     crawler=null_dict('crawler', stride_dst_mean=0.224, stride_dst_std=0.033, initial_freq=1.418,
                                        max_vel_phase=3.6),
                      turner=Tno_noise,
                      interference=phasic_coupling,
