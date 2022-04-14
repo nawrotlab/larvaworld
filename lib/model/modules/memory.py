@@ -2,7 +2,8 @@ import itertools
 import random
 
 import numpy as np
-
+from lib.ipc.ipc import Client
+from lib.ipc import LarvaMessage
 from lib.aux.dictsNlists import flatten_tuple
 from lib.model.modules.basic import Effector
 
@@ -153,4 +154,24 @@ class RLTouchMemory(RLmemory):
             return False
 
 
+class RemoteBrianModelMemory(Effector):
+
+    def __init__(self, sim_id, server_host='localhost', server_port=5795, **kwargs):
+        self.server_host = server_host
+        self.server_port = server_port
+        self.sim_id = sim_id
+        self.client = Client(server_address, server_port)
+
+    def runRemoteModel(self, model_instance_id, odor_id, t_sim=100, t_warmup=300, concentration=1, **kwargs):
+        # odor_id: 0,1,2
+        # T: duration of remote model simulation in ms
+        # warmup: duration of remote model warmup in ms
+        msg = LarvaMessage(self.sim_id, model_instance_id, odor_id, odor_concentration=concentration, T=t_sim, warmup=t_warmup, **kwargs)
+        # send model parameters to remote model server & wait for result response
+        response = self.client.send([msg]) # this is a LarvaMessage object again
+        # extract returned model results
+        pref_idx = response.param('preference_index')
+        mbon_p = response.param('MBONp')
+        mbon_n = response.param('MBONn')
+        return (response.sim_id, response.model_id, pref_idx, mbon_p, mbon_n)
 
