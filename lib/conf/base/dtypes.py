@@ -437,7 +437,7 @@ def oD(c=1, id='Odor'):
 
 
 if __name__ == '__main__':
-    print(null_dict('crawler'))
+    print(null_dict('Box2D_params').joint_types)
     # t=multiconf_to_tree(['explorer', 'nengo_explorer'], 'Model')
     # t=conf_to_tree('explorer', 'Model')
     # t.save(k='text', v='value')

@@ -2,7 +2,8 @@ import random
 import multiprocessing
 import math
 
-from lib.ga.obstacle_avoidance.ga_robot import GaRobot
+from lib.conf.base.dtypes import null_dict
+from lib.ga.obstacle_avoidance.ga_robot import GaRobot, GaLarvaRobot
 from lib.ga.obstacle_avoidance.genome import Genome
 from lib.ga.robot.actuator import Actuator
 from lib.ga.robot.motor_controller import MotorController
@@ -16,7 +17,7 @@ from lib.ga.util.time_util import TimeUtil
 class GaEngine:
 
     ROBOT_SIZE = 25
-    DEFAULT_POPULATION_NUM = 40
+    DEFAULT_POPULATION_NUM = 100
     DEFAULT_ELITISM_NUM = 3
     DEFAULT_OBSTACLE_SENSOR_ERROR = 0
     DEFAULT_MUTATION_PROBABILITY = 0.3  # 0 < MUTATION_PROBABILITY < 1
@@ -29,8 +30,16 @@ class GaEngine:
 
     def __init__(self, scene, side_panel, population_num, elitism_num, robot_random_direction, multicore,
                  obstacle_sensor_error, mutation_probability, mutation_coefficient, selection_ratio,
-                 long_lasting_generations, verbose):
+                 long_lasting_generations, verbose,dt = 0.1,arena=None):
+
+        if arena is None :
+            arena=null_dict('arena')
+        self.arena_width, self.arena_height = arena.arena_dims
+        self.arena_shape = arena.arena_shape
+        self.dt = dt
+
         self.scene = scene
+        self.scaling_factor = self.scene.width / self.arena_width
         self.side_panel = side_panel
         self.population_num = population_num
         self.elitism_num = elitism_num
@@ -152,7 +161,8 @@ class GaEngine:
         self.generation_step_num += 1
 
     def build_robot(self, x, y, genome, label):
-        robot = GaRobot(x, y, self.ROBOT_SIZE, genome)
+        robot = GaLarvaRobot(genome=genome, unique_id=label, model=self)
+        # robot = GaRobot(x, y, self.ROBOT_SIZE, genome)
 
         if not self.robot_random_direction:
             robot.direction = 0

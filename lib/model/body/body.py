@@ -1,4 +1,5 @@
 from random import sample, seed
+import random
 import numpy as np
 
 from shapely.ops import cascaded_union
@@ -10,25 +11,19 @@ from lib.aux.sim_aux import generate_seg_shapes, circle_to_polygon
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
 
 
-class LarvaBody:
-    def __init__(self, model, pos=None, orientation=None, density=300.0,
-                 initial_length=None, length_std=0, Nsegs=1, interval=0,
-                 seg_ratio=None, touch_sensors=False, shape='drosophila_larva', **kwargs):
-        self.model = model
-        self.density = density
+class LarvaShape:
+    def __init__(self, Nsegs=2, seg_ratio=None, shape='drosophila_larva', initial_length=0.005, length_std=0,
+                 density=300.0, interval=0, scaling_factor=1, initial_orientation=None, initial_pos=None, default_color='black'):
+        from lib.conf.stored.aux_conf import body_dict
+        self.default_color = default_color
         self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
-
         self.interval = interval
-        self.shape_scale = 1
         self.density = density / (1 - 2 * (Nsegs - 1) * interval)
-
+        self.scaling_factor = scaling_factor
+        self.initialize(initial_length, length_std)
         self.Nsegs = Nsegs
         self.Nangles = Nsegs - 1
         self.angles = np.zeros(self.Nangles)
-
-        self.initialize(initial_length, length_std)
-        from lib.conf.stored.aux_conf import body_dict
-
         if seg_ratio is None:
             seg_ratio = [1 / Nsegs] * Nsegs
         elif type(seg_ratio) == str:
@@ -37,28 +32,28 @@ class LarvaBody:
             seg_ratio = [float(x) for x in seg_ratio.split(',')]
         self.seg_ratio = np.array(seg_ratio)
         self.contour_points = body_dict[shape]['points']
-        self.base_seg_vertices = generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,
-                                                     points=self.contour_points)
-        self.seg_colors = self.generate_seg_colors(Nsegs)
+        self.base_seg_vertices = generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)
         self.seg_lengths = self.sim_length * self.seg_ratio
         self.seg_vertices = [s * self.sim_length for s in self.base_seg_vertices]
-        self.segs = self.generate_segs(pos, orientation, length=self.sim_length,
-                                       seg_lengths=self.seg_lengths, **kwargs)
 
-        self.contour = self.set_contour(self.segs)
+        if initial_orientation is None:
+            initial_orientation = random.uniform(0, 2 * np.pi)
+        self.initial_orientation = initial_orientation
+        if initial_pos in [None, (None,None)]:
+            initial_pos = (0.0, 0.0)
+        self.initial_pos = initial_pos
+        ls_x = [np.cos(initial_orientation) * l for l in self.seg_lengths]
+        ls_y = np.sin(initial_orientation) * self.real_length / Nsegs
+        self.seg_positions = [[initial_pos[0] + (-i + (Nsegs - 1) / 2) * ls_x[i],
+                               initial_pos[1] + (-i + (Nsegs - 1) / 2) * ls_y] for i in range(Nsegs)]
 
+        self.seg_positions0 = [[0.5 + (-i + (Nsegs - 1) / 2) * seg_ratio[i], 0.5] for i in range(Nsegs)]
+        self.seg_rotation_points0 = [np.array([0.5 + (-i + (Nsegs - 2) / 2) * seg_ratio[i], 0.5]) for i in range(Nsegs)]
 
+        self.seg_colors = self.generate_seg_colors(self.Nsegs)
         self.set_head_edges()
 
-
-
-        self.sensors = []
-        self.define_sensor('olfactor', (1, 0))
-        self.touch_sensors = touch_sensors
-        if touch_sensors:
-            self.add_touch_sensors(touch_sensors)
-
-    def initialize(self,initial_length,length_std):
+    def initialize(self, initial_length, length_std):
         if not hasattr(self, 'real_length'):
             self.real_length = None
         if self.real_length is None:
@@ -76,7 +71,7 @@ class LarvaBody:
 
     @property
     def sim_length(self):
-        return self.real_length * self.model.scaling_factor
+        return self.real_length * self.scaling_factor
 
     def get_real_mass(self):
         return self.real_mass
@@ -97,6 +92,137 @@ class LarvaBody:
     def adjust_shape_to_mass(self):
         self.real_length = np.sqrt(self.real_mass / (self.density * self.width_to_length_ratio))
 
+    def generate_seg_colors(self, N, color=None):
+        if color is None :
+            try:
+                color = self.default_color
+            except:
+                color = [0.0, 0.0, 0.0]
+        c = np.copy(color)
+        return [np.array((0, 255, 0))] + [c] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [c] * N
+
+    def generate_segs(self,orientation, seg_positions):
+        segs = []
+
+        for i in range(self.Nsegs):
+            seg = DefaultSegment(pos=seg_positions[i], orientation=orientation,
+                                 seg_vertices=self.seg_vertices[i], idx=i, color=self.seg_colors[i])
+            segs.append(seg)
+
+        return segs
+
+    def set_head_edges(self):
+        self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)
+        self.local_front_end_of_head = (np.max(self.seg_vertices[0][0], axis=0)[0], 0)
+
+    def set_color(self, colors):
+        if len(colors) != self.Nsegs:
+            colors = [tuple(colors)] * self.Nsegs
+        for seg, col in zip(self.segs, colors):
+            seg.set_color(col)
+
+    def get_color(self):
+        return [seg.get_color() for seg in self.segs]
+
+    def get_segment(self, seg_index):
+        return self.segs[seg_index]
+
+    @property
+    def head(self):
+        return self.segs[0]
+
+    @property
+    def tail(self):
+        return self.segs[-1]
+
+    def get_centroid_position(self):
+        seg_x_positions = []
+        seg_y_positions = []
+        for i, seg in enumerate(self.segs):
+            x, y = seg.get_position().tolist()
+            seg_x_positions.append(x)
+            seg_y_positions.append(y)
+        centroid = (sum(seg_x_positions) / len(self.segs), sum(seg_y_positions) / len(self.segs))
+
+        return np.asarray(centroid)
+
+    def get_local_front_end_of_seg(self, seg_index):
+        front_local_x = np.max(self.seg_vertices[seg_index][0], axis=0)[0]
+        return (front_local_x, 0)
+
+    def get_local_rear_end_of_seg(self, seg_index):
+        rear_local_x = np.min(self.seg_vertices[seg_index][0], axis=0)[0]
+        return (rear_local_x, 0)
+
+    def get_local_rear_end_of_head(self):
+        return self.local_rear_end_of_head
+
+    def get_local_front_end_of_head(self):
+        return self.local_front_end_of_head
+
+    def get_global_front_end_of_seg(self, seg_index):
+        local_pos = self.get_local_front_end_of_seg(seg_index)
+        global_pos = self.get_segment(seg_index).get_world_point(local_pos)
+        return global_pos
+
+    def get_global_rear_end_of_seg(self, seg_index):
+        local_pos = self.get_local_rear_end_of_seg(seg_index)
+        global_pos = self.get_segment(seg_index).get_world_point(local_pos)
+        return global_pos
+
+    @property
+    def global_rear_end_of_head(self):
+        return self.segs[0].get_world_point(self.local_rear_end_of_head)
+
+    @property
+    def global_front_end_of_head(self):
+        return np.array(self.segs[0].get_world_point(self.local_front_end_of_head))
+
+    @property
+    def global_midspine_of_body(self):
+        if self.Nsegs == 1:
+            return self.segs[0].get_position()
+        elif self.Nsegs == 2:
+            return self.global_rear_end_of_head
+        if (self.Nsegs % 2) == 0:
+            seg_idx = int(self.Nsegs / 2)
+            global_pos = self.get_global_front_end_of_seg(seg_idx)
+        else:
+            seg_idx = int((self.Nsegs + 1) / 2)
+            global_pos = self.segs[seg_idx].get_world_point((0.0, 0.0))
+        return global_pos
+
+    @property
+    def global_rear_end_of_body(self):
+        local_pos = self.get_local_rear_end_of_seg(-1)
+        global_pos = self.segs[-1].get_world_point(local_pos)
+        return global_pos
+
+    @property
+    def olfactor_pos(self):
+        return self.global_front_end_of_head
+
+
+class LarvaBody(LarvaShape):
+    def __init__(self, model, pos=None, orientation=None, touch_sensors=False, joint_types=None, **kwargs):
+        super().__init__(initial_orientation=orientation, initial_pos=pos,scaling_factor=model.scaling_factor, **kwargs)
+        self.model = model
+        self.shape_scale = 1
+
+        if self.model.Box2D :
+            self.segs = self.generate_Box2D_segs(self.initial_orientation, self.seg_positions,joint_types)
+        else :
+            self.segs = self.generate_segs(self.initial_orientation, self.seg_positions)
+            self.model.space.place_agent(self, self.initial_pos)
+
+        self.contour = self.set_contour(self.segs)
+
+        self.sensors = []
+        self.define_sensor('olfactor', (1, 0))
+        self.touch_sensors = touch_sensors
+        if touch_sensors:
+            self.add_touch_sensors(touch_sensors)
+
     def adjust_body_vertices(self):
         self.radius = self.sim_length / 2
         self.seg_lengths = self.sim_length * self.seg_ratio
@@ -107,13 +233,7 @@ class LarvaBody:
         self.set_head_edges()
         self.update_sensor_position()
 
-    def generate_seg_colors(self, N):
-        try:
-            col = self.default_color
-        except:
-            col = [0.0,0.0,0.0]
-        c = np.copy(col)
-        return [np.array((0, 255, 0))] + [c] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [c] * N
+
 
     '''
     seg_vertices of 2 segments example :
@@ -137,9 +257,7 @@ class LarvaBody:
         for sensor_dict in self.sensors:
             sensor_dict['local_pos'] = sensor_dict['base_local_pos'] * self.sim_length
 
-    @property
-    def olfactor_pos(self):
-        return self.global_front_end_of_head
+
 
     def define_sensor(self, sensor, pos_on_body):
         x, y = pos_on_body
@@ -166,47 +284,35 @@ class LarvaBody:
         d = self.get_sensor(sensor)
         return self.segs[d['seg_idx']].get_world_point(d['local_pos'])
 
-    def generate_segs(self, position, orientation, length, seg_lengths, **kwargs):
-
-        N = len(seg_lengths)
-        ls_x = [np.cos(orientation) * l for l in seg_lengths]
-        ls_y = np.sin(orientation) * length / N
-        seg_positions = [[position[0] + (-i + (N - 1) / 2) * ls_x[i],
-                          position[1] + (-i + (N - 1) / 2) * ls_y] for i in range(N)]
-
+    def generate_Box2D_segs(self,orientation, seg_positions, joint_types):
+        from Box2D import b2Vec2
         segs = []
-        if self.model.Box2D:
-            from Box2D import b2Vec2
-            physics_pars = {'density': self.density,
-                            'friction': 10.0,
-                            'restitution': 0.0,
-                            'lin_damping': self.lin_damping,
-                            'ang_damping': self.ang_damping,
-                            'inertia': 0.0}
+        physics_pars = {'density': self.density,
+                        'friction': 10.0,
+                        'restitution': 0.0,
+                        'lin_damping': self.lin_damping,
+                        'ang_damping': self.ang_damping,
+                        'inertia': 0.0}
 
-            fixtures = []
-            for i in range(N):
-                seg = Box2DPolygon(space=self.model.space, pos=seg_positions[i], orientation=orientation,
-                                   physics_pars=physics_pars, facing_axis=b2Vec2(1.0, 0.0), idx=i,
-                                   seg_vertices=self.seg_vertices[i], color=self.seg_colors[i])
-                fixtures.extend(seg._fixtures)
-                segs.append(seg)
+        fixtures = []
+        for i in range(self.Nsegs):
+            seg = Box2DPolygon(space=self.model.space, pos=seg_positions[i], orientation=orientation,
+                               physics_pars=physics_pars, facing_axis=b2Vec2(1.0, 0.0), idx=i,
+                               seg_vertices=self.seg_vertices[i], color=self.seg_colors[i])
+            fixtures.extend(seg._fixtures)
+            segs.append(seg)
 
-            # put all agents into same group (negative so that no collisions are detected)
-            if self.model.larva_collisions:
-                for fixture in fixtures:
-                    fixture.filterData.groupIndex = -1
+        # put all agents into same group (negative so that no collisions are detected)
+        if self.model.larva_collisions:
+            for fixture in fixtures:
+                fixture.filterData.groupIndex = -1
 
-            if N > 1:
-                self.create_joints(N, segs, **kwargs)
-                # self.create_rotator(segs, position, orientation, physics_pars)
-        else:
-            for i in range(N):
-                seg = DefaultSegment(space=self.model.space, pos=seg_positions[i], orientation=orientation,
-                                     seg_vertices=self.seg_vertices[i], idx=i, color=self.seg_colors[i])
-                segs.append(seg)
-            self.model.space.place_agent(self, position)
+        if self.Nsegs > 1:
+            self.create_joints(self.Nsegs, segs, joint_types)
+            # self.create_rotator(segs, position, orientation, physics_pars)
         return segs
+
+
 
     # To make peristalsis visible we try to leave some space between the segments.
     # We define an interval proportional to the length : int*l.
@@ -225,7 +331,10 @@ class LarvaBody:
 
         return seg_starts, seg_stops
 
-    def create_joints(self, Nsegs, segs, joint_types):
+    def create_joints(self, Nsegs, segs, joint_types=None):
+        if joint_types is None :
+            from lib.conf.base.dtypes import null_dict
+            joint_types = null_dict('Box2D_params').joint_types
         space = self.model.space
         l0 = np.mean(self.seg_lengths)
         self.joints = []
@@ -411,88 +520,7 @@ class LarvaBody:
             mass += seg.get_mass()
         return mass
 
-    def set_color(self, colors):
-        if len(colors) != self.Nsegs:
-            colors = [tuple(colors)] * self.Nsegs
-        for seg, col in zip(self.segs, colors):
-            seg.set_color(col)
 
-    def get_color(self):
-        return [seg.get_color() for seg in self.segs]
-
-    def get_segment(self, seg_index):
-        return self.segs[seg_index]
-
-    @property
-    def head(self):
-        return self.segs[0]
-
-    @property
-    def tail(self):
-        return self.segs[-1]
-
-    def get_centroid_position(self):
-        seg_x_positions = []
-        seg_y_positions = []
-        for i, seg in enumerate(self.segs):
-            x, y = seg.get_position().tolist()
-            seg_x_positions.append(x)
-            seg_y_positions.append(y)
-        centroid = (sum(seg_x_positions) / len(self.segs), sum(seg_y_positions) / len(self.segs))
-
-        return np.asarray(centroid)
-
-    def get_local_front_end_of_seg(self, seg_index):
-        front_local_x = np.max(self.seg_vertices[seg_index][0], axis=0)[0]
-        return (front_local_x, 0)
-
-    def get_local_rear_end_of_seg(self, seg_index):
-        rear_local_x = np.min(self.seg_vertices[seg_index][0], axis=0)[0]
-        return (rear_local_x, 0)
-
-    def get_local_rear_end_of_head(self):
-        return self.local_rear_end_of_head
-
-    def get_local_front_end_of_head(self):
-        return self.local_front_end_of_head
-
-    def get_global_front_end_of_seg(self, seg_index):
-        local_pos = self.get_local_front_end_of_seg(seg_index)
-        global_pos = self.get_segment(seg_index).get_world_point(local_pos)
-        return global_pos
-
-    def get_global_rear_end_of_seg(self, seg_index):
-        local_pos = self.get_local_rear_end_of_seg(seg_index)
-        global_pos = self.get_segment(seg_index).get_world_point(local_pos)
-        return global_pos
-
-    @property
-    def global_rear_end_of_head(self):
-        return self.segs[0].get_world_point(self.local_rear_end_of_head)
-
-    @property
-    def global_front_end_of_head(self):
-        return np.array(self.segs[0].get_world_point(self.local_front_end_of_head))
-
-    @property
-    def global_midspine_of_body(self):
-        if self.Nsegs == 1:
-            return self.segs[0].get_position()
-        elif self.Nsegs == 2:
-            return self.global_rear_end_of_head
-        if (self.Nsegs % 2) == 0:
-            seg_idx = int(self.Nsegs / 2)
-            global_pos = self.get_global_front_end_of_seg(seg_idx)
-        else:
-            seg_idx = int((self.Nsegs + 1) / 2)
-            global_pos = self.segs[seg_idx].get_world_point((0.0, 0.0))
-        return global_pos
-
-    @property
-    def global_rear_end_of_body(self):
-        local_pos = self.get_local_rear_end_of_seg(-1)
-        global_pos = self.segs[-1].get_world_point(local_pos)
-        return global_pos
 
     def get_contour(self):
         return self.contour
@@ -530,9 +558,7 @@ class LarvaBody:
         # elif N == 0:
         #     pass
 
-    def set_head_edges(self):
-        self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)
-        self.local_front_end_of_head = (np.max(self.seg_vertices[0][0], axis=0)[0], 0)
+
 
     def get_shape(self, scale=1):
         p = cascaded_union([seg.get_shape(scale=scale) for seg in self.segs])

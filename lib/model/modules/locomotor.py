@@ -12,7 +12,7 @@ from lib.model.modules.turner import Turner, NeuralOscillator
 
 class Locomotor:
     def __init__(self, dt, ang_mode='torque',lin_mode='velocity', offline=False, crawler_noise=0, turner_input_noise=0, turner_output_noise=0,
-                 torque_coef=1, ang_damp_coef=1, body_spring_k=1, bend_correction_coef=1, ang_vel_coef=1):
+                 torque_coef=1.78, ang_damp_coef=2.6, body_spring_k=50, bend_correction_coef=1.6, ang_vel_coef=1):
         self.offline = offline
         self.ang_mode = ang_mode
         self.lin_mode = lin_mode

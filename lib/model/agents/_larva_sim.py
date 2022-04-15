@@ -18,7 +18,7 @@ class LarvaSim(BodySim, Larva):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
                        odor=odor, group=group, default_color=default_color)
         self.build_energetics(larva_pars.energetics, life_history=life_history)
-        BodySim.__init__(self, model=model, orientation=orientation, **larva_pars.physics, **larva_pars.body,
+        BodySim.__init__(self, model=model, orientation=orientation,default_color=self.default_color, **larva_pars.physics, **larva_pars.body,
                          **larva_pars.Box2D_params,**kwargs)
 
         self.brain = self.build_brain(larva_pars.brain)

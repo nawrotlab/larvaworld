@@ -7,6 +7,7 @@ from scipy.special import erf
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from lib.aux import naming as nam
+from lib.aux.dictsNlists import AttrDict, save_dict
 from lib.conf.stored.conf import saveConf
 from lib.process.aux import suppress_stdout, suppress_stdout_stderr
 
@@ -160,36 +161,56 @@ def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
         return xmids[ii], overlaps[jj]
 
 
-def fit_bouts(config, dataset=None, s=None, e=None, id=None, store=False, bouts=['stride', 'pause'],min_dur=0.4, **kwargs):
+def fit_bouts(c, aux_dic=None,  s=None, e=None, dataset=None,id=None, store=False):
     from lib.model.modules.intermitter import get_EEB_poly1d
     if id is None:
-        id = config['id']
-    config['bout_distros'] = {}
-    dic = {}
-    for bout, p, disc, comb, (xmin, xmax) in zip(bouts,
-                                                 ['stridechain_length', 'pause_dur'],
-                                                 [True, False],
-                                                 [False, True],
-                                                 [(1, 100), (min_dur, 20.0)]):
-        if dataset is not None:
-            x0 = dataset.get_par(p).values
-        elif s is not None:
-            x0 = s[p].dropna().values
-        dic = fit_bout_distros(x0, xmin, xmax, discrete=disc, print_fits=True,
-                               dataset_id=id, bout=bout, combine=comb, store=store)
-        config['bout_distros'][bout] = dic['best'][bout]['best']
+        id = c.id
 
-    config['intermitter'] = {
-        nam.freq('crawl'): e[nam.freq(nam.scal(nam.vel('')))].mean(),
-        nam.freq('feed'): e[nam.freq('feed')].mean() if nam.freq('feed') in e.columns else 2.0,
-        'dt': config['dt'],
-        'crawl_bouts': True,
-        'feed_bouts': True,
-        'stridechain_dist': config['bout_distros']['stride'],
-        'pause_dist': config['bout_distros']['pause'],
-        'feeder_reoccurence_rate': None,
-    }
-    config['EEB_poly1d'] = get_EEB_poly1d(**config['intermitter']).c.tolist()
+    if aux_dic is None :
+        for k in ['run_count', 'run_dur', 'pause_dur']:
+            if dataset is not None:
+                aux_dic[k]=dataset.get_par(k).values
+            elif s is not None:
+                aux_dic[k] = s[k].dropna().values
+            else :
+                aux_dic[k] = None
+
+
+    dic, best = {}, {}
+    for k, v in aux_dic.items():
+        discr = True if k == 'run_count' else False
+        if v is not None :
+            dic[k] = fit_bout_distros(v, dataset_id=id, bout=k, combine=False, discrete=discr)
+            best[k] = dic[k]['best'][k]['best']
+        else:
+            dic[k] = None
+            best[k] = None
+
+    c.bout_distros = AttrDict(best)
+
+    dic = AttrDict(dic)
+    if store:
+        path=c.dir_dict.group_bout_dicts
+        os.makedirs(path, exist_ok=True)
+        save_dict(dic, f'{path}/{id}.txt', use_pickle=True)
+        print('Pooled group bouts saved')
+    # return dic
+
+    try:
+        c.intermitter = {
+            nam.freq('crawl'): e[nam.freq(nam.scal(nam.vel('')))].mean(),
+            nam.freq('feed'): e[nam.freq('feed')].mean() if nam.freq('feed') in e.columns else 2.0,
+            'dt': c.dt,
+            'crawl_bouts': True,
+            'feed_bouts': True,
+            'stridechain_dist': c.bout_distros.run_count,
+            'pause_dist': c.bout_distros.pause_dur,
+            'run_dist': c.bout_distros.run_dur,
+            'feeder_reoccurence_rate': None,
+        }
+        c['EEB_poly1d'] = get_EEB_poly1d(**c.intermitter).c.tolist()
+    except :
+        pass
     # config['EEB_poly1d'] = {config['dt']: get_EEB_poly1d(**config['intermitter']).c.tolist()}
 
     return dic

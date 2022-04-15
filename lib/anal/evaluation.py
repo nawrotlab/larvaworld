@@ -15,7 +15,7 @@ from shapely.geometry import Polygon, Point
 
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
-from lib.anal.fitting import std_norm, minmax
+from lib.anal.fitting import std_norm, minmax, fit_bouts
 from lib.anal.plot_aux import plot_single_bout, dataset_legend
 from lib.anal.plotting import plot_trajectories, plot_dispersion
 from lib.aux.colsNstr import N_colors, col_df
@@ -24,7 +24,7 @@ from lib.aux.sim_aux import circle_to_polygon, inside_polygon
 
 from lib.conf.base.par import getPar, ParDict
 from lib.conf.stored.conf import loadRef
-from lib.process.aux import annotation, fit_bouts
+from lib.process.aux import annotation
 from lib.process.spatial import scale_to_length, comp_straightness_index, comp_dispersion
 from lib.process.store import get_dsp
 from lib.aux.sim_aux import get_tank_polygon
@@ -167,8 +167,8 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
     comp_dispersion(ss, ee, dt, cc.point, dsp_starts=dsp_starts, dsp_stops=dsp_stops)
     comp_straightness_index(ss, dt, e=ee, tor_durs=tor_durs)
 
-    aux_dic = annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
-    bout_dic = fit_bouts(aux_dic, cc.id, cc)
+    chunk_dicts,aux_dic= annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
+    bout_dic = fit_bouts(c=cc, aux_dic=aux_dic,s=ss,e=ee, id=cc.id)
 
     return bout_dic
 

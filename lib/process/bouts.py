@@ -3,7 +3,7 @@ import numpy as np
 
 from lib.conf.base.par import getPar
 from lib.process.aux import suppress_stdout, comp_bearing, detect_strides, process_epochs, detect_pauses, detect_turns, \
-    fft_max
+    fft_max, compute_interference, annotation
 from lib.aux.ang_aux import angle_to_x_axis
 import lib.aux.naming as nam
 from lib.anal.fitting import fit_bouts
@@ -14,7 +14,7 @@ from lib.process.store import store_aux_dataset
 def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=True,
              recompute=False, track_point=None, track_pars=None, chunk_pars=None, vel_threshold=0.2,
              vel_par=None, ang_vel_par=None, bend_vel_par=None, min_ang=30.0, min_ang_vel=100.0,
-             non_chunks=False, show_output=True, fits=True, on_food=False, **kwargs):
+             non_chunks=False, show_output=True, fits=True, on_food=False,store=True, **kwargs):
     from lib.conf.base.par import ParDict
     dic = ParDict(mode='load').dict
     if vel_par is None:
@@ -54,128 +54,135 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
     }
     with suppress_stdout(show_output):
         c=config
-        dt=c.dt
-        l, v, sv, dst, acc, fov, foa, b, bv, ba, fv, fsv, ffov = \
-        getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv', 'fsv', 'ffov'], to_return=['d'])[0]
-        str_ps = getPar(['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'], to_return=['d'])[0]
-        lin_ps = getPar(
-            ['run_v_mu', 'pau_v_mu', 'run_a_mu', 'pau_a_mu', 'run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std',
-             'run_foa_mu', 'pau_foa_mu', 'pau_b_mu', 'pau_b_std', 'pau_bv_mu', 'pau_bv_std', 'pau_ba_mu', 'pau_ba_std',
-             'cum_run_t', 'cum_pau_t', 'Ltur_tr', 'Rtur_tr', 'run_t_min', 'run_t_max', 'pau_t_min', 'pau_t_max'],
-            to_return=['d'])[0]
-
-        att = 'attenuation'
-        att_ps = [nam.min(att), nam.max(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')]
-
-        # Parameter easy naming
-        cum_t, cum_d, v_mu, sv_mu = getPar(['cum_t', 'cum_d', 'v_mu', 'sv_mu'], to_return=['d'])[0]
-        str_d_mu, str_d_std, sstr_d_mu, sstr_d_std, run_tr, pau_tr, cum_run_t, cum_pau_t = \
-        getPar(['str_d_mu', 'str_d_std', 'sstr_d_mu', 'sstr_d_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t'],
-               to_return=['d'])[0]
-
-        step_ps, = getPar(['tur_fou', 'tur_t', 'tur_fov_max', 'pau_t', 'run_t', 'run_d'], to_return=['d'])
-        step_vs = np.zeros([c.Nticks, c.N, len(step_ps)]) * np.nan
-        vs_ps = np.zeros([c.N, len(lin_ps)]) * np.nan
-        vs_str_ps = np.zeros([c.N, len(str_ps) + len(att_ps)]) * np.nan
-        if stride:
-            e[fv] = s[v].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(1.0, 2.5))
-            e[fsv] = e[fv]
-        if turn:
-            e[ffov] = s[fov].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(0.1, 0.8))
-            e['turner_input_constant'] = (e[ffov] / 0.024) + 5
-
-        for jj, id in enumerate(c.agent_ids):
-
-
-            if turn:
-                a_fov = s[fov].xs(id, level="AgentID")
-
-                # a_acc = s[acc].xs(id, level="AgentID")
-                Lturns, Rturns = detect_turns(a_fov, dt)
-                Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov.values, Lturns, dt)
-                Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov.values, Rturns, dt)
-                Tamps = np.abs(np.concatenate([Lamps, Ramps]))
-                Tdurs = np.concatenate([Ldurs, Rdurs])
-                Tmaxs = np.concatenate([Lmaxs, Rmaxs])
-                Tslices = Lturn_slices + Rturn_slices
-                if Lturns.shape[0] > 0:
-                    step_vs[Lturns[:, 1], jj, 0] = Lamps
-                    step_vs[Lturns[:, 1], jj, 1] = Ldurs
-                    step_vs[Lturns[:, 1], jj, 2] = Lmaxs
-                if Rturns.shape[0] > 0:
-                    step_vs[Rturns[:, 1], jj, 0] = Ramps
-                    step_vs[Rturns[:, 1], jj, 1] = Rdurs
-                    step_vs[Rturns[:, 1], jj, 2] = Rmaxs
-            if stride:
-                a_acc = s[acc].xs(id, level="AgentID").values
-                a_sv = s[sv].xs(id, level="AgentID").values
-                a_fov = s[fov].xs(id, level="AgentID").values
-                a_foa = s[foa].xs(id, level="AgentID").values
-                strides, runs, run_counts = detect_strides(a_sv, dt, fr=e[fv].loc[id], return_extrema=False)
-                strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_sv,
-                                                                                                            strides,
-                                                                                                            dt)
-                str_fovs = np.abs(a_fov[stride_idx])
-                vs_str_ps[jj, :len(str_ps)] = [np.mean(stride_dsts),
-                                               np.std(stride_dsts),
-                                               np.mean(a_sv[stride_idx]),
-                                               np.mean(str_fovs),
-                                               np.std(str_fovs),
-                                               np.sum(run_counts),
-                                               ]
-                pauses = detect_pauses(a_sv, dt, runs=runs)
-                pauses1, pause_durs, pause_slices, pause_dsts, pause_idx, pause_maxs = process_epochs(a_sv, pauses, dt)
-                runs1, run_durs, run_slices, run_dsts, run_idx, run_maxs = process_epochs(a_sv, runs, dt)
-
-                step_vs[pauses1, jj, 3] = pause_durs
-                step_vs[runs1, jj, 4] = run_durs
-                step_vs[runs1, jj, 5] = run_dsts
-
-                if b in s.columns:
-                    pau_bs = s[b].xs(id, level="AgentID").abs().values[pause_idx]
-                    pau_bvs = s[bv].xs(id, level="AgentID").abs().values[pause_idx]
-                    pau_bas = s[ba].xs(id, level="AgentID").abs().values[pause_idx]
-                    pau_b_temp = [np.mean(pau_bs), np.std(pau_bs), np.mean(pau_bvs), np.std(pau_bvs), np.mean(pau_bas),
-                                  np.std(pau_bas)]
-                else:
-                    pau_b_temp = [np.nan] * 6
-
-                pau_fovs = np.abs(a_fov[pause_idx])
-                run_fovs = np.abs(a_fov[run_idx])
-                pau_foas = np.abs(a_foa[pause_idx])
-                run_foas = np.abs(a_foa[run_idx])
-                vs_ps[jj, :] = [
-                    np.mean(a_sv[run_idx]),
-                    np.mean(a_sv[pause_idx]),
-                    np.mean(a_acc[run_idx]),
-                    np.mean(a_acc[pause_idx]),
-                    np.mean(run_fovs), np.std(run_fovs),
-                    np.mean(pau_fovs), np.std(pau_fovs),
-                    np.mean(run_foas),
-                    np.mean(pau_foas),
-                    *pau_b_temp,
-                    np.sum(run_durs),
-                    np.sum(pause_durs),
-                    np.sum(Ldurs) / e[cum_t].loc[id],
-                    np.sum(Rdurs) / e[cum_t].loc[id],
-                    np.nanmin(run_durs) if len(run_durs) > 0 else 1,
-                    np.nanmax(run_durs) if len(run_durs) > 0 else 100,
-                    np.nanmin(pause_durs) if len(pause_durs) > 0 else dt,
-                    np.nanmax(pause_durs) if len(pause_durs) > 0 else 100,
-                ]
-        s[step_ps] = step_vs.reshape([c.Nticks * c.N, len(step_ps)])
-        e[lin_ps] = vs_ps
-        e[run_tr] = e[cum_run_t] / e[cum_t]
-        e[pau_tr] = e[cum_pau_t] / e[cum_t]
-
-        e[str_ps + att_ps] = vs_str_ps
-        e[sstr_d_mu] = e[str_d_mu] / e[l]
-        e[sstr_d_std] = e[str_d_std] / e[l]
-        if  fits:
-            try :
-                fit_bouts(**c, **kwargs)
-            except:
-                pass
+        if stride or pause or turn:
+            chunk_dicts,aux_dic=annotation(s, e, c, point=track_point, vel_thr=vel_threshold, strides_enabled=True,store=store, **kwargs)
+            if fits :
+                bout_dic = fit_bouts(c=c, aux_dic=aux_dic, s=s, e=e, id=c.id,store=store)
+        # dt=c.dt
+        # l, v, sv, dst, acc, fov, foa, b, bv, ba, fv, fsv, ffov = \
+        # getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv', 'fsv', 'ffov'], to_return=['d'])[0]
+        # str_ps = getPar(['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'], to_return=['d'])[0]
+        # lin_ps = getPar(
+        #     ['run_v_mu', 'pau_v_mu', 'run_a_mu', 'pau_a_mu', 'run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std',
+        #      'run_foa_mu', 'pau_foa_mu', 'pau_b_mu', 'pau_b_std', 'pau_bv_mu', 'pau_bv_std', 'pau_ba_mu', 'pau_ba_std',
+        #      'cum_run_t', 'cum_pau_t', 'Ltur_tr', 'Rtur_tr', 'run_t_min', 'run_t_max', 'pau_t_min', 'pau_t_max'],
+        #     to_return=['d'])[0]
+        #
+        # # att = 'attenuation'
+        # # att_ps = [nam.min(att), nam.max(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')]
+        #
+        # # Parameter easy naming
+        # cum_t, cum_d, v_mu, sv_mu = getPar(['cum_t', 'cum_d', 'v_mu', 'sv_mu'], to_return=['d'])[0]
+        # str_d_mu, str_d_std, sstr_d_mu, sstr_d_std, run_tr, pau_tr, cum_run_t, cum_pau_t = \
+        # getPar(['str_d_mu', 'str_d_std', 'sstr_d_mu', 'sstr_d_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t'],
+        #        to_return=['d'])[0]
+        #
+        # step_ps, = getPar(['tur_fou', 'tur_t', 'tur_fov_max', 'pau_t', 'run_t', 'run_d'], to_return=['d'])
+        # step_vs = np.zeros([c.Nticks, c.N, len(step_ps)]) * np.nan
+        # vs_ps = np.zeros([c.N, len(lin_ps)]) * np.nan
+        # vs_str_ps = np.zeros([c.N, len(str_ps)]) * np.nan
+        # if stride:
+        #     e[fv] = s[v].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(1.0, 2.5))
+        #     e[fsv] = e[fv]
+        # if turn:
+        #     e[ffov] = s[fov].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(0.1, 0.8))
+        #     e['turner_input_constant'] = (e[ffov] / 0.024) + 5
+        #
+        # for jj, id in enumerate(c.agent_ids):
+        #
+        #
+        #     if turn:
+        #         a_fov = s[fov].xs(id, level="AgentID")
+        #
+        #         # a_acc = s[acc].xs(id, level="AgentID")
+        #         Lturns, Rturns = detect_turns(a_fov, dt)
+        #         Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov.values, Lturns, dt)
+        #         Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov.values, Rturns, dt)
+        #         Tamps = np.abs(np.concatenate([Lamps, Ramps]))
+        #         Tdurs = np.concatenate([Ldurs, Rdurs])
+        #         Tmaxs = np.concatenate([Lmaxs, Rmaxs])
+        #         Tslices = Lturn_slices + Rturn_slices
+        #         if Lturns.shape[0] > 0:
+        #             step_vs[Lturns[:, 1], jj, 0] = Lamps
+        #             step_vs[Lturns[:, 1], jj, 1] = Ldurs
+        #             step_vs[Lturns[:, 1], jj, 2] = Lmaxs
+        #         if Rturns.shape[0] > 0:
+        #             step_vs[Rturns[:, 1], jj, 0] = Ramps
+        #             step_vs[Rturns[:, 1], jj, 1] = Rdurs
+        #             step_vs[Rturns[:, 1], jj, 2] = Rmaxs
+        #     if stride:
+        #         a_acc = s[acc].xs(id, level="AgentID").values
+        #         a_sv = s[sv].xs(id, level="AgentID").values
+        #         a_fov = s[fov].xs(id, level="AgentID").values
+        #         a_foa = s[foa].xs(id, level="AgentID").values
+        #         strides, runs, run_counts = detect_strides(a_sv, dt, fr=e[fv].loc[id], return_extrema=False)
+        #         strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_sv,
+        #                                                                                                     strides,
+        #                                                                                                     dt)
+        #         str_fovs = np.abs(a_fov[stride_idx])
+        #         vs_str_ps[jj, :] = [np.mean(stride_dsts),
+        #                                        np.std(stride_dsts),
+        #                                        np.mean(a_sv[stride_idx]),
+        #                                        np.mean(str_fovs),
+        #                                        np.std(str_fovs),
+        #                                        np.sum(run_counts),
+        #                                        ]
+        #         pauses = detect_pauses(a_sv, dt, runs=runs)
+        #         pauses1, pause_durs, pause_slices, pause_dsts, pause_idx, pause_maxs = process_epochs(a_sv, pauses, dt)
+        #         runs1, run_durs, run_slices, run_dsts, run_idx, run_maxs = process_epochs(a_sv, runs, dt)
+        #
+        #         step_vs[pauses1, jj, 3] = pause_durs
+        #         step_vs[runs1, jj, 4] = run_durs
+        #         step_vs[runs1, jj, 5] = run_dsts
+        #
+        #         if b in s.columns:
+        #             pau_bs = s[b].xs(id, level="AgentID").abs().values[pause_idx]
+        #             pau_bvs = s[bv].xs(id, level="AgentID").abs().values[pause_idx]
+        #             pau_bas = s[ba].xs(id, level="AgentID").abs().values[pause_idx]
+        #             pau_b_temp = [np.mean(pau_bs), np.std(pau_bs), np.mean(pau_bvs), np.std(pau_bvs), np.mean(pau_bas),
+        #                           np.std(pau_bas)]
+        #         else:
+        #             pau_b_temp = [np.nan] * 6
+        #
+        #         pau_fovs = np.abs(a_fov[pause_idx])
+        #         run_fovs = np.abs(a_fov[run_idx])
+        #         pau_foas = np.abs(a_foa[pause_idx])
+        #         run_foas = np.abs(a_foa[run_idx])
+        #         vs_ps[jj, :] = [
+        #             np.mean(a_sv[run_idx]),
+        #             np.mean(a_sv[pause_idx]),
+        #             np.mean(a_acc[run_idx]),
+        #             np.mean(a_acc[pause_idx]),
+        #             np.mean(run_fovs), np.std(run_fovs),
+        #             np.mean(pau_fovs), np.std(pau_fovs),
+        #             np.mean(run_foas),
+        #             np.mean(pau_foas),
+        #             *pau_b_temp,
+        #             np.sum(run_durs),
+        #             np.sum(pause_durs),
+        #             np.sum(Ldurs) / e[cum_t].loc[id],
+        #             np.sum(Rdurs) / e[cum_t].loc[id],
+        #             np.nanmin(run_durs) if len(run_durs) > 0 else 1,
+        #             np.nanmax(run_durs) if len(run_durs) > 0 else 100,
+        #             np.nanmin(pause_durs) if len(pause_durs) > 0 else dt,
+        #             np.nanmax(pause_durs) if len(pause_durs) > 0 else 100,
+        #         ]
+        # s[step_ps] = step_vs.reshape([c.Nticks * c.N, len(step_ps)])
+        # e[lin_ps] = vs_ps
+        # e[run_tr] = e[cum_run_t] / e[cum_t]
+        # e[pau_tr] = e[cum_pau_t] / e[cum_t]
+        #
+        # e[str_ps] = vs_str_ps
+        # e[sstr_d_mu] = e[str_d_mu] / e[l]
+        # e[sstr_d_std] = e[str_d_std] / e[l]
+        #
+        # compute_interference(s, e, c)
+        #
+        # if  fits:
+        #     try :
+        #         fit_bouts(c=c,s=s,e=e, **kwargs)
+        #     except:
+        #         pass
         if on_food:
             comp_patch_metrics(**c, **kwargs)
 

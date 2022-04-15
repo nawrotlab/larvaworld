@@ -7,8 +7,8 @@ from lib.aux.ang_aux import rotate_around_center_multi, rotate_around_center
 
 
 class BodySegment:
-    def __init__(self, space, pos, orientation, seg_vertices, color, idx):
-        self.space = space
+    def __init__(self, pos, orientation, seg_vertices, color, idx):
+        # self.space = space
         self.color = color
         self.pos = pos
         self.orientation = orientation
@@ -64,7 +64,8 @@ class BodySegment:
 class Box2DSegment(BodySegment):
 
     def __init__(self, space: Box2D.b2World, physics_pars, facing_axis, **kwargs):
-        super().__init__(space=space, **kwargs)
+        super().__init__(**kwargs)
+        self.space = space
         if self.__class__ == Box2DSegment:
             raise NotImplementedError('Abstract class Box2DSegment cannot be instantiated.')
         self.physics_pars = physics_pars

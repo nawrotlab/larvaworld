@@ -48,7 +48,7 @@ class ObstacleAvoidance:
 
     def __init__(self):
         # self.dt = 0.1
-        # self.arena_scale = 10000
+        # self.scaling_factor = 10000
         self.scene = None
         self.screen = None
         self.robots = None

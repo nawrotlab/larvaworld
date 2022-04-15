@@ -140,5 +140,5 @@ class ExplorationGA:
 
 
 if __name__ == '__main__':
-    ExplorationGA(dt=1/16, arena=null_dict('arena', arena_dims=(0.5, 0.5), arena_shape='rectangular'),
+    ExplorationGA(dt=1/16, arena=null_dict('arena', arena_dims=(0.1, 0.1), arena_shape='rectangular'),
                   eval_shorts=['b', 'fov', 'foa','tur_fou','tur_fov_max', 'v', 'a','run_d', 'run_t','pau_t','tor5', 'tor20', ])

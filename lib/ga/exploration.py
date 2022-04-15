@@ -190,7 +190,7 @@ class Exploration:
         self.robots = []
         self.obstacles = []
         self.init_scene()
-        self.arena_scale = self.scene.width / self.arena_width
+        self.scaling_factor = self.scene.width / self.arena_width
         self.screen = self.scene.screen
         self.side_panel = SidePanel(self.scene)
 

@@ -56,7 +56,7 @@ class GaLarvaEngine:
         # self.arena_height = 1
 
         self.scene = scene
-        self.arena_scale = self.scene.width/self.arena_width
+        self.scaling_factor = self.scene.width/self.arena_width
         self.side_panel = side_panel
         self.population_num = population_num
         self.elitism_num = elitism_num

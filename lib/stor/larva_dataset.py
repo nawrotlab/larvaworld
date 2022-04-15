@@ -63,6 +63,7 @@ class LarvaDataset:
                       'group_ids': group_ids,
                       'refID': None,
                       'dir': self.dir,
+                      'dir_dict': self.dir_dict,
                       'aux_dir': self.dir_dict.aux_h5,
                       'parent_plot_dir': f'{self.dir}/plots',
                       'fr': fr,
@@ -247,6 +248,7 @@ class LarvaDataset:
 
     def update_config(self):
         self.config.dt = 1 / self.fr
+        self.config.dir_dict = self.dir_dict
         if 'agent_ids' not in self.config.keys():
             try:
                 ids = self.agent_ids
@@ -569,6 +571,7 @@ class LarvaDataset:
         self.dir_dict = dNl.AttrDict.from_nested_dicts(dir_dict)
         for k in ['parent', 'data']:
             os.makedirs(self.dir_dict[k], exist_ok=True)
+
 
     def define_linear_metrics(self):
         try:
