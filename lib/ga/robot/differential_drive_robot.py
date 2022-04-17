@@ -10,9 +10,11 @@ from lib.ga.util.color import Color
 
 class DifferentialDriveRobot(RotTriangle):
 
-    def __init__(self, x, y, length, wheel_radius):
+    def __init__(self,  unique_id, model,x, y, length, wheel_radius):
         direction = random.uniform(-pi, pi)
         super().__init__(x, y, length, Color.random_color(127, 127, 127), Color.BLACK, direction)
+        self.model = model
+        self.unique_id = unique_id
         self.length = length
         self.wheel_radius = wheel_radius
         self.speed_left_wheel = 0.0     # angular velocity of left wheel

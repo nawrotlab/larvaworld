@@ -7,8 +7,8 @@ from lib.ga.robot.sensor_driven_robot import SensorDrivenRobot
 
 class GaRobot(SensorDrivenRobot):
 
-    def __init__(self, x, y, length, genome):
-        super().__init__(x, y, length, genome.robot_wheel_radius)
+    def __init__(self, genome, **kwargs):
+        super().__init__(wheel_radius=genome.robot_wheel_radius, **kwargs)
         self.genome = genome
         self.mileage = 0
 

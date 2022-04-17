@@ -9,8 +9,8 @@ from lib.ga.util.color import Color
 # class SensorDrivenRobot(ObstacleLarvaRobot):
 class SensorDrivenRobot(DifferentialDriveRobot):
 
-    def __init__(self, x, y, length, wheel_radius):
-        super().__init__(x, y, length, wheel_radius)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.collision_with_object = False
         self.left_motor_controller = None
         self.right_motor_controller = None

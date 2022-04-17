@@ -143,8 +143,8 @@ class Genome:
                str(self.sensor_saturation_value) + ' ' + str(self.sensor_max_distance) + ' ' + \
                str(self.generation_num) + ' ' + str(self.fitness)
 
-    def build_obstacle_avoidance_robot(self, x, y, robot_size, sensor_error, scene):
-        robot = SensorDrivenRobot(x, y, robot_size, self.robot_wheel_radius)
+    def build_obstacle_avoidance_robot(self, unique_id,x, y, robot_size, sensor_error, scene):
+        robot = SensorDrivenRobot(unique_id=unique_id, model=self,x=x, y=y, length=robot_size, wheel_radius=self.robot_wheel_radius)
 
         left_obstacle_sensor = ProximitySensor(robot, self.sensor_delta_direction, self.sensor_saturation_value,
                                                sensor_error, self.sensor_max_distance, scene)

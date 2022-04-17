@@ -19,13 +19,15 @@ class LarvaRobot(LarvaShape):
             x, y = model.scene.width / 2, model.scene.height / 2
         super().__init__(Nsegs=Nsegs, scaling_factor=model.scaling_factor, initial_orientation=direction,
                          initial_pos=(x, y), default_color=Color.random_color(127, 127, 127))
+        self.collision_with_object = False
         self.direction = self.initial_orientation
         self.x, self.y = self.initial_pos
         self.model = model
+        self.unique_id = unique_id
         self.size = self.sim_length
 
         self.segs = self.generate_segs(self.initial_orientation, seg_positions=self.seg_positions)
-        self.unique_id = unique_id
+
         self.eval = {
             'b': [],
             'fov': [],
