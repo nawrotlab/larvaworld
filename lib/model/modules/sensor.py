@@ -26,14 +26,18 @@ class Sensor(Effector):
             self.activation = 0
         else:
             self.compute_dX(input)
-            if self.brute_force :
-                self.affect_locomotion()
+
+                #self.activation=0
+                # return self.activation
             self.activation *= self.exp_decay_coef
             self.activation += self.dt * np.sum([self.gain[id] * self.dX[id] for id in self.gain_ids])
             if self.activation > self.A1:
                 self.activation = self.A1
             elif self.activation < self.A0:
                 self.activation = self.A0
+            if self.brute_force :
+                self.affect_locomotion()
+                return 0
         return self.activation
 
     def affect_locomotion(self):
@@ -113,10 +117,18 @@ class Olfactor(Sensor):
             #     pass
 
     def affect_locomotion(self):
-        if self.activation<0:
-            self.brain.intermitter.inhibit_locomotion()
-        elif self.activation>0:
-            self.brain.intermitter.trigger_locomotion()
+        # if self.activation < 0 :
+        #     self.brain.locomotor.intermitter.inhibit_locomotion()
+        # elif self.activation>0:
+        #     self.brain.locomotor.intermitter.trigger_locomotion()
+        if self.activation < 0 and self.brain.locomotor.crawler.complete_iteration:
+
+            if np.random.uniform(0, 1, 1)<=np.abs(self.activation):
+                # print('xxxx')
+            # if np.random.uniform(0, 1, 1)<np.abs(self.activation):
+                self.brain.locomotor.intermitter.inhibit_locomotion()
+            # elif self.activation>0:
+            #     self.brain.locomotor.intermitter.trigger_locomotion()
 
     @property
     def first_odor_concentration(self):

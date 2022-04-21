@@ -66,6 +66,7 @@ class Crawler(Oscillator):
             super().oscillate()
             self.activity=self.waveform_func()
         else:
+
             self.activity= 0
         return self.activity
 

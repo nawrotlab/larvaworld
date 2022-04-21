@@ -7,11 +7,11 @@ from pygame.locals import *
 from lib.ga.obstacle_avoidance.ga_engine import GaEngine
 from lib.ga.obstacle_avoidance.ga_robot import GaRobot
 
-from lib.ga.util.templates import GATemplate
+from lib.ga.util.templates import GALauncher
 from lib.ga.util.scene_type import SceneType
 
 
-class ObstacleAvoidanceGA(GATemplate):
+class ObstacleAvoidanceGA(GALauncher):
 
     # DEFAULT_SCENE_FILE = 'saved_scenes/obstacle_avoidance_900.txt'
 

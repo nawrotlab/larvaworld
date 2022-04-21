@@ -116,6 +116,12 @@ class BaseIntermitter(Effector):
         self.cur_state='pause'
         if self.crawl_bouts and self.crawler is not None:
             self.crawler.stop_effector()
+            try :
+                self.complete_iteration = False
+                self.crawler.phi=0
+            except :
+                pass
+            # self.crawler.
         if self.feed_bouts and self.feeder is not None:
             self.feeder.stop_effector()
 

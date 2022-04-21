@@ -33,7 +33,7 @@ class BasePlot:
         self.fit_df = None
         self.save_to = save_to
 
-    def build(self, Nrows=1, Ncols=1, figsize=None, fig=None, axs=None, dim3=False, **kwargs):
+    def build(self, Nrows=1, Ncols=1, figsize=None, fig=None, axs=None, dim3=False, azim=115, elev=15, **kwargs):
         if fig is None and axs is None:
             if figsize is None:
                 figsize = (12 * Ncols, 10 * Nrows)
@@ -42,7 +42,7 @@ class BasePlot:
                 self.axs = axs.ravel() if Nrows * Ncols > 1 else [axs]
             else:
                 self.fig = plt.figure(figsize=(15, 10))
-                ax = Axes3D(self.fig, azim=115, elev=15)
+                ax = Axes3D(self.fig, azim=azim, elev=elev)
                 self.axs = [ax]
         else:
             self.fig = fig
@@ -139,7 +139,7 @@ class ParPlot(BasePlot):
             name = f'{pref}_{name}'
         super().__init__(name, **kwargs)
 
-    def conf_ax_3d(self, vars, target, lims=None, title=None, maxN=5, labelpad=30, tickpad=10, idx=0):
+    def conf_ax_3d(self, vars, target, lims=None, title=None, maxN=3, labelpad=15, tickpad=5, idx=0):
         if lims is None:
             xlim, ylim, zlim = None, None, None
         else:

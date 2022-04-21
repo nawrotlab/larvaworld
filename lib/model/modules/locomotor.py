@@ -134,14 +134,21 @@ class DefaultLocomotor(Locomotor):
         if self.turner:
             A_in*=(1 + np.random.normal(scale=self.turner_input_noise))
             if self.coupling.suppression_mode=='amplitude' :
-                self.ang_activity = self.coupling.step() * self.turner.step(A_in=A_in)
+                cT=self.coupling.step()
+                # self.ang_activity = self.coupling.step() * self.turner.step(A_in=A_in)
             elif self.coupling.suppression_mode=='oscillation' :
                 A_in+=(1-self.coupling.step())
-                self.ang_activity =  self.turner.step(A_in=A_in)
+                cT = 1
+                # self.ang_activity =  self.turner.step(A_in=A_in)
                 # print(self.coupling.step())
             elif self.coupling.suppression_mode == 'both':
                 A_in+=(1-self.coupling.step())
-                self.ang_activity = self.coupling.step() * self.turner.step(A_in=A_in)
+                cT = self.coupling.step()
+                # self.ang_activity = self.coupling.step() * self.turner.step(A_in=A_in)
+            self.ang_activity = cT * self.turner.step(A_in=A_in)
+            # elif self.coupling.suppression_mode == 'intermit':
+            #     A_in += (1 - self.coupling.step())
+            #     self.ang_activity = self.turner.step(A_in=A_in)
                 #print(self.coupling.step())
         # if self.new_run :
         #     self.on_new_run()

@@ -16,6 +16,7 @@ from lib.ga.robot.motor_controller import MotorController
 from lib.ga.scene.box import Box
 from lib.ga.scene.wall import Wall
 from lib.ga.sensor.proximity_sensor import ProximitySensor
+from lib.ga.util.ga_engine import GA_selector
 from lib.ga.util.thread_ga_robot import ThreadGaRobot
 from lib.conf.base.dtypes import null_dict
 from lib.ga.robot.sensor_driven_robot import SensorDrivenRobot
@@ -23,9 +24,12 @@ from lib.ga.scene.scene import Scene
 from lib.ga.util.color import Color
 from lib.ga.util.side_panel import SidePanel
 from lib.ga.util.time_util import TimeUtil
+from lib.model.envs._larvaworld import LarvaWorld
+from lib.model.envs._larvaworld_sim import LarvaWorldSim
 
 
-class BaseTemplate:
+class BaseLauncher:
+# class BaseTemplate(LarvaWorldSim):
     SCENE_MAX_SPEED = 3000
 
     SCENE_MIN_SPEED = 1
@@ -35,28 +39,24 @@ class BaseTemplate:
 
     SCREEN_MARGIN = 12
 
-    def __init__(self, robot_class,scene_file,scene_type,scene_speed=0, arena=None, dt=0.1,caption='Template', population_num=30):
-        if arena is None:
-            arena = null_dict('arena')
+    def __init__(self, robot_class, scene_file, scene_type, scene_speed=0, env_params=None, dt=0.1, caption='Template',
+                 population_num=30):
+        if env_params is None:
+            env_params = null_dict('env_conf')
+        # super().__init__(env_params=env_params, dt=dt)
+
         self.dt = dt
-        self.arena_width, self.arena_height = arena.arena_dims
-        self.arena_shape = arena.arena_shape
+        self.arena_width, self.arena_height = env_params.arena.arena_dims
+        self.arena_shape = env_params.arena.arena_shape
         self.caption = caption
         self.robot_class = robot_class
         self.scene_file = scene_file
         self.scene_type = scene_type
         self.population_num = population_num
-        # self.scene = None
-        # self.screen = None
-        # self.robots = []
-        # self.obstacles = []
-        # self.side_panel = None
-        # self.population_num = None
         self.scene_speed = scene_speed
 
         # self.init_scene()
         # self.scene = Scene.load_from_file(self.scene_file, self.scene_speed, self.SIDE_PANEL_WIDTH)
-
 
         # self.screen = self.scene.screen
         # self.side_panel = SidePanel(self.scene, self.population_num)
@@ -82,7 +82,7 @@ class BaseTemplate:
         print('scene.speed:', self.scene.speed)
 
 
-class GATemplate(BaseTemplate):
+class GALauncher(BaseLauncher):
     # DEFAULT_SCENE_FILE = 'saved_scenes/obstacle_avoidance_900.txt'
     # DEFAULT_SCENE_SPEED = 0  # 0 = maximum frame rate
     # DEFAULT_VERBOSE_VALUE = 0  # 0, 1, 2
@@ -102,21 +102,21 @@ class GATemplate(BaseTemplate):
     BOX_MAX_SIZE = 60
     # MULTICORE = True
 
-    engine_kws={
-        'elitism_num' : 3,
-        'multicore' : True,
-        'mutation_probability' : 0.3,
-        'mutation_coefficient' : 0.1,
-        'selection_ratio' : 0.3,
-        'long_lasting_generations' : None,
-        'long_lasting_generation_step_num' : 1000,
-        'verbose' : 0,
-        'robot_random_direction' : True,
-        'obstacle_sensor_error' : 0,
+    engine_kws = {
+        'elitism_num': 3,
+        'multicore': True,
+        'mutation_probability': 0.3,
+        'mutation_coefficient': 0.1,
+        'selection_ratio': 0.3,
+        'long_lasting_generations': None,
+        'long_lasting_generation_step_num': 1000,
+        'verbose': 0,
+        'robot_random_direction': True,
+        'obstacle_sensor_error': 0,
     }
 
-    def __init__(self, GA_engine=None,GA_engine_kws={}, **kwargs):
-        super().__init__(scene_type = 'GA', scene_speed=0, **kwargs)
+    def __init__(self, GA_engine=None, GA_engine_kws={}, **kwargs):
+        super().__init__(scene_type='GA', scene_speed=0, **kwargs)
         # if arena is None:
         #     arena = null_dict('arena')
         # self.dt = dt
@@ -245,37 +245,25 @@ class GATemplate(BaseTemplate):
 
             print(msg)
 
-class GAEngineTemplate :
+
+class GAEngineTemplate(GA_selector):
     ROBOT_SIZE = 25
 
-    def __init__(self, robot_class,genome_class, scene, side_panel, population_num, elitism_num, robot_random_direction, multicore,
-                 obstacle_sensor_error, mutation_probability, mutation_coefficient, selection_ratio,
-                 long_lasting_generations, long_lasting_generation_step_num, verbose, dt=0.1, scaling_factor=1, **kwargs):
+    def __init__(self, robot_class, genome_class, scene, side_panel,robot_random_direction, multicore,
+                 obstacle_sensor_error, dt=0.1, scaling_factor=1,**kwargs):
+        # print(kwargs)
+        super().__init__(**kwargs)
 
         self.dt = dt
         self.scaling_factor = scaling_factor
         self.scene = scene
         self.side_panel = side_panel
-        self.population_num = population_num
-        self.elitism_num = elitism_num
         self.robot_random_direction = robot_random_direction
         self.multicore = multicore
         self.obstacle_sensor_error = obstacle_sensor_error
-        self.mutation_probability = mutation_probability
-        self.mutation_coefficient = mutation_coefficient
-        self.selection_ratio = selection_ratio
-        self.long_lasting_generations = long_lasting_generations
-        self.long_lasting_generation_step_num = long_lasting_generation_step_num
-        self.verbose = verbose
+
         self.robots = []
         self.genomes = []
-        self.genomes_last_generation = []
-        self.best_genome = None
-        self.generation_num = 1
-        self.num_cpu = multiprocessing.cpu_count()
-        self.start_total_time = TimeUtil.current_time_millis()
-        self.start_generation_time = self.start_total_time
-        self.generation_step_num = 0
         self.new_obstacle_probability = 0
         self.obstascles_added = []
         self.genome_class = genome_class
@@ -369,6 +357,7 @@ class GAEngineTemplate :
         if not self.robots:
             print('Generation', self.generation_num, 'terminated')
             self.create_new_generation()
+            self.build_genomes()
             self.side_panel.update_ga_data(self.generation_num, self.best_genome, self.best_genome.fitness)
 
         # update statistics time
@@ -393,14 +382,7 @@ class GAEngineTemplate :
         self.robots.remove(robot)
         self.printd(1, 'Destroyed robot with fitness value', fitness_value)
 
-    def create_new_generation(self):
-        self.genomes_last_generation = self.genomes
-        genomes_selected = self.ga_selection()  # parents of the new generation
-        self.printd(1, '\ngenomes selected:', genomes_selected)
-        self.generation_num += 1
-        new_genomes = self.ga_crossover_mutation(genomes_selected)
-        self.genomes = new_genomes
-
+    def build_genomes(self):
         # draw a label for the elite individuals
         elite_label = 1
 
@@ -418,7 +400,6 @@ class GAEngineTemplate :
             self.robots.append(robot)
 
         self.new_obstacle_probability = 0
-        self.generation_step_num = 0
 
         # remove all obstacles added to a long lasting generation
         for box in self.obstascles_added:
@@ -426,99 +407,11 @@ class GAEngineTemplate :
 
         self.obstascles_added = []
 
-        # reset generation time
-        self.start_generation_time = TimeUtil.current_time_millis()
-        print('\nGeneration', self.generation_num, 'started')
-
-    def ga_selection(self):
-        # sort genomes by fitness
-        sorted_genomes = sorted(self.genomes, key=lambda genome: genome.fitness, reverse=True)
-        best_genome_current_generation = sorted_genomes[0]
-
-        if self.best_genome is None or best_genome_current_generation.fitness > self.best_genome.fitness:
-            self.best_genome = best_genome_current_generation
-            print('New best:', self.best_genome.to_string())
-
-        num_genomes_to_select = round(self.population_num * self.selection_ratio)
-
-        if num_genomes_to_select < 2:
-            raise ValueError('The number of parents selected to breed a new generation is < 2. ' +
-                             'Please increase population (' + str(self.population_num) + ') or selection ratio (' +
-                             str(self.selection_ratio) + ')')
-
-        genomes_selected = []
-
-        # elitism: keep the best genomes in the new generation
-        for i in range(self.elitism_num):
-            elite_genome = sorted_genomes.pop(0)
-            genomes_selected.append(elite_genome)
-            num_genomes_to_select -= 1
-            print("Elite:", elite_genome.to_string())
-
-        while num_genomes_to_select > 0:
-            genome_selected = self.roulette_select(sorted_genomes)
-            genomes_selected.append(genome_selected)
-            sorted_genomes.remove(genome_selected)
-            num_genomes_to_select -= 1
-
-        return genomes_selected
-
-    def roulette_select(self, genomes):
-        fitness_sum = 0
-
-        for genome in genomes:
-            fitness_sum += genome.fitness
-
-        value = random.uniform(0, fitness_sum)
-
-        for i in range(len(genomes)):
-            value -= genomes[i].fitness
-
-            if value < 0:
-                return genomes[i]
-
-        return genomes[-1]
-
-    def ga_crossover_mutation(self, parents):
-        num_genomes_to_create = self.population_num
-        new_genomes = []
-
-        # elitism: keep the best genomes in the new generation
-        for i in range(self.elitism_num):
-            new_genomes.append(parents[i])
-            num_genomes_to_create -= 1
-
-        while num_genomes_to_create > 0:
-            parent_a, parent_b = self.choose_parents(parents)
-            new_genome = parent_a.crossover(parent_b, self.generation_num)
-            new_genome.mutation(self.mutation_probability, self.mutation_coefficient)
-            new_genomes.append(new_genome)
-            num_genomes_to_create -= 1
-
-        return new_genomes
-
-    def choose_parents(self, parents):
-        pos_a = random.randrange(len(parents))
-        parent_a = parents[pos_a]
-        parents.remove(parent_a)  # avoid choosing the same parent two times
-        pos_b = random.randrange(len(parents))
-        parent_b = parents[pos_b]
-        parents.insert(pos_a, parent_a)  # reinsert the first parent in the list
-        return parent_a, parent_b
-
     def robot_start_position(self):
         x = self.scene.width / 2
         y = self.scene.height / 2
         return x, y
 
-    def printd(self, min_debug_level, *args):
-        if self.verbose >= min_debug_level:
-            msg = ''
-
-            for arg in args:
-                msg += str(arg) + ' '
-
-            print(msg)
 
     def create_box(self):
         x = random.randint(0, self.scene.width)
@@ -558,8 +451,7 @@ class GAEngineTemplate :
         return None
 
 
-class RunTemplate(BaseTemplate) :
-
+class RunTemplate(BaseLauncher):
     # N_ROBOTS = 10
     N_INITIAL_BOXES = 0
     N_INITIAL_WALLS = 0
@@ -579,8 +471,8 @@ class RunTemplate(BaseTemplate) :
 
     N_GENOMES_TO_LOAD_FROM_FILE = 10
 
-    def __init__(self,genome_file=None,load_all_genomes=True, **kwargs):
-        super().__init__(scene_type = 'Run', scene_speed=30, **kwargs)
+    def __init__(self, genome_file=None, load_all_genomes=True, **kwargs):
+        super().__init__(scene_type='Run', scene_speed=30, **kwargs)
         # if arena is None:
         #     arena = null_dict('arena')
         # self.dt = dt
@@ -603,8 +495,6 @@ class RunTemplate(BaseTemplate) :
         pygame.display.set_caption(self.caption)
         clock = pygame.time.Clock()
         self.initialize()
-
-
 
         while True:
             for event in pygame.event.get():
@@ -675,8 +565,6 @@ class RunTemplate(BaseTemplate) :
         self.obstacles.append(wall)
         return wall
 
-
-
     def remove_robot(self):
         if len(self.robots) > 0:
             self.scene.remove(self.robots.pop(0))
@@ -738,7 +626,6 @@ class RunTemplate(BaseTemplate) :
 
         self.create_boxes(self.N_INITIAL_BOXES)
         self.add_walls(self.N_INITIAL_WALLS)
-
 
     #
     # def increase_scene_speed(self):

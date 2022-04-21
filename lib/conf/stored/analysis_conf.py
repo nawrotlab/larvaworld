@@ -25,7 +25,7 @@ def time(short, title=None, u='sec', f1=False, abs=False, **kwargs):
         # name =f'{short} timeplot'
     args = {
         'par_shorts': [short],
-        'show_first': f1,
+        # 'show_first': f1,
         'unit': u,
         'absolute': abs,
         **kwargs
@@ -114,11 +114,14 @@ predict = {
         entry('ethogram'),
     ],
     'chemo': [
+        entry('trajectories'),
+        #*[time(p) for p in ['c_odor1']],
         *[time(p) for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']],
+        'source_analysis',
         entry('turn amplitude'),
         entry('angular pars', Npars=5),
         entry('ethogram'),
-        'source_analysis'
+
     ],
     'intake': [
         'deb_analysis',

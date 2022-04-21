@@ -296,7 +296,7 @@ class NengoBrain(Network, Brain):
         else :
             return False
 
-    def run(self, pos=None, reward=False):
+    def step(self, pos=None, reward=False):
         length = self.agent.sim_length
         # if length is None :
         #     length=self.agent.sim_length

@@ -18,7 +18,7 @@ class LarvaSim(BodySim, Larva):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
                        odor=odor, group=group, default_color=default_color)
         self.build_energetics(larva_pars.energetics, life_history=life_history)
-        BodySim.__init__(self, model=model, orientation=orientation,default_color=self.default_color, **larva_pars.physics, **larva_pars.body,
+        BodySim.__init__(self, model=model, pos=self.pos, orientation=orientation,default_color=self.default_color, **larva_pars.physics, **larva_pars.body,
                          **larva_pars.Box2D_params,**kwargs)
 
         self.brain = self.build_brain(larva_pars.brain)
@@ -111,9 +111,9 @@ class LarvaSim(BodySim, Larva):
 
     def build_brain(self, conf):
         if conf.nengo:
-            return NengoBrain(agent=self, modules=conf.modules, conf=conf)
+            return NengoBrain(agent=self, conf=conf)
         else:
-            return DefaultBrain(agent=self, modules=conf.modules, conf=conf)
+            return DefaultBrain(agent=self, conf=conf)
 
     def run_energetics(self, V_eaten):
         if self.deb is not None:

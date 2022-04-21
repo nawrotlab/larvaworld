@@ -6,36 +6,52 @@ import numpy as np
 
 from lib.ga.exception.collision_exception import Collision
 from lib.ga.util.color import Color
+from lib.model.body.controller import BodySim
+from lib.model.modules.brain import DefaultBrain
 from lib.model.modules.locomotor import DefaultLocomotor
-from lib.model.body.body import LarvaShape
+from lib.model.body.body import LarvaShape, LarvaBody
 from lib.process.aux import detect_turns, process_epochs, detect_strides, fft_max, detect_pauses
 from lib.process.spatial import straightness_index
 
 
-class LarvaRobot(LarvaShape):
+class LarvaRobot(BodySim):
+# class LarvaRobot(LarvaBody):
 
-    def __init__(self, unique_id, model, direction=None, Nsegs=2, x=None, y=None, **kwargs):
-        if x is None and y is None:
-            x, y = model.scene.width / 2, model.scene.height / 2
-        super().__init__(Nsegs=Nsegs, scaling_factor=model.scaling_factor, initial_orientation=direction,
-                         initial_pos=(x, y), default_color=Color.random_color(127, 127, 127))
+    def __init__(self, unique_id, model,larva_pars, orientation=None, pos=(0,0), **kwargs):
+
+        super().__init__(model=model, pos=pos, orientation=orientation,
+                         default_color=Color.random_color(127, 127, 127), **larva_pars.physics,
+                         **larva_pars.body,
+                         **larva_pars.Box2D_params)
+
+        # super().__init__(Nsegs=Nsegs, scaling_factor=model.scaling_factor, initial_orientation=direction,
+        #                  initial_pos=(x, y), default_color=Color.random_color(127, 127, 127))
         self.collision_with_object = False
         self.direction = self.initial_orientation
-        self.x, self.y = self.initial_pos
-        self.model = model
+
+        # self.cum_dst=0
+        # self.real_pos=
+        # self.model = model
         self.unique_id = unique_id
         self.size = self.sim_length
 
-        self.segs = self.generate_segs(self.initial_orientation, seg_positions=self.seg_positions)
+        # self.segs = self.generate_segs(self.initial_orientation, seg_positions=self.seg_positions)
 
         self.eval = {
             'b': [],
             'fov': [],
             'v': [],
         }
-        self.dst = 0
-        self.trajectory = []
-        self.brain = DefaultLocomotor(dt=self.model.dt, offline=True, **kwargs)
+        # self.dst = 0
+        self.x, self.y = model.screen_pos(self.initial_pos)
+        # self.trajectory = [self.initial_pos]
+
+        # print(kwargs)
+        self.brain = DefaultBrain(dt=self.model.dt, offline=True, conf=larva_pars.brain, agent=self, **kwargs)
+        # print(kwargs.keys())
+        # raise
+        # self.brain = DefaultLocomotor(dt=self.model.dt, offline=True, **kwargs)
+
 
     def draw(self, screen):
         for seg in self.segs:
@@ -43,32 +59,36 @@ class LarvaRobot(LarvaShape):
                 pygame.draw.polygon(screen, seg.color, vs)
 
     @property
-    def pos(self):
+    def sim_pos(self):
         return np.array([self.x, self.y])
 
     def update_pose(self):
-        self.dst = self.brain.last_dist * self.model.scaling_factor
-        self.direction += self.brain.ang_vel * self.brain.dt
-        self.x += np.cos(self.direction) * self.dst
-        self.y += np.sin(self.direction) * self.dst
+        self.cum_dst+=self.brain.locomotor.last_dist
+        self.dst = self.brain.locomotor.last_dist
+        sim_dst=self.dst* self.model.scaling_factor
+        self.direction += self.brain.locomotor.ang_vel * self.brain.dt
+        self.x += np.cos(self.direction) * sim_dst
+        self.y += np.sin(self.direction) * sim_dst
 
     def update_vertices(self):
-        hp = self.pos + np.array([np.cos(self.direction), np.sin(self.direction)]) * self.seg_lengths[0] / 2
+        hp = self.sim_pos + np.array([np.cos(self.direction), np.sin(self.direction)]) * self.seg_lengths[0] / 2
         self.head.set_pose(hp, self.direction)
         self.head.update_vertices(hp, self.direction)
         if self.Nsegs == 2:
-            new_or = self.direction - self.brain.bend
-            new_p = self.pos + np.array([-np.cos(new_or), -np.sin(new_or)]) * self.seg_lengths[1] / 2
+            new_or = self.direction - self.brain.locomotor.bend
+            new_p = self.sim_pos + np.array([-np.cos(new_or), -np.sin(new_or)]) * self.seg_lengths[1] / 2
             self.tail.set_pose(new_p, new_or)
             self.tail.update_vertices(new_p, new_or)
         else:
             raise NotImplemented
 
     def store(self):
-        self.eval['b'].append(self.brain.bend)
-        self.eval['fov'].append(self.brain.ang_vel)
-        self.eval['v'].append(self.brain.lin_vel)
-        self.trajectory.append(self.pos / self.model.scaling_factor)
+        self.eval['b'].append(self.brain.locomotor.bend)
+        self.eval['fov'].append(self.brain.locomotor.ang_vel)
+        self.eval['v'].append(self.brain.locomotor.lin_vel)
+        self.trajectory.append(self.model.real_pos(self.sim_pos))
+
+
 
     def finalize(self, eval_shorts=['b', 'fov']):
         dt = self.brain.dt
@@ -114,7 +134,8 @@ class LarvaRobot(LarvaShape):
         print("direction = " + str(self.direction))
 
     def step(self):
-        lin, ang, feed = self.brain.step(A_in=0, length=self.real_length)
+        lin, ang, feed = self.brain.step(pos=self.model.real_pos(self.sim_pos))
+        # lin, ang, feed = self.brain.locomotor.step(A_in=0, length=self.real_length)
         self.update_pose()
         self.update_vertices()
         self.store()
@@ -146,12 +167,12 @@ class ObstacleLarvaRobot(LarvaRobot):
                 Rtorque = self.left_motor_controller.get_actuator_value()
                 Ltorque = self.right_motor_controller.get_actuator_value()
 
-                self.brain.turner.neural_oscillator.E_r += Rtorque
-                self.brain.turner.neural_oscillator.E_l += Ltorque
+                self.brain.locomotor.turner.neural_oscillator.E_r += Rtorque
+                self.brain.locomotor.turner.neural_oscillator.E_l += Ltorque
                 self.step()
             except Collision:
                 self.collision_with_object = True
-                self.brain.intermitter.interrupt_locomotion()
+                self.brain.locomotor.intermitter.interrupt_locomotion()
         else:
             pass
 

@@ -6,6 +6,7 @@ import util.cli_parser
 from pygame.locals import *
 
 from lib.conf.base.dtypes import null_dict
+from lib.conf.stored.conf import expandConf
 from lib.ga.exploration.genome import LarvaGenome
 from lib.ga.geometry.point import Point
 from lib.ga.robot.larvaConfDic import LarvaConfDic
@@ -92,4 +93,6 @@ class Exploration(RunTemplate):
 
 
 if __name__ == '__main__':
-    Exploration(robot_class='larva', dt=1/16, arena=null_dict('arena', arena_dims=(0.2, 0.2), arena_shape='rectangular'))
+    env_params = null_dict('env_conf', arena=null_dict('arena', arena_dims=(0.2, 0.2), arena_shape='rectangular'))
+    env_params=expandConf('mid_odor_gaussian', 'Env')
+    Exploration(robot_class='larva', dt=1/16, env_params=env_params)

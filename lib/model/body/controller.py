@@ -20,20 +20,20 @@ class BodyReplay(BodyManager):
         super().__init__(model=model, pos=pos, orientation=orientation, **kwargs)
 
 class BodySim(BodyManager):
-    def __init__(self, model, orientation,density=300.0,
+    def __init__(self, model, pos, orientation,density=300.0,
                  lin_vel_coef=1.0, ang_vel_coef=1.0, lin_force_coef=1.0, torque_coef=1.0,
                  lin_mode='velocity', ang_mode='torque', body_spring_k=1.0, bend_correction_coef=1.0,
                  lin_damping=1.0, ang_damping=1.0, **kwargs):
         self.lin_damping = lin_damping
         self.ang_damping = ang_damping
 
-        super().__init__(model=model, pos=self.pos, orientation=orientation, density=density, **kwargs)
+        super().__init__(model=model, pos=pos, orientation=orientation, density=density, **kwargs)
 
         self.body_spring_k = body_spring_k
         self.bend_correction_coef = bend_correction_coef
 
         self.head_contacts_ground = True
-        self.trajectory = [self.pos]
+        self.trajectory = [self.initial_pos]
         self.lin_activity = 0
         self.ang_activity = 0
         # self.ang_vel = 0
@@ -117,7 +117,7 @@ class BodySim(BodyManager):
         pos = self.olfactor_pos
         self.food_detected, self.current_foodtype = self.detect_food(pos)
         reward = self.food_detected is not None
-        self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.run(pos, reward)
+        self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.step(pos, reward)
         self.update_larva()
 
         # Trying restoration for any number of segments

@@ -781,10 +781,14 @@ class ParDict:
         self.add(p='brain.intermitter.EEB', k='EEB',  d='exploitVSexplore_balance', s='EEB', lim=(0, 1))
 
         for i, n in enumerate(['first', 'second', 'third']):
+            # u = fr'$\mu$M'
+            u = 1 * siu.microM
             k = f'c_odor{i + 1}'
-            self.add(p=f'brain.olfactor.{n}_odor_concentration', k=k, u=1 * siu.microM,  d=f'Odor {i + 1} Conc',
-                     s=sub('C', i + 1), lim=(0.0,2.5))
-            self.add(p=f'brain.olfactor.{n}_odor_concentration_change', k=f'd{k}', u=1 * siu.microM,
+            ddd=f'Odor {i + 1} Conc'
+            sss = sub('C', i + 1)
+            self.add(p=f'brain.olfactor.{n}_odor_concentration', k=k, u=u,  d=ddd,
+                     s=sss)
+            self.add(p=f'brain.olfactor.{n}_odor_concentration_change', k=f'd{k}', u=u,
                      d=f'Odor {i + 1} DConc', s=sub(dot('C'), i + 1))
             kk = f'g_odor{i + 1}'
             self.add(p=f'brain.memory.{n}_odor_best_gain', k=kk,  d=f'Odor {i + 1} Gain',
@@ -894,7 +898,8 @@ class ParDict:
                        'str_sv_mu': 'mean velocity during strides',
                        'str_fov_mu': 'mean angular velocity during strides',
                        'str_fov_std': 'std angular velocity during strides',
-            'str_N' : '# strides'
+            'str_N' : '# strides',
+            'c_odor1' : fr'Concentration C(t), $\mu$M',
             # 'tur_fov_max' : 'turn maximum angular velocity',
         }
         for k,lab in label_dict.items() :

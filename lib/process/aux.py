@@ -340,7 +340,7 @@ def process_epochs(a, epochs, dt):
         durs = np.array([])
         slices = []
         amps = np.array([])
-        idx = np.array([])
+        idx = [] #np.array([])
         maxs = np.array([])
 
     else:
@@ -351,8 +351,10 @@ def process_epochs(a, epochs, dt):
         slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in epochs]
         # print(epochs, slices)
         amps = np.array([np.trapz(a[p], dx=dt) for p in slices])
-        idx = np.concatenate(slices)
+
+        idx = np.concatenate(slices) if len(slices)>1 else slices[0]
         maxs = np.array([np.max(a[p]) for p in slices])
+    # print(idx)
     return stops, durs, slices, amps, idx, maxs
 
 
@@ -786,8 +788,9 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=None):
             a_sv = s[sv].xs(id, level="AgentID").values
             if strides_enabled:
                 strides, runs, run_counts = detect_strides(a_sv, dt, fr=e[fv].loc[id], return_extrema=False)
-                strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_v,
-                                                                                                            strides, dt)
+                strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_v,strides, dt)
+                # print(stride_idx)
+                # print(stride_idx.shape)
                 str_fovs = np.abs(a_fov[stride_idx])
                 str_vs[jj, :] = [np.mean(stride_dsts),
                                  np.std(stride_dsts),

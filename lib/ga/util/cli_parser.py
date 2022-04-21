@@ -2,7 +2,7 @@ import argparse
 
 from lib.ga.obstacle_avoidance_ga import ObstacleAvoidanceGA
 from lib.ga.exploration.ga_engine import GaLarvaEngine
-from lib.ga.util.templates import GATemplate
+from lib.ga.util.templates import GALauncher
 from lib.ga.util.scene_type import SceneType
 
 
@@ -33,30 +33,30 @@ class CliParser:
             parser.add_argument('-v', '--verbose', help='Set verbosity. Default: 0', type=int, choices=range(0, 3))
 
             parser.add_argument('-p', '--population', help='Number of vehicles in each generation. Default: ' +
-                                                           str(GATemplate.DEFAULT_POPULATION_NUM), type=int, metavar='NUM')
+                                                           str(GALauncher.DEFAULT_POPULATION_NUM), type=int, metavar='NUM')
 
             parser.add_argument('-e', '--elite',
                                 help='Number of vehicles carried over unaltered to a new generation. Default: ' + str(
-                                    GATemplate.DEFAULT_ELITISM_NUM), type=int, metavar='NUM')
+                                    GALauncher.DEFAULT_ELITISM_NUM), type=int, metavar='NUM')
 
             parser.add_argument('-m', '--mutation_prob',
                                 help='Probability that a mutation occurs on a single gene. Default: ' + str(
-                                    GATemplate.DEFAULT_MUTATION_PROBABILITY), type=float, metavar='NUM')
+                                    GALauncher.DEFAULT_MUTATION_PROBABILITY), type=float, metavar='NUM')
 
             parser.add_argument('-M', '--mutation_coeff',
                                 help='Coefficient used to alter a gene value during mutation. Default: ' + str(
-                                    GATemplate.DEFAULT_MUTATION_COEFFICIENT), type=float, metavar='NUM')
+                                    GALauncher.DEFAULT_MUTATION_COEFFICIENT), type=float, metavar='NUM')
 
             parser.add_argument('-S', '--selection_ratio',
                                 help='Ratio of parents selected to breed a new generation. Default: ' + str(
-                                    GATemplate.DEFAULT_SELECTION_RATIO), type=float, metavar='NUM')
+                                    GALauncher.DEFAULT_SELECTION_RATIO), type=float, metavar='NUM')
 
             parser.add_argument('-r', '--random_direction', help='Set an initial random direction for the vehicles',
                                 action='store_true')
 
             parser.add_argument('-E', '--sensor_error',
                                 help='Coefficient used to simulate the obstacle sensor read error. Default: ' + str(
-                                    GATemplate.DEFAULT_OBSTACLE_SENSOR_ERROR) + ', recommended: < 0.2', type=float, metavar='NUM')
+                                    GALauncher.DEFAULT_OBSTACLE_SENSOR_ERROR) + ', recommended: < 0.2', type=float, metavar='NUM')
 
             parser.add_argument('-l', '--long_lasting_generations', help='Enable long lasting generations',
                                 action='store_true')
@@ -80,15 +80,15 @@ class CliParser:
 
         if scene_type == 'GA':
         # if scene_type == SceneType.GA_OBSTACLE_AVOIDANCE:
-            self.elitism_num = GATemplate.DEFAULT_ELITISM_NUM if args.elite is None else args.elite
-            self.population_num = GATemplate.DEFAULT_POPULATION_NUM if args.population is None else args.population
-            self.mutation_probability = GATemplate.DEFAULT_MUTATION_PROBABILITY if args.mutation_prob is None else args.mutation_prob
-            self.mutation_coefficient = GATemplate.DEFAULT_MUTATION_COEFFICIENT if args.mutation_coeff is None else args.mutation_coeff
+            self.elitism_num = GALauncher.DEFAULT_ELITISM_NUM if args.elite is None else args.elite
+            self.population_num = GALauncher.DEFAULT_POPULATION_NUM if args.population is None else args.population
+            self.mutation_probability = GALauncher.DEFAULT_MUTATION_PROBABILITY if args.mutation_prob is None else args.mutation_prob
+            self.mutation_coefficient = GALauncher.DEFAULT_MUTATION_COEFFICIENT if args.mutation_coeff is None else args.mutation_coeff
             self.robot_random_direction = args.random_direction
-            self.obstacle_sensor_error = GATemplate.DEFAULT_OBSTACLE_SENSOR_ERROR if args.sensor_error is None else args.sensor_error
-            self.selection_ratio = GATemplate.DEFAULT_SELECTION_RATIO if args.selection_ratio is None else args.selection_ratio
-            self.multicore = GATemplate.MULTICORE if GATemplate.MULTICORE is not None else args.multicore
-            self.verbose = GATemplate.DEFAULT_VERBOSE_VALUE if args.verbose is None else args.verbose
+            self.obstacle_sensor_error = GALauncher.DEFAULT_OBSTACLE_SENSOR_ERROR if args.sensor_error is None else args.sensor_error
+            self.selection_ratio = GALauncher.DEFAULT_SELECTION_RATIO if args.selection_ratio is None else args.selection_ratio
+            self.multicore = GALauncher.MULTICORE if GALauncher.MULTICORE is not None else args.multicore
+            self.verbose = GALauncher.DEFAULT_VERBOSE_VALUE if args.verbose is None else args.verbose
             self.long_lasting_generations = args.long_lasting_generations
 
         if scene_type == SceneType.OBSTACLE_AVOIDANCE:

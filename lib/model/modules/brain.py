@@ -7,12 +7,10 @@ from lib.model.modules.sensor import Olfactor, Toucher, WindSensor
 
 
 class Brain():
-    def __init__(self, conf, agent=None, modules=None, dt=None):
+    def __init__(self, conf, agent=None, dt=None):
         self.conf = conf
         self.agent = agent
-        if modules is None:
-            modules = conf.modules
-        self.modules = modules
+        self.modules = conf.modules
 
         self.olfactory_activation = 0
         self.touch_activation = 0
@@ -42,7 +40,6 @@ class Brain():
         for id, layer in self.agent.model.odor_layers.items():
             v = layer.get_value(pos)
             cons[id] = v + np.random.normal(scale=v * self.olfactor.noise)
-
         return cons
 
     def sense_food(self):
@@ -67,12 +64,12 @@ class Brain():
 
 
 class DefaultBrain(Brain):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, conf, agent=None,dt=None,**kwargs):
+        super().__init__(conf=conf, agent=agent, dt=dt)
         m = self.modules
         c = self.conf
 
-        self.locomotor=DefaultLocomotor(dt=self.dt, conf=self.conf)
+        self.locomotor=DefaultLocomotor(dt=self.dt, conf=self.conf,**kwargs)
 
         if m['memory'] and c['memory_params']['modality'] == 'olfaction':
             self.memory = RLOlfMemory(brain=self, dt=self.dt, gain=self.olfactor.gain, **c['memory_params'])
@@ -81,7 +78,7 @@ class DefaultBrain(Brain):
         if m['memory'] and c['memory_params']['modality'] == 'touch':
             self.touch_memory = RLTouchMemory(brain=self, dt=self.dt, gain=t.gain, **c['memory_params'])
 
-    def run(self, pos, reward=False,**kwargs):
+    def step(self, pos, reward=False,**kwargs):
         if self.memory:
             self.olfactor.gain = self.memory.step(self.olfactor.get_dX(), reward)
         if self.olfactor:
@@ -93,4 +90,5 @@ class DefaultBrain(Brain):
         if self.windsensor:
             self.wind_activation = self.windsensor.step(self.sense_wind())
         # A_in=self.touch_activation + self.wind_activation + self.olfactory_activation
-        return self.locomotor.step(A_in=self.activation, length = self.agent.sim_length)
+        # print(self.activation)
+        return self.locomotor.step(A_in=self.activation, length = self.agent.real_length)

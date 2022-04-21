@@ -8,11 +8,11 @@ from lib.conf.base.dtypes import null_dict
 from lib.ga.exploration.ga_engine import GaLarvaEngine
 from lib.ga.robot.larvaConfDic import LarvaConfDic
 from lib.ga.robot.larva_robot import LarvaRobot
-from lib.ga.util.templates import GATemplate
+from lib.ga.util.templates import GALauncher
 
 
 
-class ExplorationGA(GATemplate):
+class ExplorationGA(GALauncher):
 
 
     def __init__(self,robot_class='larva',scene_file='saved_scenes/no_boxes.txt',**kwargs):
@@ -26,5 +26,6 @@ class ExplorationGA(GATemplate):
 
 
 if __name__ == '__main__':
-    ExplorationGA(population_num=10, dt=1/16, arena=null_dict('arena', arena_dims=(0.5, 0.5), arena_shape='rectangular'),
+    env_params=null_dict('env_conf', arena=null_dict('arena', arena_dims=(0.5, 0.5), arena_shape='rectangular'))
+    ExplorationGA(population_num=10, dt=1/16, env_params=env_params,
                   GA_engine_kws={'eval_shorts':['b', 'fov', 'foa','tur_fou','tur_fov_max', 'v', 'a','run_d', 'run_t','pau_t','tor5', 'tor20', ]})

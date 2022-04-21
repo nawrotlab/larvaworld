@@ -126,9 +126,9 @@ class SingleRun:
             d.save_larva_tables()
             dict_to_file(self.param_dict, d.dir_dict.sim)
 
-    def analyze(self, save_to=None, **kwargs):
+    def analyze(self, **kwargs):
         exp=self.experiment
-        from lib.sim.single.analysis import source_analysis, deb_analysis, comparative_analysis, foraging_analysis
+
         from lib.conf.stored.analysis_conf import analysis_dict
         dic={
             'tactile' : analysis_dict.tactile,
@@ -143,11 +143,15 @@ class SingleRun:
         }
         for k,v in dic.items() :
             if k in exp :
-                anal_params = v
+                return self.run_analysis(v, **kwargs)
+                # anal_params = v
+                # print(anal_params)
         if exp in ['food_at_bottom']:
-            anal_params = ['foraging_analysis']
+            return self.run_analysis(['foraging_analysis'], **kwargs)
+            # anal_params = ['foraging_analysis']
         elif exp in ['random_food']:
-            anal_params = analysis_dict.survival
+            return self.run_analysis(analysis_dict.survival, **kwargs)
+            # anal_params = analysis_dict.survival
         elif 'PI' in exp:
             PIs = {}
             PI2s = {}
@@ -160,7 +164,10 @@ class SingleRun:
             return None, {'PIs': PIs, 'PI2s': PI2s}
         else:
             return None, None
+        # print(anal_params)
 
+    def run_analysis(self, anal_params,save_to=None,**kwargs) :
+        from lib.sim.single.analysis import source_analysis, deb_analysis, comparative_analysis, foraging_analysis
         kws = {'datasets': self.datasets, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
         from lib.anal.plotting import graph_dict
         figs, results = {}, {}
@@ -180,7 +187,10 @@ class SingleRun:
                 kkws['datasets'] = self.datasets + targets
                 figs.update(**comparative_analysis(**kkws))
             else:
-                figs[entry['title']] = graph_dict[entry['plotID']](**entry['args'], **kws)
+               try :
+                    figs[entry['title']] = graph_dict[entry['plotID']](**entry['args'], **kws)
+               except :
+                   pass
         return figs, results
 
 

@@ -8,6 +8,7 @@ from shapely.ops import cascaded_union
 # _world_scale = np.int(100)
 import lib.aux.dictsNlists as dNl
 from lib.aux.sim_aux import generate_seg_shapes, circle_to_polygon
+
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
 
 
@@ -207,13 +208,15 @@ class LarvaBody(LarvaShape):
     def __init__(self, model, pos=None, orientation=None, touch_sensors=False, joint_types=None, **kwargs):
         super().__init__(initial_orientation=orientation, initial_pos=pos,scaling_factor=model.scaling_factor, **kwargs)
         self.model = model
-        self.shape_scale = 1
+        # self.shape_scale = 1
 
         if self.model.Box2D :
             self.segs = self.generate_Box2D_segs(self.initial_orientation, self.seg_positions,joint_types)
         else :
             self.segs = self.generate_segs(self.initial_orientation, self.seg_positions)
-            self.model.space.place_agent(self, self.initial_pos)
+            from lib.model.agents._agent import LarvaworldAgent
+            if isinstance(self, LarvaworldAgent) :
+                self.model.space.place_agent(self, self.initial_pos)
 
         self.contour = self.set_contour(self.segs)
 

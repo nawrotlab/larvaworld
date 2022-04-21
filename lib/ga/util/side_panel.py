@@ -100,7 +100,7 @@ class SidePanel:
             self.print_statistic(font, 'R : restart', self.LEFT_MARGIN)
             self.print_statistic(font, 'ESC : quit', self.LEFT_MARGIN)
 
-    def display_ga_info_larva(self, LarvaConfDic):
+    def display_ga_info_larva(self, space_dict):
         pygame.draw.line(self.screen, Color.GRAY, (self.scene.width, 0), (self.scene.width, self.scene.height))
 
         if pygame.font:
@@ -131,8 +131,16 @@ class SidePanel:
             self.print_statistic(font, 'Best genome:')
             self.print_statistic(font, 'Fitness: ' + fitness_best, self.LEFT_MARGIN)
             self.print_statistic(font, 'Generation born: ' + generation_num_best, self.LEFT_MARGIN)
-            for key,[v0, (r0,r1), lab] in LarvaConfDic.items() :
-                pkey='-' if self.best_genome is None else str(round(getattr(self.best_genome, key), 2))
+            for key,vs in space_dict.items() :
+                if self.best_genome is None :
+                    pkey = '-'
+                else :
+                    v0=getattr(self.best_genome, key)
+                    if type(v0)==float :
+                        v0=round(v0,2)
+                    pkey=str(v0)
+                lab=vs[-1]
+                # pkey='-' if self.best_genome is None else str(round(getattr(self.best_genome, key), 2))
                 self.print_statistic(font, f'{lab}: ' + pkey, self.LEFT_MARGIN)
             self.print_statistic(font, 'Controls:')
             self.print_statistic(font, 'S : save current genomes to file', self.LEFT_MARGIN)

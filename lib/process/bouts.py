@@ -41,7 +41,7 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
         min_ang = 0.0
     if min_ang_vel is None:
         min_ang_vel = 0.0
-    c = {
+    ccc = {
         's': s,
         'e': e,
         'dt': config.dt,
@@ -188,10 +188,10 @@ def annotate(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=T
 
         for b in ['stride', 'pause', 'turn']:
             try:
-                comp_chunk_bearing(**c, chunk=b, **kwargs)
+                comp_chunk_bearing(**ccc, chunk=b, **kwargs)
                 if b == 'turn':
-                    comp_chunk_bearing(**c, chunk='Lturn', **kwargs)
-                    comp_chunk_bearing(**c, chunk='Rturn', **kwargs)
+                    comp_chunk_bearing(**ccc, chunk='Lturn', **kwargs)
+                    comp_chunk_bearing(**ccc, chunk='Rturn', **kwargs)
             except:
                 pass
     return s, e

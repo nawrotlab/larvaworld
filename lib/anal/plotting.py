@@ -4,6 +4,7 @@ import itertools
 import warnings
 from matplotlib import collections as mc
 from matplotlib import pyplot as plt
+from scipy.stats import multivariate_normal
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -845,17 +846,27 @@ def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_id
     return P.get()
 
 
-def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None, unit='sec', absolute=True,
-             show_first=False, subfolder='timeplots', legend_loc='upper left', **kwargs):
+def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None, unit='sec', absolute=True,show_legend=True,
+             show_first=False, subfolder='timeplots', legend_loc='upper left',leg_fontsize=15, figsize=(7.5, 5), axs=None, fig=None,**kwargs):
     unit_coefs = {'sec': 1, 'min': 1 / 60, 'hour': 1 / 60 / 60}
     if len(pars) == 0:
         if len(par_shorts) == 0:
             raise ValueError('Either parameter names or shortcuts must be provided')
         else:
-            pars, symbols, ylabs, ylims = getPar(par_shorts, to_return=['d', 's', 'l', 'lim'])
+            pars, symbols, ylabs, ylims, ylabs0 = getPar(par_shorts, to_return=['d', 's', 'l', 'lim', 'lab'])
+
+            # ylabs=[]
+            # for ii in range(len(pars)) :
+            #     if ylabs0[ii] is not None :
+            #         ylabs.append(ylabs0[ii])
+            #     else :
+            #         ylabs.append(ylabs1[ii])
+            # print(ylabs1, ylabs0, ylabs)
     else:
         symbols = pars
         ylabs = pars
+        ylabs0 = pars
+        # ylabs0 = pars
         ylims = [None] * len(pars)
     # pars=[p for p in pars if all([p in ])]
     N = len(pars)
@@ -870,10 +881,12 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
         name = f'{N}_pars'
     P = Plot(name=name, subfolder=subfolder, **kwargs)
 
-    P.build(figsize=(7.5, 5))
+    P.build(figsize=figsize, fig=fig, axs=axs)
     ax = P.axs[0]
     counter = 0
-    for p, symbol, ylab, ylim, c in zip(pars, symbols, ylabs, ylims, cols):
+    for p, symbol, ylab0,ylab, ylim, c in zip(pars, symbols, ylabs0,ylabs, ylims, cols):
+        if ylab0 is not None :
+            ylab=ylab0
         P.conf_ax(xlab=f'time, ${unit}$' if table is None else 'timesteps', ylab=ylab, ylim=ylim, yMaxN=4)
         for d, d_col, d_lab in zip(P.datasets, P.colors, P.labels):
             if P.Ndatasets > 1:
@@ -898,10 +911,10 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                         ax.plot(x, dc_single, color=c, linewidth=1)
                     ax.plot(x, dc_m, color=c, linewidth=2)
                 else:
-                    plot_quantiles(df=dc, x=x, axis=ax, color_shading=c, label=symbol)
+                    plot_quantiles(df=dc, x=x, axis=ax, color_shading=c, label=symbol,linewidth=2)
                     if show_first:
                         dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
-                        ax.plot(x, dc0, color=c)
+                        ax.plot(x, dc0, color=c, linestyle='dashed',linewidth=1)
                 counter += 1
             except:
                 pass
@@ -909,9 +922,9 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
         raise ValueError('None of the parameters exist in any dataset')
     if N > 1:
         ax.legend()
-    if P.Ndatasets > 1:
-        dataset_legend(P.labels, P.colors, ax=ax, loc=legend_loc, fontsize=15)
-    P.adjust((0.2, 0.95), (0.15, 0.95))
+    if P.Ndatasets > 1 and show_legend:
+        dataset_legend(P.labels, P.colors, ax=ax, loc=legend_loc, fontsize=leg_fontsize)
+    P.adjust((0.1, 0.95), (0.15, 0.95))
     return P.get()
 
 
@@ -1026,7 +1039,7 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
     P = Plot(name=name, subfolder=subfolder, **kwargs)
     pause_par = nam.dur('pause')
     if stridechain_duration:
-        chain_par = nam.dur(nam.chain('stride'))
+        chain_par = nam.dur('run')#nam.dur(nam.chain('stride'))
         chn_discr = False
         chain_xlabel = f'time $({time_unit})$'
         chn0 = 0.5
@@ -1215,11 +1228,12 @@ def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwa
     return P.get()
 
 
-def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **kwargs):
+def plot_endpoint_params(axs=None, fig=None,mode='basic', par_shorts=None, subfolder='endpoint',
+                         plot_fit=True,nbins = 20,Ncols = None,use_title=True,  **kwargs):
     warnings.filterwarnings('ignore')
     P = Plot(name=f'endpoint_params_{mode}', subfolder=subfolder, **kwargs)
     ylim = [0.0, 0.25]
-    nbins = 20
+    nbins = nbins
     l_par = 'l'  # 'l_mu
     if par_shorts is None:
         dic = {
@@ -1293,6 +1307,8 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
     Npars = len(pars)
     if Npars == 0:
         return None
+    elif Ncols is not None:
+        Nrows = int(np.ceil(Npars/Ncols))
     elif Npars == 4:
         Ncols = 2
         Nrows = 2
@@ -1301,7 +1317,7 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
         Nrows = int(np.ceil(Npars / Ncols))
     fig_s = 5
 
-    P.build(Nrows, Ncols, figsize=(fig_s * Ncols, fig_s * Nrows), sharey=True)
+    P.build(Nrows, Ncols, figsize=(fig_s * Ncols, fig_s * Nrows), sharey=True, fig=fig, axs=axs)
     for i, (p, xlabel, xlim, disp) in enumerate(zip(pars, xlabels, xlims, disps)):
         bins = nbins if xlim is None else np.linspace(xlim[0], xlim[1], nbins)
         ax = P.axs[i]
@@ -1314,21 +1330,24 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint', **
             a[:Nvalues[k], k] = vs[k]
         df = pd.DataFrame(a, columns=P.labels)
         for j, (col, lab) in enumerate(zip(df.columns, P.labels)):
+
             try:
                 v = df[[col]].dropna().values
                 y, x, patches = ax.hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)),
                                         color=P.colors[j], alpha=0.5)
-                x = x[:-1] + (x[1] - x[0]) / 2
-                y_smooth = np.polyfit(x, y, 5)
-                poly_y = np.poly1d(y_smooth)(x)
-                ax.plot(x, poly_y, color=P.colors[j], label=lab, linewidth=lw)
+                if plot_fit:
+                    x = x[:-1] + (x[1] - x[0]) / 2
+                    y_smooth = np.polyfit(x, y, 5)
+                    poly_y = np.poly1d(y_smooth)(x)
+                    ax.plot(x, poly_y, color=P.colors[j], label=lab, linewidth=lw)
             except:
                 pass
         P.conf_ax(i, ylab='probability' if i % Ncols == 0 else None, xlab=xlabel, xlim=xlim, ylim=ylim,
-                  xMaxN=4, yMaxN=4, xMath=True, title=disp)
+                  xMaxN=4, yMaxN=4, xMath=True, title=disp if use_title else None)
         P.plot_half_circles(p, i)
     P.adjust((0.1, 0.97), (0.17 / Nrows, 1 - (0.1 / Nrows)), 0.1, 0.2 * Nrows)
-    P.axs[0].legend(loc='upper left', prop={'size': 15})
+    dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper right', fontsize=15)
+    #P.axs[0].legend(loc='upper left', prop={'size': 15})
     return P.get()
 
 
@@ -1962,9 +1981,9 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     return process_plot(fig, save_to, save_as, return_fig, show)
 
 
-def plot_surface(x, y, z, vars, target, z0=None, ax=None, fig=None, title=None, lims=None, **kwargs):
+def plot_surface(x, y, z, vars, target, z0=None, ax=None, fig=None, title=None, lims=None, azim=115, elev=15, **kwargs):
     P = ParPlot(name='3d_surface', **kwargs)
-    P.build(fig=fig, axs=ax, dim3=True)
+    P.build(fig=fig, axs=ax, dim3=True, azim=azim, elev=elev)
     P.conf_ax_3d(vars, target, lims=lims, title=title)
     P.axs[0].plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=True)
     if z0 is not None:
@@ -3218,23 +3237,82 @@ def plot_trajectories_solo(s, c, unit='mm', fig=None, axs=None, **kwargs):
     for id in c.agent_ids:
         xy = s[['x', 'y']].xs(id, level="AgentID").values * scale
         ax.plot(xy[:, 0], xy[:, 1])
-        ax.fill(tank[:, 0], tank[:, 1], fill=True, color='lightgrey', edgecolor='black', linewidth=4)
-        ax.set_aspect('equal', adjustable='box')
+    ax.fill(tank[:, 0], tank[:, 1], fill=True, color='lightgrey', edgecolor='black', linewidth=4)
+    ax.set_aspect('equal', adjustable='box')
     P.conf_ax(xMaxN=3, yMaxN=3, title=c.id, xlab=f'X ({unit})', ylab=f'Y ({unit})')
     return P.get()
 
 
-def plot_trajectories(axs=None, fig=None,unit='mm', **kwargs):
-    P = Plot(name=f'comparative_trajectories', **kwargs)
+def plot_trajectories(axs=None, fig=None,unit='mm',subfolder='trajectories', **kwargs):
+    P = Plot(name=f'comparative_trajectories',subfolder=subfolder, **kwargs)
     P.build(1, P.Ndatasets, figsize=(5 * P.Ndatasets, 5), sharex=True, sharey=True, fig=fig, axs=axs)
     for ii, d in enumerate(P.datasets):
-        s, e, c = d.step_data, d.endpoint_data, d.config
+        s, c = d.step_data, d.config
         plot_trajectories_solo(s, c, unit=unit,fig=P.fig, axs=P.axs[ii])
         if ii != 0:
             P.axs[ii].yaxis.set_visible(False)
-    P.adjust((0.07, 0.95), (0.15, 0.9), 0.05, 0.005)
+    P.adjust((0.07, 0.95), (0.1, 0.95), 0.05, 0.005)
     return P.get()
 
+def odorscape_from_config(c, mode='2D', fig=None, axs=None, show=True, grid_dims=(201,201),col_max=(0,0,0), **kwargs) :
+    env=c.env_params
+    source = list(env.food_params.source_units.values())[0]
+    a0, b0 = source.pos
+    oP, oS = source.odor.odor_intensity, source.odor.odor_spread
+    # print(oM,oS)
+    # raise
+    oD = multivariate_normal([0, 0], [[oS, 0], [0, oS]])
+    oM=oP / oD.pdf([0, 0])
+    if col_max is None :
+        col_max=source.default_color if source.default_color is not None else (0,0,0)
+    if grid_dims is not None :
+        X,Y=grid_dims
+    else :
+        X, Y = [51, 51] if env.odorscape.grid_dims is None else env.odorscape.grid_dims
+    Xdim, Ydim = env.arena.arena_dims
+    s = 1
+    Xmesh, Ymesh = np.meshgrid(np.linspace(-Xdim * s / 2, Xdim * s / 2, X), np.linspace(-Ydim * s / 2, Ydim * s / 2, Y))
+
+    @np.vectorize
+    def func(a, b):
+        return oD.pdf([a - a0, b - b0]) * oM
+
+    grid=func(Xmesh, Ymesh)
+
+
+
+    if mode=='2D' :
+        if fig is None and axs is None :
+            fig,axs=plt.subplots(1,1, figsize=(10,10*Ydim/Xdim))
+        q=grid.flatten()-np.min(grid)
+        q/=np.max(q)
+        cols=col_range(q, low=(255, 255, 255), high=col_max, mul255=False)
+        x, y = Xmesh * 1000 / s, Ymesh * 1000 / s,
+        axs.scatter(x=x, y=y, color=cols)
+        axs.set_aspect('equal', adjustable='box')
+        axs.set_xlim([np.min(x), np.max(x)])
+        axs.set_ylim([np.min(y), np.max(y)])
+        axs.set_xlabel(r'X $(mm)$')
+        axs.set_ylabel(r'Y $(mm)$')
+        if show :
+            plt.show()
+    elif mode == '3D':
+        return plot_surface(x=Xmesh * 1000 / s, y=Ymesh * 1000 / s, z=grid, vars=[r'X $(mm)$', r'Y $(mm)$'],
+                 target=r'concentration $(μM)$', save_as=f'odorscape', show=show, fig=fig,ax=axs, azim=0, elev=0)
+
+def odorscape_with_sample_tracks(datasets,unit='mm', fig=None, axs=None,show=False,save_to=None,  **kwargs) :
+    scale = 1000 if unit == 'mm' else 1
+    if fig is None and axs is None:
+        fig, axs = plt.subplots(1, 1, figsize=(20, 20))
+    odorscape_from_config(datasets[0].config, mode='2D', fig=fig, axs=axs,show=False, **kwargs)
+    for d in datasets:
+        s, c = d.step_data, d.config
+        xy = s[['x', 'y']].xs(c.agent_ids[0], level="AgentID").values * scale
+        axs.plot(xy[:, 0], xy[:, 1], label=c.id, color=c.color)
+    axs.legend(loc='upper left', fontsize=15)
+    if show :
+        plt.show()
+    return fig
 
 graph_dict = {
     'crawl pars': plot_crawl_pars,
@@ -3249,6 +3327,7 @@ graph_dict = {
     'turn amplitude': plot_turns,
     'marked strides': plot_marked_strides,
     'sample tracks': plot_sample_tracks,
+    'trajectories': plot_trajectories,
     'turn amplitude VS Y pos': plot_turn_amp,
     'turn Dbearing to center': plot_turn_Dorient2center,
     'chunk Dbearing to source': plot_chunk_Dorient2source,

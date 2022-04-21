@@ -143,7 +143,7 @@ class LarvaWorld:
             value = self.snapshot_counter
             self.snapshot_counter += 1
         elif name == 'odorscape #':
-            self.plot_odorscape(save_to=self.save_to, show=show)
+            self.plot_odorscape(save_to=self.save_to, show=show, scale=self.scaling_factor, idx=self.odorscape_counter)
             value = self.odorscape_counter
             self.odorscape_counter += 1
         elif name == 'trajectory_dt':
@@ -657,17 +657,15 @@ class LarvaWorld:
         for i in [self.sim_clock, self.sim_scale, self.sim_state] + list(self.screen_texts.values()):
             i.set_color(self.scale_clock_color)
 
-    def plot_odorscape(self, **kwargs):
+    def plot_odorscape(self,scale=1.0,idx=0, **kwargs):
         from lib.anal.plotting import plot_surface
         for id, layer in self.odor_layers.items():
             X, Y = layer.meshgrid
-            x = self.space_to_mm(X)
-            y = self.space_to_mm(Y)
+            x = X * 1000 / scale
+            y = Y * 1000 / scale
             plot_surface(x=x, y=y, z=layer.get_grid(), vars=[r'x $(mm)$', r'y $(mm)$'], target=r'concentration $(μM)$',
-                         title=f'{id} odorscape', save_as=f'{id}_odorscape_{self.odorscape_counter}', **kwargs)
+                         title=f'{id} odorscape', save_as=f'{id}_odorscape_{idx}', **kwargs)
 
-    def space_to_mm(self, array):
-        return array * 1000 / self.scaling_factor
 
     def eliminate_overlap(self):
         pass

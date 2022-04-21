@@ -27,7 +27,7 @@ class LarvaWorldSim(LarvaWorld):
         self._place_food(self.env_pars.food_params)
         self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
         if self.env_pars.odorscape is not None:
-            self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars.odorscape)
+            self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars.odorscape, sources = self.get_food() + self.get_flies())
 
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
@@ -39,9 +39,12 @@ class LarvaWorldSim(LarvaWorld):
         k = get_exp_condition(self.experiment)
         self.exp_condition = k(self) if k is not None else None
 
-    def _create_odor_layers(self, pars):
+    def _create_odor_layers(self, pars, sources):
+        Xdim,Ydim=self.arena_dims
+        s=self.scaling_factor
+        dt=self.dt
         from lib.model.envs._space import DiffusionValueLayer, GaussianValueLayer
-        sources = self.get_food() + self.get_flies()
+        # sources = self.get_food() + self.get_flies()
         ids = dNl.unique_list([s.odor_id for s in sources if s.odor_id is not None])
         N = len(ids)
         cols = N_colors(N, as_rgb=True)
@@ -60,10 +63,10 @@ class LarvaWorldSim(LarvaWorld):
                 'unique_id': id,
                 'sources': od_sources,
                 'default_color': c0,
-                'space_range': self.space_edges_for_screen,
+                'space_range': np.array([-Xdim * s / 2, Xdim * s / 2, -Ydim * s / 2, Ydim * s / 2]),
             }
             if pars.odorscape == 'Diffusion':
-                layers[id] = DiffusionValueLayer(dt=self.dt, scaling_factor=self.scaling_factor,
+                layers[id] = DiffusionValueLayer(dt=dt, scaling_factor=s,
                                                  grid_dims=pars['grid_dims'],
                                                  evap_const=pars['evap_const'],
                                                  gaussian_sigma=pars['gaussian_sigma'],
