@@ -155,5 +155,6 @@ output_dict = {
     # 'source_vincinity': {'step': [], 'endpoint': ['d_cent_fin']},
     # 'source_approach': {'step': [], 'endpoint': ['d_chem_fin']},
 }
+#@todo add thermosensor key to output xy or sensed temperature/actual temperature
 
 output_keys = list(output_dict.keys())

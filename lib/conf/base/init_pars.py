@@ -80,7 +80,7 @@ substrate_dict = {
 def init_vis():
     d = {}
     d['render'] = {
-        'mode': {'t': str, 'v': None, 'vs': [None, 'video', 'image'], 'h': 'The visualization mode', 's': 'm'},
+        'mode': {'t': str, 'v': 'video', 'vs': [None, 'video', 'image'], 'h': 'The visualization mode', 's': 'm'}, #@todo change it back to 'v':None
         'image_mode': {'t': str, 'vs': [None, 'final', 'snapshots', 'overlap'], 'h': 'The image-render mode',
                        's': 'im'},
         'video_speed': {'t': int, 'v': 60, 'min': 1, 'max': 100, 'h': 'The video speed', 's': 'fps'},

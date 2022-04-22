@@ -35,8 +35,8 @@ class Brain():
             self.windsensor = WindSensor(brain=self, dt=dt, gain_dict={'windsensor': 1.0}, **c['windsensor_params'])
         if m['olfactor']:
             self.olfactor = Olfactor(brain=self, dt=dt, **c['olfactor_params'])
-        if m['thermosensor']
-            self.thermosensor = Thermosensor(brain=self, dt=dt, **c['thermosensor'])
+        if m['thermosensor']:
+            self.thermosensor = Thermosensor(brain=self, dt=dt, **c['thermosensor_params'])
 
         # self.crawler, self.turner, self.feeder, self.olfactor, self.intermitter = None, None, None, None, None
 

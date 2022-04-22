@@ -391,7 +391,7 @@ class ThermoScape(ValueGrid):
     def __init__(self, pTemp, origins=[], tempDiff=[], default_color='green', visible=False):
 
         self.plate_temp = pTemp
-        self.thermo_origins = {str(i):o for i,o in enumerate(origins)} 
+        self.thermo_sources = {str(i):o for i,o in enumerate(origins)} 
         self.thermo_source_dTemps = {str(i):o for i,o in enumerate(tempDiff)}
         # self.model = model
         # self.wind_direction = wind_direction
@@ -410,7 +410,7 @@ class ThermoScape(ValueGrid):
     def update_values(self):
         pass
 #@todo remove rezo, it is actually only important if I want to draw.
-#thermo={'temp_spread':None, 'plate_temp':22, 'thermo_origins': None, 'thermo_differences': None}
+#thermo={'temp_spread':None, 'plate_temp':22, 'thermo_sources': None, 'thermo_differences': None}
     def generate_thermoscape(self, spread=0.1, pTemp = 22, origins = [[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]], tempDiff = [8,-8,8,-8]):
         '''
         size is the length of the square arena in mm.
@@ -432,7 +432,7 @@ class ThermoScape(ValueGrid):
 
         self.thermo_spread = spread 
         self.plate_temp = pTemp 
-        self.thermo_origins = {str(i):o for i,o in enumerate(origins)} 
+        self.thermo_sources = {str(i):o for i,o in enumerate(origins)} 
         self.thermo_source_dTemps = {str(i):o for i,o in enumerate(tempDiff)}
         if len(origins) != len(tempDiff):
             raise ValueError # need to raise a more informative error.
@@ -440,13 +440,13 @@ class ThermoScape(ValueGrid):
         # origins_ad = [[size*og[0], size2*og[1]] for og in origins] # origins on arena dimensions
 
         # x, y = np.mgrid[0:size:rezo, 0:size2:rezo] # setting 170 x 170 grid #don't need to do this anymore
-        pos = np.dstack((x, y)) 
+        # pos = np.dstack((x, y)) 
 
         rv_dict = {}
         # thermoDists_Dict = {}
-        for k,v in self.thermo_origins:
+        for k in self.thermo_sources:
             # v_ad = [size*v[0], size2*v[1]]
-            rv_dict[k] = multivariate_normal(v, [[spread, 0], [0, spread]])
+            rv_dict[k] = multivariate_normal(self.thermo_sources[k], [[spread, 0], [0, spread]])
             # thermoDists_Dict[k] = (rv_dict[k].pdf(pos)/rv_dict[k].pdf(v_ad))*(tempDiff[k] * len(origins)) # don't need this either
         
         self.thermoscape_layers = rv_dict
@@ -463,9 +463,10 @@ class ThermoScape(ValueGrid):
         pos_temp = {}
         if self.thermoscape_layers is None:
             return 0 # or np.nan
-        for k,v in self.thermoscape_layers:
-            pos_temp[k] = v.pdf[pos_ad] / v.pdf(self.thermo_origins[k]) * (self.thermo_origins_dTemp[k] * len(self.thermo_origins_dTemp)) #@todo need to check if this works
-        return self.plate_temp + sum(pos_temp.values()) / len(pos_temp)
+        for k in layers[id].thermoscape_layers:
+            v=layers[id].thermoscape_layers[k]
+            pos_temp[k] = v.pdf(pos_ad) / v.pdf(layers[id].thermo_sources[k]) * (layers[id].thermo_source_dTemps[k] * len(layers[id].thermo_source_dTemps)) #@todo need to check if this works
+        return layers[id].plate_temp + sum(pos_temp.values()) / len(pos_temp)
 
 
     def get_grid(self):
@@ -483,7 +484,8 @@ class ThermoScape(ValueGrid):
     def draw_isocontours(self, viewer): #@todo need to make a draw function for thermogrid.
         # g=self.get_grid()
         # vs=np.linspace(np.min(g), np.max(g), 5)
-        for k,p in self.thermo_origins:
+        for k in self.thermo_sources:
+            p = self.thermo_sources.k
             for r in np.arange(0, 0.050, 0.01):
                 pX = (p[0] + r, p[1])
                 v = self.thermo_source_dTemps[k]
@@ -517,8 +519,8 @@ class ThermoScape(ValueGrid):
 
     #     self.thermo_spread = spread 
     #     self.plate_temp = pTemp 
-    #     self.thermo_origins = {str(i):o for i,o in enumerate(origins)} # @todo need to put this in dictionary (with same 1 2 3 4 and rv_dict)
-    #     self.thermo_origins_dTemp = {str(i):o for i,o in enumerate(tempDiff)} # @todo need to put this in dictionary (with same 1 2 3 4 and rv_dict)
+    #     self.thermo_sources = {str(i):o for i,o in enumerate(origins)} # @todo need to put this in dictionary (with same 1 2 3 4 and rv_dict)
+    #     self.thermo_sources_dTemp = {str(i):o for i,o in enumerate(tempDiff)} # @todo need to put this in dictionary (with same 1 2 3 4 and rv_dict)
     #     if len(origins) != len(tempDiff):
     #         raise ValueError # need to raise a more informative error.
 
@@ -540,7 +542,7 @@ class ThermoScape(ValueGrid):
     # def get_thermo_value(self, pos):
     #     pos_temp = {}
     #     for k,v in self.thermo_dist_raw:
-    #         v.pdf[pos * 1000] / v.pdf(self.origins[k]) * (self.thermo_origins_dTemp[k] * len(self.thermo_origins_dTemp)) #@todo need to check if this works
+    #         v.pdf[pos * 1000] / v.pdf(self.origins[k]) * (self.thermo_sources_dTemp[k] * len(self.thermo_sources_dTemp)) #@todo need to check if this works
     #     return self.plate_temp + sum(pos_temp.values()) / len(pos_temp)
     #     # x,y = pos * 1000 #@todo need to multiply x and y based on what unit they are in i.e. if they are in mm multiple by 10
     #     # return self.thermo_dist[y,x]

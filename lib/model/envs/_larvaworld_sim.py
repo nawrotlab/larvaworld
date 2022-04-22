@@ -29,11 +29,14 @@ class LarvaWorldSim(LarvaWorld):
         if self.env_pars.odorscape is not None:
             self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars.odorscape)
 
-        # if self.env_pars.thermoscape is not None:
+        # print("I can enter here")
+        # print(self.env_pars.thermoscape_params)
+        # print("Did I get past here?")
+        # if self.env_pars.thermoscape_params is not None:
         #     print('Making thermoscape')
         #     # self.Ntemps, self.thermo_layer = self._create_thermo_layers(self.env_pars.thermoscape)
-        #     self.thermolayer_base = self._create_thermo_layers(self.env_pars.thermoscape)
-        #     self.thermolayer_base.generate_thermoscape(self)
+        #     self.thermolayer_base = self._create_thermo_layers(self.env_pars.thermoscape_params)
+        #     # self.thermolayer_base.generate_thermoscape(self)
 
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
@@ -83,14 +86,13 @@ class LarvaWorldSim(LarvaWorld):
 #@todo use _create_thermo_layers
     def _create_thermo_layers(self, pars):
         from lib.model.envs._space import ThermoScape
-        # sources = self.get_food() + self.get_flies()
         sources = self.thermo_sources # dictionary
         # ids = dNl.unique_list([s.thermo_id for s in sources if s.thermo_id is not None]) #@note thermo_id needs to be added to ExpConfs.txt
         # N = len(sources)
         N=1; id='temp'
         cols = N_colors(N, as_rgb=True)
         layers = {}
-        # for i, (id, c) in enumerate(zip(sources, cols)):
+        # for i, (id, c) in enumerate(zip(psources, cols)):
         #     od_sources = [f for f in sources if f.odor_id == id]
         #     temp = dNl.unique_list([s.default_color for s in od_sources])
         #     if len(temp) == 1:
@@ -114,9 +116,9 @@ class LarvaWorldSim(LarvaWorld):
 
             }
 
-        layers[id] = ThermoScape(**kwargs)
+        tlayers[id] = ThermoScape(**kwargs)
         # self.refresh_odor_dicts(ids)
-        return N, layers
+        return N, tlayers
 
 
     def create_larvae(self, larva_groups, parameter_dict={}):

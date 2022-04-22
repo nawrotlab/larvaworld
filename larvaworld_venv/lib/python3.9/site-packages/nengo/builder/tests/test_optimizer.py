@@ -1,0 +1,240 @@
+import numpy as np
+import pytest
+from numpy.testing import assert_almost_equal
+
+import nengo
+from nengo.builder.neurons import SimNeurons
+from nengo.builder.operator import Copy, ElementwiseInc
+from nengo.builder.optimizer import (
+    CopyMerger,
+    ElementwiseIncMerger,
+    OpMerger,
+    OpsToMerge,
+    SigMerger,
+    SimNeuronsMerger,
+)
+from nengo.builder.signal import Signal
+from nengo.tests.test_learning_rules import learning_net
+from nengo.transforms import SparseMatrix
+
+
+def test_sigmerger_check():
+    # 0-d signals
+    assert SigMerger.check([Signal(0), Signal(0)])
+    assert not SigMerger.check([Signal(0), Signal(1)])
+
+    # compatible along first axis
+    assert SigMerger.check([Signal(shape=(1, 2)), Signal(shape=(2, 2))])
+
+    # compatible along second axis
+    assert SigMerger.check([Signal(shape=(2, 1)), Signal(shape=(2, 2))], axis=1)
+    assert not SigMerger.check([Signal(shape=(2, 1)), Signal(shape=(2, 2))], axis=0)
+
+    # shape mismatch
+    assert not SigMerger.check([Signal(shape=(2,)), Signal(shape=(2, 2))])
+
+    # mixed dtype
+    assert not SigMerger.check(
+        [Signal(np.zeros(2, dtype=int)), Signal(np.zeros(2, dtype=float))]
+    )
+
+    s1 = Signal(shape=(5,))
+    s2 = Signal(shape=(5,))
+
+    # mixed signal and view
+    assert not SigMerger.check([s1, s1[:3]])
+
+    # mixed bases
+    assert not SigMerger.check([s1[:2], s2[2:]])
+
+    # compatible views
+    assert SigMerger.check([s1[:2], s1[2:]])
+
+    # sparse signals not mergeable
+    assert not SigMerger.check(
+        [
+            Signal(SparseMatrix([[0, 0]], 1.0, (1, 1))),
+            Signal(SparseMatrix([[0, 0]], 1.0, (1, 1))),
+        ]
+    )
+
+    # same signal cannot appear twice
+    sig = Signal(0)
+    assert not SigMerger.check([sig, sig])
+
+
+def test_sigmerger_check_signals():
+    # 0-d signals
+    SigMerger.check_signals([Signal(0), Signal(0)])
+    with pytest.raises(ValueError):
+        SigMerger.check_signals([Signal(0), Signal(1)])
+
+    # compatible along first axis
+    SigMerger.check_signals([Signal(shape=(1, 2)), Signal(shape=(2, 2))])
+
+    # compatible along second axis
+    SigMerger.check_signals([Signal(shape=(2, 1)), Signal(shape=(2, 2))], axis=1)
+    with pytest.raises(ValueError):
+        SigMerger.check_signals([Signal(shape=(2, 1)), Signal(shape=(2, 2))], axis=0)
+
+    # shape mismatch
+    with pytest.raises(ValueError):
+        SigMerger.check_signals([Signal(shape=(2,)), Signal(shape=(2, 2))])
+
+    # mixed dtype
+    with pytest.raises(ValueError):
+        SigMerger.check_signals(
+            [Signal(np.zeros(2, dtype=int)), Signal(np.zeros(2, dtype=float))]
+        )
+
+    # compatible views
+    s = Signal(shape=(5,))
+    with pytest.raises(ValueError):
+        SigMerger.check_signals([s[:2], s[2:]])
+
+
+def test_sigmerger_check_views():
+    s1 = Signal(shape=(5, 5))
+    s2 = Signal(shape=(5, 5))
+
+    # compatible along first axis
+    SigMerger.check_views([s1[:1], s1[1:]])
+
+    # compatible along second axis
+    SigMerger.check_views([s1[:1, :1], s1[:1, 1:]], axis=1)
+
+    # non-views
+    with pytest.raises(ValueError, match="Cannot merge non-views"):
+        SigMerger.check_views([s1, s2])
+
+    # different bases
+    with pytest.raises(ValueError, match="must share the same base"):
+        SigMerger.check_views([s1[:2], s2[2:]])
+
+    # different ndims
+    with pytest.raises(ValueError, match="must have the same number of dimensions"):
+        SigMerger.check_views([s1[:1], s1[1:, 0]])
+
+    # different strides
+    with pytest.raises(ValueError, match="must have equal strides"):
+        SigMerger.check_views([s1[::2], s1[::3]])
+
+    # shape mismatch
+    with pytest.raises(ValueError, match="must have same shape except on"):
+        SigMerger.check_views([s1[:1, :1], s1[:1, 1:]], axis=0)
+
+    # non-sequential
+    with pytest.raises(ValueError, match="Views are not sequential"):
+        SigMerger.check_views([s1[1:], s1[1:-1]])
+
+
+def test_sigmerger_merge(allclose):
+    s1 = Signal(np.array([[0, 1], [2, 3]]))
+    s2 = Signal(np.array([[4, 5]]))
+
+    sig, replacements = SigMerger.merge([s1, s2])
+    assert allclose(sig.initial_value, np.array([[0, 1], [2, 3], [4, 5]]))
+    assert allclose(replacements[s1].initial_value, s1.initial_value)
+    assert allclose(replacements[s2].initial_value, s2.initial_value)
+
+    with pytest.raises(ValueError, match="Cannot merge mixed views and non-views"):
+        SigMerger.merge([s1[0], s2])
+
+
+def test_sigmerger_merge_views(allclose):
+    s = Signal(np.array([[0, 1], [2, 3], [4, 5]]))
+    v1, v2 = s[:2], s[2:]
+    merged, _ = SigMerger.merge_views([v1, v2])
+
+    assert allclose(merged.initial_value, s.initial_value)
+    assert v1.base is s
+    assert v2.base is s
+
+
+def test_opstomerge_check_signals():
+    sig = Signal(np.arange(10))
+    sig_orig = sig.reshape(10)
+    sig_reshaped = sig.reshape(2, 5)
+    assert not OpsToMerge.check_signals(
+        Copy(sig_orig, sig_orig), Copy(sig_reshaped, sig_reshaped)
+    )
+
+
+def test_opmerger_warning():
+    with pytest.warns(UserWarning, match="Merger for operator type"):
+        OpMerger.register(Copy)(CopyMerger)
+
+
+def test_copymerger_merge_slice():
+    sig1 = Signal(np.ones(2))
+    slice1 = [1]
+    sig2 = Signal(np.ones(3))
+    with pytest.raises(ValueError, match="Mixed Ellipsis with list of indices."):
+        CopyMerger.merge_slice([sig1, sig2], [slice1, None])
+    merged = CopyMerger.merge_slice([sig1, sig2], [slice1, [0, 2]])
+    assert merged == [1, 2, 4]
+
+
+def test_elementwiseincmerger_scalars():
+    y1 = Signal(shape=(1,))
+    y2 = Signal(shape=(1,))
+    a = Signal(shape=(1,))
+    x1 = Signal(shape=(1,))
+    x2 = Signal(shape=(1,))
+
+    inc1 = ElementwiseInc(a, x1, y1)
+    inc2 = ElementwiseInc(a, x2, y2)
+
+    assert ElementwiseIncMerger.is_mergeable(inc1, inc2)
+    merged_inc, _ = ElementwiseIncMerger.merge([inc1, inc2])
+    assert merged_inc.Y.shape == (2,)
+    assert merged_inc.Y.name.startswith("merged")
+    assert merged_inc.A.shape == (1,)
+    assert merged_inc.A is a
+    assert merged_inc.X.shape == (2,)
+    assert merged_inc.X.name.startswith("merged")
+
+
+def test_simneuronsmerger_warning(rng):
+    nt = nengo.PoissonSpiking(nengo.Tanh())
+    op1 = SimNeurons(
+        nt, J=Signal(shape=(1,)), output=Signal(shape=(1,)), state={"rng": rng}
+    )
+
+    op2 = SimNeurons(
+        nt, J=Signal(shape=(1,)), output=Signal(shape=(1,)), state={"rng": rng}
+    )
+    assert SimNeuronsMerger.is_mergeable(op1, op2)
+    with pytest.warns(UserWarning, match="Extra state has been modified"):
+        SimNeuronsMerger.merge([op1, op2])
+
+
+def test_optimizer_does_not_change_result(seed):
+    dtype_resolution = np.finfo(nengo.rc.float_dtype).resolution
+    dtype_decimal = int(np.floor(-np.log10(dtype_resolution) * 0.5))
+
+    model = learning_net()
+    model.seed = seed
+
+    with model:
+        # Add the default probe for every non-Probe object
+        probes = [
+            nengo.Probe(obj)
+            for obj in model.all_objects
+            if not isinstance(obj, (nengo.Probe, nengo.Network))
+        ]
+        # Also probe learning rules and neurons
+        probes.extend(nengo.Probe(ens.neurons) for ens in model.all_ensembles)
+        probes.extend(
+            nengo.Probe(conn.learning_rule)
+            for conn in model.all_connections
+            if conn.learning_rule is not None
+        )
+
+    with nengo.Simulator(model, optimize=False) as sim:
+        sim.run(0.1)
+    with nengo.Simulator(model, optimize=True) as sim_opt:
+        sim_opt.run(0.1)
+
+    for probe in probes:
+        assert_almost_equal(sim.data[probe], sim_opt.data[probe], decimal=dtype_decimal)

@@ -224,3 +224,5 @@ if __name__ == '__main__':
     store_confs(['Exp'])
     t1 = time.time()
     print(int((t1-t0)*10**3))
+
+#@todo need to run the _name_ == 'main' to store new configurations of model - well not really as I have it in the expconf.py already

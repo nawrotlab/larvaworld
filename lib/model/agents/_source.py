@@ -114,4 +114,4 @@ class Food(Source):
         # return Point(self.get_position()).distance(Point(point))<=self.radius
         # return Circle(self.get_position(), radius=self.radius).contains_point(point)
 
-# @note Do I need to add a temperature_source Class?
+# @note Do I need to add a temperature_source Class? I don't think it is necessary.

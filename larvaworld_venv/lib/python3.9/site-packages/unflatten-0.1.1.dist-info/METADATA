@@ -1,0 +1,167 @@
+Metadata-Version: 2.1
+Name: unflatten
+Version: 0.1.1
+Summary: Unflatten dict to dict with nested dict/arrays
+Home-page: https://github.com/dairiki/unflatten
+Author: Jeff Dairiki
+Author-email: dairiki@dairiki.org
+License: UNKNOWN
+Keywords: unflatten nested-dict
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Description-Content-Type: text/x-rst
+License-File: LICENSE.txt
+
+==================================================
+unflatten - convert flat dict to nested dict/array
+==================================================
+
+|version| |pyversions| |build status|
+
+***********
+Description
+***********
+
+This package provides a function which can unpack a flat dictionary
+into a structured ``dict`` with nested sub-dicts and/or sub-lists.
+
+Development takes place on github_.
+The package is installable from PyPI_
+
+.. _github: https://github.com/dairiki/unflatten/
+.. _pypi: https://pypi.python.org/pypi/unflatten/
+
+********
+Synopsis
+********
+
+Nested dicts::
+
+  >>> from unflatten import unflatten
+
+  >>> unflatten({'foo.bar': 'val'})
+  {'foo': {'bar': 'val'}}
+
+Nested list::
+
+  >>> unflatten({'foo[0]': 'x', 'foo[1]': 'y'})
+  {'foo': ['x', 'y']}
+
+Nested lists and dicts, intermixed::
+
+  >>> unflatten({
+  ...     'foo[0][0]': 'a',
+  ...     'foo[0][1]': 'b',
+  ...     'foo[1].x': 'c',
+  ...      })
+  {'foo': [['a', 'b'], {'x': 'c'}]}
+
+
+*****
+Notes
+*****
+
+``Unflatten`` take a single argument which should either be a ``dict``
+(or an object with a dict-like ``.items()`` or ``.iteritems()``
+method) or a sequence of ``(key, value)`` pairs.
+All keys in the dict or sequence must be strings.
+(Under python 2, keys must be instances of ``basestring``; under
+python 3, keys just be instances of ``str``.)
+
+
+``Unflatten`` always returns a ``dict``.  By way of example::
+
+  >>> unflatten([('[0]', 'x')])
+  {'': ['x']}
+
+For list-valued nodes, all indexes must be present in the input
+(flattened) mapping, otherwise a ``ValueError`` will be thrown::
+
+  >>> unflatten({'a[0]': 'x', 'a[2]': 'y'})
+  Traceback (most recent call last):
+  ...
+  ValueError: missing key 'a[1]'
+
+********
+See Also
+********
+
+The `morph`_ and `flattery`_ packages purport to implement similar functions.
+
+.. _morph: https://github.com/metagriffin/morph
+.. _flattery: https://github.com/acg/python-flattery
+
+*******
+Authors
+*******
+
+`Jeff Dairiki`_
+
+.. _Jeff Dairiki: mailto:dairiki@dairiki.org
+
+.. |version| image::
+    https://img.shields.io/pypi/v/unflatten.svg
+    :target: https://pypi.python.org/pypi/unflatten/
+    :alt: Latest Version
+
+.. |pyversions| image::
+    https://img.shields.io/pypi/pyversions/unflatten.svg
+    :target: https://pypi.python.org/pypi/unflatten/
+    :alt: Python versions
+
+.. |build status| image::
+    https://github.com/dairiki/unflatten/actions/workflows/tests.yml/badge.svg
+    :target: https://github.com/dairiki/unflatten/actions/workflows/tests.yml
+ 
+
+*******
+History
+*******
+
+Release 0.1.1 (2021-08-16)
+==========================
+
+Nits
+----
+
+- Fix backslashes in docstrings
+
+Packaging
+---------
+
+- PEP517-ize the packaging
+- Use ``setuptools-scm`` to maintain version numbers
+
+Testing
+-------
+
+- Test under Python 3.7, 3.8, 3.9 and PyPy 3.7. Drop testing for Python 3.4 & 3.5.
+- Pin pip version for pypy2 (see `pip #8653`_)
+- Clean up and modernize the tox ``lint`` and ``coverage`` environments
+
+.. _pip #8653: https://github.com/pypa/pip/issues/8653
+
+
+Release 0.1 (2018-01-17)
+========================
+
+No code changes.
+
+This package is now deemed "production ready" (though your mileage may vary.)
+
+Release 0.1b1 (2018-01-09)
+==========================
+
+Initial release.
+
+

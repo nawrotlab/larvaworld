@@ -1,0 +1,6 @@
+[nengo.backends]
+reference = nengo:Simulator
+
+[pytest11]
+nengo = pytest_nengo
+

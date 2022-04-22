@@ -1,0 +1,80 @@
+"""Utilities to convert to and from bytes.
+
+Used by nengo.rc in order to present file sizes to users in
+human-readable formats.
+
+This code adapted from
+https://web.archive.org/web/20200817051754/http://code.activestate.com/recipes/578019-bytes-to-human-human-to-bytes-converter/?in=user-4178764
+under the MIT License.
+"""
+
+
+def bytes2human(n, fmt="%(value).1f %(symbol)s"):
+    """Convert from a size in bytes to a human readable string.
+
+    Examples
+    --------
+
+    .. testcode::
+
+       from nengo.utils.cache import bytes2human
+
+       print(bytes2human(10000))
+       print(bytes2human(100001221))
+
+    .. testoutput::
+
+       9.8 KB
+       95.4 MB
+
+    """
+    symbols = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+    prefix = {}
+    for i, s in enumerate(symbols[1:]):
+        prefix[s] = 1 << (i + 1) * 10
+    for symbol in reversed(symbols[1:]):
+        if n >= prefix[symbol]:
+            value = float(n) / prefix[symbol]
+            return fmt % {"value": value, "symbol": symbol}
+    return fmt % {"value": n, "symbol": symbols[0]}
+
+
+def human2bytes(s):
+    """Convert from a human readable string to a size in bytes.
+
+    Examples
+    --------
+
+    .. testcode::
+
+       from nengo.utils.cache import human2bytes
+
+       print(human2bytes('1 MB'))
+       print(human2bytes('1 GB'))
+
+    .. testoutput::
+
+       1048576
+       1073741824
+
+    """
+    symbols = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+
+    ix = -1 if s[-2].isdigit() else -2
+    letter = s[ix:].strip().upper()
+    num = s[:ix].strip()
+    assert letter in symbols
+    num = float(num)
+    prefix = {symbols[0]: 1}
+    for i, symbol in enumerate(symbols[1:]):
+        prefix[symbol] = 1 << (i + 1) * 10
+    return int(num * prefix[letter])
+
+
+def byte_align(size, alignment):
+    """Returns the int larger than ``size`` aligned to ``alginment`` bytes."""
+    mask = alignment - 1
+    if size & mask == 0:
+        return size
+    else:
+        return (size | mask) + 1

@@ -1,0 +1,166 @@
+from nengo.builder.builder import Builder
+from nengo.builder.connection import slice_signal
+from nengo.builder.operator import Copy, Operator, Reset
+from nengo.builder.signal import Signal
+from nengo.connection import Connection, LearningRule
+from nengo.ensemble import Ensemble, Neurons
+from nengo.exceptions import BuildError
+from nengo.node import Node
+from nengo.probe import Probe
+
+
+class SimProbe(Operator):
+    """Mark a signal as being probed.
+
+    This performs no computations, but marks ``signal`` as being read. This is
+    necessary for the rare case in which a node with constant output is probed
+    directly without that signal being otherwise used.
+
+    Parameters
+    ----------
+    signal : Signal
+        The probed signal.
+    tag : str, optional
+        A label associated with the operator, for debugging purposes.
+
+    Notes
+    -----
+    1. sets ``[]``
+    2. incs ``[]``
+    3. reads ``[signal]``
+    4. updates ``[]``
+    """
+
+    def __init__(self, signal, tag=None):
+        super().__init__(tag=tag)
+        self.sets = []
+        self.incs = []
+        self.reads = [signal]
+        self.updates = []
+
+    @property
+    def signal(self):
+        """The probed signal"""
+        return self.reads[0]
+
+    def make_step(self, signals, dt, rng):
+        def step():
+            pass
+
+        return step
+
+
+def conn_probe(model, probe):
+    """Build a "connection" probe type.
+
+    Connection probes create a connection from the target, and probe
+    the resulting signal (used when you want to probe the default
+    output of an object, which may not have a predefined signal).
+    """
+
+    conn = Connection(
+        probe.target,
+        probe,
+        synapse=probe.synapse,
+        solver=probe.solver,
+        add_to_container=False,
+    )
+
+    # Set connection's seed to probe's (which isn't used elsewhere)
+    model.seeded[conn] = model.seeded[probe]
+    model.seeds[conn] = model.seeds[probe]
+
+    # Make a sink signal for the connection
+    model.sig[probe]["in"] = Signal(shape=conn.size_out, name=str(probe))
+    model.add_op(Reset(model.sig[probe]["in"]))
+
+    # Build the connection
+    model.build(conn)
+
+
+def signal_probe(model, key, probe):
+    """Build a "signal" probe type.
+
+    Signal probes directly probe a target signal.
+    """
+
+    try:
+        sig = model.sig[probe.obj][key]
+    except (IndexError, KeyError) as e:
+        raise BuildError(
+            "Attribute %r is not probeable on %s." % (key, probe.obj)
+        ) from e
+
+    if sig is None:
+        raise BuildError(
+            "Attribute %r on %s is None, cannot be probed" % (key, probe.obj)
+        )
+
+    if probe.slice is not None:
+        sig = slice_signal(model, sig, probe.slice)
+
+    if probe.synapse is None:
+        model.sig[probe]["in"] = sig
+    else:
+        model.sig[probe]["in"] = Signal(shape=sig.shape, name=str(probe))
+        model.sig[probe]["filtered"] = model.build(probe.synapse, sig, mode="update")
+        model.add_op(Copy(model.sig[probe]["filtered"], model.sig[probe]["in"]))
+
+
+probemap = {
+    Ensemble: {"decoded_output": None, "input": "in", "scaled_encoders": "encoders"},
+    Neurons: {"output": "out", "spikes": "out", "rates": "out", "input": "in"},
+    Node: {"output": "out"},
+    Connection: {"output": "weighted", "input": "in"},
+    LearningRule: {},  # make LR signals probeable, but no mapping required
+}
+
+
+@Builder.register(Probe)
+def build_probe(model, probe):
+    """Builds a `.Probe` object into a model.
+
+    Under the hood, there are two types of probes:
+    connection probes and signal probes.
+
+    Connection probes are those that are built by creating a new `.Connection`
+    object from the probe's target to the probe, and calling that connection's
+    build function. Creating and building a connection ensure that the result
+    of probing the target's attribute is the same as would result from that
+    target being connected to another object.
+
+    Signal probes are those that are built by finding the correct `.Signal`
+    in the model and calling the build function corresponding to the probe's
+    synapse.
+
+    Parameters
+    ----------
+    model : Model
+        The model to build into.
+    probe : Probe
+        The connection to build.
+
+    Notes
+    -----
+    Sets ``model.params[probe]`` to a list.
+    `.Simulator` appends to that list when running a simulation.
+    """
+
+    # find the right parent class in `objtypes`, using `isinstance`
+    for nengotype, probeables in probemap.items():
+        if isinstance(probe.obj, nengotype):
+            key = probeables.get(probe.attr, probe.attr)
+            break
+    else:
+        raise BuildError("Type %r is not probeable" % type(probe.obj).__name__)
+
+    if key is None:
+        conn_probe(model, probe)
+    else:
+        signal_probe(model, key, probe)
+
+    model.add_op(SimProbe(model.sig[probe]["in"]))
+    model.probes.append(probe)
+
+    # Simulator will fill this list with probe data during simulation
+    model.params[probe] = []
