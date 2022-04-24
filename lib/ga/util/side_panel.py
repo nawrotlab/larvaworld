@@ -44,21 +44,21 @@ class SidePanel:
         if pygame.font:
             font = pygame.font.Font(None, self.FONT_SIZE)
             self.line_num = 1
+            self.line_spacing = self.LINE_SPACING_MAX if self.scene.height > self.SCENE_HEIGHT_THRESHOLD else self.LINE_SPACING_MIN
+            # if self.scene.height > self.SCENE_HEIGHT_THRESHOLD:
+            #     self.line_spacing = self.LINE_SPACING_MAX
+            # else:
+            #     self.line_spacing = self.LINE_SPACING_MIN
+            #
+            fitness_best = '-' if self.best_genome is None else str(round(self.fitness_best_genome, 2))
 
-            if self.scene.height > self.SCENE_HEIGHT_THRESHOLD:
-                self.line_spacing = self.LINE_SPACING_MAX
-            else:
-                self.line_spacing = self.LINE_SPACING_MIN
-            # pygame.draw.line(self.screen, Color.GRAY, (self.scene.width, self.line_spacing * 3),
-            #                  (self.screen , self.line_spacing * 3))
-
-            if self.best_genome is None:
+            # if self.best_genome is None:
                 # this happens only at the first generation
-                fitness_best = '-'
-                generation_num_best = '-'
-            else:
-                fitness_best = str(round(self.fitness_best_genome, 2))
-                generation_num_best = str(self.best_genome.generation_num)
+                # fitness_best = '-'
+                # generation_num_best = '-'
+            # else:
+            #     fitness_best = str(round(self.fitness_best_genome, 2))
+            #     generation_num_best = str(self.best_genome.generation_num)
 
             self.render_line(font, 'Total time: ' + TimeUtil.format_time_seconds(self.cum_t))
             self.render_line(font, 'Generation: ' + str(self.generation_num))
@@ -68,10 +68,7 @@ class SidePanel:
             self.render_line(font, '')
             self.render_line(font, 'Max fitness: ' + fitness_best)
             for k, vs in space_dict.items():
-                if self.best_genome is None:
-                    pkey = '-'
-                else:
-                    pkey = str(self.best_genome.get(rounded=True)[k])
+                pkey = '-' if self.best_genome is None else str(self.best_genome.get(rounded=True)[k])
                 self.render_line(font, f'{vs["name"]}: ' + pkey, self.LEFT_MARGIN)
             self.render_line(font, '')
             self.render_line(font, 'Controls:')
@@ -102,8 +99,8 @@ class SidePanel:
 
     def render_line(self, font, text, extra_margin=0):
         line = font.render(text, 1, Color.WHITE)
-        x_pos = self.scene.width + self.DEFAULT_MARGIN + extra_margin
-        y_pos = self.line_num * self.line_spacing
-        lint_pos = pygame.Rect(x_pos, y_pos, 20, 20)
+        x = self.scene.width + self.DEFAULT_MARGIN + extra_margin
+        y = self.line_num * self.line_spacing
+        lint_pos = pygame.Rect(x, y, 20, 20)
         self.screen.blit(line, lint_pos)
         self.line_num += 1

@@ -27,9 +27,8 @@ class LarvaRobot(BodySim):
 
         self.Nticks = 0
         self.collision_with_object = False
-        # self.direction = self.initial_orientation
         self.unique_id = unique_id
-        self.size = self.sim_length
+        # self.size = self.sim_length
         self.eval = AttrDict.from_nested_dicts({
             'b': [],
             'fov': [],
@@ -75,10 +74,9 @@ class LarvaRobot(BodySim):
         self.x += sim_dxy[0]
         self.y += sim_dxy[1]
         hp1 = self.sim_pos + k * self.seg_lengths[0] / 2
-        self.head.update_poseNvertices(hp1, o1)
-        self.head.set_lin_vel(lin_vel)
-        self.head.set_ang_vel(ang_vel)
-        # self.direction = o1
+        head.update_poseNvertices(hp1, o1)
+        head.set_lin_vel(lin_vel)
+        head.set_ang_vel(ang_vel)
 
         if self.Nsegs == 2:
             self.spineangles[0] += (o1 - o0)
@@ -113,7 +111,7 @@ class LarvaRobot(BodySim):
         if pygame.font and self.unique_id is not None:
             font = pygame.font.Font(None, 24)
             text = font.render(str(self.unique_id), 1, Color.YELLOW, Color.DARK_GRAY)
-            text_pos = pygame.Rect(self.x + (self.size / 2), self.y + (self.size / 2), 50, 50)
+            text_pos = pygame.Rect(self.x + (self.sim_length / 2), self.y + (self.sim_length / 2), 50, 50)
             screen.blit(text, text_pos)
 
     def finalize(self, eval_shorts=['b', 'fov'], step_data=False):
@@ -178,7 +176,7 @@ class ObstacleLarvaRobot(LarvaRobot):
         self.sensorimotor_kws = larva_pars.sensorimotor
         larva_pars.pop('sensorimotor', None)
         super().__init__(larva_pars=larva_pars, **kwargs)
-        self.collision_with_object = False
+        # self.collision_with_object = False
         self.left_motor_controller = None
         self.right_motor_controller = None
         self.build_sensorimotor(**self.sensorimotor_kws)

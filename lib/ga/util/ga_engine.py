@@ -571,9 +571,9 @@ class BaseGenome:
 
     def to_string(self):
         fitness = None if self.fitness is None else round(self.fitness, 2)
-        kwstrings = []
-        for k, vs in self.space_dict.items():
-            kwstrings.append(f' {vs["name"]}:' + repr(self.get(rounded=True)[k]))
+        kwstrings = [f' {vs["name"]}:' + repr(self.get(rounded=True)[k]) for k, vs in self.space_dict.items()]
+        # for k, vs in self.space_dict.items():
+        #     kwstrings.append(f' {vs["name"]}:' + repr(self.get(rounded=True)[k]))
         kwstr = ''
         for ii in kwstrings:
             kwstr = kwstr + ii

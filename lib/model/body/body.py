@@ -230,7 +230,6 @@ class LarvaBody(LarvaShape):
         self.radius = self.sim_length / 2
         self.seg_lengths = self.sim_length * self.seg_ratio
         self.seg_vertices = [s * self.sim_length for s in self.base_seg_vertices]
-        # self.seg_vertices = self.base_seg_vertices * self.sim_length
         for vec, seg in zip(self.seg_vertices, self.segs):
             seg.seg_vertices = vec
         self.set_head_edges()
@@ -574,7 +573,7 @@ class LarvaBody(LarvaShape):
             new_p = p + np.array([dx, dy])
             seg.set_position(tuple(new_p))
             seg.update_vertices(new_p, o)
-        self.pos = self.gglobal_midspine_of_body
+        self.pos = self.global_midspine_of_body
 
     def create_rotator(self, segs, position, orientation, physics_pars):
         import Box2D

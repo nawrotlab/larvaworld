@@ -25,4 +25,4 @@ class ObstacleAvoidanceGA(GALauncher):
 
 
 if __name__ == '__main__':
-    ObstacleAvoidanceGA(robot_class='larva',population_num=10)
+    ObstacleAvoidanceGA()
