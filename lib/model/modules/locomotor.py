@@ -327,7 +327,7 @@ class Sakagiannis2022(Locomotor):
                  run_dist={'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
                  stridechain_dist=None,freq_std=0.18,suppression_mode='amplitude',
                  initial_freq=1.418, step_mu=0.224, step_std=0.033,
-                 attenuation_min=0.2, attenuation_max=0.31, max_vel_phase=3.6,
+                 attenuation=0.2, attenuation_max=0.31, max_vel_phase=3.6,
                  turner_input_constant=19, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0, **kwargs):
         super().__init__(dt=dt, ang_mode='torque', offline=True, **kwargs)
         self.turner_input_constant = turner_input_constant
@@ -357,14 +357,14 @@ class Sakagiannis2022(Locomotor):
         self.phi = 0
         self.complete_iteration = False
         self.iteration_counter = 0
-        self.attenuation_min = attenuation_min
+        self.attenuation = attenuation
         self.attenuation_max = attenuation_max
         self.max_vel_phase = max_vel_phase
         self.max_attenuation_phase = max_vel_phase - 1.2
 
     @property
     def attenuation_func(self):
-        a = gaussian(self.phi, self.max_attenuation_phase, 1) * self.attenuation_max + self.attenuation_min
+        a = gaussian(self.phi, self.max_attenuation_phase, 1) * self.attenuation_max + self.attenuation
         if a >= 1:
             a = 1
         elif a <= 0:
@@ -507,7 +507,7 @@ Sakagiannis2022_conf = {
     'crawler_noise': 0.0,
     'turner_input_noise': 0.0,
     'turner_output_noise': 0.0,
-    'attenuation_min': 0.2,
+    'attenuation': 0.2,
     'attenuation_max': 0.31,
     # 'crawler_phi_range': (0.5, 1.5),
     'run_dist': {'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},

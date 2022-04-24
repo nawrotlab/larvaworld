@@ -80,6 +80,32 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
         return {name: d}
 
 
+
+def ga_dict(name=None, suf='', excluded=[]):
+    d = {}
+    for k, vs in par_dict(name).items():
+        if k in excluded :
+            continue
+        k0 = f'{suf}{k}'
+        kws={
+            'initial_value' : vs['initial_value'],
+            'tooltip' : vs['tooltip'],
+            'dtype' : vs['dtype'],
+            'name' : k,
+        }
+        # v0 = vs['initial_value']
+        # h = vs['tooltip']
+        # dtype=vs['dtype']
+        if vs['dtype'] == str:
+            kws['choices'] = vs['values']
+        else:
+            kws['min'] , kws['max']  = np.min(vs['values']), np.max(vs['values'])
+        d[k0]=kws
+    d=AttrDict.from_nested_dicts(d)
+    return d
+
+
+
 def par_dict(name=None, d0=None, **kwargs):
     if d0 is None:
         d0 = init_pars().get(name, None)

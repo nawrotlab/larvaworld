@@ -219,6 +219,11 @@ class DefaultSegment(BodySegment):
     def update_vertices(self, pos, orient):
         self.vertices = [pos + rotate_around_center_multi(self.seg_vertices[0], -orient)]
 
+    def update_poseNvertices(self, pos, orientation):
+        self.pos=pos
+        self.orientation=orientation
+        self.vertices = [pos + rotate_around_center_multi(self.seg_vertices[0], -orientation)]
+
     def get_pose(self):
         return np.array(self.pos), self.orientation
 

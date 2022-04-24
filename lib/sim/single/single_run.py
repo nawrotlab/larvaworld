@@ -25,7 +25,6 @@ class SingleRun:
         self.experiment = experiment
         dt = sim_params['timestep']
         self.store_data = sim_params['store_data']
-        # analysis = sim_params['analysis']
         self.enrichment = enrichment
         self.analysis = analysis
         if save_to is None:

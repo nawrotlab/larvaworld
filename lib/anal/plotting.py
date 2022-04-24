@@ -191,7 +191,7 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
     return P.get()
 
 
-def plot_ang_pars(absolute=True, include_rear=False, subfolder='turn', Npars=3, **kwargs):
+def plot_ang_pars(absolute=True, include_rear=False, subfolder='turn', Npars=3,Nbins=100, **kwargs):
     P = Plot(name='ang_pars', subfolder=subfolder, **kwargs)
     if Npars == 5:
         shorts = ['b', 'bv', 'ba', 'fov', 'foa']
@@ -214,7 +214,7 @@ def plot_ang_pars(absolute=True, include_rear=False, subfolder='turn', Npars=3, 
     P.build(1, len(shorts), figsize=(len(shorts) * 5, 5), sharey=True)
 
     for i, (p, r, p_lab, xlab) in enumerate(zip(pars, rs, p_ls, xlabs)):
-        bins, xlim = P.angrange(r, absolute, 200)
+        bins, xlim = P.angrange(r, absolute, Nbins)
         P.plot_par(p, bins, i=i, absolute=absolute, labels=p_lab, alpha=0.8, histtype='step', linewidth=2,
                    pvalues=True, half_circles=True)
         P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=xlab, ylim=[0, ylim], yMaxN=3)

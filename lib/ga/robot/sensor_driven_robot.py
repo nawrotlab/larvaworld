@@ -2,11 +2,9 @@ import pygame
 
 from lib.ga.exception.collision_exception import Collision
 from lib.ga.robot.differential_drive_robot import DifferentialDriveRobot
-from lib.ga.robot.larva_robot import ObstacleLarvaRobot
 from lib.ga.util.color import Color
 
 
-# class SensorDrivenRobot(ObstacleLarvaRobot):
 class SensorDrivenRobot(DifferentialDriveRobot):
 
     def __init__(self, **kwargs):

@@ -40,6 +40,8 @@ class Brain():
         for id, layer in self.agent.model.odor_layers.items():
             v = layer.get_value(pos)
             cons[id] = v + np.random.normal(scale=v * self.olfactor.noise)
+            # print(int(v*100))
+        # raise
         return cons
 
     def sense_food(self):
@@ -90,5 +92,5 @@ class DefaultBrain(Brain):
         if self.windsensor:
             self.wind_activation = self.windsensor.step(self.sense_wind())
         # A_in=self.touch_activation + self.wind_activation + self.olfactory_activation
-        # print(self.activation)
+        # print(self.activation, self.olfactory_activation)
         return self.locomotor.step(A_in=self.activation, length = self.agent.real_length)

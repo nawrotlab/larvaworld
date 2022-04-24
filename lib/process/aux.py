@@ -653,36 +653,42 @@ def fft_freqs(s, e, c):
     e['turner_input_constant'] = (e[ffov] / 0.024) + 5
 
 
+def compute_interference_solo(a_sv,a_fov,dt, Nbins=64, strict=True, absolute=True) :
+    strides = detect_strides(a_sv, dt, return_runs=False, return_extrema=False)
+    x = np.linspace(0, 2 * np.pi, Nbins)
 
-def compute_interference(s, e, c, Nbins=64, strict=True, absolute=True):
+    if strict:
+        strides = [(s0, s1) for s0, s1 in strides if
+                   all(np.sign(a_fov[s0:s1]) >= 0) or all(np.sign(a_fov[s0:s1]) <= 0)]
+    # print(len(strides))
+    ar_sv = np.zeros([len(strides), Nbins])
+    ar_fov = np.zeros([len(strides), Nbins])
+    for ii, (s0, s1) in enumerate(strides):
+        ar_fov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 + 1 - s0), a_fov[s0:s1 + 1])
+        ar_sv[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 + 1 - s0), a_sv[s0:s1 + 1])
+    if absolute:
+        ar_fov = np.abs(ar_fov)
+    fov_curve = np.nanquantile(ar_fov, q=0.5, axis=0)
+    sv_curve = np.nanquantile(ar_sv, q=0.5, axis=0)
+    return fov_curve, sv_curve
+
+
+def compute_interference(s, e, c, Nbins=64, **kwargs):
     from lib.conf.base.par import getPar
     import lib.aux.naming as nam
     from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
     l, v, sv, dst, acc, fov, foa, b, bv, ba, fv, fsv, ffov, pau_fov_mu = \
         getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv', 'fsv', 'ffov', 'pau_fov_mu'],
                to_return=['d'])[0]
-
+    x = np.linspace(0, 2 * np.pi, Nbins)
     sv_curves = np.zeros([c.N, Nbins]) * np.nan
     fov_curves = np.zeros([c.N, Nbins]) * np.nan
     for jj, id in enumerate(c.agent_ids):
         a_sv = s[sv].xs(id, level="AgentID").values
         a_fov = s[fov].xs(id, level="AgentID").values
-        strides = detect_strides(a_sv, c.dt, return_runs=False, return_extrema=False)
-        x = np.linspace(0, 2 * np.pi, Nbins)
-
-        if strict:
-            strides = [(s0, s1) for s0, s1 in strides if
-                       all(np.sign(a_fov[s0:s1]) >= 0) or all(np.sign(a_fov[s0:s1]) <= 0)]
-
-        ar_sv = np.zeros([len(strides), Nbins])
-        ar_fov = np.zeros([len(strides), Nbins])
-        for ii, (s0, s1) in enumerate(strides):
-            ar_fov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1+1 - s0), a_fov[s0:s1+1])
-            ar_sv[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1+1 - s0), a_sv[s0:s1+1])
-        if absolute:
-            ar_fov = np.abs(ar_fov)
-        fov_curves[jj, :] = np.nanquantile(ar_fov, q=0.5, axis=0)
-        sv_curves[jj, :] = np.nanquantile(ar_sv, q=0.5, axis=0)
+        fov_curve, sv_curve = compute_interference_solo(a_sv,a_fov,c.dt, Nbins, **kwargs)
+        fov_curves[jj, :] = fov_curve
+        sv_curves[jj, :] = sv_curve
 
     att0s, att1s = np.min(fov_curves, axis=1), np.max(fov_curves, axis=1)
     e[nam.min('attenuation')] = att0s / e[pau_fov_mu]

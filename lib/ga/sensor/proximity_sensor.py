@@ -11,18 +11,25 @@ from lib.ga.util.color import Color
 
 class ProximitySensor(Sensor):
 
-    COLLISION_DISTANCE = 12  # px
+    # COLLISION_DISTANCE = 12  # px
 
-    def __init__(self, robot, delta_direction, saturation_value, error, max_distance, scene):
+    def __init__(self, robot, delta_direction, saturation_value, error, max_distance, scene,collision_distance=12):
         super().__init__(robot, delta_direction, saturation_value, error, scene)
         self.max_distance = max_distance
+        self.collision_distance = collision_distance
+    def get_value(self, pos=None, direction=None):
+        if pos is None :
+            pos=[self.robot.x, self.robot.y]
+        x,y=pos
+        if direction is None :
+            direction=self.robot.direction
+        dir_sensor = -direction - self.delta_direction
+        # dir_sensor = self.robot.direction + self.delta_direction
+        x_sensor_eol = x + self.max_distance * cos(dir_sensor)
+        y_sensor_eol = y + self.max_distance * sin(dir_sensor)
+        # y_sensor_eol = y + self.max_distance * -sin(dir_sensor)
 
-    def get_value(self):
-        dir_sensor = self.robot.direction + self.delta_direction
-        x_sensor_eol = self.robot.x + self.max_distance * cos(dir_sensor)
-        y_sensor_eol = self.robot.y + self.max_distance * -sin(dir_sensor)
-
-        point_robot = Point(self.robot.x, self.robot.y)
+        point_robot = Point(x, y)
         point_sensor_eol = Point(x_sensor_eol, y_sensor_eol)
 
         sensor_ray = (point_robot, point_sensor_eol)
@@ -53,7 +60,7 @@ class ProximitySensor(Sensor):
             return 0
         else:
             # check collision
-            if distance_from_nearest_obstacle < self.COLLISION_DISTANCE:
+            if distance_from_nearest_obstacle < self.collision_distance:
                 raise Collision(self.robot, nearest_obstacle)
 
             error_std_dev = self.error * distance_from_nearest_obstacle

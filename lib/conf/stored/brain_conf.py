@@ -16,20 +16,14 @@ from lib.conf.stored.larva_conf import OD
 from lib.sim.single.single_run import SingleRun
 
 # Crawl-bend interference
-# CT = null_dict('interference')
-# CTtemp={k:None for k,v in CT.items()}
-# CT_exclusive = CTtemp.update({'mode':'default', 'attenuation':0.0})
-# CT_continuous = CTtemp.update({'mode':'default', 'attenuation':1.0})
-# CT_constant = CTtemp.update({'mode':'default', 'attenuation':0.25})
-# CT_phasic = CTtemp.update({'mode':'phasic', 'attenuation_min':0.2, 'attenuation_max':0.31, 'max_attenuation_phase':2.4})
 
 CT_exclusive = null_dict('interference', mode='default', attenuation=0.0)
 CT_continuous = null_dict('interference', mode='default', attenuation=1.0)
 CT_constant = null_dict('interference', mode='default', attenuation=0.25)
-CT_phasic = null_dict('interference', mode='phasic', attenuation_min=0.4, attenuation_max=0.2,
+CT_phasic = null_dict('interference', mode='phasic', attenuation=0.4, attenuation_max=0.2,
                       max_attenuation_phase=2.4)
-CT_Sak = null_dict('interference', mode='phasic', suppression_mode='both', attenuation_min=0.4, attenuation_max=0.1,
-                   max_attenuation_phase=4.71, attenuation=1)
+CT_Sak = null_dict('interference', mode='phasic', suppression_mode='both', attenuation=0.4, attenuation_max=0.1,
+                   max_attenuation_phase=4.71)
 
 CT_dict = {
     'exclusive': CT_exclusive,

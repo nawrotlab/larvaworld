@@ -13,7 +13,7 @@ from lib.conf.base.dtypes import null_dict, null_Box2D_params, Box2Djoints
 Cbas = null_dict('crawler', initial_freq=1.5, stride_dst_mean=0.25, stride_dst_std=0.0)
 base_coupling = null_dict('interference', mode='square', crawler_phi_range=(0.45, 1.0), feeder_phi_range=(0.0, 0.0),
                           attenuation=0.1)
-phasic_coupling = null_dict('interference', mode='phasic', attenuation_min=0.2, attenuation_max=0.31)
+phasic_coupling = null_dict('interference', mode='phasic', attenuation=0.2, attenuation_max=0.31)
 null_coupling = null_dict('interference', mode='default', attenuation=1.0)
 
 Tsin = null_dict('turner',

@@ -96,12 +96,12 @@ def adapt_conf(conf0, ee, cc):
 
 
 def sim_locomotor(L, N, df_cols=None, tank_polygon=None, cur_x=0, cur_y=0, cur_fo=0, length=0.004):
-    if df_cols is None :
+    if df_cols is None:
         from lib.conf.base.par import getPar
         df_cols, = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'], to_return=['d'])
     aL = np.ones([N, len(df_cols)]) * np.nan
     for i in range(N):
-        lin, ang, feed = L.step(A_in=0,length=length)
+        lin, ang, feed = L.step(A_in=0, length=length)
         cur_d = lin * L.dt
         if tank_polygon:
             if not tank_polygon.contains(Point(cur_x, cur_y)):
@@ -115,11 +115,9 @@ def sim_locomotor(L, N, df_cols=None, tank_polygon=None, cur_x=0, cur_y=0, cur_f
     return aL
 
 
-def sim_dataset(ee,cc, loco_func, loco_conf, adapted=False):
-
+def sim_dataset(ee, cc, loco_func, loco_conf, adapted=False):
     df_cols, = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'], to_return=['d'])
     Ncols = len(df_cols)
-
 
     Ls = {}
     for jj, id in enumerate(cc.agent_ids):
@@ -138,22 +136,21 @@ def sim_dataset(ee,cc, loco_func, loco_conf, adapted=False):
     tank_polygon = get_tank_polygon(cc)
     for jj, id in enumerate(cc.agent_ids):
         # cur_x, cur_y, cur_fo = 0,0,0
-        cur_fo, cur_x, cur_y  = aaL[0, jj, 3:6]
+        cur_fo, cur_x, cur_y = aaL[0, jj, 3:6]
         aaL[1:, jj, :] = sim_locomotor(Ls[id], cc.Nticks - 1, df_cols, tank_polygon, cur_x, cur_y, np.deg2rad(cur_fo),
                                        length=ee['length'].loc[id])
 
     df_index = pd.MultiIndex.from_product([np.arange(cc.Nticks), cc.agent_ids], names=['Step', 'AgentID'])
     ss = pd.DataFrame(aaL.reshape([cc.Nticks * cc.N, Ncols]), index=df_index, columns=df_cols)
 
-
     return ss
 
 
 def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stops=[40]):
-    strides_enabled = True if cc.Npoints>1 else False
+    strides_enabled = True if cc.Npoints > 1 else False
     vel_thr = cc.vel_thr if cc.Npoints == 1 else None
 
-    dt=cc.dt
+    dt = cc.dt
     ss[bv] = ss[b].groupby('AgentID').diff() / dt
     ss[ba] = ss[bv].groupby('AgentID').diff() / dt
     ss[foa] = ss[fov].groupby('AgentID').diff() / dt
@@ -167,24 +164,40 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
     comp_dispersion(ss, ee, dt, cc.point, dsp_starts=dsp_starts, dsp_stops=dsp_stops)
     comp_straightness_index(ss, dt, e=ee, tor_durs=tor_durs)
 
-    chunk_dicts,aux_dic= annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
-    bout_dic = fit_bouts(c=cc, aux_dic=aux_dic,s=ss,e=ee, id=cc.id)
+    chunk_dicts, aux_dic = annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
+    bout_dic = fit_bouts(c=cc, aux_dic=aux_dic, s=ss, e=ee, id=cc.id)
 
     return bout_dic
 
 
-def eval_all_datasets(loco_dict, s, e, save_to, suf, evaluation, mode='1:1',
+def eval_all_datasets(s, e, evaluation=None,save_to=None,  suf='',loco_dict=None,datasets=None,  mode='1:1',
                       norm_modes=['raw', 'minmax', 'std']):
+
+    if loco_dict is None and datasets is not None:
+        loco_dict={d.id : {'step_data' : d.step_data, 'endpoint_data' : d.endpoint_data} for d in datasets}
+
+    if evaluation is None :
+        evaluation_metrics = {
+            'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'tur_fou', 'tur_fov_max'],
+            'spatial displacement': ['cum_d', 'run_d', 'v_mu', 'v', 'a', 'dsp_0_40_max', 'tor5', 'tor20'],
+            'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
+            # 'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
+            # 'epochs': ['run_t', 'pau_t'],
+            # 'tortuosity': ['tor5', 'tor20']
+        }
+
+        temp = arrange_evaluation(s, e, evaluation_metrics)
+        evaluation = {k: col_df(**pars) for k, pars in temp.items()}
     # Evaluation metrics
     end_ps = dNl.flatten_list(evaluation['end']['shorts'].values.tolist())
     distro_ps = dNl.flatten_list(evaluation['step']['shorts'].values.tolist())
     GEend, GEdistro = {}, {}
     for loco_id in loco_dict.keys():
-        Eend, Edistro = {}, {}
         ss = loco_dict[loco_id]['step_data']
         ee = loco_dict[loco_id]['endpoint_data']
         ids = e.index.values
         ps1, ps1l = getPar(end_ps, to_return=['d', 'lab'])
+        Eend, Edistro = {}, {}
         for p, pl in zip(ps1, ps1l):
             Eend[pl] = None
             if p in e.columns and p in ee.columns:
@@ -226,6 +239,7 @@ def eval_all_datasets(loco_dict, s, e, save_to, suf, evaluation, mode='1:1',
     for norm in norm_modes:
         error_barplots(error_dict, normalization=norm, save_to=save_to, suf=suf, evaluation=evaluation)
     return error_dict
+
 
 def assess_tank_contact(ang_vel, o0, d, p0, dt, l0, tank_polygon):
     def avoid_border(ang_vel, counter, dd=0.1):
@@ -272,7 +286,7 @@ def arrange_evaluation(s, e, evaluation_metrics):
     return d
 
 
-def prepare_sim_dataset(e,c, id, color):
+def prepare_sim_dataset(e, c, id, color):
     cc = dNl.AttrDict.from_nested_dicts({
         'env_params': c.env_params,
         'bout_distros': c.bout_distros,
@@ -292,9 +306,10 @@ def prepare_sim_dataset(e,c, id, color):
     e_ps = ['length', nam.initial(x), nam.initial(y), nam.initial(fo)]
     ee = pd.DataFrame(e[e_ps].loc[cc.agent_ids], index=cc.agent_ids, columns=e_ps)
     ee[cum_t] = cc.Nticks * cc.dt
-    return ee,cc
+    return ee, cc
 
-def prepare_dataset(s,e,c,Nids, id = 'experiment', color = 'black'):
+
+def prepare_dataset(s, e, c, Nids, id='experiment', color='black'):
     if Nids is None:
         ids = c.agent_ids
         Nids = len(ids)
@@ -303,7 +318,6 @@ def prepare_dataset(s,e,c,Nids, id = 'experiment', color = 'black'):
     s_exp = copy.deepcopy(s.loc[(slice(None), ids), slice(None)])
     e_exp = copy.deepcopy(e.loc[ids])
 
-
     c_exp = dNl.AttrDict.from_nested_dicts(c)
     c_exp.id = id
     c_exp.agent_ids = ids
@@ -311,9 +325,10 @@ def prepare_dataset(s,e,c,Nids, id = 'experiment', color = 'black'):
     c_exp.color = color
     if "length" not in e_exp.columns:
         e_exp["length"] = np.ones(c_exp.N) * 0.004
-    return s_exp,e_exp, c_exp
+    return s_exp, e_exp, c_exp
 
-def prepare_validation_dataset(s,e,c,Nids):
+
+def prepare_validation_dataset(s, e, c, Nids):
     ids = e.nlargest(Nids, 'cum_dur').index.values
     ids2 = e.nlargest(2 * Nids, 'cum_dur').index.values[Nids:]
     s_val = s.loc[(slice(None), ids2), slice(None)]
@@ -335,10 +350,10 @@ def prepare_validation_dataset(s,e,c,Nids):
     if "length" not in e_val.columns:
         e_val["length"] = np.ones(c_val.N) * 0.004
 
-    return s_val,e_val, c_val
+    return s_val, e_val, c_val
 
 
-def torsNdsps(s) :
+def torsNdsps(s):
     tor_durs = [int(ii[len(tor) + 1:]) for ii in s.columns if ii.startswith(tor)]
     tor_shorts = [f'tor{ii}' for ii in tor_durs]
 
@@ -348,6 +363,7 @@ def torsNdsps(s) :
     dsp_shorts0 = [f'dsp_{s0}_{s1}' for s0, s1 in itertools.product(dsp_starts, dsp_stops)]
     dsp_shorts = dNl.flatten_list([[f'{ii}_max', f'{ii}_mu', f'{ii}_fin'] for ii in dsp_shorts0])
     return tor_durs, dsp_starts, dsp_stops
+
 
 def run_locomotor_evaluation(d, locomotor_models, Nids=None, save_to=None,
                              stridechain_duration=False, cross_validation=True, evaluation_modes=['1:1', 'pooled'],
@@ -381,39 +397,41 @@ def run_locomotor_evaluation(d, locomotor_models, Nids=None, save_to=None,
     end_ps = dNl.flatten_list(evaluation['end']['shorts'].values.tolist())
     distro_ps = dNl.flatten_list(evaluation['step']['shorts'].values.tolist())
 
-    datasets=[]
+    datasets = []
     loco_dict = {}
     for ii, (loco_id, (func, conf, adapted, col)) in enumerate(locomotor_models.items()):
         print(f'Simulating model {loco_id} on {c_exp.N} larvae from dataset {d.id}')
 
-        ee,cc = prepare_sim_dataset(e_exp,c_exp, loco_id, col)
+        ee, cc = prepare_sim_dataset(e_exp, c_exp, loco_id, col)
         ss = sim_dataset(ee, cc, func, conf, adapted)
         bout_dic = enrich_dataset(ss, ee, cc, tor_durs=tor_durs, dsp_starts=dsp_starts, dsp_stops=dsp_stops)
-        dd=dNl.AttrDict.from_nested_dicts({'step_data': ss, 'endpoint_data': ee, 'config': cc, 'bouts': bout_dic})
+        dd = dNl.AttrDict.from_nested_dicts({'step_data': ss, 'endpoint_data': ee, 'config': cc, 'bouts': bout_dic})
         loco_dict[loco_id] = dd
         datasets.append(dd)
     print('Evaluating all models')
     error_dicts = {}
     for mode in evaluation_modes:
         suf = 'fitted'
-        error_dicts[f'{mode} {suf}'] = eval_all_datasets(loco_dict, s_exp, e_exp, save_to, suf=suf, mode=mode,
+        error_dicts[f'{mode} {suf}'] = eval_all_datasets(s=s_exp, e=e_exp,loco_dict=loco_dict,  save_to=save_to, suf=suf, mode=mode,
                                                          norm_modes=norm_modes, evaluation=evaluation)
 
     if cross_validation and Nids <= c.N / 2:
-        s_val,e_val, c_val = prepare_validation_dataset(s, e, c, Nids)
+        s_val, e_val, c_val = prepare_validation_dataset(s, e, c, Nids)
         for mode in evaluation_modes:
             suf = c_val.id
-            error_dicts[f'{mode} {suf}'] = eval_all_datasets(loco_dict, s_val, e_val, save_to, suf=suf, mode=mode,
+            error_dicts[f'{mode} {suf}'] = eval_all_datasets(s=s_val, e=e_val,loco_dict=loco_dict,  save_to=save_to, suf=suf, mode=mode,
                                                              norm_modes=norm_modes, evaluation=evaluation)
-        d_val=dNl.AttrDict.from_nested_dicts({'step_data': s_val, 'endpoint_data': e_val, 'config': c_val, 'bouts': exp_bouts})
+        d_val = dNl.AttrDict.from_nested_dicts(
+            {'step_data': s_val, 'endpoint_data': e_val, 'config': c_val, 'bouts': exp_bouts})
         loco_dict[c_val.id] = d_val
         datasets.append(d_val)
 
-    d_exp=dNl.AttrDict.from_nested_dicts({'step_data': s_exp, 'endpoint_data': e_exp, 'config': c_exp, 'bouts': exp_bouts})
+    d_exp = dNl.AttrDict.from_nested_dicts(
+        {'step_data': s_exp, 'endpoint_data': e_exp, 'config': c_exp, 'bouts': exp_bouts})
     loco_dict[c_exp.id] = d_exp
     datasets.append(d_exp)
 
-    datasets=[dNl.AttrDict.from_nested_dicts(d) for d in datasets]
+    datasets = [dNl.AttrDict.from_nested_dicts(d) for d in datasets]
     if save_to is not None:
         dNl.save_dict(error_dicts, f'{save_to}/error_dicts.txt')
         dNl.save_dict(loco_dict, f'{save_to}/loco_dict.txt')
@@ -432,7 +450,7 @@ def run_locomotor_evaluation(d, locomotor_models, Nids=None, save_to=None,
     if 'dispersion' in plots:
         for r0, r1 in itertools.product(dsp_starts, dsp_stops):
             # plot_comparative_dispersion(loco_dict, c=c, range=(r0, r1), save_to=save_to)
-            plot_dispersion(datasets=datasets,range=(r0, r1), save_to=save_to)
+            plot_dispersion(datasets=datasets, range=(r0, r1), save_to=save_to)
     return error_dicts, loco_dict, datasets
 
 
@@ -490,7 +508,7 @@ def plot_bouts(loco_dict, plot_fits='', stridechain_duration=False, legend_outsi
     P.build(1, 2, figsize=(10, 5), sharex=False, sharey=True, fig=fig, axs=axs)
     valid_labs = {}
     loco_dict = dNl.AttrDict.from_nested_dicts(loco_dict)
-    for j, (id,d) in enumerate(loco_dict.items()):
+    for j, (id, d) in enumerate(loco_dict.items()):
         v = d['bouts']
         kws = {
             'marker': 'o',
@@ -594,6 +612,38 @@ def plot_endpoint(loco_dict, end_ps, save_to=None, show=False):
     if show:
         plt.show()
     return fig
+
+
+def compare2ref(ss, s=None, refID=None,
+                shorts= ['b', 'fov', 'foa', 'tur_fou', 'tur_fov_max', 'v', 'a', 'run_d', 'run_t', 'pau_t', 'tor5', 'tor20'],pars=None):
+    if s is None and refID is not None :
+        d = loadRef(refID)
+        d.load(contour=False)
+        s, e, c = d.step_data, d.endpoint_data, d.config
+
+    if pars is None and shorts is not None:
+        pars = getPar(shorts, to_return=['d'])[0]
+
+    KSdic = {}
+    for p, sh in zip(pars, shorts):
+        if isinstance(s, dict):
+            key = p if p in s.keys() else sh
+            p_s = np.array(s[key])
+            p_s = p_s[~np.isnan(p_s)]
+        else:
+            key = p if p in s.columns else sh
+            p_s = s[key].dropna().values
+        # else:
+        #     continue
+        if isinstance(ss, dict):
+            key= p if p in ss.keys() else sh
+            p_ss = np.array(ss[key])
+            p_ss = p_ss[~np.isnan(p_ss)]
+        else:
+            key = p if p in ss.columns else sh
+            p_ss = ss[key].dropna().values
+        KSdic[p] = ks_2samp(p_s, p_ss)[0]
+    return KSdic
 
 
 if __name__ == '__main__':

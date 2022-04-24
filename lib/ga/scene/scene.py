@@ -10,13 +10,13 @@ from lib.ga.util.time_util import TimeUtil
 
 class Scene:
 
-    def __init__(self, width, height, speed, statistics_panel_width=0):
+    def __init__(self, width, height, speed, panel_width=0):
         self.width = width
         self.height = height
         self.speed = speed
-        self.statistics_panel_width = statistics_panel_width
+        self.panel_width = panel_width
         self.objects = []
-        self.screen = pygame.display.set_mode((width + statistics_panel_width, height))
+        self.screen = pygame.display.set_mode((width + panel_width, height))
 
     def put(self, obj):
         if isinstance(obj, list):
@@ -61,7 +61,7 @@ class Scene:
         return self.__class__.__name__ + ' ' + str(self.width) + ' ' + str(self.height)
 
     @staticmethod
-    def load_from_file(file_path, scene_speed, statistics_panel_width):
+    def load_from_file(file_path, scene_speed, panel_width):
         with open(file_path) as f:
             line_number = 1
 
@@ -81,7 +81,7 @@ class Scene:
                 if words[0] == 'Scene':
                     width = int(words[1])
                     height = int(words[2])
-                    scene = Scene(width, height, scene_speed, statistics_panel_width)
+                    scene = Scene(width, height, scene_speed, panel_width)
                 # elif words[0] == 'SensorDrivenRobot':
                 #     x = float(words[1])
                 #     y = float(words[2])

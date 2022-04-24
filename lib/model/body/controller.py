@@ -108,17 +108,84 @@ class BodySim(BodyManager):
         # print(np.array(np.diff(t0) * 1000000).astype(int))
         return item, foodtype
 
-    def get_velocities(self):
-        pass
+    # def get_velocities(self):
+    #     pass
+
+    def Box2D_kinematics(self):
+        if self.ang_mode == 'velocity':
+            ang_vel = self.ang_activity * self.ang_vel_coef
+            ang_vel = self.compute_ang_vel(v=ang_vel, z=0)
+            self.segs[0].set_ang_vel(ang_vel)
+            if self.Nsegs > 1:
+                for i in np.arange(1, self.mid_seg_index, 1):
+                    self.segs[i].set_ang_vel(ang_vel / i)
+        elif self.ang_mode == 'torque':
+            self.torque = self.ang_activity * self.torque_coef
+            # self.segs[0]._body.ApplyAngularImpulse(self.torque, wake=True)
+            self.segs[0]._body.ApplyTorque(self.torque, wake=True)
+            # if self.Nsegs > 1:
+            #     for i in np.arange(1, self.mid_seg_index, 1):
+            #         self.segs[i]._body.ApplyTorque(self.torque / i, wake=True)
+
+        # Linear component
+        # Option : Apply to single body segment
+        # We get the orientation of the front segment and compute the linear vector
+        # target_segment = self.get_head()
+        # lin_vec = self.compute_new_lin_vel_vector(target_segment)
+        #
+        # # From web : Impulse = Force x 1 Sec in Box2D
+        # if self.mode == 'impulse':
+        #     imp = lin_vec / target_segment.get_Box2D_mass()
+        #     target_segment._body.ApplyLinearImpulse(imp, target_segment._body.worldCenter, wake=True)
+        # elif self.mode == 'force':
+        #     target_segment._body.ApplyForceToCenter(lin_vec, wake=True)
+        # elif self.mode == 'velocity':
+        #     # lin_vec = lin_vec * target_segment.get_Box2D_mass()
+        #     # Use this with gaussian crawler
+        #     # target_segment.set_lin_vel(lin_vec * self.lin_coef, local=False)
+        #     # Use this with square crawler
+        #     target_segment.set_lin_vel(lin_vec, local=False)
+        #     # pass
+
+        # Option : Apply to all body segments. This allows to control velocity for any Npoints. But it has the same shitty visualization as all options
+        # for seg in [self.segs[0]]:
+        for seg in self.segs:
+            if self.lin_mode == 'impulse':
+                temp_lin_vec_amp = self.lin_activity * self.lin_vel_coef
+                impulse = temp_lin_vec_amp * seg.get_world_facing_axis() / seg.get_Box2D_mass()
+                seg._body.ApplyLinearImpulse(impulse, seg._body.worldCenter, wake=True)
+            elif self.lin_mode == 'force':
+                lin_force_amp = self.lin_activity * self.lin_force_coef
+                force = lin_force_amp * seg.get_world_facing_axis()
+                seg._body.ApplyForceToCenter(force, wake=True)
+            elif self.lin_mode == 'velocity':
+                lin_vel_amp = self.lin_activity * self.lin_vel_coef
+                vel = lin_vel_amp * seg.get_world_facing_axis()
+                seg.set_lin_vel(vel, local=False)
+
+    def get_vels(self, lin, ang, prev_ang_vel):
+        if self.lin_mode == 'velocity':
+            lin_vel = lin * self.lin_vel_coef
+        else:
+            raise ValueError(f'Linear mode {self.lin_mode} not implemented for non-physics simulation')
+        if self.ang_mode == 'torque':
+            self.torque =ang * self.torque_coef
+            ang_vel = self.compute_ang_vel(torque=self.torque,
+                                           v=prev_ang_vel,
+                                           z=self.ang_damping)
+        elif self.ang_mode == 'velocity':
+            ang_vel = ang * self.ang_vel_coef
+        return lin_vel, ang_vel
 
     def step(self):
         self.cum_dur += self.model.dt
-        self.restore_body_bend()
+        self.restore_body_bend(self.dst, self.sim_length)
         pos = self.olfactor_pos
         self.food_detected, self.current_foodtype = self.detect_food(pos)
-        reward = self.food_detected is not None
-        self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.step(pos, reward)
-        self.update_larva()
+        self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.step(pos, reward= self.food_detected is not None)
+
+
+
 
         # Trying restoration for any number of segments
         # if self.Nsegs == 1:
@@ -133,101 +200,19 @@ class BodySim(BodyManager):
         #     # self.get_head()._body.ApplyTorque(self.torque, wake=True)
         #     pass
         if self.model.Box2D:
-            if self.ang_mode == 'velocity':
-                ang_vel = self.ang_activity * self.ang_vel_coef
-                ang_vel = self.compute_ang_vel(v=ang_vel, z=0)
-                self.segs[0].set_ang_vel(ang_vel)
-                if self.Nsegs > 1:
-                    for i in np.arange(1, self.mid_seg_index, 1):
-                        self.segs[i].set_ang_vel(ang_vel / i)
-            elif self.ang_mode == 'torque':
-                self.torque = self.ang_activity * self.torque_coef
-                # self.segs[0]._body.ApplyAngularImpulse(self.torque, wake=True)
-                self.segs[0]._body.ApplyTorque(self.torque, wake=True)
-                # if self.Nsegs > 1:
-                #     for i in np.arange(1, self.mid_seg_index, 1):
-                #         self.segs[i]._body.ApplyTorque(self.torque / i, wake=True)
-
-
-            # Linear component
-            # Option : Apply to single body segment
-            # We get the orientation of the front segment and compute the linear vector
-            # target_segment = self.get_head()
-            # lin_vec = self.compute_new_lin_vel_vector(target_segment)
-            #
-            # # From web : Impulse = Force x 1 Sec in Box2D
-            # if self.mode == 'impulse':
-            #     imp = lin_vec / target_segment.get_Box2D_mass()
-            #     target_segment._body.ApplyLinearImpulse(imp, target_segment._body.worldCenter, wake=True)
-            # elif self.mode == 'force':
-            #     target_segment._body.ApplyForceToCenter(lin_vec, wake=True)
-            # elif self.mode == 'velocity':
-            #     # lin_vec = lin_vec * target_segment.get_Box2D_mass()
-            #     # Use this with gaussian crawler
-            #     # target_segment.set_lin_vel(lin_vec * self.lin_coef, local=False)
-            #     # Use this with square crawler
-            #     target_segment.set_lin_vel(lin_vec, local=False)
-            #     # pass
-
-            # Option : Apply to all body segments. This allows to control velocity for any Npoints. But it has the same shitty visualization as all options
-            # for seg in [self.segs[0]]:
-            for seg in self.segs:
-                if self.lin_mode == 'impulse':
-                    temp_lin_vec_amp = self.lin_activity * self.lin_vel_coef
-                    impulse = temp_lin_vec_amp * seg.get_world_facing_axis() / seg.get_Box2D_mass()
-                    seg._body.ApplyLinearImpulse(impulse, seg._body.worldCenter, wake=True)
-                elif self.lin_mode == 'force':
-                    lin_force_amp = self.lin_activity * self.lin_force_coef
-                    force = lin_force_amp * seg.get_world_facing_axis()
-                    seg._body.ApplyForceToCenter(force, wake=True)
-                elif self.lin_mode == 'velocity':
-                    lin_vel_amp = self.lin_activity * self.lin_vel_coef
-                    vel = lin_vel_amp * seg.get_world_facing_axis()
-                    seg.set_lin_vel(vel, local=False)
+            self.Box2D_kinematics()
         else:
-            if self.lin_mode == 'velocity':
-                lin_vel_amp = self.lin_activity * self.lin_vel_coef
-            else:
-                raise ValueError(f'Linear mode {self.lin_mode} not implemented for non-physics simulation')
-            if self.ang_mode == 'torque':
-                self.torque = self.ang_activity * self.torque_coef
-                ang_vel = self.compute_ang_vel(torque=self.torque,
-                                               v=self.head.get_angularvelocity(),
-                                               z=self.ang_damping)
-            elif self.ang_mode == 'velocity':
-                ang_vel = self.ang_activity * self.ang_vel_coef
-                # ang_vel = self.compute_ang_vel(v=ang_vel, z=self.ang_damping)
-            self.step_no_physics(lin_vel=lin_vel_amp, ang_vel=ang_vel)
+            lin_vel, ang_vel = self.get_vels(self.lin_activity, self.ang_activity, self.head.get_angularvelocity())
+            lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel, self.head)
+            self.dst = lin_vel * self.model.dt
+            self.cum_dst += self.dst
+            self.position_body(lin_vel=lin_vel, ang_vel=ang_vel)
+            self.trajectory.append(self.pos)
+            self.model.space.move_agent(self, self.pos)
+
+        self.update_larva()
         for o in self.carried_objects:
             o.pos = self.pos
-
-    def compute_new_lin_vel_vector(self, target_segment):
-        # Option 1 : Create the linear velocity from orientation.
-        # This was the default. But it seems because of numerical issues it doesn't generate the expected vector,
-        # which results in some angular velocity  when linear velocity is applied.
-        # I haven't figured out when and why that happens
-        # orientation = target_segment.get_normalized_orientation()
-        # orientation = target_segment.get_orientation()
-        # lin_vec = b2Vec2(self.lin_activity * np.cos(orientation),
-        #                  self.lin_activity * np.sin(orientation))
-
-        # Option 2 : Just retrieve the current lin_velocity vec
-        # Update : Doesn't work because linear velocity can be zero
-        # Trying to integrate the two options
-
-        # if target_segment.get_linearvelocity_vec() != b2Vec2(0,0) :
-        #     previous_lin_velocity_vec = target_segment.get_linearvelocity_vec()
-        #     previous_lin_velocity_amp = target_segment.get_linearvelocity_amp()
-        #     previous_lin_velocity_unit_vec = previous_lin_velocity_vec / previous_lin_velocity_amp
-        #     lin_vec = self.lin_activity * previous_lin_velocity_unit_vec
-        # else :
-        #     orientation = target_segment.get_orientation()
-        #     # orientation = target_segment.get_normalized_orientation()
-        #     lin_vec = b2Vec2(self.lin_activity * np.cos(orientation),
-        #                      self.lin_activity * np.sin(orientation))
-        lin_vec = self.lin_activity * target_segment.get_world_facing_axis()
-
-        return lin_vec
 
     # Using the forward Euler method to compute the next theta and theta'
 
@@ -249,9 +234,9 @@ class BodySim(BodyManager):
     def compute_ang_vel(self, torque=0.0, v=0.0, z=0.0):
         return v + (-z * v - self.body_spring_k * self.body_bend + torque) * self.model.dt
 
-    def restore_body_bend(self):
+    def restore_body_bend(self,d,l):
         self.compute_spineangles()
-        d, l = self.dst, self.sim_length
+        # d, l = self.dst, self.sim_length
         if not self.model.Box2D:
             if self.Nsegs == 2:
                 self.spineangles[0] = lib.aux.ang_aux.restore_bend_2seg(self.spineangles[0], d, l,
@@ -273,28 +258,26 @@ class BodySim(BodyManager):
     def set_head_contacts_ground(self, value):
         self.head_contacts_ground = value
 
-    def step_no_physics(self, lin_vel, ang_vel):
-        dt = self.model.dt
-        l0=self.seg_lengths[0]
+    # def position_head(self, ang_vel):
+
+
+
+    def position_body(self, lin_vel, ang_vel):
+
         head = self.head
         hp0, o0 = head.get_pose()
         hr0 = self.global_rear_end_of_head
-        lin_vel, ang_vel=self.assess_collisions(lin_vel, ang_vel, head)
-        d = lin_vel * dt
-        ang_vel, o1, hr1, hp1 = self.assess_tank_contact(ang_vel, o0, d, hr0, hp0, dt, l0)
-        head.set_pose(hp1, o1)
-        head.update_vertices(hp1, o1)
+        ang_vel, o1, hr1, hp1 = self.assess_tank_contact(ang_vel, o0, self.dst, hr0, hp0, self.model.dt, self.seg_lengths[0])
+        head.update_poseNvertices(hp1, o1)
+        head.set_lin_vel(lin_vel)
+        head.set_ang_vel(ang_vel)
 
         if self.Nsegs > 1:
             self.position_rest_of_body(o1-o0, head_rear_pos=hr1, head_or=o1)
 
         self.pos = self.global_midspine_of_body if self.Nsegs != 2 else hr1
-        self.model.space.move_agent(self, self.pos)
-        head.set_lin_vel(lin_vel)
-        head.set_ang_vel(ang_vel)
-        self.dst = d
-        self.cum_dst += d
-        self.trajectory.append(self.pos)
+
+
 
     def position_rest_of_body(self, d_orientation, head_rear_pos, head_or):
         N = self.Nsegs
@@ -304,10 +287,9 @@ class BodySim(BodyManager):
             if N == 2:
                 seg = self.segs[1]
                 self.spineangles[0] += d_orientation
-                new_or = head_or - self.spineangles[0]
-                new_p = head_rear_pos + np.array([-np.cos(new_or), -np.sin(new_or)]) * self.seg_lengths[1] / 2
-                seg.set_pose(new_p, new_or)
-                seg.update_vertices(new_p, new_or)
+                o2 = head_or - self.spineangles[0]
+                p2 = head_rear_pos + np.array([-np.cos(o2), -np.sin(o2)]) * self.seg_lengths[1] / 2
+                seg.update_poseNvertices(p2, o2)
             else:
                 bend_per_spineangle = d_orientation / (N / 2)
                 for i, (seg, l) in enumerate(zip(self.segs[1:], self.seg_lengths[1:])):
@@ -321,8 +303,7 @@ class BodySim(BodyManager):
                         self.spineangles[i] += bend_per_spineangle
                     new_or = previous_seg_or - self.spineangles[i]
                     new_p = global_p + np.array([-np.cos(new_or), -np.sin(new_or)]) * l / 2
-                    seg.set_pose(new_p, new_or)
-                    seg.update_vertices(new_p, new_or)
+                    seg.update_poseNvertices(new_p, new_or)
             self.compute_body_bend()
 
     def compute_spineangles(self):

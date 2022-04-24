@@ -39,6 +39,8 @@ class LarvaWorld:
         cls.screen_dim_W, cls.screen_dim_H = int(W * 2 / 3/16)*16, int(H * 2 / 3/16)*16
         """Create a new model object_class and instantiate its RNG automatically."""
         cls._seed = kwargs.get("seed", None)
+        # print(cls._seed)
+        # raise
         cls.random = random.Random(cls._seed)
         return object.__new__(cls)
 

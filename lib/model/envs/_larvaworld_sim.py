@@ -110,8 +110,6 @@ class LarvaWorldSim(LarvaWorld):
                                    default_color=gConf['default_color'], life_history=gConf['life_history'])
 
     def step(self):
-        # t0=[]
-        # t0.append(time.time())
         self.sim_clock.tick_clock()
         if not self.larva_collisions:
             self.larva_bodies = self.get_larva_bodies()
@@ -120,14 +118,12 @@ class LarvaWorldSim(LarvaWorld):
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
         if self.windscape is not None:
             self.windscape.update()
-        # t0.append(time.time())
         self.active_larva_schedule.step()
         self.active_food_schedule.step()
         if self.Box2D:
             self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
             for fly in self.get_flies():
                 fly.update_trajectory()
-        # t0.append(time.time())
         if self.larva_step_col is not None:
             self.larva_step_col.collect(self)
         if self.step_group_collector is not None:
@@ -137,8 +133,6 @@ class LarvaWorldSim(LarvaWorld):
             self.exp_condition.check(self)
         self.Nticks += 1
 
-        # t0.append(time.time())
-        # print(np.array(np.diff(t0)*100000).astype(int))
 
     def get_larva_bodies(self, scale=1.0):
         return {l.unique_id: l.get_shape(scale=scale) for l in self.get_flies()}

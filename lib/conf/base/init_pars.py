@@ -220,15 +220,15 @@ def init_pars():
                   },
         'physics': {
             'torque_coef': {'v': 0.41, 'max': 5.0, 'dv': 0.01,
-                            'h': 'The coefficient converting the TURNER activity to bending torque (ang_mode:torque).'},
+                            'h': 'Conversion coefficient from TURNER output to torque-per-inertia-unit.'},
             'ang_vel_coef': {'v': 1.0, 'max': 5.0, 'dv': 0.01,
-                            'h': 'The coefficient converting the TURNER activity to angular velocity (ang_mode:velocity).'},
+                            'h': 'Conversion coefficient from TURNER output to angular velocity.'},
             'ang_damping': {'v': 2.5, 'max': 10.0,
-                            'h': 'The environmental angular damping exerted on bending angular velocity.'},
-            'body_spring_k': {'v': 0.25, 'max': 1.0, 'dv': 0.01,
-                              'h': 'The torsional spring constant of the larva body restoring the bending angle to 0.'},
-            'bend_correction_coef': {'v': 1.4, 'max': 10.0,
-                                     'h': 'The correction coefficient restoring the bending angle during forward motion by aligning the rear body segments to the front heading axis.'},
+                            'h': 'Angular damping exerted on angular velocity.'},
+            'body_spring_k': {'v': 0.25, 'max': 100.0, 'dv': 0.01,
+                              'h': 'Larva-body torsional spring constant reflecting deformation resistance.'},
+            'bend_correction_coef': {'v': 1.0, 'max': 1.5,
+                                     'h': 'Correction coefficient of bending angle during forward motion.'},
             'ang_mode': {'t': str, 'v': 'torque', 'vs': ['torque', 'velocity'],
                          'h': 'Whether the Turner module output is equivalent to torque or angular velocity.'},
         },
@@ -278,19 +278,21 @@ def init_pars():
                    },
         'interference': {
             'mode': {'t': str, 'v': 'square', 'vs': ['default', 'square', 'phasic'],
-                                 'h': 'The suppression phase mode of the CRAWLER on the TURNER.'},
+                                 'h': 'CRAWLER:TURNER suppression phase mode.'},
             'suppression_mode': {'t': str, 'v': 'amplitude', 'vs': ['amplitude', 'oscillation', 'both'],
-                     'h': 'The suppression mode of the CRAWLER on the TURNER.'},
+                     'h': 'CRAWLER:TURNER suppression target.'},
             'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0,
-                                  'h': 'The CRAWLER oscillator cycle range during which it interferes with the TURNER.'},
+                                  'h': 'CRAWLER phase range for TURNER suppression lift.'},
             'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0,
-                                 'h': 'The FEEDER oscillator cycle range during which it interferes with the TURNER.'},
+                                 'h': 'FEEDER phase range for TURNER suppression lift.'},
+            'max_attenuation_phase': {'v': 3.4, 'max': 2*np.pi,
+                            'h': 'CRAWLER phase of minimum TURNER suppression.'},
             'attenuation': {'v': 1.0, 'max': 1.0,
-                            'h': 'The activity attenuation exerted on the TURNER module due to interference by other oscillators.'},
-            'attenuation_min': {'v': 0.2, 'max': 1.0,
-                            'h': 'The minimum activity attenuation exerted on the TURNER module due to interference by other oscillators.'},
+                            'h': 'CRAWLER:TURNER baseline suppression coefficient.'},
+            # 'attenuation_min': {'v': 0.2, 'max': 1.0,
+            #                 'h': 'The minimum activity attenuation exerted on the TURNER module due to interference by other oscillators.'},
             'attenuation_max': {'v': 0.31, 'max': 1.0,
-                            'h': 'The maximum activity attenuation exerted on the TURNER module due to interference by other oscillators.'},
+                            'h': 'CRAWLER:TURNER suppression lift coefficient.'},
         },
 
         'olfactor': {
@@ -830,6 +832,26 @@ def init_pars():
                         'h': 'Whether to additionally fixate the above or below body segment.'},
         'use_background': {**bF, 'h': 'Whether to use a virtual moving background when replaying a fixated larva.'}
     }
+
+    d['GAselection']={
+        'Nagents': {'t': int, 'v': 30, 'min': 2, 'max': 1000, 'h': 'Number of agents per generation'},
+        'Nelits': {'t': int, 'v': 3, 'min': 0, 'max': 1000, 'h': 'Number of elite agents preserved per generation'},
+        'max_Nticks': {'t': int, 'v': 1000, 'max': 100000, 'h': 'Maximum number of ticks per generation'},
+        'Pmutation': {'v': 0.3, 'max': 1.0, 'h': 'Probability of genome mutation'},
+        'Cmutation': {'v': 0.1, 'max': 1.0, 'h': 'Mutation coefficient'},
+        'selection_ratio': {'v': 0.3, 'max': 1.0, 'h': 'Fraction of agents to be selected for the next generation'},
+        'verbose': {'t': int, 'v': 0, 'max': 3, 'h': 'Verbose argument for GA launcher'}
+    }
+
+    d['obstacle_avoidance'] = {
+        'sensor_delta_direction': {'v': 0.8,'dv': 0.01, 'min': 0.0, 'max': 2.0, 'h': 'Sensor delta_direction'},
+        'sensor_saturation_value': {'t': int, 'v': 46, 'min': 0, 'max': 500, 'h': 'Sensor saturation value'},
+        'obstacle_sensor_error': {'v': 0.85,'dv': 0.01, 'max': 1.0, 'h': 'Proximity sensor error'},
+        'sensor_max_distance': {'v': 1.67, 'dv': 0.01,'min': 0.1, 'max': 2.0, 'h': 'Sensor max_distance'},
+        'motor_ctrl_coefficient': {'t': int,'v': 3246, 'max': 8000, 'h': 'Motor ctrl_coefficient'},
+        'motor_ctrl_min_actuator_value': {'t': int,'v': 4,'min': 0, 'max': 100, 'h': 'Motor ctrl_min_actuator_value'},
+    }
+
 
     return d
 

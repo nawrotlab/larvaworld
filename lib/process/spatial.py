@@ -349,10 +349,14 @@ def tortuosity(xy):
 def straightness_index(xy, w):
     # Compute tortuosity over intervals of duration w
     xys = rolling_window_xy(xy, w)
-    k = xy.shape[0] - xys.shape[0]
-    k1 = int(k / 2)
-    SI = [np.nan] * k1 + [tortuosity(xys[i, :]) for i in range(xys.shape[0])] + [np.nan] * (k - k1)
-    return np.array(SI)
+    k0,k1=xy.shape[0], xys.shape[0]
+    dk = int((k0-k1) / 2)
+    SI = np.zeros(k0) * np.nan
+    for i in range(k1):
+        SI[dk+i]=tortuosity(xys[i, :])
+    # SI = [np.nan] * k1 + [tortuosity(xys[i, :]) for i in range(xys.shape[0])] + [np.nan] * (k - k1)
+    return SI
+    # return np.array(SI)
 
 
 def comp_straightness_index(s, dt, e=None, c=None, tor_durs=[2, 5, 10, 20], **kwargs):
