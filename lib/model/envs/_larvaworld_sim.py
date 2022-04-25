@@ -76,6 +76,43 @@ class LarvaWorldSim(LarvaWorld):
         # self.refresh_odor_dicts(ids)
         return N, layers
 
+#@todo use _create_thermo_layers
+    def _create_thermo_layers(self, pars):
+        from lib.model.envs._space import ThermoScape
+        sources = self.thermo_sources # dictionary
+        # ids = dNl.unique_list([s.thermo_id for s in sources if s.thermo_id is not None]) #@note thermo_id needs to be added to ExpConfs.txt
+        # N = len(sources)
+        N=1; id='temp'
+        cols = N_colors(N, as_rgb=True)
+        layers = {}
+        # for i, (id, c) in enumerate(zip(psources, cols)):
+        #     od_sources = [f for f in sources if f.odor_id == id]
+        #     temp = dNl.unique_list([s.default_color for s in od_sources])
+        #     if len(temp) == 1:
+        #         c0 = temp[0]
+        #     elif len(temp) == 3 and all([type(k) == float] for k in temp):
+        #         c0 = temp
+        #     else:
+        #         c0 = c
+
+        plate_temp = self.plate_temp # int/float
+        source_temp_diff = self.thermo_source_dTemps # dict
+        kwargs = {
+            'model': self,
+            'pTemp': plate_temp,
+            'spread': None,
+            'unique_id': id,
+            'origins':sources,
+            'tempDiff': source_temp_diff,
+            'default_color': 'green',
+            'space_range': self.space_edges_for_screen,
+
+            }
+
+        tlayers[id] = ThermoScape(**kwargs)
+        # self.refresh_odor_dicts(ids)
+        return N, tlayers
+        
     def create_larvae(self, larva_groups, parameter_dict={}):
         for gID, gConf in larva_groups.items():
             mod, sample = gConf['model'], gConf['sample']
