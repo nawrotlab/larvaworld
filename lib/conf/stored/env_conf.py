@@ -50,7 +50,7 @@ def foodNodor_4corners(d=0.05):
     return dic
 
 
-def env(a, f=f_pars(), o=None, bl={}, w=None):
+def env(a, f=f_pars(), o=None, bl={}, w=None, t=None):
     if o == 'D':
         o = {'odorscape': 'Diffusion',
              'grid_dims': [51, 51],
@@ -70,7 +70,7 @@ def env(a, f=f_pars(), o=None, bl={}, w=None):
         else:
             w['puffs'] = {}
         w = null_dict('windscape', **w)
-    return null_dict('env_conf', arena=a, food_params=f, odorscape=o, border_list=bl, windscape=w)
+    return null_dict('env_conf', arena=a, food_params=f, odorscape=o, border_list=bl, windscape=w, thermoscape=t)
 
 
 def CS_UCS(N=2, x=0.04):
@@ -172,6 +172,7 @@ env_dict = {
     'game': game_env(),
     # 'capture_the_flag': game_env(),
     'arena_50mm_diffusion': env(arena(0.05), o='D'),
+    'thermo_gradient': env(arena(0.17,0.17), t={"plate_temp": 22, "thermo_sources": [[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]], "thermo_source_dTemps" : [8,-8,8,-8]}),
 }
 
 # if __name__ == '__main__':
