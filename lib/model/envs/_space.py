@@ -384,7 +384,7 @@ class WindScape:
 # @todo adding thermoscape class - need to edit functions within this class mix of gaussian GaussianValueLayer(ValueLayer)
 
 class ThermoScape(ValueGrid):
-    def __init__(self, pTemp, origins=[], tempDiff=[], default_color='green', visible=False):
+    def __init__(self, pTemp, spread, origins=[], tempDiff=[], default_color='green', visible=False):
 
         self.plate_temp = pTemp
         self.thermo_sources = {str(i):o for i,o in enumerate(origins)} 
@@ -406,7 +406,7 @@ class ThermoScape(ValueGrid):
     def update_values(self):
         pass
 
-    
+
 #@todo remove rezo, it is actually only important if I want to draw.
 #thermo={'temp_spread':None, 'plate_temp':22, 'thermo_sources': None, 'thermo_differences': None}
     def generate_thermoscape(self, spread=0.1, pTemp = 22, origins = [[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]], tempDiff = [8,-8,8,-8]):
@@ -454,18 +454,39 @@ class ThermoScape(ValueGrid):
         # return  pTemp + sum(thermoDists_Dict.values()) / len(thermoDists_Dict)
 
 
+    # def get_thermo_value(self, pos):
+    #     size,size2 = [1,1]
+    #     # size, size2 = self.arena_dims * 1000  #it is in m and we want it in mm.
+    #     pos_ad = [size*pos[0], size2*pos[1]]
+    #     pos_temp = {}
+    #     if self.thermoscape_layers is None:
+    #         return 0 # or np.nan
+    #     for k in self.thermoscape_layers:
+    #         v=self.thermoscape_layers[k]
+    #         pos_temp[k] = v.pdf(pos_ad) / v.pdf(self.thermo_sources[k]) * (self.thermo_source_dTemps[k] * len(self.thermo_source_dTemps)) #@todo need to check if this works
+    #     return self.plate_temp + sum(pos_temp.values()) / len(pos_temp)
+
     def get_thermo_value(self, pos):
-        size,size2 = [1,1]
-        # size, size2 = self.arena_dims * 1000  #it is in m and we want it in mm.
+
+        size,size2=[1,1]
         pos_ad = [size*pos[0], size2*pos[1]]
         pos_temp = {}
-        if self.thermoscape_layers is None:
-            return 0 # or np.nan
-        for k in layers[id].thermoscape_layers:
-            v=layers[id].thermoscape_layers[k]
-            pos_temp[k] = v.pdf(pos_ad) / v.pdf(layers[id].thermo_sources[k]) * (layers[id].thermo_source_dTemps[k] * len(layers[id].thermo_source_dTemps)) #@todo need to check if this works
-        return layers[id].plate_temp + sum(pos_temp.values()) / len(pos_temp)
+        nSources = len(self.thermo_source_dTemps)
+        thermo_gain = {'cool':0, 'warm':0}
 
+        if self.thermoscape_layers is None:
+            print(0) # or np.nan
+        for k in self.thermoscape_layers:
+            v=self.thermoscape_layers[k]
+            pos_temp[k] = v.pdf(pos_ad) / v.pdf(self.thermo_sources[k]) * (self.thermo_source_dTemps[k] * nSources) #@todo need to check if this works
+            # print(plate_temp + sum(pos_temp.values()) / len(pos_temp))
+            # print(plate_temp + pos_temp[k] / len(pos_temp))
+            print(pos_temp[k] / nSources)
+            if pos_temp[k] < 0:
+                thermo_gain['cool'] += abs(pos_temp[k] / nSources)
+            elif pos_temp[k] > 0:
+                thermo_gain['warm'] += abs(pos_temp[k] / nSources)
+        return thermo_gain
 
     def get_grid(self):
         X, Y = self.meshgrid

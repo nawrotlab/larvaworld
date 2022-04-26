@@ -1,6 +1,8 @@
 import numpy as np
 from siunits import BaseUnit, Composite, DerivedUnit
 
+# import sys
+# sys.path.append('/Users/tkafle/Downloads/larvaworld')
 from lib.aux.collecting import output_keys
 
 proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
@@ -176,6 +178,17 @@ def init_pars():
                      'h': 'The mean gain/valence for the odorant. Positive/negative for appettitive/aversive valence.'},
             'std': {'max': 10.0, 'dv': 1.0, 'h': 'The standard deviation for the odorant gain/valence.'}
         },
+        'thermoscape': {
+            'plate_temp': {'t': float, 'v':22.0, 'min': 0.0, 'max': 40.0, 'dv': 0.1,
+                            'h': 'The base temperature of the plate.'},
+            'thermo_sources': {'t':List[Tuple[float]], 'v': [[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]],
+                            'h': 'The location of tempreatures sources as a list (between 0 and 1).'},
+            'thermo_source_dTemps' : {'t':List[float], 'v': [8,-8,8,-8],
+                            'h': 'The differences of temperature from the plate_temp of each of the corresponding sources.'},
+                      
+
+        }, #@todo need to add 'thermo_gains' like 'odor_gains' but for just 'cool' and 'warm'
+
         'optimization': {
             'fit_par': {'t': str, 'disp': 'Utility metric', 'h': 'The utility parameter optimized.'},
             'minimize': {**bT, 'h': 'Whether to minimize or maximize the utility parameter.'},
@@ -686,7 +699,8 @@ def init_pars():
                      'border_list': {'t': dict, 'v': {}},
                      'food_params': d['food_params'],
                      'odorscape': d['odorscape'],
-                     'windscape': d['windscape']}
+                     'windscape': d['windscape'],
+                     'thermoscape': d['thermoscape']}
 
     d['exp_conf'] = {'env_params': {'t': str, 'vs': kConfDict('Env')},
                      'larva_groups': {'t': dict, 'v': {}},

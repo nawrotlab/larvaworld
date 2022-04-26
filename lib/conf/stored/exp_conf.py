@@ -58,6 +58,10 @@ def chem_exp(name, c=['olfactor'], dur=5.0, **kwargs):
                enrichment=enr_dict(proc=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'],
                                    fits=False), **kwargs)
 
+def thermo_exp(name, c=['temperature'], dur=5.0, **kwargs): #@todo do I need to edit this? I need to implement it below.
+    return exp(name, sim={'duration': dur}, c=c,
+               enrichment=enr_dict(proc=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'],
+                                   fits=False), **kwargs)
 
 def food_exp(name, c=['feeder'], dur=10.0, en=True, **kwargs):
     return exp(name, sim={'duration': dur}, c=c, en=en, **kwargs)
@@ -130,6 +134,12 @@ grouped_exp_dict = {
         'dispersion_x4': simple_exp('arena_200mm', dur=3.0,
                                     l=lgs(models=['explorer', 'Levy-walker', 'explorer_3con', 'nengo_explorer'],
                                           ids=['CoupledOsc', 'Levy', '3con', 'nengo'], N=5)),
+    },
+#@ todo need to add thermotaxis here - similar to chemotaxis
+    'thermotaxis' : {
+        'squarex4': thermo_exp('thermo_gradient',
+                               l=lg(m='thermonavigator', N=20, p=(0.0, 0.0), s=(0.02, 0.02),
+                                    ors=(-180.0, 180.0))),
     },
 
     'chemotaxis': {

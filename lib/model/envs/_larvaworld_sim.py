@@ -27,7 +27,17 @@ class LarvaWorldSim(LarvaWorld):
         self._place_food(self.env_pars.food_params)
         self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
         if self.env_pars.odorscape is not None:
+            print(self.env_pars.odorscape)
             self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars.odorscape, sources = self.get_food() + self.get_flies())
+        print(self.env_pars)
+        # print("Out here")
+        # if self.env_pars.thermoscape is not None:
+        #     print("In here")
+        #     print(self.env_pars.thermoscape)
+        #     self.Ntemps, self.thermo_layers = self._create_thermo_layers(self.env_pars.thermoscape)
+        # else:
+        #     print(self.env_pars.thermoscape)
+        #     print("Hein")
 
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
@@ -108,11 +118,18 @@ class LarvaWorldSim(LarvaWorld):
             'space_range': self.space_edges_for_screen,
 
             }
+        kwargs = {
+            'pTemp': 22,
+            'origins':[[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]],
+            'tempDiff': [8,-8,8,-8],
+            'default_color': 'green',
 
-        tlayers[id] = ThermoScape(**kwargs)
+            }
+        tlayers = ThermoScape(**kwargs)
+        # tlayers.get_the
         # self.refresh_odor_dicts(ids)
         return N, tlayers
-        
+
     def create_larvae(self, larva_groups, parameter_dict={}):
         for gID, gConf in larva_groups.items():
             mod, sample = gConf['model'], gConf['sample']
