@@ -59,7 +59,7 @@ class BaseLauncher:
         # self.scene = Scene.load_from_file(self.scene_file, self.scene_speed, self.SIDE_PANEL_WIDTH)
 
         # self.screen = self.scene.screen
-        # self.side_panel = SidePanel(self.scene, self.population_num)
+        # self.side_panel = SidePanel(self.scene, self.Nagents)
         # pygame.init()
         # pygame.display.set_caption(self.caption)
         # self.clock = pygame.time.Clock()
@@ -103,13 +103,13 @@ class GALauncher(BaseLauncher):
     # MULTICORE = True
 
     engine_kws = {
-        'elitism_num': 3,
+        'Nelits': 3,
         'multicore': True,
-        'mutation_probability': 0.3,
-        'mutation_coefficient': 0.1,
+        'Pmutation': 0.3,
+        'Cmutation': 0.1,
         'selection_ratio': 0.3,
         'long_lasting_generations': None,
-        'long_lasting_generation_step_num': 1000,
+        'max_Nticks': 1000,
         'verbose': 0,
         'robot_random_direction': True,
         'obstacle_sensor_error': 0,
@@ -131,19 +131,19 @@ class GALauncher(BaseLauncher):
         # self.screen = None
         #
         # self.side_panel = None
-        # self.population_num = None
+        # self.Nagents = None
         # self.scene_speed = None
         # self.engine = None
-        # self.elitism_num = None
+        # self.Nelits = None
         # self.robot_random_direction = None
         # self.multicore = None
         # self.obstacle_sensor_error = None
-        # self.mutation_probability = None
-        # self.mutation_coefficient = None
+        # self.Pmutation = None
+        # self.Cmutation = None
         # self.selection_ratio = None
         # self.verbose = None
         # self.long_lasting_generations = None
-        # self.long_lasting_generation_step_num = self.LONG_LASTING_GENERATION_STEP_NUM
+        # self.max_Nticks = self.LONG_LASTING_GENERATION_STEP_NUM
 
         # self.parse_cli_arguments()
         pygame.init()
@@ -198,7 +198,7 @@ class GALauncher(BaseLauncher):
         # self.scaling_factor = self.scene.width / self.arena_width
 
         # self.screen = self.scene.screen
-        # self.side_panel = SidePanel(self.scene, self.population_num)
+        # self.side_panel = SidePanel(self.scene, self.Nagents)
         self.engine = self.GA_engine(scene=self.scene, side_panel=self.side_panel, population_num=self.population_num,
                                      dt=self.dt, scaling_factor=self.scaling_factor,
                                      robot_class=self.robot_class, **self.engine_kws, **self.GA_engine_kws)
@@ -223,10 +223,10 @@ class GALauncher(BaseLauncher):
     #     parser = CliParser()
     #     parser.parse_args(self.scene_file, self.DEFAULT_SCENE_SPEED, self.scene_type)
     #
-    #     self.elitism_num = parser.elitism_num
-    #     self.population_num = parser.population_num
-    #     self.mutation_probability = parser.mutation_probability
-    #     self.mutation_coefficient = parser.mutation_coefficient
+    #     self.Nelits = parser.Nelits
+    #     self.Nagents = parser.Nagents
+    #     self.Pmutation = parser.Pmutation
+    #     self.Cmutation = parser.Cmutation
     #     self.robot_random_direction = parser.robot_random_direction
     #     self.scene_speed = parser.scene_speed
     #     # self.scene_file = parser.scene_file
@@ -269,7 +269,7 @@ class GAEngineTemplate(GA_selector):
         self.genome_class = genome_class
         self.robot_class = robot_class
 
-        for i in range(self.population_num):
+        for i in range(self.Nagents):
             x, y = self.robot_start_position()
             genome = self.genome_class.random(self.generation_num)
             self.genomes.append(genome)
@@ -278,8 +278,8 @@ class GAEngineTemplate(GA_selector):
             scene.put(robot)
             self.robots.append(robot)
 
-        self.side_panel.update_ga_data(self.generation_num, None, None)
-        self.side_panel.update_ga_time(0, 0)
+        self.side_panel.update_ga_data(self.generation_num, None, None, len(self.robots))
+        self.side_panel.update_ga_time(0, 0,0)
 
         print('\nGeneration', self.generation_num, 'started')
 
@@ -346,8 +346,8 @@ class GAEngineTemplate(GA_selector):
                     self.destroy_robot(robot)
 
         # create new obstacles for long lasting generations
-        if not self.long_lasting_generations and self.generation_step_num == self.long_lasting_generation_step_num:
-            print('Time limit reached (' + str(self.long_lasting_generation_step_num) +
+        if not self.long_lasting_generations and self.generation_step_num == self.max_Nticks:
+            print('Time limit reached (' + str(self.max_Nticks) +
                   ' steps), destroying all remaining robots')
 
             for robot in self.robots[:]:
@@ -358,13 +358,14 @@ class GAEngineTemplate(GA_selector):
             print('Generation', self.generation_num, 'terminated')
             self.create_new_generation()
             self.build_genomes()
-            self.side_panel.update_ga_data(self.generation_num, self.best_genome, self.best_genome.fitness)
+            self.side_panel.update_ga_data(self.generation_num, self.best_genome, self.best_genome.fitness, len(self.robots))
 
         # update statistics time
         current_time = TimeUtil.current_time_millis()
         total_time_seconds = math.floor((current_time - self.start_total_time) / 1000)
         generation_time_seconds = math.floor((current_time - self.start_generation_time) / 1000)
-        self.side_panel.update_ga_time(total_time_seconds, generation_time_seconds)
+        self.generation_sim_time += self.dt
+        self.side_panel.update_ga_time(total_time_seconds, generation_time_seconds, self.generation_sim_time)
 
         self.generation_step_num += 1
 
@@ -387,7 +388,7 @@ class GAEngineTemplate(GA_selector):
         elite_label = 1
 
         for genome in self.genomes:
-            if elite_label <= self.elitism_num:
+            if elite_label <= self.Nelits:
                 label = elite_label
                 elite_label += 1
             else:

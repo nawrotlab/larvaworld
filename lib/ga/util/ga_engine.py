@@ -517,7 +517,10 @@ class BaseGenome:
     def mutate_with_probability(self, v, Pmut, Cmut, choices=None):
         if random.random() < Pmut:
             if choices is None:
-                return random.gauss(v, Cmut * v)
+                if v is None :
+                    return v
+                else:
+                    return random.gauss(v, Cmut * v)
             else:
                 return random.choice(choices)
         else:
@@ -531,19 +534,25 @@ class BaseGenome:
             else:
                 r0, r1 = vs['min'], vs['max']
                 v = getattr(self, k)
-                if vs['dtype'] == int:
-                    v=int(v)
-                if vs['dtype'] == Tuple[float]:
-                    vv0, vv1 = v
-                    if vv0 < r0:
-                        vv0 = r0
-                    if vv1 > r1:
-                        vv1 = r1
-                    if vv0 > vv1:
-                        vv0 = vv1
+                if v is None:
+                    setattr(self, k, v)
+                    continue
+                else :
 
-                    setattr(self, k, (vv0, vv1))
-                else:
+                    if vs['dtype'] == Tuple[float]:
+                        vv0, vv1 = v
+                        if vv0 < r0:
+                            vv0 = r0
+                        if vv1 > r1:
+                            vv1 = r1
+                        if vv0 > vv1:
+                            vv0 = vv1
+
+                        setattr(self, k, (vv0, vv1))
+                        continue
+                    if vs['dtype'] == int:
+                        v=int(v)
+                    # else:
                     if v < r0:
                         setattr(self, k, r0)
                     elif v > r1:

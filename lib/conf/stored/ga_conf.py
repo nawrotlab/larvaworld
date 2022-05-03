@@ -172,6 +172,7 @@ realism_kws = {
     'ga_kws': {
         'base_model': 'Sakagiannis2022*',
         # 'bestConfID': 'Sakagiannis2022**',
+        # 'space_dict': {**physics_space, **interference_space},
         'space_dict': physics_space,
         'fitness_func': realism_x2_func,
         'plot_func': interference_plot_func,
