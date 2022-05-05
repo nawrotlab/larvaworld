@@ -33,7 +33,8 @@ class SidePanel:
         self.best_genome = best_genome
         self.fitness_best_genome = fitness_best_genome
 
-    def update_ga_population(self, Nagents):
+    def update_ga_population(self, Nalive, Nagents):
+        self.Nalive = Nalive
         self.Nagents = Nagents
 
     def update_ga_time(self, cum_t, gen_t, gen_sim_t):
@@ -65,7 +66,7 @@ class SidePanel:
 
             self.render_line(font, 'Total time: ' + TimeUtil.format_time_seconds(self.cum_t))
             self.render_line(font, 'Generation: ' + str(self.generation_num))
-            self.render_line(font, 'Population: ' + str(self.Nagents))
+            self.render_line(font, 'Population: ' + str(self.Nalive) +'/'+ str(self.Nagents))
 
             self.render_line(font, 'Generation real-time: ' + TimeUtil.format_time_seconds(self.gen_sim_t))
             self.render_line(font, '')
@@ -80,6 +81,7 @@ class SidePanel:
             self.render_line(font, '')
             self.render_line(font, 'Controls:')
             self.render_line(font, 'S : save current genomes to file', self.LEFT_MARGIN)
+            self.render_line(font, 'E : evaluate and plot best genome', self.LEFT_MARGIN)
             self.render_line(font, '+ : increase scene speed', self.LEFT_MARGIN)
             self.render_line(font, '- : decrase scene speed', self.LEFT_MARGIN)
             self.render_line(font, 'R : restart', self.LEFT_MARGIN)

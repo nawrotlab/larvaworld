@@ -213,7 +213,7 @@ class GA_builder(GA_selector):
 
         self.robots = self.build_generation()
         self.side_panel.update_ga_data(self.generation_num, None, None)
-        self.side_panel.update_ga_population(len(self.robots))
+        self.side_panel.update_ga_population(len(self.robots), self.Nagents)
         self.side_panel.update_ga_time(0, 0, 0)
 
         print('\nGeneration', self.generation_num, 'started')
@@ -339,7 +339,7 @@ class GA_builder(GA_selector):
         gen_t = math.floor((cur_t - self.start_generation_time) / 1000)
         self.generation_sim_time += self.model.dt
         self.side_panel.update_ga_time(cum_t, gen_t, self.generation_sim_time)
-        self.side_panel.update_ga_population(len(self.robots))
+        self.side_panel.update_ga_population(len(self.robots), self.Nagents)
         self.generation_step_num += 1
 
     def destroy_robot(self, robot, excluded=False):
@@ -371,7 +371,7 @@ class Base_runner(LarvaWorldSim):
 
     SCREEN_MARGIN = 12
 
-    def __init__(self, scene_file, scene_speed=0,id=None, env_params=None, experiment='exploration',dt=0.1, caption='Template',save_to=None, **kwargs):
+    def __init__(self, scene_file, scene_speed=0,id=None, env_params=None, experiment='exploration',dt=0.1, caption=None,save_to=None, **kwargs):
         if save_to is None:
             save_to = paths.path("GA")
         if env_params is None:
@@ -384,7 +384,8 @@ class Base_runner(LarvaWorldSim):
         os.makedirs(self.plot_dir, exist_ok=True)
 
         self.arena_width, self.arena_height = env_params.arena.arena_dims
-
+        if caption is None :
+            caption=f'GA {experiment}'
         self.caption = caption
         self.scene_file = scene_file
         self.scene_speed = scene_speed
