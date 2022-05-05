@@ -127,10 +127,16 @@ class LarvaWorld:
                                               font=pygame.font.SysFont("comicsansms", 25))
         self.end_condition_met = False
 
-        if 'windscape' in self.env_pars.keys() and self.env_pars.windscape is not None and self.env_pars.windscape.wind_speed is not None:
+        # self.env_pars['thermoscape'] = {"plate_temp": 22, "thermo_sources": [[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]], "thermo_source_dTemps" : [8,-8,8,-8]}
+        # print(self.env_pars.keys()) # @todo remove the manual coding above when I can work out how to read in thermoscape in env_pars.
+        
+        # print("Hey")
+        # print(self.env_pars.windscape)
+        if 'windscape' in self.env_pars.keys() and self.env_pars.windscape is not None and self.env_pars.windscape['wind_speed'] is not None:
             self.windscape = WindScape(model=self, **self.env_pars.windscape)
         else:
             self.windscape = None
+        # self.windscape = None
 
     def toggle(self, name, value=None, show=False, minus=False, plus=False, disp=None):
         if disp is None:
@@ -437,24 +443,33 @@ class LarvaWorld:
 
     def add_larva(self, pos, orientation=None, id=None, pars=None, group=None, default_color=None, life_history=None,
                   odor=None):
+        print(f'{pos}\n{orientation}\n"id"\n{id}\n{pars}\n{group}\n"dc"\n{default_color}\n{life_history}\n{odor}')
         if group is None and pars is None:
             group, conf = list(self.larva_groups.items())[0]
+            print("al0")
             sample_dict = sample_group(conf['sample'], 1, self.sample_ps)
+            print("al0.1")
             mod = get_sample_bout_distros(conf['model'], conf['sample'])
+            print("al0.15")
             pars = self._generate_larvae(1, sample_dict, mod)
+            print("al0.2")
             life_history = conf['life_history']
+            print("al0.3")
             odor = conf['odor']
             if default_color is None:
                 default_color = conf['default_color']
+        print("al1")
         while not lib.aux.sim_aux.inside_polygon([pos], self.tank_polygon):
             pos = tuple(np.array(pos) * 0.999)
-
+        print("al2")
         l = LarvaSim(unique_id=self.next_id(type='Larva') if id is None else id, model=self, pos=pos,
                      orientation=np.random.uniform(0, 2 * np.pi, 1)[0] if orientation is None else orientation,
                      odor=odor, larva_pars=pars, group=group, default_color=default_color, life_history=life_history)
+        print("al3")
         self.active_larva_schedule.add(l)
+        print("al4")
         self.all_larva_schedule.add(l)
-
+        print("al5")
         return l
 
     def add_agent(self, agent_class, p0, p1=None):

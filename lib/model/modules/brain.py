@@ -3,7 +3,7 @@ import numpy as np
 
 from lib.model.modules.locomotor import Locomotor, DefaultLocomotor
 from lib.model.modules.memory import RLOlfMemory, RLTouchMemory
-from lib.model.modules.sensor import Olfactor, Toucher, WindSensor
+from lib.model.modules.sensor import Olfactor, Thermosensor, Toucher, WindSensor
 
 
 class Brain():
@@ -15,7 +15,8 @@ class Brain():
         self.olfactory_activation = 0
         self.touch_activation = 0
         self.wind_activation = 0
-        self.olfactor, self.memory, self.toucher, self.touch_memory, self.windsensor = [None] * 5
+        self.thermo_activation = 0
+        self.olfactor, self.memory, self.toucher, self.touch_memory, self.windsensor, self.thermosensor = [None] * 6
 
         if dt is None:
             dt = self.agent.model.dt
@@ -26,12 +27,14 @@ class Brain():
             self.windsensor = WindSensor(brain=self, dt=dt, gain_dict={'windsensor': 1.0}, **c['windsensor_params'])
         if m['olfactor']:
             self.olfactor = Olfactor(brain=self, dt=dt, **c['olfactor_params'])
+        if m['thermosensor']:
+            self.thermosensor = Thermosensor(brain=self, dt=dt, **c['thermosensor_params'])
 
         # self.crawler, self.turner, self.feeder, self.olfactor, self.intermitter = None, None, None, None, None
 
     @ property
     def activation(self):
-        return self.touch_activation + self.wind_activation + self.olfactory_activation
+        return self.touch_activation + self.wind_activation + self.olfactory_activation + self.thermo_activation
 
     def sense_odors(self, pos=None):
         if pos is None:
@@ -62,6 +65,24 @@ class Brain():
             #     v = np.abs(angle_dif(o, wo)) / 180 * wv
         return {'windsensor': v}
 
+    def sense_thermo(self, pos=None):
+        if pos is None:
+            pos = self.agent.pos
+        # cons = {}
+        # made it so dimensions are automatically put in here - as arena is xxy long with 0,0 centre (bottom left being -0.5x,-0.5y). thermoscape is 0.5,0.5 in the centre, and bottom left is 0,0 and top right is 1,1)
+        ad = self.agent.model.arena_dims
+        pos_adj = [(pos[0]+(ad[0]*0.5))/ad[0], (pos[1]+(ad[1]*0.5))/ad[1]]
+        try:
+            cons = self.agent.model.thermo_layers.get_thermo_value(pos_adj)
+        except AttributeError:
+            return {'cool': 0, 'warm': 0}
+        # for id, layer in self.agent.model.odor_layers.items():
+        #     v = layer.get_value(pos)
+        #     cons[id] = v + np.random.normal(scale=v * self.olfactor.noise)
+        # print("Sensing temp")
+        
+        # print(f'{cons} and {pos_adj}')
+        return cons
 
 class DefaultBrain(Brain):
     def __init__(self, conf, agent=None,dt=None,**kwargs):
@@ -89,6 +110,9 @@ class DefaultBrain(Brain):
             self.touch_activation = self.toucher.step(self.sense_food())
         if self.windsensor:
             self.wind_activation = self.windsensor.step(self.sense_wind())
+        if self.thermosensor:
+            # print("Have a thermoactivation!")
+            self.thermo_activation = self.thermosensor.step(self.sense_thermo())
         # A_in=self.touch_activation + self.wind_activation + self.olfactory_activation
         # print(self.activation)
         return self.locomotor.step(A_in=self.activation, length = self.agent.real_length)

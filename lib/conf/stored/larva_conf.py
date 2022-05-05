@@ -87,6 +87,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
         'W': 'windsensor',
         'F': 'feeder',
         'M': 'memory',
+        'Tp': 'thermosensor', # @todo what do I d there to make sure larvae have a gain towards temperature AND can detect it.
     }
     if 'L' in module_shorts:
         module_shorts.remove('L')
@@ -287,6 +288,8 @@ def create_mod_dict():
         'RL_navigator': add_brain(LOFM),
         'nengo_navigator': add_brain(nLO),
         'nengo_navigator_x2': add_brain(add_OD(OD2, nLO)),
+        'thermo_navigator': add_brain(add_OD(OD1, LO)), #@todo Do I need to edit something here?
+
     }
 
     foragers = {

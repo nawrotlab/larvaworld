@@ -19,30 +19,37 @@ class SingleRun:
                  trials={}, save_to=None, seed=None, analysis=False, show_output=False, **kwargs):
         np.random.seed(seed)
         random.seed(seed)
+        print('why1')
         self.show_output = show_output
         self.id = sim_params['sim_ID']
         self.sim_params = sim_params
+        print('why2')
         self.experiment = experiment
         dt = sim_params['timestep']
         self.store_data = sim_params['store_data']
         # analysis = sim_params['analysis']
         self.enrichment = enrichment
+        print('why3')
         self.analysis = analysis
         if save_to is None:
             save_to = paths.path("SIM")
         self.save_to = save_to
+        print('why4')
         self.storage_path = f'{sim_params["path"]}/{self.id}'
         self.dir_path = f'{save_to}/{self.storage_path}'
         self.plot_dir = f'{self.dir_path}/plots'
         self.param_dict = locals()
         self.start = time.time()
+        print('why5')
         self.source_xy = get_source_xy(env_params['food_params'])
         output = set_output(collections=collections, Nsegs=list(larva_groups.values())[0]['model']['body']['Nsegs'])
+        print('why5.5')
         self.env = LarvaWorldSim(id=self.id, dt=dt, Box2D=sim_params['Box2D'], output=output,
                                  env_params=env_params, larva_groups=larva_groups, trials=trials,
                                  experiment=self.experiment, Nsteps=int(sim_params['duration'] * 60 / dt),
                                  save_to=f'{self.dir_path}/visuals', configuration_text=self.configuration_text,
                                  **kwargs)
+        print('why6')
 
     def run(self):
         if self.show_output :

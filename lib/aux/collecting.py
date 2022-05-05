@@ -129,6 +129,10 @@ output_dict = {
         'step': ['c_odor1', 'dc_odor1', 'c_odor2', 'dc_odor2', 'A_olf', 'Act_tur', 'A_tur', 'Act_cr'],
         'endpoint': []},
 
+    'thermosensor': {
+        'step': ['t_cool', 'dt_cool', 't_warm', 'dt_warm', 'temp'],
+        'endpoint': []},
+
     'toucher': {
         'step': ['A_touch', 'A_tur','Act_tur', 'cum_f_det', 'on_food_tr', 'on_food'],
         'endpoint': ['on_food_tr']},
@@ -155,5 +159,6 @@ output_dict = {
     # 'source_vincinity': {'step': [], 'endpoint': ['d_cent_fin']},
     # 'source_approach': {'step': [], 'endpoint': ['d_chem_fin']},
 }
+#@todo add thermosensor key to output xy or sensed temperature/actual temperature
 
 output_keys = list(output_dict.keys())

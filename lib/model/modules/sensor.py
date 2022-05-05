@@ -130,7 +130,7 @@ class Olfactor(Sensor):
             # elif self.activation>0:
             #     self.brain.locomotor.intermitter.trigger_locomotion()
 
-    @property
+    @property #@todo add properties like this to thermosensor - and then use in par.py
     def first_odor_concentration(self):
         return list(self.X.values())[0]
 
@@ -182,9 +182,17 @@ class Thermosensor(Sensor):
             self.brain.intermitter.trigger_locomotion()
 
     @property
-    def detected_temperature(self):
-        return list(self.X.values())[0] #@todo do I need to make self.thermoX.values? same for dX.
+    def cool_detection(self):
+        return list(self.X.values())[0]
 
     @property
-    def detected_temperature_change(self):
+    def warm_detection(self):
+        return list(self.X.values())[1]
+
+    @property
+    def cool_detection_change(self):
         return list(self.dX.values())[0]
+
+    @property
+    def warm_detection_change(self):
+        return list(self.dX.values())[1]

@@ -649,6 +649,7 @@ def fft_freqs(s, e, c):
         e[fsv] = e[fv]
     except:
         pass
+    print(c.dt)
     e[ffov] = s[fov].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(0.1, 0.8))
     e['turner_input_constant'] = (e[ffov] / 0.024) + 5
 

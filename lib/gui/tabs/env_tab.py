@@ -1,3 +1,6 @@
+# import sys
+# sys.path.append('/Users/tkafle/Downloads/larvaworld')
+
 from lib.gui.aux.elements import CollapsibleTable, SelectionList, PadDict, PadTable, GuiTreeData
 from lib.gui.aux.functions import gui_cols
 from lib.gui.aux.buttons import GraphButton
@@ -14,7 +17,7 @@ class EnvTab(GuiTab):
         self.Bg = f'{self.B.lower()}_list'
 
     def update(self, w, c, conf, id=None):
-        for n in [self.Bg, 'arena', 'odorscape', 'windscape']:
+        for n in [self.Bg, 'arena', 'odorscape', 'windscape']: #@todo add thermoscape here without breaking it
             c[n].update(w, conf[n] if n in conf.keys() else {})
         for n in [self.Sg, self.Su, 'food_grid']:
             c[n].update(w, conf['food_params'][n])
@@ -22,7 +25,7 @@ class EnvTab(GuiTab):
     def get(self, w, v, c, as_entry=False):
         return {
             'food_params': {n: c[n].get_dict(v, w) for n in [self.Sg, self.Su, 'food_grid']},
-            **{n: c[n].get_dict(v, w) for n in [self.Bg, 'arena', 'odorscape', 'windscape']},
+            **{n: c[n].get_dict(v, w) for n in [self.Bg, 'arena', 'odorscape', 'windscape']},  #@todo add thermoscape here without breaking it
         }
 
     def build(self):
@@ -42,8 +45,10 @@ class EnvTab(GuiTab):
         s8 = PadDict('windscape', header_width=36,
                      subconfs={
                          'puffs': {'heading_dict': {'duration': 'duration', 'interval': 'interval', 'speed': 'speed'}}})
+        s9 = PadDict('odorscape', header_width=36)  #@todo this should be called thermoscape but causes problems atm.
+
         c = {}
-        for s in [s2, s3, s4, s5, s6, s7, s8]:
+        for s in [s2, s3, s4, s5, s6, s7, s8, s9]:
             c.update(s.get_subdicts())
         l1 = [c[n].get_layout(as_pane=True)[0] for n in [self.Sg, self.Su, 'food_grid']]
         c2 = PadDict(self.S, content=l1, header_width=34)

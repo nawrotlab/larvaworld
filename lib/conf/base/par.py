@@ -780,7 +780,7 @@ class ParDict:
         self.add(p='brain.wind_activation', k='A_wind',  d='wind activation', s=sub('A', 'wind'))
         self.add(p='brain.intermitter.EEB', k='EEB',  d='exploitVSexplore_balance', s='EEB', lim=(0, 1))
 
-        for i, n in enumerate(['first', 'second', 'third']):
+        for i, n in enumerate(['first', 'second', 'third']): #@todo add this for cool/warm brain.thermosensor.thermo_dict.cool 
             # u = fr'$\mu$M'
             u = 1 * siu.microM
             k = f'c_odor{i + 1}'
@@ -900,6 +900,9 @@ class ParDict:
                        'str_fov_std': 'std angular velocity during strides',
             'str_N' : '# strides',
             'c_odor1' : fr'Concentration C(t), $\mu$M',
+            'temp': 'temperature',
+            't_cool1': 'detected deviation of temperature (from base temperature) from cool sources',
+            't_warm1': 'detected deviation of temperature (from base temperature) from warm sources',
             # 'tur_fov_max' : 'turn maximum angular velocity',
         }
         for k,lab in label_dict.items() :

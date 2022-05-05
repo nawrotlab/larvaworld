@@ -20,18 +20,21 @@ class LarvaSim(BodySim, Larva):
         self.build_energetics(larva_pars.energetics, life_history=life_history)
         BodySim.__init__(self, model=model, pos=self.pos, orientation=orientation,default_color=self.default_color, **larva_pars.physics, **larva_pars.body,
                          **larva_pars.Box2D_params,**kwargs)
-
+        # import pdb; pdb.set_trace()
+        print("als1")
         self.brain = self.build_brain(larva_pars.brain)
+        print("als2")
         if self.deb is not None:
             self.deb.set_intermitter(self.brain.locomotor.intermitter)
+        print("als3")
         self.reset_feeder()
+        print("als4")
         self.radius = self.sim_length / 2
-
         self.food_detected, self.feeder_motion, self.current_V_eaten, self.current_foodtype, self.feed_success = None, False, None, 0,0
         self.cum_food_detected = 0
         self.foraging_dict = AttrDict.from_nested_dicts({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
                               self.model.foodtypes.keys()})
-
+        print("als5")
     def update_larva(self):
         # t0 = []
         # t0.append(time.time())
@@ -110,6 +113,7 @@ class LarvaSim(BodySim, Larva):
             self.real_length = None
 
     def build_brain(self, conf):
+        print(conf)
         if conf.nengo:
             return NengoBrain(agent=self, conf=conf)
         else:

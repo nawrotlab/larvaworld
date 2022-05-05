@@ -1460,7 +1460,7 @@ def plot_turn_Dorient2center(**kwargs):
     return plot_turn_Dbearing(ref_angle=None, **kwargs)
 
 
-def plot_odor_concentration(**kwargs):
+def plot_odor_concentration(**kwargs): #@todo could add plot_cool/warm_concentration with the 'c_cool1' etc.
     return timeplot(['c_odor1'], **kwargs)
 
 

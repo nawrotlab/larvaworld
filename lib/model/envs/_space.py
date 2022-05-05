@@ -385,7 +385,7 @@ class WindScape:
 
 class ThermoScape(ValueGrid):
     def __init__(self, pTemp, spread, origins=[], tempDiff=[], default_color='green', visible=False):
-
+        print("pTemp")
         self.plate_temp = pTemp
         self.thermo_sources = {str(i):o for i,o in enumerate(origins)} 
         self.thermo_source_dTemps = {str(i):o for i,o in enumerate(tempDiff)}
@@ -400,14 +400,15 @@ class ThermoScape(ValueGrid):
         # p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
         # self.scapelines=[(p0,p1) for p0,p1 in zip(p0s,p1s)]
 
-
+        if spread is None:
+            spread = 0.1 # just making it so spread is my default of 0.1, if None is given.
 
 
     def update_values(self):
         pass
 
 
-#@todo remove rezo, it is actually only important if I want to draw.
+#@ todo remove rezo, it is actually only important if I want to draw.
 #thermo={'temp_spread':None, 'plate_temp':22, 'thermo_sources': None, 'thermo_differences': None}
     def generate_thermoscape(self, spread=0.1, pTemp = 22, origins = [[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]], tempDiff = [8,-8,8,-8]):
         '''

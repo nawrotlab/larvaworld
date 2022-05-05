@@ -16,28 +16,34 @@ from lib.conf.base import paths
 
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, output=None, trials={}, parameter_dict={}, **kwargs):
+        print("lw1")
         super().__init__(**kwargs)
         self.sim_epochs = trials
         for idx, ep in self.sim_epochs.items():
             ep['start'] = int(ep['start'] * 60 / self.dt)
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
-
+        print(self.larva_groups, "\n\n", self.env_pars.food_params)
         self.odor_ids = get_all_odors(self.larva_groups, self.env_pars.food_params)
+        print("lw2")
         self.foodtypes = get_all_foodtypes(self.env_pars.food_params)
         self._place_food(self.env_pars.food_params)
+        print("lw3")
         self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
+        print("lw3.5")
         if self.env_pars.odorscape is not None:
-            print(self.env_pars.odorscape)
+            # print(self.env_pars.odorscape + "\n")
             self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars.odorscape, sources = self.get_food() + self.get_flies())
-        print(self.env_pars)
+        print("lw4")
+        # print(self.env_pars + "\n")
         # print("Out here")
-        # if self.env_pars.thermoscape is not None:
-        #     print("In here")
-        #     print(self.env_pars.thermoscape)
-        #     self.Ntemps, self.thermo_layers = self._create_thermo_layers(self.env_pars.thermoscape)
-        # else:
-        #     print(self.env_pars.thermoscape)
-        #     print("Hein")
+        
+        if 'thermoscape' in self.env_pars.keys() and self.env_pars.thermoscape is not None:
+            # print(self.env_pars.thermoscape + "\n")
+            self.Ntemps, self.thermo_layers = self._create_thermo_layers(self.env_pars.thermoscape)
+            # print(self.thermo_layers.get_thermo_value([0.4,0.2]))
+            # print(self.thermo_layers)
+        else:
+            print("Thermoscape not there\n")
 
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
@@ -88,10 +94,14 @@ class LarvaWorldSim(LarvaWorld):
 
 #@todo use _create_thermo_layers
     def _create_thermo_layers(self, pars):
+        print("tl1")
         from lib.model.envs._space import ThermoScape
-        sources = self.thermo_sources # dictionary
+        print("tl2")
+        print(pars['thermo_sources'])
+        sources = pars['thermo_sources'] # dictionary
         # ids = dNl.unique_list([s.thermo_id for s in sources if s.thermo_id is not None]) #@note thermo_id needs to be added to ExpConfs.txt
         # N = len(sources)
+        print("tl3")
         N=1; id='temp'
         cols = N_colors(N, as_rgb=True)
         layers = {}
@@ -105,32 +115,35 @@ class LarvaWorldSim(LarvaWorld):
         #     else:
         #         c0 = c
 
-        plate_temp = self.plate_temp # int/float
-        source_temp_diff = self.thermo_source_dTemps # dict
+        plate_temp = pars['plate_temp'] # int/float
+        source_temp_diff = pars['thermo_source_dTemps']# dict
         kwargs = {
             'model': self,
-            'pTemp': plate_temp,
-            'spread': None,
             'unique_id': id,
-            'origins':sources,
-            'tempDiff': source_temp_diff,
             'default_color': 'green',
             'space_range': self.space_edges_for_screen,
-
             }
-        kwargs = {
-            'pTemp': 22,
-            'origins':[[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]],
-            'tempDiff': [8,-8,8,-8],
-            'default_color': 'green',
+        # kwargs = {
+        #     'pTemp': 22,
+        #     'origins':[[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]],
+        #     'tempDiff': [8,-8,8,-8],
+        #     'default_color': 'green',
 
-            }
-        tlayers = ThermoScape(**kwargs)
+        #     }
+        print(kwargs)
+        kwargs={}
+        tlayers = ThermoScape(pTemp=plate_temp, spread=None, origins=sources, tempDiff=source_temp_diff, **kwargs)
+        print("tl4")
+        tlayers.generate_thermoscape()
         # tlayers.get_the
         # self.refresh_odor_dicts(ids)
         return N, tlayers
 
     def create_larvae(self, larva_groups, parameter_dict={}):
+        print("Here")
+        print(larva_groups)
+        print("pd")
+        print(parameter_dict)
         for gID, gConf in larva_groups.items():
             mod, sample = gConf['model'], gConf['sample']
             if type(sample) == str:
@@ -159,10 +172,12 @@ class LarvaWorldSim(LarvaWorld):
                 sample_dict = sample_group(sample, N, self.sample_ps) if len(self.sample_ps) > 0 else {}
             sample_dict.update(parameter_dict)
             all_pars = generate_larvae(N, sample_dict, mod, RefPars)
+            print("cl1")
             for id, p, o, pars in zip(ids, ps, ors, all_pars):
                 l = self.add_larva(pos=p, orientation=o, id=id, pars=pars, group=gID, odor=gConf['odor'],
                                    default_color=gConf['default_color'], life_history=gConf['life_history'])
-
+            print("cl2")
+            
     def step(self):
         # t0=[]
         # t0.append(time.time())
@@ -287,7 +302,10 @@ def imitate_group(config, sample_pars=[], N=None):
 
 
 def get_all_odors(larva_groups, food_params):
+    # print('gao1')
+    print(larva_groups.values())
     lg = [conf.odor.odor_id for conf in larva_groups.values()]
+    # print('gao2')
     su = [conf.odor.odor_id for conf in food_params.source_units.values()]
     sg = [conf.odor.odor_id for conf in food_params.source_groups.values()]
     ids = dNl.unique_list([id for id in lg + su + sg if id is not None])
