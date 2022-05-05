@@ -10,10 +10,11 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import mannwhitneyu, ttest_ind
 
 from lib.anal.fitting import pvalue_star, fit_bout_distros
-from lib.aux.dictsNlists import unique_list
-from lib.aux.colsNstr import N_colors
+
 from lib.conf.base.par import getPar
-from lib.conf.stored.conf import loadRef, kConfDict
+from lib.conf.stored.conf import loadRef, kConfDict, loadConf
+from lib.aux.colsNstr import N_colors
+from lib.aux.dictsNlists import unique_list
 
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
@@ -673,3 +674,127 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
     # fig.subplots_adjust(left=0.1, right=0.95, wspace=0.08, hspace=0.3, bottom=0.05)
     for jj in [0]:
         axs[jj].set_ylabel(ylabel)
+
+def modelConfTable(confID, save_as, columns = ['Parameter', 'Symbol', 'Value', 'Unit'],
+                   rows = None,**kwargs
+                   ) :
+    from lib.aux.combining import render_mpl_table
+    from lib.conf.base.dtypes import par
+    from lib.conf.base.init_pars import init_pars
+    m = loadConf(confID, "Model")
+    if rows is None :
+        rows=['physics','body']+[k for k,v in m.brain.modules.items() if v]
+
+    rowDicts =[]
+    for k in rows :
+        try :
+            rowDicts.append(m[k])
+        except :
+            rowDicts.append(m.brain[f'{k}_params'])
+    #rowColors0 = N_colors(len(rows))
+    rowColors0 = ['lightskyblue', 'lightsteelblue',  'lightcoral', 'indianred','lightsalmon', '#a55af4','palegreen','plum',   'pink'][:len(rows)]
+    # rowColors0 = ['lightskyblue', 'lightsteelblue',  'lightcoral', 'indianred','lightsalmon', 'mediumpurple','palegreen','plum',   'pink'][:len(rows)]
+    Nrows = {rowLab: 0 for rowLab in rows}
+
+    def register(vs, rowColor):
+        data.append(vs)
+        rowColors.append(rowColor)
+        Nrows[vs[0]] += 1
+
+    rowColors = [None]
+    data = []
+    for rowLab, rowDic, rowColor in zip(rows, rowDicts, rowColors0):
+        d0 = init_pars().get(rowLab, None)
+        if rowLab=='interference':
+            if rowDic.mode == 'square':
+                rowValid = ['crawler_phi_range', 'attenuation','suppression_mode']
+            elif rowDic.mode == 'phasic':
+                rowValid = ['max_attenuation_phase', 'attenuation', 'attenuation_max','suppression_mode']
+            elif rowDic.mode == 'default':
+                rowValid = ['attenuation','suppression_mode']
+        elif rowLab == 'physics':
+            rowValid = ['torque_coef', 'ang_damping', 'body_spring_k', 'bend_correction_coef']
+        elif rowLab == 'body':
+            rowValid = ['initial_length', 'Nsegs']
+        elif rowLab == 'turner':
+            if rowDic.mode == 'neural':
+                rowValid = ['base_activation', 'activation_range']
+            elif rowDic.mode == 'constant':
+                rowValid = ['initial_amp']
+            elif rowDic.mode == 'sinusoidal':
+                rowValid = ['initial_amp', 'initial_freq']
+        elif rowLab == 'crawler':
+            if rowDic.waveform == 'realistic':
+                rowValid = ['initial_freq','max_scaled_vel', 'max_vel_phase',  'stride_dst_mean', 'stride_dst_std']
+            elif rowDic.waveform == 'constant':
+                rowValid = ['initial_amp']
+        elif rowLab == 'intermitter':
+            rowValid = ['stridechain_dist', 'pause_dist']
+            rowValid = [n for n in rowValid if rowDic[n] is not None and rowDic[n].name is not None]
+        elif rowLab == 'olfactor':
+            rowValid = ['decay_coef']
+        if len(rowValid)==0 :
+            Nrows.pop(rowLab, None)
+            continue
+        for n, vv in d0.items():
+            if n not in rowValid:
+                continue
+            v = rowDic[n]
+            if n in ['stridechain_dist', 'pause_dist'] :
+                # print(rowLab, n,v)
+                if v.name == 'exponential':
+                    dist_v = f'Exp(b={v.beta})'
+                elif v.name == 'powerlaw':
+                    dist_v = f'Powerlaw(a={v.alpha})'
+                elif v.name == 'levy':
+                    dist_v = f'Levy(m={v.mu}, s={v.sigma})'
+                elif v.name == 'uniform':
+                    dist_v = f'Uniform()'
+                elif v.name == 'lognormal':
+                    dist_v = f'Lognormal(m={v.mu}, s={v.sigma})'
+                if n == 'stridechain_dist':
+                    vs1 = [rowLab, 'run length distribution', '$N_{R}$', dist_v, '-']
+                    vs2 = [rowLab, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', v.range, '# $strides$']
+                elif n == 'pause_dist':
+                    vs1 = [rowLab, 'pause duration distribution', '$t_{P}$', dist_v, '-']
+                    vs2 = [rowLab, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', v.range, '$sec$']
+                register(vs1, rowColor)
+                register(vs2, rowColor)
+            else:
+                p = par(n, **vv)
+
+                if n == 'initial_length':
+                    v *=1000
+                elif n == 'suppression_mode':
+                    if v=='both' :
+                        v='input & output'
+                    elif v=='amplitude' :
+                        v='output'
+                    elif v=='oscillation' :
+                        v='input'
+
+                else:
+                    try:
+                        v = np.round(v, 2)
+                    except:
+                        pass
+                vs = [rowLab, p[n]['label'], p[n]['symbol'], v, p[n]['unit']]
+                register(vs, rowColor)
+
+    cumNrows = dict(zip(list(Nrows.keys()), np.cumsum(list(Nrows.values())).astype(int)))
+    df = pd.DataFrame(data, columns=['field'] + columns)
+    df.set_index(['field'], inplace=True)
+
+    ax, fig, mpl = render_mpl_table(df, colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
+                                    row_colors=rowColors, return_table=True,**kwargs)
+
+    for k, cell in mpl._cells.items():
+        if k[1] == -1:
+            cell._text._text = ''
+            cell._linewidth = 0
+
+    for rowLab, idx in cumNrows.items():
+        cell = mpl._cells[(idx-Nrows[rowLab]+1, -1)]
+        cell._text._text = rowLab.upper()
+    fig.savefig(save_as, dpi=300)
+    # return fig,ax,mpl

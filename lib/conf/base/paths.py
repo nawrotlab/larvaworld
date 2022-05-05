@@ -48,6 +48,7 @@ def path(n) :
         'Env': f'{CF}/EnvConfs.txt',
         'Par': f'{CF}/ParConfs.txt',
         'Exp': f'{CF}/ExpConfs.txt',
+        'Ga': f'{CF}/GaConfs.txt',
         'ExpGroup': f'{CF}/ExpGroupConfs.txt',
         'Essay': f'{CF}/EssayConfs.txt',
         'Model': f'{CF}/ModelConfs.txt',
@@ -73,6 +74,7 @@ def path(n) :
         'ESSAY': f'{F0}/data/SimGroup/essays',
         'RUN': f'{F0}/data/SimGroup/single_runs',
         'SIM': f'{F0}/data/SimGroup',
+        'GA': f'{F0}/data/SimGroup/ga_runs',
         'DATA': f'{F0}/data',
         'GUITEST': f'{GF}/gui_speed_test.csv',
     }

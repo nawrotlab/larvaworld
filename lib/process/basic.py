@@ -234,7 +234,7 @@ def process(processing, s, e, config, mode='minimal', traj_colors=True, show_out
         if processing['dispersion'] :
             comp_dispersion(**c)
         if processing['tortuosity'] :
-            comp_tortuosity(**c)
+            # comp_tortuosity(**c)
             comp_straightness_index(**c)
         if processing['PI']:
             if 'x' in e.keys():

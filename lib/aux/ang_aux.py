@@ -1,4 +1,5 @@
 import math
+from math import cos,sin
 import time
 
 import numpy as np
@@ -27,7 +28,6 @@ def restore_bend(state, d, l, num_segments, correction_coef=1.0):
 
 
 def restore_bend_2seg(bend, d, l, correction_coef=1.0):
-    # print(bend,d,l)
     k0 = 2*d*correction_coef/ l
     if 0 <= k0 < 1:
         return bend * (1 - k0)
@@ -81,53 +81,39 @@ def rotate_around_point(point, radians, origin=[0, 0]):
     function but it'sigma faster.
     """
     x, y = point
-    offset_x, offset_y = origin
-    adjusted_x = (x - offset_x)
-    adjusted_y = (y - offset_y)
-    cos_rad = math.cos(radians)
-    sin_rad = math.sin(radians)
-    qx = offset_x + cos_rad * adjusted_x + sin_rad * adjusted_y
-    qy = offset_y + -sin_rad * adjusted_x + cos_rad * adjusted_y
+    x0, y0 = origin
+    xx = (x - x0)
+    yy = (y - y0)
+    cos_rad = cos(radians)
+    sin_rad = sin(radians)
+    qx = x0 + cos_rad * xx + sin_rad * yy
+    qy = y0 + -sin_rad * xx + cos_rad * yy
 
     return qx, qy
 
 
 def rotate_around_center(point, radians):
     x, y = point
-    cos_rad = math.cos(radians)
-    sin_rad = math.sin(radians)
+    cos_rad = cos(radians)
+    sin_rad = sin(radians)
     qx = cos_rad * x + sin_rad * y
     qy = -sin_rad * x + cos_rad * y
     return np.array([qx, qy])
 
 
-def rotate_around_center_multi(points : np.array, radians):
-    cos_rad = math.cos(radians)
-    sin_rad = math.sin(radians)
-    # def func(point):
-    #     # x,y=point
-    #     return cos_rad * point[0] + sin_rad * point[1], -sin_rad * point[0] + cos_rad * point[1]
-    # # print(points)
-    # # print(type(points))
-    # # print(type(points[0]))
-    # tt=time.time()
-    # b=np.array([(cos_rad * x + sin_rad * y, -sin_rad * x + cos_rad * y) for x, y in points])
-    # # print(b)
-    # ttt = time.time()
-    #
-    #
-    # a=np.apply_along_axis(func, 1, points)
-    # tttt = time.time()
-    # print(ttt-tt, tttt-ttt)
-    # # print(a)
-    # # print(a==b)
-    # raise
+def rotate_around_center_multi_old(points : np.array, radians):
+    cos_rad = cos(radians)
+    sin_rad = sin(radians)
     return np.array([(cos_rad * x + sin_rad * y, -sin_rad * x + cos_rad * y) for x, y in points])
+
+def rotate_around_center_multi(points : np.array, radians):
+    cos_rad = cos(radians)
+    sin_rad = sin(radians)
+    k = np.array([[cos_rad,sin_rad],[-sin_rad, cos_rad]])
+    return np.dot(k,points.T).T
 
 
 def rotate_multiple_points(points, radians, origin=[0, 0]):
-    # points have the form :
-    # points=np.array([[1,2],[3,4], [5,6], [7,8]])
     qx, qy = rotate_around_point(points.T, radians, origin=origin)
     return np.vstack((qx, qy)).T
 
@@ -145,7 +131,7 @@ def line_through_point(pos, angle, length, pos_as_start=False) :
         length=-length
 
     start = Point(pos)
-    end = Point(start.x + length * math.cos(angle),
-                start.y + length * math.sin(angle))
+    end = Point(start.x + length * cos(angle),
+                start.y + length * sin(angle))
     return LineString([start, end])
 

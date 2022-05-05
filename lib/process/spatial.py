@@ -293,6 +293,7 @@ def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
         ds = [s[['x', 'y']].xs(id, level='AgentID') for id in ids]
         ds = [d.loc[d.first_valid_index(): d.last_valid_index()].values for d in ds]
         for j, r in enumerate(durs):
+            # print(j,r)
             par = f'tortuosity_{tor_durs[j]}'
             par_m, par_s = nam.mean(par), nam.std(par)
             T_m = np.ones(Nids) * np.nan
@@ -342,21 +343,27 @@ def tortuosity(xy):
     if xy.shape[0] < 2:
         return np.nan
     D = np.nansum(np.sqrt(np.nansum(np.diff(xy, axis=0) ** 2, axis=1)))
-    L = np.sqrt(np.nansum(np.array(xy[-1, :] - xy[0, :]) ** 2))
-    return 1 - L / D
+    if D==0 :
+        return np.nan
+    else:
+        L = np.sqrt(np.nansum(np.array(xy[-1, :] - xy[0, :]) ** 2))
+        return 1 - L / D
 
 
-def straightness_index(xy, w):
+def straightness_index(xy, w, match_shape=True):
     # Compute tortuosity over intervals of duration w
     xys = rolling_window_xy(xy, w)
     k0,k1=xy.shape[0], xys.shape[0]
-    dk = int((k0-k1) / 2)
-    SI = np.zeros(k0) * np.nan
-    for i in range(k1):
-        SI[dk+i]=tortuosity(xys[i, :])
-    # SI = [np.nan] * k1 + [tortuosity(xys[i, :]) for i in range(xys.shape[0])] + [np.nan] * (k - k1)
+    if match_shape :
+        dk = int((k0-k1) / 2)
+        SI = np.zeros(k0) * np.nan
+        for i in range(k1):
+            SI[dk+i]=tortuosity(xys[i, :])
+    else :
+        SI = np.zeros(k1) * np.nan
+        for i in range(k1):
+            SI[i] = tortuosity(xys[i, :])
     return SI
-    # return np.array(SI)
 
 
 def comp_straightness_index(s, dt, e=None, c=None, tor_durs=[2, 5, 10, 20], **kwargs):

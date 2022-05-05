@@ -707,7 +707,7 @@ class ParDict:
         for k0 in ['v', 'sv']:
             self.add_freq(k0=k0)
 
-        for i in ['', 2, 5, 10, 20, 60,120, 240, 300, 600]:
+        for i in ['',1, 2, 5, 10, 20, 60,120, 240, 300, 600]:
             if i == '':
                 p = 'tortuosity'
             else:
@@ -876,12 +876,14 @@ class ParDict:
             'pau_fov_std': 'std angular velocity during pauses',
             'run_foa_std': 'std angular acceleration during runs',
             'pau_foa_std': 'std angular acceleration during pauses',
+            'tur_t' : 'turn duration',
             'tur_fou' : 'turn-angle amplitude',
             'tur_fov_max' : 'turn maximum angular velocity',
             'fsv' : 'dominant crawling frequency',
             'fv': 'dominant crawling frequency',
             'ffov' : 'dominant bending frequency',
             # 'tur_fov_max' : 'turn maximum angular velocity',
+            'tor1' : "tortuosity over 1'' window",
             'tor2' : "tortuosity over 2'' window",
             'tor5' : "tortuosity over 5'' window",
             'tor10' : "tortuosity over 10'' window",

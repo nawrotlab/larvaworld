@@ -38,14 +38,14 @@ class SquareCoupling(DefaultCoupling):
         if c_on:
             c = self.locomotor.crawler
             if c.waveform in ['realistic', 'gaussian'] and not (
-                    self.crawler_phi_range[0] < c.phi / np.pi < self.crawler_phi_range[1]):
+                    self.crawler_phi_range[0] < c.phi < self.crawler_phi_range[1]):
                 A = self.attenuation
             elif c.waveform == 'square' and not c.phi <= 2 * np.pi * c.square_signal_duty:
                 A = self.attenuation
             elif c.waveform == 'constant':
                 A = self.attenuation
         elif f_on:
-            if not self.feeder_phi_range[0] < self.locomotor.feeder.phi / np.pi < self.feeder_phi_range[1]:
+            if not self.feeder_phi_range[0] < self.locomotor.feeder.phi < self.feeder_phi_range[1]:
                 A = self.attenuation
         self.cur_attenuation = A
         return A
@@ -54,11 +54,9 @@ class SquareCoupling(DefaultCoupling):
 class PhasicCoupling(DefaultCoupling) :
     def __init__(self, attenuation_max=0.31, max_attenuation_phase = 3.4, **kwargs):
         super().__init__(**kwargs)
-        # self.attenuation_min = attenuation_min
         self.attenuation_max = attenuation_max
         self.max_attenuation_phase = max_attenuation_phase
 
-    # @property
     def step(self):
         A = 1
         c_on, f_on = self.active_effectors

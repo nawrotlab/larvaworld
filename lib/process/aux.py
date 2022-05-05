@@ -334,7 +334,7 @@ def slowNfast_freqs(s, e, c, point_idx=8, scaled=False):
         e[fr0a].loc[id] = fft_max(fov0, c.dt, fr_range=(0.15, +np.inf))
 
 
-def process_epochs(a, epochs, dt):
+def process_epochs(a, epochs, dt, return_idx=True):
     if epochs.shape[0] == 0:
         stops = []
         durs = np.array([])
@@ -342,20 +342,27 @@ def process_epochs(a, epochs, dt):
         amps = np.array([])
         idx = [] #np.array([])
         maxs = np.array([])
+        if return_idx:
+            return stops, durs, slices, amps, idx, maxs
+        else:
+            return durs, amps, maxs
 
     else:
         if epochs.shape == (2,):
             epochs = np.array([epochs, ])
-        stops = epochs[:, 1]
+
         durs = (np.diff(epochs).flatten() + 1) * dt
         slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in epochs]
-        # print(epochs, slices)
         amps = np.array([np.trapz(a[p], dx=dt) for p in slices])
 
-        idx = np.concatenate(slices) if len(slices)>1 else slices[0]
+
         maxs = np.array([np.max(a[p]) for p in slices])
-    # print(idx)
-    return stops, durs, slices, amps, idx, maxs
+        if return_idx :
+            stops = epochs[:, 1]
+            idx = np.concatenate(slices) if len(slices) > 1 else slices[0]
+            return stops, durs, slices, amps, idx, maxs
+        else :
+            return durs, amps, maxs
 
 
 def detect_pauses(a, dt, vel_thr=0.3, runs=None, min_dur=None):

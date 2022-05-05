@@ -132,6 +132,7 @@ env_dict = {
     'focus': env(arena(0.01, 0.01)),
     'dish': env(arena(0.1)),
     'arena_200mm': env(arena(0.2, 0.2)),
+    'arena_500mm': env(arena(0.5, 0.5)),
 
     'odor_gradient': env(arena(0.1, 0.06), f_pars(su=su(pos=(0.04, 0.0), o=oG(2))), 'G'),
     'mid_odor_gaussian': env(arena(0.1, 0.06), f_pars(su=su(o=oG())), 'G'),

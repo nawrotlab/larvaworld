@@ -8,6 +8,9 @@ def base(method, input, **kwargs):
 def bar(p):
     return rf'$\bar{{{p.replace("$", "")}}}$'
 
+def tilde(p):
+    return rf'$\tilde{{{p.replace("$", "")}}}$'
+
 
 def wave(p):
     return rf'$\~{{{p.replace("$", "")}}}$'
@@ -58,6 +61,9 @@ def hat_th(p):
 
 def dot(p):
     return fr'$\dot{{{p.replace("$", "")}}}$'
+
+def circle(p):
+    return fr'$\mathring{{{p.replace("$", "")}}}$'
 
 
 def circledcirc(p):

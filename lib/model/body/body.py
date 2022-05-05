@@ -48,8 +48,8 @@ class LarvaShape:
         self.seg_positions = [[initial_pos[0] + (-i + (Nsegs - 1) / 2) * ls_x[i],
                                initial_pos[1] + (-i + (Nsegs - 1) / 2) * ls_y] for i in range(Nsegs)]
 
-        self.seg_positions0 = [[0.5 + (-i + (Nsegs - 1) / 2) * seg_ratio[i], 0.5] for i in range(Nsegs)]
-        self.seg_rotation_points0 = [np.array([0.5 + (-i + (Nsegs - 2) / 2) * seg_ratio[i], 0.5]) for i in range(Nsegs)]
+        # self.seg_positions0 = [[0.5 + (-i + (Nsegs - 1) / 2) * seg_ratio[i], 0.5] for i in range(Nsegs)]
+        # self.seg_rotation_points0 = [np.array([0.5 + (-i + (Nsegs - 2) / 2) * seg_ratio[i], 0.5]) for i in range(Nsegs)]
 
         self.seg_colors = self.generate_seg_colors(self.Nsegs)
         self.set_head_edges()
@@ -208,7 +208,6 @@ class LarvaBody(LarvaShape):
     def __init__(self, model, pos=None, orientation=None, touch_sensors=False, joint_types=None, **kwargs):
         super().__init__(initial_orientation=orientation, initial_pos=pos,scaling_factor=model.scaling_factor, **kwargs)
         self.model = model
-        # self.shape_scale = 1
 
         if self.model.Box2D :
             self.segs = self.generate_Box2D_segs(self.initial_orientation, self.seg_positions,joint_types)

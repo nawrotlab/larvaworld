@@ -21,8 +21,8 @@ from lib.model.modules.basic import Oscillator, Effector
 
 class Crawler(Oscillator):
     def __init__(self, waveform, initial_amp=None, square_signal_duty=None, stride_dst_mean=None,
-                 stride_dst_std=0.0, initial_freq=1.3, freq_std=0.0,
-                 gaussian_window_std=None, max_vel_phase=1.0, crawler_noise=0, **kwargs):
+                 stride_dst_std=0.0, initial_freq=1.3, freq_std=0.0,max_scaled_vel=0.6,
+                 gaussian_window_std=None, max_vel_phase=3.6, crawler_noise=0, **kwargs):
         initial_freq = np.random.normal(initial_freq, freq_std)
         super().__init__(initial_freq=initial_freq, **kwargs)
         self.waveform = waveform
@@ -45,7 +45,8 @@ class Crawler(Oscillator):
             self.stride_dst_mean = step_mu
             self.stride_dst_std = step_std
             self.step_to_length = self.new_stride
-            self.max_vel_phase = max_vel_phase * np.pi
+            self.max_vel_phase = max_vel_phase
+            self.max_scaled_vel = max_scaled_vel
         # elif waveform == 'constant':
 
         waveform_func_dict = {
@@ -85,4 +86,4 @@ class Crawler(Oscillator):
     def realistic_oscillator(self):
         if self.complete_iteration:
             self.step_to_length = self.new_stride
-        return self.freq * self.step_to_length * (1 + 0.6 * np.cos(self.phi - self.max_vel_phase))
+        return self.freq * self.step_to_length * (1 + self.max_scaled_vel * np.cos(self.phi - self.max_vel_phase))

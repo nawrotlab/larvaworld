@@ -278,7 +278,8 @@ class GAEngineTemplate(GA_selector):
             scene.put(robot)
             self.robots.append(robot)
 
-        self.side_panel.update_ga_data(self.generation_num, None, None, len(self.robots))
+        self.side_panel.update_ga_data(self.generation_num, None, None)
+        self.side_panel.update_ga_population(len(self.robots))
         self.side_panel.update_ga_time(0, 0,0)
 
         print('\nGeneration', self.generation_num, 'started')
@@ -358,7 +359,7 @@ class GAEngineTemplate(GA_selector):
             print('Generation', self.generation_num, 'terminated')
             self.create_new_generation()
             self.build_genomes()
-            self.side_panel.update_ga_data(self.generation_num, self.best_genome, self.best_genome.fitness, len(self.robots))
+            self.side_panel.update_ga_data(self.generation_num, self.best_genome, self.best_genome.fitness)
 
         # update statistics time
         current_time = TimeUtil.current_time_millis()
@@ -366,7 +367,7 @@ class GAEngineTemplate(GA_selector):
         generation_time_seconds = math.floor((current_time - self.start_generation_time) / 1000)
         self.generation_sim_time += self.dt
         self.side_panel.update_ga_time(total_time_seconds, generation_time_seconds, self.generation_sim_time)
-
+        self.side_panel.update_ga_population(len(self.robots))
         self.generation_step_num += 1
 
     def build_robot(self, x, y, genome, label):

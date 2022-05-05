@@ -1,5 +1,6 @@
 import math
 import multiprocessing
+import os
 import random
 import sys
 import random
@@ -15,9 +16,10 @@ from unflatten import unflatten
 
 import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import eudi5x
+from lib.conf.base import paths
 from lib.conf.base.dtypes import null_dict, ga_dict
-from lib.conf.base.par import ParDict
-from lib.conf.stored.conf import copyConf, kConfDict, loadRef, expandConf, saveConf
+from lib.conf.base.par import ParDict, getPar
+from lib.conf.stored.conf import copyConf, kConfDict, loadRef, expandConf, saveConf, next_idx
 from lib.ga.robot.larva_robot import LarvaRobot
 from lib.ga.scene.box import Box
 from lib.ga.scene.scene import Scene
@@ -82,10 +84,9 @@ class GA_selector:
     def ga_selection(self):
         # sort genomes by fitness
         sorted_genomes = sorted(self.genomes, key=lambda genome: genome.fitness, reverse=True)
-        best_genome_current_generation = sorted_genomes[0]
-
-        if self.best_genome is None or best_genome_current_generation.fitness > self.best_genome.fitness:
-            self.best_genome = best_genome_current_generation
+        best_new_genome = sorted_genomes[0]
+        if self.best_genome is None or best_new_genome.fitness > self.best_genome.fitness:
+            self.best_genome = best_new_genome
             print('New best:', self.best_genome.to_string())
 
         num_genomes_to_select = round(self.Nagents * self.selection_ratio)
@@ -119,6 +120,7 @@ class GA_selector:
             fitness_sum += genome.fitness
 
         value = random.uniform(0, fitness_sum)
+        # print(fitness_sum, value)
 
         for i in range(len(genomes)):
             value -= genomes[i].fitness
@@ -158,12 +160,32 @@ class GA_selector:
 
 class GA_builder(GA_selector):
     def __init__(self, scene, side_panel, space_dict=None, robot_class=LarvaRobot, base_model='Sakagiannis2022',
-                 multicore=True, fitness_func=None, plot_func=None, bestConfID=None, init_mode='random', **kwargs):
+                 multicore=True, fitness_func=None,fitness_target_kws={},fitness_target_refID=None, exclude_func = None, plot_func=None, bestConfID=None, init_mode='random', **kwargs):
         super().__init__(**kwargs)
 
         self.bestConfID = bestConfID
         self.evaluation_mode = None
         self.fitness_func = fitness_func
+
+        self.fitness_target_refID = fitness_target_refID
+        if fitness_target_refID is not None :
+            d = loadRef(fitness_target_refID)
+            d.load(contour=False)
+            if 'eval_shorts' in fitness_target_kws.keys():
+                shs=fitness_target_kws['eval_shorts']
+                # s, e, c = d.step_data, d.endpoint_data, d.config
+                dic = ParDict(mode='load').dict
+                fitness_target_kws['eval'] = {sh: d.step_data[dic[sh]['d']].dropna().values for sh in shs}
+                eval_lims, eval_labels = getPar(shs, to_return=['lim', 'lab'])
+                fitness_target_kws['eval_labels'] = eval_labels
+                # return eval
+            if 'target_fov_curve' in fitness_target_kws.keys():
+                fitness_target_kws['target_fov_curve'] = np.array(d.config.pooled_cycle_curves.fov)
+            self.fitness_target=d
+        else :
+            self.fitness_target = None
+        self.fitness_target_kws = fitness_target_kws
+        self.exclude_func = exclude_func
         self.plot_func = plot_func
         self.multicore = multicore
         self.scene = scene
@@ -190,7 +212,8 @@ class GA_builder(GA_selector):
             self.genomes.append(g)
 
         self.robots = self.build_generation()
-        self.side_panel.update_ga_data(self.generation_num, None, None, len(self.robots))
+        self.side_panel.update_ga_data(self.generation_num, None, None)
+        self.side_panel.update_ga_population(len(self.robots))
         self.side_panel.update_ga_time(0, 0, 0)
 
         print('\nGeneration', self.generation_num, 'started')
@@ -269,6 +292,10 @@ class GA_builder(GA_selector):
                 # destroy robot if it collides an obstacle
                 if robot.collision_with_object:
                     self.destroy_robot(robot)
+
+                if self.exclude_func is not None :
+                    if self.exclude_func(robot) :
+                        self.destroy_robot(robot, excluded=True)
         else:
             # multicore = False
             for robot in self.robots[:]:
@@ -282,6 +309,10 @@ class GA_builder(GA_selector):
                 if robot.collision_with_object:
                     self.destroy_robot(robot)
 
+                if self.exclude_func is not None :
+                    if self.exclude_func(robot) :
+                        self.destroy_robot(robot, excluded=True)
+
         # create new obstacles for long lasting generations
         if self.generation_step_num == self.max_Nticks:
             print('Time limit reached (' + str(self.max_Nticks) +
@@ -294,13 +325,13 @@ class GA_builder(GA_selector):
         if not self.robots:
             if self.evaluation_mode == 'plotting':
                 if self.plot_func is not None:
-                    self.plot_func(self.last_robots)
+                    self.plot_func(self.last_robots, generation_num=self.generation_num, save_to=self.model.plot_dir, **self.fitness_target_kws)
                 self.evaluation_mode = None  # raise
             print('Generation', self.generation_num, 'terminated')
             self.create_new_generation()
 
             self.robots = self.build_generation()
-            self.side_panel.update_ga_data(self.generation_num, self.best_genome, self.best_genome.fitness, len(self.robots))
+            self.side_panel.update_ga_data(self.generation_num, self.best_genome, self.best_genome.fitness)
 
         # update statistics time
         cur_t = TimeUtil.current_time_millis()
@@ -308,11 +339,15 @@ class GA_builder(GA_selector):
         gen_t = math.floor((cur_t - self.start_generation_time) / 1000)
         self.generation_sim_time += self.model.dt
         self.side_panel.update_ga_time(cum_t, gen_t, self.generation_sim_time)
+        self.side_panel.update_ga_population(len(self.robots))
         self.generation_step_num += 1
 
-    def destroy_robot(self, robot):
-        self.last_robots.append(robot)
-        fitness = self.get_fitness(robot)
+    def destroy_robot(self, robot, excluded=False):
+        if excluded :
+            fitness=-np.inf
+        else :
+            self.last_robots.append(robot)
+            fitness = self.get_fitness(robot)
         robot.genome.fitness = fitness
 
         self.scene.remove(robot)
@@ -321,7 +356,7 @@ class GA_builder(GA_selector):
 
     def get_fitness(self, robot):
         if self.fitness_func is not None:
-            return self.fitness_func(robot)
+            return self.fitness_func(robot, **self.fitness_target_kws)
         else:
             return None
 
@@ -336,14 +371,19 @@ class Base_runner(LarvaWorldSim):
 
     SCREEN_MARGIN = 12
 
-    def __init__(self, scene_file, scene_speed=0, env_params=None, dt=0.1, caption='Template', **kwargs):
+    def __init__(self, scene_file, scene_speed=0,id=None, env_params=None, experiment='exploration',dt=0.1, caption='Template',save_to=None, **kwargs):
+        if save_to is None:
+            save_to = paths.path("GA")
         if env_params is None:
             env_params = null_dict('env_conf')
-        super().__init__(env_params=env_params, dt=dt, **kwargs)
+        if id is None :
+            id=f'{experiment}_{next_idx(experiment, type="ga")}'
+        super().__init__(env_params=env_params, dt=dt,save_to=save_to,experiment=experiment,id=id, **kwargs)
+        self.dir_path = f'{self.save_to}/{self.experiment}/{self.id}'
+        self.plot_dir = f'{self.dir_path}/plots'
+        os.makedirs(self.plot_dir, exist_ok=True)
 
-        self.dt = dt
         self.arena_width, self.arena_height = env_params.arena.arena_dims
-        # self.arena_shape = env_params.arena.arena_shape
 
         self.caption = caption
         self.scene_file = scene_file
@@ -397,49 +437,49 @@ class Base_runner(LarvaWorldSim):
 
 
 class GA_runner(Base_runner):
-    def __init__(self, ga_kws={}, **kwargs):
+    def __init__(self, ga_kws={},show_screen=True, **kwargs):
         super().__init__(**kwargs)
-
         pygame.init()
         pygame.display.set_caption(self.caption)
         clock = pygame.time.Clock()
         self.initialize(**ga_kws)
-
         while True:
-            for e in pygame.event.get():
-                if e.type == pygame.QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
-                    sys.exit()
-                elif e.type == KEYDOWN and e.key == K_r:
-                    self.initialize(**ga_kws)
-                elif e.type == KEYDOWN and (e.key == K_PLUS or e.key == 93 or e.key == 270):
-                    self.increase_scene_speed()
-                elif e.type == KEYDOWN and (e.key == K_MINUS or e.key == 47 or e.key == 269):
-                    self.decrease_scene_speed()
-                elif e.type == KEYDOWN and e.key == K_s:
-                    self.engine.save_genomes()
-                elif e.type == KEYDOWN and e.key == K_e:
-                    self.engine.evaluation_mode = 'preparing'
+            if show_screen:
+                for e in pygame.event.get():
+                    if e.type == pygame.QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
+                        sys.exit()
+                    elif e.type == KEYDOWN and e.key == K_r:
+                        self.initialize(**ga_kws)
+                    elif e.type == KEYDOWN and (e.key == K_PLUS or e.key == 93 or e.key == 270):
+                        self.increase_scene_speed()
+                    elif e.type == KEYDOWN and (e.key == K_MINUS or e.key == 47 or e.key == 269):
+                        self.decrease_scene_speed()
+                    elif e.type == KEYDOWN and e.key == K_s:
+                        self.engine.save_genomes()
+                    elif e.type == KEYDOWN and e.key == K_e:
+                        self.engine.evaluation_mode = 'preparing'
 
             t0 = TimeUtil.current_time_millis()
             self.engine.step()
             t1 = TimeUtil.current_time_millis()
             self.printd(2, 'Step duration: ', t1 - t0)
 
-            self.screen.fill(Color.BLACK)
+            if show_screen:
+                self.screen.fill(Color.BLACK)
 
-            for obj in self.scene.objects:
-                obj.draw(self.screen)
+                for obj in self.scene.objects:
+                    obj.draw(self.screen)
 
-                if issubclass(type(obj), self.engine.robot_class) and obj.unique_id is not None:
-                    obj.draw_label(self.screen)
+                    if issubclass(type(obj), self.engine.robot_class) and obj.unique_id is not None:
+                        obj.draw_label(self.screen)
 
-            # draw a black background for the side panel
-            side_panel_bg_rect = pygame.Rect(self.scene.width, 0, self.SIDE_PANEL_WIDTH, self.scene.height)
-            pygame.draw.rect(self.screen, Color.BLACK, side_panel_bg_rect)
+                # draw a black background for the side panel
+                side_panel_bg_rect = pygame.Rect(self.scene.width, 0, self.SIDE_PANEL_WIDTH, self.scene.height)
+                pygame.draw.rect(self.screen, Color.BLACK, side_panel_bg_rect)
 
-            self.display_info()
+                self.display_info()
 
-            pygame.display.flip()
+                pygame.display.flip()
             clock.tick(int(round(self.scene.speed)))
 
     def printd(self, min_debug_level, *args):
@@ -466,6 +506,7 @@ class BaseGenome:
             setattr(self, k, v)
         self.generation_num = generation_num
         self.fitness = None
+        self.fitness_dict = None
         self.space_dict = space_dict
 
     @staticmethod

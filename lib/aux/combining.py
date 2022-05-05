@@ -81,9 +81,9 @@ def combine_pdfs(file_dir='.', save_as="final.pdf", pref=''):
     print(f'Concatenated pdfs saved as {filepath}')
 
 
-def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None,
+def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None,figsize=None,
                      header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black',
-                     bbox=[0, 0, 1, 1], header_columns=0, ax=None, highlighted_cells=None, highlight_color='yellow',
+                     bbox=[0, 0, 1, 1], header_columns=0, ax=None, highlighted_cells=None, highlight_color='yellow', return_table=False,
                      **kwargs):
     def get_idx(highlighted_cells):
         d = data.values
@@ -125,29 +125,35 @@ def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=
     except:
         highlight_idx = []
     if ax is None:
-        size = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
-        fig, ax = plt.subplots(figsize=size)
+        if figsize is None :
+            figsize = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
+        fig, ax = plt.subplots(figsize=figsize)
         ax.axis('off')
     else:
         fig = None
 
-    mpl_table = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns, rowLabels=data.index, **kwargs)
+    mpl = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns, rowLabels=data.index, **kwargs)
 
-    mpl_table.auto_set_font_size(False)
-    mpl_table.set_fontsize(font_size)
+    mpl.auto_set_font_size(False)
+    mpl.set_fontsize(font_size)
 
-    for k, cell in six.iteritems(mpl_table._cells):
+    for k, cell in six.iteritems(mpl._cells):
         cell.set_edgecolor(edge_color)
         if k in highlight_idx:
             cell.set_facecolor(highlight_color)
-        elif k[0] == 0 or k[1] < header_columns:
+        elif k[0] == 0 :
             cell.set_text_props(weight='bold', color='w')
             cell.set_facecolor(header_color)
+        elif k[1] < header_columns:
+            cell.set_text_props(weight='bold', color='black')
+            cell.set_facecolor(row_colors[k[0] % len(row_colors)])
         else:
             cell.set_facecolor(row_colors[k[0] % len(row_colors)])
-    # plt.show()
     ax.set_title(title)
-    return ax, fig
+    if return_table:
+        return ax, fig, mpl
+    else :
+        return ax, fig
 
 
 def concat_files(filenames, save_as):

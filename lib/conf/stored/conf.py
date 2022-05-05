@@ -1,5 +1,6 @@
 import copy
 import json
+import pickle
 import shutil
 import time
 
@@ -8,9 +9,9 @@ from lib.conf.base.dtypes import null_dict, base_enrich
 from lib.conf.base import paths
 
 
-def loadConf(id, conf_type):
+def loadConf(id, conf_type, **kwargs):
     try:
-        conf_dict = loadConfDict(conf_type)
+        conf_dict = loadConfDict(conf_type, **kwargs)
         conf = conf_dict[id]
         return AttrDict.from_nested_dicts(conf)
         # return conf
@@ -18,33 +19,37 @@ def loadConf(id, conf_type):
         raise ValueError(f'{conf_type} Configuration {id} does not exist')
 
 
-def expandConf(id, conf_type):
-    conf = loadConf(id, conf_type)
+def expandConf(id, conf_type, **kwargs):
+    conf = loadConf(id, conf_type, **kwargs)
     try:
         if conf_type == 'Batch':
-            conf.exp = expandConf(conf.exp, 'Exp')
+            conf.exp = expandConf(conf.exp, 'Exp', **kwargs)
         elif conf_type == 'Exp':
             conf.experiment = id
-            conf.env_params = expandConf(conf.env_params, 'Env')
-            conf.trials = loadConf(conf.trials, 'Trial')
+            conf.env_params = expandConf(conf.env_params, 'Env', **kwargs)
+            conf.trials = loadConf(conf.trials, 'Trial', **kwargs)
             for k, v in conf.larva_groups.items():
                 if type(v.model) == str:
-                    v.model = loadConf(v.model, 'Model')
+                    v.model = loadConf(v.model, 'Model', **kwargs)
     except:
         pass
     return conf
 
 
-def loadConfDict(conf_type):
+def loadConfDict(conf_type, use_pickle=False):
     try:
-        with open(paths.path(conf_type)) as f:
-            d = json.load(f)
+        if use_pickle:
+            with open(paths.path(conf_type), 'rb') as tfp:
+                d = pickle.load(tfp)
+        else:
+            with open(paths.path(conf_type)) as f:
+                d = json.load(f)
         return d
     except:
         return {}
 
-def kConfDict(conf_type) :
-    return list(loadConfDict(conf_type).keys())
+def kConfDict(conf_type, **kwargs) :
+    return list(loadConfDict(conf_type, **kwargs).keys())
 
 def loadRef(id) :
     from lib.stor.larva_dataset import LarvaDataset
@@ -54,9 +59,9 @@ def loadRef(id) :
 def copyConf(id, conf_type) :
     return AttrDict.from_nested_dicts(copy.deepcopy(expandConf(id, conf_type)))
 
-def saveConf(conf, conf_type, id=None, mode='overwrite'):
+def saveConf(conf, conf_type, id=None, mode='overwrite', **kwargs):
     try:
-        d = loadConfDict(conf_type)
+        d = loadConfDict(conf_type, **kwargs)
     except:
         d = {}
     if id is None:
@@ -70,13 +75,17 @@ def saveConf(conf, conf_type, id=None, mode='overwrite'):
                 d[id][k] = v
     else:
         d[id] = conf
-    saveConfDict(d, conf_type)
+    saveConfDict(d, conf_type, **kwargs)
     print(f'{conf_type} Configuration saved under the id : {id}')
 
 
-def saveConfDict(ConfDict, conf_type):
-    with open(paths.path(conf_type), "w") as f:
-        json.dump(ConfDict, f)
+def saveConfDict(ConfDict, conf_type, use_pickle=False):
+    if use_pickle:
+        with open(paths.path(conf_type), 'wb') as fp:
+            pickle.dump(ConfDict, fp, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(paths.path(conf_type), "w") as f:
+            json.dump(ConfDict, f)
 
 
 def deleteConf(id, conf_type):
@@ -105,13 +114,16 @@ def next_idx(exp, type='single'):
         ksExp = kConfDict('Exp')
         ksBatch = kConfDict('Batch')
         ksEssay = kConfDict('Essay')
+        ksGA = kConfDict('Ga')
         dExp = dict(zip(ksExp, [0] * len(ksExp)))
         dBatch = dict(zip(ksBatch, [0] * len(ksBatch)))
         dEssay = dict(zip(ksEssay, [0] * len(ksEssay)))
+        dGA = dict(zip(ksGA, [0] * len(ksGA)))
         # batch_idx_dict.update(loadConfDict('Batch'))
         d = {'single': dExp,
              'batch': dBatch,
-             'essay': dEssay}
+             'essay': dEssay,
+             'ga':dGA}
     if not exp in d[type].keys():
         d[type][exp] = 0
     d[type][exp] += 1
@@ -140,7 +152,7 @@ def store_reference_data_confs():
 
 def store_confs(keys=None):
     if keys is None:
-        keys = ['Ref', 'Data', 'Aux', 'Model', 'Env', 'Exp']
+        keys = ['Ref', 'Data', 'Aux', 'Model', 'Env', 'Exp', 'Ga']
     if 'Aux' in keys:
         from lib.conf.stored.aux_conf import trial_dict, life_dict, body_dict
         for k, v in trial_dict.items():
@@ -197,6 +209,10 @@ def store_confs(keys=None):
 
         for k, v in bat.batch_dict.items():
             saveConf(v, 'Batch', k)
+    if 'Ga' in keys:
+        from lib.conf.stored.ga_conf import ga_dic
+        for k, v in ga_dic.items():
+            saveConf(v, 'Ga', k, use_pickle=True)
 
 
 def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None, **kwargs):
@@ -221,9 +237,12 @@ def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None, **kwarg
 
 
 if __name__ == '__main__':
-    t0=time.time()
+    # t0=time.time()
+    store_confs(['Ga'])
+    raise
     store_confs(['Model'])
     store_confs(['Aux'])
+    store_confs(['Env'])
     store_confs(['Exp'])
-    t1 = time.time()
-    print(int((t1-t0)*10**3))
+    # t1 = time.time()
+    # print(int((t1-t0)*10**3))

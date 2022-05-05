@@ -2,6 +2,7 @@ import numpy as np
 from siunits import BaseUnit, Composite, DerivedUnit
 
 from lib.aux.collecting import output_keys
+from lib.aux.par_aux import sub, sup, bar, circle, wave, tilde, subsup
 
 proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
 bout_keys = ['stride', 'pause', 'turn']
@@ -219,17 +220,17 @@ def init_pars():
                                   'h': 'The arena shape.'}
                   },
         'physics': {
-            'torque_coef': {'v': 0.41, 'max': 5.0, 'dv': 0.01,
+            'torque_coef': {'v': 0.41, 'min': 0.0,'max': 5.0, 'dv': 0.01,'label' : 'torque coefficient', 's': sub('c', 'T'), 'u' : sup('sec', -2),
                             'h': 'Conversion coefficient from TURNER output to torque-per-inertia-unit.'},
-            'ang_vel_coef': {'v': 1.0, 'max': 5.0, 'dv': 0.01,
+            'ang_vel_coef': {'v': 1.0, 'max': 5.0, 'dv': 0.01,'label' : 'angular velocity coefficient',
                             'h': 'Conversion coefficient from TURNER output to angular velocity.'},
-            'ang_damping': {'v': 2.5, 'max': 10.0,
+            'ang_damping': {'v': 2.5, 'min': 0.0,'max': 10.0,'label' : 'angular damping', 's': 'z', 'u' : sup('sec', -1),
                             'h': 'Angular damping exerted on angular velocity.'},
-            'body_spring_k': {'v': 0.25, 'max': 100.0, 'dv': 0.01,
+            'body_spring_k': {'v': 0.25,'min': 0.0, 'max': 100.0, 'dv': 0.01,'label' : 'body spring constant', 's': 'k', 'u' : sup('sec', -2),
                               'h': 'Larva-body torsional spring constant reflecting deformation resistance.'},
-            'bend_correction_coef': {'v': 1.0, 'max': 1.5,
+            'bend_correction_coef': {'v': 1.0, 'min': 0.0,'max': 2.0,'label' : 'bend correction coefficient', 's': sub('c', 'b'), 'u' : '-',
                                      'h': 'Correction coefficient of bending angle during forward motion.'},
-            'ang_mode': {'t': str, 'v': 'torque', 'vs': ['torque', 'velocity'],
+            'ang_mode': {'t': str, 'v': 'torque', 'vs': ['torque', 'velocity'],'label' : 'angular mode',
                          'h': 'Whether the Turner module output is equivalent to torque or angular velocity.'},
         },
 
@@ -238,30 +239,33 @@ def init_pars():
                     'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5), 'max': 2.0, 'disp': 'range',
                                    'combo': 'frequency',
                                    'h': 'The frequency range of the repetitive crawling behavior.'},
-                    'initial_freq': {'v': 1.418, 'max': 10.0, 'aux_vs': ['sample'], 'disp': 'initial',
+                    'initial_freq': {'v': 1.418, 'max': 10.0, 'aux_vs': ['sample'], 'disp': 'initial', 'label': 'crawling frequency','s': sub('f', 'C'), 'u' : '$Hz$',
                                      'combo': 'frequency',
                                      'h': 'The initial frequency of the repetitive crawling behavior.'},  # From D1 fit
                     'freq_std': {'v': 0.184, 'max': 1.0, 'disp': 'std', 'combo': 'frequency',
                                  'h': 'The standard deviation of the frequency of the repetitive crawling behavior.'},
-                    'stride_dst_mean': {'v': 0.224, 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample'], 'disp': 'mean',
+                    'max_scaled_vel': {'v': 0.6, 'max': 1.5, 'label': 'maximum scaled velocity',
+                                      's': sub(circle('v'), 'max'), 'u': '$body-lengths/sec$',
+                                      'h': 'The maximum scaled forward velocity.'},
+                    'stride_dst_mean': {'v': 0.224, 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample'], 'disp': 'mean','label': 'stride distance mean','s': sub(bar(circle('d')), 'S'), 'u' : '$body-lengths$',
                                           'combo': 'scaled distance / stride',
                                           'h': 'The mean displacement achieved in a single peristaltic stride as a fraction of the body length.'},
-                    'stride_dst_std': {'v': 0.033, 'max': 1.0, 'aux_vs': ['sample'], 'disp': 'std',
+                    'stride_dst_std': {'v': 0.033, 'max': 1.0, 'aux_vs': ['sample'], 'disp': 'std','label': 'stride distance std','s': sub(tilde(circle('d')), 'S'), 'u' : '$body-lengths$',
                                            'combo': 'scaled distance / stride',
                                            'h': 'The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.'},
                     'initial_amp': {'max': 2.0, 'disp': 'initial', 'combo': 'amplitude',
                                     'h': 'The initial amplitude of the CRAWLER-generated forward velocity if this is hardcoded (e.g. constant waveform).'},
                     'noise': {'v': 0.1, 'max': 1.0, 'dv': 0.01, 'disp': 'noise', 'combo': 'amplitude',
                               'h': 'The intrinsic output noise of the CRAWLER-generated forward velocity.'},
-                    'max_vel_phase': {'v': 3.6, 'max': 6.28,
+                    'max_vel_phase': {'v': 3.6, 'max': 2*np.pi,'label': 'max velocity phase','s': subsup('$\phi$', 'C', 'v'), 'u' : '$rads$',
                                       'h': 'The phase of the crawling oscillation cycle where forward velocity is maximum.'}
                     },
         'turner': {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal', 'constant'],
                             'h': 'The implementation mode of the lateral oscillator (TURNER) module.'},
 
-                   'base_activation': {'v': 20.0, 'max': 100.0, 'dv': 1.0, 'disp': 'mean', 'combo': 'activation',
+                   'base_activation': {'v': 20.0, 'min': 10.0,'max': 40.0, 'dv': 0.1, 'disp': 'mean', 'combo': 'activation', 'label': 'tonic input','s': '$I_{T}^{0}$', 'u' : '-',
                                        'h': 'The baseline activation/input of the TURNER module.'},
-                   'activation_range': {'t': Tuple[float], 'v': (10.0, 40.0), 'max': 100.0, 'dv': 1.0, 'disp': 'range',
+                   'activation_range': {'t': Tuple[float], 'v': (10.0, 40.0), 'max': 100.0, 'dv': 0.1, 'disp': 'range', 'label': 'input range','s': '$[I_{T}^{min},I_{T}^{max}]$', 'u' : '-',
                                         'combo': 'activation', 'h': 'The activation/input range of the TURNER module.'},
                    'noise': {'v': 0.15, 'max': 10.0, 'disp': 'noise', 'combo': 'amplitude',
                              'h': 'The intrinsic output noise of the TURNER activity amplitude.'},
@@ -279,27 +283,25 @@ def init_pars():
         'interference': {
             'mode': {'t': str, 'v': 'square', 'vs': ['default', 'square', 'phasic'],
                                  'h': 'CRAWLER:TURNER suppression phase mode.'},
-            'suppression_mode': {'t': str, 'v': 'amplitude', 'vs': ['amplitude', 'oscillation', 'both'],
+            'suppression_mode': {'t': str, 'v': 'amplitude', 'vs': ['amplitude', 'oscillation', 'both'],'label': 'suppression target','s': '-', 'u' : '-',
                      'h': 'CRAWLER:TURNER suppression target.'},
-            'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0,
+            'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2*np.pi,'label': 'suppression relief phase interval','s': '$[\phi_{C}^{\omega_{0}},\phi_{C}^{\omega_{1}}]$', 'u' : '$rads$',
                                   'h': 'CRAWLER phase range for TURNER suppression lift.'},
-            'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2.0,
+            'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2*np.pi,'label': 'feeder suppression relief phase interval','s': '$[\phi_{F}^{\omega_{0}},\phi_{F}^{\omega_{1}}]$', 'u' : '$rads$',
                                  'h': 'FEEDER phase range for TURNER suppression lift.'},
-            'max_attenuation_phase': {'v': 3.4, 'max': 2*np.pi,
+            'max_attenuation_phase': {'v': 3.4, 'max': 2*np.pi,'label': 'max relief phase','s': '$\phi_{C}^{\omega}$', 'u' : '$rads$',
                             'h': 'CRAWLER phase of minimum TURNER suppression.'},
-            'attenuation': {'v': 1.0, 'max': 1.0,
-                            'h': 'CRAWLER:TURNER baseline suppression coefficient.'},
-            # 'attenuation_min': {'v': 0.2, 'max': 1.0,
-            #                 'h': 'The minimum activity attenuation exerted on the TURNER module due to interference by other oscillators.'},
-            'attenuation_max': {'v': 0.31, 'max': 1.0,
-                            'h': 'CRAWLER:TURNER suppression lift coefficient.'},
+            'attenuation': {'v': 1.0, 'max': 1.0,'label': 'suppression coefficient','s': '$c_{CT}^{0}$', 'u' : '-',
+                            'h': 'CRAWLER:TURNER baseline suppression coefficient'},
+            'attenuation_max': {'v': 0.31, 'max': 1.0,'label': 'suppression relief coefficient.','s': '$c_{CT}^{1}$', 'u' : '-',
+                            'h': 'CRAWLER:TURNER suppression relief coefficient.'},
         },
 
         'olfactor': {
-            'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear', 'null'],
+            'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear', 'null'], 'label': 'sensory transduction mode','s': '-', 'u' : '-',
                            'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input.'},
             'input_noise': {'v': 0.0, 'max': 1.0, 'h': 'The intrinsic noise of the sensory input.'},
-            'decay_coef': {'v': 0.0, 'max': 2.0,
+            'decay_coef': {'v': 0.0, 'max': 2.0, 'label': 'decay coefficient','s': sub('c', 'O'), 'u' : '-',
                            'h': 'The linear decay coefficient of the olfactory sensory activation.'},
             'brute_force': {**bF, 'h': 'Whether to apply direct rule-based modulation on locomotion or not.'}
         },
@@ -459,11 +461,11 @@ def init_pars():
                    'h': 'The XY coordinates of the body contour.'},
     }
 
-    d['body'] = {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'initial',
+    d['body'] = {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'initial','label': 'length','s': '$l$', 'u' : '$mm$',
                                     'combo': 'length', 'h': 'The initial body length.'},
                  'length_std': {'v': 0.0004, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'std',
                                 'combo': 'length', 'h': 'The standard deviation of the initial body length.'},
-                 'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12,
+                 'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12,'label': 'number of body segments','s': '-', 'u' : '# $segments$',
                            'h': 'The number of segments comprising the larva body.'},
                  'seg_ratio': {'max': 1.0,
                                'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},

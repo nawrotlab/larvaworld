@@ -589,6 +589,10 @@ class LarvaDataset:
     def enrich(self, metric_definition, preprocessing={}, processing={}, annotation={},
                to_drop={}, recompute=False, mode='minimal', show_output=True, is_last=True, **kwargs):
         md = metric_definition
+        for k,v in md.items():
+            if v is None :
+                md[k]={}
+        # print(md)
         self.config.update(**md['angular'])
         self.config.update(**md['spatial'])
         self.define_linear_metrics()

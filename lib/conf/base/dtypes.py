@@ -1,11 +1,9 @@
 import numpy as np
 import pandas as pd
-import typing
-
+from typing import TypedDict, List, Tuple
 from lib.aux.dictsNlists import AttrDict, tree_dict, unique_list, flatten_list
 from lib.aux.par_aux import dtype_name
 from lib.conf.base.init_pars import init_pars, proc_type_keys, bout_keys, to_drop_keys
-
 
 
 def maxNdigits(array, Min=None):
@@ -16,7 +14,6 @@ def maxNdigits(array, Min=None):
 
 
 def base_dtype(t):
-    from typing import List, Tuple
     if t in [float, Tuple[float], List[float], List[Tuple[float]]]:
         base_t = float
     elif t in [int, Tuple[int], List[int], List[Tuple[int]]]:
@@ -27,10 +24,9 @@ def base_dtype(t):
 
 
 def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', s='',
-        combo=None, argparser=False, entry=None):
-
+        u='', label='',
+        combo=None, argparser=False, entry=None, **kwargs):
     if not argparser:
-        from typing import TypedDict
         if t == TypedDict:
             return {name: {'initial_value': v, 'dtype': t, 'entry': entry, 'disp': disp, 'tooltip': h}}
         cur_dtype = base_dtype(t)
@@ -58,7 +54,7 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
             Ndigits = maxNdigits(np.array(vs), 4)
         if aux_vs is not None and vs is not None:
             vs += aux_vs
-        d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t,
+        d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t, 'symbol': s, 'unit': u, 'label': label,
              'disp': disp if disp is not None else name, 'combo': combo, 'tooltip': h}
 
         return {name: d}
@@ -80,30 +76,26 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
         return {name: d}
 
 
-
-def ga_dict(name=None, suf='', excluded=[]):
+def ga_dict(name=None, suf='', excluded=None):
+    if excluded is None:
+        excluded = []
     d = {}
     for k, vs in par_dict(name).items():
-        if k in excluded :
+        if k in excluded:
             continue
         k0 = f'{suf}{k}'
-        kws={
-            'initial_value' : vs['initial_value'],
-            'tooltip' : vs['tooltip'],
-            'dtype' : vs['dtype'],
-            'name' : k,
+        kws = {
+            'initial_value': vs['initial_value'],
+            'tooltip': vs['tooltip'],
+            'dtype': vs['dtype'],
+            'name': k,
         }
-        # v0 = vs['initial_value']
-        # h = vs['tooltip']
-        # dtype=vs['dtype']
         if vs['dtype'] == str:
             kws['choices'] = vs['values']
         else:
-            kws['min'] , kws['max']  = np.min(vs['values']), np.max(vs['values'])
-        d[k0]=kws
-    d=AttrDict.from_nested_dicts(d)
-    return d
-
+            kws['min'], kws['max'] = np.min(vs['values']), np.max(vs['values'])
+        d[k0] = kws
+    return AttrDict.from_nested_dicts(d)
 
 
 def par_dict(name=None, d0=None, **kwargs):
@@ -132,50 +124,51 @@ def par_dict_from_df(name, df):
 
 def pars_to_df(names, d0=None):
     from lib.conf.base import paths
-    dic={}
-    for name in names :
-        d=par_dict(name,d0)
-        df = pd.DataFrame.from_dict(d, orient='index',
-                                    columns=['dtype', 'initial_value', 'tooltip'])
-                                    # columns=['dtype', 'initial_value', 'h', 'min', 'max', 'interval'])
+    dic = {}
+    for name in names:
+        d = par_dict(name, d0)
+        df = pd.DataFrame.from_dict(d, orient='index', columns=['dtype', 'initial_value', 'tooltip'])
         df.index.name = 'parameter'
         df = df.where(pd.notnull(df), None)
-        dic[name]=df
-    ddf= pd.DataFrame.from_dict(dic, orient='index')
+        dic[name] = df
+    ddf = pd.DataFrame.from_dict(dic, orient='index')
     ddf.index.name = 'group'
     ddf.to_csv(paths.path('ParGlossary'))
 
+
 def pars_to_tree(name):
-    invalid=[]
-    valid=[]
-    def add_entry(k4,v4, parent) :
-        key=f'{parent}.{k4}'
+    invalid = []
+    valid = []
+    def add_entry(k4, v4, parent):
+        key = f'{parent}.{k4}'
         if 'content' in v4.keys():
-            dd=v4['content']
+            dd = v4['content']
             if key not in valid:
                 data.append([parent, key, k4, None, dict, None, k4])
                 valid.append(key)
             for k1, v1 in dd.items():
                 add_entry(k1, v1, key)
         else:
-            entry = [parent, key,k4] + [v4[c] for c in columns[3:]]
+            entry = [parent, key, k4] + [v4[c] for c in columns[3:]]
             data.append(entry)
             valid.append(key)
+
     def add_multientry0(d, k0, name):
         key = f'{name}.{k0}'
         if key not in valid:
-            data.append([name, key, k0,  None, dict,None, k0])
+            data.append([name, key, k0, None, dict, None, k0])
             valid.append(key)
         for k1, v1 in d.items():
             add_entry(k1, v1, key)
-    data=[]
-    columns = ['parent', 'key','text','initial_value', 'dtype', 'tooltip', 'disp']
-    columns2 = ['parent', 'key','text','default_value', 'dtype', 'description', 'name']
-    P=init_pars()[name]
-    data.append(['root', name, name, None, dict,None, name])
+
+    data = []
+    columns = ['parent', 'key', 'text', 'initial_value', 'dtype', 'tooltip', 'disp']
+    columns2 = ['parent', 'key', 'text', 'default_value', 'dtype', 'description', 'name']
+    P = init_pars()[name]
+    data.append(['root', name, name, None, dict, None, name])
     valid.append(name)
-    for k0,v0 in P.items():
-        d0=P.get(k0, None)
+    for k0, v0 in P.items():
+        d0 = P.get(k0, None)
         try:
             d = par(k0, **v0)
             add_entry(k0, d[k0], name)
@@ -183,47 +176,44 @@ def pars_to_tree(name):
             d = par_dict(k0, d0)
             add_multientry0(d, k0, name)
     ddf = pd.DataFrame(data, columns=columns2)
-    if 'dtype' in columns2 :
-        ddf['dtype']=[dtype_name(v) for v in ddf['dtype'] ]
+    if 'dtype' in columns2:
+        ddf['dtype'] = [dtype_name(v) for v in ddf['dtype']]
     ddf = ddf.fillna(value=' ')
-    ddf =ddf.replace({}, ' ')
+    ddf = ddf.replace({}, ' ')
     return ddf
+
 
 def conf_to_tree(conf, id=''):
     from lib.gui.aux.elements import GuiTreeData
-    # from lib.conf.stored.conf import expandConf
-    # d=expandConf(id, conftype)
-    entries=tree_dict(d=conf, parent_key=id, sep='.')
-    tree = GuiTreeData(entries=entries, headings=['value'], col_widths=[40,20])
-    return tree
+    entries = tree_dict(d=conf, parent_key=id, sep='.')
+    return GuiTreeData(entries=entries, headings=['value'], col_widths=[40, 20])
+
 
 def multiconf_to_tree(ids, conftype):
     from lib.gui.aux.elements import GuiTreeData
     from lib.conf.stored.conf import expandConf
-    dfs=[]
-    for i, id in enumerate(ids) :
-        conf=expandConf(id, conftype)
+    dfs = []
+    for i, id in enumerate(ids):
+        conf = expandConf(id, conftype)
         entries = tree_dict(d=conf, parent_key=id)
-        df=pd.DataFrame.from_records(entries, index=['parent', 'key', 'text'])
+        df = pd.DataFrame.from_records(entries, index=['parent', 'key', 'text'])
         dfs.append(df)
-    ind0=[]
-    for df in dfs :
-        for ind in df.index.values :
-            if ind not in ind0 :
+    ind0 = []
+    for df in dfs:
+        for ind in df.index.values:
+            if ind not in ind0:
                 ind0.append(ind)
-    vs=np.zeros([len(ind0), len(ids)])*np.nan
-    df0=pd.DataFrame(vs, index=ind0, columns=ids)
-    for id, df in zip(ids, dfs) :
-        for key in df.index :
+    vs = np.zeros([len(ind0), len(ids)]) * np.nan
+    df0 = pd.DataFrame(vs, index=ind0, columns=ids)
+    for id, df in zip(ids, dfs):
+        for key in df.index:
             print(key, key in df0.index)
-            df0[id].loc[key]=df['values'].loc[key][0]
+            df0[id].loc[key] = df['values'].loc[key][0]
     df0.reset_index(inplace=True)
-    df0['values']=[df0[id] for id in ids]
+    df0['values'] = [df0[id] for id in ids]
     df0.drop(ids, axis=1)
     comp_entries = df0.to_dict(orient='records')
-    tree = GuiTreeData(entries=comp_entries, headings=[ids], col_widths=[40]+[20]*len(ids))
-    return tree
-
+    return GuiTreeData(entries=comp_entries, headings=[ids], col_widths=[40] + [20] * len(ids))
 
 
 col_idx_dict = {
@@ -259,14 +249,18 @@ def null_dict(n, key='initial_value', **kwargs):
     dic = par_dict(n)
     dic2 = v0(dic)
     if n not in ['visualization', 'enrichment']:
+
         dic2.update(kwargs)
         return AttrDict.from_nested_dicts(dic2)
         # return dic2
     else:
+        if n=='visualization' :
+            dic2 = {k:null_dict(k, key=key) for k,v in dic.items()}
+        # dic2 = {k:null_dict(k, key=key) for k,v in dic.items()}
         for k, v in dic2.items():
             if k in list(kwargs.keys()):
                 dic2[k] = kwargs[k]
-            elif type(v) == dict:
+            elif isinstance(v, dict):
                 for k0, v0 in v.items():
                     if k0 in list(kwargs.keys()):
                         dic2[k][k0] = kwargs[k0]
@@ -461,13 +455,6 @@ def oD(c=1, id='Odor'):
     return odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)
 
 
-
 if __name__ == '__main__':
-    print(null_dict('Box2D_params').joint_types)
-    # t=multiconf_to_tree(['explorer', 'nengo_explorer'], 'Model')
-    # t=conf_to_tree('explorer', 'Model')
-    # t.save(k='text', v='value')
-    # t.test()
-    raise
     store_controls()
     store_RefPars()

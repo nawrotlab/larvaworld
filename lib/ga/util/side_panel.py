@@ -2,6 +2,7 @@ from typing import Tuple
 
 import pygame
 import math
+import numpy as np
 
 from lib.ga.util.color import Color
 from lib.ga.util.time_util import TimeUtil
@@ -27,10 +28,12 @@ class SidePanel:
         self.line_num = None
         self.line_spacing = None
 
-    def update_ga_data(self, generation_num, best_genome, fitness_best_genome, Nagents):
+    def update_ga_data(self, generation_num, best_genome, fitness_best_genome):
         self.generation_num = generation_num
         self.best_genome = best_genome
         self.fitness_best_genome = fitness_best_genome
+
+    def update_ga_population(self, Nagents):
         self.Nagents = Nagents
 
     def update_ga_time(self, cum_t, gen_t, gen_sim_t):
@@ -67,6 +70,10 @@ class SidePanel:
             self.render_line(font, 'Generation real-time: ' + TimeUtil.format_time_seconds(self.gen_sim_t))
             self.render_line(font, '')
             self.render_line(font, 'Max fitness: ' + fitness_best)
+            if self.best_genome is not None and self.best_genome.fitness_dict is not None :
+                for short, ks in self.best_genome.fitness_dict.items():
+                    self.render_line(font, f'{short}: ' + str(np.round(ks,2)), self.LEFT_MARGIN)
+            self.render_line(font, 'Best genome: ' )
             for k, vs in space_dict.items():
                 pkey = '-' if self.best_genome is None else str(self.best_genome.get(rounded=True)[k])
                 self.render_line(font, f'{vs["name"]}: ' + pkey, self.LEFT_MARGIN)

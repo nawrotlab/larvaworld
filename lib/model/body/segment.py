@@ -11,7 +11,7 @@ class BodySegment:
         # self.space = space
         self.color = color
         self.pos = pos
-        self.orientation = orientation
+        self.orientation = orientation % (np.pi * 2)
         self.seg_vertices = seg_vertices
         self.idx = idx
 
@@ -32,7 +32,7 @@ class BodySegment:
         self.pos = pos
 
     def set_orientation(self, orientation):
-        self.orientation = orientation
+        self.orientation = orientation % (np.pi * 2)
 
     def set_pose(self, pos, orientation):
         self.set_position(pos)
@@ -111,7 +111,7 @@ class Box2DSegment(BodySegment):
 
     def set_orientation(self, orientation):
         # orientation %= 2 * np.pi
-        self._body.angle = orientation
+        self._body.angle = orientation % (np.pi * 2)
 
     def get_pose(self):
         pos = np.asarray(self._body.position)
@@ -221,8 +221,15 @@ class DefaultSegment(BodySegment):
 
     def update_poseNvertices(self, pos, orientation):
         self.pos=pos
-        self.orientation=orientation
+        self.orientation=orientation % (np.pi * 2)
         self.vertices = [pos + rotate_around_center_multi(self.seg_vertices[0], -orientation)]
+
+    def update_all(self, pos, orientation, lin_vel, ang_vel):
+        self.pos=pos
+        self.orientation=orientation % (np.pi * 2)
+        self.vertices = [pos + rotate_around_center_multi(self.seg_vertices[0], -orientation)]
+        self.set_lin_vel(lin_vel)
+        self.set_ang_vel(ang_vel)
 
     def get_pose(self):
         return np.array(self.pos), self.orientation

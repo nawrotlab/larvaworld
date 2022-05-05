@@ -11,7 +11,8 @@ from lib.model.modules.turner import Turner, NeuralOscillator
 
 
 class Locomotor:
-    def __init__(self, dt, ang_mode='torque',lin_mode='velocity', offline=False, crawler_noise=0, turner_input_noise=0, turner_output_noise=0,
+    def __init__(self, dt, ang_mode='torque', lin_mode='velocity', offline=False, crawler_noise=0, turner_input_noise=0,
+                 turner_output_noise=0,
                  torque_coef=1.78, ang_damp_coef=2.6, body_spring_k=50, bend_correction_coef=1.6, ang_vel_coef=1):
         self.offline = offline
         self.ang_mode = ang_mode
@@ -64,19 +65,18 @@ class Locomotor:
         self.bend_body()
 
     def bend_body(self):
-        if self.ang_mode=='torque' :
+        if self.ang_mode == 'torque':
             dv = self.ang_activity * self.torque_coef - self.ang_damp_coef * self.ang_vel - self.body_spring_k * self.bend
             # print(self.bend,self.ang_vel, dv)
             # raise
             self.ang_vel += dv * self.dt
         elif self.ang_mode == 'velocity':
-            self.ang_vel = self.ang_activity*self.ang_vel_coef
+            self.ang_vel = self.ang_activity * self.ang_vel_coef
         self.bend += self.ang_vel * self.dt
-        if self.bend > np.pi :
+        if self.bend > np.pi:
             self.bend = np.pi
         elif self.bend < -np.pi:
             self.bend = -np.pi
-
 
     def on_new_pause(self):
         pass
@@ -95,9 +95,9 @@ class DefaultLocomotor(Locomotor):
             self.turner = Turner(dt=self.dt, **c.turner_params)
         if m['feeder']:
             self.feeder = Feeder(dt=self.dt, **c.feeder_params)
-        if c.interference_params is None :
+        if c.interference_params is None:
             self.coupling = DefaultCoupling(locomotor=self, attenuation=1)
-        else :
+        else:
             mode = c.interference_params.mode if 'mode' in c.interference_params.keys() else 'default'
             if mode == 'default':
                 self.coupling = DefaultCoupling(locomotor=self, **c.interference_params)
@@ -118,52 +118,32 @@ class DefaultLocomotor(Locomotor):
         if self.intermitter:
             pre_state = self.intermitter.cur_state
             self.intermitter.step()
-            # cur_state = self.intermitter.cur_state
-            if pre_state=='run' and self.intermitter.cur_state =='pause' :
-                # self.new_run, self.new_pause=False, True
+            if pre_state == 'run' and self.intermitter.cur_state == 'pause':
                 self.on_new_pause()
-            elif pre_state=='pause' and self.intermitter.cur_state =='run' :
-                # self.new_run, self.new_pause=True, False
+            elif pre_state == 'pause' and self.intermitter.cur_state == 'run':
                 self.on_new_run()
-            # else :
-            #     self.new_run, self.new_pause = False, False
         if self.feeder:
             self.feed_motion = self.feeder.step()
         if self.crawler:
             self.lin_activity = self.crawler.step()
         if self.turner:
-            A_in*=(1 + np.random.normal(scale=self.turner_input_noise))
-            if self.coupling.suppression_mode=='amplitude' :
-                cT=self.coupling.step()
-                # self.ang_activity = self.coupling.step() * self.turner.step(A_in=A_in)
-            elif self.coupling.suppression_mode=='oscillation' :
-                A_in+=(1-self.coupling.step())
-                cT = 1
-                # self.ang_activity =  self.turner.step(A_in=A_in)
-                # print(self.coupling.step())
-            elif self.coupling.suppression_mode == 'both':
-                A_in+=(1-self.coupling.step())
+            A_in *= (1 + np.random.normal(scale=self.turner_input_noise))
+            if self.coupling.suppression_mode == 'amplitude':
                 cT = self.coupling.step()
-                # self.ang_activity = self.coupling.step() * self.turner.step(A_in=A_in)
+            elif self.coupling.suppression_mode == 'oscillation':
+                A_in += (1 - self.coupling.step())
+                cT = 1
+            elif self.coupling.suppression_mode == 'both':
+                A_in += (1 - self.coupling.step())
+                cT = self.coupling.step()
             self.ang_activity = cT * self.turner.step(A_in=A_in)
-            # elif self.coupling.suppression_mode == 'intermit':
-            #     A_in += (1 - self.coupling.step())
-            #     self.ang_activity = self.turner.step(A_in=A_in)
-                #print(self.coupling.step())
-        # if self.new_run :
-        #     self.on_new_run()
-        # elif self.new_pause :
-        #     self.on_new_pause()
         self.add_noise()
         self.scale2length(length)
-        if not self.offline :
+        if not self.offline:
             return self.lin_activity, self.ang_activity, self.feed_motion
-        else :
+        else:
             self.update_body(length)
             return self.lin_vel, self.ang_vel, self.feed_motion
-
-
-
 
 
 class Levy_locomotor(DefaultLocomotor):
@@ -172,13 +152,15 @@ class Levy_locomotor(DefaultLocomotor):
                  run_dist={'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
                  run_scaled_velocity_mean=None, run_velocity_mean=None, ang_vel_headcast=0.3, **kwargs):
         from lib.conf.base.dtypes import null_dict
-        if conf is None :
-            conf=null_dict('locomotor',
-                       crawler_params=null_dict('crawler', waveform ='constant', initial_amp=run_scaled_velocity_mean),
-                       turner_params=null_dict('turner',  mode='constant', initial_amp=ang_vel_headcast),
-                       interference_params=null_dict('interference', mode ='default', attenuation =0),
-                       intermitter_params=null_dict('intermitter', run_dist =run_dist, pause_dist=pause_dist, run_mode ='run')
-                       )
+        if conf is None:
+            conf = null_dict('locomotor',
+                             crawler_params=null_dict('crawler', waveform='constant',
+                                                      initial_amp=run_scaled_velocity_mean),
+                             turner_params=null_dict('turner', mode='constant', initial_amp=ang_vel_headcast),
+                             interference_params=null_dict('interference', mode='default', attenuation=0),
+                             intermitter_params=null_dict('intermitter', run_dist=run_dist, pause_dist=pause_dist,
+                                                          run_mode='run')
+                             )
         super().__init__(dt=dt, ang_mode='velocity', offline=True, conf=conf)
         # self.run_scaled_velocity_mean = run_scaled_velocity_mean
         # self.run_velocity_mean = run_velocity_mean
@@ -252,7 +234,7 @@ class Wystrach2016(Locomotor):
         input = (self.turner_input_constant + A_in) * (1 + np.random.normal(scale=self.turner_input_noise))
 
         self.neural_oscillator.step(input)
-        self.ang_activity =self.neural_oscillator.activity
+        self.ang_activity = self.neural_oscillator.activity
         self.add_noise()
         self.update_body(length)
         return self.lin_vel, self.ang_vel, self.feed_motion
@@ -325,7 +307,7 @@ class Sakagiannis2022(Locomotor):
     def __init__(self, dt, conf=None,
                  pause_dist={'range': [0.4, 20.0], 'name': 'uniform'},
                  run_dist={'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
-                 stridechain_dist=None,freq_std=0.18,suppression_mode='amplitude',
+                 stridechain_dist=None, freq_std=0.18, suppression_mode='amplitude',
                  initial_freq=1.418, step_mu=0.224, step_std=0.033,
                  attenuation=0.2, attenuation_max=0.31, max_vel_phase=3.6,
                  turner_input_constant=19, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0, **kwargs):
@@ -427,7 +409,8 @@ class Sakagiannis2022(Locomotor):
             if self.complete_iteration and self.current_numstrides is not None:
                 self.current_numstrides += 1
                 self.step_to_length = self.new_stride
-            self.lin_activity = self.freq * self.step_to_length * (1 + 0.6 * np.cos(self.phi - self.max_vel_phase)) * length
+            self.lin_activity = self.freq * self.step_to_length * (
+                        1 + 0.6 * np.cos(self.phi - self.max_vel_phase)) * length
             attenuation_coef = self.attenuation_func
         elif self.cur_state == 'pause':
             self.cur_pause_dur += self.dt
@@ -441,11 +424,11 @@ class Sakagiannis2022(Locomotor):
             self.neural_oscillator.step(input)
             self.ang_activity = self.neural_oscillator.activity * attenuation_coef
         elif self.suppression_mode == 'oscillation':
-            self.neural_oscillator.step(input+1 - attenuation_coef)
+            self.neural_oscillator.step(input + 1 - attenuation_coef)
             self.ang_activity = self.neural_oscillator.activity
         elif self.suppression_mode == 'both':
             self.neural_oscillator.step(input + 1 - attenuation_coef)
-            self.ang_activity = self.neural_oscillator.activity* attenuation_coef
+            self.ang_activity = self.neural_oscillator.activity * attenuation_coef
         self.add_noise()
         self.update_body(length)
         # self.lin_vel = self.lin_activity
@@ -515,8 +498,9 @@ Sakagiannis2022_conf = {
 }
 
 if __name__ == '__main__':
-    from lib.anal.evaluation import sim_locomotor, sim_dataset,adapt_conf, run_locomotor_evaluation
+    from lib.anal.evaluation import sim_locomotor, sim_dataset, adapt_conf, run_locomotor_evaluation
     from lib.conf.base.par import ParDict, getPar
+
     # df_cols, = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'], to_return=['d'])
     # Lev = AttrDict.from_nested_dicts({
     #     'run_velocity_mean': 0.001,
@@ -552,13 +536,13 @@ if __name__ == '__main__':
         'r_weathervane_stop': 2.0,
         'r_weathervane_resume': 1.0,
     }
-    L = Davies2015(dt=1/16, **Dav)
-    N=2880
-    states=np.zeros([N])*np.nan
+    L = Davies2015(dt=1 / 16, **Dav)
+    N = 2880
+    states = np.zeros([N]) * np.nan
     for i in range(N):
         v, fov, feed = L.step(length=0.004)
-        states[i] =1 if L.intermitter.cur_state=='run' else 0
-    print(np.sum(states)/N)
+        states[i] = 1 if L.intermitter.cur_state == 'run' else 0
+    print(np.sum(states) / N)
     # dt = 0.065
     # l = 1
     # labs = ["Levy", "Wystrach2016", "Davies2015", "Sakagiannis2022"]
