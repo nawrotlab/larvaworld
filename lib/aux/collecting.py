@@ -36,7 +36,7 @@ collection_dict = {
         [[k, f'{k}_mu', f'{k}_std', f'{k}_max', f'{k}_fin'] for k in ['d_chem', 'sd_chem']]),
 
     'olfactor': ['Act_tur', 'A_tur', 'A_olf'],
-    'odors': ['c_odor1', 'c_odor2', 'c_odor3', 'dc_odor1', 'dc_odor2', 'dc_odor3'],
+    'odors': ['c_odor1', 'c_odor2', 'c_odor3', 'dc_odor1', 'dc_odor2', 'dc_odor3'], #@todo add thermo here?
     # 'constants': ['dt', 'x0', 'y0'],
 }
 
