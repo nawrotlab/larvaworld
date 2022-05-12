@@ -385,7 +385,7 @@ class WindScape:
 
 class ThermoScape(ValueGrid):
     def __init__(self, pTemp, spread, origins=[], tempDiff=[], default_color='green', visible=False):
-        print("pTemp")
+        # print("pTemp")
         self.plate_temp = pTemp
         self.thermo_sources = {str(i):o for i,o in enumerate(origins)} 
         self.thermo_source_dTemps = {str(i):o for i,o in enumerate(tempDiff)}
@@ -475,14 +475,14 @@ class ThermoScape(ValueGrid):
         nSources = len(self.thermo_source_dTemps)
         thermo_gain = {'cool':0, 'warm':0}
 
-        if self.thermoscape_layers is None:
-            print(0) # or np.nan
+        # if self.thermoscape_layers is None:
+        #     print(0) # or np.nan
         for k in self.thermoscape_layers:
             v=self.thermoscape_layers[k]
             pos_temp[k] = v.pdf(pos_ad) / v.pdf(self.thermo_sources[k]) * (self.thermo_source_dTemps[k] * nSources) #@todo need to check if this works
             # print(plate_temp + sum(pos_temp.values()) / len(pos_temp))
             # print(plate_temp + pos_temp[k] / len(pos_temp))
-            print(pos_temp[k] / nSources)
+            # print(pos_temp[k] / nSources)
             if pos_temp[k] < 0:
                 thermo_gain['cool'] += abs(pos_temp[k] / nSources)
             elif pos_temp[k] > 0:
