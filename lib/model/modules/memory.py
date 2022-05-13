@@ -166,12 +166,13 @@ class RemoteBrianModelMemory(Effector):
         # odor_id: 0,1,2
         # T: duration of remote model simulation in ms
         # warmup: duration of remote model warmup in ms
-        msg = LarvaMessage(self.sim_id, model_instance_id, odor_id, odor_concentration=concentration, T=t_sim, warmup=t_warmup, **kwargs)
+        msg = LarvaMessage(self.sim_id, model_instance_id, odor_id=odor_id, odor_concentration=concentration, T=t_sim, warmup=t_warmup, **kwargs)
         # send model parameters to remote model server & wait for result response
         response = self.client.send([msg]) # this is a LarvaMessage object again
         # extract returned model results
-        pref_idx = response.param('preference_index')
         mbon_p = response.param('MBONp')
         mbon_n = response.param('MBONn')
-        return (response.sim_id, response.model_id, pref_idx, mbon_p, mbon_n)
+        return (response.sim_id, response.model_id, mbon_p, mbon_n)
 
+    def step(self):
+        result = self.runRemoteModel()
