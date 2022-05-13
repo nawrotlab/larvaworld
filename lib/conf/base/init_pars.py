@@ -1,3 +1,8 @@
+
+import warnings
+from types import FunctionType
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import numpy as np
 from siunits import BaseUnit, Composite, DerivedUnit
 
@@ -220,15 +225,15 @@ def init_pars():
                                   'h': 'The arena shape.'}
                   },
         'physics': {
-            'torque_coef': {'v': 0.41, 'min': 0.0,'max': 5.0, 'dv': 0.01,'label' : 'torque coefficient', 's': sub('c', 'T'), 'u' : sup('sec', -2),
+            'torque_coef': {'v': 0.41, 'min': 0.0,'max': 2.0, 'dv': 0.01,'label' : 'torque coefficient', 'symbol': sub('c', 'T'), 'u' : sup('sec', -2),
                             'h': 'Conversion coefficient from TURNER output to torque-per-inertia-unit.'},
             'ang_vel_coef': {'v': 1.0, 'max': 5.0, 'dv': 0.01,'label' : 'angular velocity coefficient',
                             'h': 'Conversion coefficient from TURNER output to angular velocity.'},
-            'ang_damping': {'v': 2.5, 'min': 0.0,'max': 10.0,'label' : 'angular damping', 's': 'z', 'u' : sup('sec', -1),
+            'ang_damping': {'v': 2.5, 'min': 0.0,'max': 5.0,'label' : 'angular damping', 'symbol': 'z', 'u' : sup('sec', -1),
                             'h': 'Angular damping exerted on angular velocity.'},
-            'body_spring_k': {'v': 0.25,'min': 0.0, 'max': 100.0, 'dv': 0.01,'label' : 'body spring constant', 's': 'k', 'u' : sup('sec', -2),
+            'body_spring_k': {'v': 0.3,'min': 0.0, 'max': 10.0, 'dv': 0.1,'label' : 'body spring constant', 'symbol': 'k', 'u' : sup('sec', -2),
                               'h': 'Larva-body torsional spring constant reflecting deformation resistance.'},
-            'bend_correction_coef': {'v': 1.0, 'min': 0.0,'max': 2.0,'label' : 'bend correction coefficient', 's': sub('c', 'b'), 'u' : '-',
+            'bend_correction_coef': {'v': 1.0, 'min': 0.0,'max': 1.5,'label' : 'bend correction coefficient', 'symbol': sub('c', 'b'), 'u' : '-',
                                      'h': 'Correction coefficient of bending angle during forward motion.'},
             'ang_mode': {'t': str, 'v': 'torque', 'vs': ['torque', 'velocity'],'label' : 'angular mode',
                          'h': 'Whether the Turner module output is equivalent to torque or angular velocity.'},
@@ -239,33 +244,34 @@ def init_pars():
                     'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5), 'max': 2.0, 'disp': 'range',
                                    'combo': 'frequency',
                                    'h': 'The frequency range of the repetitive crawling behavior.'},
-                    'initial_freq': {'v': 1.418, 'max': 10.0, 'aux_vs': ['sample'], 'disp': 'initial', 'label': 'crawling frequency','s': sub('f', 'C'), 'u' : '$Hz$',
-                                     'combo': 'frequency',
+                    'initial_freq': {'v': 1.418, 'max': 10.0, 'aux_vs': ['sample'], 'disp': 'initial', 'label': 'crawling frequency','symbol': sub('f', 'C'), 'u' : '$Hz$',
+                                     'combo': 'frequency','codename': 'scaled_velocity_freq',
                                      'h': 'The initial frequency of the repetitive crawling behavior.'},  # From D1 fit
                     'freq_std': {'v': 0.184, 'max': 1.0, 'disp': 'std', 'combo': 'frequency',
                                  'h': 'The standard deviation of the frequency of the repetitive crawling behavior.'},
-                    'max_scaled_vel': {'v': 0.6, 'max': 1.5, 'label': 'maximum scaled velocity',
-                                      's': sub(circle('v'), 'max'), 'u': '$body-lengths/sec$',
+                    'max_scaled_vel': {'v': 0.6, 'max': 1.5, 'label': 'maximum scaled velocity','codename': 'stride_scaled_velocity_max',
+                                      'symbol': sub(circle('v'), 'max'), 'u': '$body-lengths/sec$',
                                       'h': 'The maximum scaled forward velocity.'},
-                    'stride_dst_mean': {'v': 0.224, 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample'], 'disp': 'mean','label': 'stride distance mean','s': sub(bar(circle('d')), 'S'), 'u' : '$body-lengths$',
-                                          'combo': 'scaled distance / stride',
+                    'stride_dst_mean': {'v': 0.224, 'max': 1.0, 'dv': 0.01, 'aux_vs': ['sample'], 'disp': 'mean','label': 'stride distance mean','symbol': sub(bar(circle('d')), 'S'), 'u' : '$body-lengths$',
+                                          'combo': 'scaled distance / stride','codename': 'scaled_stride_dst_mean',
                                           'h': 'The mean displacement achieved in a single peristaltic stride as a fraction of the body length.'},
-                    'stride_dst_std': {'v': 0.033, 'max': 1.0, 'aux_vs': ['sample'], 'disp': 'std','label': 'stride distance std','s': sub(tilde(circle('d')), 'S'), 'u' : '$body-lengths$',
-                                           'combo': 'scaled distance / stride',
+                    'stride_dst_std': {'v': 0.033, 'max': 1.0, 'aux_vs': ['sample'], 'disp': 'std','label': 'stride distance std','symbol': sub(tilde(circle('d')), 'S'), 'u' : '$body-lengths$',
+                                           'combo': 'scaled distance / stride','codename': 'scaled_stride_dst_std',
                                            'h': 'The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.'},
                     'initial_amp': {'max': 2.0, 'disp': 'initial', 'combo': 'amplitude',
                                     'h': 'The initial amplitude of the CRAWLER-generated forward velocity if this is hardcoded (e.g. constant waveform).'},
                     'noise': {'v': 0.1, 'max': 1.0, 'dv': 0.01, 'disp': 'noise', 'combo': 'amplitude',
                               'h': 'The intrinsic output noise of the CRAWLER-generated forward velocity.'},
-                    'max_vel_phase': {'v': 3.6, 'max': 2*np.pi,'label': 'max velocity phase','s': subsup('$\phi$', 'C', 'v'), 'u' : '$rads$',
+                    'max_vel_phase': {'v': 3.6, 'max': 2*np.pi,'label': 'max velocity phase','symbol': subsup('$\phi$', 'C', 'v'), 'u' : '$rads$',
+                                      'codename': 'phi_scaled_velocity_max',
                                       'h': 'The phase of the crawling oscillation cycle where forward velocity is maximum.'}
                     },
         'turner': {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal', 'constant'],
                             'h': 'The implementation mode of the lateral oscillator (TURNER) module.'},
 
-                   'base_activation': {'v': 20.0, 'min': 10.0,'max': 40.0, 'dv': 0.1, 'disp': 'mean', 'combo': 'activation', 'label': 'tonic input','s': '$I_{T}^{0}$', 'u' : '-',
+                   'base_activation': {'v': 20.0, 'min': 10.0,'max': 40.0, 'dv': 0.1, 'disp': 'mean', 'combo': 'activation', 'label': 'tonic input','symbol': '$I_{T}^{0}$', 'u' : '-',
                                        'h': 'The baseline activation/input of the TURNER module.'},
-                   'activation_range': {'t': Tuple[float], 'v': (10.0, 40.0), 'max': 100.0, 'dv': 0.1, 'disp': 'range', 'label': 'input range','s': '$[I_{T}^{min},I_{T}^{max}]$', 'u' : '-',
+                   'activation_range': {'t': Tuple[float], 'v': (10.0, 40.0), 'max': 100.0, 'dv': 0.1, 'disp': 'range', 'label': 'input range','symbol': '$[I_{T}^{min},I_{T}^{max}]$', 'u' : '-',
                                         'combo': 'activation', 'h': 'The activation/input range of the TURNER module.'},
                    'noise': {'v': 0.15, 'max': 10.0, 'disp': 'noise', 'combo': 'amplitude',
                              'h': 'The intrinsic output noise of the TURNER activity amplitude.'},
@@ -283,25 +289,25 @@ def init_pars():
         'interference': {
             'mode': {'t': str, 'v': 'square', 'vs': ['default', 'square', 'phasic'],
                                  'h': 'CRAWLER:TURNER suppression phase mode.'},
-            'suppression_mode': {'t': str, 'v': 'amplitude', 'vs': ['amplitude', 'oscillation', 'both'],'label': 'suppression target','s': '-', 'u' : '-',
+            'suppression_mode': {'t': str, 'v': 'amplitude', 'vs': ['amplitude', 'oscillation', 'both'],'label': 'suppression target','symbol': '-', 'u' : '-',
                      'h': 'CRAWLER:TURNER suppression target.'},
-            'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2*np.pi,'label': 'suppression relief phase interval','s': '$[\phi_{C}^{\omega_{0}},\phi_{C}^{\omega_{1}}]$', 'u' : '$rads$',
+            'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2*np.pi,'label': 'suppression relief phase interval','symbol': '$[\phi_{C}^{\omega_{0}},\phi_{C}^{\omega_{1}}]$', 'u' : '$rads$',
                                   'h': 'CRAWLER phase range for TURNER suppression lift.'},
-            'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2*np.pi,'label': 'feeder suppression relief phase interval','s': '$[\phi_{F}^{\omega_{0}},\phi_{F}^{\omega_{1}}]$', 'u' : '$rads$',
+            'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2*np.pi,'label': 'feeder suppression relief phase interval','symbol': '$[\phi_{F}^{\omega_{0}},\phi_{F}^{\omega_{1}}]$', 'u' : '$rads$',
                                  'h': 'FEEDER phase range for TURNER suppression lift.'},
-            'max_attenuation_phase': {'v': 3.4, 'max': 2*np.pi,'label': 'max relief phase','s': '$\phi_{C}^{\omega}$', 'u' : '$rads$',
+            'max_attenuation_phase': {'v': 3.4, 'max': 2*np.pi,'label': 'max relief phase','symbol': '$\phi_{C}^{\omega}$', 'u' : '$rads$',
                             'h': 'CRAWLER phase of minimum TURNER suppression.'},
-            'attenuation': {'v': 1.0, 'max': 1.0,'label': 'suppression coefficient','s': '$c_{CT}^{0}$', 'u' : '-',
+            'attenuation': {'v': 1.0, 'max': 1.0,'label': 'suppression coefficient','symbol': '$c_{CT}^{0}$', 'u' : '-',
                             'h': 'CRAWLER:TURNER baseline suppression coefficient'},
-            'attenuation_max': {'v': 0.31, 'max': 1.0,'label': 'suppression relief coefficient.','s': '$c_{CT}^{1}$', 'u' : '-',
+            'attenuation_max': {'v': 0.31, 'max': 1.0,'label': 'suppression relief coefficient.','symbol': '$c_{CT}^{1}$', 'u' : '-',
                             'h': 'CRAWLER:TURNER suppression relief coefficient.'},
         },
 
         'olfactor': {
-            'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear', 'null'], 'label': 'sensory transduction mode','s': '-', 'u' : '-',
+            'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear', 'null'], 'label': 'sensory transduction mode','symbol': '-', 'u' : '-',
                            'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input.'},
             'input_noise': {'v': 0.0, 'max': 1.0, 'h': 'The intrinsic noise of the sensory input.'},
-            'decay_coef': {'v': 0.0, 'max': 2.0, 'label': 'decay coefficient','s': sub('c', 'O'), 'u' : '-',
+            'decay_coef': {'v': 0.0, 'max': 2.0, 'label': 'decay coefficient','symbol': sub('c', 'O'), 'u' : '-',
                            'h': 'The linear decay coefficient of the olfactory sensory activation.'},
             'brute_force': {**bF, 'h': 'Whether to apply direct rule-based modulation on locomotion or not.'}
         },
@@ -393,6 +399,8 @@ def init_pars():
             'u': {'t': Union[BaseUnit, Composite, DerivedUnit]},
             'k': {'t': str},
             's': {'t': str},
+            'symbol': {'t': str},
+            'codename': {'t': str},
             'o': {'t': type},
             'lim': {'t': Tuple[float]},
             'd': {'t': str},
@@ -461,11 +469,11 @@ def init_pars():
                    'h': 'The XY coordinates of the body contour.'},
     }
 
-    d['body'] = {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'initial','label': 'length','s': '$l$', 'u' : '$mm$',
+    d['body'] = {'initial_length': {'v': 0.004, 'max': 0.01, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'initial','label': 'length','symbol': '$l$', 'u' : '$mm$',
                                     'combo': 'length', 'h': 'The initial body length.'},
                  'length_std': {'v': 0.0004, 'max': 0.001, 'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'std',
                                 'combo': 'length', 'h': 'The standard deviation of the initial body length.'},
-                 'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12,'label': 'number of body segments','s': '-', 'u' : '# $segments$',
+                 'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12,'label': 'number of body segments','symbol': '-', 'u' : '# $segments$',
                            'h': 'The number of segments comprising the larva body.'},
                  'seg_ratio': {'max': 1.0,
                                'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
@@ -643,7 +651,7 @@ def init_pars():
                             'h': 'The midline point to use when detecting the strides. When none is provided, the default position of the larva is used (see spatial definition).'},
             'use_scaled_vel': {**bT, 'disp': 'vel_scaled',
                                'h': 'Whether to use the velocity scaled to the body length.'},
-            'vel_threshold': {'v': 0.2, 'max': 1.0, 'disp': 'vel_thr',
+            'vel_threshold': {'v': 0.3, 'max': 1.0, 'disp': 'vel_thr',
                               'h': 'The velocity threshold to be reached in every stride cycle.'},
         },
         'pause': {
@@ -764,7 +772,7 @@ def init_pars():
 
     d['LarvaGroup'] = {
         'model': d['larva_model'],
-        'sample': {'t': str, 'v': 'None.200_controls'},
+        'sample': {'t': str, 'v': 'None.50controls'},
         'default_color': {'t': str, 'v': 'black', 'disp': 'color', 'h': 'The default color of the larva group.'},
         'imitation': bF,
         'distribution': d['larva_distro'],
@@ -835,23 +843,57 @@ def init_pars():
         'use_background': {**bF, 'h': 'Whether to use a virtual moving background when replaying a fixated larva.'}
     }
 
-    d['GAselection']={
+    d['ga_select_kws']={
         'Nagents': {'t': int, 'v': 30, 'min': 2, 'max': 1000, 'h': 'Number of agents per generation'},
         'Nelits': {'t': int, 'v': 3, 'min': 0, 'max': 1000, 'h': 'Number of elite agents preserved per generation'},
-        'max_Nticks': {'t': int, 'v': 1000, 'max': 100000, 'h': 'Maximum number of ticks per generation'},
+        'Ngenerations': {'t': int, 'max': 1000, 'h': 'Number of generations to run'},
+        # 'max_Nticks': {'t': int, 'max': 100000, 'h': 'Maximum number of ticks per generation'},
+        # 'max_dur': {'v': 3, 'max': 100, 'h': 'Maximum duration per generation in minutes'},
         'Pmutation': {'v': 0.3, 'max': 1.0, 'h': 'Probability of genome mutation'},
         'Cmutation': {'v': 0.1, 'max': 1.0, 'h': 'Mutation coefficient'},
         'selection_ratio': {'v': 0.3, 'max': 1.0, 'h': 'Fraction of agents to be selected for the next generation'},
         'verbose': {'t': int, 'v': 0, 'max': 3, 'h': 'Verbose argument for GA launcher'}
     }
 
+    d['ga_build_kws'] = {
+        'space_dict': {'t': dict, 'h': 'The parameter state space'},
+        'robot_class': {'t': type, 'h': 'The agent class to use in the simulations'},
+        'base_model': {'t': str, 'v': 'navigator', 'vs': kConfDict('Model'), 'h': 'The model configuration to optimize'},
+        'bestConfID': {'t': str,  'h': 'The model configuration ID to store the best genome'},
+        'init_mode': {'t': str, 'v': 'random', 'vs': ['default', 'random', 'model'], 'h': 'The initialization mode for the first generation'},
+        'multicore': {'t': bool, 'v': True, 'h': 'Whether to use multiple cores'},
+        'fitness_target_refID': {'t': str, 'vs': kConfDict('Ref'),'h': 'The ID of the reference dataset for comparison'},
+        'fitness_target_kws': {'t': dict, 'v': {},'h': 'The target data to derive from the reference dataset for evaluation'},
+        'fitness_func': {'t': FunctionType, 'h': 'The method for fitness evaluation'},
+        'plot_func': {'t': FunctionType, 'h': 'The method for real-time simulation and plotting of the best genome'},
+        'exclude_func': {'t': FunctionType, 'h': 'The method for real-time excluding agents'},
+    }
+
+    d['GAconf'] = {
+        'scene': {'t': str,'v' : 'no_boxes', 'h': 'The name of the scene to load'},
+        'scene_speed': {'t': int, 'v' : 0, 'max' : 100, 'h': 'The rendering speed of the scene'},
+        # 'id': {'t': str, 'h': 'The GA simulation ID'},
+        'env_params': {'t': str, 'vs': kConfDict('Env'), 'h': 'The environment configuration ID to use in the simulation'},
+        'sim_params': d['sim_params'],
+        'experiment': {'t': str, 'v': 'exploration', 'vs': kConfDict('Ga'),
+                      'h': 'The GA experiment configuration'},
+        # 'dt': {'v': 0.1, 'h': 'The simulation timestep'},
+        'caption': {'t': str, 'h': 'The screen caption'},
+        'save_to': {'t': str, 'h': 'The directory to save data and plots'},
+        'show_screen': {'t': bool,'v': True, 'h': 'Whether to render the screen visualization'},
+        'ga_build_kws': d['ga_build_kws'],
+        'ga_select_kws': d['ga_select_kws'],
+        # 'ga_kws': {**d['GAbuilder'], **d['GAselector']},
+    }
+
+
     d['obstacle_avoidance'] = {
-        'sensor_delta_direction': {'v': 0.8,'dv': 0.01, 'min': 0.0, 'max': 2.0, 'h': 'Sensor delta_direction'},
-        'sensor_saturation_value': {'t': int, 'v': 46, 'min': 0, 'max': 500, 'h': 'Sensor saturation value'},
-        'obstacle_sensor_error': {'v': 0.85,'dv': 0.01, 'max': 1.0, 'h': 'Proximity sensor error'},
-        'sensor_max_distance': {'v': 1.67, 'dv': 0.01,'min': 0.1, 'max': 2.0, 'h': 'Sensor max_distance'},
-        'motor_ctrl_coefficient': {'t': int,'v': 3246, 'max': 8000, 'h': 'Motor ctrl_coefficient'},
-        'motor_ctrl_min_actuator_value': {'t': int,'v': 4,'min': 0, 'max': 100, 'h': 'Motor ctrl_min_actuator_value'},
+        'sensor_delta_direction': {'v': 0.4,'dv': 0.01, 'min': 0.2, 'max': 1.2, 'h': 'Sensor delta_direction'},
+        'sensor_saturation_value': {'t': int, 'v': 40, 'min': 0, 'max': 200, 'h': 'Sensor saturation value'},
+        'obstacle_sensor_error': {'v': 0.35,'dv': 0.01, 'max': 1.0, 'h': 'Proximity sensor error'},
+        'sensor_max_distance': {'v': 0.9, 'dv': 0.01,'min': 0.1, 'max': 1.5, 'h': 'Sensor max_distance'},
+        'motor_ctrl_coefficient': {'t': int,'v': 8770, 'max': 10000, 'h': 'Motor ctrl_coefficient'},
+        'motor_ctrl_min_actuator_value': {'t': int,'v': 35,'min': 0, 'max': 50, 'h': 'Motor ctrl_min_actuator_value'},
     }
 
 

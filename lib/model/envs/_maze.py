@@ -2,6 +2,8 @@ import random
 from matplotlib.patches import Circle
 from shapely.geometry import LineString, Point
 
+import lib.ga.geometry.point
+import lib.ga.scene.wall
 from lib.aux.dictsNlists import group_list_by_n
 import lib.aux.colsNstr as fun
 
@@ -193,6 +195,16 @@ class Border:
         lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in group_list_by_n(points, 2)]
         self.border_xy, self.border_lines = self.model.create_borders(lines)
         self.border_bodies = self.model.create_border_bodies(self.border_xy)
+        self.border_walls=[]
+        for l in self.border_lines :
+            # print(list(l.coords))
+            (x1, y1),(x2,y2)=list(l.coords)
+            point1 = lib.ga.geometry.point.Point(x1, y1)
+            point2 = lib.ga.geometry.point.Point(x2, y2)
+            wall=lib.ga.scene.wall.Wall(point1, point2, color=self.default_color)
+            # edges = [[point1, point2]]
+            self.border_walls.append(wall)
+
         self.selected=False
 
     def delete(self):

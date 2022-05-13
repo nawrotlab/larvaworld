@@ -227,7 +227,7 @@ grouped_exp_dict = {
 
     'other': {
         'realistic_imitation': exp('dish', l=lg(m='imitator', N=25), sim={'Box2D': True}, c=['midline', 'contour']),
-        'imitation': imitation_exp('None.200_controls', model='explorer'),
+        'imitation': imitation_exp('None.50controls', model='explorer'),
     }
 }
 

@@ -53,6 +53,7 @@ class Parser:
 
     def get(self, input):
         dic = {k: v.get(input) for k, v in self.parsargs.items()}
+        # print(dic)
         return null_dict(self.name, **dic)
 
 
@@ -393,9 +394,9 @@ def init_parser(description='', parsers=[]):
     return parser
 
 
-def update_exp_conf(exp, d=None, N=None, models=None, arena=None):
+def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp'):
     from lib.conf.stored.conf import expandConf, next_idx
-    exp_conf = expandConf(exp, 'Exp')
+    exp_conf = expandConf(exp, conf_type)
     if arena is not None :
         exp_conf.env_params.arena = arena
     if d is None:
@@ -405,15 +406,30 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None):
     if sim.duration is None:
         sim.duration = exp_conf.sim_params.duration
     if sim.sim_ID is None:
-        sim.sim_ID = f'{exp}_{next_idx(exp)}'
+        sim.sim_ID = f'{exp}_{next_idx(exp, conf_type)}'
     if sim.path is None:
-        sim.path = f'single_runs/{exp}'
+        if conf_type=='Exp':
+            sim.path = f'single_runs/{exp}'
+        elif conf_type == 'Ga':
+            sim.path = f'ga_runs/{exp}'
+        elif conf_type == 'Batch':
+            sim.path = f'batch_runs/{exp}'
     exp_conf.sim_params = d.sim_params
     if models is not None:
-        exp_conf = update_exp_models(exp_conf, models)
+        if conf_type=='Exp' :
+            exp_conf = update_exp_models(exp_conf, models)
+        elif conf_type == 'Ga':
+            if type(models)==list :
+                if models[0] in kConfDict('Model') :
+                    exp_conf.base_model = models[0]
+                if len(models)>=2 :
+                    exp_conf.bestConfID = models[1]
     if N is not None:
-        for gID, gConf in exp_conf.larva_groups.items():
-            gConf.distribution.N = N
+        if conf_type == 'Exp':
+            for gID, gConf in exp_conf.larva_groups.items():
+                gConf.distribution.N = N
+        elif conf_type == 'Ga':
+            exp_conf.ga_select_kws.Nagents=N
     return exp_conf
 
 

@@ -37,7 +37,7 @@ class SensorDrivenRobot(DifferentialDriveRobot):
     def set_right_motor_controller(self, right_motor_controller):
         self.right_motor_controller = right_motor_controller
 
-    def draw(self, screen):
+    def draw(self, scene):
         # draw the sensor lines
 
         # in scene_loader a robot doesn't have sensors
@@ -46,7 +46,7 @@ class SensorDrivenRobot(DifferentialDriveRobot):
             self.right_motor_controller.sensor.draw()
 
         # call super method to draw the robot
-        super().draw(screen)
+        super().draw(scene)
 
     def draw_label(self, screen):
         if pygame.font and self.label is not None:

@@ -1,7 +1,6 @@
 from copy import deepcopy
 import numpy as np
 
-from lib.aux.dictsNlists import AttrDict
 from lib.model.agents._agent import LarvaworldAgent
 
 

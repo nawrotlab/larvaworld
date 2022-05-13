@@ -17,7 +17,7 @@ class Essay:
         self.type = type
         self.enrichment = enrichment
         self.collections = collections
-        self.essay_id = f'{type}_{next_idx(type, "essay")}'
+        self.essay_id = f'{type}_{next_idx(type, "Essay")}'
         self.path = f'essays/{type}/{self.essay_id}/data'
         self.full_path = f'{paths.path("ESSAY")}/{type}/{self.essay_id}/data'
         self.plot_dir = f'{paths.path("ESSAY")}/{type}/{self.essay_id}/plots'

@@ -1,14 +1,12 @@
 from random import sample, seed
 import random
 import numpy as np
-
+from shapely.geometry import Point
 from shapely.ops import cascaded_union
-# TODO Find a way to use this. Now if changed everything is scal except locomotion. It seems that
-#  ApplyForceToCenter function does not scale
-# _world_scale = np.int(100)
+
+
 import lib.aux.dictsNlists as dNl
 from lib.aux.sim_aux import generate_seg_shapes, circle_to_polygon
-
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
 
 
@@ -202,6 +200,12 @@ class LarvaShape:
     @property
     def olfactor_pos(self):
         return self.global_front_end_of_head
+
+    @property
+    def olfactor_point(self):
+        # print(tuple(self.olfactor_pos))
+        # raise
+        return Point(self.olfactor_pos[0],self.olfactor_pos[1])
 
 
 class LarvaBody(LarvaShape):
@@ -563,7 +567,6 @@ class LarvaBody(LarvaShape):
 
     def get_shape(self, scale=1):
         p = cascaded_union([seg.get_shape(scale=scale) for seg in self.segs])
-
         return p
 
     def move_body(self, dx, dy):

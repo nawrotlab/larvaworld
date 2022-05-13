@@ -6,6 +6,7 @@ import sys
 import random
 import multiprocessing
 import math
+import threading
 from typing import Tuple
 
 from scipy.stats import ks_2samp
@@ -26,25 +27,22 @@ from lib.ga.scene.scene import Scene
 from lib.ga.scene.wall import Wall
 from lib.ga.util.color import Color
 from lib.ga.util.side_panel import SidePanel
-from lib.ga.util.thread_ga_robot import ThreadGaRobot
 from lib.ga.util.time_util import TimeUtil
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 
 
-class GA_selector:
-    def __init__(self, model, Nagents=30, Nelits=3, Pmutation=0.3, Cmutation=0.1,
-                 selection_ratio=0.3, max_Nticks=1000, max_dur=None, verbose=0):
+class GAselector:
+    def __init__(self, model, Ngenerations=None, Nagents=30, Nelits=3, Pmutation=0.3, Cmutation=0.1,
+                 selection_ratio=0.3, verbose=0):
         self.model = model
+        self.Ngenerations = Ngenerations
         self.Nagents = Nagents
         self.Nelits = Nelits
         self.Pmutation = Pmutation
         self.Cmutation = Cmutation
         self.selection_ratio = selection_ratio
-        if max_dur is not None:
-            max_Nticks = int(max_dur * 60 / self.model.dt)
-        self.max_Nticks = max_Nticks
         self.verbose = verbose
-
+        self.sorted_genomes =None
         self.stored_genomes = None
         self.genomes = []
         self.genomes_last_generation = []
@@ -81,13 +79,17 @@ class GA_selector:
 
         print('\nGeneration', self.generation_num, 'started')
 
-    def ga_selection(self):
+    def sort_genomes(self):
         # sort genomes by fitness
-        sorted_genomes = sorted(self.genomes, key=lambda genome: genome.fitness, reverse=True)
-        best_new_genome = sorted_genomes[0]
+        self.sorted_genomes = sorted(self.genomes, key=lambda genome: genome.fitness, reverse=True)
+        best_new_genome = self.sorted_genomes[0]
         if self.best_genome is None or best_new_genome.fitness > self.best_genome.fitness:
             self.best_genome = best_new_genome
             print('New best:', self.best_genome.to_string())
+
+
+    def ga_selection(self):
+
 
         num_genomes_to_select = round(self.Nagents * self.selection_ratio)
 
@@ -100,15 +102,15 @@ class GA_selector:
 
         # elitism: keep the best genomes in the new generation
         for i in range(self.Nelits):
-            elite_genome = sorted_genomes.pop(0)
+            elite_genome = self.sorted_genomes.pop(0)
             genomes_selected.append(elite_genome)
             num_genomes_to_select -= 1
             print("Elite:", elite_genome.to_string())
 
         while num_genomes_to_select > 0:
-            genome_selected = self.roulette_select(sorted_genomes)
+            genome_selected = self.roulette_select(self.sorted_genomes)
             genomes_selected.append(genome_selected)
-            sorted_genomes.remove(genome_selected)
+            self.sorted_genomes.remove(genome_selected)
             num_genomes_to_select -= 1
 
         return genomes_selected
@@ -158,11 +160,10 @@ class GA_selector:
         return parent_a, parent_b
 
 
-class GA_builder(GA_selector):
+class GAbuilder(GAselector):
     def __init__(self, scene, side_panel, space_dict=None, robot_class=LarvaRobot, base_model='Sakagiannis2022',
                  multicore=True, fitness_func=None,fitness_target_kws={},fitness_target_refID=None, exclude_func = None, plot_func=None, bestConfID=None, init_mode='random', **kwargs):
         super().__init__(**kwargs)
-
         self.bestConfID = bestConfID
         self.evaluation_mode = None
         self.fitness_func = fitness_func
@@ -203,12 +204,12 @@ class GA_builder(GA_selector):
         }
         for i in range(self.Nagents):
             if init_mode == 'default':
-                g = BaseGenome.default(**g_kws)
+                g = Genome.default(**g_kws)
             elif init_mode == 'random':
-                g = BaseGenome.random(**g_kws)
-            elif init_mode == 'base_model':
+                g = Genome.random(**g_kws)
+            elif init_mode == 'model':
                 kws = {k : dNl.flatten_dict(self.larva_pars)[k] for k in self.space_dict.keys()}
-                g = BaseGenome(**kws, **g_kws)
+                g = Genome(**kws, **g_kws)
             self.genomes.append(g)
 
         self.robots = self.build_generation()
@@ -261,7 +262,7 @@ class GA_builder(GA_selector):
                 self.printd(2, 'core:', i + 1, 'positions:', start_pos, ':', end_pos)
                 robot_list = self.robots[start_pos:end_pos]
 
-                thread = ThreadGaRobot(robot_list)
+                thread = GA_thread(robot_list)
                 thread.start()
                 self.printd(2, 'thread', i + 1, 'started')
                 threads.append(thread)
@@ -271,7 +272,7 @@ class GA_builder(GA_selector):
             self.printd(2, 'last core, start_pos', start_pos)
             robot_list = self.robots[start_pos:]
 
-            thread = ThreadGaRobot(robot_list)
+            thread = GA_thread(robot_list)
             thread.start()
             self.printd(2, 'last thread started')
             threads.append(thread)
@@ -285,37 +286,28 @@ class GA_builder(GA_selector):
                 print('Step partial duration', partial_duration)
 
             for robot in self.robots[:]:
-                # ensure robot doesn't accidentaly go outside of the scene
-                if robot.x < 0 or robot.x > self.scene.width or robot.y < 0 or robot.y > self.scene.height:
-                    self.destroy_robot(robot)
-
-                # destroy robot if it collides an obstacle
-                if robot.collision_with_object:
-                    self.destroy_robot(robot)
-
-                if self.exclude_func is not None :
-                    if self.exclude_func(robot) :
-                        self.destroy_robot(robot, excluded=True)
+                self.check(robot)
         else:
             # multicore = False
             for robot in self.robots[:]:
                 robot.sense_and_act()
-
-                # ensure robot doesn't accidentaly go outside of the scene
-                if robot.x < 0 or robot.x > self.scene.width or robot.y < 0 or robot.y > self.scene.height:
-                    self.destroy_robot(robot)
-
-                # destroy robot if it collides an obstacle
-                if robot.collision_with_object:
-                    self.destroy_robot(robot)
-
-                if self.exclude_func is not None :
-                    if self.exclude_func(robot) :
-                        self.destroy_robot(robot, excluded=True)
+                self.check(robot)
+                # # ensure robot doesn't accidentaly go outside of the scene
+                # if robot.x < 0 or robot.x > self.scene.width or robot.y < 0 or robot.y > self.scene.height:
+                # # if robot.x < 0 or robot.x > self.scene.width or robot.y < 0 or robot.y > self.scene.height:
+                #     self.destroy_robot(robot)
+                #
+                # # destroy robot if it collides an obstacle
+                # if robot.collision_with_object:
+                #     self.destroy_robot(robot)
+                #
+                # if self.exclude_func is not None :
+                #     if self.exclude_func(robot) :
+                #         self.destroy_robot(robot, excluded=True)
 
         # create new obstacles for long lasting generations
-        if self.generation_step_num == self.max_Nticks:
-            print('Time limit reached (' + str(self.max_Nticks) +
+        if self.generation_step_num == self.model.Nsteps:
+            print('Time limit reached (' + str(self.model.Nsteps) +
                   ' steps), destroying all remaining robots')
 
             for robot in self.robots[:]:
@@ -328,10 +320,16 @@ class GA_builder(GA_selector):
                     self.plot_func(self.last_robots, generation_num=self.generation_num, save_to=self.model.plot_dir, **self.fitness_target_kws)
                 self.evaluation_mode = None  # raise
             print('Generation', self.generation_num, 'terminated')
-            self.create_new_generation()
+            self.sort_genomes()
 
-            self.robots = self.build_generation()
-            self.side_panel.update_ga_data(self.generation_num, self.best_genome, self.best_genome.fitness)
+            if self.Ngenerations is None or self.generation_num<self.Ngenerations :
+                self.create_new_generation()
+
+                self.robots = self.build_generation()
+                self.side_panel.update_ga_data(self.generation_num, self.best_genome, self.best_genome.fitness)
+            else :
+                self.side_panel.update_ga_data(self.generation_num, self.best_genome, self.best_genome.fitness)
+                self.finalize()
 
         # update statistics time
         cur_t = TimeUtil.current_time_millis()
@@ -360,8 +358,27 @@ class GA_builder(GA_selector):
         else:
             return None
 
+    def finalize(self):
+        pass
+        sys.exit()
 
-class Base_runner(LarvaWorldSim):
+    def check(self,robot):
+        # print(robot.x,robot.y)
+        # ensure robot doesn't accidentaly go outside of the scene
+        if robot.x < 0 or robot.x > self.scene.width or robot.y < 0 or robot.y > self.scene.height:
+            # if robot.x < 0 or robot.x > self.scene.width or robot.y < 0 or robot.y > self.scene.height:
+            self.destroy_robot(robot)
+
+        # destroy robot if it collides an obstacle
+        if robot.collision_with_object:
+            self.destroy_robot(robot)
+
+        if self.exclude_func is not None:
+            if self.exclude_func(robot):
+                self.destroy_robot(robot, excluded=True)
+
+
+class BaseGAlauncher(LarvaWorldSim):
     SCENE_MAX_SPEED = 3000
 
     SCENE_MIN_SPEED = 1
@@ -371,23 +388,33 @@ class Base_runner(LarvaWorldSim):
 
     SCREEN_MARGIN = 12
 
-    def __init__(self, scene_file, scene_speed=0,id=None, env_params=None, experiment='exploration',dt=0.1, caption=None,save_to=None, **kwargs):
+    def __init__(self, sim_params, scene='no_boxes', scene_speed=0, env_params=None, experiment='exploration',caption=None,save_to=None, **kwargs):
+        # scene_file=f'{paths.path("GA_SCENE")}/{scene}.txt'
+        id = sim_params['sim_ID']
+        # if id is None :
+        #     id=f'{experiment}_{next_idx(experiment, type="Ga")}'
+        self.sim_params = sim_params
+        dt = sim_params['timestep']
+        Nsteps=int(sim_params['duration'] * 60 / dt)
+        self.store_data = sim_params['store_data']
         if save_to is None:
             save_to = paths.path("GA")
-        if env_params is None:
-            env_params = null_dict('env_conf')
-        if id is None :
-            id=f'{experiment}_{next_idx(experiment, type="ga")}'
-        super().__init__(env_params=env_params, dt=dt,save_to=save_to,experiment=experiment,id=id, **kwargs)
-        self.dir_path = f'{self.save_to}/{self.experiment}/{self.id}'
+        self.save_to = save_to
+        self.storage_path = f'{sim_params["path"]}/{id}'
+        self.dir_path = f'{save_to}/{self.storage_path}'
         self.plot_dir = f'{self.dir_path}/plots'
         os.makedirs(self.plot_dir, exist_ok=True)
+        # if env_params is None:
+        #     env_params = null_dict('env_conf')
 
-        self.arena_width, self.arena_height = env_params.arena.arena_dims
+        super().__init__(id=id, dt=dt, Box2D=sim_params['Box2D'],env_params=env_params, save_to=f'{self.dir_path}/visuals',
+                         Nsteps=Nsteps, experiment=experiment, **kwargs)
+
+        self.arena_width, self.arena_height = self.env_pars.arena.arena_dims
         if caption is None :
             caption=f'GA {experiment}'
         self.caption = caption
-        self.scene_file = scene_file
+        self.scene_file = f'{paths.path("GA_SCENE")}/{scene}.txt'
         self.scene_speed = scene_speed
         self.obstacles = []
 
@@ -410,9 +437,9 @@ class Base_runner(LarvaWorldSim):
             box.label = ff.unique_id
             self.scene.put(box)
 
-    # @ property
-    def real_pos(self, screen_pos):
-        return (np.array(screen_pos) - np.array([self.scene.width / 2, self.scene.height / 2])) / self.scaling_factor
+    # # @ property
+    # def real_pos(self, screen_pos):
+    #     return (np.array(screen_pos) - np.array([self.scene.width / 2, self.scene.height / 2])) / self.scaling_factor
 
     # @property
     def screen_pos(self, real_pos):
@@ -420,11 +447,18 @@ class Base_runner(LarvaWorldSim):
 
     def init_scene(self):
         self.scene = Scene.load_from_file(self.scene_file, self.scene_speed, self.SIDE_PANEL_WIDTH)
-        self.scaling_factor = self.scene.width / self.arena_width
+        self.scene.set_bounds(*self.space_edges_for_screen)
+        # print(self.scene._scale)
+        # raise
+        # self.scaling_factor = self.scene.width / self.arena_width
         self.get_larvaworld_food()
 
         self.screen = self.scene.screen
         self.side_panel = SidePanel(self.scene)
+        # print(self.arena_dims)
+        # print(self.scene.width, self.scene.height)
+        # print(self.screen_width, self.screen_height)
+        # raise
 
     def increase_scene_speed(self):
         if self.scene.speed < self.SCENE_MAX_SPEED:
@@ -437,20 +471,21 @@ class Base_runner(LarvaWorldSim):
         print('scene.speed:', self.scene.speed)
 
 
-class GA_runner(Base_runner):
-    def __init__(self, ga_kws={},show_screen=True, **kwargs):
+class GAlauncher(BaseGAlauncher):
+    def __init__(self, ga_build_kws,ga_select_kws,show_screen=True, **kwargs):
         super().__init__(**kwargs)
-        pygame.init()
-        pygame.display.set_caption(self.caption)
-        clock = pygame.time.Clock()
-        self.initialize(**ga_kws)
+        if show_screen:
+            pygame.init()
+            pygame.display.set_caption(self.caption)
+            clock = pygame.time.Clock()
+        self.initialize(**ga_build_kws, **ga_select_kws)
         while True:
             if show_screen:
                 for e in pygame.event.get():
                     if e.type == pygame.QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
                         sys.exit()
                     elif e.type == KEYDOWN and e.key == K_r:
-                        self.initialize(**ga_kws)
+                        self.initialize(**ga_select_kws, **ga_build_kws)
                     elif e.type == KEYDOWN and (e.key == K_PLUS or e.key == 93 or e.key == 270):
                         self.increase_scene_speed()
                     elif e.type == KEYDOWN and (e.key == K_MINUS or e.key == 47 or e.key == 269):
@@ -469,10 +504,11 @@ class GA_runner(Base_runner):
                 self.screen.fill(Color.BLACK)
 
                 for obj in self.scene.objects:
-                    obj.draw(self.screen)
+                    obj.draw(self.scene)
+                    # obj.draw(self.screen)
 
-                    if issubclass(type(obj), self.engine.robot_class) and obj.unique_id is not None:
-                        obj.draw_label(self.screen)
+                    # if issubclass(type(obj), self.engine.robot_class) and obj.unique_id is not None:
+                    #     obj.draw_label(self.screen)
 
                 # draw a black background for the side panel
                 side_panel_bg_rect = pygame.Rect(self.scene.width, 0, self.SIDE_PANEL_WIDTH, self.scene.height)
@@ -481,7 +517,7 @@ class GA_runner(Base_runner):
                 self.display_info()
 
                 pygame.display.flip()
-            clock.tick(int(round(self.scene.speed)))
+                clock.tick(int(round(self.scene.speed)))
 
     def printd(self, min_debug_level, *args):
         if self.engine.verbose >= min_debug_level:
@@ -497,10 +533,10 @@ class GA_runner(Base_runner):
 
     def initialize(self, **kwargs):
         self.init_scene()
-        self.engine = GA_builder(scene=self.scene, side_panel=self.side_panel, model=self, **kwargs)
+        self.engine = GAbuilder(scene=self.scene, side_panel=self.side_panel, model=self, **kwargs)
 
 
-class BaseGenome:
+class Genome:
 
     def __init__(self, space_dict, generation_num=None, **kwargs):
         for k, v in kwargs.items():
@@ -526,18 +562,18 @@ class BaseGenome:
                 kws[k] = random.randint(vs['min'], vs['max'])
             else:
                 kws[k] = random.uniform(vs['min'], vs['max'])
-        return BaseGenome(**kws, generation_num=generation_num, space_dict=space_dict)
+        return Genome(**kws, generation_num=generation_num, space_dict=space_dict)
 
     @staticmethod
     def default(generation_num, space_dict):
         kws = {k : vs['initial_value'] for k, vs in space_dict.items()}
-        return BaseGenome(**kws, generation_num=generation_num, space_dict=space_dict)
+        return Genome(**kws, generation_num=generation_num, space_dict=space_dict)
 
     def crossover(self, other_parent, generation_num):
         kws = {k: getattr(self, k) if random.random() < 0.5 else getattr(other_parent, k) for k in
                self.space_dict.keys()}
         # apply uniform crossover to generate a new genome
-        return BaseGenome(**kws, generation_num=generation_num, space_dict=self.space_dict)
+        return Genome(**kws, generation_num=generation_num, space_dict=self.space_dict)
 
     def mutation(self, **kwargs):
         for k, vs in self.space_dict.items():
@@ -648,6 +684,20 @@ class BaseGenome:
         robot = robot_class(unique_id=unique_id, model=model, larva_pars=larva2_pars)
         return robot
 
+class GA_thread(threading.Thread):
+    def __init__(self, robots):
+        threading.Thread.__init__(self)
+        self.robots = robots
+
+    def run(self):
+        for robot in self.robots:
+            robot.sense_and_act()
+
 
 if __name__ == '__main__':
-    print(null_dict('GAselection'))
+
+    # print(null_dict.__class__)
+    print(kConfDict('Ga'))
+
+
+

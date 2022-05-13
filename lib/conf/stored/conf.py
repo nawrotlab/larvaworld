@@ -37,6 +37,8 @@ def expandConf(id, conf_type, **kwargs):
 
 
 def loadConfDict(conf_type, use_pickle=False):
+    if conf_type=='Ga' :
+        use_pickle=True
     try:
         if use_pickle:
             with open(paths.path(conf_type), 'rb') as tfp:
@@ -80,6 +82,8 @@ def saveConf(conf, conf_type, id=None, mode='overwrite', **kwargs):
 
 
 def saveConfDict(ConfDict, conf_type, use_pickle=False):
+    if conf_type=='Ga' :
+        use_pickle=True
     if use_pickle:
         with open(paths.path(conf_type), 'wb') as fp:
             pickle.dump(ConfDict, fp, protocol=pickle.HIGHEST_PROTOCOL)
@@ -105,7 +109,7 @@ def deleteConf(id, conf_type):
         pass
 
 
-def next_idx(exp, type='single'):
+def next_idx(exp, type='Exp'):
     F0 = paths.path('SimIdx')
     try:
         with open(F0) as f:
@@ -120,10 +124,10 @@ def next_idx(exp, type='single'):
         dEssay = dict(zip(ksEssay, [0] * len(ksEssay)))
         dGA = dict(zip(ksGA, [0] * len(ksGA)))
         # batch_idx_dict.update(loadConfDict('Batch'))
-        d = {'single': dExp,
-             'batch': dBatch,
-             'essay': dEssay,
-             'ga':dGA}
+        d = {'Exp': dExp,
+             'Batch': dBatch,
+             'Essay': dEssay,
+             'Ga':dGA}
     if not exp in d[type].keys():
         d[type][exp] = 0
     d[type][exp] += 1
@@ -237,8 +241,8 @@ def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None, **kwarg
 
 
 if __name__ == '__main__':
-    store_confs(['Model'])
-    store_confs(['Aux'])
-    store_confs(['Env'])
-    store_confs(['Exp'])
+    # store_confs(['Model'])
+    # store_confs(['Aux'])
+    # store_confs(['Env'])
+    # store_confs(['Exp'])
     store_confs(['Ga'])

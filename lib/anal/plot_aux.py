@@ -675,9 +675,7 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
     for jj in [0]:
         axs[jj].set_ylabel(ylabel)
 
-def modelConfTable(confID, save_as, columns = ['Parameter', 'Symbol', 'Value', 'Unit'],
-                   rows = None,**kwargs
-                   ) :
+def modelConfTable(confID, save_as, columns = ['Parameter', 'Symbol', 'Value', 'Unit'],rows = None,**kwargs) :
     from lib.aux.combining import render_mpl_table
     from lib.conf.base.dtypes import par
     from lib.conf.base.init_pars import init_pars
@@ -691,9 +689,7 @@ def modelConfTable(confID, save_as, columns = ['Parameter', 'Symbol', 'Value', '
             rowDicts.append(m[k])
         except :
             rowDicts.append(m.brain[f'{k}_params'])
-    #rowColors0 = N_colors(len(rows))
     rowColors0 = ['lightskyblue', 'lightsteelblue',  'lightcoral', 'indianred','lightsalmon', '#a55af4','palegreen','plum',   'pink'][:len(rows)]
-    # rowColors0 = ['lightskyblue', 'lightsteelblue',  'lightcoral', 'indianred','lightsalmon', 'mediumpurple','palegreen','plum',   'pink'][:len(rows)]
     Nrows = {rowLab: 0 for rowLab in rows}
 
     def register(vs, rowColor):
@@ -794,7 +790,38 @@ def modelConfTable(confID, save_as, columns = ['Parameter', 'Symbol', 'Value', '
             cell._linewidth = 0
 
     for rowLab, idx in cumNrows.items():
-        cell = mpl._cells[(idx-Nrows[rowLab]+1, -1)]
-        cell._text._text = rowLab.upper()
+        try:
+            cell = mpl._cells[(idx-Nrows[rowLab]+1, -1)]
+            cell._text._text = rowLab.upper()
+        except:
+            pass
     fig.savefig(save_as, dpi=300)
+    plt.close()
     # return fig,ax,mpl
+
+
+def module_endpoint_hists(module, valid, Nbins=15, show_median=True):
+    from lib.conf.base.dtypes import par
+    from lib.conf.base.init_pars import init_pars
+    d0 = init_pars().get(module, None)
+    yy=30
+    N=len(valid)
+    fig,axs=plt.subplots(1,N,figsize=(7*N,6), sharey=True)
+    axs=axs.ravel()
+    for i,n in enumerate(valid) :
+        ax=axs[i]
+        p0 = par(n, **d0[n])[n]
+        vs=e[p0['codename']]
+        v_mu=vs.median()
+        ax.hist(vs.values, bins=Nbins)
+        ax.set_xlabel(p0['label'])
+
+        if show_median :
+            text='  ' + p0['symbol'] + f' = {np.round(v_mu,2)}'
+            ax.axvline(v_mu, color='red', alpha=1, linestyle='dashed', linewidth=3)
+            ax.annotate(text, rotation=0, fontsize=20, va='center', ha='left',
+                                            xy=(v_mu, yy), xycoords='data',
+                                            )
+
+    fig.subplots_adjust(left=0.2, bottom=0.2, wspace=0.01)
+    axs[0].set_ylabel('# larvae')

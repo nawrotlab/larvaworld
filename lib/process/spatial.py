@@ -1,9 +1,10 @@
+import copy
 import itertools
 import time
 
 import numpy as np
 
-from lib.process.aux import compute_component_velocity, compute_velocity, compute_centroid
+from lib.process.aux import compute_component_velocity, compute_velocity, compute_centroid, interpolate_nans
 from lib.aux.ang_aux import rotate_multiple_points, angle_dif
 from lib.aux.dictsNlists import group_list_by_n, flatten_list
 import lib.aux.naming as nam
@@ -77,7 +78,7 @@ def comp_linear(s, e, c, mode='minimal'):
         s[acc] = A.flatten()
         e[nam.cum(dst)] = Dcum[-1, :]
     pars = flatten_list(xy_params) + dsts + cum_dsts + vels + accs
-    scale_to_length(s, e, pars=pars)
+    scale_to_length(s, e, c, pars=pars)
     print('All linear parameters computed')
 
 
@@ -123,21 +124,21 @@ def comp_spatial(s, e, c, mode='minimal'):
         e[nam.cum(dst)] = Dcum[-1, :]
 
     pars = flatten_list(xy_params) + dsts + cum_dsts + vels + accs
-    scale_to_length(s, e, pars=pars)
+    scale_to_length(s, e, c, pars=pars)
     print('All spatial parameters computed')
 
 
-def comp_length(s, e, Npoints, mode='minimal', recompute=False):
+def comp_length(s, e, c, mode='minimal', recompute=False):
     if 'length' in e.columns.values and not recompute:
         print('Length is already computed. If you want to recompute it, set recompute_length to True')
         return
-    points = nam.midline(Npoints, type='point')
-    Npoints = len(points)
+    N=c.Npoints
+    points = nam.midline(N, type='point')
     xy_pars = nam.xy(points, flat=True)
     if not set(xy_pars).issubset(s.columns):
-        print(f'XY coordinates not found for the {Npoints} midline points. Body length can not be computed.')
+        print(f'XY coordinates not found for the {N} midline points. Body length can not be computed.')
         return
-    Nsegs = np.clip(Npoints - 1, a_min=0, a_max=None)
+    Nsegs = np.clip(N - 1, a_min=0, a_max=None)
     segs = nam.midline(Nsegs, type='seg')
     t = len(s)
     xy = s[xy_pars].values
@@ -155,7 +156,7 @@ def comp_length(s, e, Npoints, mode='minimal', recompute=False):
             s[seg] = S[i, :].flatten()
     elif mode == 'minimal':
         print(f'Computing body length')
-        xy2 = xy.reshape(xy.shape[0], Npoints, 2)
+        xy2 = xy.reshape(xy.shape[0], N, 2)
         xy3 = np.sum(np.diff(xy2, axis=1) ** 2, axis=2)
         L = np.sum(np.sqrt(xy3), axis=1)
     s['length'] = L
@@ -163,18 +164,18 @@ def comp_length(s, e, Npoints, mode='minimal', recompute=False):
     print('All lengths computed.')
 
 
-def comp_centroid(s, Ncontour, recompute=False):
+def comp_centroid(s, c, recompute=False):
     if set(nam.xy('centroid')).issubset(s.columns.values) and not recompute:
         print('Centroid is already computed. If you want to recompute it, set recompute_centroid to True')
-    contour = nam.contour(Ncontour)
+    contour = nam.contour(c.Ncontour)
     con_pars = nam.xy(contour, flat=True)
-    if not set(con_pars).issubset(s.columns) or Ncontour == 0:
+    if not set(con_pars).issubset(s.columns) or c.Ncontour == 0:
         print(f'No contour found. Not computing centroid')
     else:
-        print(f'Computing centroid from {Ncontour} contourpoints')
+        print(f'Computing centroid from {c.Ncontour} contourpoints')
         contour = s[con_pars].values
         N = contour.shape[0]
-        contour = np.reshape(contour, (N, Ncontour, 2))
+        contour = np.reshape(contour, (N, c.Ncontour, 2))
         c = np.zeros([N, 2]) * np.nan
         for i in range(N):
             c[i, :] = np.array(compute_centroid(contour[i, :, :]))
@@ -183,7 +184,7 @@ def comp_centroid(s, Ncontour, recompute=False):
     print('Centroid coordinates computed.')
 
 
-def store_spatial(s, e, point):
+def store_spatial(s, e, c, point):
     dst = nam.dst('')
     sdst = nam.scal(dst)
     cdst = nam.cum(dst)
@@ -207,7 +208,7 @@ def store_spatial(s, e, point):
         e[nam.initial(i)] = s[i].dropna().groupby('AgentID').first()
     e[nam.mean(nam.vel(''))] = e[cdst] / e[nam.cum('dur')]
 
-    scale_to_length(s, e, pars=[dst, nam.vel(''), nam.acc('')])
+    scale_to_length(s, e, c, pars=[dst, nam.vel(''), nam.acc('')])
 
     if sdst in s.columns :
         e[csdst] = s[sdst].dropna().groupby('AgentID').sum()
@@ -215,11 +216,11 @@ def store_spatial(s, e, point):
 
 
 def spatial_processing(s, e, c, mode='minimal', recompute=False, **kwargs):
-    comp_length(s, e, c.Npoints, mode=mode, recompute=recompute)
-    comp_centroid(s, c.Ncontour, recompute=recompute)
+    comp_length(s, e, c, mode=mode, recompute=recompute)
+    comp_centroid(s, c, recompute=recompute)
     comp_spatial(s, e, c, mode=mode)
     comp_linear(s, e, c, mode=mode)
-    store_spatial(s, e, c.point)
+    store_spatial(s, e, c, c.point)
     print(f'Completed {mode} spatial processing.')
 
 
@@ -259,7 +260,7 @@ def comp_dispersion(s, e, dt, point, c=None, recompute=False, dsp_starts=[0], ds
             e.loc[id, mp] = np.nanmax(d)
             e.loc[id, mup] = np.nanmean(d)
             e.loc[id, fp] = s[p].xs(id, level='AgentID').dropna().values[-1]
-    scale_to_length(s, e, pars=ps + pps)
+    scale_to_length(s, e, c, pars=ps + pps)
     if c is not None:
         store_aux_dataset(s, pars=ps + nam.scal(ps), type='dispersion', file=c.aux_dir)
     #print('Dispersions computed')
@@ -350,7 +351,46 @@ def tortuosity(xy):
         return 1 - L / D
 
 
+# def straightness_index2(xy, w, match_shape=True):
+#     # xy_int=copy.deepcopy(xy)
+#     # xy_int[:,0]=interpolate_nans(xy[:,0])
+#     # xy_int[:, 1] = interpolate_nans(xy[:, 1])
+#     # print(xy.shape)
+#     all_dsts=np.diff(xy, axis=0)
+#     print(all_dsts.shape)
+#     print(np.diff(xy, axis=1).shape)
+#     raise
+#     # all_dsts[:,0]= interpolate_nans(all_dsts[:,0])
+#     # all_dsts[:,1]= interpolate_nans(all_dsts[:,1])
+#     dsts = rolling_window_xy(all_dsts, w)
+#
+#     # Compute tortuosity over intervals of duration w
+#     xys = rolling_window_xy(xy, w)
+#
+#
+#     k0,k1=xy.shape[0], dsts.shape[0]
+#     temp=np.zeros(k1) * np.nan
+#     for i in range(k1):
+#         D = np.nansum(np.sqrt(np.nansum(dsts[i,:] ** 2, axis=1)))
+#         if D==0 :
+#             temp[i] =np.nan
+#         else :
+#             xy0=xys[i,:]
+#             xy0=xy0[~np.isnan(xy0).any(axis=1)]
+#             L = np.sqrt(np.nansum(np.array(xy0[-1, :] - xy0[0, :]) ** 2))
+#             temp[i] = 1 - L / D
+#     if match_shape :
+#         dk = int((k0-k1) / 2)
+#         SI = np.zeros(k0) * np.nan
+#         SI[dk :dk+k1]=temp
+#     else :
+#         SI = temp
+#     return SI
+
+
+
 def straightness_index(xy, w, match_shape=True):
+
     # Compute tortuosity over intervals of duration w
     xys = rolling_window_xy(xy, w)
     k0,k1=xy.shape[0], xys.shape[0]
@@ -366,7 +406,9 @@ def straightness_index(xy, w, match_shape=True):
     return SI
 
 
-def comp_straightness_index(s, dt, e=None, c=None, tor_durs=[2, 5, 10, 20], **kwargs):
+def comp_straightness_index(s,  e=None, c=None,dt=None, tor_durs=[2, 5, 10, 20], **kwargs):
+    if dt is None :
+        dt=c.dt
     Nticks = len(s.index.unique('Step'))
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
@@ -463,16 +505,16 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
         # print(e['anemotaxis'])
 
 
-def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', config=None, **kwargs):
+def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=None, **kwargs):
     ids = s.index.unique(level='AgentID').values
 
-    xy_pairs = nam.xy(nam.midline(config.Npoints, type='point') + ['centroid', ''] + nam.contour(config.Ncontour))
+    xy_pairs = nam.xy(nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(config.Ncontour))
     xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
     xy_pairs = group_list_by_n(np.unique(flatten_list(xy_pairs)), 2)
     if mode == 'arena':
         print('Centralizing trajectories in arena center')
         if arena_dims is None:
-            arena_dims = config.env_params.arena.arena_dims
+            arena_dims = c.env_params.arena.arena_dims
         x0, y0 = arena_dims
         X, Y = x0 / 2, y0 / 2
         for x, y in xy_pairs:
@@ -481,7 +523,7 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', conf
         return s
     else:
         if track_point is None:
-            track_point = config.point
+            track_point = c.point
 
         XY = nam.xy(track_point) if set(nam.xy(track_point)).issubset(s.columns) else ['x', 'y']
         if not set(XY).issubset(s.columns):
@@ -592,10 +634,11 @@ def comp_PI(arena_xdim, xs, return_num=False, return_all=False):
         return pI
 
 
-def scale_to_length(s, e, pars=None, keys=None):
+def scale_to_length(s, e,c, pars=None, keys=None):
     l_par = 'length'
     if l_par not in e.keys():
-        return
+        comp_length(s, e,c, mode='minimal', recompute=True)
+        # return
     l = e[l_par]
     if pars is None:
         if keys is not None:

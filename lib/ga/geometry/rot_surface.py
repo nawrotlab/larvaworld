@@ -17,12 +17,12 @@ class RotSurface:
         self.x += dx
         self.y += dy
 
-    def draw(self, screen):
+    def draw(self, scene):
         degrees = math.degrees(self.direction)
         rotated_surf = pygame.transform.rotate(self.surf, degrees)
         rot_rect = rotated_surf.get_rect()
         rot_rect.center = (self.x, self.y)
-        screen.blit(rotated_surf, rot_rect)
+        scene.screen.blit(rotated_surf, rot_rect)
 
 
 

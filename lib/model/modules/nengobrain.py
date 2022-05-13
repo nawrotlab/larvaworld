@@ -1,4 +1,3 @@
-import pandas as pd
 from nengo import *
 import numpy as np
 from nengo.networks import EnsembleArray

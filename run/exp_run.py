@@ -2,7 +2,8 @@ import argparse
 import sys
 import time
 import numpy as np
-
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 sys.path.insert(0, '..')

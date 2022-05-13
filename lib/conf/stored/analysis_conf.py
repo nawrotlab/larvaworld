@@ -5,14 +5,6 @@ from lib.conf.base.dtypes import null_dict
 from lib.conf.base.par import getPar
 
 
-# tact_kws={'unit' : 'min',**cc}
-#         figs['time ratio on food (final)'] = plot_endpoint_params(par_shorts=['on_food_tr'], **cc)
-#         figs['time ratio on food'] = timeplot(['on_food_tr'], **tact_kws)
-#         figs['time on food'] = timeplot(['cum_f_det'], **tact_kws)
-#         figs['turner input'] = timeplot(['A_tur'], show_first=True, **tact_kws)
-#         figs['turner output'] = timeplot(['Act_tur'], show_first=True, **tact_kws)
-#         figs['tactile activation'] = timeplot(['A_touch'], show_first=True, **tact_kws)
-
 def entry(plotID, title=None, **kwargs):
     if title is None:
         title = plotID
@@ -103,7 +95,7 @@ def deb(mode, title=None, u='hours', pref='FEED', **kwargs):
     return {'title': title, 'plotID': 'deb', 'args': args}
 
 
-predict = {
+analysis_dict = AttrDict.from_nested_dicts({
     'tactile': [
         end(['on_food_tr'], 'time ratio on food (final)'),
         time('on_food_tr', 'time ratio on food', u='min'),
@@ -175,5 +167,4 @@ predict = {
     #     *[deb(m, pref='FEED') for m in ['feeding', 'reserve_density', 'assimilation', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
     #               'food_mass_2', 'hunger', 'EEB','fs']],
     # ]
-}
-analysis_dict = AttrDict.from_nested_dicts(predict)
+})

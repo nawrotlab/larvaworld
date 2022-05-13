@@ -4,11 +4,11 @@ import random
 import time
 
 import numpy as np
-from shapely.geometry import LineString, Polygon, Point
 
-import lib.aux.ang_aux
 from lib.aux.ang_aux import restore_bend, restore_bend_2seg
 from lib.aux.sim_aux import inside_polygon
+from lib.ga.geometry.point import Point
+from lib.ga.geometry.util import detect_nearest_obstacle, radar_tuple
 from lib.model.body.body import LarvaBody
 from lib.aux.ang_aux import angle_dif
 
@@ -164,7 +164,7 @@ class BodySim(BodyManager):
                 vel = lin_vel_amp * seg.get_world_facing_axis()
                 seg.set_lin_vel(vel, local=False)
 
-    def get_vels(self, lin, ang, prev_ang_vel):
+    def get_vels(self, lin, ang, prev_ang_vel, ang_suppression):
         if self.lin_mode == 'velocity':
             lin_vel = lin * self.lin_vel_coef
         else:
@@ -176,6 +176,7 @@ class BodySim(BodyManager):
                                            c=self.ang_damping,  k=self.body_spring_k)
         elif self.ang_mode == 'velocity':
             ang_vel = ang * self.ang_vel_coef
+        ang_vel*=ang_suppression
         return lin_vel, ang_vel
 
     def step(self):
@@ -203,8 +204,9 @@ class BodySim(BodyManager):
         if self.model.Box2D:
             self.Box2D_kinematics()
         else:
-            lin_vel, ang_vel = self.get_vels(self.lin_activity, self.ang_activity, self.head.get_angularvelocity())
-            lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel, self.head)
+            lin_vel, ang_vel = self.get_vels(self.lin_activity, self.ang_activity, self.head.get_angularvelocity(),
+                                             self.brain.locomotor.cur_ang_suppression)
+            lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
             self.dst = lin_vel * self.model.dt
             self.cum_dst += self.dst
             self.position_body(lin_vel=lin_vel, ang_vel=ang_vel)
@@ -235,6 +237,16 @@ class BodySim(BodyManager):
     def compute_ang_vel(self, k, c, torque, v, b, I=1):
         dtI=self.model.dt/I
         return v + (-c * v - k * b + torque) * dtI
+
+    # def compute_ang_vel2(self, k, c, torque, v, b, I=1):
+    #     dtI = self.model.dt / I
+    #     dv = (-c * v - k * b) * dtI
+    #     v0 = v + dv
+    #     if v0 * v < 0:
+    #         v0 = 0
+    #     v1 = v0 + torque * dtI
+    #
+    #     return v1
 
     def restore_body_bend(self,d,l):
         if not self.model.Box2D:
@@ -316,17 +328,174 @@ class BodySim(BodyManager):
             a = (a + np.pi) % (np.pi * 2) - np.pi
         return a
 
-    def assess_collisions(self, lin_vel, ang_vel, head):
-        border_collision = any([l.intersects(head.get_shape()) for l in self.model.border_lines]) if len(
-            self.model.border_lines) > 0 else False
+    @property
+    def border_collision(self):
+        if len(self.model.border_walls) == 0:
+            return False
+        else:
+
+            x,y=self.pos
+            p0=Point(x,y)
+            d0 = self.sim_length / 4
+            oM = self.head.get_orientation()
+            sensor_ray = radar_tuple(p0=p0, angle=oM, distance=d0)
+            min_dst, nearest_obstacle = detect_nearest_obstacle(self.model.border_walls, sensor_ray,p0)
+
+
+            if min_dst is None:
+                # no obstacle detected
+                return False
+            else :
+                return True
+
+    @property
+    def border_collision3(self):
+        if len(self.model.border_lines) == 0:
+            return False
+        else:
+            p0 = self.olfactor_point
+            # p0 = Point(self.olfactor_pos[0],self.olfactor_pos[1])
+            # p0 = Point(self.pos)
+            d0 = self.sim_length / 4
+            # shape = self.head.get_shape()
+            for l in self.model.border_lines :
+                # print(list(l.coords))
+                # raise
+                if p0.distance(l) < d0:
+                # if l.distance(shape)< d0:
+                    return True
+            return False
+
+    @property
+    def border_collision2(self):
+        simple=True
+        # print(self.radius, self.sim_length)
+        # raise
+        if len(self.model.border_lines) == 0 :
+            return False
+        else :
+            from lib.aux.shapely_aux import distance, distance_multi
+            oM=self.head.get_orientation()
+            oL=oM+np.pi/3
+            oR=oM-np.pi/3
+            p0 = self.pos
+            # p0 = tuple(self.get_sensor_position('olfactor'))
+            # p0 = tuple(self.olfactor_pos)
+            # p0=Point(p0)
+            d0=self.sim_length/3
+            dM = distance_multi(point=p0, angle=oM, ways=self.model.border_lines, max_distance=d0)
+            # print(dM)
+            if dM is not None :
+                if simple :
+                    return True
+                dL = distance_multi(point=p0, angle=oL, ways=self.model.border_lines, max_distance=d0)
+                dR = distance_multi(point=p0, angle=oR, ways=self.model.border_lines, max_distance=d0)
+                if dL is None and dR is None :
+                    return 'M'
+                elif dL is None and dR is not None :
+                    if dR<dM :
+                        return 'RRM'
+                    else :
+                        return 'MR'
+                elif dR is None and dL is not None :
+                    if dL<dM :
+                        return 'LLM'
+                    else :
+                        return 'ML'
+                elif dR is not None and dL is not None:
+                    if dL<dR :
+                        return 'LLM'
+                    else :
+                        return 'RRM'
+            else :
+                return False
+
+            # radarM = radar_line(p0, oM, d0)
+            # radarL = radar_line(p0, oL, d0)
+            # radarR = radar_line(p0, oR, d0)
+            # interM,interL,interR = [], [], []
+            # dM0,dL0,dR0 = d0*2, d0*2, d0*2
+            # for l in self.model.border_lines :
+            #     dM=radarM.intersection(l)
+            #     dR=radarR.intersection(l)
+            #     dL=radarL.intersection(l)
+            #     if not dM.is_empty :
+            #         interM.append(p0.distance(dM))
+            #     if not dR.is_empty :
+            #         interR.append(p0.distance(dR))
+            #     if not dL.is_empty :
+            #         interL.append(p0.distance(dL))
+            # if len(interM)>0 :
+            #     dM0=np.min(interM)
+            # if len(interL)>0 :
+            #     dL0=np.min(interL)
+            # if len(interR)>0 :
+            #     dR0=np.min(interR)
+            # dst = np.min([dM0, dL0, dR0])
+            # if dst>=d0 :
+            #     return False
+            #
+            # side = np.argmin([dM0, dL0, dR0])
+            # if side==1:
+            #     return 'L'
+            # elif side==2:
+            #     return 'R'
+            # elif side == 0:
+            #     if dL0<dR0 :
+            #         return 'ML'
+            #     else :
+            #         return 'MR'
+
+            # # olfactor_point=self.olfactor_point
+            # # shape=self.head.get_shape()
+            # # print(p0, self.pos)
+            # # print(np.rad2deg([oM,oL,oR]))
+            # # raise
+            # for l in self.model.border_lines :
+            #     from lib.aux.shapely_aux import distance
+            #     dM=distance(point=p0, angle=oM, way=l, max_distance=d0)
+            #     dL=distance(point=p0, angle=oL, way=l, max_distance=d0)
+            #     dR=distance(point=p0, angle=oR, way=l, max_distance=d0)
+            #
+            #     # raise
+            #     if dM is not None or dL is not None or dR is not None:
+                    # print(dd)
+                # if shape.distance(l)<self.radius/5:
+                # if olfactor_point.distance(l)<self.radius/5:
+                # if l.intersects(shape):
+                #     return True
+            # return False
+
+
+    def assess_collisions(self, lin_vel, ang_vel):
         if not self.model.larva_collisions:
             ids = self.model.detect_collisions(self.unique_id)
             larva_collision = False if len(ids) == 0 else True
         else:
             larva_collision = False
-        if border_collision or larva_collision:
+        if larva_collision:
             lin_vel = 0
             ang_vel += np.sign(ang_vel) * np.pi / 10
+            return lin_vel, ang_vel
+        res=self.border_collision
+        d_ang = np.pi / 20
+        if not res :
+            return lin_vel, ang_vel
+        elif res==True :
+            lin_vel = 0
+            ang_vel += np.sign(ang_vel) * d_ang
+            return lin_vel, ang_vel
+        if 'M' in res :
+            lin_vel = 0
+        if 'RR' in res :
+            ang_vel +=2*d_ang
+        elif 'R' in res :
+            ang_vel +=d_ang
+        if 'LL' in res :
+            ang_vel -=2*d_ang
+        elif 'L' in res :
+            ang_vel -=d_ang
+
         return lin_vel, ang_vel
 
     def assess_tank_contact(self, ang_vel, o0, d, hr0, hp0, dt, l0):

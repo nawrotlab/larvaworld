@@ -40,7 +40,7 @@ class BatchTab(GuiTab):
         return self.datalists[self.k_stored]
 
     def update(self, w, c, conf, id):
-        w.Element(self.batch_id_key).Update(value=f'{id}_{next_idx(id, type="batch")}')
+        w.Element(self.batch_id_key).Update(value=f'{id}_{next_idx(id, type="Batch")}')
         for n in ['batch_methods', 'optimization', 'space_search']:
             c[n].update(w, conf[n])
         self.DL1.add(w, stored_trajs(id), replace=True)

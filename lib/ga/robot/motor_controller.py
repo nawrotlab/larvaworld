@@ -13,3 +13,8 @@ class MotorController:
 
     def get_actuator_value(self):
         return self.actuator.value
+
+class Actuator:
+
+    def __init__(self):
+        self.value = 0

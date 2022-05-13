@@ -51,8 +51,15 @@ class BodySegment:
 
     def get_shape(self, scale=1):
         p0 = Polygon(self.vertices[0])
-        p = affinity.scale(p0, xfact=scale, yfact=scale)
-        return p
+        # print(list(p0.exterior.coords))
+        # print(list(p0.bounds))
+        #
+        # raise
+        if scale==1:
+            return p0
+        else :
+            p = affinity.scale(p0, xfact=scale, yfact=scale)
+            return p
 
     def set_color(self, color):
         color = np.asarray(color, dtype=np.int32)

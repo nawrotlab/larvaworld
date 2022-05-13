@@ -7,8 +7,8 @@ import numpy as np
 from lib.aux.dictsNlists import AttrDict
 from lib.conf.base.par import getPar
 from lib.ga.exception.collision_exception import Collision
-from lib.ga.robot.actuator import Actuator
-from lib.ga.robot.motor_controller import MotorController
+
+from lib.ga.robot.motor_controller import MotorController, Actuator
 from lib.ga.sensor.proximity_sensor import ProximitySensor
 from lib.ga.util.color import Color
 from lib.model.body.controller import BodySim
@@ -34,29 +34,33 @@ class LarvaRobot(BodySim):
             'fov': [],
             'v': [],
         })
-        self.x, self.y = model.screen_pos(self.initial_pos)
+        # self.x, self.y = self.initial_pos
+        # self.x, self.y = model.screen_pos(self.initial_pos)
         self.pos = self.initial_pos
         self.brain = DefaultBrain(dt=self.model.dt, conf=larva_pars.brain, agent=self)
 
-    def draw(self, screen):
+        self.x, self.y = self.model.scene._transform(self.pos)
+
+    def draw(self, scene):
         for seg in self.segs:
             for vs in seg.vertices:
-                pygame.draw.polygon(screen, seg.color, vs)
+                scene.draw_polygon(vs, filled=True, color=seg.color)
+                # pygame.draw.polygon(screen, seg.color, vs)
 
-    @property
-    def sim_pos(self):
-        return np.array([self.x, self.y])
+    # @property
+    # def sim_pos(self):
+    #     return np.array([self.x, self.y])
 
     @property
     def direction(self):
         return self.head.get_orientation()
 
-    @property
-    def olfactor_pos_ga(self):
-        o0 = self.head.get_orientation()
-        k = np.array([math.cos(o0), math.sin(o0)])
-        p = self.pos + k * self.real_length * self.seg_ratio[0]
-        return p
+    # @property
+    # def olfactor_pos_ga(self):
+    #     o0 = self.head.get_orientation()
+    #     k = np.array([math.cos(o0), math.sin(o0)])
+    #     p = self.pos + k * self.real_length * self.seg_ratio[0]
+    #     return p
 
     # def print_xyd(self):
     #     """ prints the x,y position and direction """
@@ -67,23 +71,24 @@ class LarvaRobot(BodySim):
         hp0, o0 = self.head.get_pose()
         o1 = o0 + ang_vel * self.model.dt
         k1 = np.array([math.cos(o1), math.sin(o1)])
-        dxy = k1 * self.dst
-        self.pos += dxy
-        sim_dxy = dxy * self.model.scaling_factor
-        self.x += sim_dxy[0]
-        self.y += sim_dxy[1]
-        hp1 = self.sim_pos + k1 * self.seg_lengths[0] / 2
+        # dxy = k1 * self.dst
+        self.pos += k1 * self.dst
+        hp1 = self.pos + k1 * self.seg_lengths[0] / 2
+        # hp1 = self.sim_pos + k1 * self.seg_lengths[0] / 2
         self.head.update_all(hp1, o1, lin_vel, ang_vel)
 
-        self.position_rest_of_body(o0=o0, pos=self.sim_pos, o1=o1)
+        self.position_rest_of_body(o0=o0, pos=self.pos, o1=o1)
+        # self.position_rest_of_body(o0=o0, pos=self.sim_pos, o1=o1)
 
     def step(self):
         self.cum_dur += self.model.dt
         self.Nticks += 1
 
         self.restore_body_bend(self.dst, self.real_length)
-        self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.step(pos=self.olfactor_pos_ga)
-        lin_vel, ang_vel = self.get_vels(self.lin_activity, self.ang_activity, self.head.get_angularvelocity())
+        self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.step(pos=self.olfactor_pos)
+        # self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.step(pos=self.olfactor_pos_ga)
+        lin_vel, ang_vel = self.get_vels(self.lin_activity, self.ang_activity, self.head.get_angularvelocity(),
+                                         self.brain.locomotor.cur_ang_suppression)
         self.dst = lin_vel * self.model.dt
         self.cum_dst += self.dst
 
@@ -93,6 +98,9 @@ class LarvaRobot(BodySim):
         self.eval.b.append(self.body_bend)
         self.eval.fov.append(ang_vel)
         self.eval.v.append(lin_vel)
+
+        self.x,self.y=self.model.scene._transform(self.pos)
+        # self.olfactor_screen_pos = self.model.scene._transform(self.olfactor_pos)
 
     def sense_and_act(self):
         self.step()
@@ -165,8 +173,8 @@ class LarvaRobot(BodySim):
         self.finalized=True
 
     def interference_curves(self, **kwargs):
-        fov_curve, sv_curve = compute_interference_solo(self.eval.sv, self.eval.fov, self.model.dt, **kwargs)
-        return {'fov': fov_curve, 'sv': sv_curve}
+        fov_curve, sv_curve, foa_curve = compute_interference_solo(self.eval.sv, self.eval.fov,self.eval.foa, self.model.dt, **kwargs)
+        return {'foa': foa_curve,'fov': fov_curve, 'sv': sv_curve}
 
 
 class ObstacleLarvaRobot(LarvaRobot):
@@ -174,7 +182,6 @@ class ObstacleLarvaRobot(LarvaRobot):
         self.sensorimotor_kws = larva_pars.sensorimotor
         larva_pars.pop('sensorimotor', None)
         super().__init__(larva_pars=larva_pars, **kwargs)
-        # self.collision_with_object = False
         self.left_motor_controller = None
         self.right_motor_controller = None
         self.build_sensorimotor(**self.sensorimotor_kws)
@@ -182,13 +189,14 @@ class ObstacleLarvaRobot(LarvaRobot):
     def build_sensorimotor(self, sensor_delta_direction, sensor_saturation_value, obstacle_sensor_error,
                            sensor_max_distance,
                            motor_ctrl_coefficient, motor_ctrl_min_actuator_value):
-
         S_kws = {
             'saturation_value': sensor_saturation_value,
             'error': obstacle_sensor_error,
-            'max_distance': sensor_max_distance * self.sim_length,
+            'max_distance': int(self.model.scene._scale[0, 0] * sensor_max_distance* self.real_length),
+            # 'max_distance': sensor_max_distance * self.real_length,
             'scene': self.model.scene,
-            'collision_distance': 0.1 * self.sim_length,
+            'collision_distance': int(self.model.scene._scale[0, 0] * self.real_length / 5),
+            # 'collision_distance': 0.1 * self.real_length,
         }
 
         M_kws = {
@@ -208,19 +216,25 @@ class ObstacleLarvaRobot(LarvaRobot):
 
     def sense_and_act(self):
         if not self.collision_with_object:
+            pos = self.model.scene._transform(self.olfactor_pos)
             try:
-                self.left_motor_controller.sense_and_act(pos=self.olfactor_pos, direction=-self.direction)
-                self.right_motor_controller.sense_and_act(pos=self.olfactor_pos, direction=-self.direction)
-                Rtorque = self.left_motor_controller.get_actuator_value()
-                Ltorque = self.right_motor_controller.get_actuator_value()
-                # dRL=Rtorque-Ltorque
+
+                self.left_motor_controller.sense_and_act(pos=pos, direction=self.direction)
+                self.right_motor_controller.sense_and_act(pos=pos, direction=self.direction)
+                Ltorque = self.left_motor_controller.get_actuator_value()
+                Rtorque = self.right_motor_controller.get_actuator_value()
+                dRL=Rtorque-Ltorque
+                if dRL>0:
+                    self.brain.locomotor.turner.neural_oscillator.E_r += dRL * self.model.dt
+                else :
+                    self.brain.locomotor.turner.neural_oscillator.E_l -= dRL * self.model.dt
                 # ang=self.head.get_angularvelocity()
                 # self.head.set_ang_vel(ang-dRL*self.model.dt)
                 # if dRL!=0 :
                 #
                 #     print(dRL*self.model.dt, ang)
-                self.brain.locomotor.turner.neural_oscillator.E_r += Rtorque * self.model.dt
-                self.brain.locomotor.turner.neural_oscillator.E_l += Ltorque * self.model.dt
+                # self.brain.locomotor.turner.neural_oscillator.E_r += Rtorque * self.model.dt
+                # self.brain.locomotor.turner.neural_oscillator.E_l += Ltorque * self.model.dt
                 # if dRL>0 :
                 #     self.brain.locomotor.turner.neural_oscillator.E_r += np.abs(dRL)
                 # else :
@@ -238,13 +252,15 @@ class ObstacleLarvaRobot(LarvaRobot):
     def set_right_motor_controller(self, right_motor_controller):
         self.right_motor_controller = right_motor_controller
 
-    def draw(self, screen):
+    def draw(self, scene):
+        # pos = self.olfactor_pos
+        pos = self.model.scene._transform(self.olfactor_pos)
         # draw the sensor lines
 
         # in scene_loader a robot doesn't have sensors
         if self.left_motor_controller is not None:
-            self.left_motor_controller.sensor.draw(pos=self.olfactor_pos, direction=-self.direction)
-            self.right_motor_controller.sensor.draw(pos=self.olfactor_pos, direction=-self.direction)
+            self.left_motor_controller.sensor.draw(pos=pos, direction=self.direction)
+            self.right_motor_controller.sensor.draw(pos=pos, direction=self.direction)
 
         # call super method to draw the robot
-        super().draw(screen)
+        super().draw(scene)

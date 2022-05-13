@@ -28,6 +28,7 @@ class Locomotor:
         self.feed_motion = False
         self.last_dist = 0
         self.bend_correction_coef = bend_correction_coef
+        self.cur_ang_suppression=1
 
         self.crawler_noise = crawler_noise
         self.turner_input_noise = turner_input_noise
@@ -51,11 +52,11 @@ class Locomotor:
             self.cur_pause_dur += self.dt
 
     def add_noise(self):
-        self.lin_activity = self.lin_activity * (1 + np.random.normal(scale=self.crawler_noise))
-        self.ang_activity = self.ang_activity * (1 + np.random.normal(scale=self.turner_output_noise))
+        self.lin_activity *= (1 + np.random.normal(scale=self.crawler_noise))
+        self.ang_activity *= (1 + np.random.normal(scale=self.turner_output_noise))
 
-    def scale2length(self, length):
-        self.lin_activity *= length
+    # def scale2length(self, length):
+    #     self.lin_activity *= length
 
     def update_body(self, length):
         if self.lin_mode == 'velocity':
@@ -72,6 +73,7 @@ class Locomotor:
             self.ang_vel += dv * self.dt
         elif self.ang_mode == 'velocity':
             self.ang_vel = self.ang_activity * self.ang_vel_coef
+        # self.ang_vel *=self.cur_ang_suppression
         self.bend += self.ang_vel * self.dt
         if self.bend > np.pi:
             self.bend = np.pi
@@ -115,6 +117,7 @@ class DefaultLocomotor(Locomotor):
 
     def step(self, A_in=0, length=1):
         self.lin_activity, self.ang_activity, self.feed_motion = 0, 0, False
+        self.cur_ang_suppression = 1
         if self.intermitter:
             pre_state = self.intermitter.cur_state
             self.intermitter.step()
@@ -125,7 +128,7 @@ class DefaultLocomotor(Locomotor):
         if self.feeder:
             self.feed_motion = self.feeder.step()
         if self.crawler:
-            self.lin_activity = self.crawler.step()
+            self.lin_activity = self.crawler.step() * length
         if self.turner:
             A_in *= (1 + np.random.normal(scale=self.turner_input_noise))
             if self.coupling.suppression_mode == 'amplitude':
@@ -136,9 +139,12 @@ class DefaultLocomotor(Locomotor):
             elif self.coupling.suppression_mode == 'both':
                 A_in += (1 - self.coupling.step())
                 cT = self.coupling.step()
-            self.ang_activity = cT * self.turner.step(A_in=A_in)
+            self.ang_activity = self.turner.step(A_in=A_in)
+            self.cur_ang_suppression=cT
+        # if self.intermitter.cur_state=='pause' :
+        #     print(self.cur_ang_suppression)
         self.add_noise()
-        self.scale2length(length)
+        # self.scale2length(length)
         if not self.offline:
             return self.lin_activity, self.ang_activity, self.feed_motion
         else:
@@ -410,7 +416,7 @@ class Sakagiannis2022(Locomotor):
                 self.current_numstrides += 1
                 self.step_to_length = self.new_stride
             self.lin_activity = self.freq * self.step_to_length * (
-                        1 + 0.6 * np.cos(self.phi - self.max_vel_phase)) * length
+                    1 + 0.6 * np.cos(self.phi - self.max_vel_phase)) * length
             attenuation_coef = self.attenuation_func
         elif self.cur_state == 'pause':
             self.cur_pause_dur += self.dt
@@ -435,124 +441,3 @@ class Sakagiannis2022(Locomotor):
         # self.bend_body(self.ang_activity)
         # self.last_dist = self.lin_vel * self.dt
         return self.lin_vel, self.ang_vel, self.feed_motion
-
-
-Levy_conf = {
-    'run_scaled_velocity': 0.1,
-    'ang_vel_headcast': np.deg2rad(60),
-    'crawler_noise': 0.0,
-    'turner_input_noise': 0.0,
-    'turner_output_noise': 0.0,
-    'run_dist': {'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
-    'pause_dist': {'range': [0.4, 20.0], 'name': 'uniform'},
-}
-
-Wystrach2016_conf = {
-    'run_scaled_velocity': 0.1,  # in m/s
-    'torque_coef': 1.0,
-    'ang_damp_coef': 1.0,
-    'body_spring_k': 1.0,
-    'turner_input_constant': 19.0,
-    'crawler_noise': 0.0,
-    'turner_input_noise': 0.0,
-    'turner_output_noise': 0.0,
-    'w_ee': 3.0,
-    'w_ce': 0.1,
-    'w_ec': 4.0,
-    'w_cc': 4.0,
-    'm': 100.0,
-    'n': 2.0,
-}
-
-Davies2015_conf = {
-    'run_scaled_velocity': 0.1,
-    'min_run_dur': 1,
-    'theta_min_headcast': 37,
-    'theta_max_headcast': 120,
-    'theta_max_weathervane': 20,
-    'ang_vel_weathervane': np.deg2rad(60),
-    'ang_vel_headcast': np.deg2rad(60) * 2,
-    'r_run2headcast': 0.148,
-    'r_headcast2run': 2.0,
-    'r_weathervane_stop': 2.0,
-    'r_weathervane_resume': 1.0,
-}
-
-Sakagiannis2022_conf = {
-    'step_mu': 0.224,
-    'step_std': 0.033,
-    'max_vel_phase': 3.6,
-    'initial_freq': 1.418,
-    'torque_coef': 1.0,
-    'ang_damp_coef': 1.0,
-    'body_spring_k': 1.0,
-    'turner_input_constant': 19.0,
-    'crawler_noise': 0.0,
-    'turner_input_noise': 0.0,
-    'turner_output_noise': 0.0,
-    'attenuation': 0.2,
-    'attenuation_max': 0.31,
-    # 'crawler_phi_range': (0.5, 1.5),
-    'run_dist': {'range': [1.0, 100.0], 'name': 'powerlaw', 'alpha': 1.44791},
-    'pause_dist': {'range': [0.4, 20.0], 'name': 'uniform'},
-}
-
-if __name__ == '__main__':
-    from lib.anal.evaluation import sim_locomotor, sim_dataset, adapt_conf, run_locomotor_evaluation
-    from lib.conf.base.par import ParDict, getPar
-
-    # df_cols, = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'], to_return=['d'])
-    # Lev = AttrDict.from_nested_dicts({
-    #     'run_velocity_mean': 0.001,
-    #     'ang_vel_headcast': np.deg2rad(240.0),  # 60,
-    #     'run_dist': {'range': [1, 172.125],
-    #                  'name': 'powerlaw',
-    #                  'alpha': 1.46},
-    #     'pause_dist': {'range': [0.4, 2.0],
-    #                    'name': 'uniform'},
-    # })
-    # dt = 0.1
-    # N = 2880
-    # Ncols = len(df_cols)
-    # # aaL = np.zeros([N, Ncols]) * np.nan
-    # L = Levy_locomotor(dt=0.1, **Lev)
-    # aaL = sim_locomotor(L, N, dt, df_cols, {'length' : 0.004})
-    # # for i in range(5000):
-    # #     v, fov, feed = L.step(length=0.004)
-    # #     print(L.intermitter.cur_state)
-    # # from lib.conf.base.dtypes import null_dict
-    # # print(null_dict('locomotor'))
-    # raise
-    Dav = {
-        'run_velocity_mean': 0.001,
-        'run_dur_min': 1,
-        'theta_min_headcast': np.deg2rad(37),
-        'theta_max_headcast': np.deg2rad(120),
-        'theta_max_weathervane': np.deg2rad(20),
-        'ang_vel_weathervane': np.deg2rad(60.0),
-        'ang_vel_headcast': np.deg2rad(240.0),
-        'r_run2headcast': 0.148,
-        'r_headcast2run': 2.0,
-        'r_weathervane_stop': 2.0,
-        'r_weathervane_resume': 1.0,
-    }
-    L = Davies2015(dt=1 / 16, **Dav)
-    N = 2880
-    states = np.zeros([N]) * np.nan
-    for i in range(N):
-        v, fov, feed = L.step(length=0.004)
-        states[i] = 1 if L.intermitter.cur_state == 'run' else 0
-    print(np.sum(states) / N)
-    # dt = 0.065
-    # l = 1
-    # labs = ["Levy", "Wystrach2016", "Davies2015", "Sakagiannis2022"]
-    # loco_pairs = [[Levy_locomotor, Levy_locomotor_conf], [Wystrach2016, Wystrach2016_conf],
-    #               [Davies2015, Davies2015_conf], [Sakagiannis2022, Sakagiannis2022_conf]]
-    # for lab, (func, conf) in zip(labs, loco_pairs):
-    #     L = func(dt=dt, **conf)
-    #     vs = []
-    #     for i in range(5000):
-    #         v, fov, feed = L.step(length=l)
-    #         vs.append(v)
-    #     print(lab, np.mean(vs))
-    #     # break

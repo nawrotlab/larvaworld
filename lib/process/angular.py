@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from lib.aux.ang_aux import angle_dif, angle, angle_to_x_axis, unwrap_deg
 from lib.aux.dictsNlists import flatten_list
@@ -7,35 +8,45 @@ import lib.aux.naming as nam
 from lib.process.store import store_aux_dataset
 
 
-def comp_angles(s, config, mode='full'):
-    points = nam.midline(config.Npoints, type='point')
-    Nangles = np.clip(config.Npoints - 2, a_min=0, a_max=None)
+def comp_angles(s, e, c, mode='full'):
+    N=c.Npoints
+    points = nam.midline(N, type='point')
+    Nangles = np.clip(N - 2, a_min=0, a_max=None)
     angles = [f'angle{i}' for i in range(Nangles)]
-    r = config.front_body_ratio if config is not None else 0.5
-    bend_angles = angles[:int(np.round(r * len(angles)))]
-    xy = [nam.xy(points[i]) for i in range(len(points))]
+    ang_conf=c.metric_definition.angular
+    if ang_conf.fitted is None :
+        r = ang_conf.hardcoded.front_body_ratio
+    else :
+        r = ang_conf.fitted.front_body_ratio
+    bend_angles = angles[:int(np.round(r * Nangles))]
+    xy = [nam.xy(points[i]) for i in range(N)]
     if mode == 'full':
         angles = angles
     elif mode == 'minimal':
         angles = bend_angles
-    N = len(angles)
-    print(f'Computing {N} angles')
-    xy_pars = flatten_list([xy[i] for i in range(N + 2)])
-    xy_ar = s[xy_pars].values
-    Npoints = int(xy_ar.shape[1] / 2)
-    Nticks = xy_ar.shape[0]
-    xy_ar = np.reshape(xy_ar, (Nticks, Npoints, 2))
-    c = np.zeros([N, Nticks]) * np.nan
+    print(f'Computing {Nangles} angles')
+    xy_pars = flatten_list([xy[i] for i in range(Nangles + 2)])
+    Axy = s[xy_pars].values
+    Npoints = int(Axy.shape[1] / 2)
+    Nticks = Axy.shape[0]
+    Axy = np.reshape(Axy, (Nticks, Npoints, 2))
+    A = np.zeros([Nangles, Nticks]) * np.nan
     for i in range(Nticks):
-        c[:, i] = np.array([angle(xy_ar[i, j + 2, :], xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
+        A[:, i] = np.array([angle(Axy[i, j + 2, :], Axy[i, j + 1, :], Axy[i, j, :]) for j in range(Nangles)])
     for z, a in enumerate(angles):
-        s[a] = c[z].T
+        s[a] = A[z].T
     print('All angles computed')
     return bend_angles
 
 
-def comp_bend(s, config, mode='minimal'):
-    b_conf = config.bend if config is not None else 'from_angles'
+def comp_bend(s, e, c, mode='minimal'):
+    ang_conf = c.metric_definition.angular
+    if ang_conf.fitted is None:
+        b_conf = ang_conf.hardcoded.bend
+    else:
+        b_conf = ang_conf.fitted.bend
+
+    # b_conf = c.bend
     if b_conf is None:
         print('Bending angle not defined. Can not compute angles')
         return
@@ -43,7 +54,7 @@ def comp_bend(s, config, mode='minimal'):
         print(f'Computing bending angle as the difference between front and rear orients')
         s['bend'] = s.apply(lambda r: angle_dif(r[nam.orient('front')], r[nam.orient('rear')]), axis=1)
     elif b_conf == 'from_angles':
-        bend_angles = comp_angles(s, config, mode=mode)
+        bend_angles = comp_angles(s, e, c, mode=mode)
         print(f'Computing bending angle as the sum of the first {len(bend_angles)} front angles')
         s['bend'] = s[bend_angles].sum(axis=1, min_count=1)
 
@@ -60,21 +71,22 @@ def compute_LR_bias(s, e):
     print('LR biases computed')
 
 
-def comp_orientations(s, e, config, mode='minimal'):
-    Np=config.Npoints
-    if Np==1 :
-        comp_orientation_1point(s, e, config)
+def comp_orientations(s, e, c, mode='minimal'):
+    Np = c.Npoints
+    if Np == 1:
+        comp_orientation_1point(s, e, c)
         return
 
     points = nam.midline(Np, type='point')
     segs = nam.midline(Np - 1, type='seg')
+    temp=c.metric_definition.angular.hardcoded
     for key in ['front_vector', 'rear_vector']:
-        if config[key] is None:
+        if temp[key] is None:
             print('Front and rear vectors are not defined. Can not compute orients')
             return
     else:
-        f1, f2 = config.front_vector
-        r1, r2 = config.rear_vector
+        f1, f2 = temp.front_vector
+        r1, r2 = temp.rear_vector
 
     xy = [nam.xy(points[i]) for i in range(len(points))]
     print(f'Computing front and rear orients')
@@ -84,12 +96,12 @@ def comp_orientations(s, e, config, mode='minimal'):
     Nticks = xy_ar.shape[0]
     xy_ar = np.reshape(xy_ar, (Nticks, Npoints, 2))
 
-    c = np.zeros([2, Nticks]) * np.nan
+    cc = np.zeros([2, Nticks]) * np.nan
     for i in range(Nticks):
         for j in range(2):
-            c[j, i] = angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :])
+            cc[j, i] = angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :])
     for z, a in enumerate([nam.orient('front'), nam.orient('rear')]):
-        s[a] = c[z].T
+        s[a] = cc[z].T
         e[nam.initial(a)] = s[a].dropna().groupby('AgentID').first()
     if mode == 'full':
         N = len(segs)
@@ -100,26 +112,27 @@ def comp_orientations(s, e, config, mode='minimal'):
         Npoints = int(xy_ar.shape[1] / 2)
         Nticks = xy_ar.shape[0]
         xy_ar = np.reshape(xy_ar, (Nticks, Npoints, 2))
-        c = np.zeros([N, Nticks]) * np.nan
+        cc = np.zeros([N, Nticks]) * np.nan
         for i in range(Nticks):
-            c[:, i] = np.array([angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
+            cc[:, i] = np.array([angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
         for z, a in enumerate(ors):
-            s[a] = c[z].T
+            s[a] = cc[z].T
     print('All orientations computed')
     return
 
-def comp_orientation_1point(s, e, config):
-    if config.Npoints!=1 :
+
+def comp_orientation_1point(s, e, c):
+    if c.Npoints != 1:
         return
-    fov=nam.orient('front')
+    fov = nam.orient('front')
     ids = s.index.unique('AgentID').values
-    Nids=len(ids)
+    Nids = len(ids)
     Nticks = len(s.index.unique('Step'))
-    c = np.zeros([Nticks,Nids]) * np.nan
-    for j,id in enumerate(ids) :
+    c = np.zeros([Nticks, Nids]) * np.nan
+    for j, id in enumerate(ids):
         xy = s[['x', 'y']].xs(id, level='AgentID').values
-        for i in range(Nticks-1):
-            c[i+1, j] =angle_to_x_axis(xy[i,:], xy[i+1,:], in_deg=True)
+        for i in range(Nticks - 1):
+            c[i + 1, j] = angle_to_x_axis(xy[i, :], xy[i + 1, :], in_deg=True)
     s[fov] = c.flatten()
     e[nam.initial(fov)] = s[fov].dropna().groupby('AgentID').first()
     print('All orientations computed')
@@ -135,12 +148,20 @@ def unwrap_orientations(s, segs):
     print('All orients unwrapped')
 
 
-def comp_angular(s, config, mode='minimal'):
-    dt = config.dt
-    Nangles = np.clip(config.Npoints - 2, a_min=0, a_max=None)
+def comp_angular(s, e, c, mode='minimal'):
+    ors = [nam.orient('front'), nam.orient('rear')]
+    # if any([o not in s.columns for o in ors]):
+    #     comp_orientations(s, e, c, mode)
+    # if 'bend' not in s.columns:
+    #     comp_bend(s, e, c, mode)
+
+    ang_pars = ors + ['bend']
+
+    dt = c.dt
+    Nangles = np.clip(c.Npoints - 2, a_min=0, a_max=None)
     angles = [f'angle{i}' for i in range(Nangles)]
-    segs = nam.midline(config.Npoints - 1, type='seg')
-    ang_pars = [nam.orient('front'), nam.orient('rear'), 'bend']
+    segs = nam.midline(c.Npoints - 1, type='seg')
+
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     Nticks = len(s.index.unique('Step'))
@@ -182,10 +203,10 @@ def angular_processing(s, e, c, recompute=False, mode='minimal', **kwargs):
     else:
         try:
             comp_orientations(s, e, c, mode=mode)
-            comp_bend(s, c, mode=mode)
+            comp_bend(s, e, c, mode=mode)
         except:
             comp_ang_from_xy(s, e, dt=c.dt)
-    comp_angular(s, c, mode=mode)
+    comp_angular(s, e, c, mode=mode)
     comp_extrema(s, dt=c.dt, parameters=[nam.vel(nam.orient('front'))], interval_in_sec=0.3)
     compute_LR_bias(s, e)
     store_aux_dataset(s, pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), type='distro', file=c.aux_dir)
@@ -246,3 +267,12 @@ def comp_ang_from_xy(s, e, dt):
     s[p_acc] = A[:, 0, :].flatten()
     e[nam.mean(p_vel)] = s[p_vel].dropna().groupby('AgentID').mean()
     e[nam.mean(p_acc)] = s[p_acc].dropna().groupby('AgentID').mean()
+
+
+
+
+
+
+if __name__ == '__main__':
+    f=FuncParHelper()
+    print(f.func_df['module'])

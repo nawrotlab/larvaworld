@@ -49,7 +49,6 @@ class SingleRun:
             print(f'---- Simulation {self.id} ----')
         # Run the simulation
         completed = self.env.run()
-        #print()
         if not completed:
             print('    Simulation aborted!')
             self.datasets = None

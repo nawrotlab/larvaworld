@@ -12,6 +12,7 @@ import lib.process.aux
 class Viewer(object):
     def __init__(self, width, height, caption="", fps=10, dt=0.1, show_display=True, record_video_to=None,
                  record_image_to=None, zoom=1):
+        # raise
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (1550, 400)
         self.w_loc = [int(x) for x in os.environ['SDL_VIDEO_WINDOW_POS'].split(',')]
         self.zoom = zoom
@@ -82,6 +83,7 @@ class Viewer(object):
         self._scale = np.array([[x, .0], [.0, -y]])
         self._translation = np.array([(-left * self.zoom) * x, (-bottom * self.zoom) * y]) + self.center * [-x, y]
         self.center_lim = (1 - self.zoom) * np.array([left, bottom])
+
 
     def _transform(self, position):
         return np.round(self._scale.dot(position) + self._translation).astype(int)

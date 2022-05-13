@@ -75,6 +75,7 @@ def path(n) :
         'RUN': f'{F0}/data/SimGroup/single_runs',
         'SIM': f'{F0}/data/SimGroup',
         'GA': f'{F0}/data/SimGroup/ga_runs',
+        'GA_SCENE': f'{F0}/lib/ga/saved_scenes',
         'DATA': f'{F0}/data',
         'GUITEST': f'{GF}/gui_speed_test.csv',
     }

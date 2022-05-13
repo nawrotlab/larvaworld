@@ -3,11 +3,7 @@ import itertools
 import math
 import os
 
-from scipy.stats import ks_2samp
-from typing import Union
-
 import numpy as np
-from matplotlib import cm
 from scipy.stats import ks_2samp
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -20,7 +16,6 @@ from lib.anal.plot_aux import plot_single_bout, dataset_legend
 from lib.anal.plotting import plot_trajectories, plot_dispersion
 from lib.aux.colsNstr import N_colors, col_df
 from lib.aux.combining import render_mpl_table
-from lib.aux.sim_aux import circle_to_polygon, inside_polygon
 
 from lib.conf.base.par import getPar, ParDict
 from lib.conf.stored.conf import loadRef
@@ -28,17 +23,6 @@ from lib.process.aux import annotation
 from lib.process.spatial import scale_to_length, comp_straightness_index, comp_dispersion
 from lib.process.store import get_dsp
 from lib.aux.sim_aux import get_tank_polygon
-
-# plt_conf = {'axes.labelsize': 25,
-#             'axes.titlesize': 30,
-#             'figure.titlesize': 30,
-#             'xtick.labelsize': 20,
-#             'ytick.labelsize': 20,
-#             'legend.fontsize': 20,
-#             'legend.title_fontsize': 25}
-# plt.rcParams.update(plt_conf)
-# plt.rcParams['text.usetex'] = True
-# plt.rcParams['axes.labelpad'] = '18'
 
 dic = ParDict(mode='load').dict
 dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, dsp, dsp_0_40, dsp_0_40_mu, dsp_0_40_max, sdsp, sdsp_0_40, sdsp_0_40_mu, sdsp_0_40_max, str_fov_mu, run_fov_mu, pau_fov_mu, str_fov_std, pau_fov_std, sstr_d_mu, sstr_d_std, str_d_mu, str_d_std, str_sv_mu, pau_sv_mu, str_v_mu, run_v_mu, run_sv_mu, pau_v_mu, str_tr, run_tr, pau_tr, Ltur_tr, Rtur_tr, Ltur_fou, Rtur_fou, run_t_min, run_t_max, pau_t_min, pau_t_max, cum_t, run_t, run_dst, pau_t = [
@@ -148,7 +132,7 @@ def sim_dataset(ee, cc, loco_func, loco_conf, adapted=False):
 
 def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stops=[40]):
     strides_enabled = True if cc.Npoints > 1 else False
-    vel_thr = cc.vel_thr if cc.Npoints == 1 else None
+    vel_thr = cc.vel_thr if cc.Npoints == 1 else 0.2
 
     dt = cc.dt
     ss[bv] = ss[b].groupby('AgentID').diff() / dt
@@ -159,10 +143,10 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
     ee[v_mu] = ss[v].dropna().groupby('AgentID').mean()
     ee[cum_d] = ss[dst].dropna().groupby('AgentID').sum()
 
-    scale_to_length(ss, ee, keys=['d', 'v', 'a', 'v_mu'])
+    scale_to_length(ss, ee, cc, keys=['d', 'v', 'a', 'v_mu'])
 
     comp_dispersion(ss, ee, dt, cc.point, dsp_starts=dsp_starts, dsp_stops=dsp_stops)
-    comp_straightness_index(ss, dt, e=ee, tor_durs=tor_durs)
+    comp_straightness_index(ss,  ee,cc, dt,tor_durs=tor_durs)
 
     chunk_dicts, aux_dic = annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
     bout_dic = fit_bouts(c=cc, aux_dic=aux_dic, s=ss, e=ee, id=cc.id)
@@ -462,16 +446,12 @@ def error_tables(error_dict, save_to=None, suf='fitted'):
         if save_to is not None:
             plt.savefig(f'{save_to}/error_{suf}_{k}.pdf', dpi=300)
     return dic
-    # render_mpl_table(np.round(v, 6).T, highlighted_cells='row_min')
-    # render_mpl_table(np.round(v, 6).T, highlighted_cells='row_min')
-    # render_mpl_table(np.round(v, 6).T, highlighted_cells='row_min')
 
 
 def error_barplots(error_dict, evaluation, normalization='raw', suf='', axs=None, fig=None,
                    titles=[r'$\bf{endpoint}$ $\bf{metrics}$', r'$\bf{timeseries}$ $\bf{metrics}$'], **kwargs):
     from lib.anal.plot_aux import BasePlot
     import matplotlib.patches as mpatches
-    # from lib.anal.evaluation import render_mpl_table
     P = BasePlot(name=f'error_barplots_{suf}_{normalization}', **kwargs)
     Nplots = len(error_dict)
     P.build(Nplots, 1, figsize=(20, Nplots * 6), sharex=False, fig=fig, axs=axs)
@@ -501,12 +481,14 @@ def error_barplots(error_dict, evaluation, normalization='raw', suf='', axs=None
     return P.get()
 
 
-def plot_bouts(loco_dict, plot_fits='', stridechain_duration=False, legend_outside=False,
+def plot_bouts(loco_dict=None, datasets=None, plot_fits='', stridechain_duration=False, legend_outside=False,
                axs=None, fig=None, **kwargs):
     from lib.anal.plot_aux import BasePlot, plot_mean_and_range
     P = BasePlot(name=f'comparative_bouts{plot_fits}', **kwargs)
     P.build(1, 2, figsize=(10, 5), sharex=False, sharey=True, fig=fig, axs=axs)
     valid_labs = {}
+    if loco_dict is None and datasets is not None :
+        loco_dict={d.id : {'step_data': d.step_data, 'endpoint_data': d.endpoint_data, 'config': d.config, 'bouts': d.load_group_bout_dict()} for d in datasets}
     loco_dict = dNl.AttrDict.from_nested_dicts(loco_dict)
     for j, (id, d) in enumerate(loco_dict.items()):
         v = d['bouts']
@@ -533,32 +515,6 @@ def plot_bouts(loco_dict, plot_fits='', stridechain_duration=False, legend_outsi
         dataset_legend(valid_labs.keys(), valid_labs.values(), ax=P.axs[0], loc='lower left', fontsize=15)
     P.adjust((0.15, 0.95), (0.15, 0.92), 0.05, 0.005)
     return P.get()
-
-
-# def plot_comparative_dispersion(loco_dict, c, range, axs=None, fig=None, **kwargs):
-#     from lib.process.store import get_dsp
-#     from lib.anal.plot_aux import BasePlot, plot_mean_and_range
-#     from lib.aux.colsNstr import random_colors
-#     r0, r1 = range
-#     p = f'dispersion_{r0}_{r1}'
-#     P = BasePlot(name=f'comparative_dispersal_{r0}_{r1}', **kwargs)
-#     P.build(fig=fig, axs=axs)
-#     t0, t1 = int(r0 * c.fr), int(r1 * c.fr)
-#     x = np.linspace(r0, r1, t1 - t0)
-#     lws = [3] * (len(loco_dict) - 1) + [8]
-#     for lw, (lab, sim) in zip(lws, loco_dict.items()):
-#         col = sim['color']
-#         ddsp = get_dsp(sim['step'], p)
-#         mean = ddsp['median'].values[t0:t1]
-#         lb = ddsp['upper'].values[t0:t1]
-#         ub = ddsp['lower'].values[t0:t1]
-#         P.axs[0].fill_between(x, ub, lb, color=col, alpha=.2)
-#         P.axs[0].plot(x, mean, col, label=lab, linewidth=lw, alpha=1.0)
-#     P.conf_ax(xlab='time, $sec$', ylab=r'dispersal $(mm)$', xlim=[x[0], x[-1]], ylim=[0, None], xMaxN=4, yMaxN=4)
-#     P.axs[0].legend(loc='upper left', fontsize=15)
-#     # P.adjust((0.1, 0.95), (0.1, 0.95), 0.05, 0.005)
-#     return P.get()
-
 
 def plot_distros(loco_dict, distro_ps, save_to=None, show=False):
     ps2, ps2l = getPar(distro_ps, to_return=['d', 'lab'])
@@ -648,7 +604,6 @@ def compare2ref(ss, s=None, refID=None,
 
 if __name__ == '__main__':
     refID = 'None.100controls'
-    # refID='None.Sims2019_controls'
     d = loadRef(refID)
     d.load(contour=False)
     s, e, c = d.step_data, d.endpoint_data, d.config
@@ -730,19 +685,19 @@ if __name__ == '__main__':
     from lib.model.modules.locomotor import Sakagiannis2022, Levy_locomotor, Wystrach2016, Davies2015
 
     locos = {
-        "Levy": [Levy_locomotor, Lev, False],
-        "Levy+": [Levy_locomotor, Lev, True],
-        "Wystrach": [Wystrach2016, Wys, False],
-        "Wystrach+": [Wystrach2016, Wys, True],
-        "Davies": [Davies2015, Dav, False],
-        "Davies+": [Davies2015, Dav, True],
-        "Sakagiannis": [Sakagiannis2022, Sak, False],
-        "Sakagiannis+": [Sakagiannis2022, Sak, True],
+        # "Levy": [Levy_locomotor, Lev, False, 'blue'],
+        # "Levy+": [Levy_locomotor, Lev, True],
+        # "Wystrach": [Wystrach2016, Wys, False],
+        # "Wystrach+": [Wystrach2016, Wys, True],
+        "Davies": [Davies2015, Dav, False, 'green'],
+        # "Davies+": [Davies2015, Dav, True],
+        "Sakagiannis": [Sakagiannis2022, Sak, False, 'red'],
+        # "Sakagiannis+": [Sakagiannis2022, Sak, True],
         # "Sakagiannis++": [Sakagiannis2022, Sak2, False],
     }
 
-    error_dict, loco_dict, bout_dict = run_locomotor_evaluation(d, locos, Nids=100,
-                                                                save_to='/home/panos/larvaworld_new/larvaworld/tests/metrics/model_comparison/100l')
+    error_dict, loco_dict, bout_dict = run_locomotor_evaluation(d, locos, Nids=5,
+                                                                save_to='/home/panos/larvaworld_new/larvaworld/tests/metrics/model_comparison/5l')
     # error_tables(error_dict)
     # error_barplots(error_dict, normalization='minmax')
     # plot_trajectories(loco_dict)

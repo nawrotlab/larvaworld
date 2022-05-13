@@ -614,7 +614,7 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
     return wvane_min, wvane_max, cast_min, cast_max
 
 
-def annotation(s, e, cc, point=None, vel_thr=None, strides_enabled=True,store=False, **kwargs):
+def annotation(s, e, cc, vel_thr=None, strides_enabled=True,store=False, **kwargs):
     from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
 
     fft_freqs(s, e, cc)
@@ -660,7 +660,7 @@ def fft_freqs(s, e, c):
     e['turner_input_constant'] = (e[ffov] / 0.024) + 5
 
 
-def compute_interference_solo(a_sv,a_fov,dt, Nbins=64, strict=True, absolute=True) :
+def compute_interference_solo(a_sv,a_fov,a_foa,dt, Nbins=64, strict=True, absolute=True) :
     strides = detect_strides(a_sv, dt, return_runs=False, return_extrema=False)
     x = np.linspace(0, 2 * np.pi, Nbins)
 
@@ -670,17 +670,21 @@ def compute_interference_solo(a_sv,a_fov,dt, Nbins=64, strict=True, absolute=Tru
     # print(len(strides))
     ar_sv = np.zeros([len(strides), Nbins])
     ar_fov = np.zeros([len(strides), Nbins])
+    ar_foa = np.zeros([len(strides), Nbins])
     for ii, (s0, s1) in enumerate(strides):
-        ar_fov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 + 1 - s0), a_fov[s0:s1 + 1])
-        ar_sv[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 + 1 - s0), a_sv[s0:s1 + 1])
+        ar_fov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_fov[s0:s1])
+        ar_sv[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_sv[s0:s1])
+        ar_foa[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_foa[s0:s1])
     if absolute:
         ar_fov = np.abs(ar_fov)
+        ar_foa = np.abs(ar_foa)
     fov_curve = np.nanquantile(ar_fov, q=0.5, axis=0)
     sv_curve = np.nanquantile(ar_sv, q=0.5, axis=0)
-    return fov_curve, sv_curve
+    foa_curve = np.nanquantile(ar_foa, q=0.5, axis=0)
+    return fov_curve, sv_curve, foa_curve
 
 
-def compute_interference(s, e, c, Nbins=64, **kwargs):
+def compute_interference(s, e, c, Nbins=64,strict=False, **kwargs):
     from lib.conf.base.par import getPar
     import lib.aux.naming as nam
     from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
@@ -690,25 +694,35 @@ def compute_interference(s, e, c, Nbins=64, **kwargs):
     x = np.linspace(0, 2 * np.pi, Nbins)
     sv_curves = np.zeros([c.N, Nbins]) * np.nan
     fov_curves = np.zeros([c.N, Nbins]) * np.nan
+    foa_curves = np.zeros([c.N, Nbins]) * np.nan
     for jj, id in enumerate(c.agent_ids):
         a_sv = s[sv].xs(id, level="AgentID").values
         a_fov = s[fov].xs(id, level="AgentID").values
-        fov_curve, sv_curve = compute_interference_solo(a_sv,a_fov,c.dt, Nbins, **kwargs)
+        a_foa = s[foa].xs(id, level="AgentID").values
+        fov_curve, sv_curve, foa_curve = compute_interference_solo(a_sv,a_fov,a_foa, c.dt, Nbins,strict=strict, **kwargs)
         fov_curves[jj, :] = fov_curve
         sv_curves[jj, :] = sv_curve
+        foa_curves[jj, :] = foa_curve
 
     att0s, att1s = np.min(fov_curves, axis=1), np.max(fov_curves, axis=1)
+    str_sv_max = getPar('str_sv_max', to_return=['d'])[0]
+
     e[nam.min('attenuation')] = att0s / e[pau_fov_mu]
     e[nam.max('attenuation')] = (att1s - att0s) / e[pau_fov_mu]
     e[nam.max('phi_attenuation')] = x[np.argmax(fov_curves, axis=1)]
     e[nam.max(f'phi_{sv}')] = x[np.argmax(sv_curves, axis=1)]
+    e[str_sv_max] = np.max(sv_curves, axis=1)
+
+
 
     pooled_fov_curve = np.nanquantile(fov_curves, q=0.5, axis=0)
     pooled_sv_curve = np.nanquantile(sv_curves, q=0.5, axis=0)
+    pooled_foa_curve = np.nanquantile(foa_curves, q=0.5, axis=0)
 
     c.pooled_cycle_curves = {
         'sv': pooled_sv_curve.tolist(),
-        'fov': pooled_fov_curve.tolist()
+        'fov': pooled_fov_curve.tolist(),
+        'foa': pooled_foa_curve.tolist()
     }
 
 
@@ -769,7 +783,9 @@ def turn_annotation(s, e, c):
     return turn_dict
 
 
-def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=None):
+def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
+    if vel_thr is None:
+        vel_thr = c.vel_thr
     from lib.conf.base.par import getPar
     l, v, sv, dst, acc, fov, foa, b, bv, ba, fv = \
         getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv'],
@@ -800,7 +816,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=None):
         if c.Npoints > 1:
             a_sv = s[sv].xs(id, level="AgentID").values
             if strides_enabled:
-                strides, runs, run_counts = detect_strides(a_sv, dt, fr=e[fv].loc[id], return_extrema=False)
+                strides, runs, run_counts = detect_strides(a_sv, dt, fr=e[fv].loc[id],vel_thr=vel_thr, return_extrema=False)
                 strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_v,strides, dt)
                 # print(stride_idx)
                 # print(stride_idx.shape)
@@ -814,10 +830,9 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=None):
                                  ]
             else:
                 runs = detect_runs(a_sv, dt)
-            pauses = detect_pauses(a_sv, dt, runs=runs)
+            pauses = detect_pauses(a_sv, dt,vel_thr=vel_thr, runs=runs)
         else:
-            if vel_thr is None:
-                vel_thr = c.vel_thr
+
             runs = detect_runs(a_v, dt, vel_thr=vel_thr)
             pauses = detect_pauses(a_v, dt, runs=runs, vel_thr=vel_thr)
 
@@ -880,3 +895,121 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=None):
         e[sstr_d_std] = e[str_d_std] / e[l]
 
     return crawl_dict
+
+
+class FuncParHelper:
+
+    def __init__(self) :
+
+        self.func_df=self.inspect_funcs()
+
+    def get_func(self, func):
+        module=self.func_df['module'].loc[func]
+        return getattr(module, func)
+
+    def apply_func(self,func,s,**kwargs):
+        f=self.get_func(func)
+        kws={k:kwargs[k] for k in kwargs.keys() if k in self.func_df['args'].loc[func]}
+        f(s=s,**kws)
+        return s
+
+    def assemble_func_df(self,arg='s'):
+        from lib.process import angular, spatial, bouts, basic
+        arg_dicts = {}
+        for module in [angular, spatial, bouts, basic]:
+            dic = self.get_arg_dict(module, arg)
+            arg_dicts.update(dic)
+        df = pd.DataFrame.from_dict(arg_dicts,orient='index')
+
+        return df
+
+    def get_arg_dict(self, module, arg):
+        from inspect import getmembers, isfunction, signature
+
+
+        # funcnames = []
+        arg_dict={}
+        funcs = getmembers(module, isfunction)
+        for k, f in funcs:
+            args = signature(f)
+            args = list(args.parameters.keys())
+            if arg in args:
+                if k!='store_aux_dataset' :
+                    # funcnames.append(k)
+                    arg_dict[k]= {'args' : args, 'module':module}
+        return arg_dict
+
+    def inspect_funcs(self, arg='s'):
+        df=self.assemble_func_df(arg)
+        new_cols=['requires', 'depends', 'computes']
+        for col in new_cols :
+            df[col]=np.nan
+
+        df[new_cols]=self.manual_fill(df[new_cols])
+        return df
+
+    def manual_fill(self,df):
+        df.loc['comp_ang_from_xy'] = ['x', 'y'], ['ang_from_xy'], ['fov', 'foa']
+        df.loc['angular_processing'] = [], ['comp_orientations', 'comp_bend', 'comp_ang_from_xy', 'comp_angular',
+                                            'comp_extrema', 'compute_LR_bias', 'store_aux_dataset'], []
+        df.loc['comp_angular'] = ['fo', 'ro', 'b'], ['unwrap_orientations'], ['fov', 'foa', 'rov', 'roa', 'bv', 'ba']
+        df.loc['unwrap_orientations'] = ['fo', 'ro'], [], ['fou', 'rou']
+        df.loc['comp_orientation_1point'] = ['x', 'y'], [], ['fov']
+        df.loc['compute_LR_bias'] = ['b', 'bv', 'fov'], [], []
+        df.loc['comp_orientations'] = ['xys'], ['comp_orientation_1point'], ['fo', 'ro']
+        df.loc['comp_bend'] = ['fo', 'ro'], ['comp_angles'], ['b']
+        df.loc['comp_angles'] = ['xys'], [], ['angles']
+        return df
+
+    def is_computed_by(self, short):
+        return [k for k in self.func_df.index if short in self.func_df['computes'].loc[k]]
+
+    def requires(self, func):
+        return self.func_df['requires'].loc[func]
+
+    def depends(self,func):
+        return self.func_df['depends'].loc[func]
+
+    def requires_all(self, func):
+        import lib.aux.dictsNlists as dNl
+        shorts=[]
+        shorts.append(self.requires(func))
+        for f in self.depends(func) :
+            shorts.append(self.requires_all(func))
+        shorts=dNl.unique_list(shorts)
+        return shorts
+
+    def get_options(self, short):
+        options={}
+        for func in self.is_computed_by(short):
+            options[func]=self.requires(func)
+        return options
+
+    def how_to_compute(self, s, par=None, short=None, **kwargs):
+        from lib.conf.base.par import getPar
+        if par is None :
+            par = getPar(short, to_return=['d'])[0]
+        elif short is None :
+            short=getPar(d=par, to_return=['k'])[0]
+        if par in s.columns :
+            return True
+        else :
+            options=self.get_options(short)
+            available= []
+            for i,(func, shorts) in enumerate(options.items()) :
+                pars = getPar(shorts, to_return=['d'])[0]
+                if all([p in s.columns for p in pars]):
+
+                    available.append(func)
+            if len(available)==0 :
+                return False
+            else :
+                return available
+
+    def compute(self,s,**kwargs):
+        res=self.how_to_compute(s=s,**kwargs)
+        if res in [True, False]:
+            return res
+        else:
+            self.apply_func(res[0],s=s, **kwargs)
+            return self.compute(s=s,**kwargs)

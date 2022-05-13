@@ -192,7 +192,7 @@ class Parameter:
     def __init__(self, p, u, k=None, s=None, o=Larva, lim=None,
                  d=None, lab=None, exists=True, func=None, const=None, par_dict=None, fraction=False,
                  operator=None, k0=None, k_num=None, k_den=None, dst2source=None, or2source=None, dispersion=False,
-                 wrap_mode=None,l=None, unit=None):
+                 wrap_mode=None,l=None, unit=None, symbol=None):
         # print(p,k)
         self.wrap_mode = wrap_mode
         self.fraction = fraction
@@ -205,6 +205,7 @@ class Parameter:
         if s is None:
             s = self.k
         self.s = s
+        self.symbol = symbol
         self.o = o
         self.lab = lab
 
@@ -449,6 +450,7 @@ class ParDict:
         if s is None:
             s = wave(b.s)
         self.add(p=nam.std(b.p), k=f'{b.k}_std', u=b.u, d=d, s=s, exists=False, operator='std', k0=k0)
+        self.add(p=nam.var(b.p), k=f'{b.k}_var', u=None, d=nam.var(b.d), s=s, exists=False, operator='var', k0=k0)
 
     def add_min(self, k0, d=None, s=None):
         b = self.dict[k0]
@@ -820,7 +822,7 @@ class ParDict:
                               s=sub(Delta(self.dict[k].s), kc), exists=False)
                      self.add_mean(k0=f'{kc}_{k}')
                      self.add_std(k0=f'{kc}_{k}')
-                     for k0 in [f'{kc}_{k}', f'{kc}_{k}_mu', f'{kc}_{k}_std']:
+                     for k0 in [f'{kc}_{k}', f'{kc}_{k}_mu', f'{kc}_{k}_std', f'{kc}_{k}_var']:
                          self.add_scaled(k0=k0)
         self.add_rate(k_num='Ltur_N', k_den='tur_N', k='tur_H', p='handedness_score', d='handedness_score',
                       s=sub('H', 'tur'), lim=(0.0,1.0), lab='Handedness score')
@@ -1008,13 +1010,9 @@ if __name__ == '__main__':
 
     # aaa=getPar(['run_l'], to_return=['d'])[0]
     # print(aaa)
-    d=ParDict(mode='build').dict
-    raise
-    pars, =getPar(['dsp_0_40_max', 'ffov', 'fv', 'd', 'fo','x', 'y','b', 'dsp', 'cum_d', 'sv', 'a', 'sa', 'foa'], to_return=['d'])
-
-
-
-
+    # d=ParDict(mode='build').dict
+    # raise
+    pars, =getPar(['sstr_d_var'], to_return=['d'])
 
     print(pars)
     raise
@@ -1022,7 +1020,7 @@ if __name__ == '__main__':
     # # d = ParDict(mode='reconstruct').dict
     # print(d.keys())
     # raise
-    for short in ['tur_fov_max', 'pau_fov_std','ffov']:
+    for short in ['str_t_std', 'pau_fov_std','ffov']:
         p = getPar(short, to_return=['d'])[0]
         print(p)
     # dic = build_par_dict()

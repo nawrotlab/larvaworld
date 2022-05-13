@@ -6,6 +6,9 @@ import numpy as np
 import pandas as pd
 
 import lib.aux.dictsNlists
+from lib.anal.argparsers import Parser, MultiParser
+from lib.conf.base.dtypes import par_dict, par
+from lib.conf.base.init_pars import init_pars
 from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni, build_Arguello
 from lib.conf.stored.conf import *
 from lib.stor.larva_dataset import LarvaDataset
@@ -16,7 +19,7 @@ def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None,
     g = loadConf(datagroup_id, 'Group')
     build_conf = g.tracker.filesystem
     data_conf = g.tracker.resolution
-    spatial_def = g.enrichment.metric_definition.spatial
+    metric_definition = g.enrichment.metric_definition
     env_params=null_dict('env_conf', arena=g.tracker.arena)
 
 
@@ -25,7 +28,7 @@ def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None,
     except:
         pass
 
-    d = LarvaDataset(dir=target_dir, id=id, spatial_def=spatial_def, env_params=env_params,
+    d = LarvaDataset(dir=target_dir, id=id, metric_definition=metric_definition, env_params=env_params,
                      load_data=False, **data_conf)
 
 
@@ -161,28 +164,28 @@ def enrich_datasets(datagroup_id, datasets=None, names=None, enrich_conf=None, *
     return ds
 
 
-def analyse_datasets(datagroup_id, save_to=None, **kwargs):
-    from lib.sim.single.analysis import comparative_analysis
-    ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
-    if save_to is None and len(ds) > 1:
-        g = loadConf(datagroup_id, 'Group')
-        save_to = f'{paths.path("DATA")}/{g["path"]}/plots'
-    fig_dict = comparative_analysis(datasets=ds, labels=[d.id for d in ds], save_to=save_to)
-    return fig_dict
-
-
-def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={}, replay_kwargs={}, **kwargs):
-    warnings.filterwarnings('ignore')
-    ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
-    if save_to is None and len(ds) > 1:
-        g = loadConf(datagroup_id, 'Group')
-        save_to = f'{paths.path("DATA")}/{g["path"]}/visuals'
-    if save_as is None:
-        save_as = [d.id for d in ds]
-    for d, n in zip(ds, save_as):
-        vis_kwargs['media_name'] = n
-        d.visualize(save_to=save_to, vis_kwargs=vis_kwargs, **replay_kwargs)
-
+# def analyse_datasets(datagroup_id, save_to=None, **kwargs):
+#     from lib.sim.single.analysis import comparative_analysis
+#     ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
+#     if save_to is None and len(ds) > 1:
+#         g = loadConf(datagroup_id, 'Group')
+#         save_to = f'{paths.path("DATA")}/{g["path"]}/plots'
+#     fig_dict = comparative_analysis(datasets=ds, labels=[d.id for d in ds], save_to=save_to)
+#     return fig_dict
+#
+#
+# def visualize_datasets(datagroup_id, save_to=None, save_as=None, vis_kwargs={}, replay_kwargs={}, **kwargs):
+#     warnings.filterwarnings('ignore')
+#     ds = get_datasets(datagroup_id=datagroup_id, **kwargs)
+#     if save_to is None and len(ds) > 1:
+#         g = loadConf(datagroup_id, 'Group')
+#         save_to = f'{paths.path("DATA")}/{g["path"]}/visuals'
+#     if save_as is None:
+#         save_as = [d.id for d in ds]
+#     for d, n in zip(ds, save_as):
+#         vis_kwargs['media_name'] = n
+#         d.visualize(save_to=save_to, vis_kwargs=vis_kwargs, **replay_kwargs)
+#
 
 
 def detect_dataset(datagroup_id=None, folder_path=None, raw=True, **kwargs):
@@ -273,6 +276,24 @@ def split_dataset(step,end, food, larva_groups,dir, id,plot_dir,  show_output=Fa
 
 
 if __name__ == '__main__':
+    n='visualization'
+    d0 = init_pars().get(n, None)
+    d = {}
+    for n, v in d0.items():
+        try:
+            entry = par(n, argparser=True, **v)
+            print(n,v)
+        except:
+            entry = {n: {'dtype': dict, 'content': par_dict(n, argparser=True, d0=d0[n])}}
+        d.update(entry)
+    #dic = par_dict(n, argparser=True)
+    print(d)
+    raise
+
+    MP = MultiParser(['visualization', 'sim_params'])
+    p = MP.add()
+    print(p)
+    raise
     import matplotlib.pyplot as plt
     c=loadConf('Puff.Starved', 'Ref')
     d=LarvaDataset(c['dir'], load_data=False)

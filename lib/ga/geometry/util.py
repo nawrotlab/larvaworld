@@ -1,6 +1,8 @@
+import math
 from math import sqrt, pow
 
 from lib.ga.geometry.point import Point
+from lib.ga.scene.obstacle import Obstacle
 
 EPSILON = 0.000001
 
@@ -59,3 +61,37 @@ def point_to_string(point):
 
 def segment_to_string(segment):
     return "Segment(" + point_to_string(segment[0]) + ", " + point_to_string(segment[1]) + ")"
+
+def detect_nearest_obstacle(obstacles, sensor_ray, p0) :
+    min_dst = None
+    nearest_obstacle = None
+
+    for obj in obstacles:
+        if issubclass(type(obj), Obstacle):
+            obstacle = obj
+
+            # check collision between obstacle edges and sensor ray
+            # print(obstacle.edges)
+            # raise
+            for edge in obstacle.edges:
+                # print("obstacle_edge:", geom_utils.segment_to_string(obstacle_edge))
+                intersection_point = segments_intersection(sensor_ray, edge)
+
+                if intersection_point is not None:
+                    # print("intersection_point:", geom_utils.point_to_string(intersection_point))
+                    dst = distance(p0, intersection_point)
+
+                    if min_dst is None or dst < min_dst:
+                        min_dst = dst
+                        nearest_obstacle = obstacle
+                        # print("new distance_from_nearest_obstacle:", distance_from_nearest_obstacle)
+    return min_dst, nearest_obstacle
+
+
+def radar_tuple(p0: Point, angle: float, distance: float):
+    p1 = Point(
+        p0.x + math.cos(angle) * distance,
+        p0.y + math.sin(angle) * distance)
+    return p0, p1
+
+

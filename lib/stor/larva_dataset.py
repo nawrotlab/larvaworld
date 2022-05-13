@@ -6,10 +6,17 @@ import pandas as pd
 import warnings
 import copy
 
+from matplotlib import pyplot as plt
+from scipy.stats import stats
+
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
+from lib.anal.plot_aux import modelConfTable
 
 from lib.conf.base.dtypes import null_dict
+# from lib.conf.stored.conf import copyConf
+
+from lib.process.calibration import comp_stride_variation, comp_segmentation
 
 
 class LarvaDataset:
@@ -26,18 +33,32 @@ class LarvaDataset:
             except:
                 print('Data not found. Load them manually.')
 
-    def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0, spatial_def=None, env_params={},
+    def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0, metric_definition=None, env_params={},
                       larva_groups={},
                       source_xy={}, **kwargs):
         # try:
         if os.path.exists(self.dir_dict.conf):
             config = dNl.load_dict(self.dir_dict.conf, use_pickle=False)
+            # if metric_definition is None:
+            #     from lib.conf.stored.conf import loadConf
+            #     metric_definition = loadConf('SimParConf', 'Par')
+            # dic={'metric_definition': {
+            #     'spatial': {
+            #         'hardcoded': metric_definition['spatial'],
+            #         'fitted': None,
+            #     },
+            #     'angular': {
+            #         'hardcoded': metric_definition['angular'],
+            #         'fitted': None
+            #     }
+            # }}
+            # config.update(dic)
 
         # except:
         else:
-            if spatial_def is None:
+            if metric_definition is None:
                 from lib.conf.stored.conf import loadConf
-                spatial_def = loadConf('SimParConf', 'Par')['spatial']
+                metric_definition = loadConf('SimParConf', 'Par')
             group_ids = list(larva_groups.keys())
             samples = dNl.unique_list([larva_groups[k]['sample'] for k in group_ids])
             if len(group_ids) == 1:
@@ -72,7 +93,18 @@ class LarvaDataset:
                       'Ncontour': Ncontour,
                       'sample': sample,
                       'color': color,
-                      **spatial_def,
+                      'metric_definition': {
+                          'spatial': {
+                              'hardcoded' : metric_definition['spatial'],
+                              'fitted' : None,
+                          },
+                          'angular': {
+                              'hardcoded' : metric_definition['angular'],
+                              'fitted' : None
+                          }
+                      },
+                      # **metric_definition['spatial'],
+                      # **metric_definition['angular'],
                       'env_params': env_params,
                       'larva_groups': larva_groups,
                       'source_xy': source_xy,
@@ -166,6 +198,30 @@ class LarvaDataset:
             self.food_endpoint_data.sort_index(inplace=True)
         store.close()
 
+    def save_vel_definition(self, component_vels=True, add_reference=True):
+        warnings.filterwarnings('ignore')
+        store = pd.HDFStore(self.dir_dict.vel_definition)
+        res_v = comp_stride_variation(self, component_vels=component_vels)
+        for k, v in res_v.items():
+            store[k] = v
+
+        res_fov = comp_segmentation(self)
+        for k, v in res_fov.items():
+            store[k] = v
+
+        store.close()
+        self.save_config(add_reference=add_reference)
+        print(f'Velocity definition dataset stored.')
+
+    def load_vel_definition(self):
+        try:
+            store = pd.HDFStore(self.dir_dict.vel_definition)
+            dic = {k: store[k] for k in store.keys()}
+            store.close()
+            return dic
+        except:
+            raise ValueError('Not found')
+
     def save(self, step=True, end=True, food=False, contour=True, add_reference=False):
         store = pd.HDFStore(self.dir_dict.data_h5)
         if step:
@@ -229,6 +285,18 @@ class LarvaDataset:
                         df.set_index(['Step', 'AgentID'], inplace=True)
                         df.sort_index(level=['Step', 'AgentID'], inplace=True)
                         self.larva_tables[name] = df
+
+    def get_larva(self, idx=0, id=None):
+        if not hasattr(self, 'step_data'):
+            raise ValueError('Step data not loaded.')
+        if not hasattr(self, 'endpoint_data'):
+            raise ValueError('Endpoint data not loaded.')
+        s, e = self.step_data, self.endpoint_data
+        if id is None:
+            id = self.config.agent_ids[idx]
+        ss = s.xs(id, level='AgentID')
+        ee = e.loc[id]
+        return ss, ee
 
     def save_larva_tables(self):
         store = pd.HDFStore(self.dir_dict.tables_h5)
@@ -567,55 +635,62 @@ class LarvaDataset:
             'derived_h5': os.path.join(self.data_dir, 'derived.h5'),
             'contour_h5': os.path.join(self.data_dir, 'contour.h5'),
             'aux_h5': os.path.join(self.data_dir, 'aux.h5'),
+            'vel_definition': os.path.join(self.data_dir, 'vel_definition.h5'),
         }
         self.dir_dict = dNl.AttrDict.from_nested_dicts(dir_dict)
         for k in ['parent', 'data']:
             os.makedirs(self.dir_dict[k], exist_ok=True)
 
-
     def define_linear_metrics(self):
+        sp_conf = self.config.metric_definition.spatial
+        if sp_conf.fitted is None:
+            point_idx = sp_conf.hardcoded.point_idx
+            use_component_vel = sp_conf.hardcoded.use_component_vel
+        else:
+            point_idx = sp_conf.fitted.point_idx
+            use_component_vel = sp_conf.fitted.use_component_vel
+
         try:
-            self.config.point = self.points[self.config.point_idx - 1]
+            self.config.point = self.points[point_idx - 1]
         except:
             self.config.point = 'centroid'
         self.point = self.config.point
         self.distance = nam.dst(self.point)
         self.velocity = nam.vel(self.point)
         self.acceleration = nam.acc(self.point)
-        if self.config.use_component_vel:
+        if use_component_vel:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
     def enrich(self, metric_definition, preprocessing={}, processing={}, annotation={},
                to_drop={}, recompute=False, mode='minimal', show_output=True, is_last=True, **kwargs):
         md = metric_definition
-        for k,v in md.items():
-            if v is None :
-                md[k]={}
+        for k, v in md.items():
+            if v is None:
+                md[k] = {}
         # print(md)
-        self.config.update(**md['angular'])
-        self.config.update(**md['spatial'])
+        self.config.metric_definition.angular.hardcoded.update(**md['angular'])
+        self.config.metric_definition.spatial.hardcoded.update(**md['spatial'])
         self.define_linear_metrics()
         from lib.process.basic import preprocess, process
         from lib.process.bouts import annotate
-        print()
-        print(f'--- Enriching dataset {self.id} with derived parameters ---')
+        #print()
+        #print(f'--- Enriching dataset {self.id} with derived parameters ---')
         warnings.filterwarnings('ignore')
 
-        c = {
+        cc = {
             's': self.step_data,
             'e': self.endpoint_data,
-            'config': self.config,
+            'c': self.config,
             'show_output': show_output,
             'recompute': recompute,
             'mode': mode,
             'is_last': False,
-            # 'metric_definition' : metric_definition
         }
-        preprocess(**preprocessing, **c, **kwargs)
-        process(processing=processing, **c, **kwargs, **md['dispersion'], **md['tortuosity'])
-        annotate(**annotation, **c, **kwargs, **md['stride'], **md['turn'], **md['pause'])
-        self.drop_pars(**to_drop, **c)
+        preprocess(**preprocessing, **cc, **kwargs)
+        process(processing=processing, **cc, **kwargs, **md['dispersion'], **md['tortuosity'])
+        annotate(**annotation, **cc, **kwargs, **md['stride'], **md['turn'], **md['pause'])
+        self.drop_pars(**to_drop, **cc)
         if is_last:
             self.save()
         return self
@@ -680,3 +755,99 @@ class LarvaDataset:
             id = self.id
         path = os.path.join(self.dir_dict.chunk_dicts, f'{id}.txt')
         return dNl.load_dict(path, use_pickle=True)
+
+    def get_chunks(self, chunk, shorts, min_dur=0, max_dur=np.inf):
+        min_ticks = int(min_dur / self.config.dt)
+        from lib.conf.base.par import getPar
+        pars, = getPar(shorts, to_return=['d'])
+        ss = self.step_data[pars]
+
+        dic = self.load_chunk_dicts()
+        chunks = []
+        for id in self.agent_ids:
+            sss = ss.xs(id, level='AgentID')
+            p01s = dic[id][chunk]
+            p_ticks = np.diff(p01s).flatten()
+            vp01s = p01s[p_ticks > min_ticks]
+            Nvps = vp01s.shape[0]
+            if Nvps > 0:
+                for i in range(Nvps):
+                    vp0, vp1 = vp01s[i, :]
+                    entry = {'id': id, 'chunk': sss.loc[vp0:vp1]}
+                    chunks.append(entry)
+        return chunks
+
+    def average_modelConf(self, new_id=None, base_id='fitted_navigator'):
+        e=self.endpoint_data
+        c=self.config
+        from lib.conf.base.par import ParDict, getPar
+        dic = ParDict(mode='load').dict
+        fsv, ffov, sstr_d_mu, sstr_d_std, str_sv_max,run_fov_mu, pau_fov_mu = [dic[k]['d'] for k in
+                                                        ['fsv', 'ffov', 'sstr_d_mu', 'sstr_d_std', 'str_sv_max','run_fov_mu', 'pau_fov_mu']]
+
+        crawler = null_dict('crawler',
+                            initial_freq=np.round(e[fsv].median(), 2),
+                            freq_std=0,
+                            noise=0,
+                            stride_dst_mean=np.round(e[sstr_d_mu].median(), 2),
+                            stride_dst_std=np.round(e[sstr_d_std].median(), 2),
+                            max_vel_phase=np.round(e['phi_scaled_velocity_max'].median(), 2),
+                            max_scaled_vel=np.round(e[str_sv_max].median(), 2))
+
+        fr_mu = e[ffov].median()
+        coef, intercept = 0.024, 5
+        A_in_mu = np.round(fr_mu / coef + intercept)
+        A_in_mu
+
+        turner = null_dict('turner', initial_freq=np.round(e[ffov].median(), 2),
+                           noise=0, activation_noise=0, base_activation=A_in_mu
+                           )
+
+        intermitter = null_dict('intermitter')
+        intermitter.stridechain_dist = c.bout_distros.run_count
+        intermitter.run_dist = c.bout_distros.run_dur
+        intermitter.pause_dist = c.bout_distros.pause_dur
+        intermitter.crawl_freq = np.round(e[fsv].median(), 2)
+
+        at_phiM = np.round(e['phi_attenuation_max'].median(), 1)
+
+        run_fov_mu_mu=e[run_fov_mu].mean()
+        att0=np.clip(np.round((e[run_fov_mu]/e[pau_fov_mu]).median(),2),a_min=0, a_max=1)
+        fov_curve = c.pooled_cycle_curves['fov']
+        # att0=np.round(np.clip(np.nanmean(att0s),a_min=0, a_max=1),2)
+        att1 = np.min(fov_curve) / e[pau_fov_mu].median()
+        att2 = np.max(fov_curve) / e[pau_fov_mu].median() - att1
+        att1 = np.round(np.clip(att1, a_min=0, a_max=1), 2)
+        att2 = np.round(np.clip(att2, a_min=0, a_max=1 - att1), 2)
+
+
+
+        interference = null_dict('interference', mode='phasic',suppression_mode='amplitude', max_attenuation_phase=at_phiM,
+                                 attenuation_max=att2,attenuation=att1)
+
+        interference2 = null_dict('interference', mode='square',suppression_mode='amplitude', attenuation_max=None,
+                                  max_attenuation_phase=None,
+                                  crawler_phi_range=(at_phiM - 1, at_phiM + 1),
+                                  attenuation=att0)
+        from lib.conf.stored.conf import copyConf, saveConf
+        if new_id is None :
+            new_id=f'{self.id}_model'
+        m = copyConf(base_id, 'Model')
+        m.brain.turner_params = turner
+        m.brain.crawler_params = crawler
+        m.brain.intermitter_params = intermitter
+        m.brain.interference_params = interference
+        m.body.initial_length = np.round(e['length'].median(), 3)
+        #m.physics = null_dict('physics')
+        saveConf(id=new_id, conf=m, conf_type='Model')
+        if 'modelConfs' not in c.keys():
+            c.modelConfs=dNl.AttrDict.from_nested_dicts({'average' : {}, 'variable' : {}, 'individual':{}})
+        c.modelConfs.average[new_id]=m
+        self.save_config(add_reference=True)
+
+        save_to = f'{self.plot_dir}/model_tables'
+        os.makedirs(save_to, exist_ok=True)
+        save_as = f'{save_to}/{new_id}.pdf'
+        from lib.anal.plot_aux import modelConfTable
+        modelConfTable(new_id, save_as, figsize=(14, 11))
+        return m

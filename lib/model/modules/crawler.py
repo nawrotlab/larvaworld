@@ -3,22 +3,6 @@ from scipy import signal
 
 from lib.model.modules.basic import Oscillator, Effector
 
-
-# class BaseCrawler(Effector) :
-#     def __init__(self, initial_amp, **kwargs):
-#         super().__init__(**kwargs)
-#         self.amp = initial_amp
-#         self.activity = 0
-#         self.start_effector()
-#
-#     def step(self):
-#         if self.effector:
-#             self.count_time()
-#             self.activity = self.amp
-#         else:
-#             self.activity = 0
-#         return self.activity
-
 class Crawler(Oscillator):
     def __init__(self, waveform, initial_amp=None, square_signal_duty=None, stride_dst_mean=None,
                  stride_dst_std=0.0, initial_freq=1.3, freq_std=0.0,max_scaled_vel=0.6,

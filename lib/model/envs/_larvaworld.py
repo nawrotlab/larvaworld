@@ -67,7 +67,7 @@ class LarvaWorld:
         self.focus_mode = False
         self.selected_type = ''
 
-        self.borders, self.border_xy, self.border_lines, self.border_bodies = [], [], [], []
+        self.borders, self.border_xy, self.border_lines, self.border_bodies,self.border_walls = [], [], [], [], []
 
         self.mousebuttondown_pos = None
         self.mousebuttonup_pos = None
@@ -209,6 +209,7 @@ class LarvaWorld:
         elif arena_shape == 'rectangular':
             # This is a rectangular shape
             self.unscaled_tank_shape = self.unscaled_space_edges
+        # print(self.screen_width, self.screen_height)
 
     def create_space(self):
         s = self.scaling_factor = 1000.0 if self.Box2D else 1.0
@@ -489,12 +490,11 @@ class LarvaWorld:
 
     def run(self):
 
-        mode = self.vis_kwargs['render']['mode']
-        img_mode = self.vis_kwargs['render']['image_mode']
+        mode = self.vis_kwargs.render.mode
+        img_mode = self.vis_kwargs.render.image_mode
         self.is_running = True
         warnings.filterwarnings('ignore')
         while self.is_running and self.Nticks < self.Nsteps and not self.end_condition_met:
-            # print(self.Nticks)
             if not self.is_paused:
                 self.step()
                 if self.progress_bar:
@@ -606,6 +606,7 @@ class LarvaWorld:
         self.border_xy += b.border_xy
         self.border_lines += b.border_lines
         self.border_bodies += b.border_bodies
+        self.border_walls += b.border_walls
 
     def draw_screen_texts(self, screen):
         for text in list(self.screen_texts.values()) + [self.input_box]:

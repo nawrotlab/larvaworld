@@ -23,7 +23,7 @@ batch_conf = loadConf(batch_type, 'Batch')
 
 batch_id = d['batch_setup']['batch_id']
 if batch_id is None:
-    idx = next_idx(batch_type, type='batch')
+    idx = next_idx(batch_type, type='Batch')
     batch_id = f'{batch_type}_{idx}'
 
 batch_conf.exp = prs.update_exp_conf(batch_conf.exp, d, N, models)

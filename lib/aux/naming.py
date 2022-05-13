@@ -172,6 +172,11 @@ def std(chunk):
     return name(s, chunk, 'suf')
 
 
+def var(chunk):
+    s = 'var'
+    return name(s, chunk, 'suf')
+
+
 def non(chunk):
     s = 'non'
     return name(s, chunk, 'pref')

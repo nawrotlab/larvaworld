@@ -23,9 +23,8 @@ def base_dtype(t):
     return base_t
 
 
-def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', s='',
-        u='', label='',
-        combo=None, argparser=False, entry=None, **kwargs):
+def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', s='',symbol='',
+        u='', label='',combo=None, argparser=False, entry=None, codename=None):
     if not argparser:
         if t == TypedDict:
             return {name: {'initial_value': v, 'dtype': t, 'entry': entry, 'disp': disp, 'tooltip': h}}
@@ -54,8 +53,8 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
             Ndigits = maxNdigits(np.array(vs), 4)
         if aux_vs is not None and vs is not None:
             vs += aux_vs
-        d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t, 'symbol': s, 'unit': u, 'label': label,
-             'disp': disp if disp is not None else name, 'combo': combo, 'tooltip': h}
+        d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t, 'symbol': symbol, 'unit': u, 'label': label,
+             'disp': disp if disp is not None else name, 'combo': combo, 'tooltip': h, 'codename':codename}
 
         return {name: d}
     else:
@@ -92,6 +91,8 @@ def ga_dict(name=None, suf='', excluded=None):
         }
         if vs['dtype'] == str:
             kws['choices'] = vs['values']
+        elif vs['dtype'] == bool:
+            kws['choices'] = [True, False]
         else:
             kws['min'], kws['max'] = np.min(vs['values']), np.max(vs['values'])
         d[k0] = kws
@@ -108,6 +109,7 @@ def par_dict(name=None, d0=None, **kwargs):
         try:
             entry = par(n, **v, **kwargs)
         except:
+            # print(n,v)
             entry = {n: {'dtype': dict, 'content': par_dict(n, d0=d0[n], **kwargs)}}
         d.update(entry)
     return d
@@ -249,14 +251,9 @@ def null_dict(n, key='initial_value', **kwargs):
     dic = par_dict(n)
     dic2 = v0(dic)
     if n not in ['visualization', 'enrichment']:
-
         dic2.update(kwargs)
         return AttrDict.from_nested_dicts(dic2)
-        # return dic2
     else:
-        if n=='visualization' :
-            dic2 = {k:null_dict(k, key=key) for k,v in dic.items()}
-        # dic2 = {k:null_dict(k, key=key) for k,v in dic.items()}
         for k, v in dic2.items():
             if k in list(kwargs.keys()):
                 dic2[k] = kwargs[k]
@@ -265,7 +262,6 @@ def null_dict(n, key='initial_value', **kwargs):
                     if k0 in list(kwargs.keys()):
                         dic2[k][k0] = kwargs[k0]
         return AttrDict.from_nested_dicts(dic2)
-        # return dic2
 
 
 def ang_def(b='from_angles', fv=(1, 2), rv=(-2, -1), **kwargs):

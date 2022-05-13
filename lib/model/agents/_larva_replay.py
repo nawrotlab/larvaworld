@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import numpy as np
 
-import lib.aux.ang_aux
+from lib.aux.ang_aux import rotate_around_point
 import lib.aux.dictsNlists as dNl
 from lib.model.agents._larva import Larva
 from lib.model.body.body import draw_body_midline, draw_body_head, draw_body_centroid, draw_selected_body
@@ -81,34 +81,25 @@ class LarvaReplay(Larva, BodyReplay):
                 for i, seg in enumerate(segs):
                     pos = [np.nanmean([mid[i][j], mid[i + 1][j]]) for j in [0, 1]]
                     o = self.orients[i]
-                    seg.set_position(pos)
-                    seg.set_orientation(o)
-                    seg.update_vertices(pos, o)
+                    seg.update_poseNvertices(pos, o)
             elif len(segs) == 2:
                 l1, l2 = self.sim_length * self.seg_ratio
                 x, y = self.pos
                 h_or = self.front_orientation
                 b_or = self.front_orientation - self.bend
-                p_head = np.array(lib.aux.ang_aux.rotate_around_point(origin=[x, y], point=[l1 + x, y], radians=-h_or))
-                p_tail = np.array(
-                    lib.aux.ang_aux.rotate_around_point(origin=[x, y], point=[l2 + x, y], radians=np.pi - b_or))
+                p_head = np.array(rotate_around_point(origin=[x, y], point=[l1 + x, y], radians=-h_or))
+                p_tail = np.array(rotate_around_point(origin=[x, y], point=[l2 + x, y], radians=np.pi - b_or))
                 pos1 = [np.nanmean([p_head[j], [x, y][j]]) for j in [0, 1]]
                 pos2 = [np.nanmean([p_tail[j], [x, y][j]]) for j in [0, 1]]
-                segs[0].set_position(pos1)
-                segs[0].set_orientation(h_or)
-                segs[0].update_vertices(pos1, h_or)
-                segs[1].set_position(pos2)
-                segs[1].set_orientation(b_or)
-                segs[1].update_vertices(pos2, b_or)
+                segs[0].update_poseNvertices(pos1, h_or)
+                segs[1].update_poseNvertices(pos2, b_or)
                 self.midline = np.array([p_head, self.pos, p_tail])
 
-    def draw(self, viewer):
+    def draw(self, viewer, filled=True):
         r, c, m, v = self.radius, self.color, self.model, self.vertices
 
         pos = self.cen_pos if not np.isnan(self.cen_pos).any() else self.pos
         mid = self.midline
-        #print(mid)
-
         if m.draw_contour:
             if self.Nsegs is not None:
                 for seg in self.segs:
@@ -127,10 +118,6 @@ class LarvaReplay(Larva, BodyReplay):
 
         if self.selected:
             draw_selected_body(viewer, pos, v, r, m.selection_color)
-            # if len(v) > 0 and not np.isnan(v).any():
-            #     viewer.draw_polygon(v, filled=False, color=m.selection_color, width=r / 5)
-            # elif not np.isnan(pos).any():
-            #     viewer.draw_circle(pos, radius=r, filled=False, color=m.selection_color, width=r / 3)
 
     def set_color(self, color):
         self.color = color

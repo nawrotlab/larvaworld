@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 
-import lib.aux.dictsNlists
+import lib.aux.dictsNlists as dNl
 from lib.anal.fitting import BoutGenerator, critical_bout, exp_bout, get_exp_beta
 from lib.aux import naming as nam
 from lib.conf.stored.conf import loadConf
@@ -33,10 +33,6 @@ class BaseIntermitter(Effector):
         self.EEB_exp_coef = np.exp(-self.EEB_decay * self.dt)
 
         self.reset()
-
-
-
-
 
     def reset(self):
         self.t = 0
@@ -232,7 +228,7 @@ class BaseIntermitter(Effector):
         file = f'{path}/{self.locomotor.agent.unique_id}.txt'
         if not os.path.exists(path):
             os.makedirs(path)
-        lib.aux.dictsNlists.save_dict(dic, file)
+        dNl.save_dict(dic, file)
 
     def update(self, max_refeed_rate=0.9, refeed_rate_coef=0, food_present=None, feed_success=None):
         if food_present is None:
@@ -288,6 +284,7 @@ class Intermitter(BaseIntermitter):
             else :
                 raise ValueError ('None of stidechain or run distribution exist')
         self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
+        # print(stridechain_dist)
         self.disinhibit_locomotion()
 
     def generate_stridechain(self):

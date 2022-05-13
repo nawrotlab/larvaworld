@@ -39,7 +39,7 @@ class EssayTab(GuiTab):
     def update(self, w, c, conf, id):
         self.datalists[self.essay_exps_key].dict = conf['experiments']
         self.datalists[self.essay_exps_key].update_window(w)
-        essay = null_dict('essay_params', essay_ID=f'{id}_{next_idx(id)}', path=f'essays/{id}')
+        essay = null_dict('essay_params', essay_ID=f'{id}_{next_idx(id, "Essay")}', path=f'essays/{id}')
         c['essay_params'].update(w, essay)
         fdir = conf['exp_fig_folder']
         temp = {f.split('.')[0]: f'{fdir}/{f}' for f in os.listdir(fdir)}

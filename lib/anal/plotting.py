@@ -28,10 +28,12 @@ from lib.anal.plot_aux import plot_mean_and_range, circular_hist, confidence_ell
     concat_datasets, ParPlot, BasePlot
 from lib.aux import naming as nam
 from lib.aux.colsNstr import N_colors, col_range
+
 from lib.process.aux import moving_average, detect_strides, detect_pauses, compute_velocity, fft_max
 
 from lib.conf.base.par import getPar
 from lib.model.DEB.deb import DEB
+
 
 '''
 Generic plot function. Uses the next two functions internally'''
@@ -755,8 +757,8 @@ def boxplot_PI(sort_labels=False, xlabel='Trials', **kwargs):
     return P.get()
 
 
-def PIboxplot(df, exp, path, ylabel, ylim=None, show=False, suf=''):
-    f = f'{path}/boxplots/{exp}{suf}.pdf'
+def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
+    f = f'{save_to}/{exp}{suf}.pdf'
     boxplot = df.boxplot(figsize=(10, 7), grid=False,
                          color=dict(boxes='k', whiskers='k', medians='b', caps='k'),
                          boxprops=dict(linestyle='-', linewidth=3),
@@ -928,7 +930,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
     return P.get()
 
 
-def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspectrums', legend_loc='upper left',
+def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspectrums', legend_loc='upper left',Nids=None,
                   **kwargs):
     if len(pars) == 0:
         if len(par_shorts) == 0:
@@ -962,6 +964,8 @@ def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspe
             Nticks = len(dc.index.get_level_values('Step').unique())
             xf = fftfreq(Nticks, 1 / d.fr)[:Nticks // 2]
             ids = dc.index.get_level_values('AgentID').unique()
+            if Nids is not None :
+                ids=ids[:Nids]
             yf0 = np.zeros(Nticks // 2)
             for id in ids:
                 dc_single = dc.xs(id, level='AgentID').values
@@ -992,6 +996,9 @@ def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspe
         dataset_legend(P.labels, P.colors, ax=ax, loc=legend_loc, fontsize=15)
     P.adjust((0.2, 0.95), (0.15, 0.95))
     return P.get()
+
+
+
 
 
 def plot_navigation_index(subfolder='source', **kwargs):
@@ -2144,11 +2151,6 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
     best_combos_ind = [np.sort([avels.index(x) + 1 for x in set(avels).intersection(c)]) for c in best_combos]
     best_combo = combos[heapq.nlargest(1, range(len(corrs)), key=corrs.__getitem__)[0]]
 
-    # best_combos_ind[0]=[1,2,3,4,5]
-    # best_combos_ind[1]=[1,2,3,4]
-    # best_combos_ind[2]=[1,2,3,4,7]
-    # best_combos_ind[3]=[1,3]
-    # best_combos_ind[4]=[1,2,3]
     for i, (cor, combo) in enumerate(zip(max_corrs, best_combos_ind)):
         print(f'Combo number {i} has correlation {cor}')
         print(f'Includes {combo}')
@@ -2178,8 +2180,6 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
     axs[0].set_xlabel(r'angular velocity, $\dot{\theta}_{i}$')
     axs[0].set_ylabel('regression score')
 
-    # plt.subplot2grid((2, 2), (0, 1), colspan=1, rowspan=1)
-
     scores2 = []
     coefs2 = []
     for i in k:
@@ -2187,7 +2187,6 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
         reg = LinearRegression().fit(X, y)
         scores2.append(reg.score(X, y))
         coefs2.append(reg.coef_)
-    # fig.suptitle('Reorientation prediction by each spineangle')
     axs[0].scatter(np.arange(1, N + 1), scores2, c='green', alpha=1.0, marker="o", label='cumulative', s=200)
     axs[0].plot(np.arange(1, N + 1), scores2, c='green')
     shape1 = patches.Circle((0, 0), 1, facecolor='blue')
@@ -2195,16 +2194,8 @@ def plot_bend2orientation_analysis(dataset, save_to=None, save_as=f'bend2orienta
     axs[0].legend(loc='lower left')
     # axs[0].legend((shape1, shape2), ('single', 'cumulative'), loc='lower left')
     axs[0].yaxis.set_major_locator(ticker.MaxNLocator(4))
-    # r = np.arange(1, N + 1)
-    # plt.xticks(ticks=r, labels=['1'] + [f'1-{i}' for i in r[1:]])
-    # plt.xlabel(r'cumulative angular velocity, $\dot{\theta}_{1-i}$')
-    # plt.ylabel('regression score')
-
-    # plt.subplot2grid((2, 2), (1, 0), colspan=2, rowspan=1)
-
     ylim = [0.6, 1]
     bar(x=[','.join(map(str, c)) for c in best_combos_ind], height=max_corrs, width=0.8, color='black')
-    # ax.set_xticks(best_combos_ind)
     axs[1].set_xlabel('combined angular velocities')
     axs[1].set_ylabel('Pearson correlation')
     axs[1].tick_params(axis='x', which='major', labelsize=15)
@@ -2290,14 +2281,17 @@ def plot_sliding_window_analysis(dataset, parameter, flag, radius_in_sec, save_t
     return optimal_flag_phase_in_rad, mean_at_min_std
 
 
-def plot_spatiotemporal_variation(dataset, spatial_cvs, temporal_cvs, sizes=None,
+def plot_spatiotemporal_variation(spatial_cvs, temporal_cvs, sizes=None, dataset=None,
                                   save_to=None, save_as=f'velocity_flag.{suf}'):
-    d = dataset
+
     Nvels = len(spatial_cvs)
     N_svels = int(Nvels / 2)
     N_lvels = int(Nvels / 2) - 1
     if save_to is None:
-        save_to = d.plot_dir
+        if dataset is not None :
+            save_to = dataset.plot_dir
+        else :
+            raise ValueError ('Provide "save_to" directory')
     if not os.path.exists(save_to):
         os.makedirs(save_to)
     filepath = os.path.join(save_to, save_as)
@@ -2328,44 +2322,63 @@ def plot_spatiotemporal_variation(dataset, spatial_cvs, temporal_cvs, sizes=None
     print(f'Image saved as {filepath}')
 
 
-# def plot_2D_countour(x, y, z, dimensions, Cmax, filepath):
-#     xmin, xmax = dimensions[0]
-#     ymin, ymax = dimensions[1]
-#     # define grid.
-#     xi = np.linspace(xmin, xmax, 1000)
-#     yi = np.linspace(ymin, ymax, 1000)
-#     ## grid the data.
-#     zi = interpolate.griddata((x, y), z, (xi[None, :], yi[:, None]), method='cubic')
-#     levels = np.linspace(0.0, Cmax, 10000)
-#     fig = plt.figure(figsize=(xmax - xmin, ymax - ymin))
-#     # CS = plt.contour(xi, yi, zi, len(levels), linewidths=0.0, colors='k', levels=levels)
-#     CS = plt.contourf(xi, yi, zi, len(levels), cmap=cm.Purples, levels=levels, alpha=0.9)
-#     cbaxes = fig.add_axes([0.68, 0.93, 2.0, 0.2])
-#     cbar = fig.colorbar(CS, cax=cbaxes, orientation="horizontal", ticks=[0, Cmax])
-#     cbar.ax.set_xticklabels([0, f'${int(Cmax)} \mu$M'])
-#
-#     plt.xlim(xmin, xmax)
-#     plt.ylim(ymin, ymax)
-#     plt.locator_params(nbins=4)
-#     fig.savefig(filepath, dpi=300)
-#     print(f'Image saved as {filepath}')
+
+def plot_segmentation_definition(subfolder='metric_definition', axs=None, fig=None, **kwargs):
+    P = Plot(name=f'segmentation_definition', subfolder=subfolder, **kwargs)
+    P.build(1, P.Ndatasets*2, figsize=(5 * P.Ndatasets, 5), sharex=False, sharey=False, fig=fig, axs=axs)
+    Nbest=5
+    for ii, d in enumerate(P.datasets):
+        ax1, ax2=P.axs[ii * 2],P.axs[ii * 2+1]
+        N = d.Nangles
+        dic = d.load_vel_definition()
+        df_reg=dic['/bend2or_regression']
+        df_corr=dic['/bend2or_correlation']
+
+        df_reg.sort_index(inplace=True)
+        single_scores=df_reg['single_score'].values
+        cum_scores=df_reg['cum_score'].values
+        x= np.arange(1, N + 1)
+        ax1.scatter(x, single_scores, c='blue', alpha=1.0, marker=",", label='single', s=200)
+        ax1.plot(x, single_scores, c='blue')
+
+        ax1.scatter(x, cum_scores, c='green', alpha=1.0, marker="o", label='cumulative', s=200)
+        ax1.plot(x, cum_scores, c='green')
 
 
-# def gauss(x, y, Sigma, mu):
-#     from lib.aux.par_aux import dot
-#     X = np.vstack((x, y)).T
-#     mat_multi = np.dot(dot(np.linalg.inv(Sigma)), (X - mu[None, ...]).T)
-#     return np.diag(np.exp(-1 * (mat_multi)))
+        P.conf_ax(ii*2, xlab=r'angular velocity, $\dot{\theta}_{i}$',ylab='regression score',
+        xticks=x,yMaxN=4, leg_loc='lower left')
 
+        df_corr.sort_values('corr', ascending=False, inplace=True)
+        max_corrs=df_corr['corr'].values[:Nbest]
+        best_combos=df_corr.index.values[:Nbest]
+        xx = [','.join(map(str, cc)) for cc in best_combos]
+        ax2.bar(x=xx, height=max_corrs, width=0.5, color='black')
+        P.conf_ax(ii * 2 +1, xlab='combined angular velocities', ylab='Pearson correlation',yMaxN=4, ylim=(0.5,1))
+        ax2.tick_params(axis='x', which='major', labelsize=20)
+        P.adjust(LR=(0.1,0.95), BT=(0.15,0.95), W=0.3)
+        return P.get()
 
-# def plot_2D_odorscape(dimensions, Cmax, Cstd, filepath, pos=None):
-#     if pos is None:
-#         pos = [0., 0.]
-#     npts = 10000
-#     x = np.random.uniform(dimensions[0][0], dimensions[0][1], npts)
-#     y = np.random.uniform(dimensions[1][0], dimensions[1][1], npts)
-#     z = gauss(x, y, Sigma=np.asarray([[Cstd, 0.0], [0.0, Cstd]]), mu=np.asarray(pos)) * Cmax
-#     plot_2D_countour(x, y, z, dimensions=dimensions, Cmax=Cmax, filepath=filepath)
+def plot_stride_variability(component_vels=True,subfolder='metric_definition', axs=None, fig=None, **kwargs):
+    P = Plot(name=f'stride_spatiotemporal_variation', subfolder=subfolder, **kwargs)
+    P.build(1, P.Ndatasets, figsize=(5 * P.Ndatasets, 5), sharex=True, sharey=True, fig=fig, axs=axs)
+    for ii, d in enumerate(P.datasets):
+        ax=P.axs[ii]
+        try:
+            dic = d.load_vel_definition()
+        except:
+            d.save_vel_definition(component_vels=component_vels)
+            dic = d.load_vel_definition()
+        stvar=dic['/stride_variability']
+        stvar.sort_values(by='idx', inplace=True)
+        ps = stvar.index if component_vels else [p for p in stvar.index if 'lin' not in p]
+        for p in ps:
+            row = stvar.loc[p]
+            ax.scatter(x=row['scaled_stride_dst_var'], y=row['stride_dur_var'], marker=row['marker'],s=200,
+                        color=row['color'], label=row['symbol'])
+        ax.legend(ncol=2, handleheight=1.7, labelspacing=0.01,loc='lower right')
+        ax.set_ylabel(r'$\overline{cv}_{temporal}$')
+        ax.set_xlabel(r'$\overline{cv}_{spatial}$')
+    return P.get()
 
 
 def plot_bend_change_over_displacement(dataset, return_fig=False):
@@ -2942,7 +2955,7 @@ def plot_foraging(**kwargs):
     P.get()
 
 
-def annotated_strideplot(a, dt, ax=None, ylim=None, xlim=None, show_extrema=True, show_strides=True,
+def annotated_strideplot(a, dt, a2plot=None,ax=None, ylim=None, xlim=None, show_extrema=True, show_strides=True,
                          moving_average_interval=None, **kwargs):
     """
     Plots annotated strides-runs and pauses in timeseries.
@@ -2985,17 +2998,21 @@ def annotated_strideplot(a, dt, ax=None, ylim=None, xlim=None, show_extrema=True
 
     i_min, i_max, strides, runs, run_counts = detect_strides(a=a, dt=dt, **kwargs)
     pauses = detect_pauses(a, dt, runs=runs)
-    ax.set_xlim(xlim)
-    ax.set_ylim(ylim)
-    ax.set_xlabel("time (sec)")
-    ax.set_ylabel("velocity (1/sec)")
+
 
     if moving_average_interval:
         a = moving_average(a, n=int(moving_average_interval / dt))
-    ax.plot(trange, a)
-    if show_extrema:
-        ax.plot(trange[i_max], a[i_max], linestyle='None', lw=10, color='green', marker='v')
-        ax.plot(trange[i_min], a[i_min], linestyle='None', lw=10, color='red', marker='^')
+    if a2plot is not None :
+        ax.plot(trange, a2plot)
+    else:
+        ax.plot(trange, a)
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        ax.set_xlabel("time (sec)")
+        ax.set_ylabel("velocity (1/sec)")
+        if show_extrema:
+            ax.plot(trange[i_max], a[i_max], linestyle='None', lw=10, color='green', marker='v')
+            ax.plot(trange[i_min], a[i_min], linestyle='None', lw=10, color='red', marker='^')
     if show_strides:
         for s0, s1 in strides:
             # ax.axvspan(trange[s0], trange[s1], color=chunk_cols[0], alpha=1.0)
@@ -3003,12 +3020,8 @@ def annotated_strideplot(a, dt, ax=None, ylim=None, xlim=None, show_extrema=True
             ax.axvline(trange[s1], color=f'{0.4 * (0 + 1)}', alpha=0.3, linestyle='dashed', linewidth=1)
     for s0, s1 in runs:
         ax.axvspan(trange[s0], trange[s1], color=chunk_cols[0], alpha=1.0)
-        # ax.axvline(trange[s0], color=f'{0.4 * (0 + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
-        # ax.axvline(trange[s1], color=f'{0.4 * (0 + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
     for p0, p1 in pauses:
         ax.axvspan(trange[p0], trange[p1], color=chunk_cols[1], alpha=1.0)
-        # ax.axvline(trange[p0], color=f'{0.4 * (1 + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
-        # ax.axvline(trange[p1], color=f'{0.4 * (1 + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
     labels = ['runs', 'pauses']
     handles = [patches.Patch(color=col, label=n) for n, col in zip(labels, chunk_cols)]
     ax.legend(loc="upper right", handles=handles, labels=labels)
@@ -3170,12 +3183,6 @@ def stride_cycle(ang_short='fov',absolute=True, Nbins=64, scaled=False, pooled=T
         stride_cycle_solo(s, c.dt, e, ang_short=ang_short,absolute=absolute,Nbins=Nbins,color=color, scaled=scaled, pooled=pooled,  fig=P.fig, axs=P.axs[0])
     dataset_legend(labels, colors,ax=P.axs[0], loc='upper left')
 
-    # from lib.conf.base.par import ParDict
-    # dic = ParDict(mode='load').dict
-    # ang, ang_label = dic[ang_short]['d'], dic[ang_short]['l']
-    # P.conf_ax(xticks=np.linspace(0, 2 * np.pi, 5), xlim=[0, 2 * np.pi],
-    #           xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
-    #           xlab='$\phi_{stride}$', ylab=ang_label)
     return P.get()
 
 def plot_fft(s, c, save_to=None, axx=None, ax=None, fig=None):
