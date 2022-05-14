@@ -52,7 +52,9 @@ def comp_bend(s, e, c, mode='minimal'):
         return
     elif b_conf == 'from_vectors':
         print(f'Computing bending angle as the difference between front and rear orients')
-        s['bend'] = s.apply(lambda r: angle_dif(r[nam.orient('front')], r[nam.orient('rear')]), axis=1)
+        # s['bend'] = s.apply(lambda r: angle_dif(r[nam.orient('front')], r[nam.orient('rear')]), axis=1)
+        # FIXME Probably this is the right one
+        s['bend'] = s.apply(lambda r: angle_dif(r[nam.orient('front')], 180-r[nam.orient('rear')]), axis=1)
     elif b_conf == 'from_angles':
         bend_angles = comp_angles(s, e, c, mode=mode)
         print(f'Computing bending angle as the sum of the first {len(bend_angles)} front angles')
