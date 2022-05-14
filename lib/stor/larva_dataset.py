@@ -759,7 +759,7 @@ class LarvaDataset:
     def get_chunks(self, chunk, shorts, min_dur=0, max_dur=np.inf):
         min_ticks = int(min_dur / self.config.dt)
         from lib.conf.base.par import getPar
-        pars, = getPar(shorts, to_return=['d'])
+        pars = getPar(shorts)
         ss = self.step_data[pars]
 
         dic = self.load_chunk_dicts()
@@ -855,7 +855,7 @@ class LarvaDataset:
     def get_chunk_par_distro(self, chunk, short=None,par=None, ):
         if par is None :
             from lib.conf.base.par import getPar
-            par = getPar(short, to_return=['d'])[0]
+            par = getPar(short)
         chunk_idx=f'{chunk}_idx'
         dic = self.load_chunk_dicts()
         vs = []

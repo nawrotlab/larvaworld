@@ -254,7 +254,7 @@ def plot_turn_amp(par_short='tur_t', ref_angle=None, subfolder='turn', mode='his
 
     if ref_angle is not None:
         A0 = float(ref_angle)
-        p_ref, = getPar(['tur_fo0', 'tur_fo1'], to_return=['d'])
+        p_ref = getPar(['tur_fo0', 'tur_fo1'])
         ys = []
         ylab = r'$\Delta\theta_{bearing} (deg)$'
         cumylab = r'$\bar{\Delta\theta}_{bearing} (deg)$'
@@ -1302,7 +1302,7 @@ def plot_endpoint_params(axs=None, fig=None,mode='basic', par_shorts=None, subfo
         except:
             e = d.read('end')
         ends.append(e)
-    pars, = getPar(par_shorts, to_return=['d'])
+    pars = getPar(par_shorts)
 
     pars = [p for p in pars if all([p in e.columns for e in ends])]
     xlabels, xlims, disps = getPar(par_shorts, to_return=['l', 'lim', 'd'])
@@ -2934,7 +2934,7 @@ def plot_foraging(**kwargs):
             df['Group'] = d.id
             dfs.append(df)
         df0 = pd.concat(dfs)
-        par = getPar(action, to_return=['lab'])[0]
+        par = getPar(action, to_return='lab')
         mdf = pd.melt(df0, id_vars=['Group'], var_name='foodtype', value_name=par)
         with sns.plotting_context('notebook', font_scale=1.4):
             kws = {
@@ -3103,7 +3103,7 @@ def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, angular=True, maxNpoints=5
                             axs=None, fig=None, axx=None):
     from lib.conf.base.par import getPar
     import lib.aux.naming as nam
-    l, sv, pau_fov_mu, fv, fov = getPar(['l', 'sv', 'pau_fov_mu', 'fv', 'fov'], to_return=['d'])[0]
+    l, sv, pau_fov_mu, fv, fov = getPar(['l', 'sv', 'pau_fov_mu', 'fv', 'fov'])
     att = 'attenuation'
     att_max, att_min, phi_att_max, phi_sv_max = nam.max(att), nam.min(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')
 
@@ -3266,7 +3266,7 @@ def plot_fft(s, c, save_to=None, axx=None, ax=None, fig=None):
     xf = fftfreq(c.Nticks, c.dt)[:c.Nticks // 2]
 
     from lib.conf.base.par import getPar
-    l, v, fov = getPar(['l', 'v', 'fov'], to_return=['d'])[0]
+    l, v, fov = getPar(['l', 'v', 'fov'])
     fvs = np.zeros(c.N) * np.nan
     ffovs = np.zeros(c.N) * np.nan
     v_ys = np.zeros([c.N, c.Nticks // 2])

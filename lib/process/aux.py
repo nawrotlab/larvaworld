@@ -587,7 +587,7 @@ def stride_max_vel_phis(s, e, c, Nbins=64):
     import lib.aux.naming as nam
     from lib.conf.base.par import getPar
     points = nam.midline(c.Npoints, type='point')
-    l, sv, pau_fov_mu = getPar(['l', 'sv', 'pau_fov_mu'], to_return=['d'])[0]
+    l, sv, pau_fov_mu = getPar(['l', 'sv', 'pau_fov_mu'])
     x = np.linspace(0, 2 * np.pi, Nbins)
     phis = np.zeros([c.Npoints, c.N]) * np.nan
     for j, id in enumerate(c.agent_ids):
@@ -651,7 +651,7 @@ def annotation(s, e, cc, vel_thr=None, strides_enabled=True,store=False, **kwarg
 
 def fft_freqs(s, e, c):
     from lib.conf.base.par import getPar
-    v, fov, fv, fsv, ffov = getPar(['v', 'fov', 'fv', 'fsv', 'ffov'], to_return=['d'])[0]
+    v, fov, fv, fsv, ffov = getPar(['v', 'fov', 'fv', 'fsv', 'ffov'])
 
     try:
         e[fv] = s[v].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(1.0, 2.5))
@@ -691,8 +691,7 @@ def compute_interference(s, e, c, Nbins=64,strict=False, **kwargs):
     import lib.aux.naming as nam
     from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
     l, v, sv, dst, acc, fov, foa, b, bv, ba, fv, fsv, ffov, pau_fov_mu = \
-        getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv', 'fsv', 'ffov', 'pau_fov_mu'],
-               to_return=['d'])[0]
+        getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv', 'fsv', 'ffov', 'pau_fov_mu'])
     x = np.linspace(0, 2 * np.pi, Nbins)
     sv_curves = np.zeros([c.N, Nbins]) * np.nan
     fov_curves = np.zeros([c.N, Nbins]) * np.nan
@@ -707,7 +706,7 @@ def compute_interference(s, e, c, Nbins=64,strict=False, **kwargs):
         foa_curves[jj, :] = foa_curve
 
     att0s, att1s = np.min(fov_curves, axis=1), np.max(fov_curves, axis=1)
-    str_sv_max = getPar('str_sv_max', to_return=['d'])[0]
+    str_sv_max = getPar('str_sv_max')
 
     e[nam.min('attenuation')] = att0s / e[pau_fov_mu]
     e[nam.max('attenuation')] = (att1s - att0s) / e[pau_fov_mu]
@@ -739,9 +738,9 @@ def turn_mode_annotation(e, chunk_dicts):
 
 def turn_annotation(s, e, c):
     from lib.conf.base.par import getPar
-    fov, foa = getPar(['fov', 'foa'], to_return=['d'])[0]
+    fov, foa = getPar(['fov', 'foa'])
 
-    turn_ps, = getPar(['tur_fou', 'tur_t', 'tur_fov_max'], to_return=['d'])
+    turn_ps = getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
     turn_vs = np.zeros([c.Nticks, c.N, len(turn_ps)]) * np.nan
     turn_dict = {}
     # GTdurs, GTamps, GTmaxs = [], [], []
@@ -790,21 +789,18 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
         vel_thr = c.vel_thr
     from lib.conf.base.par import getPar
     l, v, sv, dst, acc, fov, foa, b, bv, ba, fv = \
-        getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv'],
-               to_return=['d'])[0]
+        getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv'])
 
-    str_ps, = getPar(['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'], to_return=['d'])
-    lin_ps, = getPar(
-        ['run_v_mu', 'pau_v_mu', 'run_a_mu', 'pau_a_mu', 'run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std',
+    str_ps = getPar(['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'])
+    lin_ps = getPar(['run_v_mu', 'pau_v_mu', 'run_a_mu', 'pau_a_mu', 'run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std',
          'run_foa_mu', 'pau_foa_mu', 'pau_b_mu', 'pau_b_std', 'pau_bv_mu', 'pau_bv_std', 'pau_ba_mu', 'pau_ba_std',
-         'cum_run_t', 'cum_pau_t', 'run_t_min', 'run_t_max', 'pau_t_min', 'pau_t_max'],
-        to_return=['d'])
+         'cum_run_t', 'cum_pau_t', 'run_t_min', 'run_t_max', 'pau_t_min', 'pau_t_max'])
 
     dt = c.dt
     lin_vs = np.zeros([c.N, len(lin_ps)]) * np.nan
     str_vs = np.zeros([c.N, len(str_ps)]) * np.nan
 
-    run_ps, = getPar(['pau_t', 'run_t', 'run_d'], to_return=['d'])
+    run_ps = getPar(['pau_t', 'run_t', 'run_d'])
     run_vs = np.zeros([c.Nticks, c.N, len(run_ps)]) * np.nan
 
     crawl_dict = {}
@@ -885,8 +881,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
 
     str_d_mu, str_d_std, sstr_d_mu, sstr_d_std, run_tr, pau_tr, cum_run_t, cum_pau_t, cum_t = \
         getPar(
-            ['str_d_mu', 'str_d_std', 'sstr_d_mu', 'sstr_d_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t', 'cum_t'],
-            to_return=['d'])[0]
+            ['str_d_mu', 'str_d_std', 'sstr_d_mu', 'sstr_d_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t', 'cum_t'])
 
     e[run_tr] = e[cum_run_t] / e[cum_t]
     e[pau_tr] = e[cum_pau_t] / e[cum_t]
@@ -1020,16 +1015,16 @@ class FuncParHelper:
     def how_to_compute(self, s, par=None, short=None, **kwargs):
         from lib.conf.base.par import getPar
         if par is None :
-            par = getPar(short, to_return=['d'])[0]
+            par = getPar(short)
         elif short is None :
-            short=getPar(d=par, to_return=['k'])[0]
+            short=getPar(d=par, to_return='k')
         if par in s.columns :
             return True
         else :
             options=self.get_options(short)
             available= []
             for i,(func, shorts) in enumerate(options.items()) :
-                pars = getPar(shorts, to_return=['d'])[0]
+                pars = getPar(shorts)
                 if all([p in s.columns for p in pars]):
 
                     available.append(func)

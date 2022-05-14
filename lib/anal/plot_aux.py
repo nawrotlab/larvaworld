@@ -11,7 +11,6 @@ from scipy.stats import mannwhitneyu, ttest_ind
 
 from lib.anal.fitting import pvalue_star, fit_bout_distros
 
-from lib.conf.base.par import getPar
 from lib.conf.stored.conf import loadRef, kConfDict, loadConf
 from lib.aux.colsNstr import N_colors
 from lib.aux.dictsNlists import unique_list

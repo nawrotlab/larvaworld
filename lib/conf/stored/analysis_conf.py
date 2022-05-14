@@ -13,7 +13,7 @@ def entry(plotID, title=None, **kwargs):
 
 def time(short, title=None, u='sec', f1=False, abs=False, **kwargs):
     if title is None:
-        title = getPar(short, to_return=['d'])[0]
+        title = getPar(short)
         # name =f'{short} timeplot'
     args = {
         'par_shorts': [short],
@@ -28,7 +28,6 @@ def time(short, title=None, u='sec', f1=False, abs=False, **kwargs):
 def end(shorts=None, title=None, **kwargs):
     if title is None:
         title = f'endpoint plot'
-        # title =getPar(short, to_return=['d'])[0]
     args = {
         'par_shorts': shorts,
         # 'show_first': f1,
@@ -47,7 +46,7 @@ def end(shorts=None, title=None, **kwargs):
 
 def bar(short, title=None, **kwargs):
     if title is None:
-        title = getPar(short, to_return=['d'])[0]
+        title = getPar(short)
         # name =f'{short} timeplot'
     args = {
         'par_shorts': [short],
@@ -58,7 +57,7 @@ def bar(short, title=None, **kwargs):
 
 def scat(shorts, title=None, **kwargs):
     if title is None:
-        d1, d2 = getPar(shorts, to_return=['d'])[0]
+        d1, d2 = getPar(shorts)
         title = f'{d1} VS {d2}'
     args = {
         'shorts': shorts,

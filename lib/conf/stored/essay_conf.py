@@ -118,7 +118,7 @@ class RvsS_Essay(Essay):
             self.figs[f'2_{exp}'] = barplot(par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
             if self.all_figs:
                 for s in shorts:
-                    p = getPar(s, to_return=['d'])[0]
+                    p = getPar(s)
                     self.figs[f'{exp} {p}'] = barplot(par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
 
         elif exp == 'starvation':
@@ -132,7 +132,7 @@ class RvsS_Essay(Essay):
                     self.figs[ii] = plot_debs(mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf', include_egg=False,
                                               label_epochs=False, **kwargs)
                 for s in shorts:
-                    p = getPar(s, to_return=['d'])[0]
+                    p = getPar(s)
                     self.figs[f'{exp} {p}'] = lineplot(par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
                                                                  **kwargs)
 
@@ -144,7 +144,7 @@ class RvsS_Essay(Essay):
             self.figs[f'4_{exp}'] = barplot(par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
             if self.all_figs:
                 for s in shorts:
-                    p = getPar(s, to_return=['d'])[0]
+                    p = getPar(s)
                     self.figs[f'{exp} {p}'] = barplot(par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
 
         elif exp == 'refeeding':
@@ -160,7 +160,7 @@ class RvsS_Essay(Essay):
                                                                              save_as=f'{n}scaled_intake_filt.pdf',
                                                                              **kwargs)
                 for s in shorts:
-                    p = getPar(s, to_return=['d'])[0]
+                    p = getPar(s)
                     self.figs[f'{exp} {p}'] = timeplot(par_shorts=[s], show_first=False, subfolder=None,
                                                            save_as=f'{n}{p}.pdf', **kwargs)
 

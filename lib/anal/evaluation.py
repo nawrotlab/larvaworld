@@ -82,7 +82,7 @@ def adapt_conf(conf0, ee, cc):
 def sim_locomotor(L, N, df_cols=None, tank_polygon=None, cur_x=0, cur_y=0, cur_fo=0, length=0.004):
     if df_cols is None:
         from lib.conf.base.par import getPar
-        df_cols, = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'], to_return=['d'])
+        df_cols = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
     aL = np.ones([N, len(df_cols)]) * np.nan
     for i in range(N):
         lin, ang, feed = L.step(A_in=0, length=length)
@@ -100,7 +100,7 @@ def sim_locomotor(L, N, df_cols=None, tank_polygon=None, cur_x=0, cur_y=0, cur_f
 
 
 def sim_dataset(ee, cc, loco_func, loco_conf, adapted=False):
-    df_cols, = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'], to_return=['d'])
+    df_cols = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
     Ncols = len(df_cols)
 
     Ls = {}
@@ -257,7 +257,7 @@ def assess_tank_contact(ang_vel, o0, d, p0, dt, l0, tank_polygon):
 def arrange_evaluation(s, e, evaluation_metrics):
     d = dNl.AttrDict.from_nested_dicts({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
     for g, shs in evaluation_metrics.items():
-        ps = getPar(shs, to_return='d')[0]
+        ps = getPar(shs)
         Eshorts = [sh for sh, p in zip(shs, ps) if p in e.columns]
         Dshorts = [sh for sh, p in zip(shs, ps) if p in s.columns]
         Dshorts = [sh for sh in Dshorts if sh not in Eshorts]
@@ -578,7 +578,7 @@ def compare2ref(ss, s=None, refID=None,
         s, e, c = d.step_data, d.endpoint_data, d.config
 
     if pars is None and shorts is not None:
-        pars = getPar(shorts, to_return=['d'])[0]
+        pars = getPar(shorts)
 
     KSdic = {}
     for p, sh in zip(pars, shorts):

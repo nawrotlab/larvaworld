@@ -243,7 +243,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
             figs['2_intake'] = barplot(par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
             if all_figs:
                 for s in shorts:
-                    p = getPar(s, to_return=['d'])[0]
+                    p = getPar(s)
                     figs[f'intake {p}'] = barplot(par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
 
         elif exp == 'starvation':
@@ -258,7 +258,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
                     figs[ii] = plot_debs(mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf', include_egg=False,
                                          label_epochs=False, **kwargs)
                 for s in shorts:
-                    p = getPar(s, to_return=['d'])[0]
+                    p = getPar(s)
                     figs[f'post-starvation {p}'] = lineplot(par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
                                                             **kwargs)
 
@@ -272,7 +272,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
             figs['4_quality'] = barplot(par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
             if all_figs:
                 for s in shorts:
-                    p = getPar(s, to_return=['d'])[0]
+                    p = getPar(s)
                     figs[f'rearing-quality {p}'] = barplot(par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
 
         elif exp == 'refeeding':
@@ -288,7 +288,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
                 figs[f'refeeding food-intake(filt)'] = plot_food_amount(scaled=True, filt_amount=True,
                                                                         save_as=f'{n}scaled_intake_filt.pdf', **kwargs)
                 for s in shorts:
-                    p = getPar(s, to_return=['d'])[0]
+                    p = getPar(s)
                     figs[f'refeeding {p}'] = timeplot(par_shorts=[s], show_first=False, subfolder=None,
                                                       save_as=f'{n}{p}.pdf', **kwargs)
         # for d in kwargs['datasets'] :
@@ -309,63 +309,6 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
                       }
             figs['double_patch'] = boxplot_double_patch(**kwargs)
 
-        # elif exp == 'intake':
-        #     kwargs = {**dsNls(ds0),
-        #               'coupled_labels': [10, 15, 20],
-        #               'xlabel': r'Time spent on food $(min)$'}
-        #     figs['2_intake'] = barplot(par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
-        #     if all_figs:
-        #         for s in shorts:
-        #             p = getPar(s, to_return=['d'])[0]
-        #             figs[f'intake {p}'] = barplot(par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
-        #
-        # elif exp == 'starvation':
-        #     hs = [0, 1, 2, 3, 4]
-        #     kwargs = {**dsNls(ds0),
-        #               'coupled_labels': hs,
-        #               'xlabel': r'Food deprivation $(h)$'}
-        #     figs['3_starvation'] = lineplot(par_shorts=['f_am_V'], save_as='3_POST-STARVATION_INTAKE.pdf',
-        #                                     ylabel='Food intake', scale=1000, **kwargs)
-        #     if all_figs:
-        #         for ii in ['feeding']:
-        #             figs[ii] = plot_debs(mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf', include_egg=False,
-        #                                  label_epochs=False, **kwargs)
-        #         for s in shorts:
-        #             p = getPar(s, to_return=['d'])[0]
-        #             figs[f'post-starvation {p}'] = lineplot(par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
-        #                                                     **kwargs)
-        #
-        # elif exp == 'quality':
-        #     qs = [1.0, 0.75, 0.5, 0.25, 0.15]
-        #     qs_labels = [int(q * 100) for q in qs]
-        #     kwargs = {**dsNls(ds0),
-        #               'coupled_labels': qs_labels,
-        #               'xlabel': 'Food quality (%)'
-        #               }
-        #     figs['4_quality'] = barplot(par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
-        #     if all_figs:
-        #         for s in shorts:
-        #             p = getPar(s, to_return=['d'])[0]
-        #             figs[f'rearing-quality {p}'] = barplot(par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
-        #
-        # elif exp == 'refeeding':
-        #     h = 3
-        #     n = f'5_REFEEDING_after_{h}h_starvation_'
-        #     kwargs = dsNls(ds0)
-        #     figs['5_refeeding'] = plot_food_amount(scaled=True, filt_amount=True, save_as='5_REFEEDING_INTAKE.pdf',
-        #                                            **kwargs)
-        #
-        #     if all_figs:
-        #         figs[f'refeeding food-intake'] = plot_food_amount(scaled=True, save_as=f'{n}scaled_intake.pdf',
-        #                                                           **kwargs)
-        #         figs[f'refeeding food-intake(filt)'] = plot_food_amount(scaled=True, filt_amount=True,
-        #                                                                 save_as=f'{n}scaled_intake_filt.pdf', **kwargs)
-        #         for s in shorts:
-        #             p = getPar(s, to_return=['d'])[0]
-        #             figs[f'refeeding {p}'] = timeplot(par_shorts=[s], show_first=False, subfolder=None,
-        #                                               save_as=f'{n}{p}.pdf', **kwargs)
-        # for d in kwargs['datasets'] :
-        #     d.delete()
     print(f'    Analysis complete!')
     return figs, results
 

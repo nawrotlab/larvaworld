@@ -160,7 +160,7 @@ class LarvaRobot(BodySim):
             self.eval.pau_t = pause_durs
 
         if step_data:
-            ps = getPar(list(self.eval.keys()), to_return=['d'])[0]
+            ps = getPar(list(self.eval.keys()))
             s = pd.DataFrame(index=np.arange(self.Nticks), columns=ps)
             for p, (k, vs) in zip(ps, self.eval.items()):
                 if vs.shape[0] == self.Nticks:

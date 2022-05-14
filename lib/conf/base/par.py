@@ -979,7 +979,7 @@ def runtime_pars( PF=None) :
     return [v['d'] for k, v in PF.items() if v['o'] == Larva and not k in PF.build_constants().keys()]
 
 
-def getPar(k=None, p=None, d=None, to_return=['d', 'l'], PF=None):
+def getPar(k=None, p=None, d=None, to_return='d', PF=None):
     if PF is None :
         PF = ParDict(mode='load').dict
     if k is None:
@@ -994,109 +994,38 @@ def getPar(k=None, p=None, d=None, to_return=['d', 'l'], PF=None):
             elif type(d) == list:
                 k = flatten_list([[k for k in PF.keys() if PF[k]['d'] == d0][0] for d0 in d])
     if type(k) == str:
-        return [PF[k][i] for i in to_return]
+        if type(to_return) == list :
+            return [PF[k][i] for i in to_return]
+        elif type(to_return) == str :
+            return PF[k][to_return]
     elif type(k) == list:
-        return [[PF[kk][i] for kk in k] for i in to_return]
+        if type(to_return) == list:
+            return [[PF[kk][i] for kk in k] for i in to_return]
+        elif type(to_return) == str :
+            return [PF[kk][to_return] for kk in k]
 
 
 
 if __name__ == '__main__':
     from lib.conf.base.par import ParDict
 
-    dic = ParDict(mode='load').dict
-    print([dic[k]['lab'] for k in ['sv']])
-    raise
+    # dic = ParDict(mode='load').dict
+    # print([dic[k]['lab'] for k in ['sv']])
+    # raise
     # print(dic.keys())
 
     # print(dic['str_d_std']['lim'])
 
 
-    # aaa=getPar(['run_l'], to_return=['d'])[0]
-    # print(aaa)
-    d=ParDict(mode='build').dict
-    raise
-    pars, =getPar(['sstr_d_var'], to_return=['d'])
+    aaa=getPar(['run_t', 'pau_tr'], to_return=['d','l'])
 
-    print(pars)
+    print(aaa)
+    # d=ParDict(mode='build').dict
     raise
     # print(us)
     # # d = ParDict(mode='reconstruct').dict
     # print(d.keys())
     # raise
     for short in ['str_t_std', 'pau_fov_std','ffov']:
-        p = getPar(short, to_return=['d'])[0]
+        p = getPar(short)
         print(p)
-    # dic = build_par_dict()
-    # print(dic.keys())
-    # print(runtime_pars)
-    # dic=load_ParDict()
-    # print(getPar(k='sstr_d_mu'))
-    # print(getPar(k='str_sd_mu'))
-    # print(dic['b'])
-    # print(dic['D_olf'])
-    # d,u=getPar('cum_d', to_return=['d', 'u'])
-    # print(u.unit==siu.m)
-
-    # raise
-    # for k in PF.keys() :
-    #     try :
-    #         a=getPar(k, ['u'])[0].unit
-    #         b=get_unit(getPar(k, ['d'])[0])
-    #         print(a==b)
-    #     except :
-    #         pass
-    # # print(a, type(a))
-    # # print(b, type(b))
-    #
-    # # print(getPar('tur_fo0'))
-    # # print(getPar('tur_fo1'))
-    # pass
-    # # print(PF['sv']['d'])
-    # # print(PF['sv']['l'])
-    # # dic=build_par_dict()
-    # # print(dic['sv'].d)
-    # # print(dic['v'].d)
-    # # raise
-    # #
-    # #
-    # # import time
-    # # s0=time.time()
-    # # dic=build_par_dict(save=False)
-    # # s1 = time.time()
-    # # dic0=reconstruct_ParDict()
-    # # s2 = time.time()
-    # #
-    # # print(s1-s0, s2-s1)
-    # #
-    # # raise
-    # # import time
-    # # s=time.time()
-    # # a=build_par_dict(save=False)['sv'].d
-    # # # a=load_ParDict()['sv'].d
-    # # print(a)
-    # # e = time.time()
-    # # print(e-s)
-    # #
-    # # raise
-    # #
-    # #
-    # #
-    # # deb = DEB(id='test_DEB', steps_per_day=24*60)
-    # # deb.grow_larva()
-    # # print(deb.fr_feed)
-    # # dic=load_ParDict()
-    # # raise
-    # # for i in range(5) :
-    # #     for k,v in dic.items() :
-    # #         if k in ['fr_f'] :
-    # #             print(k, v.get_from(deb))
-    # #     deb.run()
-    # # raise
-    # # import matplotlib.pyplot as plt
-    # # plt.plot(np.arange(10), np.arange(10))
-    # # plt.xlabel(df['unit'].iloc[1]/1973*u.day)
-    # # # plt.xlabel([d[k].symbol for k in list(d.keys())])
-    # # plt.show()
-    #pars, sim_ls, exp_ls, xlabs, xlims = getPar(['fov_mu', 'b_mu'], to_return=['d', 's', 's', 'l', 'lim'])
-
-    #print(pars, xlims)

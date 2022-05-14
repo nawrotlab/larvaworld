@@ -100,7 +100,7 @@ def col_range(q, low=(255, 0, 0), high=(255, 255, 255), mul255=False):
 
 
 def col_df(shorts=None, groups=None, group_cols=None):
-    from lib.conf.base.par import ParDict, getPar
+    from lib.conf.base.par import getPar
 
     if shorts is None and groups is None:
         shorts = [
@@ -147,11 +147,8 @@ def col_df(shorts=None, groups=None, group_cols=None):
          'group_color': group_cols
          })
     df['group_label'] = [group_label_dic[g] for g in df['group'].values]
-    df['pars'] = [getPar(s, to_return='d')[0] for s in shorts]
-    # df['pars'] = df['shorts'].apply(lambda row: par_conf.par_dict_lists(shorts=row, to_return=['par'])[0])
-    df['symbols'] = [getPar(s, to_return='l')[0] for s in shorts]
-    # df['labels'] = [getPar(s, to_return='lab')[0] for s in shorts]
-    # df['symbols'] = df['shorts'].apply(lambda row: par_conf.par_dict_lists(shorts=row, to_return=['symbol'])[0])
+    df['pars'] = getPar(shorts)
+    df['symbols'] = getPar(shorts, to_return='l')
     df['cols'] = df.apply(lambda row: [(row['group'], p) for p in row['symbols']], axis=1)
     df['par_colors'] = df.apply(
         lambda row: [cm.get_cmap(row['group_color'])(i) for i in np.linspace(0.4, 0.7, len(row['pars']))], axis=1)

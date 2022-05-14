@@ -435,7 +435,7 @@ def comp_straightness_index(s,  e=None, c=None,dt=None, tor_durs=[2, 5, 10, 20],
 
 
 def comp_source_metrics(s, e, c, **kwargs):
-    fo = getPar(['fo'], to_return=['d'])[0][0]
+    fo = getPar('fo')
     xy = nam.xy('')
     for n, pos in c.source_xy.items():
         print(f'Computing bearing and distance to {n} based on xy position')
@@ -642,7 +642,7 @@ def scale_to_length(s, e,c, pars=None, keys=None):
     l = e[l_par]
     if pars is None:
         if keys is not None:
-            pars = getPar(keys, to_return=['d'])[0]
+            pars = getPar(keys)
         else:
             raise ValueError('No parameter names or keys provided.')
     s_pars = [p for p in pars if p in s.columns]

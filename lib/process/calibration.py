@@ -237,7 +237,7 @@ def comp_stride_variation(d, component_vels=True):
            range(len(all_vels))}
 
     shorts = ['fsv', 'str_N', 'str_tr', 'str_t_mu', 'str_t_std', 'sstr_d_mu', 'sstr_d_std', 'str_t_var','sstr_d_var']
-    pars = getPar(shorts, to_return=['d'])[0]
+    pars = getPar(shorts)
     sstr_d_var, str_t_var, str_tr = pars[-1], pars[-2], pars[2]
 
     if any([vv not in s.columns for vv in vels + [cvel]]):
@@ -368,7 +368,7 @@ def comp_segmentation(d):
 
 def fit_ang_pars(refID) :
     from lib.conf.stored.conf import loadRef
-    from lib.conf.base.par import ParDict, getPar
+    from lib.conf.base.par import ParDict
     from lib.model.modules.turner import NeuralOscillator
     from scipy.optimize import minimize, rosen, rosen_der
 

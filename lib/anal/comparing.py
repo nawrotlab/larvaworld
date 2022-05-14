@@ -113,10 +113,8 @@ class ExpFitter:
              'group_color': group_cols
              })
 
-        # pars, sim_labels, exp_labels, xlabels = getPar(par_shorts, to_return=['d', 's', 's', 'l'])
-        # df['pars'] = df['shorts'].apply(lambda row: par_conf.par_dict_lists(shorts=row, to_return=['par'])[0])
-        df['pars'] = df['shorts'].apply(lambda row: getPar(row, to_return=['d'])[0])
-        df['symbols'] = df['shorts'].apply(lambda row: getPar(row, to_return=[key])[0])
+        df['pars'] = df['shorts'].apply(lambda row: getPar(row))
+        df['symbols'] = df['shorts'].apply(lambda row: getPar(row, to_return=key))
         df['cols'] = df.apply(lambda row: [(row['group'], p) for p in row['symbols']], axis=1)
         df['par_colors'] = df.apply(
             lambda row: [cm.get_cmap(row['group_color'])(i) for i in np.linspace(0.4, 0.7, len(row['pars']))], axis=1)

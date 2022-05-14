@@ -8,7 +8,6 @@ from lib.anal.plot_aux import plot_quantiles, BasePlot
 from lib.aux.dictsNlists import flatten_dict, AttrDict
 from lib.aux.xy_aux import eudi5x
 from lib.conf.base.dtypes import ga_dict, null_dict
-from lib.conf.base.par import ParDict, getPar
 from lib.conf.stored.conf import expandConf, copyConf, saveConf, loadConf, next_idx, kConfDict
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 
