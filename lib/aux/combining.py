@@ -83,7 +83,7 @@ def combine_pdfs(file_dir='.', save_as="final.pdf", pref=''):
 
 def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None,figsize=None,
                      header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black',
-                     bbox=[0, 0, 1, 1], header_columns=0, ax=None, highlighted_cells=None, highlight_color='yellow', return_table=False,
+                     bbox=[0, 0, 1, 1], header_columns=0, ax=None,fig=None,  highlighted_cells=None, highlight_color='yellow', return_table=False,
                      **kwargs):
     def get_idx(highlighted_cells):
         d = data.values
@@ -124,13 +124,13 @@ def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=
         highlight_idx = get_idx(highlighted_cells)
     except:
         highlight_idx = []
-    if ax is None:
+    if ax is None and fig is None:
         if figsize is None :
             figsize = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
         fig, ax = plt.subplots(figsize=figsize)
         ax.axis('off')
-    else:
-        fig = None
+    # else:
+    #     fig = fig
 
     mpl = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns, rowLabels=data.index, **kwargs)
 

@@ -29,7 +29,8 @@ from lib.anal.plot_aux import plot_mean_and_range, circular_hist, confidence_ell
 from lib.aux import naming as nam
 from lib.aux.colsNstr import N_colors, col_range
 
-from lib.process.aux import moving_average, detect_strides, detect_pauses, compute_velocity, fft_max
+from lib.process.aux import moving_average, detect_strides, detect_pauses, compute_velocity, fft_max, detect_turns, \
+    process_epochs
 
 from lib.conf.base.par import getPar
 from lib.model.DEB.deb import DEB
@@ -3026,6 +3027,78 @@ def annotated_strideplot(a, dt, a2plot=None,ax=None, ylim=None, xlim=None, show_
     handles = [patches.Patch(color=col, label=n) for n, col in zip(labels, chunk_cols)]
     ax.legend(loc="upper right", handles=handles, labels=labels)
 
+
+def annotated_turnplot(a, dt, a2plot=None,ax=None,min_dur=None, min_amp=None,ylim=None, xlim=None,
+                       moving_average_interval=None, **kwargs):
+    """
+    Plots annotated turnss in timeseries.
+
+    Extended description of function.
+
+    Parameters
+    ----------
+    a : array
+        1D np.array : velocity timeseries
+    dt : float
+        Timestep of the timeseries
+    ax : obj
+        The matplotlib axis on which to draw
+    ylim : Tuple[float,float]
+        The yaxis boundaries
+    xlim : Tuple[float,float]
+        The xaxis boundaries.Default is the whole a.
+    show_extrema : bool
+        Annotate minima & maxima. Default : True.
+    show_strides : bool
+        Annotate strides by vertical dashed lines. Default : True.
+    moving_average_interval : float
+        Plot moving average of velocity over a time interval instead of the actual. Default : None.
+    **kwargs : dict
+        Other arguments for bout annotation
+
+    Returns
+    -------
+    ax : obj
+        The drawn matplotlib axis
+
+    """
+    chunk_cols = ["lightgreen", "orange"]
+    trange = np.arange(0, a.shape[0] * dt, dt)
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=(20, 5), sharex=True, sharey=True)
+    if xlim is None:
+        xlim = (0, trange[-1])
+
+    Lturns, Rturns = detect_turns(a, dt, min_dur=min_dur)
+    if min_amp is not None :
+        Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a, Lturns, dt)
+        Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a, Rturns, dt)
+        Lturns=Lturns[np.abs(Lamps)>min_amp]
+        Rturns=Rturns[np.abs(Ramps)>min_amp]
+    # pauses = detect_pauses(a, dt, runs=runs)
+
+
+    if moving_average_interval:
+        a = moving_average(a, n=int(moving_average_interval / dt))
+    if a2plot is not None :
+        ax.plot(trange, a2plot)
+    else:
+        ax.plot(trange, a)
+
+        ax.set_ylabel("angular velocity (deg/sec)")
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    ax.set_xlabel("time (sec)")
+    ax.axhline(0, color='black', alpha=1, linestyle='dashed', linewidth=1)
+    for s0, s1 in Lturns:
+        ax.axvspan(trange[s0], trange[s1], color=chunk_cols[0], alpha=1.0)
+    for p0, p1 in Rturns:
+        ax.axvspan(trange[p0], trange[p1], color=chunk_cols[1], alpha=1.0)
+    labels = ['L turns', 'R turns']
+    handles = [patches.Patch(color=col, label=n) for n, col in zip(labels, chunk_cols)]
+    ax.legend(loc="upper right", handles=handles, labels=labels)
+
+
 def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, angular=True, maxNpoints=5, save_to=None,
                             axs=None, fig=None, axx=None):
     from lib.conf.base.par import getPar
@@ -3132,12 +3205,13 @@ def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, angular=True, maxNpoints=5
     # return fig, axs, axx
 
 
-def stride_cycle_solo(s, dt, e, ang_short='fov', absolute=True, Nbins=64, color='red', scaled=False,axs=None, fig=None, pooled=False, **kwargs):
+def stride_cycle_solo(s, e,c, ang_short='fov', absolute=True, Nbins=64, color_solo='grey',color='red',
+                      scaled=False,axs=None, fig=None, pooled=False, **kwargs):
     from lib.process.aux import detect_strides
     from lib.conf.base.par import ParDict
     dic = ParDict(mode='load').dict
     sv, pau_fov_mu = [dic[k]['d'] for k in ['sv', 'pau_fov_mu']]
-    ang, ang_label = dic[ang_short]['d'], dic[ang_short]['l']
+    ang, ang_label = dic[ang_short]['d'], dic[ang_short]['lab']
     ids = s.index.unique('AgentID').values
     x = np.linspace(0, 2 * np.pi, Nbins)
     ys = np.zeros([len(ids), Nbins]) * np.nan
@@ -3152,18 +3226,21 @@ def stride_cycle_solo(s, dt, e, ang_short='fov', absolute=True, Nbins=64, color=
             a_ang = np.abs(a_ang)
         if scaled and not pooled:
             a_ang /= e[pau_fov_mu].loc[id]
-        strides = detect_strides(a_sv, dt, return_runs=False, return_extrema=False)
+        strides = detect_strides(a_sv, c.dt, return_runs=False, return_extrema=False)
         strides = strides.tolist()
         aa = np.zeros([len(strides), Nbins])
         for ii, (s0,s1) in enumerate(strides):
             aa[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_ang[s0:s1])
         ys[jj, :] = np.nanquantile(aa, q=0.5, axis=0)
         if not pooled:
-            ax.plot(x, ys[jj, :], color, linewidth=2, alpha=1.0, zorder=10)
+            ax.plot(x, ys[jj, :], color_solo, linewidth=1, alpha=0.5, zorder=2)
     if pooled :
         if scaled:
             ys /= e[pau_fov_mu].mean()
         plot_quantiles(df=ys, from_np=True, axis=ax, color_shading=color, x=x)
+    else :
+        ys_mu = np.nanquantile(ys, q=0.5, axis=0)
+        ax.plot(x, ys_mu, color, linewidth=5, alpha=1.0, zorder=10)
     P.conf_ax(xticks=np.linspace(0, 2 * np.pi, 5), xlim=[0, 2 * np.pi],
               xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
               xlab='$\phi_{stride}$', ylab=ang_label)
@@ -3180,7 +3257,7 @@ def stride_cycle(ang_short='fov',absolute=True, Nbins=64, scaled=False, pooled=T
         color = c.color if c.color is not None else 'black'
         labels.append(c.id)
         colors.append(color)
-        stride_cycle_solo(s, c.dt, e, ang_short=ang_short,absolute=absolute,Nbins=Nbins,color=color, scaled=scaled, pooled=pooled,  fig=P.fig, axs=P.axs[0])
+        stride_cycle_solo(s, e,c, ang_short=ang_short,absolute=absolute,Nbins=Nbins,color=color,color_solo=color, scaled=scaled, pooled=pooled,  fig=P.fig, axs=P.axs[0])
     dataset_legend(labels, colors,ax=P.axs[0], loc='upper left')
 
     return P.get()

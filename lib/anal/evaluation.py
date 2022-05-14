@@ -496,20 +496,20 @@ def plot_bouts(loco_dict=None, datasets=None, plot_fits='', stridechain_duration
             'marker': 'o',
             'plot_fits': plot_fits,
             'label': id,
-            'color': d.config.color,
+            'color': d['color'] if 'color' in d.keys() else d.config.color,
             'legend_outside': legend_outside,
             'axs': P.axs,
             'x0': None
         }
         if v.pause_dur is not None:
             plot_single_bout(fit_dic=v.pause_dur, discr=False, bout='pauses', i=1, **kws)
-            valid_labs[id] = d.config.color
+            valid_labs[id] = kws['color']
         if stridechain_duration and v.run_dur is not None:
             plot_single_bout(fit_dic=v.run_dur, discr=False, bout='runs', i=0, **kws)
-            valid_labs[id] = d.config.color
+            valid_labs[id] = kws['color']
         elif not stridechain_duration and v.run_count is not None:
             plot_single_bout(fit_dic=v.run_count, discr=True, bout='stridechains', i=0, **kws)
-            valid_labs[id] = d.config.color
+            valid_labs[id] = kws['color']
     P.axs[1].yaxis.set_visible(False)
     if len(loco_dict.keys()) > 1:
         dataset_legend(valid_labs.keys(), valid_labs.values(), ax=P.axs[0], loc='lower left', fontsize=15)

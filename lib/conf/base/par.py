@@ -192,8 +192,9 @@ class Parameter:
     def __init__(self, p, u, k=None, s=None, o=Larva, lim=None,
                  d=None, lab=None, exists=True, func=None, const=None, par_dict=None, fraction=False,
                  operator=None, k0=None, k_num=None, k_den=None, dst2source=None, or2source=None, dispersion=False,
-                 wrap_mode=None,l=None, unit=None, symbol=None):
+                 wrap_mode=None,l=None, unit=None, symbol=None, codename=None,):
         # print(p,k)
+        self.codename = codename
         self.wrap_mode = wrap_mode
         self.fraction = fraction
         self.func = func
@@ -851,6 +852,7 @@ class ParDict:
 
         label_dict={
             'v' : 'velocity',
+            'sv' : 'scaled velocity',
             'a' : 'acceleration',
             'fov' : 'angular velocity',
             'foa' : 'angular acceleration',
@@ -1001,8 +1003,9 @@ def getPar(k=None, p=None, d=None, to_return=['d', 'l'], PF=None):
 if __name__ == '__main__':
     from lib.conf.base.par import ParDict
 
-    # dic = ParDict(mode='load').dict
-    # print([dic[k]['lab'] for k in ['torque_coef']])
+    dic = ParDict(mode='load').dict
+    print([dic[k]['lab'] for k in ['sv']])
+    raise
     # print(dic.keys())
 
     # print(dic['str_d_std']['lim'])
@@ -1010,8 +1013,8 @@ if __name__ == '__main__':
 
     # aaa=getPar(['run_l'], to_return=['d'])[0]
     # print(aaa)
-    # d=ParDict(mode='build').dict
-    # raise
+    d=ParDict(mode='build').dict
+    raise
     pars, =getPar(['sstr_d_var'], to_return=['d'])
 
     print(pars)

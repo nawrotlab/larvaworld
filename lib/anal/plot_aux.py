@@ -675,7 +675,9 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
     for jj in [0]:
         axs[jj].set_ylabel(ylabel)
 
-def modelConfTable(confID, save_as, columns = ['Parameter', 'Symbol', 'Value', 'Unit'],rows = None,**kwargs) :
+def modelConfTable(confID, save_as=None, columns = ['Parameter', 'Symbol', 'Value', 'Unit'],rows = None,**kwargs) :
+    # if save_as is None:
+    #     save_as=f'{confID}.pdf'
     from lib.aux.combining import render_mpl_table
     from lib.conf.base.dtypes import par
     from lib.conf.base.init_pars import init_pars
@@ -783,7 +785,8 @@ def modelConfTable(confID, save_as, columns = ['Parameter', 'Symbol', 'Value', '
 
     ax, fig, mpl = render_mpl_table(df, colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
                                     row_colors=rowColors, return_table=True,**kwargs)
-
+    # ax.yaxis.set_visible(False)
+    # ax.xaxis.set_visible(False)
     for k, cell in mpl._cells.items():
         if k[1] == -1:
             cell._text._text = ''
@@ -795,33 +798,175 @@ def modelConfTable(confID, save_as, columns = ['Parameter', 'Symbol', 'Value', '
             cell._text._text = rowLab.upper()
         except:
             pass
-    fig.savefig(save_as, dpi=300)
+    if save_as is not None :
+        fig.savefig(save_as, dpi=300)
     plt.close()
     # return fig,ax,mpl
 
 
-def module_endpoint_hists(module, valid, Nbins=15, show_median=True):
+def module_endpoint_hists(module, valid,e=None, refID=None, Nbins=None, show_median=True, fig=None, axs=None, **kwargs):
+    if e is None and refID is not None :
+        from lib.conf.stored.conf import loadRef
+        d=loadRef(refID)
+        d.load(step=False)
+        e=d.endpoint_data
+    if Nbins is None :
+        Nbins=int(e.index.values.shape[0]/10)
+    yy = int(e.index.values.shape[0]/7)
     from lib.conf.base.dtypes import par
     from lib.conf.base.init_pars import init_pars
     d0 = init_pars().get(module, None)
-    yy=30
     N=len(valid)
-    fig,axs=plt.subplots(1,N,figsize=(7*N,6), sharey=True)
-    axs=axs.ravel()
+
+    P = BasePlot(name=f'{module}_endpoint_hists', **kwargs)
+    P.build(1,N,figsize=(7*N,6), sharey=True,fig=fig, axs=axs)
+
     for i,n in enumerate(valid) :
-        ax=axs[i]
+        ax=P.axs[i]
         p0 = par(n, **d0[n])[n]
         vs=e[p0['codename']]
         v_mu=vs.median()
-        ax.hist(vs.values, bins=Nbins)
-        ax.set_xlabel(p0['label'])
+        P.axs[i].hist(vs.values, bins=Nbins)
+        P.conf_ax(i, xlab=p0['label'], ylab='# larvae' if i==0 else None, xMaxN=3)
 
         if show_median :
-            text='  ' + p0['symbol'] + f' = {np.round(v_mu,2)}'
-            ax.axvline(v_mu, color='red', alpha=1, linestyle='dashed', linewidth=3)
-            ax.annotate(text, rotation=0, fontsize=20, va='center', ha='left',
-                                            xy=(v_mu, yy), xycoords='data',
+            text=p0['symbol'] + f' = {np.round(v_mu,2)}'
+            P.axs[i].axvline(v_mu, color='red', alpha=1, linestyle='dashed', linewidth=3)
+            P.axs[i].annotate(text, rotation=0, fontsize=18, va='center', ha='left',
+                                            xy=(0.55, 0.8), xycoords='axes fraction',
                                             )
+        if i != 0:
+            P.axs[i].yaxis.set_visible(False)
+    P.adjust((0.2,0.9),(0.2,0.9),0.01)
+    return P.get()
 
-    fig.subplots_adjust(left=0.2, bottom=0.2, wspace=0.01)
-    axs[0].set_ylabel('# larvae')
+def test_locomotor(mID, dur=60,dt = 1 / 16,min_turn_amp=20,include_torque=False,
+                   include_ang_suppression=False,fig=None, axs=None, **kwargs) :
+    from lib.model.modules.locomotor import DefaultLocomotor
+    from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf
+    from lib.anal.plotting import annotated_strideplot, annotated_turnplot
+    m = loadConf(mID, "Model")
+    k = m.physics.body_spring_k
+    z = m.physics.ang_damping
+    tc = m.physics.torque_coef
+    bc = m.physics.bend_correction_coef
+    l = m.body.initial_length
+
+    N = int(dur / dt)
+    trange = np.arange(0, N * dt, dt)
+
+    def compute_ang_vel(b, torque, v):
+        dv = -z * v - k * b + torque
+        return v + dv * dt
+
+    def restore_bend_2seg(bend, d):
+        k0 = 2 * d * bc / l
+        if 0 <= k0 < 1:
+            return bend * (1 - k0)
+        elif 1 <= k0:
+            return 0
+        elif k0 < 0:
+            return bend
+
+    # Ntrials = 1
+    A = np.zeros(N) * np.nan
+    B = np.zeros(N) * np.nan
+    C = np.zeros(N) * np.nan
+    D = np.zeros(N) * np.nan
+    E = np.zeros(N) * np.nan
+    F = np.zeros(N) * np.nan
+    G = np.zeros(N) * np.nan
+    # for j in range(Ntrials):
+    DL = DefaultLocomotor(dt=dt, conf=m.brain)
+    b = 0
+    v = 0
+    lin = 0
+    dst = 0
+    A[0] = np.array(v)
+    C[0] = np.array(b)
+    D[0] = np.array(lin)
+    E[0] = np.array(lin/l)
+    F[0] = DL.cur_ang_suppression
+    B[0] = DL.turner.neural_oscillator.activity
+    G[0] = DL.turner.activation
+    for i in range(N - 1):
+        b = restore_bend_2seg(b, dst)
+        lin, ang, feed = DL.step(A_in=0, length=l)
+        torque = tc * ang
+        v = compute_ang_vel(b, torque, v)
+        v *= DL.cur_ang_suppression
+        dst = lin * dt
+        b += v * dt
+        A[i + 1] = np.array(v)
+        C[i + 1] = np.array(b)
+        B[i + 1] = torque
+        F[i + 1] = DL.cur_ang_suppression
+        G[i + 1] = DL.turner.activation
+        D[i + 1] = np.array(lin)
+    E = D / l
+
+
+    A = np.rad2deg(A)
+    B = np.rad2deg(B)
+    C = np.rad2deg(C)
+
+    D *= 1000
+    F = 1-F
+
+    Nrows=3
+    if include_torque :
+        Nrows+=1
+    if include_ang_suppression :
+        Nrows+=1
+    P = BasePlot(name=f'{mID}_locomotor_test', **kwargs)
+    P.build(Nrows, 1, figsize=(25, 5* Nrows), sharex=True, fig=fig, axs=axs)
+
+    ax_idx=0
+    ax=P.axs[ax_idx]
+    lab='velocity'
+    annotated_strideplot(E, dt, a2plot=None,ax=ax, ylim=None, xlim=None, show_extrema=True, show_strides=True)
+    ax.xaxis.set_visible(False)
+    ax.set_ylabel(lab, fontsize=20)
+    ax.set_xlim((0, trange[-1] + 10 * dt))
+    ax_idx+=1
+
+    if include_ang_suppression:
+        ax = P.axs[ax_idx]
+        lab ='interference'
+        annotated_strideplot(E, dt, a2plot=F, ax=ax, ylim=(0, 1), xlim=None, show_extrema=False,
+                             show_strides=True)
+        ax.xaxis.set_visible(False)
+        ax.set_ylabel(lab, fontsize=20)
+        ax.set_xlim((0, trange[-1] + 10 * dt))
+        ax_idx += 1
+
+    ax = P.axs[ax_idx]
+    lab = 'ang. velocity'
+    annotated_turnplot(A, dt, a2plot=None, ax=ax, min_dur=None, min_amp=min_turn_amp)
+    ax.xaxis.set_visible(False)
+    ax.set_ylabel(lab, fontsize=20)
+    ax.set_xlim((0, trange[-1] + 10 * dt))
+    ax_idx += 1
+
+    ax = P.axs[ax_idx]
+    lab = 'bend'
+    annotated_turnplot(A, dt, a2plot=C, ax=ax, min_dur=None, min_amp=min_turn_amp)
+    ax.xaxis.set_visible(False)
+    ax.set_ylabel(lab, fontsize=20)
+    ax.set_xlim((0, trange[-1] + 10 * dt))
+    ax_idx += 1
+
+    if include_torque :
+        ax = P.axs[ax_idx]
+        lab = 'torque'
+        ax.plot(trange, B, color='green')
+        ax.xaxis.set_visible(False)
+        ax.set_ylabel(lab, fontsize=20)
+        ax.set_xlim((0, trange[-1] + 10 * dt))
+        ax_idx += 1
+
+    P.axs[-1].set_xlabel('time (sec)')
+    P.axs[-1].xaxis.set_visible(True)
+    # P.axs[-1].set_xlim((0, trange[-1] + 10*dt))
+    P.adjust((0.1,0.95), (0.15,0.95), 0.01, 0.05)
+    return P.get()

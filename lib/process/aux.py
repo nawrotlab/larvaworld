@@ -543,6 +543,8 @@ def detect_turns(a, dt, min_dur=None):
 
 
     """
+    if type(a)!=pd.core.series.Series :
+        a=pd.Series(a)
     if min_dur is None:
         min_dur = 2 * dt
     i_zeros = np.where(np.sign(a).diff().ne(0) == True)[0]
@@ -895,6 +897,36 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
         e[sstr_d_std] = e[str_d_std] / e[l]
 
     return crawl_dict
+
+
+def comp_bend_correction(refID='None.150controls'):
+    from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf
+    from lib.conf.base.par import ParDict, getPar
+    import copy
+    import numpy as np
+    d = loadRef(refID)
+    d.load(contour=False)
+    s, e, c = d.step_data, d.endpoint_data, d.config
+
+    dic = ParDict(mode='load').dict
+    fov, bv, b, sv = [dic[k]['d'] for k in ['fov', 'bv', 'b', 'sv']]
+
+    ss = copy.deepcopy(s[[fov, bv, b, sv]].dropna())
+    ss = ss.loc[ss[sv] > 0]
+    ss = ss.loc[ss[fov] * ss[bv] > 0]
+    ss = ss.loc[ss[fov].abs() - ss[bv].abs() > 0]
+    ss['db'] = ss[fov] * c.dt - ss[bv] * c.dt
+    ss['b0'] = ss[b] + ss['db']
+    ss = ss.loc[ss['b0'] * ss['db'] > 0]
+    ss['db0'] = ss['db'] / ss['b0']
+    ss = ss.loc[ss['db0'] < 1]
+
+    ddb = ss['db0']
+    ddd = (2 * ss[sv]) * c.dt
+    m, k = np.polyfit(ddd, ddb, 1)
+    m = np.round(m, 2)
+    k = np.round(k, 2)
+    return m
 
 
 class FuncParHelper:

@@ -20,7 +20,7 @@ ga_spaces = AttrDict.from_nested_dicts({
     'turner': ga_dict(name='turner', suf='brain.turner_params.',
                       excluded=['mode', 'noise', 'activation_noise', 'initial_amp', 'amp_range', 'initial_freq',
                                 'freq_range', 'activation_range']),
-    'physics': ga_dict(name='physics', suf='physics.', excluded=['ang_mode', 'ang_vel_coef']),
+    'physics': ga_dict(name='physics', suf='physics.', excluded=['ang_mode', 'ang_vel_coef', 'bend_correction_coef']),
     'sensorimotor': ga_dict(name='obstacle_avoidance', suf='sensorimotor.', excluded=[]),
     'olfactor': {**ga_dict(name='olfactor', suf='brain.olfactor_params.', excluded=['input_noise']),
                  'brain.olfactor_params.odor_dict.Odor.mean': {'initial_value': 0.0, 'tooltip': 'Odor gain',

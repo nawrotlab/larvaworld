@@ -233,7 +233,7 @@ def init_pars():
                             'h': 'Angular damping exerted on angular velocity.'},
             'body_spring_k': {'v': 0.3,'min': 0.0, 'max': 10.0, 'dv': 0.1,'label' : 'body spring constant', 'symbol': 'k', 'u' : sup('sec', -2),
                               'h': 'Larva-body torsional spring constant reflecting deformation resistance.'},
-            'bend_correction_coef': {'v': 1.0, 'min': 0.0,'max': 1.5,'label' : 'bend correction coefficient', 'symbol': sub('c', 'b'), 'u' : '-',
+            'bend_correction_coef': {'v': 1.0, 'min': 0.8,'max': 1.5,'label' : 'bend correction coefficient', 'symbol': sub('c', 'b'), 'u' : '-',
                                      'h': 'Correction coefficient of bending angle during forward motion.'},
             'ang_mode': {'t': str, 'v': 'torque', 'vs': ['torque', 'velocity'],'label' : 'angular mode',
                          'h': 'Whether the Turner module output is equivalent to torque or angular velocity.'},

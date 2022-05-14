@@ -536,3 +536,34 @@ def std_norm(df) :
 def minmax(df) :
     df_minmax = MinMaxScaler().fit(df).transform(df)
     return pd.DataFrame(df_minmax, index=df.index, columns=df.columns)
+
+def test_boutGens(mID,refID, **kwargs):
+    from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf
+    from lib.anal.evaluation import plot_bouts
+
+    d = loadRef(refID)
+    d.load(contour=False)
+    s, e, c = d.step_data, d.endpoint_data, d.config
+    Npau=s['pause_dur'].dropna().values.shape[0]
+    Nrun=s['run_dur'].dropna().values.shape[0]
+
+    dic={}
+    dic0=c.bout_distros
+    # dic0=c.bout_distros
+    m=loadConf(mID, 'Model')
+    dicM=m.brain.intermitter_params
+    for n,n0 in zip(['pause', 'run', 'stridechain'], ['pause_dur', 'run_dur', 'run_count']) :
+        N=Npau if n == 'pause' else Nrun
+        discr = True if n == 'stridechain' else False
+        dt = 1 if n == 'stridechain' else c.dt
+
+        k=f'{n}_dist'
+        kk=dicM[k]
+        if kk is not None :
+            B = BoutGenerator(**kk, dt=dt)
+            vs = B.sample(N)
+            dic[n0] = fit_bout_distros(vs, dataset_id=mID, bout=n, combine=False, discrete=discr)
+    loco_dict = {'model': {'bouts': dic, 'color': 'blue'},
+                 'experiment': {'bouts': d.load_group_bout_dict(), 'color': 'red'}}
+    return plot_bouts(loco_dict=loco_dict, plot_fits='none', **kwargs)
+

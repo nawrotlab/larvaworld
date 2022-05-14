@@ -851,3 +851,17 @@ class LarvaDataset:
         from lib.anal.plot_aux import modelConfTable
         modelConfTable(new_id, save_as, figsize=(14, 11))
         return m
+
+    def get_chunk_par_distro(self, chunk, short=None,par=None, ):
+        if par is None :
+            from lib.conf.base.par import getPar
+            par = getPar(short, to_return=['d'])[0]
+        chunk_idx=f'{chunk}_idx'
+        dic = self.load_chunk_dicts()
+        vs = []
+        for id in self.agent_ids:
+            ss = self.step_data[par].xs(id, level='AgentID')
+            idx = dic[id][chunk_idx]
+            vs.append(ss.loc[idx].values)
+        vs = np.concatenate(vs)
+        return vs
