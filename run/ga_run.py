@@ -37,7 +37,8 @@ show_screen = args.show_screen
 exp_conf = update_exp_conf(exp, d, N, models, conf_type='Ga')
 exp_conf.show_screen = show_screen
 
-GAlauncher(**exp_conf)
+GA=GAlauncher(**exp_conf)
+best_genome = GA.run()
 # run = SingleRun(**exp_conf, vis_kwargs=d['visualization'])
 # ds=run.run()
 

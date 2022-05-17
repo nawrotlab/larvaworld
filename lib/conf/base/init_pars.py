@@ -231,6 +231,9 @@ def init_pars():
                             'h': 'Conversion coefficient from TURNER output to angular velocity.'},
             'ang_damping': {'v': 2.5, 'min': 0.0,'max': 5.0,'label' : 'angular damping', 'symbol': 'z', 'u' : sup('sec', -1),
                             'h': 'Angular damping exerted on angular velocity.'},
+            'lin_damping': {'v': 1.0, 'min': 0.0, 'max': 10.0, 'label': 'linear damping', 'symbol': 'zl',
+                            'u': sup('sec', -1),
+                            'h': 'Linear damping exerted on forward velocity.'},
             'body_spring_k': {'v': 0.3,'min': 0.0, 'max': 10.0, 'dv': 0.1,'label' : 'body spring constant', 'symbol': 'k', 'u' : sup('sec', -2),
                               'h': 'Larva-body torsional spring constant reflecting deformation resistance.'},
             'bend_correction_coef': {'v': 1.0, 'min': 0.8,'max': 1.5,'label' : 'bend correction coefficient', 'symbol': sub('c', 'b'), 'u' : '-',
@@ -697,8 +700,11 @@ def init_pars():
     d['env_conf'] = {'arena': d['arena'],
                      'border_list': {'t': dict, 'v': {}},
                      'food_params': d['food_params'],
-                     'odorscape': d['odorscape'],
-                     'windscape': d['windscape']}
+                     # 'odorscape': d['odorscape'],
+                     'odorscape': {'t': dict},
+                     'windscape': {'t': dict}
+                     # 'windscape': d['windscape']
+                     }
 
     d['exp_conf'] = {'env_params': {'t': str, 'vs': kConfDict('Env')},
                      'larva_groups': {'t': dict, 'v': {}},
@@ -861,7 +867,7 @@ def init_pars():
         'base_model': {'t': str, 'v': 'navigator', 'vs': kConfDict('Model'), 'h': 'The model configuration to optimize'},
         'bestConfID': {'t': str,  'h': 'The model configuration ID to store the best genome'},
         'init_mode': {'t': str, 'v': 'random', 'vs': ['default', 'random', 'model'], 'h': 'The initialization mode for the first generation'},
-        'multicore': {'t': bool, 'v': True, 'h': 'Whether to use multiple cores'},
+        'multicore': {'t': bool, 'v': False, 'h': 'Whether to use multiple cores'},
         'fitness_target_refID': {'t': str, 'vs': kConfDict('Ref'),'h': 'The ID of the reference dataset for comparison'},
         'fitness_target_kws': {'t': dict, 'v': {},'h': 'The target data to derive from the reference dataset for evaluation'},
         'fitness_func': {'t': FunctionType, 'h': 'The method for fitness evaluation'},
@@ -881,6 +887,7 @@ def init_pars():
         'caption': {'t': str, 'h': 'The screen caption'},
         'save_to': {'t': str, 'h': 'The directory to save data and plots'},
         'show_screen': {'t': bool,'v': True, 'h': 'Whether to render the screen visualization'},
+        'offline': {'t': bool, 'v': False, 'h': 'Whether to run a full LarvaworldSim environment'},
         'ga_build_kws': d['ga_build_kws'],
         'ga_select_kws': d['ga_select_kws'],
         # 'ga_kws': {**d['GAbuilder'], **d['GAselector']},

@@ -1,7 +1,8 @@
+import pandas as pd
 from scipy.spatial.distance import euclidean
 import numpy as np
 
-from lib.process.aux import suppress_stdout, comp_bearing, annotation
+from lib.process.aux import suppress_stdout, comp_bearing, annotation, detect_strides
 from lib.aux.ang_aux import angle_to_x_axis
 import lib.aux.naming as nam
 from lib.anal.fitting import fit_bouts
@@ -562,3 +563,24 @@ def comp_patch_metrics(s, e, **kwargs):
     e['handedness_score'] = e[nam.num('Lturn')] / e[nam.num('turn')]
     e[f'handedness_score_{on}'] = e[f"{nam.num('Lturn')}_{on}"] / e[f"{nam.num('turn')}_{on}"]
     e[f'handedness_score_{off}'] = e[f"{nam.num('Lturn')}_{off}"] / e[f"{nam.num('turn')}_{off}"]
+
+def get_stride_df(s,e,c,shorts=['sv', 'b','bv','fov','rov'], idx=0, Nbins=64):
+    from lib.conf.base.par import getPar
+    id = c.agent_ids[idx]
+    ee = e.loc[id]
+    ss = s.xs(id, level='AgentID')
+    pars= getPar(shorts)
+    Npars=len(pars)
+    strides = detect_strides(ss[getPar('sv')], c.dt, fr=ee[getPar('fv')], return_runs=False, return_extrema=False)
+    strides = strides.tolist()
+    pi2 = 2 * np.pi
+    x = np.linspace(0, pi2, Nbins)
+    my_index = pd.MultiIndex.from_product([np.arange(len(strides)), np.arange(Nbins)], names=['Stride', 'Step'])
+    df = pd.DataFrame(columns=pars,index=my_index)
+    for j, par in enumerate(pars):
+        aa = np.zeros([len(strides), Nbins]) * np.nan
+        ssp=ss[par].values
+        for ii, (s0, s1) in enumerate(strides):
+            aa[ii, :] = np.interp(x, np.linspace(0, pi2, s1 - s0), ssp[s0:s1])
+        df[par]=aa.flatten()
+    return df

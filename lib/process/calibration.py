@@ -362,7 +362,7 @@ def comp_segmentation(d):
 
     c.metric_definition.angular.fitted = AttrDict.from_nested_dicts(
         {'best_combo': str(best_combo), 'front_body_ratio': front_body_ratio,
-         'bend': 'from_angles'})
+         'bend': 'from_vectors'})
     print('Angular velocity definition analysis complete!')
     return dic
 

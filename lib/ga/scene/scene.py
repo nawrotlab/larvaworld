@@ -17,7 +17,7 @@ class Scene:
         self.speed = speed
         self.panel_width = panel_width
         self.objects = []
-        self.screen = pygame.display.set_mode((width + panel_width, height))
+
         self.center = np.array([0.0, 0.0])
         self.center_lim = np.array([0.0, 0.0])
         self._scale = np.array([[1., .0], [.0, -1.]])

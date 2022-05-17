@@ -35,7 +35,6 @@ from lib.process.aux import moving_average, detect_strides, detect_pauses, compu
 from lib.conf.base.par import getPar
 from lib.model.DEB.deb import DEB
 
-
 '''
 Generic plot function. Uses the next two functions internally'''
 
@@ -194,16 +193,17 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
     return P.get()
 
 
-def plot_ang_pars(absolute=True, include_rear=False, subfolder='turn', Npars=3,Nbins=100, **kwargs):
+def plot_ang_pars(absolute=True, include_rear=False, half_circles=True, subfolder='turn',
+                  axs=None, fig=None, Npars=3, Nbins=100, **kwargs):
     P = Plot(name='ang_pars', subfolder=subfolder, **kwargs)
     if Npars == 5:
         shorts = ['b', 'bv', 'ba', 'fov', 'foa']
         rs = [100, 200, 2000, 200, 2000]
-        ylim = 0.05
+        ylim = 0.1
     elif Npars == 3:
         shorts = ['b', 'bv', 'fov']
         rs = [100, 200, 200]
-        ylim = 0.05
+        ylim = 0.1
     else:
         raise ValueError('3 or 5 pars allowed')
 
@@ -214,14 +214,14 @@ def plot_ang_pars(absolute=True, include_rear=False, subfolder='turn', Npars=3,N
     pars, sim_ls, xlabs = getPar(shorts, to_return=['d', 's', 'l'])
     p_ls = [[sl] * P.Ndatasets for sl in sim_ls]
     P.init_fits(pars)
-    P.build(1, len(shorts), figsize=(len(shorts) * 5, 5), sharey=True)
+    P.build(1, len(shorts), figsize=(len(shorts) * 8, 8), axs=axs, fig=fig, sharey=True)
 
     for i, (p, r, p_lab, xlab) in enumerate(zip(pars, rs, p_ls, xlabs)):
         bins, xlim = P.angrange(r, absolute, Nbins)
-        P.plot_par(p, bins, i=i, absolute=absolute, labels=p_lab, alpha=0.8, histtype='step', linewidth=2,
-                   pvalues=True, half_circles=True)
+        P.plot_par(p, bins, i=i, absolute=absolute, labels=p_lab, alpha=0.8, histtype='step', linewidth=3,
+                   pvalues=True, half_circles=half_circles)
         P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=xlab, ylim=[0, ylim], yMaxN=3)
-    dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left')
+    dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left' if half_circles else 'upper right')
     P.adjust((0.3 / len(pars), 0.99), (0.15, 0.95), 0.01)
     return P.get()
 
@@ -583,7 +583,8 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
     return P.get()
 
 
-def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', axs=None, fig=None, fig_cols=1, ymax=None, **kwargs):
+def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', axs=None, fig=None, fig_cols=1, ymax=None,
+                    **kwargs):
     from lib.process.store import get_dsp
     ylab = 'scaled dispersal' if scaled else r'dispersal $(mm)$'
     r0, r1 = range
@@ -595,24 +596,24 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', axs=Non
     P.build(fig=fig, axs=axs)
 
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
-        try :
+        try:
             dsp = d.load_aux(type='dispersion', par=par if not scaled else nam.scal(par))
-        except :
+        except:
             dsp = get_dsp(d.step_data, par)
         mean = dsp['median'].values[t0:t1]
         lb = dsp['upper'].values[t0:t1]
         ub = dsp['lower'].values[t0:t1]
         P.axs[0].fill_between(x, ub, lb, color=c, alpha=.2)
-        P.axs[0].plot(x, mean, c, label=lab, linewidth=3 if lab!='experiment' else 8, alpha=1.0)
+        P.axs[0].plot(x, mean, c, label=lab, linewidth=3 if lab != 'experiment' else 8, alpha=1.0)
         # plot_mean_and_range(x=x,
         #                     mean=dsp['median'].values[t0:t1],
         #                     lb=dsp['upper'].values[t0:t1],
         #                     ub=dsp['lower'].values[t0:t1],
         #                     axis=P.axs[0], color_shading=c, label=lab)
-    #P.conf_ax(xlab='time, $sec$', ylab=r'dispersal $(mm)$', xlim=[x[0], x[-1]], ylim=[0, None], xMaxN=4, yMaxN=4, leg_loc='upper left')
+    # P.conf_ax(xlab='time, $sec$', ylab=r'dispersal $(mm)$', xlim=[x[0], x[-1]], ylim=[0, None], xMaxN=4, yMaxN=4, leg_loc='upper left')
     P.conf_ax(xlab='time, $sec$', ylab=ylab, xlim=[x[0], x[-1]], ylim=[0, ymax], xMaxN=4, yMaxN=4)
     P.axs[0].legend(loc='upper left', fontsize=15)
-    #P.adjust((0.2 / fig_cols, 0.95), (0.15, 0.95), 0.05, 0.005)
+    # P.adjust((0.2 / fig_cols, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
 
@@ -849,8 +850,10 @@ def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_id
     return P.get()
 
 
-def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None, unit='sec', absolute=True,show_legend=True,
-             show_first=False, subfolder='timeplots', legend_loc='upper left',leg_fontsize=15, figsize=(7.5, 5), axs=None, fig=None,**kwargs):
+def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None, unit='sec', absolute=True,
+             show_legend=True,
+             show_first=False, subfolder='timeplots', legend_loc='upper left', leg_fontsize=15, figsize=(7.5, 5),
+             axs=None, fig=None, **kwargs):
     unit_coefs = {'sec': 1, 'min': 1 / 60, 'hour': 1 / 60 / 60}
     if len(pars) == 0:
         if len(par_shorts) == 0:
@@ -887,9 +890,9 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
     P.build(figsize=figsize, fig=fig, axs=axs)
     ax = P.axs[0]
     counter = 0
-    for p, symbol, ylab0,ylab, ylim, c in zip(pars, symbols, ylabs0,ylabs, ylims, cols):
-        if ylab0 is not None :
-            ylab=ylab0
+    for p, symbol, ylab0, ylab, ylim, c in zip(pars, symbols, ylabs0, ylabs, ylims, cols):
+        if ylab0 is not None:
+            ylab = ylab0
         P.conf_ax(xlab=f'time, ${unit}$' if table is None else 'timesteps', ylab=ylab, ylim=ylim, yMaxN=4)
         for d, d_col, d_lab in zip(P.datasets, P.colors, P.labels):
             if P.Ndatasets > 1:
@@ -914,10 +917,10 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                         ax.plot(x, dc_single, color=c, linewidth=1)
                     ax.plot(x, dc_m, color=c, linewidth=2)
                 else:
-                    plot_quantiles(df=dc, x=x, axis=ax, color_shading=c, label=symbol,linewidth=2)
+                    plot_quantiles(df=dc, x=x, axis=ax, color_shading=c, label=symbol, linewidth=2)
                     if show_first:
                         dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
-                        ax.plot(x, dc0, color=c, linestyle='dashed',linewidth=1)
+                        ax.plot(x, dc0, color=c, linestyle='dashed', linewidth=1)
                 counter += 1
             except:
                 pass
@@ -931,7 +934,8 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
     return P.get()
 
 
-def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspectrums', legend_loc='upper left',Nids=None,
+def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspectrums', legend_loc='upper left',
+                  Nids=None,
                   **kwargs):
     if len(pars) == 0:
         if len(par_shorts) == 0:
@@ -965,8 +969,8 @@ def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspe
             Nticks = len(dc.index.get_level_values('Step').unique())
             xf = fftfreq(Nticks, 1 / d.fr)[:Nticks // 2]
             ids = dc.index.get_level_values('AgentID').unique()
-            if Nids is not None :
-                ids=ids[:Nids]
+            if Nids is not None:
+                ids = ids[:Nids]
             yf0 = np.zeros(Nticks // 2)
             for id in ids:
                 dc_single = dc.xs(id, level='AgentID').values
@@ -997,9 +1001,6 @@ def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspe
         dataset_legend(P.labels, P.colors, ax=ax, loc=legend_loc, fontsize=15)
     P.adjust((0.2, 0.95), (0.15, 0.95))
     return P.get()
-
-
-
 
 
 def plot_navigation_index(subfolder='source', **kwargs):
@@ -1047,7 +1048,7 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
     P = Plot(name=name, subfolder=subfolder, **kwargs)
     pause_par = nam.dur('pause')
     if stridechain_duration:
-        chain_par = nam.dur('run')#nam.dur(nam.chain('stride'))
+        chain_par = nam.dur('run')  # nam.dur(nam.chain('stride'))
         chn_discr = False
         chain_xlabel = f'time $({time_unit})$'
         chn0 = 0.5
@@ -1236,8 +1237,8 @@ def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwa
     return P.get()
 
 
-def plot_endpoint_params(axs=None, fig=None,mode='basic', par_shorts=None, subfolder='endpoint',
-                         plot_fit=True,nbins = 20,Ncols = None,use_title=True,  **kwargs):
+def plot_endpoint_params(axs=None, fig=None, mode='basic', par_shorts=None, subfolder='endpoint',
+                         plot_fit=True, nbins=20, Ncols=None, use_title=True, **kwargs):
     warnings.filterwarnings('ignore')
     P = Plot(name=f'endpoint_params_{mode}', subfolder=subfolder, **kwargs)
     ylim = [0.0, 0.25]
@@ -1316,7 +1317,7 @@ def plot_endpoint_params(axs=None, fig=None,mode='basic', par_shorts=None, subfo
     if Npars == 0:
         return None
     elif Ncols is not None:
-        Nrows = int(np.ceil(Npars/Ncols))
+        Nrows = int(np.ceil(Npars / Ncols))
     elif Npars == 4:
         Ncols = 2
         Nrows = 2
@@ -1355,7 +1356,7 @@ def plot_endpoint_params(axs=None, fig=None,mode='basic', par_shorts=None, subfo
         P.plot_half_circles(p, i)
     P.adjust((0.1, 0.97), (0.17 / Nrows, 1 - (0.1 / Nrows)), 0.1, 0.2 * Nrows)
     dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper right', fontsize=15)
-    #P.axs[0].legend(loc='upper left', prop={'size': 15})
+    # P.axs[0].legend(loc='upper left', prop={'size': 15})
     return P.get()
 
 
@@ -2284,15 +2285,14 @@ def plot_sliding_window_analysis(dataset, parameter, flag, radius_in_sec, save_t
 
 def plot_spatiotemporal_variation(spatial_cvs, temporal_cvs, sizes=None, dataset=None,
                                   save_to=None, save_as=f'velocity_flag.{suf}'):
-
     Nvels = len(spatial_cvs)
     N_svels = int(Nvels / 2)
     N_lvels = int(Nvels / 2) - 1
     if save_to is None:
-        if dataset is not None :
+        if dataset is not None:
             save_to = dataset.plot_dir
-        else :
-            raise ValueError ('Provide "save_to" directory')
+        else:
+            raise ValueError('Provide "save_to" directory')
     if not os.path.exists(save_to):
         os.makedirs(save_to)
     filepath = os.path.join(save_to, save_as)
@@ -2323,60 +2323,59 @@ def plot_spatiotemporal_variation(spatial_cvs, temporal_cvs, sizes=None, dataset
     print(f'Image saved as {filepath}')
 
 
-
 def plot_segmentation_definition(subfolder='metric_definition', axs=None, fig=None, **kwargs):
     P = Plot(name=f'segmentation_definition', subfolder=subfolder, **kwargs)
-    P.build(1, P.Ndatasets*2, figsize=(5 * P.Ndatasets, 5), sharex=False, sharey=False, fig=fig, axs=axs)
-    Nbest=5
+    P.build(1, P.Ndatasets * 2, figsize=(5 * P.Ndatasets, 5), sharex=False, sharey=False, fig=fig, axs=axs)
+    Nbest = 5
     for ii, d in enumerate(P.datasets):
-        ax1, ax2=P.axs[ii * 2],P.axs[ii * 2+1]
+        ax1, ax2 = P.axs[ii * 2], P.axs[ii * 2 + 1]
         N = d.Nangles
         dic = d.load_vel_definition()
-        df_reg=dic['/bend2or_regression']
-        df_corr=dic['/bend2or_correlation']
+        df_reg = dic['/bend2or_regression']
+        df_corr = dic['/bend2or_correlation']
 
         df_reg.sort_index(inplace=True)
-        single_scores=df_reg['single_score'].values
-        cum_scores=df_reg['cum_score'].values
-        x= np.arange(1, N + 1)
+        single_scores = df_reg['single_score'].values
+        cum_scores = df_reg['cum_score'].values
+        x = np.arange(1, N + 1)
         ax1.scatter(x, single_scores, c='blue', alpha=1.0, marker=",", label='single', s=200)
         ax1.plot(x, single_scores, c='blue')
 
         ax1.scatter(x, cum_scores, c='green', alpha=1.0, marker="o", label='cumulative', s=200)
         ax1.plot(x, cum_scores, c='green')
 
-
-        P.conf_ax(ii*2, xlab=r'angular velocity, $\dot{\theta}_{i}$',ylab='regression score',
-        xticks=x,yMaxN=4, leg_loc='lower left')
+        P.conf_ax(ii * 2, xlab=r'angular velocity, $\dot{\theta}_{i}$', ylab='regression score',
+                  xticks=x, yMaxN=4, leg_loc='lower left')
 
         df_corr.sort_values('corr', ascending=False, inplace=True)
-        max_corrs=df_corr['corr'].values[:Nbest]
-        best_combos=df_corr.index.values[:Nbest]
+        max_corrs = df_corr['corr'].values[:Nbest]
+        best_combos = df_corr.index.values[:Nbest]
         xx = [','.join(map(str, cc)) for cc in best_combos]
         ax2.bar(x=xx, height=max_corrs, width=0.5, color='black')
-        P.conf_ax(ii * 2 +1, xlab='combined angular velocities', ylab='Pearson correlation',yMaxN=4, ylim=(0.5,1))
+        P.conf_ax(ii * 2 + 1, xlab='combined angular velocities', ylab='Pearson correlation', yMaxN=4, ylim=(0.5, 1))
         ax2.tick_params(axis='x', which='major', labelsize=20)
-        P.adjust(LR=(0.1,0.95), BT=(0.15,0.95), W=0.3)
+        P.adjust(LR=(0.1, 0.95), BT=(0.15, 0.95), W=0.3)
         return P.get()
 
-def plot_stride_variability(component_vels=True,subfolder='metric_definition', axs=None, fig=None, **kwargs):
+
+def plot_stride_variability(component_vels=True, subfolder='metric_definition', axs=None, fig=None, **kwargs):
     P = Plot(name=f'stride_spatiotemporal_variation', subfolder=subfolder, **kwargs)
     P.build(1, P.Ndatasets, figsize=(5 * P.Ndatasets, 5), sharex=True, sharey=True, fig=fig, axs=axs)
     for ii, d in enumerate(P.datasets):
-        ax=P.axs[ii]
+        ax = P.axs[ii]
         try:
             dic = d.load_vel_definition()
         except:
             d.save_vel_definition(component_vels=component_vels)
             dic = d.load_vel_definition()
-        stvar=dic['/stride_variability']
+        stvar = dic['/stride_variability']
         stvar.sort_values(by='idx', inplace=True)
         ps = stvar.index if component_vels else [p for p in stvar.index if 'lin' not in p]
         for p in ps:
             row = stvar.loc[p]
-            ax.scatter(x=row['scaled_stride_dst_var'], y=row['stride_dur_var'], marker=row['marker'],s=200,
-                        color=row['color'], label=row['symbol'])
-        ax.legend(ncol=2, handleheight=1.7, labelspacing=0.01,loc='lower right')
+            ax.scatter(x=row['scaled_stride_dst_var'], y=row['stride_dur_var'], marker=row['marker'], s=200,
+                       color=row['color'], label=row['symbol'])
+        ax.legend(ncol=2, handleheight=1.7, labelspacing=0.01, loc='lower right')
         ax.set_ylabel(r'$\overline{cv}_{temporal}$')
         ax.set_xlabel(r'$\overline{cv}_{spatial}$')
     return P.get()
@@ -2920,7 +2919,6 @@ def ggboxplot(p='length', subfolder='ggplot', **kwargs):
     return P.get()
 
 
-
 def plot_foraging(**kwargs):
     P = Plot(name='foraging', **kwargs)
     P.build(1, 2, figsize=(15, 10), sharex=True)
@@ -2956,7 +2954,7 @@ def plot_foraging(**kwargs):
     P.get()
 
 
-def annotated_strideplot(a, dt, a2plot=None,ax=None, ylim=None, xlim=None, show_extrema=True, show_strides=True,
+def annotated_strideplot(a, dt, a2plot=None, ax=None, ylim=None, xlim=None, show_extrema=True, show_strides=True,
                          moving_average_interval=None, **kwargs):
     """
     Plots annotated strides-runs and pauses in timeseries.
@@ -3000,10 +2998,9 @@ def annotated_strideplot(a, dt, a2plot=None,ax=None, ylim=None, xlim=None, show_
     i_min, i_max, strides, runs, run_counts = detect_strides(a=a, dt=dt, **kwargs)
     pauses = detect_pauses(a, dt, runs=runs)
 
-
     if moving_average_interval:
         a = moving_average(a, n=int(moving_average_interval / dt))
-    if a2plot is not None :
+    if a2plot is not None:
         ax.plot(trange, a2plot)
     else:
         ax.plot(trange, a)
@@ -3028,7 +3025,7 @@ def annotated_strideplot(a, dt, a2plot=None,ax=None, ylim=None, xlim=None, show_
     ax.legend(loc="upper right", handles=handles, labels=labels)
 
 
-def annotated_turnplot(a, dt, a2plot=None,ax=None,min_dur=None, min_amp=None,ylim=None, xlim=None,
+def annotated_turnplot(a, dt, a2plot=None, ax=None, min_dur=None, min_amp=None, ylim=None, xlim=None,
                        moving_average_interval=None, **kwargs):
     """
     Plots annotated turnss in timeseries.
@@ -3070,17 +3067,16 @@ def annotated_turnplot(a, dt, a2plot=None,ax=None,min_dur=None, min_amp=None,yli
         xlim = (0, trange[-1])
 
     Lturns, Rturns = detect_turns(a, dt, min_dur=min_dur)
-    if min_amp is not None :
+    if min_amp is not None:
         Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a, Lturns, dt)
         Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a, Rturns, dt)
-        Lturns=Lturns[np.abs(Lamps)>min_amp]
-        Rturns=Rturns[np.abs(Ramps)>min_amp]
+        Lturns = Lturns[np.abs(Lamps) > min_amp]
+        Rturns = Rturns[np.abs(Ramps) > min_amp]
     # pauses = detect_pauses(a, dt, runs=runs)
-
 
     if moving_average_interval:
         a = moving_average(a, n=int(moving_average_interval / dt))
-    if a2plot is not None :
+    if a2plot is not None:
         ax.plot(trange, a2plot)
     else:
         ax.plot(trange, a)
@@ -3099,7 +3095,53 @@ def annotated_turnplot(a, dt, a2plot=None,ax=None,min_dur=None, min_amp=None,yli
     ax.legend(loc="upper right", handles=handles, labels=labels)
 
 
-def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, angular=True, maxNpoints=5, save_to=None,
+def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16, short='fov', idx=0, Nbins=64,
+                            color_solo='grey', color='red',
+                            absolute=False, save_to=None, pooled=False,
+                            ylim=None, axs=None, fig=None, show=False):
+    from lib.conf.base.par import getPar
+    import lib.aux.naming as nam
+    p, sv, fv = getPar([short, 'sv', 'fv'])
+    if ss is None:
+        id = c.agent_ids[idx]
+        ee = e.loc[id]
+        ss = s.xs(id, level='AgentID')
+        fr = ee[fv]
+        dt = c.dt
+    ssp = ss[p].abs().values if absolute else ss[p].values
+    strides = detect_strides(ss[sv], dt, fr=fr, return_runs=False, return_extrema=False)
+    strides = strides.tolist()
+    pi2 = 2 * np.pi
+    x = np.linspace(0, pi2, Nbins)
+
+    if axs is None and fig is None:
+        fig, axs = plt.subplots(1, 1, figsize=(15, 6))
+
+        # fig.subplots_adjust(hspace=0.1, left=0.15, right=0.9, bottom=0.2, top=0.9)
+    aa = np.zeros([len(strides), Nbins])
+    for ii, (s0, s1) in enumerate(strides):
+        aa[ii, :] = np.interp(x, np.linspace(0, pi2, s1 - s0), ssp[s0:s1])
+        if not pooled:
+            axs.plot(x, aa[ii, :], color_solo, linewidth=1, alpha=0.5, zorder=2)
+
+    if pooled:
+        plot_quantiles(df=aa, from_np=True, axis=axs, color_shading=color, x=x)
+    else:
+        aa_mu = np.nanquantile(aa, q=0.5, axis=0)
+        axs.plot(x, aa_mu, color, linewidth=5, alpha=1.0, zorder=10)
+    axs.set_xlabel('$\phi_{stride}$')
+    axs.yaxis.set_major_locator(ticker.MaxNLocator(5))
+    axs.set_xlim([0, pi2])
+    axs.set_ylim(ylim)
+    axs.set_xticks(np.linspace(0, pi2, 5))
+    axs.set_xticklabels([r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
+    if save_to is not None:
+        fig.savefig(f'{save_to}/stride_cycle_individual.pdf', dpi=300)
+    if show:
+        plt.show()
+
+
+def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, short=None, ang_absolute=True, maxNpoints=5, save_to=None,
                             axs=None, fig=None, axx=None):
     from lib.conf.base.par import getPar
     import lib.aux.naming as nam
@@ -3117,18 +3159,20 @@ def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, angular=True, maxNpoints=5
     x = np.linspace(0, pi2, Nbins)
 
     if axs is None and fig is None and axx is None:
-        Nrows = 2 if angular else 1
+        Nrows = 2 if short else 1
         fig, axs = plt.subplots(Nrows, 1, figsize=(15, 6 * Nrows))
-        axs = axs.ravel() if angular else [axs]
+        axs = axs.ravel() if short else [axs]
         axx = fig.add_axes([0.64, 0.4, 0.25, 0.12])
         fig.subplots_adjust(hspace=0.1, left=0.15, right=0.9, bottom=0.2, top=0.9)
-    if angular:
+    if short is not None:
+        ang_p = getPar(short)
+        ss_ang = ss[ang_p].abs() if ang_absolute else ss[ang_p]
 
-        aa_fov = np.zeros([len(strides), Nbins])
+        aa_ang = np.zeros([len(strides), Nbins])
         for ii, (s0, s1) in enumerate(strides):
-            aa_fov[ii, :] = np.interp(x, np.linspace(0, pi2, s1 - s0), ss[fov].abs().values[s0:s1])
-        aa_fov /= ee[pau_fov_mu]
-        plot_quantiles(df=aa_fov, from_np=True, axis=axs[1], color_shading='blue', x=x, label='experiment')
+            aa_ang[ii, :] = np.interp(x, np.linspace(0, pi2, s1 - s0), ss_ang.values[s0:s1])
+        aa_ang /= ee[pau_fov_mu]
+        plot_quantiles(df=aa_ang, from_np=True, axis=axs[1], color_shading='blue', x=x, label='experiment')
         y_sim = (gaussian(x, ee[phi_att_max], 1) * ee[att_max] + ee[att_min])
         y_sim_max = np.max(y_sim)
         phi_sim_max = x[np.argmax(y_sim)]
@@ -3205,18 +3249,21 @@ def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, angular=True, maxNpoints=5
     # return fig, axs, axx
 
 
-def stride_cycle_solo(s, e,c, ang_short='fov', absolute=True, Nbins=64, color_solo='grey',color='red',
-                      scaled=False,axs=None, fig=None, pooled=False, **kwargs):
+def stride_cycle_solo(s, e, c, short='fov', par=None, absolute=True, Nbins=64, color_solo='grey', color='red',
+                      scaled=False, axs=None, fig=None, pooled=False, **kwargs):
     from lib.process.aux import detect_strides
     from lib.conf.base.par import ParDict
     dic = ParDict(mode='load').dict
     sv, pau_fov_mu = [dic[k]['d'] for k in ['sv', 'pau_fov_mu']]
-    ang, ang_label = dic[ang_short]['d'], dic[ang_short]['lab']
+    if par is not None:
+        ang, ang_label = par, par
+    else:
+        ang, ang_label = dic[short]['d'], dic[short]['lab']
     ids = s.index.unique('AgentID').values
     x = np.linspace(0, 2 * np.pi, Nbins)
     ys = np.zeros([len(ids), Nbins]) * np.nan
 
-    P = BasePlot(name=f'stride_cycle_solo_{ang_short}', **kwargs)
+    P = BasePlot(name=f'stride_cycle_solo_{short}', **kwargs)
     P.build(fig=fig, axs=axs, figsize=(20, 10))
     ax = P.axs[0]
     for jj, id in enumerate(ids):
@@ -3229,16 +3276,16 @@ def stride_cycle_solo(s, e,c, ang_short='fov', absolute=True, Nbins=64, color_so
         strides = detect_strides(a_sv, c.dt, return_runs=False, return_extrema=False)
         strides = strides.tolist()
         aa = np.zeros([len(strides), Nbins])
-        for ii, (s0,s1) in enumerate(strides):
+        for ii, (s0, s1) in enumerate(strides):
             aa[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_ang[s0:s1])
         ys[jj, :] = np.nanquantile(aa, q=0.5, axis=0)
         if not pooled:
             ax.plot(x, ys[jj, :], color_solo, linewidth=1, alpha=0.5, zorder=2)
-    if pooled :
+    if pooled:
         if scaled:
             ys /= e[pau_fov_mu].mean()
         plot_quantiles(df=ys, from_np=True, axis=ax, color_shading=color, x=x)
-    else :
+    else:
         ys_mu = np.nanquantile(ys, q=0.5, axis=0)
         ax.plot(x, ys_mu, color, linewidth=5, alpha=1.0, zorder=10)
     P.conf_ax(xticks=np.linspace(0, 2 * np.pi, 5), xlim=[0, 2 * np.pi],
@@ -3248,21 +3295,28 @@ def stride_cycle_solo(s, e,c, ang_short='fov', absolute=True, Nbins=64, color_so
         ax.axvline(xx, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
     return P.get()
 
-def stride_cycle(ang_short='fov',absolute=True, Nbins=64, scaled=False, pooled=True,axs=None, fig=None,  **kwargs):
-    P = Plot(name=f'stride_cycle_{ang_short}', **kwargs)
+
+def stride_cycle(short='fov', absolute=True, Nbins=64, scaled=False, pooled=True, axs=None, fig=None, **kwargs):
+    P = Plot(name=f'stride_cycle_{short}', **kwargs)
     P.build(fig=fig, axs=axs)
-    labels, colors=[], []
+    labels, colors = [], []
     for ii, d in enumerate(P.datasets):
         s, e, c = d.step_data, d.endpoint_data, d.config
         color = c.color if c.color is not None else 'black'
         labels.append(c.id)
         colors.append(color)
-        stride_cycle_solo(s, e,c, ang_short=ang_short,absolute=absolute,Nbins=Nbins,color=color,color_solo=color, scaled=scaled, pooled=pooled,  fig=P.fig, axs=P.axs[0])
-    dataset_legend(labels, colors,ax=P.axs[0], loc='upper left')
+        stride_cycle_solo(s, e, c, short=short, absolute=absolute, Nbins=Nbins, color=color, color_solo=color,
+                          scaled=scaled, pooled=pooled, fig=P.fig, axs=P.axs[0])
+    dataset_legend(labels, colors, ax=P.axs[0], loc='upper left')
 
     return P.get()
 
-def plot_fft(s, c, save_to=None, axx=None, ax=None, fig=None):
+
+def plot_fft(s, c,axx=None, ax=None, fig=None, **kwargs):
+    P = BasePlot(name=f'fft_powerspectrum', **kwargs)
+    P.build(fig=fig, axs=ax, figsize=(15, 12))
+    if axx is None:
+        axx = P.fig.add_axes([0.64, 0.65, 0.25, 0.2])
     xf = fftfreq(c.Nticks, c.dt)[:c.Nticks // 2]
 
     from lib.conf.base.par import getPar
@@ -3271,24 +3325,23 @@ def plot_fft(s, c, save_to=None, axx=None, ax=None, fig=None):
     ffovs = np.zeros(c.N) * np.nan
     v_ys = np.zeros([c.N, c.Nticks // 2])
     fov_ys = np.zeros([c.N, c.Nticks // 2])
-    if ax is None and fig is None and axx is None:
-        fig, ax = plt.subplots(1, 1, figsize=(15, 12))
-        axx = fig.add_axes([0.64, 0.65, 0.25, 0.2])
 
     for j, id in enumerate(c.agent_ids):
         ss = s.xs(id, level='AgentID')
         fvs[j], v_ys[j, :] = fft_max(ss[v], c.dt, fr_range=(1.0, 2.5), return_amps=True)
         ffovs[j], fov_ys[j, :] = fft_max(ss[fov], c.dt, fr_range=(0.1, 0.8), return_amps=True)
-    plot_quantiles(v_ys, from_np=True, x=xf, axis=ax, label='forward speed', color_shading='red')
-    plot_quantiles(fov_ys, from_np=True, x=xf, axis=ax, label='angular speed', color_shading='blue')
+    plot_quantiles(v_ys, from_np=True, x=xf, axis=P.axs[0], label='forward speed', color_shading='red')
+    plot_quantiles(fov_ys, from_np=True, x=xf, axis=P.axs[0], label='angular speed', color_shading='blue')
     xmax = 3.5
-    ax.set_ylim([0, 4])
-    ax.set_xlim([0, xmax])
-    ax.set_xlabel('Frequency (Hz)')
-    ax.set_ylabel('Amplitude')
-    ax.set_title('Fourier analysis')
-    ax.legend(loc='lower left')
-    ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
+    P.conf_ax(0,ylim=(0,4),xlim=(0,xmax),ylab='Amplitude',xlab='Frequency (Hz)',
+              title='Fourier analysis', leg_loc='lower left',yMaxN=5)
+    # ax.set_ylim([0, 4])
+    # ax.set_xlim([0, xmax])
+    # ax.set_xlabel('Frequency (Hz)')
+    # ax.set_ylabel('Amplitude')
+    # ax.set_title('Fourier analysis')
+    # ax.legend(loc='lower left')
+    # ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
 
     bins = np.linspace(0, 2, 40)
 
@@ -3302,10 +3355,11 @@ def plot_fft(s, c, save_to=None, axx=None, ax=None, fig=None):
     axx.tick_params(axis='both', which='major', labelsize=12)
     axx.yaxis.set_major_locator(ticker.MaxNLocator(2))
 
-    if save_to is not None:
-        # path = f'{save_to}/fft_amp.pdf'
-        # fig.savefig(f'{save_to}/fft_amp.eps', dpi=300)
-        fig.savefig(f'{save_to}/fft_amp.pdf', dpi=300)
+    return P.get()
+    # if save_to is not None:
+    #     path = f'{save_to}/fft_amp.pdf'
+    #     fig.savefig(f'{save_to}/fft_amp.eps', dpi=300)
+        # fig.savefig(f'{save_to}/fft_amp.pdf', dpi=300)
         # fig.savefig(f'{save_to}/fft_amp.png', dpi=300)
         # print(f'Plot saved as {path}')
     # return fig, [ax, axx]
@@ -3327,31 +3381,33 @@ def plot_trajectories_solo(s, c, unit='mm', fig=None, axs=None, **kwargs):
     return P.get()
 
 
-def plot_trajectories(axs=None, fig=None,unit='mm',subfolder='trajectories', **kwargs):
-    P = Plot(name=f'comparative_trajectories',subfolder=subfolder, **kwargs)
+def plot_trajectories(axs=None, fig=None, unit='mm', subfolder='trajectories', **kwargs):
+    P = Plot(name=f'comparative_trajectories', subfolder=subfolder, **kwargs)
     P.build(1, P.Ndatasets, figsize=(5 * P.Ndatasets, 5), sharex=True, sharey=True, fig=fig, axs=axs)
     for ii, d in enumerate(P.datasets):
         s, c = d.step_data, d.config
-        plot_trajectories_solo(s, c, unit=unit,fig=P.fig, axs=P.axs[ii])
+        plot_trajectories_solo(s, c, unit=unit, fig=P.fig, axs=P.axs[ii])
         if ii != 0:
             P.axs[ii].yaxis.set_visible(False)
     P.adjust((0.07, 0.95), (0.1, 0.95), 0.05, 0.005)
     return P.get()
 
-def odorscape_from_config(c, mode='2D', fig=None, axs=None, show=True, grid_dims=(201,201),col_max=(0,0,0), **kwargs) :
-    env=c.env_params
+
+def odorscape_from_config(c, mode='2D', fig=None, axs=None, show=True, grid_dims=(201, 201), col_max=(0, 0, 0),
+                          **kwargs):
+    env = c.env_params
     source = list(env.food_params.source_units.values())[0]
     a0, b0 = source.pos
     oP, oS = source.odor.odor_intensity, source.odor.odor_spread
     # print(oM,oS)
     # raise
     oD = multivariate_normal([0, 0], [[oS, 0], [0, oS]])
-    oM=oP / oD.pdf([0, 0])
-    if col_max is None :
-        col_max=source.default_color if source.default_color is not None else (0,0,0)
-    if grid_dims is not None :
-        X,Y=grid_dims
-    else :
+    oM = oP / oD.pdf([0, 0])
+    if col_max is None:
+        col_max = source.default_color if source.default_color is not None else (0, 0, 0)
+    if grid_dims is not None:
+        X, Y = grid_dims
+    else:
         X, Y = [51, 51] if env.odorscape.grid_dims is None else env.odorscape.grid_dims
     Xdim, Ydim = env.arena.arena_dims
     s = 1
@@ -3361,16 +3417,14 @@ def odorscape_from_config(c, mode='2D', fig=None, axs=None, show=True, grid_dims
     def func(a, b):
         return oD.pdf([a - a0, b - b0]) * oM
 
-    grid=func(Xmesh, Ymesh)
+    grid = func(Xmesh, Ymesh)
 
-
-
-    if mode=='2D' :
-        if fig is None and axs is None :
-            fig,axs=plt.subplots(1,1, figsize=(10,10*Ydim/Xdim))
-        q=grid.flatten()-np.min(grid)
-        q/=np.max(q)
-        cols=col_range(q, low=(255, 255, 255), high=col_max, mul255=False)
+    if mode == '2D':
+        if fig is None and axs is None:
+            fig, axs = plt.subplots(1, 1, figsize=(10, 10 * Ydim / Xdim))
+        q = grid.flatten() - np.min(grid)
+        q /= np.max(q)
+        cols = col_range(q, low=(255, 255, 255), high=col_max, mul255=False)
         x, y = Xmesh * 1000 / s, Ymesh * 1000 / s,
         axs.scatter(x=x, y=y, color=cols)
         axs.set_aspect('equal', adjustable='box')
@@ -3378,25 +3432,28 @@ def odorscape_from_config(c, mode='2D', fig=None, axs=None, show=True, grid_dims
         axs.set_ylim([np.min(y), np.max(y)])
         axs.set_xlabel(r'X $(mm)$')
         axs.set_ylabel(r'Y $(mm)$')
-        if show :
+        if show:
             plt.show()
     elif mode == '3D':
         return plot_surface(x=Xmesh * 1000 / s, y=Ymesh * 1000 / s, z=grid, vars=[r'X $(mm)$', r'Y $(mm)$'],
-                 target=r'concentration $(μM)$', save_as=f'odorscape', show=show, fig=fig,ax=axs, azim=0, elev=0)
+                            target=r'concentration $(μM)$', save_as=f'odorscape', show=show, fig=fig, ax=axs, azim=0,
+                            elev=0)
 
-def odorscape_with_sample_tracks(datasets,unit='mm', fig=None, axs=None,show=False,save_to=None,  **kwargs) :
+
+def odorscape_with_sample_tracks(datasets, unit='mm', fig=None, axs=None, show=False, save_to=None, **kwargs):
     scale = 1000 if unit == 'mm' else 1
     if fig is None and axs is None:
         fig, axs = plt.subplots(1, 1, figsize=(20, 20))
-    odorscape_from_config(datasets[0].config, mode='2D', fig=fig, axs=axs,show=False, **kwargs)
+    odorscape_from_config(datasets[0].config, mode='2D', fig=fig, axs=axs, show=False, **kwargs)
     for d in datasets:
         s, c = d.step_data, d.config
         xy = s[['x', 'y']].xs(c.agent_ids[0], level="AgentID").values * scale
         axs.plot(xy[:, 0], xy[:, 1], label=c.id, color=c.color)
     axs.legend(loc='upper left', fontsize=15)
-    if show :
+    if show:
         plt.show()
     return fig
+
 
 graph_dict = {
     'crawl pars': plot_crawl_pars,

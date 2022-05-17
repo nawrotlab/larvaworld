@@ -4,8 +4,10 @@ import numpy as np
 
 from lib.aux.ang_aux import rotate_around_point
 import lib.aux.dictsNlists as dNl
+from lib.aux.xy_aux import xy_projection
 from lib.model.agents._larva import Larva
-from lib.model.body.body import draw_body_midline, draw_body_head, draw_body_centroid, draw_selected_body
+from lib.model.body.body import draw_body_midline, draw_body_head, draw_body_centroid, draw_selected_body, draw_body, \
+    draw_body_orientation
 from lib.model.body.controller import BodyReplay
 
 
@@ -36,16 +38,26 @@ class LarvaReplay(Larva, BodyReplay):
         for i, p in enumerate(self.behavior_pars):
             if p in vp_beh:
                 self.beh_ar[:, i] = np.array([not v for v in np.isnan(data[p].values).tolist()])
-
+        self.ang_ar = np.deg2rad(data[m.ang_pars].values) if m.Nangles > 0 else np.ones([N, m.Nangles]) * np.nan
+        self.or_ar = np.deg2rad(data[m.or_pars].values) if m.Nors > 0 else np.ones([N, m.Nors]) * np.nan
+        self.bend_ar = np.deg2rad(data['bend'].values) if 'bend' in data.columns else np.ones(N) * np.nan
+        self.front_or_ar = np.deg2rad(
+            data['front_orientation'].values) if 'front_orientation' in data.columns else np.ones(N) * np.nan
+        self.rear_or_ar = np.deg2rad(
+            data['rear_orientation'].values) if 'rear_orientation' in data.columns else np.ones(N) * np.nan
+        self.head_or_ar = np.deg2rad(
+            data['head_orientation'].values) if 'head_orientation' in data.columns else np.ones(N) * np.nan
+        self.tail_or_ar = np.deg2rad(
+            data['tail_orientation'].values) if 'tail_orientation' in data.columns else np.ones(N) * np.nan
         if self.Nsegs is not None:
-            self.ang_ar = np.deg2rad(data[m.ang_pars].values) if m.Nangles > 0 else np.ones([N, m.Nangles]) * np.nan
-            self.or_ar = np.deg2rad(data[m.or_pars].values) if m.Nors > 0 else np.ones([N, m.Nors]) * np.nan
-            self.bend_ar = np.deg2rad(data['bend'].values) if 'bend' in data.columns else np.ones(N) * np.nan
-            self.front_or_ar = np.deg2rad(
-                data['front_orientation'].values) if 'front_orientation' in data.columns else np.ones(N) * np.nan
+            # self.ang_ar = np.deg2rad(data[m.ang_pars].values) if m.Nangles > 0 else np.ones([N, m.Nangles]) * np.nan
+            # self.or_ar = np.deg2rad(data[m.or_pars].values) if m.Nors > 0 else np.ones([N, m.Nors]) * np.nan
+            # self.bend_ar = np.deg2rad(data['bend'].values) if 'bend' in data.columns else np.ones(N) * np.nan
+            # self.front_or_ar = np.deg2rad(
+            #     data['front_orientation'].values) if 'front_orientation' in data.columns else np.ones(N) * np.nan
             # FIXME Here the sim_length is not divided by 1000 because all xy coords are in mm
-            BodyReplay.__init__(self, model, pos=self.pos, orientation=self.or_ar[0][0],
-                                initial_length=self.sim_length, length_std=0, Nsegs=self.Nsegs, interval=0)
+            BodyReplay.__init__(self, model=model, pos=self.pos,orientation=self.or_ar[0][0],default_color=self.default_color,
+                                initial_length=self.real_length, length_std=0, Nsegs=self.Nsegs, interval=0)
         self.data = data
 
     def compute_step(self, i):
@@ -56,13 +68,16 @@ class LarvaReplay(Larva, BodyReplay):
         self.pos = self.pos_ar[i]
         self.trajectory = self.pos_ar[:i, :].tolist()
         self.beh_dict = dNl.AttrDict.from_nested_dicts(dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist())))
-        if self.Nsegs is not None:
-            self.angles = self.ang_ar[i]
-            self.orients = self.or_ar[i]
-            self.front_orientation = self.front_or_ar[i]
-            self.bend = self.bend_ar[i]
-            for p in ['front_orientation_vel']:
-                setattr(self, p, self.data[p].values[i] if p in self.data.columns else np.nan)
+        # if self.Nsegs is not None:
+        self.angles = self.ang_ar[i]
+        self.orients = self.or_ar[i]
+        self.front_orientation = self.front_or_ar[i]
+        self.rear_orientation = self.rear_or_ar[i]
+        self.head_orientation = self.head_or_ar[i]
+        self.tail_orientation = self.tail_or_ar[i]
+        self.bend = self.bend_ar[i]
+        for p in ['front_orientation_vel']:
+            setattr(self, p, self.data[p].values[i] if p in self.data.columns else np.nan)
 
     def step(self):
         m = self.model
@@ -95,29 +110,32 @@ class LarvaReplay(Larva, BodyReplay):
                 segs[1].update_poseNvertices(pos2, b_or)
                 self.midline = np.array([p_head, self.pos, p_tail])
 
-    def draw(self, viewer, filled=True):
-        r, c, m, v = self.radius, self.color, self.model, self.vertices
-
-        pos = self.cen_pos if not np.isnan(self.cen_pos).any() else self.pos
-        mid = self.midline
-        if m.draw_contour:
-            if self.Nsegs is not None:
-                for seg in self.segs:
-                    seg.draw(viewer)
-            elif len(v) > 0:
-                viewer.draw_polygon(v, color=c)
-
-        if m.draw_centroid:
-            draw_body_centroid(viewer, pos, r, c)
-
-        if m.draw_midline:
-            draw_body_midline(viewer, mid, r)
-
-        if m.draw_head:
-            draw_body_head(viewer, mid, r)
-
-        if self.selected:
-            draw_selected_body(viewer, pos, v, r, m.selection_color)
-
     def set_color(self, color):
         self.color = color
+
+    def draw(self, viewer, filled=True):
+        # r, c, m, v = self.radius, self.color, self.model, self.vertices
+
+        pos = self.cen_pos if not np.isnan(self.cen_pos).any() else self.pos
+
+        draw_orientations = False
+        if draw_orientations:
+            # draw_body_orientation(viewer, self.midline[1], self.head_orientation, self.radius, 'green')
+            # draw_body_orientation(viewer, self.midline[-2], self.tail_orientation, self.radius, 'red')
+            draw_body_orientation(viewer, self.midline[5], self.front_orientation, self.radius, 'green')
+            draw_body_orientation(viewer, self.midline[6], self.rear_orientation, self.radius, 'red')
+
+        if self.model.draw_contour:
+
+            if self.Nsegs is not None:
+
+                for seg in self.segs:
+                    seg.draw(viewer)
+            elif len(self.vertices) > 0:
+                viewer.draw_polygon(self.vertices, color=self.color)
+
+        draw_body(viewer=viewer, model=self.model, pos=pos, midline_xy=self.midline, contour_xy=None,
+                  radius=self.radius, vertices=self.vertices, color=self.color, selected=self.selected)
+
+
+

@@ -13,8 +13,44 @@ from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni, build_
 from lib.conf.stored.conf import *
 from lib.stor.larva_dataset import LarvaDataset
 
+def import_dataset(N,datagroup_id= 'Schleyer lab',id=None, group_id= 'exploration',min_duration_in_sec = 180,
+                   age=96.0,parent_dir='no_odor',merged=True,enrich=True,add_reference=True, **kwargs):
+    # N = 150
+    group = null_dict('LarvaGroup', sample=None, model=None, life_history={'age': age, 'epochs': {}})
+    group.distribution.N = N
 
-def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None, **kwargs):
+    # gID = 'exploration'
+    # datagroup_id = 'Schleyer lab'
+    if id is None :
+        id = f'{N}controls'
+
+    g = loadConf(datagroup_id, 'Group')
+    group_dir = f'{paths.path("DATA")}/{g["path"]}'
+    raw_folder = f'{group_dir}/raw'
+    proc_folder = f'{group_dir}/processed'
+    # parent_dir = 'no_odor'
+    target_dir = f'{proc_folder}/{group_id}'
+    source_dir = f'{raw_folder}/{parent_dir}'
+    if merged :
+        source_dir = [f'{source_dir}/{f}' for f in os.listdir(source_dir)]
+    # conf = s1.get_dict(v, w)
+    kws = {
+        'datagroup_id': datagroup_id,
+        'larva_groups': {group_id: group},
+        'target_dir': target_dir,
+        'source_dir': source_dir,
+        'max_Nagents': N,
+        'min_duration_in_sec': min_duration_in_sec,
+        # 'build_conf':g.tracker
+        **kwargs
+    }
+    d = build_dataset(id=id, **kws)
+    if enrich :
+        d.enrich(**g.enrichment, add_reference=add_reference)
+
+    return d
+
+def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None,larva_groups={}, **kwargs):
     warnings.filterwarnings('ignore')
     g = loadConf(datagroup_id, 'Group')
     build_conf = g.tracker.filesystem
@@ -29,7 +65,7 @@ def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None,
         pass
 
     d = LarvaDataset(dir=target_dir, id=id, metric_definition=metric_definition, env_params=env_params,
-                     load_data=False, **data_conf)
+                     load_data=False,larva_groups=larva_groups,  **data_conf)
 
 
     if datagroup_id in [ 'Jovanic lab']:
@@ -276,6 +312,13 @@ def split_dataset(step,end, food, larva_groups,dir, id,plot_dir,  show_output=Fa
 
 
 if __name__ == '__main__':
+    from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf
+
+    d=import_dataset(3)
+    print(d.config.refID)
+
+
+    raise
     n='visualization'
     d0 = init_pars().get(n, None)
     d = {}

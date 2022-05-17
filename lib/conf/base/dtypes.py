@@ -277,14 +277,15 @@ def metric_def(ang={}, sp={}, **kwargs):
                      )
 
 
-def enr_dict(proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, def_kws={}, **kwargs):
-    metrdef = metric_def(**def_kws)
+def enr_dict(proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, def_kws={},metric_definition=None, **kwargs):
+    if metric_definition is None:
+        metric_definition = metric_def(**def_kws)
     pre = null_dict('preprocessing', **pre_kws)
     proc = null_dict('processing', **{k: True if k in proc else False for k in proc_type_keys})
     annot = null_dict('annotation', **{k: True if k in bouts else False for k in bout_keys}, fits=fits,
                       on_food=on_food)
     to_drop = null_dict('to_drop', **{k: True if k not in to_keep else False for k in to_drop_keys})
-    dic = null_dict('enrichment', metric_definition=metrdef, preprocessing=pre, processing=proc, annotation=annot,
+    dic = null_dict('enrichment', metric_definition=metric_definition, preprocessing=pre, processing=proc, annotation=annot,
                     to_drop=to_drop, **kwargs)
     return dic
 

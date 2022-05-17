@@ -662,7 +662,21 @@ def fft_freqs(s, e, c):
     e['turner_input_constant'] = (e[ffov] / 0.024) + 5
 
 
-def compute_interference_solo(a_sv,a_fov,a_foa,dt, Nbins=64, strict=True, absolute=True) :
+def mean_stride_curve(a, strides,Nbins=64,strict=False, absolute=True) :
+    x = np.linspace(0, 2 * np.pi, Nbins)
+    if strict:
+        strides = [(s0, s1) for s0, s1 in strides if
+                   all(np.sign(a[s0:s1]) >= 0) or all(np.sign(a[s0:s1]) <= 0)]
+    aa = np.zeros([len(strides), Nbins])
+    for ii, (s0, s1) in enumerate(strides):
+        aa[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a[s0:s1])
+    if absolute:
+        aa = np.abs(aa)
+
+    curve = np.nanquantile(aa, q=0.5, axis=0)
+    return curve
+
+def compute_interference_solo(a_sv,a_fov,a_foa,a_rov,dt, Nbins=64, strict=True, absolute=True) :
     strides = detect_strides(a_sv, dt, return_runs=False, return_extrema=False)
     x = np.linspace(0, 2 * np.pi, Nbins)
 
@@ -672,36 +686,43 @@ def compute_interference_solo(a_sv,a_fov,a_foa,dt, Nbins=64, strict=True, absolu
     # print(len(strides))
     ar_sv = np.zeros([len(strides), Nbins])
     ar_fov = np.zeros([len(strides), Nbins])
+    ar_rov = np.zeros([len(strides), Nbins])
     ar_foa = np.zeros([len(strides), Nbins])
     for ii, (s0, s1) in enumerate(strides):
         ar_fov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_fov[s0:s1])
+        ar_rov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_rov[s0:s1])
         ar_sv[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_sv[s0:s1])
         ar_foa[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_foa[s0:s1])
     if absolute:
+        ar_rov = np.abs(ar_rov)
         ar_fov = np.abs(ar_fov)
         ar_foa = np.abs(ar_foa)
+    rov_curve = np.nanquantile(ar_rov, q=0.5, axis=0)
     fov_curve = np.nanquantile(ar_fov, q=0.5, axis=0)
     sv_curve = np.nanquantile(ar_sv, q=0.5, axis=0)
     foa_curve = np.nanquantile(ar_foa, q=0.5, axis=0)
-    return fov_curve, sv_curve, foa_curve
+    return fov_curve, sv_curve, foa_curve,rov_curve
 
 
 def compute_interference(s, e, c, Nbins=64,strict=False, **kwargs):
     from lib.conf.base.par import getPar
     import lib.aux.naming as nam
     from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
-    l, v, sv, dst, acc, fov, foa, b, bv, ba, fv, fsv, ffov, pau_fov_mu = \
-        getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv', 'fsv', 'ffov', 'pau_fov_mu'])
+    l, v, sv, dst, acc, fov,rov, foa, b, bv, ba, fv, fsv, ffov, pau_fov_mu = \
+        getPar(['l', 'v', 'sv', 'd', 'a', 'fov','rov', 'foa', 'b', 'bv', 'ba', 'fv', 'fsv', 'ffov', 'pau_fov_mu'])
     x = np.linspace(0, 2 * np.pi, Nbins)
     sv_curves = np.zeros([c.N, Nbins]) * np.nan
     fov_curves = np.zeros([c.N, Nbins]) * np.nan
+    rov_curves = np.zeros([c.N, Nbins]) * np.nan
     foa_curves = np.zeros([c.N, Nbins]) * np.nan
     for jj, id in enumerate(c.agent_ids):
         a_sv = s[sv].xs(id, level="AgentID").values
         a_fov = s[fov].xs(id, level="AgentID").values
+        a_rov = s[rov].xs(id, level="AgentID").values
         a_foa = s[foa].xs(id, level="AgentID").values
-        fov_curve, sv_curve, foa_curve = compute_interference_solo(a_sv,a_fov,a_foa, c.dt, Nbins,strict=strict, **kwargs)
+        fov_curve, sv_curve, foa_curve,rov_curve = compute_interference_solo(a_sv,a_fov,a_foa,a_rov, c.dt, Nbins,strict=strict, **kwargs)
         fov_curves[jj, :] = fov_curve
+        rov_curves[jj, :] = rov_curve
         sv_curves[jj, :] = sv_curve
         foa_curves[jj, :] = foa_curve
 
@@ -717,12 +738,14 @@ def compute_interference(s, e, c, Nbins=64,strict=False, **kwargs):
 
 
     pooled_fov_curve = np.nanquantile(fov_curves, q=0.5, axis=0)
+    pooled_rov_curve = np.nanquantile(rov_curves, q=0.5, axis=0)
     pooled_sv_curve = np.nanquantile(sv_curves, q=0.5, axis=0)
     pooled_foa_curve = np.nanquantile(foa_curves, q=0.5, axis=0)
 
     c.pooled_cycle_curves = {
         'sv': pooled_sv_curve.tolist(),
         'fov': pooled_fov_curve.tolist(),
+        'rov': pooled_rov_curve.tolist(),
         'foa': pooled_foa_curve.tolist()
     }
 

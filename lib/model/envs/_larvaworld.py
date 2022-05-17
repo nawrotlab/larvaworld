@@ -129,7 +129,7 @@ class LarvaWorld:
                                               font=pygame.font.SysFont("comicsansms", 25))
         self.end_condition_met = False
 
-        if 'windscape' in self.env_pars.keys() and self.env_pars.windscape is not None and self.env_pars.windscape.wind_speed is not None:
+        if 'windscape' in self.env_pars.keys() and self.env_pars.windscape is not None :
             self.windscape = WindScape(model=self, **self.env_pars.windscape)
         else:
             self.windscape = None

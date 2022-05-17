@@ -17,6 +17,7 @@ from lib.conf.base import paths
 class LarvaWorldSim(LarvaWorld):
     def __init__(self, output=None, trials={}, parameter_dict={}, **kwargs):
         super().__init__(**kwargs)
+
         self.sim_epochs = trials
         for idx, ep in self.sim_epochs.items():
             ep['start'] = int(ep['start'] * 60 / self.dt)

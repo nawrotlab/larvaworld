@@ -247,6 +247,9 @@ class DefaultSegment(BodySegment):
     def get_angularvelocity(self):
         return self.ang_vel
 
+    def get_linearvelocity(self):
+        return self.lin_vel
+
     def set_lin_vel(self, lin_vel):
         self.lin_vel = lin_vel
 

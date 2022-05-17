@@ -7,6 +7,7 @@ from shapely.ops import cascaded_union
 
 import lib.aux.dictsNlists as dNl
 from lib.aux.sim_aux import generate_seg_shapes, circle_to_polygon
+from lib.aux.xy_aux import xy_projection
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
 
 
@@ -38,7 +39,7 @@ class LarvaShape:
         if initial_orientation is None:
             initial_orientation = random.uniform(0, 2 * np.pi)
         self.initial_orientation = initial_orientation
-        if initial_pos in [None, (None,None)]:
+        if initial_pos is None:
             initial_pos = (0.0, 0.0)
         self.initial_pos = initial_pos
         ls_x = [np.cos(initial_orientation) * l for l in self.seg_lengths]
@@ -206,6 +207,10 @@ class LarvaShape:
         # print(tuple(self.olfactor_pos))
         # raise
         return Point(self.olfactor_pos[0],self.olfactor_pos[1])
+
+    @property
+    def midline_xy(self):
+        return [self.get_global_front_end_of_seg(i) for i in range(self.Nsegs)] + [self.global_rear_end_of_body]
 
 
 class LarvaBody(LarvaShape):
@@ -475,45 +480,22 @@ class LarvaBody(LarvaShape):
                                filled=True, color=(255, 0, 0), width=.1)
 
     def draw(self, viewer):
-        m = self.model
-        c, r = self.head.color, self.radius
-        h_pos = self.global_front_end_of_head
-        # pos = self.get_position()
         pos = tuple(self.pos)
-        mid = [self.get_global_front_end_of_seg(i) for i in range(self.Nsegs)] + [self.global_rear_end_of_body]
-
-        if m.draw_contour:
-            for seg in self.segs:
-                seg.draw(viewer)
-        else:
-            self.contour = self.set_contour(self.segs)
-            viewer.draw_polygon(self.contour, c, True, r / 5)
-
-        if m.draw_head:
-            draw_body_head(viewer, h_pos, r)
-
-        if m.draw_midline:
-            draw_body_midline(viewer, mid, r)
-
-        if m.draw_centroid:
-            draw_body_centroid(viewer, pos, r, c)
-
-        # if True:
-        if m.draw_sensors:
+        if self.model.draw_sensors:
             self.draw_sensors(viewer)
 
-        if self.selected:
-            draw_selected_body(viewer, pos, self.get_shape().boundary.coords, r, m.selection_color)
-            # try:
-            #     viewer.draw_polygon(self.get_shape().boundary.coords, cc, False, r / 10)
-            #     # for seg in self.segs:
-            #     #     for i, vertices in enumerate(seg.vertices):
-            #     #         viewer.draw_polygon(vertices, c, False, r)
-            # except:
-            #     viewer.draw_circle(pos, r, cc, False, r/5)
 
-        # for sigma in self.get_sensors() :
-        #     self.draw_sensor(viewer, sigma)
+
+        if self.model.draw_contour:
+            if self.Nsegs is not None:
+                for seg in self.segs:
+                    seg.draw(viewer)
+        else:
+            self.contour = self.set_contour(self.segs)
+            viewer.draw_polygon(self.contour, self.head.color, True, self.radius / 5)
+
+        draw_body(viewer=viewer, model=self.model, pos=pos,  midline_xy=self.midline_xy, contour_xy=None,
+                  radius=self.radius, vertices=self.get_shape().boundary.coords, color=self.default_color, selected=self.selected)
 
     def plot_vertices(self, axes, **kwargs):
         for seg in self.segs:
@@ -654,6 +636,24 @@ class LarvaBody(LarvaShape):
 
 #
 
+def draw_body(viewer, model, pos, midline_xy, contour_xy, radius, vertices, color, selected=False) :
+    if model.draw_centroid:
+        draw_body_centroid(viewer, pos, radius, color)
+
+
+
+    if model.draw_contour:
+        draw_body_contour(viewer, contour_xy, radius)
+
+    if model.draw_midline:
+        draw_body_midline(viewer, midline_xy, radius)
+
+    if model.draw_head:
+        draw_body_head(viewer, midline_xy, radius)
+
+    if selected:
+        draw_selected_body(viewer, pos, vertices, radius, model.selection_color)
+
 
 def draw_body_midline(viewer, midline_xy, radius):
     try:
@@ -699,3 +699,10 @@ def draw_selected_body(viewer, pos, contour_xy, radius, color):
             viewer.draw_circle(pos, radius=radius, filled=False, color=color, width=radius / 3)
     except:
         pass
+
+
+def draw_body_orientation(viewer, pos,orientation, radius,color) :
+    viewer.draw_line(pos, xy_projection(pos, orientation, radius * 3),
+                     color=color, width=radius / 10)
+    # viewer.draw_line(self.midline[-1], xy_projection(self.midline[-1], self.rear_orientation, self.radius * 3),
+    #                  color=self.color, width=self.radius / 10)

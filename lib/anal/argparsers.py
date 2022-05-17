@@ -421,9 +421,9 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
         elif conf_type == 'Ga':
             if type(models)==list :
                 if models[0] in kConfDict('Model') :
-                    exp_conf.base_model = models[0]
+                    exp_conf.ga_build_kws.base_model = models[0]
                 if len(models)>=2 :
-                    exp_conf.bestConfID = models[1]
+                    exp_conf.ga_build_kws.bestConfID = models[1]
     if N is not None:
         if conf_type == 'Exp':
             for gID, gConf in exp_conf.larva_groups.items():

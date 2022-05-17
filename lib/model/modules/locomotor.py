@@ -97,7 +97,7 @@ class DefaultLocomotor(Locomotor):
             self.turner = Turner(dt=self.dt, **c.turner_params)
         if m['feeder']:
             self.feeder = Feeder(dt=self.dt, **c.feeder_params)
-        if c.interference_params is None:
+        if c.interference_params is None or not m['interference']:
             self.coupling = DefaultCoupling(locomotor=self, attenuation=1)
         else:
             mode = c.interference_params.mode if 'mode' in c.interference_params.keys() else 'default'
@@ -134,10 +134,10 @@ class DefaultLocomotor(Locomotor):
             if self.coupling.suppression_mode == 'amplitude':
                 cT = self.coupling.step()
             elif self.coupling.suppression_mode == 'oscillation':
-                A_in += (1 - self.coupling.step())
+                A_in -= (1 - self.coupling.step())
                 cT = 1
             elif self.coupling.suppression_mode == 'both':
-                A_in += (1 - self.coupling.step())
+                A_in -= (1 - self.coupling.step())
                 cT = self.coupling.step()
             self.ang_activity = self.turner.step(A_in=A_in)
             self.cur_ang_suppression=cT

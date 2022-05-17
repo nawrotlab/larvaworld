@@ -5,7 +5,7 @@ import time
 
 import numpy as np
 
-from lib.aux.ang_aux import restore_bend, restore_bend_2seg
+from lib.aux.ang_aux import restore_bend, restore_bend_2seg, _restore_angle, rear_orientation_change, wrap_angle_to_0
 from lib.aux.sim_aux import inside_polygon
 from lib.ga.geometry.point import Point
 from lib.ga.geometry.util import detect_nearest_obstacle, radar_tuple
@@ -13,22 +13,22 @@ from lib.model.body.body import LarvaBody
 from lib.aux.ang_aux import angle_dif
 
 class BodyManager(LarvaBody):
-    def __init__(self, model, pos, orientation, **kwargs) :
-        super().__init__(model=model, pos=pos, orientation=orientation, **kwargs)
+    def __init__(self, **kwargs) :
+        super().__init__(**kwargs)
 
 class BodyReplay(BodyManager):
-    def __init__(self, model, pos, orientation, **kwargs) :
-        super().__init__(model=model, pos=pos, orientation=orientation, **kwargs)
+    def __init__(self, **kwargs) :
+        super().__init__(**kwargs)
 
 class BodySim(BodyManager):
-    def __init__(self, model, pos, orientation,density=300.0,
+    def __init__(self, density=300.0,
                  lin_vel_coef=1.0, ang_vel_coef=1.0, lin_force_coef=1.0, torque_coef=1.0,
                  lin_mode='velocity', ang_mode='torque', body_spring_k=1.0, bend_correction_coef=1.0,
                  lin_damping=1.0, ang_damping=1.0, **kwargs):
         self.lin_damping = lin_damping
         self.ang_damping = ang_damping
 
-        super().__init__(model=model, pos=pos, orientation=orientation, density=density, **kwargs)
+        super().__init__(density=density, **kwargs)
 
         self.body_spring_k = body_spring_k
         self.bend_correction_coef = bend_correction_coef
@@ -42,6 +42,7 @@ class BodySim(BodyManager):
         self.body_bend_errors = 0
         self.Nangles_b = int(self.Nangles + 1 / 2)
         self.spineangles = [0.0]*self.Nangles
+        self.rear_orientation_change = 0
         self.compute_body_bend()
         self.torque = 0
         self.mid_seg_index = int(self.Nsegs / 2)
@@ -113,6 +114,7 @@ class BodySim(BodyManager):
     #     pass
 
     def Box2D_kinematics(self):
+        self.compute_body_bend()
         if self.ang_mode == 'velocity':
             ang_vel = self.ang_activity * self.ang_vel_coef
             ang_vel = self.compute_ang_vel(v=ang_vel, c=0,  k=self.body_spring_k, b=self.body_bend)
@@ -166,22 +168,25 @@ class BodySim(BodyManager):
 
     def get_vels(self, lin, ang, prev_ang_vel, ang_suppression):
         if self.lin_mode == 'velocity':
-            lin_vel = lin * self.lin_vel_coef
+            if lin!=0:
+                lin_vel = lin * self.lin_vel_coef
+            else :
+                lin_vel = self.head.get_linearvelocity()*(1-self.lin_damping*self.model.dt)
         else:
             raise ValueError(f'Linear mode {self.lin_mode} not implemented for non-physics simulation')
         if self.ang_mode == 'torque':
-            self.torque =ang * self.torque_coef
+            self.torque =ang * self.torque_coef*ang_suppression
             ang_vel = self.compute_ang_vel(torque=self.torque,
                                            v=prev_ang_vel, b=self.body_bend,
                                            c=self.ang_damping,  k=self.body_spring_k)
         elif self.ang_mode == 'velocity':
             ang_vel = ang * self.ang_vel_coef
-        ang_vel*=ang_suppression
+        # ang_vel*=ang_suppression
         return lin_vel, ang_vel
 
     def step(self):
         self.cum_dur += self.model.dt
-        self.restore_body_bend(self.dst, self.real_length)
+        # self.restore_body_bend(self.dst, self.real_length)
         pos = self.olfactor_pos
         self.food_detected, self.current_foodtype = self.detect_food(pos)
         self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.step(pos, reward= self.food_detected is not None)
@@ -207,12 +212,17 @@ class BodySim(BodyManager):
             lin_vel, ang_vel = self.get_vels(self.lin_activity, self.ang_activity, self.head.get_angularvelocity(),
                                              self.brain.locomotor.cur_ang_suppression)
             lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
-            self.dst = lin_vel * self.model.dt
-            self.cum_dst += self.dst
-            self.position_body(lin_vel=lin_vel, ang_vel=ang_vel)
-            self.trajectory.append(self.pos)
-            self.model.space.move_agent(self, self.pos)
 
+            self.position_body(lin_vel=lin_vel, ang_vel=ang_vel)
+            self.compute_body_bend()
+            self.trajectory.append(self.pos)
+        self.complete_step()
+
+
+
+    def complete_step(self):
+        if not self.model.Box2D :
+            self.model.space.move_agent(self, self.pos)
         self.update_larva()
         for o in self.carried_objects:
             o.pos = self.pos
@@ -238,27 +248,6 @@ class BodySim(BodyManager):
         dtI=self.model.dt/I
         return v + (-c * v - k * b + torque) * dtI
 
-    # def compute_ang_vel2(self, k, c, torque, v, b, I=1):
-    #     dtI = self.model.dt / I
-    #     dv = (-c * v - k * b) * dtI
-    #     v0 = v + dv
-    #     if v0 * v < 0:
-    #         v0 = 0
-    #     v1 = v0 + torque * dtI
-    #
-    #     return v1
-
-    def restore_body_bend(self,d,l):
-        if not self.model.Box2D:
-            if self.Nsegs == 2:
-                self.spineangles[0] = restore_bend_2seg(self.spineangles[0], d, l,
-                                                                        correction_coef=self.bend_correction_coef)
-            else:
-                self.spineangles = restore_bend(self.spineangles, d, l, self.Nsegs,
-                                                           correction_coef=self.bend_correction_coef)
-        else :
-            self.compute_spineangles()
-        self.compute_body_bend()
 
     def update_trajectory(self):
         last_pos = self.trajectory[-1]
@@ -273,67 +262,50 @@ class BodySim(BodyManager):
         self.head_contacts_ground = value
 
 
-    def position_body(self, lin_vel, ang_vel):
-        hp0, o0 = self.head.get_pose()
-        hr0 = self.global_rear_end_of_head
-        ang_vel, o1, hr1, hp1 = self.assess_tank_contact(ang_vel, o0, self.dst, hr0, hp0, self.model.dt, self.seg_lengths[0])
-
-        self.head.update_all(hp1, o1, lin_vel, ang_vel)
-        self.position_rest_of_body(o0=o0, pos=hr1, o1=o1)
-        self.pos = self.global_midspine_of_body if self.Nsegs != 2 else hr1
+    def position_body(self, lin_vel, ang_vel, tank_contact=True):
+        self.dst = lin_vel * self.model.dt
+        self.cum_dst += self.dst
+        self.rear_orientation_change = rear_orientation_change(self.body_bend, self.dst, self.real_length,
+                                                               correction_coef=self.bend_correction_coef)
 
 
-
-    def position_rest_of_body(self, o0, pos, o1):
-        N = self.Nsegs
-        if N == 1:
-            pass
-        else:
-            if N == 2:
-                self.spineangles[0]=self.check_bend_error(self.spineangles[0]+ o1-o0)
-
-                o2 = (o1 - self.spineangles[0])% (np.pi * 2)
-                k2 = np.array([math.cos(o2), math.sin(o2)])
-                p2 = pos - k2 * self.seg_lengths[1] / 2
-                self.tail.update_poseNvertices(p2, o2)
-            else:
-                bend_per_spineangle = (o1-o0) / (N / 2)
-                for i, (seg, l) in enumerate(zip(self.segs[1:], self.seg_lengths[1:])):
-                    if i == 0:
-                        global_p = pos
-                        previous_seg_or = o1
-                    else:
-                        global_p = self.get_global_rear_end_of_seg(seg_index=i)
-                        previous_seg_or = self.segs[i].get_orientation()
-                    if i + 1 <= N / 2:
-                        self.spineangles[i] = self.check_bend_error(self.spineangles[i] + bend_per_spineangle)
-                    new_or = (previous_seg_or - self.spineangles[i])% (np.pi * 2)
-                    kk = np.array([math.cos(new_or), math.sin(new_or)])
-                    new_p = global_p - kk * l / 2
-                    seg.update_poseNvertices(new_p, new_or)
-            self.compute_body_bend()
-
-    def compute_spineangles(self):
-        if self.Nangles==1:
-            self.spineangles =[angle_dif(self.head.get_orientation(), self.tail.get_orientation(), in_deg=False)]
+        hp0, ho0 = self.head.get_pose()
+        if tank_contact :
+            hr0 = self.global_rear_end_of_head
+            ang_vel, ho1, hr1, hp1 = self.assess_tank_contact(ang_vel, ho0, self.dst, hr0, hp0, self.model.dt, self.seg_lengths[0])
         else :
-            self.spineangles = [angle_dif(self.segs[i].get_orientation(), self.segs[i + 1].get_orientation(), in_deg=False) for i in range(self.Nangles)]
+            d_or = ang_vel * self.model.dt
+            if np.abs(d_or) > np.pi:
+                self.body_bend_errors += 1
+            ho1 = ho0 + d_or
+            k = np.array([math.cos(ho1), math.sin(ho1)])
+            hp1 = hp0 + k * self.dst
+
+        self.head.update_all(hp1, ho1, lin_vel, ang_vel)
+        if self.Nsegs>1 :
+            for i, (seg, l) in enumerate(zip(self.segs[1:], self.seg_lengths[1:])):
+                self.position_seg(seg, d_or=self.rear_orientation_change / (self.Nsegs - 1),
+                                  front_end_pos=self.get_global_rear_end_of_seg(seg_index=i),seg_length=l)
+        self.pos = self.global_midspine_of_body
+
+    def position_seg(self, seg, d_or, front_end_pos, seg_length):
+        p0, o0 = seg.get_pose()
+        o1 = o0 + d_or
+        k = np.array([math.cos(o1), math.sin(o1)])
+        p1 = front_end_pos - k * seg_length / 2
+        seg.update_poseNvertices(p1, o1)
 
     def compute_body_bend(self):
-        self.body_bend = sum(self.spineangles[:self.Nangles_b])
+        self.spineangles = [angle_dif(self.segs[i].get_orientation(), self.segs[i + 1].get_orientation(), in_deg=False) for i in range(self.Nangles)]
+        self.body_bend = wrap_angle_to_0(sum(self.spineangles[:self.Nangles_b]))
 
-    def check_bend_error(self, a):
-        if np.abs(a) > np.pi:
-            self.body_bend_errors += 1
-            a = (a + np.pi) % (np.pi * 2) - np.pi
-        return a
+
 
     @property
     def border_collision(self):
         if len(self.model.border_walls) == 0:
             return False
         else:
-
             x,y=self.pos
             p0=Point(x,y)
             d0 = self.sim_length / 4
@@ -343,7 +315,6 @@ class BodySim(BodyManager):
 
 
             if min_dst is None:
-                # no obstacle detected
                 return False
             else :
                 return True

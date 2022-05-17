@@ -210,6 +210,7 @@ class LarvaDataset:
             store[k] = v
 
         store.close()
+        self.define_linear_metrics()
         self.save_config(add_reference=add_reference)
         print(f'Velocity definition dataset stored.')
 
@@ -430,18 +431,23 @@ class LarvaDataset:
         dic['cen_p'] = cen_p = nam.xy('centroid') if set(nam.xy('centroid')).issubset(s0.columns) else []
         dic['con_p'] = con_p = [xy for xy in self.contour_xy if set(xy).issubset(s0.columns)]
         dic['chunk_p'] = chunk_p = [p for p in ['stride_stop', 'stride_id', 'pause_id', 'feed_id'] if p in s0.columns]
-        if draw_Nsegs is None:
-            dic['ang_p'] = ang_p = []
-            dic['ors_p'] = ors_p = []
-        elif draw_Nsegs == 2 and {'bend', 'front_orientation'}.issubset(s0.columns):
-            dic['ang_p'] = ang_p = ['bend']
-            dic['ors_p'] = ors_p = ['front_orientation']
-        elif draw_Nsegs == len(mid_p) - 1 and set(nam.orient(self.segs)).issubset(s0.columns):
-            dic['ang_p'] = ang_p = []
+        dic['ang_p'] = ang_p = ['bend'] if 'bend' in s0.columns else []
+
+        dic['ors_p'] = ors_p = [p for p in ['front_orientation','rear_orientation','head_orientation','tail_orientation'] if p in s0.columns]
+        if draw_Nsegs == len(mid_p) - 1 and set(nam.orient(self.segs)).issubset(s0.columns):
             dic['ors_p'] = ors_p = nam.orient(self.segs)
-        else:
-            raise ValueError(
-                f'The required angular parameters for reconstructing a {draw_Nsegs}-segment body do not exist')
+        # if draw_Nsegs is None:
+        #     dic['ang_p'] = ang_p = []
+        #     dic['ors_p'] = ors_p = []
+        # elif draw_Nsegs == 2 and {'bend', 'front_orientation'}.issubset(s0.columns):
+        #     dic['ang_p'] = ang_p = ['bend']
+        #     dic['ors_p'] = ors_p = ['front_orientation']
+        # elif draw_Nsegs == len(mid_p) - 1 and set(nam.orient(self.segs)).issubset(s0.columns):
+        #     dic['ang_p'] = ang_p = []
+        #     dic['ors_p'] = ors_p = nam.orient(self.segs)
+        # else:
+        #     raise ValueError(
+        #         f'The required angular parameters for reconstructing a {draw_Nsegs}-segment body do not exist')
 
         pars = dNl.unique_list(cen_p + pos_p + ang_p + ors_p + chunk_p + dNl.flatten_list(mid_p + con_p))
 
@@ -531,7 +537,7 @@ class LarvaDataset:
         replay_env.run()
         print('Visualization complete')
 
-    def visualize_single(self, id=0, close_view=True, fix_point=-1, fix_segment=None, save_to=None,
+    def visualize_single(self, id=0, close_view=True, fix_point=-1, fix_segment=None, save_to=None,time_range=None,
                          draw_Nsegs=None, vis_kwargs=None, **kwargs):
         from lib.model.envs._larvaworld_replay import LarvaWorldReplay
         from lib.process.spatial import fixate_larva
@@ -541,14 +547,23 @@ class LarvaDataset:
         if s0 is None:
             self.save_agents(ids=[id])
             s0, e0 = self.load_agent(id)
+        env_params = self.env_params
         if close_view:
             from lib.conf.base.dtypes import null_dict
-            env_params = {'arena': null_dict('arena', arena_dims=(0.01, 0.01))}
+            env_params.arena =  null_dict('arena', arena_dims=(0.01, 0.01))
+        # else:
+        #     env_params = self.env_params
+
+        if time_range is None:
+            s00 = copy.deepcopy(s0)
         else:
-            env_params = self.env_params
-        dic, pars, track_point = self.get_pars_list(fix_point, s0, draw_Nsegs)
-        s, bg = fixate_larva(s0, point=fix_point, fix_segment=fix_segment,
-                             arena_dims=env_params['arena']['arena_dims'], config=self.config)
+            a, b = time_range
+            a = int(a / self.dt)
+            b = int(b / self.dt)
+            s00 = copy.deepcopy(s0.loc[slice(a, b)])
+        dic, pars, track_point = self.get_pars_list(fix_point, s00, draw_Nsegs)
+        s, bg = fixate_larva(s00, point=fix_point, fix_segment=fix_segment,
+                             arena_dims=env_params.arena.arena_dims, config=self.config)
         if save_to is None:
             save_to = self.vis_dir
         replay_id = f'{id}_fixed_at_{fix_point}'
@@ -662,16 +677,23 @@ class LarvaDataset:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
-    def enrich(self, metric_definition, preprocessing={}, processing={}, annotation={},
-               to_drop={}, recompute=False, mode='minimal', show_output=True, is_last=True, **kwargs):
+    def enrich(self, metric_definition=None, preprocessing={}, processing={}, annotation={},
+               to_drop={}, recompute=False, mode='minimal', show_output=True, is_last=True,
+               add_reference = False, **kwargs):
+        c=self.config
         md = metric_definition
-        for k, v in md.items():
-            if v is None:
-                md[k] = {}
-        # print(md)
-        self.config.metric_definition.angular.hardcoded.update(**md['angular'])
-        self.config.metric_definition.spatial.hardcoded.update(**md['spatial'])
-        self.define_linear_metrics()
+        if md is None :
+            md=c.metric_definition
+        else :
+            c.metric_definition.angular.hardcoded.update(**md['angular'])
+            c.metric_definition.spatial.hardcoded.update(**md['spatial'])
+            self.define_linear_metrics()
+
+        # for k, v in md.items():
+        #     if v is None:
+        #         md[k] = {}
+        # # print(md)
+
         from lib.process.basic import preprocess, process
         from lib.process.bouts import annotate
         #print()
@@ -681,7 +703,7 @@ class LarvaDataset:
         cc = {
             's': self.step_data,
             'e': self.endpoint_data,
-            'c': self.config,
+            'c': c,
             'show_output': show_output,
             'recompute': recompute,
             'mode': mode,
@@ -692,7 +714,7 @@ class LarvaDataset:
         annotate(**annotation, **cc, **kwargs, **md['stride'], **md['turn'], **md['pause'])
         self.drop_pars(**to_drop, **cc)
         if is_last:
-            self.save()
+            self.save(add_reference=add_reference)
         return self
 
     def get_par(self, par, key=None):
@@ -756,7 +778,7 @@ class LarvaDataset:
         path = os.path.join(self.dir_dict.chunk_dicts, f'{id}.txt')
         return dNl.load_dict(path, use_pickle=True)
 
-    def get_chunks(self, chunk, shorts, min_dur=0, max_dur=np.inf):
+    def get_chunks(self, chunk, shorts, min_dur=0, max_dur=np.inf, idx=None):
         min_ticks = int(min_dur / self.config.dt)
         from lib.conf.base.par import getPar
         pars = getPar(shorts)
@@ -764,7 +786,13 @@ class LarvaDataset:
 
         dic = self.load_chunk_dicts()
         chunks = []
-        for id in self.agent_ids:
+        if idx is None :
+            ids =self.agent_ids
+        elif type(idx)==int :
+            ids = [self.agent_ids[idx]]
+        elif type(idx)==list :
+            ids = [self.agent_ids[idxx] for idxx in idx]
+        for id in ids:
             sss = ss.xs(id, level='AgentID')
             p01s = dic[id][chunk]
             p_ticks = np.diff(p01s).flatten()
@@ -805,8 +833,24 @@ class LarvaDataset:
 
         intermitter = null_dict('intermitter')
         intermitter.stridechain_dist = c.bout_distros.run_count
+        try :
+            ll1,ll2 =intermitter.stridechain_dist.range
+            intermitter.stridechain_dist.range = (int(ll1),int(ll2))
+        except:
+            pass
+
         intermitter.run_dist = c.bout_distros.run_dur
+        try :
+            ll1,ll2 =intermitter.run_dist.range
+            intermitter.run_dist.range = (np.round(ll1,2),np.round(ll2,2))
+        except:
+            pass
         intermitter.pause_dist = c.bout_distros.pause_dur
+        try :
+            ll1,ll2 =intermitter.pause_dist.range
+            intermitter.pause_dist.range = (np.round(ll1,2),np.round(ll2,2))
+        except:
+            pass
         intermitter.crawl_freq = np.round(e[fsv].median(), 2)
 
         at_phiM = np.round(e['phi_attenuation_max'].median(), 1)

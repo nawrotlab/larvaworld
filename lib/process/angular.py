@@ -52,9 +52,8 @@ def comp_bend(s, e, c, mode='minimal'):
         return
     elif b_conf == 'from_vectors':
         print(f'Computing bending angle as the difference between front and rear orients')
-        # s['bend'] = s.apply(lambda r: angle_dif(r[nam.orient('front')], r[nam.orient('rear')]), axis=1)
-        # FIXME Probably this is the right one
-        s['bend'] = s.apply(lambda r: angle_dif(r[nam.orient('front')], 180-r[nam.orient('rear')]), axis=1)
+        s['bend'] = s.apply(lambda r: angle_dif(r[nam.orient('front')], r[nam.orient('rear')]), axis=1)
+        # s['bend'] = s.apply(lambda r: angle_dif(r[nam.orient('front')], 180-r[nam.orient('rear')]), axis=1)
     elif b_conf == 'from_angles':
         bend_angles = comp_angles(s, e, c, mode=mode)
         print(f'Computing bending angle as the sum of the first {len(bend_angles)} front angles')
@@ -71,6 +70,7 @@ def compute_LR_bias(s, e):
                 e.loc[id, nam.mean(p)] = b.mean()
                 e.loc[id, nam.std(p)] = b.std()
     print('LR biases computed')
+
 
 
 def comp_orientations(s, e, c, mode='minimal'):
@@ -91,29 +91,37 @@ def comp_orientations(s, e, c, mode='minimal'):
         r1, r2 = temp.rear_vector
 
     xy = [nam.xy(points[i]) for i in range(len(points))]
-    print(f'Computing front and rear orients')
-    xy_pars = flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1]])
-    xy_ar = s[xy_pars].values
-    Npoints = int(xy_ar.shape[1] / 2)
-    Nticks = xy_ar.shape[0]
-    xy_ar = np.reshape(xy_ar, (Nticks, Npoints, 2))
+    print(f'Computing front/rear body-vector and head/tail orientation angles')
+    pars=nam.orient(['front','rear', 'head', 'tail'])
+    Npars=len(pars)
 
-    cc = np.zeros([2, Nticks]) * np.nan
+    # xy_pars = flatten_list([xy[i] for i in [1, 0, 10, 11]])
+    xy_pars = flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1, 1,0,-1,-2]])
+    # xy_pars = flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1]])
+    xy_ar = s[xy_pars].values
+    Nticks = xy_ar.shape[0]
+    xy_ar = np.reshape(xy_ar, (Nticks, Npars*2, 2))
+
+
+
+    cc = np.zeros([Npars, Nticks]) * np.nan
     for i in range(Nticks):
-        for j in range(2):
+        for j in range(Npars):
             cc[j, i] = angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :])
-    for z, a in enumerate([nam.orient('front'), nam.orient('rear')]):
+    for z, a in enumerate(pars):
         s[a] = cc[z].T
         e[nam.initial(a)] = s[a].dropna().groupby('AgentID').first()
+
+
     if mode == 'full':
         N = len(segs)
         print(f'Computing additional orients for {N} spinesegments')
         ors = nam.orient(segs)
         xy_pars = flatten_list([xy[i] for i in range(N + 1)])
         xy_ar = s[xy_pars].values
-        Npoints = int(xy_ar.shape[1] / 2)
+        # Npoints = int(xy_ar.shape[1] / 2)
         Nticks = xy_ar.shape[0]
-        xy_ar = np.reshape(xy_ar, (Nticks, Npoints, 2))
+        xy_ar = np.reshape(xy_ar, (Nticks, N*2, 2))
         cc = np.zeros([N, Nticks]) * np.nan
         for i in range(Nticks):
             cc[:, i] = np.array([angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])

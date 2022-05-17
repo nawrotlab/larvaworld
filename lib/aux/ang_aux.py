@@ -4,6 +4,12 @@ import time
 
 import numpy as np
 
+def wrap_angle_to_0(a, in_deg=False):
+    lim=np.pi if not in_deg else 180
+    if np.abs(a) > lim:
+        # self.body_bend_errors += 1
+        a = (a + lim) % (lim * 2) - lim
+    return a
 
 def _restore_angle(a, d, l, n, num_segments, correction_coef):
     k0 = (l * n / num_segments) / correction_coef
@@ -17,14 +23,14 @@ def _restore_angle(a, d, l, n, num_segments, correction_coef):
         return 0, a
 
 
-def restore_bend(state, d, l, num_segments, correction_coef=1.0):
-    nstate = []
+def restore_bend(angles, d, l, num_segments, correction_coef=1.0):
+    new_angles = []
     da = 0
-    for i, a in enumerate(state):
-        na, k = _restore_angle(a + da, d, l, i, num_segments, correction_coef=correction_coef)
+    for i, angle in enumerate(angles):
+        new_angle, k = _restore_angle(angle + da, d, l, i, num_segments, correction_coef=correction_coef)
         da = k
-        nstate.append(na)
-    return nstate
+        new_angles.append(new_angle)
+    return new_angles
 
 
 def restore_bend_2seg(bend, d, l, correction_coef=1.0):
@@ -35,6 +41,15 @@ def restore_bend_2seg(bend, d, l, correction_coef=1.0):
         return 0
     elif k0 < 0:
         return bend
+
+def rear_orientation_change(bend, d, l, correction_coef=1.0):
+    k0 = 2*d*correction_coef/ l
+    if 0 <= k0 < 1:
+        return bend * k0
+    elif 1 <= k0:
+        return bend
+    elif k0 < 0:
+        return 0
 
 
 def angle(a, b, c, in_deg=True):

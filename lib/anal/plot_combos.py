@@ -108,8 +108,8 @@ def average_model_summary(refID, mID, save_to=None,save_as='average_model') :
 
     ax3 = fig.add_subplot(gs[hl30:hl31, 1:2 * ww - 4])
     ax4 = fig.add_subplot(gs[hl40:hl41, 1:2 * ww - 4])
-    _ = stride_cycle_solo(s, e, c, ang_short='sv', absolute=False, pooled=False,save_to=None, fig=fig, axs=ax3)
-    _ = stride_cycle_solo(s, e, c, ang_short='fov', pooled=False,save_to=None, fig=fig, axs=ax4)
+    _ = stride_cycle_solo(s, e, c, short='sv', absolute=False, pooled=False,save_to=None, fig=fig, axs=ax3)
+    _ = stride_cycle_solo(s, e, c, short='fov', pooled=False,save_to=None, fig=fig, axs=ax4)
     ax3.xaxis.set_visible(False)
 
     ax51 = fig.add_subplot(gs[hl50:hl51, 1:ww-2])

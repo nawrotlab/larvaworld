@@ -731,38 +731,37 @@ class ParDict:
                  s=th('wind'), exists=False, wrap_mode='zero', lim=(-180.0, 180.0))
 
         self.add(p='bend', k='b', u=1 * siu.deg, d='bend', s=th('b'), wrap_mode='zero')
-        fo = sub('or', 'f')
-        ro = sub('or', 'r')
-        self.add(p='front_orientation', k='fo', u=1 * siu.deg, d=nam.orient('front'), s=th(fo),
-                 wrap_mode='positive')
-        self.add(p='rear_orientation', k='ro', u=1 * siu.deg, d=nam.orient('rear'), s=th(ro),
-                 wrap_mode='positive')
-        self.add(p='front_orientation_unwrapped', k='fou', u=1 * siu.deg,
-                 d=nam.unwrap(nam.orient('front')),
-                 s=th(fo), wrap_mode=None)
-        self.add(p='rear_orientation_unwrapped', k='rou', u=1 * siu.deg,
-                 s=th(ro), wrap_mode=None)
+        self.add_diff(k0='b')
+        self.add_rate(k0='b', k_den='dt', k='bv', d=nam.vel('bend'),s=omega('b'))
+        self.add_diff(k0='bv')
+        self.add_rate(k0='bv', k_den='dt', k='ba', d=nam.acc('bend'))
+        for kk0 in ['b', 'bv', 'ba']:
+            self.add_mean(k0=kk0)
+            self.add_std(k0=kk0)
+            self.add_freq(k0=kk0)
 
-        for k0, kv, ka, s in zip(['b', 'fou', 'rou'], ['bv', 'fov', 'rov'],
-                                 ['ba', 'foa', 'roa'], ['b', fo, ro]):
-            self.add_diff(k0=k0)
-            self.add_rate(k0=k0, k_den='dt', k=kv)
 
-            if k0 == 'fou':
-                k0 = 'fo'
-            elif k0 == 'rou':
-                k0 = 'ro'
-            self.dict[kv].d = nam.vel(self.dict[k0].d)
-            self.dict[kv].s = dot_th(s)
+        for ii1,ii2 in zip(['front','rear', 'head', 'tail'], ['f', 'r', 'h', 't']) :
+            k=f'{ii2}o'
+            kk=f'{k}u'
+            kv=f'{k}v'
+            ka=f'{k}a'
+            p=f'{ii1}_orientation'
+            pp=f'{p}_unwrapped'
+            s=sub('or',ii2)
+            d = nam.orient(ii1)
+            dd = nam.unwrap(d)
+            self.add(p=p, k=k, u=1 * siu.deg, d=d, s=th(s),wrap_mode='positive')
+            self.add(p=pp, k=kk, u=1 * siu.deg,d=dd,s=th(s), wrap_mode=None)
+            self.add_diff(k0=kk)
+            self.add_rate(k0=kk, k_den='dt', k=kv, d=nam.vel(d),s=omega(ii2))
             self.add_diff(k0=kv)
-            self.add_rate(k0=kv, k_den='dt', k=ka)
-            self.dict[ka].d = nam.acc(self.dict[k0].d)
-            self.dict[ka].s = ddot_th(s)
+            self.add_rate(k0=kv, k_den='dt', k=ka, d=nam.acc(d))
+            for kk0 in [kv,ka] :
+                self.add_mean(k0=kk0)
+                self.add_std(k0=kk0)
+                self.add_freq(k0=kk0)
 
-        for k0 in ['b', 'bv', 'rov', 'fov']:
-            self.add_mean(k0=k0)
-            self.add_std(k0=k0)
-            self.add_freq(k0=k0)
 
     def build_neural(self):
         self.add(p='amount_eaten', k='f_am', u=1 * siu.m ** 3, d='ingested_food_volume', s=sub('V', 'in'),
@@ -1017,15 +1016,16 @@ if __name__ == '__main__':
     # print(dic['str_d_std']['lim'])
 
 
-    aaa=getPar(['run_t', 'pau_tr'], to_return=['d','l'])
+    # aaa=getPar(['run_t', 'pau_tr'], to_return=['d','l'])
 
-    print(aaa)
-    # d=ParDict(mode='build').dict
+    # print(aaa)
+    d=ParDict(mode='build').dict
     raise
     # print(us)
     # # d = ParDict(mode='reconstruct').dict
     # print(d.keys())
     # raise
-    for short in ['str_t_std', 'pau_fov_std','ffov']:
+    for short in ['to', 'tou','tov', 'toa']:
+
         p = getPar(short)
         print(p)

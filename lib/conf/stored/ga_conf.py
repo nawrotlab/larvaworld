@@ -12,14 +12,16 @@ from lib.conf.stored.conf import expandConf, copyConf, saveConf, loadConf, next_
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 
 from lib.ga.util.ga_engine import GAlauncher
-from lib.process.aux import compute_interference_solo
+from lib.process.aux import compute_interference_solo, detect_strides, mean_stride_curve
 
 ga_spaces = AttrDict.from_nested_dicts({
-    'interference': ga_dict(name='interference', suf='brain.interference_params.', excluded=['feeder_phi_range']),
+    'interference': ga_dict(name='interference', suf='brain.interference_params.',
+                            excluded=['feeder_phi_range', 'mode', 'suppression_mode', 'crawler_phi_range']),
     'turner': ga_dict(name='turner', suf='brain.turner_params.',
                       excluded=['mode', 'noise', 'activation_noise', 'initial_amp', 'amp_range', 'initial_freq',
                                 'freq_range', 'activation_range']),
-    'physics': ga_dict(name='physics', suf='physics.', excluded=['ang_mode', 'ang_vel_coef', 'bend_correction_coef']),
+    'physics': ga_dict(name='physics', suf='physics.',
+                       excluded=['ang_mode', 'lin_damping', 'ang_vel_coef', 'bend_correction_coef']),
     'sensorimotor': ga_dict(name='obstacle_avoidance', suf='sensorimotor.', excluded=[]),
     'olfactor': {**ga_dict(name='olfactor', suf='brain.olfactor_params.', excluded=['input_noise']),
                  'brain.olfactor_params.odor_dict.Odor.mean': {'initial_value': 0.0, 'tooltip': 'Odor gain',
@@ -28,14 +30,19 @@ ga_spaces = AttrDict.from_nested_dicts({
 })
 
 
-def interference_evaluation(robot, target_fov_curve):
-    robot.finalize(eval_shorts=['b', 'fov', 'foa'],)
-    fov_curve = robot.interference_curves(strict=False)['fov']
-    if any(np.isnan(fov_curve)):
-        return -np.inf
-    else:
-        return - np.nanmean(np.sqrt(np.nansum((fov_curve - target_fov_curve) ** 2)))
-
+def interference_evaluation(robot, pooled_cycle_curves):
+    robot.finalize(eval_shorts=['b', 'fov', 'foa', 'rov'])
+    strides= detect_strides(robot.eval.sv, robot.model.dt, return_extrema=False, return_runs=False)
+    RSS_dic={}
+    cumRSS=0
+    for sh,target in pooled_cycle_curves.items():
+        curve = mean_stride_curve(robot.eval[sh], strides, strict=False)
+        if any(np.isnan(curve)) :
+            return -np.inf
+        RSS = np.nanmean(np.sqrt(np.nansum((curve - target) ** 2)))
+        cumRSS+=RSS
+        # RSS_dic[sh] = np.nanmean(np.sqrt(np.nansum((curve - target) ** 2)))
+    return -cumRSS
 
 def distro_KS_evaluation(robot, eval_shorts, eval_labels, eval):
     robot.finalize(eval_shorts)
@@ -51,10 +58,13 @@ def distro_KS_evaluation(robot, eval_shorts, eval_labels, eval):
     return -np.mean(list(ks.values()))
 
 
-def distro_KS_interference_evaluation(robot, eval_shorts, eval_labels, eval, target_fov_curve):
-    r1 = int(distro_KS_evaluation(robot, eval_shorts, eval_labels, eval) * 10 ** 2)
-    r2 = int(interference_evaluation(robot, target_fov_curve))
-    return r1 + r2
+def distro_KS_interference_evaluation(robot, eval_shorts, eval_labels, eval, pooled_cycle_curves):
+    r1 = distro_KS_evaluation(robot, eval_shorts, eval_labels, eval)
+    r2 = interference_evaluation(robot, pooled_cycle_curves)
+    if np.isinf(r1) or np.isinf(r2):
+        return -np.inf
+    else:
+        return r1 * 500 + r2
 
 
 def dst2source_evaluation(robot):
@@ -64,7 +74,7 @@ def dst2source_evaluation(robot):
 
 
 def cum_dst(robot):
-    return robot.cum_dst/robot.real_length
+    return robot.cum_dst / robot.real_length
 
 
 fitness_funcs = AttrDict.from_nested_dicts({
@@ -134,7 +144,7 @@ def bend_error_exclusion(robot):
 
 
 def ga_conf(name, spaceIDs, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, dur=3, N=30, Nel=3, m0='Sakagiannis2022',
-            m1=None, sel={}, build={},arena_size=None,
+            m1=None, sel={}, build={}, arena_size=None,
             envID=None, fitID=None, plotID=None, init='random', excl_func=None, robot_class=LarvaRobot, **kwargs):
     space_dict = {}
     for spaceID in spaceIDs:
@@ -158,8 +168,8 @@ def ga_conf(name, spaceIDs, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, du
 
     if envID is not None:
         kws['env_params'] = expandConf(envID, 'Env')
-        if arena_size is not None :
-            kws['env_params'].arena.arena_dims=(arena_size, arena_size)
+        if arena_size is not None:
+            kws['env_params'].arena.arena_dims = (arena_size, arena_size)
     if fitID is not None:
         build_kws['fitness_func'] = fitness_funcs[fitID]
     if plotID is not None:
@@ -177,18 +187,21 @@ def ga_conf(name, spaceIDs, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, du
 # env.arena.arena_dims = (0.2, 0.2)
 
 ga_dic = AttrDict.from_nested_dicts({
-    **ga_conf('interference', dt=1 / 16,dur=1, refID='None.40controls', m0='fitted_navigator',m1='fitted_navigator',
-              fit_kws={'target_fov_curve': None},init='random',
-              spaceIDs=['interference'], fitID='interference', plotID='interference',
+    **ga_conf('interference', dt=1 / 16, dur=1, refID='exploration.150controls', m0='150l_explorer',
+              m1='150l_explorer2',
+              fit_kws={'pooled_cycle_curves': ['fov', 'rov']}, init='random',
+              spaceIDs=['interference','physics'], fitID='interference', plotID='interference',
               Nel=6, N=60, envID='arena_200mm'),
-    **ga_conf('exploration', dur=1, dt=1 / 16, refID='None.40controls', m0='40l_explorer',
-              m1='40l_explorer', fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'tur_fou', 'tur_t', 'tor5']},
-              spaceIDs=['physics'], fitID='distro_KS', plotID='distro_KS',init='random',
+    **ga_conf('exploration', dur=1, dt=1 / 16, refID='exploration.150controls', m0='150l_explorer',
+              m1='150l_explorer2', fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov', 'tur_fou', 'tor5']},
+              spaceIDs=['physics'], fitID='distro_KS', plotID='distro_KS', init='random',
               excl_func=bend_error_exclusion,
-              Nel=2, N=20, envID='arena_200mm'),
-    **ga_conf('realism', dur=1, dt=1 / 16, refID='None.40controls', m0='average_explorer',m1='average_explorer*',
-              fit_kws={'eval_shorts': ['b',  'tur_fou', 'tur_t', 'tor2'], 'target_fov_curve': None},excl_func=bend_error_exclusion,
-              spaceIDs=['interference'], fitID='distro_KS_interference', plotID='distro_KS', init='model',
+              Nel=5, N=50, envID='arena_200mm'),
+    **ga_conf('realism', dur=0.5, dt=1 / 16, refID='exploration.150controls', m0='150l_explorer', m1='150l_explorer2',
+              fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov'], 'pooled_cycle_curves': ['fov', 'rov']},
+              excl_func=bend_error_exclusion,
+              spaceIDs=['interference', 'physics', 'turner'], fitID='distro_KS_interference', plotID='distro_KS',
+              init='model',
               Nel=2, N=10, envID='arena_200mm'),
     **ga_conf('chemorbit', dur=5, m0='Sakagiannis2022', m1='best_navigator',
               spaceIDs=['olfactor'], fitID='dst2source',
@@ -199,108 +212,12 @@ ga_dic = AttrDict.from_nested_dicts({
               scene='obstacle_avoidance_700', arena_size=0.04)
 })
 
-#
-# ga_dic2 = AttrDict.from_nested_dicts({
-#     'interference': {
-#     'ga_kws': {
-#         'base_model': 'Sakagiannis2022*',
-#         'space_dict': ga_spaces.interference,
-#         'fitness_func': fitness_funcs.interference,
-#         'fitness_target_refID': 'None.100controls',
-#         'fitness_target_kws': {'target_fov_curve': None},
-#         'plot_func': plot_funcs.interference,
-#         'Nelits': 4,
-#         'Nagents': 40,
-#         # 'Pmutation': 0,
-#         # 'selection_ratio': 1,
-#         'max_Nticks': 400
-#     },
-#     'experiment': 'interference',
-#     'env_params': expandConf('arena_200mm', 'Env'),
-#     'scene_file': '../../ga/saved_scenes/no_boxes.txt'
-# },
-#     'exploration': {
-#     'ga_kws': {
-#         'base_model': 'Sakagiannis2022****',
-#         'bestConfID': 'Sakagiannis2022****',
-#         'space_dict': {**ga_spaces.interference, **ga_spaces.physics, **ga_spaces.turner},
-#         'fitness_func': fitness_funcs.distro_KS,
-#         'fitness_target_refID': 'None.100controls',
-#         'fitness_target_kws': {'eval_shorts': ['b', 'bv', 'ba', 'tur_fou', 'tur_t', 'tor5']},
-#         'exclude_func': bend_error_exclusion,
-#         'plot_func': plot_funcs.distro_KS,
-#         # 'init_mode': 'random',
-#         'init_mode': 'base_model',
-#         'Nelits': 2,
-#         'Nagents': 10,
-#         # 'Pmutation': 0.7,
-#         # 'Cmutation': 0.5,
-#         'max_dur': 0.8
-#     },
-#     'dt': 1/16,
-#     'experiment': 'exploration',
-#     'env_params': expandConf('arena_500mm', 'Env'),
-#     'scene_file': '../../ga/saved_scenes/no_boxes.txt',
-# },
-#     'realism': {
-#     'ga_kws': {
-#         'base_model': 'Sakagiannis2022*',
-#         # 'bestConfID': 'Sakagiannis2022**',
-#         'space_dict': ga_spaces.physics,
-#         'fitness_func': fitness_funcs.distro_KS_interference,
-#         'fitness_target_refID': 'None.100controls',
-#         'fitness_target_kws': {'eval_shorts': ['b', 'bv', 'ba', 'tur_fou', 'tur_t', 'tor5'],'target_fov_curve':None},
-#         'plot_func': plot_funcs.interference,
-#         'init_mode': 'base_model',
-#         'Nelits': 2,
-#         'Nagents': 10,
-#         'Pmutation': 0.9,
-#         'max_Nticks': 600
-#     },
-#     'experiment': 'realism',
-#     'env_params': expandConf('arena_200mm', 'Env'),
-#     'scene_file': '../../ga/saved_scenes/no_boxes.txt',
-# },
-#     'chemorbit': {
-#     'ga_kws': {
-#         'base_model': 'Sakagiannis2022*',
-#         'bestConfID': 'Sakagiannis2022**',
-#         'space_dict': ga_spaces.olfactor,
-#         'fitness_func': fitness_funcs.dst2source,
-#         'Nelits': 5,
-#         'Nagents': 50,
-#         'max_Nticks': 600
-#     },
-#     'experiment': 'chemorbit',
-#     'env_params': env,
-#     'scene_file': '../../ga/saved_scenes/no_boxes.txt',
-# },
-#     'obstacle_avoidance': {
-#     'ga_kws': {
-#         'base_model': 'Sakagiannis2022**',
-#         'bestConfID': None,
-#         'space_dict': ga_spaces.sensorimotor,
-#         'fitness_func': fitness_funcs.cum_dst,
-#         'robot_class': ObstacleLarvaRobot,
-#         'plot_func': None,
-#         'Nelits': 1,
-#         'Nagents': 10,
-#         'multicore': False,
-#         'max_dur': 5
-#     },
-#     'experiment': 'obstacle_avoidance',
-#     'env_params': expandConf('dish', 'Env'),
-#     'scene_file': '../../ga/saved_scenes/obstacle_avoidance_600.txt',
-# }
-# })
-
-
 if __name__ == '__main__':
     exp = 'interference'
     conf = loadConf(exp, 'Ga')
-    #mID=conf.ga_build_kws.base_model
+    # mID=conf.ga_build_kws.base_model
     # if type(mID) == str and mID in kConfDict('Model'):
     #     larva_pars = copyConf(mID, 'Model')
-    #print(mID)
+    # print(mID)
     # print(isinstance(conf.ga_build_kws.base_model, str))
     # GAlauncher(**conf)
