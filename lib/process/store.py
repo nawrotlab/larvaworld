@@ -25,6 +25,9 @@ def store_aux_dataset(s, pars, type, file):
             d = s[p].dropna().reset_index(level=0, drop=True)
             d.sort_index(inplace=True)
             store[f'{type}.{p}'] = d
+
+    elif type == 'trajectories':
+        store['trajectories'] = s[['x', 'y']]
     elif type == 'dispersion':
         for p in ps:
             d=get_dsp(s, p)

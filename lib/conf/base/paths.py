@@ -74,6 +74,7 @@ def path(n) :
         'ESSAY': f'{F0}/data/SimGroup/essays',
         'RUN': f'{F0}/data/SimGroup/single_runs',
         'SIM': f'{F0}/data/SimGroup',
+        # 'EVAL': f'{F0}/data/SimGroup/eval_runs',
         # 'GA': f'{F0}/data/SimGroup/ga_runs',
         'GA_SCENE': f'{F0}/lib/ga/saved_scenes',
         'DATA': f'{F0}/data',

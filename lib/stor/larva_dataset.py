@@ -12,9 +12,11 @@ from scipy.stats import stats
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
 from lib.anal.plot_aux import modelConfTable
+from lib.calibration.model_fit import adapt_crawler, adapt_intermitter, adapt_interference, adapt_turner
 
 from lib.conf.base.dtypes import null_dict
 # from lib.conf.stored.conf import copyConf
+from lib.conf.base.par import getPar
 
 from lib.process.calibration import comp_stride_variation, comp_segmentation
 
@@ -111,7 +113,7 @@ class LarvaDataset:
                       'life_history': life_history
                       }
         self.config = dNl.AttrDict.from_nested_dicts(config)
-
+        self.config.dir_dict = self.dir_dict
         self.__dict__.update(self.config)
 
     def set_data(self, step=None, end=None, food=None):
@@ -167,7 +169,7 @@ class LarvaDataset:
         pars = [p for p in self.step_data.columns.values if p not in vpars]
         return pars
 
-    def read(self, key='end', file='data_h5'):
+    def read(self, key='step', file='data_h5'):
         return pd.read_hdf(self.dir_dict[file], key)
 
     def load(self, step=True, end=True, food=False, contour=True):
@@ -325,7 +327,7 @@ class LarvaDataset:
                 try:
                     ids = self.endpoint_data.index.values
                 except:
-                    ids = self.read('end').index.values
+                    ids = self.read('end', file='endpoint_h5').index.values
             self.config.agent_ids = ids
             self.config.N = len(ids)
         if 't0' not in self.config.keys():
@@ -436,19 +438,6 @@ class LarvaDataset:
         dic['ors_p'] = ors_p = [p for p in ['front_orientation','rear_orientation','head_orientation','tail_orientation'] if p in s0.columns]
         if draw_Nsegs == len(mid_p) - 1 and set(nam.orient(self.segs)).issubset(s0.columns):
             dic['ors_p'] = ors_p = nam.orient(self.segs)
-        # if draw_Nsegs is None:
-        #     dic['ang_p'] = ang_p = []
-        #     dic['ors_p'] = ors_p = []
-        # elif draw_Nsegs == 2 and {'bend', 'front_orientation'}.issubset(s0.columns):
-        #     dic['ang_p'] = ang_p = ['bend']
-        #     dic['ors_p'] = ors_p = ['front_orientation']
-        # elif draw_Nsegs == len(mid_p) - 1 and set(nam.orient(self.segs)).issubset(s0.columns):
-        #     dic['ang_p'] = ang_p = []
-        #     dic['ors_p'] = ors_p = nam.orient(self.segs)
-        # else:
-        #     raise ValueError(
-        #         f'The required angular parameters for reconstructing a {draw_Nsegs}-segment body do not exist')
-
         pars = dNl.unique_list(cen_p + pos_p + ang_p + ors_p + chunk_p + dNl.flatten_list(mid_p + con_p))
 
         return dic, pars, p0
@@ -638,7 +627,8 @@ class LarvaDataset:
             'nengo': os.path.join(self.data_dir, 'nengo_probes'),
             'single_tracks': os.path.join(self.data_dir, 'single_tracks'),
             'bout_dicts': os.path.join(self.data_dir, 'bout_dicts'),
-            'group_bout_dicts': os.path.join(self.data_dir, 'group_bout_dicts'),
+            'pooled_epochs': os.path.join(self.data_dir, 'pooled_epochs'),
+            'cycle_curves': os.path.join(self.data_dir, 'cycle_curves.txt'),
             'chunk_dicts': os.path.join(self.data_dir, 'chunk_dicts'),
             'tables_h5': os.path.join(self.data_dir, 'tables.h5'),
             'sim': os.path.join(self.data_dir, 'sim_conf.txt'),
@@ -711,7 +701,7 @@ class LarvaDataset:
         }
         preprocess(**preprocessing, **cc, **kwargs)
         process(processing=processing, **cc, **kwargs, **md['dispersion'], **md['tortuosity'])
-        annotate(**annotation, **cc, **kwargs, **md['stride'], **md['turn'], **md['pause'])
+        self.chunk_dicts, self.pooled_epochs, self.cycle_curves=annotate(**annotation, **cc, **kwargs, **md['stride'], **md['turn'], **md['pause'])
         self.drop_pars(**to_drop, **cc)
         if is_last:
             self.save(add_reference=add_reference)
@@ -720,7 +710,7 @@ class LarvaDataset:
     def get_par(self, par, key=None):
         def get_end_par(par):
             try:
-                return self.read(key='end')[par]
+                return self.read(key='end', file='endpoint_h5')[par]
             except:
                 try:
                     return self.endpoint_data[par]
@@ -735,6 +725,11 @@ class LarvaDataset:
                     return self.step_data[par]
                 except:
                     return None
+        if key=='distro' :
+            try:
+                return self.read(key=f'distro.{par}', file='aux_h5')
+            except:
+                return self.get_par(par, key='step')
 
         if key == 'end':
             return get_end_par(par)
@@ -765,18 +760,29 @@ class LarvaDataset:
         if save:
             self.save_config()
 
-    def load_group_bout_dict(self, id=None):
+    def load_pooled_epochs(self, id=None):
         if id is None:
             id = self.id
-        path = os.path.join(self.dir_dict['group_bout_dicts'], f'{id}.txt')
-        dic = dNl.load_dict(path, use_pickle=True)
-        return dic
+        path = os.path.join(self.dir_dict.pooled_epochs, f'{id}.txt')
+        try:
+            dic = dNl.load_dict(path, use_pickle=True)
+            print(f'Pooled epochs loaded for dataset {id}')
+            return dic
+        except :
+            print(f'Pooled epochs not found for dataset {id}')
+            return None
 
     def load_chunk_dicts(self, id=None):
         if id is None:
             id = self.id
         path = os.path.join(self.dir_dict.chunk_dicts, f'{id}.txt')
         return dNl.load_dict(path, use_pickle=True)
+
+    def load_cycle_curves(self):
+        try :
+            return dNl.load_dict(self.dir_dict.cycle_curves, use_pickle=True)
+        except :
+            pass
 
     def get_chunks(self, chunk, shorts, min_dur=0, max_dur=np.inf, idx=None):
         min_ticks = int(min_dur / self.config.dt)
@@ -805,107 +811,75 @@ class LarvaDataset:
                     chunks.append(entry)
         return chunks
 
-    def average_modelConf(self, new_id=None, base_id='fitted_navigator'):
+    def average_modelConf(self, new_id=None, turner_mode='neural', crawler_mode='realistic', interference_mode='phasic'):
         e=self.endpoint_data
         c=self.config
-        from lib.conf.base.par import ParDict, getPar
-        dic = ParDict(mode='load').dict
-        fsv, ffov, sstr_d_mu, sstr_d_std, str_sv_max,run_fov_mu, pau_fov_mu = [dic[k]['d'] for k in
-                                                        ['fsv', 'ffov', 'sstr_d_mu', 'sstr_d_std', 'str_sv_max','run_fov_mu', 'pau_fov_mu']]
 
-        crawler = null_dict('crawler',
-                            initial_freq=np.round(e[fsv].median(), 2),
-                            freq_std=0,
-                            noise=0,
-                            stride_dst_mean=np.round(e[sstr_d_mu].median(), 2),
-                            stride_dst_std=np.round(e[sstr_d_std].median(), 2),
-                            max_vel_phase=np.round(e['phi_scaled_velocity_max'].median(), 2),
-                            max_scaled_vel=np.round(e[str_sv_max].median(), 2))
+        b_kws={
+            'modules': null_dict('modules', turner=True, crawler=True, interference=True, intermitter=True),
+            'turner_params' : adapt_turner(e,mode=turner_mode, average=True),
+            'crawler_params' : adapt_crawler(e,waveform=crawler_mode, average=True),
+            'intermitter_params' : adapt_intermitter(c, e, average=True),
+            'interference_params' : adapt_interference(c, e,mode=interference_mode, average=True),
+        }
 
-        fr_mu = e[ffov].median()
-        coef, intercept = 0.024, 5
-        A_in_mu = np.round(fr_mu / coef + intercept)
-        A_in_mu
+        kws={
+            'brain' : null_dict('brain', **b_kws),
+            'body' : null_dict('body', initial_length = np.round(e['length'].median(), 3)),
+            'physics' : null_dict('physics'),
+            'energetics' : None,
+            # 'Box2D_params' : None,
+        }
 
-        turner = null_dict('turner', initial_freq=np.round(e[ffov].median(), 2),
-                           noise=0, activation_noise=0, base_activation=A_in_mu
-                           )
+        m=null_dict('larva_conf', **kws)
 
-        intermitter = null_dict('intermitter')
-        intermitter.stridechain_dist = c.bout_distros.run_count
-        try :
-            ll1,ll2 =intermitter.stridechain_dist.range
-            intermitter.stridechain_dist.range = (int(ll1),int(ll2))
-        except:
-            pass
-
-        intermitter.run_dist = c.bout_distros.run_dur
-        try :
-            ll1,ll2 =intermitter.run_dist.range
-            intermitter.run_dist.range = (np.round(ll1,2),np.round(ll2,2))
-        except:
-            pass
-        intermitter.pause_dist = c.bout_distros.pause_dur
-        try :
-            ll1,ll2 =intermitter.pause_dist.range
-            intermitter.pause_dist.range = (np.round(ll1,2),np.round(ll2,2))
-        except:
-            pass
-        intermitter.crawl_freq = np.round(e[fsv].median(), 2)
-
-        at_phiM = np.round(e['phi_attenuation_max'].median(), 1)
-
-        run_fov_mu_mu=e[run_fov_mu].mean()
-        att0=np.clip(np.round((e[run_fov_mu]/e[pau_fov_mu]).median(),2),a_min=0, a_max=1)
-        fov_curve = c.pooled_cycle_curves['fov']
-        # att0=np.round(np.clip(np.nanmean(att0s),a_min=0, a_max=1),2)
-        att1 = np.min(fov_curve) / e[pau_fov_mu].median()
-        att2 = np.max(fov_curve) / e[pau_fov_mu].median() - att1
-        att1 = np.round(np.clip(att1, a_min=0, a_max=1), 2)
-        att2 = np.round(np.clip(att2, a_min=0, a_max=1 - att1), 2)
-
-
-
-        interference = null_dict('interference', mode='phasic',suppression_mode='amplitude', max_attenuation_phase=at_phiM,
-                                 attenuation_max=att2,attenuation=att1)
-
-        interference2 = null_dict('interference', mode='square',suppression_mode='amplitude', attenuation_max=None,
-                                  max_attenuation_phase=None,
-                                  crawler_phi_range=(at_phiM - 1, at_phiM + 1),
-                                  attenuation=att0)
         from lib.conf.stored.conf import copyConf, saveConf
         if new_id is None :
             new_id=f'{self.id}_model'
-        m = copyConf(base_id, 'Model')
-        m.brain.turner_params = turner
-        m.brain.crawler_params = crawler
-        m.brain.intermitter_params = intermitter
-        m.brain.interference_params = interference
-        m.body.initial_length = np.round(e['length'].median(), 3)
-        #m.physics = null_dict('physics')
         saveConf(id=new_id, conf=m, conf_type='Model')
         if 'modelConfs' not in c.keys():
             c.modelConfs=dNl.AttrDict.from_nested_dicts({'average' : {}, 'variable' : {}, 'individual':{}})
         c.modelConfs.average[new_id]=m
         self.save_config(add_reference=True)
 
-        save_to = f'{self.plot_dir}/model_tables'
-        os.makedirs(save_to, exist_ok=True)
-        save_as = f'{save_to}/{new_id}.pdf'
         from lib.anal.plot_aux import modelConfTable
-        modelConfTable(new_id, save_as, figsize=(14, 11))
+        modelConfTable(new_id, save_to=f'{self.plot_dir}/model_tables')
         return m
 
-    def get_chunk_par_distro(self, chunk, short=None,par=None, ):
+    def get_chunk_par_distro(self, chunk, short=None,par=None, min_dur=0):
         if par is None :
             from lib.conf.base.par import getPar
             par = getPar(short)
         chunk_idx=f'{chunk}_idx'
-        dic = self.load_chunk_dicts()
+        chunk_dur=f'{chunk}_dur'
+        dic0 = self.load_chunk_dicts()
         vs = []
         for id in self.agent_ids:
             ss = self.step_data[par].xs(id, level='AgentID')
-            idx = dic[id][chunk_idx]
+            dic=dic0[id]
+            if min_dur==0:
+                idx = dic[chunk_idx]
+            else :
+                epochs = dic[chunk][dic[chunk_dur] >= min_dur]
+                Nepochs=epochs.shape[0]
+                if Nepochs==0:
+                    idx=[]
+                elif Nepochs == 1:
+                    idx =np.arange(epochs[0][0], epochs[0][1] + 1, 1)
+                else :
+                    slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in epochs]
+                    idx = np.concatenate(slices)
             vs.append(ss.loc[idx].values)
         vs = np.concatenate(vs)
         return vs
+
+    def existing(self, key='end', return_shorts=True):
+        if key=='end' :
+            pars=self.read(key='end', file='endpoint_h5').columns.values.tolist()
+        elif key=='step' :
+            pars=self.read(key='step').columns.values.tolist()
+        if not return_shorts:
+            return sorted(pars)
+        else :
+            shorts=getPar(d=pars, to_return='k')
+            return sorted(shorts)

@@ -6,6 +6,9 @@ from matplotlib import cm, colors
 
 
 # function takes in a hex color and outputs it inverted
+# from lib.aux.dictsNlists import flatten_list
+
+
 def invert_color(col, return_self=False):
     if type(col) in [list, tuple] and len(col) == 3:
         if not all([0 <= i <= 1 for i in col]):
@@ -39,7 +42,7 @@ def random_colors(n):
 
 
 def N_colors(N, as_rgb=False):
-    cols=['green', 'red', 'blue', 'purple', 'orange', 'magenta', 'cyan']
+    cols=['green', 'red', 'blue', 'purple', 'orange', 'magenta', 'cyan', 'darkred', 'lightblue']
     if N<=len(cols):
         cs=cols[:N]
     elif N == 10:
@@ -99,38 +102,20 @@ def col_range(q, low=(255, 0, 0), high=(255, 255, 255), mul255=False):
     return res
 
 
-def col_df(shorts=None, groups=None, group_cols=None):
+def col_df(shorts, groups):
+
     from lib.conf.base.par import getPar
 
-    if shorts is None and groups is None:
-        shorts = [
-            ['run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std'],
-            ['cum_d', 'v_mu', 'run_v_mu', 'dsp_0_40_mu', 'dsp_0_40_max'],
-            # ['str_N', 'str_tr', 'cum_d', 'v_mu', 'tor5_mu'],
-            # ['str_fo', 'str_b', 'tur_fo', 'tur_t'],
-            ['fsv', 'ffov', 'run_tr', 'pau_tr', ],
-            # ['sv', 'fov', 'bv'],
-        ]
-        groups = [
-            'angular kinematics',
-            'spatial displacement',
-            'temporal dynamics',
-            # 'dispersal',
-            # 'stride cycle curve',
-        ]
+    group_col_dic = {
+        'angular kinematics': 'Blues',
+        'spatial displacement': 'Greens',
+        'temporal dynamics': 'Reds',
+        'dispersal': 'Purples',
+        'tortuosity': 'Purples',
+        'epochs': 'Oranges',
+        'stride cycle': 'Oranges',
 
-    if group_cols is None:
-        group_col_dic = {
-            'angular kinematics': 'Blues',
-            'spatial displacement': 'Greens',
-            'temporal dynamics': 'Reds',
-            'dispersal': 'Purples',
-            'tortuosity': 'Purples',
-            'epochs': 'Oranges',
-            'stride cycle': 'Oranges',
-
-        }
-        group_cols = [group_col_dic[g] for g in groups]
+    }
     group_label_dic = {
         'angular kinematics': r'$\bf{angular}$ $\bf{kinematics}$',
         'spatial displacement': r'$\bf{spatial}$ $\bf{displacement}$',
@@ -143,20 +128,17 @@ def col_df(shorts=None, groups=None, group_cols=None):
     }
     df = pd.DataFrame(
         {'group': groups,
+         'group_label': [group_label_dic[g] for g in groups],
          'shorts': shorts,
-         'group_color': group_cols
+         'pars': [getPar(sh) for sh in shorts],
+         'symbols': [getPar(sh, to_return='l') for sh in shorts],
+         'group_color': [group_col_dic[g] for g in groups]
          })
-    df['group_label'] = [group_label_dic[g] for g in df['group'].values]
-    df['pars'] = getPar(shorts)
-    df['symbols'] = getPar(shorts, to_return='l')
+
     df['cols'] = df.apply(lambda row: [(row['group'], p) for p in row['symbols']], axis=1)
     df['par_colors'] = df.apply(
         lambda row: [cm.get_cmap(row['group_color'])(i) for i in np.linspace(0.4, 0.7, len(row['pars']))], axis=1)
-
     df.set_index('group', inplace=True)
-
-    # columns = lib.aux.dictsNlists.flatten_list(df['cols'].values.tolist())
-    # par_colors = lib.aux.dictsNlists.flatten_list(df['par_colors'].values.tolist())
     return df
 
 # for q in np.arange(0,1,0.1):

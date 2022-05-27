@@ -9,6 +9,7 @@ import math
 import threading
 from typing import Tuple
 
+import progressbar
 from scipy.stats import ks_2samp
 import numpy as np
 import pygame
@@ -47,6 +48,7 @@ class GAselector:
         self.genomes = []
         self.genomes_last_generation = []
         self.best_genome = None
+        self.best_fitness = None
         self.generation_num = 1
         self.num_cpu = multiprocessing.cpu_count()
         self.start_total_time = TimeUtil.current_time_millis()
@@ -77,15 +79,17 @@ class GAselector:
         # reset generation time
         self.start_generation_time = TimeUtil.current_time_millis()
 
-        print('\nGeneration', self.generation_num, 'started')
+        self.printd(1, '\nGeneration', self.generation_num, 'started')
 
     def sort_genomes(self):
         # sort genomes by fitness
         self.sorted_genomes = sorted(self.genomes, key=lambda genome: genome.fitness, reverse=True)
         best_new_genome = self.sorted_genomes[0]
+        # if self.best_fitness is None or best_new_genome.fitness > self.best_fitness:
         if self.best_genome is None or best_new_genome.fitness > self.best_genome.fitness:
             self.best_genome = best_new_genome
-            print('New best:', self.best_genome.to_string())
+            self.best_fitness = self.best_genome.fitness
+            self.printd(1, 'New best:', self.best_genome.to_string())
             self.new_best_found=True
         else :
             self.new_best_found = False
@@ -167,23 +171,29 @@ class GAselector:
 class GAbuilder(GAselector):
     def __init__(self, scene, side_panel=None, space_dict=None, robot_class=LarvaRobot, base_model='Sakagiannis2022',
                  multicore=True, fitness_func=None, fitness_target_kws={}, fitness_target_refID=None,
-                 exclude_func=None, plot_func=None, bestConfID=None, init_mode='random', **kwargs):
+                 exclude_func=None, plot_func=None, bestConfID=None, init_mode='random',progress_bar = True, **kwargs):
         super().__init__(**kwargs)
         self.bestConfID = bestConfID
         self.evaluation_mode = None
         self.fitness_func = fitness_func
         self.is_running = True
+        if progress_bar and self.Ngenerations is not None:
+            self.progress_bar = progressbar.ProgressBar(self.Ngenerations)
+            self.progress_bar.start()
+        else :
+            self.progress_bar = None
 
         self.fitness_target_refID = fitness_target_refID
         if fitness_target_refID is not None:
             d = loadRef(fitness_target_refID)
-            d.load(contour=False)
+            # d.load(contour=False)
             if 'eval_shorts' in fitness_target_kws.keys():
                 shs = fitness_target_kws['eval_shorts']
                 eval_pars, eval_lims, eval_labels = getPar(shs, to_return=['d', 'lim', 'lab'])
                 # s, e, c = d.step_data, d.endpoint_data, d.config
                 # dic = ParDict(mode='load').dict
-                fitness_target_kws['eval'] = {sh: d.step_data[p].dropna().values for p,sh in zip(eval_pars,shs)}
+                fitness_target_kws['eval'] = {sh: d.get_par(p, key='distro').dropna().values for p,sh in zip(eval_pars,shs)}
+                # fitness_target_kws['eval'] = {sh: d.step_data[p].dropna().values for p,sh in zip(eval_pars,shs)}
 
                 fitness_target_kws['eval_labels'] = eval_labels
                 # return eval
@@ -191,7 +201,7 @@ class GAbuilder(GAselector):
                 curves = d.config.pooled_cycle_curves
                 shorts=fitness_target_kws['pooled_cycle_curves']
 
-                fitness_target_kws['pooled_cycle_curves'] = {sh : np.array(curves[sh]) for sh in shorts}
+                fitness_target_kws['pooled_cycle_curves'] = {sh : curves[sh] for sh in shorts}
                 # fitness_target_kws['target_rov_curve'] = np.array(d.config.pooled_cycle_curves.rov)
             self.fitness_target = d
         else:
@@ -228,8 +238,7 @@ class GAbuilder(GAselector):
         # self.side_panel.update_ga_population(len(self.robots), self.Nagents)
         # self.side_panel.update_ga_time(0, 0, 0)
         #
-        print('\nGeneration', self.generation_num, 'started')
-
+        self.printd(1, 'Generation', self.generation_num, 'started')
         self.printd(1, 'multicore:', self.multicore, 'num_cpu:', self.num_cpu)
 
     def save_bestConf(self):
@@ -238,7 +247,7 @@ class GAbuilder(GAselector):
             for k, vs in self.space_dict.items():
                 temp[k] = self.best_genome.get(rounded=True)[k]
             best = dNl.AttrDict.from_nested_dicts(unflatten(temp))
-            saveConf(best, 'Model', self.bestConfID)
+            saveConf(best, 'Model', self.bestConfID, verbose=self.verbose)
 
 
     def build_generation(self):
@@ -327,6 +336,8 @@ class GAbuilder(GAselector):
 
             if self.Ngenerations is None or self.generation_num < self.Ngenerations:
                 self.create_new_generation()
+                if self.progress_bar :
+                    self.progress_bar.update(self.generation_num)
 
                 self.robots = self.build_generation()
                 # self.side_panel.update_ga_data(self.generation_num, self.best_genome, self.best_genome.fitness)
@@ -357,6 +368,12 @@ class GAbuilder(GAselector):
 
     def finalize(self):
         self.is_running=False
+        if self.progress_bar:
+            self.progress_bar.finish()
+        self.printd(0, 'Best genome:', self.best_genome.to_string())
+        self.printd(0, 'Best fittness:', self.best_genome.fitness)
+
+
         pass
         #sys.exit()
 

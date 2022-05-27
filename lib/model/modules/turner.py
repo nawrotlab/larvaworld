@@ -14,6 +14,7 @@ class Turner(Oscillator, Effector):
         self.rebound = rebound
         self.buildup = 0
         self.activation = 0
+        self.activity = 0
         if mode == 'neural':
             self.init_neural(dt=dt, **kwargs)
 
@@ -24,9 +25,6 @@ class Turner(Oscillator, Effector):
             self.init_constant(dt=dt, **kwargs)
 
         self.start_effector()
-
-    def compute_angular_activity(self):
-        return self.compute_activity() if self.effector else 0.0
 
     def compute_activity(self):
         if self.mode == 'neural':
@@ -39,32 +37,46 @@ class Turner(Oscillator, Effector):
         elif self.mode == 'constant':
             return self.amp
 
-    def update_activation(self, A_olf):
+    def update_activation(self, A_in):
         if self.mode == 'neural':
             # A_olf=0
             # Map valence modulation to sigmoid accounting for the non middle location of base_activation
             # b = self.base_activation
             # rd, ru = self.A0, self.A1
             # d, u = self.activation_range
-            if A_olf == 0:
+            if A_in == 0:
                 a = 0
-            elif A_olf < 0:
-                a = self.r0 * A_olf
-            elif A_olf > 0:
-                a = self.r1 * A_olf
+            elif A_in < 0:
+                a = self.r0 * A_in
+            elif A_in > 0:
+                a = self.r1 * A_in
             # Added the relevance of noise to olfactory valence so that noise is attenuated  when valence is rising
             # noise = np.random.normal(scale=self.base_noise) * (1 - np.abs(v))
-            A_olf = self.base_activation + a
+            I_T = self.base_activation + a
         #     return  np.random.normal(scale=self.base_noise) * (1 - np.abs(A_olf))
         # else:
         #     return A_olf + np.random.normal(scale=self.activation_noise)
         # return A_olf
-        return A_olf
+        else :
+            I_T=A_in
+        return I_T
         # return A_olf * (1 + np.random.normal(scale=self.activation_noise))
 
     def step(self, A_in=0.0):
         self.activation = self.update_activation(A_in)
-        return self.compute_angular_activity()
+        if self.effector :
+            a=self.compute_activity()
+            if self.rebound:
+                a+=self.buildup
+                self.buildup =0
+        else :
+            if self.continuous:
+                aa=self.compute_activity()
+                if self.rebound :
+                    self.buildup+= aa
+            a= 0.0
+        self.activity=a
+        return a
 
     def init_neural(self, dt, base_activation=20, activation_range=None,noise=0.0, **kwargs):
         Effector.__init__(self, dt=dt)
@@ -75,10 +87,10 @@ class Turner(Oscillator, Effector):
         self.r1 = activation_range[1] - self.base_activation
         self.r0 = self.base_activation - activation_range[0]
         self.activation = self.base_activation
-        self.neural_oscillator = NeuralOscillator(dt=self.dt)
-        for i in range(100):
-            if random.uniform(0, 1) < 0.5:
-                self.neural_oscillator.step(base_activation)
+        self.neural_oscillator = NeuralOscillator(dt=self.dt, base_activation=base_activation, **kwargs)
+        # for i in range(100):
+        #     if random.uniform(0, 1) < 0.5:
+        #         self.neural_oscillator.step(base_activation)
         #     self.neural_oscillator.step(base_activation)
         # Multiplicative noise
         # activity += np.random.normal(scale=np.abs(activity * self.noise))
@@ -102,7 +114,7 @@ class Turner(Oscillator, Effector):
 
 
 class NeuralOscillator:
-    def __init__(self, dt, tau=0.1, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0, warm_up=True):
+    def __init__(self, dt,base_activation=20, tau=0.1, w_ee=3.0, w_ce=0.1, w_ec=4.0, w_cc=4.0, m=100.0, n=2.0, warm_up=True,**kwargs):
         self.dt = dt
         self.tau = tau
         self.w_ee = w_ee
@@ -116,6 +128,7 @@ class NeuralOscillator:
         # self.g = None
         # self.tau_h = None
         self.activity = 0.0
+        self.base_activation = base_activation
 
         # Neural populations
         self.E_r = 0  # 28
@@ -134,7 +147,8 @@ class NeuralOscillator:
 
         if warm_up :
             for i in range(100) :
-                self.step()
+                if random.uniform(0, 1) < 0.5:
+                    self.step(self.base_activation)
 
     def step(self, A=0):
         # print(A)

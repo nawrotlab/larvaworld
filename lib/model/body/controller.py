@@ -5,12 +5,56 @@ import time
 
 import numpy as np
 
-from lib.aux.ang_aux import restore_bend, restore_bend_2seg, _restore_angle, rear_orientation_change, wrap_angle_to_0
+from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
 from lib.aux.sim_aux import inside_polygon
 from lib.ga.geometry.point import Point
 from lib.ga.geometry.util import detect_nearest_obstacle, radar_tuple
 from lib.model.body.body import LarvaBody
 from lib.aux.ang_aux import angle_dif
+
+class PhysicsController :
+    def __init__(self, lin_vel_coef=1.0, ang_vel_coef=1.0, lin_force_coef=1.0, torque_coef=0.5,
+                 lin_mode='velocity', ang_mode='torque', body_spring_k=1.0, bend_correction_coef=1.0,
+                 lin_damping=1.0, ang_damping=1.0):
+        self.lin_damping = lin_damping
+        self.ang_damping = ang_damping
+        self.body_spring_k = body_spring_k
+        self.bend_correction_coef = bend_correction_coef
+        self.lin_mode = lin_mode
+        self.ang_mode = ang_mode
+        self.lin_vel_coef = lin_vel_coef
+        self.ang_vel_coef = ang_vel_coef
+        self.lin_force_coef = lin_force_coef
+        self.torque_coef = torque_coef
+
+    def compute_ang_vel(self, k, c, torque, v, b,dt, I=1):
+        dtI=dt/I
+        return v + (-c * v - k * b + torque) * dtI
+
+    def get_vels(self, lin, ang, prev_ang_vel, prev_lin_vel, bend,dt, ang_suppression):
+        if self.lin_mode == 'velocity':
+            if lin!=0:
+                lin_vel = lin * self.lin_vel_coef
+            else :
+                lin_vel = prev_lin_vel*(1-self.lin_damping*dt)
+        else:
+            raise ValueError(f'Linear mode {self.lin_mode} not implemented for non-physics simulation')
+        if self.ang_mode == 'torque':
+            torque =ang * self.torque_coef
+            # self.torque =ang * self.torque_coef*ang_suppression
+            ang_vel = self.compute_ang_vel(torque=torque,
+                                           v=prev_ang_vel, b=bend,
+                                           c=self.ang_damping,  k=self.body_spring_k,dt=dt)
+        elif self.ang_mode == 'velocity':
+            ang_vel = ang * self.ang_vel_coef
+        # ang_vel*=ang_suppression
+        lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
+        ang_vel*=ang_suppression
+        return lin_vel, ang_vel
+
+    def assess_collisions(self,lin_vel, ang_vel):
+        return lin_vel, ang_vel
+
 
 class BodyManager(LarvaBody):
     def __init__(self, **kwargs) :
@@ -20,73 +64,34 @@ class BodyReplay(BodyManager):
     def __init__(self, **kwargs) :
         super().__init__(**kwargs)
 
-class BodySim(BodyManager):
-    def __init__(self, density=300.0,
-                 lin_vel_coef=1.0, ang_vel_coef=1.0, lin_force_coef=1.0, torque_coef=1.0,
-                 lin_mode='velocity', ang_mode='torque', body_spring_k=1.0, bend_correction_coef=1.0,
-                 lin_damping=1.0, ang_damping=1.0, **kwargs):
-        self.lin_damping = lin_damping
-        self.ang_damping = ang_damping
+class BodySim(BodyManager, PhysicsController):
+    def __init__(self, physics,density=300.0, **kwargs):
 
-        super().__init__(density=density, **kwargs)
+        PhysicsController.__init__(self,**physics)
+        BodyManager.__init__(self,density=density, **kwargs)
 
-        self.body_spring_k = body_spring_k
-        self.bend_correction_coef = bend_correction_coef
 
         self.head_contacts_ground = True
         self.trajectory = [self.initial_pos]
-        self.lin_activity = 0
-        self.ang_activity = 0
-        # self.ang_vel = 0
+
         self.body_bend = 0
         self.body_bend_errors = 0
         self.Nangles_b = int(self.Nangles + 1 / 2)
         self.spineangles = [0.0]*self.Nangles
         self.rear_orientation_change = 0
         self.compute_body_bend()
-        self.torque = 0
         self.mid_seg_index = int(self.Nsegs / 2)
 
         self.cum_dur = 0
 
         self.cum_dst = 0.0
         self.dst = 0.0
-
-        self.lin_mode = lin_mode
-        self.ang_mode = ang_mode
-
-        # Cheating calibration (this is to get a step_to_length around 0.3 for gaussian crawler with amp=1 and std=0.05
-        # applied on TAIL of l3-sized larvae with interval -0.05.
-        # Basically this means for a 7-timestep window only one value is 1 and all others nearly 0)
-        # Will become obsolete when we have a definite answer to :
-        # is relative_to_length displacement_per_contraction a constant? How much is it?
-        # if self.Npoints == 6:
-        #     self.lin_coef = 3.2  # 2.7 for tail, 3.2 for head applied velocity
-        # elif self.Npoints == 1:
-        #     self.lin_coef = 1.7
-        # elif self.Npoints == 11:
-        #     self.lin_coef = 4.2
-        # else:
-        #     self.lin_coef = 1.5 + self.Npoints / 4
-
-        self.lin_vel_coef = lin_vel_coef
-        self.ang_vel_coef = ang_vel_coef
-        self.lin_force_coef = lin_force_coef
-        self.torque_coef = torque_coef
         self.backward_motion = True
 
-
-
-        # from lib.conf.par import pargroups
-        # from lib.conf.par import AgentCollector
-        # g=pargroups['full']
-        # self.collector=AgentCollector(g,self)
     def detect_food(self, pos):
         t0 = []
-        # t0.append(time.time())
         item, foodtype = None, None
         if self.brain.locomotor.feeder is not None or self.touch_sensors is not None:
-            # prev_item = self.food_detected
             grid = self.model.food_grid
             if grid:
                 cell = grid.get_grid_cell(pos)
@@ -94,41 +99,27 @@ class BodySim(BodyManager):
                     item, foodtype = cell, grid.unique_id
 
             else:
-                # t0.append(time.time())
                 valid = [a for a in self.model.get_food() if a.amount > 0]
-
                 accessible_food = [a for a in valid if a.contained(pos)]
-                # t0.append(time.time())
                 if accessible_food:
                     food = random.choice(accessible_food)
                     self.resolve_carrying(food)
                     item, foodtype = food, food.group
-                # t0.append(time.time())
-            # self.food_found = True if (prev_item is None and item is not None) else False
-            # self.food_missed = True if (prev_item is not None and item is None) else False
-        # t0.append(time.time())
-        # print(np.array(np.diff(t0) * 1000000).astype(int))
         return item, foodtype
 
-    # def get_velocities(self):
-    #     pass
 
-    def Box2D_kinematics(self):
+    def Box2D_kinematics(self,lin, ang):
         self.compute_body_bend()
         if self.ang_mode == 'velocity':
-            ang_vel = self.ang_activity * self.ang_vel_coef
-            ang_vel = self.compute_ang_vel(v=ang_vel, c=0,  k=self.body_spring_k, b=self.body_bend)
+            ang_vel = ang * self.ang_vel_coef
             self.segs[0].set_ang_vel(ang_vel)
             if self.Nsegs > 1:
                 for i in np.arange(1, self.mid_seg_index, 1):
                     self.segs[i].set_ang_vel(ang_vel / i)
         elif self.ang_mode == 'torque':
-            self.torque = self.ang_activity * self.torque_coef
-            # self.segs[0]._body.ApplyAngularImpulse(self.torque, wake=True)
-            self.segs[0]._body.ApplyTorque(self.torque, wake=True)
-            # if self.Nsegs > 1:
-            #     for i in np.arange(1, self.mid_seg_index, 1):
-            #         self.segs[i]._body.ApplyTorque(self.torque / i, wake=True)
+            torque = ang * self.torque_coef
+            self.segs[0]._body.ApplyTorque(torque, wake=True)
+
 
         # Linear component
         # Option : Apply to single body segment
@@ -154,42 +145,20 @@ class BodySim(BodyManager):
         # for seg in [self.segs[0]]:
         for seg in self.segs:
             if self.lin_mode == 'impulse':
-                temp_lin_vec_amp = self.lin_activity * self.lin_vel_coef
-                impulse = temp_lin_vec_amp * seg.get_world_facing_axis() / seg.get_Box2D_mass()
+                impulse = lin * self.lin_vel_coef * seg.get_world_facing_axis() / seg.get_Box2D_mass()
                 seg._body.ApplyLinearImpulse(impulse, seg._body.worldCenter, wake=True)
             elif self.lin_mode == 'force':
-                lin_force_amp = self.lin_activity * self.lin_force_coef
-                force = lin_force_amp * seg.get_world_facing_axis()
+                force = lin * self.lin_force_coef * seg.get_world_facing_axis()
                 seg._body.ApplyForceToCenter(force, wake=True)
             elif self.lin_mode == 'velocity':
-                lin_vel_amp = self.lin_activity * self.lin_vel_coef
-                vel = lin_vel_amp * seg.get_world_facing_axis()
+                vel = lin * self.lin_vel_coef * seg.get_world_facing_axis()
                 seg.set_lin_vel(vel, local=False)
-
-    def get_vels(self, lin, ang, prev_ang_vel, ang_suppression):
-        if self.lin_mode == 'velocity':
-            if lin!=0:
-                lin_vel = lin * self.lin_vel_coef
-            else :
-                lin_vel = self.head.get_linearvelocity()*(1-self.lin_damping*self.model.dt)
-        else:
-            raise ValueError(f'Linear mode {self.lin_mode} not implemented for non-physics simulation')
-        if self.ang_mode == 'torque':
-            self.torque =ang * self.torque_coef*ang_suppression
-            ang_vel = self.compute_ang_vel(torque=self.torque,
-                                           v=prev_ang_vel, b=self.body_bend,
-                                           c=self.ang_damping,  k=self.body_spring_k)
-        elif self.ang_mode == 'velocity':
-            ang_vel = ang * self.ang_vel_coef
-        # ang_vel*=ang_suppression
-        return lin_vel, ang_vel
 
     def step(self):
         self.cum_dur += self.model.dt
-        # self.restore_body_bend(self.dst, self.real_length)
         pos = self.olfactor_pos
         self.food_detected, self.current_foodtype = self.detect_food(pos)
-        self.lin_activity, self.ang_activity, self.feeder_motion = self.brain.step(pos, reward= self.food_detected is not None)
+        lin, ang, self.feeder_motion = self.brain.step(pos, reward= self.food_detected is not None)
 
 
 
@@ -207,11 +176,12 @@ class BodySim(BodyManager):
         #     # self.get_head()._body.ApplyTorque(self.torque, wake=True)
         #     pass
         if self.model.Box2D:
-            self.Box2D_kinematics()
+            self.Box2D_kinematics(lin, ang)
         else:
-            lin_vel, ang_vel = self.get_vels(self.lin_activity, self.ang_activity, self.head.get_angularvelocity(),
-                                             self.brain.locomotor.cur_ang_suppression)
-            lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
+            lin_vel, ang_vel = self.get_vels(lin, ang, self.head.get_angularvelocity(),self.head.get_linearvelocity(),
+                                             self.body_bend, dt=self.model.dt,
+                                             ang_suppression=self.brain.locomotor.cur_ang_suppression)
+            # lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
 
             self.position_body(lin_vel=lin_vel, ang_vel=ang_vel)
             self.compute_body_bend()
@@ -243,11 +213,6 @@ class BodySim(BodyManager):
     So a=1, b=1, c=n/4g=1, d=0 
     '''
 
-    # Update 4.1.2020 : Setting b=0 because it is a substitute of the angular damping of the environment
-    def compute_ang_vel(self, k, c, torque, v, b, I=1):
-        dtI=self.model.dt/I
-        return v + (-c * v - k * b + torque) * dtI
-
 
     def update_trajectory(self):
         last_pos = self.trajectory[-1]
@@ -256,7 +221,6 @@ class BodySim(BodyManager):
         self.dst = np.sqrt(np.sum(np.array(self.pos - last_pos) ** 2))
         self.cum_dst += self.dst
         self.trajectory.append(self.pos)
-
 
     def set_head_contacts_ground(self, value):
         self.head_contacts_ground = value

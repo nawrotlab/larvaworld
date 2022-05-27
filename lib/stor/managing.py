@@ -13,6 +13,24 @@ from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni, build_
 from lib.conf.stored.conf import *
 from lib.stor.larva_dataset import LarvaDataset
 
+def import_Jovanic_datasets(parent_dir, **kwargs) :
+    datagroup_id = 'Jovanic lab'
+    group_id = parent_dir
+    merged = False
+    N = None
+    ds={}
+    for source_id in ['Fed', 'Deprived', 'Starved'] :
+        try:
+            id = source_id
+            d = import_dataset(N=N, id=id, datagroup_id=datagroup_id, group_id=group_id, parent_dir=parent_dir,
+                               source_id=source_id,
+                               merged=merged, **kwargs)
+            ds[d.config.RefID : d]
+        except :
+            pass
+    return ds
+
+
 def import_dataset(N,datagroup_id= 'Schleyer lab',id=None, group_id= 'exploration',min_duration_in_sec = 180,
                    age=96.0,parent_dir='no_odor',merged=True,enrich=True,add_reference=True, **kwargs):
     # N = 150
@@ -29,8 +47,13 @@ def import_dataset(N,datagroup_id= 'Schleyer lab',id=None, group_id= 'exploratio
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
     # parent_dir = 'no_odor'
-    target_dir = f'{proc_folder}/{group_id}'
+    target_dir = f'{proc_folder}/{group_id}/{id}'
     source_dir = f'{raw_folder}/{parent_dir}'
+
+    # target = f'{target}/{target_id}'
+    # dd = build_dataset(id=target_id, target_dir=target, source_dir=source, source_id=source_id, **kws)
+
+
     if merged :
         source_dir = [f'{source_dir}/{f}' for f in os.listdir(source_dir)]
     # conf = s1.get_dict(v, w)
@@ -47,6 +70,8 @@ def import_dataset(N,datagroup_id= 'Schleyer lab',id=None, group_id= 'exploratio
     d = build_dataset(id=id, **kws)
     if enrich :
         d.enrich(**g.enrichment, add_reference=add_reference)
+    else :
+        d.save(add_reference=add_reference)
 
     return d
 
@@ -67,7 +92,7 @@ def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None,
     d = LarvaDataset(dir=target_dir, id=id, metric_definition=metric_definition, env_params=env_params,
                      load_data=False,larva_groups=larva_groups,  **data_conf)
 
-
+    print(f'Initializing {datagroup_id} format-specific dataset import...')
     if datagroup_id in [ 'Jovanic lab']:
         step, end = build_Jovanic(d, build_conf, source_dir=source_dir, **kwargs)
     elif datagroup_id in [ 'Berni lab']:
@@ -313,94 +338,22 @@ def split_dataset(step,end, food, larva_groups,dir, id,plot_dir,  show_output=Fa
 
 if __name__ == '__main__':
     from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf
+    ds = import_Jovanic_datasets(parent_dir='AttP240', enrich=True)
+    print(ds)
+    raise
 
-    d=import_dataset(3)
+
+    group_id = 'exploration'
+    datagroup_id = 'Schleyer lab'
+    parent_dir='no_odor'
+    source_id=None
+    merged=True
+    N = 5
+    id = f'{N}controls'
+
+    d=import_dataset(N=N, id=id, datagroup_id=datagroup_id,group_id= group_id,parent_dir=parent_dir, source_id=source_id,
+                     merged=merged, enrich=enrich)
     print(d.config.refID)
 
 
     raise
-    n='visualization'
-    d0 = init_pars().get(n, None)
-    d = {}
-    for n, v in d0.items():
-        try:
-            entry = par(n, argparser=True, **v)
-            print(n,v)
-        except:
-            entry = {n: {'dtype': dict, 'content': par_dict(n, argparser=True, d0=d0[n])}}
-        d.update(entry)
-    #dic = par_dict(n, argparser=True)
-    print(d)
-    raise
-
-    MP = MultiParser(['visualization', 'sim_params'])
-    p = MP.add()
-    print(p)
-    raise
-    import matplotlib.pyplot as plt
-    c=loadConf('Puff.Starved', 'Ref')
-    d=LarvaDataset(c['dir'], load_data=False)
-    e=d.read()
-    # print(e.columns.values)
-    sk=d.read('step')
-    rating_probs = sk.groupby('state').size().div(len(sk))
-    print(rating_probs)
-
-
-    sk['beh']=np.nan
-    # sk.loc[sk['scaled_velocity']<0.2, 'beh']=-0.2
-    # sk.loc[sk['scaled_velocity']<0.1, 'beh']=-0.1
-    # sk.loc[sk['scaled_velocity']<0, 'beh']=-0.001
-    # sk.loc[sk['scaled_velocity'] > 0, 'beh']=0
-    # sk.loc[sk['scaled_velocity'] > 0.1, 'beh'] = 0.1
-    # sk.loc[sk['scaled_velocity'] > 0.2, 'beh'] = 0.2
-    # sk.loc[sk['scaled_velocity'] > 0.3, 'beh'] = 0.3
-    # sk.loc[sk['scaled_velocity'] > 0.4, 'beh'] = 0.4
-    # sk.loc[sk['scaled_velocity'] > 0.5, 'beh'] = 0.5
-    # sk.loc[sk['scaled_velocity'] > 0.6, 'beh'] = 0.6
-    # sk.loc[sk['scaled_velocity'] > 0.7, 'beh'] = 0.7
-    sk.loc[sk['scaled_velocity'] > 1.2, 'beh'] = 1.2
-    sk.loc[sk['scaled_velocity'] > 1.5, 'beh'] = 1.5
-
-    rrr=sk.groupby(['beh', 'state']).size().div(len(sk)).div(rating_probs, axis=0, level='state')
-    print(rrr)
-    raise
-    # print(s['state'])
-    s=sk[sk['state']>0]
-    a=s['state'].values.shape[0]
-
-
-    aa={i : s['state'][s['state']==i].dropna().values.shape[0]/a for i in range(10)}
-    print(aa)
-    v0=-20
-    for p in ['bend_velocity'] :
-    # for p in ['stride_id','pause_id', 'Lturn_id', 'Rturn_id'] :
-        Pb=s[p][s[p] <= v0].values.shape[0]/s[p].values.shape[0]
-        print(Pb)
-        ss = s[s[p]<= v0]
-        k={}
-        for i in range(9) :
-            Pa = aa[i]
-            if Pa>0 :
-            # try:
-
-
-                PaPb=ss['state'][ss['state']==i].values.shape[0]/ss['state'].values.shape[0]
-                # x=s[(s[p] >= 0) & (s['state']==i)].dropna().values.shape[0]
-                # PaPb=x/s[s[p] >= 0].dropna().values.shape[0]
-                # PaPb=x/Pb*a
-                PbPa=PaPb*Pb/Pa
-                k[i]=PbPa
-            # except :
-            #     pass
-        print(p)
-        print(k)
-        print('-----------------------------')
-
-    raise
-    # dds=[[f'/home/panos/nawrot_larvaworld/larvaworld/data/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
-    # dds=fun.flatten_list(dds)
-    # dr = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/FRUvsQUI/Naive->PUR/EM/control'
-    dr1='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/dispersion_x2/dispersion_x2_3.Levy'
-    dr2='/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/dispersion_x2/dispersion_x2_3.Oscillatory'
-

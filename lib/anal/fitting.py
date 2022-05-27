@@ -178,8 +178,11 @@ def fit_bouts(c, aux_dic=None,  s=None, e=None, dataset=None,id=None, store=Fals
 
     dic, best = {}, {}
     for k, v in aux_dic.items():
+        # print(k,v.shape)
+        if k=='stridechain_length':
+            k='run_count'
         discr = True if k == 'run_count' else False
-        if v is not None :
+        if v is not None and v.shape[0]>0 :
             dic[k] = fit_bout_distros(v, dataset_id=id, bout=k, combine=False, discrete=discr)
             best[k] = dic[k]['best'][k]['best']
         else:
@@ -190,7 +193,7 @@ def fit_bouts(c, aux_dic=None,  s=None, e=None, dataset=None,id=None, store=Fals
 
     dic = AttrDict(dic)
     if store:
-        path=c.dir_dict.group_bout_dicts
+        path=c.dir_dict.pooled_epochs
         os.makedirs(path, exist_ok=True)
         save_dict(dic, f'{path}/{id}.txt', use_pickle=True)
         print('Pooled group bouts saved')
@@ -539,10 +542,11 @@ def minmax(df) :
 
 def test_boutGens(mID,refID, **kwargs):
     from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf
-    from lib.anal.evaluation import plot_bouts
+    from lib.anal.plotting import plot_bouts
 
     d = loadRef(refID)
     d.load(contour=False)
+    # d.pooled_epochs=d.load_pooled_epochs()
     s, e, c = d.step_data, d.endpoint_data, d.config
     Npau=s['pause_dur'].dropna().values.shape[0]
     Nrun=s['run_dur'].dropna().values.shape[0]
@@ -563,7 +567,9 @@ def test_boutGens(mID,refID, **kwargs):
             B = BoutGenerator(**kk, dt=dt)
             vs = B.sample(N)
             dic[n0] = fit_bout_distros(vs, dataset_id=mID, bout=n, combine=False, discrete=discr)
-    loco_dict = {'model': {'bouts': dic, 'color': 'blue'},
-                 'experiment': {'bouts': d.load_group_bout_dict(), 'color': 'red'}}
-    return plot_bouts(loco_dict=loco_dict, plot_fits='none', **kwargs)
+    datasets=[{'id' : 'model', 'pooled_epochs': dic, 'color': 'blue'}, {'id' : 'experiment', 'pooled_epochs': d.load_pooled_epochs(), 'color': 'red'}]
+    datasets = [AttrDict.from_nested_dicts(dd) for dd in datasets]
+    # loco_dict = {'model': {'bouts': dic, 'color': 'blue'},
+    #              'experiment': {'bouts': d.load_pooled_epochs(), 'color': 'red'}}
+    return plot_bouts(datasets=datasets, plot_fits='none', **kwargs)
 

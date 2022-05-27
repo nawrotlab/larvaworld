@@ -184,47 +184,75 @@ def comp_centroid(s, c, recompute=False):
     print('Centroid coordinates computed.')
 
 
-def store_spatial(s, e, c, point):
+def store_spatial(s, e, c, store=False, also_in_mm=False):
+    point=c.point
     dst = nam.dst('')
     sdst = nam.scal(dst)
     cdst = nam.cum(dst)
     csdst = nam.cum(sdst)
+    v=nam.vel('')
+    a=nam.acc('')
+
+
     dic = {
         'x': nam.xy(point)[0],
         'y': nam.xy(point)[1],
         dst: nam.dst(point),
-        nam.vel(''): nam.vel(point),
-        nam.acc(''): nam.acc(point),
+        v: nam.vel(point),
+        a: nam.acc(point),
         cdst: nam.cum(nam.dst(point)),
     }
-    for k, v in dic.items():
+    for k1, k2 in dic.items():
         try:
-            s[k] = s[v]
+            s[k1] = s[k2]
         except:
             pass
+
+
+
     e[cdst] = s[dst].dropna().groupby('AgentID').sum()
+
+
     for i in ['x', 'y']:
         e[nam.final(i)] = s[i].dropna().groupby('AgentID').last()
         e[nam.initial(i)] = s[i].dropna().groupby('AgentID').first()
-    e[nam.mean(nam.vel(''))] = e[cdst] / e[nam.cum('dur')]
+    e[nam.mean(v)] = e[cdst] / e[nam.cum('dur')]
 
-    scale_to_length(s, e, c, pars=[dst, nam.vel(''), nam.acc('')])
+
+    scale_to_length(s, e, c, pars=[dst, v, a])
 
     if sdst in s.columns :
         e[csdst] = s[sdst].dropna().groupby('AgentID').sum()
-        e[nam.mean(nam.scal(nam.vel('')))] = e[csdst] / e[nam.cum('dur')]
+        e[nam.mean(nam.scal(v))] = e[csdst] / e[nam.cum('dur')]
 
+    shorts = ['v', 'a', 'sv', 'sa']
 
-def spatial_processing(s, e, c, mode='minimal', recompute=False, **kwargs):
+    if also_in_mm :
+        d_in_mm, v_in_mm, a_in_mm = getPar(['d_in_mm', 'v_in_mm', 'a_in_mm'])
+        s[d_in_mm] = s[dst] * 1000
+        s[v_in_mm] = s[v] * 1000
+        s[a_in_mm] = s[a] * 1000
+        e[nam.cum(d_in_mm)] = e[cdst] * 1000
+        e[nam.mean(v_in_mm)] = e[nam.mean(v)] * 1000
+        shorts +=['v_in_mm', 'a_in_mm']
+
+    if store :
+        store_aux_dataset(s, pars=getPar(shorts), type='distro', file=c.aux_dir)
+        store_aux_dataset(s, pars=['x', 'y'], type='trajectories', file=c.aux_dir)
+
+def spatial_processing(s, e, c, mode='minimal', recompute=False,store=False, **kwargs):
     comp_length(s, e, c, mode=mode, recompute=recompute)
     comp_centroid(s, c, recompute=recompute)
     comp_spatial(s, e, c, mode=mode)
     comp_linear(s, e, c, mode=mode)
-    store_spatial(s, e, c, c.point)
+    store_spatial(s, e, c,store=store)
+
     print(f'Completed {mode} spatial processing.')
 
 
-def comp_dispersion(s, e, dt, point, c=None, recompute=False, dsp_starts=[0], dsp_stops=[40], **kwargs):
+def comp_dispersion(s, e, c, recompute=False, dsp_starts=[0], dsp_stops=[40],store=False, **kwargs):
+    dt=c.dt
+    point=c.point
     if dsp_starts is None or dsp_stops is None:
         return
 
@@ -261,7 +289,7 @@ def comp_dispersion(s, e, dt, point, c=None, recompute=False, dsp_starts=[0], ds
             e.loc[id, mup] = np.nanmean(d)
             e.loc[id, fp] = s[p].xs(id, level='AgentID').dropna().values[-1]
     scale_to_length(s, e, c, pars=ps + pps)
-    if c is not None:
+    if c is not None and store:
         store_aux_dataset(s, pars=ps + nam.scal(ps), type='dispersion', file=c.aux_dir)
     #print('Dispersions computed')
 
@@ -406,14 +434,15 @@ def straightness_index(xy, w, match_shape=True):
     return SI
 
 
-def comp_straightness_index(s,  e=None, c=None,dt=None, tor_durs=[2, 5, 10, 20], **kwargs):
+def comp_straightness_index(s,  e=None, c=None,dt=None, tor_durs=[1,2, 5, 10, 20],store=False, **kwargs):
     if dt is None :
         dt=c.dt
     Nticks = len(s.index.unique('Step'))
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
-    for dur in tor_durs:
-        par = f'tortuosity_{dur}'
+    pars=[getPar(f'tor{dur}') for dur in tor_durs]
+    for dur, par in zip(tor_durs, pars):
+        # par = f'tortuosity_{dur}'
         par_m, par_s = nam.mean(par), nam.std(par)
         r = int(dur / dt / 2)
         T = np.zeros([Nticks, Nids]) * np.nan
@@ -429,9 +458,8 @@ def comp_straightness_index(s,  e=None, c=None,dt=None, tor_durs=[2, 5, 10, 20],
         if e is not None:
             e[par_m] = T_m
             e[par_s] = T_s
-
-        if c is not None:
-            store_aux_dataset(s, pars=[par], type='exploration', file=c.aux_dir)
+    if store :
+        store_aux_dataset(s, pars=pars, type='distro', file=c.aux_dir)
 
 
 def comp_source_metrics(s, e, c, **kwargs):
@@ -508,7 +536,7 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
 def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=None, **kwargs):
     ids = s.index.unique(level='AgentID').values
 
-    xy_pairs = nam.xy(nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(config.Ncontour))
+    xy_pairs = nam.xy(nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(c.Ncontour))
     xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
     xy_pairs = group_list_by_n(np.unique(flatten_list(xy_pairs)), 2)
     if mode == 'arena':

@@ -61,7 +61,7 @@ def loadRef(id) :
 def copyConf(id, conf_type) :
     return AttrDict.from_nested_dicts(copy.deepcopy(expandConf(id, conf_type)))
 
-def saveConf(conf, conf_type, id=None, mode='overwrite', **kwargs):
+def saveConf(conf, conf_type, id=None, mode='overwrite', verbose=1, **kwargs):
     try:
         d = loadConfDict(conf_type, **kwargs)
     except:
@@ -78,7 +78,8 @@ def saveConf(conf, conf_type, id=None, mode='overwrite', **kwargs):
     else:
         d[id] = conf
     saveConfDict(d, conf_type, **kwargs)
-    print(f'{conf_type} Configuration saved under the id : {id}')
+    if verbose>=1 :
+        print(f'{conf_type} Configuration saved under the id : {id}')
 
 
 def saveConfDict(ConfDict, conf_type, use_pickle=False):
@@ -119,15 +120,20 @@ def next_idx(exp, type='Exp'):
         ksBatch = kConfDict('Batch')
         ksEssay = kConfDict('Essay')
         ksGA = kConfDict('Ga')
+        ksEval = kConfDict('Exp')
         dExp = dict(zip(ksExp, [0] * len(ksExp)))
         dBatch = dict(zip(ksBatch, [0] * len(ksBatch)))
         dEssay = dict(zip(ksEssay, [0] * len(ksEssay)))
         dGA = dict(zip(ksGA, [0] * len(ksGA)))
+        dEval = dict(zip(ksEval, [0] * len(ksEval)))
         # batch_idx_dict.update(loadConfDict('Batch'))
         d = {'Exp': dExp,
              'Batch': dBatch,
              'Essay': dEssay,
+             'Eval': dEval,
              'Ga':dGA}
+    if not type in d.keys():
+        d[type]={}
     if not exp in d[type].keys():
         d[type][exp] = 0
     d[type][exp] += 1
@@ -219,31 +225,45 @@ def store_confs(keys=None):
             saveConf(v, 'Ga', k, use_pickle=True)
 
 
-def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None, **kwargs):
+def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None,imitation=True, **kwargs):
     sample_conf = loadConf(sample, 'Ref')
+
+    # env_params = null_dict('env_conf', arena=sample_conf.env_params.arena)
+    base_larva = expandConf(model, 'Model')
+    if imitation :
+        exp='imitation'
+        larva_groups = {
+            'ImitationGroup': null_dict('LarvaGroup', sample=sample, model=base_larva, default_color='blue', imitation=True,
+                                        distribution={'N': N})}
+    else :
+        exp='evaluation'
+        larva_groups = {
+           sample: null_dict('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
+                                        imitation=False,
+                                        distribution={'N': N})}
     id = sample_conf.id
 
-    if duration is None :
+    if duration is None:
         duration = sample_conf.duration / 60
     sim_params = null_dict('sim_params', timestep=1 / sample_conf['fr'], duration=duration,
-                           path='single_runs/imitation', sim_ID=f'{id}_imitation_{idx}')
-    env_params = null_dict('env_conf', arena=sample_conf.env_params.arena)
-    base_larva = expandConf(model, 'Model')
-    larva_groups = {
-        'ImitationGroup': null_dict('LarvaGroup', sample=sample, model=base_larva, default_color='blue', imitation=True,
-                                    distribution={'N': N})}
-
+                           path=f'single_runs/{exp}', sim_ID=f'{id}_{exp}_{idx}')
+    env_params = sample_conf.env_params
     exp_conf = null_dict('exp_conf', sim_params=sim_params, env_params=env_params, larva_groups=larva_groups,
                          trials={}, enrichment=base_enrich())
-    exp_conf['experiment'] = 'imitation'
+    exp_conf['experiment'] = exp
     exp_conf.update(**kwargs)
     return exp_conf
 
 
+
+
+
 if __name__ == '__main__':
+    # print(next_idx('dispersion', 'Eval'))
+    # raise
     # store_confs(['Model'])
     # store_confs(['Aux'])
-    store_confs(['Env'])
+    # store_confs(['Env'])
     # store_confs(['Exp'])
     # store_confs(['Data'])
-    # store_confs(['Ga'])
+    store_confs(['Ga'])

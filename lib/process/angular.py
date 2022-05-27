@@ -4,7 +4,6 @@ import pandas as pd
 from lib.aux.ang_aux import angle_dif, angle, angle_to_x_axis, unwrap_deg
 from lib.aux.dictsNlists import flatten_list
 import lib.aux.naming as nam
-
 from lib.process.store import store_aux_dataset
 
 
@@ -46,14 +45,12 @@ def comp_bend(s, e, c, mode='minimal'):
     else:
         b_conf = ang_conf.fitted.bend
 
-    # b_conf = c.bend
     if b_conf is None:
         print('Bending angle not defined. Can not compute angles')
         return
     elif b_conf == 'from_vectors':
         print(f'Computing bending angle as the difference between front and rear orients')
         s['bend'] = s.apply(lambda r: angle_dif(r[nam.orient('front')], r[nam.orient('rear')]), axis=1)
-        # s['bend'] = s.apply(lambda r: angle_dif(r[nam.orient('front')], 180-r[nam.orient('rear')]), axis=1)
     elif b_conf == 'from_angles':
         bend_angles = comp_angles(s, e, c, mode=mode)
         print(f'Computing bending angle as the sum of the first {len(bend_angles)} front angles')
@@ -95,9 +92,7 @@ def comp_orientations(s, e, c, mode='minimal'):
     pars=nam.orient(['front','rear', 'head', 'tail'])
     Npars=len(pars)
 
-    # xy_pars = flatten_list([xy[i] for i in [1, 0, 10, 11]])
     xy_pars = flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1, 1,0,-1,-2]])
-    # xy_pars = flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1]])
     xy_ar = s[xy_pars].values
     Nticks = xy_ar.shape[0]
     xy_ar = np.reshape(xy_ar, (Nticks, Npars*2, 2))
@@ -159,12 +154,7 @@ def unwrap_orientations(s, segs):
 
 
 def comp_angular(s, e, c, mode='minimal'):
-    ors = [nam.orient('front'), nam.orient('rear')]
-    # if any([o not in s.columns for o in ors]):
-    #     comp_orientations(s, e, c, mode)
-    # if 'bend' not in s.columns:
-    #     comp_bend(s, e, c, mode)
-
+    ors = nam.orient(['front','rear', 'head', 'tail'])
     ang_pars = ors + ['bend']
 
     dt = c.dt
@@ -205,7 +195,7 @@ def comp_angular(s, e, c, mode='minimal'):
     print('All angular parameters computed')
 
 
-def angular_processing(s, e, c, recompute=False, mode='minimal', **kwargs):
+def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **kwargs):
     from lib.process.basic import comp_extrema
     ang_pars = [nam.orient('front'), nam.orient('rear'), 'bend']
     if set(ang_pars).issubset(s.columns.values) and not recompute:
@@ -219,7 +209,8 @@ def angular_processing(s, e, c, recompute=False, mode='minimal', **kwargs):
     comp_angular(s, e, c, mode=mode)
     comp_extrema(s, dt=c.dt, parameters=[nam.vel(nam.orient('front'))], interval_in_sec=0.3)
     compute_LR_bias(s, e)
-    store_aux_dataset(s, pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), type='distro', file=c.aux_dir)
+    if store :
+        store_aux_dataset(s, pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), type='distro', file=c.aux_dir)
     print(f'Completed {mode} angular processing.')
 
 

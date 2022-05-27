@@ -12,10 +12,9 @@ from lib.ga.exception.collision_exception import Collision
 from lib.ga.robot.motor_controller import MotorController, Actuator
 from lib.ga.sensor.proximity_sensor import ProximitySensor
 from lib.ga.util.color import Color
-from lib.model.body.controller import BodySim
+from lib.model.body.controller import BodySim, PhysicsController
 from lib.model.modules.brain import DefaultBrain
-from lib.process.aux import detect_turns, process_epochs, detect_strides, fft_max, detect_pauses, \
-    compute_interference_solo
+from lib.process.aux import detect_turns, process_epochs, detect_strides, fft_max, detect_pauses, mean_stride_curve
 from lib.process.spatial import straightness_index
 
 
@@ -38,13 +37,10 @@ class LarvaOffline:
         self.rear_orientation = orientation
         self.brain = DefaultBrain(dt=self.model.dt, conf=larva_pars.brain, agent=self)
 
-        self.x, self.y = (0,0)
+        self.x, self.y = (0, 0)
         self.real_length = larva_pars.body.initial_length
-        self.lin_damping = larva_pars.physics.lin_damping
-        self.ang_damping = larva_pars.physics.ang_damping
-        self.body_spring_k = larva_pars.physics.body_spring_k
-        self.torque_coef = larva_pars.physics.torque_coef
-        self.bend_correction_coef = larva_pars.physics.bend_correction_coef
+
+        self.controller = PhysicsController(**larva_pars.physics)
         self.trajectory = [self.pos]
         self.lin_vel = 0
         self.ang_vel = 0
@@ -57,46 +53,33 @@ class LarvaOffline:
         self.cum_dst = 0.0
         self.dst = 0.0
 
-
-
-
-
     def step(self):
         dt = self.model.dt
         self.cum_dur += dt
         self.Nticks += 1
 
+        lin, ang, feed = self.brain.locomotor.step(A_in=0, length=self.real_length)
+        self.lin_vel, self.ang_vel = self.controller.get_vels(lin, ang, self.ang_vel, self.lin_vel,
+                                                              self.body_bend, dt=self.model.dt,
+                                                              ang_suppression=self.brain.locomotor.cur_ang_suppression)
 
-        lin_new, ang, feed = self.brain.locomotor.step(A_in=0, length=self.real_length)
-        if lin_new != 0:
-            self.lin_vel = lin_new
-        else:
-            self.lin_vel *= (1 - self.lin_damping * dt)
-        self.torque = self.torque_coef * ang* self.brain.locomotor.cur_ang_suppression
-
-        self.ang_vel += (-self.ang_damping * self.ang_vel - self.body_spring_k * self.body_bend + self.torque) * dt
-        d_or=self.ang_vel * dt
-        if np.abs(d_or)>np.pi:
+        d_or = self.ang_vel * dt
+        if np.abs(d_or) > np.pi:
             self.body_bend_errors += 1
         self.orientation = (self.orientation + d_or) % (2 * np.pi)
         # self.ang_vel *= self.brain.locomotor.cur_ang_suppression
         self.dst = self.lin_vel * dt
-        self.rear_orientation_change = rear_orientation_change(self.body_bend, self.dst, self.real_length,
-                                                               correction_coef=self.bend_correction_coef)
-        self.rear_orientation=(self.rear_orientation+self.rear_orientation_change)%(2*np.pi)
-        self.body_bend = wrap_angle_to_0(self.orientation-self.rear_orientation)
-        # self.body_bend = self.check_bend_error(self.body_bend + self.ang_vel * dt- self.rear_orientation_change)
-        # self.restore_bend()
+        d_ro = rear_orientation_change(self.body_bend, self.dst, self.real_length,
+                                       correction_coef=self.controller.bend_correction_coef)
+        self.rear_orientation = (self.rear_orientation + d_ro) % (2 * np.pi)
+        self.body_bend = wrap_angle_to_0(self.orientation - self.rear_orientation)
         self.cum_dst += self.dst
-
-        # self.orientation = (self.orientation + d_or)%(2*np.pi)
         k1 = np.array([math.cos(self.orientation), math.sin(self.orientation)])
-        # dxy = k1 * self.dst
         self.pos += k1 * self.dst
 
         self.trajectory.append(tuple(self.pos))
 
-        rov=self.rear_orientation_change/dt
+        rov = d_ro / dt
         # print(self.body_bend,rov,self.ang_vel, self.lin_vel)
         self.eval.b.append(self.body_bend)
         self.eval.fov.append(self.ang_vel)
@@ -122,9 +105,8 @@ class LarvaOffline:
         self.eval.b = np.rad2deg(self.eval.b)
         self.eval.fov = np.rad2deg(self.eval.fov)
         self.eval.rov = np.rad2deg(self.eval.rov)
-        if 'bv' in eval_shorts or 'rov' in eval_shorts:
-            self.eval.bv = np.diff(self.eval.b, prepend=[np.nan]) / dt
-            # self.eval.rov = self.eval.fov - self.eval.bv
+        self.eval.bv = np.diff(self.eval.b, prepend=[np.nan]) / dt
+        # self.eval.rov = self.eval.fov - self.eval.bv
         if 'ba' in eval_shorts:
             self.eval.ba = np.diff(self.eval.bv, prepend=[np.nan]) / dt
         if 'a' in eval_shorts:
@@ -145,11 +127,11 @@ class LarvaOffline:
             a_fov = pd.Series(self.eval.fov)
             Lturns, Rturns = detect_turns(a_fov, dt)
 
-            Ldurs, Lamps, Lmaxs = process_epochs(a_fov, Lturns, dt, return_idx=False)
-            Rdurs, Ramps, Rmaxs = process_epochs(a_fov, Rturns, dt, return_idx=False)
-            self.eval.tur_fou = np.abs(np.concatenate([Lamps, Ramps]))
+            Ldurs, Lamps, Lmaxs = process_epochs(a_fov.values, Lturns, dt, return_idx=False)
+            Rdurs, Ramps, Rmaxs = process_epochs(a_fov.values, Rturns, dt, return_idx=False)
+            self.eval.tur_fou = np.concatenate([Lamps, Ramps])
             self.eval.tur_t = np.concatenate([Ldurs, Rdurs])
-            self.eval.tur_fov_max = np.abs(np.concatenate([Lmaxs, Rmaxs]))
+            self.eval.tur_fov_max = np.concatenate([Lmaxs, Rmaxs])
         if 'run_t' in eval_shorts:
             a_sv = pd.Series(self.eval.sv)
             fv = fft_max(a_sv, dt, fr_range=(1.0, 2.5), return_amps=False)
@@ -174,11 +156,12 @@ class LarvaOffline:
 
         self.finalized = True
 
-    def interference_curves(self, **kwargs):
-        fov_curve, sv_curve, foa_curve, rov_curve = compute_interference_solo(self.eval.sv, self.eval.fov,
-                                                                              self.eval.foa, self.eval.rov,
-                                                                              self.model.dt, **kwargs)
-        return {'foa': foa_curve, 'fov': fov_curve, 'sv': sv_curve, 'rov': rov_curve}
+    def cycle_curve_dict(self):
+        self.finalize(eval_shorts=['b', 'fov', 'foa', 'rov'])
+        strides = detect_strides(self.eval.sv, self.model.dt, return_extrema=False, return_runs=False)
+        da = np.array([np.trapz(self.eval.fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
+        dic = {sh: mean_stride_curve(self.eval[sh], strides, da) for sh in ['sv', 'fov', 'rov', 'foa', 'b']}
+        return AttrDict.from_nested_dicts(dic)
 
 
 class LarvaRobot(BodySim):
@@ -186,7 +169,7 @@ class LarvaRobot(BodySim):
     def __init__(self, unique_id, model, larva_pars, orientation=0, pos=(0, 0), **kwargs):
 
         super().__init__(model=model, pos=pos, orientation=orientation, default_color=Color.random_color(127, 127, 127),
-                         **larva_pars.physics, **larva_pars.body, **larva_pars.Box2D_params)
+                         physics=larva_pars.physics, **larva_pars.body, **larva_pars.Box2D_params)
 
         self.Nticks = 0
         self.finalized = False
@@ -209,7 +192,6 @@ class LarvaRobot(BodySim):
                 scene.draw_polygon(vs, filled=True, color=seg.color)
                 # pygame.draw.polygon(screen, seg.color, vs)
 
-
     @property
     def direction(self):
         return self.head.get_orientation()
@@ -217,7 +199,7 @@ class LarvaRobot(BodySim):
     def complete_step(self):
         self.Nticks += 1
         self.eval.b.append(self.body_bend)
-        self.eval.rov.append(self.rear_orientation_change/self.model.dt)
+        self.eval.rov.append(self.rear_orientation_change / self.model.dt)
         self.eval.fov.append(self.head.get_angularvelocity())
         self.eval.v.append(self.head.get_linearvelocity())
 
@@ -262,15 +244,15 @@ class LarvaRobot(BodySim):
             self.eval.tor10 = straightness_index(self.trajectory, int(10 / dt / 2), match_shape=False)
         if 'tor20' in eval_shorts:
             self.eval.tor20 = straightness_index(self.trajectory, int(20 / dt / 2), match_shape=False)
-        if 'tur_fou' in eval_shorts:
+        if 'tur_fou' in eval_shorts or 'tur_t' in eval_shorts:
             a_fov = pd.Series(self.eval.fov)
             Lturns, Rturns = detect_turns(a_fov, dt)
 
-            Ldurs, Lamps, Lmaxs = process_epochs(a_fov, Lturns, dt, return_idx=False)
-            Rdurs, Ramps, Rmaxs = process_epochs(a_fov, Rturns, dt, return_idx=False)
-            self.eval.tur_fou = np.abs(np.concatenate([Lamps, Ramps]))
+            Ldurs, Lamps, Lmaxs = process_epochs(a_fov.values, Lturns, dt, return_idx=False)
+            Rdurs, Ramps, Rmaxs = process_epochs(a_fov.values, Rturns, dt, return_idx=False)
+            self.eval.tur_fou = np.concatenate([Lamps, Ramps])
             self.eval.tur_t = np.concatenate([Ldurs, Rdurs])
-            self.eval.tur_fov_max = np.abs(np.concatenate([Lmaxs, Rmaxs]))
+            self.eval.tur_fov_max = np.concatenate([Lmaxs, Rmaxs])
         if 'run_t' in eval_shorts:
             a_sv = pd.Series(self.eval.sv)
             fv = fft_max(a_sv, dt, fr_range=(1.0, 2.5), return_amps=False)
@@ -295,11 +277,12 @@ class LarvaRobot(BodySim):
 
         self.finalized = True
 
-    def interference_curves(self, **kwargs):
-        fov_curve, sv_curve, foa_curve, rov_curve = compute_interference_solo(self.eval.sv, self.eval.fov,
-                                                                              self.eval.foa, self.eval.rov,
-                                                                              self.model.dt, **kwargs)
-        return {'foa': foa_curve, 'fov': fov_curve, 'sv': sv_curve, 'rov': rov_curve}
+    def cycle_curve_dict(self):
+        self.finalize(eval_shorts=['b', 'fov', 'foa', 'rov'])
+        strides = detect_strides(self.eval.sv, self.model.dt, return_extrema=False, return_runs=False)
+        da = np.array([np.trapz(self.eval.fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
+        dic = {sh: mean_stride_curve(self.eval[sh], strides, da) for sh in ['sv', 'fov', 'rov', 'foa', 'b']}
+        return AttrDict.from_nested_dicts(dic)
 
 
 class ObstacleLarvaRobot(LarvaRobot):

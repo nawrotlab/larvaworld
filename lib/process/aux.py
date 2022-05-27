@@ -10,6 +10,10 @@ from scipy.spatial import ConvexHull
 from scipy.fft import fft, fftfreq
 import statsmodels.api as sm
 
+from lib.aux.dictsNlists import AttrDict
+
+from lib.process.store import store_aux_dataset
+
 
 def parse_array_at_nans(a):
     a = np.insert(a, 0, np.nan)
@@ -476,7 +480,7 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None, return_extr
         fr = fft_max(a, dt, fr_range=(1, 2.5))
     tmin = stretch[0] // (fr * dt)
     tmax = stretch[1] // (fr * dt)
-    i_min = find_peaks(-a, height=-2 * vel_thr, distance=tmin)[0]
+    i_min = find_peaks(-a, height=-3 * vel_thr, distance=tmin)[0]
     i_max = find_peaks(a, height=vel_thr, distance=tmin)[0]
     strides = []
     for m in i_max:
@@ -625,17 +629,30 @@ def annotation(s, e, cc, vel_thr=None, strides_enabled=True,store=False, **kwarg
     crawl_dict = crawl_annotation(s, e, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
     chunk_dicts = AttrDict.from_nested_dicts({id: {**turn_dict[id], **crawl_dict[id]} for id in cc.agent_ids})
     turn_mode_annotation(e, chunk_dicts)
-    compute_interference(s, e, cc)
+    cycle_curves = compute_interference(s, e, cc, chunk_dicts=chunk_dicts)
     keys = ['turn_dur', 'turn_amp', 'turn_vel_max', 'run_dur', 'run_dst', 'pause_dur', 'run_count']
 
     aux_dic = {k: np.array(flatten_list([chunk_dicts[id][k] for id in cc.agent_ids])) for k in keys}
     if store :
+        from lib.conf.base.par import getPar
+        turn_ps = getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
+        store_aux_dataset(s, pars=turn_ps, type='distro', file=cc.aux_dir)
+        run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l'])
+        store_aux_dataset(s, pars=run_ps, type='distro', file=cc.aux_dir)
+
         path = cc.dir_dict.chunk_dicts
         os.makedirs(path, exist_ok=True)
         save_dict(chunk_dicts, f'{path}/{cc.id}.txt', use_pickle=True)
         # save_dict(chunk_dicts, f'{cc.dir_dict.chunk_dicts}/{cc.id}.txt', use_pickle=True)
         print('Individual larva bouts saved')
-    return chunk_dicts,aux_dic
+
+        # path = cc.dir_dict.cycle_curves
+        # os.makedirs(path, exist_ok=True)
+        save_dict(cycle_curves, cc.dir_dict.cycle_curves, use_pickle=True)
+        # save_dict(chunk_dicts, f'{cc.dir_dict.chunk_dicts}/{cc.id}.txt', use_pickle=True)
+        print('Individual mean cycle curves saved')
+
+    return chunk_dicts,aux_dic, cycle_curves
     # if save_to is not None:
     #     os.makedirs(save_to, exist_ok=True)
     #     save_dict(chunk_dicts, f'{save_to}/{cc.id}.txt', use_pickle=True)
@@ -662,92 +679,117 @@ def fft_freqs(s, e, c):
     e['turner_input_constant'] = (e[ffov] / 0.024) + 5
 
 
-def mean_stride_curve(a, strides,Nbins=64,strict=False, absolute=True) :
+def stride_interp(a, strides,Nbins=64) :
     x = np.linspace(0, 2 * np.pi, Nbins)
-    if strict:
-        strides = [(s0, s1) for s0, s1 in strides if
-                   all(np.sign(a[s0:s1]) >= 0) or all(np.sign(a[s0:s1]) <= 0)]
-    aa = np.zeros([len(strides), Nbins])
+    aa = np.zeros([strides.shape[0], Nbins])
     for ii, (s0, s1) in enumerate(strides):
         aa[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a[s0:s1])
-    if absolute:
-        aa = np.abs(aa)
+    return aa
 
-    curve = np.nanquantile(aa, q=0.5, axis=0)
-    return curve
+def mean_stride_curve(a, strides,da,Nbins=64) :
+    aa=stride_interp(a, strides,Nbins)
+    # da = np.array([np.trapz(a[s0:s1 + 1]) for s0, s1 in strides])
+    aa_minus = aa[da < 0]
+    aa_plus = aa[da > 0]
+    aa_norm = np.vstack([aa_plus, -aa_minus])
+    dic= AttrDict.from_nested_dicts({
+        'abs': np.nanquantile(np.abs(aa), q=0.5, axis=0).tolist(),
+        'plus': np.nanquantile(aa_plus, q=0.5, axis=0).tolist(),
+        'minus': np.nanquantile(aa_minus, q=0.5, axis=0).tolist(),
+        'norm': np.nanquantile(aa_norm, q=0.5, axis=0).tolist(),
+    })
 
-def compute_interference_solo(a_sv,a_fov,a_foa,a_rov,dt, Nbins=64, strict=True, absolute=True) :
-    strides = detect_strides(a_sv, dt, return_runs=False, return_extrema=False)
-    x = np.linspace(0, 2 * np.pi, Nbins)
-
-    if strict:
-        strides = [(s0, s1) for s0, s1 in strides if
-                   all(np.sign(a_fov[s0:s1]) >= 0) or all(np.sign(a_fov[s0:s1]) <= 0)]
-    # print(len(strides))
-    ar_sv = np.zeros([len(strides), Nbins])
-    ar_fov = np.zeros([len(strides), Nbins])
-    ar_rov = np.zeros([len(strides), Nbins])
-    ar_foa = np.zeros([len(strides), Nbins])
-    for ii, (s0, s1) in enumerate(strides):
-        ar_fov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_fov[s0:s1])
-        ar_rov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_rov[s0:s1])
-        ar_sv[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_sv[s0:s1])
-        ar_foa[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_foa[s0:s1])
-    if absolute:
-        ar_rov = np.abs(ar_rov)
-        ar_fov = np.abs(ar_fov)
-        ar_foa = np.abs(ar_foa)
-    rov_curve = np.nanquantile(ar_rov, q=0.5, axis=0)
-    fov_curve = np.nanquantile(ar_fov, q=0.5, axis=0)
-    sv_curve = np.nanquantile(ar_sv, q=0.5, axis=0)
-    foa_curve = np.nanquantile(ar_foa, q=0.5, axis=0)
-    return fov_curve, sv_curve, foa_curve,rov_curve
+    return dic
 
 
-def compute_interference(s, e, c, Nbins=64,strict=False, **kwargs):
+
+def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
     from lib.conf.base.par import getPar
     import lib.aux.naming as nam
-    from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
-    l, v, sv, dst, acc, fov,rov, foa, b, bv, ba, fv, fsv, ffov, pau_fov_mu = \
-        getPar(['l', 'v', 'sv', 'd', 'a', 'fov','rov', 'foa', 'b', 'bv', 'ba', 'fv', 'fsv', 'ffov', 'pau_fov_mu'])
     x = np.linspace(0, 2 * np.pi, Nbins)
-    sv_curves = np.zeros([c.N, Nbins]) * np.nan
-    fov_curves = np.zeros([c.N, Nbins]) * np.nan
-    rov_curves = np.zeros([c.N, Nbins]) * np.nan
-    foa_curves = np.zeros([c.N, Nbins]) * np.nan
-    for jj, id in enumerate(c.agent_ids):
-        a_sv = s[sv].xs(id, level="AgentID").values
-        a_fov = s[fov].xs(id, level="AgentID").values
-        a_rov = s[rov].xs(id, level="AgentID").values
-        a_foa = s[foa].xs(id, level="AgentID").values
-        fov_curve, sv_curve, foa_curve,rov_curve = compute_interference_solo(a_sv,a_fov,a_foa,a_rov, c.dt, Nbins,strict=strict, **kwargs)
-        fov_curves[jj, :] = fov_curve
-        rov_curves[jj, :] = rov_curve
-        sv_curves[jj, :] = sv_curve
-        foa_curves[jj, :] = foa_curve
 
-    att0s, att1s = np.min(fov_curves, axis=1), np.max(fov_curves, axis=1)
-    str_sv_max = getPar('str_sv_max')
+    sss={id:s.xs(id, level="AgentID") for id in c.agent_ids}
 
-    e[nam.min('attenuation')] = att0s / e[pau_fov_mu]
-    e[nam.max('attenuation')] = (att1s - att0s) / e[pau_fov_mu]
-    e[nam.max('phi_attenuation')] = x[np.argmax(fov_curves, axis=1)]
-    e[nam.max(f'phi_{sv}')] = x[np.argmax(sv_curves, axis=1)]
-    e[str_sv_max] = np.max(sv_curves, axis=1)
+    if chunk_dicts is None:
+        stride_dic={}
+
+        stride_dic_dfo={}
+        for jj, id in enumerate(c.agent_ids):
+
+            ss= sss[id]
+            stride_dic[id] = detect_strides(ss[getPar('sv')].values, c.dt, return_runs=False, return_extrema=False)
+            a_fov=ss[getPar('fov')].values
+            stride_dic_dfo[id]=np.array([np.trapz(a_fov[s0:s1]) for ii, (s0, s1) in enumerate(stride_dic[id])])
+    else :
+        stride_dic ={id:chunk_dicts[id]['stride'] for id in c.agent_ids}
+        stride_dic_dfo ={id:chunk_dicts[id]['stride_Dor'] for id in c.agent_ids}
 
 
+    pooled_curves={}
+    cycle_curves={}
+    mean_curves_abs={}
+    for sh in ['sv','fov','rov','foa', 'b'] :
+        par=getPar(sh)
+        curves_abs =np.zeros([c.N, Nbins]) * np.nan
+        curves_plus =np.zeros([c.N, Nbins]) * np.nan
+        curves_minus =np.zeros([c.N, Nbins]) * np.nan
+        curves_norm =np.zeros([c.N, Nbins]) * np.nan
+        for jj, id in enumerate(c.agent_ids):
+            ss= sss[id]
+            aa=stride_interp(ss[par].values, stride_dic[id], Nbins=64)
+            aa_plus=aa[stride_dic_dfo[id]>0]
+            aa_minus=aa[stride_dic_dfo[id]<0]
+            aa_norm=np.vstack([aa_plus, -aa_minus])
+            curves_abs[jj, :]=np.nanquantile(np.abs(aa), q=0.5, axis=0)
+            curves_plus[jj, :]=np.nanquantile(aa_plus, q=0.5, axis=0)
+            curves_minus[jj, :]=np.nanquantile(aa_minus, q=0.5, axis=0)
+            curves_norm[jj, :]=np.nanquantile(aa_norm, q=0.5, axis=0)
+        mean_curves_abs[sh]=curves_abs
+        # mean_curves_plus[sh]=curves_plus
+        # mean_curves_minus[sh]=curves_minus
+        # mean_curves_norm[sh]=curves_norm
 
-    pooled_fov_curve = np.nanquantile(fov_curves, q=0.5, axis=0)
-    pooled_rov_curve = np.nanquantile(rov_curves, q=0.5, axis=0)
-    pooled_sv_curve = np.nanquantile(sv_curves, q=0.5, axis=0)
-    pooled_foa_curve = np.nanquantile(foa_curves, q=0.5, axis=0)
+        cycle_curves[sh]=AttrDict.from_nested_dicts({
+            'abs': curves_abs,
+            'plus': curves_plus,
+            'minus': curves_minus,
+            'norm': curves_norm,
+        })
 
-    c.pooled_cycle_curves = {
-        'sv': pooled_sv_curve.tolist(),
-        'fov': pooled_fov_curve.tolist(),
-        'rov': pooled_rov_curve.tolist(),
-        'foa': pooled_foa_curve.tolist()
-    }
+        pooled_curves[sh]=AttrDict.from_nested_dicts({
+            'abs': np.nanquantile(curves_abs, q=0.5, axis=0).tolist(),
+            'plus': np.nanquantile(curves_plus, q=0.5, axis=0).tolist(),
+            'minus': np.nanquantile(curves_minus, q=0.5, axis=0).tolist(),
+            'norm': np.nanquantile(curves_norm, q=0.5, axis=0).tolist(),
+        })
+        # pooled_curves[sh]=np.nanquantile(curves_abs, q=0.5, axis=0).tolist()
+        # pooled_curves_plus[sh]=np.nanquantile(curves_plus, q=0.5, axis=0).tolist()
+        # pooled_curves_minus[sh]=np.nanquantile(curves_minus, q=0.5, axis=0).tolist()
+        # pooled_curves_norm[sh]=np.nanquantile(curves_norm, q=0.5, axis=0).tolist()
+
+
+
+
+    att0s, att1s = np.min(mean_curves_abs['fov'], axis=1), np.max(mean_curves_abs['fov'], axis=1)
+
+
+    e[nam.max('phi_attenuation')] = x[np.argmax(mean_curves_abs['fov'], axis=1)]
+    e[nam.max(f'phi_{getPar("sv")}')] = x[np.argmax(mean_curves_abs['sv'], axis=1)]
+    e[getPar('str_sv_max')] = np.max(mean_curves_abs['sv'], axis=1)
+    try :
+        e[nam.min('attenuation')] = att0s / e[getPar('pau_fov_mu')]
+        e[nam.max('attenuation')] = (att1s - att0s) / e[getPar('pau_fov_mu')]
+    except :
+        pass
+
+
+
+    c.pooled_cycle_curves = pooled_curves
+
+    return cycle_curves
+    # c.pooled_cycle_curves_plus = pooled_curves_plus
+    # c.pooled_cycle_curves_minus = pooled_curves_minus
+    # c.pooled_cycle_curves_norm = pooled_curves_norm
 
 
 def turn_mode_annotation(e, chunk_dicts):
@@ -775,7 +817,7 @@ def turn_annotation(s, e, c):
 
         Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov.values, Lturns, c.dt)
         Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov.values, Rturns, c.dt)
-        Tamps = np.abs(np.concatenate([Lamps, Ramps]))
+        Tamps = np.concatenate([Lamps, Ramps])
         Tdurs = np.concatenate([Ldurs, Rdurs])
         Tmaxs = np.concatenate([Lmaxs, Rmaxs])
         Tslices = Lturn_slices + Rturn_slices
@@ -798,7 +840,7 @@ def turn_annotation(s, e, c):
         turn_dict[id] = {'Lturn': Lturns, 'Rturn': Rturns, 'turn_slice': Tslices, 'turn_amp': Tamps,
                          'turn_dur': Tdurs, 'turn_vel_max': Tmaxs}
     s[turn_ps] = turn_vs.reshape([c.Nticks * c.N, len(turn_ps)])
-
+    # store_aux_dataset(s, pars=turn_ps, type='distro', file=c.aux_dir)
     # pooled_turn_dict = {
     #     'turn_dur': np.array(flatten_list(GTdurs)),
     #     'turn_amp': np.array(flatten_list(GTamps)),
@@ -823,22 +865,24 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
     lin_vs = np.zeros([c.N, len(lin_ps)]) * np.nan
     str_vs = np.zeros([c.N, len(str_ps)]) * np.nan
 
-    run_ps = getPar(['pau_t', 'run_t', 'run_d'])
+    run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l'])
     run_vs = np.zeros([c.Nticks, c.N, len(run_ps)]) * np.nan
 
     crawl_dict = {}
 
 
     for jj, id in enumerate(c.agent_ids):
-        strides, run_counts = [], []
+        strides, str_chain_ls,stride_Dor = [], [], []
         a_v = s[v].xs(id, level="AgentID").values
         a_fov = s[fov].xs(id, level="AgentID").values
 
         if c.Npoints > 1:
             a_sv = s[sv].xs(id, level="AgentID").values
+            a_fov = s[fov].xs(id, level="AgentID").values
             if strides_enabled:
-                strides, runs, run_counts = detect_strides(a_sv, dt, fr=e[fv].loc[id],vel_thr=vel_thr, return_extrema=False)
+                strides, runs, str_chain_ls = detect_strides(a_sv, dt, fr=e[fv].loc[id],vel_thr=vel_thr, return_extrema=False)
                 strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_v,strides, dt)
+                stride_Dor = np.array([np.trapz(a_fov[s0:s1+1]) for s0, s1 in strides])
                 # print(stride_idx)
                 # print(stride_idx.shape)
                 str_fovs = np.abs(a_fov[stride_idx])
@@ -847,7 +891,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
                                  np.mean(a_sv[stride_idx]),
                                  np.mean(str_fovs),
                                  np.std(str_fovs),
-                                 np.sum(run_counts),
+                                 np.sum(str_chain_ls),
                                  ]
             else:
                 runs = detect_runs(a_sv, dt)
@@ -863,6 +907,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
         run_vs[pauses1, jj, 0] = pause_durs
         run_vs[runs1, jj, 1] = run_durs
         run_vs[runs1, jj, 2] = run_dsts
+        run_vs[runs1, jj, 3] = str_chain_ls
 
         if b in s.columns:
             pau_bs = s[b].xs(id, level="AgentID").abs().values[pause_idx]
@@ -896,9 +941,9 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
             np.nanmax(pause_durs) if len(pause_durs) > 0 else 100,
         ]
 
-        crawl_dict[id] = {'stride': strides, 'run': runs, 'pause': pauses,
+        crawl_dict[id] = {'stride': strides,'stride_Dor': stride_Dor, 'run': runs, 'pause': pauses,
                           'run_idx': run_idx, 'pause_idx': pause_idx,
-                          'run_count': run_counts, 'run_dur': run_durs, 'run_dst': run_dsts, 'pause_dur': pause_durs}
+                          'run_count': str_chain_ls, 'run_dur': run_durs, 'run_dst': run_dsts, 'pause_dur': pause_durs}
     s[run_ps] = run_vs.reshape([c.Nticks * c.N, len(run_ps)])
     e[lin_ps] = lin_vs
 
@@ -913,7 +958,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
         e[str_ps] = str_vs
         e[sstr_d_mu] = e[str_d_mu] / e[l]
         e[sstr_d_std] = e[str_d_std] / e[l]
-
+    # store_aux_dataset(s, pars=run_ps, type='distro', file=c.aux_dir)
     return crawl_dict
 
 

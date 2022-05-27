@@ -394,7 +394,7 @@ def init_parser(description='', parsers=[]):
     return parser
 
 
-def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp'):
+def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
     from lib.conf.stored.conf import expandConf, next_idx
     exp_conf = expandConf(exp, conf_type)
     if arena is not None :
@@ -414,9 +414,11 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
             sim.path = f'ga_runs/{exp}'
         elif conf_type == 'Batch':
             sim.path = f'batch_runs/{exp}'
+        elif conf_type == 'Eval':
+            sim.path = f'eval_runs/{exp}'
     exp_conf.sim_params = d.sim_params
     if models is not None:
-        if conf_type=='Exp' :
+        if conf_type in ['Exp', 'Eval'] :
             exp_conf = update_exp_models(exp_conf, models)
         elif conf_type == 'Ga':
             if type(models)==list :
@@ -430,10 +432,11 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
                 gConf.distribution.N = N
         elif conf_type == 'Ga':
             exp_conf.ga_select_kws.Nagents=N
+    exp_conf.update(**kwargs)
     return exp_conf
 
 
-def update_exp_models(exp_conf, models):
+def update_exp_models(exp_conf, models, N=None):
     from lib.conf.stored.conf import expandConf
     larva_groups = {}
     Nmodels = len(models)
@@ -460,7 +463,9 @@ def update_exp_models(exp_conf, models):
                 larva_groups[m] = gConf
             else:
                 raise ValueError(f'{m} larva-model or brain-model does not exist!')
-
+    if N is not None:
+        for gID, gConf in larva_groups.items():
+            gConf.distribution.N = N
     exp_conf.larva_groups = larva_groups
     return exp_conf
 

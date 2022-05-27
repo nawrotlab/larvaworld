@@ -75,13 +75,16 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
         return {name: d}
 
 
-def ga_dict(name=None, suf='', excluded=None):
-    if excluded is None:
-        excluded = []
+def ga_dict(name=None, suf='', excluded=None, only=None):
+    dic=par_dict(name)
+    keys=list(dic.keys())
+    if only is not None :
+        keys=[k for k in keys if k in only]
+    elif excluded is not None :
+        keys = [k for k in keys if k not in excluded]
     d = {}
-    for k, vs in par_dict(name).items():
-        if k in excluded:
-            continue
+    for k in keys:
+        vs=dic[k]
         k0 = f'{suf}{k}'
         kws = {
             'initial_value': vs['initial_value'],

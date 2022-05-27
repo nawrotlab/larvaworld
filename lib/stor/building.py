@@ -86,7 +86,7 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
 
 def build_Jovanic(dataset, build_conf, source_dir, source_id, max_Nagents=None, min_duration_in_sec=0.0,
                   match_ids=True,**kwargs):
-    print('Initializing format-specific dataset import...')
+
     pref=f'{source_dir}/{source_id}'
     temp_step_path = f'{pref}_step.csv'
     temp_length_path = f'{pref}_length.csv'
@@ -113,7 +113,7 @@ def build_Jovanic(dataset, build_conf, source_dir, source_id, max_Nagents=None, 
         print('Loaded temporary data successfully!')
     except:
 
-
+        print(f'Buiding temporary data files for dataset {d.id} of group {d.group_id}!')
         xs = pd.read_csv(f'{pref}_x_spine.txt', header=None, sep='\t', names=x_pars)
         ys = pd.read_csv(f'{pref}_y_spine.txt', header=None, sep='\t', names=y_pars)
         ts = pd.read_csv(f'{pref}_t.txt', header=None, sep='\t', names=['Step'])

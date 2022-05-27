@@ -111,7 +111,7 @@ class SingleRun:
             if self.show_output :
                 print()
                 print(f'--- Enriching dataset {self.id} with derived parameters ---')
-            d.enrich(**self.enrichment, is_last=False, show_output=self.show_output)
+            d.enrich(**self.enrichment, is_last=False, show_output=self.show_output, store=self.store_data)
             d.get_larva_dicts(env)
             d.get_larva_tables(env)
         return ds
@@ -256,6 +256,7 @@ def get_source_xy(food_params):
     sources_u = {k: v['pos'] for k, v in food_params['source_units'].items()}
     sources_g = {k: v['distribution']['loc'] for k, v in food_params['source_groups'].items()}
     return {**sources_u, **sources_g}
+
 
 
 combo_collection_dict = {

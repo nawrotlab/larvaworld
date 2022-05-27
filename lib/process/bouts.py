@@ -19,10 +19,9 @@ def annotate(s, e, c, stride=True, pause=True, turn=True,
         'recompute': recompute,
     }
     with suppress_stdout(show_output):
-        if stride or pause or turn:
-            chunk_dicts,aux_dic=annotation(s, e, c, vel_thr=vel_threshold, strides_enabled=True,store=store, **kwargs)
-            if fits :
-                bout_dic = fit_bouts(c=c, aux_dic=aux_dic, s=s, e=e, id=c.id,store=store)
+        chunk_dicts,aux_dic, cycle_curves=annotation(s, e, c, vel_thr=vel_threshold, strides_enabled=True,store=store, **kwargs)
+        if fits :
+            pooled_epochs = fit_bouts(c=c, aux_dic=aux_dic, s=s, e=e, id=c.id,store=store)
         if on_food:
             comp_patch_metrics(**ccc, **kwargs)
 
@@ -34,7 +33,7 @@ def annotate(s, e, c, stride=True, pause=True, turn=True,
                     comp_chunk_bearing(**ccc, chunk='Rturn', **kwargs)
             except:
                 pass
-    return s, e
+    return chunk_dicts, pooled_epochs, cycle_curves
 
 
 

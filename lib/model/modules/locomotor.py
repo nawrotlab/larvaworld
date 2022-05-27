@@ -139,8 +139,14 @@ class DefaultLocomotor(Locomotor):
             elif self.coupling.suppression_mode == 'both':
                 A_in -= (1 - self.coupling.step())
                 cT = self.coupling.step()
-            self.ang_activity = self.turner.step(A_in=A_in)
+
             self.cur_ang_suppression=cT
+            ang = self.turner.step(A_in=A_in)
+            self.ang_activity = ang
+            # self.ang_activity = ang * self.cur_ang_suppression
+            if self.turner.rebound:
+                self.turner.buildup += ang * (1-self.cur_ang_suppression)
+
         # if self.intermitter.cur_state=='pause' :
         #     print(self.cur_ang_suppression)
         self.add_noise()

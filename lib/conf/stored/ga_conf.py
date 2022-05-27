@@ -2,6 +2,7 @@ from types import BuiltinFunctionType, FunctionType
 from typing import ClassVar
 
 import numpy as np
+from matplotlib import pyplot as plt
 from scipy.stats import ks_2samp
 
 from lib.anal.plot_aux import plot_quantiles, BasePlot
@@ -12,15 +13,15 @@ from lib.conf.stored.conf import expandConf, copyConf, saveConf, loadConf, next_
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 
 from lib.ga.util.ga_engine import GAlauncher
-from lib.process.aux import compute_interference_solo, detect_strides, mean_stride_curve
+from lib.process.aux import detect_strides, mean_stride_curve
 
 ga_spaces = AttrDict.from_nested_dicts({
     'interference': ga_dict(name='interference', suf='brain.interference_params.',
-                            excluded=['feeder_phi_range', 'mode', 'suppression_mode', 'crawler_phi_range']),
-    'turner': ga_dict(name='turner', suf='brain.turner_params.',
+                            excluded=['feeder_phi_range','crawler_phi_range', 'mode', 'suppression_mode']),
+    'turner': ga_dict(name='turner', suf='brain.turner_params.',only=['base_activation'],
                       excluded=['mode', 'noise', 'activation_noise', 'initial_amp', 'amp_range', 'initial_freq',
                                 'freq_range', 'activation_range']),
-    'physics': ga_dict(name='physics', suf='physics.',
+    'physics': ga_dict(name='physics', suf='physics.',only=['torque_coef'],
                        excluded=['ang_mode', 'lin_damping', 'ang_vel_coef', 'bend_correction_coef']),
     'sensorimotor': ga_dict(name='obstacle_avoidance', suf='sensorimotor.', excluded=[]),
     'olfactor': {**ga_dict(name='olfactor', suf='brain.olfactor_params.', excluded=['input_noise']),
@@ -31,20 +32,17 @@ ga_spaces = AttrDict.from_nested_dicts({
 
 
 def interference_evaluation(robot, pooled_cycle_curves):
-    robot.finalize(eval_shorts=['b', 'fov', 'foa', 'rov'])
-    strides= detect_strides(robot.eval.sv, robot.model.dt, return_extrema=False, return_runs=False)
-    RSS_dic={}
-    cumRSS=0
-    for sh,target in pooled_cycle_curves.items():
-        curve = mean_stride_curve(robot.eval[sh], strides, strict=False)
-        if any(np.isnan(curve)) :
-            return -np.inf
-        RSS = np.nanmean(np.sqrt(np.nansum((curve - target) ** 2)))
-        cumRSS+=RSS
-        # RSS_dic[sh] = np.nanmean(np.sqrt(np.nansum((curve - target) ** 2)))
-    return -cumRSS
+    from lib.anal.eval_aux import RSS_dic, RSS
+    dic=robot.cycle_curve_dict()
+    error_dic = {}
+    for sh, target_dic in pooled_cycle_curves.items():
+        mode = 'abs' if sh == 'sv' else 'norm'
+        error_dic[sh] = RSS(dic[sh][mode] ,np.array(target_dic[mode]))
+    return -np.mean(list(error_dic.values()))
+
 
 def distro_KS_evaluation(robot, eval_shorts, eval_labels, eval):
+    # print(robot.unique_id)
     robot.finalize(eval_shorts)
     ks = {}
     for p, lab in zip(eval_shorts, eval_labels):
@@ -64,7 +62,8 @@ def distro_KS_interference_evaluation(robot, eval_shorts, eval_labels, eval, poo
     if np.isinf(r1) or np.isinf(r2):
         return -np.inf
     else:
-        return r1 * 500 + r2
+        # print(r1,r2)
+        return r1 * 2 + r2
 
 
 def dst2source_evaluation(robot):
@@ -87,17 +86,19 @@ fitness_funcs = AttrDict.from_nested_dicts({
 
 
 def interference_plot(robots, generation_num, target_fov_curve, **kwargs):
+    sh='fov'
     P = BasePlot(name=f'interference_generation_{generation_num}', **kwargs)
     P.build()
     Nbins = 64
     x = np.linspace(0, 2 * np.pi, Nbins)
-    fov_curves = np.zeros([len(robots), Nbins]) * np.nan
+    curves = np.zeros([len(robots), Nbins]) * np.nan
     for i, robot in enumerate(robots):
-        curves = robot.interference_curves(strict=False)
-        fov_curves[i, :] = curves['fov']
-    plot_quantiles(fov_curves, from_np=True, x=x, axis=P.axs[0], color_shading='red')
-    fov_curve_mu = np.nanquantile(fov_curves, q=0.5, axis=0)
-    RSS = int(np.nanmean(np.nansum((fov_curve_mu - target_fov_curve) ** 2)))
+        strides = detect_strides(robot.eval.sv, robot.model.dt, return_runs=False, return_extrema=False)
+        da = np.array([np.trapz(robot.eval.fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
+        curves[i, :] = mean_stride_curve(robot.eval[sh], strides,da)
+    plot_quantiles(curves, from_np=True, x=x, axis=P.axs[0], color_shading='red')
+    curve_mu = np.nanquantile(curves, q=0.5, axis=0)
+    RSS = int(np.nanmean(np.nansum((curve_mu - target_fov_curve) ** 2)))
     P.axs[0].plot(x, target_fov_curve, color='black', linewidth=4)
     P.conf_ax(title=f'Generation {generation_num} - RSS : {RSS}', xlim=[0, 2 * np.pi])
     return P.get()
@@ -187,20 +188,22 @@ def ga_conf(name, spaceIDs, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, du
 # env.arena.arena_dims = (0.2, 0.2)
 
 ga_dic = AttrDict.from_nested_dicts({
-    **ga_conf('interference', dt=1 / 16, dur=1, refID='exploration.150controls', m0='150l_explorer',
-              m1='150l_explorer2',
-              fit_kws={'pooled_cycle_curves': ['fov', 'rov']}, init='random',
-              spaceIDs=['interference','physics'], fitID='interference', plotID='interference',
-              Nel=6, N=60, envID='arena_200mm'),
-    **ga_conf('exploration', dur=1, dt=1 / 16, refID='exploration.150controls', m0='150l_explorer',
-              m1='150l_explorer2', fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov', 'tur_fou', 'tor5']},
-              spaceIDs=['physics'], fitID='distro_KS', plotID='distro_KS', init='random',
+    **ga_conf('interference', dt=1 / 16, dur=3, refID='None.150controls', m0='NEU_PHI',
+              m1='NEU_PHI',
+              fit_kws={'pooled_cycle_curves': ['fov', 'rov', 'foa']}, init='model',
+              spaceIDs=['interference','turner'], fitID='interference', plotID='interference',
+              Nel=2, N=6, envID='arena_200mm'),
+    **ga_conf('exploration', dur=0.5, dt=1 / 16, refID='None.150controls', m0='NEU_PHI',
+              m1='NEU_PHI', fit_kws={'eval_shorts': ['b', 'bv', 'ba', 'tur_t', 'tur_fou', 'tor2', 'tor10']},
+              spaceIDs=['interference','turner'], fitID='distro_KS', plotID='distro_KS', init='random',
               excl_func=bend_error_exclusion,
-              Nel=5, N=50, envID='arena_200mm'),
-    **ga_conf('realism', dur=0.5, dt=1 / 16, refID='exploration.150controls', m0='150l_explorer', m1='150l_explorer2',
-              fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov'], 'pooled_cycle_curves': ['fov', 'rov']},
+              Nel=2, N=10, envID='arena_200mm'),
+    **ga_conf('realism', dur=1, dt=1 / 16, refID='None.150controls', m0='NEU_PHI3', m1='NEU_PHI3',
+              fit_kws={'eval_shorts': ['fov', 'foa','b'],
+              # fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov', 'tur_t', 'tur_fou', 'pau_t', 'run_t', 'tor2', 'tor10'],
+                       'pooled_cycle_curves': ['fov', 'foa','b']},
               excl_func=bend_error_exclusion,
-              spaceIDs=['interference', 'physics', 'turner'], fitID='distro_KS_interference', plotID='distro_KS',
+              spaceIDs=['interference', 'turner'], fitID='distro_KS_interference', plotID='distro_KS',
               init='model',
               Nel=2, N=10, envID='arena_200mm'),
     **ga_conf('chemorbit', dur=5, m0='Sakagiannis2022', m1='best_navigator',
@@ -213,11 +216,14 @@ ga_dic = AttrDict.from_nested_dicts({
 })
 
 if __name__ == '__main__':
+    print(ga_dict(name='physics', suf='physics.', excluded=None, only=['torque_coef','ang_damping','body_spring_k']))
+
+    raise
     exp = 'interference'
     conf = loadConf(exp, 'Ga')
     # mID=conf.ga_build_kws.base_model
     # if type(mID) == str and mID in kConfDict('Model'):
     #     larva_pars = copyConf(mID, 'Model')
-    # print(mID)
+    print(conf.ga_build_kws.space_dict)
     # print(isinstance(conf.ga_build_kws.base_model, str))
     # GAlauncher(**conf)

@@ -1,471 +1,472 @@
 import copy
 import itertools
-import math
 import os
 
 import numpy as np
+from matplotlib import ticker
 from scipy.stats import ks_2samp
 import pandas as pd
 import matplotlib.pyplot as plt
-from shapely.geometry import Polygon, Point
 
-import lib.aux.dictsNlists as dNl
-import lib.aux.naming as nam
-from lib.anal.fitting import std_norm, minmax, fit_bouts
-from lib.anal.plot_aux import plot_single_bout, dataset_legend
-from lib.anal.plotting import plot_trajectories, plot_dispersion
+from lib.anal.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, prepare_sim_dataset, \
+    prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, sim_model, sim_models, RSS_dic
+from lib.anal.fitting import std_norm, minmax
+from lib.anal.plot_aux import modelConfTable
+from lib.anal.plot_combos import model_summary
+from lib.anal.plotting import plot_trajectories, plot_dispersion, plot_ang_pars, stride_cycle, plot_bouts, \
+    plot_fft_multi, boxplots, plot_crawl_pars
 from lib.aux.colsNstr import N_colors, col_df
 from lib.aux.combining import render_mpl_table
+from lib.conf.base import paths
+from lib.conf.base.dtypes import null_dict
+import lib.aux.dictsNlists as dNl
 
-from lib.conf.base.par import getPar, ParDict
-from lib.conf.stored.conf import loadRef
-from lib.process.aux import annotation
-from lib.process.spatial import scale_to_length, comp_straightness_index, comp_dispersion
-from lib.process.store import get_dsp
-from lib.aux.sim_aux import get_tank_polygon
-
-dic = ParDict(mode='load').dict
-dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, dsp, dsp_0_40, dsp_0_40_mu, dsp_0_40_max, sdsp, sdsp_0_40, sdsp_0_40_mu, sdsp_0_40_max, str_fov_mu, run_fov_mu, pau_fov_mu, str_fov_std, pau_fov_std, sstr_d_mu, sstr_d_std, str_d_mu, str_d_std, str_sv_mu, pau_sv_mu, str_v_mu, run_v_mu, run_sv_mu, pau_v_mu, str_tr, run_tr, pau_tr, Ltur_tr, Rtur_tr, Ltur_fou, Rtur_fou, run_t_min, run_t_max, pau_t_min, pau_t_max, cum_t, run_t, run_dst, pau_t = [
-    dic[k]['d'] for k in
-    ['d', 'v', 'sv', 'a', 'sa', 'fou', 'rou', 'fo', 'ro', 'b', 'fov', 'rov', 'bv', 'foa', 'roa', 'ba', 'x', 'y', 'l',
-     "dsp", "dsp_0_40", "dsp_0_40_mu", "dsp_0_40_max", "sdsp", "sdsp_0_40", "sdsp_0_40_mu", "sdsp_0_40_max",
-     'str_fov_mu', 'run_fov_mu', 'pau_fov_mu', 'str_fov_std', 'pau_fov_std', 'sstr_d_mu', 'sstr_d_std', 'str_d_mu',
-     'str_d_std', 'str_sv_mu', 'pau_sv_mu', 'str_v_mu', 'run_v_mu', 'run_sv_mu', 'pau_v_mu', 'str_tr', 'run_tr',
-     'pau_tr', 'Ltur_tr', 'Rtur_tr', 'Ltur_fou', 'Rtur_fou', 'run_t_min', 'run_t_max', 'pau_t_min', 'pau_t_max',
-     'cum_t', 'run_t', 'run_d', 'pau_t']]
-l, v_mu, cum_d, sv_mu, fov_mu, b_mu = [dic[k]['d'] for k in ['l', 'v_mu', "cum_d", "sv_mu", 'fov_mu', 'b_mu']]
-tors = tor, tor2, tor2_mu, tor2_std, tor5, tor5_mu, tor5_std, tor10, tor10_mu, tor10_std, tor20, tor20_mu, tor20_std = [
-    dic[k]['d'] for k in
-    ["tor", "tor2", "tor2_mu", "tor2_std", "tor5", "tor5_mu", "tor5_std", "tor10", "tor10_mu", "tor10_std", "tor20",
-     "tor20_mu", "tor20_std"]]
-fsv, ffov = [dic[k]['d'] for k in ['fsv', 'ffov']]
-
-att = 'attenuation'
-att_max, att_min, phi_att_max, phi_sv_max = nam.max(att), nam.min(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')
+from lib.conf.base.par import getPar
+from lib.conf.stored.conf import loadRef, expandConf, next_idx
+from lib.sim.single.single_run import SingleRun
+from lib.stor.larva_dataset import LarvaDataset
 
 
-def adapt_conf(conf0, ee, cc):
-    conf = copy.deepcopy(conf0)
-
-    dic = {
-        run_sv_mu: ee[str_sv_mu] if str_sv_mu in ee.index else ee[run_v_mu] / ee[l],
-        run_v_mu: ee[run_v_mu],
-        run_t_min: ee[run_t_min],
-        run_t_max: ee[run_t_max],
-        pau_t_min: ee[pau_t_min],
-        pau_t_max: ee[pau_t_max],
-        'ang_vel_headcast': np.deg2rad(ee[pau_fov_mu]),
-        'theta_min_headcast': np.deg2rad(ee['headcast_q25_amp']),
-        'theta_max_headcast': np.deg2rad(ee['headcast_q75_amp']),
-        'theta_max_weathervane': np.deg2rad(ee['weathervane_q75_amp']),
-        'ang_vel_weathervane': np.deg2rad(ee[run_fov_mu]),
-        'turner_input_constant': ee['turner_input_constant'],
-        'run_dist': cc.bout_distros.run_dur,
-        'pause_dist': cc.bout_distros.pause_dur,
-        'stridechain_dist': cc.bout_distros.run_count}
-
-    if cc.Npoints > 1:
-        ddic = {'initial_freq': ee[fsv],
-                'step_mu': ee[sstr_d_mu],
-                'step_std': ee[sstr_d_std],
-                'attenuation_min': ee[att_min],
-                'attenuation_max': ee[att_max],
-                'max_vel_phase': ee[phi_sv_max]}
-        dic.update(**ddic)
-    for kk, vv in dic.items():
-        if kk in conf.keys():
-            conf[kk] = vv
-
-    return conf
+class EvalRun :
+    def __init__(self,refID,id=None,expVSsimIDs=False, eval_metrics=None,save_to=None,N=None,
+                 locomotor_models=None,modelIDs=None,dataset_ids=None, cross_validation=False,mode='load',
+                 norm_modes = ['raw', 'minmax','std'],eval_modes=['pooled'],offline=False, store_data=True, show=False) :
+        if id is None :
+            id = f'{refID}_evaluation_{next_idx("dispersion", "Eval")}'
+        self.id=id
+        if save_to is None:
+            save_to = paths.path("SIM")
+        self.path=f'eval_runs'
+        self.save_to = save_to
+        self.store_data = store_data
 
 
-def sim_locomotor(L, N, df_cols=None, tank_polygon=None, cur_x=0, cur_y=0, cur_fo=0, length=0.004):
-    if df_cols is None:
-        from lib.conf.base.par import getPar
-        df_cols = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
-    aL = np.ones([N, len(df_cols)]) * np.nan
-    for i in range(N):
-        lin, ang, feed = L.step(A_in=0, length=length)
-        cur_d = lin * L.dt
-        if tank_polygon:
-            if not tank_polygon.contains(Point(cur_x, cur_y)):
-                cur_fo -= np.pi
-        cur_fo += ang * L.dt
-        cur_x += np.cos(cur_fo) * cur_d
-        cur_y += np.sin(cur_fo) * cur_d
-        aL[i, :7] = [lin, ang, cur_d, cur_fo, cur_x, cur_y, L.bend]
-    for ii in [1, 3, 6]:
-        aL[:, ii] = np.rad2deg(aL[:, ii])
-    return aL
+        self.refID=refID
+        self.locomotor_models=locomotor_models
+        self.modelIDs=modelIDs
+        self.dataset_ids=dataset_ids
+        if self.dataset_ids is None :
+            self.dataset_ids = self.modelIDs
+        self.expVSsimIDs=expVSsimIDs
+        self.eval_modes=eval_modes
+        self.norm_modes=norm_modes
+        self.cross_validation=cross_validation
+        self.offline=offline
+
+        dir = f'{save_to}/{self.path}/{self.id}'
+
+        self.define_paths(dir)
 
 
-def sim_dataset(ee, cc, loco_func, loco_conf, adapted=False):
-    df_cols = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
-    Ncols = len(df_cols)
 
-    Ls = {}
-    for jj, id in enumerate(cc.agent_ids):
+        self.loco_dict = {}
+        self.figs = dNl.AttrDict.from_nested_dicts({'errors':{}, 'hist':{}, 'boxplot':{}, 'stride_cycle' : {}, 'loco' : {}, 'models' : {}})
+        self.refDataset=loadRef(refID)
+        self.refDataset.pooled_epochs = self.refDataset.load_pooled_epochs()
+        self.N=N
+        self.show=show
+        self.target, self.target_val=self.define_target(self.refDataset,N)
 
-        # Build locomotor instance of given model configuration adapted to the specific experimental larva
-        if adapted == 'I':
-            loco_conf = adapt_conf(loco_conf, ee.loc[id], cc)
-        Ls[id] = loco_func(dt=cc.dt, **loco_conf)
+        if mode=='load' :
+            try :
+                self.target_data = self.load_data('target_data')
+                self.evaluation = self.load_data('evaluation')
+                print('Loaded existing target data and evaluation metrics')
+                self.error_dicts = self.load_data('error_dicts')
+                self.sim_data = self.load_data('sim_data')
+                self.dataset_configs = self.load_data('dataset_configs')
+                self.datasets = [LarvaDataset(**c) for id,c in self.dataset_configs.items()]
+                print('Loaded existing datasets')
 
-    aaL = np.zeros([cc.Nticks, cc.N, Ncols]) * np.nan
-    aaL[0, :, :] = 0
-    try:
-        aaL[0, :, 3:6] = ee[nam.initial([fo, x, y])]
-    except:
-        pass
-    tank_polygon = get_tank_polygon(cc)
-    for jj, id in enumerate(cc.agent_ids):
-        # cur_x, cur_y, cur_fo = 0,0,0
-        cur_fo, cur_x, cur_y = aaL[0, jj, 3:6]
-        aaL[1:, jj, :] = sim_locomotor(Ls[id], cc.Nticks - 1, df_cols, tank_polygon, cur_x, cur_y, np.deg2rad(cur_fo),
-                                       length=ee['length'].loc[id])
+            except :
+                self.sim_data = None
+                self.error_dicts = {}
+                self.datasets = []
+                self.dataset_configs = {}
+                self.evaluation, self.target_data  = self.build_evaluation(eval_metrics)
+                if self.store_data:
+                    dNl.save_dict(self.target_data, self.dir_dict.target_data)
+                    dNl.save_dict(self.evaluation, self.dir_dict.evaluation)
+                print('Created novel target data and evaluation metrics')
+        self.define_eval_args(self.evaluation)
 
-    df_index = pd.MultiIndex.from_product([np.arange(cc.Nticks), cc.agent_ids], names=['Step', 'AgentID'])
-    ss = pd.DataFrame(aaL.reshape([cc.Nticks * cc.N, Ncols]), index=df_index, columns=df_cols)
-
-    return ss
-
-
-def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stops=[40]):
-    strides_enabled = True if cc.Npoints > 1 else False
-    vel_thr = cc.vel_thr if cc.Npoints == 1 else 0.2
-
-    dt = cc.dt
-    ss[bv] = ss[b].groupby('AgentID').diff() / dt
-    ss[ba] = ss[bv].groupby('AgentID').diff() / dt
-    ss[foa] = ss[fov].groupby('AgentID').diff() / dt
-    ss[acc] = ss[v].groupby('AgentID').diff() / dt
-
-    ee[v_mu] = ss[v].dropna().groupby('AgentID').mean()
-    ee[cum_d] = ss[dst].dropna().groupby('AgentID').sum()
-
-    scale_to_length(ss, ee, cc, keys=['d', 'v', 'a', 'v_mu'])
-
-    comp_dispersion(ss, ee, dt, cc.point, dsp_starts=dsp_starts, dsp_stops=dsp_stops)
-    comp_straightness_index(ss,  ee,cc, dt,tor_durs=tor_durs)
-
-    chunk_dicts, aux_dic = annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
-    bout_dic = fit_bouts(c=cc, aux_dic=aux_dic, s=ss, e=ee, id=cc.id)
-
-    return bout_dic
-
-
-def eval_all_datasets(s, e, evaluation=None,save_to=None,  suf='',loco_dict=None,datasets=None,  mode='1:1',
-                      norm_modes=['raw', 'minmax', 'std']):
-
-    if loco_dict is None and datasets is not None:
-        loco_dict={d.id : {'step_data' : d.step_data, 'endpoint_data' : d.endpoint_data} for d in datasets}
-
-    if evaluation is None :
-        evaluation_metrics = {
-            'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'tur_fou', 'tur_fov_max'],
-            'spatial displacement': ['cum_d', 'run_d', 'v_mu', 'v', 'a', 'dsp_0_40_max', 'tor5', 'tor20'],
-            'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
-            # 'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
-            # 'epochs': ['run_t', 'pau_t'],
-            # 'tortuosity': ['tor5', 'tor20']
+    def define_paths(self, dir):
+        self.dir = dir
+        self.data_dir = os.path.join(dir, 'data')
+        self.plot_dir = os.path.join(dir, 'plots')
+        self.error_dir = os.path.join(dir, 'errors')
+        dir_dict = {
+            'parent': self.dir,
+            'data': self.data_dir,
+            'models': os.path.join(dir, 'models'),
+            'plot': self.plot_dir,
+            'error': self.error_dir,
+            **{f'error_{norm}' : os.path.join(self.error_dir, norm) for norm in self.norm_modes},
+            'dataset_configs': os.path.join(self.data_dir, 'dataset_configs.txt'),
+            'evaluation': os.path.join(self.error_dir, 'evaluation.txt'),
+            'error_dicts': os.path.join(self.error_dir, 'error_dicts.txt'),
+            'sim_data': os.path.join(self.data_dir, 'sim_data.txt'),
+            'target_data': os.path.join(self.data_dir, 'target_data.txt'),
         }
+        self.dir_dict = dNl.AttrDict.from_nested_dicts(dir_dict)
+        for k in ['plot', 'data', 'error', 'models']+ [f'error_{norm}'  for norm in self.norm_modes]:
+            os.makedirs(self.dir_dict[k], exist_ok=True)
 
-        temp = arrange_evaluation(s, e, evaluation_metrics)
-        evaluation = {k: col_df(**pars) for k, pars in temp.items()}
-    # Evaluation metrics
-    end_ps = dNl.flatten_list(evaluation['end']['shorts'].values.tolist())
-    distro_ps = dNl.flatten_list(evaluation['step']['shorts'].values.tolist())
-    GEend, GEdistro = {}, {}
-    for loco_id in loco_dict.keys():
-        ss = loco_dict[loco_id]['step_data']
-        ee = loco_dict[loco_id]['endpoint_data']
-        ids = e.index.values
-        ps1, ps1l = getPar(end_ps, to_return=['d', 'lab'])
-        Eend, Edistro = {}, {}
-        for p, pl in zip(ps1, ps1l):
-            Eend[pl] = None
-            if p in e.columns and p in ee.columns:
-                if mode == '1:1':
-                    Eend[pl] = ((e[p] - ee[p]) ** 2).mean() ** .5
-                elif mode == 'pooled':
-                    Eend[pl] = ks_2samp(e[p].values, ee[p].values)[0]
+    def define_target(self, d, N):
+        target_val=None
+        # pooled_epochs = d.load_pooled_epochs()
 
-        # Distributions
-        N = 20
-        ps2, ps2l = getPar(distro_ps, to_return=['d', 'lab'])
-        for p, pl in zip(ps2, ps2l):
-            Edistro[pl] = None
-            if p in s.columns and p in ss.columns:
-                if mode == '1:1':
-                    pps = []
-                    for id in ids:
-                        sp, ssp = s[p].xs(id, level="AgentID").dropna().values, ss[p].xs(id,
-                                                                                         level="AgentID").dropna().values
-                        if sp.shape[0] > N and ssp.shape[0] > N:
-                            pps.append(ks_2samp(sp, ssp)[0])
+        if self.locomotor_models is not None and self.modelIDs is None :
+            d.load(contour=False)
+            s, e, c = prepare_dataset(d, N)
+            target = dNl.AttrDict.from_nested_dicts(
+                {'step_data': s, 'endpoint_data': e, 'config': c, 'pooled_epochs': d.pooled_epochs})
+            if self.cross_validation and N <= d.config.N / 2:
+                s_val, e_val, c_val = prepare_validation_dataset(d, N)
+                target_val = dNl.AttrDict.from_nested_dicts(
+                    {'step_data': s_val, 'endpoint_data': e_val, 'config': c_val, 'pooled_epochs': d.pooled_epochs})
 
-                    Edistro[pl] = np.median(pps)
-                elif mode == 'pooled':
-                    spp, sspp = s[p].dropna().values, ss[p].dropna().values
-                    if spp.shape[0] > N and sspp.shape[0] > N:
-                        Edistro[pl] = ks_2samp(spp, sspp)[0]
+            self.sim_mode='loco'
+        elif self.locomotor_models is  None and self.modelIDs is not None:
+            target = d
 
-        GEend[loco_id] = Eend
-        GEdistro[loco_id] = Edistro
-    if mode == '1:1':
-        error_names = ['RSS error', r'median 1:1 distribution KS$_{D}$']
-    elif mode == 'pooled':
-        error_names = ['pooled endpoint KS$_{D}$', 'pooled distribution KS$_{D}$']
-    error_dict = {error_names[0]: pd.DataFrame.from_records(GEend).T,
-                  error_names[1]: pd.DataFrame.from_records(GEdistro).T}
+            target.color = 'black'
+            target.config.color = 'black'
+            self.sim_mode = 'model'
+            self.model_colors = dict(zip(self.dataset_ids, N_colors(len(self.dataset_ids))))
+        return target, target_val
 
-    error_tables(error_dict, save_to=save_to, suf=suf)
-    for norm in norm_modes:
-        error_barplots(error_dict, normalization=norm, save_to=save_to, suf=suf, evaluation=evaluation)
-    return error_dict
+    def build_evaluation(self, eval_metrics):
+        # s, e, c = self.target.step_data, self.target.endpoint_data, self.target.config
+
+        if eval_metrics is None:
+            eval_metrics = {
+                'angular kinematics': ['run_fov_mu', 'run_foa_mu', 'pau_fov_mu', 'pau_foa_mu', 'b', 'fov', 'foa', 'rov','roa','tur_fou'],
+                'spatial displacement': ['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+                                         'dsp_0_40_max','str_N','tor5', 'tor20'],
+                'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
+                # 'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
+                # 'epochs': ['run_t', 'pau_t'],
+                # 'tortuosity': ['tor5', 'tor20']
+            }
+
+        temp, target_data= arrange_evaluation(self.target, eval_metrics)
+        ev = {k: col_df(**dic) for k, dic in temp.items()}
 
 
-def assess_tank_contact(ang_vel, o0, d, p0, dt, l0, tank_polygon):
-    def avoid_border(ang_vel, counter, dd=0.1):
-        if math.isinf(ang_vel) or ang_vel == 0:
-            ang_vel = 1.0
-        counter += 1
-        # print(counter)
-        ang_vel *= -(1 + dd * counter)
-        return ang_vel, counter
 
-    def check_in_tank(ang_vel, o0, d, p0, l0):
-        o1 = o0 + ang_vel * dt
-        k = np.array([math.cos(o1), math.sin(o1)])
-        dxy = k * d
-        p1 = p0 + dxy
-        f1 = p1 + k * l0
-        in_tank = tank_polygon.contains(Point(f1[0], f1[1]))
-        return in_tank, o1, p1
+        return ev, target_data
 
-    in_tank, o1, p1 = check_in_tank(ang_vel, o0, d, p0, l0)
-    counter = -1
-    while not in_tank:
-        ang_vel, counter = avoid_border(ang_vel, counter)
+    def define_eval_args(self, ev):
+        self.e_shorts = dNl.flatten_list(ev['end']['shorts'].values.tolist())
+        self.s_shorts = dNl.flatten_list(ev['step']['shorts'].values.tolist())
+        self.s_pars = dNl.flatten_list(ev['step']['pars'].values.tolist())
+        s_symbols = dNl.flatten_list(ev['step']['symbols'].values.tolist())
+        self.e_pars = dNl.flatten_list(ev['end']['pars'].values.tolist())
+        e_symbols = dNl.flatten_list(ev['end']['symbols'].values.tolist())
+        self.eval_symbols = dNl.AttrDict.from_nested_dicts(
+            {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
+        self.tor_durs, self.dsp_starts, self.dsp_stops = torsNdsps(self.s_pars + self.e_pars)
+
+    def run(self,**kwargs):
+        if self.sim_mode=='loco':
+            self.sim_locomotors(**kwargs)
+        elif self.sim_mode=='model':
+            self.sim_models(**kwargs)
+
+
+        self.changeIDs()
+        self.sim_data = self.preprocess()
+        self.run_evaluation(self.target, suf='fitted')
+        if self.target_val is not None :
+            self.run_evaluation(self.target_val, suf='cross')
+
+    def sim_locomotors(self, **kwargs):
+        s, e, c = self.target.step_data, self.target.endpoint_data, self.target.config
+        for ii, (loco_id, (func, conf, adapted, col)) in enumerate(self.locomotor_models.items()):
+            print(f'Simulating model {loco_id} on {c.N} larvae')
+
+            ee, cc = prepare_sim_dataset(e, c, loco_id, col)
+            ss = sim_dataset(ee, cc, func, conf, adapted)
+            pooled_epochs = enrich_dataset(ss, ee, cc, tor_durs=self.tor_durs, dsp_starts=self.dsp_starts, dsp_stops=self.dsp_stops)
+            dd = dNl.AttrDict.from_nested_dicts({'id': loco_id, 'step_data': ss, 'endpoint_data': ee, 'config': cc, 'pooled_epochs': pooled_epochs})
+            self.datasets.append(dd)
+
+
+    def prepare_exp_conf(self,dur, video=False):
+        exp='dispersion'
+        exp_conf = expandConf(exp, 'Exp')
+        c = self.target.config
+
+
+        exp_conf.larva_groups = {dID: null_dict('LarvaGroup', sample=self.refID, model=expandConf(mID, 'Model'),
+                                       default_color=self.model_colors[dID], distribution=null_dict('larva_distro', N=self.N)) for mID,dID in zip(self.modelIDs,self.dataset_ids)}
+        exp_conf.env_params = c.env_params
+
+        # if dur is None :
+        #     dur = c.Nticks * c.dt / 60
+
+        exp_conf.sim_params = null_dict('sim_params', timestep=c.dt, duration=dur,
+                               path=self.path, sim_ID=self.id, store_data=self.store_data)
+        if video:
+            exp_conf.vis_kwargs = null_dict('visualization', mode='video', video_speed=60)
+        else:
+            exp_conf.vis_kwargs = null_dict('visualization', mode=None)
+        exp_conf.save_to=self.save_to
+        print(f'Preparing simulation {self.id} for {dur} minutes')
+        return exp_conf
+
+    def load_data(self, key='sim_data'):
+        path = self.dir_dict[key]
         try:
-            in_tank, o1, p1 = check_in_tank(ang_vel, o0, d, p0, l0)
+            dic = dNl.load_dict(path, use_pickle=True)
+            # print(f'{key} loaded')
+            return dic
         except:
+            raise(f'Stored {key} not found')
+            # return None
+
+
+    def store(self):
+        self.dataset_configs = {dd.id: dd.config for dd in self.datasets}
+        if self.store_data:
+            dNl.save_dict(self.dataset_configs, self.dir_dict.dataset_configs)
+            dNl.save_dict(self.sim_data, self.dir_dict.sim_data)
+            dNl.save_dict(self.error_dicts, self.dir_dict.error_dicts)
+            print(f'Results saved at {self.dir}')
+
+    def run_evaluation(self, d,suf,min_size=20):
+        print('Evaluating all models')
+        for mode in self.eval_modes:
+            k=f'{mode}_{suf}'
+            self.error_dicts[k] = eval_fast(self.datasets, self.target_data, self.eval_symbols, mode=mode, min_size=min_size)
+            self.figs.errors[k]=self.get_error_plots(self.error_dicts[k], mode, show=self.show)
+        self.error_dicts = dNl.AttrDict.from_nested_dicts(self.error_dicts)
+        try :
+            for dd in self.datasets :
+                er=RSS_dic(dd, self.target)
+                print(dd.id, er)
+        except :
             pass
-    return ang_vel, o1, p1
+        self.store()
 
+    # def get_error_plots2(self,error_dict,mode='pooled',suf='fitted', **kwargs):
+    #     label_dic = {
+    #         '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},
+    #         'pooled': {'end': 'Pooled endpoint values KS$_{D}$', 'step': 'Pooled distributions KS$_{D}$'}
+    #
+    #     }
+    #     error_dir = f'{self.plot_dir}/errors'
+    #     os.makedirs(error_dir, exist_ok=True)
+    #     kws={
+    #         'labels' :label_dic[mode],
+    #         'save_to' :error_dir,
+    #         'suf' : suf,
+    #         'error_dict' : error_dict,
+    #         **kwargs
+    #     }
+    #
+    #     tabs=error_tables(**kws)
+    #     bars={}
+    #     for norm in self.norm_modes :
+    #         fig,df=error_barplots(normalization=norm,evaluation=self.evaluation,**kws)
+    #         bars[f'{suf}_{norm}']=fig
+    #         tabs[f'{suf}_{norm}'] = error_table('average error', df, norm,suf=suf,save_to=error_dir, **kwargs)
+    #     return dNl.AttrDict.from_nested_dicts({'tables': tabs, 'barplots': bars})
 
-def arrange_evaluation(s, e, evaluation_metrics):
-    d = dNl.AttrDict.from_nested_dicts({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
-    for g, shs in evaluation_metrics.items():
-        ps = getPar(shs)
-        Eshorts = [sh for sh, p in zip(shs, ps) if p in e.columns]
-        Dshorts = [sh for sh, p in zip(shs, ps) if p in s.columns]
-        Dshorts = [sh for sh in Dshorts if sh not in Eshorts]
-        if len(Eshorts) > 0:
-            d.end.shorts.append(Eshorts)
-            d.end.groups.append(g)
-        if len(Dshorts) > 0:
-            d.step.shorts.append(Dshorts)
-            d.step.groups.append(g)
-    return d
+    def get_error_plots(self,error_dict,mode='pooled',**kwargs):
+        label_dic = {
+            '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},
+            'pooled': {'end': 'Pooled endpoint values KS$_{D}$', 'step': 'Pooled distributions KS$_{D}$'}
 
-
-def prepare_sim_dataset(e, c, id, color):
-    cc = dNl.AttrDict.from_nested_dicts({
-        'env_params': c.env_params,
-        'bout_distros': c.bout_distros,
-        'id': id,
-        'dt': c.dt,
-        'fr': c.fr,
-        'N': c.N,
-        'agent_ids': c.agent_ids,
-        'Nticks': c.Nticks,
-        'Npoints': 3,
-        'color': color,
-        'point': '',
-        'parent_plot_dir': c.parent_plot_dir,
-
-    })
-
-    e_ps = ['length', nam.initial(x), nam.initial(y), nam.initial(fo)]
-    ee = pd.DataFrame(e[e_ps].loc[cc.agent_ids], index=cc.agent_ids, columns=e_ps)
-    ee[cum_t] = cc.Nticks * cc.dt
-    return ee, cc
-
-
-def prepare_dataset(s, e, c, Nids, id='experiment', color='black'):
-    if Nids is None:
-        ids = c.agent_ids
-        Nids = len(ids)
-    else:
-        ids = e.nlargest(Nids, 'cum_dur').index.values
-    s_exp = copy.deepcopy(s.loc[(slice(None), ids), slice(None)])
-    e_exp = copy.deepcopy(e.loc[ids])
-
-    c_exp = dNl.AttrDict.from_nested_dicts(c)
-    c_exp.id = id
-    c_exp.agent_ids = ids
-    c_exp.N = Nids
-    c_exp.color = color
-    if "length" not in e_exp.columns:
-        e_exp["length"] = np.ones(c_exp.N) * 0.004
-    return s_exp, e_exp, c_exp
-
-
-def prepare_validation_dataset(s, e, c, Nids):
-    ids = e.nlargest(Nids, 'cum_dur').index.values
-    ids2 = e.nlargest(2 * Nids, 'cum_dur').index.values[Nids:]
-    s_val = s.loc[(slice(None), ids2), slice(None)]
-    e_val = e.loc[ids2]
-    e_val.rename(index=dict(zip(ids2, ids)), inplace=True)
-    s_val.reset_index(level='Step', drop=False, inplace=True)
-    s_val.rename(index=dict(zip(ids2, ids)), inplace=True)
-    s_val.reset_index(drop=False, inplace=True)
-    s_val.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-
-    s_val = copy.deepcopy(s.loc[(slice(None), ids2), slice(None)])
-    e_val = copy.deepcopy(e.loc[ids2])
-    c_val = dNl.AttrDict.from_nested_dicts(c)
-    c_val.id = 'cross-val'
-    c_val.agent_ids = ids2
-    c_val.N = Nids
-    c_val.color = 'grey'
-
-    if "length" not in e_val.columns:
-        e_val["length"] = np.ones(c_val.N) * 0.004
-
-    return s_val, e_val, c_val
-
-
-def torsNdsps(s):
-    tor_durs = [int(ii[len(tor) + 1:]) for ii in s.columns if ii.startswith(tor)]
-    tor_shorts = [f'tor{ii}' for ii in tor_durs]
-
-    dsp_temp = [ii[len(dsp) + 1:].split('_') for ii in s.columns if ii.startswith(f'{dsp}_')]
-    dsp_starts = np.unique([int(ii[0]) for ii in dsp_temp]).tolist()
-    dsp_stops = np.unique([int(ii[1]) for ii in dsp_temp]).tolist()
-    dsp_shorts0 = [f'dsp_{s0}_{s1}' for s0, s1 in itertools.product(dsp_starts, dsp_stops)]
-    dsp_shorts = dNl.flatten_list([[f'{ii}_max', f'{ii}_mu', f'{ii}_fin'] for ii in dsp_shorts0])
-    return tor_durs, dsp_starts, dsp_stops
-
-
-def run_locomotor_evaluation(d, locomotor_models, Nids=None, save_to=None,
-                             stridechain_duration=False, cross_validation=True, evaluation_modes=['1:1', 'pooled'],
-                             evaluation_metrics=None,
-                             norm_modes=['raw', 'minmax', 'std'],
-                             plots=['trajectories', 'bouts', 'distros', 'endpoint', 'dispersion']):
-    if save_to is not None:
-        os.makedirs(save_to, exist_ok=True)
-    s, e, c = d.step_data, d.endpoint_data, d.config
-
-    s_exp, e_exp, c_exp = prepare_dataset(s, e, c, Nids)
-    try:
-        exp_bouts = d.load_group_bout_dict()
-    except:
-        exp_bouts = None
-
-    tor_durs, dsp_starts, dsp_stops = torsNdsps(s)
-
-    if evaluation_metrics is None:
-        evaluation_metrics = {
-            'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'tur_fou', 'tur_fov_max'],
-            'spatial displacement': ['cum_d', 'run_d', 'v_mu', 'v', 'a', 'dsp_0_40_max', 'tor5', 'tor20'],
-            'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
-            # 'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
-            # 'epochs': ['run_t', 'pau_t'],
-            # 'tortuosity': ['tor5', 'tor20']
         }
+        labels=label_dic[mode]
+        dic={}
+        for norm in self.norm_modes :
+            # error_dir = f'{self.error_dir}/{norm}'
+            # os.makedirs(error_dir, exist_ok=True)
 
-    temp = arrange_evaluation(s, e, evaluation_metrics)
-    evaluation = {k: col_df(**pars) for k, pars in temp.items()}
-    end_ps = dNl.flatten_list(evaluation['end']['shorts'].values.tolist())
-    distro_ps = dNl.flatten_list(evaluation['step']['shorts'].values.tolist())
+            error_dict0= self.norm_error_dict(error_dict, mode=norm)
+            df0 = pd.DataFrame.from_dict({k: df.mean(axis=1) for i, (k, df) in enumerate(error_dict0.items())})
+            kws={
+                'save_to' : self.dir_dict[f'error_{norm}'],
+                **kwargs
+            }
 
-    datasets = []
-    loco_dict = {}
-    for ii, (loco_id, (func, conf, adapted, col)) in enumerate(locomotor_models.items()):
-        print(f'Simulating model {loco_id} on {c_exp.N} larvae from dataset {d.id}')
+            bars = {}
+            tabs = {}
 
-        ee, cc = prepare_sim_dataset(e_exp, c_exp, loco_id, col)
-        ss = sim_dataset(ee, cc, func, conf, adapted)
-        bout_dic = enrich_dataset(ss, ee, cc, tor_durs=tor_durs, dsp_starts=dsp_starts, dsp_stops=dsp_stops)
-        dd = dNl.AttrDict.from_nested_dicts({'step_data': ss, 'endpoint_data': ee, 'config': cc, 'bouts': bout_dic})
-        loco_dict[loco_id] = dd
-        datasets.append(dd)
-    print('Evaluating all models')
-    error_dicts = {}
-    for mode in evaluation_modes:
-        suf = 'fitted'
-        error_dicts[f'{mode} {suf}'] = eval_all_datasets(s=s_exp, e=e_exp,loco_dict=loco_dict,  save_to=save_to, suf=suf, mode=mode,
-                                                         norm_modes=norm_modes, evaluation=evaluation)
-
-    if cross_validation and Nids <= c.N / 2:
-        s_val, e_val, c_val = prepare_validation_dataset(s, e, c, Nids)
-        for mode in evaluation_modes:
-            suf = c_val.id
-            error_dicts[f'{mode} {suf}'] = eval_all_datasets(s=s_val, e=e_val,loco_dict=loco_dict,  save_to=save_to, suf=suf, mode=mode,
-                                                             norm_modes=norm_modes, evaluation=evaluation)
-        d_val = dNl.AttrDict.from_nested_dicts(
-            {'step_data': s_val, 'endpoint_data': e_val, 'config': c_val, 'bouts': exp_bouts})
-        loco_dict[c_val.id] = d_val
-        datasets.append(d_val)
-
-    d_exp = dNl.AttrDict.from_nested_dicts(
-        {'step_data': s_exp, 'endpoint_data': e_exp, 'config': c_exp, 'bouts': exp_bouts})
-    loco_dict[c_exp.id] = d_exp
-    datasets.append(d_exp)
-
-    datasets = [dNl.AttrDict.from_nested_dicts(d) for d in datasets]
-    if save_to is not None:
-        dNl.save_dict(error_dicts, f'{save_to}/error_dicts.txt')
-        dNl.save_dict(loco_dict, f'{save_to}/loco_dict.txt')
-        dNl.save_dict(evaluation, f'{save_to}/evaluation.txt')
-
-    print('Generating comparative graphs')
-    if 'distros' in plots:
-        plot_distros(loco_dict, distro_ps, save_to=save_to)
-    if 'endpoint' in plots:
-        plot_endpoint(loco_dict, end_ps, save_to=save_to)
-    if 'trajectories' in plots:
-        plot_trajectories(datasets=datasets, save_to=save_to)
-        # plot_trajectories(loco_dict, save_to=save_to)
-    if 'bouts' in plots:
-        plot_bouts(loco_dict, save_to=save_to, stridechain_duration=stridechain_duration)
-    if 'dispersion' in plots:
-        for r0, r1 in itertools.product(dsp_starts, dsp_stops):
-            # plot_comparative_dispersion(loco_dict, c=c, range=(r0, r1), save_to=save_to)
-            plot_dispersion(datasets=datasets, range=(r0, r1), save_to=save_to)
-    return error_dicts, loco_dict, datasets
+            for i, (k, df) in enumerate(error_dict0.items()):
+                tabs[k] = error_table(labels[k], df, k, **kws)
+            tabs['mean'] = error_table('average error', df0, 'mean', **kws)
+            bars['full'] = error_barplot(error_dict=error_dict0, evaluation=self.evaluation, labels=labels, **kws)
 
 
-def error_tables(error_dict, save_to=None, suf='fitted'):
-    dic = {}
-    for k, v in error_dict.items():
-        ax, fig = render_mpl_table(np.round(v, 6).T, highlighted_cells='row_min', title=f'{suf} {k}')
-        dic[k] = fig
-        if save_to is not None:
-            plt.savefig(f'{save_to}/error_{suf}_{k}.pdf', dpi=300)
-    return dic
+            # Summary figure with barplots and tables for both endpoint and timeseries metrics
+            fig0, axs0 = plt.subplots(4, 1, figsize=(20, 30))
+            for i, (k, df) in enumerate(error_dict0.items()):
+                tabs['full'] = error_table(labels[k], df, 'full', fig=fig0, axs=axs0[i + 2],bbox=[0.35, 0, 1, 1],  **kwargs)
+            bars['summary'] = error_barplot(error_dict=error_dict0, evaluation=self.evaluation, labels=labels,
+                                                 fig=fig0, axs=axs0, name='evaluation_summary', **kws)
 
 
-def error_barplots(error_dict, evaluation, normalization='raw', suf='', axs=None, fig=None,
+
+            dic[norm] = dNl.AttrDict.from_nested_dicts({'tables': tabs, 'barplots': bars})
+        return dNl.AttrDict.from_nested_dicts(dic)
+
+    def norm_error_dict(self, error_dict, mode='raw'):
+        dic={}
+        for k, df in error_dict.items():
+            if mode == 'raw' :
+                df=df
+            elif mode == 'minmax':
+                df = minmax(df)
+            elif mode == 'std':
+                df = std_norm(df)
+            dic[k]=df
+        return dNl.AttrDict.from_nested_dicts(dic)
+
+
+    def plot_models(self):
+        save_to=self.dir_dict.models
+        self.figs.models.tables = dNl.AttrDict.from_nested_dicts(
+            {mID: modelConfTable(mID, save_to=save_to, figsize=(14, 11)) for mID in self.modelIDs})
+        self.figs.models.summaries = dNl.AttrDict.from_nested_dicts(
+            {mID: model_summary(refID=self.refID, mID=mID, save_to=save_to) for mID in self.modelIDs})
+
+    def plot_results(self, plots=['trajectories', 'bouts', 'dispersion', 'boxplots']):
+
+        kws={
+            'datasets' : self.datasets+[self.target],
+            'save_to' : self.dir_dict.plot,
+            'show':self.show
+        }
+        print('Generating comparative graphs')
+        self.figs.loco.fft = plot_fft_multi(**kws)
+        self.figs.hist.ang =plot_ang_pars(half_circles=True,absolute=False, Nbins=100,Npars=5, include_rear=False,subfolder=None, **kws)
+        self.figs.hist.crawl =plot_crawl_pars(subfolder=None,pvalues=False, **kws)
+        self.figs.stride_cycle.norm = stride_cycle(shorts=['sv', 'fov', 'rov', 'foa', 'b'], individuals=True, **kws)
+        self.figs.hist.step = self.plot_data(mode='step')
+        self.figs.hist.end = self.plot_data(mode='end')
+        if 'trajectories' in plots:
+            self.figs.loco.trajectories = plot_trajectories(subfolder=None, **kws)
+        if 'boxplots' in plots:
+            self.figs.boxplot.end = boxplots(shorts=self.e_shorts, key='end',evaluation=False, **kws)
+            self.figs.boxplot.step = boxplots(shorts=self.s_shorts, key='step',evaluation=False, **kws)
+        if 'bouts' in plots:
+            self.figs.loco.epochs = plot_bouts(stridechain_duration=True, **kws)
+        if 'dispersion' in plots:
+            self.figs.loco.dispersion = {}
+            for r0, r1 in itertools.product(self.dsp_starts, self.dsp_stops):
+                self.figs.loco.dispersion[f'{r0}_{r1}']=plot_dispersion(range=(r0, r1), **kws)
+
+    def preprocess(self):
+        Ddata,Edata = {},{}
+        for p in self.s_pars:
+            Ddata[p] = {d.id: d.step_data[p].dropna() for d in self.datasets}
+        for p in self.e_pars:
+            Edata[p] = {d.id: d.endpoint_data[p]  for d in self.datasets}
+        sim_data = dNl.AttrDict.from_nested_dicts({'step': Ddata, 'end': Edata})
+        return sim_data
+
+    def plot_data(self, Nbins=None, mode='step'):
+        if mode=='step' :
+            if Nbins is None :
+                Nbins=100
+            data0=self.target_data.step
+            pars=self.s_pars
+            symbols=self.eval_symbols.step
+            sim_data=self.sim_data.step
+            filename='distro_hist'
+        elif mode=='end' :
+            if Nbins is None :
+                Nbins=20
+            data0=self.target_data.end
+            pars=self.e_pars
+            symbols=self.eval_symbols.end
+            sim_data=self.sim_data.end
+            filename='endpoint_hist'
+
+        # ps2, ps2l = getPar(distro_ps, to_return=['d', 'lab'])
+        Nps = len(pars)
+        Ncols = 4
+        Nrows = int(np.ceil(Nps / Ncols))
+        fig, axs = plt.subplots(Nrows, Ncols, figsize=(5 * Ncols, 5 * Nrows), sharex=False, sharey=True)
+        axs = axs.ravel()
+        for i, (p, sym) in enumerate(symbols.items()):
+            vs0=data0[p].values
+            ws0 = np.ones_like(vs0) / float(len(vs0))
+            vmin,vmax=np.quantile(vs0, q=0.01),np.quantile(vs0, q=0.99)
+            bins = np.linspace(vmin,vmax, Nbins)
+            col0=self.target.color
+            _=axs[i].hist(vs0, bins=bins, weights=ws0, label='experiment', color=col0, alpha=0.5)
+            for id,df in sim_data[p].items() :
+                vs=df.values
+                ws = np.ones_like(vs) / float(len(vs))
+                col= self.model_colors[id]
+                _=axs[i].hist(vs, bins=bins, weights=ws, label=id, color=col,
+                              histtype='step', linewidth=3,  facecolor=col, edgecolor=col, fill=False,
+                              alpha=0.5)
+            axs[i].set_xlabel(sym, fontsize=20)
+            if i%Ncols==0:
+                axs[i].set_ylabel('probability', fontsize=20)
+        axs[-1].legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+        fig.subplots_adjust(wspace=0.01, hspace=0.5)
+        fig.savefig(f'{self.plot_dir}/{filename}.pdf', dpi=300)
+        if self.show:
+            plt.show()
+        plt.close()
+        return fig
+
+    def changeIDs(self):
+        if self.expVSsimIDs :
+            self.target.id='experiment'
+            self.target.config.id='experiment'
+            if len(self.datasets) == 1:
+                self.datasets[0].id='model'
+                self.datasets[0].config.id='model'
+            else :
+                for i in range(len(self.datasets)) :
+                    self.datasets[i].id = f'model {i+1}'
+                    self.datasets[i].config.id = f'model {i+1}'
+
+            self.model_colors = dict(zip([d.id for d in self.datasets], N_colors(len(self.datasets))))
+
+
+    def add_dataset(self, d):
+        self.datasets.append(d)
+
+    def sim_models(self, dur=None,**kwargs):
+        c=self.target.config
+        if dur is None :
+            dur = c.Nticks * c.dt / 60
+        if self.N is None:
+            self.N = 5
+
+        if self.offline:
+            print(f'Simulating offline {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
+            self.datasets += sim_models(mIDs=self.modelIDs, dur=dur, dt=c.dt,tor_durs=self.tor_durs,dataset_ids=self.dataset_ids,
+                               Nids=self.N, colors=list(self.model_colors.values()), env_params = c.env_params)
+        else :
+            self.exp_conf = self.prepare_exp_conf(dur=dur, **kwargs)
+            print(f'Simulating {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
+            run = SingleRun(progress_bar=False, **self.exp_conf)
+            self.datasets += run.run()
+
+
+def error_table(title, data, k, **kwargs):
+    data = np.round(data, 3).T
+    figsize = ((data.shape[1] + 3) * 4, data.shape[0])
+    ax, fig = render_mpl_table(data, highlighted_cells='row_min', title=title, figsize=figsize,
+                               adjust_kws={'left': 0.3, 'right': 0.95},
+                               save_as=f'error_table_{k}', **kwargs)
+    return fig
+
+
+def error_barplot(error_dict, evaluation, axs=None, fig=None,labels=None,name='error_barplots',
                    titles=[r'$\bf{endpoint}$ $\bf{metrics}$', r'$\bf{timeseries}$ $\bf{metrics}$'], **kwargs):
-    from lib.anal.plot_aux import BasePlot
-    import matplotlib.patches as mpatches
-    P = BasePlot(name=f'error_barplots_{suf}_{normalization}', **kwargs)
-    Nplots = len(error_dict)
-    P.build(Nplots, 1, figsize=(20, Nplots * 6), sharex=False, fig=fig, axs=axs)
-    P.adjust((0.07, 0.75), (0.05, 0.95), 0.05, 0.2)
-    ddf = {}
-    for ii, (lab, df) in enumerate(error_dict.items()):
-        ax = P.axs[ii]
-        eval_df = list(evaluation.values())[ii]
-        color = dNl.flatten_list(eval_df['par_colors'].values.tolist())
-        if normalization == 'minmax':
-            df = minmax(df)
-        elif normalization == 'std':
-            df = std_norm(df)
-        df.plot(kind='bar', ax=ax, ylabel=lab, rot=0, legend=False, color=color, width=0.6)
+
+    def build_legend(ax, eval_df) :
         h, l = ax.get_legend_handles_labels()
         empty = mpatches.Patch(color='none')
         counter = 0
@@ -474,49 +475,29 @@ def error_barplots(error_dict, evaluation, normalization='raw', suf='', axs=None
             l.insert(counter, eval_df['group_label'].loc[g])
             counter += (len(eval_df['shorts'].loc[g]) + 1)
         ax.legend(h, l, loc='upper left', bbox_to_anchor=(1.0, 1.0), fontsize=15)
+
+    from lib.anal.plot_aux import BasePlot
+    import matplotlib.patches as mpatches
+    P = BasePlot(name=name, **kwargs)
+    Nplots = len(error_dict)
+    P.build(Nplots, 1, figsize=(20, Nplots * 6), sharex=False, fig=fig, axs=axs)
+    P.adjust((0.07, 0.7), (0.05, 0.95), 0.05, 0.2)
+    for ii, (k, eval_df) in enumerate(evaluation.items()):
+        lab = labels[k] if labels is not None else k
+        ax = P.axs[ii] if axs is None else axs[ii]
+        df = error_dict[k]
+        color = dNl.flatten_list(eval_df['par_colors'].values.tolist())
+        df = df[dNl.flatten_list(eval_df['symbols'].values.tolist())]
+        df.plot(kind='bar', ax=ax, ylabel=lab, rot=0, legend=False, color=color, width=0.6)
+        build_legend(ax, eval_df)
         ax.set_title(titles[ii])
-        ddf[lab] = df.mean(axis=1)
-    df0 = pd.DataFrame.from_dict(ddf)
-    axx, figg = render_mpl_table(df0, highlighted_cells='col_min')
+        ax.set_xlabel(None)
+        ax.yaxis.set_major_locator(ticker.MaxNLocator(4))
+
     return P.get()
 
 
-def plot_bouts(loco_dict=None, datasets=None, plot_fits='', stridechain_duration=False, legend_outside=False,
-               axs=None, fig=None, **kwargs):
-    from lib.anal.plot_aux import BasePlot, plot_mean_and_range
-    P = BasePlot(name=f'comparative_bouts{plot_fits}', **kwargs)
-    P.build(1, 2, figsize=(10, 5), sharex=False, sharey=True, fig=fig, axs=axs)
-    valid_labs = {}
-    if loco_dict is None and datasets is not None :
-        loco_dict={d.id : {'step_data': d.step_data, 'endpoint_data': d.endpoint_data, 'config': d.config, 'bouts': d.load_group_bout_dict()} for d in datasets}
-    loco_dict = dNl.AttrDict.from_nested_dicts(loco_dict)
-    for j, (id, d) in enumerate(loco_dict.items()):
-        v = d['bouts']
-        kws = {
-            'marker': 'o',
-            'plot_fits': plot_fits,
-            'label': id,
-            'color': d['color'] if 'color' in d.keys() else d.config.color,
-            'legend_outside': legend_outside,
-            'axs': P.axs,
-            'x0': None
-        }
-        if v.pause_dur is not None:
-            plot_single_bout(fit_dic=v.pause_dur, discr=False, bout='pauses', i=1, **kws)
-            valid_labs[id] = kws['color']
-        if stridechain_duration and v.run_dur is not None:
-            plot_single_bout(fit_dic=v.run_dur, discr=False, bout='runs', i=0, **kws)
-            valid_labs[id] = kws['color']
-        elif not stridechain_duration and v.run_count is not None:
-            plot_single_bout(fit_dic=v.run_count, discr=True, bout='stridechains', i=0, **kws)
-            valid_labs[id] = kws['color']
-    P.axs[1].yaxis.set_visible(False)
-    if len(loco_dict.keys()) > 1:
-        dataset_legend(valid_labs.keys(), valid_labs.values(), ax=P.axs[0], loc='lower left', fontsize=15)
-    P.adjust((0.15, 0.95), (0.15, 0.92), 0.05, 0.005)
-    return P.get()
-
-def plot_distros(loco_dict, distro_ps, save_to=None, show=False):
+def plot_distros(datasets, distro_ps, save_to=None, show=False):
     ps2, ps2l = getPar(distro_ps, to_return=['d', 'lab'])
     Nps = len(distro_ps)
     Ncols = 4
@@ -525,14 +506,14 @@ def plot_distros(loco_dict, distro_ps, save_to=None, show=False):
     axs = axs.ravel()
     for i, (p, l) in enumerate(zip(ps2, ps2l)):
         vs = []
-        for ii, (id, d) in enumerate(loco_dict.items()):
-            vs.append(d['step_data'][p].dropna().abs().values)
+        for ii, d in enumerate(datasets):
+            vs.append(d.step_data[p].dropna().abs().values)
         vvs = np.hstack(vs).flatten()
         bins = np.linspace(0, np.quantile(vvs, q=0.9), 40)
-        for ii, (id, d) in enumerate(loco_dict.items()):
+        for ii, d in enumerate(datasets):
             col = d.config.color
             weights = np.ones_like(vs[ii]) / float(len(vs[ii]))
-            axs[i].hist(vs[ii], bins=bins, weights=weights, label=id, color=col, histtype='step', linewidth=3,
+            axs[i].hist(vs[ii], bins=bins, weights=weights, label=d.id, color=col, histtype='step', linewidth=3,
                         facecolor=col, edgecolor=col, fill=True, alpha=0.2)
         axs[i].set_title(l, fontsize=20)
     axs[2].legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
@@ -543,7 +524,7 @@ def plot_distros(loco_dict, distro_ps, save_to=None, show=False):
     return fig
 
 
-def plot_endpoint(loco_dict, end_ps, save_to=None, show=False):
+def plot_endpoint(datasets, end_ps, save_to=None, show=False):
     ps2, ps2l = getPar(end_ps, to_return=['d', 'lab'])
     Nps = len(end_ps)
     Ncols = 4
@@ -552,14 +533,14 @@ def plot_endpoint(loco_dict, end_ps, save_to=None, show=False):
     axs = axs.ravel()
     for i, (p, l) in enumerate(zip(ps2, ps2l)):
         vs = []
-        for ii, (id, d) in enumerate(loco_dict.items()):
-            vs.append(d['endpoint_data'][p].dropna().values)
+        for ii, d in enumerate(datasets):
+            vs.append(d.endpoint_data[p].dropna().values)
         vvs = np.hstack(vs).flatten()
         bins = np.linspace(np.min(vvs), np.max(vvs), 20)
-        for ii, (id, d) in enumerate(loco_dict.items()):
+        for ii, d in enumerate(datasets):
             col = d.config.color
             weights = np.ones_like(vs[ii]) / float(len(vs[ii]))
-            axs[i].hist(vs[ii], bins=bins, weights=weights, label=id, color=col, histtype='step', linewidth=3,
+            _=axs[i].hist(vs[ii], bins=bins, weights=weights, label=d.id, color=col, histtype='step', linewidth=3,
                         facecolor=col, edgecolor=col, fill=True, alpha=0.2)
         axs[i].set_title(l, fontsize=20)
     axs[2].legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
@@ -567,6 +548,7 @@ def plot_endpoint(loco_dict, end_ps, save_to=None, show=False):
         fig.savefig(f'{save_to}/comparative_endpoint.pdf', dpi=300)
     if show:
         plt.show()
+    plt.close()
     return fig
 
 
@@ -602,8 +584,17 @@ def compare2ref(ss, s=None, refID=None,
     return KSdic
 
 
+
+
 if __name__ == '__main__':
-    refID = 'None.100controls'
+    from lib.anal.evaluation import EvalRun
+    from lib.aux import dictsNlists as dNl
+
+    refID = 'None.150controls'
+    evrun = EvalRun(refID=refID, modelIDs=['150l_explorer2', '150l_b_opt', 'explorer_opt2'], N=5, show=True)
+    evrun.run(video=False, dur=3.0)
+    evrun.plot_results()
+    raise
     d = loadRef(refID)
     d.load(contour=False)
     s, e, c = d.step_data, d.endpoint_data, d.config
@@ -682,7 +673,7 @@ if __name__ == '__main__':
         **physics1_args
     }
 
-    from lib.model.modules.locomotor import Sakagiannis2022, Levy_locomotor, Wystrach2016, Davies2015
+    from lib.model.modules.locomotor import Sakagiannis2022, Davies2015
 
     locos = {
         # "Levy": [Levy_locomotor, Lev, False, 'blue'],

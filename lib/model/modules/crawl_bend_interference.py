@@ -4,8 +4,9 @@ from lib.anal.fitting import gaussian
 
 
 class DefaultCoupling:
-    def __init__(self,locomotor, attenuation = 0.0,suppression_mode='amplitude', **kwargs):
+    def __init__(self,locomotor, attenuation = 0.0,attenuation_max=1.0,suppression_mode='amplitude', **kwargs):
         self.attenuation = attenuation
+        self.attenuation_max = attenuation_max
         self.cur_attenuation = attenuation
         self.locomotor = locomotor
         self.suppression_mode=suppression_mode
@@ -33,7 +34,7 @@ class SquareCoupling(DefaultCoupling):
         self.feeder_phi_range = feeder_phi_range
 
     def step(self):
-        A = 1
+        A = self.attenuation_max
         c_on, f_on = self.active_effectors
         if c_on:
             c = self.locomotor.crawler
@@ -52,9 +53,9 @@ class SquareCoupling(DefaultCoupling):
 
 
 class PhasicCoupling(DefaultCoupling) :
-    def __init__(self, attenuation_max=0.31, max_attenuation_phase = 3.4, **kwargs):
+    def __init__(self, max_attenuation_phase = 3.4, **kwargs):
         super().__init__(**kwargs)
-        self.attenuation_max = attenuation_max
+        # self.attenuation_max = attenuation_max
         self.max_attenuation_phase = max_attenuation_phase
 
     def step(self):
@@ -67,4 +68,5 @@ class PhasicCoupling(DefaultCoupling) :
             elif A <= 0:
                 A = 0
         self.cur_attenuation = A
+        #print(A)
         return A

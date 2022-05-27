@@ -9,6 +9,7 @@ from matplotlib.pyplot import bar
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import mannwhitneyu, ttest_ind
 
+
 from lib.anal.fitting import pvalue_star, fit_bout_distros
 from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
 from lib.conf.base.par import getPar
@@ -55,7 +56,7 @@ class BasePlot:
     def conf_ax(self, idx=0, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
                 xticklabels=None, yticks=None, xticklabelrotation=None, yticklabelrotation=None,
                 yticklabels=None, zticks=None, zticklabels=None, xtickpos=None, xtickpad=None, ytickpad=None,
-                ztickpad=None,
+                ztickpad=None,xlabelfontsize=None,
                 xlabelpad=None, ylabelpad=None, zlabelpad=None,
                 xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, tickMath=None, ytickMath=None, leg_loc=None,
                 leg_handles=None,
@@ -64,7 +65,10 @@ class BasePlot:
         if ylab is not None:
             ax.set_ylabel(ylab, labelpad=ylabelpad)
         if xlab is not None:
-            ax.set_xlabel(xlab, labelpad=xlabelpad)
+            if xlabelfontsize is not None:
+                ax.set_xlabel(xlab, labelpad=xlabelpad, fontsize=xlabelfontsize)
+            else :
+                ax.set_xlabel(xlab, labelpad=xlabelpad)
         if zlab is not None:
             ax.set_zlabel(zlab, labelpad=zlabelpad)
         if xlim is not None:
@@ -170,7 +174,7 @@ class Plot(BasePlot):
         super().__init__(name, save_to=save_to, **kwargs)
         self.datasets = datasets
         ff = f'{name}_fits.csv' if save_fits_as is None else save_fits_as
-        self.fit_filename = os.path.join(self.save_to, ff) if ff is not None else None
+        self.fit_filename = os.path.join(self.save_to, ff) if ff is not None and self.save_to is not None else None
         self.fit_ind = None
 
     def init_fits(self, pars, names=('dataset1', 'dataset2'), multiindex=True):
@@ -273,12 +277,25 @@ class Plot(BasePlot):
         return x, lim
 
     def plot_par(self, par, bins, i=0, labels=None, absolute=False, nbins=None, type='plt.hist',
-                 pvalues=False, half_circles=False, **kwargs):
+                 pvalues=False, half_circles=False,key='step', **kwargs):
         if labels is None:
             labels = self.labels
         vs = []
         for d in self.datasets:
-            v = d.get_par(par).dropna().values
+            if key=='step':
+                try :
+                    v = d.step_data[par]
+                except :
+                    v = d.get_par(par, key=key)
+            elif key=='end':
+                try :
+                    v = d.endpoint_data[par]
+                except :
+                    v = d.get_par(par, key=key)
+            if v is not None :
+                v=v.dropna().values
+            else :
+                continue
             if absolute:
                 v = np.abs(v)
             vs.append(v)
@@ -295,6 +312,10 @@ class Plot(BasePlot):
             self.plot_half_circles(par, i)
         return vs
 
+class AutoPlot(Plot) :
+    def __init__(self,Nrows=1, Ncols=1, figsize=None, fig=None, axs=None,sharex=False, sharey=False, **kwargs):
+        super().__init__(**kwargs)
+        self.build(Nrows=Nrows, Ncols=Ncols, figsize=figsize, fig=fig, axs=axs,sharex=sharex, sharey=sharey)
 
 def plot_quantiles(df, from_np=False, x=None, **kwargs):
     if from_np:
@@ -474,6 +495,7 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
 
 def save_plot(fig, filepath, filename=None):
     fig.savefig(filepath, dpi=300, facecolor=None)
+    print(f'Plot saved as {filepath}')
     # print(fig.get_size_inches(), filename)
     # fig.clear()
     plt.close(fig)
@@ -484,7 +506,7 @@ def save_plot(fig, filepath, filename=None):
 
 def plot_config(datasets, labels, save_to, subfolder=None):
     if labels is None:
-        labels = [d.config.id for d in datasets]
+        labels = [d.id for d in datasets]
     Ndatasets = len(datasets)
     if Ndatasets != len(labels):
         raise ValueError(f'Number of labels {len(labels)} does not much number of datasets {Ndatasets}')
@@ -505,11 +527,11 @@ def plot_config(datasets, labels, save_to, subfolder=None):
         return colors
 
     cols = get_colors(datasets)
-    if save_to is None:
-        save_to = datasets[0].config['parent_plot_dir']
-    if subfolder is not None:
-        save_to = f'{save_to}/{subfolder}'
-    os.makedirs(save_to, exist_ok=True)
+    if save_to is not None:
+        # save_to = datasets[0].config['parent_plot_dir']
+        if subfolder is not None:
+            save_to = f'{save_to}/{subfolder}'
+        os.makedirs(save_to, exist_ok=True)
     return Ndatasets, cols, save_to, labels
 
 
@@ -564,31 +586,56 @@ def boolean_indexing(v, fillval=np.nan):
     return out
 
 
-def annotate_plot(data, x, y, hue, **kwargs):
+def annotate_plot(data, x, y, hue=None,show_ns=True, **kwargs):
     from statannotations.Annotator import Annotator
-    h1, h2 = np.unique(data[hue].values)
     subIDs0 = np.unique(data[x].values)
-    pairs = [((subID, h1), (subID, h2)) for subID in subIDs0]
-    pvs = []
-    for subID in subIDs0:
-        dd = data[data[x] == subID]
-        dd0 = dd[dd[hue] == h1][y].values
-        dd1 = dd[dd[hue] == h2][y].values
-        pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
+    if hue is not None :
+        h1, h2 = np.unique(data[hue].values)
+
+        pairs = [((subID, h1), (subID, h2)) for subID in subIDs0]
+        pvs = []
+        for subID in subIDs0:
+            dd = data[data[x] == subID]
+            dd0 = dd[dd[hue] == h1][y].dropna().values.tolist()
+            dd1 = dd[dd[hue] == h2][y].dropna().values.tolist()
+            pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
+    else :
+        pairs = list(itertools.combinations(subIDs0,2))
+
+        pvs = []
+        for subID0,subID1 in pairs:
+
+            dd0 = data[data[x] == subID0][y].dropna().values.tolist()
+            dd1 = data[data[x] == subID1][y].dropna().values.tolist()
+            pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
     f_pvs = [pvalue_star(pv) for pv in pvs]
-    # f_pvs = [f'p={pv:.2e}' for pv in pvs]
+    if not show_ns:
+        valid_idx=[i for i,f_pv in enumerate(f_pvs) if f_pv!='ns']
+        pairs = [pairs[i] for i in valid_idx]
+        f_pvs=[f_pvs[i] for i in valid_idx]
 
     # Add annotations
-    annotator = Annotator(pairs=pairs, data=data, x=x, y=y, hue=hue, **kwargs)
-    annotator.verbose = False
-    annotator.annotate_custom_annotations(f_pvs)
+    if len(pairs)>0 :
+        annotator = Annotator(pairs=pairs, data=data, x=x, y=y, hue=hue, **kwargs)
+        annotator.verbose = False
+        annotator.annotate_custom_annotations(f_pvs)
 
 
 def concat_datasets(ds, key='end', unit='sec'):
     dfs = []
     for d in ds:
-        df = d.read(key)
-        df['GroupID'] = d.id
+        if key == 'end':
+            try :
+                df=d.endpoint_data
+            except :
+                df = d.read(key='end', file='endpoint_h5')
+        elif key == 'step':
+            try :
+                df=d.step_data
+            except :
+                df = d.read(key='step')
+        df['DatasetID'] = d.id
+        df['GroupID'] = d.group_id
         dfs.append(df)
     df0 = pd.concat(dfs)
     if key == 'step':
@@ -679,13 +726,11 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
         axs[jj].set_ylabel(ylabel)
 
 
-def modelConfTable(confID, save_as=None, columns=['Parameter', 'Symbol', 'Value', 'Unit'], rows=None, **kwargs):
-    # if save_as is None:
-    #     save_as=f'{confID}.pdf'
+def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbol', 'Value', 'Unit'], rows=None, **kwargs):
     from lib.aux.combining import render_mpl_table
     from lib.conf.base.dtypes import par
     from lib.conf.base.init_pars import init_pars
-    m = loadConf(confID, "Model")
+    m = loadConf(mID, "Model")
     if rows is None:
         rows = ['physics', 'body'] + [k for k, v in m.brain.modules.items() if v]
 
@@ -710,22 +755,22 @@ def modelConfTable(confID, save_as=None, columns=['Parameter', 'Symbol', 'Value'
         d0 = init_pars().get(rowLab, None)
         if rowLab == 'interference':
             if rowDic.mode == 'square':
-                rowValid = ['crawler_phi_range', 'attenuation', 'suppression_mode']
+                rowValid = ['crawler_phi_range', 'attenuation','attenuation_max', 'suppression_mode']
             elif rowDic.mode == 'phasic':
                 rowValid = ['max_attenuation_phase', 'attenuation', 'attenuation_max', 'suppression_mode']
             elif rowDic.mode == 'default':
                 rowValid = ['attenuation', 'suppression_mode']
         elif rowLab == 'physics':
-            rowValid = ['torque_coef', 'ang_damping', 'body_spring_k', 'bend_correction_coef']
+            rowValid = ['ang_damping','torque_coef', 'body_spring_k', 'bend_correction_coef']
         elif rowLab == 'body':
             rowValid = ['initial_length', 'Nsegs']
         elif rowLab == 'turner':
             if rowDic.mode == 'neural':
-                rowValid = ['base_activation', 'activation_range']
+                rowValid = ['base_activation', 'activation_range', 'n']
             elif rowDic.mode == 'constant':
                 rowValid = ['initial_amp']
             elif rowDic.mode == 'sinusoidal':
-                rowValid = ['initial_amp', 'initial_freq']
+                rowValid = ['initial_amp','amp_range', 'initial_freq', 'freq_range',]
         elif rowLab == 'crawler':
             if rowDic.waveform == 'realistic':
                 rowValid = ['initial_freq', 'max_scaled_vel', 'max_vel_phase', 'stride_dst_mean', 'stride_dst_std']
@@ -754,7 +799,7 @@ def modelConfTable(confID, save_as=None, columns=['Parameter', 'Symbol', 'Value'
                 elif v.name == 'uniform':
                     dist_v = f'Uniform()'
                 elif v.name == 'lognormal':
-                    dist_v = f'Lognormal(m={v.mu}, s={v.sigma})'
+                    dist_v = f'Lognormal(m={np.round(v.mu,2)}, s={np.round(v.sigma,2)})'
                 if n == 'stridechain_dist':
                     vs1 = [rowLab, 'run length distribution', '$N_{R}$', dist_v, '-']
                     vs2 = [rowLab, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', v.range, '# $strides$']
@@ -770,11 +815,13 @@ def modelConfTable(confID, save_as=None, columns=['Parameter', 'Symbol', 'Value'
                     v *= 1000
                 elif n == 'suppression_mode':
                     if v == 'both':
-                        v = 'input & output'
+                        v = '$I_{T}$ & $\omega$'
+                        # v = '$I_{T}$ & $A_{T}$'
                     elif v == 'amplitude':
-                        v = 'output'
+                        v = fr'$\omega$'#'$A_{T}$'
+                        # v = '$A_{T}$'
                     elif v == 'oscillation':
-                        v = 'input'
+                        v = '$I_{T}$'
 
                 else:
                     try:
@@ -790,8 +837,8 @@ def modelConfTable(confID, save_as=None, columns=['Parameter', 'Symbol', 'Value'
 
     ax, fig, mpl = render_mpl_table(df, colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
                                     row_colors=rowColors, return_table=True, **kwargs)
-    # ax.yaxis.set_visible(False)
-    # ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    ax.xaxis.set_visible(False)
     for k, cell in mpl._cells.items():
         if k[1] == -1:
             cell._text._text = ''
@@ -803,10 +850,14 @@ def modelConfTable(confID, save_as=None, columns=['Parameter', 'Symbol', 'Value'
             cell._text._text = rowLab.upper()
         except:
             pass
-    if save_as is not None:
-        fig.savefig(save_as, dpi=300)
+    if save_to is not None:
+        os.makedirs(save_to, exist_ok=True)
+        if save_as is None:
+            save_as = mID
+        filename=f'{save_to}/{save_as}.pdf'
+        fig.savefig(filename, dpi=300)
     plt.close()
-    # return fig,ax,mpl
+    return fig
 
 
 def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_median=True, fig=None, axs=None,
@@ -838,7 +889,7 @@ def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_me
         if show_median:
             text = p0['symbol'] + f' = {np.round(v_mu, 2)}'
             P.axs[i].axvline(v_mu, color='red', alpha=1, linestyle='dashed', linewidth=3)
-            P.axs[i].annotate(text, rotation=0, fontsize=18, va='center', ha='left',
+            P.axs[i].annotate(text, rotation=0, fontsize=15, va='center', ha='left',
                               xy=(0.55, 0.8), xycoords='axes fraction',
                               )
         if i != 0:
@@ -847,156 +898,71 @@ def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_me
     return P.get()
 
 
-def test_locomotor(mID=None, m=None, dur=60, dt=1 / 16,Nids=1, min_turn_amp=20, include_torque=False,
+def test_model(mID=None, m=None, dur=2/3, dt=1 / 16,Nids=1, min_turn_amp=20, include_torque=False,d=None,
                    include_ang_suppression=False, return_df=False, fig=None, axs=None, **kwargs):
-    from lib.model.modules.locomotor import DefaultLocomotor
-    from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf
+    ylabelpad=None
     from lib.anal.plotting import annotated_strideplot, annotated_turnplot
-    if m is None:
-        m = loadConf(mID, "Model")
-    Nticks = int(dur / dt)
+    if d is None :
+        from lib.anal.eval_aux import sim_model
+        d=sim_model(mID=mID, m=m, dur=dur, dt=dt,Nids=Nids)
+    s, e, c = d.step_data, d.endpoint_data, d.config
+
+    Nticks = int(dur*60 / dt)
     trange = np.arange(0, Nticks * dt, dt)
-
-    def compute_ang_vel(b, torque, v):
-        dv = -m.physics.ang_damping * v - m.physics.body_spring_k * b + torque
-        return v + dv * dt
-
-    ids=[f'Agent{j}' for j in range(Nids)]
-    my_index = pd.MultiIndex.from_product([np.arange(Nticks), ids], names=['Step', 'AgentID'])
-    df_columns = getPar(['fov', 'Act_tur', 'b', 'v']) + ['ang_suppression'] + getPar(['A_tur', 'rov'])
-    s = pd.DataFrame(index=my_index, columns=df_columns)
-    e = pd.DataFrame(index=ids)
-    e['length'] = [m.body.initial_length for id in ids]
-    c = AttrDict.from_nested_dicts({'id': mID, 'dt': dt, 'agent_ids': ids, 'N': Nids, 'Nticks': Nticks, 'model': m})
-
-    for j,id in enumerate(ids) :
-        l=e['length'].loc[id]
-        bend_errors = 0
-        # Ntrials = 1
-        A = np.zeros(Nticks) * np.nan
-        B = np.zeros(Nticks) * np.nan
-        C = np.zeros(Nticks) * np.nan
-        D = np.zeros(Nticks) * np.nan
-        # E = np.zeros(Nticks) * np.nan
-        F = np.zeros(Nticks) * np.nan
-        G = np.zeros(Nticks) * np.nan
-        H = np.zeros(Nticks) * np.nan
-        # for j in range(Ntrials):
-        DL = DefaultLocomotor(dt=dt, conf=m.brain)
-        b = 0
-        v = 0
-        lin = 0
-        dst = 0
-        A[0] = np.array(v)
-        C[0] = np.array(b)
-        D[0] = np.array(lin)
-        # E[0] = np.array(lin / l)
-        F[0] = DL.cur_ang_suppression
-        B[0] = DL.turner.neural_oscillator.activity
-        G[0] = DL.turner.activation
-        H[0] = 0
-        for i in range(Nticks - 1):
-            # b = restore_bend_2seg(b, dst)
-            lin_new, ang, feed = DL.step(A_in=0, length=l)
-            if lin_new != 0:
-                lin = lin_new
-            else:
-                lin = lin * (1 - m.physics.lin_damping * dt)
-            torque = m.physics.torque_coef * ang * DL.cur_ang_suppression
-            v = compute_ang_vel(b, torque, v)
-
-            d_or =v * dt
-            if np.abs(d_or) > np.pi:
-                bend_errors += 1
-            # v *= DL.cur_ang_suppression
-            dst = lin * dt
-            d_ro = rear_orientation_change(b, dst, l, correction_coef= m.physics.bend_correction_coef)
-            b = wrap_angle_to_0(b + d_or - d_ro)
-            # if np.abs(b)>=np.pi :
-            #     bend_errors+=1
-            A[i + 1] = np.array(v)
-            C[i + 1] = np.array(b)
-            B[i + 1] = torque
-            F[i + 1] = DL.cur_ang_suppression
-            G[i + 1] = DL.turner.activation
-            H[i + 1] = d_ro / dt
-            D[i + 1] = np.array(lin)
-        # E = D / l
-
-        A = np.rad2deg(A)
-        B = np.rad2deg(B)
-        C = np.rad2deg(C)
-        H = np.rad2deg(H)
-        data = np.vstack([A, B, C, D, F, G, H]).T
-        s.loc[(slice(None), ids[j]), slice(None)]=data
-    if return_df:
-        VV = np.zeros([Nticks, Nids]) * np.nan
-        AA = np.zeros([Nticks, Nids]) * np.nan
-        FOA= np.zeros([Nticks, Nids]) * np.nan
-        for j, id in enumerate(ids):
-            ss=s.xs(id, level='AgentID', drop_level=True)
-            FOA[1:, j] = np.diff(ss[getPar('fov')]) / dt
-            VV[1:, j] = np.diff(ss[getPar('b')]) / dt
-            AA[2:, j] = np.diff(VV[1:, j]) / dt
-        s[getPar('bv')] = VV.flatten()
-        s[getPar('ba')] = AA.flatten()
-        s[getPar('foa')] = FOA.flatten()
-        scale_to_length(s, e, c, pars=None, keys=['v'])
-        fft_freqs(s, e, c)
-        s=s.astype(float)
-        return s,e,c
-    E = D / m.body.initial_length
-    D *= 1000
+    ss = s.xs(c.agent_ids[0], level='AgentID').loc[:Nticks]
 
     Nrows = 3
     if include_torque:
         Nrows += 1
     if include_ang_suppression:
         Nrows += 1
-    P = BasePlot(name=f'{mID}_locomotor_test', **kwargs)
+    P = BasePlot(name=f'{mID}_test', **kwargs)
     P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, fig=fig, axs=axs)
 
+    a_v=ss[getPar('v_in_mm')].values
+    a_fov=ss[getPar('fov')].values
+    a_b=ss[getPar('b')].values
     ax_idx = 0
     ax = P.axs[ax_idx]
     lab = 'velocity'
-    annotated_strideplot(E, dt, a2plot=None, ax=ax, ylim=None, xlim=None, show_extrema=True, show_strides=True)
+    annotated_strideplot(a_v, dt, a2plot=None, ax=ax, ylim=None, xlim=None, show_extrema=True, show_strides=True)
     ax.xaxis.set_visible(False)
-    ax.set_ylabel(lab, fontsize=20)
+    ax.set_ylabel(lab, fontsize=20, labelpad=ylabelpad)
     ax.set_xlim((0, trange[-1] + 10 * dt))
     ax_idx += 1
 
     if include_ang_suppression:
         ax = P.axs[ax_idx]
         lab = 'interference'
-        annotated_strideplot(E, dt, a2plot=F, ax=ax, ylim=(0, 1), xlim=None, show_extrema=False,
+        annotated_strideplot(a_v, dt, a2plot=ss['ang_suppression'].values, ax=ax, ylim=(0, 1), xlim=None, show_extrema=False,
                              show_strides=True)
         ax.xaxis.set_visible(False)
-        ax.set_ylabel(lab, fontsize=20)
+        ax.set_ylabel(lab, fontsize=20, labelpad=ylabelpad)
         ax.set_xlim((0, trange[-1] + 10 * dt))
         ax_idx += 1
 
     ax = P.axs[ax_idx]
     lab = 'ang. velocity'
-    annotated_turnplot(A, dt, a2plot=None, ax=ax, min_dur=None, min_amp=min_turn_amp)
+    annotated_turnplot(a_fov, dt, a2plot=None, ax=ax, min_dur=None, min_amp=min_turn_amp)
     ax.xaxis.set_visible(False)
-    ax.set_ylabel(lab, fontsize=20)
+    ax.set_ylabel(lab, fontsize=20, labelpad=ylabelpad)
     ax.set_xlim((0, trange[-1] + 10 * dt))
     ax_idx += 1
 
     ax = P.axs[ax_idx]
     lab = 'bend'
-    annotated_turnplot(A, dt, a2plot=C, ax=ax, min_dur=None, min_amp=min_turn_amp)
+    annotated_turnplot(a_fov, dt, a2plot=a_b, ax=ax, min_dur=None, min_amp=min_turn_amp)
     ax.xaxis.set_visible(False)
-    ax.set_ylabel(lab, fontsize=20)
+    ax.set_ylabel(lab, fontsize=20, labelpad=ylabelpad)
     ax.set_xlim((0, trange[-1] + 10 * dt))
     ax_idx += 1
 
     if include_torque:
         ax = P.axs[ax_idx]
         lab = 'torque'
-        ax.plot(trange, B, color='green')
+        ax.plot(trange, ss[getPar('Act_tur')].values, color='green')
         ax.xaxis.set_visible(False)
-        ax.set_ylabel(lab, fontsize=20)
+        ax.set_ylabel(lab, fontsize=20, labelpad=ylabelpad)
         ax.set_xlim((0, trange[-1] + 10 * dt))
         ax_idx += 1
 
@@ -1005,3 +971,24 @@ def test_locomotor(mID=None, m=None, dur=60, dt=1 / 16,Nids=1, min_turn_amp=20, 
     # P.axs[-1].set_xlim((0, trange[-1] + 10*dt))
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.01, 0.05)
     return P.get()
+
+# def plot_distros(shorts, target, sim, fig=None, axs=None) :
+#     Nps = len(shorts)
+#     if fig is None and axs is None:
+#         fig, axs = plt.subplots(1, Nps, figsize=(6 * Nps, 6), sharey=True)
+#     for i, sh in enumerate(shorts):
+#         p, lab = getPar(sh, to_return=['d', 'lab'])
+#         vs = target[sh]
+#         lim = np.nanquantile(vs, 0.999)
+#         bins = np.linspace(-lim, lim, 100)
+#
+#         ws = np.ones_like(vs) / float(len(vs))
+#         axs[i].hist(vs, weights=ws, label='experiment', bins=bins, color='red', alpha=0.5)
+#
+#         vs0 = sim[sh]
+#         ws0 = np.ones_like(vs0) / float(len(vs0))
+#         axs[i].hist(vs0, weights=ws0, label='model', bins=bins, color='blue', alpha=0.5)
+#
+#         axs[i].set_xlabel(lab)
+#         axs[i].legend()
+#     return fig
