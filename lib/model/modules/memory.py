@@ -8,35 +8,108 @@ from lib.aux.dictsNlists import flatten_tuple
 from lib.model.modules.basic import Effector
 
 
-class RLmemory(Effector):
-    def __init__(self, brain, gain_space, gain, Delta=0.1, state_spacePerSide=0, update_dt=2, train_dur=30, alpha=0.05,
+
+class Memory(Effector):
+    def __init__(self, brain, gain, update_dt=2, train_dur=30, **kwargs):
+        super().__init__(**kwargs)
+        # self.state_specific_best=state_specific_best
+        self.brain = brain
+        # self.effector = True
+        # self.alpha = alpha
+        # self.gamma = gamma
+        # self.epsilon = epsilon
+        # self.Delta = Delta
+        # self.gain_space = gain_space
+        self.gain = gain
+        self.best_gain = gain
+        self.gain_ids = list(gain.keys())
+        self.Ngains = len(self.gain_ids)
+        # self.state_spacePerSide = state_spacePerSide
+        # self.state_space = np.array(
+        #     [ii for ii in itertools.product(range(2*self.state_spacePerSide + 1), repeat=self.Ngains)])
+        # self.actions = [ii for ii in itertools.product(self.gain_space, repeat=self.Ngains)]
+        # self.q_table = np.zeros((self.state_space.shape[0], len(self.actions)))
+
+        self.train_dur = train_dur
+        # self.lastAction = 0
+        # self.lastState = 0
+        self.Niters = int(update_dt * 60 / self.dt)
+        self.iterator = self.Niters
+        self.table = False
+        self.rewardSum = 0
+
+    def step(self, dx, reward):
+        # if self.table == False:
+        #     temp = self.brain.agent.model.table_collector
+        #     if temp is not None:
+        #         self.table = temp.tables['best_gains'] if 'best_gains' in list(temp.tables.keys()) else None
+        self.count_time()
+        return self.gain
+        # if self.effector and self.total_t > self.train_dur * 60:
+        #     self.effector = False
+        #     print(f'Best gain : {self.best_gain}')
+        #     print(np.array(self.q_table*100).astype(int))
+        # if self.effector:
+        #     self.add_reward(reward)
+        #     if self.condition(dx):
+        #         state = self.state_collapse(dx)
+        #         actionID=self.select_action(state)
+        #         self.update_q_table(actionID, state,  self.rewardSum)
+        #         self.best_gain = self.get_best_combo()
+        #
+        #         if self.table:
+        #             for col in list(self.table.keys()):
+        #                 try:
+        #                     self.table[col].append(getattr(self.brain.agent, col))
+        #                 except:
+        #                     self.table[col].append(np.nan)
+        #         self.rewardSum = 0
+        #         self.iterator = 0
+        #     self.iterator += 1
+        #     return self.gain
+        # else:
+        #     if not self.state_specific_best :
+        #         return self.best_gain
+        #     else :
+        #         state = self.state_collapse(dx)
+        #         actionID = np.argmax(self.q_table[state])
+        #         action = self.actions[actionID]
+        #         for ii, id in enumerate(self.gain_ids):
+        #             self.gain[id] = action[ii]
+        #         # print(self.gain, self.best_gain, self.q_table)
+        #         return self.gain
+
+
+
+class RLmemory(Memory):
+    def __init__(self, gain_space, Delta=0.1, state_spacePerSide=0, alpha=0.05,
                  gamma=0.6, epsilon=0.15, state_specific_best=True, **kwargs):
         super().__init__(**kwargs)
         self.state_specific_best=state_specific_best
-        self.brain = brain
-        self.effector = True
+        # self.brain = brain
+        # self.effector = True
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
         self.Delta = Delta
         self.gain_space = gain_space
-        self.gain = gain
-        self.best_gain = gain
-        self.gain_ids = list(gain.keys())
-        self.Ngains = len(self.gain_ids)
+        # self.gain = gain
+        # self.best_gain = gain
+        # self.gain_ids = list(gain.keys())
+        # self.Ngains = len(self.gain_ids)
         self.state_spacePerSide = state_spacePerSide
         self.state_space = np.array(
             [ii for ii in itertools.product(range(2*self.state_spacePerSide + 1), repeat=self.Ngains)])
         self.actions = [ii for ii in itertools.product(self.gain_space, repeat=self.Ngains)]
         self.q_table = np.zeros((self.state_space.shape[0], len(self.actions)))
 
-        self.train_dur = train_dur
+        # self.train_dur = train_dur
         self.lastAction = 0
         self.lastState = 0
-        self.Niters = int(update_dt * 60 / self.dt)
-        self.iterator = self.Niters
-        self.table = False
-        self.rewardSum = 0
+        # self.Niters = int(update_dt * 60 / self.dt)
+        # self.iterator = self.Niters
+        # self.table = False
+        # self.rewardSum = 0
 
     def state_collapse(self, dx):
         k = self.state_spacePerSide
@@ -55,6 +128,7 @@ class RLmemory(Effector):
         return state
 
     def step(self, dx, reward):
+        # raise
         if self.table == False:
             temp = self.brain.agent.model.table_collector
             if temp is not None:
@@ -154,13 +228,14 @@ class RLTouchMemory(RLmemory):
             return False
 
 
-class RemoteBrianModelMemory(Effector):
+class RemoteBrianModelMemory(Memory):
 
-    def __init__(self, sim_id, server_host='localhost', server_port=5795, **kwargs):
+    def __init__(self, sim_id, dt, brain, gain, server_host='localhost', server_port=5795, **kwargs):
+        super().__init__(brain, gain,dt=dt, **kwargs)
         self.server_host = server_host
         self.server_port = server_port
         self.sim_id = sim_id
-        self.client = Client(server_address, server_port)
+        self.client = Client(server_host)
 
     def runRemoteModel(self, model_instance_id, odor_id, t_sim=100, t_warmup=300, concentration=1, **kwargs):
         # odor_id: 0,1,2
@@ -174,5 +249,9 @@ class RemoteBrianModelMemory(Effector):
         mbon_n = response.param('MBONn')
         return (response.sim_id, response.model_id, mbon_p, mbon_n)
 
-    def step(self):
-        result = self.runRemoteModel()
+    def step(self, dx=0, reward=0):
+        odor_id=self.gain_ids[0]
+        result = self.runRemoteModel(model_instance_id=self.brain.agent.unique_id,
+                                     odor_id=odor_id)
+        self.gain=result
+        return self.gain

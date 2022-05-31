@@ -334,8 +334,11 @@ def init_pars():
             'V_bite': {'v': 0.0005, 'max': 0.01, 'dv': 0.0001,
                        'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'}
         },
-        'memory': {'modality': {'t': str, 'v': 'olfaction', 'vs': ['olfaction', 'touch'],
+        'memory': {
+            'modality': {'t': str, 'v': 'olfaction', 'vs': ['olfaction', 'touch'],
                                 'h': 'The modality for which the memory module is used.'},
+            'mode': {'t': str, 'v': 'RL', 'vs': ['RL', 'MB'],
+                         'h': 'The memory model to use.'},
                    'Delta': {'v': 0.1, 'max': 10.0, 'h': 'The input sensitivity of the memory.'},
                    'state_spacePerSide': {'t': int, 'v': 0, 'max': 20, 'disp': 'state space dim',
                                           'h': 'The number of discrete states to parse the state space on either side of 0.'},

@@ -1,4 +1,4 @@
-from ipc.ipc import Server, Client
+from .ipc import Server, Client
 
 class LarvaMessage(ipc.Message):
     def __init__(self, sim_id, model_id, **params):

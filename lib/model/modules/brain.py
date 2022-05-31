@@ -2,7 +2,7 @@ import random
 import numpy as np
 
 from lib.model.modules.locomotor import Locomotor, DefaultLocomotor
-from lib.model.modules.memory import RLOlfMemory, RLTouchMemory
+from lib.model.modules.memory import RLOlfMemory, RLTouchMemory, RemoteBrianModelMemory
 from lib.model.modules.sensor import Olfactor, Toucher, WindSensor
 
 
@@ -31,7 +31,7 @@ class Brain():
 
         # self.crawler, self.turner, self.feeder, self.olfactor, self.intermitter = None, None, None, None, None
 
-    @ property
+    @property
     def activation(self):
         return self.touch_activation + self.wind_activation + self.olfactory_activation
 
@@ -72,16 +72,24 @@ class DefaultBrain(Brain):
         m = self.modules
         c = self.conf
 
-        self.locomotor=DefaultLocomotor(dt=self.dt, conf=self.conf)
+        self.locomotor = DefaultLocomotor(dt=self.dt, conf=self.conf)
+        # print (m.memory, c.memory_params.modality)
+        # raise
+        if m.memory and c.memory_params.modality == 'olfaction':
+            mode = c.memory_params.mode if 'mode' in c.memory_params.keys() else 'RL'
+            if mode == 'RL':
+                self.memory = RLOlfMemory(brain=self, dt=self.dt, gain=self.olfactor.gain, **c['memory_params'])
+                # raise
+            elif mode == 'MB':
+                # raise
+                self.memory = RemoteBrianModelMemory(sim_id=self.agent.model.id, brain=self, dt=self.dt, gain=self.olfactor.gain,**c['memory_params'])
 
-        if m['memory'] and c['memory_params']['modality'] == 'olfaction':
-            self.memory = RLOlfMemory(brain=self, dt=self.dt, gain=self.olfactor.gain, **c['memory_params'])
         if m['toucher']:
             t = self.toucher = Toucher(brain=self, dt=self.dt, **c['toucher_params'])
-        if m['memory'] and c['memory_params']['modality'] == 'touch':
+        if m.memory and c.memory_params.modality == 'touch':
             self.touch_memory = RLTouchMemory(brain=self, dt=self.dt, gain=t.gain, **c['memory_params'])
 
-    def run(self, pos, reward=False,**kwargs):
+    def run(self, pos, reward=False, **kwargs):
         if self.memory:
             self.olfactor.gain = self.memory.step(self.olfactor.get_dX(), reward)
         if self.olfactor:
@@ -93,4 +101,4 @@ class DefaultBrain(Brain):
         if self.windsensor:
             self.wind_activation = self.windsensor.step(self.sense_wind())
         # A_in=self.touch_activation + self.wind_activation + self.olfactory_activation
-        return self.locomotor.step(A_in=self.activation, length = self.agent.sim_length)
+        return self.locomotor.step(A_in=self.activation, length=self.agent.sim_length)
