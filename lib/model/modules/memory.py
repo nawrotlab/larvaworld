@@ -254,5 +254,5 @@ class RemoteBrianModelMemory(Memory):
         odor_id=self.gain_ids[0]
         result = self.runRemoteModel(model_instance_id=self.brain.agent.unique_id,
                                      odor_id=odor_id)
-        self.gain=result # note: result is a TUPLE of size 3 !
+        self.gain=result # note: result is a TUPLE of size 4 (see line 251 above) !
         return self.gain
