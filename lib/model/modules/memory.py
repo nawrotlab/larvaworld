@@ -235,7 +235,7 @@ class RemoteBrianModelMemory(Memory):
         self.server_host = server_host
         self.server_port = server_port
         self.sim_id = sim_id
-        self.client = Client(server_host)
+
 
     def runRemoteModel(self, model_instance_id, odor_id, t_sim=100, t_warmup=300, concentration=1, **kwargs):
         # odor_id: 0,1,2
@@ -243,15 +243,16 @@ class RemoteBrianModelMemory(Memory):
         # warmup: duration of remote model warmup in ms
         msg = LarvaMessage(self.sim_id, model_instance_id, odor_id=odor_id, odor_concentration=concentration, T=t_sim, warmup=t_warmup, **kwargs)
         # send model parameters to remote model server & wait for result response
-        response = self.client.send([msg]) # this is a LarvaMessage object again
-        # extract returned model results
-        mbon_p = response.param('MBONp')
-        mbon_n = response.param('MBONn')
-        return (response.sim_id, response.model_id, mbon_p, mbon_n)
+        with Client((self.server_host,self.server_port)) as client:
+            [response] = client.send([msg]) # this is a LarvaMessage object again
+            # extract returned model results
+            mbon_p = response.param('MBONp')
+            mbon_n = response.param('MBONn')
+            return (response.sim_id, response.model_id, mbon_p, mbon_n)
 
     def step(self, dx=0, reward=0):
         odor_id=self.gain_ids[0]
         result = self.runRemoteModel(model_instance_id=self.brain.agent.unique_id,
                                      odor_id=odor_id)
-        self.gain=result
+        self.gain=result # note: result is a TUPLE of size 3 !
         return self.gain
