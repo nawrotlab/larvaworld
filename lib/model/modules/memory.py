@@ -8,7 +8,6 @@ from lib.aux.dictsNlists import flatten_tuple
 from lib.model.modules.basic import Effector
 
 
-
 class Memory(Effector):
     def __init__(self, brain, gain, update_dt=2, train_dur=30, **kwargs):
         super().__init__(**kwargs)
@@ -80,12 +79,11 @@ class Memory(Effector):
         #         return self.gain
 
 
-
 class RLmemory(Memory):
     def __init__(self, gain_space, Delta=0.1, state_spacePerSide=0, alpha=0.05,
                  gamma=0.6, epsilon=0.15, state_specific_best=True, **kwargs):
         super().__init__(**kwargs)
-        self.state_specific_best=state_specific_best
+        self.state_specific_best = state_specific_best
         # self.brain = brain
         # self.effector = True
         self.alpha = alpha
@@ -99,7 +97,7 @@ class RLmemory(Memory):
         # self.Ngains = len(self.gain_ids)
         self.state_spacePerSide = state_spacePerSide
         self.state_space = np.array(
-            [ii for ii in itertools.product(range(2*self.state_spacePerSide + 1), repeat=self.Ngains)])
+            [ii for ii in itertools.product(range(2 * self.state_spacePerSide + 1), repeat=self.Ngains)])
         self.actions = [ii for ii in itertools.product(self.gain_space, repeat=self.Ngains)]
         self.q_table = np.zeros((self.state_space.shape[0], len(self.actions)))
 
@@ -137,13 +135,13 @@ class RLmemory(Memory):
         if self.effector and self.total_t > self.train_dur * 60:
             self.effector = False
             print(f'Best gain : {self.best_gain}')
-            print(np.array(self.q_table*100).astype(int))
+            print(np.array(self.q_table * 100).astype(int))
         if self.effector:
             self.add_reward(reward)
             if self.condition(dx):
                 state = self.state_collapse(dx)
-                actionID=self.select_action(state)
-                self.update_q_table(actionID, state,  self.rewardSum)
+                actionID = self.select_action(state)
+                self.update_q_table(actionID, state, self.rewardSum)
                 self.best_gain = self.get_best_combo()
 
                 if self.table:
@@ -157,9 +155,9 @@ class RLmemory(Memory):
             self.iterator += 1
             return self.gain
         else:
-            if not self.state_specific_best :
+            if not self.state_specific_best:
                 return self.best_gain
-            else :
+            else:
                 state = self.state_collapse(dx)
                 actionID = np.argmax(self.q_table[state])
                 action = self.actions[actionID]
@@ -174,7 +172,7 @@ class RLmemory(Memory):
     def get_best_combo(self):
         return dict(zip(self.gain_ids, self.actions[np.argmax(np.mean(self.q_table, axis=0))]))
 
-    def condition(self,dx):
+    def condition(self, dx):
         return self.iterator >= self.Niters
 
     def update_q_table(self, actionID, state, reward):
@@ -209,50 +207,70 @@ class RLOlfMemory(RLmemory):
         return list(self.best_gain.values())[1]
 
 
-
-
 class RLTouchMemory(RLmemory):
     def __init__(self, mode='touch', **kwargs):
         # gain = {s: 0.0 for s in brain.agent.get_sensors()}
         super().__init__(**kwargs)
 
-
-    def condition(self,dx):
+    def condition(self, dx):
         if 1 in dx.values() or -1 in dx.values():
             if 1 in dx.values():
-                self.rewardSum = 1/self.iterator
+                self.rewardSum = 1 / self.iterator
             elif -1 in dx.values():
                 self.rewardSum = self.iterator
             return True
-        else :
+        else:
             return False
 
 
 class RemoteBrianModelMemory(Memory):
 
-    def __init__(self, sim_id, dt, brain, gain, server_host='localhost', server_port=5795, **kwargs):
-        super().__init__(brain, gain,dt=dt, **kwargs)
+    def __init__(self, sim_id, dt, brain, gain,G=0.001, server_host='localhost', server_port=5795, **kwargs):
+        super().__init__(brain, gain, dt=dt, **kwargs)
         self.server_host = server_host
         self.server_port = server_port
         self.sim_id = sim_id
+        self.G = G
+        self.t_sim = int(self.dt * 1000)
+        # self.step(t_warmup=300)
+        #
+        # print(self.t_sim)
+        # raise
 
-
-    def runRemoteModel(self, model_instance_id, odor_id, t_sim=100, t_warmup=300, concentration=1, **kwargs):
+    def runRemoteModel(self, model_instance_id, odor_id, t_sim=100, t_warmup=0, concentration=1, **kwargs):
         # odor_id: 0,1,2
         # T: duration of remote model simulation in ms
         # warmup: duration of remote model warmup in ms
-        msg = LarvaMessage(self.sim_id, model_instance_id, odor_id=odor_id, odor_concentration=concentration, T=t_sim, warmup=t_warmup, **kwargs)
+        msg = LarvaMessage(self.sim_id, model_instance_id, odor_id=odor_id, odor_concentration=concentration,
+                           T=t_sim, warmup=t_warmup, **kwargs)
         # send model parameters to remote model server & wait for result response
-        with Client((self.server_host,self.server_port)) as client:
-            [response] = client.send([msg]) # this is a LarvaMessage object again
+        with Client((self.server_host, self.server_port)) as client:
+            [response] = client.send([msg])  # this is a LarvaMessage object again
             # extract returned model results
             mbon_p = response.param('MBONp')
             mbon_n = response.param('MBONn')
-            return (response.sim_id, response.model_id, mbon_p, mbon_n)
+            mbon_dif = mbon_p - mbon_n
+            return mbon_dif
 
-    def step(self, dx=0, reward=0):
-        odor_id=self.gain_ids[0]
-        result = self.runRemoteModel(model_instance_id=self.brain.agent.unique_id,
-                                     odor_id=odor_id)
-        self.gain=result # note: result is a TUPLE of size 4 (see line 251 above) !
+    def step(self, dx={}, reward=False, t_warmup=0):
+        # Default message arguments
+        msg_kws0={
+            'model_instance_id' : self.brain.agent.unique_id,
+            't_sim' : self.t_sim,
+            't_warmup' : t_warmup,
+        }
+
+        # Let's focus on the CS odor only :
+        msg_kws={
+            # Default :
+            'odor_id' : 0,
+            # The concentration change :
+            'concentration' : dx['CS'],
+            # reward as 0 or 1
+            'reward' : int(reward)
+
+        }
+
+        mbon_dif = self.runRemoteModel(**msg_kws0, **msg_kws)
+        self.gain['CS']=self.G * mbon_dif
         return self.gain
