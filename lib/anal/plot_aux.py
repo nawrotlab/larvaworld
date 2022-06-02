@@ -31,12 +31,18 @@ plt.rcParams.update(plt_conf)
 
 
 class BasePlot:
-    def __init__(self, name, save_to='.', save_as=None, return_fig=False, show=False, suf='pdf', **kwargs):
+    def __init__(self, name, save_to='.', save_as=None, return_fig=False, show=False, suf='pdf',text_xy0=(0.05, 0.98), **kwargs):
         self.filename = f'{name}.{suf}' if save_as is None else save_as
         self.return_fig = return_fig
         self.show = show
         self.fit_df = None
         self.save_to = save_to
+
+        self.cur_idx = 0
+        self.text_x0, self.text_y0 = text_xy0
+        self.letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+        self.letter_dict = {}
+        self.x0s, self.y0s = [], []
 
     def build(self, Nrows=1, Ncols=1, figsize=None, fig=None, axs=None, dim3=False, azim=115, elev=15, **kwargs):
         if fig is None and axs is None:
@@ -56,12 +62,20 @@ class BasePlot:
     def conf_ax(self, idx=0, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
                 xticklabels=None, yticks=None, xticklabelrotation=None, yticklabelrotation=None,
                 yticklabels=None, zticks=None, zticklabels=None, xtickpos=None, xtickpad=None, ytickpad=None,
-                ztickpad=None,xlabelfontsize=None,
-                xlabelpad=None, ylabelpad=None, zlabelpad=None,
-                xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, tickMath=None, ytickMath=None, leg_loc=None,
-                leg_handles=None,
+                ztickpad=None,xlabelfontsize=None,xticklabelsize=None,yticklabelsize=None,zticklabelsize=None,
+                xlabelpad=None, ylabelpad=None, zlabelpad=None,equal_aspect=None,
+                xMaxN=None, yMaxN=None, zMaxN=None, xMath=None,yMath=None, tickMath=None, ytickMath=None, leg_loc=None,
+                leg_handles=None,xvis=None,yvis=None,zvis=None,
                 title=None):
         ax = self.axs[idx]
+        if equal_aspect is not None:
+            ax.set_aspect('equal', adjustable='box')
+        if xvis is not None:
+            ax.xaxis.set_visible(xvis)
+        if yvis is not None:
+            ax.yaxis.set_visible(yvis)
+        if zvis is not None:
+            ax.zaxis.set_visible(zvis)
         if ylab is not None:
             ax.set_ylabel(ylab, labelpad=ylabelpad)
         if xlab is not None:
@@ -79,6 +93,14 @@ class BasePlot:
             ax.set_zlim(zlim)
         if xticks is not None:
             ax.set_xticks(ticks=xticks)
+        if xticklabelrotation is not None:
+            ax.tick_params(axis='x', which='major', rotation=xticklabelrotation)
+        if xticklabelsize is not None:
+            ax.tick_params(axis='x', which='major', labelsize=xticklabelsize)
+        if yticklabelsize is not None:
+            ax.tick_params(axis='y', which='major', labelsize=yticklabelsize)
+        if zticklabelsize is not None:
+            ax.tick_params(axis='z', which='major', labelsize=zticklabelsize)
         if xticklabels is not None:
             ax.set_xticklabels(labels=xticklabels, rotation=xticklabelrotation)
         if yticks is not None:
@@ -101,6 +123,8 @@ class BasePlot:
             ax.zaxis.set_major_locator(ticker.MaxNLocator(zMaxN))
         if xMath is not None:
             ax.xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=True, useMathText=True))
+        if yMath is not None:
+            ax.yaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=True, useMathText=True))
         if xtickpos is not None:
             ax.xaxis.set_ticks_position(xtickpos)
         if title is not None:
@@ -139,6 +163,26 @@ class BasePlot:
         if self.fit_df is not None:
             self.fit_df.to_csv(self.fit_filename, index=True, header=True)
         return process_plot(self.fig, self.save_to, self.filename, self.return_fig, self.show)
+
+    def add_letter(self,ax,letter=True, x0=False, y0=False):
+        if letter :
+            self.letter_dict[ax] = self.letters[self.cur_idx]
+            self.cur_idx += 1
+            if x0 :
+                self.x0s.append(ax)
+            if y0 :
+                self.y0s.append(ax)
+
+    def annotate(self, dx=-0.05, dy=0.005, full_dict=False):
+        if full_dict :
+
+            for i,ax in enumerate(self.axs) :
+                self.letter_dict[ax]=self.letters[i]
+        for i, (ax, text) in enumerate(self.letter_dict.items()) :
+
+            X = self.text_x0 if ax in self.x0s else ax.get_position().x0+dx
+            Y = self.text_y0 if ax in self.y0s else ax.get_position().y1+dy
+            self.fig.text(X, Y, text, size=30, weight='bold')
 
 
 class ParPlot(BasePlot):
@@ -276,8 +320,8 @@ class Plot(BasePlot):
         x = np.linspace(r0, r1, nbins)
         return x, lim
 
-    def plot_par(self, par, bins, i=0, labels=None, absolute=False, nbins=None, type='plt.hist',
-                 pvalues=False, half_circles=False,key='step', **kwargs):
+    def plot_par(self, par, bins, i=0, labels=None, absolute=False, nbins=None, type='plt.hist',sns_kws={},
+                  pvalues=False, half_circles=False,key='step', **kwargs):
         if labels is None:
             labels = self.labels
         vs = []
@@ -303,7 +347,7 @@ class Plot(BasePlot):
             bins = np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
         for v, c, l in zip(vs, self.colors, labels):
             if type == 'sns.hist':
-                sns.histplot(v, color=c, bins=bins, ax=self.axs[i], label=l, **kwargs)
+                sns.histplot(v, color=c, bins=bins, ax=self.axs[i], label=l, **sns_kws, **kwargs)
             elif type == 'plt.hist':
                 self.axs[i].hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), label=l, color=c, **kwargs)
         if pvalues:
@@ -586,9 +630,10 @@ def boolean_indexing(v, fillval=np.nan):
     return out
 
 
-def annotate_plot(data, x, y, hue=None,show_ns=True, **kwargs):
+def annotate_plot(data, x, y, hue=None,show_ns=True,target_only=None, **kwargs):
     from statannotations.Annotator import Annotator
     subIDs0 = np.unique(data[x].values)
+    # print(subIDs0)
     if hue is not None :
         h1, h2 = np.unique(data[hue].values)
 
@@ -600,15 +645,25 @@ def annotate_plot(data, x, y, hue=None,show_ns=True, **kwargs):
             dd1 = dd[dd[hue] == h2][y].dropna().values.tolist()
             pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
     else :
-        pairs = list(itertools.combinations(subIDs0,2))
+        if target_only is None :
+            pairs = list(itertools.combinations(subIDs0,2))
+            pvs = []
+            for subID0,subID1 in pairs:
+                dd0 = data[data[x] == subID0][y].dropna().values.tolist()
+                dd1 = data[data[x] == subID1][y].dropna().values.tolist()
+                pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
+        else :
+            pairs=[]
+            pvs = []
+            dd0 = data[data[x] == target_only][y].dropna().values.tolist()
+            for subID in subIDs0 :
+                if subID != target_only:
+                    pairs.append((target_only,subID))
+                    dd1 = data[data[x] == subID][y].dropna().values.tolist()
+                    pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
 
-        pvs = []
-        for subID0,subID1 in pairs:
-
-            dd0 = data[data[x] == subID0][y].dropna().values.tolist()
-            dd1 = data[data[x] == subID1][y].dropna().values.tolist()
-            pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
     f_pvs = [pvalue_star(pv) for pv in pvs]
+
     if not show_ns:
         valid_idx=[i for i,f_pv in enumerate(f_pvs) if f_pv!='ns']
         pairs = [pairs[i] for i in valid_idx]
@@ -675,7 +730,7 @@ def conf_ax_3d(vars, target, ax=None, fig=None, lims=None, title=None, maxN=5, l
 
 
 def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits='best',
-                     marker='.', legend_outside=False, **kwargs):
+                     marker='.', legend_outside=False,xlabel = 'time (sec)',xlim=None, **kwargs):
     distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy', 'normal', 'uniform']
     distro_cs = ['c', 'g', 'm', 'k', 'orange', 'brown', 'purple']
     num_distros = len(distro_ls)
@@ -689,8 +744,8 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
     pdfs = fit_dic['pdfs']
     u2, du2, c2, c2cum = fit_dic['values']
     lws[idx_Kmax] = 4
-    ylabel = 'cumulative probability'
-    xlabel = 'time (sec)' if not discr else '# strides'
+    ylabel = 'probability'
+    xlabel = xlabel
     xrange = u2
     y = c2cum
     ddfs = cdfs
@@ -701,6 +756,8 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
     axs[i].set_title(bout)
     axs[i].set_xlabel(xlabel)
     axs[i].set_ylim([10 ** -3.5, 10 ** 0.2])
+    if xlim is not None :
+        axs[i].set_xlim(xlim)
     distro_ls0, distro_cs0 = [], []
     for z, (l, col, lw, ddf) in enumerate(zip(distro_ls, distro_cs, lws, ddfs)):
         if ddf is None:
@@ -726,7 +783,7 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
         axs[jj].set_ylabel(ylabel)
 
 
-def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbol', 'Value', 'Unit'], rows=None, **kwargs):
+def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbol', 'Value', 'Unit'], rows=None,figsize=(14,11), **kwargs):
     from lib.aux.combining import render_mpl_table
     from lib.conf.base.dtypes import par
     from lib.conf.base.init_pars import init_pars
@@ -755,22 +812,26 @@ def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbo
         d0 = init_pars().get(rowLab, None)
         if rowLab == 'interference':
             if rowDic.mode == 'square':
-                rowValid = ['crawler_phi_range', 'attenuation','attenuation_max', 'suppression_mode']
+                rowValid = ['crawler_phi_range', 'attenuation','attenuation_max']
+                # rowValid = ['crawler_phi_range', 'attenuation','attenuation_max', 'suppression_mode']
             elif rowDic.mode == 'phasic':
-                rowValid = ['max_attenuation_phase', 'attenuation', 'attenuation_max', 'suppression_mode']
+                rowValid = ['max_attenuation_phase', 'attenuation', 'attenuation_max']
+                # rowValid = ['max_attenuation_phase', 'attenuation', 'attenuation_max', 'suppression_mode']
             elif rowDic.mode == 'default':
-                rowValid = ['attenuation', 'suppression_mode']
+                rowValid = ['attenuation']
+                # rowValid = ['attenuation', 'suppression_mode']
         elif rowLab == 'physics':
             rowValid = ['ang_damping','torque_coef', 'body_spring_k', 'bend_correction_coef']
         elif rowLab == 'body':
             rowValid = ['initial_length', 'Nsegs']
         elif rowLab == 'turner':
             if rowDic.mode == 'neural':
-                rowValid = ['base_activation', 'activation_range', 'n']
+                rowValid = ['base_activation', 'activation_range', 'n', 'tau']
             elif rowDic.mode == 'constant':
                 rowValid = ['initial_amp']
             elif rowDic.mode == 'sinusoidal':
-                rowValid = ['initial_amp','amp_range', 'initial_freq', 'freq_range',]
+                rowValid = ['initial_amp','initial_freq']
+                # rowValid = ['initial_amp','amp_range', 'initial_freq', 'freq_range',]
         elif rowLab == 'crawler':
             if rowDic.waveform == 'realistic':
                 rowValid = ['initial_freq', 'max_scaled_vel', 'max_vel_phase', 'stride_dst_mean', 'stride_dst_std']
@@ -836,6 +897,7 @@ def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbo
     df.set_index(['field'], inplace=True)
 
     ax, fig, mpl = render_mpl_table(df, colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
+                                    figsize=figsize,adjust_kws={'left': 0.2, 'right': 0.95},
                                     row_colors=rowColors, return_table=True, **kwargs)
     ax.yaxis.set_visible(False)
     ax.xaxis.set_visible(False)
@@ -884,7 +946,8 @@ def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_me
         vs = e[p0['codename']]
         v_mu = vs.median()
         P.axs[i].hist(vs.values, bins=Nbins)
-        P.conf_ax(i, xlab=p0['label'], ylab='# larvae' if i == 0 else None, xMaxN=3)
+        P.conf_ax(i, xlab=p0['label'], ylab='# larvae' if i == 0 else None, xMaxN=3, xlabelfontsize=18,xticklabelsize=18,
+                  yvis=False if i != 0 else True)
 
         if show_median:
             text = p0['symbol'] + f' = {np.round(v_mu, 2)}'
@@ -892,15 +955,11 @@ def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_me
             P.axs[i].annotate(text, rotation=0, fontsize=15, va='center', ha='left',
                               xy=(0.55, 0.8), xycoords='axes fraction',
                               )
-        if i != 0:
-            P.axs[i].yaxis.set_visible(False)
     P.adjust((0.2, 0.9), (0.2, 0.9), 0.01)
     return P.get()
 
 
-def test_model(mID=None, m=None, dur=2/3, dt=1 / 16,Nids=1, min_turn_amp=20, include_torque=False,d=None,
-                   include_ang_suppression=False, return_df=False, fig=None, axs=None, **kwargs):
-    ylabelpad=None
+def test_model(mID=None, m=None, dur=2/3, dt=1 / 16,Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
     from lib.anal.plotting import annotated_strideplot, annotated_turnplot
     if d is None :
         from lib.anal.eval_aux import sim_model
@@ -911,84 +970,30 @@ def test_model(mID=None, m=None, dur=2/3, dt=1 / 16,Nids=1, min_turn_amp=20, inc
     trange = np.arange(0, Nticks * dt, dt)
     ss = s.xs(c.agent_ids[0], level='AgentID').loc[:Nticks]
 
-    Nrows = 3
-    if include_torque:
-        Nrows += 1
-    if include_ang_suppression:
-        Nrows += 1
+    pars, labs=getPar(['v_in_mm', 'c_CT', 'Act_tur', 'fov', 'b'], to_return=['d', 'symbol'])
+
+    Nrows = len(pars)
     P = BasePlot(name=f'{mID}_test', **kwargs)
     P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, fig=fig, axs=axs)
-
     a_v=ss[getPar('v_in_mm')].values
     a_fov=ss[getPar('fov')].values
-    a_b=ss[getPar('b')].values
-    ax_idx = 0
-    ax = P.axs[ax_idx]
-    lab = 'velocity'
-    annotated_strideplot(a_v, dt, a2plot=None, ax=ax, ylim=None, xlim=None, show_extrema=True, show_strides=True)
-    ax.xaxis.set_visible(False)
-    ax.set_ylabel(lab, fontsize=20, labelpad=ylabelpad)
-    ax.set_xlim((0, trange[-1] + 10 * dt))
-    ax_idx += 1
+    annotated_strideplot(a_v, dt, ax=P.axs[0])
+    annotated_strideplot(a_v, dt, a2plot=ss[pars[1]].values, ax=P.axs[1], ylim=(0, 1),  show_extrema=False)
 
-    if include_ang_suppression:
-        ax = P.axs[ax_idx]
-        lab = 'interference'
-        annotated_strideplot(a_v, dt, a2plot=ss['ang_suppression'].values, ax=ax, ylim=(0, 1), xlim=None, show_extrema=False,
-                             show_strides=True)
-        ax.xaxis.set_visible(False)
-        ax.set_ylabel(lab, fontsize=20, labelpad=ylabelpad)
-        ax.set_xlim((0, trange[-1] + 10 * dt))
-        ax_idx += 1
+    annotated_turnplot(a_fov, dt, a2plot=ss[pars[2]].values, ax=P.axs[2], min_amp=min_turn_amp)
+    annotated_turnplot(a_fov, dt, ax=P.axs[3], min_amp=min_turn_amp)
+    annotated_turnplot(a_fov, dt, a2plot=ss[pars[4]].values, ax=P.axs[4], min_amp=min_turn_amp)
 
-    ax = P.axs[ax_idx]
-    lab = 'ang. velocity'
-    annotated_turnplot(a_fov, dt, a2plot=None, ax=ax, min_dur=None, min_amp=min_turn_amp)
-    ax.xaxis.set_visible(False)
-    ax.set_ylabel(lab, fontsize=20, labelpad=ylabelpad)
-    ax.set_xlim((0, trange[-1] + 10 * dt))
-    ax_idx += 1
 
-    ax = P.axs[ax_idx]
-    lab = 'bend'
-    annotated_turnplot(a_fov, dt, a2plot=a_b, ax=ax, min_dur=None, min_amp=min_turn_amp)
-    ax.xaxis.set_visible(False)
-    ax.set_ylabel(lab, fontsize=20, labelpad=ylabelpad)
-    ax.set_xlim((0, trange[-1] + 10 * dt))
-    ax_idx += 1
-
-    if include_torque:
-        ax = P.axs[ax_idx]
-        lab = 'torque'
-        ax.plot(trange, ss[getPar('Act_tur')].values, color='green')
-        ax.xaxis.set_visible(False)
-        ax.set_ylabel(lab, fontsize=20, labelpad=ylabelpad)
-        ax.set_xlim((0, trange[-1] + 10 * dt))
-        ax_idx += 1
-
-    P.axs[-1].set_xlabel('time (sec)')
-    P.axs[-1].xaxis.set_visible(True)
-    # P.axs[-1].set_xlim((0, trange[-1] + 10*dt))
+    for i in range(Nrows):
+        P.conf_ax(i, xlim=(0, trange[-1] + 10 * dt), ylab=labs[i], xlab='time (sec)', xvis=True if i==Nrows-1 else False)
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.01, 0.05)
+    P.fig.align_ylabels(P.axs[:])
     return P.get()
 
-# def plot_distros(shorts, target, sim, fig=None, axs=None) :
-#     Nps = len(shorts)
-#     if fig is None and axs is None:
-#         fig, axs = plt.subplots(1, Nps, figsize=(6 * Nps, 6), sharey=True)
-#     for i, sh in enumerate(shorts):
-#         p, lab = getPar(sh, to_return=['d', 'lab'])
-#         vs = target[sh]
-#         lim = np.nanquantile(vs, 0.999)
-#         bins = np.linspace(-lim, lim, 100)
-#
-#         ws = np.ones_like(vs) / float(len(vs))
-#         axs[i].hist(vs, weights=ws, label='experiment', bins=bins, color='red', alpha=0.5)
-#
-#         vs0 = sim[sh]
-#         ws0 = np.ones_like(vs0) / float(len(vs0))
-#         axs[i].hist(vs0, weights=ws0, label='model', bins=bins, color='blue', alpha=0.5)
-#
-#         axs[i].set_xlabel(lab)
-#         axs[i].legend()
-#     return fig
+def add_letters(fig,axs,dx=-0.05, dy=0.005) :
+    letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+    for i, ax in enumerate(axs):
+        X = ax.get_position().x0 + dx
+        Y = ax.get_position().y1 + dy
+        fig.text(X, Y, letters[i], size=30, weight='bold')

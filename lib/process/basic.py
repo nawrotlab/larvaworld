@@ -206,6 +206,7 @@ def generate_traj_colors(s, sp_vel=None, ang_vel=None):
 
 
 def process(processing, s, e, c, mode='minimal', traj_colors=True, show_output=True, **kwargs):
+    # print(processing)
     cc = {
         's': s,
         'e': e,
@@ -231,6 +232,7 @@ def process(processing, s, e, c, mode='minimal', traj_colors=True, show_output=T
             else :
                 comp_final_anemotaxis(**cc)
         if processing['dispersion'] :
+            # raise
             comp_dispersion(**cc)
         if processing['tortuosity'] :
             # comp_tortuosity(**cc)

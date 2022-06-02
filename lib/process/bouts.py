@@ -2,184 +2,10 @@ import pandas as pd
 from scipy.spatial.distance import euclidean
 import numpy as np
 
-from lib.process.aux import suppress_stdout, comp_bearing, annotation, detect_strides
 from lib.aux.ang_aux import angle_to_x_axis
 import lib.aux.naming as nam
-from lib.anal.fitting import fit_bouts
 from lib.process.spatial import scale_to_length
 from lib.process.store import store_aux_dataset
-
-def annotate(s, e, c, stride=True, pause=True, turn=True,
-             recompute=False, vel_threshold=0.3,show_output=True, fits=True, on_food=False,store=True, **kwargs):
-
-    ccc = {
-        's': s,
-        'e': e,
-        'c': c,
-        'recompute': recompute,
-    }
-    with suppress_stdout(show_output):
-        chunk_dicts,aux_dic, cycle_curves=annotation(s, e, c, vel_thr=vel_threshold, strides_enabled=True,store=store, **kwargs)
-        if fits :
-            pooled_epochs = fit_bouts(c=c, aux_dic=aux_dic, s=s, e=e, id=c.id,store=store)
-        if on_food:
-            comp_patch_metrics(**ccc, **kwargs)
-
-        for b in ['stride', 'pause', 'turn']:
-            try:
-                comp_chunk_bearing(**ccc, chunk=b, **kwargs)
-                if b == 'turn':
-                    comp_chunk_bearing(**ccc, chunk='Lturn', **kwargs)
-                    comp_chunk_bearing(**ccc, chunk='Rturn', **kwargs)
-            except:
-                pass
-    return chunk_dicts, pooled_epochs, cycle_curves
-
-
-
-
-#
-# def annotate_old(s, e, config=None, stride=True, pause=True, turn=True, use_scaled=True,
-#              recompute=False, track_point=None, track_pars=None, chunk_pars=None, vel_threshold=0.2,
-#              vel_par=None, ang_vel_par=None, bend_vel_par=None, min_ang=30.0, min_ang_vel=100.0,
-#              non_chunks=False, show_output=True, fits=True, on_food=False, **kwargs):
-#     from lib.conf.base.par import ParDict
-#     dic = ParDict(mode='load').dict
-#     if vel_par is None:
-#         if use_scaled:
-#             vel_par = dic['sv']['d']
-#         else:
-#             vel_par = dic['v']['d']
-#     if ang_vel_par is None:
-#         ang_vel_par = dic['fov']['d']
-#     if bend_vel_par is None:
-#         bend_vel_par = dic['bv']['d']
-#     if track_pars is None:
-#         track_pars = [dic[k]['d'] for k in ['fou', 'rou', 'fo', 'ro', 'b', 'x', 'y']]
-#         try :
-#             track_pars += nam.bearing2(list(config.source_xy.keys()))
-#         except :
-#             pass
-#     if chunk_pars is None:
-#         chunk_pars = [dic[k]['d'] for k in ['sv', 'fov', 'rov', 'bv', 'l']]
-#     track_pars = [p for p in track_pars if p in s.columns]
-#     if track_point is None:
-#         track_point = config.point
-#     if min_ang is None:
-#         min_ang = 0.0
-#     if min_ang_vel is None:
-#         min_ang_vel = 0.0
-#     c = {
-#         's': s,
-#         'e': e,
-#         'dt': config.dt,
-#         'Npoints': config.Npoints,
-#         'track_point': track_point,
-#         'track_pars': track_pars,
-#         'vel_threshold': vel_threshold,
-#         'config': config,
-#         'recompute': recompute,
-#     }
-#     with suppress_stdout(show_output):
-#         if stride:
-#             detect_strides_old(**c, non_chunks=non_chunks, vel_par=vel_par, chunk_pars=chunk_pars, **kwargs)
-#         if pause:
-#             detect_pauses_old(**c, vel_par=vel_par, **kwargs)
-#         if turn:
-#             detect_turns_old(**c, ang_vel_par=ang_vel_par, bend_vel_par=bend_vel_par, min_ang=min_ang,
-#                          min_ang_vel=min_ang_vel, **kwargs)
-#
-#         if  fits:
-#             try :
-#                 fit_bouts(**c, **kwargs)
-#             except:
-#                 pass
-#         if on_food:
-#             comp_patch_metrics(**c, **kwargs)
-#
-#         for b in ['stride', 'pause', 'turn']:
-#             try:
-#                 comp_chunk_bearing(**c, chunk=b, **kwargs)
-#                 if b == 'turn':
-#                     comp_chunk_bearing(**c, chunk='Lturn', **kwargs)
-#                     comp_chunk_bearing(**c, chunk='Rturn', **kwargs)
-#             except:
-#                 pass
-#     return s, e
-#
-#
-# def detect_turns_old(s, e, config, dt, track_pars, min_ang_vel, min_ang=30.0,
-#                  ang_vel_par=None, bend_vel_par=None, chunk_only=None, recompute=False,
-#                  constant_bend_chunks=False, **kwargs):
-#     if set(nam.num(['Lturn', 'Rturn'])).issubset(e.columns.values) and not recompute:
-#         print('Turns are already detected. If you want to recompute it, set recompute_turns to True')
-#         return
-#     ss = s.loc[s[nam.id(chunk_only)].dropna().index] if chunk_only is not None else s
-#     if ang_vel_par is None:
-#         ang_vel_par = nam.vel(nam.orient('front'))
-#     if bend_vel_par is None:
-#         bend_vel_par = nam.vel('bend')
-#     detect_chunks(ss, e, dt, chunk_names=['Lturn', 'Rturn'], chunk_only=chunk_only, par=ang_vel_par,
-#                   ROU_ranges=[[min_ang, np.inf], [-np.inf, -min_ang]],
-#                   par_ranges=[[min_ang_vel, np.inf], [-np.inf, -min_ang_vel]], merged_chunk='turn',
-#                   store_max=[True, False], store_min=[False, True])
-#     track_pars_in_chunks(ss, e, config.aux_dir, chunks=['Lturn', 'Rturn'], pars=track_pars, merged_chunk='turn')
-#
-#     if constant_bend_chunks:
-#         print('Additionally detecting constant bend chunks.')
-#         detect_chunks(ss, e, dt, chunk_names=['constant_bend'], chunk_only=chunk_only, par=bend_vel_par,
-#                       par_ranges=[[-min_ang_vel, min_ang_vel]])
-#     print('All turns detected')
-#
-#
-# def detect_pauses_old(s, e, config, dt, track_pars, recompute=False, stride_non_overlap=True, vel_par=None,
-#                   min_dur=0.4, vel_threshold=0.2, **kwargs):
-#     c = 'pause'
-#     if nam.num(c) in e.columns.values and not recompute:
-#         print('Pauses are already detected. If you want to recompute it, set recompute to True')
-#         return
-#     aux_dir = config.aux_dir
-#     if vel_par is None:
-#         vel_par = nam.scal(nam.vel(''))
-#     non_overlap_chunk = 'stride' if stride_non_overlap else None
-#
-#     detect_chunks(s, e, dt, chunk_names=[c], par=vel_par, par_ranges=[[-np.inf, vel_threshold]],
-#                   non_overlap_chunk=non_overlap_chunk, min_dur=min_dur)
-#
-#     track_pars_in_chunks(s, e, aux_dir, chunks=[c], pars=track_pars)
-#
-#     store_aux_dataset(s, pars=[nam.dur(c)], type='distro', file=aux_dir)
-#     print('All crawl-pauses detected')
-#
-#
-# def detect_strides_old(s, e, config, dt=None, recompute=False, vel_par=None, track_point=None, track_pars=[],
-#                    chunk_pars=[], non_chunks=False, vel_threshold=0.2, **kwargs):
-#     c = 'stride'
-#     if nam.num(c) in e.columns.values and not recompute:
-#         print('Strides are already detected. If you want to recompute it, set recompute to True')
-#         return
-#     aux_dir = config.aux_dir
-#     if vel_par is None:
-#         vel_par = nam.scal(nam.vel(''))
-#     if dt is None :
-#         dt=config.dt
-#     mid_flag = nam.max(vel_par)
-#     edge_flag = nam.min(vel_par)
-#
-#     comp_extrema(s, dt, parameters=[vel_par], interval_in_sec=0.2, abs_threshold=[np.inf, vel_threshold])
-#     compute_freq(s, e, dt, parameters=[vel_par], freq_range=[0.7, 2.8])
-#     detect_contacting_chunks(s, e, aux_dir, dt, mid_flag=mid_flag, edge_flag=edge_flag,
-#                              vel_par=vel_par, control_pars=track_pars,
-#                              track_point=track_point, vel_threshold=vel_threshold)
-#     if non_chunks:
-#         detect_non_chunks(s, e, dt, chunk_name=c, guide_parameter=vel_par)
-#     track_pars_in_chunks(s, e, aux_dir, chunks=[c], pars=track_pars)
-#
-#     store_aux_dataset(s, pars=chunk_pars, type='stride', file=aux_dir)
-#     print('All strides detected')
-#
-#
-
 
 def comp_merged_chunk(s, c0, cs, pars=[], e=None):
     ps = []
@@ -509,6 +335,8 @@ def detect_contacting_chunks(s, e, c, aux_dir, dt, vel_par, track_point, chunk='
 #
 
 def comp_chunk_bearing(s, c, chunk, **kwargs):
+    from lib.process.aux import comp_bearing
+
     c0 = nam.start(chunk)
     c1 = nam.stop(chunk)
     ho = nam.unwrap(nam.orient('front'))
@@ -564,6 +392,9 @@ def comp_patch_metrics(s, e, **kwargs):
     e[f'handedness_score_{off}'] = e[f"{nam.num('Lturn')}_{off}"] / e[f"{nam.num('turn')}_{off}"]
 
 def get_stride_df(s,e,c,shorts=['sv', 'b','bv','fov','rov'], idx=0, Nbins=64):
+    # from lib.process.aux import comp_bearing
+    from lib.process.aux import detect_strides
+
     from lib.conf.base.par import getPar
     id = c.agent_ids[idx]
     ee = e.loc[id]

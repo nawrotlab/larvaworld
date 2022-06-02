@@ -230,6 +230,18 @@ def merge(item):
     return {**item, 'ref': dict(merged)}
 
 
+def chunk_dicts_to_aux_dict(chunk_dicts, c=None, ids=None):
+    if ids is None:
+        if c is not None:
+            ids = c.agent_ids
+        else:
+            ids = list(chunk_dicts.keys())
+
+    keys = ['turn_dur', 'turn_amp', 'turn_vel_max', 'run_dur', 'run_dst', 'pause_dur', 'run_count']
+    aux_dic = {k: np.array(flatten_list([chunk_dicts[id][k] for id in ids])) for k in keys}
+    return aux_dic
+
+
 class AttrDict(dict):
 
     '''

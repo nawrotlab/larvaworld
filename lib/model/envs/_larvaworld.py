@@ -483,6 +483,7 @@ class LarvaWorld:
     def step(self):
         # Overriden by subclasses
         self.Nticks += 1
+        #print(self.Nticks)
         # Tick sim_clock
         self.sim_clock.tick_clock()
         if self.windscape is not None:
@@ -716,13 +717,13 @@ def get_sample_bout_distros(model, sample):
     return m
 
 
-def sample_group(sample, N, sample_ps):
-    from lib.stor.larva_dataset import LarvaDataset
-    d = LarvaDataset(sample['dir'], load_data=False)
-    e = d.read('end')
+def sample_group(sample=None, N=1, sample_ps=[], e=None):
+    if e is None :
+        from lib.stor.larva_dataset import LarvaDataset
+        d = LarvaDataset(sample['dir'], load_data=False)
+        e = d.read(key='end', file='endpoint_h5')
     ps = [p for p in sample_ps if p in e.columns]
     means = [e[p].mean() for p in ps]
-
     if len(ps) >= 2:
         base = e[ps].values.T
         cov = np.cov(base)

@@ -10,7 +10,8 @@ from scipy.spatial import ConvexHull
 from scipy.fft import fft, fftfreq
 import statsmodels.api as sm
 
-from lib.aux.dictsNlists import AttrDict
+from lib.aux.dictsNlists import AttrDict, save_dict, flatten_list
+
 
 from lib.process.store import store_aux_dataset
 
@@ -354,10 +355,10 @@ def process_epochs(a, epochs, dt, return_idx=True):
     else:
         if epochs.shape == (2,):
             epochs = np.array([epochs, ])
-
         durs = (np.diff(epochs).flatten() + 1) * dt
         slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in epochs]
-        amps = np.array([np.trapz(a[p], dx=dt) for p in slices])
+        #slices=[p[~np.isnan(a[p])] for p in slices]
+        amps = np.array([np.trapz(a[p][~np.isnan(a[p])], dx=dt) for p in slices])
 
 
         maxs = np.array([np.max(a[p]) for p in slices])
@@ -620,39 +621,42 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
     return wvane_min, wvane_max, cast_min, cast_max
 
 
-def annotation(s, e, cc, vel_thr=None, strides_enabled=True,store=False, **kwargs):
+def annotation(s, e, cc, vel_thr=0.3,
+               strides_enabled=True,store=False, **kwargs):
     from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
-
+    from lib.process.bouts import comp_patch_metrics, comp_chunk_bearing
     fft_freqs(s, e, cc)
 
-    turn_dict = turn_annotation(s, e, cc)
-    crawl_dict = crawl_annotation(s, e, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
+    turn_dict = turn_annotation(s, e, cc, store=store)
+    crawl_dict = crawl_annotation(s, e, cc, strides_enabled=strides_enabled, vel_thr=vel_thr, store=store)
     chunk_dicts = AttrDict.from_nested_dicts({id: {**turn_dict[id], **crawl_dict[id]} for id in cc.agent_ids})
     turn_mode_annotation(e, chunk_dicts)
-    cycle_curves = compute_interference(s, e, cc, chunk_dicts=chunk_dicts)
-    keys = ['turn_dur', 'turn_amp', 'turn_vel_max', 'run_dur', 'run_dst', 'pause_dur', 'run_count']
-
-    aux_dic = {k: np.array(flatten_list([chunk_dicts[id][k] for id in cc.agent_ids])) for k in keys}
     if store :
         from lib.conf.base.par import getPar
-        turn_ps = getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
-        store_aux_dataset(s, pars=turn_ps, type='distro', file=cc.aux_dir)
-        run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l'])
-        store_aux_dataset(s, pars=run_ps, type='distro', file=cc.aux_dir)
-
         path = cc.dir_dict.chunk_dicts
         os.makedirs(path, exist_ok=True)
         save_dict(chunk_dicts, f'{path}/{cc.id}.txt', use_pickle=True)
         # save_dict(chunk_dicts, f'{cc.dir_dict.chunk_dicts}/{cc.id}.txt', use_pickle=True)
         print('Individual larva bouts saved')
+    # cycle_curves = compute_interference(s, e, cc, chunk_dicts=chunk_dicts, store=store)
+    try:
+        comp_patch_metrics(s, e, **kwargs)
+    except :
+        pass
+    for b in ['stride', 'pause', 'turn']:
+        try:
+            comp_chunk_bearing(s, cc, chunk=b, **kwargs)
+            if b == 'turn':
+                comp_chunk_bearing(s,  cc, chunk='Lturn', **kwargs)
+                comp_chunk_bearing(s, cc, chunk='Rturn', **kwargs)
+        except:
+            pass
+
 
         # path = cc.dir_dict.cycle_curves
         # os.makedirs(path, exist_ok=True)
-        save_dict(cycle_curves, cc.dir_dict.cycle_curves, use_pickle=True)
-        # save_dict(chunk_dicts, f'{cc.dir_dict.chunk_dicts}/{cc.id}.txt', use_pickle=True)
-        print('Individual mean cycle curves saved')
 
-    return chunk_dicts,aux_dic, cycle_curves
+    return chunk_dicts
     # if save_to is not None:
     #     os.makedirs(save_to, exist_ok=True)
     #     save_dict(chunk_dicts, f'{save_to}/{cc.id}.txt', use_pickle=True)
@@ -664,6 +668,7 @@ def annotation(s, e, cc, vel_thr=None, strides_enabled=True,store=False, **kwarg
     #     from lib.anal.fitting import fit_bouts
     #     bout_dic = fit_bouts(c=cc, aux_dic=aux_dic,s=s,e=e, id=cc.id)
     #     return bout_dic
+
 
 
 def fft_freqs(s, e, c):
@@ -688,7 +693,6 @@ def stride_interp(a, strides,Nbins=64) :
 
 def mean_stride_curve(a, strides,da,Nbins=64) :
     aa=stride_interp(a, strides,Nbins)
-    # da = np.array([np.trapz(a[s0:s1 + 1]) for s0, s1 in strides])
     aa_minus = aa[da < 0]
     aa_plus = aa[da > 0]
     aa_norm = np.vstack([aa_plus, -aa_minus])
@@ -703,7 +707,7 @@ def mean_stride_curve(a, strides,da,Nbins=64) :
 
 
 
-def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
+def compute_interference(s, e, c, Nbins=64, chunk_dicts=None, store=False):
     from lib.conf.base.par import getPar
     import lib.aux.naming as nam
     x = np.linspace(0, 2 * np.pi, Nbins)
@@ -785,7 +789,10 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
 
 
     c.pooled_cycle_curves = pooled_curves
-
+    if store :
+        save_dict(cycle_curves, c.dir_dict.cycle_curves, use_pickle=True)
+        # save_dict(chunk_dicts, f'{cc.dir_dict.chunk_dicts}/{cc.id}.txt', use_pickle=True)
+        print('Individual mean cycle curves saved')
     return cycle_curves
     # c.pooled_cycle_curves_plus = pooled_curves_plus
     # c.pooled_cycle_curves_minus = pooled_curves_minus
@@ -801,7 +808,7 @@ def turn_mode_annotation(e, chunk_dicts):
     e[wNh_ps] = pd.DataFrame.from_dict(wNh).T
 
 
-def turn_annotation(s, e, c):
+def turn_annotation(s, e, c, store=False):
     from lib.conf.base.par import getPar
     fov, foa = getPar(['fov', 'foa'])
 
@@ -829,27 +836,16 @@ def turn_annotation(s, e, c):
             turn_vs[Rturns[:, 1], jj, 0] = Ramps
             turn_vs[Rturns[:, 1], jj, 1] = Rdurs
             turn_vs[Rturns[:, 1], jj, 2] = Rmaxs
-        # turn_dict.Lturn = Lturns
-        # turn_dict.Rturn = Rturns
-        # turn_dict.Tslice = Tslices
-        # turn_dict.Tamp = Tamps
-
-        # GTdurs.append(Tdurs)
-        # GTamps.append(Tamps)
-        # GTmaxs.append(Tmaxs)
         turn_dict[id] = {'Lturn': Lturns, 'Rturn': Rturns, 'turn_slice': Tslices, 'turn_amp': Tamps,
                          'turn_dur': Tdurs, 'turn_vel_max': Tmaxs}
     s[turn_ps] = turn_vs.reshape([c.Nticks * c.N, len(turn_ps)])
-    # store_aux_dataset(s, pars=turn_ps, type='distro', file=c.aux_dir)
-    # pooled_turn_dict = {
-    #     'turn_dur': np.array(flatten_list(GTdurs)),
-    #     'turn_amp': np.array(flatten_list(GTamps)),
-    #     'turn_vel_max': np.array(flatten_list(GTmaxs))
-    # }
+    if store :
+        turn_ps = getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
+        store_aux_dataset(s, pars=turn_ps, type='distro', file=c.aux_dir)
     return turn_dict
 
 
-def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
+def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
     if vel_thr is None:
         vel_thr = c.vel_thr
     from lib.conf.base.par import getPar
@@ -886,12 +882,12 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
                 # print(stride_idx)
                 # print(stride_idx.shape)
                 str_fovs = np.abs(a_fov[stride_idx])
-                str_vs[jj, :] = [np.mean(stride_dsts),
-                                 np.std(stride_dsts),
-                                 np.mean(a_sv[stride_idx]),
-                                 np.mean(str_fovs),
-                                 np.std(str_fovs),
-                                 np.sum(str_chain_ls),
+                str_vs[jj, :] = [np.nanmean(stride_dsts),
+                                 np.nanstd(stride_dsts),
+                                 np.nanmean(a_sv[stride_idx]),
+                                 np.nanmean(str_fovs),
+                                 np.nanstd(str_fovs),
+                                 np.nansum(str_chain_ls),
                                  ]
             else:
                 runs = detect_runs(a_sv, dt)
@@ -959,6 +955,9 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
         e[sstr_d_mu] = e[str_d_mu] / e[l]
         e[sstr_d_std] = e[str_d_std] / e[l]
     # store_aux_dataset(s, pars=run_ps, type='distro', file=c.aux_dir)
+    if store :
+        run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l'])
+        store_aux_dataset(s, pars=run_ps, type='distro', file=c.aux_dir)
     return crawl_dict
 
 

@@ -161,19 +161,23 @@ def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
         return xmids[ii], overlaps[jj]
 
 
-def fit_bouts(c, aux_dic=None,  s=None, e=None, dataset=None,id=None, store=False):
+def fit_bouts(c, aux_dic=None,chunk_dicts=None,  s=None, e=None, dataset=None,id=None, store=False):
     from lib.model.modules.intermitter import get_EEB_poly1d
     if id is None:
         id = c.id
 
     if aux_dic is None :
-        for k in ['run_count', 'run_dur', 'pause_dur']:
-            if dataset is not None:
-                aux_dic[k]=dataset.get_par(k).values
-            elif s is not None:
-                aux_dic[k] = s[k].dropna().values
-            else :
-                aux_dic[k] = None
+        if chunk_dicts is not None :
+            from lib.aux.dictsNlists import chunk_dicts_to_aux_dict
+            aux_dic=chunk_dicts_to_aux_dict(chunk_dicts,c)
+        else :
+            for k in ['run_count', 'run_dur', 'pause_dur']:
+                if dataset is not None:
+                    aux_dic[k]=dataset.get_par(k).values
+                elif s is not None:
+                    aux_dic[k] = s[k].dropna().values
+                else :
+                    aux_dic[k] = None
 
 
     dic, best = {}, {}
@@ -183,7 +187,7 @@ def fit_bouts(c, aux_dic=None,  s=None, e=None, dataset=None,id=None, store=Fals
             k='run_count'
         discr = True if k == 'run_count' else False
         if v is not None and v.shape[0]>0 :
-            dic[k] = fit_bout_distros(v, dataset_id=id, bout=k, combine=False, discrete=discr)
+            dic[k] = fit_bout_distros(np.abs(v), dataset_id=id, bout=k, combine=False, discrete=discr)
             best[k] = dic[k]['best'][k]['best']
         else:
             dic[k] = None

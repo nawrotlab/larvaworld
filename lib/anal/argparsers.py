@@ -5,6 +5,7 @@ import numpy as np
 
 from lib.aux.colsNstr import N_colors
 from lib.aux.dictsNlists import AttrDict
+
 from lib.conf.stored.conf import kConfDict
 from lib.conf.base.dtypes import null_dict, arena, par_dict
 
@@ -73,7 +74,7 @@ class MultiParser:
         return parser
 
     def get(self, input):
-        return {k: v.get(input) for k, v in self.parsers.items()}
+        return AttrDict.from_nested_dicts({k: v.get(input) for k, v in self.parsers.items()})
 
 
 def add_exp_kwargs(parser):
@@ -395,43 +396,24 @@ def init_parser(description='', parsers=[]):
 
 
 def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
-    from lib.conf.stored.conf import expandConf, next_idx
-    exp_conf = expandConf(exp, conf_type)
+    from lib.conf.stored.conf import expandConf
+    from lib.conf.base.opt_par import SimParConf
+    try :
+        exp_conf = expandConf(exp, conf_type)
+    except :
+        exp_conf = expandConf(exp, conf_type='Exp')
     if arena is not None :
         exp_conf.env_params.arena = arena
     if d is None:
         d = {'sim_params': null_dict('sim_params')}
-    d = AttrDict.from_nested_dicts(d)
-    sim = d.sim_params
-    if sim.duration is None:
-        sim.duration = exp_conf.sim_params.duration
-    if sim.sim_ID is None:
-        sim.sim_ID = f'{exp}_{next_idx(exp, conf_type)}'
-    if sim.path is None:
-        if conf_type=='Exp':
-            sim.path = f'single_runs/{exp}'
-        elif conf_type == 'Ga':
-            sim.path = f'ga_runs/{exp}'
-        elif conf_type == 'Batch':
-            sim.path = f'batch_runs/{exp}'
-        elif conf_type == 'Eval':
-            sim.path = f'eval_runs/{exp}'
-    exp_conf.sim_params = d.sim_params
+    exp_conf.sim_params = SimParConf(exp=exp, conf_type=conf_type, **d['sim_params']).dict
     if models is not None:
         if conf_type in ['Exp', 'Eval'] :
             exp_conf = update_exp_models(exp_conf, models)
-        elif conf_type == 'Ga':
-            if type(models)==list :
-                if models[0] in kConfDict('Model') :
-                    exp_conf.ga_build_kws.base_model = models[0]
-                if len(models)>=2 :
-                    exp_conf.ga_build_kws.bestConfID = models[1]
     if N is not None:
         if conf_type == 'Exp':
             for gID, gConf in exp_conf.larva_groups.items():
                 gConf.distribution.N = N
-        elif conf_type == 'Ga':
-            exp_conf.ga_select_kws.Nagents=N
     exp_conf.update(**kwargs)
     return exp_conf
 
@@ -469,6 +451,10 @@ def update_exp_models(exp_conf, models, N=None):
     exp_conf.larva_groups = larva_groups
     return exp_conf
 
-# if __name__ == '__main__':
-#     kk=Parser('sim_params')
-#     print(kk)
+
+if __name__ == '__main__':
+    conf = update_exp_conf(exp='chemorbit', d=None, N=None, models=None, arena=None, conf_type='Eval')
+
+    print(conf.sim_params)
+
+    raise

@@ -3,6 +3,7 @@ import itertools
 import time
 
 import numpy as np
+import pandas as pd
 
 from lib.process.aux import compute_component_velocity, compute_velocity, compute_centroid, interpolate_nans
 from lib.aux.ang_aux import rotate_multiple_points, angle_dif
@@ -255,6 +256,8 @@ def comp_dispersion(s, e, c, recompute=False, dsp_starts=[0], dsp_stops=[40],sto
     point=c.point
     if dsp_starts is None or dsp_stops is None:
         return
+    dsp_starts=[int(t) for t in dsp_starts]
+    dsp_stops=[int(t) for t in dsp_stops]
 
     ids = s.index.unique('AgentID').values
     ps = []
@@ -533,7 +536,7 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
         # print(e['anemotaxis'])
 
 
-def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=None, **kwargs):
+def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=None,store=False, **kwargs):
     ids = s.index.unique(level='AgentID').values
 
     xy_pairs = nam.xy(nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(c.Ncontour))
@@ -570,6 +573,11 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=No
             for x, y in xy_pairs:
                 s.loc[(slice(None), id), x] -= p[0]
                 s.loc[(slice(None), id), y] -= p[1]
+        if store :
+            storage = pd.HDFStore(c.aux_dir)
+            storage[f'traj_aligned2{mode}'] = s
+            storage.close()
+            print(f'traj_aligned2{mode} stored')
         return s
 
 

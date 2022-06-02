@@ -81,17 +81,11 @@ def combine_pdfs(file_dir='.', save_as="final.pdf", pref=''):
     print(f'Concatenated pdfs saved as {filepath}')
 
 
-def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None,figsize=None,save_to=None,save_as=None,
+def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None,figsize=None,save_to=None,name='mpl_table',
                      header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black',show=False,adjust_kws=None,
                      bbox=[0, 0, 1, 1], header_columns=0, axs=None,fig=None,  highlighted_cells=None, highlight_color='yellow', return_table=False,
                      **kwargs):
-    # Nrows, Ncols = data.values.shape
-    # NNcols=Ncols+3
-    # NNrows=Nrows+1
-    # dw=1/(NNcols)
-    # colWidths = [dw*0.8]*Ncols
-    # print(Nrows, Ncols, colWidths)
-    # print(Nrows, Ncols)
+    from lib.anal.plot_aux import BasePlot
     def get_idx(highlighted_cells):
         d = data.values
         res = []
@@ -131,29 +125,15 @@ def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=
         highlight_idx = get_idx(highlighted_cells)
     except:
         highlight_idx = []
-    if axs is None and fig is None:
-        if figsize is None :
 
-            # figsize = (NNcols*3,NNrows)
-            # bbox = None
-            # bbox = [2*dw, 0, 1-dw, 1]
-            # figsize = (np.array(data.shape[::-1]) + np.array([2, 0])) * np.array([col_width, row_height])
-            figsize = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
-        fig, axs = plt.subplots(figsize=figsize)
-    axs.axis('off')
-    # else:
-    #     fig = fig
-
-
-    # mpl = ax.table(cellText=data.reset_index().values,
-    #          colLabels=data.reset_index().columns,
-    #          loc='center',
-    #          cellLoc='center')
-
-    mpl = axs.table(cellText=data.values, bbox=bbox, colLabels=data.columns.values,
+    P=BasePlot(name=name, save_to=save_to, show=show)
+    if figsize is None:
+        figsize = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
+    P.build(1,1,figsize = figsize, axs=axs, fig=fig)
+    ax=P.axs[0]
+    ax.axis('off')
+    mpl = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns.values,
                    rowLabels=data.index.values, **kwargs)
-
-
     mpl.auto_set_font_size(False)
     mpl.set_fontsize(font_size)
 
@@ -169,22 +149,14 @@ def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=
             cell.set_facecolor(row_colors[k[0] % len(row_colors)])
         else:
             cell.set_facecolor(row_colors[k[0] % len(row_colors)])
-    axs.set_title(title)
+    ax.set_title(title)
 
     if adjust_kws is not None :
-        fig.subplots_adjust(**adjust_kws)
-
-    if show :
-        plt.show()
-
-    if save_to is not None and save_as is not None:
-        filename=f'{save_to}/{save_as}.pdf'
-        fig.savefig(filename, dpi=300)
-    plt.close()
+        P.fig.subplots_adjust(**adjust_kws)
     if return_table:
-        return axs, fig, mpl
+        return ax, P.fig, mpl
     else :
-        return axs, fig
+        return P.get()
 
 
 def concat_files(filenames, save_as):

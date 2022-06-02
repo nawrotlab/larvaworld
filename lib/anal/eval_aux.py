@@ -14,8 +14,10 @@ from lib.aux import naming as nam, dictsNlists as dNl
 from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
 from lib.aux.colsNstr import N_colors
 from lib.aux.sim_aux import get_tank_polygon
+from lib.conf.base.dtypes import null_dict
+from lib.conf.stored.conf import expandConf
 
-from lib.process.aux import annotation, fft_freqs, suppress_stdout
+from lib.process.aux import annotation, fft_freqs, suppress_stdout, compute_interference
 from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, store_spatial
 
 from lib.conf.base.par import ParDict, getPar
@@ -242,8 +244,9 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
     comp_dispersion(ss, ee, cc,dsp_starts=dsp_starts, dsp_stops=dsp_stops)
     comp_straightness_index(ss,  ee,cc, dt,tor_durs=tor_durs)
 
-    chunk_dicts, aux_dic, solo_curves = annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
-    pooled_epochs = fit_bouts(c=cc, aux_dic=aux_dic, s=ss, e=ee, id=cc.id)
+    chunk_dicts= annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
+    cycle_curves = compute_interference(ss, ee, cc, chunk_dicts=chunk_dicts)
+    pooled_epochs = fit_bouts(c=cc, chunk_dicts=chunk_dicts, s=ss, e=ee, id=cc.id)
 
     return pooled_epochs
 
@@ -376,57 +379,79 @@ def torsNdsps(pars):
     dsp_shorts = dNl.flatten_list([[f'{ii}_max', f'{ii}_mu', f'{ii}_fin'] for ii in dsp_shorts0])
     return tor_durs, dsp_starts, dsp_stops
 
-def sim_models(mIDs,colors=None,dataset_ids=None, **kwargs):
+def sim_models(mIDs,colors=None,dataset_ids=None,data_dir=None, **kwargs):
     N=len(mIDs)
     if colors is None :
         colors=N_colors(N)
     if dataset_ids is None :
         dataset_ids=mIDs
-    ds=[sim_model(mID=mIDs[i],color=colors[i],dataset_id=dataset_ids[i], **kwargs) for i in range(N)]
+    if data_dir is None :
+        dirs=[None]*N
+    else :
+        dirs=[f'{data_dir}/{dID}' for dID in dataset_ids]
+    ds=[sim_model(mID=mIDs[i],color=colors[i],dataset_id=dataset_ids[i],dir=dirs[i], **kwargs) for i in range(N)]
     return ds
 
-def sim_model(mID=None, m=None, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs=[],env_params=None, **kwargs):
+def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs=[],dsp_starts=[0],dsp_stops=[40],env_params={},dir=None,
+              bout_annotation=True,refDataset=None,sample_ks=None,store=False, **kwargs):
     from lib.model.modules.locomotor import DefaultLocomotor
     from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf
-    from lib.process.bouts import annotate
     from lib.process.angular import angular_processing
     from lib.model.body.controller import PhysicsController
-    if m is None:
-        m = loadConf(mID, "Model")
-    Nticks = int(dur*60 / dt)
+
+
     if dataset_id is None:
         dataset_id = mID
+    if refDataset is not None :
+        refID = refDataset.refID
+        ms = refDataset.sample_modelConf(N=Nids, mID=mID, sample_ks=sample_ks)
+    else :
+        refID =None
+        m = loadConf(mID, "Model")
+        ms = [m] * Nids
 
-    controller = PhysicsController(**m.physics)
-
+    Nticks = int(dur * 60 / dt)
     ids=[f'Agent{j}' for j in range(Nids)]
-    my_index = pd.MultiIndex.from_product([np.arange(Nticks), ids], names=['Step', 'AgentID'])
 
+    larva_groups = {dataset_id: null_dict('LarvaGroup', sample=refID, model=expandConf(mID, 'Model'),
+                                   default_color=color,
+                                   distribution=null_dict('larva_distro', N=Nids))}
+
+    c = dNl.AttrDict.from_nested_dicts(
+        {'dir': dir, 'id': dataset_id,'larva_groups' : larva_groups, 'group_id': 'offline', 'dt': dt, 'fr': 1/dt, 'agent_ids': ids, 'duration': dur * 60,
+         'Npoints': 3, 'Ncontour': 0, 'point': '', 'N': Nids, 'Nticks': Nticks, 'mID': mID, 'color': color, 'env_params': env_params})
+
+
+
+
+
+
+
+
+
+    my_index = pd.MultiIndex.from_product([np.arange(Nticks), ids], names=['Step', 'AgentID'])
     e = pd.DataFrame(index=ids)
-    e['length'] = [m.body.initial_length for id in ids]
-    e['cum_dur'] = dur
+    e['cum_dur'] = dur*60
     e['num_ticks'] = Nticks
-    c = dNl.AttrDict.from_nested_dicts({'id': dataset_id,'group_id': 'offline', 'dt': dt, 'agent_ids': ids,
-                                    'Npoints': 3, 'Ncontour': 0,'point': '', 'N': Nids, 'Nticks': Nticks, 'model': m, 'color': color})
-    if env_params is not None :
-        c.env_params=env_params
+    e['length'] = [m.body.initial_length for m in ms]
 
     df_columns = getPar(['b', 'fo', 'ro', 'fov', 'Act_tur','x', 'y', 'd', 'v', 'A_tur']) + ['ang_suppression']
-
     AA = np.ones([Nticks, Nids, len(df_columns)]) * np.nan
+
+
+
+
     for j,id in enumerate(ids) :
+        m=ms[j]
+        controller = PhysicsController(**m.physics)
         l=e['length'].loc[id]
         bend_errors = 0
         DL = DefaultLocomotor(dt=dt, conf=m.brain)
         for qq in range(100):
             if random.uniform(0, 1) < 0.5:
                 DL.step(A_in=0, length=l)
-        fo=0
-        ro=0
-        x,y=0,0
-        b = 0
-        fov = 0
-        v = 0
+        b, fo, ro, fov, x, y, dst, v = 0,0,0,0,0,0,0,0
+
 
         for i in range(Nticks):
             lin, ang, feed = DL.step(A_in=0, length=l)
@@ -448,19 +473,34 @@ def sim_model(mID=None, m=None, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=
     AA=AA.reshape(Nticks*Nids, len(df_columns))
     s = pd.DataFrame(AA,index=my_index, columns=df_columns)
     s[getPar('v_in_mm')] = s[getPar('v')]*1000
+    # s['torque'] = s[getPar('Act_tur')] * controller.torque_coef
     s=s.astype(float)
+
+    if c.dir is not None :
+        from lib.stor.larva_dataset import LarvaDataset
+        d=LarvaDataset(**c, load_data=False)
+        store=True
+        d.set_data(step=s, end=e)
+        c=d.config
+    else :
+        d = dNl.AttrDict.from_nested_dicts(
+            {'id': c.id, 'group_id': c.group_id, 'step_data': s, 'endpoint_data': e, 'config': c, 'color': c.color})
+
     with suppress_stdout(False):
         comp_spatial(s, e, c, mode='minimal')
-        store_spatial(s, e, c,store=False)
-        angular_processing(s, e, c, store=False)
-        comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False)
-        comp_straightness_index(s, e=e, c=c, tor_durs=tor_durs, store=False)
-        chunk_dicts, pooled_epochs, cycle_curves  = annotate(s, e, c, store=False)
+        store_spatial(s, e, c,store=store)
+        angular_processing(s, e, c, store=store)
+        comp_dispersion(s, e, c, dsp_starts=dsp_starts, dsp_stops=dsp_stops, store=store)
+        comp_straightness_index(s, e=e, c=c, tor_durs=tor_durs, store=store)
 
-    d=dNl.AttrDict.from_nested_dicts({'id' : c.id,'group_id' : c.group_id, 'step_data' : s, 'endpoint_data' : e, 'config' : c, 'color' : c.color})
-    d.chunk_dicts = chunk_dicts
-    d.pooled_epochs = pooled_epochs
-    d.cycle_curves = cycle_curves
+
+
+    if bout_annotation:
+        from lib.process import aux
+        d.chunk_dicts = aux.annotation(s, e, c, store=store)
+        d.cycle_curves = compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts, store=store)
+        d.pooled_epochs = fit_bouts(c=c, chunk_dicts=d.chunk_dicts, s=s, e=e, id=c.id, store=store)
+
     return d
 
 
@@ -468,11 +508,13 @@ from lib.aux.dictsNlists import flatten_dict, AttrDict
 
 
 def RSS(vs0, vs):
-    er = (vs - vs0) ** 2
+    er = (vs - vs0)
 
-    r = np.abs(np.max(vs0) - np.min(vs0)) ** 2
+    r = np.abs(np.max(vs0) - np.min(vs0))
 
-    MSE = np.mean(np.sum(er / r))
+    ee=(er/r)**2
+
+    MSE = np.mean(np.sum(ee))
     return np.round(np.sqrt(MSE), 2)
 
 
@@ -507,7 +549,12 @@ def RSS_dic(dd, d):
     return stat
 
 if __name__ == '__main__':
-    d=sim_model(mID='150l_default', dur=3, dt=1 / 16,Nids=10,color='blue',tor_durs=[2,5])
+    from lib.conf.base import paths
+    dir=f"{paths.path('RUN')}/testing/the/sim_model/method"
+    d=sim_model(mID='NEU_PHI', dur=1, dt=1 / 16,Nids=2,color='blue',tor_durs=[], dir=dir)
+
+    raise
+
     s=d.step_data
     ss=s.xs(d.config.agent_ids[0], level='AgentID')
     plt.plot(ss[getPar('foa')].values)

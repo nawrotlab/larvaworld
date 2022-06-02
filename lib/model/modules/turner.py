@@ -6,10 +6,11 @@ from lib.model.modules.basic import Effector, Oscillator
 
 
 class Turner(Oscillator, Effector):
-    def __init__(self, mode='neural', activation_noise=0.0, continuous=True, rebound=False, dt=0.1,
+    def __init__(self, mode='neural', activation_noise=0.0,noise=0.0, continuous=True, rebound=False, dt=0.1,
                  **kwargs):
         self.mode = mode
         self.activation_noise = activation_noise
+        self.noise = noise
         self.continuous = continuous
         self.rebound = rebound
         self.buildup = 0
@@ -75,10 +76,10 @@ class Turner(Oscillator, Effector):
                 if self.rebound :
                     self.buildup+= aa
             a= 0.0
-        self.activity=a
-        return a
+        self.activity=a * (1 + np.random.normal(scale=self.noise))
+        return self.activity
 
-    def init_neural(self, dt, base_activation=20, activation_range=None,noise=0.0, **kwargs):
+    def init_neural(self, dt, base_activation=20, activation_range=None, **kwargs):
         Effector.__init__(self, dt=dt)
         if activation_range is None:
             activation_range = [10, 40]
@@ -95,22 +96,22 @@ class Turner(Oscillator, Effector):
         # Multiplicative noise
         # activity += np.random.normal(scale=np.abs(activity * self.noise))
         # Additive noise based on mean activity=14.245 the mean output of the oscillator at baseline activation=20
-        self.noise = np.abs(14.245 * noise)
+        # self.noise = np.abs(14.245 * noise)
 
-    def init_sinusoidal(self, dt, amp_range=[0.5, 2.0], initial_amp=1.0, initial_freq=0.3, freq_range=[0.1, 1.0],noise=0.0,
+    def init_sinusoidal(self, dt, amp_range=[0.5, 2.0], initial_amp=1.0, initial_freq=0.3, freq_range=[0.1, 1.0],
                         **kwargs):
         Oscillator.__init__(self, initial_freq=initial_freq, freq_range=freq_range, dt=dt)
         self.initial_amp = initial_amp
         self.amp = initial_amp
         self.amp_range = amp_range
-        self.noise = np.abs(self.initial_amp * noise)
+        # self.noise = np.abs(self.initial_amp * noise)
 
-    def init_constant(self, dt, amp_range=[0.5, 2.0], initial_amp=1.0,noise=0.0, **kwargs):
+    def init_constant(self, dt, amp_range=[0.5, 2.0], initial_amp=1.0, **kwargs):
         Effector.__init__(self, dt=dt)
         self.initial_amp = initial_amp
         self.amp = initial_amp
         self.amp_range = amp_range
-        self.noise = np.abs(self.initial_amp * noise)
+        # self.noise = np.abs(self.initial_amp * noise)
 
 
 class NeuralOscillator:

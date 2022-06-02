@@ -323,8 +323,8 @@ def split_dataset(step,end, food, larva_groups,dir, id,plot_dir,  show_output=Fa
     agent_ids = end.index.values
     ds = []
     for gID, gConf in larva_groups.items():
-        new_dir=f'{dir}/{id}.{gID}'
-        valid_ids = [id for id in agent_ids if str.startswith(id, gID)]
+        new_dir=f'{dir}/{gID}'
+        valid_ids = [id for id in agent_ids if str.startswith(id, f'{gID}_')]
         d = LarvaDataset(new_dir, id=gID, larva_groups={gID: gConf}, load_data=False, **kwargs)
         d.set_data(step=step.loc[(slice(None), valid_ids), :], end=end.loc[valid_ids], food=food)
         d.config.parent_plot_dir = plot_dir

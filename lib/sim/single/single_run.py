@@ -33,6 +33,7 @@ class SingleRun:
         self.storage_path = f'{sim_params["path"]}/{self.id}'
         self.dir_path = f'{save_to}/{self.storage_path}'
         self.plot_dir = f'{self.dir_path}/plots'
+        self.data_dir = f'{self.dir_path}/data'
         self.param_dict = locals()
         self.start = time.time()
         self.source_xy = get_source_xy(env_params['food_params'])
@@ -106,7 +107,7 @@ class SingleRun:
 
         ds = split_dataset(step, end, food, env_params=self.env.env_pars, larva_groups=self.env.larva_groups,
                            source_xy=self.source_xy,
-                           fr=1 / self.env.dt, dir=self.dir_path, id=self.id, plot_dir=self.plot_dir, show_output=self.show_output)
+                           fr=1 / self.env.dt, dir=self.data_dir, id=self.id, plot_dir=self.plot_dir, show_output=self.show_output)
         for d in ds:
             if self.show_output :
                 print()

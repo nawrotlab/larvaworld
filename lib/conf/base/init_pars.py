@@ -451,20 +451,21 @@ def init_pars():
         }
 
     d['neural_turner'] = {
-        'base_activation': {'v': 22.78, 'min': 10.0, 'max': 40.0, 'dv': 0.1, 'disp': 'mean', 'combo': 'activation',
+        'base_activation': {'v': 20.0, 'min': 10.0, 'max': 40.0, 'dv': 0.1, 'disp': 'mean', 'combo': 'activation',
                             'label': 'tonic input', 'symbol': '$I_{T}^{0}$', 'u': '-',
                             'h': 'The baseline activation/input of the TURNER module.'},
         'activation_range': {'t': Tuple[float], 'v': (10.0, 40.0), 'max': 100.0, 'dv': 0.1, 'disp': 'range',
                              'label': 'input range', 'symbol': '$[I_{T}^{min},I_{T}^{max}]$', 'u': '-',
                              'combo': 'activation', 'h': 'The activation/input range of the TURNER module.'},
-        'n': {'v': 2.46, 'min': 1.5, 'max': 3.0, 'dv': 0.01, 'label': 'spike response steepness', 'symbol': '$n_{T}$',
-              'u': '-',
-              'h': 'The neuron spike-rate response steepness coefficient.'},
-        'tau': {'v': 0.08, 'min': 0.05, 'max': 0.5, 'dv': 0.01, 'label': 'time constant', 'symbol': '$tau_{T}$',
+
+        'tau': {'v': 0.1, 'min': 0.05, 'max': 0.5, 'dv': 0.01, 'label': 'time constant', 'symbol': r'$\tau_{T}$',
                 'u': 'sec',
                 'h': 'The time constant of the neural oscillator.'},
         'm': {'v': 100, 'min': 50, 'max': 200, 'label': 'maximum spike-rate', 'symbol': '$SR_{max}$', 'u': '-',
-              'h': 'The maximum allowed spike rate.'}
+              'h': 'The maximum allowed spike rate.'},
+        'n': {'v': 2.0, 'min': 1.5, 'max': 3.0, 'dv': 0.01, 'label': 'spike response steepness', 'symbol': '$n_{T}$',
+              'u': '-',
+              'h': 'The neuron spike-rate response steepness coefficient.'}
 
     }
 
@@ -698,7 +699,7 @@ def init_pars():
         'Box2D_params': d['Box2D_params'],
     }
     d['ang_definition'] = {
-        'bend': {'t': str, 'v': 'from_angles', 'vs': ['from_angles', 'from_vectors'],
+        'bend': {'t': str, 'v': 'from_vectors', 'vs': ['from_angles', 'from_vectors'],
                  'h': 'Whether bending angle is computed as a sum of sequential segmental angles or as the angle between front and rear body vectors.'},
         'front_vector': {'t': Tuple[int], 'v': (1, 2), 'min': -12, 'max': 12,
                          'h': 'The initial & final segment of the front body vector.'},
@@ -718,13 +719,13 @@ def init_pars():
         'angular': d['ang_definition'],
         'spatial': d['spatial_definition'],
         'dispersion': {
-            'dsp_starts': {'t': List[float], 'v': [0.0], 'max': 200.0, 'dv': 1.0, 'disp': 'starts',
+            'dsp_starts': {'t': List[int], 'v': [0], 'max': 200, 'dv': 1, 'disp': 'starts',
                            'h': 'The timepoints to start calculating dispersion in seconds.'},
-            'dsp_stops': {'t': List[float], 'v': [40.0], 'max': 200.0, 'dv': 1.0, 'disp': 'stops',
+            'dsp_stops': {'t': List[int], 'v': [40], 'max': 200, 'dv': 1, 'disp': 'stops',
                           'h': 'The timepoints to stop calculating dispersion in seconds.'},
         },
         'tortuosity': {
-            'tor_durs': {'t': List[int], 'v': [5, 10, 20], 'max': 100, 'dv': 1, 'disp': 't (sec)',
+            'tor_durs': {'t': List[int], 'v': [5, 10], 'max': 100, 'dv': 1, 'disp': 't (sec)',
                          'h': 'The time windows to use when calculating tortuosity in seconds.'}
         },
         'stride': {
@@ -735,11 +736,11 @@ def init_pars():
             'vel_threshold': {'v': 0.3, 'max': 1.0, 'disp': 'vel_thr',
                               'h': 'The velocity threshold to be reached in every stride cycle.'},
         },
-        'pause': {
-            'stride_non_overlap': {**bT, 'disp': 'excl. strides',
-                                   'h': 'Whether pause bouts are required not to overlap with strides.'},
-            'min_dur': {'v': 0.4, 'max': 2.0, 'h': 'The minimum duration for detecting a pause, in seconds.'},
-        },
+        # 'pause': {
+        #     'stride_non_overlap': {**bT, 'disp': 'excl. strides',
+        #                            'h': 'Whether pause bouts are required not to overlap with strides.'},
+        #     'min_dur': {'v': 0.4, 'max': 2.0, 'h': 'The minimum duration for detecting a pause, in seconds.'},
+        # },
         'turn': {
             'min_ang': {'v': 30.0, 'max': 180.0, 'dv': 1.0,
                         'h': 'The minimum orientation angle change required to detect a turn.'},
@@ -928,28 +929,28 @@ def init_pars():
     }
 
     d['ga_select_kws'] = {
-        'Nagents': {'t': int, 'v': 30, 'min': 2, 'max': 1000, 'h': 'Number of agents per generation'},
-        'Nelits': {'t': int, 'v': 3, 'min': 0, 'max': 1000, 'h': 'Number of elite agents preserved per generation'},
-        'Ngenerations': {'t': int, 'max': 1000, 'h': 'Number of generations to run'},
+        'Nagents': {'t': int, 'v': 30, 'min': 2, 'max': 1000, 'h': 'Number of agents per generation', 's': 'N'},
+        'Nelits': {'t': int, 'v': 3, 'min': 0, 'max': 1000, 'h': 'Number of elite agents preserved per generation', 's': 'Nel'},
+        'Ngenerations': {'t': int, 'max': 1000, 'h': 'Number of generations to run', 's': 'Ngen'},
         # 'max_Nticks': {'t': int, 'max': 100000, 'h': 'Maximum number of ticks per generation'},
         # 'max_dur': {'v': 3, 'max': 100, 'h': 'Maximum duration per generation in minutes'},
-        'Pmutation': {'v': 0.3, 'max': 1.0, 'h': 'Probability of genome mutation'},
-        'Cmutation': {'v': 0.1, 'max': 1.0, 'h': 'Mutation coefficient'},
-        'selection_ratio': {'v': 0.3, 'max': 1.0, 'h': 'Fraction of agents to be selected for the next generation'},
-        'verbose': {'t': int, 'v': 0, 'max': 3, 'h': 'Verbose argument for GA launcher'}
+        'Pmutation': {'v': 0.3, 'max': 1.0, 'h': 'Probability of genome mutation', 's': 'Pmut'},
+        'Cmutation': {'v': 0.1, 'max': 1.0, 'h': 'Mutation coefficient', 's': 'Cmut'},
+        'selection_ratio': {'v': 0.3, 'max': 1.0, 'h': 'Fraction of agents to be selected for the next generation', 's': 'Rsel'},
+        'verbose': {'t': int, 'v': 0, 'max': 3, 'h': 'Verbose argument for GA launcher', 's': 'verb'}
     }
 
     d['ga_build_kws'] = {
         'space_dict': {'t': dict, 'h': 'The parameter state space'},
         'robot_class': {'t': type, 'h': 'The agent class to use in the simulations'},
         'base_model': {'t': str, 'v': 'navigator', 'vs': kConfDict('Model'),
-                       'h': 'The model configuration to optimize'},
-        'bestConfID': {'t': str, 'h': 'The model configuration ID to store the best genome'},
+                       'h': 'The model configuration to optimize', 's': 'mID0'},
+        'bestConfID': {'t': str, 'h': 'The model configuration ID to store the best genome', 's': 'mID1'},
         'init_mode': {'t': str, 'v': 'random', 'vs': ['default', 'random', 'model'],
-                      'h': 'The initialization mode for the first generation'},
-        'multicore': {'t': bool, 'v': False, 'h': 'Whether to use multiple cores'},
+                      'h': 'The initialization mode for the first generation', 's': 'mGA'},
+        'multicore': {'t': bool, 'v': False, 'h': 'Whether to use multiple cores', 's': 'multicore'},
         'fitness_target_refID': {'t': str, 'vs': kConfDict('Ref'),
-                                 'h': 'The ID of the reference dataset for comparison'},
+                                 'h': 'The ID of the reference dataset for comparison', 's': 'refID'},
         'fitness_target_kws': {'t': dict, 'v': {},
                                'h': 'The target data to derive from the reference dataset for evaluation'},
         'fitness_func': {'t': FunctionType, 'h': 'The method for fitness evaluation'},
@@ -969,8 +970,8 @@ def init_pars():
         # 'dt': {'v': 0.1, 'h': 'The simulation timestep'},
         'caption': {'t': str, 'h': 'The screen caption'},
         'save_to': {'t': str, 'h': 'The directory to save data and plots'},
-        'show_screen': {'t': bool, 'v': True, 'h': 'Whether to render the screen visualization'},
-        'offline': {'t': bool, 'v': False, 'h': 'Whether to run a full LarvaworldSim environment'},
+        'show_screen': {'t': bool, 'v': True, 'h': 'Whether to render the screen visualization', 's' : 'hide'},
+        'offline': {'t': bool, 'v': False, 'h': 'Whether to run a full LarvaworldSim environment', 's': 'offline'},
         'ga_build_kws': d['ga_build_kws'],
         'ga_select_kws': d['ga_select_kws'],
         # 'ga_kws': {**d['GAbuilder'], **d['GAselector']},
@@ -983,6 +984,20 @@ def init_pars():
         'sensor_max_distance': {'v': 0.9, 'dv': 0.01, 'min': 0.1, 'max': 1.5, 'h': 'Sensor max_distance'},
         'motor_ctrl_coefficient': {'t': int, 'v': 8770, 'max': 10000, 'h': 'Motor ctrl_coefficient'},
         'motor_ctrl_min_actuator_value': {'t': int, 'v': 35, 'min': 0, 'max': 50, 'h': 'Motor ctrl_min_actuator_value'},
+    }
+
+    d['eval_conf'] = {
+        'refID': {'t': str, 'v' : 'None.150controls', 'vs': kConfDict('Ref'),
+                                 'h': 'The ID of the reference dataset for comparison', 's': 'refID'},
+        'modelIDs': {'t': List[str], 'vs': kConfDict('Model'),
+                       'h': 'The model configurations to evaluate', 's': 'mIDs'},
+        'dataset_ids': {'t': List[str],
+                     'h': 'The ids for the generated datasets', 's': 'dIDs'},
+        'offline': {'t': bool, 'v': False, 'h': 'Whether to run a full LarvaworldSim environment', 's': 'offline'},
+        'N': {'t': int, 'v': 5, 'min': 2, 'max': 1000, 'h': 'Number of agents per model ID', 's': 'N'},
+        'id': {'t': str, 'h': 'The id of the evaluation run', 's': 'id'}
+
+
     }
 
     return d

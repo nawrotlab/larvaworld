@@ -36,7 +36,7 @@ class PhysicsController :
             if lin!=0:
                 lin_vel = lin * self.lin_vel_coef
             else :
-                lin_vel = prev_lin_vel*(1-self.lin_damping*dt)
+                lin_vel = 0# prev_lin_vel*(1-self.lin_damping*dt)
         else:
             raise ValueError(f'Linear mode {self.lin_mode} not implemented for non-physics simulation')
         if self.ang_mode == 'torque':

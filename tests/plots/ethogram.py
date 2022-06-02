@@ -2,7 +2,6 @@ from lib.anal.plotting import plot_ethogram, timeplot, plot_2pars, plot_stridesN
 from lib.conf.stored.conf import loadRef, kConfDict
 
 # print(kConfDict('Ref'))
-from lib.process.bouts import detect_strides, annotate
 refID='Puff.Starved'
 d=loadRef(refID)
 # d.load()

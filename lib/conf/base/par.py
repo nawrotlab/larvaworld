@@ -8,14 +8,13 @@ from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from scipy.spatial.distance import euclidean
 
-from lib.aux.ang_aux import angle_to_x_axis, angle_dif
-from lib.aux.dictsNlists import flatten_list, save_dict, load_dicts, unique_list, AttrDict
+
 
 from lib.aux import naming as nam
-
 from lib.conf.base import paths
 from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledcirc, circledast, odot, paren, brack, dot_th, ddot_th, omega
-
+from lib.aux.ang_aux import angle_to_x_axis, angle_dif
+from lib.aux.dictsNlists import flatten_list, save_dict, load_dicts, unique_list, AttrDict
 
 
 
@@ -194,7 +193,6 @@ class Parameter:
                  d=None, lab=None, exists=True, func=None, const=None, par_dict=None, fraction=False,
                  operator=None, k0=None, k_num=None, k_den=None, dst2source=None, or2source=None, dispersion=False,
                  wrap_mode=None,l=None, unit=None, symbol=None, codename=None,):
-        # print(p,k)
         self.codename = codename
         self.wrap_mode = wrap_mode
         self.fraction = fraction
@@ -423,7 +421,7 @@ class ParDict:
     def add_diff(self, k0):
         b = self.dict[k0]
         self.add(p=f'D_{b.p}', k=f'D_{k0}', u=b.u, d=f'{b.d} change', s=Delta(b.s), exists=False,
-                 operator='diff', k0=k0)
+                 operator='diff', k0=k0, symbol=b.symbol)
 
     def add_cum(self, k0, d=None, p=None, s=None, k=None, lab=None):
         b = self.dict[k0]
@@ -439,7 +437,7 @@ class ParDict:
         if lab is None:
             if b.lab is not None :
                 lab = f'total {b.lab}'
-        self.add(p=p, k=k, u=b.u, d=d, s=s, exists=False, operator='cum', k0=k0, lab=lab)
+        self.add(p=p, k=k, u=b.u, d=d, s=s, exists=False, operator='cum', k0=k0, lab=lab, symbol=b.symbol)
 
     def add_mean(self, k0, d=None, s=None, lab=None):
         b = self.dict[k0]
@@ -450,7 +448,7 @@ class ParDict:
         if lab is None:
             if b.lab is not None :
                 lab = f'mean {b.lab}'
-        self.add(p=nam.mean(b.p), k=f'{b.k}_mu', u=b.u, d=d, s=s, lab=lab, exists=False, operator='mean', k0=k0)
+        self.add(p=nam.mean(b.p), k=f'{b.k}_mu', u=b.u, d=d, s=s, lab=lab, exists=False, operator='mean', k0=k0, symbol=b.symbol)
 
     def add_std(self, k0, d=None, s=None, lab=None):
         b = self.dict[k0]
@@ -465,7 +463,7 @@ class ParDict:
             else :
                 lab1 = None
                 lab2 = None
-        self.add(p=nam.std(b.p), k=f'{b.k}_std', u=b.u, d=d, s=s, lab=lab1, exists=False, operator='std', k0=k0)
+        self.add(p=nam.std(b.p), k=f'{b.k}_std', u=b.u, d=d, s=s, lab=lab1, exists=False, operator='std', k0=k0, symbol=b.symbol)
         self.add(p=nam.var(b.p), k=f'{b.k}_var', u=None, d=nam.var(b.d), s=s, lab=lab2, exists=False, operator='var', k0=k0)
 
     def add_min(self, k0, d=None, s=None, lab=None):
@@ -477,7 +475,7 @@ class ParDict:
         if lab is None:
             if b.lab is not None :
                 lab = f'minimum {b.lab}'
-        self.add(p=nam.min(b.p), k=f'{b.k}_min', u=b.u, d=d, s=s, exists=False, operator='min', k0=k0, lab=lab)
+        self.add(p=nam.min(b.p), k=f'{b.k}_min', u=b.u, d=d, s=s, exists=False, operator='min', k0=k0, lab=lab, symbol=b.symbol)
 
     def add_max(self, k0, d=None, s=None, lab=None):
         b = self.dict[k0]
@@ -488,7 +486,7 @@ class ParDict:
         if lab is None:
             if b.lab is not None :
                 lab = f'maximum {b.lab}'
-        self.add(p=nam.max(b.p), k=f'{b.k}_max', u=b.u, d=d, s=s, exists=False, operator='max', k0=k0, lab=lab)
+        self.add(p=nam.max(b.p), k=f'{b.k}_max', u=b.u, d=d, s=s, exists=False, operator='max', k0=k0, lab=lab, symbol=b.symbol)
 
     def add_fin(self, k0, d=None, s=None, lab=None):
         b = self.dict[k0]
@@ -499,7 +497,7 @@ class ParDict:
         if lab is None:
             if b.lab is not None :
                 lab = f'final {b.lab}'
-        self.add(p=nam.final(b.p), k=f'{b.k}_fin', u=b.u, d=d, s=s, exists=False, operator='final', k0=k0, lab=lab)
+        self.add(p=nam.final(b.p), k=f'{b.k}_fin', u=b.u, d=d, s=s, exists=False, operator='final', k0=k0, lab=lab, symbol=b.symbol)
 
     def add_freq(self, k0, d=None, lab=None):
         b = self.dict[k0]
@@ -634,11 +632,11 @@ class ParDict:
 
     def build_constants(self, object=None):
         dic={}
-        self.add(dic=dic,p='x0', k='x0', u=1 * siu.m, d='initial x position', s=sub('x', 0), lab='initial x position')
-        self.add(dic=dic,p='y0', k='y0', u=1 * siu.m, d='initial y position', s=sub('y', 0), lab='initial y position')
-        self.add(dic=dic,p='model.dt', k='dt', u=1 * siu.s, d='timestep', s='$dt$', lab='timestep')
-        self.add(dic=dic,p='real_length', k='l', u=1 * siu.m, d='length', s='$l$', lab='body length')
-        self.add(dic=dic,p='real_length_in_mm', k='l_in_mm', u=1 * siu.mm, d='length_in_mm', s='$l$', lab='body length')
+        self.add(dic=dic,p='x0', k='x0', u=1 * siu.m, d='initial x position', s=sub('x', 0), lab='initial x position', symbol=f'x (m)')
+        self.add(dic=dic,p='y0', k='y0', u=1 * siu.m, d='initial y position', s=sub('y', 0), lab='initial y position', symbol=f'y (m)')
+        self.add(dic=dic,p='model.dt', k='dt', u=1 * siu.s, d='timestep', s='$dt$', lab='timestep', symbol=f'timestep (sec)')
+        self.add(dic=dic,p='real_length', k='l', u=1 * siu.m, d='length', s='$l$', lab='body length', symbol=f'length (m)')
+        self.add(dic=dic,p='real_length_in_mm', k='l_in_mm', u=1 * siu.mm, d='length_in_mm', s='$l$', lab='body length', symbol=f'length (mm)')
         if object is not None :
             for k, p in dic.items():
                 p.const = p.get_from(object, u=False, tick=None, df=None)
@@ -739,12 +737,12 @@ class ParDict:
         a = nam.acc('')
         a_in_mm = f'{a}_in_mm'
         sv, sa = nam.scal([v, a])
-        self.add_rate(k_num='d', k_den='dt', k='v', p=v, d=v, s='v', lim=(-0.0005,0.005), lab='velocity')
-        self.add_rate(k_num='d_in_mm', k_den='dt', k='v_in_mm', p=v_in_mm, d=v_in_mm, s='v', lim=(-0.5,5.0), lab='velocity')
-        self.add_rate(k_num='v', k_den='dt', k='a', p=a, d=a, s='a', lim=(-0.05,0.05), lab='acceleration')
-        self.add_rate(k_num='v_in_mm', k_den='dt', k='a_in_mm', p=a_in_mm, d=a_in_mm, s='a', lim=(-5.0,5.0), lab='acceleration')
-        self.add_rate(k_num='sd', k_den='dt', k='sv', p=sv, d=sv, s=paren('v'), lim=(-0.05,1.5), lab='scaled velocity')
-        self.add_rate(k_num='sv', k_den='dt', k='sa', p=sa, d=sa, s=paren('a'), lim=(-7.0,7.0), lab='scaled acceleration')
+        self.add_rate(k_num='d', k_den='dt', k='v', p=v, d=v, s='v', lim=(-0.0005,0.005), lab='velocity',symbol=r'v ($\frac{m}{sec}$)')
+        self.add_rate(k_num='d_in_mm', k_den='dt', k='v_in_mm', p=v_in_mm, d=v_in_mm, s='v', lim=(-0.5,5.0), lab='velocity',symbol=r'v ($\frac{mm}{sec}$)')
+        self.add_rate(k_num='v', k_den='dt', k='a', p=a, d=a, s='a', lim=(-0.05,0.05), lab='acceleration',symbol=r'a ($\frac{m}{sec^{2}}$)')
+        self.add_rate(k_num='v_in_mm', k_den='dt', k='a_in_mm', p=a_in_mm, d=a_in_mm, s='a', lim=(-5.0,5.0), lab='acceleration',symbol=r'a ($\frac{mm}{sec^{2}}$)')
+        self.add_rate(k_num='sd', k_den='dt', k='sv', p=sv, d=sv, s=r'$\mathring{v}$', lim=(-0.05,1.5), lab='scaled velocity',symbol=r'$\mathring{v}$ ($sec^{-1}$)')
+        self.add_rate(k_num='sv', k_den='dt', k='sa', p=sa, d=sa, s=r'$\mathring{a}$', lim=(-7.0,7.0), lab='scaled acceleration',symbol=r'$\mathring{a}$ ($sec^{-2}$)')
 
         for i in [(0, 40), (0,60), (0, 80), (20, 80),(0,120),(0,240), (0,300),(0,600), (60,120), (60,240), (60,300), (60,600)]:
             self.add_dsp(range=i)
@@ -771,6 +769,9 @@ class ParDict:
         self.add(p='anemotaxis', k='anemotaxis', u=1 * siu.m, d='anemotaxis', s='anemotaxis')
 
     def build_angular(self):
+        deg_s=r'\frac{deg}{sec}}'
+        deg_s2=r'\frac{deg}{sec^{2}}'
+
         self.add(p=nam.bearing2('center'), k='o_cent', u=1 * siu.deg, d=nam.bearing2('center'),
                  s=odot(th('or')), exists=False, or2source=(0, 0), wrap_mode='zero', lim=(-180.0,180.0))
         self.add(p=nam.bearing2('source'), k='o_chem', u=1 * siu.deg, d=nam.bearing2('source'),
@@ -778,11 +779,12 @@ class ParDict:
         self.add(p=nam.bearing2('wind'), k='o_wind', u=1 * siu.deg, d=nam.bearing2('wind'),
                  s=th('wind'), exists=False, wrap_mode='zero', lim=(-180.0, 180.0))
 
-        self.add(p='bend', k='b', u=1 * siu.deg, d='bend', s=th('b'), wrap_mode='zero', lab = 'bending angle')
+        self.add(p='torque', k='torque', u=1 * siu.deg*siu.s**-2, d='torque', s='Torque',  lab = 'torque', symbol=r'Torque ($\frac{deg}{sec^{2}}$)')
+        self.add(p='bend', k='b', u=1 * siu.deg, d='bend', s=th('b'), wrap_mode='zero', lab = 'bending angle', symbol=f'{th("b")} ($deg$)')
         self.add_diff(k0='b')
-        self.add_rate(k0='b', k_den='dt', k='bv', d=nam.vel('bend'),s=omega('b'), lab = 'bending angular velocity')
+        self.add_rate(k0='b', k_den='dt', k='bv', d=nam.vel('bend'),s=omega('b'), lab = 'bending angular velocity', symbol=r'$\omega_{b} (\frac{deg}{sec})$')
         self.add_diff(k0='bv')
-        self.add_rate(k0='bv', k_den='dt', k='ba', d=nam.acc('bend'), lab = 'bending angular acceleration')
+        self.add_rate(k0='bv', k_den='dt', k='ba', d=nam.acc('bend'), lab = 'bending angular acceleration', symbol=r'$\dot{\omega}_{b} (\frac{deg}{sec^{2}})$')
         for kk0 in ['b', 'bv', 'ba']:
             self.add_mean(k0=kk0)
             self.add_std(k0=kk0)
@@ -799,16 +801,22 @@ class ParDict:
             lab = f'{ii1} orientation'
             lab_v = f'{ii1} angular velocity' if ii1!='front' else 'angular velocity'
             lab_a = f'{ii1} angular acceleration' if ii1!='front' else 'angular acceleration'
+
+
             pp=f'{p}_unwrapped'
             s=sub('or',ii2)
+            sym=f'{th(s)} ($deg$)'
+            sym_v = th(s)+r'($\frac{deg}{sec}}$)' if ii1!='front' else r'$\omega$ ($\frac{deg}{sec}}$)'
+            sym_a = dot(th(s))+r'($\frac{deg}{sec}}$)' if ii1!='front' else r'$\dot{\omega}$ ($\frac{deg}{sec^{2}}$)'
+
             d = nam.orient(ii1)
             dd = nam.unwrap(d)
-            self.add(p=p, k=k, u=1 * siu.deg, d=d, s=th(s),wrap_mode='positive', lab=lab)
-            self.add(p=pp, k=kk, u=1 * siu.deg,d=dd,s=th(s), wrap_mode=None, lab=lab)
+            self.add(p=p, k=k, u=1 * siu.deg, d=d, s=th(s),wrap_mode='positive', lab=lab, symbol=sym)
+            self.add(p=pp, k=kk, u=1 * siu.deg,d=dd,s=th(s), wrap_mode=None, lab=lab, symbol=sym)
             self.add_diff(k0=kk)
-            self.add_rate(k0=kk, k_den='dt', k=kv, d=nam.vel(d),s=omega(ii2), lab=lab_v)
+            self.add_rate(k0=kk, k_den='dt', k=kv, d=nam.vel(d),s=omega(ii2), lab=lab_v, symbol=sym_v)
             self.add_diff(k0=kv)
-            self.add_rate(k0=kv, k_den='dt', k=ka, d=nam.acc(d), lab=lab_a)
+            self.add_rate(k0=kv, k_den='dt', k=ka, d=nam.acc(d), lab=lab_a, symbol=sym_a)
             for kk0 in [kv,ka] :
                 self.add_mean(k0=kk0)
                 self.add_std(k0=kk0)
@@ -827,8 +835,9 @@ class ParDict:
                  lab='Fraction of time spent inside patches', lim=(0.0,1.0))
         self.add(p='scaled_amount_eaten', k='sf_am',  d='ingested_food_volume_ratio', s=sub('[V]', 'in'))
         self.add(p='lin_activity', k='Act_cr',  d='crawler output', s=sub('A', 'crawl'))
-        self.add(p='ang_activity', k='Act_tur',  d='turner output', s=subsup('A', 'tur', 'out'), lim=(-20, 20))
-        self.add(p='brain.turner.activation', k='A_tur',  d='turner input', s=subsup('A', 'tur', 'in'), lim=(10, 40))
+        self.add(p='brain.locomotor.turner.activity', k='Act_tur',  d='turner output', s=sub('A', 'T'), lim=(-20, 20), lab='turner output', symbol=f"{sub('A', 'T')} (-)")
+        self.add(p='brain.locomotor.turner.activation', k='A_tur',  d='turner input', s=sub('I', 'T'), lim=(10, 40), lab='turner input', symbol=f"{sub('I', 'T')} (-)")
+        self.add(p='brain.locomotor.cur_ang_suppression', k='c_CT',  d='ang_suppression', s=sub('c', 'CT'), lim=(0, 1), lab='angular suppression', symbol=f"{sub('c', 'CT')} (-)")
         self.add(p='brain.olfactory_activation', k='A_olf',  d='olfactory activation', s=sub('A', 'olf'), lim=(-1, 1))
         self.add(p='brain.touch_activation', k='A_touch',  d='tactile activation', s=sub('A', 'touch'), lim=(-1, 1))
         self.add(p='brain.wind_activation', k='A_wind',  d='wind activation', s=sub('A', 'wind'))
@@ -1078,6 +1087,8 @@ if __name__ == '__main__':
     # dic = ParDict(mode='load').dict
     # print([dic[k] for k in ['l']])
     #
+    # print(getPar('fov', to_return=['d', 'u', 'l', 's', 'symbol', 'lab']))
+    #
     # raise
     # print(dic.keys())
 
@@ -1087,13 +1098,13 @@ if __name__ == '__main__':
     # aaa=getPar(['run_t', 'pau_tr'], to_return=['d','l'])
 
     # print(aaa)
-    d=ParDict(mode='build').dict
-    raise
+    # d=ParDict(mode='build').dict
+    # raise
     # print(us)
     # # d = ParDict(mode='reconstruct').dict
     # print(d.keys())
     # raise
-    for short in ['to', 'tou','tov', 'toa']:
+    for short in ['fsv']:
 
         p = getPar(short)
         print(p)

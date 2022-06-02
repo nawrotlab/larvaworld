@@ -65,6 +65,11 @@ def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None
         }
         if t == bool:
             d['action'] = 'store_true' if not v else 'store_false'
+        elif t == List[str]:
+            d['type'] = str
+            d['nargs'] = '+'
+            if vs is not None:
+                d['choices'] = vs
         else:
             d['type'] = t
             if vs is not None:
@@ -100,6 +105,20 @@ def ga_dict(name=None, suf='', excluded=None, only=None):
             kws['min'], kws['max'] = np.min(vs['values']), np.max(vs['values'])
         d[k0] = kws
     return AttrDict.from_nested_dicts(d)
+
+def interference_ga_dict(mID, suf='brain.interference_params.') :
+    from lib.conf.stored.conf import loadConf
+    m = loadConf(mID, 'Model')
+    IFmod = m.brain.interference_params.mode
+
+    if IFmod == 'phasic':
+        only = ['attenuation', 'attenuation_max', 'max_attenuation_phase']
+
+    elif IFmod == 'square':
+        only = ['attenuation', 'attenuation_max', 'crawler_phi_range']
+
+    space_dict = ga_dict(name='interference', suf=suf, only=only)
+    return space_dict
 
 
 def par_dict(name=None, d0=None, **kwargs):
@@ -241,7 +260,7 @@ null_Box2D_params = {
 }
 
 
-def null_dict(n, key='initial_value', **kwargs):
+def null_dict(name, key='initial_value', **kwargs):
     def v0(d):
         null = {}
         for k, v in d.items():
@@ -251,9 +270,9 @@ def null_dict(n, key='initial_value', **kwargs):
                 null[k] = v0(v['content'])
         return null
 
-    dic = par_dict(n)
+    dic = par_dict(name)
     dic2 = v0(dic)
-    if n not in ['visualization', 'enrichment']:
+    if name not in ['visualization', 'enrichment']:
         dic2.update(kwargs)
         return AttrDict.from_nested_dicts(dic2)
     else:

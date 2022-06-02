@@ -11,12 +11,14 @@ from scipy.stats import stats
 
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
+
 from lib.anal.plot_aux import modelConfTable
 from lib.calibration.model_fit import adapt_crawler, adapt_intermitter, adapt_interference, adapt_turner
 
 from lib.conf.base.dtypes import null_dict
 # from lib.conf.stored.conf import copyConf
 from lib.conf.base.par import getPar
+from lib.process.aux import compute_interference
 
 from lib.process.calibration import comp_stride_variation, comp_segmentation
 
@@ -97,12 +99,12 @@ class LarvaDataset:
                       'color': color,
                       'metric_definition': {
                           'spatial': {
-                              'hardcoded' : metric_definition['spatial'],
-                              'fitted' : None,
+                              'hardcoded': metric_definition['spatial'],
+                              'fitted': None,
                           },
                           'angular': {
-                              'hardcoded' : metric_definition['angular'],
-                              'fitted' : None
+                              'hardcoded': metric_definition['angular'],
+                              'fitted': None
                           }
                       },
                       # **metric_definition['spatial'],
@@ -352,7 +354,7 @@ class LarvaDataset:
             try:
                 df = self.step_data[nam.xy(self.point)[0]].values.flatten()
                 valid = np.count_nonzero(~np.isnan(df))
-                self.config.duration = np.round(valid / df.shape[0], 2)
+                self.config.quality = np.round(valid / df.shape[0], 2)
             except:
                 pass
 
@@ -435,7 +437,9 @@ class LarvaDataset:
         dic['chunk_p'] = chunk_p = [p for p in ['stride_stop', 'stride_id', 'pause_id', 'feed_id'] if p in s0.columns]
         dic['ang_p'] = ang_p = ['bend'] if 'bend' in s0.columns else []
 
-        dic['ors_p'] = ors_p = [p for p in ['front_orientation','rear_orientation','head_orientation','tail_orientation'] if p in s0.columns]
+        dic['ors_p'] = ors_p = [p for p in
+                                ['front_orientation', 'rear_orientation', 'head_orientation', 'tail_orientation'] if
+                                p in s0.columns]
         if draw_Nsegs == len(mid_p) - 1 and set(nam.orient(self.segs)).issubset(s0.columns):
             dic['ors_p'] = ors_p = nam.orient(self.segs)
         pars = dNl.unique_list(cen_p + pos_p + ang_p + ors_p + chunk_p + dNl.flatten_list(mid_p + con_p))
@@ -526,7 +530,7 @@ class LarvaDataset:
         replay_env.run()
         print('Visualization complete')
 
-    def visualize_single(self, id=0, close_view=True, fix_point=-1, fix_segment=None, save_to=None,time_range=None,
+    def visualize_single(self, id=0, close_view=True, fix_point=-1, fix_segment=None, save_to=None, time_range=None,
                          draw_Nsegs=None, vis_kwargs=None, **kwargs):
         from lib.model.envs._larvaworld_replay import LarvaWorldReplay
         from lib.process.spatial import fixate_larva
@@ -539,7 +543,7 @@ class LarvaDataset:
         env_params = self.env_params
         if close_view:
             from lib.conf.base.dtypes import null_dict
-            env_params.arena =  null_dict('arena', arena_dims=(0.01, 0.01))
+            env_params.arena = null_dict('arena', arena_dims=(0.01, 0.01))
         # else:
         #     env_params = self.env_params
 
@@ -627,6 +631,7 @@ class LarvaDataset:
             'nengo': os.path.join(self.data_dir, 'nengo_probes'),
             'single_tracks': os.path.join(self.data_dir, 'single_tracks'),
             'bout_dicts': os.path.join(self.data_dir, 'bout_dicts'),
+            'model_tables': os.path.join(self.plot_dir, 'model_tables'),
             'pooled_epochs': os.path.join(self.data_dir, 'pooled_epochs'),
             'cycle_curves': os.path.join(self.data_dir, 'cycle_curves.txt'),
             'chunk_dicts': os.path.join(self.data_dir, 'chunk_dicts'),
@@ -667,14 +672,14 @@ class LarvaDataset:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
-    def enrich(self, metric_definition=None, preprocessing={}, processing={}, annotation={},
-               to_drop={}, recompute=False, mode='minimal', show_output=True, is_last=True,
-               add_reference = False, **kwargs):
-        c=self.config
+    def enrich(self, metric_definition=None, preprocessing={}, processing={},bout_annotation=True,
+               to_drop={}, recompute=False, mode='minimal', show_output=True, is_last=True,annotation={},
+               add_reference=False, **kwargs):
+        c = self.config
         md = metric_definition
-        if md is None :
-            md=c.metric_definition
-        else :
+        if md is None:
+            md = c.metric_definition
+        else:
             c.metric_definition.angular.hardcoded.update(**md['angular'])
             c.metric_definition.spatial.hardcoded.update(**md['spatial'])
             self.define_linear_metrics()
@@ -685,14 +690,13 @@ class LarvaDataset:
         # # print(md)
 
         from lib.process.basic import preprocess, process
-        from lib.process.bouts import annotate
-        #print()
-        #print(f'--- Enriching dataset {self.id} with derived parameters ---')
+        # print()
+        # print(f'--- Enriching dataset {self.id} with derived parameters ---')
         warnings.filterwarnings('ignore')
-
+        s,e = self.step_data,self.endpoint_data
         cc = {
-            's': self.step_data,
-            'e': self.endpoint_data,
+            's': s,
+            'e': e,
             'c': c,
             'show_output': show_output,
             'recompute': recompute,
@@ -701,11 +705,41 @@ class LarvaDataset:
         }
         preprocess(**preprocessing, **cc, **kwargs)
         process(processing=processing, **cc, **kwargs, **md['dispersion'], **md['tortuosity'])
-        self.chunk_dicts, self.pooled_epochs, self.cycle_curves=annotate(**annotation, **cc, **kwargs, **md['stride'], **md['turn'], **md['pause'])
+        if bout_annotation :
+            from lib.process import aux
+            self.chunk_dicts = aux.annotation(s, e, c, **kwargs)
+            self.cycle_curves = compute_interference(s=s,e=e,c=c, chunk_dicts=self.chunk_dicts, **kwargs)
+            self.pooled_epochs=self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts, **kwargs)
+
         self.drop_pars(**to_drop, **cc)
         if is_last:
             self.save(add_reference=add_reference)
         return self
+
+    def compute_pooled_epochs(self, chunk_dicts=None, store=True, **kwargs):
+        from lib.anal.fitting import fit_bouts
+        s, e, c = self.step_data, self.endpoint_data, self.config
+        if chunk_dicts is None:
+            try :
+                chunk_dicts = self.chunk_dicts
+            except :
+                chunk_dicts = self.load_chunk_dicts()
+        if chunk_dicts is not None :
+            self.pooled_epochs = fit_bouts(c=c, chunk_dicts=chunk_dicts, s=s, e=e, id=c.id)
+            if store:
+                path = c.dir_dict.pooled_epochs
+                os.makedirs(path, exist_ok=True)
+                dNl.save_dict(self.pooled_epochs, f'{path}/{self.id}.txt', use_pickle=True)
+                print('Pooled group bouts saved')
+            return self.pooled_epochs
+        else :
+            return None
+
+    def get_traj_aligned(self, mode='origin'):
+        try:
+            return self.read(key=f'traj_aligned2{mode}', file='aux_h5')
+        except:
+            return None
 
     def get_par(self, par, key=None):
         def get_end_par(par):
@@ -725,7 +759,8 @@ class LarvaDataset:
                     return self.step_data[par]
                 except:
                     return None
-        if key=='distro' :
+
+        if key == 'distro':
             try:
                 return self.read(key=f'distro.{par}', file='aux_h5')
             except:
@@ -768,9 +803,13 @@ class LarvaDataset:
             dic = dNl.load_dict(path, use_pickle=True)
             print(f'Pooled epochs loaded for dataset {id}')
             return dic
-        except :
-            print(f'Pooled epochs not found for dataset {id}')
-            return None
+        except:
+            try:
+                dic = self.compute_pooled_epochs()
+                return dic
+            except:
+                print(f'Pooled epochs not found for dataset {id}')
+                return None
 
     def load_chunk_dicts(self, id=None):
         if id is None:
@@ -779,9 +818,9 @@ class LarvaDataset:
         return dNl.load_dict(path, use_pickle=True)
 
     def load_cycle_curves(self):
-        try :
+        try:
             return dNl.load_dict(self.dir_dict.cycle_curves, use_pickle=True)
-        except :
+        except:
             pass
 
     def get_chunks(self, chunk, shorts, min_dur=0, max_dur=np.inf, idx=None):
@@ -792,11 +831,11 @@ class LarvaDataset:
 
         dic = self.load_chunk_dicts()
         chunks = []
-        if idx is None :
-            ids =self.agent_ids
-        elif type(idx)==int :
+        if idx is None:
+            ids = self.agent_ids
+        elif type(idx) == int:
             ids = [self.agent_ids[idx]]
-        elif type(idx)==list :
+        elif type(idx) == list:
             ids = [self.agent_ids[idxx] for idxx in idx]
         for id in ids:
             sss = ss.xs(id, level='AgentID')
@@ -811,62 +850,65 @@ class LarvaDataset:
                     chunks.append(entry)
         return chunks
 
-    def average_modelConf(self, new_id=None, turner_mode='neural', crawler_mode='realistic', interference_mode='phasic'):
-        e=self.endpoint_data
-        c=self.config
+    def average_modelConf(self, new_id=None, turner_mode='neural', crawler_mode='realistic', interference_mode='phasic',
+                          turner=None, physics=None, model_table=False):
+        if new_id is None:
+            new_id = f'{self.id}_model'
+        e = self.endpoint_data
+        c = self.config
 
-        b_kws={
+        b_kws = {
             'modules': null_dict('modules', turner=True, crawler=True, interference=True, intermitter=True),
-            'turner_params' : adapt_turner(e,mode=turner_mode, average=True),
-            'crawler_params' : adapt_crawler(e,waveform=crawler_mode, average=True),
-            'intermitter_params' : adapt_intermitter(c, e, average=True),
-            'interference_params' : adapt_interference(c, e,mode=interference_mode, average=True),
+            'turner_params': adapt_turner(e, mode=turner_mode, average=True) if turner is None else turner,
+            'crawler_params': adapt_crawler(e, waveform=crawler_mode, average=True),
+            'intermitter_params': adapt_intermitter(c, e, average=True),
+            'interference_params': adapt_interference(c, e, mode=interference_mode, average=True),
         }
 
-        kws={
-            'brain' : null_dict('brain', **b_kws),
-            'body' : null_dict('body', initial_length = np.round(e['length'].median(), 3)),
-            'physics' : null_dict('physics'),
-            'energetics' : None,
+        kws = {
+            'brain': null_dict('brain', **b_kws),
+            'body': null_dict('body', initial_length=np.round(e['length'].median(), 3)),
+            'physics': null_dict('physics') if physics is None else physics,
+            'energetics': None,
             # 'Box2D_params' : None,
         }
 
-        m=null_dict('larva_conf', **kws)
+        m = null_dict('larva_conf', **kws)
 
         from lib.conf.stored.conf import copyConf, saveConf
-        if new_id is None :
-            new_id=f'{self.id}_model'
+
         saveConf(id=new_id, conf=m, conf_type='Model')
         if 'modelConfs' not in c.keys():
-            c.modelConfs=dNl.AttrDict.from_nested_dicts({'average' : {}, 'variable' : {}, 'individual':{}})
-        c.modelConfs.average[new_id]=m
+            c.modelConfs = dNl.AttrDict.from_nested_dicts({'average': {}, 'variable': {}, 'individual': {}})
+        c.modelConfs.average[new_id] = m
         self.save_config(add_reference=True)
 
-        from lib.anal.plot_aux import modelConfTable
-        modelConfTable(new_id, save_to=f'{self.plot_dir}/model_tables')
+        if model_table:
+            from lib.anal.plot_aux import modelConfTable
+            modelConfTable(new_id, save_to=self.dir_dict.model_tables)
         return m
 
-    def get_chunk_par_distro(self, chunk, short=None,par=None, min_dur=0):
-        if par is None :
+    def get_chunk_par_distro(self, chunk, short=None, par=None, min_dur=0):
+        if par is None:
             from lib.conf.base.par import getPar
             par = getPar(short)
-        chunk_idx=f'{chunk}_idx'
-        chunk_dur=f'{chunk}_dur'
+        chunk_idx = f'{chunk}_idx'
+        chunk_dur = f'{chunk}_dur'
         dic0 = self.load_chunk_dicts()
         vs = []
         for id in self.agent_ids:
             ss = self.step_data[par].xs(id, level='AgentID')
-            dic=dic0[id]
-            if min_dur==0:
+            dic = dic0[id]
+            if min_dur == 0:
                 idx = dic[chunk_idx]
-            else :
+            else:
                 epochs = dic[chunk][dic[chunk_dur] >= min_dur]
-                Nepochs=epochs.shape[0]
-                if Nepochs==0:
-                    idx=[]
+                Nepochs = epochs.shape[0]
+                if Nepochs == 0:
+                    idx = []
                 elif Nepochs == 1:
-                    idx =np.arange(epochs[0][0], epochs[0][1] + 1, 1)
-                else :
+                    idx = np.arange(epochs[0][0], epochs[0][1] + 1, 1)
+                else:
                     slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in epochs]
                     idx = np.concatenate(slices)
             vs.append(ss.loc[idx].values)
@@ -874,12 +916,28 @@ class LarvaDataset:
         return vs
 
     def existing(self, key='end', return_shorts=True):
-        if key=='end' :
-            pars=self.read(key='end', file='endpoint_h5').columns.values.tolist()
-        elif key=='step' :
-            pars=self.read(key='step').columns.values.tolist()
+        if key == 'end':
+            pars = self.read(key='end', file='endpoint_h5').columns.values.tolist()
+        elif key == 'step':
+            pars = self.read(key='step').columns.values.tolist()
         if not return_shorts:
             return sorted(pars)
-        else :
-            shorts=getPar(d=pars, to_return='k')
+        else:
+            shorts = getPar(d=pars, to_return='k')
             return sorted(shorts)
+
+    def sample_modelConf(self, N, mID, sample_ks=None):
+        from lib.conf.stored.conf import loadConf, saveConf
+        from lib.conf.base import paths
+        from lib.model.envs._larvaworld_sim import sample_group, generate_larvae
+        m = loadConf(mID, 'Model')
+        if sample_ks is None:
+            modF = dNl.flatten_dict(m)
+            sample_ks = [p for p in modF if modF[p] == 'sample']
+        RefPars = dNl.load_dict(paths.path('ParRef'), use_pickle=False)
+        invRefPars = {v: k for k, v in RefPars.items()}
+        sample_ps = [invRefPars[p] for p in sample_ks]
+        sample_dict = sample_group(e=self.read(key='end', file='endpoint_h5'), N=N, sample_ps=sample_ps) if len(
+            sample_ps) > 0 else {}
+        all_pars = generate_larvae(N, sample_dict, m, RefPars)
+        return all_pars
