@@ -4,6 +4,8 @@ import pickle
 import shutil
 import time
 
+import param
+
 from lib.aux.dictsNlists import AttrDict
 from lib.conf.base.dtypes import null_dict, base_enrich
 from lib.conf.base import paths
@@ -52,6 +54,14 @@ def loadConfDict(conf_type, use_pickle=False):
 
 def kConfDict(conf_type, **kwargs) :
     return list(loadConfDict(conf_type, **kwargs).keys())
+
+def ConfSelector(conf_type, default=None,single_choice=True, **kwargs) :
+    if single_choice :
+        p=param.Selector(objects=kConfDict(conf_type), default=default, **kwargs)
+    else :
+        p = param.ListSelector(objects=kConfDict(conf_type), default=default, **kwargs)
+    return p
+
 
 def loadRef(id) :
     from lib.stor.larva_dataset import LarvaDataset

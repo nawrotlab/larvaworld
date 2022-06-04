@@ -69,6 +69,9 @@ def circle(p):
 def circledcirc(p):
     return f'${p.replace("$", "")}^{{\circledcirc}}$'
 
+def mathring(p):
+    return fr'$\mathring{{{p.replace("$", "")}}}$'
+
 
 def circledast(p):
     return f'${p.replace("$", "")}^{{\circledast}}$'

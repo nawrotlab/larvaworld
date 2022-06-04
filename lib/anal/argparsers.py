@@ -1,14 +1,61 @@
 import copy
 from argparse import ArgumentParser
+from typing import List
 
 import numpy as np
 
 from lib.aux.colsNstr import N_colors
 from lib.aux.dictsNlists import AttrDict
 
+
 from lib.conf.stored.conf import kConfDict
 from lib.conf.base.dtypes import null_dict, arena, par_dict
 
+def build_ParsArg(name,k=None,h='',t=float,v=None,vs=None, **kwargs):
+    if k is None :
+        k = name
+    d = {
+        'key': name,
+        'short': k,
+        'help': h,
+    }
+    if t == bool:
+        d['action'] = 'store_true' if not v else 'store_false'
+    elif t == List[str]:
+        d['type'] = str
+        d['nargs'] = '+'
+        if vs is not None:
+            d['choices'] = vs
+    else:
+        d['type'] = t
+        if vs is not None:
+            d['choices'] = vs
+        if v is not None:
+            d['default'] = v
+            d['nargs'] = '?'
+    return {name: d}
+
+def build_ParsDict(dic_name) :
+    from lib.conf.base.init_pars import init_pars
+    d0 = init_pars().get(dic_name, None)
+    dic = {}
+    for n, ndic in d0.items():
+        entry = build_ParsArg(name=n, **ndic)
+        dic.update(entry)
+    parsargs = {k: ParsArg(**v) for k, v in dic.items()}
+    return parsargs
+
+def build_ParsDict2(dic_name) :
+    from lib.conf.base.dtypes import par_dict
+    dic = par_dict(dic_name, argparser=True)
+    try:
+        parsargs = {k: ParsArg(**v) for k, v in dic.items()}
+    except:
+        parsargs = {}
+        for k, v in dic.items():
+            for kk, vv in v['content'].items():
+                parsargs[kk] = ParsArg(**vv)
+    return parsargs
 
 class ParsArg:
     """
@@ -36,14 +83,11 @@ class Parser:
 
     def __init__(self, name):
         self.name = name
-        dic = par_dict(name, argparser=True)
-        try:
-            self.parsargs = {k: ParsArg(**v) for k, v in dic.items()}
-        except:
-            self.parsargs = {}
-            for k, v in dic.items():
-                for kk, vv in v['content'].items():
-                    self.parsargs[kk] = ParsArg(**vv)
+        try :
+            self.parsargs =build_ParsDict(name)
+        except :
+            self.parsargs = build_ParsDict2(name)
+
 
     def add(self, parser=None):
         if parser is None:

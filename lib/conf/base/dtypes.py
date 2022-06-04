@@ -1,9 +1,18 @@
 import numpy as np
 import pandas as pd
 from typing import TypedDict, List, Tuple
+
+
 from lib.aux.dictsNlists import AttrDict, tree_dict, unique_list, flatten_list
 from lib.aux.par_aux import dtype_name
-from lib.conf.base.init_pars import init_pars, proc_type_keys, bout_keys, to_drop_keys
+from lib.conf.base.init_pars import init_pars, proc_type_keys, bout_keys, to_drop_keys, unit_dic
+import siunits as siu
+import param
+import numpy as np
+from typing import TypedDict, List, Tuple
+
+from lib.aux.dictsNlists import AttrDict
+
 
 
 def maxNdigits(array, Min=None):
@@ -22,62 +31,115 @@ def base_dtype(t):
         base_t = t
     return base_t
 
+def define_dv(dv, cur_dtype):
+    if dv is None:
+        if cur_dtype == int:
+            dv = 1
+        elif cur_dtype == float:
+            dv = 0.1
+    return dv
 
-def par(name, t=float, v=None, vs=None, min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', s='',symbol='',
-        u='', label='',combo=None, argparser=False, entry=None, codename=None):
-    if not argparser:
-        if t == TypedDict:
-            return {name: {'initial_value': v, 'dtype': t, 'entry': entry, 'disp': disp, 'tooltip': h}}
-        cur_dtype = base_dtype(t)
-        if cur_dtype in [float, int]:
-            if any([arg is not None for arg in [min, max, dv]]):
-                if vs is None:
-                    if min is None:
-                        min = 0
-                    if max is None:
-                        max = 1
-                    if dv is None:
-                        if cur_dtype == int:
-                            dv = 1
-                        elif cur_dtype == float:
-                            dv = 0.1
 
-                    ar = np.arange(min, max + dv, dv)
-                    if cur_dtype == float:
-                        Ndec = len(str(format(dv, 'f')).split('.')[1])
-                        ar = np.round(ar, Ndec)
-                    vs = ar.astype(cur_dtype)
+def define_vs(vs, dv, lim, cur_dtype):
+    if vs is not None:
+        return vs
+    if dv is not None and lim is not None:
+        ar = np.arange(lim[0], lim[1] + dv, dv)
+        if cur_dtype == float:
+            Ndec = len(str(format(dv, 'f')).split('.')[1])
+            ar = np.round(ar, Ndec)
+        vs = ar.astype(cur_dtype)
 
-                    vs = vs.tolist()
-        if vs is not None:
-            Ndigits = maxNdigits(np.array(vs), 4)
-        if aux_vs is not None and vs is not None:
-            vs += aux_vs
-        d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t, 'symbol': symbol, 'unit': u, 'label': label,
-             'disp': disp if disp is not None else name, 'combo': combo, 'tooltip': h, 'codename':codename}
+        vs = vs.tolist()
+    return vs
 
-        return {name: d}
+def define_lim(lim, vs, min, max, u, wrap_mode, cur_dtype):
+    siu.deg = siu.I.rename("deg", "deg", "plain angle")
+    if lim is not None:
+        return lim
+    if wrap_mode is not None :
+        if u.unit == siu.deg:
+            if wrap_mode == 'positive':
+                lim = (0.0, 360.0)
+            elif wrap_mode == 'zero':
+                lim = (-180.0, 180.0)
+        elif u.unit == siu.rad:
+            if wrap_mode == 'positive':
+                lim = (0.0, 2 * np.pi)
+            elif wrap_mode == 'zero':
+                lim = (-np.pi, np.pi)
     else:
-        d = {
-            'key': name,
-            'short': s if s != '' else name,
-            'help': h,
-        }
-        if t == bool:
-            d['action'] = 'store_true' if not v else 'store_false'
-        elif t == List[str]:
-            d['type'] = str
-            d['nargs'] = '+'
+        if cur_dtype in [float, int]:
             if vs is not None:
-                d['choices'] = vs
-        else:
-            d['type'] = t
-            if vs is not None:
-                d['choices'] = vs
-            if v is not None:
-                d['default'] = v
-                d['nargs'] = '?'
-        return {name: d}
+                lim = (np.min(vs), np.max(vs))
+            else:
+                if min is None:
+                    min = 0
+                if max is None:
+                    max = 1
+                lim = (min, max)
+    return lim
+
+def define_range(dtype, lim, vs, dv, min, max, u, wrap_mode):
+    cur_dtype = base_dtype(dtype)
+    dv = define_dv(dv, cur_dtype)
+    lim = define_lim(lim, vs, min, max, u, wrap_mode, cur_dtype)
+    vs = define_vs(vs, dv, lim, cur_dtype)
+    return dv, lim, vs
+
+def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', k=None,symbol='',
+        u=None, u_name=None, label='',combo=None, argparser=False, entry=None, codename=None,vfunc=None,vparfunc=None, convert2par=False):
+    if argparser :
+        from lib.anal.argparsers import build_ParsArg
+        return build_ParsArg(name,k,h,t,v,vs)
+    if t == TypedDict:
+        return {name: {'initial_value': v, 'dtype': t, 'entry': entry, 'disp': disp, 'tooltip': h}}
+
+
+    if k is None:
+        k = name
+    if u is None:
+        u = unit_dic[u_name]
+    if u_name is None:
+        u_name = u.unit.abbrev
+    dv, lim, vs = define_range(dtype=t, lim=lim, vs=vs, dv=dv, min=min, max=max, u=u, wrap_mode=None)
+
+    if convert2par:
+        from lib.conf.base.opt_par import buildPar
+        p_kws={
+        'p' : name,
+        'k' : k,
+        'lim' : lim,
+        'dv' : dv,
+        'v0' : v,
+        'dtype' : t,
+        'disp' : disp if disp is not None else label,
+        'h' : h,
+        'u_name' : u_name,
+        'u' : u,
+        'sym' : symbol,
+        'codename' : codename,
+        'vfunc' : vfunc,
+        'vparfunc' : vparfunc,
+    }
+        try :
+            p=buildPar(**p_kws)
+            return {p.k: p}
+        except :
+            return {k: None}
+
+
+    if vs is not None:
+        Ndigits = maxNdigits(np.array(vs), 4)
+    if aux_vs is not None and vs is not None:
+        vs += aux_vs
+    d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t, 'symbol': symbol, 'unit': u_name, 'label': label,
+         'disp': disp if disp is not None else name, 'combo': combo, 'tooltip': h, 'codename':codename, 'step':dv}
+
+    return {name: d}
+
+
+
 
 
 def ga_dict(name=None, suf='', excluded=None, only=None):

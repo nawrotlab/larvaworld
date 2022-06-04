@@ -192,7 +192,7 @@ class Parameter:
     def __init__(self, p, u, k=None, s=None, o=Larva, lim=None,
                  d=None, lab=None, exists=True, func=None, const=None, par_dict=None, fraction=False,
                  operator=None, k0=None, k_num=None, k_den=None, dst2source=None, or2source=None, dispersion=False,
-                 wrap_mode=None,l=None, unit=None, symbol=None, codename=None,):
+                 wrap_mode=None,l=None, unit=None, symbol=None, codename=None):
         self.codename = codename
         self.wrap_mode = wrap_mode
         self.fraction = fraction
@@ -551,6 +551,8 @@ class ParDict:
                 k_num = f'D_{k0}'
         if k_den is None:
             k_den = f'D_{k_time}'
+
+
 
         self.add(p=p, k=k, d=d, s=s, exists=False, fraction=True, k_num=k_num, k_den=k_den, **kwargs)
 
@@ -1084,26 +1086,7 @@ def getPar(k=None, p=None, d=None, to_return='d', PF=None):
 if __name__ == '__main__':
     from lib.conf.base.par import ParDict
 
-    # dic = ParDict(mode='load').dict
-    # print([dic[k] for k in ['l']])
     #
-    # print(getPar('fov', to_return=['d', 'u', 'l', 's', 'symbol', 'lab']))
-    #
-    # raise
-    # print(dic.keys())
-
-    # print(dic['str_d_std']['lim'])
-
-
-    # aaa=getPar(['run_t', 'pau_tr'], to_return=['d','l'])
-
-    # print(aaa)
-    # d=ParDict(mode='build').dict
-    # raise
-    # print(us)
-    # # d = ParDict(mode='reconstruct').dict
-    # print(d.keys())
-    # raise
     for short in ['fsv']:
 
         p = getPar(short)
