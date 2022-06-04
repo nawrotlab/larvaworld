@@ -11,7 +11,7 @@ from scipy.fft import fft, fftfreq
 import statsmodels.api as sm
 
 from lib.aux.dictsNlists import AttrDict, save_dict, flatten_list
-
+import lib.aux.naming as nam
 
 from lib.process.store import store_aux_dataset
 
@@ -683,6 +683,12 @@ def fft_freqs(s, e, c):
     e[ffov] = s[fov].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(0.1, 0.8))
     e['turner_input_constant'] = (e[ffov] / 0.024) + 5
 
+
+def get_freq(d, par, fr_range=None) :
+    if fr_range is None :
+        fr_range = (0.0, +np.inf)
+    s, e, c = d.step_data, d.endpoint_data, d.config
+    e[nam.freq(par)]=s[par].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=fr_range)
 
 def stride_interp(a, strides,Nbins=64) :
     x = np.linspace(0, 2 * np.pi, Nbins)

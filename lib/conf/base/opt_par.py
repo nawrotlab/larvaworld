@@ -42,7 +42,7 @@ def vpar(vfunc, v0, h, lab, lim, dv):
 
 
 def buildPar(p, k, dtype=float, d=None, disp=None, sym=None,codename=None, lab=None, h=None, u_name=None,u=None, v0=None, lim=None, dv=None,
-             vfunc=None,vparfunc=None,**kwargs):
+             vfunc=None,vparfunc=None,func=None,**kwargs):
 
 
     if u is None :
@@ -141,7 +141,27 @@ def buildPar(p, k, dtype=float, d=None, disp=None, sym=None,codename=None, lab=N
             from lib.anal.argparsers import build_ParsArg
             return build_ParsArg(name=self.name, k=self.k, h=self.help, t=self.dtype, v=self.initial_value, vs=None)
 
+        # @property
+        def exists(self, dataset) :
+            s, e = dataset.step_data, dataset.endpoint_data
+            dic={'step' : self.d in s.columns, 'end' : self.d in e.columns}
+            return dic
+
+        def get(self,dataset, key='step'):
+            return dataset.get_par(key=key,par=self.d)
+
+
+        def compute(self,dataset):
+            res=self.exists(dataset)
+            if not res['step'] and not res['end']:
+                if self.func is not None :
+                    self.func(dataset)
+                    print(f'Parameter {self.disp} computed successfully')
+
+
+
     par = LarvaworldParNew(name=p, p=p, k=k, d=d,dtype=dtype, disp=disp, sym=sym, u=u, codename=codename)
+    par.param.add_parameter('func' , param.Callable(default=func,doc='Function to get the parameter from a dataset', constant=True, allow_None=True))
     return par
 
 class NewParDict :
@@ -257,7 +277,7 @@ class NewParDict :
 
     def add_velNacc(self, k0, p_v=None, k_v=None, d_v=None, sym_v=None, disp_v=None, p_a=None, k_a=None, d_a=None,
                     sym_a=None, disp_a=None):
-        self.add_diff(k0)
+        # self.add_diff(k0)
         b = self.dict[k0]
         b_dt = self.dict['dt']
         u_v = b.u / b_dt.u
@@ -279,7 +299,7 @@ class NewParDict :
         if sym_a is None:
             sym_a = ddot(b.sym)
         self.addPar(**{'p': p_v, 'k': k_v, 'd': d_v, 'u': u_v, 'sym': sym_v, 'disp': disp_v,'vfunc': param.Number})
-        self.add_diff(k_v)
+        # self.add_diff(k_v)
         self.addPar(**{'p': p_a, 'k': k_a, 'd': d_a, 'u': u_a, 'sym': sym_a, 'disp': disp_a,'vfunc': param.Number})
 
     def add_scaled(self, k0, sym=None, disp=None, **kwargs):
@@ -295,7 +315,13 @@ class NewParDict :
             sym = mathring(b.sym)
         if disp is None:
             disp = f'scaled {b.disp}'
-        self.addPar(**{'p': p, 'k': k, 'd': d, 'u': u, 'sym': sym, 'disp': disp,'vfunc': param.Number}, **kwargs)
+
+        def func(d) :
+            from lib.process.spatial import scale_to_length
+            s, e, c = d.step_data, d.endpoint_data, d.config
+            scale_to_length(s, e, c, pars=[b.d], keys=None)
+
+        self.addPar(**{'p': p, 'k': k, 'd': d, 'u': u, 'sym': sym, 'disp': disp,'vfunc': param.Number, 'func':func}, **kwargs)
 
     def add_freq(self, k0, k=None, d=None, p=None, disp=None, sym=None, **kwargs):
         b = self.dict[k0]
@@ -309,7 +335,13 @@ class NewParDict :
             p = nam.freq(b.p)
         if disp is None:
             disp = f'{b.disp} dominant frequency'
-        self.addPar(**{'p': p, 'k': k, 'd': d, 'u': 1 * siu.hz, 'sym': sym, 'disp': disp,'vfunc': param.Number}, **kwargs)
+
+        from lib.process.aux import get_freq
+        def func(d) :
+            get_freq(d, par=b.d, fr_range=(0.0, +np.inf))
+
+        # func= {'func':get_freq, 'kws' : {'par' : b.d, 'fr_range' : (0.0, +np.inf)}}
+        self.addPar(**{'p': p, 'k': k, 'd': d, 'u': 1 * siu.hz, 'sym': sym, 'disp': disp,'vfunc': param.Number, 'func': func}, **kwargs)
 
     def add_dsp(self, range=(0, 40)):
         a = 'dispersion'
@@ -333,11 +365,11 @@ class NewParDict :
                  'dv': 0.1, 'v0': 0.0, **kws})
 
         kws = {'u_name': 'm', 'vfunc': param.Number}
-        self.addPar(**{'p': 'x0', 'k': 'x0', 'd': 'initial X position', 'sym': sub('X', 0), 'v0': 0.0, **kws})
-        self.addPar(**{'p': 'y0', 'k': 'y0', 'd': 'initial Y position', 'sym': sub('Y', 0), 'v0': 0.0, **kws})
-        self.addPar(**{'p': 'x', 'k': 'x', 'd': 'X position', 'sym': 'X', **kws})
-        self.addPar(** {'p': 'y', 'k': 'y', 'd': 'Y position', 'sym': 'Y', **kws})
-        self.addPar(**{'p': 'real_length', 'k': 'l', 'd': 'length', 'disp': 'body length', 'sym': '$l$', 'v0': 0.004,
+        self.addPar(**{'p': 'x0', 'k': 'x0','d': 'x0', 'disp': 'initial X position', 'sym': sub('X', 0), 'v0': 0.0, **kws})
+        self.addPar(**{'p': 'y0', 'k': 'y0','d': 'y0', 'disp': 'initial Y position', 'sym': sub('Y', 0), 'v0': 0.0, **kws})
+        self.addPar(**{'p': 'x', 'k': 'x', 'd': 'x','disp': 'X position', 'sym': 'X', **kws})
+        self.addPar(** {'p': 'y', 'k': 'y', 'd': 'y','disp': 'Y position', 'sym': 'Y', **kws})
+        self.addPar(**{'p': 'real_length', 'k': 'l', 'd': 'length','codename': 'length', 'disp': 'body length', 'sym': '$l$', 'v0': 0.004,
                  'lim': (0.0005, 0.01), 'dv': 0.0005, **kws})
         self.addPar(**{'p': nam.dst(''), 'k': 'd', 'sym': 'd', 'disp': 'distance', **kws})
 
@@ -383,8 +415,8 @@ class NewParDict :
 
 
     def build_basic(self):
-        for k0 in ['fo', 'ro', 'x', 'y'] :
-            self.add_diff(k0)
+        # for k0 in ['fo', 'ro', 'x', 'y'] :
+        #     self.add_diff(k0)
 
         bv, fov, rov,hov, tov = nam.vel('bend'), nam.vel(nam.orient('front')), nam.vel(nam.orient('rear')),nam.vel(nam.orient('head')), nam.vel(nam.orient('tail'))
         ba, foa, roa,hoa, toa = nam.acc('bend'), nam.acc(nam.orient('front')), nam.acc(nam.orient('rear')),nam.acc(nam.orient('head')), nam.acc(nam.orient('tail'))
