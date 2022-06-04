@@ -15,12 +15,13 @@ from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
 from lib.aux.colsNstr import N_colors
 from lib.aux.sim_aux import get_tank_polygon
 from lib.conf.base.dtypes import null_dict
+from lib.conf.base.opt_par import getPar
 from lib.conf.stored.conf import expandConf
 
-from lib.process.aux import annotation, fft_freqs, suppress_stdout, compute_interference
+from lib.process.aux import annotation, suppress_stdout, compute_interference
 from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, store_spatial
 
-from lib.conf.base.par import ParDict, getPar
+from lib.conf.base.par import ParDict
 
 dic = ParDict(mode='load').dict
 dst, v, sv, acc, sa, fou, rou, fo, ro, b,fov, rov, bv,foa, roa, ba, x, y, l,dsp, dsp_0_40,dsp_0_40_mu,dsp_0_40_max,sdsp, sdsp_0_40,sdsp_0_40_mu,sdsp_0_40_max,str_fov_mu,run_fov_mu,pau_fov_mu,run_foa_mu,pau_foa_mu, str_fov_std,pau_fov_std,sstr_d_mu, sstr_d_std,str_d_mu, str_d_std, str_sv_mu, pau_sv_mu,str_v_mu,run_v_mu,run_sv_mu, pau_v_mu, str_tr,run_tr, pau_tr,Ltur_tr,Rtur_tr, Ltur_fou,Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t= [dic[k]['d'] for k in ['d','v', 'sv','a','sa','fou', 'rou', 'fo', 'ro', 'b', 'fov', 'rov', 'bv', 'foa', 'roa', 'ba', 'x', 'y', 'l',"dsp", "dsp_0_40","dsp_0_40_mu","dsp_0_40_max","sdsp", "sdsp_0_40","sdsp_0_40_mu","sdsp_0_40_max",'str_fov_mu','run_fov_mu','pau_fov_mu','run_foa_mu','pau_foa_mu', 'str_fov_std','pau_fov_std', 'sstr_d_mu', 'sstr_d_std','str_d_mu', 'str_d_std', 'str_sv_mu', 'pau_sv_mu','str_v_mu', 'run_v_mu','run_sv_mu', 'pau_v_mu', 'str_tr','run_tr','pau_tr','Ltur_tr','Rtur_tr', 'Ltur_fou','Rtur_fou', 'run_t_min', 'cum_t',  'run_t', 'run_d', 'pau_t']]
@@ -177,7 +178,6 @@ def adapt_conf(conf0, ee, cc):
 
 def sim_locomotor(L, N, df_cols=None, tank_polygon=None, cur_x=0, cur_y=0, cur_fo=0, length=0.004):
     if df_cols is None:
-        from lib.conf.base.par import getPar
         df_cols = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
     aL = np.ones([N, len(df_cols)]) * np.nan
     for i in range(N):
@@ -473,7 +473,6 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
     AA=AA.reshape(Nticks*Nids, len(df_columns))
     s = pd.DataFrame(AA,index=my_index, columns=df_columns)
     s[getPar('v_in_mm')] = s[getPar('v')]*1000
-    # s['torque'] = s[getPar('Act_tur')] * controller.torque_coef
     s=s.astype(float)
 
     if c.dir is not None :
@@ -552,14 +551,5 @@ if __name__ == '__main__':
     from lib.conf.base import paths
     dir=f"{paths.path('RUN')}/testing/the/sim_model/method"
     d=sim_model(mID='NEU_PHI', dur=1, dt=1 / 16,Nids=2,color='blue',tor_durs=[], dir=dir)
-
-    raise
-
-    s=d.step_data
-    ss=s.xs(d.config.agent_ids[0], level='AgentID')
-    plt.plot(ss[getPar('foa')].values)
-
-    #plt.hist(s['bend'].dropna().values)
-    plt.show()
 
     raise

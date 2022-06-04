@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from lib.conf.base.par import getPar
+from lib.conf.base.opt_par import getPar
 from lib.conf.stored.conf import expandConf, kConfDict, loadRef
 from lib.model.modules.brain import DefaultBrain
 from pymdp.maths import spm_log_single as log_stable

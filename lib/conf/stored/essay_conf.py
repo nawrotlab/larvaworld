@@ -1,10 +1,10 @@
 import shutil
 
-from lib.anal.plotting import plot_pathlength, barplot, timeplot, plot_food_amount, lineplot, plot_debs, \
-    boxplot_double_patch
+from lib.anal.plot_datasets import barplot, boxplot_double_patch, timeplot, plot_pathlength, plot_food_amount, lineplot, \
+    plot_debs
 from lib.aux.dictsNlists import flatten_list
 from lib.conf.base.dtypes import enr_dict, null_dict, arena, base_enrich
-from lib.conf.base.par import getPar
+from lib.conf.base.opt_par import getPar
 from lib.conf.stored.env_conf import env, f_pars, double_patches
 from lib.conf.stored.exp_conf import RvsS_groups
 from lib.conf.base import paths

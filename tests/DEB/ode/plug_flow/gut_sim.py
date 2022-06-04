@@ -9,7 +9,7 @@ import numpy as np
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 
-from lib.anal.plotting import plot_debs
+from lib.anal.plot_datasets import plot_debs
 from lib.conf.base.dtypes import null_dict
 from lib.model.DEB.deb import DEB, deb_sim
 

@@ -5,20 +5,18 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt, patches, transforms, ticker
-from matplotlib.pyplot import bar
-from mpl_toolkits.mplot3d import Axes3D
-from scipy.stats import mannwhitneyu, ttest_ind
 
 
-from lib.anal.fitting import pvalue_star, fit_bout_distros
-from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
-from lib.conf.base.par import getPar
 
-from lib.conf.stored.conf import loadRef, kConfDict, loadConf
+
+
+
+from lib.conf.base.opt_par import getPar
+
+
 from lib.aux.colsNstr import N_colors
-from lib.aux.dictsNlists import unique_list, AttrDict
-from lib.process.aux import fft_freqs
-from lib.process.spatial import scale_to_length
+from lib.aux.dictsNlists import unique_list
+
 
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
@@ -52,6 +50,7 @@ class BasePlot:
                 self.fig, axs = plt.subplots(Nrows, Ncols, figsize=figsize, **kwargs)
                 self.axs = axs.ravel() if Nrows * Ncols > 1 else [axs]
             else:
+                from mpl_toolkits.mplot3d import Axes3D
                 self.fig = plt.figure(figsize=(15, 10))
                 ax = Axes3D(self.fig, azim=azim, elev=elev)
                 self.axs = [ax]
@@ -207,6 +206,7 @@ class Plot(BasePlot):
                  **kwargs):
 
         if add_samples:
+            from lib.conf.stored.conf import loadRef, kConfDict
             targetIDs = unique_list([d.config['sample'] for d in datasets])
 
             targets = [loadRef(id) for id in targetIDs if id in kConfDict('Ref')]
@@ -238,6 +238,7 @@ class Plot(BasePlot):
                 self.comp_pvalue(ind, v1, v2, p)
 
     def comp_pvalue(self, ind, v1, v2, p):
+        from scipy.stats import ttest_ind
         st, pv = ttest_ind(v1, v2, equal_var=False)
         if not pv <= 0.01:
             self.fit_df[p].loc[ind] = 0
@@ -456,7 +457,7 @@ def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
         radius = n
 
     # Plot data on ax
-    patches = bar(bins[:-1], radius, zorder=1, align='edge', width=widths,
+    patches = plt.bar(bins[:-1], radius, zorder=1, align='edge', width=widths,
                   edgecolor='black', fill=True, linewidth=2, **kwargs)
 
     # Set the direction of the zero angle
@@ -467,6 +468,12 @@ def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
         ax.set_yticks([])
 
     return n, bins, patches
+
+def circNarrow(ax, data, alpha, label, color):
+    circular_hist(ax, data, bins=16, alpha=alpha, label=label, color=color, offset=np.pi / 2)
+    arrow = patches.FancyArrowPatch((0, 0), (np.mean(data), 0.3), zorder=2, mutation_scale=30, alpha=alpha,
+                                    facecolor=color, edgecolor='black', fill=True, linewidth=0.5)
+    ax.add_patch(arrow)
 
 
 def dual_half_circle(center, radius, angle=0, ax=None, colors=('W', 'k'), **kwargs):
@@ -632,6 +639,8 @@ def boolean_indexing(v, fillval=np.nan):
 
 def annotate_plot(data, x, y, hue=None,show_ns=True,target_only=None, **kwargs):
     from statannotations.Annotator import Annotator
+    from lib.anal.fitting import pvalue_star
+    from scipy.stats import mannwhitneyu
     subIDs0 = np.unique(data[x].values)
     # print(subIDs0)
     if hue is not None :
@@ -705,6 +714,7 @@ def concat_datasets(ds, key='end', unit='sec'):
 
 def conf_ax_3d(vars, target, ax=None, fig=None, lims=None, title=None, maxN=5, labelpad=30, tickpad=10):
     if fig is None and ax is None:
+        from mpl_toolkits.mplot3d import Axes3D
         fig = plt.figure(figsize=(15, 10))
         ax = Axes3D(fig, azim=115, elev=15)
 
@@ -729,64 +739,14 @@ def conf_ax_3d(vars, target, ax=None, fig=None, lims=None, title=None, maxN=5, l
     return fig, ax
 
 
-def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits='best',
-                     marker='.', legend_outside=False,xlabel = 'time (sec)',xlim=None, **kwargs):
-    distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy', 'normal', 'uniform']
-    distro_cs = ['c', 'g', 'm', 'k', 'orange', 'brown', 'purple']
-    num_distros = len(distro_ls)
-    lws = [2] * num_distros
 
-    if fit_dic is None:
-        xmin, xmax = np.min(x0), np.max(x0)
-        fit_dic = fit_bout_distros(x0, xmin, xmax, discr, dataset_id='test', bout=bout, **kwargs)
-    idx_Kmax = fit_dic['idx_Kmax']
-    cdfs = fit_dic['cdfs']
-    pdfs = fit_dic['pdfs']
-    u2, du2, c2, c2cum = fit_dic['values']
-    lws[idx_Kmax] = 4
-    ylabel = 'probability'
-    xlabel = xlabel
-    xrange = u2
-    y = c2cum
-    ddfs = cdfs
-    for ii in ddfs:
-        if ii is not None:
-            ii /= ii[0]
-    axs[i].loglog(xrange, y, marker, color=color, alpha=0.7, label=label)
-    axs[i].set_title(bout)
-    axs[i].set_xlabel(xlabel)
-    axs[i].set_ylim([10 ** -3.5, 10 ** 0.2])
-    if xlim is not None :
-        axs[i].set_xlim(xlim)
-    distro_ls0, distro_cs0 = [], []
-    for z, (l, col, lw, ddf) in enumerate(zip(distro_ls, distro_cs, lws, ddfs)):
-        if ddf is None:
-            continue
-        if plot_fits == 'best' and z == idx_Kmax:
-            cc = color
-        elif plot_fits == 'all' or l in plot_fits:
-            distro_ls0.append(l)
-            distro_cs0.append(col)
-            cc = col
-        else:
-            continue
-        axs[i].loglog(xrange, ddf, color=cc, lw=lw, label=l)
-    if len(distro_ls0) > 1:
-        if legend_outside:
-            dataset_legend(distro_ls0, distro_cs0, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
-        else:
-            for ax in axs:
-                dataset_legend(distro_ls0, distro_cs0, ax=ax, loc='lower left', fontsize=15)
-    # dataset_legend(gIDs, colors, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
-    # fig.subplots_adjust(left=0.1, right=0.95, wspace=0.08, hspace=0.3, bottom=0.05)
-    for jj in [0]:
-        axs[jj].set_ylabel(ylabel)
 
 
 def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbol', 'Value', 'Unit'], rows=None,figsize=(14,11), **kwargs):
     from lib.aux.combining import render_mpl_table
     from lib.conf.base.dtypes import par
     from lib.conf.base.init_pars import init_pars
+    from lib.conf.stored.conf import loadConf
     m = loadConf(mID, "Model")
     if rows is None:
         rows = ['physics', 'body'] + [k for k, v in m.brain.modules.items() if v]

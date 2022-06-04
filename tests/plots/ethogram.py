@@ -1,4 +1,5 @@
-from lib.anal.plotting import plot_ethogram, timeplot, plot_2pars, plot_stridesNpauses
+from lib.anal.plotting import plot_stridesNpauses
+from lib.anal.plot_datasets import plot_ethogram, plot_2pars, timeplot
 from lib.conf.stored.conf import loadRef, kConfDict
 
 # print(kConfDict('Ref'))

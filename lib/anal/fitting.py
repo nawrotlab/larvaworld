@@ -436,7 +436,7 @@ def fit2d_coeff(df, vars, target,N=3, show=True):
     fit = np.dot(matrix, coeff)
     if show:
         import matplotlib.pyplot as plt
-        from lib.anal.plotting import plot_3d
+        from lib.anal.plot_datasets import plot_3d
         plot_3d(df, vars=vars, target=target, show=show, surface=True)
         plt.plot(fit, color='red', label='fitted')
         plt.plot(z, color='green', label='original')
@@ -457,7 +457,7 @@ def fit2d_predict(coeff, ranges,  Ngrid=100, target=None,vars=None,  show=True):
     predict = np.dot(matrix, coeff)
     if show:
         import matplotlib.pyplot as plt
-        from lib.anal.plotting import plot_surface
+        from lib.anal.plot_datasets import plot_surface
         z0 = predict.reshape(yy0.shape)
         fig3 = plot_surface(yy0, yy1, z0, vars=vars, target=target, show=show)
 

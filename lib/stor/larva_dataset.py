@@ -1,23 +1,17 @@
 import os.path
 import shutil
-from distutils.dir_util import copy_tree
 import numpy as np
 import pandas as pd
 import warnings
 import copy
 
-from matplotlib import pyplot as plt
-from scipy.stats import stats
-
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
 
-from lib.anal.plot_aux import modelConfTable
 from lib.calibration.model_fit import adapt_crawler, adapt_intermitter, adapt_interference, adapt_turner
 
 from lib.conf.base.dtypes import null_dict
-# from lib.conf.stored.conf import copyConf
-from lib.conf.base.par import getPar
+from lib.conf.base.opt_par import getPar
 from lib.process.aux import compute_interference
 
 from lib.process.calibration import comp_stride_variation, comp_segmentation
@@ -357,6 +351,8 @@ class LarvaDataset:
                 self.config.quality = np.round(valid / df.shape[0], 2)
             except:
                 pass
+        if 'aux_pars' not in self.config.keys():
+            self.inspect_aux(save=False)
 
     def save_config(self, add_reference=False, refID=None):
         self.update_config()
@@ -409,6 +405,26 @@ class LarvaDataset:
         # print(pd.HDFStore(self.dir_dict['aux_h5']).keys())
         df = self.read(key=f'{type}.{par}', file='aux_h5')
         return df
+
+    def inspect_aux(self, save=True):
+        aux_pars=dNl.AttrDict.from_nested_dicts({'distro' : [], 'dispersion' : [], 'other' : []})
+        distro_ps, dsp_ps,other_ps = [],[],[]
+        store = pd.HDFStore(self.dir_dict.aux_h5)
+        ks=store.keys()
+        ks=[k.split('/')[-1] for k in ks]
+        for k in ks :
+            kks=k.split('.')
+            if kks[0].endswith('distro') :
+                aux_pars.distro.append(kks[-1])
+            elif kks[0].endswith('dispersion'):
+                aux_pars.dispersion.append(kks[-1])
+            else :
+                aux_pars.other.append(kks[-1])
+        self.config.aux_pars=aux_pars
+
+        store.close()
+        if save :
+            self.save_config(add_reference=True, refID=self.config.refID)
 
     def load_dicts(self, type, ids=None):
         if ids is None:
@@ -760,9 +776,9 @@ class LarvaDataset:
                 except:
                     return None
 
-        if key == 'distro':
+        if key in ['distro', 'dispersion']:
             try:
-                return self.read(key=f'distro.{par}', file='aux_h5')
+                return self.read(key=f'{key}.{par}', file='aux_h5')
             except:
                 return self.get_par(par, key='step')
 
@@ -825,7 +841,6 @@ class LarvaDataset:
 
     def get_chunks(self, chunk, shorts, min_dur=0, max_dur=np.inf, idx=None):
         min_ticks = int(min_dur / self.config.dt)
-        from lib.conf.base.par import getPar
         pars = getPar(shorts)
         ss = self.step_data[pars]
 
@@ -890,7 +905,6 @@ class LarvaDataset:
 
     def get_chunk_par_distro(self, chunk, short=None, par=None, min_dur=0):
         if par is None:
-            from lib.conf.base.par import getPar
             par = getPar(short)
         chunk_idx = f'{chunk}_idx'
         chunk_dur = f'{chunk}_dur'
@@ -920,6 +934,9 @@ class LarvaDataset:
             pars = self.read(key='end', file='endpoint_h5').columns.values.tolist()
         elif key == 'step':
             pars = self.read(key='step').columns.values.tolist()
+        elif key in ['distro', 'dispersion']:
+            self.inspect_aux(save=False)
+            pars = self.config.aux_pars[key]
         if not return_shorts:
             return sorted(pars)
         else:

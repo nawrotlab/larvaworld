@@ -12,6 +12,7 @@ import lib.aux.naming as nam
 from lib.anal.plotting import plot_spatiotemporal_variation, plot_bend2orientation_analysis, \
     plot_sliding_window_analysis
 from lib.aux.dictsNlists import AttrDict
+from lib.conf.base.opt_par import getPar
 from lib.process.angular import comp_orientations, comp_angles, comp_angular
 from lib.process.aux import interpolate_nans
 from lib.process.basic import comp_extrema
@@ -206,7 +207,6 @@ def stride_max_flag_phase_analysis(dataset, agent_id=None, flag=None, par=None):
 
 def comp_stride_variation(d, component_vels=True):
     from lib.process.aux import detect_strides, process_epochs, fft_max
-    from lib.conf.base.par import getPar
     s, e, c = d.step_data, d.endpoint_data, d.config
     N = c.Npoints
     points = nam.midline(N, type='point')

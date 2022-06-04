@@ -12,6 +12,7 @@ import statsmodels.api as sm
 
 from lib.aux.dictsNlists import AttrDict, save_dict, flatten_list
 import lib.aux.naming as nam
+from lib.conf.base.opt_par import getPar
 
 from lib.process.store import store_aux_dataset
 
@@ -172,13 +173,13 @@ def compute_velocity(xy, dt, return_dst=False):
 def compute_component_velocity(xy, angles, dt, return_dst=False):
     x = xy[:, 0]
     y = xy[:, 1]
-    dx = np.diff(x)
-    dy = np.diff(y)
+    dx = np.diff(x, prepend=[np.nan])
+    dy = np.diff(y, prepend=[np.nan])
     d_temp = np.sqrt(dx ** 2 + dy ** 2)
     # This is the angle of the displacement vector relative to x-axis
     rads = np.arctan2(dy, dx)
     # And this is the angle of the displacement vector relative to the front-segment orientation vector
-    angles2ref = rads - angles[:-1]
+    angles2ref = rads - angles
     angles2ref %= 2 * np.pi
     d = d_temp * np.cos(angles2ref)
     v = d / dt
@@ -590,7 +591,6 @@ def stride_interference(a_sv, a_fov, strides, Nbins=64, strict=True, absolute=Tr
 
 def stride_max_vel_phis(s, e, c, Nbins=64):
     import lib.aux.naming as nam
-    from lib.conf.base.par import getPar
     points = nam.midline(c.Npoints, type='point')
     l, sv, pau_fov_mu = getPar(['l', 'sv', 'pau_fov_mu'])
     x = np.linspace(0, 2 * np.pi, Nbins)
@@ -632,7 +632,6 @@ def annotation(s, e, cc, vel_thr=0.3,
     chunk_dicts = AttrDict.from_nested_dicts({id: {**turn_dict[id], **crawl_dict[id]} for id in cc.agent_ids})
     turn_mode_annotation(e, chunk_dicts)
     if store :
-        from lib.conf.base.par import getPar
         path = cc.dir_dict.chunk_dicts
         os.makedirs(path, exist_ok=True)
         save_dict(chunk_dicts, f'{path}/{cc.id}.txt', use_pickle=True)
@@ -672,7 +671,6 @@ def annotation(s, e, cc, vel_thr=0.3,
 
 
 def fft_freqs(s, e, c):
-    from lib.conf.base.par import getPar
     v, fov, fv, fsv, ffov = getPar(['v', 'fov', 'fv', 'fsv', 'ffov'])
 
     try:
@@ -711,10 +709,15 @@ def mean_stride_curve(a, strides,da,Nbins=64) :
 
     return dic
 
+def cycle_curve_dict(s,dt) :
+    strides = detect_strides(s.sv, dt, return_extrema=False, return_runs=False)
+    da = np.array([np.trapz(s.fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
+    dic = {sh: mean_stride_curve(s[sh], strides, da) for sh in ['sv', 'fov', 'rov', 'foa', 'b']}
+    return AttrDict.from_nested_dicts(dic)
+
 
 
 def compute_interference(s, e, c, Nbins=64, chunk_dicts=None, store=False):
-    from lib.conf.base.par import getPar
     import lib.aux.naming as nam
     x = np.linspace(0, 2 * np.pi, Nbins)
 
@@ -815,7 +818,6 @@ def turn_mode_annotation(e, chunk_dicts):
 
 
 def turn_annotation(s, e, c, store=False):
-    from lib.conf.base.par import getPar
     fov, foa = getPar(['fov', 'foa'])
 
     turn_ps = getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
@@ -850,11 +852,25 @@ def turn_annotation(s, e, c, store=False):
         store_aux_dataset(s, pars=turn_ps, type='distro', file=c.aux_dir)
     return turn_dict
 
+def chunk_func(kc):
+    if kc in ['str', 'pau', 'run', 'str_c']:
+        def func(d):
+            # from lib.process.aux import crawl_annotation
+            s, e, c = d.step_data, d.endpoint_data, d.config
+            crawl_annotation(s, e, c, strides_enabled=True, store=True)
+    elif kc in ['tur', 'Ltur', 'Rtur']:
+        def func(d):
+            # from lib.process.aux import turn_annotation
+            s, e, c = d.step_data, d.endpoint_data, d.config
+            turn_annotation(s, e, c, store=True)
+    else:
+        func = None
+    return func
+
 
 def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
     if vel_thr is None:
         vel_thr = c.vel_thr
-    from lib.conf.base.par import getPar
     l, v, sv, dst, acc, fov, foa, b, bv, ba, fv = \
         getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv'])
 
@@ -969,7 +985,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
 
 def comp_bend_correction(refID='None.150controls'):
     from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf
-    from lib.conf.base.par import ParDict, getPar
+    from lib.conf.base.par import ParDict
     import copy
     import numpy as np
     d = loadRef(refID)
@@ -1086,7 +1102,6 @@ class FuncParHelper:
         return options
 
     def how_to_compute(self, s, par=None, short=None, **kwargs):
-        from lib.conf.base.par import getPar
         if par is None :
             par = getPar(short)
         elif short is None :
@@ -1113,3 +1128,51 @@ class FuncParHelper:
         else:
             self.apply_func(res[0],s=s, **kwargs)
             return self.compute(s=s,**kwargs)
+
+def finalize_eval(s, l, traj, ks, dt):
+    from lib.process.spatial import straightness_index
+    s.v = np.array(s.v)
+    s.sv = s.v / l
+    s.b = np.rad2deg(s.b)
+    s.fov = np.rad2deg(s.fov)
+    s.rov = np.rad2deg(s.rov)
+    s.bv = np.diff(s.b, prepend=[np.nan]) / dt
+    # self.eval.rov = self.eval.fov - self.eval.bv
+    if 'ba' in ks:
+        s.ba = np.diff(s.bv, prepend=[np.nan]) / dt
+    if 'a' in ks:
+        s.a = np.diff(s.v, prepend=[np.nan]) / dt
+    if 'foa' in ks:
+        s.foa = np.diff(s.fov, prepend=[np.nan]) / dt
+    if 'tor5' in ks:
+        s.tor5 = straightness_index(traj, int(5 / dt / 2), match_shape=False)
+    if 'tor2' in ks:
+        s.tor2 = straightness_index(traj, int(2 / dt / 2), match_shape=False)
+    if 'tor1' in ks:
+        s.tor1 = straightness_index(traj, int(1 / dt / 2), match_shape=False)
+    if 'tor10' in ks:
+        s.tor10 = straightness_index(traj, int(10 / dt / 2), match_shape=False)
+    if 'tor20' in ks:
+        s.tor20 = straightness_index(traj, int(20 / dt / 2), match_shape=False)
+    if 'tur_fou' in ks:
+        a_fov = pd.Series(s.fov)
+        Lturns, Rturns = detect_turns(a_fov, dt)
+
+        Ldurs, Lamps, Lmaxs = process_epochs(a_fov.values, Lturns, dt, return_idx=False)
+        Rdurs, Ramps, Rmaxs = process_epochs(a_fov.values, Rturns, dt, return_idx=False)
+        s.tur_fou = np.concatenate([Lamps, Ramps])
+        s.tur_t = np.concatenate([Ldurs, Rdurs])
+        s.tur_fov_max = np.concatenate([Lmaxs, Rmaxs])
+    if 'run_t' in ks:
+        a_sv = pd.Series(s.sv)
+        fv = fft_max(a_sv, dt, fr_range=(1.0, 2.5), return_amps=False)
+        strides, runs, run_counts = detect_strides(a_sv, dt, fr=fv, return_extrema=False)
+        pauses = detect_pauses(a_sv, dt, runs=runs)
+        pause_durs, pause_dsts, pause_maxs = process_epochs(a_sv, pauses, dt, return_idx=False)
+        run_durs, run_dsts, run_maxs = process_epochs(a_sv, runs, dt, return_idx=False)
+        s.run_d = run_dsts
+        s.run_t = run_durs
+        s.pau_t = pause_durs
+    for k, vs in s.items():
+        s[k] = vs[~np.isnan(vs)]
+    return s

@@ -8,8 +8,8 @@ from pypet import ObjectTable
 from lib.process.aux import suppress_stdout
 from lib.aux.dictsNlists import reconstruct_dict
 import lib.aux.sim_aux
-from lib.anal.plotting import plot_2d, plot_3pars, plot_endpoint_scatter, plot_endpoint_params, plot_debs, \
-    plot_heatmap_PI
+from lib.anal.plotting import plot_endpoint_scatter, plot_endpoint_params
+from lib.anal.plot_datasets import plot_debs, plot_heatmap_PI, plot_3pars, plot_2d
 from lib.sim.batch.aux import load_traj, retrieve_exp_conf
 from lib.sim.single.single_run import SingleRun
 from lib.stor.larva_dataset import LarvaDataset

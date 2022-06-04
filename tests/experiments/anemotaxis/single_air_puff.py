@@ -1,10 +1,7 @@
 import itertools
 
-import nengo_gui
 from lib.anal.argparsers import update_exp_conf
-from lib.anal.plotting import plot_ethogram
 from lib.conf.base.dtypes import null_dict
-from lib.conf.stored.conf import expandConf
 from lib.sim.single.single_run import SingleRun
 
 video=False

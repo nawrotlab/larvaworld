@@ -20,9 +20,9 @@ import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import eudi5x
 from lib.conf.base import paths
 from lib.conf.base.dtypes import null_dict, ga_dict
-from lib.conf.base.par import ParDict, getPar
+from lib.conf.base.opt_par import getPar
 from lib.conf.stored.conf import copyConf, kConfDict, loadRef, expandConf, saveConf, next_idx
-from lib.ga.robot.larva_robot import LarvaRobot
+from lib.ga.robot.larva_robot import LarvaRobot, LarvaOffline
 from lib.ga.scene.box import Box
 from lib.ga.scene.scene import Scene
 from lib.ga.scene.wall import Wall
@@ -78,7 +78,7 @@ class GAselector:
         self.generation_sim_time = 0
         # reset generation time
         self.start_generation_time = TimeUtil.current_time_millis()
-
+        #print(self.verbose, self.generation_num, self.Ngenerations)
         self.printd(1, '\nGeneration', self.generation_num, 'started')
 
     def sort_genomes(self):
@@ -506,6 +506,9 @@ class BaseGAlauncher(LarvaWorldSim):
 class GAlauncher(BaseGAlauncher):
     def __init__(self, ga_build_kws, ga_select_kws, show_screen=True, **kwargs):
         super().__init__(**kwargs)
+        if self.offline :
+            ga_build_kws.robot_class=LarvaOffline
+            show_screen=False
         self.ga_build_kws = ga_build_kws
         self.ga_select_kws = ga_select_kws
         self.show_screen = show_screen

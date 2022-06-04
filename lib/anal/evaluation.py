@@ -1,31 +1,28 @@
-import copy
 import itertools
 import os
 
 import numpy as np
-from matplotlib import ticker
 import seaborn as sns
 from scipy.stats import ks_2samp
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from lib.anal.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, prepare_sim_dataset, \
-    prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, sim_model, sim_models, RSS_dic
-from lib.anal.fitting import std_norm, minmax
-from lib.anal.plot_aux import modelConfTable, add_letters, process_plot, concat_datasets, annotate_plot, AutoPlot
+    prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, sim_models, RSS_dic
+
+from lib.anal.plot_aux import modelConfTable, annotate_plot, AutoPlot
 from lib.anal.plot_combos import model_summary, result_summary, dsp_summary
 from lib.anal.plotting import plot_trajectories, plot_dispersion, plot_ang_pars, stride_cycle, plot_bouts, \
-    plot_fft_multi, boxplots, plot_crawl_pars
+    plot_fft_multi, plot_crawl_pars
 from lib.aux.colsNstr import N_colors, col_df
-from lib.aux.combining import render_mpl_table
-from lib.conf.base import paths
-from lib.conf.base.dtypes import null_dict
-import lib.aux.dictsNlists as dNl
 
-from lib.conf.base.par import getPar
+
+from lib.conf.base.dtypes import null_dict
+
+from lib.conf.base.opt_par import getPar
 from lib.conf.stored.conf import loadRef, expandConf, next_idx
-from lib.sim.single.single_run import SingleRun
-from lib.stor.larva_dataset import LarvaDataset
+
+
 
 
 class EvalRun :
@@ -36,6 +33,7 @@ class EvalRun :
             id = f'evaluation_run_{next_idx("dispersion", "Eval")}'
         self.id=id
         if save_to is None:
+            from lib.conf.base import paths
             save_to = paths.path("SIM")
         self.path=f'eval_runs'
         self.bout_annotation = bout_annotation
@@ -90,6 +88,7 @@ class EvalRun :
 
         # if mode=='load' :
             try :
+                from lib.stor.larva_dataset import LarvaDataset
                 self.dataset_configs = self.load_data('dataset_configs')
                 self.datasets = [LarvaDataset(**c,load_data=False) for id, c in self.dataset_configs.items()]
                 print('Loaded existing datasets')
@@ -360,6 +359,7 @@ class EvalRun :
 
 
     def norm_error_dict(self, error_dict, mode='raw'):
+        from lib.anal.fitting import std_norm, minmax
         dic={}
         for k, df in error_dict.items():
             if mode == 'raw' :
@@ -456,7 +456,6 @@ class EvalRun :
             symbols=self.eval_symbols.end
             sim_data=self.sim_data.end
 
-        # ps2, ps2l = getPar(distro_ps, to_return=['d', 'lab'])
         filename = f'{mode}_{type}'
         Nps = len(pars)
         Ncols = 4
@@ -496,15 +495,13 @@ class EvalRun :
             P.adjust(W=0.01, H=0.5)
 
         elif type == 'box':
-
+            from lib.anal.plot_aux import concat_datasets
             data=concat_datasets(P.datasets, key=mode)
             palette = dict(zip(P.labels, P.colors))
             for sh in in_mm:
                 data[getPar(sh)] *= 1000
 
             for i, (p, sym) in enumerate(symbols.items()):
-                # ssym, un, lll, sss=getPar(d=p,to_return=['symbol', 'unit', 'l', 's'])
-                #print(p,ssym, un, lll, sss, sym)
                 kws = {
                     'x': "DatasetID",
                     'y': p,
@@ -562,6 +559,7 @@ class EvalRun :
                                         dataset_ids=self.dataset_ids,bout_annotation=self.bout_annotation,
                                Nids=self.N, colors=list(self.model_colors.values()), env_params = c.env_params, refDataset=self.target, data_dir=self.data_dir)
         else :
+            from lib.sim.single.single_run import SingleRun
             self.exp_conf = self.prepare_exp_conf(dur=dur, **kwargs)
             self.exp_conf.enrichment.metric_definition.dispersion.dsp_starts=self.dsp_starts
             self.exp_conf.enrichment.metric_definition.dispersion.dsp_stops=self.dsp_stops
@@ -582,6 +580,7 @@ class EvalRun :
 
 
 def error_table(data, k='',title = None, **kwargs):
+    from lib.aux.combining import render_mpl_table
     data = np.round(data, 3).T
     figsize = ((data.shape[1] + 3) * 4, data.shape[0])
     fig = render_mpl_table(data, highlighted_cells='row_min', title=title, figsize=figsize,
@@ -750,28 +749,3 @@ if __name__ == '__main__':
     evrun = EvalRun(refID=refID, id=id,modelIDs=mIDs,dataset_ids=dataset_ids, N=150,
                     bout_annotation=True,show=False, offline=False)
 
-
-    # evrun.run(video=False, dur=3.0)
-
-
-    # ds = evrun.datasets
-    # for d in ds:
-    #     s, e, c = d.step_data, d.endpoint_data, d.config
-    #     annotate(s,e,c)
-    #     d.save()
-    #     d.load(contour=False)
-    #     d.enrich(**enr, is_last=True)
-        # d.endpoint_data[getPar('pau_tr')].hist(color=d.color, label=d.id)
-    # _ = plot_crawl_pars(subfolder=None, pvalues=False, datasets =[evrun.target] + evrun.datasets,show=True)
-    # evrun.eval()
-    # plt.show()
-    #_ = evrun.plot_data(mode='step', type='box', in_mm = [])
-    # _=plot_trajectories(datasets =[evrun.target] + evrun.datasets, show=True, time_range=(0,40))
-    evrun.plot_results(['dispersion'])
-    # evrun.plot_models()
-    # _=boxplots(datasets =[evrun.target] + evrun.datasets, shorts=evrun.e_shorts, key='end', Ncols=4, annotation=True, show_ns=False,
-    #          in_mm = ['v_mu', 'pau_v_mu', 'run_v_mu'],show=True, target_only=evrun.target.id)
-    # _ = boxplots(datasets=[evrun.target] + evrun.datasets, shorts=evrun.s_shorts, key='step', Ncols=4, annotation=False,
-    #              show_ns=False,
-    #              in_mm=[], show=True, target_only=evrun.target.id)
-    # raise

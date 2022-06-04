@@ -2,7 +2,7 @@ import copy
 
 import PySimpleGUI as sg
 
-from lib.anal.plotting import plot_debs
+from lib.anal.plot_datasets import plot_debs
 from lib.conf.base.dtypes import null_dict
 from lib.conf.base.init_pars import substrate_dict
 from lib.gui.aux.elements import CollapsibleDict, Table, GraphList, SelectionList, Header

@@ -1,8 +1,7 @@
 import numpy as np
 
 from lib.aux.dictsNlists import AttrDict
-from lib.conf.base.dtypes import null_dict
-from lib.conf.base.par import getPar
+from lib.conf.base.opt_par import getPar
 
 
 def entry(plotID, title=None, **kwargs):

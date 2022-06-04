@@ -9,7 +9,7 @@ from lib.aux.dictsNlists import AttrDict
 
 
 from lib.conf.stored.conf import kConfDict
-from lib.conf.base.dtypes import null_dict, arena, par_dict
+from lib.conf.base.dtypes import null_dict, arena
 
 def build_ParsArg(name,k=None,h='',t=float,v=None,vs=None, **kwargs):
     if k is None :

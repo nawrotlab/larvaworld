@@ -1,19 +1,16 @@
-from types import BuiltinFunctionType, FunctionType
-from typing import ClassVar
-
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.stats import ks_2samp
 
 from lib.anal.plot_aux import plot_quantiles, BasePlot
-from lib.aux.dictsNlists import flatten_dict, AttrDict
+from lib.aux.dictsNlists import AttrDict
 from lib.aux.xy_aux import eudi5x
 from lib.conf.base.dtypes import ga_dict, null_dict
-from lib.conf.stored.conf import expandConf, copyConf, saveConf, loadConf, next_idx, kConfDict
+from lib.conf.stored.conf import expandConf
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 
 from lib.ga.util.ga_engine import GAlauncher
-from lib.process.aux import detect_strides, mean_stride_curve
+from lib.process.aux import detect_strides, mean_stride_curve, cycle_curve_dict
 
 ga_spaces = AttrDict.from_nested_dicts({
     'interference': ga_dict(name='interference', suf='brain.interference_params.',
@@ -32,8 +29,9 @@ ga_spaces = AttrDict.from_nested_dicts({
 
 
 def interference_evaluation(robot, pooled_cycle_curves):
+    robot_dic=robot.finalize(eval_shorts=['b', 'fov', 'foa', 'rov'])
     from lib.anal.eval_aux import RSS_dic, RSS
-    dic=robot.cycle_curve_dict()
+    dic=cycle_curve_dict(s=robot_dic,dt=robot.model.dt)
     error_dic = {}
     for sh, target_dic in pooled_cycle_curves.items():
         mode = 'abs' if sh == 'sv' else 'norm'
@@ -44,13 +42,13 @@ def interference_evaluation(robot, pooled_cycle_curves):
 
 def distro_KS_evaluation(robot, eval_shorts, eval_labels, eval):
     # print(robot.unique_id)
-    robot.finalize(eval_shorts)
+    robot_dic=robot.finalize(eval_shorts)
     ks = {}
     for p, lab in zip(eval_shorts, eval_labels):
-        if robot.eval[p].shape[0] == 0:
+        if robot_dic[p].shape[0] == 0:
             return -np.inf
         else:
-            ks[lab] = ks_2samp(eval[p], robot.eval[p])[0]
+            ks[lab] = ks_2samp(eval[p], robot_dic[p])[0]
             if np.isnan(ks[lab]):
                 return -np.inf
     robot.genome.fitness_dict = ks
@@ -95,9 +93,10 @@ def interference_plot(robots, generation_num, target_fov_curve, **kwargs):
     x = np.linspace(0, 2 * np.pi, Nbins)
     curves = np.zeros([len(robots), Nbins]) * np.nan
     for i, robot in enumerate(robots):
-        strides = detect_strides(robot.eval.sv, robot.model.dt, return_runs=False, return_extrema=False)
-        da = np.array([np.trapz(robot.eval.fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
-        curves[i, :] = mean_stride_curve(robot.eval[sh], strides,da)
+        robot_dic=robot.eval.dic
+        strides = detect_strides(robot_dic.sv, robot.model.dt, return_runs=False, return_extrema=False)
+        da = np.array([np.trapz(robot_dic.fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
+        curves[i, :] = mean_stride_curve(robot_dic[sh], strides,da)
     plot_quantiles(curves, from_np=True, x=x, axis=P.axs[0], color_shading='red')
     curve_mu = np.nanquantile(curves, q=0.5, axis=0)
     RSS = int(np.nanmean(np.nansum((curve_mu - target_fov_curve) ** 2)))

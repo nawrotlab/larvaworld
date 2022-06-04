@@ -8,7 +8,7 @@ import pandas as pd
 import lib.aux.dictsNlists
 import lib.aux.naming as nam
 
-from lib.conf.base.par import getPar
+from lib.conf.base.opt_par import getPar
 
 
 class ExpFitter:

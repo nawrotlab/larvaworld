@@ -662,7 +662,7 @@ class LarvaWorld:
             i.set_color(self.scale_clock_color)
 
     def plot_odorscape(self,scale=1.0,idx=0, **kwargs):
-        from lib.anal.plotting import plot_surface
+        from lib.anal.plot_datasets import plot_surface
         for id, layer in self.odor_layers.items():
             X, Y = layer.meshgrid
             x = X * 1000 / scale

@@ -7,15 +7,15 @@ import numpy as np
 from lib.aux.combining import combine_pdfs
 from lib.aux.dictsNlists import flatten_list, unique_list
 from lib.anal.comparing import ExpFitter
-from lib.anal.plotting import plot_turn_Dbearing, plot_turn_amp, plot_turns, timeplot, \
-    plot_navigation_index, plot_debs, plot_food_amount, plot_pathlength, plot_endpoint_params, barplot, \
-    plot_chunk_Dorient2source, plot_marked_strides, lineplot, plot_stridesNpauses, \
+from lib.anal.plotting import plot_turn_Dbearing, plot_turn_amp, plot_turns, plot_navigation_index, plot_endpoint_params, plot_chunk_Dorient2source, plot_marked_strides, plot_stridesNpauses, \
     plot_interference, plot_dispersion, plot_stride_Dbend, plot_stride_Dorient, plot_ang_pars, calibration_plot, \
-    plot_crawl_pars, boxplot, boxplot_double_patch, plot_2pars, plot_nengo_network, plot_marked_turns, \
+    plot_crawl_pars, boxplot, plot_marked_turns, \
     plot_sample_tracks
+from lib.anal.plot_datasets import plot_2pars, barplot, boxplot_double_patch, plot_nengo_network, timeplot, \
+    plot_pathlength, plot_food_amount, lineplot, plot_debs
 from lib.conf.stored.conf import loadConf
 from lib.conf.base.dtypes import null_dict
-from lib.conf.base.par import getPar
+from lib.conf.base.opt_par import getPar
 from lib.model.DEB.deb import deb_default
 from lib.conf.base import paths
 from lib.stor.larva_dataset import LarvaDataset

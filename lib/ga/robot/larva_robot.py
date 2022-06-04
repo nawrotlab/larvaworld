@@ -4,9 +4,8 @@ import pygame
 import pandas as pd
 import numpy as np
 
-from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
+
 from lib.aux.dictsNlists import AttrDict
-from lib.conf.base.par import getPar
 from lib.ga.exception.collision_exception import Collision
 
 from lib.ga.robot.motor_controller import MotorController, Actuator
@@ -14,8 +13,18 @@ from lib.ga.sensor.proximity_sensor import ProximitySensor
 from lib.ga.util.color import Color
 from lib.model.body.controller import BodySim, PhysicsController
 from lib.model.modules.brain import DefaultBrain
-from lib.process.aux import detect_turns, process_epochs, detect_strides, fft_max, detect_pauses, mean_stride_curve
-from lib.process.spatial import straightness_index
+from lib.process.aux import finalize_eval
+from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
+
+class EvalDict :
+    def __init__(self, dic):
+
+        self.dic = AttrDict.from_nested_dicts({k:[v] for k,v in dic.items()})
+
+
+    def update(self,dic):
+        for k,v in self.dic.items():
+            v.append(dic[k])
 
 
 class LarvaOffline:
@@ -25,12 +34,7 @@ class LarvaOffline:
         self.finalized = False
         self.collision_with_object = False
         self.unique_id = unique_id
-        self.eval = AttrDict.from_nested_dicts({
-            'b': [],
-            'fov': [],
-            'rov': [],
-            'v': [],
-        })
+
 
         self.pos = pos
         self.orientation = orientation
@@ -49,14 +53,22 @@ class LarvaOffline:
         self.Nsegs = larva_pars.body.Nsegs
         self.torque = 0
         self.cum_dur = 0
-
+        self.rear_orientation_change = 0
         self.cum_dst = 0.0
         self.dst = 0.0
+
+
+        self.eval=EvalDict(self.eval_step)
+
+    @ property
+    def eval_step(self):
+        dic={'b': self.body_bend, 'fov' : self.ang_vel, 'rov' : self.rear_orientation_change/self.model.dt, 'v' : self.lin_vel}
+        return dic
 
     def step(self):
         dt = self.model.dt
         self.cum_dur += dt
-        self.Nticks += 1
+        # self.Nticks += 1
 
         lin, ang, feed = self.brain.locomotor.step(A_in=0, length=self.real_length)
         self.lin_vel, self.ang_vel = self.controller.get_vels(lin, ang, self.ang_vel, self.lin_vel,
@@ -69,99 +81,34 @@ class LarvaOffline:
         self.orientation = (self.orientation + d_or) % (2 * np.pi)
         # self.ang_vel *= self.brain.locomotor.cur_ang_suppression
         self.dst = self.lin_vel * dt
-        d_ro = rear_orientation_change(self.body_bend, self.dst, self.real_length,
+        self.rear_orientation_change = rear_orientation_change(self.body_bend, self.dst, self.real_length,
                                        correction_coef=self.controller.bend_correction_coef)
-        self.rear_orientation = (self.rear_orientation + d_ro) % (2 * np.pi)
+        self.rear_orientation = (self.rear_orientation + self.rear_orientation_change) % (2 * np.pi)
         self.body_bend = wrap_angle_to_0(self.orientation - self.rear_orientation)
         self.cum_dst += self.dst
         k1 = np.array([math.cos(self.orientation), math.sin(self.orientation)])
         self.pos += k1 * self.dst
 
         self.trajectory.append(tuple(self.pos))
+        self.complete_step()
 
-        rov = d_ro / dt
-        # print(self.body_bend,rov,self.ang_vel, self.lin_vel)
-        self.eval.b.append(self.body_bend)
-        self.eval.fov.append(self.ang_vel)
-        self.eval.rov.append(rov)
-        self.eval.v.append(self.lin_vel)
+    def complete_step(self):
+        self.eval.update(self.eval_step)
+        self.Nticks += 1
+        # print(self.unique_id, self.Nticks)
 
-        # self.x, self.y = self.model.scene._transform(self.pos)
-        # self.olfactor_screen_pos = self.model.scene._transform(self.olfactor_pos)
+
 
     def sense_and_act(self):
         self.step()
 
-    # @property
-    # def direction(self):
-    #     return self.head.get_orientation()
-    def finalize(self, eval_shorts=['b', 'fov', 'rov'], step_data=False):
-        if self.finalized:
-            return
-        dt = self.brain.dt
-        self.trajectory = np.array(self.trajectory)[:self.Nticks, :]
-        self.eval.v = np.array(self.eval.v)
-        self.eval.sv = self.eval.v / self.real_length
-        self.eval.b = np.rad2deg(self.eval.b)
-        self.eval.fov = np.rad2deg(self.eval.fov)
-        self.eval.rov = np.rad2deg(self.eval.rov)
-        self.eval.bv = np.diff(self.eval.b, prepend=[np.nan]) / dt
-        # self.eval.rov = self.eval.fov - self.eval.bv
-        if 'ba' in eval_shorts:
-            self.eval.ba = np.diff(self.eval.bv, prepend=[np.nan]) / dt
-        if 'a' in eval_shorts:
-            self.eval.a = np.diff(self.eval.v, prepend=[np.nan]) / dt
-        if 'foa' in eval_shorts:
-            self.eval.foa = np.diff(self.eval.fov, prepend=[np.nan]) / dt
-        if 'tor5' in eval_shorts:
-            self.eval.tor5 = straightness_index(self.trajectory, int(5 / dt / 2), match_shape=False)
-        if 'tor2' in eval_shorts:
-            self.eval.tor2 = straightness_index(self.trajectory, int(2 / dt / 2), match_shape=False)
-        if 'tor1' in eval_shorts:
-            self.eval.tor1 = straightness_index(self.trajectory, int(1 / dt / 2), match_shape=False)
-        if 'tor10' in eval_shorts:
-            self.eval.tor10 = straightness_index(self.trajectory, int(10 / dt / 2), match_shape=False)
-        if 'tor20' in eval_shorts:
-            self.eval.tor20 = straightness_index(self.trajectory, int(20 / dt / 2), match_shape=False)
-        if 'tur_fou' in eval_shorts:
-            a_fov = pd.Series(self.eval.fov)
-            Lturns, Rturns = detect_turns(a_fov, dt)
+    def finalize(self, eval_shorts=['b', 'fov', 'rov']):
+        if not self.finalized:
+            self.eval.dic = finalize_eval(self.eval.dic, self.real_length, self.trajectory, eval_shorts, self.brain.dt)
+            self.finalized = True
+        return self.eval.dic
 
-            Ldurs, Lamps, Lmaxs = process_epochs(a_fov.values, Lturns, dt, return_idx=False)
-            Rdurs, Ramps, Rmaxs = process_epochs(a_fov.values, Rturns, dt, return_idx=False)
-            self.eval.tur_fou = np.concatenate([Lamps, Ramps])
-            self.eval.tur_t = np.concatenate([Ldurs, Rdurs])
-            self.eval.tur_fov_max = np.concatenate([Lmaxs, Rmaxs])
-        if 'run_t' in eval_shorts:
-            a_sv = pd.Series(self.eval.sv)
-            fv = fft_max(a_sv, dt, fr_range=(1.0, 2.5), return_amps=False)
-            strides, runs, run_counts = detect_strides(a_sv, dt, fr=fv, return_extrema=False)
-            pauses = detect_pauses(a_sv, dt, runs=runs)
-            pause_durs, pause_dsts, pause_maxs = process_epochs(a_sv, pauses, dt, return_idx=False)
-            run_durs, run_dsts, run_maxs = process_epochs(a_sv, runs, dt, return_idx=False)
-            self.eval.run_d = run_dsts
-            self.eval.run_t = run_durs
-            self.eval.pau_t = pause_durs
 
-        if step_data:
-            ps = getPar(list(self.eval.keys()))
-            s = pd.DataFrame(index=np.arange(self.Nticks), columns=ps)
-            for p, (k, vs) in zip(ps, self.eval.items()):
-                if vs.shape[0] == self.Nticks:
-                    s[p] = vs
-                self.eval[k] = vs[~np.isnan(vs)]
-        else:
-            for k, vs in self.eval.items():
-                self.eval[k] = vs[~np.isnan(vs)]
-
-        self.finalized = True
-
-    def cycle_curve_dict(self):
-        self.finalize(eval_shorts=['b', 'fov', 'foa', 'rov'])
-        strides = detect_strides(self.eval.sv, self.model.dt, return_extrema=False, return_runs=False)
-        da = np.array([np.trapz(self.eval.fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
-        dic = {sh: mean_stride_curve(self.eval[sh], strides, da) for sh in ['sv', 'fov', 'rov', 'foa', 'b']}
-        return AttrDict.from_nested_dicts(dic)
 
 
 class LarvaRobot(BodySim):
@@ -175,16 +122,17 @@ class LarvaRobot(BodySim):
         self.finalized = False
         self.collision_with_object = False
         self.unique_id = unique_id
-        self.eval = AttrDict.from_nested_dicts({
-            'b': [],
-            'fov': [],
-            'rov': [],
-            'v': [],
-        })
+
         self.pos = self.initial_pos
         self.brain = DefaultBrain(dt=self.model.dt, conf=larva_pars.brain, agent=self)
 
         self.x, self.y = self.model.scene._transform(self.pos)
+        self.eval = EvalDict(self.eval_step)
+
+    @property
+    def eval_step(self):
+        return {'b': self.body_bend, 'fov': self.head.get_angularvelocity(), 'rov': self.rear_orientation_change / self.model.dt,
+               'v': self.head.get_linearvelocity()}
 
     def draw(self, scene):
         for seg in self.segs:
@@ -197,13 +145,11 @@ class LarvaRobot(BodySim):
         return self.head.get_orientation()
 
     def complete_step(self):
-        self.Nticks += 1
-        self.eval.b.append(self.body_bend)
-        self.eval.rov.append(self.rear_orientation_change / self.model.dt)
-        self.eval.fov.append(self.head.get_angularvelocity())
-        self.eval.v.append(self.head.get_linearvelocity())
+
+        self.eval.update(self.eval_step)
 
         self.x, self.y = self.model.scene._transform(self.pos)
+        self.Nticks += 1
 
     def sense_and_act(self):
         self.step()
@@ -215,74 +161,13 @@ class LarvaRobot(BodySim):
             text_pos = pygame.Rect(self.x + (self.sim_length / 2), self.y + (self.sim_length / 2), 50, 50)
             screen.blit(text, text_pos)
 
-    def finalize(self, eval_shorts=['b', 'fov', 'rov'], step_data=False):
-        if self.finalized:
-            return
-        dt = self.brain.dt
-        self.trajectory = np.array(self.trajectory)[:self.Nticks, :]
-        self.eval.v = np.array(self.eval.v)
-        self.eval.sv = self.eval.v / self.real_length
-        self.eval.b = np.rad2deg(self.eval.b)
-        self.eval.fov = np.rad2deg(self.eval.fov)
-        self.eval.rov = np.rad2deg(self.eval.rov)
-        if 'bv' in eval_shorts:
-            self.eval.bv = np.diff(self.eval.b, prepend=[np.nan]) / dt
-            # self.eval.rov = self.eval.fov - self.eval.bv
-        if 'ba' in eval_shorts:
-            self.eval.ba = np.diff(self.eval.bv, prepend=[np.nan]) / dt
-        if 'a' in eval_shorts:
-            self.eval.a = np.diff(self.eval.v, prepend=[np.nan]) / dt
-        if 'foa' in eval_shorts:
-            self.eval.foa = np.diff(self.eval.fov, prepend=[np.nan]) / dt
-        if 'tor5' in eval_shorts:
-            self.eval.tor5 = straightness_index(self.trajectory, int(5 / dt / 2), match_shape=False)
-        if 'tor2' in eval_shorts:
-            self.eval.tor2 = straightness_index(self.trajectory, int(2 / dt / 2), match_shape=False)
-        if 'tor1' in eval_shorts:
-            self.eval.tor1 = straightness_index(self.trajectory, int(1 / dt / 2), match_shape=False)
-        if 'tor10' in eval_shorts:
-            self.eval.tor10 = straightness_index(self.trajectory, int(10 / dt / 2), match_shape=False)
-        if 'tor20' in eval_shorts:
-            self.eval.tor20 = straightness_index(self.trajectory, int(20 / dt / 2), match_shape=False)
-        if 'tur_fou' in eval_shorts or 'tur_t' in eval_shorts:
-            a_fov = pd.Series(self.eval.fov)
-            Lturns, Rturns = detect_turns(a_fov, dt)
+    def finalize(self, eval_shorts=['b', 'fov', 'rov']):
+        if not self.finalized:
+            self.eval.dic= finalize_eval(self.eval.dic, self.real_length, self.trajectory, eval_shorts, self.brain.dt)
+            self.finalized = True
+        return self.eval.dic
 
-            Ldurs, Lamps, Lmaxs = process_epochs(a_fov.values, Lturns, dt, return_idx=False)
-            Rdurs, Ramps, Rmaxs = process_epochs(a_fov.values, Rturns, dt, return_idx=False)
-            self.eval.tur_fou = np.concatenate([Lamps, Ramps])
-            self.eval.tur_t = np.concatenate([Ldurs, Rdurs])
-            self.eval.tur_fov_max = np.concatenate([Lmaxs, Rmaxs])
-        if 'run_t' in eval_shorts:
-            a_sv = pd.Series(self.eval.sv)
-            fv = fft_max(a_sv, dt, fr_range=(1.0, 2.5), return_amps=False)
-            strides, runs, run_counts = detect_strides(a_sv, dt, fr=fv, return_extrema=False)
-            pauses = detect_pauses(a_sv, dt, runs=runs)
-            pause_durs, pause_dsts, pause_maxs = process_epochs(a_sv, pauses, dt, return_idx=False)
-            run_durs, run_dsts, run_maxs = process_epochs(a_sv, runs, dt, return_idx=False)
-            self.eval.run_d = run_dsts
-            self.eval.run_t = run_durs
-            self.eval.pau_t = pause_durs
 
-        if step_data:
-            ps = getPar(list(self.eval.keys()))
-            s = pd.DataFrame(index=np.arange(self.Nticks), columns=ps)
-            for p, (k, vs) in zip(ps, self.eval.items()):
-                if vs.shape[0] == self.Nticks:
-                    s[p] = vs
-                self.eval[k] = vs[~np.isnan(vs)]
-        else:
-            for k, vs in self.eval.items():
-                self.eval[k] = vs[~np.isnan(vs)]
-
-        self.finalized = True
-
-    def cycle_curve_dict(self):
-        self.finalize(eval_shorts=['b', 'fov', 'foa', 'rov'])
-        strides = detect_strides(self.eval.sv, self.model.dt, return_extrema=False, return_runs=False)
-        da = np.array([np.trapz(self.eval.fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
-        dic = {sh: mean_stride_curve(self.eval[sh], strides, da) for sh in ['sv', 'fov', 'rov', 'foa', 'b']}
-        return AttrDict.from_nested_dicts(dic)
 
 
 class ObstacleLarvaRobot(LarvaRobot):

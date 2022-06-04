@@ -1056,30 +1056,30 @@ def runtime_pars( PF=None) :
     return [v['d'] for k, v in PF.items() if v['o'] == Larva and not k in PF.build_constants().keys()]
 
 
-def getPar(k=None, p=None, d=None, to_return='d', PF=None):
-    if PF is None :
-        PF = ParDict(mode='load').dict
-    if k is None:
-        if p is not None:
-            if type(p) == str:
-                k = [k for k in PF.keys() if PF[k]['p'] == p][0]
-            elif type(p) == list:
-                k = flatten_list([[k for k in PF.keys() if PF[k]['p'] == p0] for p0 in p])
-        elif d is not None:
-            if type(d) == str:
-                k = [k for k in PF.keys() if PF[k]['d'] == d][0]
-            elif type(d) == list:
-                k = flatten_list([[k for k in PF.keys() if PF[k]['d'] == d0] for d0 in d])
-    if type(k) == str:
-        if type(to_return) == list :
-            return [PF[k][i] for i in to_return]
-        elif type(to_return) == str :
-            return PF[k][to_return]
-    elif type(k) == list:
-        if type(to_return) == list:
-            return [[PF[kk][i] for kk in k] for i in to_return]
-        elif type(to_return) == str :
-            return [PF[kk][to_return] for kk in k]
+# def getPar(k=None, p=None, d=None, to_return='d', PF=None):
+#     if PF is None :
+#         PF = ParDict(mode='load').dict
+#     if k is None:
+#         if p is not None:
+#             if type(p) == str:
+#                 k = [k for k in PF.keys() if PF[k]['p'] == p][0]
+#             elif type(p) == list:
+#                 k = flatten_list([[k for k in PF.keys() if PF[k]['p'] == p0] for p0 in p])
+#         elif d is not None:
+#             if type(d) == str:
+#                 k = [k for k in PF.keys() if PF[k]['d'] == d][0]
+#             elif type(d) == list:
+#                 k = flatten_list([[k for k in PF.keys() if PF[k]['d'] == d0] for d0 in d])
+#     if type(k) == str:
+#         if type(to_return) == list :
+#             return [PF[k][i] for i in to_return]
+#         elif type(to_return) == str :
+#             return PF[k][to_return]
+#     elif type(k) == list:
+#         if type(to_return) == list:
+#             return [[PF[kk][i] for kk in k] for i in to_return]
+#         elif type(to_return) == str :
+#             return [PF[kk][to_return] for kk in k]
 
 
 
@@ -1087,7 +1087,3 @@ if __name__ == '__main__':
     from lib.conf.base.par import ParDict
 
     #
-    for short in ['fsv']:
-
-        p = getPar(short)
-        print(p)

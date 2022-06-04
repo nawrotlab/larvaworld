@@ -26,137 +26,6 @@ def comp_merged_chunk(s, c0, cs, pars=[], e=None):
         ps += [p_mc0, p_mc1, p_mc]
     return ps
 
-#
-# def detect_chunks(s, e, dt, chunk_names, par, chunk_only=None, par_ranges=[[-np.inf, np.inf]],
-#                   ROU_ranges=[[-np.inf, np.inf]],
-#                   non_overlap_chunk=None, merged_chunk=None, store_min=[False], store_max=[False],
-#                   min_dur=0.0):
-#     cs, c0 = chunk_names, merged_chunk
-#     ids = s.index.unique('AgentID').values
-#     Nids = len(ids)
-#     output = f'Detecting chunks-on-condition for {Nids} agents'
-#     N = len(s.index.unique('Step'))
-#     t0 = int(s.index.unique('Step').min())
-#     if min_dur == 0.0:
-#         min_dur = dt
-#     ss = s.loc[s[nam.id(chunk_only)].dropna().index] if chunk_only is not None else s
-#
-#     def agent_data(id):
-#         if non_overlap_chunk is None:
-#             return ss[par].xs(id, level='AgentID', drop_level=True)
-#         else:
-#             d = ss.xs(id, level='AgentID', drop_level=True)
-#             return d[d[nam.id(non_overlap_chunk)].isna()][par]
-#
-#     for c, (Vmin, Vmax), (Amin, Amax), storMin, storMax in zip(cs, par_ranges, ROU_ranges, store_min, store_max):
-#         c_ps = [S0, S1, Id, Dur, Max, Min] = [nam.start(c), nam.stop(c), nam.id(c), nam.dur(c),
-#                                               nam.max(nam.chunk_track(c, par)), nam.min(nam.chunk_track(c, par))]
-#         dic = {pp: np.zeros([N, Nids]) * np.nan for pp in c_ps}
-#
-#         for i, id in enumerate(ids):
-#             d = agent_data(id)
-#             ii0 = d[(d < Vmax) & (d > Vmin)].index
-#             s0s = ii0[np.where(np.diff(ii0, prepend=[-np.inf]) != 1)[0]]
-#             s1s = ii0[np.where(np.diff(ii0, append=[np.inf]) != 1)[0]]
-#             ROUs = np.array([np.trapz(d.loc[slice(s0, s1)].values) * dt for s0, s1 in zip(s0s, s1s)])
-#             s0s = s0s[(ROUs <= Amax) & (ROUs >= Amin)]
-#             s1s = s1s[(ROUs <= Amax) & (ROUs >= Amin)]
-#
-#             ds = (s1s - s0s) * dt
-#             ii1 = np.where(ds >= min_dur)
-#             ds = ds[ii1]
-#             s0s = s0s[ii1].values.astype(int)
-#             s1s = s1s[ii1].values.astype(int)
-#
-#             dic[S0][s0s - t0, i] = True
-#             dic[S1][s1s - t0, i] = True
-#             dic[Dur][s1s - t0, i] = ds
-#             for j, (s0, s1) in enumerate(zip(s0s, s1s)):
-#                 dic[Id][s0 - t0:s1 + 1 - t0, i] = j
-#                 if storMax:
-#                     dic[Max][s1 - t0, i] = s.loc[(slice(s0, s1), id), par].max()
-#                 if storMin:
-#                     dic[Min][s1 - t0, i] = s.loc[(slice(s0, s1), id), par].min()
-#
-#         for p, a in dic.items():
-#             s[p] = a.flatten()
-#     compute_chunk_metrics(s, e, cs)
-#     if c0 is not None:
-#         comp_merged_chunk(s, c0, cs)
-#         compute_chunk_metrics(s, e, [c0])
-#     print(output)
-#     print('All chunks-on-condition detected')
-#
-#
-# def detect_non_chunks(s, e, dt, chunk_name, guide_parameter, non_chunk_name=None, min_dur=0.0):
-#     ids = s.index.unique('AgentID').values
-#     Nids = len(ids)
-#     Nticks = len(s.index.unique('Step'))
-#     t0 = int(s.index.unique('Step').min())
-#     min_dur = int(min_dur / dt)
-#     chunk_id = nam.id(chunk_name)
-#     if non_chunk_name is None:
-#         c = nam.non(chunk_name)
-#     else:
-#         c = non_chunk_name
-#
-#     S0 = np.zeros([Nticks, Nids]) * np.nan
-#     S1 = np.zeros([Nticks, Nids]) * np.nan
-#     Dur = np.zeros([Nticks, Nids]) * np.nan
-#     Id = np.zeros([Nticks, Nids]) * np.nan
-#
-#     p_s0 = nam.start(c)
-#     p_s1 = nam.stop(c)
-#     p_id = nam.id(c)
-#     p_dur = nam.dur(c)
-#     print(f'Detecting non-chunks for {Nids} agents')
-#     for j, id in enumerate(ids):
-#         d = s.xs(id, level='AgentID', drop_level=True)
-#         nonna = d[guide_parameter].dropna().index.values
-#         inval = d[chunk_id].dropna().index.values
-#         val = np.setdiff1d(nonna, inval, assume_unique=True)
-#         if len(val) == 0:
-#             print(f'No valid steps for {id}')
-#             continue
-#         s0s = np.sort([val[0]] + val[np.where(np.diff(val) > 1)[0] + 1].tolist())
-#         s1s = np.sort(val[np.where(np.diff(val) > 1)[0]].tolist() + [val[-1]])
-#
-#         if len(s0s) != len(s1s):
-#             print('Number of start and stop indexes does not match')
-#             min = np.min([len(s0s), len(s1s)])
-#             s0s = s0s[:min]
-#             s1s = s1s[:min]
-#         v_s0s = []
-#         v_s1s = []
-#         for i, (s0, s1) in enumerate(zip(s0s, s1s)):
-#             if s0 > s1:
-#                 print('Start index bigger than stop index.')
-#                 continue
-#             elif s1 - s0 <= min_dur:
-#                 continue
-#             elif d[guide_parameter].loc[slice(s0, s1)].isnull().values.any():
-#                 continue
-#             else:
-#                 v_s0s.append(s0)
-#                 v_s1s.append(s1)
-#         v_s0s = np.array(v_s0s).astype(int)
-#         v_s1s = np.array(v_s1s).astype(int)
-#         S0[v_s0s - t0, j] = True
-#         S1[v_s1s - t0, j] = True
-#         Dur[v_s1s - t0, j] = (v_s1s - v_s0s) * dt
-#         for k, (v_s0, v_s1) in enumerate(zip(v_s0s, v_s1s)):
-#             Id[v_s0 - t0:v_s1 - t0, j] = k
-#
-#     pars = [p_s0, p_s1, p_dur, p_id]
-#     arrays = [S0, S1, Dur, Id]
-#     for p, a in zip(pars, arrays):
-#         s[p] = a.flatten()
-#
-#     compute_chunk_metrics(s, e, [c])
-#
-#     print('All non-chunks detected')
-#
-
 def compute_chunk_metrics(s, e, chunks):
     for c in chunks:
         dur = nam.dur(c)
@@ -281,58 +150,6 @@ def detect_contacting_chunks(s, e, c, aux_dir, dt, vel_par, track_point, chunk='
     store_aux_dataset(s, pars=[nam.dur(chain),nam.length(chain)], type='distro', file=aux_dir)
     print('All chunks-around-flag detected')
 
-#
-# def track_pars_in_chunks(s, e, aux_dir, chunks, pars, mode='dif', merged_chunk=None):
-#     ids = s.index.unique('AgentID').values
-#     Nids = len(ids)
-#     Nticks = len(s.index.unique('Step'))
-#     t0 = int(s.index.unique('Step').min())
-#     all_d = [s.xs(id, level='AgentID', drop_level=True) for id in ids]
-#     p_aux = []
-#     for c in chunks:
-#         c0 = nam.start(c)
-#         c1 = nam.stop(c)
-#
-#         all_0s = [d[d[c0] == True].index.values.astype(int) for d in all_d]
-#         all_1s = [d[d[c1] == True].index.values.astype(int) for d in all_d]
-#
-#         if mode == 'dif':
-#             p_tracks = nam.chunk_track(c, pars)
-#         elif mode == 'max':
-#             p_tracks = nam.max(nam.chunk_track(c, pars))
-#         elif mode == 'min':
-#             p_tracks = nam.min(nam.chunk_track(c, pars))
-#         p0s = [nam.at(p, c0) for p in pars]
-#         p1s = [nam.at(p, c1) for p in pars]
-#         for p, p_track, p0, p1 in zip(pars, p_tracks, p0s, p1s):
-#             p_pars = [p_track, p0, p1]
-#             p_array = np.zeros([Nticks, Nids, len(p_pars)]) * np.nan
-#             ds = [d[p] for d in all_d]
-#             for k, (id, d, s0s, s1s) in enumerate(zip(ids, ds, all_0s, all_1s)):
-#                 a0s = d[s0s].values
-#                 a1s = d[s1s].values
-#                 if mode == 'dif':
-#                     vs = a1s - a0s
-#                 elif mode == 'max':
-#                     vs = [d[slice(s0, s1)].max() for s0, s1 in zip(s0s, s1s)]
-#                 elif mode == 'min':
-#                     vs = [d[slice(s0, s1)].min() for s0, s1 in zip(s0s, s1s)]
-#                 p_array[s1s - t0, k, 0] = vs
-#                 p_array[s1s - t0, k, 1] = a0s
-#                 p_array[s1s - t0, k, 2] = a1s
-#             for i, p in enumerate(p_pars):
-#                 s[p] = p_array[:, :, i].flatten()
-#             e[nam.mean(p_track)] = s[p_track].groupby('AgentID').mean()
-#             e[nam.std(p_track)] = s[p_track].groupby('AgentID').std()
-#         p_aux = p_aux + p_tracks + p0s + p1s
-#
-#     if merged_chunk is not None:
-#         p_aux_m = comp_merged_chunk(s, merged_chunk, chunks, pars, e=e)
-#         p_aux += p_aux_m
-#
-#     store_aux_dataset(s, pars=p_aux, type='distro', file=aux_dir)
-#     print('All parameters tracked')
-#
 
 def comp_chunk_bearing(s, c, chunk, **kwargs):
     from lib.process.aux import comp_bearing
@@ -395,7 +212,7 @@ def get_stride_df(s,e,c,shorts=['sv', 'b','bv','fov','rov'], idx=0, Nbins=64):
     # from lib.process.aux import comp_bearing
     from lib.process.aux import detect_strides
 
-    from lib.conf.base.par import getPar
+    from lib.conf.base.opt_par import getPar
     id = c.agent_ids[idx]
     ee = e.loc[id]
     ss = s.xs(id, level='AgentID')

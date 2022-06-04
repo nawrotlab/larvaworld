@@ -7,7 +7,7 @@ import lib.aux.naming as nam
 from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledcirc, circledast, odot, paren, brack, dot_th, \
     ddot_th, omega, ddot, mathring
 
-from lib.aux.dictsNlists import AttrDict, load_dicts
+from lib.aux.dictsNlists import AttrDict, load_dicts, flatten_list
 from lib.conf.base.init_pars import init_pars, unit_dic
 
 func_dic = {
@@ -73,6 +73,14 @@ def buildPar(p, k, dtype=float, d=None, disp=None, sym=None,codename=None, lab=N
         v = vparfunc
 
         @property
+        def s(self):
+            return self.disp
+
+        @property
+        def l(self):
+            return self.param.v.label
+
+        @property
         def unit(self):
             if self.u is None :
                 return None
@@ -93,6 +101,10 @@ def buildPar(p, k, dtype=float, d=None, disp=None, sym=None,codename=None, lab=N
 
         @property
         def label(self):
+            return self.param.v.label
+
+        @property
+        def lab(self):
             return self.param.v.label
 
         @property
@@ -143,20 +155,33 @@ def buildPar(p, k, dtype=float, d=None, disp=None, sym=None,codename=None, lab=N
 
         # @property
         def exists(self, dataset) :
-            s, e = dataset.step_data, dataset.endpoint_data
+            s, e,c = dataset.step_data, dataset.endpoint_data, dataset.config
             dic={'step' : self.d in s.columns, 'end' : self.d in e.columns}
+            if 'aux_pars' in c.keys() :
+                for k,ps in c.aux_pars.items() :
+                    dic[k]=self.d in ps
             return dic
 
-        def get(self,dataset, key='step'):
-            return dataset.get_par(key=key,par=self.d)
+        def get(self,dataset, compute=True):
+            res = self.exists(dataset)
+            for key,exists in res.items() :
+                if exists :
+                    return dataset.get_par(key=key,par=self.d)
+
+            if compute :
+                self.compute(dataset)
+                return self.get(dataset, compute=False)
+            else :
+                print(f'Parameter {self.disp} not found')
+
 
 
         def compute(self,dataset):
-            res=self.exists(dataset)
-            if not res['step'] and not res['end']:
-                if self.func is not None :
-                    self.func(dataset)
-                    print(f'Parameter {self.disp} computed successfully')
+            if self.func is not None :
+                self.func(dataset)
+                print(f'Parameter {self.disp} computed successfully')
+            else :
+                print(f'Function to compute parameter {self.disp} is not defined')
 
 
 
@@ -203,24 +228,42 @@ class NewParDict :
 
     def add_operators(self, k0):
         b = self.dict[k0]
-        mu_kws = {'d': nam.mean(b.d), 'p': nam.mean(b.p), 'sym': bar(b.sym), 'disp': f'mean {b.disp}', 'u': b.u,
+        def mean_func(d) :
+            d.endpoint_data[nam.mean(b.d)] = d.step_data[b.d].dropna().groupby('AgentID').mean()
+        mu_kws = {'d': nam.mean(b.d), 'p': nam.mean(b.p), 'sym': bar(b.sym), 'disp': f'mean {b.disp}', 'u': b.u,'func':mean_func,
                   'k': f'{b.k}_mu'}
-        std_kws = {'d': nam.std(b.d), 'p': nam.std(b.p), 'sym': wave(b.sym), 'disp': f'std {b.disp}', 'u': b.u,
+        def std_func(d) :
+            d.endpoint_data[nam.std(b.d)] = d.step_data[b.d].dropna().groupby('AgentID').std()
+        std_kws = {'d': nam.std(b.d), 'p': nam.std(b.p), 'sym': wave(b.sym), 'disp': f'std {b.disp}', 'u': b.u,'func':std_func,
                    'k': f'{b.k}_std'}
-        min_kws = {'d': nam.min(b.d), 'p': nam.min(b.p), 'sym': sub(b.sym, 'min'), 'disp': f'minimum {b.disp}',
+        def min_func(d) :
+            d.endpoint_data[nam.min(b.d)] = d.step_data[b.d].dropna().groupby('AgentID').min()
+        min_kws = {'d': nam.min(b.d), 'p': nam.min(b.p), 'sym': sub(b.sym, 'min'), 'disp': f'minimum {b.disp}','func':min_func,
                    'u': b.u, 'k': f'{b.k}_min'}
-        max_kws = {'d': nam.max(b.d), 'p': nam.max(b.p), 'sym': sub(b.sym, 'max'), 'disp': f'maximum {b.disp}',
+        def max_func(d) :
+            d.endpoint_data[nam.max(b.d)] = d.step_data[b.d].dropna().groupby('AgentID').max()
+        max_kws = {'d': nam.max(b.d), 'p': nam.max(b.p), 'sym': sub(b.sym, 'max'), 'disp': f'maximum {b.disp}','func':max_func,
                    'u': b.u, 'k': f'{b.k}_max'}
-        fin_kws = {'d': nam.final(b.d), 'p': nam.final(b.p), 'sym': sub(b.sym, 'fin'), 'disp': f'final {b.disp}',
+        def fin_func(d) :
+            d.endpoint_data[nam.final(b.d)] = d.step_data[b.d].dropna().groupby('AgentID').last()
+        fin_kws = {'d': nam.final(b.d), 'p': nam.final(b.p), 'sym': sub(b.sym, 'fin'), 'disp': f'final {b.disp}','func':fin_func,
                    'u': b.u, 'k': f'{b.k}_fin'}
-        cum_kws = {'d': nam.cum(b.d), 'p': nam.cum(b.p), 'sym': sub(b.sym, 'cum'), 'disp': f'total {b.disp}', 'u': b.u,
+        def init_func(d) :
+            d.endpoint_data[nam.initial(b.d)] = d.step_data[b.d].dropna().groupby('AgentID').first()
+        init_kws = {'d': nam.initial(b.d), 'p': nam.initial(b.p), 'sym': sub(b.sym, '0'), 'disp': f'initial {b.disp}','func':init_func,
+                   'u': b.u, 'k': f'{b.k}_init'}
+        def cum_func(d) :
+            d.endpoint_data[nam.cum(b.d)] = d.step_data[b.d].groupby('AgentID').sum()
+        cum_kws = {'d': nam.cum(b.d), 'p': nam.cum(b.p), 'sym': sub(b.sym, 'cum'), 'disp': f'total {b.disp}', 'u': b.u,'func':cum_func,
                    'k': nam.cum(b.k)}
 
-        for kws in [mu_kws, std_kws, min_kws, max_kws, fin_kws, cum_kws]:
+        for kws in [mu_kws, std_kws, min_kws, max_kws, fin_kws, init_kws,cum_kws]:
             kws['vfunc']=param.Number
             self.addPar(**kws)
 
     def add_chunk(self, pc, kc):
+        from lib.process.aux import chunk_func
+        func = chunk_func(kc)
         p0, p1, pt, pid, ptr, pN, pl = nam.start(pc), nam.stop(pc), nam.dur(pc), nam.id(pc), nam.dur_ratio(pc), nam.num(pc),nam.length(pc)
         pN_mu=nam.mean(pN)
 
@@ -231,24 +274,28 @@ class NewParDict :
         self.addPar(
             **{'p': p0, 'k': k0, 'u_name': 'sec', 'sym': subsup('t', kc, 0), 'disp': f'{pc} start', 'vfunc': param.Number})
         self.addPar(
-            **{'p': p1, 'k': k1,'u_name': 'sec', 'sym': subsup('t', kc, 1), 'disp': f'{pc} end', 'vfunc': param.Number})
+            **{'p': p1, 'k': k1,'u_name': 'sec', 'sym': subsup('t', kc, 1), 'disp': f'{pc} end', 'vfunc': param.Number, 'func' : func})
         self.addPar(**{'p': pid, 'k': kid, 'u_name': None, 'sym': sub('idx', kc),'dtype': str, 'disp': f'{pc} idx', 'vfunc': param.String})
+
+        def func_tr(d) :
+            e=d.endpoint_data
+            e[ptr] = e[nam.cum(pt)] / e[nam.cum(nam.dur(''))]
         self.addPar(
-            **{'p': ptr, 'k': ktr, 'u_name': None, 'sym': sub('r', kc), 'disp': f'% time in {pc}s', 'vfunc': param.Magnitude})
-        self.addPar(**{'p': pN, 'k': kN, 'u_name': None, 'sym': sub('N', f'{pc}s'),'dtype': int, 'disp': f'# {pc}s', 'vfunc': param.Integer})
+            **{'p': ptr, 'k': ktr, 'u_name': None, 'sym': sub('r', kc), 'disp': f'% time in {pc}s', 'vfunc': param.Magnitude, 'func' : func_tr})
+        self.addPar(**{'p': pN, 'k': kN, 'u_name': None, 'sym': sub('N', f'{pc}s'),'dtype': int, 'disp': f'# {pc}s', 'vfunc': param.Integer, 'func' : func})
 
 
         for ii in ['on', 'off'] :
             self.addPar(**{'p': f'{pN_mu}_{ii}_food', 'k': f'{kN_mu}_{ii}_food', 'vfunc': param.Number})
             self.addPar(**{'p': f'{ptr}_{ii}_food', 'k': f'{ktr}_{ii}_food', 'vfunc': param.Magnitude})
 
-        self.add_rate(k_num=kN, k_den=nam.cum('t'), k=kN_mu, p=pN_mu, d=pN_mu,sym=bar(kN), disp=f' mean # {pc}s/sec')
+        self.add_rate(k_num=kN, k_den=nam.cum('t'), k=kN_mu, p=pN_mu, d=pN_mu,sym=bar(kN), disp=f' mean # {pc}s/sec', func=func)
         s00 = Delta('t')
-        self.addPar(**{'p': pt, 'k': kt, 'u_name': 'sec', 'sym': sub(s00, kc), 'disp': f'{pc} duration', 'vfunc': param.Number})
+        self.addPar(**{'p': pt, 'k': kt, 'u_name': 'sec', 'sym': sub(s00, kc), 'disp': f'{pc} duration', 'vfunc': param.Number, 'func' : func})
         self.add_operators(k0=kt)
 
         if str.endswith(pc, 'chain'):
-            self.addPar(**{'p': pl, 'k': kl, 'sym': sub('l', kc),'dtype': int, 'vfunc': param.Integer})
+            self.addPar(**{'p': pl, 'k': kl, 'sym': sub('l', kc),'dtype': int, 'vfunc': param.Integer, 'func' : func})
             self.add_operators(k0=kl)
 
     def add_chunk_track(self, kc, k, extrema=True):
@@ -298,9 +345,18 @@ class NewParDict :
             sym_v = dot(b.sym)
         if sym_a is None:
             sym_a = ddot(b.sym)
-        self.addPar(**{'p': p_v, 'k': k_v, 'd': d_v, 'u': u_v, 'sym': sym_v, 'disp': disp_v,'vfunc': param.Number})
-        # self.add_diff(k_v)
-        self.addPar(**{'p': p_a, 'k': k_a, 'd': d_a, 'u': u_a, 'sym': sym_a, 'disp': disp_a,'vfunc': param.Number})
+
+        def func_v(d) :
+            from lib.process.spatial import comp_rate
+            s, e, c = d.step_data, d.endpoint_data, d.config
+            comp_rate(s, c, p = b.d, pv=d_v)
+        self.addPar(**{'p': p_v, 'k': k_v, 'd': d_v, 'u': u_v, 'sym': sym_v, 'disp': disp_v,'vfunc': param.Number, 'func':func_v})
+
+        def func_a(d):
+            from lib.process.spatial import comp_rate
+            s, e, c = d.step_data, d.endpoint_data, d.config
+            comp_rate(s, c, p=d_v, pv=d_a)
+        self.addPar(**{'p': p_a, 'k': k_a, 'd': d_a, 'u': u_a, 'sym': sym_a, 'disp': disp_a,'vfunc': param.Number, 'func':func_a})
 
     def add_scaled(self, k0, sym=None, disp=None, **kwargs):
         b = self.dict[k0]
@@ -351,7 +407,13 @@ class NewParDict :
         dur = int(r1 - r0)
         p = f'{a}_{r0}_{r1}'
         k = f'{k0}_{r0}_{r1}'
-        self.addPar(**{'p': p, 'k': k, 'u_name': 'm', 'sym': subsup(s0, f'{r0}', f'{r1}'),'vfunc': param.Number,
+
+        def func(d) :
+            from lib.process.spatial import comp_dispersion
+            s, e, c = d.step_data, d.endpoint_data, d.config
+            comp_dispersion(s, e, c, recompute=True, dsp_starts=[r0], dsp_stops=[r1], store=True)
+
+        self.addPar(**{'p': p, 'k': k, 'u_name': 'm', 'sym': subsup(s0, f'{r0}', f'{r1}'),'vfunc': param.Number,'func' : func,
                        'lab': f"dispersal in {dur}''"})
         self.add_scaled(k0=k)
         self.add_operators(k0=k)
@@ -440,14 +502,21 @@ class NewParDict :
             p0 = 'tortuosity'
             if i == '':
                 p = p0
+                func=None
             else:
                 p = f'{p0}_{i}'
+                def func(d):
+                    from lib.process.spatial import comp_straightness_index
+                    s, e, c = d.step_data, d.endpoint_data, d.config
+                    comp_straightness_index(s, e=e, c=c, dt=c.dt, tor_durs=[i], store=True)
             k0 = 'tor'
             k = f'{k0}{i}'
             disp = f"{p0} over {i}''"
-            self.addPar(**{'p': p, 'k': k, 'd': p, 'u_name': None,'lim': (0.0,1.0), 'sym': sub(k0, i),'disp': disp, 'vfunc': param.Magnitude})
+            self.addPar(**{'p': p, 'k': k, 'd': p, 'u_name': None,'lim': (0.0,1.0), 'sym': sub(k0, i),'disp': disp, 'vfunc': param.Magnitude, 'func':func})
             self.add_operators(k0=k)
         self.addPar(**{'p': 'anemotaxis', 'k': 'anemotaxis', 'd': 'anemotaxis', 'u_name': 'm', 'sym': 'anemotaxis'})
+
+
 
     def build_chunks(self):
         chunk_dict = {
@@ -462,6 +531,7 @@ class NewParDict :
             'fee_c': nam.chain('feed')
         }
         for kc, pc in chunk_dict.items():
+
             self.add_chunk(pc=pc, kc=kc)
             for k in ['fov', 'rov', 'foa', 'roa', 'x', 'y', 'fo', 'fou', 'ro', 'rou', 'b', 'bv', 'ba', 'v', 'sv', 'a', 'sa']:
                 self.add_chunk_track(kc=kc, k=k)
@@ -480,7 +550,34 @@ class NewParDict :
         self.addPar(**{'p':f'handedness_score_on_food', 'k':'tur_H_on_food'})
         self.addPar(**{'p':f'handedness_score_off_food', 'k':'tur_H_off_food'})
 
-newParDict=NewParDict().dict
+ParDict=NewParDict().dict
+
+def getPar(k=None, p=None, d=None, to_return='d', PF=ParDict):
+    if PF is None :
+        PF = NewParDict().dict
+    if k is None:
+        if p is not None:
+            if type(p) == str:
+                k = [k for k in PF.keys() if PF[k].p == p][0]
+            elif type(p) == list:
+                k = flatten_list([[k for k in PF.keys() if PF[k].p == p0] for p0 in p])
+        elif d is not None:
+            if type(d) == str:
+                k = [k for k in PF.keys() if PF[k].d == d][0]
+            elif type(d) == list:
+                k = flatten_list([[k for k in PF.keys() if PF[k].d == d0] for d0 in d])
+    if type(k) == str:
+        par=PF[k]
+        if type(to_return) == list :
+            return [getattr(par,i) for i in to_return]
+        elif type(to_return) == str :
+            return getattr(par,to_return)
+    elif type(k) == list:
+        pars=[PF[kk] for kk in k]
+        if type(to_return) == list:
+            return [[getattr(par,i) for  par in pars] for i in to_return]
+        elif type(to_return) == str :
+            return [getattr(par,to_return) for  par in pars]
 
 def base_dtype(dtype):
     if dtype in [float, Tuple[float], List[float], List[Tuple[float]]]:
@@ -519,6 +616,49 @@ def init2opt_dict(name):
 
         opt_dict[k] = func(**kws)
     return opt_dict
+
+class OptParDict(Parameterized):
+    def __init__(self, name, **kwargs):
+        super().__init__(name=name)
+        opt_dict = {name: init2opt_dict(name)}
+        for k, v in opt_dict[name].items():
+            self.param.add_parameter(k, v)
+        for k, v in kwargs.items():
+            self.__setattr__(k, v)
+
+    @property
+    def dict(self):
+        dic = self.param.values()
+        dic.pop('name', None)
+        return AttrDict.from_nested_dicts(dic)
+
+    @property
+    def entry(self):
+        return AttrDict.from_nested_dicts({self.name : self.dict})
+
+
+class SimParConf(OptParDict):
+    def __init__(self, exp=None, conf_type='Exp', sim_ID=None, path=None,duration=None, **kwargs):
+        if exp is not None and conf_type is not None:
+            from lib.conf.stored.conf import loadConf, next_idx
+            if duration is None:
+                try :
+                    exp_conf = loadConf(exp, conf_type)
+                    duration = exp_conf.sim_params.duration
+                except :
+                    duration = 3.0
+            if sim_ID is None:
+                sim_ID = f'{exp}_{next_idx(exp, conf_type)}'
+            if path is None:
+                if conf_type == 'Exp':
+                    path = f'single_runs/{exp}'
+                elif conf_type == 'Ga':
+                    path = f'ga_runs/{exp}'
+                elif conf_type == 'Batch':
+                    path = f'batch_runs/{exp}'
+                elif conf_type == 'Eval':
+                    path = f'eval_runs/{exp}'
+        super().__init__(name='sim_params', sim_ID=sim_ID, path=path,duration=duration, **kwargs)
 
 if __name__ == '__main__':
     # print(newParDict.b)

@@ -1,16 +1,14 @@
-import copy
 import itertools
-import time
 
 import numpy as np
 import pandas as pd
 
-from lib.process.aux import compute_component_velocity, compute_velocity, compute_centroid, interpolate_nans
+from lib.process.aux import compute_component_velocity, compute_velocity, compute_centroid
 from lib.aux.ang_aux import rotate_multiple_points, angle_dif
 from lib.aux.dictsNlists import group_list_by_n, flatten_list
 import lib.aux.naming as nam
 from lib.process.store import store_aux_dataset
-from lib.conf.base.par import getPar
+from lib.conf.base.opt_par import getPar
 from lib.aux.xy_aux import eudi5x
 
 
@@ -128,6 +126,15 @@ def comp_spatial(s, e, c, mode='minimal'):
     scale_to_length(s, e, c, pars=pars)
     print('All spatial parameters computed')
 
+def comp_rate(s,c, p, pv=None):
+    if pv is None :
+        pv = nam.vel(p)
+    dt=c.dt
+    V = np.zeros([c.Nticks, c.N]) * np.nan
+
+    for i, id in enumerate(c.agent_ids):
+        V[1:, i] = np.diff(s[p].xs(id, level='AgentID').values) / c.dt
+    s[pv] = V.flatten()
 
 def comp_length(s, e, c, mode='minimal', recompute=False):
     if 'length' in e.columns.values and not recompute:

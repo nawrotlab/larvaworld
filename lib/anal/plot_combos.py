@@ -2,12 +2,11 @@
 # from matplotlib import pyplot as plt
 import numpy as np
 from matplotlib.gridspec import GridSpec
-import os
 import matplotlib.pyplot as plt
 
 
-from lib.anal.plot_aux import BasePlot, modelConfTable
-from lib.anal.plotting import plot_dispersion
+from lib.anal.plot_aux import BasePlot
+
 
 
 class GridPlot(BasePlot):
@@ -152,7 +151,7 @@ def combo_plot_vel_definition(d, save_to=None, save_as='vel_definition.pdf', com
     fig.savefig(f'{save_to}/{save_as}', dpi=300)
 
 def dsp_summary(datasets, target,range=(0,40), **kwargs):
-    from lib.anal.plotting import plot_trajectories,plot_bouts,plot_crawl_pars,plot_ang_pars
+    from lib.anal.plotting import plot_trajectories,plot_crawl_pars,plot_dispersion
     w, h = 54,26
     P = GridPlot(name=f'dsp_summary_{range}',  width=w, height=h, scale=(0.4, 0.5),text_xy0=(0.05, 0.95), **kwargs)
     ds=[target]+datasets

@@ -2,13 +2,13 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema, spectrogram
 
+from lib.conf.base.opt_par import getPar
 from lib.process.aux import apply_filter_to_array_with_nans_multidim, interpolate_nans, suppress_stdout
 from lib.aux.dictsNlists import common_member
 import lib.aux.naming as nam
 from lib.process.angular import angular_processing
 from lib.process.spatial import spatial_processing, comp_source_metrics, comp_dispersion, comp_PI, \
     align_trajectories, comp_wind_metrics, comp_final_anemotaxis, comp_PI2, comp_straightness_index
-from lib.conf.base.par import getPar
 
 
 def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
@@ -53,41 +53,6 @@ def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_
 
         s[p_min] = min_array[:, i, :].flatten()
         s[p_max] = max_array[:, i, :].flatten()
-
-
-# def compute_freq(s, e, dt, parameters, freq_range=None, compare_params=False):
-#     ids = s.index.unique('AgentID').values
-#     Nids = len(ids)
-#     Npars = len(parameters)
-#     V = np.zeros(Npars)
-#     F = np.ones((Npars, Nids)) * np.nan
-#     for i, p in enumerate(parameters):
-#         for j, id in enumerate(ids):
-#             d = s[p].xs(id, level='AgentID', drop_level=True)
-#             try:
-#                 f, t, Sxx = spectrogram(d, fs=1 / dt)
-#                 # keep only frequencies of interest
-#                 if freq_range:
-#                     f0, f1 = freq_range
-#                     valid = np.where((f >= f0) & (f <= f1))
-#                     f = f[valid]
-#                     Sxx = Sxx[valid, :][0]
-#                 max_freq = f[np.argmax(np.nanmedian(Sxx, axis=1))]
-#             except:
-#                 max_freq = np.nan
-#             F[i, j] = max_freq
-#     if compare_params:
-#         ind = np.argmax(V)
-#         best_p = parameters[ind]
-#         existing = common_member(nam.freq(parameters), e.columns.values)
-#         e.drop(columns=existing, inplace=True)
-#         e[nam.freq(best_p)] = F[ind]
-#     else:
-#         for i, p in enumerate(parameters):
-#             e[nam.freq(p)] = F[i]
-#     # if is_last:
-#     #     self.save()
-#
 
 def filter(s, dt, Npoints, c, freq=2, N=1, inplace=True, recompute=False, **kwargs):
     if freq in ['', None, np.nan]:
@@ -265,3 +230,5 @@ def process(processing, s, e, c, mode='minimal', traj_colors=True, show_output=T
             except:
                 pass
         return s, e
+
+
