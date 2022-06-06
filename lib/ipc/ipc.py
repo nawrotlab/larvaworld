@@ -90,6 +90,8 @@ class Message(object):
 class Client(object):
     def __init__(self, server_address):
         self.addr = server_address
+        # print(self.addr)
+        # raise
         if isinstance(self.addr, (str,bytes)):
             address_family = socket.AF_UNIX
         else:

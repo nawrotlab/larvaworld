@@ -232,10 +232,6 @@ class RemoteBrianModelMemory(Memory):
         self.sim_id = sim_id
         self.G = G
         self.t_sim = int(self.dt * 1000)
-        # self.step(t_warmup=300)
-        #
-        # print(self.t_sim)
-        # raise
 
     def runRemoteModel(self, model_instance_id, odor_id, t_sim=100, t_warmup=0, concentration=1, **kwargs):
         # odor_id: 0,1,2
@@ -247,6 +243,7 @@ class RemoteBrianModelMemory(Memory):
         with Client((self.server_host, self.server_port)) as client:
             [response] = client.send([msg])  # this is a LarvaMessage object again
             # extract returned model results
+            print(response.params)
             mbon_p = response.param('MBONp')
             mbon_n = response.param('MBONn')
             mbon_dif = mbon_p - mbon_n
