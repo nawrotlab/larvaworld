@@ -16,8 +16,7 @@ from lib.conf.stored.conf import loadConfDict, loadConf, expandConf, kConfDict, 
 import lib.aux.colsNstr as fun
 from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par, col_idx_dict, pars_to_tree, conf_to_tree, \
     multiconf_to_tree
-from lib.conf.base.par import runtime_pars
-from lib.conf.base.opt_par import getPar
+from lib.conf.base.opt_par import getPar,runtime_pars
 from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse, \
     col_kws, default_list_width
 from lib.gui.aux.buttons import named_bool_button, BoolButton, GraphButton, button_row

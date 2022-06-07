@@ -2,6 +2,8 @@ import math
 
 import numpy as np
 
+from lib.aux import naming as nam
+
 
 def single_parametric_interpolate(obj_x_loc, obj_y_loc, numPts=50):
     n = len(obj_x_loc)
@@ -77,3 +79,13 @@ def eudi5x(a, b):
 def xy_projection(point, angle: float, distance: float):
     return [point[0] + math.cos(angle) * distance,
         point[1] + math.sin(angle) * distance]
+
+
+def comp_rate(s,c, p, pv=None):
+    if pv is None :
+        pv = nam.vel(p)
+    V = np.zeros([c.Nticks, c.N]) * np.nan
+
+    for i, id in enumerate(c.agent_ids):
+        V[1:, i] = np.diff(s[p].xs(id, level='AgentID').values) / c.dt
+    s[pv] = V.flatten()

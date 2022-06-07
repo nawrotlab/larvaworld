@@ -608,23 +608,11 @@ class LarvaDataset:
         self.segs = nam.midline(self.Nsegs, type='seg')
 
         self.points_xy = nam.xy(self.points)
-        # self.points_dst = nam.dst(self.points)
-        # self.points_vel = nam.vel(self.points)
-        # self.points_acc = nam.acc(self.points)
-        # self.point_lin_pars = self.points_dst + self.points_vel + self.points_acc
 
-        # self.angles_vel = nam.vel(self.angles)
-        # self.angles_acc = nam.acc(self.angles)
-        # self.angle_pars = self.angles + self.angles_vel + self.angles_acc
 
         self.contour = nam.contour(Nc)
         self.contour_xy = nam.xy(self.contour)
 
-        # self.cent_xy = nam.xy('centroid')
-        # self.cent_dst = nam.dst('centroid')
-        # self.cent_vel = nam.vel('centroid')
-        # self.cent_acc = nam.acc('centroid')
-        # self.cent_lin_pars = [self.cent_dst, self.cent_vel, self.cent_acc]
 
         ang = ['front_orientation', 'rear_orientation', 'bend']
         self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang)

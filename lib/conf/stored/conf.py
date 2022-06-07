@@ -55,12 +55,19 @@ def loadConfDict(conf_type, use_pickle=False):
 def kConfDict(conf_type, **kwargs) :
     return list(loadConfDict(conf_type, **kwargs).keys())
 
-def ConfSelector(conf_type, default=None,single_choice=True, **kwargs) :
-    if single_choice :
-        p=param.Selector(objects=kConfDict(conf_type), default=default, **kwargs)
-    else :
-        p = param.ListSelector(objects=kConfDict(conf_type), default=default, **kwargs)
-    return p
+def ConfSelector(conf_type, default=None,single_choice=True) :
+    def func():
+
+        kws={
+            'objects': kConfDict(conf_type),
+            'default':default
+        }
+        if single_choice :
+            func0=param.Selector
+        else :
+            func0 = param.ListSelector
+        return func0(**kws)
+    return func
 
 
 def loadRef(id) :
@@ -277,3 +284,4 @@ if __name__ == '__main__':
     # store_confs(['Exp'])
     # store_confs(['Data'])
     store_confs(['Ga'])
+    # store_confs(keys = ['Data', 'Aux', 'Model', 'Env', 'Exp', 'Ga'])

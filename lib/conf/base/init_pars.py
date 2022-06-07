@@ -3,8 +3,7 @@ from types import FunctionType
 
 import param
 import siunits as siu
-
-
+from siunits import DerivedUnit
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import numpy as np
@@ -86,14 +85,6 @@ substrate_dict = {
 }
 
 
-siu.day = siu.s * 24 * 60 * 60
-siu.cm = siu.m * 10 ** -2
-siu.mm = siu.m * 10 ** -3
-siu.g = siu.kg * 10 ** -3
-siu.deg = siu.I.rename("deg", "deg", "plain angle")
-siu.microM = siu.mol * 10 ** -6
-unit_dic = {None: 1 * siu.I,'# $segments$': 1 * siu.I, 'rad': 1 * siu.rad, 'deg': 1 * siu.deg,
-             'sec': 1 * siu.s, 'm': 1 * siu.m,'cm': 1 * siu.cm, '$mm$': 1 * siu.mm,'mm': 1 * siu.mm}
 
 def init_vis():
     d = {}
@@ -565,21 +556,20 @@ def init_pars():
                    'h': 'The XY coordinates of the body contour.'},
     }
 
-    d['body'] = {'initial_length': {'v': 0.004, 'max': 0.01, 'lim': (0.0,0.01),'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'initial',
-                                    'label': 'length', 'symbol': '$l$', 'u_name': '$mm$','k' : 'l0','vfunc': param.Number,
+    d['body'] = {'initial_length': {'v': 0.004, 'lim': (0.0,0.01),'dv': 0.0001, 'aux_vs': ['sample'], 'disp': 'initial',
+                                    'label': 'length', 'symbol': '$l$', 'u': 'm','k' : 'l0','vfunc': param.Number,
                                     'combo': 'length', 'h': 'The initial body length.'},
-                 'length_std': {'v': 0.0, 'max': 0.001,'lim': (0.0,0.001), 'dv': 0.0001, 'u_name': '$mm$', 'aux_vs': ['sample'],'vfunc': param.Number, 'disp': 'std','k' : 'l_std',
+                 'length_std': {'v': 0.0, 'lim': (0.0,0.001), 'dv': 0.0001, 'u': 'm', 'aux_vs': ['sample'],'vfunc': param.Number, 'disp': 'std','k' : 'l_std',
                                 'combo': 'length', 'h': 'The standard deviation of the initial body length.'},
-                 'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12, 'label': 'number of body segments', 'symbol': '-','vfunc': param.Integer,
-                           'u_name': '# $segments$', 'u' : 1*siu.I,'k' : 'Nsegs',
+                 'Nsegs': {'t': int, 'v': 2, 'lim': (1,12), 'label': 'number of body segments', 'symbol': '-','vfunc': param.Integer,
+                           'u_name': '# $segments$', 'k' : 'Nsegs',
                            'h': 'The number of segments comprising the larva body.'},
-                 'seg_ratio': {'max': 1.0,'k' : 'seg_r','lim': (0.0,1.0),'u' : 1*siu.I,'vfunc': param.Magnitude,
+                 'seg_ratio': {'max': 1.0,'k' : 'seg_r','lim': (0.0,1.0),'vfunc': param.Magnitude,
                                'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
-                 # [5 / 11, 6 / 11]
-                 'touch_sensors': {'t': int, 'min': 0, 'max': 8,'u' : 1*siu.I,'k' : 'sens_touch','vfunc': param.Integer,
+                 'touch_sensors': {'t': int, 'lim': (0,8),'k' : 'sens_touch','vfunc': param.Integer,
                                    'h': 'The number of touch sensors existing on the larva body.'},
-                 'shape': {'t': str, 'v': 'drosophila_larva', 'vs': ['drosophila_larva', 'zebrafish_larva'],'k' : 'body_shape','u' : None,'vfunc': param.Selector,
-                           'h': 'The body shape.'},
+                 'shape': {'t': str, 'v': 'drosophila_larva', 'vs': ['drosophila_larva', 'zebrafish_larva'],'k' : 'body_shape',
+                           'vfunc': param.Selector,'h': 'The body shape.'},
                  }
 
     d['intermitter'] = {
@@ -864,7 +854,8 @@ def init_pars():
                               'h': 'The range of larva body orientations to sample from, in degrees.'}
     }
 
-    d['larva_model'] = {'t': str, 'vparfunc': ConfSelector('Model', default='explorer'), 'v': 'explorer', 'vs': kConfDict('Model')}
+    d['larva_model'] = {'t': str, 'vparfunc': ConfSelector('Model', default='explorer'), 'v': 'explorer', 'vs': kConfDict('Model'), 'symbol' : sub('ID', 'mod'),
+                        'k' : 'mID', 'h' : 'The stored larva model configurations as a list of IDs', 'disp' : 'larva-model ID'}
 
     d['Larva_DISTRO'] = {
         'model': d['larva_model'],

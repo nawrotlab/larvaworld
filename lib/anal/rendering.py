@@ -6,7 +6,7 @@ import pygame
 from scipy.spatial import ConvexHull
 from shapely.geometry import MultiPoint
 
-import lib.process.aux
+
 
 
 class Viewer(object):
@@ -472,6 +472,7 @@ class SimulationState(ScreenItem):
 
 
 def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, traj_color=None):
+    from lib.aux.sim_aux import parse_array_at_nans
     trajs = [fly.trajectory for fly in agents]
     if traj_color is not None:
         traj_cols = [traj_color.xs(fly.unique_id, level='AgentID') for fly in agents]
@@ -492,7 +493,7 @@ def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, traj_colo
         # This is the case for larva trajectories derived from experiments where some values are np.nan
         else:
             traj_x = np.array([x for x, y in traj])
-            ds, de = lib.process.aux.parse_array_at_nans(traj_x)
+            ds, de = parse_array_at_nans(traj_x)
             parsed_traj = [traj[s:e] for s, e in zip(ds, de)]
             parsed_traj_col = [traj_col[s:e] for s, e in zip(ds, de)]
 

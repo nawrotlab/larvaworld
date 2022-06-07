@@ -126,15 +126,6 @@ def comp_spatial(s, e, c, mode='minimal'):
     scale_to_length(s, e, c, pars=pars)
     print('All spatial parameters computed')
 
-def comp_rate(s,c, p, pv=None):
-    if pv is None :
-        pv = nam.vel(p)
-    dt=c.dt
-    V = np.zeros([c.Nticks, c.N]) * np.nan
-
-    for i, id in enumerate(c.agent_ids):
-        V[1:, i] = np.diff(s[p].xs(id, level='AgentID').values) / c.dt
-    s[pv] = V.flatten()
 
 def comp_length(s, e, c, mode='minimal', recompute=False):
     if 'length' in e.columns.values and not recompute:

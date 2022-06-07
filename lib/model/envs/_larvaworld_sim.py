@@ -158,9 +158,10 @@ class LarvaWorldSim(LarvaWorld):
         return False
 
     def create_collectors(self, output):
-        from lib.conf.base.par import ParDict
+        from lib.conf.base.pars import RefParDict
         from lib.aux.collecting import TargetedDataCollector, collection_dict
-        self.par_dict = ParDict(mode='load').dict
+        self.par_dict = RefParDict().par_dict
+        # self.par_dict = ParDict(mode='load').dict
         kws0 = {'par_dict': self.par_dict}
         kws = {
             'objects': self.get_flies(),

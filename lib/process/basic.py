@@ -3,7 +3,8 @@ import pandas as pd
 from scipy.signal import argrelextrema, spectrogram
 
 from lib.conf.base.opt_par import getPar
-from lib.process.aux import apply_filter_to_array_with_nans_multidim, interpolate_nans, suppress_stdout
+from lib.process.aux import interpolate_nans, suppress_stdout
+from lib.aux.sim_aux import apply_filter_to_array_with_nans_multidim
 from lib.aux.dictsNlists import common_member
 import lib.aux.naming as nam
 from lib.process.angular import angular_processing

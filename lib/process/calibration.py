@@ -206,7 +206,8 @@ def stride_max_flag_phase_analysis(dataset, agent_id=None, flag=None, par=None):
 
 
 def comp_stride_variation(d, component_vels=True):
-    from lib.process.aux import detect_strides, process_epochs, fft_max
+    from lib.process.aux import detect_strides, process_epochs
+    from lib.aux.sim_aux import fft_max
     s, e, c = d.step_data, d.endpoint_data, d.config
     N = c.Npoints
     points = nam.midline(N, type='point')
@@ -368,7 +369,7 @@ def comp_segmentation(d):
 
 def fit_ang_pars(refID) :
     from lib.conf.stored.conf import loadRef
-    from lib.conf.base.par import ParDict
+    from lib.conf.base.opt_par import ParDict
     from lib.model.modules.turner import NeuralOscillator
     from scipy.optimize import minimize, rosen, rosen_der
 

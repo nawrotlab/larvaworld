@@ -5,57 +5,17 @@ import pandas as pd
 import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
-from scipy.signal import sosfiltfilt, butter, find_peaks, argrelextrema
+from scipy.signal import sosfiltfilt, find_peaks, argrelextrema
 from scipy.spatial import ConvexHull
-from scipy.fft import fft, fftfreq
 import statsmodels.api as sm
 
-from lib.aux.dictsNlists import AttrDict, save_dict, flatten_list
-import lib.aux.naming as nam
+from lib.aux.dictsNlists import AttrDict, save_dict
+from lib.aux.sim_aux import fft_max, fft_freqs
 from lib.conf.base.opt_par import getPar
+from lib.aux import naming as nam
+
 
 from lib.process.store import store_aux_dataset
-
-
-def parse_array_at_nans(a):
-    a = np.insert(a, 0, np.nan)
-    a = np.insert(a, -1, np.nan)
-    dif = np.diff(np.isnan(a).astype(int))
-    de = np.where(dif == 1)[0]
-    ds = np.where(dif == -1)[0]
-    return ds, de
-
-
-def apply_sos_filter_to_array_with_nans(array, sos, padlen=6):
-    try:
-        array_filt = np.full_like(array, np.nan)
-        ds, de = parse_array_at_nans(array)
-        for s, e in zip(ds, de):
-            k = array[s:e]
-            if len(k) > padlen:
-                k_filt = sosfiltfilt(sos, k, padlen=padlen)
-                array_filt[s:e] = k_filt
-        return array_filt
-    except:
-        array_filt = sosfiltfilt(sos, array, padlen=padlen)
-        return array_filt
-
-
-def apply_filter_to_array_with_nans_multidim(array, freq, fr, N=1):
-    sos = butter(N=N, Wn=freq, btype='lowpass', analog=False, fs=fr, output='sos')
-    # The array chunks must be longer than padlen=6
-    padlen = 6
-    # 2-dimensional array must have each timeseries in different column
-    if array.ndim == 1:
-        return apply_sos_filter_to_array_with_nans(array=array, sos=sos, padlen=padlen)
-    elif array.ndim == 2:
-        return np.array([apply_sos_filter_to_array_with_nans(array=array[:, i], sos=sos, padlen=padlen) for i in
-                         range(array.shape[1])]).T
-    elif array.ndim == 3:
-        return np.transpose([apply_filter_to_array_with_nans_multidim(array[:, :, i], freq, fr, N=1) for i in
-                             range(array.shape[2])], (1, 2, 0))
-    else:
-        raise ValueError('Method implement for up to 3-dimensional array')
 
 
 def compute_centroid(points):
@@ -230,48 +190,6 @@ def moving_average(a, n=3):
     # return ret[n - 1:] / n
 
 
-def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
-    """
-    Powerspectrum of signal.
-
-    Compute the powerspectrum of a signal abd its dominant frequency within some range.
-
-    Parameters
-    ----------
-    a : array
-        1D np.array : velocity timeseries
-    dt : float
-        Timestep of the timeseries
-    fr_range : Tuple[float,float]
-        Frequency range allowed. Default is (0.0, +np.inf)
-
-    Returns
-    -------
-    xf : array
-        Array of computed frequencies.
-    yf : array
-        Array of computed frequency powers.
-    xmax : float
-        Dominant frequency within range.
-
-    """
-
-    a = np.nan_to_num(a)
-    Nticks = len(a)
-    xf = fftfreq(Nticks, dt)[:Nticks // 2]
-    yf = fft(a, norm="backward")
-    yf = 2.0 / Nticks * np.abs(yf[:Nticks // 2])
-    yf = 1000 * yf / np.sum(yf)
-    # yf = moving_average(yf, n=21)
-    xf_trunc = xf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
-    yf_trunc = yf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
-    fr = xf_trunc[np.argmax(yf_trunc)]
-    if return_amps:
-        return fr, yf
-    else:
-        return fr
-
-
 def slow_freq(a, dt, tmax=60.0):
     """
     Dominant slow frequency of signal.
@@ -307,37 +225,6 @@ def slow_freq(a, dt, tmax=60.0):
     fr_median = np.nanmedian(frs)
     return fr_median
 
-
-def slowNfast_freqs(s, e, c, point_idx=8, scaled=False):
-    from lib.conf.base.par import ParDict
-    dic = ParDict(mode='load').dict
-    l, fov = [dic[k]['d'] for k in ['l', 'fov']]
-
-    if point_idx is None:
-        xy_pair = ["x", "y"]
-    else:
-        import lib.aux.naming as nam
-        xy_pair = nam.xy(nam.midline(c.Npoints, type='point'))[point_idx]
-    fr0l, fr1l = "lin_short_fr", "lin_long_fr"
-    e[fr0l] = np.nan
-    e[fr1l] = np.nan
-    fr0a, fr1a = "ang_short_fr", "ang_long_fr"
-    e[fr0a] = np.nan
-    e[fr1a] = np.nan
-    for id in c.agent_ids:
-        df = s.xs(id, level="AgentID")
-        # l_mu=np.nanmedian(df[l])
-        xy = df[xy_pair].values
-        v0 = compute_velocity(xy, dt=c.dt)
-        if scaled:
-            v0 /= e[l].loc[id]
-        e[fr1l].loc[id] = slow_freq(v0, c.dt)
-        e[fr0l].loc[id] = fft_max(v0, c.dt, fr_range=(0.5, +np.inf))
-
-        fov0 = df[fov].values
-        e[fr1a].loc[id] = slow_freq(fov0, c.dt)
-
-        e[fr0a].loc[id] = fft_max(fov0, c.dt, fr_range=(0.15, +np.inf))
 
 
 def process_epochs(a, epochs, dt, return_idx=True):
@@ -623,7 +510,7 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
 
 def annotation(s, e, cc, vel_thr=0.3,
                strides_enabled=True,store=False, **kwargs):
-    from lib.aux.dictsNlists import flatten_list, AttrDict, save_dict
+    from lib.aux.dictsNlists import AttrDict, save_dict
     from lib.process.bouts import comp_patch_metrics, comp_chunk_bearing
     fft_freqs(s, e, cc)
 
@@ -668,25 +555,6 @@ def annotation(s, e, cc, vel_thr=0.3,
     #     bout_dic = fit_bouts(c=cc, aux_dic=aux_dic,s=s,e=e, id=cc.id)
     #     return bout_dic
 
-
-
-def fft_freqs(s, e, c):
-    v, fov, fv, fsv, ffov = getPar(['v', 'fov', 'fv', 'fsv', 'ffov'])
-
-    try:
-        e[fv] = s[v].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(1.0, 2.5))
-        e[fsv] = e[fv]
-    except:
-        pass
-    e[ffov] = s[fov].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(0.1, 0.8))
-    e['turner_input_constant'] = (e[ffov] / 0.024) + 5
-
-
-def get_freq(d, par, fr_range=None) :
-    if fr_range is None :
-        fr_range = (0.0, +np.inf)
-    s, e, c = d.step_data, d.endpoint_data, d.config
-    e[nam.freq(par)]=s[par].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=fr_range)
 
 def stride_interp(a, strides,Nbins=64) :
     x = np.linspace(0, 2 * np.pi, Nbins)
@@ -852,20 +720,8 @@ def turn_annotation(s, e, c, store=False):
         store_aux_dataset(s, pars=turn_ps, type='distro', file=c.aux_dir)
     return turn_dict
 
-def chunk_func(kc):
-    if kc in ['str', 'pau', 'run', 'str_c']:
-        def func(d):
-            # from lib.process.aux import crawl_annotation
-            s, e, c = d.step_data, d.endpoint_data, d.config
-            crawl_annotation(s, e, c, strides_enabled=True, store=True)
-    elif kc in ['tur', 'Ltur', 'Rtur']:
-        def func(d):
-            # from lib.process.aux import turn_annotation
-            s, e, c = d.step_data, d.endpoint_data, d.config
-            turn_annotation(s, e, c, store=True)
-    else:
-        func = None
-    return func
+
+
 
 
 def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
@@ -883,14 +739,14 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
     lin_vs = np.zeros([c.N, len(lin_ps)]) * np.nan
     str_vs = np.zeros([c.N, len(str_ps)]) * np.nan
 
-    run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l'])
+    run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l', 'str_t'])
     run_vs = np.zeros([c.Nticks, c.N, len(run_ps)]) * np.nan
 
     crawl_dict = {}
 
 
     for jj, id in enumerate(c.agent_ids):
-        strides, str_chain_ls,stride_Dor = [], [], []
+        strides, str_chain_ls,stride_Dor,stride_durs,strides1 = [], [], [], [], []
         a_v = s[v].xs(id, level="AgentID").values
         a_fov = s[fov].xs(id, level="AgentID").values
 
@@ -926,6 +782,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
         run_vs[runs1, jj, 1] = run_durs
         run_vs[runs1, jj, 2] = run_dsts
         run_vs[runs1, jj, 3] = str_chain_ls
+        run_vs[strides1, jj, 4] = stride_durs
 
         if b in s.columns:
             pau_bs = s[b].xs(id, level="AgentID").abs().values[pause_idx]
@@ -984,8 +841,8 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
 
 
 def comp_bend_correction(refID='None.150controls'):
-    from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf
-    from lib.conf.base.par import ParDict
+    from lib.conf.stored.conf import loadRef
+    from lib.conf.base.opt_par import ParDict
     import copy
     import numpy as np
     d = loadRef(refID)

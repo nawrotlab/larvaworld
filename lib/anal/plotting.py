@@ -2176,7 +2176,7 @@ def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, short=None, ang_absolute=T
 
 def plot_fft(s, c, palette=None, axx=None, ax=None, fig=None, **kwargs):
     from scipy.fft import fft, fftfreq
-    from lib.process.aux import fft_max
+    from lib.aux.sim_aux import fft_max
     if palette is None:
         palette = {'v': 'red', 'fov': 'blue'}
     P = BasePlot(name=f'fft_powerspectrum', **kwargs)

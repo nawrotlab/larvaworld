@@ -1,9 +1,13 @@
 import math
 
 import numpy as np
-from scipy.signal import spectrogram
+from numpy.fft import fftfreq
+from scipy.fft import fft
+from scipy.signal import spectrogram, sosfiltfilt, butter
 from shapely.geometry import Point, Polygon, LineString
 from shapely.ops import split
+
+from lib.aux import naming as nam
 
 
 def LvsRtoggle(side):
@@ -169,3 +173,104 @@ def get_tank_polygon(c, k=0.97, return_polygon=True):
     else :
         # tank_shape=np.insert(tank_shape,-1,tank_shape[0,:])
         return tank_shape
+
+
+def parse_array_at_nans(a):
+    a = np.insert(a, 0, np.nan)
+    a = np.insert(a, -1, np.nan)
+    dif = np.diff(np.isnan(a).astype(int))
+    de = np.where(dif == 1)[0]
+    ds = np.where(dif == -1)[0]
+    return ds, de
+
+
+def apply_sos_filter_to_array_with_nans(array, sos, padlen=6):
+    try:
+        array_filt = np.full_like(array, np.nan)
+        ds, de = parse_array_at_nans(array)
+        for s, e in zip(ds, de):
+            k = array[s:e]
+            if len(k) > padlen:
+                k_filt = sosfiltfilt(sos, k, padlen=padlen)
+                array_filt[s:e] = k_filt
+        return array_filt
+    except:
+        array_filt = sosfiltfilt(sos, array, padlen=padlen)
+        return array_filt
+
+
+def apply_filter_to_array_with_nans_multidim(array, freq, fr, N=1):
+    sos = butter(N=N, Wn=freq, btype='lowpass', analog=False, fs=fr, output='sos')
+    # The array chunks must be longer than padlen=6
+    padlen = 6
+    # 2-dimensional array must have each timeseries in different column
+    if array.ndim == 1:
+        return apply_sos_filter_to_array_with_nans(array=array, sos=sos, padlen=padlen)
+    elif array.ndim == 2:
+        return np.array([apply_sos_filter_to_array_with_nans(array=array[:, i], sos=sos, padlen=padlen) for i in
+                         range(array.shape[1])]).T
+    elif array.ndim == 3:
+        return np.transpose([apply_filter_to_array_with_nans_multidim(array[:, :, i], freq, fr, N=1) for i in
+                             range(array.shape[2])], (1, 2, 0))
+    else:
+        raise ValueError('Method implement for up to 3-dimensional array')
+
+
+def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
+    """
+    Powerspectrum of signal.
+
+    Compute the powerspectrum of a signal abd its dominant frequency within some range.
+
+    Parameters
+    ----------
+    a : array
+        1D np.array : velocity timeseries
+    dt : float
+        Timestep of the timeseries
+    fr_range : Tuple[float,float]
+        Frequency range allowed. Default is (0.0, +np.inf)
+
+    Returns
+    -------
+    xf : array
+        Array of computed frequencies.
+    yf : array
+        Array of computed frequency powers.
+    xmax : float
+        Dominant frequency within range.
+
+    """
+
+    a = np.nan_to_num(a)
+    Nticks = len(a)
+    xf = fftfreq(Nticks, dt)[:Nticks // 2]
+    yf = fft(a, norm="backward")
+    yf = 2.0 / Nticks * np.abs(yf[:Nticks // 2])
+    yf = 1000 * yf / np.sum(yf)
+    # yf = moving_average(yf, n=21)
+    xf_trunc = xf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
+    yf_trunc = yf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
+    fr = xf_trunc[np.argmax(yf_trunc)]
+    if return_amps:
+        return fr, yf
+    else:
+        return fr
+
+
+def fft_freqs(s, e, c):
+    v,fov=nam.vel(['', nam.orient('front')])
+    fv,fsv, ffov = nam.freq([v,nam.scal(v), fov])
+
+    try:
+        e[fv] = s[v].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(1.0, 2.5))
+        e[fsv] = e[fv]
+    except:
+        pass
+    e[ffov] = s[fov].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(0.1, 0.8))
+    e['turner_input_constant'] = (e[ffov] / 0.024) + 5
+
+
+def get_freq(d, par, fr_range=(0.0, +np.inf)) :
+    s, e, c = d.step_data, d.endpoint_data, d.config
+    e[nam.freq(par)]=s[par].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=fr_range)

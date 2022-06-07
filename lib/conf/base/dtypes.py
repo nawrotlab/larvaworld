@@ -3,16 +3,15 @@ import pandas as pd
 from typing import TypedDict, List, Tuple
 
 
-from lib.aux.dictsNlists import AttrDict, tree_dict, unique_list, flatten_list
-from lib.aux.par_aux import dtype_name
-from lib.conf.base.init_pars import init_pars, proc_type_keys, bout_keys, to_drop_keys, unit_dic
+
 import siunits as siu
-import param
+
 import numpy as np
 from typing import TypedDict, List, Tuple
 
-from lib.aux.dictsNlists import AttrDict
-
+from lib.aux.dictsNlists import AttrDict, tree_dict, dict_depth
+from lib.aux.par_aux import dtype_name
+from lib.conf.base.init_pars import init_pars, proc_type_keys, bout_keys, to_drop_keys
 
 
 def maxNdigits(array, Min=None):
@@ -57,7 +56,7 @@ def define_lim(lim, vs, min, max, u, wrap_mode, cur_dtype):
     siu.deg = siu.I.rename("deg", "deg", "plain angle")
     if lim is not None:
         return lim
-    if wrap_mode is not None :
+    if wrap_mode is not None and u is not None:
         if u.unit == siu.deg:
             if wrap_mode == 'positive':
                 lim = (0.0, 360.0)
@@ -88,7 +87,7 @@ def define_range(dtype, lim, vs, dv, min, max, u, wrap_mode):
     return dv, lim, vs
 
 def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', k=None,symbol='',
-        u=None, u_name=None, label='',combo=None, argparser=False, entry=None, codename=None,vfunc=None,vparfunc=None, convert2par=False):
+        u=1*siu.I, u_name=None, label='',combo=None, argparser=False, entry=None, codename=None,vfunc=None,vparfunc=None, convert2par=False):
     if argparser :
         from lib.anal.argparsers import build_ParsArg
         return build_ParsArg(name,k,h,t,v,vs)
@@ -98,10 +97,12 @@ def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, au
 
     if k is None:
         k = name
-    if u is None:
-        u = unit_dic[u_name]
-    if u_name is None:
-        u_name = u.unit.abbrev
+    # if u is None :
+    #     if u_name is not None :
+    #         u = unit_dic[u_name]
+    # if u_name is None:
+    #     if u is not None:
+    #         u_name = u.unit.abbrev
     dv, lim, vs = define_range(dtype=t, lim=lim, vs=vs, dv=dv, min=min, max=max, u=u, wrap_mode=None)
 
     if convert2par:
@@ -181,6 +182,8 @@ def interference_ga_dict(mID, suf='brain.interference_params.') :
 
     space_dict = ga_dict(name='interference', suf=suf, only=only)
     return space_dict
+
+
 
 
 def par_dict(name=None, d0=None, **kwargs):
@@ -537,5 +540,9 @@ def oD(c=1, id='Odor'):
 
 
 if __name__ == '__main__':
+    #d=init2par()
+    #print(d.keys())
+
+
     store_controls()
     store_RefPars()
