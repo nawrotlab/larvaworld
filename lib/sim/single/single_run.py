@@ -112,7 +112,8 @@ class SingleRun:
             if self.show_output :
                 print()
                 print(f'--- Enriching dataset {self.id} with derived parameters ---')
-            d.enrich(**self.enrichment, is_last=False, show_output=self.show_output, store=self.store_data)
+            if self.enrichment:
+                d.enrich(**self.enrichment, is_last=False, show_output=self.show_output, store=self.store_data)
             d.get_larva_dicts(env)
             d.get_larva_tables(env)
         return ds

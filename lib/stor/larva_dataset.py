@@ -919,9 +919,11 @@ class LarvaDataset:
 
     def existing(self, key='end', return_shorts=True):
         if key == 'end':
-            pars = self.read(key='end', file='endpoint_h5').columns.values.tolist()
+            e=self.endpoint_data if hasattr(self, 'endpoint_data') else self.read(key='end', file='endpoint_h5')
+            pars = e.columns.values.tolist()
         elif key == 'step':
-            pars = self.read(key='step').columns.values.tolist()
+            s=self.step_data if hasattr(self, 'step_data') else self.read(key='step')
+            pars = s.columns.values.tolist()
         elif key in ['distro', 'dispersion']:
             self.inspect_aux(save=False)
             pars = self.config.aux_pars[key]

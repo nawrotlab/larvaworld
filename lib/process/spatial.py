@@ -9,21 +9,7 @@ from lib.aux.dictsNlists import group_list_by_n, flatten_list
 import lib.aux.naming as nam
 from lib.process.store import store_aux_dataset
 from lib.conf.base.opt_par import getPar
-from lib.aux.xy_aux import eudi5x
-
-
-def raw_or_filtered_xy(s, points):
-    r = nam.xy(points, flat=True)
-    f = nam.filt(r)
-    if all(i in s.columns for i in f):
-        # print('Using filtered xy coordinates')
-        return f
-    elif all(i in s.columns for i in r):
-        # print('Using raw xy coordinates')
-        return r
-    else:
-        print('No xy coordinates exist. Not computing spatial metrics')
-        return
+from lib.aux.xy_aux import eudi5x, raw_or_filtered_xy
 
 
 def comp_linear(s, e, c, mode='minimal'):

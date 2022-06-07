@@ -69,7 +69,7 @@ class TargetedDataCollector(DataCollector):
         ks = [k for k in pars if k in par_dict.keys()]
         dic = {}
         for k in ks:
-            d, p = par_dict[k]['d'], par_dict[k]['p']
+            d, p = par_dict[k].d, par_dict[k].codename
             try:
                 temp = [rgetattr(l, p) for l in self.schedule.agents]
                 dic.update({d: p})

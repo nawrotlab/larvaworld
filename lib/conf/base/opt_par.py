@@ -8,14 +8,14 @@ import lib.aux.dictsNlists as dNl
 ParDict=ref_par_dict.par_dict
 
 
-def runtime_pars(PF=ParDict) :
+def runtime_pars(PF=ParDict.dict) :
     if PF is None :
-        PF = ref_par_dict.dict
+        PF = ref_par_dict.par_dict.dict
     return [v['d'] for k, v in PF.items()]
 
-def getPar(k=None, p=None, d=None, to_return='d', PF=ParDict):
+def getPar(k=None, p=None, d=None, to_return='d', PF=ParDict.dict):
     if PF is None :
-        PF = ref_par_dict.dict
+        PF = ref_par_dict.par_dict.dict
     if k is None:
         if p is not None:
             if type(p) == str:
@@ -123,7 +123,10 @@ class SimParConf(OptParDict):
         super().__init__(name='sim_params', sim_ID=sim_ID, path=path,duration=duration, **kwargs)
 
 
+
+
+
 if __name__ == '__main__':
-    # print(getattr(ureg, 'mm'))
+    print(ParDict['l'].d, ParDict['l'].codename)
     pass
-    raise
+    # raise

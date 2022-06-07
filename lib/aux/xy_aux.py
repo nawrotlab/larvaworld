@@ -89,3 +89,28 @@ def comp_rate(s,c, p, pv=None):
     for i, id in enumerate(c.agent_ids):
         V[1:, i] = np.diff(s[p].xs(id, level='AgentID').values) / c.dt
     s[pv] = V.flatten()
+
+
+
+
+
+def raw_or_filtered_xy(s, points):
+    r = nam.xy(points, flat=True)
+    f = nam.filt(r)
+    if all(i in s.columns for i in f):
+        # print('Using filtered xy coordinates')
+        return f
+    elif all(i in s.columns for i in r):
+        # print('Using raw xy coordinates')
+        return r
+    else:
+        print('No xy coordinates exist. Not computing spatial metrics')
+        return
+
+def comp_dst(s,c,point):
+    xy_params = raw_or_filtered_xy(s, point)
+    D = np.zeros([c.Nticks, c.N])
+    for i, id in enumerate(c.agent_ids):
+        xy=s[xy_params].xs(id, level='AgentID').values
+        D[1:, i] = np.sqrt(np.diff(xy[:, 0]) ** 2 + np.diff(xy[:, 1]) ** 2)
+    s[nam.dst(point)] = D.flatten()

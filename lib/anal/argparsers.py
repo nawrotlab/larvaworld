@@ -501,4 +501,4 @@ if __name__ == '__main__':
 
     print(conf.sim_params)
 
-    raise
+    # raise

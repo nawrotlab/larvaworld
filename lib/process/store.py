@@ -18,7 +18,7 @@ def get_dsp(s, p):
 
 
 
-def store_aux_dataset(s, pars, type, file):
+def store_aux_dataset(s, pars, type, file, verbose=0):
     store = pd.HDFStore(file)
     ps = [p for p in pars if p in s.columns]
     if type == 'distro':
@@ -48,4 +48,5 @@ def store_aux_dataset(s, pars, type, file):
                 df0 = pd.DataFrame(df.values.tolist(),index=df.index, columns=columns)
                 store[f'{type}.{p}'] = df0
     store.close()
-    print(f'{len(ps)} aux parameters saved')
+    if verbose>1 :
+        print(f'{len(ps)} aux parameters saved')

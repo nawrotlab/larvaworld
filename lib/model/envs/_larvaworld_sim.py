@@ -160,7 +160,7 @@ class LarvaWorldSim(LarvaWorld):
     def create_collectors(self, output):
         from lib.conf.base.pars import RefParDict
         from lib.aux.collecting import TargetedDataCollector, collection_dict
-        self.par_dict = RefParDict().par_dict
+        self.par_dict = RefParDict().par_dict.dict
         # self.par_dict = ParDict(mode='load').dict
         kws0 = {'par_dict': self.par_dict}
         kws = {
@@ -183,7 +183,6 @@ class LarvaWorldSim(LarvaWorld):
         self.table_collector = DataCollector(tables=t) if len(t) > 0 else None
         self.step_group_collector = CompGroupCollector(names=sg, save_as='step.csv', **kws) if len(sg) > 0 else None
         self.end_group_collector = CompGroupCollector(names=eg, save_as='end.csv', **kws) if len(eg) > 0 else None
-        # print(e)
 
     def eliminate_overlap(self):
         scale = 3.0

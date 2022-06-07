@@ -22,12 +22,9 @@ from lib.process.aux import annotation, suppress_stdout, compute_interference
 from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, store_spatial
 
 
-dic = ParDict
-dst, v, sv, acc, sa, fou, rou, fo, ro, b,fov, rov, bv,foa, roa, ba, x, y, l,dsp, dsp_0_40,dsp_0_40_mu,dsp_0_40_max,sdsp, sdsp_0_40,sdsp_0_40_mu,sdsp_0_40_max,str_fov_mu,run_fov_mu,pau_fov_mu,run_foa_mu,pau_foa_mu, str_fov_std,pau_fov_std,sstr_d_mu, sstr_d_std,str_d_mu, str_d_std, str_sv_mu, pau_sv_mu,str_v_mu,run_v_mu,run_sv_mu, pau_v_mu, str_tr,run_tr, pau_tr,Ltur_tr,Rtur_tr, Ltur_fou,Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t= [dic[k]['d'] for k in ['d','v', 'sv','a','sa','fou', 'rou', 'fo', 'ro', 'b', 'fov', 'rov', 'bv', 'foa', 'roa', 'ba', 'x', 'y', 'l',"dsp", "dsp_0_40","dsp_0_40_mu","dsp_0_40_max","sdsp", "sdsp_0_40","sdsp_0_40_mu","sdsp_0_40_max",'str_fov_mu','run_fov_mu','pau_fov_mu','run_foa_mu','pau_foa_mu', 'str_fov_std','pau_fov_std', 'sstr_d_mu', 'sstr_d_std','str_d_mu', 'str_d_std', 'str_sv_mu', 'pau_sv_mu','str_v_mu', 'run_v_mu','run_sv_mu', 'pau_v_mu', 'str_tr','run_tr','pau_tr','Ltur_tr','Rtur_tr', 'Ltur_fou','Rtur_fou', 'run_t_min', 'cum_t',  'run_t', 'run_d', 'pau_t']]
-l, v_mu,cum_d, sv_mu, fov_mu, b_mu = [dic[k]['d'] for k in ['l', 'v_mu', "cum_d", "sv_mu",'fov_mu','b_mu']]
-tors=tor60,tor2,tor2_mu,tor2_std,tor5,tor5_mu,tor5_std,tor10,tor10_mu,tor10_std,tor20,tor20_mu,tor20_std= [dic[k]['d'] for k in ['tor60',"tor2","tor2_mu","tor2_std","tor5","tor5_mu","tor5_std","tor10","tor10_mu","tor10_std","tor20","tor20_mu","tor20_std"]]
-fsv, ffov =  [dic[k]['d'] for k in ['fsv','ffov']]
-run_t_max, pau_t_min, pau_t_max = getPar(['run_t_max', 'pau_t_min', 'pau_t_max'])
+dst, v, sv, acc, sa, fou, rou, fo, ro, b,fov, rov, bv,foa, roa, ba, x, y, l,dsp, dsp_0_40,dsp_0_40_mu,dsp_0_40_max,str_fov_mu,run_fov_mu,pau_fov_mu,run_foa_mu,pau_foa_mu, str_fov_std,pau_fov_std,sstr_d_mu, sstr_d_std,str_d_mu, str_d_std, str_sv_mu, pau_sv_mu,str_v_mu,run_v_mu,run_sv_mu, pau_v_mu, str_tr,run_tr, pau_tr,Ltur_tr,Rtur_tr, Ltur_fou,Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t= getPar(['d','v', 'sv','a','sa','fou', 'rou', 'fo', 'ro', 'b', 'fov', 'rov', 'bv', 'foa', 'roa', 'ba', 'x', 'y', 'l',"dsp", "dsp_0_40","dsp_0_40_mu","dsp_0_40_max",'str_fov_mu','run_fov_mu','pau_fov_mu','run_foa_mu','pau_foa_mu', 'str_fov_std','pau_fov_std', 'sstr_d_mu', 'sstr_d_std','str_d_mu', 'str_d_std', 'str_sv_mu', 'pau_sv_mu','str_v_mu', 'run_v_mu','run_sv_mu', 'pau_v_mu', 'str_tr','run_tr','pau_tr','Ltur_tr','Rtur_tr', 'Ltur_fou','Rtur_fou', 'run_t_min', 'cum_t',  'run_t', 'run_d', 'pau_t'])
+
+
 
 def eval_endpoint(ee,e,e_shorts=None,e_pars=None,e_labs=None, mode = 'pooled'):
     if e_pars is None :
@@ -141,6 +138,9 @@ def eval_fast(datasets,data,symbols,mode='pooled', min_size=20):
 
 
 def adapt_conf(conf0, ee, cc):
+    run_t_max, pau_t_min, pau_t_max,fsv,l, v_mu,cum_d, sv_mu, fov_mu, b_mu = getPar(['run_t_max', 'pau_t_min', 'pau_t_max', 'fsv','l', 'v_mu', "cum_d", "sv_mu",'fov_mu','b_mu'])
+
+
     conf = copy.deepcopy(conf0)
 
     dic = {
@@ -235,8 +235,8 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
     ss[foa] = ss[fov].groupby('AgentID').diff() / dt
     ss[acc] = ss[v].groupby('AgentID').diff() / dt
 
-    ee[v_mu] = ss[v].dropna().groupby('AgentID').mean()
-    ee[cum_d] = ss[dst].dropna().groupby('AgentID').sum()
+    ee[nam.mean(v)] = ss[v].dropna().groupby('AgentID').mean()
+    ee[nam.cum(dst)] = ss[dst].dropna().groupby('AgentID').sum()
 
     scale_to_length(ss, ee, cc, keys=['d', 'v', 'a', 'v_mu'])
 
@@ -549,6 +549,6 @@ def RSS_dic(dd, d):
 if __name__ == '__main__':
     from lib.conf.base import paths
     dir=f"{paths.path('RUN')}/testing/the/sim_model/method"
-    d=sim_model(mID='NEU_PHI', dur=1, dt=1 / 16,Nids=2,color='blue',tor_durs=[], dir=dir)
+    # d=sim_model(mID='NEU_PHI', dur=1, dt=1 / 16,Nids=2,color='blue',tor_durs=[], dir=dir)
 
     raise

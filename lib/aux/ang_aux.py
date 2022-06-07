@@ -1,8 +1,12 @@
+import copy
 import math
 from math import cos,sin
 import time
 
 import numpy as np
+
+from pint import UnitRegistry
+ureg = UnitRegistry()
 
 def wrap_angle_to_0(a, in_deg=False):
     lim=np.pi if not in_deg else 180
@@ -137,6 +141,22 @@ def unwrap_deg(ts):
     b = np.copy(ts)
     b[~np.isnan(b)] = np.unwrap(b[~np.isnan(b)] * np.pi / 180) * 180 / np.pi
     return b
+
+def unwrap_rad(s,c, par, in_deg=False) :
+    import lib.aux.naming as nam
+    ss=copy.deepcopy(s[par])
+
+    UP = np.zeros([c.Nticks, c.N]) * np.nan
+    for j, id in enumerate(c.agent_ids):
+        b = ss.xs(id, level='AgentID').values
+        if in_deg:
+            b = np.deg2rad(b)
+        b[~np.isnan(b)] = np.unwrap(b[~np.isnan(b)])
+        if in_deg:
+            b = np.rad2deg(b)
+        UP[:, j] = b
+    s[nam.unwrap(par)] = UP.flatten()
+
 
 def line_through_point(pos, angle, length, pos_as_start=False) :
     import math

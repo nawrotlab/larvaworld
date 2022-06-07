@@ -14,7 +14,6 @@ from lib.aux.sim_aux import fft_max, fft_freqs
 from lib.conf.base.opt_par import getPar
 from lib.aux import naming as nam
 
-
 from lib.process.store import store_aux_dataset
 
 
@@ -721,9 +720,6 @@ def turn_annotation(s, e, c, store=False):
     return turn_dict
 
 
-
-
-
 def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
     if vel_thr is None:
         vel_thr = c.vel_thr
@@ -739,23 +735,23 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
     lin_vs = np.zeros([c.N, len(lin_ps)]) * np.nan
     str_vs = np.zeros([c.N, len(str_ps)]) * np.nan
 
-    run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l', 'str_t'])
+    run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l', 'str_t', 'str_d', 'str_sd'])
     run_vs = np.zeros([c.Nticks, c.N, len(run_ps)]) * np.nan
 
     crawl_dict = {}
 
 
     for jj, id in enumerate(c.agent_ids):
-        strides, str_chain_ls,stride_Dor,stride_durs,strides1 = [], [], [], [], []
+        strides, str_chain_ls,stride_Dor,stride_durs,stride_dsts,stride_sdsts,strides1 = [], [], [], [], [], [], []
         a_v = s[v].xs(id, level="AgentID").values
         a_fov = s[fov].xs(id, level="AgentID").values
 
         if c.Npoints > 1:
             a_sv = s[sv].xs(id, level="AgentID").values
-            a_fov = s[fov].xs(id, level="AgentID").values
             if strides_enabled:
                 strides, runs, str_chain_ls = detect_strides(a_sv, dt, fr=e[fv].loc[id],vel_thr=vel_thr, return_extrema=False)
                 strides1, stride_durs, stride_slices, stride_dsts, stride_idx, stride_maxs = process_epochs(a_v,strides, dt)
+                stride_sdsts = stride_dsts / e[l].loc[id]
                 stride_Dor = np.array([np.trapz(a_fov[s0:s1+1]) for s0, s1 in strides])
                 # print(stride_idx)
                 # print(stride_idx.shape)
@@ -783,6 +779,8 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
         run_vs[runs1, jj, 2] = run_dsts
         run_vs[runs1, jj, 3] = str_chain_ls
         run_vs[strides1, jj, 4] = stride_durs
+        run_vs[strides1, jj, 5] = stride_dsts
+        run_vs[strides1, jj, 6] = stride_sdsts
 
         if b in s.columns:
             pau_bs = s[b].xs(id, level="AgentID").abs().values[pause_idx]
@@ -822,20 +820,20 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
     s[run_ps] = run_vs.reshape([c.Nticks * c.N, len(run_ps)])
     e[lin_ps] = lin_vs
 
-    str_d_mu, str_d_std, sstr_d_mu, sstr_d_std, run_tr, pau_tr, cum_run_t, cum_pau_t, cum_t = \
+    str_d_mu, str_d_std, str_sd_mu, str_sd_std, run_tr, pau_tr, cum_run_t, cum_pau_t, cum_t = \
         getPar(
-            ['str_d_mu', 'str_d_std', 'sstr_d_mu', 'sstr_d_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t', 'cum_t'])
+            ['str_d_mu', 'str_d_std', 'str_sd_mu', 'str_sd_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t', 'cum_t'])
 
     e[run_tr] = e[cum_run_t] / e[cum_t]
     e[pau_tr] = e[cum_pau_t] / e[cum_t]
 
+
     if c.Npoints > 1 and strides_enabled:
         e[str_ps] = str_vs
-        e[sstr_d_mu] = e[str_d_mu] / e[l]
-        e[sstr_d_std] = e[str_d_std] / e[l]
-    # store_aux_dataset(s, pars=run_ps, type='distro', file=c.aux_dir)
+        e[str_sd_mu] = e[str_d_mu] / e[l]
+        e[str_sd_std] = e[str_d_std] / e[l]
     if store :
-        run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l'])
+        run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l','str_d','str_sd'])
         store_aux_dataset(s, pars=run_ps, type='distro', file=c.aux_dir)
     return crawl_dict
 
