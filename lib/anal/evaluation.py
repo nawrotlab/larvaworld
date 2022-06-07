@@ -1,5 +1,6 @@
 import itertools
 import os
+import time
 
 import numpy as np
 import seaborn as sns
@@ -9,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from lib.anal.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, prepare_sim_dataset, \
     prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, sim_models, RSS_dic
-
+from lib.aux import naming as nam, dictsNlists as dNl
 from lib.anal.plot_aux import modelConfTable, annotate_plot, AutoPlot
 from lib.anal.plot_combos import model_summary, result_summary, dsp_summary
 from lib.anal.plotting import plot_trajectories, plot_dispersion, plot_ang_pars, stride_cycle, plot_bouts, \
@@ -18,11 +19,11 @@ from lib.aux.colsNstr import N_colors, col_df
 
 
 from lib.conf.base.dtypes import null_dict
-
+from lib.conf.base.pars import RefParDict
 from lib.conf.base.opt_par import getPar
 from lib.conf.stored.conf import loadRef, expandConf, next_idx
 
-
+par_dict = RefParDict().par_dict
 
 
 class EvalRun :
@@ -438,6 +439,15 @@ class EvalRun :
         sim_data = dNl.AttrDict.from_nested_dicts({'step': Ddata, 'end': Edata})
         return sim_data
 
+    def preprocess2(self):
+        Ddata,Edata = {},{}
+        for p, sh in zip(self.s_pars, self.s_shorts):
+            Ddata[p] = {d.id: par_dict.get(sh, d) for d in self.datasets}
+        for p, sh in zip(self.e_pars, self.e_shorts):
+            Edata[p] = {d.id: par_dict.get(sh, d) for d in self.datasets}
+        sim_data = dNl.AttrDict.from_nested_dicts({'step': Ddata, 'end': Edata})
+        return sim_data
+
     def plot_data(self, Nbins=None, mode='step', type='hist', in_mm = []):
         if mode=='step' :
             if Nbins is None :
@@ -561,10 +571,12 @@ class EvalRun :
         else :
             from lib.sim.single.single_run import SingleRun
             self.exp_conf = self.prepare_exp_conf(dur=dur, **kwargs)
+
             self.exp_conf.enrichment.metric_definition.dispersion.dsp_starts=self.dsp_starts
             self.exp_conf.enrichment.metric_definition.dispersion.dsp_stops=self.dsp_stops
             self.exp_conf.enrichment.metric_definition.tortuosity.tor_durs=self.tor_durs
             self.exp_conf.enrichment.bout_annotation= self.bout_annotation
+            # self.exp_conf.enrichment = None
 
             print(f'Simulating {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
             run = SingleRun(**self.exp_conf)
@@ -735,6 +747,7 @@ def compare2ref(ss, s=None, refID=None,
 
 
 if __name__ == '__main__':
+    t0=time.time()
     from lib.anal.evaluation import EvalRun
     from lib.aux import dictsNlists as dNl
 
@@ -742,10 +755,18 @@ if __name__ == '__main__':
     # print(enr)
     # raise
     refID = 'None.150controls'
-    mIDs = ['NEU_PHI', 'NEU_PHIx', 'PHIonSIN', 'PHIonSINx']
-    dataset_ids = ['NEU mean', 'NEU var', 'SIN mean', 'SIN var']
-    id = 'online_meanVSvar_x150serious'
+    # mIDs = ['NEU_PHI', 'NEU_PHIx', 'PHIonSIN', 'PHIonSINx']
+    mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
+    dataset_ids = mIDs
+    # dataset_ids = ['NEU mean', 'NEU var', 'SIN mean', 'SIN var']
+    id = 'online_4models_test5'
 
-    evrun = EvalRun(refID=refID, id=id,modelIDs=mIDs,dataset_ids=dataset_ids, N=150,
+    evrun = EvalRun(refID=refID, id=id,modelIDs=mIDs,dataset_ids=dataset_ids, N=5,
                     bout_annotation=True,show=False, offline=False)
+
+    evrun.run(video=False)
+    evrun.eval()
+    # evrun.plot_results()
+    t1 = time.time()
+    print(int((t1-t0)*1000))
 

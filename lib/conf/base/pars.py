@@ -4,7 +4,7 @@ import param
 from typing import List, Tuple
 from pint import UnitRegistry
 ureg = UnitRegistry()
-
+ureg.default_format = "~P"
 
 
 
@@ -41,8 +41,7 @@ def vpar(vfunc, v0, h, lab, lim, dv):
 
 
 def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, lab=None, h=None, u_name=None,
-                 required_ks=[],
-                 u=ureg.dimensionless, v0=None, lim=None, dv=None,
+                 required_ks=[],u=ureg.dimensionless, v0=None, lim=None, dv=None,
                  vfunc=None, vparfunc=None, func=None, **kwargs):
     codename = p if codename is None else codename
     d = p if d is None else d
@@ -65,7 +64,6 @@ def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, 
         k = param.String('k')
         sym = param.String('')
         codename = param.String('')
-
         dtype = param.Parameter(float)
         v = vparfunc
 
@@ -146,7 +144,6 @@ def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, 
             from lib.anal.argparsers import build_ParsArg
             return build_ParsArg(name=self.name, k=self.k, h=self.help, t=self.dtype, v=self.initial_value, vs=None)
 
-        # @property
         def exists(self, dataset):
             par=self.d
             s, e, c = dataset.step_data, dataset.endpoint_data, dataset.config
@@ -170,9 +167,7 @@ def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, 
 
         def compute(self, dataset):
             if self.func is not None:
-                # self.
                 self.func(dataset)
-                # print(f'Parameter {self.disp} computed successfully')
             else:
                 print(f'Function to compute parameter {self.disp} is not defined')
 
@@ -228,33 +223,26 @@ class BaseParDict:
         self.in_m = in_m
         self.build()
 
-    def entry(self, k) :
-        if k not in self.dict.keys() :
-            raise f'Key {k}  not found'
-        else :
-            return self.dict[k]
-
-    def get_key(self, k,d, compute=True):
-        p = self.entry(k)
+    def get(self, k, d, compute=True):
+        p = self.dict[k]
         res = p.exists(d)
-
         for key, exists in res.items():
             if exists:
                 return d.get_par(key=key, par=p.d)
 
         if compute:
-            self.compute_key(k,d)
-            return p.get(d, compute=False)
+            self.compute(k, d)
+            return self.get(k, d, compute=False)
         else:
             print(f'Parameter {p.disp} not found')
 
-    def compute_key(self, k, d):
-        p = self.entry(k)
+    def compute(self, k, d):
+        p = self.dict[k]
         res = p.exists(d)
         if not any(list(res.values())):
             k0s = p.required_ks
             for k0 in k0s:
-                self.compute_key(k0,d)
+                self.compute(k0,d)
             p.compute(d)
 
 
@@ -319,6 +307,8 @@ class BaseParDict:
             self.addPar(**kws, **kws0)
 
     def add_chunk(self, pc, kc, func=None,required_ks=[]):
+        f_kws= {'func': func, 'required_ks': required_ks}
+
         p0, p1, pt, pid, ptr, pN, pl = nam.start(pc), nam.stop(pc), nam.dur(pc), nam.id(pc), nam.dur_ratio(pc), nam.num(
             pc), nam.length(pc)
         pN_mu = nam.mean(pN)
@@ -328,23 +318,17 @@ class BaseParDict:
 
         self.addPar(**{'p': pc, 'k': kc, 'sym': f'${kc}$', 'disp': pc})
         self.addPar(
-            **{'p': p0, 'k': k0, 'u': ureg.s, 'sym': subsup('t', kc, 0), 'disp': f'{pc} start', 'vfunc': param.Number})
+            **{'p': p0, 'k': k0, 'u': ureg.s, 'sym': subsup('t', kc, 0), 'disp': f'{pc} start', 'vfunc': param.Number,**f_kws})
         self.addPar(
-            **{'p': p1, 'k': k1, 'u': ureg.s, 'sym': subsup('t', kc, 1), 'disp': f'{pc} end', 'vfunc': param.Number,
-               'func': func})
+            **{'p': p1, 'k': k1, 'u': ureg.s, 'sym': subsup('t', kc, 1), 'disp': f'{pc} end', 'vfunc': param.Number,**f_kws})
         self.addPar(
             **{'p': pid, 'k': kid, 'sym': sub('idx', kc), 'dtype': str, 'disp': f'{pc} idx', 'vfunc': param.String})
 
-        def func_tr(d):
-            e = d.endpoint_data
-            e[ptr] = e[nam.cum(pt)] / e[nam.cum(nam.dur(''))]
-
         self.addPar(
             **{'p': ptr, 'k': ktr, 'sym': sub('r', kc), 'disp': f'% time in {pc}s', 'vfunc': param.Magnitude,
-               'required_ks' : [nam.cum(pt), nam.cum(nam.dur(''))], 'func': func_tr})
+               'required_ks' : [nam.cum(pt), nam.cum(nam.dur(''))], 'func': tr_func(pc)})
         self.addPar(
-            **{'p': pN, 'k': kN, 'sym': sub('N', f'{pc}s'), 'dtype': int, 'disp': f'# {pc}s', 'vfunc': param.Integer,
-               'func': func, 'required_ks': required_ks})
+            **{'p': pN, 'k': kN, 'sym': sub('N', f'{pc}s'), 'dtype': int, 'disp': f'# {pc}s', 'vfunc': param.Integer,**f_kws})
 
         for ii in ['on', 'off']:
             self.addPar(**{'p': f'{pN_mu}_{ii}_food', 'k': f'{kN_mu}_{ii}_food', 'vfunc': param.Number})
@@ -353,12 +337,11 @@ class BaseParDict:
         self.add_rate(k_num=kN, k_den=nam.cum('t'), k=kN_mu, p=pN_mu, d=pN_mu, sym=bar(kN), disp=f' mean # {pc}s/sec',
                       func=func)
         self.addPar(**{'p': pt, 'k': kt, 'u': ureg.s, 'sym': sub(Delta('t'), kc), 'disp': f'{pc} duration',
-                       'vfunc': param.Number, 'func': func, 'required_ks': required_ks})
+                       'vfunc': param.Number,**f_kws})
         self.add_operators(k0=kt)
 
         if str.endswith(pc, 'chain'):
-            self.addPar(**{'p': pl, 'k': kl, 'sym': sub('l', kc), 'dtype': int, 'vfunc': param.Integer,
-                           'func': func, 'required_ks': required_ks})
+            self.addPar(**{'p': pl, 'k': kl, 'sym': sub('l', kc), 'dtype': int, 'vfunc': param.Integer,**f_kws})
             self.add_operators(k0=kl)
 
     def add_chunk_track(self, kc, k, extrema=True, func=None,required_ks=[]):
@@ -503,13 +486,8 @@ class BaseParDict:
             p = nam.freq(b.p)
         if disp is None:
             disp = f'{b.disp} dominant frequency'
-
-        from lib.aux.sim_aux import get_freq
-        def func(d):
-            get_freq(d, par=b.d, fr_range=(0.0, +np.inf))
-
         self.addPar(
-            **{'p': p, 'k': k, 'd': d, 'u': 1 / ureg.s, 'sym': sym, 'disp': disp,'required_ks' : [k0], 'vfunc': param.Number, 'func': func},
+            **{'p': p, 'k': k, 'd': d, 'u': ureg.Hz, 'sym': sym, 'disp': disp,'required_ks' : [k0], 'vfunc': param.Number, 'func': freq_func(b.d)},
             **kwargs)
 
     def add_dsp(self, range=(0, 40), u=ureg.m):
@@ -556,6 +534,8 @@ class BaseParDict:
         self.build_angular(in_rad=self.in_rad)
         self.build_spatial(in_m=self.in_m)
         self.build_chunks()
+        self.build_sim_pars()
+
 
         if save:
             self.save()
@@ -669,6 +649,18 @@ class BaseParDict:
         self.addPar(**{'p': f'handedness_score_on_food', 'k': 'tur_H_on_food'})
         self.addPar(**{'p': f'handedness_score_off_food', 'k': 'tur_H_off_food'})
 
+    def build_sim_pars(self):
+        kws={}
+        self.addPar(**{'p': 'brain.locomotor.crawler.activity', 'k': 'Act_cr','d': 'crawler output', 'disp': 'crawler output', 'sym': sub('A', 'C'), 'vfunc': param.Number, **kws})
+        self.addPar(**{'p': 'brain.locomotor.turner.activity', 'k': 'Act_tur','d': 'turner output', 'disp': 'turner output', 'sym': sub('A', 'T'), 'vfunc': param.Number, **kws})
+        self.addPar(**{'p': 'brain.locomotor.turner.activation', 'k': 'A_tur', 'd': 'crawler input','disp': 'crawler input', 'sym': sub('I', 'T'), 'vfunc': param.Number, **kws})
+        self.addPar(**{'p': 'brain.locomotor.cur_ang_suppression', 'k': 'c_CT','d': 'ang_suppression', 'disp': 'angular suppression output', 'sym': sub('c', 'CT'), 'vfunc': param.Magnitude, **kws})
+        self.addPar(**{'p': 'brain.olfactory_activation', 'k': 'A_olf','d': 'olfactory activation', 'disp': 'olfactory activation', 'sym': sub('A', 'olf'), 'vfunc': param.Number, **kws})
+        self.addPar(**{'p': 'brain.touch_activation', 'k': 'A_touch','d': 'tactile activation', 'disp': 'tactile activation', 'sym': sub('A', 'touch'), 'vfunc': param.Number, **kws})
+        self.addPar(**{'p': 'brain.wind_activation', 'k': 'A_wind','d': 'wind activation', 'disp': 'wind activation', 'sym': sub('A', 'wind'), 'vfunc': param.Number, **kws})
+        self.addPar(**{'p': 'brain.intermitter.EEB', 'k': 'EEB','d': 'exploitVSexplore_balance', 'disp': 'exploitVSexplore_balance', 'sym': 'EEB', 'vfunc': param.Magnitude, **kws})
+
+
 
 class ParFuncDict:
     def __init__(self, tor_durs, dsp_ranges):
@@ -733,6 +725,14 @@ def cum_func(par):
         d.endpoint_data[nam.cum(par)] = d.step_data[par].dropna().groupby('AgentID').sum()
     return func
 
+
+def tr_func(pc):
+    def func(d):
+        e=d.endpoint_data
+        e[nam.dur_ratio(pc)] = e[nam.cum(nam.dur(pc))] / e[nam.cum(nam.dur(''))]
+    return func
+
+
 def dsp_func(range):
     r0, r1 = range
 
@@ -792,6 +792,12 @@ def func_v_spatial(p_d, p_v):
 
     return func
 
+def freq_func(par) :
+    from lib.aux.sim_aux import get_freq
+    def func(d):
+        get_freq(d, par=par, fr_range=(0.0, +np.inf))
+    return func
+
 
 
 
@@ -799,31 +805,3 @@ def func_v_spatial(p_d, p_v):
 
 
 ref_par_dict=RefParDict()
-# ParDict = ref_par_dict.par_dict
-
-def process_new(d, store=True, add_reference=False) :
-    d0 = ref_par_dict.par_dict
-
-    for k in ['d', 'v', 'a', 'sd', 'sv', 'sa']:
-        d0[k].compute(d)
-
-    for k in ['fo', 'ro', 'b']:
-        if k != 'b':
-            d0[f'{k}u'].compute(d)
-        d0[f'{k}v'].compute(d)
-        d0[f'{k}a'].compute(d)
-
-    for k in ['x', 'y', 'fo', 'ro', 'b'] :
-        d0[f'{k}0'].compute(d)
-
-    for k in ['d', 'sd'] :
-        d0[f'cum_{k}'].compute(d)
-
-
-    if store :
-        d.save(add_reference = add_reference)
-        s, e, c = d.step_data, d.endpoint_data, d.config
-        pars=[d0[k].d for k in ['b', 'bv', 'ba', 'fov', 'foa', 'rov', 'roa', 'v', 'sv', 'a', 'sa']]
-        from lib.process.store import store_aux_dataset
-
-        store_aux_dataset(s, pars=pars, type='distro', file=c.aux_dir)

@@ -113,7 +113,7 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
     return P.get()
 
 
-def plot_ang_pars(absolute=False, include_rear=True, half_circles=True, subfolder='turn', Npars=5, Nbins=100, **kwargs):
+def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfolder='turn', Npars=5, Nbins=100, **kwargs):
     if Npars == 5:
         shorts = ['b', 'bv', 'ba', 'fov', 'foa']
         rs = [100, 200, 2000, 200, 2000]
