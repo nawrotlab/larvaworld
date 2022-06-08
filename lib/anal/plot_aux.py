@@ -6,12 +6,7 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt, patches, transforms, ticker
 
-
-
-
-
-
-from lib.conf.base.opt_par import getPar
+from lib.conf.base.pars import getPar, ParDict
 
 
 from lib.aux.colsNstr import N_colors

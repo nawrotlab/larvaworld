@@ -19,9 +19,7 @@ from lib.aux import naming as nam, dictsNlists as dNl
 from lib.aux.colsNstr import N_colors
 
 
-
-from lib.conf.base.opt_par import getPar
-from lib.conf.base.pars import ParDict
+from lib.conf.base.pars import getPar, ParDict
 from lib.process.aux import comp_pooled_epochs, compute_interference
 
 '''

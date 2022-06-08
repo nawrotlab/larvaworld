@@ -12,7 +12,7 @@ import lib.aux.naming as nam
 from lib.anal.plotting import plot_spatiotemporal_variation, plot_bend2orientation_analysis, \
     plot_sliding_window_analysis
 from lib.aux.dictsNlists import AttrDict
-from lib.conf.base.opt_par import getPar
+from lib.conf.base.pars import getPar, ParDict
 from lib.process.angular import comp_orientations, comp_angles, comp_angular
 from lib.process.aux import interpolate_nans
 from lib.process.basic import comp_extrema

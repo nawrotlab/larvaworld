@@ -1,7 +1,7 @@
 import numpy as np
 
 from lib.aux.dictsNlists import AttrDict
-from lib.conf.base.opt_par import getPar
+from lib.conf.base.pars import getPar, ParDict
 
 
 def entry(plotID, title=None, **kwargs):

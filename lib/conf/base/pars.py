@@ -1,205 +1,16 @@
 import numpy as np
 import param
 
-from typing import List, Tuple
-from pint import UnitRegistry
-ureg = UnitRegistry()
-ureg.default_format = "~P"
+from lib.conf.base.units import ureg
 
 
 
+
+from lib.conf.base.par import buildBasePar
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledast, omega, ddot, mathring
 from lib.aux.ang_aux import unwrap_rad
 from lib.aux.xy_aux import comp_dst
-
-func_dic = {
-    float: param.Number,
-    int: param.Integer,
-    str: param.String,
-    bool: param.Boolean,
-    dict: param.Dict,
-    list: param.List,
-    Tuple[float]: param.Range,
-    Tuple[int]: param.NumericTuple,
-}
-
-
-def vpar(vfunc, v0, h, lab, lim, dv):
-    f_kws = {
-        'default': v0,
-        'doc': h,
-        'label': lab,
-    }
-    if vfunc in [param.List, param.Range]:
-        if lim is not None:
-            f_kws['bounds'] = lim
-        if dv is not None:
-            f_kws['step'] = dv
-    func = vfunc(**f_kws, instantiate=True)
-    return func
-
-
-def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, lab=None, h=None, u_name=None,
-                 required_ks=[],u=ureg.dimensionless, v0=None, lim=None, dv=None,
-                 vfunc=None, vparfunc=None, func=None, **kwargs):
-    codename = p if codename is None else codename
-    d = p if d is None else d
-    disp = d if disp is None else disp
-    sym = k if sym is None else sym
-    lab = f'{disp} ({u})' if lab is None else lab
-    h = lab if h is None else h
-    if vparfunc is None:
-        if vfunc is None:
-            vfunc = func_dic[dtype]
-        vparfunc = vpar(vfunc, v0, h, lab, lim, dv)
-    else:
-        vparfunc = vparfunc()
-
-    class LarvaworldParNew(param.Parameterized):
-
-        p = param.String('p')
-        d = param.String('')
-        disp = param.String('')
-        k = param.String('k')
-        sym = param.String('')
-        codename = param.String('')
-        dtype = param.Parameter(float)
-        v = vparfunc
-
-        @property
-        def s(self):
-            return self.disp
-
-        @property
-        def l(self):
-            return self.param.v.label
-
-        @property
-        def unit(self):
-            return self.param.u
-
-        @property
-        def short(self):
-            return self.k
-
-        @property
-        def initial_value(self):
-            return self.param.v.default
-
-        @property
-        def symbol(self):
-            return self.sym
-
-        @property
-        def label(self):
-            return self.param.v.label
-
-        @property
-        def lab(self):
-            return self.param.v.label
-
-        @property
-        def tooltip(self):
-            return self.param.v.doc
-
-        @property
-        def help(self):
-            return self.param.v.doc
-
-        @property
-        def min(self):
-            try:
-                vmin, vmax = self.param.v.bounds
-                return vmin
-            except:
-                return None
-
-        @property
-        def max(self):
-            try:
-                vmin, vmax = self.param.v.bounds
-                return vmax
-            except:
-                return None
-
-        @property
-        def lim(self):
-            try:
-                lim = self.param.v.bounds
-                return lim
-            except:
-                return None
-
-        @property
-        def step(self):
-            try:
-                step = self.param.v.step
-                return step
-            except:
-                return None
-
-        @property
-        def get_ParsArg(self):
-            from lib.anal.argparsers import build_ParsArg
-            return build_ParsArg(name=self.name, k=self.k, h=self.help, t=self.dtype, v=self.initial_value, vs=None)
-
-        def exists(self, dataset):
-            par=self.d
-            s, e, c = dataset.step_data, dataset.endpoint_data, dataset.config
-            dic = {'step': par in s.columns, 'end': par in e.columns}
-            if 'aux_pars' in c.keys():
-                for k, ps in c.aux_pars.items():
-                    dic[k] = par in ps
-            return dic
-
-        def get(self, dataset, compute=True):
-            res = self.exists(dataset)
-            for key, exists in res.items():
-                if exists:
-                    return dataset.get_par(key=key, par=self.d)
-
-            if compute:
-                self.compute(dataset)
-                return self.get(dataset, compute=False)
-            else:
-                print(f'Parameter {self.disp} not found')
-
-        def compute(self, dataset):
-            if self.func is not None:
-                self.func(dataset)
-            else:
-                print(f'Function to compute parameter {self.disp} is not defined')
-
-    par = LarvaworldParNew(name=p, p=p, k=k, d=d, dtype=dtype, disp=disp, sym=sym, codename=codename)
-    par.param.add_parameter('func', param.Callable(default=func, doc='Function to get the parameter from a dataset',
-                                                   constant=True, allow_None=True))
-    par.u = u
-    par.required_ks = required_ks
-    return par
-
-
-def init2par(d0=None, d=None):
-    if d0 is None:
-        from lib.conf.base.init_pars import init_pars
-        d0 = init_pars()
-
-    if d is None:
-        d = {}
-    from lib.conf.base.dtypes import par
-    for n, v in d0.items():
-        depth=dNl.dict_depth(v)
-        if depth==0:
-            continue
-        if depth==1:
-            try:
-                entry = par(n, **v, convert2par=True)
-                d.update(entry)
-            except:
-                continue
-        elif depth>1:
-            init2par(v, d=d)
-    return d
 
 
 class RefParDict:
@@ -334,9 +145,9 @@ class BaseParDict:
 
         self.addPar(**{'p': pc, 'k': kc, 'sym': f'${kc}$', 'disp': pc})
         self.addPar(
-            **{'p': p0, 'k': k0, 'u': ureg.s, 'sym': subsup('t', kc, 0), 'disp': f'{pc} start', 'vfunc': param.Number,**f_kws})
+            **{'p': p0, 'k': k0, 'u': ureg.s, 'sym': subsup('t', kc, 0), 'disp': f'{pc} start', 'vfunc': param.Number, **f_kws})
         self.addPar(
-            **{'p': p1, 'k': k1, 'u': ureg.s, 'sym': subsup('t', kc, 1), 'disp': f'{pc} end', 'vfunc': param.Number,**f_kws})
+            **{'p': p1, 'k': k1, 'u': ureg.s, 'sym': subsup('t', kc, 1), 'disp': f'{pc} end', 'vfunc': param.Number, **f_kws})
         self.addPar(
             **{'p': pid, 'k': kid, 'sym': sub('idx', kc), 'dtype': str, 'disp': f'{pc} idx', 'vfunc': param.String})
 
@@ -353,7 +164,7 @@ class BaseParDict:
         self.add_rate(k_num=kN, k_den=nam.cum('t'), k=kN_mu, p=pN_mu, d=pN_mu, sym=bar(kN), disp=f' mean # {pc}s/sec',
                       func=func)
         self.addPar(**{'p': pt, 'k': kt, 'u': ureg.s, 'sym': sub(Delta('t'), kc), 'disp': f'{pc} duration',
-                       'vfunc': param.Number,**f_kws})
+                       'vfunc': param.Number, **f_kws})
         self.add_operators(k0=kt)
 
         if str.endswith(pc, 'chain'):
@@ -451,9 +262,9 @@ class BaseParDict:
             p = nam.unwrap(b.p)
         if disp is None:
             disp = b.disp
-        if b.u==ureg.deg :
+        if b.u== ureg.deg :
             in_deg=True
-        elif b.u==ureg.rad :
+        elif b.u== ureg.rad :
             in_deg=False
 
         self.addPar(**{'p': p,'d': d, 'k': k, 'u' : b.u,  'sym': sym, 'disp': disp, 'lim': None,'required_ks' : [k0],
@@ -503,7 +314,7 @@ class BaseParDict:
         if disp is None:
             disp = f'{b.disp} dominant frequency'
         self.addPar(
-            **{'p': p, 'k': k, 'd': d, 'u': ureg.Hz, 'sym': sym, 'disp': disp,'required_ks' : [k0], 'vfunc': param.Number, 'func': freq_func(b.d)},
+            **{'p': p, 'k': k, 'd': d, 'u': ureg.Hz, 'sym': sym, 'disp': disp, 'required_ks' : [k0], 'vfunc': param.Number, 'func': freq_func(b.d)},
             **kwargs)
 
     def add_dsp(self, range=(0, 40), u=ureg.m):
@@ -573,7 +384,7 @@ class BaseParDict:
 
     def build_angular(self, in_rad=True):
         if in_rad :
-            u=ureg.rad
+            u= ureg.rad
             amax=np.pi
         else :
             u = ureg.deg
@@ -611,7 +422,7 @@ class BaseParDict:
 
     def build_spatial(self, in_m = True):
         if in_m :
-            u=ureg.m
+            u= ureg.m
             s=1
         else :
             u = ureg.mm
@@ -814,11 +625,33 @@ def freq_func(par) :
         get_freq(d, par=par, fr_range=(0.0, +np.inf))
     return func
 
-
-
-
-
-
-
 ref_par_dict=RefParDict()
 ParDict=ref_par_dict.par_dict
+
+
+def getPar(k=None, p=None, d=None, to_return='d', PF=ParDict):
+    if k is not None:
+        d0=PF.dict
+        k0=k
+    elif d is not None:
+        d0 = PF.ddict
+        k0 = d
+    elif p is not None:
+        d0 = PF.pdict
+        k0 = p
+
+    if type(k0) == str:
+        par = d0[k0]
+        if type(to_return) == list:
+            return [getattr(par, i) for i in to_return]
+        elif type(to_return) == str:
+            return getattr(par, to_return)
+    elif type(k0) == list:
+        pars = [d0[i] for i in k0]
+        if type(to_return) == list:
+            return [[getattr(par, i) for par in pars] for i in to_return]
+        elif type(to_return) == str:
+            return [getattr(par, to_return) for par in pars]
+
+def runtime_pars(PF=ParDict.dict):
+    return [v.d for k, v in PF.items()]

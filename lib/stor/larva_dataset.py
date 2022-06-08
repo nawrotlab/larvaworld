@@ -11,7 +11,7 @@ import lib.aux.naming as nam
 from lib.calibration.model_fit import adapt_crawler, adapt_intermitter, adapt_interference, adapt_turner
 
 from lib.conf.base.dtypes import null_dict
-from lib.conf.base.opt_par import getPar
+from lib.conf.base.pars import getPar, ParDict
 from lib.process.aux import compute_interference
 
 from lib.process.calibration import comp_stride_variation, comp_segmentation

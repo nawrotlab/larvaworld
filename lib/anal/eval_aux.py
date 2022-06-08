@@ -15,7 +15,7 @@ from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
 from lib.aux.colsNstr import N_colors
 from lib.aux.sim_aux import get_tank_polygon
 from lib.conf.base.dtypes import null_dict
-from lib.conf.base.opt_par import getPar, ParDict
+from lib.conf.base.pars import getPar, ParDict
 from lib.conf.stored.conf import expandConf
 
 from lib.process.aux import annotation, suppress_stdout, compute_interference

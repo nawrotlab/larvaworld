@@ -8,7 +8,7 @@ import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import generate_xy_distro
 from lib.aux.colsNstr import N_colors
 
-from lib.conf.base.par import CompGroupCollector
+# from lib.conf.base.par import CompGroupCollector
 from lib.model.envs._larvaworld import LarvaWorld, generate_larvae, get_sample_bout_distros, sample_group
 from lib.sim.single.conditions import get_exp_condition
 from lib.conf.base import paths
@@ -127,8 +127,8 @@ class LarvaWorldSim(LarvaWorld):
                 fly.update_trajectory()
         if self.larva_step_col is not None:
             self.larva_step_col.collect(self)
-        if self.step_group_collector is not None:
-            self.step_group_collector.collect()
+        # if self.step_group_collector is not None:
+        #     self.step_group_collector.collect()
 
         if self.exp_condition is not None:
             self.exp_condition.check(self)
@@ -173,7 +173,7 @@ class LarvaWorldSim(LarvaWorld):
         if output is None:
             output = {'step': [], 'end': [], 'tables': {}, 'step_groups': [], 'end_groups': []}
         s, e, t = output['step'], output['end'], output['tables']
-        sg, eg = output['step_groups'], output['end_groups']
+        # sg, eg = output['step_groups'], output['end_groups']
         self.larva_step_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s, **kws0) if len(
             s) > 0 else None
         self.larva_end_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e, **kws0) if len(
@@ -181,8 +181,8 @@ class LarvaWorldSim(LarvaWorld):
         self.food_end_col = TargetedDataCollector(schedule=self.all_food_schedule,
                                                   pars=['initial_amount', 'final_amount'], **kws0)
         self.table_collector = DataCollector(tables=t) if len(t) > 0 else None
-        self.step_group_collector = CompGroupCollector(names=sg, save_as='step.csv', **kws) if len(sg) > 0 else None
-        self.end_group_collector = CompGroupCollector(names=eg, save_as='end.csv', **kws) if len(eg) > 0 else None
+        # self.step_group_collector = CompGroupCollector(names=sg, save_as='step.csv', **kws) if len(sg) > 0 else None
+        # self.end_group_collector = CompGroupCollector(names=eg, save_as='end.csv', **kws) if len(eg) > 0 else None
 
     def eliminate_overlap(self):
         scale = 3.0

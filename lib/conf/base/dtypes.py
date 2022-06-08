@@ -12,6 +12,7 @@ from typing import TypedDict, List, Tuple
 from lib.aux.dictsNlists import AttrDict, tree_dict, dict_depth
 from lib.aux.par_aux import dtype_name
 from lib.conf.base.init_pars import init_pars, proc_type_keys, bout_keys, to_drop_keys
+from lib.conf.base.units import ureg
 
 
 def maxNdigits(array, Min=None):
@@ -87,7 +88,7 @@ def define_range(dtype, lim, vs, dv, min, max, u, wrap_mode):
     return dv, lim, vs
 
 def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', k=None,symbol='',
-        u=1*siu.I, u_name=None, label='',combo=None, argparser=False, entry=None, codename=None,vfunc=None,vparfunc=None, convert2par=False):
+        u=ureg.dimensionless, u_name=None, label='',combo=None, argparser=False, entry=None, codename=None,vfunc=None,vparfunc=None, convert2par=False):
     if argparser :
         from lib.anal.argparsers import build_ParsArg
         return build_ParsArg(name,k,h,t,v,vs)

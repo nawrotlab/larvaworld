@@ -10,18 +10,15 @@ import threading
 from typing import Tuple
 
 import progressbar
-from scipy.stats import ks_2samp
 import numpy as np
 import pygame
 from pygame import KEYDOWN, K_ESCAPE, K_r, K_MINUS, K_PLUS, K_s, K_e
 from unflatten import unflatten
 
 import lib.aux.dictsNlists as dNl
-from lib.aux.xy_aux import eudi5x
 from lib.conf.base import paths
-from lib.conf.base.dtypes import null_dict, ga_dict
-from lib.conf.base.opt_par import getPar
-from lib.conf.stored.conf import copyConf, kConfDict, loadRef, expandConf, saveConf, next_idx
+from lib.conf.base.pars import getPar, ParDict
+from lib.conf.stored.conf import copyConf, kConfDict, loadRef, saveConf
 from lib.ga.robot.larva_robot import LarvaRobot, LarvaOffline
 from lib.ga.scene.box import Box
 from lib.ga.scene.scene import Scene

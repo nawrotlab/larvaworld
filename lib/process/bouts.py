@@ -212,7 +212,8 @@ def get_stride_df(s,e,c,shorts=['sv', 'b','bv','fov','rov'], idx=0, Nbins=64):
     # from lib.process.aux import comp_bearing
     from lib.process.aux import detect_strides
 
-    from lib.conf.base.opt_par import getPar
+    from lib.conf.base.pars import getPar, ParDict
+
     id = c.agent_ids[idx]
     ee = e.loc[id]
     ss = s.xs(id, level='AgentID')

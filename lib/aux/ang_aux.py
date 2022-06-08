@@ -5,8 +5,6 @@ import time
 
 import numpy as np
 
-from pint import UnitRegistry
-ureg = UnitRegistry()
 
 def wrap_angle_to_0(a, in_deg=False):
     lim=np.pi if not in_deg else 180

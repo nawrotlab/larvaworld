@@ -19,11 +19,11 @@ from lib.aux.colsNstr import N_colors, col_df
 
 
 from lib.conf.base.dtypes import null_dict
-from lib.conf.base.pars import RefParDict
-from lib.conf.base.opt_par import getPar
+# from lib.conf.base.pars import RefParDict
+from lib.conf.base.pars import getPar, ParDict
 from lib.conf.stored.conf import loadRef, expandConf, next_idx
 
-par_dict = RefParDict().par_dict
+# par_dict = RefParDict().par_dict
 
 
 class EvalRun :
@@ -432,9 +432,9 @@ class EvalRun :
     def preprocess(self):
         Ddata,Edata = {},{}
         for p, sh in zip(self.s_pars, self.s_shorts):
-            Ddata[p] = {d.id: par_dict.get(sh, d) for d in self.datasets}
+            Ddata[p] = {d.id: ParDict.get(sh, d) for d in self.datasets}
         for p, sh in zip(self.e_pars, self.e_shorts):
-            Edata[p] = {d.id: par_dict.get(sh, d) for d in self.datasets}
+            Edata[p] = {d.id: ParDict.get(sh, d) for d in self.datasets}
         sim_data = dNl.AttrDict.from_nested_dicts({'step': Ddata, 'end': Edata})
         return sim_data
 

@@ -12,7 +12,7 @@ import statsmodels.api as sm
 # from lib.aux.dictsNlists import AttrDict, save_dict
 
 from lib.aux.sim_aux import fft_max, fft_freqs
-from lib.conf.base.opt_par import getPar
+from lib.conf.base.pars import getPar, ParDict
 from lib.aux import naming as nam, dictsNlists as dNl
 
 from lib.process.store import store_aux_dataset

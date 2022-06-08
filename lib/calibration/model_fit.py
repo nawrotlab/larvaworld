@@ -13,7 +13,7 @@ from lib.aux.ang_aux import wrap_angle_to_0
 from lib.aux.dictsNlists import AttrDict
 from lib.conf.base.dtypes import null_dict, ga_dict
 from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf, expandConf, saveConf
-from lib.conf.base.opt_par import getPar
+from lib.conf.base.pars import getPar, ParDict
 from lib.model.modules.turner import Turner
 from lib.process.aux import detect_turns, process_epochs
 from lib.aux.sim_aux import fft_max

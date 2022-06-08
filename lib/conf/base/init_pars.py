@@ -2,8 +2,8 @@ import warnings
 from types import FunctionType
 
 import param
-import siunits as siu
-from siunits import DerivedUnit
+
+from lib.conf.base.units import ureg
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import numpy as np
@@ -233,18 +233,18 @@ def init_pars():
                   },
         'physics': {
             'torque_coef': {'v': 0.5, 'min': 0.5, 'max': 0.5, 'dv': 0.01, 'label': 'torque coefficient','vfunc': param.Number,
-                            'symbol': sub('c', 'T'),'u_name': sup('sec', -2),'u' : 1*siu.s * 10**-2,
+                            'symbol': sub('c', 'T'),'u_name': sup('sec', -2),'u' : ureg.s**-2,
                             'h': 'Conversion coefficient from TURNER output to torque-per-inertia-unit.'},
             'ang_vel_coef': {'v': 1.0, 'max': 5.0, 'dv': 0.01, 'label': 'angular velocity coefficient','vfunc': param.Number,
                              'h': 'Conversion coefficient from TURNER output to angular velocity.'},
             'ang_damping': {'v': 1.0, 'min': 1.0, 'max': 1.0, 'label': 'angular damping', 'symbol': 'z','vfunc': param.Number,
-                            'u_name': sup('sec', -1), 'u': 1 * siu.s * 10 ** -1,
+                            'u_name': sup('sec', -1), 'u':ureg.s ** -1,
                             'h': 'Angular damping exerted on angular velocity.'},
             'lin_damping': {'v': 1.0, 'min': 0.0, 'max': 10.0, 'label': 'linear damping', 'symbol': 'zl','vfunc': param.Number,
-                            'u_name': sup('sec', -1),'u' : 1*siu.s * 10**-1,
+                            'u_name': sup('sec', -1),'u' : ureg.s**-1,
                             'h': 'Linear damping exerted on forward velocity.'},
             'body_spring_k': {'v': 1.0, 'min': 1.0, 'max': 1.0, 'dv': 0.1, 'label': 'body spring constant','vfunc': param.Number,
-                              'symbol': 'k', 'u_name': sup('sec', -2),'u' : 1*siu.s * 10**-2,
+                              'symbol': 'k', 'u_name': sup('sec', -2),'u' : ureg.s**-2,
                               'h': 'Larva-body torsional spring constant reflecting deformation resistance.'},
             'bend_correction_coef': {'v': 1.0, 'min': 0.8, 'max': 1.5, 'label': 'bend correction coefficient','vfunc': param.Number,
                                      'symbol': sub('c', 'b'), 'u_name':None,
@@ -256,26 +256,25 @@ def init_pars():
         'crawler': {'waveform': {'t': str, 'v': 'realistic','k' : 'Cr_mod', 'vs': ['realistic', 'square', 'gaussian', 'constant'],'vfunc': param.Selector,
                                  'h': 'The waveform of the repetitive crawling oscillator (CRAWLER) module.'},
                     'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5), 'max': 2.0, 'disp': 'range','vfunc': param.Range,
-                                   'combo': 'frequency','k' : 'f_C_r','lim': (0.0,5.0),'u': 1 * siu.hz,
+                                   'combo': 'frequency','k' : 'f_C_r','lim': (0.0,5.0),'u': ureg.Hz,
                                    'h': 'The frequency range of the repetitive crawling behavior.'},
                     'initial_freq': {'v': 1.418, 'max': 5.0,'lim': (0.0,5.0), 'aux_vs': ['sample'], 'disp': 'initial','k' : 'f_C0','vfunc': param.Number,
-                                     'label': 'crawling frequency', 'symbol': sub('f', 'C'), 'u': 1 * siu.hz,
+                                     'label': 'crawling frequency', 'symbol': sub('f', 'C'), 'u': ureg.Hz,
                                      'combo': 'frequency', 'codename': 'scaled_velocity_freq',
                                      'h': 'The initial frequency of the repetitive crawling behavior.'},  # From D1 fit
-                    'freq_std': {'v': 0.0, 'max': 1.0,'lim': (0.0,1.0),'k' : 'f_C_std', 'disp': 'std', 'combo': 'frequency','u': 1 * siu.hz,'vfunc': param.Number,
+                    'freq_std': {'v': 0.0, 'max': 1.0,'lim': (0.0,1.0),'k' : 'f_C_std', 'disp': 'std', 'combo': 'frequency','u': ureg.Hz,'vfunc': param.Number,
                                  'h': 'The standard deviation of the frequency of the repetitive crawling behavior.'},
                     'max_scaled_vel': {'v': 0.6, 'max': 1.5,'lim': (0.0,1.5), 'label': 'maximum scaled velocity','vfunc': param.Number,
                                        'codename': 'stride_scaled_velocity_max','k' : 'sstr_v_max',
-                                       'symbol': sub(circle('v'), 'max'), 'u': siu.s * 10**-1,'u_name' : '$body-lengths/sec$',
+                                       'symbol': sub(circle('v'), 'max'), 'u': ureg.s**-1,'u_name' : '$body-lengths/sec$',
                                        'h': 'The maximum scaled forward velocity.'},
                     'stride_dst_mean': {'v': 0.224, 'max': 1.0,'lim': (0.0,1.0), 'dv': 0.01, 'aux_vs': ['sample'], 'disp': 'mean','k' : 'sstr_d_mu','vfunc': param.Number,
-                                        'label': r'stride distance mean', 'symbol': sub(bar(circle('d')), 'S'),
-                                        'u': 1*siu.I,'u_name' : '$body-lengths$',
+                                        'label': r'stride distance mean', 'symbol': sub(bar(circle('d')), 'S'),'u_name' : '$body-lengths$',
                                         'combo': 'scaled distance / stride', 'codename': 'scaled_stride_dst_mean',
                                         'h': 'The mean displacement achieved in a single peristaltic stride as a fraction of the body length.'},
                     'stride_dst_std': {'v': 0.033, 'max': 1.0,'lim': (0.0,1.0), 'aux_vs': ['sample'], 'disp': 'std','k' : 'sstr_d_std','vfunc': param.Number,
                                        'label': 'stride distance std', 'symbol': sub(tilde(circle('d')), 'S'),
-                                       'u': 1*siu.I,'u_name' : '$body-lengths$',
+                                       'u_name' : '$body-lengths$',
                                        'combo': 'scaled distance / stride', 'codename': 'scaled_stride_dst_std',
                                        'h': 'The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.'},
                     'initial_amp': {'max': 2.0,'lim': (0.0,2.0), 'disp': 'initial', 'combo': 'amplitude','k' : 'A_C0','vfunc': param.Number,
@@ -283,7 +282,7 @@ def init_pars():
                     'noise': {'v': 0.0, 'max': 1.0, 'lim': (0.0,1.0),'dv': 0.01, 'disp': 'noise', 'combo': 'amplitude','k' : 'A_Cnoise','vfunc': param.Magnitude,
                               'h': 'The intrinsic output noise of the CRAWLER-generated forward velocity.'},
                     'max_vel_phase': {'v': 3.6, 'max': 2 * np.pi,'lim': (0.0,2 * np.pi), 'label': 'max velocity phase','k' : 'phi_v_max','vfunc': param.Number,
-                                      'symbol': subsup('$\phi$', 'C', 'v'), 'u_name': 'rad','u' : 1*siu.rad,
+                                      'symbol': subsup('$\phi$', 'C', 'v'), 'u_name': 'rad','u' : ureg.rad,
                                       'codename': 'phi_scaled_velocity_max',
                                       'h': 'The phase of the crawling oscillation cycle where forward velocity is maximum.'}
                     },
@@ -384,7 +383,7 @@ def init_pars():
         },
         'par': {
             'p': {'t': str},
-            'u': {'t': Union[siu.BaseUnit, siu.Composite, siu.DerivedUnit]},
+            'u': {'t': str},
             'k': {'t': str},
             's': {'t': str},
             'symbol': {'t': str},
@@ -421,19 +420,19 @@ def init_pars():
                             'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2 * np.pi,'vfunc': param.Range,
                                                   'label': 'suppression relief phase interval',
                                                   'symbol': '$[\phi_{C}^{\omega_{0}},\phi_{C}^{\omega_{1}}]$',
-                                                  'u_name': '$rads$','u' : 1*siu.rad,
+                                             'u' : ureg.rad,
                                                   'h': 'CRAWLER phase range for TURNER suppression lift.'},
                             'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2 * np.pi,'vfunc': param.Range,
                                                  'label': 'feeder suppression relief phase interval',
                                                  'symbol': '$[\phi_{F}^{\omega_{0}},\phi_{F}^{\omega_{1}}]$',
-                                                 'u_name': '$rads$','u' : 1*siu.rad,
+                                                 'u' : ureg.rad,
                                                  'h': 'FEEDER phase range for TURNER suppression lift.'}
 
                         }
 
     d['phasic_interference'] = {
          'max_attenuation_phase': {'v': 3.4, 'max': 2 * np.pi, 'label': 'max relief phase','lim': (0.0, 2 * np.pi),'vfunc': param.Number,
-                                      'symbol': '$\phi_{C}^{\omega}$', 'u_name': 'rad','u' : 1*siu.rad,'k' : 'phi_fov_max',
+                                      'symbol': '$\phi_{C}^{\omega}$', 'u' : ureg.rad,'k' : 'phi_fov_max',
                                       'h': 'CRAWLER phase of minimum TURNER suppression.'}
     }
 
@@ -459,14 +458,14 @@ def init_pars():
 
     d['neural_turner'] = {
         'base_activation': {'v': 20.0, 'min': 10.0, 'max': 40.0,'lim': (10.0,40.0), 'dv': 0.1, 'disp': 'mean', 'combo': 'activation',
-                            'label': 'tonic input', 'symbol': '$I_{T}^{0}$','u_name': None,'u' : 1*siu.I,'k' : 'I_T0','vfunc': param.Number,
+                            'label': 'tonic input', 'symbol': '$I_{T}^{0}$','k' : 'I_T0','vfunc': param.Number,
                             'h': 'The baseline activation/input of the TURNER module.'},
         'activation_range': {'t': Tuple[float], 'v': (10.0, 40.0), 'max': 100.0,'lim': (0.0,100.0), 'dv': 0.1, 'disp': 'range','k' : 'I_T_r',
-                             'label': 'input range', 'symbol': r'$[I_{T}^{min},I_{T}^{max}]$','u_name': None,'u' : 1*siu.I,'vfunc': param.Range,
+                             'label': 'input range', 'symbol': r'$[I_{T}^{min},I_{T}^{max}]$','vfunc': param.Range,
                              'combo': 'activation', 'h': 'The activation/input range of the TURNER module.'},
 
         'tau': {'v': 0.1, 'min': 0.05, 'max': 0.5, 'dv': 0.01, 'label': 'time constant', 'symbol': r'$\tau_{T}$','vfunc': param.Number,
-                'u_name': 'sec','u' : 1*siu.s,
+              'u' : ureg.s,
                 'h': 'The time constant of the neural oscillator.'},
         'm': {'v': 100, 'min': 50, 'max': 200, 'label': 'maximum spike-rate', 'symbol': '$SR_{max}$','u_name': None,'vfunc': param.Integer,
               'h': 'The maximum allowed spike rate.'},
@@ -484,11 +483,11 @@ def init_pars():
                                             'u_name': None,'k' : 'A_T_r',
                                             'h': 'The activity amplitude range of the TURNER module.'},
                               'initial_freq': {'v': 0.58, 'min': 0.01, 'max': 2.0,'dv': 0.01,  'disp': 'initial', 'combo': 'frequency','k' : 'f_T0',
-                                               'label': 'bending frequency', 'symbol': sub('f', 'T'), 'u_name': '$Hz$','u' : 1*siu.hz,'vfunc': param.Number,
+                                               'label': 'bending frequency', 'symbol': sub('f', 'T'), 'u_name': '$Hz$','u' :ureg.Hz,'vfunc': param.Number,
                                                'h': 'The initial frequency of the repetitive lateral bending behavior if this is hardcoded (e.g. sinusoidal mode).'},
                               'freq_range': {'t': Tuple[float],'min': 0.01, 'max': 2.0,'lim': (0.01,2.0),'dv': 0.01,  'disp': 'range', 'combo': 'frequency',
                                              'label': 'bending frequency range','k' : 'f_T_r','v': (0.1,0.8),'vfunc': param.Range,
-                                             'symbol': r'$[f_{T}^{min},f_{T}^{max}]$','u_name': '$Hz$','u' : 1*siu.hz,
+                                             'symbol': r'$[f_{T}^{min},f_{T}^{max}]$','u_name': '$Hz$','u' : ureg.Hz,
                                              'h': 'The frequency range of the repetitive lateral bending behavior.'}
                               }
 
@@ -497,16 +496,15 @@ def init_pars():
                                               'h': 'The initial activity amplitude of the TURNER module.'},
                               'amp_range': {'t': Tuple[float],'min': 0.1, 'max': 20.0,'lim' : (0.1,20.0), 'disp': 'range', 'combo': 'amplitude',
                                             'label': 'output amplitude range', 'symbol': '$[A_{T}^{min},A_{T}^{max}]$','k' : 'A_T_r','vfunc': param.Range,
-                                            'u_name': None,'u' : 1*siu.I,
                                             'h': 'The activity amplitude range of the TURNER module.'}
                             }
 
     d['base_turner'] = {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal', 'constant'],'k' : 'Tur_mod','vfunc': param.Selector,
                             'h': 'The implementation mode of the lateral oscillator (TURNER) module.'},
 
-                   'noise': {'v': 0.0, 'max': 1.0, 'disp': 'noise', 'combo': 'amplitude','k' : 'A_Tnoise','u_name': None,'u' : 1*siu.I,'vfunc': param.Magnitude,
+                   'noise': {'v': 0.0, 'max': 1.0, 'disp': 'noise', 'combo': 'amplitude','k' : 'A_Tnoise','vfunc': param.Magnitude,
                              'h': 'The intrinsic output noise of the TURNER activity amplitude.'},
-                   'activation_noise': {'v': 0.0, 'max': 1.0, 'disp': 'noise', 'combo': 'activation','k' : 'I_Tnoise','u_name': None,'u' : 1*siu.I,'vfunc': param.Magnitude,
+                   'activation_noise': {'v': 0.0, 'max': 1.0, 'disp': 'noise', 'combo': 'activation','k' : 'I_Tnoise','vfunc': param.Magnitude,
                                         'h': 'The intrinsic input noise of the TURNER module.'}
                             }
 

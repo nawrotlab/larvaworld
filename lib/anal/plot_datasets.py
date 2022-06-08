@@ -15,8 +15,7 @@ from scipy.stats import ttest_ind, multivariate_normal
 from lib.anal.plot_aux import Plot, dataset_legend, AutoPlot, plot_quantiles, plot_mean_and_range, process_plot, ParPlot
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.aux.colsNstr import N_colors, col_range
-from lib.conf.base.opt_par import getPar
-
+from lib.conf.base.pars import getPar, ParDict
 suf = 'pdf'
 
 def plot_ethogram(subfolder='timeplots', **kwargs):
