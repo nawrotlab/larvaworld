@@ -201,7 +201,7 @@ def result_summary(datasets, target, **kwargs):
     }
 
     dur=int(np.min([d.config.duration for d in ds]))
-    print([d.config.duration for d in ds])
+    # print([d.config.duration for d in ds])
     P.plot(func=plot_trajectories, kws={'mode' : 'origin','range': (0,dur), **kws}, N=Nds,  x0=True, y0=True, **kws2)
     P.plot(func=plot_bouts, kws={'stridechain_duration' : True, **kws}, N=2, w=18, h0=12, x0=True, **kws2)
     P.plot(func=plot_bouts, kws={'turns' : True,**kws}, N=2, w=18, h0=24,  x0=True, **kws2)

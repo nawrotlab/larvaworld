@@ -580,7 +580,7 @@ class BaseParDict:
             amax = 180
         kws = {'dv': np.round(amax / 180, 2), 'u': u, 'v0': 0.0, 'vfunc': param.Number}
         self.addPar(**{'p': 'bend','codename': 'bend', 'k': 'b', 'sym': th('b'), 'disp': 'bending angle', 'lim': (-amax, amax), **kws})
-        self.add_velNacc(k0='b', sym_v=omega('b'), sym_a=dot(omega('b')), disp_v='bending angular velocity',
+        self.add_velNacc(k0='b', sym_v=omega('b'), sym_a=dot(omega('b')), disp_v='bending angular speed',
                          disp_a='bending angular acceleration')
 
         angs = [
@@ -603,7 +603,7 @@ class BaseParDict:
 
             self.add_velNacc(k0=kou, k_v=f'{suf}ov', k_a=f'{suf}oa', p_v=p_v, d_v=p_v, p_a=p_a, d_a=p_a,
                              sym_v=omega(ksuf),
-                             sym_a=dot(omega(ksuf)), disp_v=f'{lsuf}angular velocity',
+                             sym_a=dot(omega(ksuf)), disp_v=f'{lsuf}angular speed',
                              disp_a=f'{lsuf}angular acceleration')
         for k0 in ['b', 'bv', 'ba', 'fov', 'foa', 'rov', 'roa', 'fo', 'ro']:
             self.add_freq(k0=k0)
@@ -633,10 +633,10 @@ class BaseParDict:
         d_sd, d_sv, d_sa = nam.scal([d_d, d_v, d_a])
         self.add_dst(point='')
         self.add_velNacc(k0='d', k_v='v', k_a='a', p_v=d_v, d_v=d_v, p_a=d_a, d_a=d_a,
-                         sym_v='v', sym_a=dot('v'), disp_v='velocity', disp_a='acceleration', func_v = func_v_spatial(d_d,d_v))
+                         sym_v='v', sym_a=dot('v'), disp_v='speed', disp_a='acceleration', func_v = func_v_spatial(d_d,d_v))
         self.add_scaled(k0='d')
         self.add_velNacc(k0='sd', k_v='sv', k_a='sa', p_v=d_sv, d_v=d_sv, p_a=d_sa, d_a=d_sa, sym_v=mathring('v'),
-                         sym_a=dot(mathring('v')), disp_v='scaled velocity', disp_a='scaled acceleration',
+                         sym_a=dot(mathring('v')), disp_v='scaled speed', disp_a='scaled acceleration',
                          func_v = func_v_spatial(d_sd, d_sv))
         for k0 in ['l', 'd', 'sd', 'v', 'sv', 'a', 'sa', 'x', 'y']:
             self.add_freq(k0=k0)

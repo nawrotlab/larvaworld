@@ -28,8 +28,8 @@ par_dict = RefParDict().par_dict
 
 class EvalRun :
     def __init__(self,refID,id=None,expVSsimIDs=False, eval_metrics=None,save_to=None,N=None,bout_annotation=True,
-                 locomotor_models=None,modelIDs=None,dataset_ids=None, cross_validation=False,mode='load',enrichment=True,
-                 norm_modes = ['raw', 'minmax', 'std'],eval_modes=['pooled'],offline=False, store_data=True, show=False) :
+                 locomotor_models=None,modelIDs=None,dataset_ids=None, cross_validation=False,mode='load',enrichment=None,
+                 norm_modes = ['raw'],eval_modes=['pooled'],offline=False, store_data=True, show=False) :
         if id is None :
             id = f'evaluation_run_{next_idx("dispersion", "Eval")}'
         self.id=id
@@ -376,13 +376,12 @@ class EvalRun :
         self.figs.models.summaries = dNl.AttrDict.from_nested_dicts(
             {mID: model_summary(refID=self.refID, mID=mID, save_to=save_to) for mID in self.modelIDs})
 
-    def plot_results(self, plots=['dispersion','hists','trajectories','boxplots','bouts','fft']):
+    def plot_results(self, plots=['hists','trajectories','dispersion','bouts']):
         print('Generating comparative graphs')
 
-
-
-
+        self.target.load(contour=False)
         ds =[self.target] + self.datasets
+
         kws = {
             'datasets': ds ,
             'save_to': self.dir_dict.plot,
@@ -406,9 +405,7 @@ class EvalRun :
             self.figs.loco.trajectories = plot_trajectories(subfolder=None, **kws)
         if 'boxplots' in plots:
             self.figs.boxplot.end = self.plot_data(mode='end', type='box')
-            # self.figs.boxplot.end = boxplots(shorts=self.e_shorts, key='end',annotation=True,show_ns=False,  target_only=evrun.target.id, **kws)
             self.figs.boxplot.step = self.plot_data(mode='step', type='box')
-            # self.figs.boxplot.step = boxplots(shorts=self.s_shorts, key='step',annotation=True,show_ns=False, target_only=evrun.target.id, **kws)
         if 'bouts' in plots:
             self.figs.epochs.runNpause = plot_bouts(stridechain_duration=True, **kws)
             self.figs.epochs.turn = plot_bouts(turns=True, **kws)
@@ -418,7 +415,6 @@ class EvalRun :
                 fig1=plot_dispersion(range=(r0, r1),subfolder=None, **kws)
                 fig2=plot_trajectories(name=f'traj_{r0}_{r1}', range=(r0, r1),subfolder=None,mode='origin', **kws)
                 fig3=dsp_summary(range=(r0, r1),**kws2)
-
                 self.figs.loco[k] = dNl.AttrDict.from_nested_dicts({'plot': fig1, 'traj': fig2, 'summary' : fig3})
 
         self.figs.summary = result_summary(**kws2)
@@ -581,7 +577,6 @@ class EvalRun :
         try :
             for dd in self.datasets :
                 er=RSS_dic(dd, self.target)
-                print(dd.id, er)
         except :
             pass
         self.dataset_configs = {dd.id: dd.config for dd in self.datasets}
@@ -647,7 +642,7 @@ def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled',**k
            N=2,share_w=True, dh=3, h=23,w=24, x0=True, y0=True)
     for i, (k, df) in enumerate(error_dict.items()):
         h0 = 28 + i * 14
-        P.plot(func=error_table, kws={'data': df,'k' : k,  'bbox': [0.4, 0, 1, 1]}, h=12,h0=h0,w=24, x0=True)
+        P.plot(func=error_table, kws={'data': df,'k' : k,  'bbox': [0.5, 0, 1, 1]}, h=12,h0=h0,w=24, x0=True)
     P.adjust((0.1, 0.9), (0.05, 0.95), 0.1, 0.2)
     P.annotate()
     return P.get()
@@ -744,26 +739,20 @@ def compare2ref(ss, s=None, refID=None,
 
 
 if __name__ == '__main__':
-    t0=time.time()
     from lib.anal.evaluation import EvalRun
     from lib.aux import dictsNlists as dNl
 
-    # enr=null_dict('enrichment')
-    # print(enr)
-    # raise
     refID = 'None.150controls'
     # mIDs = ['NEU_PHI', 'NEU_PHIx', 'PHIonSIN', 'PHIonSINx']
     mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
     dataset_ids = mIDs
     # dataset_ids = ['NEU mean', 'NEU var', 'SIN mean', 'SIN var']
-    id = 'online_4models_test5'
+    id = 'online_4models_3l'
 
-    evrun = EvalRun(refID=refID, id=id,modelIDs=mIDs,dataset_ids=dataset_ids, N=5,
+    evrun = EvalRun(refID=refID, id=id,modelIDs=mIDs,dataset_ids=dataset_ids, N=3,
                     bout_annotation=True,show=False, offline=False)
 
     evrun.run(video=False)
     evrun.eval()
-    # evrun.plot_results()
-    t1 = time.time()
-    print(int((t1-t0)*1000))
+    evrun.plot_results()
 

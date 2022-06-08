@@ -22,7 +22,7 @@ from lib.aux.colsNstr import N_colors
 
 from lib.conf.base.opt_par import getPar
 from lib.conf.base.pars import ParDict
-
+from lib.process.aux import comp_pooled_epochs, compute_interference
 
 '''
 Generic plot function. Uses the next two functions internally'''
@@ -2013,16 +2013,18 @@ def stride_cycle(shorts=['sv', 'fov', 'rov', 'foa'], modes=None, Nbins=64, indiv
             mode = 'abs' if sh == 'sv' else 'norm'
         else:
             mode = modes[ii]
-        # mode='abs' if sh=='sv' else 'norm'
+
         for d in P.datasets:
             c = d.config
             col = c.color if 'color' in c.keys() else d.color
-
             if individuals:
                 try:
                     cycle_curves = d.cycle_curves
                 except:
                     cycle_curves = d.load_cycle_curves()
+                if cycle_curves is None:
+                    s, e = d.step_data, d.endpoint_data
+                    cycle_curves = compute_interference(s, e, c=c)
                 if cycle_curves is not None:
                     df = cycle_curves[sh][mode]
                     if pooled:
@@ -2033,7 +2035,13 @@ def stride_cycle(shorts=['sv', 'fov', 'rov', 'foa'], modes=None, Nbins=64, indiv
                         P.axs[ii].plot(x, np.nanquantile(df, q=0.5, axis=0), label=d.id, color=col)
 
             else:
+                if 'pooled_cycle_curves' not in c.keys():
+                    s, e = d.step_data, d.endpoint_data
+                    compute_interference(s, e, c=c)
+                # pooled_cycle_curves=c.pooled_cycle_curves
                 P.axs[ii].plot(x, np.array(c.pooled_cycle_curves[sh][mode]), label=d.id, color=col)
+
+
         P.conf_ax(ii, xticks=np.linspace(0, 2 * np.pi, 5), xlim=[0, 2 * np.pi],
                   xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
                   xlab='$\phi_{stride}$', ylab=sym, xvis=True if ii == Nsh - 1 else False)
@@ -2261,8 +2269,12 @@ def plot_trajectories(axs=None, fig=None, unit='mm', name=f'comparative_trajecto
                 return get_traj(d, None)
         else:
             try:
-                s = d.read(key='trajectories', file='aux_h5')
-                return s
+                try:
+                    s = d.read(key='trajectories', file='aux_h5')
+                    return s
+                except:
+                    s = d.step_data[['x', 'y']]
+                    return s
             except:
                 s = d.step_data[['x', 'y']]
                 return s
@@ -2351,6 +2363,10 @@ def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_out
             v = d.pooled_epochs
         except:
             v = d.load_pooled_epochs()
+
+        if v is None :
+            v = comp_pooled_epochs(d)
+        # print(id,v.keys())
 
         kws = {
             'marker': 'o',
