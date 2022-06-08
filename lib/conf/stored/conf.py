@@ -55,18 +55,20 @@ def loadConfDict(conf_type, use_pickle=False):
 def kConfDict(conf_type, **kwargs) :
     return list(loadConfDict(conf_type, **kwargs).keys())
 
-def ConfSelector(conf_type, default=None,single_choice=True) :
+def ConfSelector(conf_type, default=None,single_choice=True, **kwargs) :
     def func():
 
         kws={
             'objects': kConfDict(conf_type),
-            'default':default
+            'default':default,
+            'allow_None':True,
+            'empty_default':True,
         }
         if single_choice :
             func0=param.Selector
         else :
             func0 = param.ListSelector
-        return func0(**kws)
+        return func0(**kws, **kwargs)
     return func
 
 

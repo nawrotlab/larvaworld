@@ -3,6 +3,7 @@ from typing import Tuple
 import param
 
 from lib.aux import dictsNlists as dNl
+from lib.aux.par_aux import sub
 from lib.conf.base.units import ureg
 
 func_dic = {
@@ -193,7 +194,29 @@ def init2par(d0=None, d=None):
             init2par(v, d=d)
     return d
 
+def confID_dict() :
+    from lib.conf.stored.conf import kConfDict, ConfSelector
+    dic = dNl.AttrDict.from_nested_dicts({})
+    keys = ['Ref', 'Model', 'Env', 'Exp', 'Ga']
+    for K0 in keys:
+        k0 = K0.lower()
+        k = f'{k0}ID'
+        # print(K0,kConfDict(K0))
+
+        # p=buildBasePar(p=k, k=k, dtype=str, d=None, disp=f'{K0} IDs', sym=sub('ID', k0), codename=None, lab=f'{K0} IDs',
+        #            h=f'The stored {k0} configurations as a list of IDs',v0=None,vparfunc=ConfSelector(K0))
+        vparfunc = ConfSelector(K0, doc=f'The stored {K0} configurations as a list of IDs', label=sub('ID', k0))
+        dic[K0] = vparfunc()
+    return dic
+
+# ConfIDdict=confID_dict()
+
 if __name__ == '__main__':
-    pass
-    d=init2par(d0=None, d=None)
-    print(d.keys())
+    pp=ConfIDdict['Model']
+    print(pp.default)
+
+    # ppp=pp('explorer')
+    # print(ppp.default)
+    # for k,p in ConfIDdict.items():
+    #     print(k,p)
+
