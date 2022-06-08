@@ -5,10 +5,6 @@ import pandas as pd
 from matplotlib import cm, colors
 
 
-# function takes in a hex color and outputs it inverted
-# from lib.aux.dictsNlists import flatten_list
-
-
 def invert_color(col, return_self=False):
     if type(col) in [list, tuple] and len(col) == 3:
         if not all([0 <= i <= 1 for i in col]):

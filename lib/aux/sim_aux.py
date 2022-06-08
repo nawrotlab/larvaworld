@@ -1,11 +1,9 @@
 import math
 
 import numpy as np
-from numpy.fft import fftfreq
-from scipy.fft import fft
-from scipy.signal import spectrogram, sosfiltfilt, butter
+
 from shapely.geometry import Point, Polygon, LineString
-from shapely.ops import split
+
 
 from lib.aux import naming as nam
 
@@ -74,6 +72,7 @@ def body(points, start=[1, 0], stop=[0, 0]):
 
 # Segment body in N segments of given ratios via vertical lines
 def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
+    from shapely.ops import split
     # If segment ratio is not provided, generate equal-length segments
     if seg_ratio is None:
         seg_ratio = [1 / N] * N
@@ -144,6 +143,7 @@ def compute_dst(point1, point2):
 
 
 def freq(d, dt, range=[0.7, 1.8]) :
+    from scipy.signal import spectrogram
     try:
         f, t, Sxx = spectrogram(d, fs=1 / dt)
         # keep only frequencies of interest
@@ -185,6 +185,7 @@ def parse_array_at_nans(a):
 
 
 def apply_sos_filter_to_array_with_nans(array, sos, padlen=6):
+    from scipy.signal import sosfiltfilt
     try:
         array_filt = np.full_like(array, np.nan)
         ds, de = parse_array_at_nans(array)
@@ -200,6 +201,8 @@ def apply_sos_filter_to_array_with_nans(array, sos, padlen=6):
 
 
 def apply_filter_to_array_with_nans_multidim(array, freq, fr, N=1):
+    from scipy.signal import butter
+
     sos = butter(N=N, Wn=freq, btype='lowpass', analog=False, fs=fr, output='sos')
     # The array chunks must be longer than padlen=6
     padlen = 6
@@ -241,7 +244,8 @@ def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
         Dominant frequency within range.
 
     """
-
+    from numpy.fft import fftfreq
+    from scipy.fft import fft
     a = np.nan_to_num(a)
     Nticks = len(a)
     xf = fftfreq(Nticks, dt)[:Nticks // 2]

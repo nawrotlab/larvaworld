@@ -5,10 +5,8 @@ import random
 import time
 import numpy as np
 from lib.aux import naming as nam,dictsNlists as dNl
-from lib.conf.stored.conf import loadRef
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 from lib.conf.base import paths
-from lib.sim.single.analysis import targeted_analysis
 
 
 class SingleRun:
@@ -153,10 +151,10 @@ class SingleRun:
                     print(f'Group {d.id} -> PI2 : {PI2s[d.id]}')
             return None, {'PIs': PIs, 'PI2s': PI2s}
         else:
-        # print(anal_params)
+            return None, None
 
     def run_analysis(self, anal_params,save_to=None,**kwargs) :
-        from lib.sim.single.analysis import source_analysis, deb_analysis, comparative_analysis, foraging_analysis
+        from lib.sim.single.analysis import targeted_analysis,source_analysis, deb_analysis, comparative_analysis, foraging_analysis
         kws = {'datasets': self.datasets, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
         from lib.anal.plotting import graph_dict
         figs, results = {}, {}
@@ -168,8 +166,11 @@ class SingleRun:
             elif entry == 'deb_analysis':
                 figs.update(**deb_analysis(**kws))
             elif entry == 'targeted_analysis':
+
                 figs.update(**targeted_analysis(**kws))
             elif entry == 'comparative_analysis':
+                from lib.conf.stored.conf import loadRef
+
                 samples = dNl.unique_list([d.config.sample for d in self.datasets])
                 targets = [loadRef(sd) for sd in samples]
                 kkws = copy.deepcopy(kws)

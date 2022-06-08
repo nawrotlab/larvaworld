@@ -702,39 +702,6 @@ def plot_endpoint(datasets, end_ps, save_to=None, show=False):
         plt.show()
     plt.close()
     return fig
-#
-#
-# def compare2ref(ss, s=None, refID=None,
-#                 shorts= ['b', 'fov', 'foa', 'tur_fou', 'tur_fov_max', 'v', 'a', 'run_d', 'run_t', 'pau_t', 'tor5', 'tor20'],pars=None):
-#     if s is None and refID is not None :
-#         d = loadRef(refID)
-#         d.load(contour=False)
-#         s, e, c = d.step_data, d.endpoint_data, d.config
-#
-#     if pars is None and shorts is not None:
-#         pars = getPar(shorts)
-#
-#     KSdic = {}
-#     for p, sh in zip(pars, shorts):
-#         if isinstance(s, dict):
-#             key = p if p in s.keys() else sh
-#             p_s = np.array(s[key])
-#             p_s = p_s[~np.isnan(p_s)]
-#         else:
-#             key = p if p in s.columns else sh
-#             p_s = s[key].dropna().values
-#         # else:
-#         #     continue
-#         if isinstance(ss, dict):
-#             key= p if p in ss.keys() else sh
-#             p_ss = np.array(ss[key])
-#             p_ss = p_ss[~np.isnan(p_ss)]
-#         else:
-#             key = p if p in ss.columns else sh
-#             p_ss = ss[key].dropna().values
-#         KSdic[p] = ks_2samp(p_s, p_ss)[0]
-#     return KSdic
-#
 
 
 
@@ -747,7 +714,7 @@ if __name__ == '__main__':
     mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
     dataset_ids = mIDs
     # dataset_ids = ['NEU mean', 'NEU var', 'SIN mean', 'SIN var']
-    id = 'online_4models_4lll'
+    id = 'online_4models_4r'
 
     evrun = EvalRun(refID=refID, id=id,modelIDs=mIDs,dataset_ids=dataset_ids, N=4,
                     bout_annotation=True,show=False, offline=False)

@@ -160,25 +160,18 @@ class LarvaWorldSim(LarvaWorld):
     def create_collectors(self, output):
         from lib.conf.base.pars import ParDict
         from lib.aux.collecting import TargetedDataCollector
-        # self.par_dict = RefParDict().par_dict.dict
-        # self.par_dict = ParDict(mode='load').dict
         kws0 = {'par_dict': ParDict.dict}
-        # kws = {
-        #     'objects': self.get_flies(),
-        #     'common': True,
-        #     'collection_dict': collection_dict,
-        #     **kws0
-        # }
-
         if output is None:
-            output = {'step': [], 'end': [], 'tables': {}, 'step_groups': [], 'end_groups': []}
+            output = {'step': [], 'end': [], 'tables': {}}
         s, e, t = output['step'], output['end'], output['tables']
+        f=[]#['initial_amount', 'final_amount']
         self.larva_step_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s, **kws0) if len(
             s) > 0 else None
         self.larva_end_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e, **kws0) if len(
             e) > 0 else None
         self.food_end_col = TargetedDataCollector(schedule=self.all_food_schedule,
-                                                  pars=['initial_amount', 'final_amount'], **kws0)
+                                                  pars=f, **kws0)if len(
+            f) > 0 else None
         self.table_collector = DataCollector(tables=t) if len(t) > 0 else None
 
     def eliminate_overlap(self):

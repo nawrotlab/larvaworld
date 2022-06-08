@@ -1,14 +1,10 @@
-import collections
 import copy
 import json
 import os
 import pickle
 import sys
-from collections import deque
-from itertools import groupby
 import numpy as np
 
-from pypet import ParameterGroup, Parameter
 
 def dict_depth(d):
     if isinstance(d, dict):
@@ -32,6 +28,8 @@ def flatten_list(l):
 
 
 def flatten_dict(d, parent_key='', sep='.'):
+    import collections
+
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
@@ -59,6 +57,8 @@ def tree_dict(d, parent_key='', sep='.'):
     add(['', parent_key, parent_key, [' ']])
 
     def tree_dict0(d, parent_key='', sep='.'):
+        import collections
+
         for k, v in d.items():
             new_key = parent_key + sep + k
             if isinstance(v, collections.MutableMapping):
@@ -73,6 +73,8 @@ def tree_dict(d, parent_key='', sep='.'):
 
 
 def reconstruct_dict(param_group, **kwargs):
+    from pypet import ParameterGroup, Parameter
+
     dict = {}
     for p in param_group:
         if type(p) == ParameterGroup:
@@ -159,6 +161,8 @@ def save_dict(d, file, use_pickle=True):
 
 
 def depth(d):
+    from collections import deque
+
     queue = deque([(id(d), d, 1)])
     memo = set()
     while queue:
@@ -218,6 +222,8 @@ def replace_in_dict(d0, replace_d, inverse=False):
 
 
 def group_dicts(dics):
+    from itertools import groupby
+
     if all(not isinstance(i, dict) for i in dics):
         return [i for b in dics for i in b]
     r = [i for b in dics for i in b.items()]

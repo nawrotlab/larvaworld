@@ -711,9 +711,6 @@ def get_sample_bout_distros(model, sample):
             for sample_d in dic[d] :
                 if sample_d in sample.bout_distros.keys() and sample.bout_distros[sample_d] is not None :
                     Im[d]=sample.bout_distros[sample_d]
-        # for bout, dist in zip(['pause', 'stride'], ['pause_dist', 'stridechain_dist']):
-        #     if 'fit' in m.brain.intermitter_params[dist].keys() and m.brain.intermitter_params[dist].fit :
-        #         m.brain.intermitter_params[dist] = sample.bout_distros[bout]
     return m
 
 

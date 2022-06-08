@@ -1,22 +1,13 @@
 import copy
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.stats import ks_2samp
-from scipy.optimize import minimize
 
-from lib.anal.plot_aux import BasePlot
-from lib.anal.plot_combos import model_summary
-from lib.aux.ang_aux import wrap_angle_to_0
-from lib.aux.dictsNlists import AttrDict
+from lib.aux import dictsNlists as dNl
 from lib.conf.base.dtypes import null_dict, ga_dict
-from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf, expandConf, saveConf
-from lib.conf.base.pars import getPar, ParDict
-from lib.model.modules.turner import Turner
-from lib.process.aux import detect_turns, process_epochs
-from lib.aux.sim_aux import fft_max
+from lib.conf.stored.conf import loadConf, loadRef, expandConf, saveConf
+from lib.conf.base.pars import getPar
 
 
 class Calibration:
@@ -56,6 +47,8 @@ class Calibration:
 
 
     def plot_turner_distros(self, sim, fig=None, axs=None,in_deg=False,**kwargs):
+        from lib.anal.plot_aux import BasePlot
+
         # err, Ks_dic = self.eval_turner(sim, absolute=True)
         # print(Ks_dic)
         Nps = len(self.shorts)
@@ -85,6 +78,9 @@ class Calibration:
         return P.get()
 
     def sim_turner(self, turner, physics, N=2000):
+        from lib.model.modules.turner import Turner
+        from lib.aux.ang_aux import wrap_angle_to_0
+
         L = Turner(dt=self.dt, **turner)
 
         def compute_ang_vel(b, torque, fov):
@@ -107,6 +103,7 @@ class Calibration:
         simFOA = np.diff(simFOV, prepend=[0]) / self.dt
 
         if 'tur_t' in self.shorts or 'tur_fou' in self.shorts:
+            from lib.process.aux import detect_turns, process_epochs
 
             Lturns, Rturns = detect_turns(pd.Series(simFOV), self.dt)
             Ldurs, Lamps, Lmaxs = process_epochs(simFOV, Lturns, self.dt, return_idx=False)
@@ -123,6 +120,8 @@ class Calibration:
 
 
     def eval_turner(self, sim):
+        from scipy.stats import ks_2samp
+
         if not self.absolute:
             Ks_dic = {sh: np.round(ks_2samp(self.target[sh], sim[sh])[0], 3) for sh in self.shorts}
         else:
@@ -131,8 +130,8 @@ class Calibration:
         return err, Ks_dic
 
     def retrieve_modules(self,q, Ndec=None):
-        dic = AttrDict.from_nested_dicts({k: q0 for (k, dic), q0 in zip(self.space_dict.items(), q)})
-        turner = AttrDict.from_nested_dicts(copy.deepcopy(self.base_turner))
+        dic = dNl.AttrDict.from_nested_dicts({k: q0 for (k, dic), q0 in zip(self.space_dict.items(), q)})
+        turner = dNl.AttrDict.from_nested_dicts(copy.deepcopy(self.base_turner))
 
         if Ndec is not None :
             physics = null_dict('physics', **{k: np.round(dic[k], Ndec) for k in self.physics_keys})
@@ -154,6 +153,8 @@ class Calibration:
             return err
 
     def run(self, method='Nelder-Mead',**kwargs):
+        from scipy.optimize import minimize
+
         print(f'Calibrating parameters {list(self.space_dict.keys())}')
         bnds = [(dic['min'], dic['max']) for k,dic in self.space_dict.items()]
         init = np.array([dic['initial_value'] for k,dic in self.space_dict.items()])
@@ -163,6 +164,8 @@ class Calibration:
         self.best, self.KS_dic = self.plot_turner(q=res.x)
 
     def plot_turner(self, q):
+        from lib.aux.sim_aux import fft_max
+
         physics, turner = self.retrieve_modules(q, Ndec=2)
         sim = self.sim_turner(turner, physics, N=self.N)
         err, Ks_dic = self.eval_turner(sim)
@@ -176,7 +179,7 @@ class Calibration:
         ffov = fft_max(sim['fov'], self.dt, fr_range=(0.1, 0.8))
         print('ffov : ', np.round(ffov, 2), 'dt : ', self.dt)
         _=self.plot_turner_distros(sim)
-        best = AttrDict.from_nested_dicts({'turner': turner, 'physics': physics})
+        best = dNl.AttrDict.from_nested_dicts({'turner': turner, 'physics': physics})
 
         return best, Ks_dic
         # pass
@@ -382,6 +385,8 @@ def calibrate_4models(refID='None.150controls') :
 
 def update_modelConfs(refID, mIDs):
     from lib.anal.plot_aux import modelConfTable
+    from lib.anal.plot_combos import model_summary
+
     d = loadRef(refID)
     # c = d.config
     save_to = f'{d.dir_dict.model_tables}/4models'
@@ -401,46 +406,3 @@ if __name__ == '__main__':
         m=loadConf(mID, 'Model')
         print(m)
     # update_modelConfs(refID, mIDs)
-    raise
-
-
-    for mID in ['SQonNEU','SQonSIN'] :
-        mm=calibrate_interference(mID, refID, dur=1, N=15)
-
-    raise
-
-
-
-
-    mID='SIN_fitted'
-    mm = loadConf(mID, 'Model')
-    IF = mm.brain.interference_params
-    # mm.brain.interference_params.attenuation_max = 0.41
-    print(IF)
-    # saveConf(id=mID, conf_type='Model', conf=mm)
-    raise
-
-    C = Calibration(refID='None.150controls', turner_mode='sinusoidal')
-    C.run()
-    print(C.best)
-    m=C.build_modelConf(new_id=mID, interference_mode='phasic')
-    print(m)
-
-    mm = C.calibrate_interference(mID)
-    print(mm)
-
-    #mm=expandConf('fitted_turner', 'Model')
-    #print(mm)
-    # sim=C.optimize_turner(return_sim=True, N=C.N)
-    # fig=C.plot_turner_distros(sim, fig=None, axs=None, in_deg=True)
-    raise
-    from lib.anal.eval_aux import sim_model
-    mID = 'explorer_opt3'
-    dd = sim_model(mID=mID, dur=3, dt=1 / 16, Nids=30)
-    ##{'turner': {'base_activation': 22.28, 'n': 2.49, 'tau': 0.09}, 'physics': {'torque_coef': 0.42, 'ang_damping': 0.86, 'body_spring_k': 0.98}}
-    ##{'turner': {'base_activation': 22.37, 'n': 2.5, 'tau': 0.07}, 'physics': {'torque_coef': 0.48, 'ang_damping': 1.0, 'body_spring_k': 1.0}}
-    # {'turner': {'base_activation': 22.78, 'n': 2.46, 'tau': 0.08}
-
-    # {'turner': {'initial_amp': 16.84, 'initial_freq': 0.52}, 'physics': {'torque_coef': 0.45, 'ang_damping': 1.0, 'body_spring_k': 1.0}}
-#     {'turner': {'initial_amp': 19.81, 'initial_freq': 0.56}, 'physics': {'torque_coef': 0.45, 'ang_damping': 1.0, 'body_spring_k': 1.0}}
-#     {'turner': {'initial_amp': 19.27, 'initial_freq': 0.58}
