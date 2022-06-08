@@ -1,5 +1,7 @@
+import random
 from typing import Tuple
 
+import numpy as np
 import param
 
 from lib.aux import dictsNlists as dNl
@@ -18,23 +20,26 @@ func_dic = {
 }
 
 
-def vpar(vfunc, v0, h, lab, lim, dv):
+def vpar(vfunc, v0, h, lab, lim, dv,vs):
     f_kws = {
         'default': v0,
         'doc': h,
         'label': lab,
     }
-    if vfunc in [param.List, param.Range]:
+    if vfunc in [param.List,param.Number, param.Range]:
         if lim is not None:
             f_kws['bounds'] = lim
+    if vfunc in [param.Range,param.Number]:
         if dv is not None:
             f_kws['step'] = dv
+    if vfunc in [param.Selector]:
+        f_kws['objects'] = vs
     func = vfunc(**f_kws, instantiate=True)
     return func
 
 
 def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, lab=None, h=None, u_name=None,
-                 required_ks=[], u=ureg.dimensionless, v0=None, lim=None, dv=None,
+                 required_ks=[], u=ureg.dimensionless, v0=None, lim=None, dv=None,vs=None,
                  vfunc=None, vparfunc=None, func=None, **kwargs):
     codename = p if codename is None else codename
     d = p if d is None else d
@@ -45,7 +50,7 @@ def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, 
     if vparfunc is None:
         if vfunc is None:
             vfunc = func_dic[dtype]
-        vparfunc = vpar(vfunc, v0, h, lab, lim, dv)
+        vparfunc = vpar(vfunc, v0, h, lab, lim, dv,vs)
     else:
         vparfunc = vparfunc()
 
@@ -99,6 +104,10 @@ def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, 
         @property
         def help(self):
             return self.param.v.doc
+
+        @property
+        def parclass(self):
+            return type(self.param.v)
 
         @property
         def min(self):
@@ -164,6 +173,35 @@ def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, 
             else:
                 print(f'Function to compute parameter {self.disp} is not defined')
 
+        def mutate(self, Pmut, Cmut):
+            if random.random() < Pmut:
+                if self.parclass == param.Number :
+
+                    vmin, vmax = self.param.v.bounds
+                    vr = np.abs(vmax - vmin)
+                    v0 = self.v if self.v is not None else vmin+vr/2
+                    vv = random.gauss(v0, Cmut * vr)
+                    self.v=self.param.v.crop_to_bounds(vv)
+                elif self.parclass == param.Selector:
+                    self.v = random.choice(self.param.v.objects)
+                elif self.parclass == param.Boolean:
+                    self.v = random.choice([True, False])
+                elif self.parclass == param.Range:
+                    vmin, vmax = self.param.v.bounds
+                    vr = np.abs(vmax - vmin)
+                    v0,v1=self.v if self.v is not None else (vmin, vmax)
+                    vv0 = random.gauss(v0, Cmut * vr)
+                    vv1 = random.gauss(v1, Cmut * vr)
+                    if vv0<vmin :
+                        vv0 = vmin
+                    if vv1>vmax :
+                        vv1 = vmax
+                    if vv0>vv1 :
+                        vv0=vv1
+                    self.v = (vv0,vv1)
+
+
+
     par = LarvaworldParNew(name=p, p=p, k=k, d=d, dtype=dtype, disp=disp, sym=sym, codename=codename)
     par.param.add_parameter('func', param.Callable(default=func, doc='Function to get the parameter from a dataset',
                                                    constant=True, allow_None=True))
@@ -186,8 +224,10 @@ def init2par(d0=None, d=None):
             continue
         if depth == 1:
             try:
-                entry = par(name=n, **v, convert2par=True)
-                d.update(entry)
+                p = par(name=n, **v, convert2par=True)
+                if p is not None :
+                    d[p.d]=p
+                # d.update(entry)
             except:
                 continue
         elif depth > 1:
@@ -216,7 +256,7 @@ class ModuleConfDict:
 
     def conf(self, mkey, **kwargs):
         mdict = self.mdicts[mkey]
-        conf0 = dNl.AttrDict.from_nested_dicts({p.d: p.v for k, p in mdict.items()})
+        conf0 = dNl.AttrDict.from_nested_dicts({d: p.v for d, p in mdict.items()})
         conf0.update(kwargs)
         return conf0
 
@@ -245,7 +285,7 @@ def confID_dict():
 
 if __name__ == '__main__':
     pass
-    # dd = ModuleConfDict()
+    dd = ModuleConfDict()
     # from lib.conf.stored.conf import loadConf
     # dt=0.1
     # mID='explorer'

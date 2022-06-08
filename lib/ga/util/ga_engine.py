@@ -1,7 +1,5 @@
-import math
-import multiprocessing
+
 import os
-import random
 import sys
 import random
 import multiprocessing
@@ -12,17 +10,14 @@ from typing import Tuple
 import progressbar
 import numpy as np
 import pygame
-from pygame import KEYDOWN, K_ESCAPE, K_r, K_MINUS, K_PLUS, K_s, K_e
 from unflatten import unflatten
-
-import lib.aux.dictsNlists as dNl
 from lib.conf.base import paths
-from lib.conf.base.pars import getPar, ParDict
+import lib.aux.dictsNlists as dNl
+from lib.conf.base.pars import getPar
 from lib.conf.stored.conf import copyConf, kConfDict, loadRef, saveConf
 from lib.ga.robot.larva_robot import LarvaRobot, LarvaOffline
-from lib.ga.scene.box import Box
 from lib.ga.scene.scene import Scene
-from lib.ga.scene.wall import Wall
+
 from lib.ga.util.color import Color
 from lib.ga.util.side_panel import SidePanel
 from lib.ga.util.time_util import TimeUtil
@@ -161,8 +156,6 @@ class GAselector:
         parents.insert(pos_a, parent_a)  # reinsert the first parent in the list
         return parent_a, parent_b
 
-    # def save_genome(self):
-    #     pass
 
 
 class GAbuilder(GAselector):
@@ -399,30 +392,23 @@ class BaseGAlauncher(LarvaWorldSim):
 
     SIDE_PANEL_WIDTH = 600
 
-    SCREEN_MARGIN = 12
+    # SCREEN_MARGIN = 12
 
     def __init__(self, sim_params, scene='no_boxes', scene_speed=0, env_params=None, experiment='exploration',
                  caption=None, save_to=None, offline=False, **kwargs):
-        # scene_file=f'{paths.path("GA_SCENE")}/{scene}.txt'
         self.offline =offline
-        id = sim_params['sim_ID']
-        # if id is None :
-        #     id=f'{experiment}_{next_idx(experiment, type="Ga")}'
+        id = sim_params.sim_ID
         self.sim_params = sim_params
-        dt = sim_params['timestep']
-        Nsteps = int(sim_params['duration'] * 60 / dt)
-        self.store_data = sim_params['store_data']
+        dt = sim_params.timestep
+        Nsteps = int(sim_params.duration * 60 / dt)
         if save_to is None:
             save_to = paths.path("SIM")
         self.save_to = save_to
-        self.storage_path = f'{sim_params["path"]}/{id}'
-        self.dir_path = f'{save_to}/{self.storage_path}'
+        self.dir_path = f'{save_to}/{sim_params.path}/{id}'
         self.plot_dir = f'{self.dir_path}/plots'
         os.makedirs(self.plot_dir, exist_ok=True)
-        # if env_params is None:
-        #     env_params = null_dict('env_conf')
         if not self.offline:
-            super().__init__(id=id, dt=dt, Box2D=sim_params['Box2D'], env_params=env_params,
+            super().__init__(id=id, dt=dt, Box2D=sim_params.Box2D, env_params=env_params,
                              save_to=f'{self.dir_path}/visuals',
                              Nsteps=Nsteps, experiment=experiment, **kwargs)
             self.arena_width, self.arena_height = self.env_pars.arena.arena_dims
@@ -446,11 +432,14 @@ class BaseGAlauncher(LarvaWorldSim):
         self.obstacles = []
 
     def build_box(self, x, y, size, color):
+        from lib.ga.scene.box import Box
+
         box = Box(x, y, size, color)
         self.obstacles.append(box)
         return box
 
     def build_wall(self, point1, point2, color):
+        from lib.ga.scene.wall import Wall
         wall = Wall(point1, point2, color)
         self.obstacles.append(wall)
         return wall
@@ -464,30 +453,14 @@ class BaseGAlauncher(LarvaWorldSim):
             box.label = ff.unique_id
             self.scene.put(box)
 
-    # # @ property
-    # def real_pos(self, screen_pos):
-    #     return (np.array(screen_pos) - np.array([self.scene.width / 2, self.scene.height / 2])) / self.scaling_factor
-
-    # @property
     def screen_pos(self, real_pos):
         return np.array(real_pos) * self.scaling_factor + np.array([self.scene.width / 2, self.scene.height / 2])
 
     def init_scene(self):
-        # raise
         self.scene = Scene.load_from_file(self.scene_file, self.scene_speed, self.SIDE_PANEL_WIDTH)
 
         self.scene.set_bounds(*self.space_edges_for_screen)
 
-        # print(self.scene._scale)
-        # raise
-        # self.scaling_factor = self.scene.width / self.arena_width
-        # self.get_larvaworld_food()
-
-        # self.side_panel = SidePanel(self.scene)
-        # print(self.arena_dims)
-        # print(self.scene.width, self.scene.height)
-        # print(self.screen_width, self.screen_height)
-        # raise
 
     def increase_scene_speed(self):
         if self.scene.speed < self.SCENE_MAX_SPEED:
@@ -518,6 +491,8 @@ class GAlauncher(BaseGAlauncher):
 
     def run(self):
         while True and self.engine.is_running:
+            from pygame import KEYDOWN, K_ESCAPE, K_r, K_MINUS, K_PLUS, K_s, K_e
+
             t0 = TimeUtil.current_time_millis()
             self.engine.step()
             t1 = TimeUtil.current_time_millis()
@@ -546,20 +521,12 @@ class GAlauncher(BaseGAlauncher):
                 cur_t = TimeUtil.current_time_millis()
                 cum_t = math.floor((cur_t - self.engine.start_total_time) / 1000)
                 gen_t = math.floor((cur_t - self.engine.start_generation_time) / 1000)
-                # self.generation_sim_time += self.dt
                 self.side_panel.update_ga_time(cum_t, gen_t, self.engine.generation_sim_time)
                 self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
-                # self.generation_step_num += 1
-
-                # if show_screen:
                 self.screen.fill(Color.BLACK)
 
                 for obj in self.scene.objects:
                     obj.draw(self.scene)
-                    # obj.draw(self.screen)
-
-                    # if issubclass(type(obj), self.engine.robot_class) and obj.unique_id is not None:
-                    #     obj.draw_label(self.screen)
 
                 # draw a black background for the side panel
                 side_panel_bg_rect = pygame.Rect(self.scene.width, 0, self.SIDE_PANEL_WIDTH, self.scene.height)
@@ -597,9 +564,6 @@ class GAlauncher(BaseGAlauncher):
             self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
             self.side_panel.update_ga_time(0, 0, 0)
 
-        # print('\nGeneration', self.generation_num, 'started')
-        #
-        # self.printd(1, 'multicore:', self.multicore, 'num_cpu:', self.num_cpu)
 
 
 class Genome:
@@ -702,7 +666,6 @@ class Genome:
                         continue
                     if vs['dtype'] == int:
                         v = int(v)
-                    # else:
                     if v < r0:
                         setattr(self, k, r0)
                     elif v > r1:
@@ -730,15 +693,11 @@ class Genome:
     def to_string(self):
         fitness = None if self.fitness is None else round(self.fitness, 2)
         kwstrings = [f' {vs["name"]}:' + repr(self.get(rounded=True)[k]) for k, vs in self.space_dict.items()]
-        # for k, vs in self.space_dict.items():
-        #     kwstrings.append(f' {vs["name"]}:' + repr(self.get(rounded=True)[k]))
         kwstr = ''
         for ii in kwstrings:
             kwstr = kwstr + ii
 
         return '(fitness:' + repr(fitness) + kwstr + ')'
-        # return self.__class__.__name__ + '(fitness:' + repr(fitness) + ' generation_num:' + repr(
-        #     self.generation_num) + kwstr + ')'
 
     def get_saved_genome_repr(self):
         kwstr = ''
@@ -747,9 +706,7 @@ class Genome:
         return kwstr + str(self.generation_num) + ' ' + str(self.fitness)
 
     def build_robot(self, larva_pars, robot_class, unique_id, model):
-
         larva_pars_f = dNl.flatten_dict(larva_pars)
-
         for k in self.space_dict.keys():
             larva_pars_f[k] = getattr(self, k)
         larva2_pars = dNl.AttrDict.from_nested_dicts(unflatten(larva_pars_f))

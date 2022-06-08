@@ -1,7 +1,4 @@
-from typing import Tuple
-
 import pygame
-import math
 import numpy as np
 
 from lib.ga.util.color import Color

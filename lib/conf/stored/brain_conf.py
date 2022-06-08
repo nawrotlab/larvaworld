@@ -5,15 +5,11 @@ Define and store configurations of larva brains and their modules
 import copy
 
 import numpy as np
-import matplotlib.pyplot as plt
 
-from lib.anal.argparsers import update_exp_conf
 from lib.aux.dictsNlists import AttrDict
 from lib.conf.base.dtypes import null_dict
+from lib.conf.stored.conf import loadConf
 
-from lib.conf.stored.conf import loadConf, kConfDict
-from lib.conf.stored.larva_conf import OD
-from lib.sim.single.single_run import SingleRun
 
 # Crawl-bend interference
 

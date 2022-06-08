@@ -1,5 +1,5 @@
 from lib.aux import naming as nam
-from lib.conf.base.dtypes import null_dict, base_enrich, enr_dict, arena, metric_def
+from lib.conf.base.dtypes import base_enrich, enr_dict, arena, metric_def
 
 
 import_par_confs = {

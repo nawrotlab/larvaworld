@@ -2,7 +2,6 @@
 The larva model parameters
 '''
 import copy
-
 import numpy as np
 
 from lib.aux.dictsNlists import AttrDict

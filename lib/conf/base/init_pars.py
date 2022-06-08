@@ -1,13 +1,14 @@
 import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 from types import FunctionType
-
+import numpy as np
 import param
 
+
+
+
+
 from lib.conf.base.units import ureg
-
-warnings.simplefilter(action='ignore', category=FutureWarning)
-import numpy as np
-
 from lib.aux.collecting import output_keys
 from lib.aux.par_aux import sub, sup, bar, circle, wave, tilde, subsup
 
@@ -278,10 +279,10 @@ def init_pars():
         'waveform': {'t': str, 'v': 'realistic', 'k': 'Cr_mod', 'vs': ['realistic', 'square', 'gaussian', 'constant'],
                      'vfunc': param.Selector,'symbol': subsup('A', 'C','mode'),'label': 'crawler waveform',
                      'h': 'The waveform of the repetitive crawling oscillator (CRAWLER) module.'},
-        'freq_range': {'t': Tuple[float], 'v': (0.5, 2.5),'dv': 0.1,  'disp': 'range', 'vfunc': param.Range, 'label': 'crawling frequency range',
-                       'combo': 'frequency', 'k': 'f_C_r', 'lim': (0.0, 5.0), 'u': ureg.Hz,'symbol': subsup('f', 'C','range'),
+        'freq_range': {'t': Tuple[float], 'v': (1.0, 2.0),'dv': 0.1,  'disp': 'range', 'vfunc': param.Range, 'label': 'crawling frequency range',
+                       'combo': 'frequency', 'k': 'f_C_r', 'lim': (0.5, 2.5), 'u': ureg.Hz,'symbol': subsup('f', 'C','range'),
                        'h': 'The frequency range of the repetitive crawling behavior.'},
-        'initial_freq': {'v': 1.418, 'lim': (0.0, 5.0),'dv': 0.1,  'aux_vs': ['sample'], 'disp': 'initial', 'k': 'f_C0',
+        'initial_freq': {'v': 1.418, 'lim': (0.5, 2.5),'dv': 0.1,  'aux_vs': ['sample'], 'disp': 'initial', 'k': 'f_C0',
                          'vfunc': param.Number,
                          'label': 'crawling frequency', 'symbol': sub('f', 'C'), 'u': ureg.Hz,
                          'combo': 'frequency', 'codename': 'scaled_velocity_freq',

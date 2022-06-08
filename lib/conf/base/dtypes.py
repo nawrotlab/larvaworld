@@ -1,17 +1,14 @@
 import numpy as np
 import pandas as pd
-from typing import TypedDict, List, Tuple
 
 
 
-import siunits as siu
 
 import numpy as np
 from typing import TypedDict, List, Tuple
 
-from lib.aux.dictsNlists import AttrDict, tree_dict, dict_depth
-from lib.aux.par_aux import dtype_name
-from lib.conf.base.init_pars import init_pars, proc_type_keys, bout_keys, to_drop_keys
+from lib.aux.dictsNlists import AttrDict, tree_dict
+from lib.conf.base.init_pars import init_pars
 from lib.conf.base.units import ureg
 
 
@@ -54,16 +51,15 @@ def define_vs(vs, dv, lim, cur_dtype):
     return vs
 
 def define_lim(lim, vs, min, max, u, wrap_mode, cur_dtype):
-    siu.deg = siu.I.rename("deg", "deg", "plain angle")
     if lim is not None:
         return lim
     if wrap_mode is not None and u is not None:
-        if u.unit == siu.deg:
+        if u == ureg.deg:
             if wrap_mode == 'positive':
                 lim = (0.0, 360.0)
             elif wrap_mode == 'zero':
                 lim = (-180.0, 180.0)
-        elif u.unit == siu.rad:
+        elif u == ureg.rad:
             if wrap_mode == 'positive':
                 lim = (0.0, 2 * np.pi)
             elif wrap_mode == 'zero':
@@ -113,6 +109,7 @@ def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, au
         'k' : k,
         'lim' : lim,
         'dv' : dv,
+        'vs' : vs,
         'v0' : v,
         'dtype' : t,
         'disp' : disp if disp is not None else label,
@@ -126,9 +123,9 @@ def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, au
     }
         try :
             p=buildBasePar(**p_kws)
-            return {p.k: p}
+            return p
         except :
-            return {k: None}
+            return None
 
 
     if vs is not None:
@@ -227,6 +224,8 @@ def pars_to_df(names, d0=None):
 
 
 def pars_to_tree(name):
+    from lib.aux.par_aux import dtype_name
+
     invalid = []
     valid = []
     def add_entry(k4, v4, parent):
@@ -366,6 +365,8 @@ def metric_def(ang={}, sp={}, **kwargs):
 
 
 def enr_dict(proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, def_kws={},metric_definition=None, **kwargs):
+    from lib.conf.base.init_pars import proc_type_keys, bout_keys, to_drop_keys
+
     if metric_definition is None:
         metric_definition = metric_def(**def_kws)
     pre = null_dict('preprocessing', **pre_kws)

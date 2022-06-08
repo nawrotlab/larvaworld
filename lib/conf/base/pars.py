@@ -9,8 +9,6 @@ from lib.conf.base.units import ureg
 from lib.conf.base.par import buildBasePar
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledast, omega, ddot, mathring
-from lib.aux.ang_aux import unwrap_rad
-from lib.aux.xy_aux import comp_dst
 
 
 class RefParDict:
@@ -580,12 +578,16 @@ def tor_func(dur):
     return func
 
 def unwrap_func(par, in_deg):
+    from lib.aux.ang_aux import unwrap_rad
+
     def func(d):
         s, c = d.step_data, d.config
         unwrap_rad(s,c,par, in_deg)
     return func
 
 def dst_func(point=''):
+    from lib.aux.xy_aux import comp_dst
+
     def func(d):
         s, c = d.step_data, d.config
         comp_dst(s,c,point)

@@ -1,4 +1,4 @@
-from lib.conf.base.dtypes import null_dict, enr_dict, base_enrich
+from lib.conf.base.dtypes import null_dict, enr_dict
 
 
 def batch(exp, en=None, ss=None,ssbool=None, o=None, o_kws={},bm={}, as_entry=True, **kwargs):
@@ -79,16 +79,12 @@ batch_dict = {
             bm={'run':'exp_fit'}),
     **batch('tactile_detection',
             ss={'initial_gain': [[25.0, 75.0], 10],'decay_coef': [[0.01, 0.5], 4]},
-            # ssbool=['brute_force'],
             o='cum_food_detected', o_kws={'threshold': 100000.0, 'max_Nsims': 600, 'minimize' : False, 'Nbest' : 8,
                                           'operations': {'mean': True, 'abs': False, 'std': False}}),
 **batch('anemotaxis',
-        # ss={f'windsensor_params.weights.{m1}_{m2}': [(-20.0, 20.0), 2] for m1,m2 in zip(['bend','bend', 'hunch','hunch'], ['lin','ang', 'lin','ang'])},
         ss={f'windsensor_params.weights.{m1}_{m2}': [[-20.0, 20.0], 3] for m1,m2 in zip(['bend', 'hunch'], ['ang', 'lin'])},
         o='anemotaxis', o_kws={'threshold': 1000.0, 'max_Nsims': 100, 'minimize' : False, 'Nbest' : 8,
-                                          'operations': {'mean': True, 'abs': False}}, en=enr_dict(proc=['wind'])),
-                                          # 'operations': {'mean': True, 'abs': False}}, en=enr_dict(proc=['wind', 'spatial', 'angular'])),
-
+                                          'operations': {'mean': True, 'abs': False}}, en=enr_dict(proc=['wind']))
 }
 
 
@@ -116,7 +112,6 @@ def fit_global_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
                o='sample_fit', o_kws={'threshold': 0.1, 'Nbest': 8, 'max_Nsims': 140, 'operations': {'mean': False, 'abs': False}},
                bm={'run': 'exp_fit'},
                en=enr_dict(proc=['angular']),
-               # en=base_enrich(fits=False),
                as_entry=False
                )
     conf['exp'] = imitation_exp(sample, model=model, exp=exp, idx=idx, **kwargs)

@@ -1,5 +1,4 @@
 import numpy as np
-from matplotlib import pyplot as plt
 from scipy.stats import ks_2samp
 
 from lib.anal.plot_aux import plot_quantiles, BasePlot
@@ -9,7 +8,6 @@ from lib.conf.base.dtypes import ga_dict, null_dict
 from lib.conf.stored.conf import expandConf
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 
-from lib.ga.util.ga_engine import GAlauncher
 from lib.process.aux import detect_strides, mean_stride_curve, cycle_curve_dict
 
 ga_spaces = AttrDict.from_nested_dicts({
@@ -219,12 +217,3 @@ ga_dic = AttrDict.from_nested_dicts({
 if __name__ == '__main__':
     print(ga_dict(name='physics', suf='physics.', excluded=None, only=['torque_coef','ang_damping','body_spring_k']))
 
-    raise
-    exp = 'interference'
-    conf = loadConf(exp, 'Ga')
-    # mID=conf.ga_build_kws.base_model
-    # if type(mID) == str and mID in kConfDict('Model'):
-    #     larva_pars = copyConf(mID, 'Model')
-    print(conf.ga_build_kws.space_dict)
-    # print(isinstance(conf.ga_build_kws.base_model, str))
-    # GAlauncher(**conf)
