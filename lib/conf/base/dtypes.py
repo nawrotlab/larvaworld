@@ -107,7 +107,7 @@ def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, au
     dv, lim, vs = define_range(dtype=t, lim=lim, vs=vs, dv=dv, min=min, max=max, u=u, wrap_mode=None)
 
     if convert2par:
-        from lib.conf.base.opt_par import buildPar
+        from lib.conf.base.par import buildBasePar
         p_kws={
         'p' : name,
         'k' : k,
@@ -125,7 +125,7 @@ def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, au
         'vparfunc' : vparfunc,
     }
         try :
-            p=buildPar(**p_kws)
+            p=buildBasePar(**p_kws)
             return {p.k: p}
         except :
             return {k: None}

@@ -4,28 +4,28 @@ from lib.anal.fitting import gaussian
 
 
 class DefaultCoupling:
-    def __init__(self,locomotor, attenuation = 0.0,attenuation_max=1.0,suppression_mode='amplitude', **kwargs):
+    def __init__(self, locomotor, attenuation=0.0, attenuation_max=1.0, suppression_mode='amplitude', **kwargs):
         self.attenuation = attenuation
         self.attenuation_max = attenuation_max
         self.cur_attenuation = attenuation
         self.locomotor = locomotor
-        self.suppression_mode=suppression_mode
+        self.suppression_mode = suppression_mode
 
-    @ property
+    @property
     def active_effectors(self):
         c, f = self.locomotor.crawler, self.locomotor.feeder
-        c_on=True if c is not None and c.effector else False
-        f_on=True if f is not None and f.effector else False
+        c_on = True if c is not None and c.effector else False
+        f_on = True if f is not None and f.effector else False
         return c_on, f_on
 
-
     def step(self):
-        A=1
+        A = 1
         c_on, f_on = self.active_effectors
-        if c_on or f_on :
-            A= self.attenuation
+        if c_on or f_on:
+            A = self.attenuation
         self.cur_attenuation = A
         return A
+
 
 class SquareCoupling(DefaultCoupling):
     def __init__(self, crawler_phi_range=[0.0, 0.0], feeder_phi_range=[0.0, 0.0], **kwargs):
@@ -55,21 +55,32 @@ class SquareCoupling(DefaultCoupling):
         return A
 
 
-class PhasicCoupling(DefaultCoupling) :
-    def __init__(self, max_attenuation_phase = 3.4, **kwargs):
+class PhasicCoupling(DefaultCoupling):
+    def __init__(self, max_attenuation_phase=3.4, **kwargs):
         super().__init__(**kwargs)
-        # self.attenuation_max = attenuation_max
         self.max_attenuation_phase = max_attenuation_phase
 
     def step(self):
         A = 1
         c_on, f_on = self.active_effectors
         if c_on:
-            A = gaussian(self.locomotor.crawler.phi, self.max_attenuation_phase, 1) * self.attenuation_max + self.attenuation
+            A = gaussian(self.locomotor.crawler.phi, self.max_attenuation_phase,
+                         1) * self.attenuation_max + self.attenuation
             if A >= 1:
                 A = 1
             elif A <= 0:
                 A = 0
         self.cur_attenuation = A
-        #print(A)
+        # print(A)
         return A
+
+
+class Coupling:
+    def __new__(cls, mode='default', **kwargs):
+        class_dic={
+            'default' : DefaultCoupling,
+            'square' : SquareCoupling,
+            'phasic' : PhasicCoupling,
+        }
+
+        return class_dic[mode](**kwargs)

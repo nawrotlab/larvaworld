@@ -3,10 +3,10 @@ import numpy as np
 from lib.anal.fitting import BoutGenerator, gaussian
 from lib.aux.ang_aux import restore_bend_2seg
 from lib.aux.dictsNlists import AttrDict
-from lib.model.modules.crawl_bend_interference import DefaultCoupling, SquareCoupling, PhasicCoupling
+from lib.model.modules.crawl_bend_interference import DefaultCoupling, SquareCoupling, PhasicCoupling, Coupling
 from lib.model.modules.crawler import Crawler
 from lib.model.modules.feeder import Feeder
-from lib.model.modules.intermitter import Intermitter, BranchIntermitter, NengoIntermitter
+from lib.model.modules.intermitter import Intermitter, BranchIntermitter, NengoIntermitter, ChoiceIntermitter
 from lib.model.modules.turner import Turner, NeuralOscillator
 
 
@@ -98,22 +98,29 @@ class DefaultLocomotor(Locomotor):
         if m['feeder']:
             self.feeder = Feeder(dt=self.dt, **c.feeder_params)
         if c.interference_params is None or not m['interference']:
-            self.coupling = DefaultCoupling(locomotor=self, attenuation=1)
-        else:
-            mode = c.interference_params.mode if 'mode' in c.interference_params.keys() else 'default'
-            if mode == 'default':
-                self.coupling = DefaultCoupling(locomotor=self, **c.interference_params)
-            elif mode == 'square':
-                self.coupling = SquareCoupling(locomotor=self, **c.interference_params)
-            elif mode == 'phasic':
-                self.coupling = PhasicCoupling(locomotor=self, **c.interference_params)
+            c.interference_params=AttrDict.from_nested_dicts({'mode' : 'default', 'attenuation' : 1})
+        self.coupling = Coupling(locomotor=self, **c.interference_params)
+
+        #     self.coupling = DefaultCoupling(locomotor=self, attenuation=1)
+        # else:
+        #     mode = c.interference_params.mode if 'mode' in c.interference_params.keys() else 'default'
+        #     if mode == 'default':
+        #         self.coupling = DefaultCoupling(locomotor=self, **c.interference_params)
+        #     elif mode == 'square':
+        #         self.coupling = SquareCoupling(locomotor=self, **c.interference_params)
+        #     elif mode == 'phasic':
+        #         self.coupling = PhasicCoupling(locomotor=self, **c.interference_params)
 
         if m['intermitter']:
-            mode = c.intermitter_params.mode if 'mode' in c.intermitter_params.keys() else 'default'
-            if mode == 'default':
-                self.intermitter = Intermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
-            elif mode == 'branch':
-                self.intermitter = BranchIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
+            if 'mode' not in c.intermitter_params.keys():
+                c.intermitter_params.mode='default'
+            self.intermitter = ChoiceIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
+
+            # mode = c.intermitter_params.mode if 'mode' in c.intermitter_params.keys() else 'default'
+            # if mode == 'default':
+            #     self.intermitter = Intermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
+            # elif mode == 'branch':
+            #     self.intermitter = BranchIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
 
     def step(self, A_in=0, length=1):
         self.lin_activity, self.ang_activity, self.feed_motion = 0, 0, False

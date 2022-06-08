@@ -8,10 +8,8 @@ from matplotlib import pyplot as plt, patches, transforms, ticker
 
 from lib.conf.base.pars import getPar, ParDict
 
-
 from lib.aux.colsNstr import N_colors
-from lib.aux.dictsNlists import unique_list
-
+import lib.aux.dictsNlists as dNl
 
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
@@ -24,7 +22,8 @@ plt.rcParams.update(plt_conf)
 
 
 class BasePlot:
-    def __init__(self, name, save_to='.', save_as=None, return_fig=False, show=False, suf='pdf',text_xy0=(0.05, 0.98), **kwargs):
+    def __init__(self, name, save_to='.', save_as=None, return_fig=False, show=False, suf='pdf', text_xy0=(0.05, 0.98),
+                 **kwargs):
         self.filename = f'{name}.{suf}' if save_as is None else save_as
         self.return_fig = return_fig
         self.show = show
@@ -56,10 +55,10 @@ class BasePlot:
     def conf_ax(self, idx=0, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
                 xticklabels=None, yticks=None, xticklabelrotation=None, yticklabelrotation=None,
                 yticklabels=None, zticks=None, zticklabels=None, xtickpos=None, xtickpad=None, ytickpad=None,
-                ztickpad=None,xlabelfontsize=None,xticklabelsize=None,yticklabelsize=None,zticklabelsize=None,
-                xlabelpad=None, ylabelpad=None, zlabelpad=None,equal_aspect=None,
-                xMaxN=None, yMaxN=None, zMaxN=None, xMath=None,yMath=None, tickMath=None, ytickMath=None, leg_loc=None,
-                leg_handles=None,xvis=None,yvis=None,zvis=None,
+                ztickpad=None, xlabelfontsize=None, xticklabelsize=None, yticklabelsize=None, zticklabelsize=None,
+                xlabelpad=None, ylabelpad=None, zlabelpad=None, equal_aspect=None,
+                xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, yMath=None, tickMath=None, ytickMath=None, leg_loc=None,
+                leg_handles=None, xvis=None, yvis=None, zvis=None,
                 title=None):
         ax = self.axs[idx]
         if equal_aspect is not None:
@@ -75,7 +74,7 @@ class BasePlot:
         if xlab is not None:
             if xlabelfontsize is not None:
                 ax.set_xlabel(xlab, labelpad=xlabelpad, fontsize=xlabelfontsize)
-            else :
+            else:
                 ax.set_xlabel(xlab, labelpad=xlabelpad)
         if zlab is not None:
             ax.set_zlabel(zlab, labelpad=zlabelpad)
@@ -158,24 +157,23 @@ class BasePlot:
             self.fit_df.to_csv(self.fit_filename, index=True, header=True)
         return process_plot(self.fig, self.save_to, self.filename, self.return_fig, self.show)
 
-    def add_letter(self,ax,letter=True, x0=False, y0=False):
-        if letter :
+    def add_letter(self, ax, letter=True, x0=False, y0=False):
+        if letter:
             self.letter_dict[ax] = self.letters[self.cur_idx]
             self.cur_idx += 1
-            if x0 :
+            if x0:
                 self.x0s.append(ax)
-            if y0 :
+            if y0:
                 self.y0s.append(ax)
 
     def annotate(self, dx=-0.05, dy=0.005, full_dict=False):
-        if full_dict :
+        if full_dict:
 
-            for i,ax in enumerate(self.axs) :
-                self.letter_dict[ax]=self.letters[i]
-        for i, (ax, text) in enumerate(self.letter_dict.items()) :
-
-            X = self.text_x0 if ax in self.x0s else ax.get_position().x0+dx
-            Y = self.text_y0 if ax in self.y0s else ax.get_position().y1+dy
+            for i, ax in enumerate(self.axs):
+                self.letter_dict[ax] = self.letters[i]
+        for i, (ax, text) in enumerate(self.letter_dict.items()):
+            X = self.text_x0 if ax in self.x0s else ax.get_position().x0 + dx
+            Y = self.text_y0 if ax in self.y0s else ax.get_position().y1 + dy
             self.fig.text(X, Y, text, size=30, weight='bold')
 
 
@@ -202,7 +200,7 @@ class Plot(BasePlot):
 
         if add_samples:
             from lib.conf.stored.conf import loadRef, kConfDict
-            targetIDs = unique_list([d.config['sample'] for d in datasets])
+            targetIDs = dNl.unique_list([d.config['sample'] for d in datasets])
 
             targets = [loadRef(id) for id in targetIDs if id in kConfDict('Ref')]
             datasets += targets
@@ -282,16 +280,16 @@ class Plot(BasePlot):
     @property
     def Nticks(self):
         Nticks_list = [len(d.step_data.index.unique('Step')) for d in self.datasets]
-        return np.max(unique_list(Nticks_list))
+        return np.max(dNl.unique_list(Nticks_list))
 
     @property
     def fr(self):
         fr_list = [d.fr for d in self.datasets]
-        return np.max(unique_list(fr_list))
+        return np.max(dNl.unique_list(fr_list))
 
     @property
     def dt(self):
-        dt_list = unique_list([d.dt for d in self.datasets])
+        dt_list = dNl.unique_list([d.dt for d in self.datasets])
         # print(dt_list)
         return np.max(dt_list)
 
@@ -316,26 +314,27 @@ class Plot(BasePlot):
         x = np.linspace(r0, r1, nbins)
         return x, lim
 
-    def plot_par(self, short=None,par=None,vs=None, bins= 'broad', i=0, labels=None, absolute=False, nbins=None, type='plt.hist',sns_kws={},
-                  pvalues=False, half_circles=False,key='step', **kwargs):
+    def plot_par(self, short=None, par=None, vs=None, bins='broad', i=0, labels=None, absolute=False, nbins=None,
+                 type='plt.hist', sns_kws={},
+                 pvalues=False, half_circles=False, key='step', **kwargs):
         if labels is None:
             labels = self.labels
         if vs is None:
             vs = []
             for d in self.datasets:
-                if key=='step':
-                    try :
+                if key == 'step':
+                    try:
                         v = d.step_data[par]
-                    except :
+                    except:
                         v = d.get_par(par, key=key)
-                elif key=='end':
-                    try :
+                elif key == 'end':
+                    try:
                         v = d.endpoint_data[par]
-                    except :
+                    except:
                         v = d.get_par(par, key=key)
-                if v is not None :
-                    v=v.dropna().values
-                else :
+                if v is not None:
+                    v = v.dropna().values
+                else:
                     continue
                 if absolute:
                     v = np.abs(v)
@@ -353,10 +352,12 @@ class Plot(BasePlot):
             self.plot_half_circles(par, i)
         return vs
 
-class AutoPlot(Plot) :
-    def __init__(self,Nrows=1, Ncols=1, figsize=None, fig=None, axs=None,sharex=False, sharey=False, **kwargs):
+
+class AutoPlot(Plot):
+    def __init__(self, Nrows=1, Ncols=1, figsize=None, fig=None, axs=None, sharex=False, sharey=False, **kwargs):
         super().__init__(**kwargs)
-        self.build(Nrows=Nrows, Ncols=Ncols, figsize=figsize, fig=fig, axs=axs,sharex=sharex, sharey=sharey)
+        self.build(Nrows=Nrows, Ncols=Ncols, figsize=figsize, fig=fig, axs=axs, sharex=sharex, sharey=sharey)
+
 
 def plot_quantiles(df, from_np=False, x=None, **kwargs):
     if from_np:
@@ -454,7 +455,7 @@ def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
 
     # Plot data on ax
     patches = plt.bar(bins[:-1], radius, zorder=1, align='edge', width=widths,
-                  edgecolor='black', fill=True, linewidth=2, **kwargs)
+                      edgecolor='black', fill=True, linewidth=2, **kwargs)
 
     # Set the direction of the zero angle
     ax.set_theta_offset(offset)
@@ -464,6 +465,7 @@ def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
         ax.set_yticks([])
 
     return n, bins, patches
+
 
 def circNarrow(ax, data, alpha, label, color):
     circular_hist(ax, data, bins=16, alpha=alpha, label=label, color=color, offset=np.pi / 2)
@@ -561,7 +563,7 @@ def plot_config(datasets, labels, save_to, subfolder=None):
     def get_colors(datasets):
         try:
             cs = [d.config['color'] for d in datasets]
-            u_cs = unique_list(cs)
+            u_cs = dNl.unique_list(cs)
             if len(u_cs) == len(cs) and None not in u_cs:
                 colors = cs
             elif len(u_cs) == len(cs) - 1 and cs[-1] in cs[:-1] and 'black' not in cs:
@@ -575,7 +577,6 @@ def plot_config(datasets, labels, save_to, subfolder=None):
 
     cols = get_colors(datasets)
     if save_to is not None:
-        # save_to = datasets[0].config['parent_plot_dir']
         if subfolder is not None:
             save_to = f'{save_to}/{subfolder}'
         os.makedirs(save_to, exist_ok=True)
@@ -633,13 +634,13 @@ def boolean_indexing(v, fillval=np.nan):
     return out
 
 
-def annotate_plot(data, x, y, hue=None,show_ns=True,target_only=None, **kwargs):
+def annotate_plot(data, x, y, hue=None, show_ns=True, target_only=None, **kwargs):
     from statannotations.Annotator import Annotator
     from lib.anal.fitting import pvalue_star
     from scipy.stats import mannwhitneyu
     subIDs0 = np.unique(data[x].values)
     # print(subIDs0)
-    if hue is not None :
+    if hue is not None:
         h1, h2 = np.unique(data[hue].values)
 
         pairs = [((subID, h1), (subID, h2)) for subID in subIDs0]
@@ -649,33 +650,33 @@ def annotate_plot(data, x, y, hue=None,show_ns=True,target_only=None, **kwargs):
             dd0 = dd[dd[hue] == h1][y].dropna().values.tolist()
             dd1 = dd[dd[hue] == h2][y].dropna().values.tolist()
             pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
-    else :
-        if target_only is None :
-            pairs = list(itertools.combinations(subIDs0,2))
+    else:
+        if target_only is None:
+            pairs = list(itertools.combinations(subIDs0, 2))
             pvs = []
-            for subID0,subID1 in pairs:
+            for subID0, subID1 in pairs:
                 dd0 = data[data[x] == subID0][y].dropna().values.tolist()
                 dd1 = data[data[x] == subID1][y].dropna().values.tolist()
                 pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
-        else :
-            pairs=[]
+        else:
+            pairs = []
             pvs = []
             dd0 = data[data[x] == target_only][y].dropna().values.tolist()
-            for subID in subIDs0 :
+            for subID in subIDs0:
                 if subID != target_only:
-                    pairs.append((target_only,subID))
+                    pairs.append((target_only, subID))
                     dd1 = data[data[x] == subID][y].dropna().values.tolist()
                     pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
 
     f_pvs = [pvalue_star(pv) for pv in pvs]
 
     if not show_ns:
-        valid_idx=[i for i,f_pv in enumerate(f_pvs) if f_pv!='ns']
+        valid_idx = [i for i, f_pv in enumerate(f_pvs) if f_pv != 'ns']
         pairs = [pairs[i] for i in valid_idx]
-        f_pvs=[f_pvs[i] for i in valid_idx]
+        f_pvs = [f_pvs[i] for i in valid_idx]
 
     # Add annotations
-    if len(pairs)>0 :
+    if len(pairs) > 0:
         annotator = Annotator(pairs=pairs, data=data, x=x, y=y, hue=hue, **kwargs)
         annotator.verbose = False
         annotator.annotate_custom_annotations(f_pvs)
@@ -685,14 +686,14 @@ def concat_datasets(ds, key='end', unit='sec'):
     dfs = []
     for d in ds:
         if key == 'end':
-            try :
-                df=d.endpoint_data
-            except :
+            try:
+                df = d.endpoint_data
+            except:
                 df = d.read(key='end', file='endpoint_h5')
         elif key == 'step':
-            try :
-                df=d.step_data
-            except :
+            try:
+                df = d.step_data
+            except:
                 df = d.read(key='step')
         df['DatasetID'] = d.id
         df['GroupID'] = d.group_id
@@ -735,10 +736,8 @@ def conf_ax_3d(vars, target, ax=None, fig=None, lims=None, title=None, maxN=5, l
     return fig, ax
 
 
-
-
-
-def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbol', 'Value', 'Unit'], rows=None,figsize=(14,11), **kwargs):
+def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbol', 'Value', 'Unit'], rows=None,
+                   figsize=(14, 11), **kwargs):
     from lib.aux.combining import render_mpl_table
     from lib.conf.base.dtypes import par
     from lib.conf.base.init_pars import init_pars
@@ -764,65 +763,62 @@ def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbo
 
     rowColors = [None]
     data = []
-    for rowLab, rowDic, rowColor in zip(rows, rowDicts, rowColors0):
-        d0 = init_pars().get(rowLab, None)
-        if rowLab == 'interference':
-            if rowDic.mode == 'square':
-                rowValid = ['crawler_phi_range', 'attenuation','attenuation_max']
-                # rowValid = ['crawler_phi_range', 'attenuation','attenuation_max', 'suppression_mode']
-            elif rowDic.mode == 'phasic':
-                rowValid = ['max_attenuation_phase', 'attenuation', 'attenuation_max']
-                # rowValid = ['max_attenuation_phase', 'attenuation', 'attenuation_max', 'suppression_mode']
-            elif rowDic.mode == 'default':
-                rowValid = ['attenuation']
-                # rowValid = ['attenuation', 'suppression_mode']
-        elif rowLab == 'physics':
-            rowValid = ['ang_damping','torque_coef', 'body_spring_k', 'bend_correction_coef']
-        elif rowLab == 'body':
-            rowValid = ['initial_length', 'Nsegs']
-        elif rowLab == 'turner':
-            if rowDic.mode == 'neural':
-                rowValid = ['base_activation', 'activation_range', 'n', 'tau']
-            elif rowDic.mode == 'constant':
-                rowValid = ['initial_amp']
-            elif rowDic.mode == 'sinusoidal':
-                rowValid = ['initial_amp','initial_freq']
-                # rowValid = ['initial_amp','amp_range', 'initial_freq', 'freq_range',]
-        elif rowLab == 'crawler':
-            if rowDic.waveform == 'realistic':
-                rowValid = ['initial_freq', 'max_scaled_vel', 'max_vel_phase', 'stride_dst_mean', 'stride_dst_std']
-            elif rowDic.waveform == 'constant':
-                rowValid = ['initial_amp']
-        elif rowLab == 'intermitter':
-            rowValid = ['stridechain_dist', 'pause_dist']
-            rowValid = [n for n in rowValid if rowDic[n] is not None and rowDic[n].name is not None]
-        elif rowLab == 'olfactor':
-            rowValid = ['decay_coef']
+
+    dvalid = dNl.AttrDict.from_nested_dicts({'interference': {
+        'square': ['crawler_phi_range', 'attenuation', 'attenuation_max'],
+        'phasic': ['max_attenuation_phase', 'attenuation', 'attenuation_max'],
+        'default': ['attenuation']
+    },
+        'turner': {
+            'neural': ['base_activation', 'activation_range', 'n', 'tau'],
+            'constant': ['initial_amp'],
+            'sinusoidal': ['initial_amp', 'initial_freq']
+        },
+        'crawler': {
+            'realistic': ['initial_freq', 'max_scaled_vel', 'max_vel_phase', 'stride_dst_mean', 'stride_dst_std'],
+            'constant': ['initial_amp']
+        },
+        'physics': ['ang_damping', 'torque_coef', 'body_spring_k', 'bend_correction_coef'],
+        'body': ['initial_length', 'Nsegs'],
+        'olfactor': ['decay_coef'],
+    })
+
+    for l, dd, rowColor in zip(rows, rowDicts, rowColors0):
+        d0 = init_pars().get(l, None)
+        if l in ['physics', 'body', 'olfactor']:
+            rowValid = dvalid[l]
+        elif l == 'interference':
+            rowValid = dvalid[l][dd.mode]
+        elif l == 'turner':
+            rowValid = dvalid[l][dd.mode]
+        elif l == 'crawler':
+            rowValid = dvalid[l][dd.waveform]
+        elif l == 'intermitter':
+            rowValid = [n for n in ['stridechain_dist', 'pause_dist'] if dd[n] is not None and dd[n].name is not None]
+
         if len(rowValid) == 0:
-            Nrows.pop(rowLab, None)
+            Nrows.pop(l, None)
             continue
         for n, vv in d0.items():
             if n not in rowValid:
                 continue
-            v = rowDic[n]
+            v = dd[n]
             if n in ['stridechain_dist', 'pause_dist']:
-                # print(rowLab, n,v)
-                if v.name == 'exponential':
-                    dist_v = f'Exp(b={v.beta})'
-                elif v.name == 'powerlaw':
-                    dist_v = f'Powerlaw(a={v.alpha})'
-                elif v.name == 'levy':
-                    dist_v = f'Levy(m={v.mu}, s={v.sigma})'
-                elif v.name == 'uniform':
-                    dist_v = f'Uniform()'
-                elif v.name == 'lognormal':
-                    dist_v = f'Lognormal(m={np.round(v.mu,2)}, s={np.round(v.sigma,2)})'
+                dist_dic={
+                    'exponential' : f'Exp(b={v.beta})',
+                    'powerlaw' : f'Powerlaw(a={v.alpha})',
+                    'levy' : f'Levy(m={v.mu}, s={v.sigma})',
+                    'uniform' : f'Uniform()',
+                    'lognormal' : f'Lognormal(m={np.round(v.mu, 2)}, s={np.round(v.sigma, 2)})'
+                }
+                dist_v = dist_dic[v.name]
+
                 if n == 'stridechain_dist':
-                    vs1 = [rowLab, 'run length distribution', '$N_{R}$', dist_v, '-']
-                    vs2 = [rowLab, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', v.range, '# $strides$']
+                    vs1 = [l, 'run length distribution', '$N_{R}$', dist_v, '-']
+                    vs2 = [l, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', v.range, '# $strides$']
                 elif n == 'pause_dist':
-                    vs1 = [rowLab, 'pause duration distribution', '$t_{P}$', dist_v, '-']
-                    vs2 = [rowLab, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', v.range, '$sec$']
+                    vs1 = [l, 'pause duration distribution', '$t_{P}$', dist_v, '-']
+                    vs2 = [l, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', v.range, '$sec$']
                 register(vs1, rowColor)
                 register(vs2, rowColor)
             else:
@@ -833,10 +829,8 @@ def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbo
                 elif n == 'suppression_mode':
                     if v == 'both':
                         v = '$I_{T}$ & $\omega$'
-                        # v = '$I_{T}$ & $A_{T}$'
                     elif v == 'amplitude':
-                        v = fr'$\omega$'#'$A_{T}$'
-                        # v = '$A_{T}$'
+                        v = fr'$\omega$'
                     elif v == 'oscillation':
                         v = '$I_{T}$'
 
@@ -845,7 +839,7 @@ def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbo
                         v = np.round(v, 2)
                     except:
                         pass
-                vs = [rowLab, p[n]['label'], p[n]['symbol'], v, p[n]['unit']]
+                vs = [l, p[n]['label'], p[n]['symbol'], v, p[n]['unit']]
                 register(vs, rowColor)
 
     cumNrows = dict(zip(list(Nrows.keys()), np.cumsum(list(Nrows.values())).astype(int)))
@@ -853,7 +847,7 @@ def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbo
     df.set_index(['field'], inplace=True)
 
     ax, fig, mpl = render_mpl_table(df, colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
-                                    figsize=figsize,adjust_kws={'left': 0.2, 'right': 0.95},
+                                    figsize=figsize, adjust_kws={'left': 0.2, 'right': 0.95},
                                     row_colors=rowColors, return_table=True, **kwargs)
     ax.yaxis.set_visible(False)
     ax.xaxis.set_visible(False)
@@ -872,7 +866,7 @@ def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbo
         os.makedirs(save_to, exist_ok=True)
         if save_as is None:
             save_as = mID
-        filename=f'{save_to}/{save_as}.pdf'
+        filename = f'{save_to}/{save_as}.pdf'
         fig.savefig(filename, dpi=300)
     plt.close()
     return fig
@@ -902,7 +896,8 @@ def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_me
         vs = e[p0['codename']]
         v_mu = vs.median()
         P.axs[i].hist(vs.values, bins=Nbins)
-        P.conf_ax(i, xlab=p0['label'], ylab='# larvae' if i == 0 else None, xMaxN=3, xlabelfontsize=18,xticklabelsize=18,
+        P.conf_ax(i, xlab=p0['label'], ylab='# larvae' if i == 0 else None, xMaxN=3, xlabelfontsize=18,
+                  xticklabelsize=18,
                   yvis=False if i != 0 else True)
 
         if show_median:
@@ -915,39 +910,40 @@ def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_me
     return P.get()
 
 
-def test_model(mID=None, m=None, dur=2/3, dt=1 / 16,Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
+def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
     from lib.anal.plotting import annotated_strideplot, annotated_turnplot
-    if d is None :
+    if d is None:
         from lib.anal.eval_aux import sim_model
-        d=sim_model(mID=mID, m=m, dur=dur, dt=dt,Nids=Nids,enrichment=False)
+        d = sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
     s, e, c = d.step_data, d.endpoint_data, d.config
 
-    Nticks = int(dur*60 / dt)
+    Nticks = int(dur * 60 / dt)
     trange = np.arange(0, Nticks * dt, dt)
     ss = s.xs(c.agent_ids[0], level='AgentID').loc[:Nticks]
 
-    pars, labs=getPar(['v', 'c_CT', 'Act_tur', 'fov', 'b'], to_return=['d', 'symbol'])
+    pars, labs = getPar(['v', 'c_CT', 'Act_tur', 'fov', 'b'], to_return=['d', 'symbol'])
 
     Nrows = len(pars)
     P = BasePlot(name=f'{mID}_test', **kwargs)
     P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, fig=fig, axs=axs)
-    a_v=ss[getPar('v')].values
-    a_fov=ss[getPar('fov')].values
+    a_v = ss[getPar('v')].values
+    a_fov = ss[getPar('fov')].values
     annotated_strideplot(a_v, dt, ax=P.axs[0])
-    annotated_strideplot(a_v, dt, a2plot=ss[pars[1]].values, ax=P.axs[1], ylim=(0, 1),  show_extrema=False)
+    annotated_strideplot(a_v, dt, a2plot=ss[pars[1]].values, ax=P.axs[1], ylim=(0, 1), show_extrema=False)
 
     annotated_turnplot(a_fov, dt, a2plot=ss[pars[2]].values, ax=P.axs[2], min_amp=min_turn_amp)
     annotated_turnplot(a_fov, dt, ax=P.axs[3], min_amp=min_turn_amp)
     annotated_turnplot(a_fov, dt, a2plot=ss[pars[4]].values, ax=P.axs[4], min_amp=min_turn_amp)
 
-
     for i in range(Nrows):
-        P.conf_ax(i, xlim=(0, trange[-1] + 10 * dt), ylab=labs[i], xlab='time (sec)', xvis=True if i==Nrows-1 else False)
+        P.conf_ax(i, xlim=(0, trange[-1] + 10 * dt), ylab=labs[i], xlab='time (sec)',
+                  xvis=True if i == Nrows - 1 else False)
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.01, 0.05)
     P.fig.align_ylabels(P.axs[:])
     return P.get()
 
-def add_letters(fig,axs,dx=-0.05, dy=0.005) :
+
+def add_letters(fig, axs, dx=-0.05, dy=0.005):
     letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
     for i, ax in enumerate(axs):
         X = ax.get_position().x0 + dx

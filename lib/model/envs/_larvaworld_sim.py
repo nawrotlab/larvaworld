@@ -158,22 +158,21 @@ class LarvaWorldSim(LarvaWorld):
         return False
 
     def create_collectors(self, output):
-        from lib.conf.base.pars import RefParDict
-        from lib.aux.collecting import TargetedDataCollector, collection_dict
-        self.par_dict = RefParDict().par_dict.dict
+        from lib.conf.base.pars import ParDict
+        from lib.aux.collecting import TargetedDataCollector
+        # self.par_dict = RefParDict().par_dict.dict
         # self.par_dict = ParDict(mode='load').dict
-        kws0 = {'par_dict': self.par_dict}
-        kws = {
-            'objects': self.get_flies(),
-            'common': True,
-            'collection_dict': collection_dict,
-            **kws0
-        }
+        kws0 = {'par_dict': ParDict.dict}
+        # kws = {
+        #     'objects': self.get_flies(),
+        #     'common': True,
+        #     'collection_dict': collection_dict,
+        #     **kws0
+        # }
 
         if output is None:
             output = {'step': [], 'end': [], 'tables': {}, 'step_groups': [], 'end_groups': []}
         s, e, t = output['step'], output['end'], output['tables']
-        # sg, eg = output['step_groups'], output['end_groups']
         self.larva_step_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s, **kws0) if len(
             s) > 0 else None
         self.larva_end_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e, **kws0) if len(
@@ -181,8 +180,6 @@ class LarvaWorldSim(LarvaWorld):
         self.food_end_col = TargetedDataCollector(schedule=self.all_food_schedule,
                                                   pars=['initial_amount', 'final_amount'], **kws0)
         self.table_collector = DataCollector(tables=t) if len(t) > 0 else None
-        # self.step_group_collector = CompGroupCollector(names=sg, save_as='step.csv', **kws) if len(sg) > 0 else None
-        # self.end_group_collector = CompGroupCollector(names=eg, save_as='end.csv', **kws) if len(eg) > 0 else None
 
     def eliminate_overlap(self):
         scale = 3.0

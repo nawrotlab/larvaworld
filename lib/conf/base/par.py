@@ -34,7 +34,7 @@ def vpar(vfunc, v0, h, lab, lim, dv):
 
 
 def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, lab=None, h=None, u_name=None,
-                 required_ks=[],u=ureg.dimensionless, v0=None, lim=None, dv=None,
+                 required_ks=[], u=ureg.dimensionless, v0=None, lim=None, dv=None,
                  vfunc=None, vparfunc=None, func=None, **kwargs):
     codename = p if codename is None else codename
     d = p if d is None else d
@@ -138,7 +138,7 @@ def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, 
             return build_ParsArg(name=self.name, k=self.k, h=self.help, t=self.dtype, v=self.initial_value, vs=None)
 
         def exists(self, dataset):
-            par=self.d
+            par = self.d
             s, e, c = dataset.step_data, dataset.endpoint_data, dataset.config
             dic = {'step': par in s.columns, 'end': par in e.columns}
             if 'aux_pars' in c.keys():
@@ -181,20 +181,53 @@ def init2par(d0=None, d=None):
         d = {}
     from lib.conf.base.dtypes import par
     for n, v in d0.items():
-        depth=dNl.dict_depth(v)
-        if depth==0:
+        depth = dNl.dict_depth(v)
+        if depth == 0:
             continue
-        if depth==1:
+        if depth == 1:
             try:
-                entry = par(n, **v, convert2par=True)
+                entry = par(name=n, **v, convert2par=True)
                 d.update(entry)
             except:
                 continue
-        elif depth>1:
+        elif depth > 1:
             init2par(v, d=d)
     return d
 
-def confID_dict() :
+
+class ModuleConfDict:
+    def __init__(self):
+        from lib.conf.base.init_pars import init_pars
+        from lib.model.modules import crawler, turner, intermitter, crawl_bend_interference, sensor, memory, feeder
+        dinit=init_pars()
+        self.mfunc = {
+            'crawler': crawler.Crawler,
+            'turner': turner.Turner,
+            'interference': crawl_bend_interference.Coupling,
+            'intermitter': intermitter.ChoiceIntermitter,
+            'olfactor': sensor.Olfactor,
+            'windsensor': sensor.WindSensor,
+            'toucher': sensor.Toucher,
+            'feeder': feeder.Feeder,
+            'memory': memory.RLmemory,
+        }
+        self.mkeys = list(self.mfunc.keys())
+        self.mdicts = dNl.AttrDict.from_nested_dicts({k: init2par(d0=dinit[k]) for k in self.mkeys})
+
+    def conf(self, mkey, **kwargs):
+        mdict = self.mdicts[mkey]
+        conf0 = dNl.AttrDict.from_nested_dicts({p.d: p.v for k, p in mdict.items()})
+        conf0.update(kwargs)
+        return conf0
+
+    def module(self, mkey, **kwargs):
+        conf0 = self.conf(mkey, **kwargs)
+        func= self.mfunc[mkey]
+        m=func(**conf0)
+        return m
+
+
+def confID_dict():
     from lib.conf.stored.conf import kConfDict, ConfSelector
     dic = dNl.AttrDict.from_nested_dicts({})
     keys = ['Ref', 'Model', 'Env', 'Exp', 'Ga']
@@ -209,14 +242,28 @@ def confID_dict() :
         dic[K0] = vparfunc()
     return dic
 
-# ConfIDdict=confID_dict()
 
 if __name__ == '__main__':
-    pp=ConfIDdict['Model']
-    print(pp.default)
+    pass
+    # dd = ModuleConfDict()
+    # from lib.conf.stored.conf import loadConf
+    # dt=0.1
+    # mID='explorer'
+    # m = loadConf(mID, 'Model').brain
+    #
+    # for mkey, exists in m.modules.items() :
+    #     if exists :
+    #         kws=m[f'{mkey}_params']
+    #         M = dd.module(mkey=mkey,dt=dt, **kws)
+    #         print(mkey, M)
 
-    # ppp=pp('explorer')
-    # print(ppp.default)
-    # for k,p in ConfIDdict.items():
-    #     print(k,p)
-
+    # T=dd.module(mkey='turner', noise=0.5)
+    # for i in range(1000) :
+    #     T.step()
+    #     print(T.activity)
+    # print(T)
+    # from lib.conf.base.init_pars import init_pars
+    # dd=init2par(d0=init_pars()['turner'], d=None)
+    # print(dd)
+    # for k,p in pp.items():
+    #     print(k,p.v, p.d)
