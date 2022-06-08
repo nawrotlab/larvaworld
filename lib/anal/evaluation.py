@@ -28,7 +28,7 @@ par_dict = RefParDict().par_dict
 
 class EvalRun :
     def __init__(self,refID,id=None,expVSsimIDs=False, eval_metrics=None,save_to=None,N=None,bout_annotation=True,
-                 locomotor_models=None,modelIDs=None,dataset_ids=None, cross_validation=False,mode='load',
+                 locomotor_models=None,modelIDs=None,dataset_ids=None, cross_validation=False,mode='load',enrichment=True,
                  norm_modes = ['raw', 'minmax', 'std'],eval_modes=['pooled'],offline=False, store_data=True, show=False) :
         if id is None :
             id = f'evaluation_run_{next_idx("dispersion", "Eval")}'
@@ -38,6 +38,7 @@ class EvalRun :
             save_to = paths.path("SIM")
         self.path=f'eval_runs'
         self.bout_annotation = bout_annotation
+        self.enrichment = enrichment
         self.save_to = save_to
         self.store_data = store_data
         self.label_dic = {
@@ -87,7 +88,6 @@ class EvalRun :
                 print('Created novel target data and evaluation metrics')
 
 
-        # if mode=='load' :
             try :
                 from lib.stor.larva_dataset import LarvaDataset
                 self.dataset_configs = self.load_data('dataset_configs')
@@ -98,13 +98,11 @@ class EvalRun :
                 self.dataset_configs = {}
 
 
-        # if mode=='load' :
             try :
                 self.sim_data = self.load_data('sim_data')
             except :
                 self.sim_data = None
 
-        # if mode == 'load':
             try:
                 self.error_dicts = self.load_data('error_dicts')
 
@@ -243,8 +241,6 @@ class EvalRun :
             exp_conf.vis_kwargs = null_dict('visualization', mode=None)
         exp_conf.save_to=self.save_to
         exp_conf.update(kwargs)
-        # print(exp_conf.enrichment)
-        # raise
         print(f'Preparing simulation {self.id} for {dur} minutes')
         return exp_conf
 
@@ -399,8 +395,6 @@ class EvalRun :
             'show': self.show
         }
 
-
-        # print([(d.id, d.config.N) for d in ds])
         if 'fft' in plots:
             self.figs.loco.fft = plot_fft_multi(**kws)
         if 'hists' in plots:
@@ -430,7 +424,7 @@ class EvalRun :
         self.figs.summary = result_summary(**kws2)
         self.figs.stride_cycle.norm = stride_cycle(shorts=['sv', 'fov', 'rov', 'foa', 'b'], individuals=True, **kws)
 
-    def preprocess(self):
+    def preprocess2(self):
         Ddata,Edata = {},{}
         for p in self.s_pars:
             Ddata[p] = {d.id: d.step_data[p].dropna() for d in self.datasets}
@@ -439,7 +433,7 @@ class EvalRun :
         sim_data = dNl.AttrDict.from_nested_dicts({'step': Ddata, 'end': Edata})
         return sim_data
 
-    def preprocess2(self):
+    def preprocess(self):
         Ddata,Edata = {},{}
         for p, sh in zip(self.s_pars, self.s_shorts):
             Ddata[p] = {d.id: par_dict.get(sh, d) for d in self.datasets}
@@ -566,17 +560,20 @@ class EvalRun :
         if self.offline:
             print(f'Simulating offline {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
             self.datasets += sim_models(mIDs=self.modelIDs, dur=dur, dt=c.dt,tor_durs=self.tor_durs,dsp_starts=self.dsp_starts,dsp_stops=self.dsp_stops,
-                                        dataset_ids=self.dataset_ids,bout_annotation=self.bout_annotation,
+                                        dataset_ids=self.dataset_ids,bout_annotation=self.bout_annotation,enrichment = self.enrichment,
                                Nids=self.N, colors=list(self.model_colors.values()), env_params = c.env_params, refDataset=self.target, data_dir=self.data_dir)
         else :
             from lib.sim.single.single_run import SingleRun
             self.exp_conf = self.prepare_exp_conf(dur=dur, **kwargs)
 
-            self.exp_conf.enrichment.metric_definition.dispersion.dsp_starts=self.dsp_starts
-            self.exp_conf.enrichment.metric_definition.dispersion.dsp_stops=self.dsp_stops
-            self.exp_conf.enrichment.metric_definition.tortuosity.tor_durs=self.tor_durs
-            self.exp_conf.enrichment.bout_annotation= self.bout_annotation
-            # self.exp_conf.enrichment = None
+
+            if self.enrichment is None:
+                self.exp_conf.enrichment = None
+            else :
+                self.exp_conf.enrichment.metric_definition.dispersion.dsp_starts = self.dsp_starts
+                self.exp_conf.enrichment.metric_definition.dispersion.dsp_stops = self.dsp_stops
+                self.exp_conf.enrichment.metric_definition.tortuosity.tor_durs = self.tor_durs
+                self.exp_conf.enrichment.bout_annotation = self.bout_annotation
 
             print(f'Simulating {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
             run = SingleRun(**self.exp_conf)

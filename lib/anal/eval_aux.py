@@ -162,8 +162,8 @@ def adapt_conf(conf0, ee, cc):
 
     if cc.Npoints > 1:
         ddic = {'initial_freq': ee[fsv],
-                'step_mu': ee[sstr_d_mu],
-                'step_std': ee[sstr_d_std],
+                'step_mu': ee[str_sd_mu],
+                'step_std': ee[str_sd_std],
                 'attenuation': ee['attenuation'],
                 'attenuation_max': ee['attenuation_max'],
                 'max_vel_phase': ee['phi_scaled_velocity_max']}
@@ -392,12 +392,11 @@ def sim_models(mIDs,colors=None,dataset_ids=None,data_dir=None, **kwargs):
     return ds
 
 def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs=[],dsp_starts=[0],dsp_stops=[40],env_params={},dir=None,
-              bout_annotation=True,refDataset=None,sample_ks=None,store=False, **kwargs):
+              bout_annotation=True,enrichment=True,refDataset=None,sample_ks=None,store=False, **kwargs):
     from lib.model.modules.locomotor import DefaultLocomotor
-    from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf
+    from lib.conf.stored.conf import loadConf
     from lib.process.angular import angular_processing
     from lib.model.body.controller import PhysicsController
-
 
     if dataset_id is None:
         dataset_id = mID
@@ -409,7 +408,6 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
         m = loadConf(mID, "Model")
         ms = [m] * Nids
 
-    Nticks = int(dur * 60 / dt)
     ids=[f'Agent{j}' for j in range(Nids)]
 
     larva_groups = {dataset_id: null_dict('LarvaGroup', sample=refID, model=expandConf(mID, 'Model'),
@@ -418,24 +416,18 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
 
     c = dNl.AttrDict.from_nested_dicts(
         {'dir': dir, 'id': dataset_id,'larva_groups' : larva_groups, 'group_id': 'offline', 'dt': dt, 'fr': 1/dt, 'agent_ids': ids, 'duration': dur * 60,
-         'Npoints': 3, 'Ncontour': 0, 'point': '', 'N': Nids, 'Nticks': Nticks, 'mID': mID, 'color': color, 'env_params': env_params})
+         'Npoints': 3, 'Ncontour': 0, 'point': '', 'N': Nids, 'Nticks': int(dur * 60 / dt), 'mID': mID, 'color': color, 'env_params': env_params})
 
 
 
-
-
-
-
-
-
-    my_index = pd.MultiIndex.from_product([np.arange(Nticks), ids], names=['Step', 'AgentID'])
+    my_index = pd.MultiIndex.from_product([np.arange(c.Nticks), ids], names=['Step', 'AgentID'])
     e = pd.DataFrame(index=ids)
-    e['cum_dur'] = dur*60
-    e['num_ticks'] = Nticks
+    e['cum_dur'] = c.duration
+    e['num_ticks'] = c.Nticks
     e['length'] = [m.body.initial_length for m in ms]
 
-    df_columns = getPar(['b', 'fo', 'ro', 'fov', 'Act_tur','x', 'y', 'd', 'v', 'A_tur']) + ['ang_suppression']
-    AA = np.ones([Nticks, Nids, len(df_columns)]) * np.nan
+    df_columns = getPar(['b', 'fo', 'ro', 'fov', 'Act_tur','x', 'y', 'd', 'v', 'A_tur', 'c_CT'])
+    AA = np.ones([c.Nticks, Nids, len(df_columns)]) * np.nan
 
 
 
@@ -452,7 +444,7 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
         b, fo, ro, fov, x, y, dst, v = 0,0,0,0,0,0,0,0
 
 
-        for i in range(Nticks):
+        for i in range(c.Nticks):
             lin, ang, feed = DL.step(A_in=0, length=l)
             v, fov = controller.get_vels(lin, ang, fov, v,b, dt=dt, ang_suppression=DL.cur_ang_suppression)
 
@@ -469,9 +461,8 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
 
             AA[i,j,:]=[b,fo,ro,fov,DL.turner.activity,x,y,dst, v,DL.turner.activation,DL.cur_ang_suppression]
     AA[:, :, :4] = np.rad2deg(AA[:, :, :4])
-    AA=AA.reshape(Nticks*Nids, len(df_columns))
+    AA=AA.reshape(c.Nticks*Nids, len(df_columns))
     s = pd.DataFrame(AA,index=my_index, columns=df_columns)
-    s[getPar('v_in_mm')] = s[getPar('v')]*1000
     s=s.astype(float)
 
     if c.dir is not None :
@@ -484,20 +475,21 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
         d = dNl.AttrDict.from_nested_dicts(
             {'id': c.id, 'group_id': c.group_id, 'step_data': s, 'endpoint_data': e, 'config': c, 'color': c.color})
 
-    with suppress_stdout(False):
-        comp_spatial(s, e, c, mode='minimal')
-        store_spatial(s, e, c,store=store)
-        angular_processing(s, e, c, store=store)
-        comp_dispersion(s, e, c, dsp_starts=dsp_starts, dsp_stops=dsp_stops, store=store)
-        comp_straightness_index(s, e=e, c=c, tor_durs=tor_durs, store=store)
+    if enrichment :
+        with suppress_stdout(False):
+            comp_spatial(s, e, c, mode='minimal')
+            store_spatial(s, e, c,store=store)
+            angular_processing(s, e, c, store=store)
+            comp_dispersion(s, e, c, dsp_starts=dsp_starts, dsp_stops=dsp_stops, store=store)
+            comp_straightness_index(s, e=e, c=c, tor_durs=tor_durs, store=store)
 
 
 
-    if bout_annotation:
-        from lib.process import aux
-        d.chunk_dicts = aux.annotation(s, e, c, store=store)
-        d.cycle_curves = compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts, store=store)
-        d.pooled_epochs = fit_bouts(c=c, chunk_dicts=d.chunk_dicts, s=s, e=e, id=c.id, store=store)
+        if bout_annotation:
+            from lib.process import aux
+            d.chunk_dicts = aux.annotation(s, e, c, store=store)
+            d.cycle_curves = compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts, store=store)
+            d.pooled_epochs = fit_bouts(c=c, chunk_dicts=d.chunk_dicts, s=s, e=e, id=c.id, store=store)
 
     return d
 
@@ -547,8 +539,21 @@ def RSS_dic(dd, d):
     return stat
 
 if __name__ == '__main__':
+    mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
+    ds = sim_models(mIDs,dur=3, dt=1 / 16,Nids=3, enrichment=False)
+    from lib.anal.plotting import plot_trajectories, plot_bouts, plot_crawl_pars, plot_ang_pars,plot_dispersion
+
+    _ =plot_dispersion(datasets=ds, show=True)
+    # _ =plot_crawl_pars(datasets=ds, show=True)
+    # _ =plot_ang_pars(datasets=ds, show=True)
+    raise
     from lib.conf.base import paths
     dir=f"{paths.path('RUN')}/testing/the/sim_model/method"
-    # d=sim_model(mID='NEU_PHI', dur=1, dt=1 / 16,Nids=2,color='blue',tor_durs=[], dir=dir)
+    d=sim_model(mID='PHIonNEU', dur=3, dt=1 / 16,Nids=5,color='blue',enrichment=False)
+    print(d.step_data.columns)
+    ParDict.compute('str_sd_mu',d)
+    ParDict.compute('tur_fou', d)
+    print(d.step_data.columns)
 
-    raise
+
+

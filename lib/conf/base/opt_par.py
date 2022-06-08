@@ -1,44 +1,38 @@
 from param import Parameterized
 from typing import List, Tuple
 
-from lib.conf.base.pars import ref_par_dict, func_dic
+from lib.conf.base.pars import ParDict, func_dic
 import lib.aux.dictsNlists as dNl
 
 
-ParDict=ref_par_dict.par_dict
+def runtime_pars(PF=ParDict.dict):
+    return [v.d for k, v in PF.items()]
 
 
-def runtime_pars(PF=ParDict.dict) :
-    if PF is None :
-        PF = ref_par_dict.par_dict.dict
-    return [v['d'] for k, v in PF.items()]
+def getPar(k=None, p=None, d=None, to_return='d', PF=ParDict):
+    if k is not None:
+        d0=PF.dict
+        k0=k
+    elif d is not None:
+        d0 = PF.ddict
+        k0 = d
+    elif p is not None:
+        d0 = PF.pdict
+        k0 = p
 
-def getPar(k=None, p=None, d=None, to_return='d', PF=ParDict.dict):
-    if PF is None :
-        PF = ref_par_dict.par_dict.dict
-    if k is None:
-        if p is not None:
-            if type(p) == str:
-                k = [k for k in PF.keys() if PF[k].p == p][0]
-            elif type(p) == list:
-                k = dNl.flatten_list([[k for k in PF.keys() if PF[k].p == p0] for p0 in p])
-        elif d is not None:
-            if type(d) == str:
-                k = [k for k in PF.keys() if PF[k].d == d][0]
-            elif type(d) == list:
-                k = dNl.flatten_list([[k for k in PF.keys() if PF[k].d == d0] for d0 in d])
-    if type(k) == str:
-        par=PF[k]
-        if type(to_return) == list :
-            return [getattr(par,i) for i in to_return]
-        elif type(to_return) == str :
-            return getattr(par,to_return)
-    elif type(k) == list:
-        pars=[PF[kk] for kk in k]
+    if type(k0) == str:
+        par = d0[k0]
         if type(to_return) == list:
-            return [[getattr(par,i) for  par in pars] for i in to_return]
-        elif type(to_return) == str :
-            return [getattr(par,to_return) for  par in pars]
+            return [getattr(par, i) for i in to_return]
+        elif type(to_return) == str:
+            return getattr(par, to_return)
+    elif type(k0) == list:
+        pars = [d0[i] for i in k0]
+        if type(to_return) == list:
+            return [[getattr(par, i) for par in pars] for i in to_return]
+        elif type(to_return) == str:
+            return [getattr(par, to_return) for par in pars]
+
 
 def base_dtype(dtype):
     if dtype in [float, Tuple[float], List[float], List[Tuple[float]]]:
@@ -48,6 +42,7 @@ def base_dtype(dtype):
     else:
         base_t = dtype
     return base_t
+
 
 def init2opt_dict(name):
     from lib.conf.base.init_pars import init_pars
@@ -79,6 +74,7 @@ def init2opt_dict(name):
         opt_dict[k] = func(**kws)
     return opt_dict
 
+
 class OptParDict(Parameterized):
     def __init__(self, name, **kwargs):
         super().__init__(name=name)
@@ -96,18 +92,18 @@ class OptParDict(Parameterized):
 
     @property
     def entry(self):
-        return dNl.AttrDict.from_nested_dicts({self.name : self.dict})
+        return dNl.AttrDict.from_nested_dicts({self.name: self.dict})
 
 
 class SimParConf(OptParDict):
-    def __init__(self, exp=None, conf_type='Exp', sim_ID=None, path=None,duration=None, **kwargs):
+    def __init__(self, exp=None, conf_type='Exp', sim_ID=None, path=None, duration=None, **kwargs):
         if exp is not None and conf_type is not None:
             from lib.conf.stored.conf import loadConf, next_idx
             if duration is None:
-                try :
+                try:
                     exp_conf = loadConf(exp, conf_type)
                     duration = exp_conf.sim_params.duration
-                except :
+                except:
                     duration = 3.0
             if sim_ID is None:
                 sim_ID = f'{exp}_{next_idx(exp, conf_type)}'
@@ -120,13 +116,10 @@ class SimParConf(OptParDict):
                     path = f'batch_runs/{exp}'
                 elif conf_type == 'Eval':
                     path = f'eval_runs/{exp}'
-        super().__init__(name='sim_params', sim_ID=sim_ID, path=path,duration=duration, **kwargs)
-
-
-
+        super().__init__(name='sim_params', sim_ID=sim_ID, path=path, duration=duration, **kwargs)
 
 
 if __name__ == '__main__':
-    print(ParDict['l'].d, ParDict['l'].codename)
+    print(getPar(['b', 'fo', 'ro', 'fov', 'Act_tur','x', 'y', 'd', 'v', 'A_tur']))
     pass
     # raise

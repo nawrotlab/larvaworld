@@ -321,29 +321,30 @@ class Plot(BasePlot):
         x = np.linspace(r0, r1, nbins)
         return x, lim
 
-    def plot_par(self, par, bins, i=0, labels=None, absolute=False, nbins=None, type='plt.hist',sns_kws={},
+    def plot_par(self, short=None,par=None,vs=None, bins= 'broad', i=0, labels=None, absolute=False, nbins=None, type='plt.hist',sns_kws={},
                   pvalues=False, half_circles=False,key='step', **kwargs):
         if labels is None:
             labels = self.labels
-        vs = []
-        for d in self.datasets:
-            if key=='step':
-                try :
-                    v = d.step_data[par]
-                except :
-                    v = d.get_par(par, key=key)
-            elif key=='end':
-                try :
-                    v = d.endpoint_data[par]
-                except :
-                    v = d.get_par(par, key=key)
-            if v is not None :
-                v=v.dropna().values
-            else :
-                continue
-            if absolute:
-                v = np.abs(v)
-            vs.append(v)
+        if vs is None:
+            vs = []
+            for d in self.datasets:
+                if key=='step':
+                    try :
+                        v = d.step_data[par]
+                    except :
+                        v = d.get_par(par, key=key)
+                elif key=='end':
+                    try :
+                        v = d.endpoint_data[par]
+                    except :
+                        v = d.get_par(par, key=key)
+                if v is not None :
+                    v=v.dropna().values
+                else :
+                    continue
+                if absolute:
+                    v = np.abs(v)
+                vs.append(v)
         if bins == 'broad' and nbins is not None:
             bins = np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
         for v, c, l in zip(vs, self.colors, labels):
@@ -923,19 +924,19 @@ def test_model(mID=None, m=None, dur=2/3, dt=1 / 16,Nids=1, min_turn_amp=20, d=N
     from lib.anal.plotting import annotated_strideplot, annotated_turnplot
     if d is None :
         from lib.anal.eval_aux import sim_model
-        d=sim_model(mID=mID, m=m, dur=dur, dt=dt,Nids=Nids)
+        d=sim_model(mID=mID, m=m, dur=dur, dt=dt,Nids=Nids,enrichment=False)
     s, e, c = d.step_data, d.endpoint_data, d.config
 
     Nticks = int(dur*60 / dt)
     trange = np.arange(0, Nticks * dt, dt)
     ss = s.xs(c.agent_ids[0], level='AgentID').loc[:Nticks]
 
-    pars, labs=getPar(['v_in_mm', 'c_CT', 'Act_tur', 'fov', 'b'], to_return=['d', 'symbol'])
+    pars, labs=getPar(['v', 'c_CT', 'Act_tur', 'fov', 'b'], to_return=['d', 'symbol'])
 
     Nrows = len(pars)
     P = BasePlot(name=f'{mID}_test', **kwargs)
     P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, fig=fig, axs=axs)
-    a_v=ss[getPar('v_in_mm')].values
+    a_v=ss[getPar('v')].values
     a_fov=ss[getPar('fov')].values
     annotated_strideplot(a_v, dt, ax=P.axs[0])
     annotated_strideplot(a_v, dt, a2plot=ss[pars[1]].values, ax=P.axs[1], ylim=(0, 1),  show_extrema=False)

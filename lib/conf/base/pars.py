@@ -222,13 +222,29 @@ class BaseParDict:
         self.in_rad = in_rad
         self.in_m = in_m
         self.build()
+        self.ddict=dNl.AttrDict.from_nested_dicts({p.d:p for k,p in self.dict.items()})
+        self.pdict=dNl.AttrDict.from_nested_dicts({p.p:p for k,p in self.dict.items()})
+
 
     def get(self, k, d, compute=True):
         p = self.dict[k]
         res = p.exists(d)
-        for key, exists in res.items():
-            if exists:
-                return d.get_par(key=key, par=p.d)
+
+        if res['step']:
+            if hasattr(d, 'step_data') :
+                return d.step_data[p.d]
+            else :
+                return d.read(key='step')[p.d]
+        elif res['end']:
+            if hasattr(d, 'endpoint_data') :
+                return d.endpoint_data[p.d]
+            else :
+                return d.read(key='end', file='endpoint_h5')[p.d]
+        else :
+            for key in res.keys() :
+                if key not in ['step', 'end'] and res[key] :
+                    return d.read(key=f'{key}.{p.d}', file='aux_h5')
+
 
         if compute:
             self.compute(k, d)
@@ -739,7 +755,7 @@ def dsp_func(range):
     def func(d):
         from lib.process.spatial import comp_dispersion
         s, e, c = d.step_data, d.endpoint_data, d.config
-        comp_dispersion(s, e, c, recompute=True, dsp_starts=[r0], dsp_stops=[r1], store=True)
+        comp_dispersion(s, e, c, recompute=True, dsp_starts=[r0], dsp_stops=[r1], store=False)
 
     return func
 
@@ -765,18 +781,18 @@ def dst_func(point=''):
     return func
 
 
-def chunk_func(kc):
+def chunk_func(kc, store=False):
     if kc in ['str', 'pau', 'run', 'str_c']:
         def func(d):
             from lib.process.aux import crawl_annotation
             s, e, c = d.step_data, d.endpoint_data, d.config
-            crawl_annotation(s, e, c, strides_enabled=True, store=True)
+            crawl_annotation(s, e, c, strides_enabled=True, store=store)
         required_ks=['a', 'sa','ba','foa', 'fv']
     elif kc in ['tur', 'Ltur', 'Rtur']:
         def func(d):
             from lib.process.aux import turn_annotation
             s, e, c = d.step_data, d.endpoint_data, d.config
-            turn_annotation(s, e, c, store=True)
+            turn_annotation(s, e, c, store=store)
 
         required_ks = ['fov']
     else:
@@ -805,3 +821,4 @@ def freq_func(par) :
 
 
 ref_par_dict=RefParDict()
+ParDict=ref_par_dict.par_dict

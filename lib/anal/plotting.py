@@ -21,6 +21,7 @@ from lib.aux.colsNstr import N_colors
 
 
 from lib.conf.base.opt_par import getPar
+from lib.conf.base.pars import ParDict
 
 
 '''
@@ -117,11 +118,9 @@ def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfol
     if Npars == 5:
         shorts = ['b', 'bv', 'ba', 'fov', 'foa']
         rs = [100, 200, 2000, 200, 2000]
-        ylim = 0.1
     elif Npars == 3:
         shorts = ['b', 'bv', 'fov']
         rs = [100, 200, 200]
-        ylim = 0.1
     else:
         raise ValueError('3 or 5 pars allowed')
 
@@ -129,35 +128,34 @@ def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfol
         shorts += ['rov', 'roa']
         rs += [200, 2000]
 
-    pars, sim_ls, xlabs = getPar(shorts, to_return=['d', 's', 'l'])
     Nps = len(shorts)
     P = AutoPlot(name='ang_pars', subfolder=subfolder, Ncols=Nps, figsize=(Nps * 8, 8), sharey=True, **kwargs)
-    p_ls = [[sl] * P.Ndatasets for sl in sim_ls]
-    P.init_fits(pars)
-
-    for i, (p, r, p_lab, xlab) in enumerate(zip(pars, rs, p_ls, xlabs)):
+    P.init_fits(getPar(shorts))
+    for i, (k,r) in enumerate(zip(shorts, rs)):
+        p=ParDict.dict[k]
+        vs=[ParDict.get(k,d) for d in P.datasets]
         bins, xlim = P.angrange(r, absolute, Nbins)
-        P.plot_par(p, bins, i=i, absolute=absolute, labels=p_lab, alpha=0.8, histtype='step', linewidth=3,
-                   pvalues=True, half_circles=half_circles)
-        P.conf_ax(i, ylab='probability', yvis=True if i == 0 else False, xlab=xlab, ylim=[0, ylim], yMaxN=3)
+        P.plot_par(vs=vs, bins=bins, i=i, absolute=absolute, labels=p.disp, alpha=0.8, histtype='step', linewidth=3,
+                   pvalues=False, half_circles=half_circles)
+        P.conf_ax(i, ylab='probability', yvis=True if i == 0 else False, xlab=p.label, ylim=[0, 0.1], yMaxN=3)
     dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left' if half_circles else 'upper right')
-    P.adjust((0.3 / len(pars), 0.99), (0.15, 0.95), 0.01)
+    P.adjust((0.3 / Nps, 0.99), (0.15, 0.95), 0.01)
     return P.get()
 
 
 def plot_crawl_pars(subfolder='endpoint', par_legend=False, pvalues=False,type='sns.hist',
-                    half_circles=True, kde=True, fig=None, axs=None,shorts=['str_N', 'run_tr', 'cum_d'], **kwargs):
+                    half_circles=False, kde=True, fig=None, axs=None,shorts=['str_N', 'run_tr', 'cum_d'], **kwargs):
     sns_kws={'kde' : kde, 'stat' : "probability", 'element': "step", 'fill':True, 'multiple' : "layer", 'shrink' :1}
     P = Plot(name='crawl_pars', subfolder=subfolder, **kwargs)
     Ncols=len(shorts)
-    pars, sim_ls, xlabs, xlims = getPar(shorts, to_return=['d', 'symbol', 'lab', 'lim'])
-    p_ls = [[sl] * P.Ndatasets for sl in sim_ls]
-    P.init_fits(pars)
+    P.init_fits(getPar(shorts))
     P.build(1, Ncols, figsize=(Ncols * 5, 5), sharey=True, fig=fig, axs=axs)
-    for i, (p, p_lab, xlab, xlim) in enumerate(zip(pars, p_ls, xlabs, xlims)):
-        P.plot_par(p, bins='broad', nbins=40, labels=p_lab, i=i, sns_kws = sns_kws,
+    for i, k in enumerate(shorts):
+        p=ParDict.dict[k]
+        vs=[ParDict.get(k,d) for d in P.datasets]
+        P.plot_par(vs=vs, bins='broad', nbins=40, labels=p.disp, i=i, sns_kws = sns_kws,
                    type=type, pvalues=pvalues, half_circles=half_circles, key='end')
-        P.conf_ax(i, ylab='probability', yvis=True if i == 0 else False, xlab=xlab, xlim=xlim, yMaxN=4,
+        P.conf_ax(i, ylab='probability', yvis=True if i == 0 else False, xlab=p.label, xlim=p.lim, yMaxN=4,
                   leg_loc='upper right' if par_legend else None)
     dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left', fontsize=15)
     P.adjust((0.25 / Ncols, 0.99), (0.15, 0.95), 0.01)
@@ -398,18 +396,26 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', fig_col
     r0, r1 = range
     par = f'dispersion_{r0}_{r1}'
     name = f'scaled_dispersal_{r0}-{r1}' if scaled else f'dispersal_{r0}-{r1}'
+    k = f'sdsp_{r0}_{r1}' if scaled else f'dsp_{r0}_{r1}'
     P = AutoPlot(name=name, subfolder=subfolder, **kwargs)
     t0, t1 = int(r0 * P.datasets[0].config.fr), int(r1 * P.datasets[0].config.fr)
     x = np.linspace(r0, r1, t1 - t0)
 
+
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
-        try:
-            dsp = d.load_aux(type='dispersion', par=par if not scaled else nam.scal(par))
-        except:
-            dsp = get_dsp(d.step_data, par)
-        mean = dsp['median'].values[t0:t1]
-        lb = dsp['upper'].values[t0:t1]
-        ub = dsp['lower'].values[t0:t1]
+        try :
+            try:
+                dsp = d.load_aux(type='dispersion', par=par if not scaled else nam.scal(par))
+            except:
+                dsp = get_dsp(d.step_data, par)
+            mean = dsp['median'].values[t0:t1]
+            lb = dsp['upper'].values[t0:t1]
+            ub = dsp['lower'].values[t0:t1]
+        except :
+            dsp = ParDict.get(k, d)
+            mean = dsp.groupby(level='Step').quantile(q=0.5).values[t0:t1]
+            ub = dsp.groupby(level='Step').quantile(q=0.75).values[t0:t1]
+            lb = dsp.groupby(level='Step').quantile(q=0.25).values[t0:t1]
         P.axs[0].fill_between(x, ub, lb, color=c, alpha=.2)
         P.axs[0].plot(x, mean, c, label=lab, linewidth=3 if lab != 'experiment' else 8, alpha=1.0)
     P.conf_ax(xlab='time, $sec$', ylab=ylab, xlim=[x[0], x[-1]], ylim=[0, ymax], xMaxN=4, yMaxN=4)
