@@ -6,18 +6,15 @@ import progressbar
 import os
 from typing import List, Any
 import webcolors
-from shapely.geometry import Polygon
 from unflatten import unflatten
-
-from lib.model.envs._base_larvaworld import BaseLarvaWorld
-
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from shapely.affinity import affine_transform
 
-from mesa.space import ContinuousSpace
 
-import lib.aux.dictsNlists
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+
+
+import lib.aux.dictsNlists as dNl
 import lib.aux.sim_aux
 import lib.aux.xy_aux
 from lib.conf.base.dtypes import null_dict
@@ -31,8 +28,7 @@ from lib.model.envs._maze import Border
 from lib.model.agents._agent import LarvaworldAgent
 from lib.model.agents._source import Food
 from lib.sim.single.input_lib import evaluate_input, evaluate_graphs
-from lib.aux.dictsNlists import AttrDict
-
+from lib.model.envs._base_larvaworld import BaseLarvaWorld
 
 class LarvaWorld(BaseLarvaWorld):
 
@@ -50,7 +46,7 @@ class LarvaWorld(BaseLarvaWorld):
 
         if vis_kwargs is None:
             vis_kwargs = null_dict('visualization', mode=None)
-        self.vis_kwargs = AttrDict.from_nested_dicts(vis_kwargs)
+        self.vis_kwargs = dNl.AttrDict.from_nested_dicts(vis_kwargs)
         self.__dict__.update(self.vis_kwargs.draw)
         self.__dict__.update(self.vis_kwargs.color)
         self.__dict__.update(self.vis_kwargs.aux)
@@ -675,7 +671,7 @@ def generate_larvae(N, sample_dict, base_model, RefPars=None):
             for p, vs in sample_dict.items():
                 p=RefPars[p] if p in RefPars.keys() else p
                 lF.update({p: vs[i]})
-            dic=AttrDict.from_nested_dicts(unflatten(lF))
+            dic=dNl.AttrDict.from_nested_dicts(unflatten(lF))
             all_pars.append(dic)
     else:
         all_pars = [base_model] * N
@@ -688,7 +684,7 @@ def get_sample_bout_distros(model, sample):
         'stridechain_dist' : ['stride', 'run_count'],
         'run_dist' : ['run', 'run_dur'],
          }
-    m = AttrDict.from_nested_dicts(copy.deepcopy(model))
+    m = dNl.AttrDict.from_nested_dicts(copy.deepcopy(model))
     Im=m.brain.intermitter_params
     if Im and sample != {}:
 

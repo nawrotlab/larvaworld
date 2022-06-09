@@ -15,21 +15,10 @@ from shapely.affinity import affine_transform
 
 from mesa.space import ContinuousSpace
 import lib.aux.dictsNlists as dNl
-import lib.aux.dictsNlists
+# import lib.aux.dictsNlists
 import lib.aux.sim_aux
 import lib.aux.xy_aux
-from lib.conf.base.dtypes import null_dict
-from lib.model.agents._larva_sim import LarvaSim
-from lib.conf.base import paths
-from lib.aux.collecting import NamedRandomActivation
-from lib.model.envs._space import FoodGrid, WindScape
-import lib.anal.rendering as ren
-import lib.aux.colsNstr as fun
-from lib.model.envs._maze import Border
-from lib.model.agents._agent import LarvaworldAgent
-from lib.model.agents._source import Food
-from lib.sim.single.input_lib import evaluate_input, evaluate_graphs
-from lib.aux.dictsNlists import AttrDict
+# from lib.aux.dictsNlists import AttrDict
 
 
 class BaseLarvaWorld:
@@ -60,8 +49,8 @@ class BaseLarvaWorld:
         self.larva_collisions = larva_collisions
         self.borders, self.border_xy, self.border_lines, self.border_bodies, self.border_walls = [], [], [], [], []
         os.makedirs(save_to, exist_ok=True)
-        self.env_pars = AttrDict.from_nested_dicts(env_params)
-        self.larva_groups = AttrDict.from_nested_dicts(larva_groups)
+        self.env_pars = dNl.AttrDict.from_nested_dicts(env_params)
+        self.larva_groups = dNl.AttrDict.from_nested_dicts(larva_groups)
         self.create_arena(**self.env_pars.arena)
         self.space = self.create_space()
 

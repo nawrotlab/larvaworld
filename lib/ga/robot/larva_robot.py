@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 
-from lib.aux.dictsNlists import AttrDict
+# from lib.aux.dictsNlists import AttrDict
 from lib.ga.exception.collision_exception import Collision
 
 from lib.ga.robot.motor_controller import MotorController, Actuator
@@ -13,7 +13,7 @@ from lib.ga.sensor.proximity_sensor import ProximitySensor
 from lib.ga.util.color import Color
 from lib.model.body.controller import BodySim, PhysicsController
 from lib.model.modules.brain import DefaultBrain
-from lib.process.aux import finalize_eval
+# from lib.process.aux import finalize_eval
 from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
 
 class LarvaOffline:
