@@ -657,3 +657,10 @@ def getPar(k=None, p=None, d=None, to_return='d', PF=ParDict):
 
 def runtime_pars(PF=ParDict.dict):
     return [v.d for k, v in PF.items()]
+
+if __name__ == '__main__':
+    print(ParDict.dict['b'].d, ParDict.dict['b'].codename)
+    print(ParDict.dict['fo'].d, ParDict.dict['fo'].codename)
+    print(ParDict.dict['ro'].d, ParDict.dict['ro'].codename)
+    print(ParDict.dict['v'].d, ParDict.dict['v'].codename)
+    pass

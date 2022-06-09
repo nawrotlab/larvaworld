@@ -3,10 +3,12 @@ from typing import Tuple
 
 import numpy as np
 import param
+from unflatten import unflatten
 
 from lib.aux import dictsNlists as dNl
 from lib.aux.par_aux import sub
 from lib.conf.base.units import ureg
+
 
 func_dic = {
     float: param.Number,
@@ -173,6 +175,26 @@ def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, 
             else:
                 print(f'Function to compute parameter {self.disp} is not defined')
 
+        def randomize(self):
+            if self.parclass == param.Number :
+                vmin, vmax = self.param.v.bounds
+                self.v=random.uniform(vmin, vmax)
+            elif self.parclass == param.Integer:
+                vmin, vmax = self.param.v.bounds
+                self.v = random.randint(vmin, vmax)
+            elif self.parclass == param.Magnitude:
+                self.v = random.uniform(0.0, 1.0)
+
+            elif self.parclass == param.Selector:
+                self.v = random.choice(self.param.v.objects)
+            elif self.parclass == param.Boolean:
+                self.v = random.choice([True, False])
+            elif self.parclass == param.Range:
+                vmin, vmax = self.param.v.bounds
+                vv0 = random.uniform(vmin, vmax)
+                vv1 = random.uniform(vv0, vmax)
+                self.v = (vv0,vv1)
+
         def mutate(self, Pmut, Cmut):
             if random.random() < Pmut:
                 if self.parclass == param.Number :
@@ -182,6 +204,16 @@ def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, 
                     v0 = self.v if self.v is not None else vmin+vr/2
                     vv = random.gauss(v0, Cmut * vr)
                     self.v=self.param.v.crop_to_bounds(vv)
+                elif self.parclass == param.Integer:
+                    vmin, vmax = self.param.v.bounds
+                    vr = np.abs(vmax - vmin)
+                    v0 = self.v if self.v is not None else int(vmin + vr / 2)
+                    vv = random.gauss(v0, Cmut * vr)
+                    self.v=self.param.v.crop_to_bounds(int(vv))
+                elif self.parclass == param.Magnitude:
+                    v0 = self.v if self.v is not None else 0.5
+                    vv = random.gauss(v0, Cmut)
+                    self.v = self.param.v.crop_to_bounds(vv)
                 elif self.parclass == param.Selector:
                     self.v = random.choice(self.param.v.objects)
                 elif self.parclass == param.Boolean:
@@ -192,12 +224,8 @@ def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, 
                     v0,v1=self.v if self.v is not None else (vmin, vmax)
                     vv0 = random.gauss(v0, Cmut * vr)
                     vv1 = random.gauss(v1, Cmut * vr)
-                    if vv0<vmin :
-                        vv0 = vmin
-                    if vv1>vmax :
-                        vv1 = vmax
-                    if vv0>vv1 :
-                        vv0=vv1
+                    vv0=np.clip(vv0, a_min=vmin,a_max=vmax)
+                    vv1=np.clip(vv1, a_min=vv0,a_max=vmax)
                     self.v = (vv0,vv1)
 
 
@@ -210,7 +238,7 @@ def buildBasePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, 
     return par
 
 
-def init2par(d0=None, d=None):
+def init2par(d0=None, d=None, aux_args={}):
     if d0 is None:
         from lib.conf.base.init_pars import init_pars
         d0 = init_pars()
@@ -226,19 +254,20 @@ def init2par(d0=None, d=None):
             try:
                 p = par(name=n, **v, convert2par=True)
                 if p is not None :
+                    for kk,vv in aux_args.items() :
+                        setattr(p,kk,vv)
                     d[p.d]=p
-                # d.update(entry)
             except:
                 continue
         elif depth > 1:
-            init2par(v, d=d)
+            d[n]=init2par(v)
     return d
 
 
 class ModuleConfDict:
     def __init__(self):
         from lib.conf.base.init_pars import init_pars
-        from lib.model.modules import crawler, turner, intermitter, crawl_bend_interference, sensor, memory, feeder
+        from lib.model.modules import crawler, turner, intermitter, crawl_bend_interference, sensor, memory, feeder, locomotor, brain
         dinit=init_pars()
         self.mfunc = {
             'crawler': crawler.Crawler,
@@ -250,21 +279,120 @@ class ModuleConfDict:
             'toucher': sensor.Toucher,
             'feeder': feeder.Feeder,
             'memory': memory.RLmemory,
+            # 'locomotor': locomotor.DefaultLocomotor,
         }
-        self.mkeys = list(self.mfunc.keys())
-        self.mdicts = dNl.AttrDict.from_nested_dicts({k: init2par(d0=dinit[k]) for k in self.mkeys})
 
-    def conf(self, mkey, **kwargs):
-        mdict = self.mdicts[mkey]
-        conf0 = dNl.AttrDict.from_nested_dicts({d: p.v for d, p in mdict.items()})
+
+        self.mkeys = list(self.mfunc.keys())
+        self.mpref = {k: f'brain.{k}_params.' for k in self.mkeys}
+        self.mdicts = dNl.AttrDict.from_nested_dicts({})
+        self.mfunc['locomotor']=locomotor.DefaultLocomotor
+        self.mfunc['brain']=brain.DefaultBrain
+        for k in self.mkeys :
+            mdic=init2par(d0=dinit[k], aux_args={'pref' : self.mpref[k]})
+            # for d,p in mdic.items() :
+            #     p.pref=self.mpref[k]
+            self.mdicts[k]=mdic
+
+
+    def conf(self, mdict,prefix=False, **kwargs):
+        conf0 = dNl.AttrDict.from_nested_dicts({})
+        for d, p in mdict.items() :
+            if isinstance(p, param.Parameterized) :
+                d0=f'{p.pref}{d}' if prefix else d
+                conf0[d0]=p.v
+            else :
+                conf0[d] = self.conf(mdict=p, prefix=False)
+
         conf0.update(kwargs)
         return conf0
 
     def module(self, mkey, **kwargs):
-        conf0 = self.conf(mkey, **kwargs)
+        mdict = self.mdicts[mkey]
+        conf0 = self.conf(mdict,prefix=False)
         func= self.mfunc[mkey]
-        m=func(**conf0)
+        m=func(**conf0, **kwargs)
         return m
+
+    def update_modelConf(self, mconf, mdict, **kwargs):
+        conf0 = self.conf(mdict, prefix=True, **kwargs)
+        return dNl.update_nestdict(mconf,conf0)
+
+    def crossover(self, mdict, mdict2):
+        # mdict = self.mdicts[mkey]
+        for d,p in mdict.items() :
+            if random.random() < 0.5 :
+                p.v = mdict2[d].v
+
+
+    def mutate(self, mdict, Pmut, Cmut):
+        # mdict = self.mdicts[mkey]
+        for d,p in mdict.items() :
+            p.mutate(Pmut, Cmut)
+
+    def randomize(self, mdict):
+        # mdict = self.mdicts[mkey]
+        for d,p in mdict.items() :
+            p.randomize()
+
+    def initConf(self,init_mode, mdict, mconf0,**kwargs):
+        if init_mode=='model' :
+            conf=self.conf(mdict,prefix=True,**mconf0)
+            # return mconf0
+        elif init_mode=='default' :
+            conf = self.conf(mdict, prefix=True)
+            # return self.update_modelConf(mconf0, mdict,**kwargs)
+        elif init_mode=='random' :
+            self.randomize(mdict)
+            conf = self.conf(mdict, prefix=True)
+        return conf
+
+    def compile_pdict(self, dic):
+        pdict = dNl.AttrDict.from_nested_dicts({})
+        for mkey, ds in dic.items() :
+            mdict = self.mdicts[mkey]
+            for d in ds :
+                pdict[d]=mdict[d]
+        return pdict
+
+    def loco_conf(self,mkeys=None):
+        mkeys0 = ['crawler', 'turner', 'interference', 'intermitter', 'feeder']
+        if mkeys is None :
+            mkeys=mkeys0
+        conf=dNl.AttrDict.from_nested_dicts({'modules': {mkey : mkey in mkeys for mkey in mkeys0}})
+        for mkey in mkeys0 :
+            if mkey in mkeys :
+                mdict = self.mdicts[mkey]
+                conf[f'{mkey}_params'] = self.conf(mdict, prefix=False)
+            else :
+                conf[f'{mkey}_params'] = None
+        return conf
+
+    def loco_module(self,mkeys=None, **kwargs):
+        conf=self.loco_conf(mkeys)
+        L=self.mfunc['locomotor'](conf=conf, **kwargs)
+        return L
+
+    def brain_conf(self,mkeys=None):
+        mkeys0 = self.mkeys
+        if mkeys is None :
+            mkeys=mkeys0
+
+        conf=dNl.AttrDict.from_nested_dicts({'modules': {mkey : mkey in mkeys for mkey in mkeys0}})
+        for mkey in mkeys0 :
+            if mkey in mkeys :
+                mdict = self.mdicts[mkey]
+                conf[f'{mkey}_params'] = self.conf(mdict, prefix=False)
+            else :
+                conf[f'{mkey}_params'] = None
+        return conf
+
+    def brain_module(self,mkeys=None, **kwargs):
+        conf=self.brain_conf(mkeys)
+        L=self.mfunc['brain'](conf=conf, **kwargs)
+        return L
+
+
 
 
 def confID_dict():
@@ -285,7 +413,15 @@ def confID_dict():
 
 if __name__ == '__main__':
     pass
-    dd = ModuleConfDict()
+    # dic={'crawler' : ['initial_freq', 'freq_range'], 'turner' : ['base_activation', 'tau'], 'interference' : ['attenuation', 'crawler_phi_range']}
+    # dd = ModuleConfDict()
+    # pdict = dd.compile_pdict(dic)
+    # dd.mutate(pdict,0.8,0.3)
+    # print(dd.conf(pdict))
+    # print()
+    # print()
+    # print()
+    #print(dd.conf(pdict, prefix=True))
     # from lib.conf.stored.conf import loadConf
     # dt=0.1
     # mID='explorer'

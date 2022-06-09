@@ -85,9 +85,13 @@ def comp_rate(s,c, p, pv=None):
     if pv is None :
         pv = nam.vel(p)
     V = np.zeros([c.Nticks, c.N]) * np.nan
-
+    # print(V.shape)
+    # print(V.flatten().shape)
+    # print(s[p].values.shape)
     for i, id in enumerate(c.agent_ids):
+        # print(np.diff(s[p].xs(id, level='AgentID').values).shape)
         V[1:, i] = np.diff(s[p].xs(id, level='AgentID').values) / c.dt
+
     s[pv] = V.flatten()
 
 

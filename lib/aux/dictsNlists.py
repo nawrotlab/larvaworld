@@ -4,6 +4,7 @@ import os
 import pickle
 import sys
 import numpy as np
+from unflatten import unflatten
 
 
 def dict_depth(d):
@@ -238,6 +239,12 @@ def merge(item):
         for key, val in ref.items():
             merged[key].append(val)
     return {**item, 'ref': dict(merged)}
+
+def update_nestdict(dic0,dic) :
+    dic0_f = flatten_dict(dic0)
+    dic0_f.update(dic)
+    dic0_new = AttrDict.from_nested_dicts(unflatten(dic0_f))
+    return dic0_new
 
 
 def chunk_dicts_to_aux_dict(chunk_dicts, c=None, ids=None):

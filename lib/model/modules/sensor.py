@@ -105,9 +105,10 @@ class Sensor(Effector):
 class Olfactor(Sensor):
     def __init__(self, odor_dict={}, **kwargs):
         super().__init__(gain_dict=odor_dict, **kwargs)
-        for id in self.brain.agent.model.odor_ids:
-            if id not in self.gain_ids:
-                self.add_novel_gain(id)
+        if self.brain.agent is not None :
+            for id in self.brain.agent.model.odor_ids:
+                if id not in self.gain_ids:
+                    self.add_novel_gain(id)
                 # print(self.brain.agent.unique_id, id, 'new')
         # print(self.brain.agent.unique_id, self.gain)
             # except:
@@ -140,7 +141,10 @@ class Olfactor(Sensor):
 
 class Toucher(Sensor):
     def __init__(self,initial_gain, brain, **kwargs):
-        gain_dict = {s: initial_gain for s in brain.agent.get_sensors()}
+        if brain.agent is not None:
+            gain_dict = {s: initial_gain for s in brain.agent.get_sensors()}
+        else :
+            gain_dict={}
         super().__init__(brain=brain, gain_dict=gain_dict, **kwargs)
 
     def affect_locomotion(self):

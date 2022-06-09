@@ -456,24 +456,24 @@ def detect_turns(a, dt, min_dur=None):
     Rturns = np.array(Rturns)
     return Lturns, Rturns
 
-
-def stride_interference(a_sv, a_fov, strides, Nbins=64, strict=True, absolute=True):
-    x = np.linspace(0, 2 * np.pi, Nbins)
-
-    if strict:
-        strides = [(s0, s1) for s0, s1 in strides if all(np.sign(a_fov[s0:s1]) >= 0) or all(np.sign(a_fov[s0:s1]) <= 0)]
-
-    ar_sv = np.zeros([len(strides), Nbins])
-    ar_fov = np.zeros([len(strides), Nbins])
-    for ii, (s0, s1) in enumerate(strides):
-        ar_fov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_fov[s0:s1])
-        ar_sv[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_sv[s0:s1])
-    if absolute:
-        ar_fov = np.abs(ar_fov)
-    ar_fov_mu = np.nanquantile(ar_fov, q=0.5, axis=0)
-    ar_sv_mu = np.nanquantile(ar_sv, q=0.5, axis=0)
-
-    return ar_sv_mu, ar_fov_mu, x
+#
+# def stride_interference(a_sv, a_fov, strides, Nbins=64, strict=True, absolute=True):
+#     x = np.linspace(0, 2 * np.pi, Nbins)
+#
+#     if strict:
+#         strides = [(s0, s1) for s0, s1 in strides if all(np.sign(a_fov[s0:s1]) >= 0) or all(np.sign(a_fov[s0:s1]) <= 0)]
+#
+#     ar_sv = np.zeros([len(strides), Nbins])
+#     ar_fov = np.zeros([len(strides), Nbins])
+#     for ii, (s0, s1) in enumerate(strides):
+#         ar_fov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_fov[s0:s1])
+#         ar_sv[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_sv[s0:s1])
+#     if absolute:
+#         ar_fov = np.abs(ar_fov)
+#     ar_fov_mu = np.nanquantile(ar_fov, q=0.5, axis=0)
+#     ar_sv_mu = np.nanquantile(ar_sv, q=0.5, axis=0)
+#
+#     return ar_sv_mu, ar_fov_mu, x
 
 
 def stride_max_vel_phis(s, e, c, Nbins=64):
@@ -571,10 +571,10 @@ def mean_stride_curve(a, strides,da,Nbins=64) :
 
     return dic
 
-def cycle_curve_dict(s,dt) :
-    strides = detect_strides(s.sv, dt, return_extrema=False, return_runs=False)
-    da = np.array([np.trapz(s.fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
-    dic = {sh: mean_stride_curve(s[sh], strides, da) for sh in ['sv', 'fov', 'rov', 'foa', 'b']}
+def cycle_curve_dict(s,dt, shs=['sv', 'fov', 'rov', 'foa', 'b']) :
+    strides = detect_strides(s[getPar('sv')], dt, return_extrema=False, return_runs=False)
+    da = np.array([np.trapz(s[getPar('fov')][s0:s1]) for ii, (s0, s1) in enumerate(strides)])
+    dic = {sh: mean_stride_curve(s[getPar(sh)], strides, da) for sh in shs}
     return dNl.AttrDict.from_nested_dicts(dic)
 
 

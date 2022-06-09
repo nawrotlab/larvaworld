@@ -16,17 +16,6 @@ from lib.model.modules.brain import DefaultBrain
 from lib.process.aux import finalize_eval
 from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
 
-class EvalDict :
-    def __init__(self, dic):
-
-        self.dic = AttrDict.from_nested_dicts({k:[v] for k,v in dic.items()})
-
-
-    def update(self,dic):
-        for k,v in self.dic.items():
-            v.append(dic[k])
-
-
 class LarvaOffline:
     def __init__(self, unique_id, model, larva_pars, orientation=0, pos=(0, 0), **kwargs):
         self.model = model
@@ -37,8 +26,8 @@ class LarvaOffline:
 
 
         self.pos = pos
-        self.orientation = orientation
-        self.rear_orientation = orientation
+        self.fo = orientation
+        self.ro = orientation
         self.brain = DefaultBrain(dt=self.model.dt, conf=larva_pars.brain, agent=self)
 
         self.x, self.y = (0, 0)
@@ -57,18 +46,9 @@ class LarvaOffline:
         self.cum_dst = 0.0
         self.dst = 0.0
 
-
-        self.eval=EvalDict(self.eval_step)
-
-    @ property
-    def eval_step(self):
-        dic={'b': self.body_bend, 'fov' : self.ang_vel, 'rov' : self.rear_orientation_change/self.model.dt, 'v' : self.lin_vel}
-        return dic
-
     def step(self):
         dt = self.model.dt
         self.cum_dur += dt
-        # self.Nticks += 1
 
         lin, ang, feed = self.brain.locomotor.step(A_in=0, length=self.real_length)
         self.lin_vel, self.ang_vel = self.controller.get_vels(lin, ang, self.ang_vel, self.lin_vel,
@@ -78,35 +58,35 @@ class LarvaOffline:
         d_or = self.ang_vel * dt
         if np.abs(d_or) > np.pi:
             self.body_bend_errors += 1
-        self.orientation = (self.orientation + d_or) % (2 * np.pi)
-        # self.ang_vel *= self.brain.locomotor.cur_ang_suppression
+        self.fo = (self.fo + d_or) % (2 * np.pi)
         self.dst = self.lin_vel * dt
         self.rear_orientation_change = rear_orientation_change(self.body_bend, self.dst, self.real_length,
                                        correction_coef=self.controller.bend_correction_coef)
-        self.rear_orientation = (self.rear_orientation + self.rear_orientation_change) % (2 * np.pi)
-        self.body_bend = wrap_angle_to_0(self.orientation - self.rear_orientation)
+        self.ro = (self.ro + self.rear_orientation_change) % (2 * np.pi)
+        self.body_bend = wrap_angle_to_0(self.fo - self.ro)
         self.cum_dst += self.dst
-        k1 = np.array([math.cos(self.orientation), math.sin(self.orientation)])
+        k1 = np.array([math.cos(self.fo), math.sin(self.fo)])
         self.pos += k1 * self.dst
 
         self.trajectory.append(tuple(self.pos))
         self.complete_step()
 
     def complete_step(self):
-        self.eval.update(self.eval_step)
+        self.model.engine.step_df[self.Nticks, self.unique_id, :]=[self.body_bend,self.ang_vel, self.rear_orientation_change/self.model.dt,
+                                                                   self.lin_vel, self.pos[0],self.pos[1]]
+        # self.eval.update(self.eval_step)
         self.Nticks += 1
-        # print(self.unique_id, self.Nticks)
 
 
 
     def sense_and_act(self):
         self.step()
 
-    def finalize(self, eval_shorts=['b', 'fov', 'rov']):
-        if not self.finalized:
-            self.eval.dic = finalize_eval(self.eval.dic, self.real_length, self.trajectory, eval_shorts, self.brain.dt)
-            self.finalized = True
-        return self.eval.dic
+    # def finalize(self, eval_shorts=['b', 'fov', 'rov']):
+    #     if not self.finalized:
+    #         self.eval.dic = finalize_eval(self.eval.dic, self.real_length, self.trajectory, eval_shorts, self.brain.dt)
+    #         self.finalized = True
+    #     return self.eval.dic
 
 
 
@@ -127,12 +107,7 @@ class LarvaRobot(BodySim):
         self.brain = DefaultBrain(dt=self.model.dt, conf=larva_pars.brain, agent=self)
 
         self.x, self.y = self.model.scene._transform(self.pos)
-        self.eval = EvalDict(self.eval_step)
 
-    @property
-    def eval_step(self):
-        return {'b': self.body_bend, 'fov': self.head.get_angularvelocity(), 'rov': self.rear_orientation_change / self.model.dt,
-               'v': self.head.get_linearvelocity()}
 
     def draw(self, scene):
         for seg in self.segs:
@@ -146,7 +121,9 @@ class LarvaRobot(BodySim):
 
     def complete_step(self):
 
-        self.eval.update(self.eval_step)
+        self.model.engine.step_df[self.Nticks, self.unique_id, :]=[self.body_bend,self.head.get_angularvelocity(),
+                                                                   self.rear_orientation_change/self.model.dt,
+                                                                   self.head.get_linearvelocity(), self.pos[0],self.pos[1]]
 
         self.x, self.y = self.model.scene._transform(self.pos)
         self.Nticks += 1
@@ -161,11 +138,11 @@ class LarvaRobot(BodySim):
             text_pos = pygame.Rect(self.x + (self.sim_length / 2), self.y + (self.sim_length / 2), 50, 50)
             screen.blit(text, text_pos)
 
-    def finalize(self, eval_shorts=['b', 'fov', 'rov']):
-        if not self.finalized:
-            self.eval.dic= finalize_eval(self.eval.dic, self.real_length, self.trajectory, eval_shorts, self.brain.dt)
-            self.finalized = True
-        return self.eval.dic
+    # def finalize(self, eval_shorts=['b', 'fov', 'rov']):
+    #     if not self.finalized:
+    #         self.eval.dic= finalize_eval(self.eval.dic, self.real_length, self.trajectory, eval_shorts, self.brain.dt)
+    #         self.finalized = True
+    #     return self.eval.dic
 
 
 

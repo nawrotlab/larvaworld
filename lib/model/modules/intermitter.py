@@ -267,9 +267,9 @@ class Intermitter(BaseIntermitter):
     def __init__(self, pause_dist=None, stridechain_dist=None, run_dist= None, run_mode='stridechain',**kwargs):
         super().__init__(**kwargs)
         if pause_dist.range is None and stridechain_dist.range is None:
-            conf=loadConf('None.200_controls', 'Ref').bout_distros
-            pause_dist=conf.pause
-            stridechain_dist=conf.stride
+            conf=loadConf('None.150controls', 'Ref').bout_distros
+            pause_dist=conf.pause_dur
+            stridechain_dist=conf.run_count
 
         if run_mode=='stridechain' :
             if stridechain_dist is not None :

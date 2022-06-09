@@ -7,7 +7,7 @@ from lib.aux.xy_aux import eudi5x
 from lib.conf.base.dtypes import ga_dict, null_dict
 from lib.conf.stored.conf import expandConf
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
-
+from lib.anal.eval_aux import RSS
 from lib.process.aux import detect_strides, mean_stride_curve, cycle_curve_dict
 
 ga_spaces = AttrDict.from_nested_dicts({
@@ -24,9 +24,12 @@ ga_spaces = AttrDict.from_nested_dicts({
                                                                'dtype': float,
                                                                'name': 'Gain', 'min': -100.0, 'max': 1000.0}}
 })
+def interference_evaluation(gdict, pooled_cycle_curves, cycle_curve_keys, **kwargs):
+    d1,d2=gdict['cycle_curves'],pooled_cycle_curves
+    RSS_dic={sh:RSS(d1[sh][mode] ,np.array(d2[sh][mode])) for sh,mode in cycle_curve_keys.items()}
+    return -np.mean(list(RSS_dic.values())),RSS_dic
 
-
-def interference_evaluation(robot, pooled_cycle_curves):
+def interference_evaluation2(robot, pooled_cycle_curves):
     robot_dic=robot.finalize(eval_shorts=['b', 'fov', 'foa', 'rov'])
     from lib.anal.eval_aux import RSS_dic, RSS
     dic=cycle_curve_dict(s=robot_dic,dt=robot.model.dt)
@@ -38,7 +41,25 @@ def interference_evaluation(robot, pooled_cycle_curves):
     return -np.mean(list(error_dic.values()))
 
 
-def distro_KS_evaluation(robot, eval_shorts, eval_labels, eval):
+def distro_KS_evaluation(gdict, eval_shorts, eval_labels, eval, **kwargs):
+    ks_dic={s:ks_2samp(eval[s], gdict['eval'][s])[0] for s,l in zip(eval_shorts,eval_labels)}
+    return -np.mean(list(ks_dic.values())),ks_dic
+
+    # ks = {}
+    # for p, lab in zip(eval_shorts, eval_labels):
+    #     a=gdict['eval'][p]
+    #     if a.shape[0] == 0:
+    #         return -np.inf
+    #     else:
+    #         ks[lab] = ks_2samp(eval[p], a)[0]
+    #         if np.isnan(ks[lab]):
+    #             return -np.inf
+    # # robot.genome.fitness_dict = ks
+    # # print(ks)
+    # return -np.mean(list(ks.values()))
+
+
+def distro_KS_evaluation2(robot, eval_shorts, eval_labels, eval):
     # print(robot.unique_id)
     robot_dic=robot.finalize(eval_shorts)
     ks = {}
@@ -53,8 +74,17 @@ def distro_KS_evaluation(robot, eval_shorts, eval_labels, eval):
     # print(ks)
     return -np.mean(list(ks.values()))
 
+def distro_KS_interference_evaluation(gdict, eval_shorts, eval_labels, eval, pooled_cycle_curves, cycle_curve_keys):
+    r1,ks_dic = distro_KS_evaluation(gdict, eval_shorts, eval_labels, eval)
+    r2,RSS_dic = interference_evaluation(gdict, pooled_cycle_curves, cycle_curve_keys)
+    dic=AttrDict.from_nested_dicts({'KS': ks_dic, 'RSS': RSS_dic})
+    if np.isinf(r1) or np.isinf(r2):
+        return -np.inf,dic
+    else:
+        # print(r1,r2)
+        return r1 * 10 + r2,dic
 
-def distro_KS_interference_evaluation(robot, eval_shorts, eval_labels, eval, pooled_cycle_curves):
+def distro_KS_interference_evaluation2(robot, eval_shorts, eval_labels, eval, pooled_cycle_curves):
     r1 = distro_KS_evaluation(robot, eval_shorts, eval_labels, eval)
     r2 = interference_evaluation(robot, pooled_cycle_curves)
     if np.isinf(r1) or np.isinf(r2):
@@ -63,11 +93,21 @@ def distro_KS_interference_evaluation(robot, eval_shorts, eval_labels, eval, poo
         # print(r1,r2)
         return r1 * 10 + r2
 
+def dst2source_evaluation(gdict, source_xy):
 
-def dst2source_evaluation(robot):
+    traj=gdict['step'][['x','y']].values
+    dst=np.sqrt(np.diff(traj[:, 0]) ** 2 + np.diff(traj[:, 1]) ** 2)
+    cum_dst=np.sum(dst)
+    for label,pos in source_xy.items() :
+        #f = pos
+        dst2source = eudi5x(traj, np.array(pos))
+        break
+    return -np.mean(dst2source) / cum_dst, {}
+
+def dst2source_evaluation2(robot):
     f = robot.model.get_food()[0]
     dst = eudi5x(np.array(robot.trajectory), np.array(f.pos))
-    return -np.mean(dst) / robot.cum_dst
+    return -np.mean(dst) / robot.cum_dst, {}
 
 
 def cum_dst(robot):
@@ -197,16 +237,16 @@ ga_dic = AttrDict.from_nested_dicts({
               spaceIDs=['interference','turner'], fitID='distro_KS', plotID='distro_KS', init='random',
               excl_func=bend_error_exclusion,
               Nel=2, N=10, envID='arena_200mm'),
-    **ga_conf('realism', dur=1, dt=1 / 16, refID='None.150controls', m0='phasic_explorer', m1='NEU_PHI3',
-              fit_kws={'eval_shorts': ['fov', 'foa','b'],
+    **ga_conf('realism', dur=1, dt=1 / 16, refID='None.150controls', m0='NEU_PHI3', m1='NEU_PHI3',
+              fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov', 'tur_t', 'tur_fou', 'pau_t', 'run_t'],
               # fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov', 'tur_t', 'tur_fou', 'pau_t', 'run_t', 'tor2', 'tor10'],
-                       'pooled_cycle_curves': ['fov', 'foa','b']},
+                       'pooled_cycle_curves': ['fov', 'foa','b', 'rov']},
               excl_func=bend_error_exclusion,
               spaceIDs=['interference', 'turner'], fitID='distro_KS_interference', plotID='distro_KS',
               init='model',
               Nel=2, N=10, envID='arena_200mm'),
     **ga_conf('chemorbit', dur=5, m0='navigator', m1='best_navigator',
-              spaceIDs=['olfactor'], fitID='dst2source',
+              spaceIDs=['olfactor'], fitID='dst2source',fit_kws={'source_xy': None},
               Nel=5, N=50, envID='mid_odor_gaussian', arena_size=0.2),
     **ga_conf('obstacle_avoidance', dur=0.5, m0='obstacle_avoider', m1='obstacle_avoider2',
               spaceIDs=['sensorimotor'], fitID='cum_dst', robot_class=ObstacleLarvaRobot,
@@ -215,5 +255,6 @@ ga_dic = AttrDict.from_nested_dicts({
 })
 
 if __name__ == '__main__':
-    print(ga_dict(name='physics', suf='physics.', excluded=None, only=['torque_coef','ang_damping','body_spring_k']))
+    print(ga_spaces.interference)
+    # print(ga_dict(name='physics', suf='physics.', excluded=None, only=['torque_coef','ang_damping','body_spring_k']))
 

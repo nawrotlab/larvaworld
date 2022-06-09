@@ -5,6 +5,7 @@ import random
 import time
 import numpy as np
 from lib.aux import naming as nam,dictsNlists as dNl
+from lib.aux.sim_aux import get_source_xy
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 from lib.conf.base import paths
 
@@ -86,15 +87,15 @@ class SingleRun:
         from lib.stor.managing import split_dataset
         env = self.env
         # Read the data collected during the simulation
-        step = env.larva_step_col.get_agent_vars_dataframe() if env.larva_step_col else None
-        if env.larva_end_col is not None:
-            env.larva_end_col.collect(env)
-            end = env.larva_end_col.get_agent_vars_dataframe().droplevel('Step')
+        step = env.step_collector.get_agent_vars_dataframe() if env.step_collector else None
+        if env.end_collector is not None:
+            env.end_collector.collect(env)
+            end = env.end_collector.get_agent_vars_dataframe().droplevel('Step')
         else:
             end = None
-        if env.food_end_col is not None:
-            env.food_end_col.collect(env)
-            food = env.food_end_col.get_agent_vars_dataframe().droplevel('Step')
+        if env.food_collector is not None:
+            env.food_collector.collect(env)
+            food = env.food_collector.get_agent_vars_dataframe().droplevel('Step')
         else:
             food = None
 
@@ -223,8 +224,3 @@ def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):
         ds.append(d)
     return ds
 
-
-def get_source_xy(food_params):
-    sources_u = {k: v['pos'] for k, v in food_params['source_units'].items()}
-    sources_g = {k: v['distribution']['loc'] for k, v in food_params['source_groups'].items()}
-    return {**sources_u, **sources_g}

@@ -23,8 +23,7 @@ class LarvaWorldSim(LarvaWorld):
             ep['start'] = int(ep['start'] * 60 / self.dt)
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
 
-        self.odor_ids = get_all_odors(self.larva_groups, self.env_pars.food_params)
-        self.foodtypes = get_all_foodtypes(self.env_pars.food_params)
+
         self._place_food(self.env_pars.food_params)
         self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
         if self.env_pars.odorscape is not None:
@@ -33,7 +32,6 @@ class LarvaWorldSim(LarvaWorld):
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
         self.create_collectors(output)
-
         if not self.larva_collisions:
             self.eliminate_overlap()
 
@@ -125,8 +123,8 @@ class LarvaWorldSim(LarvaWorld):
             self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
             for fly in self.get_flies():
                 fly.update_trajectory()
-        if self.larva_step_col is not None:
-            self.larva_step_col.collect(self)
+        if self.step_collector is not None:
+            self.step_collector.collect(self)
         # if self.step_group_collector is not None:
         #     self.step_group_collector.collect()
 
@@ -165,12 +163,12 @@ class LarvaWorldSim(LarvaWorld):
             output = {'step': [], 'end': [], 'tables': {}}
         s, e, t = output['step'], output['end'], output['tables']
         f=[]#['initial_amount', 'final_amount']
-        self.larva_step_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s, **kws0) if len(
+        self.step_collector = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s, **kws0) if len(
             s) > 0 else None
-        self.larva_end_col = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e, **kws0) if len(
+        self.end_collector = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e, **kws0) if len(
             e) > 0 else None
-        self.food_end_col = TargetedDataCollector(schedule=self.all_food_schedule,
-                                                  pars=f, **kws0)if len(
+        self.food_collector = TargetedDataCollector(schedule=self.all_food_schedule,
+                                                    pars=f, **kws0)if len(
             f) > 0 else None
         self.table_collector = DataCollector(tables=t) if len(t) > 0 else None
 
@@ -217,23 +215,4 @@ def imitate_group(config, sample_pars=[], N=None):
     return ids, ps, ors, dic
 
 
-def get_all_odors(larva_groups, food_params):
-    lg = [conf.odor.odor_id for conf in larva_groups.values()]
-    su = [conf.odor.odor_id for conf in food_params.source_units.values()]
-    sg = [conf.odor.odor_id for conf in food_params.source_groups.values()]
-    ids = dNl.unique_list([id for id in lg + su + sg if id is not None])
-    return ids
 
-
-def get_all_foodtypes(food_params):
-    sg = {k: v.default_color for k, v in food_params.source_groups.items()}
-    su = {conf.group: conf.default_color for conf in food_params.source_units.values()}
-    gr = {
-        food_params.food_grid.unique_id: food_params.food_grid.default_color} if food_params.food_grid is not None else {}
-    ids = {**gr, **su, **sg}
-    ks = dNl.unique_list(list(ids.keys()))
-    try:
-        ids = {k: np.array(ids[k]) / 255 for k in ks}
-    except:
-        ids = {k: ids[k] for k in ks}
-    return ids

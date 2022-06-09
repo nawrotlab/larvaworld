@@ -9,6 +9,8 @@ import webcolors
 from shapely.geometry import Polygon
 from unflatten import unflatten
 
+from lib.model.envs._base_larvaworld import BaseLarvaWorld
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from shapely.affinity import affine_transform
@@ -32,61 +34,45 @@ from lib.sim.single.input_lib import evaluate_input, evaluate_graphs
 from lib.aux.dictsNlists import AttrDict
 
 
-class LarvaWorld:
-    def __new__(cls, *args: Any, **kwargs: Any) -> Any:
-        pygame.init()
-        W, H = pygame.display.Info().current_w, pygame.display.Info().current_h
-        cls.screen_dim_W, cls.screen_dim_H = int(W * 2 / 3/16)*16, int(H * 2 / 3/16)*16
-        """Create a new model object_class and instantiate its RNG automatically."""
-        cls._seed = kwargs.get("seed", None)
-        # print(cls._seed)
-        # raise
-        cls.random = random.Random(cls._seed)
-        return object.__new__(cls)
+class LarvaWorld(BaseLarvaWorld):
+
 
     def __init__(self, env_params, vis_kwargs=None, id='unnamed', dt=0.1, Nsteps=None, save_to='.',
                  background_motion=None, Box2D=False, use_background=False, traj_color=None, allow_clicks=True,
                  experiment=None, progress_bar=None, larva_groups={}, configuration_text=None,larva_collisions=True):
-        self.configuration_text = configuration_text
-        self.larva_collisions = larva_collisions
+
+        super().__init__(env_params, id, dt, Nsteps, save_to, Box2D, experiment,larva_collisions,larva_groups)
+
         if progress_bar is None:
             progress_bar = progressbar.ProgressBar(Nsteps)
             progress_bar.start()
         self.progress_bar = progress_bar
-        self.Box2D = Box2D
+
         if vis_kwargs is None:
             vis_kwargs = null_dict('visualization', mode=None)
         self.vis_kwargs = AttrDict.from_nested_dicts(vis_kwargs)
         self.__dict__.update(self.vis_kwargs.draw)
         self.__dict__.update(self.vis_kwargs.color)
         self.__dict__.update(self.vis_kwargs.aux)
-
-        self.odor_aura = False
-        self.experiment = experiment
         self.dynamic_graphs = []
         self.focus_mode = False
         self.selected_type = ''
 
-        self.borders, self.border_xy, self.border_lines, self.border_bodies,self.border_walls = [], [], [], [], []
+        self.configuration_text = configuration_text
 
         self.mousebuttondown_pos = None
         self.mousebuttonup_pos = None
 
         self.selected_agents = []
-        self.is_running = False
-        self.is_paused = False
-        self.dt = dt
+
         self.video_fps = int(self.vis_kwargs.render.video_speed / dt)
         self.allow_clicks = allow_clicks
-        self.Nticks = 0
-        self.Nsteps = Nsteps
+
         self.snapshot_interval = int(60 / dt)
-        self.id = id
+
 
         self._screen = None
-        self.save_to = save_to
 
-        os.makedirs(save_to, exist_ok=True)
         if self.vis_kwargs.render.media_name:
             self.media_name = os.path.join(save_to, self.vis_kwargs.render.media_name)
         else:
@@ -99,18 +85,18 @@ class LarvaWorld:
             self.black_background)
 
         self.selection_color = np.array([255, 0, 0])
-        self.env_pars = AttrDict.from_nested_dicts(env_params)
-        self.larva_groups = AttrDict.from_nested_dicts(larva_groups)
+
+
 
         self.snapshot_counter = 0
         self.odorscape_counter = 0
-        self.Nodors, self.odor_layers = 0, {}
-        self.food_grid = None
+
 
         # Add mesa schedule to use datacollector class
         self.create_schedules()
-        self.create_arena(**self.env_pars.arena)
-        self.space = self.create_space()
+
+
+
         if 'border_list' in self.env_pars.keys() :
             for id, pars in self.env_pars.border_list.items():
                 b = Border(model=self, unique_id=id, **pars)
@@ -194,49 +180,49 @@ class LarvaWorld:
             default_larva_color = np.array([0, 0, 0])
         return tank_color, screen_color, scale_clock_color, default_larva_color
 
-    def create_arena(self, arena_dims, arena_shape):
-        self.arena_dims = X, Y = np.array(arena_dims)
-        W0, H0 = self.screen_dim_W, self.screen_dim_H
-        R0, R = W0 / H0, X / Y
-        self.screen_width, self.screen_height = (W0, int(W0 / R/16)*16) if R0 < R else (int(H0 * R/16)*16, H0)
-        self.unscaled_space_edges = np.array([(-X / 2, -Y / 2),
-                                              (-X / 2, Y / 2),
-                                              (X / 2, Y / 2),
-                                              (X / 2, -Y / 2)])
-        if arena_shape == 'circular':
-            # This is a circle_to_polygon shape from the function
-            self.unscaled_tank_shape = lib.aux.sim_aux.circle_to_polygon(60, X / 2)
-        elif arena_shape == 'rectangular':
-            # This is a rectangular shape
-            self.unscaled_tank_shape = self.unscaled_space_edges
-        # print(self.screen_width, self.screen_height)
-
-    def create_space(self):
-        s = self.scaling_factor = 1000.0 if self.Box2D else 1.0
-        X, Y = self.space_dims = self.arena_dims * s
-        self.space_edges = [(x * s, y * s) for (x, y) in self.unscaled_space_edges]
-        self.space_edges_for_screen = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
-        self.tank_shape = self.unscaled_tank_shape * s
-        k = 0.97
-        self.tank_polygon = Polygon(self.tank_shape * k)
-
-        if self.Box2D:
-            from Box2D import b2World, b2ChainShape, b2EdgeShape
-            self._sim_velocity_iterations = 6
-            self._sim_position_iterations = 2
-
-            # create the space in Box2D
-            space = b2World(gravity=(0, 0), doSleep=True)
-
-            # create a static body for the space borders
-            self.tank = space.CreateStaticBody(position=(.0, .0))
-            self.tank.CreateFixture(shape=b2ChainShape(vertices=self.tank_shape.tolist()))
-            #     create second static body to attach friction
-            self.friction_body = space.CreateStaticBody(position=(.0, .0))
-            self.friction_body.CreateFixture(shape=b2ChainShape(vertices=self.space_edges))
-        else:
-            space = ContinuousSpace(x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2, torus=False)
-        return space
+    # def create_arena(self, arena_dims, arena_shape):
+    #     self.arena_dims = X, Y = np.array(arena_dims)
+    #     W0, H0 = self.screen_dim_W, self.screen_dim_H
+    #     R0, R = W0 / H0, X / Y
+    #     self.screen_width, self.screen_height = (W0, int(W0 / R/16)*16) if R0 < R else (int(H0 * R/16)*16, H0)
+    #     self.unscaled_space_edges = np.array([(-X / 2, -Y / 2),
+    #                                           (-X / 2, Y / 2),
+    #                                           (X / 2, Y / 2),
+    #                                           (X / 2, -Y / 2)])
+    #     if arena_shape == 'circular':
+    #         # This is a circle_to_polygon shape from the function
+    #         self.unscaled_tank_shape = lib.aux.sim_aux.circle_to_polygon(60, X / 2)
+    #     elif arena_shape == 'rectangular':
+    #         # This is a rectangular shape
+    #         self.unscaled_tank_shape = self.unscaled_space_edges
+    #     # print(self.screen_width, self.screen_height)
+    #
+    # def create_space(self):
+    #     s = self.scaling_factor = 1000.0 if self.Box2D else 1.0
+    #     X, Y = self.space_dims = self.arena_dims * s
+    #     self.space_edges = [(x * s, y * s) for (x, y) in self.unscaled_space_edges]
+    #     self.space_edges_for_screen = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
+    #     self.tank_shape = self.unscaled_tank_shape * s
+    #     k = 0.97
+    #     self.tank_polygon = Polygon(self.tank_shape * k)
+    #
+    #     if self.Box2D:
+    #         from Box2D import b2World, b2ChainShape, b2EdgeShape
+    #         self._sim_velocity_iterations = 6
+    #         self._sim_position_iterations = 2
+    #
+    #         # create the space in Box2D
+    #         space = b2World(gravity=(0, 0), doSleep=True)
+    #
+    #         # create a static body for the space borders
+    #         self.tank = space.CreateStaticBody(position=(.0, .0))
+    #         self.tank.CreateFixture(shape=b2ChainShape(vertices=self.tank_shape.tolist()))
+    #         #     create second static body to attach friction
+    #         self.friction_body = space.CreateStaticBody(position=(.0, .0))
+    #         self.friction_body.CreateFixture(shape=b2ChainShape(vertices=self.space_edges))
+    #     else:
+    #         space = ContinuousSpace(x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2, torus=False)
+    #     return space
 
 
     def create_schedules(self):

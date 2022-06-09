@@ -84,9 +84,9 @@ class Parser:
     def __init__(self, name):
         self.name = name
         try :
-            self.parsargs =build_ParsDict(name)
+            self.parsargs =build_ParsDict2(name)
         except :
-            self.parsargs = build_ParsDict2(name)
+            self.parsargs = build_ParsDict(name)
 
 
     def add(self, parser=None):
