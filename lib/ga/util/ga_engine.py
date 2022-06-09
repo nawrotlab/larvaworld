@@ -487,9 +487,7 @@ class BaseGAlauncher(BaseLarvaWorld):
             self.id = id
             self.save_to = save_to
             self.Box2D = False
-        self.source_xy = get_source_xy(self.env_pars['food_params'])
-        # print(self.source_xy)
-        # raise
+        self.source_xy = get_source_xy(self.env_pars.food_params)
         if caption is None:
             caption = f'GA {experiment} : {self.id}'
         self.caption = caption
@@ -512,11 +510,12 @@ class BaseGAlauncher(BaseLarvaWorld):
 
     def get_larvaworld_food(self):
 
-        for label,pos in self.source_xy.items():
-            x, y = self.screen_pos(pos)
-            # size = ff.radius * self.scaling_factor
-            # col = ff.default_color
-            box = self.build_box(x, y, 4, 'green')
+        for label,ff in self.env_pars.food_params.source_units.items():
+            # pos=dic['pos']
+            x, y = self.screen_pos(ff.pos)
+            size = ff.radius * self.scaling_factor
+            col = ff.default_color
+            box = self.build_box(x, y, size, col)
             box.label = label
             self.scene.put(box)
 
