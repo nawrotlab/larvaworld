@@ -6,7 +6,7 @@ import copy
 import PySimpleGUI as sg
 
 # sys.path.insert(0, '..')
-from lib.aux.combining import render_mpl_table
+from lib.plot.table import render_mpl_table
 from lib.conf.base.dtypes import null_dict
 from lib.gui.aux.elements import GraphList, CollapsibleTable, SelectionList, DataList, \
     PadDict

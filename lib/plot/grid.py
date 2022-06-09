@@ -1,84 +1,21 @@
 # Create composite figure
-# from matplotlib import pyplot as plt
 import numpy as np
 from matplotlib.gridspec import GridSpec
 import matplotlib.pyplot as plt
 
-
-from lib.anal.plot_aux import BasePlot
-
-
-
-class GridPlot(BasePlot):
-    def __init__(self, name, width, height, scale=(1, 1), **kwargs):
-        super().__init__(name, **kwargs)
-        ws, hs = scale
-        self.width, self.height = width, height
-        figsize = (int(width * ws), int(height * hs))
-        self.fig = plt.figure(constrained_layout=False, figsize=figsize)
-        self.grid = GridSpec(height, width, figure=self.fig)
-        self.cur_w, self.cur_h = 0, 0
-        # self.cur_idx = 0
-        # self.text_x0, self.text_y0=0.05, 0.98
-        # self.letters=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
-        # self.letter_dict={}
-        # self.x0s, self.y0s=[],[]
-
-    # def annotate(self, dx=-0.05, dy=0.005):
-    #     for i, (ax, text) in enumerate(self.letter_dict.items()) :
-    #
-    #         X = self.text_x0 if ax in self.x0s else ax.get_position().x0+dx
-    #         Y = self.text_y0 if ax in self.y0s else ax.get_position().y1+dy
-    #         # if i in x0 :
-    #         #     X=self.text_x0
-    #         # if i in y0 :
-    #         #     Y=self.text_y0
-    #         self.fig.text(X, Y, text, size=30, weight='bold')
-
-
-    def add(self, N=1, w=None, h=None, w0=None, h0=None, dw=0, dh=0, share_w=False, share_h=False, letter=True, x0=False, y0=False):
-
-
-        if w0 is None:
-            w0 = self.cur_w
-        if h0 is None:
-            h0 = self.cur_h
-
-        if w is None:
-            w = self.width - w0
-        if h is None:
-            h = self.height - h0
-
-        if N == 1:
-            axs = self.fig.add_subplot(self.grid[h0:h0 + h, w0:w0 + w])
-            ax_letter=axs
-            # if letter:
-            #     self.letter_dict[axs]=self.letters[self.cur_idx]
-            #     self.cur_idx += 1
-            # return axs
-        else:
-            if share_h:
-                ww=int((w-(N-1)*dw)/N)
-                axs = [self.fig.add_subplot(self.grid[h0:h0 + h, w0 + dw*i+ww * i:w0 + dw*i+ ww * (i + 1)]) for i in range(N)]
-            elif share_w:
-                hh = int((h-(N-1)*dh )/ N)
-                axs = [self.fig.add_subplot(self.grid[h0+ dh*i + hh * i:h0+ dh*i + hh * (i + 1), w0:w0 + w]) for i in range(N)]
-            ax_letter = axs[0]
-        self.add_letter(ax_letter,letter, x0=x0, y0=y0)
-        return axs
-
-    def plot(self, func, kws, axs=None, **kwargs):
-        if axs is None:
-            axs = self.add(**kwargs)
-        _ = func(fig=self.fig, axs=axs, **kws)
+from lib.conf.pars.pars import getPar
+from lib.eval.evaluation import error_barplot
+from lib.plot.base import GridPlot, BasePlot
+from lib.plot.table import modelConfTable, error_table
+from lib.plot.plot_datasets import module_endpoint_hists, plot_ang_pars, plot_crawl_pars, plot_dispersion
+from lib.plot.plotting import stride_cycle, plot_stride_variability, plot_segmentation_definition, plot_trajectories, \
+    plot_bouts, annotated_strideplot
 
 
 def model_summary(refID, mID, Nids=1,model_table=True, **kwargs):
     from lib.conf.stored.conf import loadRef
-    from lib.anal.plot_aux import modelConfTable, module_endpoint_hists, test_model
     from lib.anal.fitting import test_boutGens
     from lib.eval.eval_aux import sim_model
-    from lib.anal.plotting import stride_cycle
 
     d = loadRef(refID)
     d.load(step=False, contour=False)
@@ -122,7 +59,6 @@ def model_summary(refID, mID, Nids=1,model_table=True, **kwargs):
 
 
 def combo_plot_vel_definition(d, save_to=None, save_as='vel_definition.pdf', component_vels=True):
-    from lib.anal.plotting import plot_stride_variability, plot_segmentation_definition
     if save_to is None:
         save_to = d.plot_dir
 
@@ -151,9 +87,8 @@ def combo_plot_vel_definition(d, save_to=None, save_as='vel_definition.pdf', com
     fig.savefig(f'{save_to}/{save_as}', dpi=300)
 
 def dsp_summary(datasets, target,range=(0,40), **kwargs):
-    from lib.anal.plotting import plot_trajectories,plot_crawl_pars,plot_dispersion
     w, h = 54,26
-    P = GridPlot(name=f'dsp_summary_{range}',  width=w, height=h, scale=(0.4, 0.5),text_xy0=(0.05, 0.95), **kwargs)
+    P = GridPlot(name=f'dsp_summary_{range}', width=w, height=h, scale=(0.4, 0.5), text_xy0=(0.05, 0.95), **kwargs)
     ds=[target]+datasets
     Nds=len(ds)
     kws = {
@@ -182,7 +117,6 @@ def dsp_summary(datasets, target,range=(0,40), **kwargs):
     return P.get()
 
 def result_summary(datasets, target, **kwargs):
-    from lib.anal.plotting import plot_trajectories,plot_bouts,plot_crawl_pars,plot_ang_pars
     w, h = 50, 34
     P = GridPlot(name=f'{target.id}_result_summary', width=w, height=h, scale=(0.5, 0.5), **kwargs)
     ds=[target]+datasets
@@ -214,15 +148,56 @@ def result_summary(datasets, target, **kwargs):
     return P.get()
 
 
+def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
+    if d is None:
+        from lib.eval.eval_aux import sim_model
+        d = sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
+    s, e, c = d.step_data, d.endpoint_data, d.config
+
+    Nticks = int(dur * 60 / dt)
+    trange = np.arange(0, Nticks * dt, dt)
+    ss = s.xs(c.agent_ids[0], level='AgentID').loc[:Nticks]
+
+    pars, labs = getPar(['v', 'c_CT', 'Act_tur', 'fov', 'b'], to_return=['d', 'symbol'])
+
+    Nrows = len(pars)
+    P = BasePlot(name=f'{mID}_test', **kwargs)
+    P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, fig=fig, axs=axs)
+    a_v = ss[getPar('v')].values
+    a_fov = ss[getPar('fov')].values
+    annotated_strideplot(a_v, dt, ax=P.axs[0])
+    annotated_strideplot(a_v, dt, a2plot=ss[pars[1]].values, ax=P.axs[1], ylim=(0, 1), show_extrema=False)
+
+    annotated_turnplot(a_fov, dt, a2plot=ss[pars[2]].values, ax=P.axs[2], min_amp=min_turn_amp)
+    annotated_turnplot(a_fov, dt, ax=P.axs[3], min_amp=min_turn_amp)
+    annotated_turnplot(a_fov, dt, a2plot=ss[pars[4]].values, ax=P.axs[4], min_amp=min_turn_amp)
+
+    for i in range(Nrows):
+        P.conf_ax(i, xlim=(0, trange[-1] + 10 * dt), ylab=labs[i], xlab='time (sec)',
+                  xvis=True if i == Nrows - 1 else False)
+    P.adjust((0.1, 0.95), (0.15, 0.95), 0.01, 0.05)
+    P.fig.align_ylabels(P.axs[:])
+    return P.get()
 
 
-if __name__ == '__main__':
-    # cwd = os.getcwd()
-    # print(cwd)
-    # raise
-    save_to = '/home/panos/Dropbox/Science/Images/my/Papers/02.locomotory_model/09.calibration/model_summaries/test99'
-    refID = 'None.150controls'
-    mID = 'NEU_PHI'
+def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled',**kwargs):
 
-    # _=modelConfTable(mID, save_to=save_to, save_as=None)
-    _ = model_summary(refID, mID, save_to=save_to, Nids=3, show=True, save_as='average_model3.pdf', model_table=False)
+    label_dic = {
+        '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},
+        'pooled': {'end': 'Pooled endpoint values KS$_{D}$', 'step': 'Pooled distributions KS$_{D}$'}
+
+    }
+    labels=label_dic[eval_mode]
+
+
+    w,h=36,56
+    P = GridPlot(name=f'{norm_mode}_{eval_mode}_error_summary', width=w, height=h, scale=(0.45, 0.45), **kwargs)
+
+    P.plot(func=error_barplot, kws={'error_dict': error_dict, 'evaluation' : evaluation,'labels' : labels},
+           N=2,share_w=True, dh=3, h=23,w=24, x0=True, y0=True)
+    for i, (k, df) in enumerate(error_dict.items()):
+        h0 = 28 + i * 14
+        P.plot(func=error_table, kws={'data': df,'k' : k,  'bbox': [0.5, 0, 1, 1]}, h=12,h0=h0,w=24, x0=True)
+    P.adjust((0.1, 0.9), (0.05, 0.95), 0.1, 0.2)
+    P.annotate()
+    return P.get()

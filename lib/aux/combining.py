@@ -1,9 +1,7 @@
 import os
-import six
 from PyPDF2 import PdfFileMerger, PdfFileReader
 import numpy as np
 from PIL import Image
-from matplotlib import pyplot as plt
 
 
 def combine_images(filenames=None, file_dir='.', save_as='combined_image.pdf', save_to='.', size=(1000, 1000),
@@ -81,84 +79,6 @@ def combine_pdfs(file_dir='.', save_as="final.pdf", pref=''):
     print(f'Concatenated pdfs saved as {filepath}')
 
 
-def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None,figsize=None,save_to=None,name='mpl_table',
-                     header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black',show=False,adjust_kws=None,
-                     bbox=[0, 0, 1, 1], header_columns=0, axs=None,fig=None,  highlighted_cells=None, highlight_color='yellow', return_table=False,
-                     **kwargs):
-    from lib.anal.plot_aux import BasePlot
-    def get_idx(highlighted_cells):
-        d = data.values
-        res = []
-        if highlighted_cells == 'row_min':
-            idx = np.nanargmin(d, axis=1)
-            for i in range(d.shape[0]):
-                res.append((i + 1, idx[i]))
-                for j in range(d.shape[1]):
-                    if d[i, j] == d[i, idx[i]] and j != idx[i]:
-                        res.append((i + 1, j))
-        elif highlighted_cells == 'row_max':
-            idx = np.nanargmax(d, axis=1)
-            for i in range(d.shape[0]):
-                res.append((i + 1, idx[i]))
-                for j in range(d.shape[1]):
-                    if d[i, j] == d[i, idx[i]] and j != idx[i]:
-                        res.append((i + 1, j))
-        elif highlighted_cells == 'col_min':
-            idx = np.nanargmin(d, axis=0)
-            for i in range(d.shape[1]):
-                res.append((idx[i] + 1, i))
-                for j in range(d.shape[0]):
-                    if d[j, i] == d[idx[i], i] and j != idx[i]:
-                        res.append((j + 1, i))
-        elif highlighted_cells == 'col_max':
-            idx = np.nanargmax(d, axis=0)
-            for i in range(d.shape[1]):
-                res.append((idx[i] + 1, i))
-                for j in range(d.shape[0]):
-                    if d[j, i] == d[idx[i], i] and j != idx[i]:
-                        res.append((j + 1, i))
-        # else :
-        #     res=  []
-        return res
-
-    try:
-        highlight_idx = get_idx(highlighted_cells)
-    except:
-        highlight_idx = []
-
-    P=BasePlot(name=name, save_to=save_to, show=show)
-    if figsize is None:
-        figsize = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
-    P.build(1,1,figsize = figsize, axs=axs, fig=fig)
-    ax=P.axs[0]
-    ax.axis('off')
-    mpl = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns.values,
-                   rowLabels=data.index.values, **kwargs)
-    mpl.auto_set_font_size(False)
-    mpl.set_fontsize(font_size)
-
-    for k, cell in six.iteritems(mpl._cells):
-        cell.set_edgecolor(edge_color)
-        if k in highlight_idx:
-            cell.set_facecolor(highlight_color)
-        elif k[0] == 0 :
-            cell.set_text_props(weight='bold', color='w')
-            cell.set_facecolor(header_color)
-        elif k[1] < header_columns:
-            cell.set_text_props(weight='bold', color='black')
-            cell.set_facecolor(row_colors[k[0] % len(row_colors)])
-        else:
-            cell.set_facecolor(row_colors[k[0] % len(row_colors)])
-    ax.set_title(title)
-
-    if adjust_kws is not None :
-        P.fig.subplots_adjust(**adjust_kws)
-    if return_table:
-        return ax, P.fig, mpl
-    else :
-        return P.get()
-
-
 def concat_files(filenames, save_as):
     # filenames = ['file1.txt', 'file2.txt', ...]
     with open(save_as, 'w') as outfile:
@@ -167,6 +87,3 @@ def concat_files(filenames, save_as):
                 for line in infile:
                     outfile.write(line)
 
-
-if __name__ == '__main__':
-    concat_files(filenames=['graphics.py', 'output.py'], save_as='graphics2.py')

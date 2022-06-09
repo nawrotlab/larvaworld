@@ -176,13 +176,12 @@ def initConf(init_mode, space_dict, mConf0):
 
 class GAbuilder(GAselector):
     def __init__(self, scene, side_panel=None, space_dict=None, robot_class=LarvaRobot, base_model='explorer',
-                 multicore=True, fitness_func=None, fitness_target_kws={}, fitness_target_refID=None,
+                 multicore=True, fitness_func=None, fitness_target_kws=None, fitness_target_refID=None,
                  exclude_func=None, plot_func=None, bestConfID=None, init_mode='random', progress_bar=True, **kwargs):
         super().__init__(bestConfID = bestConfID,**kwargs)
-        # self.robot_ids = [i for i in range(Nagents))]
-        # print(fitness_target_kws)
-        # raise
 
+        if fitness_target_kws is None:
+            fitness_target_kws = {}
         self.is_running = True
         if progress_bar and self.Ngenerations is not None:
             self.progress_bar = progressbar.ProgressBar(self.Ngenerations)

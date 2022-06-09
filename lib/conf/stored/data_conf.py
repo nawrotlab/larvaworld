@@ -1,12 +1,11 @@
 from lib.aux import naming as nam
 from lib.conf.base.dtypes import base_enrich, enr_dict, arena, metric_def
 
-
 import_par_confs = {
-    'SchleyerParConf': metric_def(ang= {'b' : 'from_vectors', 'fv': (2, 6), 'rv': (7, 11)}, sp={'point_idx' : 9}),
-    'JovanicParConf': metric_def(ang= {'b' : 'from_vectors','fv': (2, 6), 'rv': (6, 10)}, sp={'point_idx' : 8}),
-    'PaisiosParConf': metric_def(ang= {'b' : 'from_vectors','fv': (2, 4), 'rv': (7, 11)}, sp={'point_idx' : 6}),
-    'SinglepointParConf': metric_def(ang= {'b' :None}, sp={'point_idx' : 0}),
+    'SchleyerParConf': metric_def(ang={'b': 'from_vectors', 'fv': (2, 6), 'rv': (7, 11)}, sp={'point_idx': 9}),
+    'JovanicParConf': metric_def(ang={'b': 'from_vectors', 'fv': (2, 6), 'rv': (6, 10)}, sp={'point_idx': 8}),
+    'PaisiosParConf': metric_def(ang={'b': 'from_vectors', 'fv': (2, 4), 'rv': (7, 11)}, sp={'point_idx': 6}),
+    'SinglepointParConf': metric_def(ang={'b': None}, sp={'point_idx': 0}),
     'SimParConf': metric_def(),
 }
 
@@ -83,7 +82,7 @@ importformats = [
                                metric_definition=import_par_confs['SinglepointParConf']),
     },
 
-        {
+    {
         'id': 'Arguello lab',
         'path': 'ArguelloGroup',
         'tracker': {
@@ -92,7 +91,9 @@ importformats = [
                            'Ncontour': 0},
 
             'filesystem': {
-                'read_sequence': ['Date', 'head_x', 'head_y', 'spinepoint_1_x', 'spinepoint_1_y', 'spinepoint_2_x', 'spinepoint_2_y', 'spinepoint_2_x','spinepoint_2_y', 'spinepoint_3_x', 'spinepoint_3_y', 'tail_x', 'tail_y', 'centroid_x', 'centroid_y'],
+                'read_sequence': ['Date', 'head_x', 'head_y', 'spinepoint_1_x', 'spinepoint_1_y', 'spinepoint_2_x',
+                                  'spinepoint_2_y', 'spinepoint_2_x', 'spinepoint_2_y', 'spinepoint_3_x',
+                                  'spinepoint_3_y', 'tail_x', 'tail_y', 'centroid_x', 'centroid_y'],
                 'read_metadata': False,
                 # 'detect': {
                 'folder': {'pref': None, 'suf': None},
@@ -105,5 +106,5 @@ importformats = [
         # 'parameterization': parconf(bend=None, point_idx=0),
         'enrichment': enr_dict(pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
                                metric_definition=import_par_confs['SinglepointParConf']),
-        }
+    }
 ]

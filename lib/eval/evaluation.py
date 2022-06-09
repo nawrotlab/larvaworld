@@ -1,18 +1,17 @@
 import itertools
 import os
-import time
 
 import numpy as np
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 
+import lib.plot.plotting
+from lib.aux.data_aux import concat_datasets
 from lib.eval.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, prepare_sim_dataset, \
     prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, sim_models, RSS_dic, std_norm, minmax
-from lib.anal.plot_aux import modelConfTable, annotate_plot, AutoPlot
-from lib.anal.plot_combos import model_summary, result_summary, dsp_summary
-from lib.anal.plotting import plot_trajectories, plot_dispersion, plot_ang_pars, stride_cycle, plot_bouts, \
-    plot_fft_multi, plot_crawl_pars
+
 from lib.aux.colsNstr import N_colors, col_df
 
 
@@ -21,6 +20,12 @@ from lib.conf.pars.pars import getPar, ParDict
 from lib.conf.stored.conf import loadRef, expandConf, next_idx
 
 # par_dict = RefParDict().par_dict
+from lib.plot.aux import annotate_plot
+from lib.plot.base import AutoPlot, BasePlot
+from lib.plot.grid import model_summary, dsp_summary, result_summary, eval_summary
+from lib.plot.plotting import plot_fft_multi, plot_trajectories, plot_bouts, stride_cycle
+from lib.plot.dataplot import plot_ang_pars, plot_crawl_pars, plot_dispersion
+from lib.plot.table import modelConfTable, error_table
 
 
 class EvalRun :
@@ -270,29 +275,7 @@ class EvalRun :
 
         self.store()
 
-    # def get_error_plots2(self,error_dict,mode='pooled',suf='fitted', **kwargs):
-    #     label_dic = {
-    #         '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},
-    #         'pooled': {'end': 'Pooled endpoint values KS$_{D}$', 'step': 'Pooled distributions KS$_{D}$'}
-    #
-    #     }
-    #     error_dir = f'{self.plot_dir}/errors'
-    #     os.makedirs(error_dir, exist_ok=True)
-    #     kws={
-    #         'labels' :label_dic[mode],
-    #         'save_to' :error_dir,
-    #         'suf' : suf,
-    #         'error_dict' : error_dict,
-    #         **kwargs
-    #     }
-    #
-    #     tabs=error_tables(**kws)
-    #     bars={}
-    #     for norm in self.norm_modes :
-    #         fig,df=error_barplots(normalization=norm,evaluation=self.evaluation,**kws)
-    #         bars[f'{suf}_{norm}']=fig
-    #         tabs[f'{suf}_{norm}'] = error_table('average error', df, norm,suf=suf,save_to=error_dir, **kwargs)
-    #     return dNl.AttrDict.from_nested_dicts({'tables': tabs, 'barplots': bars})
+
 
     def plot_eval(self, suf='fitted'):
         for mode in self.eval_modes:
@@ -317,8 +300,8 @@ class EvalRun :
                                            evaluation=self.evaluation, **kws)
 
             for i, (k, df) in enumerate(error_dict0.items()):
-                tabs[k] = error_table(df, k,labels[k],  **kws)
-            tabs['mean'] = error_table(df0, 'mean','average error',  **kws)
+                tabs[k] = error_table(df, k, labels[k], **kws)
+            tabs['mean'] = error_table(df0, 'mean', 'average error', **kws)
             bars['full'] = error_barplot(error_dict=error_dict0, evaluation=self.evaluation, labels=labels, **kws)
 
 
@@ -327,28 +310,7 @@ class EvalRun :
 
             dic[norm] = dNl.AttrDict.from_nested_dicts({'tables': tabs, 'barplots': bars})
         return dNl.AttrDict.from_nested_dicts(dic)
-    #
-    # def summary_plot(self, norm_mode='raw', eval_mode='pooled', suf='fitted',save_to=None,error_dict=None, **kwargs):
-    #     from lib.anal.plot_combos import GridPlot
-    #     save_to = self.dir_dict[f'error_{norm_mode}'] if save_to is None else save_to
-    #     if error_dict is None :
-    #         k = f'{eval_mode}_{suf}'
-    #         error_dict=self.error_dicts[k]
-    #     error_dict0 = self.norm_error_dict(error_dict, mode=norm_mode)
-    #     labels=self.label_dic[eval_mode]
-    #
-    #
-    #     w,h=36,52
-    #     P = GridPlot(name=f'{norm_mode}_{eval_mode}_error_summary', width=w, height=h, scale=(0.45, 0.45),
-    #                  save_to = save_to, **kwargs)
-    #
-    #     P.plot(func=error_barplot, kws={'error_dict': error_dict0, 'evaluation' : self.evaluation,
-    #                                     'labels' : labels},N=2,share_w=True, dh=3, h=23,w=24, x0=True, y0=True)
-    #     for i, (k, df) in enumerate(error_dict0.items()):
-    #         P.plot(func=error_table, kws={'data': df, 'bbox': [0.4, 0, 1, 1]}, h=10,h0=28+i*12,w=24, x0=True)
-    #     P.adjust((0.1, 0.9), (0.05, 0.95), 0.1, 0.2)
-    #     P.annotate()
-    #     return P.get()
+
 
 
 
@@ -400,8 +362,8 @@ class EvalRun :
         if 'trajectories' in plots:
             self.figs.loco.trajectories = plot_trajectories(subfolder=None, **kws)
         if 'boxplots' in plots:
-            self.figs.boxplot.end = self.plot_data(mode='end', type='box')
-            self.figs.boxplot.step = self.plot_data(mode='step', type='box')
+            lib.plot.plot_datasets.boxplot.end = self.plot_data(mode='end', type='box')
+            lib.plot.plot_datasets.boxplot.step = self.plot_data(mode='step', type='box')
         if 'bouts' in plots:
             self.figs.epochs.runNpause = plot_bouts(stridechain_duration=True, **kws)
             self.figs.epochs.turn = plot_bouts(turns=True, **kws)
@@ -491,7 +453,6 @@ class EvalRun :
             P.adjust(W=0.01, H=0.5)
 
         elif type == 'box':
-            from lib.anal.plot_aux import concat_datasets
             data=concat_datasets(P.datasets, key=mode)
             palette = dict(zip(P.labels, P.colors))
             for sh in in_mm:
@@ -579,22 +540,12 @@ class EvalRun :
         dNl.save_dict(self.dataset_configs, self.dir_dict.dataset_configs)
 
 
-def error_table(data, k='',title = None, **kwargs):
-    from lib.aux.combining import render_mpl_table
-    data = np.round(data, 3).T
-    figsize = ((data.shape[1] + 3) * 4, data.shape[0])
-    fig = render_mpl_table(data, highlighted_cells='row_min', title=title, figsize=figsize,
-                               adjust_kws={'left': 0.3, 'right': 0.95},
-                               name=f'error_table_{k}', **kwargs)
-    return fig
-
-
 def error_barplot(error_dict, evaluation, axs=None, fig=None,labels=None,name='error_barplots',
                    titles=[r'$\bf{endpoint}$ $\bf{metrics}$', r'$\bf{timeseries}$ $\bf{metrics}$'], **kwargs):
 
     def build_legend(ax, eval_df) :
         h, l = ax.get_legend_handles_labels()
-        empty = mpatches.Patch(color='none')
+        empty = Patch(color='none')
         counter = 0
         for g in eval_df.index:
             h.insert(counter, empty)
@@ -602,8 +553,6 @@ def error_barplot(error_dict, evaluation, axs=None, fig=None,labels=None,name='e
             counter += (len(eval_df['shorts'].loc[g]) + 1)
         ax.legend(h, l, loc='upper left', bbox_to_anchor=(1.0, 1.0), fontsize=15)
 
-    from lib.anal.plot_aux import BasePlot
-    import matplotlib.patches as mpatches
     P = BasePlot(name=name, **kwargs)
     Nplots = len(error_dict)
     P.build(Nplots, 1, figsize=(20, Nplots * 6), sharex=False, fig=fig, axs=axs)
@@ -620,102 +569,20 @@ def error_barplot(error_dict, evaluation, axs=None, fig=None,labels=None,name='e
     return P.get()
 
 
-def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled',**kwargs):
-    from lib.anal.plot_combos import GridPlot
-
-    label_dic = {
-        '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},
-        'pooled': {'end': 'Pooled endpoint values KS$_{D}$', 'step': 'Pooled distributions KS$_{D}$'}
-
-    }
-    labels=label_dic[eval_mode]
-
-
-    w,h=36,56
-    P = GridPlot(name=f'{norm_mode}_{eval_mode}_error_summary', width=w, height=h, scale=(0.45, 0.45), **kwargs)
-
-    P.plot(func=error_barplot, kws={'error_dict': error_dict, 'evaluation' : evaluation,'labels' : labels},
-           N=2,share_w=True, dh=3, h=23,w=24, x0=True, y0=True)
-    for i, (k, df) in enumerate(error_dict.items()):
-        h0 = 28 + i * 14
-        P.plot(func=error_table, kws={'data': df,'k' : k,  'bbox': [0.5, 0, 1, 1]}, h=12,h0=h0,w=24, x0=True)
-    P.adjust((0.1, 0.9), (0.05, 0.95), 0.1, 0.2)
-    P.annotate()
-    return P.get()
-
-
-
-def plot_distros(datasets, distro_ps, save_to=None, show=False):
-    ps2, ps2l = getPar(distro_ps, to_return=['d', 'lab'])
-    Nps = len(distro_ps)
-    Ncols = 4
-    Nrows = int(np.ceil(Nps / Ncols))
-    fig, axs = plt.subplots(Nrows, Ncols, figsize=(5 * Ncols, 5 * Nrows), sharex=False, sharey=False)
-    axs = axs.ravel()
-    for i, (p, l) in enumerate(zip(ps2, ps2l)):
-        vs = []
-        for ii, d in enumerate(datasets):
-            vs.append(d.step_data[p].dropna().abs().values)
-        vvs = np.hstack(vs).flatten()
-        bins = np.linspace(0, np.quantile(vvs, q=0.9), 40)
-        for ii, d in enumerate(datasets):
-            col = d.config.color
-            weights = np.ones_like(vs[ii]) / float(len(vs[ii]))
-            axs[i].hist(vs[ii], bins=bins, weights=weights, label=d.id, color=col, histtype='step', linewidth=3,
-                        facecolor=col, edgecolor=col, fill=True, alpha=0.2)
-        axs[i].set_title(l, fontsize=20)
-    axs[2].legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
-    if save_to is not None:
-        fig.savefig(f'{save_to}/comparative_distros.pdf', dpi=300)
-    if show:
-        plt.show()
-    return fig
-
-
-def plot_endpoint(datasets, end_ps, save_to=None, show=False):
-    ps2, ps2l = getPar(end_ps, to_return=['d', 'lab'])
-    Nps = len(end_ps)
-    Ncols = 4
-    Nrows = int(np.ceil(Nps / Ncols))
-    fig, axs = plt.subplots(Nrows, Ncols, figsize=(5 * Ncols, 5 * Nrows), sharex=False, sharey=False)
-    axs = axs.ravel()
-    for i, (p, l) in enumerate(zip(ps2, ps2l)):
-        vs = []
-        for ii, d in enumerate(datasets):
-            vs.append(d.endpoint_data[p].dropna().values)
-        vvs = np.hstack(vs).flatten()
-        bins = np.linspace(np.min(vvs), np.max(vvs), 20)
-        for ii, d in enumerate(datasets):
-            col = d.config.color
-            weights = np.ones_like(vs[ii]) / float(len(vs[ii]))
-            _=axs[i].hist(vs[ii], bins=bins, weights=weights, label=d.id, color=col, histtype='step', linewidth=3,
-                        facecolor=col, edgecolor=col, fill=True, alpha=0.2)
-        axs[i].set_title(l, fontsize=20)
-    axs[2].legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
-    if save_to is not None:
-        fig.savefig(f'{save_to}/comparative_endpoint.pdf', dpi=300)
-    if show:
-        plt.show()
-    plt.close()
-    return fig
-
-
-
 if __name__ == '__main__':
-    from lib.eval.evaluation import EvalRun
     from lib.aux import dictsNlists as dNl
 
-    refID = 'None.150controls'
-    # mIDs = ['NEU_PHI', 'NEU_PHIx', 'PHIonSIN', 'PHIonSINx']
-    mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
-    dataset_ids = mIDs
-    # dataset_ids = ['NEU mean', 'NEU var', 'SIN mean', 'SIN var']
-    id = 'online_4models_4r'
-
-    evrun = EvalRun(refID=refID, id=id,modelIDs=mIDs,dataset_ids=dataset_ids, N=4,
-                    bout_annotation=True,show=False, offline=False)
-
-    evrun.run(video=False)
-    evrun.eval()
-    evrun.plot_results()
+    # refID = 'None.150controls'
+    # # mIDs = ['NEU_PHI', 'NEU_PHIx', 'PHIonSIN', 'PHIonSINx']
+    # mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
+    # dataset_ids = mIDs
+    # # dataset_ids = ['NEU mean', 'NEU var', 'SIN mean', 'SIN var']
+    # id = 'online_4models_4r'
+    #
+    # evrun = EvalRun(refID=refID, id=id,modelIDs=mIDs,dataset_ids=dataset_ids, N=4,
+    #                 bout_annotation=True,show=False, offline=False)
+    #
+    # evrun.run(video=False)
+    # evrun.eval()
+    # evrun.plot_results()
 

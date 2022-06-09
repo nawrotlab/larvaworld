@@ -10,8 +10,13 @@ from lib.conf.stored.conf import loadConf, loadRef, expandConf, saveConf
 from lib.conf.pars.pars import getPar
 
 
+
 class Calibration:
-    def __init__(self, refID,turner_mode='neural', physics_keys=[],absolute=True,shorts = ['b', 'fov', 'foa']):
+    def __init__(self, refID, turner_mode='neural', physics_keys=None, absolute=True, shorts=None):
+        if shorts is None:
+            shorts = ['b', 'fov', 'foa']
+        if physics_keys is None:
+            physics_keys = []
         if turner_mode == 'neural':
             turner_keys =['base_activation','n','tau']
         elif turner_mode == 'sinusoidal':
