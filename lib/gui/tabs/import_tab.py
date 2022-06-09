@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 
-from lib.gui.aux.elements import ButtonGraphList, CollapsibleDict, DataList, SelectionList, PadDict
-from lib.gui.aux.functions import gui_cols, t_kws, gui_row, gui_col, col_size, gui_rowNcol, window_size
+from lib.gui.aux.elements import ButtonGraphList, DataList, SelectionList, PadDict
+from lib.gui.aux.functions import t_kws, gui_row, gui_col
 from lib.gui.tabs.tab import GuiTab
 from lib.sim.single.single_run import SingleRun
 from lib.conf.base import paths

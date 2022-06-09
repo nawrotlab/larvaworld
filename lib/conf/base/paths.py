@@ -35,6 +35,7 @@ def path(n) :
         'ParDb': f'{CF}/ParDatabase.csv',
         'ParShelve': f'{CF}/ParShelve',
         'ParDict': f'{CF}/ParDict.csv',
+        'ParFuncDict': f'{CF}/ParFuncDict.csv',
         'ParDf': f'{CF}/ParDf.csv',
         'ParPdf': f'{CF}/ParPdf.pdf',
         'Unit': f'{CF}/UnitDict.csv',

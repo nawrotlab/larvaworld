@@ -9,7 +9,7 @@ from typing import TypedDict, List, Tuple
 
 from lib.aux.dictsNlists import AttrDict, tree_dict
 from lib.conf.base.init_pars import init_pars
-from lib.conf.base.units import ureg
+from lib.conf.pars.units import ureg
 
 
 def maxNdigits(array, Min=None):
@@ -103,7 +103,7 @@ def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, au
     dv, lim, vs = define_range(dtype=t, lim=lim, vs=vs, dv=dv, min=min, max=max, u=u, wrap_mode=None)
 
     if convert2par:
-        from lib.conf.base.par import buildBasePar
+        # from lib.conf.base.par_dict import preparePar
         p_kws={
         'p' : name,
         'k' : k,
@@ -112,7 +112,7 @@ def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, au
         'vs' : vs,
         'v0' : v,
         'dtype' : t,
-        'disp' : disp if disp is not None else label,
+        'disp' : label,
         'h' : h,
         'u_name' : u_name,
         'u' : u,
@@ -121,11 +121,7 @@ def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, au
         'vfunc' : vfunc,
         'vparfunc' : vparfunc,
     }
-        try :
-            p=buildBasePar(**p_kws)
-            return p
-        except :
-            return None
+        return p_kws
 
 
     if vs is not None:

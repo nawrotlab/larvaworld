@@ -2,7 +2,7 @@ import os
 
 from lib.conf.base.dtypes import null_dict
 
-from lib.gui.aux.elements import CollapsibleDict, GraphList, SelectionList, DataList, ButtonGraphList, PadDict
+from lib.gui.aux.elements import GraphList, SelectionList, DataList, ButtonGraphList, PadDict
 from lib.gui.aux.functions import gui_cols, t_kws, col_size
 from lib.gui.tabs.tab import GuiTab
 from lib.sim.single.single_run import run_essay

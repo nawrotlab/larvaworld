@@ -36,6 +36,8 @@ class Brain():
     def sense_odors(self, pos=None):
         if pos is None:
             pos = self.agent.pos
+        if self.agent is None :
+            return {}
         cons = {}
         for id, layer in self.agent.model.odor_layers.items():
             v = layer.get_value(pos)
@@ -63,7 +65,7 @@ class Brain():
 
 
 class DefaultBrain(Brain):
-    def __init__(self, conf, agent=None,dt=None,**kwargs):
+    def __init__(self, conf, agent=None,dt=0.1,**kwargs):
         super().__init__(conf=conf, agent=agent, dt=dt)
         m = self.modules
         c = self.conf
@@ -88,4 +90,5 @@ class DefaultBrain(Brain):
             self.touch_activation = self.toucher.step(self.sense_food())
         if self.windsensor:
             self.wind_activation = self.windsensor.step(self.sense_wind())
-        return self.locomotor.step(A_in=self.activation, length = self.agent.real_length)
+        length = self.agent.real_length if self.agent is not None else 1
+        return self.locomotor.step(A_in=self.activation, length = length)

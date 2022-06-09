@@ -8,7 +8,7 @@ from lib.aux.ang_aux import rotate_multiple_points, angle_dif
 from lib.aux.dictsNlists import group_list_by_n, flatten_list
 import lib.aux.naming as nam
 from lib.process.store import store_aux_dataset
-from lib.conf.base.pars import getPar, ParDict
+from lib.conf.pars.pars import getPar, ParDict
 from lib.aux.xy_aux import eudi5x, raw_or_filtered_xy
 
 

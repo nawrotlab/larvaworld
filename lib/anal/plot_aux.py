@@ -6,7 +6,7 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt, patches, transforms, ticker
 
-from lib.conf.base.pars import getPar, ParDict
+from lib.conf.pars.pars import getPar, ParDict
 
 from lib.aux.colsNstr import N_colors
 import lib.aux.dictsNlists as dNl
@@ -913,7 +913,7 @@ def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_me
 def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
     from lib.anal.plotting import annotated_strideplot, annotated_turnplot
     if d is None:
-        from lib.anal.eval_aux import sim_model
+        from lib.eval.eval_aux import sim_model
         d = sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
     s, e, c = d.step_data, d.endpoint_data, d.config
 
@@ -943,9 +943,9 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     return P.get()
 
 
-def add_letters(fig, axs, dx=-0.05, dy=0.005):
-    letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
-    for i, ax in enumerate(axs):
-        X = ax.get_position().x0 + dx
-        Y = ax.get_position().y1 + dy
-        fig.text(X, Y, letters[i], size=30, weight='bold')
+# def add_letters(fig, axs, dx=-0.05, dy=0.005):
+#     letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+#     for i, ax in enumerate(axs):
+#         X = ax.get_position().x0 + dx
+#         Y = ax.get_position().y1 + dy
+#         fig.text(X, Y, letters[i], size=30, weight='bold')

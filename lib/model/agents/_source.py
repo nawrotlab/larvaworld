@@ -1,6 +1,5 @@
 import numpy as np
 from Box2D import Box2D, b2ChainShape
-from scipy.spatial.distance import euclidean
 from shapely import affinity
 from shapely.geometry import Point, Polygon
 

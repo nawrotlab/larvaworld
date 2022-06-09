@@ -7,17 +7,14 @@ from lib.aux.xy_aux import eudi5x
 from lib.conf.base.dtypes import ga_dict, null_dict
 from lib.conf.stored.conf import expandConf
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
-from lib.anal.eval_aux import RSS
+from lib.eval.eval_aux import RSS
 from lib.process.aux import detect_strides, mean_stride_curve, cycle_curve_dict
 
 ga_spaces = AttrDict.from_nested_dicts({
     'interference': ga_dict(name='interference', suf='brain.interference_params.',
                             excluded=['feeder_phi_range','crawler_phi_range', 'mode', 'suppression_mode']),
-    'turner': ga_dict(name='turner', suf='brain.turner_params.',only=['base_activation'],
-                      excluded=['mode', 'noise', 'activation_noise', 'initial_amp', 'amp_range', 'initial_freq',
-                                'freq_range', 'activation_range']),
-    'physics': ga_dict(name='physics', suf='physics.',only=['torque_coef'],
-                       excluded=['ang_mode', 'lin_damping', 'ang_vel_coef', 'bend_correction_coef']),
+    'turner': ga_dict(name='turner', suf='brain.turner_params.',only=['base_activation']),
+    'physics': ga_dict(name='physics', suf='physics.',only=['torque_coef']),
     'sensorimotor': ga_dict(name='obstacle_avoidance', suf='sensorimotor.', excluded=[]),
     'olfactor': {**ga_dict(name='olfactor', suf='brain.olfactor_params.', excluded=['input_noise']),
                  'brain.olfactor_params.odor_dict.Odor.mean': {'initial_value': 0.0, 'tooltip': 'Odor gain',
@@ -29,50 +26,9 @@ def interference_evaluation(gdict, pooled_cycle_curves, cycle_curve_keys, **kwar
     RSS_dic={sh:RSS(d1[sh][mode] ,np.array(d2[sh][mode])) for sh,mode in cycle_curve_keys.items()}
     return -np.mean(list(RSS_dic.values())),RSS_dic
 
-def interference_evaluation2(robot, pooled_cycle_curves):
-    robot_dic=robot.finalize(eval_shorts=['b', 'fov', 'foa', 'rov'])
-    from lib.anal.eval_aux import RSS_dic, RSS
-    dic=cycle_curve_dict(s=robot_dic,dt=robot.model.dt)
-    error_dic = {}
-    for sh, target_dic in pooled_cycle_curves.items():
-        mode = 'abs' if sh == 'sv' else 'norm'
-        error_dic[sh] = RSS(dic[sh][mode] ,np.array(target_dic[mode]))
-    # print(error_dic)
-    return -np.mean(list(error_dic.values()))
-
-
 def distro_KS_evaluation(gdict, eval_shorts, eval_labels, eval, **kwargs):
     ks_dic={s:ks_2samp(eval[s], gdict['eval'][s])[0] for s,l in zip(eval_shorts,eval_labels)}
     return -np.mean(list(ks_dic.values())),ks_dic
-
-    # ks = {}
-    # for p, lab in zip(eval_shorts, eval_labels):
-    #     a=gdict['eval'][p]
-    #     if a.shape[0] == 0:
-    #         return -np.inf
-    #     else:
-    #         ks[lab] = ks_2samp(eval[p], a)[0]
-    #         if np.isnan(ks[lab]):
-    #             return -np.inf
-    # # robot.genome.fitness_dict = ks
-    # # print(ks)
-    # return -np.mean(list(ks.values()))
-
-
-def distro_KS_evaluation2(robot, eval_shorts, eval_labels, eval):
-    # print(robot.unique_id)
-    robot_dic=robot.finalize(eval_shorts)
-    ks = {}
-    for p, lab in zip(eval_shorts, eval_labels):
-        if robot_dic[p].shape[0] == 0:
-            return -np.inf
-        else:
-            ks[lab] = ks_2samp(eval[p], robot_dic[p])[0]
-            if np.isnan(ks[lab]):
-                return -np.inf
-    robot.genome.fitness_dict = ks
-    # print(ks)
-    return -np.mean(list(ks.values()))
 
 def distro_KS_interference_evaluation(gdict, eval_shorts, eval_labels, eval, pooled_cycle_curves, cycle_curve_keys):
     r1,ks_dic = distro_KS_evaluation(gdict, eval_shorts, eval_labels, eval)
@@ -81,17 +37,7 @@ def distro_KS_interference_evaluation(gdict, eval_shorts, eval_labels, eval, poo
     if np.isinf(r1) or np.isinf(r2):
         return -np.inf,dic
     else:
-        # print(r1,r2)
         return r1 * 10 + r2,dic
-
-def distro_KS_interference_evaluation2(robot, eval_shorts, eval_labels, eval, pooled_cycle_curves):
-    r1 = distro_KS_evaluation(robot, eval_shorts, eval_labels, eval)
-    r2 = interference_evaluation(robot, pooled_cycle_curves)
-    if np.isinf(r1) or np.isinf(r2):
-        return -np.inf
-    else:
-        # print(r1,r2)
-        return r1 * 10 + r2
 
 def dst2source_evaluation(gdict, source_xy):
 
@@ -99,15 +45,9 @@ def dst2source_evaluation(gdict, source_xy):
     dst=np.sqrt(np.diff(traj[:, 0]) ** 2 + np.diff(traj[:, 1]) ** 2)
     cum_dst=np.sum(dst)
     for label,pos in source_xy.items() :
-        #f = pos
         dst2source = eudi5x(traj, np.array(pos))
         break
     return -np.mean(dst2source) / cum_dst, {}
-
-def dst2source_evaluation2(robot):
-    f = robot.model.get_food()[0]
-    dst = eudi5x(np.array(robot.trajectory), np.array(f.pos))
-    return -np.mean(dst) / robot.cum_dst, {}
 
 
 def cum_dst(robot):

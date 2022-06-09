@@ -15,7 +15,7 @@ from lib.anal.plot_datasets import plot_2pars, barplot, boxplot_double_patch, pl
     plot_pathlength, plot_food_amount, lineplot, plot_debs
 from lib.conf.stored.conf import loadConf
 from lib.conf.base.dtypes import null_dict
-from lib.conf.base.pars import getPar, ParDict
+from lib.conf.pars.pars import getPar, ParDict
 from lib.model.DEB.deb import deb_default
 from lib.conf.base import paths
 from lib.stor.larva_dataset import LarvaDataset

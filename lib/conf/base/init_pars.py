@@ -8,7 +8,7 @@ import param
 
 
 
-from lib.conf.base.units import ureg
+from lib.conf.pars.units import ureg
 from lib.aux.collecting import output_keys
 from lib.aux.par_aux import sub, sup, bar, circle, wave, tilde, subsup
 
@@ -140,14 +140,14 @@ def init_pars():
         'bout_distro': {
         'fit': {**bT, 'combo': 'distro',
                 'h': 'Whether the distribution is sampled from a reference dataset. Once this is set to "ON" no other parameter is taken into account.'},
-        'range': {'t': Tuple[float], 'max': 100.0, 'combo': 'distro', 'h': 'The distribution range.',
+        'range': {'t': Tuple[float], 'max': 500.0, 'combo': 'distro', 'h': 'The distribution range.',
                   'vfunc': param.Range},
         'name': {'t': str, 'vfunc': param.Selector,
                  'vs': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy', 'normal', 'uniform'],
                  'combo': 'distro', 'h': 'The distribution name.'},
-        'mu': {'max': 10.0, 'disp': 'mean', 'combo': 'distro', 'vfunc': param.Number,
+        'mu': {'lim': (-1000.0, 1000.0), 'disp': 'mean', 'combo': 'distro', 'vfunc': param.Number,
                'h': 'The "mean" argument for constructing the distribution.'},
-        'sigma': {'max': 10.0, 'disp': 'std', 'combo': 'distro', 'vfunc': param.Number,
+        'sigma': {'lim': (-1000.0, 1000.0), 'disp': 'std', 'combo': 'distro', 'vfunc': param.Number,
                   'h': 'The "sigma" argument for constructing the distribution.'},
     },
         'xy': {'t': Tuple[float], 'v': (0.0, 0.0), 'k': 'xy', 'lim': (-1.0, 1.0), 'min': -1.0, 'max': 1.0,
@@ -279,17 +279,17 @@ def init_pars():
         'waveform': {'t': str, 'v': 'realistic', 'k': 'Cr_mod', 'vs': ['realistic', 'square', 'gaussian', 'constant'],
                      'vfunc': param.Selector,'symbol': subsup('A', 'C','mode'),'label': 'crawler waveform',
                      'h': 'The waveform of the repetitive crawling oscillator (CRAWLER) module.'},
-        'freq_range': {'t': Tuple[float], 'v': (1.0, 2.0),'dv': 0.1,  'disp': 'range', 'vfunc': param.Range, 'label': 'crawling frequency range',
-                       'combo': 'frequency', 'k': 'f_C_r', 'lim': (0.5, 2.5), 'u': ureg.Hz,'symbol': subsup('f', 'C','range'),
-                       'h': 'The frequency range of the repetitive crawling behavior.'},
+        # 'freq_range': {'t': Tuple[float], 'v': (1.0, 2.0),'dv': 0.1,  'disp': 'range', 'vfunc': param.Range, 'label': 'crawling frequency range',
+        #                'combo': 'frequency', 'k': 'f_C_r', 'lim': (0.5, 2.5), 'u': ureg.Hz,'symbol': subsup('f', 'C','range'),
+        #                'h': 'The frequency range of the repetitive crawling behavior.'},
         'initial_freq': {'v': 1.418, 'lim': (0.5, 2.5),'dv': 0.1,  'aux_vs': ['sample'], 'disp': 'initial', 'k': 'f_C0',
                          'vfunc': param.Number,
                          'label': 'crawling frequency', 'symbol': sub('f', 'C'), 'u': ureg.Hz,
                          'combo': 'frequency', 'codename': 'scaled_velocity_freq',
                          'h': 'The initial frequency of the repetitive crawling behavior.'},  # From D1 fit
-        'freq_std': {'v': 0.0, 'lim': (0.0, 1.0), 'dv': 0.01,  'k': 'f_C_std', 'disp': 'std', 'combo': 'frequency', 'u': ureg.Hz,
-                     'vfunc': param.Number,'label': 'crawling frequency std','symbol': subsup('f', 'C','std'),
-                     'h': 'The standard deviation of the frequency of the repetitive crawling behavior.'},
+        # 'freq_std': {'v': 0.0, 'lim': (0.0, 1.0), 'dv': 0.01,  'k': 'f_C_std', 'disp': 'std', 'combo': 'frequency', 'u': ureg.Hz,
+        #              'vfunc': param.Number,'label': 'crawling frequency std','symbol': subsup('f', 'C','std'),
+        #              'h': 'The standard deviation of the frequency of the repetitive crawling behavior.'},
         'max_scaled_vel': {'v': 0.6, 'lim': (0.0, 1.5), 'label': 'maximum scaled velocity', 'vfunc': param.Number,
                            'codename': 'stride_scaled_velocity_max', 'k': 'sstr_v_max','dv': 0.1,
                            'symbol': sub(circle('v'), 'max'), 'u': ureg.s ** -1, 'u_name': '$body-lengths/sec$',
@@ -530,12 +530,12 @@ def init_pars():
                                              'h': 'The frequency range of the repetitive lateral bending behavior.'}
                               }
 
-    d['constant_turner'] = {'initial_amp': {'min': 0.1,'max': 20.0,'disp': 'initial', 'combo': 'amplitude','k' : 'A_T0',
+    d['constant_turner'] = {'initial_amp': {'min': 0.1,'lim' : (0.1,20.0),'disp': 'initial', 'combo': 'amplitude','k' : 'A_T0',
                                               'label': 'output amplitude', 'symbol': '$A_{T}^{0}$','u_name': None,'vfunc': param.Number,
                                               'h': 'The initial activity amplitude of the TURNER module.'},
-                              'amp_range': {'t': Tuple[float],'min': 0.1, 'max': 20.0,'lim' : (0.1,20.0), 'disp': 'range', 'combo': 'amplitude',
-                                            'label': 'output amplitude range', 'symbol': '$[A_{T}^{min},A_{T}^{max}]$','k' : 'A_T_r','vfunc': param.Range,
-                                            'h': 'The activity amplitude range of the TURNER module.'}
+                              # 'amp_range': {'t': Tuple[float],'min': 0.1, 'max': 20.0,'lim' : (0.1,20.0), 'disp': 'range', 'combo': 'amplitude',
+                              #               'label': 'output amplitude range', 'symbol': '$[A_{T}^{min},A_{T}^{max}]$','k' : 'A_T_r','vfunc': param.Range,
+                              #               'h': 'The activity amplitude range of the TURNER module.'}
                             }
 
     d['base_turner'] = {'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal', 'constant'],'k' : 'Tur_mod','vfunc': param.Selector,

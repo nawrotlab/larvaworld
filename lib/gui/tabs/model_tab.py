@@ -3,10 +3,9 @@ import copy
 import os
 
 from lib.conf.base.dtypes import null_dict
-from lib.gui.aux.buttons import BoolButton, named_bool_button
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, CollapsibleTable, GraphList, SelectionList, PadDict, \
-    GuiTreeData
-from lib.gui.aux.functions import col_size, gui_cols, t_kws, gui_col, tab_kws, col_kws
+from lib.gui.aux.buttons import named_bool_button
+from lib.gui.aux.elements import CollapsibleTable, GraphList, SelectionList, PadDict
+from lib.gui.aux.functions import t_kws, gui_col, tab_kws, col_kws
 from lib.gui.tabs.draw_body_tab import DrawBodyTab
 from lib.gui.tabs.tab import GuiTab
 from lib.conf.base import paths

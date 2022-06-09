@@ -10,7 +10,7 @@ import lib.aux.xy_aux
 import lib.conf.base.dtypes
 import lib.gui.aux.functions
 from lib.conf.base.dtypes import null_dict
-from lib.gui.aux.elements import CollapsibleDict, GraphList, PadDict
+from lib.gui.aux.elements import GraphList, PadDict
 from lib.gui.aux.functions import col_kws, t_kws
 from lib.gui.aux.buttons import color_pick_layout
 from lib.gui.tabs.tab import GuiTab, DrawTab

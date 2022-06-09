@@ -8,7 +8,7 @@ import pandas as pd
 import lib.aux.dictsNlists
 import lib.aux.naming as nam
 
-from lib.conf.base.pars import getPar, ParDict
+from lib.conf.pars.pars import getPar
 
 class ExpFitter:
     from lib.stor.larva_dataset import LarvaDataset

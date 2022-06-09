@@ -4,7 +4,6 @@ import random
 
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 from scipy.stats import ks_2samp
 from shapely.geometry import Point
 
@@ -15,7 +14,7 @@ from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
 from lib.aux.colsNstr import N_colors
 from lib.aux.sim_aux import get_tank_polygon
 from lib.conf.base.dtypes import null_dict
-from lib.conf.base.pars import getPar, ParDict
+from lib.conf.pars.pars import getPar, ParDict
 from lib.conf.stored.conf import expandConf
 
 from lib.process.aux import annotation, suppress_stdout, compute_interference
@@ -392,7 +391,7 @@ def sim_models(mIDs,colors=None,dataset_ids=None,data_dir=None, **kwargs):
     return ds
 
 def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs=[],dsp_starts=[0],dsp_stops=[40],env_params={},dir=None,
-              bout_annotation=True,enrichment=True,refDataset=None,sample_ks=None,store=False, **kwargs):
+              bout_annotation=True,enrichment=True,refDataset=None,sample_ks=None,store=False,use_LarvaConfDict=False, **kwargs):
     from lib.model.modules.locomotor import DefaultLocomotor
     from lib.conf.stored.conf import loadConf
     from lib.process.angular import angular_processing
@@ -437,7 +436,14 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
         controller = PhysicsController(**m.physics)
         l=e['length'].loc[id]
         bend_errors = 0
-        DL = DefaultLocomotor(dt=dt, conf=m.brain)
+        if not use_LarvaConfDict :
+            mbrain=m.brain
+        else :
+            from lib.conf.pars.parConfs import LarvaConfDict
+            mConfDict=LarvaConfDict()
+            mParbrain = mConfDict.mIDconf(m=m.brain)
+            mbrain=mConfDict.multiconf(mParbrain)
+        DL = DefaultLocomotor(dt=dt, conf=mbrain)
         for qq in range(100):
             if random.uniform(0, 1) < 0.5:
                 DL.step(A_in=0, length=l)
@@ -539,21 +545,19 @@ def RSS_dic(dd, d):
     return stat
 
 if __name__ == '__main__':
-    mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
-    ds = sim_models(mIDs,dur=3, dt=1 / 16,Nids=3, enrichment=False)
-    from lib.anal.plotting import plot_trajectories, plot_bouts, plot_crawl_pars, plot_ang_pars,plot_dispersion
-
-    _ =plot_dispersion(datasets=ds, show=True)
-    # _ =plot_crawl_pars(datasets=ds, show=True)
-    # _ =plot_ang_pars(datasets=ds, show=True)
-    raise
-    from lib.conf.base import paths
-    dir=f"{paths.path('RUN')}/testing/the/sim_model/method"
-    d=sim_model(mID='PHIonNEU', dur=3, dt=1 / 16,Nids=5,color='blue',enrichment=False)
-    print(d.step_data.columns)
-    ParDict.compute('str_sd_mu',d)
-    ParDict.compute('tur_fou', d)
-    print(d.step_data.columns)
+    mID = 'forager'
+    d = sim_model(mID=mID, dur=3, dt=1 / 16, Nids=5, color='blue', enrichment=False, use_ModuleConfDict=True)
 
 
+def std_norm(df) :
+    from sklearn.preprocessing import StandardScaler
 
+    df_std = StandardScaler().fit(df).transform(df)
+    return pd.DataFrame(df_std, index=df.index, columns=df.columns)
+
+
+def minmax(df) :
+    from sklearn.preprocessing import MinMaxScaler
+
+    df_minmax = MinMaxScaler().fit(df).transform(df)
+    return pd.DataFrame(df_minmax, index=df.index, columns=df.columns)

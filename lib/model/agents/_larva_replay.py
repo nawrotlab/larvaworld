@@ -4,10 +4,8 @@ import numpy as np
 
 from lib.aux.ang_aux import rotate_around_point
 import lib.aux.dictsNlists as dNl
-from lib.aux.xy_aux import xy_projection
 from lib.model.agents._larva import Larva
-from lib.model.body.body import draw_body_midline, draw_body_head, draw_body_centroid, draw_selected_body, draw_body, \
-    draw_body_orientation
+from lib.model.body.body import draw_body_orientation, draw_body
 from lib.model.body.controller import BodyReplay
 
 

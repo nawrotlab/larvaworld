@@ -106,12 +106,11 @@ class Turner(Oscillator, Effector):
         self.amp_range = amp_range
         # self.noise = np.abs(self.initial_amp * noise)
 
-    def init_constant(self, dt, amp_range=[0.5, 2.0], initial_amp=1.0, **kwargs):
+    def init_constant(self, dt, initial_amp=1.0, **kwargs):
         Effector.__init__(self, dt=dt)
         self.initial_amp = initial_amp
         self.amp = initial_amp
-        self.amp_range = amp_range
-        # self.noise = np.abs(self.initial_amp * noise)
+
 
 
 class NeuralOscillator:

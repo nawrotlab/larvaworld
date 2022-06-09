@@ -4,8 +4,8 @@ import PySimpleGUI as sg
 import lib.aux.dictsNlists
 from lib.conf.stored.conf import saveConfDict, loadConfDict
 from lib.conf.base.dtypes import store_controls
-from lib.gui.aux.elements import CollapsibleDict, Collapsible, PadDict
-from lib.gui.aux.functions import t_kws, gui_col, gui_cols, get_pygame_key, gui_row
+from lib.gui.aux.elements import PadDict
+from lib.gui.aux.functions import t_kws, gui_cols, get_pygame_key
 from lib.gui.aux.buttons import GraphButton
 from lib.gui.tabs.tab import GuiTab
 

@@ -156,6 +156,7 @@ def save_dict(d, file, use_pickle=True):
     if use_pickle:
         with open(file, 'wb') as fp:
             pickle.dump(d, fp, protocol=pickle.HIGHEST_PROTOCOL)
+            # print('xxx')
     else:
         with open(file, "w") as fp:
             json.dump(d, fp)

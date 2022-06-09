@@ -1,24 +1,16 @@
-import copy
 import random
-import warnings
 import numpy as np
-import progressbar
 import os
-from typing import List, Any
-import webcolors
+from typing import Any
 from shapely.geometry import Polygon
-from unflatten import unflatten
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
-from shapely.affinity import affine_transform
 
 from mesa.space import ContinuousSpace
 import lib.aux.dictsNlists as dNl
-# import lib.aux.dictsNlists
 import lib.aux.sim_aux
 import lib.aux.xy_aux
-# from lib.aux.dictsNlists import AttrDict
 
 
 class BaseLarvaWorld:

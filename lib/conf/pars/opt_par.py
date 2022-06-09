@@ -1,8 +1,8 @@
 from param import Parameterized
 from typing import List, Tuple
 
-from lib.conf.base.par import func_dic
 import lib.aux.dictsNlists as dNl
+from lib.conf.pars.par_dict import func_dic
 
 
 def base_dtype(dtype):

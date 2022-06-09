@@ -39,11 +39,10 @@ class Effector:
 
 
 class Oscillator(Effector):
-    def __init__(self, freq_range=None, initial_freq=None, initial_freq_std=0, random_phi=True, **kwargs):
+    def __init__(self, initial_freq=None, initial_freq_std=0, random_phi=True, **kwargs):
         super().__init__(**kwargs)
         # self.freq = initial_freq
         self.freq = float(np.random.normal(loc=initial_freq, scale=initial_freq_std, size=1))
-        self.freq_range = freq_range
         self.complete_iteration = False
         self.iteration_counter = 0
         self.d_phi = 2 * np.pi * self.dt * self.freq

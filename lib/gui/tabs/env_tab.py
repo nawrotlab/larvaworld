@@ -1,4 +1,4 @@
-from lib.gui.aux.elements import CollapsibleTable, SelectionList, PadDict, PadTable, GuiTreeData
+from lib.gui.aux.elements import SelectionList, PadDict, PadTable
 from lib.gui.aux.functions import gui_cols
 from lib.gui.aux.buttons import GraphButton
 from lib.gui.tabs.tab import GuiTab

@@ -1,14 +1,11 @@
 import os
-import pandas as pd
 import warnings
 import numpy as np
 from scipy.stats import levy, norm, uniform, rv_discrete, ks_2samp
 from scipy.special import erf
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from lib.aux import naming as nam
 from lib.aux.dictsNlists import AttrDict, save_dict
-from lib.conf.stored.conf import saveConf
 from lib.process.aux import suppress_stdout, suppress_stdout_stderr
 
 def gaussian(x, mu, sig):
@@ -250,7 +247,6 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
         p_pdf = powerlaw_pdf(du2, xmin, a)
 
         b = get_exp_beta(x, xmin)
-        # b = len(x) / np.sum(x - xmin)
         e_cdf = 1 - exponential_cdf(u2, xmin, b)
         e_pdf = exponential_pdf(du2, xmin, b)
 
@@ -330,8 +326,6 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
     res_dict2 = dict(zip(names2, res))
     best = {bout: {'best': get_best_distro(p, res_dict, idx_Kmax=idx_Kmax),
                    'fits': res_dict2}}
-    # if store:
-    #     saveConf(best, conf_type='Ref', id=dataset_id, mode='update')
 
     if print_fits:
         print()
@@ -352,10 +346,6 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
         print('MSE levy', KS_lev)
         print('MSE normal', KS_norm)
         print('MSE uniform', KS_uni)
-        # print('KS2 pow', p_st, p_pv)
-        # print('KS2 exp', e_st, e_pv)
-        # print('KS2 logn', l_st, l_pv)
-        # print('KS2 lognNpow', lp_st, lp_pv)
 
         print()
         print(f'---{dataset_id}-{bout}-distro')
@@ -535,29 +525,17 @@ class BoutGenerator:
         return func(x=x, **self.args)
 
 
-
-def std_norm(df) :
-    df_std = StandardScaler().fit(df).transform(df)
-    return pd.DataFrame(df_std, index=df.index, columns=df.columns)
-
-def minmax(df) :
-    df_minmax = MinMaxScaler().fit(df).transform(df)
-    return pd.DataFrame(df_minmax, index=df.index, columns=df.columns)
-
 def test_boutGens(mID,refID, **kwargs):
-    from lib.conf.stored.conf import loadConf, kConfDict, loadRef, copyConf
+    from lib.conf.stored.conf import loadConf, loadRef
     from lib.anal.plotting import plot_bouts
 
     d = loadRef(refID)
     d.load(contour=False)
-    # d.pooled_epochs=d.load_pooled_epochs()
     s, e, c = d.step_data, d.endpoint_data, d.config
     Npau=s['pause_dur'].dropna().values.shape[0]
     Nrun=s['run_dur'].dropna().values.shape[0]
 
     dic={}
-    dic0=c.bout_distros
-    # dic0=c.bout_distros
     m=loadConf(mID, 'Model')
     dicM=m.brain.intermitter_params
     for n,n0 in zip(['pause', 'run', 'stridechain'], ['pause_dur', 'run_dur', 'run_count']) :
@@ -573,7 +551,5 @@ def test_boutGens(mID,refID, **kwargs):
             dic[n0] = fit_bout_distros(vs, dataset_id=mID, bout=n, combine=False, discrete=discr)
     datasets=[{'id' : 'model', 'pooled_epochs': dic, 'color': 'blue'}, {'id' : 'experiment', 'pooled_epochs': d.load_pooled_epochs(), 'color': 'red'}]
     datasets = [AttrDict.from_nested_dicts(dd) for dd in datasets]
-    # loco_dict = {'model': {'bouts': dic, 'color': 'blue'},
-    #              'experiment': {'bouts': d.load_pooled_epochs(), 'color': 'red'}}
     return plot_bouts(datasets=datasets, plot_fits='none', **kwargs)
 

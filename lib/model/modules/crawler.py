@@ -5,9 +5,9 @@ from lib.model.modules.basic import Oscillator, Effector
 
 class Crawler(Oscillator):
     def __init__(self, waveform, initial_amp=None, square_signal_duty=None, stride_dst_mean=None,
-                 stride_dst_std=0.0, initial_freq=1.3, freq_std=0.0,max_scaled_vel=0.6,
+                 stride_dst_std=0.0, initial_freq=1.3,max_scaled_vel=0.6,
                  gaussian_window_std=None, max_vel_phase=3.6, crawler_noise=0, **kwargs):
-        initial_freq = np.random.normal(initial_freq, freq_std)
+        # initial_freq = np.random.normal(initial_freq, freq_std)
         super().__init__(initial_freq=initial_freq, **kwargs)
         self.waveform = waveform
         self.activity = 0

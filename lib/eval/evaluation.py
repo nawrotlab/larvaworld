@@ -4,13 +4,11 @@ import time
 
 import numpy as np
 import seaborn as sns
-from scipy.stats import ks_2samp
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from lib.anal.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, prepare_sim_dataset, \
-    prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, sim_models, RSS_dic
-from lib.aux import naming as nam, dictsNlists as dNl
+from lib.eval.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, prepare_sim_dataset, \
+    prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, sim_models, RSS_dic, std_norm, minmax
 from lib.anal.plot_aux import modelConfTable, annotate_plot, AutoPlot
 from lib.anal.plot_combos import model_summary, result_summary, dsp_summary
 from lib.anal.plotting import plot_trajectories, plot_dispersion, plot_ang_pars, stride_cycle, plot_bouts, \
@@ -19,8 +17,7 @@ from lib.aux.colsNstr import N_colors, col_df
 
 
 from lib.conf.base.dtypes import null_dict
-# from lib.conf.base.pars import RefParDict
-from lib.conf.base.pars import getPar, ParDict
+from lib.conf.pars.pars import getPar, ParDict
 from lib.conf.stored.conf import loadRef, expandConf, next_idx
 
 # par_dict = RefParDict().par_dict
@@ -356,7 +353,6 @@ class EvalRun :
 
 
     def norm_error_dict(self, error_dict, mode='raw'):
-        from lib.anal.fitting import std_norm, minmax
         dic={}
         for k, df in error_dict.items():
             if mode == 'raw' :
@@ -706,7 +702,7 @@ def plot_endpoint(datasets, end_ps, save_to=None, show=False):
 
 
 if __name__ == '__main__':
-    from lib.anal.evaluation import EvalRun
+    from lib.eval.evaluation import EvalRun
     from lib.aux import dictsNlists as dNl
 
     refID = 'None.150controls'

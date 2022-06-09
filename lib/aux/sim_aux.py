@@ -39,18 +39,6 @@ def circle_to_polygon(sides, radius, rotation=0, translation=None):
 
 def inside_polygon(points, tank_polygon):
     return all([tank_polygon.contains(Point(x, y)) for x, y in points])
-    # # // p is your point, p.x is the x coord, p.y is the y coord
-    # Xmin, Xmax, Ymin, Ymax = space_edges_for_screen
-    # # x, y = point
-    #
-    # if all([(x < Xmin or x > Xmax or y < Ymin or y > Ymax) for x, y in points]):
-    #     # // Definitely not within the polygon!
-    #     return False
-    # else:
-    #     # point = Point(x, y)
-    #     # print(polygon.contains(point))
-    #     return all([Polygon(vertices).contains(Point(x, y)) for x, y in points])
-
 
 def body(points, start=[1, 0], stop=[0, 0]):
     xy = np.zeros([len(points) * 2+2, 2]) * np.nan
@@ -62,15 +50,7 @@ def body(points, start=[1, 0], stop=[0, 0]):
         xy[-1 - i, :] = x, -y
     return xy
 
-# Create a bilaterally symmetrical 2D contour with the long axis along x axis
 
-# Arguments :
-#   points : the points above x axis through which the contour passes
-#   start : the front end of the body
-#   stop : the rear end of the body
-
-
-# Segment body in N segments of given ratios via vertical lines
 def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
     from shapely.ops import split
     # If segment ratio is not provided, generate equal-length segments
@@ -116,10 +96,6 @@ def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
         ps[i] = ps[i][np.sort(idx)]
         if closed :
             ps[i]=np.concatenate([ps[i], [ps[i][0]]])
-        # ps[i][:,0]+=0.5
-    # ps[0]=np.vstack([ps[0], np.array(ps[0][0,:])])
-
-    # print(ps)
     return ps
 
 def generate_seg_shapes(Nsegs,  points,seg_ratio=None, centered=True, closed=False, **kwargs):

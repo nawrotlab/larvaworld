@@ -77,7 +77,7 @@ def model_summary(refID, mID, Nids=1,model_table=True, **kwargs):
     from lib.conf.stored.conf import loadRef
     from lib.anal.plot_aux import modelConfTable, module_endpoint_hists, test_model
     from lib.anal.fitting import test_boutGens
-    from lib.anal.eval_aux import sim_model
+    from lib.eval.eval_aux import sim_model
     from lib.anal.plotting import stride_cycle
 
     d = loadRef(refID)

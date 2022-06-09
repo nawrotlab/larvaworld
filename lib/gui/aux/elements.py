@@ -10,7 +10,6 @@ import PySimpleGUI as sg
 from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
-
 from lib.aux.dictsNlists import flatten_dict, group_list_by_n
 from lib.conf.stored.conf import loadConfDict, loadConf, expandConf, kConfDict, saveConf
 import lib.aux.colsNstr as fun
@@ -22,7 +21,7 @@ from lib.gui.aux.buttons import named_bool_button, BoolButton, GraphButton, butt
 from lib.gui.aux.windows import set_kwargs, save_conf_window, import_window, change_dataset_id, save_ref_window, \
     add_ref_window, delete_conf_window
 from lib.conf.base import paths
-from lib.conf.base.pars import getPar, ParDict,runtime_pars
+from lib.conf.pars.pars import getPar, ParDict,runtime_pars
 
 
 class SectionDict:

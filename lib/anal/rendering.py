@@ -3,8 +3,6 @@ import os
 import time
 import numpy as np
 import pygame
-from scipy.spatial import ConvexHull
-from shapely.geometry import MultiPoint
 
 
 
@@ -102,6 +100,8 @@ class Viewer(object):
         pygame.draw.polygon(self._window, color, vs, w)
 
     def draw_convex(self, points, **kwargs):
+        from scipy.spatial import ConvexHull
+
         ps=np.array(points)
         vs = ps[ConvexHull(ps).vertices].tolist()
         # print(vs)
@@ -139,16 +139,9 @@ class Viewer(object):
         self._window.blit(text_font, text_position)
 
     def draw_envelope(self, points, **kwargs):
-        # print(MultiPoint([(0, 0), (1, 1),(2, 2), (3, 1)]))
+        from shapely.geometry import MultiPoint
         vs = list(MultiPoint(points).envelope.exterior.coords)
-        # print(vs)
         self.draw_polygon(vs, **kwargs)
-    # def draw_arrow(self, color, pos, a0, s=10):
-    #
-    #     p0 = (pos[0] + sin0, pos[1] + cos0)
-    #     p1 = (pos[0] + sin1, pos[1] + cos1)
-    #     p2 = (pos[0] + sin2, pos[1] + cos2)
-    #     pygame.draw.polygon(self._window, color, (p0, p1, p2))
 
     def draw_arrow_line(self, start, end, color=(0, 0, 0), width=.01, dl=0.02, phi=0, s=10):
         a0 = math.atan2(end[1] - start[1], end[0] - start[0])
@@ -170,8 +163,6 @@ class Viewer(object):
             pygame.draw.polygon(self._window, color, (p0, p1, p2))
             l += dl
 
-    # def get_array(self):
-    #     return pygame.surfarray.array3d(self._window)
 
     @property
     def mouse_position(self):
