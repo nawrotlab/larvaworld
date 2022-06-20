@@ -56,6 +56,21 @@ def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbo
         'olfactor': ['decay_coef'],
     })
 
+    def dist_lab(v):
+        n = v.name
+        if n == 'exponential':
+            return f'Exp(b={v.beta})'
+        elif n == 'powerlaw':
+            return f'Powerlaw(a={v.alpha})'
+        elif n == 'levy':
+            return f'Levy(m={v.mu}, s={v.sigma})'
+        elif n == 'uniform':
+            return f'Uniform()'
+        elif n == 'lognormal':
+            return f'Lognormal(m={np.round(v.mu, 2)}, s={np.round(v.sigma, 2)})'
+        else:
+            raise
+
     for l, dd, rowColor in zip(rows, rowDicts, rowColors0):
         d0 = init_pars().get(l, None)
         if l in ['physics', 'body', 'olfactor']:
@@ -77,14 +92,8 @@ def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbo
                 continue
             v = dd[n]
             if n in ['stridechain_dist', 'pause_dist']:
-                dist_dic={
-                    'exponential' : f'Exp(b={v.beta})',
-                    'powerlaw' : f'Powerlaw(a={v.alpha})',
-                    'levy' : f'Levy(m={v.mu}, s={v.sigma})',
-                    'uniform' : f'Uniform()',
-                    'lognormal' : f'Lognormal(m={np.round(v.mu, 2)}, s={np.round(v.sigma, 2)})'
-                }
-                dist_v = dist_dic[v.name]
+
+                dist_v = dist_lab(v)
 
                 if n == 'stridechain_dist':
                     vs1 = [l, 'run length distribution', '$N_{R}$', dist_v, '-']
@@ -115,26 +124,7 @@ def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbo
                 vs = [l, p[n]['label'], p[n]['symbol'], v, p[n]['unit']]
                 register(vs, rowColor)
 
-    cumNrows = dict(zip(list(Nrows.keys()), np.cumsum(list(Nrows.values())).astype(int)))
-    df = pd.DataFrame(data, columns=['field'] + columns)
-    df.set_index(['field'], inplace=True)
-
-    ax, fig, mpl = render_mpl_table(df, colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
-                                    figsize=figsize, adjust_kws={'left': 0.2, 'right': 0.95},
-                                    row_colors=rowColors, return_table=True, **kwargs)
-    ax.yaxis.set_visible(False)
-    ax.xaxis.set_visible(False)
-    for k, cell in mpl._cells.items():
-        if k[1] == -1:
-            cell._text._text = ''
-            cell._linewidth = 0
-
-    for rowLab, idx in cumNrows.items():
-        try:
-            cell = mpl._cells[(idx - Nrows[rowLab] + 1, -1)]
-            cell._text._text = rowLab.upper()
-        except:
-            pass
+    fig = render_conf_table(data, rowColors, Nrows, columns=columns, figsize=figsize, **kwargs)
     if save_to is not None:
         os.makedirs(save_to, exist_ok=True)
         if save_as is None:
@@ -144,10 +134,44 @@ def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbo
     plt.close()
     return fig
 
+def render_conf_table(df,row_colors,figsize=(14, 11),show=False,save_to=None, save_as=None, **kwargs) :
 
-def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None,figsize=None,save_to=None,name='mpl_table',
-                     header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black',show=False,adjust_kws=None,
-                     bbox=[0, 0, 1, 1], header_columns=0, axs=None,fig=None,  highlighted_cells=None, highlight_color='yellow', return_table=False,
+
+    ax, fig, mpl = render_mpl_table(df, colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
+                                    figsize=figsize, adjust_kws={'left': 0.2, 'right': 0.95},
+                                    row_colors=row_colors, return_table=True, **kwargs)
+
+    Nks=df.index.value_counts(sort=False)
+    cumNks0=np.cumsum(Nks.values)
+    cumNks= {k : int(cumNks0[i]-Nk/2) for i,(k,Nk) in enumerate(Nks.items())}
+    for (k0,k1), cell in mpl._cells.items():
+        if k1 == -1:
+            k=cell._text._text
+            cell._linewidth = 0
+            if k0 != cumNks[k]:
+                cell._text._text = ''
+            else :
+                cell._text._text = k.upper()
+
+    if save_to is not None:
+        os.makedirs(save_to, exist_ok=True)
+        if save_as is None:
+            save_as = 'model_conf'
+        filename = f'{save_to}/{save_as}.pdf'
+        fig.savefig(filename, dpi=300)
+    if show :
+        plt.show()
+    plt.close()
+    return fig
+    # return fig
+
+
+def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, figsize=None, save_to=None,
+                     name='mpl_table',
+                     header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black', show=False,
+                     adjust_kws=None,
+                     bbox=[0, 0, 1, 1], header_columns=0, axs=None, fig=None, highlighted_cells=None,
+                     highlight_color='yellow', return_table=False,
                      **kwargs):
     def get_idx(highlighted_cells):
         d = data.values
@@ -189,11 +213,11 @@ def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=
     except:
         highlight_idx = []
 
-    P=BasePlot(name=name, save_to=save_to, show=show)
+    P = BasePlot(name=name, save_to=save_to, show=show)
     if figsize is None:
         figsize = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
-    P.build(1,1,figsize = figsize, axs=axs, fig=fig)
-    ax=P.axs[0]
+    P.build(1, 1, figsize=figsize, axs=axs, fig=fig)
+    ax = P.axs[0]
     ax.axis('off')
     mpl = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns.values,
                    rowLabels=data.index.values, **kwargs)
@@ -204,7 +228,7 @@ def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=
         cell.set_edgecolor(edge_color)
         if k in highlight_idx:
             cell.set_facecolor(highlight_color)
-        elif k[0] == 0 :
+        elif k[0] == 0:
             cell.set_text_props(weight='bold', color='w')
             cell.set_facecolor(header_color)
         elif k[1] < header_columns:
@@ -214,28 +238,27 @@ def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=
             cell.set_facecolor(row_colors[k[0] % len(row_colors)])
     ax.set_title(title)
 
-    if adjust_kws is not None :
+    if adjust_kws is not None:
         P.fig.subplots_adjust(**adjust_kws)
     if return_table:
         return ax, P.fig, mpl
-    else :
+    else:
         return P.get()
 
 
-def error_table(data, k='',title = None, **kwargs):
+def error_table(data, k='', title=None, **kwargs):
     from lib.plot.table import render_mpl_table
     data = np.round(data, 3).T
     figsize = ((data.shape[1] + 3) * 4, data.shape[0])
     fig = render_mpl_table(data, highlighted_cells='row_min', title=title, figsize=figsize,
-                               adjust_kws={'left': 0.3, 'right': 0.95},
-                               name=f'error_table_{k}', **kwargs)
+                           adjust_kws={'left': 0.3, 'right': 0.95},
+                           name=f'error_table_{k}', **kwargs)
     return fig
 
 
-def error_barplot(error_dict, evaluation, axs=None, fig=None,labels=None,name='error_barplots',
-                   titles=[r'$\bf{endpoint}$ $\bf{metrics}$', r'$\bf{timeseries}$ $\bf{metrics}$'], **kwargs):
-
-    def build_legend(ax, eval_df) :
+def error_barplot(error_dict, evaluation, axs=None, fig=None, labels=None, name='error_barplots',
+                  titles=[r'$\bf{endpoint}$ $\bf{metrics}$', r'$\bf{timeseries}$ $\bf{metrics}$'], **kwargs):
+    def build_legend(ax, eval_df):
         h, l = ax.get_legend_handles_labels()
         empty = Patch(color='none')
         counter = 0
@@ -257,5 +280,5 @@ def error_barplot(error_dict, evaluation, axs=None, fig=None,labels=None,name='e
         df = df[dNl.flatten_list(eval_df['symbols'].values.tolist())]
         df.plot(kind='bar', ax=P.axs[ii], ylabel=lab, rot=0, legend=False, color=color, width=0.6)
         build_legend(P.axs[ii], eval_df)
-        P.conf_ax(ii,title=titles[ii],xlab='', yMaxN=4)
+        P.conf_ax(ii, title=titles[ii], xlab='', yMaxN=4)
     return P.get()

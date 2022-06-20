@@ -384,23 +384,18 @@ def calibrate_4models(refID='None.150controls') :
     return mdict
 
 def update_modelConfs(d, mIDs):
-
-    # d = loadRef(refID)
-    # c = d.config
     save_to = f'{d.dir_dict.model_tables}/4models'
     os.makedirs(save_to, exist_ok=True)
     for mID in mIDs:
         d.config.modelConfs.average[mID] = loadConf(mID, 'Model')
-        # modelConfTable(mID, save_to=save_to)
-        # model_summary(refID=refID, mID=mID, save_to=save_to)
     d.save_config(add_reference=True)
 
 
 if __name__ == '__main__':
 
     refID = 'None.150controls'
-    mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
-    for mID in mIDs:
-        m=loadConf(mID, 'Model')
-        print(m)
-    # update_modelConfs(refID, mIDs)
+    # mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
+    # for mID in mIDs:
+    #     m=loadConf(mID, 'Model')
+    #     print(m)
+    calibrate_4models(refID)

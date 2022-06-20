@@ -26,6 +26,7 @@ def vpar(vfunc, v0, h, lab, lim, dv,vs):
         'default': v0,
         'doc': h,
         'label': lab,
+        'allow_None': True
     }
     if vfunc in [param.List,param.Number, param.Range]:
         if lim is not None:

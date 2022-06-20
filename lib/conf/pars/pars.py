@@ -3,6 +3,7 @@ import random
 import numpy as np
 import pandas as pd
 import param
+from pint.formatting import format_unit
 
 from lib.conf.base import paths
 
@@ -37,7 +38,7 @@ def v_descriptor(vparfunc,v0=None,dv=None, **kws):
 
         @property
         def unit(self):
-            return self.param.u
+            return self.u
 
         @property
         def short(self):
@@ -52,12 +53,20 @@ def v_descriptor(vparfunc,v0=None,dv=None, **kws):
             return self.param.v.default
 
         @property
+        def value(self):
+            return self.v
+
+        @property
         def symbol(self):
             return self.sym
 
         @property
         def label(self):
             return self.param.v.label
+
+        @property
+        def parameter(self):
+            return self.disp
 
         @property
         def lab(self):

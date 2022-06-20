@@ -441,8 +441,8 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
         else :
             from lib.conf.pars.parConfs import LarvaConfDict
             mConfDict=LarvaConfDict()
-            mParbrain = mConfDict.mIDconf(m=m.brain)
-            mbrain=mConfDict.multiconf(mParbrain)
+            mParbrain = mConfDict.mIDbconf(m=m.brain)
+            mbrain=mConfDict.multibconf(mParbrain)
         DL = DefaultLocomotor(dt=dt, conf=mbrain)
         for qq in range(100):
             if random.uniform(0, 1) < 0.5:

@@ -1,3 +1,7 @@
+import warnings
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 import itertools
 import os
 
@@ -5,12 +9,12 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 
+
+from lib.aux import dictsNlists as dNl
+from lib.aux.colsNstr import N_colors, col_df
 from lib.aux.data_aux import concat_datasets
 from lib.eval.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, prepare_sim_dataset, \
     prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, sim_models, RSS_dic, std_norm, minmax
-
-from lib.aux.colsNstr import N_colors, col_df
-
 
 from lib.conf.base.dtypes import null_dict
 from lib.conf.pars.pars import getPar, ParDict
@@ -531,10 +535,10 @@ class EvalRun :
 
 
 if __name__ == '__main__':
-    from lib.aux import dictsNlists as dNl
 
-    # refID = 'None.150controls'
-    # # mIDs = ['NEU_PHI', 'NEU_PHIx', 'PHIonSIN', 'PHIonSINx']
+
+    refID = 'None.150controls'
+    # mIDs = ['NEU_PHI', 'NEU_PHIx', 'PHIonSIN', 'PHIonSINx']
     # mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
     # dataset_ids = mIDs
     # # dataset_ids = ['NEU mean', 'NEU var', 'SIN mean', 'SIN var']

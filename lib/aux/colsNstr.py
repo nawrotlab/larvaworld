@@ -99,7 +99,7 @@ def col_range(q, low=(255, 0, 0), high=(255, 255, 255), mul255=False):
 
 
 def col_df(shorts, groups):
-    from lib.conf.base.pars import getPar, ParDict
+    from lib.conf.pars.pars import getPar, ParDict
 
     group_col_dic = {
         'angular kinematics': 'Blues',

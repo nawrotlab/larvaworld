@@ -1,20 +1,38 @@
+import os
 import random
 
+import numpy as np
+import pandas as pd
 import param
+from matplotlib import pyplot as plt
 
 from lib.aux import dictsNlists as dNl
 from lib.aux.par_aux import sub
 
-
 from lib.conf.stored.conf import loadConf
 
 
-def init2par(d0=None, d=None,k=None, aux_args={}):
+def dist_lab(v):
+    n = v.name
+    if n == 'exponential':
+        return f'Exp(b={v.beta})'
+    elif n == 'powerlaw':
+        return f'Powerlaw(a={v.alpha})'
+    elif n == 'levy':
+        return f'Levy(m={v.mu}, s={v.sigma})'
+    elif n == 'uniform':
+        return f'Uniform()'
+    elif n == 'lognormal':
+        return f'Lognormal(m={np.round(v.mu, 2)}, s={np.round(v.sigma, 2)})'
+    else:
+        raise
+
+def init2par(d0=None, d=None, k=None, aux_args={}):
     from lib.conf.pars.par_dict import preparePar
     from lib.conf.pars.pars import v_descriptor
     if d0 is None:
         from lib.conf.base.init_pars import init_pars
-        if k is None :
+        if k is None:
             d0 = init_pars()
         else:
             d0 = init_pars()[k]
@@ -42,6 +60,8 @@ def init2par(d0=None, d=None,k=None, aux_args={}):
     return d
 
 
+def mIDrows():
+    pass
 
 
 class LarvaConfDict:
@@ -61,20 +81,44 @@ class LarvaConfDict:
             # 'locomotor': locomotor.DefaultLocomotor,
         }
 
-        self.mkeys = list(self.mfunc.keys())
-        self.mpref = {k: f'brain.{k}_params.' for k in self.mkeys}
+        self.mcolor = dNl.NestDict({
+            'body' : 'lightskyblue',
+            'physics' : 'lightsteelblue',
+            'energetics' : 'lightskyblue',
+            'Box2D_params': 'lightcoral',
+            'crawler': 'lightcoral',
+            'turner': 'indianred',
+            'interference': 'lightsalmon',
+            'intermitter': '#a55af4',
+            'olfactor': 'palegreen',
+            'windsensor': 'plum',
+            'toucher': 'pink',
+            'feeder': 'pink',
+            'memory': 'pink',
+            # 'locomotor': locomotor.DefaultLocomotor,
+        })
+
+
+
+        self.mbkeys = list(self.mfunc.keys())
+        self.mpref = {k: f'brain.{k}_params.' for k in self.mbkeys}
         self.mdicts = dNl.NestDict()
+
         self.mfunc['locomotor'] = locomotor.DefaultLocomotor
         self.mfunc['brain'] = brain.DefaultBrain
-        for k in self.mkeys:
-            mdic = init2par(k=k, aux_args={'pref': self.mpref[k]})
-
-            # for d,p in mdic.items() :
-            #     p.pref=self.mpref[k]
-            self.mdicts[k] = mdic
+        for k in self.mbkeys:
+            self.mdicts[k] = init2par(k=k, aux_args={'pref': self.mpref[k]})
 
         self.aux_keys = ['body', 'physics', 'energetics', 'Box2D_params']
-        self.aux_dicts = dNl.NestDict({k: init2par(k=k) for k in self.aux_keys})
+        self.aux_dicts = dNl.NestDict()
+        for k in self.aux_keys:
+            self.aux_dicts[k] = init2par(k=k)
+
+
+
+
+
+
 
     def conf(self, mdict, prefix=False, **kwargs):
         conf0 = dNl.NestDict()
@@ -88,16 +132,28 @@ class LarvaConfDict:
         conf0.update(kwargs)
         return conf0
 
-    def multiconf(self, mConf):
+    def multibconf(self, mbConf):
         multiconf = dNl.NestDict()
-        for mkey, mdict in mConf.items():
+        for mkey, mdict in mbConf.items():
             if mkey == 'modules':
-                multiconf.modules = mConf.modules
+                multiconf.modules = mbConf.modules
             elif mdict is None:
                 multiconf[mkey] = None
             else:
                 multiconf[mkey] = self.conf(mdict)
         return multiconf
+
+    def multiconf(self, mConf):
+        mc = dNl.NestDict()
+        mc.brain = self.multibconf(mConf['brain'])
+        for mkey, mdict in mConf.items():
+            if mkey=='brain':
+                continue
+            if mdict is None:
+                mc[mkey] = None
+            else:
+                mc[mkey] = self.conf(mdict)
+        return mc
 
     def module(self, mkey, **kwargs):
         mdict = self.mdicts[mkey]
@@ -165,7 +221,7 @@ class LarvaConfDict:
         return L
 
     def brain_conf(self, mkeys=None):
-        mkeys0 = self.mkeys
+        mkeys0 = self.mbkeys
         if mkeys is None:
             mkeys = mkeys0
 
@@ -183,8 +239,8 @@ class LarvaConfDict:
         L = self.mfunc['brain'](conf=conf, **kwargs)
         return L
 
-    def mIDconf(self, mID=None, m=None):
-        if m is None :
+    def mIDbconf(self, mID=None, m=None):
+        if m is None:
             m = loadConf(mID, 'Model').brain
         mIDconf = dNl.NestDict()
         mIDconf.modules = m.modules
@@ -197,12 +253,23 @@ class LarvaConfDict:
                 mIDconf[f'{mkey}_params'] = None
         return mIDconf
 
-    def mIDmodule(self,mID,module='brain', **kwargs):
-        mConf=self.mIDconf(mID)
-        multiconf=self.multiconf(mConf)
-        return self.mfunc[module](conf=multiconf, **kwargs)
+    def mIDconf(self, mID=None, m=None):
+        if m is None:
+            m = loadConf(mID, 'Model')
+        mc = dNl.NestDict()
+        mc.brain =self.mIDbconf(self, m=m.brain)
+        for mkey, mdic in self.aux_dicts.items():
+            mmdic = m[mkey]
+            if mmdic:
+                mc[mkey] = self.copyID(mdic, mmdic)
+            else:
+                mc[mkey]= None
+        return mc
 
-
+    def mIDmodule(self, mID, module='brain', **kwargs):
+        mbConf = self.mIDbconf(mID)
+        multibconf = self.multibconf(mbConf)
+        return self.mfunc[module](conf=multibconf, **kwargs)
 
     def copyID(self, mdic, mmdic):
         for d, p in mdic.items():
@@ -215,6 +282,95 @@ class LarvaConfDict:
             else:
                 self.copyID(mdic=mdic[d], mmdic=mmdic[d])
         return mdic
+
+    def mIDtable_data(self, mID, columns=['parameter', 'symbol', 'value', 'unit']):
+        mConf = self.mIDconf(mID)
+        m = self.multiconf(mConf)
+        ks = self.aux_keys + self.mbkeys
+        data = []
+
+        def mvalid(k, dic):
+            dvalid = dNl.NestDict({
+                'interference': {
+                    'square': ['crawler_phi_range', 'attenuation', 'attenuation_max'],
+                    'phasic': ['max_attenuation_phase', 'attenuation', 'attenuation_max'],
+                    'default': ['attenuation']
+                },
+                'turner': {
+                    'neural': ['base_activation', 'activation_range', 'n', 'tau'],
+                    'constant': ['initial_amp'],
+                    'sinusoidal': ['initial_amp', 'initial_freq']
+                },
+                'crawler': {
+                    'realistic': ['initial_freq', 'max_scaled_vel', 'max_vel_phase', 'stride_dst_mean',
+                                  'stride_dst_std'],
+                    'constant': ['initial_amp']
+                },
+                'physics': ['ang_damping', 'torque_coef', 'body_spring_k', 'bend_correction_coef'],
+                'body': ['initial_length', 'Nsegs'],
+                'energetics': [],
+                'Box2D_params': [],
+                'olfactor': ['decay_coef'],
+                'windsensor': [],
+                'toucher': [],
+                'feeder': [],
+                'memory': []
+            })
+
+            if k == 'interference':
+                vals = dvalid[k][dic.mode]
+            elif k == 'turner':
+                vals = dvalid[k][dic.mode]
+            elif k == 'crawler':
+                vals = dvalid[k][dic.waveform]
+            elif k == 'intermitter':
+                vals = [n for n in ['stridechain_dist', 'pause_dist'] if
+                            dic[n] is not None and dic[n].name is not None]
+            else:
+                vals = dvalid[k]
+            return vals
+
+        for k in ks:
+            if k in self.aux_keys:
+                dic = m[k]
+                dic0 = mConf[k]
+            elif k in self.mbkeys:
+                dic = m['brain'][f'{k}_params']
+                dic0 = mConf['brain'][f'{k}_params']
+            if dic is None:
+                valid = []
+            else :
+                valid = mvalid(k, dic)
+            if len(valid) > 0:
+                for n in valid:
+                    if n in ['stridechain_dist', 'pause_dist']:
+                        dist_v = dist_lab(dic[n])
+                        if n == 'stridechain_dist':
+                            vs1 = [k, 'run length distribution', '$N_{R}$', dist_v, '-']
+                            vs2 = [k, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', dic[n].range,
+                                   '# $strides$']
+                        elif n == 'pause_dist':
+                            vs1 = [k, 'pause duration distribution', '$t_{P}$', dist_v, '-']
+                            vs2 = [k, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', dic[n].range, '$sec$']
+                        data.append(vs1)
+                        data.append(vs2)
+                    else:
+                        ddd=[getattr(dic0[n], pname) for pname in columns]
+                        data.append([k]+ddd)
+        row_colors = [None] + [self.mcolor[row[0]] for row in data]
+        df = pd.DataFrame(data, columns=['field'] + columns)
+        df.set_index(['field'], inplace=True)
+        return df,row_colors
+
+    def mIDtable(self, mID, columns=['parameter', 'symbol', 'value', 'unit'], figsize=(14, 11), **kwargs):
+        from lib.plot.table import render_conf_table
+        df,row_colors=self.mIDtable_data(mID, columns=columns)
+        return render_conf_table(df, row_colors, figsize=figsize, **kwargs)
+
+
+
+
+
 
 
 def confID_dict():
@@ -230,6 +386,8 @@ def confID_dict():
 
 
 if __name__ == '__main__':
-
     #
     dd = LarvaConfDict()
+    dd.mIDtable(mID='PHIonNEU', show=True)
+    # print(dd.aux_keys)
+    # raise
