@@ -1,16 +1,16 @@
 import numpy as np
 
-from lib.aux.ang_aux import restore_bend_2seg
 from lib.aux.dictsNlists import NestDict
-from lib.model.modules.crawl_bend_interference import  Coupling
+from lib.model.modules.crawl_bend_interference import Coupling
 from lib.model.modules.crawler import Crawler
 from lib.model.modules.feeder import Feeder
-from lib.model.modules.intermitter import  ChoiceIntermitter
+from lib.model.modules.intermitter import ChoiceIntermitter
 from lib.model.modules.turner import Turner
 
 
 class Locomotor:
-    def __init__(self, dt=0.1, ang_mode='torque', lin_mode='velocity', offline=False, crawler_noise=0, turner_input_noise=0,
+    def __init__(self, dt=0.1, ang_mode='torque', lin_mode='velocity', offline=False, crawler_noise=0,
+                 turner_input_noise=0,
                  turner_output_noise=0,
                  torque_coef=1.78, ang_damp_coef=2.6, body_spring_k=50, bend_correction_coef=1.6, ang_vel_coef=1):
         self.offline = offline
@@ -27,7 +27,7 @@ class Locomotor:
         self.feed_motion = False
         self.last_dist = 0
         self.bend_correction_coef = bend_correction_coef
-        self.cur_ang_suppression=1
+        self.cur_ang_suppression = 1
 
         self.crawler_noise = crawler_noise
         self.turner_input_noise = turner_input_noise
@@ -58,6 +58,8 @@ class Locomotor:
     #     self.lin_activity *= length
 
     def update_body(self, length):
+        from lib.aux.ang_aux import restore_bend_2seg
+
         if self.lin_mode == 'velocity':
             self.lin_vel = self.lin_activity
         self.last_dist = self.lin_vel * self.dt
@@ -97,7 +99,7 @@ class DefaultLocomotor(Locomotor):
         if m['feeder']:
             self.feeder = Feeder(dt=self.dt, **c.feeder_params)
         if c.interference_params is None or not m['interference']:
-            c.interference_params=NestDict({'mode' : 'default', 'attenuation' : 1})
+            c.interference_params = NestDict({'mode': 'default', 'attenuation': 1})
         self.coupling = Coupling(locomotor=self, **c.interference_params)
 
         #     self.coupling = DefaultCoupling(locomotor=self, attenuation=1)
@@ -112,7 +114,7 @@ class DefaultLocomotor(Locomotor):
 
         if m['intermitter']:
             if 'mode' not in c.intermitter_params.keys():
-                c.intermitter_params.mode='default'
+                c.intermitter_params.mode = 'default'
             self.intermitter = ChoiceIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
 
             # mode = c.intermitter_params.mode if 'mode' in c.intermitter_params.keys() else 'default'
@@ -146,12 +148,12 @@ class DefaultLocomotor(Locomotor):
                 A_in -= (1 - self.coupling.step())
                 cT = self.coupling.step()
 
-            self.cur_ang_suppression=cT
+            self.cur_ang_suppression = cT
             ang = self.turner.step(A_in=A_in)
             self.ang_activity = ang
             # self.ang_activity = ang * self.cur_ang_suppression
             if self.turner.rebound:
-                self.turner.buildup += ang * (1-self.cur_ang_suppression)
+                self.turner.buildup += ang * (1 - self.cur_ang_suppression)
 
         # if self.intermitter.cur_state=='pause' :
         #     print(self.cur_ang_suppression)

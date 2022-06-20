@@ -1,10 +1,10 @@
-from lib.plot.plot_datasets import plot_odor_concentration, plot_sensed_odor_concentration, plot_Y_pos, boxplot_PI, \
+from lib.plot.dataplot import plot_odor_concentration, plot_sensed_odor_concentration, plot_Y_pos, boxplot_PI, \
     plot_pathlength, plot_food_amount, intake_barplot, plot_gut, plot_debs, timeplot, plot_ethogram, plot_foraging, \
     barplot, plot_2pars, plot_nengo_network, ggboxplot, plot_turns, plot_ang_pars, plot_crawl_pars, plot_turn_duration, \
     plot_turn_amp, plot_stride_Dbend, plot_marked_strides, plot_sample_tracks, plot_stride_Dorient, plot_interference, \
     plot_dispersion, powerspectrum, plot_navigation_index, plot_stridesNpauses, plot_endpoint_params, \
     plot_chunk_Dorient2source, plot_turn_Dorient2center
-from lib.plot.plotting import plot_trajectories
+from lib.plot.traj import plot_trajectories
 
 graph_dict = {
     'crawl pars': plot_crawl_pars,

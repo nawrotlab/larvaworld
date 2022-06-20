@@ -8,14 +8,13 @@ import copy
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
 
-from lib.calibration.model_fit import adapt_crawler, adapt_intermitter, adapt_interference, adapt_turner
 
 from lib.conf.base.dtypes import null_dict
 from lib.conf.pars.pars import getPar, ParDict
-from lib.plot.table import modelConfTable
-from lib.process.aux import compute_interference
 
-from lib.process.calibration import comp_stride_variation, comp_segmentation
+
+
+
 
 
 class LarvaDataset:
@@ -198,6 +197,7 @@ class LarvaDataset:
         store.close()
 
     def save_vel_definition(self, component_vels=True, add_reference=True):
+        from lib.process.calibration import comp_stride_variation, comp_segmentation
         warnings.filterwarnings('ignore')
         store = pd.HDFStore(self.dir_dict.vel_definition)
         res_v = comp_stride_variation(self, component_vels=component_vels)
@@ -712,7 +712,7 @@ class LarvaDataset:
         if bout_annotation :
             from lib.process import aux
             self.chunk_dicts = aux.annotation(s, e, c, **kwargs)
-            self.cycle_curves = compute_interference(s=s,e=e,c=c, chunk_dicts=self.chunk_dicts, **kwargs)
+            self.cycle_curves = aux.compute_interference(s=s,e=e,c=c, chunk_dicts=self.chunk_dicts, **kwargs)
             self.pooled_epochs=self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts, **kwargs)
 
         self.drop_pars(**to_drop, **cc)
@@ -855,6 +855,8 @@ class LarvaDataset:
 
     def average_modelConf(self, new_id=None, turner_mode='neural', crawler_mode='realistic', interference_mode='phasic',
                           turner=None, physics=None, model_table=False):
+        from lib.eval.model_fit import adapt_turner, adapt_crawler, adapt_intermitter, adapt_interference
+
         if new_id is None:
             new_id = f'{self.id}_model'
         e = self.endpoint_data
@@ -887,6 +889,7 @@ class LarvaDataset:
         self.save_config(add_reference=True)
 
         if model_table:
+            from lib.plot.table import modelConfTable
             modelConfTable(new_id, save_to=self.dir_dict.model_tables)
         return m
 

@@ -19,11 +19,10 @@ from lib.conf.pars.pars import getPar, ParDict
 from lib.conf.pars.units import ureg
 from lib.plot.base import Plot, AutoPlot, ParPlot, BasePlot
 from lib.plot.aux import dataset_legend, label_diff, annotate_plot, plot_quantiles, \
-    plot_mean_and_range, process_plot, circNarrow, circular_hist
+    plot_mean_and_range, process_plot, circNarrow, circular_hist, scatter_hist, suf
 from lib.aux.data_aux import boolean_indexing, concat_datasets
-from lib.plot.plotting import scatter_hist
 
-suf = 'pdf'
+
 
 def plot_ethogram(subfolder='timeplots', **kwargs):
     P = Plot(name='ethogram', subfolder=subfolder, **kwargs)
@@ -666,17 +665,17 @@ def boxplot_PI(sort_labels=False, xlabel='Trials', **kwargs):
 
 def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
     f = f'{save_to}/{exp}{suf}.pdf'
-    boxplot = boxplot(figsize=(10, 7), grid=False,
+    box = boxplot(figsize=(10, 7), grid=False,
                       color=dict(boxes='k', whiskers='k', medians='b', caps='k'),
                       boxprops=dict(linestyle='-', linewidth=3),
                       medianprops=dict(linestyle='-', linewidth=3),
                       whiskerprops=dict(linestyle='-', linewidth=3),
                       capprops=dict(linestyle='-', linewidth=3)
                       )
-    boxplot.set_title(exp, fontsize=35)
-    boxplot.set_xlabel('# training trials', fontsize=25)
-    boxplot.set_ylabel(ylabel, fontsize=25)
-    boxplot.set_ylim(ylim)
+    box.set_title(exp, fontsize=35)
+    box.set_xlabel('# training trials', fontsize=25)
+    box.set_ylabel(ylabel, fontsize=25)
+    box.set_ylim(ylim)
     plt.tick_params(labelsize=20)
     plt.tight_layout()
     plt.savefig(f, dpi=300)

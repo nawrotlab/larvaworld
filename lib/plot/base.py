@@ -349,9 +349,6 @@ class AutoPlot(Plot):
         self.build(Nrows=Nrows, Ncols=Ncols, figsize=figsize, fig=fig, axs=axs, sharex=sharex, sharey=sharey)
 
 
-
-
-
 class GridPlot(BasePlot):
     def __init__(self, name, width, height, scale=(1, 1), **kwargs):
         super().__init__(name, **kwargs)
@@ -367,20 +364,8 @@ class GridPlot(BasePlot):
         # self.letter_dict={}
         # self.x0s, self.y0s=[],[]
 
-    # def annotate(self, dx=-0.05, dy=0.005):
-    #     for i, (ax, text) in enumerate(self.letter_dict.items()) :
-    #
-    #         X = self.text_x0 if ax in self.x0s else ax.get_position().x0+dx
-    #         Y = self.text_y0 if ax in self.y0s else ax.get_position().y1+dy
-    #         # if i in x0 :
-    #         #     X=self.text_x0
-    #         # if i in y0 :
-    #         #     Y=self.text_y0
-    #         self.fig.text(X, Y, text, size=30, weight='bold')
-
-
-    def add(self, N=1, w=None, h=None, w0=None, h0=None, dw=0, dh=0, share_w=False, share_h=False, letter=True, x0=False, y0=False):
-
+    def add(self, N=1, w=None, h=None, w0=None, h0=None, dw=0, dh=0, share_w=False, share_h=False, letter=True,
+            x0=False, y0=False):
 
         if w0 is None:
             w0 = self.cur_w
@@ -394,25 +379,25 @@ class GridPlot(BasePlot):
 
         if N == 1:
             axs = self.fig.add_subplot(self.grid[h0:h0 + h, w0:w0 + w])
-            ax_letter=axs
+            ax_letter = axs
             # if letter:
             #     self.letter_dict[axs]=self.letters[self.cur_idx]
             #     self.cur_idx += 1
             # return axs
         else:
             if share_h:
-                ww=int((w-(N-1)*dw)/N)
-                axs = [self.fig.add_subplot(self.grid[h0:h0 + h, w0 + dw*i+ww * i:w0 + dw*i+ ww * (i + 1)]) for i in range(N)]
+                ww = int((w - (N - 1) * dw) / N)
+                axs = [self.fig.add_subplot(self.grid[h0:h0 + h, w0 + dw * i + ww * i:w0 + dw * i + ww * (i + 1)]) for i
+                       in range(N)]
             elif share_w:
-                hh = int((h-(N-1)*dh )/ N)
-                axs = [self.fig.add_subplot(self.grid[h0+ dh*i + hh * i:h0+ dh*i + hh * (i + 1), w0:w0 + w]) for i in range(N)]
+                hh = int((h - (N - 1) * dh) / N)
+                axs = [self.fig.add_subplot(self.grid[h0 + dh * i + hh * i:h0 + dh * i + hh * (i + 1), w0:w0 + w]) for i
+                       in range(N)]
             ax_letter = axs[0]
-        self.add_letter(ax_letter,letter, x0=x0, y0=y0)
+        self.add_letter(ax_letter, letter, x0=x0, y0=y0)
         return axs
 
     def plot(self, func, kws, axs=None, **kwargs):
         if axs is None:
             axs = self.add(**kwargs)
         _ = func(fig=self.fig, axs=axs, **kws)
-
-

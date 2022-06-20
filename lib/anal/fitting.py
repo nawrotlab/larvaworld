@@ -529,7 +529,7 @@ class BoutGenerator:
 
 def test_boutGens(mID,refID, **kwargs):
     from lib.conf.stored.conf import loadConf, loadRef
-    from lib.plot.plotting import plot_bouts
+    from lib.plot.epochs import plot_bouts
     d = loadRef(refID)
     d.load(contour=False)
     s, e, c = d.step_data, d.endpoint_data, d.config

@@ -4,10 +4,9 @@ import os
 import numpy as np
 import seaborn as sns
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
 
 import lib.plot.plotting
+import lib.plot.stridecycle
 from lib.aux.data_aux import concat_datasets
 from lib.eval.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, prepare_sim_dataset, \
     prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, sim_models, RSS_dic, std_norm, minmax
@@ -19,13 +18,14 @@ from lib.conf.base.dtypes import null_dict
 from lib.conf.pars.pars import getPar, ParDict
 from lib.conf.stored.conf import loadRef, expandConf, next_idx
 
-# par_dict = RefParDict().par_dict
 from lib.plot.aux import annotate_plot
-from lib.plot.base import AutoPlot, BasePlot
+from lib.plot.base import AutoPlot
 from lib.plot.grid import model_summary, dsp_summary, result_summary, eval_summary
-from lib.plot.plotting import plot_fft_multi, plot_trajectories, plot_bouts, stride_cycle
+from lib.plot.epochs import plot_bouts, plot_fft_multi
+from lib.plot.stridecycle import stride_cycle
+from lib.plot.traj import plot_trajectories
 from lib.plot.dataplot import plot_ang_pars, plot_crawl_pars, plot_dispersion
-from lib.plot.table import modelConfTable, error_table
+from lib.plot.table import modelConfTable, error_table, error_barplot
 
 
 class EvalRun :
@@ -374,7 +374,7 @@ class EvalRun :
                 self.figs.loco[k] = dNl.NestDict({'plot': fig1, 'traj': fig2, 'summary' : fig3})
 
         self.figs.summary = result_summary(**kws2)
-        self.figs.stride_cycle.norm = stride_cycle(shorts=['sv', 'fov', 'rov', 'foa', 'b'], individuals=True, **kws)
+        lib.plot.stridecycle.stride_cycle.norm = stride_cycle(shorts=['sv', 'fov', 'rov', 'foa', 'b'], individuals=True, **kws)
 
     def preprocess2(self):
         Ddata,Edata = {},{}
@@ -469,10 +469,6 @@ class EvalRun :
                 }
                 g1 = sns.boxplot(**kws)
                 annotate_plot(show_ns=False, target_only=self.target.id, **kws)
-                # try:
-                #     g1.get_legend().remove()
-                # except:
-                #     pass
                 P.conf_ax(i, xticklabelrotation=30, ylab=sym, yMaxN=4,xvis=False if i < (Nrows - 1) * Ncols else True)
 
             P.adjust((0.1, 0.95), (0.15, 0.9), 0.5, 0.1)
@@ -534,35 +530,6 @@ class EvalRun :
             pass
         self.dataset_configs = {dd.id: dd.config for dd in self.datasets}
         dNl.save_dict(self.dataset_configs, self.dir_dict.dataset_configs)
-
-
-def error_barplot(error_dict, evaluation, axs=None, fig=None,labels=None,name='error_barplots',
-                   titles=[r'$\bf{endpoint}$ $\bf{metrics}$', r'$\bf{timeseries}$ $\bf{metrics}$'], **kwargs):
-
-    def build_legend(ax, eval_df) :
-        h, l = ax.get_legend_handles_labels()
-        empty = Patch(color='none')
-        counter = 0
-        for g in eval_df.index:
-            h.insert(counter, empty)
-            l.insert(counter, eval_df['group_label'].loc[g])
-            counter += (len(eval_df['shorts'].loc[g]) + 1)
-        ax.legend(h, l, loc='upper left', bbox_to_anchor=(1.0, 1.0), fontsize=15)
-
-    P = BasePlot(name=name, **kwargs)
-    Nplots = len(error_dict)
-    P.build(Nplots, 1, figsize=(20, Nplots * 6), sharex=False, fig=fig, axs=axs)
-    P.adjust((0.07, 0.7), (0.05, 0.95), 0.05, 0.2)
-    for ii, (k, eval_df) in enumerate(evaluation.items()):
-        lab = labels[k] if labels is not None else k
-        # ax = P.axs[ii] if axs is None else axs[ii]
-        df = error_dict[k]
-        color = dNl.flatten_list(eval_df['par_colors'].values.tolist())
-        df = df[dNl.flatten_list(eval_df['symbols'].values.tolist())]
-        df.plot(kind='bar', ax=P.axs[ii], ylabel=lab, rot=0, legend=False, color=color, width=0.6)
-        build_legend(P.axs[ii], eval_df)
-        P.conf_ax(ii,title=titles[ii],xlab='', yMaxN=4)
-    return P.get()
 
 
 if __name__ == '__main__':

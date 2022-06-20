@@ -1,15 +1,12 @@
 import random
-import time
-
 import numpy as np
 
 import lib.aux.sim_aux
 from lib.aux.dictsNlists import NestDict
 from lib.model.agents._larva import Larva
 from lib.model.body.controller import BodySim
-from lib.model.modules.brain import DefaultBrain
-from lib.model.modules.nengobrain import NengoBrain
-from lib.model.DEB.deb import DEB
+
+
 
 
 class LarvaSim(BodySim, Larva):
@@ -88,6 +85,7 @@ class LarvaSim(BodySim, Larva):
         return self.brain.locomotor.feeder.V_bite * self.V  # ** (2 / 3)
 
     def build_energetics(self, energetic_pars, life_history):
+        from lib.model.DEB.deb import DEB
         if energetic_pars is not None:
             pDEB=energetic_pars.DEB
             pGUT=energetic_pars.gut
@@ -112,8 +110,10 @@ class LarvaSim(BodySim, Larva):
 
     def build_brain(self, conf):
         if conf.nengo:
+            from lib.model.modules.nengobrain import NengoBrain
             return NengoBrain(agent=self, conf=conf)
         else:
+            from lib.model.modules.brain import DefaultBrain
             return DefaultBrain(agent=self, conf=conf)
 
     def run_energetics(self, V_eaten):

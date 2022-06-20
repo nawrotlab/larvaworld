@@ -1,15 +1,64 @@
 # Create composite figure
+import os
+
 import numpy as np
 from matplotlib.gridspec import GridSpec
 import matplotlib.pyplot as plt
 
 from lib.conf.pars.pars import getPar
-from lib.eval.evaluation import error_barplot
+from lib.plot.aux import save_plot
 from lib.plot.base import GridPlot, BasePlot
-from lib.plot.table import modelConfTable, error_table
-from lib.plot.plot_datasets import module_endpoint_hists, plot_ang_pars, plot_crawl_pars, plot_dispersion
-from lib.plot.plotting import stride_cycle, plot_stride_variability, plot_segmentation_definition, plot_trajectories, \
-    plot_bouts, annotated_strideplot
+from lib.plot.dataplot import plot_dispersion, plot_crawl_pars, plot_ang_pars, module_endpoint_hists
+from lib.plot.metric import plot_segmentation_definition, plot_stride_variability
+from lib.plot.table import modelConfTable, error_table, error_barplot
+from lib.plot.epochs import plot_bouts
+from lib.plot.stridecycle import stride_cycle
+from lib.plot.traj import plot_trajectories, annotated_strideplot, annotated_turnplot
+
+
+def calibration_plot(save_to=None, files=None):
+    from PIL import Image
+    tick_params = {
+        'axis': 'both',  # changes apply to the x-axis
+        'which': 'both',  # both major and minor ticks are affected
+        'bottom': False,  # ticks along the bottom edge are off
+        'top': False,  # ticks along the top edge are off
+        'labelbottom': False,  # labels along the bottom edge are off
+        'labeltop': False,
+        'labelleft': False,
+        'labelright': False,
+    }
+
+    filename = 'calibration.pdf'
+    fig = plt.figure(constrained_layout=True, figsize=(6 * 5, 2 * 5))
+    gs = fig.add_gridspec(2, 6)
+    interference = fig.add_subplot(gs[:, :2])
+    bouts = fig.add_subplot(gs[0, 2:4])
+    orient = fig.add_subplot(gs[0, 4:])
+    angular = fig.add_subplot(gs[1, 3:])
+    bend = fig.add_subplot(gs[1, 2])
+
+    if save_to is None:
+        save_to = '.'
+    if files is None:
+        filenames = [
+            'interference/interference_orientation.png',
+            'bouts/stridesNpauses_cdf_restricted_0.png',
+            'stride/stride_orient_change.png',
+            'turn/angular_pars_3.png',
+            'stride/stride_bend_change.png'
+        ]
+        files = [f'{save_to}/{f}' for f in filenames]
+    images = [Image.open(f) for f in files]
+    axes = [interference, bouts, orient, angular, bend]
+    for ax, im in zip(axes, images):
+        ax.tick_params(**tick_params)
+        ax.axis('off')
+        ax.imshow(im, cmap=None, aspect=None)
+    filepath = os.path.join(save_to, filename)
+    save_plot(fig, filepath, filename)
+    return fig
+
 
 
 def model_summary(refID, mID, Nids=1,model_table=True, **kwargs):
