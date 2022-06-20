@@ -31,7 +31,7 @@ def flatten_list(l):
 
 def flatten_dict(d, parent_key='', sep='.'):
     import collections
-
+    # print(type(d))
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
@@ -42,7 +42,7 @@ def flatten_dict(d, parent_key='', sep='.'):
                 items.append((new_key, 'empty_dict'))
         else:
             items.append((new_key, v))
-    return NestDict(items)
+    return NestDict(dict(items))
 
 
 def tree_dict(d, parent_key='', sep='.'):

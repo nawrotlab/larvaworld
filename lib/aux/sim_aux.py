@@ -1,11 +1,13 @@
+import copy
 import math
 
 import numpy as np
 
 from shapely.geometry import Point, Polygon, LineString
+from unflatten import unflatten
 
-
-from lib.aux import naming as nam
+from lib.aux import naming as nam, dictsNlists as dNl
+from lib.conf.base import paths
 
 
 def LvsRtoggle(side):
@@ -259,3 +261,62 @@ def get_source_xy(food_params):
     sources_u = {k: v['pos'] for k, v in food_params['source_units'].items()}
     sources_g = {k: v['distribution']['loc'] for k, v in food_params['source_groups'].items()}
     return {**sources_u, **sources_g}
+
+
+def generate_larvae(N, sample_dict, base_model, RefPars=None):
+
+    from lib.aux.dictsNlists import load_dict, flatten_dict
+    if RefPars is None:
+        RefPars = load_dict(paths.path('ParRef'), use_pickle=False)
+    if len(sample_dict) > 0:
+        # print(sample_dict)
+        all_pars = []
+        modF = flatten_dict(base_model)
+        for i in range(N):
+            lF = copy.deepcopy(modF)
+            for p, vs in sample_dict.items():
+                p=RefPars[p] if p in RefPars.keys() else p
+                lF.update({p: vs[i]})
+            dic=dNl.NestDict(unflatten(lF))
+            all_pars.append(dic)
+    else:
+        all_pars = [base_model] * N
+    return all_pars
+
+
+def get_sample_bout_distros(model, sample):
+    dic={
+        'pause_dist' : ['pause', 'pause_dur'],
+        'stridechain_dist' : ['stride', 'run_count'],
+        'run_dist' : ['run', 'run_dur'],
+         }
+    m = dNl.NestDict(copy.deepcopy(model))
+    Im=m.brain.intermitter_params
+    if Im and sample != {}:
+
+        ds=[ii for ii in ['pause_dist', 'stridechain_dist', 'run_dist'] if (ii in Im.keys()) and (Im[ii] is not None) and ('fit' in Im[ii].keys()) and (Im[ii]['fit'])]
+        for d in ds :
+            for sample_d in dic[d] :
+                if sample_d in sample.bout_distros.keys() and sample.bout_distros[sample_d] is not None :
+                    Im[d]=sample.bout_distros[sample_d]
+    return m
+
+
+def sample_group(sample=None, N=1, sample_ps=[], e=None):
+    if e is None :
+        from lib.stor.larva_dataset import LarvaDataset
+        d = LarvaDataset(sample['dir'], load_data=False)
+        e = d.read(key='end', file='endpoint_h5')
+    ps = [p for p in sample_ps if p in e.columns]
+    means = [e[p].mean() for p in ps]
+    if len(ps) >= 2:
+        base = e[ps].values.T
+        cov = np.cov(base)
+        vs = np.random.multivariate_normal(means, cov, N).T
+    elif len(ps) == 1:
+        std = np.std(e[ps].values)
+        vs = np.atleast_2d(np.random.normal(means[0], std, N))
+    else:
+        return {}
+    dic = {p: v for p, v in zip(ps, vs)}
+    return dic

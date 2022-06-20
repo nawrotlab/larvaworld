@@ -1,10 +1,8 @@
-from lib.anal.fitting import test_boutGens
+
 from lib.aux import dictsNlists as dNl
 
 from lib.plot import dataplot as dplt,traj as traj, stridecycle as cycle, table as tab, grid as grid, epochs as epochs
-# from lib.plot.epochs import plot_bouts
-#
-# from lib.plot.dataplot import module_endpoint_hists
+# from lib.anal.fitting import test_boutGens
 
 graph_dict = dNl.NestDict({
     'crawl pars': dplt.plot_crawl_pars,
@@ -16,8 +14,10 @@ graph_dict = dNl.NestDict({
     'stride cycle': cycle.stride_cycle,
     'interference': dplt.plot_interference,
     'dispersal': dplt.plot_dispersion,
+    'dispersal summary': grid.dsp_summary,
     'runs & pauses': dplt.plot_stridesNpauses,
     'epochs': epochs.plot_bouts,
+    'fft': epochs.plot_fft_multi,
     'turn duration': dplt.plot_turn_duration,
     'turn amplitude': dplt.plot_turns,
     'stride track': traj.annotated_strideplot,
@@ -51,7 +51,7 @@ graph_dict = dNl.NestDict({
 ModelGraphDict = dNl.NestDict({
     'configuration': tab.modelConfTable,
     'sample track': grid.test_model,
-    'sample epochs': test_boutGens,
+    # 'sample epochs': test_boutGens,
     'module hists': dplt.module_endpoint_hists,
     'summary': grid.model_summary,
 
@@ -60,6 +60,10 @@ ModelGraphDict = dNl.NestDict({
 
 if __name__ == "__main__":
     from lib.plot.grid import test_model
+    from lib.plot.grid import model_summary
+    from lib.anal.fitting import test_boutGens
     # print('dddddddddddd')
-    test_model(mID='explorer', dur=2.1 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, show=True)
+    # test_boutGens(refID='None.150controls', mID='explorer', show=True)
+    model_summary(refID='None.150controls', mID='explorer', show=True)
+    # test_model(mID='explorer', dur=2.1 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, show=True)
 

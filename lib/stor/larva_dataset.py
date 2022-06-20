@@ -854,7 +854,7 @@ class LarvaDataset:
         return chunks
 
     def average_modelConf(self, new_id=None, turner_mode='neural', crawler_mode='realistic', interference_mode='phasic',
-                          turner=None, physics=None, model_table=False):
+                          turner=None, physics=None):
         from lib.eval.model_fit import adapt_turner, adapt_crawler, adapt_intermitter, adapt_interference
 
         if new_id is None:
@@ -887,10 +887,6 @@ class LarvaDataset:
             c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
         c.modelConfs.average[new_id] = m
         self.save_config(add_reference=True)
-
-        if model_table:
-            from lib.plot.table import modelConfTable
-            modelConfTable(new_id, save_to=self.dir_dict.model_tables)
         return m
 
     def get_chunk_par_distro(self, chunk, short=None, par=None, min_dur=0):
@@ -938,7 +934,8 @@ class LarvaDataset:
     def sample_modelConf(self, N, mID, sample_ks=None):
         from lib.conf.stored.conf import loadConf, saveConf
         from lib.conf.base import paths
-        from lib.model.envs._larvaworld_sim import sample_group, generate_larvae
+        from lib.aux.sim_aux import sample_group
+        from lib.aux.sim_aux import generate_larvae
         m = loadConf(mID, 'Model')
         if sample_ks is None:
             modF = dNl.flatten_dict(m)

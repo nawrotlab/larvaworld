@@ -5,10 +5,11 @@ import numpy as np
 from matplotlib.gridspec import GridSpec
 import matplotlib.pyplot as plt
 
+
 from lib.aux.dictsNlists import NestDict
 from lib.conf.pars.pars import getPar
 from lib.plot.aux import save_plot
-from lib.plot.base import GridPlot, BasePlot, Plot
+from lib.plot.base import GridPlot, Plot
 
 
 
@@ -58,12 +59,10 @@ def calibration_plot(save_to=None, files=None):
 
 
 
-def model_summary(refID, mID, Nids=1,model_table=True, **kwargs):
-    from lib.plot.dataplot import module_endpoint_hists
+def model_summary(refID, mID, Nids=1,model_table=False, **kwargs):
     from lib.conf.stored.conf import loadRef
     from lib.anal.fitting import test_boutGens
     from lib.eval.eval_aux import sim_model
-    # from lib.plot.table import modelConfTable
 
     d = loadRef(refID)
     d.load(step=False, contour=False)
@@ -96,7 +95,8 @@ def model_summary(refID, mID, Nids=1,model_table=True, **kwargs):
     P.plot(func='stride cycle',kws={'datasets': [d, dd], 'shorts': shorts, 'individuals': True, 'save_to': None},
            N=len(shorts), w=29, h=32, h0=hh0+18, share_w=True, x0=True)
 
-    P.plot(func='sample epochs', kws={'mID': mID, 'refID': refID, 'save_to': None},
+    ds = test_boutGens(**{'mID': mID, 'refID': refID})
+    P.plot(func='epochs', kws={'datasets': ds, 'save_to': None},
            N=2, w=29, h0=hh0+56, share_h=True, dw=1, x0=True)
 
     P.plot(func='sample track',kws={'mID': mID, 'dur': 0.5, 'd': dd, 'save_to': None},
@@ -196,12 +196,10 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     if d is None:
         from lib.eval.eval_aux import sim_model
         d = sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
-    # print('idii')
     kws0=NestDict({
         'datasets' : [d],
         # 'labels' : [d],
     })
-    # print('ddds')
     s, e, c = d.step_data, d.endpoint_data, d.config
     Nticks = int(dur * 60 / dt)
     ss = s.xs(c.agent_ids[0], level='AgentID').loc[:Nticks]

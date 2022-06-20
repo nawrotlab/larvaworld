@@ -9,8 +9,6 @@ from lib.conf.base.dtypes import null_dict, ga_dict
 from lib.conf.stored.conf import loadConf, loadRef, expandConf, saveConf
 from lib.conf.pars.pars import getPar
 from lib.plot.base import BasePlot
-from lib.plot.grid import model_summary
-from lib.plot.table import modelConfTable
 
 
 class Calibration:
@@ -381,19 +379,20 @@ def calibrate_4models(refID='None.150controls') :
             m = C.build_modelConf(new_id=mID, interference_mode=IFmod)
             mm = calibrate_interference(mID=mID, refID=refID)
             mdict.update(mm)
-    update_modelConfs(refID, mIDs)
+
+    update_modelConfs(d=loadRef(refID), mIDs=mIDs)
     return mdict
 
-def update_modelConfs(refID, mIDs):
+def update_modelConfs(d, mIDs):
 
-    d = loadRef(refID)
+    # d = loadRef(refID)
     # c = d.config
     save_to = f'{d.dir_dict.model_tables}/4models'
     os.makedirs(save_to, exist_ok=True)
     for mID in mIDs:
         d.config.modelConfs.average[mID] = loadConf(mID, 'Model')
-        modelConfTable(mID, save_to=save_to)
-        model_summary(refID=refID, mID=mID, save_to=save_to)
+        # modelConfTable(mID, save_to=save_to)
+        # model_summary(refID=refID, mID=mID, save_to=save_to)
     d.save_config(add_reference=True)
 
 

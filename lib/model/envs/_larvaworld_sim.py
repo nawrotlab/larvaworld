@@ -8,7 +8,8 @@ import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import generate_xy_distro
 from lib.aux.colsNstr import N_colors
 
-from lib.model.envs._larvaworld import LarvaWorld, generate_larvae, get_sample_bout_distros, sample_group
+from lib.model.envs._larvaworld import LarvaWorld
+from lib.aux.sim_aux import generate_larvae, get_sample_bout_distros, sample_group
 from lib.sim.single.conditions import get_exp_condition
 from lib.conf.base import paths
 
@@ -155,7 +156,7 @@ class LarvaWorldSim(LarvaWorld):
         return False
 
     def create_collectors(self, output):
-        from lib.conf.base.pars import ParDict
+        from lib.conf.pars.pars import ParDict
         from lib.aux.collecting import TargetedDataCollector
         kws0 = {'par_dict': ParDict.dict}
         if output is None:

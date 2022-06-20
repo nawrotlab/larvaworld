@@ -1,14 +1,12 @@
-import copy
-import random
 import warnings
 import numpy as np
 import progressbar
 import os
-from typing import List, Any
+from typing import List
 import webcolors
-from unflatten import unflatten
 import pygame
 from shapely.affinity import affine_transform
+
 
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -19,7 +17,6 @@ import lib.aux.sim_aux
 import lib.aux.xy_aux
 from lib.conf.base.dtypes import null_dict
 from lib.model.agents._larva_sim import LarvaSim
-from lib.conf.base import paths
 from lib.aux.collecting import NamedRandomActivation
 from lib.model.envs._space import FoodGrid, WindScape
 import lib.anal.rendering as ren
@@ -29,6 +26,8 @@ from lib.model.agents._agent import LarvaworldAgent
 from lib.model.agents._source import Food
 from lib.sim.single.input_lib import evaluate_input, evaluate_graphs
 from lib.model.envs._base_larvaworld import BaseLarvaWorld
+from lib.aux.sim_aux import get_sample_bout_distros, sample_group
+
 
 class LarvaWorld(BaseLarvaWorld):
 
@@ -644,7 +643,7 @@ class LarvaWorld(BaseLarvaWorld):
             i.set_color(self.scale_clock_color)
 
     def plot_odorscape(self,scale=1.0,idx=0, **kwargs):
-        from lib.anal.plot_datasets import plot_surface
+        from lib.plot.dataplot import plot_surface
         for id, layer in self.odor_layers.items():
             X, Y = layer.meshgrid
             x = X * 1000 / scale
@@ -655,65 +654,6 @@ class LarvaWorld(BaseLarvaWorld):
 
     def eliminate_overlap(self):
         pass
-
-
-def generate_larvae(N, sample_dict, base_model, RefPars=None):
-
-    from lib.aux.dictsNlists import load_dict, flatten_dict
-    if RefPars is None:
-        RefPars = load_dict(paths.path('ParRef'), use_pickle=False)
-    if len(sample_dict) > 0:
-        # print(sample_dict)
-        all_pars = []
-        modF = flatten_dict(base_model)
-        for i in range(N):
-            lF = copy.deepcopy(modF)
-            for p, vs in sample_dict.items():
-                p=RefPars[p] if p in RefPars.keys() else p
-                lF.update({p: vs[i]})
-            dic=dNl.NestDict(unflatten(lF))
-            all_pars.append(dic)
-    else:
-        all_pars = [base_model] * N
-    return all_pars
-
-
-def get_sample_bout_distros(model, sample):
-    dic={
-        'pause_dist' : ['pause', 'pause_dur'],
-        'stridechain_dist' : ['stride', 'run_count'],
-        'run_dist' : ['run', 'run_dur'],
-         }
-    m = dNl.NestDict(copy.deepcopy(model))
-    Im=m.brain.intermitter_params
-    if Im and sample != {}:
-
-        ds=[ii for ii in ['pause_dist', 'stridechain_dist', 'run_dist'] if (ii in Im.keys()) and (Im[ii] is not None) and ('fit' in Im[ii].keys()) and (Im[ii]['fit'])]
-        for d in ds :
-            for sample_d in dic[d] :
-                if sample_d in sample.bout_distros.keys() and sample.bout_distros[sample_d] is not None :
-                    Im[d]=sample.bout_distros[sample_d]
-    return m
-
-
-def sample_group(sample=None, N=1, sample_ps=[], e=None):
-    if e is None :
-        from lib.stor.larva_dataset import LarvaDataset
-        d = LarvaDataset(sample['dir'], load_data=False)
-        e = d.read(key='end', file='endpoint_h5')
-    ps = [p for p in sample_ps if p in e.columns]
-    means = [e[p].mean() for p in ps]
-    if len(ps) >= 2:
-        base = e[ps].values.T
-        cov = np.cov(base)
-        vs = np.random.multivariate_normal(means, cov, N).T
-    elif len(ps) == 1:
-        std = np.std(e[ps].values)
-        vs = np.atleast_2d(np.random.normal(means[0], std, N))
-    else:
-        return {}
-    dic = {p: v for p, v in zip(ps, vs)}
-    return dic
 
 # if __name__ == '__main__':
 #     RefPars = lib.aux.dictsNlists.load_dict(paths.path('ParRef'), use_pickle=False)

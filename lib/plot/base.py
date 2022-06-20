@@ -404,14 +404,11 @@ class GridPlot(BasePlot):
         if axs is None:
             axs = self.add(**kwargs)
         if isinstance(func, str) :
-            if 'datasets' in kwargs.keys() :
-                from lib.plot.dict import graph_dict
-
+            from lib.plot.dict import graph_dict, ModelGraphDict
+            if func in graph_dict.keys() :
                 func=graph_dict[func]
+            elif func in ModelGraphDict.keys() :
+                func = ModelGraphDict[func]
             else :
-                try :
-                    from lib.plot.dict import ModelGraphDict
-                    func = ModelGraphDict[func]
-                except :
-                    raise
+                raise
         _ = func(fig=self.fig, axs=axs, **kws)

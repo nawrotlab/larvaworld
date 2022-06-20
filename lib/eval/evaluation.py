@@ -5,8 +5,6 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 
-import lib.plot.plotting
-import lib.plot.stridecycle
 from lib.aux.data_aux import concat_datasets
 from lib.eval.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, prepare_sim_dataset, \
     prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, sim_models, RSS_dic, std_norm, minmax
@@ -20,12 +18,8 @@ from lib.conf.stored.conf import loadRef, expandConf, next_idx
 
 from lib.plot.aux import annotate_plot
 from lib.plot.base import AutoPlot
-from lib.plot.grid import model_summary, dsp_summary, result_summary, eval_summary
-from lib.plot.epochs import plot_bouts, plot_fft_multi
-from lib.plot.stridecycle import stride_cycle
-from lib.plot.traj import traj_grouped
-from lib.plot.dataplot import plot_ang_pars, plot_crawl_pars, plot_dispersion
-from lib.plot.table import modelConfTable, error_table, error_barplot
+from lib.plot.grid import result_summary, eval_summary
+from lib.plot.table import error_table, error_barplot
 
 
 class EvalRun :
@@ -68,7 +62,7 @@ class EvalRun :
 
 
         self.loco_dict = {}
-        self.figs = dNl.NestDict({'errors':{}, 'hist':{}, 'boxplot':{}, 'stride_cycle' : {}, 'loco' : {},'epochs' : {}, 'models' : {}})
+        self.figs = dNl.NestDict({'errors':{}, 'hist':{}, 'boxplot':{}, 'stride_cycle' : {}, 'loco' : {},'epochs' : {}, 'models' : {'table' : {}, 'summary' : {}}})
         self.refDataset=loadRef(refID)
         self.refDataset.pooled_epochs = self.refDataset.load_pooled_epochs()
         self.N=N
@@ -326,13 +320,16 @@ class EvalRun :
 
 
     def plot_models(self):
+        from lib.plot.dict import ModelGraphDict
         save_to=self.dir_dict.models
-        self.figs.models.tables = dNl.NestDict(
-            {mID: modelConfTable(mID, save_to=save_to, figsize=(14, 11)) for mID in self.modelIDs})
-        self.figs.models.summaries = dNl.NestDict(
-            {mID: model_summary(refID=self.refID, mID=mID, save_to=save_to) for mID in self.modelIDs})
+        for mID in self.modelIDs :
+            self.figs.models.table[mID]=ModelGraphDict['configuration'](mID=mID, save_to=save_to, figsize=(14, 11))
+            self.figs.models.summary[mID]=ModelGraphDict['summary'](mID=mID, save_to=save_to, refID=self.refID)
+
 
     def plot_results(self, plots=['hists','trajectories','dispersion','bouts']):
+        from lib.plot.dict import graph_dict as GD
+
         print('Generating comparative graphs')
 
         self.target.load(contour=False)
@@ -351,30 +348,31 @@ class EvalRun :
         }
 
         if 'fft' in plots:
-            self.figs.loco.fft = plot_fft_multi(**kws)
+            self.figs.loco.fft =  GD['fft'](**kws)
         if 'hists' in plots:
             self.figs.hist.step = self.plot_data(mode='step', type='hist')
             self.figs.hist.end = self.plot_data(mode='end', type='hist')
-            self.figs.hist.ang = plot_ang_pars(half_circles=False, absolute=False, Nbins=100, Npars=5,include_rear=False, subfolder=None, **kws)
-            self.figs.hist.crawl = plot_crawl_pars(subfolder=None, pvalues=False, **kws)
+            self.figs.hist.ang = GD['angular pars'](half_circles=False, absolute=False, Nbins=100, Npars=5,include_rear=False, subfolder=None, **kws)
+            self.figs.hist.crawl = GD['crawl pars'](subfolder=None, pvalues=False, **kws)
         if 'trajectories' in plots:
-            self.figs.loco.trajectories = traj_grouped(subfolder=None, **kws)
+            self.figs.loco.trajectories = GD['trajectories'](subfolder=None, **kws)
         if 'boxplots' in plots:
-            lib.plot.plot_datasets.boxplot.end = self.plot_data(mode='end', type='box')
-            lib.plot.plot_datasets.boxplot.step = self.plot_data(mode='step', type='box')
+            self.figs.boxplot.end = self.plot_data(mode='end', type='box')
+            self.figs.boxplot.step = self.plot_data(mode='step', type='box')
         if 'bouts' in plots:
-            self.figs.epochs.runNpause = plot_bouts(stridechain_duration=True, **kws)
-            self.figs.epochs.turn = plot_bouts(turns=True, **kws)
+            self.figs.epochs.runNpause = GD['epochs'](stridechain_duration=True, **kws)
+            self.figs.epochs.turn = GD['epochs'](turns=True, **kws)
         if 'dispersion' in plots:
             for r0, r1 in itertools.product(self.dsp_starts, self.dsp_stops):
                 k=f'dsp_{r0}_{r1}'
-                fig1=plot_dispersion(range=(r0, r1),subfolder=None, **kws)
-                fig2=traj_grouped(name=f'traj_{r0}_{r1}', range=(r0, r1), subfolder=None, mode='origin', **kws)
-                fig3=dsp_summary(range=(r0, r1),**kws2)
+                fig1=GD['dispersal'](range=(r0, r1),subfolder=None, **kws)
+                fig2=GD['trajectories'](name=f'traj_{r0}_{r1}', range=(r0, r1), subfolder=None, mode='origin', **kws)
+                fig3=GD['dispersal summary'](range=(r0, r1),**kws2)
                 self.figs.loco[k] = dNl.NestDict({'plot': fig1, 'traj': fig2, 'summary' : fig3})
 
         self.figs.summary = result_summary(**kws2)
-        lib.plot.stridecycle.stride_cycle.norm = stride_cycle(shorts=['sv', 'fov', 'rov', 'foa', 'b'], individuals=True, **kws)
+
+        self.figs.stride_cycle.norm = GD['stride cycle'](shorts=['sv', 'fov', 'rov', 'foa', 'b'], individuals=True, **kws)
 
     def preprocess2(self):
         Ddata,Edata = {},{}

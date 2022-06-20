@@ -530,6 +530,8 @@ class BoutGenerator:
 def test_boutGens(mID,refID, **kwargs):
     from lib.conf.stored.conf import loadConf, loadRef
     from lib.plot.epochs import plot_bouts
+    from lib.aux.sim_aux import get_sample_bout_distros
+
     d = loadRef(refID)
     d.load(contour=False)
     s, e, c = d.step_data, d.endpoint_data, d.config
@@ -538,6 +540,7 @@ def test_boutGens(mID,refID, **kwargs):
 
     dic={}
     m=loadConf(mID, 'Model')
+    m=get_sample_bout_distros(m, loadConf(refID, 'Ref'))
     dicM=m.brain.intermitter_params
     for n,n0 in zip(['pause', 'run', 'stridechain'], ['pause_dur', 'run_dur', 'run_count']) :
         N=Npau if n == 'pause' else Nrun
@@ -552,5 +555,7 @@ def test_boutGens(mID,refID, **kwargs):
             dic[n0] = fit_bout_distros(vs, dataset_id=mID, bout=n, combine=False, discrete=discr)
     datasets=[{'id' : 'model', 'pooled_epochs': dic, 'color': 'blue'}, {'id' : 'experiment', 'pooled_epochs': d.load_pooled_epochs(), 'color': 'red'}]
     datasets = [dNl.NestDict(dd) for dd in datasets]
-    return plot_bouts(datasets=datasets, plot_fits='none', **kwargs)
+    # print(datasets)
+    return datasets
+    # return plot_bouts(datasets=datasets, plot_fits='none', **kwargs)
 

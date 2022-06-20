@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema, spectrogram
 
-from lib.conf.base.pars import getPar, ParDict
+from lib.conf.pars.pars import getPar, ParDict
 from lib.process.aux import interpolate_nans, suppress_stdout
 from lib.aux.sim_aux import apply_filter_to_array_with_nans_multidim
 # from lib.aux.dictsNlists import common_member
