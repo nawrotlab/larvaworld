@@ -471,6 +471,7 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
     s = pd.DataFrame(AA,index=my_index, columns=df_columns)
     s=s.astype(float)
 
+
     if c.dir is not None :
         from lib.stor.larva_dataset import LarvaDataset
         d=LarvaDataset(**c, load_data=False)
@@ -480,7 +481,7 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
     else :
         d = dNl.NestDict(
             {'id': c.id, 'group_id': c.group_id, 'step_data': s, 'endpoint_data': e, 'config': c, 'color': c.color})
-
+    scale_to_length(s, e, c, pars=None, keys=['v'])
     if enrichment :
         with suppress_stdout(False):
             comp_spatial(s, e, c, mode='minimal')

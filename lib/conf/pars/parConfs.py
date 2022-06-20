@@ -211,7 +211,6 @@ class LarvaConfDict:
                 if type(new_v) == list:
                     if p.parclass == param.Range:
                         new_v = tuple(new_v)
-                # print(d,p.v==new_v,p.v,new_v)
                 p.v = new_v
             else:
                 self.copyID(mdic=mdic[d], mmdic=mmdic[d])
@@ -225,19 +224,12 @@ def confID_dict():
     for K0 in keys:
         k0 = K0.lower()
         k = f'{k0}ID'
-        # print(K0,kConfDict(K0))
-
-        # p=buildBasePar(p=k, k=k, dtype=str, d=None, disp=f'{K0} IDs', sym=sub('ID', k0), codename=None, lab=f'{K0} IDs',
-        #            h=f'The stored {k0} configurations as a list of IDs',v0=None,vparfunc=ConfSelector(K0))
         vparfunc = ConfSelector(K0, doc=f'The stored {K0} configurations as a list of IDs', label=sub('ID', k0))
         dic[K0] = vparfunc()
     return dic
 
 
 if __name__ == '__main__':
-    # print(kConfDict('Model'))
-    # mID='forager'
-    # m=loadConf(mID, 'Model').brain.turner_params
-    # print(m)
+
     #
     dd = LarvaConfDict()

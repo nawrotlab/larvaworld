@@ -7,6 +7,9 @@ import seaborn as sns
 from matplotlib import pyplot as plt, ticker
 from matplotlib.gridspec import GridSpec
 
+
+
+
 from lib.aux import dictsNlists as dNl
 from lib.plot.aux import dual_half_circle, plot_config, process_plot
 
@@ -400,4 +403,15 @@ class GridPlot(BasePlot):
     def plot(self, func, kws, axs=None, **kwargs):
         if axs is None:
             axs = self.add(**kwargs)
+        if isinstance(func, str) :
+            if 'datasets' in kwargs.keys() :
+                from lib.plot.dict import graph_dict
+
+                func=graph_dict[func]
+            else :
+                try :
+                    from lib.plot.dict import ModelGraphDict
+                    func = ModelGraphDict[func]
+                except :
+                    raise
         _ = func(fig=self.fig, axs=axs, **kws)

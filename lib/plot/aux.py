@@ -3,9 +3,12 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt, patches, transforms, ticker
 
+
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 from lib.aux import dictsNlists as dNl
 from lib.aux.colsNstr import N_colors
-
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
             'figure.titlesize': 25,

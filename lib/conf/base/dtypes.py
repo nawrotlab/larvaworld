@@ -191,7 +191,6 @@ def par_dict(name=None, d0=None, **kwargs):
         try:
             entry = par(n, **v, **kwargs)
         except:
-            print(n,v)
             entry = {n: {'dtype': dict, 'content': par_dict(n, d0=d0[n], **kwargs)}}
         d.update(entry)
     return d

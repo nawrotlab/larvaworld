@@ -5,15 +5,12 @@ import numpy as np
 from matplotlib.gridspec import GridSpec
 import matplotlib.pyplot as plt
 
+from lib.aux.dictsNlists import NestDict
 from lib.conf.pars.pars import getPar
 from lib.plot.aux import save_plot
-from lib.plot.base import GridPlot, BasePlot
-from lib.plot.dataplot import plot_dispersion, plot_crawl_pars, plot_ang_pars, module_endpoint_hists
-from lib.plot.metric import plot_segmentation_definition, plot_stride_variability
-from lib.plot.table import modelConfTable, error_table, error_barplot
-from lib.plot.epochs import plot_bouts
-from lib.plot.stridecycle import stride_cycle
-from lib.plot.traj import traj_grouped, track_annotated
+from lib.plot.base import GridPlot, BasePlot, Plot
+
+
 
 
 def calibration_plot(save_to=None, files=None):
@@ -62,9 +59,11 @@ def calibration_plot(save_to=None, files=None):
 
 
 def model_summary(refID, mID, Nids=1,model_table=True, **kwargs):
+    from lib.plot.dataplot import module_endpoint_hists
     from lib.conf.stored.conf import loadRef
     from lib.anal.fitting import test_boutGens
     from lib.eval.eval_aux import sim_model
+    # from lib.plot.table import modelConfTable
 
     d = loadRef(refID)
     d.load(step=False, contour=False)
@@ -86,21 +85,21 @@ def model_summary(refID, mID, Nids=1,model_table=True, **kwargs):
     P = GridPlot(name=f'{mID}_summary', width=w, height=h, scale=(0.25, 0.25), **kwargs)
 
     if model_table:
-        P.plot(func=modelConfTable, kws={'mID': mID}, h=hh0,w0=8, x0=True, y0=True)
+        P.plot(func='configuration', kws={'mID': mID}, h=hh0,w0=8, x0=True, y0=True)
 
     valid = ['initial_freq', 'max_scaled_vel', 'max_vel_phase', 'stride_dst_mean', 'stride_dst_std']
 
-    P.plot(func=module_endpoint_hists,kws={'module': 'crawler', 'valid': valid, 'e': e, 'save_to': None},
+    P.plot(func='module hists',kws={'module': 'crawler', 'valid': valid, 'e': e, 'save_to': None},
            N=len(valid), h=10, h0=hh0+3, share_h=True, dw=1, x0=True)
 
     shorts=['sv', 'fov', 'foa', 'b']
-    P.plot(func=stride_cycle,kws={'datasets': [d, dd], 'shorts': shorts, 'individuals': True, 'save_to': None},
+    P.plot(func='stride cycle',kws={'datasets': [d, dd], 'shorts': shorts, 'individuals': True, 'save_to': None},
            N=len(shorts), w=29, h=32, h0=hh0+18, share_w=True, x0=True)
 
-    P.plot(func=test_boutGens, kws={'mID': mID, 'refID': refID, 'save_to': None},
+    P.plot(func='sample epochs', kws={'mID': mID, 'refID': refID, 'save_to': None},
            N=2, w=29, h0=hh0+56, share_h=True, dw=1, x0=True)
 
-    P.plot(func=test_model,kws={'mID': mID, 'dur': 0.5, 'd': dd, 'save_to': None},
+    P.plot(func='sample track',kws={'mID': mID, 'dur': 0.5, 'd': dd, 'save_to': None},
            N=5, w0=38, h0=hh0+18, share_w=True, dh=1)
     P.adjust((0.1, 0.95), (0.05, 0.98), 0.01, 0.2)
     P.annotate()
@@ -108,6 +107,8 @@ def model_summary(refID, mID, Nids=1,model_table=True, **kwargs):
 
 
 def combo_plot_vel_definition(d, save_to=None, save_as='vel_definition.pdf', component_vels=True):
+    from lib.plot.metric import plot_segmentation_definition, plot_stride_variability
+
     if save_to is None:
         save_to = d.plot_dir
 
@@ -152,15 +153,10 @@ def dsp_summary(datasets, target,range=(0,40), **kwargs):
         'h' : 8,
         'share_h' :True
     }
-    # plot_dispersion(range=(r0, r1), subfolder=None, **kws)
 
-    P.plot(func=traj_grouped, kws={'mode' : 'origin', 'range': range, **kws}, N=Nds, x0=True, y0=True, **kws2)
-    P.plot(func=plot_dispersion, kws={'range': range, **kws}, N=1, w=16, h0=14, x0=True, **kws2)
-    # P.plot(func=plot_bouts, kws={'turns' : True,**kws}, N=2, w=18, h0=24,  x0=True, **kws2)
-
-    P.plot(func=plot_crawl_pars, kws={'pvalues' : False,**kws}, N=3,w=30,w0=22, h0=14, **kws2)
-    # P.plot(func=plot_ang_pars, kws={'absolute': False, 'Npars': 3, **kws}, N=3,  w=28, w0=22, h0=24, **kws2)
-
+    P.plot(func='trajectories', kws={'mode' : 'origin', 'range': range, **kws}, N=Nds, x0=True, y0=True, **kws2)
+    P.plot(func='dispersal', kws={'range': range, **kws}, N=1, w=16, h0=14, x0=True, **kws2)
+    P.plot(func='crawl pars', kws={'pvalues' : False,**kws}, N=3,w=30,w0=22, h0=14, **kws2)
     P.adjust((0.1, 0.95), (0.05, 0.9), 0.05, 0.1)
     P.annotate()
     return P.get()
@@ -184,13 +180,11 @@ def result_summary(datasets, target, **kwargs):
     }
 
     dur=int(np.min([d.config.duration for d in ds]))
-    # print([d.config.duration for d in ds])
-    P.plot(func=traj_grouped, kws={'mode' : 'origin', 'range': (0, dur), **kws}, N=Nds, x0=True, y0=True, **kws2)
-    P.plot(func=plot_bouts, kws={'stridechain_duration' : True, **kws}, N=2, w=18, h0=12, x0=True, **kws2)
-    P.plot(func=plot_bouts, kws={'turns' : True,**kws}, N=2, w=18, h0=24,  x0=True, **kws2)
-
-    P.plot(func=plot_crawl_pars, kws={'pvalues' : False,**kws}, N=3,w=28,w0=22, h0=12, **kws2)
-    P.plot(func=plot_ang_pars, kws={'absolute': False, 'Npars': 3, **kws}, N=3,  w=28, w0=22, h0=24, **kws2)
+    P.plot(func='trajectories', kws={'mode' : 'origin', 'range': (0, dur), **kws}, N=Nds, x0=True, y0=True, **kws2)
+    P.plot(func='epochs', kws={'stridechain_duration' : True, **kws}, N=2, w=18, h0=12, x0=True, **kws2)
+    P.plot(func='epochs', kws={'turns' : True,**kws}, N=2, w=18, h0=24,  x0=True, **kws2)
+    P.plot(func='crawl pars', kws={'pvalues' : False,**kws}, N=3,w=28,w0=22, h0=12, **kws2)
+    P.plot(func='angular pars', kws={'absolute': False, 'Npars': 3, **kws}, N=3,  w=28, w0=22, h0=24, **kws2)
 
     P.adjust((0.1, 0.9), (0.1, 0.9), 0.1, 0.1)
     P.annotate()
@@ -198,38 +192,51 @@ def result_summary(datasets, target, **kwargs):
 
 
 def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
+    from lib.plot.traj import track_annotated
     if d is None:
         from lib.eval.eval_aux import sim_model
         d = sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
+    # print('idii')
+    kws0=NestDict({
+        'datasets' : [d],
+        # 'labels' : [d],
+    })
+    # print('ddds')
     s, e, c = d.step_data, d.endpoint_data, d.config
-
     Nticks = int(dur * 60 / dt)
-    trange = np.arange(0, Nticks * dt, dt)
     ss = s.xs(c.agent_ids[0], level='AgentID').loc[:Nticks]
-
-    pars, labs = getPar(['v', 'c_CT', 'Act_tur', 'fov', 'b'], to_return=['d', 'symbol'])
+    a_sv = ss[getPar('sv')].values
+    a_fov = ss[getPar('fov')].values
+    pars, labs = getPar(['sv', 'c_CT', 'Act_tur', 'fov', 'b'], to_return=['d', 'symbol'])
 
     Nrows = len(pars)
-    P = BasePlot(name=f'{mID}_test', **kwargs)
-    P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, fig=fig, axs=axs)
-    a_v = ss[getPar('v')].values
-    a_fov = ss[getPar('fov')].values
-    track_annotated(epoch='stride', a=a_v, dt=dt, ax=P.axs[0])
-    track_annotated(epoch='stride', a=a_v, dt=dt, a2plot=ss[pars[1]].values, ax=P.axs[1], ylim=(0, 1), show_extrema=False)
+    P = Plot(name=f'{mID}_test', **kws0, **kwargs)
+    P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, axs=axs, fig=fig)
+    kws1 = NestDict({
+        'agent_idx': 0,
+        'slice': (0,dur * 60),
+        'dt' : dt,
+        'fig' : P.fig,
+        'show' : False,
+        **kws0
+    })
 
-    track_annotated(epoch='turn', a=a_fov, dt=dt, a2plot=ss[pars[2]].values, ax=P.axs[2], min_amp=min_turn_amp)
-    track_annotated(epoch='turn', a=a_fov, dt=dt, ax=P.axs[3], min_amp=min_turn_amp)
-    track_annotated(epoch='turn', a=a_fov, dt=dt, a2plot=ss[pars[4]].values, ax=P.axs[4], min_amp=min_turn_amp)
+    epochs=['stride']*2+['turn']*3
+    aas=[a_sv]*2+[a_fov]*3
+    a2s=[None, ss[pars[1]].values, ss[pars[2]].values, None, ss[pars[4]].values]
+    extrs=[True, False,False,False,False]
+    min_amps=[None]*2+[min_turn_amp]*3
 
-    for i in range(Nrows):
-        P.conf_ax(i, xlim=(0, trange[-1] + 10 * dt), ylab=labs[i], xlab='time (sec)',
-                  xvis=True if i == Nrows - 1 else False)
+    for i, (p,l,ep,a, a2,extr,min_amp) in enumerate(zip(pars, labs,epochs,aas, a2s, extrs,min_amps)) :
+        track_annotated(epoch=ep, a=a, a2plot=a2, ax=P.axs[i], min_amp=min_amp, show_extrema=extr,ylab=l, **kws1)
+        P.conf_ax(i, xvis=True if i == Nrows - 1 else False)
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.01, 0.05)
     P.fig.align_ylabels(P.axs[:])
     return P.get()
 
 
 def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled',**kwargs):
+    from lib.plot.table import error_table, error_barplot
 
     label_dic = {
         '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},
@@ -250,3 +257,6 @@ def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled',**k
     P.adjust((0.1, 0.9), (0.05, 0.95), 0.1, 0.2)
     P.annotate()
     return P.get()
+
+
+

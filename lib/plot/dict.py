@@ -1,46 +1,65 @@
-from lib.plot.dataplot import plot_odor_concentration, plot_sensed_odor_concentration, plot_Y_pos, boxplot_PI, \
-    plot_pathlength, plot_food_amount, intake_barplot, plot_gut, plot_debs, timeplot, plot_ethogram, plot_foraging, \
-    barplot, plot_2pars, plot_nengo_network, ggboxplot, plot_turns, plot_ang_pars, plot_crawl_pars, plot_turn_duration, \
-    plot_turn_amp, plot_stride_Dbend, plot_marked_strides, plot_sample_tracks, plot_stride_Dorient, plot_interference, \
-    plot_dispersion, powerspectrum, plot_navigation_index, plot_stridesNpauses, plot_endpoint_params, \
-    plot_chunk_Dorient2source, plot_turn_Dorient2center
-from lib.plot.traj import traj_grouped
+from lib.anal.fitting import test_boutGens
+from lib.aux import dictsNlists as dNl
 
-graph_dict = {
-    'crawl pars': plot_crawl_pars,
-    'angular pars': plot_ang_pars,
-    'endpoint params': plot_endpoint_params,
-    'powerspectrum': powerspectrum,
-    'stride Dbend': plot_stride_Dbend,
-    'stride Dor': plot_stride_Dorient,
-    'interference': plot_interference,
-    'dispersion': plot_dispersion,
-    'runs & pauses': plot_stridesNpauses,
-    'turn duration': plot_turn_duration,
-    'turn amplitude': plot_turns,
-    'marked strides': plot_marked_strides,
-    'sample tracks': plot_sample_tracks,
-    'trajectories': traj_grouped,
-    'turn amplitude VS Y pos': plot_turn_amp,
-    'turn Dbearing to center': plot_turn_Dorient2center,
-    'chunk Dbearing to source': plot_chunk_Dorient2source,
-    'C odor (real)': plot_odor_concentration,
-    'C odor (perceived)': plot_sensed_odor_concentration,
-    'navigation index': plot_navigation_index,
-    'Y pos': plot_Y_pos,
-    'PI (boxplot)': boxplot_PI,
-    'pathlength': plot_pathlength,
-    'food intake (timeplot)': plot_food_amount,
-    'gut': plot_gut,
-    'food intake (barplot)': intake_barplot,
-    'deb': plot_debs,
-    'timeplot': timeplot,
-    'ethogram': plot_ethogram,
-    'foraging': plot_foraging,
-    'barplot': barplot,
-    'scatter': plot_2pars,
-    'nengo': plot_nengo_network,
-    'ggboxplot': ggboxplot
-}
+from lib.plot import dataplot as dplt,traj as traj, stridecycle as cycle, table as tab, grid as grid, epochs as epochs
+# from lib.plot.epochs import plot_bouts
+#
+# from lib.plot.dataplot import module_endpoint_hists
 
+graph_dict = dNl.NestDict({
+    'crawl pars': dplt.plot_crawl_pars,
+    'angular pars': dplt.plot_ang_pars,
+    'endpoint params': dplt.plot_endpoint_params,
+    'powerspectrum': dplt.powerspectrum,
+    'stride Dbend': dplt.plot_stride_Dbend,
+    'stride Dor': dplt.plot_stride_Dorient,
+    'stride cycle': cycle.stride_cycle,
+    'interference': dplt.plot_interference,
+    'dispersal': dplt.plot_dispersion,
+    'runs & pauses': dplt.plot_stridesNpauses,
+    'epochs': epochs.plot_bouts,
+    'turn duration': dplt.plot_turn_duration,
+    'turn amplitude': dplt.plot_turns,
+    'stride track': traj.annotated_strideplot,
+    'turn track': traj.annotated_turnplot,
+    'marked strides': traj.plot_marked_strides,
+    'sample tracks': traj.plot_sample_tracks,
+    'trajectories': traj.traj_grouped,
+    'turn amplitude VS Y pos': dplt.plot_turn_amp,
+    'turn Dbearing to center': dplt.plot_turn_Dorient2center,
+    'chunk Dbearing to source': dplt.plot_chunk_Dorient2source,
+    'C odor (real)': dplt.plot_odor_concentration,
+    'C odor (perceived)': dplt.plot_sensed_odor_concentration,
+    'navigation index': dplt.plot_navigation_index,
+    'Y pos': dplt.plot_Y_pos,
+    'PI (boxplot)': dplt.boxplot_PI,
+    'pathlength': dplt.plot_pathlength,
+    'food intake (timeplot)': dplt.plot_food_amount,
+    'gut': dplt.plot_gut,
+    'food intake (barplot)': dplt.intake_barplot,
+    'deb': dplt.plot_debs,
+    'timeplot': dplt.timeplot,
+    'ethogram': dplt.plot_ethogram,
+    'foraging': dplt.plot_foraging,
+    'barplot': dplt.barplot,
+    'scatter': dplt.plot_2pars,
+    'nengo': dplt.plot_nengo_network,
+    'ggboxplot': dplt.ggboxplot
+})
+
+
+ModelGraphDict = dNl.NestDict({
+    'configuration': tab.modelConfTable,
+    'sample track': grid.test_model,
+    'sample epochs': test_boutGens,
+    'module hists': dplt.module_endpoint_hists,
+    'summary': grid.model_summary,
+
+})
+
+
+if __name__ == "__main__":
+    from lib.plot.grid import test_model
+    # print('dddddddddddd')
+    test_model(mID='explorer', dur=2.1 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, show=True)
 

@@ -234,9 +234,7 @@ class ParRegistry:
     def load(self):
         # FIXME Not working
         df = pd.read_csv(paths.path('ParDf'),index_col=0)
-        # df = df.where(pd.notnull(df), None)
         entries=df.to_dict(orient='records')
-        # print(entries[0]['func'])
         dict = self.finalize_dict(entries)
         return dict
 
@@ -309,14 +307,6 @@ def runtime_pars(PF=ParDict.dict):
     return [v.d for k, v in PF.items()]
 
 if __name__ == '__main__':
-    # for d,p in ParDict.dict.items() :
-    #     print(d,p.v,type(p.func),type(p.dtype))
     # # p.param.trigger('disp', 'd')
     #d=ParDict.dict['ba'].param.d
-    print(ParDict.dict['ba'].param.values())
-    # # print(ParDict.dict['b'].v)
-    # # print(p.param.values())
-    # # p._internal_name = 'ddd'
-    # # ParDict.dict['b'].param.add_parameter('FF', param.String())
-    # print(p.param.schema())
-    # df = pd.read_csv(paths.path('ParDf'),index_col=0)
+    pass

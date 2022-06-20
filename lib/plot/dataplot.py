@@ -1,4 +1,3 @@
-import copy
 import itertools
 import os
 import warnings
@@ -1448,103 +1447,6 @@ def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
     P.conf_ax(xlab=r'$\theta_{bend}$ at stride start $(deg)$', ylab=r'$\Delta\theta_{bend}$ over stride $(deg)$',
               xlim=[0, 85], ylim=[-60, 60], yMaxN=5)
     P.adjust((0.25, 0.95), (0.2, 0.95), 0.01)
-    return P.get()
-
-
-def plot_marked_strides(agent_idx=0, agent_id=None, slice=[20, 40], subfolder='individuals', **kwargs):
-    temp = f'marked_strides_{slice[0]}-{slice[1]}' if slice is not None else f'marked_strides'
-    name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
-    P = Plot(name=name, subfolder=subfolder, **kwargs)
-    Nds = P.Ndatasets
-
-    chunks = ['stride', 'pause']
-    chunk_cols = ['lightblue', 'grey']
-    p, ylab = getPar('sv', to_return=['d', 'l'])
-    figx = 15 * 6 * 3 if slice is None else int((slice[1] - slice[0]) / 3)
-    figy = 5
-
-    P.build(Nds, 1, figsize=(figx, figy * Nds), sharey=True, sharex=True)
-    handles = [patches.Patch(color=col, label=n) for n, col in zip(['stride', 'pause'], chunk_cols)]
-
-    for ii, (d, l) in enumerate(zip(P.datasets, P.labels)):
-        ax = P.axs[ii]
-        P.conf_ax(ii, xlab=r'time $(sec)$' if ii == Nds - 1 else None, ylab=ylab, ylim=[0, 1.0], xlim=slice,
-                  leg_loc='upper right', leg_handles=handles)
-        temp_id = d.agent_ids[agent_idx] if agent_id is None else agent_id
-        s = copy.deepcopy(d.read('step').xs(temp_id, level='AgentID', drop_level=True))
-        s.set_index(s.index * d.dt, inplace=True)
-        ax.plot(s[p], color='blue')
-        for i, (c, col) in enumerate(zip(chunks, chunk_cols)):
-            s0s = s.index[s[nam.start(c)] == True]
-            s1s = s.index[s[nam.stop(c)] == True]
-            for s0, s1 in zip(s0s, s1s):
-                ax.axvspan(s0, s1, color=col, alpha=1.0)
-                ax.axvline(s0, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
-                ax.axvline(s1, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
-
-        ax.plot(s[p].loc[s[nam.max(p)] == True], linestyle='None', lw=10, color='green', marker='v')
-        ax.plot(s[p].loc[s[nam.min(p)] == True], linestyle='None', lw=10, color='red', marker='^')
-    P.adjust((0.08, 0.95), (0.15, 0.95), H=0.1)
-    return P.get()
-
-
-def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, slice=[20, 40], subfolder='individuals',
-                       **kwargs):
-    Nrows = len(mode)
-    if Nrows == 2:
-        suf = 'stridesVSturns'
-    else:
-        suf = mode[0]
-    t0, t1 = slice
-    temp = f'sample_marked_{suf}_{t0}-{t1}'
-    name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
-    P = Plot(name=name, subfolder=subfolder, **kwargs)
-    Nds = P.Ndatasets
-
-    figx = 15 * 6 * 3 if slice is None else int((t1 - t0) / 3)
-    figy = 5
-
-    P.build(Nrows, Nds, figsize=(figx * Nds, figy * Nrows), sharey=False, sharex=True)
-
-    for ii, (d, l) in enumerate(zip(P.datasets, P.labels)):
-        for jj, key in enumerate(mode):
-            kk = ii + Nrows * jj
-            ax = P.axs[kk]
-            if key == 'strides':
-                chunks = ['stride', 'pause']
-                chunk_cols = ['lightblue', 'grey']
-
-                p, ylab, ylim = getPar('sv', to_return=['d', 'l', 'lim'])
-                ylim = (0.0, 1.0)
-            elif key == 'turns':
-                chunks = ['Rturn', 'Lturn']
-                chunk_cols = ['lightgreen', 'orange']
-
-                b = 'bend'
-                bv = nam.vel(b)
-                ho = nam.orient('front')
-                hov = nam.vel(ho)
-                p, ylab, ylim = getPar('fov', to_return=['d', 'l', 'lim'])
-
-            handles = [patches.Patch(color=col, label=n) for n, col in zip(chunks, chunk_cols)]
-            P.conf_ax(kk, xlab=r'time $(sec)$' if jj == Nrows - 1 else None, ylab=ylab, ylim=ylim, xlim=slice,
-                      leg_loc='upper right', leg_handles=handles)
-
-            temp_id = d.agent_ids[agent_idx] if agent_id is None else agent_id
-            s = copy.deepcopy(d.read('step').xs(temp_id, level='AgentID', drop_level=True))
-            s.set_index(s.index * d.dt, inplace=True)
-            ax.plot(s[p], color='blue')
-            for i, (c, col) in enumerate(zip(chunks, chunk_cols)):
-                s0s = s.index[s[nam.start(c)] == True]
-                s1s = s.index[s[nam.stop(c)] == True]
-                for s0, s1 in zip(s0s, s1s):
-                    ax.axvspan(s0, s1, color=col, alpha=1.0)
-                    ax.axvline(s0, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
-                    ax.axvline(s1, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
-
-            ax.plot(s[p].loc[s[nam.max(p)] == True], linestyle='None', lw=10, color='green', marker='v')
-            ax.plot(s[p].loc[s[nam.min(p)] == True], linestyle='None', lw=10, color='red', marker='^')
-    P.adjust((0.08, 0.95), (0.12, 0.95), H=0.2)
     return P.get()
 
 

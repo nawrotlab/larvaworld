@@ -1,7 +1,13 @@
+import copy
+
 import numpy as np
 from matplotlib import pyplot as plt, patches
 
+from lib.aux import naming as nam
+from lib.conf.pars.pars import getPar
+
 from lib.plot.base import BasePlot, Plot
+from lib.process.aux import detect_strides, detect_pauses, detect_turns, process_epochs
 
 
 def traj_1group(s, c, unit='mm', fig=None, axs=None, **kwargs):
@@ -168,15 +174,79 @@ def traj_grouped(axs=None, fig=None, unit='mm', name=f'comparative_trajectories'
 #     # return process_plot(fig, save_to, filename, return_fig, show)
 #     return fig_dict
 
-def track_annotated(epoch='stride', **kwargs) :
-    if epoch=='stride' :
-        annotated_strideplot(**kwargs)
-    elif epoch=='turn' :
-        annotated_turnplot(**kwargs)
+def track_annotated(epoch='stride',a=None, dt=0.1, a2plot=None, fig=None, ax=None, ylab =None, ylim=None, xlim=None,slice=None,agent_idx=0, agent_id=None,
+                         subfolder='tracks', moving_average_interval=None,epoch_boundaries=True, show_extrema=True, min_amp=None, **kwargs) :
+    temp = f'track_{slice[0]}-{slice[1]}' if slice is not None else f'track'
+    name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
+    P = Plot(name=name, subfolder=subfolder, **kwargs)
+    Nds = P.Ndatasets
+
+    if epoch == 'stride':
+        chunk_cols = ["lightblue", "grey"]
+        labels = ['runs', 'pauses']
+        ylab = "velocity (1/sec)" if ylab is None else ylab
+        i_min, i_max, strides, runs, run_counts = detect_strides(a=a, dt=dt)
+        pauses = detect_pauses(a, dt, runs=runs)
+        epochs1, epochs2, epochs0 = runs, pauses, strides
+    elif epoch == 'turn':
+        ax.axhline(0, color='black', alpha=1, linestyle='dashed', linewidth=1)
+        chunk_cols = ["lightgreen", "orange"]
+        labels = ['L turns', 'R turns']
+        ylab = "angular velocity (deg/sec)"  if ylab is None else ylab
+        Lturns, Rturns = detect_turns(a, dt)
+        if min_amp is not None:
+            Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a, Lturns, dt)
+            Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a, Rturns, dt)
+            Lturns = Lturns[np.abs(Lamps) > min_amp]
+            Rturns = Rturns[np.abs(Ramps) > min_amp]
+        epochs1, epochs2, epochs0 = Lturns, Rturns, Lturns.tolist() + Rturns.tolist()
+
+    handles = [patches.Patch(color=col, label=n) for n, col in zip(labels, chunk_cols)]
+    # figx = 20 if slice is None else int((slice[1] - slice[0]) / 3)
+    P.build(Nds, 1, figsize=(20, 5 * Nds), sharey=True, sharex=True,fig=fig, axs=ax)
 
 
-def annotated_strideplot(a, dt, a2plot=None, ax=None, ylim=None, xlim=None,
-                         moving_average_interval=None,show_extrema=True, epoch_boundaries=True, min_amp=None, **kwargs):
+    trange = np.arange(0, a.shape[0] * dt, dt)
+    if xlim is None:
+        xlim = (0, trange[-1])
+
+    if moving_average_interval:
+        from lib.process.aux import moving_average
+        a = moving_average(a, n=int(moving_average_interval / dt))
+
+    ii=0
+    P.conf_ax(ii, xlab=r'time $(sec)$' if ii == Nds - 1 else None, ylab=ylab, ylim=ylim, xlim=xlim)
+    ax.legend(loc="upper right", handles=handles, labels=labels, fontsize=15)
+
+    if a2plot is not None:
+        ax.plot(trange, a2plot)
+    else:
+        ax.plot(trange, a)
+        if show_extrema and epoch=='stride':
+            ax.plot(trange[i_max], a[i_max], linestyle='None', lw=10, color='green', marker='v')
+            ax.plot(trange[i_min], a[i_min], linestyle='None', lw=10, color='red', marker='^')
+
+    if epoch_boundaries:
+        for s0, s1 in epochs0:
+            ax.axvline(trange[s0], color=f'{0.4 * (0 + 1)}', alpha=0.3, linestyle='dashed', linewidth=1)
+            ax.axvline(trange[s1], color=f'{0.4 * (0 + 1)}', alpha=0.3, linestyle='dashed', linewidth=1)
+    for s0, s1 in epochs1:
+        ax.axvspan(trange[s0], trange[s1], color=chunk_cols[0], alpha=1.0)
+    for s0, s1 in epochs2:
+        ax.axvspan(trange[s0], trange[s1], color=chunk_cols[1], alpha=1.0)
+
+    # P.adjust((0.08, 0.95), (0.15, 0.95), H=0.1)
+    return P.get()
+
+
+def annotated_strideplot(**kwargs):
+    return track_annotated(epoch='stride', **kwargs)
+
+def annotated_turnplot(**kwargs):
+    return track_annotated(epoch='turn', **kwargs)
+
+def annotated_strideplot0(a, dt, a2plot=None, ax=None, ylim=None, xlim=None,
+                         moving_average_interval=None,epoch_boundaries=True, show_extrema=True, min_amp=None, **kwargs):
     """
     Plots annotated strides-runs and pauses in timeseries.
 
@@ -211,6 +281,7 @@ def annotated_strideplot(a, dt, a2plot=None, ax=None, ylim=None, xlim=None,
     """
     from lib.process.aux import detect_strides, detect_pauses, moving_average
     chunk_cols = ["lightblue", "grey"]
+    labels = ['runs', 'pauses']
     trange = np.arange(0, a.shape[0] * dt, dt)
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(20, 5), sharex=True, sharey=True)
@@ -243,12 +314,13 @@ def annotated_strideplot(a, dt, a2plot=None, ax=None, ylim=None, xlim=None,
         ax.axvspan(trange[s0], trange[s1], color=chunk_cols[0], alpha=1.0)
     for p0, p1 in pauses:
         ax.axvspan(trange[p0], trange[p1], color=chunk_cols[1], alpha=1.0)
-    labels = ['runs', 'pauses']
+
     handles = [patches.Patch(color=col, label=n) for n, col in zip(labels, chunk_cols)]
     ax.legend(loc="upper right", handles=handles, labels=labels, fontsize=15)
 
 
-def annotated_turnplot(a, dt, a2plot=None, ax=None, ylim=None, xlim=None, moving_average_interval=None,epoch_boundaries=True, show_extrema=False, min_amp=None, **kwargs):
+def annotated_turnplot0(a, dt, a2plot=None, ax=None, ylim=None, xlim=None,
+                       moving_average_interval=None,epoch_boundaries=False, show_extrema=False, min_amp=None, **kwargs):
     """
     Plots annotated turnss in timeseries.
 
@@ -284,6 +356,7 @@ def annotated_turnplot(a, dt, a2plot=None, ax=None, ylim=None, xlim=None, moving
     from lib.process.aux import detect_turns, process_epochs, moving_average
 
     chunk_cols = ["lightgreen", "orange"]
+    labels = ['L turns', 'R turns']
     trange = np.arange(0, a.shape[0] * dt, dt)
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=(20, 5), sharex=True, sharey=True)
@@ -319,6 +392,103 @@ def annotated_turnplot(a, dt, a2plot=None, ax=None, ylim=None, xlim=None, moving
         if epoch_boundaries:
             ax.axvline(trange[s0], color=f'{0.4 * (0 + 1)}', alpha=0.3, linestyle='dashed', linewidth=1)
             ax.axvline(trange[s1], color=f'{0.4 * (0 + 1)}', alpha=0.3, linestyle='dashed', linewidth=1)
-    labels = ['L turns', 'R turns']
+
     handles = [patches.Patch(color=col, label=n) for n, col in zip(labels, chunk_cols)]
     ax.legend(loc="upper right", handles=handles, labels=labels, fontsize=15)
+
+
+def plot_marked_strides(agent_idx=0, agent_id=None, slice=[20, 40], subfolder='individuals', **kwargs):
+    temp = f'marked_strides_{slice[0]}-{slice[1]}' if slice is not None else f'marked_strides'
+    name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
+    P = Plot(name=name, subfolder=subfolder, **kwargs)
+    Nds = P.Ndatasets
+
+    chunks = ['stride', 'pause']
+    chunk_cols = ['lightblue', 'grey']
+    p, ylab = getPar('sv', to_return=['d', 'l'])
+    figx = 15 * 6 * 3 if slice is None else int((slice[1] - slice[0]) / 3)
+    figy = 5
+
+    P.build(Nds, 1, figsize=(figx, figy * Nds), sharey=True, sharex=True)
+    handles = [patches.Patch(color=col, label=n) for n, col in zip(['stride', 'pause'], chunk_cols)]
+
+    for ii, (d, l) in enumerate(zip(P.datasets, P.labels)):
+        ax = P.axs[ii]
+        P.conf_ax(ii, xlab=r'time $(sec)$' if ii == Nds - 1 else None, ylab=ylab, ylim=[0, 1.0], xlim=slice,
+                  leg_loc='upper right', leg_handles=handles)
+        temp_id = d.agent_ids[agent_idx] if agent_id is None else agent_id
+        s = copy.deepcopy(d.read('step').xs(temp_id, level='AgentID', drop_level=True))
+        s.set_index(s.index * d.dt, inplace=True)
+        ax.plot(s[p], color='blue')
+        for i, (c, col) in enumerate(zip(chunks, chunk_cols)):
+            s0s = s.index[s[nam.start(c)] == True]
+            s1s = s.index[s[nam.stop(c)] == True]
+            for s0, s1 in zip(s0s, s1s):
+                ax.axvspan(s0, s1, color=col, alpha=1.0)
+                ax.axvline(s0, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
+                ax.axvline(s1, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
+
+        ax.plot(s[p].loc[s[nam.max(p)] == True], linestyle='None', lw=10, color='green', marker='v')
+        ax.plot(s[p].loc[s[nam.min(p)] == True], linestyle='None', lw=10, color='red', marker='^')
+    P.adjust((0.08, 0.95), (0.15, 0.95), H=0.1)
+    return P.get()
+
+
+def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, slice=[20, 40], subfolder='individuals',
+                       **kwargs):
+    Nrows = len(mode)
+    if Nrows == 2:
+        suf = 'stridesVSturns'
+    else:
+        suf = mode[0]
+    t0, t1 = slice
+    temp = f'sample_marked_{suf}_{t0}-{t1}'
+    name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
+    P = Plot(name=name, subfolder=subfolder, **kwargs)
+    Nds = P.Ndatasets
+
+    figx = 15 * 6 * 3 if slice is None else int((t1 - t0) / 3)
+    figy = 5
+
+    P.build(Nrows, Nds, figsize=(figx * Nds, figy * Nrows), sharey=False, sharex=True)
+
+    for ii, (d, l) in enumerate(zip(P.datasets, P.labels)):
+        for jj, key in enumerate(mode):
+            kk = ii + Nrows * jj
+            ax = P.axs[kk]
+            if key == 'strides':
+                chunks = ['stride', 'pause']
+                chunk_cols = ['lightblue', 'grey']
+
+                p, ylab, ylim = getPar('sv', to_return=['d', 'l', 'lim'])
+                ylim = (0.0, 1.0)
+            elif key == 'turns':
+                chunks = ['Rturn', 'Lturn']
+                chunk_cols = ['lightgreen', 'orange']
+
+                b = 'bend'
+                bv = nam.vel(b)
+                ho = nam.orient('front')
+                hov = nam.vel(ho)
+                p, ylab, ylim = getPar('fov', to_return=['d', 'l', 'lim'])
+
+            handles = [patches.Patch(color=col, label=n) for n, col in zip(chunks, chunk_cols)]
+            P.conf_ax(kk, xlab=r'time $(sec)$' if jj == Nrows - 1 else None, ylab=ylab, ylim=ylim, xlim=slice,
+                      leg_loc='upper right', leg_handles=handles)
+
+            temp_id = d.agent_ids[agent_idx] if agent_id is None else agent_id
+            s = copy.deepcopy(d.read('step').xs(temp_id, level='AgentID', drop_level=True))
+            s.set_index(s.index * d.dt, inplace=True)
+            ax.plot(s[p], color='blue')
+            for i, (c, col) in enumerate(zip(chunks, chunk_cols)):
+                s0s = s.index[s[nam.start(c)] == True]
+                s1s = s.index[s[nam.stop(c)] == True]
+                for s0, s1 in zip(s0s, s1s):
+                    ax.axvspan(s0, s1, color=col, alpha=1.0)
+                    ax.axvline(s0, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
+                    ax.axvline(s1, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
+
+            ax.plot(s[p].loc[s[nam.max(p)] == True], linestyle='None', lw=10, color='green', marker='v')
+            ax.plot(s[p].loc[s[nam.min(p)] == True], linestyle='None', lw=10, color='red', marker='^')
+    P.adjust((0.08, 0.95), (0.12, 0.95), H=0.2)
+    return P.get()
